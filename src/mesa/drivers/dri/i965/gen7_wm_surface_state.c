@@ -337,6 +337,8 @@ gen7_update_texture_surface(struct gl_context *ctx,
               /* mip count */
               (intelObj->_MaxLevel - tObj->BaseLevel));
 
+   surf[7] = mt->fast_clear_color_value;
+
    if (brw->is_haswell) {
       /* Handling GL_ALPHA as a surface format override breaks 1.30+ style
        * texturing functions that return a float, as our code generation always
@@ -351,7 +353,7 @@ gen7_update_texture_surface(struct gl_context *ctx,
 
       const bool need_scs_green_to_blue = for_gather && tex_format == BRW_SURFACEFORMAT_R32G32_FLOAT_LD;
 
-      surf[7] =
+      surf[7] |=
          SET_FIELD(brw_swizzle_to_scs(GET_SWZ(swizzle, 0), need_scs_green_to_blue), GEN7_SURFACE_SCS_R) |
          SET_FIELD(brw_swizzle_to_scs(GET_SWZ(swizzle, 1), need_scs_green_to_blue), GEN7_SURFACE_SCS_G) |
          SET_FIELD(brw_swizzle_to_scs(GET_SWZ(swizzle, 2), need_scs_green_to_blue), GEN7_SURFACE_SCS_B) |
