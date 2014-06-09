@@ -1,0 +1,105 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>Mesa Release Notes</title>
+  <link rel="stylesheet" type="text/css" href="../mesa.css">
+</head>
+<body>
+
+<div class="header">
+  <h1>The Mesa 3D Graphics Library</h1>
+</div>
+
+<iframe src="../contents.html"></iframe>
+<div class="content">
+
+<h1>Mesa 10.1.5 Release Notes / (June 6, 2014)</h1>
+
+<p>
+Mesa 10.1.5 is a bug fix release which fixes bugs found since the 10.1.4 release.
+</p>
+
+<p>
+Mesa 10.1.5 implements the OpenGL 3.3 API, but the version reported by
+glGetString(GL_VERSION) or glGetIntegerv(GL_MAJOR_VERSION) /
+glGetIntegerv(GL_MINOR_VERSION) depends on the particular driver being used.
+Some drivers don't support all the features required in OpenGL 3.3.  OpenGL
+3.3 is <strong>only</strong> available if requested at context creation
+because compatibility contexts are not supported.
+</p>
+
+<h2>SHA256 checksums</h2>
+<pre>
+b0aceaa75bc9a9b2d9215a113e2ad488b5cf85c99005a7624f8cf7c37c5d0eaa  MesaLib-10.1.5.tar.gz
+bc6c5ec7836f254a49d055a29d9aa34c97c54c038f47ad3a00fa57a5fef15bbc  MesaLib-10.1.5.tar.bz2
+78b7255cab0af7918945452a84de7989096ebcdd27e99b31c56c0589274cbc77  MesaLib-10.1.5.zip
+</pre>
+
+<h2>New features</h2>
+<p>None</p>
+
+<h2>Bug fixes</h2>
+
+<p>This list is likely incomplete.</p>
+
+<ul>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=79115">Bug 79115</a> - </li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=79421">Bug 79421</a> - </li>
+
+</ul>
+
+<h2>Changes</h2>
+
+<p>Brian Paul (1):</p>
+<ul>
+  <li>glsl: fix use-after free bug/crash in ast_declarator_list::hir()</li>
+</ul>
+
+<p>Carl Worth (5):</p>
+<ul>
+  <li>docs: Add md5sums for 10.1.4 release</li>
+  <li>Merge remote-tracking branch 'origin/10.1' into 10.1</li>
+  <li>cherry-ignore: Ignore two commits.</li>
+  <li>Ignore a patch that is not needed for the 10.1 branch.</li>
+  <li>Update version to 10.1.5</li>
+</ul>
+
+<p>Emil Velikov (1):</p>
+<ul>
+  <li>glx: do not leak dri3Display</li>
+</ul>
+
+<p>Ilia Mirkin (2):</p>
+<ul>
+  <li>nv50/ir: fix s32 x s32 -&gt; high s32 multiply logic</li>
+  <li>nv50/ir: fix constant folding for OP_MUL subop HIGH</li>
+</ul>
+
+<p>James Legg (1):</p>
+<ul>
+  <li>mesa: Fix unbinding GL_DEPTH_STENCIL_ATTACHMENT</li>
+</ul>
+
+<p>Jeremy Huddleston Sequoia (2):</p>
+<ul>
+  <li>glapi: Avoid heap corruption in _glapi_table</li>
+  <li>darwin: Fix test for kCGLPFAOpenGLProfile support at runtime</li>
+</ul>
+
+<p>Pavel Popov (2):</p>
+<ul>
+  <li>i965: Properly return *RESET* status in glGetGraphicsResetStatusARB</li>
+  <li>i965: Fix Line Stipple enable bit in 3DSTATE_SF for Haswell.</li>
+</ul>
+
+<p>Roland Scheidegger (1):</p>
+<ul>
+  <li>llvmpipe: fix crash when not all attachments are populated in a fb</li>
+</ul>
+
+</div>
+</body>
+</html>
