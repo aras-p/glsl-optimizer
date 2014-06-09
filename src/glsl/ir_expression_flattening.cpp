@@ -32,10 +32,8 @@
  */
 
 #include "ir.h"
-#include "ir_visitor.h"
 #include "ir_rvalue_visitor.h"
 #include "ir_expression_flattening.h"
-#include "glsl_types.h"
 
 class ir_expression_flattening_visitor : public ir_rvalue_visitor {
 public:
