@@ -26,7 +26,6 @@
 #include "glsl_symbol_table.h"
 #include "main/core.h"
 #include "main/uniforms.h"
-#include "program/prog_parameter.h"
 #include "program/prog_statevars.h"
 #include "program/prog_instruction.h"
 
