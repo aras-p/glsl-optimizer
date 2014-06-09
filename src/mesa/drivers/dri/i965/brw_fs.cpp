@@ -2355,7 +2355,7 @@ fs_visitor::insert_gen4_pre_send_dependency_workarounds(fs_inst *inst)
     * program.
     */
    for (fs_inst *scan_inst = (fs_inst *)inst->prev;
-        scan_inst != NULL;
+        !scan_inst->is_head_sentinel();
         scan_inst = (fs_inst *)scan_inst->prev) {
 
       /* If we hit control flow, assume that there *are* outstanding
