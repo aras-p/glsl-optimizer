@@ -57,7 +57,7 @@ static void bind_sampler_states(struct fd_texture_stateobj *prog,
 
 	for (i = 0; i < nr; i++) {
 		if (hwcso[i])
-			new_nr++;
+			new_nr = i + 1;
 		prog->samplers[i] = hwcso[i];
 		prog->dirty_samplers |= (1 << i);
 	}
@@ -78,7 +78,7 @@ static void set_sampler_views(struct fd_texture_stateobj *prog,
 
 	for (i = 0; i < nr; i++) {
 		if (views[i])
-			new_nr++;
+			new_nr = i + 1;
 		pipe_sampler_view_reference(&prog->textures[i], views[i]);
 		prog->dirty_samplers |= (1 << i);
 	}

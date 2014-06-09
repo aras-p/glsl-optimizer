@@ -195,8 +195,10 @@ emit_textures(struct fd_ringbuffer *ring,
 		OUT_RING(ring, CP_LOAD_STATE_1_STATE_TYPE(ST_CONSTANTS) |
 				CP_LOAD_STATE_1_EXT_SRC_ADDR(0));
 		for (i = 0; i < tex->num_textures; i++) {
-			struct fd3_pipe_sampler_view *view =
-					fd3_pipe_sampler_view(tex->textures[i]);
+			static const struct fd3_pipe_sampler_view dummy_view = {};
+			const struct fd3_pipe_sampler_view *view = tex->textures[i] ?
+					fd3_pipe_sampler_view(tex->textures[i]) :
+					&dummy_view;
 			OUT_RING(ring, view->texconst0);
 			OUT_RING(ring, view->texconst1);
 			OUT_RING(ring, view->texconst2 |
@@ -213,8 +215,10 @@ emit_textures(struct fd_ringbuffer *ring,
 		OUT_RING(ring, CP_LOAD_STATE_1_STATE_TYPE(ST_CONSTANTS) |
 				CP_LOAD_STATE_1_EXT_SRC_ADDR(0));
 		for (i = 0; i < tex->num_textures; i++) {
-			struct fd3_pipe_sampler_view *view =
-					fd3_pipe_sampler_view(tex->textures[i]);
+			static const struct fd3_pipe_sampler_view dummy_view = {};
+			const struct fd3_pipe_sampler_view *view = tex->textures[i] ?
+					fd3_pipe_sampler_view(tex->textures[i]) :
+					&dummy_view;
 			struct fd_resource *rsc = view->tex_resource;
 
 			for (j = 0; j < view->mipaddrs; j++) {
