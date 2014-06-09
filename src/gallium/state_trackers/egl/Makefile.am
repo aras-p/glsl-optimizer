@@ -25,12 +25,13 @@ AUTOMAKE_OPTIONS = subdir-objects
 include Makefile.sources
 include $(top_srcdir)/src/gallium/Automake.inc
 
-AM_CFLAGS = $(GALLIUM_CFLAGS)
+AM_CFLAGS = \
+	$(GALLIUM_CFLAGS) \
+	$(VISIBILITY_CFLAGS)
+
 AM_CPPFLAGS = \
-	$(VISIBILITY_CFLAGS) \
 	-I$(top_srcdir)/src/egl/main \
-	-I$(top_builddir)/src/egl/wayland/wayland-drm/ \
-	-I$(top_srcdir)/include
+	-I$(top_builddir)/src/egl/wayland/wayland-drm/
 
 noinst_LTLIBRARIES = libegl.la
 libegl_la_SOURCES = $(common_FILES)

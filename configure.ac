@@ -1317,6 +1317,7 @@ if test "x$enable_gallium_egl" = xyes; then
 
     GALLIUM_STATE_TRACKERS_DIRS="egl $GALLIUM_STATE_TRACKERS_DIRS"
     GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS egl-static"
+#    enable_gallium_loader=yes
 fi
 AM_CONDITIONAL(HAVE_GALLIUM_EGL, test "x$enable_gallium_egl" = xyes)
 

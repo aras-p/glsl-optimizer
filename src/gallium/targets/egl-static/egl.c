@@ -32,6 +32,7 @@
 
 #include "egl_pipe.h"
 #include "egl_st.h"
+#include "target-helpers/inline_drm_helper.h"
 
 static struct egl_g3d_loader egl_g3d_loader;
 
@@ -57,25 +58,7 @@ get_st_api(enum st_api_type api)
 static struct pipe_screen *
 create_drm_screen(const char *constname, int fd)
 {
-   struct pipe_screen *screen;
-   char *name = (char *)constname;
-
-   if (!name) {
-      name = loader_get_driver_for_fd(fd, _LOADER_GALLIUM);
-      if (!name)
-         return NULL;
-   }
-
-   screen = egl_pipe_create_drm_screen(name, fd);
-   if (screen)
-      _eglLog(_EGL_INFO, "created a pipe screen for %s", name);
-   else
-      _eglLog(_EGL_WARNING, "failed to create a pipe screen for %s", name);
-
-   if (name != constname)
-      free(name);
-
-   return screen;
+   return dd_create_screen(fd);
 }
 
 static struct pipe_screen *

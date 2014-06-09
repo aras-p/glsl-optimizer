@@ -91,7 +91,7 @@ if env['HAVE_X11']:
 if env['HAVE_DRM']:
     env.PkgUseModules('DRM')
 
-    env.Append(CPPDEFINES = ['_EGL_PIPE_VMWGFX'])
+    env.Append(CPPDEFINES = ['GALLIUM_VMWGFX'])
     env.Prepend(LIBS = [
         svgadrm,
         svga,

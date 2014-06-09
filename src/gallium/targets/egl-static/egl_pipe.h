@@ -31,9 +31,6 @@ struct pipe_screen;
 struct sw_winsys;
 
 struct pipe_screen *
-egl_pipe_create_drm_screen(const char *name, int fd);
-
-struct pipe_screen *
 egl_pipe_create_swrast_screen(struct sw_winsys *ws);
 
 #endif /* _EGL_PIPE_H_ */
