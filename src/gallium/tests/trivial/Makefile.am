@@ -11,23 +11,12 @@ AM_CPPFLAGS = \
 	-DPIPE_SEARCH_DIR=\"$(PIPE_SRC_DIR)/.libs\" \
 	$(GALLIUM_PIPE_LOADER_DEFINES)
 
-LDADD = $(GALLIUM_PIPE_LOADER_CLIENT_LIBS) \
+LDADD = \
+	$(GALLIUM_PIPE_LOADER_CLIENT_LIBS) \
+	$(GALLIUM_PIPE_LOADER_WINSYS_LIBS) \
 	$(top_builddir)/src/gallium/auxiliary/pipe-loader/libpipe_loader_client.la \
-	$(top_builddir)/src/gallium/winsys/sw/null/libws_null.la \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
 	$(GALLIUM_COMMON_LIB_DEPS)
-
-if HAVE_DRISW
-LDADD += \
-	$(top_builddir)/src/gallium/winsys/sw/dri/libswdri.la
-endif
-
-if NEED_WINSYS_XLIB
-LDADD += \
-	$(top_builddir)/src/gallium/winsys/sw/xlib/libws_xlib.la \
-	-lX11 -lXext -lXfixes \
-	$(LIBDRM_LIBS)
-endif
 
 noinst_PROGRAMS = compute tri quad-tex
 

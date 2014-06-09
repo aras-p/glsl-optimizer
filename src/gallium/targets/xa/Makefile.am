@@ -41,24 +41,12 @@ libxatracker_la_SOURCES =
 
 libxatracker_la_LIBADD = \
 	$(GALLIUM_PIPE_LOADER_LIBS) \
+	$(GALLIUM_PIPE_LOADER_WINSYS_LIBS) \
 	$(top_builddir)/src/gallium/auxiliary/pipe-loader/libpipe_loader.la \
-	$(top_builddir)/src/gallium/winsys/sw/null/libws_null.la \
 	$(top_builddir)/src/gallium/state_trackers/xa/libxatracker.la \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
 	$(LIBDRM_LIBS) \
 	$(GALLIUM_COMMON_LIB_DEPS)
-
-if HAVE_DRISW
-libxatracker_la_LIBADD += \
-	$(top_builddir)/src/gallium/winsys/sw/dri/libswdri.la
-endif
-
-if NEED_WINSYS_XLIB
-libxatracker_la_LIBADD += \
-	$(top_builddir)/src/gallium/winsys/sw/xlib/libws_xlib.la \
-	-lX11 -lXext -lXfixes \
-	$(LIBDRM_LIBS)
-endif
 
 libxatracker_la_LDFLAGS = \
 	-no-undefined \

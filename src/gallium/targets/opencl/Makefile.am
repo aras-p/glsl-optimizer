@@ -1,5 +1,7 @@
 AUTOMAKE_OPTIONS = subdir-objects
 
+include $(top_srcdir)/src/gallium/Automake.inc
+
 lib_LTLIBRARIES = lib@OPENCL_LIBNAME@.la
 
 lib@OPENCL_LIBNAME@_la_LDFLAGS = \
@@ -15,11 +17,11 @@ lib@OPENCL_LIBNAME@_la_LDFLAGS += \
 endif
 
 lib@OPENCL_LIBNAME@_la_LIBADD = \
+	$(GALLIUM_PIPE_LOADER_CLIENT_LIBS) \
+	$(GALLIUM_PIPE_LOADER_WINSYS_LIBS) \
 	$(top_builddir)/src/gallium/auxiliary/pipe-loader/libpipe_loader_client.la \
-	$(top_builddir)/src/gallium/winsys/sw/null/libws_null.la \
 	$(top_builddir)/src/gallium/state_trackers/clover/libclover.la \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
-	$(GALLIUM_PIPE_LOADER_CLIENT_LIBS) \
 	-ldl \
 	-lclangCodeGen \
 	-lclangFrontendTool \
@@ -35,18 +37,6 @@ lib@OPENCL_LIBNAME@_la_LIBADD = \
 	-lclangLex \
 	-lclangBasic \
 	$(LLVM_LIBS)
-
-if HAVE_DRISW
-lib@OPENCL_LIBNAME@_la_LIBADD += \
-	$(top_builddir)/src/gallium/winsys/sw/dri/libswdri.la
-endif
-
-if NEED_WINSYS_XLIB
-lib@OPENCL_LIBNAME@_la_LIBADD += \
-	$(top_builddir)/src/gallium/winsys/sw/xlib/libws_xlib.la \
-	-lX11 -lXext -lXfixes \
-	$(LIBDRM_LIBS)
-endif
 
 nodist_EXTRA_lib@OPENCL_LIBNAME@_la_SOURCES = dummy.cpp
 lib@OPENCL_LIBNAME@_la_SOURCES =
