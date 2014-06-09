@@ -257,6 +257,8 @@ cfg_t::cfg_t(exec_list *instructions)
       }
    }
 
+   assert(cur->end);
+
    cur->end_ip = ip;
 
    make_block_array();
