@@ -1171,21 +1171,21 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    fs_inst *inst = NULL;
    switch (ir->op) {
    case ir_tex:
-      inst = emit(SHADER_OPCODE_TEX, dst);
+      inst = emit(SHADER_OPCODE_TEX, dst, reg_undef);
       break;
    case ir_txb:
       mlen = MAX2(mlen, header_present + 4 * reg_width);
       emit(MOV(fs_reg(MRF, base_mrf + mlen), lod));
       mlen += reg_width;
 
-      inst = emit(FS_OPCODE_TXB, dst);
+      inst = emit(FS_OPCODE_TXB, dst, reg_undef);
       break;
    case ir_txl:
       mlen = MAX2(mlen, header_present + 4 * reg_width);
       emit(MOV(fs_reg(MRF, base_mrf + mlen), lod));
       mlen += reg_width;
 
-      inst = emit(SHADER_OPCODE_TXL, dst);
+      inst = emit(SHADER_OPCODE_TXL, dst, reg_undef);
       break;
    case ir_txd: {
       mlen = MAX2(mlen, header_present + 4 * reg_width); /* skip over 'ai' */
@@ -1215,17 +1215,17 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    case ir_txs:
       emit(MOV(fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_UD), lod));
       mlen += reg_width;
-      inst = emit(SHADER_OPCODE_TXS, dst);
+      inst = emit(SHADER_OPCODE_TXS, dst, reg_undef);
       break;
    case ir_query_levels:
       emit(MOV(fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_UD), fs_reg(0u)));
       mlen += reg_width;
-      inst = emit(SHADER_OPCODE_TXS, dst);
+      inst = emit(SHADER_OPCODE_TXS, dst, reg_undef);
       break;
    case ir_txf:
       mlen = header_present + 4 * reg_width;
       emit(MOV(fs_reg(MRF, base_mrf + mlen - reg_width, BRW_REGISTER_TYPE_UD), lod));
-      inst = emit(SHADER_OPCODE_TXF, dst);
+      inst = emit(SHADER_OPCODE_TXF, dst, reg_undef);
       break;
    case ir_txf_ms:
       mlen = header_present + 4 * reg_width;
@@ -1235,13 +1235,13 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       /* sample index */
       emit(MOV(fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_UD), sample_index));
       mlen += reg_width;
-      inst = emit(SHADER_OPCODE_TXF_CMS, dst);
+      inst = emit(SHADER_OPCODE_TXF_CMS, dst, reg_undef);
       break;
    case ir_lod:
-      inst = emit(SHADER_OPCODE_LOD, dst);
+      inst = emit(SHADER_OPCODE_LOD, dst, reg_undef);
       break;
    case ir_tg4:
-      inst = emit(SHADER_OPCODE_TG4, dst);
+      inst = emit(SHADER_OPCODE_TG4, dst, reg_undef);
       break;
    default:
       fail("unrecognized texture opcode");
