@@ -128,11 +128,17 @@ calculate_tiles(struct fd_context *ctx)
 		bin_w = align(width / nbins_x, 32);
 	}
 
-	/* then find a bin height that satisfies the memory constraints:
+	/* then find a bin width/height that satisfies the memory
+	 * constraints:
 	 */
 	while ((bin_w * bin_h * cpp) > gmem_size) {
-		nbins_y++;
-		bin_h = align(height / nbins_y, 32);
+		if (bin_w > bin_h) {
+			nbins_x++;
+			bin_w = align(width / nbins_x, 32);
+		} else {
+			nbins_y++;
+			bin_h = align(height / nbins_y, 32);
+		}
 	}
 
 	DBG("using %d bins of size %dx%d", nbins_x*nbins_y, bin_w, bin_h);
