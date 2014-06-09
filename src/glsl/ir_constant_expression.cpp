@@ -36,7 +36,6 @@
 #include <math.h>
 #include "main/core.h" /* for MAX2, MIN2, CLAMP */
 #include "ir.h"
-#include "ir_visitor.h"
 #include "glsl_types.h"
 #include "program/hash_table.h"
 
