@@ -28,9 +28,7 @@
  */
 
 #include "ir.h"
-#include "ir_visitor.h"
 #include "ir_basic_block.h"
-#include "glsl_types.h"
 
 /**
  * Calls a user function for every basic block in the instruction stream.
