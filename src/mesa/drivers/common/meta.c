@@ -1569,6 +1569,7 @@ meta_glsl_clear_init(struct gl_context *ctx, struct clear_state *clear)
    _mesa_AttachShader(clear->ShaderProg, vs);
    _mesa_DeleteShader(vs);
    _mesa_BindAttribLocation(clear->ShaderProg, 0, "position");
+   _mesa_ObjectLabel(GL_PROGRAM, clear->ShaderProg, -1, "meta clear");
    _mesa_LinkProgram(clear->ShaderProg);
 
    clear->ColorLocation = _mesa_GetUniformLocation(clear->ShaderProg,
