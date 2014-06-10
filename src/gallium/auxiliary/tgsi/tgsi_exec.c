@@ -689,7 +689,7 @@ tgsi_exec_machine_bind_shader(
       struct tgsi_exec_vector *outputs;
 
       inputs = align_malloc(sizeof(struct tgsi_exec_vector) *
-                            TGSI_MAX_PRIM_VERTICES * PIPE_MAX_ATTRIBS,
+                            TGSI_MAX_PRIM_VERTICES * PIPE_MAX_SHADER_INPUTS,
                             16);
 
       if (!inputs)
@@ -828,8 +828,8 @@ tgsi_exec_machine_create( void )
    mach->MaxGeometryShaderOutputs = TGSI_MAX_TOTAL_VERTICES;
    mach->Predicates = &mach->Temps[TGSI_EXEC_TEMP_P0];
 
-   mach->Inputs = align_malloc(sizeof(struct tgsi_exec_vector) * PIPE_MAX_ATTRIBS, 16);
-   mach->Outputs = align_malloc(sizeof(struct tgsi_exec_vector) * PIPE_MAX_ATTRIBS, 16);
+   mach->Inputs = align_malloc(sizeof(struct tgsi_exec_vector) * PIPE_MAX_SHADER_INPUTS, 16);
+   mach->Outputs = align_malloc(sizeof(struct tgsi_exec_vector) * PIPE_MAX_SHADER_OUTPUTS, 16);
    if (!mach->Inputs || !mach->Outputs)
       goto fail;
 
