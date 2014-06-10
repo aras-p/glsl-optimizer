@@ -4094,6 +4094,78 @@ _mesa_store_texsubimage(struct gl_context *ctx, GLuint dims,
                      format, type, pixels, packing, "glTexSubImage");
 }
 
+static void
+clear_image_to_zero(GLubyte *dstMap, GLint dstRowStride,
+                    GLsizei width, GLsizei height,
+                    GLsizei clearValueSize)
+{
+   GLsizei y;
+
+   for (y = 0; y < height; y++) {
+      memset(dstMap, 0, clearValueSize * width);
+      dstMap += dstRowStride;
+   }
+}
+
+static void
+clear_image_to_value(GLubyte *dstMap, GLint dstRowStride,
+                     GLsizei width, GLsizei height,
+                     const GLvoid *clearValue,
+                     GLsizei clearValueSize)
+{
+   GLsizei y, x;
+
+   for (y = 0; y < height; y++) {
+      for (x = 0; x < width; x++) {
+         memcpy(dstMap, clearValue, clearValueSize);
+         dstMap += clearValueSize;
+      }
+      dstMap += dstRowStride - clearValueSize * width;
+   }
+}
+
+/*
+ * Fallback for Driver.ClearTexSubImage().
+ */
+void
+_mesa_store_cleartexsubimage(struct gl_context *ctx,
+                             struct gl_texture_image *texImage,
+                             GLint xoffset, GLint yoffset, GLint zoffset,
+                             GLsizei width, GLsizei height, GLsizei depth,
+                             const GLvoid *clearValue)
+{
+   GLubyte *dstMap;
+   GLint dstRowStride;
+   GLsizeiptr clearValueSize;
+   GLsizei z;
+
+   clearValueSize = _mesa_get_format_bytes(texImage->TexFormat);
+
+   for (z = 0; z < depth; z++) {
+      ctx->Driver.MapTextureImage(ctx, texImage,
+                                  z + zoffset, xoffset, yoffset,
+                                  width, height,
+                                  GL_MAP_WRITE_BIT,
+                                  &dstMap, &dstRowStride);
+      if (dstMap == NULL) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glClearTex*Image");
+         return;
+      }
+
+      if (clearValue) {
+         clear_image_to_value(dstMap, dstRowStride,
+                              width, height,
+                              clearValue,
+                              clearValueSize);
+      } else {
+         clear_image_to_zero(dstMap, dstRowStride,
+                             width, height,
+                             clearValueSize);
+      }
+
+      ctx->Driver.UnmapTextureImage(ctx, texImage, z + zoffset);
+   }
+}
 
 /**
  * Fallback for Driver.CompressedTexImage()
