@@ -367,6 +367,7 @@ _mesa_BeginQueryIndexed(GLenum target, GLuint index, GLuint id)
    q->Result = 0;
    q->Ready = GL_FALSE;
    q->EverBound = GL_TRUE;
+   q->Stream = index;
 
    /* XXX should probably refcount query objects */
    *bindpt = q;
