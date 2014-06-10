@@ -52,15 +52,18 @@ program::build(const ref_vector<device> &devs, const char *opts) {
 
          _opts.insert({ &dev, opts });
 
+         compat::string log;
+
          try {
             auto module = (dev.ir_format() == PIPE_SHADER_IR_TGSI ?
                            compile_program_tgsi(_source) :
                            compile_program_llvm(_source, dev.ir_format(),
-                                                dev.ir_target(), build_opts(dev)));
+                                                dev.ir_target(), build_opts(dev),
+                                                log));
             _binaries.insert({ &dev, module });
-
-         } catch (build_error &e) {
-            _logs.insert({ &dev, e.what() });
+            _logs.insert({ &dev, std::string(log.c_str()) });
+         } catch (const build_error &) {
+            _logs.insert({ &dev, std::string(log.c_str()) });
             throw;
          }
       }

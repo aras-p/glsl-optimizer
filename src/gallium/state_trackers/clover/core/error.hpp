@@ -66,8 +66,8 @@ namespace clover {
 
    class build_error : public error {
    public:
-      build_error(const compat::string &log) :
-         error(CL_BUILD_PROGRAM_FAILURE, log) {
+      build_error(const compat::string &what = "") :
+         error(CL_BUILD_PROGRAM_FAILURE, what) {
       }
    };
 

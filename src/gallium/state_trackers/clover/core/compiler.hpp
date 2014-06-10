@@ -32,7 +32,8 @@ namespace clover {
    module compile_program_llvm(const compat::string &source,
                                pipe_shader_ir ir,
                                const compat::string &target,
-                               const compat::string &opts);
+                               const compat::string &opts,
+                               compat::string &r_log);
 
    module compile_program_tgsi(const compat::string &source);
 }

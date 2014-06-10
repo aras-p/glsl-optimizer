@@ -265,6 +265,9 @@ namespace clover {
 
       class string : public vector<char> {
       public:
+         string() : vector() {
+         }
+
          string(const char *p) : vector(p, std::strlen(p)) {
          }
 
