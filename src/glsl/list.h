@@ -242,75 +242,19 @@ struct exec_list {
       make_empty();
    }
 
-   void make_empty()
-   {
-      head = (exec_node *) & tail;
-      tail = NULL;
-      tail_pred = (exec_node *) & head;
-   }
+   void make_empty();
 
-   bool is_empty() const
-   {
-      /* There are three ways to test whether a list is empty or not.
-       *
-       * - Check to see if the \c head points to the \c tail.
-       * - Check to see if the \c tail_pred points to the \c head.
-       * - Check to see if the \c head is the sentinel node by test whether its
-       *   \c next pointer is \c NULL.
-       *
-       * The first two methods tend to generate better code on modern systems
-       * because they save a pointer dereference.
-       */
-      return head == (exec_node *) &tail;
-   }
+   bool is_empty() const;
 
-   const exec_node *get_head() const
-   {
-      return !is_empty() ? head : NULL;
-   }
+   const exec_node *get_head() const;
+   exec_node *get_head();
 
-   exec_node *get_head()
-   {
-      return !is_empty() ? head : NULL;
-   }
+   const exec_node *get_tail() const;
+   exec_node *get_tail();
 
-   const exec_node *get_tail() const
-   {
-      return !is_empty() ? tail_pred : NULL;
-   }
-
-   exec_node *get_tail()
-   {
-      return !is_empty() ? tail_pred : NULL;
-   }
-
-   void push_head(exec_node *n)
-   {
-      n->next = head;
-      n->prev = (exec_node *) &head;
-
-      n->next->prev = n;
-      head = n;
-   }
-
-   void push_tail(exec_node *n)
-   {
-      n->next = (exec_node *) &tail;
-      n->prev = tail_pred;
-
-      n->prev->next = n;
-      tail_pred = n;
-   }
-
-   void push_degenerate_list_at_head(exec_node *n)
-   {
-      assert(n->prev->next == n);
-
-      n->prev->next = head;
-      head->prev = n->prev;
-      n->prev = (exec_node *) &head;
-      head = n;
-   }
+   void push_head(exec_node *n);
+   void push_tail(exec_node *n);
+   void push_degenerate_list_at_head(exec_node *n);
 
    /**
     * Remove the first node from a list and return it
@@ -320,62 +264,137 @@ struct exec_list {
     *
     * \sa exec_list::get_head
     */
-   exec_node *pop_head()
-   {
-      exec_node *const n = this->get_head();
-      if (n != NULL)
-	 n->remove();
-
-      return n;
-   }
+   exec_node *pop_head();
 
    /**
     * Move all of the nodes from this list to the target list
     */
-   void move_nodes_to(exec_list *target)
-   {
-      if (is_empty()) {
-	 target->make_empty();
-      } else {
-	 target->head = head;
-	 target->tail = NULL;
-	 target->tail_pred = tail_pred;
-
-	 target->head->prev = (exec_node *) &target->head;
-	 target->tail_pred->next = (exec_node *) &target->tail;
-
-	 make_empty();
-      }
-   }
+   void move_nodes_to(exec_list *target);
 
    /**
     * Append all nodes from the source list to the target list
     */
-   void
-   append_list(exec_list *source)
-   {
-      if (source->is_empty())
-	 return;
-
-      /* Link the first node of the source with the last node of the target list.
-       */
-      this->tail_pred->next = source->head;
-      source->head->prev = this->tail_pred;
-
-      /* Make the tail of the source list be the tail of the target list.
-       */
-      this->tail_pred = source->tail_pred;
-      this->tail_pred->next = (exec_node *) &this->tail;
-
-      /* Make the source list empty for good measure.
-       */
-      source->make_empty();
-   }
+   void append_list(exec_list *source);
 #endif
 };
 
 
 #ifdef __cplusplus
+inline void exec_list::make_empty()
+{
+   head = (exec_node *) & tail;
+   tail = NULL;
+   tail_pred = (exec_node *) & head;
+}
+
+inline bool exec_list::is_empty() const
+{
+   /* There are three ways to test whether a list is empty or not.
+    *
+    * - Check to see if the \c head points to the \c tail.
+    * - Check to see if the \c tail_pred points to the \c head.
+    * - Check to see if the \c head is the sentinel node by test whether its
+    *   \c next pointer is \c NULL.
+    *
+    * The first two methods tend to generate better code on modern systems
+    * because they save a pointer dereference.
+    */
+   return head == (exec_node *) &tail;
+}
+
+inline const exec_node *exec_list::get_head() const
+{
+   return !is_empty() ? head : NULL;
+}
+
+inline exec_node *exec_list::get_head()
+{
+   return !is_empty() ? head : NULL;
+}
+
+inline const exec_node *exec_list::get_tail() const
+{
+   return !is_empty() ? tail_pred : NULL;
+}
+
+inline exec_node *exec_list::get_tail()
+{
+   return !is_empty() ? tail_pred : NULL;
+}
+
+inline void exec_list::push_head(exec_node *n)
+{
+   n->next = head;
+   n->prev = (exec_node *) &head;
+
+   n->next->prev = n;
+   head = n;
+}
+
+inline void exec_list::push_tail(exec_node *n)
+{
+   n->next = (exec_node *) &tail;
+   n->prev = tail_pred;
+
+   n->prev->next = n;
+   tail_pred = n;
+}
+
+inline void exec_list::push_degenerate_list_at_head(exec_node *n)
+{
+   assert(n->prev->next == n);
+
+   n->prev->next = head;
+   head->prev = n->prev;
+   n->prev = (exec_node *) &head;
+   head = n;
+}
+
+inline exec_node *exec_list::pop_head()
+{
+   exec_node *const n = this->get_head();
+   if (n != NULL)
+      n->remove();
+
+   return n;
+}
+
+inline void exec_list::move_nodes_to(exec_list *target)
+{
+   if (is_empty()) {
+      target->make_empty();
+   } else {
+      target->head = head;
+      target->tail = NULL;
+      target->tail_pred = tail_pred;
+
+      target->head->prev = (exec_node *) &target->head;
+      target->tail_pred->next = (exec_node *) &target->tail;
+
+      make_empty();
+   }
+}
+
+inline void exec_list::append_list(exec_list *source)
+{
+   if (source->is_empty())
+      return;
+
+   /* Link the first node of the source with the last node of the target list.
+    */
+   this->tail_pred->next = source->head;
+   source->head->prev = this->tail_pred;
+
+   /* Make the tail of the source list be the tail of the target list.
+    */
+   this->tail_pred = source->tail_pred;
+   this->tail_pred->next = (exec_node *) &this->tail;
+
+   /* Make the source list empty for good measure.
+    */
+   source->make_empty();
+}
+
 inline void exec_node::insert_before(exec_list *before)
 {
    if (before->is_empty())
