@@ -1,12 +1,12 @@
-varying highp vec4 xlv_TEXCOORD1;
 varying highp vec4 xlv_TEXCOORD0;
+varying highp vec4 xlv_TEXCOORD1;
 mediump vec4 xlat_main (
   in highp vec4 uv_1,
   in highp vec4 foobar_xlv_foo_2
 )
 {
   mediump vec4 c_3;
-  vec4 tmpvar_4;
+  mediump vec4 tmpvar_4;
   tmpvar_4 = vec4(0.0, 0.0, 0.0, 0.0);
   c_3 = tmpvar_4;
   return c_3;

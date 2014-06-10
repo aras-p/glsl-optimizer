@@ -79,9 +79,9 @@ do_dead_code(exec_list *instructions, bool uniform_locations_assigned)
 	 /* Remove a single dead assignment to the variable we found.
 	  * Don't do so if it's a shader or function output, though.
 	  */
-	 if (entry->var->mode != ir_var_function_out &&
-	     entry->var->mode != ir_var_function_inout &&
-             entry->var->mode != ir_var_shader_out) {
+	 if (entry->var->data.mode != ir_var_function_out &&
+	     entry->var->data.mode != ir_var_function_inout &&
+             entry->var->data.mode != ir_var_shader_out) {
 	    entry->assign->remove();
 	    progress = true;
 
@@ -99,7 +99,7 @@ do_dead_code(exec_list *instructions, bool uniform_locations_assigned)
 	  * stage.  Also, once uniform locations have been assigned, the
 	  * declaration cannot be deleted.
 	  */
-	 if (entry->var->mode == ir_var_uniform &&
+	 if (entry->var->data.mode == ir_var_uniform &&
 	     (uniform_locations_assigned ||
 	      entry->var->constant_value))
 	    continue;
@@ -129,13 +129,12 @@ do_dead_code_unlinked(exec_list *instructions)
 {
    bool progress = false;
 
-   foreach_iter(exec_list_iterator, iter, *instructions) {
-      ir_instruction *ir = (ir_instruction *)iter.get();
+   foreach_list(n, instructions) {
+      ir_instruction *ir = (ir_instruction *) n;
       ir_function *f = ir->as_function();
       if (f) {
-	 foreach_iter(exec_list_iterator, sigiter, *f) {
-	    ir_function_signature *sig =
-	       (ir_function_signature *) sigiter.get();
+	 foreach_list(signode, &f->signatures) {
+	    ir_function_signature *sig = (ir_function_signature *) signode;
 	    /* The setting of the uniform_locations_assigned flag here is
 	     * irrelevent.  If there is a uniform declaration encountered
 	     * inside the body of the function, something has already gone

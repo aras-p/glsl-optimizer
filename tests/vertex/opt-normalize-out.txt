@@ -5,3 +5,5 @@ void main ()
   var_a = (gl_Vertex.xyz * normalize(vec3(0.0, 0.0, 0.0)));
 }
 
+
+// inputs: 1, stats: 3 alu 0 tex 0 flow

@@ -1,8 +1,8 @@
 #extension GL_EXT_shader_texture_lod : enable
 #extension GL_OES_standard_derivatives : enable
-varying vec3 uv;
-uniform samplerCube cub;
 uniform sampler2D tex;
+uniform samplerCube cub;
+varying mediump vec3 uv;
 void main ()
 {
   lowp vec4 tmpvar_1;
@@ -10,3 +10,5 @@ void main ()
   gl_FragColor = tmpvar_1;
 }
 
+
+// inputs: 1, stats: 5 alu 2 tex 0 flow

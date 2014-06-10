@@ -31,8 +31,7 @@ link_function_calls(gl_shader_program *prog, gl_shader *main,
 		    gl_shader **shader_list, unsigned num_shaders);
 
 extern void
-link_invalidate_variable_locations(gl_shader *sh, enum ir_variable_mode mode,
-				   int generic_base);
+link_invalidate_variable_locations(exec_list *ir);
 
 extern void
 link_assign_uniform_locations(struct gl_shader_program *prog);
@@ -53,12 +52,34 @@ extern bool
 link_uniform_blocks_are_compatible(const gl_uniform_block *a,
 				   const gl_uniform_block *b);
 
-extern int
+extern unsigned
 link_uniform_blocks(void *mem_ctx,
                     struct gl_shader_program *prog,
                     struct gl_shader **shader_list,
                     unsigned num_shaders,
                     struct gl_uniform_block **blocks_ret);
+
+void
+validate_intrastage_interface_blocks(struct gl_shader_program *prog,
+                                     const gl_shader **shader_list,
+                                     unsigned num_shaders);
+
+void
+validate_interstage_inout_blocks(struct gl_shader_program *prog,
+                                 const gl_shader *producer,
+                                 const gl_shader *consumer);
+
+void
+validate_interstage_uniform_blocks(struct gl_shader_program *prog,
+                                   gl_shader **stages, int num_stages);
+
+extern void
+link_assign_atomic_counter_resources(struct gl_context *ctx,
+                                     struct gl_shader_program *prog);
+
+extern void
+link_check_atomic_counter_resources(struct gl_context *ctx,
+                                    struct gl_shader_program *prog);
 
 /**
  * Class for processing all of the leaf fields of a variable that corresponds
@@ -116,6 +137,19 @@ protected:
     * \param type  Type of the field.
     * \param name  Fully qualified name of the field.
     * \param row_major  For a matrix type, is it stored row-major.
+    * \param record_type  Type of the record containing the field.
+    *
+    * The default implementation just calls the other \c visit_field method.
+    */
+   virtual void visit_field(const glsl_type *type, const char *name,
+                            bool row_major, const glsl_type *record_type);
+
+   /**
+    * Method invoked for each leaf of the variable
+    *
+    * \param type  Type of the field.
+    * \param name  Fully qualified name of the field.
+    * \param row_major  For a matrix type, is it stored row-major.
     */
    virtual void visit_field(const glsl_type *type, const char *name,
                             bool row_major) = 0;
@@ -136,7 +170,7 @@ private:
     *                     terminating \c NUL character.
     */
    void recursion(const glsl_type *t, char **name, size_t name_length,
-                  bool row_major);
+                  bool row_major, const glsl_type *record_type);
 };
 
 extern struct gl_shader *
@@ -151,8 +185,5 @@ linker_error(gl_shader_program *prog, const char *fmt, ...);
 
 void
 linker_warning(gl_shader_program *prog, const char *fmt, ...);
-
-unsigned
-count_attribute_slots(const glsl_type *t);
 
 #endif /* GLSL_LINKER_H */

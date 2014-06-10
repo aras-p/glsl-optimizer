@@ -3,8 +3,8 @@ struct v2f {
   highp vec2 uv;
   highp vec4 color;
 };
-varying highp vec4 xlv_COLOR;
 varying highp vec2 xlv_TEXCOORD0;
+varying highp vec4 xlv_COLOR;
 mediump vec4 xlat_main (
   in v2f i_1
 )
@@ -23,7 +23,7 @@ void main ()
 {
   v2f xlt_i_5;
   mediump vec4 xl_retval_6;
-  vec4 tmpvar_7;
+  mediump vec4 tmpvar_7;
   tmpvar_7 = vec4(0.0, 0.0, 0.0, 0.0);
   xlt_i_5.pos = tmpvar_7;
   highp vec2 tmpvar_8;

@@ -66,7 +66,7 @@ parameter_lists_match(const exec_list *list_a, const exec_list *list_b)
 
       /* Try to find an implicit conversion from actual to param. */
       inexact_match = true;
-      switch ((enum ir_variable_mode)(param->mode)) {
+      switch ((enum ir_variable_mode)(param->data.mode)) {
       case ir_var_auto:
       case ir_var_uniform:
       case ir_var_temporary:
@@ -116,14 +116,16 @@ parameter_lists_match(const exec_list *list_a, const exec_list *list_b)
 
 
 ir_function_signature *
-ir_function::matching_signature(const exec_list *actual_parameters)
+ir_function::matching_signature(_mesa_glsl_parse_state *state,
+                                const exec_list *actual_parameters)
 {
    bool is_exact;
-   return matching_signature(actual_parameters, &is_exact);
+   return matching_signature(state, actual_parameters, &is_exact);
 }
 
 ir_function_signature *
-ir_function::matching_signature(const exec_list *actual_parameters,
+ir_function::matching_signature(_mesa_glsl_parse_state *state,
+                                const exec_list *actual_parameters,
 			        bool *is_exact)
 {
    ir_function_signature *match = NULL;
@@ -139,9 +141,12 @@ ir_function::matching_signature(const exec_list *actual_parameters,
     *  multiple ways to apply these conversions to the actual arguments of a
     *  call such that the call can be made to match multiple signatures."
     */
-   foreach_iter(exec_list_iterator, iter, signatures) {
-      ir_function_signature *const sig =
-	 (ir_function_signature *) iter.get();
+   foreach_list(n, &this->signatures) {
+      ir_function_signature *const sig = (ir_function_signature *) n;
+
+      /* Skip over any built-ins that aren't available in this shader. */
+      if (sig->is_builtin() && !sig->is_builtin_available(state))
+         continue;
 
       switch (parameter_lists_match(& sig->parameters, actual_parameters)) {
       case PARAMETER_LIST_EXACT_MATCH:
@@ -203,11 +208,15 @@ parameter_lists_match_exact(const exec_list *list_a, const exec_list *list_b)
 }
 
 ir_function_signature *
-ir_function::exact_matching_signature(const exec_list *actual_parameters)
+ir_function::exact_matching_signature(_mesa_glsl_parse_state *state,
+                                      const exec_list *actual_parameters)
 {
-   foreach_iter(exec_list_iterator, iter, signatures) {
-      ir_function_signature *const sig =
-	 (ir_function_signature *) iter.get();
+   foreach_list(n, &this->signatures) {
+      ir_function_signature *const sig = (ir_function_signature *) n;
+
+      /* Skip over any built-ins that aren't available in this shader. */
+      if (sig->is_builtin() && !sig->is_builtin_available(state))
+         continue;
 
       if (parameter_lists_match_exact(&sig->parameters, actual_parameters))
 	 return sig;

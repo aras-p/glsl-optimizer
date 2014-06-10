@@ -132,7 +132,8 @@ lower_ubo_reference_visitor::handle_rvalue(ir_rvalue **rvalue)
    mem_ctx = ralloc_parent(*rvalue);
 
    const char *const field_name =
-      interface_field_name(mem_ctx, (char *) var->interface_type->name, deref);
+      interface_field_name(mem_ctx, (char *) var->get_interface_type()->name,
+                           deref);
 
    this->uniform_block = -1;
    for (unsigned i = 0; i < shader->NumUniformBlocks; i++) {
@@ -142,7 +143,7 @@ lower_ubo_reference_visitor::handle_rvalue(ir_rvalue **rvalue)
          struct gl_uniform_block *block = &shader->UniformBlocks[i];
 
          this->ubo_var = var->is_interface_instance()
-            ? &block->Uniforms[0] : &block->Uniforms[var->location];
+            ? &block->Uniforms[0] : &block->Uniforms[var->data.location];
 
          break;
       }

@@ -20,7 +20,6 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  7.1
  *
  * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
@@ -37,9 +36,10 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
- * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
  */
 
 
@@ -167,6 +167,8 @@ _mesa_align_calloc(size_t bytes, unsigned long alignment)
  * \param ptr pointer to the memory to be freed.
  * The actual address to free is stored in the word immediately before the
  * address the client sees.
+ * Note that it is legal to pass NULL pointer to this function and will be
+ * handled accordingly.
  */
 void
 _mesa_align_free(void *ptr)
@@ -176,9 +178,11 @@ _mesa_align_free(void *ptr)
 #elif defined(_WIN32) && defined(_MSC_VER)
    _aligned_free(ptr);
 #else
-   void **cubbyHole = (void **) ((char *) ptr - sizeof(void *));
-   void *realAddr = *cubbyHole;
-   free(realAddr);
+   if (ptr) {
+      void **cubbyHole = (void **) ((char *) ptr - sizeof(void *));
+      void *realAddr = *cubbyHole;
+      free(realAddr);
+   }
 #endif /* defined(HAVE_POSIX_MEMALIGN) */
 }
 
@@ -198,8 +202,8 @@ _mesa_align_realloc(void *oldBuffer, size_t oldSize, size_t newSize,
    if (newBuf && oldBuffer && copySize > 0) {
       memcpy(newBuf, oldBuffer, copySize);
    }
-   if (oldBuffer)
-      _mesa_align_free(oldBuffer);
+
+   _mesa_align_free(oldBuffer);
    return newBuf;
 #endif
 }
@@ -565,7 +569,8 @@ float
 _mesa_strtof( const char *s, char **end )
 {
 #if defined(_GNU_SOURCE) && !defined(__CYGWIN__) && !defined(__FreeBSD__) && \
-   !defined(ANDROID) && !defined(__HAIKU__) && !defined(__UCLIBC__)
+   !defined(ANDROID) && !defined(__HAIKU__) && !defined(__UCLIBC__) && \
+   !defined(__NetBSD__)
    static locale_t loc = NULL;
    if (!loc) {
       loc = newlocale(LC_CTYPE_MASK, "C", NULL);

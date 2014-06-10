@@ -60,7 +60,7 @@ program_resource_visitor::process(const glsl_type *type, const char *name)
           || (type->is_array() && type->fields.array->is_interface()));
 
    char *name_copy = ralloc_strdup(NULL, name);
-   recursion(type, &name_copy, strlen(name), false);
+   recursion(type, &name_copy, strlen(name), false, NULL);
    ralloc_free(name_copy);
 }
 
@@ -75,26 +75,83 @@ program_resource_visitor::process(ir_variable *var)
     */
 
    /* Only strdup the name if we actually will need to modify it. */
-   if (t->is_record() || (t->is_array() && t->fields.array->is_record())) {
+   if (var->data.from_named_ifc_block_array) {
+      /* lower_named_interface_blocks created this variable by lowering an
+       * interface block array to an array variable.  For example if the
+       * original source code was:
+       *
+       *     out Blk { vec4 bar } foo[3];
+       *
+       * Then the variable is now:
+       *
+       *     out vec4 bar[3];
+       *
+       * We need to visit each array element using the names constructed like
+       * so:
+       *
+       *     Blk[0].bar
+       *     Blk[1].bar
+       *     Blk[2].bar
+       */
+      assert(t->is_array());
+      const glsl_type *ifc_type = var->get_interface_type();
+      char *name = ralloc_strdup(NULL, ifc_type->name);
+      size_t name_length = strlen(name);
+      for (unsigned i = 0; i < t->length; i++) {
+         size_t new_length = name_length;
+         ralloc_asprintf_rewrite_tail(&name, &new_length, "[%u].%s", i,
+                                      var->name);
+         /* Note: row_major is only meaningful for uniform blocks, and
+          * lowering is only applied to non-uniform interface blocks, so we
+          * can safely pass false for row_major.
+          */
+         recursion(var->type, &name, new_length, false, NULL);
+      }
+      ralloc_free(name);
+   } else if (var->data.from_named_ifc_block_nonarray) {
+      /* lower_named_interface_blocks created this variable by lowering a
+       * named interface block (non-array) to an ordinary variable.  For
+       * example if the original source code was:
+       *
+       *     out Blk { vec4 bar } foo;
+       *
+       * Then the variable is now:
+       *
+       *     out vec4 bar;
+       *
+       * We need to visit this variable using the name:
+       *
+       *     Blk.bar
+       */
+      const glsl_type *ifc_type = var->get_interface_type();
+      char *name = ralloc_asprintf(NULL, "%s.%s", ifc_type->name, var->name);
+      /* Note: row_major is only meaningful for uniform blocks, and lowering
+       * is only applied to non-uniform interface blocks, so we can safely
+       * pass false for row_major.
+       */
+      recursion(var->type, &name, strlen(name), false, NULL);
+      ralloc_free(name);
+   } else if (t->is_record() || (t->is_array() && t->fields.array->is_record())) {
       char *name = ralloc_strdup(NULL, var->name);
-      recursion(var->type, &name, strlen(name), false);
+      recursion(var->type, &name, strlen(name), false, NULL);
       ralloc_free(name);
    } else if (t->is_interface()) {
       char *name = ralloc_strdup(NULL, var->type->name);
-      recursion(var->type, &name, strlen(name), false);
+      recursion(var->type, &name, strlen(name), false, NULL);
       ralloc_free(name);
    } else if (t->is_array() && t->fields.array->is_interface()) {
       char *name = ralloc_strdup(NULL, var->type->fields.array->name);
-      recursion(var->type, &name, strlen(name), false);
+      recursion(var->type, &name, strlen(name), false, NULL);
       ralloc_free(name);
    } else {
-      this->visit_field(t, var->name, false);
+      this->visit_field(t, var->name, false, NULL);
    }
 }
 
 void
 program_resource_visitor::recursion(const glsl_type *t, char **name,
-                                    size_t name_length, bool row_major)
+                                    size_t name_length, bool row_major,
+                                    const glsl_type *record_type)
 {
    /* Records need to have each field processed individually.
     *
@@ -103,6 +160,9 @@ program_resource_visitor::recursion(const glsl_type *t, char **name,
     * individually.
     */
    if (t->is_record() || t->is_interface()) {
+      if (record_type == NULL && t->is_record())
+         record_type = t;
+
       for (unsigned i = 0; i < t->length; i++) {
 	 const char *field = t->fields.structure[i].name;
 	 size_t new_length = name_length;
@@ -118,22 +178,43 @@ program_resource_visitor::recursion(const glsl_type *t, char **name,
          }
 
          recursion(t->fields.structure[i].type, name, new_length,
-                   t->fields.structure[i].row_major);
+                   t->fields.structure[i].row_major, record_type);
+
+         /* Only the first leaf-field of the record gets called with the
+          * record type pointer.
+          */
+         record_type = NULL;
       }
    } else if (t->is_array() && (t->fields.array->is_record()
                                 || t->fields.array->is_interface())) {
+      if (record_type == NULL && t->fields.array->is_record())
+         record_type = t->fields.array;
+
       for (unsigned i = 0; i < t->length; i++) {
 	 size_t new_length = name_length;
 
 	 /* Append the subscript to the current variable name */
 	 ralloc_asprintf_rewrite_tail(name, &new_length, "[%u]", i);
 
-         recursion(t->fields.array, name, new_length,
-                   t->fields.structure[i].row_major);
+         recursion(t->fields.array, name, new_length, row_major,
+                   record_type);
+
+         /* Only the first leaf-field of the record gets called with the
+          * record type pointer.
+          */
+         record_type = NULL;
       }
    } else {
-      this->visit_field(t, *name, row_major);
+      this->visit_field(t, *name, row_major, record_type);
    }
+}
+
+void
+program_resource_visitor::visit_field(const glsl_type *type, const char *name,
+                                      bool row_major,
+                                      const glsl_type *record_type)
+{
+   visit_field(type, name, row_major);
 }
 
 void
@@ -142,6 +223,8 @@ program_resource_visitor::visit_field(const glsl_struct_field *field)
    (void) field;
    /* empty */
 }
+
+namespace {
 
 /**
  * Class to help calculate the storage requirements for a set of uniforms
@@ -157,7 +240,8 @@ class count_uniform_size : public program_resource_visitor {
 public:
    count_uniform_size(struct string_to_uint_map *map)
       : num_active_uniforms(0), num_values(0), num_shader_samplers(0),
-	num_shader_uniform_components(0), map(map)
+        num_shader_images(0), num_shader_uniform_components(0),
+        is_ubo_var(false), map(map)
    {
       /* empty */
    }
@@ -165,14 +249,16 @@ public:
    void start_shader()
    {
       this->num_shader_samplers = 0;
+      this->num_shader_images = 0;
       this->num_shader_uniform_components = 0;
    }
 
    void process(ir_variable *var)
    {
+      this->is_ubo_var = var->is_in_uniform_block();
       if (var->is_interface_instance())
-         program_resource_visitor::process(var->interface_type,
-                                           var->interface_type->name);
+         program_resource_visitor::process(var->get_interface_type(),
+                                           var->get_interface_type()->name);
       else
          program_resource_visitor::process(var);
    }
@@ -193,9 +279,16 @@ public:
    unsigned num_shader_samplers;
 
    /**
+    * Number of images used
+    */
+   unsigned num_shader_images;
+
+   /**
     * Number of uniforms used in the current shader
     */
    unsigned num_shader_uniform_components;
+
+   bool is_ubo_var;
 
 private:
    virtual void visit_field(const glsl_type *type, const char *name,
@@ -217,12 +310,22 @@ private:
       if (type->contains_sampler()) {
 	 this->num_shader_samplers +=
 	    type->is_array() ? type->array_size() : 1;
+      } else if (type->contains_image()) {
+         this->num_shader_images += values;
+
+         /* As drivers are likely to represent image uniforms as
+          * scalar indices, count them against the limit of uniform
+          * components in the default block.  The spec allows image
+          * uniforms to use up no more than one scalar slot.
+          */
+         this->num_shader_uniform_components += values;
       } else {
 	 /* Accumulate the total number of uniform slots used by this shader.
 	  * Note that samplers do not count against this limit because they
 	  * don't use any storage on current hardware.
 	  */
-	 this->num_shader_uniform_components += values;
+	 if (!is_ubo_var)
+	    this->num_shader_uniform_components += values;
       }
 
       /* If the uniform is already in the map, there's nothing more to do.
@@ -242,6 +345,8 @@ private:
 
    struct string_to_uint_map *map;
 };
+
+} /* anonymous namespace */
 
 /**
  * Class to help parcel out pieces of backing storage to uniforms
@@ -263,15 +368,20 @@ public:
    parcel_out_uniform_storage(struct string_to_uint_map *map,
 			      struct gl_uniform_storage *uniforms,
 			      union gl_constant_value *values)
-      : map(map), uniforms(uniforms), next_sampler(0), values(values)
+      : map(map), uniforms(uniforms), values(values)
    {
-      memset(this->targets, 0, sizeof(this->targets));
    }
 
-   void start_shader()
+   void start_shader(gl_shader_stage shader_type)
    {
+      assert(shader_type < MESA_SHADER_STAGES);
+      this->shader_type = shader_type;
+
       this->shader_samplers_used = 0;
       this->shader_shadow_samplers = 0;
+      this->next_sampler = 0;
+      this->next_image = 0;
+      memset(this->targets, 0, sizeof(this->targets));
    }
 
    void set_and_process(struct gl_shader_program *prog,
@@ -280,10 +390,10 @@ public:
       ubo_block_index = -1;
       if (var->is_in_uniform_block()) {
          if (var->is_interface_instance() && var->type->is_array()) {
-            unsigned l = strlen(var->interface_type->name);
+            unsigned l = strlen(var->get_interface_type()->name);
 
             for (unsigned i = 0; i < prog->NumUniformBlocks; i++) {
-               if (strncmp(var->interface_type->name,
+               if (strncmp(var->get_interface_type()->name,
                            prog->UniformBlocks[i].Name,
                            l) == 0
                    && prog->UniformBlocks[i].Name[l] == '[') {
@@ -293,7 +403,7 @@ public:
             }
          } else {
             for (unsigned i = 0; i < prog->NumUniformBlocks; i++) {
-               if (strcmp(var->interface_type->name,
+               if (strcmp(var->get_interface_type()->name,
                           prog->UniformBlocks[i].Name) == 0) {
                   ubo_block_index = i;
                   break;
@@ -315,17 +425,18 @@ public:
             const struct gl_uniform_block *const block =
                &prog->UniformBlocks[ubo_block_index];
 
-            assert(var->location != -1);
+            assert(var->data.location != -1);
 
             const struct gl_uniform_buffer_variable *const ubo_var =
-               &block->Uniforms[var->location];
+               &block->Uniforms[var->data.location];
 
             ubo_row_major = !!ubo_var->RowMajor;
             ubo_byte_offset = ubo_var->Offset;
          }
 
          if (var->is_interface_instance())
-            process(var->interface_type, var->interface_type->name);
+            process(var->get_interface_type(),
+                    var->get_interface_type()->name);
          else
             process(var);
       } else
@@ -335,10 +446,66 @@ public:
    int ubo_block_index;
    int ubo_byte_offset;
    bool ubo_row_major;
+   gl_shader_stage shader_type;
 
 private:
+   void handle_samplers(const glsl_type *base_type,
+                        struct gl_uniform_storage *uniform)
+   {
+      if (base_type->is_sampler()) {
+         uniform->sampler[shader_type].index = this->next_sampler;
+         uniform->sampler[shader_type].active = true;
+
+         /* Increment the sampler by 1 for non-arrays and by the number of
+          * array elements for arrays.
+          */
+         this->next_sampler +=
+               MAX2(1, uniform->array_elements);
+
+         const gl_texture_index target = base_type->sampler_index();
+         const unsigned shadow = base_type->sampler_shadow;
+         for (unsigned i = uniform->sampler[shader_type].index;
+              i < MIN2(this->next_sampler, MAX_SAMPLERS);
+              i++) {
+            this->targets[i] = target;
+            this->shader_samplers_used |= 1U << i;
+            this->shader_shadow_samplers |= shadow << i;
+         }
+      } else {
+         uniform->sampler[shader_type].index = ~0;
+         uniform->sampler[shader_type].active = false;
+      }
+   }
+
+   void handle_images(const glsl_type *base_type,
+                      struct gl_uniform_storage *uniform)
+   {
+      if (base_type->is_image()) {
+         uniform->image[shader_type].index = this->next_image;
+         uniform->image[shader_type].active = true;
+
+         /* Increment the image index by 1 for non-arrays and by the
+          * number of array elements for arrays.
+          */
+         this->next_image += MAX2(1, uniform->array_elements);
+
+      } else {
+         uniform->image[shader_type].index = ~0;
+         uniform->image[shader_type].active = false;
+      }
+   }
+
    virtual void visit_field(const glsl_type *type, const char *name,
                             bool row_major)
+   {
+      (void) type;
+      (void) name;
+      (void) row_major;
+      assert(!"Should not get here.");
+   }
+
+   virtual void visit_field(const glsl_type *type, const char *name,
+                            bool row_major, const glsl_type *record_type)
    {
       assert(!type->is_record());
       assert(!(type->is_array() && type->fields.array->is_record()));
@@ -354,31 +521,6 @@ private:
       if (!found)
 	 return;
 
-      /* If there is already storage associated with this uniform, it means
-       * that it was set while processing an earlier shader stage.  For
-       * example, we may be processing the uniform in the fragment shader, but
-       * the uniform was already processed in the vertex shader.
-       */
-      if (this->uniforms[id].storage != NULL) {
-	 /* If the uniform already has storage set from another shader stage,
-	  * mark the samplers used for this shader stage.
-	  */
-	 if (type->contains_sampler()) {
-	    const unsigned count = MAX2(1, this->uniforms[id].array_elements);
-	    const unsigned shadow = (type->is_array())
-	       ? type->fields.array->sampler_shadow : type->sampler_shadow;
-
-	    for (unsigned i = 0; i < count; i++) {
-	       const unsigned s = this->uniforms[id].sampler + i;
-
-	       this->shader_samplers_used |= 1U << s;
-	       this->shader_shadow_samplers |= shadow << s;
-	    }
-	 }
-
-	 return;
-      }
-
       const glsl_type *base_type;
       if (type->is_array()) {
 	 this->uniforms[id].array_elements = type->length;
@@ -388,26 +530,17 @@ private:
 	 base_type = type;
       }
 
-      if (base_type->is_sampler()) {
-	 this->uniforms[id].sampler = this->next_sampler;
+      /* This assigns uniform indices to sampler and image uniforms. */
+      handle_samplers(base_type, &this->uniforms[id]);
+      handle_images(base_type, &this->uniforms[id]);
 
-	 /* Increment the sampler by 1 for non-arrays and by the number of
-	  * array elements for arrays.
-	  */
-	 this->next_sampler += MAX2(1, this->uniforms[id].array_elements);
-
-	 const gl_texture_index target = base_type->sampler_index();
-	 const unsigned shadow = base_type->sampler_shadow;
-	 for (unsigned i = this->uniforms[id].sampler
-		 ; i < MIN2(this->next_sampler, MAX_SAMPLERS)
-		 ; i++) {
-	    this->targets[i] = target;
-	    this->shader_samplers_used |= 1U << i;
-	    this->shader_shadow_samplers |= shadow << i;
-	 }
-
-      } else {
-	 this->uniforms[id].sampler = ~0;
+      /* If there is already storage associated with this uniform, it means
+       * that it was set while processing an earlier shader stage.  For
+       * example, we may be processing the uniform in the fragment shader, but
+       * the uniform was already processed in the vertex shader.
+       */
+      if (this->uniforms[id].storage != NULL) {
+         return;
       }
 
       this->uniforms[id].name = ralloc_strdup(this->uniforms, name);
@@ -416,10 +549,13 @@ private:
       this->uniforms[id].num_driver_storage = 0;
       this->uniforms[id].driver_storage = NULL;
       this->uniforms[id].storage = this->values;
+      this->uniforms[id].atomic_buffer_index = -1;
       if (this->ubo_block_index != -1) {
 	 this->uniforms[id].block_index = this->ubo_block_index;
 
-	 unsigned alignment = type->std140_base_alignment(ubo_row_major);
+	 const unsigned alignment = record_type
+	    ? record_type->std140_base_alignment(ubo_row_major)
+	    : type->std140_base_alignment(ubo_row_major);
 	 this->ubo_byte_offset = glsl_align(this->ubo_byte_offset, alignment);
 	 this->uniforms[id].offset = this->ubo_byte_offset;
 	 this->ubo_byte_offset += type->std140_size(ubo_row_major);
@@ -454,6 +590,7 @@ private:
 
    struct gl_uniform_storage *uniforms;
    unsigned next_sampler;
+   unsigned next_image;
 
 public:
    union gl_constant_value *values;
@@ -537,10 +674,10 @@ link_update_uniform_buffer_variables(struct gl_shader *shader)
       if ((var == NULL) || !var->is_in_uniform_block())
 	 continue;
 
-      assert(var->mode == ir_var_uniform);
+      assert(var->data.mode == ir_var_uniform);
 
       if (var->is_interface_instance()) {
-         var->location = 0;
+         var->data.location = 0;
          continue;
       }
 
@@ -569,13 +706,13 @@ link_update_uniform_buffer_variables(struct gl_shader *shader)
 
                if (strncmp(var->name, begin, l) == 0) {
                   found = true;
-                  var->location = j;
+                  var->data.location = j;
                   break;
                }
             } else if (!strcmp(var->name,
                                shader->UniformBlocks[i].Uniforms[j].Name)) {
 	       found = true;
-	       var->location = j;
+	       var->data.location = j;
 	       break;
 	    }
 	 }
@@ -620,6 +757,40 @@ link_assign_uniform_block_offsets(struct gl_shader *shader)
    }
 }
 
+/**
+ * Scan the program for image uniforms and store image unit access
+ * information into the gl_shader data structure.
+ */
+static void
+link_set_image_access_qualifiers(struct gl_shader_program *prog)
+{
+   for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
+      gl_shader *sh = prog->_LinkedShaders[i];
+
+      if (sh == NULL)
+	 continue;
+
+      foreach_list(node, sh->ir) {
+	 ir_variable *var = ((ir_instruction *) node)->as_variable();
+
+         if (var && var->data.mode == ir_var_uniform &&
+             var->type->contains_image()) {
+            unsigned id;
+            bool found = prog->UniformHash->get(id, var->name);
+            assert(found);
+            const gl_uniform_storage *storage = &prog->UniformStorage[id];
+            const unsigned index = storage->image[i].index;
+            const GLenum access = (var->data.image.read_only ? GL_READ_ONLY :
+                                   var->data.image.write_only ? GL_WRITE_ONLY :
+                                   GL_READ_WRITE);
+
+            for (unsigned j = 0; j < MAX2(1, storage->array_elements); ++j)
+               sh->ImageAccess[index + j] = access;
+         }
+      }
+   }
+}
+
 void
 link_assign_uniform_locations(struct gl_shader_program *prog)
 {
@@ -633,17 +804,6 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
       prog->UniformHash = new string_to_uint_map;
    }
 
-   /* Uniforms that lack an initializer in the shader code have an initial
-    * value of zero.  This includes sampler uniforms.
-    *
-    * Page 24 (page 30 of the PDF) of the GLSL 1.20 spec says:
-    *
-    *     "The link time initial value is either the value of the variable's
-    *     initializer, if present, or 0 if no initializer is present. Sampler
-    *     types cannot have initializers."
-    */
-   memset(prog->SamplerUnits, 0, sizeof(prog->SamplerUnits));
-
    /* First pass: Count the uniform resources used by the user-defined
     * uniforms.  While this happens, each active uniform will have an index
     * assigned to it.
@@ -652,20 +812,34 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
     * glGetUniformLocation.
     */
    count_uniform_size uniform_size(prog->UniformHash);
-   for (unsigned i = 0; i < MESA_SHADER_TYPES; i++) {
-      if (prog->_LinkedShaders[i] == NULL)
+   for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
+      struct gl_shader *sh = prog->_LinkedShaders[i];
+
+      if (sh == NULL)
 	 continue;
 
-      link_update_uniform_buffer_variables(prog->_LinkedShaders[i]);
+      /* Uniforms that lack an initializer in the shader code have an initial
+       * value of zero.  This includes sampler uniforms.
+       *
+       * Page 24 (page 30 of the PDF) of the GLSL 1.20 spec says:
+       *
+       *     "The link time initial value is either the value of the variable's
+       *     initializer, if present, or 0 if no initializer is present. Sampler
+       *     types cannot have initializers."
+       */
+      memset(sh->SamplerUnits, 0, sizeof(sh->SamplerUnits));
+      memset(sh->ImageUnits, 0, sizeof(sh->ImageUnits));
+
+      link_update_uniform_buffer_variables(sh);
 
       /* Reset various per-shader target counts.
        */
       uniform_size.start_shader();
 
-      foreach_list(node, prog->_LinkedShaders[i]->ir) {
+      foreach_list(node, sh->ir) {
 	 ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-	 if ((var == NULL) || (var->mode != ir_var_uniform))
+	 if ((var == NULL) || (var->data.mode != ir_var_uniform))
 	    continue;
 
 	 /* FINISHME: Update code to process built-in uniforms!
@@ -679,9 +853,15 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
 	 uniform_size.process(var);
       }
 
-      prog->_LinkedShaders[i]->num_samplers = uniform_size.num_shader_samplers;
-      prog->_LinkedShaders[i]->num_uniform_components =
-	 uniform_size.num_shader_uniform_components;
+      sh->num_samplers = uniform_size.num_shader_samplers;
+      sh->NumImages = uniform_size.num_shader_images;
+      sh->num_uniform_components = uniform_size.num_shader_uniform_components;
+
+      sh->num_combined_uniform_components = sh->num_uniform_components;
+      for (unsigned i = 0; i < sh->NumUniformBlocks; i++) {
+	 sh->num_combined_uniform_components +=
+	    sh->UniformBlocks[i].UniformBufferSize / 4;
+      }
    }
 
    const unsigned num_user_uniforms = uniform_size.num_active_uniforms;
@@ -702,18 +882,16 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
 
    parcel_out_uniform_storage parcel(prog->UniformHash, uniforms, data);
 
-   for (unsigned i = 0; i < MESA_SHADER_TYPES; i++) {
+   for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
       if (prog->_LinkedShaders[i] == NULL)
 	 continue;
 
-      /* Reset various per-shader target counts.
-       */
-      parcel.start_shader();
+      parcel.start_shader((gl_shader_stage)i);
 
       foreach_list(node, prog->_LinkedShaders[i]->ir) {
 	 ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-	 if ((var == NULL) || (var->mode != ir_var_uniform))
+	 if ((var == NULL) || (var->data.mode != ir_var_uniform))
 	    continue;
 
 	 /* FINISHME: Update code to process built-in uniforms!
@@ -726,10 +904,25 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
 
       prog->_LinkedShaders[i]->active_samplers = parcel.shader_samplers_used;
       prog->_LinkedShaders[i]->shadow_samplers = parcel.shader_shadow_samplers;
+
+      STATIC_ASSERT(sizeof(prog->_LinkedShaders[i]->SamplerTargets) == sizeof(parcel.targets));
+      memcpy(prog->_LinkedShaders[i]->SamplerTargets, parcel.targets,
+             sizeof(prog->_LinkedShaders[i]->SamplerTargets));
    }
 
-   assert(sizeof(prog->SamplerTargets) == sizeof(parcel.targets));
-   memcpy(prog->SamplerTargets, parcel.targets, sizeof(prog->SamplerTargets));
+   /* Determine the size of the largest uniform array queryable via
+    * glGetUniformLocation.  Using this as the location scale guarantees that
+    * there is enough "room" for the array index to be stored in the low order
+    * part of the uniform location.  It also makes the locations be more
+    * tightly packed.
+    */
+   unsigned max_array_size = 1;
+   for (unsigned i = 0; i < num_user_uniforms; i++) {
+      if (uniforms[i].array_elements > max_array_size)
+         max_array_size = uniforms[i].array_elements;
+   }
+
+   prog->UniformLocationBaseScale = max_array_size;
 
 #ifndef NDEBUG
    for (unsigned i = 0; i < num_user_uniforms; i++) {
@@ -742,6 +935,7 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
    prog->NumUserUniformStorage = num_user_uniforms;
    prog->UniformStorage = uniforms;
 
+   link_set_image_access_qualifiers(prog);
    link_set_uniform_initializers(prog);
 
    return;

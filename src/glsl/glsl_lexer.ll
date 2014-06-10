@@ -78,12 +78,12 @@ static int classify_identifier(struct _mesa_glsl_parse_state *, const char *);
                          alt_expr, token)				\
    do {									\
       if (yyextra->is_version(allowed_glsl, allowed_glsl_es)		\
-          || alt_expr) {						\
+          || (alt_expr)) {						\
 	 return token;							\
       } else if (yyextra->is_version(reserved_glsl,			\
                                      reserved_glsl_es)) {		\
 	 _mesa_glsl_error(yylloc, yyextra,				\
-			  "Illegal use of reserved word `%s'", yytext);	\
+			  "illegal use of reserved word `%s'", yytext);	\
 	 return ERROR_TOK;						\
       } else {								\
 	 yylval->identifier = strdup(yytext);				\
@@ -99,7 +99,7 @@ static int classify_identifier(struct _mesa_glsl_parse_state *, const char *);
    do {									\
       if (yyextra->is_version(0, 300)) {				\
 	 _mesa_glsl_error(yylloc, yyextra,				\
-			  "Illegal use of reserved word `%s'", yytext);	\
+			  "illegal use of reserved word `%s'", yytext);	\
 	 return ERROR_TOK;						\
       } else {								\
          return token;							\
@@ -130,10 +130,10 @@ literal_integer(char *text, int len, struct _mesa_glsl_parse_state *state,
       /* Note that signed 0xffffffff is valid, not out of range! */
       if (state->is_version(130, 300)) {
 	 _mesa_glsl_error(lloc, state,
-			  "Literal value `%s' out of range", text);
+			  "literal value `%s' out of range", text);
       } else {
 	 _mesa_glsl_warning(lloc, state,
-			    "Literal value `%s' out of range", text);
+			    "literal value `%s' out of range", text);
       }
    } else if (base == 10 && !is_uint && (unsigned)value > (unsigned)INT_MAX + 1) {
       /* Tries to catch unintentionally providing a negative value.
@@ -141,7 +141,7 @@ literal_integer(char *text, int len, struct _mesa_glsl_parse_state *state,
        * want to warn for INT_MAX.
        */
       _mesa_glsl_warning(lloc, state,
-			 "Signed literal value `%s' is interpreted as %d",
+			 "signed literal value `%s' is interpreted as %d",
 			 text, lval->n);
    }
    return is_uint ? UINTCONSTANT : INTCONSTANT;
@@ -155,7 +155,7 @@ literal_integer(char *text, int len, struct _mesa_glsl_parse_state *state,
 %option bison-bridge bison-locations reentrant noyywrap
 %option nounput noyy_top_state
 %option never-interactive
-%option prefix="_mesa_glsl_"
+%option prefix="_mesa_glsl_lexer_"
 %option extra-type="struct _mesa_glsl_parse_state *"
 
 %x PP PRAGMA
@@ -330,30 +330,11 @@ sampler2DMSArray   KEYWORD_WITH_ALT(150, 300, 150, 0, yyextra->ARB_texture_multi
 isampler2DMSArray  KEYWORD_WITH_ALT(150, 300, 150, 0, yyextra->ARB_texture_multisample_enable, ISAMPLER2DMSARRAY);
 usampler2DMSArray  KEYWORD_WITH_ALT(150, 300, 150, 0, yyextra->ARB_texture_multisample_enable, USAMPLER2DMSARRAY);
 
-samplerCubeArray	{
-			  if (yyextra->ARB_texture_cube_map_array_enable)
-			     return SAMPLERCUBEARRAY;
-			  else
-			     return IDENTIFIER;
-		}
-isamplerCubeArray	{
-			  if (yyextra->ARB_texture_cube_map_array_enable)
-			     return ISAMPLERCUBEARRAY;
-			  else
-			     return IDENTIFIER;
-		}
-usamplerCubeArray	{
-			  if (yyextra->ARB_texture_cube_map_array_enable)
-			     return USAMPLERCUBEARRAY;
-			  else
-			     return IDENTIFIER;
-		}
-samplerCubeArrayShadow	{
-			  if (yyextra->ARB_texture_cube_map_array_enable)
-			     return SAMPLERCUBEARRAYSHADOW;
-			  else
-			     return IDENTIFIER;
-		}
+   /* keywords available with ARB_texture_cube_map_array_enable extension on desktop GLSL */
+samplerCubeArray   KEYWORD_WITH_ALT(400, 0, 400, 0, yyextra->ARB_texture_cube_map_array_enable, SAMPLERCUBEARRAY);
+isamplerCubeArray KEYWORD_WITH_ALT(400, 0, 400, 0, yyextra->ARB_texture_cube_map_array_enable, ISAMPLERCUBEARRAY);
+usamplerCubeArray KEYWORD_WITH_ALT(400, 0, 400, 0, yyextra->ARB_texture_cube_map_array_enable, USAMPLERCUBEARRAY);
+samplerCubeArrayShadow   KEYWORD_WITH_ALT(400, 0, 400, 0, yyextra->ARB_texture_cube_map_array_enable, SAMPLERCUBEARRAYSHADOW);
 
 samplerExternalOES		{
 			  if (yyextra->OES_EGL_image_external_enable)
@@ -362,6 +343,52 @@ samplerExternalOES		{
 			     return IDENTIFIER;
 		}
 
+   /* keywords available with ARB_shader_image_load_store */
+image1D         KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, IMAGE1D);
+image2D         KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, IMAGE2D);
+image3D         KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, IMAGE3D);
+image2DRect     KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, IMAGE2DRECT);
+imageCube       KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, IMAGECUBE);
+imageBuffer     KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, IMAGEBUFFER);
+image1DArray    KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, IMAGE1DARRAY);
+image2DArray    KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, IMAGE2DARRAY);
+imageCubeArray  KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, IMAGECUBEARRAY);
+image2DMS       KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, IMAGE2DMS);
+image2DMSArray  KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, IMAGE2DMSARRAY);
+iimage1D        KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, IIMAGE1D);
+iimage2D        KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, IIMAGE2D);
+iimage3D        KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, IIMAGE3D);
+iimage2DRect    KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, IIMAGE2DRECT);
+iimageCube      KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, IIMAGECUBE);
+iimageBuffer    KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, IIMAGEBUFFER);
+iimage1DArray   KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, IIMAGE1DARRAY);
+iimage2DArray   KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, IIMAGE2DARRAY);
+iimageCubeArray KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, IIMAGECUBEARRAY);
+iimage2DMS      KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, IIMAGE2DMS);
+iimage2DMSArray KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, IIMAGE2DMSARRAY);
+uimage1D        KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, UIMAGE1D);
+uimage2D        KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, UIMAGE2D);
+uimage3D        KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, UIMAGE3D);
+uimage2DRect    KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, UIMAGE2DRECT);
+uimageCube      KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, UIMAGECUBE);
+uimageBuffer    KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, UIMAGEBUFFER);
+uimage1DArray   KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, UIMAGE1DARRAY);
+uimage2DArray   KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, UIMAGE2DARRAY);
+uimageCubeArray KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, UIMAGECUBEARRAY);
+uimage2DMS      KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, UIMAGE2DMS);
+uimage2DMSArray KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, UIMAGE2DMSARRAY);
+image1DShadow           KEYWORD(130, 300, 0, 0, IMAGE1DSHADOW);
+image2DShadow           KEYWORD(130, 300, 0, 0, IMAGE2DSHADOW);
+image1DArrayShadow      KEYWORD(130, 300, 0, 0, IMAGE1DARRAYSHADOW);
+image2DArrayShadow      KEYWORD(130, 300, 0, 0, IMAGE2DARRAYSHADOW);
+
+coherent	KEYWORD_WITH_ALT(420, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, COHERENT);
+volatile	KEYWORD_WITH_ALT(110, 100, 420, 0, yyextra->ARB_shader_image_load_store_enable, VOLATILE);
+restrict	KEYWORD_WITH_ALT(420, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, RESTRICT);
+readonly	KEYWORD_WITH_ALT(420, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, READONLY);
+writeonly	KEYWORD_WITH_ALT(420, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, WRITEONLY);
+
+atomic_uint     KEYWORD_WITH_ALT(420, 300, 420, 0, yyextra->ARB_shader_atomic_counters_enable, ATOMIC_UINT);
 
 struct		return STRUCT;
 void		return VOID_TOK;
@@ -372,11 +399,13 @@ layout		{
 		      || yyextra->ARB_conservative_depth_enable
 		      || yyextra->ARB_explicit_attrib_location_enable
 		      || yyextra->ARB_uniform_buffer_object_enable
-		      || yyextra->ARB_fragment_coord_conventions_enable) {
+		      || yyextra->ARB_fragment_coord_conventions_enable
+                      || yyextra->ARB_shading_language_420pack_enable
+                      || yyextra->ARB_compute_shader_enable) {
 		      return LAYOUT_TOK;
 		   } else {
 		      yylval->identifier = strdup(yytext);
-		      return IDENTIFIER;
+		      return classify_identifier(yyextra, yytext);
 		   }
 		}
 
@@ -458,7 +487,6 @@ switch		KEYWORD(110, 100, 130, 300, SWITCH);
 default		KEYWORD(110, 100, 130, 300, DEFAULT);
 inline		KEYWORD(110, 100, 0, 0, INLINE_TOK);
 noinline	KEYWORD(110, 100, 0, 0, NOINLINE);
-volatile	KEYWORD(110, 100, 0, 0, VOLATILE);
 public		KEYWORD(110, 100, 0, 0, PUBLIC_TOK);
 static		KEYWORD(110, 100, 0, 0, STATIC);
 extern		KEYWORD(110, 100, 0, 0, EXTERN);
@@ -503,32 +531,7 @@ active		KEYWORD(130, 300, 0, 0, ACTIVE);
 superp		KEYWORD(130, 100, 0, 0, SUPERP);
 samplerBuffer	KEYWORD(130, 300, 140, 0, SAMPLERBUFFER);
 filter		KEYWORD(130, 300, 0, 0, FILTER);
-image1D		KEYWORD(130, 300, 0, 0, IMAGE1D);
-image2D		KEYWORD(130, 300, 0, 0, IMAGE2D);
-image3D		KEYWORD(130, 300, 0, 0, IMAGE3D);
-imageCube	KEYWORD(130, 300, 0, 0, IMAGECUBE);
-iimage1D	KEYWORD(130, 300, 0, 0, IIMAGE1D);
-iimage2D	KEYWORD(130, 300, 0, 0, IIMAGE2D);
-iimage3D	KEYWORD(130, 300, 0, 0, IIMAGE3D);
-iimageCube	KEYWORD(130, 300, 0, 0, IIMAGECUBE);
-uimage1D	KEYWORD(130, 300, 0, 0, UIMAGE1D);
-uimage2D	KEYWORD(130, 300, 0, 0, UIMAGE2D);
-uimage3D	KEYWORD(130, 300, 0, 0, UIMAGE3D);
-uimageCube	KEYWORD(130, 300, 0, 0, UIMAGECUBE);
-image1DArray	KEYWORD(130, 300, 0, 0, IMAGE1DARRAY);
-image2DArray	KEYWORD(130, 300, 0, 0, IMAGE2DARRAY);
-iimage1DArray	KEYWORD(130, 300, 0, 0, IIMAGE1DARRAY);
-iimage2DArray	KEYWORD(130, 300, 0, 0, IIMAGE2DARRAY);
-uimage1DArray	KEYWORD(130, 300, 0, 0, UIMAGE1DARRAY);
-uimage2DArray	KEYWORD(130, 300, 0, 0, UIMAGE2DARRAY);
-image1DShadow	KEYWORD(130, 300, 0, 0, IMAGE1DSHADOW);
-image2DShadow	KEYWORD(130, 300, 0, 0, IMAGE2DSHADOW);
-image1DArrayShadow KEYWORD(130, 300, 0, 0, IMAGE1DARRAYSHADOW);
-image2DArrayShadow KEYWORD(130, 300, 0, 0, IMAGE2DARRAYSHADOW);
-imageBuffer	KEYWORD(130, 300, 0, 0, IMAGEBUFFER);
-iimageBuffer	KEYWORD(130, 300, 0, 0, IIMAGEBUFFER);
-uimageBuffer	KEYWORD(130, 300, 0, 0, UIMAGEBUFFER);
-row_major	KEYWORD_WITH_ALT(130, 0, 140, 0, yyextra->ARB_uniform_buffer_object_enable, ROW_MAJOR);
+row_major	KEYWORD_WITH_ALT(130, 0, 140, 0, yyextra->ARB_uniform_buffer_object_enable && !yyextra->es_shader, ROW_MAJOR);
 
     /* Additional reserved words in GLSL 1.40 */
 isampler2DRect	KEYWORD(140, 300, 140, 0, ISAMPLER2DRECT);
@@ -537,14 +540,9 @@ isamplerBuffer	KEYWORD(140, 300, 140, 0, ISAMPLERBUFFER);
 usamplerBuffer	KEYWORD(140, 300, 140, 0, USAMPLERBUFFER);
 
     /* Additional reserved words in GLSL ES 3.00 */
-coherent	KEYWORD(0, 300, 0, 0, COHERENT);
-restrict	KEYWORD(0, 300, 0, 0, RESTRICT);
-readonly	KEYWORD(0, 300, 0, 0, READONLY);
-writeonly	KEYWORD(0, 300, 0, 0, WRITEONLY);
 resource	KEYWORD(0, 300, 0, 0, RESOURCE);
-atomic_uint	KEYWORD(0, 300, 0, 0, ATOMIC_UINT);
 patch		KEYWORD(0, 300, 0, 0, PATCH);
-sample		KEYWORD(0, 300, 0, 0, SAMPLE);
+sample		KEYWORD_WITH_ALT(400, 300, 400, 0, yyextra->ARB_gpu_shader5_enable, SAMPLE);
 subroutine	KEYWORD(0, 300, 0, 0, SUBROUTINE);
 
 

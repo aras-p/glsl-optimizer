@@ -97,8 +97,10 @@ remove_line_continuations(glcpp_parser_t *ctx, const char *shader)
 			{
 				ralloc_strncat(&clean, shader,
 					       newline - shader + 1);
-				while (collapsed_newlines--)
+				while (collapsed_newlines) {
 					ralloc_strcat(&clean, "\n");
+					collapsed_newlines--;
+				}
 				shader = newline + 1;
 				search_start = shader;
 			}
@@ -148,6 +150,8 @@ glcpp_preprocess(void *ralloc_ctx, const char **shader, char **info_log,
 
 	if (parser->skip_stack)
 		glcpp_error (&parser->skip_stack->loc, parser, "Unterminated #if\n");
+
+	glcpp_parser_resolve_implicit_version(parser);
 
 	ralloc_strcat(info_log, parser->info_log);
 
