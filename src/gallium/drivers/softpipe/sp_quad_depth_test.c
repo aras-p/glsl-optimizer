@@ -51,6 +51,8 @@ struct depth_data {
    boolean use_shader_stencil_refs;
    ubyte shader_stencil_refs[TGSI_QUAD_SIZE];
    struct softpipe_cached_tile *tile;
+   float minval, maxval;
+   bool clamp;
 };
 
 
@@ -152,6 +154,7 @@ convert_quad_depth( struct depth_data *data,
                     const struct quad_header *quad )
 {
    unsigned j;
+   float dvals[TGSI_QUAD_SIZE];
 
    /* Convert quad's float depth values to int depth values (qzzzz).
     * If the Z buffer stores integer values, we _have_ to do the depth
@@ -159,13 +162,23 @@ convert_quad_depth( struct depth_data *data,
     * conversion of Z values (which isn't an identity function) will cause
     * Z-fighting errors.
     */
+   if (data->clamp) {
+      for (j = 0; j < TGSI_QUAD_SIZE; j++) {
+         dvals[j] = CLAMP(quad->output.depth[j], data->minval, data->maxval);
+      }
+   } else {
+      for (j = 0; j < TGSI_QUAD_SIZE; j++) {
+         dvals[j] = quad->output.depth[j];
+      }
+   }
+
    switch (data->format) {
    case PIPE_FORMAT_Z16_UNORM:
       {
          float scale = 65535.0;
 
          for (j = 0; j < TGSI_QUAD_SIZE; j++) {
-            data->qzzzz[j] = (unsigned) (quad->output.depth[j] * scale);
+            data->qzzzz[j] = (unsigned) (dvals[j] * scale);
          }
       }
       break;
@@ -174,7 +187,7 @@ convert_quad_depth( struct depth_data *data,
          double scale = (double) (uint) ~0UL;
 
          for (j = 0; j < TGSI_QUAD_SIZE; j++) {
-            data->qzzzz[j] = (unsigned) (quad->output.depth[j] * scale);
+            data->qzzzz[j] = (unsigned) (dvals[j] * scale);
          }
       }
       break;
@@ -184,7 +197,7 @@ convert_quad_depth( struct depth_data *data,
          float scale = (float) ((1 << 24) - 1);
 
          for (j = 0; j < TGSI_QUAD_SIZE; j++) {
-            data->qzzzz[j] = (unsigned) (quad->output.depth[j] * scale);
+            data->qzzzz[j] = (unsigned) (dvals[j] * scale);
          }
       }
       break;
@@ -194,7 +207,7 @@ convert_quad_depth( struct depth_data *data,
          float scale = (float) ((1 << 24) - 1);
 
          for (j = 0; j < TGSI_QUAD_SIZE; j++) {
-            data->qzzzz[j] = (unsigned) (quad->output.depth[j] * scale);
+            data->qzzzz[j] = (unsigned) (dvals[j] * scale);
          }
       }
       break;
@@ -204,7 +217,7 @@ convert_quad_depth( struct depth_data *data,
          union fi fui;
 
          for (j = 0; j < TGSI_QUAD_SIZE; j++) {
-            fui.f = quad->output.depth[j];
+            fui.f = dvals[j];
             data->qzzzz[j] = fui.ui;
          }
       }
@@ -782,12 +795,19 @@ depth_test_quads_fallback(struct quad_stage *qs,
    if (qs->softpipe->framebuffer.zsbuf &&
          (qs->softpipe->depth_stencil->depth.enabled ||
           qs->softpipe->depth_stencil->stencil[0].enabled)) {
+      float near_val, far_val;
 
       data.ps = qs->softpipe->framebuffer.zsbuf;
       data.format = data.ps->format;
       data.tile = sp_get_cached_tile(qs->softpipe->zsbuf_cache, 
                                      quads[0]->input.x0, 
                                      quads[0]->input.y0);
+      data.clamp = !qs->softpipe->rasterizer->depth_clip;
+
+      near_val = qs->softpipe->viewport.translate[2] - qs->softpipe->viewport.scale[2];
+      far_val = near_val + (qs->softpipe->viewport.scale[2] * 2.0);
+      data.minval = MIN2(near_val, far_val);
+      data.maxval = MAX2(near_val, far_val);
 
       for (i = 0; i < nr; i++) {
          get_depth_stencil_values(&data, quads[i]);
@@ -895,6 +915,8 @@ choose_depth_test(struct quad_stage *qs,
 
    boolean occlusion = qs->softpipe->active_query_count;
 
+   boolean clipped = !qs->softpipe->rasterizer->depth_clip;
+
    if(!qs->softpipe->framebuffer.zsbuf)
       depth = depthwrite = stencil = FALSE;
 
@@ -905,6 +927,7 @@ choose_depth_test(struct quad_stage *qs,
    if (!alpha &&
        !depth &&
        !occlusion &&
+       !clipped &&
        !stencil) {
       qs->run = depth_noop;
    }
@@ -913,6 +936,7 @@ choose_depth_test(struct quad_stage *qs,
             depth && 
             depthwrite && 
             !occlusion &&
+            !clipped &&
             !stencil) 
    {
       if (qs->softpipe->framebuffer.zsbuf->format == PIPE_FORMAT_Z16_UNORM) {
