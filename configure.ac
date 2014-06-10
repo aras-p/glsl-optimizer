@@ -1462,10 +1462,6 @@ if test "x$enable_opencl" = xyes; then
         AC_MSG_ERROR([cannot enable OpenCL without Gallium])
     fi
 
-    if test "x$enable_gallium_llvm" != xyes; then
-        AC_MSG_ERROR([cannot enable OpenCL without LLVM])
-    fi
-
     if test $GCC_VERSION_MAJOR -lt 4 -o $GCC_VERSION_MAJOR -eq 4 -a $GCC_VERSION_MINOR -lt 7; then
         AC_MSG_ERROR([gcc >= 4.7 is required to build clover])
     fi
@@ -1766,6 +1762,10 @@ if test "x$enable_gallium_llvm" = xyes; then
 else
     MESA_LLVM=0
     LLVM_VERSION_INT=0
+
+    if test "x$enable_opencl" = xyes; then
+        AC_MSG_ERROR([cannot enable OpenCL without LLVM])
+    fi
 fi
 
 dnl Directory for XVMC libs
