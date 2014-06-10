@@ -129,6 +129,88 @@ struct exec_node {
 #endif
 };
 
+static inline const struct exec_node *
+exec_node_get_next_const(const struct exec_node *n)
+{
+   return n->next;
+}
+
+static inline struct exec_node *
+exec_node_get_next(struct exec_node *n)
+{
+   return n->next;
+}
+
+static inline const struct exec_node *
+exec_node_get_prev_const(const struct exec_node *n)
+{
+   return n->prev;
+}
+
+static inline struct exec_node *
+exec_node_get_prev(struct exec_node *n)
+{
+   return n->prev;
+}
+
+static inline void
+exec_node_remove(struct exec_node *n)
+{
+   n->next->prev = n->prev;
+   n->prev->next = n->next;
+   n->next = NULL;
+   n->prev = NULL;
+}
+
+static inline void
+exec_node_self_link(struct exec_node *n)
+{
+   n->next = n;
+   n->prev = n;
+}
+
+static inline void
+exec_node_insert_after(struct exec_node *n, struct exec_node *after)
+{
+   after->next = n->next;
+   after->prev = n;
+
+   n->next->prev = after;
+   n->next = after;
+}
+
+static inline void
+exec_node_insert_node_before(struct exec_node *n, struct exec_node *before)
+{
+   before->next = n;
+   before->prev = n->prev;
+
+   n->prev->next = before;
+   n->prev = before;
+}
+
+static inline void
+exec_node_replace_with(struct exec_node *n, struct exec_node *replacement)
+{
+   replacement->prev = n->prev;
+   replacement->next = n->next;
+
+   n->prev->next = replacement;
+   n->next->prev = replacement;
+}
+
+static inline bool
+exec_node_is_tail_sentinel(const struct exec_node *n)
+{
+   return n->next == NULL;
+}
+
+static inline bool
+exec_node_is_head_sentinel(const struct exec_node *n)
+{
+   return n->prev == NULL;
+}
+
 #ifdef __cplusplus
 inline const exec_node *exec_node::get_next() const
 {
