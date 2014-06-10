@@ -121,6 +121,9 @@ struct softpipe_context {
    /** Which vertex shader output slot contains point size */
    int psize_slot;
 
+   /** Which vertex shader output slot contains layer */
+   int layer_slot;
+
    /** The reduced version of the primitive supplied by the state tracker */
    unsigned reduced_api_prim;
 

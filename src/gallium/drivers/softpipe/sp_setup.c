@@ -92,6 +92,7 @@ struct setup_context {
    int facing;
 
    float pixel_offset;
+   unsigned max_layer;
 
    struct quad_header quad[MAX_QUADS];
    struct quad_header *quad_ptrs[MAX_QUADS];
@@ -801,7 +802,7 @@ sp_setup_tri(struct setup_context *setup,
              const float (*v2)[4])
 {
    float det;
-
+   uint layer = 0;
 #if DEBUG_VERTS
    debug_printf("Setup triangle:\n");
    print_vertex(setup, v0);
@@ -834,6 +835,11 @@ sp_setup_tri(struct setup_context *setup,
    setup->span.right[0] = 0;
    setup->span.right[1] = 0;
    /*   setup->span.z_mode = tri_z_mode( setup->ctx ); */
+   if (setup->softpipe->layer_slot > 0) {
+      layer = *(unsigned *)v1[setup->softpipe->layer_slot];
+      layer = MIN2(layer, setup->max_layer);
+   }
+   setup->quad[0].input.layer = layer;
 
    /*   init_constant_attribs( setup ); */
 
@@ -1072,6 +1078,7 @@ sp_setup_line(struct setup_context *setup,
    int dx = x1 - x0;
    int dy = y1 - y0;
    int xstep, ystep;
+   uint layer = 0;
 
 #if DEBUG_VERTS
    debug_printf("Setup line:\n");
@@ -1115,6 +1122,11 @@ sp_setup_line(struct setup_context *setup,
 
    setup->quad[0].input.x0 = setup->quad[0].input.y0 = -1;
    setup->quad[0].inout.mask = 0x0;
+   if (setup->softpipe->layer_slot > 0) {
+      layer = *(unsigned *)v1[setup->softpipe->layer_slot];
+      layer = MIN2(layer, setup->max_layer);
+   }
+   setup->quad[0].input.layer = layer;
 
    /* XXX temporary: set coverage to 1.0 so the line appears
     * if AA mode happens to be enabled.
@@ -1206,7 +1218,7 @@ sp_setup_point(struct setup_context *setup,
    const float y = v0[0][1];
    const struct vertex_info *vinfo = softpipe_get_vertex_info(softpipe);
    uint fragSlot;
-
+   uint layer = 0;
 #if DEBUG_VERTS
    debug_printf("Setup point:\n");
    print_vertex(setup, v0);
@@ -1216,6 +1228,12 @@ sp_setup_point(struct setup_context *setup,
       return;
 
    assert(setup->softpipe->reduced_prim == PIPE_PRIM_POINTS);
+
+   if (setup->softpipe->layer_slot > 0) {
+      layer = *(unsigned *)v0[setup->softpipe->layer_slot];
+      layer = MIN2(layer, setup->max_layer);
+   }
+   setup->quad[0].input.layer = layer;
 
    /* For points, all interpolants are constant-valued.
     * However, for point sprites, we'll need to setup texcoords appropriately.
@@ -1401,13 +1419,31 @@ void
 sp_setup_prepare(struct setup_context *setup)
 {
    struct softpipe_context *sp = setup->softpipe;
-
+   int i;
+   unsigned max_layer = ~0;
    if (sp->dirty) {
       softpipe_update_derived(sp, sp->reduced_api_prim);
    }
 
    /* Note: nr_attrs is only used for debugging (vertex printing) */
    setup->nr_vertex_attrs = draw_num_shader_outputs(sp->draw);
+
+   /*
+    * Determine how many layers the fb has (used for clamping layer value).
+    * OpenGL (but not d3d10) permits different amount of layers per rt, however
+    * results are undefined if layer exceeds the amount of layers of ANY
+    * attachment hence don't need separate per cbuf and zsbuf max.
+    */
+   for (i = 0; i < setup->softpipe->framebuffer.nr_cbufs; i++) {
+      struct pipe_surface *cbuf = setup->softpipe->framebuffer.cbufs[i];
+      if (cbuf) {
+         max_layer = MIN2(max_layer,
+                          cbuf->u.tex.last_layer - cbuf->u.tex.first_layer);
+
+      }
+   }
+
+   setup->max_layer = max_layer;
 
    sp->quad.first->begin( sp->quad.first );
 

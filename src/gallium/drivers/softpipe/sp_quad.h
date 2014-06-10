@@ -62,6 +62,7 @@
 struct quad_header_input
 {
    int x0, y0;                /**< quad window pos, always even */
+   unsigned layer;
    float coverage[TGSI_QUAD_SIZE]; /**< fragment coverage for antialiasing */
    unsigned facing:1;         /**< Front (0) or back (1) facing? */
    unsigned prim:2;           /**< QUAD_PRIM_POINT, LINE, TRI */
