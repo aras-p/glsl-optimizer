@@ -169,11 +169,14 @@ void ir_print_visitor::visit(ir_variable *ir)
                                 "in ", "out ", "inout ",
 			        "const_in ", "sys ", "temporary " };
    STATIC_ASSERT(ARRAY_SIZE(mode) == ir_var_mode_count);
+   const char *const stream [] = {"", "stream1 ", "stream2 ", "stream3 "};
    const char *const interp[] = { "", "smooth", "flat", "noperspective" };
    STATIC_ASSERT(ARRAY_SIZE(interp) == INTERP_QUALIFIER_COUNT);
 
-   fprintf(f, "(%s%s%s%s%s) ",
-	  cent, samp, inv, mode[ir->data.mode], interp[ir->data.interpolation]);
+   fprintf(f, "(%s%s%s%s%s%s) ",
+           cent, samp, inv, mode[ir->data.mode],
+           stream[ir->data.stream],
+           interp[ir->data.interpolation]);
 
    print_type(f, ir->type);
    fprintf(f, " %s)", unique_name(ir));

@@ -437,6 +437,12 @@ ir_reader::read_declaration(s_expression *expr)
 	 var->data.mode = ir_var_function_inout;
       } else if (strcmp(qualifier->value(), "temporary") == 0) {
 	 var->data.mode = ir_var_temporary;
+      } else if (strcmp(qualifier->value(), "stream1") == 0) {
+	 var->data.stream = 1;
+      } else if (strcmp(qualifier->value(), "stream2") == 0) {
+	 var->data.stream = 2;
+      } else if (strcmp(qualifier->value(), "stream3") == 0) {
+	 var->data.stream = 3;
       } else if (strcmp(qualifier->value(), "smooth") == 0) {
 	 var->data.interpolation = INTERP_QUALIFIER_SMOOTH;
       } else if (strcmp(qualifier->value(), "flat") == 0) {
