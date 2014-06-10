@@ -144,11 +144,12 @@ _mesa_init_query_object_functions(struct dd_function_table *driver)
 
 
 /**
- * Return pointer to the query object binding point for the given target.
+ * Return pointer to the query object binding point for the given target and
+ * index.
  * \return NULL if invalid target, else the address of binding point
  */
 static struct gl_query_object **
-get_query_binding_point(struct gl_context *ctx, GLenum target)
+get_query_binding_point(struct gl_context *ctx, GLenum target, GLuint index)
 {
    switch (target) {
    case GL_SAMPLES_PASSED_ARB:
@@ -174,12 +175,12 @@ get_query_binding_point(struct gl_context *ctx, GLenum target)
          return NULL;
    case GL_PRIMITIVES_GENERATED:
       if (ctx->Extensions.EXT_transform_feedback)
-         return &ctx->Query.PrimitivesGenerated;
+         return &ctx->Query.PrimitivesGenerated[index];
       else
          return NULL;
    case GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN:
       if (ctx->Extensions.EXT_transform_feedback)
-         return &ctx->Query.PrimitivesWritten;
+         return &ctx->Query.PrimitivesWritten[index];
       else
          return NULL;
    default:
@@ -240,7 +241,7 @@ _mesa_DeleteQueries(GLsizei n, const GLuint *ids)
          if (q) {
             if (q->Active) {
                struct gl_query_object **bindpt;
-               bindpt = get_query_binding_point(ctx, q->Target);
+               bindpt = get_query_binding_point(ctx, q->Target, q->Stream);
                assert(bindpt); /* Should be non-null for active q. */
                if (bindpt) {
                   *bindpt = NULL;
@@ -313,7 +314,7 @@ _mesa_BeginQueryIndexed(GLenum target, GLuint index, GLuint id)
 
    FLUSH_VERTICES(ctx, 0);
 
-   bindpt = get_query_binding_point(ctx, target);
+   bindpt = get_query_binding_point(ctx, target, index);
    if (!bindpt) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glBeginQuery{Indexed}(target)");
       return;
@@ -391,7 +392,7 @@ _mesa_EndQueryIndexed(GLenum target, GLuint index)
 
    FLUSH_VERTICES(ctx, 0);
 
-   bindpt = get_query_binding_point(ctx, target);
+   bindpt = get_query_binding_point(ctx, target, index);
    if (!bindpt) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glEndQuery{Indexed}(target)");
       return;
@@ -518,7 +519,7 @@ _mesa_GetQueryIndexediv(GLenum target, GLuint index, GLenum pname,
       }
    }
    else {
-      bindpt = get_query_binding_point(ctx, target);
+      bindpt = get_query_binding_point(ctx, target, index);
       if (!bindpt) {
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetQuery{Indexed}iv(target)");
          return;
