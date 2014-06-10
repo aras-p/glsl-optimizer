@@ -8,7 +8,7 @@ Persistent<Function> Compiler::constructor;
 
 //----------------------------------------------------------------------
 
-Compiler::Compiler(int target)
+Compiler::Compiler(glslopt_target target)
 {
 	_binding = glslopt_initialize(target);
 }
@@ -59,11 +59,11 @@ NAN_METHOD(Compiler::New)
 	NanScope();
 
 	if (args.IsConstructCall()) {
-		int target = 0;
+		glslopt_target target = kGlslTargetOpenGL;
 		if (args[0]->IsInt32()) 
-			target = args[0]->Int32Value();
+			target = (glslopt_target)args[0]->Int32Value();
 		else if (args[0]->IsBoolean())
-			target = (int)args[0]->BooleanValue();
+			target = (glslopt_target)( (int)args[0]->BooleanValue() );
 
 		Compiler* obj = new Compiler(target);
 		obj->Wrap(args.This());

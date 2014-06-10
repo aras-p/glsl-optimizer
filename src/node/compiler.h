@@ -14,7 +14,7 @@ public:
 	void release();
 
 private:
-	Compiler(int target);
+	Compiler(glslopt_target target);
 	~Compiler();
 
 	glslopt_ctx* _binding;
