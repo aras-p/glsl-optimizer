@@ -112,7 +112,7 @@ _mesa_uniform_attach_driver_storage(struct gl_uniform_storage *uni,
 
    uni->driver_storage[uni->num_driver_storage].element_stride = element_stride;
    uni->driver_storage[uni->num_driver_storage].vector_stride = vector_stride;
-   uni->driver_storage[uni->num_driver_storage].format = (uint8_t) format;
+   uni->driver_storage[uni->num_driver_storage].format = format;
    uni->driver_storage[uni->num_driver_storage].data = data;
 
    uni->num_driver_storage++;

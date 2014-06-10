@@ -37,7 +37,7 @@
 extern "C" {
 #endif
 
-enum gl_uniform_driver_format {
+enum PACKED gl_uniform_driver_format {
    uniform_native = 0,          /**< Store data in the native format. */
    uniform_int_float,           /**< Store integer data as floats. */
    uniform_bool_float,          /**< Store boolean data as floats. */
@@ -66,11 +66,8 @@ struct gl_uniform_driver_storage {
 
    /**
     * Base format of the stored data.
-    *
-    * This field must have a value from \c GLSL_TYPE_UINT through \c
-    * GLSL_TYPE_SAMPLER.
     */
-   uint8_t format;
+   enum gl_uniform_driver_format format;
 
    /**
     * Pointer to the base of the data.
