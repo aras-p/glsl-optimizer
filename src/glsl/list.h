@@ -556,13 +556,13 @@ inline void exec_node::insert_before(exec_list *before)
 /**
  * This version is safe even if the current node is removed.
  */ 
-#define foreach_list_safe(__node, __list)			     \
-   for (exec_node * __node = (__list)->head, * __next = __node->next \
-	; __next != NULL					     \
+#define foreach_list_safe(__node, __list)					\
+   for (struct exec_node * __node = (__list)->head, * __next = __node->next	\
+	; __next != NULL							\
 	; __node = __next, __next = __next->next)
 
 #define foreach_list(__node, __list)			\
-   for (exec_node * __node = (__list)->head		\
+   for (struct exec_node * __node = (__list)->head	\
 	; (__node)->next != NULL 			\
 	; (__node) = (__node)->next)
 
@@ -572,19 +572,19 @@ inline void exec_node::insert_before(exec_list *before)
  * This is safe against either current node being removed or replaced.
  */
 #define foreach_two_lists(__node1, __list1, __node2, __list2) \
-   for (exec_node * __node1 = (__list1)->head,                \
-                  * __node2 = (__list2)->head,                \
-                  * __next1 = __node1->next,                  \
-                  * __next2 = __node2->next                   \
+   for (struct exec_node * __node1 = (__list1)->head,         \
+                         * __node2 = (__list2)->head,         \
+                         * __next1 = __node1->next,           \
+                         * __next2 = __node2->next            \
 	; __next1 != NULL && __next2 != NULL                  \
 	; __node1 = __next1,                                  \
           __node2 = __next2,                                  \
           __next1 = __next1->next,                            \
           __next2 = __next2->next)
 
-#define foreach_list_const(__node, __list)		\
-   for (const exec_node * __node = (__list)->head	\
-	; (__node)->next != NULL 			\
+#define foreach_list_const(__node, __list)			\
+   for (const struct exec_node * __node = (__list)->head	\
+	; (__node)->next != NULL 				\
 	; (__node) = (__node)->next)
 
 #define foreach_list_typed(__type, __node, __field, __list)		\
