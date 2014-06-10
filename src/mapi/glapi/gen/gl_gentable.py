@@ -134,7 +134,11 @@ body_template = """
     if(!disp->%(name)s) {
         void ** procp = (void **) &disp->%(name)s;
         snprintf(symboln, sizeof(symboln), "%%s%(entry_point)s", symbol_prefix);
+#ifdef _WIN32
+        *procp = GetProcAddress(handle, symboln);
+#else
         *procp = dlsym(handle, symboln);
+#endif
     }
 """
 
