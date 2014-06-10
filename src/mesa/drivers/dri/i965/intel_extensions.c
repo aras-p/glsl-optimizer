@@ -163,6 +163,7 @@ intelInitExtensions(struct gl_context *ctx)
    assert(brw->gen >= 4);
 
    ctx->Extensions.ARB_buffer_storage = true;
+   ctx->Extensions.ARB_clear_texture = true;
    ctx->Extensions.ARB_depth_buffer_float = true;
    ctx->Extensions.ARB_depth_clamp = true;
    ctx->Extensions.ARB_depth_texture = true;

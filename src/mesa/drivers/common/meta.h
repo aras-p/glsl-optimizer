@@ -477,6 +477,13 @@ _mesa_meta_CopyTexSubImage(struct gl_context *ctx, GLuint dims,
                            GLsizei width, GLsizei height);
 
 extern void
+_mesa_meta_ClearTexSubImage(struct gl_context *ctx,
+                            struct gl_texture_image *texImage,
+                            GLint xoffset, GLint yoffset, GLint zoffset,
+                            GLsizei width, GLsizei height, GLsizei depth,
+                            const GLvoid *clearValue);
+
+extern void
 _mesa_meta_GetTexImage(struct gl_context *ctx,
                        GLenum format, GLenum type, GLvoid *pixels,
                        struct gl_texture_image *texImage);
