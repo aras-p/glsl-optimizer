@@ -801,7 +801,7 @@ depth_test_quads_fallback(struct quad_stage *qs,
       data.format = data.ps->format;
       data.tile = sp_get_cached_tile(qs->softpipe->zsbuf_cache, 
                                      quads[0]->input.x0, 
-                                     quads[0]->input.y0);
+                                     quads[0]->input.y0, 0);
       data.clamp = !qs->softpipe->rasterizer->depth_clip;
 
       near_val = qs->softpipe->viewport.translate[2] - qs->softpipe->viewport.scale[2];

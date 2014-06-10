@@ -71,7 +71,7 @@ NAME(struct quad_stage *qs,
 
    depth_step = (ushort)(dzdx * scale);
 
-   tile = sp_get_cached_tile(qs->softpipe->zsbuf_cache, ix, iy);
+   tile = sp_get_cached_tile(qs->softpipe->zsbuf_cache, ix, iy, 0);
 
    for (i = 0; i < nr; i++) {
       const unsigned outmask = quads[i]->inout.mask;
