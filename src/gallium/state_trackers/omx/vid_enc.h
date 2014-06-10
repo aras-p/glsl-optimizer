@@ -46,8 +46,8 @@
 #include "vl/vl_defines.h"
 #include "vl/vl_compositor.h"
 
-#define OMX_VID_ENC_BASE_NAME "OMX.%s.video_encoder"
-#define OMX_VID_ENC_AVC_NAME "OMX.%s.video_encoder.avc"
+#define OMX_VID_ENC_BASE_NAME "OMX.mesa.video_encoder"
+#define OMX_VID_ENC_AVC_NAME "OMX.mesa.video_encoder.avc"
 #define OMX_VID_ENC_AVC_ROLE "video_encoder.avc"
 
 #define OMX_VID_ENC_BITRATE_MIN 64000

@@ -50,12 +50,12 @@
 #include "os/os_thread.h"
 #include "util/u_double_list.h"
 
-#define OMX_VID_DEC_BASE_NAME "OMX.%s.video_decoder"
+#define OMX_VID_DEC_BASE_NAME "OMX.mesa.video_decoder"
 
-#define OMX_VID_DEC_MPEG2_NAME "OMX.%s.video_decoder.mpeg2"
+#define OMX_VID_DEC_MPEG2_NAME "OMX.mesa.video_decoder.mpeg2"
 #define OMX_VID_DEC_MPEG2_ROLE "video_decoder.mpeg2"
 
-#define OMX_VID_DEC_AVC_NAME "OMX.%s.video_decoder.avc"
+#define OMX_VID_DEC_AVC_NAME "OMX.mesa.video_decoder.avc"
 #define OMX_VID_DEC_AVC_ROLE "video_decoder.avc"
 
 struct vl_vlc;

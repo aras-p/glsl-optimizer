@@ -96,16 +96,6 @@ static void vid_enc_BufferEncoded(OMX_COMPONENTTYPE *comp, OMX_BUFFERHEADERTYPE*
 
 static void enc_ReleaseTasks(struct list_head *head);
 
-static void vid_enc_name(char str[OMX_MAX_STRINGNAME_SIZE])
-{
-   snprintf(str, OMX_MAX_STRINGNAME_SIZE, OMX_VID_ENC_BASE_NAME, driver_descriptor.name);
-}
-
-static void vid_enc_name_avc(char str[OMX_MAX_STRINGNAME_SIZE])
-{
-   snprintf(str, OMX_MAX_STRINGNAME_SIZE, OMX_VID_ENC_AVC_NAME, driver_descriptor.name);
-}
-
 OMX_ERRORTYPE vid_enc_LoaderComponent(stLoaderComponentType *comp)
 {
    comp->componentVersion.s.nVersionMajor = 0;
@@ -115,11 +105,7 @@ OMX_ERRORTYPE vid_enc_LoaderComponent(stLoaderComponentType *comp)
    comp->name_specific_length = 1;
    comp->constructor = vid_enc_Constructor;
 
-   comp->name = CALLOC(1, OMX_MAX_STRINGNAME_SIZE);
-   if (!comp->name)
-      return OMX_ErrorInsufficientResources;
-
-   vid_enc_name(comp->name);
+   comp->name = OMX_VID_ENC_BASE_NAME;
 
    comp->name_specific = CALLOC(1, sizeof(char *));
    if (!comp->name_specific)
@@ -129,28 +115,15 @@ OMX_ERRORTYPE vid_enc_LoaderComponent(stLoaderComponentType *comp)
    if (!comp->role_specific)
       goto error_arrays;
 
-   comp->name_specific[0] = CALLOC(1, OMX_MAX_STRINGNAME_SIZE);
-   if (!comp->name_specific[0])
-      goto error_specific;
+   comp->name_specific[0] = OMX_VID_ENC_AVC_NAME;
 
-   vid_enc_name_avc(comp->name_specific[0]);
-
-   comp->role_specific[0] = CALLOC(1, OMX_MAX_STRINGNAME_SIZE);
-   if (!comp->role_specific[0])
-      goto error_specific;
-
-   strcpy(comp->role_specific[0], OMX_VID_ENC_AVC_ROLE);
+   comp->role_specific[0] = OMX_VID_ENC_AVC_ROLE;
 
    return OMX_ErrorNone;
-
-error_specific:
-   FREE(comp->name_specific[0]);
-   FREE(comp->role_specific[0]);
 
 error_arrays:
    FREE(comp->role_specific);
    FREE(comp->name_specific);
-   FREE(comp->name);
 
    return OMX_ErrorInsufficientResources;
 }

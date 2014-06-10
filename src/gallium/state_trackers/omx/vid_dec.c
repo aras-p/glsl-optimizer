@@ -64,21 +64,6 @@ static OMX_ERRORTYPE vid_dec_DecodeBuffer(omx_base_PortType *port, OMX_BUFFERHEA
 static OMX_ERRORTYPE vid_dec_FreeDecBuffer(omx_base_PortType *port, OMX_U32 idx, OMX_BUFFERHEADERTYPE *buf);
 static void vid_dec_FrameDecoded(OMX_COMPONENTTYPE *comp, OMX_BUFFERHEADERTYPE* input, OMX_BUFFERHEADERTYPE* output);
 
-static void vid_dec_name(char str[OMX_MAX_STRINGNAME_SIZE])
-{
-   snprintf(str, OMX_MAX_STRINGNAME_SIZE, OMX_VID_DEC_BASE_NAME, driver_descriptor.name);
-}
-
-static void vid_dec_name_mpeg2(char str[OMX_MAX_STRINGNAME_SIZE])
-{
-   snprintf(str, OMX_MAX_STRINGNAME_SIZE, OMX_VID_DEC_MPEG2_NAME, driver_descriptor.name);
-}
-
-static void vid_dec_name_avc(char str[OMX_MAX_STRINGNAME_SIZE])
-{
-   snprintf(str, OMX_MAX_STRINGNAME_SIZE, OMX_VID_DEC_AVC_NAME, driver_descriptor.name);
-}
-
 OMX_ERRORTYPE vid_dec_LoaderComponent(stLoaderComponentType *comp)
 {
    comp->componentVersion.s.nVersionMajor = 0;
@@ -87,67 +72,35 @@ OMX_ERRORTYPE vid_dec_LoaderComponent(stLoaderComponentType *comp)
    comp->componentVersion.s.nStep = 1;
    comp->name_specific_length = 2;
 
-   comp->name = CALLOC(1, OMX_MAX_STRINGNAME_SIZE);
-   if (comp->name == NULL)
-      goto error;
-
    comp->name_specific = CALLOC(comp->name_specific_length, sizeof(char *));
    if (comp->name_specific == NULL)
-      goto error;
-
-   comp->name_specific[0] = CALLOC(1, OMX_MAX_STRINGNAME_SIZE);
-   if (comp->name_specific[0] == NULL)
-      goto error;
-
-   comp->name_specific[1] = CALLOC(1, OMX_MAX_STRINGNAME_SIZE);
-   if (comp->name_specific[1] == NULL)
       goto error;
 
    comp->role_specific = CALLOC(comp->name_specific_length, sizeof(char *));
    if (comp->role_specific == NULL)
       goto error;
 
-   comp->role_specific[0] = CALLOC(1, OMX_MAX_STRINGNAME_SIZE);
-   if (comp->role_specific[0] == NULL)
-      goto error;
+   comp->name = OMX_VID_DEC_BASE_NAME;
+   comp->name_specific[0] = OMX_VID_DEC_MPEG2_NAME;
+   comp->name_specific[1] = OMX_VID_DEC_AVC_NAME;
 
-   comp->role_specific[1] = CALLOC(1, OMX_MAX_STRINGNAME_SIZE);
-   if (comp->role_specific[1] == NULL)
-      goto error;
-
-   vid_dec_name(comp->name);
-   vid_dec_name_mpeg2(comp->name_specific[0]);
-   vid_dec_name_avc(comp->name_specific[1]);
-
-   strcpy(comp->role_specific[0], OMX_VID_DEC_MPEG2_ROLE);
-   strcpy(comp->role_specific[1], OMX_VID_DEC_AVC_ROLE);
+   comp->role_specific[0] = OMX_VID_DEC_MPEG2_ROLE;
+   comp->role_specific[1] = OMX_VID_DEC_AVC_ROLE;
 
    comp->constructor = vid_dec_Constructor;
- 
+
    return OMX_ErrorNone;
 
 error:
 
-   FREE(comp->name);
-
-   if (comp->name_specific) {
-      FREE(comp->name_specific[0]);
-      FREE(comp->name_specific[1]);
-      FREE(comp->name_specific);
-   }
-
-   if (comp->role_specific) {
-      FREE(comp->role_specific[0]);
-      FREE(comp->role_specific[1]);
-      FREE(comp->role_specific);
-   }
+   FREE(comp->name_specific);
+   FREE(comp->role_specific);
 
    return OMX_ErrorInsufficientResources;
 }
 
 static OMX_ERRORTYPE vid_dec_Constructor(OMX_COMPONENTTYPE *comp, OMX_STRING name)
 {
-   char tmpstr[OMX_MAX_STRINGNAME_SIZE];
    vid_dec_PrivateType *priv;
    omx_base_video_PortType *port;
    struct pipe_screen *screen;
@@ -166,12 +119,10 @@ static OMX_ERRORTYPE vid_dec_Constructor(OMX_COMPONENTTYPE *comp, OMX_STRING nam
 
    priv->profile = PIPE_VIDEO_PROFILE_UNKNOWN;
 
-   vid_dec_name_mpeg2(tmpstr);
-   if (!strcmp(name, tmpstr))
+   if (!strcmp(name, OMX_VID_DEC_MPEG2_NAME))
       priv->profile = PIPE_VIDEO_PROFILE_MPEG2_MAIN;
 
-   vid_dec_name_avc(tmpstr);
-   if (!strcmp(name, tmpstr))
+   if (!strcmp(name, OMX_VID_DEC_AVC_NAME))
       priv->profile = PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH;
 
    priv->BufferMgmtCallback = vid_dec_FrameDecoded;
