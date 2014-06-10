@@ -336,6 +336,18 @@ _mesa_TexStorage3DMultisample(GLenum target, GLsizei samples,
                               GLsizei height, GLsizei depth,
                               GLboolean fixedsamplelocations);
 
+extern void GLAPIENTRY
+_mesa_ClearTexImage(GLuint texture, GLint level,
+                    GLenum format, GLenum type,
+                    const void *data);
+
+extern void GLAPIENTRY
+_mesa_ClearTexSubImage(GLuint texture, GLint level,
+                       GLint xoffset, GLint yoffset, GLint zoffset,
+                       GLsizei width, GLsizei height, GLsizei depth,
+                       GLenum format, GLenum type,
+                       const void *data);
+
 bool
 _mesa_compressed_texture_pixel_storage_error_check(struct gl_context *ctx,
                                              GLint dimensions,

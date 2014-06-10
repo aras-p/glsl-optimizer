@@ -239,6 +239,20 @@ struct dd_function_table {
                         struct gl_texture_image *texImage );
 
    /**
+    * Called by glClearTex[Sub]Image
+    *
+    * Clears a rectangular region of the image to a given value. The
+    * clearValue argument is either NULL or points to a single texel to use as
+    * the clear value in the same internal format as the texture image. If it
+    * is NULL then the texture should be cleared to zeroes.
+    */
+   void (*ClearTexSubImage)(struct gl_context *ctx,
+                            struct gl_texture_image *texImage,
+                            GLint xoffset, GLint yoffset, GLint zoffset,
+                            GLsizei width, GLsizei height, GLsizei depth,
+                            const GLvoid *clearValue);
+
+   /**
     * Called by glCopyTex[Sub]Image[123]D().
     *
     * This function should copy a rectangular region in the rb to a single
