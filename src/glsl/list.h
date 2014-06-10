@@ -214,73 +214,57 @@ exec_node_is_head_sentinel(const struct exec_node *n)
 #ifdef __cplusplus
 inline const exec_node *exec_node::get_next() const
 {
-   return next;
+   return exec_node_get_next_const(this);
 }
 
 inline exec_node *exec_node::get_next()
 {
-   return next;
+   return exec_node_get_next(this);
 }
 
 inline const exec_node *exec_node::get_prev() const
 {
-   return prev;
+   return exec_node_get_prev_const(this);
 }
 
 inline exec_node *exec_node::get_prev()
 {
-   return prev;
+   return exec_node_get_prev(this);
 }
 
 inline void exec_node::remove()
 {
-   next->prev = prev;
-   prev->next = next;
-   next = NULL;
-   prev = NULL;
+   exec_node_remove(this);
 }
 
 inline void exec_node::self_link()
 {
-   next = this;
-   prev = this;
+   exec_node_self_link(this);
 }
 
 inline void exec_node::insert_after(exec_node *after)
 {
-   after->next = this->next;
-   after->prev = this;
-
-   this->next->prev = after;
-   this->next = after;
+   exec_node_insert_after(this, after);
 }
 
 inline void exec_node::insert_before(exec_node *before)
 {
-   before->next = this;
-   before->prev = this->prev;
-
-   this->prev->next = before;
-   this->prev = before;
+   exec_node_insert_node_before(this, before);
 }
 
 inline void exec_node::replace_with(exec_node *replacement)
 {
-   replacement->prev = this->prev;
-   replacement->next = this->next;
-
-   this->prev->next = replacement;
-   this->next->prev = replacement;
+   exec_node_replace_with(this, replacement);
 }
 
 inline bool exec_node::is_tail_sentinel() const
 {
-   return this->next == NULL;
+   return exec_node_is_tail_sentinel(this);
 }
 
 inline bool exec_node::is_head_sentinel() const
 {
-   return this->prev == NULL;
+   return exec_node_is_head_sentinel(this);
 }
 #endif
 
