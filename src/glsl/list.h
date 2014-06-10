@@ -360,6 +360,147 @@ struct exec_list {
 #endif
 };
 
+static inline void
+exec_list_make_empty(struct exec_list *list)
+{
+   list->head = (struct exec_node *) & list->tail;
+   list->tail = NULL;
+   list->tail_pred = (struct exec_node *) & list->head;
+}
+
+static inline bool
+exec_list_is_empty(const struct exec_list *list)
+{
+   /* There are three ways to test whether a list is empty or not.
+    *
+    * - Check to see if the \c head points to the \c tail.
+    * - Check to see if the \c tail_pred points to the \c head.
+    * - Check to see if the \c head is the sentinel node by test whether its
+    *   \c next pointer is \c NULL.
+    *
+    * The first two methods tend to generate better code on modern systems
+    * because they save a pointer dereference.
+    */
+   return list->head == (struct exec_node *) &list->tail;
+}
+
+static inline const struct exec_node *
+exec_list_get_head_const(const struct exec_list *list)
+{
+   return !exec_list_is_empty(list) ? list->head : NULL;
+}
+
+static inline struct exec_node *
+exec_list_get_head(struct exec_list *list)
+{
+   return !exec_list_is_empty(list) ? list->head : NULL;
+}
+
+static inline const struct exec_node *
+exec_list_get_tail_const(const struct exec_list *list)
+{
+   return !exec_list_is_empty(list) ? list->tail_pred : NULL;
+}
+
+static inline struct exec_node *
+exec_list_get_tail(struct exec_list *list)
+{
+   return !exec_list_is_empty(list) ? list->tail_pred : NULL;
+}
+
+static inline void
+exec_list_push_head(struct exec_list *list, struct exec_node *n)
+{
+   n->next = list->head;
+   n->prev = (struct exec_node *) &list->head;
+
+   n->next->prev = n;
+   list->head = n;
+}
+
+static inline void
+exec_list_push_tail(struct exec_list *list, struct exec_node *n)
+{
+   n->next = (struct exec_node *) &list->tail;
+   n->prev = list->tail_pred;
+
+   n->prev->next = n;
+   list->tail_pred = n;
+}
+
+static inline void
+exec_list_push_degenerate_list_at_head(struct exec_list *list, struct exec_node *n)
+{
+   assert(n->prev->next == n);
+
+   n->prev->next = list->head;
+   list->head->prev = n->prev;
+   n->prev = (struct exec_node *) &list->head;
+   list->head = n;
+}
+
+static inline struct exec_node *
+exec_list_pop_head(struct exec_list *list)
+{
+   struct exec_node *const n = exec_list_get_head(list);
+   if (n != NULL)
+      exec_node_remove(n);
+
+   return n;
+}
+
+static inline void
+exec_list_move_nodes_to(struct exec_list *list, struct exec_list *target)
+{
+   if (exec_list_is_empty(list)) {
+      exec_list_make_empty(target);
+   } else {
+      target->head = list->head;
+      target->tail = NULL;
+      target->tail_pred = list->tail_pred;
+
+      target->head->prev = (struct exec_node *) &target->head;
+      target->tail_pred->next = (struct exec_node *) &target->tail;
+
+      exec_list_make_empty(list);
+   }
+}
+
+static inline void
+exec_list_append(struct exec_list *list, struct exec_list *source)
+{
+   if (exec_list_is_empty(source))
+      return;
+
+   /* Link the first node of the source with the last node of the target list.
+    */
+   list->tail_pred->next = source->head;
+   source->head->prev = list->tail_pred;
+
+   /* Make the tail of the source list be the tail of the target list.
+    */
+   list->tail_pred = source->tail_pred;
+   list->tail_pred->next = (struct exec_node *) &list->tail;
+
+   /* Make the source list empty for good measure.
+    */
+   exec_list_make_empty(source);
+}
+
+static inline void
+exec_node_insert_list_before(struct exec_node *n, struct exec_list *before)
+{
+   if (exec_list_is_empty(before))
+      return;
+
+   before->tail_pred->next = n;
+   before->head->prev = n->prev;
+
+   n->prev->next = before->head;
+   n->prev = before->tail_pred;
+
+   exec_list_make_empty(before);
+}
 
 #ifdef __cplusplus
 inline void exec_list::make_empty()
