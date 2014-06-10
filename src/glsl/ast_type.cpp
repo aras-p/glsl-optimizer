@@ -125,9 +125,13 @@ ast_type_qualifier::merge_qualifier(YYLTYPE *loc,
    /* Uniform block layout qualifiers get to overwrite each
     * other (rightmost having priority), while all other
     * qualifiers currently don't allow duplicates.
+    *
+    * Geometry shaders can have several layout qualifiers
+    * assigning different stream values.
     */
 
-   if ((this->flags.i & q.flags.i & ~(ubo_mat_mask.flags.i |
+   if ((state->stage != MESA_SHADER_GEOMETRY) &&
+       (this->flags.i & q.flags.i & ~(ubo_mat_mask.flags.i |
 				      ubo_layout_mask.flags.i |
                                       ubo_binding_mask.flags.i)) != 0) {
       _mesa_glsl_error(loc, state,
@@ -152,6 +156,39 @@ ast_type_qualifier::merge_qualifier(YYLTYPE *loc,
 	 return false;
       }
       this->max_vertices = q.max_vertices;
+   }
+
+   if (state->stage == MESA_SHADER_GEOMETRY &&
+       state->has_explicit_attrib_stream()) {
+      if (q.flags.q.stream && q.stream >= state->ctx->Const.MaxVertexStreams) {
+         _mesa_glsl_error(loc, state,
+                          "`stream' value is larger than MAX_VERTEX_STREAMS - 1 "
+                          "(%d > %d)",
+                          q.stream, state->ctx->Const.MaxVertexStreams - 1);
+      }
+      if (this->flags.q.explicit_stream &&
+          this->stream >= state->ctx->Const.MaxVertexStreams) {
+         _mesa_glsl_error(loc, state,
+                          "`stream' value is larger than MAX_VERTEX_STREAMS - 1 "
+                          "(%d > %d)",
+                          this->stream, state->ctx->Const.MaxVertexStreams - 1);
+      }
+
+      if (!this->flags.q.explicit_stream) {
+         if (q.flags.q.stream) {
+            this->flags.q.stream = 1;
+            this->stream = q.stream;
+         } else if (!this->flags.q.stream && this->flags.q.out) {
+            /* Assign default global stream value */
+            this->flags.q.stream = 1;
+            this->stream = state->out_qualifier->stream;
+         }
+      } else {
+         if (q.flags.q.explicit_stream) {
+            _mesa_glsl_error(loc, state,
+                             "duplicate layout `stream' qualifier");
+         }
+      }
    }
 
    if ((q.flags.i & ubo_mat_mask.flags.i) != 0)

@@ -509,6 +509,8 @@ struct ast_type_qualifier {
          /** \name Layout qualifiers for GL_ARB_gpu_shader5 */
          /** \{ */
          unsigned invocations:1;
+         unsigned stream:1; /**< Has stream value assigned  */
+         unsigned explicit_stream:1; /**< stream value assigned explicitly by shader code */
          /** \} */
       }
       /** \brief Set of flags, accessed by name. */
@@ -541,6 +543,9 @@ struct ast_type_qualifier {
 
    /** Maximum output vertices in GLSL 1.50 geometry shaders. */
    int max_vertices;
+
+   /** Stream in GLSL 1.50 geometry shaders. */
+   unsigned stream;
 
    /** Input or output primitive type in GLSL 1.50 geometry shaders */
    GLenum prim_type;

@@ -671,6 +671,12 @@ struct glsl_struct_field {
     * in ir_variable::sample). 0 otherwise.
     */
    unsigned sample:1;
+
+   /**
+    * For interface blocks, it has a value if this variable uses multiple vertex
+    * streams (as in ir_variable::stream). -1 otherwise.
+    */
+   int stream;
 };
 
 static inline unsigned int

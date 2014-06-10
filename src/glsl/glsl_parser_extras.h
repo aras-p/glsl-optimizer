@@ -119,6 +119,19 @@ struct _mesa_glsl_parse_state {
       return check_version(130, 300, locp, "bit-wise operations are forbidden");
    }
 
+   bool check_explicit_attrib_stream_allowed(YYLTYPE *locp)
+   {
+      if (!this->has_explicit_attrib_stream()) {
+         const char *const requirement = "GL_ARB_gpu_shader5 extension or GLSL 400";
+
+         _mesa_glsl_error(locp, this, "explicit stream requires %s",
+                          requirement);
+         return false;
+      }
+
+      return true;
+   }
+
    bool check_explicit_attrib_location_allowed(YYLTYPE *locp,
                                                const ir_variable *var)
    {
@@ -164,6 +177,11 @@ struct _mesa_glsl_parse_state {
       }
 
       return true;
+   }
+
+   bool has_explicit_attrib_stream() const
+   {
+      return ARB_gpu_shader5_enable || is_version(400, 0);
    }
 
    bool has_explicit_attrib_location() const

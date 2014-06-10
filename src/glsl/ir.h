@@ -706,6 +706,11 @@ public:
       int location;
 
       /**
+       * Vertex stream output identifier.
+       */
+      unsigned stream;
+
+      /**
        * output index for dual source blending.
        */
       int index;

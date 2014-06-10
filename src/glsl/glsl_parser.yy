@@ -1395,6 +1395,22 @@ layout_qualifier_id:
          }
       }
 
+      if (state->stage == MESA_SHADER_GEOMETRY) {
+         if (match_layout_qualifier("stream", $1, state) == 0 &&
+             state->check_explicit_attrib_stream_allowed(& @3)) {
+            $$.flags.q.stream = 1;
+
+            if ($3 < 0) {
+               _mesa_glsl_error(& @3, state,
+                                "invalid stream %d specified", $3);
+               YYERROR;
+            } else {
+               $$.flags.q.explicit_stream = 1;
+               $$.stream = $3;
+            }
+         }
+      }
+
       static const char * const local_size_qualifiers[3] = {
          "local_size_x",
          "local_size_y",
@@ -1693,6 +1709,20 @@ storage_qualifier:
    {
       memset(& $$, 0, sizeof($$));
       $$.flags.q.out = 1;
+
+      if (state->stage == MESA_SHADER_GEOMETRY &&
+          state->has_explicit_attrib_stream()) {
+         /* Section 4.3.8.2 (Output Layout Qualifiers) of the GLSL 4.00
+          * spec says:
+          *
+          *     "If the block or variable is declared with the stream
+          *     identifier, it is associated with the specified stream;
+          *     otherwise, it is associated with the current default stream."
+          */
+          $$.flags.q.stream = 1;
+          $$.flags.q.explicit_stream = 0;
+          $$.stream = state->out_qualifier->stream;
+      }
    }
    | UNIFORM
    {
@@ -2361,6 +2391,18 @@ interface_block:
       if (!block->layout.merge_qualifier(& @1, state, $1)) {
          YYERROR;
       }
+
+      foreach_list_typed (ast_declarator_list, member, link, &block->declarations) {
+         ast_type_qualifier& qualifier = member->type->qualifier;
+         if (qualifier.flags.q.stream && qualifier.stream != block->layout.stream) {
+               _mesa_glsl_error(& @1, state,
+                             "stream layout qualifier on "
+                             "interface block member does not match "
+                             "the interface block (%d vs %d)",
+                             qualifier.stream, block->layout.stream);
+               YYERROR;
+         }
+      }
       $$ = block;
    }
    ;
@@ -2433,6 +2475,14 @@ basic_interface_block:
       uint64_t block_interface_qualifier = $1.flags.i;
 
       block->layout.flags.i |= block_interface_qualifier;
+
+      if (state->stage == MESA_SHADER_GEOMETRY &&
+          state->has_explicit_attrib_stream()) {
+         /* Assign global layout's stream value. */
+         block->layout.flags.q.stream = 1;
+         block->layout.flags.q.explicit_stream = 0;
+         block->layout.stream = state->out_qualifier->stream;
+      }
 
       foreach_list_typed (ast_declarator_list, member, link, &block->declarations) {
          ast_type_qualifier& qualifier = member->type->qualifier;
@@ -2576,6 +2626,9 @@ layout_defaults:
          }
          if (!state->out_qualifier->merge_qualifier(& @1, state, $1))
             YYERROR;
+
+         /* Allow future assigments of global out's stream id value */
+         state->out_qualifier->flags.q.explicit_stream = 0;
       }
       $$ = NULL;
    }

@@ -2461,6 +2461,11 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
    if (qual->flags.q.sample)
       var->data.sample = 1;
 
+   if (state->stage == MESA_SHADER_GEOMETRY &&
+       qual->flags.q.out && qual->flags.q.stream) {
+      var->data.stream = qual->stream;
+   }
+
    if (qual->flags.q.attribute && state->stage != MESA_SHADER_VERTEX) {
       var->type = glsl_type::error_type;
       _mesa_glsl_error(loc, state,
@@ -5100,6 +5105,9 @@ ast_process_structure_or_interface_block(exec_list *instructions,
          fields[i].centroid = qual->flags.q.centroid ? 1 : 0;
          fields[i].sample = qual->flags.q.sample ? 1 : 0;
 
+         /* Only save explicitly defined streams in block's field */
+         fields[i].stream = qual->flags.q.explicit_stream ? qual->stream : -1;
+
          if (qual->flags.q.row_major || qual->flags.q.column_major) {
             if (!qual->flags.q.uniform) {
                _mesa_glsl_error(&loc, state,
@@ -5547,6 +5555,17 @@ ast_interface_block::hir(exec_list *instructions,
          var->data.centroid = fields[i].centroid;
          var->data.sample = fields[i].sample;
          var->init_interface_type(block_type);
+
+         if (fields[i].stream != -1 &&
+             ((unsigned)fields[i].stream) != this->layout.stream) {
+            _mesa_glsl_error(&loc, state,
+                             "stream layout qualifier on "
+                             "interface block member `%s' does not match "
+                             "the interface block (%d vs %d)",
+                             var->name, fields[i].stream, this->layout.stream);
+         }
+
+         var->data.stream = this->layout.stream;
 
          if (redeclaring_per_vertex) {
             ir_variable *earlier =
