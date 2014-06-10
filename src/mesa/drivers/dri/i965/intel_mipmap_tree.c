@@ -261,6 +261,7 @@ intel_miptree_create_layout(struct brw_context *brw,
    mt->logical_height0 = height0;
    mt->logical_depth0 = depth0;
    mt->fast_clear_state = INTEL_FAST_CLEAR_STATE_NO_MCS;
+   exec_list_make_empty(&mt->hiz_map);
 
    /* The cpp is bytes per (1, blockheight)-sized block for compressed
     * textures.  This is why you'll see divides by blockheight all over
@@ -1400,20 +1401,18 @@ intel_miptree_alloc_hiz(struct brw_context *brw,
       return false;
 
    /* Mark that all slices need a HiZ resolve. */
-   struct intel_resolve_map *head = &mt->hiz_map;
    for (int level = mt->first_level; level <= mt->last_level; ++level) {
       if (!intel_miptree_level_enable_hiz(brw, mt, level))
          continue;
 
       for (int layer = 0; layer < mt->level[level].depth; ++layer) {
-	 head->next = malloc(sizeof(*head->next));
-	 head->next->prev = head;
-	 head->next->next = NULL;
-	 head = head->next;
+         struct intel_resolve_map *m = malloc(sizeof(struct intel_resolve_map));
+         exec_node_init(&m->link);
+         m->level = level;
+         m->layer = layer;
+         m->need = GEN6_HIZ_OP_HIZ_RESOLVE;
 
-	 head->level = level;
-	 head->layer = layer;
-	 head->need = GEN6_HIZ_OP_HIZ_RESOLVE;
+         exec_list_push_tail(&mt->hiz_map, &m->link);
       }
    }
 
@@ -1513,15 +1512,15 @@ intel_miptree_all_slices_resolve(struct brw_context *brw,
 				 enum gen6_hiz_op need)
 {
    bool did_resolve = false;
-   struct intel_resolve_map *i, *next;
 
-   for (i = mt->hiz_map.next; i; i = next) {
-      next = i->next;
-      if (i->need != need)
+   foreach_list_safe(node, &mt->hiz_map) {
+      struct intel_resolve_map *map = (struct intel_resolve_map *)node;
+
+      if (map->need != need)
 	 continue;
 
-      intel_hiz_exec(brw, mt, i->level, i->layer, need);
-      intel_resolve_map_remove(i);
+      intel_hiz_exec(brw, mt, map->level, map->layer, need);
+      intel_resolve_map_remove(map);
       did_resolve = true;
    }
 

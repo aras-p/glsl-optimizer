@@ -381,7 +381,7 @@ struct intel_mipmap_tree
     * \c mt->hiz_map. The resolve map of the child HiZ miptree, \c
     * mt->hiz_mt->hiz_map, is unused.
     */
-   struct intel_resolve_map hiz_map;
+   struct exec_list hiz_map; /* List of intel_resolve_map. */
 
    /**
     * \brief Stencil miptree for depthstencil textures.
