@@ -119,7 +119,7 @@ softpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return 16*4;
    case PIPE_CAP_MAX_GEOMETRY_OUTPUT_VERTICES:
    case PIPE_CAP_MAX_GEOMETRY_TOTAL_OUTPUT_COMPONENTS:
-      return 0;
+      return 1024;
    case PIPE_CAP_PRIMITIVE_RESTART:
       return 1;
    case PIPE_CAP_SHADER_STENCIL_EXPORT:
