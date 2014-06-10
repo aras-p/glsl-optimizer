@@ -83,67 +83,29 @@ struct exec_node {
       /* empty */
    }
 
-   const exec_node *get_next() const
-   {
-      return next;
-   }
+   const exec_node *get_next() const;
+   exec_node *get_next();
 
-   exec_node *get_next()
-   {
-      return next;
-   }
+   const exec_node *get_prev() const;
+   exec_node *get_prev();
 
-   const exec_node *get_prev() const
-   {
-      return prev;
-   }
-
-   exec_node *get_prev()
-   {
-      return prev;
-   }
-
-   void remove()
-   {
-      next->prev = prev;
-      prev->next = next;
-      next = NULL;
-      prev = NULL;
-   }
+   void remove();
 
    /**
     * Link a node with itself
     *
     * This creates a sort of degenerate list that is occasionally useful.
     */
-   void self_link()
-   {
-      next = this;
-      prev = this;
-   }
+   void self_link();
 
    /**
     * Insert a node in the list after the current node
     */
-   void insert_after(exec_node *after)
-   {
-      after->next = this->next;
-      after->prev = this;
-
-      this->next->prev = after;
-      this->next = after;
-   }
+   void insert_after(exec_node *after);
    /**
     * Insert a node in the list before the current node
     */
-   void insert_before(exec_node *before)
-   {
-      before->next = this;
-      before->prev = this->prev;
-
-      this->prev->next = before;
-      this->prev = before;
-   }
+   void insert_before(exec_node *before);
 
    /**
     * Insert another list in the list before the current node
@@ -153,33 +115,92 @@ struct exec_node {
    /**
     * Replace the current node with the given node.
     */
-   void replace_with(exec_node *replacement)
-   {
-      replacement->prev = this->prev;
-      replacement->next = this->next;
-
-      this->prev->next = replacement;
-      this->next->prev = replacement;
-   }
+   void replace_with(exec_node *replacement);
 
    /**
     * Is this the sentinel at the tail of the list?
     */
-   bool is_tail_sentinel() const
-   {
-      return this->next == NULL;
-   }
+   bool is_tail_sentinel() const;
 
    /**
     * Is this the sentinel at the head of the list?
     */
-   bool is_head_sentinel() const
-   {
-      return this->prev == NULL;
-   }
+   bool is_head_sentinel() const;
 #endif
 };
 
+#ifdef __cplusplus
+inline const exec_node *exec_node::get_next() const
+{
+   return next;
+}
+
+inline exec_node *exec_node::get_next()
+{
+   return next;
+}
+
+inline const exec_node *exec_node::get_prev() const
+{
+   return prev;
+}
+
+inline exec_node *exec_node::get_prev()
+{
+   return prev;
+}
+
+inline void exec_node::remove()
+{
+   next->prev = prev;
+   prev->next = next;
+   next = NULL;
+   prev = NULL;
+}
+
+inline void exec_node::self_link()
+{
+   next = this;
+   prev = this;
+}
+
+inline void exec_node::insert_after(exec_node *after)
+{
+   after->next = this->next;
+   after->prev = this;
+
+   this->next->prev = after;
+   this->next = after;
+}
+
+inline void exec_node::insert_before(exec_node *before)
+{
+   before->next = this;
+   before->prev = this->prev;
+
+   this->prev->next = before;
+   this->prev = before;
+}
+
+inline void exec_node::replace_with(exec_node *replacement)
+{
+   replacement->prev = this->prev;
+   replacement->next = this->next;
+
+   this->prev->next = replacement;
+   this->next->prev = replacement;
+}
+
+inline bool exec_node::is_tail_sentinel() const
+{
+   return this->next == NULL;
+}
+
+inline bool exec_node::is_head_sentinel() const
+{
+   return this->prev == NULL;
+}
+#endif
 
 #ifdef __cplusplus
 /* This macro will not work correctly if `t' uses virtual inheritance.  If you
