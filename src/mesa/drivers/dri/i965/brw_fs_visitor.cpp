@@ -1089,22 +1089,22 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    fs_inst *inst = NULL;
    switch (ir->op) {
    case ir_tex:
-      inst = emit(SHADER_OPCODE_TEX, dst);
+      inst = emit(SHADER_OPCODE_TEX, dst, reg_undef);
       break;
    case ir_txb:
-      inst = emit(FS_OPCODE_TXB, dst);
+      inst = emit(FS_OPCODE_TXB, dst, reg_undef);
       break;
    case ir_txl:
-      inst = emit(SHADER_OPCODE_TXL, dst);
+      inst = emit(SHADER_OPCODE_TXL, dst, reg_undef);
       break;
    case ir_txd:
-      inst = emit(SHADER_OPCODE_TXD, dst);
+      inst = emit(SHADER_OPCODE_TXD, dst, reg_undef);
       break;
    case ir_txs:
-      inst = emit(SHADER_OPCODE_TXS, dst);
+      inst = emit(SHADER_OPCODE_TXS, dst, reg_undef);
       break;
    case ir_txf:
-      inst = emit(SHADER_OPCODE_TXF, dst);
+      inst = emit(SHADER_OPCODE_TXF, dst, reg_undef);
       break;
    default:
       fail("unrecognized texture opcode");
