@@ -129,6 +129,13 @@ struct exec_node {
 #endif
 };
 
+static inline void
+exec_node_init(struct exec_node *n)
+{
+   n->next = NULL;
+   n->prev = NULL;
+}
+
 static inline const struct exec_node *
 exec_node_get_next_const(const struct exec_node *n)
 {
