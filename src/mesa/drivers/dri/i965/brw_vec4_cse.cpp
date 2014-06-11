@@ -56,6 +56,8 @@ is_expression(const vec4_instruction *const inst)
    case BRW_OPCODE_SHR:
    case BRW_OPCODE_SHL:
    case BRW_OPCODE_ASR:
+   case BRW_OPCODE_CMP:
+   case BRW_OPCODE_CMPN:
    case BRW_OPCODE_ADD:
    case BRW_OPCODE_MUL:
    case BRW_OPCODE_FRC:
@@ -135,7 +137,7 @@ vec4_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
 
       /* Skip some cases. */
       if (is_expression(inst) && !inst->predicate && inst->mlen == 0 &&
-          !inst->conditional_mod)
+          (inst->dst.file != HW_REG || inst->dst.is_null()))
       {
          bool found = false;
 
@@ -195,6 +197,19 @@ vec4_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
       }
 
       foreach_in_list_safe(aeb_entry, entry, aeb) {
+         /* Kill all AEB entries that write a different value to or read from
+          * the flag register if we just wrote it.
+          */
+         if (inst->writes_flag()) {
+            if (entry->generator->reads_flag() ||
+                (entry->generator->writes_flag() &&
+                 !instructions_match(inst, entry->generator))) {
+               entry->remove();
+               ralloc_free(entry);
+               continue;
+            }
+         }
+
          for (int i = 0; i < 3; i++) {
             src_reg *src = &entry->generator->src[i];
 
