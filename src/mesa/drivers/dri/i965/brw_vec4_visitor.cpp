@@ -2655,13 +2655,13 @@ vec4_visitor::swizzle_result(ir_texture *ir, src_reg orig_val, int sampler)
 }
 
 void
-vec4_visitor::visit(ir_return *ir)
+vec4_visitor::visit(ir_return *)
 {
    assert(!"not reached");
 }
 
 void
-vec4_visitor::visit(ir_discard *ir)
+vec4_visitor::visit(ir_discard *)
 {
    assert(!"not reached");
 }
