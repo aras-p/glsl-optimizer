@@ -2219,23 +2219,23 @@ AC_CONFIG_FILES([Makefile
 		src/gallium/targets/dri-vmwgfx/Makefile
 		src/gallium/targets/egl-static/Makefile
 		src/gallium/targets/gbm/Makefile
-		src/gallium/targets/opencl/Makefile
-		src/gallium/targets/xa/Makefile
-		src/gallium/targets/xa/xatracker.pc
+		src/gallium/targets/libgl-xlib/Makefile
 		src/gallium/targets/omx-nouveau/Makefile
+		src/gallium/targets/opencl/Makefile
 		src/gallium/targets/osmesa/Makefile
 		src/gallium/targets/osmesa/osmesa.pc
 		src/gallium/targets/pipe-loader/Makefile
-		src/gallium/targets/radeonsi/dri/Makefile
-		src/gallium/targets/radeonsi/omx/Makefile
-		src/gallium/targets/radeonsi/vdpau/Makefile
 		src/gallium/targets/r300/dri/Makefile
 		src/gallium/targets/r600/dri/Makefile
 		src/gallium/targets/r600/omx/Makefile
 		src/gallium/targets/r600/vdpau/Makefile
 		src/gallium/targets/r600/xvmc/Makefile
-		src/gallium/targets/libgl-xlib/Makefile
+		src/gallium/targets/radeonsi/dri/Makefile
+		src/gallium/targets/radeonsi/omx/Makefile
+		src/gallium/targets/radeonsi/vdpau/Makefile
 		src/gallium/targets/vdpau-nouveau/Makefile
+		src/gallium/targets/xa/Makefile
+		src/gallium/targets/xa/xatracker.pc
 		src/gallium/targets/xvmc-nouveau/Makefile
 		src/gallium/tests/trivial/Makefile
 		src/gallium/tests/unit/Makefile
