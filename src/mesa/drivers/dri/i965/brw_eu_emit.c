@@ -1017,12 +1017,13 @@ void brw_##OP(struct brw_compile *p,					      \
 	      struct brw_reg dest,					      \
 	      struct brw_reg src)					      \
 {									      \
+   struct brw_context *brw = p->brw;					      \
    struct brw_instruction *rnd, *add;					      \
    rnd = next_insn(p, BRW_OPCODE_##OP);					      \
    brw_set_dest(p, rnd, dest);						      \
    brw_set_src0(p, rnd, src);						      \
 									      \
-   if (p->brw->gen < 6) {						      \
+   if (brw->gen < 6) {							      \
       /* turn on round-increments */					      \
       rnd->header.destreg__conditionalmod = BRW_CONDITIONAL_R;		      \
       add = brw_ADD(p, dest, dest, brw_imm_f(1.0f));			      \

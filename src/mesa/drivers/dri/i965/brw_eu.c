@@ -113,9 +113,11 @@ void
 brw_set_default_compression_control(struct brw_compile *p,
 			    enum brw_compression compression_control)
 {
+   struct brw_context *brw = p->brw;
+
    p->compressed = (compression_control == BRW_COMPRESSION_COMPRESSED);
 
-   if (p->brw->gen >= 6) {
+   if (brw->gen >= 6) {
       /* Since we don't use the SIMD32 support in gen6, we translate
        * the pre-gen6 compression control here.
        */
@@ -158,7 +160,9 @@ void brw_set_default_saturate( struct brw_compile *p, bool enable )
 
 void brw_set_default_acc_write_control(struct brw_compile *p, unsigned value)
 {
-   if (p->brw->gen >= 6)
+   struct brw_context *brw = p->brw;
+
+   if (brw->gen >= 6)
       p->current->header.acc_wr_control = value;
 }
 

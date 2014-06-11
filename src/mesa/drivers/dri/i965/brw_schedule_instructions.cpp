@@ -882,7 +882,7 @@ fs_instruction_scheduler::calculate_deps()
 	 last_conditional_mod[inst->flag_subreg] = n;
       }
 
-      if (inst->writes_accumulator_implicitly(v->brw->gen) &&
+      if (inst->writes_accumulator_implicitly(v->brw) &&
           !inst->dst.is_accumulator()) {
          add_dep(last_accumulator_write, n);
          last_accumulator_write = n;
@@ -1002,7 +1002,7 @@ fs_instruction_scheduler::calculate_deps()
 	 last_conditional_mod[inst->flag_subreg] = n;
       }
 
-      if (inst->writes_accumulator_implicitly(v->brw->gen)) {
+      if (inst->writes_accumulator_implicitly(v->brw)) {
          last_accumulator_write = n;
       }
    }
@@ -1112,7 +1112,7 @@ vec4_instruction_scheduler::calculate_deps()
          last_conditional_mod = n;
       }
 
-      if (inst->writes_accumulator_implicitly(v->brw->gen) &&
+      if (inst->writes_accumulator_implicitly(v->brw) &&
           !inst->dst.is_accumulator()) {
          add_dep(last_accumulator_write, n);
          last_accumulator_write = n;
@@ -1197,7 +1197,7 @@ vec4_instruction_scheduler::calculate_deps()
          last_conditional_mod = n;
       }
 
-      if (inst->writes_accumulator_implicitly(v->brw->gen)) {
+      if (inst->writes_accumulator_implicitly(v->brw)) {
          last_accumulator_write = n;
       }
    }
@@ -1206,6 +1206,7 @@ vec4_instruction_scheduler::calculate_deps()
 schedule_node *
 fs_instruction_scheduler::choose_instruction_to_schedule()
 {
+   struct brw_context *brw = v->brw;
    schedule_node *chosen = NULL;
 
    if (mode == SCHEDULE_PRE || mode == SCHEDULE_POST) {
@@ -1276,7 +1277,7 @@ fs_instruction_scheduler::choose_instruction_to_schedule()
              * then the MRFs for the next SEND, then the next SEND, then the
              * MRFs, etc., without ever consuming the results of a send.
              */
-            if (v->brw->gen < 7) {
+            if (brw->gen < 7) {
                fs_inst *chosen_inst = (fs_inst *)chosen->inst;
 
                /* We use regs_written > 1 as our test for the kind of send
