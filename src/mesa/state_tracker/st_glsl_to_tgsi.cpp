@@ -3139,14 +3139,14 @@ void
 glsl_to_tgsi_visitor::visit(ir_emit_vertex *ir)
 {
    assert(this->prog->Target == GL_GEOMETRY_PROGRAM_NV);
-   emit(ir, TGSI_OPCODE_EMIT);
+   emit(ir, TGSI_OPCODE_EMIT, undef_dst, st_src_reg_for_int(0));
 }
 
 void
 glsl_to_tgsi_visitor::visit(ir_end_primitive *ir)
 {
    assert(this->prog->Target == GL_GEOMETRY_PROGRAM_NV);
-   emit(ir, TGSI_OPCODE_ENDPRIM);
+   emit(ir, TGSI_OPCODE_ENDPRIM, undef_dst, st_src_reg_for_int(0));
 }
 
 glsl_to_tgsi_visitor::glsl_to_tgsi_visitor()

@@ -1646,14 +1646,14 @@ in any other type of shader.
 
 .. opcode:: EMIT - Emit
 
-  Generate a new vertex for the current primitive using the values in the
-  output registers.
+  Generate a new vertex for the current primitive into the specified vertex
+  stream using the values in the output registers.
 
 
 .. opcode:: ENDPRIM - End Primitive
 
-  Complete the current primitive (consisting of the emitted vertices),
-  and start a new one.
+  Complete the current primitive in the specified vertex stream (consisting of
+  the emitted vertices), and start a new one.
 
 
 GLSL ISA
