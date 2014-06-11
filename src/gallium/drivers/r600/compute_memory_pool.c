@@ -110,7 +110,7 @@ int64_t compute_memory_prealloc_chunk(
 
 	for (item = pool->item_list; item; item = item->next) {
 		if (item->start_in_dw > -1) {
-			if (item->start_in_dw-last_end > size_in_dw) {
+			if (last_end + size_in_dw <= item->start_in_dw) {
 				return last_end;
 			}
 
