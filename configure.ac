@@ -543,7 +543,7 @@ darwin*|mingw*)
 *)
     AC_CHECK_FUNCS([clock_gettime], [CLOCK_LIB=],
                    [AC_CHECK_LIB([rt], [clock_gettime], [CLOCK_LIB=-lrt],
-                                 [AC_MSG_ERROR([Couldn't find clock_gettime])])])
+                                 [AC_MSG_ERROR([Could not find clock_gettime])])])
     AC_SUBST([CLOCK_LIB])
     ;;
 esac
@@ -1362,7 +1362,7 @@ if test "x$enable_xa" = xyes; then
     if test "x$with_gallium_drivers" = xswrast; then
        AC_MSG_ERROR([
           Building xa requires at least one non swrast gallium driver.
-          If you are looking to use libxatracker.so with vmware's virtual gpu,
+          If you are looking to use libxatracker.so with the VMware driver,
           make sure to include svga in the gallium drivers list, apart from
           enabling XA.
           Example: ./configure --enable-xa --with-gallium-drivers=svga...])
