@@ -789,6 +789,11 @@ tgsi_exec_machine_bind_shader(
          break;
 
       case TGSI_TOKEN_TYPE_PROPERTY:
+         if (mach->Processor == TGSI_PROCESSOR_GEOMETRY) {
+            if (parse.FullToken.FullProperty.Property.PropertyName == TGSI_PROPERTY_GS_MAX_OUTPUT_VERTICES) {
+               mach->MaxOutputVertices = parse.FullToken.FullProperty.u[0].Data;
+            }
+         }
          break;
 
       default:
@@ -1621,6 +1626,9 @@ emit_vertex(struct tgsi_exec_machine *mach)
          if ((mach->ExecMask & (1 << i)))
    */
    if (mach->ExecMask) {
+      if (mach->Primitives[mach->Temps[TEMP_PRIMITIVE_I].xyzw[TEMP_PRIMITIVE_C].u[0]] >= mach->MaxOutputVertices)
+         return;
+
       mach->Temps[TEMP_OUTPUT_I].xyzw[TEMP_OUTPUT_C].u[0] += mach->NumOutputs;
       mach->Primitives[mach->Temps[TEMP_PRIMITIVE_I].xyzw[TEMP_PRIMITIVE_C].u[0]]++;
    }

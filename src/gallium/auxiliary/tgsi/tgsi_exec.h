@@ -297,6 +297,7 @@ struct tgsi_exec_machine
    unsigned                      *Primitives;
    unsigned                       NumOutputs;
    unsigned                       MaxGeometryShaderOutputs;
+   unsigned                       MaxOutputVertices;
 
    /* FRAGMENT processor only. */
    const struct tgsi_interp_coef *InterpCoefs;
