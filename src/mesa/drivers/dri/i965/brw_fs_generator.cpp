@@ -106,9 +106,14 @@ fs_generator::fire_fb_write(fs_inst *inst,
    uint32_t msg_control;
 
    if (brw->gen < 6) {
+      brw_push_insn_state(p);
+      brw_set_default_mask_control(p, BRW_MASK_DISABLE);
+      brw_set_default_predicate_control(p, BRW_PREDICATE_NONE);
+      brw_set_default_compression_control(p, BRW_COMPRESSION_NONE);
       brw_MOV(p,
               brw_message_reg(base_reg + 1),
               brw_vec8_grf(1, 0));
+      brw_pop_insn_state(p);
    }
 
    if (this->dual_source_output)
@@ -196,6 +201,8 @@ fs_generator::generate_fb_write(fs_inst *inst)
       implied_header = brw_null_reg();
    }
 
+   brw_pop_insn_state(p);
+
    if (!runtime_check_aads_emit) {
       fire_fb_write(inst, inst->base_mrf, implied_header, inst->mlen);
    } else {
@@ -221,8 +228,6 @@ fs_generator::generate_fb_write(fs_inst *inst)
       brw_land_fwd_jump(p, jmp);
       fire_fb_write(inst, inst->base_mrf, implied_header, inst->mlen);
    }
-
-   brw_pop_insn_state(p);
 }
 
 void
