@@ -1,0 +1,41 @@
+attribute vec4 a_position;
+uniform int u_iter;
+uniform vec4 u_deltas[5];
+int my_min (
+  in int a_1,
+  in int b_2
+)
+{
+  if ((a_1 < b_2)) {
+    return a_1;
+  } else {
+    return b_2;
+  };
+}
+
+void main ()
+{
+  int i_3;
+  vec4 tmpvar_4;
+  tmpvar_4 = a_position;
+  gl_Position = tmpvar_4;
+  int tmpvar_5;
+  tmpvar_5 = 0;
+  i_3 = tmpvar_5;
+  while (true) {
+    int tmpvar_6;
+    tmpvar_6 = my_min (u_iter, 5);
+    if (!((i_3 < tmpvar_6))) {
+      break;
+    };
+    vec4 tmpvar_7;
+    tmpvar_7 = (gl_Position + u_deltas[i_3]);
+    gl_Position = tmpvar_7;
+    int _post_incdec_tmp_8;
+    _post_incdec_tmp_8 = i_3;
+    int tmpvar_9;
+    tmpvar_9 = (i_3 + 1);
+    i_3 = tmpvar_9;
+  };
+}
+

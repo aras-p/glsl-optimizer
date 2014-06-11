@@ -186,6 +186,7 @@ public:
 	virtual void visit(ir_end_primitive *);
 	
 	void emit_assignment_part (ir_dereference* lhs, ir_rvalue* rhs, unsigned write_mask, ir_rvalue* dstIndex);
+    bool can_emit_canonical_for (loop_variable_state *ls);
 	bool emit_canonical_for (ir_loop* ir);
 	bool try_print_array_assignment (ir_dereference* lhs, ir_rvalue* rhs);
 	
@@ -431,7 +432,8 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 	if (!inside_loop_body)
 	{
 		loop_variable_state* inductor_state = loopstate->get_for_inductor(ir);
-		if (inductor_state && inductor_state->private_induction_variable_count == 1)
+		if (inductor_state && inductor_state->private_induction_variable_count == 1 &&
+            can_emit_canonical_for(inductor_state))
 		{
 			skipped_this_ir = true;
 			return;
@@ -1126,7 +1128,8 @@ void ir_print_glsl_visitor::visit(ir_assignment *ir)
 		if (!ir->condition && whole_var)
 		{
 			loop_variable_state* inductor_state = loopstate->get_for_inductor(whole_var);
-			if (inductor_state && inductor_state->private_induction_variable_count == 1)
+			if (inductor_state && inductor_state->private_induction_variable_count == 1 &&
+                can_emit_canonical_for(inductor_state))
 			{
 				skipped_this_ir = true;
 				return;
@@ -1381,10 +1384,8 @@ ir_print_glsl_visitor::visit(ir_if *ir)
    }
 }
 
-
-bool ir_print_glsl_visitor::emit_canonical_for (ir_loop* ir)
+bool ir_print_glsl_visitor::can_emit_canonical_for (loop_variable_state *ls)
 {
-	loop_variable_state* const ls = this->loopstate->get(ir);
 	if (ls == NULL)
 		return false;
 	
@@ -1401,6 +1402,16 @@ bool ir_print_glsl_visitor::emit_canonical_for (ir_loop* ir)
 	}
 	if (terminatorCount != 1)
 		return false;
+
+    return true;
+}
+
+bool ir_print_glsl_visitor::emit_canonical_for (ir_loop* ir)
+{
+	loop_variable_state* const ls = this->loopstate->get(ir);
+
+    if (!can_emit_canonical_for(ls))
+        return false;
 	
 	hash_table* terminator_hash = hash_table_ctor(0, hash_table_pointer_hash, hash_table_pointer_compare);
 	hash_table* induction_hash = hash_table_ctor(0, hash_table_pointer_hash, hash_table_pointer_compare);
