@@ -149,7 +149,7 @@ _SAVE_LDFLAGS="$LDFLAGS"
 _SAVE_CPPFLAGS="$CPPFLAGS"
 
 dnl Compiler macros
-DEFINES=""
+DEFINES="-DUSE_EXTERNAL_DXTN_LIB=1"
 AC_SUBST([DEFINES])
 case "$host_os" in
 linux*|*-gnu*|gnu*)
@@ -1077,7 +1077,6 @@ if test "x$enable_dri" = xyes; then
     # Platform specific settings and drivers to build
     case "$host_os" in
     linux*)
-        DEFINES="$DEFINES -DUSE_EXTERNAL_DXTN_LIB=1"
         DEFINES="$DEFINES -DHAVE_ALIAS"
         if test "x$enable_dri3" = xyes; then
             DEFINES="$DEFINES -DHAVE_DRI3"
@@ -1097,24 +1096,19 @@ if test "x$enable_dri" = xyes; then
         esac
         ;;
     *freebsd* | dragonfly* | *netbsd* | openbsd*)
-        DEFINES="$DEFINES -DHAVE_PTHREAD -DUSE_EXTERNAL_DXTN_LIB=1"
+        DEFINES="$DEFINES -DHAVE_PTHREAD"
         DEFINES="$DEFINES -DHAVE_ALIAS"
         ;;
     gnu*)
-        DEFINES="$DEFINES -DUSE_EXTERNAL_DXTN_LIB=1"
         DEFINES="$DEFINES -DHAVE_ALIAS"
         ;;
-    solaris*)
-        DEFINES="$DEFINES -DUSE_EXTERNAL_DXTN_LIB=1"
-        ;;
     cygwin*)
-        DEFINES="$DEFINES -DUSE_EXTERNAL_DXTN_LIB=1"
         if test "x$with_dri_drivers" = "xyes"; then
             with_dri_drivers="swrast"
         fi
         ;;
     darwin*)
-        DEFINES="$DEFINES -DUSE_EXTERNAL_DXTN_LIB=1 -DGLX_ALIAS_UNSUPPORTED"
+        DEFINES="$DEFINES -DGLX_ALIAS_UNSUPPORTED"
         if test "x$with_dri_drivers" = "xyes"; then
             with_dri_drivers="swrast"
         fi
