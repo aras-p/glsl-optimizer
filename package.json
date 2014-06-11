@@ -17,5 +17,14 @@
   "author": "Don Olmstead",
   "license": "MIT",
   "gypfile": true,
-  "readmeFilename": "README.md"
+  "bugs": {
+    "url": "https://github.com/donny-dont/glsl-optimizer/issues"
+  },
+  "homepage": "https://github.com/donny-dont/glsl-optimizer",
+  "directories": {
+    "test": "tests"
+  },
+  "dependencies": {
+    "nan": "~1.2.0"
+  }
 }
