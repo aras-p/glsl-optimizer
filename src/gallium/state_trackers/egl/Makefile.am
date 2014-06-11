@@ -88,3 +88,23 @@ AM_CPPFLAGS += \
 	-I$(top_srcdir)/src/gallium/winsys/sw \
 	-DHAVE_NULL_BACKEND
 endif
+
+if HAVE_OPENGL
+AM_CPPFLAGS += \
+	-DFEATURE_GL=1
+endif
+
+if HAVE_OPENGL_ES1
+AM_CPPFLAGS += \
+	-DFEATURE_ES1=1
+endif
+
+if HAVE_OPENGL_ES2
+AM_CPPFLAGS += \
+	-DFEATURE_ES2=1
+endif
+
+if HAVE_OPENVG
+AM_CPPFLAGS += \
+	-DFEATURE_VG=1
+endif

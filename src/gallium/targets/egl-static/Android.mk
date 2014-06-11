@@ -31,6 +31,8 @@ LOCAL_SRC_FILES := \
 	egl_st.c
 
 LOCAL_CFLAGS := \
+	-DFEATURE_ES1=1 \
+	-DFEATURE_ES2=1 \
 	-D_EGL_MAIN=_eglBuiltInDriverGALLIUM
 
 LOCAL_C_INCLUDES := \
