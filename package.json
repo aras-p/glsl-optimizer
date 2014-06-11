@@ -12,7 +12,14 @@
   },
   "keywords": [
     "glsl",
-    "webgl"
+    "webgl",
+    "shader",
+    "optimize",
+    "optimizer",
+    "opengl",
+    "essl",
+    "es",
+    "opengles"
   ],
   "readmeFilename": "README.md",
   "author": "Aras Pranckevičius",
