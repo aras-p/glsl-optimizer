@@ -1,6 +1,13 @@
 GLSL optimizer Change Log
 =========================
 
+2014 06
+-------
+
+Fixes:
+
+* Fixed more issues with for-loop printing.
+
 2014 03
 -------
 
