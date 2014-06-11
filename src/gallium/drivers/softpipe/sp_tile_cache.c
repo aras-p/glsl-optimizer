@@ -529,7 +529,6 @@ sp_find_cached_tile(struct softpipe_tile_cache *tc,
 
    if (addr.value != tc->tile_addrs[pos].value) {
 
-      assert(pt->resource);
       layer = tc->tile_addrs[pos].bits.layer;
       if (tc->tile_addrs[pos].bits.invalid == 0) {
          /* put dirty tile back in framebuffer */
@@ -570,6 +569,7 @@ sp_find_cached_tile(struct softpipe_tile_cache *tc,
 
       layer = tc->tile_addrs[pos].bits.layer;
       pt = tc->transfer[layer];
+      assert(pt->resource);
 
       if (is_clear_flag_set(tc->clear_flags, addr, tc->clear_flags_size)) {
          /* don't get tile from framebuffer, just clear it */
