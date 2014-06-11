@@ -159,7 +159,7 @@ vec4_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
              * If we don't have a temporary already, make one.
              */
             bool no_existing_temp = entry->tmp.file == BAD_FILE;
-            if (no_existing_temp) {
+            if (no_existing_temp && !entry->generator->dst.is_null()) {
                entry->tmp = src_reg(this, glsl_type::float_type);
                entry->tmp.type = inst->dst.type;
                entry->tmp.swizzle = BRW_SWIZZLE_XYZW;
@@ -170,10 +170,12 @@ vec4_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
             }
 
             /* dest <- temp */
-            assert(inst->dst.type == entry->tmp.type);
-            vec4_instruction *copy = MOV(inst->dst, entry->tmp);
-            copy->force_writemask_all = inst->force_writemask_all;
-            inst->insert_before(copy);
+            if (!inst->dst.is_null()) {
+               assert(inst->dst.type == entry->tmp.type);
+               vec4_instruction *copy = MOV(inst->dst, entry->tmp);
+               copy->force_writemask_all = inst->force_writemask_all;
+               inst->insert_before(copy);
+            }
 
             /* Set our iterator so that next time through the loop inst->next
              * will get the instruction in the basic block after the one we've
