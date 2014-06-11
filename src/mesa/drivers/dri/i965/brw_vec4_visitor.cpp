@@ -1126,6 +1126,48 @@ vec4_visitor::try_emit_mad(ir_expression *ir)
    return true;
 }
 
+bool
+vec4_visitor::try_emit_b2f_of_compare(ir_expression *ir)
+{
+   ir_expression *const cmp = ir->operands[0]->as_expression();
+
+   if (cmp == NULL)
+      return false;
+
+   switch (cmp->operation) {
+   case ir_binop_less:
+   case ir_binop_greater:
+   case ir_binop_lequal:
+   case ir_binop_gequal:
+   case ir_binop_equal:
+   case ir_binop_nequal:
+      break;
+
+   default:
+      return false;
+   }
+
+   cmp->operands[0]->accept(this);
+   const src_reg cmp_src0 = this->result;
+
+   cmp->operands[1]->accept(this);
+   const src_reg cmp_src1 = this->result;
+
+   this->result = src_reg(this, ir->type);
+
+   emit(CMP(dst_reg(this->result), cmp_src0, cmp_src1,
+            brw_conditional_for_comparison(cmp->operation)));
+
+   /* If the comparison is false, this->result will just happen to be zero.
+    */
+   vec4_instruction *const inst = emit(BRW_OPCODE_SEL, dst_reg(this->result),
+                                       this->result, src_reg(1.0f));
+   inst->predicate = BRW_PREDICATE_NORMAL;
+   inst->predicate_inverse = true;
+
+   return true;
+}
+
 void
 vec4_visitor::emit_bool_comparison(unsigned int op,
 				 dst_reg dst, src_reg src0, src_reg src1)
@@ -1199,6 +1241,11 @@ vec4_visitor::visit(ir_expression *ir)
 
    if (ir->operation == ir_binop_add) {
       if (try_emit_mad(ir))
+	 return;
+   }
+
+   if (ir->operation == ir_unop_b2f) {
+      if (try_emit_b2f_of_compare(ir))
 	 return;
    }
 
