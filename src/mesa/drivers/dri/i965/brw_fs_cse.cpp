@@ -136,39 +136,39 @@ fs_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
 
    int ip = block->start_ip;
    for (fs_inst *inst = (fs_inst *)block->start;
-	inst != block->end->next;
-	inst = (fs_inst *) inst->next) {
+        inst != block->end->next;
+        inst = (fs_inst *) inst->next) {
 
       /* Skip some cases. */
       if (is_expression(inst) && !inst->is_partial_write() &&
           (inst->dst.file != HW_REG || inst->dst.is_null()))
       {
-	 bool found = false;
+         bool found = false;
 
-	 aeb_entry *entry;
-	 foreach_list(entry_node, aeb) {
-	    entry = (aeb_entry *) entry_node;
+         aeb_entry *entry;
+         foreach_list(entry_node, aeb) {
+            entry = (aeb_entry *) entry_node;
 
-	    /* Match current instruction's expression against those in AEB. */
-	    if (instructions_match(inst, entry->generator)) {
-	       found = true;
-	       progress = true;
-	       break;
-	    }
-	 }
+            /* Match current instruction's expression against those in AEB. */
+            if (instructions_match(inst, entry->generator)) {
+               found = true;
+               progress = true;
+               break;
+            }
+         }
 
-	 if (!found) {
-	    /* Our first sighting of this expression.  Create an entry. */
-	    aeb_entry *entry = ralloc(cse_ctx, aeb_entry);
-	    entry->tmp = reg_undef;
-	    entry->generator = inst;
-	    aeb->push_tail(entry);
-	 } else {
-	    /* This is at least our second sighting of this expression.
-	     * If we don't have a temporary already, make one.
-	     */
-	    bool no_existing_temp = entry->tmp.file == BAD_FILE;
-	    if (no_existing_temp && !entry->generator->dst.is_null()) {
+         if (!found) {
+            /* Our first sighting of this expression.  Create an entry. */
+            aeb_entry *entry = ralloc(cse_ctx, aeb_entry);
+            entry->tmp = reg_undef;
+            entry->generator = inst;
+            aeb->push_tail(entry);
+         } else {
+            /* This is at least our second sighting of this expression.
+             * If we don't have a temporary already, make one.
+             */
+            bool no_existing_temp = entry->tmp.file == BAD_FILE;
+            if (no_existing_temp && !entry->generator->dst.is_null()) {
                int written = entry->generator->regs_written;
 
                fs_reg orig_dst = entry->generator->dst;
@@ -186,9 +186,9 @@ fs_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
                   orig_dst.reg_offset++;
                   tmp.reg_offset++;
                }
-	    }
+            }
 
-	    /* dest <- temp */
+            /* dest <- temp */
             if (!inst->dst.is_null()) {
                int written = inst->regs_written;
                assert(written == entry->generator->regs_written);
@@ -214,17 +214,17 @@ fs_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
 
             inst->remove();
 
-	    /* Appending an instruction may have changed our bblock end. */
-	    if (inst == block->end) {
-	       block->end = prev;
-	    }
+            /* Appending an instruction may have changed our bblock end. */
+            if (inst == block->end) {
+               block->end = prev;
+            }
 
             inst = prev;
-	 }
+         }
       }
 
       foreach_list_safe(entry_node, aeb) {
-	 aeb_entry *entry = (aeb_entry *)entry_node;
+         aeb_entry *entry = (aeb_entry *)entry_node;
 
          /* Kill all AEB entries that write a different value to or read from
           * the flag register if we just wrote it.
@@ -239,17 +239,17 @@ fs_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
             }
          }
 
-	 for (int i = 0; i < entry->generator->sources; i++) {
+         for (int i = 0; i < entry->generator->sources; i++) {
             fs_reg *src_reg = &entry->generator->src[i];
 
             /* Kill all AEB entries that use the destination we just
              * overwrote.
              */
             if (inst->overwrites_reg(entry->generator->src[i])) {
-	       entry->remove();
-	       ralloc_free(entry);
-	       break;
-	    }
+               entry->remove();
+               ralloc_free(entry);
+               break;
+            }
 
             /* Kill any AEB entries using registers that don't get reused any
              * more -- a sure sign they'll fail operands_match().
@@ -257,9 +257,9 @@ fs_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
             if (src_reg->file == GRF && virtual_grf_end[src_reg->reg] < ip) {
                entry->remove();
                ralloc_free(entry);
-	       break;
+               break;
             }
-	 }
+         }
       }
 
       ip++;
