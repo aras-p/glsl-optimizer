@@ -148,12 +148,12 @@ fs_generator::generate_fb_write(fs_inst *inst)
    /* Header is 2 regs, g0 and g1 are the contents. g0 will be implied
     * move, here's g1.
     */
-   brw_push_insn_state(p);
-   brw_set_default_mask_control(p, BRW_MASK_DISABLE);
-   brw_set_default_predicate_control(p, BRW_PREDICATE_NONE);
-   brw_set_default_compression_control(p, BRW_COMPRESSION_NONE);
-
    if (inst->header_present) {
+      brw_push_insn_state(p);
+      brw_set_default_mask_control(p, BRW_MASK_DISABLE);
+      brw_set_default_predicate_control(p, BRW_PREDICATE_NONE);
+      brw_set_default_compression_control(p, BRW_COMPRESSION_NONE);
+
       /* On HSW, the GPU will use the predicate on SENDC, unless the header is
        * present.
        */
@@ -197,11 +197,11 @@ fs_generator::generate_fb_write(fs_inst *inst)
       } else {
 	 implied_header = retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW);
       }
+
+      brw_pop_insn_state(p);
    } else {
       implied_header = brw_null_reg();
    }
-
-   brw_pop_insn_state(p);
 
    if (!runtime_check_aads_emit) {
       fire_fb_write(inst, inst->base_mrf, implied_header, inst->mlen);
