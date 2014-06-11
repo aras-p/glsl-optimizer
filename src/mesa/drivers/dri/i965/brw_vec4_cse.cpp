@@ -128,6 +128,7 @@ vec4_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
 
    void *cse_ctx = ralloc_context(NULL);
 
+   int ip = block->start_ip;
    for (vec4_instruction *inst = (vec4_instruction *)block->start;
         inst != block->end->next;
         inst = (vec4_instruction *) inst->next) {
@@ -193,6 +194,8 @@ vec4_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
 
       foreach_in_list_safe(aeb_entry, entry, aeb) {
          for (int i = 0; i < 3; i++) {
+            src_reg *src = &entry->generator->src[i];
+
             /* Kill all AEB entries that use the destination we just
              * overwrote.
              */
@@ -202,8 +205,23 @@ vec4_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
                ralloc_free(entry);
                break;
             }
+
+            /* Kill any AEB entries using registers that don't get reused any
+             * more -- a sure sign they'll fail operands_match().
+             */
+            int last_reg_use = MAX2(MAX2(virtual_grf_end[src->reg * 4 + 0],
+                                         virtual_grf_end[src->reg * 4 + 1]),
+                                    MAX2(virtual_grf_end[src->reg * 4 + 2],
+                                         virtual_grf_end[src->reg * 4 + 3]));
+            if (src->file == GRF && last_reg_use < ip) {
+               entry->remove();
+               ralloc_free(entry);
+               break;
+            }
          }
       }
+
+      ip++;
    }
 
    ralloc_free(cse_ctx);
@@ -218,6 +236,8 @@ bool
 vec4_visitor::opt_cse()
 {
    bool progress = false;
+
+   calculate_live_intervals();
 
    cfg_t cfg(&instructions);
 
