@@ -239,6 +239,7 @@ HASH		^{SPC}#{SPC}
 				    return INTCONSTANT;
 				}
 <PP>\n				{ BEGIN 0; yylineno++; yycolumn = 0; return EOL; }
+<PP>.				{ return yytext[0]; }
 
 \n		{ yylineno++; yycolumn = 0; }
 
