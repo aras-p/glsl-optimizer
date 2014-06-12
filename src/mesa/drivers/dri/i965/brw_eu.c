@@ -267,6 +267,6 @@ brw_disassemble(struct brw_context *brw,
 	 offset += 16;
       }
 
-      brw_disassemble_inst(out, insn, brw->gen, compacted);
+      brw_disassemble_inst(out, brw, insn, compacted);
    }
 }

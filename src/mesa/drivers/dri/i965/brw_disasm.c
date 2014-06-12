@@ -1118,8 +1118,8 @@ static int qtr_ctrl(FILE *file, struct brw_instruction *inst)
 }
 
 int
-brw_disassemble_inst(FILE *file,
-                     struct brw_instruction *inst, int gen, bool is_compacted)
+brw_disassemble_inst(FILE *file, struct brw_context *brw,
+                     struct brw_instruction *inst, bool is_compacted)
 {
     int	err = 0;
     int space = 0;
@@ -1127,7 +1127,7 @@ brw_disassemble_inst(FILE *file,
     if (inst->header.predicate_control) {
 	string (file, "(");
 	err |= control (file, "predicate inverse", pred_inv, inst->header.predicate_inverse, NULL);
-	format (file, "f%d", gen >= 7 ? inst->bits2.da1.flag_reg_nr : 0);
+	format (file, "f%d", brw->gen >= 7 ? inst->bits2.da1.flag_reg_nr : 0);
 	if (inst->bits2.da1.flag_subreg_nr)
 	    format (file, ".%d", inst->bits2.da1.flag_subreg_nr);
 	if (inst->header.access_mode == BRW_ALIGN_1)
@@ -1158,10 +1158,10 @@ brw_disassemble_inst(FILE *file,
          * control flow doesn't update flags.
          */
 	if (inst->header.destreg__conditionalmod &&
-            (gen < 6 || (inst->header.opcode != BRW_OPCODE_SEL &&
+            (brw->gen < 6 || (inst->header.opcode != BRW_OPCODE_SEL &&
                          inst->header.opcode != BRW_OPCODE_IF &&
                          inst->header.opcode != BRW_OPCODE_WHILE))) {
-	    format (file, ".f%d", gen >= 7 ? inst->bits2.da1.flag_reg_nr : 0);
+	    format (file, ".f%d", brw->gen >= 7 ? inst->bits2.da1.flag_reg_nr : 0);
 	    if (inst->bits2.da1.flag_subreg_nr)
 		format (file, ".%d", inst->bits2.da1.flag_subreg_nr);
         }
@@ -1173,7 +1173,7 @@ brw_disassemble_inst(FILE *file,
 	string (file, ")");
     }
 
-    if (inst->header.opcode == BRW_OPCODE_SEND && gen < 6)
+    if (inst->header.opcode == BRW_OPCODE_SEND && brw->gen < 6)
 	format (file, " %d", inst->header.destreg__conditionalmod);
 
     if (opcode[inst->header.opcode].nsrc == 3) {
@@ -1192,19 +1192,19 @@ brw_disassemble_inst(FILE *file,
        if (opcode[inst->header.opcode].ndst > 0) {
 	  pad (file, 16);
 	  err |= dest (file, inst);
-       } else if (gen == 7 && (inst->header.opcode == BRW_OPCODE_ELSE ||
+       } else if (brw->gen == 7 && (inst->header.opcode == BRW_OPCODE_ELSE ||
 			       inst->header.opcode == BRW_OPCODE_ENDIF ||
 			       inst->header.opcode == BRW_OPCODE_WHILE)) {
 	  format (file, " %d", inst->bits3.break_cont.jip);
-       } else if (gen == 6 && (inst->header.opcode == BRW_OPCODE_IF ||
+       } else if (brw->gen == 6 && (inst->header.opcode == BRW_OPCODE_IF ||
 			       inst->header.opcode == BRW_OPCODE_ELSE ||
 			       inst->header.opcode == BRW_OPCODE_ENDIF ||
 			       inst->header.opcode == BRW_OPCODE_WHILE)) {
 	  format (file, " %d", inst->bits1.branch_gen6.jump_count);
-       } else if ((gen >= 6 && (inst->header.opcode == BRW_OPCODE_BREAK ||
+       } else if ((brw->gen >= 6 && (inst->header.opcode == BRW_OPCODE_BREAK ||
                                 inst->header.opcode == BRW_OPCODE_CONTINUE ||
                                 inst->header.opcode == BRW_OPCODE_HALT)) ||
-                  (gen == 7 && inst->header.opcode == BRW_OPCODE_IF)) {
+                  (brw->gen == 7 && inst->header.opcode == BRW_OPCODE_IF)) {
 	  format (file, " %d %d", inst->bits3.break_cont.uip, inst->bits3.break_cont.jip);
        } else if (inst->header.opcode == BRW_OPCODE_JMPI) {
 	  format (file, " %d", inst->bits3.d);
@@ -1224,9 +1224,9 @@ brw_disassemble_inst(FILE *file,
 	inst->header.opcode == BRW_OPCODE_SENDC) {
 	enum brw_message_target target;
 
-	if (gen >= 6)
+	if (brw->gen >= 6)
 	    target = inst->header.destreg__conditionalmod;
-	else if (gen == 5)
+	else if (brw->gen == 5)
 	    target = inst->bits2.send_gen5.sfid;
 	else
 	    target = inst->bits3.generic.msg_target;
@@ -1236,7 +1236,7 @@ brw_disassemble_inst(FILE *file,
 	space = 0;
 
 	fprintf (file, "            ");
-	if (gen >= 6) {
+	if (brw->gen >= 6) {
 	   err |= control (file, "target function", target_function_gen6,
 			   target, &space);
 	} else {
@@ -1258,13 +1258,13 @@ brw_disassemble_inst(FILE *file,
 			    inst->bits3.math.precision, &space);
 	    break;
 	case BRW_SFID_SAMPLER:
-	    if (gen >= 7) {
+	    if (brw->gen >= 7) {
 		format (file, " (%d, %d, %d, %d)",
 			inst->bits3.sampler_gen7.binding_table_index,
 			inst->bits3.sampler_gen7.sampler,
 			inst->bits3.sampler_gen7.msg_type,
 			inst->bits3.sampler_gen7.simd_mode);
-	    } else if (gen >= 5) {
+	    } else if (brw->gen >= 5) {
 		format (file, " (%d, %d, %d, %d)",
 			inst->bits3.sampler_gen5.binding_table_index,
 			inst->bits3.sampler_gen5.sampler,
@@ -1285,13 +1285,13 @@ brw_disassemble_inst(FILE *file,
 	    }
 	    break;
 	case BRW_SFID_DATAPORT_READ:
-	    if (gen >= 6) {
+	    if (brw->gen >= 6) {
 		format (file, " (%d, %d, %d, %d)",
 			inst->bits3.gen6_dp.binding_table_index,
 			inst->bits3.gen6_dp.msg_control,
 			inst->bits3.gen6_dp.msg_type,
 			inst->bits3.gen6_dp.send_commit_msg);
-	    } else if (gen >= 5 /* FINISHME: || is_g4x */) {
+	    } else if (brw->gen >= 5 /* FINISHME: || is_g4x */) {
 		format (file, " (%d, %d, %d)",
 			inst->bits3.dp_read_gen5.binding_table_index,
 			inst->bits3.dp_read_gen5.msg_control,
@@ -1305,7 +1305,7 @@ brw_disassemble_inst(FILE *file,
 	    break;
 
 	case BRW_SFID_DATAPORT_WRITE:
-	    if (gen >= 7) {
+	    if (brw->gen >= 7) {
 		format (file, " (");
 
 		err |= control (file, "DP rc message type",
@@ -1316,7 +1316,7 @@ brw_disassemble_inst(FILE *file,
 			inst->bits3.gen7_dp.binding_table_index,
 			inst->bits3.gen7_dp.msg_control,
 			inst->bits3.gen7_dp.msg_type);
-	    } else if (gen == 6) {
+	    } else if (brw->gen == 6) {
 		format (file, " (");
 
 		err |= control (file, "DP rc message type",
@@ -1339,14 +1339,14 @@ brw_disassemble_inst(FILE *file,
 	    break;
 
 	case BRW_SFID_URB:
-	    if (gen >= 5) {
+	    if (brw->gen >= 5) {
 		format (file, " %d", inst->bits3.urb_gen5.offset);
 	    } else {
 		format (file, " %d", inst->bits3.urb.offset);
 	    }
 
 	    space = 1;
-	    if (gen >= 5) {
+	    if (brw->gen >= 5) {
 		err |= control (file, "urb opcode", urb_opcode,
 				inst->bits3.urb_gen5.opcode, &space);
 	    }
@@ -1362,7 +1362,7 @@ brw_disassemble_inst(FILE *file,
 	case BRW_SFID_THREAD_SPAWNER:
 	    break;
 	case GEN7_SFID_DATAPORT_DATA_CACHE:
-           if (gen >= 7) {
+           if (brw->gen >= 7) {
               format (file, " (");
 
               err |= control (file, "DP DC0 message type",
@@ -1385,7 +1385,7 @@ brw_disassemble_inst(FILE *file,
            /* FALLTHROUGH */
 
 	case HSW_SFID_DATAPORT_DATA_CACHE_1:
-	    if (gen >= 7) {
+	    if (brw->gen >= 7) {
 		format (file, " (");
 
 		err |= control (file, "DP DC1 message type",
@@ -1419,7 +1419,7 @@ brw_disassemble_inst(FILE *file,
 	}
 	if (space)
 	    string (file, " ");
-	if (gen >= 5) {
+	if (brw->gen >= 5) {
 	   format (file, "mlen %d",
 		   inst->bits3.generic_gen5.msg_length);
 	   format (file, " rlen %d",
@@ -1436,13 +1436,13 @@ brw_disassemble_inst(FILE *file,
 	string (file, "{");
 	space = 1;
 	err |= control(file, "access mode", access_mode, inst->header.access_mode, &space);
-	if (gen >= 6)
+	if (brw->gen >= 6)
 	    err |= control (file, "write enable control", wectrl, inst->header.mask_control, &space);
 	else
 	    err |= control (file, "mask control", mask_ctrl, inst->header.mask_control, &space);
 	err |= control (file, "dependency control", dep_ctrl, inst->header.dependency_control, &space);
 
-	if (gen >= 6)
+	if (brw->gen >= 6)
 	    err |= qtr_ctrl (file, inst);
 	else {
 	    if (inst->header.compression_control == BRW_COMPRESSION_COMPRESSED &&
@@ -1458,7 +1458,7 @@ brw_disassemble_inst(FILE *file,
 
 	err |= control (file, "compaction control", cmpt_ctrl, is_compacted, &space);
 	err |= control (file, "thread control", thread_ctrl, inst->header.thread_control, &space);
-	if (gen >= 6)
+	if (brw->gen >= 6)
 	    err |= control (file, "acc write control", accwr, inst->header.acc_wr_control, &space);
 	if (inst->header.opcode == BRW_OPCODE_SEND ||
 	    inst->header.opcode == BRW_OPCODE_SENDC)
