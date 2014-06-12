@@ -458,36 +458,6 @@ _mesa_is_enum_format_integer(GLenum format)
 }
 
 
-/**
- * Test if the given type is an integer (non-normalized) format.
- */
-GLboolean
-_mesa_is_type_integer(GLenum type)
-{
-   switch (type) {
-   case GL_INT:
-   case GL_UNSIGNED_INT:
-   case GL_SHORT:
-   case GL_UNSIGNED_SHORT:
-   case GL_BYTE:
-   case GL_UNSIGNED_BYTE:
-      return GL_TRUE;
-   default:
-      return GL_FALSE;
-   }
-}
-
-
-/**
- * Test if the given format or type is an integer (non-normalized) format.
- */
-extern GLboolean
-_mesa_is_enum_format_or_type_integer(GLenum format, GLenum type)
-{
-   return _mesa_is_enum_format_integer(format) || _mesa_is_type_integer(type);
-}
-
-
 GLboolean
 _mesa_is_type_unsigned(GLenum type)
 {

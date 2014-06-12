@@ -54,9 +54,6 @@ extern GLint
 _mesa_bytes_per_vertex_attrib(GLint comps, GLenum type);
 
 extern GLboolean
-_mesa_is_type_integer(GLenum type);
-
-extern GLboolean
 _mesa_is_type_unsigned(GLenum type);
 
 extern GLboolean
@@ -67,9 +64,6 @@ _mesa_is_enum_format_unsigned_int(GLenum format);
 
 extern GLboolean
 _mesa_is_enum_format_signed_int(GLenum format);
-
-extern GLboolean
-_mesa_is_enum_format_or_type_integer(GLenum format, GLenum type);
 
 extern GLboolean
 _mesa_is_color_format(GLenum format);
