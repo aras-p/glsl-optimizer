@@ -76,6 +76,7 @@ NEWLINE		[\n]
 HSPACE		[ \t]
 HASH		^{HSPACE}*#{HSPACE}*
 IDENTIFIER	[_a-zA-Z][_a-zA-Z0-9]*
+PP_NUMBER	[.]?[0-9]([._a-zA-Z0-9]|[eEpP][-+])*
 PUNCTUATION	[][(){}.&*~!/%<>^|;,=+-]
 
 /* The OTHER class is simply a catch-all for things that the CPP
@@ -328,6 +329,11 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 {IDENTIFIER} {
 	yylval->str = ralloc_strdup (yyextra, yytext);
 	return IDENTIFIER;
+}
+
+{PP_NUMBER} {
+	yylval->str = ralloc_strdup (yyextra, yytext);
+	return OTHER;
 }
 
 {PUNCTUATION} {
