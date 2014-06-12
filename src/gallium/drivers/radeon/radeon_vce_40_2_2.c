@@ -108,7 +108,7 @@ static void create(struct rvce_encoder *enc)
 	RVCE_CS(0x00000000); // encUseCircularBuffer
 	RVCE_CS(profiles[enc->base.profile -
 		PIPE_VIDEO_PROFILE_MPEG4_AVC_BASELINE]); // encProfile
-	RVCE_CS(0x0000002a); // encLevel: 4.2
+	RVCE_CS(enc->base.level); // encLevel
 	RVCE_CS(0x00000000); // encPicStructRestriction
 	RVCE_CS(enc->base.width); // encImageWidth
 	RVCE_CS(enc->base.height); // encImageHeight
