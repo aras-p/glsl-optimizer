@@ -1,7 +1,7 @@
 include $(top_srcdir)/src/gallium/Automake.inc
 
 AM_CFLAGS = \
-	$(GALLIUM_VIDEO_CFLAGS)
+	$(GALLIUM_TARGET_CFLAGS)
 
 omxdir = $(OMX_LIB_INSTALL_DIR)
 omx_LTLIBRARIES = libomx_mesa.la

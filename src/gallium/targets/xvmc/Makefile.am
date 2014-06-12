@@ -1,7 +1,7 @@
 include $(top_srcdir)/src/gallium/Automake.inc
 
 AM_CFLAGS = \
-	$(GALLIUM_VIDEO_CFLAGS)
+	$(GALLIUM_TARGET_CFLAGS)
 
 xvmcdir = $(XVMC_LIB_INSTALL_DIR)
 xvmc_LTLIBRARIES = libXvMCgallium.la

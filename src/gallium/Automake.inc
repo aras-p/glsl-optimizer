@@ -39,7 +39,7 @@ GALLIUM_DRI_CFLAGS = \
 	$(LIBDRM_CFLAGS) \
 	$(VISIBILITY_CFLAGS)
 
-GALLIUM_VIDEO_CFLAGS = \
+GALLIUM_TARGET_CFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/src/loader \
 	-I$(top_srcdir)/src/gallium/include \
