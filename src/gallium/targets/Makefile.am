@@ -26,6 +26,10 @@ if HAVE_X11_DRIVER
 SUBDIRS += libgl-xlib
 endif
 
+if HAVE_ST_OMX
+SUBDIRS += omx
+endif
+
 if HAVE_GALLIUM_OSMESA
 SUBDIRS += osmesa
 endif
@@ -103,10 +107,6 @@ endif
 if HAVE_GALLIUM_NOUVEAU
 if HAVE_DRI2
 SUBDIRS += dri-nouveau
-endif
-
-if HAVE_ST_OMX
-SUBDIRS += omx-nouveau
 endif
 endif
 

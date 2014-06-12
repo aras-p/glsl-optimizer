@@ -72,7 +72,7 @@ GALLIUM_DRI_LINKER_FLAGS += \
 	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/dri.sym
 
 GALLIUM_OMX_LINKER_FLAGS += \
-	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/omx.sym
+	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/omx/omx.sym
 endif
 
 
