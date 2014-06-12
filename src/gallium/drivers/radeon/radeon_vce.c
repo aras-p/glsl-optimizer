@@ -87,7 +87,7 @@ static void reset_cpb(struct rvce_encoder *enc)
 	unsigned i;
 
 	LIST_INITHEAD(&enc->cpb_slots);
-	for (i = 0; i < RVCE_NUM_CPB_FRAMES; ++i) {
+	for (i = 0; i < enc->cpb_num; ++i) {
 		struct rvce_cpb_slot *slot = &enc->cpb_array[i];
 		slot->index = i;
 		slot->picture_type = PIPE_H264_ENC_PICTURE_TYPE_SKIP;
@@ -128,6 +128,59 @@ static void sort_cpb(struct rvce_encoder *enc)
 		LIST_DEL(&l0->list);
 		LIST_ADD(&l0->list, &enc->cpb_slots);
 	}
+}
+
+/**
+ * get number of cpbs based on dpb
+ */
+static unsigned get_cpb_num(struct rvce_encoder *enc)
+{
+	unsigned w = align(enc->base.width, 16) / 16;
+	unsigned h = align(enc->base.height, 16) / 16;
+	unsigned dpb;
+
+	switch (enc->base.level) {
+	case 10:
+		dpb = 396;
+		break;
+	case 11:
+		dpb = 900;
+		break;
+	case 12:
+	case 13:
+	case 20:
+		dpb = 2376;
+		break;
+	case 21:
+		dpb = 4752;
+		break;
+	case 22:
+	case 30:
+		dpb = 8100;
+		break;
+	case 31:
+		dpb = 18000;
+		break;
+	case 32:
+		dpb = 20480;
+		break;
+	case 40:
+	case 41:
+		dpb = 32768;
+		break;
+	default:
+	case 42:
+		dpb = 34816;
+		break;
+	case 50:
+		dpb = 110400;
+		break;
+	case 51:
+		dpb = 184320;
+		break;
+	}
+
+	return MIN2(dpb / (w * h), 16);
 }
 
 /**
@@ -327,18 +380,22 @@ struct pipe_video_codec *rvce_create_encoder(struct pipe_context *context,
 		goto error;
 	}
 
+	enc->cpb_num = get_cpb_num(enc);
+	if (!enc->cpb_num)
+		goto error;
+
 	get_buffer(((struct vl_video_buffer *)tmp_buf)->resources[0], NULL, &tmp_surf);
 	cpb_size = align(tmp_surf->level[0].pitch_bytes, 128);
 	cpb_size = cpb_size * align(tmp_surf->npix_y, 16);
 	cpb_size = cpb_size * 3 / 2;
-	cpb_size = cpb_size * RVCE_NUM_CPB_FRAMES;
+	cpb_size = cpb_size * enc->cpb_num;
 	tmp_buf->destroy(tmp_buf);
 	if (!rvid_create_buffer(enc->ws, &enc->cpb, cpb_size, RADEON_DOMAIN_VRAM)) {
 		RVID_ERR("Can't create CPB buffer.\n");
 		goto error;
 	}
 
-	enc->cpb_array = CALLOC(RVCE_NUM_CPB_FRAMES, sizeof(struct rvce_cpb_slot));
+	enc->cpb_array = CALLOC(enc->cpb_num, sizeof(struct rvce_cpb_slot));
 	if (!enc->cpb_array)
 		goto error;
 
