@@ -66,7 +66,7 @@ struct cmd_bin;
 /* Rasterizer output size going to jit fs, width/height */
 #define LP_RASTER_BLOCK_SIZE 4
 
-#define LP_MAX_ACTIVE_BINNED_QUERIES 16
+#define LP_MAX_ACTIVE_BINNED_QUERIES 64
 
 #define IMUL64(a, b) (((int64_t)(a)) * ((int64_t)(b)))
 
