@@ -80,7 +80,7 @@ GALLIUM_DRI_LINKER_FLAGS += \
 	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/dri.sym
 
 GALLIUM_XVMC_LINKER_FLAGS += \
-	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/xvmc.sym
+	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/xvmc/xvmc.sym
 
 GALLIUM_OMX_LINKER_FLAGS += \
 	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/omx.sym

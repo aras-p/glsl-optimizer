@@ -42,6 +42,10 @@ if HAVE_ST_XA
 SUBDIRS += xa
 endif
 
+if HAVE_ST_XVMC
+SUBDIRS += xvmc
+endif
+
 if HAVE_CLOVER
 SUBDIRS += opencl
 endif
@@ -103,10 +107,6 @@ endif
 if HAVE_GALLIUM_NOUVEAU
 if HAVE_DRI2
 SUBDIRS += dri-nouveau
-endif
-
-if HAVE_ST_XVMC
-SUBDIRS += xvmc-nouveau
 endif
 
 if HAVE_ST_OMX
