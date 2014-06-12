@@ -376,16 +376,12 @@ vl_screen_create(Display *display, int screen)
    if (authenticate == NULL || !authenticate->authenticated)
       goto free_authenticate;
 
-#if SPLIT_TARGETS
-   scrn->base.pscreen = driver_descriptor.create_screen(fd);
-#else
 #if GALLIUM_STATIC_TARGETS
    scrn->base.pscreen = dd_create_screen(fd);
 #else
    if (pipe_loader_drm_probe_fd(&scrn->base.dev, fd, true))
       scrn->base.pscreen = pipe_loader_create_screen(scrn->base.dev, PIPE_SEARCH_DIR);
 #endif // GALLIUM_STATIC_TARGETS
-#endif // SPLIT_TARGETS
 
    if (!scrn->base.pscreen)
       goto release_pipe;
@@ -402,12 +398,10 @@ vl_screen_create(Display *display, int screen)
    return &scrn->base;
 
 release_pipe:
-#if !SPLIT_TARGETS
 #if !GALLIUM_STATIC_TARGETS
    if (scrn->base.dev)
       pipe_loader_release(&scrn->base.dev, 1);
 #endif // !GALLIUM_STATIC_TARGETS
-#endif // !SPLIT_TARGETS
 free_authenticate:
    free(authenticate);
 free_connect:
@@ -435,10 +429,8 @@ void vl_screen_destroy(struct vl_screen *vscreen)
 
    vl_dri2_destroy_drawable(scrn);
    scrn->base.pscreen->destroy(scrn->base.pscreen);
-#if !SPLIT_TARGETS
 #if !GALLIUM_STATIC_TARGETS
    pipe_loader_release(&scrn->base.dev, 1);
 #endif // !GALLIUM_STATIC_TARGETS
-#endif // !SPLIT_TARGETS
    FREE(scrn);
 }
