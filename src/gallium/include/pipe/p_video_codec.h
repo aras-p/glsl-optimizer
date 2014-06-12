@@ -48,6 +48,7 @@ struct pipe_video_codec
    struct pipe_context *context;
 
    enum pipe_video_profile profile;
+   unsigned level;
    enum pipe_video_entrypoint entrypoint;
    enum pipe_video_chroma_format chroma_format;
    unsigned width;
