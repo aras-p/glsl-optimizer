@@ -645,6 +645,44 @@ static enum pipe_video_profile enc_TranslateOMXProfileToPipe(unsigned omx_profil
    }
 }
 
+static unsigned enc_TranslateOMXLevelToPipe(unsigned omx_level)
+{
+   switch (omx_level) {
+   case OMX_VIDEO_AVCLevel1:
+   case OMX_VIDEO_AVCLevel1b:
+      return 10;
+   case OMX_VIDEO_AVCLevel11:
+      return 11;
+   case OMX_VIDEO_AVCLevel12:
+      return 12;
+   case OMX_VIDEO_AVCLevel13:
+      return 13;
+   case OMX_VIDEO_AVCLevel2:
+      return 20;
+   case OMX_VIDEO_AVCLevel21:
+      return 21;
+   case OMX_VIDEO_AVCLevel22:
+      return 22;
+   case OMX_VIDEO_AVCLevel3:
+      return 30;
+   case OMX_VIDEO_AVCLevel31:
+      return 31;
+   case OMX_VIDEO_AVCLevel32:
+      return 32;
+   case OMX_VIDEO_AVCLevel4:
+      return 40;
+   case OMX_VIDEO_AVCLevel41:
+      return 41;
+   default:
+   case OMX_VIDEO_AVCLevel42:
+      return 42;
+   case OMX_VIDEO_AVCLevel5:
+      return 50;
+   case OMX_VIDEO_AVCLevel51:
+      return 51;
+   }
+}
+
 static OMX_ERRORTYPE vid_enc_MessageHandler(OMX_COMPONENTTYPE* comp, internalRequestMessageType *msg)
 {
    vid_enc_PrivateType* priv = comp->pComponentPrivate;
@@ -658,6 +696,7 @@ static OMX_ERRORTYPE vid_enc_MessageHandler(OMX_COMPONENTTYPE* comp, internalReq
          port = (omx_base_video_PortType *)priv->ports[OMX_BASE_FILTER_INPUTPORT_INDEX];
 
          templat.profile = enc_TranslateOMXProfileToPipe(priv->profile_level.eProfile);
+         templat.level = enc_TranslateOMXLevelToPipe(priv->profile_level.eLevel);
          templat.entrypoint = PIPE_VIDEO_ENTRYPOINT_ENCODE;
          templat.chroma_format = PIPE_VIDEO_CHROMA_FORMAT_420;
          templat.width = priv->scale_buffer[priv->current_scale_buffer] ?
