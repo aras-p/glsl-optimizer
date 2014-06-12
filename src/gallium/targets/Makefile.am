@@ -88,10 +88,6 @@ if HAVE_GALLIUM_R600
 if HAVE_DRI2
 SUBDIRS += r600/dri
 endif
-
-if HAVE_ST_OMX
-SUBDIRS += r600/omx
-endif
 endif
 
 if HAVE_GALLIUM_RADEONSI
