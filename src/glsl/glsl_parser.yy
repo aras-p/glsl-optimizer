@@ -1558,11 +1558,6 @@ type_qualifier:
       if ($2.flags.q.invariant)
          _mesa_glsl_error(&@1, state, "duplicate \"invariant\" qualifier");
 
-      if ($2.has_layout()) {
-         _mesa_glsl_error(&@1, state,
-                          "\"invariant\" cannot be used with layout(...)");
-      }
-
       if (!state->ARB_shading_language_420pack_enable && $2.flags.q.precise)
          _mesa_glsl_error(&@1, state,
                           "\"invariant\" must come after \"precise\"");
@@ -1585,11 +1580,6 @@ type_qualifier:
       if ($2.has_interpolation())
          _mesa_glsl_error(&@1, state, "duplicate interpolation qualifier");
 
-      if ($2.has_layout()) {
-         _mesa_glsl_error(&@1, state, "interpolation qualifiers cannot be used "
-                          "with layout(...)");
-      }
-
       if (!state->ARB_shading_language_420pack_enable &&
           ($2.flags.q.precise || $2.flags.q.invariant)) {
          _mesa_glsl_error(&@1, state, "interpolation qualifiers must come "
@@ -1601,27 +1591,17 @@ type_qualifier:
    }
    | layout_qualifier type_qualifier
    {
-      /* The GLSL 1.50 grammar indicates that a layout(...) declaration can be
-       * used standalone or immediately before a storage qualifier.  It cannot
-       * be used with interpolation qualifiers or invariant.  There does not
-       * appear to be any text indicating that it must come before the storage
-       * qualifier, but always seems to in examples.
+      /* In the absence of ARB_shading_language_420pack, layout qualifiers may
+       * appear no later than auxiliary storage qualifiers. There is no
+       * particularly clear spec language mandating this, but in all examples
+       * the layout qualifier precedes the storage qualifier.
+       *
+       * We allow combinations of layout with interpolation, invariant or
+       * precise qualifiers since these are useful in ARB_separate_shader_objects.
+       * There is no clear spec guidance on this either.
        */
       if (!state->ARB_shading_language_420pack_enable && $2.has_layout())
          _mesa_glsl_error(&@1, state, "duplicate layout(...) qualifiers");
-
-      if ($2.flags.q.invariant)
-         _mesa_glsl_error(&@1, state, "layout(...) cannot be used with "
-                          "the \"invariant\" qualifier");
-
-      if ($2.flags.q.precise)
-         _mesa_glsl_error(&@1, state, "layout(...) cannot be used with "
-                          "the \"precise\" qualifier");
-
-      if ($2.has_interpolation()) {
-         _mesa_glsl_error(&@1, state, "layout(...) cannot be used with "
-                          "interpolation qualifiers");
-      }
 
       $$ = $1;
       $$.merge_qualifier(&@1, state, $2);
