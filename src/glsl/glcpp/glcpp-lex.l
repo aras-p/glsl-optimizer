@@ -137,14 +137,15 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	 *	2. The skip_stack is NULL meaning that we've reached
 	 *	   the last #endif.
 	 *
-	 *	3. The lexing_if bit is set. This indicates that we
-	 *	   are lexing the expression following an "#if" of
-	 *	   "#elif". Even inside an "#if 0" we need to lex this
-	 *	   expression so the parser can correctly update the
-	 *	   skip_stack state.
+	 *	3. The lexing_directive bit is set. This indicates that we are
+	 *	   lexing a pre-processor directive, (such as #if, #elif, or
+	 *	   #else). For the #if and #elif directives we always need to
+	 *	   parse the conditions, (even if otherwise within an #if
+	 *	   0). And for #else, we want to be able to generate an error
+	 *	   if any garbage follows #else.
 	 */
 	if (YY_START == INITIAL || YY_START == SKIP) {
-		if (parser->lexing_if ||
+		if (parser->lexing_directive ||
 		    parser->skip_stack == NULL ||
 		    parser->skip_stack->type == SKIP_NO_SKIP)
 		{
@@ -193,25 +194,25 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 
 <SKIP,INITIAL>{
 {HASH}ifdef {
-	yyextra->lexing_if = 1;
+	yyextra->lexing_directive = 1;
 	yyextra->space_tokens = 0;
 	return HASH_IFDEF;
 }
 
 {HASH}ifndef {
-	yyextra->lexing_if = 1;
+	yyextra->lexing_directive = 1;
 	yyextra->space_tokens = 0;
 	return HASH_IFNDEF;
 }
 
 {HASH}if/[^_a-zA-Z0-9] {
-	yyextra->lexing_if = 1;
+	yyextra->lexing_directive = 1;
 	yyextra->space_tokens = 0;
 	return HASH_IF;
 }
 
 {HASH}elif/[^_a-zA-Z0-9] {
-	yyextra->lexing_if = 1;
+	yyextra->lexing_directive = 1;
 	yyextra->space_tokens = 0;
 	return HASH_ELIF;
 }
@@ -348,7 +349,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	if (parser->commented_newlines) {
 		BEGIN NEWLINE_CATCHUP;
 	}
-	yyextra->lexing_if = 0;
+	yyextra->lexing_directive = 0;
 	yylineno++;
 	yycolumn = 0;
 	return NEWLINE;
@@ -357,7 +358,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	/* Handle missing newline at EOF. */
 <INITIAL><<EOF>> {
 	BEGIN DONE; /* Don't keep matching this rule forever. */
-	yyextra->lexing_if = 0;
+	yyextra->lexing_directive = 0;
 	return NEWLINE;
 }
 

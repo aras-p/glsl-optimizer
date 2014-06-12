@@ -364,7 +364,7 @@ control_line:
 			glcpp_warning(& @1, parser, "ignoring illegal #elif without expression");
 		}
 	}
-|	HASH_ELSE {
+|	HASH_ELSE { parser->lexing_directive = 1; } NEWLINE {
 		if (parser->skip_stack &&
 		    parser->skip_stack->has_else)
 		{
@@ -376,7 +376,7 @@ control_line:
 			if (parser->skip_stack)
 				parser->skip_stack->has_else = true;
 		}
-	} NEWLINE
+	}
 |	HASH_ENDIF {
 		_glcpp_parser_skip_stack_pop (parser, & @1);
 	} NEWLINE
@@ -1211,7 +1211,7 @@ glcpp_parser_create (const struct gl_extensions *extensions, gl_api api)
 	parser->defines = hash_table_ctor (32, hash_table_string_hash,
 					   hash_table_string_compare);
 	parser->active = NULL;
-	parser->lexing_if = 0;
+	parser->lexing_directive = 0;
 	parser->space_tokens = 1;
 	parser->newline_as_space = 0;
 	parser->in_control_line = 0;
