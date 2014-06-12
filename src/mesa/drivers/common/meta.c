@@ -2745,15 +2745,14 @@ get_temp_image_type(struct gl_context *ctx, mesa_format format)
    case GL_LUMINANCE:
    case GL_LUMINANCE_ALPHA:
    case GL_INTENSITY:
-      if (format_red_bits <= 8) {
+      if (datatype == GL_INT || datatype == GL_UNSIGNED_INT) {
+         return datatype;
+      } else if (format_red_bits <= 8) {
          return GL_UNSIGNED_BYTE;
       } else if (format_red_bits <= 16) {
          return GL_UNSIGNED_SHORT;
-      } else {
-         if (datatype == GL_INT || datatype == GL_UNSIGNED_INT)
-            return datatype;
-         return GL_FLOAT;
       }
+      return GL_FLOAT;
    case GL_DEPTH_COMPONENT:
       if (datatype == GL_FLOAT)
          return GL_FLOAT;
