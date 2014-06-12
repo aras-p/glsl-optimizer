@@ -626,22 +626,22 @@ static OMX_ERRORTYPE vid_enc_GetConfig(OMX_HANDLETYPE handle, OMX_INDEXTYPE idx,
 static enum pipe_video_profile enc_TranslateOMXProfileToPipe(unsigned omx_profile)
 {
    switch (omx_profile) {
-      case OMX_VIDEO_AVCProfileBaseline:
-         return PIPE_VIDEO_PROFILE_MPEG4_AVC_BASELINE;
-      case OMX_VIDEO_AVCProfileMain:
-         return PIPE_VIDEO_PROFILE_MPEG4_AVC_MAIN;
-      case OMX_VIDEO_AVCProfileExtended:
-         return PIPE_VIDEO_PROFILE_MPEG4_AVC_EXTENDED;
-      case OMX_VIDEO_AVCProfileHigh:
-         return PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH;
-      case OMX_VIDEO_AVCProfileHigh10:
-         return PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH10;
-      case OMX_VIDEO_AVCProfileHigh422:
-         return PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH422;
-      case OMX_VIDEO_AVCProfileHigh444:
-         return PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH444;
-      default:
-         return PIPE_VIDEO_PROFILE_UNKNOWN;
+   case OMX_VIDEO_AVCProfileBaseline:
+      return PIPE_VIDEO_PROFILE_MPEG4_AVC_BASELINE;
+   case OMX_VIDEO_AVCProfileMain:
+      return PIPE_VIDEO_PROFILE_MPEG4_AVC_MAIN;
+   case OMX_VIDEO_AVCProfileExtended:
+      return PIPE_VIDEO_PROFILE_MPEG4_AVC_EXTENDED;
+   case OMX_VIDEO_AVCProfileHigh:
+      return PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH;
+   case OMX_VIDEO_AVCProfileHigh10:
+      return PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH10;
+   case OMX_VIDEO_AVCProfileHigh422:
+      return PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH422;
+   case OMX_VIDEO_AVCProfileHigh444:
+      return PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH444;
+   default:
+      return PIPE_VIDEO_PROFILE_UNKNOWN;
    }
 }
 
