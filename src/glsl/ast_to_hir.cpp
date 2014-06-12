@@ -4657,9 +4657,51 @@ ast_case_label::hir(exec_list *instructions,
       ir_dereference_variable *deref_test_var =
          new(ctx) ir_dereference_variable(state->switch_state.test_var);
 
-      ir_rvalue *const test_cond = new(ctx) ir_expression(ir_binop_all_equal,
-                                                          label_const,
-                                                          deref_test_var);
+      ir_expression *test_cond = new(ctx) ir_expression(ir_binop_all_equal,
+                                                        label_const,
+                                                        deref_test_var);
+
+      /*
+       * From GLSL 4.40 specification section 6.2 ("Selection"):
+       *
+       *     "The type of the init-expression value in a switch statement must
+       *     be a scalar int or uint. The type of the constant-expression value
+       *     in a case label also must be a scalar int or uint. When any pair
+       *     of these values is tested for "equal value" and the types do not
+       *     match, an implicit conversion will be done to convert the int to a
+       *     uint (see section 4.1.10 “Implicit Conversions”) before the compare
+       *     is done."
+       */
+      if (label_const->type != state->switch_state.test_var->type) {
+         YYLTYPE loc = this->test_value->get_location();
+
+         const glsl_type *type_a = label_const->type;
+         const glsl_type *type_b = state->switch_state.test_var->type;
+
+         /* Check if int->uint implicit conversion is supported. */
+         bool integer_conversion_supported =
+            glsl_type::int_type->can_implicitly_convert_to(glsl_type::uint_type,
+                                                           state);
+
+         if ((!type_a->is_integer() || !type_b->is_integer()) ||
+              !integer_conversion_supported) {
+            _mesa_glsl_error(&loc, state, "type mismatch with switch "
+                             "init-expression and case label (%s != %s)",
+                             type_a->name, type_b->name);
+         } else {
+            /* Conversion of the case label. */
+            if (type_a->base_type == GLSL_TYPE_INT) {
+               if (!apply_implicit_conversion(glsl_type::uint_type,
+                                              test_cond->operands[0], state))
+                  _mesa_glsl_error(&loc, state, "implicit type conversion error");
+            } else {
+               /* Conversion of the init-expression value. */
+               if (!apply_implicit_conversion(glsl_type::uint_type,
+                                              test_cond->operands[1], state))
+                  _mesa_glsl_error(&loc, state, "implicit type conversion error");
+            }
+         }
+      }
 
       ir_assignment *set_fallthru_on_test =
          new(ctx) ir_assignment(deref_fallthru_var, true_val, test_cond);
