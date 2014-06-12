@@ -2732,9 +2732,7 @@ _mesa_meta_blit_shader_table_cleanup(struct blit_shader_table *table)
 static GLenum
 get_temp_image_type(struct gl_context *ctx, mesa_format format)
 {
-   GLenum baseFormat;
-
-   baseFormat = _mesa_get_format_base_format(format);
+   const GLenum baseFormat = _mesa_get_format_base_format(format);
 
    switch (baseFormat) {
    case GL_RGBA:
