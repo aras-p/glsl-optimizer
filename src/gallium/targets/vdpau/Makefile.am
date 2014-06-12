@@ -48,6 +48,25 @@ STATIC_TARGET_LIB_DEPS += \
 	$(NOUVEAU_LIBS)
 endif
 
+# Radeon winsys chaos
+if HAVE_GALLIUM_R600
+STATIC_TARGET_LIB_DEPS += \
+	$(top_builddir)/src/gallium/winsys/radeon/drm/libradeonwinsys.la
+endif
+
+if HAVE_GALLIUM_RADEON_COMMON
+STATIC_TARGET_LIB_DEPS += \
+	$(top_builddir)/src/gallium/drivers/radeon/libradeon.la
+endif
+
+if HAVE_GALLIUM_R600
+MEGADRIVERS += r600
+STATIC_TARGET_CPPFLAGS += -DGALLIUM_R600
+STATIC_TARGET_LIB_DEPS += \
+	$(top_builddir)/src/gallium/drivers/r600/libr600.la \
+	$(RADEON_LIBS)
+endif
+
 libvdpau_gallium_la_SOURCES += target.c
 libvdpau_gallium_la_CPPFLAGS = $(STATIC_TARGET_CPPFLAGS)
 libvdpau_gallium_la_LIBADD += $(STATIC_TARGET_LIB_DEPS)
