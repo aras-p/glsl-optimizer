@@ -41,6 +41,7 @@
  * - BITFIELD_INSERT_TO_BFM_BFI
  * - CARRY_TO_ARITH
  * - BORROW_TO_ARITH
+ * - SAT_TO_CLAMP
  *
  * SUB_TO_ADD_NEG:
  * ---------------
@@ -104,6 +105,10 @@
  * ----------------
  * Converts ir_borrow into (x < y).
  *
+ * SAT_TO_CLAMP:
+ * -------------
+ * Converts ir_unop_saturate into min(max(x, 0.0), 1.0)
+ *
  */
 
 #include "main/core.h" /* for M_LOG2E */
@@ -139,6 +144,7 @@ private:
    void ldexp_to_arith(ir_expression *);
    void carry_to_arith(ir_expression *);
    void borrow_to_arith(ir_expression *);
+   void sat_to_clamp(ir_expression *);
 };
 
 } /* anonymous namespace */
@@ -484,6 +490,24 @@ lower_instructions_visitor::borrow_to_arith(ir_expression *ir)
    this->progress = true;
 }
 
+void
+lower_instructions_visitor::sat_to_clamp(ir_expression *ir)
+{
+   /* Translates
+    *   ir_unop_saturate x
+    * into
+    *   ir_binop_min (ir_binop_max(x, 0.0), 1.0)
+    */
+
+   ir->operation = ir_binop_min;
+   ir->operands[0] = new(ir) ir_expression(ir_binop_max, ir->operands[0]->type,
+                                           ir->operands[0],
+                                           new(ir) ir_constant(0.0f));
+   ir->operands[1] = new(ir) ir_constant(1.0f);
+
+   this->progress = true;
+}
+
 ir_visitor_status
 lower_instructions_visitor::visit_leave(ir_expression *ir)
 {
@@ -538,6 +562,11 @@ lower_instructions_visitor::visit_leave(ir_expression *ir)
    case ir_binop_borrow:
       if (lowering(BORROW_TO_ARITH))
          borrow_to_arith(ir);
+      break;
+
+   case ir_unop_saturate:
+      if (lowering(SAT_TO_CLAMP))
+         sat_to_clamp(ir);
       break;
 
    default:

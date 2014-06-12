@@ -40,6 +40,7 @@
 #define LDEXP_TO_ARITH     0x100
 #define CARRY_TO_ARITH     0x200
 #define BORROW_TO_ARITH    0x400
+#define SAT_TO_CLAMP       0x800
 
 /**
  * \see class lower_packing_builtins_visitor
