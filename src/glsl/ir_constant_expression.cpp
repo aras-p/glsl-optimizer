@@ -1469,6 +1469,12 @@ ir_expression::constant_expression_value(struct hash_table *variable_context)
       }
       break;
 
+   case ir_unop_saturate:
+      for (unsigned c = 0; c < components; c++) {
+         data.f[c] = CLAMP(op[0]->value.f[c], 0.0f, 1.0f);
+      }
+      break;
+
    case ir_triop_bitfield_extract: {
       int offset = op[1]->value.i[0];
       int bits = op[2]->value.i[0];
