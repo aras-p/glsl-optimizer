@@ -2469,6 +2469,13 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
                        _mesa_shader_stage_to_string(state->stage));
    }
 
+   /* Disallow layout qualifiers which may only appear on layout declarations. */
+   if (qual->flags.q.prim_type) {
+      _mesa_glsl_error(loc, state,
+                       "Primitive type may only be specified on GS input or output "
+                       "layout declaration, not on variables.");
+   }
+
    /* Section 6.1.1 (Function Calling Conventions) of the GLSL 1.10 spec says:
     *
     *     "However, the const qualifier cannot be used with out or inout."
