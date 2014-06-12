@@ -38,10 +38,12 @@
 
 struct pipe_screen;
 struct pipe_surface;
+struct pipe_loader_device;
 
 struct vl_screen
 {
    struct pipe_screen *pscreen;
+   struct pipe_loader_device *dev;
 };
 
 struct vl_screen*

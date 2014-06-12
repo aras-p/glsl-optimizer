@@ -34,6 +34,10 @@ if HAVE_GALLIUM_GBM
 SUBDIRS += gbm
 endif
 
+if HAVE_ST_VDPAU
+SUBDIRS += vdpau
+endif
+
 if HAVE_ST_XA
 SUBDIRS += xa
 endif
@@ -111,10 +115,6 @@ endif
 
 if HAVE_ST_XVMC
 SUBDIRS += xvmc-nouveau
-endif
-
-if HAVE_ST_VDPAU
-SUBDIRS += vdpau-nouveau
 endif
 
 if HAVE_ST_OMX

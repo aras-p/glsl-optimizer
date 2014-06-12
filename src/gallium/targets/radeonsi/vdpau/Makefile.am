@@ -22,6 +22,8 @@
 
 include $(top_srcdir)/src/gallium/Automake.inc
 
+AM_CPPFLAGS = \
+	-DSPLIT_TARGETS=1
 AM_CFLAGS = \
 	$(GALLIUM_VIDEO_CFLAGS)
 

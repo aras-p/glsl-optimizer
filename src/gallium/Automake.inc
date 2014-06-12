@@ -41,6 +41,7 @@ GALLIUM_DRI_CFLAGS = \
 
 GALLIUM_VIDEO_CFLAGS = \
 	-I$(top_srcdir)/include \
+	-I$(top_srcdir)/src/loader \
 	-I$(top_srcdir)/src/gallium/include \
 	-I$(top_srcdir)/src/gallium/auxiliary \
 	-I$(top_srcdir)/src/gallium/drivers \
@@ -87,7 +88,7 @@ GALLIUM_DRI_LINKER_FLAGS += \
 	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/dri.sym
 
 GALLIUM_VDPAU_LINKER_FLAGS += \
-	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/vdpau.sym
+	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/vdpau/vdpau.sym
 
 GALLIUM_XVMC_LINKER_FLAGS += \
 	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/xvmc.sym

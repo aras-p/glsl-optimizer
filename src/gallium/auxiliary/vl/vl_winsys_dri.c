@@ -40,6 +40,7 @@
 #include "pipe/p_screen.h"
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
+#include "pipe-loader/pipe_loader.h"
 #include "state_tracker/drm_driver.h"
 
 #include "util/u_memory.h"
@@ -375,10 +376,19 @@ vl_screen_create(Display *display, int screen)
    if (authenticate == NULL || !authenticate->authenticated)
       goto free_authenticate;
 
+#if SPLIT_TARGETS
    scrn->base.pscreen = driver_descriptor.create_screen(fd);
+#else
+#if GALLIUM_STATIC_TARGETS
+   scrn->base.pscreen = dd_create_screen(fd);
+#else
+   if (pipe_loader_drm_probe_fd(&scrn->base.dev, fd, true))
+      scrn->base.pscreen = pipe_loader_create_screen(scrn->base.dev, PIPE_SEARCH_DIR);
+#endif // GALLIUM_STATIC_TARGETS
+#endif // SPLIT_TARGETS
 
    if (!scrn->base.pscreen)
-      goto free_authenticate;
+      goto release_pipe;
 
    scrn->base.pscreen->flush_frontbuffer = vl_dri2_flush_frontbuffer;
    vl_compositor_reset_dirty_area(&scrn->dirty_areas[0]);
@@ -391,6 +401,13 @@ vl_screen_create(Display *display, int screen)
 
    return &scrn->base;
 
+release_pipe:
+#if !SPLIT_TARGETS
+#if !GALLIUM_STATIC_TARGETS
+   if (scrn->base.dev)
+      pipe_loader_release(&scrn->base.dev, 1);
+#endif // !GALLIUM_STATIC_TARGETS
+#endif // !SPLIT_TARGETS
 free_authenticate:
    free(authenticate);
 free_connect:
@@ -418,5 +435,10 @@ void vl_screen_destroy(struct vl_screen *vscreen)
 
    vl_dri2_destroy_drawable(scrn);
    scrn->base.pscreen->destroy(scrn->base.pscreen);
+#if !SPLIT_TARGETS
+#if !GALLIUM_STATIC_TARGETS
+   pipe_loader_release(&scrn->base.dev, 1);
+#endif // !GALLIUM_STATIC_TARGETS
+#endif // !SPLIT_TARGETS
    FREE(scrn);
 }
