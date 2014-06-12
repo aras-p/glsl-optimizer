@@ -331,16 +331,15 @@ set_control_index(struct brw_context *brw,
                   struct brw_compact_instruction *dst,
                   struct brw_instruction *src)
 {
-   uint32_t *src_u32 = (uint32_t *)src;
-   uint32_t uncompacted = 0;
+   uint32_t uncompacted =                  /* 17b/SNB; 19b/IVB+ */
+      (brw_inst_bits(src, 31, 31) << 16) | /* 1b */
+      (brw_inst_bits(src, 23,  8));        /* 16b */
 
-   uncompacted |= ((src_u32[0] >> 8) & 0xffff) << 0;
-   uncompacted |= ((src_u32[0] >> 31) & 0x1) << 16;
-   /* On gen7, the flag register number gets integrated into the control
-    * index.
+   /* On gen7, the flag register and subregister numbers are integrated into
+    * the control index.
     */
    if (brw->gen >= 7)
-      uncompacted |= ((src_u32[2] >> 25) & 0x3) << 17;
+      uncompacted |= brw_inst_bits(src, 90, 89) << 17; /* 2b */
 
    for (int i = 0; i < 32; i++) {
       if (control_index_table[i] == uncompacted) {
@@ -353,13 +352,13 @@ set_control_index(struct brw_context *brw,
 }
 
 static bool
-set_datatype_index(struct brw_compact_instruction *dst,
+set_datatype_index(struct brw_context *brw,
+                   struct brw_compact_instruction *dst,
                    struct brw_instruction *src)
 {
-   uint32_t uncompacted = 0;
-
-   uncompacted |= src->bits1.ud & 0x7fff;
-   uncompacted |= (src->bits1.ud >> 29) << 15;
+   uint32_t uncompacted =                  /* 18b */
+      (brw_inst_bits(src, 63, 61) << 15) | /* 3b */
+      (brw_inst_bits(src, 46, 32));        /* 15b */
 
    for (int i = 0; i < 32; i++) {
       if (datatype_table[i] == uncompacted) {
@@ -372,17 +371,17 @@ set_datatype_index(struct brw_compact_instruction *dst,
 }
 
 static bool
-set_subreg_index(struct brw_compact_instruction *dst,
+set_subreg_index(struct brw_context *brw,
+                 struct brw_compact_instruction *dst,
                  struct brw_instruction *src,
                  bool is_immediate)
 {
-   uint16_t uncompacted = 0;
-
-   uncompacted |= src->bits1.da1.dest_subreg_nr << 0;
-   uncompacted |= src->bits2.da1.src0_subreg_nr << 5;
+   uint16_t uncompacted =                 /* 15b */
+      (brw_inst_bits(src, 52, 48) << 0) | /*  5b */
+      (brw_inst_bits(src, 68, 64) << 5);  /*  5b */
 
    if (!is_immediate)
-      uncompacted |= src->bits3.da1.src1_subreg_nr << 10;
+      uncompacted |= brw_inst_bits(src, 100, 96) << 10; /* 5b */
 
    for (int i = 0; i < 32; i++) {
       if (subreg_table[i] == uncompacted) {
@@ -409,12 +408,12 @@ get_src_index(uint16_t uncompacted,
 }
 
 static bool
-set_src0_index(struct brw_compact_instruction *dst,
+set_src0_index(struct brw_context *brw,
+               struct brw_compact_instruction *dst,
                struct brw_instruction *src)
 {
-   uint16_t compacted, uncompacted = 0;
-
-   uncompacted |= (src->bits2.ud >> 13) & 0xfff;
+   uint16_t compacted;
+   uint16_t uncompacted = brw_inst_bits(src, 88, 77); /* 12b */
 
    if (!get_src_index(uncompacted, &compacted))
       return false;
@@ -426,15 +425,15 @@ set_src0_index(struct brw_compact_instruction *dst,
 }
 
 static bool
-set_src1_index(struct brw_compact_instruction *dst,
+set_src1_index(struct brw_context *brw,
+               struct brw_compact_instruction *dst,
                struct brw_instruction *src, bool is_immediate)
 {
    if (is_immediate) {
-      dst->dw1.src1_index = (src->bits3.ud >> 8) & 0x1f;
+      dst->dw1.src1_index = (brw_inst_imm_ud(brw, src) >> 8) & 0x1f;
    } else {
-      uint16_t compacted, uncompacted;
-
-      uncompacted = (src->bits3.ud >> 13) & 0xfff;
+      uint16_t compacted;
+      uint16_t uncompacted = brw_inst_bits(src, 120, 109); /* 12b */
 
       if (!get_src_index(uncompacted, &compacted))
          return false;
@@ -475,49 +474,50 @@ brw_try_compact_instruction(struct brw_compile *p,
    struct brw_context *brw = p->brw;
    struct brw_compact_instruction temp;
 
-   if (src->header.opcode == BRW_OPCODE_IF ||
-       src->header.opcode == BRW_OPCODE_ELSE ||
-       src->header.opcode == BRW_OPCODE_ENDIF ||
-       src->header.opcode == BRW_OPCODE_HALT ||
-       src->header.opcode == BRW_OPCODE_DO ||
-       src->header.opcode == BRW_OPCODE_WHILE) {
+   if (brw_inst_opcode(brw, src) == BRW_OPCODE_IF ||
+       brw_inst_opcode(brw, src) == BRW_OPCODE_ELSE ||
+       brw_inst_opcode(brw, src) == BRW_OPCODE_ENDIF ||
+       brw_inst_opcode(brw, src) == BRW_OPCODE_HALT ||
+       brw_inst_opcode(brw, src) == BRW_OPCODE_DO ||
+       brw_inst_opcode(brw, src) == BRW_OPCODE_WHILE) {
       /* FINISHME: The fixup code below, and brw_set_uip_jip and friends, needs
        * to be able to handle compacted flow control instructions..
        */
       return false;
    }
 
-   bool is_immediate = src->bits1.da1.src0_reg_file == BRW_IMMEDIATE_VALUE ||
-                       src->bits1.da1.src1_reg_file == BRW_IMMEDIATE_VALUE;
-   if (is_immediate && !is_compactable_immediate(src->bits3.ud)) {
+   bool is_immediate =
+      brw_inst_src0_reg_file(brw, src) == BRW_IMMEDIATE_VALUE ||
+      brw_inst_src1_reg_file(brw, src) == BRW_IMMEDIATE_VALUE;
+   if (is_immediate && !is_compactable_immediate(brw_inst_imm_ud(brw, src))) {
       return false;
    }
 
    memset(&temp, 0, sizeof(temp));
 
-   temp.dw0.opcode = src->header.opcode;
-   temp.dw0.debug_control = src->header.debug_control;
+   temp.dw0.opcode = brw_inst_opcode(brw, src);
+   temp.dw0.debug_control = brw_inst_debug_control(brw, src);
    if (!set_control_index(brw, &temp, src))
       return false;
-   if (!set_datatype_index(&temp, src))
+   if (!set_datatype_index(brw, &temp, src))
       return false;
-   if (!set_subreg_index(&temp, src, is_immediate))
+   if (!set_subreg_index(brw, &temp, src, is_immediate))
       return false;
-   temp.dw0.acc_wr_control = src->header.acc_wr_control;
-   temp.dw0.conditionalmod = src->header.destreg__conditionalmod;
+   temp.dw0.acc_wr_control = brw_inst_acc_wr_control(brw, src);
+   temp.dw0.conditionalmod = brw_inst_cond_modifier(brw, src);
    if (brw->gen <= 6)
-      temp.dw0.flag_subreg_nr = src->bits2.da1.flag_subreg_nr;
+      temp.dw0.flag_subreg_nr = brw_inst_flag_subreg_nr(brw, src);
    temp.dw0.cmpt_ctrl = 1;
-   if (!set_src0_index(&temp, src))
+   if (!set_src0_index(brw, &temp, src))
       return false;
-   if (!set_src1_index(&temp, src, is_immediate))
+   if (!set_src1_index(brw, &temp, src, is_immediate))
       return false;
-   temp.dw1.dst_reg_nr = src->bits1.da1.dest_reg_nr;
-   temp.dw1.src0_reg_nr = src->bits2.da1.src0_reg_nr;
+   temp.dw1.dst_reg_nr = brw_inst_dst_da_reg_nr(brw, src);
+   temp.dw1.src0_reg_nr = brw_inst_src0_da_reg_nr(brw, src);
    if (is_immediate) {
-      temp.dw1.src1_reg_nr = src->bits3.ud & 0xff;
+      temp.dw1.src1_reg_nr = brw_inst_imm_ud(brw, src) & 0xff;
    } else {
-      temp.dw1.src1_reg_nr = src->bits3.da1.src1_reg_nr;
+      temp.dw1.src1_reg_nr = brw_inst_src1_da_reg_nr(brw, src);
    }
 
    *dst = temp;
@@ -530,61 +530,62 @@ set_uncompacted_control(struct brw_context *brw,
                         struct brw_instruction *dst,
                         struct brw_compact_instruction *src)
 {
-   uint32_t *dst_u32 = (uint32_t *)dst;
    uint32_t uncompacted = control_index_table[src->dw0.control_index];
 
-   dst_u32[0] |= ((uncompacted >> 0) & 0xffff) << 8;
-   dst_u32[0] |= ((uncompacted >> 16) & 0x1) << 31;
+   brw_inst_set_bits(dst, 31, 31, (uncompacted >> 16) & 0x1);
+   brw_inst_set_bits(dst, 23,  8, (uncompacted & 0xffff));
 
    if (brw->gen >= 7)
-      dst_u32[2] |= ((uncompacted >> 17) & 0x3) << 25;
+      brw_inst_set_bits(dst, 90, 89, uncompacted >> 17);
 }
 
 static void
-set_uncompacted_datatype(struct brw_instruction *dst,
+set_uncompacted_datatype(struct brw_context *brw,
+                         struct brw_instruction *dst,
                          struct brw_compact_instruction *src)
 {
    uint32_t uncompacted = datatype_table[src->dw0.data_type_index];
 
-   dst->bits1.ud &= ~(0x7 << 29);
-   dst->bits1.ud |= ((uncompacted >> 15) & 0x7) << 29;
-   dst->bits1.ud &= ~0x7fff;
-   dst->bits1.ud |= uncompacted & 0x7fff;
+   brw_inst_set_bits(dst, 63, 61, (uncompacted >> 15));
+   brw_inst_set_bits(dst, 46, 32, (uncompacted & 0x7fff));
 }
 
 static void
-set_uncompacted_subreg(struct brw_instruction *dst,
+set_uncompacted_subreg(struct brw_context *brw,
+                       struct brw_instruction *dst,
                        struct brw_compact_instruction *src)
 {
    uint16_t uncompacted = subreg_table[src->dw0.sub_reg_index];
 
-   dst->bits1.da1.dest_subreg_nr = (uncompacted >> 0)  & 0x1f;
-   dst->bits2.da1.src0_subreg_nr = (uncompacted >> 5)  & 0x1f;
-   dst->bits3.da1.src1_subreg_nr = (uncompacted >> 10) & 0x1f;
+   brw_inst_set_bits(dst, 100, 96, (uncompacted >> 10));
+   brw_inst_set_bits(dst,  68, 64, (uncompacted >>  5) & 0x1f);
+   brw_inst_set_bits(dst,  52, 48, (uncompacted >>  0) & 0x1f);
 }
 
 static void
-set_uncompacted_src0(struct brw_instruction *dst,
+set_uncompacted_src0(struct brw_context *brw,
+                     struct brw_instruction *dst,
                      struct brw_compact_instruction *src)
 {
    uint32_t compacted = src->dw0.src0_index | src->dw1.src0_index << 2;
    uint16_t uncompacted = src_index_table[compacted];
 
-   dst->bits2.ud |= uncompacted << 13;
+   brw_inst_set_bits(dst, 88, 77, uncompacted);
 }
 
 static void
-set_uncompacted_src1(struct brw_instruction *dst,
+set_uncompacted_src1(struct brw_context *brw,
+                     struct brw_instruction *dst,
                      struct brw_compact_instruction *src, bool is_immediate)
 {
    if (is_immediate) {
       signed high5 = src->dw1.src1_index;
       /* Replicate top bit of src1_index into high 20 bits of the immediate. */
-      dst->bits3.ud = (high5 << 27) >> 19;
+      brw_inst_set_imm_ud(brw, dst, (high5 << 27) >> 19);
    } else {
       uint16_t uncompacted = src_index_table[src->dw1.src1_index];
 
-      dst->bits3.ud |= uncompacted << 13;
+      brw_inst_set_bits(dst, 120, 109, uncompacted);
    }
 }
 
@@ -595,29 +596,30 @@ brw_uncompact_instruction(struct brw_context *brw,
 {
    memset(dst, 0, sizeof(*dst));
 
-   dst->header.opcode = src->dw0.opcode;
-   dst->header.debug_control = src->dw0.debug_control;
+   brw_inst_set_opcode(brw, dst, src->dw0.opcode);
+   brw_inst_set_debug_control(brw, dst, src->dw0.debug_control);
 
    set_uncompacted_control(brw, dst, src);
-   set_uncompacted_datatype(dst, src);
+   set_uncompacted_datatype(brw, dst, src);
 
    /* src0/1 register file fields are in the datatype table. */
-   bool is_immediate = dst->bits1.da1.src0_reg_file == BRW_IMMEDIATE_VALUE ||
-                       dst->bits1.da1.src1_reg_file == BRW_IMMEDIATE_VALUE;
+   bool is_immediate = brw_inst_src0_reg_file(brw, dst) == BRW_IMMEDIATE_VALUE ||
+                       brw_inst_src1_reg_file(brw, dst) == BRW_IMMEDIATE_VALUE;
 
-   set_uncompacted_subreg(dst, src);
-   dst->header.acc_wr_control = src->dw0.acc_wr_control;
-   dst->header.destreg__conditionalmod = src->dw0.conditionalmod;
+   set_uncompacted_subreg(brw, dst, src);
+   brw_inst_set_acc_wr_control(brw, dst, src->dw0.acc_wr_control);
+   brw_inst_set_cond_modifier(brw, dst, src->dw0.conditionalmod);
    if (brw->gen <= 6)
-      dst->bits2.da1.flag_subreg_nr = src->dw0.flag_subreg_nr;
-   set_uncompacted_src0(dst, src);
-   set_uncompacted_src1(dst, src, is_immediate);
-   dst->bits1.da1.dest_reg_nr = src->dw1.dst_reg_nr;
-   dst->bits2.da1.src0_reg_nr = src->dw1.src0_reg_nr;
+      brw_inst_set_flag_subreg_nr(brw, dst, src->dw0.flag_subreg_nr);
+   set_uncompacted_src0(brw, dst, src);
+   set_uncompacted_src1(brw, dst, src, is_immediate);
+   brw_inst_set_dst_da_reg_nr(brw, dst, src->dw1.dst_reg_nr);
+   brw_inst_set_src0_da_reg_nr(brw, dst, src->dw1.src0_reg_nr);
    if (is_immediate) {
-      dst->bits3.ud |= src->dw1.src1_reg_nr;
+      brw_inst_set_imm_ud(brw, dst,
+                          brw_inst_imm_ud(brw, dst) | src->dw1.src1_reg_nr);
    } else {
-      dst->bits3.da1.src1_reg_nr = src->dw1.src1_reg_nr;
+      brw_inst_set_src1_da_reg_nr(brw, dst, src->dw1.src1_reg_nr);
    }
 }
 
@@ -658,20 +660,16 @@ compacted_between(int old_ip, int old_target_ip, int *compacted_counts)
 }
 
 static void
-update_uip_jip(struct brw_instruction *insn, int this_old_ip,
-               int *compacted_counts)
+update_uip_jip(struct brw_context *brw, struct brw_instruction *insn,
+               int this_old_ip, int *compacted_counts)
 {
-   int target_old_ip;
+   int jip = brw_inst_jip(brw, insn);
+   jip -= compacted_between(this_old_ip, this_old_ip + jip, compacted_counts);
+   brw_inst_set_jip(brw, insn, jip);
 
-   target_old_ip = this_old_ip + insn->bits3.break_cont.jip;
-   insn->bits3.break_cont.jip -= compacted_between(this_old_ip,
-                                                   target_old_ip,
-                                                   compacted_counts);
-
-   target_old_ip = this_old_ip + insn->bits3.break_cont.uip;
-   insn->bits3.break_cont.uip -= compacted_between(this_old_ip,
-                                                   target_old_ip,
-                                                   compacted_counts);
+   int uip = brw_inst_uip(brw, insn);
+   uip -= compacted_between(this_old_ip, this_old_ip + uip, compacted_counts);
+   brw_inst_set_uip(brw, insn, uip);
 }
 
 void
@@ -734,7 +732,7 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
 
       struct brw_instruction saved = *src;
 
-      if (!src->header.cmpt_control &&
+      if (!brw_inst_cmpt_control(brw, src) &&
           brw_try_compact_instruction(p, dst, src)) {
          compacted_count++;
 
@@ -749,14 +747,14 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
          offset += 8;
          src_offset += 16;
       } else {
-         int size = src->header.cmpt_control ? 8 : 16;
+         int size = brw_inst_cmpt_control(brw, src) ? 8 : 16;
 
          /* It appears that the end of thread SEND instruction needs to be
           * aligned, or the GPU hangs.
           */
-         if ((src->header.opcode == BRW_OPCODE_SEND ||
-              src->header.opcode == BRW_OPCODE_SENDC) &&
-             src->bits3.generic.end_of_thread &&
+         if ((brw_inst_opcode(brw, src) == BRW_OPCODE_SEND ||
+              brw_inst_opcode(brw, src) == BRW_OPCODE_SENDC) &&
+             brw_inst_eot(brw, src) &&
              (offset & 8) != 0) {
             struct brw_compact_instruction *align = store + offset;
             memset(align, 0, sizeof(*align));
@@ -786,11 +784,11 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
       int this_compacted_count = compacted_counts[this_old_ip];
       int target_old_ip, target_compacted_count;
 
-      switch (insn->header.opcode) {
+      switch (brw_inst_opcode(brw, insn)) {
       case BRW_OPCODE_BREAK:
       case BRW_OPCODE_CONTINUE:
       case BRW_OPCODE_HALT:
-         update_uip_jip(insn, this_old_ip, compacted_counts);
+         update_uip_jip(brw, insn, this_old_ip, compacted_counts);
          break;
 
       case BRW_OPCODE_IF:
@@ -798,12 +796,13 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
       case BRW_OPCODE_ENDIF:
       case BRW_OPCODE_WHILE:
          if (brw->gen == 6) {
-            target_old_ip = this_old_ip + insn->bits1.branch_gen6.jump_count;
+            int gen6_jump_count = brw_inst_gen6_jump_count(brw, insn);
+            target_old_ip = this_old_ip + gen6_jump_count;
             target_compacted_count = compacted_counts[target_old_ip];
-            insn->bits1.branch_gen6.jump_count -= (target_compacted_count -
-                                                   this_compacted_count);
+            gen6_jump_count -= (target_compacted_count - this_compacted_count);
+            brw_inst_set_gen6_jump_count(brw, insn, gen6_jump_count);
          } else {
-            update_uip_jip(insn, this_old_ip, compacted_counts);
+            update_uip_jip(brw, insn, this_old_ip, compacted_counts);
          }
          break;
       }
