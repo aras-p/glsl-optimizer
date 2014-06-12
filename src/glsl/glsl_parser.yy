@@ -2180,7 +2180,7 @@ condition:
    ;
 
 /*
- * siwtch_statement grammar is based on the syntax described in the body
+ * switch_statement grammar is based on the syntax described in the body
  * of the GLSL spec, not in it's appendix!!!
  */
 switch_statement:
