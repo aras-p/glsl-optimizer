@@ -47,6 +47,16 @@ STATIC_TARGET_LIB_DEPS += \
 	$(NOUVEAU_LIBS)
 endif
 
+if HAVE_GALLIUM_R600
+MEGADRIVERS += r600
+STATIC_TARGET_CPPFLAGS += -DGALLIUM_R600
+STATIC_TARGET_LIB_DEPS += \
+	$(top_builddir)/src/gallium/winsys/radeon/drm/libradeonwinsys.la \
+	$(top_builddir)/src/gallium/drivers/radeon/libradeon.la \
+	$(top_builddir)/src/gallium/drivers/r600/libr600.la \
+	$(RADEON_LIBS)
+endif
+
 libXvMCgallium_la_SOURCES += target.c
 libXvMCgallium_la_CPPFLAGS = $(STATIC_TARGET_CPPFLAGS)
 libXvMCgallium_la_LIBADD += $(STATIC_TARGET_LIB_DEPS)

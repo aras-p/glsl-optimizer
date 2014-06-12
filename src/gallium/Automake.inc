@@ -59,14 +59,6 @@ GALLIUM_DRI_LINKER_FLAGS = \
 	-avoid-version \
 	$(GC_SECTIONS)
 
-GALLIUM_XVMC_LINKER_FLAGS = \
-	-shared \
-	-module \
-	-no-undefined \
-	-version-number $(XVMC_MAJOR):$(XVMC_MINOR) \
-	$(GC_SECTIONS) \
-	$(LD_NO_UNDEFINED)
-
 GALLIUM_OMX_LINKER_FLAGS = \
 	-shared \
 	-module \
@@ -78,9 +70,6 @@ GALLIUM_OMX_LINKER_FLAGS = \
 if HAVE_LD_VERSION_SCRIPT
 GALLIUM_DRI_LINKER_FLAGS += \
 	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/dri.sym
-
-GALLIUM_XVMC_LINKER_FLAGS += \
-	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/xvmc/xvmc.sym
 
 GALLIUM_OMX_LINKER_FLAGS += \
 	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/omx.sym
@@ -101,13 +90,6 @@ GALLIUM_DRI_LIB_DEPS = \
 	$(EXPAT_LIBS) \
 	$(GALLIUM_COMMON_LIB_DEPS)
 
-GALLIUM_XVMC_LIB_DEPS = \
-	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
-	$(top_builddir)/src/gallium/state_trackers/xvmc/libxvmctracker.la \
-	$(XVMC_LIBS) \
-	$(LIBDRM_LIBS) \
-	$(GALLIUM_COMMON_LIB_DEPS)
-
 GALLIUM_OMX_LIB_DEPS = \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
 	$(top_builddir)/src/gallium/state_trackers/omx/libomxtracker.la \
@@ -124,11 +106,9 @@ GALLIUM_WINSYS_CFLAGS = \
 if HAVE_MESA_LLVM
 
 GALLIUM_DRI_LINKER_FLAGS += $(LLVM_LDFLAGS)
-GALLIUM_XVMC_LINKER_FLAGS += $(LLVM_LDFLAGS)
 GALLIUM_OMX_LINKER_FLAGS += $(LLVM_LDFLAGS)
 
 GALLIUM_DRI_LIB_DEPS += $(LLVM_LIBS)
-GALLIUM_XVMC_LIB_DEPS += $(LLVM_LIBS)
 GALLIUM_OMX_LIB_DEPS += $(LLVM_LIBS)
 
 endif
