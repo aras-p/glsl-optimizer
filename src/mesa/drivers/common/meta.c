@@ -2733,6 +2733,7 @@ static GLenum
 get_temp_image_type(struct gl_context *ctx, mesa_format format)
 {
    const GLenum baseFormat = _mesa_get_format_base_format(format);
+   const GLenum datatype = _mesa_get_format_datatype(format);
    const GLint format_red_bits = _mesa_get_format_bits(format, GL_RED_BITS);
 
    switch (baseFormat) {
@@ -2749,25 +2750,20 @@ get_temp_image_type(struct gl_context *ctx, mesa_format format)
       } else if (format_red_bits <= 16) {
          return GL_UNSIGNED_SHORT;
       } else {
-         GLenum datatype = _mesa_get_format_datatype(format);
          if (datatype == GL_INT || datatype == GL_UNSIGNED_INT)
             return datatype;
          return GL_FLOAT;
       }
-   case GL_DEPTH_COMPONENT: {
-      GLenum datatype = _mesa_get_format_datatype(format);
+   case GL_DEPTH_COMPONENT:
       if (datatype == GL_FLOAT)
          return GL_FLOAT;
       else
          return GL_UNSIGNED_INT;
-   }
-   case GL_DEPTH_STENCIL: {
-      GLenum datatype = _mesa_get_format_datatype(format);
+   case GL_DEPTH_STENCIL:
       if (datatype == GL_FLOAT)
          return GL_FLOAT_32_UNSIGNED_INT_24_8_REV;
       else
          return GL_UNSIGNED_INT_24_8;
-   }
    default:
       _mesa_problem(ctx, "Unexpected format %d in get_temp_image_type()",
 		    baseFormat);
