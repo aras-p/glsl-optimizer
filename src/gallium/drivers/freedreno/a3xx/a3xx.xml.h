@@ -10,11 +10,11 @@ git clone https://github.com/freedreno/envytools.git
 The rules-ng-ng source files this header was generated from are:
 - /home/robclark/src/freedreno/envytools/rnndb/adreno.xml               (    364 bytes, from 2013-11-30 14:47:15)
 - /home/robclark/src/freedreno/envytools/rnndb/freedreno_copyright.xml  (   1453 bytes, from 2013-03-31 16:51:27)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno/a2xx.xml          (  32901 bytes, from 2014-05-21 20:40:21)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno/adreno_common.xml (   9859 bytes, from 2014-05-21 20:39:42)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno/a2xx.xml          (  32901 bytes, from 2014-06-02 15:21:30)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno/adreno_common.xml (   9859 bytes, from 2014-06-02 15:21:30)
 - /home/robclark/src/freedreno/envytools/rnndb/adreno/adreno_pm4.xml    (  14477 bytes, from 2014-05-16 11:51:57)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno/a3xx.xml          (  57954 bytes, from 2014-05-26 12:57:46)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno/a4xx.xml          (  26602 bytes, from 2014-05-21 20:46:17)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno/a3xx.xml          (  58020 bytes, from 2014-06-13 17:29:47)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno/a4xx.xml          (  26602 bytes, from 2014-06-13 17:28:10)
 
 Copyright (C) 2013-2014 by the following authors:
 - Rob Clark <robdclark@gmail.com> (robclark)
@@ -988,6 +988,7 @@ static inline uint32_t A3XX_RB_COPY_CONTROL_MSAA_RESOLVE(enum a3xx_msaa_samples 
 {
 	return ((val) << A3XX_RB_COPY_CONTROL_MSAA_RESOLVE__SHIFT) & A3XX_RB_COPY_CONTROL_MSAA_RESOLVE__MASK;
 }
+#define A3XX_RB_COPY_CONTROL_DEPTHCLEAR				0x00000008
 #define A3XX_RB_COPY_CONTROL_MODE__MASK				0x00000070
 #define A3XX_RB_COPY_CONTROL_MODE__SHIFT			4
 static inline uint32_t A3XX_RB_COPY_CONTROL_MODE(enum adreno_rb_copy_control_mode val)
@@ -1535,6 +1536,12 @@ static inline uint32_t A3XX_VFD_DECODE_INSTR_FORMAT(enum a3xx_vtx_fmt val)
 static inline uint32_t A3XX_VFD_DECODE_INSTR_REGID(uint32_t val)
 {
 	return ((val) << A3XX_VFD_DECODE_INSTR_REGID__SHIFT) & A3XX_VFD_DECODE_INSTR_REGID__MASK;
+}
+#define A3XX_VFD_DECODE_INSTR_SWAP__MASK			0x00c00000
+#define A3XX_VFD_DECODE_INSTR_SWAP__SHIFT			22
+static inline uint32_t A3XX_VFD_DECODE_INSTR_SWAP(enum a3xx_color_swap val)
+{
+	return ((val) << A3XX_VFD_DECODE_INSTR_SWAP__SHIFT) & A3XX_VFD_DECODE_INSTR_SWAP__MASK;
 }
 #define A3XX_VFD_DECODE_INSTR_SHIFTCNT__MASK			0x1f000000
 #define A3XX_VFD_DECODE_INSTR_SHIFTCNT__SHIFT			24
