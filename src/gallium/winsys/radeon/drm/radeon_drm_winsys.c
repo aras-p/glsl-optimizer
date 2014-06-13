@@ -423,7 +423,8 @@ static void radeon_winsys_destroy(struct radeon_winsys *rws)
     pipe_mutex_destroy(ws->cmask_owner_mutex);
     pipe_mutex_destroy(ws->cs_stack_lock);
 
-    ws->cman->destroy(ws->cman);
+    ws->cman_vram->destroy(ws->cman_vram);
+    ws->cman_gtt->destroy(ws->cman_gtt);
     ws->kman->destroy(ws->kman);
     if (ws->gen >= DRV_R600) {
         radeon_surface_manager_free(ws->surf_man);
@@ -638,8 +639,11 @@ radeon_drm_winsys_create(int fd, radeon_screen_create_t screen_create)
     ws->kman = radeon_bomgr_create(ws);
     if (!ws->kman)
         goto fail;
-    ws->cman = pb_cache_manager_create(ws->kman, 1000000, 2.0f, 0);
-    if (!ws->cman)
+    ws->cman_vram = pb_cache_manager_create(ws->kman, 1000000, 2.0f, 0);
+    if (!ws->cman_vram)
+        goto fail;
+    ws->cman_gtt = pb_cache_manager_create(ws->kman, 1000000, 2.0f, 0);
+    if (!ws->cman_gtt)
         goto fail;
 
     if (ws->gen >= DRV_R600) {
@@ -695,8 +699,10 @@ radeon_drm_winsys_create(int fd, radeon_screen_create_t screen_create)
 
 fail:
     pipe_mutex_unlock(fd_tab_mutex);
-    if (ws->cman)
-        ws->cman->destroy(ws->cman);
+    if (ws->cman_gtt)
+        ws->cman_gtt->destroy(ws->cman_gtt);
+    if (ws->cman_vram)
+        ws->cman_vram->destroy(ws->cman_vram);
     if (ws->kman)
         ws->kman->destroy(ws->kman);
     if (ws->surf_man)

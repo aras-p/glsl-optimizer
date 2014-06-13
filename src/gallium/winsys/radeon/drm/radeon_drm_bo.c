@@ -800,10 +800,14 @@ radeon_winsys_bo_create(struct radeon_winsys *rws,
     desc.initial_domains = domain;
 
     /* Assign a buffer manager. */
-    if (use_reusable_pool)
-        provider = ws->cman;
-    else
+    if (use_reusable_pool) {
+        if (domain == RADEON_DOMAIN_VRAM)
+            provider = ws->cman_vram;
+        else
+            provider = ws->cman_gtt;
+    } else {
         provider = ws->kman;
+    }
 
     buffer = provider->create_buffer(provider, size, &desc.base);
     if (!buffer)
