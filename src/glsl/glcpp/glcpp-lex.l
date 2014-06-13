@@ -180,7 +180,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 
 	/* glcpp doesn't handle #extension, #version, or #pragma directives.
 	 * Simply pass them through to the main compiler's lexer/parser. */
-{HASH}(extension|pragma)[^\n]+ {
+{HASH}(extension|pragma)[^\n]* {
 	if (parser->commented_newlines)
 		BEGIN NEWLINE_CATCHUP;
 	yylval->str = ralloc_strdup (yyextra, yytext);
