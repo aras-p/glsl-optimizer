@@ -625,7 +625,7 @@ replacement_list:
 junk:
 	/* empty */
 |	pp_tokens {
-		glcpp_warning(&@1, parser, "extra tokens at end of directive");
+		glcpp_error(&@1, parser, "extra tokens at end of directive");
 	}
 ;
 
