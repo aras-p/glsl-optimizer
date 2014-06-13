@@ -692,6 +692,96 @@ brw_inst_set_bits(brw_inst *inst, unsigned high, unsigned low, uint64_t value)
 #undef F
 #undef FC
 
+typedef struct {
+   uint64_t data;
+} brw_compact_inst;
+
+/**
+ * Fetch a set of contiguous bits from the compacted instruction.
+ *
+ * Bits indices range from 0..63.
+ */
+static inline unsigned
+brw_compact_inst_bits(brw_compact_inst *inst, unsigned high, unsigned low)
+{
+   const uint64_t mask = (((1ull << (high - low + 1)) - 1) << low);
+
+   return (inst->data & mask) >> low;
+}
+
+/**
+ * Set bits in the compacted instruction.
+ *
+ * Bits indices range from 0..63.
+ */
+static inline void
+brw_compact_inst_set_bits(brw_compact_inst *inst, unsigned high, unsigned low,
+                          uint64_t value)
+{
+   const uint64_t mask = (((1ull << (high - low + 1)) - 1) << low);
+
+   /* Make sure the supplied value actually fits in the given bitfield. */
+   assert((value & (mask >> low)) == value);
+
+   inst->data = (inst->data & ~mask) | ((value << low) & mask);
+}
+
+#define F(name, high, low)                                      \
+static inline void                                              \
+brw_compact_inst_set_##name(struct brw_compact_instruction *insn, unsigned v) \
+{                                                               \
+   brw_compact_inst *inst = (brw_compact_inst *)insn;           \
+   brw_compact_inst_set_bits(inst, high, low, v);               \
+}                                                               \
+                                                                \
+static inline unsigned                                          \
+brw_compact_inst_##name(struct brw_compact_instruction *insn)   \
+{                                                               \
+   brw_compact_inst *inst = (brw_compact_inst *)insn;           \
+   return brw_compact_inst_bits(inst, high, low);               \
+}
+
+F(src1_reg_nr,    63, 56)
+F(src0_reg_nr,    55, 48)
+F(dst_reg_nr,     47, 40)
+F(src1_index,     39, 35)
+F(src0_index,     34, 30)
+F(cmpt_control,   29, 29) /* Same location as brw_inst */
+F(flag_subreg_nr, 28, 28) /* <= Gen6 only */
+F(cond_modifier,  27, 24) /* Same location as brw_inst */
+F(acc_wr_control, 23, 23)
+F(subreg_index,   22, 18)
+F(datatype_index, 17, 13)
+F(control_index,  12,  8)
+F(debug_control,   7,  7)
+F(opcode,          6,  0) /* Same location as brw_inst */
+
+/**
+ * (Gen8+) Compacted three-source instructions:
+ *  @{
+ */
+F(3src_src2_reg_nr,    63, 57)
+F(3src_src1_reg_nr,    56, 50)
+F(3src_src0_reg_nr,    49, 43)
+F(3src_src2_subreg_nr, 42, 40)
+F(3src_src1_subreg_nr, 39, 37)
+F(3src_src0_subreg_nr, 36, 34)
+F(3src_src2_rep_ctrl,  33, 33)
+F(3src_src1_rep_ctrl,  32, 32)
+F(3src_saturate,       31, 31)
+F(3src_debug_control,  30, 30)
+F(3src_cmpt_control,   29, 29)
+F(3src_src0_rep_ctrl,  28, 28)
+/* Reserved */
+F(3src_dst_reg_nr,     18, 12)
+F(3src_source_index,   11, 10)
+F(3src_control_index,   9,  8)
+/* Bit 7 is Reserved (for future Opcode expansion) */
+F(3src_opcode,          6,  0)
+/** @} */
+
+#undef F
+
 #ifdef __cplusplus
 }
 #endif
