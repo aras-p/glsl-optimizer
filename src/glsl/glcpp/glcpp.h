@@ -37,6 +37,12 @@
 
 /* Some data types used for parser values. */
 
+typedef struct expression_value {
+	intmax_t value;
+	bool has_undefined;
+} expression_value_t;
+   
+
 typedef struct string_node {
 	const char *str;
 	struct string_node *next;
@@ -53,6 +59,7 @@ typedef struct token_list token_list_t;
 typedef union YYSTYPE
 {
 	intmax_t ival;
+	expression_value_t expression_value;
 	char *str;
 	string_list_t *string_list;
 	token_t *token;

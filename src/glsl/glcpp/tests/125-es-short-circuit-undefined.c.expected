@@ -1,0 +1,30 @@
+0:10(16): preprocessor error: undefined macro in expression (illegal in GLES)
+0:14(23): preprocessor error: undefined macro in expression (illegal in GLES)
+ 
+
+
+
+
+
+#version 300 es
+
+
+
+
+
+
+
+
+
+
+
+Success
+
+
+
+
+
+More success
+
+
+

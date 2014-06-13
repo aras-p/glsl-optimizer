@@ -166,7 +166,8 @@ add_builtin_define(glcpp_parser_t *parser, const char *name, int value);
 %expect 0
 %token COMMA_FINAL DEFINED ELIF_EXPANDED HASH HASH_DEFINE FUNC_IDENTIFIER OBJ_IDENTIFIER HASH_ELIF HASH_ELSE HASH_ENDIF HASH_IF HASH_IFDEF HASH_IFNDEF HASH_LINE HASH_UNDEF HASH_VERSION IDENTIFIER IF_EXPANDED INTEGER INTEGER_STRING LINE_EXPANDED NEWLINE OTHER PLACEHOLDER SPACE
 %token PASTE
-%type <ival> expression INTEGER operator SPACE integer_constant
+%type <ival> INTEGER operator SPACE integer_constant
+%type <expression_value> expression
 %type <str> IDENTIFIER FUNC_IDENTIFIER OBJ_IDENTIFIER INTEGER_STRING OTHER
 %type <string_list> identifier_list
 %type <token> preprocessing_token conditional_token
@@ -216,10 +217,14 @@ line:
 
 expanded_line:
 	IF_EXPANDED expression NEWLINE {
-		_glcpp_parser_skip_stack_push_if (parser, & @1, $2);
+		if (parser->is_gles && $2.has_undefined)
+			glcpp_error(& @1, parser, "undefined macro in expression (illegal in GLES)");
+		_glcpp_parser_skip_stack_push_if (parser, & @1, $2.value);
 	}
 |	ELIF_EXPANDED expression NEWLINE {
-		_glcpp_parser_skip_stack_change_if (parser, & @1, "elif", $2);
+		if (parser->is_gles && $2.has_undefined)
+			glcpp_error(& @1, parser, "undefined macro in expression (illegal in GLES)");
+		_glcpp_parser_skip_stack_change_if (parser, & @1, "elif", $2.value);
 	}
 |	LINE_EXPANDED integer_constant NEWLINE {
 		parser->has_new_line_number = 1;
@@ -412,87 +417,128 @@ integer_constant:
 	}
 
 expression:
-	integer_constant
+	integer_constant {
+		$$.value = $1;
+		$$.has_undefined = false;
+	}
 |	IDENTIFIER {
+		$$.value = 0;
 		if (parser->is_gles)
-			glcpp_error(& @1, parser, "undefined macro %s in expression (illegal in GLES)", $1);
-		$$ = 0;
+			$$.has_undefined = true;
+		else
+			$$.has_undefined = false;
 	}
 |	expression OR expression {
-		$$ = $1 || $3;
+		$$.value = $1.value || $3.value;
+
+		/* Short-circuit: Only flag undefined from right side
+		 * if left side evaluates to false.
+		 */
+		if ($1.value)
+			$$.has_undefined = $1.has_undefined;
+		else
+			$$.has_undefined = $1.has_undefined || $3.has_undefined;
 	}
 |	expression AND expression {
-		$$ = $1 && $3;
+		$$.value = $1.value && $3.value;
+
+		/* Short-circuit: Only flag undefined from right-side
+		 * if left side evaluates to true.
+		 */
+		if ($1.value)
+			$$.has_undefined = $1.has_undefined || $3.has_undefined;
+		else
+			$$.has_undefined = $1.has_undefined;
 	}
 |	expression '|' expression {
-		$$ = $1 | $3;
+		$$.value = $1.value | $3.value;
+		$$.has_undefined = $1.has_undefined || $3.has_undefined;
 	}
 |	expression '^' expression {
-		$$ = $1 ^ $3;
+		$$.value = $1.value ^ $3.value;
+		$$.has_undefined = $1.has_undefined || $3.has_undefined;
 	}
 |	expression '&' expression {
-		$$ = $1 & $3;
+		$$.value = $1.value & $3.value;
+		$$.has_undefined = $1.has_undefined || $3.has_undefined;
 	}
 |	expression NOT_EQUAL expression {
-		$$ = $1 != $3;
+		$$.value = $1.value != $3.value;
+		$$.has_undefined = $1.has_undefined || $3.has_undefined;
 	}
 |	expression EQUAL expression {
-		$$ = $1 == $3;
+		$$.value = $1.value == $3.value;
+		$$.has_undefined = $1.has_undefined || $3.has_undefined;
 	}
 |	expression GREATER_OR_EQUAL expression {
-		$$ = $1 >= $3;
+		$$.value = $1.value >= $3.value;
+		$$.has_undefined = $1.has_undefined || $3.has_undefined;
 	}
 |	expression LESS_OR_EQUAL expression {
-		$$ = $1 <= $3;
+		$$.value = $1.value <= $3.value;
+		$$.has_undefined = $1.has_undefined || $3.has_undefined;
 	}
 |	expression '>' expression {
-		$$ = $1 > $3;
+		$$.value = $1.value > $3.value;
+		$$.has_undefined = $1.has_undefined || $3.has_undefined;
 	}
 |	expression '<' expression {
-		$$ = $1 < $3;
+		$$.value = $1.value < $3.value;
+		$$.has_undefined = $1.has_undefined || $3.has_undefined;
 	}
 |	expression RIGHT_SHIFT expression {
-		$$ = $1 >> $3;
+		$$.value = $1.value >> $3.value;
+		$$.has_undefined = $1.has_undefined || $3.has_undefined;
 	}
 |	expression LEFT_SHIFT expression {
-		$$ = $1 << $3;
+		$$.value = $1.value << $3.value;
+		$$.has_undefined = $1.has_undefined || $3.has_undefined;
 	}
 |	expression '-' expression {
-		$$ = $1 - $3;
+		$$.value = $1.value - $3.value;
+		$$.has_undefined = $1.has_undefined || $3.has_undefined;
 	}
 |	expression '+' expression {
-		$$ = $1 + $3;
+		$$.value = $1.value + $3.value;
+		$$.has_undefined = $1.has_undefined || $3.has_undefined;
 	}
 |	expression '%' expression {
-		if ($3 == 0) {
+		if ($3.value == 0) {
 			yyerror (& @1, parser,
 				 "zero modulus in preprocessor directive");
 		} else {
-			$$ = $1 % $3;
+			$$.value = $1.value % $3.value;
 		}
+		$$.has_undefined = $1.has_undefined || $3.has_undefined;
 	}
 |	expression '/' expression {
-		if ($3 == 0) {
+		if ($3.value == 0) {
 			yyerror (& @1, parser,
 				 "division by 0 in preprocessor directive");
 		} else {
-			$$ = $1 / $3;
+			$$.value = $1.value / $3.value;
 		}
+		$$.has_undefined = $1.has_undefined || $3.has_undefined;
 	}
 |	expression '*' expression {
-		$$ = $1 * $3;
+		$$.value = $1.value * $3.value;
+		$$.has_undefined = $1.has_undefined || $3.has_undefined;
 	}
 |	'!' expression %prec UNARY {
-		$$ = ! $2;
+		$$.value = ! $2.value;
+		$$.has_undefined = $2.has_undefined;
 	}
 |	'~' expression %prec UNARY {
-		$$ = ~ $2;
+		$$.value = ~ $2.value;
+		$$.has_undefined = $2.has_undefined;
 	}
 |	'-' expression %prec UNARY {
-		$$ = - $2;
+		$$.value = - $2.value;
+		$$.has_undefined = $2.has_undefined;
 	}
 |	'+' expression %prec UNARY {
-		$$ = + $2;
+		$$.value = + $2.value;
+		$$.has_undefined = $2.has_undefined;
 	}
 |	'(' expression ')' {
 		$$ = $2;
