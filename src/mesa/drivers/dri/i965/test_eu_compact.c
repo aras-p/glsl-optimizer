@@ -33,7 +33,7 @@ test_compact_instruction(struct brw_compile *p, brw_inst src)
 {
    struct brw_context *brw = p->brw;
 
-   struct brw_compact_instruction dst;
+   brw_compact_inst dst;
    memset(&dst, 0xd0, sizeof(dst));
 
    if (brw_try_compact_instruction(p, &dst, &src)) {
@@ -45,7 +45,7 @@ test_compact_instruction(struct brw_compile *p, brw_inst src)
 	 return false;
       }
    } else {
-      struct brw_compact_instruction unchanged;
+      brw_compact_inst unchanged;
       memset(&unchanged, 0xd0, sizeof(unchanged));
       /* It's not supposed to change dst unless it compacted. */
       if (memcmp(&unchanged, &dst, sizeof(dst))) {

@@ -327,9 +327,7 @@ static const uint16_t *subreg_table;
 static const uint16_t *src_index_table;
 
 static bool
-set_control_index(struct brw_context *brw,
-                  struct brw_compact_instruction *dst,
-                  brw_inst *src)
+set_control_index(struct brw_context *brw, brw_compact_inst *dst, brw_inst *src)
 {
    uint32_t uncompacted =                  /* 17b/SNB; 19b/IVB+ */
       (brw_inst_bits(src, 31, 31) << 16) | /* 1b */
@@ -352,8 +350,7 @@ set_control_index(struct brw_context *brw,
 }
 
 static bool
-set_datatype_index(struct brw_context *brw,
-                   struct brw_compact_instruction *dst,
+set_datatype_index(struct brw_context *brw, brw_compact_inst *dst,
                    brw_inst *src)
 {
    uint32_t uncompacted =                  /* 18b */
@@ -371,9 +368,8 @@ set_datatype_index(struct brw_context *brw,
 }
 
 static bool
-set_subreg_index(struct brw_context *brw,
-                 struct brw_compact_instruction *dst,
-                 brw_inst *src, bool is_immediate)
+set_subreg_index(struct brw_context *brw, brw_compact_inst *dst, brw_inst *src,
+                 bool is_immediate)
 {
    uint16_t uncompacted =                 /* 15b */
       (brw_inst_bits(src, 52, 48) << 0) | /*  5b */
@@ -407,9 +403,7 @@ get_src_index(uint16_t uncompacted,
 }
 
 static bool
-set_src0_index(struct brw_context *brw,
-               struct brw_compact_instruction *dst,
-               brw_inst *src)
+set_src0_index(struct brw_context *brw, brw_compact_inst *dst, brw_inst *src)
 {
    uint16_t compacted;
    uint16_t uncompacted = brw_inst_bits(src, 88, 77); /* 12b */
@@ -423,9 +417,8 @@ set_src0_index(struct brw_context *brw,
 }
 
 static bool
-set_src1_index(struct brw_context *brw,
-               struct brw_compact_instruction *dst,
-               brw_inst *src, bool is_immediate)
+set_src1_index(struct brw_context *brw, brw_compact_inst *dst, brw_inst *src,
+               bool is_immediate)
 {
    uint16_t compacted;
 
@@ -466,12 +459,11 @@ is_compactable_immediate(unsigned imm)
  * brw_compact_instructions().
  */
 bool
-brw_try_compact_instruction(struct brw_compile *p,
-                            struct brw_compact_instruction *dst,
+brw_try_compact_instruction(struct brw_compile *p, brw_compact_inst *dst,
                             brw_inst *src)
 {
    struct brw_context *brw = p->brw;
-   struct brw_compact_instruction temp;
+   brw_compact_inst temp;
 
    if (brw_inst_opcode(brw, src) == BRW_OPCODE_IF ||
        brw_inst_opcode(brw, src) == BRW_OPCODE_ELSE ||
@@ -529,7 +521,7 @@ brw_try_compact_instruction(struct brw_compile *p,
 
 static void
 set_uncompacted_control(struct brw_context *brw, brw_inst *dst,
-                        struct brw_compact_instruction *src)
+                        brw_compact_inst *src)
 {
    uint32_t uncompacted =
       control_index_table[brw_compact_inst_control_index(src)];
@@ -543,7 +535,7 @@ set_uncompacted_control(struct brw_context *brw, brw_inst *dst,
 
 static void
 set_uncompacted_datatype(struct brw_context *brw, brw_inst *dst,
-                         struct brw_compact_instruction *src)
+                         brw_compact_inst *src)
 {
    uint32_t uncompacted = datatype_table[brw_compact_inst_datatype_index(src)];
 
@@ -553,7 +545,7 @@ set_uncompacted_datatype(struct brw_context *brw, brw_inst *dst,
 
 static void
 set_uncompacted_subreg(struct brw_context *brw, brw_inst *dst,
-                       struct brw_compact_instruction *src)
+                       brw_compact_inst *src)
 {
    uint16_t uncompacted = subreg_table[brw_compact_inst_subreg_index(src)];
 
@@ -564,7 +556,7 @@ set_uncompacted_subreg(struct brw_context *brw, brw_inst *dst,
 
 static void
 set_uncompacted_src0(struct brw_context *brw, brw_inst *dst,
-                     struct brw_compact_instruction *src)
+                     brw_compact_inst *src)
 {
    uint32_t compacted = brw_compact_inst_src0_index(src);
    uint16_t uncompacted = src_index_table[compacted];
@@ -574,7 +566,7 @@ set_uncompacted_src0(struct brw_context *brw, brw_inst *dst,
 
 static void
 set_uncompacted_src1(struct brw_context *brw, brw_inst *dst,
-                     struct brw_compact_instruction *src, bool is_immediate)
+                     brw_compact_inst *src, bool is_immediate)
 {
    if (is_immediate) {
       signed high5 = brw_compact_inst_src1_index(src);
@@ -589,7 +581,7 @@ set_uncompacted_src1(struct brw_context *brw, brw_inst *dst,
 
 void
 brw_uncompact_instruction(struct brw_context *brw, brw_inst *dst,
-                          struct brw_compact_instruction *src)
+                          brw_compact_inst *src)
 {
    memset(dst, 0, sizeof(*dst));
 
@@ -755,7 +747,7 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
               brw_inst_opcode(brw, src) == BRW_OPCODE_SENDC) &&
              brw_inst_eot(brw, src) &&
              (offset & 8) != 0) {
-            struct brw_compact_instruction *align = store + offset;
+            brw_compact_inst *align = store + offset;
             memset(align, 0, sizeof(*align));
             brw_compact_inst_set_opcode(align, BRW_OPCODE_NOP);
             brw_compact_inst_set_cmpt_control(align, true);
@@ -815,7 +807,7 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
     * compile passes) parses correctly.
     */
    if (p->next_insn_offset & 8) {
-      struct brw_compact_instruction *align = store + offset;
+      brw_compact_inst *align = store + offset;
       memset(align, 0, sizeof(*align));
       brw_compact_inst_set_opcode(align, BRW_OPCODE_NOP);
       brw_compact_inst_set_cmpt_control(align, true);

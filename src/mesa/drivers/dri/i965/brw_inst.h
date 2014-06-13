@@ -728,16 +728,14 @@ brw_compact_inst_set_bits(brw_compact_inst *inst, unsigned high, unsigned low,
 
 #define F(name, high, low)                                      \
 static inline void                                              \
-brw_compact_inst_set_##name(struct brw_compact_instruction *insn, unsigned v) \
+brw_compact_inst_set_##name(brw_compact_inst *inst, unsigned v) \
 {                                                               \
-   brw_compact_inst *inst = (brw_compact_inst *)insn;           \
    brw_compact_inst_set_bits(inst, high, low, v);               \
 }                                                               \
                                                                 \
 static inline unsigned                                          \
-brw_compact_inst_##name(struct brw_compact_instruction *insn)   \
+brw_compact_inst_##name(brw_compact_inst *inst)                 \
 {                                                               \
-   brw_compact_inst *inst = (brw_compact_inst *)insn;           \
    return brw_compact_inst_bits(inst, high, low);               \
 }
 

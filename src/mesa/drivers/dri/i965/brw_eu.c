@@ -246,7 +246,7 @@ brw_disassemble(struct brw_context *brw,
       fprintf(out, "0x%08x: ", offset);
 
       if (compacted) {
-	 struct brw_compact_instruction *compacted = (void *)insn;
+         brw_compact_inst *compacted = (void *)insn;
 	 if (dump_hex) {
 	    fprintf(out, "0x%08x 0x%08x                       ",
 		    ((uint32_t *)insn)[1],
