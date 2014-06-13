@@ -243,17 +243,6 @@ emit_hw_vs(struct svga_context *svga, unsigned dirty)
       if (svga_have_gb_objects(svga)) {
          struct svga_winsys_gb_shader *gbshader =
             variant ? variant->gb_shader : NULL;
-
-         /*
-          * Bind is necessary here only because pipebuffer_fenced may move
-          * the shader contents around....
-          */
-         if (gbshader) {
-            ret = SVGA3D_BindGBShader(svga->swc, gbshader);
-            if (ret != PIPE_OK)
-               return ret;
-         }
-
          ret = SVGA3D_SetGBShader(svga->swc, SVGA3D_SHADERTYPE_VS, gbshader);
          if (ret != PIPE_OK)
             return ret;

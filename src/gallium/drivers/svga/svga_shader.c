@@ -45,13 +45,20 @@ svga_define_shader(struct svga_context *svga,
 
    if (svga_have_gb_objects(svga)) {
       struct svga_winsys_screen *sws = svga_screen(svga->pipe.screen)->sws;
+      enum pipe_error ret;
 
       variant->gb_shader = sws->shader_create(sws, type,
                                               variant->tokens, codeLen);
       if (!variant->gb_shader)
          return PIPE_ERROR_OUT_OF_MEMORY;
 
-      return PIPE_OK;
+      ret = SVGA3D_BindGBShader(svga->swc, variant->gb_shader);
+      if (ret != PIPE_OK) {
+         sws->shader_destroy(sws, variant->gb_shader);
+         variant->gb_shader = NULL;
+      }
+
+      return ret;
    }
    else {
       enum pipe_error ret;
