@@ -526,11 +526,10 @@ static int r600_get_compute_param(struct pipe_screen *screen,
 			*max_compute_units = MAX2(rscreen->info.max_compute_units, 1);
 		}
 		return sizeof(uint32_t);
-
-	default:
-		fprintf(stderr, "unknown PIPE_COMPUTE_CAP %d\n", param);
-		return 0;
 	}
+
+        fprintf(stderr, "unknown PIPE_COMPUTE_CAP %d\n", param);
+        return 0;
 }
 
 static uint64_t r600_get_timestamp(struct pipe_screen *screen)
