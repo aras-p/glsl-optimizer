@@ -217,13 +217,13 @@ line:
 
 expanded_line:
 	IF_EXPANDED expression NEWLINE {
-		if (parser->is_gles && $2.has_undefined)
-			glcpp_error(& @1, parser, "undefined macro in expression (illegal in GLES)");
+		if (parser->is_gles && $2.undefined_macro)
+			glcpp_error(& @1, parser, "undefined macro %s in expression (illegal in GLES)", $2.undefined_macro);
 		_glcpp_parser_skip_stack_push_if (parser, & @1, $2.value);
 	}
 |	ELIF_EXPANDED expression NEWLINE {
-		if (parser->is_gles && $2.has_undefined)
-			glcpp_error(& @1, parser, "undefined macro in expression (illegal in GLES)");
+		if (parser->is_gles && $2.undefined_macro)
+			glcpp_error(& @1, parser, "undefined macro %s in expression (illegal in GLES)", $2.undefined_macro);
 		_glcpp_parser_skip_stack_change_if (parser, & @1, "elif", $2.value);
 	}
 |	LINE_EXPANDED integer_constant NEWLINE {
@@ -419,14 +419,14 @@ integer_constant:
 expression:
 	integer_constant {
 		$$.value = $1;
-		$$.has_undefined = false;
+		$$.undefined_macro = NULL;
 	}
 |	IDENTIFIER {
 		$$.value = 0;
 		if (parser->is_gles)
-			$$.has_undefined = true;
+			$$.undefined_macro = ralloc_strdup (parser, $1);
 		else
-			$$.has_undefined = false;
+			$$.undefined_macro = NULL;
 	}
 |	expression OR expression {
 		$$.value = $1.value || $3.value;
@@ -434,10 +434,10 @@ expression:
 		/* Short-circuit: Only flag undefined from right side
 		 * if left side evaluates to false.
 		 */
-		if ($1.value)
-			$$.has_undefined = $1.has_undefined;
-		else
-			$$.has_undefined = $1.has_undefined || $3.has_undefined;
+		if ($1.undefined_macro)
+			$$.undefined_macro = $1.undefined_macro;
+                else if (! $1.value)
+			$$.undefined_macro = $3.undefined_macro;
 	}
 |	expression AND expression {
 		$$.value = $1.value && $3.value;
@@ -445,62 +445,101 @@ expression:
 		/* Short-circuit: Only flag undefined from right-side
 		 * if left side evaluates to true.
 		 */
-		if ($1.value)
-			$$.has_undefined = $1.has_undefined || $3.has_undefined;
-		else
-			$$.has_undefined = $1.has_undefined;
+		if ($1.undefined_macro)
+			$$.undefined_macro = $1.undefined_macro;
+                else if ($1.value)
+			$$.undefined_macro = $3.undefined_macro;
 	}
 |	expression '|' expression {
 		$$.value = $1.value | $3.value;
-		$$.has_undefined = $1.has_undefined || $3.has_undefined;
+		if ($1.undefined_macro)
+			$$.undefined_macro = $1.undefined_macro;
+                else
+			$$.undefined_macro = $3.undefined_macro;
 	}
 |	expression '^' expression {
 		$$.value = $1.value ^ $3.value;
-		$$.has_undefined = $1.has_undefined || $3.has_undefined;
+		if ($1.undefined_macro)
+			$$.undefined_macro = $1.undefined_macro;
+                else
+			$$.undefined_macro = $3.undefined_macro;
 	}
 |	expression '&' expression {
 		$$.value = $1.value & $3.value;
-		$$.has_undefined = $1.has_undefined || $3.has_undefined;
+		if ($1.undefined_macro)
+			$$.undefined_macro = $1.undefined_macro;
+                else
+			$$.undefined_macro = $3.undefined_macro;
 	}
 |	expression NOT_EQUAL expression {
 		$$.value = $1.value != $3.value;
-		$$.has_undefined = $1.has_undefined || $3.has_undefined;
+		if ($1.undefined_macro)
+			$$.undefined_macro = $1.undefined_macro;
+                else
+			$$.undefined_macro = $3.undefined_macro;
 	}
 |	expression EQUAL expression {
 		$$.value = $1.value == $3.value;
-		$$.has_undefined = $1.has_undefined || $3.has_undefined;
+		if ($1.undefined_macro)
+			$$.undefined_macro = $1.undefined_macro;
+                else
+			$$.undefined_macro = $3.undefined_macro;
 	}
 |	expression GREATER_OR_EQUAL expression {
 		$$.value = $1.value >= $3.value;
-		$$.has_undefined = $1.has_undefined || $3.has_undefined;
+		if ($1.undefined_macro)
+			$$.undefined_macro = $1.undefined_macro;
+                else
+			$$.undefined_macro = $3.undefined_macro;
 	}
 |	expression LESS_OR_EQUAL expression {
 		$$.value = $1.value <= $3.value;
-		$$.has_undefined = $1.has_undefined || $3.has_undefined;
+		if ($1.undefined_macro)
+			$$.undefined_macro = $1.undefined_macro;
+                else
+			$$.undefined_macro = $3.undefined_macro;
 	}
 |	expression '>' expression {
 		$$.value = $1.value > $3.value;
-		$$.has_undefined = $1.has_undefined || $3.has_undefined;
+		if ($1.undefined_macro)
+			$$.undefined_macro = $1.undefined_macro;
+                else
+			$$.undefined_macro = $3.undefined_macro;
 	}
 |	expression '<' expression {
 		$$.value = $1.value < $3.value;
-		$$.has_undefined = $1.has_undefined || $3.has_undefined;
+		if ($1.undefined_macro)
+			$$.undefined_macro = $1.undefined_macro;
+                else
+			$$.undefined_macro = $3.undefined_macro;
 	}
 |	expression RIGHT_SHIFT expression {
 		$$.value = $1.value >> $3.value;
-		$$.has_undefined = $1.has_undefined || $3.has_undefined;
+		if ($1.undefined_macro)
+			$$.undefined_macro = $1.undefined_macro;
+                else
+			$$.undefined_macro = $3.undefined_macro;
 	}
 |	expression LEFT_SHIFT expression {
 		$$.value = $1.value << $3.value;
-		$$.has_undefined = $1.has_undefined || $3.has_undefined;
+		if ($1.undefined_macro)
+			$$.undefined_macro = $1.undefined_macro;
+                else
+			$$.undefined_macro = $3.undefined_macro;
 	}
 |	expression '-' expression {
 		$$.value = $1.value - $3.value;
-		$$.has_undefined = $1.has_undefined || $3.has_undefined;
+		if ($1.undefined_macro)
+			$$.undefined_macro = $1.undefined_macro;
+                else
+			$$.undefined_macro = $3.undefined_macro;
 	}
 |	expression '+' expression {
 		$$.value = $1.value + $3.value;
-		$$.has_undefined = $1.has_undefined || $3.has_undefined;
+		if ($1.undefined_macro)
+			$$.undefined_macro = $1.undefined_macro;
+                else
+			$$.undefined_macro = $3.undefined_macro;
 	}
 |	expression '%' expression {
 		if ($3.value == 0) {
@@ -509,7 +548,10 @@ expression:
 		} else {
 			$$.value = $1.value % $3.value;
 		}
-		$$.has_undefined = $1.has_undefined || $3.has_undefined;
+		if ($1.undefined_macro)
+			$$.undefined_macro = $1.undefined_macro;
+                else
+			$$.undefined_macro = $3.undefined_macro;
 	}
 |	expression '/' expression {
 		if ($3.value == 0) {
@@ -518,27 +560,33 @@ expression:
 		} else {
 			$$.value = $1.value / $3.value;
 		}
-		$$.has_undefined = $1.has_undefined || $3.has_undefined;
+		if ($1.undefined_macro)
+			$$.undefined_macro = $1.undefined_macro;
+                else
+			$$.undefined_macro = $3.undefined_macro;
 	}
 |	expression '*' expression {
 		$$.value = $1.value * $3.value;
-		$$.has_undefined = $1.has_undefined || $3.has_undefined;
+		if ($1.undefined_macro)
+			$$.undefined_macro = $1.undefined_macro;
+                else
+			$$.undefined_macro = $3.undefined_macro;
 	}
 |	'!' expression %prec UNARY {
 		$$.value = ! $2.value;
-		$$.has_undefined = $2.has_undefined;
+		$$.undefined_macro = $2.undefined_macro;
 	}
 |	'~' expression %prec UNARY {
 		$$.value = ~ $2.value;
-		$$.has_undefined = $2.has_undefined;
+		$$.undefined_macro = $2.undefined_macro;
 	}
 |	'-' expression %prec UNARY {
 		$$.value = - $2.value;
-		$$.has_undefined = $2.has_undefined;
+		$$.undefined_macro = $2.undefined_macro;
 	}
 |	'+' expression %prec UNARY {
 		$$.value = + $2.value;
-		$$.has_undefined = $2.has_undefined;
+		$$.undefined_macro = $2.undefined_macro;
 	}
 |	'(' expression ')' {
 		$$ = $2;

@@ -39,7 +39,7 @@
 
 typedef struct expression_value {
 	intmax_t value;
-	bool has_undefined;
+	char *undefined_macro;
 } expression_value_t;
    
 

@@ -1,5 +1,5 @@
-0:10(16): preprocessor error: undefined macro in expression (illegal in GLES)
-0:14(23): preprocessor error: undefined macro in expression (illegal in GLES)
+0:10(16): preprocessor error: undefined macro NOT_DEFINED in expression (illegal in GLES)
+0:14(23): preprocessor error: undefined macro ALSO_NOT_DEFINED in expression (illegal in GLES)
  
 
 
