@@ -346,6 +346,7 @@ gen6_sol_program(struct brw_ff_gs_compile *c, struct brw_ff_gs_prog_key *key,
 	         unsigned num_verts, bool check_edge_flags)
 {
    struct brw_compile *p = &c->func;
+   struct brw_context *brw = p->brw;
    struct brw_instruction *inst;
    c->prog_data.svbi_postincrement_value = num_verts;
 
@@ -411,7 +412,7 @@ gen6_sol_program(struct brw_ff_gs_compile *c, struct brw_ff_gs_prog_key *key,
          inst = brw_MOV(p, destination_indices_uw,
                         brw_imm_v(key->pv_first ? 0x00010200    /* (0, 2, 1) */
                                                 : 0x00020001)); /* (1, 0, 2) */
-         inst->header.predicate_control = BRW_PREDICATE_NORMAL;
+         brw_inst_set_pred_control(brw, inst, BRW_PREDICATE_NORMAL);
       }
       brw_ADD(p, c->reg.destination_indices,
               c->reg.destination_indices, get_element_ud(c->reg.SVBI, 0));
@@ -501,7 +502,7 @@ gen6_sol_program(struct brw_ff_gs_compile *c, struct brw_ff_gs_prog_key *key,
          brw_AND(p, retype(brw_null_reg(), BRW_REGISTER_TYPE_UD),
                  get_element_ud(c->reg.R0, 2),
                  brw_imm_ud(BRW_GS_EDGE_INDICATOR_0));
-         brw_last_inst->header.destreg__conditionalmod = BRW_CONDITIONAL_NZ;
+         brw_inst_set_cond_modifier(brw, brw_last_inst, BRW_CONDITIONAL_NZ);
          brw_IF(p, BRW_EXECUTE_1);
       }
       brw_ff_gs_offset_header_dw2(c, URB_WRITE_PRIM_START);
@@ -517,7 +518,7 @@ gen6_sol_program(struct brw_ff_gs_compile *c, struct brw_ff_gs_prog_key *key,
          brw_AND(p, retype(brw_null_reg(), BRW_REGISTER_TYPE_UD),
                  get_element_ud(c->reg.R0, 2),
                  brw_imm_ud(BRW_GS_EDGE_INDICATOR_1));
-         brw_last_inst->header.destreg__conditionalmod = BRW_CONDITIONAL_NZ;
+         brw_inst_set_cond_modifier(brw, brw_last_inst, BRW_CONDITIONAL_NZ);
          brw_set_default_predicate_control(p, BRW_PREDICATE_NORMAL);
       }
       brw_ff_gs_offset_header_dw2(c, URB_WRITE_PRIM_END);
