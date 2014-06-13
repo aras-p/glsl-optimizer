@@ -327,9 +327,12 @@ fd3_emit_vertex_bufs(struct fd_ringbuffer *ring,
 		if (vp->inputs[i].compmask) {
 			struct pipe_resource *prsc = vbufs[i].prsc;
 			struct fd_resource *rsc = fd_resource(prsc);
-			enum a3xx_vtx_fmt fmt = fd3_pipe2vtx(vbufs[i].format);
+			enum pipe_format pfmt = vbufs[i].format;
+			enum a3xx_vtx_fmt fmt = fd3_pipe2vtx(pfmt);
 			bool switchnext = (i != last);
-			uint32_t fs = util_format_get_blocksize(vbufs[i].format);
+			uint32_t fs = util_format_get_blocksize(pfmt);
+
+			debug_assert(fmt != ~0);
 
 			OUT_PKT0(ring, REG_A3XX_VFD_FETCH(j), 2);
 			OUT_RING(ring, A3XX_VFD_FETCH_INSTR_0_FETCHSIZE(fs - 1) |
@@ -343,6 +346,7 @@ fd3_emit_vertex_bufs(struct fd_ringbuffer *ring,
 			OUT_RING(ring, A3XX_VFD_DECODE_INSTR_CONSTFILL |
 					A3XX_VFD_DECODE_INSTR_WRITEMASK(vp->inputs[i].compmask) |
 					A3XX_VFD_DECODE_INSTR_FORMAT(fmt) |
+					A3XX_VFD_DECODE_INSTR_SWAP(fd3_pipe2swap(pfmt)) |
 					A3XX_VFD_DECODE_INSTR_REGID(vp->inputs[i].regid) |
 					A3XX_VFD_DECODE_INSTR_SHIFTCNT(fs) |
 					A3XX_VFD_DECODE_INSTR_LASTCOMPVALID |
