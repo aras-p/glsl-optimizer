@@ -225,6 +225,13 @@ gen8_hiz_exec(struct brw_context *brw, struct intel_mipmap_tree *mt,
    assert(mt->first_level == 0);
    assert(mt->logical_depth0 >= 1);
 
+   /* If we're operating on LOD 0, align to 8x4 to meet the alignment
+    * requirements for most HiZ operations.  Otherwise, use the actual size
+    * to allow the hardware to calculate the miplevel offsets correctly.
+    */
+   uint32_t surface_width  = ALIGN(mt->logical_width0,  level == 0 ? 8 : 1);
+   uint32_t surface_height = ALIGN(mt->logical_height0, level == 0 ? 4 : 1);
+
    /* The basic algorithm is:
     * - If needed, emit 3DSTATE_{DEPTH,HIER_DEPTH,STENCIL}_BUFFER and
     *   3DSTATE_CLEAR_PARAMS packets to set up the relevant buffers.
@@ -239,14 +246,19 @@ gen8_hiz_exec(struct brw_context *brw, struct intel_mipmap_tree *mt,
                       true, /* depth writes */
                       NULL, false, 0, /* no stencil for now */
                       true, /* hiz */
-                      mt->logical_width0,
-                      mt->logical_height0,
+                      surface_width,
+                      surface_height,
                       mt->logical_depth0,
                       level,
                       layer); /* min_array_element */
 
-   unsigned rect_width = minify(mt->logical_width0, level);
-   unsigned rect_height = minify(mt->logical_height0, level);
+   /* Depth buffer clears and HiZ resolves must use an 8x4 aligned rectangle.
+    * Note that intel_miptree_level_enable_hiz disables HiZ for miplevels > 0
+    * which aren't 8x4 aligned, so expanding the size is safe - it'll just
+    * draw into empty padding space.
+    */
+   unsigned rect_width = ALIGN(minify(mt->logical_width0, level), 8);
+   unsigned rect_height = ALIGN(minify(mt->logical_height0, level), 4);
 
    BEGIN_BATCH(4);
    OUT_BATCH(_3DSTATE_DRAWING_RECTANGLE << 16 | (4 - 2));
