@@ -154,8 +154,7 @@ fd3_clear_binning(struct fd_context *ctx, unsigned dirty)
 	OUT_PKT0(ring, REG_A3XX_PC_RESTART_INDEX, 1);
 	OUT_RING(ring, 0xffffffff);   /* PC_RESTART_INDEX */
 
-	OUT_PKT3(ring, CP_EVENT_WRITE, 1);
-	OUT_RING(ring, PERFCOUNTER_STOP);
+	fd_event_write(ctx, ring, PERFCOUNTER_STOP);
 
 	fd_draw(ctx, ring, DI_PT_RECTLIST, IGNORE_VISIBILITY,
 			DI_SRC_SEL_AUTO_INDEX, 2, INDEX_SIZE_IGN, 0, 0, NULL);
@@ -195,6 +194,7 @@ fd3_clear(struct fd_context *ctx, unsigned buffers,
 				A3XX_RB_DEPTH_CONTROL_Z_ENABLE |
 				A3XX_RB_DEPTH_CONTROL_ZFUNC(FUNC_ALWAYS));
 
+		fd_wfi(ctx, ring);
 		OUT_PKT0(ring, REG_A3XX_GRAS_CL_VPORT_ZOFFSET, 2);
 		OUT_RING(ring, A3XX_GRAS_CL_VPORT_ZOFFSET(0.0));
 		OUT_RING(ring, A3XX_GRAS_CL_VPORT_ZSCALE(depth));
@@ -276,7 +276,6 @@ fd3_clear(struct fd_context *ctx, unsigned buffers,
 				.format = PIPE_FORMAT_R32G32B32_FLOAT,
 			}}, 1);
 
-	fd_wfi(ctx, ring);
 	fd3_emit_constant(ring, SB_FRAG_SHADER, 0, 0, 4, color->ui, NULL);
 
 	OUT_PKT0(ring, REG_A3XX_PC_PRIM_VTX_CNTL, 1);
@@ -292,8 +291,7 @@ fd3_clear(struct fd_context *ctx, unsigned buffers,
 	OUT_PKT0(ring, REG_A3XX_PC_RESTART_INDEX, 1);
 	OUT_RING(ring, 0xffffffff);   /* PC_RESTART_INDEX */
 
-	OUT_PKT3(ring, CP_EVENT_WRITE, 1);
-	OUT_RING(ring, PERFCOUNTER_STOP);
+	fd_event_write(ctx, ring, PERFCOUNTER_STOP);
 
 	fd_draw(ctx, ring, DI_PT_RECTLIST, USE_VISIBILITY,
 			DI_SRC_SEL_AUTO_INDEX, 2, INDEX_SIZE_IGN, 0, 0, NULL);

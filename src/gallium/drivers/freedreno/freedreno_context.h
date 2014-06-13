@@ -363,6 +363,17 @@ fd_wfi(struct fd_context *ctx, struct fd_ringbuffer *ring)
 	}
 }
 
+/* emit a CP_EVENT_WRITE:
+ */
+static inline void
+fd_event_write(struct fd_context *ctx, struct fd_ringbuffer *ring,
+		enum vgt_event_type evt)
+{
+	OUT_PKT3(ring, CP_EVENT_WRITE, 1);
+	OUT_RING(ring, evt);
+	fd_reset_wfi(ctx);
+}
+
 struct pipe_context * fd_context_init(struct fd_context *ctx,
 		struct pipe_screen *pscreen, const uint8_t *primtypes,
 		void *priv);

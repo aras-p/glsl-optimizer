@@ -177,7 +177,6 @@ emit_binning_workaround(struct fd_context *ctx)
 			A3XX_GRAS_SC_CONTROL_MSAA_SAMPLES(MSAA_ONE) |
 			A3XX_GRAS_SC_CONTROL_RASTER_MODE(1));
 
-	fd_wfi(ctx, ring);
 	fd3_program_emit(ring, &ctx->solid_prog, key);
 	fd3_emit_vertex_bufs(ring, fd3_shader_variant(ctx->solid_prog.vp, key),
 			(struct fd3_vertex_buf[]) {{
@@ -245,6 +244,7 @@ emit_binning_workaround(struct fd_context *ctx)
 	OUT_RING(ring, A3XX_GRAS_SC_SCREEN_SCISSOR_BR_X(31) |
 			A3XX_GRAS_SC_SCREEN_SCISSOR_BR_Y(0));
 
+	fd_wfi(ctx, ring);
 	OUT_PKT0(ring, REG_A3XX_GRAS_CL_VPORT_XOFFSET, 6);
 	OUT_RING(ring, A3XX_GRAS_CL_VPORT_XOFFSET(0.0));
 	OUT_RING(ring, A3XX_GRAS_CL_VPORT_XSCALE(1.0));
@@ -356,6 +356,7 @@ fd3_emit_tile_gmem2mem(struct fd_context *ctx, struct fd_tile *tile)
 	OUT_PKT0(ring, REG_A3XX_GRAS_CL_CLIP_CNTL, 1);
 	OUT_RING(ring, 0x00000000);   /* GRAS_CL_CLIP_CNTL */
 
+	fd_wfi(ctx, ring);
 	OUT_PKT0(ring, REG_A3XX_GRAS_CL_VPORT_XOFFSET, 6);
 	OUT_RING(ring, A3XX_GRAS_CL_VPORT_XOFFSET((float)pfb->width/2.0 - 0.5));
 	OUT_RING(ring, A3XX_GRAS_CL_VPORT_XSCALE((float)pfb->width/2.0));
@@ -397,7 +398,6 @@ fd3_emit_tile_gmem2mem(struct fd_context *ctx, struct fd_tile *tile)
 	OUT_RING(ring, 0);            /* VFD_INSTANCEID_OFFSET */
 	OUT_RING(ring, 0);            /* VFD_INDEX_OFFSET */
 
-	fd_wfi(ctx, ring);
 	fd3_program_emit(ring, &ctx->solid_prog, key);
 	fd3_emit_vertex_bufs(ring, fd3_shader_variant(ctx->solid_prog.vp, key),
 			(struct fd3_vertex_buf[]) {{
@@ -435,7 +435,6 @@ emit_mem2gmem_surf(struct fd_context *ctx, uint32_t base,
 
 	emit_mrt(ring, 1, &psurf, &base, bin_w);
 
-	fd_wfi(ctx, ring);
 	fd3_emit_gmem_restore_tex(ring, psurf);
 
 	fd_draw(ctx, ring, DI_PT_RECTLIST, IGNORE_VISIBILITY,
@@ -487,12 +486,14 @@ fd3_emit_tile_mem2gmem(struct fd_context *ctx, struct fd_tile *tile)
 	OUT_RING(ring, A3XX_RB_RENDER_CONTROL_ALPHA_TEST_FUNC(FUNC_ALWAYS) |
 			A3XX_RB_RENDER_CONTROL_BIN_WIDTH(gmem->bin_w));
 
+	fd_wfi(ctx, ring);
 	OUT_PKT0(ring, REG_A3XX_RB_DEPTH_CONTROL, 1);
 	OUT_RING(ring, A3XX_RB_DEPTH_CONTROL_ZFUNC(FUNC_LESS));
 
 	OUT_PKT0(ring, REG_A3XX_GRAS_CL_CLIP_CNTL, 1);
 	OUT_RING(ring, A3XX_GRAS_CL_CLIP_CNTL_IJ_PERSP_CENTER);   /* GRAS_CL_CLIP_CNTL */
 
+	fd_wfi(ctx, ring);
 	OUT_PKT0(ring, REG_A3XX_GRAS_CL_VPORT_XOFFSET, 6);
 	OUT_RING(ring, A3XX_GRAS_CL_VPORT_XOFFSET((float)bin_w/2.0 - 0.5));
 	OUT_RING(ring, A3XX_GRAS_CL_VPORT_XSCALE((float)bin_w/2.0));
@@ -541,7 +542,6 @@ fd3_emit_tile_mem2gmem(struct fd_context *ctx, struct fd_tile *tile)
 	OUT_RING(ring, 0);            /* VFD_INSTANCEID_OFFSET */
 	OUT_RING(ring, 0);            /* VFD_INDEX_OFFSET */
 
-	fd_wfi(ctx, ring);
 	fd3_program_emit(ring, &ctx->blit_prog, key);
 	fd3_emit_vertex_bufs(ring, fd3_shader_variant(ctx->blit_prog.vp, key),
 			(struct fd3_vertex_buf[]) {{
@@ -677,7 +677,7 @@ emit_binning_pass(struct fd_context *ctx)
 
 	if (ctx->screen->gpu_id == 320) {
 		emit_binning_workaround(ctx);
-
+		fd_wfi(ctx, ring);
 		OUT_PKT3(ring, CP_INVALIDATE_STATE, 1);
 		OUT_RING(ring, 0x00007fff);
 	}
@@ -760,8 +760,8 @@ emit_binning_pass(struct fd_context *ctx)
 			A3XX_RB_RENDER_CONTROL_ALPHA_TEST_FUNC(FUNC_NEVER) |
 			A3XX_RB_RENDER_CONTROL_BIN_WIDTH(gmem->bin_w));
 
-	OUT_PKT3(ring, CP_EVENT_WRITE, 1);
-	OUT_RING(ring, CACHE_FLUSH);
+	fd_event_write(ctx, ring, CACHE_FLUSH);
+	fd_wfi(ctx, ring);
 
 	if (ctx->screen->gpu_id == 320) {
 		/* dummy-draw workaround: */
@@ -877,17 +877,13 @@ fd3_emit_tile_renderprep(struct fd_context *ctx, struct fd_tile *tile)
 
 		assert(pipe->w * pipe->h);
 
-		OUT_PKT3(ring, CP_EVENT_WRITE, 1);
-		OUT_RING(ring, HLSQ_FLUSH);
-
-		OUT_WFI(ring);
+		fd_event_write(ctx, ring, HLSQ_FLUSH);
+		fd_wfi(ctx, ring);
 
 		OUT_PKT0(ring, REG_A3XX_PC_VSTREAM_CONTROL, 1);
 		OUT_RING(ring, A3XX_PC_VSTREAM_CONTROL_SIZE(pipe->w * pipe->h) |
 				A3XX_PC_VSTREAM_CONTROL_N(tile->n));
 
-		OUT_PKT3(ring, CP_EVENT_WRITE, 1);
-		OUT_RING(ring, CACHE_FLUSH);
 
 		OUT_PKT3(ring, CP_SET_BIN_DATA, 2);
 		OUT_RELOC(ring, pipe->bo, 0, 0, 0);    /* BIN_DATA_ADDR <- VSC_PIPE[p].DATA_ADDRESS */
