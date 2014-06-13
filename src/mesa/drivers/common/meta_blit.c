@@ -407,7 +407,7 @@ blitframebuffer_texture(struct gl_context *ctx,
       }
    } else {
       GLenum tex_base_format;
-      int srcW = abs(srcY1 - srcY0);
+      int srcW = abs(srcX1 - srcX0);
       int srcH = abs(srcY1 - srcY0);
       /* Fall back to doing a CopyTexSubImage to get the destination
        * renderbuffer into a texture.
