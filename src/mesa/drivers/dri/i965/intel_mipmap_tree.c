@@ -1370,10 +1370,12 @@ intel_miptree_level_enable_hiz(struct brw_context *brw,
        * force the proper size alignments.
        */
       if (level > 0 && ((width & 7) || (height & 3))) {
+         DBG("mt %p level %d: HiZ DISABLED\n", mt, level);
          return false;
       }
    }
 
+   DBG("mt %p level %d: HiZ enabled\n", mt, level);
    mt->level[level].has_hiz = true;
    return true;
 }
