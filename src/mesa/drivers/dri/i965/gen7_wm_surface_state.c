@@ -315,7 +315,7 @@ gen7_update_texture_surface(struct gl_context *ctx,
    uint32_t effective_depth = (tObj->Immutable && tObj->Target != GL_TEXTURE_3D)
                               ? tObj->NumLayers : mt->logical_depth0;
 
-   if (mt->array_spacing_lod0)
+   if (mt->array_layout == ALL_SLICES_AT_EACH_LOD)
       surf[0] |= GEN7_SURFACE_ARYSPC_LOD0;
 
    surf[1] = mt->bo->offset64 + mt->offset; /* reloc */
@@ -508,8 +508,8 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
 
    surf[0] = surftype << BRW_SURFACE_TYPE_SHIFT |
              format << BRW_SURFACE_FORMAT_SHIFT |
-             (irb->mt->array_spacing_lod0 ? GEN7_SURFACE_ARYSPC_LOD0
-                                          : GEN7_SURFACE_ARYSPC_FULL) |
+             (irb->mt->array_layout == ALL_SLICES_AT_EACH_LOD ?
+                 GEN7_SURFACE_ARYSPC_LOD0 : GEN7_SURFACE_ARYSPC_FULL) |
              gen7_surface_tiling_mode(mt->tiling);
 
    if (irb->mt->align_h == 4)

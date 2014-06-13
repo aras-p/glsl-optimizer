@@ -255,6 +255,58 @@ enum intel_fast_clear_state
    INTEL_FAST_CLEAR_STATE_CLEAR,
 };
 
+enum miptree_array_layout {
+   /* Each array slice contains all miplevels packed together.
+    *
+    * Gen hardware usually wants multilevel miptrees configured this way.
+    *
+    * A 2D Array texture with 2 slices and multiple LODs using
+    * ALL_LOD_IN_EACH_SLICE would look somewhat like this:
+    *
+    *   +----------+
+    *   |          |
+    *   |          |
+    *   +----------+
+    *   +---+ +-+
+    *   |   | +-+
+    *   +---+ *
+    *   +----------+
+    *   |          |
+    *   |          |
+    *   +----------+
+    *   +---+ +-+
+    *   |   | +-+
+    *   +---+ *
+    */
+   ALL_LOD_IN_EACH_SLICE,
+
+   /* Each LOD contains all slices of that LOD packed together.
+    *
+    * In some situations, Gen7+ hardware can use the array_spacing_lod0
+    * feature to save space when the surface only contains LOD 0.
+    *
+    * Gen6 uses this for separate stencil and hiz since gen6 does not support
+    * multiple LODs for separate stencil and hiz.
+    *
+    * A 2D Array texture with 2 slices and multiple LODs using
+    * ALL_SLICES_AT_EACH_LOD would look somewhat like this:
+    *
+    *   +----------+
+    *   |          |
+    *   |          |
+    *   +----------+
+    *   |          |
+    *   |          |
+    *   +----------+
+    *   +---+ +-+
+    *   |   | +-+
+    *   +---+ +-+
+    *   |   | :
+    *   +---+
+    */
+   ALL_SLICES_AT_EACH_LOD,
+};
+
 struct intel_mipmap_tree
 {
    /** Buffer object containing the pixel data. */
@@ -322,13 +374,10 @@ struct intel_mipmap_tree
    uint32_t logical_width0, logical_height0, logical_depth0;
 
    /**
-    * For 1D array, 2D array, cube, and 2D multisampled surfaces on Gen7: true
-    * if the surface only contains LOD 0, and hence no space is for LOD's
-    * other than 0 in between array slices.
-    *
-    * Corresponds to the surface_array_spacing bit in gen7_surface_state.
+    * Indicates if we use the standard miptree layout (ALL_LOD_IN_EACH_SLICE),
+    * or if we tightly pack array slices at each LOD (ALL_SLICES_AT_EACH_LOD).
     */
-   bool array_spacing_lod0;
+   enum miptree_array_layout array_layout;
 
    /**
     * The distance in rows between array slices in an uncompressed surface.

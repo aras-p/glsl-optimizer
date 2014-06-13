@@ -82,7 +82,7 @@ brw_blorp_surface_info::set(struct brw_context *brw,
 {
    brw_blorp_mip_info::set(mt, level, layer);
    this->num_samples = mt->num_samples;
-   this->array_spacing_lod0 = mt->array_spacing_lod0;
+   this->array_layout = mt->array_layout;
    this->map_stencil_as_y_tiled = false;
    this->msaa_layout = mt->msaa_layout;
 

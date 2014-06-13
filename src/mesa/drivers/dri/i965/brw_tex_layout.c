@@ -241,7 +241,7 @@ brw_miptree_layout_texture_array(struct brw_context *brw,
 
    h0 = ALIGN(mt->physical_height0, mt->align_h);
    h1 = ALIGN(minify(mt->physical_height0, 1), mt->align_h);
-   if (mt->array_spacing_lod0)
+   if (mt->array_layout == ALL_SLICES_AT_EACH_LOD)
       mt->qpitch = h0;
    else
       mt->qpitch = (h0 + h1 + (brw->gen >= 7 ? 12 : 11) * mt->align_h);

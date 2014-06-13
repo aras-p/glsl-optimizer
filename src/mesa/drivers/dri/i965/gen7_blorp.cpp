@@ -169,7 +169,7 @@ gen7_blorp_emit_surface_state(struct brw_context *brw,
    if (surface->mt->align_w == 8)
       surf[0] |= GEN7_SURFACE_HALIGN_8;
 
-   if (surface->array_spacing_lod0)
+   if (surface->array_layout == ALL_SLICES_AT_EACH_LOD)
       surf[0] |= GEN7_SURFACE_ARYSPC_LOD0;
    else
       surf[0] |= GEN7_SURFACE_ARYSPC_FULL;

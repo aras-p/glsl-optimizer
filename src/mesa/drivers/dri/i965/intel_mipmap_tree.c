@@ -350,17 +350,18 @@ intel_miptree_create_layout(struct brw_context *brw,
       }
    }
 
-   /* array_spacing_lod0 is only used for non-IMS MSAA surfaces.  TODO: can we
-    * use it elsewhere?
+   /* Set array_layout to ALL_SLICES_AT_EACH_LOD when gen7+ array_spacing_lod0
+    * can be used. array_spacing_lod0 is only used for non-IMS MSAA surfaces.
+    * TODO: can we use it elsewhere?
     */
    switch (mt->msaa_layout) {
    case INTEL_MSAA_LAYOUT_NONE:
    case INTEL_MSAA_LAYOUT_IMS:
-      mt->array_spacing_lod0 = false;
+      mt->array_layout = ALL_LOD_IN_EACH_SLICE;
       break;
    case INTEL_MSAA_LAYOUT_UMS:
    case INTEL_MSAA_LAYOUT_CMS:
-      mt->array_spacing_lod0 = true;
+      mt->array_layout = ALL_SLICES_AT_EACH_LOD;
       break;
    }
 
