@@ -523,7 +523,7 @@ static int r600_get_compute_param(struct pipe_screen *screen,
 	case PIPE_COMPUTE_CAP_MAX_COMPUTE_UNITS:
 		if (ret) {
 			uint32_t *max_compute_units = ret;
-			*max_compute_units = rscreen->info.max_compute_units;
+			*max_compute_units = MAX2(rscreen->info.max_compute_units, 1);
 		}
 		return sizeof(uint32_t);
 
