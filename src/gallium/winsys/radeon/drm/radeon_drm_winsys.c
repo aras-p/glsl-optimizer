@@ -45,6 +45,10 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#ifndef RADEON_INFO_ACTIVE_CU_COUNT
+#define RADEON_INFO_ACTIVE_CU_COUNT 0x20
+#endif
+
 static struct util_hash_table *fd_tab = NULL;
 pipe_static_mutex(fd_tab_mutex);
 
@@ -381,6 +385,9 @@ static boolean do_winsys_init(struct radeon_drm_winsys *ws)
     ws->info.r600_max_pipes = 2;
     radeon_get_drm_value(ws->fd, RADEON_INFO_MAX_PIPES, NULL,
                          &ws->info.r600_max_pipes);
+
+    radeon_get_drm_value(ws->fd, RADEON_INFO_ACTIVE_CU_COUNT, NULL,
+                         &ws->info.max_compute_units);
 
     if (radeon_get_drm_value(ws->fd, RADEON_INFO_SI_TILE_MODE_ARRAY, NULL,
                              ws->info.si_tile_mode_array)) {
