@@ -54,7 +54,7 @@ extern "C" {
 #define brw_last_inst (&p->store[p->nr_insn - 1])
 
 struct brw_compile {
-   struct brw_instruction *store;
+   brw_inst *store;
    int store_size;
    unsigned nr_insn;
    unsigned int next_insn_offset;
@@ -63,9 +63,9 @@ struct brw_compile {
 
    /* Allow clients to push/pop instruction state:
     */
-   struct brw_instruction stack[BRW_EU_MAX_INSN_STACK];
+   brw_inst stack[BRW_EU_MAX_INSN_STACK];
    bool compressed_stack[BRW_EU_MAX_INSN_STACK];
-   struct brw_instruction *current;
+   brw_inst *current;
 
    bool single_program_flow;
    bool compressed;
@@ -114,11 +114,9 @@ void brw_disassemble(struct brw_context *brw, void *assembly,
                      int start, int end, FILE *out);
 const unsigned *brw_get_program( struct brw_compile *p, unsigned *sz );
 
-struct brw_instruction *brw_next_insn(struct brw_compile *p, unsigned opcode);
-void brw_set_dest(struct brw_compile *p, struct brw_instruction *insn,
-		  struct brw_reg dest);
-void brw_set_src0(struct brw_compile *p, struct brw_instruction *insn,
-		  struct brw_reg reg);
+brw_inst *brw_next_insn(struct brw_compile *p, unsigned opcode);
+void brw_set_dest(struct brw_compile *p, brw_inst *insn, struct brw_reg dest);
+void brw_set_src0(struct brw_compile *p, brw_inst *insn, struct brw_reg reg);
 
 void gen6_resolve_implied_move(struct brw_compile *p,
 			       struct brw_reg *src,
@@ -126,22 +124,22 @@ void gen6_resolve_implied_move(struct brw_compile *p,
 
 /* Helpers for regular instructions:
  */
-#define ALU1(OP)					\
-struct brw_instruction *brw_##OP(struct brw_compile *p,	\
-	      struct brw_reg dest,			\
+#define ALU1(OP)				\
+brw_inst *brw_##OP(struct brw_compile *p,	\
+	      struct brw_reg dest,		\
 	      struct brw_reg src0);
 
-#define ALU2(OP)					\
-struct brw_instruction *brw_##OP(struct brw_compile *p,	\
-	      struct brw_reg dest,			\
-	      struct brw_reg src0,			\
+#define ALU2(OP)				\
+brw_inst *brw_##OP(struct brw_compile *p,	\
+	      struct brw_reg dest,		\
+	      struct brw_reg src0,		\
 	      struct brw_reg src1);
 
-#define ALU3(OP)					\
-struct brw_instruction *brw_##OP(struct brw_compile *p,	\
-	      struct brw_reg dest,			\
-	      struct brw_reg src0,			\
-	      struct brw_reg src1,			\
+#define ALU3(OP)				\
+brw_inst *brw_##OP(struct brw_compile *p,	\
+	      struct brw_reg dest,		\
+	      struct brw_reg src0,		\
+	      struct brw_reg src1,		\
 	      struct brw_reg src2);
 
 #define ROUND(OP) \
@@ -197,7 +195,7 @@ ROUND(RNDE)
 /* Helpers for SEND instruction:
  */
 void brw_set_sampler_message(struct brw_compile *p,
-                             struct brw_instruction *insn,
+                             brw_inst *insn,
                              unsigned binding_table_index,
                              unsigned sampler,
                              unsigned msg_type,
@@ -208,7 +206,7 @@ void brw_set_sampler_message(struct brw_compile *p,
                              unsigned return_format);
 
 void brw_set_dp_read_message(struct brw_compile *p,
-			     struct brw_instruction *insn,
+			     brw_inst *insn,
 			     unsigned binding_table_index,
 			     unsigned msg_control,
 			     unsigned msg_type,
@@ -218,7 +216,7 @@ void brw_set_dp_read_message(struct brw_compile *p,
 			     unsigned response_length);
 
 void brw_set_dp_write_message(struct brw_compile *p,
-			      struct brw_instruction *insn,
+			      brw_inst *insn,
 			      unsigned binding_table_index,
 			      unsigned msg_control,
 			      unsigned msg_type,
@@ -321,32 +319,30 @@ void brw_shader_time_add(struct brw_compile *p,
 /* If/else/endif.  Works by manipulating the execution flags on each
  * channel.
  */
-struct brw_instruction *brw_IF(struct brw_compile *p,
-			       unsigned execute_size);
-struct brw_instruction *gen6_IF(struct brw_compile *p, uint32_t conditional,
-				struct brw_reg src0, struct brw_reg src1);
+brw_inst *brw_IF(struct brw_compile *p, unsigned execute_size);
+brw_inst *gen6_IF(struct brw_compile *p, uint32_t conditional,
+                  struct brw_reg src0, struct brw_reg src1);
 
 void brw_ELSE(struct brw_compile *p);
 void brw_ENDIF(struct brw_compile *p);
 
 /* DO/WHILE loops:
  */
-struct brw_instruction *brw_DO(struct brw_compile *p,
-			       unsigned execute_size);
+brw_inst *brw_DO(struct brw_compile *p, unsigned execute_size);
 
-struct brw_instruction *brw_WHILE(struct brw_compile *p);
+brw_inst *brw_WHILE(struct brw_compile *p);
 
-struct brw_instruction *brw_BREAK(struct brw_compile *p);
-struct brw_instruction *brw_CONT(struct brw_compile *p);
-struct brw_instruction *gen6_CONT(struct brw_compile *p);
-struct brw_instruction *gen6_HALT(struct brw_compile *p);
+brw_inst *brw_BREAK(struct brw_compile *p);
+brw_inst *brw_CONT(struct brw_compile *p);
+brw_inst *gen6_CONT(struct brw_compile *p);
+brw_inst *gen6_HALT(struct brw_compile *p);
 
 /* Forward jumps:
  */
 void brw_land_fwd_jump(struct brw_compile *p, int jmp_insn_idx);
 
-struct brw_instruction *brw_JMPI(struct brw_compile *p, struct brw_reg index,
-                                 unsigned predicate_control);
+brw_inst *brw_JMPI(struct brw_compile *p, struct brw_reg index,
+                   unsigned predicate_control);
 
 void brw_NOP(struct brw_compile *p);
 
@@ -404,9 +400,7 @@ void brw_math_invert( struct brw_compile *p,
 		      struct brw_reg dst,
 		      struct brw_reg src);
 
-void brw_set_src1(struct brw_compile *p,
-		  struct brw_instruction *insn,
-		  struct brw_reg reg);
+void brw_set_src1(struct brw_compile *p, brw_inst *insn, struct brw_reg reg);
 
 void brw_set_uip_jip(struct brw_compile *p);
 
@@ -416,22 +410,19 @@ uint32_t brw_swap_cmod(uint32_t cmod);
 void brw_init_compaction_tables(struct brw_context *brw);
 void brw_compact_instructions(struct brw_compile *p, int start_offset,
                               int num_annotations, struct annotation *annotation);
-void brw_uncompact_instruction(struct brw_context *brw,
-			       struct brw_instruction *dst,
+void brw_uncompact_instruction(struct brw_context *brw, brw_inst *dst,
 			       struct brw_compact_instruction *src);
 bool brw_try_compact_instruction(struct brw_compile *p,
                                  struct brw_compact_instruction *dst,
-                                 struct brw_instruction *src);
+                                 brw_inst *src);
 
-void brw_debug_compact_uncompact(struct brw_context *brw,
-				 struct brw_instruction *orig,
-				 struct brw_instruction *uncompacted);
+void brw_debug_compact_uncompact(struct brw_context *brw, brw_inst *orig,
+                                 brw_inst *uncompacted);
 
 static inline int
 next_offset(const struct brw_context *brw, void *store, int offset)
 {
-   struct brw_instruction *insn =
-      (struct brw_instruction *)((char *)store + offset);
+   brw_inst *insn = (brw_inst *)((char *)store + offset);
 
    if (brw_inst_cmpt_control(brw, insn))
       return offset + 8;

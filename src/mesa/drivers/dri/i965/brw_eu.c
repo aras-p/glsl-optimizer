@@ -171,7 +171,7 @@ void brw_set_default_acc_write_control(struct brw_compile *p, unsigned value)
 void brw_push_insn_state( struct brw_compile *p )
 {
    assert(p->current != &p->stack[BRW_EU_MAX_INSN_STACK-1]);
-   memcpy(p->current+1, p->current, sizeof(struct brw_instruction));
+   memcpy(p->current + 1, p->current, sizeof(brw_inst));
    p->compressed_stack[p->current - p->stack] = p->compressed;
    p->current++;
 }
@@ -198,7 +198,7 @@ brw_init_compile(struct brw_context *brw, struct brw_compile *p, void *mem_ctx)
     * until out of memory.
     */
    p->store_size = 1024;
-   p->store = rzalloc_array(mem_ctx, struct brw_instruction, p->store_size);
+   p->store = rzalloc_array(mem_ctx, brw_inst, p->store_size);
    p->nr_insn = 0;
    p->current = p->stack;
    p->compressed = false;
@@ -240,8 +240,8 @@ brw_disassemble(struct brw_context *brw,
    bool dump_hex = false;
 
    for (int offset = start; offset < end;) {
-      struct brw_instruction *insn = assembly + offset;
-      struct brw_instruction uncompacted;
+      brw_inst *insn = assembly + offset;
+      brw_inst uncompacted;
       bool compacted = brw_inst_cmpt_control(brw, insn);
       fprintf(out, "0x%08x: ", offset);
 

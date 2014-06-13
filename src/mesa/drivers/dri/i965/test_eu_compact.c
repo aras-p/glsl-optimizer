@@ -29,7 +29,7 @@
 #include "brw_eu.h"
 
 static bool
-test_compact_instruction(struct brw_compile *p, struct brw_instruction src)
+test_compact_instruction(struct brw_compile *p, brw_inst src)
 {
    struct brw_context *brw = p->brw;
 
@@ -37,7 +37,7 @@ test_compact_instruction(struct brw_compile *p, struct brw_instruction src)
    memset(&dst, 0xd0, sizeof(dst));
 
    if (brw_try_compact_instruction(p, &dst, &src)) {
-      struct brw_instruction uncompacted;
+      brw_inst uncompacted;
 
       brw_uncompact_instruction(brw, &uncompacted, &dst);
       if (memcmp(&uncompacted, &src, sizeof(src))) {
@@ -67,7 +67,7 @@ test_compact_instruction(struct brw_compile *p, struct brw_instruction src)
  * become meaningless once fuzzing twiddles a related bit.
  */
 static void
-clear_pad_bits(const struct brw_context *brw, struct brw_instruction *inst)
+clear_pad_bits(const struct brw_context *brw, brw_inst *inst)
 {
    if (brw_inst_opcode(brw, inst) != BRW_OPCODE_SEND &&
        brw_inst_opcode(brw, inst) != BRW_OPCODE_SENDC &&
@@ -80,7 +80,7 @@ clear_pad_bits(const struct brw_context *brw, struct brw_instruction *inst)
 }
 
 static bool
-skip_bit(const struct brw_context *brw, struct brw_instruction *src, int bit)
+skip_bit(const struct brw_context *brw, brw_inst *src, int bit)
 {
    /* pad bit */
    if (bit == 7)
@@ -113,15 +113,14 @@ skip_bit(const struct brw_context *brw, struct brw_instruction *src, int bit)
 }
 
 static bool
-test_fuzz_compact_instruction(struct brw_compile *p,
-			      struct brw_instruction src)
+test_fuzz_compact_instruction(struct brw_compile *p, brw_inst src)
 {
    for (int bit0 = 0; bit0 < 128; bit0++) {
       if (skip_bit(p->brw, &src, bit0))
 	 continue;
 
       for (int bit1 = 0; bit1 < 128; bit1++) {
-	 struct brw_instruction instr = src;
+         brw_inst instr = src;
 	 uint32_t *bits = (uint32_t *)&instr;
 
          if (skip_bit(p->brw, &src, bit1))
@@ -233,7 +232,7 @@ gen_f0_1_MOV_GRF_GRF(struct brw_compile *p)
 
    brw_push_insn_state(p);
    brw_set_default_predicate_control(p, true);
-   struct brw_instruction *mov = brw_MOV(p, g0, g2);
+   brw_inst *mov = brw_MOV(p, g0, g2);
    brw_inst_set_flag_subreg_nr(p->brw, mov, 1);
    brw_pop_insn_state(p);
 }

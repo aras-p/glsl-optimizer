@@ -329,7 +329,7 @@ static const uint16_t *src_index_table;
 static bool
 set_control_index(struct brw_context *brw,
                   struct brw_compact_instruction *dst,
-                  struct brw_instruction *src)
+                  brw_inst *src)
 {
    uint32_t uncompacted =                  /* 17b/SNB; 19b/IVB+ */
       (brw_inst_bits(src, 31, 31) << 16) | /* 1b */
@@ -354,7 +354,7 @@ set_control_index(struct brw_context *brw,
 static bool
 set_datatype_index(struct brw_context *brw,
                    struct brw_compact_instruction *dst,
-                   struct brw_instruction *src)
+                   brw_inst *src)
 {
    uint32_t uncompacted =                  /* 18b */
       (brw_inst_bits(src, 63, 61) << 15) | /* 3b */
@@ -373,8 +373,7 @@ set_datatype_index(struct brw_context *brw,
 static bool
 set_subreg_index(struct brw_context *brw,
                  struct brw_compact_instruction *dst,
-                 struct brw_instruction *src,
-                 bool is_immediate)
+                 brw_inst *src, bool is_immediate)
 {
    uint16_t uncompacted =                 /* 15b */
       (brw_inst_bits(src, 52, 48) << 0) | /*  5b */
@@ -410,7 +409,7 @@ get_src_index(uint16_t uncompacted,
 static bool
 set_src0_index(struct brw_context *brw,
                struct brw_compact_instruction *dst,
-               struct brw_instruction *src)
+               brw_inst *src)
 {
    uint16_t compacted;
    uint16_t uncompacted = brw_inst_bits(src, 88, 77); /* 12b */
@@ -427,7 +426,7 @@ set_src0_index(struct brw_context *brw,
 static bool
 set_src1_index(struct brw_context *brw,
                struct brw_compact_instruction *dst,
-               struct brw_instruction *src, bool is_immediate)
+               brw_inst *src, bool is_immediate)
 {
    if (is_immediate) {
       dst->dw1.src1_index = (brw_inst_imm_ud(brw, src) >> 8) & 0x1f;
@@ -469,7 +468,7 @@ is_compactable_immediate(unsigned imm)
 bool
 brw_try_compact_instruction(struct brw_compile *p,
                             struct brw_compact_instruction *dst,
-                            struct brw_instruction *src)
+                            brw_inst *src)
 {
    struct brw_context *brw = p->brw;
    struct brw_compact_instruction temp;
@@ -526,8 +525,7 @@ brw_try_compact_instruction(struct brw_compile *p,
 }
 
 static void
-set_uncompacted_control(struct brw_context *brw,
-                        struct brw_instruction *dst,
+set_uncompacted_control(struct brw_context *brw, brw_inst *dst,
                         struct brw_compact_instruction *src)
 {
    uint32_t uncompacted = control_index_table[src->dw0.control_index];
@@ -540,8 +538,7 @@ set_uncompacted_control(struct brw_context *brw,
 }
 
 static void
-set_uncompacted_datatype(struct brw_context *brw,
-                         struct brw_instruction *dst,
+set_uncompacted_datatype(struct brw_context *brw, brw_inst *dst,
                          struct brw_compact_instruction *src)
 {
    uint32_t uncompacted = datatype_table[src->dw0.data_type_index];
@@ -551,8 +548,7 @@ set_uncompacted_datatype(struct brw_context *brw,
 }
 
 static void
-set_uncompacted_subreg(struct brw_context *brw,
-                       struct brw_instruction *dst,
+set_uncompacted_subreg(struct brw_context *brw, brw_inst *dst,
                        struct brw_compact_instruction *src)
 {
    uint16_t uncompacted = subreg_table[src->dw0.sub_reg_index];
@@ -563,8 +559,7 @@ set_uncompacted_subreg(struct brw_context *brw,
 }
 
 static void
-set_uncompacted_src0(struct brw_context *brw,
-                     struct brw_instruction *dst,
+set_uncompacted_src0(struct brw_context *brw, brw_inst *dst,
                      struct brw_compact_instruction *src)
 {
    uint32_t compacted = src->dw0.src0_index | src->dw1.src0_index << 2;
@@ -574,8 +569,7 @@ set_uncompacted_src0(struct brw_context *brw,
 }
 
 static void
-set_uncompacted_src1(struct brw_context *brw,
-                     struct brw_instruction *dst,
+set_uncompacted_src1(struct brw_context *brw, brw_inst *dst,
                      struct brw_compact_instruction *src, bool is_immediate)
 {
    if (is_immediate) {
@@ -590,8 +584,7 @@ set_uncompacted_src1(struct brw_context *brw,
 }
 
 void
-brw_uncompact_instruction(struct brw_context *brw,
-                          struct brw_instruction *dst,
+brw_uncompact_instruction(struct brw_context *brw, brw_inst *dst,
                           struct brw_compact_instruction *src)
 {
    memset(dst, 0, sizeof(*dst));
@@ -624,8 +617,8 @@ brw_uncompact_instruction(struct brw_context *brw,
 }
 
 void brw_debug_compact_uncompact(struct brw_context *brw,
-                                 struct brw_instruction *orig,
-                                 struct brw_instruction *uncompacted)
+                                 brw_inst *orig,
+                                 brw_inst *uncompacted)
 {
    fprintf(stderr, "Instruction compact/uncompact changed (gen%d):\n",
            brw->gen);
@@ -660,7 +653,7 @@ compacted_between(int old_ip, int old_target_ip, int *compacted_counts)
 }
 
 static void
-update_uip_jip(struct brw_context *brw, struct brw_instruction *insn,
+update_uip_jip(struct brw_context *brw, brw_inst *insn,
                int this_old_ip, int *compacted_counts)
 {
    int jip = brw_inst_jip(brw, insn);
@@ -724,20 +717,20 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
    int offset = 0;
    int compacted_count = 0;
    for (src_offset = 0; src_offset < p->next_insn_offset - start_offset;) {
-      struct brw_instruction *src = store + src_offset;
+      brw_inst *src = store + src_offset;
       void *dst = store + offset;
 
       old_ip[offset / 8] = src_offset / 8;
       compacted_counts[src_offset / 8] = compacted_count;
 
-      struct brw_instruction saved = *src;
+      brw_inst saved = *src;
 
       if (!brw_inst_cmpt_control(brw, src) &&
           brw_try_compact_instruction(p, dst, src)) {
          compacted_count++;
 
          if (INTEL_DEBUG) {
-            struct brw_instruction uncompacted;
+            brw_inst uncompacted;
             brw_uncompact_instruction(brw, &uncompacted, dst);
             if (memcmp(&saved, &uncompacted, sizeof(uncompacted))) {
                brw_debug_compact_uncompact(brw, &saved, &uncompacted);
@@ -779,7 +772,7 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
    /* Fix up control flow offsets. */
    p->next_insn_offset = start_offset + offset;
    for (offset = 0; offset < p->next_insn_offset - start_offset;) {
-      struct brw_instruction *insn = store + offset;
+      brw_inst *insn = store + offset;
       int this_old_ip = old_ip[offset / 8];
       int this_compacted_count = compacted_counts[this_old_ip];
       int target_old_ip, target_compacted_count;

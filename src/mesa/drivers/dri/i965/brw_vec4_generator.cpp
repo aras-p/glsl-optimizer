@@ -695,7 +695,7 @@ vec4_generator::generate_scratch_read(vec4_instruction *inst,
    /* Each of the 8 channel enables is considered for whether each
     * dword is written.
     */
-   struct brw_instruction *send = brw_next_insn(p, BRW_OPCODE_SEND);
+   brw_inst *send = brw_next_insn(p, BRW_OPCODE_SEND);
    brw_set_dest(p, send, dst);
    brw_set_src0(p, send, header);
    if (brw->gen < 6)
@@ -766,7 +766,7 @@ vec4_generator::generate_scratch_write(vec4_instruction *inst,
    /* Each of the 8 channel enables is considered for whether each
     * dword is written.
     */
-   struct brw_instruction *send = brw_next_insn(p, BRW_OPCODE_SEND);
+   brw_inst *send = brw_next_insn(p, BRW_OPCODE_SEND);
    brw_set_dest(p, send, dst);
    brw_set_src0(p, send, header);
    if (brw->gen < 6)
@@ -813,7 +813,7 @@ vec4_generator::generate_pull_constant_load(vec4_instruction *inst,
    /* Each of the 8 channel enables is considered for whether each
     * dword is written.
     */
-   struct brw_instruction *send = brw_next_insn(p, BRW_OPCODE_SEND);
+   brw_inst *send = brw_next_insn(p, BRW_OPCODE_SEND);
    brw_set_dest(p, send, dst);
    brw_set_src0(p, send, header);
    if (brw->gen < 6)
@@ -839,7 +839,7 @@ vec4_generator::generate_pull_constant_load_gen7(vec4_instruction *inst,
    assert(surf_index.file == BRW_IMMEDIATE_VALUE &&
 	  surf_index.type == BRW_REGISTER_TYPE_UD);
 
-   brw_instruction *insn = brw_next_insn(p, BRW_OPCODE_SEND);
+   brw_inst *insn = brw_next_insn(p, BRW_OPCODE_SEND);
    brw_set_dest(p, insn, dst);
    brw_set_src0(p, insn, offset);
    brw_set_sampler_message(p, insn,
@@ -1072,7 +1072,7 @@ vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
          assert(brw->gen == 6);
          gen6_IF(p, inst->conditional_mod, src[0], src[1]);
       } else {
-         struct brw_instruction *if_inst = brw_IF(p, BRW_EXECUTE_8);
+         brw_inst *if_inst = brw_IF(p, BRW_EXECUTE_8);
          brw_inst_set_pred_control(brw, if_inst, inst->predicate);
       }
       break;
@@ -1265,7 +1265,7 @@ vec4_generator::generate_code(exec_list *instructions)
                 !"conditional_mod, no_dd_check, or no_dd_clear set for IR "
                  "emitting more than 1 instruction");
 
-         struct brw_instruction *last = &p->store[pre_emit_nr_insn];
+         brw_inst *last = &p->store[pre_emit_nr_insn];
 
          if (inst->conditional_mod)
             brw_inst_set_cond_modifier(brw, last, inst->conditional_mod);

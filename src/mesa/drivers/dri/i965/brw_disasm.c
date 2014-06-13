@@ -585,8 +585,7 @@ static int reg (FILE *file, unsigned _reg_file, unsigned _reg_nr)
     return err;
 }
 
-static int dest (FILE *file, struct brw_context *brw,
-                 struct brw_instruction *inst)
+static int dest (FILE *file, struct brw_context *brw, brw_inst *inst)
 {
     int	err = 0;
 
@@ -643,8 +642,7 @@ static int dest (FILE *file, struct brw_context *brw,
     return 0;
 }
 
-static int dest_3src (FILE *file, struct brw_context *brw,
-                      struct brw_instruction *inst)
+static int dest_3src (FILE *file, struct brw_context *brw, brw_inst *inst)
 {
     int	err = 0;
     uint32_t reg_file;
@@ -783,8 +781,7 @@ static int src_da16 (FILE *file,
     return err;
 }
 
-static int src0_3src (FILE *file, struct brw_context *brw,
-                      struct brw_instruction *inst)
+static int src0_3src (FILE *file, struct brw_context *brw, brw_inst *inst)
 {
     int err = 0;
     unsigned swz = brw_inst_3src_src0_swizzle(brw, inst);
@@ -834,8 +831,7 @@ static int src0_3src (FILE *file, struct brw_context *brw,
     return err;
 }
 
-static int src1_3src (FILE *file, struct brw_context *brw,
-                      struct brw_instruction *inst)
+static int src1_3src (FILE *file, struct brw_context *brw, brw_inst *inst)
 {
     int err = 0;
     unsigned swz = brw_inst_3src_src1_swizzle(brw, inst);
@@ -886,8 +882,7 @@ static int src1_3src (FILE *file, struct brw_context *brw,
 }
 
 
-static int src2_3src (FILE *file, struct brw_context *brw,
-                      struct brw_instruction *inst)
+static int src2_3src (FILE *file, struct brw_context *brw, brw_inst *inst)
 {
     int err = 0;
     unsigned swz = brw_inst_3src_src2_swizzle(brw, inst);
@@ -938,7 +933,7 @@ static int src2_3src (FILE *file, struct brw_context *brw,
 }
 
 static int imm (FILE *file, struct brw_context *brw, unsigned type,
-                struct brw_instruction *inst) {
+                brw_inst *inst) {
     switch (type) {
     case BRW_HW_REG_TYPE_UD:
 	format (file, "0x%08xUD", brw_inst_imm_ud(brw, inst));
@@ -967,8 +962,7 @@ static int imm (FILE *file, struct brw_context *brw, unsigned type,
     return 0;
 }
 
-static int src0 (FILE *file, struct brw_context *brw,
-                 struct brw_instruction *inst)
+static int src0 (FILE *file, struct brw_context *brw, brw_inst *inst)
 {
     if (brw_inst_src0_reg_file(brw, inst) == BRW_IMMEDIATE_VALUE)
 	return imm (file, brw, brw_inst_src0_reg_type(brw, inst), inst);
@@ -1027,8 +1021,7 @@ static int src0 (FILE *file, struct brw_context *brw,
     }
 }
 
-static int src1 (FILE *file, struct brw_context *brw,
-                 struct brw_instruction *inst)
+static int src1 (FILE *file, struct brw_context *brw, brw_inst *inst)
 {
     if (brw_inst_src1_reg_file(brw, inst) == BRW_IMMEDIATE_VALUE)
 	return imm (file, brw, brw_inst_src1_reg_type(brw, inst), inst);
@@ -1087,8 +1080,7 @@ static int src1 (FILE *file, struct brw_context *brw,
     }
 }
 
-static int qtr_ctrl(FILE *file, struct brw_context *brw,
-                    struct brw_instruction *inst)
+static int qtr_ctrl(FILE *file, struct brw_context *brw, brw_inst *inst)
 {
     int qtr_ctl = brw_inst_qtr_control(brw, inst);
     int exec_size = 1 << brw_inst_exec_size(brw, inst);
@@ -1118,8 +1110,8 @@ static int qtr_ctrl(FILE *file, struct brw_context *brw,
 }
 
 int
-brw_disassemble_inst(FILE *file, struct brw_context *brw,
-                     struct brw_instruction *inst, bool is_compacted)
+brw_disassemble_inst(FILE *file, struct brw_context *brw, brw_inst *inst,
+                     bool is_compacted)
 {
     int	err = 0;
     int space = 0;

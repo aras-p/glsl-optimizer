@@ -143,7 +143,7 @@ extern "C" {
 #define BRW_MAX_CURBE                    (32*16)
 
 struct brw_context;
-struct brw_instruction;
+struct brw_inst;
 struct brw_vs_prog_key;
 struct brw_vec4_prog_key;
 struct brw_wm_prog_key;
@@ -1577,7 +1577,7 @@ void brw_vec4_alloc_reg_set(struct intel_screen *screen);
 
 /* brw_disasm.c */
 int brw_disassemble_inst(FILE *file, struct brw_context *brw,
-                         struct brw_instruction *inst, bool is_compacted);
+                         struct brw_inst *inst, bool is_compacted);
 
 /* brw_vs.c */
 gl_clip_plane *brw_select_clip_planes(struct gl_context *ctx);

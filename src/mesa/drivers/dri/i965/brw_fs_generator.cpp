@@ -78,7 +78,7 @@ fs_generator::patch_discard_jumps_to_fb_writes()
     * included GPU hangs and sparkly rendering on the piglit discard
     * tests.
     */
-   struct brw_instruction *last_halt = gen6_HALT(p);
+   brw_inst *last_halt = gen6_HALT(p);
    brw_inst_set_uip(brw, last_halt, 2);
    brw_inst_set_jip(brw, last_halt, 2);
 
@@ -86,7 +86,7 @@ fs_generator::patch_discard_jumps_to_fb_writes()
 
    foreach_list(node, &this->discard_halt_patches) {
       ip_record *patch_ip = (ip_record *)node;
-      struct brw_instruction *patch = &p->store[patch_ip->ip];
+      brw_inst *patch = &p->store[patch_ip->ip];
 
       assert(brw_inst_opcode(brw, patch) == BRW_OPCODE_HALT);
       /* HALT takes a half-instruction distance from the pre-incremented IP. */
@@ -841,7 +841,7 @@ fs_generator::generate_uniform_pull_constant_load_gen7(fs_inst *inst,
    brw_push_insn_state(p);
    brw_set_default_compression_control(p, BRW_COMPRESSION_NONE);
    brw_set_default_mask_control(p, BRW_MASK_DISABLE);
-   struct brw_instruction *send = brw_next_insn(p, BRW_OPCODE_SEND);
+   brw_inst *send = brw_next_insn(p, BRW_OPCODE_SEND);
    brw_pop_insn_state(p);
 
    /* We use the SIMD4x2 mode because we want to end up with 4 components in
@@ -907,7 +907,7 @@ fs_generator::generate_varying_pull_constant_load(fs_inst *inst,
    struct brw_reg header = brw_vec8_grf(0, 0);
    gen6_resolve_implied_move(p, &header, inst->base_mrf);
 
-   struct brw_instruction *send = brw_next_insn(p, BRW_OPCODE_SEND);
+   brw_inst *send = brw_next_insn(p, BRW_OPCODE_SEND);
    brw_inst_set_qtr_control(brw, send, BRW_COMPRESSION_NONE);
    brw_set_dest(p, send, retype(dst, BRW_REGISTER_TYPE_UW));
    brw_set_src0(p, send, header);
@@ -959,7 +959,7 @@ fs_generator::generate_varying_pull_constant_load_gen7(fs_inst *inst,
       simd_mode = BRW_SAMPLER_SIMD_MODE_SIMD8;
    }
 
-   struct brw_instruction *send = brw_next_insn(p, BRW_OPCODE_SEND);
+   brw_inst *send = brw_next_insn(p, BRW_OPCODE_SEND);
    brw_set_dest(p, send, dst);
    brw_set_src0(p, send, offset);
    brw_set_sampler_message(p, send,
@@ -1761,7 +1761,7 @@ fs_generator::generate_code(exec_list *instructions)
           * doesn't make sense.
           */
          assert(p->next_insn_offset == last_insn_offset + 16);
-         struct brw_instruction *last = &p->store[last_insn_offset / 16];
+         brw_inst *last = &p->store[last_insn_offset / 16];
          brw_inst_set_cond_modifier(brw, last, inst->conditional_mod);
       }
    }

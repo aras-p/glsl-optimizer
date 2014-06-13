@@ -769,11 +769,6 @@ struct gen7_sf_clip_viewport {
 /* Instruction format for the execution units:
  */
 
-struct brw_instruction
-{
-   uint64_t data[2];
-};
-
 struct brw_compact_instruction {
    struct {
       unsigned opcode:7;          /*  0- 6 */

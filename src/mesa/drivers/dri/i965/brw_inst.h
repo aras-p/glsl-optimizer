@@ -39,29 +39,28 @@
 extern "C" {
 #endif
 
-struct brw_instruction;
-
-typedef struct {
+/* brw_context.h has a forward declaration of brw_inst, so name the struct. */
+typedef struct brw_inst {
    uint64_t data[2];
 } brw_inst;
 
-static inline uint64_t brw_inst_bits(struct brw_instruction *inst,
+static inline uint64_t brw_inst_bits(brw_inst *inst,
                                      unsigned high, unsigned low);
-static inline void brw_inst_set_bits(struct brw_instruction *inst,
+static inline void brw_inst_set_bits(brw_inst *inst,
                                      unsigned high, unsigned low,
                                      uint64_t value);
 
 #define FC(name, high, low, assertions)                       \
 static inline void                                            \
 brw_inst_set_##name(const struct brw_context *brw,            \
-                    struct brw_instruction *inst, uint64_t v) \
+                    brw_inst *inst, uint64_t v)               \
 {                                                             \
    assert(assertions);                                        \
    brw_inst_set_bits(inst, high, low, v);                     \
 }                                                             \
 static inline uint64_t                                        \
 brw_inst_##name(const struct brw_context *brw,                \
-                struct brw_instruction *inst)                 \
+                brw_inst *inst)                               \
 {                                                             \
    assert(assertions);                                        \
    return brw_inst_bits(inst, high, low);                     \
@@ -94,13 +93,13 @@ brw_inst_##name(const struct brw_context *brw,                \
 #define FF(name, hi4, lo4, hi45, lo45, hi5, lo5, hi6, lo6, hi7, lo7, hi8, lo8)\
 static inline void                                                            \
 brw_inst_set_##name(const struct brw_context *brw,                            \
-                    struct brw_instruction *inst, uint64_t value)             \
+                    brw_inst *inst, uint64_t value)                           \
 {                                                                             \
    BOUNDS(hi4, lo4, hi45, lo45, hi5, lo5, hi6, lo6, hi7, lo7, hi8, lo8)       \
    brw_inst_set_bits(inst, high, low, value);                                 \
 }                                                                             \
 static inline uint64_t                                                        \
-brw_inst_##name(const struct brw_context *brw, struct brw_instruction *inst)  \
+brw_inst_##name(const struct brw_context *brw, brw_inst *inst)                \
 {                                                                             \
    BOUNDS(hi4, lo4, hi45, lo45, hi5, lo5, hi6, lo6, hi7, lo7, hi8, lo8)       \
    return brw_inst_bits(inst, high, low);                                     \
@@ -247,7 +246,7 @@ F(3src_opcode,           6,  0)
  */
 static inline void
 brw_inst_set_uip(const struct brw_context *brw,
-                 struct brw_instruction *inst, int32_t value)
+                 brw_inst *inst, int32_t value)
 {
    assert(brw->gen >= 6);
 
@@ -261,7 +260,7 @@ brw_inst_set_uip(const struct brw_context *brw,
 }
 
 static inline int32_t
-brw_inst_uip(const struct brw_context *brw, struct brw_instruction *inst)
+brw_inst_uip(const struct brw_context *brw, brw_inst *inst)
 {
    assert(brw->gen >= 6);
 
@@ -274,7 +273,7 @@ brw_inst_uip(const struct brw_context *brw, struct brw_instruction *inst)
 
 static inline void
 brw_inst_set_jip(const struct brw_context *brw,
-                 struct brw_instruction *inst, int32_t value)
+                 brw_inst *inst, int32_t value)
 {
    assert(brw->gen >= 6);
 
@@ -288,7 +287,7 @@ brw_inst_set_jip(const struct brw_context *brw,
 }
 
 static inline int32_t
-brw_inst_jip(const struct brw_context *brw, struct brw_instruction *inst)
+brw_inst_jip(const struct brw_context *brw, brw_inst *inst)
 {
    assert(brw->gen >= 6);
 
@@ -532,19 +531,19 @@ F(ts_opcode,           MD( 0),  MD( 0))
  *  @{
  */
 static inline int
-brw_inst_imm_d(const struct brw_context *brw, struct brw_instruction *insn)
+brw_inst_imm_d(const struct brw_context *brw, brw_inst *insn)
 {
    return brw_inst_bits(insn, 127, 96);
 }
 
 static inline unsigned
-brw_inst_imm_ud(const struct brw_context *brw, struct brw_instruction *insn)
+brw_inst_imm_ud(const struct brw_context *brw, brw_inst *insn)
 {
    return brw_inst_bits(insn, 127, 96);
 }
 
 static inline float
-brw_inst_imm_f(const struct brw_context *brw, struct brw_instruction *insn)
+brw_inst_imm_f(const struct brw_context *brw, brw_inst *insn)
 {
    fi_type ft;
    ft.u = brw_inst_bits(insn, 127, 96);
@@ -553,21 +552,21 @@ brw_inst_imm_f(const struct brw_context *brw, struct brw_instruction *insn)
 
 static inline void
 brw_inst_set_imm_d(const struct brw_context *brw,
-                   struct brw_instruction *insn, int value)
+                   brw_inst *insn, int value)
 {
    return brw_inst_set_bits(insn, 127, 96, value);
 }
 
 static inline void
 brw_inst_set_imm_ud(const struct brw_context *brw,
-                    struct brw_instruction *insn, unsigned value)
+                    brw_inst *insn, unsigned value)
 {
    return brw_inst_set_bits(insn, 127, 96, value);
 }
 
 static inline void
 brw_inst_set_imm_f(const struct brw_context *brw,
-                   struct brw_instruction *insn, float value)
+                   brw_inst *insn, float value)
 {
    fi_type ft;
    ft.f = value;
@@ -580,7 +579,7 @@ brw_inst_set_imm_f(const struct brw_context *brw,
 #define BRW_IA1_ADDR_IMM(reg, g4_high, g4_low, g8_nine, g8_high, g8_low) \
 static inline void                                                       \
 brw_inst_set_##reg##_ia1_addr_imm(const struct brw_context *brw,         \
-                                  struct brw_instruction *inst,          \
+                                  brw_inst *inst,                        \
                                   unsigned value)                        \
 {                                                                        \
    assert((value & ~0x3ff) == 0);                                        \
@@ -593,7 +592,7 @@ brw_inst_set_##reg##_ia1_addr_imm(const struct brw_context *brw,         \
 }                                                                        \
 static inline unsigned                                                   \
 brw_inst_##reg##_ia1_addr_imm(const struct brw_context *brw,             \
-                              struct brw_instruction *inst)              \
+                              brw_inst *inst)                            \
 {                                                                        \
    if (brw->gen >= 8) {                                                  \
       return brw_inst_bits(inst, g8_high, g8_low) |                      \
@@ -612,8 +611,7 @@ BRW_IA1_ADDR_IMM(dst,   57, 48,  47,  56, 48)
 #define BRW_IA16_ADDR_IMM(reg, g4_high, g4_low, g8_nine, g8_high, g8_low) \
 static inline void                                                        \
 brw_inst_set_##reg##_ia16_addr_imm(const struct brw_context *brw,         \
-                                   struct brw_instruction *inst,          \
-                                   unsigned value)                        \
+                                   brw_inst *inst, unsigned value)        \
 {                                                                         \
    assert((value & ~0x3ff) == 0);                                         \
    if (brw->gen >= 8) {                                                   \
@@ -625,7 +623,7 @@ brw_inst_set_##reg##_ia16_addr_imm(const struct brw_context *brw,         \
 }                                                                         \
 static inline unsigned                                                    \
 brw_inst_##reg##_ia16_addr_imm(const struct brw_context *brw,             \
-                               struct brw_instruction *inst)              \
+                               brw_inst *inst)                            \
 {                                                                         \
    if (brw->gen >= 8) {                                                   \
       return brw_inst_bits(inst, g8_high, g8_low) |                       \
@@ -649,10 +647,8 @@ BRW_IA16_ADDR_IMM(dst,   57, 52,  47,  56,  52)
  * Bits indices range from 0..127; fields may not cross 64-bit boundaries.
  */
 static inline uint64_t
-brw_inst_bits(struct brw_instruction *insn, unsigned high, unsigned low)
+brw_inst_bits(brw_inst *inst, unsigned high, unsigned low)
 {
-   brw_inst *inst = (brw_inst *) insn;
-
    /* We assume the field doesn't cross 64-bit boundaries. */
    const unsigned word = high / 64;
    assert(word == low / 64);
@@ -671,12 +667,8 @@ brw_inst_bits(struct brw_instruction *insn, unsigned high, unsigned low)
  * Bits indices range from 0..127; fields may not cross 64-bit boundaries.
  */
 static inline void
-brw_inst_set_bits(struct brw_instruction *insn,
-                  unsigned high, unsigned low,
-                  uint64_t value)
+brw_inst_set_bits(brw_inst *inst, unsigned high, unsigned low, uint64_t value)
 {
-   brw_inst *inst = (brw_inst *) insn;
-
    const unsigned word = high / 64;
    assert(word == low / 64);
 

@@ -347,7 +347,7 @@ gen6_sol_program(struct brw_ff_gs_compile *c, struct brw_ff_gs_prog_key *key,
 {
    struct brw_compile *p = &c->func;
    struct brw_context *brw = p->brw;
-   struct brw_instruction *inst;
+   brw_inst *inst;
    c->prog_data.svbi_postincrement_value = num_verts;
 
    brw_ff_gs_alloc_regs(c, num_verts, true);
