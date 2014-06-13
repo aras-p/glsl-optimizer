@@ -507,6 +507,10 @@ brw_initialize_context_constants(struct brw_context *brw)
       ctx->Const.ViewportBounds.Min = -(float)ctx->Const.MaxViewportWidth;
       ctx->Const.ViewportBounds.Max = ctx->Const.MaxViewportWidth;
    }
+
+   /* ARB_gpu_shader5 */
+   if (brw->gen >= 7)
+      ctx->Const.MaxVertexStreams = MIN2(4, MAX_VERTEX_STREAMS);
 }
 
 /**
