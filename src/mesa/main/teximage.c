@@ -2010,6 +2010,43 @@ _mesa_legal_texture_base_format_for_target(struct gl_context *ctx,
    return true;
 }
 
+static bool
+texture_formats_agree(GLenum internalFormat,
+                      GLenum format)
+{
+   GLboolean colorFormat;
+   GLboolean is_format_depth_or_depthstencil;
+   GLboolean is_internalFormat_depth_or_depthstencil;
+
+   /* Even though there are no color-index textures, we still have to support
+    * uploading color-index data and remapping it to RGB via the
+    * GL_PIXEL_MAP_I_TO_[RGBA] tables.
+    */
+   const GLboolean indexFormat = (format == GL_COLOR_INDEX);
+
+   is_internalFormat_depth_or_depthstencil =
+      _mesa_is_depth_format(internalFormat) ||
+      _mesa_is_depthstencil_format(internalFormat);
+
+   is_format_depth_or_depthstencil =
+      _mesa_is_depth_format(format) ||
+      _mesa_is_depthstencil_format(format);
+
+   colorFormat = _mesa_is_color_format(format);
+
+   if (_mesa_is_color_format(internalFormat) && !colorFormat && !indexFormat)
+      return false;
+
+   if (is_internalFormat_depth_or_depthstencil !=
+       is_format_depth_or_depthstencil)
+      return false;
+
+   if (_mesa_is_ycbcr_format(internalFormat) != _mesa_is_ycbcr_format(format))
+      return false;
+
+   return true;
+}
+
 /**
  * Test the glTexImage[123]D() parameters for errors.
  *
@@ -2043,16 +2080,7 @@ texture_error_check( struct gl_context *ctx,
                      GLint width, GLint height,
                      GLint depth, GLint border )
 {
-   GLboolean colorFormat;
-   GLboolean is_format_depth_or_depthstencil;
-   GLboolean is_internalFormat_depth_or_depthstencil;
    GLenum err;
-
-   /* Even though there are no color-index textures, we still have to support
-    * uploading color-index data and remapping it to RGB via the
-    * GL_PIXEL_MAP_I_TO_[RGBA] tables.
-    */
-   const GLboolean indexFormat = (format == GL_COLOR_INDEX);
 
    /* Note: for proxy textures, some error conditions immediately generate
     * a GL error in the usual way.  But others do not generate a GL error.
@@ -2136,18 +2164,7 @@ texture_error_check( struct gl_context *ctx,
    }
 
    /* make sure internal format and format basically agree */
-   is_internalFormat_depth_or_depthstencil =
-      _mesa_is_depth_format(internalFormat) ||
-      _mesa_is_depthstencil_format(internalFormat);
-
-   is_format_depth_or_depthstencil =
-      _mesa_is_depth_format(format) ||
-      _mesa_is_depthstencil_format(format);
-
-   colorFormat = _mesa_is_color_format(format);
-   if ((_mesa_is_color_format(internalFormat) && !colorFormat && !indexFormat) ||
-       (is_internalFormat_depth_or_depthstencil != is_format_depth_or_depthstencil) ||
-       (_mesa_is_ycbcr_format(internalFormat) != _mesa_is_ycbcr_format(format))) {
+   if (!texture_formats_agree(internalFormat, format)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glTexImage%dD(incompatible internalFormat = %s, format = %s)",
                   dimensions, _mesa_lookup_enum_by_nr(internalFormat),
