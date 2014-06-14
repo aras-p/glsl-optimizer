@@ -1106,6 +1106,7 @@ nv50_blitctx_post_blit(struct nv50_blitctx *blit)
        NV50_NEW_RASTERIZER | NV50_NEW_ZSA | NV50_NEW_BLEND |
        NV50_NEW_TEXTURES | NV50_NEW_SAMPLERS |
        NV50_NEW_VERTPROG | NV50_NEW_GMTYPROG | NV50_NEW_FRAGPROG);
+   nv50->scissors_dirty |= 1;
 
    nv50->base.pipe.set_min_samples(&nv50->base.pipe, blit->saved.min_samples);
 }
