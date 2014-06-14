@@ -6712,6 +6712,10 @@
 #define   S_02880C_CONSERVATIVE_Z_EXPORT(x)                           (((x) & 0x03) << 13)
 #define   G_02880C_CONSERVATIVE_Z_EXPORT(x)                           (((x) >> 13) & 0x03)
 #define   C_02880C_CONSERVATIVE_Z_EXPORT                              0xFFFF9FFF
+#define     V_02880C_EXPORT_ANY_Z                                   0
+#define     V_02880C_EXPORT_LESS_THAN_Z                             1
+#define     V_02880C_EXPORT_GREATER_THAN_Z                          2
+#define     V_02880C_EXPORT_RESERVED                                3
 /*     */
 #define R_028810_PA_CL_CLIP_CNTL                                        0x028810
 #define   S_028810_UCP_ENA_0(x)                                       (((x) & 0x1) << 0)

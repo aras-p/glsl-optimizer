@@ -2745,10 +2745,29 @@ int si_pipe_shader_create(
 		}
 		break;
 	}
-	case TGSI_PROCESSOR_FRAGMENT:
+	case TGSI_PROCESSOR_FRAGMENT: {
+		int i;
+
 		si_shader_ctx.radeon_bld.load_input = declare_input_fs;
 		bld_base->emit_epilogue = si_llvm_emit_fs_epilogue;
+		shader->shader.ps_conservative_z = V_02880C_EXPORT_ANY_Z;
+
+		for (i = 0; i < shader_info.num_properties; i++) {
+			switch (shader_info.properties[i].name) {
+			case TGSI_PROPERTY_FS_DEPTH_LAYOUT:
+				switch (shader_info.properties[i].data[0]) {
+				case TGSI_FS_DEPTH_LAYOUT_GREATER:
+					shader->shader.ps_conservative_z = V_02880C_EXPORT_GREATER_THAN_Z;
+					break;
+				case TGSI_FS_DEPTH_LAYOUT_LESS:
+					shader->shader.ps_conservative_z = V_02880C_EXPORT_LESS_THAN_Z;
+					break;
+				}
+				break;
+			}
+		}
 		break;
+	}
 	default:
 		assert(!"Unsupported shader type");
 		return -1;
