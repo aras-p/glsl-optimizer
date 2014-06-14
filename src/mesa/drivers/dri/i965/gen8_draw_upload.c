@@ -213,11 +213,9 @@ gen8_emit_index_buffer(struct brw_context *brw)
    if (index_buffer == NULL)
       return;
 
-   perf_debug("Missing MOCS setup for 3DSTATE_INDEX_BUFFER.");
-
    BEGIN_BATCH(5);
    OUT_BATCH(CMD_INDEX_BUFFER << 16 | (5 - 2));
-   OUT_BATCH(brw_get_index_type(index_buffer->type) << 8);
+   OUT_BATCH(brw_get_index_type(index_buffer->type) << 8 | BDW_MOCS_WB);
    OUT_RELOC64(brw->ib.bo, I915_GEM_DOMAIN_VERTEX, 0, 0);
    OUT_BATCH(brw->ib.bo->size);
    ADVANCE_BATCH();
