@@ -69,7 +69,9 @@ namespace {
 
    /// (De)serialize a vector.
    template<typename T>
-   struct _serializer<compat::vector<T>> {
+   struct _serializer<compat::vector<T>,
+                      typename std::enable_if<
+                         !std::is_scalar<T>::value>::type> {
       static void
       proc(compat::ostream &os, const compat::vector<T> &v) {
          _proc<uint32_t>(os, v.size());
@@ -84,6 +86,25 @@ namespace {
 
          for (size_t i = 0; i < v.size(); i++)
             new(&v[i]) T(_proc<T>(is));
+      }
+   };
+
+   template<typename T>
+   struct _serializer<compat::vector<T>,
+                      typename std::enable_if<
+                         std::is_scalar<T>::value>::type> {
+      static void
+      proc(compat::ostream &os, const compat::vector<T> &v) {
+         _proc<uint32_t>(os, v.size());
+         os.write(reinterpret_cast<const char *>(v.begin()),
+                  v.size() * sizeof(T));
+      }
+
+      static void
+      proc(compat::istream &is, compat::vector<T> &v) {
+         v.reserve(_proc<uint32_t>(is));
+         is.read(reinterpret_cast<char *>(v.begin()),
+                 v.size() * sizeof(T));
       }
    };
 
