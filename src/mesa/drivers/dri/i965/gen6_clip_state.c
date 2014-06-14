@@ -106,7 +106,7 @@ upload_clip_state(struct brw_context *brw)
          dw2 &= ~GEN6_CLIP_GB_TEST;
          if (brw->gen >= 8) {
             perf_debug("Disabling GB clipping due to lack of Gen8 viewport "
-                       "clipping setup code.  This should be fixed.");
+                       "clipping setup code.  This should be fixed.\n");
          }
          break;
       }
@@ -116,7 +116,7 @@ upload_clip_state(struct brw_context *brw)
    if (ctx->RasterDiscard) {
       dw2 |= GEN6_CLIP_MODE_REJECT_ALL;
       perf_debug("Rasterizer discard is currently implemented via the clipper; "
-                 "%s be faster.", brw->gen >= 7 ? "using the SOL unit may" :
+                 "%s be faster.\n", brw->gen >= 7 ? "using the SOL unit may" :
                  "having the GS not write primitives would likely");
    }
 
