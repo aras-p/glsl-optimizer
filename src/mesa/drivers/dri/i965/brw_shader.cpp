@@ -451,6 +451,8 @@ brw_instruction_name(enum opcode op)
       return "tg4";
    case SHADER_OPCODE_TG4_OFFSET:
       return "tg4_offset";
+   case SHADER_OPCODE_SHADER_TIME_ADD:
+      return "shader_time_add";
 
    case SHADER_OPCODE_GEN4_SCRATCH_READ:
       return "gen4_scratch_read";
