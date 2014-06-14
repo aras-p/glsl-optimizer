@@ -105,6 +105,7 @@ namespace clover {
 
       void serialize(compat::ostream &os) const;
       static module deserialize(compat::istream &is);
+      size_t size() const;
 
       compat::vector<symbol> syms;
       compat::vector<section> secs;

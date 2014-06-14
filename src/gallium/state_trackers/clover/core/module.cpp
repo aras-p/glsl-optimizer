@@ -52,6 +52,13 @@ namespace {
       return x;
    }
 
+   /// Calculate the size of the specified object.
+   template<typename T>
+   void
+   _proc(module::size_t &sz, const T &x) {
+      _serializer<T>::proc(sz, x);
+   }
+
    /// (De)serialize a scalar value.
    template<typename T>
    struct _serializer<T, typename std::enable_if<
@@ -64,6 +71,11 @@ namespace {
       static void
       proc(compat::istream &is, T &x) {
          is.read(reinterpret_cast<char *>(&x), sizeof(x));
+      }
+
+      static void
+      proc(module::size_t &sz, const T &x) {
+         sz += sizeof(x);
       }
    };
 
@@ -87,6 +99,14 @@ namespace {
          for (size_t i = 0; i < v.size(); i++)
             new(&v[i]) T(_proc<T>(is));
       }
+
+      static void
+      proc(module::size_t &sz, const compat::vector<T> &v) {
+         sz += sizeof(uint32_t);
+
+         for (size_t i = 0; i < v.size(); i++)
+            _proc<T>(sz, v[i]);
+      }
    };
 
    template<typename T>
@@ -105,6 +125,11 @@ namespace {
          v.reserve(_proc<uint32_t>(is));
          is.read(reinterpret_cast<char *>(v.begin()),
                  v.size() * sizeof(T));
+      }
+
+      static void
+      proc(module::size_t &sz, const compat::vector<T> &v) {
+         sz += sizeof(uint32_t) + sizeof(T) * v.size();
       }
    };
 
@@ -169,5 +194,12 @@ namespace clover {
    module
    module::deserialize(compat::istream &is) {
       return _proc<module>(is);
+   }
+
+   module::size_t
+   module::size() const {
+      size_t sz = 0;
+      _proc(sz, *this);
+      return sz;
    }
 }

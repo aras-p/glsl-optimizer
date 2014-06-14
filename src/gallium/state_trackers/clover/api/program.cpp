@@ -190,10 +190,7 @@ clGetProgramInfo(cl_program d_prog, cl_program_info param,
 
    case CL_PROGRAM_BINARY_SIZES:
       buf.as_vector<size_t>() = map([&](const device &dev) {
-            compat::ostream::buffer_t bin;
-            compat::ostream s(bin);
-            prog.binary(dev).serialize(s);
-            return bin.size();
+            return prog.binary(dev).size();
          },
          prog.devices());
       break;
