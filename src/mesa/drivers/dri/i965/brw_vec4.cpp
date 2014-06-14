@@ -464,7 +464,8 @@ vec4_visitor::dead_code_eliminate()
          }
 
          if (inst->dst.file == scan_inst->dst.file &&
-             inst->dst.reg == scan_inst->dst.reg) {
+             inst->dst.reg == scan_inst->dst.reg &&
+             inst->dst.reg_offset == scan_inst->dst.reg_offset) {
             int new_writemask = scan_inst->dst.writemask & ~dead_channels;
 
             progress = try_eliminate_instruction(scan_inst, new_writemask, brw) ||
