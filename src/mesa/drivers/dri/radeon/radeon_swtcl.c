@@ -536,8 +536,8 @@ static struct {
 
 #define DO_FALLBACK  0
 #define DO_OFFSET    0
-#define DO_UNFILLED (IND & RADEON_UNFILLED_BIT)
-#define DO_TWOSIDE  (IND & RADEON_TWOSIDE_BIT)
+#define DO_UNFILLED ((IND & RADEON_UNFILLED_BIT) != 0)
+#define DO_TWOSIDE  ((IND & RADEON_TWOSIDE_BIT) != 0)
 #define DO_FLAT      0
 #define DO_TRI       1
 #define DO_QUAD      1

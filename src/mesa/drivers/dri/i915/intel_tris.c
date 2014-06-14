@@ -602,10 +602,10 @@ static struct
 } rast_tab[INTEL_MAX_TRIFUNC];
 
 
-#define DO_FALLBACK (IND & INTEL_FALLBACK_BIT)
-#define DO_OFFSET   (IND & INTEL_OFFSET_BIT)
-#define DO_UNFILLED (IND & INTEL_UNFILLED_BIT)
-#define DO_TWOSIDE  (IND & INTEL_TWOSIDE_BIT)
+#define DO_FALLBACK ((IND & INTEL_FALLBACK_BIT) != 0)
+#define DO_OFFSET   ((IND & INTEL_OFFSET_BIT) != 0)
+#define DO_UNFILLED ((IND & INTEL_UNFILLED_BIT) != 0)
+#define DO_TWOSIDE  ((IND & INTEL_TWOSIDE_BIT) != 0)
 #define DO_FLAT      0
 #define DO_TRI       1
 #define DO_QUAD      1

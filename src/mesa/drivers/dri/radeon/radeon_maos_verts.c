@@ -67,11 +67,11 @@ static struct {
 		 _mesa_need_secondary_color(ctx))
 #define DO_FOG  ((IND & RADEON_CP_VC_FRMT_PKSPEC) && ctx->Fog.Enabled && \
 		 (ctx->Fog.FogCoordinateSource == GL_FOG_COORD))
-#define DO_TEX0 (IND & RADEON_CP_VC_FRMT_ST0)
-#define DO_TEX1 (IND & RADEON_CP_VC_FRMT_ST1)
-#define DO_TEX2 (IND & RADEON_CP_VC_FRMT_ST2)
-#define DO_PTEX (IND & RADEON_CP_VC_FRMT_Q0)
-#define DO_NORM (IND & RADEON_CP_VC_FRMT_N0)
+#define DO_TEX0 ((IND & RADEON_CP_VC_FRMT_ST0) != 0)
+#define DO_TEX1 ((IND & RADEON_CP_VC_FRMT_ST1) != 0)
+#define DO_TEX2 ((IND & RADEON_CP_VC_FRMT_ST2) != 0)
+#define DO_PTEX ((IND & RADEON_CP_VC_FRMT_Q0) != 0)
+#define DO_NORM ((IND & RADEON_CP_VC_FRMT_N0) != 0)
 
 #define DO_TEX3 0
 
