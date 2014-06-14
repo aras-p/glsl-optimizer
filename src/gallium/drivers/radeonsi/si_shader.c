@@ -2165,9 +2165,9 @@ static void create_function(struct si_shader_context *si_shader_ctx)
 	/* We assume at most 16 textures per program at the moment.
 	 * This need probably need to be changed to support bindless textures */
 	params[SI_PARAM_SAMPLER] = LLVMPointerType(
-		LLVMArrayType(LLVMVectorType(i8, 16), NUM_SAMPLER_VIEWS), CONST_ADDR_SPACE);
+		LLVMArrayType(LLVMVectorType(i8, 16), NUM_SAMPLER_STATES), CONST_ADDR_SPACE);
 	params[SI_PARAM_RESOURCE] = LLVMPointerType(
-		LLVMArrayType(LLVMVectorType(i8, 32), NUM_SAMPLER_STATES), CONST_ADDR_SPACE);
+		LLVMArrayType(LLVMVectorType(i8, 32), NUM_SAMPLER_VIEWS), CONST_ADDR_SPACE);
 
 	switch (si_shader_ctx->type) {
 	case TGSI_PROCESSOR_VERTEX:
