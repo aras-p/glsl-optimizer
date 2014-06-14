@@ -349,8 +349,6 @@ struct brw_instruction *brw_JMPI(struct brw_compile *p, struct brw_reg index,
 
 void brw_NOP(struct brw_compile *p);
 
-void brw_WAIT(struct brw_compile *p);
-
 /* Special case: there is never a destination, execution size will be
  * taken from src0:
  */

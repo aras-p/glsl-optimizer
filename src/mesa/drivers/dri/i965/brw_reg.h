@@ -633,22 +633,6 @@ brw_acc_reg(void)
 }
 
 static inline struct brw_reg
-brw_notification_1_reg(void)
-{
-
-   return brw_reg(BRW_ARCHITECTURE_REGISTER_FILE,
-                  BRW_ARF_NOTIFICATION_COUNT,
-                  1,
-                  BRW_REGISTER_TYPE_UD,
-                  BRW_VERTICAL_STRIDE_0,
-                  BRW_WIDTH_1,
-                  BRW_HORIZONTAL_STRIDE_0,
-                  BRW_SWIZZLE_XXXX,
-                  WRITEMASK_X);
-}
-
-
-static inline struct brw_reg
 brw_flag_reg(int reg, int subreg)
 {
    return brw_uw1_reg(BRW_ARCHITECTURE_REGISTER_FILE,
