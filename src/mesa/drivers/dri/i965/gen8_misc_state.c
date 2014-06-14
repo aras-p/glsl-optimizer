@@ -31,8 +31,6 @@
  */
 static void upload_state_base_address(struct brw_context *brw)
 {
-   perf_debug("Missing MOCS setup for STATE_BASE_ADDRESS.");
-
    BEGIN_BATCH(16);
    OUT_BATCH(CMD_STATE_BASE_ADDRESS << 16 | (16 - 2));
    /* General state base address: stateless DP read/write requests */
