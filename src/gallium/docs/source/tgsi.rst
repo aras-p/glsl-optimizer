@@ -964,7 +964,9 @@ XXX doesn't look like most of the opcodes really belong here.
 
   As per NV_gpu_program4, retrieve the dimensions of the texture depending on
   the target. For 1D (width), 2D/RECT/CUBE (width, height), 3D (width, height,
-  depth), 1D array (width, layers), 2D array (width, height, layers)
+  depth), 1D array (width, layers), 2D array (width, height, layers).
+  Also return the number of accessible levels (last_level - first_level + 1)
+  in W.
 
 .. math::
 
@@ -975,6 +977,8 @@ XXX doesn't look like most of the opcodes really belong here.
   dst.y = texture\_height(unit, lod)
 
   dst.z = texture\_depth(unit, lod)
+
+  dst.w = texture\_levels(unit)
 
 .. opcode:: TG4 - Texture Gather
 

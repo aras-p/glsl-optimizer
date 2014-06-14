@@ -2911,6 +2911,9 @@ sp_get_dims(struct sp_sampler_view *sp_sview, int level,
    if (level > view->u.tex.last_level)
       return;
 
+   if (texture->target != PIPE_BUFFER)
+      dims[3] = view->u.tex.last_level - view->u.tex.first_level + 1;
+
    dims[0] = u_minify(texture->width0, level);
 
    switch(texture->target) {

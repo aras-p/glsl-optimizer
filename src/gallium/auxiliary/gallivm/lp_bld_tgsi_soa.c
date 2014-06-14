@@ -2445,7 +2445,7 @@ emit_size_query( struct lp_build_tgsi_soa_context *bld,
                                  bld->bld_base.base.gallivm,
                                  bld->bld_base.int_bld.type,
                                  unit, pipe_target,
-                                 is_sviewinfo,
+                                 TRUE,
                                  lod_property,
                                  explicit_lod,
                                  sizes_out);

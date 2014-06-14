@@ -2779,7 +2779,9 @@ glsl_to_tgsi_visitor::visit(ir_call *ir)
 void
 glsl_to_tgsi_visitor::visit(ir_texture *ir)
 {
-   st_src_reg result_src, coord, cube_sc, lod_info, projector, dx, dy, offset[MAX_GLSL_TEXTURE_OFFSET], sample_index, component;
+   st_src_reg result_src, coord, cube_sc, lod_info, projector, dx, dy;
+   st_src_reg offset[MAX_GLSL_TEXTURE_OFFSET], sample_index, component;
+   st_src_reg levels_src;
    st_dst_reg result_dst, coord_dst, cube_sc_dst;
    glsl_to_tgsi_instruction *inst = NULL;
    unsigned opcode = TGSI_OPCODE_NOP;
@@ -2860,6 +2862,11 @@ glsl_to_tgsi_visitor::visit(ir_texture *ir)
       ir->lod_info.lod->accept(this);
       lod_info = this->result;
       break;
+   case ir_query_levels:
+      opcode = TGSI_OPCODE_TXQ;
+      lod_info = st_src_reg(PROGRAM_IMMEDIATE, 0, GLSL_TYPE_INT);
+      levels_src = get_temp(ir->type);
+      break;
    case ir_txf:
       opcode = TGSI_OPCODE_TXF;
       ir->lod_info.lod->accept(this);
@@ -2895,9 +2902,6 @@ glsl_to_tgsi_visitor::visit(ir_texture *ir)
       break;
    case ir_lod:
       opcode = TGSI_OPCODE_LODQ;
-      break;
-   case ir_query_levels:
-      assert(!"Unexpected ir_query_levels opcode");
       break;
    }
 
@@ -2995,9 +2999,16 @@ glsl_to_tgsi_visitor::visit(ir_texture *ir)
 
    if (opcode == TGSI_OPCODE_TXD)
       inst = emit(ir, opcode, result_dst, coord, dx, dy);
-   else if (opcode == TGSI_OPCODE_TXQ)
-      inst = emit(ir, opcode, result_dst, lod_info);
-   else if (opcode == TGSI_OPCODE_TXF) {
+   else if (opcode == TGSI_OPCODE_TXQ) {
+      if (ir->op == ir_query_levels) {
+         /* the level is stored in W */
+         inst = emit(ir, opcode, st_dst_reg(levels_src), lod_info);
+         result_dst.writemask = WRITEMASK_X;
+         levels_src.swizzle = SWIZZLE_WWWW;
+         emit(ir, TGSI_OPCODE_MOV, result_dst, levels_src);
+      } else
+         inst = emit(ir, opcode, result_dst, lod_info);
+   } else if (opcode == TGSI_OPCODE_TXF) {
       inst = emit(ir, opcode, result_dst, coord);
    } else if (opcode == TGSI_OPCODE_TXL2 || opcode == TGSI_OPCODE_TXB2) {
       inst = emit(ir, opcode, result_dst, coord, lod_info);

@@ -172,7 +172,7 @@ GL 4.3:
   GL_ARB_shader_storage_buffer_object                  not started
   GL_ARB_stencil_texturing                             DONE (i965/gen8+, nv50, nvc0, r600, radeonsi)
   GL_ARB_texture_buffer_range                          DONE (nv50, nvc0, i965, r600, radeonsi)
-  GL_ARB_texture_query_levels                          DONE (i965)
+  GL_ARB_texture_query_levels                          DONE (all drivers that support GLSL 1.30)
   GL_ARB_texture_storage_multisample                   DONE (all drivers that support GL_ARB_texture_multisample)
   GL_ARB_texture_view                                  DONE (i965)
   GL_ARB_vertex_attrib_binding                         DONE (all drivers)
