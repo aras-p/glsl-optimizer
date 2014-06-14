@@ -394,6 +394,14 @@ st_texture_image_copy(struct pipe_context *pipe,
    src_box.width = width;
    src_box.height = height;
    src_box.depth = 1;
+
+   if (src->target == PIPE_TEXTURE_1D_ARRAY ||
+       src->target == PIPE_TEXTURE_2D_ARRAY ||
+       src->target == PIPE_TEXTURE_CUBE_ARRAY) {
+      face = 0;
+      depth = src->array_size;
+   }
+
    /* Loop over 3D image slices */
    /* could (and probably should) use "true" 3d box here -
       but drivers can't quite handle it yet */
