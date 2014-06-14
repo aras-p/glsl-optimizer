@@ -160,11 +160,8 @@ convert_sampler(struct st_context *st,
 
    sampler->lod_bias = ctx->Texture.Unit[texUnit].LodBias + msamp->LodBias;
 
-   sampler->min_lod = CLAMP(msamp->MinLod,
-                            0.0f,
-                            (GLfloat) texobj->MaxLevel - texobj->BaseLevel);
-   sampler->max_lod = MIN2((GLfloat) texobj->MaxLevel - texobj->BaseLevel,
-                           msamp->MaxLod);
+   sampler->min_lod = MAX2(msamp->MinLod, 0.0f);
+   sampler->max_lod = msamp->MaxLod;
    if (sampler->max_lod < sampler->min_lod) {
       /* The GL spec doesn't seem to specify what to do in this case.
        * Swap the values.

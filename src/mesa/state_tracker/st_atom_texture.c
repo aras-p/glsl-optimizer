@@ -212,6 +212,12 @@ check_sampler_swizzle(const struct st_texture_object *stObj,
 }
 
 
+static unsigned last_level(struct st_texture_object *stObj)
+{
+   return MIN2(stObj->base._MaxLevel, stObj->pt->last_level);
+}
+
+
 static struct pipe_sampler_view *
 st_create_texture_sampler_view_from_stobj(struct pipe_context *pipe,
 					  struct st_texture_object *stObj,
@@ -244,6 +250,8 @@ st_create_texture_sampler_view_from_stobj(struct pipe_context *pipe,
       templ.u.buf.last_element  = f + (n - 1);
    } else {
       templ.u.tex.first_level = stObj->base.BaseLevel;
+      templ.u.tex.last_level = last_level(stObj);
+      assert(templ.u.tex.first_level <= templ.u.tex.last_level);
    }
 
    if (swizzle != SWIZZLE_NOOP) {
@@ -279,7 +287,8 @@ st_get_texture_sampler_view_from_stobj(struct st_context *st,
    if (*sv) {
       if (check_sampler_swizzle(stObj, *sv) ||
 	  (format != (*sv)->format) ||
-	  stObj->base.BaseLevel != (*sv)->u.tex.first_level) {
+          stObj->base.BaseLevel != (*sv)->u.tex.first_level ||
+          last_level(stObj) != (*sv)->u.tex.last_level) {
 	 pipe_sampler_view_reference(sv, NULL);
       }
    }
