@@ -84,6 +84,7 @@ const struct opcode_desc opcode_descs[128] = {
    [BRW_OPCODE_SEND]     = { .name = "send",    .nsrc = 1, .ndst = 1 },
    [BRW_OPCODE_SENDC]    = { .name = "sendc",   .nsrc = 1, .ndst = 1 },
    [BRW_OPCODE_NOP]      = { .name = "nop",     .nsrc = 0, .ndst = 0 },
+   [BRW_OPCODE_NENOP]    = { .name = "nenop",   .nsrc = 0, .ndst = 0 },
    [BRW_OPCODE_JMPI]     = { .name = "jmpi",    .nsrc = 0, .ndst = 0 },
    [BRW_OPCODE_IF]       = { .name = "if",      .nsrc = 2, .ndst = 0 },
    [BRW_OPCODE_IFF]      = { .name = "iff",     .nsrc = 2, .ndst = 1 },
@@ -1225,7 +1226,7 @@ brw_disassemble_inst(FILE *file, struct brw_context *brw, brw_inst *inst,
       }
    }
 
-   if (opcode != BRW_OPCODE_NOP) {
+   if (opcode != BRW_OPCODE_NOP && opcode != BRW_OPCODE_NENOP) {
       string(file, "(");
       err |= control(file, "execution size", exec_size,
                      brw_inst_exec_size(brw, inst), NULL);
@@ -1509,7 +1510,7 @@ brw_disassemble_inst(FILE *file, struct brw_context *brw, brw_inst *inst,
       }
    }
    pad(file, 64);
-   if (opcode != BRW_OPCODE_NOP) {
+   if (opcode != BRW_OPCODE_NOP && opcode != BRW_OPCODE_NENOP) {
       string(file, "{");
       space = 1;
       err |= control(file, "access mode", access_mode,

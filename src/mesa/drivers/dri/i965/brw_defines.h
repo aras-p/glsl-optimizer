@@ -847,6 +847,7 @@ enum opcode {
    BRW_OPCODE_PLN =	90,  /**< G45+ */
    BRW_OPCODE_MAD =	91,  /**< Gen6+ */
    BRW_OPCODE_LRP =	92,  /**< Gen6+ */
+   BRW_OPCODE_NENOP =	125, /**< G45 only */
    BRW_OPCODE_NOP =	126,
 
    /* These are compiler backend opcodes that get translated into other
