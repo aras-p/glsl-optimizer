@@ -789,14 +789,14 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
       case BRW_OPCODE_ELSE:
       case BRW_OPCODE_ENDIF:
       case BRW_OPCODE_WHILE:
-         if (brw->gen == 6) {
+         if (brw->gen >= 7) {
+            update_uip_jip(brw, insn, this_old_ip, compacted_counts);
+         } else if (brw->gen == 6) {
             int gen6_jump_count = brw_inst_gen6_jump_count(brw, insn);
             target_old_ip = this_old_ip + gen6_jump_count;
             target_compacted_count = compacted_counts[target_old_ip];
             gen6_jump_count -= (target_compacted_count - this_compacted_count);
             brw_inst_set_gen6_jump_count(brw, insn, gen6_jump_count);
-         } else {
-            update_uip_jip(brw, insn, this_old_ip, compacted_counts);
          }
          break;
       }
