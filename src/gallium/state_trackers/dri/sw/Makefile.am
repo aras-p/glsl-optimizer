@@ -24,6 +24,9 @@ include Makefile.sources
 include $(top_srcdir)/src/gallium/Automake.inc
 
 AM_CPPFLAGS = \
+	$(GALLIUM_PIPE_LOADER_DEFINES) \
+	-DPIPE_SEARCH_DIR=\"$(libdir)/gallium-pipe\" \
+	-DSPLIT_TARGETS=1 \
 	-I$(top_srcdir)/src/mapi \
 	-I$(top_srcdir)/src/mesa \
 	-I$(top_srcdir)/src/gallium/state_trackers/dri/common \

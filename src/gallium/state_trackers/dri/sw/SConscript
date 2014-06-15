@@ -14,6 +14,7 @@ env.Append(CPPPATH = [
 ])
 
 env.Append(CPPDEFINES = [('__NOT_HAVE_DRM_H', '1')])
+env.Append(CPPDEFINES = [('SPLIT_TARGETS', '1')])
 
 st_drisw = env.ConvenienceLibrary(
     target = 'st_drisw',

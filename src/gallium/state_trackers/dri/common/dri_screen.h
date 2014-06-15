@@ -43,6 +43,7 @@
 
 struct dri_context;
 struct dri_drawable;
+struct pipe_loader_device;
 
 struct dri_screen
 {
@@ -69,6 +70,8 @@ struct dri_screen
 
    /* drm */
    int fd;
+
+   struct pipe_loader_device *dev;
 
    /* gallium */
    boolean d_depth_bits_last;

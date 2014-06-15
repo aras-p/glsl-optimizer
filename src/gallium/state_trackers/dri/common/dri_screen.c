@@ -37,6 +37,7 @@
 #include "util/u_inlines.h"
 #include "pipe/p_screen.h"
 #include "pipe/p_format.h"
+#include "pipe-loader/pipe_loader.h"
 #include "state_tracker/st_gl_api.h" /* for st_gl_api_create */
 #include "state_tracker/drm_driver.h"
 
@@ -387,6 +388,12 @@ dri_destroy_screen(__DRIscreen * sPriv)
 
    dri_destroy_screen_helper(screen);
 
+#if !SPLIT_TARGETS
+#if !GALLIUM_STATIC_TARGETS
+   pipe_loader_release(&screen->dev, 1);
+#endif // !GALLIUM_STATIC_TARGETS
+#endif // !SPLIT_TARGETS
+
    free(screen);
    sPriv->driverPrivate = NULL;
    sPriv->extensions = NULL;
@@ -428,9 +435,17 @@ dri_init_screen_helper(struct dri_screen *screen,
    driParseOptionInfo(&screen->optionCacheDefaults, gallium_config_options.xml);
 
    driParseConfigFiles(&screen->optionCache,
-		       &screen->optionCacheDefaults,
+                       &screen->optionCacheDefaults,
                        screen->sPriv->myNum,
+#if SPLIT_TARGETS
                        driver_descriptor.name);
+#else
+#if GALLIUM_STATIC_TARGETS
+                       dd_driver_name());
+#else
+                       screen->dev->driver_name);
+#endif // GALLIUM_STATIC_TARGETS
+#endif // SPLIT_TARGETS
 
    /* Handle force_s3tc_enable. */
    if (!util_format_s3tc_enabled &&
