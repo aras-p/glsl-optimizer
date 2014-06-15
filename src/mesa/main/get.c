@@ -278,11 +278,6 @@ static const int extra_flush_current[] = {
    EXTRA_END
 };
 
-static const int extra_EXT_texture_integer[] = {
-   EXT(EXT_texture_integer),
-   EXTRA_END
-};
-
 static const int extra_EXT_texture_integer_and_new_buffers[] = {
    EXT(EXT_texture_integer),
    EXTRA_NEW_BUFFERS,
