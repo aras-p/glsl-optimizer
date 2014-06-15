@@ -1088,6 +1088,7 @@ struct brw_context
    bool is_g4x;
    bool is_baytrail;
    bool is_haswell;
+   bool is_cherryview;
 
    bool has_hiz;
    bool has_separate_stencil;
