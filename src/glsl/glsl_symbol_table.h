@@ -34,7 +34,7 @@ extern "C" {
 #include "ir.h"
 
 class symbol_table_entry;
-class glsl_type;
+struct glsl_type;
 
 /**
  * Facade class for _mesa_symbol_table
