@@ -2614,6 +2614,7 @@ _mesa_meta_setup_texture_coords(GLenum faceTarget,
             break;
          default:
             assert(0);
+            unreachable();
          }
 
          coord[3] = (float) (slice / 6);
