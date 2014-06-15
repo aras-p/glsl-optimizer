@@ -611,6 +611,97 @@ set_src1_index(struct brw_context *brw, brw_compact_inst *dst, brw_inst *src,
    return true;
 }
 
+static bool
+set_3src_control_index(struct brw_context *brw, brw_compact_inst *dst, brw_inst *src)
+{
+   assert(brw->gen >= 8);
+
+   uint32_t uncompacted =                  /* 24b/BDW; 26b/CHV */
+      (brw_inst_bits(src, 34, 32) << 21) | /*  3b */
+      (brw_inst_bits(src, 28,  8));        /* 21b */
+
+   if (brw->is_cherryview)
+      uncompacted |= brw_inst_bits(src, 36, 35) << 24; /* 2b */
+
+   for (int i = 0; i < ARRAY_SIZE(gen8_3src_control_index_table); i++) {
+      if (gen8_3src_control_index_table[i] == uncompacted) {
+         brw_compact_inst_set_3src_control_index(dst, i);
+	 return true;
+      }
+   }
+
+   return false;
+}
+
+static bool
+set_3src_source_index(struct brw_context *brw, brw_compact_inst *dst, brw_inst *src)
+{
+   assert(brw->gen >= 8);
+
+   uint64_t uncompacted =                    /* 46b/BDW; 49b/CHV */
+      (brw_inst_bits(src,  83,  83) << 43) | /*  1b */
+      (brw_inst_bits(src, 114, 107) << 35) | /*  8b */
+      (brw_inst_bits(src,  93,  86) << 27) | /*  8b */
+      (brw_inst_bits(src,  72,  65) << 19) | /*  8b */
+      (brw_inst_bits(src,  55,  37));        /* 19b */
+
+   if (brw->is_cherryview) {
+      uncompacted |=
+         (brw_inst_bits(src, 126, 125) << 47) | /* 2b */
+         (brw_inst_bits(src, 105, 104) << 45) | /* 2b */
+         (brw_inst_bits(src,  84,  84) << 44);  /* 1b */
+   } else {
+      uncompacted |=
+         (brw_inst_bits(src, 125, 125) << 45) | /* 1b */
+         (brw_inst_bits(src, 104, 104) << 44);  /* 1b */
+   }
+
+   for (int i = 0; i < ARRAY_SIZE(gen8_3src_source_index_table); i++) {
+      if (gen8_3src_source_index_table[i] == uncompacted) {
+         brw_compact_inst_set_3src_source_index(dst, i);
+	 return true;
+      }
+   }
+
+   return false;
+}
+
+static bool
+brw_try_compact_3src_instruction(struct brw_context *brw, brw_compact_inst *dst,
+                                 brw_inst *src)
+{
+   assert(brw->gen >= 8);
+
+#define compact(field) \
+   brw_compact_inst_set_3src_##field(dst, brw_inst_3src_##field(brw, src))
+
+   compact(opcode);
+
+   if (!set_3src_control_index(brw, dst, src))
+      return false;
+
+   if (!set_3src_source_index(brw, dst, src))
+      return false;
+
+   compact(dst_reg_nr);
+   compact(src0_rep_ctrl);
+   brw_compact_inst_set_3src_cmpt_control(dst, true);
+   compact(debug_control);
+   compact(saturate);
+   compact(src1_rep_ctrl);
+   compact(src2_rep_ctrl);
+   compact(src0_reg_nr);
+   compact(src1_reg_nr);
+   compact(src2_reg_nr);
+   compact(src0_subreg_nr);
+   compact(src1_subreg_nr);
+   compact(src2_subreg_nr);
+
+#undef compact
+
+   return true;
+}
+
 /* Compacted instructions have 12-bits for immediate sources, and a 13th bit
  * that's replicated through the high 20 bits.
  *
@@ -625,6 +716,13 @@ is_compactable_immediate(unsigned imm)
 
    /* We get one bit replicated through the top 20 bits. */
    return imm == 0 || imm == 0xfffff000;
+}
+
+/* Returns whether an opcode takes three sources. */
+static bool
+is_3src(uint32_t op)
+{
+   return opcode_descs[op].nsrc == 3;
 }
 
 /**
@@ -649,6 +747,16 @@ brw_try_compact_instruction(struct brw_context *brw, brw_compact_inst *dst,
        * to be able to handle compacted flow control instructions..
        */
       return false;
+   }
+
+   if (brw->gen >= 8 && is_3src(brw_inst_opcode(brw, src))) {
+      memset(&temp, 0, sizeof(temp));
+      if (brw_try_compact_3src_instruction(brw, &temp, src)) {
+         *dst = temp;
+         return true;
+      } else {
+         return false;
+      }
    }
 
    bool is_immediate =
@@ -767,11 +875,88 @@ set_uncompacted_src1(struct brw_context *brw, brw_inst *dst,
    }
 }
 
+static void
+set_uncompacted_3src_control_index(struct brw_context *brw, brw_inst *dst,
+                                   brw_compact_inst *src)
+{
+   assert(brw->gen >= 8);
+
+   uint32_t compacted = brw_compact_inst_3src_control_index(src);
+   uint32_t uncompacted = gen8_3src_control_index_table[compacted];
+
+   brw_inst_set_bits(dst, 34, 32, (uncompacted >> 21) & 0x7);
+   brw_inst_set_bits(dst, 28,  8, (uncompacted >>  0) & 0x1fffff);
+
+   if (brw->is_cherryview)
+      brw_inst_set_bits(dst, 36, 35, (uncompacted >> 24) & 0x3);
+}
+
+static void
+set_uncompacted_3src_source_index(struct brw_context *brw, brw_inst *dst,
+                                  brw_compact_inst *src)
+{
+   assert(brw->gen >= 8);
+
+   uint32_t compacted = brw_compact_inst_3src_source_index(src);
+   uint64_t uncompacted = gen8_3src_source_index_table[compacted];
+
+   brw_inst_set_bits(dst,  83,  83, (uncompacted >> 43) & 0x1);
+   brw_inst_set_bits(dst, 114, 107, (uncompacted >> 35) & 0xff);
+   brw_inst_set_bits(dst,  93,  86, (uncompacted >> 27) & 0xff);
+   brw_inst_set_bits(dst,  72,  65, (uncompacted >> 19) & 0xff);
+   brw_inst_set_bits(dst,  55,  37, (uncompacted >>  0) & 0x7ffff);
+
+   if (brw->is_cherryview) {
+      brw_inst_set_bits(dst, 126, 125, (uncompacted >> 47) & 0x3);
+      brw_inst_set_bits(dst, 105, 104, (uncompacted >> 45) & 0x3);
+      brw_inst_set_bits(dst,  84,  84, (uncompacted >> 44) & 0x1);
+   } else {
+      brw_inst_set_bits(dst, 125, 125, (uncompacted >> 45) & 0x1);
+      brw_inst_set_bits(dst, 104, 104, (uncompacted >> 44) & 0x1);
+   }
+}
+
+static void
+brw_uncompact_3src_instruction(struct brw_context *brw, brw_inst *dst,
+                               brw_compact_inst *src)
+{
+   assert(brw->gen >= 8);
+
+#define uncompact(field) \
+   brw_inst_set_3src_##field(brw, dst, brw_compact_inst_3src_##field(src))
+
+   uncompact(opcode);
+
+   set_uncompacted_3src_control_index(brw, dst, src);
+   set_uncompacted_3src_source_index(brw, dst, src);
+
+   uncompact(dst_reg_nr);
+   uncompact(src0_rep_ctrl);
+   brw_inst_set_3src_cmpt_control(brw, dst, false);
+   uncompact(debug_control);
+   uncompact(saturate);
+   uncompact(src1_rep_ctrl);
+   uncompact(src2_rep_ctrl);
+   uncompact(src0_reg_nr);
+   uncompact(src1_reg_nr);
+   uncompact(src2_reg_nr);
+   uncompact(src0_subreg_nr);
+   uncompact(src1_subreg_nr);
+   uncompact(src2_subreg_nr);
+
+#undef uncompact
+}
+
 void
 brw_uncompact_instruction(struct brw_context *brw, brw_inst *dst,
                           brw_compact_inst *src)
 {
    memset(dst, 0, sizeof(*dst));
+
+   if (brw->gen >= 8 && is_3src(brw_compact_inst_3src_opcode(src))) {
+      brw_uncompact_3src_instruction(brw, dst, src);
+      return;
+   }
 
    brw_inst_set_opcode(brw, dst, brw_compact_inst_opcode(src));
    brw_inst_set_debug_control(brw, dst, brw_compact_inst_debug_control(src));
