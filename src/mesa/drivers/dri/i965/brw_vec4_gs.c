@@ -309,6 +309,7 @@ brw_upload_gs_prog(struct brw_context *brw)
          do_gs_prog(brw, ctx->_Shader->CurrentProgram[MESA_SHADER_GEOMETRY], gp,
                     &key);
       assert(success);
+      (void)success;
    }
    brw->gs.base.prog_data = &brw->gs.prog_data->base.base;
 
