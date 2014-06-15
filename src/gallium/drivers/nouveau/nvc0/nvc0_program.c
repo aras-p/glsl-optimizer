@@ -493,6 +493,7 @@ nvc0_program_create_tfb_state(const struct nv50_ir_prog_info *info,
             info->out[pso->output[i].register_index].slot[s + c];
 
       tfb->varying_count[b] = MAX2(tfb->varying_count[b], p);
+      tfb->stream[b] = pso->output[i].stream;
    }
    for (b = 0; b < 4; ++b) // zero unused indices (looks nicer)
       for (c = tfb->varying_count[b]; c & 3; ++c)

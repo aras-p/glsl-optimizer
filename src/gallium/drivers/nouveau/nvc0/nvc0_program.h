@@ -9,6 +9,7 @@
 
 struct nvc0_transform_feedback_state {
    uint32_t stride[4];
+   uint8_t stream[4];
    uint8_t varying_count[4];
    uint8_t varying_index[4][128];
 };

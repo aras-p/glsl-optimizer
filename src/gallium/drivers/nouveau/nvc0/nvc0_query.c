@@ -136,6 +136,7 @@ nvc0_query_create(struct pipe_context *pipe, unsigned type, unsigned index)
    case PIPE_QUERY_PRIMITIVES_GENERATED:
    case PIPE_QUERY_PRIMITIVES_EMITTED:
       q->is64bit = TRUE;
+      q->index = index;
       space = 32;
       break;
    case PIPE_QUERY_TIME_ELAPSED:

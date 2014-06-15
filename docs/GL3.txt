@@ -108,7 +108,7 @@ GL 4.0:
   - Packing/bitfield/conversion functions              DONE
   - Enhanced textureGather                             DONE
   - Geometry shader instancing                         DONE
-  - Geometry shader multiple streams                   DONE (i965)
+  - Geometry shader multiple streams                   DONE (i965, nvc0)
   - Enhanced per-sample shading                        DONE
   - Interpolation functions                            started (Chris)
   - New overload resolution rules                      DONE

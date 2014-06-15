@@ -231,7 +231,7 @@ nvc0_tfb_validate(struct nvc0_context *nvc0)
             unsigned n = (tfb->varying_count[b] + 3) / 4;
 
             BEGIN_NVC0(push, NVC0_3D(TFB_STREAM(b)), 3);
-            PUSH_DATA (push, 0);
+            PUSH_DATA (push, tfb->stream[b]);
             PUSH_DATA (push, tfb->varying_count[b]);
             PUSH_DATA (push, tfb->stride[b]);
             BEGIN_NVC0(push, NVC0_3D(TFB_VARYING_LOCS(b, 0)), n);
