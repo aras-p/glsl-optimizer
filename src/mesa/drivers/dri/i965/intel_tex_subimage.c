@@ -42,6 +42,10 @@
 #include "intel_mipmap_tree.h"
 #include "intel_blit.h"
 
+#ifdef __SSSE3__
+#include <tmmintrin.h>
+#endif
+
 #define FILE_DEBUG_FLAG DEBUG_TEXTURE
 
 #define ALIGN_DOWN(a, b) ROUND_DOWN_TO(a, b)
@@ -174,13 +178,11 @@ err:
 static const uint8_t rgba8_permutation[16] =
    { 2,1,0,3, 6,5,4,7, 10,9,8,11, 14,13,12,15 };
 
-typedef char v16 __attribute__((vector_size(16)));
-
 /* NOTE: dst must be 16 byte aligned */
 #define rgba8_copy_16(dst, src)                     \
-   *(v16*)(dst) = __builtin_ia32_pshufb128(         \
-       (v16) __builtin_ia32_loadups((float*)(src)), \
-      *(v16*) rgba8_permutation                     \
+   *(__m128i *)(dst) = _mm_shuffle_epi8(            \
+      (__m128i) _mm_loadu_ps((float *)(src)),       \
+      *(__m128i *) rgba8_permutation                \
    )
 #endif
 
