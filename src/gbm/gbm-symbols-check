@@ -21,6 +21,7 @@ gbm_bo_set_user_data
 gbm_bo_get_user_data
 gbm_bo_destroy
 gbm_surface_create
+gbm_surface_needs_lock_front_buffer
 gbm_surface_lock_front_buffer
 gbm_surface_release_buffer
 gbm_surface_has_free_buffers

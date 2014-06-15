@@ -28,6 +28,7 @@
 #ifndef _GBM_DRI_INTERNAL_H_
 #define _GBM_DRI_INTERNAL_H_
 
+#include <sys/mman.h>
 #include "gbmint.h"
 
 #include "common_drm.h"
@@ -36,6 +37,7 @@
 #include "GL/internal/dri_interface.h"
 
 struct gbm_dri_surface;
+struct gbm_dri_bo;
 
 struct gbm_dri_device {
    struct gbm_drm_device base;
@@ -47,6 +49,7 @@ struct gbm_dri_device {
    const __DRIcoreExtension   *core;
    const __DRIdri2Extension   *dri2;
    const __DRIimageExtension  *image;
+   const __DRIswrastExtension *swrast;
    const __DRI2flushExtension *flush;
    const __DRIdri2LoaderExtension *loader;
 
@@ -72,6 +75,22 @@ struct gbm_dri_device {
                             void *loaderPrivate,
                             uint32_t buffer_mask,
                             struct __DRIimageList *buffers);
+   void (*swrast_put_image2)(__DRIdrawable *driDrawable,
+                             int            op,
+                             int            x,
+                             int            y,
+                             int            width,
+                             int            height,
+                             int            stride,
+                             char          *data,
+                             void          *loaderPrivate);
+   void (*swrast_get_image)(__DRIdrawable *driDrawable,
+                            int            x,
+                            int            y,
+                            int            width,
+                            int            height,
+                            char          *data,
+                            void          *loaderPrivate);
 
    struct wl_drm *wl_drm;
 };
@@ -81,7 +100,7 @@ struct gbm_dri_bo {
 
    __DRIimage *image;
 
-   /* Only used for cursors */
+   /* Used for cursors and the swrast front BO */
    uint32_t handle, size;
    void *map;
 };
@@ -108,6 +127,42 @@ static inline struct gbm_dri_surface *
 gbm_dri_surface(struct gbm_surface *surface)
 {
    return (struct gbm_dri_surface *) surface;
+}
+
+static inline void *
+gbm_dri_bo_map(struct gbm_dri_bo *bo)
+{
+   struct drm_mode_map_dumb map_arg;
+   int ret;
+
+   if (bo->image != NULL)
+      return NULL;
+
+   if (bo->map != NULL)
+      return bo->map;
+
+   memset(&map_arg, 0, sizeof(map_arg));
+   map_arg.handle = bo->handle;
+
+   ret = drmIoctl(bo->base.base.gbm->fd, DRM_IOCTL_MODE_MAP_DUMB, &map_arg);
+   if (ret)
+      return NULL;
+
+   bo->map = mmap(0, bo->size, PROT_WRITE,
+                  MAP_SHARED, bo->base.base.gbm->fd, map_arg.offset);
+   if (bo->map == MAP_FAILED) {
+      bo->map = NULL;
+      return NULL;
+   }
+
+   return bo->map;
+}
+
+static inline void
+gbm_dri_bo_unmap(struct gbm_dri_bo *bo)
+{
+   munmap(bo->map, bo->size);
+   bo->map = NULL;
 }
 
 #endif
