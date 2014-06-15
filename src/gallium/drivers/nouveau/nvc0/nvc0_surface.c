@@ -1012,11 +1012,13 @@ nvc0_blitctx_post_blit(struct nvc0_blitctx *blit)
    nvc0->dirty = blit->saved.dirty |
       (NVC0_NEW_FRAMEBUFFER | NVC0_NEW_SCISSOR | NVC0_NEW_SAMPLE_MASK |
        NVC0_NEW_RASTERIZER | NVC0_NEW_ZSA | NVC0_NEW_BLEND |
+       NVC0_NEW_VIEWPORT |
        NVC0_NEW_TEXTURES | NVC0_NEW_SAMPLERS |
        NVC0_NEW_VERTPROG | NVC0_NEW_FRAGPROG |
        NVC0_NEW_TCTLPROG | NVC0_NEW_TEVLPROG | NVC0_NEW_GMTYPROG |
        NVC0_NEW_TFB_TARGETS | NVC0_NEW_VERTEX | NVC0_NEW_ARRAYS);
    nvc0->scissors_dirty |= 1;
+   nvc0->viewports_dirty |= 1;
 
    nvc0->base.pipe.set_min_samples(&nvc0->base.pipe, blit->saved.min_samples);
 }
@@ -1188,11 +1190,7 @@ nvc0_blit_3d(struct nvc0_context *nvc0, const struct pipe_blit_info *info)
 
    nvc0_blitctx_post_blit(blit);
 
-   /* restore viewport */
-
-   BEGIN_NVC0(push, NVC0_3D(VIEWPORT_HORIZ(0)), 2);
-   PUSH_DATA (push, nvc0->vport_int[0]);
-   PUSH_DATA (push, nvc0->vport_int[1]);
+   /* restore viewport transform */
    IMMED_NVC0(push, NVC0_3D(VIEWPORT_TRANSFORM_EN), 1);
 }
 

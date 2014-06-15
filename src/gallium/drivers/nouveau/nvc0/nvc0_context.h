@@ -202,7 +202,6 @@ struct nvc0_context {
    struct pipe_surface *surfaces[2][NVC0_MAX_SURFACE_SLOTS];
    uint16_t surfaces_dirty[2];
    uint16_t surfaces_valid[2];
-   uint32_t vport_int[2];
 
    struct util_dynarray global_residents;
 

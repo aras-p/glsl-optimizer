@@ -299,11 +299,6 @@ nvc0_validate_viewport(struct nvc0_context *nvc0)
       PUSH_DATA (push, (w << 16) | x);
       PUSH_DATA (push, (h << 16) | y);
 
-      if (i == 0) {
-         nvc0->vport_int[0] = (w << 16) | x;
-         nvc0->vport_int[1] = (h << 16) | y;
-      }
-
       zmin = vp->translate[2] - fabsf(vp->scale[2]);
       zmax = vp->translate[2] + fabsf(vp->scale[2]);
 
