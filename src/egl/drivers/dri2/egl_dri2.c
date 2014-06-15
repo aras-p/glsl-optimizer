@@ -304,8 +304,6 @@ const __DRIimageLookupExtension image_lookup_extension = {
    .lookupEGLImage       = dri2_lookup_egl_image
 };
 
-static const char dri_driver_path[] = DEFAULT_DRIVER_DIR;
-
 struct dri2_extension_match {
    const char *name;
    int version;
