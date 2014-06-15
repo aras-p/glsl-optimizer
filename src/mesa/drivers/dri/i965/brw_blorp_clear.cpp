@@ -340,6 +340,7 @@ brw_blorp_clear_params::brw_blorp_clear_params(struct brw_context *brw,
             break;
          default:
             assert(!"Unexpected sample count for fast clear");
+            unreachable();
             break;
          }
          y_scaledown = 2;
