@@ -112,20 +112,6 @@ solve_plane(GLfloat x, GLfloat y, const GLfloat plane[4])
 
 
 /*
- * Return 1 / solve_plane().
- */
-static inline GLfloat
-solve_plane_recip(GLfloat x, GLfloat y, const GLfloat plane[4])
-{
-   const GLfloat denom = plane[3] + plane[0] * x + plane[1] * y;
-   if (denom == 0.0F)
-      return 0.0F;
-   else
-      return -plane[2] / denom;
-}
-
-
-/*
  * Solve plane and return clamped GLchan value.
  */
 static inline GLchan
