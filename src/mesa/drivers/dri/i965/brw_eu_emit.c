@@ -2683,8 +2683,7 @@ void brw_shader_time_add(struct brw_compile *p,
                          struct brw_reg payload,
                          uint32_t surf_index)
 {
-   struct brw_context *brw = p->brw;
-   assert(brw->gen >= 7);
+   assert(p->brw->gen >= 7);
 
    brw_push_insn_state(p);
    brw_set_default_access_mode(p, BRW_ALIGN_1);
