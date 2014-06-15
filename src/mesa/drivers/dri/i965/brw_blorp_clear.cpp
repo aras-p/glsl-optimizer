@@ -99,7 +99,6 @@ private:
    void alloc_regs();
 
    void *mem_ctx;
-   struct brw_context *brw;
    const brw_blorp_const_color_prog_key *key;
    struct brw_compile func;
 
@@ -120,7 +119,6 @@ brw_blorp_const_color_program::brw_blorp_const_color_program(
       struct brw_context *brw,
       const brw_blorp_const_color_prog_key *key)
    : mem_ctx(ralloc_context(NULL)),
-     brw(brw),
      key(key),
      R0(),
      R1(),
