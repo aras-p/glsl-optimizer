@@ -257,7 +257,7 @@ static const char * const reg_encoding[8] = {
     [7] = "F"
 };
 
-const char * const three_source_reg_encoding[] = {
+static const char * const three_source_reg_encoding[] = {
    [BRW_3SRC_TYPE_F]  = "F",
    [BRW_3SRC_TYPE_D]  = "D",
    [BRW_3SRC_TYPE_UD] = "UD",
