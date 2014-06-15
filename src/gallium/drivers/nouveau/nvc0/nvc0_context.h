@@ -178,8 +178,10 @@ struct nvc0_context {
    struct pipe_blend_color blend_colour;
    struct pipe_stencil_ref stencil_ref;
    struct pipe_poly_stipple stipple;
-   struct pipe_scissor_state scissor;
-   struct pipe_viewport_state viewport;
+   struct pipe_scissor_state scissors[NVC0_MAX_VIEWPORTS];
+   unsigned scissors_dirty;
+   struct pipe_viewport_state viewports[NVC0_MAX_VIEWPORTS];
+   unsigned viewports_dirty;
    struct pipe_clip_state clip;
 
    unsigned sample_mask;

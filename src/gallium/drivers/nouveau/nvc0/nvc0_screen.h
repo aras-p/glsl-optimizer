@@ -20,6 +20,9 @@
 
 #define NVC0_MAX_SURFACE_SLOTS 16
 
+#define NVC0_MAX_VIEWPORTS 16
+
+
 struct nvc0_context;
 
 struct nvc0_blitter;

@@ -1016,6 +1016,7 @@ nvc0_blitctx_post_blit(struct nvc0_blitctx *blit)
        NVC0_NEW_VERTPROG | NVC0_NEW_FRAGPROG |
        NVC0_NEW_TCTLPROG | NVC0_NEW_TEVLPROG | NVC0_NEW_GMTYPROG |
        NVC0_NEW_TFB_TARGETS | NVC0_NEW_VERTEX | NVC0_NEW_ARRAYS);
+   nvc0->scissors_dirty |= 1;
 
    nvc0->base.pipe.set_min_samples(&nvc0->base.pipe, blit->saved.min_samples);
 }

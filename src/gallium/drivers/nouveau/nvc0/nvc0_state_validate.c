@@ -236,59 +236,82 @@ nvc0_validate_stipple(struct nvc0_context *nvc0)
 static void
 nvc0_validate_scissor(struct nvc0_context *nvc0)
 {
-    struct nouveau_pushbuf *push = nvc0->base.pushbuf;
-    struct pipe_scissor_state *s = &nvc0->scissor;
+   int i;
+   struct nouveau_pushbuf *push = nvc0->base.pushbuf;
 
-    if (!(nvc0->dirty & NVC0_NEW_SCISSOR) &&
-        nvc0->rast->pipe.scissor == nvc0->state.scissor)
-       return;
-    nvc0->state.scissor = nvc0->rast->pipe.scissor;
+   if (!(nvc0->dirty & NVC0_NEW_SCISSOR) &&
+      nvc0->rast->pipe.scissor == nvc0->state.scissor)
+      return;
 
-    BEGIN_NVC0(push, NVC0_3D(SCISSOR_HORIZ(0)), 2);
-    if (nvc0->rast->pipe.scissor) {
-       PUSH_DATA(push, (s->maxx << 16) | s->minx);
-       PUSH_DATA(push, (s->maxy << 16) | s->miny);
-    } else {
-       PUSH_DATA(push, (0xffff << 16) | 0);
-       PUSH_DATA(push, (0xffff << 16) | 0);
-    }
+   if (nvc0->state.scissor != nvc0->rast->pipe.scissor)
+      nvc0->scissors_dirty = (1 << NVC0_MAX_VIEWPORTS) - 1;
+
+   nvc0->state.scissor = nvc0->rast->pipe.scissor;
+
+   for (i = 0; i < NVC0_MAX_VIEWPORTS; i++) {
+      struct pipe_scissor_state *s = &nvc0->scissors[i];
+      if (!(nvc0->scissors_dirty & (1 << i)))
+         continue;
+
+      BEGIN_NVC0(push, NVC0_3D(SCISSOR_HORIZ(i)), 2);
+      if (nvc0->rast->pipe.scissor) {
+         PUSH_DATA(push, (s->maxx << 16) | s->minx);
+         PUSH_DATA(push, (s->maxy << 16) | s->miny);
+      } else {
+         PUSH_DATA(push, (0xffff << 16) | 0);
+         PUSH_DATA(push, (0xffff << 16) | 0);
+      }
+   }
+   nvc0->scissors_dirty = 0;
 }
 
 static void
 nvc0_validate_viewport(struct nvc0_context *nvc0)
 {
-    struct nouveau_pushbuf *push = nvc0->base.pushbuf;
-    struct pipe_viewport_state *vp = &nvc0->viewport;
-    int x, y, w, h;
-    float zmin, zmax;
+   struct nouveau_pushbuf *push = nvc0->base.pushbuf;
+   int x, y, w, h, i;
+   float zmin, zmax;
 
-    BEGIN_NVC0(push, NVC0_3D(VIEWPORT_TRANSLATE_X(0)), 3);
-    PUSH_DATAf(push, vp->translate[0]);
-    PUSH_DATAf(push, vp->translate[1]);
-    PUSH_DATAf(push, vp->translate[2]);
-    BEGIN_NVC0(push, NVC0_3D(VIEWPORT_SCALE_X(0)), 3);
-    PUSH_DATAf(push, vp->scale[0]);
-    PUSH_DATAf(push, vp->scale[1]);
-    PUSH_DATAf(push, vp->scale[2]);
+   for (i = 0; i < NVC0_MAX_VIEWPORTS; i++) {
+      struct pipe_viewport_state *vp = &nvc0->viewports[i];
 
-    /* now set the viewport rectangle to viewport dimensions for clipping */
+      if (!(nvc0->viewports_dirty & (1 << i)))
+         continue;
 
-    x = util_iround(MAX2(0.0f, vp->translate[0] - fabsf(vp->scale[0])));
-    y = util_iround(MAX2(0.0f, vp->translate[1] - fabsf(vp->scale[1])));
-    w = util_iround(vp->translate[0] + fabsf(vp->scale[0])) - x;
-    h = util_iround(vp->translate[1] + fabsf(vp->scale[1])) - y;
+      BEGIN_NVC0(push, NVC0_3D(VIEWPORT_TRANSLATE_X(i)), 3);
+      PUSH_DATAf(push, vp->translate[0]);
+      PUSH_DATAf(push, vp->translate[1]);
+      PUSH_DATAf(push, vp->translate[2]);
 
-    zmin = vp->translate[2] - fabsf(vp->scale[2]);
-    zmax = vp->translate[2] + fabsf(vp->scale[2]);
+      BEGIN_NVC0(push, NVC0_3D(VIEWPORT_SCALE_X(i)), 3);
+      PUSH_DATAf(push, vp->scale[0]);
+      PUSH_DATAf(push, vp->scale[1]);
+      PUSH_DATAf(push, vp->scale[2]);
 
-    nvc0->vport_int[0] = (w << 16) | x;
-    nvc0->vport_int[1] = (h << 16) | y;
-    BEGIN_NVC0(push, NVC0_3D(VIEWPORT_HORIZ(0)), 2);
-    PUSH_DATA (push, nvc0->vport_int[0]);
-    PUSH_DATA (push, nvc0->vport_int[1]);
-    BEGIN_NVC0(push, NVC0_3D(DEPTH_RANGE_NEAR(0)), 2);
-    PUSH_DATAf(push, zmin);
-    PUSH_DATAf(push, zmax);
+      /* now set the viewport rectangle to viewport dimensions for clipping */
+
+      x = util_iround(MAX2(0.0f, vp->translate[0] - fabsf(vp->scale[0])));
+      y = util_iround(MAX2(0.0f, vp->translate[1] - fabsf(vp->scale[1])));
+      w = util_iround(vp->translate[0] + fabsf(vp->scale[0])) - x;
+      h = util_iround(vp->translate[1] + fabsf(vp->scale[1])) - y;
+
+      BEGIN_NVC0(push, NVC0_3D(VIEWPORT_HORIZ(i)), 2);
+      PUSH_DATA (push, (w << 16) | x);
+      PUSH_DATA (push, (h << 16) | y);
+
+      if (i == 0) {
+         nvc0->vport_int[0] = (w << 16) | x;
+         nvc0->vport_int[1] = (h << 16) | y;
+      }
+
+      zmin = vp->translate[2] - fabsf(vp->scale[2]);
+      zmax = vp->translate[2] + fabsf(vp->scale[2]);
+
+      BEGIN_NVC0(push, NVC0_3D(DEPTH_RANGE_NEAR(i)), 2);
+      PUSH_DATAf(push, zmin);
+      PUSH_DATAf(push, zmax);
+   }
+   nvc0->viewports_dirty = 0;
 }
 
 static INLINE void
@@ -527,6 +550,8 @@ nvc0_switch_pipe_context(struct nvc0_context *ctx_to)
       ctx_to->state = ctx_from->state;
 
    ctx_to->dirty = ~0;
+   ctx_to->viewports_dirty = ~0;
+   ctx_to->scissors_dirty = ~0;
 
    for (s = 0; s < 5; ++s) {
       ctx_to->samplers_dirty[s] = ~0;

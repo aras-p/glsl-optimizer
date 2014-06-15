@@ -183,7 +183,7 @@ nvc0_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_FAKE_SW_MSAA:
       return 0;
    case PIPE_CAP_MAX_VIEWPORTS:
-      return 1;
+      return NVC0_MAX_VIEWPORTS;
    case PIPE_CAP_TEXTURE_QUERY_LOD:
    case PIPE_CAP_SAMPLE_SHADING:
    case PIPE_CAP_TEXTURE_GATHER_OFFSETS:
@@ -933,19 +933,23 @@ nvc0_screen_create(struct nouveau_device *dev)
 
    BEGIN_NVC0(push, NVC0_3D(VIEWPORT_TRANSFORM_EN), 1);
    PUSH_DATA (push, 1);
-   BEGIN_NVC0(push, NVC0_3D(DEPTH_RANGE_NEAR(0)), 2);
-   PUSH_DATAf(push, 0.0f);
-   PUSH_DATAf(push, 1.0f);
+   for (i = 0; i < NVC0_MAX_VIEWPORTS; i++) {
+      BEGIN_NVC0(push, NVC0_3D(DEPTH_RANGE_NEAR(i)), 2);
+      PUSH_DATAf(push, 0.0f);
+      PUSH_DATAf(push, 1.0f);
+   }
    BEGIN_NVC0(push, NVC0_3D(VIEW_VOLUME_CLIP_CTRL), 1);
    PUSH_DATA (push, NVC0_3D_VIEW_VOLUME_CLIP_CTRL_UNK1_UNK1);
 
    /* We use scissors instead of exact view volume clipping,
     * so they're always enabled.
     */
-   BEGIN_NVC0(push, NVC0_3D(SCISSOR_ENABLE(0)), 3);
-   PUSH_DATA (push, 1);
-   PUSH_DATA (push, 8192 << 16);
-   PUSH_DATA (push, 8192 << 16);
+   for (i = 0; i < NVC0_MAX_VIEWPORTS; i++) {
+      BEGIN_NVC0(push, NVC0_3D(SCISSOR_ENABLE(i)), 3);
+      PUSH_DATA (push, 1);
+      PUSH_DATA (push, 8192 << 16);
+      PUSH_DATA (push, 8192 << 16);
+   }
 
 #define MK_MACRO(m, n) i = nvc0_graph_set_macro(screen, m, i, sizeof(n), n);
 
