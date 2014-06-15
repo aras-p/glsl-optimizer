@@ -5524,6 +5524,7 @@ st_translate_stream_output_info(glsl_to_tgsi_visitor *glsl_to_tgsi,
       so->output[i].num_components = info->Outputs[i].NumComponents;
       so->output[i].output_buffer = info->Outputs[i].OutputBuffer;
       so->output[i].dst_offset = info->Outputs[i].DstOffset;
+      so->output[i].stream = 0; /* info->Outputs[i].StreamId */
    }
 
    for (i = 0; i < PIPE_MAX_SO_BUFFERS; i++) {
