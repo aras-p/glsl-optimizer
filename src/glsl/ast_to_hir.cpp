@@ -5087,7 +5087,7 @@ ast_struct_specifier::hir(exec_list *instructions,
     */
    if (state->language_version != 110 && state->struct_specifier_depth != 0)
       _mesa_glsl_error(&loc, state,
-		       "embedded structure declartions are not allowed");
+		       "embedded structure declarations are not allowed");
 
    state->struct_specifier_depth++;
 
