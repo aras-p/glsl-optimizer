@@ -3139,14 +3139,18 @@ void
 glsl_to_tgsi_visitor::visit(ir_emit_vertex *ir)
 {
    assert(this->prog->Target == GL_GEOMETRY_PROGRAM_NV);
-   emit(ir, TGSI_OPCODE_EMIT, undef_dst, st_src_reg_for_int(0));
+
+   ir->stream->accept(this);
+   emit(ir, TGSI_OPCODE_EMIT, undef_dst, this->result);
 }
 
 void
 glsl_to_tgsi_visitor::visit(ir_end_primitive *ir)
 {
    assert(this->prog->Target == GL_GEOMETRY_PROGRAM_NV);
-   emit(ir, TGSI_OPCODE_ENDPRIM, undef_dst, st_src_reg_for_int(0));
+
+   ir->stream->accept(this);
+   emit(ir, TGSI_OPCODE_ENDPRIM, undef_dst, this->result);
 }
 
 glsl_to_tgsi_visitor::glsl_to_tgsi_visitor()
@@ -5524,7 +5528,7 @@ st_translate_stream_output_info(glsl_to_tgsi_visitor *glsl_to_tgsi,
       so->output[i].num_components = info->Outputs[i].NumComponents;
       so->output[i].output_buffer = info->Outputs[i].OutputBuffer;
       so->output[i].dst_offset = info->Outputs[i].DstOffset;
-      so->output[i].stream = 0; /* info->Outputs[i].StreamId */
+      so->output[i].stream = info->Outputs[i].StreamId;
    }
 
    for (i = 0; i < PIPE_MAX_SO_BUFFERS; i++) {

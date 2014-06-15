@@ -138,7 +138,7 @@ st_BeginQuery(struct gl_context *ctx, struct gl_query_object *q)
       pipe->end_query(pipe, stq->pq_begin);
    } else {
       if (!stq->pq) {
-         stq->pq = pipe->create_query(pipe, type, 0);
+         stq->pq = pipe->create_query(pipe, type, q->Stream);
          stq->type = type;
       }
       if (stq->pq) {
