@@ -164,19 +164,6 @@ counterid_to_index(GLuint counterid)
    return counterid - 1;
 }
 
-static inline GLuint
-index_to_counterid(GLuint index)
-{
-   return index + 1;
-}
-
-static inline bool
-counterid_valid(const struct gl_perf_monitor_group *group_obj,
-                GLuint counterid)
-{
-   return get_counter(group_obj, counterid_to_index(counterid)) != NULL;
-}
-
 /*****************************************************************************/
 
 void GLAPIENTRY
