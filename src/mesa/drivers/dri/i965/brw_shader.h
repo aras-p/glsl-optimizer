@@ -43,7 +43,7 @@ enum PACKED register_file {
 
 class cfg_t;
 
-class backend_instruction : public exec_node {
+struct backend_instruction : public exec_node {
 public:
    bool is_tex() const;
    bool is_math() const;

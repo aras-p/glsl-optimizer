@@ -54,7 +54,7 @@ extern "C" {
 
 #define MAX_SAMPLER_MESSAGE_SIZE 11
 
-class bblock_t;
+struct bblock_t;
 namespace {
    struct acp_entry;
 }
