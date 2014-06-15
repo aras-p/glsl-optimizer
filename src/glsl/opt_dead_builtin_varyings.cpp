@@ -334,7 +334,7 @@ public:
    }
 
    void prepare_array(exec_list *ir,
-                      struct ir_variable **new_var,
+                      ir_variable **new_var,
                       int max_elements, unsigned start_location,
                       const char *var_name, const char *mode_str,
                       unsigned usage, unsigned external_usage)
