@@ -5287,6 +5287,12 @@ ast_interface_block::hir(exec_list *instructions,
    bool block_row_major = this->layout.flags.q.row_major;
    exec_list declared_variables;
    glsl_struct_field *fields;
+
+   /* Treat an interface block as one level of nesting, so that embedded struct
+    * specifiers will be disallowed.
+    */
+   state->struct_specifier_depth++;
+
    unsigned int num_variables =
       ast_process_structure_or_interface_block(&declared_variables,
                                                state,
@@ -5297,6 +5303,8 @@ ast_interface_block::hir(exec_list *instructions,
                                                block_row_major,
                                                redeclaring_per_vertex,
                                                var_mode);
+
+   state->struct_specifier_depth--;
 
    if (!redeclaring_per_vertex)
       validate_identifier(this->block_name, loc, state);
