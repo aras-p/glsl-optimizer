@@ -51,6 +51,18 @@ static char* driver_name = NULL;
 /* XXX: We need to teardown the winsys if *screen_create() fails. */
 
 #if defined(GALLIUM_I915)
+#if defined(DRI_TARGET)
+#include "dri_screen.h"
+
+const __DRIextension **__driDriverGetExtensions_i915(void);
+
+PUBLIC const __DRIextension **__driDriverGetExtensions_i915(void)
+{
+   globalDriverAPI = &galliumdrm_driver_api;
+   return galliumdrm_driver_extensions;
+}
+#endif
+
 static struct pipe_screen *
 pipe_i915_create_screen(int fd)
 {
