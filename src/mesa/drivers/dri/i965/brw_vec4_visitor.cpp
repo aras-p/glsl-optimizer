@@ -1397,6 +1397,10 @@ vec4_visitor::visit(ir_expression *ir)
    case ir_unop_find_lsb:
       emit(FBL(result_dst, op[0]));
       break;
+   case ir_unop_saturate:
+      inst = emit(MOV(result_dst, op[0]));
+      inst->saturate = true;
+      break;
 
    case ir_unop_noise:
       unreachable("not reached: should be handled by lower_noise");
