@@ -83,6 +83,18 @@ pipe_ilo_create_screen(int fd)
 #endif
 
 #if defined(GALLIUM_NOUVEAU)
+#if defined(DRI_TARGET)
+#include "dri_screen.h"
+
+const __DRIextension **__driDriverGetExtensions_nouveau(void);
+
+PUBLIC const __DRIextension **__driDriverGetExtensions_nouveau(void)
+{
+   globalDriverAPI = &galliumdrm_driver_api;
+   return galliumdrm_driver_extensions;
+}
+#endif
+
 static struct pipe_screen *
 pipe_nouveau_create_screen(int fd)
 {

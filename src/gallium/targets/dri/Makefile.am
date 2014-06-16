@@ -1,6 +1,10 @@
 include $(top_srcdir)/src/gallium/Automake.inc
 
 AM_CFLAGS = \
+	-I$(top_srcdir)/src/mapi \
+	-I$(top_srcdir)/src/mesa \
+	-I$(top_srcdir)/src/mesa/drivers/dri/common \
+	-I$(top_srcdir)/src/gallium/state_trackers/dri/common \
 	$(GALLIUM_TARGET_CFLAGS)
 
 AM_CPPFLAGS = \
@@ -8,6 +12,11 @@ AM_CPPFLAGS = \
 	-DGALLIUM_NOOP \
 	-DGALLIUM_RBUG \
 	-DGALLIUM_TRACE
+
+if HAVE_GALLIUM_NOUVEAU
+AM_CPPFLAGS += \
+	-DDRI_TARGET
+endif
 
 dridir = $(DRI_DRIVER_INSTALL_DIR)
 dri_LTLIBRARIES = gallium_dri.la
