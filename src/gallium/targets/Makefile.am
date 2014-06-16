@@ -22,6 +22,10 @@
 
 SUBDIRS =
 
+if HAVE_DRI2
+SUBDIRS += dri
+endif
+
 if HAVE_X11_DRIVER
 SUBDIRS += libgl-xlib
 endif
@@ -93,12 +97,6 @@ endif
 if HAVE_GALLIUM_RADEONSI
 if HAVE_DRI2
 SUBDIRS += radeonsi/dri
-endif
-endif
-
-if HAVE_GALLIUM_NOUVEAU
-if HAVE_DRI2
-SUBDIRS += dri-nouveau
 endif
 endif
 

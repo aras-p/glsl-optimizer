@@ -852,6 +852,7 @@ esac
 if test "x$enable_dri" = xyes; then
     GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/dri"
     GALLIUM_STATE_TRACKERS_DIRS="dri $GALLIUM_STATE_TRACKERS_DIRS"
+    enable_gallium_loader=yes
 fi
 
 if test "x$enable_gallium_osmesa" = xyes; then
@@ -1973,7 +1974,7 @@ if test -n "$with_gallium_drivers"; then
             PKG_CHECK_MODULES([NOUVEAU], [libdrm_nouveau >= $LIBDRM_NOUVEAU_REQUIRED])
             gallium_require_drm_loader
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS nouveau"
-            gallium_check_st "nouveau/drm" "dri-nouveau" "xa/nouveau" "xvmc/nouveau" "vdpau/nouveau" "omx/nouveau"
+            gallium_check_st "nouveau/drm" "dri/nouveau" "xa/nouveau" "xvmc/nouveau" "vdpau/nouveau" "omx/nouveau"
             ;;
         xfreedreno)
             HAVE_GALLIUM_FREEDRENO=yes
@@ -2210,9 +2211,9 @@ AC_CONFIG_FILES([Makefile
 		src/gallium/targets/dri-freedreno/Makefile
 		src/gallium/targets/dri-i915/Makefile
 		src/gallium/targets/dri-ilo/Makefile
-		src/gallium/targets/dri-nouveau/Makefile
 		src/gallium/targets/dri-swrast/Makefile
 		src/gallium/targets/dri-vmwgfx/Makefile
+		src/gallium/targets/dri/Makefile
 		src/gallium/targets/egl-static/Makefile
 		src/gallium/targets/gbm/Makefile
 		src/gallium/targets/libgl-xlib/Makefile

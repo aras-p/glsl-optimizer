@@ -61,7 +61,7 @@ GALLIUM_DRI_LINKER_FLAGS = \
 
 if HAVE_LD_VERSION_SCRIPT
 GALLIUM_DRI_LINKER_FLAGS += \
-	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/dri.sym
+	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/dri/dri.sym
 
 endif
 
