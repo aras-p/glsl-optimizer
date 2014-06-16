@@ -111,6 +111,14 @@ STATIC_TARGET_LIB_DEPS += \
 	$(RADEON_LIBS)
 endif
 
+if HAVE_GALLIUM_SVGA
+MEGADRIVERS += vmwgfx
+STATIC_TARGET_CPPFLAGS += -DGALLIUM_VMWGFX
+STATIC_TARGET_LIB_DEPS += \
+	$(top_builddir)/src/gallium/winsys/svga/drm/libsvgadrm.la \
+	$(top_builddir)/src/gallium/drivers/svga/libsvga.la
+endif
+
 if HAVE_GALLIUM_FREEDRENO
 MEGADRIVERS += freedreno
 STATIC_TARGET_CPPFLAGS += -DGALLIUM_FREEDRENO

@@ -58,12 +58,6 @@ if HAVE_CLOVER
 SUBDIRS += opencl
 endif
 
-if HAVE_GALLIUM_SVGA
-if HAVE_DRI2
-SUBDIRS += dri-vmwgfx
-endif
-endif
-
 if HAVE_GALLIUM_SOFTPIPE
 if HAVE_DRISW
 SUBDIRS += dri-swrast

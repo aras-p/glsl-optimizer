@@ -15,7 +15,7 @@ env.Append(CPPPATH = [
     xmlpool_options.dir.dir, # Dir to generated xmlpool/options.h
 ])
 
-env.Append(CPPDEFINES = [('SPLIT_TARGETS', '1')])
+env.Append(CPPDEFINES = [('GALLIUM_STATIC_TARGETS', '1')])
 
 st_dri = env.ConvenienceLibrary(
     target = 'st_dri',

@@ -6,6 +6,10 @@ if env['suncc']:
     print 'warning: not building dri-vmwgfx'
     Return()
 
+env.Append(CPPPATH = [
+    '#/src/loader',
+])
+
 if env['build'] == 'release':
     env.Append(CPPDEFINES = ['GALLIUM_RBUG'])
     env.Prepend(LIBS = [rbug])
@@ -13,11 +17,15 @@ else:
     env.Append(CPPDEFINES = ['GALLIUM_TRACE', 'GALLIUM_RBUG', 'GALLIUM_GALAHAD', 'GALLIUM_SOFTPIPE'])
     env.Prepend(LIBS = [trace, rbug, galahad, softpipe, ws_wrapper])
 
+env.Append(CPPDEFINES = [
+    'GALLIUM_VMWGFX',
+])
 
 env.Prepend(LIBS = [
     st_dri,
     svgadrm,
     svga,
+    libloader,
     mesa,
     glsl,
     gallium,
