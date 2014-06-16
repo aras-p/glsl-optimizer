@@ -552,6 +552,7 @@ _mesa_clone_program(struct gl_context *ctx, const struct gl_program *prog)
          gpc->InputType = gp->InputType;
          gpc->Invocations = gp->Invocations;
          gpc->OutputType = gp->OutputType;
+         gpc->UsesEndPrimitive = gp->UsesEndPrimitive;
       }
       break;
    default:
