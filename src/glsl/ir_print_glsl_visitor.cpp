@@ -918,7 +918,7 @@ void ir_print_glsl_visitor::visit(ir_swizzle *ir)
       ir->mask.w,
    };
 
-	if (ir->val->type == glsl_type::float_type || ir->val->type == glsl_type::int_type)
+   if (ir->val->type == glsl_type::float_type || ir->val->type == glsl_type::int_type || ir->val->type == glsl_type::uint_type)
 	{
 		if (ir->mask.num_components != 1)
 		{
@@ -929,7 +929,7 @@ void ir_print_glsl_visitor::visit(ir_swizzle *ir)
 
 	ir->val->accept(this);
 	
-	if (ir->val->type == glsl_type::float_type || ir->val->type == glsl_type::int_type)
+	if (ir->val->type == glsl_type::float_type || ir->val->type == glsl_type::int_type || ir->val->type == glsl_type::uint_type)
 	{
 		if (ir->mask.num_components != 1)
 		{
