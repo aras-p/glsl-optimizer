@@ -106,6 +106,18 @@ pipe_nouveau_create_screen(int fd)
 #endif
 
 #if defined(GALLIUM_R300)
+#if defined(DRI_TARGET)
+#include "dri_screen.h"
+
+const __DRIextension **__driDriverGetExtensions_r300(void);
+
+PUBLIC const __DRIextension **__driDriverGetExtensions_r300(void)
+{
+   globalDriverAPI = &galliumdrm_driver_api;
+   return galliumdrm_driver_extensions;
+}
+#endif
+
 static struct pipe_screen *
 pipe_r300_create_screen(int fd)
 {
@@ -117,6 +129,18 @@ pipe_r300_create_screen(int fd)
 #endif
 
 #if defined(GALLIUM_R600)
+#if defined(DRI_TARGET)
+#include "dri_screen.h"
+
+const __DRIextension **__driDriverGetExtensions_r600(void);
+
+PUBLIC const __DRIextension **__driDriverGetExtensions_r600(void)
+{
+   globalDriverAPI = &galliumdrm_driver_api;
+   return galliumdrm_driver_extensions;
+}
+#endif
+
 static struct pipe_screen *
 pipe_r600_create_screen(int fd)
 {
@@ -128,6 +152,18 @@ pipe_r600_create_screen(int fd)
 #endif
 
 #if defined(GALLIUM_RADEONSI)
+#if defined(DRI_TARGET)
+#include "dri_screen.h"
+
+const __DRIextension **__driDriverGetExtensions_radeonsi(void);
+
+PUBLIC const __DRIextension **__driDriverGetExtensions_radeonsi(void)
+{
+   globalDriverAPI = &galliumdrm_driver_api;
+   return galliumdrm_driver_extensions;
+}
+#endif
+
 static struct pipe_screen *
 pipe_radeonsi_create_screen(int fd)
 {

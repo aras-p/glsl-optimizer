@@ -18,6 +18,11 @@ AM_CPPFLAGS += \
 	-DDRI_TARGET
 endif
 
+if NEED_RADEON_DRM_WINSYS
+AM_CPPFLAGS += \
+	-DDRI_TARGET
+endif
+
 dridir = $(DRI_DRIVER_INSTALL_DIR)
 dri_LTLIBRARIES = gallium_dri.la
 
