@@ -234,6 +234,7 @@ static int si_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_MAX_TEXTURE_BUFFER_SIZE:
 		return MIN2(sscreen->b.info.vram_size, 0xFFFFFFFF);
 
+	case PIPE_CAP_TEXTURE_QUERY_LOD:
 	case PIPE_CAP_TEXTURE_GATHER_SM5:
 		return HAVE_LLVM >= 0x0305;
 	case PIPE_CAP_MAX_TEXTURE_GATHER_COMPONENTS:
@@ -249,7 +250,6 @@ static int si_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_USER_VERTEX_BUFFERS:
 	case PIPE_CAP_TGSI_TEXCOORD:
 	case PIPE_CAP_FAKE_SW_MSAA:
-	case PIPE_CAP_TEXTURE_QUERY_LOD:
 	case PIPE_CAP_TEXTURE_GATHER_OFFSETS:
 	case PIPE_CAP_TGSI_VS_WINDOW_SPACE_POSITION:
 		return 0;

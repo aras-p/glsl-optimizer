@@ -1641,7 +1641,7 @@ static void tex_fetch_args(
 		radeon_llvm_emit_prepare_cube_coords(bld_base, emit_data, coords);
 
 	/* Pack depth comparison value */
-	if (tgsi_is_shadow_sampler(target)) {
+	if (tgsi_is_shadow_sampler(target) && opcode != TGSI_OPCODE_LODQ) {
 		if (target == TGSI_TEXTURE_SHADOWCUBE_ARRAY) {
 			address[count++] = lp_build_emit_fetch(bld_base, inst, 1, 0);
 		} else {
@@ -1816,7 +1816,8 @@ static void tex_fetch_args(
 		emit_data->dst_type = LLVMVectorType(
 			LLVMInt32TypeInContext(gallivm->context),
 			4);
-	} else if (opcode == TGSI_OPCODE_TG4) {
+	} else if (opcode == TGSI_OPCODE_TG4 ||
+		   opcode == TGSI_OPCODE_LODQ) {
 		unsigned is_array = target == TGSI_TEXTURE_1D_ARRAY ||
 				    target == TGSI_TEXTURE_SHADOW1D_ARRAY ||
 				    target == TGSI_TEXTURE_2D_ARRAY ||
@@ -1824,31 +1825,37 @@ static void tex_fetch_args(
 				    target == TGSI_TEXTURE_CUBE_ARRAY ||
 				    target == TGSI_TEXTURE_SHADOWCUBE_ARRAY;
 		unsigned is_rect = target == TGSI_TEXTURE_RECT;
-		unsigned gather_comp = 0;
+		unsigned dmask = 0xf;
 
-		/* DMASK was repurposed for GATHER4. 4 components are always
-		 * returned and DMASK works like a swizzle - it selects
-		 * the component to fetch. The only valid DMASK values are
-		 * 1=red, 2=green, 4=blue, 8=alpha. (e.g. 1 returns
-		 * (red,red,red,red) etc.) The ISA document doesn't mention
-		 * this.
-		 */
+		if (opcode == TGSI_OPCODE_TG4) {
+			unsigned gather_comp = 0;
 
-		/* Get the component index from src1.x for Gather4. */
-		if (!tgsi_is_shadow_sampler(target)) {
-			LLVMValueRef (*imms)[4] = lp_soa_context(bld_base)->immediates;
-			LLVMValueRef comp_imm;
-			struct tgsi_src_register src1 = inst->Src[1].Register;
+			/* DMASK was repurposed for GATHER4. 4 components are always
+			 * returned and DMASK works like a swizzle - it selects
+			 * the component to fetch. The only valid DMASK values are
+			 * 1=red, 2=green, 4=blue, 8=alpha. (e.g. 1 returns
+			 * (red,red,red,red) etc.) The ISA document doesn't mention
+			 * this.
+			 */
 
-			assert(src1.File == TGSI_FILE_IMMEDIATE);
+			/* Get the component index from src1.x for Gather4. */
+			if (!tgsi_is_shadow_sampler(target)) {
+				LLVMValueRef (*imms)[4] = lp_soa_context(bld_base)->immediates;
+				LLVMValueRef comp_imm;
+				struct tgsi_src_register src1 = inst->Src[1].Register;
 
-			comp_imm = imms[src1.Index][src1.SwizzleX];
-			gather_comp = LLVMConstIntGetZExtValue(comp_imm);
-			gather_comp = CLAMP(gather_comp, 0, 3);
+				assert(src1.File == TGSI_FILE_IMMEDIATE);
+
+				comp_imm = imms[src1.Index][src1.SwizzleX];
+				gather_comp = LLVMConstIntGetZExtValue(comp_imm);
+				gather_comp = CLAMP(gather_comp, 0, 3);
+			}
+
+			dmask = 1 << gather_comp;
 		}
 
 		emit_data->args[2] = si_shader_ctx->samplers[sampler_index];
-		emit_data->args[3] = lp_build_const_int32(gallivm, 1 << gather_comp); /* dmask */
+		emit_data->args[3] = lp_build_const_int32(gallivm, dmask);
 		emit_data->args[4] = lp_build_const_int32(gallivm, is_rect); /* unorm */
 		emit_data->args[5] = lp_build_const_int32(gallivm, 0); /* r128 */
 		emit_data->args[6] = lp_build_const_int32(gallivm, is_array); /* da */
@@ -1918,7 +1925,8 @@ static void build_new_tex_intrinsic(const struct lp_build_tgsi_action * action,
 	struct lp_build_context * base = &bld_base->base;
 	char intr_name[127];
 	unsigned target = emit_data->inst->Texture.Texture;
-	bool is_shadow = tgsi_is_shadow_sampler(target);
+	bool is_shadow = tgsi_is_shadow_sampler(target) &&
+			 emit_data->inst->Instruction.Opcode != TGSI_OPCODE_LODQ;
 
 	/* Add the type and suffixes .c, .o if needed. */
 	sprintf(intr_name, "%s%s%s.v%ui32",
@@ -2227,10 +2235,16 @@ static const struct lp_build_tgsi_action txq_action = {
 	.intr_name = "llvm.SI.resinfo"
 };
 
-static const struct lp_build_tgsi_action new_tex_action = {
+static const struct lp_build_tgsi_action tg4_action = {
 	.fetch_args = tex_fetch_args,
 	.emit = build_new_tex_intrinsic,
 	.intr_name = "llvm.SI.gather4"
+};
+
+static const struct lp_build_tgsi_action lodq_action = {
+	.fetch_args = tex_fetch_args,
+	.emit = build_new_tex_intrinsic,
+	.intr_name = "llvm.SI.getlod"
 };
 
 static void create_meta_data(struct si_shader_context *si_shader_ctx)
@@ -2697,7 +2711,8 @@ int si_pipe_shader_create(
 	bld_base->op_actions[TGSI_OPCODE_TXL2] = txl_action;
 	bld_base->op_actions[TGSI_OPCODE_TXP] = tex_action;
 	bld_base->op_actions[TGSI_OPCODE_TXQ] = txq_action;
-	bld_base->op_actions[TGSI_OPCODE_TG4] = new_tex_action;
+	bld_base->op_actions[TGSI_OPCODE_TG4] = tg4_action;
+	bld_base->op_actions[TGSI_OPCODE_LODQ] = lodq_action;
 
 #if HAVE_LLVM >= 0x0304
 	bld_base->op_actions[TGSI_OPCODE_DDX].emit = si_llvm_emit_ddxy;
