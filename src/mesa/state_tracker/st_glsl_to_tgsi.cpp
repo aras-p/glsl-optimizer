@@ -5429,6 +5429,9 @@ st_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
       if (!pscreen->get_param(pscreen, PIPE_CAP_TEXTURE_GATHER_OFFSETS))
          lower_offset_arrays(ir);
       do_mat_op_to_vec(ir);
+      /* Emit saturates in the vertex shader only if SM 3.0 is supported. */
+      bool vs_sm3 = (_mesa_shader_stage_to_program(prog->_LinkedShaders[i]->Stage) ==
+                         GL_VERTEX_PROGRAM_ARB) && st_context(ctx)->has_shader_model3;
       lower_instructions(ir,
                          MOD_TO_FRACT |
                          DIV_TO_MUL_RCP |
@@ -5438,7 +5441,8 @@ st_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
                          CARRY_TO_ARITH |
                          BORROW_TO_ARITH |
                          (options->EmitNoPow ? POW_TO_EXP2 : 0) |
-                         (!ctx->Const.NativeIntegers ? INT_DIV_TO_MUL_RCP : 0));
+                         (!ctx->Const.NativeIntegers ? INT_DIV_TO_MUL_RCP : 0) |
+                         (vs_sm3 ? SAT_TO_CLAMP : 0));
 
       lower_ubo_reference(prog->_LinkedShaders[i], ir);
       do_vec_index_to_cond_assign(ir);
