@@ -248,6 +248,7 @@ _mesa_init_shader_program(struct gl_context *ctx, struct gl_shader_program *prog
    prog->Geom.VerticesOut = 0;
    prog->Geom.InputType = GL_TRIANGLES;
    prog->Geom.OutputType = GL_TRIANGLE_STRIP;
+   prog->Geom.UsesEndPrimitive = GL_FALSE;
 
    prog->TransformFeedback.BufferMode = GL_INTERLEAVED_ATTRIBS;
 
