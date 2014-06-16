@@ -1130,6 +1130,7 @@ if test "x$enable_dri" = xyes; then
        EXPAT_LIBS=-lexpat
     fi
 
+    DRICOMMON_NEED_LIBDRM=no
     # If we are building any DRI driver other than swrast.
     if test -n "$with_dri_drivers"; then
         if test "x$with_dri_drivers" != xswrast; then
@@ -1138,8 +1139,14 @@ if test "x$enable_dri" = xyes; then
                 AC_MSG_ERROR([DRI drivers requires libdrm >= $LIBDRM_REQUIRED])
             fi
             DRICOMMON_NEED_LIBDRM=yes
-        else
-            DRICOMMON_NEED_LIBDRM=no
+        fi
+    fi
+
+    # If we're building any gallium DRI driver other than swrast
+    if test -n "$with_gallium_drivers" -a "x$DRICOMMON_NEED_LIBDRM" = xno; then
+        if test "x$with_gallium_drivers" != xswrast; then
+            # ... build a libdrm aware dricommon
+            DRICOMMON_NEED_LIBDRM=yes
         fi
     fi
 
@@ -1919,7 +1926,6 @@ if test -n "$with_gallium_drivers"; then
             gallium_require_drm_loader
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i915"
             gallium_check_st "i915/drm" "dri-i915" "xa/i915"
-            DRICOMMON_NEED_LIBDRM=yes
             ;;
         xilo)
             HAVE_GALLIUM_ILO=yes
@@ -1927,7 +1933,6 @@ if test -n "$with_gallium_drivers"; then
             gallium_require_drm_loader
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS ilo"
             gallium_check_st "intel/drm" "dri-ilo" "xa/ilo"
-            DRICOMMON_NEED_LIBDRM=yes
             ;;
         xr300)
             HAVE_GALLIUM_R300=yes
@@ -1936,7 +1941,6 @@ if test -n "$with_gallium_drivers"; then
             gallium_require_llvm "Gallium R300"
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
             gallium_check_st "radeon/drm" "r300/dri" "xa/r300" "" ""
-            DRICOMMON_NEED_LIBDRM=yes
             ;;
         xr600)
             HAVE_GALLIUM_R600=yes
@@ -1954,7 +1958,6 @@ if test -n "$with_gallium_drivers"; then
                 LLVM_COMPONENTS="${LLVM_COMPONENTS} bitreader asmparser"
             fi
             gallium_check_st "radeon/drm" "r600/dri" "xa/r600" "xvmc/r600" "vdpau/r600" "omx/r600"
-            DRICOMMON_NEED_LIBDRM=yes
             ;;
         xradeonsi)
             HAVE_GALLIUM_RADEONSI=yes
@@ -1964,7 +1967,6 @@ if test -n "$with_gallium_drivers"; then
             radeon_llvm_check "radeonsi"
             require_egl_drm "radeonsi"
             gallium_check_st "radeon/drm" "radeonsi/dri" "xa/radeonsi" "" "vdpau/radeonsi" "omx/radeonsi"
-            DRICOMMON_NEED_LIBDRM=yes
             ;;
         xnouveau)
             HAVE_GALLIUM_NOUVEAU=yes
@@ -1972,7 +1974,6 @@ if test -n "$with_gallium_drivers"; then
             gallium_require_drm_loader
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS nouveau"
             gallium_check_st "nouveau/drm" "dri-nouveau" "xa/nouveau" "xvmc/nouveau" "vdpau/nouveau" "omx/nouveau"
-            DRICOMMON_NEED_LIBDRM=yes
             ;;
         xfreedreno)
             HAVE_GALLIUM_FREEDRENO=yes
@@ -1980,7 +1981,6 @@ if test -n "$with_gallium_drivers"; then
             gallium_require_drm_loader
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS freedreno"
             gallium_check_st "freedreno/drm" "dri-freedreno" "xa/freedreno" "" ""
-            DRICOMMON_NEED_LIBDRM=yes
             ;;
         xswrast)
             HAVE_GALLIUM_SOFTPIPE=yes

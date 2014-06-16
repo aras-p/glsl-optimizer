@@ -23,29 +23,22 @@
 include $(top_srcdir)/src/gallium/Automake.inc
 
 AM_CFLAGS = \
-	$(EXPAT_CFLAGS) \
 	$(GALLIUM_DRI_CFLAGS)
 AM_CPPFLAGS = \
-	-I$(top_srcdir)/src/gallium/winsys/sw/dri \
-	-I$(top_builddir)/src/mesa/drivers/dri/common \
 	-DGALLIUM_RBUG \
 	-DGALLIUM_TRACE \
-	-DGALLIUM_SOFTPIPE \
-	-D__NOT_HAVE_DRM_H
+	-DGALLIUM_SOFTPIPE
 
 dridir = $(DRI_DRIVER_INSTALL_DIR)
 dri_LTLIBRARIES = swrast_dri.la
 
 nodist_EXTRA_swrast_dri_la_SOURCES = dummy.cpp
-swrast_dri_la_SOURCES = \
-	swrast_drm_api.c \
-	$(top_srcdir)/src/mesa/drivers/dri/common/utils.c \
-	$(top_srcdir)/src/mesa/drivers/dri/common/dri_util.c \
-	$(top_srcdir)/src/mesa/drivers/dri/common/xmlconfig.c
+swrast_dri_la_SOURCES = swrast_drm_api.c
 
 swrast_dri_la_LDFLAGS = $(GALLIUM_DRI_LINKER_FLAGS)
 
 swrast_dri_la_LIBADD = \
+	$(top_builddir)/src/mesa/drivers/dri/common/libdricommon.la \
 	$(top_builddir)/src/gallium/state_trackers/dri/sw/libdrisw.la \
 	$(top_builddir)/src/gallium/winsys/sw/dri/libswdri.la \
 	$(top_builddir)/src/gallium/drivers/softpipe/libsoftpipe.la \

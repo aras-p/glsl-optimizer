@@ -28,12 +28,12 @@
 
 #include "pipe/p_compiler.h"
 #include "util/u_memory.h"
-#include "dri_sw_winsys.h"
 
 #include "target-helpers/inline_debug_helper.h"
 #include "target-helpers/inline_sw_helper.h"
 
 #include "state_tracker/drm_driver.h"
+#include "sw/dri/dri_sw_winsys.h"
 
 DRM_DRIVER_DESCRIPTOR("swrast", NULL, NULL, NULL);
 
