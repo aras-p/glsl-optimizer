@@ -267,16 +267,13 @@ fs_visitor::emit_minmax(enum brw_conditional_mod conditionalmod, const fs_reg &d
    }
 }
 
-/* Instruction selection: Produce a MOV.sat instead of
- * MIN(MAX(val, 0), 1) when possible.
- */
 bool
 fs_visitor::try_emit_saturate(ir_expression *ir)
 {
-   ir_rvalue *sat_val = ir->as_rvalue_to_saturate();
-
-   if (!sat_val)
+   if (ir->operation != ir_unop_saturate)
       return false;
+
+   ir_rvalue *sat_val = ir->operands[0];
 
    fs_inst *pre_inst = (fs_inst *) this->instructions.get_tail();
 
@@ -285,21 +282,17 @@ fs_visitor::try_emit_saturate(ir_expression *ir)
 
    fs_inst *last_inst = (fs_inst *) this->instructions.get_tail();
 
-   /* If the last instruction from our accept() didn't generate our
-    * src, generate a saturated MOV
+   /* If the last instruction from our accept() generated our
+    * src, just set the saturate flag instead of emmitting a separate mov.
     */
    fs_inst *modify = get_instruction_generating_reg(pre_inst, last_inst, src);
-   if (!modify || modify->regs_written != 1) {
-      this->result = fs_reg(this, ir->type);
-      fs_inst *inst = emit(MOV(this->result, src));
-      inst->saturate = true;
-   } else {
+   if (modify && modify->regs_written == 1 && modify->can_do_saturate()) {
       modify->saturate = true;
       this->result = src;
+      return true;
    }
 
-
-   return true;
+   return false;
 }
 
 bool
