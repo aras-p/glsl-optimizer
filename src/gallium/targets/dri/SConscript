@@ -8,6 +8,10 @@ if env['suncc']:
 
 env.Append(CPPPATH = [
     '#/src/loader',
+    '#/src/mapi',
+    '#/src/mesa',
+    '#/src/mesa/drivers/dri/common',
+    '#/src/gallium/state_trackers/dri/common',
 ])
 
 if env['build'] == 'release':
@@ -19,6 +23,7 @@ else:
 
 env.Append(CPPDEFINES = [
     'GALLIUM_VMWGFX',
+    'DRI_TARGET',
 ])
 
 env.Prepend(LIBS = [
