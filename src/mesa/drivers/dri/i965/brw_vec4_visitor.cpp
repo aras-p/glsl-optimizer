@@ -1078,24 +1078,6 @@ vec4_visitor::visit(ir_function *ir)
 }
 
 bool
-vec4_visitor::try_emit_sat(ir_expression *ir)
-{
-   ir_rvalue *sat_src = ir->as_rvalue_to_saturate();
-   if (!sat_src)
-      return false;
-
-   sat_src->accept(this);
-   src_reg src = this->result;
-
-   this->result = src_reg(this, ir->type);
-   vec4_instruction *inst;
-   inst = emit(MOV(dst_reg(this->result), src));
-   inst->saturate = true;
-
-   return true;
-}
-
-bool
 vec4_visitor::try_emit_mad(ir_expression *ir)
 {
    /* 3-src instructions were introduced in gen6. */
@@ -1234,9 +1216,6 @@ vec4_visitor::visit(ir_expression *ir)
    src_reg result_src;
    dst_reg result_dst;
    vec4_instruction *inst;
-
-   if (try_emit_sat(ir))
-      return;
 
    if (ir->operation == ir_binop_add) {
       if (try_emit_mad(ir))
