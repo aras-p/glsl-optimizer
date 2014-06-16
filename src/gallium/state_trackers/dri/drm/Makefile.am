@@ -36,10 +36,18 @@ AM_CPPFLAGS = \
 	$(LIBDRM_CFLAGS) \
 	$(VISIBILITY_CFLAGS)
 
-noinst_LTLIBRARIES = libdridrm.la
+noinst_LTLIBRARIES = libdridrm.la libdridrm_s.la
 
 libdridrm_la_CPPFLAGS = \
 	$(AM_CPPFLAGS) \
 	-DSPLIT_TARGETS=1
 
+if HAVE_GALLIUM_STATIC_TARGETS
+libdridrm_s_la_CPPFLAGS = \
+	$(AM_CPPFLAGS) \
+	-DGALLIUM_STATIC_TARGETS=1
+endif # HAVE_GALLIUM_STATIC_TARGETS
+
 libdridrm_la_SOURCES = $(C_SOURCES)
+
+libdridrm_s_la_SOURCES = $(C_SOURCES)
