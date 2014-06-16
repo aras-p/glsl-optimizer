@@ -191,6 +191,18 @@ pipe_vmwgfx_create_screen(int fd)
 #endif
 
 #if defined(GALLIUM_FREEDRENO)
+#if defined(DRI_TARGET)
+#include "dri_screen.h"
+
+const __DRIextension **__driDriverGetExtensions_freedreno(void);
+
+PUBLIC const __DRIextension **__driDriverGetExtensions_freedreno(void)
+{
+   globalDriverAPI = &galliumdrm_driver_api;
+   return galliumdrm_driver_extensions;
+}
+#endif
+
 static struct pipe_screen *
 pipe_freedreno_create_screen(int fd)
 {

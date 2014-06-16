@@ -23,6 +23,11 @@ AM_CPPFLAGS += \
 	-DDRI_TARGET
 endif
 
+if HAVE_GALLIUM_FREEDRENO
+AM_CPPFLAGS += \
+	-DDRI_TARGET
+endif
+
 dridir = $(DRI_DRIVER_INSTALL_DIR)
 dri_LTLIBRARIES = gallium_dri.la
 
