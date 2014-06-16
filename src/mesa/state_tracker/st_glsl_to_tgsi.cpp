@@ -1460,6 +1460,12 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
    case ir_unop_cos_reduced:
       emit_scs(ir, TGSI_OPCODE_COS, result_dst, op[0]);
       break;
+   case ir_unop_saturate: {
+      glsl_to_tgsi_instruction *inst;
+      inst = emit(ir, TGSI_OPCODE_MOV, result_dst, op[0]);
+      inst->saturate = true;
+      break;
+   }
 
    case ir_unop_dFdx:
    case ir_unop_dFdx_coarse:

@@ -1171,6 +1171,12 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       emit(ir, OPCODE_DDY, result_dst, op[0]);
       break;
 
+   case ir_unop_saturate: {
+      ir_to_mesa_instruction *inst = emit(ir, OPCODE_MOV,
+                                          result_dst, op[0]);
+      inst->saturate = true;
+      break;
+   }
    case ir_unop_noise: {
       const enum prog_opcode opcode =
 	 prog_opcode(OPCODE_NOISE1
