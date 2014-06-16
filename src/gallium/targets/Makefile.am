@@ -82,24 +82,6 @@ SUBDIRS += dri-ilo
 endif
 endif
 
-if HAVE_GALLIUM_R300
-if HAVE_DRI2
-SUBDIRS += r300/dri
-endif
-endif
-
-if HAVE_GALLIUM_R600
-if HAVE_DRI2
-SUBDIRS += r600/dri
-endif
-endif
-
-if HAVE_GALLIUM_RADEONSI
-if HAVE_DRI2
-SUBDIRS += radeonsi/dri
-endif
-endif
-
 if HAVE_GALLIUM_SOFTPIPE
 if HAVE_DRISW
 SUBDIRS += dri-swrast

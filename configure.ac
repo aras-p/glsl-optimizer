@@ -1941,7 +1941,7 @@ if test -n "$with_gallium_drivers"; then
             gallium_require_drm_loader
             gallium_require_llvm "Gallium R300"
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
-            gallium_check_st "radeon/drm" "r300/dri" "xa/r300" "" ""
+            gallium_check_st "radeon/drm" "dri/r300" "xa/r300" "" ""
             ;;
         xr600)
             HAVE_GALLIUM_R600=yes
@@ -1958,7 +1958,7 @@ if test -n "$with_gallium_drivers"; then
             if test "x$enable_opencl" = xyes; then
                 LLVM_COMPONENTS="${LLVM_COMPONENTS} bitreader asmparser"
             fi
-            gallium_check_st "radeon/drm" "r600/dri" "xa/r600" "xvmc/r600" "vdpau/r600" "omx/r600"
+            gallium_check_st "radeon/drm" "dri/r600" "xa/r600" "xvmc/r600" "vdpau/r600" "omx/r600"
             ;;
         xradeonsi)
             HAVE_GALLIUM_RADEONSI=yes
@@ -1967,7 +1967,7 @@ if test -n "$with_gallium_drivers"; then
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS radeonsi"
             radeon_llvm_check "radeonsi"
             require_egl_drm "radeonsi"
-            gallium_check_st "radeon/drm" "radeonsi/dri" "xa/radeonsi" "" "vdpau/radeonsi" "omx/radeonsi"
+            gallium_check_st "radeon/drm" "dri/radeonsi" "xa/radeonsi" "" "vdpau/radeonsi" "omx/radeonsi"
             ;;
         xnouveau)
             HAVE_GALLIUM_NOUVEAU=yes
@@ -2222,9 +2222,6 @@ AC_CONFIG_FILES([Makefile
 		src/gallium/targets/osmesa/Makefile
 		src/gallium/targets/osmesa/osmesa.pc
 		src/gallium/targets/pipe-loader/Makefile
-		src/gallium/targets/r300/dri/Makefile
-		src/gallium/targets/r600/dri/Makefile
-		src/gallium/targets/radeonsi/dri/Makefile
 		src/gallium/targets/vdpau/Makefile
 		src/gallium/targets/xa/Makefile
 		src/gallium/targets/xa/xatracker.pc
