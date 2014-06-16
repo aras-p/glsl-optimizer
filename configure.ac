@@ -1933,7 +1933,7 @@ if test -n "$with_gallium_drivers"; then
             PKG_CHECK_MODULES([INTEL], [libdrm_intel >= $LIBDRM_INTEL_REQUIRED])
             gallium_require_drm_loader
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS ilo"
-            gallium_check_st "intel/drm" "dri-ilo" "xa/ilo"
+            gallium_check_st "intel/drm" "dri/ilo" "xa/ilo"
             ;;
         xr300)
             HAVE_GALLIUM_R300=yes
@@ -2208,7 +2208,6 @@ AC_CONFIG_FILES([Makefile
 		src/gallium/state_trackers/xa/Makefile
 		src/gallium/state_trackers/xvmc/Makefile
 		src/gallium/targets/Makefile
-		src/gallium/targets/dri-ilo/Makefile
 		src/gallium/targets/dri-swrast/Makefile
 		src/gallium/targets/dri-vmwgfx/Makefile
 		src/gallium/targets/dri/Makefile

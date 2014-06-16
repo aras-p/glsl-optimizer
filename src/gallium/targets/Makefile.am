@@ -64,12 +64,6 @@ SUBDIRS += dri-vmwgfx
 endif
 endif
 
-if HAVE_GALLIUM_ILO
-if HAVE_DRI2
-SUBDIRS += dri-ilo
-endif
-endif
-
 if HAVE_GALLIUM_SOFTPIPE
 if HAVE_DRISW
 SUBDIRS += dri-swrast

@@ -59,6 +59,15 @@ STATIC_TARGET_LIB_DEPS += \
 	$(INTEL_LIBS)
 endif
 
+if HAVE_GALLIUM_ILO
+MEGADRIVERS += ilo
+STATIC_TARGET_CPPFLAGS += -DGALLIUM_ILO
+STATIC_TARGET_LIB_DEPS += \
+	$(top_builddir)/src/gallium/winsys/intel/drm/libintelwinsys.la \
+	$(top_builddir)/src/gallium/drivers/ilo/libilo.la \
+	$(INTEL_LIBS)
+endif
+
 if HAVE_GALLIUM_NOUVEAU
 MEGADRIVERS += nouveau
 STATIC_TARGET_CPPFLAGS += -DGALLIUM_NOUVEAU
