@@ -864,6 +864,10 @@ fs_visitor::visit(ir_expression *ir)
    case ir_unop_find_lsb:
       emit(FBL(this->result, op[0]));
       break;
+   case ir_unop_saturate:
+      inst = emit(MOV(this->result, op[0]));
+      inst->saturate = true;
+      break;
    case ir_triop_bitfield_extract:
       /* Note that the instruction's argument order is reversed from GLSL
        * and the IR.

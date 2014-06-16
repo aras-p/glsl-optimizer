@@ -246,6 +246,7 @@ ir_channel_expressions_visitor::visit_leave(ir_assignment *ir)
    case ir_unop_bit_count:
    case ir_unop_find_msb:
    case ir_unop_find_lsb:
+   case ir_unop_saturate:
       for (i = 0; i < vector_elements; i++) {
 	 ir_rvalue *op0 = get_element(op_var[0], i);
 
