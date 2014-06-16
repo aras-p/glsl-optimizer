@@ -412,7 +412,7 @@ void brw_compact_instructions(struct brw_compile *p, int start_offset,
                               int num_annotations, struct annotation *annotation);
 void brw_uncompact_instruction(struct brw_context *brw, brw_inst *dst,
                                brw_compact_inst *src);
-bool brw_try_compact_instruction(struct brw_compile *p, brw_compact_inst *dst,
+bool brw_try_compact_instruction(struct brw_context *brw, brw_compact_inst *dst,
                                  brw_inst *src);
 
 void brw_debug_compact_uncompact(struct brw_context *brw, brw_inst *orig,

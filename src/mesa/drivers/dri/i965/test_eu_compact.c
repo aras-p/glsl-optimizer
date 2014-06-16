@@ -36,7 +36,7 @@ test_compact_instruction(struct brw_compile *p, brw_inst src)
    brw_compact_inst dst;
    memset(&dst, 0xd0, sizeof(dst));
 
-   if (brw_try_compact_instruction(p, &dst, &src)) {
+   if (brw_try_compact_instruction(brw, &dst, &src)) {
       brw_inst uncompacted;
 
       brw_uncompact_instruction(brw, &uncompacted, &dst);

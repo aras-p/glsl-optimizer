@@ -459,10 +459,9 @@ is_compactable_immediate(unsigned imm)
  * brw_compact_instructions().
  */
 bool
-brw_try_compact_instruction(struct brw_compile *p, brw_compact_inst *dst,
+brw_try_compact_instruction(struct brw_context *brw, brw_compact_inst *dst,
                             brw_inst *src)
 {
-   struct brw_context *brw = p->brw;
    brw_compact_inst temp;
 
    if (brw_inst_opcode(brw, src) == BRW_OPCODE_IF ||
@@ -728,7 +727,7 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
       brw_inst saved = *src;
 
       if (!brw_inst_cmpt_control(brw, src) &&
-          brw_try_compact_instruction(p, dst, src)) {
+          brw_try_compact_instruction(brw, dst, src)) {
          compacted_count++;
 
          if (INTEL_DEBUG) {
