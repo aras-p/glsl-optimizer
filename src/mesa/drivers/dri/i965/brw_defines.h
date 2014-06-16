@@ -717,6 +717,7 @@ enum opcode {
    BRW_OPCODE_ASR =	12,
    BRW_OPCODE_CMP =	16,
    BRW_OPCODE_CMPN =	17,
+   BRW_OPCODE_CSEL =	18,  /**< Gen8+ */
    BRW_OPCODE_F32TO16 = 19,  /**< Gen7 only */
    BRW_OPCODE_F16TO32 = 20,  /**< Gen7 only */
    BRW_OPCODE_BFREV =	23,  /**< Gen7+ */
