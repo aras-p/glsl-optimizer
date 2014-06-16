@@ -4,6 +4,9 @@
 #include "state_tracker/drm_driver.h"
 #include "target-helpers/inline_debug_helper.h"
 #include "loader.h"
+#if defined(DRI_TARGET)
+#include "dri_screen.h"
+#endif
 
 #if GALLIUM_I915
 #include "i915/drm/i915_drm_public.h"
@@ -52,7 +55,6 @@ static char* driver_name = NULL;
 
 #if defined(GALLIUM_I915)
 #if defined(DRI_TARGET)
-#include "dri_screen.h"
 
 const __DRIextension **__driDriverGetExtensions_i915(void);
 
@@ -80,7 +82,6 @@ pipe_i915_create_screen(int fd)
 
 #if defined(GALLIUM_ILO)
 #if defined(DRI_TARGET)
-#include "dri_screen.h"
 
 const __DRIextension **__driDriverGetExtensions_i965(void);
 
@@ -108,7 +109,6 @@ pipe_ilo_create_screen(int fd)
 
 #if defined(GALLIUM_NOUVEAU)
 #if defined(DRI_TARGET)
-#include "dri_screen.h"
 
 const __DRIextension **__driDriverGetExtensions_nouveau(void);
 
@@ -131,7 +131,6 @@ pipe_nouveau_create_screen(int fd)
 
 #if defined(GALLIUM_R300)
 #if defined(DRI_TARGET)
-#include "dri_screen.h"
 
 const __DRIextension **__driDriverGetExtensions_r300(void);
 
@@ -154,7 +153,6 @@ pipe_r300_create_screen(int fd)
 
 #if defined(GALLIUM_R600)
 #if defined(DRI_TARGET)
-#include "dri_screen.h"
 
 const __DRIextension **__driDriverGetExtensions_r600(void);
 
@@ -177,7 +175,6 @@ pipe_r600_create_screen(int fd)
 
 #if defined(GALLIUM_RADEONSI)
 #if defined(DRI_TARGET)
-#include "dri_screen.h"
 
 const __DRIextension **__driDriverGetExtensions_radeonsi(void);
 
@@ -200,7 +197,6 @@ pipe_radeonsi_create_screen(int fd)
 
 #if defined(GALLIUM_VMWGFX)
 #if defined(DRI_TARGET)
-#include "dri_screen.h"
 
 const __DRIextension **__driDriverGetExtensions_vmwgfx(void);
 
@@ -228,7 +224,6 @@ pipe_vmwgfx_create_screen(int fd)
 
 #if defined(GALLIUM_FREEDRENO)
 #if defined(DRI_TARGET)
-#include "dri_screen.h"
 
 const __DRIextension **__driDriverGetExtensions_freedreno(void);
 
