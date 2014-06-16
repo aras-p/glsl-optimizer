@@ -79,6 +79,18 @@ pipe_i915_create_screen(int fd)
 #endif
 
 #if defined(GALLIUM_ILO)
+#if defined(DRI_TARGET)
+#include "dri_screen.h"
+
+const __DRIextension **__driDriverGetExtensions_i965(void);
+
+PUBLIC const __DRIextension **__driDriverGetExtensions_i965(void)
+{
+   globalDriverAPI = &galliumdrm_driver_api;
+   return galliumdrm_driver_extensions;
+}
+#endif
+
 static struct pipe_screen *
 pipe_ilo_create_screen(int fd)
 {
