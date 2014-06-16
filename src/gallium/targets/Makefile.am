@@ -64,12 +64,6 @@ SUBDIRS += dri-vmwgfx
 endif
 endif
 
-if HAVE_GALLIUM_FREEDRENO
-if HAVE_DRI2
-SUBDIRS += dri-freedreno
-endif
-endif
-
 if HAVE_GALLIUM_I915
 if HAVE_DRI2
 SUBDIRS += dri-i915

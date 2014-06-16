@@ -92,6 +92,17 @@ STATIC_TARGET_LIB_DEPS += \
 	$(top_builddir)/src/gallium/drivers/radeonsi/libradeonsi.la \
 	$(RADEON_LIBS)
 endif
+
+if HAVE_GALLIUM_FREEDRENO
+MEGADRIVERS += freedreno
+STATIC_TARGET_CPPFLAGS += -DGALLIUM_FREEDRENO
+STATIC_TARGET_LIB_DEPS += \
+	$(top_builddir)/src/gallium/winsys/freedreno/drm/libfreedrenodrm.la \
+	$(top_builddir)/src/gallium/drivers/freedreno/libfreedreno.la \
+	$(FREEDRENO_LIBS)
+
+endif
+
 gallium_dri_la_SOURCES += target.c
 AM_CPPFLAGS += $(STATIC_TARGET_CPPFLAGS)
 gallium_dri_la_LIBADD += $(STATIC_TARGET_LIB_DEPS)
