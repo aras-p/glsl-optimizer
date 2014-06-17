@@ -1123,6 +1123,8 @@ get_tex_level_parameter_image(struct gl_context *ctx,
          break;
       case GL_TEXTURE_INTENSITY_SIZE:
       case GL_TEXTURE_LUMINANCE_SIZE:
+         if (ctx->API != API_OPENGL_COMPAT)
+            goto invalid_pname;
          if (_mesa_base_format_has_channel(img->_BaseFormat, pname)) {
             *params = _mesa_get_format_bits(texFormat, pname);
             if (*params == 0) {
@@ -1169,12 +1171,15 @@ get_tex_level_parameter_image(struct gl_context *ctx,
          break;
 
       /* GL_ARB_texture_float */
+      case GL_TEXTURE_LUMINANCE_TYPE_ARB:
+      case GL_TEXTURE_INTENSITY_TYPE_ARB:
+         if (ctx->API != API_OPENGL_COMPAT)
+            goto invalid_pname;
+         /* FALLTHROUGH */
       case GL_TEXTURE_RED_TYPE_ARB:
       case GL_TEXTURE_GREEN_TYPE_ARB:
       case GL_TEXTURE_BLUE_TYPE_ARB:
       case GL_TEXTURE_ALPHA_TYPE_ARB:
-      case GL_TEXTURE_LUMINANCE_TYPE_ARB:
-      case GL_TEXTURE_INTENSITY_TYPE_ARB:
       case GL_TEXTURE_DEPTH_TYPE_ARB:
          if (!ctx->Extensions.ARB_texture_float)
             goto invalid_pname;
