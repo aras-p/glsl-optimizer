@@ -117,12 +117,13 @@ namespace {
 #endif
 
    llvm::Module *
-   compile(const std::string &source, const std::string &name,
-           const std::string &triple, const std::string &processor,
-           const std::string &opts, clang::LangAS::Map& address_spaces) {
+   compile(llvm::LLVMContext &llvm_ctx, const std::string &source,
+           const std::string &name, const std::string &triple,
+           const std::string &processor, const std::string &opts,
+           clang::LangAS::Map& address_spaces) {
 
       clang::CompilerInstance c;
-      clang::EmitLLVMOnlyAction act(&llvm::getGlobalContext());
+      clang::EmitLLVMOnlyAction act(&llvm_ctx);
       std::string log;
       llvm::raw_string_ostream s_log(log);
       std::string libclc_path = LIBCLC_LIBEXECDIR + processor + "-"
@@ -399,10 +400,12 @@ clover::compile_program_llvm(const compat::string &source,
                       target.size() - processor_str_len - 1);
    clang::LangAS::Map address_spaces;
 
+   llvm::LLVMContext llvm_ctx;
+
    // The input file name must have the .cl extension in order for the
    // CompilerInvocation class to recognize it as an OpenCL source file.
-   llvm::Module *mod = compile(source, "input.cl", triple, processor, opts,
-                                                                address_spaces);
+   llvm::Module *mod = compile(llvm_ctx, source, "input.cl", triple, processor,
+                               opts, address_spaces);
 
    find_kernels(mod, kernels);
 
