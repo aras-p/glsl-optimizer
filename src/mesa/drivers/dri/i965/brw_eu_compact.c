@@ -658,6 +658,10 @@ update_uip_jip(struct brw_context *brw, brw_inst *insn,
    jip -= compacted_between(this_old_ip, this_old_ip + jip, compacted_counts);
    brw_inst_set_jip(brw, insn, jip);
 
+   if (brw_inst_opcode(brw, insn) == BRW_OPCODE_ENDIF ||
+       brw_inst_opcode(brw, insn) == BRW_OPCODE_WHILE)
+      return;
+
    int uip = brw_inst_uip(brw, insn);
    uip -= compacted_between(this_old_ip, this_old_ip + uip, compacted_counts);
    brw_inst_set_uip(brw, insn, uip);
