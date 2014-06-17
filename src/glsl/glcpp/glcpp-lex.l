@@ -259,6 +259,12 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	return OBJ_IDENTIFIER;
 }
 
+<DEFINE>[^_a-zA-Z]{NONSPACE}* {
+	BEGIN INITIAL;
+	glcpp_error(yylloc, yyextra, "#define followed by a non-identifier: %s", yytext);
+	return INTEGER_STRING;
+}
+
 {HASH}undef {
 	yyextra->space_tokens = 0;
 	return HASH_UNDEF;
