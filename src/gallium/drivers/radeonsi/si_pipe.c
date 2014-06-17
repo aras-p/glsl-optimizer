@@ -327,6 +327,9 @@ static int si_get_shader_param(struct pipe_screen* pscreen, unsigned shader, enu
 		switch (param) {
 		case PIPE_SHADER_CAP_PREFERRED_IR:
 			return PIPE_SHADER_IR_LLVM;
+		case PIPE_SHADER_CAP_DOUBLES:
+			return 0; /* XXX: Enable doubles once the compiler can
+			             handle them. */
 		default:
 			return 0;
 		}
@@ -378,6 +381,8 @@ static int si_get_shader_param(struct pipe_screen* pscreen, unsigned shader, enu
 		return 16;
 	case PIPE_SHADER_CAP_PREFERRED_IR:
 		return PIPE_SHADER_IR_TGSI;
+	case PIPE_SHADER_CAP_DOUBLES:
+		return 0;
 	}
 	return 0;
 }

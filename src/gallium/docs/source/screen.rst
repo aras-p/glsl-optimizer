@@ -288,6 +288,8 @@ to be 0.
   program.  It should be one of the ``pipe_shader_ir`` enum values.
 * ``PIPE_SHADER_CAP_MAX_SAMPLER_VIEWS``: The maximum number of texture
   sampler views. Must not be lower than PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS.
+* ``PIPE_SHADER_CAP_DOUBLES``: Whether double precision floating-point
+  operations are supported.
 
 
 .. _pipe_compute_cap:

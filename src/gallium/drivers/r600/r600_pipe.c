@@ -447,6 +447,8 @@ static int r600_get_shader_param(struct pipe_screen* pscreen, unsigned shader, e
 		} else {
 			return PIPE_SHADER_IR_TGSI;
 		}
+	case PIPE_SHADER_CAP_DOUBLES:
+		return 0;
 	}
 	return 0;
 }
