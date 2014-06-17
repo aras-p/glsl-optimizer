@@ -792,29 +792,23 @@ lp_build_conv(struct gallivm_state *gallivm,
       unsigned dst_shift = lp_const_shift(dst_type);
       unsigned src_offset = lp_const_offset(src_type);
       unsigned dst_offset = lp_const_offset(dst_type);
+      struct lp_build_context bld;
+      lp_build_context_init(&bld, gallivm, tmp_type);
 
       /* Compensate for different offsets */
-      if (dst_offset > src_offset && src_type.width > dst_type.width) {
+      /* sscaled -> unorm and similar would cause negative shift count, skip */
+      if (dst_offset > src_offset && src_type.width > dst_type.width && src_shift > 0) {
          for (i = 0; i < num_tmps; ++i) {
             LLVMValueRef shifted;
-            LLVMValueRef shift = lp_build_const_int_vec(gallivm, tmp_type, src_shift - 1);
-            if(src_type.sign)
-               shifted = LLVMBuildAShr(builder, tmp[i], shift, "");
-            else
-               shifted = LLVMBuildLShr(builder, tmp[i], shift, "");
 
+            shifted = lp_build_shr_imm(&bld, tmp[i], src_shift - 1);
             tmp[i] = LLVMBuildSub(builder, tmp[i], shifted, "");
          }
       }
 
       if(src_shift > dst_shift) {
-         LLVMValueRef shift = lp_build_const_int_vec(gallivm, tmp_type,
-                                                     src_shift - dst_shift);
          for(i = 0; i < num_tmps; ++i)
-            if(src_type.sign)
-               tmp[i] = LLVMBuildAShr(builder, tmp[i], shift, "");
-            else
-               tmp[i] = LLVMBuildLShr(builder, tmp[i], shift, "");
+            tmp[i] = lp_build_shr_imm(&bld, tmp[i], src_shift - dst_shift);
       }
    }
 
@@ -900,14 +894,27 @@ lp_build_conv(struct gallivm_state *gallivm,
        unsigned dst_shift = lp_const_shift(dst_type);
        unsigned src_offset = lp_const_offset(src_type);
        unsigned dst_offset = lp_const_offset(dst_type);
+       struct lp_build_context bld;
+       lp_build_context_init(&bld, gallivm, tmp_type);
 
        if (src_shift < dst_shift) {
           LLVMValueRef pre_shift[LP_MAX_VECTOR_LENGTH];
-          LLVMValueRef shift = lp_build_const_int_vec(gallivm, tmp_type, dst_shift - src_shift);
 
-          for (i = 0; i < num_tmps; ++i) {
-             pre_shift[i] = tmp[i];
-             tmp[i] = LLVMBuildShl(builder, tmp[i], shift, "");
+          if (dst_shift - src_shift < dst_type.width) {
+             for (i = 0; i < num_tmps; ++i) {
+                pre_shift[i] = tmp[i];
+                tmp[i] = lp_build_shl_imm(&bld, tmp[i], dst_shift - src_shift);
+             }
+          }
+          else {
+             /*
+              * This happens for things like sscaled -> unorm conversions. Shift
+              * counts equal to bit width cause undefined results, so hack around it.
+              */
+             for (i = 0; i < num_tmps; ++i) {
+                pre_shift[i] = tmp[i];
+                tmp[i] = lp_build_zero(gallivm, dst_type);
+             }
           }
 
           /* Compensate for different offsets */
