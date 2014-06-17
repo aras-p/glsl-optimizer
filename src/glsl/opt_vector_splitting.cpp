@@ -39,6 +39,8 @@
 #include "ir_visitor.h"
 #include "ir_rvalue_visitor.h"
 #include "glsl_types.h"
+#include "ir_optimization.h"
+#include "loop_analysis.h"
 
 static bool debug = false;
 
@@ -102,7 +104,7 @@ public:
       ralloc_free(mem_ctx);
    }
 
-   bool get_split_list(exec_list *instructions, bool linked);
+   bool get_split_list(exec_list *instructions, bool linked, glsl_vector_splitting_mode mode);
 
    virtual ir_visitor_status visit(ir_variable *);
    virtual ir_visitor_status visit(ir_dereference_variable *);
@@ -114,6 +116,11 @@ public:
 
    /* List of variable_entry */
    exec_list variable_list;
+
+   /* Current split mode */
+   glsl_vector_splitting_mode mode;
+
+   loop_state *loopstate;
 
    void *mem_ctx;
 };
@@ -132,11 +139,22 @@ ir_vector_reference_visitor::get_variable_entry(ir_variable *var)
    if (!var->type->is_vector())
       return NULL;
 
+   // If mode is loop_inductors, allow only loop inductors to be stored.
+   if (mode == OPT_SPLIT_ONLY_LOOP_INDUCTORS && loopstate)
+   {
+	   loop_variable_state* inductor_state = loopstate->get_for_inductor(var);
+	   if (!inductor_state)
+	   {
+		   return NULL;
+	   }
+   }
+
    foreach_list(n, &this->variable_list) {
       variable_entry *entry = (variable_entry *) n;
       if (entry->var == var)
 	 return entry;
    }
+
 
    variable_entry *entry = new(mem_ctx) variable_entry(var);
    this->variable_list.push_tail(entry);
@@ -243,9 +261,25 @@ ir_vector_reference_visitor::visit_enter(ir_function_signature *ir)
 
 bool
 ir_vector_reference_visitor::get_split_list(exec_list *instructions,
-					   bool linked)
+					   bool linked,
+					   glsl_vector_splitting_mode _mode)
 {
-   visit_list_elements(this, instructions);
+	mode = _mode;
+
+	if (linked)
+	{
+		loop_state* ls = analyze_loop_variables(instructions);
+		if (ls->loop_found)
+			set_loop_controls(instructions, ls);
+
+		loopstate = ls;
+	}
+	else
+	{
+		loopstate = NULL;
+	}
+
+	visit_list_elements(this, instructions);
 
    /* If the shaders aren't linked yet, we can't mess with global
     * declarations, which need to be matched by name across shaders.
@@ -274,6 +308,15 @@ ir_vector_reference_visitor::get_split_list(exec_list *instructions,
       if (!(entry->declaration && entry->split)) {
 	 entry->remove();
       }
+	  else if (mode == OPT_SPLIT_ONLY_UNUSED)
+	  {
+		  /* Build mask of fully used vector (vec2 -> 0x3, vec3 -> 0x7, vec4 -> 0xe) */
+		  unsigned int fullmask = (1 << entry->var->type->vector_elements) - 1;
+		  if (entry->use_mask == fullmask)
+		  {
+			  entry->remove();
+		  }
+	  }
    }
 
    return !variable_list.is_empty();
@@ -397,10 +440,10 @@ ir_vector_splitting_visitor::visit_leave(ir_assignment *ir)
 }
 
 bool
-optimize_split_vectors(exec_list *instructions, bool linked)
+optimize_split_vectors(exec_list *instructions, bool linked, glsl_vector_splitting_mode mode)
 {
    ir_vector_reference_visitor refs;
-   if (!refs.get_split_list(instructions, linked))
+   if (!refs.get_split_list(instructions, linked, mode))
       return false;
 
    void *mem_ctx = ralloc_context(NULL);
