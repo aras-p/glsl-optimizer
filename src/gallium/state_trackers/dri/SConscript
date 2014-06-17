@@ -1,6 +1,35 @@
+#######################################################################
+# SConscript for dri state_tracker
+
 Import('*')
 
-SConscript([
-    'sw/SConscript',
-    'drm/SConscript',
+env = env.Clone()
+
+# XXX: If HAVE_DRI2
+env.PkgUseModules(['DRM'])
+# else
+#env.Append(CPPDEFINES = [('__NOT_HAVE_DRM_H', '1')])
+
+env.Append(CPPPATH = [
+    '#/src/mapi',
+    '#/src/mesa',
+    '#/src/gallium/state_trackers/dri/common',
+    '#/src/mesa/drivers/dri/common',
+    xmlpool_options.dir.dir, # Dir to generated xmlpool/options.h
 ])
+
+env.Append(CPPDEFINES = [('GALLIUM_STATIC_TARGETS', '1')])
+
+sources = env.ParseSourceList('Makefile.sources', 'common_SOURCES')
+
+# XXX: if HAVE_DRISW
+sources.append(env.ParseSourceList('Makefile.sources', 'drisw_SOURCES'))
+
+# XXX: if HAVE_DRI2
+sources.append(env.ParseSourceList('Makefile.sources', 'dri2_SOURCES'))
+
+st_dri = env.ConvenienceLibrary(
+    target = 'st_dri',
+    source = sources
+)
+Export('st_dri')

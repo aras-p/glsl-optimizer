@@ -388,11 +388,9 @@ dri_destroy_screen(__DRIscreen * sPriv)
 
    dri_destroy_screen_helper(screen);
 
-#if !SPLIT_TARGETS
 #if !GALLIUM_STATIC_TARGETS
    pipe_loader_release(&screen->dev, 1);
 #endif // !GALLIUM_STATIC_TARGETS
-#endif // !SPLIT_TARGETS
 
    free(screen);
    sPriv->driverPrivate = NULL;
@@ -412,7 +410,8 @@ dri_postprocessing_init(struct dri_screen *screen)
 
 const __DRIconfig **
 dri_init_screen_helper(struct dri_screen *screen,
-                       struct pipe_screen *pscreen)
+                       struct pipe_screen *pscreen,
+                       const char* driver_name)
 {
    screen->base.screen = pscreen;
    if (!screen->base.screen) {
@@ -437,15 +436,7 @@ dri_init_screen_helper(struct dri_screen *screen,
    driParseConfigFiles(&screen->optionCache,
                        &screen->optionCacheDefaults,
                        screen->sPriv->myNum,
-#if SPLIT_TARGETS
-                       driver_descriptor.name);
-#else
-#if GALLIUM_STATIC_TARGETS
-                       dd_driver_name());
-#else
-                       screen->dev->driver_name);
-#endif // GALLIUM_STATIC_TARGETS
-#endif // SPLIT_TARGETS
+                       driver_name);
 
    /* Handle force_s3tc_enable. */
    if (!util_format_s3tc_enabled &&

@@ -1,4 +1,5 @@
 # Copyright © 2012 Intel Corporation
+# Copyright © 2014 Emil Velikov
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -20,12 +21,39 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-SUBDIRS =
+include Makefile.sources
+include $(top_srcdir)/src/gallium/Automake.inc
+
+AM_CPPFLAGS = \
+	$(GALLIUM_PIPE_LOADER_DEFINES) \
+	-DPIPE_SEARCH_DIR=\"$(libdir)/gallium-pipe\" \
+	-I$(top_srcdir)/include \
+	-I$(top_srcdir)/src/mapi \
+	-I$(top_srcdir)/src/mesa \
+	-I$(top_srcdir)/src/gallium/state_trackers/dri/common \
+	-I$(top_srcdir)/src/mesa/drivers/dri/common \
+	-I$(top_builddir)/src/mesa/drivers/dri/common \
+	$(GALLIUM_CFLAGS) \
+	$(LIBDRM_CFLAGS) \
+	$(VISIBILITY_CFLAGS)
+
+if HAVE_GALLIUM_STATIC_TARGETS
+AM_CPPFLAGS += \
+	-DGALLIUM_STATIC_TARGETS=1
+endif # HAVE_GALLIUM_STATIC_TARGETS
+
+noinst_LTLIBRARIES = libdri.la
+libdri_la_SOURCES = $(common_SOURCES)
 
 if HAVE_DRISW
-SUBDIRS += sw
+if !HAVE_DRI2
+AM_CPPFLAGS += \
+	-D__NOT_HAVE_DRM_H
+endif
+libdri_la_SOURCES += $(drisw_SOURCES)
 endif
 
-if HAVE_LIBDRM
-SUBDIRS += drm
+
+if HAVE_DRI2
+libdri_la_SOURCES += $(dri2_SOURCES)
 endif

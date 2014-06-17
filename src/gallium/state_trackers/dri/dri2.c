@@ -1241,14 +1241,6 @@ dri2_init_screen(__DRIscreen * sPriv)
 
    sPriv->driverPrivate = (void *)screen;
 
-#if SPLIT_TARGETS
-   pscreen = driver_descriptor.create_screen(screen->fd);
-   if (driver_descriptor.configuration) {
-      throttle_ret = driver_descriptor.configuration(DRM_CONF_THROTTLE);
-      dmabuf_ret = driver_descriptor.configuration(DRM_CONF_SHARE_FD);
-   }
-
-#else
 #if GALLIUM_STATIC_TARGETS
    pscreen = dd_create_screen(screen->fd);
 
@@ -1262,7 +1254,6 @@ dri2_init_screen(__DRIscreen * sPriv)
       dmabuf_ret = pipe_loader_configuration(screen->dev, DRM_CONF_SHARE_FD);
    }
 #endif // GALLIUM_STATIC_TARGETS
-#endif // SPLIT_TARGETS
 
    if (throttle_ret && throttle_ret->val.val_int != -1) {
       screen->throttling_enabled = TRUE;
@@ -1283,7 +1274,11 @@ dri2_init_screen(__DRIscreen * sPriv)
 
    /* dri_init_screen_helper checks pscreen for us */
 
-   configs = dri_init_screen_helper(screen, pscreen);
+#if GALLIUM_STATIC_TARGETS
+   configs = dri_init_screen_helper(screen, pscreen, dd_driver_name());
+#else
+   configs = dri_init_screen_helper(screen, pscreen, screen->dev->driver_name);
+#endif // GALLIUM_STATIC_TARGETS
    if (!configs)
       goto fail;
 
@@ -1294,12 +1289,10 @@ dri2_init_screen(__DRIscreen * sPriv)
    return configs;
 fail:
    dri_destroy_screen_helper(screen);
-#if !SPLIT_TARGETS
 #if !GALLIUM_STATIC_TARGETS
    if (screen->dev)
       pipe_loader_release(&screen->dev, 1);
 #endif // !GALLIUM_STATIC_TARGETS
-#endif // !SPLIT_TARGETS
    FREE(screen);
    return NULL;
 }

@@ -137,7 +137,8 @@ dri_fill_st_visual(struct st_visual *stvis, struct dri_screen *screen,
 
 const __DRIconfig **
 dri_init_screen_helper(struct dri_screen *screen,
-                       struct pipe_screen *pscreen);
+                       struct pipe_screen *pscreen,
+                       const char* driver_name);
 
 void
 dri_destroy_screen_helper(struct dri_screen * screen);

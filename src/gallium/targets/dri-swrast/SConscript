@@ -7,11 +7,11 @@ env.Append(CPPPATH = [
     '#/src/mapi',
     '#/src/mesa',
     '#/src/mesa/drivers/dri/common',
-    '#/src/gallium/state_trackers/dri/common',
+    '#/src/gallium/state_trackers/dri',
 ])
 
 env.Prepend(LIBS = [
-    st_drisw,
+    st_dri,
     ws_dri,
     trace,
     rbug,

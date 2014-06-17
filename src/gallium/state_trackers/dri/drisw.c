@@ -361,7 +361,7 @@ drisw_init_screen(__DRIscreen * sPriv)
    pscreen = drisw_create_screen(&drisw_lf);
    /* dri_init_screen_helper checks pscreen for us */
 
-   configs = dri_init_screen_helper(screen, pscreen);
+   configs = dri_init_screen_helper(screen, pscreen, "swrast");
    if (!configs)
       goto fail;
 
