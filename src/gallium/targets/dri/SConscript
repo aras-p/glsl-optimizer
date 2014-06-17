@@ -35,7 +35,7 @@ env.Prepend(LIBS = [
     glsl,
     gallium,
     megadrivers_stub,
-    COMMON_DRI_DRM_OBJECTS
+    dri_common,
 ])
 
 module = env.LoadableModule(

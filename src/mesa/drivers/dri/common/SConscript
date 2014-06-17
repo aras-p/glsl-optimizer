@@ -27,54 +27,21 @@ drienv.Replace(CPPPATH = [
     '#src/egl/drivers/dri',
 ])
 
-driswenv = drienv.Clone()
-driswenv.Append(CPPDEFINES = [
-    '__NOT_HAVE_DRM_H',
-    'HAVE_DLADDR',
-])
-
-drienv.PkgUseModules('DRM')
-
-dri_common_utils = drienv.SharedObject(
-    target = 'utils.o',
-    source = '#src/mesa/drivers/dri/common/utils.c'
-)
-
-dri_common_xmlconfig = drienv.SharedObject(
-    target = 'xmlconfig.o',
-    source = '#src/mesa/drivers/dri/common/xmlconfig.c'
-)
-
-dri_common_dri_util = drienv.SharedObject(
-    target = 'dri_util.o',
-    source = '#src/mesa/drivers/dri/common/dri_util.c'
-)
-
-dri_common_drisw_util = driswenv.SharedObject(
-    target = 'drisw_util.o',
-    source = '#src/mesa/drivers/dri/common/dri_util.c'
-)
-
-
-COMMON_DRI_SW_OBJECTS = [
-    dri_common_utils,
-    dri_common_xmlconfig,
-    dri_common_drisw_util,
-]
-
-COMMON_DRI_DRM_OBJECTS = [
-    dri_common_utils,
-    dri_common_xmlconfig,
-    dri_common_dri_util,
-]
-
 drienv.AppendUnique(LIBS = [
     'expat',
 ])
 
-driswenv.AppendUnique(LIBS = [
-    'expat',
-])
+# if HAVE_DRI2
+drienv.PkgUseModules('DRM')
+# else
+#env.Append(CPPDEFINES = ['__NOT_HAVE_DRM_H'])
+
+sources = drienv.ParseSourceList('Makefile.sources', 'DRI_COMMON_FILES')
+
+dri_common = drienv.ConvenienceLibrary(
+	target = 'dri_common',
+	source = sources,
+)
 
 #
 # megadrivers_stub
@@ -104,8 +71,6 @@ env.Alias('megadrivers_stub', megadrivers_stub)
 
 Export([
     'drienv',
-    'driswenv',
-    'COMMON_DRI_SW_OBJECTS',
-    'COMMON_DRI_DRM_OBJECTS',
+    'dri_common',
     'megadrivers_stub',
 ])

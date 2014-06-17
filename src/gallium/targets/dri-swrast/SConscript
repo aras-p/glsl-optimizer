@@ -1,6 +1,6 @@
 Import('*')
 
-env = driswenv.Clone()
+env = drienv.Clone()
 
 env.Prepend(LIBS = [
     st_drisw,
@@ -10,7 +10,7 @@ env.Prepend(LIBS = [
     mesa,
     glsl,
     gallium,
-    COMMON_DRI_SW_OBJECTS
+    dri_common,
 ])
 
 if True:
