@@ -801,7 +801,7 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
       int buf, real_color_buffers = 0;
       memset(save->ColorDrawBuffers, 0, sizeof(save->ColorDrawBuffers));
 
-      for (buf = 0; buf < MAX_DRAW_BUFFERS; buf++) {
+      for (buf = 0; buf < ctx->Const.MaxDrawBuffers; buf++) {
          int buf_index = ctx->DrawBuffer->_ColorDrawBufferIndexes[buf];
          if (buf_index == -1)
             continue;
@@ -1213,7 +1213,7 @@ _mesa_meta_end(struct gl_context *ctx)
       _mesa_BindRenderbuffer(GL_RENDERBUFFER, save->RenderbufferName);
 
    if (state & MESA_META_DRAW_BUFFERS) {
-      _mesa_DrawBuffers(MAX_DRAW_BUFFERS, save->ColorDrawBuffers);
+      _mesa_DrawBuffers(ctx->Const.MaxDrawBuffers, save->ColorDrawBuffers);
    }
 
    ctx->Meta->SaveStackDepth--;
