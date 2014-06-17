@@ -1108,6 +1108,8 @@ get_tex_level_parameter_image(struct gl_context *ctx,
 	 }
          break;
       case GL_TEXTURE_BORDER:
+         if (ctx->API != API_OPENGL_COMPAT)
+            goto invalid_pname;
          *params = img->Border;
          break;
       case GL_TEXTURE_RED_SIZE:
