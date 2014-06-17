@@ -1051,6 +1051,7 @@ get_tex_level_parameter_image(struct gl_context *ctx,
                               GLenum pname, GLint *params)
 {
    const struct gl_texture_image *img = NULL;
+   struct gl_texture_image dummy_image;
    mesa_format texFormat;
 
    img = _mesa_select_tex_image(ctx, texObj, target, level);
@@ -1062,12 +1063,12 @@ get_tex_level_parameter_image(struct gl_context *ctx,
        *     instead of 1. TEXTURE_COMPONENTS is deprecated; always
        *     use TEXTURE_INTERNAL_FORMAT."
        */
+      memset(&dummy_image, 0, sizeof(dummy_image));
+      dummy_image.TexFormat = MESA_FORMAT_NONE;
+      dummy_image.InternalFormat = GL_RGBA;
+      dummy_image._BaseFormat = GL_NONE;
 
-      if (pname == GL_TEXTURE_INTERNAL_FORMAT)
-         *params = GL_RGBA;
-      else
-         *params = 0;
-      return;
+      img = &dummy_image;
    }
 
    texFormat = img->TexFormat;
