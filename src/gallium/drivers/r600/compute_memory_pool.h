@@ -59,6 +59,11 @@ struct compute_memory_pool
 };
 
 
+static inline int is_item_in_pool(struct compute_memory_item *item)
+{
+	return item->start_in_dw != -1;
+}
+
 struct compute_memory_pool* compute_memory_pool_new(struct r600_screen *rscreen); ///Creates a new pool
 void compute_memory_pool_delete(struct compute_memory_pool* pool); ///Frees all stuff in the pool and the pool struct itself too
 
