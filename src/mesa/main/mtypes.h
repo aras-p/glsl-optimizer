@@ -2051,13 +2051,31 @@ typedef enum
  */
 typedef enum
 {
-   SYSTEM_VALUE_FRONT_FACE,     /**< Fragment shader only (not done yet) */
-   SYSTEM_VALUE_VERTEX_ID,      /**< Vertex shader only */
-   SYSTEM_VALUE_INSTANCE_ID,    /**< Vertex shader only */
-   SYSTEM_VALUE_SAMPLE_ID,      /**< Fragment shader only */
-   SYSTEM_VALUE_SAMPLE_POS,     /**< Fragment shader only */
-   SYSTEM_VALUE_SAMPLE_MASK_IN, /**< Fragment shader only */
-   SYSTEM_VALUE_INVOCATION_ID,  /**< Geometry shader only */
+   /**
+    * \name Vertex shader system values
+    */
+   /*@{*/
+   SYSTEM_VALUE_VERTEX_ID,
+   SYSTEM_VALUE_INSTANCE_ID,
+   /*@}*/
+
+   /**
+    * \name Geometry shader system values
+    */
+   /*@{*/
+   SYSTEM_VALUE_INVOCATION_ID,
+   /*@}*/
+
+   /**
+    * \name Fragment shader system values
+    */
+   /*@{*/
+   SYSTEM_VALUE_FRONT_FACE,     /**< (not done yet) */
+   SYSTEM_VALUE_SAMPLE_ID,
+   SYSTEM_VALUE_SAMPLE_POS,
+   SYSTEM_VALUE_SAMPLE_MASK_IN,
+   /*@}*/
+
    SYSTEM_VALUE_MAX             /**< Number of values */
 } gl_system_value;
 
