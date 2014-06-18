@@ -165,6 +165,9 @@ nv30_context_destroy(struct pipe_context *pipe)
    if (nv30->draw)
       draw_destroy(nv30->draw);
 
+   if (nv30->screen->base.pushbuf->user_priv == &nv30->bufctx)
+      nv30->screen->base.pushbuf->user_priv = NULL;
+
    nouveau_bufctx_del(&nv30->bufctx);
 
    if (nv30->screen->cur_ctx == nv30)
