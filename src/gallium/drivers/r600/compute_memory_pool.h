@@ -58,6 +58,7 @@ struct compute_memory_pool
 
 	struct r600_resource *bo; ///The pool buffer object resource
 	struct compute_memory_item* item_list; ///Allocated memory chunks in the buffer,they must be ordered by "start_in_dw"
+	struct compute_memory_item* unallocated_list; ///Unallocated memory chunks
 	struct r600_screen *screen;
 
 	uint32_t *shadow; ///host copy of the pool, used for defragmentation

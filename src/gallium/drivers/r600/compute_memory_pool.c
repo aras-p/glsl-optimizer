@@ -108,13 +108,11 @@ int64_t compute_memory_prealloc_chunk(
 		size_in_dw);
 
 	for (item = pool->item_list; item; item = item->next) {
-		if (item->start_in_dw > -1) {
-			if (last_end + size_in_dw <= item->start_in_dw) {
-				return last_end;
-			}
-
-			last_end = item->start_in_dw + align(item->size_in_dw, ITEM_ALIGNMENT);
+		if (last_end + size_in_dw <= item->start_in_dw) {
+			return last_end;
 		}
+
+		last_end = item->start_in_dw + align(item->size_in_dw, ITEM_ALIGNMENT);
 	}
 
 	if (pool->size_in_dw - last_end < size_in_dw) {
@@ -226,7 +224,6 @@ void compute_memory_shadow(struct compute_memory_pool* pool,
 int compute_memory_finalize_pending(struct compute_memory_pool* pool,
 	struct pipe_context * pipe)
 {
-	struct compute_memory_item *pending_list = NULL, *end_p = NULL;
 	struct compute_memory_item *item, *next;
 
 	int64_t allocated = 0;
@@ -244,45 +241,16 @@ int compute_memory_finalize_pending(struct compute_memory_pool* pool,
 			item->size_in_dw, item->size_in_dw * 4);
 	}
 
-	/* Search through the list of memory items in the pool */
+	/* Calculate the total allocated size */
 	for (item = pool->item_list; item; item = next) {
 		next = item->next;
+		allocated += align(item->size_in_dw, ITEM_ALIGNMENT);
+	}
 
-		/* Check if the item is pending. */
-		if (item->start_in_dw == -1) {
-			/* It is pending, so add it to the pending_list... */
-			if (end_p) {
-				end_p->next = item;
-			}
-			else {
-				pending_list = item;
-			}
-
-			/* ... and then remove it from the item list. */
-			if (item->prev) {
-				item->prev->next = next;
-			}
-			else {
-				pool->item_list = next;
-			}
-
-			if (next) {
-				next->prev = item->prev;
-			}
-
-			/* This sequence makes the item be at the end of the list */
-			item->prev = end_p;
-			item->next = NULL;
-			end_p = item;
-
-			/* Update the amount of space we will need to allocate. */
-			unallocated += item->size_in_dw+1024;
-		}
-		else {
-			/* The item is not pending, so update the amount of space
-			 * that has already been allocated. */
-			allocated += item->size_in_dw;
-		}
+	/* Calculate the total unallocated size */
+	for (item = pool->unallocated_list; item; item = next) {
+		next = item->next;
+		unallocated += align(item->size_in_dw, ITEM_ALIGNMENT);
 	}
 
 	/* If we require more space than the size of the pool, then grow the
@@ -302,15 +270,15 @@ int compute_memory_finalize_pending(struct compute_memory_pool* pool,
 	 * In this case, there are 300 units of free space in the pool, but
 	 * they aren't contiguous, so it will be impossible to allocate Item D.
 	 */
-	if (pool->size_in_dw < allocated+unallocated) {
-		err = compute_memory_grow_pool(pool, pipe, allocated+unallocated);
+	if (pool->size_in_dw < allocated + unallocated) {
+		err = compute_memory_grow_pool(pool, pipe, allocated + unallocated);
 		if (err == -1)
 			return -1;
 	}
 
-	/* Loop through all the pending items, allocate space for them and
-	 * add them back to the item_list. */
-	for (item = pending_list; item; item = next) {
+	/* Loop through all the unallocated items, allocate space for them
+	 * and add them to the item_list. */
+	for (item = pool->unallocated_list; item; item = next) {
 		next = item->next;
 
 		struct pipe_screen *screen = (struct pipe_screen *)pool->screen;
@@ -383,6 +351,8 @@ int compute_memory_finalize_pending(struct compute_memory_pool* pool,
 		allocated += item->size_in_dw;
 	}
 
+	pool->unallocated_list = NULL;
+
 	return 0;
 }
 
@@ -404,6 +374,33 @@ void compute_memory_free(struct compute_memory_pool* pool, int64_t id)
 			}
 			else {
 				pool->item_list = item->next;
+			}
+
+			if (item->next) {
+				item->next->prev = item->prev;
+			}
+
+			if (item->real_buffer) {
+				res = (struct pipe_resource *)item->real_buffer;
+				pool->screen->b.b.resource_destroy(
+						screen, res);
+			}
+
+			free(item);
+
+			return;
+		}
+	}
+
+	for (item = pool->unallocated_list; item; item = next) {
+		next = item->next;
+
+		if (item->id == id) {
+			if (item->prev) {
+				item->prev->next = item->next;
+			}
+			else {
+				pool->unallocated_list = item->next;
 			}
 
 			if (item->next) {
@@ -452,15 +449,15 @@ struct compute_memory_item* compute_memory_alloc(
 	new_item->real_buffer = (struct r600_resource*)r600_compute_buffer_alloc_vram(
 							pool->screen, size_in_dw * 4);
 
-	if (pool->item_list) {
-		for (last_item = pool->item_list; last_item->next;
+	if (pool->unallocated_list) {
+		for (last_item = pool->unallocated_list; last_item->next;
 						last_item = last_item->next);
 
 		last_item->next = new_item;
 		new_item->prev = last_item;
 	}
 	else {
-		pool->item_list = new_item;
+		pool->unallocated_list = new_item;
 	}
 
 	COMPUTE_DBG(pool->screen, "  + Adding item %p id = %u size = %u (%u bytes)\n",
