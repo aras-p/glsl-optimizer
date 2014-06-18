@@ -496,14 +496,19 @@ static const uint16_t *src_index_table;
 static bool
 set_control_index(struct brw_context *brw, brw_compact_inst *dst, brw_inst *src)
 {
-   uint32_t uncompacted =                  /* 17b/SNB; 19b/IVB+ */
-      (brw_inst_bits(src, 31, 31) << 16) | /* 1b */
-      (brw_inst_bits(src, 23,  8));        /* 16b */
+   uint32_t uncompacted = brw->gen >= 8      /* 17b/SNB; 19b/IVB+ */
+      ? (brw_inst_bits(src, 33, 31) << 16) | /*  3b */
+        (brw_inst_bits(src, 23, 12) <<  4) | /* 12b */
+        (brw_inst_bits(src, 10,  9) <<  2) | /*  2b */
+        (brw_inst_bits(src, 34, 34) <<  1) | /*  1b */
+        (brw_inst_bits(src,  8,  8))         /*  1b */
+      : (brw_inst_bits(src, 31, 31) << 16) | /*  1b */
+        (brw_inst_bits(src, 23,  8));        /* 16b */
 
    /* On gen7, the flag register and subregister numbers are integrated into
     * the control index.
     */
-   if (brw->gen >= 7)
+   if (brw->gen == 7)
       uncompacted |= brw_inst_bits(src, 90, 89) << 17; /* 2b */
 
    for (int i = 0; i < 32; i++) {
@@ -520,9 +525,12 @@ static bool
 set_datatype_index(struct brw_context *brw, brw_compact_inst *dst,
                    brw_inst *src)
 {
-   uint32_t uncompacted =                  /* 18b */
-      (brw_inst_bits(src, 63, 61) << 15) | /* 3b */
-      (brw_inst_bits(src, 46, 32));        /* 15b */
+   uint32_t uncompacted = brw->gen >= 8      /* 18b/SNB+; 21b/BDW+ */
+      ? (brw_inst_bits(src, 63, 61) << 18) | /*  3b */
+        (brw_inst_bits(src, 94, 89) << 12) | /*  6b */
+        (brw_inst_bits(src, 46, 35))         /* 12b */
+      : (brw_inst_bits(src, 63, 61) << 15) | /*  3b */
+        (brw_inst_bits(src, 46, 32));        /* 15b */
 
    for (int i = 0; i < 32; i++) {
       if (datatype_table[i] == uncompacted) {
@@ -692,11 +700,19 @@ set_uncompacted_control(struct brw_context *brw, brw_inst *dst,
    uint32_t uncompacted =
       control_index_table[brw_compact_inst_control_index(src)];
 
-   brw_inst_set_bits(dst, 31, 31, (uncompacted >> 16) & 0x1);
-   brw_inst_set_bits(dst, 23,  8, (uncompacted & 0xffff));
+   if (brw->gen >= 8) {
+      brw_inst_set_bits(dst, 33, 31, (uncompacted >> 16));
+      brw_inst_set_bits(dst, 23, 12, (uncompacted >>  4) & 0xfff);
+      brw_inst_set_bits(dst, 10,  9, (uncompacted >>  2) & 0x3);
+      brw_inst_set_bits(dst, 34, 34, (uncompacted >>  1) & 0x1);
+      brw_inst_set_bits(dst,  8,  8, (uncompacted >>  0) & 0x1);
+   } else {
+      brw_inst_set_bits(dst, 31, 31, (uncompacted >> 16) & 0x1);
+      brw_inst_set_bits(dst, 23,  8, (uncompacted & 0xffff));
 
-   if (brw->gen >= 7)
-      brw_inst_set_bits(dst, 90, 89, uncompacted >> 17);
+      if (brw->gen == 7)
+         brw_inst_set_bits(dst, 90, 89, uncompacted >> 17);
+   }
 }
 
 static void
@@ -705,8 +721,14 @@ set_uncompacted_datatype(struct brw_context *brw, brw_inst *dst,
 {
    uint32_t uncompacted = datatype_table[brw_compact_inst_datatype_index(src)];
 
-   brw_inst_set_bits(dst, 63, 61, (uncompacted >> 15));
-   brw_inst_set_bits(dst, 46, 32, (uncompacted & 0x7fff));
+   if (brw->gen >= 8) {
+      brw_inst_set_bits(dst, 63, 61, (uncompacted >> 18));
+      brw_inst_set_bits(dst, 94, 89, (uncompacted >> 12) & 0x3f);
+      brw_inst_set_bits(dst, 46, 35, (uncompacted >>  0) & 0xfff);
+   } else {
+      brw_inst_set_bits(dst, 63, 61, (uncompacted >> 15));
+      brw_inst_set_bits(dst, 46, 32, (uncompacted & 0x7fff));
+   }
 }
 
 static void
