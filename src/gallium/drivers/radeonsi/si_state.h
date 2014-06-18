@@ -219,9 +219,6 @@ struct si_buffer_resources {
 	} while(0)
 
 /* si_descriptors.c */
-void si_set_sampler_view(struct si_context *sctx, unsigned shader,
-			 unsigned slot, struct pipe_sampler_view *view,
-			 unsigned *view_desc);
 void si_set_sampler_descriptors(struct si_context *sctx, unsigned shader,
 				unsigned start, unsigned count, void **states);
 void si_set_ring_buffer(struct pipe_context *ctx, uint shader, uint slot,

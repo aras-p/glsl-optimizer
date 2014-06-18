@@ -2673,71 +2673,6 @@ static void *si_create_sampler_state(struct pipe_context *ctx,
 	return rstate;
 }
 
-/* XXX consider moving this function to si_descriptors.c for gcc to inline
- *     the si_set_sampler_view calls. LTO might help too. */
-static void si_set_sampler_views(struct pipe_context *ctx,
-				 unsigned shader, unsigned start,
-                                 unsigned count,
-				 struct pipe_sampler_view **views)
-{
-	struct si_context *sctx = (struct si_context *)ctx;
-	struct si_textures_info *samplers = &sctx->samplers[shader];
-	struct si_pipe_sampler_view **rviews = (struct si_pipe_sampler_view **)views;
-	int i;
-
-	if (shader >= SI_NUM_SHADERS)
-		return;
-
-	assert(start == 0);
-
-	for (i = 0; i < count; i++) {
-		if (!views[i]) {
-			samplers->depth_texture_mask &= ~(1 << i);
-			samplers->compressed_colortex_mask &= ~(1 << i);
-			si_set_sampler_view(sctx, shader, i, NULL, NULL);
-			si_set_sampler_view(sctx, shader, SI_FMASK_TEX_OFFSET + i,
-					    NULL, NULL);
-			continue;
-		}
-
-		si_set_sampler_view(sctx, shader, i, views[i], rviews[i]->state);
-
-		if (views[i]->texture->target != PIPE_BUFFER) {
-			struct r600_texture *rtex =
-				(struct r600_texture*)views[i]->texture;
-
-			if (rtex->is_depth && !rtex->is_flushing_texture) {
-				samplers->depth_texture_mask |= 1 << i;
-			} else {
-				samplers->depth_texture_mask &= ~(1 << i);
-			}
-			if (rtex->cmask.size || rtex->fmask.size) {
-				samplers->compressed_colortex_mask |= 1 << i;
-			} else {
-				samplers->compressed_colortex_mask &= ~(1 << i);
-			}
-
-			if (rtex->fmask.size) {
-				si_set_sampler_view(sctx, shader, SI_FMASK_TEX_OFFSET + i,
-						    views[i], rviews[i]->fmask_state);
-			} else {
-				si_set_sampler_view(sctx, shader, SI_FMASK_TEX_OFFSET + i,
-						    NULL, NULL);
-			}
-		}
-	}
-	for (; i < samplers->n_views; i++) {
-		samplers->depth_texture_mask &= ~(1 << i);
-		samplers->compressed_colortex_mask &= ~(1 << i);
-		si_set_sampler_view(sctx, shader, i, NULL, NULL);
-		si_set_sampler_view(sctx, shader, SI_FMASK_TEX_OFFSET + i,
-				    NULL, NULL);
-	}
-
-	samplers->n_views = count;
-	sctx->b.flags |= R600_CONTEXT_INV_TEX_CACHE;
-}
-
 /* Upload border colors and update the pointers in resource descriptors.
  * There can only be 4096 border colors per context.
  *
@@ -3001,7 +2936,6 @@ void si_init_state_functions(struct si_context *sctx)
 	sctx->b.b.delete_sampler_state = si_delete_sampler_state;
 
 	sctx->b.b.create_sampler_view = si_create_sampler_view;
-	sctx->b.b.set_sampler_views = si_set_sampler_views;
 	sctx->b.b.sampler_view_destroy = si_sampler_view_destroy;
 
 	sctx->b.b.set_sample_mask = si_set_sample_mask;

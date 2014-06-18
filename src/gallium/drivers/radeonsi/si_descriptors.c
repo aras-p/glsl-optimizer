@@ -333,9 +333,9 @@ static void si_sampler_views_begin_new_cs(struct si_context *sctx,
 	si_emit_shader_pointer(sctx, &views->desc);
 }
 
-void si_set_sampler_view(struct si_context *sctx, unsigned shader,
-			 unsigned slot, struct pipe_sampler_view *view,
-			 unsigned *view_desc)
+static void si_set_sampler_view(struct si_context *sctx, unsigned shader,
+				unsigned slot, struct pipe_sampler_view *view,
+				unsigned *view_desc)
 {
 	struct si_sampler_views *views = &sctx->samplers[shader].views;
 
@@ -360,7 +360,70 @@ void si_set_sampler_view(struct si_context *sctx, unsigned shader,
 	}
 
 	views->desc.dirty_mask |= 1 << slot;
-	si_update_descriptors(sctx, &views->desc);
+}
+
+static void si_set_sampler_views(struct pipe_context *ctx,
+				 unsigned shader, unsigned start,
+                                 unsigned count,
+				 struct pipe_sampler_view **views)
+{
+	struct si_context *sctx = (struct si_context *)ctx;
+	struct si_textures_info *samplers = &sctx->samplers[shader];
+	struct si_pipe_sampler_view **rviews = (struct si_pipe_sampler_view **)views;
+	int i;
+
+	if (shader >= SI_NUM_SHADERS)
+		return;
+
+	assert(start == 0);
+
+	for (i = 0; i < count; i++) {
+		if (!views[i]) {
+			samplers->depth_texture_mask &= ~(1 << i);
+			samplers->compressed_colortex_mask &= ~(1 << i);
+			si_set_sampler_view(sctx, shader, i, NULL, NULL);
+			si_set_sampler_view(sctx, shader, SI_FMASK_TEX_OFFSET + i,
+					    NULL, NULL);
+			continue;
+		}
+
+		si_set_sampler_view(sctx, shader, i, views[i], rviews[i]->state);
+
+		if (views[i]->texture->target != PIPE_BUFFER) {
+			struct r600_texture *rtex =
+				(struct r600_texture*)views[i]->texture;
+
+			if (rtex->is_depth && !rtex->is_flushing_texture) {
+				samplers->depth_texture_mask |= 1 << i;
+			} else {
+				samplers->depth_texture_mask &= ~(1 << i);
+			}
+			if (rtex->cmask.size || rtex->fmask.size) {
+				samplers->compressed_colortex_mask |= 1 << i;
+			} else {
+				samplers->compressed_colortex_mask &= ~(1 << i);
+			}
+
+			if (rtex->fmask.size) {
+				si_set_sampler_view(sctx, shader, SI_FMASK_TEX_OFFSET + i,
+						    views[i], rviews[i]->fmask_state);
+			} else {
+				si_set_sampler_view(sctx, shader, SI_FMASK_TEX_OFFSET + i,
+						    NULL, NULL);
+			}
+		}
+	}
+	for (; i < samplers->n_views; i++) {
+		samplers->depth_texture_mask &= ~(1 << i);
+		samplers->compressed_colortex_mask &= ~(1 << i);
+		si_set_sampler_view(sctx, shader, i, NULL, NULL);
+		si_set_sampler_view(sctx, shader, SI_FMASK_TEX_OFFSET + i,
+				    NULL, NULL);
+	}
+
+	samplers->n_views = count;
+	sctx->b.flags |= R600_CONTEXT_INV_TEX_CACHE;
+	si_update_descriptors(sctx, &samplers->views.desc);
 }
 
 /* SAMPLER STATES */
@@ -1044,6 +1107,7 @@ void si_init_all_descriptors(struct si_context *sctx)
 
 	/* Set pipe_context functions. */
 	sctx->b.b.set_constant_buffer = si_set_constant_buffer;
+	sctx->b.b.set_sampler_views = si_set_sampler_views;
 	sctx->b.b.set_stream_output_targets = si_set_streamout_targets;
 	sctx->b.clear_buffer = si_clear_buffer;
 	sctx->b.invalidate_buffer = si_invalidate_buffer;
