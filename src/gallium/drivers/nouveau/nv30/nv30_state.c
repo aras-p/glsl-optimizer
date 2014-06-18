@@ -23,6 +23,7 @@
  *
  */
 
+#include "util/u_format.h"
 #include "util/u_helpers.h"
 #include "util/u_inlines.h"
 
@@ -360,6 +361,22 @@ nv30_set_framebuffer_state(struct pipe_context *pipe,
 
     nv30->framebuffer = *fb;
     nv30->dirty |= NV30_NEW_FRAMEBUFFER;
+
+   /* Hardware can't handle different swizzled-ness or different blocksizes
+    * for zs and cbufs. If both are supplied and something doesn't match,
+    * blank out the zs for now so that at least *some* rendering can occur.
+    */
+    if (fb->nr_cbufs > 0 && fb->zsbuf) {
+       struct nv30_miptree *color_mt = nv30_miptree(fb->cbufs[0]->texture);
+       struct nv30_miptree *zeta_mt = nv30_miptree(fb->zsbuf->texture);
+
+       if (color_mt->swizzled != zeta_mt->swizzled ||
+           (util_format_get_blocksize(fb->zsbuf->format) > 2) !=
+           (util_format_get_blocksize(fb->cbufs[0]->format) > 2)) {
+          nv30->framebuffer.zsbuf = NULL;
+          debug_printf("Mismatched color and zeta formats, ignoring zeta.\n");
+       }
+    }
 }
 
 static void
