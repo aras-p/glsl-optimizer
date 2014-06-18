@@ -38,6 +38,8 @@ struct compute_memory_item
 	int64_t start_in_dw; ///Start pointer in dwords relative in the pool bo
 	int64_t size_in_dw; ///Size of the chunk in dwords
 
+	struct r600_resource *real_buffer;
+
 	struct compute_memory_pool* pool;
 
 	struct compute_memory_item* prev;

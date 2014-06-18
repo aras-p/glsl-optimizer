@@ -71,7 +71,6 @@ static void compute_memory_pool_init(struct compute_memory_pool * pool,
 	if (pool->shadow == NULL)
 		return;
 
-	pool->next_id = 1;
 	pool->size_in_dw = initial_size_in_dw;
 	pool->bo = (struct r600_resource*)r600_compute_buffer_alloc_vram(pool->screen,
 							pool->size_in_dw * 4);
@@ -314,6 +313,14 @@ int compute_memory_finalize_pending(struct compute_memory_pool* pool,
 	for (item = pending_list; item; item = next) {
 		next = item->next;
 
+		struct pipe_screen *screen = (struct pipe_screen *)pool->screen;
+		struct r600_context *rctx = (struct r600_context *)pipe;
+		struct pipe_resource *dst = (struct pipe_resource *)pool->bo;
+		struct pipe_resource *src = (struct pipe_resource *)item->real_buffer;
+		struct pipe_box box;
+
+		u_box_1d(0, item->size_in_dw * 4, &box);
+
 		/* Search for free space in the pool for this item. */
 		while ((start_in_dw=compute_memory_prealloc_chunk(pool,
 						item->size_in_dw)) == -1) {
@@ -365,6 +372,14 @@ int compute_memory_finalize_pending(struct compute_memory_pool* pool,
 			pool->item_list = item;
 		}
 
+		rctx->b.b.resource_copy_region(pipe,
+				dst, 0, item->start_in_dw * 4, 0 ,0,
+				src, 0, &box);
+
+		pool->screen->b.b.resource_destroy(
+			screen, src);
+		item->real_buffer = NULL;
+
 		allocated += item->size_in_dw;
 	}
 
@@ -375,6 +390,8 @@ int compute_memory_finalize_pending(struct compute_memory_pool* pool,
 void compute_memory_free(struct compute_memory_pool* pool, int64_t id)
 {
 	struct compute_memory_item *item, *next;
+	struct pipe_screen *screen = (struct pipe_screen *)pool->screen;
+	struct pipe_resource *res;
 
 	COMPUTE_DBG(pool->screen, "* compute_memory_free() id + %ld \n", id);
 
@@ -391,6 +408,12 @@ void compute_memory_free(struct compute_memory_pool* pool, int64_t id)
 
 			if (item->next) {
 				item->next->prev = item->prev;
+			}
+
+			if (item->real_buffer) {
+				res = (struct pipe_resource *)item->real_buffer;
+				pool->screen->b.b.resource_destroy(
+						screen, res);
 			}
 
 			free(item);
@@ -426,6 +449,8 @@ struct compute_memory_item* compute_memory_alloc(
 	new_item->start_in_dw = -1; /* mark pending */
 	new_item->id = pool->next_id++;
 	new_item->pool = pool;
+	new_item->real_buffer = (struct r600_resource*)r600_compute_buffer_alloc_vram(
+							pool->screen, size_in_dw * 4);
 
 	if (pool->item_list) {
 		for (last_item = pool->item_list; last_item->next;
