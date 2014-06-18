@@ -90,6 +90,9 @@ int compute_memory_promote_item(struct compute_memory_pool *pool,
 		struct compute_memory_item *item, struct pipe_context *pipe,
 		int64_t allocated);
 
+void compute_memory_demote_item(struct compute_memory_pool *pool,
+	struct compute_memory_item *item, struct pipe_context *pipe);
+
 void compute_memory_free(struct compute_memory_pool* pool, int64_t id);
 struct compute_memory_item* compute_memory_alloc(struct compute_memory_pool* pool, int64_t size_in_dw); ///Creates pending allocations
 

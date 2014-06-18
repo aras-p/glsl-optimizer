@@ -387,6 +387,57 @@ int compute_memory_promote_item(struct compute_memory_pool *pool,
 	return 0;
 }
 
+void compute_memory_demote_item(struct compute_memory_pool *pool,
+	struct compute_memory_item *item, struct pipe_context *pipe)
+{
+	struct r600_context *rctx = (struct r600_context *)pipe;
+	struct pipe_resource *src = (struct pipe_resource *)pool->bo;
+	struct pipe_resource *dst;
+	struct pipe_box box;
+
+	/* First, we remove the item from the item_list */
+	if (item->prev == NULL)
+		pool->item_list = item->next;
+	else
+		item->prev->next = item->next;
+
+	if (item->next != NULL)
+		item->next->prev = item->prev;
+
+
+	/* Now we add it to the beginning of the unallocated list
+	 * NOTE: we could also add it to the end, but this is easier */
+	item->next = NULL;
+	item->prev = NULL;
+	if (pool->unallocated_list) {
+		item->next = pool->unallocated_list;
+		item->next->prev = item;
+		pool->unallocated_list = item;
+	}
+	else
+		pool->unallocated_list = item;
+
+	/* We check if the intermediate buffer exists, and if it
+	 * doesn't, we create it again */
+	if (item->real_buffer == NULL) {
+		item->real_buffer = (struct r600_resource*)r600_compute_buffer_alloc_vram(
+				pool->screen, item->size_in_dw * 4);
+	}
+
+	dst = (struct pipe_resource *)item->real_buffer;
+
+	/* We transfer the memory from the item in the pool to the
+	 * temporary buffer */
+	u_box_1d(item->start_in_dw * 4, item->size_in_dw * 4, &box);
+
+	rctx->b.b.resource_copy_region(pipe,
+		dst, 0, 0, 0, 0,
+		src, 0, &box);
+
+	/* Remember to mark the buffer as 'pending' by setting start_in_dw to -1 */
+	item->start_in_dw = -1;
+}
+
 void compute_memory_free(struct compute_memory_pool* pool, int64_t id)
 {
 	struct compute_memory_item *item, *next;
