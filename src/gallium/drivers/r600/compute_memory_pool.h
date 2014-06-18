@@ -27,13 +27,18 @@
 
 #include <stdlib.h>
 
+#define ITEM_MAPPED_FOR_READING (1<<0)
+#define ITEM_MAPPED_FOR_WRITING (1<<1)
+#define ITEM_FOR_PROMOTING      (1<<2)
+#define ITEM_FOR_DEMOTING       (1<<3)
+
 struct compute_memory_pool;
 
 struct compute_memory_item
 {
 	int64_t id; ///ID of the memory chunk
 
-	int untouched; ///True if the memory contains only junk, no need to save it for defrag
+	uint32_t status; ///Will track the status of the item
 
 	int64_t start_in_dw; ///Start pointer in dwords relative in the pool bo
 	int64_t size_in_dw; ///Size of the chunk in dwords

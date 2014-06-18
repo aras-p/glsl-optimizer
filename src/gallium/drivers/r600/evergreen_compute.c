@@ -659,6 +659,15 @@ static void evergreen_set_global_binding(
 		return;
 	}
 
+	/* We mark these items for promotion to the pool if they
+	 * aren't already there */
+	for (int i = 0; i < n; i++) {
+		struct compute_memory_item *item = buffers[i]->chunk;
+
+		if (!is_item_in_pool(item))
+			buffers[i]->chunk->status |= ITEM_FOR_PROMOTING;
+	}
+
 	compute_memory_finalize_pending(pool, ctx_);
 
 	for (int i = 0; i < n; i++)
@@ -968,6 +977,9 @@ void *r600_compute_global_transfer_map(
 		dst = (struct pipe_resource*)buffer->chunk->pool->bo;
 		offset += (buffer->chunk->start_in_dw * 4);
 	}
+
+	if (usage & PIPE_TRANSFER_READ)
+		buffer->chunk->status |= ITEM_MAPPED_FOR_READING;
 
 	COMPUTE_DBG(rctx->screen, "* r600_compute_global_transfer_map()\n"
 			"level = %u, usage = %u, box(x = %u, y = %u, z = %u "
