@@ -4238,7 +4238,7 @@ struct st_translate {
 };
 
 /** Map Mesa's SYSTEM_VALUE_x to TGSI_SEMANTIC_x */
-static const unsigned mesa_sysval_to_semantic[SYSTEM_VALUE_MAX] = {
+const unsigned _mesa_sysval_to_semantic[SYSTEM_VALUE_MAX] = {
    TGSI_SEMANTIC_FACE,
    TGSI_SEMANTIC_VERTEXID,
    TGSI_SEMANTIC_INSTANCEID,
@@ -5039,7 +5039,7 @@ st_translate_program(
       unsigned numSys = 0;
       for (i = 0; sysInputs; i++) {
          if (sysInputs & (1 << i)) {
-            unsigned semName = mesa_sysval_to_semantic[i];
+            unsigned semName = _mesa_sysval_to_semantic[i];
             t->systemValues[i] = ureg_DECL_system_value(ureg, numSys, semName, 0);
             if (semName == TGSI_SEMANTIC_INSTANCEID ||
                 semName == TGSI_SEMANTIC_VERTEXID) {

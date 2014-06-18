@@ -44,6 +44,7 @@
 #include "util/u_debug.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "st_glsl_to_tgsi.h" /* for _mesa_sysval_to_semantic */
 
 
 #define PROGRAM_ANY_CONST ((1 << PROGRAM_STATE_VAR) |    \
@@ -93,14 +94,6 @@ struct st_translate {
    unsigned procType;  /**< TGSI_PROCESSOR_VERTEX/FRAGMENT */
 
    boolean error;
-};
-
-
-/** Map Mesa's SYSTEM_VALUE_x to TGSI_SEMANTIC_x */
-static unsigned mesa_sysval_to_semantic[SYSTEM_VALUE_MAX] = {
-   TGSI_SEMANTIC_FACE,
-   TGSI_SEMANTIC_VERTEXID,
-   TGSI_SEMANTIC_INSTANCEID
 };
 
 
@@ -1147,7 +1140,7 @@ st_translate_mesa_program(
       unsigned numSys = 0;
       for (i = 0; sysInputs; i++) {
          if (sysInputs & (1 << i)) {
-            unsigned semName = mesa_sysval_to_semantic[i];
+            unsigned semName = _mesa_sysval_to_semantic[i];
             t->systemValues[i] = ureg_DECL_system_value(ureg, numSys, semName, 0);
             if (semName == TGSI_SEMANTIC_INSTANCEID ||
                 semName == TGSI_SEMANTIC_VERTEXID) {
