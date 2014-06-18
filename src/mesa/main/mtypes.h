@@ -2055,7 +2055,64 @@ typedef enum
     * \name Vertex shader system values
     */
    /*@{*/
+   /**
+    * OpenGL-style vertex ID.
+    *
+    * Section 2.11.7 (Shader Execution), subsection Shader Inputs, of the
+    * OpenGL 3.3 core profile spec says:
+    *
+    *     "gl_VertexID holds the integer index i implicitly passed by
+    *     DrawArrays or one of the other drawing commands defined in section
+    *     2.8.3."
+    *
+    * Section 2.8.3 (Drawing Commands) of the same spec says:
+    *
+    *     "The commands....are equivalent to the commands with the same base
+    *     name (without the BaseVertex suffix), except that the ith element
+    *     transferred by the corresponding draw call will be taken from
+    *     element indices[i] + basevertex of each enabled array."
+    *
+    * Additionally, the overview in the GL_ARB_shader_draw_parameters spec
+    * says:
+    *
+    *     "In unextended GL, vertex shaders have inputs named gl_VertexID and
+    *     gl_InstanceID, which contain, respectively the index of the vertex
+    *     and instance. The value of gl_VertexID is the implicitly passed
+    *     index of the vertex being processed, which includes the value of
+    *     baseVertex, for those commands that accept it."
+    *
+    * gl_VertexID gets basevertex added in.  This differs from DirectX where
+    * SV_VertexID does \b not get basevertex added in.
+    */
    SYSTEM_VALUE_VERTEX_ID,
+
+   /**
+    * Instanced ID as supplied to gl_InstanceID
+    *
+    * Values assigned to gl_InstanceID always begin with zero, regardless of
+    * the value of baseinstance.
+    *
+    * Section 11.1.3.9 (Shader Inputs) of the OpenGL 4.4 core profile spec
+    * says:
+    *
+    *     "gl_InstanceID holds the integer instance number of the current
+    *     primitive in an instanced draw call (see section 10.5)."
+    *
+    * Through a big chain of pseudocode, section 10.5 describes that
+    * baseinstance is not counted by gl_InstanceID.  In that section, notice
+    *
+    *     "If an enabled vertex attribute array is instanced (it has a
+    *     non-zero divisor as specified by VertexAttribDivisor), the element
+    *     index that is transferred to the GL, for all vertices, is given by
+    *
+    *         floor(instance/divisor) + baseinstance
+    *
+    *     If an array corresponding to an attribute required by a vertex
+    *     shader is not enabled, then the corresponding element is taken from
+    *     the current attribute state (see section 10.2)."
+    *
+    * Note that baseinstance is \b not included in the value of instance.
+    */
    SYSTEM_VALUE_INSTANCE_ID,
    /*@}*/
 
