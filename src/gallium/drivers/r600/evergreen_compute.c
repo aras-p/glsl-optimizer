@@ -970,13 +970,11 @@ void *r600_compute_global_transfer_map(
 	struct pipe_resource *dst;
 	unsigned offset = box->x;
 
-	if (buffer->chunk->real_buffer) {
-		dst = (struct pipe_resource*)buffer->chunk->real_buffer;
+	if (is_item_in_pool(buffer->chunk)) {
+		compute_memory_demote_item(pool, buffer->chunk, ctx_);
 	}
-	else {
-		dst = (struct pipe_resource*)buffer->chunk->pool->bo;
-		offset += (buffer->chunk->start_in_dw * 4);
-	}
+
+	dst = (struct pipe_resource*)buffer->chunk->real_buffer;
 
 	if (usage & PIPE_TRANSFER_READ)
 		buffer->chunk->status |= ITEM_MAPPED_FOR_READING;
