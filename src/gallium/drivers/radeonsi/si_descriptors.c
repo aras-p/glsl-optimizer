@@ -363,6 +363,52 @@ void si_set_sampler_view(struct si_context *sctx, unsigned shader,
 	si_update_descriptors(sctx, &views->desc);
 }
 
+/* SAMPLER STATES */
+
+static void si_emit_sampler_states(struct si_context *sctx, struct r600_atom *atom)
+{
+	struct si_sampler_states *states = (struct si_sampler_states*)atom;
+
+	si_emit_descriptors(sctx, &states->desc, states->desc_data);
+}
+
+static void si_sampler_states_begin_new_cs(struct si_context *sctx,
+					   struct si_sampler_states *states)
+{
+	r600_context_bo_reloc(&sctx->b, &sctx->b.rings.gfx, states->desc.buffer,
+			      RADEON_USAGE_READWRITE, RADEON_PRIO_SHADER_DATA);
+	si_emit_shader_pointer(sctx, &states->desc);
+}
+
+void si_set_sampler_descriptors(struct si_context *sctx, unsigned shader,
+				unsigned start, unsigned count, void **states)
+{
+	struct si_sampler_states *samplers = &sctx->samplers[shader].states;
+	struct si_pipe_sampler_state **sstates = (struct si_pipe_sampler_state**)states;
+	int i;
+
+	if (start == 0)
+		samplers->saved_states[0] = states[0];
+	if (start == 1)
+		samplers->saved_states[1] = states[0];
+	else if (start == 0 && count >= 2)
+		samplers->saved_states[1] = states[1];
+
+	for (i = 0; i < count; i++) {
+		unsigned slot = start + i;
+
+		if (!sstates[i]) {
+			samplers->desc.dirty_mask &= ~(1 << slot);
+			continue;
+		}
+
+		samplers->desc_data[slot] = sstates[i]->val;
+		samplers->desc.dirty_mask |= 1 << slot;
+	}
+
+	si_update_descriptors(sctx, &samplers->desc);
+}
+
 /* BUFFER RESOURCES */
 
 static void si_emit_buffer_resources(struct si_context *sctx, struct r600_atom *atom)
@@ -985,9 +1031,14 @@ void si_init_all_descriptors(struct si_context *sctx)
 
 		si_init_sampler_views(sctx, &sctx->samplers[i].views, i);
 
+		si_init_descriptors(sctx, &sctx->samplers[i].states.desc,
+				    si_get_shader_user_data_base(i) + SI_SGPR_SAMPLER * 4,
+				    4, SI_NUM_SAMPLER_STATES, si_emit_sampler_states);
+
 		sctx->atoms.s.const_buffers[i] = &sctx->const_buffers[i].desc.atom;
 		sctx->atoms.s.rw_buffers[i] = &sctx->rw_buffers[i].desc.atom;
 		sctx->atoms.s.sampler_views[i] = &sctx->samplers[i].views.desc.atom;
+		sctx->atoms.s.sampler_states[i] = &sctx->samplers[i].states.desc.atom;
 	}
 
 
@@ -1006,6 +1057,7 @@ void si_release_all_descriptors(struct si_context *sctx)
 		si_release_buffer_resources(&sctx->const_buffers[i]);
 		si_release_buffer_resources(&sctx->rw_buffers[i]);
 		si_release_sampler_views(&sctx->samplers[i].views);
+		si_release_descriptors(&sctx->samplers[i].states.desc);
 	}
 }
 
@@ -1017,5 +1069,6 @@ void si_all_descriptors_begin_new_cs(struct si_context *sctx)
 		si_buffer_resources_begin_new_cs(sctx, &sctx->const_buffers[i]);
 		si_buffer_resources_begin_new_cs(sctx, &sctx->rw_buffers[i]);
 		si_sampler_views_begin_new_cs(sctx, &sctx->samplers[i].views);
+		si_sampler_states_begin_new_cs(sctx, &sctx->samplers[i].states);
 	}
 }

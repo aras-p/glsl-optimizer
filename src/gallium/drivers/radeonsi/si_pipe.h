@@ -63,11 +63,10 @@ struct si_cs_shader_state {
 
 struct si_textures_info {
 	struct si_sampler_views		views;
-	struct si_pipe_sampler_state	*samplers[SI_NUM_USER_SAMPLERS];
+	struct si_sampler_states	states;
 	unsigned			n_views;
 	uint32_t			depth_texture_mask; /* which textures are depth */
 	uint32_t			compressed_colortex_mask;
-	unsigned			n_samplers;
 };
 
 struct si_framebuffer {
@@ -102,6 +101,7 @@ struct si_context {
 			struct r600_atom *const_buffers[SI_NUM_SHADERS];
 			struct r600_atom *rw_buffers[SI_NUM_SHADERS];
 			struct r600_atom *sampler_views[SI_NUM_SHADERS];
+			struct r600_atom *sampler_states[SI_NUM_SHADERS];
 			/* Caches must be flushed after resource descriptors are
 			 * updated in memory. */
 			struct r600_atom *cache_flush;

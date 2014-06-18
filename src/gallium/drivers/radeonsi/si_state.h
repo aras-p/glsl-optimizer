@@ -89,15 +89,13 @@ union si_state {
 		struct si_pm4_state		*fb_rs;
 		struct si_pm4_state		*fb_blend;
 		struct si_pm4_state		*dsa_stencil_ref;
+		struct si_pm4_state		*ta_bordercolor_base;
 		struct si_pm4_state		*es;
 		struct si_pm4_state		*gs;
 		struct si_pm4_state		*gs_rings;
-		struct si_pm4_state		*gs_sampler;
 		struct si_pm4_state		*gs_onoff;
 		struct si_pm4_state		*vs;
-		struct si_pm4_state		*vs_sampler;
 		struct si_pm4_state		*ps;
-		struct si_pm4_state		*ps_sampler;
 		struct si_pm4_state		*spi;
 		struct si_pm4_state		*vertex_buffers;
 		struct si_pm4_state		*draw_info;
@@ -174,6 +172,12 @@ struct si_sampler_views {
 	uint32_t			*desc_data[SI_NUM_SAMPLER_VIEWS];
 };
 
+struct si_sampler_states {
+	struct si_descriptors		desc;
+	uint32_t			*desc_data[SI_NUM_SAMPLER_STATES];
+	void				*saved_states[2]; /* saved for u_blitter */
+};
+
 struct si_buffer_resources {
 	struct si_descriptors		desc;
 	unsigned			num_buffers;
@@ -218,6 +222,8 @@ struct si_buffer_resources {
 void si_set_sampler_view(struct si_context *sctx, unsigned shader,
 			 unsigned slot, struct pipe_sampler_view *view,
 			 unsigned *view_desc);
+void si_set_sampler_descriptors(struct si_context *sctx, unsigned shader,
+				unsigned start, unsigned count, void **states);
 void si_set_ring_buffer(struct pipe_context *ctx, uint shader, uint slot,
 			struct pipe_constant_buffer *input,
 			unsigned stride, unsigned num_records,

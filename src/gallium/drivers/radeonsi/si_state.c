@@ -2738,22 +2738,18 @@ static void si_set_sampler_views(struct pipe_context *ctx,
 	sctx->b.flags |= R600_CONTEXT_INV_TEX_CACHE;
 }
 
-static void si_set_sampler_states(struct si_context *sctx,
-				  struct si_pm4_state *pm4,
-				  unsigned count, void **states,
-				  struct si_textures_info *samplers,
-				  unsigned user_data_reg)
+/* Upload border colors and update the pointers in resource descriptors.
+ * There can only be 4096 border colors per context.
+ *
+ * XXX: This is broken if the buffer gets reallocated.
+ */
+static void si_set_border_colors(struct si_context *sctx, unsigned count,
+				 void **states)
 {
 	struct si_pipe_sampler_state **rstates = (struct si_pipe_sampler_state **)states;
 	uint32_t *border_color_table = NULL;
 	int i, j;
 
-	if (!count)
-		goto out;
-
-	sctx->b.flags |= R600_CONTEXT_INV_TEX_CACHE;
-
-	si_pm4_sh_data_begin(pm4);
 	for (i = 0; i < count; i++) {
 		if (rstates[i] &&
 		    G_008F3C_BORDER_COLOR_TYPE(rstates[i]->val[3]) ==
@@ -2786,14 +2782,11 @@ static void si_set_sampler_states(struct si_context *sctx,
 			rstates[i]->val[3] &= C_008F3C_BORDER_COLOR_PTR;
 			rstates[i]->val[3] |= S_008F3C_BORDER_COLOR_PTR(sctx->border_color_offset++);
 		}
-
-		for (j = 0; j < Elements(rstates[i]->val); ++j) {
-			si_pm4_sh_data_add(pm4, rstates[i] ? rstates[i]->val[j] : 0);
-		}
 	}
-	si_pm4_sh_data_end(pm4, user_data_reg, SI_SGPR_SAMPLER);
 
 	if (border_color_table) {
+		struct si_pm4_state *pm4 = si_pm4_alloc_state(sctx);
+
 		uint64_t va_offset =
 			r600_resource_va(&sctx->screen->b.b,
 					 (void*)sctx->border_color_table);
@@ -2801,76 +2794,24 @@ static void si_set_sampler_states(struct si_context *sctx,
 		si_pm4_set_reg(pm4, R_028080_TA_BC_BASE_ADDR, va_offset >> 8);
 		if (sctx->b.chip_class >= CIK)
 			si_pm4_set_reg(pm4, R_028084_TA_BC_BASE_ADDR_HI, va_offset >> 40);
-		sctx->b.ws->buffer_unmap(sctx->border_color_table->cs_buf);
 		si_pm4_add_bo(pm4, sctx->border_color_table, RADEON_USAGE_READ,
 			      RADEON_PRIO_SHADER_DATA);
+		si_pm4_set_state(sctx, ta_bordercolor_base, pm4);
 	}
-
-	memcpy(samplers->samplers, states, sizeof(void*) * count);
-
-out:
-	samplers->n_samplers = count;
 }
-
-static void si_bind_vs_sampler_states(struct pipe_context *ctx, unsigned count, void **states)
-{
-	struct si_context *sctx = (struct si_context *)ctx;
-	struct si_pm4_state *pm4 = si_pm4_alloc_state(sctx);
-
-	si_set_sampler_states(sctx, pm4, count, states,
-			      &sctx->samplers[PIPE_SHADER_VERTEX],
-			      R_00B130_SPI_SHADER_USER_DATA_VS_0);
-	si_set_sampler_states(sctx, pm4, count, states,
-			      &sctx->samplers[PIPE_SHADER_VERTEX],
-			      R_00B330_SPI_SHADER_USER_DATA_ES_0);
-	si_pm4_set_state(sctx, vs_sampler, pm4);
-}
-
-static void si_bind_gs_sampler_states(struct pipe_context *ctx, unsigned count, void **states)
-{
-	struct si_context *sctx = (struct si_context *)ctx;
-	struct si_pm4_state *pm4 = si_pm4_alloc_state(sctx);
-
-	si_set_sampler_states(sctx, pm4, count, states,
-			      &sctx->samplers[PIPE_SHADER_GEOMETRY],
-			      R_00B230_SPI_SHADER_USER_DATA_GS_0);
-	si_pm4_set_state(sctx, gs_sampler, pm4);
-}
-
-static void si_bind_ps_sampler_states(struct pipe_context *ctx, unsigned count, void **states)
-{
-	struct si_context *sctx = (struct si_context *)ctx;
-	struct si_pm4_state *pm4 = si_pm4_alloc_state(sctx);
-
-	si_set_sampler_states(sctx, pm4, count, states,
-			      &sctx->samplers[PIPE_SHADER_FRAGMENT],
-			      R_00B030_SPI_SHADER_USER_DATA_PS_0);
-	si_pm4_set_state(sctx, ps_sampler, pm4);
-}
-
 
 static void si_bind_sampler_states(struct pipe_context *ctx, unsigned shader,
                                    unsigned start, unsigned count,
                                    void **states)
 {
-   assert(start == 0);
+	struct si_context *sctx = (struct si_context *)ctx;
 
-   switch (shader) {
-   case PIPE_SHADER_VERTEX:
-      si_bind_vs_sampler_states(ctx, count, states);
-      break;
-   case PIPE_SHADER_GEOMETRY:
-      si_bind_gs_sampler_states(ctx, count, states);
-      break;
-   case PIPE_SHADER_FRAGMENT:
-      si_bind_ps_sampler_states(ctx, count, states);
-      break;
-   default:
-      ;
-   }
+	if (!count || shader >= SI_NUM_SHADERS)
+		return;
+
+	si_set_border_colors(sctx, count, states);
+	si_set_sampler_descriptors(sctx, shader, start, count, states);
 }
-
-
 
 static void si_set_sample_mask(struct pipe_context *ctx, unsigned sample_mask)
 {
