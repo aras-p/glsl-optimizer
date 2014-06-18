@@ -64,7 +64,6 @@ struct si_cs_shader_state {
 struct si_textures_info {
 	struct si_sampler_views		views;
 	struct si_sampler_states	states;
-	unsigned			n_views;
 	uint32_t			depth_texture_mask; /* which textures are depth */
 	uint32_t			compressed_colortex_mask;
 };
