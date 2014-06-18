@@ -57,6 +57,12 @@ struct compute_memory_pool* compute_memory_pool_new(
 	COMPUTE_DBG(rscreen, "* compute_memory_pool_new()\n");
 
 	pool->screen = rscreen;
+	pool->item_list = (struct list_head *)
+				CALLOC(sizeof(struct list_head), 1);
+	pool->unallocated_list = (struct list_head *)
+				CALLOC(sizeof(struct list_head), 1);
+	list_inithead(pool->item_list);
+	list_inithead(pool->unallocated_list);
 	return pool;
 }
 
@@ -107,7 +113,7 @@ int64_t compute_memory_prealloc_chunk(
 	COMPUTE_DBG(pool->screen, "* compute_memory_prealloc_chunk() size_in_dw = %ld\n",
 		size_in_dw);
 
-	for (item = pool->item_list; item; item = item->next) {
+	LIST_FOR_EACH_ENTRY(item, pool->item_list, link) {
 		if (last_end + size_in_dw <= item->start_in_dw) {
 			return last_end;
 		}
@@ -125,31 +131,37 @@ int64_t compute_memory_prealloc_chunk(
 /**
  *  Search for the chunk where we can link our new chunk after it.
  */
-struct compute_memory_item* compute_memory_postalloc_chunk(
+struct list_head *compute_memory_postalloc_chunk(
 	struct compute_memory_pool* pool,
 	int64_t start_in_dw)
 {
-	struct compute_memory_item* item;
+	struct compute_memory_item *item;
+	struct compute_memory_item *next;
+	struct list_head *next_link;
 
 	COMPUTE_DBG(pool->screen, "* compute_memory_postalloc_chunck() start_in_dw = %ld\n",
 		start_in_dw);
 
 	/* Check if we can insert it in the front of the list */
-	if (pool->item_list && pool->item_list->start_in_dw > start_in_dw) {
-		return NULL;
+	item = LIST_ENTRY(struct compute_memory_item, pool->item_list->next, link);
+	if (LIST_IS_EMPTY(pool->item_list) || item->start_in_dw > start_in_dw) {
+		return pool->item_list;
 	}
 
-	for (item = pool->item_list; item; item = item->next) {
-		if (item->next) {
+	LIST_FOR_EACH_ENTRY(item, pool->item_list, link) {
+		next_link = item->link.next;
+
+		if (next_link != pool->item_list) {
+			next = container_of(next_link, item, link);
 			if (item->start_in_dw < start_in_dw
-				&& item->next->start_in_dw > start_in_dw) {
-				return item;
+				&& next->start_in_dw > start_in_dw) {
+				return &item->link;
 			}
 		}
 		else {
 			/* end of chain */
 			assert(item->start_in_dw < start_in_dw);
-			return item;
+			return &item->link;
 		}
 	}
 
@@ -212,7 +224,6 @@ void compute_memory_shadow(struct compute_memory_pool* pool,
 	chunk.id = 0;
 	chunk.start_in_dw = 0;
 	chunk.size_in_dw = pool->size_in_dw;
-	chunk.prev = chunk.next = NULL;
 	compute_memory_transfer(pool, pipe, device_to_host, &chunk,
 				pool->shadow, 0, pool->size_in_dw*4);
 }
@@ -233,22 +244,20 @@ int compute_memory_finalize_pending(struct compute_memory_pool* pool,
 
 	COMPUTE_DBG(pool->screen, "* compute_memory_finalize_pending()\n");
 
-	for (item = pool->item_list; item; item = item->next) {
+	LIST_FOR_EACH_ENTRY(item, pool->item_list, link) {
 		COMPUTE_DBG(pool->screen, "  + list: offset = %i id = %i size = %i "
 			"(%i bytes)\n",item->start_in_dw, item->id,
 			item->size_in_dw, item->size_in_dw * 4);
 	}
 
 	/* Calculate the total allocated size */
-	for (item = pool->item_list; item; item = next) {
-		next = item->next;
+	LIST_FOR_EACH_ENTRY(item, pool->item_list, link) {
 		allocated += align(item->size_in_dw, ITEM_ALIGNMENT);
 	}
 
 	/* Calculate the total unallocated size of the items that
 	 * will be promoted to the pool */
-	for (item = pool->unallocated_list; item; item = next) {
-		next = item->next;
+	LIST_FOR_EACH_ENTRY(item, pool->unallocated_list, link) {
 		if (item->status & ITEM_FOR_PROMOTING)
 			unallocated += align(item->size_in_dw, ITEM_ALIGNMENT);
 	}
@@ -278,9 +287,7 @@ int compute_memory_finalize_pending(struct compute_memory_pool* pool,
 
 	/* Loop through all the unallocated items, check if they are marked
 	 * for promoting, allocate space for them and add them to the item_list. */
-	for (item = pool->unallocated_list; item; item = next) {
-		next = item->next;
-
+	LIST_FOR_EACH_ENTRY_SAFE(item, next, pool->unallocated_list, link) {
 		if (item->status & ITEM_FOR_PROMOTING) {
 			err = compute_memory_promote_item(pool, item, pipe, allocated);
 			item->status ^= ITEM_FOR_PROMOTING;
@@ -305,6 +312,7 @@ int compute_memory_promote_item(struct compute_memory_pool *pool,
 	struct pipe_resource *src = (struct pipe_resource *)item->real_buffer;
 	struct pipe_box box;
 
+	struct list_head *pos;
 	int64_t start_in_dw;
 	int err = 0;
 
@@ -334,40 +342,12 @@ int compute_memory_promote_item(struct compute_memory_pool *pool,
 			item->size_in_dw, item->size_in_dw * 4);
 
 	/* Remove the item from the unallocated list */
-	if (item->prev == NULL)
-		pool->unallocated_list = item->next;
-	else
-		item->prev->next = item->next;
+	list_del(&item->link);
 
-	if (item->next != NULL)
-		item->next->prev = item->prev;
-
+	/* Add it back to the item_list */
+	pos = compute_memory_postalloc_chunk(pool, start_in_dw);
+	list_add(&item->link, pos);
 	item->start_in_dw = start_in_dw;
-	item->next = NULL;
-	item->prev = NULL;
-
-	if (pool->item_list) {
-		struct compute_memory_item *pos;
-
-		pos = compute_memory_postalloc_chunk(pool, start_in_dw);
-		if (pos) {
-			item->prev = pos;
-			item->next = pos->next;
-			pos->next = item;
-			if (item->next) {
-				item->next->prev = item;
-			}
-		} else {
-			/* Add item to the front of the list */
-			item->next = pool->item_list;
-			item->prev = pool->item_list->prev;
-			pool->item_list->prev = item;
-			pool->item_list = item;
-		}
-	}
-	else {
-		pool->item_list = item;
-	}
 
 	u_box_1d(0, item->size_in_dw * 4, &box);
 
@@ -396,26 +376,10 @@ void compute_memory_demote_item(struct compute_memory_pool *pool,
 	struct pipe_box box;
 
 	/* First, we remove the item from the item_list */
-	if (item->prev == NULL)
-		pool->item_list = item->next;
-	else
-		item->prev->next = item->next;
+	list_del(&item->link);
 
-	if (item->next != NULL)
-		item->next->prev = item->prev;
-
-
-	/* Now we add it to the beginning of the unallocated list
-	 * NOTE: we could also add it to the end, but this is easier */
-	item->next = NULL;
-	item->prev = NULL;
-	if (pool->unallocated_list) {
-		item->next = pool->unallocated_list;
-		item->next->prev = item;
-		pool->unallocated_list = item;
-	}
-	else
-		pool->unallocated_list = item;
+	/* Now we add it to the unallocated list */
+	list_addtail(&item->link, pool->unallocated_list);
 
 	/* We check if the intermediate buffer exists, and if it
 	 * doesn't, we create it again */
@@ -446,20 +410,10 @@ void compute_memory_free(struct compute_memory_pool* pool, int64_t id)
 
 	COMPUTE_DBG(pool->screen, "* compute_memory_free() id + %ld \n", id);
 
-	for (item = pool->item_list; item; item = next) {
-		next = item->next;
+	LIST_FOR_EACH_ENTRY_SAFE(item, next, pool->item_list, link) {
 
 		if (item->id == id) {
-			if (item->prev) {
-				item->prev->next = item->next;
-			}
-			else {
-				pool->item_list = item->next;
-			}
-
-			if (item->next) {
-				item->next->prev = item->prev;
-			}
+			list_del(&item->link);
 
 			if (item->real_buffer) {
 				res = (struct pipe_resource *)item->real_buffer;
@@ -473,20 +427,10 @@ void compute_memory_free(struct compute_memory_pool* pool, int64_t id)
 		}
 	}
 
-	for (item = pool->unallocated_list; item; item = next) {
-		next = item->next;
+	LIST_FOR_EACH_ENTRY_SAFE(item, next, pool->unallocated_list, link) {
 
 		if (item->id == id) {
-			if (item->prev) {
-				item->prev->next = item->next;
-			}
-			else {
-				pool->unallocated_list = item->next;
-			}
-
-			if (item->next) {
-				item->next->prev = item->prev;
-			}
+			list_del(&item->link);
 
 			if (item->real_buffer) {
 				res = (struct pipe_resource *)item->real_buffer;
@@ -513,7 +457,7 @@ struct compute_memory_item* compute_memory_alloc(
 	struct compute_memory_pool* pool,
 	int64_t size_in_dw)
 {
-	struct compute_memory_item *new_item = NULL, *last_item = NULL;
+	struct compute_memory_item *new_item = NULL;
 
 	COMPUTE_DBG(pool->screen, "* compute_memory_alloc() size_in_dw = %ld (%ld bytes)\n",
 			size_in_dw, 4 * size_in_dw);
@@ -530,16 +474,7 @@ struct compute_memory_item* compute_memory_alloc(
 	new_item->real_buffer = (struct r600_resource*)r600_compute_buffer_alloc_vram(
 							pool->screen, size_in_dw * 4);
 
-	if (pool->unallocated_list) {
-		for (last_item = pool->unallocated_list; last_item->next;
-						last_item = last_item->next);
-
-		last_item->next = new_item;
-		new_item->prev = last_item;
-	}
-	else {
-		pool->unallocated_list = new_item;
-	}
+	list_addtail(&new_item->link, pool->unallocated_list);
 
 	COMPUTE_DBG(pool->screen, "  + Adding item %p id = %u size = %u (%u bytes)\n",
 			new_item, new_item->id, new_item->size_in_dw,

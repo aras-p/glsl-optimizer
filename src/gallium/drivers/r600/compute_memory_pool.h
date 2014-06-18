@@ -47,8 +47,7 @@ struct compute_memory_item
 
 	struct compute_memory_pool* pool;
 
-	struct compute_memory_item* prev;
-	struct compute_memory_item* next;
+	struct list_head link;
 };
 
 struct compute_memory_pool
@@ -57,11 +56,12 @@ struct compute_memory_pool
 	int64_t size_in_dw; ///Size of the pool in dwords
 
 	struct r600_resource *bo; ///The pool buffer object resource
-	struct compute_memory_item* item_list; ///Allocated memory chunks in the buffer,they must be ordered by "start_in_dw"
-	struct compute_memory_item* unallocated_list; ///Unallocated memory chunks
 	struct r600_screen *screen;
 
 	uint32_t *shadow; ///host copy of the pool, used for defragmentation
+
+	struct list_head *item_list; ///Allocated memory chunks in the buffer,they must be ordered by "start_in_dw"
+	struct list_head *unallocated_list; ///Unallocated memory chunks
 };
 
 
@@ -75,7 +75,7 @@ void compute_memory_pool_delete(struct compute_memory_pool* pool); ///Frees all 
 
 int64_t compute_memory_prealloc_chunk(struct compute_memory_pool* pool, int64_t size_in_dw); ///searches for an empty space in the pool, return with the pointer to the allocatable space in the pool, returns -1 on failure
 
-struct compute_memory_item* compute_memory_postalloc_chunk(struct compute_memory_pool* pool, int64_t start_in_dw); ///search for the chunk where we can link our new chunk after it
+struct list_head *compute_memory_postalloc_chunk(struct compute_memory_pool* pool, int64_t start_in_dw); ///search for the chunk where we can link our new chunk after it
 
 int compute_memory_grow_pool(struct compute_memory_pool* pool, struct pipe_context * pipe,
 	int new_size_in_dw);
