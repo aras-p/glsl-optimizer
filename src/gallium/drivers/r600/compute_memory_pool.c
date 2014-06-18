@@ -375,10 +375,14 @@ int compute_memory_promote_item(struct compute_memory_pool *pool,
 			dst, 0, item->start_in_dw * 4, 0 ,0,
 			src, 0, &box);
 
-	pool->screen->b.b.resource_destroy(
-			screen, src);
-
-	item->real_buffer = NULL;
+	/* We check if the item is mapped for reading.
+	 * In this case, we need to keep the temporary buffer 'alive'
+	 * because it is possible to keep a map active for reading
+	 * while a kernel (that reads from it) executes */
+	if (!(item->status & ITEM_MAPPED_FOR_READING)) {
+		pool->screen->b.b.resource_destroy(screen, src);
+		item->real_buffer = NULL;
+	}
 
 	return 0;
 }
