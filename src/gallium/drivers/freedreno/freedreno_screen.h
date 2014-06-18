@@ -44,7 +44,8 @@ struct fd_screen {
 
 	uint32_t gmemsize_bytes;
 	uint32_t device_id;
-	uint32_t gpu_id;
+	uint32_t gpu_id;         /* 220, 305, etc */
+	uint32_t chip_id;        /* coreid:8 majorrev:8 minorrev:8 patch:8 */
 
 	struct fd_device *dev;
 	struct fd_pipe *pipe;
@@ -67,5 +68,12 @@ struct fd_bo * fd_screen_bo_from_handle(struct pipe_screen *pscreen,
 		unsigned *out_stride);
 
 struct pipe_screen * fd_screen_create(struct fd_device *dev);
+
+/* is a3xx patch revision 0? */
+static inline boolean
+is_a3xx_p0(struct fd_screen *screen)
+{
+	return (screen->gpu_id & 0xff0000ff) == 0x0300000000;
+}
 
 #endif /* FREEDRENO_SCREEN_H_ */

@@ -681,12 +681,13 @@ fd3_emit_restore(struct fd_context *ctx)
 
 	fd_event_write(ctx, ring, CACHE_FLUSH);
 
-	/* probably only really needed on a320: */
-	OUT_PKT3(ring, CP_DRAW_INDX, 3);
-	OUT_RING(ring, 0x00000000);
-	OUT_RING(ring, DRAW(1, DI_SRC_SEL_AUTO_INDEX,
-			INDEX_SIZE_IGN, IGNORE_VISIBILITY));
-	OUT_RING(ring, 0);					/* NumIndices */
+	if (is_a3xx_p0(ctx->screen)) {
+		OUT_PKT3(ring, CP_DRAW_INDX, 3);
+		OUT_RING(ring, 0x00000000);
+		OUT_RING(ring, DRAW(1, DI_SRC_SEL_AUTO_INDEX,
+				INDEX_SIZE_IGN, IGNORE_VISIBILITY));
+		OUT_RING(ring, 0);					/* NumIndices */
+	}
 
 	OUT_PKT3(ring, CP_NOP, 4);
 	OUT_RING(ring, 0x00000000);

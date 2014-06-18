@@ -61,7 +61,7 @@ fd_draw(struct fd_context *ctx, struct fd_ringbuffer *ring,
 	 */
 	emit_marker(ring, 7);
 
-	if (ctx->screen->gpu_id == 320) {
+	if (is_a3xx_p0(ctx->screen)) {
 		/* dummy-draw workaround: */
 		OUT_PKT3(ring, CP_DRAW_INDX, 3);
 		OUT_RING(ring, 0x00000000);
