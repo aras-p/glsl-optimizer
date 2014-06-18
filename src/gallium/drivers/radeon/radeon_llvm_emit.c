@@ -87,11 +87,13 @@ static void radeonDiagnosticHandler(LLVMDiagnosticInfoRef di, void *context) {
 	char *diaginfo_message;
 
 	diaginfo_message = LLVMGetDiagInfoDescription(di);
-	fprintf(stderr,"LLVM triggered Diagnostic Handler: %s\n", diaginfo_message);
 	LLVMDisposeMessage(diaginfo_message);
 
 	diagnosticflag = (unsigned int *)context;
-	*diagnosticflag = ((LLVMDSError == LLVMGetDiagInfoSeverity(di)) ? 1 : 0);
+	if (LLVMGetDiagInfoSeverity(di) == LLVMDSError) {
+		*diagnosticflag = 1;
+		fprintf(stderr,"LLVM triggered Diagnostic Handler: %s\n", diaginfo_message);
+	}
 }
 
 #endif
