@@ -327,6 +327,12 @@ nv30_screen_destroy(struct pipe_screen *pscreen)
       nouveau_fence_ref(NULL, &screen->base.fence.current);
    }
 
+   nouveau_bo_ref(NULL, &screen->notify);
+
+   nouveau_heap_destroy(&screen->query_heap);
+   nouveau_heap_destroy(&screen->vp_exec_heap);
+   nouveau_heap_destroy(&screen->vp_data_heap);
+
    nouveau_object_del(&screen->query);
    nouveau_object_del(&screen->fence);
    nouveau_object_del(&screen->ntfy);

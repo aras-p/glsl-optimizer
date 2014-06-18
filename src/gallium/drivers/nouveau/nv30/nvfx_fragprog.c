@@ -1225,6 +1225,7 @@ out:
    if(fpc)
    {
       FREE(fpc->r_temp);
+      FREE(fpc->r_imm);
       util_dynarray_fini(&fpc->if_stack);
       util_dynarray_fini(&fpc->label_relocs);
       util_dynarray_fini(&fpc->imm_data);
