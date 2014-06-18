@@ -4904,6 +4904,21 @@ st_translate_program(
    assert(numInputs <= Elements(t->inputs));
    assert(numOutputs <= Elements(t->outputs));
 
+   assert(_mesa_sysval_to_semantic[SYSTEM_VALUE_FRONT_FACE] ==
+          TGSI_SEMANTIC_FACE);
+   assert(_mesa_sysval_to_semantic[SYSTEM_VALUE_VERTEX_ID] ==
+          TGSI_SEMANTIC_VERTEXID);
+   assert(_mesa_sysval_to_semantic[SYSTEM_VALUE_INSTANCE_ID] ==
+          TGSI_SEMANTIC_INSTANCEID);
+   assert(_mesa_sysval_to_semantic[SYSTEM_VALUE_SAMPLE_ID] ==
+          TGSI_SEMANTIC_SAMPLEID);
+   assert(_mesa_sysval_to_semantic[SYSTEM_VALUE_SAMPLE_POS] ==
+          TGSI_SEMANTIC_SAMPLEPOS);
+   assert(_mesa_sysval_to_semantic[SYSTEM_VALUE_SAMPLE_MASK_IN] ==
+          TGSI_SEMANTIC_SAMPLEMASK);
+   assert(_mesa_sysval_to_semantic[SYSTEM_VALUE_INVOCATION_ID] ==
+          TGSI_SEMANTIC_INVOCATIONID);
+
    t = CALLOC_STRUCT(st_translate);
    if (!t) {
       ret = PIPE_ERROR_OUT_OF_MEMORY;
