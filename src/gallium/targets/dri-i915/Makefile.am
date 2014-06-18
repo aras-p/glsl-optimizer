@@ -27,8 +27,7 @@ AM_CFLAGS = \
 AM_CPPFLAGS = \
 	-DGALLIUM_RBUG \
 	-DGALLIUM_TRACE \
-	-DGALLIUM_GALAHAD \
-	-DGALLIUM_SOFTPIPE
+	-DGALLIUM_GALAHAD
 
 dridir = $(DRI_DRIVER_INSTALL_DIR)
 dri_LTLIBRARIES = i915_dri.la
@@ -42,18 +41,11 @@ i915_dri_la_LIBADD = \
 	$(top_builddir)/src/mesa/drivers/dri/common/libdricommon.la \
 	$(top_builddir)/src/gallium/state_trackers/dri/drm/libdridrm.la \
 	$(top_builddir)/src/gallium/winsys/i915/drm/libi915drm.la \
-	$(top_builddir)/src/gallium/winsys/sw/wrapper/libwsw.la \
-	$(top_builddir)/src/gallium/drivers/softpipe/libsoftpipe.la \
 	$(top_builddir)/src/gallium/drivers/galahad/libgalahad.la \
 	$(top_builddir)/src/gallium/drivers/trace/libtrace.la \
 	$(top_builddir)/src/gallium/drivers/rbug/librbug.la \
 	$(top_builddir)/src/gallium/drivers/i915/libi915.la \
 	$(GALLIUM_DRI_LIB_DEPS) \
 	$(INTEL_LIBS)
-
-if HAVE_MESA_LLVM
-AM_CPPFLAGS += -DGALLIUM_LLVMPIPE
-i915_dri_la_LIBADD += $(top_builddir)/src/gallium/drivers/llvmpipe/libllvmpipe.la
-endif
 
 include $(top_srcdir)/install-gallium-links.mk
