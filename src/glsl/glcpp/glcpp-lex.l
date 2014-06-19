@@ -161,6 +161,10 @@ glcpp_lex_update_state_per_token (glcpp_parser_t *parser, int token)
 %option stack
 %option never-interactive
 
+	/* Note: When adding any start conditions to this list, you must also
+	 * update the "Internal compiler error" catch-all rule near the end of
+	 * this file. */
+
 %x DONE COMMENT HASH UNREACHABLE DEFINE NEWLINE_CATCHUP
 
 SPACE		[[:space:]]
@@ -532,6 +536,15 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	yyextra->lexing_directive = 0;
 	if (! parser->last_token_was_newline)
 		RETURN_TOKEN (NEWLINE);
+}
+
+	/* This is a catch-all to avoid the annoying default flex action which
+	 * matches any character and prints it. If any input ever matches this
+	 * rule, then we have made a mistake above and need to fix one or more
+	 * of the preceding patterns to match that input. */
+
+<INITIAL,DONE,COMMENT,DEFINE,HASH,NEWLINE_CATCHUP>. {
+	glcpp_error(yylloc, yyextra, "Internal compiler error: Unexpected character: %s", yytext);
 }
 
 	/* We don't actually use the UNREACHABLE start condition. We
