@@ -155,6 +155,7 @@ vec4_vs_visitor::make_reg_for_system_value(ir_variable *ir)
 
    switch (ir->data.location) {
    case SYSTEM_VALUE_VERTEX_ID:
+   case SYSTEM_VALUE_VERTEX_ID_ZERO_BASE:
       reg->writemask = WRITEMASK_X;
       break;
    case SYSTEM_VALUE_INSTANCE_ID:
