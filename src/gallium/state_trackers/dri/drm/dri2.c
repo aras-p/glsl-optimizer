@@ -201,214 +201,58 @@ dri2_drawable_get_buffers(struct dri_drawable *drawable,
    return buffers;
 }
 
-/**
- * Process __DRIbuffer and convert them into pipe_resources.
- */
-static void
-dri2_drawable_process_buffers(struct dri_context *ctx,
-                              struct dri_drawable *drawable,
-                              __DRIbuffer *buffers, unsigned buffer_count,
-                              const enum st_attachment_type *atts,
-                              unsigned att_count)
+static bool
+dri_image_drawable_get_buffers(struct dri_drawable *drawable,
+                               struct __DRIimageList *images,
+                               const enum st_attachment_type *statts,
+                               unsigned statts_count)
 {
-   struct dri_screen *screen = dri_screen(drawable->sPriv);
-   __DRIdrawable *dri_drawable = drawable->dPriv;
-   struct pipe_resource templ;
-   struct winsys_handle whandle;
-   boolean alloc_depthstencil = FALSE;
-   unsigned i, j, bind;
+   __DRIdrawable *dPriv = drawable->dPriv;
+   __DRIscreen *sPriv = drawable->sPriv;
+   unsigned int image_format = __DRI_IMAGE_FORMAT_NONE;
+   enum pipe_format pf;
+   uint32_t buffer_mask = 0;
+   unsigned i, bind;
 
-   if (drawable->old_num == buffer_count &&
-       drawable->old_w == dri_drawable->w &&
-       drawable->old_h == dri_drawable->h &&
-       memcmp(drawable->old, buffers, sizeof(__DRIbuffer) * buffer_count) == 0)
-      return;
-
-   /* See if we need a depth-stencil buffer. */
-   for (i = 0; i < att_count; i++) {
-      if (atts[i] == ST_ATTACHMENT_DEPTH_STENCIL) {
-         alloc_depthstencil = TRUE;
-         break;
-      }
-   }
-
-   /* Delete the resources we won't need. */
-   for (i = 0; i < ST_ATTACHMENT_COUNT; i++) {
-      /* Don't delete the depth-stencil buffer, we can reuse it. */
-      if (i == ST_ATTACHMENT_DEPTH_STENCIL && alloc_depthstencil)
+   for (i = 0; i < statts_count; i++) {
+      dri_drawable_get_format(drawable, statts[i], &pf, &bind);
+      if (pf == PIPE_FORMAT_NONE)
          continue;
 
-      /* Flush the texture before unreferencing, so that other clients can
-       * see what the driver has rendered.
-       */
-      if (i != ST_ATTACHMENT_DEPTH_STENCIL && drawable->textures[i]) {
-         struct pipe_context *pipe = ctx->st->pipe;
-         pipe->flush_resource(pipe, drawable->textures[i]);
-      }
-
-      pipe_resource_reference(&drawable->textures[i], NULL);
-   }
-
-   if (drawable->stvis.samples > 1) {
-      for (i = 0; i < ST_ATTACHMENT_COUNT; i++) {
-         boolean del = TRUE;
-
-         /* Don't delete MSAA resources for the attachments which are enabled,
-          * we can reuse them. */
-         for (j = 0; j < att_count; j++) {
-            if (i == atts[j]) {
-               del = FALSE;
-               break;
-            }
-         }
-
-         if (del) {
-            pipe_resource_reference(&drawable->msaa_textures[i], NULL);
-         }
-      }
-   }
-
-   memset(&templ, 0, sizeof(templ));
-   templ.target = screen->target;
-   templ.last_level = 0;
-   templ.width0 = dri_drawable->w;
-   templ.height0 = dri_drawable->h;
-   templ.depth0 = 1;
-   templ.array_size = 1;
-
-   memset(&whandle, 0, sizeof(whandle));
-
-   /* Process DRI-provided buffers and get pipe_resources. */
-   for (i = 0; i < buffer_count; i++) {
-      __DRIbuffer *buf = &buffers[i];
-      enum st_attachment_type statt;
-      enum pipe_format format;
-
-      switch (buf->attachment) {
-      case __DRI_BUFFER_FRONT_LEFT:
-         if (!screen->auto_fake_front) {
-            continue; /* invalid attachment */
-         }
-         /* fallthrough */
-      case __DRI_BUFFER_FAKE_FRONT_LEFT:
-         statt = ST_ATTACHMENT_FRONT_LEFT;
+      switch (statts[i]) {
+      case ST_ATTACHMENT_FRONT_LEFT:
+         buffer_mask |= __DRI_IMAGE_BUFFER_FRONT;
          break;
-      case __DRI_BUFFER_BACK_LEFT:
-         statt = ST_ATTACHMENT_BACK_LEFT;
+      case ST_ATTACHMENT_BACK_LEFT:
+         buffer_mask |= __DRI_IMAGE_BUFFER_BACK;
          break;
       default:
-         continue; /* invalid attachment */
-      }
-
-      dri_drawable_get_format(drawable, statt, &format, &bind);
-      if (format == PIPE_FORMAT_NONE)
          continue;
+      }
 
-      templ.format = format;
-      templ.bind = bind;
-      whandle.type = DRM_API_HANDLE_TYPE_SHARED;
-      whandle.handle = buf->name;
-      whandle.stride = buf->pitch;
-
-      drawable->textures[statt] =
-         screen->base.screen->resource_from_handle(screen->base.screen,
-               &templ, &whandle);
-      assert(drawable->textures[statt]);
-   }
-
-   /* Allocate private MSAA colorbuffers. */
-   if (drawable->stvis.samples > 1) {
-      for (i = 0; i < att_count; i++) {
-         enum st_attachment_type att = atts[i];
-
-         if (att == ST_ATTACHMENT_DEPTH_STENCIL)
-            continue;
-
-         if (drawable->textures[att]) {
-            templ.format = drawable->textures[att]->format;
-            templ.bind = drawable->textures[att]->bind;
-            templ.nr_samples = drawable->stvis.samples;
-
-            /* Try to reuse the resource.
-             * (the other resource parameters should be constant)
-             */
-            if (!drawable->msaa_textures[att] ||
-                drawable->msaa_textures[att]->width0 != templ.width0 ||
-                drawable->msaa_textures[att]->height0 != templ.height0) {
-               /* Allocate a new one. */
-               pipe_resource_reference(&drawable->msaa_textures[att], NULL);
-
-               drawable->msaa_textures[att] =
-                  screen->base.screen->resource_create(screen->base.screen,
-                                                       &templ);
-               assert(drawable->msaa_textures[att]);
-
-               /* If there are any MSAA resources, we should initialize them
-                * such that they contain the same data as the single-sample
-                * resources we just got from the X server.
-                *
-                * The reason for this is that the state tracker (and
-                * therefore the app) can access the MSAA resources only.
-                * The single-sample resources are not exposed
-                * to the state tracker.
-                *
-                */
-               dri_pipe_blit(ctx->st->pipe,
-                             drawable->msaa_textures[att],
-                             drawable->textures[att]);
-            }
-         }
-         else {
-            pipe_resource_reference(&drawable->msaa_textures[att], NULL);
-         }
+      switch (pf) {
+      case PIPE_FORMAT_B5G6R5_UNORM:
+         image_format = __DRI_IMAGE_FORMAT_RGB565;
+         break;
+      case PIPE_FORMAT_B8G8R8X8_UNORM:
+         image_format = __DRI_IMAGE_FORMAT_XRGB8888;
+         break;
+      case PIPE_FORMAT_B8G8R8A8_UNORM:
+         image_format = __DRI_IMAGE_FORMAT_ARGB8888;
+         break;
+      case PIPE_FORMAT_R8G8B8A8_UNORM:
+         image_format = __DRI_IMAGE_FORMAT_ABGR8888;
+         break;
+      default:
+         image_format = __DRI_IMAGE_FORMAT_NONE;
+         break;
       }
    }
 
-   /* Allocate a private depth-stencil buffer. */
-   if (alloc_depthstencil) {
-      enum st_attachment_type att = ST_ATTACHMENT_DEPTH_STENCIL;
-      struct pipe_resource **zsbuf;
-      enum pipe_format format;
-      unsigned bind;
-
-      dri_drawable_get_format(drawable, att, &format, &bind);
-
-      if (format) {
-         templ.format = format;
-         templ.bind = bind;
-
-         if (drawable->stvis.samples > 1) {
-            templ.nr_samples = drawable->stvis.samples;
-            zsbuf = &drawable->msaa_textures[att];
-         }
-         else {
-            templ.nr_samples = 0;
-            zsbuf = &drawable->textures[att];
-         }
-
-         /* Try to reuse the resource.
-          * (the other resource parameters should be constant)
-          */
-         if (!*zsbuf ||
-             (*zsbuf)->width0 != templ.width0 ||
-             (*zsbuf)->height0 != templ.height0) {
-            /* Allocate a new one. */
-            pipe_resource_reference(zsbuf, NULL);
-            *zsbuf = screen->base.screen->resource_create(screen->base.screen,
-                                                          &templ);
-            assert(*zsbuf);
-         }
-      }
-      else {
-         pipe_resource_reference(&drawable->msaa_textures[att], NULL);
-         pipe_resource_reference(&drawable->textures[att], NULL);
-      }
-   }
-
-   drawable->old_num = buffer_count;
-   drawable->old_w = dri_drawable->w;
-   drawable->old_h = dri_drawable->h;
-   memcpy(drawable->old, buffers, sizeof(__DRIbuffer) * buffer_count);
+   return (*sPriv->image.loader->getBuffers) (dPriv, image_format,
+                                       (uint32_t *) &drawable->base.stamp,
+                                       dPriv->loaderPrivate, buffer_mask,
+                                       images);
 }
 
 static __DRIbuffer *
@@ -508,13 +352,267 @@ dri2_allocate_textures(struct dri_context *ctx,
                        const enum st_attachment_type *statts,
                        unsigned statts_count)
 {
+   __DRIscreen *sPriv = drawable->sPriv;
+   __DRIdrawable *dri_drawable = drawable->dPriv;
+   struct dri_screen *screen = dri_screen(sPriv);
+   struct pipe_resource templ;
+   boolean alloc_depthstencil = FALSE;
+   unsigned i, j, bind;
+   const __DRIimageLoaderExtension *image = sPriv->image.loader;
+   /* Image specific variables */
+   struct __DRIimageList images;
+   /* Dri2 specific variables */
    __DRIbuffer *buffers;
+   struct winsys_handle whandle;
    unsigned num_buffers = statts_count;
 
-   buffers = dri2_drawable_get_buffers(drawable, statts, &num_buffers);
-   if (buffers)
-      dri2_drawable_process_buffers(ctx, drawable, buffers, num_buffers,
-                                    statts, statts_count);
+   /* First get the buffers from the loader */
+   if (image) {
+      if (!dri_image_drawable_get_buffers(drawable, &images,
+                                          statts, statts_count))
+         return;
+   }
+   else {
+      buffers = dri2_drawable_get_buffers(drawable, statts, &num_buffers);
+      if (!buffers || (drawable->old_num == num_buffers &&
+                       drawable->old_w == dri_drawable->w &&
+                       drawable->old_h == dri_drawable->h &&
+                       memcmp(drawable->old, buffers,
+                              sizeof(__DRIbuffer) * num_buffers) == 0))
+         return;
+   }
+
+   /* Second clean useless resources*/
+
+   /* See if we need a depth-stencil buffer. */
+   for (i = 0; i < statts_count; i++) {
+      if (statts[i] == ST_ATTACHMENT_DEPTH_STENCIL) {
+         alloc_depthstencil = TRUE;
+         break;
+      }
+   }
+
+   /* Delete the resources we won't need. */
+   for (i = 0; i < ST_ATTACHMENT_COUNT; i++) {
+      /* Don't delete the depth-stencil buffer, we can reuse it. */
+      if (i == ST_ATTACHMENT_DEPTH_STENCIL && alloc_depthstencil)
+         continue;
+
+      /* Flush the texture before unreferencing, so that other clients can
+       * see what the driver has rendered.
+       */
+      if (i != ST_ATTACHMENT_DEPTH_STENCIL && drawable->textures[i]) {
+         struct pipe_context *pipe = ctx->st->pipe;
+         pipe->flush_resource(pipe, drawable->textures[i]);
+      }
+
+      pipe_resource_reference(&drawable->textures[i], NULL);
+   }
+
+   if (drawable->stvis.samples > 1) {
+      for (i = 0; i < ST_ATTACHMENT_COUNT; i++) {
+         boolean del = TRUE;
+
+         /* Don't delete MSAA resources for the attachments which are enabled,
+          * we can reuse them. */
+         for (j = 0; j < statts_count; j++) {
+            if (i == statts[j]) {
+               del = FALSE;
+               break;
+            }
+         }
+
+         if (del) {
+            pipe_resource_reference(&drawable->msaa_textures[i], NULL);
+         }
+      }
+   }
+
+   /* Third use the buffers retrieved to fill the drawable info */
+
+   memset(&templ, 0, sizeof(templ));
+   templ.target = screen->target;
+   templ.last_level = 0;
+   templ.depth0 = 1;
+   templ.array_size = 1;
+
+   if (image) {
+      if (images.image_mask & __DRI_IMAGE_BUFFER_FRONT) {
+         struct pipe_resource **buf =
+            &drawable->textures[ST_ATTACHMENT_FRONT_LEFT];
+         struct pipe_resource *texture = images.front->texture;
+
+         dri_drawable->w = texture->width0;
+         dri_drawable->h = texture->height0;
+
+         pipe_resource_reference(buf, texture);
+      }
+
+      if (images.image_mask & __DRI_IMAGE_BUFFER_BACK) {
+         struct pipe_resource **buf =
+            &drawable->textures[ST_ATTACHMENT_BACK_LEFT];
+         struct pipe_resource *texture = images.back->texture;
+
+         dri_drawable->w = texture->width0;
+         dri_drawable->h = texture->height0;
+
+         pipe_resource_reference(buf, texture);
+      }
+
+      /* Note: if there is both a back and a front buffer,
+       * then they have the same size.
+       */
+      templ.width0 = dri_drawable->w;
+      templ.height0 = dri_drawable->h;
+   }
+   else {
+      memset(&whandle, 0, sizeof(whandle));
+
+      /* Process DRI-provided buffers and get pipe_resources. */
+      for (i = 0; i < num_buffers; i++) {
+         __DRIbuffer *buf = &buffers[i];
+         enum st_attachment_type statt;
+         enum pipe_format format;
+
+         switch (buf->attachment) {
+         case __DRI_BUFFER_FRONT_LEFT:
+            if (!screen->auto_fake_front) {
+               continue; /* invalid attachment */
+            }
+            /* fallthrough */
+         case __DRI_BUFFER_FAKE_FRONT_LEFT:
+            statt = ST_ATTACHMENT_FRONT_LEFT;
+            break;
+         case __DRI_BUFFER_BACK_LEFT:
+            statt = ST_ATTACHMENT_BACK_LEFT;
+            break;
+         default:
+            continue; /* invalid attachment */
+         }
+
+         dri_drawable_get_format(drawable, statt, &format, &bind);
+         if (format == PIPE_FORMAT_NONE)
+            continue;
+
+         /* dri2_drawable_get_buffers has already filled dri_drawable->w
+          * and dri_drawable->h */
+         templ.width0 = dri_drawable->w;
+         templ.height0 = dri_drawable->h;
+         templ.format = format;
+         templ.bind = bind;
+         whandle.type = DRM_API_HANDLE_TYPE_SHARED;
+         whandle.handle = buf->name;
+         whandle.stride = buf->pitch;
+
+         drawable->textures[statt] =
+            screen->base.screen->resource_from_handle(screen->base.screen,
+                  &templ, &whandle);
+         assert(drawable->textures[statt]);
+      }
+   }
+
+   /* Allocate private MSAA colorbuffers. */
+   if (drawable->stvis.samples > 1) {
+      for (i = 0; i < statts_count; i++) {
+         enum st_attachment_type statt = statts[i];
+
+         if (statt == ST_ATTACHMENT_DEPTH_STENCIL)
+            continue;
+
+         if (drawable->textures[statt]) {
+            templ.format = drawable->textures[statt]->format;
+            templ.bind = drawable->textures[statt]->bind;
+            templ.nr_samples = drawable->stvis.samples;
+
+            /* Try to reuse the resource.
+             * (the other resource parameters should be constant)
+             */
+            if (!drawable->msaa_textures[statt] ||
+                drawable->msaa_textures[statt]->width0 != templ.width0 ||
+                drawable->msaa_textures[statt]->height0 != templ.height0) {
+               /* Allocate a new one. */
+               pipe_resource_reference(&drawable->msaa_textures[statt], NULL);
+
+               drawable->msaa_textures[statt] =
+                  screen->base.screen->resource_create(screen->base.screen,
+                                                       &templ);
+               assert(drawable->msaa_textures[statt]);
+
+               /* If there are any MSAA resources, we should initialize them
+                * such that they contain the same data as the single-sample
+                * resources we just got from the X server.
+                *
+                * The reason for this is that the state tracker (and
+                * therefore the app) can access the MSAA resources only.
+                * The single-sample resources are not exposed
+                * to the state tracker.
+                *
+                */
+               dri_pipe_blit(ctx->st->pipe,
+                             drawable->msaa_textures[statt],
+                             drawable->textures[statt]);
+            }
+         }
+         else {
+            pipe_resource_reference(&drawable->msaa_textures[statt], NULL);
+         }
+      }
+   }
+
+   /* Allocate a private depth-stencil buffer. */
+   if (alloc_depthstencil) {
+      enum st_attachment_type statt = ST_ATTACHMENT_DEPTH_STENCIL;
+      struct pipe_resource **zsbuf;
+      enum pipe_format format;
+      unsigned bind;
+
+      dri_drawable_get_format(drawable, statt, &format, &bind);
+
+      if (format) {
+         templ.format = format;
+         templ.bind = bind;
+
+         if (drawable->stvis.samples > 1) {
+            templ.nr_samples = drawable->stvis.samples;
+            zsbuf = &drawable->msaa_textures[statt];
+         }
+         else {
+            templ.nr_samples = 0;
+            zsbuf = &drawable->textures[statt];
+         }
+
+         /* Try to reuse the resource.
+          * (the other resource parameters should be constant)
+          */
+         if (!*zsbuf ||
+             (*zsbuf)->width0 != templ.width0 ||
+             (*zsbuf)->height0 != templ.height0) {
+            /* Allocate a new one. */
+            pipe_resource_reference(zsbuf, NULL);
+            *zsbuf = screen->base.screen->resource_create(screen->base.screen,
+                                                          &templ);
+            assert(*zsbuf);
+         }
+      }
+      else {
+         pipe_resource_reference(&drawable->msaa_textures[statt], NULL);
+         pipe_resource_reference(&drawable->textures[statt], NULL);
+      }
+   }
+
+   /* For DRI2, we may get the same buffers again from the server.
+    * To prevent useless imports of gem names, drawable->old* is used
+    * to bypass the import if we get the same buffers. This doesn't apply
+    * to DRI3/Wayland, users of image.loader, since the buffer is managed
+    * by the client (no import), and the back buffer is going to change
+    * at every redraw.
+    */
+   if (!image) {
+      drawable->old_num = num_buffers;
+      drawable->old_w = dri_drawable->w;
+      drawable->old_h = dri_drawable->h;
+      memcpy(drawable->old, buffers, sizeof(__DRIbuffer) * num_buffers);
+   }
 }
 
 static void
@@ -523,6 +621,7 @@ dri2_flush_frontbuffer(struct dri_context *ctx,
                        enum st_attachment_type statt)
 {
    __DRIdrawable *dri_drawable = drawable->dPriv;
+   const __DRIimageLoaderExtension *image = drawable->sPriv->image.loader;
    const __DRIdri2LoaderExtension *loader = drawable->sPriv->dri2.loader;
    struct pipe_context *pipe = ctx->st->pipe;
 
@@ -542,7 +641,10 @@ dri2_flush_frontbuffer(struct dri_context *ctx,
 
    pipe->flush(pipe, NULL, 0);
 
-   if (loader->flushFrontBuffer) {
+   if (image) {
+      image->flushFrontBuffer(dri_drawable, dri_drawable->loaderPrivate);
+   }
+   else if (loader->flushFrontBuffer) {
       loader->flushFrontBuffer(dri_drawable, dri_drawable->loaderPrivate);
    }
 }
@@ -1171,6 +1273,7 @@ const struct __DriverAPIRec driDriverAPI = {
 /* This is the table of extensions that the loader will dlsym() for. */
 PUBLIC const __DRIextension *__driDriverExtensions[] = {
     &driCoreExtension.base,
+    &driImageDriverExtension.base,
     &driDRI2Extension.base,
     &gallium_config_options.base,
     NULL
