@@ -1737,6 +1737,9 @@ link_intrastage_shaders(void *mem_ctx,
       }
    }
 
+   if (ctx->Const.VertexID_is_zero_based)
+      lower_vertex_id(linked);
+
    /* Make a pass over all variable declarations to ensure that arrays with
     * unspecified sizes have a size specified.  The size is inferred from the
     * max_array_access field.

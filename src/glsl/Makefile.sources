@@ -76,6 +76,7 @@ LIBGLSL_FILES = \
 	$(GLSL_SRCDIR)/lower_vec_index_to_swizzle.cpp \
 	$(GLSL_SRCDIR)/lower_vector.cpp \
 	$(GLSL_SRCDIR)/lower_vector_insert.cpp \
+	$(GLSL_SRCDIR)/lower_vertex_id.cpp \
 	$(GLSL_SRCDIR)/lower_output_reads.cpp \
 	$(GLSL_SRCDIR)/lower_ubo_reference.cpp \
 	$(GLSL_SRCDIR)/opt_algebraic.cpp \

@@ -126,6 +126,8 @@ bool optimize_redundant_jumps(exec_list *instructions);
 bool optimize_split_arrays(exec_list *instructions, bool linked);
 bool lower_offset_arrays(exec_list *instructions);
 
+bool lower_vertex_id(gl_shader *shader);
+
 ir_rvalue *
 compare_index_block(exec_list *instructions, ir_variable *index,
 		    unsigned base, unsigned components, void *mem_ctx);
