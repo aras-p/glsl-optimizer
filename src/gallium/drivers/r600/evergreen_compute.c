@@ -668,7 +668,10 @@ static void evergreen_set_global_binding(
 			buffers[i]->chunk->status |= ITEM_FOR_PROMOTING;
 	}
 
-	compute_memory_finalize_pending(pool, ctx_);
+	if (compute_memory_finalize_pending(pool, ctx_) == -1) {
+		/* XXX: Unset */
+		return;
+	}
 
 	for (int i = 0; i < n; i++)
 	{
