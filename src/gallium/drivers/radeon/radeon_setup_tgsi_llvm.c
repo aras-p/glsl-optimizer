@@ -1384,7 +1384,11 @@ void radeon_llvm_context_init(struct radeon_llvm_context * ctx)
 	bld_base->op_actions[TGSI_OPCODE_UCMP].emit = emit_ucmp;
 
 	bld_base->rsq_action.emit = build_tgsi_intrinsic_nomem;
+#if HAVE_LLVM >= 0x0305
+	bld_base->rsq_action.intr_name = "llvm.AMDGPU.rsq.";
+#else
 	bld_base->rsq_action.intr_name = "llvm.AMDGPU.rsq";
+#endif
 }
 
 void radeon_llvm_create_func(struct radeon_llvm_context * ctx,
