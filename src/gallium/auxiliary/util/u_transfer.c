@@ -25,8 +25,8 @@ void u_default_transfer_inline_write( struct pipe_context *pipe,
    usage |= PIPE_TRANSFER_WRITE;
 
    /* transfer_inline_write implicitly discards the rewritten buffer range */
-   /* XXX this looks very broken for non-buffer resources having more than one dim. */
-   if (box->x == 0 && box->width == resource->width0) {
+   if (resource->target == PIPE_BUFFER &&
+       box->x == 0 && box->width == resource->width0) {
       usage |= PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE;
    } else {
       usage |= PIPE_TRANSFER_DISCARD_RANGE;
