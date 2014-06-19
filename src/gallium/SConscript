@@ -21,12 +21,6 @@ SConscript([
     'drivers/trace/SConscript',
 ])
 
-if not env['msvc']:
-    # These drivers do not build on MSVC compilers
-    SConscript([
-        'drivers/i915/SConscript',
-    ])
-
 #
 # State trackers
 #
@@ -64,11 +58,6 @@ if env['x11']:
 if env['platform'] == 'windows':
     SConscript([
         'winsys/sw/gdi/SConscript',
-    ])
-
-if not env['msvc']:
-    SConscript([
-        'winsys/i915/sw/SConscript',
     ])
 
 if env['platform'] == 'haiku':
