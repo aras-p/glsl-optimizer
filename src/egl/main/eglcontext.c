@@ -322,10 +322,13 @@ _eglParseContextAttribList(_EGLContext *ctx, _EGLDisplay *dpy,
          break;
 
       case 3:
-      default:
          /* Don't put additional version checks here.  We don't know that
           * there won't be versions > 3.0.
           */
+         break;
+
+      default:
+         err = EGL_BAD_MATCH;
          break;
       }
    }
