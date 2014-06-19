@@ -353,19 +353,21 @@ int compute_memory_promote_item(struct compute_memory_pool *pool,
 	list_add(&item->link, pos);
 	item->start_in_dw = start_in_dw;
 
-	u_box_1d(0, item->size_in_dw * 4, &box);
+	if (src != NULL) {
+		u_box_1d(0, item->size_in_dw * 4, &box);
 
-	rctx->b.b.resource_copy_region(pipe,
-			dst, 0, item->start_in_dw * 4, 0 ,0,
-			src, 0, &box);
+		rctx->b.b.resource_copy_region(pipe,
+				dst, 0, item->start_in_dw * 4, 0 ,0,
+				src, 0, &box);
 
-	/* We check if the item is mapped for reading.
-	 * In this case, we need to keep the temporary buffer 'alive'
-	 * because it is possible to keep a map active for reading
-	 * while a kernel (that reads from it) executes */
-	if (!(item->status & ITEM_MAPPED_FOR_READING)) {
-		pool->screen->b.b.resource_destroy(screen, src);
-		item->real_buffer = NULL;
+		/* We check if the item is mapped for reading.
+		 * In this case, we need to keep the temporary buffer 'alive'
+		 * because it is possible to keep a map active for reading
+		 * while a kernel (that reads from it) executes */
+		if (!(item->status & ITEM_MAPPED_FOR_READING)) {
+			pool->screen->b.b.resource_destroy(screen, src);
+			item->real_buffer = NULL;
+		}
 	}
 
 	return 0;
@@ -475,8 +477,7 @@ struct compute_memory_item* compute_memory_alloc(
 	new_item->start_in_dw = -1; /* mark pending */
 	new_item->id = pool->next_id++;
 	new_item->pool = pool;
-	new_item->real_buffer = (struct r600_resource*)r600_compute_buffer_alloc_vram(
-							pool->screen, size_in_dw * 4);
+	new_item->real_buffer = NULL;
 
 	list_addtail(&new_item->link, pool->unallocated_list);
 

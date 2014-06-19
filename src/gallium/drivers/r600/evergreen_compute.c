@@ -970,14 +970,21 @@ void *r600_compute_global_transfer_map(
 	struct r600_resource_global* buffer =
 		(struct r600_resource_global*)resource;
 
-	struct pipe_resource *dst;
+	struct compute_memory_item *item = buffer->chunk;
+	struct pipe_resource *dst = NULL;
 	unsigned offset = box->x;
 
-	if (is_item_in_pool(buffer->chunk)) {
-		compute_memory_demote_item(pool, buffer->chunk, ctx_);
+	if (is_item_in_pool(item)) {
+		compute_memory_demote_item(pool, item, ctx_);
+	}
+	else {
+		if (item->real_buffer == NULL) {
+			item->real_buffer = (struct r600_resource*)
+					r600_compute_buffer_alloc_vram(pool->screen, item->size_in_dw * 4);
+		}
 	}
 
-	dst = (struct pipe_resource*)buffer->chunk->real_buffer;
+	dst = (struct pipe_resource*)item->real_buffer;
 
 	if (usage & PIPE_TRANSFER_READ)
 		buffer->chunk->status |= ITEM_MAPPED_FOR_READING;
@@ -988,7 +995,7 @@ void *r600_compute_global_transfer_map(
 			box->x, box->y, box->z, box->width, box->height,
 			box->depth);
 	COMPUTE_DBG(rctx->screen, "Buffer id = %u offset = "
-		"%u (box.x)\n", buffer->chunk->id, box->x);
+		"%u (box.x)\n", item->id, box->x);
 
 
 	assert(resource->target == PIPE_BUFFER);
