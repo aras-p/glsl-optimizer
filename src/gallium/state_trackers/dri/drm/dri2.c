@@ -1132,6 +1132,53 @@ dri2_from_dma_bufs(__DRIscreen *screen,
 }
 
 static void
+dri2_blit_image(__DRIcontext *context, __DRIimage *dst, __DRIimage *src,
+                int dstx0, int dsty0, int dstwidth, int dstheight,
+                int srcx0, int srcy0, int srcwidth, int srcheight,
+                int flush_flag)
+{
+   struct dri_context *ctx = dri_context(context);
+   struct pipe_context *pipe = ctx->st->pipe;
+   struct pipe_screen *screen;
+   struct pipe_fence_handle *fence;
+   struct pipe_blit_info blit;
+
+   if (!dst || !src)
+      return;
+
+   memset(&blit, 0, sizeof(blit));
+   blit.dst.resource = dst->texture;
+   blit.dst.box.x = dstx0;
+   blit.dst.box.y = dsty0;
+   blit.dst.box.width = dstwidth;
+   blit.dst.box.height = dstheight;
+   blit.dst.box.depth = 1;
+   blit.dst.format = dst->texture->format;
+   blit.src.resource = src->texture;
+   blit.src.box.x = srcx0;
+   blit.src.box.y = srcy0;
+   blit.src.box.width = srcwidth;
+   blit.src.box.height = srcheight;
+   blit.src.box.depth = 1;
+   blit.src.format = src->texture->format;
+   blit.mask = PIPE_MASK_RGBA;
+   blit.filter = PIPE_TEX_FILTER_NEAREST;
+
+   pipe->blit(pipe, &blit);
+
+   if (flush_flag == __BLIT_FLAG_FLUSH) {
+      pipe->flush_resource(pipe, dst->texture);
+      ctx->st->flush(ctx->st, 0, NULL);
+   } else if (flush_flag == __BLIT_FLAG_FINISH) {
+      screen = dri_screen(ctx->sPriv)->base.screen;
+      pipe->flush_resource(pipe, dst->texture);
+      ctx->st->flush(ctx->st, 0, &fence);
+      (void) screen->fence_finish(screen, fence, PIPE_TIMEOUT_INFINITE);
+      screen->fence_reference(screen, &fence, NULL);
+   }
+}
+
+static void
 dri2_destroy_image(__DRIimage *img)
 {
    pipe_resource_reference(&img->texture, NULL);
@@ -1140,7 +1187,7 @@ dri2_destroy_image(__DRIimage *img)
 
 /* The extension is modified during runtime if DRI_PRIME is detected */
 static __DRIimageExtension dri2ImageExtension = {
-    .base = { __DRI_IMAGE, 6 },
+    .base = { __DRI_IMAGE, 9 },
 
     .createImageFromName          = dri2_create_image_from_name,
     .createImageFromRenderbuffer  = dri2_create_image_from_renderbuffer,
@@ -1152,6 +1199,9 @@ static __DRIimageExtension dri2ImageExtension = {
     .createImageFromNames         = dri2_from_names,
     .fromPlanar                   = dri2_from_planar,
     .createImageFromTexture       = dri2_create_from_texture,
+    .createImageFromFds           = NULL,
+    .createImageFromDmaBufs       = NULL,
+    .blitImage                    = dri2_blit_image,
 };
 
 /*
@@ -1206,8 +1256,6 @@ dri2_init_screen(__DRIscreen * sPriv)
 
       if (drmGetCap(sPriv->fd, DRM_CAP_PRIME, &cap) == 0 &&
           (cap & DRM_PRIME_CAP_IMPORT)) {
-
-         dri2ImageExtension.base.version = 8;
          dri2ImageExtension.createImageFromFds = dri2_from_fds;
          dri2ImageExtension.createImageFromDmaBufs = dri2_from_dma_bufs;
       }
