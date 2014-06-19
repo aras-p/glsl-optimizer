@@ -70,4 +70,8 @@ endif
 if HAVE_GALLIUM_SVGA
 SUBDIRS += svga/drm
 endif
+
+if HAVE_GALLIUM_VC4
+SUBDIRS += vc4/drm
+endif
 endif

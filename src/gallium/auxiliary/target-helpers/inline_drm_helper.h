@@ -54,6 +54,10 @@
 #include "freedreno/drm/freedreno_drm_public.h"
 #endif
 
+#if GALLIUM_VC4
+#include "vc4/drm/vc4_drm_public.h"
+#endif
+
 static char* driver_name = NULL;
 
 /* XXX: We need to teardown the winsys if *screen_create() fails. */
@@ -286,6 +290,48 @@ pipe_freedreno_create_screen(int fd)
 }
 #endif
 
+#if defined(GALLIUM_VC4)
+#if defined(DRI_TARGET)
+
+const __DRIextension **__driDriverGetExtensions_vc4(void);
+
+PUBLIC const __DRIextension **__driDriverGetExtensions_vc4(void)
+{
+   globalDriverAPI = &galliumdrm_driver_api;
+   return galliumdrm_driver_extensions;
+}
+
+#if defined(USE_VC4_SIMULATOR)
+const __DRIextension **__driDriverGetExtensions_i965(void);
+
+/**
+ * When building using the simulator (on x86), we advertise ourselves as the
+ * i965 driver so that you can just make a directory with a link from
+ * i965_dri.so to the built vc4_dri.so, and point LIBGL_DRIVERS_PATH to that
+ * on your i965-using host to run the driver under simulation.
+ *
+ * This is, of course, incompatible with building with the ilo driver, but you
+ * shouldn't be building that anyway.
+ */
+PUBLIC const __DRIextension **__driDriverGetExtensions_i965(void)
+{
+   globalDriverAPI = &galliumdrm_driver_api;
+   return galliumdrm_driver_extensions;
+}
+#endif
+
+#endif
+
+static struct pipe_screen *
+pipe_vc4_create_screen(int fd)
+{
+   struct pipe_screen *screen;
+
+   screen = vc4_drm_screen_create(fd);
+   return screen ? debug_screen_wrap(screen) : NULL;
+}
+#endif
+
 inline struct pipe_screen *
 dd_create_screen(int fd)
 {
@@ -332,6 +378,16 @@ dd_create_screen(int fd)
    if ((strcmp(driver_name, "kgsl") == 0) || (strcmp(driver_name, "msm") == 0))
       return pipe_freedreno_create_screen(fd);
    else
+#endif
+#if defined(GALLIUM_VC4)
+   if (strcmp(driver_name, "vc4") == 0)
+      return pipe_vc4_create_screen(fd);
+   else
+#if defined(USE_VC4_SIMULATOR)
+   if (strcmp(driver_name, "i965") == 0)
+      return pipe_vc4_create_screen(fd);
+   else
+#endif
 #endif
       return NULL;
 }

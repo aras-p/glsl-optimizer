@@ -1,0 +1,15 @@
+C_SOURCES := \
+	vc4_bufmgr.c \
+	vc4_cl.c \
+	vc4_context.c \
+	vc4_draw.c \
+	vc4_emit.c \
+	vc4_program.c \
+	vc4_qpu.c \
+	vc4_qpu_disasm.c \
+	vc4_qpu_validate.c \
+	vc4_resource.c \
+	vc4_screen.c \
+	vc4_simulator.c \
+	vc4_state.c \
+	$()

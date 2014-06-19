@@ -90,3 +90,11 @@ if NEED_GALLIUM_LLVMPIPE_DRIVER
 SUBDIRS += llvmpipe
 
 endif
+
+################################################################################
+
+if HAVE_GALLIUM_VC4
+
+SUBDIRS += vc4
+
+endif
