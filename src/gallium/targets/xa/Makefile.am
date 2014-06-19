@@ -40,11 +40,11 @@ nodist_EXTRA_libxatracker_la_SOURCES = dummy.cpp
 libxatracker_la_SOURCES =
 
 libxatracker_la_LIBADD = \
-	$(GALLIUM_PIPE_LOADER_LIBS) \
-	$(GALLIUM_PIPE_LOADER_WINSYS_LIBS) \
 	$(top_builddir)/src/gallium/auxiliary/pipe-loader/libpipe_loader.la \
 	$(top_builddir)/src/gallium/state_trackers/xa/libxatracker.la \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
+	$(GALLIUM_PIPE_LOADER_WINSYS_LIBS) \
+	$(GALLIUM_PIPE_LOADER_LIBS) \
 	$(LIBDRM_LIBS) \
 	$(GALLIUM_COMMON_LIB_DEPS)
 

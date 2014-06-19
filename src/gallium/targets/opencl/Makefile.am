@@ -17,11 +17,11 @@ lib@OPENCL_LIBNAME@_la_LDFLAGS += \
 endif
 
 lib@OPENCL_LIBNAME@_la_LIBADD = \
-	$(GALLIUM_PIPE_LOADER_CLIENT_LIBS) \
-	$(GALLIUM_PIPE_LOADER_WINSYS_LIBS) \
 	$(top_builddir)/src/gallium/auxiliary/pipe-loader/libpipe_loader_client.la \
 	$(top_builddir)/src/gallium/state_trackers/clover/libclover.la \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
+	$(GALLIUM_PIPE_LOADER_WINSYS_LIBS) \
+	$(GALLIUM_PIPE_LOADER_CLIENT_LIBS) \
 	-ldl \
 	-lclangCodeGen \
 	-lclangFrontendTool \

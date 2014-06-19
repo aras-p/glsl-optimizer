@@ -43,11 +43,11 @@ nodist_EXTRA_gbm_gallium_drm_la_SOURCES = dummy.cpp
 gbm_gallium_drm_la_SOURCES = gbm.c
 
 gbm_gallium_drm_la_LIBADD = \
-	$(GALLIUM_PIPE_LOADER_CLIENT_LIBS) \
-	$(GALLIUM_PIPE_LOADER_WINSYS_LIBS) \
 	$(top_builddir)/src/gallium/auxiliary/pipe-loader/libpipe_loader_client.la \
 	$(top_builddir)/src/gallium/state_trackers/gbm/libgbm.la \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
+	$(GALLIUM_PIPE_LOADER_WINSYS_LIBS) \
+	$(GALLIUM_PIPE_LOADER_CLIENT_LIBS) \
 	$(LIBDRM_LIBS) \
 	$(GALLIUM_COMMON_LIB_DEPS)
 

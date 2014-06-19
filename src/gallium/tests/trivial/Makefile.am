@@ -12,10 +12,10 @@ AM_CPPFLAGS = \
 	$(GALLIUM_PIPE_LOADER_DEFINES)
 
 LDADD = \
-	$(GALLIUM_PIPE_LOADER_CLIENT_LIBS) \
-	$(GALLIUM_PIPE_LOADER_WINSYS_LIBS) \
 	$(top_builddir)/src/gallium/auxiliary/pipe-loader/libpipe_loader_client.la \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
+	$(GALLIUM_PIPE_LOADER_WINSYS_LIBS) \
+	$(GALLIUM_PIPE_LOADER_CLIENT_LIBS) \
 	$(GALLIUM_COMMON_LIB_DEPS)
 
 noinst_PROGRAMS = compute tri quad-tex
