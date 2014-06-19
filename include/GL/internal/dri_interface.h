@@ -1005,7 +1005,7 @@ struct __DRIdri2ExtensionRec {
  * extensions.
  */
 #define __DRI_IMAGE "DRI_IMAGE"
-#define __DRI_IMAGE_VERSION 8
+#define __DRI_IMAGE_VERSION 9
 
 /**
  * These formats correspond to the similarly named MESA_FORMAT_*
@@ -1133,6 +1133,13 @@ enum __DRIChromaSiting {
 #define __DRI_IMAGE_ERROR_BAD_PARAMETER 3
 /*@}*/
 
+/**
+ * blitImage flags
+ */
+
+#define __BLIT_FLAG_FLUSH		0x0001
+#define __BLIT_FLAG_FINISH		0x0002
+
 typedef struct __DRIimageRec          __DRIimage;
 typedef struct __DRIimageExtensionRec __DRIimageExtension;
 struct __DRIimageExtensionRec {
@@ -1239,6 +1246,21 @@ struct __DRIimageExtensionRec {
                                          enum __DRIChromaSiting vert_siting,
                                          unsigned *error,
                                          void *loaderPrivate);
+
+   /**
+    * Blit a part of a __DRIimage to another and flushes
+    *
+    * flush_flag:
+    *    0:                  no flush
+    *    __BLIT_FLAG_FLUSH:  flush after the blit operation
+    *    __BLIT_FLAG_FINISH: flush and wait the blit finished
+    *
+    * \since 9
+    */
+   void (*blitImage)(__DRIcontext *context, __DRIimage *dst, __DRIimage *src,
+                     int dstx0, int dsty0, int dstwidth, int dstheight,
+                     int srcx0, int srcy0, int srcwidth, int srcheight,
+                     int flush_flag);
 };
 
 
