@@ -107,11 +107,14 @@ bool r600_init_resource(struct r600_common_screen *rscreen,
 {
 	struct r600_texture *rtex = (struct r600_texture*)res;
 	struct pb_buffer *old_buf, *new_buf;
+	enum radeon_bo_flag flags = 0;
 
 	switch (res->b.b.usage) {
-	case PIPE_USAGE_STAGING:
 	case PIPE_USAGE_DYNAMIC:
 	case PIPE_USAGE_STREAM:
+		flags = RADEON_FLAG_GTT_WC;
+		/* fall through */
+	case PIPE_USAGE_STAGING:
 		/* Transfers are likely to occur more often with these resources. */
 		res->domains = RADEON_DOMAIN_GTT;
 		break;
@@ -120,6 +123,7 @@ bool r600_init_resource(struct r600_common_screen *rscreen,
 	default:
 		/* Not listing GTT here improves performance in some apps. */
 		res->domains = RADEON_DOMAIN_VRAM;
+		flags = RADEON_FLAG_GTT_WC;
 		break;
 	}
 
@@ -129,6 +133,7 @@ bool r600_init_resource(struct r600_common_screen *rscreen,
 	    res->b.b.flags & (PIPE_RESOURCE_FLAG_MAP_PERSISTENT |
 			      PIPE_RESOURCE_FLAG_MAP_COHERENT)) {
 		res->domains = RADEON_DOMAIN_GTT;
+		flags = 0;
 	}
 
 	/* Tiled textures are unmappable. Always put them in VRAM. */
@@ -140,7 +145,7 @@ bool r600_init_resource(struct r600_common_screen *rscreen,
 	/* Allocate a new resource. */
 	new_buf = rscreen->ws->buffer_create(rscreen->ws, size, alignment,
 					     use_reusable_pool,
-					     res->domains);
+					     res->domains, flags);
 	if (!new_buf) {
 		return false;
 	}

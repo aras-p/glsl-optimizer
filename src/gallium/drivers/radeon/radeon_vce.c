@@ -191,7 +191,7 @@ static void rvce_destroy(struct pipe_video_codec *encoder)
 	struct rvce_encoder *enc = (struct rvce_encoder*)encoder;
 	if (enc->stream_handle) {
 		struct rvid_buffer fb;
-		rvid_create_buffer(enc->ws, &fb, 512, RADEON_DOMAIN_GTT);
+		rvid_create_buffer(enc->ws, &fb, 512, RADEON_DOMAIN_GTT, 0);
 		enc->fb = &fb;
 		enc->session(enc);
 		enc->feedback(enc);
@@ -233,7 +233,7 @@ static void rvce_begin_frame(struct pipe_video_codec *encoder,
 	if (!enc->stream_handle) {
 		struct rvid_buffer fb;
 		enc->stream_handle = rvid_alloc_stream_handle();
-		rvid_create_buffer(enc->ws, &fb, 512, RADEON_DOMAIN_GTT);
+		rvid_create_buffer(enc->ws, &fb, 512, RADEON_DOMAIN_GTT, 0);
 		enc->fb = &fb;
 		enc->session(enc);
 		enc->create(enc);
@@ -265,7 +265,7 @@ static void rvce_encode_bitstream(struct pipe_video_codec *encoder,
 	enc->bs_size = destination->width0;
 
 	*fb = enc->fb = CALLOC_STRUCT(rvid_buffer);
-	if (!rvid_create_buffer(enc->ws, enc->fb, 512, RADEON_DOMAIN_GTT)) {
+	if (!rvid_create_buffer(enc->ws, enc->fb, 512, RADEON_DOMAIN_GTT, 0)) {
 		RVID_ERR("Can't create feedback buffer.\n");
 		return;
 	}
@@ -390,7 +390,7 @@ struct pipe_video_codec *rvce_create_encoder(struct pipe_context *context,
 	cpb_size = cpb_size * 3 / 2;
 	cpb_size = cpb_size * enc->cpb_num;
 	tmp_buf->destroy(tmp_buf);
-	if (!rvid_create_buffer(enc->ws, &enc->cpb, cpb_size, RADEON_DOMAIN_VRAM)) {
+	if (!rvid_create_buffer(enc->ws, &enc->cpb, cpb_size, RADEON_DOMAIN_VRAM, 0)) {
 		RVID_ERR("Can't create CPB buffer.\n");
 		goto error;
 	}

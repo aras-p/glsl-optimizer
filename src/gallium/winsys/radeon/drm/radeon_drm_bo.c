@@ -477,6 +477,10 @@ const struct pb_vtbl radeon_bo_vtbl = {
     radeon_bo_get_base_buffer,
 };
 
+#ifndef RADEON_GEM_GTT_WC
+#define RADEON_GEM_GTT_WC (1 << 2)
+#endif
+
 static struct pb_buffer *radeon_bomgr_create_bo(struct pb_manager *_mgr,
                                                 pb_size size,
                                                 const struct pb_desc *desc)
@@ -497,6 +501,10 @@ static struct pb_buffer *radeon_bomgr_create_bo(struct pb_manager *_mgr,
     args.size = size;
     args.alignment = desc->alignment;
     args.initial_domain = rdesc->initial_domains;
+    args.flags = 0;
+
+    if (rdesc->flags & RADEON_FLAG_GTT_WC)
+        args.flags |= RADEON_GEM_GTT_WC;
 
     if (drmCommandWriteRead(rws->fd, DRM_RADEON_GEM_CREATE,
                             &args, sizeof(args))) {
@@ -504,6 +512,7 @@ static struct pb_buffer *radeon_bomgr_create_bo(struct pb_manager *_mgr,
         fprintf(stderr, "radeon:    size      : %d bytes\n", size);
         fprintf(stderr, "radeon:    alignment : %d bytes\n", desc->alignment);
         fprintf(stderr, "radeon:    domains   : %d\n", args.initial_domain);
+        fprintf(stderr, "radeon:    flags     : %d\n", args.flags);
         return NULL;
     }
 
@@ -784,7 +793,8 @@ radeon_winsys_bo_create(struct radeon_winsys *rws,
                         unsigned size,
                         unsigned alignment,
                         boolean use_reusable_pool,
-                        enum radeon_bo_domain domain)
+                        enum radeon_bo_domain domain,
+                        enum radeon_bo_flag flags)
 {
     struct radeon_drm_winsys *ws = radeon_drm_winsys(rws);
     struct radeon_bomgr *mgr = radeon_bomgr(ws->kman);
@@ -798,13 +808,20 @@ radeon_winsys_bo_create(struct radeon_winsys *rws,
     /* Additional criteria for the cache manager. */
     desc.base.usage = domain;
     desc.initial_domains = domain;
+    desc.flags = flags;
 
     /* Assign a buffer manager. */
     if (use_reusable_pool) {
-        if (domain == RADEON_DOMAIN_VRAM)
-            provider = ws->cman_vram;
-        else
+        if (domain == RADEON_DOMAIN_VRAM) {
+            if (flags & RADEON_FLAG_GTT_WC)
+                provider = ws->cman_vram_gtt_wc;
+            else
+                provider = ws->cman_vram;
+        } else if (flags & RADEON_FLAG_GTT_WC) {
+            provider = ws->cman_gtt_wc;
+        } else {
             provider = ws->cman_gtt;
+        }
     } else {
         provider = ws->kman;
     }

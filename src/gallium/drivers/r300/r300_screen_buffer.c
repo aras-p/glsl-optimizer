@@ -103,7 +103,7 @@ r300_buffer_transfer_map( struct pipe_context *context,
             /* Create a new one in the same pipe_resource. */
             new_buf = r300->rws->buffer_create(r300->rws, rbuf->b.b.width0,
                                                R300_BUFFER_ALIGNMENT, TRUE,
-                                               rbuf->domain);
+                                               rbuf->domain, 0);
             if (new_buf) {
                 /* Discard the old buffer. */
                 pb_reference(&rbuf->buf, NULL);
@@ -185,7 +185,7 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
     rbuf->buf =
         r300screen->rws->buffer_create(r300screen->rws, rbuf->b.b.width0,
                                        R300_BUFFER_ALIGNMENT, TRUE,
-                                       rbuf->domain);
+                                       rbuf->domain, 0);
     if (!rbuf->buf) {
         FREE(rbuf);
         return NULL;

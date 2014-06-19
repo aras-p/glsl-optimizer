@@ -1027,6 +1027,8 @@ static void *r600_texture_transfer_map(struct pipe_context *ctx,
 
 		r600_init_temp_resource_from_box(&resource, texture, box, level,
 						 R600_RESOURCE_FLAG_TRANSFER);
+		resource.usage = (usage & PIPE_TRANSFER_READ) ?
+			PIPE_USAGE_STAGING : PIPE_USAGE_STREAM;
 
 		/* Create the temporary texture. */
 		staging = (struct r600_texture*)ctx->screen->resource_create(ctx->screen, &resource);

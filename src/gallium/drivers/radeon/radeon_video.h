@@ -44,6 +44,7 @@
 struct rvid_buffer
 {
 	enum radeon_bo_domain		domain;
+	enum radeon_bo_flag		flags;
 	struct pb_buffer*		buf;
 	struct radeon_winsys_cs_handle*	cs_handle;
 };
@@ -53,7 +54,8 @@ unsigned rvid_alloc_stream_handle(void);
 
 /* create a buffer in the winsys */
 bool rvid_create_buffer(struct radeon_winsys *ws, struct rvid_buffer *buffer,
-			unsigned size, enum radeon_bo_domain domain);
+			unsigned size, enum radeon_bo_domain domain,
+			enum radeon_bo_flag flags);
 
 /* destroy a buffer */
 void rvid_destroy_buffer(struct rvid_buffer *buffer);

@@ -42,6 +42,7 @@ struct radeon_bo_desc {
     struct pb_desc base;
 
     unsigned initial_domains;
+    unsigned flags;
 };
 
 struct radeon_bo {

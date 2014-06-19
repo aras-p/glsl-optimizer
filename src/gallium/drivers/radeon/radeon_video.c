@@ -61,11 +61,13 @@ unsigned rvid_alloc_stream_handle()
 
 /* create a buffer in the winsys */
 bool rvid_create_buffer(struct radeon_winsys *ws, struct rvid_buffer *buffer,
-			unsigned size, enum radeon_bo_domain domain)
+			unsigned size, enum radeon_bo_domain domain,
+			enum radeon_bo_flag flags)
 {
 	buffer->domain = domain;
+	buffer->flags = flags;
 
-	buffer->buf = ws->buffer_create(ws, size, 4096, false, domain);
+	buffer->buf = ws->buffer_create(ws, size, 4096, false, domain, flags);
 	if (!buffer->buf)
 		return false;
 
@@ -91,7 +93,8 @@ bool rvid_resize_buffer(struct radeon_winsys *ws, struct radeon_winsys_cs *cs,
 	struct rvid_buffer old_buf = *new_buf;
 	void *src = NULL, *dst = NULL;
 
-	if (!rvid_create_buffer(ws, new_buf, new_size, new_buf->domain))
+	if (!rvid_create_buffer(ws, new_buf, new_size, new_buf->domain,
+                                new_buf->flags))
 		goto error;
 
 	src = ws->buffer_map(old_buf.cs_handle, cs, PIPE_TRANSFER_READ);
@@ -191,7 +194,7 @@ void rvid_join_surfaces(struct radeon_winsys* ws, unsigned bind,
 	/* TODO: 2D tiling workaround */
 	alignment *= 2;
 
-	pb = ws->buffer_create(ws, size, alignment, bind, RADEON_DOMAIN_VRAM);
+	pb = ws->buffer_create(ws, size, alignment, bind, RADEON_DOMAIN_VRAM, 0);
 	if (!pb)
 		return;
 

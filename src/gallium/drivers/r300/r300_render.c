@@ -907,7 +907,7 @@ static boolean r300_render_allocate_vertices(struct vbuf_render* render,
         r300->vbo = rws->buffer_create(rws,
                                        MAX2(R300_MAX_DRAW_VBO_SIZE, size),
                                        R300_BUFFER_ALIGNMENT, TRUE,
-                                       RADEON_DOMAIN_GTT);
+                                       RADEON_DOMAIN_GTT, 0);
         if (!r300->vbo) {
             return FALSE;
         }

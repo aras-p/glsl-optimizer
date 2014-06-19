@@ -65,6 +65,10 @@ enum radeon_bo_domain { /* bitfield */
     RADEON_DOMAIN_VRAM_GTT = RADEON_DOMAIN_VRAM | RADEON_DOMAIN_GTT
 };
 
+enum radeon_bo_flag { /* bitfield */
+   RADEON_FLAG_GTT_WC = (1 << 0)
+};
+
 enum radeon_bo_usage { /* bitfield */
     RADEON_USAGE_READ = 2,
     RADEON_USAGE_WRITE = 4,
@@ -287,7 +291,8 @@ struct radeon_winsys {
                                        unsigned size,
                                        unsigned alignment,
                                        boolean use_reusable_pool,
-                                       enum radeon_bo_domain domain);
+                                       enum radeon_bo_domain domain,
+                                       enum radeon_bo_flag flags);
 
     struct radeon_winsys_cs_handle *(*buffer_get_cs_handle)(
             struct pb_buffer *buf);

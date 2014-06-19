@@ -2697,7 +2697,7 @@ static void si_set_border_colors(struct si_context *sctx, unsigned count,
 
 				sctx->border_color_table =
 					si_resource_create_custom(&sctx->screen->b.b,
-								  PIPE_USAGE_STAGING,
+								  PIPE_USAGE_DYNAMIC,
 								  4096 * 4 * 4);
 			}
 
