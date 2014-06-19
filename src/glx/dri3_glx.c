@@ -1308,9 +1308,14 @@ static const __DRIimageLoaderExtension imageLoaderExtension = {
    .flushFrontBuffer    = dri3_flush_front_buffer,
 };
 
+const __DRIuseInvalidateExtension dri3UseInvalidate = {
+   .base = { __DRI_USE_INVALIDATE, 1 }
+};
+
 static const __DRIextension *loader_extensions[] = {
    &imageLoaderExtension.base,
    &systemTimeExtension.base,
+   &dri3UseInvalidate.base,
    NULL
 };
 
@@ -1383,6 +1388,8 @@ dri3_swap_buffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
       if (priv->stamp)
          ++(*priv->stamp);
    }
+
+   (*psc->f->invalidate)(priv->driDrawable);
 
    return ret;
 }
