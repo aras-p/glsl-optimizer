@@ -272,28 +272,30 @@ setup_coord_transform(GLuint prog, const struct blit_dims *dims)
 }
 
 static GLuint
-setup_program(struct gl_context *ctx, bool msaa_tex)
+setup_program(struct brw_context *brw, bool msaa_tex)
 {
+   struct gl_context *ctx = &brw->ctx;
    struct blit_state *blit = &ctx->Meta->Blit;
-   static GLuint prog_cache[] = { 0, 0 };
    char *fs_source;
    const struct sampler_and_fetch *sampler = &samplers[msaa_tex];
 
    _mesa_meta_setup_vertex_objects(&blit->VAO, &blit->VBO, true, 2, 2, 0);
 
-   if (prog_cache[msaa_tex]) {
-      _mesa_UseProgram(prog_cache[msaa_tex]);
-      return prog_cache[msaa_tex];
+   GLuint *prog_id = &brw->meta_stencil_blit_programs[msaa_tex];
+
+   if (*prog_id) {
+      _mesa_UseProgram(*prog_id);
+      return *prog_id;
    }
   
    fs_source = ralloc_asprintf(NULL, fs_tmpl, sampler->sampler,
                                sampler->fetch);
    _mesa_meta_compile_and_link_program(ctx, vs_source, fs_source,
                                        "i965 stencil blit",
-                                       &prog_cache[msaa_tex]);
+                                       prog_id);
    ralloc_free(fs_source);
 
-   return prog_cache[msaa_tex];
+   return *prog_id;
 }
 
 /**
@@ -427,7 +429,7 @@ brw_meta_stencil_blit(struct brw_context *brw,
    _mesa_TexParameteri(target, GL_DEPTH_STENCIL_TEXTURE_MODE,
                        GL_STENCIL_INDEX);
 
-   prog = setup_program(ctx, target != GL_TEXTURE_2D);
+   prog = setup_program(brw, target != GL_TEXTURE_2D);
    setup_bounding_rect(prog, orig_dims);
    setup_drawing_rect(prog, &dims);
    setup_coord_transform(prog, orig_dims);
