@@ -26,6 +26,9 @@
 #ifndef GLSL_LINKER_H
 #define GLSL_LINKER_H
 
+ir_function_signature *
+link_get_main_function_signature(gl_shader *sh);
+
 extern bool
 link_function_calls(gl_shader_program *prog, gl_shader *main,
 		    gl_shader **shader_list, unsigned num_shaders);

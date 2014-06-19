@@ -1115,8 +1115,8 @@ move_non_declarations(exec_list *instructions, exec_node *last,
 /**
  * Get the function signature for main from a shader
  */
-static ir_function_signature *
-get_main_function_signature(gl_shader *sh)
+ir_function_signature *
+link_get_main_function_signature(gl_shader *sh)
 {
    ir_function *const f = sh->symbols->get_function("main");
    if (f != NULL) {
@@ -1644,7 +1644,7 @@ link_intrastage_shaders(void *mem_ctx,
     */
    gl_shader *main = NULL;
    for (unsigned i = 0; i < num_shaders; i++) {
-      if (get_main_function_signature(shader_list[i]) != NULL) {
+      if (link_get_main_function_signature(shader_list[i]) != NULL) {
 	 main = shader_list[i];
 	 break;
       }
@@ -1673,7 +1673,8 @@ link_intrastage_shaders(void *mem_ctx,
    /* The a pointer to the main function in the final linked shader (i.e., the
     * copy of the original shader that contained the main function).
     */
-   ir_function_signature *const main_sig = get_main_function_signature(linked);
+   ir_function_signature *const main_sig =
+      link_get_main_function_signature(linked);
 
    /* Move any instructions other than variable declarations or function
     * declarations into main.
