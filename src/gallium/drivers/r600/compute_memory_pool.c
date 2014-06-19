@@ -323,8 +323,11 @@ int compute_memory_promote_item(struct compute_memory_pool *pool,
 		int64_t need = item->size_in_dw + 2048 -
 			(pool->size_in_dw - allocated);
 
-		if (need < 0) {
-			need = pool->size_in_dw / 10;
+		if (need <= 0) {
+			/* There's enough free space, but it's too
+			 * fragmented. Assume half of the item can fit
+			 * int the last chunk */
+			need = (item->size_in_dw / 2) + ITEM_ALIGNMENT;
 		}
 
 		need = align(need, ITEM_ALIGNMENT);
