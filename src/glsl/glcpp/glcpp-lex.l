@@ -161,7 +161,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 }
 
 	/* Multi-line comments */
-"/*"                    { yy_push_state(COMMENT, yyscanner); }
+<DEFINE,INITIAL>"/*"                    { yy_push_state(COMMENT, yyscanner); }
 <COMMENT>[^*\n]*
 <COMMENT>[^*\n]*\n      { yylineno++; yycolumn = 0; parser->commented_newlines++; }
 <COMMENT>"*"+[^*/\n]*
@@ -241,25 +241,59 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	glcpp_error(yylloc, yyextra, "#error%s", p);
 }
 
+	/* After we see a "#define" we enter the <DEFINE> start state
+	 * for the lexer. Within <DEFINE> we are looking for the first
+	 * identifier and specifically checking whether the identifier
+	 * is followed by a '(' or not, (to lex either a
+	 * FUNC_IDENTIFIER or an OBJ_IDENITIFIER token).
+	 *
+	 * While in the <DEFINE> state we also need to explicitly
+	 * handle a few other things that may appear before the
+	 * identifier:
+	 * 
+	 * 	* Comments, (handled above with the main support for
+	 * 	  comments).
+	 *
+	 *	* Whitespace (simply ignored)
+	 *
+	 *	* Anything else, (not an identifier, not a comment,
+	 *	  and not whitespace). This will generate an error.
+	 */
 {HASH}define{HSPACE}+ {
 	yyextra->space_tokens = 0;
 	yy_push_state(DEFINE, yyscanner);
 	return HASH_DEFINE;
 }
 
+	/* An identifier immediately followed by '(' */
 <DEFINE>{IDENTIFIER}/"(" {
 	yy_pop_state(yyscanner);
 	yylval->str = ralloc_strdup (yyextra, yytext);
 	return FUNC_IDENTIFIER;
 }
 
+	/* An identifier not immediately followed by '(' */
 <DEFINE>{IDENTIFIER} {
 	yy_pop_state(yyscanner);
 	yylval->str = ralloc_strdup (yyextra, yytext);
 	return OBJ_IDENTIFIER;
 }
 
-<DEFINE>[^_a-zA-Z]{NONSPACE}* {
+	/* Whitespace */
+<DEFINE>{HSPACE}+ {
+	/* Just ignore it. Nothing to do here. */
+}
+
+	/* '/' not followed by '*', so not a comment. This is an error. */
+<DEFINE>[/][^*]{NONSPACE}* {
+	BEGIN INITIAL;
+	glcpp_error(yylloc, yyextra, "#define followed by a non-identifier: %s", yytext);
+	return INTEGER_STRING;
+}
+
+	/* A character that can't start an identifier, comment, or
+	 * space. This is an error. */
+<DEFINE>[^_a-zA-Z/[:space:]]{NONSPACE}* {
 	BEGIN INITIAL;
 	glcpp_error(yylloc, yyextra, "#define followed by a non-identifier: %s", yytext);
 	return INTEGER_STRING;
