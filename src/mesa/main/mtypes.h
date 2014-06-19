@@ -2083,6 +2083,8 @@ typedef enum
     *
     * gl_VertexID gets basevertex added in.  This differs from DirectX where
     * SV_VertexID does \b not get basevertex added in.
+    *
+    * \sa SYSTEM_VALUE_VERTEX_ID_ZERO_BASE
     */
    SYSTEM_VALUE_VERTEX_ID,
 
@@ -2114,6 +2116,16 @@ typedef enum
     * Note that baseinstance is \b not included in the value of instance.
     */
    SYSTEM_VALUE_INSTANCE_ID,
+
+   /**
+    * DirectX-style vertex ID.
+    *
+    * Unlike \c SYSTEM_VALUE_VERTEX_ID, this system value does \b not include
+    * the value of basevertex.
+    *
+    * \sa SYSTEM_VALUE_VERTEX_ID, SYSTEM_VALUE_BASE_VERTEX
+    */
+   SYSTEM_VALUE_VERTEX_ID_ZERO_BASE,
    /*@}*/
 
    /**
