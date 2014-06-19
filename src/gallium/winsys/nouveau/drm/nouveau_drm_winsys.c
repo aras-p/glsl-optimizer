@@ -1,4 +1,5 @@
 #include <sys/stat.h>
+#include <unistd.h>
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
 #include "util/u_format.h"
@@ -59,7 +60,7 @@ nouveau_drm_screen_create(int fd)
 	struct nouveau_device *dev = NULL;
 	struct pipe_screen *(*init)(struct nouveau_device *);
 	struct nouveau_screen *screen;
-	int ret;
+	int ret, dupfd = -1;
 
 	pipe_mutex_lock(nouveau_screen_mutex);
 	if (!fd_tab) {
@@ -75,7 +76,17 @@ nouveau_drm_screen_create(int fd)
 		return &screen->base;
 	}
 
-	ret = nouveau_device_wrap(fd, 0, &dev);
+	/* Since the screen re-use is based on the device node and not the fd,
+	 * create a copy of the fd to be owned by the device. Otherwise a
+	 * scenario could occur where two screens are created, and the first
+	 * one is shut down, along with the fd being closed. The second
+	 * (identical) screen would now have a reference to the closed fd. We
+	 * avoid this by duplicating the original fd. Note that
+	 * nouveau_device_wrap does not close the fd in case of a device
+	 * creation error.
+	 */
+	dupfd = dup(fd);
+	ret = nouveau_device_wrap(dupfd, 1, &dev);
 	if (ret)
 		goto err;
 
@@ -115,6 +126,10 @@ nouveau_drm_screen_create(int fd)
 	return &screen->base;
 
 err:
+	if (dev)
+		nouveau_device_del(&dev);
+	else if (dupfd >= 0)
+		close(dupfd);
 	pipe_mutex_unlock(nouveau_screen_mutex);
 	return NULL;
 }
