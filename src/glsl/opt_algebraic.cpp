@@ -614,6 +614,42 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
 
       break;
 
+   case ir_binop_min:
+   case ir_binop_max:
+      if (ir->type->base_type != GLSL_TYPE_FLOAT)
+         break;
+
+      /* Replace min(max) operations and its commutative combinations with
+       * a saturate operation
+       */
+      for (int op = 0; op < 2; op++) {
+         ir_expression *minmax = op_expr[op];
+         ir_constant *outer_const = op_const[1 - op];
+         ir_expression_operation op_cond = (ir->operation == ir_binop_max) ?
+            ir_binop_min : ir_binop_max;
+
+         if (!minmax || !outer_const || (minmax->operation != op_cond))
+            continue;
+
+         /* Found a min(max) combination. Now try to see if its operands
+          * meet our conditions that we can do just a single saturate operation
+          */
+         for (int minmax_op = 0; minmax_op < 2; minmax_op++) {
+            ir_rvalue *inner_val_a = minmax->operands[minmax_op];
+            ir_rvalue *inner_val_b = minmax->operands[1 - minmax_op];
+
+            if (!inner_val_a || !inner_val_b)
+               continue;
+
+            /* Found a {min|max} ({max|min} (x, 0.0), 1.0) operation and its variations */
+            if ((outer_const->is_one() && inner_val_a->is_zero()) ||
+                (inner_val_a->is_one() && outer_const->is_zero()))
+               return saturate(inner_val_b);
+         }
+      }
+
+      break;
+
    case ir_unop_rcp:
       if (op_expr[0] && op_expr[0]->operation == ir_unop_rcp)
 	 return op_expr[0]->operands[0];
