@@ -241,6 +241,7 @@ ir_validate::visit_leave(ir_expression *ir)
    case ir_unop_log:
    case ir_unop_exp2:
    case ir_unop_log2:
+   case ir_unop_saturate:
       assert(ir->operands[0]->type->base_type == GLSL_TYPE_FLOAT);
       assert(ir->type == ir->operands[0]->type);
       break;

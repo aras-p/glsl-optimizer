@@ -1250,6 +1250,7 @@ enum ir_expression_operation {
    ir_unop_find_lsb,
    /*@}*/
 
+   ir_unop_saturate,
    ir_unop_noise,
 
    /**

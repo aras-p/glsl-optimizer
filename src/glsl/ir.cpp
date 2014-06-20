@@ -255,6 +255,7 @@ ir_expression::ir_expression(int op, ir_rvalue *op0)
    case ir_unop_dFdy_fine:
    case ir_unop_bitfield_reverse:
    case ir_unop_interpolate_at_centroid:
+   case ir_unop_saturate:
       this->type = op0->type;
       break;
 
@@ -534,6 +535,7 @@ static const char *const operator_strs[] = {
    "bit_count",
    "find_msb",
    "find_lsb",
+   "sat",
    "noise",
    "interpolate_at_centroid",
    "+",
