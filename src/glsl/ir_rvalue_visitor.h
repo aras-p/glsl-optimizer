@@ -41,6 +41,7 @@ public:
    ir_visitor_status rvalue_visit(ir_return *);
    ir_visitor_status rvalue_visit(ir_swizzle *);
    ir_visitor_status rvalue_visit(ir_texture *);
+   ir_visitor_status rvalue_visit(ir_emit_vertex *);
 
    virtual void handle_rvalue(ir_rvalue **rvalue) = 0;
 };
@@ -57,6 +58,7 @@ public:
    virtual ir_visitor_status visit_leave(ir_return *);
    virtual ir_visitor_status visit_leave(ir_swizzle *);
    virtual ir_visitor_status visit_leave(ir_texture *);
+   virtual ir_visitor_status visit_leave(ir_emit_vertex *);
 };
 
 class ir_rvalue_enter_visitor : public ir_rvalue_base_visitor {
@@ -71,4 +73,5 @@ public:
    virtual ir_visitor_status visit_enter(ir_return *);
    virtual ir_visitor_status visit_enter(ir_swizzle *);
    virtual ir_visitor_status visit_enter(ir_texture *);
+   virtual ir_visitor_status visit_enter(ir_emit_vertex *);
 };

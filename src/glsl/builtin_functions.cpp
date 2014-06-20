@@ -3872,7 +3872,8 @@ builtin_builder::_EmitVertex()
 {
    MAKE_SIG(glsl_type::void_type, gs_only, 0);
 
-   body.emit(new(mem_ctx) ir_emit_vertex());
+   ir_rvalue *stream = new(mem_ctx) ir_constant(0, 1);
+   body.emit(new(mem_ctx) ir_emit_vertex(stream));
 
    return sig;
 }

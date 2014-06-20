@@ -114,7 +114,7 @@ public:
       return visit_continue_with_parent;
    }
 
-   virtual ir_visitor_status visit(ir_emit_vertex *)
+   virtual ir_visitor_status visit_leave(ir_emit_vertex *)
    {
       /* For the purpose of dead code elimination, emitting a vertex counts as
        * "reading" all of the currently assigned output variables.

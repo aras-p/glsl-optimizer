@@ -87,7 +87,6 @@ public:
    virtual ir_visitor_status visit(class ir_variable *);
    virtual ir_visitor_status visit(class ir_constant *);
    virtual ir_visitor_status visit(class ir_loop_jump *);
-   virtual ir_visitor_status visit(class ir_emit_vertex *);
    virtual ir_visitor_status visit(class ir_end_primitive *);
 
    /**
@@ -137,6 +136,8 @@ public:
    virtual ir_visitor_status visit_leave(class ir_discard *);
    virtual ir_visitor_status visit_enter(class ir_if *);
    virtual ir_visitor_status visit_leave(class ir_if *);
+   virtual ir_visitor_status visit_enter(class ir_emit_vertex *);
+   virtual ir_visitor_status visit_leave(class ir_emit_vertex *);
    /*@}*/
 
 

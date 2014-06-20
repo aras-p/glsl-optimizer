@@ -149,6 +149,12 @@ ir_rvalue_base_visitor::rvalue_visit(ir_if *ir)
    return visit_continue;
 }
 
+ir_visitor_status
+ir_rvalue_base_visitor::rvalue_visit(ir_emit_vertex *ir)
+{
+   handle_rvalue(&ir->stream);
+   return visit_continue;
+}
 
 ir_visitor_status
 ir_rvalue_visitor::visit_leave(ir_expression *ir)
@@ -205,6 +211,12 @@ ir_rvalue_visitor::visit_leave(ir_if *ir)
 }
 
 ir_visitor_status
+ir_rvalue_visitor::visit_leave(ir_emit_vertex *ir)
+{
+   return rvalue_visit(ir);
+}
+
+ir_visitor_status
 ir_rvalue_enter_visitor::visit_enter(ir_expression *ir)
 {
    return rvalue_visit(ir);
@@ -254,6 +266,12 @@ ir_rvalue_enter_visitor::visit_enter(ir_return *ir)
 
 ir_visitor_status
 ir_rvalue_enter_visitor::visit_enter(ir_if *ir)
+{
+   return rvalue_visit(ir);
+}
+
+ir_visitor_status
+ir_rvalue_enter_visitor::visit_enter(ir_emit_vertex *ir)
 {
    return rvalue_visit(ir);
 }

@@ -613,7 +613,7 @@ public:
    explicit lower_packed_varyings_gs_splicer(void *mem_ctx,
                                              const exec_list *instructions);
 
-   virtual ir_visitor_status visit(ir_emit_vertex *ev);
+   virtual ir_visitor_status visit_leave(ir_emit_vertex *ev);
 
 private:
    /**
@@ -637,7 +637,7 @@ lower_packed_varyings_gs_splicer::lower_packed_varyings_gs_splicer(
 
 
 ir_visitor_status
-lower_packed_varyings_gs_splicer::visit(ir_emit_vertex *ev)
+lower_packed_varyings_gs_splicer::visit_leave(ir_emit_vertex *ev)
 {
    foreach_list(node, this->instructions) {
       ir_instruction *ir = (ir_instruction *) node;
