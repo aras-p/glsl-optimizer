@@ -177,6 +177,7 @@ struct glcpp_parser {
 	active_list_t *active;
 	int lexing_directive;
 	int space_tokens;
+	int last_token_was_newline;
 	int newline_as_space;
 	int in_control_line;
 	int paren_count;

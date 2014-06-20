@@ -60,6 +60,16 @@ void glcpp_set_column (int  column_no , yyscan_t yyscanner);
 		yycolumn = 1;		\
 		yylloc->source = 0;	\
 	} while(0)
+
+#define RETURN_TOKEN(token)					\
+	do {							\
+		if (token == NEWLINE)				\
+			parser->last_token_was_newline = 1;	\
+		else						\
+			parser->last_token_was_newline = 0;	\
+		return (token);					\
+	} while(0)
+
 %}
 
 %option bison-bridge bison-locations reentrant noyywrap
@@ -111,7 +121,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 			parser->commented_newlines--;
 		if (parser->commented_newlines == 0)
 			BEGIN INITIAL;
-		return NEWLINE;
+		RETURN_TOKEN (NEWLINE);
 	}
 
 	/* The handling of the SKIP vs INITIAL start states requires
@@ -169,13 +179,13 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 <COMMENT>"*"+"/"        {
 	yy_pop_state(yyscanner);
 	if (yyextra->space_tokens)
-		return SPACE;
+		RETURN_TOKEN (SPACE);
 }
 
 {HASH}version{HSPACE}+ {
 	yylval->str = ralloc_strdup (yyextra, yytext);
 	yyextra->space_tokens = 0;
-	return HASH_VERSION;
+	RETURN_TOKEN (HASH_VERSION);
 }
 
 	/* glcpp doesn't handle #extension, #version, or #pragma directives.
@@ -184,46 +194,46 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	yylval->str = ralloc_strdup (yyextra, yytext);
 	yylineno++;
 	yycolumn = 0;
-	return OTHER;
+	RETURN_TOKEN (OTHER);
 }
 
 {HASH}line{HSPACE}+ {
-	return HASH_LINE;
+	RETURN_TOKEN (HASH_LINE);
 }
 
 <SKIP,INITIAL>{
 {HASH}ifdef {
 	yyextra->lexing_directive = 1;
 	yyextra->space_tokens = 0;
-	return HASH_IFDEF;
+	RETURN_TOKEN (HASH_IFDEF);
 }
 
 {HASH}ifndef {
 	yyextra->lexing_directive = 1;
 	yyextra->space_tokens = 0;
-	return HASH_IFNDEF;
+	RETURN_TOKEN (HASH_IFNDEF);
 }
 
 {HASH}if/[^_a-zA-Z0-9] {
 	yyextra->lexing_directive = 1;
 	yyextra->space_tokens = 0;
-	return HASH_IF;
+	RETURN_TOKEN (HASH_IF);
 }
 
 {HASH}elif/[^_a-zA-Z0-9] {
 	yyextra->lexing_directive = 1;
 	yyextra->space_tokens = 0;
-	return HASH_ELIF;
+	RETURN_TOKEN (HASH_ELIF);
 }
 
 {HASH}else {
 	yyextra->space_tokens = 0;
-	return HASH_ELSE;
+	RETURN_TOKEN (HASH_ELSE);
 }
 
 {HASH}endif {
 	yyextra->space_tokens = 0;
-	return HASH_ENDIF;
+	RETURN_TOKEN (HASH_ENDIF);
 }
 }
 
@@ -258,21 +268,21 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 {HASH}define{HSPACE}+ {
 	yyextra->space_tokens = 0;
 	yy_push_state(DEFINE, yyscanner);
-	return HASH_DEFINE;
+	RETURN_TOKEN (HASH_DEFINE);
 }
 
 	/* An identifier immediately followed by '(' */
 <DEFINE>{IDENTIFIER}/"(" {
 	yy_pop_state(yyscanner);
 	yylval->str = ralloc_strdup (yyextra, yytext);
-	return FUNC_IDENTIFIER;
+	RETURN_TOKEN (FUNC_IDENTIFIER);
 }
 
 	/* An identifier not immediately followed by '(' */
 <DEFINE>{IDENTIFIER} {
 	yy_pop_state(yyscanner);
 	yylval->str = ralloc_strdup (yyextra, yytext);
-	return OBJ_IDENTIFIER;
+	RETURN_TOKEN (OBJ_IDENTIFIER);
 }
 
 	/* Whitespace */
@@ -284,7 +294,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 <DEFINE>[/][^*]{NONSPACE}* {
 	BEGIN INITIAL;
 	glcpp_error(yylloc, yyextra, "#define followed by a non-identifier: %s", yytext);
-	return INTEGER_STRING;
+	RETURN_TOKEN (INTEGER_STRING);
 }
 
 	/* A character that can't start an identifier, comment, or
@@ -292,98 +302,98 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 <DEFINE>[^_a-zA-Z/[:space:]]{NONSPACE}* {
 	BEGIN INITIAL;
 	glcpp_error(yylloc, yyextra, "#define followed by a non-identifier: %s", yytext);
-	return INTEGER_STRING;
+	RETURN_TOKEN (INTEGER_STRING);
 }
 
 {HASH}undef {
 	yyextra->space_tokens = 0;
-	return HASH_UNDEF;
+	RETURN_TOKEN (HASH_UNDEF);
 }
 
 {HASH} {
 	yyextra->space_tokens = 0;
-	return HASH;
+	RETURN_TOKEN (HASH);
 }
 
 {DECIMAL_INTEGER} {
 	yylval->str = ralloc_strdup (yyextra, yytext);
-	return INTEGER_STRING;
+	RETURN_TOKEN (INTEGER_STRING);
 }
 
 {OCTAL_INTEGER} {
 	yylval->str = ralloc_strdup (yyextra, yytext);
-	return INTEGER_STRING;
+	RETURN_TOKEN (INTEGER_STRING);
 }
 
 {HEXADECIMAL_INTEGER} {
 	yylval->str = ralloc_strdup (yyextra, yytext);
-	return INTEGER_STRING;
+	RETURN_TOKEN (INTEGER_STRING);
 }
 
 "<<"  {
-	return LEFT_SHIFT;
+	RETURN_TOKEN (LEFT_SHIFT);
 }
 
 ">>" {
-	return RIGHT_SHIFT;
+	RETURN_TOKEN (RIGHT_SHIFT);
 }
 
 "<=" {
-	return LESS_OR_EQUAL;
+	RETURN_TOKEN (LESS_OR_EQUAL);
 }
 
 ">=" {
-	return GREATER_OR_EQUAL;
+	RETURN_TOKEN (GREATER_OR_EQUAL);
 }
 
 "==" {
-	return EQUAL;
+	RETURN_TOKEN (EQUAL);
 }
 
 "!=" {
-	return NOT_EQUAL;
+	RETURN_TOKEN (NOT_EQUAL);
 }
 
 "&&" {
-	return AND;
+	RETURN_TOKEN (AND);
 }
 
 "||" {
-	return OR;
+	RETURN_TOKEN (OR);
 }
 
 "##" {
 	if (parser->is_gles)
 		glcpp_error(yylloc, yyextra, "Token pasting (##) is illegal in GLES");
-	return PASTE;
+	RETURN_TOKEN (PASTE);
 }
 
 "defined" {
-	return DEFINED;
+	RETURN_TOKEN (DEFINED);
 }
 
 {IDENTIFIER} {
 	yylval->str = ralloc_strdup (yyextra, yytext);
-	return IDENTIFIER;
+	RETURN_TOKEN (IDENTIFIER);
 }
 
 {PP_NUMBER} {
 	yylval->str = ralloc_strdup (yyextra, yytext);
-	return OTHER;
+	RETURN_TOKEN (OTHER);
 }
 
 {PUNCTUATION} {
-	return yytext[0];
+	RETURN_TOKEN (yytext[0]);
 }
 
 {OTHER}+ {
 	yylval->str = ralloc_strdup (yyextra, yytext);
-	return OTHER;
+	RETURN_TOKEN (OTHER);
 }
 
 {HSPACE} {
 	if (yyextra->space_tokens) {
-		return SPACE;
+		RETURN_TOKEN (SPACE);
 	}
 }
 
@@ -395,7 +405,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	yyextra->lexing_directive = 0;
 	yylineno++;
 	yycolumn = 0;
-	return NEWLINE;
+	RETURN_TOKEN (NEWLINE);
 }
 
 <INITIAL,COMMENT,DEFINE><<EOF>> {
@@ -405,7 +415,8 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 		glcpp_error(yylloc, yyextra, "#define without macro name");
 	BEGIN DONE; /* Don't keep matching this rule forever. */
 	yyextra->lexing_directive = 0;
-	return NEWLINE;
+	if (! parser->last_token_was_newline)
+		RETURN_TOKEN (NEWLINE);
 }
 
 	/* We don't actually use the UNREACHABLE start condition. We

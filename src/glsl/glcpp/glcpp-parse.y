@@ -1308,6 +1308,7 @@ glcpp_parser_create (const struct gl_extensions *extensions, gl_api api)
 	parser->active = NULL;
 	parser->lexing_directive = 0;
 	parser->space_tokens = 1;
+        parser->last_token_was_newline = 0;
 	parser->newline_as_space = 0;
 	parser->in_control_line = 0;
 	parser->paren_count = 0;
