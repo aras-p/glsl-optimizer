@@ -338,6 +338,7 @@ dri_open_driver(struct gbm_dri_device *dri)
    if (dri->driver == NULL) {
       fprintf(stderr, "gbm: failed to open any driver (search paths %s)\n",
               search_paths);
+      fprintf(stderr, "gbm: Last dlopen error: %s\n", dlerror());
       return NULL;
    }
 
