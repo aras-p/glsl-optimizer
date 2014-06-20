@@ -1315,6 +1315,7 @@ glcpp_parser_create (const struct gl_extensions *extensions, gl_api api)
         parser->commented_newlines = 0;
 
 	parser->skip_stack = NULL;
+	parser->skipping = 0;
 
 	parser->lex_from_list = NULL;
 	parser->lex_from_node = NULL;

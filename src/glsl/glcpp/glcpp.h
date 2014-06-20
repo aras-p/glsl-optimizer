@@ -183,6 +183,7 @@ struct glcpp_parser {
 	int paren_count;
 	int commented_newlines;
 	skip_node_t *skip_stack;
+	int skipping;
 	token_list_t *lex_from_list;
 	token_node_t *lex_from_node;
 	char *output;

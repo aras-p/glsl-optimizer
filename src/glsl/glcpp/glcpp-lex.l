@@ -61,19 +61,52 @@ void glcpp_set_column (int  column_no , yyscan_t yyscanner);
 		yylloc->source = 0;	\
 	} while(0)
 
-#define RETURN_TOKEN(token)					\
+/* It's ugly to have macros that have return statements inside of
+ * them, but flex-based lexer generation is all built around the
+ * return statement.
+ *
+ * To mitigate the ugliness, we defer as much of the logic as possible
+ * to an actual function, not a macro (see
+ * glcpplex_update_state_per_token) and we make the word RETURN
+ * prominent in all of the macros which may return.
+ *
+ * The most-commonly-used macro is RETURN_TOKEN which will perform all
+ * necessary state updates based on the provided token,, then
+ * conditionally return the token. It will not return a token if the
+ * parser is currently skipping tokens, (such as within #if
+ * 0...#else).
+ *
+ * The RETURN_TOKEN_NEVER_SKIP macro is a lower-level variant that
+ * makes the token returning unconditional. This is needed for things
+ * like #if and the tokens of its condition, (since these must be
+ * evaluated by the parser even when otherwise skipping).
+ *
+ * Finally, RETURN_STRING_TOKEN is a simple convenience wrapper on top
+ * of RETURN_TOKEN that performs a string copy of yytext before the
+ * return.
+ */
+#define RETURN_TOKEN_NEVER_SKIP(token)				\
 	do {							\
 		if (token == NEWLINE)				\
 			parser->last_token_was_newline = 1;	\
 		else						\
 			parser->last_token_was_newline = 0;	\
 		return (token);					\
+	} while (0)
+
+#define RETURN_TOKEN(token)						\
+	do {								\
+		if (! parser->skipping) {				\
+			RETURN_TOKEN_NEVER_SKIP(token);			\
+		}							\
 	} while(0)
 
-#define RETURN_STRING_TOKEN(token)				\
-	do {							\
-		yylval->str = ralloc_strdup (yyextra, yytext);	\
-		RETURN_TOKEN (token);				\
+#define RETURN_STRING_TOKEN(token)					\
+	do {								\
+		if (! parser->skipping) {				\
+			yylval->str = ralloc_strdup (yyextra, yytext);	\
+			RETURN_TOKEN_NEVER_SKIP (token);		\
+		}							\
 	} while(0)
 
 %}
@@ -84,7 +117,7 @@ void glcpp_set_column (int  column_no , yyscan_t yyscanner);
 %option stack
 %option never-interactive
 
-%x DONE COMMENT UNREACHABLE SKIP DEFINE NEWLINE_CATCHUP
+%x DONE COMMENT UNREACHABLE DEFINE NEWLINE_CATCHUP
 
 SPACE		[[:space:]]
 NONSPACE	[^[:space:]]
@@ -130,46 +163,42 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 		RETURN_TOKEN (NEWLINE);
 	}
 
-	/* The handling of the SKIP vs INITIAL start states requires
-	 * some special handling. Typically, a lexer would change
-	 * start states with statements like "BEGIN SKIP" within the
-	 * lexer rules. We can't get away with that here, since we
-	 * need the parser to actually evaluate expressions for
-	 * directives like "#if".
+	/* Set up the parser->skipping bit here before doing any lexing.
 	 *
-	 * So, here, in code that will be executed on every call to
-	 * the lexer,and before any rules, we examine the skip_stack
-	 * as set by the parser to know whether to change from INITIAL
-	 * to SKIP or from SKIP back to INITIAL.
+	 * This bit controls whether tokens are skipped, (as implemented by
+         * RETURN_TOKEN), such as between "#if 0" and "#endif".
 	 *
-	 * Three cases cause us to switch out of the SKIP state and
-	 * back to the INITIAL state:
+	 * The parser maintains a skip_stack indicating whether we should be
+         * skipping, (and nested levels of #if/#ifdef/#ifndef/#endif) will
+         * push and pop items from the stack.
 	 *
-	 *	1. The top of the skip_stack is of type SKIP_NO_SKIP
-	 *	   This means we're still evaluating some #if
-	 *	   hierarchy, but we're on a branch of it where
-	 *	   content should not be skipped (such as "#if 1" or
-	 *	   "#else" or so).
+	 * Here are the rules for determining whether we are skipping:
 	 *
-	 *	2. The skip_stack is NULL meaning that we've reached
-	 *	   the last #endif.
+	 *	1. If the skip stack is NULL, we are outside of all #if blocks
+	 *         and we are not skipping.
 	 *
-	 *	3. The lexing_directive bit is set. This indicates that we are
-	 *	   lexing a pre-processor directive, (such as #if, #elif, or
-	 *	   #else). For the #if and #elif directives we always need to
-	 *	   parse the conditions, (even if otherwise within an #if
-	 *	   0). And for #else, we want to be able to generate an error
-	 *	   if any garbage follows #else.
+	 *	2. If the skip stack is non-NULL, the type of the top node in
+	 *	   the stack determines whether to skip. A type of
+	 *	   SKIP_NO_SKIP is used for blocks wheere we are emitting
+	 *	   tokens, (such as between #if 1 and #endif, or after the
+	 *	   #else of an #if 0, etc.).
+	 *
+	 *	3. The lexing_directive bit overrides the skip stack. This bit
+	 *	   is set when we are actively lexing the expression for a
+	 *	   pre-processor condition, (such as #if, #elif, or #else). In
+	 *	   this case, even if otherwise skipping, we need to emit the
+	 *	   tokens for this condition so that the parser can evaluate
+	 *	   the expression. (For, #else, there's no expression, but we
+	 *	   emit tokens so the parser can generate a nice error message
+	 *	   if there are any tokens here).
 	 */
-	if (YY_START == INITIAL || YY_START == SKIP) {
-		if (parser->lexing_directive ||
-		    parser->skip_stack == NULL ||
-		    parser->skip_stack->type == SKIP_NO_SKIP)
-		{
-			BEGIN INITIAL;
-		} else {
-			BEGIN SKIP;
-		}
+	if (parser->skip_stack &&
+	    parser->skip_stack->type != SKIP_NO_SKIP &&
+	    ! parser->lexing_directive)
+	{
+		parser->skipping = 1;
+	} else {
+		parser->skipping = 0;
 	}
 
 	/* Single-line comments */
@@ -205,50 +234,49 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	RETURN_TOKEN (HASH_LINE);
 }
 
-<SKIP,INITIAL>{
+	/* For the pre-processor directives, we return these tokens
+	 * even when we are otherwise skipping. */
 {HASH}ifdef {
 	yyextra->lexing_directive = 1;
 	yyextra->space_tokens = 0;
-	RETURN_TOKEN (HASH_IFDEF);
+	RETURN_TOKEN_NEVER_SKIP (HASH_IFDEF);
 }
 
 {HASH}ifndef {
 	yyextra->lexing_directive = 1;
 	yyextra->space_tokens = 0;
-	RETURN_TOKEN (HASH_IFNDEF);
+	RETURN_TOKEN_NEVER_SKIP (HASH_IFNDEF);
 }
 
 {HASH}if/[^_a-zA-Z0-9] {
 	yyextra->lexing_directive = 1;
 	yyextra->space_tokens = 0;
-	RETURN_TOKEN (HASH_IF);
+	RETURN_TOKEN_NEVER_SKIP (HASH_IF);
 }
 
 {HASH}elif/[^_a-zA-Z0-9] {
 	yyextra->lexing_directive = 1;
 	yyextra->space_tokens = 0;
-	RETURN_TOKEN (HASH_ELIF);
+	RETURN_TOKEN_NEVER_SKIP (HASH_ELIF);
 }
 
 {HASH}else {
 	yyextra->space_tokens = 0;
-	RETURN_TOKEN (HASH_ELSE);
+	RETURN_TOKEN_NEVER_SKIP (HASH_ELSE);
 }
 
 {HASH}endif {
 	yyextra->space_tokens = 0;
-	RETURN_TOKEN (HASH_ENDIF);
-}
-}
-
-<SKIP>[^\n] {
+	RETURN_TOKEN_NEVER_SKIP (HASH_ENDIF);
 }
 
 {HASH}error.* {
-	char *p;
-	for (p = yytext; !isalpha(p[0]); p++); /* skip "  #   " */
-	p += 5; /* skip "error" */
-	glcpp_error(yylloc, yyextra, "#error%s", p);
+	if (! parser->skipping) {
+		char *p;
+		for (p = yytext; !isalpha(p[0]); p++); /* skip "  #   " */
+		p += 5; /* skip "error" */
+		glcpp_error(yylloc, yyextra, "#error%s", p);
+	}
 }
 
 	/* After we see a "#define" we enter the <DEFINE> start state
@@ -270,9 +298,11 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	 *	  and not whitespace). This will generate an error.
 	 */
 {HASH}define{HSPACE}+ {
-	yyextra->space_tokens = 0;
-	yy_push_state(DEFINE, yyscanner);
-	RETURN_TOKEN (HASH_DEFINE);
+	if (! parser->skipping) {
+		yyextra->space_tokens = 0;
+		yy_push_state(DEFINE, yyscanner);
+		RETURN_TOKEN (HASH_DEFINE);
+	}
 }
 
 	/* An identifier immediately followed by '(' */
@@ -362,9 +392,11 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 }
 
 "##" {
-	if (parser->is_gles)
-		glcpp_error(yylloc, yyextra, "Token pasting (##) is illegal in GLES");
-	RETURN_TOKEN (PASTE);
+	if (! parser->skipping) {
+		if (parser->is_gles)
+			glcpp_error(yylloc, yyextra, "Token pasting (##) is illegal in GLES");
+		RETURN_TOKEN (PASTE);
+	}
 }
 
 "defined" {
@@ -393,7 +425,9 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	}
 }
 
-<SKIP,INITIAL>\n {
+	/* We preserve all newlines, even between #if 0..#endif, so no
+	skipping.. */
+\n {
 	if (parser->commented_newlines) {
 		BEGIN NEWLINE_CATCHUP;
 	}
@@ -401,7 +435,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	yyextra->lexing_directive = 0;
 	yylineno++;
 	yycolumn = 0;
-	RETURN_TOKEN (NEWLINE);
+	RETURN_TOKEN_NEVER_SKIP (NEWLINE);
 }
 
 <INITIAL,COMMENT,DEFINE><<EOF>> {
