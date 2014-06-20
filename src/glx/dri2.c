@@ -131,10 +131,14 @@ DRI2WireToEvent(Display *dpy, XEvent *event, xEvent *wire)
       aevent->msc = ((CARD64)awire->msc_hi << 32) | awire->msc_lo;
 
       glxDraw = GetGLXDrawable(dpy, pdraw->drawable);
-      if (awire->sbc < glxDraw->lastEventSbc)
-	 glxDraw->eventSbcWrap += 0x100000000;
-      glxDraw->lastEventSbc = awire->sbc;
-      aevent->sbc = awire->sbc + glxDraw->eventSbcWrap;
+      if (glxDraw != NULL) {
+         if (awire->sbc < glxDraw->lastEventSbc)
+            glxDraw->eventSbcWrap += 0x100000000;
+         glxDraw->lastEventSbc = awire->sbc;
+         aevent->sbc = awire->sbc + glxDraw->eventSbcWrap;
+      } else {
+         aevent->sbc = awire->sbc;
+      }
 
       return True;
    }
