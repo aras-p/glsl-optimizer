@@ -3883,7 +3883,8 @@ builtin_builder::_EndPrimitive()
 {
    MAKE_SIG(glsl_type::void_type, gs_only, 0);
 
-   body.emit(new(mem_ctx) ir_end_primitive());
+   ir_rvalue *stream = new(mem_ctx) ir_constant(0, 1);
+   body.emit(new(mem_ctx) ir_end_primitive(stream));
 
    return sig;
 }

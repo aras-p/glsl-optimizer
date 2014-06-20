@@ -2192,9 +2192,11 @@ public:
  */
 class ir_end_primitive : public ir_instruction {
 public:
-   ir_end_primitive()
-      : ir_instruction(ir_type_end_primitive)
+   ir_end_primitive(ir_rvalue *stream)
+      : ir_instruction(ir_type_end_primitive),
+        stream(stream)
    {
+      assert(stream);
    }
 
    virtual void accept(ir_visitor *v)
@@ -2202,12 +2204,19 @@ public:
       v->visit(this);
    }
 
-   virtual ir_end_primitive *clone(void *mem_ctx, struct hash_table *) const
+   virtual ir_end_primitive *clone(void *mem_ctx, struct hash_table *ht) const
    {
-      return new(mem_ctx) ir_end_primitive();
+      return new(mem_ctx) ir_end_primitive(this->stream->clone(mem_ctx, ht));
    }
 
    virtual ir_visitor_status accept(ir_hierarchical_visitor *);
+
+   int stream_id() const
+   {
+      return stream->as_constant()->value.i[0];
+   }
+
+   ir_rvalue *stream;
 };
 
 /*@}*/
