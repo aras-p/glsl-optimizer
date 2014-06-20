@@ -398,8 +398,11 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	return NEWLINE;
 }
 
-	/* Handle missing newline at EOF. */
-<INITIAL><<EOF>> {
+<INITIAL,COMMENT,DEFINE><<EOF>> {
+	if (YY_START == COMMENT)
+		glcpp_error(yylloc, yyextra, "Unterminated comment");
+	if (YY_START == DEFINE)
+		glcpp_error(yylloc, yyextra, "#define without macro name");
 	BEGIN DONE; /* Don't keep matching this rule forever. */
 	yyextra->lexing_directive = 0;
 	return NEWLINE;
