@@ -2084,7 +2084,12 @@ typedef enum
     * gl_VertexID gets basevertex added in.  This differs from DirectX where
     * SV_VertexID does \b not get basevertex added in.
     *
-    * \sa SYSTEM_VALUE_VERTEX_ID_ZERO_BASE
+    * \note
+    * If all system values are available, \c SYSTEM_VALUE_VERTEX_ID will be
+    * equal to \c SYSTEM_VALUE_VERTEX_ID_ZERO_BASE plus
+    * \c SYSTEM_VALUE_BASE_VERTEX.
+    *
+    * \sa SYSTEM_VALUE_VERTEX_ID_ZERO_BASE, SYSTEM_VALUE_BASE_VERTEX
     */
    SYSTEM_VALUE_VERTEX_ID,
 
@@ -2126,6 +2131,14 @@ typedef enum
     * \sa SYSTEM_VALUE_VERTEX_ID, SYSTEM_VALUE_BASE_VERTEX
     */
    SYSTEM_VALUE_VERTEX_ID_ZERO_BASE,
+
+   /**
+    * Value of \c basevertex passed to \c glDrawElementsBaseVertex and similar
+    * functions.
+    *
+    * \sa SYSTEM_VALUE_VERTEX_ID, SYSTEM_VALUE_VERTEX_ID_ZERO_BASE
+    */
+   SYSTEM_VALUE_BASE_VERTEX,
    /*@}*/
 
    /**
