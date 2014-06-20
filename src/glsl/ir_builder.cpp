@@ -271,11 +271,7 @@ clamp(operand a, operand b, operand c)
 ir_expression *
 saturate(operand a)
 {
-   void *mem_ctx = ralloc_parent(a.val);
-
-   return expr(ir_binop_max,
-	       expr(ir_binop_min, a, new(mem_ctx) ir_constant(1.0f)),
-	       new(mem_ctx) ir_constant(0.0f));
+   return expr(ir_unop_saturate, a);
 }
 
 ir_expression *
