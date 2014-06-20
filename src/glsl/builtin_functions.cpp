@@ -359,6 +359,12 @@ shader_image_load_store(const _mesa_glsl_parse_state *state)
            state->ARB_shader_image_load_store_enable);
 }
 
+static bool
+gs_streams(const _mesa_glsl_parse_state *state)
+{
+   return gpu_shader5(state) && gs_only(state);
+}
+
 /** @} */
 
 /******************************************************************************/
@@ -594,6 +600,10 @@ private:
 
    B0(EmitVertex)
    B0(EndPrimitive)
+   ir_function_signature *_EmitStreamVertex(builtin_available_predicate avail,
+                                            const glsl_type *stream_type);
+   ir_function_signature *_EndStreamPrimitive(builtin_available_predicate avail,
+                                              const glsl_type *stream_type);
 
    B2(textureQueryLod);
    B1(textureQueryLevels);
@@ -1708,6 +1718,14 @@ builtin_builder::create_builtins()
 
    add_function("EmitVertex",   _EmitVertex(),   NULL);
    add_function("EndPrimitive", _EndPrimitive(), NULL);
+   add_function("EmitStreamVertex",
+                _EmitStreamVertex(gs_streams, glsl_type::uint_type),
+                _EmitStreamVertex(gs_streams, glsl_type::int_type),
+                NULL);
+   add_function("EndStreamPrimitive",
+                _EndStreamPrimitive(gs_streams, glsl_type::uint_type),
+                _EndStreamPrimitive(gs_streams, glsl_type::int_type),
+                NULL);
 
    add_function("textureQueryLOD",
                 _textureQueryLod(glsl_type::sampler1D_type,  glsl_type::float_type),
@@ -3879,12 +3897,52 @@ builtin_builder::_EmitVertex()
 }
 
 ir_function_signature *
+builtin_builder::_EmitStreamVertex(builtin_available_predicate avail,
+                                   const glsl_type *stream_type)
+{
+   /* Section 8.12 (Geometry Shader Functions) of the GLSL 4.0 spec says:
+    *
+    *     "Emit the current values of output variables to the current output
+    *     primitive on stream stream. The argument to stream must be a constant
+    *     integral expression."
+    */
+   ir_variable *stream =
+      new(mem_ctx) ir_variable(stream_type, "stream", ir_var_const_in);
+
+   MAKE_SIG(glsl_type::void_type, avail, 1, stream);
+
+   body.emit(new(mem_ctx) ir_emit_vertex(var_ref(stream)));
+
+   return sig;
+}
+
+ir_function_signature *
 builtin_builder::_EndPrimitive()
 {
    MAKE_SIG(glsl_type::void_type, gs_only, 0);
 
    ir_rvalue *stream = new(mem_ctx) ir_constant(0, 1);
    body.emit(new(mem_ctx) ir_end_primitive(stream));
+
+   return sig;
+}
+
+ir_function_signature *
+builtin_builder::_EndStreamPrimitive(builtin_available_predicate avail,
+                                     const glsl_type *stream_type)
+{
+   /* Section 8.12 (Geometry Shader Functions) of the GLSL 4.0 spec says:
+    *
+    *     "Completes the current output primitive on stream stream and starts
+    *     a new one. The argument to stream must be a constant integral
+    *     expression."
+    */
+   ir_variable *stream =
+      new(mem_ctx) ir_variable(stream_type, "stream", ir_var_const_in);
+
+   MAKE_SIG(glsl_type::void_type, avail, 1, stream);
+
+   body.emit(new(mem_ctx) ir_end_primitive(var_ref(stream)));
 
    return sig;
 }
