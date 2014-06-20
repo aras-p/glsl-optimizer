@@ -70,6 +70,12 @@ void glcpp_set_column (int  column_no , yyscan_t yyscanner);
 		return (token);					\
 	} while(0)
 
+#define RETURN_STRING_TOKEN(token)				\
+	do {							\
+		yylval->str = ralloc_strdup (yyextra, yytext);	\
+		RETURN_TOKEN (token);				\
+	} while(0)
+
 %}
 
 %option bison-bridge bison-locations reentrant noyywrap
@@ -183,18 +189,16 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 }
 
 {HASH}version{HSPACE}+ {
-	yylval->str = ralloc_strdup (yyextra, yytext);
 	yyextra->space_tokens = 0;
-	RETURN_TOKEN (HASH_VERSION);
+	RETURN_STRING_TOKEN (HASH_VERSION);
 }
 
 	/* glcpp doesn't handle #extension, #version, or #pragma directives.
 	 * Simply pass them through to the main compiler's lexer/parser. */
 {HASH}(extension|pragma)[^\n]* {
-	yylval->str = ralloc_strdup (yyextra, yytext);
 	yylineno++;
 	yycolumn = 0;
-	RETURN_TOKEN (OTHER);
+	RETURN_STRING_TOKEN (OTHER);
 }
 
 {HASH}line{HSPACE}+ {
@@ -274,15 +278,13 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	/* An identifier immediately followed by '(' */
 <DEFINE>{IDENTIFIER}/"(" {
 	yy_pop_state(yyscanner);
-	yylval->str = ralloc_strdup (yyextra, yytext);
-	RETURN_TOKEN (FUNC_IDENTIFIER);
+	RETURN_STRING_TOKEN (FUNC_IDENTIFIER);
 }
 
 	/* An identifier not immediately followed by '(' */
 <DEFINE>{IDENTIFIER} {
 	yy_pop_state(yyscanner);
-	yylval->str = ralloc_strdup (yyextra, yytext);
-	RETURN_TOKEN (OBJ_IDENTIFIER);
+	RETURN_STRING_TOKEN (OBJ_IDENTIFIER);
 }
 
 	/* Whitespace */
@@ -294,7 +296,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 <DEFINE>[/][^*]{NONSPACE}* {
 	BEGIN INITIAL;
 	glcpp_error(yylloc, yyextra, "#define followed by a non-identifier: %s", yytext);
-	RETURN_TOKEN (INTEGER_STRING);
+	RETURN_STRING_TOKEN (INTEGER_STRING);
 }
 
 	/* A character that can't start an identifier, comment, or
@@ -302,7 +304,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 <DEFINE>[^_a-zA-Z/[:space:]]{NONSPACE}* {
 	BEGIN INITIAL;
 	glcpp_error(yylloc, yyextra, "#define followed by a non-identifier: %s", yytext);
-	RETURN_TOKEN (INTEGER_STRING);
+	RETURN_STRING_TOKEN (INTEGER_STRING);
 }
 
 {HASH}undef {
@@ -316,18 +318,15 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 }
 
 {DECIMAL_INTEGER} {
-	yylval->str = ralloc_strdup (yyextra, yytext);
-	RETURN_TOKEN (INTEGER_STRING);
+	RETURN_STRING_TOKEN (INTEGER_STRING);
 }
 
 {OCTAL_INTEGER} {
-	yylval->str = ralloc_strdup (yyextra, yytext);
-	RETURN_TOKEN (INTEGER_STRING);
+	RETURN_STRING_TOKEN (INTEGER_STRING);
 }
 
 {HEXADECIMAL_INTEGER} {
-	yylval->str = ralloc_strdup (yyextra, yytext);
-	RETURN_TOKEN (INTEGER_STRING);
+	RETURN_STRING_TOKEN (INTEGER_STRING);
 }
 
 "<<"  {
@@ -373,13 +372,11 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 }
 
 {IDENTIFIER} {
-	yylval->str = ralloc_strdup (yyextra, yytext);
-	RETURN_TOKEN (IDENTIFIER);
+	RETURN_STRING_TOKEN (IDENTIFIER);
 }
 
 {PP_NUMBER} {
-	yylval->str = ralloc_strdup (yyextra, yytext);
-	RETURN_TOKEN (OTHER);
+	RETURN_STRING_TOKEN (OTHER);
 }
 
 {PUNCTUATION} {
@@ -387,8 +384,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 }
 
 {OTHER}+ {
-	yylval->str = ralloc_strdup (yyextra, yytext);
-	RETURN_TOKEN (OTHER);
+	RETURN_STRING_TOKEN (OTHER);
 }
 
 {HSPACE} {
