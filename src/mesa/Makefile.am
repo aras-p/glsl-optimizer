@@ -64,6 +64,7 @@ include Makefile.sources
 
 BUILT_SOURCES = \
 	main/get_hash.h \
+        main/format_info.c \
 	$(BUILDDIR)main/git_sha1.h \
 	$(BUILDDIR)program/program_parse.tab.c \
 	$(BUILDDIR)program/lex.yy.c
@@ -80,6 +81,15 @@ main/get_hash.h: $(GLAPI)/gl_and_es_API.xml main/get_hash_params.py 	\
 	$(PYTHON2) $(PYTHON_FLAGS) $(srcdir)/$(GET_HASH_GEN)		\
 		-f $< > $@.tmp;						\
 	mv $@.tmp $@;
+
+main/format_info.c: main/formats.csv                                    \
+                    main/format_parser.py main/format_info.py
+	$(AM_V_GEN)set -e;						\
+	$(PYTHON2) $(PYTHON_FLAGS) $(srcdir)/main/format_info.py        \
+                   $< > $@.tmp;                                         \
+	mv $@.tmp $@;
+
+main/formats.c: main/format_info.c
 
 noinst_LTLIBRARIES = $(ARCH_LIBS)
 if NEED_LIBMESA

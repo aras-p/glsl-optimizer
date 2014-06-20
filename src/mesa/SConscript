@@ -59,6 +59,13 @@ get_hash_header = env.CodeGenerate(
       command = python_cmd + ' $SCRIPT ' + ' -f $SOURCE > $TARGET'
 )
 
+format_info = env.CodeGenerate(
+      target = 'main/format_info.c',
+      script = 'main/format_info.py',
+      source = 'main/formats.csv',
+      command = python_cmd + ' $SCRIPT ' + ' $SOURCE > $TARGET'
+)
+
 #
 # Assembly sources
 #
