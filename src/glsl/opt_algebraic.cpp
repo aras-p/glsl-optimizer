@@ -110,6 +110,33 @@ is_vec_basis(ir_constant *ir)
    return (ir == NULL) ? false : ir->is_basis();
 }
 
+static inline bool
+is_valid_vec_const(ir_constant *ir)
+{
+   if (ir == NULL)
+      return false;
+
+   if (!ir->type->is_scalar() && !ir->type->is_vector())
+      return false;
+
+   return true;
+}
+
+static inline bool
+is_less_than_one(ir_constant *ir)
+{
+   if (!is_valid_vec_const(ir))
+      return false;
+
+   unsigned component = 0;
+   for (int c = 0; c < ir->type->vector_elements; c++) {
+      if (ir->get_float_component(c) < 1.0f)
+         component++;
+   }
+
+   return (component == ir->type->vector_elements);
+}
+
 static void
 update_type(ir_expression *ir)
 {
@@ -645,6 +672,18 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
             if ((outer_const->is_one() && inner_val_a->is_zero()) ||
                 (inner_val_a->is_one() && outer_const->is_zero()))
                return saturate(inner_val_b);
+
+            /* Found a {min|max} ({max|min} (x, 0.0), b) where b < 1.0
+             * and its variations
+             */
+            if (is_less_than_one(outer_const) && inner_val_b->is_zero())
+               return expr(ir_binop_min, saturate(inner_val_a), outer_const);
+
+            if (!inner_val_b->as_constant())
+               continue;
+
+            if (is_less_than_one(inner_val_b->as_constant()) && outer_const->is_zero())
+               return expr(ir_binop_min, saturate(inner_val_a), inner_val_b);
          }
       }
 
