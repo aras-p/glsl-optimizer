@@ -95,10 +95,6 @@ if HAVE_DRI2
 SUBDIRS += radeonsi/dri
 endif
 
-if HAVE_ST_VDPAU
-SUBDIRS += radeonsi/vdpau
-endif
-
 if HAVE_ST_OMX
 SUBDIRS += radeonsi/omx
 endif

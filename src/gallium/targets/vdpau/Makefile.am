@@ -52,6 +52,11 @@ endif
 if HAVE_GALLIUM_R600
 STATIC_TARGET_LIB_DEPS += \
 	$(top_builddir)/src/gallium/winsys/radeon/drm/libradeonwinsys.la
+else
+if HAVE_GALLIUM_RADEONSI
+STATIC_TARGET_LIB_DEPS += \
+	$(top_builddir)/src/gallium/winsys/radeon/drm/libradeonwinsys.la
+endif
 endif
 
 if HAVE_GALLIUM_RADEON_COMMON
@@ -64,6 +69,14 @@ MEGADRIVERS += r600
 STATIC_TARGET_CPPFLAGS += -DGALLIUM_R600
 STATIC_TARGET_LIB_DEPS += \
 	$(top_builddir)/src/gallium/drivers/r600/libr600.la \
+	$(RADEON_LIBS)
+endif
+
+if HAVE_GALLIUM_RADEONSI
+MEGADRIVERS += radeonsi
+STATIC_TARGET_CPPFLAGS += -DGALLIUM_RADEONSI
+STATIC_TARGET_LIB_DEPS += \
+	$(top_builddir)/src/gallium/drivers/radeonsi/libradeonsi.la \
 	$(RADEON_LIBS)
 endif
 
