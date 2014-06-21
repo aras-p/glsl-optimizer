@@ -1926,7 +1926,7 @@ if test -n "$with_gallium_drivers"; then
             PKG_CHECK_MODULES([INTEL], [libdrm_intel >= $LIBDRM_INTEL_REQUIRED])
             gallium_require_drm_loader
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i915"
-            gallium_check_st "i915/drm" "dri-i915" "xa/i915"
+            gallium_check_st "i915/drm" "dri/i915" "xa/i915"
             ;;
         xilo)
             HAVE_GALLIUM_ILO=yes
@@ -2208,7 +2208,6 @@ AC_CONFIG_FILES([Makefile
 		src/gallium/state_trackers/xa/Makefile
 		src/gallium/state_trackers/xvmc/Makefile
 		src/gallium/targets/Makefile
-		src/gallium/targets/dri-i915/Makefile
 		src/gallium/targets/dri-ilo/Makefile
 		src/gallium/targets/dri-swrast/Makefile
 		src/gallium/targets/dri-vmwgfx/Makefile
