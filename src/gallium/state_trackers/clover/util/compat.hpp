@@ -72,7 +72,7 @@ namespace clover {
          vector(const vector &v) : p(alloc(v.n, v.p, v.n)), n(v.n) {
          }
 
-         vector(iterator p, size_type n) : p(alloc(n, p, n)), n(n) {
+         vector(const_iterator p, size_type n) : p(alloc(n, p, n)), n(n) {
          }
 
          template<typename C>
@@ -263,13 +263,13 @@ namespace clover {
          size_t offset;
       };
 
-      class string : public vector_ref<const char> {
+      class string : public vector<char> {
       public:
-         string(const char *p) : vector_ref(p, std::strlen(p)) {
+         string(const char *p) : vector(p, std::strlen(p)) {
          }
 
          template<typename C>
-         string(const C &v) : vector_ref(v) {
+         string(const C &v) : vector(v) {
          }
 
          operator std::string() const {
