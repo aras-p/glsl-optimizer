@@ -152,7 +152,7 @@ struct _mesa_glsl_parse_state {
    }
 
    bool check_explicit_uniform_location_allowed(YYLTYPE *locp,
-                                                const ir_variable *var)
+                                                const ir_variable *)
    {
       if (!this->has_explicit_attrib_location() ||
           !this->ARB_explicit_uniform_location_enable) {
