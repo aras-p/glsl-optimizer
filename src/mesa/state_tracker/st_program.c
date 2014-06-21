@@ -572,6 +572,11 @@ st_translate_fragment_program(struct st_context *st,
             input_semantic_index[slot] = 0;
             interpMode[slot] = TGSI_INTERPOLATE_CONSTANT;
             break;
+         case VARYING_SLOT_LAYER:
+            input_semantic_name[slot] = TGSI_SEMANTIC_LAYER;
+            input_semantic_index[slot] = 0;
+            interpMode[slot] = TGSI_INTERPOLATE_CONSTANT;
+            break;
          case VARYING_SLOT_VIEWPORT:
             input_semantic_name[slot] = TGSI_SEMANTIC_VIEWPORT_INDEX;
             input_semantic_index[slot] = 0;
