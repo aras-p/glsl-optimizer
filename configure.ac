@@ -1962,7 +1962,7 @@ if test -n "$with_gallium_drivers"; then
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS radeonsi"
             radeon_llvm_check "radeonsi"
             require_egl_drm "radeonsi"
-            gallium_check_st "radeon/drm" "radeonsi/dri" "" "" "vdpau/radeonsi" "radeonsi/omx"
+            gallium_check_st "radeon/drm" "radeonsi/dri" "" "" "vdpau/radeonsi" "omx/radeonsi"
             DRICOMMON_NEED_LIBDRM=yes
             ;;
         xnouveau)
@@ -2223,7 +2223,6 @@ AC_CONFIG_FILES([Makefile
 		src/gallium/targets/r300/dri/Makefile
 		src/gallium/targets/r600/dri/Makefile
 		src/gallium/targets/radeonsi/dri/Makefile
-		src/gallium/targets/radeonsi/omx/Makefile
 		src/gallium/targets/vdpau/Makefile
 		src/gallium/targets/xa/Makefile
 		src/gallium/targets/xa/xatracker.pc

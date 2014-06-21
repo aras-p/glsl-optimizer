@@ -59,20 +59,10 @@ GALLIUM_DRI_LINKER_FLAGS = \
 	-avoid-version \
 	$(GC_SECTIONS)
 
-GALLIUM_OMX_LINKER_FLAGS = \
-	-shared \
-	-module \
-	-no-undefined \
-	-avoid-version \
-	$(GC_SECTIONS) \
-	$(LD_NO_UNDEFINED)
-
 if HAVE_LD_VERSION_SCRIPT
 GALLIUM_DRI_LINKER_FLAGS += \
 	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/dri.sym
 
-GALLIUM_OMX_LINKER_FLAGS += \
-	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/omx/omx.sym
 endif
 
 
@@ -90,12 +80,6 @@ GALLIUM_DRI_LIB_DEPS = \
 	$(EXPAT_LIBS) \
 	$(GALLIUM_COMMON_LIB_DEPS)
 
-GALLIUM_OMX_LIB_DEPS = \
-	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
-	$(top_builddir)/src/gallium/state_trackers/omx/libomxtracker.la \
-	$(OMX_LIBS) \
-	$(GALLIUM_COMMON_LIB_DEPS)
-
 GALLIUM_WINSYS_CFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/src/gallium/include \
@@ -104,13 +88,8 @@ GALLIUM_WINSYS_CFLAGS = \
 	$(VISIBILITY_CFLAGS)
 
 if HAVE_MESA_LLVM
-
 GALLIUM_DRI_LINKER_FLAGS += $(LLVM_LDFLAGS)
-GALLIUM_OMX_LINKER_FLAGS += $(LLVM_LDFLAGS)
-
 GALLIUM_DRI_LIB_DEPS += $(LLVM_LIBS)
-GALLIUM_OMX_LIB_DEPS += $(LLVM_LIBS)
-
 endif
 
 

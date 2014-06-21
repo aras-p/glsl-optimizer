@@ -94,10 +94,6 @@ if HAVE_GALLIUM_RADEONSI
 if HAVE_DRI2
 SUBDIRS += radeonsi/dri
 endif
-
-if HAVE_ST_OMX
-SUBDIRS += radeonsi/omx
-endif
 endif
 
 if HAVE_GALLIUM_NOUVEAU
