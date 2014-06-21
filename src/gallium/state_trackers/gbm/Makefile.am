@@ -26,9 +26,17 @@ include $(top_srcdir)/src/gallium/Automake.inc
 AM_CFLAGS = \
 	$(GALLIUM_CFLAGS) \
 	$(VISIBILITY_CFLAGS)
+
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/gbm/main \
-	-I$(top_srcdir)/include
+	$(GALLIUM_PIPE_LOADER_DEFINES) \
+	-DPIPE_SEARCH_DIR=\"$(libdir)/gallium-pipe\"
+
+if HAVE_GALLIUM_STATIC_TARGETS
+AM_CPPFLAGS += \
+	-DGALLIUM_STATIC_TARGETS=1
+endif
+
 if HAVE_EGL_PLATFORM_WAYLAND
 AM_CFLAGS += $(WAYLAND_CFLAGS)
 AM_CPPFLAGS += -DHAVE_WAYLAND_PLATFORM

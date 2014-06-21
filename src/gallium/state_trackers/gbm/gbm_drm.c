@@ -28,6 +28,7 @@
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
 
+#include "pipe-loader/pipe_loader.h"
 #include "state_tracker/drm_driver.h"
 
 #include <unistd.h>
@@ -223,17 +224,40 @@ gbm_gallium_drm_destroy(struct gbm_device *gbm)
 {
    struct gbm_gallium_drm_device *gdrm = gbm_gallium_drm_device(gbm);
 
-   gallium_screen_destroy(gdrm);
-   FREE(gdrm);
+   free(gdrm->base.driver_name);
+   gdrm->screen->destroy(gdrm->screen);
+#if !GALLIUM_STATIC_TARGETS
+   pipe_loader_release(&gdrm->dev, 1);
+#endif
+   free(gdrm);
 }
 
-struct gbm_device *
+#if !GALLIUM_STATIC_TARGETS
+#ifdef HAVE_PIPE_LOADER_DRM
+static const char *
+get_library_search_path(void)
+{
+   const char *search_path = NULL;
+
+   /* don't allow setuid apps to use GBM_BACKENDS_PATH */
+   if (geteuid() == getuid())
+      search_path = getenv("GBM_BACKENDS_PATH");
+   if (search_path == NULL)
+      search_path = PIPE_SEARCH_DIR;
+
+   return search_path;
+}
+#endif
+#endif
+
+static struct gbm_device *
 gbm_gallium_drm_device_create(int fd)
 {
    struct gbm_gallium_drm_device *gdrm;
-   int ret;
 
    gdrm = calloc(1, sizeof *gdrm);
+   if (!gdrm)
+      return NULL;
 
    gdrm->base.base.fd = fd;
    gdrm->base.base.bo_create = gbm_gallium_drm_bo_create;
@@ -245,11 +269,34 @@ gbm_gallium_drm_device_create(int fd)
    gdrm->base.type = GBM_DRM_DRIVER_TYPE_GALLIUM;
    gdrm->base.base.name = "drm";
 
-   ret = gallium_screen_create(gdrm);
-   if (ret) {
-      free(gdrm);
-      return NULL;
-   }
+#if GALLIUM_STATIC_TARGETS
+   gdrm->screen = dd_create_screen(gdrm->base.base.fd);
+#else
+#ifdef HAVE_PIPE_LOADER_DRM
+   if (pipe_loader_drm_probe_fd(&gdrm->dev, gdrm->base.base.fd, true))
+      gdrm->screen = pipe_loader_create_screen(gdrm->dev,
+                                               get_library_search_path());
+#endif /* HAVE_PIPE_LOADER_DRM */
+#endif
 
+   if (gdrm->screen == NULL)
+      goto out_no_screen;
+
+   gdrm->base.driver_name = strdup(gdrm->dev->driver_name);
    return &gdrm->base.base;
+
+out_no_screen:
+   debug_printf("failed to load driver: %s\n", gdrm->dev->driver_name);
+#if !GALLIUM_STATIC_TARGETS
+   if (gdrm->dev)
+      pipe_loader_release(&gdrm->dev, 1);
+#endif
+   free(gdrm);
+   return NULL;
 }
+
+
+GBM_EXPORT struct gbm_backend gbm_backend = {
+   .backend_name = "gallium_drm",
+   .create_device = gbm_gallium_drm_device_create,
+};
