@@ -2119,7 +2119,7 @@ _glcpp_parser_skip_stack_change_if (glcpp_parser_t *parser, YYLTYPE *loc,
 				    const char *type, int condition)
 {
 	if (parser->skip_stack == NULL) {
-		glcpp_error (loc, parser, "%s without #if\n", type);
+		glcpp_error (loc, parser, "#%s without #if\n", type);
 		return;
 	}
 
