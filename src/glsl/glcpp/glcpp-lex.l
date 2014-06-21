@@ -57,7 +57,7 @@ void glcpp_set_column (int  column_no , yyscan_t yyscanner);
 #define YY_USER_INIT			\
 	do {				\
 		yylineno = 1;		\
-		yycolumn = 1;		\
+		yycolumn = 0;		\
 		yylloc->source = 0;	\
 	} while(0)
 
