@@ -144,8 +144,12 @@ xa_tracker_create(int drm_fd)
     if (!xa)
 	return NULL;
 
+#if GALLIUM_STATIC_TARGETS
+    xa->screen = dd_create_screen(drm_fd);
+#else
     if (pipe_loader_drm_probe_fd(&xa->dev, drm_fd, false))
 	xa->screen = pipe_loader_create_screen(xa->dev, PIPE_SEARCH_DIR);
+#endif
     if (!xa->screen)
 	goto out_no_screen;
 
@@ -192,8 +196,10 @@ xa_tracker_create(int drm_fd)
  out_no_pipe:
     xa->screen->destroy(xa->screen);
  out_no_screen:
+#if !GALLIUM_STATIC_TARGETS
     if (xa->dev)
 	pipe_loader_release(&xa->dev, 1);
+#endif
     free(xa);
     return NULL;
 }
@@ -204,7 +210,9 @@ xa_tracker_destroy(struct xa_tracker *xa)
     free(xa->supported_formats);
     xa_context_destroy(xa->default_ctx);
     xa->screen->destroy(xa->screen);
+#if !GALLIUM_STATIC_TARGETS
     pipe_loader_release(&xa->dev, 1);
+#endif
     free(xa);
 }
 
