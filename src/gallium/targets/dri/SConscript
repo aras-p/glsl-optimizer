@@ -18,11 +18,16 @@ if env['build'] == 'release':
     env.Append(CPPDEFINES = ['GALLIUM_RBUG'])
     env.Prepend(LIBS = [rbug])
 else:
-    env.Append(CPPDEFINES = ['GALLIUM_TRACE', 'GALLIUM_RBUG', 'GALLIUM_GALAHAD', 'GALLIUM_SOFTPIPE'])
-    env.Prepend(LIBS = [trace, rbug, galahad, softpipe, ws_wrapper])
+    env.Append(CPPDEFINES = ['GALLIUM_TRACE', 'GALLIUM_RBUG', 'GALLIUM_GALAHAD'])
+    env.Prepend(LIBS = [trace, rbug, galahad])
+
+if env['llvm']:
+    env.Append(CPPDEFINES = 'GALLIUM_LLVMPIPE')
+    env.Prepend(LIBS = [llvmpipe])
 
 env.Append(CPPDEFINES = [
     'GALLIUM_VMWGFX',
+    'GALLIUM_SOFTPIPE',
     'DRI_TARGET',
 ])
 
@@ -30,6 +35,8 @@ env.Prepend(LIBS = [
     st_dri,
     svgadrm,
     svga,
+    ws_dri,
+    softpipe,
     libloader,
     mesa,
     glsl,
@@ -39,9 +46,15 @@ env.Prepend(LIBS = [
 ])
 
 module = env.LoadableModule(
-    target = 'vmwgfx_dri.so',
+    target = 'gallium_dri.so',
     source = 'target.c',
     SHLIBPREFIX = '',
 )
 
+# vmwgfx_dri.so
+env.Command('vmwgfx_dri.so', 'gallium_dri.so', "ln -f ${SOURCE} ${TARGET}")
+# swrast_dri.so
+env.Command('swrast_dri.so', 'gallium_dri.so', "ln -f ${SOURCE} ${TARGET}")
+
 env.Alias('dri-vmwgfx', module)
+env.Alias('dri-swrast', module)

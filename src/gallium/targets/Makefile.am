@@ -24,6 +24,10 @@ SUBDIRS =
 
 if HAVE_DRI2
 SUBDIRS += dri
+else
+if HAVE_DRISW
+SUBDIRS += dri
+endif
 endif
 
 if HAVE_X11_DRIVER
@@ -56,12 +60,6 @@ endif
 
 if HAVE_CLOVER
 SUBDIRS += opencl
-endif
-
-if HAVE_GALLIUM_SOFTPIPE
-if HAVE_DRISW
-SUBDIRS += dri-swrast
-endif
 endif
 
 if NEED_GALLIUM_LOADER

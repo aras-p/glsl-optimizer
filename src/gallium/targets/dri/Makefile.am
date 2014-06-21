@@ -140,6 +140,20 @@ STATIC_TARGET_LIB_DEPS += \
 
 endif
 
+if HAVE_GALLIUM_SOFTPIPE
+MEGADRIVERS += swrast
+STATIC_TARGET_CPPFLAGS += -DGALLIUM_SOFTPIPE
+STATIC_TARGET_LIB_DEPS += \
+	$(top_builddir)/src/gallium/winsys/sw/dri/libswdri.la \
+	$(top_builddir)/src/gallium/drivers/softpipe/libsoftpipe.la
+endif
+
+if NEED_GALLIUM_LLVMPIPE_DRIVER
+STATIC_TARGET_CPPFLAGS += -DGALLIUM_LLVMPIPE
+STATIC_TARGET_LIB_DEPS += \
+	$(top_builddir)/src/gallium/drivers/llvmpipe/libllvmpipe.la
+endif
+
 gallium_dri_la_SOURCES += target.c
 AM_CPPFLAGS += $(STATIC_TARGET_CPPFLAGS)
 gallium_dri_la_LIBADD += $(STATIC_TARGET_LIB_DEPS)

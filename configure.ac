@@ -1985,7 +1985,7 @@ if test -n "$with_gallium_drivers"; then
             fi
 
             if test "x$enable_dri" = xyes; then
-                GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS dri-swrast"
+                GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS dri/swrast"
             fi
             ;;
         *)
@@ -2199,7 +2199,6 @@ AC_CONFIG_FILES([Makefile
 		src/gallium/state_trackers/xa/Makefile
 		src/gallium/state_trackers/xvmc/Makefile
 		src/gallium/targets/Makefile
-		src/gallium/targets/dri-swrast/Makefile
 		src/gallium/targets/dri/Makefile
 		src/gallium/targets/egl-static/Makefile
 		src/gallium/targets/gbm/Makefile
