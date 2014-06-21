@@ -34,6 +34,15 @@
 
 #include "state_tracker/drm_driver.h"
 #include "sw/dri/dri_sw_winsys.h"
+#include "dri_screen.h"
+
+const __DRIextension **__driDriverGetExtensions_swrast(void);
+
+PUBLIC const __DRIextension **__driDriverGetExtensions_swrast(void)
+{
+   globalDriverAPI = &galliumsw_driver_api;
+   return galliumsw_driver_extensions;
+}
 
 DRM_DRIVER_DESCRIPTOR("swrast", NULL, NULL, NULL);
 

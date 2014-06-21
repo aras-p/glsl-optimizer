@@ -39,6 +39,7 @@ swrast_dri_la_LDFLAGS = $(GALLIUM_DRI_LINKER_FLAGS)
 
 swrast_dri_la_LIBADD = \
 	$(top_builddir)/src/mesa/drivers/dri/common/libdricommon.la \
+	$(top_builddir)/src/mesa/drivers/dri/common/libmegadriver_stub.la \
 	$(top_builddir)/src/gallium/state_trackers/dri/sw/libdrisw.la \
 	$(top_builddir)/src/gallium/winsys/sw/dri/libswdri.la \
 	$(top_builddir)/src/gallium/drivers/softpipe/libsoftpipe.la \

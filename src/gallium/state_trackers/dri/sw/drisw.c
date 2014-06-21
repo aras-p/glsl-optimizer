@@ -397,7 +397,7 @@ drisw_create_buffer(__DRIscreen * sPriv,
  *
  * DRI versions differ in their implementation of init_screen and swap_buffers.
  */
-const struct __DriverAPIRec driDriverAPI = {
+const struct __DriverAPIRec galliumsw_driver_api = {
    .InitScreen = drisw_init_screen,
    .DestroyScreen = dri_destroy_screen,
    .CreateContext = dri_create_context,
@@ -411,7 +411,7 @@ const struct __DriverAPIRec driDriverAPI = {
 };
 
 /* This is the table of extensions that the loader will dlsym() for. */
-PUBLIC const __DRIextension *__driDriverExtensions[] = {
+const __DRIextension *galliumsw_driver_extensions[] = {
     &driCoreExtension.base,
     &driSWRastExtension.base,
     &driCopySubBufferExtension.base,

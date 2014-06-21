@@ -28,6 +28,8 @@ GALLIUM_DRIVER_CXXFLAGS = \
 
 GALLIUM_DRI_CFLAGS = \
 	-I$(top_srcdir)/include \
+	-I$(top_srcdir)/src/gallium/state_trackers/dri/common \
+	-I$(top_srcdir)/src/mesa/drivers/dri/common \
 	-I$(top_srcdir)/src/gallium/include \
 	-I$(top_srcdir)/src/gallium/auxiliary \
 	-I$(top_srcdir)/src/gallium/drivers \
