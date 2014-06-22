@@ -136,6 +136,7 @@ static const struct extension extension_table[] = {
    { "GL_ARB_sample_shading",                      o(ARB_sample_shading),                      GL,             2009 },
    { "GL_ARB_sampler_objects",                     o(dummy_true),                              GL,             2009 },
    { "GL_ARB_seamless_cube_map",                   o(ARB_seamless_cube_map),                   GL,             2009 },
+   { "GL_ARB_seamless_cubemap_per_texture",        o(AMD_seamless_cubemap_per_texture),        GL,             2013 },
    { "GL_ARB_separate_shader_objects",             o(dummy_true),                              GL,             2010 },
    { "GL_ARB_shader_atomic_counters",              o(ARB_shader_atomic_counters),              GL,             2011 },
    { "GL_ARB_shader_bit_encoding",                 o(ARB_shader_bit_encoding),                 GL,             2010 },
