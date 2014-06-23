@@ -308,8 +308,8 @@ int compute_memory_promote_item(struct compute_memory_pool *pool,
 {
 	struct pipe_screen *screen = (struct pipe_screen *)pool->screen;
 	struct r600_context *rctx = (struct r600_context *)pipe;
-	struct pipe_resource *dst = (struct pipe_resource *)pool->bo;
 	struct pipe_resource *src = (struct pipe_resource *)item->real_buffer;
+	struct pipe_resource *dst = NULL;
 	struct pipe_box box;
 
 	struct list_head *pos;
@@ -336,6 +336,7 @@ int compute_memory_promote_item(struct compute_memory_pool *pool,
 		if (err == -1)
 			return -1;
 	}
+	dst = (struct pipe_resource *)pool->bo;
 	COMPUTE_DBG(pool->screen, "  + Found space for Item %p id = %u "
 			"start_in_dw = %u (%u bytes) size_in_dw = %u (%u bytes)\n",
 			item, item->id, start_in_dw, start_in_dw * 4,
