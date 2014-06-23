@@ -815,6 +815,7 @@ void st_init_extensions(struct st_context *st)
          ctx->Const.ViewportBounds.Min = -16384.0;
          ctx->Const.ViewportBounds.Max = 16384.0;
          ctx->Extensions.ARB_viewport_array = GL_TRUE;
+         ctx->Extensions.ARB_fragment_layer_viewport = GL_TRUE;
       }
    }
    if (ctx->Const.MaxProgramTextureGatherComponents > 0)
