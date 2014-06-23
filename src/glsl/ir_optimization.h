@@ -120,6 +120,14 @@ void lower_named_interface_blocks(void *mem_ctx, gl_shader *shader);
 bool optimize_redundant_jumps(exec_list *instructions);
 bool optimize_split_arrays(exec_list *instructions, bool linked);
 
+typedef enum {
+	OPT_SPLIT_ONLY_LOOP_INDUCTORS = 0, //< only split vectors that are used as loop inductors (and are not used by any vector operation)
+	OPT_SPLIT_ONLY_UNUSED = 1, //< only split vectors that have unused components (and are not used by any vector operation)
+	OPT_SPLIT_ANY_POSSIBLE = 2, //< Split all vectors that are only accessed by their components
+} glsl_vector_splitting_mode;
+
+bool optimize_split_vectors(exec_list *instructions, bool linked, glsl_vector_splitting_mode mode);
+
 ir_rvalue *
 compare_index_block(exec_list *instructions, ir_variable *index,
 		    unsigned base, unsigned components, void *mem_ctx);

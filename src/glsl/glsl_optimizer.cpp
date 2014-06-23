@@ -172,7 +172,7 @@ static inline void debug_print_ir (const char* name, exec_list* ir, _mesa_glsl_p
 {
 	#if 0
 	printf("**** %s:\n", name);
-	//_mesa_print_ir (ir, state);
+//	_mesa_print_ir (ir, state);
 	char* foobar = _mesa_print_ir_glsl(ir, state, ralloc_strdup(memctx, ""), kPrintGlslFragment);
 	printf("%s\n", foobar);
 	validate_ir_tree(ir);
@@ -308,6 +308,11 @@ static void do_optimization_passes(exec_list* ir, bool linked, unsigned max_unro
 		progress2 = propagate_precision (ir); progress |= progress2; if (progress2) debug_print_ir ("After prec propagation", ir, state, mem_ctx);
 		progress2 = do_copy_propagation(ir); progress |= progress2; if (progress2) debug_print_ir ("After copy propagation", ir, state, mem_ctx);
 		progress2 = do_copy_propagation_elements(ir); progress |= progress2; if (progress2) debug_print_ir ("After copy propagation elems", ir, state, mem_ctx);
+		if (state->es_shader && linked)
+		{
+			progress2 = optimize_split_vectors(ir, linked, OPT_SPLIT_ONLY_LOOP_INDUCTORS); progress |= progress2; if (progress2) debug_print_ir("After split vectors", ir, state, mem_ctx);
+		}
+
 		if (linked)
 		{
 			progress2 = do_vectorize(ir); progress |= progress2; if (progress2) debug_print_ir ("After vectorize", ir, state, mem_ctx);
@@ -334,7 +339,8 @@ static void do_optimization_passes(exec_list* ir, bool linked, unsigned max_unro
 		progress2 = do_swizzle_swizzle(ir); progress |= progress2; if (progress2) debug_print_ir ("After swizzle swizzle", ir, state, mem_ctx);
 		progress2 = do_noop_swizzle(ir); progress |= progress2; if (progress2) debug_print_ir ("After noop swizzle", ir, state, mem_ctx);
 		progress2 = optimize_split_arrays(ir, linked); progress |= progress2; if (progress2) debug_print_ir ("After split arrays", ir, state, mem_ctx);
-		progress2 = optimize_redundant_jumps(ir); progress |= progress2; if (progress2) debug_print_ir ("After redundant jumps", ir, state, mem_ctx);
+		progress2 = optimize_split_vectors(ir, linked, OPT_SPLIT_ONLY_UNUSED); progress |= progress2; if (progress2) debug_print_ir("After split unused vectors", ir, state, mem_ctx);
+		progress2 = optimize_redundant_jumps(ir); progress |= progress2; if (progress2) debug_print_ir("After redundant jumps", ir, state, mem_ctx);
 		
 		// do loop stuff only when linked; otherwise causes duplicate loop induction variable
 		// problems (ast-in.txt test)

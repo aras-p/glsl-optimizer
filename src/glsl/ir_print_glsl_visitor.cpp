@@ -918,7 +918,7 @@ void ir_print_glsl_visitor::visit(ir_swizzle *ir)
       ir->mask.w,
    };
 
-	if (ir->val->type == glsl_type::float_type || ir->val->type == glsl_type::int_type)
+   if (ir->val->type == glsl_type::float_type || ir->val->type == glsl_type::int_type || ir->val->type == glsl_type::uint_type)
 	{
 		if (ir->mask.num_components != 1)
 		{
@@ -929,7 +929,7 @@ void ir_print_glsl_visitor::visit(ir_swizzle *ir)
 
 	ir->val->accept(this);
 	
-	if (ir->val->type == glsl_type::float_type || ir->val->type == glsl_type::int_type)
+	if (ir->val->type == glsl_type::float_type || ir->val->type == glsl_type::int_type || ir->val->type == glsl_type::uint_type)
 	{
 		if (ir->mask.num_components != 1)
 		{
@@ -1244,7 +1244,12 @@ void ir_print_glsl_visitor::visit(ir_constant *ir)
 	}
 	else if (type == glsl_type::uint_type)
 	{
-		buffer.asprintf_append ("%u", ir->value.u[0]);
+		// ES 2.0 doesn't support uints, neither does GLSL < 130
+		if ((state->es_shader && (state->language_version < 300))
+			|| (state->language_version < 130))
+			buffer.asprintf_append("%u", ir->value.u[0]);
+		else
+			buffer.asprintf_append("%uu", ir->value.u[0]);
 		return;
 	}
 
@@ -1276,7 +1281,16 @@ void ir_print_glsl_visitor::visit(ir_constant *ir)
 	    buffer.asprintf_append (", ");
 	 first = false;
 	 switch (base_type->base_type) {
-	 case GLSL_TYPE_UINT:  buffer.asprintf_append ("%u", ir->value.u[i]); break;
+	 case GLSL_TYPE_UINT:
+	 {
+		 // ES 2.0 doesn't support uints, neither does GLSL < 130
+		 if ((state->es_shader && (state->language_version < 300))
+			 || (state->language_version < 130))
+			 buffer.asprintf_append("%u", ir->value.u[i]);
+		 else
+			 buffer.asprintf_append("%uu", ir->value.u[i]);
+		 break;
+	 }
 	 case GLSL_TYPE_INT:   buffer.asprintf_append ("%d", ir->value.i[i]); break;
 	 case GLSL_TYPE_FLOAT: print_float(buffer, ir->value.f[i]); break;
 	 case GLSL_TYPE_BOOL:  buffer.asprintf_append ("%d", ir->value.b[i]); break;

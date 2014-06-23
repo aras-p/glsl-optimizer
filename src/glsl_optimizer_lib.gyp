@@ -130,6 +130,7 @@
         'glsl/opt_swizzle_swizzle.cpp',
         'glsl/opt_tree_grafting.cpp',
         'glsl/opt_vectorize.cpp',
+        'glsl/opt_vector_splitting.cpp',
         'glsl/program.h',
         'glsl/ralloc.c',
         'glsl/ralloc.h',
