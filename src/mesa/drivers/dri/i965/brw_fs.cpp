@@ -1386,7 +1386,7 @@ fs_visitor::emit_math(enum opcode opcode, fs_reg dst, fs_reg src)
     * Gen 6 hardware ignores source modifiers (negate and abs) on math
     * instructions, so we also move to a temp to set those up.
     */
-   if (brw->gen >= 6)
+   if (brw->gen == 6 || brw->gen == 7)
       src = fix_math_operand(src);
 
    fs_inst *inst = emit(opcode, dst, src);
@@ -1418,7 +1418,9 @@ fs_visitor::emit_math(enum opcode opcode, fs_reg dst, fs_reg src0, fs_reg src1)
       return NULL;
    }
 
-   if (brw->gen >= 6) {
+   if (brw->gen >= 8) {
+      inst = emit(opcode, dst, src0, src1);
+   } else if (brw->gen >= 6) {
       src0 = fix_math_operand(src0);
       src1 = fix_math_operand(src1);
 
