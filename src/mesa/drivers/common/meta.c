@@ -1515,23 +1515,15 @@ static void
 meta_glsl_clear_init(struct gl_context *ctx, struct clear_state *clear)
 {
    const char *vs_source =
+      "#extension GL_AMD_vertex_shader_layer : enable\n"
       "attribute vec4 position;\n"
-      "void main()\n"
-      "{\n"
-      "   gl_Position = position;\n"
-      "}\n";
-   const char *gs_source =
-      "#version 150\n"
-      "layout(triangles) in;\n"
-      "layout(triangle_strip, max_vertices = 4) out;\n"
       "uniform int layer;\n"
       "void main()\n"
       "{\n"
-      "  for (int i = 0; i < 3; i++) {\n"
-      "    gl_Layer = layer;\n"
-      "    gl_Position = gl_in[i].gl_Position;\n"
-      "    EmitVertex();\n"
-      "  }\n"
+      "#ifdef GL_AMD_vertex_shader_layer\n"
+      "   gl_Layer = layer;\n"
+      "#endif\n"
+      "   gl_Position = position;\n"
       "}\n";
    const char *fs_source =
       "uniform vec4 color;\n"
@@ -1539,7 +1531,7 @@ meta_glsl_clear_init(struct gl_context *ctx, struct clear_state *clear)
       "{\n"
       "   gl_FragColor = color;\n"
       "}\n";
-   GLuint vs, gs = 0, fs;
+   GLuint vs, fs;
    bool has_integer_textures;
 
    _mesa_meta_setup_vertex_objects(&clear->VAO, &clear->VBO, true, 3, 0, 0);
@@ -1551,12 +1543,6 @@ meta_glsl_clear_init(struct gl_context *ctx, struct clear_state *clear)
    _mesa_ShaderSource(vs, 1, &vs_source, NULL);
    _mesa_CompileShader(vs);
 
-   if (_mesa_has_geometry_shaders(ctx)) {
-      gs = _mesa_CreateShader(GL_GEOMETRY_SHADER);
-      _mesa_ShaderSource(gs, 1, &gs_source, NULL);
-      _mesa_CompileShader(gs);
-   }
-
    fs = _mesa_CreateShader(GL_FRAGMENT_SHADER);
    _mesa_ShaderSource(fs, 1, &fs_source, NULL);
    _mesa_CompileShader(fs);
@@ -1564,20 +1550,14 @@ meta_glsl_clear_init(struct gl_context *ctx, struct clear_state *clear)
    clear->ShaderProg = _mesa_CreateProgram();
    _mesa_AttachShader(clear->ShaderProg, fs);
    _mesa_DeleteShader(fs);
-   if (gs != 0)
-      _mesa_AttachShader(clear->ShaderProg, gs);
    _mesa_AttachShader(clear->ShaderProg, vs);
    _mesa_DeleteShader(vs);
    _mesa_BindAttribLocation(clear->ShaderProg, 0, "position");
    _mesa_ObjectLabel(GL_PROGRAM, clear->ShaderProg, -1, "meta clear");
    _mesa_LinkProgram(clear->ShaderProg);
 
-   clear->ColorLocation = _mesa_GetUniformLocation(clear->ShaderProg,
-						      "color");
-   if (gs != 0) {
-      clear->LayerLocation = _mesa_GetUniformLocation(clear->ShaderProg,
-						      "layer");
-   }
+   clear->ColorLocation = _mesa_GetUniformLocation(clear->ShaderProg, "color");
+   clear->LayerLocation = _mesa_GetUniformLocation(clear->ShaderProg, "layer");
 
    has_integer_textures = _mesa_is_gles3(ctx) ||
       (_mesa_is_desktop_gl(ctx) && ctx->Const.GLSLVersion >= 130);
@@ -1587,9 +1567,14 @@ meta_glsl_clear_init(struct gl_context *ctx, struct clear_state *clear)
       const char *vs_int_source =
          ralloc_asprintf(shader_source_mem_ctx,
                          "#version 130\n"
+                         "#extension GL_AMD_vertex_shader_layer : enable\n"
                          "in vec4 position;\n"
+                         "uniform int layer;\n"
                          "void main()\n"
                          "{\n"
+                         "#ifdef GL_AMD_vertex_shader_layer\n"
+                         "   gl_Layer = layer;\n"
+                         "#endif\n"
                          "   gl_Position = position;\n"
                          "}\n");
       const char *fs_int_source =
@@ -1612,8 +1597,6 @@ meta_glsl_clear_init(struct gl_context *ctx, struct clear_state *clear)
       clear->IntegerShaderProg = _mesa_CreateProgram();
       _mesa_AttachShader(clear->IntegerShaderProg, fs);
       _mesa_DeleteShader(fs);
-      if (gs != 0)
-         _mesa_AttachShader(clear->IntegerShaderProg, gs);
       _mesa_AttachShader(clear->IntegerShaderProg, vs);
       _mesa_DeleteShader(vs);
       _mesa_BindAttribLocation(clear->IntegerShaderProg, 0, "position");
@@ -1629,13 +1612,9 @@ meta_glsl_clear_init(struct gl_context *ctx, struct clear_state *clear)
 
       clear->IntegerColorLocation =
 	 _mesa_GetUniformLocation(clear->IntegerShaderProg, "color");
-      if (gs != 0) {
-         clear->IntegerLayerLocation =
-            _mesa_GetUniformLocation(clear->IntegerShaderProg, "layer");
-      }
+      clear->IntegerLayerLocation =
+         _mesa_GetUniformLocation(clear->IntegerShaderProg, "layer");
    }
-   if (gs != 0)
-      _mesa_DeleteShader(gs);
 }
 
 static void
@@ -1843,7 +1822,7 @@ meta_clear(struct gl_context *ctx, GLbitfield buffers, bool glsl)
    /* draw quad(s) */
    if (fb->MaxNumLayers > 0) {
       unsigned layer;
-      assert(glsl);
+      assert(glsl && clear->LayerLocation != -1);
       for (layer = 0; layer < fb->MaxNumLayers; layer++) {
          if (fb->_IntegerColor)
             _mesa_Uniform1i(clear->IntegerLayerLocation, layer);
