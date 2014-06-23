@@ -4,9 +4,14 @@ GLSL optimizer Change Log
 2014 06
 -------
 
+Goodies:
+
+* Optimization: split vectors with only some used components into scalars.
+
 Fixes:
 
 * Fixed more issues with for-loop printing.
+* Fixed printing of unsigned integer swizzled & constants.
 
 2014 03
 -------
