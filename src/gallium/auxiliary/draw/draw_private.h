@@ -493,7 +493,7 @@ draw_stats_clipper_primitives(struct draw_context *draw,
 static INLINE unsigned
 draw_clamp_viewport_idx(int idx)
 {
-   return ((PIPE_MAX_VIEWPORTS > idx || idx < 0) ? idx : 0);
+   return ((PIPE_MAX_VIEWPORTS > idx && idx >= 0) ? idx : 0);
 }
 
 /**
