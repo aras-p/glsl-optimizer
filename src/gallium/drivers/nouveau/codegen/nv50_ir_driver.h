@@ -177,6 +177,7 @@ struct nv50_ir_prog_info
       uint8_t vertexId;          /* system value index of VertexID */
       uint8_t edgeFlagIn;
       uint8_t edgeFlagOut;
+      int8_t viewportId;         /* output index of ViewportIndex */
       uint8_t fragDepth;         /* output index of FragDepth */
       uint8_t sampleMask;        /* output index of SampleMask */
       boolean sampleInterp;      /* perform sample interp on all fp inputs */

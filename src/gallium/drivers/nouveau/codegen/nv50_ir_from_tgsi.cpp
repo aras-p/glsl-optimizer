@@ -790,6 +790,8 @@ bool Source::scanSource()
       info->prop.gp.instanceCount = 1; // default value
    }
 
+   info->io.viewportId = -1;
+
    info->immd.data = (uint32_t *)MALLOC(scan.immediate_count * 16);
    info->immd.type = (ubyte *)MALLOC(scan.immediate_count * sizeof(ubyte));
 
@@ -981,6 +983,9 @@ bool Source::scanDeclaration(const struct tgsi_full_declaration *decl)
             break;
          case TGSI_SEMANTIC_SAMPLEMASK:
             info->io.sampleMask = i;
+            break;
+         case TGSI_SEMANTIC_VIEWPORT_INDEX:
+            info->io.viewportId = i;
             break;
          default:
             break;
@@ -1258,6 +1263,8 @@ private:
    Stack joinBBs;  // fork BB, for inserting join ops on ENDIF
    Stack loopBBs;  // loop headers
    Stack breakBBs; // end of / after loop
+
+   Value *viewport;
 };
 
 Symbol *
@@ -1555,8 +1562,16 @@ Converter::storeDst(const tgsi::Instruction::DstRegister dst, int c,
       mkOp2(OP_WRSV, TYPE_U32, NULL, dstToSym(dst, c), val);
    } else
    if (f == TGSI_FILE_OUTPUT && prog->getType() != Program::TYPE_FRAGMENT) {
-      if (ptr || (info->out[idx].mask & (1 << c)))
-         mkStore(OP_EXPORT, TYPE_U32, dstToSym(dst, c), ptr, val);
+
+      if (ptr || (info->out[idx].mask & (1 << c))) {
+         /* Save the viewport index into a scratch register so that it can be
+            exported at EMIT time */
+         if (info->out[idx].sn == TGSI_SEMANTIC_VIEWPORT_INDEX &&
+             viewport != NULL)
+            mkOp1(OP_MOV, TYPE_U32, viewport, val);
+         else
+            mkStore(OP_EXPORT, TYPE_U32, dstToSym(dst, c), ptr, val);
+      }
    } else
    if (f == TGSI_FILE_TEMPORARY ||
        f == TGSI_FILE_PREDICATE ||
@@ -2523,6 +2538,13 @@ Converter::handleInstruction(const struct tgsi_full_instruction *insn)
          mkCvt(OP_CVT, dstTy, dst0[c], srcTy, fetchSrc(0, c));
       break;
    case TGSI_OPCODE_EMIT:
+      /* export the saved viewport index */
+      if (viewport != NULL) {
+         Symbol *vpSym = mkSymbol(FILE_SHADER_OUTPUT, 0, TYPE_U32,
+                                  info->out[info->io.viewportId].slot[0] * 4);
+         mkStore(OP_EXPORT, TYPE_U32, vpSym, NULL, viewport);
+      }
+      /* fallthrough */
    case TGSI_OPCODE_ENDPRIM:
       // get vertex stream if specified (must be immediate)
       src0 = tgsi.srcCount() ?
@@ -2951,6 +2973,11 @@ Converter::run()
       fragCoord[3] = mkOp1v(OP_RDSV, TYPE_F32, getSSA(), sv);
       mkOp1(OP_RCP, TYPE_F32, fragCoord[3], fragCoord[3]);
    }
+
+   if (info->io.viewportId >= 0)
+      viewport = getScratch();
+   else
+      viewport = NULL;
 
    for (ip = 0; ip < code->scan.num_instructions; ++ip) {
       if (!handleInstruction(&code->insns[ip]))
