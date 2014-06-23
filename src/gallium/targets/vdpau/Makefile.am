@@ -131,7 +131,7 @@ install-data-hook:
 		j=libvdpau_gallium.$(LIB_EXT);				\
 		k=libvdpau_$${i}.$(LIB_EXT);				\
 		l=$${k}.$(VDPAU_MAJOR).$(VDPAU_MINOR).0;		\
-		ln -f .libs/$${j}.$(VDPAU_MAJOR).$(VDPAU_MINOR).0	\
+		ln -f $${dest_dir}/$${j}.$(VDPAU_MAJOR).$(VDPAU_MINOR).0 \
 		      $${dest_dir}/$${l};				\
 		ln -sf $${l}						\
 		       $${dest_dir}/$${k}.$(VDPAU_MAJOR).$(VDPAU_MINOR); \
@@ -140,4 +140,4 @@ install-data-hook:
 		ln -sf $${l}						\
 		       $${dest_dir}/$${k};				\
 	done;								\
-	$(RM) -f $$dest_dir/libvdpau_gallium.*
+	$(RM) -f $${dest_dir}/libvdpau_gallium.*

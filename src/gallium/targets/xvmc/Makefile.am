@@ -88,7 +88,7 @@ install-data-hook:
 		j=libXvMCgallium.$(LIB_EXT);				\
 		k=libXvMC$${i}.$(LIB_EXT);				\
 		l=$${k}.$(XVMC_MAJOR).$(XVMC_MINOR).0;			\
-		ln -f .libs/$${j}.$(XVMC_MAJOR).$(XVMC_MINOR).0		\
+		ln -f $${dest_dir}/$${j}.$(XVMC_MAJOR).$(XVMC_MINOR).0	\
 		      $${dest_dir}/$${l};				\
 		ln -sf $${l}						\
 		       $${dest_dir}/$${k}.$(XVMC_MAJOR).$(XVMC_MINOR);	\
