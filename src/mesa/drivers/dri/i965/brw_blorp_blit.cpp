@@ -120,20 +120,34 @@ do_blorp_blit(struct brw_context *brw, GLbitfield buffer_bit,
 }
 
 static bool
+format_is_rgba_or_rgbx_byte(mesa_format format)
+{
+   switch (format) {
+   case MESA_FORMAT_B8G8R8X8_UNORM:
+   case MESA_FORMAT_B8G8R8A8_UNORM:
+   case MESA_FORMAT_R8G8B8X8_UNORM:
+   case MESA_FORMAT_R8G8B8A8_UNORM:
+      return true;
+   default:
+      return false;
+   }
+}
+
+static bool
 color_formats_match(mesa_format src_format, mesa_format dst_format)
 {
    mesa_format linear_src_format = _mesa_get_srgb_format_linear(src_format);
    mesa_format linear_dst_format = _mesa_get_srgb_format_linear(dst_format);
 
-   /* Normally, we require the formats to be equal.  However, we also support
+   /* Normally, we require the formats to be equal. However, we also support
     * blitting from ARGB to XRGB (discarding alpha), and from XRGB to ARGB
-    * (overriding alpha to 1.0 via blending).
+    * (overriding alpha to 1.0 via blending) as well as swizzling between BGR
+    * and RGB.
     */
-   return linear_src_format == linear_dst_format ||
-          (linear_src_format == MESA_FORMAT_B8G8R8X8_UNORM &&
-           linear_dst_format == MESA_FORMAT_B8G8R8A8_UNORM) ||
-          (linear_src_format == MESA_FORMAT_B8G8R8A8_UNORM &&
-           linear_dst_format == MESA_FORMAT_B8G8R8X8_UNORM);
+
+   return (linear_src_format == linear_dst_format ||
+           (format_is_rgba_or_rgbx_byte(linear_src_format) &&
+            format_is_rgba_or_rgbx_byte(linear_dst_format)));
 }
 
 static bool
