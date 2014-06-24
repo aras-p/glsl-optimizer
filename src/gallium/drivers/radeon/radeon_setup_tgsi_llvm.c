@@ -1385,7 +1385,7 @@ void radeon_llvm_context_init(struct radeon_llvm_context * ctx)
 
 	bld_base->rsq_action.emit = build_tgsi_intrinsic_nomem;
 #if HAVE_LLVM >= 0x0305
-	bld_base->rsq_action.intr_name = "llvm.AMDGPU.rsq.";
+	bld_base->rsq_action.intr_name = "llvm.AMDGPU.rsq.clamped.f32";
 #else
 	bld_base->rsq_action.intr_name = "llvm.AMDGPU.rsq";
 #endif
