@@ -584,6 +584,15 @@ inline void exec_node::insert_before(exec_list *before)
         (__inst) = (__type *)(__inst)->prev)
 
 /**
+ * This version is safe even if the current node is removed.
+ */ 
+#define foreach_in_list_safe(__type, __node, __list) \
+   for (__type *__node = (__type *)(__list)->head,   \
+               *__next = (__type *)__node->next;     \
+        __next != NULL;                              \
+        __node = __next, __next = (__type *)__next->next)
+
+/**
  * Iterate through two lists at once.  Stops at the end of the shorter list.
  *
  * This is safe against either current node being removed or replaced.
