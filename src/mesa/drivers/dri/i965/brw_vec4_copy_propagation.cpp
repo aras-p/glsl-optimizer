@@ -73,7 +73,8 @@ is_channel_updated(vec4_instruction *inst, src_reg *values[4], int ch)
 }
 
 static bool
-try_constant_propagation(vec4_instruction *inst, int arg, src_reg *values[4])
+try_constant_propagation(struct brw_context *brw, vec4_instruction *inst,
+                         int arg, src_reg *values[4])
 {
    /* For constant propagation, we only handle the same constant
     * across all 4 channels.  Some day, we should handle the 8-bit
@@ -110,6 +111,12 @@ try_constant_propagation(vec4_instruction *inst, int arg, src_reg *values[4])
       inst->src[arg] = value;
       return true;
 
+   case SHADER_OPCODE_POW:
+   case SHADER_OPCODE_INT_QUOTIENT:
+   case SHADER_OPCODE_INT_REMAINDER:
+      if (brw->gen < 8)
+         break;
+      /* fallthrough */
    case BRW_OPCODE_DP2:
    case BRW_OPCODE_DP3:
    case BRW_OPCODE_DP4:
@@ -360,7 +367,7 @@ vec4_visitor::opt_copy_propagation()
 	 if (c != 4)
 	    continue;
 
-	 if (try_constant_propagation(inst, i, values) ||
+	 if (try_constant_propagation(brw, inst, i, values) ||
 	     try_copy_propagation(inst, i, values))
 	    progress = true;
       }
