@@ -498,8 +498,6 @@ static int r600_spi_sid(struct r600_shader_io * io)
 	if (name == TGSI_SEMANTIC_POSITION ||
 	    name == TGSI_SEMANTIC_PSIZE ||
 	    name == TGSI_SEMANTIC_EDGEFLAG ||
-	    name == TGSI_SEMANTIC_LAYER ||
-	    name == TGSI_SEMANTIC_VIEWPORT_INDEX ||
 	    name == TGSI_SEMANTIC_FACE)
 		index = 0;
 	else {
@@ -1337,6 +1335,12 @@ static int generate_gs_copy_shader(struct r600_context *rctx,
 			ctx.shader->vs_out_point_size = 1;
 			break;
 		case TGSI_SEMANTIC_LAYER:
+			if (out->spi_sid) {
+				/* duplicate it as PARAM to pass to the pixel shader */
+				output.array_base = next_param++;
+				r600_bytecode_add_output(ctx.bc, &output);
+				last_exp_param = ctx.bc->cf_last;
+			}
 			output.array_base = 61;
 			if (next_clip_pos == 61)
 				next_clip_pos = 62;
@@ -1349,6 +1353,12 @@ static int generate_gs_copy_shader(struct r600_context *rctx,
 			ctx.shader->vs_out_layer = 1;
 			break;
 		case TGSI_SEMANTIC_VIEWPORT_INDEX:
+			if (out->spi_sid) {
+				/* duplicate it as PARAM to pass to the pixel shader */
+				output.array_base = next_param++;
+				r600_bytecode_add_output(ctx.bc, &output);
+				last_exp_param = ctx.bc->cf_last;
+			}
 			output.array_base = 61;
 			if (next_clip_pos == 61)
 				next_clip_pos = 62;
@@ -2016,6 +2026,14 @@ static int r600_shader_from_tgsi(struct r600_context *rctx,
 					pos_emitted = true;
 					break;
 				case TGSI_SEMANTIC_LAYER:
+					/* spi_sid is 0 for outputs that are
+					 * not consumed by PS */
+					if (shader->output[i].spi_sid) {
+						output[j].array_base = next_param_base++;
+						output[j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PARAM;
+						j++;
+						memcpy(&output[j], &output[j-1], sizeof(struct r600_bytecode_output));
+					}
 					output[j].array_base = 61;
 					output[j].swizzle_x = 7;
 					output[j].swizzle_y = 7;
