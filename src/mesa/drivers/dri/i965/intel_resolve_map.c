@@ -87,7 +87,7 @@ intel_resolve_map_remove(struct intel_resolve_map *elem)
 void
 intel_resolve_map_clear(struct exec_list *resolve_map)
 {
-   foreach_list_safe(node, resolve_map) {
+   foreach_in_list_safe(struct exec_node, node, resolve_map) {
       free(node);
    }
 

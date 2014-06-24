@@ -392,9 +392,7 @@ vec4_visitor::dead_code_eliminate()
 
    calculate_live_intervals();
 
-   foreach_list_safe(node, &this->instructions) {
-      vec4_instruction *inst = (vec4_instruction *)node;
-
+   foreach_in_list_safe(vec4_instruction, inst, &instructions) {
       pc++;
 
       bool inst_writes_flag = false;
@@ -755,9 +753,7 @@ vec4_visitor::move_push_constants_to_pull_constants()
    /* Now actually rewrite usage of the things we've moved to pull
     * constants.
     */
-   foreach_list_safe(node, &this->instructions) {
-      vec4_instruction *inst = (vec4_instruction *)node;
-
+   foreach_in_list_safe(vec4_instruction, inst, &instructions) {
       for (int i = 0 ; i < 3; i++) {
 	 if (inst->src[i].file != UNIFORM ||
 	     pull_constant_loc[inst->src[i].reg] == -1)
@@ -987,9 +983,7 @@ vec4_visitor::opt_register_coalesce()
 
    calculate_live_intervals();
 
-   foreach_list_safe(node, &this->instructions) {
-      vec4_instruction *inst = (vec4_instruction *)node;
-
+   foreach_in_list_safe(vec4_instruction, inst, &instructions) {
       int ip = next_ip;
       next_ip++;
 

@@ -3254,9 +3254,7 @@ vec4_visitor::move_grf_array_access_to_scratch()
     * we may generate a new scratch_write instruction after the one
     * we're processing.
     */
-   foreach_list_safe(node, &this->instructions) {
-      vec4_instruction *inst = (vec4_instruction *)node;
-
+   foreach_in_list_safe(vec4_instruction, inst, &instructions) {
       /* Set up the annotation tracking for new generated instructions. */
       base_ir = inst->ir;
       current_annotation = inst->annotation;
@@ -3340,9 +3338,7 @@ vec4_visitor::move_uniform_array_access_to_pull_constants()
     * Note that we don't move constant-indexed accesses to arrays.  No
     * testing has been done of the performance impact of this choice.
     */
-   foreach_list_safe(node, &this->instructions) {
-      vec4_instruction *inst = (vec4_instruction *)node;
-
+   foreach_in_list_safe(vec4_instruction, inst, &instructions) {
       for (int i = 0 ; i < 3; i++) {
 	 if (inst->src[i].file != UNIFORM || !inst->src[i].reladdr)
 	    continue;

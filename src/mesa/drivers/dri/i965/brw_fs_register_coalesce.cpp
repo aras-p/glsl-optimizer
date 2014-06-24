@@ -272,9 +272,7 @@ fs_visitor::register_coalesce()
    }
 
    if (progress) {
-      foreach_list_safe(node, &this->instructions) {
-         fs_inst *inst = (fs_inst *)node;
-
+      foreach_in_list_safe(fs_inst, inst, &instructions) {
          if (inst->opcode == BRW_OPCODE_NOP) {
             inst->remove();
          }

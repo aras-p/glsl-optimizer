@@ -2510,8 +2510,7 @@ fs_visitor::emit(fs_inst *inst)
 void
 fs_visitor::emit(exec_list list)
 {
-   foreach_list_safe(node, &list) {
-      fs_inst *inst = (fs_inst *)node;
+   foreach_in_list_safe(fs_inst, inst, &list) {
       inst->remove();
       emit(inst);
    }

@@ -545,9 +545,7 @@ fs_visitor::opt_copy_propagate_local(void *copy_prop_ctx, bblock_t *block,
 
       /* kill the destination from the ACP */
       if (inst->dst.file == GRF) {
-	 foreach_list_safe(entry_node, &acp[inst->dst.reg % ACP_HASH_SIZE]) {
-	    acp_entry *entry = (acp_entry *)entry_node;
-
+	 foreach_in_list_safe(acp_entry, entry, &acp[inst->dst.reg % ACP_HASH_SIZE]) {
 	    if (inst->overwrites_reg(entry->dst)) {
 	       entry->remove();
 	    }
@@ -557,8 +555,7 @@ fs_visitor::opt_copy_propagate_local(void *copy_prop_ctx, bblock_t *block,
           * the source, so walk across the entire table.
           */
          for (int i = 0; i < ACP_HASH_SIZE; i++) {
-            foreach_list_safe(entry_node, &acp[i]) {
-               acp_entry *entry = (acp_entry *)entry_node;
+            foreach_in_list_safe(acp_entry, entry, &acp[i]) {
                if (inst->overwrites_reg(entry->src))
                   entry->remove();
             }

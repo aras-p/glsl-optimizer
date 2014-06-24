@@ -1800,9 +1800,7 @@ fs_visitor::move_uniform_array_access_to_pull_constants()
     * Note that we don't move constant-indexed accesses to arrays.  No
     * testing has been done of the performance impact of this choice.
     */
-   foreach_list_safe(node, &this->instructions) {
-      fs_inst *inst = (fs_inst *)node;
-
+   foreach_in_list_safe(fs_inst, inst, &instructions) {
       for (int i = 0 ; i < inst->sources; i++) {
          if (inst->src[i].file != UNIFORM || !inst->src[i].reladdr)
             continue;
@@ -2079,9 +2077,7 @@ fs_visitor::compute_to_mrf()
 
    calculate_live_intervals();
 
-   foreach_list_safe(node, &this->instructions) {
-      fs_inst *inst = (fs_inst *)node;
-
+   foreach_in_list_safe(fs_inst, inst, &instructions) {
       int ip = next_ip;
       next_ip++;
 
@@ -2251,9 +2247,7 @@ fs_visitor::remove_duplicate_mrf_writes()
 
    memset(last_mrf_move, 0, sizeof(last_mrf_move));
 
-   foreach_list_safe(node, &this->instructions) {
-      fs_inst *inst = (fs_inst *)node;
-
+   foreach_in_list_safe(fs_inst, inst, &instructions) {
       if (inst->is_control_flow()) {
 	 memset(last_mrf_move, 0, sizeof(last_mrf_move));
       }
@@ -2505,9 +2499,7 @@ fs_visitor::insert_gen4_send_dependency_workarounds()
     * have a .reg_offset of 0.
     */
 
-   foreach_list_safe(node, &this->instructions) {
-      fs_inst *inst = (fs_inst *)node;
-
+   foreach_in_list_safe(fs_inst, inst, &instructions) {
       if (inst->mlen != 0 && inst->dst.file == GRF) {
          insert_gen4_pre_send_dependency_workarounds(inst);
          insert_gen4_post_send_dependency_workarounds(inst);
@@ -2590,9 +2582,7 @@ fs_visitor::lower_load_payload()
 {
    bool progress = false;
 
-   foreach_list_safe(node, &instructions) {
-      fs_inst *inst = (fs_inst *)node;
-
+   foreach_in_list_safe(fs_inst, inst, &instructions) {
       if (inst->opcode == SHADER_OPCODE_LOAD_PAYLOAD) {
          fs_reg dst = inst->dst;
 
@@ -2986,9 +2976,7 @@ fs_visitor::opt_drop_redundant_mov_to_flags()
 {
    bool flag_mov_found[2] = {false};
 
-   foreach_list_safe(node, &this->instructions) {
-      fs_inst *inst = (fs_inst *)node;
-
+   foreach_in_list_safe(fs_inst, inst, &instructions) {
       if (inst->is_control_flow()) {
          memset(flag_mov_found, 0, sizeof(flag_mov_found));
       } else if (inst->opcode == FS_OPCODE_MOV_DISPATCH_TO_FLAGS) {

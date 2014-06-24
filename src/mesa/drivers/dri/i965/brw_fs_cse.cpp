@@ -264,9 +264,7 @@ fs_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
          }
       }
 
-      foreach_list_safe(entry_node, aeb) {
-         aeb_entry *entry = (aeb_entry *)entry_node;
-
+      foreach_in_list_safe(aeb_entry, entry, aeb) {
          /* Kill all AEB entries that write a different value to or read from
           * the flag register if we just wrote it.
           */

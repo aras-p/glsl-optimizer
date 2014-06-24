@@ -1352,8 +1352,7 @@ instruction_scheduler::schedule_instructions(backend_instruction *next_block_hea
    time = 0;
 
    /* Remove non-DAG heads from the list. */
-   foreach_list_safe(node, &instructions) {
-      schedule_node *n = (schedule_node *)node;
+   foreach_in_list_safe(schedule_node, n, &instructions) {
       if (n->parent_count != 0)
 	 n->remove();
    }

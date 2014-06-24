@@ -336,9 +336,7 @@ brw_do_vector_splitting(exec_list *instructions)
    visit_list_elements(&refs, instructions);
 
    /* Trim out variables we can't split. */
-   foreach_list_safe(node, &refs.variable_list) {
-      variable_entry *entry = (variable_entry *)node;
-
+   foreach_in_list_safe(variable_entry, entry, &refs.variable_list) {
       if (debug) {
 	 fprintf(stderr, "vector %s@%p: whole_access %d\n",
                  entry->var->name, (void *) entry->var,
