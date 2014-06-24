@@ -518,7 +518,7 @@ typedef struct {
     unsigned long serial;	/* # of last request processed by server */
     Bool send_event;		/* true if this came from a SendEvent request */
     Display *display;		/* Display the event was read from */
-    GLXDrawable drawable;	/* drawable on which event was requested in event mask */
+    Drawable drawable;	/* drawable on which event was requested in event mask */
     int event_type;
     int64_t ust;
     int64_t msc;

@@ -134,13 +134,14 @@ __glXWireToEvent(Display *dpy, XEvent *event, xEvent *wire)
       GLXBufferSwapComplete *aevent = (GLXBufferSwapComplete *)event;
       xGLXBufferSwapComplete2 *awire = (xGLXBufferSwapComplete2 *)wire;
       struct glx_drawable *glxDraw = GetGLXDrawable(dpy, awire->drawable);
-      aevent->event_type = awire->event_type;
-      aevent->drawable = awire->drawable;
-      aevent->ust = ((CARD64)awire->ust_hi << 32) | awire->ust_lo;
-      aevent->msc = ((CARD64)awire->msc_hi << 32) | awire->msc_lo;
 
       if (!glxDraw)
 	 return False;
+
+      aevent->event_type = awire->event_type;
+      aevent->drawable = glxDraw->xDrawable;
+      aevent->ust = ((CARD64)awire->ust_hi << 32) | awire->ust_lo;
+      aevent->msc = ((CARD64)awire->msc_hi << 32) | awire->msc_lo;
 
       if (awire->sbc < glxDraw->lastEventSbc)
 	 glxDraw->eventSbcWrap += 0x100000000;
