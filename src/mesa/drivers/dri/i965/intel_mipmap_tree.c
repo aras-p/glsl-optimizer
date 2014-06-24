@@ -1251,6 +1251,7 @@ intel_miptree_alloc_mcs(struct brw_context *brw,
     */
    mesa_format format;
    switch (num_samples) {
+   case 2:
    case 4:
       /* 8 bits/pixel are required for MCS data when using 4x MSAA (2 bits for
        * each sample).
