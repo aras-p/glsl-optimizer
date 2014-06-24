@@ -496,8 +496,8 @@ public:
 			       vec4_instruction *pre_rhs_inst,
 			       vec4_instruction *last_rhs_inst);
 
-   bool try_copy_propagation(vec4_instruction *inst, int arg,
-                             src_reg *values[4]);
+   bool try_copy_propagate(vec4_instruction *inst, int arg,
+                           src_reg *values[4]);
 
    /** Walks an exec_list of ir_instruction and sends it through this visitor. */
    void visit_instructions(const exec_list *list);
