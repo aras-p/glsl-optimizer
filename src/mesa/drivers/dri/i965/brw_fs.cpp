@@ -2137,7 +2137,7 @@ fs_visitor::compute_to_mrf()
        */
       fs_inst *scan_inst;
       for (scan_inst = (fs_inst *)inst->prev;
-	   scan_inst->prev != NULL;
+           !scan_inst->is_head_sentinel();
 	   scan_inst = (fs_inst *)scan_inst->prev) {
 	 if (scan_inst->dst.file == GRF &&
 	     scan_inst->dst.reg == inst->src[0].reg) {
