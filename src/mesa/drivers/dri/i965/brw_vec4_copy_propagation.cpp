@@ -367,8 +367,10 @@ vec4_visitor::opt_copy_propagation()
 	 if (c != 4)
 	    continue;
 
-	 if (try_constant_propagate(brw, inst, i, values) ||
-	     try_copy_propagate(brw, inst, i, values))
+	 if (try_constant_propagate(brw, inst, i, values))
+            progress = true;
+
+	 if (try_copy_propagate(brw, inst, i, values))
 	    progress = true;
       }
 
