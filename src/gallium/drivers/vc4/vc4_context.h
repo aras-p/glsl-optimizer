@@ -66,6 +66,8 @@ struct vc4_texture_stateobj {
 struct vc4_shader_state {
         struct pipe_shader_state base;
         struct vc4_bo *bo;
+
+        uint32_t coord_shader_offset;
 };
 
 struct vc4_program_stateobj {

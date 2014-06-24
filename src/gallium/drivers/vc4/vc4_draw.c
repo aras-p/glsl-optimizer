@@ -31,40 +31,11 @@ static struct vc4_bo *
 get_vbo(struct vc4_context *vc4, uint32_t width, uint32_t height)
 {
         struct {
-                uint16_t x, y;
-                float z, rhw, r, g, b;
+                float x, y, z, w;
         } verts[] = {
-                {
-                        // Vertex: Top, red
-                        (-(int)width / 3) << 4, // X in 12.4 fixed point
-                        (-(int)height / 3) << 4, // Y in 12.4 fixed point
-                        1.0f, // Z
-                        1.0f, // 1/W
-                        1.0f, // Varying 0 (Red)
-                        0.0f, // Varying 1 (Green)
-                        0.0f, // Varying 2 (Blue)
-                },
-                {
-                        // Vertex: bottom left, Green
-                        (width / 3) << 4, // X in 12.4 fixed point
-                        (-(int)height / 3) << 4, // Y in 12.4 fixed point
-                        1.0f, // Z
-                        1.0f, // 1/W
-                        0.0f, // Varying 0 (Red)
-                        1.0f, // Varying 1 (Green)
-                        0.0f, // Varying 2 (Blue)
-                },
-
-                {
-                        // Vertex: bottom right, Blue
-                        (width / 3) << 4, // X in 12.4 fixed point
-                        (height / 3) << 4, // Y in 12.4 fixed point
-                        1.0f, // Z
-                        1.0f, // 1/W
-                        0.0f, // Varying 0 (Red)
-                        0.0f, // Varying 1 (Green)
-                        1.0f, // Varying 2 (Blue)
-                },
+                { -1, -1, 1, 1 },
+                {  1, -1, 1, 1 },
+                { -1,  1, 1, 1 },
         };
 
         return vc4_bo_alloc_mem(vc4->screen, verts, sizeof(verts), "verts");
@@ -118,8 +89,22 @@ vc4_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
                                                  48 * tilew * tileh, "tilestate");
         struct vc4_bo *ibo = get_ibo(vc4);
 
-        struct vc4_bo *fs_uniform = vc4_bo_alloc(vc4->screen, 0x1000, "fsu");
         struct vc4_bo *vbo = get_vbo(vc4, width, height);
+        static const uint32_t fs_uni[] = { 0 };
+        uint32_t vs_uni[] = {
+                fui(vc4->framebuffer.width * 16.0f / 2.0f),
+                fui(vc4->framebuffer.height * 16.0f / 2.0f),
+        };
+        uint32_t cs_uni[] = {
+                fui(vc4->framebuffer.width * 16.0f / 2.0f),
+                fui(vc4->framebuffer.height * 16.0f / 2.0f),
+        };
+        struct vc4_bo *fs_ubo = vc4_bo_alloc_mem(vc4->screen, fs_uni,
+                                                 sizeof(fs_uni), "fs_ubo");
+        struct vc4_bo *vs_ubo = vc4_bo_alloc_mem(vc4->screen, vs_uni,
+                                                 sizeof(vs_uni), "vs_ubo");
+        struct vc4_bo *cs_ubo = vc4_bo_alloc_mem(vc4->screen, cs_uni,
+                                                 sizeof(cs_uni), "cs_ubo");
 
         vc4->needs_flush = true;
 
@@ -137,16 +122,18 @@ vc4_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
         cl_u8(&vc4->bcl, VC4_PACKET_START_TILE_BINNING);
 
         cl_u8(&vc4->bcl, VC4_PACKET_PRIMITIVE_LIST_FORMAT);
-        cl_u8(&vc4->bcl, 0x32); // 16 bit triangle
+        cl_u8(&vc4->bcl, 0x12); // 16 bit triangle
 
         vc4_emit_state(pctx);
 
         /* the actual draw call. */
-        cl_u8(&vc4->bcl, VC4_PACKET_NV_SHADER_STATE);
+        uint32_t nr_attributes = 1;
+        cl_u8(&vc4->bcl, VC4_PACKET_GL_SHADER_STATE);
 #ifndef USE_VC4_SIMULATOR
-        cl_u32(&vc4->bcl, 0); /* offset into shader_rec */
+        cl_u32(&vc4->bcl, nr_attributes & 0x7); /* offset into shader_rec */
 #else
-        cl_u32(&vc4->bcl, simpenrose_hw_addr(vc4->shader_rec.next));
+        cl_u32(&vc4->bcl, simpenrose_hw_addr(vc4->shader_rec.next) |
+               (nr_attributes & 0x7));
 #endif
 
         cl_start_reloc(&vc4->bcl, 1);
@@ -161,15 +148,32 @@ vc4_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
         cl_u8(&vc4->bcl, VC4_PACKET_HALT);
 
 // Shader Record
-        cl_start_shader_reloc(&vc4->shader_rec, 3);
 
-        cl_u8(&vc4->shader_rec, 0);
-        cl_u8(&vc4->shader_rec, 6*4); // stride
-        cl_u8(&vc4->shader_rec, 0xcc); // num uniforms (not used)
-        cl_u8(&vc4->shader_rec, 3); // num varyings
+        cl_start_shader_reloc(&vc4->shader_rec, 7);
+        cl_u16(&vc4->shader_rec, VC4_SHADER_FLAG_ENABLE_CLIPPING);
+        cl_u8(&vc4->shader_rec, 0); /* fs num uniforms (unused) */
+        cl_u8(&vc4->shader_rec, 0); /* fs num varyings */
         cl_reloc(vc4, &vc4->shader_rec, vc4->prog.fs->bo, 0);
-        cl_reloc(vc4, &vc4->shader_rec, fs_uniform, 0);
+        cl_reloc(vc4, &vc4->shader_rec, fs_ubo, 0);
+
+        cl_u16(&vc4->shader_rec, 0); /* vs num uniforms */
+        cl_u8(&vc4->shader_rec, 1); /* vs attribute array bitfield */
+        cl_u8(&vc4->shader_rec, 16); /* vs total attribute size */
+        cl_reloc(vc4, &vc4->shader_rec, vc4->prog.vs->bo, 0);
+        cl_reloc(vc4, &vc4->shader_rec, vs_ubo, 0);
+
+        cl_u16(&vc4->shader_rec, 0); /* cs num uniforms */
+        cl_u8(&vc4->shader_rec, 1); /* cs attribute array bitfield */
+        cl_u8(&vc4->shader_rec, 16); /* vs total attribute size */
+        cl_reloc(vc4, &vc4->shader_rec, vc4->prog.vs->bo,
+                vc4->prog.vs->coord_shader_offset);
+        cl_reloc(vc4, &vc4->shader_rec, cs_ubo, 0);
+
         cl_reloc(vc4, &vc4->shader_rec, vbo, 0);
+        cl_u8(&vc4->shader_rec, 15); /* bytes - 1 in the attribute*/
+        cl_u8(&vc4->shader_rec, 16); /* attribute stride */
+        cl_u8(&vc4->shader_rec, 0); /* VS VPM offset */
+        cl_u8(&vc4->shader_rec, 0); /* CS VPM offset */
 
         vc4->shader_rec_count++;
 

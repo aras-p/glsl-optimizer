@@ -66,7 +66,7 @@ vc4_fs_state_create(struct pipe_context *pctx,
         uint64_t gen_fsc[100];
         uint64_t cur_inst;
         int gen_fsc_len = 0;
-#if 1
+#if 0
         cur_inst = qpu_load_imm_f(qpu_r5(), 0.0f);
         gen_fsc[gen_fsc_len++] = cur_inst;
 
@@ -176,14 +176,140 @@ vc4_fs_state_create(struct pipe_context *pctx,
         return so;
 }
 
+static int
+gen_vs_cs_code(uint64_t *gen, bool is_vs)
+{
+        uint32_t count = 0;
+        uint64_t cur_inst;
+        struct qpu_reg x = qpu_ra(0);
+        struct qpu_reg y = qpu_ra(1);
+        struct qpu_reg z = qpu_ra(2);
+        struct qpu_reg w = qpu_ra(3);
+        struct qpu_reg xy = qpu_ra(10);
+        struct qpu_reg xs = qpu_ra(12);
+        struct qpu_reg ys = qpu_ra(13);
+        struct qpu_reg vpmread = qpu_ra(QPU_R_VPM);
+        struct qpu_reg vpm = qpu_ra(QPU_W_VPM);
+
+        gen[count++] = qpu_load_imm_ui(qpu_vrsetup(), 0x00401a00);
+        gen[count++] = qpu_load_imm_ui(qpu_vwsetup(), 0x00001a00);
+
+#if 1
+        gen[count++] = qpu_inst(qpu_a_MOV(x, vpmread), qpu_m_NOP());
+        gen[count++] = qpu_inst(qpu_a_MOV(y, vpmread), qpu_m_NOP());
+        gen[count++] = qpu_inst(qpu_a_MOV(z, vpmread), qpu_m_NOP());
+        gen[count++] = qpu_inst(qpu_a_MOV(w, vpmread), qpu_m_NOP());
+
+
+        gen[count++] = qpu_inst(qpu_a_NOP(), qpu_m_FMUL(xs, x,
+                                                        qpu_rb(QPU_R_UNIF)));
+        gen[count++] = qpu_inst(qpu_a_NOP(), qpu_m_FMUL(ys, y,
+                                                        qpu_rb(QPU_R_UNIF)));
+
+        cur_inst = qpu_inst(qpu_a_FTOI(xy, xs), qpu_m_NOP());
+        cur_inst |= QPU_SET_FIELD(QPU_PACK_A_16A, QPU_PACK);
+        gen[count++] = cur_inst;
+        cur_inst = qpu_inst(qpu_a_FTOI(xy, ys), qpu_m_NOP());
+        cur_inst |= QPU_SET_FIELD(QPU_PACK_A_16B, QPU_PACK);
+        gen[count++] = cur_inst;
+
+#else
+
+        struct qpu_reg t = qpu_ra(20);
+        struct qpu_reg hundred = qpu_rb(21);
+        gen[count++] = qpu_inst(qpu_a_NOP(),
+                                qpu_m_MUL24(t,
+                                            qpu_ra(QPU_R_ELEM_QPU),
+                                            qpu_ra(QPU_R_ELEM_QPU)));
+        gen[count++] = qpu_inst(qpu_a_NOP(), qpu_m_NOP());
+
+        gen[count++] = qpu_load_imm_ui(hundred, 400);
+        gen[count++] = qpu_inst(qpu_a_NOP(), qpu_m_NOP());
+
+        struct qpu_reg xm = qpu_ra(22), ym = qpu_ra(23);
+        gen[count++] = qpu_inst(qpu_a_NOP(),
+                                qpu_m_MUL24(xm, hundred, qpu_ra(QPU_R_ELEM_QPU)));
+        gen[count++] = qpu_inst(qpu_a_NOP(), qpu_m_NOP());
+
+        gen[count++] = qpu_inst(qpu_a_NOP(),
+                                qpu_m_MUL24(ym, hundred, t));
+        gen[count++] = qpu_inst(qpu_a_NOP(), qpu_m_NOP());
+
+        cur_inst = qpu_inst(qpu_a_MOV(xy, xm), qpu_m_NOP());
+        cur_inst |= QPU_SET_FIELD(QPU_PACK_A_16A, QPU_PACK);
+        gen[count++] = cur_inst;
+        cur_inst = qpu_inst(qpu_a_MOV(xy, ym), qpu_m_NOP());
+        cur_inst |= QPU_SET_FIELD(QPU_PACK_A_16B, QPU_PACK);
+        gen[count++] = cur_inst;
+#endif
+
+        gen[count++] = qpu_inst(qpu_a_NOP(), qpu_m_NOP());
+
+        if (is_vs) {
+                gen[count++] = qpu_inst(qpu_a_MOV(vpm, xy), qpu_m_NOP());
+
+                /* XXX */
+                gen[count++] = qpu_inst(qpu_a_MOV(vpm, z), qpu_m_NOP());
+                gen[count++] = qpu_inst(qpu_a_MOV(vpm, w), qpu_m_NOP());
+
+        } else {
+                gen[count++] = qpu_inst(qpu_a_MOV(vpm, x), qpu_m_NOP());
+                gen[count++] = qpu_inst(qpu_a_MOV(vpm, y), qpu_m_NOP());
+                gen[count++] = qpu_inst(qpu_a_MOV(vpm, z), qpu_m_NOP());
+                gen[count++] = qpu_inst(qpu_a_MOV(vpm, w), qpu_m_NOP());
+                gen[count++] = qpu_inst(qpu_a_MOV(vpm, xy), qpu_m_NOP());
+
+                /* XXX */
+                gen[count++] = qpu_inst(qpu_a_MOV(vpm, z), qpu_m_NOP());
+                gen[count++] = qpu_inst(qpu_a_MOV(vpm, w), qpu_m_NOP());
+        }
+
+        /* PROGRAM END */
+        cur_inst = qpu_inst(qpu_a_NOP(), qpu_m_NOP());
+        cur_inst = (cur_inst & ~QPU_SIG_MASK) | QPU_SET_FIELD(QPU_SIG_PROG_END, QPU_SIG);
+        gen[count++] = cur_inst;
+
+        cur_inst = qpu_inst(qpu_a_NOP(), qpu_m_NOP());
+        gen[count++] = cur_inst;
+
+        cur_inst = qpu_inst(qpu_a_NOP(), qpu_m_NOP());
+        gen[count++] = cur_inst;
+
+        vc4_qpu_validate(gen, count);
+
+        return count;
+}
+
 static void *
 vc4_vs_state_create(struct pipe_context *pctx,
                     const struct pipe_shader_state *cso)
 {
+        struct vc4_context *vc4 = vc4_context(pctx);
         struct vc4_shader_state *so = vc4_shader_state_create(pctx, cso);
         if (!so)
                 return NULL;
 
+        uint64_t gen[100];
+        uint64_t count = 0;
+        uint64_t *vsc = gen;
+
+        /* VS */
+        count += gen_vs_cs_code(gen + count, true);
+        fprintf(stderr, "VS:\n");
+        vc4_dump_program(vsc, count);
+
+        /* CS */
+
+        /* XXX alignment? */
+        uint64_t *csc = gen + count;
+        so->coord_shader_offset = count * sizeof(uint64_t);
+        count += gen_vs_cs_code(gen + count, false);
+
+        fprintf(stderr, "CS:\n");
+        vc4_dump_program(csc, count - (csc - gen));
+
+        so->bo = vc4_bo_alloc_mem(vc4->screen, gen, count * sizeof(uint64_t),
+                                  "vs_code");
 
         return so;
 }
