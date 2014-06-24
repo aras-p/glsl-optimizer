@@ -105,4 +105,14 @@ public:
 };
 #endif
 
+#define foreach_inst_in_block(__type, __inst, __block)         \
+   for (__type *__inst = (__type *)__block->start;             \
+        __inst != __block->end->next;                          \
+        __inst = (__type *)__inst->next)
+
+#define foreach_inst_in_block_reverse(__type, __inst, __block) \
+   for (__type *__inst = (__type *)__block->end;               \
+        __inst != __block->start->prev;                        \
+        __inst = (__type *)__inst->prev)
+
 #endif /* BRW_CFG_H */

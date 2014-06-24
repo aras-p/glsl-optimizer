@@ -34,9 +34,7 @@ opt_saturate_propagation_local(fs_visitor *v, bblock_t *block)
    bool progress = false;
    int ip = block->start_ip - 1;
 
-   for (fs_inst *inst = (fs_inst *)block->start;
-        inst != block->end->next;
-        inst = (fs_inst *) inst->next) {
+   foreach_inst_in_block(fs_inst, inst, block) {
       ip++;
 
       if (inst->opcode != BRW_OPCODE_MOV ||

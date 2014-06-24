@@ -144,10 +144,7 @@ fs_live_variables::setup_def_use()
       if (b > 0)
 	 assert(cfg->blocks[b - 1]->end_ip == ip - 1);
 
-      for (fs_inst *inst = (fs_inst *)block->start;
-	   inst != block->end->next;
-	   inst = (fs_inst *)inst->next) {
-
+      foreach_inst_in_block(fs_inst, inst, block) {
 	 /* Set use[] for this instruction */
 	 for (unsigned int i = 0; i < inst->sources; i++) {
             fs_reg reg = inst->src[i];

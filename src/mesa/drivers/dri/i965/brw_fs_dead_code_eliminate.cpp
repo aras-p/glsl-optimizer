@@ -51,9 +51,7 @@ fs_visitor::dead_code_eliminate()
       memcpy(live, live_intervals->bd[b].liveout,
              sizeof(BITSET_WORD) * BITSET_WORDS(num_vars));
 
-      for (fs_inst *inst = (fs_inst *)block->end;
-           inst != block->start->prev;
-           inst = (fs_inst *)inst->prev) {
+      foreach_inst_in_block_reverse(fs_inst, inst, block) {
          if (inst->dst.file == GRF &&
              !inst->has_side_effects() &&
              !inst->writes_flag()) {

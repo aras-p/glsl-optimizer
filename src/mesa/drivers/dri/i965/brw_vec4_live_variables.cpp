@@ -72,10 +72,7 @@ vec4_live_variables::setup_def_use()
       if (b > 0)
 	 assert(cfg->blocks[b - 1]->end_ip == ip - 1);
 
-      for (vec4_instruction *inst = (vec4_instruction *)block->start;
-	   inst != block->end->next;
-	   inst = (vec4_instruction *)inst->next) {
-
+      foreach_inst_in_block(vec4_instruction, inst, block) {
 	 /* Set use[] for this instruction */
 	 for (unsigned int i = 0; i < 3; i++) {
 	    if (inst->src[i].file == GRF) {

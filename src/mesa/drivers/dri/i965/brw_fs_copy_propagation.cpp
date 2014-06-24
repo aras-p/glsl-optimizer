@@ -157,9 +157,7 @@ fs_copy_prop_dataflow::setup_initial_values()
    for (int b = 0; b < cfg->num_blocks; b++) {
       bblock_t *block = cfg->blocks[b];
 
-      for (fs_inst *inst = (fs_inst *)block->start;
-           inst != block->end->next;
-           inst = (fs_inst *)inst->next) {
+      foreach_inst_in_block(fs_inst, inst, block) {
          if (inst->dst.file != GRF)
             continue;
 
@@ -532,10 +530,7 @@ fs_visitor::opt_copy_propagate_local(void *copy_prop_ctx, bblock_t *block,
 {
    bool progress = false;
 
-   for (fs_inst *inst = (fs_inst *)block->start;
-	inst != block->end->next;
-	inst = (fs_inst *)inst->next) {
-
+   foreach_inst_in_block(fs_inst, inst, block) {
       /* Try propagating into this instruction. */
       for (int i = 0; i < inst->sources; i++) {
          if (inst->src[i].file != GRF)

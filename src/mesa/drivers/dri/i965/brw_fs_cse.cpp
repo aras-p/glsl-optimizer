@@ -173,10 +173,7 @@ fs_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
    void *cse_ctx = ralloc_context(NULL);
 
    int ip = block->start_ip;
-   for (fs_inst *inst = (fs_inst *)block->start;
-        inst != block->end->next;
-        inst = (fs_inst *) inst->next) {
-
+   foreach_inst_in_block(fs_inst, inst, block) {
       /* Skip some cases. */
       if (is_expression(inst) && !inst->is_partial_write() &&
           (inst->dst.file != HW_REG || inst->dst.is_null()))
