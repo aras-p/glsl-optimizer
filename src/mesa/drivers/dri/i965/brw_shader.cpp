@@ -213,8 +213,8 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
        * too late.  At that point, the values for the built-in uniforms won't
        * get sent to the shader.
        */
-      foreach_list(node, shader->base.ir) {
-	 ir_variable *var = ((ir_instruction *) node)->as_variable();
+      foreach_in_list(ir_instruction, node, shader->base.ir) {
+	 ir_variable *var = node->as_variable();
 
 	 if ((var == NULL) || (var->data.mode != ir_var_uniform)
 	     || (strncmp(var->name, "gl_", 3) != 0))
@@ -719,8 +719,7 @@ backend_visitor::dump_instructions(const char *name)
    }
 
    int ip = 0;
-   foreach_list(node, &this->instructions) {
-      backend_instruction *inst = (backend_instruction *)node;
+   foreach_in_list(backend_instruction, inst, &instructions) {
       if (!name)
          fprintf(stderr, "%d: ", ip++);
       dump_instruction(inst, file);

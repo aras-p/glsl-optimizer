@@ -312,9 +312,7 @@ vec4_visitor::opt_copy_propagation()
 
    memset(&cur_value, 0, sizeof(cur_value));
 
-   foreach_list(node, &this->instructions) {
-      vec4_instruction *inst = (vec4_instruction *)node;
-
+   foreach_in_list(vec4_instruction, inst, &instructions) {
       /* This pass only works on basic blocks.  If there's flow
        * control, throw out all our information and start from
        * scratch.

@@ -1238,8 +1238,7 @@ vec4_generator::generate_code(exec_list *instructions)
    if (unlikely(debug_flag))
       cfg = new(mem_ctx) cfg_t(instructions);
 
-   foreach_list(node, instructions) {
-      vec4_instruction *inst = (vec4_instruction *)node;
+   foreach_in_list(vec4_instruction, inst, instructions) {
       struct brw_reg src[3], dst;
 
       if (unlikely(debug_flag))

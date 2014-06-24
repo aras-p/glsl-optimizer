@@ -56,9 +56,7 @@ vec4_visitor::reg_allocate_trivial()
       virtual_grf_used[i] = false;
    }
 
-   foreach_list(node, &this->instructions) {
-      vec4_instruction *inst = (vec4_instruction *) node;
-
+   foreach_in_list(vec4_instruction, inst, &instructions) {
       if (inst->dst.file == GRF)
 	 virtual_grf_used[inst->dst.reg] = true;
 
@@ -78,9 +76,7 @@ vec4_visitor::reg_allocate_trivial()
    }
    prog_data->total_grf = next;
 
-   foreach_list(node, &this->instructions) {
-      vec4_instruction *inst = (vec4_instruction *) node;
-
+   foreach_in_list(vec4_instruction, inst, &instructions) {
       assign(hw_reg_mapping, &inst->dst);
       assign(hw_reg_mapping, &inst->src[0]);
       assign(hw_reg_mapping, &inst->src[1]);
@@ -241,9 +237,7 @@ vec4_visitor::reg_allocate()
 				  hw_reg_mapping[i] + virtual_grf_sizes[i]);
    }
 
-   foreach_list(node, &this->instructions) {
-      vec4_instruction *inst = (vec4_instruction *)node;
-
+   foreach_in_list(vec4_instruction, inst, &instructions) {
       assign(hw_reg_mapping, &inst->dst);
       assign(hw_reg_mapping, &inst->src[0]);
       assign(hw_reg_mapping, &inst->src[1]);
@@ -269,9 +263,7 @@ vec4_visitor::evaluate_spill_costs(float *spill_costs, bool *no_spill)
     * spill/unspill we'll have to do, and guess that the insides of
     * loops run 10 times.
     */
-   foreach_list(node, &this->instructions) {
-      vec4_instruction *inst = (vec4_instruction *) node;
-
+   foreach_in_list(vec4_instruction, inst, &instructions) {
       for (unsigned int i = 0; i < 3; i++) {
 	 if (inst->src[i].file == GRF) {
 	    spill_costs[inst->src[i].reg] += loop_scale;
@@ -335,9 +327,7 @@ vec4_visitor::spill_reg(int spill_reg_nr)
    unsigned int spill_offset = c->last_scratch++;
 
    /* Generate spill/unspill instructions for the objects being spilled. */
-   foreach_list(node, &this->instructions) {
-      vec4_instruction *inst = (vec4_instruction *) node;
-
+   foreach_in_list(vec4_instruction, inst, &instructions) {
       for (unsigned int i = 0; i < 3; i++) {
          if (inst->src[i].file == GRF && inst->src[i].reg == spill_reg_nr) {
             src_reg spill_reg = inst->src[i];

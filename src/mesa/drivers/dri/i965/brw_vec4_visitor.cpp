@@ -549,9 +549,7 @@ vec4_visitor::emit_unpack_half_2x16(dst_reg dst, src_reg src0)
 void
 vec4_visitor::visit_instructions(const exec_list *list)
 {
-   foreach_list(node, list) {
-      ir_instruction *ir = (ir_instruction *)node;
-
+   foreach_in_list(ir_instruction, ir, list) {
       base_ir = ir;
       ir->accept(this);
    }
@@ -2163,9 +2161,7 @@ void
 vec4_visitor::emit_constant_values(dst_reg *dst, ir_constant *ir)
 {
    if (ir->type->base_type == GLSL_TYPE_STRUCT) {
-      foreach_list(node, &ir->components) {
-	 ir_constant *field_value = (ir_constant *)node;
-
+      foreach_in_list(ir_constant, field_value, &ir->components) {
 	 emit_constant_values(dst, field_value);
       }
       return;
@@ -3235,9 +3231,7 @@ vec4_visitor::move_grf_array_access_to_scratch()
     * to scratch due to having any array access on them, and where in
     * scratch.
     */
-   foreach_list(node, &this->instructions) {
-      vec4_instruction *inst = (vec4_instruction *)node;
-
+   foreach_in_list(vec4_instruction, inst, &instructions) {
       if (inst->dst.file == GRF && inst->dst.reladdr &&
 	  scratch_loc[inst->dst.reg] == -1) {
 	 scratch_loc[inst->dst.reg] = c->last_scratch;

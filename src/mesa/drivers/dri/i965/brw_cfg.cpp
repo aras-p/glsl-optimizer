@@ -107,9 +107,7 @@ cfg_t::cfg_t(exec_list *instructions)
 
    entry->start = (backend_instruction *) instructions->get_head();
 
-   foreach_list(node, instructions) {
-      backend_instruction *inst = (backend_instruction *)node;
-
+   foreach_in_list(backend_instruction, inst, instructions) {
       cur->end = inst;
 
       /* set_next_block wants the post-incremented ip */

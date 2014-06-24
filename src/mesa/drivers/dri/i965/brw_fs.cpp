@@ -1477,9 +1477,7 @@ fs_visitor::assign_curb_setup()
    prog_data->curb_read_length = ALIGN(stage_prog_data->nr_params, 8) / 8;
 
    /* Map the offsets in the UNIFORM file to fixed HW regs. */
-   foreach_list(node, &this->instructions) {
-      fs_inst *inst = (fs_inst *)node;
-
+   foreach_in_list(fs_inst, inst, &instructions) {
       for (unsigned int i = 0; i < inst->sources; i++) {
 	 if (inst->src[i].file == UNIFORM) {
             int uniform_nr = inst->src[i].reg + inst->src[i].reg_offset;
@@ -1601,9 +1599,7 @@ fs_visitor::assign_urb_setup()
    /* Offset all the urb_setup[] index by the actual position of the
     * setup regs, now that the location of the constants has been chosen.
     */
-   foreach_list(node, &this->instructions) {
-      fs_inst *inst = (fs_inst *)node;
-
+   foreach_in_list(fs_inst, inst, &instructions) {
       if (inst->opcode == FS_OPCODE_LINTERP) {
 	 assert(inst->src[2].file == HW_REG);
 	 inst->src[2].fixed_hw_reg.nr += urb_start;
@@ -1664,9 +1660,7 @@ fs_visitor::split_virtual_grfs()
          false;
    }
 
-   foreach_list(node, &this->instructions) {
-      fs_inst *inst = (fs_inst *)node;
-
+   foreach_in_list(fs_inst, inst, &instructions) {
       /* If there's a SEND message that requires contiguous destination
        * registers, no splitting is allowed.
        */
@@ -1701,9 +1695,7 @@ fs_visitor::split_virtual_grfs()
       }
    }
 
-   foreach_list(node, &this->instructions) {
-      fs_inst *inst = (fs_inst *)node;
-
+   foreach_in_list(fs_inst, inst, &instructions) {
       if (inst->dst.file == GRF &&
 	  split_grf[inst->dst.reg] &&
 	  inst->dst.reg_offset != 0) {
@@ -1743,9 +1735,7 @@ fs_visitor::compact_virtual_grfs()
    int remap_table[this->virtual_grf_count];
    memset(remap_table, -1, sizeof(remap_table));
 
-   foreach_list(node, &this->instructions) {
-      const fs_inst *inst = (const fs_inst *) node;
-
+   foreach_in_list(const fs_inst, inst, &instructions) {
       if (inst->dst.file == GRF)
          remap_table[inst->dst.reg] = 0;
 
@@ -1769,9 +1759,7 @@ fs_visitor::compact_virtual_grfs()
    this->virtual_grf_count = new_index;
 
    /* Patch all the instructions to use the newly renumbered registers */
-   foreach_list(node, &this->instructions) {
-      fs_inst *inst = (fs_inst *) node;
-
+   foreach_in_list(fs_inst, inst, &instructions) {
       if (inst->dst.file == GRF)
          inst->dst.reg = remap_table[inst->dst.reg];
 
@@ -1862,9 +1850,7 @@ fs_visitor::assign_constant_locations()
       is_live[i] = false;
    }
 
-   foreach_list(node, &this->instructions) {
-      fs_inst *inst = (fs_inst *) node;
-
+   foreach_in_list(fs_inst, inst, &instructions) {
       for (int i = 0; i < inst->sources; i++) {
          if (inst->src[i].file != UNIFORM)
             continue;
@@ -1933,9 +1919,7 @@ fs_visitor::assign_constant_locations()
 void
 fs_visitor::demote_pull_constants()
 {
-   foreach_list(node, &this->instructions) {
-      fs_inst *inst = (fs_inst *)node;
-
+   foreach_in_list(fs_inst, inst, &instructions) {
       for (int i = 0; i < inst->sources; i++) {
 	 if (inst->src[i].file != UNIFORM)
 	    continue;
@@ -1983,9 +1967,7 @@ fs_visitor::opt_algebraic()
 {
    bool progress = false;
 
-   foreach_list(node, &this->instructions) {
-      fs_inst *inst = (fs_inst *)node;
-
+   foreach_in_list(fs_inst, inst, &instructions) {
       switch (inst->opcode) {
       case BRW_OPCODE_MUL:
 	 if (inst->src[1].file != IMM)
@@ -2556,9 +2538,7 @@ fs_visitor::insert_gen4_send_dependency_workarounds()
 void
 fs_visitor::lower_uniform_pull_constant_loads()
 {
-   foreach_list(node, &this->instructions) {
-      fs_inst *inst = (fs_inst *)node;
-
+   foreach_in_list(fs_inst, inst, &instructions) {
       if (inst->opcode != FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD)
          continue;
 
@@ -2656,8 +2636,7 @@ fs_visitor::dump_instructions(const char *name)
    }
 
    int ip = 0, max_pressure = 0;
-   foreach_list(node, &this->instructions) {
-      backend_instruction *inst = (backend_instruction *)node;
+   foreach_in_list(backend_instruction, inst, &instructions) {
       max_pressure = MAX2(max_pressure, regs_live_at_ip[ip]);
       fprintf(file, "{%3d} %4d: ", regs_live_at_ip[ip], ip);
       dump_instruction(inst, file);
@@ -2980,7 +2959,7 @@ fs_visitor::calculate_register_pressure()
    calculate_live_intervals();
 
    int num_instructions = 0;
-   foreach_list(node, &this->instructions) {
+   foreach_in_list(fs_inst, inst, &instructions) {
       ++num_instructions;
    }
 
@@ -3062,8 +3041,7 @@ fs_visitor::run()
        * functions called "main").
        */
       if (shader) {
-         foreach_list(node, &*shader->base.ir) {
-            ir_instruction *ir = (ir_instruction *)node;
+         foreach_in_list(ir_instruction, ir, shader->base.ir) {
             base_ir = ir;
             this->result = reg_undef;
             ir->accept(this);

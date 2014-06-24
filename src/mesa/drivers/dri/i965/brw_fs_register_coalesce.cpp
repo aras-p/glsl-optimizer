@@ -133,8 +133,7 @@ can_coalesce_vars(brw::fs_live_variables *live_intervals,
 
    int scan_ip = -1;
 
-   foreach_list(n, instructions) {
-      fs_inst *scan_inst = (fs_inst *)n;
+   foreach_in_list(fs_inst, scan_inst, instructions) {
       scan_ip++;
 
       if (scan_inst->is_control_flow())
@@ -169,9 +168,7 @@ fs_visitor::register_coalesce()
    int var_to[MAX_SAMPLER_MESSAGE_SIZE];
    int var_from[MAX_SAMPLER_MESSAGE_SIZE];
 
-   foreach_list(node, &this->instructions) {
-      fs_inst *inst = (fs_inst *)node;
-
+   foreach_in_list(fs_inst, inst, &instructions) {
       if (!is_coalesce_candidate(inst, virtual_grf_sizes))
          continue;
 
@@ -242,9 +239,7 @@ fs_visitor::register_coalesce()
          }
       }
 
-      foreach_list(node, &this->instructions) {
-         fs_inst *scan_inst = (fs_inst *)node;
-
+      foreach_in_list(fs_inst, scan_inst, &instructions) {
          for (int i = 0; i < src_size; i++) {
             if (mov[i] || was_load_payload) {
                if (scan_inst->dst.file == GRF &&

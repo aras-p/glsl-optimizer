@@ -1970,8 +1970,7 @@ fs_visitor::visit(ir_constant *ir)
 	 }
       }
    } else if (ir->type->is_record()) {
-      foreach_list(node, &ir->components) {
-	 ir_constant *const field = (ir_constant *) node;
+      foreach_in_list(ir_constant, field, &ir->components) {
 	 const unsigned size = type_size(field->type);
 
 	 field->accept(this);
@@ -2260,21 +2259,17 @@ fs_visitor::visit(ir_if *ir)
       emit(IF(BRW_PREDICATE_NORMAL));
    }
 
-   foreach_list(node, &ir->then_instructions) {
-      ir_instruction *ir = (ir_instruction *)node;
-      this->base_ir = ir;
-
-      ir->accept(this);
+   foreach_in_list(ir_instruction, ir_, &ir->then_instructions) {
+      this->base_ir = ir_;
+      ir_->accept(this);
    }
 
    if (!ir->else_instructions.is_empty()) {
       emit(BRW_OPCODE_ELSE);
 
-      foreach_list(node, &ir->else_instructions) {
-	 ir_instruction *ir = (ir_instruction *)node;
-	 this->base_ir = ir;
-
-	 ir->accept(this);
+      foreach_in_list(ir_instruction, ir_, &ir->else_instructions) {
+	 this->base_ir = ir_;
+	 ir_->accept(this);
       }
    }
 
@@ -2293,11 +2288,9 @@ fs_visitor::visit(ir_loop *ir)
    this->base_ir = NULL;
    emit(BRW_OPCODE_DO);
 
-   foreach_list(node, &ir->body_instructions) {
-      ir_instruction *ir = (ir_instruction *)node;
-
-      this->base_ir = ir;
-      ir->accept(this);
+   foreach_in_list(ir_instruction, ir_, &ir->body_instructions) {
+      this->base_ir = ir_;
+      ir_->accept(this);
    }
 
    this->base_ir = NULL;
@@ -2392,11 +2385,9 @@ fs_visitor::visit(ir_function *ir)
 
       assert(sig);
 
-      foreach_list(node, &sig->body) {
-	 ir_instruction *ir = (ir_instruction *)node;
-	 this->base_ir = ir;
-
-	 ir->accept(this);
+      foreach_in_list(ir_instruction, ir_, &sig->body) {
+	 this->base_ir = ir_;
+	 ir_->accept(this);
       }
    }
 }

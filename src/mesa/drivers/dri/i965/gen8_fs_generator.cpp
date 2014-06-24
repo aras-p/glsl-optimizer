@@ -663,8 +663,7 @@ gen8_fs_generator::patch_discard_jumps_to_fb_writes()
 
    int ip = nr_inst;
 
-   foreach_list(node, &discard_halt_patches) {
-      ip_record *patch_ip = (ip_record *) node;
+   foreach_in_list(ip_record, patch_ip, &discard_halt_patches) {
       gen8_instruction *patch = &store[patch_ip->ip];
       assert(gen8_opcode(patch) == BRW_OPCODE_HALT);
 
@@ -895,8 +894,7 @@ gen8_fs_generator::generate_code(exec_list *instructions)
    if (unlikely(INTEL_DEBUG & DEBUG_WM))
       cfg = new(mem_ctx) cfg_t(instructions);
 
-   foreach_list(node, instructions) {
-      fs_inst *ir = (fs_inst *) node;
+   foreach_in_list(fs_inst, ir, instructions) {
       struct brw_reg src[3], dst;
 
       if (unlikely(INTEL_DEBUG & DEBUG_WM))

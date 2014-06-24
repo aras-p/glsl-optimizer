@@ -84,8 +84,7 @@ fs_generator::patch_discard_jumps_to_fb_writes()
 
    int ip = p->nr_insn;
 
-   foreach_list(node, &this->discard_halt_patches) {
-      ip_record *patch_ip = (ip_record *)node;
+   foreach_in_list(ip_record, patch_ip, &discard_halt_patches) {
       brw_inst *patch = &p->store[patch_ip->ip];
 
       assert(brw_inst_opcode(brw, patch) == BRW_OPCODE_HALT);
@@ -1326,8 +1325,7 @@ fs_generator::generate_code(exec_list *instructions)
    if (unlikely(debug_flag))
       cfg = new(mem_ctx) cfg_t(instructions);
 
-   foreach_list(node, instructions) {
-      fs_inst *inst = (fs_inst *)node;
+   foreach_in_list(fs_inst, inst, instructions) {
       struct brw_reg src[3], dst;
       unsigned int last_insn_offset = p->next_insn_offset;
 

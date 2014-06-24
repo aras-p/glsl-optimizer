@@ -106,7 +106,7 @@ fs_copy_prop_dataflow::fs_copy_prop_dataflow(void *mem_ctx, cfg_t *cfg,
    num_acp = 0;
    for (int b = 0; b < cfg->num_blocks; b++) {
       for (int i = 0; i < ACP_HASH_SIZE; i++) {
-         foreach_list(entry_node, &out_acp[b][i]) {
+         foreach_in_list(acp_entry, entry, &out_acp[b][i]) {
             num_acp++;
          }
       }
@@ -124,9 +124,7 @@ fs_copy_prop_dataflow::fs_copy_prop_dataflow(void *mem_ctx, cfg_t *cfg,
       bd[b].kill = rzalloc_array(bd, BITSET_WORD, bitset_words);
 
       for (int i = 0; i < ACP_HASH_SIZE; i++) {
-         foreach_list(entry_node, &out_acp[b][i]) {
-            acp_entry *entry = (acp_entry *)entry_node;
-
+         foreach_in_list(acp_entry, entry, &out_acp[b][i]) {
             acp[next_acp] = entry;
 
             /* opt_copy_propagate_local populates out_acp with copies created
@@ -536,9 +534,7 @@ fs_visitor::opt_copy_propagate_local(void *copy_prop_ctx, bblock_t *block,
          if (inst->src[i].file != GRF)
             continue;
 
-         foreach_list(entry_node, &acp[inst->src[i].reg % ACP_HASH_SIZE]) {
-            acp_entry *entry = (acp_entry *)entry_node;
-
+         foreach_in_list(acp_entry, entry, &acp[inst->src[i].reg % ACP_HASH_SIZE]) {
             if (try_constant_propagate(brw, inst, entry))
                progress = true;
 
