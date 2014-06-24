@@ -371,15 +371,15 @@ fs_inst::is_send_from_grf() const
 }
 
 bool
-fs_visitor::can_do_source_mods(fs_inst *inst)
+fs_inst::can_do_source_mods(struct brw_context *brw)
 {
-   if (brw->gen == 6 && inst->is_math())
+   if (brw->gen == 6 && is_math())
       return false;
 
-   if (inst->is_send_from_grf())
+   if (is_send_from_grf())
       return false;
 
-   if (!inst->can_do_source_mods())
+   if (!backend_instruction::can_do_source_mods())
       return false;
 
    return true;

@@ -265,6 +265,7 @@ public:
    bool is_send_from_grf();
    bool can_reswizzle_dst(int dst_writemask, int swizzle, int swizzle_mask);
    void reswizzle_dst(int dst_writemask, int swizzle);
+   bool can_do_source_mods(struct brw_context *brw);
 
    bool reads_flag()
    {
@@ -429,8 +430,6 @@ public:
    bool opt_register_coalesce();
    void opt_set_dependency_control();
    void opt_schedule_instructions();
-
-   bool can_do_source_mods(vec4_instruction *inst);
 
    vec4_instruction *emit(vec4_instruction *inst);
 

@@ -208,6 +208,7 @@ public:
    bool is_send_from_grf() const;
    bool is_partial_write() const;
    int regs_read(fs_visitor *v, int arg) const;
+   bool can_do_source_mods(struct brw_context *brw);
 
    bool reads_flag() const;
    bool writes_flag() const;
@@ -284,8 +285,6 @@ public:
 
    uint32_t gather_channel(ir_texture *ir, int sampler);
    void swizzle_result(ir_texture *ir, fs_reg orig_val, int sampler);
-
-   bool can_do_source_mods(fs_inst *inst);
 
    fs_inst *emit(fs_inst *inst);
    void emit(exec_list list);

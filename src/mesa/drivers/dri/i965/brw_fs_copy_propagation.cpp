@@ -314,7 +314,7 @@ fs_visitor::try_copy_propagate(fs_inst *inst, int arg, acp_entry *entry)
 
    if ((has_source_modifiers || entry->src.file == UNIFORM ||
         !entry->src.is_contiguous()) &&
-       !can_do_source_mods(inst))
+       !inst->can_do_source_mods(brw))
       return false;
 
    /* Bail if the result of composing both strides would exceed the

@@ -263,7 +263,7 @@ vec4_visitor::try_copy_propagation(vec4_instruction *inst, int arg,
     * instructions.
     */
    if ((has_source_modifiers || value.file == UNIFORM ||
-        value.swizzle != BRW_SWIZZLE_XYZW) && !can_do_source_mods(inst))
+        value.swizzle != BRW_SWIZZLE_XYZW) && !inst->can_do_source_mods(brw))
       return false;
 
    if (has_source_modifiers && value.type != inst->src[arg].type)

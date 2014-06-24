@@ -250,15 +250,15 @@ vec4_instruction::is_send_from_grf()
 }
 
 bool
-vec4_visitor::can_do_source_mods(vec4_instruction *inst)
+vec4_instruction::can_do_source_mods(struct brw_context *brw)
 {
-   if (brw->gen == 6 && inst->is_math())
+   if (brw->gen == 6 && is_math())
       return false;
 
-   if (inst->is_send_from_grf())
+   if (is_send_from_grf())
       return false;
 
-   if (!inst->can_do_source_mods())
+   if (!backend_instruction::can_do_source_mods())
       return false;
 
    return true;
