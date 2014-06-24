@@ -573,6 +573,16 @@ inline void exec_node::insert_before(exec_list *before)
 	; (__node)->next != NULL 			\
 	; (__node) = (__node)->next)
 
+#define foreach_in_list(__type, __inst, __list)      \
+   for (__type *(__inst) = (__type *)(__list)->head; \
+        !(__inst)->is_tail_sentinel();               \
+        (__inst) = (__type *)(__inst)->next)
+
+#define foreach_in_list_reverse(__type, __inst, __list) \
+   for (__type *(__inst) = (__type *)(__list)->head;    \
+        !(__inst)->is_head_sentinel();                  \
+        (__inst) = (__type *)(__inst)->prev)
+
 /**
  * Iterate through two lists at once.  Stops at the end of the shorter list.
  *
