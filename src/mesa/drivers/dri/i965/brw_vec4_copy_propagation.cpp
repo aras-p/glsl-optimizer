@@ -211,9 +211,9 @@ is_logic_op(enum opcode opcode)
            opcode == BRW_OPCODE_NOT);
 }
 
-bool
-vec4_visitor::try_copy_propagate(vec4_instruction *inst, int arg,
-                                 src_reg *values[4])
+static bool
+try_copy_propagate(struct brw_context *brw, vec4_instruction *inst,
+                   int arg, src_reg *values[4])
 {
    /* For constant propagation, we only handle the same constant
     * across all 4 channels.  Some day, we should handle the 8-bit
@@ -368,7 +368,7 @@ vec4_visitor::opt_copy_propagation()
 	    continue;
 
 	 if (try_constant_propagate(brw, inst, i, values) ||
-	     try_copy_propagate(inst, i, values))
+	     try_copy_propagate(brw, inst, i, values))
 	    progress = true;
       }
 
