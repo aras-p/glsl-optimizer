@@ -367,8 +367,8 @@ fs_visitor::try_copy_propagate(fs_inst *inst, int arg, acp_entry *entry)
 }
 
 
-bool
-fs_visitor::try_constant_propagate(fs_inst *inst, acp_entry *entry)
+static bool
+try_constant_propagate(fs_inst *inst, acp_entry *entry)
 {
    bool progress = false;
 

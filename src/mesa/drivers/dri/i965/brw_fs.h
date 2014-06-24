@@ -373,7 +373,6 @@ public:
    bool opt_cse_local(bblock_t *block, exec_list *aeb);
    bool opt_copy_propagate();
    bool try_copy_propagate(fs_inst *inst, int arg, acp_entry *entry);
-   bool try_constant_propagate(fs_inst *inst, acp_entry *entry);
    bool opt_copy_propagate_local(void *mem_ctx, bblock_t *block,
                                  exec_list *acp);
    void opt_drop_redundant_mov_to_flags();
