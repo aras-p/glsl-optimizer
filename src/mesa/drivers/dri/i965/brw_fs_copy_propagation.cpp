@@ -368,7 +368,8 @@ fs_visitor::try_copy_propagate(fs_inst *inst, int arg, acp_entry *entry)
 
 
 static bool
-try_constant_propagate(fs_inst *inst, acp_entry *entry)
+try_constant_propagate(struct brw_context *brw, fs_inst *inst,
+                       acp_entry *entry)
 {
    bool progress = false;
 
@@ -396,6 +397,12 @@ try_constant_propagate(fs_inst *inst, acp_entry *entry)
          progress = true;
          break;
 
+      case SHADER_OPCODE_POW:
+      case SHADER_OPCODE_INT_QUOTIENT:
+      case SHADER_OPCODE_INT_REMAINDER:
+         if (brw->gen < 8)
+            break;
+         /* fallthrough */
       case BRW_OPCODE_BFI1:
       case BRW_OPCODE_ASR:
       case BRW_OPCODE_SHL:
@@ -537,7 +544,7 @@ fs_visitor::opt_copy_propagate_local(void *copy_prop_ctx, bblock_t *block,
          foreach_list(entry_node, &acp[inst->src[i].reg % ACP_HASH_SIZE]) {
             acp_entry *entry = (acp_entry *)entry_node;
 
-            if (try_constant_propagate(inst, entry))
+            if (try_constant_propagate(brw, inst, entry))
                progress = true;
 
             if (try_copy_propagate(inst, i, entry))
