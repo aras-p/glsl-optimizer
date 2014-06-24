@@ -68,14 +68,6 @@ compute_msaa_layout(struct brw_context *brw, mesa_format format, GLenum target)
    case GL_DEPTH_STENCIL:
       return INTEL_MSAA_LAYOUT_IMS;
    default:
-      /* Disable MCS on Broadwell for now.  We can enable it once things
-       * are working without it.
-       */
-      if (brw->gen >= 8) {
-         perf_debug("Missing CMS support on Broadwell.\n");
-         return INTEL_MSAA_LAYOUT_UMS;
-      }
-
       /* From the Ivy Bridge PRM, Vol4 Part1 p77 ("MCS Enable"):
        *
        *   This field must be set to 0 for all SINT MSRTs when all RT channels
