@@ -164,7 +164,10 @@ add_builtin_define(glcpp_parser_t *parser, const char *name, int value);
 %lex-param {glcpp_parser_t *parser}
 
 %expect 0
-%token COMMA_FINAL DEFINED ELIF_EXPANDED HASH HASH_DEFINE FUNC_IDENTIFIER OBJ_IDENTIFIER HASH_ELIF HASH_ELSE HASH_ENDIF HASH_IF HASH_IFDEF HASH_IFNDEF HASH_LINE HASH_UNDEF HASH_VERSION IDENTIFIER IF_EXPANDED INTEGER INTEGER_STRING LINE_EXPANDED NEWLINE OTHER PLACEHOLDER SPACE
+
+	/* We use HASH_TOKEN, not HASH to avoid a conflict with the <HASH>
+         * start condition in the lexer. */
+%token COMMA_FINAL DEFINED ELIF_EXPANDED HASH_TOKEN HASH_DEFINE FUNC_IDENTIFIER OBJ_IDENTIFIER HASH_ELIF HASH_ELSE HASH_ENDIF HASH_IF HASH_IFDEF HASH_IFNDEF HASH_LINE HASH_UNDEF HASH_VERSION IDENTIFIER IF_EXPANDED INTEGER INTEGER_STRING LINE_EXPANDED NEWLINE OTHER PLACEHOLDER SPACE
 %token PASTE
 %type <ival> INTEGER operator SPACE integer_constant
 %type <expression_value> expression
@@ -214,7 +217,7 @@ line:
 		ralloc_free ($1);
 	}
 |	expanded_line
-|	HASH non_directive
+|	HASH_TOKEN non_directive
 ;
 
 expanded_line:
@@ -400,7 +403,7 @@ control_line:
 		}
 		_glcpp_parser_handle_version_declaration(parser, $2, $3, true);
 	}
-|	HASH NEWLINE {
+|	HASH_TOKEN NEWLINE {
 		glcpp_parser_resolve_implicit_version(parser);
 	}
 ;
@@ -2028,7 +2031,7 @@ glcpp_parser_lex (YYSTYPE *yylval, YYLTYPE *yylloc, glcpp_parser_t *parser)
 			   ret == HASH_UNDEF || ret == HASH_IF ||
 			   ret == HASH_IFDEF || ret == HASH_IFNDEF ||
 			   ret == HASH_ELIF || ret == HASH_ELSE ||
-			   ret == HASH_ENDIF || ret == HASH)
+			   ret == HASH_ENDIF || ret == HASH_TOKEN)
 		{
 			parser->in_control_line = 1;
 		}

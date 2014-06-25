@@ -344,7 +344,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 
 {HASH} {
 	yyextra->space_tokens = 0;
-	RETURN_TOKEN (HASH);
+	RETURN_TOKEN (HASH_TOKEN);
 }
 
 {DECIMAL_INTEGER} {
