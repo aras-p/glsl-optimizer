@@ -172,9 +172,7 @@ ir_validate::visit_enter(ir_function *ir)
    /* Verify that all of the things stored in the list of signatures are,
     * in fact, function signatures.
     */
-   foreach_list(node, &ir->signatures) {
-      ir_instruction *sig = (ir_instruction *) node;
-
+   foreach_in_list(ir_instruction, sig, &ir->signatures) {
       if (sig->ir_type != ir_type_function_signature) {
 	 printf("Non-signature in signature list of function `%s'\n",
 		ir->name);
@@ -816,9 +814,7 @@ validate_ir_tree(exec_list *instructions)
 
    v.run(instructions);
 
-   foreach_list(n, instructions) {
-      ir_instruction *ir = (ir_instruction *) n;
-
+   foreach_in_list(ir_instruction, ir, instructions) {
       visit_tree(ir, check_node_type, NULL);
    }
 #endif

@@ -437,8 +437,8 @@ parse_program_resource_name(const GLchar *name,
 void
 link_invalidate_variable_locations(exec_list *ir)
 {
-   foreach_list(node, ir) {
-      ir_variable *const var = ((ir_instruction *) node)->as_variable();
+   foreach_in_list(ir_instruction, node, ir) {
+      ir_variable *const var = node->as_variable();
 
       if (var == NULL)
          continue;
@@ -692,8 +692,8 @@ cross_validate_globals(struct gl_shader_program *prog,
       if (shader_list[i] == NULL)
 	 continue;
 
-      foreach_list(node, shader_list[i]->ir) {
-	 ir_variable *const var = ((ir_instruction *) node)->as_variable();
+      foreach_in_list(ir_instruction, node, shader_list[i]->ir) {
+	 ir_variable *const var = node->as_variable();
 
 	 if (var == NULL)
 	    continue;
@@ -962,8 +962,7 @@ populate_symbol_table(gl_shader *sh)
 {
    sh->symbols = new(sh) glsl_symbol_table;
 
-   foreach_list(node, sh->ir) {
-      ir_instruction *const inst = (ir_instruction *) node;
+   foreach_in_list(ir_instruction, inst, sh->ir) {
       ir_variable *var;
       ir_function *func;
 
@@ -1603,8 +1602,8 @@ link_intrastage_shaders(void *mem_ctx,
     * across all shaders.
     */
    for (unsigned i = 0; i < (num_shaders - 1); i++) {
-      foreach_list(node, shader_list[i]->ir) {
-	 ir_function *const f = ((ir_instruction *) node)->as_function();
+      foreach_in_list(ir_instruction, node, shader_list[i]->ir) {
+	 ir_function *const f = node->as_function();
 
 	 if (f == NULL)
 	    continue;
@@ -1619,9 +1618,7 @@ link_intrastage_shaders(void *mem_ctx,
 	    if (other == NULL)
 	       continue;
 
-	    foreach_list(n, &f->signatures) {
-	       ir_function_signature *sig = (ir_function_signature *) n;
-
+	    foreach_in_list(ir_function_signature, sig, &f->signatures) {
 	       if (!sig->is_defined || sig->is_builtin())
 		  continue;
 
@@ -1735,8 +1732,7 @@ link_intrastage_shaders(void *mem_ctx,
    if (linked->Stage == MESA_SHADER_GEOMETRY) {
       unsigned num_vertices = vertices_per_prim(prog->Geom.InputType);
       geom_array_resize_visitor input_resize_visitor(num_vertices, prog);
-      foreach_list(n, linked->ir) {
-         ir_instruction *ir = (ir_instruction *) n;
+      foreach_in_list(ir_instruction, ir, linked->ir) {
          ir->accept(&input_resize_visitor);
       }
    }
@@ -1774,8 +1770,8 @@ update_array_sizes(struct gl_shader_program *prog)
 	 if (prog->_LinkedShaders[i] == NULL)
 	    continue;
 
-      foreach_list(node, prog->_LinkedShaders[i]->ir) {
-	 ir_variable *const var = ((ir_instruction *) node)->as_variable();
+      foreach_in_list(ir_instruction, node, prog->_LinkedShaders[i]->ir) {
+	 ir_variable *const var = node->as_variable();
 
 	 if ((var == NULL) || (var->data.mode != ir_var_uniform) ||
 	     !var->type->is_array())
@@ -1797,8 +1793,8 @@ update_array_sizes(struct gl_shader_program *prog)
 	       if (prog->_LinkedShaders[j] == NULL)
 		  continue;
 
-	    foreach_list(node2, prog->_LinkedShaders[j]->ir) {
-	       ir_variable *other_var = ((ir_instruction *) node2)->as_variable();
+	    foreach_in_list(ir_instruction, node2, prog->_LinkedShaders[j]->ir) {
+	       ir_variable *other_var = node2->as_variable();
 	       if (!other_var)
 		  continue;
 
@@ -1940,8 +1936,8 @@ assign_attribute_or_color_locations(gl_shader_program *prog,
 
    unsigned num_attr = 0;
 
-   foreach_list(node, sh->ir) {
-      ir_variable *const var = ((ir_instruction *) node)->as_variable();
+   foreach_in_list(ir_instruction, node, sh->ir) {
+      ir_variable *const var = node->as_variable();
 
       if ((var == NULL) || (var->data.mode != (unsigned) direction))
 	 continue;
@@ -2159,8 +2155,8 @@ assign_attribute_or_color_locations(gl_shader_program *prog,
 void
 demote_shader_inputs_and_outputs(gl_shader *sh, enum ir_variable_mode mode)
 {
-   foreach_list(node, sh->ir) {
-      ir_variable *const var = ((ir_instruction *) node)->as_variable();
+   foreach_in_list(ir_instruction, node, sh->ir) {
+      ir_variable *const var = node->as_variable();
 
       if ((var == NULL) || (var->data.mode != int(mode)))
 	 continue;
@@ -2195,8 +2191,8 @@ store_fragdepth_layout(struct gl_shader_program *prog)
     * We're only interested in the cases where the variable is NOT removed
     * from the IR.
     */
-   foreach_list(node, ir) {
-      ir_variable *const var = ((ir_instruction *) node)->as_variable();
+   foreach_in_list(ir_instruction, node, ir) {
+      ir_variable *const var = node->as_variable();
 
       if (var == NULL || var->data.mode != ir_var_shader_out) {
          continue;
@@ -2327,8 +2323,8 @@ check_image_resources(struct gl_context *ctx, struct gl_shader_program *prog)
          total_image_units += sh->NumImages;
 
          if (i == MESA_SHADER_FRAGMENT) {
-            foreach_list(node, sh->ir) {
-               ir_variable *var = ((ir_instruction *)node)->as_variable();
+            foreach_in_list(ir_instruction, node, sh->ir) {
+               ir_variable *var = node->as_variable();
                if (var && var->data.mode == ir_var_shader_out)
                   fragment_outputs += var->type->count_attribute_slots();
             }
@@ -2440,8 +2436,8 @@ check_explicit_uniform_locations(struct gl_context *ctx,
       if (!sh)
          continue;
 
-      foreach_list(node, sh->ir) {
-         ir_variable *var = ((ir_instruction *)node)->as_variable();
+      foreach_in_list(ir_instruction, node, sh->ir) {
+         ir_variable *var = node->as_variable();
          if ((var && var->data.mode == ir_var_uniform) &&
              var->data.explicit_location) {
             if (!reserve_explicit_locations(prog, uniform_map, var))

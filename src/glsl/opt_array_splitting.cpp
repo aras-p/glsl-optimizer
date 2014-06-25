@@ -135,8 +135,7 @@ ir_array_reference_visitor::get_variable_entry(ir_variable *var)
    if (var->type->is_unsized_array())
       return NULL;
 
-   foreach_list(n, &this->variable_list) {
-      variable_entry *entry = (variable_entry *) n;
+   foreach_in_list(variable_entry, entry, &this->variable_list) {
       if (entry->var == var)
 	 return entry;
    }
@@ -213,8 +212,8 @@ ir_array_reference_visitor::get_split_list(exec_list *instructions,
     * declarations, which need to be matched by name across shaders.
     */
    if (!linked) {
-      foreach_list(node, instructions) {
-	 ir_variable *var = ((ir_instruction *)node)->as_variable();
+      foreach_in_list(ir_instruction, node, instructions) {
+	 ir_variable *var = node->as_variable();
 	 if (var) {
 	    variable_entry *entry = get_variable_entry(var);
 	    if (entry)
@@ -270,8 +269,7 @@ ir_array_splitting_visitor::get_splitting_entry(ir_variable *var)
 {
    assert(var);
 
-   foreach_list(n, this->variable_list) {
-      variable_entry *entry = (variable_entry *) n;
+   foreach_in_list(variable_entry, entry, this->variable_list) {
       if (entry->var == var) {
 	 return entry;
       }
@@ -368,8 +366,7 @@ optimize_split_arrays(exec_list *instructions, bool linked)
    /* Replace the decls of the arrays to be split with their split
     * components.
     */
-   foreach_list(n, &refs.variable_list) {
-      variable_entry *entry = (variable_entry *) n;
+   foreach_in_list(variable_entry, entry, &refs.variable_list) {
       const struct glsl_type *type = entry->var->type;
       const struct glsl_type *subtype;
 

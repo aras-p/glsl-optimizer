@@ -1782,8 +1782,7 @@ bool ir_function_signature::constant_expression_evaluate_expression_list(const s
 									 struct hash_table *variable_context,
 									 ir_constant **result)
 {
-   foreach_list(n, &body) {
-      ir_instruction *inst = (ir_instruction *)n;
+   foreach_in_list(ir_instruction, inst, &body) {
       switch(inst->ir_type) {
 
 	 /* (declare () type symbol) */
@@ -1922,8 +1921,8 @@ ir_function_signature::constant_expression_value(exec_list *actual_parameters, s
     */
    const exec_node *parameter_info = origin ? origin->parameters.head : parameters.head;
 
-   foreach_list(n, actual_parameters) {
-      ir_constant *constant = ((ir_rvalue *) n)->constant_expression_value(variable_context);
+   foreach_in_list(ir_rvalue, n, actual_parameters) {
+      ir_constant *constant = n->constant_expression_value(variable_context);
       if (constant == NULL) {
          hash_table_dtor(deref_hash);
          return NULL;

@@ -699,8 +699,7 @@ ir_constant::ir_constant(const struct glsl_type *type, exec_list *value_list)
    if (type->is_array()) {
       this->array_elements = ralloc_array(this, ir_constant *, type->length);
       unsigned i = 0;
-      foreach_list(node, value_list) {
-	 ir_constant *value = (ir_constant *) node;
+      foreach_in_list(ir_constant, value, value_list) {
 	 assert(value->as_constant() != NULL);
 
 	 this->array_elements[i++] = value;
@@ -1001,9 +1000,7 @@ ir_constant::copy_offset(ir_constant *src, int offset)
    case GLSL_TYPE_STRUCT: {
       assert (src->type == this->type);
       this->components.make_empty();
-      foreach_list(node, &src->components) {
-	 ir_constant *const orig = (ir_constant *) node;
-
+      foreach_in_list(ir_constant, orig, &src->components) {
 	 this->components.push_tail(orig->clone(this, NULL));
       }
       break;
@@ -1702,8 +1699,7 @@ ir_function::ir_function(const char *name)
 bool
 ir_function::has_user_signature()
 {
-   foreach_list(n, &this->signatures) {
-      ir_function_signature *const sig = (ir_function_signature *) n;
+   foreach_in_list(ir_function_signature, sig, &this->signatures) {
       if (!sig->is_builtin())
 	 return true;
    }
@@ -1746,8 +1742,7 @@ steal_memory(ir_instruction *ir, void *new_ctx)
     */
    if (constant != NULL) {
       if (constant->type->is_record()) {
-	 foreach_list(n, &constant->components) {
-	    ir_constant *field = (ir_constant *) n;
+	 foreach_in_list(ir_constant, field, &constant->components) {
 	    steal_memory(field, ir);
 	 }
       } else if (constant->type->is_array()) {
@@ -1764,8 +1759,8 @@ steal_memory(ir_instruction *ir, void *new_ctx)
 void
 reparent_ir(exec_list *list, void *mem_ctx)
 {
-   foreach_list(node, list) {
-      visit_tree((ir_instruction *) node, steal_memory, mem_ctx);
+   foreach_in_list(ir_instruction, node, list) {
+      visit_tree(node, steal_memory, mem_ctx);
    }
 }
 

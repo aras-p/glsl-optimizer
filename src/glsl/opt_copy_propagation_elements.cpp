@@ -244,9 +244,7 @@ ir_copy_propagation_elements_visitor::handle_rvalue(ir_rvalue **ir)
    /* Try to find ACP entries covering swizzle_chan[], hoping they're
     * the same source variable.
     */
-   foreach_list(n, this->acp) {
-      acp_entry *entry = (acp_entry *) n;
-
+   foreach_in_list(acp_entry, entry, this->acp) {
       if (var == entry->lhs) {
 	 for (int c = 0; c < chans; c++) {
 	    if (entry->write_mask & (1 << swizzle_chan[c])) {
@@ -324,8 +322,7 @@ ir_copy_propagation_elements_visitor::handle_if_block(exec_list *instructions)
    this->killed_all = false;
 
    /* Populate the initial acp with a copy of the original */
-   foreach_list(n, orig_acp) {
-      acp_entry *a = (acp_entry *) n;
+   foreach_in_list(acp_entry, a, orig_acp) {
       this->acp->push_tail(new(this->mem_ctx) acp_entry(a));
    }
 

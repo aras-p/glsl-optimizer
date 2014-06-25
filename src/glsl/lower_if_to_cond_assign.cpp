@@ -178,12 +178,10 @@ ir_if_to_cond_assign_visitor::visit_leave(ir_if *ir)
    ir_assignment *assign;
 
    /* Check that both blocks don't contain anything we can't support. */
-   foreach_list(n, &ir->then_instructions) {
-      ir_instruction *then_ir = (ir_instruction *) n;
+   foreach_in_list(ir_instruction, then_ir, &ir->then_instructions) {
       visit_tree(then_ir, check_control_flow, &found_control_flow);
    }
-   foreach_list(n, &ir->else_instructions) {
-      ir_instruction *else_ir = (ir_instruction *) n;
+   foreach_in_list(ir_instruction, else_ir, &ir->else_instructions) {
       visit_tree(else_ir, check_control_flow, &found_control_flow);
    }
    if (found_control_flow)

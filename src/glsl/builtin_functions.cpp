@@ -2575,8 +2575,7 @@ builtin_builder::call(ir_function *f, ir_variable *ret, exec_list params)
 {
    exec_list actual_params;
 
-   foreach_list(node, &params) {
-      ir_variable *var = (ir_variable *) node;
+   foreach_in_list(ir_variable, var, &params) {
       actual_params.push_tail(var_ref(var));
    }
 

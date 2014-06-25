@@ -317,8 +317,7 @@ ir_reader::read_instructions(exec_list *instructions, s_expression *expr,
       return;
    }
 
-   foreach_list(n, &list->subexpressions) {
-      s_expression *sub = (s_expression *) n;
+   foreach_in_list(s_expression, sub, &list->subexpressions) {
       ir_instruction *ir = read_instruction(sub, loop_ctx);
       if (ir != NULL) {
 	 /* Global variable declarations should be moved to the top, before
@@ -664,11 +663,10 @@ ir_reader::read_call(s_expression *expr)
 
    exec_list parameters;
 
-   foreach_list(n, &params->subexpressions) {
-      s_expression *expr = (s_expression *) n;
-      ir_rvalue *param = read_rvalue(expr);
+   foreach_in_list(s_expression, e, &params->subexpressions) {
+      ir_rvalue *param = read_rvalue(e);
       if (param == NULL) {
-	 ir_read_error(expr, "when reading parameter to function call");
+	 ir_read_error(e, "when reading parameter to function call");
 	 return NULL;
       }
       parameters.push_tail(param);
@@ -729,7 +727,7 @@ ir_reader::read_expression(s_expression *expr)
    }
     
    int num_operands = -3; /* skip "expression" <type> <operation> */
-   foreach_list(n, &((s_list *) expr)->subexpressions)
+   foreach_in_list(s_expression, e, &((s_list *) expr)->subexpressions)
       ++num_operands;
 
    int expected_operands = ir_expression::get_num_operands(op);
@@ -804,8 +802,7 @@ ir_reader::read_constant(s_expression *expr)
    if (type->is_array()) {
       unsigned elements_supplied = 0;
       exec_list elements;
-      foreach_list(n, &values->subexpressions) {
-	 s_expression *elt = (s_expression *) n;
+      foreach_in_list(s_expression, elt, &values->subexpressions) {
 	 ir_constant *ir_elt = read_constant(elt);
 	 if (ir_elt == NULL)
 	    return NULL;
@@ -825,13 +822,11 @@ ir_reader::read_constant(s_expression *expr)
 
    // Read in list of values (at most 16).
    unsigned k = 0;
-   foreach_list(n, &values->subexpressions) {
+   foreach_in_list(s_expression, expr, &values->subexpressions) {
       if (k >= 16) {
 	 ir_read_error(values, "expected at most 16 numbers");
 	 return NULL;
       }
-
-      s_expression *expr = (s_expression *) n;
 
       if (type->base_type == GLSL_TYPE_FLOAT) {
 	 s_number *value = SX_AS_NUMBER(expr);

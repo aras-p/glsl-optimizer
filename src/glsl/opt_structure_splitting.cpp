@@ -107,8 +107,7 @@ ir_structure_reference_visitor::get_variable_entry(ir_variable *var)
        || var->data.mode == ir_var_shader_in || var->data.mode == ir_var_shader_out)
       return NULL;
 
-   foreach_list(n, &this->variable_list) {
-      variable_entry *entry = (variable_entry *) n;
+   foreach_in_list(variable_entry, entry, &this->variable_list) {
       if (entry->var == var)
 	 return entry;
    }
@@ -209,8 +208,7 @@ ir_structure_splitting_visitor::get_splitting_entry(ir_variable *var)
    if (!var->type->is_record())
       return NULL;
 
-   foreach_list(n, this->variable_list) {
-      variable_entry *entry = (variable_entry *) n;
+   foreach_in_list(variable_entry, entry, this->variable_list) {
       if (entry->var == var) {
 	 return entry;
       }

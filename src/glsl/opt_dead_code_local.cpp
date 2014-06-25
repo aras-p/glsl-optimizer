@@ -280,9 +280,7 @@ process_assignment(void *ctx, ir_assignment *ir, exec_list *assignments)
       printf("add %s\n", var->name);
 
       printf("current entries\n");
-      foreach_list(n, assignments) {
-	 assignment_entry *entry = (assignment_entry *) n;
-
+      foreach_in_list(assignment_entry, entry, assignments) {
 	 printf("    %s (0x%01x)\n", entry->lhs->name, entry->unused);
       }
    }

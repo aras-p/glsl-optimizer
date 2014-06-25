@@ -129,12 +129,10 @@ do_dead_code_unlinked(exec_list *instructions)
 {
    bool progress = false;
 
-   foreach_list(n, instructions) {
-      ir_instruction *ir = (ir_instruction *) n;
+   foreach_in_list(ir_instruction, ir, instructions) {
       ir_function *f = ir->as_function();
       if (f) {
-	 foreach_list(signode, &f->signatures) {
-	    ir_function_signature *sig = (ir_function_signature *) signode;
+	 foreach_in_list(ir_function_signature, sig, &f->signatures) {
 	    /* The setting of the uniform_locations_assigned flag here is
 	     * irrelevent.  If there is a uniform declaration encountered
 	     * inside the body of the function, something has already gone

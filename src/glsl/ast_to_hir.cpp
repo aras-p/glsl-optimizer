@@ -4210,10 +4210,8 @@ ast_function_definition::hir(exec_list *instructions,
     * Add these to the symbol table.
     */
    state->symbols->push_scope();
-   foreach_list(n, &signature->parameters) {
-      ir_variable *const var = ((ir_instruction *) n)->as_variable();
-
-      assert(var != NULL);
+   foreach_in_list(ir_variable, var, &signature->parameters) {
+      assert(var->as_variable() != NULL);
 
       /* The only way a parameter would "exist" is if two parameters have
        * the same name.
@@ -5678,8 +5676,8 @@ ast_gs_input_layout::hir(exec_list *instructions,
    /* If any shader inputs occurred before this declaration and did not
     * specify an array size, their size is determined now.
     */
-   foreach_list (node, instructions) {
-      ir_variable *var = ((ir_instruction *) node)->as_variable();
+   foreach_in_list(ir_instruction, node, instructions) {
+      ir_variable *var = node->as_variable();
       if (var == NULL || var->data.mode != ir_var_shader_in)
          continue;
 
@@ -5796,8 +5794,8 @@ detect_conflicting_assignments(struct _mesa_glsl_parse_state *state,
    YYLTYPE loc;
    memset(&loc, 0, sizeof(loc));
 
-   foreach_list(node, instructions) {
-      ir_variable *var = ((ir_instruction *)node)->as_variable();
+   foreach_in_list(ir_instruction, node, instructions) {
+      ir_variable *var = node->as_variable();
 
       if (!var || !var->data.assigned)
          continue;

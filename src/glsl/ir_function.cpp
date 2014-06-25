@@ -306,9 +306,7 @@ ir_function::matching_signature(_mesa_glsl_parse_state *state,
     *  multiple ways to apply these conversions to the actual arguments of a
     *  call such that the call can be made to match multiple signatures."
     */
-   foreach_list(n, &this->signatures) {
-      ir_function_signature *const sig = (ir_function_signature *) n;
-
+   foreach_in_list(ir_function_signature, sig, &this->signatures) {
       /* Skip over any built-ins that aren't available in this shader. */
       if (sig->is_builtin() && !sig->is_builtin_available(state))
          continue;
@@ -380,9 +378,7 @@ ir_function_signature *
 ir_function::exact_matching_signature(_mesa_glsl_parse_state *state,
                                       const exec_list *actual_parameters)
 {
-   foreach_list(n, &this->signatures) {
-      ir_function_signature *const sig = (ir_function_signature *) n;
-
+   foreach_in_list(ir_function_signature, sig, &this->signatures) {
       /* Skip over any built-ins that aren't available in this shader. */
       if (sig->is_builtin() && !sig->is_builtin_available(state))
          continue;

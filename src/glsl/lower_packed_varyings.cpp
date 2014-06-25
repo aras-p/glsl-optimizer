@@ -242,8 +242,8 @@ lower_packed_varyings_visitor::lower_packed_varyings_visitor(
 void
 lower_packed_varyings_visitor::run(exec_list *instructions)
 {
-   foreach_list (node, instructions) {
-      ir_variable *var = ((ir_instruction *) node)->as_variable();
+   foreach_in_list(ir_instruction, node, instructions) {
+      ir_variable *var = node->as_variable();
       if (var == NULL)
          continue;
 
@@ -639,8 +639,7 @@ lower_packed_varyings_gs_splicer::lower_packed_varyings_gs_splicer(
 ir_visitor_status
 lower_packed_varyings_gs_splicer::visit_leave(ir_emit_vertex *ev)
 {
-   foreach_list(node, this->instructions) {
-      ir_instruction *ir = (ir_instruction *) node;
+   foreach_in_list(ir_instruction, ir, this->instructions) {
       ev->insert_before(ir->clone(this->mem_ctx, NULL));
    }
    return visit_continue;

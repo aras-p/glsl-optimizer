@@ -202,9 +202,7 @@ loop_control_visitor::visit_leave(ir_loop *ir)
     * bound, then that terminates the loop, so we don't even need the limiting
     * terminator.
     */
-   foreach_list(node, &ls->terminators) {
-      loop_terminator *t = (loop_terminator *) node;
-
+   foreach_in_list(loop_terminator, t, &ls->terminators) {
       if (t->iterations < 0)
          continue;
 

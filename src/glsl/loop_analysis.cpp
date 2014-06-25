@@ -227,8 +227,7 @@ loop_analysis::visit_enter(ir_call *)
    /* Mark every loop that we're currently analyzing as containing an ir_call
     * (even those at outer nesting levels).
     */
-   foreach_list(node, &this->state) {
-      loop_variable_state *const ls = (loop_variable_state *) node;
+   foreach_in_list(loop_variable_state, ls, &this->state) {
       ls->contains_calls = true;
    }
 
@@ -246,9 +245,7 @@ loop_analysis::visit(ir_dereference_variable *ir)
 
    bool nested = false;
 
-   foreach_list(node, &this->state) {
-      loop_variable_state *const ls = (loop_variable_state *) node;
-
+   foreach_in_list(loop_variable_state, ls, &this->state) {
       ir_variable *var = ir->variable_referenced();
       loop_variable *lv = ls->get_or_insert(var, this->in_assignee);
 
@@ -288,10 +285,10 @@ loop_analysis::visit_leave(ir_loop *ir)
    if (ls->contains_calls)
       return visit_continue;
 
-   foreach_list(node, &ir->body_instructions) {
+   foreach_in_list(ir_instruction, node, &ir->body_instructions) {
       /* Skip over declarations at the start of a loop.
        */
-      if (((ir_instruction *) node)->as_variable())
+      if (node->as_variable())
 	 continue;
 
       ir_if *if_stmt = ((ir_instruction *) node)->as_if();
@@ -402,8 +399,7 @@ loop_analysis::visit_leave(ir_loop *ir)
     * Also figure out which terminator (if any) produces the smallest
     * iteration count--this is the limiting terminator.
     */
-   foreach_list(node, &ls->terminators) {
-      loop_terminator *t = (loop_terminator *) node;
+   foreach_in_list(loop_terminator, t, &ls->terminators) {
       ir_if *if_stmt = t->ir;
 
       /* If-statements can be either 'if (expr)' or 'if (deref)'.  We only care

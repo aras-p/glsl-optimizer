@@ -702,8 +702,8 @@ link_cross_validate_uniform_block(void *mem_ctx,
 static void
 link_update_uniform_buffer_variables(struct gl_shader *shader)
 {
-   foreach_list(node, shader->ir) {
-      ir_variable *const var = ((ir_instruction *) node)->as_variable();
+   foreach_in_list(ir_instruction, node, shader->ir) {
+      ir_variable *const var = node->as_variable();
 
       if ((var == NULL) || !var->is_in_uniform_block())
 	 continue;
@@ -804,8 +804,8 @@ link_set_image_access_qualifiers(struct gl_shader_program *prog)
       if (sh == NULL)
 	 continue;
 
-      foreach_list(node, sh->ir) {
-	 ir_variable *var = ((ir_instruction *) node)->as_variable();
+      foreach_in_list(ir_instruction, node, sh->ir) {
+	 ir_variable *var = node->as_variable();
 
          if (var && var->data.mode == ir_var_uniform &&
              var->type->contains_image()) {
@@ -871,8 +871,8 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
        */
       uniform_size.start_shader();
 
-      foreach_list(node, sh->ir) {
-	 ir_variable *const var = ((ir_instruction *) node)->as_variable();
+      foreach_in_list(ir_instruction, node, sh->ir) {
+	 ir_variable *const var = node->as_variable();
 
 	 if ((var == NULL) || (var->data.mode != ir_var_uniform))
 	    continue;
@@ -923,8 +923,8 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
 
       parcel.start_shader((gl_shader_stage)i);
 
-      foreach_list(node, prog->_LinkedShaders[i]->ir) {
-	 ir_variable *const var = ((ir_instruction *) node)->as_variable();
+      foreach_in_list(ir_instruction, node, prog->_LinkedShaders[i]->ir) {
+	 ir_variable *const var = node->as_variable();
 
 	 if ((var == NULL) || (var->data.mode != ir_var_uniform))
 	    continue;

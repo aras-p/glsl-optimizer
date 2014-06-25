@@ -193,12 +193,10 @@ do_constant_variable_unlinked(exec_list *instructions)
 {
    bool progress = false;
 
-   foreach_list(n, instructions) {
-      ir_instruction *ir = (ir_instruction *) n;
+   foreach_in_list(ir_instruction, ir, instructions) {
       ir_function *f = ir->as_function();
       if (f) {
-	 foreach_list(signode, &f->signatures) {
-	    ir_function_signature *sig = (ir_function_signature *) signode;
+	 foreach_in_list(ir_function_signature, sig, &f->signatures) {
 	    if (do_constant_variable(&sig->body))
 	       progress = true;
 	 }

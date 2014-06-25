@@ -82,9 +82,7 @@ prototype_string(const glsl_type *return_type, const char *name,
    ralloc_asprintf_append(&str, "%s(", name);
 
    const char *comma = "";
-   foreach_list(node, parameters) {
-      const ir_variable *const param = (ir_variable *) node;
-
+   foreach_in_list(const ir_variable, param, parameters) {
       ralloc_asprintf_append(&str, "%s%s", comma, param->type->name);
       comma = ", ";
    }
@@ -158,12 +156,11 @@ verify_parameter_modes(_mesa_glsl_parse_state *state,
    exec_node *actual_ir_node  = actual_ir_parameters.head;
    exec_node *actual_ast_node = actual_ast_parameters.head;
 
-   foreach_list(formal_node, &sig->parameters) {
+   foreach_in_list(const ir_variable, formal, &sig->parameters) {
       /* The lists must be the same length. */
       assert(!actual_ir_node->is_tail_sentinel());
       assert(!actual_ast_node->is_tail_sentinel());
 
-      const ir_variable *const formal = (ir_variable *) formal_node;
       const ir_rvalue *const actual = (ir_rvalue *) actual_ir_node;
       const ast_expression *const actual_ast =
 	 exec_node_data(ast_expression, actual_ast_node, link);
@@ -478,9 +475,7 @@ print_function_prototypes(_mesa_glsl_parse_state *state, YYLTYPE *loc,
    if (f == NULL)
       return;
 
-   foreach_list (node, &f->signatures) {
-      ir_function_signature *sig = (ir_function_signature *) node;
-
+   foreach_in_list(ir_function_signature, sig, &f->signatures) {
       if (sig->is_builtin() && !sig->is_builtin_available(state))
          continue;
 
@@ -749,8 +744,7 @@ process_vec_mat_constructor(exec_list *instructions,
    instructions->push_tail(var);
 
    int i = 0;
-   foreach_list(node, &actual_parameters) {
-      ir_rvalue *rhs = (ir_rvalue *) node;
+   foreach_in_list(ir_rvalue, rhs, &actual_parameters) {
       ir_rvalue *lhs = new(ctx) ir_dereference_array(var,
                                                      new(ctx) ir_constant(i));
 
@@ -870,8 +864,7 @@ process_array_constructor(exec_list *instructions,
    instructions->push_tail(var);
 
    int i = 0;
-   foreach_list(node, &actual_parameters) {
-      ir_rvalue *rhs = (ir_rvalue *) node;
+   foreach_in_list(ir_rvalue, rhs, &actual_parameters) {
       ir_rvalue *lhs = new(ctx) ir_dereference_array(var,
 						     new(ctx) ir_constant(i));
 
@@ -892,8 +885,8 @@ static ir_constant *
 constant_record_constructor(const glsl_type *constructor_type,
 			    exec_list *parameters, void *mem_ctx)
 {
-   foreach_list(node, parameters) {
-      ir_constant *constant = ((ir_instruction *) node)->as_constant();
+   foreach_in_list(ir_instruction, node, parameters) {
+      ir_constant *constant = node->as_constant();
       if (constant == NULL)
 	 return NULL;
       node->replace_with(constant);
@@ -967,8 +960,7 @@ emit_inline_vector_constructor(const glsl_type *type,
 
       memset(&data, 0, sizeof(data));
 
-      foreach_list(node, parameters) {
-	 ir_rvalue *param = (ir_rvalue *) node;
+      foreach_in_list(ir_rvalue, param, parameters) {
 	 unsigned rhs_components = param->type->components();
 
 	 /* Do not try to assign more components to the vector than it has!
@@ -1025,8 +1017,7 @@ emit_inline_vector_constructor(const glsl_type *type,
       }
 
       base_component = 0;
-      foreach_list(node, parameters) {
-	 ir_rvalue *param = (ir_rvalue *) node;
+      foreach_in_list(ir_rvalue, param, parameters) {
 	 unsigned rhs_components = param->type->components();
 
 	 /* Do not try to assign more components to the vector than it has!
@@ -1312,8 +1303,7 @@ emit_inline_matrix_constructor(const glsl_type *type,
       unsigned col_idx = 0;
       unsigned row_idx = 0;
 
-      foreach_list (node, parameters) {
-	 ir_rvalue *const rhs = (ir_rvalue *) node;
+      foreach_in_list(ir_rvalue, rhs, parameters) {
 	 const unsigned components_remaining_this_column = rows - row_idx;
 	 unsigned rhs_components = rhs->type->components();
 	 unsigned rhs_base = 0;

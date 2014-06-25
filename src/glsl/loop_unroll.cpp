@@ -347,10 +347,8 @@ loop_unroll_visitor::visit_leave(ir_loop *ir)
       return visit_continue;
    }
 
-   foreach_list(node, &ir->body_instructions) {
-      /* recognize loops in the form produced by ir_lower_jumps */
-      ir_instruction *cur_ir = (ir_instruction *) node;
-
+   /* recognize loops in the form produced by ir_lower_jumps */
+   foreach_in_list(ir_instruction, cur_ir, &ir->body_instructions) {
       /* Skip the limiting terminator, since it will go away when we
        * unroll.
        */

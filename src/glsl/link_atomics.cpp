@@ -110,8 +110,8 @@ namespace {
          if (sh == NULL)
             continue;
 
-         foreach_list(node, sh->ir) {
-            ir_variable *var = ((ir_instruction *)node)->as_variable();
+         foreach_in_list(ir_instruction, node, sh->ir) {
+            ir_variable *var = node->as_variable();
 
             if (var && var->type->contains_atomic()) {
                unsigned id = 0;

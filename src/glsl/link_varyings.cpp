@@ -175,8 +175,8 @@ cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
 
    /* Find all shader outputs in the "producer" stage.
     */
-   foreach_list(node, producer->ir) {
-      ir_variable *const var = ((ir_instruction *) node)->as_variable();
+   foreach_in_list(ir_instruction, node, producer->ir) {
+      ir_variable *const var = node->as_variable();
 
       if ((var == NULL) || (var->data.mode != ir_var_shader_out))
 	 continue;
@@ -212,8 +212,8 @@ cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
     * should be arrays and the type of the array element should match the type
     * of the corresponding producer output.
     */
-   foreach_list(node, consumer->ir) {
-      ir_variable *const input = ((ir_instruction *) node)->as_variable();
+   foreach_in_list(ir_instruction, node, consumer->ir) {
+      ir_variable *const input = node->as_variable();
 
       if ((input == NULL) || (input->data.mode != ir_var_shader_in))
 	 continue;
@@ -1121,8 +1121,8 @@ populate_consumer_input_sets(void *mem_ctx, exec_list *ir,
           0,
           sizeof(consumer_inputs_with_locations[0]) * VARYING_SLOT_MAX);
 
-   foreach_list(node, ir) {
-      ir_variable *const input_var = ((ir_instruction *) node)->as_variable();
+   foreach_in_list(ir_instruction, node, ir) {
+      ir_variable *const input_var = node->as_variable();
 
       if ((input_var != NULL) && (input_var->data.mode == ir_var_shader_in)) {
          if (input_var->type->is_interface())
@@ -1227,8 +1227,8 @@ canonicalize_shader_io(exec_list *ir, enum ir_variable_mode io_mode)
    ir_variable *var_table[MAX_PROGRAM_OUTPUTS * 4];
    unsigned num_variables = 0;
 
-   foreach_list(node, ir) {
-      ir_variable *const var = ((ir_instruction *) node)->as_variable();
+   foreach_in_list(ir_instruction, node, ir) {
+      ir_variable *const var = node->as_variable();
 
       if (var == NULL || var->data.mode != io_mode)
          continue;
@@ -1339,9 +1339,8 @@ assign_varying_locations(struct gl_context *ctx,
    }
 
    if (producer) {
-      foreach_list(node, producer->ir) {
-         ir_variable *const output_var =
-            ((ir_instruction *) node)->as_variable();
+      foreach_in_list(ir_instruction, node, producer->ir) {
+         ir_variable *const output_var = node->as_variable();
 
          if ((output_var == NULL) ||
              (output_var->data.mode != ir_var_shader_out))
@@ -1383,9 +1382,8 @@ assign_varying_locations(struct gl_context *ctx,
        * geometry) shader program.  This means that locations must be assigned
        * for all the inputs.
        */
-      foreach_list(node, consumer->ir) {
-         ir_variable *const input_var =
-            ((ir_instruction *) node)->as_variable();
+      foreach_in_list(ir_instruction, node, consumer->ir) {
+         ir_variable *const input_var = node->as_variable();
 
          if ((input_var == NULL) ||
              (input_var->data.mode != ir_var_shader_in))
@@ -1450,8 +1448,8 @@ assign_varying_locations(struct gl_context *ctx,
    }
 
    if (consumer && producer) {
-      foreach_list(node, consumer->ir) {
-         ir_variable *const var = ((ir_instruction *) node)->as_variable();
+      foreach_in_list(ir_instruction, node, consumer->ir) {
+         ir_variable *const var = node->as_variable();
 
          if (var && var->data.mode == ir_var_shader_in &&
              var->data.is_unmatched_generic_inout) {
@@ -1494,8 +1492,8 @@ check_against_output_limit(struct gl_context *ctx,
 {
    unsigned output_vectors = 0;
 
-   foreach_list(node, producer->ir) {
-      ir_variable *const var = ((ir_instruction *) node)->as_variable();
+   foreach_in_list(ir_instruction, node, producer->ir) {
+      ir_variable *const var = node->as_variable();
 
       if (var && var->data.mode == ir_var_shader_out &&
           var_counts_against_varying_limit(producer->Stage, var)) {
@@ -1533,8 +1531,8 @@ check_against_input_limit(struct gl_context *ctx,
 {
    unsigned input_vectors = 0;
 
-   foreach_list(node, consumer->ir) {
-      ir_variable *const var = ((ir_instruction *) node)->as_variable();
+   foreach_in_list(ir_instruction, node, consumer->ir) {
+      ir_variable *const var = node->as_variable();
 
       if (var && var->data.mode == ir_var_shader_in &&
           var_counts_against_varying_limit(consumer->Stage, var)) {

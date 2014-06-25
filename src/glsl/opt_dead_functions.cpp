@@ -74,8 +74,7 @@ public:
 signature_entry *
 ir_dead_functions_visitor::get_signature_entry(ir_function_signature *sig)
 {
-   foreach_list(n, &this->signature_list) {
-      signature_entry *entry = (signature_entry *) n;
+   foreach_in_list(signature_entry, entry, &this->signature_list) {
       if (entry->signature == sig)
 	 return entry;
    }
