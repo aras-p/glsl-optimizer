@@ -1944,6 +1944,10 @@ _define_object_macro (glcpp_parser_t *parser,
 {
 	macro_t *macro, *previous;
 
+	/* We define pre-defined macros before we've started parsing the
+         * actual file. So if there's no location defined yet, that's what
+         * were doing and we don't want to generate an error for using the
+         * reserved names. */
 	if (loc != NULL)
 		_check_for_reserved_macro_name(parser, loc, identifier);
 
