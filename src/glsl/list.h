@@ -560,19 +560,6 @@ inline void exec_node::insert_before(exec_list *before)
 }
 #endif
 
-/**
- * This version is safe even if the current node is removed.
- */ 
-#define foreach_list_safe(__node, __list)					\
-   for (struct exec_node * __node = (__list)->head, * __next = __node->next	\
-	; __next != NULL							\
-	; __node = __next, __next = __next->next)
-
-#define foreach_list(__node, __list)			\
-   for (struct exec_node * __node = (__list)->head	\
-	; (__node)->next != NULL 			\
-	; (__node) = (__node)->next)
-
 #define foreach_in_list(__type, __inst, __list)      \
    for (__type *(__inst) = (__type *)(__list)->head; \
         !(__inst)->is_tail_sentinel();               \
@@ -613,19 +600,8 @@ inline void exec_node::insert_before(exec_list *before)
           __next1 = __next1->next,                            \
           __next2 = __next2->next)
 
-#define foreach_list_const(__node, __list)			\
-   for (const struct exec_node * __node = (__list)->head	\
-	; (__node)->next != NULL 				\
-	; (__node) = (__node)->next)
-
 #define foreach_list_typed(__type, __node, __field, __list)		\
    for (__type * __node =						\
-	   exec_node_data(__type, (__list)->head, __field);		\
-	(__node)->__field.next != NULL; 				\
-	(__node) = exec_node_data(__type, (__node)->__field.next, __field))
-
-#define foreach_list_typed_const(__type, __node, __field, __list)	\
-   for (const __type * __node =						\
 	   exec_node_data(__type, (__list)->head, __field);		\
 	(__node)->__field.next != NULL; 				\
 	(__node) = exec_node_data(__type, (__node)->__field.next, __field))
