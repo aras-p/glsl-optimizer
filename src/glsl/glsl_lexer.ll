@@ -153,6 +153,9 @@ literal_integer(char *text, int len, struct _mesa_glsl_parse_state *state,
 %option prefix="_mesa_glsl_lexer_"
 %option extra-type="struct _mesa_glsl_parse_state *"
 
+	/* Note: When adding any start conditions to this list, you must also
+	 * update the "Internal compiler error" catch-all rule near the end of
+	 * this file. */
 %x PP PRAGMA
 
 DEC_INT		[1-9][0-9]*
@@ -554,6 +557,16 @@ subroutine	KEYWORD(0, 300, 0, 0, SUBROUTINE);
 			}
 
 .			{ return yytext[0]; }
+
+	/* This is a catch-all to avoid the annoying default flex action which
+	 * matches any character and prints it. If any input ever matches this
+	 * rule, then we have made a mistake above and need to fix one or more
+	 * of the preceding patterns to match that input. */
+<PP,PRAGMA>. {
+	_mesa_glsl_error(yylloc, yyextra,
+                         "Internal compiler error: Unexpected character: %s", yytext);
+}
+
 
 %%
 
