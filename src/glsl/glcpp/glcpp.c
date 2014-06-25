@@ -124,6 +124,7 @@ enum {
 const static struct option
 long_options[] = {
 	{"disable-line-continuations", no_argument, 0, DISABLE_LINE_CONTINUATIONS_OPT },
+        {"debug",                      no_argument, 0, 'd'},
 	{0,                            0,           0, 0 }
 };
 
@@ -140,10 +141,13 @@ main (int argc, char *argv[])
 
 	init_fake_gl_context (&gl_ctx);
 
-	while ((c = getopt_long(argc, argv, "", long_options, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "d", long_options, NULL)) != -1) {
 		switch (c) {
 		case DISABLE_LINE_CONTINUATIONS_OPT:
 			gl_ctx.Const.DisableGLSLLineContinuations = true;
+			break;
+                case 'd':
+			glcpp_parser_debug = 1;
 			break;
 		default:
 			usage ();

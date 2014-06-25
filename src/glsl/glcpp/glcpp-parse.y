@@ -184,6 +184,8 @@ add_builtin_define(glcpp_parser_t *parser, const char *name, int value);
 %left '*' '/' '%'
 %right UNARY
 
+%debug
+
 %%
 
 input:
