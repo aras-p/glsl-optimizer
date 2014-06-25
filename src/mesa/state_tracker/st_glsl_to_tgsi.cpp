@@ -2660,11 +2660,7 @@ glsl_to_tgsi_visitor::visit(ir_constant *ir)
 function_entry *
 glsl_to_tgsi_visitor::get_function_signature(ir_function_signature *sig)
 {
-   function_entry *entry;
-
-   foreach_list(node, &this->function_signatures) {
-      entry = (function_entry *) node;
-
+   foreach_in_list_use_after(function_entry, entry, &this->function_signatures) {
       if (entry->sig == sig)
          return entry;
    }

@@ -183,10 +183,7 @@ fs_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
       {
          bool found = false;
 
-         aeb_entry *entry;
-         foreach_list(entry_node, aeb) {
-            entry = (aeb_entry *) entry_node;
-
+         foreach_in_list_use_after(aeb_entry, entry, aeb) {
             /* Match current instruction's expression against those in AEB. */
             if (instructions_match(inst, entry->generator)) {
                found = true;

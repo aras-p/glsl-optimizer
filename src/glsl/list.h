@@ -592,6 +592,11 @@ inline void exec_node::insert_before(exec_list *before)
         __next != NULL;                              \
         __node = __next, __next = (__type *)__next->next)
 
+#define foreach_in_list_use_after(__type, __inst, __list) \
+   __type *(__inst);                                      \
+   for ((__inst) = (__type *)(__list)->head;              \
+        !(__inst)->is_tail_sentinel();                    \
+        (__inst) = (__type *)(__inst)->next)
 /**
  * Iterate through two lists at once.  Stops at the end of the shorter list.
  *
