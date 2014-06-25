@@ -100,7 +100,7 @@ gen6_upload_vs_push_constants(struct brw_context *brw)
                                    stage_state, AUB_TRACE_VS_CONSTANTS);
 
    if (brw->gen >= 7) {
-      if (brw->gen == 7 && !brw->is_haswell)
+      if (brw->gen == 7 && !brw->is_haswell && !brw->is_baytrail)
          gen7_emit_vs_workaround_flush(brw);
 
       gen7_upload_constant_state(brw, stage_state, true /* active */,

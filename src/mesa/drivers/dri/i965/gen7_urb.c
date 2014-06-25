@@ -121,9 +121,9 @@ gen7_emit_push_constant_state(struct brw_context *brw, unsigned vs_size,
     *     A PIPE_CONTOL command with the CS Stall bit set must be programmed
     *     in the ring after this instruction.
     *
-    * No such restriction exists for Haswell.
+    * No such restriction exists for Haswell or Baytrail.
     */
-   if (brw->gen < 8 && !brw->is_haswell)
+   if (brw->gen < 8 && !brw->is_haswell && !brw->is_baytrail)
       gen7_emit_cs_stall_flush(brw);
 }
 
@@ -263,7 +263,7 @@ gen7_upload_urb(struct brw_context *brw)
    brw->urb.vs_start = push_constant_chunks;
    brw->urb.gs_start = push_constant_chunks + vs_chunks;
 
-   if (brw->gen == 7 && !brw->is_haswell)
+   if (brw->gen == 7 && !brw->is_haswell && !brw->is_baytrail)
       gen7_emit_vs_workaround_flush(brw);
    gen7_emit_urb_state(brw,
                        brw->urb.nr_vs_entries, vs_size, brw->urb.vs_start,

@@ -212,7 +212,7 @@ gen7_upload_sampler_state_table(struct brw_context *brw,
       }
    }
 
-  if (brw->gen == 7 && !brw->is_haswell &&
+  if (brw->gen == 7 && !brw->is_haswell && !brw->is_baytrail &&
       stage_state->stage == MESA_SHADER_VERTEX) {
       gen7_emit_vs_workaround_flush(brw);
   }
