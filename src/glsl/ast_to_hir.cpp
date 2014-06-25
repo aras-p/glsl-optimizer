@@ -5007,7 +5007,7 @@ ast_process_structure_or_interface_block(exec_list *instructions,
     * 'declarations' list in each of the elements.
     */
    foreach_list_typed (ast_declarator_list, decl_list, link, declarations) {
-      foreach_list_const (decl_ptr, & decl_list->declarations) {
+      foreach_list_typed (ast_declaration, decl, link, &decl_list->declarations) {
          decl_count++;
       }
    }

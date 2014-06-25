@@ -41,8 +41,7 @@ process_parameters(exec_list *instructions, exec_list *actual_parameters,
 {
    unsigned count = 0;
 
-   foreach_list (n, parameters) {
-      ast_node *const ast = exec_node_data(ast_node, n, link);
+   foreach_list_typed(ast_node, ast, link, parameters) {
       ir_rvalue *result = ast->hir(instructions, state);
 
       ir_constant *const constant = result->constant_expression_value();
@@ -1546,8 +1545,7 @@ ast_function_expression::hir(exec_list *instructions,
       unsigned nonmatrix_parameters = 0;
       exec_list actual_parameters;
 
-      foreach_list (n, &this->expressions) {
-	 ast_node *ast = exec_node_data(ast_node, n, link);
+      foreach_list_typed(ast_node, ast, link, &this->expressions) {
 	 ir_rvalue *result = ast->hir(instructions, state);
 
 	 /* From page 50 (page 56 of the PDF) of the GLSL 1.50 spec:
