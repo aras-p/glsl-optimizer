@@ -299,21 +299,21 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	 */
 {HASH}define{HSPACE}+ {
 	if (! parser->skipping) {
+		BEGIN DEFINE;
 		yyextra->space_tokens = 0;
-		yy_push_state(DEFINE, yyscanner);
 		RETURN_TOKEN (HASH_DEFINE);
 	}
 }
 
 	/* An identifier immediately followed by '(' */
 <DEFINE>{IDENTIFIER}/"(" {
-	yy_pop_state(yyscanner);
+	BEGIN INITIAL;
 	RETURN_STRING_TOKEN (FUNC_IDENTIFIER);
 }
 
 	/* An identifier not immediately followed by '(' */
 <DEFINE>{IDENTIFIER} {
-	yy_pop_state(yyscanner);
+	BEGIN INITIAL;
 	RETURN_STRING_TOKEN (OBJ_IDENTIFIER);
 }
 
