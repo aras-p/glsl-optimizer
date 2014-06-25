@@ -630,4 +630,13 @@ inline void exec_node::insert_before(exec_list *before)
 	(__node)->__field.next != NULL; 				\
 	(__node) = exec_node_data(__type, (__node)->__field.next, __field))
 
+#define foreach_list_typed_safe(__type, __node, __field, __list)           \
+   for (__type * __node =                                                  \
+           exec_node_data(__type, (__list)->head, __field),                \
+               * __next =                                                  \
+           exec_node_data(__type, (__node)->__field.next, __field);        \
+        __next != NULL;                                                    \
+        __node = __next, __next =                                          \
+           exec_node_data(__type, (__next)->__field.next, __field))
+
 #endif /* LIST_CONTAINER_H */

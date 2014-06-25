@@ -1506,9 +1506,7 @@ intel_miptree_all_slices_resolve(struct brw_context *brw,
 {
    bool did_resolve = false;
 
-   foreach_list_safe(node, &mt->hiz_map) {
-      struct intel_resolve_map *map = (struct intel_resolve_map *)node;
-
+   foreach_list_typed_safe(struct intel_resolve_map, map, link, &mt->hiz_map) {
       if (map->need != need)
 	 continue;
 
