@@ -116,9 +116,7 @@ move_block_to_cond_assign(void *mem_ctx,
 			  exec_list *instructions,
 			  struct hash_table *ht)
 {
-   foreach_list_safe(node, instructions) {
-      ir_instruction *ir = (ir_instruction *) node;
-
+   foreach_in_list_safe(ir_instruction, ir, instructions) {
       if (ir->ir_type == ir_type_assignment) {
 	 ir_assignment *assign = (ir_assignment *)ir;
 

@@ -70,9 +70,7 @@ public:
 
    void use_channels(ir_variable *const var, int used)
    {
-      foreach_list_safe(n, this->assignments) {
-	 assignment_entry *entry = (assignment_entry *) n;
-
+      foreach_in_list_safe(assignment_entry, entry, this->assignments) {
 	 if (entry->lhs == var) {
 	    if (var->type->is_scalar() || var->type->is_vector()) {
 	       if (debug)
@@ -119,8 +117,7 @@ public:
       /* For the purpose of dead code elimination, emitting a vertex counts as
        * "reading" all of the currently assigned output variables.
        */
-      foreach_list_safe(n, this->assignments) {
-         assignment_entry *entry = (assignment_entry *) n;
+      foreach_in_list_safe(assignment_entry, entry, this->assignments) {
          if (entry->lhs->data.mode == ir_var_shader_out) {
             if (debug)
                printf("kill %s\n", entry->lhs->name);
@@ -196,9 +193,7 @@ process_assignment(void *ctx, ir_assignment *ir, exec_list *assignments)
 	    printf("looking for %s.0x%01x to remove\n", var->name,
 		   ir->write_mask);
 
-	 foreach_list_safe(n, assignments) {
-	    assignment_entry *entry = (assignment_entry *) n;
-
+	 foreach_in_list_safe(assignment_entry, entry, assignments) {
 	    if (entry->lhs != var)
 	       continue;
 
@@ -258,9 +253,7 @@ process_assignment(void *ctx, ir_assignment *ir, exec_list *assignments)
 	  */
 	 if (debug)
 	    printf("looking for %s to remove\n", var->name);
-	 foreach_list_safe(n, assignments) {
-	    assignment_entry *entry = (assignment_entry *) n;
-
+	 foreach_in_list_safe(assignment_entry, entry, assignments) {
 	    if (entry->lhs == var) {
 	       if (debug)
 		  printf("removing %s\n", var->name);

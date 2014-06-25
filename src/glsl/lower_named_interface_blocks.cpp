@@ -99,8 +99,8 @@ flatten_named_interface_blocks_declarations::run(exec_list *instructions)
     * The interface block variables are stored in the interface_namespace
     * hash table so they can be used in the second pass.
     */
-   foreach_list_safe(node, instructions) {
-      ir_variable *var = ((ir_instruction *) node)->as_variable();
+   foreach_in_list_safe(ir_instruction, node, instructions) {
+      ir_variable *var = node->as_variable();
       if (!var || !var->is_interface_instance())
          continue;
 

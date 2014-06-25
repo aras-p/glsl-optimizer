@@ -1720,8 +1720,8 @@ ir_rvalue::error_value(void *mem_ctx)
 void
 visit_exec_list(exec_list *list, ir_visitor *visitor)
 {
-   foreach_list_safe(n, list) {
-      ((ir_instruction *) n)->accept(visitor);
+   foreach_in_list_safe(ir_instruction, node, list) {
+      node->accept(visitor);
    }
 }
 

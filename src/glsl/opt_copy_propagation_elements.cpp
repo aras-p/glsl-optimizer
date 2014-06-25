@@ -340,8 +340,7 @@ ir_copy_propagation_elements_visitor::handle_if_block(exec_list *instructions)
    /* Move the new kills into the parent block's list, removing them
     * from the parent's ACP list in the process.
     */
-   foreach_list_safe(node, new_kills) {
-      kill_entry *k = (kill_entry *)node;
+   foreach_in_list_safe(kill_entry, k, new_kills) {
       kill(k);
    }
 }
@@ -384,8 +383,7 @@ ir_copy_propagation_elements_visitor::visit_enter(ir_loop *ir)
    this->acp = orig_acp;
    this->killed_all = this->killed_all || orig_killed_all;
 
-   foreach_list_safe(node, new_kills) {
-      kill_entry *k = (kill_entry *)node;
+   foreach_in_list_safe(kill_entry, k, new_kills) {
       kill(k);
    }
 
@@ -397,9 +395,7 @@ ir_copy_propagation_elements_visitor::visit_enter(ir_loop *ir)
 void
 ir_copy_propagation_elements_visitor::kill(kill_entry *k)
 {
-   foreach_list_safe(node, acp) {
-      acp_entry *entry = (acp_entry *)node;
-
+   foreach_in_list_safe(acp_entry, entry, acp) {
       if (entry->lhs == k->var) {
 	 entry->write_mask = entry->write_mask & ~k->write_mask;
 	 if (entry->write_mask == 0) {

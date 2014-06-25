@@ -393,9 +393,7 @@ ir_constant_propagation_visitor::kill(ir_variable *var, unsigned write_mask)
       return;
 
    /* Remove any entries currently in the ACP for this kill. */
-   foreach_list_safe(n, this->acp) {
-      acp_entry *entry = (acp_entry *) n;
-
+   foreach_in_list_safe(acp_entry, entry, this->acp) {
       if (entry->var == var) {
 	 entry->write_mask &= ~write_mask;
 	 if (entry->write_mask == 0)

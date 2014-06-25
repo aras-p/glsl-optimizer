@@ -685,8 +685,7 @@ process_vec_mat_constructor(exec_list *instructions,
    bool all_parameters_are_constant = true;
 
    /* Type cast each parameter and, if possible, fold constants. */
-   foreach_list_safe(n, &actual_parameters) {
-      ir_rvalue *ir = (ir_rvalue *) n;
+   foreach_in_list_safe(ir_rvalue, ir, &actual_parameters) {
       ir_rvalue *result = ir;
 
       /* Apply implicit conversions (not the scalar constructor rules!). See
@@ -813,8 +812,7 @@ process_array_constructor(exec_list *instructions,
    bool all_parameters_are_constant = true;
 
    /* Type cast each parameter and, if possible, fold constants. */
-   foreach_list_safe(n, &actual_parameters) {
-      ir_rvalue *ir = (ir_rvalue *) n;
+   foreach_in_list_safe(ir_rvalue, ir, &actual_parameters) {
       ir_rvalue *result = ir;
 
       /* Apply implicit conversions (not the scalar constructor rules!). See
@@ -1629,9 +1627,7 @@ ast_function_expression::hir(exec_list *instructions,
        * need to break them up into a series of column vectors.
        */
       if (constructor_type->base_type != GLSL_TYPE_FLOAT) {
-	 foreach_list_safe(n, &actual_parameters) {
-	    ir_rvalue *matrix = (ir_rvalue *) n;
-
+	 foreach_in_list_safe(ir_rvalue, matrix, &actual_parameters) {
 	    if (!matrix->type->is_matrix())
 	       continue;
 
@@ -1655,9 +1651,7 @@ ast_function_expression::hir(exec_list *instructions,
       bool all_parameters_are_constant = true;
 
       /* Type cast each parameter and, if possible, fold constants.*/
-      foreach_list_safe(n, &actual_parameters) {
-	 ir_rvalue *ir = (ir_rvalue *) n;
-
+      foreach_in_list_safe(ir_rvalue, ir, &actual_parameters) {
 	 const glsl_type *desired_type =
 	    glsl_type::get_instance(constructor_type->base_type,
 				    ir->type->vector_elements,

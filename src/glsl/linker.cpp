@@ -1078,9 +1078,7 @@ move_non_declarations(exec_list *instructions, exec_node *last,
       temps = hash_table_ctor(0, hash_table_pointer_hash,
 			      hash_table_pointer_compare);
 
-   foreach_list_safe(node, instructions) {
-      ir_instruction *inst = (ir_instruction *) node;
-
+   foreach_in_list_safe(ir_instruction, inst, instructions) {
       if (inst->as_function())
 	 continue;
 

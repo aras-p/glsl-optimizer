@@ -313,9 +313,7 @@ do_structure_splitting(exec_list *instructions)
    visit_list_elements(&refs, instructions);
 
    /* Trim out variables we can't split. */
-   foreach_list_safe(n, &refs.variable_list) {
-      variable_entry *entry = (variable_entry *) n;
-
+   foreach_in_list_safe(variable_entry, entry, &refs.variable_list) {
       if (debug) {
 	 printf("structure %s@%p: decl %d, whole_access %d\n",
 		entry->var->name, (void *) entry->var, entry->declaration,
@@ -335,8 +333,7 @@ do_structure_splitting(exec_list *instructions)
    /* Replace the decls of the structures to be split with their split
     * components.
     */
-   foreach_list_safe(n, &refs.variable_list) {
-      variable_entry *entry = (variable_entry *) n;
+   foreach_in_list_safe(variable_entry, entry, &refs.variable_list) {
       const struct glsl_type *type = entry->var->type;
 
       entry->mem_ctx = ralloc_parent(entry->var);

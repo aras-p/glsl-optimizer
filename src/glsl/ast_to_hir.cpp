@@ -112,8 +112,8 @@ _mesa_ast_to_hir(exec_list *instructions, struct _mesa_glsl_parse_state *state)
     * applications depend on this behavior, and it matches what nearly all
     * other drivers do.
     */
-   foreach_list_safe(node, instructions) {
-      ir_variable *const var = ((ir_instruction *) node)->as_variable();
+   foreach_in_list_safe(ir_instruction, node, instructions) {
+      ir_variable *const var = node->as_variable();
 
       if (var == NULL)
          continue;
@@ -5619,8 +5619,8 @@ ast_interface_block::hir(exec_list *instructions,
           * thinking there are conflicting definitions of gl_PerVertex in the
           * shader.
           */
-         foreach_list_safe(node, instructions) {
-            ir_variable *const var = ((ir_instruction *) node)->as_variable();
+         foreach_in_list_safe(ir_instruction, node, instructions) {
+            ir_variable *const var = node->as_variable();
             if (var != NULL &&
                 var->get_interface_type() == earlier_per_vertex &&
                 var->data.mode == var_mode) {
@@ -5884,8 +5884,8 @@ remove_per_vertex_blocks(exec_list *instructions,
    /* Remove any ir_variable declarations that refer to the interface block
     * we're removing.
     */
-   foreach_list_safe(node, instructions) {
-      ir_variable *const var = ((ir_instruction *) node)->as_variable();
+   foreach_in_list_safe(ir_instruction, node, instructions) {
+      ir_variable *const var = node->as_variable();
       if (var != NULL && var->get_interface_type() == per_vertex &&
           var->data.mode == mode) {
          state->symbols->disable_variable(var->name);
