@@ -73,6 +73,45 @@ process_block(void *mem_ctx, struct hash_table *ht, ir_variable *var)
 }
 
 ir_visitor_status
+link_uniform_block_active_visitor::visit(ir_variable *var)
+{
+   if (!var->is_in_uniform_block())
+      return visit_continue;
+
+   const glsl_type *const block_type = var->is_interface_instance()
+      ? var->type : var->get_interface_type();
+
+   /* Section 2.11.6 (Uniform Variables) of the OpenGL ES 3.0.3 spec says:
+    *
+    *     "All members of a named uniform block declared with a shared or
+    *     std140 layout qualifier are considered active, even if they are not
+    *     referenced in any shader in the program. The uniform block itself is
+    *     also considered active, even if no member of the block is
+    *     referenced."
+    */
+   if (block_type->interface_packing == GLSL_INTERFACE_PACKING_PACKED)
+      return visit_continue;
+
+   /* Process the block.  Bail if there was an error.
+    */
+   link_uniform_block_active *const b =
+      process_block(this->mem_ctx, this->ht, var);
+   if (b == NULL) {
+      linker_error(this->prog,
+                   "uniform block `%s' has mismatching definitions",
+                   var->get_interface_type()->name);
+      this->success = false;
+      return visit_stop;
+   }
+
+   assert(b->num_array_elements == 0);
+   assert(b->array_elements == NULL);
+   assert(b->type != NULL);
+
+   return visit_continue;
+}
+
+ir_visitor_status
 link_uniform_block_active_visitor::visit_enter(ir_dereference_array *ir)
 {
    ir_dereference_variable *const d = ir->array->as_dereference_variable();

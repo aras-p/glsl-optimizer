@@ -51,6 +51,7 @@ public:
 
    virtual ir_visitor_status visit_enter(ir_dereference_array *);
    virtual ir_visitor_status visit(ir_dereference_variable *);
+   virtual ir_visitor_status visit(ir_variable *);
 
    bool success;
 
