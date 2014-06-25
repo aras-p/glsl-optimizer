@@ -1,6 +1,6 @@
-  
+ 
 #version 300
- #pragma Testing spaces before hash
+#pragma Testing spaces before hash
 
 #line 3
 

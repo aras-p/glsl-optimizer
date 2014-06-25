@@ -52,7 +52,7 @@ void glcpp_set_column (int  column_no , yyscan_t yyscanner);
 		yylloc->last_column = yycolumn + 1;			\
 		parser->has_new_line_number = 0;			\
 		parser->has_new_source_number = 0;			\
- } while(0);
+	} while(0);
 
 #define YY_USER_INIT			\
 	do {				\
@@ -85,13 +85,10 @@ void glcpp_set_column (int  column_no , yyscan_t yyscanner);
  * of RETURN_TOKEN that performs a string copy of yytext before the
  * return.
  */
-#define RETURN_TOKEN_NEVER_SKIP(token)				\
-	do {							\
-		if (token == NEWLINE)				\
-			parser->last_token_was_newline = 1;	\
-		else						\
-			parser->last_token_was_newline = 0;	\
-		return (token);					\
+#define RETURN_TOKEN_NEVER_SKIP(token)					\
+	do {								\
+		if (glcpp_lex_update_state_per_token (parser, token))	\
+			return token;					\
 	} while (0)
 
 #define RETURN_TOKEN(token)						\
@@ -109,6 +106,53 @@ void glcpp_set_column (int  column_no , yyscan_t yyscanner);
 		}							\
 	} while(0)
 
+
+/* Update all state necessary for each token being returned.
+ *
+ * Here we'll be tracking newlines and spaces so that the lexer can
+ * alter its behavior as necessary, (for example, '#' has special
+ * significance if it is the first non-whitespace, non-comment token
+ * in a line, but does not otherwise).
+ *
+ * NOTE: If this function returns FALSE, then no token should be
+ * returned at all. This is used to suprress duplicate SPACE tokens.
+ */
+static int
+glcpp_lex_update_state_per_token (glcpp_parser_t *parser, int token)
+{
+	/* After the first non-space token in a line, we won't
+	 * allow any '#' to introduce a directive. */
+	if (token == NEWLINE) {
+		parser->first_non_space_token_this_line = 1;
+	} else if (token != SPACE) {
+		parser->first_non_space_token_this_line = 0;
+	}
+
+	/* Track newlines just to know whether a newline needs
+	 * to be inserted if end-of-file comes early. */
+	if (token == NEWLINE) {
+		parser->last_token_was_newline = 1;
+	} else {
+		parser->last_token_was_newline = 0;
+	}
+
+	/* Track spaces to avoid emitting multiple SPACE
+	 * tokens in a row. */
+	if (token == SPACE) {
+		if (! parser->last_token_was_space) {
+			parser->last_token_was_space = 1;
+			return 1;
+		} else {
+			parser->last_token_was_space = 1;
+			return 0;
+		}
+	} else {
+		parser->last_token_was_space = 0;
+		return 1;
+	}
+}
+
+
 %}
 
 %option bison-bridge bison-locations reentrant noyywrap
@@ -117,13 +161,13 @@ void glcpp_set_column (int  column_no , yyscan_t yyscanner);
 %option stack
 %option never-interactive
 
-%x DONE COMMENT UNREACHABLE DEFINE NEWLINE_CATCHUP
+%x DONE COMMENT HASH UNREACHABLE DEFINE NEWLINE_CATCHUP
 
 SPACE		[[:space:]]
 NONSPACE	[^[:space:]]
 NEWLINE		[\n]
 HSPACE		[ \t]
-HASH		^{HSPACE}*#{HSPACE}*
+HASH		#
 IDENTIFIER	[_a-zA-Z][_a-zA-Z0-9]*
 PP_NUMBER	[.]?[0-9]([._a-zA-Z0-9]|[eEpP][-+])*
 PUNCTUATION	[][(){}.&*~!/%<>^|;,=+-]
@@ -160,7 +204,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 			parser->commented_newlines--;
 		if (parser->commented_newlines == 0)
 			BEGIN INITIAL;
-		RETURN_TOKEN (NEWLINE);
+		RETURN_TOKEN_NEVER_SKIP (NEWLINE);
 	}
 
 	/* Set up the parser->skipping bit here before doing any lexing.
@@ -206,77 +250,103 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 }
 
 	/* Multi-line comments */
-<DEFINE,INITIAL>"/*"                    { yy_push_state(COMMENT, yyscanner); }
+<DEFINE,HASH,INITIAL>"/*"                    { yy_push_state(COMMENT, yyscanner); }
 <COMMENT>[^*\n]*
 <COMMENT>[^*\n]*\n      { yylineno++; yycolumn = 0; parser->commented_newlines++; }
 <COMMENT>"*"+[^*/\n]*
 <COMMENT>"*"+[^*/\n]*\n { yylineno++; yycolumn = 0; parser->commented_newlines++; }
 <COMMENT>"*"+"/"        {
 	yy_pop_state(yyscanner);
-	if (yyextra->space_tokens)
+	/* In the <HASH> start condition, we don't want any SPACE token. */
+	if (yyextra->space_tokens && YY_START != HASH)
 		RETURN_TOKEN (SPACE);
 }
 
-{HASH}version{HSPACE}+ {
+{HASH} {
+
+	/* If the '#' is the first non-whitespace, non-comment token on this
+	 * line, then it introduces a directive, switch to the <HASH> start
+	 * condition.
+	 *
+	 * Otherwise, this is just punctuation, so return the HASH_TOKEN
+         * token. */
+	if (parser->first_non_space_token_this_line) {
+		BEGIN HASH;
+	}
+
+	RETURN_TOKEN_NEVER_SKIP (HASH_TOKEN);
+}
+
+<HASH>version{HSPACE}+ {
+	BEGIN INITIAL;
 	yyextra->space_tokens = 0;
 	RETURN_STRING_TOKEN (HASH_VERSION);
 }
 
 	/* glcpp doesn't handle #extension, #version, or #pragma directives.
 	 * Simply pass them through to the main compiler's lexer/parser. */
-{HASH}(extension|pragma)[^\n]* {
+<HASH>(extension|pragma)[^\n]* {
+	BEGIN INITIAL;
 	yylineno++;
 	yycolumn = 0;
-	RETURN_STRING_TOKEN (OTHER);
+	RETURN_STRING_TOKEN (HASH_PRAGMA);
 }
 
-{HASH}line{HSPACE}+ {
+<HASH>line{HSPACE}+ {
+	BEGIN INITIAL;
 	RETURN_TOKEN (HASH_LINE);
+}
+
+<HASH>\n {
+	BEGIN INITIAL;
+	RETURN_TOKEN_NEVER_SKIP (NEWLINE);
 }
 
 	/* For the pre-processor directives, we return these tokens
 	 * even when we are otherwise skipping. */
-{HASH}ifdef {
+<HASH>ifdef {
+	BEGIN INITIAL;
 	yyextra->lexing_directive = 1;
 	yyextra->space_tokens = 0;
 	RETURN_TOKEN_NEVER_SKIP (HASH_IFDEF);
 }
 
-{HASH}ifndef {
+<HASH>ifndef {
+	BEGIN INITIAL;
 	yyextra->lexing_directive = 1;
 	yyextra->space_tokens = 0;
 	RETURN_TOKEN_NEVER_SKIP (HASH_IFNDEF);
 }
 
-{HASH}if/[^_a-zA-Z0-9] {
+<HASH>if/[^_a-zA-Z0-9] {
+	BEGIN INITIAL;
 	yyextra->lexing_directive = 1;
 	yyextra->space_tokens = 0;
 	RETURN_TOKEN_NEVER_SKIP (HASH_IF);
 }
 
-{HASH}elif/[^_a-zA-Z0-9] {
+<HASH>elif/[^_a-zA-Z0-9] {
+	BEGIN INITIAL;
 	yyextra->lexing_directive = 1;
 	yyextra->space_tokens = 0;
 	RETURN_TOKEN_NEVER_SKIP (HASH_ELIF);
 }
 
-{HASH}else {
+<HASH>else {
+	BEGIN INITIAL;
 	yyextra->space_tokens = 0;
 	RETURN_TOKEN_NEVER_SKIP (HASH_ELSE);
 }
 
-{HASH}endif {
+<HASH>endif {
+	BEGIN INITIAL;
 	yyextra->space_tokens = 0;
 	RETURN_TOKEN_NEVER_SKIP (HASH_ENDIF);
 }
 
-{HASH}error.* {
-	if (! parser->skipping) {
-		char *p;
-		for (p = yytext; !isalpha(p[0]); p++); /* skip "  #   " */
-		p += 5; /* skip "error" */
-		glcpp_error(yylloc, yyextra, "#error%s", p);
-	}
+<HASH>error.* {
+	BEGIN INITIAL;
+	RETURN_STRING_TOKEN (HASH_ERROR);
 }
 
 	/* After we see a "#define" we enter the <DEFINE> start state
@@ -297,12 +367,30 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	 *	* Anything else, (not an identifier, not a comment,
 	 *	  and not whitespace). This will generate an error.
 	 */
-{HASH}define{HSPACE}+ {
+<HASH>define{HSPACE}+ {
 	if (! parser->skipping) {
 		BEGIN DEFINE;
 		yyextra->space_tokens = 0;
 		RETURN_TOKEN (HASH_DEFINE);
 	}
+}
+
+<HASH>undef {
+	BEGIN INITIAL;
+	yyextra->space_tokens = 0;
+	RETURN_TOKEN (HASH_UNDEF);
+}
+
+<HASH>{HSPACE}+ {
+	/* Nothing to do here. Importantly, don't leave the <HASH>
+	 * start condition, since it's legal to have space between the
+	 * '#' and the directive.. */
+}
+
+	/* This will catch any non-directive garbage after a HASH */
+<HASH>{NONSPACE} {
+	BEGIN INITIAL;
+	RETURN_TOKEN (HASH_GARBAGE);
 }
 
 	/* An identifier immediately followed by '(' */
@@ -335,16 +423,6 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	BEGIN INITIAL;
 	glcpp_error(yylloc, yyextra, "#define followed by a non-identifier: %s", yytext);
 	RETURN_STRING_TOKEN (INTEGER_STRING);
-}
-
-{HASH}undef {
-	yyextra->space_tokens = 0;
-	RETURN_TOKEN (HASH_UNDEF);
-}
-
-{HASH} {
-	yyextra->space_tokens = 0;
-	RETURN_TOKEN (HASH_TOKEN);
 }
 
 {DECIMAL_INTEGER} {
@@ -438,7 +516,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	RETURN_TOKEN_NEVER_SKIP (NEWLINE);
 }
 
-<INITIAL,COMMENT,DEFINE><<EOF>> {
+<INITIAL,COMMENT,DEFINE,HASH><<EOF>> {
 	if (YY_START == COMMENT)
 		glcpp_error(yylloc, yyextra, "Unterminated comment");
 	if (YY_START == DEFINE)

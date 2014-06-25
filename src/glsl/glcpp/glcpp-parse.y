@@ -167,11 +167,11 @@ add_builtin_define(glcpp_parser_t *parser, const char *name, int value);
 
 	/* We use HASH_TOKEN, not HASH to avoid a conflict with the <HASH>
          * start condition in the lexer. */
-%token COMMA_FINAL DEFINED ELIF_EXPANDED HASH_TOKEN HASH_DEFINE FUNC_IDENTIFIER OBJ_IDENTIFIER HASH_ELIF HASH_ELSE HASH_ENDIF HASH_IF HASH_IFDEF HASH_IFNDEF HASH_LINE HASH_UNDEF HASH_VERSION IDENTIFIER IF_EXPANDED INTEGER INTEGER_STRING LINE_EXPANDED NEWLINE OTHER PLACEHOLDER SPACE
+%token COMMA_FINAL DEFINED ELIF_EXPANDED HASH_TOKEN HASH_DEFINE FUNC_IDENTIFIER OBJ_IDENTIFIER HASH_ELIF HASH_ELSE HASH_ENDIF HASH_ERROR HASH_IF HASH_IFDEF HASH_IFNDEF HASH_LINE HASH_PRAGMA HASH_UNDEF HASH_VERSION HASH_GARBAGE IDENTIFIER IF_EXPANDED INTEGER INTEGER_STRING LINE_EXPANDED NEWLINE OTHER PLACEHOLDER SPACE
 %token PASTE
 %type <ival> INTEGER operator SPACE integer_constant
 %type <expression_value> expression
-%type <str> IDENTIFIER FUNC_IDENTIFIER OBJ_IDENTIFIER INTEGER_STRING OTHER
+%type <str> IDENTIFIER FUNC_IDENTIFIER OBJ_IDENTIFIER INTEGER_STRING OTHER HASH_ERROR HASH_PRAGMA
 %type <string_list> identifier_list
 %type <token> preprocessing_token conditional_token
 %type <token_list> pp_tokens replacement_list text_line conditional_tokens
@@ -197,27 +197,14 @@ input:
 ;
 
 line:
-	control_line {
-		ralloc_asprintf_rewrite_tail (&parser->output, &parser->output_length, "\n");
-	}
-|	HASH_LINE {
-		glcpp_parser_resolve_implicit_version(parser);
-	} pp_tokens NEWLINE {
-
-		if (parser->skip_stack == NULL ||
-		    parser->skip_stack->type == SKIP_NO_SKIP)
-		{
-			_glcpp_parser_expand_and_lex_from (parser,
-							   LINE_EXPANDED, $3);
-		}
-	}
+	control_line
+|	SPACE control_line
 |	text_line {
 		_glcpp_parser_print_expanded_token_list (parser, $1);
 		ralloc_asprintf_rewrite_tail (&parser->output, &parser->output_length, "\n");
 		ralloc_free ($1);
 	}
 |	expanded_line
-|	HASH_TOKEN non_directive
 ;
 
 expanded_line:
@@ -264,27 +251,45 @@ define:
 ;
 
 control_line:
-	HASH_DEFINE {
+	control_line_success {
+		ralloc_asprintf_rewrite_tail (&parser->output, &parser->output_length, "\n");
+	}
+|	control_line_error
+|	HASH_TOKEN HASH_LINE {
+		glcpp_parser_resolve_implicit_version(parser);
+	} pp_tokens NEWLINE {
+
+		if (parser->skip_stack == NULL ||
+		    parser->skip_stack->type == SKIP_NO_SKIP)
+		{
+			_glcpp_parser_expand_and_lex_from (parser,
+							   LINE_EXPANDED, $4);
+		}
+	}
+;
+
+control_line_success:
+	HASH_TOKEN HASH_DEFINE {
 		glcpp_parser_resolve_implicit_version(parser);
 	} define
-|	HASH_UNDEF {
+|	HASH_TOKEN HASH_UNDEF {
 		glcpp_parser_resolve_implicit_version(parser);
 	} IDENTIFIER NEWLINE {
 		macro_t *macro;
-		if (strcmp("__LINE__", $3) == 0
-		    || strcmp("__FILE__", $3) == 0
-		    || strcmp("__VERSION__", $3) == 0)
+		if (strcmp("__LINE__", $4) == 0
+		    || strcmp("__FILE__", $4) == 0
+		    || strcmp("__VERSION__", $4) == 0)
 			glcpp_error(& @1, parser, "Built-in (pre-defined)"
 				    " macro names can not be undefined.");
 
-		macro = hash_table_find (parser->defines, $3);
+		macro = hash_table_find (parser->defines, $4);
 		if (macro) {
-			hash_table_remove (parser->defines, $3);
+			hash_table_remove (parser->defines, $4);
 			ralloc_free (macro);
 		}
-		ralloc_free ($3);
+		ralloc_free ($4);
 	}
-|	HASH_IF {
+|	HASH_TOKEN HASH_IF {
 		glcpp_parser_resolve_implicit_version(parser);
 	} conditional_tokens NEWLINE {
 		/* Be careful to only evaluate the 'if' expression if
@@ -298,7 +303,7 @@ control_line:
 		    parser->skip_stack->type == SKIP_NO_SKIP)
 		{
 			_glcpp_parser_expand_and_lex_from (parser,
-							   IF_EXPANDED, $3);
+							   IF_EXPANDED, $4);
 		}	
 		else
 		{
@@ -306,7 +311,7 @@ control_line:
 			parser->skip_stack->type = SKIP_TO_ENDIF;
 		}
 	}
-|	HASH_IF NEWLINE {
+|	HASH_TOKEN HASH_IF NEWLINE {
 		/* #if without an expression is only an error if we
 		 *  are not skipping */
 		if (parser->skip_stack == NULL ||
@@ -316,21 +321,21 @@ control_line:
 		}	
 		_glcpp_parser_skip_stack_push_if (parser, & @1, 0);
 	}
-|	HASH_IFDEF {
+|	HASH_TOKEN HASH_IFDEF {
 		glcpp_parser_resolve_implicit_version(parser);
 	} IDENTIFIER junk NEWLINE {
-		macro_t *macro = hash_table_find (parser->defines, $3);
-		ralloc_free ($3);
+		macro_t *macro = hash_table_find (parser->defines, $4);
+		ralloc_free ($4);
 		_glcpp_parser_skip_stack_push_if (parser, & @1, macro != NULL);
 	}
-|	HASH_IFNDEF {
+|	HASH_TOKEN HASH_IFNDEF {
 		glcpp_parser_resolve_implicit_version(parser);
 	} IDENTIFIER junk NEWLINE {
-		macro_t *macro = hash_table_find (parser->defines, $3);
-		ralloc_free ($3);
-		_glcpp_parser_skip_stack_push_if (parser, & @2, macro == NULL);
+		macro_t *macro = hash_table_find (parser->defines, $4);
+		ralloc_free ($4);
+		_glcpp_parser_skip_stack_push_if (parser, & @3, macro == NULL);
 	}
-|	HASH_ELIF conditional_tokens NEWLINE {
+|	HASH_TOKEN HASH_ELIF conditional_tokens NEWLINE {
 		/* Be careful to only evaluate the 'elif' expression
 		 * if we are not skipping. When we are skipping, we
 		 * simply change to a 0-valued 'elif' on the skip
@@ -342,7 +347,7 @@ control_line:
 		    parser->skip_stack->type == SKIP_TO_ELSE)
 		{
 			_glcpp_parser_expand_and_lex_from (parser,
-							   ELIF_EXPANDED, $2);
+							   ELIF_EXPANDED, $3);
 		}
 		else if (parser->skip_stack &&
 		    parser->skip_stack->has_else)
@@ -355,7 +360,7 @@ control_line:
 							    "elif", 0);
 		}
 	}
-|	HASH_ELIF NEWLINE {
+|	HASH_TOKEN HASH_ELIF NEWLINE {
 		/* #elif without an expression is an error unless we
 		 * are skipping. */
 		if (parser->skip_stack &&
@@ -375,7 +380,7 @@ control_line:
 			glcpp_warning(& @1, parser, "ignoring illegal #elif without expression");
 		}
 	}
-|	HASH_ELSE { parser->lexing_directive = 1; } NEWLINE {
+|	HASH_TOKEN HASH_ELSE { parser->lexing_directive = 1; } NEWLINE {
 		if (parser->skip_stack &&
 		    parser->skip_stack->has_else)
 		{
@@ -388,23 +393,35 @@ control_line:
 				parser->skip_stack->has_else = true;
 		}
 	}
-|	HASH_ENDIF {
+|	HASH_TOKEN HASH_ENDIF {
 		_glcpp_parser_skip_stack_pop (parser, & @1);
 	} NEWLINE
-|	HASH_VERSION integer_constant NEWLINE {
+|	HASH_TOKEN HASH_VERSION integer_constant NEWLINE {
 		if (parser->version_resolved) {
 			glcpp_error(& @1, parser, "#version must appear on the first line");
 		}
-		_glcpp_parser_handle_version_declaration(parser, $2, NULL, true);
+		_glcpp_parser_handle_version_declaration(parser, $3, NULL, true);
 	}
-|	HASH_VERSION integer_constant IDENTIFIER NEWLINE {
+|	HASH_TOKEN HASH_VERSION integer_constant IDENTIFIER NEWLINE {
 		if (parser->version_resolved) {
 			glcpp_error(& @1, parser, "#version must appear on the first line");
 		}
-		_glcpp_parser_handle_version_declaration(parser, $2, $3, true);
+		_glcpp_parser_handle_version_declaration(parser, $3, $4, true);
 	}
 |	HASH_TOKEN NEWLINE {
 		glcpp_parser_resolve_implicit_version(parser);
+	}
+|	HASH_TOKEN HASH_PRAGMA NEWLINE {
+		ralloc_asprintf_rewrite_tail (&parser->output, &parser->output_length, "#%s", $2);
+	}
+;
+
+control_line_error:
+	HASH_TOKEN HASH_ERROR NEWLINE {
+		glcpp_error(& @1, parser, "#%s", $2);
+	}
+|	HASH_TOKEN HASH_GARBAGE pp_tokens NEWLINE  {
+		glcpp_error (& @1, parser, "Illegal non-directive after #");
 	}
 ;
 
@@ -615,12 +632,6 @@ identifier_list:
 text_line:
 	NEWLINE { $$ = NULL; }
 |	pp_tokens NEWLINE
-;
-
-non_directive:
-	pp_tokens NEWLINE {
-		yyerror (& @1, parser, "Invalid tokens after #");
-	}
 ;
 
 replacement_list:
@@ -1313,7 +1324,9 @@ glcpp_parser_create (const struct gl_extensions *extensions, gl_api api)
 	parser->active = NULL;
 	parser->lexing_directive = 0;
 	parser->space_tokens = 1;
-        parser->last_token_was_newline = 0;
+	parser->last_token_was_newline = 0;
+	parser->last_token_was_space = 0;
+	parser->first_non_space_token_this_line = 1;
 	parser->newline_as_space = 0;
 	parser->in_control_line = 0;
 	parser->paren_count = 0;

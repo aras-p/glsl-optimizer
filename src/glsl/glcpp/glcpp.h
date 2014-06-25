@@ -178,6 +178,8 @@ struct glcpp_parser {
 	int lexing_directive;
 	int space_tokens;
 	int last_token_was_newline;
+	int last_token_was_space;
+	int first_non_space_token_this_line;
 	int newline_as_space;
 	int in_control_line;
 	int paren_count;
