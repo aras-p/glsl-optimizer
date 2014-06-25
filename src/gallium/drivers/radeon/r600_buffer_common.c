@@ -110,14 +110,21 @@ bool r600_init_resource(struct r600_common_screen *rscreen,
 	enum radeon_bo_flag flags = 0;
 
 	switch (res->b.b.usage) {
-	case PIPE_USAGE_DYNAMIC:
-	case PIPE_USAGE_STREAM:
-		flags = RADEON_FLAG_GTT_WC;
-		/* fall through */
 	case PIPE_USAGE_STAGING:
 		/* Transfers are likely to occur more often with these resources. */
 		res->domains = RADEON_DOMAIN_GTT;
 		break;
+	case PIPE_USAGE_STREAM:
+	case PIPE_USAGE_DYNAMIC:
+		/* Older kernels didn't always flush the HDP cache before
+		 * CS execution
+		 */
+		if (rscreen->info.drm_minor < 40) {
+			res->domains = RADEON_DOMAIN_GTT;
+			flags = RADEON_FLAG_GTT_WC;
+			break;
+		}
+		/* fall through */
 	case PIPE_USAGE_DEFAULT:
 	case PIPE_USAGE_IMMUTABLE:
 	default:
