@@ -919,9 +919,7 @@ glsl_to_tgsi_visitor::add_constant(gl_register_file file,
       /* Search immediate storage to see if we already have an identical
        * immediate that we can use instead of adding a duplicate entry.
        */
-      foreach_list(node, &this->immediates) {
-         entry = (immediate_storage *) node;
-         
+      foreach_in_list(immediate_storage, entry, &this->immediates) {
          if (entry->size == size &&
              entry->type == datatype &&
              !memcmp(entry->values, values, size * sizeof(gl_constant_value))) {
@@ -1061,11 +1059,7 @@ variable_storage *
 glsl_to_tgsi_visitor::find_variable_storage(ir_variable *var)
 {
    
-   variable_storage *entry;
-
-   foreach_list(node, &this->variables) {
-      entry = (variable_storage *) node;
-
+   foreach_in_list(variable_storage, entry, &this->variables) {
       if (entry->var == var)
          return entry;
    }
@@ -1202,9 +1196,7 @@ glsl_to_tgsi_visitor::visit(ir_function *ir)
 
       assert(sig);
 
-      foreach_list(node, &sig->body) {
-         ir_instruction *ir = (ir_instruction *) node;
-
+      foreach_in_list(ir_instruction, ir, &sig->body) {
          ir->accept(this);
       }
    }
@@ -2554,8 +2546,7 @@ glsl_to_tgsi_visitor::visit(ir_constant *ir)
       st_src_reg temp_base = get_temp(ir->type);
       st_dst_reg temp = st_dst_reg(temp_base);
 
-      foreach_list(node, &ir->components) {
-         ir_constant *field_value = (ir_constant *) node;
+      foreach_in_list(ir_constant, field_value, &ir->components) {
          int size = type_size(field_value->type);
 
          assert(size > 0);
@@ -2684,8 +2675,7 @@ glsl_to_tgsi_visitor::get_function_signature(ir_function_signature *sig)
    entry->bgn_inst = NULL;
 
    /* Allocate storage for all the parameters. */
-   foreach_list(node, &sig->parameters) {
-      ir_variable *param = (ir_variable *) node;
+   foreach_in_list(ir_variable, param, &sig->parameters) {
       variable_storage *storage;
 
       storage = find_variable_storage(param);
@@ -3199,9 +3189,7 @@ count_resources(glsl_to_tgsi_visitor *v, gl_program *prog)
 {
    v->samplers_used = 0;
 
-   foreach_list(node, &v->instructions) {
-      glsl_to_tgsi_instruction *inst = (glsl_to_tgsi_instruction *) node;
-
+   foreach_in_list(glsl_to_tgsi_instruction, inst, &v->instructions) {
       if (is_tex_instruction(inst->op)) {
          v->samplers_used |= 1 << inst->sampler;
 
@@ -3345,8 +3333,7 @@ glsl_to_tgsi_visitor::simplify_cmp(void)
    memset(tempWrites, 0, sizeof(unsigned) * MAX_TEMPS);
    memset(outputWrites, 0, sizeof(outputWrites));
 
-   foreach_list(node, &this->instructions) {
-      glsl_to_tgsi_instruction *inst = (glsl_to_tgsi_instruction *) node;
+   foreach_in_list(glsl_to_tgsi_instruction, inst, &this->instructions) {
       unsigned prevWriteMask = 0;
 
       /* Give up if we encounter relative addressing or flow control. */
@@ -3391,8 +3378,7 @@ glsl_to_tgsi_visitor::simplify_cmp(void)
 void
 glsl_to_tgsi_visitor::rename_temp_register(int index, int new_index)
 {
-   foreach_list(node, &this->instructions) {
-      glsl_to_tgsi_instruction *inst = (glsl_to_tgsi_instruction *) node;
+   foreach_in_list(glsl_to_tgsi_instruction, inst, &this->instructions) {
       unsigned j;
       
       for (j=0; j < num_inst_src_regs(inst->op); j++) {
@@ -3422,9 +3408,7 @@ glsl_to_tgsi_visitor::get_first_temp_read(int index)
    int loop_start = -1; /* index of the first active BGNLOOP (if any) */
    unsigned i = 0, j;
    
-   foreach_list(node, &this->instructions) {
-      glsl_to_tgsi_instruction *inst = (glsl_to_tgsi_instruction *) node;
-      
+   foreach_in_list(glsl_to_tgsi_instruction, inst, &this->instructions) {
       for (j=0; j < num_inst_src_regs(inst->op); j++) {
          if (inst->src[j].file == PROGRAM_TEMPORARY && 
              inst->src[j].index == index) {
@@ -3460,9 +3444,7 @@ glsl_to_tgsi_visitor::get_first_temp_write(int index)
    int loop_start = -1; /* index of the first active BGNLOOP (if any) */
    int i = 0;
    
-   foreach_list(node, &this->instructions) {
-      glsl_to_tgsi_instruction *inst = (glsl_to_tgsi_instruction *) node;
-      
+   foreach_in_list(glsl_to_tgsi_instruction, inst, &this->instructions) {
       if (inst->dst.file == PROGRAM_TEMPORARY && inst->dst.index == index) {
          return (depth == 0) ? i : loop_start;
       }
@@ -3489,9 +3471,7 @@ glsl_to_tgsi_visitor::get_last_temp_read(int index)
    int last = -1; /* index of last instruction that reads the temporary */
    unsigned i = 0, j;
    
-   foreach_list(node, &this->instructions) {
-      glsl_to_tgsi_instruction *inst = (glsl_to_tgsi_instruction *) node;
-      
+   foreach_in_list(glsl_to_tgsi_instruction, inst, &this->instructions) {
       for (j=0; j < num_inst_src_regs(inst->op); j++) {
          if (inst->src[j].file == PROGRAM_TEMPORARY && 
              inst->src[j].index == index) {
@@ -3525,9 +3505,7 @@ glsl_to_tgsi_visitor::get_last_temp_write(int index)
    int last = -1; /* index of last instruction that writes to the temporary */
    int i = 0;
    
-   foreach_list(node, &this->instructions) {
-      glsl_to_tgsi_instruction *inst = (glsl_to_tgsi_instruction *) node;
-      
+   foreach_in_list(glsl_to_tgsi_instruction, inst, &this->instructions) {
       if (inst->dst.file == PROGRAM_TEMPORARY && inst->dst.index == index)
          last = (depth == 0) ? i : -2;
       
@@ -3574,9 +3552,7 @@ glsl_to_tgsi_visitor::copy_propagate(void)
    int *acp_level = rzalloc_array(mem_ctx, int, this->next_temp * 4);
    int level = 0;
 
-   foreach_list(node, &this->instructions) {
-      glsl_to_tgsi_instruction *inst = (glsl_to_tgsi_instruction *) node;
-
+   foreach_in_list(glsl_to_tgsi_instruction, inst, &this->instructions) {
       assert(inst->dst.file != PROGRAM_TEMPORARY
              || inst->dst.index < this->next_temp);
 
@@ -3770,9 +3746,7 @@ glsl_to_tgsi_visitor::eliminate_dead_code(void)
    int level = 0;
    int removed = 0;
 
-   foreach_list(node, &this->instructions) {
-      glsl_to_tgsi_instruction *inst = (glsl_to_tgsi_instruction *) node;
-
+   foreach_in_list(glsl_to_tgsi_instruction, inst, &this->instructions) {
       assert(inst->dst.file != PROGRAM_TEMPORARY
              || inst->dst.index < this->next_temp);
       
@@ -4086,8 +4060,7 @@ get_pixel_transfer_visitor(struct st_fragment_program *fp,
 
    /* Now copy the instructions from the original glsl_to_tgsi_visitor into the
     * new visitor. */
-   foreach_list(node, &original->instructions) {
-      glsl_to_tgsi_instruction *inst = (glsl_to_tgsi_instruction *) node;
+   foreach_in_list(glsl_to_tgsi_instruction, inst, &original->instructions) {
       glsl_to_tgsi_instruction *newinst;
       st_src_reg src_regs[3];
 
@@ -4171,8 +4144,7 @@ get_bitmap_visitor(struct st_fragment_program *fp,
 
    /* Now copy the instructions from the original glsl_to_tgsi_visitor into the
     * new visitor. */
-   foreach_list(node, &original->instructions) {
-      glsl_to_tgsi_instruction *inst = (glsl_to_tgsi_instruction *) node;
+   foreach_in_list(glsl_to_tgsi_instruction, inst, &original->instructions) {
       glsl_to_tgsi_instruction *newinst;
       st_src_reg src_regs[3];
 
@@ -5147,8 +5119,7 @@ st_translate_program(
       goto out;
    }
    i = 0;
-   foreach_list(node, &program->immediates) {
-      immediate_storage *imm = (immediate_storage *) node;
+   foreach_in_list(immediate_storage, imm, &program->immediates) {
       assert(i < program->num_immediates);
       t->immediates[i++] = emit_immediate(t, imm->values, imm->type, imm->size);
    }
@@ -5163,9 +5134,9 @@ st_translate_program(
 
    /* Emit each instruction in turn:
     */
-   foreach_list(n, &program->instructions) {
+   foreach_in_list(glsl_to_tgsi_instruction, inst, &program->instructions) {
       set_insn_start(t, ureg_get_instruction_number(ureg));
-      compile_tgsi_instruction(t, (glsl_to_tgsi_instruction *) n, clamp_color);
+      compile_tgsi_instruction(t, inst, clamp_color);
    }
 
    /* Fix up all emitted labels:
@@ -5276,9 +5247,7 @@ get_mesa_program(struct gl_context *ctx,
    do {
       progress = GL_FALSE;
 
-      foreach_list(node, &v->function_signatures) {
-         function_entry *entry = (function_entry *) node;
-
+      foreach_in_list(function_entry, entry, &v->function_signatures) {
          if (!entry->bgn_inst) {
             v->current_function = entry;
 

@@ -126,8 +126,8 @@ _mesa_GetActiveAttrib(GLhandleARB program, GLuint desired_index,
    exec_list *const ir = shProg->_LinkedShaders[MESA_SHADER_VERTEX]->ir;
    unsigned current_index = 0;
 
-   foreach_list(node, ir) {
-      const ir_variable *const var = ((ir_instruction *) node)->as_variable();
+   foreach_in_list(ir_instruction, node, ir) {
+      const ir_variable *const var = node->as_variable();
 
       if (!is_active_attrib(var))
          continue;
@@ -236,8 +236,8 @@ _mesa_GetAttribLocation(GLhandleARB program, const GLcharARB * name)
       return -1;
 
    exec_list *ir = shProg->_LinkedShaders[MESA_SHADER_VERTEX]->ir;
-   foreach_list(node, ir) {
-      const ir_variable *const var = ((ir_instruction *) node)->as_variable();
+   foreach_in_list(ir_instruction, node, ir) {
+      const ir_variable *const var = node->as_variable();
 
       /* The extra check against VERT_ATTRIB_GENERIC0 is because
        * glGetAttribLocation cannot be used on "conventional" attributes.
@@ -274,8 +274,8 @@ _mesa_count_active_attribs(struct gl_shader_program *shProg)
    exec_list *const ir = shProg->_LinkedShaders[MESA_SHADER_VERTEX]->ir;
    unsigned i = 0;
 
-   foreach_list(node, ir) {
-      const ir_variable *const var = ((ir_instruction *) node)->as_variable();
+   foreach_in_list(ir_instruction, node, ir) {
+      const ir_variable *const var = node->as_variable();
 
       if (!is_active_attrib(var))
          continue;
@@ -298,8 +298,8 @@ _mesa_longest_attribute_name_length(struct gl_shader_program *shProg)
    exec_list *const ir = shProg->_LinkedShaders[MESA_SHADER_VERTEX]->ir;
    size_t longest = 0;
 
-   foreach_list(node, ir) {
-      const ir_variable *const var = ((ir_instruction *) node)->as_variable();
+   foreach_in_list(ir_instruction, node, ir) {
+      const ir_variable *const var = node->as_variable();
 
       if (var == NULL
 	  || var->data.mode != ir_var_shader_in
@@ -400,8 +400,8 @@ _mesa_GetFragDataIndex(GLuint program, const GLchar *name)
       return -1;
 
    exec_list *ir = shProg->_LinkedShaders[MESA_SHADER_FRAGMENT]->ir;
-   foreach_list(node, ir) {
-      const ir_variable *const var = ((ir_instruction *) node)->as_variable();
+   foreach_in_list(ir_instruction, node, ir) {
+      const ir_variable *const var = node->as_variable();
 
       /* The extra check against FRAG_RESULT_DATA0 is because
        * glGetFragDataLocation cannot be used on "conventional" attributes.
@@ -456,8 +456,8 @@ _mesa_GetFragDataLocation(GLuint program, const GLchar *name)
       return -1;
 
    exec_list *ir = shProg->_LinkedShaders[MESA_SHADER_FRAGMENT]->ir;
-   foreach_list(node, ir) {
-      const ir_variable *const var = ((ir_instruction *) node)->as_variable();
+   foreach_in_list(ir_instruction, node, ir) {
+      const ir_variable *const var = node->as_variable();
 
       /* The extra check against FRAG_RESULT_DATA0 is because
        * glGetFragDataLocation cannot be used on "conventional" attributes.
