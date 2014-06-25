@@ -57,6 +57,9 @@ _string_list_append_item (string_list_t *list, const char *str);
 static int
 _string_list_contains (string_list_t *list, const char *member, int *index);
 
+static const char *
+_string_list_has_duplicate (string_list_t *list);
+
 static int
 _string_list_length (string_list_t *list);
 
@@ -792,6 +795,25 @@ _string_list_contains (string_list_t *list, const char *member, int *index)
 	}
 
 	return 0;
+}
+
+/* Return duplicate string in list (if any), NULL otherwise. */
+const char *
+_string_list_has_duplicate (string_list_t *list)
+{
+	string_node_t *node, *dup;
+
+	if (list == NULL)
+		return NULL;
+
+	for (node = list->head; node; node = node->next) {
+		for (dup = node->next; dup; dup = dup->next) {
+			if (strcmp (node->str, dup->str) == 0)
+				return node->str;
+		}
+	}
+
+	return NULL;
 }
 
 int
@@ -1980,8 +2002,15 @@ _define_function_macro (glcpp_parser_t *parser,
 			token_list_t *replacements)
 {
 	macro_t *macro, *previous;
+	const char *dup;
 
 	_check_for_reserved_macro_name(parser, loc, identifier);
+
+        /* Check for any duplicate parameter names. */
+	if ((dup = _string_list_has_duplicate (parameters)) != NULL) {
+		glcpp_error (loc, parser, "Duplicate macro parameter \"%s\"",
+			     dup);
+	}
 
 	macro = ralloc (parser, macro_t);
 	ralloc_steal (macro, parameters);
