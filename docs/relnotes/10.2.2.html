@@ -1,0 +1,181 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>Mesa Release Notes</title>
+  <link rel="stylesheet" type="text/css" href="../mesa.css">
+</head>
+<body>
+
+<div class="header">
+  <h1>The Mesa 3D Graphics Library</h1>
+</div>
+
+<iframe src="../contents.html"></iframe>
+<div class="content">
+
+<h1>Mesa 10.2.2 Release Notes / June 24, 2014</h1>
+
+<p>
+Mesa 10.2.2 is a bug fix release which fixes bugs found since the 10.2.1 release.
+</p>
+<p>
+Mesa 10.2.2 implements the OpenGL 3.3 API, but the version reported by
+glGetString(GL_VERSION) or glGetIntegerv(GL_MAJOR_VERSION) /
+glGetIntegerv(GL_MINOR_VERSION) depends on the particular driver being used.
+Some drivers don't support all the features required in OpenGL 3.3.  OpenGL
+3.3 is <strong>only</strong> available if requested at context creation
+because compatibility contexts are not supported.
+</p>
+
+
+<h2>SHA256 checksums</h2>
+<pre>
+38c4a40364000f89cddaa1694f6f3cfb444981d1110238ce603093585477399c  MesaLib-10.2.2.tar.bz2
+2af2ec8b4db624c352e961eefbcce6c8d1f86d44c5542f6f378c50e1b958d453  MesaLib-10.2.2.tar.gz
+d4c0372da59367a344d62ebcdf5cf61039c9cae6925f40f2dab8f8d95cf22da9  MesaLib-10.2.2.zip
+</pre>
+
+
+<h2>New features</h2>
+<p>None</p>
+
+<h2>Bug fixes</h2>
+
+<p>This list is likely incomplete.</p>
+
+<ul>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=54372">Bug 54372</a> - GLX_INTEL_swap_event crashes driver when swapping window buffers</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=66452">Bug 66452</a> - JUNIPER UVD accelerated playback of WMV3 streams does not work</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=74005">Bug 74005</a> - [i965 Bisected]Piglit/glx_glx-make-glxdrawable-current fails</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=77865">Bug 77865</a> - [BDW] Many Ogles3conform framebuffer_blit cases fail</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=78581">Bug 78581</a> - OpenCL: clBuildProgram prints error messages directly rather than storing them</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=79029">Bug 79029</a> - INTEL_DEBUG=shader_time is full of lies</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=79729">Bug 79729</a> - [i965] glClear on a multisample texture doesn't work</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=79907">Bug 79907</a> - Mesa 10.2.1 --enable-vdpau default=auto broken</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=80115">Bug 80115</a> - MESA_META_DRAW_BUFFERS induced GL_INVALID_VALUE errors</li>
+
+</ul>
+
+
+<h2>Changes</h2>
+
+<p>Adrian Negreanu (8):</p>
+<ul>
+  <li>add megadriver_stub_FILES</li>
+  <li>android: adapt to the megadriver mechanism</li>
+  <li>android: add libloader to libGLES_mesa and libmesa_egl_dri2</li>
+  <li>android: add src/gallium/auxiliary as include path for libmesa_dricore</li>
+  <li>android, egl: add correct drm include for libmesa_egl_dri2</li>
+  <li>android, egl: typo dri2_fallback_pixmap_surface -&gt; dri2_fallback_create_pixmap_surface</li>
+  <li>android, mesa_gen_matypes: pull in timespec POSIX definition</li>
+  <li>android, dricore: undefined reference to _mesa_streaming_load_memcpy</li>
+</ul>
+
+<p>Carl Worth (1):</p>
+<ul>
+  <li>Update VERSION to 10.2.2</li>
+</ul>
+
+<p>Daniel Manjarres (1):</p>
+<ul>
+  <li>glx: Don't crash on swap event for a Window (non-GLXWindow)</li>
+</ul>
+
+<p>Emil Velikov (3):</p>
+<ul>
+  <li>targets/xa: limit the amount of exported symbols</li>
+  <li>configure: error out when building opencl without LLVM</li>
+  <li>configure: correctly autodetect xvmc/vdpau/omx</li>
+</ul>
+
+<p>Grigori Goronzy (1):</p>
+<ul>
+  <li>radeon/uvd: disable VC-1 simple/main on UVD 2.x</li>
+</ul>
+
+<p>Iago Toral Quiroga (1):</p>
+<ul>
+  <li>mesa: Copy Geom.UsesEndPrimitive when cloning a geometry program.</li>
+</ul>
+
+<p>Ian Romanick (3):</p>
+<ul>
+  <li>docs: Add initial 10.2.1 release notes</li>
+  <li>docs: Add MD5 checksum, etc. for 10.2.1 release</li>
+  <li>meta: Respect the driver's maximum number of draw buffers</li>
+</ul>
+
+<p>Ilia Mirkin (7):</p>
+<ul>
+  <li>gk110/ir: emit saturate flag on fadd when needed</li>
+  <li>gk110/ir: fix emitting constbuf file index</li>
+  <li>gk110/ir: fix bfind emission</li>
+  <li>nv50: make sure to mark first scissor dirty after blit</li>
+  <li>nv30: plug some memory leaks on screen destroy and shader compile</li>
+  <li>nv30: avoid dangling references to deleted contexts</li>
+  <li>nv30: hack to avoid errors on unexpected color/zeta combinations</li>
+</ul>
+
+<p>Jason Ekstrand (1):</p>
+<ul>
+  <li>meta_blit: properly compute texture width for the CopyTexSubImage fallback</li>
+</ul>
+
+<p>José Fonseca (1):</p>
+<ul>
+  <li>mesa/main: Prevent sefgault on glGetIntegerv(GL_ATOMIC_COUNTER_BUFFER_BINDING).</li>
+</ul>
+
+<p>Kenneth Graunke (9):</p>
+<ul>
+  <li>i965: Don't use the head sentinel as an fs_inst in Gen4 workaround code.</li>
+  <li>i965: Invalidate live intervals when inserting Gen4 SEND workarounds.</li>
+  <li>i965/vec4: Fix dead code elimination for VGRFs of size &gt; 1.</li>
+  <li>i965: Add missing MOCS setup for 3DSTATE_INDEX_BUFFER on Broadwell.</li>
+  <li>i965: Drop Broadwell perf_debugs about missing MOCS that aren't missing.</li>
+  <li>i965: Add missing newlines to a few perf_debug messages.</li>
+  <li>i965/vec4: Use the sampler for pull constant loads on Broadwell.</li>
+  <li>i965: Use 8x4 aligned rectangles for HiZ operations on Broadwell.</li>
+  <li>i965: Save meta stencil blit programs in the context.</li>
+</ul>
+
+<p>Kristian Høgsberg (1):</p>
+<ul>
+  <li>mesa: Remove glClear optimization based on drawable size</li>
+</ul>
+
+<p>Michel Dänzer (1):</p>
+<ul>
+  <li>configure: Only check for OpenCL without LLVM when the latter is certain</li>
+</ul>
+
+<p>Neil Roberts (1):</p>
+<ul>
+  <li>i965: Set the fast clear color value for texture surfaces</li>
+</ul>
+
+<p>Tom Stellard (2):</p>
+<ul>
+  <li>clover: Prevent Clang from printing number of errors and warnings to stderr.</li>
+  <li>clover: Don't use llvm's global context</li>
+</ul>
+
+<p>Ville Syrjälä (1):</p>
+<ul>
+  <li>i915: Fix gen2 texblend setup</li>
+</ul>
+
+
+</div>
+</body>
+</html>
