@@ -1532,8 +1532,6 @@ static void si_llvm_emit_fs_epilogue(struct lp_build_tgsi_context * bld_base)
 			   last_args, 9);
 }
 
-static const struct lp_build_tgsi_action txf_action;
-
 static void build_tex_intrinsic(const struct lp_build_tgsi_action * action,
 				struct lp_build_tgsi_context * bld_base,
 				struct lp_build_emit_data * emit_data);
@@ -1548,6 +1546,8 @@ static bool tgsi_is_shadow_sampler(unsigned target)
 	       target == TGSI_TEXTURE_SHADOWCUBE_ARRAY ||
 	       target == TGSI_TEXTURE_SHADOWRECT;
 }
+
+static const struct lp_build_tgsi_action tex_action;
 
 static void tex_fetch_args(
 	struct lp_build_tgsi_context * bld_base,
@@ -1566,6 +1566,7 @@ static void tex_fetch_args(
 	unsigned chan;
 	unsigned sampler_src = emit_data->inst->Instruction.NumSrcRegs - 1;
 	unsigned sampler_index = emit_data->inst->Src[sampler_src].Register.Index;
+	bool has_offset = HAVE_LLVM >= 0x0305 ? inst->Texture.NumOffsets > 0 : false;
 
 	if (target == TGSI_TEXTURE_BUFFER) {
 		LLVMTypeRef i128 = LLVMIntTypeInContext(gallivm->context, 128);
@@ -1604,8 +1605,7 @@ static void tex_fetch_args(
 		coords[3] = bld_base->base.one;
 
 	/* Pack offsets. */
-	if (opcode == TGSI_OPCODE_TG4 &&
-	    inst->Texture.NumOffsets) {
+	if (has_offset && opcode != TGSI_OPCODE_TXF) {
 		/* The offsets are six-bit signed integers packed like this:
 		 *   X=[5:0], Y=[13:8], and Z=[21:16].
 		 */
@@ -1730,6 +1730,7 @@ static void tex_fetch_args(
 		struct lp_build_emit_data txf_emit_data = *emit_data;
 		LLVMValueRef txf_address[4];
 		unsigned txf_count = count;
+		struct tgsi_full_instruction inst = {};
 
 		memcpy(txf_address, address, sizeof(txf_address));
 
@@ -1743,16 +1744,18 @@ static void tex_fetch_args(
 			txf_address[txf_count++] = LLVMGetUndef(LLVMInt32TypeInContext(gallivm->context));
 
 		/* Read FMASK using TXF. */
+		inst.Instruction.Opcode = TGSI_OPCODE_TXF;
+		inst.Texture.Texture = target == TGSI_TEXTURE_2D_MSAA ? TGSI_TEXTURE_2D : TGSI_TEXTURE_2D_ARRAY;
+		txf_emit_data.inst = &inst;
 		txf_emit_data.chan = 0;
 		txf_emit_data.dst_type = LLVMVectorType(
 			LLVMInt32TypeInContext(gallivm->context), 4);
 		txf_emit_data.args[0] = lp_build_gather_values(gallivm, txf_address, txf_count);
 		txf_emit_data.args[1] = si_shader_ctx->resources[FMASK_TEX_OFFSET + sampler_index];
-		txf_emit_data.args[2] = lp_build_const_int32(gallivm,
-			target == TGSI_TEXTURE_2D_MSAA ? TGSI_TEXTURE_2D : TGSI_TEXTURE_2D_ARRAY);
+		txf_emit_data.args[2] = lp_build_const_int32(gallivm, inst.Texture.Texture);
 		txf_emit_data.arg_count = 3;
 
-		build_tex_intrinsic(&txf_action, bld_base, &txf_emit_data);
+		build_tex_intrinsic(&tex_action, bld_base, &txf_emit_data);
 
 		/* Initialize some constants. */
 		LLVMValueRef four = LLVMConstInt(uint_bld->elem_type, 4, 0);
@@ -1843,7 +1846,8 @@ static void tex_fetch_args(
 			LLVMInt32TypeInContext(gallivm->context),
 			4);
 	} else if (opcode == TGSI_OPCODE_TG4 ||
-		   opcode == TGSI_OPCODE_LODQ) {
+		   opcode == TGSI_OPCODE_LODQ ||
+		   has_offset) {
 		unsigned is_array = target == TGSI_TEXTURE_1D_ARRAY ||
 				    target == TGSI_TEXTURE_SHADOW1D_ARRAY ||
 				    target == TGSI_TEXTURE_2D_ARRAY ||
@@ -1924,9 +1928,13 @@ static void build_tex_intrinsic(const struct lp_build_tgsi_action * action,
 				struct lp_build_emit_data * emit_data)
 {
 	struct lp_build_context * base = &bld_base->base;
+	unsigned opcode = emit_data->inst->Instruction.Opcode;
+	unsigned target = emit_data->inst->Texture.Texture;
 	char intr_name[127];
+	bool has_offset = HAVE_LLVM >= 0x0305 ?
+				emit_data->inst->Texture.NumOffsets > 0 : false;
 
-	if (emit_data->inst->Texture.Texture == TGSI_TEXTURE_BUFFER) {
+	if (target == TGSI_TEXTURE_BUFFER) {
 		emit_data->output[emit_data->chan] = build_intrinsic(
 			base->gallivm->builder,
 			"llvm.SI.vs.load.input", emit_data->dst_type,
@@ -1935,36 +1943,87 @@ static void build_tex_intrinsic(const struct lp_build_tgsi_action * action,
 		return;
 	}
 
-	sprintf(intr_name, "%sv%ui32", action->intr_name,
-		LLVMGetVectorSize(LLVMTypeOf(emit_data->args[0])));
+	if (opcode == TGSI_OPCODE_TG4 ||
+	    opcode == TGSI_OPCODE_LODQ ||
+	    (opcode != TGSI_OPCODE_TXF && has_offset)) {
+		bool is_shadow = tgsi_is_shadow_sampler(target);
+		const char *name = "llvm.SI.image.sample";
+		const char *infix = "";
 
-	emit_data->output[emit_data->chan] = build_intrinsic(
-		base->gallivm->builder, intr_name, emit_data->dst_type,
-		emit_data->args, emit_data->arg_count,
-		LLVMReadNoneAttribute | LLVMNoUnwindAttribute);
-}
+		switch (opcode) {
+		case TGSI_OPCODE_TEX:
+		case TGSI_OPCODE_TEX2:
+		case TGSI_OPCODE_TXP:
+			break;
+		case TGSI_OPCODE_TXB:
+		case TGSI_OPCODE_TXB2:
+			infix = ".b";
+			break;
+		case TGSI_OPCODE_TXL:
+		case TGSI_OPCODE_TXL2:
+			infix = ".l";
+			break;
+		case TGSI_OPCODE_TXD:
+			infix = ".d";
+			break;
+		case TGSI_OPCODE_TG4:
+			name = "llvm.SI.gather4";
+			break;
+		case TGSI_OPCODE_LODQ:
+			name = "llvm.SI.getlod";
+			is_shadow = false;
+			has_offset = false;
+			break;
+		default:
+			assert(0);
+			return;
+		}
 
-static void build_new_tex_intrinsic(const struct lp_build_tgsi_action * action,
-				    struct lp_build_tgsi_context * bld_base,
-				    struct lp_build_emit_data * emit_data)
-{
-	struct lp_build_context * base = &bld_base->base;
-	char intr_name[127];
-	unsigned target = emit_data->inst->Texture.Texture;
-	bool is_shadow = tgsi_is_shadow_sampler(target) &&
-			 emit_data->inst->Instruction.Opcode != TGSI_OPCODE_LODQ;
+		/* Add the type and suffixes .c, .o if needed. */
+		sprintf(intr_name, "%s%s%s%s.v%ui32", name,
+			is_shadow ? ".c" : "", infix, has_offset ? ".o" : "",
+			LLVMGetVectorSize(LLVMTypeOf(emit_data->args[0])));
 
-	/* Add the type and suffixes .c, .o if needed. */
-	sprintf(intr_name, "%s%s%s.v%ui32",
-		action->intr_name,
-		is_shadow ? ".c" : "",
-		emit_data->inst->Texture.NumOffsets ? ".o" : "",
-		LLVMGetVectorSize(LLVMTypeOf(emit_data->args[0])));
+		emit_data->output[emit_data->chan] = build_intrinsic(
+			base->gallivm->builder, intr_name, emit_data->dst_type,
+			emit_data->args, emit_data->arg_count,
+			LLVMReadNoneAttribute | LLVMNoUnwindAttribute);
+	} else {
+		const char *name;
 
-	emit_data->output[emit_data->chan] = build_intrinsic(
-		base->gallivm->builder, intr_name, emit_data->dst_type,
-		emit_data->args, emit_data->arg_count,
-		LLVMReadNoneAttribute | LLVMNoUnwindAttribute);
+		switch (opcode) {
+		case TGSI_OPCODE_TEX:
+		case TGSI_OPCODE_TEX2:
+		case TGSI_OPCODE_TXP:
+			name = "llvm.SI.sample";
+			break;
+		case TGSI_OPCODE_TXB:
+		case TGSI_OPCODE_TXB2:
+			name = "llvm.SI.sampleb";
+			break;
+		case TGSI_OPCODE_TXD:
+			name = "llvm.SI.sampled";
+			break;
+		case TGSI_OPCODE_TXF:
+			name = "llvm.SI.imageload";
+			break;
+		case TGSI_OPCODE_TXL:
+		case TGSI_OPCODE_TXL2:
+			name = "llvm.SI.samplel";
+			break;
+		default:
+			assert(0);
+			return;
+		}
+
+		sprintf(intr_name, "%s.v%ui32", name,
+			LLVMGetVectorSize(LLVMTypeOf(emit_data->args[0])));
+
+		emit_data->output[emit_data->chan] = build_intrinsic(
+			base->gallivm->builder, intr_name, emit_data->dst_type,
+			emit_data->args, emit_data->arg_count,
+			LLVMReadNoneAttribute | LLVMNoUnwindAttribute);
+	}
 }
 
 static void txq_fetch_args(
@@ -2226,51 +2285,12 @@ static void si_llvm_emit_primitive(
 static const struct lp_build_tgsi_action tex_action = {
 	.fetch_args = tex_fetch_args,
 	.emit = build_tex_intrinsic,
-	.intr_name = "llvm.SI.sample."
-};
-
-static const struct lp_build_tgsi_action txb_action = {
-	.fetch_args = tex_fetch_args,
-	.emit = build_tex_intrinsic,
-	.intr_name = "llvm.SI.sampleb."
-};
-
-#if HAVE_LLVM >= 0x0304
-static const struct lp_build_tgsi_action txd_action = {
-	.fetch_args = tex_fetch_args,
-	.emit = build_tex_intrinsic,
-	.intr_name = "llvm.SI.sampled."
-};
-#endif
-
-static const struct lp_build_tgsi_action txf_action = {
-	.fetch_args = tex_fetch_args,
-	.emit = build_tex_intrinsic,
-	.intr_name = "llvm.SI.imageload."
-};
-
-static const struct lp_build_tgsi_action txl_action = {
-	.fetch_args = tex_fetch_args,
-	.emit = build_tex_intrinsic,
-	.intr_name = "llvm.SI.samplel."
 };
 
 static const struct lp_build_tgsi_action txq_action = {
 	.fetch_args = txq_fetch_args,
 	.emit = build_txq_intrinsic,
 	.intr_name = "llvm.SI.resinfo"
-};
-
-static const struct lp_build_tgsi_action tg4_action = {
-	.fetch_args = tex_fetch_args,
-	.emit = build_new_tex_intrinsic,
-	.intr_name = "llvm.SI.gather4"
-};
-
-static const struct lp_build_tgsi_action lodq_action = {
-	.fetch_args = tex_fetch_args,
-	.emit = build_new_tex_intrinsic,
-	.intr_name = "llvm.SI.getlod"
 };
 
 static void create_meta_data(struct si_shader_context *si_shader_ctx)
@@ -2727,18 +2747,18 @@ int si_pipe_shader_create(
 
 	bld_base->op_actions[TGSI_OPCODE_TEX] = tex_action;
 	bld_base->op_actions[TGSI_OPCODE_TEX2] = tex_action;
-	bld_base->op_actions[TGSI_OPCODE_TXB] = txb_action;
-	bld_base->op_actions[TGSI_OPCODE_TXB2] = txb_action;
+	bld_base->op_actions[TGSI_OPCODE_TXB] = tex_action;
+	bld_base->op_actions[TGSI_OPCODE_TXB2] = tex_action;
 #if HAVE_LLVM >= 0x0304
-	bld_base->op_actions[TGSI_OPCODE_TXD] = txd_action;
+	bld_base->op_actions[TGSI_OPCODE_TXD] = tex_action;
 #endif
-	bld_base->op_actions[TGSI_OPCODE_TXF] = txf_action;
-	bld_base->op_actions[TGSI_OPCODE_TXL] = txl_action;
-	bld_base->op_actions[TGSI_OPCODE_TXL2] = txl_action;
+	bld_base->op_actions[TGSI_OPCODE_TXF] = tex_action;
+	bld_base->op_actions[TGSI_OPCODE_TXL] = tex_action;
+	bld_base->op_actions[TGSI_OPCODE_TXL2] = tex_action;
 	bld_base->op_actions[TGSI_OPCODE_TXP] = tex_action;
 	bld_base->op_actions[TGSI_OPCODE_TXQ] = txq_action;
-	bld_base->op_actions[TGSI_OPCODE_TG4] = tg4_action;
-	bld_base->op_actions[TGSI_OPCODE_LODQ] = lodq_action;
+	bld_base->op_actions[TGSI_OPCODE_TG4] = tex_action;
+	bld_base->op_actions[TGSI_OPCODE_LODQ] = tex_action;
 
 #if HAVE_LLVM >= 0x0304
 	bld_base->op_actions[TGSI_OPCODE_DDX].emit = si_llvm_emit_ddxy;
