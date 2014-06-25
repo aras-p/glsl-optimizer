@@ -124,7 +124,9 @@ static ir_expression *
 try_replace_with_dot(ir_expression *expr0, ir_expression *expr1, void *mem_ctx)
 {
    if (expr0 && expr0->operation == ir_binop_add &&
-       expr1 && expr1->operation == ir_binop_add) {
+       expr0->type->is_float() &&
+       expr1 && expr1->operation == ir_binop_add &&
+       expr1->type->is_float()) {
       ir_swizzle *x = expr0->operands[0]->as_swizzle();
       ir_swizzle *y = expr0->operands[1]->as_swizzle();
       ir_swizzle *z = expr1->operands[0]->as_swizzle();
