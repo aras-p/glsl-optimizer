@@ -115,7 +115,7 @@ llvmpipe_texture_layout(struct llvmpipe_screen *screen,
             lpr->row_stride[level] = align(nblocksx * block_size, util_cpu_caps.cacheline);
 
          /* if row_stride * height > LP_MAX_TEXTURE_SIZE */
-         if (lpr->row_stride[level] > LP_MAX_TEXTURE_SIZE / nblocksy) {
+         if ((uint64_t)lpr->row_stride[level] * nblocksy > LP_MAX_TEXTURE_SIZE) {
             /* image too large */
             goto fail;
          }
