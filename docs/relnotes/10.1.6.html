@@ -1,0 +1,138 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>Mesa Release Notes</title>
+  <link rel="stylesheet" type="text/css" href="../mesa.css">
+</head>
+<body>
+
+<div class="header">
+  <h1>The Mesa 3D Graphics Library</h1>
+</div>
+
+<iframe src="../contents.html"></iframe>
+<div class="content">
+
+<h1>Mesa 10.1.6 Release Notes / (June 24, 2014)</h1>
+
+<p>
+Mesa 10.1.6 is a bug fix release which fixes bugs found since the 10.1.5 release.
+</p>
+
+<p>
+Mesa 10.1.6 implements the OpenGL 3.3 API, but the version reported by
+glGetString(GL_VERSION) or glGetIntegerv(GL_MAJOR_VERSION) /
+glGetIntegerv(GL_MINOR_VERSION) depends on the particular driver being used.
+Some drivers don't support all the features required in OpenGL 3.3.  OpenGL
+3.3 is <strong>only</strong> available if requested at context creation
+because compatibility contexts are not supported.
+</p>
+
+<h2>SHA256 checksums</h2>
+<pre>
+cde60e06b340d7598802fe4a4484b3fb8befd714f9ab9caabe1f27d3149e8815  MesaLib-10.1.6.tar.bz2
+e4e726d7805a442f7ed07d12f71335e6126796ec85328a5989eb5348a8042d00  MesaLib-10.1.6.tar.gz
+bf7e3f721a7ad0c2057a034834b6fea688e64f26a66cf8d1caa2827e405e72dd  MesaLib-10.1.6.zip
+</pre>
+
+<h2>New features</h2>
+<p>None</p>
+
+<h2>Bug fixes</h2>
+
+<p>This list is likely incomplete.</p>
+
+<ul>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=54372">Bug 54372</a> - GLX_INTEL_swap_event crashes driver when swapping window buffers</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=74005">Bug 74005</a> - [i965 Bisected]Piglit/glx_glx-make-glxdrawable-current fails</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=78581">Bug 78581</a> - </li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=79729">Bug 79729</a> - [i965] glClear on a multisample texture doesn't work</li>
+
+</ul>
+
+<h2>Changes</h2>
+
+<p>Adrian Negreanu (7):</p>
+<ul>
+  <li>add megadriver_stub_FILES</li>
+  <li>android: adapt to the megadriver mechanism</li>
+  <li>android: add libloader to libGLES_mesa and libmesa_egl_dri2</li>
+  <li>android: add src/gallium/auxiliary as include path for libmesa_dricore</li>
+  <li>android, egl: add correct drm include for libmesa_egl_dri2</li>
+  <li>android, mesa_gen_matypes: pull in timespec POSIX definition</li>
+  <li>android, dricore: undefined reference to _mesa_streaming_load_memcpy</li>
+</ul>
+
+<p>Beren Minor (1):</p>
+<ul>
+  <li>egl/main: Fix eglMakeCurrent when releasing context from current thread.</li>
+</ul>
+
+<p>Carl Worth (3):</p>
+<ul>
+  <li>docs: Add SHA256 checksums for the 10.1.5 release</li>
+  <li>cherry-ignore: Add a patch to ignore</li>
+  <li>Update VERSION to 10.1.6</li>
+</ul>
+
+<p>Daniel Manjarres (1):</p>
+<ul>
+  <li>glx: Don't crash on swap event for a Window (non-GLXWindow)</li>
+</ul>
+
+<p>Emil Velikov (1):</p>
+<ul>
+  <li>configure: error out when building opencl without LLVM</li>
+</ul>
+
+<p>Iago Toral Quiroga (1):</p>
+<ul>
+  <li>mesa: Copy Geom.UsesEndPrimitive when cloning a geometry program.</li>
+</ul>
+
+<p>José Fonseca (3):</p>
+<ul>
+  <li>mesa/main: Make get_hash.c values constant.</li>
+  <li>mesa: Make glGetIntegerv(GL_*_ARRAY_SIZE) return GL_BGRA.</li>
+  <li>mesa/main: Prevent sefgault on glGetIntegerv(GL_ATOMIC_COUNTER_BUFFER_BINDING).</li>
+</ul>
+
+<p>Kristian Høgsberg (1):</p>
+<ul>
+  <li>mesa: Remove glClear optimization based on drawable size</li>
+</ul>
+
+<p>Michel Dänzer (1):</p>
+<ul>
+  <li>configure: Only check for OpenCL without LLVM when the latter is certain</li>
+</ul>
+
+<p>Neil Roberts (1):</p>
+<ul>
+  <li>i965: Set the fast clear color value for texture surfaces</li>
+</ul>
+
+<p>Roland Scheidegger (1):</p>
+<ul>
+  <li>draw: (trivial) fix clamping of viewport index</li>
+</ul>
+
+<p>Tobias Klausmann (1):</p>
+<ul>
+  <li>nv50/ir: clear subop when folding constant expressions</li>
+</ul>
+
+<p>Tom Stellard (2):</p>
+<ul>
+  <li>clover: Prevent Clang from printing number of errors and warnings to stderr.</li>
+  <li>clover: Don't use llvm's global context</li>
+</ul>
+
+</div>
+</body>
+</html>
