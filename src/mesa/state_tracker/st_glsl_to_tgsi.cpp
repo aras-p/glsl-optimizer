@@ -3872,9 +3872,7 @@ glsl_to_tgsi_visitor::eliminate_dead_code(void)
    /* Now actually remove the instructions that are completely dead and update
     * the writemask of other instructions with dead channels.
     */
-   foreach_list_safe(node, &this->instructions) {
-      glsl_to_tgsi_instruction *inst = (glsl_to_tgsi_instruction *) node;
-      
+   foreach_in_list_safe(glsl_to_tgsi_instruction, inst, &this->instructions) {
       if (!inst->dead_mask || !inst->dst.writemask)
          continue;
       else if ((inst->dst.writemask & ~inst->dead_mask) == 0) {
