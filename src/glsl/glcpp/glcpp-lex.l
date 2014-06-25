@@ -280,7 +280,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 <HASH>version{HSPACE}+ {
 	BEGIN INITIAL;
 	yyextra->space_tokens = 0;
-	RETURN_STRING_TOKEN (HASH_VERSION);
+	RETURN_STRING_TOKEN (VERSION_TOKEN);
 }
 
 	/* glcpp doesn't handle #extension, #version, or #pragma directives.
@@ -289,12 +289,12 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	BEGIN INITIAL;
 	yylineno++;
 	yycolumn = 0;
-	RETURN_STRING_TOKEN (HASH_PRAGMA);
+	RETURN_STRING_TOKEN (PRAGMA);
 }
 
 <HASH>line{HSPACE}+ {
 	BEGIN INITIAL;
-	RETURN_TOKEN (HASH_LINE);
+	RETURN_TOKEN (LINE);
 }
 
 <HASH>\n {
@@ -308,45 +308,45 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	BEGIN INITIAL;
 	yyextra->lexing_directive = 1;
 	yyextra->space_tokens = 0;
-	RETURN_TOKEN_NEVER_SKIP (HASH_IFDEF);
+	RETURN_TOKEN_NEVER_SKIP (IFDEF);
 }
 
 <HASH>ifndef {
 	BEGIN INITIAL;
 	yyextra->lexing_directive = 1;
 	yyextra->space_tokens = 0;
-	RETURN_TOKEN_NEVER_SKIP (HASH_IFNDEF);
+	RETURN_TOKEN_NEVER_SKIP (IFNDEF);
 }
 
 <HASH>if/[^_a-zA-Z0-9] {
 	BEGIN INITIAL;
 	yyextra->lexing_directive = 1;
 	yyextra->space_tokens = 0;
-	RETURN_TOKEN_NEVER_SKIP (HASH_IF);
+	RETURN_TOKEN_NEVER_SKIP (IF);
 }
 
 <HASH>elif/[^_a-zA-Z0-9] {
 	BEGIN INITIAL;
 	yyextra->lexing_directive = 1;
 	yyextra->space_tokens = 0;
-	RETURN_TOKEN_NEVER_SKIP (HASH_ELIF);
+	RETURN_TOKEN_NEVER_SKIP (ELIF);
 }
 
 <HASH>else {
 	BEGIN INITIAL;
 	yyextra->space_tokens = 0;
-	RETURN_TOKEN_NEVER_SKIP (HASH_ELSE);
+	RETURN_TOKEN_NEVER_SKIP (ELSE);
 }
 
 <HASH>endif {
 	BEGIN INITIAL;
 	yyextra->space_tokens = 0;
-	RETURN_TOKEN_NEVER_SKIP (HASH_ENDIF);
+	RETURN_TOKEN_NEVER_SKIP (ENDIF);
 }
 
 <HASH>error.* {
 	BEGIN INITIAL;
-	RETURN_STRING_TOKEN (HASH_ERROR);
+	RETURN_STRING_TOKEN (ERROR);
 }
 
 	/* After we see a "#define" we enter the <DEFINE> start state
@@ -371,14 +371,14 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	if (! parser->skipping) {
 		BEGIN DEFINE;
 		yyextra->space_tokens = 0;
-		RETURN_TOKEN (HASH_DEFINE);
+		RETURN_TOKEN (DEFINE_TOKEN);
 	}
 }
 
 <HASH>undef {
 	BEGIN INITIAL;
 	yyextra->space_tokens = 0;
-	RETURN_TOKEN (HASH_UNDEF);
+	RETURN_TOKEN (UNDEF);
 }
 
 <HASH>{HSPACE}+ {
@@ -390,7 +390,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	/* This will catch any non-directive garbage after a HASH */
 <HASH>{NONSPACE} {
 	BEGIN INITIAL;
-	RETURN_TOKEN (HASH_GARBAGE);
+	RETURN_TOKEN (GARBAGE);
 }
 
 	/* An identifier immediately followed by '(' */
