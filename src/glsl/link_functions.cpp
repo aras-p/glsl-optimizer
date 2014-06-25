@@ -145,8 +145,7 @@ public:
       struct hash_table *ht = hash_table_ctor(0, hash_table_pointer_hash,
 					      hash_table_pointer_compare);
       exec_list formal_parameters;
-      foreach_list_const(node, &sig->parameters) {
-	 const ir_instruction *const original = (ir_instruction *) node;
+      foreach_in_list(const ir_instruction, original, &sig->parameters) {
 	 assert(const_cast<ir_instruction *>(original)->as_variable());
 
 	 ir_instruction *copy = original->clone(linked, ht);
@@ -156,9 +155,7 @@ public:
       linked_sig->replace_parameters(&formal_parameters);
 
       if (sig->is_defined) {
-         foreach_list_const(node, &sig->body) {
-            const ir_instruction *const original = (ir_instruction *) node;
-
+         foreach_in_list(const ir_instruction, original, &sig->body) {
             ir_instruction *copy = original->clone(linked, ht);
             linked_sig->body.push_tail(copy);
          }
