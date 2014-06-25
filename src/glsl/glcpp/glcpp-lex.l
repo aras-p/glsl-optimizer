@@ -469,6 +469,14 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	RETURN_TOKEN (OR);
 }
 
+"++" {
+	RETURN_TOKEN (PLUS_PLUS);
+}
+
+"--" {
+	RETURN_TOKEN (MINUS_MINUS);
+}
+
 "##" {
 	if (! parser->skipping) {
 		if (parser->is_gles)

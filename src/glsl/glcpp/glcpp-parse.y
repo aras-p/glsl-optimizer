@@ -171,7 +171,7 @@ add_builtin_define(glcpp_parser_t *parser, const char *name, int value);
 	/* We use HASH_TOKEN, DEFINE_TOKEN and VERSION_TOKEN (as opposed to
          * HASH, DEFINE, and VERSION) to avoid conflicts with other symbols,
          * (such as the <HASH> and <DEFINE> start conditions in the lexer). */
-%token COMMA_FINAL DEFINED ELIF_EXPANDED HASH_TOKEN DEFINE_TOKEN FUNC_IDENTIFIER OBJ_IDENTIFIER ELIF ELSE ENDIF ERROR IF IFDEF IFNDEF LINE PRAGMA UNDEF VERSION_TOKEN GARBAGE IDENTIFIER IF_EXPANDED INTEGER INTEGER_STRING LINE_EXPANDED NEWLINE OTHER PLACEHOLDER SPACE
+%token COMMA_FINAL DEFINED ELIF_EXPANDED HASH_TOKEN DEFINE_TOKEN FUNC_IDENTIFIER OBJ_IDENTIFIER ELIF ELSE ENDIF ERROR IF IFDEF IFNDEF LINE PRAGMA UNDEF VERSION_TOKEN GARBAGE IDENTIFIER IF_EXPANDED INTEGER INTEGER_STRING LINE_EXPANDED NEWLINE OTHER PLACEHOLDER SPACE PLUS_PLUS MINUS_MINUS
 %token PASTE
 %type <ival> INTEGER operator SPACE integer_constant
 %type <expression_value> expression
@@ -742,6 +742,8 @@ operator:
 |	','			{ $$ = ','; }
 |	'='			{ $$ = '='; }
 |	PASTE			{ $$ = PASTE; }
+|	PLUS_PLUS		{ $$ = PLUS_PLUS; }
+|	MINUS_MINUS		{ $$ = MINUS_MINUS; }
 ;
 
 %%
@@ -1161,6 +1163,12 @@ _token_print (char **out, size_t *len, token_t *token)
 		break;
 	case PASTE:
 		ralloc_asprintf_rewrite_tail (out, len, "##");
+		break;
+        case PLUS_PLUS:
+		ralloc_asprintf_rewrite_tail (out, len, "++");
+		break;
+        case MINUS_MINUS:
+		ralloc_asprintf_rewrite_tail (out, len, "--");
 		break;
 	case COMMA_FINAL:
 		ralloc_asprintf_rewrite_tail (out, len, ",");
