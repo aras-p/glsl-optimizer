@@ -170,9 +170,8 @@ ir_reader::scan_for_prototypes(exec_list *instructions, s_expression *expr)
       return;
    }
 
-   foreach_list(n, &list->subexpressions) {
-      s_list *sub = SX_AS_LIST(n);
-      if (sub == NULL)
+   foreach_in_list(s_list, sub, &list->subexpressions) {
+      if (!sub->is_list())
 	 continue; // not a (function ...); ignore it.
 
       s_symbol *tag = SX_AS_SYMBOL(sub->subexpressions.get_head());
@@ -404,9 +403,8 @@ ir_reader::read_declaration(s_expression *expr)
    ir_variable *var = new(mem_ctx) ir_variable(type, s_name->value(),
 					       ir_var_auto);
 
-   foreach_list(n, &s_quals->subexpressions) {
-      s_symbol *qualifier = SX_AS_SYMBOL(n);
-      if (qualifier == NULL) {
+   foreach_in_list(s_symbol, qualifier, &s_quals->subexpressions) {
+      if (!qualifier->is_symbol()) {
 	 ir_read_error(expr, "qualifier list must contain only symbols");
 	 return NULL;
       }
