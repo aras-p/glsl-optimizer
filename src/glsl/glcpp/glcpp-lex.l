@@ -165,7 +165,6 @@ glcpp_lex_update_state_per_token (glcpp_parser_t *parser, int token)
 
 SPACE		[[:space:]]
 NONSPACE	[^[:space:]]
-NEWLINE		[\n]
 HSPACE		[ \t]
 HASH		#
 IDENTIFIER	[_a-zA-Z][_a-zA-Z0-9]*
@@ -246,15 +245,15 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	}
 
 	/* Single-line comments */
-"//"[^\n]* {
+"//"[^\r\n]* {
 }
 
 	/* Multi-line comments */
-<DEFINE,HASH,INITIAL>"/*"                    { yy_push_state(COMMENT, yyscanner); }
-<COMMENT>[^*\n]*
-<COMMENT>[^*\n]*\n      { yylineno++; yycolumn = 0; parser->commented_newlines++; }
-<COMMENT>"*"+[^*/\n]*
-<COMMENT>"*"+[^*/\n]*\n { yylineno++; yycolumn = 0; parser->commented_newlines++; }
+<DEFINE,HASH,INITIAL>"/*"   { yy_push_state(COMMENT, yyscanner); }
+<COMMENT>[^*\r\n]*
+<COMMENT>[^*\r\n]*[\r\n]    { yylineno++; yycolumn = 0; parser->commented_newlines++; }
+<COMMENT>"*"+[^*/\r\n]*
+<COMMENT>"*"+[^*/\r\n]*[\r\n] { yylineno++; yycolumn = 0; parser->commented_newlines++; }
 <COMMENT>"*"+"/"        {
 	yy_pop_state(yyscanner);
 	/* In the <HASH> start condition, we don't want any SPACE token. */
@@ -285,7 +284,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 
 	/* glcpp doesn't handle #extension, #version, or #pragma directives.
 	 * Simply pass them through to the main compiler's lexer/parser. */
-<HASH>(extension|pragma)[^\n]* {
+<HASH>(extension|pragma)[^\r\n]* {
 	BEGIN INITIAL;
 	yylineno++;
 	yycolumn = 0;
@@ -513,7 +512,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 
 	/* We preserve all newlines, even between #if 0..#endif, so no
 	skipping.. */
-\n {
+[\r\n] {
 	if (parser->commented_newlines) {
 		BEGIN NEWLINE_CATCHUP;
 	}
