@@ -130,6 +130,7 @@ uint64_t qpu_m_alu2(enum qpu_op_mul op, struct qpu_reg dst,
                     struct qpu_reg src0, struct qpu_reg src1);
 uint64_t qpu_inst(uint64_t add, uint64_t mul);
 uint64_t qpu_load_imm_ui(struct qpu_reg dst, uint32_t val);
+uint64_t qpu_set_sig(uint64_t inst, uint32_t sig);
 
 static inline uint64_t
 qpu_load_imm_f(struct qpu_reg dst, float val)
@@ -163,8 +164,8 @@ A_ALU2(FADD)
 A_ALU2(FSUB)
 A_ALU2(FMIN)
 A_ALU2(FMAX)
-A_ALU2(MINABS)
-A_ALU2(MAXABS)
+A_ALU2(FMINABS)
+A_ALU2(FMAXABS)
 A_ALU1(FTOI)
 A_ALU1(ITOF)
 A_ALU2(ADD)

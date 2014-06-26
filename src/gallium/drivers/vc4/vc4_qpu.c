@@ -208,3 +208,11 @@ qpu_inst(uint64_t add, uint64_t mul)
 
         return merge;
 }
+
+uint64_t
+qpu_set_sig(uint64_t inst, uint32_t sig)
+{
+        assert(QPU_GET_FIELD(inst, QPU_SIG) == QPU_SIG_NONE);
+        return (inst & ~QPU_SIG_MASK) | QPU_SET_FIELD(sig, QPU_SIG);
+}
+

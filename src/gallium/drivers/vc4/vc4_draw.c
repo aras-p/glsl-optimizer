@@ -90,21 +90,6 @@ vc4_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
         struct vc4_bo *ibo = get_ibo(vc4);
 
         struct vc4_bo *vbo = get_vbo(vc4, width, height);
-        static const uint32_t fs_uni[] = { 0 };
-        uint32_t vs_uni[] = {
-                fui(vc4->framebuffer.width * 16.0f / 2.0f),
-                fui(vc4->framebuffer.height * 16.0f / 2.0f),
-        };
-        uint32_t cs_uni[] = {
-                fui(vc4->framebuffer.width * 16.0f / 2.0f),
-                fui(vc4->framebuffer.height * 16.0f / 2.0f),
-        };
-        struct vc4_bo *fs_ubo = vc4_bo_alloc_mem(vc4->screen, fs_uni,
-                                                 sizeof(fs_uni), "fs_ubo");
-        struct vc4_bo *vs_ubo = vc4_bo_alloc_mem(vc4->screen, vs_uni,
-                                                 sizeof(vs_uni), "vs_ubo");
-        struct vc4_bo *cs_ubo = vc4_bo_alloc_mem(vc4->screen, cs_uni,
-                                                 sizeof(cs_uni), "cs_ubo");
 
         vc4->needs_flush = true;
 
@@ -149,25 +134,37 @@ vc4_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
 
 // Shader Record
 
+        struct vc4_bo *fs_ubo, *vs_ubo, *cs_ubo;
+        uint32_t fs_ubo_offset, vs_ubo_offset, cs_ubo_offset;
+        vc4_get_uniform_bo(vc4, vc4->prog.fs,
+                           &vc4->constbuf[PIPE_SHADER_FRAGMENT],
+                           0, &fs_ubo, &fs_ubo_offset);
+        vc4_get_uniform_bo(vc4, vc4->prog.vs,
+                           &vc4->constbuf[PIPE_SHADER_VERTEX],
+                           0, &vs_ubo, &vs_ubo_offset);
+        vc4_get_uniform_bo(vc4, vc4->prog.vs,
+                           &vc4->constbuf[PIPE_SHADER_VERTEX],
+                           1, &cs_ubo, &cs_ubo_offset);
+
         cl_start_shader_reloc(&vc4->shader_rec, 7);
         cl_u16(&vc4->shader_rec, VC4_SHADER_FLAG_ENABLE_CLIPPING);
         cl_u8(&vc4->shader_rec, 0); /* fs num uniforms (unused) */
         cl_u8(&vc4->shader_rec, 0); /* fs num varyings */
         cl_reloc(vc4, &vc4->shader_rec, vc4->prog.fs->bo, 0);
-        cl_reloc(vc4, &vc4->shader_rec, fs_ubo, 0);
+        cl_reloc(vc4, &vc4->shader_rec, fs_ubo, fs_ubo_offset);
 
         cl_u16(&vc4->shader_rec, 0); /* vs num uniforms */
         cl_u8(&vc4->shader_rec, 1); /* vs attribute array bitfield */
         cl_u8(&vc4->shader_rec, 16); /* vs total attribute size */
         cl_reloc(vc4, &vc4->shader_rec, vc4->prog.vs->bo, 0);
-        cl_reloc(vc4, &vc4->shader_rec, vs_ubo, 0);
+        cl_reloc(vc4, &vc4->shader_rec, vs_ubo, vs_ubo_offset);
 
         cl_u16(&vc4->shader_rec, 0); /* cs num uniforms */
         cl_u8(&vc4->shader_rec, 1); /* cs attribute array bitfield */
         cl_u8(&vc4->shader_rec, 16); /* vs total attribute size */
         cl_reloc(vc4, &vc4->shader_rec, vc4->prog.vs->bo,
                 vc4->prog.vs->coord_shader_offset);
-        cl_reloc(vc4, &vc4->shader_rec, cs_ubo, 0);
+        cl_reloc(vc4, &vc4->shader_rec, cs_ubo, cs_ubo_offset);
 
         cl_reloc(vc4, &vc4->shader_rec, vbo, 0);
         cl_u8(&vc4->shader_rec, 15); /* bytes - 1 in the attribute*/

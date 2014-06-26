@@ -32,6 +32,7 @@
 #include "vc4_bufmgr.h"
 #include "vc4_resource.h"
 #include "vc4_cl.h"
+#include "vc4_qir.h"
 
 #define VC4_DIRTY_BLEND         (1 <<  0)
 #define VC4_DIRTY_RASTERIZER    (1 <<  1)
@@ -63,9 +64,17 @@ struct vc4_texture_stateobj {
         unsigned dirty_samplers;
 };
 
+struct vc4_shader_uniform_info {
+        enum quniform_contents *contents;
+        uint32_t *data;
+        uint32_t count;
+};
+
 struct vc4_shader_state {
         struct pipe_shader_state base;
         struct vc4_bo *bo;
+
+        struct vc4_shader_uniform_info uniforms[2];
 
         uint32_t coord_shader_offset;
 };
@@ -173,7 +182,14 @@ void vc4_simulator_flush(struct vc4_context *vc4,
                          struct vc4_surface *color_surf);
 void *vc4_simulator_alloc(struct vc4_screen *screen, uint32_t size);
 
+void vc4_get_uniform_bo(struct vc4_context *vc4,
+                        struct vc4_shader_state *shader,
+                        struct vc4_constbuf_stateobj *cb,
+                        int shader_index, struct vc4_bo **out_bo,
+                        uint32_t *out_offset);
+
 void vc4_flush(struct pipe_context *pctx);
 void vc4_emit_state(struct pipe_context *pctx);
+void vc4_generate_code(struct qcompile *c);
 
 #endif /* VC4_CONTEXT_H */
