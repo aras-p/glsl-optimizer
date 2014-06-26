@@ -1028,7 +1028,7 @@ nv50_so_target_create(struct pipe_context *pipe,
 
    if (nouveau_context(pipe)->screen->class_3d >= NVA0_3D_CLASS) {
       targ->pq = pipe->create_query(pipe,
-                                    NVA0_QUERY_STREAM_OUTPUT_BUFFER_OFFSET);
+                                    NVA0_QUERY_STREAM_OUTPUT_BUFFER_OFFSET, 0);
       if (!targ->pq) {
          FREE(targ);
          return NULL;

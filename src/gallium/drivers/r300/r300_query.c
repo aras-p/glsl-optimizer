@@ -30,7 +30,8 @@
 #include <stdio.h>
 
 static struct pipe_query *r300_create_query(struct pipe_context *pipe,
-                                            unsigned query_type)
+                                            unsigned query_type,
+                                            unsigned index)
 {
     struct r300_context *r300 = r300_context(pipe);
     struct r300_screen *r300screen = r300->screen;

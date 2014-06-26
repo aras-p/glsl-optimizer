@@ -108,7 +108,7 @@ nvc0_query_destroy(struct pipe_context *pipe, struct pipe_query *pq)
 }
 
 static struct pipe_query *
-nvc0_query_create(struct pipe_context *pipe, unsigned type)
+nvc0_query_create(struct pipe_context *pipe, unsigned type, unsigned index)
 {
    struct nvc0_context *nvc0 = nvc0_context(pipe);
    struct nvc0_query *q;

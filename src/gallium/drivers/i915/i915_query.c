@@ -40,7 +40,8 @@ struct i915_query
 };
 
 static struct pipe_query *i915_create_query(struct pipe_context *ctx,
-                                            unsigned query_type)
+                                            unsigned query_type,
+                                            unsigned index)
 {
    struct i915_query *query = CALLOC_STRUCT( i915_query );
 

@@ -53,7 +53,8 @@ static struct softpipe_query *softpipe_query( struct pipe_query *p )
 
 static struct pipe_query *
 softpipe_create_query(struct pipe_context *pipe, 
-		      unsigned type)
+		      unsigned type,
+		      unsigned index)
 {
    struct softpipe_query* sq;
 

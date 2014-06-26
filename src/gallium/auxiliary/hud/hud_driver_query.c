@@ -90,7 +90,7 @@ query_new_value(struct hud_graph *gr)
                        NUM_QUERIES);
                pipe->destroy_query(pipe, info->query[info->head]);
                info->query[info->head] =
-                     pipe->create_query(pipe, info->query_type);
+                     pipe->create_query(pipe, info->query_type, 0);
             }
             else {
                /* the last query is busy, we need to add a new one we can use
@@ -98,7 +98,7 @@ query_new_value(struct hud_graph *gr)
                info->head = (info->head+1) % NUM_QUERIES;
                if (!info->query[info->head]) {
                   info->query[info->head] =
-                        pipe->create_query(pipe, info->query_type);
+                        pipe->create_query(pipe, info->query_type, 0);
                }
             }
             break;
@@ -119,7 +119,7 @@ query_new_value(struct hud_graph *gr)
    else {
       /* initialize */
       info->last_time = now;
-      info->query[info->head] = pipe->create_query(pipe, info->query_type);
+      info->query[info->head] = pipe->create_query(pipe, info->query_type, 0);
       pipe->begin_query(pipe, info->query[info->head]);
    }
 }

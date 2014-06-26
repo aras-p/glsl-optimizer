@@ -70,7 +70,7 @@ ilo_query(struct pipe_query *query)
 }
 
 static struct pipe_query *
-ilo_create_query(struct pipe_context *pipe, unsigned query_type)
+ilo_create_query(struct pipe_context *pipe, unsigned query_type, unsigned index)
 {
    struct ilo_query *q;
 

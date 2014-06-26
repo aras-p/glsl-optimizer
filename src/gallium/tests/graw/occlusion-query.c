@@ -169,8 +169,8 @@ draw(void)
                    PIPE_CLEAR_COLOR | PIPE_CLEAR_DEPTHSTENCIL,
                    &clear_color, 1.0, 0);
 
-   q1 = info.ctx->create_query(info.ctx, PIPE_QUERY_OCCLUSION_COUNTER);
-   q2 = info.ctx->create_query(info.ctx, PIPE_QUERY_OCCLUSION_COUNTER);
+   q1 = info.ctx->create_query(info.ctx, PIPE_QUERY_OCCLUSION_COUNTER, 0);
+   q2 = info.ctx->create_query(info.ctx, PIPE_QUERY_OCCLUSION_COUNTER, 0);
 
    /* draw first, large object */
    set_vertices(obj1_vertices, sizeof(obj1_vertices));

@@ -1022,7 +1022,7 @@ nvc0_so_target_create(struct pipe_context *pipe,
    if (!targ)
       return NULL;
 
-   targ->pq = pipe->create_query(pipe, NVC0_QUERY_TFB_BUFFER_OFFSET);
+   targ->pq = pipe->create_query(pipe, NVC0_QUERY_TFB_BUFFER_OFFSET, 0);
    if (!targ->pq) {
       FREE(targ);
       return NULL;

@@ -63,7 +63,8 @@ galahad_context_draw_vbo(struct pipe_context *_pipe,
 
 static struct pipe_query *
 galahad_context_create_query(struct pipe_context *_pipe,
-                      unsigned query_type)
+                             unsigned query_type,
+                             unsigned index)
 {
    struct galahad_context *glhd_pipe = galahad_context(_pipe);
    struct pipe_context *pipe = glhd_pipe->pipe;
@@ -79,7 +80,8 @@ galahad_context_create_query(struct pipe_context *_pipe,
    }
 
    return pipe->create_query(pipe,
-                             query_type);
+                             query_type,
+                             index);
 }
 
 static void

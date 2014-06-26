@@ -134,14 +134,16 @@ rbug_draw_vbo(struct pipe_context *_pipe, const struct pipe_draw_info *info)
 
 static struct pipe_query *
 rbug_create_query(struct pipe_context *_pipe,
-                  unsigned query_type)
+                  unsigned query_type,
+                  unsigned index)
 {
    struct rbug_context *rb_pipe = rbug_context(_pipe);
    struct pipe_context *pipe = rb_pipe->pipe;
 
    pipe_mutex_lock(rb_pipe->call_mutex);
    return pipe->create_query(pipe,
-                             query_type);
+                             query_type,
+                             index);
    pipe_mutex_unlock(rb_pipe->call_mutex);
 }
 

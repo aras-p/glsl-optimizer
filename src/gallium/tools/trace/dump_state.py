@@ -665,7 +665,7 @@ class Context(Dispatcher):
     def surface_destroy(self, surface):
         self.interpreter.unregister_object(surface)
 
-    def create_query(self, query_type):
+    def create_query(self, query_type, index):
         return query_type
     
     def destroy_query(self, query):

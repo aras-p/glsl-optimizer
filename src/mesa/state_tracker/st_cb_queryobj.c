@@ -132,13 +132,13 @@ st_BeginQuery(struct gl_context *ctx, struct gl_query_object *q)
        type == PIPE_QUERY_TIMESTAMP) {
       /* Determine time elapsed by emitting two timestamp queries. */
       if (!stq->pq_begin) {
-         stq->pq_begin = pipe->create_query(pipe, type);
+         stq->pq_begin = pipe->create_query(pipe, type, 0);
          stq->type = type;
       }
       pipe->end_query(pipe, stq->pq_begin);
    } else {
       if (!stq->pq) {
-         stq->pq = pipe->create_query(pipe, type);
+         stq->pq = pipe->create_query(pipe, type, 0);
          stq->type = type;
       }
       if (stq->pq) {
@@ -164,7 +164,7 @@ st_EndQuery(struct gl_context *ctx, struct gl_query_object *q)
    if ((q->Target == GL_TIMESTAMP ||
         q->Target == GL_TIME_ELAPSED) &&
        !stq->pq) {
-      stq->pq = pipe->create_query(pipe, PIPE_QUERY_TIMESTAMP);
+      stq->pq = pipe->create_query(pipe, PIPE_QUERY_TIMESTAMP, 0);
       stq->type = PIPE_QUERY_TIMESTAMP;
    }
 

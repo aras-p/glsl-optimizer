@@ -300,6 +300,10 @@ Queries can be created with ``create_query`` and deleted with
 ``destroy_query``. To start a query, use ``begin_query``, and when finished,
 use ``end_query`` to end the query.
 
+``create_query`` takes a query type (``PIPE_QUERY_*``), as well as an index,
+which is the vertex stream for ``PIPE_QUERY_PRIMITIVES_GENERATED`` and
+``PIPE_QUERY_PRIMITIVES_EMITTED``, and allocates a query structure.
+
 ``begin_query`` will clear/reset previous query results.
 
 ``get_query_result`` is used to retrieve the results of a query.  If

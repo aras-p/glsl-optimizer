@@ -29,7 +29,7 @@ using namespace clover;
 
 timestamp::query::query(command_queue &q) :
    q(q),
-   _query(q.pipe->create_query(q.pipe, PIPE_QUERY_TIMESTAMP)) {
+   _query(q.pipe->create_query(q.pipe, PIPE_QUERY_TIMESTAMP, 0)) {
 }
 
 timestamp::query::query(query &&other) :

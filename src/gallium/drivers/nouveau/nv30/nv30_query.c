@@ -105,7 +105,7 @@ nv30_query(struct pipe_query *pipe)
 }
 
 static struct pipe_query *
-nv30_query_create(struct pipe_context *pipe, unsigned type)
+nv30_query_create(struct pipe_context *pipe, unsigned type, unsigned index)
 {
    struct nv30_query *q = CALLOC_STRUCT(nv30_query);
    if (!q)

@@ -346,7 +346,7 @@ static void r600_emit_query_predication(struct r600_common_context *ctx, struct 
 	}
 }
 
-static struct pipe_query *r600_create_query(struct pipe_context *ctx, unsigned query_type)
+static struct pipe_query *r600_create_query(struct pipe_context *ctx, unsigned query_type, unsigned index)
 {
 	struct r600_common_context *rctx = (struct r600_common_context *)ctx;
 	struct r600_query *query;
