@@ -1860,22 +1860,22 @@ mip_filter_linear(struct sp_sampler_view *sp_sview,
                   enum tgsi_sampler_control control,
                   float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
-   const struct pipe_resource *texture = sp_sview->base.texture;
+   const struct pipe_sampler_view *psview = &sp_sview->base;
    int j;
    float lod[TGSI_QUAD_SIZE];
 
    compute_lambda_lod(sp_sview, sp_samp, s, t, p, lod_in, control, lod);
 
    for (j = 0; j < TGSI_QUAD_SIZE; j++) {
-      int level0 = sp_sview->base.u.tex.first_level + (int)lod[j];
+      int level0 = psview->u.tex.first_level + (int)lod[j];
 
       if (lod[j] < 0.0)
          mag_filter(sp_sview, sp_samp, s[j], t[j], p[j],
-                    sp_sview->base.u.tex.first_level,
+                    psview->u.tex.first_level,
                     sp_sview->faces[j], &rgba[0][j]);
 
-      else if (level0 >= (int) texture->last_level)
-         min_filter(sp_sview, sp_samp, s[j], t[j], p[j], texture->last_level,
+      else if (level0 >= (int) psview->u.tex.last_level)
+         min_filter(sp_sview, sp_samp, s[j], t[j], p[j], psview->u.tex.last_level,
                     sp_sview->faces[j], &rgba[0][j]);
 
       else {
@@ -1918,7 +1918,7 @@ mip_filter_nearest(struct sp_sampler_view *sp_sview,
                    enum tgsi_sampler_control control,
                    float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
-   const struct pipe_resource *texture = sp_sview->base.texture;
+   const struct pipe_sampler_view *psview = &sp_sview->base;
    float lod[TGSI_QUAD_SIZE];
    int j;
 
@@ -1927,11 +1927,11 @@ mip_filter_nearest(struct sp_sampler_view *sp_sview,
    for (j = 0; j < TGSI_QUAD_SIZE; j++) {
       if (lod[j] < 0.0)
          mag_filter(sp_sview, sp_samp, s[j], t[j], p[j],
-                    sp_sview->base.u.tex.first_level,
+                    psview->u.tex.first_level,
                     sp_sview->faces[j], &rgba[0][j]);
       else {
-         int level = sp_sview->base.u.tex.first_level + (int)(lod[j] + 0.5F);
-         level = MIN2(level, (int)texture->last_level);
+         int level = psview->u.tex.first_level + (int)(lod[j] + 0.5F);
+         level = MIN2(level, (int)psview->u.tex.last_level);
          min_filter(sp_sview, sp_samp, s[j], t[j], p[j],
                     level, sp_sview->faces[j], &rgba[0][j]);
       }
@@ -2230,12 +2230,13 @@ mip_filter_linear_aniso(struct sp_sampler_view *sp_sview,
                         float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
    const struct pipe_resource *texture = sp_sview->base.texture;
+   const struct pipe_sampler_view *psview = &sp_sview->base;
    int level0;
    float lambda;
    float lod[TGSI_QUAD_SIZE];
 
-   float s_to_u = u_minify(texture->width0, sp_sview->base.u.tex.first_level);
-   float t_to_v = u_minify(texture->height0, sp_sview->base.u.tex.first_level);
+   float s_to_u = u_minify(texture->width0, psview->u.tex.first_level);
+   float t_to_v = u_minify(texture->height0, psview->u.tex.first_level);
    float dudx = (s[QUAD_BOTTOM_RIGHT] - s[QUAD_BOTTOM_LEFT]) * s_to_u;
    float dudy = (s[QUAD_TOP_LEFT]     - s[QUAD_BOTTOM_LEFT]) * s_to_u;
    float dvdx = (t[QUAD_BOTTOM_RIGHT] - t[QUAD_BOTTOM_LEFT]) * t_to_v;
@@ -2292,15 +2293,15 @@ mip_filter_linear_aniso(struct sp_sampler_view *sp_sview,
    /* XXX: Take into account all lod values.
     */
    lambda = lod[0];
-   level0 = sp_sview->base.u.tex.first_level + (int)lambda;
+   level0 = psview->u.tex.first_level + (int)lambda;
 
    /* If the ellipse covers the whole image, we can
     * simply return the average of the whole image.
     */
-   if (level0 >= (int) texture->last_level) {
+   if (level0 >= (int) psview->u.tex.last_level) {
       int j;
       for (j = 0; j < TGSI_QUAD_SIZE; j++)
-         min_filter(sp_sview, sp_samp, s[j], t[j], p[j], texture->last_level,
+         min_filter(sp_sview, sp_samp, s[j], t[j], p[j], psview->u.tex.last_level,
                     sp_sview->faces[j], &rgba[0][j]);
    }
    else {
@@ -2336,25 +2337,25 @@ mip_filter_linear_2d_linear_repeat_POT(
    enum tgsi_sampler_control control,
    float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
-   const struct pipe_resource *texture = sp_sview->base.texture;
+   const struct pipe_sampler_view *psview = &sp_sview->base;
    int j;
    float lod[TGSI_QUAD_SIZE];
 
    compute_lambda_lod(sp_sview, sp_samp, s, t, p, lod_in, control, lod);
 
    for (j = 0; j < TGSI_QUAD_SIZE; j++) {
-      int level0 = sp_sview->base.u.tex.first_level + (int)lod[j];
+      int level0 = psview->u.tex.first_level + (int)lod[j];
 
       /* Catches both negative and large values of level0:
        */
-      if ((unsigned)level0 >= texture->last_level) { 
+      if ((unsigned)level0 >= psview->u.tex.last_level) {
          if (level0 < 0)
             img_filter_2d_linear_repeat_POT(sp_sview, sp_samp, s[j], t[j], p[j],
-                                            sp_sview->base.u.tex.first_level,
+                                            psview->u.tex.first_level,
                                             sp_sview->faces[j], &rgba[0][j]);
          else
             img_filter_2d_linear_repeat_POT(sp_sview, sp_samp, s[j], t[j], p[j],
-                                            sp_sview->base.texture->last_level,
+                                            psview->u.tex.last_level,
                                             sp_sview->faces[j], &rgba[0][j]);
 
       }
