@@ -5212,7 +5212,7 @@ ast_process_structure_or_interface_block(exec_list *instructions,
                fields[i].row_major = false;
          }
 
-      i++;
+         i++;
       }
    }
 
