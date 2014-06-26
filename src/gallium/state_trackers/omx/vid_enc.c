@@ -105,7 +105,9 @@ OMX_ERRORTYPE vid_enc_LoaderComponent(stLoaderComponentType *comp)
    comp->name_specific_length = 1;
    comp->constructor = vid_enc_Constructor;
 
-   comp->name = OMX_VID_ENC_BASE_NAME;
+   comp->name = CALLOC(1, OMX_MAX_STRINGNAME_SIZE);
+   if (!comp->name)
+      return OMX_ErrorInsufficientResources;
 
    comp->name_specific = CALLOC(1, sizeof(char *));
    if (!comp->name_specific)
@@ -115,15 +117,29 @@ OMX_ERRORTYPE vid_enc_LoaderComponent(stLoaderComponentType *comp)
    if (!comp->role_specific)
       goto error_arrays;
 
-   comp->name_specific[0] = OMX_VID_ENC_AVC_NAME;
+   comp->name_specific[0] = CALLOC(1, OMX_MAX_STRINGNAME_SIZE);
+   if (comp->name_specific[0] == NULL)
+      goto error_specific;
 
+   comp->role_specific[0] = CALLOC(1, OMX_MAX_STRINGNAME_SIZE);
+   if (comp->role_specific[0] == NULL)
+      goto error_specific;
+
+   comp->name = OMX_VID_ENC_BASE_NAME;
+   comp->name_specific[0] = OMX_VID_ENC_AVC_NAME;
    comp->role_specific[0] = OMX_VID_ENC_AVC_ROLE;
 
    return OMX_ErrorNone;
 
+error_specific:
+   FREE(comp->role_specific[0]);
+   FREE(comp->name_specific[0]);
+
 error_arrays:
    FREE(comp->role_specific);
    FREE(comp->name_specific);
+
+   FREE(comp->name);
 
    return OMX_ErrorInsufficientResources;
 }

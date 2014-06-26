@@ -72,6 +72,10 @@ OMX_ERRORTYPE vid_dec_LoaderComponent(stLoaderComponentType *comp)
    comp->componentVersion.s.nStep = 1;
    comp->name_specific_length = 2;
 
+   comp->name = CALLOC(1, OMX_MAX_STRINGNAME_SIZE);
+   if (comp->name == NULL)
+      goto error;
+
    comp->name_specific = CALLOC(comp->name_specific_length, sizeof(char *));
    if (comp->name_specific == NULL)
       goto error;
@@ -80,21 +84,44 @@ OMX_ERRORTYPE vid_dec_LoaderComponent(stLoaderComponentType *comp)
    if (comp->role_specific == NULL)
       goto error;
 
-   comp->name = OMX_VID_DEC_BASE_NAME;
-   comp->name_specific[0] = OMX_VID_DEC_MPEG2_NAME;
-   comp->name_specific[1] = OMX_VID_DEC_AVC_NAME;
+   comp->name_specific[0] = CALLOC(1, OMX_MAX_STRINGNAME_SIZE);
+   if (comp->name_specific[0] == NULL)
+      goto error_specific;
 
-   comp->role_specific[0] = OMX_VID_DEC_MPEG2_ROLE;
-   comp->role_specific[1] = OMX_VID_DEC_AVC_ROLE;
+   comp->name_specific[1] = CALLOC(1, OMX_MAX_STRINGNAME_SIZE);
+   if (comp->name_specific[1] == NULL)
+      goto error_specific;
+
+   comp->role_specific[0] = CALLOC(1, OMX_MAX_STRINGNAME_SIZE);
+   if (comp->role_specific[0] == NULL)
+      goto error_specific;
+
+   comp->role_specific[1] = CALLOC(1, OMX_MAX_STRINGNAME_SIZE);
+   if (comp->role_specific[1] == NULL)
+      goto error_specific;
+
+   strcpy(comp->name, OMX_VID_DEC_BASE_NAME);
+   strcpy(comp->name_specific[0], OMX_VID_DEC_MPEG2_NAME);
+   strcpy(comp->name_specific[1], OMX_VID_DEC_AVC_NAME);
+
+   strcpy(comp->role_specific[0], OMX_VID_DEC_MPEG2_ROLE);
+   strcpy(comp->role_specific[1], OMX_VID_DEC_AVC_ROLE);
 
    comp->constructor = vid_dec_Constructor;
 
    return OMX_ErrorNone;
 
-error:
+error_specific:
+   FREE(comp->role_specific[1]);
+   FREE(comp->role_specific[0]);
+   FREE(comp->name_specific[1]);
+   FREE(comp->name_specific[0]);
 
-   FREE(comp->name_specific);
+error:
    FREE(comp->role_specific);
+   FREE(comp->name_specific);
+
+   FREE(comp->name);
 
    return OMX_ErrorInsufficientResources;
 }
