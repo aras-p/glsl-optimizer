@@ -1301,7 +1301,7 @@ brw_disassemble_inst(FILE *file, struct brw_context *brw, brw_inst *inst,
 
 		format (file, ", %d, %d, %d, %d)",
 			brw_inst_binding_table_index(brw, inst),
-			brw_inst_dp_msg_control(brw, inst) & 0x7,
+			brw_inst_dp_msg_control(brw, inst),
 			brw_inst_dp_msg_type(brw, inst),
 			brw_inst_dp_write_commit(brw, inst));
 	    } else {
