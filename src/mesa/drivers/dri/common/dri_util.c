@@ -677,7 +677,7 @@ dri2ReleaseBuffer(__DRIscreen *screen, __DRIbuffer *buffer)
 
 
 static int
-dri2ConfigQueryb(__DRIscreen *screen, const char *var, GLboolean *val)
+dri2ConfigQueryb(__DRIscreen *screen, const char *var, bool *val)
 {
    if (!driCheckOption(&screen->optionCache, var, DRI_BOOL))
       return -1;
@@ -688,7 +688,7 @@ dri2ConfigQueryb(__DRIscreen *screen, const char *var, GLboolean *val)
 }
 
 static int
-dri2ConfigQueryi(__DRIscreen *screen, const char *var, GLint *val)
+dri2ConfigQueryi(__DRIscreen *screen, const char *var, int *val)
 {
    if (!driCheckOption(&screen->optionCache, var, DRI_INT) &&
        !driCheckOption(&screen->optionCache, var, DRI_ENUM))
@@ -700,7 +700,7 @@ dri2ConfigQueryi(__DRIscreen *screen, const char *var, GLint *val)
 }
 
 static int
-dri2ConfigQueryf(__DRIscreen *screen, const char *var, GLfloat *val)
+dri2ConfigQueryf(__DRIscreen *screen, const char *var, float *val)
 {
    if (!driCheckOption(&screen->optionCache, var, DRI_FLOAT))
       return -1;
