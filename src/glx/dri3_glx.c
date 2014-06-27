@@ -1594,6 +1594,9 @@ dri3_bind_extensions(struct dri3_screen *psc, struct glx_display * priv,
          /* internal driver extension, no GL extension exposed */
       }
 
+      if (strcmp(extensions[i]->name, __DRI_IMAGE) == 0)
+         psc->image = (__DRIimageExtension *) extensions[i];
+
       if ((strcmp(extensions[i]->name, __DRI2_CONFIG_QUERY) == 0))
          psc->config = (__DRI2configQueryExtension *) extensions[i];
 
@@ -1712,19 +1715,12 @@ dri3_create_screen(int screen, struct glx_display * priv)
       goto handle_error;
    }
 
-   extensions = (*psc->core->getExtensions)(psc->driScreen);
+   dri3_bind_extensions(psc, priv, driverName);
 
-   for (i = 0; extensions[i]; i++) {
-      if (strcmp(extensions[i]->name, __DRI_IMAGE) == 0)
-         psc->image = (__DRIimageExtension *) extensions[i];
-   }
-
-   if (psc->image == NULL) {
-      ErrorMessageF("image extension not found\n");
+   if (!psc->image || psc->image->base.version < 7 || !psc->image->createImageFromFds) {
+      ErrorMessageF("Version 7 or imageFromFds image extension not found\n");
       goto handle_error;
    }
-
-   dri3_bind_extensions(psc, priv, driverName);
 
    if (!psc->f || psc->f->base.version < 4) {
       ErrorMessageF("Version 4 or later of flush extension not found\n");
