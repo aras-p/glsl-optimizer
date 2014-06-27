@@ -594,6 +594,9 @@ libudev_get_device_name_for_fd(int fd)
                (struct udev_device *));
    UDEV_SYMBOL(struct udev *, udev_unref, (struct udev *));
 
+   if (dlsym_failed)
+      return NULL;
+
    udev = udev_new();
    device = udev_device_new_from_fd(udev, fd);
    if (device == NULL)
