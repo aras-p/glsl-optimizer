@@ -255,16 +255,6 @@ _mesa_base_tex_format( struct gl_context *ctx, GLint internalFormat )
       }
    }
 
-   if (ctx->Extensions.ATI_envmap_bumpmap) {
-      switch (internalFormat) {
-         case GL_DUDV_ATI:
-         case GL_DU8DV8_ATI:
-            return GL_DUDV_ATI;
-         default:
-            ; /* fallthrough */
-      }
-   }
-
    if (ctx->Extensions.EXT_texture_snorm) {
       switch (internalFormat) {
          case GL_RED_SNORM:
@@ -2157,8 +2147,7 @@ texture_error_check( struct gl_context *ctx,
    colorFormat = _mesa_is_color_format(format);
    if ((_mesa_is_color_format(internalFormat) && !colorFormat && !indexFormat) ||
        (is_internalFormat_depth_or_depthstencil != is_format_depth_or_depthstencil) ||
-       (_mesa_is_ycbcr_format(internalFormat) != _mesa_is_ycbcr_format(format)) ||
-       (_mesa_is_dudv_format(internalFormat) != _mesa_is_dudv_format(format))) {
+       (_mesa_is_ycbcr_format(internalFormat) != _mesa_is_ycbcr_format(format))) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glTexImage%dD(incompatible internalFormat = %s, format = %s)",
                   dimensions, _mesa_lookup_enum_by_nr(internalFormat),

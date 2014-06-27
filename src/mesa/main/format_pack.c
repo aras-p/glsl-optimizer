@@ -1403,27 +1403,6 @@ pack_float_RG_FLOAT16(const GLfloat src[4], void *dst)
 }
 
 
-/* MESA_FORMAT_DUDV8 */
-
-static void
-pack_ubyte_DUDV8(const GLubyte src[4], void *dst)
-{
-   /* XXX is this ever used? */
-   GLushort *d = ((GLushort *) dst);
-   *d = PACK_COLOR_88(src[0], src[1]);
-}
-
-static void
-pack_float_DUDV8(const GLfloat src[4], void *dst)
-{
-   GLushort *d = ((GLushort *) dst);
-   GLbyte du, dv;
-   du = FLOAT_TO_BYTE(CLAMP(src[0], 0.0F, 1.0F));
-   dv = FLOAT_TO_BYTE(CLAMP(src[1], 0.0F, 1.0F));
-   *d = PACK_COLOR_88(du, dv);
-}
-
-
 /* MESA_FORMAT_RGBA_UNORM16 */
 
 static void
@@ -2027,8 +2006,6 @@ _mesa_get_pack_ubyte_rgba_function(mesa_format format)
       table[MESA_FORMAT_RGBA_UINT16] = NULL; /* pack_ubyte_RGBA_UINT16 */
       table[MESA_FORMAT_RGBA_UINT32] = NULL; /* pack_ubyte_RGBA_UINT32 */
 
-      table[MESA_FORMAT_DUDV8] = pack_ubyte_DUDV8;
-
       table[MESA_FORMAT_RGBA_UNORM16] = pack_ubyte_RGBA_16;
 
       /* n/a */
@@ -2193,8 +2170,6 @@ _mesa_get_pack_float_rgba_function(mesa_format format)
       table[MESA_FORMAT_RGBA_UINT8] = NULL;
       table[MESA_FORMAT_RGBA_UINT16] = NULL;
       table[MESA_FORMAT_RGBA_UINT32] = NULL;
-
-      table[MESA_FORMAT_DUDV8] = pack_float_DUDV8;
 
       table[MESA_FORMAT_RGBA_UNORM16] = pack_float_RGBA_16;
 

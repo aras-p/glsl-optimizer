@@ -888,22 +888,6 @@ FETCH(RGBA_UINT32)(const struct swrast_texture_image *texImage,
 }
 
 
-/**
- * This format by definition produces 0,0,0,1 as rgba values,
- * however we'll return the dudv values as rg and fix up elsewhere.
- */
-static void
-FETCH(DUDV8)(const struct swrast_texture_image *texImage,
-             GLint i, GLint j, GLint k, GLfloat *texel)
-{
-   const GLbyte *src = TEXEL_ADDR(GLbyte, texImage, i, j, k, 2);
-   texel[RCOMP] = BYTE_TO_FLOAT(src[0]);
-   texel[GCOMP] = BYTE_TO_FLOAT(src[1]);
-   texel[BCOMP] = 0;
-   texel[ACOMP] = 0;
-}
-
-
 static void
 FETCH(R_SNORM8)(const struct swrast_texture_image *texImage,
                 GLint i, GLint j, GLint k, GLfloat *texel)

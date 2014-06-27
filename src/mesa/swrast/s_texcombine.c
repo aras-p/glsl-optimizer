@@ -429,16 +429,6 @@ texture_combine( struct gl_context *ctx, GLuint unit,
                               arg1[i][BCOMP]) * scaleRGB;
 	 }
          break;
-      case GL_BUMP_ENVMAP_ATI:
-         /* this produces a fixed rgba color, and the coord calc is done elsewhere */
-         for (i = 0; i < n; i++) {
-            /* rgba result is 0,0,0,1 */
-            rgba[i][RCOMP] = 0.0;
-            rgba[i][GCOMP] = 0.0;
-            rgba[i][BCOMP] = 0.0;
-            rgba[i][ACOMP] = 1.0;
-	 }
-         goto end; /* no alpha processing */
       default:
          _mesa_problem(ctx, "invalid combine mode");
       }
@@ -653,78 +643,13 @@ _swrast_texture_span( struct gl_context *ctx, SWspan *span )
       }
    }
 
-   /* First must sample all bump maps */
-   for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
-      const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
-
-      if (texUnit->_Current &&
-         texUnit->_CurrentCombine->ModeRGB == GL_BUMP_ENVMAP_ATI) {
-         const GLfloat (*texcoords)[4] = (const GLfloat (*)[4])
-            span->array->attribs[VARYING_SLOT_TEX0 + unit];
-         float4_array targetcoords =
-            span->array->attribs[VARYING_SLOT_TEX0 +
-               ctx->Texture.Unit[unit].BumpTarget - GL_TEXTURE0];
-
-         const struct gl_sampler_object *samp = _mesa_get_samplerobj(ctx, unit);
-         GLfloat *lambda = span->array->lambda[unit];
-         float4_array texels = get_texel_array(swrast, unit);
-         GLuint i;
-         GLfloat rotMatrix00 = ctx->Texture.Unit[unit].RotMatrix[0];
-         GLfloat rotMatrix01 = ctx->Texture.Unit[unit].RotMatrix[1];
-         GLfloat rotMatrix10 = ctx->Texture.Unit[unit].RotMatrix[2];
-         GLfloat rotMatrix11 = ctx->Texture.Unit[unit].RotMatrix[3];
-
-         /* adjust texture lod (lambda) */
-         if (span->arrayMask & SPAN_LAMBDA) {
-            if (texUnit->LodBias + samp->LodBias != 0.0F) {
-               /* apply LOD bias, but don't clamp yet */
-               const GLfloat bias = CLAMP(texUnit->LodBias + samp->LodBias,
-                                          -ctx->Const.MaxTextureLodBias,
-                                          ctx->Const.MaxTextureLodBias);
-               GLuint i;
-               for (i = 0; i < span->end; i++) {
-                  lambda[i] += bias;
-               }
-            }
-
-            if (samp->MinLod != -1000.0 ||
-                samp->MaxLod != 1000.0) {
-               /* apply LOD clamping to lambda */
-               const GLfloat min = samp->MinLod;
-               const GLfloat max = samp->MaxLod;
-               GLuint i;
-               for (i = 0; i < span->end; i++) {
-                  GLfloat l = lambda[i];
-                  lambda[i] = CLAMP(l, min, max);
-               }
-            }
-         }
-
-         /* Sample the texture (span->end = number of fragments) */
-         swrast->TextureSample[unit]( ctx, samp,
-                                      ctx->Texture.Unit[unit]._Current,
-                                      span->end, texcoords, lambda, texels );
-
-         /* manipulate the span values of the bump target
-            not sure this can work correctly even ignoring
-            the problem that channel is unsigned */
-         for (i = 0; i < span->end; i++) {
-            targetcoords[i][0] += (texels[i][0] * rotMatrix00 + texels[i][1] *
-                                  rotMatrix01) / targetcoords[i][3];
-            targetcoords[i][1] += (texels[i][0] * rotMatrix10 + texels[i][1] *
-                                  rotMatrix11) / targetcoords[i][3];
-         }
-      }
-   }
-
    /*
     * Must do all texture sampling before combining in order to
     * accomodate GL_ARB_texture_env_crossbar.
     */
    for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
       const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
-      if (texUnit->_Current &&
-          texUnit->_CurrentCombine->ModeRGB != GL_BUMP_ENVMAP_ATI) {
+      if (texUnit->_Current) {
          const GLfloat (*texcoords)[4] = (const GLfloat (*)[4])
             span->array->attribs[VARYING_SLOT_TEX0 + unit];
          const struct gl_texture_object *curObj = texUnit->_Current;

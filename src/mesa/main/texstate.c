@@ -91,10 +91,6 @@ _mesa_copy_texture_state( const struct gl_context *src, struct gl_context *dst )
       /* GL_EXT_texture_env_combine */
       dst->Texture.Unit[u].Combine = src->Texture.Unit[u].Combine;
 
-      /* GL_ATI_envmap_bumpmap - need this? */
-      dst->Texture.Unit[u].BumpTarget = src->Texture.Unit[u].BumpTarget;
-      COPY_4V(dst->Texture.Unit[u].RotMatrix, src->Texture.Unit[u].RotMatrix);
-
       /*
        * XXX strictly speaking, we should compare texture names/ids and
        * bind textures in the dest context according to id.  For now, only
@@ -188,7 +184,6 @@ calculate_derived_texenv( struct gl_tex_env_combine_state *state,
    case GL_RG:
    case GL_RGB:
    case GL_YCBCR_MESA:
-   case GL_DUDV_ATI:
       state->SourceA[0] = GL_PREVIOUS;
       break;
       
@@ -230,7 +225,6 @@ calculate_derived_texenv( struct gl_tex_env_combine_state *state,
       case GL_RG:
       case GL_RGB:
       case GL_YCBCR_MESA:
-      case GL_DUDV_ATI:
 	 mode_rgb = GL_REPLACE;
 	 break;
       case GL_RGBA:
@@ -259,7 +253,6 @@ calculate_derived_texenv( struct gl_tex_env_combine_state *state,
       case GL_LUMINANCE_ALPHA:
       case GL_RGBA:
       case GL_YCBCR_MESA:
-      case GL_DUDV_ATI:
 	 state->SourceRGB[2] = GL_TEXTURE;
 	 state->SourceA[2]   = GL_TEXTURE;
 	 state->SourceRGB[0] = GL_CONSTANT;
@@ -442,10 +435,6 @@ update_tex_combine(struct gl_context *ctx, struct gl_texture_unit *texUnit)
    case GL_MODULATE_SIGNED_ADD_ATI:
    case GL_MODULATE_SUBTRACT_ATI:
       combine->_NumArgsRGB = 3;
-      break;
-   case GL_BUMP_ENVMAP_ATI:
-      /* no real arguments for this case */
-      combine->_NumArgsRGB = 0;
       break;
    default:
       combine->_NumArgsRGB = 0;
@@ -848,7 +837,6 @@ init_texture_unit( struct gl_context *ctx, GLuint unit )
    texUnit->Combine = default_combine_state;
    texUnit->_EnvMode = default_combine_state;
    texUnit->_CurrentCombine = & texUnit->_EnvMode;
-   texUnit->BumpTarget = GL_TEXTURE0;
 
    texUnit->TexGenEnabled = 0x0;
    texUnit->GenS.Mode = GL_EYE_LINEAR;
@@ -869,9 +857,6 @@ init_texture_unit( struct gl_context *ctx, GLuint unit )
    ASSIGN_4V( texUnit->GenT.EyePlane, 0.0, 1.0, 0.0, 0.0 );
    ASSIGN_4V( texUnit->GenR.EyePlane, 0.0, 0.0, 0.0, 0.0 );
    ASSIGN_4V( texUnit->GenQ.EyePlane, 0.0, 0.0, 0.0, 0.0 );
-
-   /* no mention of this in spec, but maybe id matrix expected? */
-   ASSIGN_4V( texUnit->RotMatrix, 1.0, 0.0, 0.0, 1.0 );
 
    /* initialize current texture object ptrs to the shared default objects */
    for (tex = 0; tex < NUM_TEXTURE_TARGETS; tex++) {

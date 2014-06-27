@@ -656,9 +656,6 @@ _mesa_init_constants(struct gl_context *ctx)
    /* GL_ARB_sync */
    ctx->Const.MaxServerWaitTimeout = 0x1fff7fffffffULL;
 
-   /* GL_ATI_envmap_bumpmap */
-   ctx->Const.SupportedBumpUnits = SUPPORTED_ATI_BUMP_UNITS;
-
    /* GL_EXT_provoking_vertex */
    ctx->Const.QuadsFollowProvokingVertexConvention = GL_TRUE;
 

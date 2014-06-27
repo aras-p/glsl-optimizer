@@ -440,11 +440,6 @@ _mesa_choose_tex_format(struct gl_context *ctx, GLenum target,
       ASSERT(ctx->TextureFormatSupported[MESA_FORMAT_Z32_FLOAT_S8X24_UINT]);
       return MESA_FORMAT_Z32_FLOAT_S8X24_UINT;
 
-   case GL_DUDV_ATI:
-   case GL_DU8DV8_ATI:
-      RETURN_IF_SUPPORTED(MESA_FORMAT_DUDV8);
-      break;
-
    case GL_RED_SNORM:
    case GL_R8_SNORM:
       RETURN_IF_SUPPORTED(MESA_FORMAT_R_SNORM8);

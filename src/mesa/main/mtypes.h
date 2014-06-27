@@ -1342,8 +1342,6 @@ struct gl_texture_unit
    GLbitfield _GenFlags;	/**< Bitwise-OR of Gen[STRQ]._ModeBit */
 
    GLfloat LodBias;		/**< for biasing mipmap levels */
-   GLenum BumpTarget;
-   GLfloat RotMatrix[4]; /* 2x2 matrix */
 
    /** Current sampler object (GL_ARB_sampler_objects) */
    struct gl_sampler_object *Sampler;
@@ -3362,9 +3360,6 @@ struct gl_constants
     */
    GLuint UniformBooleanTrue;
 
-   /** Which texture units support GL_ATI_envmap_bumpmap as targets */
-   GLbitfield SupportedBumpUnits;
-
    /**
     * Maximum amount of time, measured in nanseconds, that the server can wait.
     */
@@ -3622,7 +3617,6 @@ struct gl_extensions
    GLboolean AMD_seamless_cubemap_per_texture;
    GLboolean AMD_vertex_shader_layer;
    GLboolean APPLE_object_purgeable;
-   GLboolean ATI_envmap_bumpmap;
    GLboolean ATI_texture_compression_3dc;
    GLboolean ATI_texture_mirror_once;
    GLboolean ATI_texture_env_combine3;

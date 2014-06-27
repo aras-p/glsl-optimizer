@@ -220,7 +220,6 @@ static GLuint translate_source( GLenum src )
 #define MODE_MODULATE_SUBTRACT_ATI      12  /* r = a0 * a2 - a1 */
 #define MODE_ADD_PRODUCTS               13  /* r = a0 * a1 + a2 * a3 */
 #define MODE_ADD_PRODUCTS_SIGNED        14  /* r = a0 * a1 + a2 * a3 - 0.5 */
-#define MODE_BUMP_ENVMAP_ATI            15  /* special */
 #define MODE_UNKNOWN                    16
 
 /**
@@ -250,7 +249,6 @@ static GLuint translate_mode( GLenum envMode, GLenum mode )
    case GL_MODULATE_ADD_ATI: return MODE_MODULATE_ADD_ATI;
    case GL_MODULATE_SIGNED_ADD_ATI: return MODE_MODULATE_SIGNED_ADD_ATI;
    case GL_MODULATE_SUBTRACT_ATI: return MODE_MODULATE_SUBTRACT_ATI;
-   case GL_BUMP_ENVMAP_ATI: return MODE_BUMP_ENVMAP_ATI;
    default:
       assert(0);
       return MODE_UNKNOWN;
@@ -283,7 +281,6 @@ need_saturate( GLuint mode )
    case MODE_MODULATE_SUBTRACT_ATI:
    case MODE_ADD_PRODUCTS:
    case MODE_ADD_PRODUCTS_SIGNED:
-   case MODE_BUMP_ENVMAP_ATI:
       return GL_TRUE;
    default:
       assert(0);
@@ -455,16 +452,6 @@ static GLuint make_state_key( struct gl_context *ctx,  struct state_key *key )
          key->unit[i].OptRGB[j].Source = translate_source(comb->SourceRGB[j]);
          key->unit[i].OptA[j].Source = translate_source(comb->SourceA[j]);
       }
-
-      if (key->unit[i].ModeRGB == MODE_BUMP_ENVMAP_ATI) {
-         /* requires some special translation */
-         key->unit[i].NumArgsRGB = 2;
-         key->unit[i].ScaleShiftRGB = 0;
-         key->unit[i].OptRGB[0].Operand = OPR_SRC_COLOR;
-         key->unit[i].OptRGB[0].Source = SRC_TEXTURE;
-         key->unit[i].OptRGB[1].Operand = OPR_SRC_COLOR;
-         key->unit[i].OptRGB[1].Source = texUnit->BumpTarget - GL_TEXTURE0 + SRC_TEXTURE0;
-       }
    }
 
    /* _NEW_LIGHT | _NEW_FOG */
@@ -753,11 +740,6 @@ emit_combine(texenv_fragment_program *p,
    case MODE_ADD_PRODUCTS_SIGNED:
       return add(add(mul(src[0], src[1]), mul(src[2], src[3])),
 		 new(p->mem_ctx) ir_constant(-0.5f));
-
-   case MODE_BUMP_ENVMAP_ATI:
-      /* special - not handled here */
-      assert(0);
-      return src[0];
    default: 
       assert(0);
       return src[0];
@@ -775,10 +757,6 @@ emit_texenv(texenv_fragment_program *p, GLuint unit)
    GLuint rgb_shift, alpha_shift;
 
    if (!key->unit[unit].enabled) {
-      return get_source(p, SRC_PREVIOUS, 0);
-   }
-   if (key->unit[unit].ModeRGB == MODE_BUMP_ENVMAP_ATI) {
-      /* this isn't really a env stage delivering a color and handled elsewhere */
       return get_source(p, SRC_PREVIOUS, 0);
    }
    
@@ -1075,56 +1053,6 @@ load_texunit_sources( texenv_fragment_program *p, GLuint unit )
 }
 
 /**
- * Generate instructions for loading bump map textures.
- */
-static void
-load_texunit_bumpmap( texenv_fragment_program *p, GLuint unit )
-{
-   const struct state_key *key = p->state;
-   GLuint bumpedUnitNr = key->unit[unit].OptRGB[1].Source - SRC_TEXTURE0;
-   ir_rvalue *bump;
-   ir_rvalue *texcoord;
-   ir_variable *rot_mat_0, *rot_mat_1;
-
-   rot_mat_0 = p->shader->symbols->get_variable("gl_BumpRotMatrix0MESA");
-   assert(rot_mat_0);
-   rot_mat_1 = p->shader->symbols->get_variable("gl_BumpRotMatrix1MESA");
-   assert(rot_mat_1);
-
-   ir_variable *tc_array = p->shader->symbols->get_variable("gl_TexCoord");
-   assert(tc_array);
-   texcoord = new(p->mem_ctx) ir_dereference_variable(tc_array);
-   ir_rvalue *index = new(p->mem_ctx) ir_constant(bumpedUnitNr);
-   texcoord = new(p->mem_ctx) ir_dereference_array(texcoord, index);
-   tc_array->data.max_array_access = MAX2(tc_array->data.max_array_access, unit);
-
-   load_texenv_source( p, unit + SRC_TEXTURE0, unit );
-
-   /* Apply rot matrix and add coords to be available in next phase.
-    * dest = Arg1 + (Arg0.xx * rotMat0) + (Arg0.yy * rotMat1)
-    * note only 2 coords are affected the rest are left unchanged (mul by 0)
-    */
-   ir_rvalue *bump_x, *bump_y;
-
-   texcoord = smear(p, texcoord);
-
-   /* bump_texcoord = texcoord */
-   ir_variable *bumped = p->make_temp(texcoord->type, "bump_texcoord");
-   p->emit(bumped);
-   p->emit(assign(bumped, texcoord));
-
-   /* bump_texcoord.xy += arg0.x * rotmat0 + arg0.y * rotmat1 */
-   bump = get_source(p, key->unit[unit].OptRGB[0].Source, unit);
-   bump_x = mul(swizzle_x(bump), rot_mat_0);
-   bump_y = mul(swizzle_y(bump->clone(p->mem_ctx, NULL)), rot_mat_1);
-
-   p->emit(assign(bumped, add(swizzle_xy(bumped), add(bump_x, bump_y)),
-		  WRITEMASK_XY));
-
-   p->texcoord_tex[bumpedUnitNr] = bumped;
-}
-
-/**
  * Applies the fog calculations.
  *
  * This is basically like the ARB_fragment_prorgam fog options.  Note
@@ -1214,14 +1142,6 @@ emit_instructions(texenv_fragment_program *p)
    GLuint unit;
 
    if (key->enabled_units) {
-      /* Zeroth pass - bump map textures first */
-      for (unit = 0; unit < key->nr_enabled_units; unit++) {
-	 if (key->unit[unit].enabled &&
-             key->unit[unit].ModeRGB == MODE_BUMP_ENVMAP_ATI) {
-	    load_texunit_bumpmap(p, unit);
-	 }
-      }
-
       /* First pass - to support texture_env_crossbar, first identify
        * all referenced texture sources and emit texld instructions
        * for each:

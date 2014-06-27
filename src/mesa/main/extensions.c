@@ -329,7 +329,6 @@ static const struct extension extension_table[] = {
    { "GL_APPLE_vertex_array_object",               o(dummy_true),                              GLL,            2002 },
    { "GL_ATI_blend_equation_separate",             o(EXT_blend_equation_separate),             GL,             2003 },
    { "GL_ATI_draw_buffers",                        o(dummy_true),                              GLL,            2002 },
-   { "GL_ATI_envmap_bumpmap",                      o(ATI_envmap_bumpmap),                      GLL,            2001 },
    { "GL_ATI_fragment_shader",                     o(ATI_fragment_shader),                     GLL,            2001 },
    { "GL_ATI_separate_stencil",                    o(ATI_separate_stencil),                    GLL,            2006 },
    { "GL_ATI_texture_compression_3dc",             o(ATI_texture_compression_3dc),             GL,             2004 },
@@ -462,7 +461,6 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.ARB_vertex_shader = GL_TRUE;
    ctx->Extensions.ARB_sync = GL_TRUE;
    ctx->Extensions.APPLE_object_purgeable = GL_TRUE;
-   ctx->Extensions.ATI_envmap_bumpmap = GL_TRUE;
    ctx->Extensions.ATI_fragment_shader = GL_TRUE;
    ctx->Extensions.ATI_texture_compression_3dc = GL_TRUE;
    ctx->Extensions.ATI_texture_env_combine3 = GL_TRUE;

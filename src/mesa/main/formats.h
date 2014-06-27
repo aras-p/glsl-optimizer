@@ -211,8 +211,6 @@ typedef enum
    MESA_FORMAT_YCBCR,            /*                     YYYY YYYY UorV UorV */
    MESA_FORMAT_YCBCR_REV,        /*                     UorV UorV YYYY YYYY */
 
-   MESA_FORMAT_DUDV8,            /*                     DUDU DUDU DVDV DVDV */
-
    /* Array unorm formats */
    MESA_FORMAT_A_UNORM8,      /* ubyte[i] = A */
    MESA_FORMAT_A_UNORM16,     /* ushort[i] = A */

@@ -84,9 +84,6 @@ extern GLboolean
 _mesa_is_depth_or_stencil_format(GLenum format);
 
 extern GLboolean
-_mesa_is_dudv_format(GLenum format);
-
-extern GLboolean
 _mesa_is_compressed_format(struct gl_context *ctx, GLenum format);
 
 extern GLenum

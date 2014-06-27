@@ -420,11 +420,6 @@ get_component_indexes(GLenum format,
       *blueIndex = 1;
       *alphaIndex = 0;
       break;
-   case GL_DU8DV8_ATI:
-   case GL_DUDV_ATI:
-      *redIndex = 0;
-      *greenIndex = 1;
-      break;
    default:
       assert(0 && "bad format in get_component_indexes()");
    }
@@ -1471,13 +1466,6 @@ _mesa_pack_rgba_span_float(struct gl_context *ctx, GLuint n, GLfloat rgba[][4],
                                          rgba[i][BCOMP]);
                   }
                   break;
-               case GL_DUDV_ATI:
-               case GL_DU8DV8_ATI:
-                  for (i=0;i<n;i++) {
-                     dst[i*2+0] = FLOAT_TO_UBYTE(rgba[i][RCOMP]);
-                     dst[i*2+1] = FLOAT_TO_UBYTE(rgba[i][GCOMP]);
-                  }
-                  break;
                default:
                   _mesa_problem(ctx, "bad format in _mesa_pack_rgba_span\n");
             }
@@ -1626,13 +1614,6 @@ _mesa_pack_rgba_span_float(struct gl_context *ctx, GLuint n, GLfloat rgba[][4],
                      dst[i] = (GLbyte) (rgba[i][RCOMP] +
                                         rgba[i][GCOMP] +
                                         rgba[i][BCOMP]);
-                  }
-                  break;
-               case GL_DUDV_ATI:
-               case GL_DU8DV8_ATI:
-                  for (i=0;i<n;i++) {
-                     dst[i*2+0] = FLOAT_TO_BYTE_TEX(rgba[i][RCOMP]);
-                     dst[i*2+1] = FLOAT_TO_BYTE_TEX(rgba[i][GCOMP]);
                   }
                   break;
                default:
@@ -1785,13 +1766,6 @@ _mesa_pack_rgba_span_float(struct gl_context *ctx, GLuint n, GLfloat rgba[][4],
                                           rgba[i][BCOMP]);
                   }
                   break;
-               case GL_DUDV_ATI:
-               case GL_DU8DV8_ATI:
-                  for (i=0;i<n;i++) {
-                     dst[i*2+0] = FLOAT_TO_USHORT(rgba[i][RCOMP]);
-                     dst[i*2+1] = FLOAT_TO_USHORT(rgba[i][GCOMP]);
-                  }
-                  break;
                default:
                   _mesa_problem(ctx, "bad format in _mesa_pack_rgba_span\n");
             }
@@ -1940,13 +1914,6 @@ _mesa_pack_rgba_span_float(struct gl_context *ctx, GLuint n, GLfloat rgba[][4],
                      dst[i] = (GLshort) (rgba[i][RCOMP] +
                                          rgba[i][GCOMP] +
                                          rgba[i][BCOMP]);
-                  }
-                  break;
-               case GL_DUDV_ATI:
-               case GL_DU8DV8_ATI:
-                  for (i=0;i<n;i++) {
-                     dst[i*2+0] = FLOAT_TO_SHORT_TEX(rgba[i][RCOMP]);
-                     dst[i*2+1] = FLOAT_TO_SHORT_TEX(rgba[i][GCOMP]);
                   }
                   break;
                default:
@@ -2099,13 +2066,6 @@ _mesa_pack_rgba_span_float(struct gl_context *ctx, GLuint n, GLfloat rgba[][4],
                                         rgba[i][BCOMP]);
                   }
                   break;
-               case GL_DUDV_ATI:
-               case GL_DU8DV8_ATI:
-                  for (i=0;i<n;i++) {
-                     dst[i*2+0] = FLOAT_TO_UINT(rgba[i][RCOMP]);
-                     dst[i*2+1] = FLOAT_TO_UINT(rgba[i][GCOMP]);
-                  }
-                  break;
                default:
                   _mesa_problem(ctx, "bad format in _mesa_pack_rgba_span\n");
             }
@@ -2183,13 +2143,6 @@ _mesa_pack_rgba_span_float(struct gl_context *ctx, GLuint n, GLfloat rgba[][4],
                      dst[i*4+1] = FLOAT_TO_INT(rgba[i][BCOMP]);
                      dst[i*4+2] = FLOAT_TO_INT(rgba[i][GCOMP]);
                      dst[i*4+3] = FLOAT_TO_INT(rgba[i][RCOMP]);
-                  }
-                  break;
-               case GL_DUDV_ATI:
-               case GL_DU8DV8_ATI:
-                  for (i=0;i<n;i++) {
-                     dst[i*2+0] = FLOAT_TO_INT(rgba[i][RCOMP]);
-                     dst[i*2+1] = FLOAT_TO_INT(rgba[i][GCOMP]);
                   }
                   break;
                case GL_RED_INTEGER_EXT:
@@ -2342,13 +2295,6 @@ _mesa_pack_rgba_span_float(struct gl_context *ctx, GLuint n, GLfloat rgba[][4],
                      dst[i*4+3] = rgba[i][RCOMP];
                   }
                   break;
-               case GL_DUDV_ATI:
-               case GL_DU8DV8_ATI:
-                  for (i=0;i<n;i++) {
-                     dst[i*2+0] = rgba[i][RCOMP];
-                     dst[i*2+1] = rgba[i][GCOMP];
-                  }
-                  break;
                default:
                   _mesa_problem(ctx, "bad format in _mesa_pack_rgba_span\n");
             }
@@ -2426,13 +2372,6 @@ _mesa_pack_rgba_span_float(struct gl_context *ctx, GLuint n, GLfloat rgba[][4],
                      dst[i*4+1] = _mesa_float_to_half(rgba[i][BCOMP]);
                      dst[i*4+2] = _mesa_float_to_half(rgba[i][GCOMP]);
                      dst[i*4+3] = _mesa_float_to_half(rgba[i][RCOMP]);
-                  }
-                  break;
-               case GL_DUDV_ATI:
-               case GL_DU8DV8_ATI:
-                  for (i=0;i<n;i++) {
-                     dst[i*2+0] = _mesa_float_to_half(rgba[i][RCOMP]);
-                     dst[i*2+1] = _mesa_float_to_half(rgba[i][GCOMP]);
                   }
                   break;
                default:
@@ -3095,13 +3034,6 @@ get_component_mapping(GLenum format,
       *bDst = 1;
       *aDst = 0;
       break;
-   case GL_DU8DV8_ATI:
-   case GL_DUDV_ATI:
-      *rSrc = 0;
-      *gSrc = 1;
-      *bSrc = -1;
-      *aSrc = -1;
-      break;
    default:
       _mesa_problem(NULL, "bad srcFormat %s in get_component_mapping",
                     _mesa_lookup_enum_by_nr(format));
@@ -3151,8 +3083,6 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
           srcFormat == GL_RGBA ||
           srcFormat == GL_BGRA ||
           srcFormat == GL_ABGR_EXT ||
-          srcFormat == GL_DU8DV8_ATI ||
-          srcFormat == GL_DUDV_ATI ||
           srcFormat == GL_RED_INTEGER_EXT ||
           srcFormat == GL_GREEN_INTEGER_EXT ||
           srcFormat == GL_BLUE_INTEGER_EXT ||
@@ -3768,8 +3698,6 @@ extract_uint_rgba(GLuint n, GLuint rgba[][4],
           srcFormat == GL_RGBA ||
           srcFormat == GL_BGRA ||
           srcFormat == GL_ABGR_EXT ||
-          srcFormat == GL_DU8DV8_ATI ||
-          srcFormat == GL_DUDV_ATI ||
           srcFormat == GL_RED_INTEGER_EXT ||
           srcFormat == GL_RG_INTEGER ||
           srcFormat == GL_GREEN_INTEGER_EXT ||
@@ -4845,71 +4773,6 @@ _mesa_unpack_color_span_uint(struct gl_context *ctx,
    free(rgba);
 }
 
-
-
-/**
- * Similar to _mesa_unpack_color_span_float(), but for dudv data instead of rgba,
- * directly return GLbyte data, no transfer ops apply.
- */
-void
-_mesa_unpack_dudv_span_byte( struct gl_context *ctx,
-                             GLuint n, GLenum dstFormat, GLbyte dest[],
-                             GLenum srcFormat, GLenum srcType,
-                             const GLvoid *source,
-                             const struct gl_pixelstore_attrib *srcPacking,
-                             GLbitfield transferOps )
-{
-   ASSERT(dstFormat == GL_DUDV_ATI);
-   ASSERT(srcFormat == GL_DUDV_ATI ||
-	  srcFormat == GL_DU8DV8_ATI);
-
-   ASSERT(srcType == GL_UNSIGNED_BYTE ||
-          srcType == GL_BYTE ||
-          srcType == GL_UNSIGNED_SHORT ||
-          srcType == GL_SHORT ||
-          srcType == GL_UNSIGNED_INT ||
-          srcType == GL_INT ||
-          srcType == GL_HALF_FLOAT_ARB ||
-          srcType == GL_FLOAT);
-
-   /* general solution */
-   {
-      GLint dstComponents;
-      GLbyte *dst = dest;
-      GLuint i;
-      GLfloat (*rgba)[4] = malloc(4 * n * sizeof(GLfloat));
-
-      if (!rgba) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "pixel unpacking");
-         return;
-      }
-
-      dstComponents = _mesa_components_in_format( dstFormat );
-      /* source & dest image formats should have been error checked by now */
-      assert(dstComponents > 0);
-
-      /*
-       * Extract image data and convert to RGBA floats
-       */
-      extract_float_rgba(n, rgba, srcFormat, srcType, source,
-                         srcPacking->SwapBytes);
-
-
-      /* Now determine which color channels we need to produce.
-       * And determine the dest index (offset) within each color tuple.
-       */
-
-      /* Now pack results in the requested dstFormat */
-      for (i = 0; i < n; i++) {
-         /* not sure - need clamp[-1,1] here? */
-         dst[0] = FLOAT_TO_BYTE(rgba[i][RCOMP]);
-         dst[1] = FLOAT_TO_BYTE(rgba[i][GCOMP]);
-         dst += dstComponents;
-      }
-
-      free(rgba);
-   }
-}
 
 /*
  * Unpack a row of color index data from a client buffer according to

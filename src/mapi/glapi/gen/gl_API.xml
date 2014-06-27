@@ -12157,22 +12157,22 @@
         <size name="GetTexEnviv" mode="get"/>
         <size name="GetTexEnvfv" mode="get"/>
     </enum>
-    <function name="TexBumpParameterfvATI" offset="assign" deprecated="3.1">
+    <function name="TexBumpParameterfvATI" offset="assign" deprecated="3.1" exec="skip">
       <param name="pname" type="GLenum"/>
       <param name="param" type="const GLfloat *" variable_param="pname"/>
       <glx ignore="true"/>
     </function>
-    <function name="TexBumpParameterivATI" offset="assign" deprecated="3.1">
+    <function name="TexBumpParameterivATI" offset="assign" deprecated="3.1" exec="skip">
       <param name="pname" type="GLenum"/>
       <param name="param" type="const GLint *" variable_param="pname"/>
       <glx ignore="true"/>
     </function>
-    <function name="GetTexBumpParameterfvATI" offset="assign" deprecated="3.1">
+    <function name="GetTexBumpParameterfvATI" offset="assign" deprecated="3.1" exec="skip">
       <param name="pname" type="GLenum"/>
       <param name="param" type="GLfloat *" variable_param="pname"/>
       <glx ignore="true"/>
     </function>
-    <function name="GetTexBumpParameterivATI" offset="assign" deprecated="3.1">
+    <function name="GetTexBumpParameterivATI" offset="assign" deprecated="3.1" exec="skip">
       <param name="pname" type="GLenum"/>
       <param name="param" type="GLint *" variable_param="pname"/>
       <glx ignore="true"/>

@@ -210,7 +210,6 @@ texfetch_funcs[] =
    },
    FETCH_FUNCS(YCBCR),
    FETCH_FUNCS(YCBCR_REV),
-   FETCH_FUNCS(DUDV8),
 
    /* Array unorm formats */
    FETCH_FUNCS(A_UNORM8),

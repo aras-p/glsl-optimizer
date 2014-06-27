@@ -160,14 +160,6 @@ static const struct gl_builtin_uniform_element gl_NormalScale_elements[] = {
    {NULL, {STATE_NORMAL_SCALE}, SWIZZLE_XXXX},
 };
 
-static const struct gl_builtin_uniform_element gl_BumpRotMatrix0MESA_elements[] = {
-   {NULL, {STATE_INTERNAL, STATE_ROT_MATRIX_0}, SWIZZLE_XYZW},
-};
-
-static const struct gl_builtin_uniform_element gl_BumpRotMatrix1MESA_elements[] = {
-   {NULL, {STATE_INTERNAL, STATE_ROT_MATRIX_1}, SWIZZLE_XYZW},
-};
-
 static const struct gl_builtin_uniform_element gl_FogParamsOptimizedMESA_elements[] = {
    {NULL, {STATE_INTERNAL, STATE_FOG_PARAMS_OPTIMIZED}, SWIZZLE_XYZW},
 };
@@ -284,8 +276,6 @@ static const struct gl_builtin_uniform_desc _mesa_builtin_uniform_desc[] = {
    STATEVAR(gl_NormalMatrix),
    STATEVAR(gl_NormalScale),
 
-   STATEVAR(gl_BumpRotMatrix0MESA),
-   STATEVAR(gl_BumpRotMatrix1MESA),
    STATEVAR(gl_FogParamsOptimizedMESA),
    STATEVAR(gl_CurrentAttribVertMESA),
    STATEVAR(gl_CurrentAttribFragMESA),
@@ -761,8 +751,6 @@ builtin_variable_generator::generate_uniforms()
       add_uniform(mat4_t, "gl_ModelViewProjectionMatrixInverseTranspose");
       add_uniform(float_t, "gl_NormalScale");
       add_uniform(type("gl_LightModelParameters"), "gl_LightModel");
-      add_uniform(vec2_t, "gl_BumpRotMatrix0MESA");
-      add_uniform(vec2_t, "gl_BumpRotMatrix1MESA");
       add_uniform(vec4_t, "gl_FogParamsOptimizedMESA");
 
       const glsl_type *const mat4_array_type =

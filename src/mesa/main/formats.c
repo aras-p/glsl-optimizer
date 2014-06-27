@@ -43,7 +43,7 @@ struct gl_format_info
    /**
     * Base format is one of GL_RED, GL_RG, GL_RGB, GL_RGBA, GL_ALPHA,
     * GL_LUMINANCE, GL_LUMINANCE_ALPHA, GL_INTENSITY, GL_YCBCR_MESA,
-    * GL_DEPTH_COMPONENT, GL_STENCIL_INDEX, GL_DEPTH_STENCIL, GL_DUDV_ATI.
+    * GL_DEPTH_COMPONENT, GL_STENCIL_INDEX, GL_DEPTH_STENCIL.
     */
    GLenum BaseFormat;
 
@@ -414,15 +414,6 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
 
    /* Array unorm formats */
-   {
-      MESA_FORMAT_DUDV8,
-      "MESA_FORMAT_DUDV8",
-      GL_DUDV_ATI,
-      GL_SIGNED_NORMALIZED,
-      0, 0, 0, 0,
-      0, 0, 0, 0, 0,
-      1, 1, 2
-   },
    {
       MESA_FORMAT_A_UNORM8,        /* Name */
       "MESA_FORMAT_A_UNORM8",      /* StrName */
@@ -2576,11 +2567,6 @@ _mesa_format_to_type_and_comps(mesa_format format,
       *comps = 1;
       return;
 
-   case MESA_FORMAT_DUDV8:
-      *datatype = GL_BYTE;
-      *comps = 2;
-      return;
-
    case MESA_FORMAT_R_SNORM8:
    case MESA_FORMAT_A_SNORM8:
    case MESA_FORMAT_L_SNORM8:
@@ -3386,10 +3372,6 @@ _mesa_format_matches_format_and_type(mesa_format mesa_format,
       return format == GL_RGB_INTEGER && type == GL_UNSIGNED_INT && !swapBytes;
    case MESA_FORMAT_RGBA_UINT32:
       return format == GL_RGBA_INTEGER && type == GL_UNSIGNED_INT && !swapBytes;
-
-   case MESA_FORMAT_DUDV8:
-      return (format == GL_DU8DV8_ATI || format == GL_DUDV_ATI) &&
-             type == GL_BYTE && littleEndian && !swapBytes;
 
    case MESA_FORMAT_R_SNORM8:
       return format == GL_RED && type == GL_BYTE;
