@@ -164,6 +164,7 @@ intelInitExtensions(struct gl_context *ctx)
 
    ctx->Extensions.ARB_buffer_storage = true;
    ctx->Extensions.ARB_clear_texture = true;
+   ctx->Extensions.ARB_copy_image = true;
    ctx->Extensions.ARB_depth_buffer_float = true;
    ctx->Extensions.ARB_depth_clamp = true;
    ctx->Extensions.ARB_depth_texture = true;

@@ -8,6 +8,7 @@ i965_FILES = \
 	intel_blit.c \
 	intel_buffer_objects.c \
 	intel_buffers.c \
+	intel_copy_image.c \
 	intel_debug.c \
 	intel_extensions.c \
 	intel_fbo.c \

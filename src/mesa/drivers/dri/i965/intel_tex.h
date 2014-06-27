@@ -42,6 +42,8 @@ void intelInitTextureSubImageFuncs(struct dd_function_table *functions);
 
 void intelInitTextureCopyImageFuncs(struct dd_function_table *functions);
 
+void intelInitCopyImageFuncs(struct dd_function_table *functions);
+
 void intelSetTexBuffer(__DRIcontext *pDRICtx,
 		       GLint target, __DRIdrawable *pDraw);
 void intelSetTexBuffer2(__DRIcontext *pDRICtx,
