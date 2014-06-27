@@ -30,6 +30,8 @@
 #ifndef __XMLCONFIG_H
 #define __XMLCONFIG_H
 
+#include <stdbool.h>
+
 /** \brief Option data types */
 typedef enum driOptionType {
     DRI_BOOL, DRI_ENUM, DRI_INT, DRI_FLOAT
@@ -37,9 +39,9 @@ typedef enum driOptionType {
 
 /** \brief Option value */
 typedef union driOptionValue {
-    GLboolean _bool; /**< \brief Boolean */
-    GLint _int;      /**< \brief Integer or Enum */
-    GLfloat _float;  /**< \brief Floating-point */
+    bool _bool; /**< \brief Boolean */
+    int _int;      /**< \brief Integer or Enum */
+    float _float;  /**< \brief Floating-point */
 } driOptionValue;
 
 /** \brief Single range of valid values
@@ -55,7 +57,7 @@ typedef struct driOptionInfo {
     char *name;             /**< \brief Name */
     driOptionType type;     /**< \brief Type */
     driOptionRange *ranges; /**< \brief Array of ranges */
-    GLuint nRanges;         /**< \brief Number of ranges */
+    uint nRanges;         /**< \brief Number of ranges */
 } driOptionInfo;
 
 /** \brief Option cache
@@ -73,7 +75,7 @@ typedef struct driOptionCache {
    * \li Default values in screen
    * \li Actual values in contexts 
    */
-    GLuint tableSize;
+    uint tableSize;
   /**< \brief Size of the arrays
    *
    * In the current implementation it's not actually a size but log2(size).
@@ -98,7 +100,7 @@ void driParseOptionInfo (driOptionCache *info,
  * To be called in <driver>CreateContext. screenNum and driverName select
  * device sections. */
 void driParseConfigFiles (driOptionCache *cache, const driOptionCache *info,
-			  GLint screenNum, const char *driverName);
+			  int screenNum, const char *driverName);
 /** \brief Destroy option info
  *
  * To be called in <driver>DestroyScreen */
@@ -109,14 +111,14 @@ void driDestroyOptionInfo (driOptionCache *info);
 void driDestroyOptionCache (driOptionCache *cache);
 
 /** \brief Check if there exists a certain option */
-GLboolean driCheckOption (const driOptionCache *cache, const char *name,
+bool driCheckOption (const driOptionCache *cache, const char *name,
 			  driOptionType type);
 
 /** \brief Query a boolean option value */
-GLboolean driQueryOptionb (const driOptionCache *cache, const char *name);
+bool driQueryOptionb (const driOptionCache *cache, const char *name);
 /** \brief Query an integer option value */
-GLint driQueryOptioni (const driOptionCache *cache, const char *name);
+int driQueryOptioni (const driOptionCache *cache, const char *name);
 /** \brief Query a floating-point option value */
-GLfloat driQueryOptionf (const driOptionCache *cache, const char *name);
+float driQueryOptionf (const driOptionCache *cache, const char *name);
 
 #endif
