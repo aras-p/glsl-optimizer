@@ -205,6 +205,9 @@ The integer capabilities:
 * ``PIPE_CAP_TGSI_VS_WINDOW_SPACE_POSITION``: Whether
   TGSI_PROPERTY_VS_WINDOW_SPACE_POSITION is supported, which disables clipping
   and viewport transformation.
+* ``PIPE_CAP_MAX_VERTEX_STREAMS``: The maximum number of vertex streams
+  supported by the geometry shader. If stream-out is supported, this should be
+  at least 1. If stream-out is not supported, this should be 0.
 
 
 .. _pipe_capf:

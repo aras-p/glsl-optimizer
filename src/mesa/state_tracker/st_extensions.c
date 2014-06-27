@@ -287,6 +287,11 @@ void st_init_limits(struct st_context *st)
       screen->get_param(screen, PIPE_CAP_MAX_STREAM_OUTPUT_SEPARATE_COMPONENTS);
    c->MaxTransformFeedbackInterleavedComponents =
       screen->get_param(screen, PIPE_CAP_MAX_STREAM_OUTPUT_INTERLEAVED_COMPONENTS);
+   c->MaxVertexStreams =
+      MAX2(1, screen->get_param(screen, PIPE_CAP_MAX_VERTEX_STREAMS));
+
+   /* The vertex stream must fit into pipe_stream_output_info::stream */
+   assert(c->MaxVertexStreams <= 4);
 
    c->StripTextureBorder = GL_TRUE;
 

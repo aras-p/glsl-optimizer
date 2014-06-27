@@ -375,6 +375,7 @@ ilo_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return ILO_MAX_SO_BINDINGS;
    case PIPE_CAP_MAX_GEOMETRY_OUTPUT_VERTICES:
    case PIPE_CAP_MAX_GEOMETRY_TOTAL_OUTPUT_COMPONENTS:
+   case PIPE_CAP_MAX_VERTEX_STREAMS:
       return 0;
    case PIPE_CAP_STREAM_OUTPUT_PAUSE_RESUME:
       if (is->dev.gen >= ILO_GEN(7))

@@ -271,6 +271,8 @@ static int si_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 		return 1024;
 	case PIPE_CAP_MAX_GEOMETRY_TOTAL_OUTPUT_COMPONENTS:
 		return 4095;
+	case PIPE_CAP_MAX_VERTEX_STREAMS:
+		return 1;
 
 	/* Texturing. */
 	case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
