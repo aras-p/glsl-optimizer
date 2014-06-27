@@ -320,15 +320,11 @@ target_valid(struct gl_context *ctx, GLenum origTarget, GLenum newTarget)
  * If an error is found, record it with _mesa_error()
  * \return false if any error, true otherwise.
  */
-static bool
-compatible_format(struct gl_context *ctx, const struct gl_texture_object *origTexObj,
-                  GLenum internalformat)
+GLboolean
+_mesa_texture_view_compatible_format(struct gl_context *ctx,
+                                     GLenum origInternalFormat,
+                                     GLenum newInternalFormat)
 {
-   /* Level 0 of a texture created by glTextureStorage or glTextureView
-    * is always defined.
-    */
-   struct gl_texture_image *texImage = origTexObj->Image[0][0];
-   GLint origInternalFormat = texImage->InternalFormat;
    unsigned int origViewClass, newViewClass;
 
    /* The two textures' internal formats must be compatible according to
@@ -337,19 +333,15 @@ compatible_format(struct gl_context *ctx, const struct gl_texture_object *origTe
     * The internal formats must be identical if not in that table,
     * or an INVALID_OPERATION error is generated.
     */
-   if (origInternalFormat == internalformat)
-      return true;
+   if (origInternalFormat == newInternalFormat)
+      return GL_TRUE;
 
    origViewClass = lookup_view_class(ctx, origInternalFormat);
-   newViewClass = lookup_view_class(ctx, internalformat);
+   newViewClass = lookup_view_class(ctx, newInternalFormat);
    if ((origViewClass == newViewClass) && origViewClass != false)
-      return true;
+      return GL_TRUE;
 
-   _mesa_error(ctx, GL_INVALID_OPERATION,
-               "glTextureView(internalformat %s not compatible with origtexture %s)",
-               _mesa_lookup_enum_by_nr(internalformat),
-               _mesa_lookup_enum_by_nr(origInternalFormat));
-   return false;
+   return GL_FALSE;
 }
 /**
  * Helper function for TexStorage and teximagemultisample to set immutable
@@ -512,8 +504,14 @@ _mesa_TextureView(GLuint texture, GLenum target, GLuint origtexture,
       return;
    }
 
-   if (!compatible_format(ctx, origTexObj, internalformat)) {
-      return; /* Error logged */
+   if (!_mesa_texture_view_compatible_format(ctx,
+                                             origTexObj->Image[0][0]->InternalFormat,
+                                             internalformat)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glTextureView(internalformat %s not compatible with origtexture %s)",
+                  _mesa_lookup_enum_by_nr(internalformat),
+                  _mesa_lookup_enum_by_nr(origTexObj->Image[0][0]->InternalFormat));
+      return;
    }
 
    texFormat = _mesa_choose_texture_format(ctx, texObj, target, 0,

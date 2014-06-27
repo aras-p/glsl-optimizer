@@ -269,6 +269,22 @@ struct dd_function_table {
                            GLsizei width, GLsizei height);
 
    /**
+    * Called by glCopyImageSubData().
+    *
+    * This function should copy one 2-D slice from srcTexImage to
+    * dstTexImage.  If one of the textures is 3-D or is a 1-D or 2-D array
+    * texture, this function will be called multiple times: once for each
+    * slice.  If one of the textures is a cube map, this function will be
+    * called once for each face to be copied.
+    */
+   void (*CopyImageSubData)(struct gl_context *ctx,
+                            struct gl_texture_image *src_image,
+                            int src_x, int src_y, int src_z,
+                            struct gl_texture_image *dstTexImage,
+                            int dst_x, int dst_y, int dst_z,
+                            int src_width, int src_height);
+
+   /**
     * Called by glGenerateMipmap() or when GL_GENERATE_MIPMAP_SGIS is enabled.
     * Note that if the texture is a cube map, the <target> parameter will
     * indicate which cube face to generate (GL_POSITIVE/NEGATIVE_X/Y/Z).

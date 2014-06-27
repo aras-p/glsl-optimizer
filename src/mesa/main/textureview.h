@@ -29,6 +29,10 @@
 #ifndef TEXTUREVIEW_H
 #define TEXTUREVIEW_H
 
+GLboolean
+_mesa_texture_view_compatible_format(struct gl_context *ctx,
+                                     GLenum origInternalFormat,
+                                     GLenum newInternalFormat);
 
 extern void GLAPIENTRY
 _mesa_TextureView(GLuint texture, GLenum target, GLuint origtexture,

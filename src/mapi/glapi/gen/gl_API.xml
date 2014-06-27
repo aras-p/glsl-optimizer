@@ -8302,7 +8302,7 @@
 
 <xi:include href="ARB_compute_shader.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
-<!-- ARB extension #123 -->
+<xi:include href="ARB_copy_image.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
 <xi:include href="ARB_texture_view.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 

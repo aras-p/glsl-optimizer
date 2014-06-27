@@ -31,6 +31,7 @@ MAIN_FILES = \
 	$(SRCDIR)main/condrender.c \
 	$(SRCDIR)main/context.c \
 	$(SRCDIR)main/convolve.c \
+	$(SRCDIR)main/copyimage.c \
 	$(SRCDIR)main/cpuinfo.c \
 	$(SRCDIR)main/debug.c \
 	$(SRCDIR)main/depth.c \
