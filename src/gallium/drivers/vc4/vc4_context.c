@@ -29,6 +29,7 @@
 #include "util/u_inlines.h"
 #include "util/u_memory.h"
 #include "util/u_blitter.h"
+#include "indices/u_primconvert.h"
 #include "pipe/p_screen.h"
 
 #define __user
@@ -142,6 +143,10 @@ vc4_context_destroy(struct pipe_context *pctx)
 
         if (vc4->blitter)
                 util_blitter_destroy(vc4->blitter);
+
+        if (vc4->primconvert)
+                util_primconvert_destroy(vc4->primconvert);
+
         util_slab_destroy(&vc4->transfer_pool);
 
         free(vc4);
@@ -182,6 +187,11 @@ vc4_context_create(struct pipe_screen *pscreen, void *priv)
                          16, UTIL_SLAB_SINGLETHREADED);
         vc4->blitter = util_blitter_create(pctx);
         if (!vc4->blitter)
+                goto fail;
+
+        vc4->primconvert = util_primconvert_create(pctx,
+                                                   !((1 << PIPE_PRIM_QUADS) - 1));
+        if (!vc4->primconvert)
                 goto fail;
 
         return &vc4->base;

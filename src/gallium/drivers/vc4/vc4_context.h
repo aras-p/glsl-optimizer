@@ -133,6 +133,8 @@ struct vc4_context {
          */
         bool needs_flush;
 
+        struct primconvert_context *primconvert;
+
         /** @{ Current pipeline state objects */
         struct pipe_scissor_state scissor;
         struct pipe_blend_state *blend;

@@ -114,6 +114,9 @@ enum vc4_packet {
 #define VC4_STORE_TILE_BUFFER_FULL                 (5 << 0)
 /** @} */
 
+#define VC4_INDEX_BUFFER_U8                        (0 << 4)
+#define VC4_INDEX_BUFFER_U16                       (1 << 4)
+
 /* This flag is only present in NV shader state. */
 #define VC4_SHADER_FLAG_SHADED_CLIP_COORDS         (1 << 3)
 #define VC4_SHADER_FLAG_ENABLE_CLIPPING            (1 << 2)

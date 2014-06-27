@@ -24,29 +24,11 @@
 
 #include <stdio.h>
 
+#include "util/u_format.h"
+#include "indices/u_primconvert.h"
+
 #include "vc4_context.h"
 #include "vc4_resource.h"
-
-static struct vc4_bo *
-get_vbo(struct vc4_context *vc4, uint32_t width, uint32_t height)
-{
-        struct {
-                float x, y, z, w;
-        } verts[] = {
-                { -1, -1, 1, 1 },
-                {  1, -1, 1, 1 },
-                { -1,  1, 1, 1 },
-        };
-
-        return vc4_bo_alloc_mem(vc4->screen, verts, sizeof(verts), "verts");
-}
-static struct vc4_bo *
-get_ibo(struct vc4_context *vc4)
-{
-        static const uint8_t indices[] = { 0, 1, 2 };
-
-        return vc4_bo_alloc_mem(vc4->screen, indices, sizeof(indices), "indices");
-}
 
 static void
 vc4_rcl_tile_calls(struct vc4_context *vc4,
@@ -79,6 +61,14 @@ static void
 vc4_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
 {
         struct vc4_context *vc4 = vc4_context(pctx);
+
+        if (info->mode >= PIPE_PRIM_QUADS) {
+                util_primconvert_save_index_buffer(vc4->primconvert, &vc4->indexbuf);
+                util_primconvert_save_rasterizer_state(vc4->primconvert, &vc4->rasterizer->base);
+                util_primconvert_draw_vbo(vc4->primconvert, info);
+                return;
+        }
+
         uint32_t width = vc4->framebuffer.width;
         uint32_t height = vc4->framebuffer.height;
         uint32_t tilew = align(width, 64) / 64;
@@ -87,9 +77,6 @@ vc4_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
                                                  32 * tilew * tileh, "tilea");
         struct vc4_bo *tile_state = vc4_bo_alloc(vc4->screen,
                                                  48 * tilew * tileh, "tilestate");
-        struct vc4_bo *ibo = get_ibo(vc4);
-
-        struct vc4_bo *vbo = get_vbo(vc4, width, height);
 
         vc4->needs_flush = true;
 
@@ -121,12 +108,31 @@ vc4_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
                (nr_attributes & 0x7));
 #endif
 
-        cl_start_reloc(&vc4->bcl, 1);
-        cl_u8(&vc4->bcl, VC4_PACKET_GL_INDEXED_PRIMITIVE);
-        cl_u8(&vc4->bcl, 0x04); // 8bit index, trinagles
-        cl_u32(&vc4->bcl, 3); // Length
-        cl_reloc(vc4, &vc4->bcl, ibo, 0);
-        cl_u32(&vc4->bcl, 2); // Maximum index
+        /* Note that the primitive type fields match with OpenGL/gallium
+         * definitions, up to but not including QUADS.
+         */
+        if (info->indexed) {
+                struct vc4_resource *rsc = vc4_resource(vc4->indexbuf.buffer);
+
+                assert(vc4->indexbuf.index_size == 1 ||
+                       vc4->indexbuf.index_size == 2);
+
+                cl_start_reloc(&vc4->bcl, 1);
+                cl_u8(&vc4->bcl, VC4_PACKET_GL_INDEXED_PRIMITIVE);
+                cl_u8(&vc4->bcl,
+                      info->mode |
+                      (vc4->indexbuf.index_size == 2 ?
+                       VC4_INDEX_BUFFER_U16:
+                       VC4_INDEX_BUFFER_U8));
+                cl_u32(&vc4->bcl, info->count);
+                cl_reloc(vc4, &vc4->bcl, rsc->bo, vc4->indexbuf.offset);
+                cl_u32(&vc4->bcl, info->max_index);
+        } else {
+                cl_u8(&vc4->bcl, VC4_PACKET_GL_ARRAY_PRIMITIVE);
+                cl_u8(&vc4->bcl, info->mode);
+                cl_u32(&vc4->bcl, info->count);
+                cl_u32(&vc4->bcl, info->start);
+        }
 
         cl_u8(&vc4->bcl, VC4_PACKET_FLUSH_ALL);
         cl_u8(&vc4->bcl, VC4_PACKET_NOP);
@@ -166,11 +172,25 @@ vc4_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
                 vc4->prog.vs->coord_shader_offset);
         cl_reloc(vc4, &vc4->shader_rec, cs_ubo, cs_ubo_offset);
 
-        cl_reloc(vc4, &vc4->shader_rec, vbo, 0);
-        cl_u8(&vc4->shader_rec, 15); /* bytes - 1 in the attribute*/
-        cl_u8(&vc4->shader_rec, 16); /* attribute stride */
-        cl_u8(&vc4->shader_rec, 0); /* VS VPM offset */
-        cl_u8(&vc4->shader_rec, 0); /* CS VPM offset */
+        struct vc4_vertex_stateobj *vtx = vc4->vtx;
+        struct vc4_vertexbuf_stateobj *vertexbuf = &vc4->vertexbuf;
+        for (int i = 0; i < vtx->num_elements; i++) {
+                struct pipe_vertex_element *elem = &vtx->pipe[i];
+                struct pipe_vertex_buffer *vb =
+                        &vertexbuf->vb[elem->vertex_buffer_index];
+                struct vc4_resource *rsc = vc4_resource(vb->buffer);
+
+                cl_reloc(vc4, &vc4->shader_rec, rsc->bo,
+                         vb->buffer_offset + elem->src_offset);
+                cl_u8(&vc4->shader_rec,
+                      util_format_get_blocksize(elem->src_format) - 1);
+                cl_u8(&vc4->shader_rec, vb->stride);
+                cl_u8(&vc4->shader_rec, 0); /* VS VPM offset */
+                cl_u8(&vc4->shader_rec, 0); /* CS VPM offset */
+
+                break; /* XXX: just the 1 for now. */
+        }
+
 
         vc4->shader_rec_count++;
 
