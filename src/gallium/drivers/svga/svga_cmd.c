@@ -1652,7 +1652,7 @@ SVGA3D_BindGBShader(struct svga_winsys_context *swc,
       SVGA3D_FIFOReserve(swc,
                          SVGA_3D_CMD_BIND_GB_SHADER,
                          sizeof *cmd,
-                         1);  /* one relocation */
+                         2);  /* two relocations */
 
    if (!cmd)
       return PIPE_ERROR_OUT_OF_MEMORY;
