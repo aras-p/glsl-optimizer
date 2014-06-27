@@ -1331,7 +1331,7 @@ dri3_swap_buffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
    struct dri3_screen *psc = (struct dri3_screen *) priv->base.psc;
    Display *dpy = priv->base.psc->dpy;
    xcb_connection_t *c = XGetXCBConnection(dpy);
-   int buf_id = DRI3_BACK_ID(priv->cur_back);
+   struct dri3_buffer *back;
    int64_t ret = 0;
 
    unsigned flags = __DRI2_FLUSH_DRAWABLE;
@@ -1339,10 +1339,11 @@ dri3_swap_buffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
       flags |= __DRI2_FLUSH_CONTEXT;
    dri3_flush(psc, priv, flags, __DRI2_THROTTLE_SWAPBUFFER);
 
+   back = priv->buffers[DRI3_BACK_ID(priv->cur_back)];
    dri3_flush_present_events(priv);
 
-   if (priv->buffers[buf_id] && !priv->is_pixmap) {
-      dri3_fence_reset(c, priv->buffers[buf_id]);
+   if (back && !priv->is_pixmap) {
+      dri3_fence_reset(c, back);
 
       /* Compute when we want the frame shown by taking the last known successful
        * MSC and adding in a swap interval for each outstanding swap request
@@ -1351,11 +1352,11 @@ dri3_swap_buffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
       if (target_msc == 0)
          target_msc = priv->msc + priv->swap_interval * (priv->send_sbc - priv->recv_sbc);
 
-      priv->buffers[buf_id]->busy = 1;
-      priv->buffers[buf_id]->last_swap = priv->send_sbc;
+      back->busy = 1;
+      back->last_swap = priv->send_sbc;
       xcb_present_pixmap(c,
                          priv->base.xDrawable,
-                         priv->buffers[buf_id]->pixmap,
+                         back->pixmap,
                          (uint32_t) priv->send_sbc,
                          0,                                    /* valid */
                          0,                                    /* update */
@@ -1363,7 +1364,7 @@ dri3_swap_buffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
                          0,                                    /* y_off */
                          None,                                 /* target_crtc */
                          None,
-                         priv->buffers[buf_id]->sync_fence,
+                         back->sync_fence,
                          XCB_PRESENT_OPTION_NONE,
                          target_msc,
                          divisor,
@@ -1378,7 +1379,7 @@ dri3_swap_buffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
       if (priv->have_fake_front) {
          dri3_fence_reset(c, priv->buffers[DRI3_FRONT_ID]);
          dri3_copy_area(c,
-                        priv->buffers[buf_id]->pixmap,
+                        back->pixmap,
                         priv->buffers[DRI3_FRONT_ID]->pixmap,
                         dri3_drawable_gc(priv),
                         0, 0, 0, 0, priv->width, priv->height);
