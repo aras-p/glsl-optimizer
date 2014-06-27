@@ -616,6 +616,14 @@ fui( float f )
    return fi.ui;
 }
 
+static INLINE float
+uif(uint32_t ui)
+{
+        union fi fi;
+        fi.ui = ui;
+        return fi.f;
+}
+
 
 /**
  * Convert ubyte to float in [0, 1].
