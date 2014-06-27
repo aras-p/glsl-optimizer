@@ -168,6 +168,16 @@ ast_type_qualifier::merge_qualifier(YYLTYPE *loc,
       this->max_vertices = q.max_vertices;
    }
 
+   if (q.flags.q.invocations) {
+      if (this->flags.q.invocations && this->invocations != q.invocations) {
+         _mesa_glsl_error(loc, state,
+                          "geometry shader set conflicting invocations "
+                          "(%d and %d)", this->invocations, q.invocations);
+         return false;
+      }
+      this->invocations = q.invocations;
+   }
+
    if (state->stage == MESA_SHADER_GEOMETRY &&
        state->has_explicit_attrib_stream()) {
       if (q.flags.q.stream && q.stream >= state->ctx->Const.MaxVertexStreams) {
