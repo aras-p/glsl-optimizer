@@ -24,6 +24,7 @@
 #include "glsl_types.h"
 #include "ir.h"
 #include "glsl_parser_extras.h"
+#include "main/errors.h"
 
 typedef enum {
    PARAMETER_LIST_NO_MATCH,
@@ -296,6 +297,7 @@ ir_function::matching_signature(_mesa_glsl_parse_state *state,
                                 bool *is_exact)
 {
    ir_function_signature **inexact_matches = NULL;
+   ir_function_signature **inexact_matches_temp;
    ir_function_signature *match = NULL;
    int num_inexact_matches = 0;
 
@@ -321,11 +323,16 @@ ir_function::matching_signature(_mesa_glsl_parse_state *state,
          free(inexact_matches);
          return sig;
       case PARAMETER_LIST_INEXACT_MATCH:
-         inexact_matches = (ir_function_signature **)
+         inexact_matches_temp = (ir_function_signature **)
                realloc(inexact_matches,
                        sizeof(*inexact_matches) *
                        (num_inexact_matches + 1));
-         assert(inexact_matches);
+         if (inexact_matches_temp == NULL) {
+            _mesa_error_no_memory(__func__);
+            free(inexact_matches);
+            return NULL;
+         }
+         inexact_matches = inexact_matches_temp;
          inexact_matches[num_inexact_matches++] = sig;
          continue;
       case PARAMETER_LIST_NO_MATCH:
