@@ -37,6 +37,7 @@ endif # HAVE_LD_VERSION_SCRIPT
 gallium_dri_la_LIBADD = \
 	$(top_builddir)/src/mesa/libmesagallium.la \
 	$(top_builddir)/src/mesa/drivers/dri/common/libdricommon.la \
+	$(top_builddir)/src/mesa/drivers/dri/common/libmegadriver_stub.la \
 	$(top_builddir)/src/gallium/state_trackers/dri/drm/libdridrm.la \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
 	$(top_builddir)/src/gallium/drivers/galahad/libgalahad.la \

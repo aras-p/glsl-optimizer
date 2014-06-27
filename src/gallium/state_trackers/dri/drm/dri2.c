@@ -1328,20 +1328,6 @@ dri2_create_buffer(__DRIscreen * sPriv,
  *
  * DRI versions differ in their implementation of init_screen and swap_buffers.
  */
-const struct __DriverAPIRec driDriverAPI = {
-   .InitScreen = dri2_init_screen,
-   .DestroyScreen = dri_destroy_screen,
-   .CreateContext = dri_create_context,
-   .DestroyContext = dri_destroy_context,
-   .CreateBuffer = dri2_create_buffer,
-   .DestroyBuffer = dri_destroy_buffer,
-   .MakeCurrent = dri_make_current,
-   .UnbindContext = dri_unbind_context,
-
-   .AllocateBuffer = dri2_allocate_buffer,
-   .ReleaseBuffer  = dri2_release_buffer,
-};
-
 const struct __DriverAPIRec galliumdrm_driver_api = {
    .InitScreen = dri2_init_screen,
    .DestroyScreen = dri_destroy_screen,
@@ -1357,14 +1343,6 @@ const struct __DriverAPIRec galliumdrm_driver_api = {
 };
 
 /* This is the table of extensions that the loader will dlsym() for. */
-PUBLIC const __DRIextension *__driDriverExtensions[] = {
-    &driCoreExtension.base,
-    &driImageDriverExtension.base,
-    &driDRI2Extension.base,
-    &gallium_config_options.base,
-    NULL
-};
-
 const __DRIextension *galliumdrm_driver_extensions[] = {
     &driCoreExtension.base,
     &driImageDriverExtension.base,

@@ -34,6 +34,7 @@ env.Prepend(LIBS = [
     mesa,
     glsl,
     gallium,
+    megadrivers_stub,
     COMMON_DRI_DRM_OBJECTS
 ])
 

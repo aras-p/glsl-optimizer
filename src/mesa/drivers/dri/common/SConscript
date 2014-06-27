@@ -76,9 +76,36 @@ driswenv.AppendUnique(LIBS = [
     'expat',
 ])
 
+#
+# megadrivers_stub
+#
+env = env.Clone()
+
+env.Append(CPPPATH = [
+    '#/include',
+    '#/src/',
+    '#/src/mapi',
+    '#/src/mesa',
+])
+
+env.Append(CPPDEFINES = [
+    '__NOT_HAVE_DRM_H',
+    'HAVE_DLADDR',
+])
+
+sources = env.ParseSourceList('Makefile.sources', 'megadriver_stub_FILES')
+
+megadrivers_stub = env.ConvenienceLibrary(
+	target = 'megadrivers_stub',
+	source = sources,
+)
+
+env.Alias('megadrivers_stub', megadrivers_stub)
+
 Export([
     'drienv',
     'driswenv',
     'COMMON_DRI_SW_OBJECTS',
     'COMMON_DRI_DRM_OBJECTS',
+    'megadrivers_stub',
 ])
