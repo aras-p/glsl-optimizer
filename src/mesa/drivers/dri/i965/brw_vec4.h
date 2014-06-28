@@ -448,45 +448,67 @@ public:
    vec4_instruction *emit_before(vec4_instruction *inst,
 				 vec4_instruction *new_inst);
 
-   vec4_instruction *MOV(dst_reg dst, src_reg src0);
-   vec4_instruction *NOT(dst_reg dst, src_reg src0);
-   vec4_instruction *RNDD(dst_reg dst, src_reg src0);
-   vec4_instruction *RNDE(dst_reg dst, src_reg src0);
-   vec4_instruction *RNDZ(dst_reg dst, src_reg src0);
-   vec4_instruction *FRC(dst_reg dst, src_reg src0);
-   vec4_instruction *F32TO16(dst_reg dst, src_reg src0);
-   vec4_instruction *F16TO32(dst_reg dst, src_reg src0);
-   vec4_instruction *ADD(dst_reg dst, src_reg src0, src_reg src1);
-   vec4_instruction *MUL(dst_reg dst, src_reg src0, src_reg src1);
-   vec4_instruction *MACH(dst_reg dst, src_reg src0, src_reg src1);
-   vec4_instruction *MAC(dst_reg dst, src_reg src0, src_reg src1);
-   vec4_instruction *AND(dst_reg dst, src_reg src0, src_reg src1);
-   vec4_instruction *OR(dst_reg dst, src_reg src0, src_reg src1);
-   vec4_instruction *XOR(dst_reg dst, src_reg src0, src_reg src1);
-   vec4_instruction *DP3(dst_reg dst, src_reg src0, src_reg src1);
-   vec4_instruction *DP4(dst_reg dst, src_reg src0, src_reg src1);
-   vec4_instruction *DPH(dst_reg dst, src_reg src0, src_reg src1);
-   vec4_instruction *SHL(dst_reg dst, src_reg src0, src_reg src1);
-   vec4_instruction *SHR(dst_reg dst, src_reg src0, src_reg src1);
-   vec4_instruction *ASR(dst_reg dst, src_reg src0, src_reg src1);
+   vec4_instruction *MOV(const dst_reg &dst, const src_reg &src0);
+   vec4_instruction *NOT(const dst_reg &dst, const src_reg &src0);
+   vec4_instruction *RNDD(const dst_reg &dst, const src_reg &src0);
+   vec4_instruction *RNDE(const dst_reg &dst, const src_reg &src0);
+   vec4_instruction *RNDZ(const dst_reg &dst, const src_reg &src0);
+   vec4_instruction *FRC(const dst_reg &dst, const src_reg &src0);
+   vec4_instruction *F32TO16(const dst_reg &dst, const src_reg &src0);
+   vec4_instruction *F16TO32(const dst_reg &dst, const src_reg &src0);
+   vec4_instruction *ADD(const dst_reg &dst, const src_reg &src0,
+                         const src_reg &src1);
+   vec4_instruction *MUL(const dst_reg &dst, const src_reg &src0,
+                         const src_reg &src1);
+   vec4_instruction *MACH(const dst_reg &dst, const src_reg &src0,
+                          const src_reg &src1);
+   vec4_instruction *MAC(const dst_reg &dst, const src_reg &src0,
+                         const src_reg &src1);
+   vec4_instruction *AND(const dst_reg &dst, const src_reg &src0,
+                         const src_reg &src1);
+   vec4_instruction *OR(const dst_reg &dst, const src_reg &src0,
+                        const src_reg &src1);
+   vec4_instruction *XOR(const dst_reg &dst, const src_reg &src0,
+                         const src_reg &src1);
+   vec4_instruction *DP3(const dst_reg &dst, const src_reg &src0,
+                         const src_reg &src1);
+   vec4_instruction *DP4(const dst_reg &dst, const src_reg &src0,
+                         const src_reg &src1);
+   vec4_instruction *DPH(const dst_reg &dst, const src_reg &src0,
+                         const src_reg &src1);
+   vec4_instruction *SHL(const dst_reg &dst, const src_reg &src0,
+                         const src_reg &src1);
+   vec4_instruction *SHR(const dst_reg &dst, const src_reg &src0,
+                         const src_reg &src1);
+   vec4_instruction *ASR(const dst_reg &dst, const src_reg &src0,
+                         const src_reg &src1);
    vec4_instruction *CMP(dst_reg dst, src_reg src0, src_reg src1,
 			 uint32_t condition);
    vec4_instruction *IF(src_reg src0, src_reg src1, uint32_t condition);
    vec4_instruction *IF(uint32_t predicate);
-   vec4_instruction *PULL_CONSTANT_LOAD(dst_reg dst, src_reg index);
-   vec4_instruction *SCRATCH_READ(dst_reg dst, src_reg index);
-   vec4_instruction *SCRATCH_WRITE(dst_reg dst, src_reg src, src_reg index);
-   vec4_instruction *LRP(dst_reg dst, src_reg a, src_reg y, src_reg x);
-   vec4_instruction *BFREV(dst_reg dst, src_reg value);
-   vec4_instruction *BFE(dst_reg dst, src_reg bits, src_reg offset, src_reg value);
-   vec4_instruction *BFI1(dst_reg dst, src_reg bits, src_reg offset);
-   vec4_instruction *BFI2(dst_reg dst, src_reg bfi1_dst, src_reg insert, src_reg base);
-   vec4_instruction *FBH(dst_reg dst, src_reg value);
-   vec4_instruction *FBL(dst_reg dst, src_reg value);
-   vec4_instruction *CBIT(dst_reg dst, src_reg value);
-   vec4_instruction *MAD(dst_reg dst, src_reg c, src_reg b, src_reg a);
-   vec4_instruction *ADDC(dst_reg dst, src_reg src0, src_reg src1);
-   vec4_instruction *SUBB(dst_reg dst, src_reg src0, src_reg src1);
+   vec4_instruction *PULL_CONSTANT_LOAD(const dst_reg &dst,
+                                        const src_reg &index);
+   vec4_instruction *SCRATCH_READ(const dst_reg &dst, const src_reg &index);
+   vec4_instruction *SCRATCH_WRITE(const dst_reg &dst, const src_reg &src,
+                                   const src_reg &index);
+   vec4_instruction *LRP(const dst_reg &dst, const src_reg &a,
+                         const src_reg &y, const src_reg &x);
+   vec4_instruction *BFREV(const dst_reg &dst, const src_reg &value);
+   vec4_instruction *BFE(const dst_reg &dst, const src_reg &bits,
+                         const src_reg &offset, const src_reg &value);
+   vec4_instruction *BFI1(const dst_reg &dst, const src_reg &bits,
+                          const src_reg &offset);
+   vec4_instruction *BFI2(const dst_reg &dst, const src_reg &bfi1_dst,
+                          const src_reg &insert, const src_reg &base);
+   vec4_instruction *FBH(const dst_reg &dst, const src_reg &value);
+   vec4_instruction *FBL(const dst_reg &dst, const src_reg &value);
+   vec4_instruction *CBIT(const dst_reg &dst, const src_reg &value);
+   vec4_instruction *MAD(const dst_reg &dst, const src_reg &c,
+                         const src_reg &b, const src_reg &a);
+   vec4_instruction *ADDC(const dst_reg &dst, const src_reg &src0,
+                          const src_reg &src1);
+   vec4_instruction *SUBB(const dst_reg &dst, const src_reg &src0,
+                          const src_reg &src1);
 
    int implied_mrf_writes(vec4_instruction *inst);
 

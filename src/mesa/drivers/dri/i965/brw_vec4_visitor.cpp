@@ -112,7 +112,7 @@ vec4_visitor::emit(enum opcode opcode)
 
 #define ALU1(op)							\
    vec4_instruction *							\
-   vec4_visitor::op(dst_reg dst, src_reg src0)				\
+   vec4_visitor::op(const dst_reg &dst, const src_reg &src0)		\
    {									\
       return new(mem_ctx) vec4_instruction(this, BRW_OPCODE_##op, dst,	\
 					   src0);			\
@@ -120,7 +120,8 @@ vec4_visitor::emit(enum opcode opcode)
 
 #define ALU2(op)							\
    vec4_instruction *							\
-   vec4_visitor::op(dst_reg dst, src_reg src0, src_reg src1)		\
+   vec4_visitor::op(const dst_reg &dst, const src_reg &src0,		\
+                    const src_reg &src1)				\
    {									\
       return new(mem_ctx) vec4_instruction(this, BRW_OPCODE_##op, dst,	\
 					   src0, src1);			\
@@ -128,7 +129,8 @@ vec4_visitor::emit(enum opcode opcode)
 
 #define ALU2_ACC(op)							\
    vec4_instruction *							\
-   vec4_visitor::op(dst_reg dst, src_reg src0, src_reg src1)		\
+   vec4_visitor::op(const dst_reg &dst, const src_reg &src0,		\
+                    const src_reg &src1)				\
    {									\
       vec4_instruction *inst = new(mem_ctx) vec4_instruction(this,     \
                        BRW_OPCODE_##op, dst, src0, src1);		\
@@ -138,7 +140,8 @@ vec4_visitor::emit(enum opcode opcode)
 
 #define ALU3(op)							\
    vec4_instruction *							\
-   vec4_visitor::op(dst_reg dst, src_reg src0, src_reg src1, src_reg src2)\
+   vec4_visitor::op(const dst_reg &dst, const src_reg &src0,		\
+                    const src_reg &src1, const src_reg &src2)		\
    {									\
       assert(brw->gen >= 6);						\
       return new(mem_ctx) vec4_instruction(this, BRW_OPCODE_##op, dst,	\
@@ -238,7 +241,7 @@ vec4_visitor::CMP(dst_reg dst, src_reg src0, src_reg src1, uint32_t condition)
 }
 
 vec4_instruction *
-vec4_visitor::SCRATCH_READ(dst_reg dst, src_reg index)
+vec4_visitor::SCRATCH_READ(const dst_reg &dst, const src_reg &index)
 {
    vec4_instruction *inst;
 
@@ -251,7 +254,8 @@ vec4_visitor::SCRATCH_READ(dst_reg dst, src_reg index)
 }
 
 vec4_instruction *
-vec4_visitor::SCRATCH_WRITE(dst_reg dst, src_reg src, src_reg index)
+vec4_visitor::SCRATCH_WRITE(const dst_reg &dst, const src_reg &src,
+                            const src_reg &index)
 {
    vec4_instruction *inst;
 
