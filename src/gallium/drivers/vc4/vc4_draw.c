@@ -32,8 +32,7 @@
 
 static void
 vc4_rcl_tile_calls(struct vc4_context *vc4,
-                   uint32_t xtiles, uint32_t ytiles,
-                   struct vc4_bo *tile_alloc)
+                   uint32_t xtiles, uint32_t ytiles)
 {
         for (int x = 0; x < xtiles; x++) {
                 for (int y = 0; y < ytiles; y++) {
@@ -43,7 +42,7 @@ vc4_rcl_tile_calls(struct vc4_context *vc4,
 
                         cl_start_reloc(&vc4->rcl, 1);
                         cl_u8(&vc4->rcl, VC4_PACKET_BRANCH_TO_SUB_LIST);
-                        cl_reloc(vc4, &vc4->rcl, tile_alloc,
+                        cl_reloc(vc4, &vc4->rcl, vc4->tile_alloc,
                                  (y * xtiles + x) * 32);
 
                         if (x == xtiles - 1 && y == ytiles - 1) {
@@ -73,10 +72,19 @@ vc4_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
         uint32_t height = vc4->framebuffer.height;
         uint32_t tilew = align(width, 64) / 64;
         uint32_t tileh = align(height, 64) / 64;
-        struct vc4_bo *tile_alloc = vc4_bo_alloc(vc4->screen,
-                                                 32 * tilew * tileh, "tilea");
-        struct vc4_bo *tile_state = vc4_bo_alloc(vc4->screen,
-                                                 48 * tilew * tileh, "tilestate");
+
+        uint32_t tile_alloc_size = 32 * tilew * tileh;
+        uint32_t tile_state_size = 48 * tilew * tileh;
+        if (!vc4->tile_alloc || vc4->tile_alloc->size < tile_alloc_size) {
+                vc4_bo_unreference(&vc4->tile_alloc);
+                vc4->tile_alloc = vc4_bo_alloc(vc4->screen, tile_alloc_size,
+                                               "tile_alloc");
+        }
+        if (!vc4->tile_state || vc4->tile_state->size < tile_state_size) {
+                vc4_bo_unreference(&vc4->tile_state);
+                vc4->tile_state = vc4_bo_alloc(vc4->screen, tile_state_size,
+                                               "tile_state");
+        }
 
         vc4->needs_flush = true;
 
@@ -84,9 +92,9 @@ vc4_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
         //   as soon as binning is finished.
         cl_start_reloc(&vc4->bcl, 2);
         cl_u8(&vc4->bcl, VC4_PACKET_TILE_BINNING_MODE_CONFIG);
-        cl_reloc(vc4, &vc4->bcl, tile_alloc, 0);
+        cl_reloc(vc4, &vc4->bcl, vc4->tile_alloc, 0);
         cl_u32(&vc4->bcl, 0x8000); /* tile allocation memory size */
-        cl_reloc(vc4, &vc4->bcl, tile_state, 0);
+        cl_reloc(vc4, &vc4->bcl, vc4->tile_state, 0);
         cl_u8(&vc4->bcl, tilew);
         cl_u8(&vc4->bcl, tileh);
         cl_u8(&vc4->bcl, VC4_BIN_CONFIG_AUTO_INIT_TSDA);
@@ -222,7 +230,7 @@ vc4_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
         cl_u16(&vc4->rcl, 0); // Store nothing (just clear)
         cl_u32(&vc4->rcl, 0); // no address is needed
 
-        vc4_rcl_tile_calls(vc4, tilew, tileh, tile_alloc);
+        vc4_rcl_tile_calls(vc4, tilew, tileh);
 
         vc4_flush(pctx);
 }

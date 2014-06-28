@@ -120,6 +120,9 @@ struct vc4_context {
         struct vc4_cl bo_handles;
         uint32_t shader_rec_count;
 
+        struct vc4_bo *tile_alloc;
+        struct vc4_bo *tile_state;
+
         struct util_slab_mempool transfer_pool;
         struct blitter_context *blitter;
 
