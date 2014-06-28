@@ -2546,11 +2546,15 @@ Converter::handleInstruction(const struct tgsi_full_instruction *insn)
       }
       /* fallthrough */
    case TGSI_OPCODE_ENDPRIM:
-      // get vertex stream if specified (must be immediate)
-      src0 = tgsi.srcCount() ?
-         mkImm(tgsi.getSrc(0).getValueU32(0, info)) : zero;
+   {
+      // get vertex stream (must be immediate)
+      unsigned int stream = tgsi.getSrc(0).getValueU32(0, info);
+      if (stream && op == OP_RESTART)
+         break;
+      src0 = mkImm(stream);
       mkOp1(op, TYPE_U32, NULL, src0)->fixed = 1;
       break;
+   }
    case TGSI_OPCODE_IF:
    case TGSI_OPCODE_UIF:
    {
