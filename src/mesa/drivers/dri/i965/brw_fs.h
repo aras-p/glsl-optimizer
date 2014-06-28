@@ -298,39 +298,43 @@ public:
    fs_inst *emit(enum opcode opcode, fs_reg dst,
                  fs_reg src[], int sources);
 
-   fs_inst *MOV(fs_reg dst, fs_reg src);
-   fs_inst *NOT(fs_reg dst, fs_reg src);
-   fs_inst *RNDD(fs_reg dst, fs_reg src);
-   fs_inst *RNDE(fs_reg dst, fs_reg src);
-   fs_inst *RNDZ(fs_reg dst, fs_reg src);
-   fs_inst *FRC(fs_reg dst, fs_reg src);
-   fs_inst *ADD(fs_reg dst, fs_reg src0, fs_reg src1);
-   fs_inst *MUL(fs_reg dst, fs_reg src0, fs_reg src1);
-   fs_inst *MACH(fs_reg dst, fs_reg src0, fs_reg src1);
-   fs_inst *MAC(fs_reg dst, fs_reg src0, fs_reg src1);
-   fs_inst *SHL(fs_reg dst, fs_reg src0, fs_reg src1);
-   fs_inst *SHR(fs_reg dst, fs_reg src0, fs_reg src1);
-   fs_inst *ASR(fs_reg dst, fs_reg src0, fs_reg src1);
-   fs_inst *AND(fs_reg dst, fs_reg src0, fs_reg src1);
-   fs_inst *OR(fs_reg dst, fs_reg src0, fs_reg src1);
-   fs_inst *XOR(fs_reg dst, fs_reg src0, fs_reg src1);
+   fs_inst *MOV(const fs_reg &dst, const fs_reg &src);
+   fs_inst *NOT(const fs_reg &dst, const fs_reg &src);
+   fs_inst *RNDD(const fs_reg &dst, const fs_reg &src);
+   fs_inst *RNDE(const fs_reg &dst, const fs_reg &src);
+   fs_inst *RNDZ(const fs_reg &dst, const fs_reg &src);
+   fs_inst *FRC(const fs_reg &dst, const fs_reg &src);
+   fs_inst *ADD(const fs_reg &dst, const fs_reg &src0, const fs_reg &src1);
+   fs_inst *MUL(const fs_reg &dst, const fs_reg &src0, const fs_reg &src1);
+   fs_inst *MACH(const fs_reg &dst, const fs_reg &src0, const fs_reg &src1);
+   fs_inst *MAC(const fs_reg &dst, const fs_reg &src0, const fs_reg &src1);
+   fs_inst *SHL(const fs_reg &dst, const fs_reg &src0, const fs_reg &src1);
+   fs_inst *SHR(const fs_reg &dst, const fs_reg &src0, const fs_reg &src1);
+   fs_inst *ASR(const fs_reg &dst, const fs_reg &src0, const fs_reg &src1);
+   fs_inst *AND(const fs_reg &dst, const fs_reg &src0, const fs_reg &src1);
+   fs_inst *OR(const fs_reg &dst, const fs_reg &src0, const fs_reg &src1);
+   fs_inst *XOR(const fs_reg &dst, const fs_reg &src0, const fs_reg &src1);
    fs_inst *IF(uint32_t predicate);
-   fs_inst *IF(fs_reg src0, fs_reg src1, uint32_t condition);
+   fs_inst *IF(const fs_reg &src0, const fs_reg &src1, uint32_t condition);
    fs_inst *CMP(fs_reg dst, fs_reg src0, fs_reg src1,
                 uint32_t condition);
-   fs_inst *LRP(fs_reg dst, fs_reg a, fs_reg y, fs_reg x);
+   fs_inst *LRP(const fs_reg &dst, const fs_reg &a, const fs_reg &y,
+                const fs_reg &x);
    fs_inst *DEP_RESOLVE_MOV(int grf);
-   fs_inst *BFREV(fs_reg dst, fs_reg value);
-   fs_inst *BFE(fs_reg dst, fs_reg bits, fs_reg offset, fs_reg value);
-   fs_inst *BFI1(fs_reg dst, fs_reg bits, fs_reg offset);
-   fs_inst *BFI2(fs_reg dst, fs_reg bfi1_dst, fs_reg insert, fs_reg base);
-   fs_inst *FBH(fs_reg dst, fs_reg value);
-   fs_inst *FBL(fs_reg dst, fs_reg value);
-   fs_inst *CBIT(fs_reg dst, fs_reg value);
-   fs_inst *MAD(fs_reg dst, fs_reg c, fs_reg b, fs_reg a);
-   fs_inst *ADDC(fs_reg dst, fs_reg src0, fs_reg src1);
-   fs_inst *SUBB(fs_reg dst, fs_reg src0, fs_reg src1);
-   fs_inst *SEL(fs_reg dst, fs_reg src0, fs_reg src1);
+   fs_inst *BFREV(const fs_reg &dst, const fs_reg &value);
+   fs_inst *BFE(const fs_reg &dst, const fs_reg &bits, const fs_reg &offset,
+                const fs_reg &value);
+   fs_inst *BFI1(const fs_reg &dst, const fs_reg &bits, const fs_reg &offset);
+   fs_inst *BFI2(const fs_reg &dst, const fs_reg &bfi1_dst,
+                 const fs_reg &insert, const fs_reg &base);
+   fs_inst *FBH(const fs_reg &dst, const fs_reg &value);
+   fs_inst *FBL(const fs_reg &dst, const fs_reg &value);
+   fs_inst *CBIT(const fs_reg &dst, const fs_reg &value);
+   fs_inst *MAD(const fs_reg &dst, const fs_reg &c, const fs_reg &b,
+                const fs_reg &a);
+   fs_inst *ADDC(const fs_reg &dst, const fs_reg &src0, const fs_reg &src1);
+   fs_inst *SUBB(const fs_reg &dst, const fs_reg &src0, const fs_reg &src1);
+   fs_inst *SEL(const fs_reg &dst, const fs_reg &src0, const fs_reg &src1);
 
    int type_size(const struct glsl_type *type);
    fs_inst *get_instruction_generating_reg(fs_inst *start,

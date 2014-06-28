@@ -127,21 +127,23 @@ fs_inst::resize_sources(uint8_t num_sources)
 
 #define ALU1(op)                                                        \
    fs_inst *                                                            \
-   fs_visitor::op(fs_reg dst, fs_reg src0)                              \
+   fs_visitor::op(const fs_reg &dst, const fs_reg &src0)                \
    {                                                                    \
       return new(mem_ctx) fs_inst(BRW_OPCODE_##op, dst, src0);          \
    }
 
 #define ALU2(op)                                                        \
    fs_inst *                                                            \
-   fs_visitor::op(fs_reg dst, fs_reg src0, fs_reg src1)                 \
+   fs_visitor::op(const fs_reg &dst, const fs_reg &src0,                \
+                  const fs_reg &src1)                                   \
    {                                                                    \
       return new(mem_ctx) fs_inst(BRW_OPCODE_##op, dst, src0, src1);    \
    }
 
 #define ALU2_ACC(op)                                                    \
    fs_inst *                                                            \
-   fs_visitor::op(fs_reg dst, fs_reg src0, fs_reg src1)                 \
+   fs_visitor::op(const fs_reg &dst, const fs_reg &src0,                \
+                  const fs_reg &src1)                                   \
    {                                                                    \
       fs_inst *inst = new(mem_ctx) fs_inst(BRW_OPCODE_##op, dst, src0, src1);\
       inst->writes_accumulator = true;                                  \
@@ -150,7 +152,8 @@ fs_inst::resize_sources(uint8_t num_sources)
 
 #define ALU3(op)                                                        \
    fs_inst *                                                            \
-   fs_visitor::op(fs_reg dst, fs_reg src0, fs_reg src1, fs_reg src2)    \
+   fs_visitor::op(const fs_reg &dst, const fs_reg &src0,                \
+                  const fs_reg &src1, const fs_reg &src2)               \
    {                                                                    \
       return new(mem_ctx) fs_inst(BRW_OPCODE_##op, dst, src0, src1, src2);\
    }
@@ -195,7 +198,7 @@ fs_visitor::IF(uint32_t predicate)
 
 /** Gen6 IF with embedded comparison. */
 fs_inst *
-fs_visitor::IF(fs_reg src0, fs_reg src1, uint32_t condition)
+fs_visitor::IF(const fs_reg &src0, const fs_reg &src1, uint32_t condition)
 {
    assert(brw->gen == 6);
    fs_inst *inst = new(mem_ctx) fs_inst(BRW_OPCODE_IF,
