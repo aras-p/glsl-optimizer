@@ -1464,14 +1464,21 @@ NVC0LoweringPass::handleEXPORT(Instruction *i)
 bool
 NVC0LoweringPass::handleOUT(Instruction *i)
 {
-   if (i->op == OP_RESTART && i->prev && i->prev->op == OP_EMIT) {
+   Instruction *prev = i->prev;
+   ImmediateValue stream, prevStream;
+
+   // Only merge if the stream ids match. Also, note that the previous
+   // instruction would have already been lowered, so we take arg1 from it.
+   if (i->op == OP_RESTART && prev && prev->op == OP_EMIT &&
+       i->src(0).getImmediate(stream) &&
+       prev->src(1).getImmediate(prevStream) &&
+       stream.reg.data.u32 == prevStream.reg.data.u32) {
       i->prev->subOp = NV50_IR_SUBOP_EMIT_RESTART;
       delete_Instruction(prog, i);
    } else {
       assert(gpEmitAddress);
       i->setDef(0, gpEmitAddress);
-      if (i->srcExists(0))
-         i->setSrc(1, i->getSrc(0));
+      i->setSrc(1, i->getSrc(0));
       i->setSrc(0, gpEmitAddress);
    }
    return true;
