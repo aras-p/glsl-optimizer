@@ -40,6 +40,28 @@ vc4_dump_program(struct qcompile *c)
         }
 }
 
+/**
+ * This is used to resolve the fact that we might register-allocate two
+ * different operands of an instruction to the same physical register file
+ * even though instructions have only one field for the register file source
+ * address.
+ *
+ * In that case, we need to move one to a temporary that can be used in the
+ * instruction, instead.
+ */
+static void
+fixup_raddr_conflict(uint64_t *insts, uint32_t *ni,
+               struct qpu_reg src0, struct qpu_reg *src1)
+{
+        if ((src0.mux == QPU_MUX_A || src0.mux == QPU_MUX_B) &&
+            (src1->mux == QPU_MUX_A || src1->mux == QPU_MUX_B) &&
+            src0.addr != src1->addr) {
+                insts[(*ni)++] = qpu_inst(qpu_a_MOV(qpu_r5(), *src1),
+                                          qpu_m_NOP());
+                *src1 = qpu_r5();
+        }
+}
+
 void
 vc4_generate_code(struct qcompile *c)
 {
@@ -108,6 +130,13 @@ vc4_generate_code(struct qcompile *c)
                         A(FTOI),
 
                         M(FMUL),
+                };
+
+                static const uint32_t compareflags[] = {
+                        [QOP_SEQ - QOP_SEQ] = QPU_COND_ZS,
+                        [QOP_SNE - QOP_SEQ] = QPU_COND_ZC,
+                        [QOP_SLT - QOP_SEQ] = QPU_COND_NS,
+                        [QOP_SGE - QOP_SEQ] = QPU_COND_NC,
                 };
 
                 struct qpu_reg src[4];
@@ -182,6 +211,24 @@ vc4_generate_code(struct qcompile *c)
                                 insts[ni++] = qpu_inst(qpu_a_MOV(dst, src[0]),
                                                        qpu_m_NOP());
                         }
+                        break;
+
+                case QOP_SEQ:
+                case QOP_SNE:
+                case QOP_SGE:
+                case QOP_SLT:
+                        fixup_raddr_conflict(insts, &ni, src[0], &src[1]);
+                        insts[ni++] = qpu_inst(qpu_a_SUB(qpu_ra(QPU_W_NOP),
+                                                         src[0], src[1]),
+                                               qpu_m_NOP());
+                        insts[ni - 1] |= QPU_SF;
+
+                        insts[ni++] = qpu_load_imm_f(dst, 0.0);
+                        insts[ni++] = qpu_load_imm_f(dst, 1.0);
+                        insts[ni - 1] = ((insts[ni - 1] & ~QPU_COND_ADD_MASK)
+                                         | QPU_SET_FIELD(compareflags[qinst->op - QOP_SEQ],
+                                                         QPU_COND_ADD));
+
                         break;
 
                 case QOP_VPM_WRITE:
@@ -274,13 +321,7 @@ vc4_generate_code(struct qcompile *c)
                         if (qir_get_op_nsrc(qinst->op) == 1)
                                 src[1] = src[0];
 
-                        if ((src[0].mux == QPU_MUX_A || src[0].mux == QPU_MUX_B) &&
-                            (src[1].mux == QPU_MUX_A || src[1].mux == QPU_MUX_B) &&
-                            src[0].addr != src[1].addr) {
-                                insts[ni++] = qpu_inst(qpu_a_MOV(qpu_r5(), src[1]),
-                                                       qpu_m_NOP());
-                                src[1] = qpu_r5();
-                        }
+                        fixup_raddr_conflict(insts, &ni, src[0], &src[1]);
 
                         if (translate[qinst->op].is_mul) {
                                 insts[ni++] = qpu_inst(qpu_a_NOP(),

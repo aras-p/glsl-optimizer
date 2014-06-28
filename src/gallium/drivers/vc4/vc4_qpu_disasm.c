@@ -199,6 +199,17 @@ static const char *qpu_pack_a[] = {
         [QPU_PACK_A_8D_SAT] = ".8d.sat",
 };
 
+static const char *qpu_condflags[] = {
+        [QPU_COND_NEVER] = ".never",
+        [QPU_COND_ALWAYS] = "",
+        [QPU_COND_ZS] = ".zs",
+        [QPU_COND_ZC] = ".zc",
+        [QPU_COND_NS] = ".ns",
+        [QPU_COND_NC] = ".nc",
+        [QPU_COND_CS] = ".cs",
+        [QPU_COND_CC] = ".cc",
+};
+
 #define DESC(array, index)                                        \
         ((index > ARRAY_SIZE(array) || !(array)[index]) ?         \
          "???" : (array)[index])
@@ -282,11 +293,15 @@ static void
 print_add_op(uint64_t inst)
 {
         uint32_t op_add = QPU_GET_FIELD(inst, QPU_OP_ADD);
+        uint32_t cond = QPU_GET_FIELD(inst, QPU_COND_ADD);
         bool is_mov = (op_add == QPU_A_OR &&
                        QPU_GET_FIELD(inst, QPU_ADD_A) ==
                        QPU_GET_FIELD(inst, QPU_ADD_B));
 
-        fprintf(stderr, "%s ", is_mov ? "mov" : DESC(qpu_add_opcodes, op_add));
+        fprintf(stderr, "%s%s%s ",
+                is_mov ? "mov" : DESC(qpu_add_opcodes, op_add),
+                ((inst & QPU_SF) && op_add != QPU_A_NOP) ? ".sf" : "",
+                op_add != QPU_A_NOP ? DESC(qpu_condflags, cond) : "");
 
         print_alu_dst(inst, false);
         fprintf(stderr, ", ");
@@ -303,12 +318,17 @@ print_add_op(uint64_t inst)
 static void
 print_mul_op(uint64_t inst)
 {
+        uint32_t op_add = QPU_GET_FIELD(inst, QPU_OP_ADD);
         uint32_t op_mul = QPU_GET_FIELD(inst, QPU_OP_MUL);
+        uint32_t cond = QPU_GET_FIELD(inst, QPU_COND_MUL);
         bool is_mov = (op_mul == QPU_M_V8MIN &&
                        QPU_GET_FIELD(inst, QPU_MUL_A) ==
                        QPU_GET_FIELD(inst, QPU_MUL_B));
 
-        fprintf(stderr, "%s ", is_mov ? "mov" : DESC(qpu_mul_opcodes, op_mul));
+        fprintf(stderr, "%s%s%s ",
+                is_mov ? "mov" : DESC(qpu_mul_opcodes, op_mul),
+                ((inst & QPU_SF) && op_add == QPU_A_NOP) ? ".sf" : "",
+                op_mul != QPU_M_NOP ? DESC(qpu_condflags, cond) : "");
 
         print_alu_dst(inst, true);
         fprintf(stderr, ", ");
@@ -325,12 +345,18 @@ static void
 print_load_imm(uint64_t inst)
 {
         uint32_t imm = inst;
+        uint32_t waddr_add = QPU_GET_FIELD(inst, QPU_WADDR_ADD);
+        uint32_t waddr_mul = QPU_GET_FIELD(inst, QPU_WADDR_MUL);
+        uint32_t cond_add = QPU_GET_FIELD(inst, QPU_COND_ADD);
+        uint32_t cond_mul = QPU_GET_FIELD(inst, QPU_COND_MUL);
 
         fprintf(stderr, "load_imm ");
         print_alu_dst(inst, false);
-        fprintf(stderr, ", ");
+        fprintf(stderr, "%s, ", (waddr_add != QPU_W_NOP ?
+                                 DESC(qpu_condflags, cond_add) : ""));
         print_alu_dst(inst, true);
-        fprintf(stderr, ", ");
+        fprintf(stderr, "%s, ", (waddr_mul != QPU_W_NOP ?
+                                 DESC(qpu_condflags, cond_mul) : ""));
         fprintf(stderr, "0x%08x (%f)", imm, uif(imm));
 }
 

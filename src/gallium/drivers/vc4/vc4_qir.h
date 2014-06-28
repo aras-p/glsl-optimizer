@@ -50,6 +50,12 @@ enum qop {
         QOP_FMAX,
         QOP_FMINABS,
         QOP_FMAXABS,
+
+        QOP_SEQ,
+        QOP_SNE,
+        QOP_SGE,
+        QOP_SLT,
+
         QOP_FTOI,
         QOP_RCP,
         QOP_RSQ,

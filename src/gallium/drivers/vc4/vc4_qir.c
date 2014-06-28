@@ -43,6 +43,12 @@ static const struct qir_op_info qir_op_info[] = {
         [QOP_FMAX] = { "fmax", 1, 2 },
         [QOP_FMINABS] = { "fminabs", 1, 2 },
         [QOP_FMAXABS] = { "fmaxabs", 1, 2 },
+
+        [QOP_SEQ] = { "seq", 1, 2 },
+        [QOP_SNE] = { "sne", 1, 2 },
+        [QOP_SGE] = { "sge", 1, 2 },
+        [QOP_SLT] = { "slt", 1, 2 },
+
         [QOP_FTOI] = { "ftoi", 1, 1 },
         [QOP_RCP] = { "rcp", 1, 1 },
         [QOP_RSQ] = { "rsq", 1, 1 },

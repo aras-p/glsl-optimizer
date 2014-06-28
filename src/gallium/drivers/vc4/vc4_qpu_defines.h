@@ -223,6 +223,8 @@ enum qpu_pack_a {
 #define QPU_COND_MUL_SHIFT              46
 #define QPU_COND_MUL_MASK               QPU_MASK(48, 46)
 
+#define QPU_SF                          ((uint64_t)1 << 45)
+
 #define QPU_WADDR_ADD_SHIFT             38
 #define QPU_WADDR_ADD_MASK              QPU_MASK(43, 38)
 #define QPU_WADDR_MUL_SHIFT             32
