@@ -29,7 +29,13 @@
 
 struct vc4_bo;
 
-#define VC4_DBG_CL        0x0001
+#define VC4_DEBUG_CL        0x0001
+#define VC4_DEBUG_QPU       0x0002
+#define VC4_DEBUG_QIR       0x0004
+#define VC4_DEBUG_TGSI      0x0008
+#define VC4_DEBUG_SHADERDB  0x0010
+#define VC4_DEBUG_PERF      0x0020
+#define VC4_DEBUG_NORAST    0x0040
 
 #define VC4_MAX_MIP_LEVELS 11
 
@@ -59,5 +65,7 @@ vc4_screen_bo_from_handle(struct pipe_screen *pscreen,
                           unsigned *out_stride);
 
 uint8_t vc4_get_texture_format(enum pipe_format format);
+
+extern uint32_t vc4_debug;
 
 #endif /* VC4_SCREEN_H */

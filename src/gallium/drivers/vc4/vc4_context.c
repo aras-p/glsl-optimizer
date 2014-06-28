@@ -110,13 +110,16 @@ vc4_flush(struct pipe_context *pctx)
         submit.shader_record_len = vc4->shader_rec.next - vc4->shader_rec.base;
         submit.shader_record_count = vc4->shader_rec_count;
 
+        if (!(vc4_debug & VC4_DEBUG_NORAST)) {
 #ifndef USE_VC4_SIMULATOR
-        int ret = drmIoctl(vc4->fd, DRM_IOCTL_VC4_SUBMIT_CL, &submit);
-        if (ret)
-                errx(1, "VC4 submit failed\n");
+                int ret = drmIoctl(vc4->fd, DRM_IOCTL_VC4_SUBMIT_CL, &submit);
+                if (ret)
+                        errx(1, "VC4 submit failed\n");
 #else
-        vc4_simulator_flush(vc4, csurf);
+                vc4_simulator_flush(vc4, csurf);
 #endif
+        }
+
         vc4_reset_cl(&vc4->bcl);
         vc4_reset_cl(&vc4->rcl);
         vc4_reset_cl(&vc4->shader_rec);
@@ -158,6 +161,10 @@ vc4_context_create(struct pipe_screen *pscreen, void *priv)
         struct vc4_screen *screen = vc4_screen(pscreen);
         struct vc4_context *vc4;
 
+        /* Prevent dumping of the shaders built during context setup. */
+        uint32_t saved_shaderdb_flag = vc4_debug & VC4_DEBUG_SHADERDB;
+        vc4_debug &= ~VC4_DEBUG_SHADERDB;
+
         vc4 = CALLOC_STRUCT(vc4_context);
         if (vc4 == NULL)
                 return NULL;
@@ -193,6 +200,8 @@ vc4_context_create(struct pipe_screen *pscreen, void *priv)
                                                    !((1 << PIPE_PRIM_QUADS) - 1));
         if (!vc4->primconvert)
                 goto fail;
+
+        vc4_debug |= saved_shaderdb_flag;
 
         return &vc4->base;
 

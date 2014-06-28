@@ -37,8 +37,24 @@
 #include "vc4_resource.h"
 
 static const struct debug_named_value debug_options[] = {
-        {"cl",      VC4_DBG_CL,   "Dump command list during creation"},
+        { "cl",       VC4_DEBUG_CL,
+          "Dump command list during creation" },
+        { "qpu",      VC4_DEBUG_QPU,
+          "Dump generated QPU instructions" },
+        { "qir",      VC4_DEBUG_QIR,
+          "Dump QPU IR during program compile" },
+        { "tgsi",     VC4_DEBUG_TGSI,
+          "Dump TGSI during program compile" },
+        { "shaderdb", VC4_DEBUG_SHADERDB,
+          "Dump program compile information for shader-db analysis" },
+        { "perf",     VC4_DEBUG_PERF,
+          "Print during performance-related events" },
+        { "norast",   VC4_DEBUG_NORAST,
+          "Skip actual hardware execution of commands" },
 };
+
+DEBUG_GET_ONCE_FLAGS_OPTION(vc4_debug, "VC4_DEBUG", debug_options, 0)
+uint32_t vc4_debug;
 
 static const char *
 vc4_screen_get_name(struct pipe_screen *pscreen)
@@ -380,6 +396,10 @@ vc4_screen_create(int fd)
         pscreen->is_format_supported = vc4_screen_is_format_supported;
 
         screen->fd = fd;
+
+	vc4_debug = debug_get_option_vc4_debug();
+        if (vc4_debug & VC4_DEBUG_SHADERDB)
+                vc4_debug |= VC4_DEBUG_NORAST;
 
 #if USE_VC4_SIMULATOR
         vc4_simulator_init(screen);

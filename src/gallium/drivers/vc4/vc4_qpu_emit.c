@@ -363,7 +363,9 @@ vc4_generate_code(struct qcompile *c)
         c->qpu_insts = insts;
         c->num_qpu_insts = ni;
 
-        vc4_dump_program(c);
+        if (vc4_debug & VC4_DEBUG_QPU)
+                vc4_dump_program(c);
+
         vc4_qpu_validate(insts, ni);
 }
 
