@@ -711,7 +711,7 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
     */
    int old_ip[(p->next_insn_offset - start_offset) / 8];
 
-   if (brw->gen < 6)
+   if (brw->gen < 6 || brw->gen >= 8)
       return;
 
    int src_offset;
