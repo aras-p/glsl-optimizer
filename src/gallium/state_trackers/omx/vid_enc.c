@@ -125,9 +125,9 @@ OMX_ERRORTYPE vid_enc_LoaderComponent(stLoaderComponentType *comp)
    if (comp->role_specific[0] == NULL)
       goto error_specific;
 
-   comp->name = OMX_VID_ENC_BASE_NAME;
-   comp->name_specific[0] = OMX_VID_ENC_AVC_NAME;
-   comp->role_specific[0] = OMX_VID_ENC_AVC_ROLE;
+   strcpy(comp->name, OMX_VID_ENC_BASE_NAME);
+   strcpy(comp->name_specific[0], OMX_VID_ENC_AVC_NAME);
+   strcpy(comp->role_specific[0], OMX_VID_ENC_AVC_ROLE);
 
    return OMX_ErrorNone;
 
