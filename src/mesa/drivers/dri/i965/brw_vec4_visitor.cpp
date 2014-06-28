@@ -30,8 +30,9 @@ extern "C" {
 namespace brw {
 
 vec4_instruction::vec4_instruction(vec4_visitor *v,
-				   enum opcode opcode, dst_reg dst,
-				   src_reg src0, src_reg src1, src_reg src2)
+                                   enum opcode opcode, const dst_reg &dst,
+                                   const src_reg &src0, const src_reg &src1,
+                                   const src_reg &src2)
 {
    this->opcode = opcode;
    this->dst = dst;

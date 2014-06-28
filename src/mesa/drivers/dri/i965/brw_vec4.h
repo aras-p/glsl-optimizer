@@ -233,10 +233,10 @@ public:
    DECLARE_RALLOC_CXX_OPERATORS(vec4_instruction)
 
    vec4_instruction(vec4_visitor *v, enum opcode opcode,
-		    dst_reg dst = dst_reg(),
-		    src_reg src0 = src_reg(),
-		    src_reg src1 = src_reg(),
-		    src_reg src2 = src_reg());
+                    const dst_reg &dst = dst_reg(),
+                    const src_reg &src0 = src_reg(),
+                    const src_reg &src1 = src_reg(),
+                    const src_reg &src2 = src_reg());
 
    struct brw_reg get_dst(void);
    struct brw_reg get_src(const struct brw_vec4_prog_data *prog_data, int i);
