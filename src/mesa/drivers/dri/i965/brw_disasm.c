@@ -248,14 +248,18 @@ static const char *const access_mode[2] = {
    [1] = "align16",
 };
 
-static const char *const reg_encoding[8] = {
-   [0] = "UD",
-   [1] = "D",
-   [2] = "UW",
-   [3] = "W",
-   [4] = "UB",
-   [5] = "B",
-   [7] = "F"
+static const char * const reg_encoding[] = {
+   [BRW_HW_REG_TYPE_UD]          = "UD",
+   [BRW_HW_REG_TYPE_D]           = "D",
+   [BRW_HW_REG_TYPE_UW]          = "UW",
+   [BRW_HW_REG_TYPE_W]           = "W",
+   [BRW_HW_REG_NON_IMM_TYPE_UB]  = "UB",
+   [BRW_HW_REG_NON_IMM_TYPE_B]   = "B",
+   [GEN7_HW_REG_NON_IMM_TYPE_DF] = "DF",
+   [BRW_HW_REG_TYPE_F]           = "F",
+   [GEN8_HW_REG_TYPE_UQ]         = "UQ",
+   [GEN8_HW_REG_TYPE_Q]          = "Q",
+   [GEN8_HW_REG_NON_IMM_TYPE_HF] = "HF",
 };
 
 static const char *const three_source_reg_encoding[] = {
@@ -264,14 +268,18 @@ static const char *const three_source_reg_encoding[] = {
    [BRW_3SRC_TYPE_UD] = "UD",
 };
 
-const int reg_type_size[8] = {
-   [0] = 4,
-   [1] = 4,
-   [2] = 2,
-   [3] = 2,
-   [4] = 1,
-   [5] = 1,
-   [7] = 4
+const int reg_type_size[] = {
+   [BRW_HW_REG_TYPE_UD]          = 4,
+   [BRW_HW_REG_TYPE_D]           = 4,
+   [BRW_HW_REG_TYPE_UW]          = 2,
+   [BRW_HW_REG_TYPE_W]           = 2,
+   [BRW_HW_REG_NON_IMM_TYPE_UB]  = 1,
+   [BRW_HW_REG_NON_IMM_TYPE_B]   = 1,
+   [GEN7_HW_REG_NON_IMM_TYPE_DF] = 8,
+   [BRW_HW_REG_TYPE_F]           = 4,
+   [GEN8_HW_REG_TYPE_UQ]         = 8,
+   [GEN8_HW_REG_TYPE_Q]          = 8,
+   [GEN8_HW_REG_NON_IMM_TYPE_HF] = 2,
 };
 
 static const char *const reg_file[4] = {
