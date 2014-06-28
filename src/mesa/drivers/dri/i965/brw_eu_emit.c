@@ -1004,8 +1004,6 @@ ALU2(XOR)
 ALU2(SHR)
 ALU2(SHL)
 ALU2(ASR)
-ALU1(F32TO16)
-ALU1(F16TO32)
 ALU1(FRC)
 ALU1(RNDD)
 ALU2(MAC)
@@ -1108,6 +1106,56 @@ brw_MUL(struct brw_compile *p, struct brw_reg dest,
 	  src1.nr != BRW_ARF_ACCUMULATOR);
 
    return brw_alu2(p, BRW_OPCODE_MUL, dest, src0, src1);
+}
+
+brw_inst *
+brw_F32TO16(struct brw_compile *p, struct brw_reg dst, struct brw_reg src)
+{
+   const struct brw_context *brw = p->brw;
+   bool align16 = brw_inst_access_mode(brw, p->current) == BRW_ALIGN_16;
+
+   if (align16) {
+      assert(dst.type == BRW_REGISTER_TYPE_UD);
+   } else {
+      assert(dst.type == BRW_REGISTER_TYPE_W ||
+             dst.type == BRW_REGISTER_TYPE_UW ||
+             dst.type == BRW_REGISTER_TYPE_HF);
+   }
+
+   if (brw->gen >= 8) {
+      if (align16) {
+         /* Emulate the Gen7 zeroing bug (see comments in vec4_visitor's
+          * emit_pack_half_2x16 method.)
+          */
+         brw_MOV(p, retype(dst, BRW_REGISTER_TYPE_UD), brw_imm_ud(0u));
+      }
+      return brw_MOV(p, retype(dst, BRW_REGISTER_TYPE_HF), src);
+   } else {
+      assert(brw->gen == 7);
+      return brw_alu1(p, BRW_OPCODE_F32TO16, dst, src);
+   }
+}
+
+brw_inst *
+brw_F16TO32(struct brw_compile *p, struct brw_reg dst, struct brw_reg src)
+{
+   const struct brw_context *brw = p->brw;
+   bool align16 = brw_inst_access_mode(brw, p->current) == BRW_ALIGN_16;
+
+   if (align16) {
+      assert(src.type == BRW_REGISTER_TYPE_UD);
+   } else {
+      assert(src.type == BRW_REGISTER_TYPE_W ||
+             src.type == BRW_REGISTER_TYPE_UW ||
+             src.type == BRW_REGISTER_TYPE_HF);
+   }
+
+   if (brw->gen >= 8) {
+      return brw_MOV(p, dst, retype(src, BRW_REGISTER_TYPE_HF));
+   } else {
+      assert(brw->gen == 7);
+      return brw_alu1(p, BRW_OPCODE_F16TO32, dst, src);
+   }
 }
 
 
