@@ -454,6 +454,8 @@ static const char *const math_function[16] = {
    [BRW_MATH_FUNCTION_INT_DIV_QUOTIENT_AND_REMAINDER] = "intdivmod",
    [BRW_MATH_FUNCTION_INT_DIV_QUOTIENT]  = "intdiv",
    [BRW_MATH_FUNCTION_INT_DIV_REMAINDER] = "intmod",
+   [GEN8_MATH_FUNCTION_INVM]  = "invm",
+   [GEN8_MATH_FUNCTION_RSQRTM] = "rsqrtm",
 };
 
 static const char *const math_saturate[2] = {
