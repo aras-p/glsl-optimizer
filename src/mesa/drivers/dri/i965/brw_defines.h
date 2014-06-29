@@ -1025,6 +1025,8 @@ operator|(brw_urb_write_flags x, brw_urb_write_flags y)
 #define BRW_PREDICATE_ALIGN1_ALL8H            9
 #define BRW_PREDICATE_ALIGN1_ANY16H           10
 #define BRW_PREDICATE_ALIGN1_ALL16H           11
+#define BRW_PREDICATE_ALIGN1_ANY32H           12
+#define BRW_PREDICATE_ALIGN1_ALL32H           13
 #define BRW_PREDICATE_ALIGN16_REPLICATE_X     2
 #define BRW_PREDICATE_ALIGN16_REPLICATE_Y     3
 #define BRW_PREDICATE_ALIGN16_REPLICATE_Z     4
