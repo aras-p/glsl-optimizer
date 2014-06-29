@@ -119,6 +119,7 @@ has_uip(struct brw_context *brw, enum opcode opcode)
       return false;
 
    return (brw->gen >= 7 && opcode == BRW_OPCODE_IF) ||
+          (brw->gen >= 8 && opcode == BRW_OPCODE_ELSE) ||
           opcode == BRW_OPCODE_BREAK ||
           opcode == BRW_OPCODE_CONTINUE ||
           opcode == BRW_OPCODE_HALT;
