@@ -99,7 +99,6 @@ const struct opcode_desc opcode_descs[128] = {
     [BRW_OPCODE_DO] = { .name = "do", .nsrc = 0, .ndst = 0 },
     [BRW_OPCODE_ENDIF] = { .name = "endif", .nsrc = 2, .ndst = 0 },
 };
-static const struct opcode_desc *opcode = opcode_descs;
 
 const char * const conditional_modifier[16] = {
     [BRW_CONDITIONAL_NONE] = "",
@@ -525,11 +524,11 @@ static int control (FILE *file, const char *name, const char * const ctrl[],
 
 static int print_opcode (FILE *file, int id)
 {
-    if (!opcode[id].name) {
+    if (!opcode_descs[id].name) {
 	format (file, "*** invalid opcode value %d ", id);
 	return 1;
     }
-    string (file, opcode[id].name);
+    string (file, opcode_descs[id].name);
     return 0;
 }
 
@@ -1171,7 +1170,7 @@ brw_disassemble_inst(FILE *file, struct brw_context *brw, brw_inst *inst,
     if (brw_inst_opcode(brw, inst) == BRW_OPCODE_SEND && brw->gen < 6)
 	format (file, " %d", brw_inst_base_mrf(brw, inst));
 
-    if (opcode[brw_inst_opcode(brw, inst)].nsrc == 3) {
+    if (opcode_descs[brw_inst_opcode(brw, inst)].nsrc == 3) {
        pad (file, 16);
        err |= dest_3src (file, brw, inst);
 
@@ -1184,7 +1183,7 @@ brw_disassemble_inst(FILE *file, struct brw_context *brw, brw_inst *inst,
        pad (file, 64);
        err |= src2_3src (file, brw, inst);
     } else {
-       if (opcode[brw_inst_opcode(brw, inst)].ndst > 0) {
+       if (opcode_descs[brw_inst_opcode(brw, inst)].ndst > 0) {
 	  pad (file, 16);
 	  err |= dest (file, brw, inst);
        } else if (brw->gen == 7 && (brw_inst_opcode(brw, inst) == BRW_OPCODE_ELSE ||
@@ -1205,11 +1204,11 @@ brw_disassemble_inst(FILE *file, struct brw_context *brw, brw_inst *inst,
 	  format (file, " %d", brw_inst_imm_d(brw, inst));
        }
 
-       if (opcode[brw_inst_opcode(brw, inst)].nsrc > 0) {
+       if (opcode_descs[brw_inst_opcode(brw, inst)].nsrc > 0) {
 	  pad (file, 32);
 	  err |= src0 (file, brw, inst);
        }
-       if (opcode[brw_inst_opcode(brw, inst)].nsrc > 1) {
+       if (opcode_descs[brw_inst_opcode(brw, inst)].nsrc > 1) {
 	  pad (file, 48);
 	  err |= src1 (file, brw, inst);
        }
@@ -1413,7 +1412,7 @@ brw_disassemble_inst(FILE *file, struct brw_context *brw, brw_inst *inst,
 	    err |= qtr_ctrl (file, brw, inst);
 	else {
 	    if (brw_inst_qtr_control(brw, inst) == BRW_COMPRESSION_COMPRESSED &&
-		opcode[brw_inst_opcode(brw, inst)].ndst > 0 &&
+		opcode_descs[brw_inst_opcode(brw, inst)].ndst > 0 &&
 		brw_inst_dst_reg_file(brw, inst) == BRW_MESSAGE_REGISTER_FILE &&
 		brw_inst_dst_da_reg_nr(brw, inst) & (1 << 7)) {
 		format (file, " compr4");
