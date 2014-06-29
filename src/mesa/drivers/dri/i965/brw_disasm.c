@@ -231,17 +231,19 @@ static const char *const pred_ctrl_align16[16] = {
 };
 
 static const char *const pred_ctrl_align1[16] = {
-   [1] = "",
-   [2] = ".anyv",
-   [3] = ".allv",
-   [4] = ".any2h",
-   [5] = ".all2h",
-   [6] = ".any4h",
-   [7] = ".all4h",
-   [8] = ".any8h",
-   [9] = ".all8h",
-   [10] = ".any16h",
-   [11] = ".all16h",
+   [BRW_PREDICATE_NORMAL]        = "",
+   [BRW_PREDICATE_ALIGN1_ANYV]   = ".anyv",
+   [BRW_PREDICATE_ALIGN1_ALLV]   = ".allv",
+   [BRW_PREDICATE_ALIGN1_ANY2H]  = ".any2h",
+   [BRW_PREDICATE_ALIGN1_ALL2H]  = ".all2h",
+   [BRW_PREDICATE_ALIGN1_ANY4H]  = ".any4h",
+   [BRW_PREDICATE_ALIGN1_ALL4H]  = ".all4h",
+   [BRW_PREDICATE_ALIGN1_ANY8H]  = ".any8h",
+   [BRW_PREDICATE_ALIGN1_ALL8H]  = ".all8h",
+   [BRW_PREDICATE_ALIGN1_ANY16H] = ".any16h",
+   [BRW_PREDICATE_ALIGN1_ANY16H] = ".all16h",
+   [BRW_PREDICATE_ALIGN1_ANY32H] = ".any32h",
+   [BRW_PREDICATE_ALIGN1_ANY32H] = ".all32h",
 };
 
 static const char *const thread_ctrl[4] = {
