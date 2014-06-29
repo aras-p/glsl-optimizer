@@ -1207,6 +1207,21 @@ brw_disassemble_inst(FILE *file, struct brw_context *brw, brw_inst *inst,
       } else {
          format(file, "JIP: %d", brw_inst_gen6_jump_count(brw, inst));
       }
+   } else if (brw->gen < 6 && (opcode == BRW_OPCODE_BREAK ||
+                               opcode == BRW_OPCODE_CONTINUE ||
+                               opcode == BRW_OPCODE_ELSE)) {
+      pad(file, 16);
+      format(file, "Jump: %d", brw_inst_gen4_jump_count(brw, inst));
+      pad(file, 32);
+      format(file, "Pop: %d", brw_inst_gen4_pop_count(brw, inst));
+   } else if (brw->gen < 6 && (opcode == BRW_OPCODE_IF ||
+                               opcode == BRW_OPCODE_IFF ||
+                               opcode == BRW_OPCODE_HALT)) {
+      pad(file, 16);
+      format(file, "Jump: %d", brw_inst_gen4_pop_count(brw, inst));
+   } else if (brw->gen < 6 && opcode == BRW_OPCODE_ENDIF) {
+      pad(file, 16);
+      format(file, "Pop: %d", brw_inst_gen4_pop_count(brw, inst));
    } else if (opcode == BRW_OPCODE_JMPI) {
       format(file, " %d", brw_inst_imm_d(brw, inst));
    } else if (opcode_descs[opcode].nsrc == 3) {
