@@ -1755,14 +1755,16 @@ fs_generator::generate_code(exec_list *instructions)
          break;
       }
 
-      if (inst->conditional_mod) {
-         /* Set the conditional modifier on the last instruction we generated.
-          * Also, make sure we only emitted one instruction - anything else
-          * doesn't make sense.
-          */
-         assert(p->next_insn_offset == last_insn_offset + 16);
+      if (inst->no_dd_clear || inst->no_dd_check || inst->conditional_mod) {
+         assert(p->next_insn_offset == last_insn_offset + 16 ||
+                !"conditional_mod, no_dd_check, or no_dd_clear set for IR "
+                 "emitting more than 1 instruction");
+
          brw_inst *last = &p->store[last_insn_offset / 16];
+
          brw_inst_set_cond_modifier(brw, last, inst->conditional_mod);
+         brw_inst_set_no_dd_clear(brw, last, inst->no_dd_clear);
+         brw_inst_set_no_dd_check(brw, last, inst->no_dd_check);
       }
    }
 

@@ -239,6 +239,8 @@ public:
    bool force_uncompressed:1;
    bool force_sechalf:1;
    bool force_writemask_all:1;
+   bool no_dd_clear:1;
+   bool no_dd_check:1;
 };
 
 /**
