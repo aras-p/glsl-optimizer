@@ -1310,7 +1310,8 @@ brw_disassemble_inst(FILE *file, struct brw_context *brw, brw_inst *inst,
             string(file, ")");
          }
          break;
-      case BRW_SFID_DATAPORT_READ:
+      case GEN6_SFID_DATAPORT_SAMPLER_CACHE:
+         /* aka BRW_SFID_DATAPORT_READ on Gen4-5 */
          if (brw->gen >= 6) {
             format(file, " (%d, %d, %d, %d)",
                    brw_inst_binding_table_index(brw, inst),
@@ -1325,7 +1326,8 @@ brw_disassemble_inst(FILE *file, struct brw_context *brw, brw_inst *inst,
          }
          break;
 
-      case BRW_SFID_DATAPORT_WRITE:
+      case GEN6_SFID_DATAPORT_RENDER_CACHE:
+         /* aka BRW_SFID_DATAPORT_WRITE on Gen4-5 */
          if (brw->gen >= 7) {
             format(file, " (");
 
