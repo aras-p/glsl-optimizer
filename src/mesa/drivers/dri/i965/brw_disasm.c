@@ -247,8 +247,9 @@ static const char *const pred_ctrl_align1[16] = {
 };
 
 static const char *const thread_ctrl[4] = {
-   [0] = "",
-   [2] = "switch"
+   [BRW_THREAD_NORMAL] = "",
+   [BRW_THREAD_ATOMIC] = "atomic",
+   [BRW_THREAD_SWITCH] = "switch",
 };
 
 static const char *const compr_ctrl[4] = {
