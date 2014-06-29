@@ -93,9 +93,9 @@ fs_visitor::opt_saturate_propagation()
 {
    bool progress = false;
 
-   calculate_live_intervals();
-
    cfg_t cfg(&instructions);
+
+   calculate_live_intervals(&cfg);
 
    for (int b = 0; b < cfg.num_blocks; b++) {
       progress = opt_saturate_propagation_local(this, cfg.blocks[b])

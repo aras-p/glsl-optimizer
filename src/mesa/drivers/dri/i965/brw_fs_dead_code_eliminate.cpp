@@ -41,7 +41,7 @@ fs_visitor::dead_code_eliminate()
 
    cfg_t cfg(&instructions);
 
-   calculate_live_intervals();
+   calculate_live_intervals(&cfg);
 
    int num_vars = live_intervals->num_vars;
    BITSET_WORD *live = ralloc_array(NULL, BITSET_WORD, BITSET_WORDS(num_vars));

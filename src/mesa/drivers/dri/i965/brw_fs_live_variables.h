@@ -57,7 +57,7 @@ class fs_live_variables {
 public:
    DECLARE_RALLOC_CXX_OPERATORS(fs_live_variables)
 
-   fs_live_variables(fs_visitor *v, cfg_t *cfg);
+   fs_live_variables(fs_visitor *v, const cfg_t *cfg);
    ~fs_live_variables();
 
    bool vars_interfere(int a, int b);
@@ -97,7 +97,7 @@ protected:
    void compute_start_end();
 
    fs_visitor *v;
-   cfg_t *cfg;
+   const cfg_t *cfg;
    void *mem_ctx;
 
 };

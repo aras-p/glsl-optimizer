@@ -243,7 +243,7 @@ fs_live_variables::var_from_reg(fs_reg *reg)
    return var_from_vgrf[reg->reg] + reg->reg_offset;
 }
 
-fs_live_variables::fs_live_variables(fs_visitor *v, cfg_t *cfg)
+fs_live_variables::fs_live_variables(fs_visitor *v, const cfg_t *cfg)
    : v(v), cfg(cfg)
 {
    mem_ctx = ralloc_context(NULL);
@@ -304,7 +304,7 @@ fs_visitor::invalidate_live_intervals()
  * information about whole VGRFs.
  */
 void
-fs_visitor::calculate_live_intervals()
+fs_visitor::calculate_live_intervals(const cfg_t *cfg)
 {
    if (this->live_intervals)
       return;
@@ -320,8 +320,12 @@ fs_visitor::calculate_live_intervals()
       virtual_grf_end[i] = -1;
    }
 
-   cfg_t cfg(&instructions);
-   this->live_intervals = new(mem_ctx) fs_live_variables(this, &cfg);
+   if (cfg) {
+      this->live_intervals = new(mem_ctx) fs_live_variables(this, cfg);
+   } else {
+      cfg_t cfg(&instructions);
+      this->live_intervals = new(mem_ctx) fs_live_variables(this, &cfg);
+   }
 
    /* Merge the per-component live ranges to whole VGRF live ranges. */
    for (int i = 0; i < live_intervals->num_vars; i++) {

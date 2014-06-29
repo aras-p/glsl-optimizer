@@ -373,7 +373,7 @@ public:
    void assign_constant_locations();
    void demote_pull_constants();
    void invalidate_live_intervals();
-   void calculate_live_intervals();
+   void calculate_live_intervals(const cfg_t *cfg = NULL);
    void calculate_register_pressure();
    bool opt_algebraic();
    bool opt_cse();
