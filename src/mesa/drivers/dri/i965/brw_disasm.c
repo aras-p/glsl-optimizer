@@ -1115,6 +1115,8 @@ brw_disassemble_inst(FILE *file, struct brw_context *brw, brw_inst *inst,
     int	err = 0;
     int space = 0;
 
+    const enum opcode opcode = brw_inst_opcode(brw, inst);
+
     if (brw_inst_pred_control(brw, inst)) {
 	string (file, "(");
 	err |= control (file, "predicate inverse", pred_inv,
@@ -1131,19 +1133,18 @@ brw_disassemble_inst(FILE *file, struct brw_context *brw, brw_inst *inst,
 	string (file, ") ");
     }
 
-    err |= print_opcode (file, brw_inst_opcode(brw, inst));
+    err |= print_opcode (file, opcode);
     err |= control (file, "saturate", saturate, brw_inst_saturate(brw, inst),
                           NULL);
 
     err |= control (file, "debug control", debug_ctrl,
                           brw_inst_debug_control(brw, inst), NULL);
 
-    if (brw_inst_opcode(brw, inst) == BRW_OPCODE_MATH) {
+    if (opcode == BRW_OPCODE_MATH) {
 	string (file, " ");
 	err |= control (file, "function", math_function,
 			brw_inst_math_function(brw, inst), NULL);
-    } else if (brw_inst_opcode(brw, inst) != BRW_OPCODE_SEND &&
-	       brw_inst_opcode(brw, inst) != BRW_OPCODE_SENDC) {
+    } else if (opcode != BRW_OPCODE_SEND && opcode != BRW_OPCODE_SENDC) {
 	err |= control (file, "conditional modifier", conditional_modifier,
 			brw_inst_cond_modifier(brw, inst), NULL);
 
@@ -1152,25 +1153,25 @@ brw_disassemble_inst(FILE *file, struct brw_context *brw, brw_inst *inst,
          * control flow doesn't update flags.
          */
 	if (brw_inst_cond_modifier(brw, inst) &&
-            (brw->gen < 6 || (brw_inst_opcode(brw, inst) != BRW_OPCODE_SEL &&
-                         brw_inst_opcode(brw, inst) != BRW_OPCODE_IF &&
-                         brw_inst_opcode(brw, inst) != BRW_OPCODE_WHILE))) {
+            (brw->gen < 6 || (opcode != BRW_OPCODE_SEL &&
+                         opcode != BRW_OPCODE_IF &&
+                         opcode != BRW_OPCODE_WHILE))) {
 	    format (file, ".f%d", brw->gen >= 7 ? brw_inst_flag_reg_nr(brw, inst) : 0);
 	    if (brw_inst_flag_subreg_nr(brw, inst))
 		format (file, ".%d", brw_inst_flag_subreg_nr(brw, inst));
         }
     }
 
-    if (brw_inst_opcode(brw, inst) != BRW_OPCODE_NOP) {
+    if (opcode != BRW_OPCODE_NOP) {
 	string (file, "(");
 	err |= control (file, "execution size", exec_size, brw_inst_exec_size(brw, inst), NULL);
 	string (file, ")");
     }
 
-    if (brw_inst_opcode(brw, inst) == BRW_OPCODE_SEND && brw->gen < 6)
+    if (opcode == BRW_OPCODE_SEND && brw->gen < 6)
 	format (file, " %d", brw_inst_base_mrf(brw, inst));
 
-    if (opcode_descs[brw_inst_opcode(brw, inst)].nsrc == 3) {
+    if (opcode_descs[opcode].nsrc == 3) {
        pad (file, 16);
        err |= dest_3src (file, brw, inst);
 
@@ -1183,39 +1184,38 @@ brw_disassemble_inst(FILE *file, struct brw_context *brw, brw_inst *inst,
        pad (file, 64);
        err |= src2_3src (file, brw, inst);
     } else {
-       if (opcode_descs[brw_inst_opcode(brw, inst)].ndst > 0) {
+       if (opcode_descs[opcode].ndst > 0) {
 	  pad (file, 16);
 	  err |= dest (file, brw, inst);
-       } else if (brw->gen == 7 && (brw_inst_opcode(brw, inst) == BRW_OPCODE_ELSE ||
-				    brw_inst_opcode(brw, inst) == BRW_OPCODE_ENDIF ||
-				    brw_inst_opcode(brw, inst) == BRW_OPCODE_WHILE)) {
+       } else if (brw->gen == 7 && (opcode == BRW_OPCODE_ELSE ||
+				    opcode == BRW_OPCODE_ENDIF ||
+				    opcode == BRW_OPCODE_WHILE)) {
 	  format (file, " %d", brw_inst_jip(brw, inst));
-       } else if (brw->gen == 6 && (brw_inst_opcode(brw, inst) == BRW_OPCODE_IF ||
-				    brw_inst_opcode(brw, inst) == BRW_OPCODE_ELSE ||
-				    brw_inst_opcode(brw, inst) == BRW_OPCODE_ENDIF ||
-				    brw_inst_opcode(brw, inst) == BRW_OPCODE_WHILE)) {
+       } else if (brw->gen == 6 && (opcode == BRW_OPCODE_IF ||
+				    opcode == BRW_OPCODE_ELSE ||
+				    opcode == BRW_OPCODE_ENDIF ||
+				    opcode == BRW_OPCODE_WHILE)) {
 	  format (file, " %d", brw_inst_gen6_jump_count(brw, inst));
-       } else if ((brw->gen >= 6 && (brw_inst_opcode(brw, inst) == BRW_OPCODE_BREAK ||
-                                     brw_inst_opcode(brw, inst) == BRW_OPCODE_CONTINUE ||
-                                     brw_inst_opcode(brw, inst) == BRW_OPCODE_HALT)) ||
-                  (brw->gen == 7 && brw_inst_opcode(brw, inst) == BRW_OPCODE_IF)) {
+       } else if ((brw->gen >= 6 && (opcode == BRW_OPCODE_BREAK ||
+                                     opcode == BRW_OPCODE_CONTINUE ||
+                                     opcode == BRW_OPCODE_HALT)) ||
+                  (brw->gen == 7 && opcode == BRW_OPCODE_IF)) {
 	  format (file, " %d %d", brw_inst_uip(brw, inst), brw_inst_jip(brw, inst));
-       } else if (brw_inst_opcode(brw, inst) == BRW_OPCODE_JMPI) {
+       } else if (opcode == BRW_OPCODE_JMPI) {
 	  format (file, " %d", brw_inst_imm_d(brw, inst));
        }
 
-       if (opcode_descs[brw_inst_opcode(brw, inst)].nsrc > 0) {
+       if (opcode_descs[opcode].nsrc > 0) {
 	  pad (file, 32);
 	  err |= src0 (file, brw, inst);
        }
-       if (opcode_descs[brw_inst_opcode(brw, inst)].nsrc > 1) {
+       if (opcode_descs[opcode].nsrc > 1) {
 	  pad (file, 48);
 	  err |= src1 (file, brw, inst);
        }
     }
 
-    if (brw_inst_opcode(brw, inst) == BRW_OPCODE_SEND ||
-	brw_inst_opcode(brw, inst) == BRW_OPCODE_SENDC) {
+    if (opcode == BRW_OPCODE_SEND || opcode == BRW_OPCODE_SENDC) {
 	enum brw_message_target target = brw_inst_sfid(brw, inst);
 
 	newline (file);
@@ -1396,7 +1396,7 @@ brw_disassemble_inst(FILE *file, struct brw_context *brw, brw_inst *inst,
 	format (file, " rlen %d", brw_inst_rlen(brw, inst));
     }
     pad (file, 64);
-    if (brw_inst_opcode(brw, inst) != BRW_OPCODE_NOP) {
+    if (opcode != BRW_OPCODE_NOP) {
 	string (file, "{");
 	space = 1;
 	err |= control(file, "access mode", access_mode, brw_inst_access_mode(brw, inst), &space);
@@ -1412,7 +1412,7 @@ brw_disassemble_inst(FILE *file, struct brw_context *brw, brw_inst *inst,
 	    err |= qtr_ctrl (file, brw, inst);
 	else {
 	    if (brw_inst_qtr_control(brw, inst) == BRW_COMPRESSION_COMPRESSED &&
-		opcode_descs[brw_inst_opcode(brw, inst)].ndst > 0 &&
+		opcode_descs[opcode].ndst > 0 &&
 		brw_inst_dst_reg_file(brw, inst) == BRW_MESSAGE_REGISTER_FILE &&
 		brw_inst_dst_da_reg_nr(brw, inst) & (1 << 7)) {
 		format (file, " compr4");
@@ -1426,8 +1426,7 @@ brw_disassemble_inst(FILE *file, struct brw_context *brw, brw_inst *inst,
 	err |= control (file, "thread control", thread_ctrl, brw_inst_thread_control(brw, inst), &space);
 	if (brw->gen >= 6)
 	    err |= control (file, "acc write control", accwr, brw_inst_acc_wr_control(brw, inst), &space);
-	if (brw_inst_opcode(brw, inst) == BRW_OPCODE_SEND ||
-	    brw_inst_opcode(brw, inst) == BRW_OPCODE_SENDC)
+	if (opcode == BRW_OPCODE_SEND || opcode == BRW_OPCODE_SENDC)
 	    err |= control (file, "end of thread", end_of_thread,
 			    brw_inst_eot(brw, inst), &space);
 	if (space)
