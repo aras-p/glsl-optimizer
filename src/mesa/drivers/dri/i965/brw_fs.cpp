@@ -734,32 +734,33 @@ fs_visitor::emit(enum opcode opcode)
 }
 
 fs_inst *
-fs_visitor::emit(enum opcode opcode, fs_reg dst)
+fs_visitor::emit(enum opcode opcode, const fs_reg &dst)
 {
    return emit(new(mem_ctx) fs_inst(opcode, dst));
 }
 
 fs_inst *
-fs_visitor::emit(enum opcode opcode, fs_reg dst, fs_reg src0)
+fs_visitor::emit(enum opcode opcode, const fs_reg &dst, const fs_reg &src0)
 {
    return emit(new(mem_ctx) fs_inst(opcode, dst, src0));
 }
 
 fs_inst *
-fs_visitor::emit(enum opcode opcode, fs_reg dst, fs_reg src0, fs_reg src1)
+fs_visitor::emit(enum opcode opcode, const fs_reg &dst, const fs_reg &src0,
+                 const fs_reg &src1)
 {
    return emit(new(mem_ctx) fs_inst(opcode, dst, src0, src1));
 }
 
 fs_inst *
-fs_visitor::emit(enum opcode opcode, fs_reg dst,
-                 fs_reg src0, fs_reg src1, fs_reg src2)
+fs_visitor::emit(enum opcode opcode, const fs_reg &dst, const fs_reg &src0,
+                 const fs_reg &src1, const fs_reg &src2)
 {
    return emit(new(mem_ctx) fs_inst(opcode, dst, src0, src1, src2));
 }
 
 fs_inst *
-fs_visitor::emit(enum opcode opcode, fs_reg dst,
+fs_visitor::emit(enum opcode opcode, const fs_reg &dst,
                  fs_reg src[], int sources)
 {
    return emit(new(mem_ctx) fs_inst(opcode, dst, src, sources));

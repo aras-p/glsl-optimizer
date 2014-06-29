@@ -290,12 +290,13 @@ public:
    void emit(exec_list list);
 
    fs_inst *emit(enum opcode opcode);
-   fs_inst *emit(enum opcode opcode, fs_reg dst);
-   fs_inst *emit(enum opcode opcode, fs_reg dst, fs_reg src0);
-   fs_inst *emit(enum opcode opcode, fs_reg dst, fs_reg src0, fs_reg src1);
-   fs_inst *emit(enum opcode opcode, fs_reg dst,
-                 fs_reg src0, fs_reg src1, fs_reg src2);
-   fs_inst *emit(enum opcode opcode, fs_reg dst,
+   fs_inst *emit(enum opcode opcode, const fs_reg &dst);
+   fs_inst *emit(enum opcode opcode, const fs_reg &dst, const fs_reg &src0);
+   fs_inst *emit(enum opcode opcode, const fs_reg &dst, const fs_reg &src0,
+                 const fs_reg &src1);
+   fs_inst *emit(enum opcode opcode, const fs_reg &dst,
+                 const fs_reg &src0, const fs_reg &src1, const fs_reg &src2);
+   fs_inst *emit(enum opcode opcode, const fs_reg &dst,
                  fs_reg src[], int sources);
 
    fs_inst *MOV(const fs_reg &dst, const fs_reg &src);
