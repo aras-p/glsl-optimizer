@@ -34,7 +34,7 @@ using namespace brw;
 namespace brw {
 
 static void
-assign(unsigned int *reg_hw_locations, reg *reg)
+assign(unsigned int *reg_hw_locations, backend_reg *reg)
 {
    if (reg->file == GRF) {
       reg->reg = reg_hw_locations[reg->reg];

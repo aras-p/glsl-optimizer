@@ -91,21 +91,7 @@ class dst_reg;
 unsigned
 swizzle_for_size(int size);
 
-class reg
-{
-public:
-   /** Register file: GRF, MRF, IMM. */
-   enum register_file file;
-   /** virtual register number.  0 = fixed hw reg */
-   int reg;
-   /** Offset within the virtual register. */
-   int reg_offset;
-   /** Register type.  BRW_REGISTER_TYPE_* */
-   int type;
-   struct brw_reg fixed_hw_reg;
-};
-
-class src_reg : public reg
+class src_reg : public backend_reg
 {
 public:
    DECLARE_RALLOC_CXX_OPERATORS(src_reg)
@@ -129,8 +115,6 @@ public:
    explicit src_reg(dst_reg reg);
 
    GLuint swizzle; /**< BRW_SWIZZLE_XYZW macros from brw_reg.h. */
-   bool negate;
-   bool abs;
 
    src_reg *reladdr;
 };
@@ -174,7 +158,7 @@ negate(src_reg reg)
    return reg;
 }
 
-class dst_reg : public reg
+class dst_reg : public backend_reg
 {
 public:
    DECLARE_RALLOC_CXX_OPERATORS(dst_reg)

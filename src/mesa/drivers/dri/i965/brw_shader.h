@@ -22,6 +22,7 @@
  */
 
 #include <stdint.h>
+#include "brw_reg.h"
 #include "brw_defines.h"
 #include "main/compiler.h"
 #include "glsl/ir.h"
@@ -37,6 +38,37 @@ enum PACKED register_file {
    HW_REG, /* a struct brw_reg */
    ATTR,
    UNIFORM, /* prog_data->params[reg] */
+};
+
+struct backend_reg
+{
+   enum register_file file; /**< Register file: GRF, MRF, IMM. */
+   uint8_t type;            /**< Register type: BRW_REGISTER_TYPE_* */
+
+   /**
+    * Register number.
+    *
+    * For GRF, it's a virtual register number until register allocation.
+    *
+    * For MRF, it's the hardware register.
+    */
+   uint16_t reg;
+
+   /**
+    * Offset within the virtual register.
+    *
+    * In the scalar backend, this is in units of a float per pixel for pre-
+    * register allocation registers (i.e., one register in SIMD8 mode and two
+    * registers in SIMD16 mode).
+    *
+    * For uniforms, this is in units of 1 float.
+    */
+   int reg_offset;
+
+   struct brw_reg fixed_hw_reg;
+
+   bool negate;
+   bool abs;
 };
 
 #ifdef __cplusplus

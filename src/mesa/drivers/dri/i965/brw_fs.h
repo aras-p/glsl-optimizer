@@ -63,7 +63,7 @@ namespace brw {
    class fs_live_variables;
 }
 
-class fs_reg {
+class fs_reg : public backend_reg {
 public:
    DECLARE_RALLOC_CXX_OPERATORS(fs_reg)
 
@@ -90,35 +90,13 @@ public:
    /** Smear a channel of the reg to all channels. */
    fs_reg &set_smear(unsigned subreg);
 
-   /** Register file: GRF, MRF, IMM. */
-   enum register_file file;
-   /** Register type.  BRW_REGISTER_TYPE_* */
-   uint8_t type;
-   /**
-    * Register number.  For MRF, it's the hardware register.  For
-    * GRF, it's a virtual register number until register allocation
-    */
-   uint16_t reg;
-   /**
-    * Offset from the start of the contiguous register block.
-    *
-    * For pre-register-allocation GRFs, this is in units of a float per pixel
-    * (1 hardware register for SIMD8 mode, or 2 registers for SIMD16 mode).
-    * For uniforms, this is in units of 1 float.
-    */
-   int reg_offset;
    /**
     * Offset in bytes from the start of the register.  Values up to a
     * backend_reg::reg_offset unit are valid.
     */
    int subreg_offset;
 
-   struct brw_reg fixed_hw_reg;
-
    fs_reg *reladdr;
-
-   bool negate;
-   bool abs;
 
    /** Register region horizontal stride */
    uint8_t stride;
