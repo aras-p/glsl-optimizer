@@ -49,8 +49,6 @@ opt_saturate_propagation_local(fs_visitor *v, bblock_t *block)
 
       int src_var = v->live_intervals->var_from_reg(&inst->src[0]);
       int src_end_ip = v->live_intervals->end[src_var];
-      if (src_end_ip > ip && !inst->dst.equals(inst->src[0]))
-         continue;
 
       int scan_ip = ip;
       bool interfered = false;
@@ -63,10 +61,15 @@ opt_saturate_propagation_local(fs_visitor *v, bblock_t *block)
              scan_inst->dst.reg == inst->src[0].reg &&
              scan_inst->dst.reg_offset == inst->src[0].reg_offset &&
              !scan_inst->is_partial_write()) {
-            if (scan_inst->can_do_saturate()) {
-               scan_inst->saturate = true;
+            if (scan_inst->saturate) {
                inst->saturate = false;
                progress = true;
+            } else if (src_end_ip <= ip || inst->dst.equals(inst->src[0])) {
+               if (scan_inst->can_do_saturate()) {
+                  scan_inst->saturate = true;
+                  inst->saturate = false;
+                  progress = true;
+               }
             }
             break;
          }
