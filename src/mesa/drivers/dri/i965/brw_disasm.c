@@ -352,7 +352,8 @@ static const char *const end_of_thread[2] = {
    [1] = "EOT"
 };
 
-static const char *const target_function[16] = {
+/* SFIDs on Gen4-5 */
+static const char *const gen4_sfid[16] = {
    [BRW_SFID_NULL]            = "null",
    [BRW_SFID_MATH]            = "math",
    [BRW_SFID_SAMPLER]         = "sampler",
@@ -364,7 +365,7 @@ static const char *const target_function[16] = {
    [BRW_SFID_VME]             = "vme",
 };
 
-static const char *const target_function_gen6[16] = {
+static const char *const gen6_sfid[16] = {
    [BRW_SFID_NULL]                     = "null",
    [BRW_SFID_MATH]                     = "math",
    [BRW_SFID_SAMPLER]                  = "sampler",
@@ -1262,22 +1263,17 @@ brw_disassemble_inst(FILE *file, struct brw_context *brw, brw_inst *inst,
    }
 
    if (opcode == BRW_OPCODE_SEND || opcode == BRW_OPCODE_SENDC) {
-      enum brw_message_target target = brw_inst_sfid(brw, inst);
+      enum brw_message_target sfid = brw_inst_sfid(brw, inst);
 
       newline(file);
       pad(file, 16);
       space = 0;
 
       fprintf(file, "            ");
-      if (brw->gen >= 6) {
-         err |= control(file, "target function", target_function_gen6,
-                        target, &space);
-      } else {
-         err |= control(file, "target function", target_function,
-                        target, &space);
-      }
+      err |= control(file, "SFID", brw->gen >= 6 ? gen6_sfid : gen4_sfid,
+                     sfid, &space);
 
-      switch (target) {
+      switch (sfid) {
       case BRW_SFID_MATH:
          err |= control(file, "math function", math_function,
                         brw_inst_math_msg_function(brw, inst), &space);
@@ -1451,7 +1447,7 @@ brw_disassemble_inst(FILE *file, struct brw_context *brw, brw_inst *inst,
       }
 
       default:
-         format(file, "unsupported target %d", target);
+         format(file, "unsupported shared function ID %d", sfid);
          break;
       }
       if (space)
