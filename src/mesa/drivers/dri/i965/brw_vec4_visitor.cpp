@@ -1624,7 +1624,7 @@ vec4_visitor::visit(ir_expression *ir)
       break;
 
    case ir_binop_ubo_load: {
-      ir_constant *uniform_block = ir->operands[0]->as_constant();
+      ir_constant *const_uniform_block = ir->operands[0]->as_constant();
       ir_constant *const_offset_ir = ir->operands[1]->as_constant();
       unsigned const_offset = const_offset_ir ? const_offset_ir->value.u[0] : 0;
       src_reg offset;
@@ -1634,8 +1634,31 @@ vec4_visitor::visit(ir_expression *ir)
 
       src_reg packed_consts = src_reg(this, glsl_type::vec4_type);
       packed_consts.type = result.type;
-      src_reg surf_index =
-         src_reg(prog_data->base.binding_table.ubo_start + uniform_block->value.u[0]);
+      src_reg surf_index;
+
+      if (const_uniform_block) {
+         /* The block index is a constant, so just emit the binding table entry
+          * as an immediate.
+          */
+         surf_index = src_reg(prog_data->base.binding_table.ubo_start +
+                              const_uniform_block->value.u[0]);
+      } else {
+         /* The block index is not a constant. Evaluate the index expression
+          * per-channel and add the base UBO index; the generator will select
+          * a value from any live channel.
+          */
+         surf_index = src_reg(this, glsl_type::uint_type);
+         emit(ADD(dst_reg(surf_index), op[0],
+                  src_reg(prog_data->base.binding_table.ubo_start)));
+
+         /* Assume this may touch any UBO. It would be nice to provide
+          * a tighter bound, but the array information is already lowered away.
+          */
+         brw_mark_surface_used(&prog_data->base,
+                               prog_data->base.binding_table.ubo_start +
+                               shader_prog->NumUniformBlocks - 1);
+      }
+
       if (const_offset_ir) {
          if (brw->gen >= 8) {
             /* Store the offset in a GRF so we can send-from-GRF. */
