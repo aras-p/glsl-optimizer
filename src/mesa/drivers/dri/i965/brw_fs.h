@@ -113,13 +113,6 @@ public:
     */
    int subreg_offset;
 
-   /** Value for file == IMM */
-   union {
-      int32_t i;
-      uint32_t u;
-      float f;
-   } imm;
-
    struct brw_reg fixed_hw_reg;
 
    fs_reg *reladdr;

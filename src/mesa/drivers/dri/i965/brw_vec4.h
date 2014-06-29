@@ -103,13 +103,6 @@ public:
    /** Register type.  BRW_REGISTER_TYPE_* */
    int type;
    struct brw_reg fixed_hw_reg;
-
-   /** Value for file == BRW_IMMMEDIATE_FILE */
-   union {
-      int32_t i;
-      uint32_t u;
-      float f;
-   } imm;
 };
 
 class src_reg : public reg
