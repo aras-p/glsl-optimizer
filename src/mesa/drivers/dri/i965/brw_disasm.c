@@ -817,6 +817,28 @@ src_ia1(FILE *file,
 }
 
 static int
+src_swizzle(FILE *file, unsigned swiz)
+{
+   unsigned x = BRW_GET_SWZ(swiz, BRW_CHANNEL_X);
+   unsigned y = BRW_GET_SWZ(swiz, BRW_CHANNEL_Y);
+   unsigned z = BRW_GET_SWZ(swiz, BRW_CHANNEL_Z);
+   unsigned w = BRW_GET_SWZ(swiz, BRW_CHANNEL_W);
+   int err = 0;
+
+   if (x == y && x == z && x == w) {
+      string(file, ".");
+      err |= control(file, "channel select", chan_sel, x, NULL);
+   } else if (swiz != BRW_SWIZZLE_XYZW) {
+      string(file, ".");
+      err |= control(file, "channel select", chan_sel, x, NULL);
+      err |= control(file, "channel select", chan_sel, y, NULL);
+      err |= control(file, "channel select", chan_sel, z, NULL);
+      err |= control(file, "channel select", chan_sel, w, NULL);
+   }
+   return err;
+}
+
+static int
 src_da16(FILE *file,
          const struct brw_context *brw,
          unsigned opcode,
@@ -848,26 +870,7 @@ src_da16(FILE *file,
    string(file, "<");
    err |= control(file, "vert stride", vert_stride, _vert_stride, NULL);
    string(file, ",4,1>");
-   /*
-    * Three kinds of swizzle display:
-    *  identity - nothing printed
-    *  1->all   - print the single channel
-    *  1->1     - print the mapping
-    */
-   if (swz_x == BRW_CHANNEL_X &&
-       swz_y == BRW_CHANNEL_Y &&
-       swz_z == BRW_CHANNEL_Z && swz_w == BRW_CHANNEL_W) {
-      ;
-   } else if (swz_x == swz_y && swz_x == swz_z && swz_x == swz_w) {
-      string(file, ".");
-      err |= control(file, "channel select", chan_sel, swz_x, NULL);
-   } else {
-      string(file, ".");
-      err |= control(file, "channel select", chan_sel, swz_x, NULL);
-      err |= control(file, "channel select", chan_sel, swz_y, NULL);
-      err |= control(file, "channel select", chan_sel, swz_z, NULL);
-      err |= control(file, "channel select", chan_sel, swz_w, NULL);
-   }
+   err |= src_swizzle(file, BRW_SWIZZLE4(swz_x, swz_y, swz_z, swz_w));
    err |= control(file, "src da16 reg type", reg_encoding, _reg_type, NULL);
    return err;
 }
@@ -876,11 +879,6 @@ static int
 src0_3src(FILE *file, struct brw_context *brw, brw_inst *inst)
 {
    int err = 0;
-   unsigned swz = brw_inst_3src_src0_swizzle(brw, inst);
-   unsigned swz_x = BRW_GET_SWZ(swz, BRW_CHANNEL_X);
-   unsigned swz_y = BRW_GET_SWZ(swz, BRW_CHANNEL_Y);
-   unsigned swz_z = BRW_GET_SWZ(swz, BRW_CHANNEL_Z);
-   unsigned swz_w = BRW_GET_SWZ(swz, BRW_CHANNEL_W);
    unsigned src0_subreg_nr = brw_inst_3src_src0_subreg_nr(brw, inst);
 
    err |= control(file, "negate", m_negate,
@@ -899,24 +897,7 @@ src0_3src(FILE *file, struct brw_context *brw, brw_inst *inst)
       string(file, "<4,4,1>");
    err |= control(file, "src da16 reg type", three_source_reg_encoding,
                   brw_inst_3src_src_type(brw, inst), NULL);
-   /*
-    * Three kinds of swizzle display:
-    *  identity - nothing printed
-    *  1->all   - print the single channel
-    *  1->1     - print the mapping
-    */
-   if (swz == BRW_SWIZZLE_XYZW) {
-      ;
-   } else if (swz_x == swz_y && swz_x == swz_z && swz_x == swz_w) {
-      string(file, ".");
-      err |= control(file, "channel select", chan_sel, swz_x, NULL);
-   } else {
-      string(file, ".");
-      err |= control(file, "channel select", chan_sel, swz_x, NULL);
-      err |= control(file, "channel select", chan_sel, swz_y, NULL);
-      err |= control(file, "channel select", chan_sel, swz_z, NULL);
-      err |= control(file, "channel select", chan_sel, swz_w, NULL);
-   }
+   err |= src_swizzle(file, brw_inst_3src_src0_swizzle(brw, inst));
    return err;
 }
 
@@ -924,11 +905,6 @@ static int
 src1_3src(FILE *file, struct brw_context *brw, brw_inst *inst)
 {
    int err = 0;
-   unsigned swz = brw_inst_3src_src1_swizzle(brw, inst);
-   unsigned swz_x = BRW_GET_SWZ(swz, BRW_CHANNEL_X);
-   unsigned swz_y = BRW_GET_SWZ(swz, BRW_CHANNEL_Y);
-   unsigned swz_z = BRW_GET_SWZ(swz, BRW_CHANNEL_Z);
-   unsigned swz_w = BRW_GET_SWZ(swz, BRW_CHANNEL_W);
    unsigned src1_subreg_nr = brw_inst_3src_src1_subreg_nr(brw, inst);
 
    err |= control(file, "negate", m_negate,
@@ -947,24 +923,7 @@ src1_3src(FILE *file, struct brw_context *brw, brw_inst *inst)
       string(file, "<4,4,1>");
    err |= control(file, "src da16 reg type", three_source_reg_encoding,
                   brw_inst_3src_src_type(brw, inst), NULL);
-   /*
-    * Three kinds of swizzle display:
-    *  identity - nothing printed
-    *  1->all   - print the single channel
-    *  1->1     - print the mapping
-    */
-   if (swz == BRW_SWIZZLE_XYZW) {
-      ;
-   } else if (swz_x == swz_y && swz_x == swz_z && swz_x == swz_w) {
-      string(file, ".");
-      err |= control(file, "channel select", chan_sel, swz_x, NULL);
-   } else {
-      string(file, ".");
-      err |= control(file, "channel select", chan_sel, swz_x, NULL);
-      err |= control(file, "channel select", chan_sel, swz_y, NULL);
-      err |= control(file, "channel select", chan_sel, swz_z, NULL);
-      err |= control(file, "channel select", chan_sel, swz_w, NULL);
-   }
+   err |= src_swizzle(file, brw_inst_3src_src1_swizzle(brw, inst));
    return err;
 }
 
@@ -973,11 +932,6 @@ static int
 src2_3src(FILE *file, struct brw_context *brw, brw_inst *inst)
 {
    int err = 0;
-   unsigned swz = brw_inst_3src_src2_swizzle(brw, inst);
-   unsigned swz_x = BRW_GET_SWZ(swz, BRW_CHANNEL_X);
-   unsigned swz_y = BRW_GET_SWZ(swz, BRW_CHANNEL_Y);
-   unsigned swz_z = BRW_GET_SWZ(swz, BRW_CHANNEL_Z);
-   unsigned swz_w = BRW_GET_SWZ(swz, BRW_CHANNEL_W);
    unsigned src2_subreg_nr = brw_inst_3src_src2_subreg_nr(brw, inst);
 
    err |= control(file, "negate", m_negate,
@@ -996,24 +950,7 @@ src2_3src(FILE *file, struct brw_context *brw, brw_inst *inst)
       string(file, "<4,4,1>");
    err |= control(file, "src da16 reg type", three_source_reg_encoding,
                   brw_inst_3src_src_type(brw, inst), NULL);
-   /*
-    * Three kinds of swizzle display:
-    *  identity - nothing printed
-    *  1->all   - print the single channel
-    *  1->1     - print the mapping
-    */
-   if (swz == BRW_SWIZZLE_XYZW) {
-      ;
-   } else if (swz_x == swz_y && swz_x == swz_z && swz_x == swz_w) {
-      string(file, ".");
-      err |= control(file, "channel select", chan_sel, swz_x, NULL);
-   } else {
-      string(file, ".");
-      err |= control(file, "channel select", chan_sel, swz_x, NULL);
-      err |= control(file, "channel select", chan_sel, swz_y, NULL);
-      err |= control(file, "channel select", chan_sel, swz_z, NULL);
-      err |= control(file, "channel select", chan_sel, swz_w, NULL);
-   }
+   err |= src_swizzle(file, brw_inst_3src_src2_swizzle(brw, inst));
    return err;
 }
 
