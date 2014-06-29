@@ -1255,7 +1255,7 @@ gen8_fs_generator::generate_code(exec_list *instructions)
    int before_size = next_inst_offset - start_offset;
 
    if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
-      if (prog) {
+      if (shader_prog) {
          fprintf(stderr,
                  "Native code for %s fragment shader %d (SIMD%d dispatch):\n",
                 shader_prog->Label ? shader_prog->Label : "unnamed",
