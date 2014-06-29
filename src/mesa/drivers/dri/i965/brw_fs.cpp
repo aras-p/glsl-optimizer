@@ -1178,15 +1178,20 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
 
                   fs_inst *inst;
                   inst = emit_linterp(attr, fs_reg(interp), interpolation_mode,
+                                      false, false);
+                  inst->predicate = BRW_PREDICATE_NORMAL;
+                  inst->predicate_inverse = true;
+                  if (brw->has_pln)
+                     inst->no_dd_clear = true;
+
+                  inst = emit_linterp(attr, fs_reg(interp), interpolation_mode,
                                       ir->data.centroid && !key->persample_shading,
                                       ir->data.sample || key->persample_shading);
                   inst->predicate = BRW_PREDICATE_NORMAL;
                   inst->predicate_inverse = false;
+                  if (brw->has_pln)
+                     inst->no_dd_check = true;
 
-                  inst = emit_linterp(attr, fs_reg(interp), interpolation_mode,
-                                      false, false);
-                  inst->predicate = BRW_PREDICATE_NORMAL;
-                  inst->predicate_inverse = true;
                } else {
                   emit_linterp(attr, fs_reg(interp), interpolation_mode,
                                ir->data.centroid && !key->persample_shading,
