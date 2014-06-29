@@ -60,9 +60,7 @@ vec4_instruction::get_dst(void)
       break;
 
    default:
-      assert(!"not reached");
-      brw_reg = brw_null_reg();
-      break;
+      unreachable("not reached");
    }
    return brw_reg;
 }
@@ -95,9 +93,7 @@ vec4_instruction::get_src(const struct brw_vec4_prog_data *prog_data, int i)
 	 brw_reg = brw_imm_ud(src[i].imm.u);
 	 break;
       default:
-	 assert(!"not reached");
-	 brw_reg = brw_null_reg();
-	 break;
+	 unreachable("not reached");
       }
       break;
 
@@ -128,9 +124,7 @@ vec4_instruction::get_src(const struct brw_vec4_prog_data *prog_data, int i)
       break;
    case ATTR:
    default:
-      assert(!"not reached");
-      brw_reg = brw_null_reg();
-      break;
+      unreachable("not reached");
    }
 
    return brw_reg;
@@ -285,8 +279,7 @@ vec4_generator::generate_tex(vec4_instruction *inst,
          }
          break;
       default:
-	 assert(!"should not get here: invalid vec4 texture opcode");
-	 break;
+	 unreachable("should not get here: invalid vec4 texture opcode");
       }
    } else {
       switch (inst->opcode) {
@@ -314,8 +307,7 @@ vec4_generator::generate_tex(vec4_instruction *inst,
 	 assert(inst->mlen == 2);
 	 break;
       default:
-	 assert(!"should not get here: invalid vec4 texture opcode");
-	 break;
+	 unreachable("should not get here: invalid vec4 texture opcode");
       }
    }
 

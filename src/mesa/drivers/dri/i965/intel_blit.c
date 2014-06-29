@@ -85,8 +85,7 @@ br13_for_cpp(int cpp)
       return BR13_8;
       break;
    default:
-      assert(0);
-      return 0;
+      unreachable("not reached");
    }
 }
 

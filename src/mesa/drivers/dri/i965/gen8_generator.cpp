@@ -506,8 +506,7 @@ gen8_generator::find_loop_end(unsigned start) const
             return ip;
       }
    }
-   assert(!"not reached");
-   return start;
+   unreachable("not reached");
 }
 
 /* After program generation, go back and update the UIP and JIP of

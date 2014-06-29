@@ -119,7 +119,7 @@ brw_upload_vs_unit(struct brw_context *brw)
 	 vs->thread4.nr_urb_entries = brw->urb.nr_vs_entries >> 2;
 	 break;
       default:
-	 assert(0);
+         unreachable("not reached");
       }
    } else {
       switch (brw->urb.nr_vs_entries) {
@@ -132,7 +132,7 @@ brw_upload_vs_unit(struct brw_context *brw)
 	 assert(brw->is_g4x);
 	 break;
       default:
-	 assert(0);
+         unreachable("not reached");
       }
       vs->thread4.nr_urb_entries = brw->urb.nr_vs_entries;
    }

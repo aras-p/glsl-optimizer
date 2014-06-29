@@ -142,8 +142,7 @@ upload_sf_state(struct brw_context *brw)
        break;
 
    default:
-       assert(0);
-       break;
+       unreachable("not reached");
    }
 
    switch (ctx->Polygon.BackMode) {
@@ -160,8 +159,7 @@ upload_sf_state(struct brw_context *brw)
        break;
 
    default:
-       assert(0);
-       break;
+       unreachable("not reached");
    }
 
    dw2 = 0;
@@ -178,8 +176,7 @@ upload_sf_state(struct brw_context *brw)
 	 dw2 |= GEN6_SF_CULL_BOTH;
 	 break;
       default:
-	 assert(0);
-	 break;
+	 unreachable("not reached");
       }
    } else {
       dw2 |= GEN6_SF_CULL_NONE;

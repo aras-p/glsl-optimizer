@@ -464,8 +464,7 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
          }
          break;
       default:
-	 assert(!"not reached");
-	 break;
+	 unreachable("not reached");
       }
    } else {
       switch (inst->opcode) {
@@ -517,8 +516,7 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
 	 simd_mode = BRW_SAMPLER_SIMD_MODE_SIMD16;
 	 break;
       default:
-	 assert(!"not reached");
-	 break;
+	 unreachable("not reached");
       }
    }
    assert(msg_type != -1);
@@ -1008,8 +1006,7 @@ static uint32_t brw_file_from_reg(fs_reg *reg)
    case IMM:
       return BRW_IMMEDIATE_VALUE;
    default:
-      assert(!"not reached");
-      return BRW_GENERAL_REGISTER_FILE;
+      unreachable("not reached");
    }
 }
 
@@ -1043,9 +1040,7 @@ brw_reg_from_fs_reg(fs_reg *reg)
 	 brw_reg = brw_imm_ud(reg->imm.u);
 	 break;
       default:
-	 assert(!"not reached");
-	 brw_reg = brw_null_reg();
-	 break;
+	 unreachable("not reached");
       }
       break;
    case HW_REG:
@@ -1057,13 +1052,9 @@ brw_reg_from_fs_reg(fs_reg *reg)
       brw_reg = brw_null_reg();
       break;
    case UNIFORM:
-      assert(!"not reached");
-      brw_reg = brw_null_reg();
-      break;
+      unreachable("not reached");
    default:
-      assert(!"not reached");
-      brw_reg = brw_null_reg();
-      break;
+      unreachable("not reached");
    }
    if (reg->abs)
       brw_reg = brw_abs(brw_reg);
@@ -1749,8 +1740,7 @@ fs_generator::generate_code(exec_list *instructions)
 	 abort();
 
       case SHADER_OPCODE_LOAD_PAYLOAD:
-         assert(!"Should be lowered by lower_load_payload()");
-         break;
+         unreachable("Should be lowered by lower_load_payload()");
       }
 
       if (inst->no_dd_clear || inst->no_dd_check || inst->conditional_mod) {

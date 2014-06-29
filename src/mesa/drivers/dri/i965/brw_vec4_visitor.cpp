@@ -366,8 +366,7 @@ vec4_visitor::emit_math(opcode opcode, dst_reg dst, src_reg src)
    case SHADER_OPCODE_COS:
       break;
    default:
-      assert(!"not reached: bad math opcode");
-      return;
+      unreachable("not reached: bad math opcode");
    }
 
    if (brw->gen >= 8) {
@@ -420,8 +419,7 @@ vec4_visitor::emit_math(enum opcode opcode,
    case SHADER_OPCODE_INT_REMAINDER:
       break;
    default:
-      assert(!"not reached: unsupported binary math opcode");
-      return;
+      unreachable("not reached: unsupported binary math opcode");
    }
 
    if (brw->gen >= 8) {
@@ -436,8 +434,9 @@ vec4_visitor::emit_math(enum opcode opcode,
 void
 vec4_visitor::emit_pack_half_2x16(dst_reg dst, src_reg src0)
 {
-   if (brw->gen < 7)
-      assert(!"ir_unop_pack_half_2x16 should be lowered");
+   if (brw->gen < 7) {
+      unreachable("ir_unop_pack_half_2x16 should be lowered");
+   }
 
    assert(dst.type == BRW_REGISTER_TYPE_UD);
    assert(src0.type == BRW_REGISTER_TYPE_F);
@@ -512,8 +511,9 @@ vec4_visitor::emit_pack_half_2x16(dst_reg dst, src_reg src0)
 void
 vec4_visitor::emit_unpack_half_2x16(dst_reg dst, src_reg src0)
 {
-   if (brw->gen < 7)
-      assert(!"ir_unop_unpack_half_2x16 should be lowered");
+   if (brw->gen < 7) {
+      unreachable("ir_unop_unpack_half_2x16 should be lowered");
+   }
 
    assert(dst.type == BRW_REGISTER_TYPE_F);
    assert(src0.type == BRW_REGISTER_TYPE_UD);
@@ -597,8 +597,7 @@ type_size(const struct glsl_type *type)
    case GLSL_TYPE_VOID:
    case GLSL_TYPE_ERROR:
    case GLSL_TYPE_INTERFACE:
-      assert(0);
-      break;
+      unreachable("not reached");
    }
 
    return 0;
@@ -850,8 +849,7 @@ vec4_visitor::emit_bool_to_cond_code(ir_rvalue *ir, uint32_t *predicate)
 	 break;
 
       default:
-	 assert(!"not reached");
-	 break;
+	 unreachable("not reached");
       }
       return;
    }
@@ -944,9 +942,7 @@ vec4_visitor::emit_if_gen6(ir_if *ir)
 	 return;
 
       default:
-	 assert(!"not reached");
-	 emit(IF(op[0], src_reg(0), BRW_CONDITIONAL_NZ));
-	 return;
+	 unreachable("not reached");
       }
       return;
    }
@@ -1017,7 +1013,7 @@ vec4_visitor::visit(ir_variable *ir)
       break;
 
    default:
-      assert(!"not reached");
+      unreachable("not reached");
    }
 
    reg->type = brw_type_for_base_type(ir->type);
@@ -1054,10 +1050,9 @@ vec4_visitor::visit(ir_loop_jump *ir)
 
 
 void
-vec4_visitor::visit(ir_function_signature *ir)
+vec4_visitor::visit(ir_function_signature *)
 {
-   assert(0);
-   (void)ir;
+   unreachable("not reached");
 }
 
 void
@@ -1354,8 +1349,7 @@ vec4_visitor::visit(ir_expression *ir)
       break;
    case ir_unop_exp:
    case ir_unop_log:
-      assert(!"not reached: should be handled by ir_explog_to_explog2");
-      break;
+      unreachable("not reached: should be handled by ir_explog_to_explog2");
    case ir_unop_sin:
    case ir_unop_sin_reduced:
       emit_math(SHADER_OPCODE_SIN, result_dst, op[0]);
@@ -1367,8 +1361,7 @@ vec4_visitor::visit(ir_expression *ir)
 
    case ir_unop_dFdx:
    case ir_unop_dFdy:
-      assert(!"derivatives not valid in vertex shader");
-      break;
+      unreachable("derivatives not valid in vertex shader");
 
    case ir_unop_bitfield_reverse:
       emit(BFREV(result_dst, op[0]));
@@ -1404,15 +1397,13 @@ vec4_visitor::visit(ir_expression *ir)
       break;
 
    case ir_unop_noise:
-      assert(!"not reached: should be handled by lower_noise");
-      break;
+      unreachable("not reached: should be handled by lower_noise");
 
    case ir_binop_add:
       emit(ADD(result_dst, op[0], op[1]));
       break;
    case ir_binop_sub:
-      assert(!"not reached: should be handled by ir_sub_to_add_neg");
-      break;
+      unreachable("not reached: should be handled by ir_sub_to_add_neg");
 
    case ir_binop_mul:
       if (brw->gen < 8 && ir->type->is_integer()) {
@@ -1707,8 +1698,7 @@ vec4_visitor::visit(ir_expression *ir)
    }
 
    case ir_binop_vector_extract:
-      assert(!"should have been lowered by vec_index_to_cond_assign");
-      break;
+      unreachable("should have been lowered by vec_index_to_cond_assign");
 
    case ir_triop_fma:
       op[0] = fix_3src_operand(op[0]);
@@ -1748,17 +1738,14 @@ vec4_visitor::visit(ir_expression *ir)
       break;
 
    case ir_triop_vector_insert:
-      assert(!"should have been lowered by lower_vector_insert");
-      break;
+      unreachable("should have been lowered by lower_vector_insert");
 
    case ir_quadop_bitfield_insert:
-      assert(!"not reached: should be handled by "
+      unreachable("not reached: should be handled by "
               "bitfield_insert_to_bfm_bfi\n");
-      break;
 
    case ir_quadop_vector:
-      assert(!"not reached: should be handled by lower_quadop_vector");
-      break;
+      unreachable("not reached: should be handled by lower_quadop_vector");
 
    case ir_unop_pack_half_2x16:
       emit_pack_half_2x16(result_dst, op[0]);
@@ -1774,16 +1761,13 @@ vec4_visitor::visit(ir_expression *ir)
    case ir_unop_unpack_snorm_4x8:
    case ir_unop_unpack_unorm_2x16:
    case ir_unop_unpack_unorm_4x8:
-      assert(!"not reached: should be handled by lower_packing_builtins");
-      break;
+      unreachable("not reached: should be handled by lower_packing_builtins");
    case ir_unop_unpack_half_2x16_split_x:
    case ir_unop_unpack_half_2x16_split_y:
    case ir_binop_pack_half_2x16_split:
-      assert(!"not reached: should not occur in vertex shader");
-      break;
+      unreachable("not reached: should not occur in vertex shader");
    case ir_binop_ldexp:
-      assert(!"not reached: should be handled by ldexp_to_arith()");
-      break;
+      unreachable("not reached: should be handled by ldexp_to_arith()");
    }
 }
 
@@ -2229,8 +2213,7 @@ vec4_visitor::emit_constant_values(dst_reg *dst, ir_constant *ir)
 	 emit(MOV(*dst, src_reg(ir->value.b[i])));
 	 break;
       default:
-	 assert(!"Non-float/uint/int/bool constant");
-	 break;
+	 unreachable("Non-float/uint/int/bool constant");
       }
 
       remaining_writemask &= ~dst->writemask;
@@ -2296,7 +2279,7 @@ vec4_visitor::visit(ir_call *ir)
        !strcmp("__intrinsic_atomic_predecrement", callee)) {
       visit_atomic_counter_intrinsic(ir);
    } else {
-      assert(!"Unsupported intrinsic.");
+      unreachable("Unsupported intrinsic.");
    }
 }
 
@@ -2445,13 +2428,11 @@ vec4_visitor::visit(ir_texture *ir)
       inst = new(mem_ctx) vec4_instruction(this, SHADER_OPCODE_TXS);
       break;
    case ir_txb:
-      assert(!"TXB is not valid for vertex shaders.");
-      break;
+      unreachable("TXB is not valid for vertex shaders.");
    case ir_lod:
-      assert(!"LOD is not valid for vertex shaders.");
-      break;
+      unreachable("LOD is not valid for vertex shaders.");
    default:
-      assert(!"Unrecognized tex op");
+      unreachable("Unrecognized tex op");
    }
 
    if (ir->offset != NULL && ir->op != ir_txf)
@@ -2644,8 +2625,7 @@ vec4_visitor::gather_channel(ir_texture *ir, int sampler)
       case SWIZZLE_Z: return 2;
       case SWIZZLE_W: return 3;
       default:
-         assert(!"Not reached"); /* zero, one swizzles handled already */
-         return 0;
+         unreachable("Not reached"); /* zero, one swizzles handled already */
    }
 }
 
@@ -2709,13 +2689,13 @@ vec4_visitor::swizzle_result(ir_texture *ir, src_reg orig_val, int sampler)
 void
 vec4_visitor::visit(ir_return *)
 {
-   assert(!"not reached");
+   unreachable("not reached");
 }
 
 void
 vec4_visitor::visit(ir_discard *)
 {
-   assert(!"not reached");
+   unreachable("not reached");
 }
 
 void
@@ -2750,13 +2730,13 @@ vec4_visitor::visit(ir_if *ir)
 void
 vec4_visitor::visit(ir_emit_vertex *)
 {
-   assert(!"not reached");
+   unreachable("not reached");
 }
 
 void
 vec4_visitor::visit(ir_end_primitive *)
 {
-   assert(!"not reached");
+   unreachable("not reached");
 }
 
 void

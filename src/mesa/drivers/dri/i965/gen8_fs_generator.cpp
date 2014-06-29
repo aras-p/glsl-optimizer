@@ -231,8 +231,7 @@ gen8_fs_generator::generate_tex(fs_inst *ir,
       }
       break;
    default:
-      assert(!"not reached");
-      break;
+      unreachable("not reached");
    }
    assert(msg_type != -1);
 
@@ -1125,8 +1124,7 @@ gen8_fs_generator::generate_code(exec_list *instructions)
 
       case FS_OPCODE_PIXEL_X:
       case FS_OPCODE_PIXEL_Y:
-         assert(!"FS_OPCODE_PIXEL_X and FS_OPCODE_PIXEL_Y are only for Gen4-5.");
-         break;
+         unreachable("FS_OPCODE_PIXEL_X and FS_OPCODE_PIXEL_Y are only for Gen4-5.");
 
       case FS_OPCODE_CINTERP:
          MOV(dst, src[0]);
@@ -1193,8 +1191,7 @@ gen8_fs_generator::generate_code(exec_list *instructions)
          break;
 
       case SHADER_OPCODE_SHADER_TIME_ADD:
-         assert(!"XXX: Missing Gen8 scalar support for INTEL_DEBUG=shader_time");
-         break;
+         unreachable("XXX: Missing Gen8 scalar support for INTEL_DEBUG=shader_time");
 
       case SHADER_OPCODE_UNTYPED_ATOMIC:
          generate_untyped_atomic(ir, dst, src[0], src[1]);

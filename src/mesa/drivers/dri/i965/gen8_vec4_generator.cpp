@@ -97,8 +97,7 @@ gen8_vec4_generator::generate_tex(vec4_instruction *ir, struct brw_reg dst)
       }
       break;
    default:
-      assert(!"should not get here: invalid VS texture opcode");
-      break;
+      unreachable("should not get here: invalid VS texture opcode");
    }
 
    if (ir->header_present) {
@@ -815,8 +814,7 @@ gen8_vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
       break;
 
    case SHADER_OPCODE_SHADER_TIME_ADD:
-      assert(!"XXX: Missing Gen8 vec4 support for INTEL_DEBUG=shader_time");
-      break;
+      unreachable("XXX: Missing Gen8 vec4 support for INTEL_DEBUG=shader_time");
 
    case SHADER_OPCODE_UNTYPED_ATOMIC:
       generate_untyped_atomic(ir, dst, src[0], src[1]);
@@ -827,8 +825,7 @@ gen8_vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
       break;
 
    case VS_OPCODE_UNPACK_FLAGS_SIMD4X2:
-      assert(!"VS_OPCODE_UNPACK_FLAGS_SIMD4X2 should not be used on Gen8+.");
-      break;
+      unreachable("VS_OPCODE_UNPACK_FLAGS_SIMD4X2 should not be used on Gen8+.");
 
    default:
       if (ir->opcode < (int) ARRAY_SIZE(opcode_descs)) {

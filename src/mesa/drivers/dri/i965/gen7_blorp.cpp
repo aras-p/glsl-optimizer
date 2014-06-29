@@ -517,8 +517,7 @@ gen7_blorp_emit_wm_config(struct brw_context *brw,
    case GEN6_HIZ_OP_NONE:
       break;
    default:
-      assert(0);
-      break;
+      unreachable("not reached");
    }
    dw1 |= GEN7_WM_LINE_AA_WIDTH_1_0;
    dw1 |= GEN7_WM_LINE_END_CAP_AA_WIDTH_0_5;

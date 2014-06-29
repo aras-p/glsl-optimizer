@@ -655,8 +655,7 @@ start_oa_counters(struct brw_context *brw)
       counter_format = 0b101;
       break;
    default:
-      assert(!"Tried to enable OA counters on an unsupported generation.");
-      return;
+      unreachable("Tried to enable OA counters on an unsupported generation.");
    }
 
    BEGIN_BATCH(3);
@@ -748,7 +747,7 @@ emit_mi_report_perf_count(struct brw_context *brw,
       OUT_BATCH(report_id);
       ADVANCE_BATCH();
    } else {
-      assert(!"Unsupported generation for performance counters.");
+      unreachable("Unsupported generation for performance counters.");
    }
 
    /* Reports apparently don't always get written unless we flush after. */

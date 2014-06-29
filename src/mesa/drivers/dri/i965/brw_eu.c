@@ -141,9 +141,7 @@ brw_set_default_compression_control(struct brw_compile *p,
          brw_inst_set_qtr_control(brw, p->current, GEN6_COMPRESSION_1H);
 	 break;
       default:
-	 assert(!"not reached");
-         brw_inst_set_qtr_control(brw, p->current, GEN6_COMPRESSION_1H);
-	 break;
+         unreachable("not reached");
       }
    } else {
       brw_inst_set_qtr_control(brw, p->current, compression_control);

@@ -105,8 +105,7 @@ static void compile_sf_prog( struct brw_context *brw,
       brw_emit_anyprim_setup( &c );
       break;
    default:
-      assert(0);
-      return;
+      unreachable("not reached");
    }
 
    brw_compact_instructions(&c.func, 0, 0, NULL);

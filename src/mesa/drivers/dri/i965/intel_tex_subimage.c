@@ -449,8 +449,7 @@ linear_to_tiled(uint32_t xt1, uint32_t xt2,
       span = ytile_span;
       tile_copy = ytile_copy_faster;
    } else {
-      assert(!"unsupported tiling");
-      return;
+      unreachable("unsupported tiling");
    }
 
    /* Round out to tile boundaries. */

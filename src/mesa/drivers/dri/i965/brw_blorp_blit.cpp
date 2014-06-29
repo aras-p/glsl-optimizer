@@ -230,7 +230,7 @@ try_blorp_blit(struct brw_context *brw,
                     filter, mirror_x, mirror_y);
       break;
    default:
-      assert(false);
+      unreachable("not reached");
    }
 
    return true;
@@ -996,9 +996,8 @@ brw_blorp_blit_program::compute_frag_coords()
          break;
       }
       default:
-         assert(!"Unrecognized sample count in "
-                "brw_blorp_blit_program::compute_frag_coords()");
-         break;
+         unreachable("Unrecognized sample count in "
+                     "brw_blorp_blit_program::compute_frag_coords()");
       }
       s_is_zero = false;
    } else {
@@ -1128,8 +1127,7 @@ brw_blorp_blit_program::encode_msaa(unsigned num_samples,
       /* We can't compensate for compressed layout since at this point in the
        * program we haven't read from the MCS buffer.
        */
-      assert(!"Bad layout in encode_msaa");
-      break;
+      unreachable("Bad layout in encode_msaa");
    case INTEL_MSAA_LAYOUT_UMS:
       /* No translation necessary. */
       break;
@@ -1215,8 +1213,7 @@ brw_blorp_blit_program::decode_msaa(unsigned num_samples,
       /* We can't compensate for compressed layout since at this point in the
        * program we don't have access to the MCS buffer.
        */
-      assert(!"Bad layout in encode_msaa");
-      break;
+      unreachable("Bad layout in encode_msaa");
    case INTEL_MSAA_LAYOUT_UMS:
       /* No translation necessary. */
       break;
@@ -1675,8 +1672,7 @@ brw_blorp_blit_program::texel_fetch(struct brw_reg dst)
       }
       break;
    default:
-      assert(!"Should not get here.");
-      break;
+      unreachable("Should not get here.");
    };
 }
 
@@ -1942,8 +1938,7 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
       wm_prog_key.texture_data_type = BRW_REGISTER_TYPE_D;
       break;
    default:
-      assert(!"Unrecognized blorp format");
-      break;
+      unreachable("Unrecognized blorp format");
    }
 
    if (brw->gen > 6) {
@@ -2064,8 +2059,7 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
          y1 = ALIGN(y1 * 2, 4);
          break;
       default:
-         assert(!"Unrecognized sample count in brw_blorp_blit_params ctor");
-         break;
+         unreachable("Unrecognized sample count in brw_blorp_blit_params ctor");
       }
       wm_prog_key.use_kill = true;
    }

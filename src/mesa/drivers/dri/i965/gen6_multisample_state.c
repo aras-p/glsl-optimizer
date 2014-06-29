@@ -48,8 +48,7 @@ gen6_get_sample_position(struct gl_context *ctx,
       bits = brw_multisample_positions_8x[index >> 2] >> (8 * (index & 3));
       break;
    default:
-      assert(!"Not implemented");
-      return;
+      unreachable("Not implemented");
    }
 
    /* Convert from U0.4 back to a floating point coordinate. */
@@ -85,8 +84,7 @@ gen6_emit_3dstate_multisample(struct brw_context *brw,
       sample_positions_7654 = brw_multisample_positions_8x[1];
       break;
    default:
-      assert(!"Unrecognized num_samples in gen6_emit_3dstate_multisample");
-      break;
+      unreachable("Unrecognized num_samples in gen6_emit_3dstate_multisample");
    }
 
    /* 3DSTATE_MULTISAMPLE is nonpipelined. */

@@ -408,8 +408,7 @@ static void emit_primitives( struct brw_clip_compile *c,
       break;
 
    case CLIP_CULL:
-      assert(0);
-      break;
+      unreachable("not reached");
    }
 }
 

@@ -69,8 +69,7 @@ upload_clip_state(struct brw_context *brw)
             dw1 |= GEN7_CLIP_CULLMODE_BOTH;
             break;
          default:
-            assert(!"Should not get here: invalid CullFlag");
-            break;
+            unreachable("Should not get here: invalid CullFlag");
          }
       } else {
          dw1 |= GEN7_CLIP_CULLMODE_NONE;

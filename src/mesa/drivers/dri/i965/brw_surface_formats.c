@@ -767,8 +767,7 @@ brw_depth_format(struct brw_context *brw, mesa_format format)
    case MESA_FORMAT_Z32_FLOAT_S8X24_UINT:
       return BRW_DEPTHFORMAT_D32_FLOAT_S8X24_UINT;
    default:
-      assert(!"Unexpected depth format.");
-      return BRW_DEPTHFORMAT_D32_FLOAT;
+      unreachable("Unexpected depth format.");
    }
 }
 

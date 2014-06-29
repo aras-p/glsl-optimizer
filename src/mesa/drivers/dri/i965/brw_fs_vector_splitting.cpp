@@ -312,7 +312,7 @@ ir_vector_splitting_visitor::visit_leave(ir_assignment *ir)
 	 break;
       default:
 	 ir->fprint(stderr);
-	 assert(!"not reached: non-channelwise dereference of LHS.");
+	 unreachable("not reached: non-channelwise dereference of LHS.");
       }
 
       ir->lhs = new(mem_ctx) ir_dereference_variable(lhs->components[elem]);

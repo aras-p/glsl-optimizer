@@ -106,8 +106,7 @@ static void compile_clip_prog( struct brw_context *brw,
       brw_emit_point_clip( &c );
       break;
    default:
-      assert(0);
-      return;
+      unreachable("not reached");
    }
 
    brw_compact_instructions(&c.func, 0, 0, NULL);

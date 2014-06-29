@@ -58,8 +58,7 @@ vec4_gs_visitor::make_reg_for_system_value(ir_variable *ir)
       emit(GS_OPCODE_GET_INSTANCE_ID, *reg);
       break;
    default:
-      assert(!"not reached");
-      break;
+      unreachable("not reached");
    }
 
    return reg;
@@ -209,7 +208,7 @@ void
 vec4_gs_visitor::emit_program_code()
 {
    /* We don't support NV_geometry_program4. */
-   assert(!"Unreached");
+   unreachable("Unreached");
 }
 
 

@@ -309,8 +309,7 @@ ir_channel_expressions_visitor::visit_leave(ir_assignment *ir)
    case ir_binop_logic_or:
       ir->fprint(stderr);
       fprintf(stderr, "\n");
-      assert(!"not reached: expression operates on scalars only");
-      break;
+      unreachable("not reached: expression operates on scalars only");
    case ir_binop_all_equal:
    case ir_binop_any_nequal: {
       ir_expression *last = NULL;
@@ -342,8 +341,7 @@ ir_channel_expressions_visitor::visit_leave(ir_assignment *ir)
       break;
    }
    case ir_unop_noise:
-      assert(!"noise should have been broken down to function call");
-      break;
+      unreachable("noise should have been broken down to function call");
 
    case ir_binop_bfm: {
       /* Does not need to be scalarized, since its result will be identical
@@ -360,8 +358,7 @@ ir_channel_expressions_visitor::visit_leave(ir_assignment *ir)
    }
 
    case ir_binop_ubo_load:
-      assert(!"not yet supported");
-      break;
+      unreachable("not yet supported");
 
    case ir_triop_fma:
    case ir_triop_lrp:
@@ -412,14 +409,12 @@ ir_channel_expressions_visitor::visit_leave(ir_assignment *ir)
    case ir_triop_vector_insert:
    case ir_quadop_bitfield_insert:
    case ir_quadop_vector:
-      assert(!"should have been lowered");
-      break;
+      unreachable("should have been lowered");
 
    case ir_unop_unpack_half_2x16_split_x:
    case ir_unop_unpack_half_2x16_split_y:
    case ir_binop_pack_half_2x16_split:
-      assert(!"not reached: expression operates on scalars only");
-      break;
+      unreachable("not reached: expression operates on scalars only");
    }
 
    ir->remove();

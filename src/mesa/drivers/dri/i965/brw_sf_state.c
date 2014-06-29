@@ -209,8 +209,7 @@ static void upload_sf_unit( struct brw_context *brw )
       sf->sf6.cull_mode = BRW_CULLMODE_NONE;
       break;
    default:
-      assert(0);
-      break;
+      unreachable("not reached");
    }
 
    /* _NEW_LINE */

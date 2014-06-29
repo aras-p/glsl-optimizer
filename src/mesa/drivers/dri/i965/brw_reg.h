@@ -207,8 +207,7 @@ type_is_signed(unsigned type)
       return false;
 
    default:
-      assert(!"Unreachable.");
-      return false;
+      unreachable("not reached");
    }
 }
 

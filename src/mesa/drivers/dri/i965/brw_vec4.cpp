@@ -317,8 +317,7 @@ vec4_visitor::implied_mrf_writes(vec4_instruction *inst)
    case SHADER_OPCODE_UNTYPED_SURFACE_READ:
       return 0;
    default:
-      assert(!"not reached");
-      return inst->mlen;
+      unreachable("not reached");
    }
 }
 
@@ -670,9 +669,7 @@ vec4_visitor::opt_algebraic()
 	       inst->src[0] = src_reg(0u);
 	       break;
 	    default:
-	       assert(!"not reached");
-	       inst->src[0] = src_reg(0.0f);
-	       break;
+	       unreachable("not reached");
 	    }
 	    inst->src[1] = src_reg();
 	    progress = true;

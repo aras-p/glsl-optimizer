@@ -136,7 +136,7 @@ intel_get_non_msrt_mcs_alignment(struct brw_context *brw,
 {
    switch (mt->tiling) {
    default:
-      assert(!"Non-MSRT MCS requires X or Y tiling");
+      unreachable("Non-MSRT MCS requires X or Y tiling");
       /* In release builds, fall through */
    case I915_TILING_Y:
       *width_px = 32 / mt->cpp;
@@ -322,7 +322,7 @@ intel_miptree_create_layout(struct brw_context *brw,
             /* num_samples should already have been quantized to 0, 1, 2, 4, or
              * 8.
              */
-            assert(false);
+            unreachable("not reached");
          }
       } else {
          /* Non-interleaved */
@@ -987,7 +987,7 @@ intel_miptree_get_tile_masks(const struct intel_mipmap_tree *mt,
 
    switch (tiling) {
    default:
-      assert(false);
+      unreachable("not reached");
    case I915_TILING_NONE:
       *mask_x = *mask_y = 0;
       break;
@@ -1031,7 +1031,7 @@ intel_miptree_get_aligned_offset(const struct intel_mipmap_tree *mt,
 
    switch (tiling) {
    default:
-      assert(false);
+      unreachable("not reached");
    case I915_TILING_NONE:
       return y * pitch + x * cpp;
    case I915_TILING_X:
@@ -1257,8 +1257,7 @@ intel_miptree_alloc_mcs(struct brw_context *brw,
       format = MESA_FORMAT_R_UINT32;
       break;
    default:
-      assert(!"Unrecognized sample count in intel_miptree_alloc_mcs");
-      return false;
+      unreachable("Unrecognized sample count in intel_miptree_alloc_mcs");
    };
 
    /* From the Ivy Bridge PRM, Vol4 Part1 p76, "MCS Base Address":

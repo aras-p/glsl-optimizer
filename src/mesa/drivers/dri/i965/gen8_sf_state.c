@@ -202,8 +202,7 @@ upload_raster(struct brw_context *brw)
          dw1 |= GEN8_RASTER_CULL_BOTH;
          break;
       default:
-         assert(0);
-         break;
+         unreachable("not reached");
       }
    } else {
       dw1 |= GEN8_RASTER_CULL_NONE;
@@ -237,8 +236,7 @@ upload_raster(struct brw_context *brw)
       break;
 
    default:
-      assert(0);
-      break;
+      unreachable("not reached");
    }
 
    switch (ctx->Polygon.BackMode) {
@@ -252,8 +250,7 @@ upload_raster(struct brw_context *brw)
       dw1 |= GEN6_SF_BACK_POINT;
       break;
    default:
-      assert(0);
-      break;
+      unreachable("not reached");
    }
 
    /* _NEW_LINE */

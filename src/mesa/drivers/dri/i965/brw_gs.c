@@ -103,8 +103,7 @@ static void compile_ff_gs_prog(struct brw_context *brw,
          check_edge_flag = true;
          break;
       default:
-	 assert(!"Unexpected primitive type in Gen6 SOL program.");
-	 return;
+	 unreachable("Unexpected primitive type in Gen6 SOL program.");
       }
       gen6_sol_program(&c, key, num_verts, check_edge_flag);
    } else {

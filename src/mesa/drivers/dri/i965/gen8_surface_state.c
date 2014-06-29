@@ -62,8 +62,7 @@ vertical_alignment(struct intel_mipmap_tree *mt)
    case 16:
       return GEN8_SURFACE_VALIGN_16;
    default:
-      assert(!"Unsupported vertical surface alignment.");
-      return GEN8_SURFACE_VALIGN_4;
+      unreachable("Unsupported vertical surface alignment.");
    }
 }
 
@@ -78,8 +77,7 @@ horizontal_alignment(struct intel_mipmap_tree *mt)
    case 16:
       return GEN8_SURFACE_HALIGN_16;
    default:
-      assert(!"Unsupported horizontal surface alignment.");
-      return GEN8_SURFACE_HALIGN_4;
+      unreachable("Unsupported horizontal surface alignment.");
    }
 }
 

@@ -283,7 +283,7 @@ gen8_hiz_exec(struct brw_context *brw, struct intel_mipmap_tree *mt,
       dw1 |= GEN8_WM_HZ_DEPTH_CLEAR;
       break;
    case GEN6_HIZ_OP_NONE:
-      assert(!"Should not get here.");
+      unreachable("Should not get here.");
    }
 
    if (mt->num_samples > 0)

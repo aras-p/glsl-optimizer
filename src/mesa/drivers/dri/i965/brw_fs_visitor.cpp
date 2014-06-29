@@ -442,8 +442,7 @@ fs_visitor::visit(ir_expression *ir)
       break;
    case ir_unop_exp:
    case ir_unop_log:
-      assert(!"not reached: should be handled by ir_explog_to_explog2");
-      break;
+      unreachable("not reached: should be handled by ir_explog_to_explog2");
    case ir_unop_sin:
    case ir_unop_sin_reduced:
       emit_math(SHADER_OPCODE_SIN, this->result, op[0]);
@@ -464,8 +463,7 @@ fs_visitor::visit(ir_expression *ir)
       emit(ADD(this->result, op[0], op[1]));
       break;
    case ir_binop_sub:
-      assert(!"not reached: should be handled by ir_sub_to_add_neg");
-      break;
+      unreachable("not reached: should be handled by ir_sub_to_add_neg");
 
    case ir_binop_mul:
       if (brw->gen < 8 && ir->type->is_integer()) {
@@ -568,28 +566,22 @@ fs_visitor::visit(ir_expression *ir)
 
    case ir_binop_dot:
    case ir_unop_any:
-      assert(!"not reached: should be handled by brw_fs_channel_expressions");
-      break;
+      unreachable("not reached: should be handled by brw_fs_channel_expressions");
 
    case ir_unop_noise:
-      assert(!"not reached: should be handled by lower_noise");
-      break;
+      unreachable("not reached: should be handled by lower_noise");
 
    case ir_quadop_vector:
-      assert(!"not reached: should be handled by lower_quadop_vector");
-      break;
+      unreachable("not reached: should be handled by lower_quadop_vector");
 
    case ir_binop_vector_extract:
-      assert(!"not reached: should be handled by lower_vec_index_to_cond_assign()");
-      break;
+      unreachable("not reached: should be handled by lower_vec_index_to_cond_assign()");
 
    case ir_triop_vector_insert:
-      assert(!"not reached: should be handled by lower_vector_insert()");
-      break;
+      unreachable("not reached: should be handled by lower_vector_insert()");
 
    case ir_binop_ldexp:
-      assert(!"not reached: should be handled by ldexp_to_arith()");
-      break;
+      unreachable("not reached: should be handled by ldexp_to_arith()");
 
    case ir_unop_sqrt:
       emit_math(SHADER_OPCODE_SQRT, this->result, op[0]);
@@ -673,8 +665,7 @@ fs_visitor::visit(ir_expression *ir)
    case ir_unop_unpack_unorm_4x8:
    case ir_unop_unpack_half_2x16:
    case ir_unop_pack_half_2x16:
-      assert(!"not reached: should be handled by lower_packing_builtins");
-      break;
+      unreachable("not reached: should be handled by lower_packing_builtins");
    case ir_unop_unpack_half_2x16_split_x:
       emit(FS_OPCODE_UNPACK_HALF_2x16_SPLIT_X, this->result, op[0]);
       break;
@@ -724,9 +715,8 @@ fs_visitor::visit(ir_expression *ir)
       emit(BFI2(this->result, op[0], op[1], op[2]));
       break;
    case ir_quadop_bitfield_insert:
-      assert(!"not reached: should be handled by "
+      unreachable("not reached: should be handled by "
               "lower_instructions::bitfield_insert_to_bfm_bfi");
-      break;
 
    case ir_unop_bit_not:
       emit(NOT(this->result, op[0]));
@@ -871,8 +861,7 @@ fs_visitor::emit_assignment_writes(fs_reg &l, fs_reg &r,
    case GLSL_TYPE_VOID:
    case GLSL_TYPE_ERROR:
    case GLSL_TYPE_INTERFACE:
-      assert(!"not reached");
-      break;
+      unreachable("not reached");
    }
 }
 
@@ -994,7 +983,7 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
 	 emit(MOV(fs_reg(MRF, base_mrf + mlen), lod));
 	 mlen++;
       } else {
-         assert(!"Should not get here.");
+         unreachable("Should not get here.");
       }
 
       emit(MOV(fs_reg(MRF, base_mrf + mlen), shadow_c));
@@ -1708,7 +1697,7 @@ fs_visitor::visit(ir_texture *ir)
          mcs = fs_reg(0u);
       break;
    default:
-      assert(!"Unrecognized texture opcode");
+      unreachable("Unrecognized texture opcode");
    };
 
    /* Writemasking doesn't eliminate channels on SIMD8 texture
@@ -1819,8 +1808,7 @@ fs_visitor::gather_channel(ir_texture *ir, int sampler)
       case SWIZZLE_Z: return 2;
       case SWIZZLE_W: return 3;
       default:
-         assert(!"Not reached"); /* zero, one swizzles handled already */
-         return 0;
+         unreachable("Not reached"); /* zero, one swizzles handled already */
    }
 }
 
@@ -2001,7 +1989,7 @@ fs_visitor::visit(ir_constant *ir)
 	    emit(MOV(dst_reg, fs_reg((int)ir->value.b[i])));
 	    break;
 	 default:
-	    assert(!"Non-float/uint/int/bool constant");
+	    unreachable("Non-float/uint/int/bool constant");
 	 }
 	 dst_reg.reg_offset++;
       }
@@ -2072,9 +2060,7 @@ fs_visitor::emit_bool_to_cond_code(ir_rvalue *ir)
 	 break;
 
       default:
-	 assert(!"not reached");
-	 fail("bad cond code\n");
-	 break;
+	 unreachable("not reached");
       }
       return;
    }
@@ -2142,10 +2128,7 @@ fs_visitor::emit_if_gen6(ir_if *ir)
                  brw_conditional_for_comparison(expr->operation)));
 	 return;
       default:
-	 assert(!"not reached");
-	 emit(IF(op[0], fs_reg(0), BRW_CONDITIONAL_NZ));
-	 fail("bad condition\n");
-	 return;
+	 unreachable("not reached");
       }
    }
 
@@ -2361,14 +2344,14 @@ fs_visitor::visit(ir_call *ir)
        !strcmp("__intrinsic_atomic_predecrement", callee)) {
       visit_atomic_counter_intrinsic(ir);
    } else {
-      assert(!"Unsupported intrinsic.");
+      unreachable("Unsupported intrinsic.");
    }
 }
 
 void
 fs_visitor::visit(ir_return *ir)
 {
-   assert(!"FINISHME");
+   unreachable("FINISHME");
 }
 
 void
@@ -2393,22 +2376,21 @@ fs_visitor::visit(ir_function *ir)
 }
 
 void
-fs_visitor::visit(ir_function_signature *ir)
+fs_visitor::visit(ir_function_signature *)
 {
-   assert(!"not reached");
-   (void)ir;
+   unreachable("not reached");
 }
 
 void
 fs_visitor::visit(ir_emit_vertex *)
 {
-   assert(!"not reached");
+   unreachable("not reached");
 }
 
 void
 fs_visitor::visit(ir_end_primitive *)
 {
-   assert(!"not reached");
+   unreachable("not reached");
 }
 
 void
@@ -2726,8 +2708,7 @@ cond_for_alpha_func(GLenum func)
       case GL_NOTEQUAL:
          return BRW_CONDITIONAL_NEQ;
       default:
-         assert(!"Not reached");
-         return 0;
+         unreachable("Not reached");
    }
 }
 

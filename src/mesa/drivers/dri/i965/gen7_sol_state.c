@@ -415,7 +415,7 @@ brw_compute_xfb_vertices_written(struct brw_context *brw,
       vertices_per_prim = 3;
       break;
    default:
-      assert(!"Invalid transform feedback primitive mode.");
+      unreachable("Invalid transform feedback primitive mode.");
    }
 
    /* Get the number of primitives generated. */

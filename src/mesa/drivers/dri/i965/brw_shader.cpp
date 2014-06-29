@@ -305,8 +305,7 @@ brw_type_for_base_type(const struct glsl_type *type)
    case GLSL_TYPE_VOID:
    case GLSL_TYPE_ERROR:
    case GLSL_TYPE_INTERFACE:
-      assert(!"not reached");
-      break;
+      unreachable("not reached");
    }
 
    return BRW_REGISTER_TYPE_F;
@@ -331,8 +330,7 @@ brw_conditional_for_comparison(unsigned int op)
    case ir_binop_any_nequal: /* same as nequal for scalars */
       return BRW_CONDITIONAL_NZ;
    default:
-      assert(!"not reached: bad operation for comparison");
-      return BRW_CONDITIONAL_NZ;
+      unreachable("not reached: bad operation for comparison");
    }
 }
 
@@ -361,8 +359,7 @@ brw_math_function(enum opcode op)
    case SHADER_OPCODE_INT_REMAINDER:
       return BRW_MATH_FUNCTION_INT_DIV_REMAINDER;
    default:
-      assert(!"not reached: unknown math function");
-      return 0;
+      unreachable("not reached: unknown math function");
    }
 }
 

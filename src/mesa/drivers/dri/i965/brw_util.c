@@ -51,8 +51,7 @@ GLuint brw_translate_blend_equation( GLenum mode )
    case GL_FUNC_REVERSE_SUBTRACT:
       return BRW_BLENDFUNCTION_REVERSE_SUBTRACT;
    default:
-      assert(0);
-      return BRW_BLENDFUNCTION_ADD;
+      unreachable("not reached");
    }
 }
 
@@ -100,7 +99,6 @@ GLuint brw_translate_blend_factor( GLenum factor )
       return BRW_BLENDFACTOR_INV_SRC1_ALPHA;
 
    default:
-      assert(0);
-      return BRW_BLENDFACTOR_ZERO;
+      unreachable("not reached");
    }
 }

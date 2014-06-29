@@ -161,8 +161,7 @@ vec4_vs_visitor::make_reg_for_system_value(ir_variable *ir)
       reg->writemask = WRITEMASK_Y;
       break;
    default:
-      assert(!"not reached");
-      break;
+      unreachable("not reached");
    }
 
    return reg;

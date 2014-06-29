@@ -550,8 +550,7 @@ fs_visitor::type_size(const struct glsl_type *type)
    case GLSL_TYPE_VOID:
    case GLSL_TYPE_ERROR:
    case GLSL_TYPE_INTERFACE:
-      assert(!"not reached");
-      break;
+      unreachable("not reached");
    }
 
    return 0;
@@ -873,8 +872,7 @@ fs_visitor::implied_mrf_writes(fs_inst *inst)
    case SHADER_OPCODE_UNTYPED_SURFACE_READ:
       return 0;
    default:
-      assert(!"not reached");
-      return inst->mlen;
+      unreachable("not reached");
    }
 }
 
@@ -1391,8 +1389,7 @@ fs_visitor::emit_math(enum opcode opcode, fs_reg dst, fs_reg src)
    case SHADER_OPCODE_COS:
       break;
    default:
-      assert(!"not reached: bad math opcode");
-      return NULL;
+      unreachable("not reached: bad math opcode");
    }
 
    /* Can't do hstride == 0 args to gen6 math, so expand it out.  We
@@ -1431,8 +1428,7 @@ fs_visitor::emit_math(enum opcode opcode, fs_reg dst, fs_reg src0, fs_reg src1)
    case SHADER_OPCODE_POW:
       break;
    default:
-      assert(!"not reached: unsupported binary math opcode.");
-      return NULL;
+      unreachable("not reached: unsupported binary math opcode.");
    }
 
    if (brw->gen >= 8) {

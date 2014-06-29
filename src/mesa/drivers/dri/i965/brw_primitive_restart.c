@@ -62,8 +62,7 @@ can_cut_index_handle_restart_index(struct gl_context *ctx,
       cut_index_will_work = ctx->Array.RestartIndex == 0xffffffff;
       break;
    default:
-      cut_index_will_work = false;
-      assert(0);
+      unreachable("not reached");
    }
 
    return cut_index_will_work;

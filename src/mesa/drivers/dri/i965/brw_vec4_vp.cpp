@@ -478,8 +478,7 @@ vec4_vs_visitor::get_vp_dst_reg(const prog_dst_register &dst)
       return dst_null_f();
 
    default:
-      assert(!"vec4_vp: bad destination register file");
-      return dst_reg(this, glsl_type::vec4_type);
+      unreachable("vec4_vp: bad destination register file");
    }
 
    result.writemask = dst.WriteMask;

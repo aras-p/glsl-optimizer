@@ -1285,8 +1285,7 @@ set_max_gl_versions(struct intel_screen *screen)
       psp->max_gl_es2_version = 20;
       break;
    default:
-      assert(!"unrecognized intel_screen::gen");
-      break;
+      unreachable("unrecognized intel_screen::gen");
    }
 }
 

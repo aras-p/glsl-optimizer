@@ -73,8 +73,7 @@ translate_tex_target(GLenum target)
       return BRW_SURFACE_CUBE;
 
    default:
-      assert(0);
-      return 0;
+      unreachable("not reached");
    }
 }
 
@@ -449,9 +448,7 @@ brw_update_sol_surface(struct brw_context *brw,
       surface_format = BRW_SURFACEFORMAT_R32G32B32A32_FLOAT;
       break;
    default:
-      assert(!"Invalid vector size for transform feedback output");
-      surface_format = BRW_SURFACEFORMAT_R32_FLOAT;
-      break;
+      unreachable("Invalid vector size for transform feedback output");
    }
 
    surf[0] = BRW_SURFACE_BUFFER << BRW_SURFACE_TYPE_SHIFT |

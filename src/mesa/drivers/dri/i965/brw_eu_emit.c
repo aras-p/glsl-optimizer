@@ -1070,7 +1070,7 @@ brw_AVG(struct brw_compile *p, struct brw_reg dest,
    case BRW_REGISTER_TYPE_UD:
       break;
    default:
-      assert(!"Bad type for brw_AVG");
+      unreachable("Bad type for brw_AVG");
    }
 
    return brw_alu2(p, BRW_OPCODE_AVG, dest, src0, src1);
