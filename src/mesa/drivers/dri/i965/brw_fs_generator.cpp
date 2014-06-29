@@ -1795,8 +1795,7 @@ fs_generator::generate_code(exec_list *instructions)
 
       const struct gl_program *prog = fp ? &fp->Base : NULL;
 
-      dump_assembly(p->store, annotation.ann_count, annotation.ann,
-                    brw, prog, brw_disassemble);
+      dump_assembly(p->store, annotation.ann_count, annotation.ann, brw, prog);
       ralloc_free(annotation.ann);
    }
 }

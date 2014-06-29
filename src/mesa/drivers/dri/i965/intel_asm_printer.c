@@ -22,14 +22,14 @@
  */
 
 #include "brw_cfg.h"
+#include "brw_eu.h"
 #include "intel_asm_printer.h"
 #include "program/prog_print.h"
 #include "program/prog_instruction.h"
 
 void
 dump_assembly(void *assembly, int num_annotations, struct annotation *annotation,
-              struct brw_context *brw, const struct gl_program *prog,
-              disassemble_func disassemble)
+              struct brw_context *brw, const struct gl_program *prog)
 {
    const char *last_annotation_string = NULL;
    const void *last_annotation_ir = NULL;
@@ -73,7 +73,7 @@ dump_assembly(void *assembly, int num_annotations, struct annotation *annotation
             fprintf(stderr, "   %s\n", last_annotation_string);
       }
 
-      disassemble(brw, assembly, start_offset, end_offset, stderr);
+      brw_disassemble(brw, assembly, start_offset, end_offset, stderr);
 
       if (annotation[i].block_end) {
          fprintf(stderr, "   END B%d", annotation[i].block_end->block_num);

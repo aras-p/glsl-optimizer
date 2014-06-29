@@ -1271,8 +1271,7 @@ gen8_fs_generator::generate_code(exec_list *instructions)
       fprintf(stderr, "SIMD%d shader: %d instructions.\n",
               dispatch_width, before_size / 16);
 
-      dump_assembly(store, annotation.ann_count, annotation.ann, brw, prog,
-                    gen8_disassemble);
+      dump_assembly(store, annotation.ann_count, annotation.ann, brw, prog);
       ralloc_free(annotation.ann);
    }
 }

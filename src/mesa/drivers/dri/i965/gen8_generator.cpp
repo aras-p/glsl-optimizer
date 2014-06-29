@@ -619,25 +619,3 @@ gen8_generator::HALT()
    gen8_set_mask_control(inst, BRW_MASK_DISABLE);
    return inst;
 }
-
-extern "C" void
-gen8_disassemble(struct brw_context *brw, void *assembly,
-                 int start, int end, FILE *out)
-{
-   bool dump_hex = false;
-
-   for (int offset = start; offset < end; offset += 16) {
-      gen8_instruction *inst = &((gen8_instruction *)assembly)[offset / 16];
-      fprintf(stderr, "0x%08x: ", offset);
-
-      if (dump_hex) {
-         fprintf(stderr, "0x%08x 0x%08x 0x%08x 0x%08x ",
-                 ((uint32_t *) inst)[3],
-                 ((uint32_t *) inst)[2],
-                 ((uint32_t *) inst)[1],
-                 ((uint32_t *) inst)[0]);
-      }
-
-      gen8_disassemble_inst(stderr, inst, brw->gen);
-   }
-}

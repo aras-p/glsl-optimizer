@@ -1296,8 +1296,7 @@ vec4_generator::generate_code(exec_list *instructions)
               before_size / 16, before_size, after_size,
               100.0f * (before_size - after_size) / before_size);
 
-      dump_assembly(p->store, annotation.ann_count, annotation.ann,
-                    brw, prog, brw_disassemble);
+      dump_assembly(p->store, annotation.ann_count, annotation.ann, brw, prog);
       ralloc_free(annotation.ann);
    }
 }

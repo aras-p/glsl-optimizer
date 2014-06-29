@@ -194,7 +194,3 @@ protected:
 
    void *mem_ctx;
 };
-
-extern "C" void
-gen8_disassemble(struct brw_context *brw, void *assembly,
-                 int start, int end, FILE *out);

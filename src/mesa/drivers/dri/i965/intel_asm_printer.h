@@ -56,13 +56,9 @@ struct annotation_info {
    int cur_block;
 };
 
-typedef void (*disassemble_func)(struct brw_context *brw, void *assembly,
-                                 int start, int end, FILE *out);
-
 void
 dump_assembly(void *assembly, int num_annotations, struct annotation *annotation,
-              struct brw_context *brw, const struct gl_program *prog,
-              disassemble_func disassemble);
+              struct brw_context *brw, const struct gl_program *prog);
 
 #ifdef __cplusplus
 } /* extern "C" */
