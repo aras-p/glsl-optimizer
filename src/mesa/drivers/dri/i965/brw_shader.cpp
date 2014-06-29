@@ -554,6 +554,43 @@ backend_visitor::backend_visitor(struct brw_context *brw,
 }
 
 bool
+backend_reg::is_zero() const
+{
+   if (file != IMM)
+      return false;
+
+   return fixed_hw_reg.dw1.d == 0;
+}
+
+bool
+backend_reg::is_one() const
+{
+   if (file != IMM)
+      return false;
+
+   return type == BRW_REGISTER_TYPE_F
+          ? fixed_hw_reg.dw1.f == 1.0
+          : fixed_hw_reg.dw1.d == 1;
+}
+
+bool
+backend_reg::is_null() const
+{
+   return file == HW_REG &&
+          fixed_hw_reg.file == BRW_ARCHITECTURE_REGISTER_FILE &&
+          fixed_hw_reg.nr == BRW_ARF_NULL;
+}
+
+
+bool
+backend_reg::is_accumulator() const
+{
+   return file == HW_REG &&
+          fixed_hw_reg.file == BRW_ARCHITECTURE_REGISTER_FILE &&
+          fixed_hw_reg.nr == BRW_ARF_ACCUMULATOR;
+}
+
+bool
 backend_instruction::is_tex() const
 {
    return (opcode == SHADER_OPCODE_TEX ||

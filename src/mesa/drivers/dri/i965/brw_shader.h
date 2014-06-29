@@ -42,6 +42,13 @@ enum PACKED register_file {
 
 struct backend_reg
 {
+#ifdef __cplusplus
+   bool is_zero() const;
+   bool is_one() const;
+   bool is_null() const;
+   bool is_accumulator() const;
+#endif
+
    enum register_file file; /**< Register file: GRF, MRF, IMM. */
    uint8_t type;            /**< Register type: BRW_REGISTER_TYPE_* */
 

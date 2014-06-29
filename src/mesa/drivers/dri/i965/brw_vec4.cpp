@@ -151,15 +151,6 @@ src_reg::src_reg(dst_reg reg)
                                 swizzles[2], swizzles[3]);
 }
 
-bool
-src_reg::is_accumulator() const
-{
-   return file == HW_REG &&
-          fixed_hw_reg.file == BRW_ARCHITECTURE_REGISTER_FILE &&
-          fixed_hw_reg.nr == BRW_ARF_ACCUMULATOR;
-}
-
-
 void
 dst_reg::init()
 {
@@ -219,22 +210,6 @@ dst_reg::dst_reg(src_reg reg)
       this->writemask = WRITEMASK_XYZW;
    this->reladdr = reg.reladdr;
    this->fixed_hw_reg = reg.fixed_hw_reg;
-}
-
-bool
-dst_reg::is_null() const
-{
-   return file == HW_REG &&
-          fixed_hw_reg.file == BRW_ARCHITECTURE_REGISTER_FILE &&
-          fixed_hw_reg.nr == BRW_ARF_NULL;
-}
-
-bool
-dst_reg::is_accumulator() const
-{
-   return file == HW_REG &&
-          fixed_hw_reg.file == BRW_ARCHITECTURE_REGISTER_FILE &&
-          fixed_hw_reg.nr == BRW_ARF_ACCUMULATOR;
 }
 
 bool
@@ -598,28 +573,6 @@ vec4_visitor::pack_uniform_registers()
 	 int sw = BRW_GET_SWZ(inst->src[i].swizzle, 3) + new_chan[src];
 	 inst->src[i].swizzle = BRW_SWIZZLE4(sx, sy, sz, sw);
       }
-   }
-}
-
-bool
-src_reg::is_zero() const
-{
-   if (file != IMM)
-      return false;
-
-   return fixed_hw_reg.dw1.d == 0;
-}
-
-bool
-src_reg::is_one() const
-{
-   if (file != IMM)
-      return false;
-
-   if (type == BRW_REGISTER_TYPE_F) {
-      return fixed_hw_reg.dw1.f == 1.0;
-   } else {
-      return fixed_hw_reg.dw1.d == 1;
    }
 }
 

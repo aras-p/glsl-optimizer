@@ -79,12 +79,8 @@ public:
    fs_reg(class fs_visitor *v, const struct glsl_type *type);
 
    bool equals(const fs_reg &r) const;
-   bool is_zero() const;
-   bool is_one() const;
-   bool is_null() const;
    bool is_valid_3src() const;
    bool is_contiguous() const;
-   bool is_accumulator() const;
 
    fs_reg &apply_stride(unsigned stride);
    /** Smear a channel of the reg to all channels. */
