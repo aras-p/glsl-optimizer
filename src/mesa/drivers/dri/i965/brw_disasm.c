@@ -125,6 +125,15 @@ has_uip(struct brw_context *brw, enum opcode opcode)
           opcode == BRW_OPCODE_HALT;
 }
 
+static bool
+is_logic_instruction(unsigned opcode)
+{
+   return opcode == BRW_OPCODE_AND ||
+          opcode == BRW_OPCODE_NOT ||
+          opcode == BRW_OPCODE_OR ||
+          opcode == BRW_OPCODE_XOR;
+}
+
 const char *const conditional_modifier[16] = {
    [BRW_CONDITIONAL_NONE] = "",
    [BRW_CONDITIONAL_Z]    = ".e",
@@ -147,6 +156,8 @@ static const char *const _abs[2] = {
    [0] = "",
    [1] = "(abs)",
 };
+
+static const char *const m_bitnot[2] = { "", "~" };
 
 static const char *const vert_stride[16] = {
    [0] = "0",
@@ -745,13 +756,21 @@ src_align1_region(FILE *file,
 }
 
 static int
-src_da1(FILE *file, unsigned type, unsigned _reg_file,
+src_da1(FILE *file,
+        const struct brw_context *brw,
+        unsigned opcode,
+        unsigned type, unsigned _reg_file,
         unsigned _vert_stride, unsigned _width, unsigned _horiz_stride,
         unsigned reg_num, unsigned sub_reg_num, unsigned __abs,
         unsigned _negate)
 {
    int err = 0;
-   err |= control(file, "negate", m_negate, _negate, NULL);
+
+   if (brw->gen >= 8 && is_logic_instruction(opcode))
+      err |= control(file, "bitnot", m_bitnot, _negate, NULL);
+   else
+      err |= control(file, "negate", m_negate, _negate, NULL);
+
    err |= control(file, "abs", _abs, __abs, NULL);
 
    err |= reg(file, _reg_file, reg_num);
@@ -766,6 +785,8 @@ src_da1(FILE *file, unsigned type, unsigned _reg_file,
 
 static int
 src_ia1(FILE *file,
+        const struct brw_context *brw,
+        unsigned opcode,
         unsigned type,
         unsigned _reg_file,
         int _addr_imm,
@@ -776,7 +797,12 @@ src_ia1(FILE *file,
         unsigned _horiz_stride, unsigned _width, unsigned _vert_stride)
 {
    int err = 0;
-   err |= control(file, "negate", m_negate, _negate, NULL);
+
+   if (brw->gen >= 8 && is_logic_instruction(opcode))
+      err |= control(file, "bitnot", m_bitnot, _negate, NULL);
+   else
+      err |= control(file, "negate", m_negate, _negate, NULL);
+
    err |= control(file, "abs", _abs, __abs, NULL);
 
    string(file, "g[a0");
@@ -792,6 +818,8 @@ src_ia1(FILE *file,
 
 static int
 src_da16(FILE *file,
+         const struct brw_context *brw,
+         unsigned opcode,
          unsigned _reg_type,
          unsigned _reg_file,
          unsigned _vert_stride,
@@ -802,7 +830,12 @@ src_da16(FILE *file,
          unsigned swz_x, unsigned swz_y, unsigned swz_z, unsigned swz_w)
 {
    int err = 0;
-   err |= control(file, "negate", m_negate, _negate, NULL);
+
+   if (brw->gen >= 8 && is_logic_instruction(opcode))
+      err |= control(file, "bitnot", m_bitnot, _negate, NULL);
+   else
+      err |= control(file, "negate", m_negate, _negate, NULL);
+
    err |= control(file, "abs", _abs, __abs, NULL);
 
    err |= reg(file, _reg_file, _reg_nr);
@@ -1023,6 +1056,8 @@ src0(FILE *file, struct brw_context *brw, brw_inst *inst)
    } else if (brw_inst_access_mode(brw, inst) == BRW_ALIGN_1) {
       if (brw_inst_src0_address_mode(brw, inst) == BRW_ADDRESS_DIRECT) {
          return src_da1(file,
+                        brw,
+                        brw_inst_opcode(brw, inst),
                         brw_inst_src0_reg_type(brw, inst),
                         brw_inst_src0_reg_file(brw, inst),
                         brw_inst_src0_vstride(brw, inst),
@@ -1034,6 +1069,8 @@ src0(FILE *file, struct brw_context *brw, brw_inst *inst)
                         brw_inst_src0_negate(brw, inst));
       } else {
          return src_ia1(file,
+                        brw,
+                        brw_inst_opcode(brw, inst),
                         brw_inst_src0_reg_type(brw, inst),
                         brw_inst_src0_reg_file(brw, inst),
                         brw_inst_src0_ia1_addr_imm(brw, inst),
@@ -1048,6 +1085,8 @@ src0(FILE *file, struct brw_context *brw, brw_inst *inst)
    } else {
       if (brw_inst_src0_address_mode(brw, inst) == BRW_ADDRESS_DIRECT) {
          return src_da16(file,
+                         brw,
+                         brw_inst_opcode(brw, inst),
                          brw_inst_src0_reg_type(brw, inst),
                          brw_inst_src0_reg_file(brw, inst),
                          brw_inst_src0_vstride(brw, inst),
@@ -1074,6 +1113,8 @@ src1(FILE *file, struct brw_context *brw, brw_inst *inst)
    } else if (brw_inst_access_mode(brw, inst) == BRW_ALIGN_1) {
       if (brw_inst_src1_address_mode(brw, inst) == BRW_ADDRESS_DIRECT) {
          return src_da1(file,
+                        brw,
+                        brw_inst_opcode(brw, inst),
                         brw_inst_src1_reg_type(brw, inst),
                         brw_inst_src1_reg_file(brw, inst),
                         brw_inst_src1_vstride(brw, inst),
@@ -1085,6 +1126,8 @@ src1(FILE *file, struct brw_context *brw, brw_inst *inst)
                         brw_inst_src1_negate(brw, inst));
       } else {
          return src_ia1(file,
+                        brw,
+                        brw_inst_opcode(brw, inst),
                         brw_inst_src1_reg_type(brw, inst),
                         brw_inst_src1_reg_file(brw, inst),
                         brw_inst_src1_ia1_addr_imm(brw, inst),
@@ -1099,6 +1142,8 @@ src1(FILE *file, struct brw_context *brw, brw_inst *inst)
    } else {
       if (brw_inst_src1_address_mode(brw, inst) == BRW_ADDRESS_DIRECT) {
          return src_da16(file,
+                         brw,
+                         brw_inst_opcode(brw, inst),
                          brw_inst_src1_reg_type(brw, inst),
                          brw_inst_src1_reg_file(brw, inst),
                          brw_inst_src1_vstride(brw, inst),
