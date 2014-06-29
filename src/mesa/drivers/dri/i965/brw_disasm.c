@@ -100,6 +100,30 @@ const struct opcode_desc opcode_descs[128] = {
    [BRW_OPCODE_ENDIF]    = { .name = "endif",   .nsrc = 2, .ndst = 0 },
 };
 
+static bool
+has_jip(struct brw_context *brw, enum opcode opcode)
+{
+   if (brw->gen < 6)
+      return false;
+
+   return opcode == BRW_OPCODE_IF ||
+          opcode == BRW_OPCODE_ELSE ||
+          opcode == BRW_OPCODE_ENDIF ||
+          opcode == BRW_OPCODE_WHILE;
+}
+
+static bool
+has_uip(struct brw_context *brw, enum opcode opcode)
+{
+   if (brw->gen < 6)
+      return false;
+
+   return (brw->gen >= 7 && opcode == BRW_OPCODE_IF) ||
+          opcode == BRW_OPCODE_BREAK ||
+          opcode == BRW_OPCODE_CONTINUE ||
+          opcode == BRW_OPCODE_HALT;
+}
+
 const char *const conditional_modifier[16] = {
    [BRW_CONDITIONAL_NONE] = "",
    [BRW_CONDITIONAL_Z]    = ".e",
@@ -1170,7 +1194,22 @@ brw_disassemble_inst(FILE *file, struct brw_context *brw, brw_inst *inst,
    if (opcode == BRW_OPCODE_SEND && brw->gen < 6)
       format(file, " %d", brw_inst_base_mrf(brw, inst));
 
-   if (opcode_descs[opcode].nsrc == 3) {
+   if (has_uip(brw, opcode)) {
+      /* Instructions that have UIP also have JIP. */
+      pad(file, 16);
+      format(file, "JIP: %d", brw_inst_jip(brw, inst));
+      pad(file, 32);
+      format(file, "UIP: %d", brw_inst_uip(brw, inst));
+   } else if (has_jip(brw, opcode)) {
+      pad(file, 16);
+      if (brw->gen >= 7) {
+         format(file, "JIP: %d", brw_inst_jip(brw, inst));
+      } else {
+         format(file, "JIP: %d", brw_inst_gen6_jump_count(brw, inst));
+      }
+   } else if (opcode == BRW_OPCODE_JMPI) {
+      format(file, " %d", brw_inst_imm_d(brw, inst));
+   } else if (opcode_descs[opcode].nsrc == 3) {
       pad(file, 16);
       err |= dest_3src(file, brw, inst);
 
@@ -1186,29 +1225,13 @@ brw_disassemble_inst(FILE *file, struct brw_context *brw, brw_inst *inst,
       if (opcode_descs[opcode].ndst > 0) {
          pad(file, 16);
          err |= dest(file, brw, inst);
-      } else if (brw->gen == 7 && (opcode == BRW_OPCODE_ELSE ||
-                                   opcode == BRW_OPCODE_ENDIF ||
-                                   opcode == BRW_OPCODE_WHILE)) {
-         format(file, " %d", brw_inst_jip(brw, inst));
-      } else if (brw->gen == 6 && (opcode == BRW_OPCODE_IF ||
-                                   opcode == BRW_OPCODE_ELSE ||
-                                   opcode == BRW_OPCODE_ENDIF ||
-                                   opcode == BRW_OPCODE_WHILE)) {
-         format(file, " %d", brw_inst_gen6_jump_count(brw, inst));
-      } else if ((brw->gen >= 6 && (opcode == BRW_OPCODE_BREAK ||
-                                    opcode == BRW_OPCODE_CONTINUE ||
-                                    opcode == BRW_OPCODE_HALT)) ||
-                 (brw->gen == 7 && opcode == BRW_OPCODE_IF)) {
-         format(file, " %d %d", brw_inst_uip(brw, inst),
-                brw_inst_jip(brw, inst));
-      } else if (opcode == BRW_OPCODE_JMPI) {
-         format(file, " %d", brw_inst_imm_d(brw, inst));
       }
 
       if (opcode_descs[opcode].nsrc > 0) {
          pad(file, 32);
          err |= src0(file, brw, inst);
       }
+
       if (opcode_descs[opcode].nsrc > 1) {
          pad(file, 48);
          err |= src1(file, brw, inst);
