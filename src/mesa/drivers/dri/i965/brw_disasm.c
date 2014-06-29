@@ -981,6 +981,13 @@ imm(FILE *file, struct brw_context *brw, unsigned type, brw_inst *inst)
       break;
    case BRW_HW_REG_TYPE_F:
       format(file, "%-gF", brw_inst_imm_f(brw, inst));
+      break;
+   case GEN8_HW_REG_IMM_TYPE_DF:
+      string(file, "Double IMM");
+      break;
+   case GEN8_HW_REG_IMM_TYPE_HF:
+      string(file, "Half Float IMM");
+      break;
    }
    return 0;
 }
