@@ -1168,9 +1168,6 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
 	    /* Smooth/noperspective interpolation case. */
 	    for (unsigned int k = 0; k < type->vector_elements; k++) {
                struct brw_reg interp = interp_reg(location, k);
-               emit_linterp(attr, fs_reg(interp), interpolation_mode,
-                            ir->data.centroid && !key->persample_shading,
-                            ir->data.sample || key->persample_shading);
                if (brw->needs_unlit_centroid_workaround && ir->data.centroid) {
                   /* Get the pixel/sample mask into f0 so that we know
                    * which pixels are lit.  Then, for each channel that is
@@ -1178,11 +1175,22 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
                    * data.
                    */
                   emit(FS_OPCODE_MOV_DISPATCH_TO_FLAGS);
-                  fs_inst *inst = emit_linterp(attr, fs_reg(interp),
-                                               interpolation_mode,
-                                               false, false);
+
+                  fs_inst *inst;
+                  inst = emit_linterp(attr, fs_reg(interp), interpolation_mode,
+                                      ir->data.centroid && !key->persample_shading,
+                                      ir->data.sample || key->persample_shading);
+                  inst->predicate = BRW_PREDICATE_NORMAL;
+                  inst->predicate_inverse = false;
+
+                  inst = emit_linterp(attr, fs_reg(interp), interpolation_mode,
+                                      false, false);
                   inst->predicate = BRW_PREDICATE_NORMAL;
                   inst->predicate_inverse = true;
+               } else {
+                  emit_linterp(attr, fs_reg(interp), interpolation_mode,
+                               ir->data.centroid && !key->persample_shading,
+                               ir->data.sample || key->persample_shading);
                }
                if (brw->gen < 6 && interpolation_mode == INTERP_QUALIFIER_SMOOTH) {
                   emit(BRW_OPCODE_MUL, attr, attr, this->pixel_w);
