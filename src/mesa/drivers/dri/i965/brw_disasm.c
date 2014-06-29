@@ -381,6 +381,17 @@ static const char *const gen6_sfid[16] = {
    [HSW_SFID_CRE]                      = "cre",
 };
 
+static const char *const dp_write_port_msg_type[8] = {
+   [0b000] = "OWord block write",
+   [0b001] = "OWord dual block write",
+   [0b010] = "media block write",
+   [0b011] = "DWord scattered write",
+   [0b100] = "RT write",
+   [0b101] = "streamed VB write",
+   [0b110] = "RT UNORM write", /* G45+ */
+   [0b111] = "flush render cache",
+};
+
 static const char *const dp_rc_msg_type_gen6[16] = {
    [BRW_DATAPORT_READ_MESSAGE_OWORD_BLOCK_READ] = "OWORD block read",
    [GEN6_DATAPORT_READ_MESSAGE_RENDER_UNORM_READ] = "RT UNORM read",
@@ -399,6 +410,16 @@ static const char *const dp_rc_msg_type_gen6[16] = {
    [GEN6_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_WRITE] = "RT write",
    [GEN6_DATAPORT_WRITE_MESSAGE_STREAMED_VB_WRITE] = "streamed VB write",
    [GEN6_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_UNORM_WRITE] = "RT UNORM write",
+};
+
+static const char *const m_rt_write_subtype[] = {
+   [0b000] = "SIMD16",
+   [0b001] = "SIMD16/RepData",
+   [0b010] = "SIMD8/DualSrcLow",
+   [0b011] = "SIMD8/DualSrcHigh",
+   [0b100] = "SIMD8",
+   [0b101] = "SIMD8/ImageWrite",   /* Gen6+ */
+   [0b111] = "SIMD16/RepData-111", /* no idea how this is different than 1 */
 };
 
 static const char *const dp_dc0_msg_type_gen7[16] = {
@@ -1322,40 +1343,36 @@ brw_disassemble_inst(FILE *file, struct brw_context *brw, brw_inst *inst,
          }
          break;
 
-      case GEN6_SFID_DATAPORT_RENDER_CACHE:
+      case GEN6_SFID_DATAPORT_RENDER_CACHE: {
          /* aka BRW_SFID_DATAPORT_WRITE on Gen4-5 */
-         if (brw->gen >= 7) {
-            format(file, " (");
+         unsigned msg_type = brw_inst_dp_write_msg_type(brw, inst);
 
-            err |= control(file, "DP rc message type",
-                           dp_rc_msg_type_gen6,
-                           brw_inst_dp_msg_type(brw, inst), &space);
+         err |= control(file, "DP rc message type",
+                        brw->gen >= 6 ? dp_rc_msg_type_gen6
+                                      : dp_write_port_msg_type,
+                        msg_type, &space);
 
-            format(file, ", %d, %d, %d)",
-                   brw_inst_binding_table_index(brw, inst),
-                   brw_inst_dp_msg_control(brw, inst),
-                   brw_inst_dp_msg_type(brw, inst));
-         } else if (brw->gen == 6) {
-            format(file, " (");
+         bool is_rt_write = msg_type ==
+            (brw->gen >= 6 ? GEN6_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_WRITE
+                           : BRW_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_WRITE);
 
-            err |= control(file, "DP rc message type",
-                           dp_rc_msg_type_gen6,
-                           brw_inst_dp_msg_type(brw, inst), &space);
-
-            format(file, ", %d, %d, %d, %d)",
-                   brw_inst_binding_table_index(brw, inst),
-                   brw_inst_dp_msg_control(brw, inst),
-                   brw_inst_dp_msg_type(brw, inst),
-                   brw_inst_dp_write_commit(brw, inst));
+         if (is_rt_write) {
+            err |= control(file, "RT message type", m_rt_write_subtype,
+                           brw_inst_rt_message_type(brw, inst), &space);
+            if (brw->gen >= 6 && brw_inst_rt_slot_group(brw, inst))
+               string(file, " Hi");
+            if (brw_inst_rt_last(brw, inst))
+               string(file, " LastRT");
+            if (brw->gen < 7 && brw_inst_dp_write_commit(brw, inst))
+               string(file, " WriteCommit");
          } else {
-            format(file, " (%d, %d, %d, %d)",
-                   brw_inst_binding_table_index(brw, inst),
-                   (brw_inst_rt_last(brw, inst) << 3) |
-                   brw_inst_dp_write_msg_control(brw, inst),
-                   brw_inst_dp_write_msg_type(brw, inst),
-                   brw_inst_dp_write_commit(brw, inst));
+            format(file, " MsgCtrl = 0x%x",
+                   brw_inst_dp_write_msg_control(brw, inst));
          }
+
+         format(file, " Surface = %d", brw_inst_binding_table_index(brw, inst));
          break;
+      }
 
       case BRW_SFID_URB:
          format(file, " %d", brw_inst_urb_global_offset(brw, inst));
