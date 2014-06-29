@@ -1417,33 +1417,47 @@ brw_disassemble_inst(FILE *file, struct brw_context *brw, brw_inst *inst,
          }
          /* FALLTHROUGH */
 
-      case HSW_SFID_DATAPORT_DATA_CACHE_1:
+      case HSW_SFID_DATAPORT_DATA_CACHE_1: {
          if (brw->gen >= 7) {
             format(file, " (");
+
+            unsigned msg_ctrl = brw_inst_dp_msg_control(brw, inst);
 
             err |= control(file, "DP DC1 message type",
                            dp_dc1_msg_type_hsw,
                            brw_inst_dp_msg_type(brw, inst), &space);
 
-            format(file, ", %d, ", brw_inst_binding_table_index(brw, inst));
+            format(file, ", Surface = %d, ",
+                   brw_inst_binding_table_index(brw, inst));
 
             switch (brw_inst_dp_msg_type(brw, inst)) {
             case HSW_DATAPORT_DC_PORT1_UNTYPED_ATOMIC_OP:
-            case HSW_DATAPORT_DC_PORT1_UNTYPED_ATOMIC_OP_SIMD4X2:
             case HSW_DATAPORT_DC_PORT1_TYPED_ATOMIC_OP:
-            case HSW_DATAPORT_DC_PORT1_TYPED_ATOMIC_OP_SIMD4X2:
             case HSW_DATAPORT_DC_PORT1_ATOMIC_COUNTER_OP:
+               format(file, "SIMD%d,", (msg_ctrl & (1 << 4)) ? 8 : 16);
+               /* fallthrough */
+            case HSW_DATAPORT_DC_PORT1_UNTYPED_ATOMIC_OP_SIMD4X2:
+            case HSW_DATAPORT_DC_PORT1_TYPED_ATOMIC_OP_SIMD4X2:
             case HSW_DATAPORT_DC_PORT1_ATOMIC_COUNTER_OP_SIMD4X2:
-               control(file, "atomic op", aop,
-                       brw_inst_imm_ud(brw, inst) >> 8 & 0xf, &space);
+               control(file, "atomic op", aop, msg_ctrl & 0xf, &space);
                break;
+            case HSW_DATAPORT_DC_PORT1_UNTYPED_SURFACE_READ:
+            case HSW_DATAPORT_DC_PORT1_UNTYPED_SURFACE_WRITE:
+            case HSW_DATAPORT_DC_PORT1_TYPED_SURFACE_READ:
+            case HSW_DATAPORT_DC_PORT1_TYPED_SURFACE_WRITE: {
+               static const char *simd_modes[] = { "4x2", "16", "8" };
+               format(file, "SIMD%s, Mask = 0x%x",
+                      simd_modes[msg_ctrl >> 4], msg_ctrl & 0xf);
+               break;
+            }
             default:
-               format(file, "%d", brw_inst_dp_msg_control(brw, inst));
+               format(file, "0x%x", msg_ctrl);
             }
             format(file, ")");
             break;
          }
          /* FALLTHROUGH */
+      }
 
       default:
          format(file, "unsupported target %d", target);
