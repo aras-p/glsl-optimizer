@@ -58,18 +58,19 @@ public:
    vec4_live_variables(vec4_visitor *v, cfg_t *cfg);
    ~vec4_live_variables();
 
+   int num_vars;
+   int bitset_words;
+
+   /** Per-basic-block information on live variables */
+   struct block_data *bd;
+
+protected:
    void setup_def_use();
    void compute_live_variables();
 
    vec4_visitor *v;
    cfg_t *cfg;
    void *mem_ctx;
-
-   int num_vars;
-   int bitset_words;
-
-   /** Per-basic-block information on live variables */
-   struct block_data *bd;
 };
 
 } /* namespace brw */

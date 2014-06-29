@@ -60,18 +60,8 @@ public:
    fs_live_variables(fs_visitor *v, cfg_t *cfg);
    ~fs_live_variables();
 
-   void setup_def_use();
-   void setup_one_read(bblock_t *block, fs_inst *inst, int ip, fs_reg reg);
-   void setup_one_write(bblock_t *block, fs_inst *inst, int ip, fs_reg reg);
-   void compute_live_variables();
-   void compute_start_end();
-
    bool vars_interfere(int a, int b);
    int var_from_reg(fs_reg *reg);
-
-   fs_visitor *v;
-   cfg_t *cfg;
-   void *mem_ctx;
 
    /** Map from virtual GRF number to index in block_data arrays. */
    int *var_from_vgrf;
@@ -98,6 +88,18 @@ public:
 
    /** Per-basic-block information on live variables */
    struct block_data *bd;
+
+protected:
+   void setup_def_use();
+   void setup_one_read(bblock_t *block, fs_inst *inst, int ip, fs_reg reg);
+   void setup_one_write(bblock_t *block, fs_inst *inst, int ip, fs_reg reg);
+   void compute_live_variables();
+   void compute_start_end();
+
+   fs_visitor *v;
+   cfg_t *cfg;
+   void *mem_ctx;
+
 };
 
 } /* namespace brw */
