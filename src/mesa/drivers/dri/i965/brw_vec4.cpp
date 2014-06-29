@@ -91,7 +91,7 @@ src_reg::src_reg(float f)
 
    this->file = IMM;
    this->type = BRW_REGISTER_TYPE_F;
-   this->imm.f = f;
+   this->fixed_hw_reg.dw1.f = f;
 }
 
 src_reg::src_reg(uint32_t u)
@@ -100,7 +100,7 @@ src_reg::src_reg(uint32_t u)
 
    this->file = IMM;
    this->type = BRW_REGISTER_TYPE_UD;
-   this->imm.u = u;
+   this->fixed_hw_reg.dw1.ud = u;
 }
 
 src_reg::src_reg(int32_t i)
@@ -109,7 +109,7 @@ src_reg::src_reg(int32_t i)
 
    this->file = IMM;
    this->type = BRW_REGISTER_TYPE_D;
-   this->imm.i = i;
+   this->fixed_hw_reg.dw1.d = i;
 }
 
 src_reg::src_reg(struct brw_reg reg)
@@ -333,8 +333,7 @@ src_reg::equals(const src_reg &r) const
 	   swizzle == r.swizzle &&
 	   !reladdr && !r.reladdr &&
 	   memcmp(&fixed_hw_reg, &r.fixed_hw_reg,
-		  sizeof(fixed_hw_reg)) == 0 &&
-	   imm.u == r.imm.u);
+		  sizeof(fixed_hw_reg)) == 0);
 }
 
 static bool
@@ -608,11 +607,7 @@ src_reg::is_zero() const
    if (file != IMM)
       return false;
 
-   if (type == BRW_REGISTER_TYPE_F) {
-      return imm.f == 0.0;
-   } else {
-      return imm.i == 0;
-   }
+   return fixed_hw_reg.dw1.d == 0;
 }
 
 bool
@@ -622,9 +617,9 @@ src_reg::is_one() const
       return false;
 
    if (type == BRW_REGISTER_TYPE_F) {
-      return imm.f == 1.0;
+      return fixed_hw_reg.dw1.f == 1.0;
    } else {
-      return imm.i == 1;
+      return fixed_hw_reg.dw1.d == 1;
    }
 }
 
@@ -1335,13 +1330,13 @@ vec4_visitor::dump_instruction(backend_instruction *be_inst, FILE *file)
       case IMM:
          switch (inst->src[i].type) {
          case BRW_REGISTER_TYPE_F:
-            fprintf(file, "%fF", inst->src[i].imm.f);
+            fprintf(file, "%fF", inst->src[i].fixed_hw_reg.dw1.f);
             break;
          case BRW_REGISTER_TYPE_D:
-            fprintf(file, "%dD", inst->src[i].imm.i);
+            fprintf(file, "%dD", inst->src[i].fixed_hw_reg.dw1.d);
             break;
          case BRW_REGISTER_TYPE_UD:
-            fprintf(file, "%uU", inst->src[i].imm.u);
+            fprintf(file, "%uU", inst->src[i].fixed_hw_reg.dw1.ud);
             break;
          default:
             fprintf(file, "???");

@@ -92,18 +92,18 @@ try_constant_propagate(struct brw_context *brw, vec4_instruction *inst,
 
    if (inst->src[arg].abs) {
       if (value.type == BRW_REGISTER_TYPE_F) {
-	 value.imm.f = fabs(value.imm.f);
+	 value.fixed_hw_reg.dw1.f = fabs(value.fixed_hw_reg.dw1.f);
       } else if (value.type == BRW_REGISTER_TYPE_D) {
-	 if (value.imm.i < 0)
-	    value.imm.i = -value.imm.i;
+	 if (value.fixed_hw_reg.dw1.d < 0)
+	    value.fixed_hw_reg.dw1.d = -value.fixed_hw_reg.dw1.d;
       }
    }
 
    if (inst->src[arg].negate) {
       if (value.type == BRW_REGISTER_TYPE_F)
-	 value.imm.f = -value.imm.f;
+	 value.fixed_hw_reg.dw1.f = -value.fixed_hw_reg.dw1.f;
       else
-	 value.imm.u = -value.imm.u;
+	 value.fixed_hw_reg.dw1.ud = -value.fixed_hw_reg.dw1.ud;
    }
 
    switch (inst->opcode) {

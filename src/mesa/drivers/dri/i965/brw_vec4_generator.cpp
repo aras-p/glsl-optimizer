@@ -84,13 +84,13 @@ vec4_instruction::get_src(const struct brw_vec4_prog_data *prog_data, int i)
    case IMM:
       switch (src[i].type) {
       case BRW_REGISTER_TYPE_F:
-	 brw_reg = brw_imm_f(src[i].imm.f);
+	 brw_reg = brw_imm_f(src[i].fixed_hw_reg.dw1.f);
 	 break;
       case BRW_REGISTER_TYPE_D:
-	 brw_reg = brw_imm_d(src[i].imm.i);
+	 brw_reg = brw_imm_d(src[i].fixed_hw_reg.dw1.d);
 	 break;
       case BRW_REGISTER_TYPE_UD:
-	 brw_reg = brw_imm_ud(src[i].imm.u);
+	 brw_reg = brw_imm_ud(src[i].fixed_hw_reg.dw1.ud);
 	 break;
       default:
 	 unreachable("not reached");

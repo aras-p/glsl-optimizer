@@ -483,10 +483,10 @@ try_constant_propagate(struct brw_context *brw, fs_inst *inst,
           * anyway.
           */
          assert(i == 0);
-         if (inst->src[0].imm.f != 0.0f) {
+         if (inst->src[0].fixed_hw_reg.dw1.f != 0.0f) {
             inst->opcode = BRW_OPCODE_MOV;
             inst->src[0] = entry->src;
-            inst->src[0].imm.f = 1.0f / inst->src[0].imm.f;
+            inst->src[0].fixed_hw_reg.dw1.f = 1.0f / inst->src[0].fixed_hw_reg.dw1.f;
             progress = true;
          }
          break;

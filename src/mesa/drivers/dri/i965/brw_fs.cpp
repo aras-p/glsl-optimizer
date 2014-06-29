@@ -408,7 +408,7 @@ fs_reg::fs_reg(float f)
    init();
    this->file = IMM;
    this->type = BRW_REGISTER_TYPE_F;
-   this->imm.f = f;
+   this->fixed_hw_reg.dw1.f = f;
 }
 
 /** Immediate value constructor. */
@@ -417,7 +417,7 @@ fs_reg::fs_reg(int32_t i)
    init();
    this->file = IMM;
    this->type = BRW_REGISTER_TYPE_D;
-   this->imm.i = i;
+   this->fixed_hw_reg.dw1.d = i;
 }
 
 /** Immediate value constructor. */
@@ -426,7 +426,7 @@ fs_reg::fs_reg(uint32_t u)
    init();
    this->file = IMM;
    this->type = BRW_REGISTER_TYPE_UD;
-   this->imm.u = u;
+   this->fixed_hw_reg.dw1.ud = u;
 }
 
 /** Fixed brw_reg. */
@@ -451,8 +451,7 @@ fs_reg::equals(const fs_reg &r) const
            !reladdr && !r.reladdr &&
            memcmp(&fixed_hw_reg, &r.fixed_hw_reg,
                   sizeof(fixed_hw_reg)) == 0 &&
-           stride == r.stride &&
-           imm.u == r.imm.u);
+           stride == r.stride);
 }
 
 fs_reg &
@@ -486,7 +485,7 @@ fs_reg::is_zero() const
    if (file != IMM)
       return false;
 
-   return type == BRW_REGISTER_TYPE_F ? imm.f == 0.0 : imm.i == 0;
+   return fixed_hw_reg.dw1.d == 0;
 }
 
 bool
@@ -495,7 +494,9 @@ fs_reg::is_one() const
    if (file != IMM)
       return false;
 
-   return type == BRW_REGISTER_TYPE_F ? imm.f == 1.0 : imm.i == 1;
+   return type == BRW_REGISTER_TYPE_F
+          ? fixed_hw_reg.dw1.f == 1.0
+          : fixed_hw_reg.dw1.d == 1;
 }
 
 bool
@@ -2031,7 +2032,7 @@ fs_visitor::opt_algebraic()
             case BRW_CONDITIONAL_L:
                switch (inst->src[1].type) {
                case BRW_REGISTER_TYPE_F:
-                  if (inst->src[1].imm.f >= 1.0f) {
+                  if (inst->src[1].fixed_hw_reg.dw1.f >= 1.0f) {
                      inst->opcode = BRW_OPCODE_MOV;
                      inst->src[1] = reg_undef;
                      progress = true;
@@ -2045,7 +2046,7 @@ fs_visitor::opt_algebraic()
             case BRW_CONDITIONAL_G:
                switch (inst->src[1].type) {
                case BRW_REGISTER_TYPE_F:
-                  if (inst->src[1].imm.f <= 0.0f) {
+                  if (inst->src[1].fixed_hw_reg.dw1.f <= 0.0f) {
                      inst->opcode = BRW_OPCODE_MOV;
                      inst->src[1] = reg_undef;
                      inst->conditional_mod = BRW_CONDITIONAL_NONE;
@@ -2540,7 +2541,7 @@ fs_visitor::lower_uniform_pull_constant_loads()
          fs_reg const_offset_reg = inst->src[1];
          assert(const_offset_reg.file == IMM &&
                 const_offset_reg.type == BRW_REGISTER_TYPE_UD);
-         const_offset_reg.imm.u /= 4;
+         const_offset_reg.fixed_hw_reg.dw1.ud /= 4;
          fs_reg payload = fs_reg(this, glsl_type::uint_type);
 
          /* This is actually going to be a MOV, but since only the first dword
@@ -2752,13 +2753,13 @@ fs_visitor::dump_instruction(backend_instruction *be_inst, FILE *file)
       case IMM:
          switch (inst->src[i].type) {
          case BRW_REGISTER_TYPE_F:
-            fprintf(file, "%ff", inst->src[i].imm.f);
+            fprintf(file, "%ff", inst->src[i].fixed_hw_reg.dw1.f);
             break;
          case BRW_REGISTER_TYPE_D:
-            fprintf(file, "%dd", inst->src[i].imm.i);
+            fprintf(file, "%dd", inst->src[i].fixed_hw_reg.dw1.d);
             break;
          case BRW_REGISTER_TYPE_UD:
-            fprintf(file, "%uu", inst->src[i].imm.u);
+            fprintf(file, "%uu", inst->src[i].fixed_hw_reg.dw1.ud);
             break;
          default:
             fprintf(file, "???");

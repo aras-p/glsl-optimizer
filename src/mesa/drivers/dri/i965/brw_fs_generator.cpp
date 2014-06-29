@@ -1031,13 +1031,13 @@ brw_reg_from_fs_reg(fs_reg *reg)
    case IMM:
       switch (reg->type) {
       case BRW_REGISTER_TYPE_F:
-	 brw_reg = brw_imm_f(reg->imm.f);
+	 brw_reg = brw_imm_f(reg->fixed_hw_reg.dw1.f);
 	 break;
       case BRW_REGISTER_TYPE_D:
-	 brw_reg = brw_imm_d(reg->imm.i);
+	 brw_reg = brw_imm_d(reg->fixed_hw_reg.dw1.d);
 	 break;
       case BRW_REGISTER_TYPE_UD:
-	 brw_reg = brw_imm_ud(reg->imm.u);
+	 brw_reg = brw_imm_ud(reg->fixed_hw_reg.dw1.ud);
 	 break;
       default:
 	 unreachable("not reached");
