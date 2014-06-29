@@ -75,7 +75,7 @@ public:
    fs_reg(uint32_t u);
    fs_reg(struct brw_reg fixed_hw_reg);
    fs_reg(enum register_file file, int reg);
-   fs_reg(enum register_file file, int reg, uint32_t type);
+   fs_reg(enum register_file file, int reg, enum brw_reg_type type);
    fs_reg(class fs_visitor *v, const struct glsl_type *type);
 
    bool equals(const fs_reg &r) const;
@@ -99,7 +99,7 @@ public:
 };
 
 static inline fs_reg
-retype(fs_reg reg, unsigned type)
+retype(fs_reg reg, enum brw_reg_type type)
 {
    reg.fixed_hw_reg.type = reg.type = type;
    return reg;

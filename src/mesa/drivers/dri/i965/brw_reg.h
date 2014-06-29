@@ -131,7 +131,7 @@ const char *brw_reg_type_letters(unsigned brw_reg_type);
  * or "structure of array" form:
  */
 struct brw_reg {
-   unsigned type:4;
+   enum brw_reg_type type:4;
    unsigned file:2;
    unsigned nr:8;
    unsigned subnr:5;              /* :1 in align16 */
@@ -227,7 +227,7 @@ static inline struct brw_reg
 brw_reg(unsigned file,
         unsigned nr,
         unsigned subnr,
-        unsigned type,
+        enum brw_reg_type type,
         unsigned vstride,
         unsigned width,
         unsigned hstride,
@@ -362,7 +362,7 @@ brw_vecn_reg(unsigned width, unsigned file, unsigned nr, unsigned subnr)
 }
 
 static inline struct brw_reg
-retype(struct brw_reg reg, unsigned type)
+retype(struct brw_reg reg, enum brw_reg_type type)
 {
    reg.type = type;
    return reg;
@@ -424,7 +424,7 @@ brw_uw1_reg(unsigned file, unsigned nr, unsigned subnr)
 }
 
 static inline struct brw_reg
-brw_imm_reg(unsigned type)
+brw_imm_reg(enum brw_reg_type type)
 {
    return brw_reg(BRW_IMMEDIATE_VALUE,
                   0,

@@ -50,7 +50,7 @@ struct backend_reg
 #endif
 
    enum register_file file; /**< Register file: GRF, MRF, IMM. */
-   uint8_t type;            /**< Register type: BRW_REGISTER_TYPE_* */
+   enum brw_reg_type type;  /**< Register type: BRW_REGISTER_TYPE_* */
 
    /**
     * Register number.
@@ -166,7 +166,7 @@ void annotation_finalize(struct annotation_info *annotation, unsigned offset);
 
 #endif /* __cplusplus */
 
-int brw_type_for_base_type(const struct glsl_type *type);
+enum brw_reg_type brw_type_for_base_type(const struct glsl_type *type);
 uint32_t brw_conditional_for_comparison(unsigned int op);
 uint32_t brw_math_function(enum opcode op);
 const char *brw_instruction_name(enum opcode op);

@@ -117,7 +117,7 @@ public:
 };
 
 static inline src_reg
-retype(src_reg reg, unsigned type)
+retype(src_reg reg, enum brw_reg_type type)
 {
    reg.fixed_hw_reg.type = reg.type = type;
    return reg;
@@ -176,7 +176,7 @@ public:
 };
 
 static inline dst_reg
-retype(dst_reg reg, unsigned type)
+retype(dst_reg reg, enum brw_reg_type type)
 {
    reg.fixed_hw_reg.type = reg.type = type;
    return reg;
