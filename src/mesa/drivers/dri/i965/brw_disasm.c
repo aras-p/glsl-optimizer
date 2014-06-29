@@ -478,9 +478,22 @@ static const char *const math_precision[2] = {
    [1] = "partial_precision"
 };
 
-static const char *const urb_opcode[2] = {
+static const char *const gen5_urb_opcode[] = {
    [0] = "urb_write",
    [1] = "ff_sync",
+};
+
+static const char *const gen7_urb_opcode[] = {
+   [0] = "write HWord",
+   [1] = "write OWord",
+   [2] = "read HWord",
+   [3] = "read OWord",
+   [4] = "atomic mov",  /* Gen7+ */
+   [5] = "atomic inc",  /* Gen7+ */
+   [6] = "atomic add",  /* Gen8+ */
+   [7] = "SIMD8 write", /* Gen8+ */
+   [8] = "SIMD8 read",  /* Gen8+ */
+   /* [9-15] - reserved */
 };
 
 static const char *const urb_swizzle[4] = {
@@ -1361,8 +1374,11 @@ brw_disassemble_inst(FILE *file, struct brw_context *brw, brw_inst *inst,
          format(file, " %d", brw_inst_urb_global_offset(brw, inst));
 
          space = 1;
-         if (brw->gen >= 5) {
-            err |= control(file, "urb opcode", urb_opcode,
+         if (brw->gen >= 7) {
+            err |= control(file, "urb opcode", gen7_urb_opcode,
+                           brw_inst_urb_opcode(brw, inst), &space);
+         } else if (brw->gen >= 5) {
+            err |= control(file, "urb opcode", gen5_urb_opcode,
                            brw_inst_urb_opcode(brw, inst), &space);
          }
          err |= control(file, "urb swizzle", urb_swizzle,
