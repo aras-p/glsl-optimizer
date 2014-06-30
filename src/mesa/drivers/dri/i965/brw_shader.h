@@ -78,12 +78,10 @@ struct backend_reg
    bool abs;
 };
 
-#ifdef __cplusplus
-
 struct cfg_t;
 
+#ifdef __cplusplus
 struct backend_instruction : public exec_node {
-public:
    bool is_tex() const;
    bool is_math() const;
    bool is_control_flow() const;
@@ -98,7 +96,10 @@ public:
     * optimize these out unless you know what you are doing.
     */
    bool has_side_effects() const;
-
+#else
+struct backend_instruction {
+   struct exec_node link;
+#endif
    /** @{
     * Annotation for the generated IR.  One of the two can be set.
     */
@@ -123,6 +124,8 @@ public:
    bool no_dd_check:1;
    bool saturate:1;
 };
+
+#ifdef __cplusplus
 
 enum instruction_scheduler_mode {
    SCHEDULE_PRE,
