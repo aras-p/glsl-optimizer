@@ -1631,6 +1631,8 @@ brw_patch_break_cont(struct brw_compile *p, brw_inst *while_inst)
    brw_inst *inst;
    int br = (brw->gen == 5) ? 2 : 1;
 
+   assert(brw->gen < 6);
+
    for (inst = while_inst - 1; inst != do_inst; inst--) {
       /* If the jump count is != 0, that means that this instruction has already
        * been patched because it's part of a loop inside of the one we're
