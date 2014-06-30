@@ -1441,6 +1441,8 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       else
          opcode = SHADER_OPCODE_TG4;
       break;
+   default:
+      unreachable("not reached");
    }
    fs_inst *inst = emit(opcode, dst, src_payload);
    inst->base_mrf = -1;
