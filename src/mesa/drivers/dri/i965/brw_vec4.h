@@ -215,23 +215,10 @@ public:
    dst_reg dst;
    src_reg src[3];
 
-   bool saturate;
-   bool force_writemask_all;
-   bool no_dd_clear, no_dd_check;
-
-   int conditional_mod; /**< BRW_CONDITIONAL_* */
-
-   int sampler;
-   uint32_t texture_offset; /**< Texture Offset bitfield */
-   int target; /**< MRT target. */
    bool shadow_compare;
 
    enum brw_urb_write_flags urb_write_flags;
    bool header_present;
-   int mlen; /**< SEND message length */
-   int base_mrf; /**< First MRF in the SEND message, if mlen is nonzero. */
-
-   uint32_t offset; /* spill/unspill offset */
 
    bool is_send_from_grf();
    bool can_reswizzle_dst(int dst_writemask, int swizzle, int swizzle_mask);

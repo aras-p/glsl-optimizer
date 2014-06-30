@@ -111,6 +111,19 @@ public:
    const void *ir;
    const char *annotation;
    /** @} */
+
+   uint32_t texture_offset; /**< Texture offset bitfield */
+   uint32_t offset; /**< spill/unspill offset */
+   uint8_t sampler;
+   uint8_t mlen; /**< SEND message length */
+   int8_t base_mrf; /**< First MRF in the SEND message, if mlen is nonzero. */
+   uint8_t target; /**< MRT target. */
+   uint8_t conditional_mod; /**< BRW_CONDITIONAL_* */
+
+   bool force_writemask_all:1;
+   bool no_dd_clear:1;
+   bool no_dd_check:1;
+   bool saturate:1;
 };
 
 enum instruction_scheduler_mode {
