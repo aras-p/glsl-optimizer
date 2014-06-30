@@ -1604,7 +1604,7 @@ fi
 
 AC_ARG_WITH([egl-driver-dir],
     [AS_HELP_STRING([--with-egl-driver-dir=DIR],
-                    [directory for EGL drivers [[default=${libdir}/egl]]])],
+                    [directory for EGL drivers @<:@default=${libdir}/egl@:>@])],
     [EGL_DRIVER_INSTALL_DIR="$withval"],
     [EGL_DRIVER_INSTALL_DIR='${libdir}/egl'])
 AC_SUBST([EGL_DRIVER_INSTALL_DIR])
