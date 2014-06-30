@@ -1391,6 +1391,12 @@ patch_IF_ELSE(struct brw_compile *p,
 	 /* The IF instruction's UIP and ELSE's JIP should point to ENDIF */
          brw_inst_set_uip(brw, if_inst, br * (endif_inst - if_inst));
          brw_inst_set_jip(brw, else_inst, br * (endif_inst - else_inst));
+         if (brw->gen >= 8) {
+            /* Since we don't set branch_ctrl, the ELSE's JIP and UIP both
+             * should point to ENDIF.
+             */
+            brw_inst_set_uip(brw, else_inst, br * (endif_inst - else_inst));
+         }
       }
    }
 }
