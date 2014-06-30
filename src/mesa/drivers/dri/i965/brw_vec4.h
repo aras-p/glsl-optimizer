@@ -444,7 +444,7 @@ public:
 			 enum brw_conditional_mod condition);
    vec4_instruction *IF(src_reg src0, src_reg src1,
                         enum brw_conditional_mod condition);
-   vec4_instruction *IF(uint32_t predicate);
+   vec4_instruction *IF(enum brw_predicate predicate);
    vec4_instruction *PULL_CONSTANT_LOAD(const dst_reg &dst,
                                         const src_reg &index);
    vec4_instruction *SCRATCH_READ(const dst_reg &dst, const src_reg &index);
@@ -483,7 +483,7 @@ public:
    void emit_vp_sop(enum brw_conditional_mod condmod, dst_reg dst,
                     src_reg src0, src_reg src1, src_reg one);
 
-   void emit_bool_to_cond_code(ir_rvalue *ir, uint32_t *predicate);
+   void emit_bool_to_cond_code(ir_rvalue *ir, enum brw_predicate *predicate);
    void emit_bool_comparison(unsigned int op, dst_reg dst, src_reg src0, src_reg src1);
    void emit_if_gen6(ir_if *ir);
 
@@ -494,7 +494,7 @@ public:
                  const src_reg &x, const src_reg &y, const src_reg &a);
 
    void emit_block_move(dst_reg *dst, src_reg *src,
-			const struct glsl_type *type, uint32_t predicate);
+                        const struct glsl_type *type, brw_predicate predicate);
 
    void emit_constant_values(dst_reg *dst, ir_constant *value);
 

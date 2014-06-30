@@ -189,7 +189,7 @@ ALU2(MAC)
 
 /** Gen4 predicated IF. */
 fs_inst *
-fs_visitor::IF(uint32_t predicate)
+fs_visitor::IF(enum brw_predicate predicate)
 {
    fs_inst *inst = new(mem_ctx) fs_inst(BRW_OPCODE_IF);
    inst->predicate = predicate;

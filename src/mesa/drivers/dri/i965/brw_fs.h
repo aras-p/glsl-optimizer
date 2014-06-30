@@ -272,7 +272,7 @@ public:
    fs_inst *AND(const fs_reg &dst, const fs_reg &src0, const fs_reg &src1);
    fs_inst *OR(const fs_reg &dst, const fs_reg &src0, const fs_reg &src1);
    fs_inst *XOR(const fs_reg &dst, const fs_reg &src0, const fs_reg &src1);
-   fs_inst *IF(uint32_t predicate);
+   fs_inst *IF(enum brw_predicate predicate);
    fs_inst *IF(const fs_reg &src0, const fs_reg &src1,
                enum brw_conditional_mod condition);
    fs_inst *CMP(fs_reg dst, fs_reg src0, fs_reg src1,

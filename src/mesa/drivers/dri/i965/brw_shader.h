@@ -101,7 +101,7 @@ public:
 
    enum opcode opcode; /* BRW_OPCODE_* or FS_OPCODE_* */
 
-   uint8_t predicate;
+   enum brw_predicate predicate;
    bool predicate_inverse;
    bool writes_accumulator; /**< instruction implicitly writes accumulator */
 

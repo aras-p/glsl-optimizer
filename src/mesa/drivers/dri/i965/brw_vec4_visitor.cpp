@@ -183,7 +183,7 @@ ALU2(MAC)
 
 /** Gen4 predicated IF. */
 vec4_instruction *
-vec4_visitor::IF(uint32_t predicate)
+vec4_visitor::IF(enum brw_predicate predicate)
 {
    vec4_instruction *inst;
 
@@ -768,7 +768,8 @@ vec4_visitor::variable_storage(ir_variable *var)
 }
 
 void
-vec4_visitor::emit_bool_to_cond_code(ir_rvalue *ir, uint32_t *predicate)
+vec4_visitor::emit_bool_to_cond_code(ir_rvalue *ir,
+                                     enum brw_predicate *predicate)
 {
    ir_expression *expr = ir->as_expression();
 
@@ -1954,7 +1955,8 @@ get_assignment_lhs(ir_dereference *ir, vec4_visitor *v)
 
 void
 vec4_visitor::emit_block_move(dst_reg *dst, src_reg *src,
-			      const struct glsl_type *type, uint32_t predicate)
+                              const struct glsl_type *type,
+                              enum brw_predicate predicate)
 {
    if (type->base_type == GLSL_TYPE_STRUCT) {
       for (unsigned int i = 0; i < type->length; i++) {
@@ -2060,7 +2062,7 @@ void
 vec4_visitor::visit(ir_assignment *ir)
 {
    dst_reg dst = get_assignment_lhs(ir->lhs, this);
-   uint32_t predicate = BRW_PREDICATE_NONE;
+   enum brw_predicate predicate = BRW_PREDICATE_NONE;
 
    if (!ir->lhs->type->is_scalar() &&
        !ir->lhs->type->is_vector()) {
@@ -2711,7 +2713,7 @@ vec4_visitor::visit(ir_if *ir)
    if (brw->gen == 6) {
       emit_if_gen6(ir);
    } else {
-      uint32_t predicate;
+      enum brw_predicate predicate;
       emit_bool_to_cond_code(ir->condition, &predicate);
       emit(IF(predicate));
    }
