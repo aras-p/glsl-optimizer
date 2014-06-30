@@ -97,7 +97,7 @@ gen7_convert_mrf_to_grf(struct brw_compile *p, struct brw_reg *reg)
     * registers required for messages with EOT.
     */
    struct brw_context *brw = p->brw;
-   if (brw->gen == 7 && reg->file == BRW_MESSAGE_REGISTER_FILE) {
+   if (brw->gen >= 7 && reg->file == BRW_MESSAGE_REGISTER_FILE) {
       reg->file = BRW_GENERAL_REGISTER_FILE;
       reg->nr += GEN7_MRF_HACK_START;
    }
@@ -2265,7 +2265,7 @@ void brw_urb_WRITE(struct brw_compile *p,
 
    gen6_resolve_implied_move(p, &src0, msg_reg_nr);
 
-   if (brw->gen == 7 && !(flags & BRW_URB_WRITE_USE_CHANNEL_MASKS)) {
+   if (brw->gen >= 7 && !(flags & BRW_URB_WRITE_USE_CHANNEL_MASKS)) {
       /* Enable Channel Masks in the URB_WRITE_HWORD message header */
       brw_push_insn_state(p);
       brw_set_default_access_mode(p, BRW_ALIGN_1);
