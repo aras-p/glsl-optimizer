@@ -46,7 +46,7 @@ extern "C" {
 #include "brw_eu.h"
 #include "brw_wm.h"
 #include "brw_shader.h"
-#include "intel_asm_printer.h"
+#include "intel_asm_annotation.h"
 }
 #include "gen8_generator.h"
 #include "glsl/glsl_types.h"

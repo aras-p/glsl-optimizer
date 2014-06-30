@@ -38,7 +38,7 @@
 #include "brw_structs.h"
 #include "brw_defines.h"
 #include "brw_reg.h"
-#include "intel_asm_printer.h"
+#include "intel_asm_annotation.h"
 #include "program/prog_instruction.h"
 
 #ifdef __cplusplus

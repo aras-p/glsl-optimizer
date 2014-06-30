@@ -39,7 +39,7 @@
 
 #include "brw_context.h"
 #include "brw_eu.h"
-#include "intel_asm_printer.h"
+#include "intel_asm_annotation.h"
 
 static const uint32_t gen6_control_index_table[32] = {
    0b00000000000000000,

@@ -26,7 +26,7 @@
 #include "brw_defines.h"
 #include "main/compiler.h"
 #include "glsl/ir.h"
-#include "intel_asm_printer.h"
+#include "intel_asm_annotation.h"
 
 #pragma once
 

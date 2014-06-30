@@ -23,7 +23,7 @@
 
 #include "brw_cfg.h"
 #include "brw_eu.h"
-#include "intel_asm_printer.h"
+#include "intel_asm_annotation.h"
 #include "program/prog_print.h"
 #include "program/prog_instruction.h"
 
