@@ -99,12 +99,6 @@ public:
     */
    bool has_side_effects() const;
 
-   enum opcode opcode; /* BRW_OPCODE_* or FS_OPCODE_* */
-
-   enum brw_predicate predicate;
-   bool predicate_inverse;
-   bool writes_accumulator; /**< instruction implicitly writes accumulator */
-
    /** @{
     * Annotation for the generated IR.  One of the two can be set.
     */
@@ -118,8 +112,12 @@ public:
    uint8_t mlen; /**< SEND message length */
    int8_t base_mrf; /**< First MRF in the SEND message, if mlen is nonzero. */
    uint8_t target; /**< MRT target. */
-   enum brw_conditional_mod conditional_mod; /**< BRW_CONDITIONAL_* */
 
+   enum opcode opcode; /* BRW_OPCODE_* or FS_OPCODE_* */
+   enum brw_conditional_mod conditional_mod; /**< BRW_CONDITIONAL_* */
+   enum brw_predicate predicate;
+   bool predicate_inverse:1;
+   bool writes_accumulator:1; /**< instruction implicitly writes accumulator */
    bool force_writemask_all:1;
    bool no_dd_clear:1;
    bool no_dd_check:1;
