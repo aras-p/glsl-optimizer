@@ -1742,6 +1742,14 @@ void brw_CMP(struct brw_compile *p,
    struct brw_context *brw = p->brw;
    brw_inst *insn = next_insn(p, BRW_OPCODE_CMP);
 
+   if (brw->gen >= 8) {
+      /* The CMP instruction appears to behave erratically for floating point
+       * sources unless the destination type is also float.  Overriding it to
+       * match src0 makes it work in all cases.
+       */
+      dest.type = src0.type;
+   }
+
    brw_inst_set_cond_modifier(brw, insn, conditional);
    brw_set_dest(p, insn, dest);
    brw_set_src0(p, insn, src0);
