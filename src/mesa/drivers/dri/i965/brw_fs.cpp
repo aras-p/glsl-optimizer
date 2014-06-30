@@ -3245,7 +3245,7 @@ brw_wm_fs_emit(struct brw_context *brw,
    }
 
    const unsigned *assembly = NULL;
-   if (brw->gen >= 8) {
+   if (brw->gen >= 8 && getenv("GEN8") != NULL) {
       gen8_fs_generator g(brw, mem_ctx, key, prog_data, prog, fp, v.do_dual_src);
       assembly = g.generate_assembly(&v.instructions, simd16_instructions,
                                      final_assembly_size);
