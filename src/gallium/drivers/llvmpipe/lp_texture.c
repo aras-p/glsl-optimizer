@@ -730,7 +730,7 @@ llvmpipe_get_texture_image_address(struct llvmpipe_resource *lpr,
    unsigned offset;
 
    img = &lpr->linear_img;
-   offset = lpr->linear_mip_offsets[level];
+   offset = lpr->mip_offsets[level];
 
    if (face_slice > 0)
       offset += face_slice * tex_image_face_size(lpr, level);
@@ -771,7 +771,7 @@ alloc_image_data(struct llvmpipe_resource *lpr)
        */
       for (level = 0; level <= lpr->base.last_level; level++) {
          uint buffer_size = tex_image_size(lpr, level);
-         lpr->linear_mip_offsets[level] = offset;
+         lpr->mip_offsets[level] = offset;
          offset += align(buffer_size, alignment);
       }
       lpr->linear_img.data = align_malloc(offset, alignment);
@@ -809,7 +809,7 @@ llvmpipe_get_texture_image(struct llvmpipe_resource *lpr,
    }
 
    target_img = &lpr->linear_img;
-   target_off_ptr = lpr->linear_mip_offsets;
+   target_off_ptr = lpr->mip_offsets;
    target_data = target_img->data;
 
    if (!target_data) {

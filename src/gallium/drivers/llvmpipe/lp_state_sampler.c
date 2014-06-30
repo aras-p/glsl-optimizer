@@ -254,7 +254,7 @@ prepare_shader_sampling(
                    * could get mip offset directly but need call above to
                    * invoke tiled->linear conversion.
                    */
-                  assert(lp_tex->linear_mip_offsets[j] == mip_offsets[j]);
+                  assert(lp_tex->mip_offsets[j] == mip_offsets[j]);
                   row_stride[j] = lp_tex->row_stride[j];
                   img_stride[j] = lp_tex->img_stride[j];
                }

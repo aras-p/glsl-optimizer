@@ -74,7 +74,7 @@ struct llvmpipe_resource
    /** Number of 3D slices or cube faces per level */
    unsigned num_slices_faces[LP_MAX_TEXTURE_LEVELS];
    /** Offset to start of mipmap level, in bytes */
-   unsigned linear_mip_offsets[LP_MAX_TEXTURE_LEVELS];
+   unsigned mip_offsets[LP_MAX_TEXTURE_LEVELS];
 
    /**
     * Display target, for textures with the PIPE_BIND_DISPLAY_TARGET
