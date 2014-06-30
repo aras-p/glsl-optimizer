@@ -316,6 +316,26 @@ void brw_shader_time_add(struct brw_compile *p,
                          struct brw_reg payload,
                          uint32_t surf_index);
 
+/**
+ * Return the generation-specific jump distance scaling factor.
+ *
+ * Given the number of instructions to jump, we need to scale by
+ * some number to obtain the actual jump distance to program in an
+ * instruction.
+ */
+static inline unsigned
+brw_jump_scale(const struct brw_context *brw)
+{
+   /* Ironlake and later measure jump targets in 64-bit data chunks (in order
+    * (to support compaction), so each 128-bit instruction requires 2 chunks.
+    */
+   if (brw->gen >= 5)
+      return 2;
+
+   /* Gen4 simply uses the number of 128-bit instructions. */
+   return 1;
+}
+
 /* If/else/endif.  Works by manipulating the execution flags on each
  * channel.
  */

@@ -67,6 +67,8 @@ fs_generator::patch_discard_jumps_to_fb_writes()
    if (brw->gen < 6 || this->discard_halt_patches.is_empty())
       return false;
 
+   int scale = brw_jump_scale(brw);
+
    /* There is a somewhat strange undocumented requirement of using
     * HALT, according to the simulator.  If some channel has HALTed to
     * a particular UIP, then by the end of the program, every channel
@@ -79,8 +81,8 @@ fs_generator::patch_discard_jumps_to_fb_writes()
     * tests.
     */
    brw_inst *last_halt = gen6_HALT(p);
-   brw_inst_set_uip(brw, last_halt, 2);
-   brw_inst_set_jip(brw, last_halt, 2);
+   brw_inst_set_uip(brw, last_halt, 1 * scale);
+   brw_inst_set_jip(brw, last_halt, 1 * scale);
 
    int ip = p->nr_insn;
 
@@ -89,7 +91,7 @@ fs_generator::patch_discard_jumps_to_fb_writes()
 
       assert(brw_inst_opcode(brw, patch) == BRW_OPCODE_HALT);
       /* HALT takes a half-instruction distance from the pre-incremented IP. */
-      brw_inst_set_uip(brw, patch, (ip - patch_ip->ip) * 2);
+      brw_inst_set_uip(brw, patch, (ip - patch_ip->ip) * scale);
    }
 
    this->discard_halt_patches.make_empty();

@@ -1333,12 +1333,7 @@ patch_IF_ELSE(struct brw_compile *p,
    assert(endif_inst != NULL);
    assert(else_inst == NULL || brw_inst_opcode(brw, else_inst) == BRW_OPCODE_ELSE);
 
-   unsigned br = 1;
-   /* Jump count is for 64bit data chunk each, so one 128bit instruction
-    * requires 2 chunks.
-    */
-   if (brw->gen >= 5)
-      br = 2;
+   unsigned br = brw_jump_scale(brw);
 
    assert(brw_inst_opcode(brw, endif_inst) == BRW_OPCODE_ENDIF);
    brw_inst_set_exec_size(brw, endif_inst, brw_inst_exec_size(brw, if_inst));
@@ -1635,7 +1630,7 @@ brw_patch_break_cont(struct brw_compile *p, brw_inst *while_inst)
    struct brw_context *brw = p->brw;
    brw_inst *do_inst = get_inner_do_insn(p);
    brw_inst *inst;
-   int br = (brw->gen == 5) ? 2 : 1;
+   unsigned br = brw_jump_scale(brw);
 
    assert(brw->gen < 6);
 
@@ -1659,10 +1654,7 @@ brw_WHILE(struct brw_compile *p)
 {
    struct brw_context *brw = p->brw;
    brw_inst *insn, *do_insn;
-   unsigned br = 1;
-
-   if (brw->gen >= 5)
-      br = 2;
+   unsigned br = brw_jump_scale(brw);
 
    if (brw->gen >= 7) {
       insn = next_insn(p, BRW_OPCODE_WHILE);
@@ -2346,7 +2338,7 @@ brw_find_loop_end(struct brw_compile *p, int start_offset)
 {
    struct brw_context *brw = p->brw;
    int offset;
-   int scale = 8;
+   int scale = 16 / brw_jump_scale(brw);
    void *store = p->store;
 
    assert(brw->gen >= 6);
@@ -2378,7 +2370,8 @@ brw_set_uip_jip(struct brw_compile *p)
 {
    struct brw_context *brw = p->brw;
    int offset;
-   int scale = 8;
+   int br = brw_jump_scale(brw);
+   int scale = 16 / br;
    void *store = p->store;
 
    if (brw->gen < 6)
@@ -2418,7 +2411,7 @@ brw_set_uip_jip(struct brw_compile *p)
 
       case BRW_OPCODE_ENDIF:
          if (block_end_offset == 0)
-            brw_inst_set_jip(brw, insn, 2);
+            brw_inst_set_jip(brw, insn, 1 * br);
          else
             brw_inst_set_jip(brw, insn, (block_end_offset - offset) / scale);
 	 break;
