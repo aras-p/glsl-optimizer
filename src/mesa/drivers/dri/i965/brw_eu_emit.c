@@ -2341,6 +2341,8 @@ brw_find_loop_end(struct brw_compile *p, int start_offset)
    int scale = 8;
    void *store = p->store;
 
+   assert(brw->gen >= 6);
+
    /* Always start after the instruction (such as a WHILE) we're trying to fix
     * up.
     */
