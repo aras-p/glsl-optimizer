@@ -23,9 +23,12 @@
 
 #include "brw_cfg.h"
 #include "brw_eu.h"
+#include "brw_context.h"
+#include "intel_debug.h"
 #include "intel_asm_annotation.h"
 #include "program/prog_print.h"
 #include "program/prog_instruction.h"
+#include "main/macros.h"
 
 void
 dump_assembly(void *assembly, int num_annotations, struct annotation *annotation,
@@ -86,4 +89,59 @@ dump_assembly(void *assembly, int num_annotations, struct annotation *annotation
       }
    }
    fprintf(stderr, "\n");
+}
+
+void annotate(struct brw_context *brw,
+              struct annotation_info *annotation, struct cfg_t *cfg,
+              struct backend_instruction *inst, unsigned offset)
+{
+   if (annotation->ann_size <= annotation->ann_count) {
+      annotation->ann_size = MAX2(1024, annotation->ann_size * 2);
+      annotation->ann = reralloc(annotation->mem_ctx, annotation->ann,
+                                 struct annotation, annotation->ann_size);
+      if (!annotation->ann)
+         return;
+   }
+
+   struct annotation *ann = &annotation->ann[annotation->ann_count++];
+   ann->offset = offset;
+   if ((INTEL_DEBUG & DEBUG_NO_ANNOTATION) == 0) {
+      ann->ir = inst->ir;
+      ann->annotation = inst->annotation;
+   }
+
+   if (cfg->blocks[annotation->cur_block]->start == inst) {
+      ann->block_start = cfg->blocks[annotation->cur_block];
+   }
+
+   /* There is no hardware DO instruction on Gen6+, so since DO always
+    * starts a basic block, we need to set the .block_start of the next
+    * instruction's annotation with a pointer to the bblock started by
+    * the DO.
+    *
+    * There's also only complication from emitting an annotation without
+    * a corresponding hardware instruction to disassemble.
+    */
+   if (brw->gen >= 6 && inst->opcode == BRW_OPCODE_DO) {
+      annotation->ann_count--;
+   }
+
+   if (cfg->blocks[annotation->cur_block]->end == inst) {
+      ann->block_end = cfg->blocks[annotation->cur_block];
+      annotation->cur_block++;
+   }
+}
+
+void
+annotation_finalize(struct annotation_info *annotation,
+                    unsigned next_inst_offset)
+{
+   if (!annotation->ann_count)
+      return;
+
+   if (annotation->ann_count == annotation->ann_size) {
+      annotation->ann = reralloc(annotation->mem_ctx, annotation->ann,
+                                 struct annotation, annotation->ann_size + 1);
+   }
+   annotation->ann[annotation->ann_count].offset = next_inst_offset;
 }

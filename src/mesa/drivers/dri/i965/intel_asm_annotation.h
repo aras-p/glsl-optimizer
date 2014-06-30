@@ -31,6 +31,8 @@ extern "C" {
 struct bblock_t;
 struct brw_context;
 struct gl_program;
+struct backend_instruction;
+struct cfg_t;
 
 struct annotation {
    int offset;
@@ -59,6 +61,13 @@ struct annotation_info {
 void
 dump_assembly(void *assembly, int num_annotations, struct annotation *annotation,
               struct brw_context *brw, const struct gl_program *prog);
+
+void
+annotate(struct brw_context *brw,
+         struct annotation_info *annotation, struct cfg_t *cfg,
+         struct backend_instruction *inst, unsigned offset);
+void
+annotation_finalize(struct annotation_info *annotation, unsigned offset);
 
 #ifdef __cplusplus
 } /* extern "C" */

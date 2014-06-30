@@ -26,7 +26,6 @@
 #include "brw_defines.h"
 #include "main/compiler.h"
 #include "glsl/ir.h"
-#include "intel_asm_annotation.h"
 
 #pragma once
 
@@ -172,11 +171,6 @@ public:
 };
 
 uint32_t brw_texture_offset(struct gl_context *ctx, ir_constant *offset);
-
-void annotate(struct brw_context *brw,
-              struct annotation_info *annotation, cfg_t *cfg,
-              backend_instruction *inst, unsigned offset);
-void annotation_finalize(struct annotation_info *annotation, unsigned offset);
 
 #endif /* __cplusplus */
 
