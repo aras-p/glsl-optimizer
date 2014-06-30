@@ -273,9 +273,10 @@ public:
    fs_inst *OR(const fs_reg &dst, const fs_reg &src0, const fs_reg &src1);
    fs_inst *XOR(const fs_reg &dst, const fs_reg &src0, const fs_reg &src1);
    fs_inst *IF(uint32_t predicate);
-   fs_inst *IF(const fs_reg &src0, const fs_reg &src1, uint32_t condition);
+   fs_inst *IF(const fs_reg &src0, const fs_reg &src1,
+               enum brw_conditional_mod condition);
    fs_inst *CMP(fs_reg dst, fs_reg src0, fs_reg src1,
-                uint32_t condition);
+                enum brw_conditional_mod condition);
    fs_inst *LRP(const fs_reg &dst, const fs_reg &a, const fs_reg &y,
                 const fs_reg &x);
    fs_inst *DEP_RESOLVE_MOV(int grf);
@@ -385,7 +386,7 @@ public:
    fs_inst *emit_math(enum opcode op, fs_reg dst, fs_reg src0, fs_reg src1);
    void emit_lrp(const fs_reg &dst, const fs_reg &x, const fs_reg &y,
                  const fs_reg &a);
-   void emit_minmax(uint32_t conditionalmod, const fs_reg &dst,
+   void emit_minmax(enum brw_conditional_mod conditionalmod, const fs_reg &dst,
                     const fs_reg &src0, const fs_reg &src1);
    bool try_emit_saturate(ir_expression *ir);
    bool try_emit_mad(ir_expression *ir);
@@ -417,7 +418,7 @@ public:
    void emit_fp_minmax(const struct prog_instruction *fpi,
                        fs_reg dst, fs_reg src0, fs_reg src1);
 
-   void emit_fp_sop(uint32_t conditional_mod,
+   void emit_fp_sop(enum brw_conditional_mod conditional_mod,
                     const struct prog_instruction *fpi,
                     fs_reg dst, fs_reg src0, fs_reg src1, fs_reg one);
 

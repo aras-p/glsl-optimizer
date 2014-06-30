@@ -117,7 +117,7 @@ brw_blorp_eu_emitter::emit_combine(enum opcode combine_opcode,
 }
 
 fs_inst *
-brw_blorp_eu_emitter::emit_cmp(int op,
+brw_blorp_eu_emitter::emit_cmp(enum brw_conditional_mod op,
                                const struct brw_reg &x,
                                const struct brw_reg &y)
 {

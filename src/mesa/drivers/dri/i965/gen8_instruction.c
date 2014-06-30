@@ -28,6 +28,7 @@
  * and set various fields.  This is the actual hardware format.
  */
 
+#include "main/compiler.h"
 #include "brw_defines.h"
 #include "gen8_instruction.h"
 

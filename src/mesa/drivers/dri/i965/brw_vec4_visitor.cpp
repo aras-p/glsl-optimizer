@@ -195,7 +195,8 @@ vec4_visitor::IF(uint32_t predicate)
 
 /** Gen6 IF with embedded comparison. */
 vec4_instruction *
-vec4_visitor::IF(src_reg src0, src_reg src1, uint32_t condition)
+vec4_visitor::IF(src_reg src0, src_reg src1,
+                 enum brw_conditional_mod condition)
 {
    assert(brw->gen == 6);
 
@@ -217,7 +218,8 @@ vec4_visitor::IF(src_reg src0, src_reg src1, uint32_t condition)
  * the flag register with the packed 16 bits of the result.
  */
 vec4_instruction *
-vec4_visitor::CMP(dst_reg dst, src_reg src0, src_reg src1, uint32_t condition)
+vec4_visitor::CMP(dst_reg dst, src_reg src0, src_reg src1,
+                  enum brw_conditional_mod condition)
 {
    vec4_instruction *inst;
 
@@ -1185,7 +1187,7 @@ vec4_visitor::emit_bool_comparison(unsigned int op,
 }
 
 void
-vec4_visitor::emit_minmax(uint32_t conditionalmod, dst_reg dst,
+vec4_visitor::emit_minmax(enum brw_conditional_mod conditionalmod, dst_reg dst,
                           src_reg src0, src_reg src1)
 {
    vec4_instruction *inst;

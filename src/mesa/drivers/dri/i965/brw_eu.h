@@ -320,7 +320,7 @@ void brw_shader_time_add(struct brw_compile *p,
  * channel.
  */
 brw_inst *brw_IF(struct brw_compile *p, unsigned execute_size);
-brw_inst *gen6_IF(struct brw_compile *p, uint32_t conditional,
+brw_inst *gen6_IF(struct brw_compile *p, enum brw_conditional_mod conditional,
                   struct brw_reg src0, struct brw_reg src1);
 
 void brw_ELSE(struct brw_compile *p);
@@ -404,7 +404,7 @@ void brw_set_src1(struct brw_compile *p, brw_inst *insn, struct brw_reg reg);
 
 void brw_set_uip_jip(struct brw_compile *p);
 
-uint32_t brw_swap_cmod(uint32_t cmod);
+enum brw_conditional_mod brw_swap_cmod(uint32_t cmod);
 
 /* brw_eu_compact.c */
 void brw_init_compaction_tables(struct brw_context *brw);

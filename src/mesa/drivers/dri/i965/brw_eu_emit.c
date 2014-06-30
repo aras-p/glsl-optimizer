@@ -1241,7 +1241,7 @@ brw_IF(struct brw_compile *p, unsigned execute_size)
  * embedded comparison (conditional modifier).  It is not used on gen7.
  */
 brw_inst *
-gen6_IF(struct brw_compile *p, uint32_t conditional,
+gen6_IF(struct brw_compile *p, enum brw_conditional_mod conditional,
 	struct brw_reg src0, struct brw_reg src1)
 {
    const struct brw_context *brw = p->brw;

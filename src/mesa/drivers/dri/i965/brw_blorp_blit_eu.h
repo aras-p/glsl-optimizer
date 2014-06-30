@@ -59,7 +59,7 @@ protected:
 
    inline void emit_cond_mov(const struct brw_reg &x,
                              const struct brw_reg &y,
-                             int op,
+                             enum brw_conditional_mod op,
                              const struct brw_reg &dst,
                              const struct brw_reg &src)
    {
@@ -160,7 +160,7 @@ protected:
       insts.push_tail(new (mem_ctx) fs_inst(BRW_OPCODE_RNDD, dst, src));
    }
 
-   inline void emit_cmp_if(int op,
+   inline void emit_cmp_if(enum brw_conditional_mod op,
                            const struct brw_reg &x,
                            const struct brw_reg &y)
    {
@@ -179,7 +179,8 @@ protected:
    }
 
 private:
-   fs_inst *emit_cmp(int op, const struct brw_reg &x, const struct brw_reg &y);
+   fs_inst *emit_cmp(enum brw_conditional_mod op, const struct brw_reg &x,
+                     const struct brw_reg &y);
 
    void *mem_ctx;
    exec_list insts;

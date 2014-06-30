@@ -311,7 +311,7 @@ brw_type_for_base_type(const struct glsl_type *type)
    return BRW_REGISTER_TYPE_F;
 }
 
-uint32_t
+enum brw_conditional_mod
 brw_conditional_for_comparison(unsigned int op)
 {
    switch (op) {

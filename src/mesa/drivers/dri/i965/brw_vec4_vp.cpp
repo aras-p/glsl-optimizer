@@ -37,7 +37,7 @@ extern "C" {
 using namespace brw;
 
 void
-vec4_visitor::emit_vp_sop(uint32_t conditional_mod,
+vec4_visitor::emit_vp_sop(enum brw_conditional_mod conditional_mod,
                           dst_reg dst, src_reg src0, src_reg src1,
                           src_reg one)
 {

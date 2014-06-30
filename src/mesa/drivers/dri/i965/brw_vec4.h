@@ -441,8 +441,9 @@ public:
    vec4_instruction *ASR(const dst_reg &dst, const src_reg &src0,
                          const src_reg &src1);
    vec4_instruction *CMP(dst_reg dst, src_reg src0, src_reg src1,
-			 uint32_t condition);
-   vec4_instruction *IF(src_reg src0, src_reg src1, uint32_t condition);
+			 enum brw_conditional_mod condition);
+   vec4_instruction *IF(src_reg src0, src_reg src1,
+                        enum brw_conditional_mod condition);
    vec4_instruction *IF(uint32_t predicate);
    vec4_instruction *PULL_CONSTANT_LOAD(const dst_reg &dst,
                                         const src_reg &index);
@@ -479,14 +480,15 @@ public:
    /** Walks an exec_list of ir_instruction and sends it through this visitor. */
    void visit_instructions(const exec_list *list);
 
-   void emit_vp_sop(uint32_t condmod, dst_reg dst,
+   void emit_vp_sop(enum brw_conditional_mod condmod, dst_reg dst,
                     src_reg src0, src_reg src1, src_reg one);
 
    void emit_bool_to_cond_code(ir_rvalue *ir, uint32_t *predicate);
    void emit_bool_comparison(unsigned int op, dst_reg dst, src_reg src0, src_reg src1);
    void emit_if_gen6(ir_if *ir);
 
-   void emit_minmax(uint32_t condmod, dst_reg dst, src_reg src0, src_reg src1);
+   void emit_minmax(enum brw_conditional_mod conditionalmod, dst_reg dst,
+                    src_reg src0, src_reg src1);
 
    void emit_lrp(const dst_reg &dst,
                  const src_reg &x, const src_reg &y, const src_reg &a);

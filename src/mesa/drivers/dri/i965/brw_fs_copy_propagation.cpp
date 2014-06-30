@@ -442,7 +442,7 @@ try_constant_propagate(struct brw_context *brw, fs_inst *inst,
             inst->src[i] = entry->src;
             progress = true;
          } else if (i == 0 && inst->src[1].file != IMM) {
-            uint32_t new_cmod;
+            enum brw_conditional_mod new_cmod;
 
             new_cmod = brw_swap_cmod(inst->conditional_mod);
             if (new_cmod != ~0u) {

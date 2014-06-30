@@ -68,7 +68,7 @@ brw_reg_type_letters(unsigned type)
 /* Returns the corresponding conditional mod for swapping src0 and
  * src1 in e.g. CMP.
  */
-uint32_t
+enum brw_conditional_mod
 brw_swap_cmod(uint32_t cmod)
 {
    switch (cmod) {

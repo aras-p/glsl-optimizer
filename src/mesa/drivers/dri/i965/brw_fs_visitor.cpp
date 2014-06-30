@@ -251,7 +251,7 @@ fs_visitor::emit_lrp(const fs_reg &dst, const fs_reg &x, const fs_reg &y,
 }
 
 void
-fs_visitor::emit_minmax(uint32_t conditionalmod, const fs_reg &dst,
+fs_visitor::emit_minmax(enum brw_conditional_mod conditionalmod, const fs_reg &dst,
                         const fs_reg &src0, const fs_reg &src1)
 {
    fs_inst *inst;
@@ -2692,7 +2692,7 @@ fs_visitor::emit_color_write(int target, int index, int first_color_mrf)
    }
 }
 
-static int
+static enum brw_conditional_mod
 cond_for_alpha_func(GLenum func)
 {
    switch(func) {

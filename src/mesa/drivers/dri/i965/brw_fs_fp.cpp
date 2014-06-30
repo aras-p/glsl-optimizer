@@ -57,7 +57,7 @@ void
 fs_visitor::emit_fp_minmax(const prog_instruction *fpi,
                            fs_reg dst, fs_reg src0, fs_reg src1)
 {
-   uint32_t conditionalmod;
+   enum brw_conditional_mod conditionalmod;
    if (fpi->Opcode == OPCODE_MIN)
       conditionalmod = BRW_CONDITIONAL_L;
    else
@@ -72,7 +72,7 @@ fs_visitor::emit_fp_minmax(const prog_instruction *fpi,
 }
 
 void
-fs_visitor::emit_fp_sop(uint32_t conditional_mod,
+fs_visitor::emit_fp_sop(enum brw_conditional_mod conditional_mod,
                         const struct prog_instruction *fpi,
                         fs_reg dst, fs_reg src0, fs_reg src1,
                         fs_reg one)

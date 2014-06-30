@@ -162,7 +162,7 @@ try_constant_propagate(struct brw_context *brw, vec4_instruction *inst,
 	 inst->src[arg] = value;
 	 return true;
       } else if (arg == 0 && inst->src[1].file != IMM) {
-	 uint32_t new_cmod;
+	 enum brw_conditional_mod new_cmod;
 
 	 new_cmod = brw_swap_cmod(inst->conditional_mod);
 	 if (new_cmod != ~0u) {

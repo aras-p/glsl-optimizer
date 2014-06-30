@@ -654,18 +654,20 @@ enum brw_compression {
 #define GEN6_COMPRESSION_1H		0
 #define GEN6_COMPRESSION_2H		2
 
-#define BRW_CONDITIONAL_NONE  0
-#define BRW_CONDITIONAL_Z     1
-#define BRW_CONDITIONAL_NZ    2
-#define BRW_CONDITIONAL_EQ    1	/* Z */
-#define BRW_CONDITIONAL_NEQ   2	/* NZ */
-#define BRW_CONDITIONAL_G     3
-#define BRW_CONDITIONAL_GE    4
-#define BRW_CONDITIONAL_L     5
-#define BRW_CONDITIONAL_LE    6
-#define BRW_CONDITIONAL_R     7
-#define BRW_CONDITIONAL_O     8
-#define BRW_CONDITIONAL_U     9
+enum PACKED brw_conditional_mod {
+   BRW_CONDITIONAL_NONE = 0,
+   BRW_CONDITIONAL_Z    = 1,
+   BRW_CONDITIONAL_NZ   = 2,
+   BRW_CONDITIONAL_EQ   = 1,	/* Z */
+   BRW_CONDITIONAL_NEQ  = 2,	/* NZ */
+   BRW_CONDITIONAL_G    = 3,
+   BRW_CONDITIONAL_GE   = 4,
+   BRW_CONDITIONAL_L    = 5,
+   BRW_CONDITIONAL_LE   = 6,
+   BRW_CONDITIONAL_R    = 7,
+   BRW_CONDITIONAL_O    = 8,
+   BRW_CONDITIONAL_U    = 9,
+};
 
 #define BRW_DEBUG_NONE        0
 #define BRW_DEBUG_BREAKPOINT  1

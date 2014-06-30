@@ -118,7 +118,7 @@ public:
    uint8_t mlen; /**< SEND message length */
    int8_t base_mrf; /**< First MRF in the SEND message, if mlen is nonzero. */
    uint8_t target; /**< MRT target. */
-   uint8_t conditional_mod; /**< BRW_CONDITIONAL_* */
+   enum brw_conditional_mod conditional_mod; /**< BRW_CONDITIONAL_* */
 
    bool force_writemask_all:1;
    bool no_dd_clear:1;
@@ -180,6 +180,6 @@ void annotation_finalize(struct annotation_info *annotation, unsigned offset);
 #endif /* __cplusplus */
 
 enum brw_reg_type brw_type_for_base_type(const struct glsl_type *type);
-uint32_t brw_conditional_for_comparison(unsigned int op);
+enum brw_conditional_mod brw_conditional_for_comparison(unsigned int op);
 uint32_t brw_math_function(enum opcode op);
 const char *brw_instruction_name(enum opcode op);

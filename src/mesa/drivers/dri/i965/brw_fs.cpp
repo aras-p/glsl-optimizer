@@ -198,7 +198,8 @@ fs_visitor::IF(uint32_t predicate)
 
 /** Gen6 IF with embedded comparison. */
 fs_inst *
-fs_visitor::IF(const fs_reg &src0, const fs_reg &src1, uint32_t condition)
+fs_visitor::IF(const fs_reg &src0, const fs_reg &src1,
+               enum brw_conditional_mod condition)
 {
    assert(brw->gen == 6);
    fs_inst *inst = new(mem_ctx) fs_inst(BRW_OPCODE_IF,
@@ -213,7 +214,8 @@ fs_visitor::IF(const fs_reg &src0, const fs_reg &src1, uint32_t condition)
  * the flag register with the packed 16 bits of the result.
  */
 fs_inst *
-fs_visitor::CMP(fs_reg dst, fs_reg src0, fs_reg src1, uint32_t condition)
+fs_visitor::CMP(fs_reg dst, fs_reg src0, fs_reg src1,
+                enum brw_conditional_mod condition)
 {
    fs_inst *inst;
 
