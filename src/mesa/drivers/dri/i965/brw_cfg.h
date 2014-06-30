@@ -82,9 +82,8 @@ struct bblock_t {
    struct backend_instruction *endif_inst;
 };
 
+struct cfg_t {
 #ifdef __cplusplus
-class cfg_t {
-public:
    DECLARE_RALLOC_CXX_OPERATORS(cfg_t)
 
    cfg_t(exec_list *instructions);
@@ -95,15 +94,14 @@ public:
    void make_block_array();
 
    void dump(backend_visitor *v);
-
+#endif
    void *mem_ctx;
 
    /** Ordered list (by ip) of basic blocks */
-   exec_list block_list;
-   bblock_t **blocks;
+   struct exec_list block_list;
+   struct bblock_t **blocks;
    int num_blocks;
 };
-#endif
 
 #define foreach_inst_in_block(__type, __inst, __block)         \
    for (__type *__inst = (__type *)__block->start;             \

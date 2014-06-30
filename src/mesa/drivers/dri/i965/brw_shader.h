@@ -80,7 +80,7 @@ struct backend_reg
 
 #ifdef __cplusplus
 
-class cfg_t;
+struct cfg_t;
 
 struct backend_instruction : public exec_node {
 public:

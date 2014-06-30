@@ -28,7 +28,7 @@
 #include "brw_fs.h"
 #include "main/bitset.h"
 
-class cfg_t;
+struct cfg_t;
 
 namespace brw {
 
