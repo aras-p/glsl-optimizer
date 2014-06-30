@@ -253,15 +253,23 @@ static INLINE GLuint CPU_TO_LE32(GLuint x)
  * function" warnings.
  */
 #if __GNUC__ >= 4 && __GNUC_MINOR__ >= 5
-#define unreachable() __builtin_unreachable()
+#define unreachable(str)    \
+do {                        \
+   assert(!str);            \
+   __builtin_unreachable(); \
+} while (0)
 #elif (defined(__clang__) && defined(__has_builtin))
 # if __has_builtin(__builtin_unreachable)
-#  define unreachable() __builtin_unreachable()
+#  define unreachable(str)  \
+do {                        \
+   assert(!str);            \
+   __builtin_unreachable(); \
+} while (0)
 # endif
 #endif
 
 #ifndef unreachable
-#define unreachable()
+#define unreachable(str)
 #endif
 
 /*
