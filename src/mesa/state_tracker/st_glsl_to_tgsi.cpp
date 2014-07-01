@@ -1971,9 +1971,17 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
       assert(ir->type->is_vector() || ir->type->is_scalar());
 
       if (const_offset_ir) {
-         index_reg = st_src_reg_for_int(const_offset / 16);
-      } else {
-         emit(ir, TGSI_OPCODE_USHR, st_dst_reg(index_reg), op[1], st_src_reg_for_int(4));
+         /* Constant index into constant buffer */
+         cbuf.reladdr = NULL;
+         cbuf.index = const_offset / 16;
+         cbuf.has_index2 = true;
+      }
+      else {
+         /* Relative/variable index into constant buffer */
+         emit(ir, TGSI_OPCODE_USHR, st_dst_reg(index_reg), op[1],
+              st_src_reg_for_int(4));
+         cbuf.reladdr = ralloc(mem_ctx, st_src_reg);
+         memcpy(cbuf.reladdr, &index_reg, sizeof(index_reg));
       }
 
       cbuf.swizzle = swizzle_for_size(ir->type->vector_elements);
@@ -1981,9 +1989,6 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
                                     const_offset % 16 / 4,
                                     const_offset % 16 / 4,
                                     const_offset % 16 / 4);
-
-      cbuf.reladdr = ralloc(mem_ctx, st_src_reg);
-      memcpy(cbuf.reladdr, &index_reg, sizeof(index_reg));
 
       if (ir->type->base_type == GLSL_TYPE_BOOL) {
          emit(ir, TGSI_OPCODE_USNE, result_dst, cbuf, st_src_reg_for_int(0));
