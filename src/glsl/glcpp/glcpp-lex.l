@@ -543,17 +543,17 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	 * rule, then we have made a mistake above and need to fix one or more
 	 * of the preceding patterns to match that input. */
 
-<INITIAL,COMMENT,DEFINE,DONE,HASH,NEWLINE_CATCHUP>. {
+<*>. {
 	glcpp_error(yylloc, yyextra, "Internal compiler error: Unexpected character: %s", yytext);
-}
 
 	/* We don't actually use the UNREACHABLE start condition. We
-	only have this action here so that we can pretend to call some
+	only have this block here so that we can pretend to call some
 	generated functions, (to avoid "defined but not used"
 	warnings. */
-<UNREACHABLE>. {
-	unput('.');
-	yy_top_state(yyextra);
+        if (YY_START == UNREACHABLE) {
+		unput('.');
+		yy_top_state(yyextra);
+	}
 }
 
 %%
