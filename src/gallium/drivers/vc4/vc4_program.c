@@ -25,6 +25,9 @@
 #include <stdio.h>
 #include <inttypes.h>
 #include "pipe/p_state.h"
+#include "util/u_format.h"
+#include "util/u_hash_table.h"
+#include "util/u_hash.h"
 #include "util/u_memory.h"
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_dump.h"
@@ -43,9 +46,27 @@ struct tgsi_to_qir {
         struct qreg *consts;
         uint32_t num_consts;
 
+        struct vc4_shader_state *shader_state;
+        struct vc4_fs_key *fs_key;
+        struct vc4_vs_key *vs_key;
+
         uint32_t *uniform_data;
         enum quniform_contents *uniform_contents;
         uint32_t num_uniforms;
+};
+
+struct vc4_key {
+        struct vc4_shader_state *shader_state;
+};
+
+struct vc4_fs_key {
+        struct vc4_key base;
+        enum pipe_format color_format;
+};
+
+struct vc4_vs_key {
+        struct vc4_key base;
+        enum pipe_format attr_formats[8];
 };
 
 static struct qreg
@@ -323,7 +344,7 @@ parse_tgsi_immediate(struct tgsi_to_qir *trans, struct tgsi_full_immediate *imm)
 }
 
 static void
-emit_frag_init(struct tgsi_to_qir *trans, struct vc4_shader_state *so)
+emit_frag_init(struct tgsi_to_qir *trans)
 {
         /* XXX: lols */
         for (int i = 0; i < 4; i++) {
@@ -333,7 +354,7 @@ emit_frag_init(struct tgsi_to_qir *trans, struct vc4_shader_state *so)
 }
 
 static void
-emit_vert_init(struct tgsi_to_qir *trans, struct vc4_shader_state *so)
+emit_vert_init(struct tgsi_to_qir *trans)
 {
         struct qcompile *c = trans->c;
 
@@ -346,7 +367,7 @@ emit_vert_init(struct tgsi_to_qir *trans, struct vc4_shader_state *so)
 }
 
 static void
-emit_coord_init(struct tgsi_to_qir *trans, struct vc4_shader_state *so)
+emit_coord_init(struct tgsi_to_qir *trans)
 {
         struct qcompile *c = trans->c;
 
@@ -359,16 +380,27 @@ emit_coord_init(struct tgsi_to_qir *trans, struct vc4_shader_state *so)
 }
 
 static void
-emit_frag_end(struct tgsi_to_qir *trans, struct vc4_shader_state *so)
+emit_frag_end(struct tgsi_to_qir *trans)
 {
         struct qcompile *c = trans->c;
 
         struct qreg t = qir_get_temp(c);
+
+        const struct util_format_description *format_desc =
+                util_format_description(trans->fs_key->color_format);
+
+        struct qreg swizzled_outputs[4] = {
+                trans->outputs[format_desc->swizzle[0]],
+                trans->outputs[format_desc->swizzle[1]],
+                trans->outputs[format_desc->swizzle[2]],
+                trans->outputs[format_desc->swizzle[3]],
+        };
+
         qir_emit(c, qir_inst4(QOP_PACK_COLORS, t,
-                              trans->outputs[0],
-                              trans->outputs[1],
-                              trans->outputs[2],
-                              trans->outputs[3]));
+                              swizzled_outputs[0],
+                              swizzled_outputs[1],
+                              swizzled_outputs[2],
+                              swizzled_outputs[3]));
         qir_emit(c, qir_inst(QOP_TLB_COLOR_WRITE, c->undef,
                              t, c->undef));
 }
@@ -409,7 +441,7 @@ emit_1_wc_write(struct tgsi_to_qir *trans)
 }
 
 static void
-emit_vert_end(struct tgsi_to_qir *trans, struct vc4_shader_state *so)
+emit_vert_end(struct tgsi_to_qir *trans)
 {
         emit_scaled_viewport_write(trans);
         emit_zs_write(trans);
@@ -418,7 +450,7 @@ emit_vert_end(struct tgsi_to_qir *trans, struct vc4_shader_state *so)
 }
 
 static void
-emit_coord_end(struct tgsi_to_qir *trans, struct vc4_shader_state *so)
+emit_coord_end(struct tgsi_to_qir *trans)
 {
         struct qcompile *c = trans->c;
 
@@ -431,7 +463,8 @@ emit_coord_end(struct tgsi_to_qir *trans, struct vc4_shader_state *so)
 }
 
 static struct tgsi_to_qir *
-vc4_shader_tgsi_to_qir(struct vc4_shader_state *so, enum qstage stage)
+vc4_shader_tgsi_to_qir(struct vc4_compiled_shader *shader, enum qstage stage,
+                       struct vc4_key *key)
 {
         struct tgsi_to_qir *trans = CALLOC_STRUCT(tgsi_to_qir);
         struct qcompile *c;
@@ -451,24 +484,28 @@ vc4_shader_tgsi_to_qir(struct vc4_shader_state *so, enum qstage stage)
         trans->uniform_data = calloc(sizeof(uint32_t), 1024);
         trans->uniform_contents = calloc(sizeof(enum quniform_contents), 1024);
 
+        trans->shader_state = key->shader_state;
         trans->c = c;
-        ret = tgsi_parse_init(&trans->parser, so->base.tokens);
+        ret = tgsi_parse_init(&trans->parser, trans->shader_state->base.tokens);
         assert(ret == TGSI_PARSE_OK);
 
         if (vc4_debug & VC4_DEBUG_TGSI) {
                 fprintf(stderr, "TGSI:\n");
-                tgsi_dump(so->base.tokens, 0);
+                tgsi_dump(trans->shader_state->base.tokens, 0);
         }
 
         switch (stage) {
         case QSTAGE_FRAG:
-                emit_frag_init(trans, so);
+                trans->fs_key = (struct vc4_fs_key *)key;
+                emit_frag_init(trans);
                 break;
         case QSTAGE_VERT:
-                emit_vert_init(trans, so);
+                trans->vs_key = (struct vc4_vs_key *)key;
+                emit_vert_init(trans);
                 break;
         case QSTAGE_COORD:
-                emit_coord_init(trans, so);
+                trans->vs_key = (struct vc4_vs_key *)key;
+                emit_coord_init(trans);
                 break;
         }
 
@@ -490,13 +527,13 @@ vc4_shader_tgsi_to_qir(struct vc4_shader_state *so, enum qstage stage)
 
         switch (stage) {
         case QSTAGE_FRAG:
-                emit_frag_end(trans, so);
+                emit_frag_end(trans);
                 break;
         case QSTAGE_VERT:
-                emit_vert_end(trans, so);
+                emit_vert_end(trans);
                 break;
         case QSTAGE_COORD:
-                emit_coord_end(trans, so);
+                emit_coord_end(trans);
                 break;
         }
 
@@ -520,7 +557,7 @@ vc4_shader_tgsi_to_qir(struct vc4_shader_state *so, enum qstage stage)
         return trans;
 }
 
-static struct vc4_shader_state *
+static void *
 vc4_shader_state_create(struct pipe_context *pctx,
                         const struct pipe_shader_state *cso)
 {
@@ -534,12 +571,12 @@ vc4_shader_state_create(struct pipe_context *pctx,
 }
 
 static void
-copy_uniform_state_to_shader(struct vc4_shader_state *so,
+copy_uniform_state_to_shader(struct vc4_compiled_shader *shader,
                              int shader_index,
                              struct tgsi_to_qir *trans)
 {
         int count = trans->num_uniforms;
-        struct vc4_shader_uniform_info *uinfo = &so->uniforms[shader_index];
+        struct vc4_shader_uniform_info *uinfo = &shader->uniforms[shader_index];
 
         uinfo->count = count;
         uinfo->data = malloc(count * sizeof(*uinfo->data));
@@ -550,71 +587,187 @@ copy_uniform_state_to_shader(struct vc4_shader_state *so,
                count * sizeof(*uinfo->contents));
 }
 
-static void *
-vc4_fs_state_create(struct pipe_context *pctx,
-                    const struct pipe_shader_state *cso)
+static void
+vc4_fs_compile(struct vc4_context *vc4, struct vc4_compiled_shader *shader,
+               struct vc4_fs_key *key)
 {
-        struct vc4_context *vc4 = vc4_context(pctx);
-        struct vc4_shader_state *so = vc4_shader_state_create(pctx, cso);
-        if (!so)
-                return NULL;
+        struct tgsi_to_qir *trans = vc4_shader_tgsi_to_qir(shader, QSTAGE_FRAG,
+                                                           &key->base);
+        copy_uniform_state_to_shader(shader, 0, trans);
 
-        struct tgsi_to_qir *trans = vc4_shader_tgsi_to_qir(so, QSTAGE_FRAG);
-        copy_uniform_state_to_shader(so, 0, trans);
-
-        so->bo = vc4_bo_alloc_mem(vc4->screen, trans->c->qpu_insts,
-                                  trans->c->num_qpu_insts * sizeof(uint64_t),
-                                  "fs_code");
+        shader->bo = vc4_bo_alloc_mem(vc4->screen, trans->c->qpu_insts,
+                                      trans->c->num_qpu_insts * sizeof(uint64_t),
+                                      "fs_code");
 
         qir_compile_destroy(trans->c);
         free(trans);
-
-        return so;
 }
 
-static void *
-vc4_vs_state_create(struct pipe_context *pctx,
-                    const struct pipe_shader_state *cso)
+static void
+vc4_vs_compile(struct vc4_context *vc4, struct vc4_compiled_shader *shader,
+               struct vc4_vs_key *key)
 {
-        struct vc4_context *vc4 = vc4_context(pctx);
-        struct vc4_shader_state *so = vc4_shader_state_create(pctx, cso);
-        if (!so)
-                return NULL;
+        struct tgsi_to_qir *vs_trans = vc4_shader_tgsi_to_qir(shader,
+                                                              QSTAGE_VERT,
+                                                              &key->base);
+        copy_uniform_state_to_shader(shader, 0, vs_trans);
 
-        struct tgsi_to_qir *vs_trans = vc4_shader_tgsi_to_qir(so, QSTAGE_VERT);
-        copy_uniform_state_to_shader(so, 0, vs_trans);
-
-        struct tgsi_to_qir *cs_trans = vc4_shader_tgsi_to_qir(so, QSTAGE_COORD);
-        copy_uniform_state_to_shader(so, 1, cs_trans);
+        struct tgsi_to_qir *cs_trans = vc4_shader_tgsi_to_qir(shader,
+                                                              QSTAGE_COORD,
+                                                              &key->base);
+        copy_uniform_state_to_shader(shader, 1, cs_trans);
 
         uint32_t vs_size = vs_trans->c->num_qpu_insts * sizeof(uint64_t);
         uint32_t cs_size = cs_trans->c->num_qpu_insts * sizeof(uint64_t);
-        so->coord_shader_offset = vs_size; /* XXX: alignment? */
-        so->bo = vc4_bo_alloc(vc4->screen,
-                              so->coord_shader_offset + cs_size,
-                              "vs_code");
+        shader->coord_shader_offset = vs_size; /* XXX: alignment? */
+        shader->bo = vc4_bo_alloc(vc4->screen,
+                                  shader->coord_shader_offset + cs_size,
+                                  "vs_code");
 
-        void *map = vc4_bo_map(so->bo);
+        void *map = vc4_bo_map(shader->bo);
         memcpy(map, vs_trans->c->qpu_insts, vs_size);
-        memcpy(map + so->coord_shader_offset, cs_trans->c->qpu_insts, cs_size);
+        memcpy(map + shader->coord_shader_offset,
+               cs_trans->c->qpu_insts, cs_size);
 
         qir_compile_destroy(vs_trans->c);
         qir_compile_destroy(cs_trans->c);
+}
 
-        return so;
+static void
+vc4_update_compiled_fs(struct vc4_context *vc4)
+{
+        struct vc4_fs_key local_key;
+        struct vc4_fs_key *key = &local_key;
+
+        memset(key, 0, sizeof(*key));
+        key->base.shader_state = vc4->prog.bind_fs;
+
+        if (vc4->framebuffer.cbufs[0])
+                key->color_format = vc4->framebuffer.cbufs[0]->format;
+
+        vc4->prog.fs = util_hash_table_get(vc4->fs_cache, key);
+        if (vc4->prog.fs)
+                return;
+
+        key = malloc(sizeof(*key));
+        memcpy(key, &local_key, sizeof(*key));
+
+        struct vc4_compiled_shader *shader = CALLOC_STRUCT(vc4_compiled_shader);
+        vc4_fs_compile(vc4, shader, key);
+        util_hash_table_set(vc4->fs_cache, key, shader);
+
+        vc4->prog.fs = shader;
+}
+
+static void
+vc4_update_compiled_vs(struct vc4_context *vc4)
+{
+        struct vc4_vs_key local_key;
+        struct vc4_vs_key *key = &local_key;
+
+        memset(key, 0, sizeof(*key));
+        key->base.shader_state = vc4->prog.bind_vs;
+
+        vc4->prog.vs = util_hash_table_get(vc4->vs_cache, key);
+        if (vc4->prog.vs)
+                return;
+
+        key = malloc(sizeof(*key));
+        memcpy(key, &local_key, sizeof(*key));
+
+        struct vc4_compiled_shader *shader = CALLOC_STRUCT(vc4_compiled_shader);
+        vc4_vs_compile(vc4, shader, key);
+        util_hash_table_set(vc4->vs_cache, key, shader);
+
+        vc4->prog.vs = shader;
+}
+
+void
+vc4_update_compiled_shaders(struct vc4_context *vc4)
+{
+        vc4_update_compiled_fs(vc4);
+        vc4_update_compiled_vs(vc4);
+}
+
+static unsigned
+fs_cache_hash(void *key)
+{
+        return util_hash_crc32(key, sizeof(struct vc4_fs_key));
+}
+
+static unsigned
+vs_cache_hash(void *key)
+{
+        return util_hash_crc32(key, sizeof(struct vc4_vs_key));
+}
+
+static int
+fs_cache_compare(void *key1, void *key2)
+{
+        return memcmp(key1, key2, sizeof(struct vc4_fs_key));
+}
+
+static int
+vs_cache_compare(void *key1, void *key2)
+{
+        return memcmp(key1, key2, sizeof(struct vc4_vs_key));
+}
+
+struct delete_state {
+        struct vc4_context *vc4;
+        struct vc4_shader_state *shader_state;
+};
+
+static enum pipe_error
+fs_delete_from_cache(void *in_key, void *in_value, void *data)
+{
+        struct delete_state *del = data;
+        struct vc4_fs_key *key = in_key;
+        struct vc4_compiled_shader *shader = in_value;
+
+        if (key->base.shader_state == data) {
+                util_hash_table_remove(del->vc4->fs_cache, key);
+                vc4_bo_unreference(&shader->bo);
+                free(shader);
+        }
+
+        return 0;
+}
+
+static enum pipe_error
+vs_delete_from_cache(void *in_key, void *in_value, void *data)
+{
+        struct delete_state *del = data;
+        struct vc4_vs_key *key = in_key;
+        struct vc4_compiled_shader *shader = in_value;
+
+        if (key->base.shader_state == data) {
+                util_hash_table_remove(del->vc4->vs_cache, key);
+                vc4_bo_unreference(&shader->bo);
+                free(shader);
+        }
+
+        return 0;
 }
 
 static void
 vc4_shader_state_delete(struct pipe_context *pctx, void *hwcso)
 {
-        struct pipe_shader_state *so = hwcso;
+        struct vc4_context *vc4 = vc4_context(pctx);
+        struct vc4_shader_state *so = hwcso;
+        struct delete_state del;
 
-        free((void *)so->tokens);
+        del.vc4 = vc4;
+        del.shader_state = so;
+        util_hash_table_foreach(vc4->fs_cache, fs_delete_from_cache, &del);
+        util_hash_table_foreach(vc4->vs_cache, vs_delete_from_cache, &del);
+
+        free((void *)so->base.tokens);
         free(so);
 }
 
 void
-vc4_get_uniform_bo(struct vc4_context *vc4, struct vc4_shader_state *shader,
+vc4_get_uniform_bo(struct vc4_context *vc4, struct vc4_compiled_shader *shader,
                    struct vc4_constbuf_stateobj *cb,
                    int shader_index, struct vc4_bo **out_bo,
                    uint32_t *out_offset)
@@ -653,7 +806,7 @@ static void
 vc4_fp_state_bind(struct pipe_context *pctx, void *hwcso)
 {
         struct vc4_context *vc4 = vc4_context(pctx);
-        vc4->prog.fs = hwcso;
+        vc4->prog.bind_fs = hwcso;
         vc4->prog.dirty |= VC4_SHADER_DIRTY_FP;
         vc4->dirty |= VC4_DIRTY_PROG;
 }
@@ -662,7 +815,7 @@ static void
 vc4_vp_state_bind(struct pipe_context *pctx, void *hwcso)
 {
         struct vc4_context *vc4 = vc4_context(pctx);
-        vc4->prog.vs = hwcso;
+        vc4->prog.bind_vs = hwcso;
         vc4->prog.dirty |= VC4_SHADER_DIRTY_VP;
         vc4->dirty |= VC4_DIRTY_PROG;
 }
@@ -670,12 +823,17 @@ vc4_vp_state_bind(struct pipe_context *pctx, void *hwcso)
 void
 vc4_program_init(struct pipe_context *pctx)
 {
-        pctx->create_vs_state = vc4_vs_state_create;
+        struct vc4_context *vc4 = vc4_context(pctx);
+
+        pctx->create_vs_state = vc4_shader_state_create;
         pctx->delete_vs_state = vc4_shader_state_delete;
 
-        pctx->create_fs_state = vc4_fs_state_create;
+        pctx->create_fs_state = vc4_shader_state_create;
         pctx->delete_fs_state = vc4_shader_state_delete;
 
         pctx->bind_fs_state = vc4_fp_state_bind;
         pctx->bind_vs_state = vc4_vp_state_bind;
+
+        vc4->fs_cache = util_hash_table_create(fs_cache_hash, fs_cache_compare);
+        vc4->vs_cache = util_hash_table_create(vs_cache_hash, vs_cache_compare);
 }

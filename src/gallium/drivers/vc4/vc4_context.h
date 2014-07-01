@@ -72,6 +72,9 @@ struct vc4_shader_uniform_info {
 
 struct vc4_shader_state {
         struct pipe_shader_state base;
+};
+
+struct vc4_compiled_shader {
         struct vc4_bo *bo;
 
         struct vc4_shader_uniform_info uniforms[2];
@@ -80,7 +83,8 @@ struct vc4_shader_state {
 };
 
 struct vc4_program_stateobj {
-        struct vc4_shader_state *vs, *fs;
+        struct vc4_shader_state *bind_vs, *bind_fs;
+        struct vc4_compiled_shader *vs, *fs;
         uint32_t dirty;
         uint8_t num_exports;
         /* Indexed by semantic name or TGSI_SEMANTIC_COUNT + semantic index
@@ -138,6 +142,8 @@ struct vc4_context {
 
         struct primconvert_context *primconvert;
 
+        struct util_hash_table *fs_cache, *vs_cache;
+
         /** @{ Current pipeline state objects */
         struct pipe_scissor_state scissor;
         struct pipe_blend_state *blend;
@@ -188,7 +194,7 @@ void vc4_simulator_flush(struct vc4_context *vc4,
 void *vc4_simulator_alloc(struct vc4_screen *screen, uint32_t size);
 
 void vc4_get_uniform_bo(struct vc4_context *vc4,
-                        struct vc4_shader_state *shader,
+                        struct vc4_compiled_shader *shader,
                         struct vc4_constbuf_stateobj *cb,
                         int shader_index, struct vc4_bo **out_bo,
                         uint32_t *out_offset);
@@ -196,5 +202,6 @@ void vc4_get_uniform_bo(struct vc4_context *vc4,
 void vc4_flush(struct pipe_context *pctx);
 void vc4_emit_state(struct pipe_context *pctx);
 void vc4_generate_code(struct qcompile *c);
+void vc4_update_compiled_shaders(struct vc4_context *vc4);
 
 #endif /* VC4_CONTEXT_H */

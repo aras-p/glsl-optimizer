@@ -98,6 +98,8 @@ vc4_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
                                                "tile_state");
         }
 
+        vc4_update_compiled_shaders(vc4);
+
         vc4->needs_flush = true;
 
         //   Tile state data is 48 bytes per tile, I think it can be thrown away
