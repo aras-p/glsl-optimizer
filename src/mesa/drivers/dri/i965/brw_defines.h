@@ -1595,10 +1595,14 @@ enum brw_message_target {
 # define GEN7_URB_ENTRY_SIZE_SHIFT                      16
 # define GEN7_URB_STARTING_ADDRESS_SHIFT                25
 
-/* "GS URB Entry Allocation Size" is a U9-1 field, so the maximum gs_size
+/* Gen7 "GS URB Entry Allocation Size" is a U9-1 field, so the maximum gs_size
  * is 2^9, or 512.  It's counted in multiples of 64 bytes.
  */
-#define GEN7_MAX_GS_URB_ENTRY_SIZE_BYTES		(512*64)
+#define GEN7_MAX_GS_URB_ENTRY_SIZE_BYTES                (512*64)
+/* Gen6 "GS URB Entry Allocation Size" is defined as a number of 1024-bit
+ * (128 bytes) URB rows and the maximum allowed value is 5 rows.
+ */
+#define GEN6_MAX_GS_URB_ENTRY_SIZE_BYTES                (5*128)
 
 #define _3DSTATE_PUSH_CONSTANT_ALLOC_VS         0x7912 /* GEN7+ */
 #define _3DSTATE_PUSH_CONSTANT_ALLOC_GS         0x7915 /* GEN7+ */
