@@ -217,6 +217,7 @@ _mesa_meta_compile_and_link_program(struct gl_context *ctx,
                                                     fs_source);
 
    *program = _mesa_CreateProgram();
+   _mesa_ObjectLabel(GL_PROGRAM, *program, -1, name);
    _mesa_AttachShader(*program, fs);
    _mesa_DeleteShader(fs);
    _mesa_AttachShader(*program, vs);
@@ -224,7 +225,6 @@ _mesa_meta_compile_and_link_program(struct gl_context *ctx,
    _mesa_BindAttribLocation(*program, 0, "position");
    _mesa_BindAttribLocation(*program, 1, "texcoords");
    _mesa_meta_link_program_with_debug(ctx, *program);
-   _mesa_ObjectLabel(GL_PROGRAM, *program, -1, name);
 
    _mesa_UseProgram(*program);
 }
