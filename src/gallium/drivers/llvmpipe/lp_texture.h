@@ -217,12 +217,6 @@ ubyte *
 llvmpipe_get_texture_image_address(struct llvmpipe_resource *lpr,
                                    unsigned face_slice, unsigned level);
 
-ubyte *
-llvmpipe_get_texture_tile_linear(struct llvmpipe_resource *lpr,
-                                 unsigned face_slice, unsigned level,
-                                 enum lp_texture_usage usage,
-                                 unsigned x, unsigned y);
-
 
 extern void
 llvmpipe_print_resources(void);

@@ -35,22 +35,6 @@
 #include "lp_query.h"
 
 
-/**
- * Adjust x, y, width, height to lie on tile bounds.
- */
-static void
-adjust_to_tile_bounds(unsigned x, unsigned y, unsigned width, unsigned height,
-                      unsigned *x_tile, unsigned *y_tile,
-                      unsigned *w_tile, unsigned *h_tile)
-{
-   *x_tile = x & ~(TILE_SIZE - 1);
-   *y_tile = y & ~(TILE_SIZE - 1);
-   *w_tile = ((x + width + TILE_SIZE - 1) & ~(TILE_SIZE - 1)) - *x_tile;
-   *h_tile = ((y + height + TILE_SIZE - 1) & ~(TILE_SIZE - 1)) - *y_tile;
-}
-
-
-
 static void
 lp_resource_copy(struct pipe_context *pipe,
                  struct pipe_resource *dst, unsigned dst_level,
@@ -64,7 +48,6 @@ lp_resource_copy(struct pipe_context *pipe,
    unsigned width = src_box->width;
    unsigned height = src_box->height;
    unsigned depth = src_box->depth;
-   unsigned z;
 
    llvmpipe_flush_resource(pipe,
                            dst, dst_level,
@@ -94,61 +77,16 @@ lp_resource_copy(struct pipe_context *pipe,
           src_box->width, src_box->height, src_box->depth);
    */
 
-   for (z = 0; z < src_box->depth; z++){
+   /* make sure display target resources (which cannot have levels/layers) are mapped */
+   if (src_tex->dt)
+      (void) llvmpipe_resource_map(src, src_level, 0, LP_TEX_USAGE_READ);
+   if (dst_tex->dt)
+      /*
+       * Could set this to WRITE_ALL if complete dst is covered but it gets
+       * ignored anyway.
+       */
+      (void) llvmpipe_resource_map(dst, dst_level, 0, LP_TEX_USAGE_READ_WRITE);
 
-      /* set src tiles to linear layout */
-      {
-         unsigned tx, ty, tw, th;
-         unsigned x, y;
-
-         adjust_to_tile_bounds(src_box->x, src_box->y, width, height,
-                               &tx, &ty, &tw, &th);
-
-         for (y = 0; y < th; y += TILE_SIZE) {
-            for (x = 0; x < tw; x += TILE_SIZE) {
-               (void) llvmpipe_get_texture_tile_linear(src_tex,
-                                                       src_box->z + z, src_level,
-                                                       LP_TEX_USAGE_READ,
-                                                       tx + x, ty + y);
-            }
-         }
-      }
-
-      /* set dst tiles to linear layout */
-      {
-         unsigned tx, ty, tw, th;
-         unsigned x, y;
-         enum lp_texture_usage usage;
-
-         adjust_to_tile_bounds(dstx, dsty, width, height, &tx, &ty, &tw, &th);
-
-         for (y = 0; y < th; y += TILE_SIZE) {
-            boolean contained_y = ty + y >= dsty &&
-                                  ty + y + TILE_SIZE <= dsty + height ?
-                                  TRUE : FALSE;
-
-            for (x = 0; x < tw; x += TILE_SIZE) {
-               boolean contained_x = tx + x >= dstx &&
-                                     tx + x + TILE_SIZE <= dstx + width ?
-                                     TRUE : FALSE;
-
-               /*
-                * Set the usage mode to WRITE_ALL for the tiles which are
-                * completely contained by the dest rectangle.
-                */
-               if (contained_y && contained_x)
-                  usage = LP_TEX_USAGE_WRITE_ALL;
-               else
-                  usage = LP_TEX_USAGE_READ_WRITE;
-
-               (void) llvmpipe_get_texture_tile_linear(dst_tex,
-                                                       dstz + z, dst_level,
-                                                       usage,
-                                                       tx + x, ty + y);
-            }
-         }
-      }
-   }
 
    /* copy */
    {
@@ -171,6 +109,12 @@ lp_resource_copy(struct pipe_context *pipe,
                        src_box->x, src_box->y, 0);
       }
    }
+
+   if (src_tex->dt)
+      llvmpipe_resource_unmap(src, 0, 0);
+   if (dst_tex->dt)
+      llvmpipe_resource_unmap(dst, 0, 0);
+
 }
 
 

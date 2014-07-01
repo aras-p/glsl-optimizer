@@ -735,6 +735,8 @@ llvmpipe_get_texture_image_address(struct llvmpipe_resource *lpr,
 {
    unsigned offset;
 
+   assert(llvmpipe_resource_is_texture(&lpr->base));
+
    offset = lpr->mip_offsets[level];
 
    if (face_slice > 0)
@@ -784,36 +786,6 @@ alloc_image_data(struct llvmpipe_resource *lpr)
          memset(lpr->tex_data, 0, offset);
       }
    }
-}
-
-
-/**
- * Get pointer to a linear image (not the tile!) at tile (x,y).
- * \return pointer to start of image/face (not the tile)
- */
-ubyte *
-llvmpipe_get_texture_tile_linear(struct llvmpipe_resource *lpr,
-                                 unsigned face_slice, unsigned level,
-                                 enum lp_texture_usage usage,
-                                 unsigned x, unsigned y)
-{
-   uint8_t *linear_image;
-
-   assert(llvmpipe_resource_is_texture(&lpr->base));
-   assert(x % TILE_SIZE == 0);
-   assert(y % TILE_SIZE == 0);
-
-   if (!lpr->tex_data) {
-      /* allocate memory for the linear image now */
-      /* XXX should probably not do that here? */
-      alloc_image_data(lpr);
-   }
-   assert(lpr->tex_data);
-
-   /* compute address of the slice/face of the image that contains the tile */
-   linear_image = llvmpipe_get_texture_image_address(lpr, face_slice, level);
-
-   return linear_image;
 }
 
 
