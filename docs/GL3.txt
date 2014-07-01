@@ -104,12 +104,12 @@ GL 4.0:
   - Dynamically uniform sampler array indices          started (Chris)
   - Dynamically uniform UBO array indices              started (Chris)
   - Implicit signed -> unsigned conversions            DONE
-  - Fused multiply-add                                 DONE
-  - Packing/bitfield/conversion functions              DONE
-  - Enhanced textureGather                             DONE
-  - Geometry shader instancing                         DONE
+  - Fused multiply-add                                 DONE (i965, nvc0)
+  - Packing/bitfield/conversion functions              DONE (i965, nvc0)
+  - Enhanced textureGather                             DONE (i965, nvc0, radeonsi)
+  - Geometry shader instancing                         DONE (i965, nvc0)
   - Geometry shader multiple streams                   DONE (i965, nvc0)
-  - Enhanced per-sample shading                        DONE
+  - Enhanced per-sample shading                        DONE (i965)
   - Interpolation functions                            started (Chris)
   - New overload resolution rules                      DONE
   GL_ARB_gpu_shader_fp64                               started (Dave)
