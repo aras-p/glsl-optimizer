@@ -28,6 +28,7 @@
  */
 
 #include "brw_vec4_gs_visitor.h"
+#include "gen6_gs_visitor.h"
 
 const unsigned MAX_GS_INPUT_VERTICES = 6;
 
@@ -634,19 +635,21 @@ brw_gs_emit(struct brw_context *brw,
       brw_dump_ir(brw, "geometry", prog, &shader->base, NULL);
    }
 
-   /* Compile the geometry shader in DUAL_OBJECT dispatch mode, if we can do
-    * so without spilling. If the GS invocations count > 1, then we can't use
-    * dual object mode.
-    */
-   if (c->prog_data.invocations <= 1 &&
-       likely(!(INTEL_DEBUG & DEBUG_NO_DUAL_OBJECT_GS))) {
-      c->prog_data.dispatch_mode = GEN7_GS_DISPATCH_MODE_DUAL_OBJECT;
+   if (brw->gen >= 7) {
+      /* Compile the geometry shader in DUAL_OBJECT dispatch mode, if we can do
+       * so without spilling. If the GS invocations count > 1, then we can't use
+       * dual object mode.
+       */
+      if (c->prog_data.invocations <= 1 &&
+          likely(!(INTEL_DEBUG & DEBUG_NO_DUAL_OBJECT_GS))) {
+         c->prog_data.dispatch_mode = GEN7_GS_DISPATCH_MODE_DUAL_OBJECT;
 
-      vec4_gs_visitor v(brw, c, prog, mem_ctx, true /* no_spills */);
-      if (v.run()) {
-         return generate_assembly(brw, prog, &c->gp->program.Base,
-                                  &c->prog_data.base, mem_ctx, v.cfg,
-                                  final_assembly_size);
+         vec4_gs_visitor v(brw, c, prog, mem_ctx, true /* no_spills */);
+         if (v.run()) {
+            return generate_assembly(brw, prog, &c->gp->program.Base,
+                                     &c->prog_data.base, mem_ctx, v.cfg,
+                                     final_assembly_size);
+         }
       }
    }
 
@@ -673,20 +676,30 @@ brw_gs_emit(struct brw_context *brw,
     * mode is more performant when invocations > 1. Gen6 only supports
     * SINGLE mode.
     */
-   if (c->prog_data.invocations <= 1)
+   if (c->prog_data.invocations <= 1 || brw->gen < 7)
       c->prog_data.dispatch_mode = GEN7_GS_DISPATCH_MODE_SINGLE;
    else
       c->prog_data.dispatch_mode = GEN7_GS_DISPATCH_MODE_DUAL_INSTANCE;
 
-   vec4_gs_visitor v(brw, c, prog, mem_ctx, false /* no_spills */);
-   if (!v.run()) {
+   vec4_gs_visitor *gs = NULL;
+   const unsigned *ret = NULL;
+
+   if (brw->gen >= 7)
+      gs = new vec4_gs_visitor(brw, c, prog, mem_ctx, false /* no_spills */);
+   else
+      gs = new gen6_gs_visitor(brw, c, prog, mem_ctx, false /* no_spills */);
+
+   if (!gs->run()) {
       prog->LinkStatus = false;
-      ralloc_strcat(&prog->InfoLog, v.fail_msg);
-      return NULL;
+      ralloc_strcat(&prog->InfoLog, gs->fail_msg);
+   } else {
+      ret = generate_assembly(brw, prog, &c->gp->program.Base,
+                              &c->prog_data.base, mem_ctx, gs->cfg,
+                              final_assembly_size);
    }
 
-   return generate_assembly(brw, prog, &c->gp->program.Base, &c->prog_data.base,
-                            mem_ctx, v.cfg, final_assembly_size);
+   delete gs;
+   return ret;
 }
 
 
