@@ -31,58 +31,142 @@
 #include "intel_batchbuffer.h"
 
 static void
+upload_gs_state_for_tf(struct brw_context *brw)
+{
+   BEGIN_BATCH(7);
+   OUT_BATCH(_3DSTATE_GS << 16 | (7 - 2));
+   OUT_BATCH(brw->ff_gs.prog_offset);
+   OUT_BATCH(GEN6_GS_SPF_MODE | GEN6_GS_VECTOR_MASK_ENABLE);
+   OUT_BATCH(0); /* no scratch space */
+   OUT_BATCH((2 << GEN6_GS_DISPATCH_START_GRF_SHIFT) |
+             (brw->ff_gs.prog_data->urb_read_length << GEN6_GS_URB_READ_LENGTH_SHIFT));
+   OUT_BATCH(((brw->max_gs_threads - 1) << GEN6_GS_MAX_THREADS_SHIFT) |
+             GEN6_GS_STATISTICS_ENABLE |
+             GEN6_GS_SO_STATISTICS_ENABLE |
+             GEN6_GS_RENDERING_ENABLE);
+   OUT_BATCH(GEN6_GS_SVBI_PAYLOAD_ENABLE |
+             GEN6_GS_SVBI_POSTINCREMENT_ENABLE |
+             (brw->ff_gs.prog_data->svbi_postincrement_value <<
+              GEN6_GS_SVBI_POSTINCREMENT_VALUE_SHIFT) |
+             GEN6_GS_ENABLE);
+   ADVANCE_BATCH();
+}
+
+static void
 upload_gs_state(struct brw_context *brw)
 {
-   /* Disable all the constant buffers. */
-   BEGIN_BATCH(5);
-   OUT_BATCH(_3DSTATE_CONSTANT_GS << 16 | (5 - 2));
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   ADVANCE_BATCH();
+   /* BRW_NEW_GEOMETRY_PROGRAM */
+   bool active = brw->geometry_program;
+   /* CACHE_NEW_GS_PROG */
+   const struct brw_vec4_prog_data *prog_data = &brw->gs.prog_data->base;
+   const struct brw_stage_state *stage_state = &brw->gs.base;
 
-   if (brw->ff_gs.prog_active) {
-      BEGIN_BATCH(7);
-      OUT_BATCH(_3DSTATE_GS << 16 | (7 - 2));
-      OUT_BATCH(brw->ff_gs.prog_offset);
-      OUT_BATCH(GEN6_GS_SPF_MODE | GEN6_GS_VECTOR_MASK_ENABLE);
-      OUT_BATCH(0); /* no scratch space */
-      OUT_BATCH((2 << GEN6_GS_DISPATCH_START_GRF_SHIFT) |
-	        (brw->ff_gs.prog_data->urb_read_length << GEN6_GS_URB_READ_LENGTH_SHIFT));
-      OUT_BATCH(((brw->max_gs_threads - 1) << GEN6_GS_MAX_THREADS_SHIFT) |
-	        GEN6_GS_STATISTICS_ENABLE |
-		GEN6_GS_SO_STATISTICS_ENABLE |
-		GEN6_GS_RENDERING_ENABLE);
-      OUT_BATCH(GEN6_GS_SVBI_PAYLOAD_ENABLE |
-                GEN6_GS_SVBI_POSTINCREMENT_ENABLE |
-                (brw->ff_gs.prog_data->svbi_postincrement_value <<
-                 GEN6_GS_SVBI_POSTINCREMENT_VALUE_SHIFT) |
-                GEN6_GS_ENABLE);
-      ADVANCE_BATCH();
-   } else {
-      BEGIN_BATCH(7);
-      OUT_BATCH(_3DSTATE_GS << 16 | (7 - 2));
-      OUT_BATCH(0); /* prog_bo */
-      OUT_BATCH((0 << GEN6_GS_SAMPLER_COUNT_SHIFT) |
-		(0 << GEN6_GS_BINDING_TABLE_ENTRY_COUNT_SHIFT));
-      OUT_BATCH(0); /* scratch space base offset */
-      OUT_BATCH((1 << GEN6_GS_DISPATCH_START_GRF_SHIFT) |
-		(0 << GEN6_GS_URB_READ_LENGTH_SHIFT) |
-		(0 << GEN6_GS_URB_ENTRY_READ_OFFSET_SHIFT));
-      OUT_BATCH((0 << GEN6_GS_MAX_THREADS_SHIFT) |
-		GEN6_GS_STATISTICS_ENABLE |
-		GEN6_GS_RENDERING_ENABLE);
+   if (active) {
+      /* FIXME: enable constant buffers */
+      BEGIN_BATCH(5);
+      OUT_BATCH(_3DSTATE_CONSTANT_GS << 16 | (5 - 2));
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      OUT_BATCH(0);
       OUT_BATCH(0);
       ADVANCE_BATCH();
+
+      BEGIN_BATCH(7);
+      OUT_BATCH(_3DSTATE_GS << 16 | (7 - 2));
+      OUT_BATCH(stage_state->prog_offset);
+
+      /* GEN6_GS_SPF_MODE and GEN6_GS_VECTOR_MASK_ENABLE are enabled as it
+       * was previously done for gen6.
+       *
+       * TODO: test with both disabled to see if the HW is behaving
+       * as expected, like in gen7.
+       */
+      OUT_BATCH(GEN6_GS_SPF_MODE | GEN6_GS_VECTOR_MASK_ENABLE |
+                ((ALIGN(stage_state->sampler_count, 4)/4) <<
+                 GEN6_GS_SAMPLER_COUNT_SHIFT) |
+                ((prog_data->base.binding_table.size_bytes / 4) <<
+                 GEN6_GS_BINDING_TABLE_ENTRY_COUNT_SHIFT));
+
+      if (prog_data->base.total_scratch) {
+         OUT_RELOC(stage_state->scratch_bo,
+                   I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
+                   ffs(prog_data->base.total_scratch) - 11);
+      } else {
+         OUT_BATCH(0); /* no scratch space */
+      }
+
+      OUT_BATCH((prog_data->urb_read_length <<
+                 GEN6_GS_URB_READ_LENGTH_SHIFT) |
+                (0 << GEN6_GS_URB_ENTRY_READ_OFFSET_SHIFT) |
+                (prog_data->base.dispatch_grf_start_reg <<
+                 GEN6_GS_DISPATCH_START_GRF_SHIFT));
+
+      OUT_BATCH(((brw->max_gs_threads - 1) << GEN6_GS_MAX_THREADS_SHIFT) |
+                GEN6_GS_STATISTICS_ENABLE |
+                GEN6_GS_SO_STATISTICS_ENABLE |
+                GEN6_GS_RENDERING_ENABLE);
+
+      /* FIXME: Enable SVBI payload only when TF is enable in SNB for
+       * user-provided GS.
+       */
+      if (0) {
+         /* GEN6_GS_REORDER is equivalent to GEN7_GS_REORDER_TRAILING
+          * in gen7. SNB and IVB specs are the same regarding the reordering of
+          * TRISTRIP/TRISTRIP_REV vertices and triangle orientation, so we do
+          * the same thing in both generations. For more details, see the
+          * comment in gen7_gs_state.c
+          */
+         OUT_BATCH(GEN6_GS_REORDER |
+                   GEN6_GS_SVBI_PAYLOAD_ENABLE |
+                   GEN6_GS_SVBI_POSTINCREMENT_ENABLE |
+                   /* FIXME: prog_data->svbi_postincrement_value instead of 0 */
+                   (0 << GEN6_GS_SVBI_POSTINCREMENT_VALUE_SHIFT) |
+                   GEN6_GS_ENABLE);
+      } else {
+         OUT_BATCH(GEN6_GS_REORDER | GEN6_GS_ENABLE);
+      }
+      ADVANCE_BATCH();
+   } else {
+      /* Disable all the constant buffers. */
+      BEGIN_BATCH(5);
+      OUT_BATCH(_3DSTATE_CONSTANT_GS << 16 | (5 - 2));
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      ADVANCE_BATCH();
+
+      if (brw->ff_gs.prog_active) {
+         /* In gen6, transform feedback for the VS stage is done with an ad-hoc GS
+          * program. This function provides the needed 3DSTATE_GS for this.
+          */
+         upload_gs_state_for_tf(brw);
+      } else {
+         /* No GS function required */
+         BEGIN_BATCH(7);
+         OUT_BATCH(_3DSTATE_GS << 16 | (7 - 2));
+         OUT_BATCH(0); /* prog_bo */
+         OUT_BATCH((0 << GEN6_GS_SAMPLER_COUNT_SHIFT) |
+		   (0 << GEN6_GS_BINDING_TABLE_ENTRY_COUNT_SHIFT));
+         OUT_BATCH(0); /* scratch space base offset */
+         OUT_BATCH((1 << GEN6_GS_DISPATCH_START_GRF_SHIFT) |
+		   (0 << GEN6_GS_URB_READ_LENGTH_SHIFT) |
+		   (0 << GEN6_GS_URB_ENTRY_READ_OFFSET_SHIFT));
+         OUT_BATCH((0 << GEN6_GS_MAX_THREADS_SHIFT) |
+		   GEN6_GS_STATISTICS_ENABLE |
+		   GEN6_GS_RENDERING_ENABLE);
+         OUT_BATCH(0);
+         ADVANCE_BATCH();
+      }
    }
+   brw->gs.enabled = active;
 }
 
 const struct brw_tracked_state gen6_gs_state = {
    .dirty = {
       .mesa  = _NEW_TRANSFORM,
       .brw   = BRW_NEW_CONTEXT | BRW_NEW_PUSH_CONSTANT_ALLOCATION,
-      .cache = CACHE_NEW_FF_GS_PROG
+      .cache = (CACHE_NEW_GS_PROG | CACHE_NEW_FF_GS_PROG)
    },
    .emit = upload_gs_state,
 };
