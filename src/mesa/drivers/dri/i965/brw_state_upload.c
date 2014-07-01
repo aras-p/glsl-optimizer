@@ -108,7 +108,7 @@ static const struct brw_tracked_state *gen4_atoms[] =
 static const struct brw_tracked_state *gen6_atoms[] =
 {
    &brw_vs_prog, /* must do before state base address */
-   &brw_ff_gs_prog, /* must do before state base address */
+   &brw_gs_prog, /* must do before state base address */
    &brw_wm_prog, /* must do before state base address */
 
    &gen6_clip_vp,

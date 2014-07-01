@@ -31,6 +31,7 @@
 #include "brw_context.h"
 #include "brw_vec4_gs_visitor.h"
 #include "brw_state.h"
+#include "brw_gs.h"
 
 
 static bool
@@ -272,6 +273,12 @@ brw_upload_gs_prog(struct brw_context *brw)
       (struct brw_geometry_program *) brw->geometry_program;
 
    if (gp == NULL) {
+      if (brw->gen == 6) {
+         if (brw->state.dirty.brw & BRW_NEW_TRANSFORM_FEEDBACK)
+            gen6_brw_upload_ff_gs_prog(brw);
+         return;
+      }
+
       /* No geometry shader.  Vertex data just passes straight through. */
       if (brw->state.dirty.brw & BRW_NEW_VUE_MAP_VS) {
          brw->vue_map_geom_out = brw->vue_map_vs;
@@ -327,7 +334,9 @@ brw_upload_gs_prog(struct brw_context *brw)
 const struct brw_tracked_state brw_gs_prog = {
    .dirty = {
       .mesa  = (_NEW_LIGHT | _NEW_BUFFERS | _NEW_TEXTURE),
-      .brw   = BRW_NEW_GEOMETRY_PROGRAM | BRW_NEW_VUE_MAP_VS,
+      .brw   = (BRW_NEW_GEOMETRY_PROGRAM |
+                BRW_NEW_VUE_MAP_VS |
+                BRW_NEW_TRANSFORM_FEEDBACK),
    },
    .emit = brw_upload_gs_prog
 };

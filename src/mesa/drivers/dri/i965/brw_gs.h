@@ -110,5 +110,6 @@ void brw_ff_gs_lines(struct brw_ff_gs_compile *c);
 void gen6_sol_program(struct brw_ff_gs_compile *c,
                       struct brw_ff_gs_prog_key *key,
                       unsigned num_verts, bool check_edge_flag);
+void gen6_brw_upload_ff_gs_prog(struct brw_context *brw);
 
 #endif
