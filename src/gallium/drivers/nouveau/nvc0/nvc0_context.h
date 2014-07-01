@@ -154,6 +154,8 @@ struct nvc0_context {
 
    struct nvc0_constbuf constbuf[6][NVC0_MAX_PIPE_CONSTBUFS];
    uint16_t constbuf_dirty[6];
+   uint16_t constbuf_valid[6];
+   boolean cb_dirty;
 
    struct pipe_vertex_buffer vtxbuf[PIPE_MAX_ATTRIBS];
    unsigned num_vtxbufs;

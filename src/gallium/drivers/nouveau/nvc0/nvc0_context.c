@@ -60,7 +60,7 @@ static void
 nvc0_memory_barrier(struct pipe_context *pipe, unsigned flags)
 {
    struct nvc0_context *nvc0 = nvc0_context(pipe);
-   int i;
+   int i, s;
 
    if (flags & PIPE_BARRIER_MAPPED_BUFFER) {
       for (i = 0; i < nvc0->num_vtxbufs; ++i) {
@@ -73,6 +73,26 @@ nvc0_memory_barrier(struct pipe_context *pipe, unsigned flags)
       if (nvc0->idxbuf.buffer &&
           nvc0->idxbuf.buffer->flags & PIPE_RESOURCE_FLAG_MAP_PERSISTENT)
          nvc0->base.vbo_dirty = TRUE;
+
+      for (s = 0; s < 5 && !nvc0->cb_dirty; ++s) {
+         uint32_t valid = nvc0->constbuf_valid[s];
+
+         while (valid && !nvc0->cb_dirty) {
+            const unsigned i = ffs(valid) - 1;
+            struct pipe_resource *res;
+
+            valid &= ~(1 << i);
+            if (nvc0->constbuf[s][i].user)
+               continue;
+
+            res = nvc0->constbuf[s][i].u.buf;
+            if (!res)
+               continue;
+
+            if (res->flags & PIPE_RESOURCE_FLAG_MAP_PERSISTENT)
+               nvc0->cb_dirty = TRUE;
+         }
+      }
    }
 }
 

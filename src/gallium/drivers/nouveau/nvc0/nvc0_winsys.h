@@ -80,8 +80,9 @@ NVC0_FIFO_PKHDR_NI(int subc, int mthd, unsigned size)
 }
 
 static INLINE uint32_t
-NVC0_FIFO_PKHDR_IL(int subc, int mthd, uint8_t data)
+NVC0_FIFO_PKHDR_IL(int subc, int mthd, uint16_t data)
 {
+   assert(data < 0x2000);
    return 0x80000000 | (data << 16) | (subc << 13) | (mthd >> 2);
 }
 
@@ -133,7 +134,7 @@ BEGIN_1IC0(struct nouveau_pushbuf *push, int subc, int mthd, unsigned size)
 }
 
 static INLINE void
-IMMED_NVC0(struct nouveau_pushbuf *push, int subc, int mthd, uint8_t data)
+IMMED_NVC0(struct nouveau_pushbuf *push, int subc, int mthd, uint16_t data)
 {
 #ifndef NVC0_PUSH_EXPLICIT_SPACE_CHECKING
    PUSH_SPACE(push, 1);

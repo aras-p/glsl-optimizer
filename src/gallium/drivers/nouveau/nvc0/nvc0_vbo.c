@@ -799,7 +799,7 @@ nvc0_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 {
    struct nvc0_context *nvc0 = nvc0_context(pipe);
    struct nouveau_pushbuf *push = nvc0->base.pushbuf;
-   int i;
+   int i, s;
 
    /* NOTE: caller must ensure that (min_index + index_bias) is >= 0 */
    nvc0->vb_elt_first = info->min_index + info->index_bias;
@@ -831,6 +831,31 @@ nvc0_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    nvc0_state_validate(nvc0, ~0, 8);
 
    push->kick_notify = nvc0_draw_vbo_kick_notify;
+
+   for (s = 0; s < 5 && !nvc0->cb_dirty; ++s) {
+      uint32_t valid = nvc0->constbuf_valid[s];
+
+      while (valid && !nvc0->cb_dirty) {
+         const unsigned i = ffs(valid) - 1;
+         struct pipe_resource *res;
+
+         valid &= ~(1 << i);
+         if (nvc0->constbuf[s][i].user)
+            continue;
+
+         res = nvc0->constbuf[s][i].u.buf;
+         if (!res)
+            continue;
+
+         if (res->flags & PIPE_RESOURCE_FLAG_MAP_COHERENT)
+            nvc0->cb_dirty = TRUE;
+      }
+   }
+
+   if (nvc0->cb_dirty) {
+      IMMED_NVC0(push, NVC0_3D(MEM_BARRIER), 0x1011);
+      nvc0->cb_dirty = FALSE;
+   }
 
    if (nvc0->state.vbo_mode) {
       nvc0_push_vbo(nvc0, info);
