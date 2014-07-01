@@ -40,7 +40,6 @@
 #ifndef DRI_INTERFACE_H
 #define DRI_INTERFACE_H
 
-#include <stdbool.h>
 /* For archs with no drm.h */
 #if defined(__APPLE__) || defined(__CYGWIN__) || defined(__GNU__)
 #ifndef __NOT_HAVE_DRM_H
@@ -1295,7 +1294,7 @@ typedef struct __DRI2configQueryExtensionRec __DRI2configQueryExtension;
 struct __DRI2configQueryExtensionRec {
    __DRIextension base;
 
-   int (*configQueryb)(__DRIscreen *screen, const char *var, bool *val);
+   int (*configQueryb)(__DRIscreen *screen, const char *var, unsigned char *val);
    int (*configQueryi)(__DRIscreen *screen, const char *var, int *val);
    int (*configQueryf)(__DRIscreen *screen, const char *var, float *val);
 };

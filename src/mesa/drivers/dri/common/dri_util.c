@@ -677,7 +677,7 @@ dri2ReleaseBuffer(__DRIscreen *screen, __DRIbuffer *buffer)
 
 
 static int
-dri2ConfigQueryb(__DRIscreen *screen, const char *var, bool *val)
+dri2ConfigQueryb(__DRIscreen *screen, const char *var, unsigned char *val)
 {
    if (!driCheckOption(&screen->optionCache, var, DRI_BOOL))
       return -1;

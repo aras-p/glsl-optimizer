@@ -30,8 +30,6 @@
 #ifndef __XMLCONFIG_H
 #define __XMLCONFIG_H
 
-#include <stdbool.h>
-
 #define STRING_CONF_MAXLEN 25
 
 /** \brief Option data types */
@@ -41,7 +39,7 @@ typedef enum driOptionType {
 
 /** \brief Option value */
 typedef union driOptionValue {
-    bool _bool; /**< \brief Boolean */
+    unsigned char _bool; /**< \brief Boolean */
     int _int;      /**< \brief Integer or Enum */
     float _float;  /**< \brief Floating-point */
     char *_string;   /**< \brief String */
@@ -114,11 +112,11 @@ void driDestroyOptionInfo (driOptionCache *info);
 void driDestroyOptionCache (driOptionCache *cache);
 
 /** \brief Check if there exists a certain option */
-bool driCheckOption (const driOptionCache *cache, const char *name,
+unsigned char driCheckOption (const driOptionCache *cache, const char *name,
 			  driOptionType type);
 
 /** \brief Query a boolean option value */
-bool driQueryOptionb (const driOptionCache *cache, const char *name);
+unsigned char driQueryOptionb (const driOptionCache *cache, const char *name);
 /** \brief Query an integer option value */
 int driQueryOptioni (const driOptionCache *cache, const char *name);
 /** \brief Query a floating-point option value */

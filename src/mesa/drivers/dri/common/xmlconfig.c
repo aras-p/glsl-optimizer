@@ -285,7 +285,7 @@ static float strToF (const XML_Char *string, const XML_Char **tail) {
 }
 
 /** \brief Parse a value of a given type. */
-static bool parseValue (driOptionValue *v, driOptionType type,
+static unsigned char parseValue (driOptionValue *v, driOptionType type,
 			     const XML_Char *string) {
     const XML_Char *tail = NULL;
   /* skip leading white-space */
@@ -328,7 +328,7 @@ static bool parseValue (driOptionValue *v, driOptionType type,
 }
 
 /** \brief Parse a list of ranges of type info->type. */
-static bool parseRanges (driOptionInfo *info, const XML_Char *string) {
+static unsigned char parseRanges (driOptionInfo *info, const XML_Char *string) {
     XML_Char *cp, *range;
     uint32_t nRanges, i;
     driOptionRange *ranges;
@@ -1003,13 +1003,13 @@ void driDestroyOptionCache (driOptionCache *cache) {
     free(cache->values);
 }
 
-bool driCheckOption (const driOptionCache *cache, const char *name,
+unsigned char driCheckOption (const driOptionCache *cache, const char *name,
 			  driOptionType type) {
     uint32_t i = findOption (cache, name);
     return cache->info[i].name != NULL && cache->info[i].type == type;
 }
 
-bool driQueryOptionb (const driOptionCache *cache, const char *name) {
+unsigned char driQueryOptionb (const driOptionCache *cache, const char *name) {
     uint32_t i = findOption (cache, name);
   /* make sure the option is defined and has the correct type */
     assert (cache->info[i].name != NULL);
