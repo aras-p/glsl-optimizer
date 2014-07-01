@@ -49,13 +49,6 @@ struct llvmpipe_context;
 struct sw_displaytarget;
 
 
-/** A 1D/2D/3D image, one mipmap level */
-struct llvmpipe_texture_image
-{
-   void *data;
-};
-
-
 /**
  * llvmpipe subclass of pipe_resource.  A texture, drawing surface,
  * vertex buffer, const buffer, etc.
@@ -85,7 +78,7 @@ struct llvmpipe_resource
    /**
     * Malloc'ed data for regular textures, or a mapping to dt above.
     */
-   struct llvmpipe_texture_image linear_img;
+   void *tex_data;
 
    /**
     * Data for non-texture resources.

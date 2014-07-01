@@ -818,7 +818,7 @@ lp_setup_set_fragment_sampler_views(struct lp_setup_context *setup,
                 */
                mip_ptr = llvmpipe_get_texture_image_all(lp_tex, first_level,
                                                         LP_TEX_USAGE_READ);
-               jit_tex->base = lp_tex->linear_img.data;
+               jit_tex->base = lp_tex->tex_data;
             }
             else {
                mip_ptr = lp_tex->data;

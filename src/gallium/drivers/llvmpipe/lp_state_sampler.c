@@ -244,7 +244,7 @@ prepare_shader_sampling(
                /* XXX this may fail due to OOM ? */
                mip_ptr = llvmpipe_get_texture_image_all(lp_tex, view->u.tex.first_level,
                                                         LP_TEX_USAGE_READ);
-               addr = lp_tex->linear_img.data;
+               addr = lp_tex->tex_data;
 
                for (j = first_level; j <= last_level; j++) {
                   mip_ptr = llvmpipe_get_texture_image_all(lp_tex, j,

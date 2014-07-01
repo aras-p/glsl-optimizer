@@ -301,9 +301,9 @@ llvmpipe_resource_destroy(struct pipe_screen *pscreen,
    }
    else if (llvmpipe_resource_is_texture(pt)) {
       /* free linear image data */
-      if (lpr->linear_img.data) {
-         align_free(lpr->linear_img.data);
-         lpr->linear_img.data = NULL;
+      if (lpr->tex_data) {
+         align_free(lpr->tex_data);
+         lpr->tex_data = NULL;
       }
    }
    else if (!lpr->userBuffer) {
@@ -359,7 +359,7 @@ llvmpipe_resource_map(struct pipe_resource *resource,
       map = winsys->displaytarget_map(winsys, lpr->dt, dt_usage);
 
       /* install this linear image in texture data structure */
-      lpr->linear_img.data = map;
+      lpr->tex_data = map;
 
       return map;
    }
@@ -726,16 +726,14 @@ ubyte *
 llvmpipe_get_texture_image_address(struct llvmpipe_resource *lpr,
                                    unsigned face_slice, unsigned level)
 {
-   struct llvmpipe_texture_image *img;
    unsigned offset;
 
-   img = &lpr->linear_img;
    offset = lpr->mip_offsets[level];
 
    if (face_slice > 0)
       offset += face_slice * tex_image_face_size(lpr, level);
 
-   return (ubyte *) img->data + offset;
+   return (ubyte *) lpr->tex_data + offset;
 }
 
 
@@ -759,7 +757,7 @@ alloc_image_data(struct llvmpipe_resource *lpr)
 
       assert(lpr->base.last_level == 0);
 
-      lpr->linear_img.data =
+      lpr->tex_data =
          winsys->displaytarget_map(winsys, lpr->dt,
                                    PIPE_TRANSFER_READ_WRITE);
    }
@@ -774,9 +772,9 @@ alloc_image_data(struct llvmpipe_resource *lpr)
          lpr->mip_offsets[level] = offset;
          offset += align(buffer_size, alignment);
       }
-      lpr->linear_img.data = align_malloc(offset, alignment);
-      if (lpr->linear_img.data) {
-         memset(lpr->linear_img.data, 0, offset);
+      lpr->tex_data = align_malloc(offset, alignment);
+      if (lpr->tex_data) {
+         memset(lpr->tex_data, 0, offset);
       }
    }
 }
@@ -795,7 +793,6 @@ llvmpipe_get_texture_image(struct llvmpipe_resource *lpr,
                            unsigned face_slice, unsigned level,
                            enum lp_texture_usage usage)
 {
-   struct llvmpipe_texture_image *target_img;
    void *target_data;
    unsigned target_offset;
    unsigned *target_off_ptr;
@@ -805,17 +802,14 @@ llvmpipe_get_texture_image(struct llvmpipe_resource *lpr,
           usage == LP_TEX_USAGE_WRITE_ALL);
 
    if (lpr->dt) {
-      assert(lpr->linear_img.data);
+      assert(lpr->tex_data);
    }
 
-   target_img = &lpr->linear_img;
    target_off_ptr = lpr->mip_offsets;
-   target_data = target_img->data;
 
-   if (!target_data) {
+   if (!lpr->tex_data) {
       /* allocate memory for the target image now */
       alloc_image_data(lpr);
-      target_data = target_img->data;
    }
 
    target_offset = target_off_ptr[level];
@@ -824,8 +818,8 @@ llvmpipe_get_texture_image(struct llvmpipe_resource *lpr,
       target_offset += face_slice * tex_image_face_size(lpr, level);
    }
 
-   if (target_data) {
-      target_data = (uint8_t *) target_data + target_offset;
+   if (lpr->tex_data) {
+      target_data = (uint8_t *) lpr->tex_data + target_offset;
    }
 
    return target_data;
@@ -865,19 +859,18 @@ llvmpipe_get_texture_tile_linear(struct llvmpipe_resource *lpr,
                                  enum lp_texture_usage usage,
                                  unsigned x, unsigned y)
 {
-   struct llvmpipe_texture_image *linear_img = &lpr->linear_img;
    uint8_t *linear_image;
 
    assert(llvmpipe_resource_is_texture(&lpr->base));
    assert(x % TILE_SIZE == 0);
    assert(y % TILE_SIZE == 0);
 
-   if (!linear_img->data) {
+   if (!lpr->tex_data) {
       /* allocate memory for the linear image now */
       /* XXX should probably not do that here? */
       alloc_image_data(lpr);
    }
-   assert(linear_img->data);
+   assert(lpr->tex_data);
 
    /* compute address of the slice/face of the image that contains the tile */
    linear_image = llvmpipe_get_texture_image_address(lpr, face_slice, level);
@@ -897,7 +890,7 @@ llvmpipe_resource_size(const struct pipe_resource *resource)
 
    if (llvmpipe_resource_is_texture(resource)) {
       for (lvl = 0; lvl <= lpr->base.last_level; lvl++) {
-         if (lpr->linear_img.data)
+         if (lpr->tex_data)
             size += tex_image_size(lpr, lvl);
       }
    }
