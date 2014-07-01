@@ -5127,7 +5127,14 @@ st_translate_program(
       unsigned num_ubos = program->shader->NumUniformBlocks;
 
       for (i = 0; i < num_ubos; i++) {
-         ureg_DECL_constant2D(t->ureg, 0, program->shader->UniformBlocks[i].UniformBufferSize / 4, i + 1);
+         unsigned size =
+            program->shader_program->UniformBlocks[i].UniformBufferSize;
+         unsigned num_const_vecs = (size + 15) / 16;
+         unsigned first, last;
+         assert(num_const_vecs > 0);
+         first = 0;
+         last = num_const_vecs > 0 ? num_const_vecs - 1 : 0;
+         ureg_DECL_constant2D(t->ureg, first, last, i + 1);
       }
    }
    
