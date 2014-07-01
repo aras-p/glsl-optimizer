@@ -590,10 +590,12 @@ struct brw_gs_prog_data
    int invocations;
 
    /**
-    * True if the thread should be dispatched in DUAL_INSTANCE mode, false if
-    * it should be dispatched in DUAL_OBJECT mode.
+    * Dispatch mode, can be any of:
+    * GEN7_GS_DISPATCH_MODE_DUAL_OBJECT
+    * GEN7_GS_DISPATCH_MODE_DUAL_INSTANCE
+    * GEN7_GS_DISPATCH_MODE_SINGLE
     */
-   bool dual_instanced_dispatch;
+   int dispatch_mode;
 };
 
 /** Number of texture sampler units */

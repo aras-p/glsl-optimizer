@@ -101,10 +101,11 @@ vec4_gs_visitor::setup_payload()
 {
    int attribute_map[BRW_VARYING_SLOT_COUNT * MAX_GS_INPUT_VERTICES];
 
-   /* If we are in dual instanced mode, then attributes are going to be
-    * interleaved, so one register contains two attribute slots.
+   /* If we are in dual instanced or single mode, then attributes are going
+    * to be interleaved, so one register contains two attribute slots.
     */
-   int attributes_per_reg = c->prog_data.dual_instanced_dispatch ? 2 : 1;
+   int attributes_per_reg =
+      c->prog_data.dispatch_mode == GEN7_GS_DISPATCH_MODE_DUAL_OBJECT ? 1 : 2;
 
    /* If a geometry shader tries to read from an input that wasn't written by
     * the vertex shader, that produces undefined results, but it shouldn't
@@ -129,8 +130,7 @@ vec4_gs_visitor::setup_payload()
 
    reg = setup_varying_inputs(reg, attribute_map, attributes_per_reg);
 
-   lower_attributes_to_hw_regs(attribute_map,
-                               c->prog_data.dual_instanced_dispatch);
+   lower_attributes_to_hw_regs(attribute_map, attributes_per_reg > 1);
 
    this->first_non_payload_grf = reg;
 }
@@ -640,7 +640,7 @@ brw_gs_emit(struct brw_context *brw,
     */
    if (c->prog_data.invocations <= 1 &&
        likely(!(INTEL_DEBUG & DEBUG_NO_DUAL_OBJECT_GS))) {
-      c->prog_data.dual_instanced_dispatch = false;
+      c->prog_data.dispatch_mode = GEN7_GS_DISPATCH_MODE_DUAL_OBJECT;
 
       vec4_gs_visitor v(brw, c, prog, mem_ctx, true /* no_spills */);
       if (v.run()) {
@@ -652,15 +652,31 @@ brw_gs_emit(struct brw_context *brw,
 
    /* Either we failed to compile in DUAL_OBJECT mode (probably because it
     * would have required spilling) or DUAL_OBJECT mode is disabled.  So fall
-    * back to DUAL_INSTANCED mode, which consumes fewer registers.
+    * back to DUAL_INSTANCED or SINGLE mode, which consumes fewer registers.
     *
-    * FIXME: In an ideal world we'd fall back to SINGLE mode, which would
-    * allow us to interleave general purpose registers (resulting in even less
-    * likelihood of spilling).  But at the moment, the vec4 generator and
-    * visitor classes don't have the infrastructure to interleave general
-    * purpose registers, so DUAL_INSTANCED is the best we can do.
+    * FIXME: Single dispatch mode requires that the driver can handle
+    * interleaving of input registers, but this is already supported (dual
+    * instance mode has the same requirement). However, to take full advantage
+    * of single dispatch mode to reduce register pressure we would also need to
+    * do interleaved outputs, but currently, the vec4 visitor and generator
+    * classes do not support this, so at the moment register pressure in
+    * single and dual instance modes is the same.
+    *
+    * From the Ivy Bridge PRM, Vol2 Part1 7.2.1.1 "3DSTATE_GS"
+    * "If InstanceCount>1, DUAL_OBJECT mode is invalid. Software will likely
+    * want to use DUAL_INSTANCE mode for higher performance, but SINGLE mode
+    * is also supported. When InstanceCount=1 (one instance per object) software
+    * can decide which dispatch mode to use. DUAL_OBJECT mode would likely be
+    * the best choice for performance, followed by SINGLE mode."
+    *
+    * So SINGLE mode is more performant when invocations == 1 and DUAL_INSTANCE
+    * mode is more performant when invocations > 1. Gen6 only supports
+    * SINGLE mode.
     */
-   c->prog_data.dual_instanced_dispatch = true;
+   if (c->prog_data.invocations <= 1)
+      c->prog_data.dispatch_mode = GEN7_GS_DISPATCH_MODE_SINGLE;
+   else
+      c->prog_data.dispatch_mode = GEN7_GS_DISPATCH_MODE_DUAL_INSTANCE;
 
    vec4_gs_visitor v(brw, c, prog, mem_ctx, false /* no_spills */);
    if (!v.run()) {
