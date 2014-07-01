@@ -32,13 +32,25 @@
 
 static void
 vc4_rcl_tile_calls(struct vc4_context *vc4,
+                   struct vc4_surface *csurf,
                    uint32_t xtiles, uint32_t ytiles)
 {
+        struct vc4_resource *ctex = vc4_resource(csurf->base.texture);
+
         for (int x = 0; x < xtiles; x++) {
                 for (int y = 0; y < ytiles; y++) {
                         cl_u8(&vc4->rcl, VC4_PACKET_TILE_COORDINATES);
                         cl_u8(&vc4->rcl, x);
                         cl_u8(&vc4->rcl, y);
+
+                        cl_start_reloc(&vc4->rcl, 1);
+                        cl_u8(&vc4->rcl, VC4_PACKET_LOAD_TILE_BUFFER_GENERAL);
+                        cl_u8(&vc4->rcl,
+                              VC4_LOADSTORE_TILE_BUFFER_COLOR |
+                              VC4_LOADSTORE_TILE_BUFFER_FORMAT_RASTER);
+                        cl_u8(&vc4->rcl,
+                              VC4_LOADSTORE_TILE_BUFFER_RGBA8888);
+                        cl_reloc(vc4, &vc4->rcl, ctex->bo, csurf->offset);
 
                         cl_start_reloc(&vc4->rcl, 1);
                         cl_u8(&vc4->rcl, VC4_PACKET_BRANCH_TO_SUB_LIST);
@@ -222,15 +234,17 @@ vc4_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
 
         // Do a store of the first tile to force the tile buffer to be cleared
         /* XXX: I think these two packets may be unnecessary. */
-        cl_u8(&vc4->rcl, VC4_PACKET_TILE_COORDINATES);
-        cl_u8(&vc4->rcl, 0);
-        cl_u8(&vc4->rcl, 0);
+        if (0) {
+                cl_u8(&vc4->rcl, VC4_PACKET_TILE_COORDINATES);
+                cl_u8(&vc4->rcl, 0);
+                cl_u8(&vc4->rcl, 0);
 
-        cl_u8(&vc4->rcl, VC4_PACKET_STORE_TILE_BUFFER_GENERAL);
-        cl_u16(&vc4->rcl, 0); // Store nothing (just clear)
-        cl_u32(&vc4->rcl, 0); // no address is needed
+                cl_u8(&vc4->rcl, VC4_PACKET_STORE_TILE_BUFFER_GENERAL);
+                cl_u16(&vc4->rcl, 0); // Store nothing (just clear)
+                cl_u32(&vc4->rcl, 0); // no address is needed
+        }
 
-        vc4_rcl_tile_calls(vc4, tilew, tileh);
+        vc4_rcl_tile_calls(vc4, csurf, tilew, tileh);
 
         vc4_flush(pctx);
 }
