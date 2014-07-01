@@ -253,7 +253,14 @@ nv50_create(struct pipe_screen *pscreen, void *priv)
    nv50->base.screen    = &screen->base;
    nv50->base.copy_data = nv50_m2mf_copy_linear;
    nv50->base.push_data = nv50_sifc_linear_u8;
+   /* FIXME: Make it possible to use this again. The problem is that there is
+    * some clever logic in the card that allows for multiple renders to happen
+    * when there are only constbuf changes. However that relies on the
+    * constbuf updates happening to the right constbuf slots. Currently
+    * implementation just makes it go through a separate slot which doesn't
+    * properly update the right constbuf data.
    nv50->base.push_cb   = nv50_cb_push;
+    */
 
    nv50->screen = screen;
    pipe->screen = pscreen;
