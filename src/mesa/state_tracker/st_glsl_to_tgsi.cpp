@@ -4488,7 +4488,10 @@ translate_src(struct st_translate *t, const st_src_reg *src_reg)
 {
    struct ureg_src src = src_register(t, src_reg->file, src_reg->index, src_reg->index2D);
 
-   if (t->procType == TGSI_PROCESSOR_GEOMETRY && src_reg->has_index2) {
+   if (src_reg->has_index2) {
+      /* 2D indexes occur with geometry shader inputs (attrib, vertex)
+       * and UBO constant buffers (buffer, position).
+       */
       src = src_register(t, src_reg->file, src_reg->index, src_reg->index2D);
       if (src_reg->reladdr2)
          src = ureg_src_dimension_indirect(src, ureg_src(t->address[1]),
