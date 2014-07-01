@@ -106,6 +106,7 @@ struct nv50_context {
    struct nouveau_bufctx *bufctx;
 
    uint32_t dirty;
+   boolean cb_dirty;
 
    struct {
       uint32_t instance_elts; /* bitmask of per-instance elements */

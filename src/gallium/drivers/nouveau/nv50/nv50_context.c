@@ -61,7 +61,7 @@ static void
 nv50_memory_barrier(struct pipe_context *pipe, unsigned flags)
 {
    struct nv50_context *nv50 = nv50_context(pipe);
-   int i;
+   int i, s;
 
    if (flags & PIPE_BARRIER_MAPPED_BUFFER) {
       for (i = 0; i < nv50->num_vtxbufs; ++i) {
@@ -74,6 +74,26 @@ nv50_memory_barrier(struct pipe_context *pipe, unsigned flags)
       if (nv50->idxbuf.buffer &&
           nv50->idxbuf.buffer->flags & PIPE_RESOURCE_FLAG_MAP_PERSISTENT)
          nv50->base.vbo_dirty = TRUE;
+
+      for (s = 0; s < 3 && !nv50->cb_dirty; ++s) {
+         uint32_t valid = nv50->constbuf_valid[s];
+
+         while (valid && !nv50->cb_dirty) {
+            const unsigned i = ffs(valid) - 1;
+            struct pipe_resource *res;
+
+            valid &= ~(1 << i);
+            if (nv50->constbuf[s][i].user)
+               continue;
+
+            res = nv50->constbuf[s][i].u.buf;
+            if (!res)
+               continue;
+
+            if (res->flags & PIPE_RESOURCE_FLAG_MAP_PERSISTENT)
+               nv50->cb_dirty = TRUE;
+         }
+      }
    }
 }
 

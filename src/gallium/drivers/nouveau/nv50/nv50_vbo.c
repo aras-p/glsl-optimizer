@@ -747,7 +747,7 @@ nv50_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 {
    struct nv50_context *nv50 = nv50_context(pipe);
    struct nouveau_pushbuf *push = nv50->base.pushbuf;
-   int i;
+   int i, s;
 
    /* NOTE: caller must ensure that (min_index + index_bias) is >= 0 */
    nv50->vb_elt_first = info->min_index + info->index_bias;
@@ -775,6 +775,33 @@ nv50_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    nv50_state_validate(nv50, ~0, 8); /* 8 as minimum, we use flush_notify */
 
    push->kick_notify = nv50_draw_vbo_kick_notify;
+
+   for (s = 0; s < 3 && !nv50->cb_dirty; ++s) {
+      uint32_t valid = nv50->constbuf_valid[s];
+
+      while (valid && !nv50->cb_dirty) {
+         const unsigned i = ffs(valid) - 1;
+         struct pipe_resource *res;
+
+         valid &= ~(1 << i);
+         if (nv50->constbuf[s][i].user)
+            continue;
+
+         res = nv50->constbuf[s][i].u.buf;
+         if (!res)
+            continue;
+
+         if (res->flags & PIPE_RESOURCE_FLAG_MAP_COHERENT)
+            nv50->cb_dirty = TRUE;
+      }
+   }
+
+   /* If there are any coherent constbufs, flush the cache */
+   if (nv50->cb_dirty) {
+      BEGIN_NV04(push, NV50_3D(CODE_CB_FLUSH), 1);
+      PUSH_DATA (push, 0);
+      nv50->cb_dirty = FALSE;
+   }
 
    if (nv50->vbo_fifo) {
       nv50_push_vbo(nv50, info);
