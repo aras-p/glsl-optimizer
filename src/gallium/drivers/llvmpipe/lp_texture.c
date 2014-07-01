@@ -372,7 +372,7 @@ llvmpipe_resource_map(struct pipe_resource *resource,
    }
    else if (llvmpipe_resource_is_texture(resource)) {
 
-      map = llvmpipe_get_texture_image(lpr, layer, level, tex_usage);
+      map = llvmpipe_get_texture_image_address(lpr, layer, level);
       return map;
    }
    else {
@@ -784,52 +784,6 @@ alloc_image_data(struct llvmpipe_resource *lpr)
          memset(lpr->tex_data, 0, offset);
       }
    }
-}
-
-
-
-/**
- * Return pointer to texture image data
- * for a particular cube face or 3D texture slice.
- *
- * \param face_slice  the cube face or 3D slice of interest
- * \param usage  one of LP_TEX_USAGE_READ/WRITE_ALL/READ_WRITE
- */
-void *
-llvmpipe_get_texture_image(struct llvmpipe_resource *lpr,
-                           unsigned face_slice, unsigned level,
-                           enum lp_texture_usage usage)
-{
-   void *target_data;
-   unsigned target_offset;
-   unsigned *target_off_ptr;
-
-   assert(usage == LP_TEX_USAGE_READ ||
-          usage == LP_TEX_USAGE_READ_WRITE ||
-          usage == LP_TEX_USAGE_WRITE_ALL);
-
-   if (lpr->dt) {
-      assert(lpr->tex_data);
-   }
-
-   target_off_ptr = lpr->mip_offsets;
-
-   if (!lpr->tex_data) {
-      /* allocate memory for the target image now */
-      alloc_image_data(lpr);
-   }
-
-   target_offset = target_off_ptr[level];
-
-   if (face_slice > 0) {
-      target_offset += face_slice * tex_image_face_size(lpr, level);
-   }
-
-   if (lpr->tex_data) {
-      target_data = (uint8_t *) lpr->tex_data + target_offset;
-   }
-
-   return target_data;
 }
 
 
