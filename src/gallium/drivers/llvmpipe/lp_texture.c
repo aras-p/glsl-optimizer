@@ -834,29 +834,6 @@ llvmpipe_get_texture_image(struct llvmpipe_resource *lpr,
 
 
 /**
- * Return pointer to start of a texture image (1D, 2D, 3D, CUBE).
- * This is typically used when we're about to sample from a texture.
- */
-void *
-llvmpipe_get_texture_image_all(struct llvmpipe_resource *lpr,
-                               unsigned level,
-                               enum lp_texture_usage usage)
-{
-   const int slices = lpr->num_slices_faces[level];
-   int slice;
-   void *map = NULL;
-
-   assert(slices > 0);
-
-   for (slice = slices - 1; slice >= 0; slice--) {
-      map = llvmpipe_get_texture_image(lpr, slice, level, usage);
-   }
-
-   return map;
-}
-
-
-/**
  * Get pointer to a linear image (not the tile!) at tile (x,y).
  * \return pointer to start of image/face (not the tile)
  */
