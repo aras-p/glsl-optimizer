@@ -59,6 +59,8 @@ static struct llvmpipe_resource resource_list;
 #endif
 static unsigned id_counter = 0;
 
+static void
+alloc_image_data(struct llvmpipe_resource *lpr);
 
 /**
  * Conventional allocation path for non-display textures:
@@ -247,6 +249,11 @@ llvmpipe_resource_create(struct pipe_screen *_screen,
          /* texture map */
          if (!llvmpipe_texture_layout(screen, lpr))
             goto fail;
+
+         alloc_image_data(lpr);
+         if (!lpr->tex_data) {
+            goto fail;
+         }
       }
    }
    else {
