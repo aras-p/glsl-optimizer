@@ -165,7 +165,7 @@ glcpp_lex_update_state_per_token (glcpp_parser_t *parser, int token)
 	 * update the "Internal compiler error" catch-all rule near the end of
 	 * this file. */
 
-%x DONE COMMENT HASH UNREACHABLE DEFINE NEWLINE_CATCHUP
+%x COMMENT DEFINE DONE HASH NEWLINE_CATCHUP UNREACHABLE
 
 SPACE		[[:space:]]
 NONSPACE	[^[:space:]]
@@ -253,7 +253,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 }
 
 	/* Multi-line comments */
-<DEFINE,HASH,INITIAL>"/*"   { yy_push_state(COMMENT, yyscanner); }
+<INITIAL,DEFINE,HASH>"/*"   { yy_push_state(COMMENT, yyscanner); }
 <COMMENT>[^*\r\n]*
 <COMMENT>[^*\r\n]*[\r\n]    { yylineno++; yycolumn = 0; parser->commented_newlines++; }
 <COMMENT>"*"+[^*/\r\n]*
@@ -543,7 +543,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	 * rule, then we have made a mistake above and need to fix one or more
 	 * of the preceding patterns to match that input. */
 
-<INITIAL,DONE,COMMENT,DEFINE,HASH,NEWLINE_CATCHUP>. {
+<INITIAL,COMMENT,DEFINE,DONE,HASH,NEWLINE_CATCHUP>. {
 	glcpp_error(yylloc, yyextra, "Internal compiler error: Unexpected character: %s", yytext);
 }
 
