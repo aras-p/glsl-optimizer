@@ -210,13 +210,13 @@ dd_driver_name(void)
 }
 
 static const struct drm_conf_ret throttle_ret = {
-   .type = DRM_CONF_INT,
-   .val.val_int = 2,
+   DRM_CONF_INT,
+   {2},
 };
 
 static const struct drm_conf_ret share_fd_ret = {
-   .type = DRM_CONF_BOOL,
-   .val.val_int = true,
+   DRM_CONF_BOOL,
+   {true},
 };
 
 static const struct drm_conf_ret *
