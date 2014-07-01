@@ -160,6 +160,7 @@ glcpp_lex_update_state_per_token (glcpp_parser_t *parser, int token)
 %option prefix="glcpp_"
 %option stack
 %option never-interactive
+%option warn nodefault
 
 	/* Note: When adding any start conditions to this list, you must also
 	 * update the "Internal compiler error" catch-all rule near the end of
@@ -516,7 +517,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 
 	/* We preserve all newlines, even between #if 0..#endif, so no
 	skipping.. */
-[\r\n] {
+<*>[\r\n] {
 	if (parser->commented_newlines) {
 		BEGIN NEWLINE_CATCHUP;
 	}
