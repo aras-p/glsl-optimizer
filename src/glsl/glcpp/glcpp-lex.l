@@ -172,6 +172,7 @@ SPACE		[[:space:]]
 NONSPACE	[^[:space:]]
 HSPACE		[ \t]
 HASH		#
+NEWLINE		(\r\n|\n\r|\r|\n)
 IDENTIFIER	[_a-zA-Z][_a-zA-Z0-9]*
 PP_NUMBER	[.]?[0-9]([._a-zA-Z0-9]|[eEpP][-+])*
 PUNCTUATION	[][(){}.&*~!/%<>^|;,=+-]
@@ -256,9 +257,9 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	/* Multi-line comments */
 <INITIAL,DEFINE,HASH>"/*"   { yy_push_state(COMMENT, yyscanner); }
 <COMMENT>[^*\r\n]*
-<COMMENT>[^*\r\n]*[\r\n]    { yylineno++; yycolumn = 0; parser->commented_newlines++; }
+<COMMENT>[^*\r\n]*{NEWLINE} { yylineno++; yycolumn = 0; parser->commented_newlines++; }
 <COMMENT>"*"+[^*/\r\n]*
-<COMMENT>"*"+[^*/\r\n]*[\r\n] { yylineno++; yycolumn = 0; parser->commented_newlines++; }
+<COMMENT>"*"+[^*/\r\n]*{NEWLINE} { yylineno++; yycolumn = 0; parser->commented_newlines++; }
 <COMMENT>"*"+"/"        {
 	yy_pop_state(yyscanner);
 	/* In the <HASH> start condition, we don't want any SPACE token. */
@@ -289,7 +290,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 
 	/* Swallow empty #pragma directives, (to avoid confusing the
 	 * downstream compiler). */
-<HASH>pragma{HSPACE}*/[\r\n] {
+<HASH>pragma{HSPACE}*/{NEWLINE} {
 	BEGIN INITIAL;
 }
 
@@ -305,7 +306,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	RETURN_TOKEN (LINE);
 }
 
-<HASH>\n {
+<HASH>{NEWLINE} {
 	BEGIN INITIAL;
 	RETURN_TOKEN_NEVER_SKIP (NEWLINE);
 }
@@ -521,7 +522,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 
 	/* We preserve all newlines, even between #if 0..#endif, so no
 	skipping.. */
-<*>[\r\n] {
+<*>{NEWLINE} {
 	if (parser->commented_newlines) {
 		BEGIN NEWLINE_CATCHUP;
 	} else {
