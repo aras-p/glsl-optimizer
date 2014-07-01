@@ -120,52 +120,6 @@ do_blorp_blit(struct brw_context *brw, GLbitfield buffer_bit,
 }
 
 static bool
-format_is_rgba_or_rgbx_byte(mesa_format format)
-{
-   switch (format) {
-   case MESA_FORMAT_B8G8R8X8_UNORM:
-   case MESA_FORMAT_B8G8R8A8_UNORM:
-   case MESA_FORMAT_R8G8B8X8_UNORM:
-   case MESA_FORMAT_R8G8B8A8_UNORM:
-      return true;
-   default:
-      return false;
-   }
-}
-
-static bool
-color_formats_match(mesa_format src_format, mesa_format dst_format)
-{
-   mesa_format linear_src_format = _mesa_get_srgb_format_linear(src_format);
-   mesa_format linear_dst_format = _mesa_get_srgb_format_linear(dst_format);
-
-   /* Normally, we require the formats to be equal. However, we also support
-    * blitting from ARGB to XRGB (discarding alpha), and from XRGB to ARGB
-    * (overriding alpha to 1.0 via blending) as well as swizzling between BGR
-    * and RGB.
-    */
-
-   return (linear_src_format == linear_dst_format ||
-           (format_is_rgba_or_rgbx_byte(linear_src_format) &&
-            format_is_rgba_or_rgbx_byte(linear_dst_format)));
-}
-
-static bool
-formats_match(GLbitfield buffer_bit, struct intel_renderbuffer *src_irb,
-              struct intel_renderbuffer *dst_irb)
-{
-   /* Note: don't just check gl_renderbuffer::Format, because in some cases
-    * multiple gl_formats resolve to the same native type in the miptree (for
-    * example MESA_FORMAT_Z24_UNORM_X8_UINT and MESA_FORMAT_Z24_UNORM_S8_UINT), and we can blit
-    * between those formats.
-    */
-   mesa_format src_format = find_miptree(buffer_bit, src_irb)->format;
-   mesa_format dst_format = find_miptree(buffer_bit, dst_irb)->format;
-
-   return color_formats_match(src_format, dst_format);
-}
-
-static bool
 try_blorp_blit(struct brw_context *brw,
                GLfloat srcX0, GLfloat srcY0, GLfloat srcX1, GLfloat srcY1,
                GLfloat dstX0, GLfloat dstY0, GLfloat dstX1, GLfloat dstY1,
@@ -191,14 +145,11 @@ try_blorp_blit(struct brw_context *brw,
    /* Find buffers */
    struct intel_renderbuffer *src_irb;
    struct intel_renderbuffer *dst_irb;
+   struct intel_mipmap_tree *src_mt;
+   struct intel_mipmap_tree *dst_mt;
    switch (buffer_bit) {
    case GL_COLOR_BUFFER_BIT:
       src_irb = intel_renderbuffer(read_fb->_ColorReadBuffer);
-      for (unsigned i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; ++i) {
-         dst_irb = intel_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[i]);
-         if (dst_irb && !formats_match(buffer_bit, src_irb, dst_irb))
-            return false;
-      }
       for (unsigned i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; ++i) {
          dst_irb = intel_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[i]);
 	 if (dst_irb)
@@ -212,8 +163,17 @@ try_blorp_blit(struct brw_context *brw,
          intel_renderbuffer(read_fb->Attachment[BUFFER_DEPTH].Renderbuffer);
       dst_irb =
          intel_renderbuffer(draw_fb->Attachment[BUFFER_DEPTH].Renderbuffer);
-      if (!formats_match(buffer_bit, src_irb, dst_irb))
+      src_mt = find_miptree(buffer_bit, src_irb);
+      dst_mt = find_miptree(buffer_bit, dst_irb);
+
+      /* We can't handle format conversions between Z24 and other formats
+       * since we have to lie about the surface format. See the comments in
+       * brw_blorp_surface_info::set().
+       */
+      if ((src_mt->format == MESA_FORMAT_Z24_UNORM_X8_UINT) !=
+          (dst_mt->format == MESA_FORMAT_Z24_UNORM_X8_UINT))
          return false;
+
       do_blorp_blit(brw, buffer_bit, src_irb, dst_irb, srcX0, srcY0,
                     srcX1, srcY1, dstX0, dstY0, dstX1, dstY1,
                     filter, mirror_x, mirror_y);
@@ -223,8 +183,6 @@ try_blorp_blit(struct brw_context *brw,
          intel_renderbuffer(read_fb->Attachment[BUFFER_STENCIL].Renderbuffer);
       dst_irb =
          intel_renderbuffer(draw_fb->Attachment[BUFFER_STENCIL].Renderbuffer);
-      if (!formats_match(buffer_bit, src_irb, dst_irb))
-         return false;
       do_blorp_blit(brw, buffer_bit, src_irb, dst_irb, srcX0, srcY0,
                     srcX1, srcY1, dstX0, dstY0, dstX1, dstY1,
                     filter, mirror_x, mirror_y);
