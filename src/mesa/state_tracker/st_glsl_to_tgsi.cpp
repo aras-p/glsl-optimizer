@@ -4400,7 +4400,7 @@ src_register(struct st_translate *t,
    case PROGRAM_CONSTANT:       /* ie, immediate */
       if (index2D) {
          struct ureg_src src;
-         src = ureg_src_register(TGSI_FILE_CONSTANT, 0);
+         src = ureg_src_register(TGSI_FILE_CONSTANT, index);
          src.Dimension = 1;
          src.DimensionIndex = index2D;
          return src;
