@@ -45,6 +45,12 @@ gallium_dri_la_LIBADD = \
 
 if HAVE_GALLIUM_STATIC_TARGETS
 
+# XXX: Temporary allow duplicated symbols, as the loader pulls in xmlconfig.c
+# which already provides driParse* and driQuery* amongst others.
+# Remove this hack as we come up with a cleaner solution.
+gallium_dri_la_LDFLAGS += \
+	-Wl,--allow-multiple-definition
+
 MEGADRIVERS =
 STATIC_TARGET_CPPFLAGS =
 STATIC_TARGET_LIB_DEPS = \
