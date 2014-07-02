@@ -147,7 +147,7 @@ struct dri3_context
    __DRIcontext *driContext;
 };
 
-#define DRI3_MAX_BACK   3
+#define DRI3_MAX_BACK   4
 #define DRI3_BACK_ID(i) (i)
 #define DRI3_FRONT_ID   (DRI3_MAX_BACK)
 
@@ -171,6 +171,10 @@ struct dri3_drawable {
    uint8_t have_fake_front;
    uint8_t is_pixmap;
    uint8_t flipping;
+
+   /* Present extension capabilities
+    */
+   uint32_t present_capabilities;
 
    /* SBC numbers are tracked by using the serial numbers
     * in the present request and complete events

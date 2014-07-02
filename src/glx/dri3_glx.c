@@ -271,8 +271,11 @@ static void
 dri3_update_num_back(struct dri3_drawable *priv)
 {
    priv->num_back = 1;
-   if (priv->flipping)
+   if (priv->flipping) {
+      if (!priv->is_pixmap && !(priv->present_capabilities & XCB_PRESENT_CAPABILITY_ASYNC))
+         priv->num_back++;
       priv->num_back++;
+   }
    if (priv->swap_interval == 0)
       priv->num_back++;
 }
@@ -976,6 +979,9 @@ dri3_update_drawable(__DRIdrawable *driDrawable, void *loaderPrivate)
       xcb_get_geometry_reply_t                  *geom_reply;
       xcb_void_cookie_t                         cookie;
       xcb_generic_error_t                       *error;
+      xcb_present_query_capabilities_cookie_t   present_capabilities_cookie;
+      xcb_present_query_capabilities_reply_t    *present_capabilities_reply;
+
 
       /* Try to select for input on the window.
        *
@@ -993,6 +999,8 @@ dri3_update_drawable(__DRIdrawable *driDrawable, void *loaderPrivate)
                                                 XCB_PRESENT_EVENT_MASK_CONFIGURE_NOTIFY|
                                                 XCB_PRESENT_EVENT_MASK_COMPLETE_NOTIFY|
                                                 XCB_PRESENT_EVENT_MASK_IDLE_NOTIFY);
+
+      present_capabilities_cookie = xcb_present_query_capabilities(c, priv->base.xDrawable);
 
       /* Create an XCB event queue to hold present events outside of the usual
        * application event queue
@@ -1022,6 +1030,16 @@ dri3_update_drawable(__DRIdrawable *driDrawable, void *loaderPrivate)
        */
 
       error = xcb_request_check(c, cookie);
+
+      present_capabilities_reply = xcb_present_query_capabilities_reply(c,
+                                                                        present_capabilities_cookie,
+                                                                        NULL);
+
+      if (present_capabilities_reply) {
+         priv->present_capabilities = present_capabilities_reply->capabilities;
+         free(present_capabilities_reply);
+      } else
+         priv->present_capabilities = 0;
 
       if (error) {
          if (error->error_code != BadWindow) {
