@@ -424,6 +424,9 @@ control_line_error:
 	HASH_TOKEN ERROR_TOKEN NEWLINE {
 		glcpp_error(& @1, parser, "#%s", $2);
 	}
+|	HASH_TOKEN DEFINE_TOKEN NEWLINE {
+		glcpp_error (& @1, parser, "#define without macro name");
+	}
 |	HASH_TOKEN GARBAGE pp_tokens NEWLINE  {
 		glcpp_error (& @1, parser, "Illegal non-directive after #");
 	}

@@ -371,7 +371,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	 *	* Anything else, (not an identifier, not a comment,
 	 *	  and not whitespace). This will generate an error.
 	 */
-<HASH>define{HSPACE}+ {
+<HASH>define{HSPACE}* {
 	if (! parser->skipping) {
 		BEGIN DEFINE;
 		yyextra->space_tokens = 0;
@@ -520,6 +520,8 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 <*>[\r\n] {
 	if (parser->commented_newlines) {
 		BEGIN NEWLINE_CATCHUP;
+	} else {
+		BEGIN INITIAL;
 	}
 	yyextra->space_tokens = 1;
 	yyextra->lexing_directive = 0;
@@ -531,8 +533,6 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 <INITIAL,COMMENT,DEFINE,HASH><<EOF>> {
 	if (YY_START == COMMENT)
 		glcpp_error(yylloc, yyextra, "Unterminated comment");
-	if (YY_START == DEFINE)
-		glcpp_error(yylloc, yyextra, "#define without macro name");
 	BEGIN DONE; /* Don't keep matching this rule forever. */
 	yyextra->lexing_directive = 0;
 	if (! parser->last_token_was_newline)

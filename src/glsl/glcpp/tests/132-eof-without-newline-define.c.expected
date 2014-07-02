@@ -1,2 +1,1 @@
-0:1(2): preprocessor error: #define without macro name
-0:1(2): preprocessor error: syntax error, unexpected NEWLINE, expecting FUNC_IDENTIFIER or OBJ_IDENTIFIER
+0:1(1): preprocessor error: #define without macro name
