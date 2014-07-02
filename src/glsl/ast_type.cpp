@@ -122,18 +122,28 @@ ast_type_qualifier::merge_qualifier(YYLTYPE *loc,
    ubo_binding_mask.flags.q.explicit_binding = 1;
    ubo_binding_mask.flags.q.explicit_offset = 1;
 
+   ast_type_qualifier stream_layout_mask;
+   stream_layout_mask.flags.i = 0;
+   stream_layout_mask.flags.q.stream = 1;
+
    /* Uniform block layout qualifiers get to overwrite each
     * other (rightmost having priority), while all other
     * qualifiers currently don't allow duplicates.
-    *
-    * Geometry shaders can have several layout qualifiers
+    */
+   ast_type_qualifier allowed_duplicates_mask;
+   allowed_duplicates_mask.flags.i =
+      ubo_mat_mask.flags.i |
+      ubo_layout_mask.flags.i |
+      ubo_binding_mask.flags.i;
+
+   /* Geometry shaders can have several layout qualifiers
     * assigning different stream values.
     */
+   if (state->stage == MESA_SHADER_GEOMETRY)
+      allowed_duplicates_mask.flags.i |=
+         stream_layout_mask.flags.i;
 
-   if ((state->stage != MESA_SHADER_GEOMETRY) &&
-       (this->flags.i & q.flags.i & ~(ubo_mat_mask.flags.i |
-				      ubo_layout_mask.flags.i |
-                                      ubo_binding_mask.flags.i)) != 0) {
+   if ((this->flags.i & q.flags.i & ~allowed_duplicates_mask.flags.i) != 0) {
       _mesa_glsl_error(loc, state,
 		       "duplicate layout qualifiers used");
       return false;
