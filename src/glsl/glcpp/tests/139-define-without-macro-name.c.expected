@@ -1,0 +1,2 @@
+0:1(1): preprocessor error: #define without macro name
+Error expected because no macro name is ever given!
