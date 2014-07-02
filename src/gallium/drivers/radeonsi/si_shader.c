@@ -1652,11 +1652,37 @@ static void tex_fetch_args(
 
 	/* Pack user derivatives */
 	if (opcode == TGSI_OPCODE_TXD) {
-		for (chan = 0; chan < 2; chan++) {
-			address[count++] = lp_build_emit_fetch(bld_base, inst, 1, chan);
-			if (num_coords > 1)
-				address[count++] = lp_build_emit_fetch(bld_base, inst, 2, chan);
+		int num_deriv_channels, param;
+
+		switch (target) {
+		case TGSI_TEXTURE_3D:
+			num_deriv_channels = 3;
+			break;
+		case TGSI_TEXTURE_2D:
+		case TGSI_TEXTURE_SHADOW2D:
+		case TGSI_TEXTURE_RECT:
+		case TGSI_TEXTURE_SHADOWRECT:
+		case TGSI_TEXTURE_2D_ARRAY:
+		case TGSI_TEXTURE_SHADOW2D_ARRAY:
+		case TGSI_TEXTURE_CUBE:
+		case TGSI_TEXTURE_SHADOWCUBE:
+		case TGSI_TEXTURE_CUBE_ARRAY:
+		case TGSI_TEXTURE_SHADOWCUBE_ARRAY:
+			num_deriv_channels = 2;
+			break;
+		case TGSI_TEXTURE_1D:
+		case TGSI_TEXTURE_SHADOW1D:
+		case TGSI_TEXTURE_1D_ARRAY:
+		case TGSI_TEXTURE_SHADOW1D_ARRAY:
+			num_deriv_channels = 1;
+			break;
+		default:
+			assert(0); /* no other targets are valid here */
 		}
+
+		for (param = 1; param <= 2; param++)
+			for (chan = 0; chan < num_deriv_channels; chan++)
+				address[count++] = lp_build_emit_fetch(bld_base, inst, param, chan);
 	}
 
 	/* Pack texture coordinates */
