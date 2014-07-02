@@ -815,6 +815,8 @@ builtin_variable_generator::generate_vs_special_vars()
       add_system_value(SYSTEM_VALUE_INSTANCE_ID, int_t, "gl_InstanceID");
    if (state->AMD_vertex_shader_layer_enable)
       add_output(VARYING_SLOT_LAYER, int_t, "gl_Layer");
+   if (state->AMD_vertex_shader_viewport_index_enable)
+      add_output(VARYING_SLOT_VIEWPORT, int_t, "gl_ViewportIndex");
    if (compatibility) {
       add_input(VERT_ATTRIB_POS, vec4_t, "gl_Vertex");
       add_input(VERT_ATTRIB_NORMAL, vec3_t, "gl_Normal");

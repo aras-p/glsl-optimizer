@@ -552,6 +552,7 @@ static const _mesa_glsl_extension _mesa_glsl_supported_extensions[] = {
    EXT(AMD_shader_stencil_export,      true,  false,     ARB_shader_stencil_export),
    EXT(AMD_shader_trinary_minmax,      true,  false,     dummy_true),
    EXT(AMD_vertex_shader_layer,        true,  false,     AMD_vertex_shader_layer),
+   EXT(AMD_vertex_shader_viewport_index, true,  false,   AMD_vertex_shader_viewport_index),
    EXT(EXT_separate_shader_objects,    false, true,      dummy_true),
    EXT(EXT_shader_integer_mix,         true,  true,      EXT_shader_integer_mix),
    EXT(EXT_texture_array,              true,  false,     EXT_texture_array),

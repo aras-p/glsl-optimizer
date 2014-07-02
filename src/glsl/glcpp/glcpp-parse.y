@@ -2133,6 +2133,9 @@ _glcpp_parser_handle_version_declaration(glcpp_parser_t *parser, intmax_t versio
 	      if (extensions->AMD_vertex_shader_layer)
 	         add_builtin_define(parser, "GL_AMD_vertex_shader_layer", 1);
 
+	      if (extensions->AMD_vertex_shader_viewport_index)
+	         add_builtin_define(parser, "GL_AMD_vertex_shader_viewport_index", 1);
+
 	      if (extensions->ARB_shading_language_420pack)
 	         add_builtin_define(parser, "GL_ARB_shading_language_420pack", 1);
 
