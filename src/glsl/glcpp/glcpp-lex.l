@@ -291,8 +291,6 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	 * Simply pass them through to the main compiler's lexer/parser. */
 <HASH>(extension|pragma)[^\r\n]* {
 	BEGIN INITIAL;
-	yylineno++;
-	yycolumn = 0;
 	RETURN_STRING_TOKEN (PRAGMA);
 }
 
