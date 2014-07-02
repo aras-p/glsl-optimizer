@@ -579,7 +579,7 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 		ctx->shader->input[i].name = d->Semantic.Name;
 		ctx->shader->input[i].sid = d->Semantic.Index;
 		ctx->shader->input[i].interpolate = d->Interp.Interpolate;
-		ctx->shader->input[i].centroid = d->Interp.Centroid;
+		ctx->shader->input[i].centroid = d->Interp.Location == TGSI_INTERPOLATE_LOC_CENTROID;
 		ctx->shader->input[i].gpr = ctx->file_offset[TGSI_FILE_INPUT] + d->Range.First;
 		if (ctx->type == TGSI_PROCESSOR_FRAGMENT) {
 			ctx->shader->input[i].spi_sid = r600_spi_sid(&ctx->shader->input[i]);
@@ -735,7 +735,7 @@ static int evergreen_gpr_count(struct r600_shader_ctx *ctx)
 			ctx->input_linear = TRUE;
 		if (ctx->info.input_interpolate[i] == TGSI_INTERPOLATE_PERSPECTIVE)
 			ctx->input_perspective = TRUE;
-		if (ctx->info.input_centroid[i])
+		if (ctx->info.input_interpolate_loc[i] == TGSI_INTERPOLATE_LOC_CENTROID)
 			ctx->input_centroid = TRUE;
 	}
 

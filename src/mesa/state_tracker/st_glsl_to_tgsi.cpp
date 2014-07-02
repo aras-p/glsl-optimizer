@@ -4848,6 +4848,7 @@ emit_edgeflags(struct st_translate *t)
  * \param inputSemanticIndex  the semantic index (ex: which texcoord) for
  *                            each input
  * \param interpMode  the TGSI_INTERPOLATE_LINEAR/PERSP mode for each input
+ * \param interpLocation the TGSI_INTERPOLATE_LOC_* location for each input
  * \param numOutputs  number of output registers used
  * \param outputMapping  maps Mesa fragment program outputs to TGSI
  *                       generic outputs
@@ -4869,7 +4870,7 @@ st_translate_program(
    const ubyte inputSemanticName[],
    const ubyte inputSemanticIndex[],
    const GLuint interpMode[],
-   const GLboolean is_centroid[],
+   const GLuint interpLocation[],
    GLuint numOutputs,
    const GLuint outputMapping[],
    const ubyte outputSemanticName[],
@@ -4915,7 +4916,7 @@ st_translate_program(
                                                         inputSemanticName[i],
                                                         inputSemanticIndex[i],
                                                         interpMode[i], 0,
-                                                        is_centroid[i]);
+                                                        interpLocation[i]);
       }
 
       if (proginfo->InputsRead & VARYING_BIT_POS) {

@@ -2735,6 +2735,11 @@ This token is only valid for fragment shader INPUT declarations.
 The Interpolate field specifes the way input is being interpolated by
 the rasteriser and is one of TGSI_INTERPOLATE_*.
 
+The Location field specifies the location inside the pixel that the
+interpolation should be done at, one of ``TGSI_INTERPOLATE_LOC_*``. Note that
+when per-sample shading is enabled, the implementation may choose to
+interpolate at the sample irrespective of the Location field.
+
 The CylindricalWrap bitfield specifies which register components
 should be subject to cylindrical wrapping when interpolating by the
 rasteriser. If TGSI_CYLINDRICAL_WRAP_X is set to 1, the X component

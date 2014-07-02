@@ -172,7 +172,7 @@ static int si_store_shader_io_attribs(struct si_shader *shader,
 		shader->input[i].sid = d->Semantic.Index;
 		shader->input[i].index = d->Range.First;
 		shader->input[i].interpolate = d->Interp.Interpolate;
-		shader->input[i].centroid = d->Interp.Centroid;
+		shader->input[i].centroid = d->Interp.Location == TGSI_INTERPOLATE_LOC_CENTROID;
 		return -1;
 
 	case TGSI_FILE_OUTPUT:
@@ -427,7 +427,7 @@ static void declare_input_fs(
 	case TGSI_INTERPOLATE_LINEAR:
 		if (si_shader_ctx->shader->key.ps.interp_at_sample)
 			interp_param = LLVMGetParam(main_fn, SI_PARAM_LINEAR_SAMPLE);
-		else if (decl->Interp.Centroid)
+		else if (decl->Interp.Location == TGSI_INTERPOLATE_LOC_CENTROID)
 			interp_param = LLVMGetParam(main_fn, SI_PARAM_LINEAR_CENTROID);
 		else
 			interp_param = LLVMGetParam(main_fn, SI_PARAM_LINEAR_CENTER);
@@ -441,7 +441,7 @@ static void declare_input_fs(
 	case TGSI_INTERPOLATE_PERSPECTIVE:
 		if (si_shader_ctx->shader->key.ps.interp_at_sample)
 			interp_param = LLVMGetParam(main_fn, SI_PARAM_PERSP_SAMPLE);
-		else if (decl->Interp.Centroid)
+		else if (decl->Interp.Location == TGSI_INTERPOLATE_LOC_CENTROID)
 			interp_param = LLVMGetParam(main_fn, SI_PARAM_PERSP_CENTROID);
 		else
 			interp_param = LLVMGetParam(main_fn, SI_PARAM_PERSP_CENTER);

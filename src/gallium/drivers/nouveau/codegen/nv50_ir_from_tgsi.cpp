@@ -950,7 +950,7 @@ bool Source::scanDeclaration(const struct tgsi_full_declaration *decl)
                default:
                   break;
                }
-               if (decl->Interp.Centroid || info->io.sampleInterp)
+               if (decl->Interp.Location || info->io.sampleInterp)
                   info->in[i].centroid = 1;
             }
          }

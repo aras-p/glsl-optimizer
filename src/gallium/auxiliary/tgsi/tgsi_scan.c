@@ -187,7 +187,7 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                   info->input_semantic_name[reg] = (ubyte) semName;
                   info->input_semantic_index[reg] = (ubyte) semIndex;
                   info->input_interpolate[reg] = (ubyte)fulldecl->Interp.Interpolate;
-                  info->input_centroid[reg] = (ubyte)fulldecl->Interp.Centroid;
+                  info->input_interpolate_loc[reg] = (ubyte)fulldecl->Interp.Location;
                   info->input_cylindrical_wrap[reg] = (ubyte)fulldecl->Interp.CylindricalWrap;
                   info->num_inputs++;
 

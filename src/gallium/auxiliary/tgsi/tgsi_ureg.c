@@ -103,7 +103,7 @@ struct ureg_program
       unsigned semantic_index;
       unsigned interp;
       unsigned char cylindrical_wrap;
-      unsigned char centroid;
+      unsigned interp_location;
    } fs_input[UREG_MAX_INPUT];
    unsigned nr_fs_inputs;
 
@@ -345,7 +345,7 @@ ureg_DECL_fs_input_cyl_centroid(struct ureg_program *ureg,
                        unsigned semantic_index,
                        unsigned interp_mode,
                        unsigned cylindrical_wrap,
-                       unsigned centroid)
+                       unsigned interp_location)
 {
    unsigned i;
 
@@ -361,7 +361,7 @@ ureg_DECL_fs_input_cyl_centroid(struct ureg_program *ureg,
       ureg->fs_input[i].semantic_index = semantic_index;
       ureg->fs_input[i].interp = interp_mode;
       ureg->fs_input[i].cylindrical_wrap = cylindrical_wrap;
-      ureg->fs_input[i].centroid = centroid;
+      ureg->fs_input[i].interp_location = interp_location;
       ureg->nr_fs_inputs++;
    } else {
       set_bad(ureg);
@@ -1288,7 +1288,7 @@ emit_decl_fs(struct ureg_program *ureg,
              unsigned semantic_index,
              unsigned interpolate,
              unsigned cylindrical_wrap,
-             unsigned centroid)
+             unsigned interpolate_location)
 {
    union tgsi_any_token *out = get_tokens(ureg, DOMAIN_DECL, 4);
 
@@ -1307,7 +1307,7 @@ emit_decl_fs(struct ureg_program *ureg,
    out[2].value = 0;
    out[2].decl_interp.Interpolate = interpolate;
    out[2].decl_interp.CylindricalWrap = cylindrical_wrap;
-   out[2].decl_interp.Centroid = centroid;
+   out[2].decl_interp.Location = interpolate_location;
 
    out[3].value = 0;
    out[3].decl_semantic.Name = semantic_name;
@@ -1539,7 +1539,7 @@ static void emit_decls( struct ureg_program *ureg )
                       ureg->fs_input[i].semantic_index,
                       ureg->fs_input[i].interp,
                       ureg->fs_input[i].cylindrical_wrap,
-                      ureg->fs_input[i].centroid);
+                      ureg->fs_input[i].interp_location);
       }
    } else {
       for (i = 0; i < ureg->nr_gs_inputs; i++) {

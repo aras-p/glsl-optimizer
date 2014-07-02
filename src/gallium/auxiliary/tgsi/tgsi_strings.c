@@ -142,6 +142,13 @@ const char *tgsi_interpolate_names[TGSI_INTERPOLATE_COUNT] =
    "COLOR"
 };
 
+const char *tgsi_interpolate_locations[TGSI_INTERPOLATE_LOC_COUNT] =
+{
+   "CENTER",
+   "CENTROID",
+   "SAMPLE",
+};
+
 const char *tgsi_primitive_names[PIPE_PRIM_MAX] =
 {
    "POINTS",

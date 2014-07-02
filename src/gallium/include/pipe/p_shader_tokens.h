@@ -103,6 +103,11 @@ enum tgsi_file_type {
 #define TGSI_INTERPOLATE_COLOR         3 /* special color case for smooth/flat */
 #define TGSI_INTERPOLATE_COUNT         4
 
+#define TGSI_INTERPOLATE_LOC_CENTER    0
+#define TGSI_INTERPOLATE_LOC_CENTROID  1
+#define TGSI_INTERPOLATE_LOC_SAMPLE    2
+#define TGSI_INTERPOLATE_LOC_COUNT     3
+
 #define TGSI_CYLINDRICAL_WRAP_X (1 << 0)
 #define TGSI_CYLINDRICAL_WRAP_Y (1 << 1)
 #define TGSI_CYLINDRICAL_WRAP_Z (1 << 2)
@@ -138,9 +143,9 @@ struct tgsi_declaration_dimension
 struct tgsi_declaration_interp
 {
    unsigned Interpolate : 4;   /**< one of TGSI_INTERPOLATE_x */
-   unsigned Centroid    : 1;   /**< centroid sampling? */
+   unsigned Location    : 2;   /**< one of TGSI_INTERPOLATE_LOC_x */
    unsigned CylindricalWrap:4; /**< TGSI_CYLINDRICAL_WRAP_x flags */
-   unsigned Padding     : 23;
+   unsigned Padding     : 22;
 };
 
 #define TGSI_SEMANTIC_POSITION   0

@@ -199,7 +199,7 @@ ureg_DECL_fs_input_cyl_centroid(struct ureg_program *,
                        unsigned semantic_index,
                        unsigned interp_mode,
                        unsigned cylindrical_wrap,
-                       unsigned centroid);
+                       unsigned interp_location);
 
 static INLINE struct ureg_src
 ureg_DECL_fs_input_cyl(struct ureg_program *ureg,

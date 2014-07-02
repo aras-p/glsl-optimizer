@@ -349,8 +349,9 @@ iter_declaration(
          ENM( decl->Interp.Interpolate, tgsi_interpolate_names );
       }
 
-      if (decl->Interp.Centroid) {
-         TXT( ", CENTROID" );
+      if (decl->Interp.Location != TGSI_INTERPOLATE_LOC_CENTER) {
+         TXT( ", " );
+         ENM( decl->Interp.Location, tgsi_interpolate_locations );
       }
 
       if (decl->Interp.CylindricalWrap) {

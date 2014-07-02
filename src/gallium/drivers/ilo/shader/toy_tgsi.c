@@ -2298,7 +2298,7 @@ decl_add_in(struct toy_tgsi *tgsi, const struct tgsi_full_declaration *decl)
          tgsi->inputs[slot].semantic_index = index;
       }
       tgsi->inputs[slot].interp = interp->Interpolate;
-      tgsi->inputs[slot].centroid = interp->Centroid;
+      tgsi->inputs[slot].centroid = interp->Location == TGSI_INTERPOLATE_LOC_CENTROID;
    }
 }
 
