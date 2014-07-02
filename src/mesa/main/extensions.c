@@ -609,6 +609,15 @@ _mesa_one_time_init_extension_overrides(void)
 
    /* Copy env_const because strtok() is destructive. */
    env = strdup(env_const);
+
+   if (env == NULL || extra_extensions == NULL ||
+           cant_disable_extensions == NULL) {
+       free(env);
+       free(extra_extensions);
+       free(cant_disable_extensions);
+       return;
+   }
+
    for (ext = strtok(env, " "); ext != NULL; ext = strtok(NULL, " ")) {
       int enable;
       bool recognized;
