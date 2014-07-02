@@ -2496,7 +2496,7 @@ fs_visitor::visit(ir_call *ir)
 }
 
 void
-fs_visitor::visit(ir_return *ir)
+fs_visitor::visit(ir_return *)
 {
    unreachable("FINISHME");
 }
