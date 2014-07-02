@@ -287,6 +287,12 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	RETURN_STRING_TOKEN (VERSION_TOKEN);
 }
 
+	/* Swallow empty #pragma directives, (to avoid confusing the
+	 * downstream compiler). */
+<HASH>pragma{HSPACE}*/[\r\n] {
+	BEGIN INITIAL;
+}
+
 	/* glcpp doesn't handle #extension, #version, or #pragma directives.
 	 * Simply pass them through to the main compiler's lexer/parser. */
 <HASH>(extension|pragma)[^\r\n]* {
