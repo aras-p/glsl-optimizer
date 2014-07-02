@@ -323,6 +323,7 @@ static const struct extension extension_table[] = {
    { "GL_AMD_shader_stencil_export",               o(ARB_shader_stencil_export),               GL,             2009 },
    { "GL_AMD_shader_trinary_minmax",               o(dummy_true),                              GL,             2012 },
    { "GL_AMD_vertex_shader_layer",                 o(AMD_vertex_shader_layer),                 GLC,            2012 },
+   { "GL_AMD_vertex_shader_viewport_index",        o(AMD_vertex_shader_viewport_index),        GLC,            2012 },
    { "GL_APPLE_object_purgeable",                  o(APPLE_object_purgeable),                  GL,             2006 },
    { "GL_APPLE_packed_pixels",                     o(dummy_true),                              GLL,            2002 },
    { "GL_APPLE_texture_max_level",                 o(dummy_true),                                   ES1 | ES2, 2009 },
