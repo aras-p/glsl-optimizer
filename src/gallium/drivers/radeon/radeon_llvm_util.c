@@ -100,13 +100,17 @@ LLVMModuleRef radeon_llvm_get_kernel_module(LLVMContextRef ctx, unsigned index,
 	kernel_metadata = MALLOC(num_kernels * sizeof(LLVMValueRef));
 	LLVMGetNamedMetadataOperands(mod, "opencl.kernels", kernel_metadata);
 	for (i = 0; i < num_kernels; i++) {
-		LLVMValueRef kernel_signature, kernel_function;
+		LLVMValueRef kernel_signature, *kernel_function;
+		unsigned num_kernel_md_operands;
 		if (i == index) {
 			continue;
 		}
 		kernel_signature = kernel_metadata[i];
-		LLVMGetMDNodeOperands(kernel_signature, &kernel_function);
-		LLVMDeleteFunction(kernel_function);
+		num_kernel_md_operands = LLVMGetMDNodeNumOperands(kernel_signature);
+		kernel_function = MALLOC(num_kernel_md_operands * sizeof (LLVMValueRef));
+		LLVMGetMDNodeOperands(kernel_signature, kernel_function);
+		LLVMDeleteFunction(*kernel_function);
+		FREE(kernel_function);
 	}
 	FREE(kernel_metadata);
 	radeon_llvm_optimize(mod);
