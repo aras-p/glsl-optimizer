@@ -673,6 +673,11 @@ AC_ARG_ENABLE([omx],
          [enable OpenMAX library @<:@default=disabled@:>@])],
    [enable_omx="$enableval"],
    [enable_omx=no])
+AC_ARG_ENABLE([va],
+   [AS_HELP_STRING([--enable-va],
+         [enable va library @<:@default=auto@:>@])],
+   [enable_va="$enableval"],
+   [enable_va=auto])
 AC_ARG_ENABLE([opencl],
    [AS_HELP_STRING([--enable-opencl],
          [enable OpenCL library @<:@default=disabled@:>@])],
@@ -744,6 +749,7 @@ if test "x$enable_opengl" = xno -a \
         "x$enable_xvmc" = xno -a \
         "x$enable_vdpau" = xno -a \
         "x$enable_omx" = xno -a \
+        "x$enable_va" = xno -a \
         "x$enable_opencl" = xno; then
     AC_MSG_ERROR([at least one API should be enabled])
 fi
@@ -1404,6 +1410,10 @@ if test -n "$with_gallium_drivers" -a "x$with_gallium_drivers" != xswrast; then
     if test "x$enable_omx" = xauto; then
 	PKG_CHECK_EXISTS([libomxil-bellagio], [enable_omx=yes], [enable_omx=no])
     fi
+
+    if test "x$enable_va" = xauto; then
+        PKG_CHECK_EXISTS([libva], [enable_va=yes], [enable_va=no])
+    fi
 fi
 
 if test "x$enable_xvmc" = xyes; then
@@ -1424,6 +1434,14 @@ if test "x$enable_omx" = xyes; then
     enable_gallium_loader=$enable_shared_pipe_drivers
 fi
 AM_CONDITIONAL(HAVE_ST_OMX, test "x$enable_omx" = xyes)
+
+if test "x$enable_va" = xyes; then
+    PKG_CHECK_MODULES([VA], [libva >= 0.35.0 x11-xcb xcb-dri2 >= $XCBDRI2_REQUIRED],
+                      [VA_LIBS="`$PKG_CONFIG --libs x11-xcb xcb-dri2`"])
+    GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS va"
+    enable_gallium_loader=$enable_shared_pipe_drivers
+fi
+AM_CONDITIONAL(HAVE_ST_VA, test "x$enable_va" = xyes)
 
 dnl
 dnl OpenCL configuration
@@ -1793,6 +1811,15 @@ AC_ARG_WITH([omx-libdir],
     [OMX_LIB_INSTALL_DIR="$OMX_LIB_INSTALL_DIR_DEFAULT"])
 AC_SUBST([OMX_LIB_INSTALL_DIR])
 
+dnl Directory for VA libs
+
+AC_ARG_WITH([va-libdir],
+    [AS_HELP_STRING([--with-va-libdir=DIR],
+        [directory for the VA libraries @<:@default=`pkg-config libva --variable=driverdir`@:>@])],
+    [VA_LIB_INSTALL_DIR="$withval"],
+    [VA_LIB_INSTALL_DIR=`pkg-config libva --variable=driverdir`])
+AC_SUBST([VA_LIB_INSTALL_DIR])
+
 dnl
 dnl Gallium helper functions
 dnl
@@ -1817,6 +1844,9 @@ gallium_require_drm_loader() {
             AC_MSG_ERROR([Gallium drm loader requires libudev >= $LIBUDEV_REQUIRED or sysfs])
         fi
         enable_gallium_drm_loader=yes
+    fi
+    if test "x$enable_va" = xyes && test "x$7" != x; then
+         GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $7"
     fi
 }
 
@@ -2071,6 +2101,11 @@ AM_CONDITIONAL(HAVE_SPARC_ASM, test "x$asm_arch" = xsparc)
 AC_SUBST([VDPAU_MAJOR], 1)
 AC_SUBST([VDPAU_MINOR], 0)
 
+VA_MAJOR=`$PKG_CONFIG --modversion libva | $SED -n 's/\([[^\.]]*\)\..*$/\1/p'`
+VA_MINOR=`$PKG_CONFIG --modversion libva | $SED -n 's/.*\.\(.*\)\..*$/\1/p'`
+AC_SUBST([VA_MAJOR], $VA_MAJOR)
+AC_SUBST([VA_MINOR], $VA_MINOR)
+
 AC_SUBST([XVMC_MAJOR], 1)
 AC_SUBST([XVMC_MINOR], 0)
 
@@ -2135,6 +2170,7 @@ AC_CONFIG_FILES([Makefile
 		src/gallium/state_trackers/glx/xlib/Makefile
 		src/gallium/state_trackers/omx/Makefile
 		src/gallium/state_trackers/osmesa/Makefile
+		src/gallium/state_trackers/va/Makefile
 		src/gallium/state_trackers/vdpau/Makefile
 		src/gallium/state_trackers/vega/Makefile
 		src/gallium/state_trackers/xa/Makefile
@@ -2148,6 +2184,7 @@ AC_CONFIG_FILES([Makefile
 		src/gallium/targets/osmesa/Makefile
 		src/gallium/targets/osmesa/osmesa.pc
 		src/gallium/targets/pipe-loader/Makefile
+		src/gallium/targets/va/Makefile
 		src/gallium/targets/vdpau/Makefile
 		src/gallium/targets/xa/Makefile
 		src/gallium/targets/xa/xatracker.pc

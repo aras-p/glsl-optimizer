@@ -158,6 +158,10 @@ if HAVE_GALLIUM_OSMESA
 SUBDIRS += state_trackers/osmesa targets/osmesa
 endif
 
+if HAVE_ST_VA
+SUBDIRS += state_trackers/va targets/va
+endif
+
 if HAVE_ST_VDPAU
 SUBDIRS += state_trackers/vdpau targets/vdpau
 endif

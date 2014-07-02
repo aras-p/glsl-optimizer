@@ -1,0 +1,10 @@
+C_SOURCES := \
+	buffer.c \
+	config.c \
+	context.c \
+	display.c \
+	image.c \
+	picture.c \
+	subpicture.c \
+	surface.c \
+	va_private.h
