@@ -306,8 +306,6 @@ static inline void                                                            \
 brw_inst_set_##name(const struct brw_context *brw, brw_inst *inst, int16_t v) \
 {                                                                             \
    assert(assertions);                                                        \
-   assert(v <= (1 << 16) - 1);                                                \
-   assert(v > -(1 << 16));                                                    \
    (void) brw;                                                                \
    brw_inst_set_bits(inst, high, low, (uint16_t) v);                          \
 }                                                                             \
