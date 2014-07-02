@@ -33,18 +33,22 @@
 static void
 gen6_upload_gs_push_constants(struct brw_context *brw)
 {
+   struct brw_stage_state *stage_state = &brw->gs.base;
+
    /* BRW_NEW_GEOMETRY_PROGRAM */
    const struct brw_geometry_program *gp =
       (struct brw_geometry_program *) brw->geometry_program;
 
    if (gp) {
       /* CACHE_NEW_GS_PROG */
-      struct brw_stage_state *stage_state = &brw->gs.base;
       struct brw_stage_prog_data *prog_data = &brw->gs.prog_data->base.base;
 
       gen6_upload_push_constants(brw, &gp->program.Base, prog_data,
                                  stage_state, AUB_TRACE_VS_CONSTANTS);
    }
+
+   if (brw->gen >= 7)
+      gen7_upload_constant_state(brw, stage_state, gp, _3DSTATE_CONSTANT_GS);
 }
 
 const struct brw_tracked_state gen6_gs_push_constants = {
