@@ -250,7 +250,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	}
 
 	/* Single-line comments */
-"//"[^\r\n]* {
+<INITIAL,DEFINE>"//"[^\r\n]* {
 }
 
 	/* Multi-line comments */
