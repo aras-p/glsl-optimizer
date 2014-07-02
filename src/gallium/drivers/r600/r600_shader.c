@@ -2042,6 +2042,23 @@ static int r600_shader_from_tgsi(struct r600_context *rctx,
 					output[j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_POS;
 					pos_emitted = true;
 					break;
+				case TGSI_SEMANTIC_VIEWPORT_INDEX:
+					/* spi_sid is 0 for outputs that are
+					 * not consumed by PS */
+					if (shader->output[i].spi_sid) {
+						output[j].array_base = next_param_base++;
+						output[j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PARAM;
+						j++;
+						memcpy(&output[j], &output[j-1], sizeof(struct r600_bytecode_output));
+					}
+					output[j].array_base = 61;
+					output[j].swizzle_x = 7;
+					output[j].swizzle_y = 7;
+					output[j].swizzle_z = 7;
+					output[j].swizzle_w = 0;
+					output[j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_POS;
+					pos_emitted = true;
+					break;
 				case TGSI_SEMANTIC_CLIPVERTEX:
 					j--;
 					break;
