@@ -914,54 +914,54 @@ static void load_texture( texenv_fragment_program *p, GLuint unit )
    switch (texTarget) {
    case TEXTURE_1D_INDEX:
       if (p->state->unit[unit].shadow)
-	 sampler_type = p->shader->symbols->get_type("sampler1DShadow");
+	 sampler_type = glsl_type::sampler1DShadow_type;
       else
-	 sampler_type = p->shader->symbols->get_type("sampler1D");
+	 sampler_type = glsl_type::sampler1D_type;
       coords = 1;
       break;
    case TEXTURE_1D_ARRAY_INDEX:
       if (p->state->unit[unit].shadow)
-	 sampler_type = p->shader->symbols->get_type("sampler1DArrayShadow");
+	 sampler_type = glsl_type::sampler1DArrayShadow_type;
       else
-	 sampler_type = p->shader->symbols->get_type("sampler1DArray");
+	 sampler_type = glsl_type::sampler1DArray_type;
       coords = 2;
       break;
    case TEXTURE_2D_INDEX:
       if (p->state->unit[unit].shadow)
-	 sampler_type = p->shader->symbols->get_type("sampler2DShadow");
+	 sampler_type = glsl_type::sampler2DShadow_type;
       else
-	 sampler_type = p->shader->symbols->get_type("sampler2D");
+	 sampler_type = glsl_type::sampler2D_type;
       coords = 2;
       break;
    case TEXTURE_2D_ARRAY_INDEX:
       if (p->state->unit[unit].shadow)
-	 sampler_type = p->shader->symbols->get_type("sampler2DArrayShadow");
+	 sampler_type = glsl_type::sampler2DArrayShadow_type;
       else
-	 sampler_type = p->shader->symbols->get_type("sampler2DArray");
+	 sampler_type = glsl_type::sampler2DArray_type;
       coords = 3;
       break;
    case TEXTURE_RECT_INDEX:
       if (p->state->unit[unit].shadow)
-	 sampler_type = p->shader->symbols->get_type("sampler2DRectShadow");
+	 sampler_type = glsl_type::sampler2DRectShadow_type;
       else
-	 sampler_type = p->shader->symbols->get_type("sampler2DRect");
+	 sampler_type = glsl_type::sampler2DRect_type;
       coords = 2;
       break;
    case TEXTURE_3D_INDEX:
       assert(!p->state->unit[unit].shadow);
-      sampler_type = p->shader->symbols->get_type("sampler3D");
+      sampler_type = glsl_type::sampler3D_type;
       coords = 3;
       break;
    case TEXTURE_CUBE_INDEX:
       if (p->state->unit[unit].shadow)
-	 sampler_type = p->shader->symbols->get_type("samplerCubeShadow");
+	 sampler_type = glsl_type::samplerCubeShadow_type;
       else
-	 sampler_type = p->shader->symbols->get_type("samplerCube");
+	 sampler_type = glsl_type::samplerCube_type;
       coords = 3;
       break;
    case TEXTURE_EXTERNAL_INDEX:
       assert(!p->state->unit[unit].shadow);
-      sampler_type = p->shader->symbols->get_type("samplerExternalOES");
+      sampler_type = glsl_type::samplerExternalOES_type;
       coords = 2;
       break;
    }
@@ -1241,7 +1241,7 @@ create_new_program(struct gl_context *ctx, struct state_key *key)
    state->symbols->add_function(main_f);
 
    ir_function_signature *main_sig =
-      new(p.mem_ctx) ir_function_signature(p.shader->symbols->get_type("void"));
+      new(p.mem_ctx) ir_function_signature(glsl_type::void_type);
    main_sig->is_defined = true;
    main_f->add_signature(main_sig);
 
