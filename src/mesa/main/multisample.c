@@ -89,7 +89,7 @@ _mesa_GetMultisamplefv(GLenum pname, GLuint index, GLfloat * val)
 
       /* winsys FBOs are upside down */
       if (_mesa_is_winsys_fbo(ctx->DrawBuffer))
-         val[1] = 1 - val[1];
+         val[1] = 1.0f - val[1];
 
       return;
    }
