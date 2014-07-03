@@ -28,7 +28,7 @@ test_specific_args ()
 {
     test="$1"
 
-    grep 'glcpp-args:' "$test" | sed -e 's,^.*glcpp-args: *,,'
+    tr "\r" "\n" < "$test" | grep 'glcpp-args:' | sed -e 's,^.*glcpp-args: *,,'
 }
 
 # Parse command-line options
