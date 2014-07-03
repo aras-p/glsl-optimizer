@@ -100,17 +100,23 @@ gen8_upload_sf_clip_viewport(struct brw_context *brw)
       vp[10] = -gby; /* y-min */
       vp[11] =  gby; /* y-max */
 
-      /* _NEW_SCISSOR | _NEW_VIEWPORT | _NEW_BUFFERS: Screen Space Viewport */
+      /* _NEW_SCISSOR | _NEW_VIEWPORT | _NEW_BUFFERS: Screen Space Viewport
+       * The hardware will take the intersection of the drawing rectangle,
+       * scissor rectangle, and the viewport extents. We don't need to be
+       * smart, and can therefore just program the viewport extents.
+       */
+      float viewport_Xmax = ctx->ViewportArray[i].X + ctx->ViewportArray[i].Width;
+      float viewport_Ymax = ctx->ViewportArray[i].Y + ctx->ViewportArray[i].Height;
       if (render_to_fbo) {
-         vp[12] = ctx->DrawBuffer->_Xmin;
-         vp[13] = ctx->DrawBuffer->_Xmax - 1;
-         vp[14] = ctx->DrawBuffer->_Ymin;
-         vp[15] = ctx->DrawBuffer->_Ymax - 1;
+         vp[12] = ctx->ViewportArray[i].X;
+         vp[13] = viewport_Xmax - 1;
+         vp[14] = ctx->ViewportArray[i].Y;
+         vp[15] = viewport_Ymax - 1;
       } else {
-         vp[12] = ctx->DrawBuffer->_Xmin;
-         vp[13] = ctx->DrawBuffer->_Xmax - 1;
-         vp[14] = ctx->DrawBuffer->Height - ctx->DrawBuffer->_Ymax;
-         vp[15] = ctx->DrawBuffer->Height - ctx->DrawBuffer->_Ymin - 1;
+         vp[12] = ctx->ViewportArray[i].X;
+         vp[13] = viewport_Xmax - 1;
+         vp[14] = ctx->DrawBuffer->Height - viewport_Ymax;
+         vp[15] = ctx->DrawBuffer->Height - ctx->ViewportArray[i].Y - 1;
       }
 
       vp += 16;
