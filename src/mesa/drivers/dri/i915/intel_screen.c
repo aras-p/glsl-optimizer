@@ -1152,7 +1152,8 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
 {
    struct intel_screen *intelScreen;
 
-   if (psp->dri2.loader->base.version <= 2 ||
+   if (psp->image.loader) {
+   } else if (psp->dri2.loader->base.version <= 2 ||
        psp->dri2.loader->getBuffersWithFormat == NULL) {
       fprintf(stderr,
 	      "\nERROR!  DRI2 loader with getBuffersWithFormat() "
