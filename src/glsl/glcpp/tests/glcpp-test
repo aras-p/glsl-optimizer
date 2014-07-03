@@ -19,6 +19,7 @@ Run the test suite for mesa's GLSL pre-processor.
 
 Valid options include:
 
+	--testdir=<DIR>	Use tests in the given <DIR> (default is ".")
 	--valgrind	Run the test suite a second time under valgrind
 EOF
 }
@@ -32,17 +33,24 @@ test_specific_args ()
 
 # Parse command-line options
 for option; do
-    if [ "${option}" = '--help' ] ; then
-	usage
-	exit 0
-    elif [ "${option}" = '--valgrind' ] ; then
-	do_valgrind=yes
-    else
-	echo "Unrecognized option: $option" >&2
-	echo >&2
-	usage
-	exit 1
-    fi
+    case "${option}" in
+        "--help")
+            usage
+            exit 0
+            ;;
+        "--valgrind")
+	    do_valgrind=yes
+            ;;
+        "--testdir="*)
+            testdir="${option#--testdir=}"
+            ;;
+        *)
+	    echo "Unrecognized option: $option" >&2
+	    echo >&2
+	    usage
+	    exit 1
+            ;;
+        esac
 done
 
 total=0

@@ -1,0 +1,118 @@
+#!/bin/sh
+
+total=0
+pass=0
+
+# This supports a pipe that doesn't destroy the exit status of first command
+#
+# http://unix.stackexchange.com/questions/14270/get-exit-status-of-process-thats-piped-to-another
+stdintoexitstatus() {
+    read exitstatus
+    return $exitstatus
+}
+
+run_test ()
+{
+    cmd="$1"
+
+    total=$((total+1))
+
+    if [ "$VERBOSE" = "yes" ]; then
+	if $cmd; then
+	    echo "PASS"
+	    pass=$((pass+1))
+	else
+	    echo "FAIL"
+	fi
+    else
+	# This is "$cmd | tail -2" but with the exit status of "$cmd" not "tail -2"
+	if (((($cmd; echo $? >&3) | tail -2 | head -1 >&4) 3>&1) | stdintoexitstatus) 4>&1; then
+	    echo "PASS"
+	    pass=$((pass+1))
+	else
+	    echo "FAIL"
+	fi
+    fi
+}
+
+usage ()
+{
+	cat <<EOF
+Usage: glcpp-cr-lf [options...]
+
+Run the entire glcpp-test suite several times, each time with each source
+file transformed to use a non-standard line-termination character. Each
+entire run with a different line-termination character is considered a
+single test.
+
+Valid options include:
+
+	-v|--verbose	Print all output from the various sub-tests
+EOF
+}
+
+# Parse command-line options
+for option; do
+    case "${option}" in
+	-v|--verbose)
+	    VERBOSE=yes;
+	    ;;
+	*)
+	    echo "Unrecognized option: $option" >&2
+	    echo >&2
+	    usage
+	    exit 1
+	    ;;
+	esac
+done
+
+# All tests depend on the .out files being present. So first do a
+# normal run of the test suite, (silently) just to create the .out
+# files as a side effect.
+./glcpp-test >/dev/null 2>&1
+
+echo "===== Testing with \\\\r line terminators (old Mac format) ====="
+
+# Prepare test files with '\r' instead of '\n'
+rm -rf ./subtest-cr
+mkdir subtest-cr
+for file in *.c; do
+    tr "\n" "\r" < "$file" > subtest-cr/"$file"
+    cp "$file".out subtest-cr/"$file".expected
+done
+
+run_test "./glcpp-test --testdir=subtest-cr"
+
+echo "===== Testing with \\\\r\\\\n line terminators (DOS format) ====="
+
+# Prepare test files with '\r\n' instead of '\n'
+rm -rf ./subtest-cr-lf
+mkdir subtest-cr-lf
+for file in *.c; do
+    sed -e 's/$/\r/' < "$file" > subtest-cr-lf/"$file"
+    cp "$file".out subtest-cr-lf/"$file".expected
+done
+
+run_test "./glcpp-test --testdir=subtest-cr-lf"
+
+echo "===== Testing with \\\\n\\\\r (bizarre, but allowed by GLSL spec.) ====="
+
+# Prepare test files with '\n\r' instead of '\n'
+rm -rf ./subtest-lf-cr
+mkdir subtest-lf-cr
+for file in *.c; do
+    tr "\n" "\r" < "$file" | sed -e 's/\r/\n\r/g' > subtest-lf-cr/"$file"
+    cp "$file".out subtest-lf-cr/"$file".expected
+done
+
+run_test "./glcpp-test --testdir=subtest-lf-cr"
+
+echo ""
+echo "$pass/$total tests returned correct results"
+echo ""
+
+if [ "$pass" = "$total" ]; then
+    exit 0
+else
+    exit 1
+fi
