@@ -26,6 +26,7 @@
  * Thomas Hellstrom <thellstrom-at-vmware-dot-com>
  */
 
+#include <unistd.h>
 #include "xa_tracker.h"
 #include "xa_priv.h"
 #include "pipe/p_state.h"
@@ -140,6 +141,7 @@ xa_tracker_create(int drm_fd)
     struct xa_tracker *xa = calloc(1, sizeof(struct xa_tracker));
     enum xa_surface_type stype;
     unsigned int num_formats;
+    int loader_fd;
 
     if (!xa)
 	return NULL;
@@ -147,7 +149,10 @@ xa_tracker_create(int drm_fd)
 #if GALLIUM_STATIC_TARGETS
     xa->screen = dd_create_screen(drm_fd);
 #else
-    if (pipe_loader_drm_probe_fd(&xa->dev, drm_fd, false))
+    loader_fd = dup(drm_fd);
+    if (loader_fd == -1)
+        return NULL;
+    if (pipe_loader_drm_probe_fd(&xa->dev, loader_fd, false))
 	xa->screen = pipe_loader_create_screen(xa->dev, PIPE_SEARCH_DIR);
 #endif
     if (!xa->screen)
