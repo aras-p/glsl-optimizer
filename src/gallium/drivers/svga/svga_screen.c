@@ -349,6 +349,8 @@ static int svga_get_shader_param(struct pipe_screen *screen, unsigned shader, en
          return 16;
       case PIPE_SHADER_CAP_PREFERRED_IR:
          return PIPE_SHADER_IR_TGSI;
+      case PIPE_SHADER_CAP_DOUBLES:
+         return 0;
       }
       /* If we get here, we failed to handle a cap above */
       debug_printf("Unexpected fragment shader query %u\n", param);
@@ -401,6 +403,8 @@ static int svga_get_shader_param(struct pipe_screen *screen, unsigned shader, en
          return 0;
       case PIPE_SHADER_CAP_PREFERRED_IR:
          return PIPE_SHADER_IR_TGSI;
+      case PIPE_SHADER_CAP_DOUBLES:
+         return 0;
       }
       /* If we get here, we failed to handle a cap above */
       debug_printf("Unexpected vertex shader query %u\n", param);
