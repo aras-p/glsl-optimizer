@@ -136,7 +136,7 @@ set_vertex_shader_layered(struct st_context *st)
    struct pipe_context *pipe = st->pipe;
 
    if (!pipe->screen->get_param(pipe->screen, PIPE_CAP_TGSI_INSTANCEID) ||
-       !pipe->screen->get_param(pipe->screen, PIPE_CAP_TGSI_VS_LAYER)) {
+       !pipe->screen->get_param(pipe->screen, PIPE_CAP_TGSI_VS_LAYER_VIEWPORT)) {
       assert(!"Got layered clear, but the VS layer output is unsupported");
       set_vertex_shader(st);
       return;

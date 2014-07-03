@@ -325,7 +325,7 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
    }
 
    if (pipe->screen->get_param(pipe->screen, PIPE_CAP_TGSI_INSTANCEID) &&
-       pipe->screen->get_param(pipe->screen, PIPE_CAP_TGSI_VS_LAYER)) {
+       pipe->screen->get_param(pipe->screen, PIPE_CAP_TGSI_VS_LAYER_VIEWPORT)) {
       ctx->vs_layered = util_make_layered_clear_vertex_shader(pipe);
    }
 

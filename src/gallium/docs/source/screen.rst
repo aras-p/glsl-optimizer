@@ -174,8 +174,10 @@ The integer capabilities:
 * ``PIPE_CAP_MIXED_FRAMEBUFFER_SIZES``: Whether it is allowed to have
   different sizes for fb color/zs attachments. This controls whether
   ARB_framebuffer_object is provided.
-* ``PIPE_CAP_TGSI_VS_LAYER``: Whether TGSI_SEMANTIC_LAYER is supported
-  as a vertex shader output.
+* ``PIPE_CAP_TGSI_VS_LAYER_VIEWPORT``: Whether ``TGSI_SEMANTIC_LAYER`` and
+  ``TGSI_SEMANTIC_VIEWPORT_INDEX`` are supported as vertex shader
+  outputs. Note that the viewport will only be used if multiple viewports are
+  exposed.
 * ``PIPE_CAP_MAX_GEOMETRY_OUTPUT_VERTICES``: The maximum number of vertices
   output by a single invocation of a geometry shader.
 * ``PIPE_CAP_MAX_GEOMETRY_TOTAL_OUTPUT_COMPONENTS``: The maximum number of

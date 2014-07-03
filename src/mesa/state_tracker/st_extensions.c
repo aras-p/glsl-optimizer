@@ -624,7 +624,7 @@ void st_init_extensions(struct st_context *st)
    /* This extension needs full OpenGL 3.2, but we don't know if that's
     * supported at this point. Only check the GLSL version. */
    if (ctx->Const.GLSLVersion >= 150 &&
-       screen->get_param(screen, PIPE_CAP_TGSI_VS_LAYER)) {
+       screen->get_param(screen, PIPE_CAP_TGSI_VS_LAYER_VIEWPORT)) {
       ctx->Extensions.AMD_vertex_shader_layer = GL_TRUE;
    }
 
