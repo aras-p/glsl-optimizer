@@ -40,7 +40,7 @@ static void
 st_GetSamplePosition(struct gl_context *ctx,
                      struct gl_framebuffer *fb,
                      GLuint index,
-                     GLfloat *outValue)
+                     GLfloat *outPos)
 {
    struct st_context *st = st_context(ctx);
 
@@ -48,7 +48,9 @@ st_GetSamplePosition(struct gl_context *ctx,
 
    if (st->pipe->get_sample_position)
       st->pipe->get_sample_position(st->pipe, (unsigned) fb->Visual.samples,
-                                    index, outValue);
+                                    index, outPos);
+   else
+      outPos[0] = outPos[1] = 0.5f;
 }
 
 
