@@ -43,6 +43,7 @@ struct acp_entry : public exec_node {
    fs_reg dst;
    fs_reg src;
    enum opcode opcode;
+   bool saturate;
 };
 
 struct block_data {
@@ -344,11 +345,26 @@ fs_visitor::try_copy_propagate(fs_inst *inst, int arg, acp_entry *entry)
       return false;
    }
 
+   if (entry->saturate) {
+      switch(inst->opcode) {
+      case BRW_OPCODE_SEL:
+         if (inst->src[1].file != IMM ||
+             inst->src[1].fixed_hw_reg.dw1.f < 0.0 ||
+             inst->src[1].fixed_hw_reg.dw1.f > 1.0) {
+            return false;
+         }
+         break;
+      default:
+         return false;
+      }
+   }
+
    inst->src[arg].file = entry->src.file;
    inst->src[arg].reg = entry->src.reg;
    inst->src[arg].reg_offset = entry->src.reg_offset;
    inst->src[arg].subreg_offset = entry->src.subreg_offset;
    inst->src[arg].stride *= entry->src.stride;
+   inst->saturate = inst->saturate || entry->saturate;
 
    if (!inst->src[arg].abs) {
       inst->src[arg].abs = entry->src.abs;
@@ -511,7 +527,6 @@ can_propagate_from(fs_inst *inst)
             inst->src[0].file == UNIFORM ||
             inst->src[0].file == IMM) &&
            inst->src[0].type == inst->dst.type &&
-           !inst->saturate &&
            !inst->is_partial_write());
 }
 
@@ -566,6 +581,7 @@ fs_visitor::opt_copy_propagate_local(void *copy_prop_ctx, bblock_t *block,
 	 entry->dst = inst->dst;
 	 entry->src = inst->src[0];
          entry->opcode = inst->opcode;
+         entry->saturate = inst->saturate;
 	 acp[entry->dst.reg % ACP_HASH_SIZE].push_tail(entry);
       } else if (inst->opcode == SHADER_OPCODE_LOAD_PAYLOAD &&
                  inst->dst.file == GRF) {
