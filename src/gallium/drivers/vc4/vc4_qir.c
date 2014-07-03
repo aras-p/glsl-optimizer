@@ -171,6 +171,12 @@ qir_emit(struct qcompile *c, struct qinst *inst)
         insert_at_tail(&c->instructions, &inst->link);
 }
 
+bool
+qir_reg_equals(struct qreg a, struct qreg b)
+{
+        return a.file == b.file && a.index == b.index;
+}
+
 struct qcompile *
 qir_compile_init(void)
 {
@@ -197,4 +203,35 @@ qir_get_stage_name(enum qstage stage)
         };
 
         return names[stage];
+}
+
+#define OPTPASS(func)                                                   \
+        do {                                                            \
+                bool stage_progress = func(c);                          \
+                if (stage_progress) {                                   \
+                        progress = true;                                \
+                        if (print_opt_debug) {                          \
+                                fprintf(stderr,                         \
+                                        "QIR opt pass %2d: %s progress\n", \
+                                        pass, #func);                   \
+                        }                                               \
+                }                                                       \
+        } while (0)
+
+void
+qir_optimize(struct qcompile *c)
+{
+        bool print_opt_debug = false;
+        int pass = 1;
+
+        while (true) {
+                bool progress = false;
+
+                OPTPASS(qir_opt_algebraic);
+
+                if (!progress)
+                        break;
+
+                pass++;
+        }
 }

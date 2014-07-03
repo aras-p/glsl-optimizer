@@ -593,14 +593,15 @@ vc4_shader_tgsi_to_qir(struct vc4_compiled_shader *shader, enum qstage stage,
                 break;
         }
 
+        tgsi_parse_free(&trans->parser);
+        free(trans->temps);
+
+        qir_optimize(c);
+
         if (vc4_debug & VC4_DEBUG_QIR) {
                 fprintf(stderr, "QIR:\n");
                 qir_dump(c);
         }
-
-        tgsi_parse_free(&trans->parser);
-        free(trans->temps);
-
         vc4_generate_code(c);
 
         if (vc4_debug & VC4_DEBUG_SHADERDB) {

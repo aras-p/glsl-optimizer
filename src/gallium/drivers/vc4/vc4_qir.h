@@ -24,6 +24,7 @@
 #ifndef VC4_QIR_H
 #define VC4_QIR_H
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #include "util/u_simple_list.h"
@@ -145,10 +146,14 @@ struct qinst *qir_inst4(enum qop op, struct qreg dst,
 void qir_emit(struct qcompile *c, struct qinst *inst);
 struct qreg qir_get_temp(struct qcompile *c);
 int qir_get_op_nsrc(enum qop qop);
+bool qir_reg_equals(struct qreg a, struct qreg b);
 
 void qir_dump(struct qcompile *c);
 void qir_dump_inst(struct qinst *inst);
 const char *qir_get_stage_name(enum qstage stage);
+
+void qir_optimize(struct qcompile *c);
+bool qir_opt_algebraic(struct qcompile *c);
 
 #define QIR_ALU1(name)                                                   \
 static inline struct qreg                                                \
