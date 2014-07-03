@@ -178,7 +178,7 @@ add_builtin_define(glcpp_parser_t *parser, const char *name, int value);
 	/* We use HASH_TOKEN, DEFINE_TOKEN and VERSION_TOKEN (as opposed to
          * HASH, DEFINE, and VERSION) to avoid conflicts with other symbols,
          * (such as the <HASH> and <DEFINE> start conditions in the lexer). */
-%token COMMA_FINAL DEFINED ELIF_EXPANDED HASH_TOKEN DEFINE_TOKEN FUNC_IDENTIFIER OBJ_IDENTIFIER ELIF ELSE ENDIF ERROR_TOKEN IF IFDEF IFNDEF LINE PRAGMA UNDEF VERSION_TOKEN GARBAGE IDENTIFIER IF_EXPANDED INTEGER INTEGER_STRING LINE_EXPANDED NEWLINE OTHER PLACEHOLDER SPACE PLUS_PLUS MINUS_MINUS
+%token DEFINED ELIF_EXPANDED HASH_TOKEN DEFINE_TOKEN FUNC_IDENTIFIER OBJ_IDENTIFIER ELIF ELSE ENDIF ERROR_TOKEN IF IFDEF IFNDEF LINE PRAGMA UNDEF VERSION_TOKEN GARBAGE IDENTIFIER IF_EXPANDED INTEGER INTEGER_STRING LINE_EXPANDED NEWLINE OTHER PLACEHOLDER SPACE PLUS_PLUS MINUS_MINUS
 %token PASTE
 %type <ival> INTEGER operator SPACE integer_constant
 %type <expression_value> expression
@@ -1162,9 +1162,6 @@ _token_print (char **out, size_t *len, token_t *token)
         case MINUS_MINUS:
 		ralloc_asprintf_rewrite_tail (out, len, "--");
 		break;
-	case COMMA_FINAL:
-		ralloc_asprintf_rewrite_tail (out, len, ",");
-		break;
 	case DEFINED:
 		ralloc_asprintf_rewrite_tail (out, len, "defined");
 		break;
@@ -1847,14 +1844,6 @@ _glcpp_parser_expand_node (glcpp_parser_t *parser,
 
 	/* We only expand identifiers */
 	if (token->type != IDENTIFIER) {
-		/* We change any COMMA into a COMMA_FINAL to prevent
-		 * it being mistaken for an argument separator
-		 * later. */
-		if (token->type == ',') {
-			token->type = COMMA_FINAL;
-			token->value.ival = COMMA_FINAL;
-		}
-
 		return NULL;
 	}
 
