@@ -101,6 +101,7 @@ extern const struct brw_tracked_state gen6_clip_vp;
 extern const struct brw_tracked_state gen6_color_calc_state;
 extern const struct brw_tracked_state gen6_depth_stencil_state;
 extern const struct brw_tracked_state gen6_gs_state;
+extern const struct brw_tracked_state gen6_gs_push_constants;
 extern const struct brw_tracked_state gen6_gs_binding_table;
 extern const struct brw_tracked_state gen6_multisample_state;
 extern const struct brw_tracked_state gen6_renderbuffer_surfaces;

@@ -31,6 +31,34 @@
 #include "intel_batchbuffer.h"
 
 static void
+gen6_upload_gs_push_constants(struct brw_context *brw)
+{
+   /* BRW_NEW_GEOMETRY_PROGRAM */
+   const struct brw_geometry_program *gp =
+      (struct brw_geometry_program *) brw->geometry_program;
+
+   if (gp) {
+      /* CACHE_NEW_GS_PROG */
+      struct brw_stage_state *stage_state = &brw->gs.base;
+      struct brw_stage_prog_data *prog_data = &brw->gs.prog_data->base.base;
+
+      gen6_upload_push_constants(brw, &gp->program.Base, prog_data,
+                                 stage_state, AUB_TRACE_VS_CONSTANTS);
+   }
+}
+
+const struct brw_tracked_state gen6_gs_push_constants = {
+   .dirty = {
+      .mesa  = _NEW_TRANSFORM | _NEW_PROGRAM_CONSTANTS,
+      .brw   = (BRW_NEW_BATCH |
+                BRW_NEW_GEOMETRY_PROGRAM |
+                BRW_NEW_PUSH_CONSTANT_ALLOCATION),
+      .cache = CACHE_NEW_GS_PROG,
+   },
+   .emit = gen6_upload_gs_push_constants,
+};
+
+static void
 upload_gs_state_for_tf(struct brw_context *brw)
 {
    BEGIN_BATCH(7);
@@ -61,8 +89,8 @@ upload_gs_state(struct brw_context *brw)
    const struct brw_vec4_prog_data *prog_data = &brw->gs.prog_data->base;
    const struct brw_stage_state *stage_state = &brw->gs.base;
 
-   if (active) {
-      /* FIXME: enable constant buffers */
+   if (!active || stage_state->push_const_size == 0) {
+      /* Disable the push constant buffers. */
       BEGIN_BATCH(5);
       OUT_BATCH(_3DSTATE_CONSTANT_GS << 16 | (5 - 2));
       OUT_BATCH(0);
@@ -70,7 +98,23 @@ upload_gs_state(struct brw_context *brw)
       OUT_BATCH(0);
       OUT_BATCH(0);
       ADVANCE_BATCH();
+   } else {
+      BEGIN_BATCH(5);
+      OUT_BATCH(_3DSTATE_CONSTANT_GS << 16 |
+		GEN6_CONSTANT_BUFFER_0_ENABLE |
+		(5 - 2));
+      /* Pointer to the GS constant buffer.  Covered by the set of
+       * state flags from gen6_upload_vs_constants
+       */
+      OUT_BATCH(stage_state->push_const_offset +
+                stage_state->push_const_size - 1);
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      ADVANCE_BATCH();
+   }
 
+   if (active) {
       BEGIN_BATCH(7);
       OUT_BATCH(_3DSTATE_GS << 16 | (7 - 2));
       OUT_BATCH(stage_state->prog_offset);
@@ -126,45 +170,34 @@ upload_gs_state(struct brw_context *brw)
          OUT_BATCH(GEN6_GS_REORDER | GEN6_GS_ENABLE);
       }
       ADVANCE_BATCH();
+   } else if (brw->ff_gs.prog_active) {
+      /* In gen6, transform feedback for the VS stage is done with an ad-hoc GS
+       * program. This function provides the needed 3DSTATE_GS for this.
+       */
+      upload_gs_state_for_tf(brw);
    } else {
-      /* Disable all the constant buffers. */
-      BEGIN_BATCH(5);
-      OUT_BATCH(_3DSTATE_CONSTANT_GS << 16 | (5 - 2));
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
+      /* No GS function required */
+      BEGIN_BATCH(7);
+      OUT_BATCH(_3DSTATE_GS << 16 | (7 - 2));
+      OUT_BATCH(0); /* prog_bo */
+      OUT_BATCH((0 << GEN6_GS_SAMPLER_COUNT_SHIFT) |
+                (0 << GEN6_GS_BINDING_TABLE_ENTRY_COUNT_SHIFT));
+      OUT_BATCH(0); /* scratch space base offset */
+      OUT_BATCH((1 << GEN6_GS_DISPATCH_START_GRF_SHIFT) |
+                (0 << GEN6_GS_URB_READ_LENGTH_SHIFT) |
+                (0 << GEN6_GS_URB_ENTRY_READ_OFFSET_SHIFT));
+      OUT_BATCH((0 << GEN6_GS_MAX_THREADS_SHIFT) |
+                GEN6_GS_STATISTICS_ENABLE |
+                GEN6_GS_RENDERING_ENABLE);
+                OUT_BATCH(0);
       ADVANCE_BATCH();
-
-      if (brw->ff_gs.prog_active) {
-         /* In gen6, transform feedback for the VS stage is done with an ad-hoc GS
-          * program. This function provides the needed 3DSTATE_GS for this.
-          */
-         upload_gs_state_for_tf(brw);
-      } else {
-         /* No GS function required */
-         BEGIN_BATCH(7);
-         OUT_BATCH(_3DSTATE_GS << 16 | (7 - 2));
-         OUT_BATCH(0); /* prog_bo */
-         OUT_BATCH((0 << GEN6_GS_SAMPLER_COUNT_SHIFT) |
-		   (0 << GEN6_GS_BINDING_TABLE_ENTRY_COUNT_SHIFT));
-         OUT_BATCH(0); /* scratch space base offset */
-         OUT_BATCH((1 << GEN6_GS_DISPATCH_START_GRF_SHIFT) |
-		   (0 << GEN6_GS_URB_READ_LENGTH_SHIFT) |
-		   (0 << GEN6_GS_URB_ENTRY_READ_OFFSET_SHIFT));
-         OUT_BATCH((0 << GEN6_GS_MAX_THREADS_SHIFT) |
-		   GEN6_GS_STATISTICS_ENABLE |
-		   GEN6_GS_RENDERING_ENABLE);
-         OUT_BATCH(0);
-         ADVANCE_BATCH();
-      }
    }
    brw->gs.enabled = active;
 }
 
 const struct brw_tracked_state gen6_gs_state = {
    .dirty = {
-      .mesa  = _NEW_TRANSFORM,
+      .mesa  = _NEW_TRANSFORM | _NEW_PROGRAM_CONSTANTS,
       .brw   = BRW_NEW_CONTEXT | BRW_NEW_PUSH_CONSTANT_ALLOCATION,
       .cache = (CACHE_NEW_GS_PROG | CACHE_NEW_FF_GS_PROG)
    },

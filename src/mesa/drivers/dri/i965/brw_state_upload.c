@@ -128,6 +128,7 @@ static const struct brw_tracked_state *gen6_atoms[] =
    &gen6_depth_stencil_state,	/* must do before cc unit */
 
    &gen6_vs_push_constants, /* Before vs_state */
+   &gen6_gs_push_constants, /* Before gs_state */
    &gen6_wm_push_constants, /* Before wm_state */
 
    /* Surface state setup.  Must come before the VS/WM unit.  The binding
