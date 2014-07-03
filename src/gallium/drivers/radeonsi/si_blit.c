@@ -730,25 +730,6 @@ static void si_blit(struct pipe_context *ctx,
 		return;
 	}
 
-	if (info->src.box.width ==  info->dst.box.width &&
-	    info->src.box.height ==  info->dst.box.height &&
-	    info->src.format == info->dst.format &&
-	    info->src.box.width > 0 &&
-	    info->src.box.height > 0 &&
-	    info->src.resource->nr_samples <= 1 &&
-	    info->dst.resource->nr_samples <= 1 &&
-	    info->src.box.depth == info->dst.box.depth &&
-	    info->mask == PIPE_MASK_RGBA &&
-	    !info->scissor_enable &&
-	    (!info->render_condition_enable ||
-	     !sctx->b.current_render_cond)) {
-		sctx->b.dma_copy(ctx, info->dst.resource, info->dst.level,
-				 info->dst.box.x, info->dst.box.y,
-				 info->dst.box.z, info->src.resource,
-				 info->src.level, &(info->src.box));
-		return;
-	}
-
 	assert(util_blitter_is_blit_supported(sctx->blitter, info));
 
 	/* The driver doesn't decompress resources automatically while
