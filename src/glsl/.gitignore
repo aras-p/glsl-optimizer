@@ -4,3 +4,7 @@ glsl_parser.cpp
 glsl_parser.h
 glsl_parser.output
 glsl_test
+subtest-cr/
+subtest-lf/
+subtest-cr-lf/
+subtest-lf-cr/

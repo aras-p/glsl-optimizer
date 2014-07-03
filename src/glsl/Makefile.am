@@ -33,6 +33,7 @@ AM_CXXFLAGS = $(VISIBILITY_CXXFLAGS)
 include Makefile.sources
 
 TESTS = glcpp/tests/glcpp-test				\
+	glcpp/tests/glcpp-test-cr-lf			\
 	tests/general-ir-test				\
 	tests/optimization-test				\
 	tests/sampler-types-test                        \

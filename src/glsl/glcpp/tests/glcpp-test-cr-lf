@@ -1,5 +1,18 @@
 #!/bin/sh
 
+# The build system runs this test from a different working directory, and may
+# be in a build directory entirely separate from the source. So if the
+# "srcdir" variable is set, we must use it to locate the test files and the
+# glcpp-test script.
+
+if [ ! -z "$srcdir" ]; then
+   testdir="$srcdir/glcpp/tests"
+   glcpp_test="$srcdir/glcpp/tests/glcpp-test"
+else
+   testdir=.
+   glcpp_test=./glcpp-test
+fi
+
 total=0
 pass=0
 
@@ -69,43 +82,53 @@ done
 # All tests depend on the .out files being present. So first do a
 # normal run of the test suite, (silently) just to create the .out
 # files as a side effect.
-./glcpp-test >/dev/null 2>&1
+rm -rf ./subtest-lf
+mkdir subtest-lf
+for file in "$testdir"/*.c; do
+    base=$(basename "$file")
+    cp "$file" subtest-lf
+done
+
+${glcpp_test} --testdir=subtest-lf >/dev/null 2>&1
 
 echo "===== Testing with \\\\r line terminators (old Mac format) ====="
 
 # Prepare test files with '\r' instead of '\n'
 rm -rf ./subtest-cr
 mkdir subtest-cr
-for file in *.c; do
-    tr "\n" "\r" < "$file" > subtest-cr/"$file"
-    cp "$file".out subtest-cr/"$file".expected
+for file in "$testdir"/*.c; do
+    base=$(basename "$file")
+    tr "\n" "\r" < "$file" > subtest-cr/"$base"
+    cp subtest-lf/"$base".out subtest-cr/"$base".expected
 done
 
-run_test "./glcpp-test --testdir=subtest-cr"
+run_test "${glcpp_test} --testdir=subtest-cr"
 
 echo "===== Testing with \\\\r\\\\n line terminators (DOS format) ====="
 
 # Prepare test files with '\r\n' instead of '\n'
 rm -rf ./subtest-cr-lf
 mkdir subtest-cr-lf
-for file in *.c; do
-    sed -e 's/$/\r/' < "$file" > subtest-cr-lf/"$file"
-    cp "$file".out subtest-cr-lf/"$file".expected
+for file in "$testdir"/*.c; do
+    base=$(basename "$file")
+    sed -e 's/$/\r/' < "$file" > subtest-cr-lf/"$base"
+    cp subtest-lf/"$base".out subtest-cr-lf/"$base".expected
 done
 
-run_test "./glcpp-test --testdir=subtest-cr-lf"
+run_test "${glcpp_test} --testdir=subtest-cr-lf"
 
 echo "===== Testing with \\\\n\\\\r (bizarre, but allowed by GLSL spec.) ====="
 
 # Prepare test files with '\n\r' instead of '\n'
 rm -rf ./subtest-lf-cr
 mkdir subtest-lf-cr
-for file in *.c; do
-    tr "\n" "\r" < "$file" | sed -e 's/\r/\n\r/g' > subtest-lf-cr/"$file"
-    cp "$file".out subtest-lf-cr/"$file".expected
+for file in "$testdir"/*.c; do
+    base=$(basename "$file")
+    tr "\n" "\r" < "$file" | sed -e 's/\r/\n\r/g' > subtest-lf-cr/"$base"
+    cp subtest-lf/"$base".out subtest-lf-cr/"$base".expected
 done
 
-run_test "./glcpp-test --testdir=subtest-lf-cr"
+run_test "${glcpp_test} --testdir=subtest-lf-cr"
 
 echo ""
 echo "$pass/$total tests returned correct results"
