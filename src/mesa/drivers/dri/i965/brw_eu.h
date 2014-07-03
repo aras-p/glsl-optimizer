@@ -326,6 +326,10 @@ void brw_shader_time_add(struct brw_compile *p,
 static inline unsigned
 brw_jump_scale(const struct brw_context *brw)
 {
+   /* Broadwell measures jump targets in bytes. */
+   if (brw->gen >= 8)
+      return 16;
+
    /* Ironlake and later measure jump targets in 64-bit data chunks (in order
     * (to support compaction), so each 128-bit instruction requires 2 chunks.
     */
