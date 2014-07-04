@@ -32,6 +32,7 @@
 struct qir_op_info {
         const char *name;
         uint8_t ndst, nsrc;
+        bool has_side_effects;
 };
 
 static const struct qir_op_info qir_op_info[] = {
@@ -57,9 +58,9 @@ static const struct qir_op_info qir_op_info[] = {
         [QOP_LOG2] = { "log2", 1, 2 },
         [QOP_PACK_COLORS] = { "pack_colors", 1, 4 },
         [QOP_PACK_SCALED] = { "pack_scaled", 1, 2 },
-        [QOP_VPM_WRITE] = { "vpm_write", 0, 1 },
-        [QOP_VPM_READ] = { "vpm_read", 0, 1 },
-        [QOP_TLB_COLOR_WRITE] = { "tlb_color", 0, 1 },
+        [QOP_VPM_WRITE] = { "vpm_write", 0, 1, true },
+        [QOP_VPM_READ] = { "vpm_read", 0, 1, true },
+        [QOP_TLB_COLOR_WRITE] = { "tlb_color", 0, 1, true },
         [QOP_VARY_ADD_C] = { "vary_add_c", 1, 1 },
 };
 
@@ -79,6 +80,18 @@ qir_get_op_nsrc(enum qop qop)
                 return qir_op_info[qop].nsrc;
         else
                 abort();
+}
+
+bool
+qir_has_side_effects(struct qinst *inst)
+{
+        for (int i = 0; i < qir_get_op_nsrc(inst->op); i++) {
+                if (inst->src[i].file == QFILE_VARY ||
+                    inst->src[i].file == QFILE_UNIF)
+                        return true;
+        }
+
+        return qir_op_info[inst->op].has_side_effects;
 }
 
 static void
@@ -228,6 +241,7 @@ qir_optimize(struct qcompile *c)
                 bool progress = false;
 
                 OPTPASS(qir_opt_algebraic);
+                OPTPASS(qir_opt_dead_code);
 
                 if (!progress)
                         break;
