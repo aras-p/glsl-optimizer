@@ -36,13 +36,17 @@ extern "C" {
 
 namespace brw {
 
+struct copy_entry {
+   src_reg *value[4];
+   int saturatemask;
+};
+
 static bool
 is_direct_copy(vec4_instruction *inst)
 {
    return (inst->opcode == BRW_OPCODE_MOV &&
 	   !inst->predicate &&
 	   inst->dst.file == GRF &&
-	   !inst->saturate &&
 	   !inst->dst.reladdr &&
 	   !inst->src[0].reladdr &&
 	   inst->dst.type == inst->src[0].type);
@@ -74,16 +78,16 @@ is_channel_updated(vec4_instruction *inst, src_reg *values[4], int ch)
 
 static bool
 try_constant_propagate(struct brw_context *brw, vec4_instruction *inst,
-                       int arg, src_reg *values[4])
+                       int arg, struct copy_entry *entry)
 {
    /* For constant propagation, we only handle the same constant
     * across all 4 channels.  Some day, we should handle the 8-bit
     * float vector format, which would let us constant propagate
     * vectors better.
     */
-   src_reg value = *values[0];
+   src_reg value = *entry->value[0];
    for (int i = 1; i < 4; i++) {
-      if (!value.equals(*values[i]))
+      if (!value.equals(*entry->value[i]))
 	 return false;
    }
 
@@ -213,22 +217,22 @@ is_logic_op(enum opcode opcode)
 
 static bool
 try_copy_propagate(struct brw_context *brw, vec4_instruction *inst,
-                   int arg, src_reg *values[4])
+                   int arg, struct copy_entry *entry, int reg)
 {
    /* For constant propagation, we only handle the same constant
     * across all 4 channels.  Some day, we should handle the 8-bit
     * float vector format, which would let us constant propagate
     * vectors better.
     */
-   src_reg value = *values[0];
+   src_reg value = *entry->value[0];
    for (int i = 1; i < 4; i++) {
       /* This is equals() except we don't care about the swizzle. */
-      if (value.file != values[i]->file ||
-	  value.reg != values[i]->reg ||
-	  value.reg_offset != values[i]->reg_offset ||
-	  value.type != values[i]->type ||
-	  value.negate != values[i]->negate ||
-	  value.abs != values[i]->abs) {
+      if (value.file != entry->value[i]->file ||
+	  value.reg != entry->value[i]->reg ||
+	  value.reg_offset != entry->value[i]->reg_offset ||
+	  value.type != entry->value[i]->type ||
+	  value.negate != entry->value[i]->negate ||
+	  value.abs != entry->value[i]->abs) {
 	 return false;
       }
    }
@@ -239,7 +243,7 @@ try_copy_propagate(struct brw_context *brw, vec4_instruction *inst,
     */
    int s[4];
    for (int i = 0; i < 4; i++) {
-      s[i] = BRW_GET_SWZ(values[i]->swizzle,
+      s[i] = BRW_GET_SWZ(entry->value[i]->swizzle,
 			 BRW_GET_SWZ(inst->src[arg].swizzle, i));
    }
    value.swizzle = BRW_SWIZZLE4(s[0], s[1], s[2], s[3]);
@@ -300,6 +304,25 @@ try_copy_propagate(struct brw_context *brw, vec4_instruction *inst,
    if (value.equals(inst->src[arg]))
       return false;
 
+   /* Limit saturate propagation only to SEL with src1 bounded within 1.0 and 1.0
+    * otherwise, skip copy propagate altogether
+    */
+   if (entry->saturatemask & (1 << arg)) {
+      switch(inst->opcode) {
+      case BRW_OPCODE_SEL:
+         if (inst->src[1].file != IMM ||
+             inst->src[1].fixed_hw_reg.dw1.f < 0.0 ||
+             inst->src[1].fixed_hw_reg.dw1.f > 1.0) {
+            return false;
+         }
+         if (!inst->saturate)
+            inst->saturate = true;
+         break;
+      default:
+         return false;
+      }
+   }
+
    value.type = inst->src[arg].type;
    inst->src[arg] = value;
    return true;
@@ -309,9 +332,9 @@ bool
 vec4_visitor::opt_copy_propagation()
 {
    bool progress = false;
-   src_reg *cur_value[virtual_grf_reg_count][4];
+   struct copy_entry entries[virtual_grf_reg_count];
 
-   memset(&cur_value, 0, sizeof(cur_value));
+   memset(&entries, 0, sizeof(entries));
 
    foreach_in_list(vec4_instruction, inst, &instructions) {
       /* This pass only works on basic blocks.  If there's flow
@@ -322,7 +345,7 @@ vec4_visitor::opt_copy_propagation()
        * src/glsl/opt_copy_propagation.cpp to track available copies.
        */
       if (!is_dominated_by_previous_instruction(inst)) {
-	 memset(cur_value, 0, sizeof(cur_value));
+	 memset(&entries, 0, sizeof(entries));
 	 continue;
       }
 
@@ -343,33 +366,38 @@ vec4_visitor::opt_copy_propagation()
 
 	 /* Find the regs that each swizzle component came from.
 	  */
-	 src_reg *values[4];
+         struct copy_entry entry;
+         memset(&entry, 0, sizeof(copy_entry));
 	 int c;
 	 for (c = 0; c < 4; c++) {
-	    values[c] = cur_value[reg][BRW_GET_SWZ(inst->src[i].swizzle, c)];
+            int channel = BRW_GET_SWZ(inst->src[i].swizzle, c);
+            entry.value[c] = entries[reg].value[channel];
 
 	    /* If there's no available copy for this channel, bail.
 	     * We could be more aggressive here -- some channels might
 	     * not get used based on the destination writemask.
 	     */
-	    if (!values[c])
+	    if (!entry.value[c])
 	       break;
+
+            entry.saturatemask |=
+               (entries[reg].saturatemask & (1 << channel) ? 1 : 0) << c;
 
 	    /* We'll only be able to copy propagate if the sources are
 	     * all from the same file -- there's no ability to swizzle
 	     * 0 or 1 constants in with source registers like in i915.
 	     */
-	    if (c > 0 && values[c - 1]->file != values[c]->file)
+	    if (c > 0 && entry.value[c - 1]->file != entry.value[c]->file)
 	       break;
 	 }
 
 	 if (c != 4)
 	    continue;
 
-	 if (try_constant_propagate(brw, inst, i, values))
+	 if (try_constant_propagate(brw, inst, i, &entry))
             progress = true;
 
-	 if (try_copy_propagate(brw, inst, i, values))
+	 if (try_copy_propagate(brw, inst, i, &entry, reg))
 	    progress = true;
       }
 
@@ -383,9 +411,11 @@ vec4_visitor::opt_copy_propagation()
 	  * the new value, so clear it.
 	  */
 	 bool direct_copy = is_direct_copy(inst);
+	 entries[reg].saturatemask = 0x0;
 	 for (int i = 0; i < 4; i++) {
 	    if (inst->dst.writemask & (1 << i)) {
-	       cur_value[reg][i] = direct_copy ? &inst->src[0] : NULL;
+               entries[reg].value[i] = direct_copy ? &inst->src[0] : NULL;
+               entries[reg].saturatemask |= (((inst->saturate && direct_copy) ? 1 : 0) << i);
 	    }
 	 }
 
@@ -393,13 +423,14 @@ vec4_visitor::opt_copy_propagation()
 	  * our destination's updated channels, as the two are no longer equal.
 	  */
 	 if (inst->dst.reladdr)
-	    memset(cur_value, 0, sizeof(cur_value));
+	    memset(&entries, 0, sizeof(entries));
 	 else {
 	    for (int i = 0; i < virtual_grf_reg_count; i++) {
 	       for (int j = 0; j < 4; j++) {
-		  if (is_channel_updated(inst, cur_value[i], j)){
-		     cur_value[i][j] = NULL;
-		  }
+		  if (is_channel_updated(inst, entries[i].value, j)){
+		     entries[i].value[j] = NULL;
+		     entries[i].saturatemask &= ~(1 << j);
+                  }
 	       }
 	    }
 	 }
