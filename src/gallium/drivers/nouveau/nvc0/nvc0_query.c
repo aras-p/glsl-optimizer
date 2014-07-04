@@ -1067,6 +1067,7 @@ nvc0_mp_pm_query_begin(struct nvc0_context *nvc0, struct nvc0_query *q)
 {
    struct nvc0_screen *screen = nvc0->screen;
    struct nouveau_pushbuf *push = nvc0->base.pushbuf;
+   const boolean is_nve4 = screen->base.class_3d >= NVE4_3D_CLASS;
    const struct nvc0_mp_pm_query_cfg *cfg;
    unsigned i, c;
    unsigned num_ab[2] = { 0, 0 };
@@ -1084,7 +1085,7 @@ nvc0_mp_pm_query_begin(struct nvc0_context *nvc0, struct nvc0_query *q)
    }
 
    assert(cfg->num_counters <= 4);
-   PUSH_SPACE(push, 4 * 8 + 6);
+   PUSH_SPACE(push, 4 * 8 * (is_nve4 ? 1 : 6) + 6);
 
    if (!screen->pm.mp_counters_enabled) {
       screen->pm.mp_counters_enabled = TRUE;
@@ -1118,7 +1119,7 @@ nvc0_mp_pm_query_begin(struct nvc0_context *nvc0, struct nvc0_query *q)
       assert(c <= (d * 4 + 3)); /* must succeed, already checked for space */
 
       /* configure and reset the counter(s) */
-      if (screen->base.class_3d >= NVE4_3D_CLASS) {
+      if (is_nve4) {
          if (d == 0)
             BEGIN_NVC0(push, NVE4_COMPUTE(MP_PM_A_SIGSEL(c & 3)), 1);
          else
