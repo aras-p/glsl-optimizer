@@ -155,6 +155,7 @@ const char *qir_get_stage_name(enum qstage stage);
 
 void qir_optimize(struct qcompile *c);
 bool qir_opt_algebraic(struct qcompile *c);
+bool qir_opt_copy_propagation(struct qcompile *c);
 bool qir_opt_dead_code(struct qcompile *c);
 
 #define QIR_ALU1(name)                                                   \

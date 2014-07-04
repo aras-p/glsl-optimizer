@@ -241,6 +241,7 @@ qir_optimize(struct qcompile *c)
                 bool progress = false;
 
                 OPTPASS(qir_opt_algebraic);
+                OPTPASS(qir_opt_copy_propagation);
                 OPTPASS(qir_opt_dead_code);
 
                 if (!progress)
