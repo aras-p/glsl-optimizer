@@ -56,9 +56,9 @@ fixup_raddr_conflict(uint64_t *insts, uint32_t *ni,
         if ((src0.mux == QPU_MUX_A || src0.mux == QPU_MUX_B) &&
             (src1->mux == QPU_MUX_A || src1->mux == QPU_MUX_B) &&
             src0.addr != src1->addr) {
-                insts[(*ni)++] = qpu_inst(qpu_a_MOV(qpu_r5(), *src1),
+                insts[(*ni)++] = qpu_inst(qpu_a_MOV(qpu_r3(), *src1),
                                           qpu_m_NOP());
-                *src1 = qpu_r5();
+                *src1 = qpu_r3();
         }
 }
 
@@ -67,7 +67,7 @@ vc4_generate_code(struct qcompile *c)
 {
         uint64_t *insts = malloc(sizeof(uint64_t) * 1024); /* XXX: sizing */
         uint32_t ni = 0;
-        struct qpu_reg allocate_to_qpu_reg[4 + 32 + 32];
+        struct qpu_reg allocate_to_qpu_reg[3 + 32 + 32];
         bool reg_in_use[ARRAY_SIZE(allocate_to_qpu_reg)];
         int *reg_allocated = calloc(c->num_temps, sizeof(*reg_allocated));
         int *reg_uses_remaining =
@@ -77,12 +77,12 @@ vc4_generate_code(struct qcompile *c)
                 reg_in_use[i] = false;
         for (int i = 0; i < c->num_temps; i++)
                 reg_allocated[i] = -1;
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < 3; i++)
                 allocate_to_qpu_reg[i] = qpu_rn(i);
         for (int i = 0; i < 32; i++)
-                allocate_to_qpu_reg[i + 4] = qpu_ra(i);
+                allocate_to_qpu_reg[i + 3] = qpu_ra(i);
         for (int i = 0; i < 32; i++)
-                allocate_to_qpu_reg[i + 4 + 32] = qpu_rb(i);
+                allocate_to_qpu_reg[i + 3 + 32] = qpu_rb(i);
 
         struct simple_node *node;
         foreach(node, &c->instructions) {
@@ -283,13 +283,13 @@ vc4_generate_code(struct qcompile *c)
                 case QOP_PACK_COLORS:
                         for (int i = 0; i < 4; i++) {
                                 insts[ni++] = qpu_inst(qpu_a_NOP(),
-                                                       qpu_m_MOV(qpu_r5(), src[i]));
+                                                       qpu_m_MOV(qpu_r3(), src[i]));
                                 insts[ni - 1] |= QPU_PM;
                                 insts[ni - 1] |= QPU_SET_FIELD(QPU_PACK_MUL_8A + i,
                                                                QPU_PACK);
                         }
 
-                        insts[ni++] = qpu_inst(qpu_a_MOV(dst, qpu_r5()),
+                        insts[ni++] = qpu_inst(qpu_a_MOV(dst, qpu_r3()),
                                                qpu_m_NOP());
                         break;
 
