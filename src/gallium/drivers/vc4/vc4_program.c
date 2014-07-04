@@ -600,7 +600,7 @@ vc4_shader_tgsi_to_qir(struct vc4_compiled_shader *shader, enum qstage stage,
 
         if (vc4_debug & VC4_DEBUG_SHADERDB) {
                 fprintf(stderr, "SHADER-DB: %s: %d instructions\n",
-                        qir_get_stage_name(c->stage), c->num_qpu_insts);
+                        qir_get_stage_name(c->stage), c->qpu_inst_count);
                 fprintf(stderr, "SHADER-DB: %s: %d uniforms\n",
                         qir_get_stage_name(c->stage), trans->num_uniforms);
         }
@@ -647,7 +647,7 @@ vc4_fs_compile(struct vc4_context *vc4, struct vc4_compiled_shader *shader,
         shader->num_inputs = trans->num_inputs;
         copy_uniform_state_to_shader(shader, 0, trans);
         shader->bo = vc4_bo_alloc_mem(vc4->screen, trans->c->qpu_insts,
-                                      trans->c->num_qpu_insts * sizeof(uint64_t),
+                                      trans->c->qpu_inst_count * sizeof(uint64_t),
                                       "fs_code");
 
         qir_compile_destroy(trans->c);
@@ -668,8 +668,8 @@ vc4_vs_compile(struct vc4_context *vc4, struct vc4_compiled_shader *shader,
                                                               &key->base);
         copy_uniform_state_to_shader(shader, 1, cs_trans);
 
-        uint32_t vs_size = vs_trans->c->num_qpu_insts * sizeof(uint64_t);
-        uint32_t cs_size = cs_trans->c->num_qpu_insts * sizeof(uint64_t);
+        uint32_t vs_size = vs_trans->c->qpu_inst_count * sizeof(uint64_t);
+        uint32_t cs_size = cs_trans->c->qpu_inst_count * sizeof(uint64_t);
         shader->coord_shader_offset = vs_size; /* XXX: alignment? */
         shader->bo = vc4_bo_alloc(vc4->screen,
                                   shader->coord_shader_offset + cs_size,

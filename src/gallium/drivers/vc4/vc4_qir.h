@@ -126,8 +126,10 @@ struct qcompile {
         struct simple_node instructions;
         uint32_t immediates[1024];
 
+        struct simple_node qpu_inst_list;
         uint64_t *qpu_insts;
-        uint32_t num_qpu_insts;
+        uint32_t qpu_inst_count;
+        uint32_t qpu_inst_size;
 };
 
 struct qcompile *qir_compile_init(void);
