@@ -59,6 +59,7 @@
 #define MESA_META_FRAMEBUFFER_SRGB     0x200000
 #define MESA_META_OCCLUSION_QUERY      0x400000
 #define MESA_META_DRAW_BUFFERS         0x800000
+#define MESA_META_DITHER              0x1000000
 /**\}*/
 
 /**
@@ -83,6 +84,9 @@ struct save_state
    /** MESA_META_BLEND */
    GLbitfield BlendEnabled;
    GLboolean ColorLogicOpEnabled;
+
+   /** MESA_META_DITHER */
+   GLboolean DitherFlag;
 
    /** MESA_META_COLOR_MASK */
    GLubyte ColorMask[MAX_DRAW_BUFFERS][4];

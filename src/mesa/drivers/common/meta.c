@@ -505,6 +505,11 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
          _mesa_set_enable(ctx, GL_COLOR_LOGIC_OP, GL_FALSE);
    }
 
+   if (state & MESA_META_DITHER) {
+      save->DitherFlag = ctx->Color.DitherFlag;
+      _mesa_set_enable(ctx, GL_DITHER, GL_TRUE);
+   }
+
    if (state & MESA_META_COLOR_MASK) {
       memcpy(save->ColorMask, ctx->Color.ColorMask,
              sizeof(ctx->Color.ColorMask));
@@ -874,6 +879,9 @@ _mesa_meta_end(struct gl_context *ctx)
       if (ctx->Color.ColorLogicOpEnabled != save->ColorLogicOpEnabled)
          _mesa_set_enable(ctx, GL_COLOR_LOGIC_OP, save->ColorLogicOpEnabled);
    }
+
+   if (state & MESA_META_DITHER)
+      _mesa_set_enable(ctx, GL_DITHER, save->DitherFlag);
 
    if (state & MESA_META_COLOR_MASK) {
       GLuint i;
