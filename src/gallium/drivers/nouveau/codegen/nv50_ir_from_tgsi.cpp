@@ -2504,7 +2504,7 @@ Converter::handleInstruction(const struct tgsi_full_instruction *insn)
       break;
    case TGSI_OPCODE_TXB2:
    case TGSI_OPCODE_TXL2:
-      handleTEX(dst0, 2, 2, 0x10, 0x11, 0x00, 0x00);
+      handleTEX(dst0, 2, 2, 0x10, 0x0f, 0x00, 0x00);
       break;
    case TGSI_OPCODE_SAMPLE:
    case TGSI_OPCODE_SAMPLE_B:
