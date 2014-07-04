@@ -2820,7 +2820,13 @@ glsl_to_tgsi_visitor::visit(ir_texture *ir)
       }
       break;
    case ir_txb:
-      opcode = is_cube_array ? TGSI_OPCODE_TXB2 : TGSI_OPCODE_TXB;
+      if (is_cube_array ||
+          sampler_type == glsl_type::samplerCubeShadow_type) {
+         opcode = TGSI_OPCODE_TXB2;
+      }
+      else {
+         opcode = TGSI_OPCODE_TXB;
+      }
       ir->lod_info.bias->accept(this);
       lod_info = this->result;
       if (ir->offset) {
