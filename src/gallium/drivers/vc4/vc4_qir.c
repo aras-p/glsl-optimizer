@@ -59,6 +59,7 @@ static const struct qir_op_info qir_op_info[] = {
         [QOP_VPM_WRITE] = { "vpm_write", 0, 1 },
         [QOP_VPM_READ] = { "vpm_read", 0, 1 },
         [QOP_TLB_COLOR_WRITE] = { "tlb_color", 0, 1 },
+        [QOP_VARY_ADD_C] = { "vary_add_c", 1, 1 },
 };
 
 static const char *

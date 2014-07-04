@@ -299,6 +299,12 @@ vc4_generate_code(struct qcompile *c)
                                                qpu_m_NOP());
                         break;
 
+                case QOP_VARY_ADD_C:
+                        insts[ni++] = qpu_inst(qpu_a_FADD(dst,
+                                                          src[0], qpu_r5()),
+                                               qpu_m_NOP());
+                        break;
+
                 case QOP_PACK_SCALED:
                         insts[ni++] = qpu_inst(qpu_a_MOV(dst, src[0]),
                                                qpu_m_NOP());

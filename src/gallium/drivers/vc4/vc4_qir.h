@@ -68,6 +68,7 @@ enum qop {
         QOP_VPM_WRITE,
         QOP_VPM_READ,
         QOP_TLB_COLOR_WRITE,
+        QOP_VARY_ADD_C,
 };
 
 struct simple_node {
@@ -178,6 +179,7 @@ QIR_ALU1(RSQ)
 QIR_ALU1(EXP2)
 QIR_ALU1(LOG2)
 QIR_ALU2(PACK_SCALED)
+QIR_ALU1(VARY_ADD_C)
 
 static inline void
 qir_VPM_WRITE(struct qcompile *c, struct qreg a)

@@ -53,6 +53,8 @@ struct tgsi_to_qir {
         uint32_t *uniform_data;
         enum quniform_contents *uniform_contents;
         uint32_t num_uniforms;
+        uint32_t num_inputs;
+        uint32_t num_outputs;
 };
 
 struct vc4_key {
@@ -184,6 +186,8 @@ update_dst(struct tgsi_to_qir *trans, struct tgsi_full_instruction *tgsi_inst,
                 break;
         case TGSI_FILE_OUTPUT:
                 trans->outputs[tgsi_dst->Index * 4 + i] = val;
+                trans->num_outputs = MAX2(trans->num_outputs,
+                                          tgsi_dst->Index * 4 + i + 1);
                 break;
         default:
                 fprintf(stderr, "unknown dst file %d\n", tgsi_dst->File);
@@ -263,6 +267,38 @@ tgsi_to_qir_abs(struct tgsi_to_qir *trans,
         struct qcompile *c = trans->c;
         struct qreg arg = src[0 * 4 + i];
         return qir_FMAXABS(c, arg, arg);
+}
+
+static void
+emit_tgsi_declaration(struct tgsi_to_qir *trans,
+                      struct tgsi_full_declaration *decl)
+{
+        struct qcompile *c = trans->c;
+
+        switch (decl->Declaration.File) {
+        case TGSI_FILE_INPUT:
+                if (c->stage == QSTAGE_FRAG) {
+                        for (int index = decl->Range.First;
+                             index <= decl->Range.Last;
+                             index++) {
+                                for (int i = 0; i < 4; i++) {
+                                        struct qreg vary = {
+                                                QFILE_VARY,
+                                                index * 4 + i
+                                        };
+
+                                        /* XXX: multiply by W */
+                                        trans->inputs[index * 4 + i] =
+                                                qir_VARY_ADD_C(c,
+                                                               qir_MOV(c,
+                                                                       vary));
+
+                                        trans->num_inputs++;
+                                }
+                        }
+                }
+                break;
+        }
 }
 
 static void
@@ -356,11 +392,6 @@ parse_tgsi_immediate(struct tgsi_to_qir *trans, struct tgsi_full_immediate *imm)
 static void
 emit_frag_init(struct tgsi_to_qir *trans)
 {
-        /* XXX: lols */
-        for (int i = 0; i < 4; i++) {
-                trans->inputs[i] = qir_uniform_ui(trans, fui(1.0));
-        }
-
 }
 
 static void
@@ -453,10 +484,15 @@ emit_1_wc_write(struct tgsi_to_qir *trans)
 static void
 emit_vert_end(struct tgsi_to_qir *trans)
 {
+        struct qcompile *c = trans->c;
+
         emit_scaled_viewport_write(trans);
         emit_zs_write(trans);
         emit_1_wc_write(trans);
-        /* XXX: write varyings */
+
+        for (int i = 4; i < trans->num_outputs; i++) {
+                qir_VPM_WRITE(c, trans->outputs[i]);
+        }
 }
 
 static void
@@ -523,6 +559,11 @@ vc4_shader_tgsi_to_qir(struct vc4_compiled_shader *shader, enum qstage stage,
                 tgsi_parse_token(&trans->parser);
 
                 switch (trans->parser.FullToken.Token.Type) {
+                case TGSI_TOKEN_TYPE_DECLARATION:
+                        emit_tgsi_declaration(trans,
+                                              &trans->parser.FullToken.FullDeclaration);
+                        break;
+
                 case TGSI_TOKEN_TYPE_INSTRUCTION:
                         emit_tgsi_instruction(trans,
                                               &trans->parser.FullToken.FullInstruction);
@@ -603,8 +644,8 @@ vc4_fs_compile(struct vc4_context *vc4, struct vc4_compiled_shader *shader,
 {
         struct tgsi_to_qir *trans = vc4_shader_tgsi_to_qir(shader, QSTAGE_FRAG,
                                                            &key->base);
+        shader->num_inputs = trans->num_inputs;
         copy_uniform_state_to_shader(shader, 0, trans);
-
         shader->bo = vc4_bo_alloc_mem(vc4->screen, trans->c->qpu_insts,
                                       trans->c->num_qpu_insts * sizeof(uint64_t),
                                       "fs_code");

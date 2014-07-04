@@ -80,6 +80,7 @@ struct vc4_compiled_shader {
         struct vc4_shader_uniform_info uniforms[2];
 
         uint32_t coord_shader_offset;
+        uint8_t num_inputs;
 };
 
 struct vc4_program_stateobj {

@@ -177,7 +177,7 @@ vc4_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
         cl_start_shader_reloc(&vc4->shader_rec, 7);
         cl_u16(&vc4->shader_rec, VC4_SHADER_FLAG_ENABLE_CLIPPING);
         cl_u8(&vc4->shader_rec, 0); /* fs num uniforms (unused) */
-        cl_u8(&vc4->shader_rec, 0); /* fs num varyings */
+        cl_u8(&vc4->shader_rec, vc4->prog.fs->num_inputs);
         cl_reloc(vc4, &vc4->shader_rec, vc4->prog.fs->bo, 0);
         cl_reloc(vc4, &vc4->shader_rec, fs_ubo, fs_ubo_offset);
 
