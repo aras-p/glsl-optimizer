@@ -30,6 +30,7 @@
 #include "pipe/p_video_codec.h"
 
 #include "util/u_memory.h"
+#include "util/u_handle_table.h"
 #include "vl/vl_winsys.h"
 
 #include "va_private.h"
@@ -95,10 +96,22 @@ VA_DRIVER_INIT_FUNC(VADriverContextP ctx)
       return VA_STATUS_ERROR_ALLOCATION_FAILED;
 
    drv->vscreen = vl_screen_create(ctx->native_dpy, ctx->x11_screen);
-   if (!drv->vscreen) {
-      FREE(drv);
-      return VA_STATUS_ERROR_ALLOCATION_FAILED;
-   }
+   if (!drv->vscreen)
+      goto error_screen;
+
+   drv->pipe = drv->vscreen->pscreen->context_create(drv->vscreen->pscreen, drv->vscreen);
+   if (!drv->pipe)
+      goto error_pipe;
+
+   drv->htab = handle_table_create();
+   if (!drv->htab)
+      goto error_htab;
+
+   vl_compositor_init(&drv->compositor, drv->pipe);
+   vl_compositor_init_state(&drv->cstate, drv->pipe);
+
+   vl_csc_get_matrix(VL_CSC_COLOR_STANDARD_BT_601, NULL, true, &drv->csc);
+   vl_compositor_set_csc_matrix(&drv->cstate, (const vl_csc_matrix *)&drv->csc);
 
    ctx->pDriverData = (void *)drv;
    ctx->version_major = 0;
@@ -113,26 +126,73 @@ VA_DRIVER_INIT_FUNC(VADriverContextP ctx)
    ctx->str_vendor = "mesa gallium vaapi";
 
    return VA_STATUS_SUCCESS;
+
+error_htab:
+   drv->pipe->destroy(drv->pipe);
+
+error_pipe:
+   vl_screen_destroy(drv->vscreen);
+
+error_screen:
+   FREE(drv);
+   return VA_STATUS_ERROR_ALLOCATION_FAILED;
 }
 
 VAStatus
 vlVaCreateContext(VADriverContextP ctx, VAConfigID config_id, int picture_width,
                   int picture_height, int flag, VASurfaceID *render_targets,
-                  int num_render_targets, VAContextID *conext)
+                  int num_render_targets, VAContextID *context_id)
 {
+   struct pipe_video_codec templat = {};
+   vlVaDriver *drv;
+   vlVaContext *context;
+
    if (!ctx)
       return VA_STATUS_ERROR_INVALID_CONTEXT;
 
-   return VA_STATUS_ERROR_UNIMPLEMENTED;
+   if (!(picture_width && picture_height))
+      return VA_STATUS_ERROR_INVALID_IMAGE_FORMAT;
+
+   drv = VL_VA_DRIVER(ctx);
+   context = CALLOC(1, sizeof(vlVaContext));
+   if (!context)
+      return VA_STATUS_ERROR_ALLOCATION_FAILED;
+
+   templat.profile = config_id;
+   templat.entrypoint = PIPE_VIDEO_ENTRYPOINT_BITSTREAM;
+   templat.chroma_format = PIPE_VIDEO_CHROMA_FORMAT_420;
+   templat.width = picture_width;
+   templat.height = picture_height;
+   templat.max_references = num_render_targets;
+   templat.expect_chunked_decode = true;
+
+   context->decoder = drv->pipe->create_video_codec(drv->pipe, &templat);
+   if (!context->decoder) {
+      FREE(context);
+      return VA_STATUS_ERROR_ALLOCATION_FAILED;
+   }
+
+   context->desc.base.profile = config_id;
+   *context_id = handle_table_add(drv->htab, context);
+
+   return VA_STATUS_SUCCESS;
 }
 
 VAStatus
-vlVaDestroyContext(VADriverContextP ctx, VAContextID context)
+vlVaDestroyContext(VADriverContextP ctx, VAContextID context_id)
 {
+   vlVaDriver *drv;
+   vlVaContext *context;
+
    if (!ctx)
       return VA_STATUS_ERROR_INVALID_CONTEXT;
 
-   return VA_STATUS_ERROR_UNIMPLEMENTED;
+   drv = VL_VA_DRIVER(ctx);
+   context = handle_table_get(drv->htab, context_id);
+   context->decoder->destroy(context->decoder);
+   FREE(context);
+
+   return VA_STATUS_SUCCESS;
 }
 
 VAStatus
@@ -144,7 +204,11 @@ vlVaTerminate(VADriverContextP ctx)
       return VA_STATUS_ERROR_INVALID_CONTEXT;
 
    drv = ctx->pDriverData;
+   vl_compositor_cleanup_state(&drv->cstate);
+   vl_compositor_cleanup(&drv->compositor);
+   drv->pipe->destroy(drv->pipe);
    vl_screen_destroy(drv->vscreen);
+   handle_table_destroy(drv->htab);
    FREE(drv);
 
    return VA_STATUS_SUCCESS;

@@ -35,9 +35,29 @@
 #include <va/va_backend.h>
 
 #include "pipe/p_video_enums.h"
+#include "pipe/p_video_codec.h"
+
+#include "vl/vl_compositor.h"
+#include "vl/vl_csc.h"
 
 #define VL_VA_DRIVER(ctx) ((vlVaDriver *)ctx->pDriverData)
 #define VL_VA_PSCREEN(ctx) (VL_VA_DRIVER(ctx)->vscreen->pscreen)
+
+static inline enum pipe_video_chroma_format
+ChromaToPipe(int format)
+{
+   switch (format) {
+   case VA_RT_FORMAT_YUV420:
+      return PIPE_VIDEO_CHROMA_FORMAT_420;
+   case VA_RT_FORMAT_YUV422:
+      return PIPE_VIDEO_CHROMA_FORMAT_422;
+   case VA_RT_FORMAT_YUV444:
+      return PIPE_VIDEO_CHROMA_FORMAT_444;
+   default:
+      assert(0);
+      return PIPE_VIDEO_CHROMA_FORMAT_420;
+   }
+}
 
 static inline VAProfile
 PipeToProfile(enum pipe_video_profile profile)
@@ -102,7 +122,35 @@ ProfileToPipe(VAProfile profile)
 
 typedef struct {
    struct vl_screen *vscreen;
+   struct pipe_context *pipe;
+   struct handle_table *htab;
+   struct vl_compositor compositor;
+   struct vl_compositor_state cstate;
+   vl_csc_matrix csc;
 } vlVaDriver;
+
+typedef struct {
+   struct pipe_video_codec *decoder;
+   union {
+      struct pipe_picture_desc base;
+      struct pipe_mpeg12_picture_desc mpeg12;
+      struct pipe_mpeg4_picture_desc mpeg4;
+      struct pipe_vc1_picture_desc vc1;
+      struct pipe_h264_picture_desc h264;
+   } desc;
+} vlVaContext;
+
+typedef struct {
+   VABufferType type;
+   unsigned int size;
+   unsigned int num_elements;
+   void *data;
+} vlVaBuffer;
+
+typedef struct {
+   struct pipe_video_buffer templat, *buffer;
+   struct pipe_fence_handle *fence;
+} vlVaSurface;
 
 // Public functions:
 VAStatus VA_DRIVER_INIT_FUNC(VADriverContextP ctx);

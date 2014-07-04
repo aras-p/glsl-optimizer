@@ -26,6 +26,9 @@
  *
  **************************************************************************/
 
+#include "util/u_memory.h"
+#include "util/u_handle_table.h"
+
 #include "va_private.h"
 
 VAStatus
@@ -33,55 +36,121 @@ vlVaCreateBuffer(VADriverContextP ctx, VAContextID context, VABufferType type,
                  unsigned int size, unsigned int num_elements, void *data,
                  VABufferID *buf_id)
 {
+   vlVaBuffer *buf;
+
    if (!ctx)
       return VA_STATUS_ERROR_INVALID_CONTEXT;
 
-   return VA_STATUS_ERROR_UNIMPLEMENTED;
+   buf = CALLOC(1, sizeof(vlVaBuffer));
+   if (!buf)
+      return VA_STATUS_ERROR_ALLOCATION_FAILED;
+
+   buf->type = type;
+   buf->size = size;
+   buf->num_elements = num_elements;
+   buf->data = MALLOC(size * num_elements);
+
+   if (!buf->data) {
+      FREE(buf);
+      return VA_STATUS_ERROR_ALLOCATION_FAILED;
+   }
+
+   if (data)
+      memcpy(buf->data, data, size * num_elements);
+
+   *buf_id = handle_table_add(VL_VA_DRIVER(ctx)->htab, buf);
+
+   return VA_STATUS_SUCCESS;
 }
 
 VAStatus
 vlVaBufferSetNumElements(VADriverContextP ctx, VABufferID buf_id,
                          unsigned int num_elements)
 {
+   vlVaBuffer *buf;
+
    if (!ctx)
       return VA_STATUS_ERROR_INVALID_CONTEXT;
 
-   return VA_STATUS_ERROR_UNIMPLEMENTED;
+   buf = handle_table_get(VL_VA_DRIVER(ctx)->htab, buf_id);
+   buf->data = REALLOC(buf->data, buf->size * buf->num_elements,
+                       buf->size * num_elements);
+   buf->num_elements = num_elements;
+
+   if (!buf->data)
+      return VA_STATUS_ERROR_ALLOCATION_FAILED;
+
+   return VA_STATUS_SUCCESS;
 }
 
 VAStatus
 vlVaMapBuffer(VADriverContextP ctx, VABufferID buf_id, void **pbuff)
 {
+   vlVaBuffer *buf;
+
    if (!ctx)
       return VA_STATUS_ERROR_INVALID_CONTEXT;
 
-   return VA_STATUS_ERROR_UNIMPLEMENTED;
+   buf = handle_table_get(VL_VA_DRIVER(ctx)->htab, buf_id);
+   if (!buf)
+      return VA_STATUS_ERROR_INVALID_BUFFER;
+
+   *pbuff = buf->data;
+
+   return VA_STATUS_SUCCESS;
 }
 
 VAStatus
 vlVaUnmapBuffer(VADriverContextP ctx, VABufferID buf_id)
 {
+   vlVaBuffer *buf;
+
    if (!ctx)
       return VA_STATUS_ERROR_INVALID_CONTEXT;
 
-   return VA_STATUS_ERROR_UNIMPLEMENTED;
+   buf = handle_table_get(VL_VA_DRIVER(ctx)->htab, buf_id);
+   if (!buf)
+      return VA_STATUS_ERROR_INVALID_BUFFER;
+
+   /* Nothing to do here */
+
+   return VA_STATUS_SUCCESS;
 }
 
 VAStatus
-vlVaDestroyBuffer(VADriverContextP ctx, VABufferID buffer_id)
+vlVaDestroyBuffer(VADriverContextP ctx, VABufferID buf_id)
 {
+   vlVaBuffer *buf;
+
    if (!ctx)
       return VA_STATUS_ERROR_INVALID_CONTEXT;
 
-   return VA_STATUS_ERROR_UNIMPLEMENTED;
+   buf = handle_table_get(VL_VA_DRIVER(ctx)->htab, buf_id);
+   if (!buf)
+      return VA_STATUS_ERROR_INVALID_BUFFER;
+
+   FREE(buf->data);
+   FREE(buf);
+
+   return VA_STATUS_SUCCESS;
 }
 
 VAStatus
 vlVaBufferInfo(VADriverContextP ctx, VABufferID buf_id, VABufferType *type,
                unsigned int *size, unsigned int *num_elements)
 {
+   vlVaBuffer *buf;
+
    if (!ctx)
       return VA_STATUS_ERROR_INVALID_CONTEXT;
 
-   return VA_STATUS_ERROR_UNIMPLEMENTED;
+   buf = handle_table_get(VL_VA_DRIVER(ctx)->htab, buf_id);
+   if (!buf)
+      return VA_STATUS_ERROR_INVALID_BUFFER;
+
+   *type = buf->type;
+   *size = buf->size;
+   *num_elements = buf->num_elements;
+
+   return VA_STATUS_SUCCESS;
 }
