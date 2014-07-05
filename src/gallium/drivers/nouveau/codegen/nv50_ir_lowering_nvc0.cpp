@@ -769,7 +769,8 @@ NVC0LoweringPass::handleTXD(TexInstruction *txd)
    if (dim > 2 ||
        txd->tex.target.isCube() ||
        arg > 4 ||
-       txd->tex.target.isShadow())
+       txd->tex.target.isShadow() ||
+       txd->tex.useOffsets)
       return handleManualTXD(txd);
 
    for (int c = 0; c < dim; ++c) {
