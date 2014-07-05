@@ -548,6 +548,9 @@ st_translate_fragment_program(struct st_context *st,
          else
             interpLocation[slot] = TGSI_INTERPOLATE_LOC_CENTER;
 
+         if (key->persample_shading)
+            interpLocation[slot] = TGSI_INTERPOLATE_LOC_SAMPLE;
+
          switch (attr) {
          case VARYING_SLOT_POS:
             input_semantic_name[slot] = TGSI_SEMANTIC_POSITION;

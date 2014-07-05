@@ -58,6 +58,9 @@ struct st_fp_variant_key
 
    /** for ARB_color_buffer_float */
    GLuint clamp_color:1;
+
+   /** for ARB_sample_shading */
+   GLuint persample_shading:1;
 };
 
 

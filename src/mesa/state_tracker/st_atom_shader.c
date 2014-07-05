@@ -89,6 +89,10 @@ update_fp( struct st_context *st )
    key.clamp_color = st->clamp_frag_color_in_shader &&
                      st->ctx->Color._ClampFragmentColor;
 
+   /* Ignore sample qualifier while computing this flag. */
+   key.persample_shading =
+      _mesa_get_min_invocations_per_fragment(st->ctx, &stfp->Base, true) > 1;
+
    st->fp_variant = st_get_fp_variant(st, stfp, &key);
 
    st_reference_fragprog(st, &st->fp, stfp);
@@ -108,7 +112,7 @@ update_fp( struct st_context *st )
 const struct st_tracked_state st_update_fp = {
    "st_update_fp",					/* name */
    {							/* dirty */
-      _NEW_BUFFERS,					/* mesa */
+      _NEW_BUFFERS | _NEW_MULTISAMPLE,			/* mesa */
       ST_NEW_FRAGMENT_PROGRAM                           /* st */
    },
    update_fp  					/* update */
