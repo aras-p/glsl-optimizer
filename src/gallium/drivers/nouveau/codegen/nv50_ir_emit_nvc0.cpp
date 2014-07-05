@@ -1561,7 +1561,7 @@ CodeEmitterNVC0::emitINTERP(const Instruction *i)
    defId(i->def(0), 14);
 
    if (i->getSampleMode() == NV50_IR_INTERP_OFFSET)
-      srcId(i->src(i->op == OP_PINTERP ? 2 : 1), 17);
+      srcId(i->src(i->op == OP_PINTERP ? 2 : 1), 32 + 17);
    else
       code[1] |= 0x3f << 17;
 }
