@@ -1375,6 +1375,23 @@ static boolean parse_declaration( struct translate_ctx *ctx )
       }
    }
 
+   cur = ctx->cur;
+   eat_opt_white( &cur );
+   if (*cur == ',' && !is_vs_input) {
+      uint i;
+
+      cur++;
+      eat_opt_white( &cur );
+      for (i = 0; i < TGSI_INTERPOLATE_LOC_COUNT; i++) {
+         if (str_match_nocase_whole( &cur, tgsi_interpolate_locations[i] )) {
+            decl.Interp.Location = i;
+
+            ctx->cur = cur;
+            break;
+         }
+      }
+   }
+
    advance = tgsi_build_full_declaration(
       &decl,
       ctx->tokens_cur,
