@@ -712,6 +712,7 @@ NVC0LoweringPass::handleManualTXD(TexInstruction *i)
    Value *zero = bld.loadImm(bld.getSSA(), 0);
    int l, c;
    const int dim = i->tex.target.getDim();
+   const int array = i->tex.target.isArray();
 
    i->op = OP_TEX; // no need to clone dPdx/dPdy later
 
@@ -722,7 +723,7 @@ NVC0LoweringPass::handleManualTXD(TexInstruction *i)
    for (l = 0; l < 4; ++l) {
       // mov coordinates from lane l to all lanes
       for (c = 0; c < dim; ++c)
-         bld.mkQuadop(0x00, crd[c], l, i->getSrc(c), zero);
+         bld.mkQuadop(0x00, crd[c], l, i->getSrc(c + array), zero);
       // add dPdx from lane l to lanes dx
       for (c = 0; c < dim; ++c)
          bld.mkQuadop(qOps[l][0], crd[c], l, i->dPdx[c].get(), crd[c]);
@@ -732,7 +733,7 @@ NVC0LoweringPass::handleManualTXD(TexInstruction *i)
       // texture
       bld.insert(tex = cloneForward(func, i));
       for (c = 0; c < dim; ++c)
-         tex->setSrc(c, crd[c]);
+         tex->setSrc(c + array, crd[c]);
       // save results
       for (c = 0; i->defExists(c); ++c) {
          Instruction *mov;
