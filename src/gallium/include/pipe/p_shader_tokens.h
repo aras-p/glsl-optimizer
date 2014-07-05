@@ -477,7 +477,11 @@ struct tgsi_property_data {
 #define TGSI_OPCODE_IMSB                190
 #define TGSI_OPCODE_UMSB                191
 
-#define TGSI_OPCODE_LAST                192
+#define TGSI_OPCODE_INTERP_CENTROID     192
+#define TGSI_OPCODE_INTERP_SAMPLE       193
+#define TGSI_OPCODE_INTERP_OFFSET       194
+
+#define TGSI_OPCODE_LAST                195
 
 #define TGSI_SAT_NONE            0  /* do not saturate */
 #define TGSI_SAT_ZERO_ONE        1  /* clamp to [0,1] */

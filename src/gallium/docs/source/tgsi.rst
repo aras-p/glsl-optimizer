@@ -1808,6 +1808,29 @@ This instruction replicates its result.
   dst = \frac{src.x}{src.x \times src.x + src.y \times src.y + src.z \times src.z + src.w \times src.w}
 
 
+Interpolation ISA
+^^^^^^^^^^^^^^^^^
+
+The interpolation instructions allow an input to be interpolated in a
+different way than its declaration. This corresponds to the GLSL 4.00
+interpolateAt* functions. The first argument of each of these must come from
+``TGSI_FILE_INPUT``.
+
+.. opcode:: INTERP_CENTROID - Interpolate at the centroid
+
+   Interpolates the varying specified by src0 at the centroid
+
+.. opcode:: INTERP_SAMPLE - Interpolate at the specified sample
+
+   Interpolates the varying specified by src0 at the sample id specified by
+   src1.x (interpreted as an integer)
+
+.. opcode:: INTERP_OFFSET - Interpolate at the specified offset
+
+   Interpolates the varying specified by src0 at the offset src1.xy from the
+   pixel center (interpreted as floats)
+
+
 .. _doubleopcodes:
 
 Double ISA

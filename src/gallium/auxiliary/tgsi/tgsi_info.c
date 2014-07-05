@@ -231,6 +231,10 @@ static const struct tgsi_opcode_info opcode_info[TGSI_OPCODE_LAST] =
    { 1, 1, 0, 0, 0, 0, COMP, "LSB", TGSI_OPCODE_LSB },
    { 1, 1, 0, 0, 0, 0, COMP, "IMSB", TGSI_OPCODE_IMSB },
    { 1, 1, 0, 0, 0, 0, COMP, "UMSB", TGSI_OPCODE_UMSB },
+
+   { 1, 1, 0, 0, 0, 0, OTHR, "INTERP_CENTROID", TGSI_OPCODE_INTERP_CENTROID },
+   { 1, 2, 0, 0, 0, 0, OTHR, "INTERP_SAMPLE", TGSI_OPCODE_INTERP_SAMPLE },
+   { 1, 2, 0, 0, 0, 0, OTHR, "INTERP_OFFSET", TGSI_OPCODE_INTERP_OFFSET },
 };
 
 const struct tgsi_opcode_info *
