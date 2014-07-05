@@ -639,12 +639,14 @@ NVC0LoweringPass::handleTEX(TexInstruction *i)
    if (i->tex.useOffsets) {
       int n, c;
       int s = i->srcCount(0xff, true);
-      if (i->tex.target.isShadow())
-         s--;
-      if (i->srcExists(s)) // move potential predicate out of the way
-         i->moveSources(s, 1);
-      if (i->tex.useOffsets == 4 && i->srcExists(s + 1))
-         i->moveSources(s + 1, 1);
+      if (i->op != OP_TXD || chipset < NVISA_GK104_CHIPSET) {
+         if (i->tex.target.isShadow())
+            s--;
+         if (i->srcExists(s)) // move potential predicate out of the way
+            i->moveSources(s, 1);
+         if (i->tex.useOffsets == 4 && i->srcExists(s + 1))
+            i->moveSources(s + 1, 1);
+      }
       if (i->op == OP_TXG) {
          // Either there is 1 offset, which goes into the 2 low bytes of the
          // first source, or there are 4 offsets, which go into 2 sources (8
@@ -673,7 +675,22 @@ NVC0LoweringPass::handleTEX(TexInstruction *i)
             assert(i->offset[0][c].getImmediate(val));
             imm |= (val.reg.data.u32 & 0xf) << (c * 4);
          }
-         i->setSrc(s, bld.loadImm(NULL, imm));
+         if (i->op == OP_TXD && chipset >= NVISA_GK104_CHIPSET) {
+            // The offset goes into the upper 16 bits of the array index. So
+            // create it if it's not already there, and INSBF it if it already
+            // is.
+            if (i->tex.target.isArray()) {
+               bld.mkOp3(OP_INSBF, TYPE_U32, i->getSrc(0),
+                         bld.loadImm(NULL, imm), bld.mkImm(0xc10),
+                         i->getSrc(0));
+            } else {
+               for (int s = dim; s >= 1; --s)
+                  i->setSrc(s, i->getSrc(s - 1));
+               i->setSrc(0, bld.loadImm(NULL, imm << 16));
+            }
+         } else {
+            i->setSrc(s, bld.loadImm(NULL, imm));
+         }
       }
    }
 
@@ -759,20 +776,33 @@ bool
 NVC0LoweringPass::handleTXD(TexInstruction *txd)
 {
    int dim = txd->tex.target.getDim();
-   int arg = txd->tex.target.getArgCount();
+   unsigned arg = txd->tex.target.getArgCount();
+   unsigned expected_args = arg;
+   const int chipset = prog->getTarget()->getChipset();
+
+   if (chipset >= NVISA_GK104_CHIPSET) {
+      if (!txd->tex.target.isArray() && txd->tex.useOffsets)
+         expected_args++;
+   } else {
+      if (txd->tex.useOffsets)
+         expected_args++;
+   }
+
+   if (expected_args > 4 ||
+       dim > 2 ||
+       txd->tex.target.isShadow() ||
+       txd->tex.target.isCube())
+      txd->op = OP_TEX;
 
    handleTEX(txd);
    while (txd->srcExists(arg))
       ++arg;
 
    txd->tex.derivAll = true;
-   if (dim > 2 ||
-       txd->tex.target.isCube() ||
-       arg > 4 ||
-       txd->tex.target.isShadow() ||
-       txd->tex.useOffsets)
+   if (txd->op == OP_TEX)
       return handleManualTXD(txd);
 
+   assert(arg == expected_args);
    for (int c = 0; c < dim; ++c) {
       txd->setSrc(arg + c * 2 + 0, txd->dPdx[c]);
       txd->setSrc(arg + c * 2 + 1, txd->dPdy[c]);
