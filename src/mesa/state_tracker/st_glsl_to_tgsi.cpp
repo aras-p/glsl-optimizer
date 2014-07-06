@@ -1947,16 +1947,16 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
       break;
 
    case ir_binop_ubo_load: {
-      ir_constant *uniform_block = ir->operands[0]->as_constant();
+      ir_constant *const_uniform_block = ir->operands[0]->as_constant();
       ir_constant *const_offset_ir = ir->operands[1]->as_constant();
       unsigned const_offset = const_offset_ir ? const_offset_ir->value.u[0] : 0;
+      unsigned const_block = const_uniform_block ? const_uniform_block->value.u[0] + 1 : 0;
       st_src_reg index_reg = get_temp(glsl_type::uint_type);
       st_src_reg cbuf;
 
       cbuf.type = glsl_type::vec4_type->base_type;
       cbuf.file = PROGRAM_CONSTANT;
       cbuf.index = 0;
-      cbuf.index2D = uniform_block->value.u[0] + 1;
       cbuf.reladdr = NULL;
       cbuf.negate = 0;
       
@@ -1966,7 +1966,6 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
          /* Constant index into constant buffer */
          cbuf.reladdr = NULL;
          cbuf.index = const_offset / 16;
-         cbuf.has_index2 = true;
       }
       else {
          /* Relative/variable index into constant buffer */
@@ -1974,6 +1973,20 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
               st_src_reg_for_int(4));
          cbuf.reladdr = ralloc(mem_ctx, st_src_reg);
          memcpy(cbuf.reladdr, &index_reg, sizeof(index_reg));
+      }
+
+      if (const_uniform_block) {
+         /* Constant constant buffer */
+         cbuf.reladdr2 = NULL;
+         cbuf.index2D = const_block;
+         cbuf.has_index2 = true;
+      }
+      else {
+         /* Relative/variable constant buffer */
+         cbuf.reladdr2 = ralloc(mem_ctx, st_src_reg);
+         cbuf.index2D = 1;
+         memcpy(cbuf.reladdr2, &op[0], sizeof(st_src_reg));
+         cbuf.has_index2 = true;
       }
 
       cbuf.swizzle = swizzle_for_size(ir->type->vector_elements);
@@ -4367,51 +4380,45 @@ dst_register(struct st_translate *t,
  * Map a glsl_to_tgsi src register to a TGSI ureg_src register.
  */
 static struct ureg_src
-src_register(struct st_translate *t,
-             gl_register_file file,
-             GLint index, GLint index2D)
+src_register(struct st_translate *t, const struct st_src_reg *reg)
 {
-   switch(file) {
+   switch(reg->file) {
    case PROGRAM_UNDEFINED:
       return ureg_src_undef();
 
    case PROGRAM_TEMPORARY:
    case PROGRAM_ARRAY:
-      return ureg_src(dst_register(t, file, index));
+      return ureg_src(dst_register(t, reg->file, reg->index));
 
    case PROGRAM_UNIFORM:
-      assert(index >= 0);
-      return t->constants[index];
+      assert(reg->index >= 0);
+      return t->constants[reg->index];
    case PROGRAM_STATE_VAR:
    case PROGRAM_CONSTANT:       /* ie, immediate */
-      if (index2D) {
-         struct ureg_src src;
-         src = ureg_src_register(TGSI_FILE_CONSTANT, index);
-         src.Dimension = 1;
-         src.DimensionIndex = index2D;
-         return src;
-      } else if (index < 0)
+      if (reg->has_index2)
+         return ureg_src_register(TGSI_FILE_CONSTANT, reg->index);
+      else if (reg->index < 0)
          return ureg_DECL_constant(t->ureg, 0);
       else
-         return t->constants[index];
+         return t->constants[reg->index];
 
    case PROGRAM_IMMEDIATE:
-      return t->immediates[index];
+      return t->immediates[reg->index];
 
    case PROGRAM_INPUT:
-      assert(t->inputMapping[index] < Elements(t->inputs));
-      return t->inputs[t->inputMapping[index]];
+      assert(t->inputMapping[reg->index] < Elements(t->inputs));
+      return t->inputs[t->inputMapping[reg->index]];
 
    case PROGRAM_OUTPUT:
-      assert(t->outputMapping[index] < Elements(t->outputs));
-      return ureg_src(t->outputs[t->outputMapping[index]]); /* not needed? */
+      assert(t->outputMapping[reg->index] < Elements(t->outputs));
+      return ureg_src(t->outputs[t->outputMapping[reg->index]]); /* not needed? */
 
    case PROGRAM_ADDRESS:
-      return ureg_src(t->address[index]);
+      return ureg_src(t->address[reg->index]);
 
    case PROGRAM_SYSTEM_VALUE:
-      assert(index < (int) Elements(t->systemValues));
-      return t->systemValues[index];
+      assert(reg->index < (int) Elements(t->systemValues));
+      return t->systemValues[reg->index];
 
    default:
       assert(!"unknown src register file");
@@ -4472,13 +4479,12 @@ translate_dst(struct st_translate *t,
 static struct ureg_src
 translate_src(struct st_translate *t, const st_src_reg *src_reg)
 {
-   struct ureg_src src = src_register(t, src_reg->file, src_reg->index, src_reg->index2D);
+   struct ureg_src src = src_register(t, src_reg);
 
    if (src_reg->has_index2) {
       /* 2D indexes occur with geometry shader inputs (attrib, vertex)
        * and UBO constant buffers (buffer, position).
        */
-      src = src_register(t, src_reg->file, src_reg->index, src_reg->index2D);
       if (src_reg->reladdr2)
          src = ureg_src_dimension_indirect(src, ureg_src(t->address[1]),
                                            src_reg->index2D);
