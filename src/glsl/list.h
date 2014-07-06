@@ -565,9 +565,9 @@ inline void exec_node::insert_before(exec_list *before)
         !(__inst)->is_tail_sentinel();               \
         (__inst) = (__type *)(__inst)->next)
 
-#define foreach_in_list_reverse(__type, __inst, __list) \
-   for (__type *(__inst) = (__type *)(__list)->head;    \
-        !(__inst)->is_head_sentinel();                  \
+#define foreach_in_list_reverse(__type, __inst, __list)   \
+   for (__type *(__inst) = (__type *)(__list)->tail_pred; \
+        !(__inst)->is_head_sentinel();                    \
         (__inst) = (__type *)(__inst)->prev)
 
 /**
