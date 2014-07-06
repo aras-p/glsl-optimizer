@@ -157,7 +157,7 @@ bool r600_init_resource(struct r600_common_screen *rscreen,
 	util_range_set_empty(&res->valid_buffer_range);
 
 	if (rscreen->debug_flags & DBG_VM && res->b.b.target == PIPE_BUFFER) {
-		fprintf(stderr, "VM start=0x%"PRIu64"  end=0x%"PRIu64" | Buffer %u bytes\n",
+		fprintf(stderr, "VM start=0x%"PRIX64"  end=0x%"PRIX64" | Buffer %u bytes\n",
 			r600_resource_va(&rscreen->b, &res->b.b),
 			r600_resource_va(&rscreen->b, &res->b.b) + res->buf->size,
 			res->buf->size);

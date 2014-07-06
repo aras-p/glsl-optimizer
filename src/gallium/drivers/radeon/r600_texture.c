@@ -666,7 +666,7 @@ r600_texture_create_object(struct pipe_screen *screen,
 	rtex->cmask.base_address_reg = (va + rtex->cmask.offset) >> 8;
 
 	if (rscreen->debug_flags & DBG_VM) {
-		fprintf(stderr, "VM start=0x%"PRIu64"  end=0x%"PRIu64" | Texture %ix%ix%i, %i levels, %i samples, %s\n",
+		fprintf(stderr, "VM start=0x%"PRIX64"  end=0x%"PRIX64" | Texture %ix%ix%i, %i levels, %i samples, %s\n",
 			r600_resource_va(screen, &rtex->resource.b.b),
 			r600_resource_va(screen, &rtex->resource.b.b) + rtex->resource.buf->size,
 			base->width0, base->height0, util_max_layer(base, 0)+1, base->last_level+1,
