@@ -1354,7 +1354,14 @@ NVC0LoweringPass::handleRDSV(Instruction *i)
    switch (sv) {
    case SV_POSITION:
       assert(prog->getType() == Program::TYPE_FRAGMENT);
-      bld.mkInterp(NV50_IR_INTERP_LINEAR, i->getDef(0), addr, NULL);
+      if (i->srcExists(1)) {
+         // Pass offset through to the interpolation logic
+         ld = bld.mkInterp(NV50_IR_INTERP_LINEAR | NV50_IR_INTERP_OFFSET,
+                           i->getDef(0), addr, NULL);
+         ld->setSrc(1, i->getSrc(1));
+      } else {
+         bld.mkInterp(NV50_IR_INTERP_LINEAR, i->getDef(0), addr, NULL);
+      }
       break;
    case SV_FACE:
    {

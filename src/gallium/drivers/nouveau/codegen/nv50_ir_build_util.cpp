@@ -163,6 +163,7 @@ BuildUtil::mkInterp(unsigned mode, Value *dst, int32_t offset, Value *rel)
 
    Instruction *insn = mkOp1(op, ty, dst, sym);
    insn->setIndirect(0, 0, rel);
+   insn->setInterpolate(mode);
    return insn;
 }
 

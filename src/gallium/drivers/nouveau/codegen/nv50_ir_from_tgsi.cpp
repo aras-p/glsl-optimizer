@@ -1202,6 +1202,8 @@ private:
    void handleSTORE();
    void handleATOM(Value *dst0[4], DataType, uint16_t subOp);
 
+   void handleINTERP(Value *dst0[4]);
+
    Value *interpolate(tgsi::Instruction::SrcRegister, int c, Value *ptr);
 
    void insertConvergenceOps(BasicBlock *conv, BasicBlock *fork);
@@ -2132,6 +2134,84 @@ Converter::handleATOM(Value *dst0[4], DataType ty, uint16_t subOp)
          dst0[c] = dst; // not equal to rDst so handleInstruction will do mkMov
 }
 
+void
+Converter::handleINTERP(Value *dst[4])
+{
+   // Check whether the input is linear. All other attributes ignored.
+   Instruction *insn;
+   Value *offset = NULL, *ptr = NULL, *w;
+   bool linear;
+   operation op;
+   int c, mode;
+
+   tgsi::Instruction::SrcRegister src = tgsi.getSrc(0);
+   assert(src.getFile() == TGSI_FILE_INPUT);
+
+   if (src.isIndirect(0))
+      ptr = fetchSrc(src.getIndirect(0), 0, NULL);
+
+   // XXX: no way to know interp mode if we don't know the index
+   linear = info->in[ptr ? 0 : src.getIndex(0)].linear;
+   if (linear) {
+      op = OP_LINTERP;
+      mode = NV50_IR_INTERP_LINEAR;
+   } else {
+      op = OP_PINTERP;
+      mode = NV50_IR_INTERP_PERSPECTIVE;
+   }
+
+   switch (tgsi.getOpcode()) {
+   case TGSI_OPCODE_INTERP_CENTROID:
+      mode |= NV50_IR_INTERP_CENTROID;
+      break;
+   case TGSI_OPCODE_INTERP_SAMPLE:
+      insn = mkOp1(OP_PIXLD, TYPE_U32, (offset = getScratch()), fetchSrc(1, 0));
+      insn->subOp = NV50_IR_SUBOP_PIXLD_OFFSET;
+      mode |= NV50_IR_INTERP_OFFSET;
+      break;
+   case TGSI_OPCODE_INTERP_OFFSET: {
+      // The input in src1.xy is float, but we need a single 32-bit value
+      // where the upper and lower 16 bits are encoded in S0.12 format. We need
+      // to clamp the input coordinates to (-0.5, 0.4375), multiply by 4096,
+      // and then convert to s32.
+      Value *offs[2];
+      for (c = 0; c < 2; c++) {
+         offs[c] = fetchSrc(1, c);
+         mkOp2(OP_MIN, TYPE_F32, offs[c], offs[c], loadImm(NULL, 0.4375f));
+         mkOp2(OP_MAX, TYPE_F32, offs[c], offs[c], loadImm(NULL, -0.5f));
+         mkOp2(OP_MUL, TYPE_F32, offs[c], offs[c], loadImm(NULL, 4096.0f));
+         mkCvt(OP_CVT, TYPE_S32, offs[c], TYPE_F32, offs[c]);
+      }
+      offset = mkOp3v(OP_INSBF, TYPE_U32, getScratch(),
+                      offs[1], mkImm(0x1010), offs[0]);
+      mode |= NV50_IR_INTERP_OFFSET;
+      break;
+   }
+   }
+
+   if (op == OP_PINTERP) {
+      if (offset) {
+         w = mkOp2v(OP_RDSV, TYPE_F32, getSSA(), mkSysVal(SV_POSITION, 3), offset);
+         mkOp1(OP_RCP, TYPE_F32, w, w);
+      } else {
+         w = fragCoord[3];
+      }
+   }
+
+
+   FOR_EACH_DST_ENABLED_CHANNEL(0, c, tgsi) {
+      insn = mkOp1(op, TYPE_F32, dst[c], srcToSym(src, c));
+      if (op == OP_PINTERP)
+         insn->setSrc(1, w);
+      if (ptr)
+         insn->setIndirect(0, 0, ptr);
+      if (offset)
+         insn->setSrc(op == OP_PINTERP ? 2 : 1, offset);
+
+      insn->setInterpolate(mode);
+   }
+}
+
 Converter::Subroutine *
 Converter::getSubroutine(unsigned ip)
 {
@@ -2795,6 +2875,11 @@ Converter::handleInstruction(const struct tgsi_full_instruction *insn)
          src0 = fetchSrc(0, c);
          mkOp2(OP_POPCNT, TYPE_U32, dst0[c], src0, src0);
       }
+      break;
+   case TGSI_OPCODE_INTERP_CENTROID:
+   case TGSI_OPCODE_INTERP_SAMPLE:
+   case TGSI_OPCODE_INTERP_OFFSET:
+      handleINTERP(dst0);
       break;
    default:
       ERROR("unhandled TGSI opcode: %u\n", tgsi.getOpcode());
