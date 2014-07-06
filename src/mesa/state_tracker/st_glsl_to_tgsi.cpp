@@ -2028,6 +2028,15 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
        */
       emit(ir, TGSI_OPCODE_MAD, result_dst, op[0], op[1], op[2]);
       break;
+   case ir_unop_interpolate_at_centroid:
+      emit(ir, TGSI_OPCODE_INTERP_CENTROID, result_dst, op[0]);
+      break;
+   case ir_binop_interpolate_at_offset:
+      emit(ir, TGSI_OPCODE_INTERP_OFFSET, result_dst, op[0], op[1]);
+      break;
+   case ir_binop_interpolate_at_sample:
+      emit(ir, TGSI_OPCODE_INTERP_SAMPLE, result_dst, op[0], op[1]);
+      break;
    case ir_unop_pack_snorm_2x16:
    case ir_unop_pack_unorm_2x16:
    case ir_unop_pack_half_2x16:
@@ -2049,9 +2058,6 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
    case ir_binop_ldexp:
    case ir_binop_carry:
    case ir_binop_borrow:
-   case ir_unop_interpolate_at_centroid:
-   case ir_binop_interpolate_at_offset:
-   case ir_binop_interpolate_at_sample:
       /* This operation is not supported, or should have already been handled.
        */
       assert(!"Invalid ir opcode in glsl_to_tgsi_visitor::visit()");
