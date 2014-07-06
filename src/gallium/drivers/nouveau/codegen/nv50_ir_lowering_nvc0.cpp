@@ -600,13 +600,18 @@ NVC0LoweringPass::handleTEX(TexInstruction *i)
    if (i->tex.target.isArray() || i->tex.rIndirectSrc >= 0 || i->tex.sIndirectSrc >= 0) {
       LValue *src = new_LValue(func, FILE_GPR); // 0xttxsaaaa
 
+      Value *ticRel = i->getIndirectR();
+      Value *tscRel = i->getIndirectS();
+
+      if (ticRel)
+         i->setSrc(i->tex.rIndirectSrc, NULL);
+      if (tscRel)
+         i->setSrc(i->tex.sIndirectSrc, NULL);
+
       Value *arrayIndex = i->tex.target.isArray() ? i->getSrc(lyr) : NULL;
       for (int s = dim; s >= 1; --s)
          i->setSrc(s, i->getSrc(s - 1));
       i->setSrc(0, arrayIndex);
-
-      Value *ticRel = i->getIndirectR();
-      Value *tscRel = i->getIndirectS();
 
       if (arrayIndex) {
          int sat = (i->op == OP_TXF) ? 1 : 0;
@@ -616,14 +621,10 @@ NVC0LoweringPass::handleTEX(TexInstruction *i)
          bld.loadImm(src, 0);
       }
 
-      if (ticRel) {
-         i->setSrc(i->tex.rIndirectSrc, NULL);
+      if (ticRel)
          bld.mkOp3(OP_INSBF, TYPE_U32, src, ticRel, bld.mkImm(0x0917), src);
-      }
-      if (tscRel) {
-         i->setSrc(i->tex.sIndirectSrc, NULL);
+      if (tscRel)
          bld.mkOp3(OP_INSBF, TYPE_U32, src, tscRel, bld.mkImm(0x0710), src);
-      }
 
       i->setSrc(0, src);
    }
