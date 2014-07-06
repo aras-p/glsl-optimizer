@@ -1286,6 +1286,12 @@ brw_disassemble_inst(FILE *file, struct brw_context *brw, brw_inst *inst,
    if (opcode == BRW_OPCODE_SEND || opcode == BRW_OPCODE_SENDC) {
       enum brw_message_target sfid = brw_inst_sfid(brw, inst);
 
+      if (brw_inst_src1_reg_file(brw, inst) != BRW_IMMEDIATE_VALUE) {
+         /* show the indirect descriptor source */
+         pad(file, 48);
+         err |= src1(file, brw, inst);
+      }
+
       newline(file);
       pad(file, 16);
       space = 0;
@@ -1294,183 +1300,189 @@ brw_disassemble_inst(FILE *file, struct brw_context *brw, brw_inst *inst,
       err |= control(file, "SFID", brw->gen >= 6 ? gen6_sfid : gen4_sfid,
                      sfid, &space);
 
-      switch (sfid) {
-      case BRW_SFID_MATH:
-         err |= control(file, "math function", math_function,
-                        brw_inst_math_msg_function(brw, inst), &space);
-         err |= control(file, "math saturate", math_saturate,
-                        brw_inst_math_msg_saturate(brw, inst), &space);
-         err |= control(file, "math signed", math_signed,
-                        brw_inst_math_msg_signed_int(brw, inst), &space);
-         err |= control(file, "math scalar", math_scalar,
-                        brw_inst_math_msg_data_type(brw, inst), &space);
-         err |= control(file, "math precision", math_precision,
-                        brw_inst_math_msg_precision(brw, inst), &space);
-         break;
-      case BRW_SFID_SAMPLER:
-         if (brw->gen >= 5) {
-            format(file, " (%d, %d, %d, %d)",
-                   brw_inst_binding_table_index(brw, inst),
-                   brw_inst_sampler(brw, inst),
-                   brw_inst_sampler_msg_type(brw, inst),
-                   brw_inst_sampler_simd_mode(brw, inst));
-         } else {
-            format(file, " (%d, %d, %d, ",
-                   brw_inst_binding_table_index(brw, inst),
-                   brw_inst_sampler(brw, inst),
-                   brw_inst_sampler_msg_type(brw, inst));
-            if (!brw->is_g4x) {
-               err |= control(file, "sampler target format",
-                              sampler_target_format,
-                              brw_inst_sampler_return_format(brw, inst), NULL);
+
+      if (brw_inst_src1_reg_file(brw, inst) != BRW_IMMEDIATE_VALUE) {
+         format(file, " indirect");
+      } else {
+         switch (sfid) {
+         case BRW_SFID_MATH:
+            err |= control(file, "math function", math_function,
+                           brw_inst_math_msg_function(brw, inst), &space);
+            err |= control(file, "math saturate", math_saturate,
+                           brw_inst_math_msg_saturate(brw, inst), &space);
+            err |= control(file, "math signed", math_signed,
+                           brw_inst_math_msg_signed_int(brw, inst), &space);
+            err |= control(file, "math scalar", math_scalar,
+                           brw_inst_math_msg_data_type(brw, inst), &space);
+            err |= control(file, "math precision", math_precision,
+                           brw_inst_math_msg_precision(brw, inst), &space);
+            break;
+         case BRW_SFID_SAMPLER:
+            if (brw->gen >= 5) {
+               format(file, " (%d, %d, %d, %d)",
+                      brw_inst_binding_table_index(brw, inst),
+                      brw_inst_sampler(brw, inst),
+                      brw_inst_sampler_msg_type(brw, inst),
+                      brw_inst_sampler_simd_mode(brw, inst));
+            } else {
+               format(file, " (%d, %d, %d, ",
+                      brw_inst_binding_table_index(brw, inst),
+                      brw_inst_sampler(brw, inst),
+                      brw_inst_sampler_msg_type(brw, inst));
+               if (!brw->is_g4x) {
+                  err |= control(file, "sampler target format",
+                                 sampler_target_format,
+                                 brw_inst_sampler_return_format(brw, inst), NULL);
+               }
+               string(file, ")");
             }
-            string(file, ")");
-         }
-         break;
-      case GEN6_SFID_DATAPORT_SAMPLER_CACHE:
-         /* aka BRW_SFID_DATAPORT_READ on Gen4-5 */
-         if (brw->gen >= 6) {
-            format(file, " (%d, %d, %d, %d)",
-                   brw_inst_binding_table_index(brw, inst),
-                   brw_inst_dp_msg_control(brw, inst),
-                   brw_inst_dp_msg_type(brw, inst),
-                   brw->gen >= 7 ? 0 : brw_inst_dp_write_commit(brw, inst));
-         } else {
-            format(file, " (%d, %d, %d)",
-                   brw_inst_binding_table_index(brw, inst),
-                   brw_inst_dp_read_msg_control(brw, inst),
-                   brw_inst_dp_read_msg_type(brw, inst));
-         }
-         break;
-
-      case GEN6_SFID_DATAPORT_RENDER_CACHE: {
-         /* aka BRW_SFID_DATAPORT_WRITE on Gen4-5 */
-         unsigned msg_type = brw_inst_dp_write_msg_type(brw, inst);
-
-         err |= control(file, "DP rc message type",
-                        brw->gen >= 6 ? dp_rc_msg_type_gen6
-                                      : dp_write_port_msg_type,
-                        msg_type, &space);
-
-         bool is_rt_write = msg_type ==
-            (brw->gen >= 6 ? GEN6_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_WRITE
-                           : BRW_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_WRITE);
-
-         if (is_rt_write) {
-            err |= control(file, "RT message type", m_rt_write_subtype,
-                           brw_inst_rt_message_type(brw, inst), &space);
-            if (brw->gen >= 6 && brw_inst_rt_slot_group(brw, inst))
-               string(file, " Hi");
-            if (brw_inst_rt_last(brw, inst))
-               string(file, " LastRT");
-            if (brw->gen < 7 && brw_inst_dp_write_commit(brw, inst))
-               string(file, " WriteCommit");
-         } else {
-            format(file, " MsgCtrl = 0x%x",
-                   brw_inst_dp_write_msg_control(brw, inst));
-         }
-
-         format(file, " Surface = %d", brw_inst_binding_table_index(brw, inst));
-         break;
-      }
-
-      case BRW_SFID_URB:
-         format(file, " %d", brw_inst_urb_global_offset(brw, inst));
-
-         space = 1;
-         if (brw->gen >= 7) {
-            err |= control(file, "urb opcode", gen7_urb_opcode,
-                           brw_inst_urb_opcode(brw, inst), &space);
-         } else if (brw->gen >= 5) {
-            err |= control(file, "urb opcode", gen5_urb_opcode,
-                           brw_inst_urb_opcode(brw, inst), &space);
-         }
-         err |= control(file, "urb swizzle", urb_swizzle,
-                        brw_inst_urb_swizzle_control(brw, inst), &space);
-         if (brw->gen < 7) {
-            err |= control(file, "urb allocate", urb_allocate,
-                           brw_inst_urb_allocate(brw, inst), &space);
-            err |= control(file, "urb used", urb_used,
-                           brw_inst_urb_used(brw, inst), &space);
-         }
-         err |= control(file, "urb complete", urb_complete,
-                        brw_inst_urb_complete(brw, inst), &space);
-         break;
-      case BRW_SFID_THREAD_SPAWNER:
-         break;
-      case GEN7_SFID_DATAPORT_DATA_CACHE:
-         if (brw->gen >= 7) {
-            format(file, " (");
-
-            err |= control(file, "DP DC0 message type",
-                           dp_dc0_msg_type_gen7,
-                           brw_inst_dp_msg_type(brw, inst), &space);
-
-            format(file, ", %d, ", brw_inst_binding_table_index(brw, inst));
-
-            switch (brw_inst_dp_msg_type(brw, inst)) {
-            case GEN7_DATAPORT_DC_UNTYPED_ATOMIC_OP:
-               control(file, "atomic op", aop,
-                       brw_inst_imm_ud(brw, inst) >> 8 & 0xf, &space);
-               break;
-            default:
-               format(file, "%d", brw_inst_dp_msg_control(brw, inst));
+            break;
+         case GEN6_SFID_DATAPORT_SAMPLER_CACHE:
+            /* aka BRW_SFID_DATAPORT_READ on Gen4-5 */
+            if (brw->gen >= 6) {
+               format(file, " (%d, %d, %d, %d)",
+                      brw_inst_binding_table_index(brw, inst),
+                      brw_inst_dp_msg_control(brw, inst),
+                      brw_inst_dp_msg_type(brw, inst),
+                      brw->gen >= 7 ? 0 : brw_inst_dp_write_commit(brw, inst));
+            } else {
+               format(file, " (%d, %d, %d)",
+                      brw_inst_binding_table_index(brw, inst),
+                      brw_inst_dp_read_msg_control(brw, inst),
+                      brw_inst_dp_read_msg_type(brw, inst));
             }
-            format(file, ")");
+            break;
+
+         case GEN6_SFID_DATAPORT_RENDER_CACHE: {
+            /* aka BRW_SFID_DATAPORT_WRITE on Gen4-5 */
+            unsigned msg_type = brw_inst_dp_write_msg_type(brw, inst);
+
+            err |= control(file, "DP rc message type",
+                           brw->gen >= 6 ? dp_rc_msg_type_gen6
+                                         : dp_write_port_msg_type,
+                           msg_type, &space);
+
+            bool is_rt_write = msg_type ==
+               (brw->gen >= 6 ? GEN6_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_WRITE
+                              : BRW_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_WRITE);
+
+            if (is_rt_write) {
+               err |= control(file, "RT message type", m_rt_write_subtype,
+                              brw_inst_rt_message_type(brw, inst), &space);
+               if (brw->gen >= 6 && brw_inst_rt_slot_group(brw, inst))
+                  string(file, " Hi");
+               if (brw_inst_rt_last(brw, inst))
+                  string(file, " LastRT");
+               if (brw->gen < 7 && brw_inst_dp_write_commit(brw, inst))
+                  string(file, " WriteCommit");
+            } else {
+               format(file, " MsgCtrl = 0x%x",
+                      brw_inst_dp_write_msg_control(brw, inst));
+            }
+
+            format(file, " Surface = %d", brw_inst_binding_table_index(brw, inst));
             break;
          }
-         /* FALLTHROUGH */
 
-      case HSW_SFID_DATAPORT_DATA_CACHE_1: {
-         if (brw->gen >= 7) {
-            format(file, " (");
+         case BRW_SFID_URB:
+            format(file, " %d", brw_inst_urb_global_offset(brw, inst));
 
-            unsigned msg_ctrl = brw_inst_dp_msg_control(brw, inst);
+            space = 1;
+            if (brw->gen >= 7) {
+               err |= control(file, "urb opcode", gen7_urb_opcode,
+                              brw_inst_urb_opcode(brw, inst), &space);
+            } else if (brw->gen >= 5) {
+               err |= control(file, "urb opcode", gen5_urb_opcode,
+                              brw_inst_urb_opcode(brw, inst), &space);
+            }
+            err |= control(file, "urb swizzle", urb_swizzle,
+                           brw_inst_urb_swizzle_control(brw, inst), &space);
+            if (brw->gen < 7) {
+               err |= control(file, "urb allocate", urb_allocate,
+                              brw_inst_urb_allocate(brw, inst), &space);
+               err |= control(file, "urb used", urb_used,
+                              brw_inst_urb_used(brw, inst), &space);
+            }
+            err |= control(file, "urb complete", urb_complete,
+                           brw_inst_urb_complete(brw, inst), &space);
+            break;
+         case BRW_SFID_THREAD_SPAWNER:
+            break;
+         case GEN7_SFID_DATAPORT_DATA_CACHE:
+            if (brw->gen >= 7) {
+               format(file, " (");
 
-            err |= control(file, "DP DC1 message type",
-                           dp_dc1_msg_type_hsw,
-                           brw_inst_dp_msg_type(brw, inst), &space);
+               err |= control(file, "DP DC0 message type",
+                              dp_dc0_msg_type_gen7,
+                              brw_inst_dp_msg_type(brw, inst), &space);
 
-            format(file, ", Surface = %d, ",
-                   brw_inst_binding_table_index(brw, inst));
+               format(file, ", %d, ", brw_inst_binding_table_index(brw, inst));
 
-            switch (brw_inst_dp_msg_type(brw, inst)) {
-            case HSW_DATAPORT_DC_PORT1_UNTYPED_ATOMIC_OP:
-            case HSW_DATAPORT_DC_PORT1_TYPED_ATOMIC_OP:
-            case HSW_DATAPORT_DC_PORT1_ATOMIC_COUNTER_OP:
-               format(file, "SIMD%d,", (msg_ctrl & (1 << 4)) ? 8 : 16);
-               /* fallthrough */
-            case HSW_DATAPORT_DC_PORT1_UNTYPED_ATOMIC_OP_SIMD4X2:
-            case HSW_DATAPORT_DC_PORT1_TYPED_ATOMIC_OP_SIMD4X2:
-            case HSW_DATAPORT_DC_PORT1_ATOMIC_COUNTER_OP_SIMD4X2:
-               control(file, "atomic op", aop, msg_ctrl & 0xf, &space);
-               break;
-            case HSW_DATAPORT_DC_PORT1_UNTYPED_SURFACE_READ:
-            case HSW_DATAPORT_DC_PORT1_UNTYPED_SURFACE_WRITE:
-            case HSW_DATAPORT_DC_PORT1_TYPED_SURFACE_READ:
-            case HSW_DATAPORT_DC_PORT1_TYPED_SURFACE_WRITE: {
-               static const char *simd_modes[] = { "4x2", "16", "8" };
-               format(file, "SIMD%s, Mask = 0x%x",
-                      simd_modes[msg_ctrl >> 4], msg_ctrl & 0xf);
+               switch (brw_inst_dp_msg_type(brw, inst)) {
+               case GEN7_DATAPORT_DC_UNTYPED_ATOMIC_OP:
+                  control(file, "atomic op", aop,
+                          brw_inst_imm_ud(brw, inst) >> 8 & 0xf, &space);
+                  break;
+               default:
+                  format(file, "%d", brw_inst_dp_msg_control(brw, inst));
+               }
+               format(file, ")");
                break;
             }
-            default:
-               format(file, "0x%x", msg_ctrl);
+            /* FALLTHROUGH */
+
+         case HSW_SFID_DATAPORT_DATA_CACHE_1: {
+            if (brw->gen >= 7) {
+               format(file, " (");
+
+               unsigned msg_ctrl = brw_inst_dp_msg_control(brw, inst);
+
+               err |= control(file, "DP DC1 message type",
+                              dp_dc1_msg_type_hsw,
+                              brw_inst_dp_msg_type(brw, inst), &space);
+
+               format(file, ", Surface = %d, ",
+                      brw_inst_binding_table_index(brw, inst));
+
+               switch (brw_inst_dp_msg_type(brw, inst)) {
+               case HSW_DATAPORT_DC_PORT1_UNTYPED_ATOMIC_OP:
+               case HSW_DATAPORT_DC_PORT1_TYPED_ATOMIC_OP:
+               case HSW_DATAPORT_DC_PORT1_ATOMIC_COUNTER_OP:
+                  format(file, "SIMD%d,", (msg_ctrl & (1 << 4)) ? 8 : 16);
+                  /* fallthrough */
+               case HSW_DATAPORT_DC_PORT1_UNTYPED_ATOMIC_OP_SIMD4X2:
+               case HSW_DATAPORT_DC_PORT1_TYPED_ATOMIC_OP_SIMD4X2:
+               case HSW_DATAPORT_DC_PORT1_ATOMIC_COUNTER_OP_SIMD4X2:
+                  control(file, "atomic op", aop, msg_ctrl & 0xf, &space);
+                  break;
+               case HSW_DATAPORT_DC_PORT1_UNTYPED_SURFACE_READ:
+               case HSW_DATAPORT_DC_PORT1_UNTYPED_SURFACE_WRITE:
+               case HSW_DATAPORT_DC_PORT1_TYPED_SURFACE_READ:
+               case HSW_DATAPORT_DC_PORT1_TYPED_SURFACE_WRITE: {
+                  static const char *simd_modes[] = { "4x2", "16", "8" };
+                  format(file, "SIMD%s, Mask = 0x%x",
+                         simd_modes[msg_ctrl >> 4], msg_ctrl & 0xf);
+                  break;
+               }
+               default:
+                  format(file, "0x%x", msg_ctrl);
+               }
+               format(file, ")");
+               break;
             }
-            format(file, ")");
+            /* FALLTHROUGH */
+         }
+
+         default:
+            format(file, "unsupported shared function ID %d", sfid);
             break;
          }
-         /* FALLTHROUGH */
-      }
 
-      default:
-         format(file, "unsupported shared function ID %d", sfid);
-         break;
+         if (space)
+            string(file, " ");
+         format(file, "mlen %d", brw_inst_mlen(brw, inst));
+         format(file, " rlen %d", brw_inst_rlen(brw, inst));
       }
-      if (space)
-         string(file, " ");
-      format(file, "mlen %d", brw_inst_mlen(brw, inst));
-      format(file, " rlen %d", brw_inst_rlen(brw, inst));
    }
    pad(file, 64);
    if (opcode != BRW_OPCODE_NOP) {
