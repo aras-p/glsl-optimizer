@@ -1337,7 +1337,10 @@ vec4_visitor::dump_instruction(backend_instruction *be_inst, FILE *file)
          break;
       }
 
-      if (virtual_grf_sizes[inst->src[i].reg] != 1)
+      /* Don't print .0; and only VGRFs have reg_offsets and sizes */
+      if (inst->src[i].reg_offset != 0 &&
+          inst->src[i].file == GRF &&
+          virtual_grf_sizes[inst->src[i].reg] != 1)
          fprintf(file, ".%d", inst->src[i].reg_offset);
 
       if (inst->src[i].file != IMM) {
