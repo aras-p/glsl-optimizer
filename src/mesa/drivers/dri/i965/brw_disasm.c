@@ -252,7 +252,7 @@ static const char *const pred_ctrl_align1[16] = {
    [BRW_PREDICATE_ALIGN1_ANY8H]  = ".any8h",
    [BRW_PREDICATE_ALIGN1_ALL8H]  = ".all8h",
    [BRW_PREDICATE_ALIGN1_ANY16H] = ".any16h",
-   [BRW_PREDICATE_ALIGN1_ANY16H] = ".all16h",
+   [BRW_PREDICATE_ALIGN1_ALL16H] = ".all16h",
    [BRW_PREDICATE_ALIGN1_ANY32H] = ".any32h",
    [BRW_PREDICATE_ALIGN1_ANY32H] = ".all32h",
 };
