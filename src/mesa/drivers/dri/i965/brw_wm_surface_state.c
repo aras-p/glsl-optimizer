@@ -479,13 +479,12 @@ brw_update_sol_surface(struct brw_context *brw,
 static void
 brw_upload_wm_pull_constants(struct brw_context *brw)
 {
-   struct gl_context *ctx = &brw->ctx;
    struct brw_stage_state *stage_state = &brw->wm.base;
    /* BRW_NEW_FRAGMENT_PROGRAM */
    struct brw_fragment_program *fp =
       (struct brw_fragment_program *) brw->fragment_program;
    /* CACHE_NEW_WM_PROG */
-   struct gl_stage_prog_data *prog_data = &brw->wm.prog_data->base;
+   struct brw_stage_prog_data *prog_data = &brw->wm.prog_data->base;
 
    /* _NEW_PROGRAM_CONSTANTS */
    brw_upload_pull_constants(brw, BRW_NEW_SURFACES, &fp->program.Base,
