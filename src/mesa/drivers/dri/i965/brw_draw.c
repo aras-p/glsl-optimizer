@@ -55,7 +55,7 @@
 
 #define FILE_DEBUG_FLAG DEBUG_PRIMS
 
-const GLuint prim_to_hw_prim[GL_TRIANGLE_STRIP_ADJACENCY+1] = {
+static const GLuint prim_to_hw_prim[GL_TRIANGLE_STRIP_ADJACENCY+1] = {
    _3DPRIM_POINTLIST,
    _3DPRIM_LINELIST,
    _3DPRIM_LINELOOP,
@@ -86,6 +86,15 @@ static const GLenum reduced_prim[GL_POLYGON+1] = {
    GL_TRIANGLES
 };
 
+uint32_t
+get_hw_prim_for_gl_prim(int mode)
+{
+   if (mode >= BRW_PRIM_OFFSET)
+      return mode - BRW_PRIM_OFFSET;
+   else
+      return prim_to_hw_prim[mode];
+}
+
 
 /* When the primitive changes, set a state bit and re-validate.  Not
  * the nicest and would rather deal with this by having all the
@@ -96,7 +105,7 @@ static void brw_set_prim(struct brw_context *brw,
                          const struct _mesa_prim *prim)
 {
    struct gl_context *ctx = &brw->ctx;
-   uint32_t hw_prim = prim_to_hw_prim[prim->mode];
+   uint32_t hw_prim = get_hw_prim_for_gl_prim(prim->mode);
 
    DBG("PRIM: %s\n", _mesa_lookup_enum_by_nr(prim->mode));
 
@@ -133,7 +142,7 @@ static void gen6_set_prim(struct brw_context *brw,
 
    DBG("PRIM: %s\n", _mesa_lookup_enum_by_nr(prim->mode));
 
-   hw_prim = prim_to_hw_prim[prim->mode];
+   hw_prim = get_hw_prim_for_gl_prim(prim->mode);
 
    if (hw_prim != brw->primitive) {
       brw->primitive = hw_prim;
