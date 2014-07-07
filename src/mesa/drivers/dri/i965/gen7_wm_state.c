@@ -139,11 +139,11 @@ static void
 upload_ps_state(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->ctx;
-   uint32_t dw2, dw4, dw5;
+   uint32_t dw2, dw4, dw5, ksp0, ksp2;
    const int max_threads_shift = brw->is_haswell ?
       HSW_PS_MAX_THREADS_SHIFT : IVB_PS_MAX_THREADS_SHIFT;
 
-   dw2 = dw4 = dw5 = 0;
+   dw2 = dw4 = dw5 = ksp2 = 0;
 
    dw2 |=
       (ALIGN(brw->wm.base.sampler_count, 4) / 4) << GEN7_PS_SAMPLER_COUNT_SHIFT;
@@ -231,22 +231,24 @@ upload_ps_state(struct brw_context *brw)
                  GEN7_PS_DISPATCH_START_GRF_SHIFT_0);
          dw5 |= (brw->wm.prog_data->dispatch_grf_start_reg_16 <<
                  GEN7_PS_DISPATCH_START_GRF_SHIFT_2);
-      } else
+         ksp0 = brw->wm.base.prog_offset;
+         ksp2 = brw->wm.base.prog_offset + brw->wm.prog_data->prog_offset_16;
+      } else {
          dw5 |= (brw->wm.prog_data->dispatch_grf_start_reg_16 <<
                  GEN7_PS_DISPATCH_START_GRF_SHIFT_0);
+         ksp0 = brw->wm.base.prog_offset + brw->wm.prog_data->prog_offset_16;
+      }
    }
    else {
       dw4 |= GEN7_PS_8_DISPATCH_ENABLE;
       dw5 |= (brw->wm.prog_data->base.dispatch_grf_start_reg <<
               GEN7_PS_DISPATCH_START_GRF_SHIFT_0);
+      ksp0 = brw->wm.base.prog_offset;
    }
 
    BEGIN_BATCH(8);
    OUT_BATCH(_3DSTATE_PS << 16 | (8 - 2));
-   if (brw->wm.prog_data->prog_offset_16 && min_inv_per_frag > 1)
-      OUT_BATCH(brw->wm.base.prog_offset + brw->wm.prog_data->prog_offset_16);
-   else
-      OUT_BATCH(brw->wm.base.prog_offset);
+   OUT_BATCH(ksp0);
    OUT_BATCH(dw2);
    if (brw->wm.prog_data->total_scratch) {
       OUT_RELOC(brw->wm.base.scratch_bo,
@@ -258,7 +260,7 @@ upload_ps_state(struct brw_context *brw)
    OUT_BATCH(dw4);
    OUT_BATCH(dw5);
    OUT_BATCH(0); /* kernel 1 pointer */
-   OUT_BATCH(brw->wm.base.prog_offset + brw->wm.prog_data->prog_offset_16);
+   OUT_BATCH(ksp2);
    ADVANCE_BATCH();
 }
 
