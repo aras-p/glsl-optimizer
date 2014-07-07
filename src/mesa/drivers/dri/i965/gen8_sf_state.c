@@ -117,7 +117,10 @@ upload_sf(struct brw_context *brw)
    uint32_t dw1 = 0, dw2 = 0, dw3 = 0;
    float point_size;
 
-   dw1 = GEN6_SF_STATISTICS_ENABLE | GEN6_SF_VIEWPORT_TRANSFORM_ENABLE;
+   dw1 = GEN6_SF_STATISTICS_ENABLE;
+
+   if (brw->sf.viewport_transform_enable)
+       dw1 |= GEN6_SF_VIEWPORT_TRANSFORM_ENABLE;
 
    /* _NEW_LINE */
    uint32_t line_width_u3_7 = U_FIXED(CLAMP(ctx->Line.Width, 0.0, 7.99), 7);

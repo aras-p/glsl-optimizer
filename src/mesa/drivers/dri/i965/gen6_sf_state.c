@@ -241,9 +241,10 @@ upload_sf_state(struct brw_context *brw)
    uint32_t point_sprite_origin;
 
    dw1 = GEN6_SF_SWIZZLE_ENABLE | num_outputs << GEN6_SF_NUM_OUTPUTS_SHIFT;
+   dw2 = GEN6_SF_STATISTICS_ENABLE;
 
-   dw2 = GEN6_SF_STATISTICS_ENABLE |
-         GEN6_SF_VIEWPORT_TRANSFORM_ENABLE;
+   if (brw->sf.viewport_transform_enable)
+       dw2 |= GEN6_SF_VIEWPORT_TRANSFORM_ENABLE;
 
    dw3 = 0;
    dw4 = 0;

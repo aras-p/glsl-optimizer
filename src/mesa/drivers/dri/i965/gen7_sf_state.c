@@ -109,8 +109,10 @@ upload_sf_state(struct brw_context *brw)
    bool render_to_fbo = _mesa_is_user_fbo(ctx->DrawBuffer);
    bool multisampled_fbo = ctx->DrawBuffer->Visual.samples > 1;
 
-   dw1 = GEN6_SF_STATISTICS_ENABLE |
-         GEN6_SF_VIEWPORT_TRANSFORM_ENABLE;
+   dw1 = GEN6_SF_STATISTICS_ENABLE;
+
+   if (brw->sf.viewport_transform_enable)
+       dw1 |= GEN6_SF_VIEWPORT_TRANSFORM_ENABLE;
 
    /* _NEW_BUFFERS */
    dw1 |= (brw_depthbuffer_format(brw) << GEN7_SF_DEPTH_BUFFER_SURFACE_FORMAT_SHIFT);

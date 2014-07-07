@@ -757,6 +757,7 @@ brwCreateContext(gl_api api,
    brw->prim_restart.in_progress = false;
    brw->prim_restart.enable_cut_index = false;
    brw->gs.enabled = false;
+   brw->sf.viewport_transform_enable = true;
 
    ctx->VertexProgram._MaintainTnlProgram = true;
    ctx->FragmentProgram._MaintainTexEnvProgram = true;
