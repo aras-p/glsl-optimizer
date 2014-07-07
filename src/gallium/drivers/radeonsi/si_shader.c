@@ -68,11 +68,11 @@ struct si_shader_context
 	int param_vertex_id;
 	int param_instance_id;
 	LLVMValueRef const_md;
-	LLVMValueRef const_resource[NUM_CONST_BUFFERS];
+	LLVMValueRef const_resource[SI_NUM_CONST_BUFFERS];
 #if HAVE_LLVM >= 0x0304
 	LLVMValueRef ddxy_lds;
 #endif
-	LLVMValueRef *constants[NUM_CONST_BUFFERS];
+	LLVMValueRef *constants[SI_NUM_CONST_BUFFERS];
 	LLVMValueRef *resources;
 	LLVMValueRef *samplers;
 	LLVMValueRef so_buffers[4];
@@ -580,7 +580,7 @@ static void declare_system_value(
 	{
 		LLVMBuilderRef builder = gallivm->builder;
 		LLVMValueRef desc = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn, SI_PARAM_CONST);
-		LLVMValueRef buf_index = lp_build_const_int32(gallivm, NUM_PIPE_CONST_BUFFERS);
+		LLVMValueRef buf_index = lp_build_const_int32(gallivm, SI_DRIVER_STATE_CONST_BUF);
 		LLVMValueRef resource = build_indexed_load(si_shader_ctx, desc, buf_index);
 
 		/* offset = sample_id * 8  (8 = 2 floats containing samplepos.xy) */
@@ -788,7 +788,7 @@ static void si_llvm_emit_clipvertex(struct lp_build_tgsi_context * bld_base,
 	unsigned const_chan;
 	LLVMValueRef base_elt;
 	LLVMValueRef ptr = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn, SI_PARAM_CONST);
-	LLVMValueRef constbuf_index = lp_build_const_int32(base->gallivm, NUM_PIPE_CONST_BUFFERS);
+	LLVMValueRef constbuf_index = lp_build_const_int32(base->gallivm, SI_DRIVER_STATE_CONST_BUF);
 	LLVMValueRef const_resource = build_indexed_load(si_shader_ctx, ptr, constbuf_index);
 
 	for (reg_index = 0; reg_index < 2; reg_index ++) {
@@ -1751,7 +1751,7 @@ static void tex_fetch_args(
 		txf_emit_data.dst_type = LLVMVectorType(
 			LLVMInt32TypeInContext(gallivm->context), 4);
 		txf_emit_data.args[0] = lp_build_gather_values(gallivm, txf_address, txf_count);
-		txf_emit_data.args[1] = si_shader_ctx->resources[FMASK_TEX_OFFSET + sampler_index];
+		txf_emit_data.args[1] = si_shader_ctx->resources[SI_FMASK_TEX_OFFSET + sampler_index];
 		txf_emit_data.args[2] = lp_build_const_int32(gallivm, inst.Texture.Texture);
 		txf_emit_data.arg_count = 3;
 
@@ -1783,7 +1783,7 @@ static void tex_fetch_args(
 		 */
 		LLVMValueRef fmask_desc =
 			LLVMBuildBitCast(gallivm->builder,
-					 si_shader_ctx->resources[FMASK_TEX_OFFSET + sampler_index],
+					 si_shader_ctx->resources[SI_FMASK_TEX_OFFSET + sampler_index],
 					 LLVMVectorType(uint_bld->elem_type, 8), "");
 
 		LLVMValueRef fmask_word1 =
@@ -2328,14 +2328,14 @@ static void create_function(struct si_shader_context *si_shader_ctx)
 	v8i32 = LLVMVectorType(i32, 8);
 	v16i8 = LLVMVectorType(i8, 16);
 
-	params[SI_PARAM_CONST] = const_array(v16i8, NUM_CONST_BUFFERS);
-	params[SI_PARAM_RW_BUFFERS] = const_array(v16i8, 6); /* XXX hardcoded */
-	params[SI_PARAM_SAMPLER] = const_array(v4i32, NUM_SAMPLER_STATES);
-	params[SI_PARAM_RESOURCE] = const_array(v8i32, NUM_SAMPLER_VIEWS);
+	params[SI_PARAM_CONST] = const_array(v16i8, SI_NUM_CONST_BUFFERS);
+	params[SI_PARAM_RW_BUFFERS] = const_array(v16i8, SI_NUM_RW_BUFFERS);
+	params[SI_PARAM_SAMPLER] = const_array(v4i32, SI_NUM_SAMPLER_STATES);
+	params[SI_PARAM_RESOURCE] = const_array(v8i32, SI_NUM_SAMPLER_VIEWS);
 
 	switch (si_shader_ctx->type) {
 	case TGSI_PROCESSOR_VERTEX:
-		params[SI_PARAM_VERTEX_BUFFER] = const_array(v16i8, 16); /* XXX hardcoded */
+		params[SI_PARAM_VERTEX_BUFFER] = const_array(v16i8, SI_NUM_VERTEX_BUFFERS);
 		params[SI_PARAM_START_INSTANCE] = i32;
 		num_params = SI_PARAM_START_INSTANCE+1;
 		if (shader->key.vs.as_es) {
@@ -2454,7 +2454,7 @@ static void preload_constants(struct si_shader_context *si_shader_ctx)
 	unsigned buf;
 	LLVMValueRef ptr = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn, SI_PARAM_CONST);
 
-	for (buf = 0; buf < NUM_CONST_BUFFERS; buf++) {
+	for (buf = 0; buf < SI_NUM_CONST_BUFFERS; buf++) {
 		unsigned i, num_const = info->const_file_max[buf] + 1;
 
 		if (num_const == 0)
@@ -2493,7 +2493,7 @@ static void preload_samplers(struct si_shader_context *si_shader_ctx)
 		return;
 
 	/* Allocate space for the values */
-	si_shader_ctx->resources = CALLOC(NUM_SAMPLER_VIEWS, sizeof(LLVMValueRef));
+	si_shader_ctx->resources = CALLOC(SI_NUM_SAMPLER_VIEWS, sizeof(LLVMValueRef));
 	si_shader_ctx->samplers = CALLOC(num_samplers, sizeof(LLVMValueRef));
 
 	res_ptr = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn, SI_PARAM_RESOURCE);
@@ -2511,8 +2511,8 @@ static void preload_samplers(struct si_shader_context *si_shader_ctx)
 
 		/* FMASK resource */
 		if (info->is_msaa_sampler[i]) {
-			offset = lp_build_const_int32(gallivm, FMASK_TEX_OFFSET + i);
-			si_shader_ctx->resources[FMASK_TEX_OFFSET + i] =
+			offset = lp_build_const_int32(gallivm, SI_FMASK_TEX_OFFSET + i);
+			si_shader_ctx->resources[SI_FMASK_TEX_OFFSET + i] =
 				build_indexed_load(si_shader_ctx, res_ptr, offset);
 		}
 	}
@@ -2536,7 +2536,7 @@ static void preload_streamout_buffers(struct si_shader_context *si_shader_ctx)
 	for (i = 0; i < 4; ++i) {
 		if (si_shader_ctx->shader->selector->so.stride[i]) {
 			LLVMValueRef offset = lp_build_const_int32(gallivm,
-								   SI_RW_SO + i);
+								   SI_SO_BUF_OFFSET + i);
 
 			si_shader_ctx->so_buffers[i] = build_indexed_load(si_shader_ctx, buf_ptr, offset);
 		}
@@ -2880,7 +2880,7 @@ int si_pipe_shader_create(
 	tgsi_parse_free(&si_shader_ctx.parse);
 
 out:
-	for (int i = 0; i < NUM_CONST_BUFFERS; i++)
+	for (int i = 0; i < SI_NUM_CONST_BUFFERS; i++)
 		FREE(si_shader_ctx.constants[i]);
 	FREE(si_shader_ctx.resources);
 	FREE(si_shader_ctx.samplers);

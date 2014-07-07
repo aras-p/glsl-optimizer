@@ -289,7 +289,7 @@ static void si_init_sampler_views(struct si_context *sctx,
 	si_init_descriptors(sctx, &views->desc,
 			    si_get_shader_user_data_base(shader) +
 			    SI_SGPR_RESOURCE * 4,
-			    8, NUM_SAMPLER_VIEWS, si_emit_sampler_views);
+			    8, SI_NUM_SAMPLER_VIEWS, si_emit_sampler_views);
 }
 
 static void si_release_sampler_views(struct si_sampler_views *views)
@@ -643,7 +643,7 @@ static void si_set_streamout_targets(struct pipe_context *ctx,
 
 	/* Set the shader resources.*/
 	for (i = 0; i < num_targets; i++) {
-		bufidx = SI_RW_SO + i;
+		bufidx = SI_SO_BUF_OFFSET + i;
 
 		if (targets[i]) {
 			struct pipe_resource *buffer = targets[i]->buffer;
@@ -677,7 +677,7 @@ static void si_set_streamout_targets(struct pipe_context *ctx,
 		buffers->desc.dirty_mask |= 1 << bufidx;
 	}
 	for (; i < old_num_targets; i++) {
-		bufidx = SI_RW_SO + i;
+		bufidx = SI_SO_BUF_OFFSET + i;
 		/* Clear the descriptor and unset the resource. */
 		memset(buffers->desc_data[bufidx], 0, sizeof(uint32_t) * 4);
 		pipe_resource_reference(&buffers->buffers[bufidx], NULL);
@@ -755,7 +755,7 @@ static void si_invalidate_buffer(struct pipe_context *ctx, struct pipe_resource 
 				buffers->desc.dirty_mask |= 1 << i;
 				found = true;
 
-				if (i >= SI_RW_SO && shader == PIPE_SHADER_VERTEX) {
+				if (i >= SI_SO_BUF_OFFSET && shader == PIPE_SHADER_VERTEX) {
 					/* Update the streamout state. */
 					if (sctx->b.streamout.begin_emitted) {
 						r600_emit_streamout_end(&sctx->b);
@@ -977,11 +977,11 @@ void si_init_all_descriptors(struct si_context *sctx)
 
 	for (i = 0; i < SI_NUM_SHADERS; i++) {
 		si_init_buffer_resources(sctx, &sctx->const_buffers[i],
-					 NUM_CONST_BUFFERS, i, SI_SGPR_CONST,
+					 SI_NUM_CONST_BUFFERS, i, SI_SGPR_CONST,
 					 RADEON_USAGE_READ, RADEON_PRIO_SHADER_BUFFER_RO);
 		si_init_buffer_resources(sctx, &sctx->rw_buffers[i],
 					 i == PIPE_SHADER_VERTEX ?
-					 SI_RW_SO + 4 : SI_RW_SO,
+					 SI_NUM_RW_BUFFERS : SI_NUM_RING_BUFFERS,
 					 i, SI_SGPR_RW_BUFFERS,
 					 RADEON_USAGE_READWRITE, RADEON_PRIO_SHADER_RESOURCE_RW);
 

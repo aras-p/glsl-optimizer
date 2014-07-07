@@ -446,7 +446,7 @@ static void si_set_clip_state(struct pipe_context *ctx,
 	cb.user_buffer = state->ucp;
 	cb.buffer_offset = 0;
 	cb.buffer_size = 4*4*8;
-	ctx->set_constant_buffer(ctx, PIPE_SHADER_VERTEX, NUM_PIPE_CONST_BUFFERS, &cb);
+	ctx->set_constant_buffer(ctx, PIPE_SHADER_VERTEX, SI_DRIVER_STATE_CONST_BUF, &cb);
 	pipe_resource_reference(&cb.buffer, NULL);
 
 	si_pm4_set_state(sctx, clip, pm4);
@@ -1961,7 +1961,7 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 	}
 	constbuf.buffer_size = sctx->framebuffer.nr_samples * 2 * 4;
 	ctx->set_constant_buffer(ctx, PIPE_SHADER_FRAGMENT,
-				 NUM_PIPE_CONST_BUFFERS, &constbuf);
+				 SI_DRIVER_STATE_CONST_BUF, &constbuf);
 }
 
 static void si_emit_framebuffer_state(struct si_context *sctx, struct r600_atom *atom)
@@ -2710,7 +2710,7 @@ static void si_set_sampler_views(struct pipe_context *ctx,
 			samplers->depth_texture_mask &= ~(1 << i);
 			samplers->compressed_colortex_mask &= ~(1 << i);
 			si_set_sampler_view(sctx, shader, i, NULL, NULL);
-			si_set_sampler_view(sctx, shader, FMASK_TEX_OFFSET + i,
+			si_set_sampler_view(sctx, shader, SI_FMASK_TEX_OFFSET + i,
 					    NULL, NULL);
 			continue;
 		}
@@ -2733,10 +2733,10 @@ static void si_set_sampler_views(struct pipe_context *ctx,
 			}
 
 			if (rtex->fmask.size) {
-				si_set_sampler_view(sctx, shader, FMASK_TEX_OFFSET + i,
+				si_set_sampler_view(sctx, shader, SI_FMASK_TEX_OFFSET + i,
 						    views[i], rviews[i]->fmask_state);
 			} else {
-				si_set_sampler_view(sctx, shader, FMASK_TEX_OFFSET + i,
+				si_set_sampler_view(sctx, shader, SI_FMASK_TEX_OFFSET + i,
 						    NULL, NULL);
 			}
 		}
@@ -2745,7 +2745,7 @@ static void si_set_sampler_views(struct pipe_context *ctx,
 		samplers->depth_texture_mask &= ~(1 << i);
 		samplers->compressed_colortex_mask &= ~(1 << i);
 		si_set_sampler_view(sctx, shader, i, NULL, NULL);
-		si_set_sampler_view(sctx, shader, FMASK_TEX_OFFSET + i,
+		si_set_sampler_view(sctx, shader, SI_FMASK_TEX_OFFSET + i,
 				    NULL, NULL);
 	}
 

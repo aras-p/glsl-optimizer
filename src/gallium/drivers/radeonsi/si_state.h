@@ -106,20 +106,35 @@ union si_state {
 	struct si_pm4_state	*array[0];
 };
 
-#define NUM_TEX_UNITS 16
+#define SI_NUM_USER_SAMPLERS 16 /* AKA OpenGL textures units per shader */
 
 /* User sampler views:   0..15
  * FMASK sampler views: 16..31 (no sampler states)
  */
-#define FMASK_TEX_OFFSET	NUM_TEX_UNITS
-#define NUM_SAMPLER_VIEWS	(FMASK_TEX_OFFSET+NUM_TEX_UNITS)
-#define NUM_SAMPLER_STATES	NUM_TEX_UNITS
+#define SI_FMASK_TEX_OFFSET		SI_NUM_USER_SAMPLERS
+#define SI_NUM_SAMPLER_VIEWS		(SI_FMASK_TEX_OFFSET + SI_NUM_USER_SAMPLERS)
+#define SI_NUM_SAMPLER_STATES		SI_NUM_USER_SAMPLERS
 
-#define NUM_PIPE_CONST_BUFFERS	16
-#define NUM_CONST_BUFFERS	(NUM_PIPE_CONST_BUFFERS + 1)
+/* User constant buffers:   0..15
+ * Driver state constants:  16
+ */
+#define SI_NUM_USER_CONST_BUFFERS	16
+#define SI_DRIVER_STATE_CONST_BUF	SI_NUM_USER_CONST_BUFFERS
+#define SI_NUM_CONST_BUFFERS		(SI_DRIVER_STATE_CONST_BUF + 1)
 
+/* Read-write buffer slots.
+ *
+ * Ring buffers:        0..1
+ * Streamout buffers:   2..5
+ */
 #define SI_RING_ESGS		0
 #define SI_RING_GSVS		1
+#define SI_NUM_RING_BUFFERS	2
+#define SI_SO_BUF_OFFSET	SI_NUM_RING_BUFFERS
+#define SI_NUM_RW_BUFFERS	(SI_SO_BUF_OFFSET + 4)
+
+#define SI_NUM_VERTEX_BUFFERS	16
+
 
 /* This represents resource descriptors in memory, such as buffer resources,
  * image resources, and sampler states.
@@ -155,8 +170,8 @@ struct si_descriptors {
 
 struct si_sampler_views {
 	struct si_descriptors		desc;
-	struct pipe_sampler_view	*views[NUM_SAMPLER_VIEWS];
-	uint32_t			*desc_data[NUM_SAMPLER_VIEWS];
+	struct pipe_sampler_view	*views[SI_NUM_SAMPLER_VIEWS];
+	uint32_t			*desc_data[SI_NUM_SAMPLER_VIEWS];
 };
 
 struct si_buffer_resources {

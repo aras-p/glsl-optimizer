@@ -67,7 +67,7 @@ struct si_cs_shader_state {
 
 struct si_textures_info {
 	struct si_sampler_views		views;
-	struct si_pipe_sampler_state	*samplers[NUM_TEX_UNITS];
+	struct si_pipe_sampler_state	*samplers[SI_NUM_USER_SAMPLERS];
 	unsigned			n_views;
 	uint32_t			depth_texture_mask; /* which textures are depth */
 	uint32_t			compressed_colortex_mask;
@@ -87,8 +87,6 @@ struct si_framebuffer {
 #define SI_NUM_ATOMS(sctx) (sizeof((sctx)->atoms)/sizeof((sctx)->atoms.array[0]))
 
 #define SI_NUM_SHADERS (PIPE_SHADER_GEOMETRY+1)
-
-#define SI_RW_SO 2 /* Streamout buffer descriptors after ring buffers */
 
 struct si_context {
 	struct r600_common_context	b;

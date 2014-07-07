@@ -76,7 +76,7 @@ static void si_blitter_begin(struct pipe_context *ctx, enum si_blitter_op op)
 
 		util_blitter_save_fragment_sampler_views(sctx->blitter,
 			util_last_bit(sctx->samplers[PIPE_SHADER_FRAGMENT].views.desc.enabled_mask &
-				      ((1 << NUM_TEX_UNITS) - 1)),
+				      ((1 << SI_NUM_USER_SAMPLERS) - 1)),
 			sctx->samplers[PIPE_SHADER_FRAGMENT].views.views);
 	}
 

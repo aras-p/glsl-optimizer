@@ -146,7 +146,7 @@ static struct pipe_context *si_create_context(struct pipe_screen *screen, void *
 		sctx->null_const_buf.buffer_size = sctx->null_const_buf.buffer->width0;
 
 		for (shader = 0; shader < SI_NUM_SHADERS; shader++) {
-			for (i = 0; i < NUM_CONST_BUFFERS; i++) {
+			for (i = 0; i < SI_NUM_CONST_BUFFERS; i++) {
 				sctx->b.b.set_constant_buffer(&sctx->b.b, shader, i,
 							      &sctx->null_const_buf);
 			}
@@ -347,7 +347,7 @@ static int si_get_shader_param(struct pipe_screen* pscreen, unsigned shader, enu
 	case PIPE_SHADER_CAP_MAX_CONTROL_FLOW_DEPTH:
 		return 32;
 	case PIPE_SHADER_CAP_MAX_INPUTS:
-		return 32;
+		return shader == PIPE_SHADER_VERTEX ? SI_NUM_VERTEX_BUFFERS : 32;
 	case PIPE_SHADER_CAP_MAX_TEMPS:
 		return 256; /* Max native temporaries. */
 	case PIPE_SHADER_CAP_MAX_ADDRS:
@@ -356,7 +356,7 @@ static int si_get_shader_param(struct pipe_screen* pscreen, unsigned shader, enu
 	case PIPE_SHADER_CAP_MAX_CONSTS:
 		return 4096; /* actually only memory limits this */
 	case PIPE_SHADER_CAP_MAX_CONST_BUFFERS:
-		return NUM_PIPE_CONST_BUFFERS;
+		return SI_NUM_USER_CONST_BUFFERS;
 	case PIPE_SHADER_CAP_MAX_PREDS:
 		return 0; /* FIXME */
 	case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:
