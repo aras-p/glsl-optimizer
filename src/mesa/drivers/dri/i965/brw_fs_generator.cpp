@@ -115,7 +115,9 @@ fs_generator::fire_fb_write(fs_inst *inst,
       brw_pop_insn_state(p);
    }
 
-   if (prog_data->dual_src_blend)
+   if (inst->opcode == FS_OPCODE_REP_FB_WRITE)
+      msg_control = BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD16_SINGLE_SOURCE_REPLICATED;
+   else if (prog_data->dual_src_blend)
       msg_control = BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD8_DUAL_SOURCE_SUBSPAN01;
    else if (dispatch_width == 16)
       msg_control = BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD16_SINGLE_SOURCE;
@@ -1839,6 +1841,7 @@ fs_generator::generate_code(exec_list *instructions)
 	 generate_varying_pull_constant_load_gen7(inst, dst, src[0], src[1]);
 	 break;
 
+      case FS_OPCODE_REP_FB_WRITE:
       case FS_OPCODE_FB_WRITE:
 	 generate_fb_write(inst);
 	 break;
