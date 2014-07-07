@@ -1574,7 +1574,7 @@ static void tex_fetch_args(
 		LLVMTypeRef i8 = LLVMInt8TypeInContext(gallivm->context);
 		LLVMTypeRef v16i8 = LLVMVectorType(i8, 16);
 
-		/* Truncate v32i8 to v16i8. */
+		/* Bitcast and truncate v8i32 to v16i8. */
 		LLVMValueRef res = si_shader_ctx->resources[sampler_index];
 		res = LLVMBuildBitCast(gallivm->builder, res, v2i128, "");
 		res = LLVMBuildExtractElement(gallivm->builder, res, bld_base->uint_bld.zero, "");
@@ -2305,12 +2305,18 @@ static void create_meta_data(struct si_shader_context *si_shader_ctx)
 	si_shader_ctx->const_md = LLVMMDNodeInContext(gallivm->context, args, 3);
 }
 
+static LLVMTypeRef const_array(LLVMTypeRef elem_type, int num_elements)
+{
+	return LLVMPointerType(LLVMArrayType(elem_type, num_elements),
+			       CONST_ADDR_SPACE);
+}
+
 static void create_function(struct si_shader_context *si_shader_ctx)
 {
 	struct lp_build_tgsi_context *bld_base = &si_shader_ctx->radeon_bld.soa.bld_base;
 	struct gallivm_state *gallivm = bld_base->base.gallivm;
 	struct si_pipe_shader *shader = si_shader_ctx->shader;
-	LLVMTypeRef params[SI_NUM_PARAMS], f32, i8, i32, v2i32, v3i32;
+	LLVMTypeRef params[SI_NUM_PARAMS], f32, i8, i32, v2i32, v3i32, v16i8, v4i32, v8i32;
 	unsigned i, last_sgpr, num_params;
 
 	i8 = LLVMInt8TypeInContext(gallivm->context);
@@ -2318,21 +2324,18 @@ static void create_function(struct si_shader_context *si_shader_ctx)
 	f32 = LLVMFloatTypeInContext(gallivm->context);
 	v2i32 = LLVMVectorType(i32, 2);
 	v3i32 = LLVMVectorType(i32, 3);
+	v4i32 = LLVMVectorType(i32, 4);
+	v8i32 = LLVMVectorType(i32, 8);
+	v16i8 = LLVMVectorType(i8, 16);
 
-	params[SI_PARAM_CONST] = LLVMPointerType(
-		LLVMArrayType(LLVMVectorType(i8, 16), NUM_CONST_BUFFERS), CONST_ADDR_SPACE);
-	params[SI_PARAM_RW_BUFFERS] = params[SI_PARAM_CONST];
-
-	/* We assume at most 16 textures per program at the moment.
-	 * This need probably need to be changed to support bindless textures */
-	params[SI_PARAM_SAMPLER] = LLVMPointerType(
-		LLVMArrayType(LLVMVectorType(i8, 16), NUM_SAMPLER_STATES), CONST_ADDR_SPACE);
-	params[SI_PARAM_RESOURCE] = LLVMPointerType(
-		LLVMArrayType(LLVMVectorType(i8, 32), NUM_SAMPLER_VIEWS), CONST_ADDR_SPACE);
+	params[SI_PARAM_CONST] = const_array(v16i8, NUM_CONST_BUFFERS);
+	params[SI_PARAM_RW_BUFFERS] = const_array(v16i8, 6); /* XXX hardcoded */
+	params[SI_PARAM_SAMPLER] = const_array(v4i32, NUM_SAMPLER_STATES);
+	params[SI_PARAM_RESOURCE] = const_array(v8i32, NUM_SAMPLER_VIEWS);
 
 	switch (si_shader_ctx->type) {
 	case TGSI_PROCESSOR_VERTEX:
-		params[SI_PARAM_VERTEX_BUFFER] = params[SI_PARAM_CONST];
+		params[SI_PARAM_VERTEX_BUFFER] = const_array(v16i8, 16); /* XXX hardcoded */
 		params[SI_PARAM_START_INSTANCE] = i32;
 		num_params = SI_PARAM_START_INSTANCE+1;
 		if (shader->key.vs.as_es) {
