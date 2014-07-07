@@ -246,6 +246,8 @@ upload_ps_state(struct brw_context *brw)
       ksp0 = brw->wm.base.prog_offset;
    }
 
+   dw4 |= brw->wm.fast_clear_op;
+
    BEGIN_BATCH(8);
    OUT_BATCH(_3DSTATE_PS << 16 | (8 - 2));
    OUT_BATCH(ksp0);

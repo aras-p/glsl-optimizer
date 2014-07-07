@@ -1252,6 +1252,7 @@ struct brw_context
        * Gen6.  See brw_update_null_renderbuffer_surface().
        */
       drm_intel_bo *multisampled_null_render_target_bo;
+      uint32_t fast_clear_op;
    } wm;
 
 

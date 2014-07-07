@@ -185,6 +185,8 @@ upload_ps_state(struct brw_context *brw)
    else
       dw6 |= GEN7_PS_POSOFFSET_NONE;
 
+   dw6 |= brw->wm.fast_clear_op;
+
    /* _NEW_MULTISAMPLE
     * In case of non 1x per sample shading, only one of SIMD8 and SIMD16
     * should be enabled. We do 'SIMD16 only' dispatch if a SIMD16 shader
