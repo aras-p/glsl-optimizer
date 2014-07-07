@@ -52,6 +52,7 @@ intel_copy_texsubimage(struct brw_context *brw,
                        GLint x, GLint y, GLsizei width, GLsizei height)
 {
    const GLenum internalFormat = intelImage->base.Base.InternalFormat;
+   bool ret;
 
    intel_prepare_render(brw);
 
@@ -79,17 +80,19 @@ intel_copy_texsubimage(struct brw_context *brw,
    int dst_slice = slice + intelImage->base.Base.Face +
                    intelImage->base.Base.TexObject->MinLayer;
 
-   /* blit from src buffer to texture */
-   if (!intel_miptree_blit(brw,
-                           irb->mt, irb->mt_level, irb->mt_layer,
-                           x, y, irb->Base.Base.Name == 0,
-                           intelImage->mt, dst_level, dst_slice,
-                           dstx, dsty, false,
-                           width, height, GL_COPY)) {
-      return false;
-   }
+   _mesa_unlock_texture(&brw->ctx, intelImage->base.Base.TexObject);
 
-   return true;
+   /* blit from src buffer to texture */
+   ret = intel_miptree_blit(brw,
+                            irb->mt, irb->mt_level, irb->mt_layer,
+                            x, y, irb->Base.Base.Name == 0,
+                            intelImage->mt, dst_level, dst_slice,
+                            dstx, dsty, false,
+                            width, height, GL_COPY);
+
+   _mesa_lock_texture(&brw->ctx, intelImage->base.Base.TexObject);
+
+   return ret;
 }
 
 

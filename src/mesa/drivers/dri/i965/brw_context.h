@@ -1359,6 +1359,8 @@ struct brw_context
       double report_time;
    } shader_time;
 
+   struct brw_fast_clear_state *fast_clear_state;
+
    __DRIcontext *driContext;
    struct intel_screen *intelScreen;
 };
@@ -1420,6 +1422,19 @@ void brw_meta_fbo_stencil_blit(struct brw_context *brw,
 void brw_meta_stencil_updownsample(struct brw_context *brw,
                                    struct intel_mipmap_tree *src,
                                    struct intel_mipmap_tree *dst);
+
+bool brw_meta_fast_clear(struct brw_context *brw,
+                         struct gl_framebuffer *fb,
+                         GLbitfield mask,
+                         bool partial_clear);
+
+void
+brw_meta_resolve_color(struct brw_context *brw,
+                       struct intel_mipmap_tree *mt);
+void
+brw_meta_fast_clear_free(struct brw_context *brw);
+
+
 /*======================================================================
  * brw_misc_state.c
  */

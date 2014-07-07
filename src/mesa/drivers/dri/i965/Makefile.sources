@@ -28,7 +28,6 @@ i965_FILES = \
 	brw_blorp.cpp \
 	brw_blorp_blit.cpp \
 	brw_blorp_blit_eu.cpp \
-	brw_blorp_clear.cpp \
 	brw_cc.c \
 	brw_cfg.cpp \
 	brw_clear.c \
@@ -76,6 +75,7 @@ i965_FILES = \
 	brw_meta_updownsample.c \
 	brw_meta_stencil_blit.c \
 	brw_meta_util.c \
+	brw_meta_fast_clear.c \
 	brw_misc_state.c \
 	brw_object_purgeable.c \
 	brw_performance_monitor.c \

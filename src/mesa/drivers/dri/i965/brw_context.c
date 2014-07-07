@@ -833,6 +833,7 @@ intelDestroyContext(__DRIcontext * driContextPriv)
    }
 
    _mesa_meta_free(&brw->ctx);
+   brw_meta_fast_clear_free(brw);
 
    if (INTEL_DEBUG & DEBUG_SHADER_TIME) {
       /* Force a report. */
