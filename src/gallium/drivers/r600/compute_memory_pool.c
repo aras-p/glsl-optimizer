@@ -73,10 +73,6 @@ static void compute_memory_pool_init(struct compute_memory_pool * pool,
 	COMPUTE_DBG(pool->screen, "* compute_memory_pool_init() initial_size_in_dw = %ld\n",
 		initial_size_in_dw);
 
-	pool->shadow = (uint32_t*)CALLOC(initial_size_in_dw, 4);
-	if (pool->shadow == NULL)
-		return;
-
 	pool->size_in_dw = initial_size_in_dw;
 	pool->bo = (struct r600_resource*)r600_compute_buffer_alloc_vram(pool->screen,
 							pool->size_in_dw * 4);
@@ -184,27 +180,56 @@ int compute_memory_grow_pool(struct compute_memory_pool* pool,
 
 	if (!pool->bo) {
 		compute_memory_pool_init(pool, MAX2(new_size_in_dw, 1024 * 16));
-		if (pool->shadow == NULL)
-			return -1;
 	} else {
+		struct r600_resource *temp = NULL;
+
 		new_size_in_dw = align(new_size_in_dw, ITEM_ALIGNMENT);
 
 		COMPUTE_DBG(pool->screen, "  Aligned size = %d (%d bytes)\n",
 			new_size_in_dw, new_size_in_dw * 4);
 
-		compute_memory_shadow(pool, pipe, 1);
-		pool->shadow = realloc(pool->shadow, new_size_in_dw*4);
-		if (pool->shadow == NULL)
-			return -1;
+		temp = (struct r600_resource *)r600_compute_buffer_alloc_vram(
+							pool->screen, new_size_in_dw * 4);
 
-		pool->size_in_dw = new_size_in_dw;
-		pool->screen->b.b.resource_destroy(
-			(struct pipe_screen *)pool->screen,
-			(struct pipe_resource *)pool->bo);
-		pool->bo = (struct r600_resource*)r600_compute_buffer_alloc_vram(
-							pool->screen,
-							pool->size_in_dw * 4);
-		compute_memory_shadow(pool, pipe, 0);
+		if (temp != NULL) {
+			struct r600_context *rctx = (struct r600_context *)pipe;
+			struct pipe_resource *src = (struct pipe_resource *)pool->bo;
+			struct pipe_resource *dst = (struct pipe_resource *)temp;
+			struct pipe_box box;
+
+			COMPUTE_DBG(pool->screen, "  Growing the pool using a temporary resource\n");
+
+			u_box_1d(0, pool->size_in_dw * 4, &box);
+
+			rctx->b.b.resource_copy_region(pipe,
+					dst, 0, 0, 0 ,0,
+					src, 0, &box);
+
+			pool->screen->b.b.resource_destroy(
+					(struct pipe_screen *)pool->screen,
+					src);
+
+			pool->bo = temp;
+			pool->size_in_dw = new_size_in_dw;
+		}
+		else {
+			COMPUTE_DBG(pool->screen, "  The creation of the temporary resource failed\n"
+				"  Falling back to using 'shadow'\n");
+
+			compute_memory_shadow(pool, pipe, 1);
+			pool->shadow = realloc(pool->shadow, new_size_in_dw * 4);
+			if (pool->shadow == NULL)
+				return -1;
+
+			pool->size_in_dw = new_size_in_dw;
+			pool->screen->b.b.resource_destroy(
+					(struct pipe_screen *)pool->screen,
+					(struct pipe_resource *)pool->bo);
+			pool->bo = (struct r600_resource*)r600_compute_buffer_alloc_vram(
+					pool->screen,
+					pool->size_in_dw * 4);
+			compute_memory_shadow(pool, pipe, 0);
+		}
 	}
 
 	return 0;
