@@ -1356,6 +1356,7 @@ vec4_instruction_scheduler::issue_time(backend_instruction *inst)
 void
 instruction_scheduler::schedule_instructions(backend_instruction *next_block_header)
 {
+   struct brw_context *brw = bv->brw;
    time = 0;
 
    /* Remove non-DAG heads from the list. */
@@ -1424,7 +1425,7 @@ instruction_scheduler::schedule_instructions(backend_instruction *next_block_hea
        * the next math instruction isn't going to make progress until the first
        * is done.
        */
-      if (chosen->inst->is_math()) {
+      if (brw->gen < 6 && chosen->inst->is_math()) {
          foreach_in_list(schedule_node, n, &instructions) {
 	    if (n->inst->is_math())
 	       n->unblocked_time = MAX2(n->unblocked_time,
