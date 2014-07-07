@@ -129,10 +129,16 @@ upload_clip_state(struct brw_context *brw)
                  "having the GS not write primitives would likely");
    }
 
+   uint32_t enable;
+   if (brw->primitive == _3DPRIM_RECTLIST)
+      enable = 0;
+   else
+      enable = GEN6_CLIP_ENABLE;
+
    BEGIN_BATCH(4);
    OUT_BATCH(_3DSTATE_CLIP << 16 | (4 - 2));
    OUT_BATCH(dw1);
-   OUT_BATCH(GEN6_CLIP_ENABLE |
+   OUT_BATCH(enable |
 	     GEN6_CLIP_API_OGL |
 	     GEN6_CLIP_MODE_NORMAL |
 	     GEN6_CLIP_XY_TEST |
