@@ -341,6 +341,7 @@ struct brw_wm_prog_data {
       /** @} */
    } binding_table;
 
+   bool no_8;
    bool dual_src_blend;
    bool uses_pos_offset;
    bool uses_omask;
@@ -1032,6 +1033,7 @@ struct brw_context
    bool has_compr4;
    bool has_negative_rhw_bug;
    bool has_pln;
+   bool no_simd8;
 
    /**
     * Some versions of Gen hardware don't do centroid interpolation correctly

@@ -66,6 +66,7 @@ static const struct dri_debug_control debug_control[] = {
    { "nodualobj", DEBUG_NO_DUAL_OBJECT_GS },
    { "optimizer", DEBUG_OPTIMIZER },
    { "noann", DEBUG_NO_ANNOTATION },
+   { "no8",  DEBUG_NO8 },
    { NULL,    0 }
 };
 

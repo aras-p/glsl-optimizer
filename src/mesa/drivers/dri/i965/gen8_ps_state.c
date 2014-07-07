@@ -195,9 +195,9 @@ upload_ps_state(struct brw_context *brw)
       _mesa_get_min_invocations_per_fragment(ctx, brw->fragment_program, false);
    assert(min_invocations_per_fragment >= 1);
 
-   if (brw->wm.prog_data->prog_offset_16) {
+   if (brw->wm.prog_data->prog_offset_16 || brw->wm.prog_data->no_8) {
       dw6 |= GEN7_PS_16_DISPATCH_ENABLE;
-      if (min_invocations_per_fragment == 1) {
+      if (!brw->wm.prog_data->no_8 && min_invocations_per_fragment == 1) {
          dw6 |= GEN7_PS_8_DISPATCH_ENABLE;
          dw7 |= (brw->wm.prog_data->base.dispatch_grf_start_reg <<
                  GEN7_PS_DISPATCH_START_GRF_SHIFT_0);

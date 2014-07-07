@@ -3299,10 +3299,20 @@ brw_wm_fs_emit(struct brw_context *brw,
       }
    }
 
+   exec_list *simd8_instructions;
+   int no_simd8 = (INTEL_DEBUG & DEBUG_NO8) || brw->no_simd8;
+   if (no_simd8 && simd16_instructions) {
+      simd8_instructions = NULL;
+      prog_data->no_8 = true;
+   } else {
+      simd8_instructions = &v.instructions;
+      prog_data->no_8 = false;
+   }
+
    const unsigned *assembly = NULL;
    fs_generator g(brw, mem_ctx, key, prog_data, prog, fp,
                   v.runtime_check_aads_emit, INTEL_DEBUG & DEBUG_WM);
-   assembly = g.generate_assembly(&v.instructions, simd16_instructions,
+   assembly = g.generate_assembly(simd8_instructions, simd16_instructions,
                                   final_assembly_size);
 
    if (unlikely(brw->perf_debug) && shader) {
