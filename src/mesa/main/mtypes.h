@@ -3363,6 +3363,11 @@ struct gl_constants
    GLuint ForceGLSLVersion;
 
    /**
+    * Allow GLSL #extension directives in the middle of shaders.
+    */
+   GLboolean AllowGLSLExtensionDirectiveMidShader;
+
+   /**
     * Does the driver support real 32-bit integers?  (Otherwise, integers are
     * simulated via floats.)
     */

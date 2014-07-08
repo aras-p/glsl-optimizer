@@ -493,6 +493,8 @@ struct _mesa_glsl_parse_state {
 
    /** Atomic counter offsets by binding */
    unsigned atomic_counter_offsets[MAX_COMBINED_ATOMIC_BUFFERS];
+
+   bool allow_extension_directive_midshader;
 };
 
 # define YYLLOC_DEFAULT(Current, Rhs, N)			\

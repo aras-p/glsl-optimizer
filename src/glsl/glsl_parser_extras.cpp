@@ -210,6 +210,8 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
    this->early_fragment_tests = false;
    memset(this->atomic_counter_offsets, 0,
           sizeof(this->atomic_counter_offsets));
+   this->allow_extension_directive_midshader =
+      ctx->Const.AllowGLSLExtensionDirectiveMidShader;
 }
 
 /**

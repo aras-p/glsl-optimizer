@@ -376,6 +376,14 @@ external_declaration_list:
       if ($2 != NULL)
          state->translation_unit.push_tail(& $2->link);
    }
+   | external_declaration_list extension_statement {
+      if (!state->allow_extension_directive_midshader) {
+         _mesa_glsl_error(& @2, state,
+                          "#extension directive is not allowed "
+                          "in the middle of a shader");
+         YYERROR;
+      }
+   }
    ;
 
 variable_identifier:
