@@ -325,6 +325,8 @@ struct exec_list {
    const exec_node *get_tail() const;
    exec_node *get_tail();
 
+   unsigned length() const;
+
    void push_head(exec_node *n);
    void push_tail(exec_node *n);
    void push_degenerate_list_at_head(exec_node *n);
@@ -403,6 +405,19 @@ static inline struct exec_node *
 exec_list_get_tail(struct exec_list *list)
 {
    return !exec_list_is_empty(list) ? list->tail_pred : NULL;
+}
+
+static inline unsigned
+exec_list_length(const struct exec_list *list)
+{
+   unsigned size = 0;
+
+   for (struct exec_node *node = list->head; node->next != NULL;
+	node = node->next) {
+      size++;
+   }
+
+   return size;
 }
 
 static inline void
@@ -535,6 +550,11 @@ inline const exec_node *exec_list::get_tail() const
 inline exec_node *exec_list::get_tail()
 {
    return exec_list_get_tail(this);
+}
+
+inline unsigned exec_list::length() const
+{
+   return exec_list_length(this);
 }
 
 inline void exec_list::push_head(exec_node *n)
