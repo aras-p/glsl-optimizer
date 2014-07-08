@@ -39,10 +39,6 @@
 
 #define SI_MAX_DRAW_CS_DWORDS 18
 
-#define LLVM_SUPPORTS_GEOM_SHADERS \
-	((HAVE_LLVM >= 0x0305) || \
-	(HAVE_LLVM == 0x0304 && LLVM_VERSION_PATCH >= 1))
-
 struct si_pipe_compute;
 
 struct si_screen {

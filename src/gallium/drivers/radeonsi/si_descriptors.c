@@ -152,11 +152,11 @@ static void si_update_descriptors(struct si_context *sctx,
 			7 + /* copy */
 			(4 + desc->element_dw_size) * util_bitcount(desc->dirty_mask) + /* update */
 			4; /* pointer update */
-#if LLVM_SUPPORTS_GEOM_SHADERS
+
 		if (desc->shader_userdata_reg >= R_00B130_SPI_SHADER_USER_DATA_VS_0 &&
 		    desc->shader_userdata_reg < R_00B230_SPI_SHADER_USER_DATA_GS_0)
 			desc->atom.num_dw += 4; /* second pointer update */
-#endif
+
 		desc->atom.dirty = true;
 		/* The descriptors are read with the K cache. */
 		sctx->b.flags |= R600_CONTEXT_INV_CONST_CACHE;
@@ -177,7 +177,6 @@ static void si_emit_shader_pointer(struct si_context *sctx,
 	radeon_emit(cs, va);
 	radeon_emit(cs, va >> 32);
 
-#if LLVM_SUPPORTS_GEOM_SHADERS
 	if (desc->shader_userdata_reg >= R_00B130_SPI_SHADER_USER_DATA_VS_0 &&
 	    desc->shader_userdata_reg < R_00B230_SPI_SHADER_USER_DATA_GS_0) {
 		radeon_emit(cs, PKT3(PKT3_SET_SH_REG, 2, 0));
@@ -188,7 +187,6 @@ static void si_emit_shader_pointer(struct si_context *sctx,
 		radeon_emit(cs, va);
 		radeon_emit(cs, va >> 32);
 	}
-#endif
 }
 
 static void si_emit_descriptors(struct si_context *sctx,

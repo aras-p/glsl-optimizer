@@ -218,8 +218,8 @@ static int si_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 
 	case PIPE_CAP_TEXTURE_MULTISAMPLE:
 		/* 2D tiling on CIK is supported since DRM 2.35.0 */
-		return HAVE_LLVM >= 0x0304 && (sscreen->b.chip_class < CIK ||
-					       sscreen->b.info.drm_minor >= 35);
+		return sscreen->b.chip_class < CIK ||
+		       sscreen->b.info.drm_minor >= 35;
 
         case PIPE_CAP_MIN_MAP_BUFFER_ALIGNMENT:
                 return R600_MAP_BUFFER_ALIGNMENT;
@@ -229,7 +229,7 @@ static int si_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 		return 4;
 
 	case PIPE_CAP_GLSL_FEATURE_LEVEL:
-		return (LLVM_SUPPORTS_GEOM_SHADERS) ? 330 : 140;
+		return 330;
 
 	case PIPE_CAP_MAX_TEXTURE_BUFFER_SIZE:
 		return MIN2(sscreen->b.info.vram_size, 0xFFFFFFFF);
@@ -317,11 +317,7 @@ static int si_get_shader_param(struct pipe_screen* pscreen, unsigned shader, enu
 	{
 	case PIPE_SHADER_FRAGMENT:
 	case PIPE_SHADER_VERTEX:
-		break;
 	case PIPE_SHADER_GEOMETRY:
-#if !(LLVM_SUPPORTS_GEOM_SHADERS)
-		return 0;
-#endif
 		break;
 	case PIPE_SHADER_COMPUTE:
 		switch (param) {
@@ -421,7 +417,7 @@ struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws)
 	}
 
 	sscreen->b.has_cp_dma = true;
-	sscreen->b.has_streamout = HAVE_LLVM >= 0x0304;
+	sscreen->b.has_streamout = true;
 
 	if (debug_get_bool_option("RADEON_DUMP_SHADERS", FALSE))
 		sscreen->b.debug_flags |= DBG_FS | DBG_VS | DBG_GS | DBG_PS | DBG_CS;

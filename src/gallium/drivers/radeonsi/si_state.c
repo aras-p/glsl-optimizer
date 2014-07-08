@@ -1485,9 +1485,6 @@ boolean si_is_format_supported(struct pipe_screen *screen,
 		return FALSE;
 
 	if (sample_count > 1) {
-		if (HAVE_LLVM < 0x0304)
-			return FALSE;
-
 		/* 2D tiling on CIK is supported since DRM 2.35.0 */
 		if (sscreen->b.chip_class >= CIK && sscreen->b.info.drm_minor < 35)
 			return FALSE;
@@ -2239,15 +2236,11 @@ static void *si_create_fs_state(struct pipe_context *ctx,
 	return si_create_shader_state(ctx, state, PIPE_SHADER_FRAGMENT);
 }
 
-#if LLVM_SUPPORTS_GEOM_SHADERS
-
 static void *si_create_gs_state(struct pipe_context *ctx,
 				const struct pipe_shader_state *state)
 {
 	return si_create_shader_state(ctx, state, PIPE_SHADER_GEOMETRY);
 }
-
-#endif
 
 static void *si_create_vs_state(struct pipe_context *ctx,
 				const struct pipe_shader_state *state)
@@ -2269,8 +2262,6 @@ static void si_bind_vs_shader(struct pipe_context *ctx, void *state)
 	sctx->vs_shader = sel;
 }
 
-#if LLVM_SUPPORTS_GEOM_SHADERS
-
 static void si_bind_gs_shader(struct pipe_context *ctx, void *state)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
@@ -2281,8 +2272,6 @@ static void si_bind_gs_shader(struct pipe_context *ctx, void *state)
 
 	sctx->gs_shader = sel;
 }
-
-#endif
 
 static void si_bind_ps_shader(struct pipe_context *ctx, void *state)
 {
@@ -2337,8 +2326,6 @@ static void si_delete_vs_shader(struct pipe_context *ctx, void *state)
 	si_delete_shader_selector(ctx, sel);
 }
 
-#if LLVM_SUPPORTS_GEOM_SHADERS
-
 static void si_delete_gs_shader(struct pipe_context *ctx, void *state)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
@@ -2350,8 +2337,6 @@ static void si_delete_gs_shader(struct pipe_context *ctx, void *state)
 
 	si_delete_shader_selector(ctx, sel);
 }
-
-#endif
 
 static void si_delete_ps_shader(struct pipe_context *ctx, void *state)
 {
@@ -2835,11 +2820,9 @@ static void si_bind_vs_sampler_states(struct pipe_context *ctx, unsigned count, 
 	si_set_sampler_states(sctx, pm4, count, states,
 			      &sctx->samplers[PIPE_SHADER_VERTEX],
 			      R_00B130_SPI_SHADER_USER_DATA_VS_0);
-#if LLVM_SUPPORTS_GEOM_SHADERS
 	si_set_sampler_states(sctx, pm4, count, states,
 			      &sctx->samplers[PIPE_SHADER_VERTEX],
 			      R_00B330_SPI_SHADER_USER_DATA_ES_0);
-#endif
 	si_pm4_set_state(sctx, vs_sampler, pm4);
 }
 
@@ -3067,11 +3050,10 @@ void si_init_state_functions(struct si_context *sctx)
 	sctx->b.b.bind_fs_state = si_bind_ps_shader;
 	sctx->b.b.delete_vs_state = si_delete_vs_shader;
 	sctx->b.b.delete_fs_state = si_delete_ps_shader;
-#if LLVM_SUPPORTS_GEOM_SHADERS
+
 	sctx->b.b.create_gs_state = si_create_gs_state;
 	sctx->b.b.bind_gs_state = si_bind_gs_shader;
 	sctx->b.b.delete_gs_state = si_delete_gs_shader;
-#endif
 
 	sctx->b.b.create_sampler_state = si_create_sampler_state;
 	sctx->b.b.bind_sampler_states = si_bind_sampler_states;

@@ -69,9 +69,7 @@ struct si_shader_context
 	int param_instance_id;
 	LLVMValueRef const_md;
 	LLVMValueRef const_resource[SI_NUM_CONST_BUFFERS];
-#if HAVE_LLVM >= 0x0304
 	LLVMValueRef ddxy_lds;
-#endif
 	LLVMValueRef *constants[SI_NUM_CONST_BUFFERS];
 	LLVMValueRef *resources;
 	LLVMValueRef *samplers;
@@ -2111,8 +2109,6 @@ static void build_txq_intrinsic(const struct lp_build_tgsi_action * action,
 	}
 }
 
-#if HAVE_LLVM >= 0x0304
-
 static void si_llvm_emit_ddxy(
 	const struct lp_build_tgsi_action * action,
 	struct lp_build_tgsi_context * bld_base,
@@ -2180,8 +2176,6 @@ static void si_llvm_emit_ddxy(
 
 	emit_data->output[0] = lp_build_gather_values(gallivm, result, 4);
 }
-
-#endif /* HAVE_LLVM >= 0x0304 */
 
 /* Emit one vertex from the geometry shader */
 static void si_llvm_emit_vertex(
@@ -2434,7 +2428,6 @@ static void create_function(struct si_shader_context *si_shader_ctx)
 		default:
 			LLVMAddAttribute(P, LLVMInRegAttribute);
 			break;
-#if HAVE_LLVM >= 0x0304
 		/* We tell llvm that array inputs are passed by value to allow Sinking pass
 		 * to move load. Inputs are constant so this is fine. */
 		case SI_PARAM_CONST:
@@ -2442,11 +2435,9 @@ static void create_function(struct si_shader_context *si_shader_ctx)
 		case SI_PARAM_RESOURCE:
 			LLVMAddAttribute(P, LLVMByValAttribute);
 			break;
-#endif
 		}
 	}
 
-#if HAVE_LLVM >= 0x0304
 	if (bld_base->info &&
 	    (bld_base->info->opcode_count[TGSI_OPCODE_DDX] > 0 ||
 	     bld_base->info->opcode_count[TGSI_OPCODE_DDY] > 0))
@@ -2455,7 +2446,6 @@ static void create_function(struct si_shader_context *si_shader_ctx)
 						    LLVMArrayType(i32, 64),
 						    "ddxy_lds",
 						    LOCAL_ADDR_SPACE);
-#endif
 }
 
 static void preload_constants(struct si_shader_context *si_shader_ctx)
@@ -2764,9 +2754,7 @@ int si_pipe_shader_create(
 	bld_base->op_actions[TGSI_OPCODE_TEX2] = tex_action;
 	bld_base->op_actions[TGSI_OPCODE_TXB] = tex_action;
 	bld_base->op_actions[TGSI_OPCODE_TXB2] = tex_action;
-#if HAVE_LLVM >= 0x0304
 	bld_base->op_actions[TGSI_OPCODE_TXD] = tex_action;
-#endif
 	bld_base->op_actions[TGSI_OPCODE_TXF] = tex_action;
 	bld_base->op_actions[TGSI_OPCODE_TXL] = tex_action;
 	bld_base->op_actions[TGSI_OPCODE_TXL2] = tex_action;
@@ -2775,10 +2763,8 @@ int si_pipe_shader_create(
 	bld_base->op_actions[TGSI_OPCODE_TG4] = tex_action;
 	bld_base->op_actions[TGSI_OPCODE_LODQ] = tex_action;
 
-#if HAVE_LLVM >= 0x0304
 	bld_base->op_actions[TGSI_OPCODE_DDX].emit = si_llvm_emit_ddxy;
 	bld_base->op_actions[TGSI_OPCODE_DDY].emit = si_llvm_emit_ddxy;
-#endif
 
 	bld_base->op_actions[TGSI_OPCODE_EMIT].emit = si_llvm_emit_vertex;
 	bld_base->op_actions[TGSI_OPCODE_ENDPRIM].emit = si_llvm_emit_primitive;
