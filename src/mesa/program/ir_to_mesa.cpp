@@ -2817,10 +2817,7 @@ get_mesa_program(struct gl_context *ctx,
 
    prog->NumTemporaries = v.next_temp;
 
-   int num_instructions = 0;
-   foreach_in_list(ir_instruction, node, &v.instructions) {
-      num_instructions++;
-   }
+   unsigned num_instructions = v.instructions.length();
 
    mesa_instructions =
       (struct prog_instruction *)calloc(num_instructions,

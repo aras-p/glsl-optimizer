@@ -723,10 +723,9 @@ ir_reader::read_expression(s_expression *expr)
       ir_read_error(expr, "invalid operator: %s", s_op->value());
       return NULL;
    }
-    
-   int num_operands = -3; /* skip "expression" <type> <operation> */
-   foreach_in_list(s_expression, e, &((s_list *) expr)->subexpressions)
-      ++num_operands;
+
+   /* Skip "expression" <type> <operation> by subtracting 3. */
+   int num_operands = (int) ((s_list *) expr)->subexpressions.length() - 3;
 
    int expected_operands = ir_expression::get_num_operands(op);
    if (num_operands != expected_operands) {

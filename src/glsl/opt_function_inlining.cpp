@@ -100,16 +100,13 @@ ir_call::generate_inline(ir_instruction *next_ir)
 {
    void *ctx = ralloc_parent(this);
    ir_variable **parameters;
-   int num_parameters;
+   unsigned num_parameters;
    int i;
    struct hash_table *ht;
 
    ht = hash_table_ctor(0, hash_table_pointer_hash, hash_table_pointer_compare);
 
-   num_parameters = 0;
-   foreach_in_list(ir_rvalue, param, &this->callee->parameters)
-      num_parameters++;
-
+   num_parameters = this->callee->parameters.length();
    parameters = new ir_variable *[num_parameters];
 
    /* Generate the declarations for the parameters to our inlined code,

@@ -106,9 +106,7 @@ fs_copy_prop_dataflow::fs_copy_prop_dataflow(void *mem_ctx, cfg_t *cfg,
    num_acp = 0;
    for (int b = 0; b < cfg->num_blocks; b++) {
       for (int i = 0; i < ACP_HASH_SIZE; i++) {
-         foreach_in_list(acp_entry, entry, &out_acp[b][i]) {
-            num_acp++;
-         }
+         num_acp += out_acp[b][i].length();
       }
    }
 

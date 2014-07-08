@@ -2965,10 +2965,7 @@ fs_visitor::calculate_register_pressure()
    invalidate_live_intervals();
    calculate_live_intervals();
 
-   int num_instructions = 0;
-   foreach_in_list(fs_inst, inst, &instructions) {
-      ++num_instructions;
-   }
+   unsigned num_instructions = instructions.length();
 
    regs_live_at_ip = rzalloc_array(mem_ctx, int, num_instructions);
 
