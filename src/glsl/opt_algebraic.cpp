@@ -137,6 +137,21 @@ is_less_than_one(ir_constant *ir)
    return (component == ir->type->vector_elements);
 }
 
+static inline bool
+is_greater_than_zero(ir_constant *ir)
+{
+   if (!is_valid_vec_const(ir))
+      return false;
+
+   unsigned component = 0;
+   for (int c = 0; c < ir->type->vector_elements; c++) {
+      if (ir->get_float_component(c) > 0.0f)
+         component++;
+   }
+
+   return (component == ir->type->vector_elements);
+}
+
 static void
 update_type(ir_expression *ir)
 {
@@ -684,6 +699,14 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
 
             if (is_less_than_one(inner_val_b->as_constant()) && outer_const->is_zero())
                return expr(ir_binop_min, saturate(inner_val_a), inner_val_b);
+
+            /* Found a {min|max} ({max|min} (x, b), 1.0), where b > 0.0
+             * and its variations
+             */
+            if (outer_const->is_one() && is_greater_than_zero(inner_val_b->as_constant()))
+               return expr(ir_binop_max, saturate(inner_val_a), inner_val_b);
+            if (inner_val_b->as_constant()->is_one() && is_greater_than_zero(outer_const))
+               return expr(ir_binop_max, saturate(inner_val_a), outer_const);
          }
       }
 
