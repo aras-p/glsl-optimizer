@@ -654,7 +654,7 @@ ir_validate::visit(ir_variable *ir)
     * in the ir_dereference_variable handler to ensure that a variable is
     * declared before it is dereferenced.
     */
-   if (ir->name)
+   if (ir->name && ir->is_name_ralloced())
       assert(ralloc_parent(ir->name) == ir);
 
    hash_table_insert(ht, ir, ir);

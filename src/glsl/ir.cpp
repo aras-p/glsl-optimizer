@@ -1543,12 +1543,30 @@ ir_swizzle::variable_referenced() const
 }
 
 
+const char ir_variable::tmp_name[] = "compiler_temp";
+
 ir_variable::ir_variable(const struct glsl_type *type, const char *name,
 			 ir_variable_mode mode)
    : ir_instruction(ir_type_variable)
 {
    this->type = type;
-   this->name = ralloc_strdup(this, name);
+
+   /* The ir_variable clone method may call this constructor with name set to
+    * tmp_name.
+    */
+   assert(name != NULL
+          || mode == ir_var_temporary
+          || mode == ir_var_function_in
+          || mode == ir_var_function_out
+          || mode == ir_var_function_inout);
+   assert(name != ir_variable::tmp_name
+          || mode == ir_var_temporary);
+   if (mode == ir_var_temporary
+       && (name == NULL || name == ir_variable::tmp_name)) {
+      this->name = ir_variable::tmp_name;
+   } else {
+      this->name = ralloc_strdup(this, name);
+   }
 
    this->u.max_ifc_array_access = NULL;
 

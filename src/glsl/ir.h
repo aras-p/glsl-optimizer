@@ -575,6 +575,11 @@ public:
       return this->u.state_slots;
    }
 
+   inline bool is_name_ralloced() const
+   {
+      return this->name != ir_variable::tmp_name;
+   }
+
    /**
     * Enable emitting extension warnings for this variable
     */
@@ -886,6 +891,11 @@ private:
     * \sa ir_variable::location
     */
    const glsl_type *interface_type;
+
+   /**
+    * Name used for anonymous compiler temporaries
+    */
+   static const char tmp_name[];
 };
 
 /**
