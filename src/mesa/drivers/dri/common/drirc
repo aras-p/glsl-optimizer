@@ -11,16 +11,20 @@ Application bugs worked around in this file:
   is still 1.10.
 
 * Unigine Heaven 3.0 with ARB_texture_multisample uses a "ivec4 * vec4"
-  expression, which fails to compile with GLSL 1.10.
+  expression, which is illegal in GLSL 1.10.
   Adding "#version 130" fixes this.
 
 * Unigine Heaven 3.0 with ARB_shader_bit_encoding uses the uint keyword, which
-  fails to compile with GLSL 1.10.
+  is illegal in GLSL 1.10.
   Adding "#version 130" fixes this.
 
 * Unigine Heaven 3.0 with ARB_shader_bit_encoding uses a "uint & int"
-  expression, which fails (and should fail) to compile with any GLSL version.
+  expression, which is illegal in any GLSL version.
   Disabling ARB_shader_bit_encoding fixes this.
+
+* If ARB_sample_shading is supported, Unigine Heaven 4.0 and Valley 1.0 uses
+  an #extension directive in the middle of its shaders, which is illegal
+  in GLSL.
 
 TODO: document the other workarounds.
 
@@ -45,6 +49,7 @@ TODO: document the other workarounds.
             <option name="disable_blend_func_extended" value="true" />
             <option name="force_glsl_version" value="130" />
             <option name="disable_shader_bit_encoding" value="true" />
+            <option name="allow_glsl_extension_directive_midshader" value="true" />
 	</application>
 
         <application name="Unigine Heaven (64-bit)" executable="heaven_x64">
@@ -52,6 +57,15 @@ TODO: document the other workarounds.
             <option name="disable_blend_func_extended" value="true" />
             <option name="force_glsl_version" value="130" />
             <option name="disable_shader_bit_encoding" value="true" />
+            <option name="allow_glsl_extension_directive_midshader" value="true" />
+	</application>
+
+        <application name="Unigine Valley (32-bit)" executable="valley_x86">
+            <option name="allow_glsl_extension_directive_midshader" value="true" />
+	</application>
+
+        <application name="Unigine Valley (64-bit)" executable="valley_x64">
+            <option name="allow_glsl_extension_directive_midshader" value="true" />
 	</application>
 
         <application name="Unigine OilRush (32-bit)" executable="OilRush_x86">

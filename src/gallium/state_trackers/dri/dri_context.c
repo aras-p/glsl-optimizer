@@ -55,6 +55,8 @@ dri_fill_st_options(struct st_config_options *options,
       driQueryOptioni(optionCache, "force_glsl_version");
    options->force_s3tc_enable =
       driQueryOptionb(optionCache, "force_s3tc_enable");
+   options->allow_glsl_extension_directive_midshader =
+      driQueryOptionb(optionCache, "allow_glsl_extension_directive_midshader");
 }
 
 GLboolean

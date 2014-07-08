@@ -69,6 +69,7 @@ const __DRIconfigOptionsExtension gallium_config_options = {
          DRI_CONF_DISABLE_BLEND_FUNC_EXTENDED("false")
          DRI_CONF_DISABLE_SHADER_BIT_ENCODING("false")
          DRI_CONF_FORCE_GLSL_VERSION(0)
+         DRI_CONF_ALLOW_GLSL_EXTENSION_DIRECTIVE_MIDSHADER("false")
       DRI_CONF_SECTION_END
 
       DRI_CONF_SECTION_MISCELLANEOUS

@@ -772,6 +772,9 @@ void st_init_extensions(struct st_context *st)
    if (st->options.disable_glsl_line_continuations)
       ctx->Const.DisableGLSLLineContinuations = 1;
 
+   if (st->options.allow_glsl_extension_directive_midshader)
+      ctx->Const.AllowGLSLExtensionDirectiveMidShader = GL_TRUE;
+
    ctx->Const.MinMapBufferAlignment =
       screen->get_param(screen, PIPE_CAP_MIN_MAP_BUFFER_ALIGNMENT);
 
