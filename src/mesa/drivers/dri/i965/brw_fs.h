@@ -573,7 +573,6 @@ public:
                 struct brw_wm_prog_data *prog_data,
                 struct gl_shader_program *prog,
                 struct gl_fragment_program *fp,
-                bool dual_source_output,
                 bool runtime_check_aads_emit,
                 bool debug_flag);
    ~fs_generator();
@@ -684,7 +683,6 @@ private:
    unsigned dispatch_width; /**< 8 or 16 */
 
    exec_list discard_halt_patches;
-   bool dual_source_output;
    bool runtime_check_aads_emit;
    const bool debug_flag;
    void *mem_ctx;

@@ -3245,7 +3245,7 @@ brw_wm_fs_emit(struct brw_context *brw,
    }
 
    const unsigned *assembly = NULL;
-   fs_generator g(brw, mem_ctx, key, prog_data, prog, fp, v.do_dual_src,
+   fs_generator g(brw, mem_ctx, key, prog_data, prog, fp,
                   v.runtime_check_aads_emit, INTEL_DEBUG & DEBUG_WM);
    assembly = g.generate_assembly(&v.instructions, simd16_instructions,
                                   final_assembly_size);
