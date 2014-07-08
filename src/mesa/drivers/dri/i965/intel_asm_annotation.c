@@ -96,11 +96,15 @@ void annotate(struct brw_context *brw,
               struct backend_instruction *inst, unsigned offset)
 {
    if (annotation->ann_size <= annotation->ann_count) {
+      int old_size = annotation->ann_size;
       annotation->ann_size = MAX2(1024, annotation->ann_size * 2);
       annotation->ann = reralloc(annotation->mem_ctx, annotation->ann,
                                  struct annotation, annotation->ann_size);
       if (!annotation->ann)
          return;
+
+      memset(annotation->ann + old_size, 0,
+             (annotation->ann_size - old_size) * sizeof(struct annotation));
    }
 
    struct annotation *ann = &annotation->ann[annotation->ann_count++];
