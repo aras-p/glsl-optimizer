@@ -160,6 +160,7 @@ void si_begin_new_cs(struct si_context *ctx)
 	ctx->emitted.named.init = ctx->queued.named.init;
 
 	ctx->framebuffer.atom.dirty = true;
+	ctx->msaa_config.dirty = true;
 	ctx->b.streamout.enable_atom.dirty = true;
 	si_all_descriptors_begin_new_cs(ctx);
 
