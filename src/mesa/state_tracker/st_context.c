@@ -307,6 +307,7 @@ void st_destroy_context( struct st_context *st )
    cso_release_all(st->cso_context);
 
    st_reference_fragprog(st, &st->fp, NULL);
+   st_reference_geomprog(st, &st->gp, NULL);
    st_reference_vertprog(st, &st->vp, NULL);
 
    /* release framebuffer surfaces */
