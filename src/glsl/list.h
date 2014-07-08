@@ -345,9 +345,15 @@ struct exec_list {
    void move_nodes_to(exec_list *target);
 
    /**
-    * Append all nodes from the source list to the target list
+    * Append all nodes from the source list to the end of the target list
     */
    void append_list(exec_list *source);
+
+   /**
+    * Prepend all nodes from the source list to the beginning of the target
+    * list
+    */
+   void prepend_list(exec_list *source);
 #endif
 };
 
@@ -479,6 +485,13 @@ exec_list_append(struct exec_list *list, struct exec_list *source)
 }
 
 static inline void
+exec_list_prepend(struct exec_list *list, struct exec_list *source)
+{
+   exec_list_append(source, list);
+   exec_list_move_nodes_to(source, list);
+}
+
+static inline void
 exec_node_insert_list_before(struct exec_node *n, struct exec_list *before)
 {
    if (exec_list_is_empty(before))
@@ -552,6 +565,11 @@ inline void exec_list::move_nodes_to(exec_list *target)
 inline void exec_list::append_list(exec_list *source)
 {
    exec_list_append(this, source);
+}
+
+inline void exec_list::prepend_list(exec_list *source)
+{
+   exec_list_prepend(this, source);
 }
 
 inline void exec_node::insert_before(exec_list *before)
