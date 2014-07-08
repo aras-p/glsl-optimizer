@@ -529,26 +529,23 @@ ilo_fence_reference(struct pipe_screen *screen,
                     struct pipe_fence_handle **p,
                     struct pipe_fence_handle *f)
 {
-   struct ilo_fence **ptr = (struct ilo_fence **) p;
    struct ilo_fence *fence = ilo_fence(f);
+   struct ilo_fence *old;
 
-   if (!ptr) {
-      /* still need to reference fence */
-      if (fence)
-         pipe_reference(NULL, &fence->reference);
-      return;
+   if (likely(p)) {
+      old = ilo_fence(*p);
+      *p = f;
+   }
+   else {
+      old = NULL;
    }
 
-   /* reference fence and dereference the one pointed to by ptr */
-   if (*ptr && pipe_reference(&(*ptr)->reference, &fence->reference)) {
-      struct ilo_fence *old = *ptr;
-
+   STATIC_ASSERT(&((struct ilo_fence *) NULL)->reference == NULL);
+   if (pipe_reference(&old->reference, &fence->reference)) {
       if (old->bo)
          intel_bo_unreference(old->bo);
       FREE(old);
    }
-
-   *ptr = fence;
 }
 
 static boolean
