@@ -686,7 +686,7 @@ ConstantFolding::tryCollapseChainedMULs(Instruction *mul2,
       // b = mul a, imm
       // d = mul b, c   -> d = mul_x_imm a, c
       int s2, t2;
-      insn = mul2->getDef(0)->uses.front()->getInsn();
+      insn = (*mul2->getDef(0)->uses.begin())->getInsn();
       if (!insn)
          return;
       mul1 = mul2;
