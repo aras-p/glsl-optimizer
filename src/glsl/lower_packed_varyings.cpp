@@ -261,6 +261,7 @@ lower_packed_varyings_visitor::run(exec_list *instructions)
              !var->type->contains_integer());
 
       /* Change the old varying into an ordinary global. */
+      assert(var->data.mode != ir_var_temporary);
       var->data.mode = ir_var_auto;
 
       /* Create a reference to the old varying. */

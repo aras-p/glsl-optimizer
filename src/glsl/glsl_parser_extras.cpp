@@ -1536,9 +1536,13 @@ _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader,
       case ir_type_function:
          shader->symbols->add_function((ir_function *) ir);
          break;
-      case ir_type_variable:
-         shader->symbols->add_variable((ir_variable *) ir);
+      case ir_type_variable: {
+         ir_variable *const var = (ir_variable *) ir;
+
+         if (var->data.mode != ir_var_temporary)
+            shader->symbols->add_variable(var);
          break;
+      }
       default:
          break;
       }

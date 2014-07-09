@@ -976,7 +976,8 @@ populate_symbol_table(gl_shader *sh)
       if ((func = inst->as_function()) != NULL) {
 	 sh->symbols->add_function(func);
       } else if ((var = inst->as_variable()) != NULL) {
-	 sh->symbols->add_variable(var);
+         if (var->data.mode != ir_var_temporary)
+            sh->symbols->add_variable(var);
       }
    }
 }
@@ -2185,6 +2186,7 @@ demote_shader_inputs_and_outputs(gl_shader *sh, enum ir_variable_mode mode)
        * to have a location assigned.
        */
       if (var->data.is_unmatched_generic_inout) {
+         assert(var->data.mode != ir_var_temporary);
 	 var->data.mode = ir_var_auto;
       }
    }

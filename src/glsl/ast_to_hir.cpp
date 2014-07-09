@@ -912,7 +912,6 @@ get_lvalue_copy(exec_list *instructions, ir_rvalue *lvalue)
    var = new(ctx) ir_variable(lvalue->type, "_post_incdec_tmp",
 			      ir_var_temporary);
    instructions->push_tail(var);
-   var->data.mode = ir_var_auto;
 
    instructions->push_tail(new(ctx) ir_assignment(new(ctx) ir_dereference_variable(var),
 						  lvalue));
@@ -2499,6 +2498,7 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
    /* If there is no qualifier that changes the mode of the variable, leave
     * the setting alone.
     */
+   assert(var->data.mode != ir_var_temporary);
    if (qual->flags.q.in && qual->flags.q.out)
       var->data.mode = ir_var_function_inout;
    else if (qual->flags.q.in)
@@ -5031,7 +5031,7 @@ ast_type_specifier::hir(exec_list *instructions,
           */
          ir_variable *const junk =
             new(state) ir_variable(type, "#default precision",
-                                   ir_var_temporary);
+                                   ir_var_auto);
 
          state->symbols->add_variable(junk);
       }

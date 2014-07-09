@@ -124,6 +124,8 @@ bool glsl_symbol_table::name_declared_this_scope(const char *name)
 
 bool glsl_symbol_table::add_variable(ir_variable *v)
 {
+   assert(v->data.mode != ir_var_temporary);
+
    if (this->separate_function_namespace) {
       /* In 1.10, functions and variables have separate namespaces. */
       symbol_table_entry *existing = get_entry(v->name);
