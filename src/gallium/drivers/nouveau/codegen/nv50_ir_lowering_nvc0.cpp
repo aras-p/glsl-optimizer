@@ -787,6 +787,9 @@ NVC0LoweringPass::handleTXD(TexInstruction *txd)
    } else {
       if (txd->tex.useOffsets)
          expected_args++;
+      if (!txd->tex.target.isArray() && (
+                txd->tex.rIndirectSrc >= 0 || txd->tex.sIndirectSrc >= 0))
+         expected_args++;
    }
 
    if (expected_args > 4 ||
