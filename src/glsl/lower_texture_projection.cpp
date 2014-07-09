@@ -62,7 +62,7 @@ lower_texture_projection_visitor::visit_leave(ir_texture *ir)
    void *mem_ctx = ralloc_parent(ir);
 
    ir_variable *var = new(mem_ctx) ir_variable(ir->projector->type,
-					       "projector", ir_var_auto);
+					       "projector", ir_var_temporary);
    base_ir->insert_before(var);
    ir_dereference *deref = new(mem_ctx) ir_dereference_variable(var);
    ir_expression *expr = new(mem_ctx) ir_expression(ir_unop_rcp,

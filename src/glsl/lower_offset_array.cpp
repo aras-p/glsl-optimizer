@@ -63,7 +63,8 @@ brw_lower_offset_array_visitor::handle_rvalue(ir_rvalue **rv)
 
    void *mem_ctx = ralloc_parent(ir);
 
-   ir_variable *var = new (mem_ctx) ir_variable(ir->type, "result", ir_var_auto);
+   ir_variable *var =
+      new (mem_ctx) ir_variable(ir->type, "result", ir_var_temporary);
    base_ir->insert_before(var);
 
    for (int i = 0; i < 4; i++) {

@@ -276,7 +276,7 @@ cse_visitor::try_cse(ir_rvalue *rvalue)
 
          ir_variable *var = new(rvalue) ir_variable(rvalue->type,
                                                     "cse",
-                                                    ir_var_auto);
+                                                    ir_var_temporary);
 
          /* Write the previous expression result into a new variable. */
          base_ir->insert_before(var);
