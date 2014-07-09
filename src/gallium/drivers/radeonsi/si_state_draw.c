@@ -658,68 +658,6 @@ static void si_update_derived_state(struct si_context *sctx)
 	}
 }
 
-static void si_vertex_buffer_update(struct si_context *sctx)
-{
-	struct pipe_context *ctx = &sctx->b.b;
-	struct si_pm4_state *pm4 = si_pm4_alloc_state(sctx);
-	bool bound[PIPE_MAX_ATTRIBS] = {};
-	unsigned i, count;
-	uint64_t va;
-
-	sctx->b.flags |= R600_CONTEXT_INV_TEX_CACHE;
-
-	count = sctx->vertex_elements->count;
-	assert(count <= 256 / 4);
-
-	si_pm4_sh_data_begin(pm4);
-	for (i = 0 ; i < count; i++) {
-		struct pipe_vertex_element *ve = &sctx->vertex_elements->elements[i];
-		struct pipe_vertex_buffer *vb;
-		struct r600_resource *rbuffer;
-		unsigned offset;
-
-		if (ve->vertex_buffer_index >= sctx->nr_vertex_buffers)
-			continue;
-
-		vb = &sctx->vertex_buffer[ve->vertex_buffer_index];
-		rbuffer = (struct r600_resource*)vb->buffer;
-		if (rbuffer == NULL)
-			continue;
-
-		offset = 0;
-		offset += vb->buffer_offset;
-		offset += ve->src_offset;
-
-		va = r600_resource_va(ctx->screen, (void*)rbuffer);
-		va += offset;
-
-		/* Fill in T# buffer resource description */
-		si_pm4_sh_data_add(pm4, va & 0xFFFFFFFF);
-		si_pm4_sh_data_add(pm4, (S_008F04_BASE_ADDRESS_HI(va >> 32) |
-					 S_008F04_STRIDE(vb->stride)));
-		if (vb->stride)
-			/* Round up by rounding down and adding 1 */
-			si_pm4_sh_data_add(pm4,
-					   (vb->buffer->width0 - offset -
-					    util_format_get_blocksize(ve->src_format)) /
-					   vb->stride + 1);
-		else
-			si_pm4_sh_data_add(pm4, vb->buffer->width0 - offset);
-		si_pm4_sh_data_add(pm4, sctx->vertex_elements->rsrc_word3[i]);
-
-		if (!bound[ve->vertex_buffer_index]) {
-			si_pm4_add_bo(pm4, rbuffer, RADEON_USAGE_READ,
-				      RADEON_PRIO_SHADER_BUFFER_RO);
-			bound[ve->vertex_buffer_index] = true;
-		}
-	}
-	si_pm4_sh_data_end(pm4, sctx->gs_shader ?
-			   R_00B330_SPI_SHADER_USER_DATA_ES_0 :
-			   R_00B130_SPI_SHADER_USER_DATA_VS_0,
-			   SI_SGPR_VERTEX_BUFFER);
-	si_pm4_set_state(sctx, vertex_buffers, pm4);
-}
-
 static void si_state_draw(struct si_context *sctx,
 			  const struct pipe_draw_info *info,
 			  const struct pipe_index_buffer *ib)
@@ -954,7 +892,7 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		return;
 
 	si_update_derived_state(sctx);
-	si_vertex_buffer_update(sctx);
+	si_update_vertex_buffers(sctx);
 
 	if (info->indexed) {
 		/* Initialize the index buffer struct. */

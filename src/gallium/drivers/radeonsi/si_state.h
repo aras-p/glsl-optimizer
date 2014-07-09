@@ -72,6 +72,7 @@ struct si_vertex_element
 {
 	unsigned			count;
 	uint32_t			rsrc_word3[PIPE_MAX_ATTRIBS];
+	uint32_t			format_size[PIPE_MAX_ATTRIBS];
 	struct pipe_vertex_element	elements[PIPE_MAX_ATTRIBS];
 };
 
@@ -97,7 +98,6 @@ union si_state {
 		struct si_pm4_state		*vs;
 		struct si_pm4_state		*ps;
 		struct si_pm4_state		*spi;
-		struct si_pm4_state		*vertex_buffers;
 		struct si_pm4_state		*draw_info;
 		struct si_pm4_state		*draw;
 	} named;
@@ -147,6 +147,7 @@ struct si_descriptors {
 
 	/* The buffer where resource descriptors are stored. */
 	struct r600_resource *buffer;
+	unsigned buffer_offset;
 
 	/* The i-th bit is set if that element is dirty (changed but not emitted). */
 	unsigned dirty_mask;
@@ -221,6 +222,7 @@ struct si_buffer_resources {
 /* si_descriptors.c */
 void si_set_sampler_descriptors(struct si_context *sctx, unsigned shader,
 				unsigned start, unsigned count, void **states);
+void si_update_vertex_buffers(struct si_context *sctx);
 void si_set_ring_buffer(struct pipe_context *ctx, uint shader, uint slot,
 			struct pipe_constant_buffer *input,
 			unsigned stride, unsigned num_records,

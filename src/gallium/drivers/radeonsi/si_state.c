@@ -2800,6 +2800,7 @@ static void *si_create_vertex_elements(struct pipe_context *ctx,
 				   S_008F0C_DST_SEL_W(si_map_swizzle(desc->swizzle[3])) |
 				   S_008F0C_NUM_FORMAT(num_format) |
 				   S_008F0C_DATA_FORMAT(data_format);
+		v->format_size[i] = desc->block.bits / 8;
 	}
 	memcpy(v->elements, elements, sizeof(struct pipe_vertex_element) * count);
 

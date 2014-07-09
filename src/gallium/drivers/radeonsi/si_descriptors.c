@@ -166,11 +166,13 @@ static void si_update_descriptors(struct si_context *sctx,
 }
 
 static void si_emit_shader_pointer(struct si_context *sctx,
-				   struct si_descriptors *desc)
+				   struct r600_atom *atom)
 {
+	struct si_descriptors *desc = (struct si_descriptors*)atom;
 	struct radeon_winsys_cs *cs = sctx->b.rings.gfx.cs;
 	uint64_t va = r600_resource_va(sctx->b.b.screen, &desc->buffer->b.b) +
-		      desc->current_context_id * desc->context_size;
+		      desc->current_context_id * desc->context_size +
+		      desc->buffer_offset;
 
 	radeon_emit(cs, PKT3(PKT3_SET_SH_REG, 2, 0));
 	radeon_emit(cs, (desc->shader_userdata_reg - SI_SH_REG_OFFSET) >> 2);
@@ -253,7 +255,7 @@ static void si_emit_descriptors(struct si_context *sctx,
 	desc->current_context_id = new_context_id;
 
 	/* Now update the shader userdata pointer. */
-	si_emit_shader_pointer(sctx, desc);
+	si_emit_shader_pointer(sctx, &desc->atom);
 }
 
 static unsigned si_get_shader_user_data_base(unsigned shader)
@@ -330,7 +332,7 @@ static void si_sampler_views_begin_new_cs(struct si_context *sctx,
 	r600_context_bo_reloc(&sctx->b, &sctx->b.rings.gfx, views->desc.buffer,
 			      RADEON_USAGE_READWRITE, RADEON_PRIO_SHADER_DATA);
 
-	si_emit_shader_pointer(sctx, &views->desc);
+	si_emit_shader_pointer(sctx, &views->desc.atom);
 }
 
 static void si_set_sampler_view(struct si_context *sctx, unsigned shader,
@@ -432,7 +434,7 @@ static void si_sampler_states_begin_new_cs(struct si_context *sctx,
 {
 	r600_context_bo_reloc(&sctx->b, &sctx->b.rings.gfx, states->desc.buffer,
 			      RADEON_USAGE_READWRITE, RADEON_PRIO_SHADER_DATA);
-	si_emit_shader_pointer(sctx, &states->desc);
+	si_emit_shader_pointer(sctx, &states->desc.atom);
 }
 
 void si_set_sampler_descriptors(struct si_context *sctx, unsigned shader,
@@ -533,8 +535,118 @@ static void si_buffer_resources_begin_new_cs(struct si_context *sctx,
 			      buffers->desc.buffer, RADEON_USAGE_READWRITE,
 			      RADEON_PRIO_SHADER_DATA);
 
-	si_emit_shader_pointer(sctx, &buffers->desc);
+	si_emit_shader_pointer(sctx, &buffers->desc.atom);
 }
+
+/* VERTEX BUFFERS */
+
+static void si_vertex_buffers_begin_new_cs(struct si_context *sctx)
+{
+	struct si_descriptors *desc = &sctx->vertex_buffers;
+	int count = sctx->vertex_elements ? sctx->vertex_elements->count : 0;
+	int i;
+
+	for (i = 0; i < count; i++) {
+		int vb = sctx->vertex_elements->elements[i].vertex_buffer_index;
+
+		if (vb >= sctx->nr_vertex_buffers)
+			continue;
+		if (!sctx->vertex_buffer[vb].buffer)
+			continue;
+
+		r600_context_bo_reloc(&sctx->b, &sctx->b.rings.gfx,
+				      (struct r600_resource*)sctx->vertex_buffer[vb].buffer,
+				      RADEON_USAGE_READ, RADEON_PRIO_SHADER_BUFFER_RO);
+	}
+	r600_context_bo_reloc(&sctx->b, &sctx->b.rings.gfx,
+			      desc->buffer, RADEON_USAGE_READ,
+			      RADEON_PRIO_SHADER_DATA);
+
+	si_emit_shader_pointer(sctx, &desc->atom);
+}
+
+void si_update_vertex_buffers(struct si_context *sctx)
+{
+	struct pipe_context *ctx = &sctx->b.b;
+	struct si_descriptors *desc = &sctx->vertex_buffers;
+	bool bound[SI_NUM_VERTEX_BUFFERS] = {};
+	unsigned i, count = sctx->vertex_elements->count;
+	uint64_t va;
+	uint32_t *ptr;
+
+	if (!count || !sctx->vertex_elements)
+		return;
+
+	/* Vertex buffer descriptors are the only ones which are uploaded
+	 * directly through a staging buffer and don't go through
+	 * the fine-grained upload path.
+	 */
+	u_upload_alloc(sctx->b.uploader, 0, count * 16, &desc->buffer_offset,
+		       (struct pipe_resource**)&desc->buffer, (void**)&ptr);
+
+	r600_context_bo_reloc(&sctx->b, &sctx->b.rings.gfx,
+			      desc->buffer, RADEON_USAGE_READ,
+			      RADEON_PRIO_SHADER_DATA);
+
+	assert(count <= SI_NUM_VERTEX_BUFFERS);
+	assert(desc->current_context_id == 0);
+
+	for (i = 0; i < count; i++) {
+		struct pipe_vertex_element *ve = &sctx->vertex_elements->elements[i];
+		struct pipe_vertex_buffer *vb;
+		struct r600_resource *rbuffer;
+		unsigned offset;
+		uint32_t *desc = &ptr[i*4];
+
+		if (ve->vertex_buffer_index >= sctx->nr_vertex_buffers) {
+			memset(desc, 0, 16);
+			continue;
+		}
+
+		vb = &sctx->vertex_buffer[ve->vertex_buffer_index];
+		rbuffer = (struct r600_resource*)vb->buffer;
+		if (rbuffer == NULL) {
+			memset(desc, 0, 16);
+			continue;
+		}
+
+		offset = vb->buffer_offset + ve->src_offset;
+
+		va = r600_resource_va(ctx->screen, (void*)rbuffer);
+		va += offset;
+
+		/* Fill in T# buffer resource description */
+		desc[0] = va & 0xFFFFFFFF;
+		desc[1] = S_008F04_BASE_ADDRESS_HI(va >> 32) |
+			  S_008F04_STRIDE(vb->stride);
+		if (vb->stride)
+			/* Round up by rounding down and adding 1 */
+			desc[2] = (vb->buffer->width0 - offset -
+				   sctx->vertex_elements->format_size[i]) /
+				  vb->stride + 1;
+		else
+			desc[2] = vb->buffer->width0 - offset;
+
+		desc[3] = sctx->vertex_elements->rsrc_word3[i];
+
+		if (!bound[ve->vertex_buffer_index]) {
+			r600_context_bo_reloc(&sctx->b, &sctx->b.rings.gfx,
+					      (struct r600_resource*)vb->buffer,
+					      RADEON_USAGE_READ, RADEON_PRIO_SHADER_BUFFER_RO);
+			bound[ve->vertex_buffer_index] = true;
+		}
+	}
+
+	desc->atom.num_dw = 8; /* update 2 shader pointers (VS+ES) */
+	desc->atom.dirty = true;
+
+	/* Don't flush the const cache. It would have a very negative effect
+	 * on performance (confirmed by testing). New descriptors are always
+	 * uploaded to a fresh new buffer, so I don't think flushing the const
+	 * cache is needed. */
+	sctx->b.flags |= R600_CONTEXT_INV_TEX_CACHE;
+}
+
 
 /* CONSTANT BUFFERS */
 
@@ -1096,6 +1208,11 @@ void si_init_all_descriptors(struct si_context *sctx)
 		sctx->atoms.s.sampler_states[i] = &sctx->samplers[i].states.desc.atom;
 	}
 
+	si_init_descriptors(sctx, &sctx->vertex_buffers,
+			    si_get_shader_user_data_base(PIPE_SHADER_VERTEX) +
+			    SI_SGPR_VERTEX_BUFFER*4, 4, SI_NUM_VERTEX_BUFFERS,
+			    si_emit_shader_pointer);
+	sctx->atoms.s.vertex_buffers = &sctx->vertex_buffers.atom;
 
 	/* Set pipe_context functions. */
 	sctx->b.b.set_constant_buffer = si_set_constant_buffer;
@@ -1115,6 +1232,7 @@ void si_release_all_descriptors(struct si_context *sctx)
 		si_release_sampler_views(&sctx->samplers[i].views);
 		si_release_descriptors(&sctx->samplers[i].states.desc);
 	}
+	si_release_descriptors(&sctx->vertex_buffers);
 }
 
 void si_all_descriptors_begin_new_cs(struct si_context *sctx)
@@ -1127,4 +1245,5 @@ void si_all_descriptors_begin_new_cs(struct si_context *sctx)
 		si_sampler_views_begin_new_cs(sctx, &sctx->samplers[i].views);
 		si_sampler_states_begin_new_cs(sctx, &sctx->samplers[i].states);
 	}
+	si_vertex_buffers_begin_new_cs(sctx);
 }
