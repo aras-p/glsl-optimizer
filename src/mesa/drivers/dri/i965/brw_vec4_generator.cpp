@@ -500,7 +500,7 @@ vec4_generator::generate_gs_thread_end(vec4_instruction *inst)
                  brw_null_reg(), /* dest */
                  inst->base_mrf, /* starting mrf reg nr */
                  src,
-                 BRW_URB_WRITE_EOT,
+                 BRW_URB_WRITE_EOT | inst->urb_write_flags,
                  brw->gen >= 8 ? 2 : 1,/* message len */
                  0,              /* response len */
                  0,              /* urb destination offset */
