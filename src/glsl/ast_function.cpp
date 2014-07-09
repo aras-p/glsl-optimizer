@@ -408,13 +408,16 @@ generate_call(exec_list *instructions, ir_function_signature *sig,
    ir_dereference_variable *deref = NULL;
    if (!sig->return_type->is_void()) {
       /* Create a new temporary to hold the return value. */
+      char *const name = ir_variable::temporaries_allocate_names
+         ? ralloc_asprintf(ctx, "%s_retval", sig->function_name())
+         : NULL;
+
       ir_variable *var;
 
-      var = new(ctx) ir_variable(sig->return_type,
-				 ralloc_asprintf(ctx, "%s_retval",
-						 sig->function_name()),
-				 ir_var_temporary);
+      var = new(ctx) ir_variable(sig->return_type, name, ir_var_temporary);
       instructions->push_tail(var);
+
+      ralloc_free(name);
 
       deref = new(ctx) ir_dereference_variable(var);
    }
