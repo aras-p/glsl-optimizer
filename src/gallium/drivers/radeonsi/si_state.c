@@ -2824,12 +2824,30 @@ static void si_delete_vertex_element(struct pipe_context *ctx, void *state)
 	FREE(state);
 }
 
-static void si_set_vertex_buffers(struct pipe_context *ctx, unsigned start_slot, unsigned count,
+static void si_set_vertex_buffers(struct pipe_context *ctx,
+				  unsigned start_slot, unsigned count,
 				  const struct pipe_vertex_buffer *buffers)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
+	struct pipe_vertex_buffer *dst = sctx->vertex_buffer + start_slot;
+	int i;
 
-	util_set_vertex_buffers_count(sctx->vertex_buffer, &sctx->nr_vertex_buffers, buffers, start_slot, count);
+	assert(start_slot + count <= Elements(sctx->vertex_buffer));
+
+	if (buffers) {
+		for (i = 0; i < count; i++) {
+			const struct pipe_vertex_buffer *src = buffers + i;
+			struct pipe_vertex_buffer *dsti = dst + i;
+
+			pipe_resource_reference(&dsti->buffer, src->buffer);
+			dsti->buffer_offset = src->buffer_offset;
+			dsti->stride = src->stride;
+		}
+	} else {
+		for (i = 0; i < count; i++) {
+			pipe_resource_reference(&dst[i].buffer, NULL);
+		}
+	}
 }
 
 static void si_set_index_buffer(struct pipe_context *ctx,

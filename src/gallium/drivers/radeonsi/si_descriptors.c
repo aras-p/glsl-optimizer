@@ -549,7 +549,7 @@ static void si_vertex_buffers_begin_new_cs(struct si_context *sctx)
 	for (i = 0; i < count; i++) {
 		int vb = sctx->vertex_elements->elements[i].vertex_buffer_index;
 
-		if (vb >= sctx->nr_vertex_buffers)
+		if (vb >= Elements(sctx->vertex_buffer))
 			continue;
 		if (!sctx->vertex_buffer[vb].buffer)
 			continue;
@@ -598,7 +598,7 @@ void si_update_vertex_buffers(struct si_context *sctx)
 		unsigned offset;
 		uint32_t *desc = &ptr[i*4];
 
-		if (ve->vertex_buffer_index >= sctx->nr_vertex_buffers) {
+		if (ve->vertex_buffer_index >= Elements(sctx->vertex_buffer)) {
 			memset(desc, 0, 16);
 			continue;
 		}

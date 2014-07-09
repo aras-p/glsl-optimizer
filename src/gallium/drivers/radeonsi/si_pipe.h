@@ -144,8 +144,7 @@ struct si_context {
 	/* Vertex and index buffers. */
 	bool			vertex_buffers_dirty;
 	struct pipe_index_buffer index_buffer;
-	struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
-	unsigned		nr_vertex_buffers;
+	struct pipe_vertex_buffer vertex_buffer[SI_NUM_VERTEX_BUFFERS];
 
 	/* With rasterizer discard, there doesn't have to be a pixel shader.
 	 * In that case, we bind this one: */
