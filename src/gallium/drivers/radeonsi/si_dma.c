@@ -91,12 +91,13 @@ static void si_dma_copy_buffer(struct si_context *ctx,
 	}
 	ncopy = (size / max_csize) + !!(size % max_csize);
 
+	r600_need_dma_space(&ctx->b, ncopy * 5);
+
 	r600_context_bo_reloc(&ctx->b, &ctx->b.rings.dma, rsrc, RADEON_USAGE_READ,
 			      RADEON_PRIO_MIN);
 	r600_context_bo_reloc(&ctx->b, &ctx->b.rings.dma, rdst, RADEON_USAGE_WRITE,
 			      RADEON_PRIO_MIN);
 
-	r600_need_dma_space(&ctx->b, ncopy * 5);
 	for (i = 0; i < ncopy; i++) {
 		csize = size < max_csize ? size : max_csize;
 		cs->buf[cs->cdw++] = SI_DMA_PACKET(SI_DMA_PACKET_COPY, sub_cmd, csize);
