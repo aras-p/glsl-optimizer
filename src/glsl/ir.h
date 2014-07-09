@@ -896,6 +896,25 @@ private:
     * Name used for anonymous compiler temporaries
     */
    static const char tmp_name[];
+
+public:
+   /**
+    * Should the construct keep names for ir_var_temporary variables?
+    *
+    * When this global is false, names passed to the constructor for
+    * \c ir_var_temporary variables will be dropped.  Instead, the variable will
+    * be named "compiler_temp".  This name will be in static storage.
+    *
+    * \warning
+    * \b NEVER change the mode of an \c ir_var_temporary.
+    *
+    * \warning
+    * This variable is \b not thread-safe.  It is global, \b not
+    * per-context. It begins life false.  A context can, at some point, make
+    * it true.  From that point on, it will be true forever.  This should be
+    * okay since it will only be set true while debugging.
+    */
+   static bool temporaries_allocate_names;
 };
 
 /**

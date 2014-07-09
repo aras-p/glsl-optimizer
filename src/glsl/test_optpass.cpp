@@ -200,6 +200,7 @@ int test_optpass(int argc, char **argv)
    initialize_context_to_defaults(ctx, API_OPENGL_COMPAT);
 
    ctx->Driver.NewShader = _mesa_new_shader;
+   ir_variable::temporaries_allocate_names = true;
 
    struct gl_shader *shader = rzalloc(NULL, struct gl_shader);
    shader->Type = shader_type;

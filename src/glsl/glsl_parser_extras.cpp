@@ -1440,6 +1440,9 @@ _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader,
       new(shader) _mesa_glsl_parse_state(ctx, shader->Stage, shader);
    const char *source = shader->Source;
 
+   if (ctx->Const.GenerateTemporaryNames)
+      ir_variable::temporaries_allocate_names = true;
+
    state->error = glcpp_preprocess(state, &source, &state->info_log,
                              &ctx->Extensions, ctx);
 

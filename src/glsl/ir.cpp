@@ -1543,6 +1543,8 @@ ir_swizzle::variable_referenced() const
 }
 
 
+bool ir_variable::temporaries_allocate_names = false;
+
 const char ir_variable::tmp_name[] = "compiler_temp";
 
 ir_variable::ir_variable(const struct glsl_type *type, const char *name,
@@ -1550,6 +1552,9 @@ ir_variable::ir_variable(const struct glsl_type *type, const char *name,
    : ir_instruction(ir_type_variable)
 {
    this->type = type;
+
+   if (mode == ir_var_temporary && !ir_variable::temporaries_allocate_names)
+      name = NULL;
 
    /* The ir_variable clone method may call this constructor with name set to
     * tmp_name.
