@@ -656,6 +656,9 @@ private:
    void generate_gs_prepare_channel_masks(struct brw_reg dst);
    void generate_gs_set_channel_masks(struct brw_reg dst, struct brw_reg src);
    void generate_gs_get_instance_id(struct brw_reg dst);
+   void generate_gs_ff_sync(vec4_instruction *inst,
+                            struct brw_reg dst,
+                            struct brw_reg src0);
    void generate_oword_dual_block_offsets(struct brw_reg m1,
 					  struct brw_reg index);
    void generate_scratch_write(vec4_instruction *inst,

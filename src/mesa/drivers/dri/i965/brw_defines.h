@@ -1014,6 +1014,21 @@ enum opcode {
     * - dst is the GRF for gl_InvocationID.
     */
    GS_OPCODE_GET_INSTANCE_ID,
+
+   /**
+    * Send a FF_SYNC message to allocate initial URB handles (gen6).
+    *
+    * - dst will be used as the writeback register for the FF_SYNC operation.
+    *
+    * - src0 is the number of primitives written.
+    *
+    * Note: This opcode uses an implicit MRF register for the ff_sync message
+    * header, so the caller is expected to set inst->base_mrf and initialize
+    * that MRF register to r0. This opcode will also write to this MRF register
+    * to include the allocated URB handle so it can then be reused directly as
+    * the header in the URB write operation we are allocating the handle for.
+    */
+   GS_OPCODE_FF_SYNC,
 };
 
 enum brw_derivative_quality {

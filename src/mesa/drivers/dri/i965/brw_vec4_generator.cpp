@@ -659,6 +659,47 @@ vec4_generator::generate_gs_get_instance_id(struct brw_reg dst)
 }
 
 void
+vec4_generator::generate_gs_ff_sync(vec4_instruction *inst,
+                                    struct brw_reg dst,
+                                    struct brw_reg src0)
+{
+   /* This opcode uses an implied MRF register for:
+    *  - the header of the ff_sync message. And as such it is expected to be
+    *    initialized to r0 before calling here.
+    *  - the destination where we will write the allocated URB handle.
+    */
+   struct brw_reg header =
+      retype(brw_message_reg(inst->base_mrf), BRW_REGISTER_TYPE_UD);
+
+   /* Overwrite dword 0 of the header (cleared for now since we are not doing
+    * transform feedback) and dword 1 (to hold the number of primitives
+    * written).
+    */
+   brw_push_insn_state(p);
+   brw_set_default_mask_control(p, BRW_MASK_DISABLE);
+   brw_set_default_access_mode(p, BRW_ALIGN_1);
+   brw_MOV(p, get_element_ud(header, 0), brw_imm_ud(0));
+   brw_MOV(p, get_element_ud(header, 1), get_element_ud(src0, 0));
+   brw_pop_insn_state(p);
+
+   /* Allocate URB handle in dst */
+   brw_ff_sync(p,
+               dst,
+               0,
+               header,
+               1, /* allocate */
+               1, /* response length */
+               0 /* eot */);
+
+   /* Now put allocated urb handle in header.0 */
+   brw_push_insn_state(p);
+   brw_set_default_access_mode(p, BRW_ALIGN_1);
+   brw_set_default_mask_control(p, BRW_MASK_DISABLE);
+   brw_MOV(p, get_element_ud(header, 0), get_element_ud(dst, 0));
+   brw_pop_insn_state(p);
+}
+
+void
 vec4_generator::generate_oword_dual_block_offsets(struct brw_reg m1,
                                                   struct brw_reg index)
 {
@@ -1278,6 +1319,10 @@ vec4_generator::generate_code(const cfg_t *cfg)
 
       case GS_OPCODE_SET_VERTEX_COUNT:
          generate_gs_set_vertex_count(dst, src[0]);
+         break;
+
+      case GS_OPCODE_FF_SYNC:
+         generate_gs_ff_sync(inst, dst, src[0]);
          break;
 
       case GS_OPCODE_SET_DWORD_2_IMMED:
