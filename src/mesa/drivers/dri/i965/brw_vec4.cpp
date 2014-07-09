@@ -274,6 +274,7 @@ vec4_visitor::implied_mrf_writes(vec4_instruction *inst)
    case SHADER_OPCODE_GEN4_SCRATCH_WRITE:
       return 3;
    case GS_OPCODE_URB_WRITE:
+   case GS_OPCODE_URB_WRITE_ALLOCATE:
    case GS_OPCODE_THREAD_END:
       return 0;
    case GS_OPCODE_FF_SYNC:

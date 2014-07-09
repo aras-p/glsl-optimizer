@@ -508,6 +508,8 @@ brw_instruction_name(enum opcode op)
 
    case GS_OPCODE_URB_WRITE:
       return "gs_urb_write";
+   case GS_OPCODE_URB_WRITE_ALLOCATE:
+      return "gs_urb_write_allocate";
    case GS_OPCODE_THREAD_END:
       return "gs_thread_end";
    case GS_OPCODE_SET_WRITE_OFFSET:

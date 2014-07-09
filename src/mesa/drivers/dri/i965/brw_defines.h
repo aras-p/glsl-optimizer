@@ -941,6 +941,14 @@ enum opcode {
    GS_OPCODE_URB_WRITE,
 
    /**
+    * Write geometry shader output data to the URB and request a new URB
+    * handle (gen6).
+    *
+    * This opcode doesn't do an implied move from R0 to the first MRF.
+    */
+   GS_OPCODE_URB_WRITE_ALLOCATE,
+
+   /**
     * Terminate the geometry shader thread by doing an empty URB write.
     *
     * This opcode doesn't do an implied move from R0 to the first MRF.  This

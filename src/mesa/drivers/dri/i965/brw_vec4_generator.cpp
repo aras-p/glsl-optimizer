@@ -467,6 +467,32 @@ vec4_generator::generate_gs_urb_write(vec4_instruction *inst)
 }
 
 void
+vec4_generator::generate_gs_urb_write_allocate(vec4_instruction *inst)
+{
+   struct brw_reg src = brw_message_reg(inst->base_mrf);
+
+   /* We pass the temporary passed in src0 as the writeback register */
+   brw_urb_WRITE(p,
+                 inst->get_src(this->prog_data, 0), /* dest */
+                 inst->base_mrf, /* starting mrf reg nr */
+                 src,
+                 BRW_URB_WRITE_ALLOCATE_COMPLETE,
+                 inst->mlen,
+                 1, /* response len */
+                 inst->offset,  /* urb destination offset */
+                 BRW_URB_SWIZZLE_INTERLEAVE);
+
+   /* Now put allocated urb handle in dst.0 */
+   brw_push_insn_state(p);
+   brw_set_default_access_mode(p, BRW_ALIGN_1);
+   brw_set_default_mask_control(p, BRW_MASK_DISABLE);
+   brw_MOV(p, get_element_ud(inst->get_dst(), 0),
+           get_element_ud(inst->get_src(this->prog_data, 0), 0));
+   brw_set_default_access_mode(p, BRW_ALIGN_16);
+   brw_pop_insn_state(p);
+}
+
+void
 vec4_generator::generate_gs_thread_end(vec4_instruction *inst)
 {
    struct brw_reg src = brw_message_reg(inst->base_mrf);
@@ -1307,6 +1333,10 @@ vec4_generator::generate_code(const cfg_t *cfg)
 
       case GS_OPCODE_URB_WRITE:
          generate_gs_urb_write(inst);
+         break;
+
+      case GS_OPCODE_URB_WRITE_ALLOCATE:
+         generate_gs_urb_write_allocate(inst);
          break;
 
       case GS_OPCODE_THREAD_END:

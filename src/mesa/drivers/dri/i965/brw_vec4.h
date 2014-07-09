@@ -646,6 +646,7 @@ private:
 
    void generate_vs_urb_write(vec4_instruction *inst);
    void generate_gs_urb_write(vec4_instruction *inst);
+   void generate_gs_urb_write_allocate(vec4_instruction *inst);
    void generate_gs_thread_end(vec4_instruction *inst);
    void generate_gs_set_write_offset(struct brw_reg dst,
                                      struct brw_reg src0,
