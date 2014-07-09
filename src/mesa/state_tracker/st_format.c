@@ -83,6 +83,8 @@ st_mesa_format_to_pipe_format(mesa_format mesaFormat)
       return PIPE_FORMAT_B2G3R3_UNORM;
    case MESA_FORMAT_B10G10R10A2_UNORM:
       return PIPE_FORMAT_B10G10R10A2_UNORM;
+   case MESA_FORMAT_R10G10B10A2_UNORM:
+      return PIPE_FORMAT_R10G10B10A2_UNORM;
    case MESA_FORMAT_L4A4_UNORM:
       return PIPE_FORMAT_L4A4_UNORM;
    case MESA_FORMAT_L8A8_UNORM:
@@ -439,6 +441,8 @@ st_pipe_format_to_mesa_format(enum pipe_format format)
       return MESA_FORMAT_B2G3R3_UNORM;
    case PIPE_FORMAT_B10G10R10A2_UNORM:
       return MESA_FORMAT_B10G10R10A2_UNORM;
+   case PIPE_FORMAT_R10G10B10A2_UNORM:
+      return MESA_FORMAT_R10G10B10A2_UNORM;
    case PIPE_FORMAT_L4A4_UNORM:
       return MESA_FORMAT_L4A4_UNORM;
    case PIPE_FORMAT_L8A8_UNORM:
