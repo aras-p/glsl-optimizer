@@ -383,6 +383,15 @@ void util_blitter_destroy(struct blitter_context *blitter)
       if (ctx->fs_texfetch_stencil[i])
          ctx->delete_fs_state(pipe, ctx->fs_texfetch_stencil[i]);
 
+      if (ctx->fs_texfetch_col_msaa[i])
+         ctx->delete_fs_state(pipe, ctx->fs_texfetch_col_msaa[i]);
+      if (ctx->fs_texfetch_depth_msaa[i])
+         ctx->delete_fs_state(pipe, ctx->fs_texfetch_depth_msaa[i]);
+      if (ctx->fs_texfetch_depthstencil_msaa[i])
+         ctx->delete_fs_state(pipe, ctx->fs_texfetch_depthstencil_msaa[i]);
+      if (ctx->fs_texfetch_stencil_msaa[i])
+         ctx->delete_fs_state(pipe, ctx->fs_texfetch_stencil_msaa[i]);
+
       for (j = 0; j< Elements(ctx->fs_resolve[i]); j++)
          for (f = 0; f < 2; f++)
             if (ctx->fs_resolve[i][j][f])
