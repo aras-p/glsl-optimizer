@@ -210,6 +210,7 @@ initialize_context(struct gl_context *ctx, gl_api api)
       break;
    }
 
+   ctx->Const.GenerateTemporaryNames = true;
    ctx->Driver.NewShader = _mesa_new_shader;
 }
 

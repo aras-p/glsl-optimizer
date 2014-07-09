@@ -645,6 +645,12 @@ _mesa_init_constants(struct gl_constants *consts, gl_api api)
    consts->GLSLVersion = 120;
    _mesa_override_glsl_version(consts);
 
+#ifdef DEBUG
+   consts->GenerateTemporaryNames = true;
+#else
+   consts->GenerateTemporaryNames = false;
+#endif
+
    /* GL_ARB_framebuffer_object */
    consts->MaxSamples = 0;
 

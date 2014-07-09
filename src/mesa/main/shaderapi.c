@@ -123,6 +123,9 @@ _mesa_init_shader_state(struct gl_context *ctx)
 
    ctx->Shader.Flags = _mesa_get_shader_flags();
 
+   if (ctx->Shader.Flags != 0)
+      ctx->Const.GenerateTemporaryNames = true;
+
    /* Extended for ARB_separate_shader_objects */
    ctx->Shader.RefCount = 1;
    mtx_init(&ctx->Shader.Mutex, mtx_plain);
