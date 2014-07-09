@@ -804,6 +804,13 @@ parse_src_operand(
       src->Dimension.Indirect = 0;
       src->Dimension.Dimension = 0;
       src->Dimension.Index = bracket[0].index;
+      if (bracket[0].ind_file != TGSI_FILE_NULL) {
+         src->Dimension.Indirect = 1;
+         src->DimIndirect.File = bracket[0].ind_file;
+         src->DimIndirect.Index = bracket[0].ind_index;
+         src->DimIndirect.Swizzle = bracket[0].ind_comp;
+         src->DimIndirect.ArrayID = bracket[0].ind_array;
+      }
       bracket[0] = bracket[1];
    }
    src->Register.Index = bracket[0].index;
