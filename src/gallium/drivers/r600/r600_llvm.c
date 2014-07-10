@@ -366,7 +366,6 @@ static void llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 			case TGSI_SEMANTIC_CLIPVERTEX: {
 				LLVMValueRef args[3];
 				unsigned reg_index;
-				unsigned base_vector_chan;
 				LLVMValueRef adjusted_elements[4];
 				for (reg_index = 0; reg_index < 2; reg_index ++) {
 					for (chan = 0; chan < TGSI_NUM_CHANNELS; chan++) {
