@@ -2907,14 +2907,21 @@ sp_get_dims(struct sp_sampler_view *sp_sview, int level,
    const struct pipe_sampler_view *view = &sp_sview->base;
    const struct pipe_resource *texture = view->texture;
 
+   if (texture->target == PIPE_BUFFER) {
+      dims[0] = (view->u.buf.last_element - view->u.buf.first_element) + 1;
+      /* the other values are undefined, but let's avoid potential valgrind
+       * warnings.
+       */
+      dims[1] = dims[2] = dims[3] = 0;
+      return;
+   }
+
    /* undefined according to EXT_gpu_program */
    level += view->u.tex.first_level;
    if (level > view->u.tex.last_level)
       return;
 
-   if (texture->target != PIPE_BUFFER)
-      dims[3] = view->u.tex.last_level - view->u.tex.first_level + 1;
-
+   dims[3] = view->u.tex.last_level - view->u.tex.first_level + 1;
    dims[0] = u_minify(texture->width0, level);
 
    switch(texture->target) {
@@ -2939,9 +2946,6 @@ sp_get_dims(struct sp_sampler_view *sp_sview, int level,
       dims[1] = u_minify(texture->height0, level);
       dims[2] = (view->u.tex.last_layer - view->u.tex.first_layer + 1) / 6;
       break;
-   case PIPE_BUFFER:
-      dims[0] /= util_format_get_blocksize(view->format);
-      return;
    default:
       assert(!"unexpected texture target in sp_get_dims()");
       return;
