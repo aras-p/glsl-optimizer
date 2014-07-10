@@ -52,19 +52,29 @@ gen6_upload_urb( struct brw_context *brw )
    int nr_vs_entries, nr_gs_entries;
    int total_urb_size = brw->urb.size * 1024; /* in bytes */
 
+   bool gs_present = brw->ff_gs.prog_active || brw->geometry_program;
+
    /* CACHE_NEW_VS_PROG */
    unsigned vs_size = MAX2(brw->vs.prog_data->base.urb_entry_size, 1);
 
-   /* We use the same VUE layout for VS outputs and GS outputs (as it's what
-    * the SF and Clipper expect), so we can simply make the GS URB entry size
-    * the same as for the VS.  This may technically be too large in cases
-    * where we have few vertex attributes and a lot of varyings, since the VS
-    * size is determined by the larger of the two.  For now, it's safe.
+   /* Whe using GS to do transform feedback only we use the same VUE layout for
+    * VS outputs and GS outputs (as it's what the SF and Clipper expect), so we
+    * can simply make the GS URB entry size the same as for the VS.  This may
+    * technically be too large in cases where we have few vertex attributes and
+    * a lot of varyings, since the VS size is determined by the larger of the
+    * two. For now, it's safe.
+    *
+    * For user-provided GS the assumption above does not hold since the GS
+    * outputs can be different from the VS outputs.
     */
    unsigned gs_size = vs_size;
+   if (brw->geometry_program) {
+      gs_size = brw->gs.prog_data->base.urb_entry_size;
+      assert(gs_size >= 1);
+   }
 
    /* Calculate how many entries fit in each stage's section of the URB */
-   if (brw->ff_gs.prog_active) {
+   if (gs_present) {
       nr_vs_entries = (total_urb_size/2) / (vs_size * 128);
       nr_gs_entries = (total_urb_size/2) / (gs_size * 128);
    } else {
@@ -109,16 +119,16 @@ gen6_upload_urb( struct brw_context *brw )
     * doesn't exist on Gen6).  So for now we just do a full pipeline flush as
     * a workaround.
     */
-   if (brw->urb.gen6_gs_previously_active && !brw->ff_gs.prog_active)
+   if (brw->urb.gen6_gs_previously_active && !gs_present)
       intel_batchbuffer_emit_mi_flush(brw);
-   brw->urb.gen6_gs_previously_active = brw->ff_gs.prog_active;
+   brw->urb.gen6_gs_previously_active = gs_present;
 }
 
 const struct brw_tracked_state gen6_urb = {
    .dirty = {
       .mesa = 0,
-      .brw = BRW_NEW_CONTEXT,
-      .cache = (CACHE_NEW_VS_PROG | CACHE_NEW_FF_GS_PROG),
+      .brw = (BRW_NEW_CONTEXT | BRW_NEW_GEOMETRY_PROGRAM),
+      .cache = (CACHE_NEW_VS_PROG | CACHE_NEW_GS_PROG | CACHE_NEW_FF_GS_PROG),
    },
    .emit = gen6_upload_urb,
 };
