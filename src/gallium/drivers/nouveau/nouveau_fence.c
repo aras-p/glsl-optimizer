@@ -174,6 +174,9 @@ nouveau_fence_signalled(struct nouveau_fence *fence)
 {
    struct nouveau_screen *screen = fence->screen;
 
+   if (fence->state == NOUVEAU_FENCE_STATE_SIGNALLED)
+      return TRUE;
+
    if (fence->state >= NOUVEAU_FENCE_STATE_EMITTED)
       nouveau_fence_update(screen, FALSE);
 
