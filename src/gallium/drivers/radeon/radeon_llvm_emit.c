@@ -83,16 +83,13 @@ static LLVMTargetRef get_r600_target() {
 #if HAVE_LLVM >= 0x0305
 
 static void radeonDiagnosticHandler(LLVMDiagnosticInfoRef di, void *context) {
-	unsigned int *diagnosticflag;
-	char *diaginfo_message;
-
-	diaginfo_message = LLVMGetDiagInfoDescription(di);
-	LLVMDisposeMessage(diaginfo_message);
-
-	diagnosticflag = (unsigned int *)context;
 	if (LLVMGetDiagInfoSeverity(di) == LLVMDSError) {
+		unsigned int *diagnosticflag = (unsigned int *)context;
+		char *diaginfo_message = LLVMGetDiagInfoDescription(di);
+
 		*diagnosticflag = 1;
 		fprintf(stderr,"LLVM triggered Diagnostic Handler: %s\n", diaginfo_message);
+		LLVMDisposeMessage(diaginfo_message);
 	}
 }
 
