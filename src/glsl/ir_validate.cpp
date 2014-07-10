@@ -49,8 +49,8 @@ public:
 
       this->current_function = NULL;
 
-      this->callback = ir_validate::validate_ir;
-      this->data = ht;
+      this->callback_enter = ir_validate::validate_ir;
+      this->data_enter = ht;
    }
 
    ~ir_validate()
@@ -100,7 +100,7 @@ ir_validate::visit(ir_dereference_variable *ir)
       abort();
    }
 
-   this->validate_ir(ir, this->data);
+   this->validate_ir(ir, this->data_enter);
 
    return visit_continue;
 }
@@ -167,7 +167,7 @@ ir_validate::visit_enter(ir_function *ir)
     */
    this->current_function = ir;
 
-   this->validate_ir(ir, this->data);
+   this->validate_ir(ir, this->data_enter);
 
    /* Verify that all of the things stored in the list of signatures are,
     * in fact, function signatures.
@@ -211,7 +211,7 @@ ir_validate::visit_enter(ir_function_signature *ir)
       abort();
    }
 
-   this->validate_ir(ir, this->data);
+   this->validate_ir(ir, this->data_enter);
 
    return visit_continue;
 }
@@ -726,7 +726,7 @@ ir_validate::visit_enter(ir_assignment *ir)
       }
    }
 
-   this->validate_ir(ir, this->data);
+   this->validate_ir(ir, this->data_enter);
 
    return visit_continue;
 }
