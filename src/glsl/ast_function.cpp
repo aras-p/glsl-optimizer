@@ -760,11 +760,22 @@ process_vec_mat_constructor(exec_list *instructions,
    instructions->push_tail(var);
 
    int i = 0;
-   foreach_in_list(ir_rvalue, rhs, &actual_parameters) {
-      ir_rvalue *lhs = new(ctx) ir_dereference_array(var,
-                                                     new(ctx) ir_constant(i));
 
-      ir_instruction *assignment = new(ctx) ir_assignment(lhs, rhs, NULL);
+   foreach_in_list(ir_rvalue, rhs, &actual_parameters) {
+      ir_instruction *assignment = NULL;
+
+      if (var->type->is_matrix()) {
+         ir_rvalue *lhs = new(ctx) ir_dereference_array(var,
+                                             new(ctx) ir_constant(i));
+         assignment = new(ctx) ir_assignment(lhs, rhs, NULL);
+      } else {
+         /* use writemask rather than index for vector */
+         assert(var->type->is_vector());
+         assert(i < 4);
+         ir_dereference *lhs = new(ctx) ir_dereference_variable(var);
+         assignment = new(ctx) ir_assignment(lhs, rhs, NULL, (unsigned)(1 << i));
+      }
+
       instructions->push_tail(assignment);
 
       i++;
