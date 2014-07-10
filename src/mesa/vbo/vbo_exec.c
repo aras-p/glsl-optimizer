@@ -82,21 +82,6 @@ void vbo_exec_invalidate_state( struct gl_context *ctx, GLuint new_state )
 
    if (!exec->validating && new_state & (_NEW_PROGRAM|_NEW_ARRAY)) {
       exec->array.recalculate_inputs = GL_TRUE;
-
-      /* If we ended up here because a VAO was deleted, the _DrawArrays
-       * pointer which pointed to the VAO might be invalid now, so set it
-       * to NULL.  This prevents crashes in driver functions like Clear
-       * where driver state validation might occur, but the vbo module is
-       * still in an invalid state.
-       *
-       * Drivers should skip vertex array state validation if _DrawArrays
-       * is NULL.  It also has no effect on performance, because attrib
-       * bindings will be recalculated anyway.
-       */
-      if (vbo->last_draw_method == DRAW_ARRAYS) {
-         ctx->Array._DrawArrays = NULL;
-         vbo->last_draw_method = DRAW_NONE;
-      }
    }
 
    if (new_state & _NEW_EVAL)

@@ -427,6 +427,21 @@ bind_vertex_array(struct gl_context *ctx, GLuint id, GLboolean genRequired)
       }
    }
 
+   if (ctx->Array.DrawMethod == DRAW_ARRAYS) {
+      /* The _DrawArrays pointer is pointing at the VAO being unbound and
+       * that VAO may be in the process of being deleted. If it's not going
+       * to be deleted, this will have no effect, because the pointer needs
+       * to be updated by the VBO module anyway.
+       *
+       * Before the VBO module can update the pointer, we have to set it
+       * to NULL for drivers not to set up arrays which are not bound,
+       * or to prevent a crash if the VAO being unbound is going to be
+       * deleted.
+       */
+      ctx->Array._DrawArrays = NULL;
+      ctx->Array.DrawMethod = DRAW_NONE;
+   }
+
    ctx->NewState |= _NEW_ARRAY;
    _mesa_reference_vao(ctx, &ctx->Array.VAO, newObj);
 

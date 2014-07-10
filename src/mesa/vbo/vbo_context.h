@@ -57,18 +57,6 @@
 #include "vbo_save.h"
 
 
-/** Used to signal when transitioning from one kind of drawing method
- * to another.
- */
-enum draw_method
-{
-   DRAW_NONE,          /**< Initial value only */
-   DRAW_BEGIN_END,
-   DRAW_DISPLAY_LIST,
-   DRAW_ARRAYS
-};
-
-
 struct vbo_context {
    struct gl_client_array currval[VBO_ATTRIB_MAX];
    
@@ -83,8 +71,6 @@ struct vbo_context {
     * is responsible for initiating any fallback actions required:
     */
    vbo_draw_func draw_prims;
-
-   enum draw_method last_draw_method;
 };
 
 
@@ -122,11 +108,11 @@ get_program_mode( struct gl_context *ctx )
  * that arrays may be changing.
  */
 static inline void
-vbo_draw_method(struct vbo_context *vbo, enum draw_method method)
+vbo_draw_method(struct vbo_context *vbo, gl_draw_method method)
 {
-   if (vbo->last_draw_method != method) {
-      struct gl_context *ctx = vbo->exec.ctx;
+   struct gl_context *ctx = vbo->exec.ctx;
 
+   if (ctx->Array.DrawMethod != method) {
       switch (method) {
       case DRAW_ARRAYS:
          ctx->Array._DrawArrays = vbo->exec.array.inputs;
@@ -142,7 +128,7 @@ vbo_draw_method(struct vbo_context *vbo, enum draw_method method)
       }
 
       ctx->NewDriverState |= ctx->DriverFlags.NewArray;
-      vbo->last_draw_method = method;
+      ctx->Array.DrawMethod = method;
    }
 }
 
