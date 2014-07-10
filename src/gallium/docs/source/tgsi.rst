@@ -968,6 +968,10 @@ XXX doesn't look like most of the opcodes really belong here.
   Also return the number of accessible levels (last_level - first_level + 1)
   in W.
 
+  For components which don't return a resource dimension, their value
+  is undefined.
+
+
 .. math::
 
   lod = src0.x
