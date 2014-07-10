@@ -60,6 +60,7 @@
 #include "ir_visitor.h"
 #include "ir_rvalue_visitor.h"
 #include "ir_optimization.h"
+#include "main/macros.h" /* for MAX2 */
 
 /* The DSW algorithm generates a degenerate tree (really, a linked list) in
  * tree_to_vine(). We'd rather not leave a binary expression with only one
@@ -261,6 +262,20 @@ handle_expression(ir_expression *expr)
    return expr;
 }
 
+static void
+update_types(ir_instruction *ir, void *)
+{
+   ir_expression *expr = ir->as_expression();
+   if (!expr)
+      return;
+
+   expr->type =
+      glsl_type::get_instance(expr->type->base_type,
+                              MAX2(expr->operands[0]->type->components(),
+                                   expr->operands[1]->type->components()),
+                              1);
+}
+
 void
 ir_rebalance_visitor::handle_rvalue(ir_rvalue **rvalue)
 {
@@ -284,6 +299,8 @@ ir_rebalance_visitor::handle_rvalue(ir_rvalue **rvalue)
     */
    if (new_rvalue == *rvalue)
       return;
+
+   visit_tree(new_rvalue, NULL, NULL, update_types);
 
    *rvalue = new_rvalue;
    this->progress = true;
