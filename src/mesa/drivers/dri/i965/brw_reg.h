@@ -52,6 +52,8 @@
 extern "C" {
 #endif
 
+struct brw_context;
+
 /** Number of general purpose registers (VS, WM, etc) */
 #define BRW_MAX_GRF 128
 
