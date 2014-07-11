@@ -61,6 +61,8 @@ struct bblock_t {
    void dump(backend_visitor *v);
 #endif
 
+   struct exec_node link;
+
    struct backend_instruction *start;
    struct backend_instruction *end;
 

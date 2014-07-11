@@ -67,8 +67,8 @@ bblock_t::bblock_t() :
 void
 bblock_t::add_successor(void *mem_ctx, bblock_t *successor)
 {
-   successor->parents.push_tail(link(mem_ctx, this));
-   children.push_tail(link(mem_ctx, successor));
+   successor->parents.push_tail(::link(mem_ctx, this));
+   children.push_tail(::link(mem_ctx, successor));
 }
 
 void
@@ -285,7 +285,7 @@ cfg_t::set_next_block(bblock_t **cur, bblock_t *block, int ip)
 
    block->start_ip = ip;
    block->block_num = num_blocks++;
-   block_list.push_tail(link(mem_ctx, block));
+   block_list.push_tail(&block->link);
    *cur = block;
 }
 
@@ -295,8 +295,8 @@ cfg_t::make_block_array()
    blocks = ralloc_array(mem_ctx, bblock_t *, num_blocks);
 
    int i = 0;
-   foreach_list_typed(bblock_link, link, link, &block_list) {
-      blocks[i++] = link->block;
+   foreach_list_typed(bblock_t, block, link, &block_list) {
+      blocks[i++] = block;
    }
    assert(i == num_blocks);
 }
