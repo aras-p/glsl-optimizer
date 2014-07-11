@@ -55,6 +55,7 @@
 #include "bufferobj.h"
 #include "colormac.h"
 #include "format_pack.h"
+#include "format_utils.h"
 #include "image.h"
 #include "macros.h"
 #include "mipmap.h"
@@ -233,21 +234,44 @@ static int
 get_map_idx(GLenum value)
 {
    switch (value) {
-   case GL_LUMINANCE: return IDX_LUMINANCE;
-   case GL_ALPHA: return IDX_ALPHA;
-   case GL_INTENSITY: return IDX_INTENSITY;
-   case GL_LUMINANCE_ALPHA: return IDX_LUMINANCE_ALPHA;
-   case GL_RGB: return IDX_RGB;
-   case GL_RGBA: return IDX_RGBA;
-   case GL_RED: return IDX_RED;
-   case GL_GREEN: return IDX_GREEN;
-   case GL_BLUE: return IDX_BLUE;
-   case GL_BGR: return IDX_BGR;
-   case GL_BGRA: return IDX_BGRA;
-   case GL_ABGR_EXT: return IDX_ABGR;
-   case GL_RG: return IDX_RG;
+   case GL_LUMINANCE:
+   case GL_LUMINANCE_INTEGER_EXT:
+      return IDX_LUMINANCE;
+   case GL_ALPHA:
+   case GL_ALPHA_INTEGER:
+      return IDX_ALPHA;
+   case GL_INTENSITY:
+      return IDX_INTENSITY;
+   case GL_LUMINANCE_ALPHA:
+   case GL_LUMINANCE_ALPHA_INTEGER_EXT:
+      return IDX_LUMINANCE_ALPHA;
+   case GL_RGB:
+   case GL_RGB_INTEGER:
+      return IDX_RGB;
+   case GL_RGBA:
+   case GL_RGBA_INTEGER:
+      return IDX_RGBA;
+   case GL_RED:
+   case GL_RED_INTEGER:
+      return IDX_RED;
+   case GL_GREEN:
+      return IDX_GREEN;
+   case GL_BLUE:
+      return IDX_BLUE;
+   case GL_BGR:
+   case GL_BGR_INTEGER:
+      return IDX_BGR;
+   case GL_BGRA:
+   case GL_BGRA_INTEGER:
+      return IDX_BGRA;
+   case GL_ABGR_EXT:
+      return IDX_ABGR;
+   case GL_RG:
+   case GL_RG_INTEGER:
+      return IDX_RG;
    default:
-      _mesa_problem(NULL, "Unexpected inFormat");
+      _mesa_problem(NULL, "Unexpected inFormat %s",
+                    _mesa_lookup_enum_by_nr(value));
       return 0;
    }
 }   
@@ -789,6 +813,7 @@ swizzle_copy(GLubyte *dst, GLuint dstComponents, const GLubyte *src,
 
 static const GLubyte map_identity[6] = { 0, 1, 2, 3, ZERO, ONE };
 static const GLubyte map_3210[6] = { 3, 2, 1, 0, ZERO, ONE };
+static const GLubyte map_1032[6] = { 1, 0, 3, 2, ZERO, ONE };
 
 
 /**
@@ -826,6 +851,12 @@ byteswap_mapping( GLboolean swapBytes,
    switch (srcType) {
    case GL_BYTE:
    case GL_UNSIGNED_BYTE:
+   case GL_SHORT:
+   case GL_UNSIGNED_SHORT:
+   case GL_INT:
+   case GL_UNSIGNED_INT:
+   case GL_FLOAT:
+   case GL_HALF_FLOAT:
       return map_identity;
    case GL_UNSIGNED_INT_8_8_8_8:
    case GL_UNSIGNED_INT_8_8_8_8_REV:
@@ -3621,6 +3652,124 @@ texstore_compressed(TEXSTORE_PARAMS)
                            srcFormat, srcType, srcAddr, srcPacking);
 }
 
+static void
+invert_swizzle(uint8_t dst[4], const uint8_t src[4])
+{
+   int i, j;
+
+   dst[0] = MESA_FORMAT_SWIZZLE_NONE;
+   dst[1] = MESA_FORMAT_SWIZZLE_NONE;
+   dst[2] = MESA_FORMAT_SWIZZLE_NONE;
+   dst[3] = MESA_FORMAT_SWIZZLE_NONE;
+
+   for (i = 0; i < 4; ++i)
+      for (j = 0; j < 4; ++j)
+         if (src[j] == i && dst[i] == MESA_FORMAT_SWIZZLE_NONE)
+            dst[i] = j;
+}
+
+/** Store a texture by per-channel conversions and swizzling.
+ *
+ * This function attempts to perform a texstore operation by doing simple
+ * per-channel conversions and swizzling.  This covers a huge chunk of the
+ * texture storage operations that anyone cares about.  If this function is
+ * incapable of performing the operation, it bails and returns GL_FALSE.
+ */
+static GLboolean
+texstore_swizzle(TEXSTORE_PARAMS)
+{
+   const GLint srcRowStride = _mesa_image_row_stride(srcPacking, srcWidth,
+                                                     srcFormat, srcType);
+   const GLint srcImageStride = _mesa_image_image_stride(srcPacking,
+                                      srcWidth, srcHeight, srcFormat, srcType);
+   const GLubyte *srcImage = (const GLubyte *) _mesa_image_address(dims,
+        srcPacking, srcAddr, srcWidth, srcHeight, srcFormat, srcType, 0, 0, 0);
+   const int src_components = _mesa_components_in_format(srcFormat);
+
+   GLubyte swizzle[4], rgba2base[6], base2src[6], rgba2dst[4], dst2rgba[4];
+   const GLubyte *swap;
+   GLenum dst_type;
+   int dst_components;
+   bool is_array, normalized, need_swap;
+   GLint i, img, row;
+   const GLubyte *src_row;
+   GLubyte *dst_row;
+
+   is_array = _mesa_format_to_array(dstFormat, &dst_type, &dst_components,
+                                    rgba2dst, &normalized);
+
+   if (!is_array)
+      return GL_FALSE;
+
+   switch (srcType) {
+   case GL_FLOAT:
+   case GL_UNSIGNED_BYTE:
+   case GL_BYTE:
+   case GL_UNSIGNED_SHORT:
+   case GL_SHORT:
+   case GL_UNSIGNED_INT:
+   case GL_INT:
+      /* If wa have to swap bytes in a multi-byte datatype, that means
+       * we're not doing an array conversion anymore */
+      if (srcPacking->SwapBytes)
+         return GL_FALSE;
+      need_swap = false;
+      break;
+   case GL_UNSIGNED_INT_8_8_8_8:
+      need_swap = srcPacking->SwapBytes;
+      if (_mesa_little_endian())
+         need_swap = !need_swap;
+      srcType = GL_UNSIGNED_BYTE;
+      break;
+   case GL_UNSIGNED_INT_8_8_8_8_REV:
+      need_swap = srcPacking->SwapBytes;
+      if (!_mesa_little_endian())
+         need_swap = !need_swap;
+      srcType = GL_UNSIGNED_BYTE;
+      break;
+   default:
+      return GL_FALSE;
+   }
+   swap = need_swap ? map_3210 : map_identity;
+
+   compute_component_mapping(srcFormat, baseInternalFormat, base2src);
+   compute_component_mapping(baseInternalFormat, GL_RGBA, rgba2base);
+   invert_swizzle(dst2rgba, rgba2dst);
+
+   for (i = 0; i < 4; i++) {
+      if (dst2rgba[i] == MESA_FORMAT_SWIZZLE_NONE)
+         swizzle[i] = MESA_FORMAT_SWIZZLE_NONE;
+      else
+         swizzle[i] = swap[base2src[rgba2base[dst2rgba[i]]]];
+   }
+
+   /* Is it normalized? */
+   normalized |= !_mesa_is_enum_format_integer(srcFormat);
+
+   for (img = 0; img < srcDepth; img++) {
+      if (dstRowStride == srcWidth * dst_components &&
+          srcRowStride == srcWidth * src_components) {
+         _mesa_swizzle_and_convert(dstSlices[img], dst_type, dst_components,
+                                   srcImage, srcType, src_components,
+                                   swizzle, normalized, srcWidth * srcHeight);
+      } else {
+         src_row = srcImage;
+         dst_row = dstSlices[img];
+         for (row = 0; row < srcHeight; row++) {
+            _mesa_swizzle_and_convert(dst_row, dst_type, dst_components,
+                                      src_row, srcType, src_components,
+                                      swizzle, normalized, srcWidth);
+            dst_row += dstRowStride;
+            src_row += srcRowStride;
+         }
+      }
+      srcImage += srcImageStride;
+   }
+
+   return GL_TRUE;
+}
+
+
 static GLboolean
 texstore_rgba(TEXSTORE_PARAMS)
 {
@@ -3796,6 +3945,14 @@ texstore_rgba(TEXSTORE_PARAMS)
       initialized = GL_TRUE;
    }
 
+   if (texstore_swizzle(ctx, dims, baseInternalFormat,
+                        dstFormat,
+                        dstRowStride, dstSlices,
+                        srcWidth, srcHeight, srcDepth,
+                        srcFormat, srcType, srcAddr, srcPacking)) {
+      return GL_TRUE;
+   }
+
    ASSERT(table[dstFormat]);
    return table[dstFormat](ctx, dims, baseInternalFormat,
                            dstFormat, dstRowStride, dstSlices,
@@ -3887,7 +4044,6 @@ _mesa_texstore_memcpy(TEXSTORE_PARAMS)
                   srcAddr, srcPacking);
    return GL_TRUE;
 }
-
 
 /**
  * Store user data into texture memory.
