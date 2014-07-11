@@ -2511,7 +2511,7 @@ brw_set_dp_untyped_atomic_message(struct brw_compile *p,
       atomic_op | /* Atomic Operation Type: BRW_AOP_* */
       (response_length ? 1 << 5 : 0); /* Return data expected */
 
-   if (brw->is_haswell) {
+   if (brw->gen >= 8 || brw->is_haswell) {
       brw_set_message_descriptor(p, insn, HSW_SFID_DATAPORT_DATA_CACHE_1,
                                  msg_length, response_length,
                                  header_present, false);
@@ -2574,7 +2574,7 @@ brw_set_dp_untyped_surface_read_message(struct brw_compile *p,
       (brw_inst_exec_size(brw, insn) == BRW_EXECUTE_16 ? 16 : 8);
    const unsigned num_channels = response_length / (dispatch_width / 8);
 
-   if (brw->is_haswell) {
+   if (brw->gen >= 8 || brw->is_haswell) {
       brw_set_message_descriptor(p, insn, HSW_SFID_DATAPORT_DATA_CACHE_1,
                                  msg_length, response_length,
                                  header_present, false);
