@@ -40,6 +40,8 @@ struct gl_format_info
    /** text name for debugging */
    const char *StrName;
 
+   enum mesa_format_layout Layout;
+
    /**
     * Base format is one of GL_RED, GL_RG, GL_RGB, GL_RGBA, GL_ALPHA,
     * GL_LUMINANCE, GL_LUMINANCE_ALPHA, GL_INTENSITY, GL_YCBCR_MESA,
@@ -67,6 +69,8 @@ struct gl_format_info
     */
    GLubyte BlockWidth, BlockHeight;
    GLubyte BytesPerBlock;
+
+   uint8_t Swizzle[4];
 };
 
 #include "format_info.c"
@@ -178,6 +182,21 @@ _mesa_get_format_max_bits(mesa_format format)
 
 
 /**
+ * Return the layout type of the given format.
+ * The return value will be one of:
+ *    MESA_FORMAT_LAYOUT_ARRAY
+ *    MESA_FORMAT_LAYOUT_PACKED
+ *    MESA_FORMAT_LAYOUT_OTHER
+ */
+extern enum mesa_format_layout
+_mesa_get_format_layout(mesa_format format)
+{
+   const struct gl_format_info *info = _mesa_get_format_info(format);
+   return info->Layout;
+}
+
+
+/**
  * Return the data type (or more specifically, the data representation)
  * for the given format.
  * The return value will be one of:
@@ -221,6 +240,33 @@ _mesa_get_format_block_size(mesa_format format, GLuint *bw, GLuint *bh)
    const struct gl_format_info *info = _mesa_get_format_info(format);
    *bw = info->BlockWidth;
    *bh = info->BlockHeight;
+}
+
+
+/**
+ * Returns the an array of four numbers representing the transformation
+ * from the RGBA or SZ colorspace to the given format.  For array formats,
+ * the i'th RGBA component is given by:
+ *
+ * if (swizzle[i] <= MESA_FORMAT_SWIZZLE_W)
+ *    comp = data[swizzle[i]];
+ * else if (swizzle[i] == MESA_FORMAT_SWIZZLE_ZERO)
+ *    comp = 0;
+ * else if (swizzle[i] == MESA_FORMAT_SWIZZLE_ONE)
+ *    comp = 1;
+ * else if (swizzle[i] == MESA_FORMAT_SWIZZLE_NONE)
+ *    // data does not contain a channel of this format
+ *
+ * For packed formats, the swizzle gives the number of components left of
+ * the least significant bit.
+ *
+ * Compressed formats have no swizzle.
+ */
+void
+_mesa_get_format_swizzle(mesa_format format, uint8_t swizzle_out[4])
+{
+   const struct gl_format_info *info = _mesa_get_format_info(format);
+   memcpy(swizzle_out, info->Swizzle, sizeof(info->Swizzle));
 }
 
 
