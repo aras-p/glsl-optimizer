@@ -1818,7 +1818,8 @@ void gen6_math(struct brw_compile *p,
 
    assert(dest.file == BRW_GENERAL_REGISTER_FILE ||
           (brw->gen >= 7 && dest.file == BRW_MESSAGE_REGISTER_FILE));
-   assert(src0.file == BRW_GENERAL_REGISTER_FILE);
+   assert(src0.file == BRW_GENERAL_REGISTER_FILE ||
+          (brw->gen >= 8 && src0.file == BRW_IMMEDIATE_VALUE));
 
    assert(dest.hstride == BRW_HORIZONTAL_STRIDE_1);
    if (brw->gen == 6) {
@@ -1831,12 +1832,14 @@ void gen6_math(struct brw_compile *p,
        function == BRW_MATH_FUNCTION_INT_DIV_QUOTIENT_AND_REMAINDER) {
       assert(src0.type != BRW_REGISTER_TYPE_F);
       assert(src1.type != BRW_REGISTER_TYPE_F);
-      assert(src1.file == BRW_GENERAL_REGISTER_FILE);
+      assert(src1.file == BRW_GENERAL_REGISTER_FILE ||
+             (brw->gen >= 8 && src1.file == BRW_IMMEDIATE_VALUE));
    } else {
       assert(src0.type == BRW_REGISTER_TYPE_F);
       assert(src1.type == BRW_REGISTER_TYPE_F);
       if (function == BRW_MATH_FUNCTION_POW) {
-         assert(src1.file == BRW_GENERAL_REGISTER_FILE);
+         assert(src1.file == BRW_GENERAL_REGISTER_FILE ||
+                (brw->gen >= 8 && src1.file == BRW_IMMEDIATE_VALUE));
       } else {
          assert(src1.file == BRW_ARCHITECTURE_REGISTER_FILE &&
                 src1.nr == BRW_ARF_NULL);
