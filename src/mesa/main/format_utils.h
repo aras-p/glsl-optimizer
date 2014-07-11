@@ -33,6 +33,10 @@
 
 #include "imports.h"
 
+bool
+_mesa_format_to_array(mesa_format, GLenum *type, int *num_components,
+                      uint8_t swizzle[4], bool *normalized);
+
 void
 _mesa_swizzle_and_convert(void *dst, GLenum dst_type, int num_dst_channels,
                           const void *src, GLenum src_type, int num_src_channels,
