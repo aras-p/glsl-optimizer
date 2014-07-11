@@ -933,6 +933,8 @@ static void si_invalidate_buffer(struct pipe_context *ctx, struct pipe_resource 
 	struct r600_resource *rbuffer = r600_resource(buf);
 	unsigned i, shader, alignment = rbuffer->buf->alignment;
 	uint64_t old_va = r600_resource_va(ctx->screen, buf);
+	unsigned num_elems = sctx->vertex_elements ?
+				       sctx->vertex_elements->count : 0;
 
 	/* Reallocate the buffer in the same pipe_resource. */
 	r600_init_resource(&sctx->screen->b, rbuffer, rbuffer->b.b.width0,
@@ -945,7 +947,19 @@ static void si_invalidate_buffer(struct pipe_context *ctx, struct pipe_resource 
 	 */
 
 	/* Vertex buffers. */
-	/* Nothing to do. Vertex buffer bindings are updated before every draw call. */
+	for (i = 0; i < num_elems; i++) {
+		int vb = sctx->vertex_elements->elements[i].vertex_buffer_index;
+
+		if (vb >= Elements(sctx->vertex_buffer))
+			continue;
+		if (!sctx->vertex_buffer[vb].buffer)
+			continue;
+
+		if (sctx->vertex_buffer[vb].buffer == buf) {
+			sctx->vertex_buffers_dirty = true;
+			break;
+		}
+	}
 
 	/* Read/Write buffers. */
 	for (shader = 0; shader < SI_NUM_SHADERS; shader++) {

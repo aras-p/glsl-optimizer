@@ -2813,6 +2813,7 @@ static void si_bind_vertex_elements(struct pipe_context *ctx, void *state)
 	struct si_vertex_element *v = (struct si_vertex_element*)state;
 
 	sctx->vertex_elements = v;
+	sctx->vertex_buffers_dirty = true;
 }
 
 static void si_delete_vertex_element(struct pipe_context *ctx, void *state)
@@ -2848,6 +2849,7 @@ static void si_set_vertex_buffers(struct pipe_context *ctx,
 			pipe_resource_reference(&dst[i].buffer, NULL);
 		}
 	}
+	sctx->vertex_buffers_dirty = true;
 }
 
 static void si_set_index_buffer(struct pipe_context *ctx,

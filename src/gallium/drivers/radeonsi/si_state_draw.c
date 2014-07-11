@@ -892,7 +892,11 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		return;
 
 	si_update_derived_state(sctx);
-	si_update_vertex_buffers(sctx);
+
+	if (sctx->vertex_buffers_dirty) {
+		si_update_vertex_buffers(sctx);
+		sctx->vertex_buffers_dirty = false;
+	}
 
 	if (info->indexed) {
 		/* Initialize the index buffer struct. */
