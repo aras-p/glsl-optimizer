@@ -120,6 +120,14 @@ struct cfg_t {
         __inst != __block->end->next;                          \
         __inst = (__type *)__inst->next)
 
+#define foreach_inst_in_block_safe(__type, __inst, __block)    \
+   for (__type *__inst = (__type *)__block->start,             \
+               *__next = (__type *)__inst->next,               \
+               *__end = (__type *)__block->end->next->next;    \
+        __next != __end;                                       \
+        __inst = __next,                                       \
+        __next = (__type *)__next->next)
+
 #define foreach_inst_in_block_reverse(__type, __inst, __block) \
    for (__type *__inst = (__type *)__block->end;               \
         __inst != __block->start->prev;                        \
