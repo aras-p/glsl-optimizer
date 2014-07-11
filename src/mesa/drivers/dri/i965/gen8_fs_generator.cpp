@@ -921,7 +921,7 @@ gen8_fs_generator::generate_code(exec_list *instructions)
       default_state.mask_control = ir->force_writemask_all;
       default_state.flag_subreg_nr = ir->flag_subreg;
 
-      if (dispatch_width == 16 && !ir->force_uncompressed)
+      if (dispatch_width == 16 && !ir->force_uncompressed && !ir->force_sechalf)
          default_state.exec_size = BRW_EXECUTE_16;
       else
          default_state.exec_size = BRW_EXECUTE_8;
