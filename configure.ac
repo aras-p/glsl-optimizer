@@ -41,6 +41,7 @@ GLPROTO_REQUIRED=1.4.14
 LIBOMXIL_BELLAGIO_REQUIRED=0.0
 VDPAU_REQUIRED=0.4.1
 WAYLAND_REQUIRED=1.2.0
+XCB_REQUIRED=1.9.3
 XCBDRI2_REQUIRED=1.8
 XCBGLX_REQUIRED=1.8.1
 XSHMFENCE_REQUIRED=1.1
@@ -906,8 +907,9 @@ dnl
 case "x$enable_glx$enable_xlib_glx" in
 xyesyes)
     # Xlib-based GLX
-    PKG_CHECK_MODULES([XLIBGL], [x11 xext])
-    GL_PC_REQ_PRIV="x11 xext"
+    dri_modules="x11 xext xcb"
+    PKG_CHECK_MODULES([XLIBGL], [$dri_modules])
+    GL_PC_REQ_PRIV="$GL_PC_REQ_PRIV $dri_modules"
     X11_INCLUDES="$X11_INCLUDES $XLIBGL_CFLAGS"
     GL_LIB_DEPS="$XLIBGL_LIBS"
     GL_LIB_DEPS="$GL_LIB_DEPS $SELINUX_LIBS -lm $PTHREAD_LIBS $DLOPEN_LIBS"
@@ -918,7 +920,7 @@ xyesno)
     PKG_CHECK_MODULES([GLPROTO], [glproto >= $GLPROTO_REQUIRED])
 
     # find the DRI deps for libGL
-    dri_modules="x11 xext xdamage xfixes x11-xcb xcb-glx >= $XCBGLX_REQUIRED"
+    dri_modules="x11 xext xdamage xfixes x11-xcb xcb xcb-glx >= $XCBGLX_REQUIRED"
 
     if test x"$driglx_direct" = xyes; then
         if test x"$dri_platform" = xdrm ; then
@@ -939,6 +941,7 @@ xyesno)
             fi
 
             if test x"$enable_dri3" = xyes; then
+               PKG_CHECK_EXISTS([xcb >= $XCB_REQUIRED], [], AC_MSG_ERROR([DRI3 requires xcb >= $XCB_REQUIRED]))
                dri_modules="$dri_modules xcb-dri3 xcb-present xcb-sync xshmfence >= $XSHMFENCE_REQUIRED"
             fi
         fi
