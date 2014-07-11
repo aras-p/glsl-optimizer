@@ -1256,19 +1256,21 @@ fs_visitor::emit_samplepos_setup(ir_variable *ir)
       stride(retype(brw_vec1_grf(payload.sample_pos_reg, 0),
                     BRW_REGISTER_TYPE_B), 16, 8, 2);
 
-   emit(MOV(int_sample_x, fs_reg(sample_pos_reg)));
+   fs_inst *inst = emit(MOV(int_sample_x, fs_reg(sample_pos_reg)));
    if (dispatch_width == 16) {
-      fs_inst *inst = emit(MOV(half(int_sample_x, 1),
-                               fs_reg(suboffset(sample_pos_reg, 16))));
+      inst->force_uncompressed = true;
+      inst = emit(MOV(half(int_sample_x, 1),
+                      fs_reg(suboffset(sample_pos_reg, 16))));
       inst->force_sechalf = true;
    }
    /* Compute gl_SamplePosition.x */
    compute_sample_position(pos, int_sample_x);
    pos.reg_offset++;
-   emit(MOV(int_sample_y, fs_reg(suboffset(sample_pos_reg, 1))));
+   inst = emit(MOV(int_sample_y, fs_reg(suboffset(sample_pos_reg, 1))));
    if (dispatch_width == 16) {
-      fs_inst *inst = emit(MOV(half(int_sample_y, 1),
-                               fs_reg(suboffset(sample_pos_reg, 17))));
+      inst->force_uncompressed = true;
+      inst = emit(MOV(half(int_sample_y, 1),
+                      fs_reg(suboffset(sample_pos_reg, 17))));
       inst->force_sechalf = true;
    }
    /* Compute gl_SamplePosition.y */
