@@ -59,7 +59,6 @@ struct gl_format_info
    GLubyte AlphaBits;
    GLubyte LuminanceBits;
    GLubyte IntensityBits;
-   GLubyte IndexBits;
    GLubyte DepthBits;
    GLubyte StencilBits;
 
@@ -145,7 +144,7 @@ _mesa_get_format_bits(mesa_format format, GLenum pname)
    case GL_TEXTURE_LUMINANCE_SIZE:
       return info->LuminanceBits;
    case GL_INDEX_BITS:
-      return info->IndexBits;
+      return 0;
    case GL_DEPTH_BITS:
    case GL_TEXTURE_DEPTH_SIZE_ARB:
    case GL_RENDERBUFFER_DEPTH_SIZE_EXT:

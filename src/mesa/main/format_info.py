@@ -171,7 +171,7 @@ for fmat in formats:
 
    bits = [ get_channel_bits(fmat, name) for name in ['r', 'g', 'b', 'a']]
    print '      {0},'.format(', '.join(map(str, bits)))
-   bits = [ get_channel_bits(fmat, name) for name in ['l', 'i', 'I', 'z', 's']]
+   bits = [ get_channel_bits(fmat, name) for name in ['l', 'i', 'z', 's']]
    print '      {0},'.format(', '.join(map(str, bits)))
 
    print '      {0}, {1}, {2},'.format(fmat.block_width, fmat.block_height,
