@@ -51,6 +51,7 @@ MAIN_FILES = \
 	$(SRCDIR)main/formats.c \
 	$(SRCDIR)main/format_pack.c \
 	$(SRCDIR)main/format_unpack.c \
+	$(SRCDIR)main/format_utils.c \
 	$(SRCDIR)main/framebuffer.c \
 	$(SRCDIR)main/get.c \
 	$(SRCDIR)main/genmipmap.c \
