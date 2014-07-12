@@ -334,7 +334,7 @@ public:
    void calculate_register_pressure();
    bool opt_algebraic();
    bool opt_cse();
-   bool opt_cse_local(bblock_t *block, exec_list *aeb);
+   bool opt_cse_local(bblock_t *block);
    bool opt_copy_propagate();
    bool try_copy_propagate(fs_inst *inst, int arg, acp_entry *entry);
    bool opt_copy_propagate_local(void *mem_ctx, bblock_t *block,
