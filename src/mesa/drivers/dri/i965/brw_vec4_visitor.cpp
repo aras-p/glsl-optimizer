@@ -1768,6 +1768,9 @@ vec4_visitor::visit(ir_expression *ir)
    case ir_unop_unpack_half_2x16_split_x:
    case ir_unop_unpack_half_2x16_split_y:
    case ir_binop_pack_half_2x16_split:
+   case ir_unop_interpolate_at_centroid:
+   case ir_binop_interpolate_at_sample:
+   case ir_binop_interpolate_at_offset:
       unreachable("not reached: should not occur in vertex shader");
    case ir_binop_ldexp:
       unreachable("not reached: should be handled by ldexp_to_arith()");
