@@ -127,10 +127,10 @@ fs_visitor::opt_peephole_sel()
 {
    bool progress = false;
 
-   cfg_t cfg(&instructions);
+   calculate_cfg();
 
-   for (int b = 0; b < cfg.num_blocks; b++) {
-      bblock_t *block = cfg.blocks[b];
+   for (int b = 0; b < cfg->num_blocks; b++) {
+      bblock_t *block = cfg->blocks[b];
 
       /* IF instructions, by definition, can only be found at the ends of
        * basic blocks.

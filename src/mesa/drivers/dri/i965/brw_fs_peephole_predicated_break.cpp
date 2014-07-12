@@ -45,10 +45,10 @@ fs_visitor::opt_peephole_predicated_break()
 {
    bool progress = false;
 
-   cfg_t cfg(&instructions);
+   calculate_cfg();
 
-   for (int b = 0; b < cfg.num_blocks; b++) {
-      bblock_t *block = cfg.blocks[b];
+   for (int b = 0; b < cfg->num_blocks; b++) {
+      bblock_t *block = cfg->blocks[b];
 
       /* BREAK and CONTINUE instructions, by definition, can only be found at
        * the ends of basic blocks.

@@ -748,13 +748,13 @@ vec4_visitor::opt_set_dependency_control()
    vec4_instruction *last_mrf_write[BRW_MAX_GRF];
    uint8_t mrf_channels_written[BRW_MAX_GRF];
 
-   cfg_t cfg(&instructions);
+   calculate_cfg();
 
    assert(prog_data->total_grf ||
           !"Must be called after register allocation");
 
-   for (int i = 0; i < cfg.num_blocks; i++) {
-      bblock_t *bblock = cfg.blocks[i];
+   for (int i = 0; i < cfg->num_blocks; i++) {
+      bblock_t *bblock = cfg->blocks[i];
       vec4_instruction *inst;
 
       memset(last_grf_write, 0, sizeof(last_grf_write));

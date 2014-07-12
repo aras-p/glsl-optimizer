@@ -591,31 +591,33 @@ fs_visitor::opt_copy_propagate_local(void *copy_prop_ctx, bblock_t *block,
 bool
 fs_visitor::opt_copy_propagate()
 {
+   calculate_cfg();
+
    bool progress = false;
    void *copy_prop_ctx = ralloc_context(NULL);
-   cfg_t cfg(&instructions);
-   exec_list *out_acp[cfg.num_blocks];
-   for (int i = 0; i < cfg.num_blocks; i++)
+   exec_list *out_acp[cfg->num_blocks];
+
+   for (int i = 0; i < cfg->num_blocks; i++)
       out_acp[i] = new exec_list [ACP_HASH_SIZE];
 
    /* First, walk through each block doing local copy propagation and getting
     * the set of copies available at the end of the block.
     */
-   for (int b = 0; b < cfg.num_blocks; b++) {
-      bblock_t *block = cfg.blocks[b];
+   for (int b = 0; b < cfg->num_blocks; b++) {
+      bblock_t *block = cfg->blocks[b];
 
       progress = opt_copy_propagate_local(copy_prop_ctx, block,
                                           out_acp[b]) || progress;
    }
 
    /* Do dataflow analysis for those available copies. */
-   fs_copy_prop_dataflow dataflow(copy_prop_ctx, &cfg, out_acp);
+   fs_copy_prop_dataflow dataflow(copy_prop_ctx, cfg, out_acp);
 
    /* Next, re-run local copy propagation, this time with the set of copies
     * provided by the dataflow analysis available at the start of a block.
     */
-   for (int b = 0; b < cfg.num_blocks; b++) {
-      bblock_t *block = cfg.blocks[b];
+   for (int b = 0; b < cfg->num_blocks; b++) {
+      bblock_t *block = cfg->blocks[b];
       exec_list in_acp[ACP_HASH_SIZE];
 
       for (int i = 0; i < dataflow.num_acp; i++) {
@@ -628,7 +630,7 @@ fs_visitor::opt_copy_propagate()
       progress = opt_copy_propagate_local(copy_prop_ctx, block, in_acp) || progress;
    }
 
-   for (int i = 0; i < cfg.num_blocks; i++)
+   for (int i = 0; i < cfg->num_blocks; i++)
       delete [] out_acp[i];
    ralloc_free(copy_prop_ctx);
 
