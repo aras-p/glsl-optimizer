@@ -384,7 +384,7 @@ public:
    bool dead_code_eliminate();
    bool virtual_grf_interferes(int a, int b);
    bool opt_copy_propagation();
-   bool opt_cse_local(bblock_t *, exec_list *);
+   bool opt_cse_local(bblock_t *block);
    bool opt_cse();
    bool opt_algebraic();
    bool opt_register_coalesce();

@@ -124,9 +124,10 @@ instructions_match(vec4_instruction *a, vec4_instruction *b)
 }
 
 bool
-vec4_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
+vec4_visitor::opt_cse_local(bblock_t *block)
 {
    bool progress = false;
+   exec_list aeb;
 
    void *cse_ctx = ralloc_context(NULL);
 
@@ -141,7 +142,7 @@ vec4_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
       {
          bool found = false;
 
-         foreach_in_list_use_after(aeb_entry, entry, aeb) {
+         foreach_in_list_use_after(aeb_entry, entry, &aeb) {
             /* Match current instruction's expression against those in AEB. */
             if (instructions_match(inst, entry->generator)) {
                found = true;
@@ -155,7 +156,7 @@ vec4_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
             aeb_entry *entry = ralloc(cse_ctx, aeb_entry);
             entry->tmp = src_reg(); /* file will be BAD_FILE */
             entry->generator = inst;
-            aeb->push_tail(entry);
+            aeb.push_tail(entry);
          } else {
             /* This is at least our second sighting of this expression.
              * If we don't have a temporary already, make one.
@@ -196,7 +197,7 @@ vec4_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
          }
       }
 
-      foreach_in_list_safe(aeb_entry, entry, aeb) {
+      foreach_in_list_safe(aeb_entry, entry, &aeb) {
          /* Kill all AEB entries that write a different value to or read from
           * the flag register if we just wrote it.
           */
@@ -260,9 +261,8 @@ vec4_visitor::opt_cse()
 
    for (int b = 0; b < cfg.num_blocks; b++) {
       bblock_t *block = cfg.blocks[b];
-      exec_list aeb;
 
-      progress = opt_cse_local(block, &aeb) || progress;
+      progress = opt_cse_local(block) || progress;
    }
 
    return progress;
