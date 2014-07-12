@@ -755,14 +755,11 @@ vec4_visitor::opt_set_dependency_control()
 
    for (int i = 0; i < cfg->num_blocks; i++) {
       bblock_t *bblock = cfg->blocks[i];
-      vec4_instruction *inst;
 
       memset(last_grf_write, 0, sizeof(last_grf_write));
       memset(last_mrf_write, 0, sizeof(last_mrf_write));
 
-      for (inst = (vec4_instruction *)bblock->start;
-           inst != (vec4_instruction *)bblock->end->next;
-           inst = (vec4_instruction *)inst->next) {
+      foreach_inst_in_block (vec4_instruction, inst, bblock) {
          /* If we read from a register that we were doing dependency control
           * on, don't do dependency control across the read.
           */
