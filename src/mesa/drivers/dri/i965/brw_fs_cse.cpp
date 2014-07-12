@@ -307,9 +307,6 @@ fs_visitor::opt_cse_local(bblock_t *block)
 
    ralloc_free(cse_ctx);
 
-   if (progress)
-      invalidate_live_intervals();
-
    return progress;
 }
 
@@ -326,6 +323,9 @@ fs_visitor::opt_cse()
 
       progress = opt_cse_local(block) || progress;
    }
+
+   if (progress)
+      invalidate_live_intervals();
 
    return progress;
 }
