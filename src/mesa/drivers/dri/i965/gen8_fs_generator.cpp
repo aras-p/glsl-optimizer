@@ -841,7 +841,8 @@ gen8_fs_generator::generate_untyped_atomic(fs_inst *ir,
 
    gen8_instruction *inst = next_inst(BRW_OPCODE_SEND);
    gen8_set_dst(brw, inst, retype(dst, BRW_REGISTER_TYPE_UD));
-   gen8_set_src0(brw, inst, brw_message_reg(ir->base_mrf));
+   gen8_set_src0(brw, inst, retype(brw_message_reg(ir->base_mrf),
+                                   BRW_REGISTER_TYPE_UD));
    gen8_set_dp_message(brw, inst, HSW_SFID_DATAPORT_DATA_CACHE_1,
                        surf_index.dw1.ud,
                        HSW_DATAPORT_DC_PORT1_UNTYPED_ATOMIC_OP,
@@ -867,7 +868,8 @@ gen8_fs_generator::generate_untyped_surface_read(fs_inst *ir,
 
    gen8_instruction *inst = next_inst(BRW_OPCODE_SEND);
    gen8_set_dst(brw, inst, retype(dst, BRW_REGISTER_TYPE_UD));
-   gen8_set_src0(brw, inst, brw_message_reg(ir->base_mrf));
+   gen8_set_src0(brw, inst, retype(brw_message_reg(ir->base_mrf),
+                                   BRW_REGISTER_TYPE_UD));
    gen8_set_dp_message(brw, inst, HSW_SFID_DATAPORT_DATA_CACHE_1,
                        surf_index.dw1.ud,
                        HSW_DATAPORT_DC_PORT1_UNTYPED_SURFACE_READ,
