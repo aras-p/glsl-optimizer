@@ -42,11 +42,11 @@ dump_assembly(void *assembly, int num_annotations, struct annotation *annotation
       int end_offset = annotation[i + 1].offset;
 
       if (annotation[i].block_start) {
-         fprintf(stderr, "   START B%d", annotation[i].block_start->block_num);
+         fprintf(stderr, "   START B%d", annotation[i].block_start->num);
          foreach_list_typed(struct bblock_link, predecessor_link, link,
                             &annotation[i].block_start->parents) {
             struct bblock_t *predecessor_block = predecessor_link->block;
-            fprintf(stderr, " <-B%d", predecessor_block->block_num);
+            fprintf(stderr, " <-B%d", predecessor_block->num);
          }
          fprintf(stderr, "\n");
       }
@@ -79,11 +79,11 @@ dump_assembly(void *assembly, int num_annotations, struct annotation *annotation
       brw_disassemble(brw, assembly, start_offset, end_offset, stderr);
 
       if (annotation[i].block_end) {
-         fprintf(stderr, "   END B%d", annotation[i].block_end->block_num);
+         fprintf(stderr, "   END B%d", annotation[i].block_end->num);
          foreach_list_typed(struct bblock_link, successor_link, link,
                             &annotation[i].block_end->children) {
             struct bblock_t *successor_block = successor_link->block;
-            fprintf(stderr, " ->B%d", successor_block->block_num);
+            fprintf(stderr, " ->B%d", successor_block->num);
          }
          fprintf(stderr, "\n");
       }

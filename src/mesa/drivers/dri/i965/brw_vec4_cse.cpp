@@ -251,9 +251,7 @@ vec4_visitor::opt_cse()
 
    calculate_live_intervals();
 
-   for (int b = 0; b < cfg->num_blocks; b++) {
-      bblock_t *block = cfg->blocks[b];
-
+   foreach_block (block, cfg) {
       progress = opt_cse_local(block) || progress;
    }
 

@@ -129,9 +129,7 @@ fs_visitor::opt_peephole_sel()
 
    calculate_cfg();
 
-   for (int b = 0; b < cfg->num_blocks; b++) {
-      bblock_t *block = cfg->blocks[b];
-
+   foreach_block (block, cfg) {
       /* IF instructions, by definition, can only be found at the ends of
        * basic blocks.
        */

@@ -44,9 +44,8 @@ fs_visitor::dead_code_eliminate()
    int num_vars = live_intervals->num_vars;
    BITSET_WORD *live = ralloc_array(NULL, BITSET_WORD, BITSET_WORDS(num_vars));
 
-   for (int b = 0; b < cfg->num_blocks; b++) {
-      bblock_t *block = cfg->blocks[b];
-      memcpy(live, live_intervals->bd[b].liveout,
+   foreach_block (block, cfg) {
+      memcpy(live, live_intervals->bd[block->num].liveout,
              sizeof(BITSET_WORD) * BITSET_WORDS(num_vars));
 
       foreach_inst_in_block_reverse(fs_inst, inst, block) {

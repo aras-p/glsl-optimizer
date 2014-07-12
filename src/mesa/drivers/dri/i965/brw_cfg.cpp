@@ -51,7 +51,7 @@ link(void *mem_ctx, bblock_t *block)
 }
 
 bblock_t::bblock_t() :
-   start_ip(0), end_ip(0), block_num(0)
+   start_ip(0), end_ip(0), num(0)
 {
    start = NULL;
    end = NULL;
@@ -284,7 +284,7 @@ cfg_t::set_next_block(bblock_t **cur, bblock_t *block, int ip)
    }
 
    block->start_ip = ip;
-   block->block_num = num_blocks++;
+   block->num = num_blocks++;
    block_list.push_tail(&block->link);
    *cur = block;
 }
@@ -295,7 +295,7 @@ cfg_t::make_block_array()
    blocks = ralloc_array(mem_ctx, bblock_t *, num_blocks);
 
    int i = 0;
-   foreach_list_typed(bblock_t, block, link, &block_list) {
+   foreach_block (block, this) {
       blocks[i++] = block;
    }
    assert(i == num_blocks);
@@ -304,19 +304,18 @@ cfg_t::make_block_array()
 void
 cfg_t::dump(backend_visitor *v)
 {
-   for (int b = 0; b < this->num_blocks; b++) {
-        bblock_t *block = this->blocks[b];
-      fprintf(stderr, "START B%d", b);
+   foreach_block (block, this) {
+      fprintf(stderr, "START B%d", block->num);
       foreach_list_typed(bblock_link, link, link, &block->parents) {
          fprintf(stderr, " <-B%d",
-                 link->block->block_num);
+                 link->block->num);
       }
       fprintf(stderr, "\n");
       block->dump(v);
-      fprintf(stderr, "END B%d", b);
+      fprintf(stderr, "END B%d", block->num);
       foreach_list_typed(bblock_link, link, link, &block->children) {
          fprintf(stderr, " ->B%d",
-                 link->block->block_num);
+                 link->block->num);
       }
       fprintf(stderr, "\n");
    }

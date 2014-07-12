@@ -753,13 +753,11 @@ vec4_visitor::opt_set_dependency_control()
    assert(prog_data->total_grf ||
           !"Must be called after register allocation");
 
-   for (int i = 0; i < cfg->num_blocks; i++) {
-      bblock_t *bblock = cfg->blocks[i];
-
+   foreach_block (block, cfg) {
       memset(last_grf_write, 0, sizeof(last_grf_write));
       memset(last_mrf_write, 0, sizeof(last_mrf_write));
 
-      foreach_inst_in_block (vec4_instruction, inst, bblock) {
+      foreach_inst_in_block (vec4_instruction, inst, block) {
          /* If we read from a register that we were doing dependency control
           * on, don't do dependency control across the read.
           */

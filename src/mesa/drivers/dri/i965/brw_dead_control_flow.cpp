@@ -42,8 +42,7 @@ dead_control_flow_eliminate(backend_visitor *v)
 
    v->calculate_cfg();
 
-   for (int b = 0; b < v->cfg->num_blocks; b++) {
-      bblock_t *block = v->cfg->blocks[b];
+   foreach_block (block, v->cfg) {
       bool found = false;
 
       /* ENDIF instructions, by definition, can only be found at the start of

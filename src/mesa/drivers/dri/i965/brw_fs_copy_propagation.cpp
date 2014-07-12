@@ -104,9 +104,9 @@ fs_copy_prop_dataflow::fs_copy_prop_dataflow(void *mem_ctx, cfg_t *cfg,
    bd = rzalloc_array(mem_ctx, struct block_data, cfg->num_blocks);
 
    num_acp = 0;
-   for (int b = 0; b < cfg->num_blocks; b++) {
+   foreach_block (block, cfg) {
       for (int i = 0; i < ACP_HASH_SIZE; i++) {
-         num_acp += out_acp[b][i].length();
+         num_acp += out_acp[block->num][i].length();
       }
    }
 
@@ -115,21 +115,21 @@ fs_copy_prop_dataflow::fs_copy_prop_dataflow(void *mem_ctx, cfg_t *cfg,
    bitset_words = BITSET_WORDS(num_acp);
 
    int next_acp = 0;
-   for (int b = 0; b < cfg->num_blocks; b++) {
-      bd[b].livein = rzalloc_array(bd, BITSET_WORD, bitset_words);
-      bd[b].liveout = rzalloc_array(bd, BITSET_WORD, bitset_words);
-      bd[b].copy = rzalloc_array(bd, BITSET_WORD, bitset_words);
-      bd[b].kill = rzalloc_array(bd, BITSET_WORD, bitset_words);
+   foreach_block (block, cfg) {
+      bd[block->num].livein = rzalloc_array(bd, BITSET_WORD, bitset_words);
+      bd[block->num].liveout = rzalloc_array(bd, BITSET_WORD, bitset_words);
+      bd[block->num].copy = rzalloc_array(bd, BITSET_WORD, bitset_words);
+      bd[block->num].kill = rzalloc_array(bd, BITSET_WORD, bitset_words);
 
       for (int i = 0; i < ACP_HASH_SIZE; i++) {
-         foreach_in_list(acp_entry, entry, &out_acp[b][i]) {
+         foreach_in_list(acp_entry, entry, &out_acp[block->num][i]) {
             acp[next_acp] = entry;
 
             /* opt_copy_propagate_local populates out_acp with copies created
              * in a block which are still live at the end of the block.  This
              * is exactly what we want in the COPY set.
              */
-            BITSET_SET(bd[b].copy, next_acp);
+            BITSET_SET(bd[block->num].copy, next_acp);
 
             next_acp++;
          }
@@ -150,9 +150,7 @@ void
 fs_copy_prop_dataflow::setup_initial_values()
 {
    /* Initialize the COPY and KILL sets. */
-   for (int b = 0; b < cfg->num_blocks; b++) {
-      bblock_t *block = cfg->blocks[b];
-
+   foreach_block (block, cfg) {
       foreach_inst_in_block(fs_inst, inst, block) {
          if (inst->dst.file != GRF)
             continue;
@@ -161,7 +159,7 @@ fs_copy_prop_dataflow::setup_initial_values()
          for (int i = 0; i < num_acp; i++) {
             if (inst->overwrites_reg(acp[i]->dst) ||
                 inst->overwrites_reg(acp[i]->src)) {
-               BITSET_SET(bd[b].kill, i);
+               BITSET_SET(bd[block->num].kill, i);
             }
          }
       }
@@ -172,17 +170,16 @@ fs_copy_prop_dataflow::setup_initial_values()
     * For the others, set liveout to 0 (the empty set) and livein to ~0
     * (the universal set).
     */
-   for (int b = 0; b < cfg->num_blocks; b++) {
-      bblock_t *block = cfg->blocks[b];
+   foreach_block (block, cfg) {
       if (block->parents.is_empty()) {
          for (int i = 0; i < bitset_words; i++) {
-            bd[b].livein[i] = 0u;
-            bd[b].liveout[i] = bd[b].copy[i];
+            bd[block->num].livein[i] = 0u;
+            bd[block->num].liveout[i] = bd[block->num].copy[i];
          }
       } else {
          for (int i = 0; i < bitset_words; i++) {
-            bd[b].liveout[i] = 0u;
-            bd[b].livein[i] = ~0u;
+            bd[block->num].liveout[i] = 0u;
+            bd[block->num].livein[i] = ~0u;
          }
       }
    }
@@ -201,17 +198,18 @@ fs_copy_prop_dataflow::run()
       progress = false;
 
       /* Update liveout for all blocks. */
-      for (int b = 0; b < cfg->num_blocks; b++) {
-         if (cfg->blocks[b]->parents.is_empty())
+      foreach_block (block, cfg) {
+         if (block->parents.is_empty())
             continue;
 
          for (int i = 0; i < bitset_words; i++) {
-            const BITSET_WORD old_liveout = bd[b].liveout[i];
+            const BITSET_WORD old_liveout = bd[block->num].liveout[i];
 
-            bd[b].liveout[i] =
-               bd[b].copy[i] | (bd[b].livein[i] & ~bd[b].kill[i]);
+            bd[block->num].liveout[i] =
+               bd[block->num].copy[i] | (bd[block->num].livein[i] &
+                                         ~bd[block->num].kill[i]);
 
-            if (old_liveout != bd[b].liveout[i])
+            if (old_liveout != bd[block->num].liveout[i])
                progress = true;
          }
       }
@@ -219,20 +217,20 @@ fs_copy_prop_dataflow::run()
       /* Update livein for all blocks.  If a copy is live out of all parent
        * blocks, it's live coming in to this block.
        */
-      for (int b = 0; b < cfg->num_blocks; b++) {
-         if (cfg->blocks[b]->parents.is_empty())
+      foreach_block (block, cfg) {
+         if (block->parents.is_empty())
             continue;
 
          for (int i = 0; i < bitset_words; i++) {
-            const BITSET_WORD old_livein = bd[b].livein[i];
+            const BITSET_WORD old_livein = bd[block->num].livein[i];
 
-            bd[b].livein[i] = ~0u;
-            foreach_list_typed(bblock_link, link, link, &cfg->blocks[b]->parents) {
-               bblock_t *block = link->block;
-               bd[b].livein[i] &= bd[block->block_num].liveout[i];
+            bd[block->num].livein[i] = ~0u;
+            foreach_list_typed(bblock_link, parent_link, link, &block->parents) {
+               bblock_t *parent = parent_link->block;
+               bd[block->num].livein[i] &= bd[parent->num].liveout[i];
             }
 
-            if (old_livein != bd[b].livein[i])
+            if (old_livein != bd[block->num].livein[i])
                progress = true;
          }
       }
@@ -242,27 +240,26 @@ fs_copy_prop_dataflow::run()
 void
 fs_copy_prop_dataflow::dump_block_data() const
 {
-   for (int b = 0; b < cfg->num_blocks; b++) {
-      bblock_t *block = cfg->blocks[b];
-      fprintf(stderr, "Block %d [%d, %d] (parents ", block->block_num,
+   foreach_block (block, cfg) {
+      fprintf(stderr, "Block %d [%d, %d] (parents ", block->num,
              block->start_ip, block->end_ip);
       foreach_list_typed(bblock_link, link, link, &block->parents) {
          bblock_t *parent = link->block;
-         fprintf(stderr, "%d ", parent->block_num);
+         fprintf(stderr, "%d ", parent->num);
       }
       fprintf(stderr, "):\n");
       fprintf(stderr, "       livein = 0x");
       for (int i = 0; i < bitset_words; i++)
-         fprintf(stderr, "%08x", bd[b].livein[i]);
+         fprintf(stderr, "%08x", bd[block->num].livein[i]);
       fprintf(stderr, ", liveout = 0x");
       for (int i = 0; i < bitset_words; i++)
-         fprintf(stderr, "%08x", bd[b].liveout[i]);
+         fprintf(stderr, "%08x", bd[block->num].liveout[i]);
       fprintf(stderr, ",\n       copy   = 0x");
       for (int i = 0; i < bitset_words; i++)
-         fprintf(stderr, "%08x", bd[b].copy[i]);
+         fprintf(stderr, "%08x", bd[block->num].copy[i]);
       fprintf(stderr, ", kill    = 0x");
       for (int i = 0; i < bitset_words; i++)
-         fprintf(stderr, "%08x", bd[b].kill[i]);
+         fprintf(stderr, "%08x", bd[block->num].kill[i]);
       fprintf(stderr, "\n");
    }
 }
@@ -607,11 +604,9 @@ fs_visitor::opt_copy_propagate()
    /* First, walk through each block doing local copy propagation and getting
     * the set of copies available at the end of the block.
     */
-   for (int b = 0; b < cfg->num_blocks; b++) {
-      bblock_t *block = cfg->blocks[b];
-
+   foreach_block (block, cfg) {
       progress = opt_copy_propagate_local(copy_prop_ctx, block,
-                                          out_acp[b]) || progress;
+                                          out_acp[block->num]) || progress;
    }
 
    /* Do dataflow analysis for those available copies. */
@@ -620,12 +615,11 @@ fs_visitor::opt_copy_propagate()
    /* Next, re-run local copy propagation, this time with the set of copies
     * provided by the dataflow analysis available at the start of a block.
     */
-   for (int b = 0; b < cfg->num_blocks; b++) {
-      bblock_t *block = cfg->blocks[b];
+   foreach_block (block, cfg) {
       exec_list in_acp[ACP_HASH_SIZE];
 
       for (int i = 0; i < dataflow.num_acp; i++) {
-         if (BITSET_TEST(dataflow.bd[b].livein, i)) {
+         if (BITSET_TEST(dataflow.bd[block->num].livein, i)) {
             struct acp_entry *entry = dataflow.acp[i];
             in_acp[entry->dst.reg % ACP_HASH_SIZE].push_tail(entry);
          }

@@ -47,9 +47,7 @@ fs_visitor::opt_peephole_predicated_break()
 
    calculate_cfg();
 
-   for (int b = 0; b < cfg->num_blocks; b++) {
-      bblock_t *block = cfg->blocks[b];
-
+   foreach_block (block, cfg) {
       /* BREAK and CONTINUE instructions, by definition, can only be found at
        * the ends of basic blocks.
        */
@@ -80,11 +78,6 @@ fs_visitor::opt_peephole_predicated_break()
 
       if_inst->remove();
       endif_inst->remove();
-
-      /* By removing the ENDIF instruction we removed a basic block. Skip over
-       * it for the next iteration.
-       */
-      b++;
 
       progress = true;
    }

@@ -71,7 +71,7 @@ struct bblock_t {
 
    struct exec_list parents;
    struct exec_list children;
-   int block_num;
+   int num;
 
    /* If the current basic block ends in an IF, ELSE, or ENDIF instruction,
     * these pointers will hold the locations of the other associated control
@@ -108,6 +108,9 @@ struct cfg_t {
 #define foreach_block_and_inst(__block, __type, __inst, __cfg) \
    foreach_block (__block, __cfg)                              \
       foreach_inst_in_block (__type, __inst, __block)
+
+#define foreach_block(__block, __cfg)                          \
+   foreach_list_typed (bblock_t, __block, link, &(__cfg)->block_list)
 
 #define foreach_inst_in_block(__type, __inst, __block)         \
    for (__type *__inst = (__type *)__block->start;             \

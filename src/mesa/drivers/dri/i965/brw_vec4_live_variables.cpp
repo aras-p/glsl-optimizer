@@ -65,12 +65,10 @@ vec4_live_variables::setup_def_use()
 {
    int ip = 0;
 
-   for (int b = 0; b < cfg->num_blocks; b++) {
-      bblock_t *block = cfg->blocks[b];
-
+   foreach_block (block, cfg) {
       assert(ip == block->start_ip);
-      if (b > 0)
-	 assert(cfg->blocks[b - 1]->end_ip == ip - 1);
+      if (block->num > 0)
+	 assert(cfg->blocks[block->num - 1]->end_ip == ip - 1);
 
       foreach_inst_in_block(vec4_instruction, inst, block) {
 	 /* Set use[] for this instruction */
@@ -80,8 +78,8 @@ vec4_live_variables::setup_def_use()
 
                for (int j = 0; j < 4; j++) {
                   int c = BRW_GET_SWZ(inst->src[i].swizzle, j);
-                  if (!BITSET_TEST(bd[b].def, reg * 4 + c))
-                     BITSET_SET(bd[b].use, reg * 4 + c);
+                  if (!BITSET_TEST(bd[block->num].def, reg * 4 + c))
+                     BITSET_SET(bd[block->num].use, reg * 4 + c);
                }
 	    }
 	 }
@@ -96,8 +94,8 @@ vec4_live_variables::setup_def_use()
             for (int c = 0; c < 4; c++) {
                if (inst->dst.writemask & (1 << c)) {
                   int reg = inst->dst.reg;
-                  if (!BITSET_TEST(bd[b].use, reg * 4 + c))
-                     BITSET_SET(bd[b].def, reg * 4 + c);
+                  if (!BITSET_TEST(bd[block->num].use, reg * 4 + c))
+                     BITSET_SET(bd[block->num].def, reg * 4 + c);
                }
             }
          }
@@ -121,26 +119,27 @@ vec4_live_variables::compute_live_variables()
    while (cont) {
       cont = false;
 
-      for (int b = 0; b < cfg->num_blocks; b++) {
+      foreach_block (block, cfg) {
 	 /* Update livein */
 	 for (int i = 0; i < bitset_words; i++) {
-            BITSET_WORD new_livein = (bd[b].use[i] |
-                                      (bd[b].liveout[i] & ~bd[b].def[i]));
-            if (new_livein & ~bd[b].livein[i]) {
-               bd[b].livein[i] |= new_livein;
+            BITSET_WORD new_livein = (bd[block->num].use[i] |
+                                      (bd[block->num].liveout[i] &
+                                       ~bd[block->num].def[i]));
+            if (new_livein & ~bd[block->num].livein[i]) {
+               bd[block->num].livein[i] |= new_livein;
                cont = true;
 	    }
 	 }
 
 	 /* Update liveout */
-	 foreach_list_typed(bblock_link, link, link, &cfg->blocks[b]->children) {
-	    bblock_t *block = link->block;
+	 foreach_list_typed(bblock_link, child_link, link, &block->children) {
+	    bblock_t *child = child_link->block;
 
 	    for (int i = 0; i < bitset_words; i++) {
-               BITSET_WORD new_liveout = (bd[block->block_num].livein[i] &
-                                          ~bd[b].liveout[i]);
+               BITSET_WORD new_liveout = (bd[child->num].livein[i] &
+                                          ~bd[block->num].liveout[i]);
                if (new_liveout) {
-                  bd[b].liveout[i] |= new_liveout;
+                  bd[block->num].liveout[i] |= new_liveout;
 		  cont = true;
 	       }
 	    }
@@ -251,16 +250,16 @@ vec4_visitor::calculate_live_intervals()
    calculate_cfg();
    vec4_live_variables livevars(this, cfg);
 
-   for (int b = 0; b < cfg->num_blocks; b++) {
+   foreach_block (block, cfg) {
       for (int i = 0; i < livevars.num_vars; i++) {
-	 if (BITSET_TEST(livevars.bd[b].livein, i)) {
-	    start[i] = MIN2(start[i], cfg->blocks[b]->start_ip);
-	    end[i] = MAX2(end[i], cfg->blocks[b]->start_ip);
+	 if (BITSET_TEST(livevars.bd[block->num].livein, i)) {
+	    start[i] = MIN2(start[i], block->start_ip);
+	    end[i] = MAX2(end[i], block->start_ip);
 	 }
 
-	 if (BITSET_TEST(livevars.bd[b].liveout, i)) {
-	    start[i] = MIN2(start[i], cfg->blocks[b]->end_ip);
-	    end[i] = MAX2(end[i], cfg->blocks[b]->end_ip);
+	 if (BITSET_TEST(livevars.bd[block->num].liveout, i)) {
+	    start[i] = MIN2(start[i], block->end_ip);
+	    end[i] = MAX2(end[i], block->end_ip);
 	 }
       }
    }
