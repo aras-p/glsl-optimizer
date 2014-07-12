@@ -1295,6 +1295,11 @@ enum brw_message_target {
                                                                (1 << 17))
 #define GEN7_DATAPORT_SCRATCH_NUM_REGS_SHIFT                        12
 
+#define GEN7_PIXEL_INTERPOLATOR_LOC_SHARED_OFFSET     0
+#define GEN7_PIXEL_INTERPOLATOR_LOC_SAMPLE            1
+#define GEN7_PIXEL_INTERPOLATOR_LOC_CENTROID          2
+#define GEN7_PIXEL_INTERPOLATOR_LOC_PER_SLOT_OFFSET   3
+
 /* HSW */
 #define HSW_DATAPORT_DC_PORT0_OWORD_BLOCK_READ                      0
 #define HSW_DATAPORT_DC_PORT0_UNALIGNED_OWORD_BLOCK_READ            1

@@ -527,6 +527,17 @@ F(ts_opcode,           MD( 0),  MD( 0))
 /** @} */
 
 /**
+ * Pixel Interpolator message function control bits:
+ *  @{
+ */
+F(pi_simd_mode,      MD(16),  MD(16))
+F(pi_nopersp,        MD(14),  MD(14))
+F(pi_message_type,   MD(13),  MD(12))
+F(pi_slot_group,     MD(11),  MD(11))
+F(pi_message_data,   MD(7),   MD(0))
+/** @} */
+
+/**
  * Immediates:
  *  @{
  */
