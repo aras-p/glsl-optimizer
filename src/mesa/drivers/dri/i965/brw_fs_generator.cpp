@@ -1480,18 +1480,14 @@ fs_generator::generate_untyped_surface_read(fs_inst *inst, struct brw_reg dst,
 }
 
 void
-fs_generator::generate_code(exec_list *instructions)
+fs_generator::generate_code(const cfg_t *cfg)
 {
    int start_offset = p->next_insn_offset;
 
    struct annotation_info annotation;
    memset(&annotation, 0, sizeof(annotation));
 
-   cfg_t *cfg = NULL;
-   if (unlikely(debug_flag))
-      cfg = new(mem_ctx) cfg_t(instructions);
-
-   foreach_in_list(fs_inst, inst, instructions) {
+   foreach_block_and_inst (block, fs_inst, inst, cfg) {
       struct brw_reg src[3], dst;
       unsigned int last_insn_offset = p->next_insn_offset;
 
@@ -1983,18 +1979,18 @@ fs_generator::generate_code(exec_list *instructions)
 }
 
 const unsigned *
-fs_generator::generate_assembly(exec_list *simd8_instructions,
-                                exec_list *simd16_instructions,
+fs_generator::generate_assembly(const cfg_t *simd8_cfg,
+                                const cfg_t *simd16_cfg,
                                 unsigned *assembly_size)
 {
-   assert(simd8_instructions || simd16_instructions);
+   assert(simd8_cfg || simd16_cfg);
 
-   if (simd8_instructions) {
+   if (simd8_cfg) {
       dispatch_width = 8;
-      generate_code(simd8_instructions);
+      generate_code(simd8_cfg);
    }
 
-   if (simd16_instructions) {
+   if (simd16_cfg) {
       /* align to 64 byte boundary. */
       while (p->next_insn_offset % 64) {
          brw_NOP(p);
@@ -2006,7 +2002,7 @@ fs_generator::generate_assembly(exec_list *simd8_instructions,
       brw_set_default_compression_control(p, BRW_COMPRESSION_COMPRESSED);
 
       dispatch_width = 16;
-      generate_code(simd16_instructions);
+      generate_code(simd16_cfg);
    }
 
    return brw_get_program(p, assembly_size);

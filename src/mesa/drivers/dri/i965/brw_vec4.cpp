@@ -1742,6 +1742,8 @@ vec4_visitor::run()
     */
    assert(sanity_param_count == prog->Parameters->NumParameters);
 
+   calculate_cfg();
+
    return !failed;
 }
 
@@ -1794,7 +1796,7 @@ brw_vs_emit(struct brw_context *brw,
    const unsigned *assembly = NULL;
    vec4_generator g(brw, prog, &c->vp->program.Base, &prog_data->base,
                     mem_ctx, INTEL_DEBUG & DEBUG_VS);
-   assembly = g.generate_assembly(&v.instructions, final_assembly_size);
+   assembly = g.generate_assembly(v.cfg, final_assembly_size);
 
    if (unlikely(brw->perf_debug) && shader) {
       if (shader->compiled_once) {

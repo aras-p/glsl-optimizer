@@ -580,12 +580,12 @@ public:
                 bool debug_flag);
    ~fs_generator();
 
-   const unsigned *generate_assembly(exec_list *simd8_instructions,
-                                     exec_list *simd16_instructions,
+   const unsigned *generate_assembly(const cfg_t *simd8_cfg,
+                                     const cfg_t *simd16_cfg,
                                      unsigned *assembly_size);
 
 private:
-   void generate_code(exec_list *instructions);
+   void generate_code(const cfg_t *cfg);
    void fire_fb_write(fs_inst *inst,
                       GLuint base_reg,
                       struct brw_reg implied_header,

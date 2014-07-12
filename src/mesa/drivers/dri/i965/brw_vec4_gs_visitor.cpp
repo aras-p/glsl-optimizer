@@ -612,12 +612,12 @@ generate_assembly(struct brw_context *brw,
                   struct gl_program *prog,
                   struct brw_vec4_prog_data *prog_data,
                   void *mem_ctx,
-                  exec_list *instructions,
+                  const cfg_t *cfg,
                   unsigned *final_assembly_size)
 {
    vec4_generator g(brw, shader_prog, prog, prog_data, mem_ctx,
                     INTEL_DEBUG & DEBUG_GS);
-   return g.generate_assembly(instructions, final_assembly_size);
+   return g.generate_assembly(cfg, final_assembly_size);
 }
 
 extern "C" const unsigned *
@@ -645,7 +645,7 @@ brw_gs_emit(struct brw_context *brw,
       vec4_gs_visitor v(brw, c, prog, mem_ctx, true /* no_spills */);
       if (v.run()) {
          return generate_assembly(brw, prog, &c->gp->program.Base,
-                                  &c->prog_data.base, mem_ctx, &v.instructions,
+                                  &c->prog_data.base, mem_ctx, v.cfg,
                                   final_assembly_size);
       }
    }
@@ -670,7 +670,7 @@ brw_gs_emit(struct brw_context *brw,
    }
 
    return generate_assembly(brw, prog, &c->gp->program.Base, &c->prog_data.base,
-                            mem_ctx, &v.instructions, final_assembly_size);
+                            mem_ctx, v.cfg, final_assembly_size);
 }
 
 

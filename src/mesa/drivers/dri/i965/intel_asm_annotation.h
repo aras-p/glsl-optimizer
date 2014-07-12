@@ -64,7 +64,7 @@ dump_assembly(void *assembly, int num_annotations, struct annotation *annotation
 
 void
 annotate(struct brw_context *brw,
-         struct annotation_info *annotation, struct cfg_t *cfg,
+         struct annotation_info *annotation, const struct cfg_t *cfg,
          struct backend_instruction *inst, unsigned offset);
 void
 annotation_finalize(struct annotation_info *annotation, unsigned offset);

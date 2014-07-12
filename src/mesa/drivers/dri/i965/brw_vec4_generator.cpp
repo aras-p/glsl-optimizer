@@ -1314,16 +1314,12 @@ vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
 }
 
 void
-vec4_generator::generate_code(exec_list *instructions)
+vec4_generator::generate_code(const cfg_t *cfg)
 {
    struct annotation_info annotation;
    memset(&annotation, 0, sizeof(annotation));
 
-   cfg_t *cfg = NULL;
-   if (unlikely(debug_flag))
-      cfg = new(mem_ctx) cfg_t(instructions);
-
-   foreach_in_list(vec4_instruction, inst, instructions) {
+   foreach_block_and_inst (block, vec4_instruction, inst, cfg) {
       struct brw_reg src[3], dst;
 
       if (unlikely(debug_flag))
@@ -1383,11 +1379,11 @@ vec4_generator::generate_code(exec_list *instructions)
 }
 
 const unsigned *
-vec4_generator::generate_assembly(exec_list *instructions,
+vec4_generator::generate_assembly(const cfg_t *cfg,
                                   unsigned *assembly_size)
 {
    brw_set_default_access_mode(p, BRW_ALIGN_16);
-   generate_code(instructions);
+   generate_code(cfg);
 
    return brw_get_program(p, assembly_size);
 }

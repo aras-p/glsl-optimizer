@@ -3355,6 +3355,8 @@ fs_visitor::run()
     */
    assert(sanity_param_count == fp->Base.Parameters->NumParameters);
 
+   calculate_cfg();
+
    return !failed;
 }
 
@@ -3398,7 +3400,7 @@ brw_wm_fs_emit(struct brw_context *brw,
       return NULL;
    }
 
-   exec_list *simd16_instructions = NULL;
+   cfg_t *simd16_cfg = NULL;
    fs_visitor v2(brw, mem_ctx, key, prog_data, prog, fp, 16);
    if (brw->gen >= 5 && likely(!(INTEL_DEBUG & DEBUG_NO16))) {
       if (!v.simd16_unsupported) {
@@ -3408,7 +3410,7 @@ brw_wm_fs_emit(struct brw_context *brw,
             perf_debug("SIMD16 shader failed to compile, falling back to "
                        "SIMD8 at a 10-20%% performance cost: %s", v2.fail_msg);
          } else {
-            simd16_instructions = &v2.instructions;
+            simd16_cfg = v2.cfg;
          }
       } else {
          perf_debug("SIMD16 shader unsupported, falling back to "
@@ -3416,20 +3418,20 @@ brw_wm_fs_emit(struct brw_context *brw,
       }
    }
 
-   exec_list *simd8_instructions;
+   cfg_t *simd8_cfg;
    int no_simd8 = (INTEL_DEBUG & DEBUG_NO8) || brw->no_simd8;
-   if (no_simd8 && simd16_instructions) {
-      simd8_instructions = NULL;
+   if (no_simd8 && simd16_cfg) {
+      simd8_cfg = NULL;
       prog_data->no_8 = true;
    } else {
-      simd8_instructions = &v.instructions;
+      simd8_cfg = v.cfg;
       prog_data->no_8 = false;
    }
 
    const unsigned *assembly = NULL;
    fs_generator g(brw, mem_ctx, key, prog_data, prog, fp,
                   v.runtime_check_aads_emit, INTEL_DEBUG & DEBUG_WM);
-   assembly = g.generate_assembly(simd8_instructions, simd16_instructions,
+   assembly = g.generate_assembly(simd8_cfg, simd16_cfg,
                                   final_assembly_size);
 
    if (unlikely(brw->perf_debug) && shader) {
