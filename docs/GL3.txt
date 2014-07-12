@@ -110,7 +110,7 @@ GL 4.0:
   - Geometry shader instancing                         DONE (i965, nvc0)
   - Geometry shader multiple streams                   DONE (i965, nvc0)
   - Enhanced per-sample shading                        DONE (i965)
-  - Interpolation functions                            started (Chris)
+  - Interpolation functions                            DONE (i965)
   - New overload resolution rules                      DONE
   GL_ARB_gpu_shader_fp64                               started (Dave)
   GL_ARB_sample_shading                                DONE (i965, nv50, nvc0, radeonsi)
