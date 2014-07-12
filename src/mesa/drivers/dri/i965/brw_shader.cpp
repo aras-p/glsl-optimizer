@@ -549,7 +549,8 @@ backend_visitor::backend_visitor(struct brw_context *brw,
         (struct brw_shader *)shader_prog->_LinkedShaders[stage] : NULL),
      shader_prog(shader_prog),
      prog(prog),
-     stage_prog_data(stage_prog_data)
+     stage_prog_data(stage_prog_data),
+     cfg(NULL)
 {
 }
 
@@ -764,6 +765,20 @@ backend_visitor::dump_instructions(const char *name)
    }
 }
 
+void
+backend_visitor::calculate_cfg()
+{
+   if (this->cfg)
+      return;
+   cfg = new(mem_ctx) cfg_t(&this->instructions);
+}
+
+void
+backend_visitor::invalidate_cfg()
+{
+   ralloc_free(this->cfg);
+   this->cfg = NULL;
+}
 
 /**
  * Sets up the starting offsets for the groups of binding table entries

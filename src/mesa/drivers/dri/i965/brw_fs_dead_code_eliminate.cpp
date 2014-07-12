@@ -39,15 +39,13 @@ fs_visitor::dead_code_eliminate()
 {
    bool progress = false;
 
-   cfg_t cfg(&instructions);
-
-   calculate_live_intervals(&cfg);
+   calculate_live_intervals();
 
    int num_vars = live_intervals->num_vars;
    BITSET_WORD *live = ralloc_array(NULL, BITSET_WORD, BITSET_WORDS(num_vars));
 
-   for (int b = 0; b < cfg.num_blocks; b++) {
-      bblock_t *block = cfg.blocks[b];
+   for (int b = 0; b < cfg->num_blocks; b++) {
+      bblock_t *block = cfg->blocks[b];
       memcpy(live, live_intervals->bd[b].liveout,
              sizeof(BITSET_WORD) * BITSET_WORDS(num_vars));
 
