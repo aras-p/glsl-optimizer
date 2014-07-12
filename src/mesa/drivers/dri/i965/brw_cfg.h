@@ -103,6 +103,10 @@ struct cfg_t {
    int num_blocks;
 };
 
+#define foreach_block_and_inst(__block, __type, __inst, __cfg) \
+   foreach_block (__block, __cfg)                              \
+      foreach_inst_in_block (__type, __inst, __block)
+
 #define foreach_inst_in_block(__type, __inst, __block)         \
    for (__type *__inst = (__type *)__block->start;             \
         __inst != __block->end->next;                          \
