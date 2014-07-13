@@ -78,6 +78,7 @@ struct backend_reg
 };
 
 struct cfg_t;
+struct bblock_t;
 
 #ifdef __cplusplus
 struct backend_instruction : public exec_node {
@@ -88,6 +89,9 @@ struct backend_instruction : public exec_node {
    bool can_do_saturate() const;
    bool reads_accumulator_implicitly() const;
    bool writes_accumulator_implicitly(struct brw_context *brw) const;
+
+   using exec_node::remove;
+   void remove(bblock_t *block);
 
    /**
     * True if the instruction has side effects other than writing to

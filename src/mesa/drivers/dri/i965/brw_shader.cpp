@@ -732,6 +732,52 @@ backend_instruction::has_side_effects() const
    }
 }
 
+#ifndef NDEBUG
+static bool
+inst_is_in_block(const bblock_t *block, const backend_instruction *inst)
+{
+   bool found = false;
+   foreach_inst_in_block (backend_instruction, i, block) {
+      if (inst == i) {
+         found = true;
+      }
+   }
+   return found;
+}
+#endif
+
+static void
+adjust_later_block_ips(bblock_t *start_block, int ip_adjustment)
+{
+   for (bblock_t *block_iter = (bblock_t *)start_block->link.next;
+        !block_iter->link.is_tail_sentinel();
+        block_iter = (bblock_t *)block_iter->link.next) {
+      block_iter->start_ip += ip_adjustment;
+      block_iter->end_ip += ip_adjustment;
+   }
+}
+
+void
+backend_instruction::remove(bblock_t *block)
+{
+   assert(inst_is_in_block(block, this) || !"Instruction not in block");
+
+   adjust_later_block_ips(block, -1);
+
+   if (block->start_ip == block->end_ip) {
+      block->cfg->remove_block(block);
+   } else {
+      block->end_ip--;
+
+      if (block->start == this)
+         block->start = (backend_instruction *)this->next;
+      if (block->end == this)
+         block->end = (backend_instruction *)this->prev;
+   }
+
+   exec_node::remove();
+}
+
 void
 backend_visitor::dump_instructions()
 {
