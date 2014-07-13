@@ -92,6 +92,11 @@ struct backend_instruction : public exec_node {
 
    using exec_node::remove;
    void remove(bblock_t *block);
+   using exec_node::insert_after;
+   void insert_after(bblock_t *block, backend_instruction *inst);
+   using exec_node::insert_before;
+   void insert_before(bblock_t *block, backend_instruction *inst);
+   void insert_before(bblock_t *block, exec_list *list);
 
    /**
     * True if the instruction has side effects other than writing to
