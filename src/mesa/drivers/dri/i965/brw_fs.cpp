@@ -46,6 +46,7 @@ extern "C" {
 #include "brw_wm.h"
 }
 #include "brw_fs.h"
+#include "brw_cfg.h"
 #include "brw_dead_control_flow.h"
 #include "main/uniforms.h"
 #include "brw_fs_live_variables.h"
@@ -1702,7 +1703,7 @@ fs_visitor::split_virtual_grfs()
 	 }
       }
    }
-   invalidate_live_intervals();
+   invalidate_live_intervals(false);
 }
 
 /**
@@ -1740,7 +1741,7 @@ fs_visitor::compact_virtual_grfs()
       if (remap_table[i] != -1) {
          remap_table[i] = new_index;
          virtual_grf_sizes[new_index] = virtual_grf_sizes[i];
-         invalidate_live_intervals();
+         invalidate_live_intervals(false);
          ++new_index;
       }
    }
@@ -1923,7 +1924,9 @@ fs_visitor::assign_constant_locations()
 void
 fs_visitor::demote_pull_constants()
 {
-   foreach_in_list(fs_inst, inst, &instructions) {
+   calculate_cfg();
+
+   foreach_block_and_inst (block, fs_inst, inst, cfg) {
       for (int i = 0; i < inst->sources; i++) {
 	 if (inst->src[i].file != UNIFORM)
 	    continue;
@@ -1946,14 +1949,14 @@ fs_visitor::demote_pull_constants()
                                                         surf_index,
                                                         *inst->src[i].reladdr,
                                                         pull_index);
-            inst->insert_before(&list);
+            inst->insert_before(block, &list);
             inst->src[i].reladdr = NULL;
          } else {
             fs_reg offset = fs_reg((unsigned)(pull_index * 4) & ~15);
             fs_inst *pull =
                new(mem_ctx) fs_inst(FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD,
                                     dst, surf_index, offset);
-            inst->insert_before(pull);
+            inst->insert_before(block, pull);
             inst->src[i].set_smear(pull_index & 3);
          }
 
@@ -1963,7 +1966,7 @@ fs_visitor::demote_pull_constants()
          inst->src[i].reg_offset = 0;
       }
    }
-   invalidate_live_intervals();
+   invalidate_live_intervals(false);
 }
 
 bool
@@ -2298,7 +2301,7 @@ fs_visitor::compute_to_mrf()
    }
 
    if (progress)
-      invalidate_live_intervals();
+      invalidate_live_intervals(false);
 
    return progress;
 }
@@ -2413,7 +2416,9 @@ fs_visitor::remove_duplicate_mrf_writes()
 
    memset(last_mrf_move, 0, sizeof(last_mrf_move));
 
-   foreach_in_list_safe(fs_inst, inst, &instructions) {
+   calculate_cfg();
+
+   foreach_block_and_inst_safe (block, fs_inst, inst, cfg) {
       if (inst->is_control_flow()) {
 	 memset(last_mrf_move, 0, sizeof(last_mrf_move));
       }
@@ -2422,7 +2427,7 @@ fs_visitor::remove_duplicate_mrf_writes()
 	  inst->dst.file == MRF) {
 	 fs_inst *prev_inst = last_mrf_move[inst->dst.reg];
 	 if (prev_inst && inst->equals(prev_inst)) {
-	    inst->remove();
+	    inst->remove(block);
 	    progress = true;
 	    continue;
 	 }
@@ -2696,7 +2701,9 @@ fs_visitor::insert_gen4_send_dependency_workarounds()
 void
 fs_visitor::lower_uniform_pull_constant_loads()
 {
-   foreach_in_list(fs_inst, inst, &instructions) {
+   calculate_cfg();
+
+   foreach_block_and_inst (block, fs_inst, inst, cfg) {
       if (inst->opcode != FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD)
          continue;
 
@@ -2721,7 +2728,7 @@ fs_visitor::lower_uniform_pull_constant_loads()
 
          setup->ir = inst->ir;
          setup->annotation = inst->annotation;
-         inst->insert_before(setup);
+         inst->insert_before(block, setup);
 
          /* Similarly, this will only populate the first 4 channels of the
           * result register (since we only use smear values from 0-3), but we
@@ -2730,7 +2737,7 @@ fs_visitor::lower_uniform_pull_constant_loads()
          inst->opcode = FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD_GEN7;
          inst->src[1] = payload;
 
-         invalidate_live_intervals();
+         invalidate_live_intervals(false);
       } else {
          /* Before register allocation, we didn't tell the scheduler about the
           * MRF we use.  We know it's safe to use this MRF because nothing
@@ -2748,28 +2755,30 @@ fs_visitor::lower_load_payload()
 {
    bool progress = false;
 
-   foreach_in_list_safe(fs_inst, inst, &instructions) {
+   calculate_cfg();
+
+   foreach_block_and_inst_safe (block, fs_inst, inst, cfg) {
       if (inst->opcode == SHADER_OPCODE_LOAD_PAYLOAD) {
          fs_reg dst = inst->dst;
 
          /* src[0] represents the (optional) message header. */
          if (inst->src[0].file != BAD_FILE) {
-            inst->insert_before(MOV(dst, inst->src[0]));
+            inst->insert_before(block, MOV(dst, inst->src[0]));
          }
          dst.reg_offset++;
 
          for (int i = 1; i < inst->sources; i++) {
-            inst->insert_before(MOV(dst, inst->src[i]));
+            inst->insert_before(block, MOV(dst, inst->src[i]));
             dst.reg_offset++;
          }
 
-         inst->remove();
+         inst->remove(block);
          progress = true;
       }
    }
 
    if (progress)
-      invalidate_live_intervals();
+      invalidate_live_intervals(false);
 
    return progress;
 }
@@ -3111,7 +3120,7 @@ fs_visitor::assign_binding_table_offsets()
 void
 fs_visitor::calculate_register_pressure()
 {
-   invalidate_live_intervals();
+   invalidate_live_intervals(false);
    calculate_live_intervals();
 
    unsigned num_instructions = instructions.length();

@@ -222,7 +222,7 @@ fs_visitor::opt_cse_local(bblock_t *block)
                   copy->force_writemask_all =
                      entry->generator->force_writemask_all;
                }
-               entry->generator->insert_after(copy);
+               entry->generator->insert_after(block, copy);
             }
 
             /* dest <- temp */
@@ -244,7 +244,7 @@ fs_visitor::opt_cse_local(bblock_t *block)
                   copy = MOV(dst, tmp);
                   copy->force_writemask_all = inst->force_writemask_all;
                }
-               inst->insert_before(copy);
+               inst->insert_before(block, copy);
             }
 
             /* Set our iterator so that next time through the loop inst->next
@@ -253,7 +253,7 @@ fs_visitor::opt_cse_local(bblock_t *block)
              */
             fs_inst *prev = (fs_inst *)inst->prev;
 
-            inst->remove();
+            inst->remove(block);
 
             /* Appending an instruction may have changed our bblock end. */
             if (inst == block->end) {
@@ -321,7 +321,7 @@ fs_visitor::opt_cse()
    }
 
    if (progress)
-      invalidate_live_intervals();
+      invalidate_live_intervals(false);
 
    return progress;
 }

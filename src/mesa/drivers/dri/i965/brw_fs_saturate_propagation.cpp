@@ -100,7 +100,7 @@ fs_visitor::opt_saturate_propagation()
    }
 
    if (progress)
-      invalidate_live_intervals();
+      invalidate_live_intervals(false);
 
    return progress;
 }

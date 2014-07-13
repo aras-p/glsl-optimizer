@@ -403,7 +403,7 @@ vec4_visitor::opt_reduce_swizzle()
    }
 
    if (progress)
-      invalidate_live_intervals();
+      invalidate_live_intervals(false);
 
    return progress;
 }
@@ -1029,7 +1029,7 @@ vec4_visitor::opt_register_coalesce()
 
    calculate_live_intervals();
 
-   foreach_in_list_safe(vec4_instruction, inst, &instructions) {
+   foreach_block_and_inst_safe (block, vec4_instruction, inst, cfg) {
       int ip = next_ip;
       next_ip++;
 
@@ -1199,13 +1199,13 @@ vec4_visitor::opt_register_coalesce()
 	    }
 	    scan_inst = (vec4_instruction *)scan_inst->next;
 	 }
-	 inst->remove();
+	 inst->remove(block);
 	 progress = true;
       }
    }
 
    if (progress)
-      invalidate_live_intervals();
+      invalidate_live_intervals(false);
 
    return progress;
 }
@@ -1284,7 +1284,7 @@ vec4_visitor::split_virtual_grfs()
          }
       }
    }
-   invalidate_live_intervals();
+   invalidate_live_intervals(false);
 }
 
 void

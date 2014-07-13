@@ -41,6 +41,7 @@
  */
 
 #include "brw_fs.h"
+#include "brw_cfg.h"
 #include "brw_fs_live_variables.h"
 
 static bool
@@ -273,13 +274,13 @@ fs_visitor::register_coalesce()
    }
 
    if (progress) {
-      foreach_in_list_safe(fs_inst, inst, &instructions) {
+      foreach_block_and_inst_safe (block, backend_instruction, inst, cfg) {
          if (inst->opcode == BRW_OPCODE_NOP) {
-            inst->remove();
+            inst->remove(block);
          }
       }
 
-      invalidate_live_intervals();
+      invalidate_live_intervals(false);
    }
 
    return progress;

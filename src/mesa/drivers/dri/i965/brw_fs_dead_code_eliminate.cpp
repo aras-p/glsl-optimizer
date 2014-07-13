@@ -100,13 +100,13 @@ fs_visitor::dead_code_eliminate()
    ralloc_free(live);
 
    if (progress) {
-      foreach_in_list_safe(fs_inst, inst, &instructions) {
+      foreach_block_and_inst_safe (block, backend_instruction, inst, cfg) {
          if (inst->opcode == BRW_OPCODE_NOP) {
-            inst->remove();
+            inst->remove(block);
          }
       }
 
-      invalidate_live_intervals();
+      invalidate_live_intervals(false);
    }
 
    return progress;
