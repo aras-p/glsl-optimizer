@@ -219,6 +219,10 @@ gallivm_free_code(struct gallivm_state *gallivm)
    assert(!gallivm->engine);
    lp_free_generated_code(gallivm->code);
    gallivm->code = NULL;
+#if HAVE_LLVM < 0x0306
+   LLVMDisposeMCJITMemoryManager(gallivm->memorymgr);
+   gallivm->memorymgr = NULL;
+#endif
 }
 
 
@@ -240,6 +244,7 @@ init_gallivm_engine(struct gallivm_state *gallivm)
       ret = lp_build_create_jit_compiler_for_module(&gallivm->engine,
                                                     &gallivm->code,
                                                     gallivm->module,
+                                                    gallivm->memorymgr,
                                                     (unsigned) optlevel,
                                                     USE_MCJIT,
                                                     &error);
@@ -311,6 +316,14 @@ init_gallivm_state(struct gallivm_state *gallivm, const char *name,
    gallivm->builder = LLVMCreateBuilderInContext(gallivm->context);
    if (!gallivm->builder)
       goto fail;
+
+#if HAVE_LLVM < 0x0306
+   gallivm->memorymgr = lp_get_default_memory_manager();
+   if (!gallivm->memorymgr)
+      goto fail;
+#else
+   gallivm->memorymgr = 0;
+#endif
 
    /* FIXME: MC-JIT only allows compiling one module at a time, and it must be
     * complete when MC-JIT is created. So defer the MC-JIT engine creation for

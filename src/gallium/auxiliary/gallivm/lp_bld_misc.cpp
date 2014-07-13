@@ -322,15 +322,15 @@ class DelegatingJITMemoryManager : public llvm::JITMemoryManager {
  */
 class ShaderMemoryManager : public DelegatingJITMemoryManager {
 
-   static llvm::JITMemoryManager *TheMM;
-   static unsigned NumUsers;
+   llvm::JITMemoryManager *TheMM;
 
    struct GeneratedCode {
       typedef std::vector<void *> Vec;
       Vec FunctionBody, ExceptionTable;
+      llvm::JITMemoryManager *TheMM;
 
-      GeneratedCode() {
-         ++NumUsers;
+      GeneratedCode(llvm::JITMemoryManager *MM) {
+         TheMM = MM;
       }
 
       ~GeneratedCode() {
@@ -347,27 +347,20 @@ class ShaderMemoryManager : public DelegatingJITMemoryManager {
 	 for ( i = ExceptionTable.begin(); i != ExceptionTable.end(); ++i )
 	    TheMM->deallocateExceptionTable(*i);
 #endif
-         --NumUsers;
-         if (NumUsers == 0) {
-            delete TheMM;
-            TheMM = 0;
-         }
       }
    };
 
    GeneratedCode *code;
 
    llvm::JITMemoryManager *mgr() const {
-      if (!TheMM) {
-         TheMM = CreateDefaultMemManager();
-      }
       return TheMM;
    }
 
    public:
 
-      ShaderMemoryManager() {
-         code = new GeneratedCode;
+      ShaderMemoryManager(llvm::JITMemoryManager* MM) {
+         TheMM = MM;
+         code = new GeneratedCode(MM);
       }
 
       virtual ~ShaderMemoryManager() {
@@ -398,9 +391,6 @@ class ShaderMemoryManager : public DelegatingJITMemoryManager {
       }
 };
 
-llvm::JITMemoryManager *ShaderMemoryManager::TheMM = 0;
-unsigned ShaderMemoryManager::NumUsers = 0;
-
 #endif
 
 /**
@@ -418,6 +408,7 @@ LLVMBool
 lp_build_create_jit_compiler_for_module(LLVMExecutionEngineRef *OutJIT,
                                         lp_generated_code **OutCode,
                                         LLVMModuleRef M,
+                                        LLVMMCJITMemoryManagerRef CMM,
                                         unsigned OptLevel,
                                         int useMCJIT,
                                         char **OutError)
@@ -510,7 +501,8 @@ lp_build_create_jit_compiler_for_module(LLVMExecutionEngineRef *OutJIT,
    builder.setMCPU(MCPU);
 #endif
 
-   ShaderMemoryManager *MM = new ShaderMemoryManager();
+   llvm::JITMemoryManager* JMM = reinterpret_cast<llvm::JITMemoryManager*>(CMM);
+   ShaderMemoryManager *MM = new ShaderMemoryManager(JMM);
    *OutCode = MM->getGeneratedCode();
 
    builder.setJITMemoryManager(MM);
@@ -547,5 +539,18 @@ lp_free_generated_code(struct lp_generated_code *code)
 {
 #if HAVE_LLVM < 0x0306
    ShaderMemoryManager::freeGeneratedCode(code);
+#endif
+}
+
+extern "C"
+LLVMMCJITMemoryManagerRef
+lp_get_default_memory_manager()
+{
+#if HAVE_LLVM < 0x0306
+   llvm::JITMemoryManager *mm;
+   mm = llvm::JITMemoryManager::CreateDefaultMemManager();
+   return reinterpret_cast<LLVMMCJITMemoryManagerRef>(mm);
+#else
+   return 0;
 #endif
 }
