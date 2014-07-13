@@ -378,7 +378,7 @@ public:
    void split_uniform_registers();
    void pack_uniform_registers();
    void calculate_live_intervals();
-   void invalidate_live_intervals();
+   void invalidate_live_intervals(bool invalidate_cfg = true);
    void split_virtual_grfs();
    bool opt_reduce_swizzle();
    bool dead_code_eliminate();

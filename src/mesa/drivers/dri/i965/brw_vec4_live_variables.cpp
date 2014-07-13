@@ -268,11 +268,12 @@ vec4_visitor::calculate_live_intervals()
 }
 
 void
-vec4_visitor::invalidate_live_intervals()
+vec4_visitor::invalidate_live_intervals(bool __invalidate_cfg)
 {
    live_intervals_valid = false;
 
-   invalidate_cfg();
+   if (__invalidate_cfg)
+      invalidate_cfg();
 }
 
 bool

@@ -290,12 +290,13 @@ fs_live_variables::~fs_live_variables()
 }
 
 void
-fs_visitor::invalidate_live_intervals()
+fs_visitor::invalidate_live_intervals(bool __invalidate_cfg)
 {
    ralloc_free(live_intervals);
    live_intervals = NULL;
 
-   invalidate_cfg();
+   if (__invalidate_cfg)
+      invalidate_cfg();
 }
 
 /**

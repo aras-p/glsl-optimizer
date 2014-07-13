@@ -328,7 +328,7 @@ public:
    void move_uniform_array_access_to_pull_constants();
    void assign_constant_locations();
    void demote_pull_constants();
-   void invalidate_live_intervals();
+   void invalidate_live_intervals(bool invalidate_cfg = true);
    void calculate_live_intervals();
    void calculate_register_pressure();
    bool opt_algebraic();
