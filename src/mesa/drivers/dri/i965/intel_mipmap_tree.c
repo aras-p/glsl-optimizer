@@ -2129,9 +2129,9 @@ intel_miptree_unmap_depthstencil(struct brw_context *brw,
 						 x + s_image_x + map->x,
 						 y + s_image_y + map->y,
 						 brw->has_swizzling);
-	    ptrdiff_t z_offset = ((y + z_image_y) *
+	    ptrdiff_t z_offset = ((y + z_image_y + map->y) *
                                   (z_mt->pitch / 4) +
-				  (x + z_image_x));
+				  (x + z_image_x + map->x));
 
 	    if (map_z32f_x24s8) {
 	       z_map[z_offset] = packed_map[(y * map->w + x) * 2 + 0];
