@@ -201,7 +201,9 @@ link_assign_atomic_counter_resources(struct gl_context *ctx,
          gl_uniform_storage *const storage = &prog->UniformStorage[id];
 
          mab.Uniforms[j] = id;
-         var->data.atomic.buffer_index = i;
+         if (!var->data.explicit_binding)
+            var->data.binding = i;
+
          storage->atomic_buffer_index = i;
          storage->offset = var->data.atomic.offset;
          storage->array_stride = (var->type->is_array() ?

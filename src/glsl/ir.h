@@ -727,7 +727,7 @@ public:
       int index;
 
       /**
-       * Initial binding point for a sampler or UBO.
+       * Initial binding point for a sampler, atomic, or UBO.
        *
        * For array types, this represents the binding point for the first element.
        */
@@ -737,7 +737,6 @@ public:
        * Location an atomic counter is stored at.
        */
       struct {
-         unsigned buffer_index;
          unsigned offset;
       } atomic;
 

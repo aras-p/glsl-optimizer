@@ -2294,7 +2294,7 @@ vec4_visitor::visit_atomic_counter_intrinsic(ir_call *ir)
       ir->actual_parameters.get_head());
    ir_variable *location = deref->variable_referenced();
    unsigned surf_index = (prog_data->base.binding_table.abo_start +
-                          location->data.atomic.buffer_index);
+                          location->data.binding);
 
    /* Calculate the surface offset */
    src_reg offset(this, glsl_type::uint_type);

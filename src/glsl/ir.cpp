@@ -1551,6 +1551,7 @@ ir_variable::ir_variable(const struct glsl_type *type, const char *name,
    this->data.has_initializer = false;
    this->data.location = -1;
    this->data.location_frac = 0;
+   this->data.binding = 0;
    this->warn_extension = NULL;
    this->constant_value = NULL;
    this->constant_initializer = NULL;
@@ -1566,7 +1567,6 @@ ir_variable::ir_variable(const struct glsl_type *type, const char *name,
    this->data.mode = mode;
    this->data.interpolation = INTERP_QUALIFIER_NONE;
    this->data.max_array_access = 0;
-   this->data.atomic.buffer_index = 0;
    this->data.atomic.offset = 0;
    this->data.image.read_only = false;
    this->data.image.write_only = false;
