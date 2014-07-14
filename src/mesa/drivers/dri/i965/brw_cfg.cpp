@@ -50,8 +50,8 @@ link(void *mem_ctx, bblock_t *block)
    return &l->link;
 }
 
-bblock_t::bblock_t() :
-   start_ip(0), end_ip(0), num(0)
+bblock_t::bblock_t(cfg_t *cfg) :
+   cfg(cfg), start_ip(0), end_ip(0), num(0)
 {
    start = NULL;
    end = NULL;
@@ -291,10 +291,62 @@ cfg_t::~cfg_t()
    ralloc_free(mem_ctx);
 }
 
+void
+cfg_t::remove_block(bblock_t *block)
+{
+   foreach_list_typed_safe (bblock_link, predecessor, link, &block->parents) {
+      /* Remove block from all of its predecessors' successor lists. */
+      foreach_list_typed_safe (bblock_link, successor, link,
+                               &predecessor->block->children) {
+         if (block == successor->block) {
+            successor->link.remove();
+            ralloc_free(successor);
+         }
+      }
+
+      /* Add removed-block's successors to its predecessors' successor lists. */
+      foreach_list_typed (bblock_link, successor, link, &block->children) {
+         if (!successor->block->is_successor_of(predecessor->block)) {
+            predecessor->block->children.push_tail(link(mem_ctx,
+                                                        successor->block));
+         }
+      }
+   }
+
+   foreach_list_typed_safe (bblock_link, successor, link, &block->children) {
+      /* Remove block from all of its childrens' parents lists. */
+      foreach_list_typed_safe (bblock_link, predecessor, link,
+                               &successor->block->parents) {
+         if (block == predecessor->block) {
+            predecessor->link.remove();
+            ralloc_free(predecessor);
+         }
+      }
+
+      /* Add removed-block's predecessors to its successors' predecessor lists. */
+      foreach_list_typed (bblock_link, predecessor, link, &block->parents) {
+         if (!predecessor->block->is_predecessor_of(successor->block)) {
+            successor->block->parents.push_tail(link(mem_ctx,
+                                                     predecessor->block));
+         }
+      }
+   }
+
+   block->link.remove();
+
+   for (int b = block->num; b < this->num_blocks - 1; b++) {
+      this->blocks[b] = this->blocks[b + 1];
+      this->blocks[b]->num = b;
+   }
+
+   this->blocks[this->num_blocks - 1]->num = this->num_blocks - 2;
+   this->num_blocks--;
+}
+
 bblock_t *
 cfg_t::new_block()
 {
-   bblock_t *block = new(mem_ctx) bblock_t();
+   bblock_t *block = new(mem_ctx) bblock_t(this);
 
    return block;
 }

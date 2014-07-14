@@ -55,7 +55,7 @@ struct bblock_t {
 #ifdef __cplusplus
    DECLARE_RALLOC_CXX_OPERATORS(bblock_t)
 
-   bblock_t();
+   explicit bblock_t(cfg_t *cfg);
 
    void add_successor(void *mem_ctx, bblock_t *successor);
    bool is_predecessor_of(const bblock_t *block) const;
@@ -64,6 +64,7 @@ struct bblock_t {
 #endif
 
    struct exec_node link;
+   struct cfg_t *cfg;
 
    struct backend_instruction *start;
    struct backend_instruction *end;
@@ -92,6 +93,8 @@ struct cfg_t {
 
    cfg_t(exec_list *instructions);
    ~cfg_t();
+
+   void remove_block(bblock_t *block);
 
    bblock_t *new_block();
    void set_next_block(bblock_t **cur, bblock_t *block, int ip);
