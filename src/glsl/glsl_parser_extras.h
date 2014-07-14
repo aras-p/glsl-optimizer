@@ -43,6 +43,9 @@ struct glsl_switch_state {
    ir_variable *is_break_var;
    class ast_switch_statement *switch_nesting_ast;
 
+   /** Used to set condition if 'default' label should be chosen. */
+   ir_variable *run_default;
+
    /** Table of constant values already used in case labels */
    struct hash_table *labels_ht;
    class ast_case_label *previous_default;
