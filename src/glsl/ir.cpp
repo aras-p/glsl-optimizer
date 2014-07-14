@@ -1568,11 +1568,11 @@ ir_variable::ir_variable(const struct glsl_type *type, const char *name,
    this->data.interpolation = INTERP_QUALIFIER_NONE;
    this->data.max_array_access = 0;
    this->data.atomic.offset = 0;
-   this->data.image.read_only = false;
-   this->data.image.write_only = false;
-   this->data.image.coherent = false;
-   this->data.image._volatile = false;
-   this->data.image.restrict_flag = false;
+   this->data.image_read_only = false;
+   this->data.image_write_only = false;
+   this->data.image_coherent = false;
+   this->data.image_volatile = false;
+   this->data.image_restrict = false;
 
    if (type != NULL) {
       if (type->base_type == GLSL_TYPE_SAMPLER)
@@ -1678,11 +1678,11 @@ ir_function_signature::qualifiers_match(exec_list *params)
 	  a->data.interpolation != b->data.interpolation ||
 	  a->data.centroid != b->data.centroid ||
           a->data.sample != b->data.sample ||
-          a->data.image.read_only != b->data.image.read_only ||
-          a->data.image.write_only != b->data.image.write_only ||
-          a->data.image.coherent != b->data.image.coherent ||
-          a->data.image._volatile != b->data.image._volatile ||
-          a->data.image.restrict_flag != b->data.image.restrict_flag) {
+          a->data.image_read_only != b->data.image_read_only ||
+          a->data.image_write_only != b->data.image_write_only ||
+          a->data.image_coherent != b->data.image_coherent ||
+          a->data.image_volatile != b->data.image_volatile ||
+          a->data.image_restrict != b->data.image_restrict) {
 
 	 /* parameter a's qualifiers don't match */
 	 return a->name;

@@ -697,6 +697,19 @@ public:
        */
       unsigned index:1;
 
+
+      /**
+       * ARB_shader_image_load_store qualifiers.
+       */
+      unsigned image_read_only:1; /**< "readonly" qualifier. */
+      unsigned image_write_only:1; /**< "writeonly" qualifier. */
+      unsigned image_coherent:1;
+      unsigned image_volatile:1;
+      unsigned image_restrict:1;
+
+      /** Image internal format if specified explicitly, otherwise GL_NONE. */
+      uint16_t image_format;
+
       /**
        * \brief Layout qualifier for gl_FragDepth.
        *
@@ -743,20 +756,6 @@ public:
       struct {
          unsigned offset;
       } atomic;
-
-      /**
-       * ARB_shader_image_load_store qualifiers.
-       */
-      struct {
-         bool read_only; /**< "readonly" qualifier. */
-         bool write_only; /**< "writeonly" qualifier. */
-         bool coherent;
-         bool _volatile;
-         bool restrict_flag;
-
-         /** Image internal format if specified explicitly, otherwise GL_NONE. */
-         GLenum format;
-      } image;
 
       /**
        * Highest element accessed with a constant expression array index

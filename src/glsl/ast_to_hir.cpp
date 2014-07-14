@@ -2360,11 +2360,11 @@ apply_image_qualifier_to_variable(const struct ast_type_qualifier *qual,
                           "global variables");
       }
 
-      var->data.image.read_only |= qual->flags.q.read_only;
-      var->data.image.write_only |= qual->flags.q.write_only;
-      var->data.image.coherent |= qual->flags.q.coherent;
-      var->data.image._volatile |= qual->flags.q._volatile;
-      var->data.image.restrict_flag |= qual->flags.q.restrict_flag;
+      var->data.image_read_only |= qual->flags.q.read_only;
+      var->data.image_write_only |= qual->flags.q.write_only;
+      var->data.image_coherent |= qual->flags.q.coherent;
+      var->data.image_volatile |= qual->flags.q._volatile;
+      var->data.image_restrict |= qual->flags.q.restrict_flag;
       var->data.read_only = true;
 
       if (qual->flags.q.explicit_image_format) {
@@ -2378,7 +2378,7 @@ apply_image_qualifier_to_variable(const struct ast_type_qualifier *qual,
                              "base data type of the image");
          }
 
-         var->data.image.format = qual->image_format;
+         var->data.image_format = qual->image_format;
       } else {
          if (var->data.mode == ir_var_uniform && !qual->flags.q.write_only) {
             _mesa_glsl_error(loc, state, "uniforms not qualified with "
@@ -2386,7 +2386,7 @@ apply_image_qualifier_to_variable(const struct ast_type_qualifier *qual,
                              "qualifier");
          }
 
-         var->data.image.format = GL_NONE;
+         var->data.image_format = GL_NONE;
       }
    }
 }

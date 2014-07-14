@@ -103,35 +103,35 @@ verify_image_parameter(YYLTYPE *loc, _mesa_glsl_parse_state *state,
     *  qualifiers. [...] It is legal to have additional qualifiers
     *  on a formal parameter, but not to have fewer."
     */
-   if (actual->data.image.coherent && !formal->data.image.coherent) {
+   if (actual->data.image_coherent && !formal->data.image_coherent) {
       _mesa_glsl_error(loc, state,
                        "function call parameter `%s' drops "
                        "`coherent' qualifier", formal->name);
       return false;
    }
 
-   if (actual->data.image._volatile && !formal->data.image._volatile) {
+   if (actual->data.image_volatile && !formal->data.image_volatile) {
       _mesa_glsl_error(loc, state,
                        "function call parameter `%s' drops "
                        "`volatile' qualifier", formal->name);
       return false;
    }
 
-   if (actual->data.image.restrict_flag && !formal->data.image.restrict_flag) {
+   if (actual->data.image_restrict && !formal->data.image_restrict) {
       _mesa_glsl_error(loc, state,
                        "function call parameter `%s' drops "
                        "`restrict' qualifier", formal->name);
       return false;
    }
 
-   if (actual->data.image.read_only && !formal->data.image.read_only) {
+   if (actual->data.image_read_only && !formal->data.image_read_only) {
       _mesa_glsl_error(loc, state,
                        "function call parameter `%s' drops "
                        "`readonly' qualifier", formal->name);
       return false;
    }
 
-   if (actual->data.image.write_only && !formal->data.image.write_only) {
+   if (actual->data.image_write_only && !formal->data.image_write_only) {
       _mesa_glsl_error(loc, state,
                        "function call parameter `%s' drops "
                        "`writeonly' qualifier", formal->name);

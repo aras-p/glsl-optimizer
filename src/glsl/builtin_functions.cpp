@@ -4476,11 +4476,11 @@ builtin_builder::_image_prototype(const glsl_type *image_type,
     * accept everything that needs to be accepted, and reject cases
     * like loads from write-only or stores to read-only images.
     */
-   image->data.image.read_only = flags & IMAGE_FUNCTION_READ_ONLY;
-   image->data.image.write_only = flags & IMAGE_FUNCTION_WRITE_ONLY;
-   image->data.image.coherent = true;
-   image->data.image._volatile = true;
-   image->data.image.restrict_flag = true;
+   image->data.image_read_only = (flags & IMAGE_FUNCTION_READ_ONLY) != 0;
+   image->data.image_write_only = (flags & IMAGE_FUNCTION_WRITE_ONLY) != 0;
+   image->data.image_coherent = true;
+   image->data.image_volatile = true;
+   image->data.image_restrict = true;
 
    return sig;
 }

@@ -829,8 +829,8 @@ link_set_image_access_qualifiers(struct gl_shader_program *prog)
             (void) found;
             const gl_uniform_storage *storage = &prog->UniformStorage[id];
             const unsigned index = storage->image[i].index;
-            const GLenum access = (var->data.image.read_only ? GL_READ_ONLY :
-                                   var->data.image.write_only ? GL_WRITE_ONLY :
+            const GLenum access = (var->data.image_read_only ? GL_READ_ONLY :
+                                   var->data.image_write_only ? GL_WRITE_ONLY :
                                    GL_READ_WRITE);
 
             for (unsigned j = 0; j < MAX2(1, storage->array_elements); ++j)
