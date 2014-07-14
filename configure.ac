@@ -301,10 +301,20 @@ AC_ARG_ENABLE([debug],
 if test "x$enable_debug" = xyes; then
     DEFINES="$DEFINES -DDEBUG"
     if test "x$GCC" = xyes; then
-        CFLAGS="$CFLAGS -g -O0"
+        if ! echo "$CFLAGS" | grep -q -e '-g'; then
+            CFLAGS="$CFLAGS -g"
+        fi
+        if ! echo "$CFLAGS" | grep -q -e '-O'; then
+            CFLAGS="$CFLAGS -O0"
+        fi
     fi
     if test "x$GXX" = xyes; then
-        CXXFLAGS="$CXXFLAGS -g -O0"
+        if ! echo "$CXXFLAGS" | grep -q -e '-g'; then
+            CXXFLAGS="$CXXFLAGS -g"
+        fi
+        if ! echo "$CXXFLAGS" | grep -q -e '-O'; then
+            CXXFLAGS="$CXXFLAGS -O0"
+        fi
     fi
 fi
 
