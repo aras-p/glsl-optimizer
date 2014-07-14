@@ -1487,7 +1487,7 @@ _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader,
    if (shader->InfoLog)
       ralloc_free(shader->InfoLog);
 
-   shader->symbols = state->symbols;
+   shader->symbols = new(shader->ir) glsl_symbol_table;
    shader->CompileStatus = !state->error;
    shader->InfoLog = state->info_log;
    shader->Version = state->language_version;
@@ -1500,6 +1500,30 @@ _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader,
    /* Retain any live IR, but trash the rest. */
    reparent_ir(shader->ir, shader->ir);
 
+   /* Destroy the symbol table.  Create a new symbol table that contains only
+    * the variables and functions that still exist in the IR.  The symbol
+    * table will be used later during linking.
+    *
+    * There must NOT be any freed objects still referenced by the symbol
+    * table.  That could cause the linker to dereference freed memory.
+    *
+    * We don't have to worry about types or interface-types here because those
+    * are fly-weights that are looked up by glsl_type.
+    */
+   foreach_in_list (ir_instruction, ir, shader->ir) {
+      switch (ir->ir_type) {
+      case ir_type_function:
+         shader->symbols->add_function((ir_function *) ir);
+         break;
+      case ir_type_variable:
+         shader->symbols->add_variable((ir_variable *) ir);
+         break;
+      default:
+         break;
+      }
+   }
+
+   delete state->symbols;
    ralloc_free(state);
 }
 
