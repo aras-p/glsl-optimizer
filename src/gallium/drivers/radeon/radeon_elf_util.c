@@ -80,6 +80,11 @@ void radeon_elf_read(const char *elf_data, unsigned elf_size,
 			fprintf(stderr, "\nShader Disassembly:\n\n");
 			fprintf(stderr, "%.*s\n", (int)section_data->d_size,
 						  (char *)section_data->d_buf);
+		} else if (!strncmp(name, ".rodata", 7)) {
+			section_data = elf_getdata(section, section_data);
+			binary->rodata_size = section_data->d_size;
+			binary->rodata = MALLOC(binary->rodata_size * sizeof(unsigned char));
+			memcpy(binary->rodata, section_data->d_buf, binary->rodata_size);
 		}
 	}
 

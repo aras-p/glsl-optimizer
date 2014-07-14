@@ -108,6 +108,11 @@ struct radeon_shader_binary {
 	unsigned char *config;
 	unsigned config_size;
 
+	/** Constant data accessed by the shader.  This will be uploaded
+	 * into a constant buffer. */
+	unsigned char *rodata;
+	unsigned rodata_size;
+
 	/** Set to 1 if the disassembly for this binary has been dumped to
 	 *  stderr. */
 	int disassembled;

@@ -2558,6 +2558,7 @@ int si_compile_llvm(struct si_context *sctx, struct si_pipe_shader *shader,
 	bool dump = r600_can_dump_shader(&sctx->screen->b,
 			shader->selector ? shader->selector->tokens : NULL);
 	const char * gpu_family = r600_get_llvm_processor_name(sctx->screen->b.family);
+	unsigned code_size;
 
 	/* Use LLVM to compile shader */
 	memset(&binary, 0, sizeof(binary));
@@ -2605,9 +2606,10 @@ int si_compile_llvm(struct si_context *sctx, struct si_pipe_shader *shader,
 	}
 
 	/* copy new shader */
+	code_size = binary.code_size + binary.rodata_size;
 	r600_resource_reference(&shader->bo, NULL);
 	shader->bo = si_resource_create_custom(sctx->b.b.screen, PIPE_USAGE_IMMUTABLE,
-					       binary.code_size);
+					       code_size);
 	if (shader->bo == NULL) {
 		return -ENOMEM;
 	}
@@ -2617,13 +2619,22 @@ int si_compile_llvm(struct si_context *sctx, struct si_pipe_shader *shader,
 		for (i = 0; i < binary.code_size / 4; ++i) {
 			ptr[i] = util_cpu_to_le32((*(uint32_t*)(binary.code + i*4)));
 		}
+		ptr += (binary.code_size / 4);
+		for (i = 0; i < binary.rodata_size / 4; ++i) {
+			ptr[i] = util_cpu_to_le32((*(uint32_t*)(binary.rodata + i * 4)));
+		}
 	} else {
 		memcpy(ptr, binary.code, binary.code_size);
+		if (binary.rodata_size > 0) {
+			ptr += (binary.code_size / 4);
+			memcpy(ptr, binary.rodata, binary.rodata_size);
+		}
 	}
 	sctx->b.ws->buffer_unmap(shader->bo->cs_buf);
 
 	free(binary.code);
 	free(binary.config);
+	free(binary.rodata);
 
 	return r;
 }
