@@ -689,6 +689,15 @@ public:
       unsigned must_be_shader_input:1;
 
       /**
+       * Output index for dual source blending.
+       *
+       * \note
+       * The GLSL spec only allows the values 0 or 1 for the index in \b dual
+       * source blending.
+       */
+      unsigned index:1;
+
+      /**
        * \brief Layout qualifier for gl_FragDepth.
        *
        * This is not equal to \c ir_depth_layout_none if and only if this
@@ -720,11 +729,6 @@ public:
        * Vertex stream output identifier.
        */
       unsigned stream;
-
-      /**
-       * output index for dual source blending.
-       */
-      int index;
 
       /**
        * Initial binding point for a sampler, atomic, or UBO.
