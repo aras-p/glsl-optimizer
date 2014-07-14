@@ -1989,6 +1989,7 @@ static void build_tex_intrinsic(const struct lp_build_tgsi_action * action,
 			emit_data->args, emit_data->arg_count,
 			LLVMReadNoneAttribute | LLVMNoUnwindAttribute);
 	} else {
+		LLVMTypeRef i8, v16i8, v32i8;
 		const char *name;
 
 		switch (opcode) {
@@ -2014,6 +2015,17 @@ static void build_tex_intrinsic(const struct lp_build_tgsi_action * action,
 		default:
 			assert(0);
 			return;
+		}
+
+		i8 = LLVMInt8TypeInContext(base->gallivm->context);
+		v16i8 = LLVMVectorType(i8, 16);
+		v32i8 = LLVMVectorType(i8, 32);
+
+		emit_data->args[1] = LLVMBuildBitCast(base->gallivm->builder,
+						emit_data->args[1], v32i8, "");
+		if (opcode != TGSI_OPCODE_TXF) {
+			emit_data->args[2] = LLVMBuildBitCast(base->gallivm->builder,
+						emit_data->args[2], v16i8, "");
 		}
 
 		sprintf(intr_name, "%s.v%ui32", name,
