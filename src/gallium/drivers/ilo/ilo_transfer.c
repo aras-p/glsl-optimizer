@@ -196,7 +196,7 @@ tex_get_box_origin(const struct ilo_texture *tex,
 
    assert(x % tex->block_width == 0 && y % tex->block_height == 0);
 
-   *mem_x = x / tex->block_width * tex->bo_cpp;
+   *mem_x = x / tex->block_width * tex->block_size;
    *mem_y = y / tex->block_height;
 }
 
@@ -506,7 +506,7 @@ tex_staging_sys_zs_read(struct ilo_context *ilo,
                d[dst_s8_pos] = s8_src[s8_offset];
 
                d += dst_cpp;
-               x += tex->bo_cpp;
+               x += tex->block_size;
                s8_x++;
             }
 
@@ -633,7 +633,7 @@ tex_staging_sys_zs_write(struct ilo_context *ilo,
                s8_dst[s8_offset] = s[src_s8_pos];
 
                s += src_cpp;
-               x += tex->bo_cpp;
+               x += tex->block_size;
                s8_x++;
             }
 

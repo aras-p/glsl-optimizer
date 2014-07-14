@@ -57,7 +57,16 @@ struct tex_layout {
    int qpitch;
 
    int width, height;
+
+   int bo_stride, bo_height;
+   int hiz_stride, hiz_height;
 };
+
+/*
+ * We do not know if we will fail until we try to allocate the bo.
+ * So just set a limit on the texture size.
+ */
+static const size_t max_resource_size = 1u << 30;
 
 static void
 tex_layout_init_qpitch(struct tex_layout *layout)
@@ -682,19 +691,65 @@ tex_layout_init(struct tex_layout *layout,
    }
 }
 
-static bool
-tex_layout_force_linear(struct tex_layout *layout)
+static void
+tex_layout_align(struct tex_layout *layout)
 {
-   if (!layout->can_be_linear)
-      return false;
+   int align_w = 1, align_h = 1, pad_h = 0;
 
    /*
-    * we may be able to switch from VALIGN_4 to VALIGN_2 when the layout was
-    * Y-tiled, but let's keep it simple
+    * From the Sandy Bridge PRM, volume 1 part 1, page 118:
+    *
+    *     "To determine the necessary padding on the bottom and right side of
+    *      the surface, refer to the table in Section 7.18.3.4 for the i and j
+    *      parameters for the surface format in use. The surface must then be
+    *      extended to the next multiple of the alignment unit size in each
+    *      dimension, and all texels contained in this extended surface must
+    *      have valid GTT entries."
+    *
+    *     "For cube surfaces, an additional two rows of padding are required
+    *      at the bottom of the surface. This must be ensured regardless of
+    *      whether the surface is stored tiled or linear.  This is due to the
+    *      potential rotation of cache line orientation from memory to cache."
+    *
+    *     "For compressed textures (BC* and FXT1 surface formats), padding at
+    *      the bottom of the surface is to an even compressed row, which is
+    *      equal to a multiple of 8 uncompressed texel rows. Thus, for padding
+    *      purposes, these surfaces behave as if j = 8 only for surface
+    *      padding purposes. The value of 4 for j still applies for mip level
+    *      alignment and QPitch calculation."
     */
-   layout->tiling = INTEL_TILING_NONE;
+   if (layout->templ->bind & PIPE_BIND_SAMPLER_VIEW) {
+      align_w = MAX2(align_w, layout->align_i);
+      align_h = MAX2(align_h, layout->align_j);
 
-   return true;
+      if (layout->templ->target == PIPE_TEXTURE_CUBE)
+         pad_h += 2;
+
+      if (layout->compressed)
+         align_h = MAX2(align_h, layout->align_j * 2);
+   }
+
+   /*
+    * From the Sandy Bridge PRM, volume 1 part 1, page 118:
+    *
+    *     "If the surface contains an odd number of rows of data, a final row
+    *      below the surface must be allocated."
+    */
+   if (layout->templ->bind & PIPE_BIND_RENDER_TARGET)
+      align_h = MAX2(align_h, 2);
+
+   /*
+    * Depth Buffer Clear/Resolve works in 8x4 sample blocks.  In
+    * ilo_texture_can_enable_hiz(), we always return true for the first slice.
+    * To avoid out-of-bound access, we have to pad.
+    */
+   if (layout->hiz) {
+      align_w = MAX2(align_w, 8);
+      align_h = MAX2(align_h, 4);
+   }
+
+   layout->width = align(layout->width, align_w);
+   layout->height = align(layout->height + pad_h, align_h);
 }
 
 /**
@@ -744,6 +799,8 @@ tex_layout_2d(struct tex_layout *layout)
 
    /* we did not take slices into consideration in the computation above */
    layout->height += layout->qpitch * (num_slices - 1);
+
+   tex_layout_align(layout);
 }
 
 /**
@@ -790,127 +847,176 @@ tex_layout_3d(struct tex_layout *layout)
       if (lv == templ->last_level)
          layout->height = (level_y - slice_qpitch) + level_h;
    }
+
+   tex_layout_align(layout);
 }
 
-static void
-tex_layout_validate(struct tex_layout *layout)
+/* note that this may force the texture to be linear */
+static bool
+tex_layout_calculate_bo_size(struct tex_layout *layout)
 {
-   /*
-    * From the Sandy Bridge PRM, volume 1 part 1, page 118:
-    *
-    *     "To determine the necessary padding on the bottom and right side of
-    *      the surface, refer to the table in Section 7.18.3.4 for the i and j
-    *      parameters for the surface format in use. The surface must then be
-    *      extended to the next multiple of the alignment unit size in each
-    *      dimension, and all texels contained in this extended surface must
-    *      have valid GTT entries."
-    *
-    *     "For cube surfaces, an additional two rows of padding are required
-    *      at the bottom of the surface. This must be ensured regardless of
-    *      whether the surface is stored tiled or linear.  This is due to the
-    *      potential rotation of cache line orientation from memory to cache."
-    *
-    *     "For compressed textures (BC* and FXT1 surface formats), padding at
-    *      the bottom of the surface is to an even compressed row, which is
-    *      equal to a multiple of 8 uncompressed texel rows. Thus, for padding
-    *      purposes, these surfaces behave as if j = 8 only for surface
-    *      padding purposes. The value of 4 for j still applies for mip level
-    *      alignment and QPitch calculation."
-    */
-   if (layout->templ->bind & PIPE_BIND_SAMPLER_VIEW) {
-      layout->width = align(layout->width, layout->align_i);
-      layout->height = align(layout->height, layout->align_j);
-
-      if (layout->templ->target == PIPE_TEXTURE_CUBE)
-         layout->height += 2;
-
-      if (layout->compressed)
-         layout->height = align(layout->height, layout->align_j * 2);
-   }
-
-   /*
-    * From the Sandy Bridge PRM, volume 1 part 1, page 118:
-    *
-    *     "If the surface contains an odd number of rows of data, a final row
-    *      below the surface must be allocated."
-    */
-   if (layout->templ->bind & PIPE_BIND_RENDER_TARGET)
-      layout->height = align(layout->height, 2);
-
-   /*
-    * From the Sandy Bridge PRM, volume 1 part 2, page 22:
-    *
-    *     "A 4KB tile is subdivided into 8-high by 8-wide array of Blocks for
-    *      W-Major Tiles (W Tiles). Each Block is 8 rows by 8 bytes."
-    *
-    * Since we ask for INTEL_TILING_NONE instead of the non-existent
-    * INTEL_TILING_W, we need to manually align the width and height to the
-    * tile boundaries.
-    */
-   if (layout->templ->format == PIPE_FORMAT_S8_UINT) {
-      layout->width = align(layout->width, 64);
-      layout->height = align(layout->height, 64);
-   }
-
-   /*
-    * Depth Buffer Clear/Resolve works in 8x4 sample blocks.  In
-    * ilo_texture_can_enable_hiz(), we always return true for the first slice.
-    * To avoid out-of-bound access, we have to pad.
-    */
-   if (layout->hiz) {
-      layout->width = align(layout->width, 8);
-      layout->height = align(layout->height, 4);
-   }
-
    assert(layout->width % layout->block_width == 0);
    assert(layout->height % layout->block_height == 0);
    assert(layout->qpitch % layout->block_height == 0);
-}
 
-static size_t
-tex_layout_estimate_size(const struct tex_layout *layout)
-{
-   unsigned stride, height;
+   layout->bo_stride =
+      (layout->width / layout->block_width) * layout->block_size;
+   layout->bo_height = layout->height / layout->block_height;
 
-   stride = (layout->width / layout->block_width) * layout->block_size;
-   height = layout->height / layout->block_height;
+   while (true) {
+      int w = layout->bo_stride, h = layout->bo_height;
+      int align_w, align_h;
 
-   switch (layout->tiling) {
-   case INTEL_TILING_X:
-      stride = align(stride, 512);
-      height = align(height, 8);
-      break;
-   case INTEL_TILING_Y:
-      stride = align(stride, 128);
-      height = align(height, 32);
-      break;
-   default:
-      height = align(height, 2);
+      /*
+       * From the Haswell PRM, volume 5, page 163:
+       *
+       *     "For linear surfaces, additional padding of 64 bytes is required
+       *      at the bottom of the surface. This is in addition to the padding
+       *      required above."
+       */
+      if (layout->dev->gen >= ILO_GEN(7.5) &&
+          (layout->templ->bind & PIPE_BIND_SAMPLER_VIEW) &&
+          layout->tiling == INTEL_TILING_NONE) {
+         layout->bo_height +=
+            (64 + layout->bo_stride - 1) / layout->bo_stride;
+      }
+
+      /*
+       * From the Sandy Bridge PRM, volume 4 part 1, page 81:
+       *
+       *     "- For linear render target surfaces, the pitch must be a
+       *        multiple of the element size for non-YUV surface formats.
+       *        Pitch must be a multiple of 2 * element size for YUV surface
+       *        formats.
+       *      - For other linear surfaces, the pitch can be any multiple of
+       *        bytes.
+       *      - For tiled surfaces, the pitch must be a multiple of the tile
+       *        width."
+       *
+       * Different requirements may exist when the bo is used in different
+       * places, but our alignments here should be good enough that we do not
+       * need to check layout->templ->bind.
+       */
+      switch (layout->tiling) {
+      case INTEL_TILING_X:
+         align_w = 512;
+         align_h = 8;
+         break;
+      case INTEL_TILING_Y:
+         align_w = 128;
+         align_h = 32;
+         break;
+      default:
+         if (layout->format == PIPE_FORMAT_S8_UINT) {
+            /*
+             * From the Sandy Bridge PRM, volume 1 part 2, page 22:
+             *
+             *     "A 4KB tile is subdivided into 8-high by 8-wide array of
+             *      Blocks for W-Major Tiles (W Tiles). Each Block is 8 rows by 8
+             *      bytes."
+             *
+             * Since we asked for INTEL_TILING_NONE instead of the non-existent
+             * INTEL_TILING_W, we want to align to W tiles here.
+             */
+            align_w = 64;
+            align_h = 64;
+         }
+         else {
+            /* some good enough values */
+            align_w = 64;
+            align_h = 2;
+         }
+         break;
+      }
+
+      w = align(w, align_w);
+      h = align(h, align_h);
+
+      /* make sure the bo is mappable */
+      if (layout->tiling != INTEL_TILING_NONE) {
+         /*
+          * Usually only the first 256MB of the GTT is mappable.
+          *
+          * See also how intel_context::max_gtt_map_object_size is calculated.
+          */
+         const size_t mappable_gtt_size = 256 * 1024 * 1024;
+
+         /*
+          * Be conservative.  We may be able to switch from VALIGN_4 to
+          * VALIGN_2 if the layout was Y-tiled, but let's keep it simple.
+          */
+         if (mappable_gtt_size / w / 4 < h) {
+            if (layout->can_be_linear) {
+               layout->tiling = INTEL_TILING_NONE;
+               continue;
+            }
+            else {
+               ilo_warn("cannot force texture to be linear\n");
+            }
+         }
+      }
+
+      layout->bo_stride = w;
+      layout->bo_height = h;
       break;
    }
 
-   return stride * height;
+   return (layout->bo_height <= max_resource_size / layout->bo_stride);
 }
 
 static void
-tex_layout_apply(const struct tex_layout *layout, struct ilo_texture *tex)
+tex_layout_calculate_hiz_size(struct tex_layout *layout)
 {
-   tex->bo_format = layout->format;
+   const struct pipe_resource *templ = layout->templ;
+   const int hz_align_j = 8;
+   int hz_width, hz_height;
 
-   /* in blocks */
-   tex->bo_width = layout->width / layout->block_width;
-   tex->bo_height = layout->height / layout->block_height;
-   tex->bo_cpp = layout->block_size;
-   tex->tiling = layout->tiling;
+   if (!layout->hiz)
+      return;
 
-   tex->compressed = layout->compressed;
-   tex->block_width = layout->block_width;
-   tex->block_height = layout->block_height;
+   /*
+    * See the Sandy Bridge PRM, volume 2 part 1, page 312, and the Ivy Bridge
+    * PRM, volume 2 part 1, page 312-313.
+    *
+    * It seems HiZ buffer is aligned to 8x8, with every two rows packed into a
+    * memory row.
+    */
 
-   tex->halign_8 = (layout->align_i == 8);
-   tex->valign_4 = (layout->align_j == 4);
-   tex->array_spacing_full = layout->array_spacing_full;
-   tex->interleaved = layout->interleaved;
+   hz_width = align(layout->levels[0].w, 16);
+
+   if (templ->target == PIPE_TEXTURE_3D) {
+      unsigned lv;
+
+      hz_height = 0;
+
+      for (lv = 0; lv <= templ->last_level; lv++) {
+         const unsigned h = align(layout->levels[lv].h, hz_align_j);
+         hz_height += h * layout->levels[lv].d;
+      }
+
+      hz_height /= 2;
+   }
+   else {
+      const unsigned h0 = align(layout->levels[0].h, hz_align_j);
+      unsigned hz_qpitch = h0;
+
+      if (layout->array_spacing_full) {
+         const unsigned h1 = align(layout->levels[1].h, hz_align_j);
+         const unsigned htail =
+            ((layout->dev->gen >= ILO_GEN(7)) ? 12 : 11) * hz_align_j;
+
+         hz_qpitch += h1 + htail;
+      }
+
+      hz_height = hz_qpitch * templ->array_size / 2;
+
+      if (layout->dev->gen >= ILO_GEN(7))
+         hz_height = align(hz_height, 8);
+   }
+
+   /* align to Y-tile */
+   layout->hiz_stride = align(hz_width, 128);
+   layout->hiz_height = align(hz_height, 32);
 }
 
 static void
@@ -958,8 +1064,6 @@ tex_create_bo(struct ilo_texture *tex,
    struct ilo_screen *is = ilo_screen(tex->base.screen);
    const char *name;
    struct intel_bo *bo;
-   enum intel_tiling_mode tiling;
-   unsigned long pitch;
 
    switch (tex->base.target) {
    case PIPE_TEXTURE_1D:
@@ -992,9 +1096,16 @@ tex_create_bo(struct ilo_texture *tex,
    }
 
    if (handle) {
+      enum intel_tiling_mode tiling;
+      unsigned long pitch;
+
       bo = intel_winsys_import_handle(is->winsys, name, handle,
-            tex->bo_width, tex->bo_height, tex->bo_cpp,
-            &tiling, &pitch);
+            tex->bo_height, &tiling, &pitch);
+
+      if (bo) {
+         tex->tiling = tiling;
+         tex->bo_stride = pitch;
+      }
    }
    else {
       const uint32_t initial_domain =
@@ -1002,11 +1113,8 @@ tex_create_bo(struct ilo_texture *tex,
                             PIPE_BIND_RENDER_TARGET)) ?
          INTEL_DOMAIN_RENDER : 0;
 
-      bo = intel_winsys_alloc_texture(is->winsys, name,
-            tex->bo_width, tex->bo_height, tex->bo_cpp,
-            tex->tiling, initial_domain, &pitch);
-
-      tiling = tex->tiling;
+      bo = intel_winsys_alloc_bo(is->winsys, name, tex->tiling,
+            tex->bo_stride, tex->bo_height, initial_domain);
    }
 
    if (!bo)
@@ -1016,8 +1124,6 @@ tex_create_bo(struct ilo_texture *tex,
       intel_bo_unreference(tex->bo);
 
    tex->bo = bo;
-   tex->tiling = tiling;
-   tex->bo_stride = pitch;
 
    return true;
 }
@@ -1051,55 +1157,15 @@ tex_create_hiz(struct ilo_texture *tex, const struct tex_layout *layout)
 {
    struct ilo_screen *is = ilo_screen(tex->base.screen);
    const struct pipe_resource *templ = layout->templ;
-   const int hz_align_j = 8;
-   unsigned hz_width, hz_height, lv;
-   unsigned long pitch;
+   unsigned lv;
 
-   /*
-    * See the Sandy Bridge PRM, volume 2 part 1, page 312, and the Ivy Bridge
-    * PRM, volume 2 part 1, page 312-313.
-    *
-    * It seems HiZ buffer is aligned to 8x8, with every two rows packed into a
-    * memory row.
-    */
-
-   hz_width = align(layout->levels[0].w, 16);
-
-   if (templ->target == PIPE_TEXTURE_3D) {
-      hz_height = 0;
-
-      for (lv = 0; lv <= templ->last_level; lv++) {
-         const unsigned h = align(layout->levels[lv].h, hz_align_j);
-         hz_height += h * layout->levels[lv].d;
-      }
-
-      hz_height /= 2;
-   }
-   else {
-      const unsigned h0 = align(layout->levels[0].h, hz_align_j);
-      unsigned hz_qpitch = h0;
-
-      if (layout->array_spacing_full) {
-         const unsigned h1 = align(layout->levels[1].h, hz_align_j);
-         const unsigned htail =
-            ((layout->dev->gen >= ILO_GEN(7)) ? 12 : 11) * hz_align_j;
-
-         hz_qpitch += h1 + htail;
-      }
-
-      hz_height = hz_qpitch * templ->array_size / 2;
-
-      if (layout->dev->gen >= ILO_GEN(7))
-         hz_height = align(hz_height, 8);
-   }
-
-   tex->hiz.bo = intel_winsys_alloc_texture(is->winsys,
-         "hiz texture", hz_width, hz_height, 1,
-         INTEL_TILING_Y, INTEL_DOMAIN_RENDER, &pitch);
+   tex->hiz.bo = intel_winsys_alloc_bo(is->winsys, "hiz texture",
+         INTEL_TILING_Y, layout->hiz_stride, layout->hiz_height,
+         INTEL_DOMAIN_RENDER);
    if (!tex->hiz.bo)
       return false;
 
-   tex->hiz.bo_stride = pitch;
+   tex->hiz.bo_stride = layout->hiz_stride;
 
    /*
     * From the Sandy Bridge PRM, volume 2 part 1, page 313-314:
@@ -1177,6 +1243,42 @@ tex_create_hiz(struct ilo_texture *tex, const struct tex_layout *layout)
    return true;
 }
 
+static bool
+tex_apply_layout(struct ilo_texture *tex,
+                 const struct tex_layout *layout,
+                 const struct winsys_handle *handle)
+{
+   tex->bo_format = layout->format;
+
+   tex->tiling = layout->tiling;
+   tex->bo_stride = layout->bo_stride;
+   tex->bo_height = layout->bo_height;
+
+   tex->block_width = layout->block_width;
+   tex->block_height = layout->block_height;
+   tex->block_size = layout->block_size;
+
+   tex->halign_8 = (layout->align_i == 8);
+   tex->valign_4 = (layout->align_j == 4);
+   tex->array_spacing_full = layout->array_spacing_full;
+   tex->interleaved = layout->interleaved;
+
+   if (!tex_create_bo(tex, handle))
+      return false;
+
+   /* allocate separate stencil resource */
+   if (layout->separate_stencil && !tex_create_separate_stencil(tex))
+      return false;
+
+   if (layout->hiz && !tex_create_hiz(tex, layout)) {
+      /* Separate Stencil Buffer requires HiZ to be enabled */
+      if (layout->dev->gen == ILO_GEN(6) && layout->separate_stencil)
+         return false;
+   }
+
+   return true;
+}
+
 static void
 tex_destroy(struct ilo_texture *tex)
 {
@@ -1186,7 +1288,9 @@ tex_destroy(struct ilo_texture *tex)
    if (tex->separate_s8)
       tex_destroy(tex->separate_s8);
 
-   intel_bo_unreference(tex->bo);
+   if (tex->bo)
+      intel_bo_unreference(tex->bo);
+
    tex_free_slices(tex);
    FREE(tex);
 }
@@ -1234,43 +1338,16 @@ tex_create(struct pipe_screen *screen,
       break;
    }
 
-   tex_layout_validate(&layout);
-
-   /* make sure the bo can be mapped through GTT if tiled */
-   if (layout.tiling != INTEL_TILING_NONE) {
-      /*
-       * Usually only the first 256MB of the GTT is mappable.
-       *
-       * See also how intel_context::max_gtt_map_object_size is calculated.
-       */
-      const size_t mappable_gtt_size = 256 * 1024 * 1024;
-      const size_t size = tex_layout_estimate_size(&layout);
-
-      /* be conservative */
-      if (size > mappable_gtt_size / 4)
-         tex_layout_force_linear(&layout);
-   }
-
-   tex_layout_apply(&layout, tex);
-
-   if (!tex_create_bo(tex, handle)) {
-      tex_free_slices(tex);
-      FREE(tex);
-      return NULL;
-   }
-
-   /* allocate separate stencil resource */
-   if (layout.separate_stencil && !tex_create_separate_stencil(tex)) {
+   if (!tex_layout_calculate_bo_size(&layout)) {
       tex_destroy(tex);
       return NULL;
    }
 
-   if (layout.hiz && !tex_create_hiz(tex, &layout)) {
-      /* Separate Stencil Buffer requires HiZ to be enabled */
-      if (layout.dev->gen == ILO_GEN(6) && layout.separate_stencil) {
-         tex_destroy(tex);
-         return NULL;
-      }
+   tex_layout_calculate_hiz_size(&layout);
+
+   if (!tex_apply_layout(tex, &layout, handle)) {
+      tex_destroy(tex);
+      return NULL;
    }
 
    return &tex->base;
@@ -1283,35 +1360,9 @@ tex_get_handle(struct ilo_texture *tex, struct winsys_handle *handle)
    int err;
 
    err = intel_winsys_export_handle(is->winsys, tex->bo,
-         tex->tiling, tex->bo_stride, handle);
+         tex->tiling, tex->bo_stride, tex->bo_height, handle);
 
    return !err;
-}
-
-/**
- * Estimate the texture size.  For large textures, the errors should be pretty
- * small.
- */
-static size_t
-tex_estimate_size(struct pipe_screen *screen,
-                  const struct pipe_resource *templ)
-{
-   struct tex_layout layout;
-
-   tex_layout_init(&layout, screen, templ, NULL);
-
-   switch (templ->target) {
-   case PIPE_TEXTURE_3D:
-      tex_layout_3d(&layout);
-      break;
-   default:
-      tex_layout_2d(&layout);
-      break;
-   }
-
-   tex_layout_validate(&layout);
-
-   return tex_layout_estimate_size(&layout);
 }
 
 static bool
@@ -1405,7 +1456,9 @@ buf_create(struct pipe_screen *screen, const struct pipe_resource *templ)
       buf->bo_size = align(buf->bo_size, 4096);
    }
 
-   if (!buf_create_bo(buf)) {
+   if (buf->bo_size < templ->width0 ||
+       buf->bo_size > max_resource_size ||
+       !buf_create_bo(buf)) {
       FREE(buf);
       return NULL;
    }
@@ -1417,19 +1470,23 @@ static boolean
 ilo_can_create_resource(struct pipe_screen *screen,
                         const struct pipe_resource *templ)
 {
-   /*
-    * We do not know if we will fail until we try to allocate the bo.
-    * So just set a limit on the texture size.
-    */
-   const size_t max_size = 1 * 1024 * 1024 * 1024;
-   size_t size;
+   struct tex_layout layout;
 
    if (templ->target == PIPE_BUFFER)
-      size = templ->width0;
-   else
-      size = tex_estimate_size(screen, templ);
+      return (templ->width0 <= max_resource_size);
 
-   return (size <= max_size);
+   tex_layout_init(&layout, screen, templ, NULL);
+
+   switch (templ->target) {
+   case PIPE_TEXTURE_3D:
+      tex_layout_3d(&layout);
+      break;
+   default:
+      tex_layout_2d(&layout);
+      break;
+   }
+
+   return tex_layout_calculate_bo_size(&layout);
 }
 
 static struct pipe_resource *
@@ -1555,7 +1612,7 @@ ilo_texture_get_slice_offset(const struct ilo_texture *tex,
    row_size = tex->bo_stride * tile_h;
 
    /* in bytes */
-   x = s->x / tex->block_width * tex->bo_cpp;
+   x = s->x / tex->block_width * tex->block_size;
    y = s->y / tex->block_height;
    slice_offset = row_size * (y / tile_h) + tile_size * (x / tile_w);
 
@@ -1572,7 +1629,7 @@ ilo_texture_get_slice_offset(const struct ilo_texture *tex,
     */
    if (x_offset) {
       /* in pixels */
-      x = (x % tile_w) / tex->bo_cpp * tex->block_width;
+      x = (x % tile_w) / tex->block_size * tex->block_width;
       assert(x % 4 == 0);
 
       *x_offset = x;

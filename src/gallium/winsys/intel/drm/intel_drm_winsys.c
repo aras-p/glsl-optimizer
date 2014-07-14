@@ -255,15 +255,36 @@ intel_winsys_read_reg(struct intel_winsys *winsys,
 }
 
 struct intel_bo *
-intel_winsys_alloc_buffer(struct intel_winsys *winsys,
-                          const char *name,
-                          unsigned long size,
-                          uint32_t initial_domain)
+intel_winsys_alloc_bo(struct intel_winsys *winsys,
+                      const char *name,
+                      enum intel_tiling_mode tiling,
+                      unsigned long pitch,
+                      unsigned long height,
+                      uint32_t initial_domain)
 {
    const bool for_render =
       (initial_domain & (INTEL_DOMAIN_RENDER | INTEL_DOMAIN_INSTRUCTION));
-   const int alignment = 4096; /* always page-aligned */
+   const unsigned int alignment = 4096; /* always page-aligned */
+   unsigned long size;
    drm_intel_bo *bo;
+
+   switch (tiling) {
+   case INTEL_TILING_X:
+      if (pitch % 512)
+         return NULL;
+      break;
+   case INTEL_TILING_Y:
+      if (pitch % 128)
+         return NULL;
+      break;
+   default:
+      break;
+   }
+
+   if (pitch > ULONG_MAX / height)
+      return NULL;
+
+   size = pitch * height;
 
    if (for_render) {
       bo = drm_intel_bo_alloc_for_render(winsys->bufmgr,
@@ -273,32 +294,16 @@ intel_winsys_alloc_buffer(struct intel_winsys *winsys,
       bo = drm_intel_bo_alloc(winsys->bufmgr, name, size, alignment);
    }
 
-   return (struct intel_bo *) bo;
-}
+   if (bo && tiling != INTEL_TILING_NONE) {
+      uint32_t real_tiling = tiling;
+      int err;
 
-struct intel_bo *
-intel_winsys_alloc_texture(struct intel_winsys *winsys,
-                           const char *name,
-                           int width, int height, int cpp,
-                           enum intel_tiling_mode tiling,
-                           uint32_t initial_domain,
-                           unsigned long *pitch)
-{
-   const unsigned long flags =
-      (initial_domain & (INTEL_DOMAIN_RENDER | INTEL_DOMAIN_INSTRUCTION)) ?
-      BO_ALLOC_FOR_RENDER : 0;
-   uint32_t real_tiling = tiling;
-   drm_intel_bo *bo;
-
-   bo = drm_intel_bo_alloc_tiled(winsys->bufmgr, name,
-         width, height, cpp, &real_tiling, pitch, flags);
-   if (!bo)
-      return NULL;
-
-   if (real_tiling != tiling) {
-      assert(!"tiling mismatch");
-      drm_intel_bo_unreference(bo);
-      return NULL;
+      err = drm_intel_bo_set_tiling(bo, &real_tiling, pitch);
+      if (err || real_tiling != tiling) {
+         assert(!"tiling mismatch");
+         drm_intel_bo_unreference(bo);
+         return NULL;
+      }
    }
 
    return (struct intel_bo *) bo;
@@ -308,7 +313,7 @@ struct intel_bo *
 intel_winsys_import_handle(struct intel_winsys *winsys,
                            const char *name,
                            const struct winsys_handle *handle,
-                           int width, int height, int cpp,
+                           unsigned long height,
                            enum intel_tiling_mode *tiling,
                            unsigned long *pitch)
 {
@@ -356,6 +361,7 @@ intel_winsys_export_handle(struct intel_winsys *winsys,
                            struct intel_bo *bo,
                            enum intel_tiling_mode tiling,
                            unsigned long pitch,
+                           unsigned long height,
                            struct winsys_handle *handle)
 {
    int err = 0;
