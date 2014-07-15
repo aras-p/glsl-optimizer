@@ -92,6 +92,58 @@ bblock_t::is_successor_of(const bblock_t *block) const
    return false;
 }
 
+static bool
+ends_block(const backend_instruction *inst)
+{
+   enum opcode op = inst->opcode;
+
+   return op == BRW_OPCODE_IF ||
+          op == BRW_OPCODE_ELSE ||
+          op == BRW_OPCODE_CONTINUE ||
+          op == BRW_OPCODE_BREAK ||
+          op == BRW_OPCODE_WHILE;
+}
+
+static bool
+starts_block(const backend_instruction *inst)
+{
+   enum opcode op = inst->opcode;
+
+   return op == BRW_OPCODE_DO ||
+          op == BRW_OPCODE_ENDIF;
+}
+
+bool
+bblock_t::can_combine_with(const bblock_t *that) const
+{
+   if ((const bblock_t *)this->link.next != that)
+      return false;
+
+   if (ends_block(this->end) ||
+       starts_block(that->start))
+      return false;
+
+   return true;
+}
+
+void
+bblock_t::combine_with(bblock_t *that)
+{
+   assert(this->can_combine_with(that));
+   foreach_list_typed (bblock_link, link, link, &this->children) {
+      assert(link->block == that);
+   }
+   foreach_list_typed (bblock_link, link, link, &that->parents) {
+      assert(link->block == this);
+   }
+
+   this->end_ip = that->end_ip;
+   this->end = that->end;
+   this->else_block = that->else_block;
+
+   this->cfg->remove_block(that);
+}
+
 void
 bblock_t::dump(backend_visitor *v)
 {

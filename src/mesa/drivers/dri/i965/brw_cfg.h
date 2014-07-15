@@ -60,6 +60,8 @@ struct bblock_t {
    void add_successor(void *mem_ctx, bblock_t *successor);
    bool is_predecessor_of(const bblock_t *block) const;
    bool is_successor_of(const bblock_t *block) const;
+   bool can_combine_with(const bblock_t *that) const;
+   void combine_with(bblock_t *that);
    void dump(backend_visitor *v);
 #endif
 
