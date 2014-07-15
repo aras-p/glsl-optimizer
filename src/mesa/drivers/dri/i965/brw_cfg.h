@@ -109,6 +109,10 @@ struct cfg_t {
    foreach_block (__block, __cfg)                              \
       foreach_inst_in_block (__type, __inst, __block)
 
+#define foreach_block_and_inst_safe(__block, __type, __inst, __cfg) \
+   foreach_block_safe (__block, __cfg)                              \
+      foreach_inst_in_block_safe (__type, __inst, __block)
+
 #define foreach_block(__block, __cfg)                          \
    foreach_list_typed (bblock_t, __block, link, &(__cfg)->block_list)
 
