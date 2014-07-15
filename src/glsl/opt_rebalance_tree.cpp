@@ -273,8 +273,8 @@ update_types(ir_instruction *ir, void *)
 
    const glsl_type *const new_type =
       glsl_type::get_instance(expr->type->base_type,
-                              MAX2(expr->operands[0]->type->components(),
-                                   expr->operands[1]->type->components()),
+                              MAX2(expr->operands[0]->type->vector_elements,
+                                   expr->operands[1]->type->vector_elements),
                               1);
    assert(new_type != glsl_type::error_type);
    expr->type = new_type;
