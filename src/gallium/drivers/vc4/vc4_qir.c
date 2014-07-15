@@ -63,6 +63,16 @@ static const struct qir_op_info qir_op_info[] = {
         [QOP_VPM_READ] = { "vpm_read", 0, 1, true },
         [QOP_TLB_COLOR_WRITE] = { "tlb_color", 0, 1, true },
         [QOP_VARY_ADD_C] = { "vary_add_c", 1, 1 },
+
+        [QOP_TEX_S] = { "tex_s", 0, 2 },
+        [QOP_TEX_T] = { "tex_t", 0, 2 },
+        [QOP_TEX_R] = { "tex_r", 0, 2 },
+        [QOP_TEX_B] = { "tex_b", 0, 2 },
+        [QOP_TEX_RESULT] = { "tex_result", 0, 0 },
+        [QOP_R4_UNPACK_A] = { "r4_unpack_a", 1, 0 },
+        [QOP_R4_UNPACK_B] = { "r4_unpack_b", 1, 0 },
+        [QOP_R4_UNPACK_C] = { "r4_unpack_c", 1, 0 },
+        [QOP_R4_UNPACK_D] = { "r4_unpack_d", 1, 0 },
 };
 
 static const char *

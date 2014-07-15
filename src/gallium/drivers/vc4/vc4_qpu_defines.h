@@ -195,6 +195,17 @@ enum qpu_pack_a {
         QPU_PACK_A_8D_SAT,
 };
 
+enum qpu_unpack_r4 {
+        QPU_UNPACK_R4_NOP,
+        QPU_UNPACK_R4_F16A_TO_F32,
+        QPU_UNPACK_R4_F16B_TO_F32,
+        QPU_UNPACK_R4_8D_REP,
+        QPU_UNPACK_R4_8A,
+        QPU_UNPACK_R4_8B,
+        QPU_UNPACK_R4_8C,
+        QPU_UNPACK_R4_8D,
+};
+
 #define QPU_MASK(high, low) ((((uint64_t)1<<((high)-(low)+1))-1)<<(low))
 /* Using the GNU statement expression extension */
 #define QPU_SET_FIELD(value, field)                                       \
@@ -208,6 +219,9 @@ enum qpu_pack_a {
 
 #define QPU_SIG_SHIFT                   60
 #define QPU_SIG_MASK                    QPU_MASK(63, 60)
+
+#define QPU_UNPACK_SHIFT                57
+#define QPU_UNPACK_MASK                 QPU_MASK(59, 57)
 
 /**
  * If set, the pack field means PACK_MUL or R4 packing, instead of normal

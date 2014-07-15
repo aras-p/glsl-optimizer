@@ -490,6 +490,38 @@ vc4_generate_code(struct qcompile *c)
                         break;
                 }
 
+                case QOP_TEX_S:
+                case QOP_TEX_T:
+                case QOP_TEX_R:
+                case QOP_TEX_B:
+                        queue(c, qpu_inst(qpu_a_MOV(qpu_rb(QPU_W_TMU0_S +
+                                                           (qinst->op -
+                                                            QOP_TEX_S)),
+                                                    src[0]),
+                                          qpu_m_NOP()));
+                        break;
+
+                case QOP_TEX_RESULT:
+                        queue(c, qpu_inst(qpu_a_NOP(), qpu_m_NOP()));
+                        *last_inst(c) = qpu_set_sig(*last_inst(c),
+                                                    QPU_SIG_LOAD_TMU0);
+
+                        break;
+
+                case QOP_R4_UNPACK_A:
+                case QOP_R4_UNPACK_B:
+                case QOP_R4_UNPACK_C:
+                case QOP_R4_UNPACK_D:
+                        queue(c, qpu_inst(qpu_a_MOV(dst, qpu_r4()),
+                                          qpu_m_NOP()));
+                        *last_inst(c) |= QPU_PM;
+                        *last_inst(c) |= QPU_SET_FIELD(QPU_UNPACK_R4_8A +
+                                                       (qinst->op -
+                                                        QOP_R4_UNPACK_A),
+                                                       QPU_UNPACK);
+
+                        break;
+
                 default:
                         assert(qinst->op < ARRAY_SIZE(translate));
                         assert(translate[qinst->op].op != 0); /* NOPs */

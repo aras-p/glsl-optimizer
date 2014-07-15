@@ -93,6 +93,17 @@ static const char *qpu_pack_mul[] = {
         [QPU_PACK_MUL_8D] = "8d",
 };
 
+static const char *qpu_unpack_r4[] = {
+        [QPU_UNPACK_R4_NOP] = "",
+        [QPU_UNPACK_R4_F16A_TO_F32] = "f16a",
+        [QPU_UNPACK_R4_F16B_TO_F32] = "f16b",
+        [QPU_UNPACK_R4_8D_REP] = "8d_rep",
+        [QPU_UNPACK_R4_8A] = "8a",
+        [QPU_UNPACK_R4_8B] = "8b",
+        [QPU_UNPACK_R4_8C] = "8c",
+        [QPU_UNPACK_R4_8D] = "8d",
+};
+
 static const char *special_read_a[] = {
         "uni",
         NULL,
@@ -263,6 +274,7 @@ print_alu_src(uint64_t inst, uint32_t mux)
         uint32_t raddr = (is_a ?
                           QPU_GET_FIELD(inst, QPU_RADDR_A) :
                           QPU_GET_FIELD(inst, QPU_RADDR_B));
+        uint32_t unpack = QPU_GET_FIELD(inst, QPU_UNPACK);
 
         if (mux <= QPU_MUX_R5)
                 fprintf(stderr, "r%d", mux);
@@ -286,6 +298,11 @@ print_alu_src(uint64_t inst, uint32_t mux)
                         fprintf(stderr, "%s", DESC(special_read_a, raddr - 32));
                 else
                         fprintf(stderr, "%s", DESC(special_read_b, raddr - 32));
+        }
+
+        if (mux == QPU_MUX_R4 && (inst & QPU_PM) &&
+            unpack != QPU_UNPACK_R4_NOP) {
+                fprintf(stderr, ".%s", DESC(qpu_unpack_r4, unpack));
         }
 }
 

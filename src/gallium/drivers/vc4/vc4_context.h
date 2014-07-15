@@ -197,6 +197,7 @@ void *vc4_simulator_alloc(struct vc4_screen *screen, uint32_t size);
 void vc4_get_uniform_bo(struct vc4_context *vc4,
                         struct vc4_compiled_shader *shader,
                         struct vc4_constbuf_stateobj *cb,
+                        struct vc4_texture_stateobj *texstate,
                         int shader_index, struct vc4_bo **out_bo,
                         uint32_t *out_offset);
 

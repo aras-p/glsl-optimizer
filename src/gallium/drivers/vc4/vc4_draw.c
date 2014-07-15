@@ -171,12 +171,15 @@ vc4_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
         uint32_t fs_ubo_offset, vs_ubo_offset, cs_ubo_offset;
         vc4_get_uniform_bo(vc4, vc4->prog.fs,
                            &vc4->constbuf[PIPE_SHADER_FRAGMENT],
+                           &vc4->fragtex,
                            0, &fs_ubo, &fs_ubo_offset);
         vc4_get_uniform_bo(vc4, vc4->prog.vs,
                            &vc4->constbuf[PIPE_SHADER_VERTEX],
+                           &vc4->verttex,
                            0, &vs_ubo, &vs_ubo_offset);
         vc4_get_uniform_bo(vc4, vc4->prog.vs,
                            &vc4->constbuf[PIPE_SHADER_VERTEX],
+                           &vc4->verttex,
                            1, &cs_ubo, &cs_ubo_offset);
 
         cl_start_shader_reloc(&vc4->shader_rec, 6 + vtx->num_elements);
