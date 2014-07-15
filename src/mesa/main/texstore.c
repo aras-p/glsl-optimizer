@@ -3540,35 +3540,95 @@ _mesa_texstore_abgr2101010(TEXSTORE_PARAMS)
    return GL_TRUE;
 }
 
+
 static GLboolean
-_mesa_texstore_null(TEXSTORE_PARAMS)
-{
-   (void) ctx; (void) dims;
-   (void) baseInternalFormat;
-   (void) dstFormat;
-   (void) dstRowStride; (void) dstSlices,
-   (void) srcWidth; (void) srcHeight; (void) srcDepth;
-   (void) srcFormat; (void) srcType;
-   (void) srcAddr;
-   (void) srcPacking;
-
-   /* should never happen */
-   _mesa_problem(NULL, "_mesa_texstore_null() is called");
-   return GL_FALSE;
-}
-
-
-/**
- * Return the StoreTexImageFunc pointer to store an image in the given format.
- */
-static StoreTexImageFunc
-_mesa_get_texstore_func(mesa_format format)
+texstore_depth_stencil(TEXSTORE_PARAMS)
 {
    static StoreTexImageFunc table[MESA_FORMAT_COUNT];
    static GLboolean initialized = GL_FALSE;
 
    if (!initialized) {
-      table[MESA_FORMAT_NONE] = _mesa_texstore_null;
+      memset(table, 0, sizeof table);
+
+      table[MESA_FORMAT_S8_UINT_Z24_UNORM] = _mesa_texstore_z24_s8;
+      table[MESA_FORMAT_Z24_UNORM_S8_UINT] = _mesa_texstore_s8_z24;
+      table[MESA_FORMAT_Z_UNORM16] = _mesa_texstore_z16;
+      table[MESA_FORMAT_Z24_UNORM_X8_UINT] = _mesa_texstore_x8_z24;
+      table[MESA_FORMAT_X8_UINT_Z24_UNORM] = _mesa_texstore_z24_x8;
+      table[MESA_FORMAT_Z_UNORM32] = _mesa_texstore_z32;
+      table[MESA_FORMAT_S_UINT8] = _mesa_texstore_s8;
+      table[MESA_FORMAT_Z_FLOAT32] = _mesa_texstore_z32;
+      table[MESA_FORMAT_Z32_FLOAT_S8X24_UINT] = _mesa_texstore_z32f_x24s8;
+
+      initialized = GL_TRUE;
+   }
+
+   ASSERT(table[dstFormat]);
+   return table[dstFormat](ctx, dims, baseInternalFormat,
+                           dstFormat, dstRowStride, dstSlices,
+                           srcWidth, srcHeight, srcDepth,
+                           srcFormat, srcType, srcAddr, srcPacking);
+}
+
+static GLboolean
+texstore_compressed(TEXSTORE_PARAMS)
+{
+   static StoreTexImageFunc table[MESA_FORMAT_COUNT];
+   static GLboolean initialized = GL_FALSE;
+
+   if (!initialized) {
+      memset(table, 0, sizeof table);
+
+      table[MESA_FORMAT_SRGB_DXT1] = _mesa_texstore_rgb_dxt1;
+      table[MESA_FORMAT_SRGBA_DXT1] = _mesa_texstore_rgba_dxt1;
+      table[MESA_FORMAT_SRGBA_DXT3] = _mesa_texstore_rgba_dxt3;
+      table[MESA_FORMAT_SRGBA_DXT5] = _mesa_texstore_rgba_dxt5;
+      table[MESA_FORMAT_RGB_FXT1] = _mesa_texstore_rgb_fxt1;
+      table[MESA_FORMAT_RGBA_FXT1] = _mesa_texstore_rgba_fxt1;
+      table[MESA_FORMAT_RGB_DXT1] = _mesa_texstore_rgb_dxt1;
+      table[MESA_FORMAT_RGBA_DXT1] = _mesa_texstore_rgba_dxt1;
+      table[MESA_FORMAT_RGBA_DXT3] = _mesa_texstore_rgba_dxt3;
+      table[MESA_FORMAT_RGBA_DXT5] = _mesa_texstore_rgba_dxt5;
+      table[MESA_FORMAT_R_RGTC1_UNORM] = _mesa_texstore_red_rgtc1;
+      table[MESA_FORMAT_R_RGTC1_SNORM] = _mesa_texstore_signed_red_rgtc1;
+      table[MESA_FORMAT_RG_RGTC2_UNORM] = _mesa_texstore_rg_rgtc2;
+      table[MESA_FORMAT_RG_RGTC2_SNORM] = _mesa_texstore_signed_rg_rgtc2;
+      table[MESA_FORMAT_L_LATC1_UNORM] = _mesa_texstore_red_rgtc1;
+      table[MESA_FORMAT_L_LATC1_SNORM] = _mesa_texstore_signed_red_rgtc1;
+      table[MESA_FORMAT_LA_LATC2_UNORM] = _mesa_texstore_rg_rgtc2;
+      table[MESA_FORMAT_LA_LATC2_SNORM] = _mesa_texstore_signed_rg_rgtc2;
+      table[MESA_FORMAT_ETC1_RGB8] = _mesa_texstore_etc1_rgb8;
+      table[MESA_FORMAT_ETC2_RGB8] = _mesa_texstore_etc2_rgb8;
+      table[MESA_FORMAT_ETC2_SRGB8] = _mesa_texstore_etc2_srgb8;
+      table[MESA_FORMAT_ETC2_RGBA8_EAC] = _mesa_texstore_etc2_rgba8_eac;
+      table[MESA_FORMAT_ETC2_SRGB8_ALPHA8_EAC] = _mesa_texstore_etc2_srgb8_alpha8_eac;
+      table[MESA_FORMAT_ETC2_R11_EAC] = _mesa_texstore_etc2_r11_eac;
+      table[MESA_FORMAT_ETC2_RG11_EAC] = _mesa_texstore_etc2_rg11_eac;
+      table[MESA_FORMAT_ETC2_SIGNED_R11_EAC] = _mesa_texstore_etc2_signed_r11_eac;
+      table[MESA_FORMAT_ETC2_SIGNED_RG11_EAC] = _mesa_texstore_etc2_signed_rg11_eac;
+      table[MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1] =
+         _mesa_texstore_etc2_rgb8_punchthrough_alpha1;
+      table[MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1] =
+         _mesa_texstore_etc2_srgb8_punchthrough_alpha1;
+
+      initialized = GL_TRUE;
+   }
+
+   ASSERT(table[dstFormat]);
+   return table[dstFormat](ctx, dims, baseInternalFormat,
+                           dstFormat, dstRowStride, dstSlices,
+                           srcWidth, srcHeight, srcDepth,
+                           srcFormat, srcType, srcAddr, srcPacking);
+}
+
+static GLboolean
+texstore_rgba(TEXSTORE_PARAMS)
+{
+   static StoreTexImageFunc table[MESA_FORMAT_COUNT];
+   static GLboolean initialized = GL_FALSE;
+
+   if (!initialized) {
+      memset(table, 0, sizeof table);
 
       table[MESA_FORMAT_A8B8G8R8_UNORM] = _mesa_texstore_rgba8888;
       table[MESA_FORMAT_R8G8B8A8_UNORM] = _mesa_texstore_rgba8888;
@@ -3608,28 +3668,11 @@ _mesa_get_texstore_func(mesa_format format)
       table[MESA_FORMAT_R16G16_UNORM] = _mesa_texstore_unorm1616;
       table[MESA_FORMAT_G16R16_UNORM] = _mesa_texstore_unorm1616;
       table[MESA_FORMAT_B10G10R10A2_UNORM] = _mesa_texstore_argb2101010;
-      table[MESA_FORMAT_S8_UINT_Z24_UNORM] = _mesa_texstore_z24_s8;
-      table[MESA_FORMAT_Z24_UNORM_S8_UINT] = _mesa_texstore_s8_z24;
-      table[MESA_FORMAT_Z_UNORM16] = _mesa_texstore_z16;
-      table[MESA_FORMAT_Z24_UNORM_X8_UINT] = _mesa_texstore_x8_z24;
-      table[MESA_FORMAT_X8_UINT_Z24_UNORM] = _mesa_texstore_z24_x8;
-      table[MESA_FORMAT_Z_UNORM32] = _mesa_texstore_z32;
-      table[MESA_FORMAT_S_UINT8] = _mesa_texstore_s8;
       table[MESA_FORMAT_BGR_SRGB8] = _mesa_texstore_srgb8;
       table[MESA_FORMAT_A8B8G8R8_SRGB] = _mesa_texstore_srgba8;
       table[MESA_FORMAT_B8G8R8A8_SRGB] = _mesa_texstore_sargb8;
       table[MESA_FORMAT_L_SRGB8] = _mesa_texstore_sl8;
       table[MESA_FORMAT_L8A8_SRGB] = _mesa_texstore_sla8;
-      table[MESA_FORMAT_SRGB_DXT1] = _mesa_texstore_rgb_dxt1;
-      table[MESA_FORMAT_SRGBA_DXT1] = _mesa_texstore_rgba_dxt1;
-      table[MESA_FORMAT_SRGBA_DXT3] = _mesa_texstore_rgba_dxt3;
-      table[MESA_FORMAT_SRGBA_DXT5] = _mesa_texstore_rgba_dxt5;
-      table[MESA_FORMAT_RGB_FXT1] = _mesa_texstore_rgb_fxt1;
-      table[MESA_FORMAT_RGBA_FXT1] = _mesa_texstore_rgba_fxt1;
-      table[MESA_FORMAT_RGB_DXT1] = _mesa_texstore_rgb_dxt1;
-      table[MESA_FORMAT_RGBA_DXT1] = _mesa_texstore_rgba_dxt1;
-      table[MESA_FORMAT_RGBA_DXT3] = _mesa_texstore_rgba_dxt3;
-      table[MESA_FORMAT_RGBA_DXT5] = _mesa_texstore_rgba_dxt5;
       table[MESA_FORMAT_RGBA_FLOAT32] = _mesa_texstore_rgba_float32;
       table[MESA_FORMAT_RGBA_FLOAT16] = _mesa_texstore_rgba_float16;
       table[MESA_FORMAT_RGB_FLOAT32] = _mesa_texstore_rgba_float32;
@@ -3656,27 +3699,6 @@ _mesa_get_texstore_func(mesa_format format)
       table[MESA_FORMAT_RGB_SNORM16] = _mesa_texstore_signed_rgba_16;
       table[MESA_FORMAT_RGBA_SNORM16] = _mesa_texstore_signed_rgba_16;
       table[MESA_FORMAT_RGBA_UNORM16] = _mesa_texstore_rgba_16;
-      table[MESA_FORMAT_R_RGTC1_UNORM] = _mesa_texstore_red_rgtc1;
-      table[MESA_FORMAT_R_RGTC1_SNORM] = _mesa_texstore_signed_red_rgtc1;
-      table[MESA_FORMAT_RG_RGTC2_UNORM] = _mesa_texstore_rg_rgtc2;
-      table[MESA_FORMAT_RG_RGTC2_SNORM] = _mesa_texstore_signed_rg_rgtc2;
-      table[MESA_FORMAT_L_LATC1_UNORM] = _mesa_texstore_red_rgtc1;
-      table[MESA_FORMAT_L_LATC1_SNORM] = _mesa_texstore_signed_red_rgtc1;
-      table[MESA_FORMAT_LA_LATC2_UNORM] = _mesa_texstore_rg_rgtc2;
-      table[MESA_FORMAT_LA_LATC2_SNORM] = _mesa_texstore_signed_rg_rgtc2;
-      table[MESA_FORMAT_ETC1_RGB8] = _mesa_texstore_etc1_rgb8;
-      table[MESA_FORMAT_ETC2_RGB8] = _mesa_texstore_etc2_rgb8;
-      table[MESA_FORMAT_ETC2_SRGB8] = _mesa_texstore_etc2_srgb8;
-      table[MESA_FORMAT_ETC2_RGBA8_EAC] = _mesa_texstore_etc2_rgba8_eac;
-      table[MESA_FORMAT_ETC2_SRGB8_ALPHA8_EAC] = _mesa_texstore_etc2_srgb8_alpha8_eac;
-      table[MESA_FORMAT_ETC2_R11_EAC] = _mesa_texstore_etc2_r11_eac;
-      table[MESA_FORMAT_ETC2_RG11_EAC] = _mesa_texstore_etc2_rg11_eac;
-      table[MESA_FORMAT_ETC2_SIGNED_R11_EAC] = _mesa_texstore_etc2_signed_r11_eac;
-      table[MESA_FORMAT_ETC2_SIGNED_RG11_EAC] = _mesa_texstore_etc2_signed_rg11_eac;
-      table[MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1] =
-         _mesa_texstore_etc2_rgb8_punchthrough_alpha1;
-      table[MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1] =
-         _mesa_texstore_etc2_srgb8_punchthrough_alpha1;
       table[MESA_FORMAT_A_SNORM8] = _mesa_texstore_snorm8;
       table[MESA_FORMAT_L_SNORM8] = _mesa_texstore_snorm8;
       table[MESA_FORMAT_L8A8_SNORM] = _mesa_texstore_snorm88;
@@ -3774,10 +3796,12 @@ _mesa_get_texstore_func(mesa_format format)
       initialized = GL_TRUE;
    }
 
-   ASSERT(table[format]);
-   return table[format];
+   ASSERT(table[dstFormat]);
+   return table[dstFormat](ctx, dims, baseInternalFormat,
+                           dstFormat, dstRowStride, dstSlices,
+                           srcWidth, srcHeight, srcDepth,
+                           srcFormat, srcType, srcAddr, srcPacking);
 }
-
 
 GLboolean
 _mesa_texstore_needs_transfer_ops(struct gl_context *ctx,
@@ -3873,9 +3897,6 @@ _mesa_texstore_memcpy(TEXSTORE_PARAMS)
 GLboolean
 _mesa_texstore(TEXSTORE_PARAMS)
 {
-   StoreTexImageFunc storeImage;
-   GLboolean success;
-
    if (_mesa_texstore_memcpy(ctx, dims, baseInternalFormat,
                              dstFormat,
                              dstRowStride, dstSlices,
@@ -3884,14 +3905,22 @@ _mesa_texstore(TEXSTORE_PARAMS)
       return GL_TRUE;
    }
 
-   storeImage = _mesa_get_texstore_func(dstFormat);
-
-   success = storeImage(ctx, dims, baseInternalFormat,
-                        dstFormat,
-                        dstRowStride, dstSlices,
-                        srcWidth, srcHeight, srcDepth,
-                        srcFormat, srcType, srcAddr, srcPacking);
-   return success;
+   if (_mesa_is_depth_or_stencil_format(baseInternalFormat)) {
+      return texstore_depth_stencil(ctx, dims, baseInternalFormat,
+                                    dstFormat, dstRowStride, dstSlices,
+                                    srcWidth, srcHeight, srcDepth,
+                                    srcFormat, srcType, srcAddr, srcPacking);
+   } else if (_mesa_is_format_compressed(dstFormat)) {
+      return texstore_compressed(ctx, dims, baseInternalFormat,
+                                 dstFormat, dstRowStride, dstSlices,
+                                 srcWidth, srcHeight, srcDepth,
+                                 srcFormat, srcType, srcAddr, srcPacking);
+   } else {
+      return texstore_rgba(ctx, dims, baseInternalFormat,
+                           dstFormat, dstRowStride, dstSlices,
+                           srcWidth, srcHeight, srcDepth,
+                           srcFormat, srcType, srcAddr, srcPacking);
+   }
 }
 
 
