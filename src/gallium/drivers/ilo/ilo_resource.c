@@ -63,10 +63,13 @@ struct tex_layout {
 };
 
 /*
- * We do not know if we will fail until we try to allocate the bo.
- * So just set a limit on the texture size.
+ * From the Ivy Bridge PRM, volume 1 part 1, page 105:
+ *
+ *     "In addition to restrictions on maximum height, width, and depth,
+ *      surfaces are also restricted to a maximum size in bytes. This
+ *      maximum is 2 GB for all products and all surface types."
  */
-static const size_t max_resource_size = 1u << 30;
+static const size_t max_resource_size = 1u << 31;
 
 static void
 tex_layout_init_qpitch(struct tex_layout *layout)

@@ -309,23 +309,12 @@ ilo_get_param(struct pipe_screen *screen, enum pipe_cap param)
        *           Max WxHxD for 2D and CUBE     Max WxHxD for 3D
        *  GEN6           8192x8192x512            2048x2048x2048
        *  GEN7         16384x16384x2048           2048x2048x2048
-       *
-       * However, when the texutre size is large, things become unstable.  We
-       * require the maximum texture size to be 2^30 bytes in
-       * screen->can_create_resource().  Since the maximum pixel size is 2^4
-       * bytes (PIPE_FORMAT_R32G32B32A32_FLOAT), textures should not have more
-       * than 2^26 pixels.
-       *
-       * For 3D textures, we have to set the maximum number of levels to 9,
-       * which has at most 2^24 pixels.  For 2D textures, we set it to 14,
-       * which has at most 2^26 pixels.  And for cube textures, we has to set
-       * it to 12.
        */
-      return 14;
+      return (is->dev.gen >= ILO_GEN(7)) ? 15 : 14;
    case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
-      return 9;
-   case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
       return 12;
+   case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
+      return (is->dev.gen >= ILO_GEN(7)) ? 15 : 14;
    case PIPE_CAP_TEXTURE_MIRROR_CLAMP:
       return false;
    case PIPE_CAP_BLEND_EQUATION_SEPARATE:
