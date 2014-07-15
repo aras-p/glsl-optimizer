@@ -1478,6 +1478,7 @@ CodeEmitterGK110::emitLOAD(const Instruction *i)
       offset &= 0xffff;
       code[0] = 0x00000002;
       code[1] = 0x7c800000 | (i->src(0).get()->reg.fileIndex << 7);
+      code[1] |= i->subOp << 15;
       break;
    default:
       assert(!"invalid memory file");
