@@ -26,6 +26,7 @@
  */
 
 #include "brw_fs.h"
+#include "brw_cfg.h"
 #include "glsl/glsl_types.h"
 #include "glsl/ir_optimization.h"
 
@@ -533,8 +534,8 @@ fs_visitor::assign_regs(bool allow_spilling)
 }
 
 void
-fs_visitor::emit_unspill(fs_inst *inst, fs_reg dst, uint32_t spill_offset,
-                         int count)
+fs_visitor::emit_unspill(bblock_t *block, fs_inst *inst, fs_reg dst,
+                         uint32_t spill_offset, int count)
 {
    for (int i = 0; i < count; i++) {
       /* The gen7 descriptor-based offset is 12 bits of HWORD units. */
@@ -553,7 +554,7 @@ fs_visitor::emit_unspill(fs_inst *inst, fs_reg dst, uint32_t spill_offset,
          unspill_inst->base_mrf = 14;
          unspill_inst->mlen = 1; /* header contains offset */
       }
-      inst->insert_before(unspill_inst);
+      inst->insert_before(block, unspill_inst);
 
       dst.reg_offset++;
       spill_offset += dispatch_width * sizeof(float);
@@ -668,12 +669,14 @@ fs_visitor::spill_reg(int spill_reg)
 
    last_scratch += size * reg_size;
 
+   calculate_cfg();
+
    /* Generate spill/unspill instructions for the objects being
     * spilled.  Right now, we spill or unspill the whole thing to a
     * virtual grf of the same size.  For most instructions, though, we
     * could just spill/unspill the GRF being accessed.
     */
-   foreach_in_list(fs_inst, inst, &instructions) {
+   foreach_block_and_inst (block, fs_inst, inst, cfg) {
       for (unsigned int i = 0; i < inst->sources; i++) {
 	 if (inst->src[i].file == GRF &&
 	     inst->src[i].reg == spill_reg) {
@@ -685,7 +688,8 @@ fs_visitor::spill_reg(int spill_reg)
             inst->src[i].reg = unspill_dst.reg;
             inst->src[i].reg_offset = 0;
 
-            emit_unspill(inst, unspill_dst, subset_spill_offset, regs_read);
+            emit_unspill(block, inst, unspill_dst, subset_spill_offset,
+                         regs_read);
 	 }
       }
 
@@ -704,7 +708,7 @@ fs_visitor::spill_reg(int spill_reg)
 	  */
 	 if (inst->predicate || inst->force_uncompressed ||
              inst->force_sechalf || inst->dst.subreg_offset) {
-            emit_unspill(inst, spill_src, subset_spill_offset,
+            emit_unspill(block, inst, spill_src, subset_spill_offset,
                          inst->regs_written);
 	 }
 
@@ -718,10 +722,10 @@ fs_visitor::spill_reg(int spill_reg)
 	    spill_inst->annotation = inst->annotation;
 	    spill_inst->mlen = 1 + dispatch_width / 8; /* header, value */
 	    spill_inst->base_mrf = spill_base_mrf;
-	    inst->insert_after(spill_inst);
+	    inst->insert_after(block, spill_inst);
 	 }
       }
    }
 
-   invalidate_live_intervals();
+   invalidate_live_intervals(false);
 }
