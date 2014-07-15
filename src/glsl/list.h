@@ -411,9 +411,9 @@ static inline unsigned
 exec_list_length(const struct exec_list *list)
 {
    unsigned size = 0;
+   struct exec_node *node;
 
-   for (struct exec_node *node = list->head; node->next != NULL;
-	node = node->next) {
+   for (node = list->head; node->next != NULL; node = node->next) {
       size++;
    }
 
