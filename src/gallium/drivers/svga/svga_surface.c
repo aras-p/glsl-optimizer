@@ -127,7 +127,6 @@ svga_texture_view_surface(struct svga_context *svga,
    key->size.height = u_minify(tex->b.b.height0, start_mip);
    key->size.depth = zslice_pick < 0 ? u_minify(tex->b.b.depth0, start_mip) : 1;
    key->cachable = 1;
-   assert(key->size.depth == 1);
    
    if (tex->b.b.target == PIPE_TEXTURE_CUBE && face_pick < 0) {
       key->flags |= SVGA3D_SURFACE_CUBEMAP;
