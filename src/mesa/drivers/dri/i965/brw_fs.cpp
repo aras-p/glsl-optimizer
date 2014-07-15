@@ -2053,8 +2053,7 @@ bool
 fs_visitor::compute_to_mrf()
 {
    bool progress = false;
-   int next_ip = 0, block_size = 0, step = dispatch_width / 8;
-   fs_inst *block_start = NULL, *block_end = NULL;
+   int next_ip = 0;
 
    calculate_live_intervals();
 
@@ -2068,27 +2067,8 @@ fs_visitor::compute_to_mrf()
 	  inst->dst.type != inst->src[0].type ||
 	  inst->src[0].abs || inst->src[0].negate ||
           !inst->src[0].is_contiguous() ||
-          inst->src[0].subreg_offset) {
-         block_start = NULL;
+          inst->src[0].subreg_offset)
 	 continue;
-      }
-
-      /* We're trying to identify a block of GRF-to-MRF MOVs for the purpose
-       * of rewriting the send that assigned the GRFs to just return in the
-       * MRFs directly.  send can't saturate, so if any of the MOVs do that,
-       * cancel the block.
-       */
-      if (inst->saturate) {
-         block_start = NULL;
-      } else if (block_start && inst->dst.reg == block_end->dst.reg + step &&
-                 inst->src[0].reg == block_end->src[0].reg &&
-                 inst->src[0].reg_offset == block_end->src[0].reg_offset + 1) {
-         block_size++;
-         block_end = inst;
-      } else if (inst->src[0].reg_offset == 0) {
-         block_size = 1;
-         block_start = block_end = inst;
-      }
 
       /* Work out which hardware MRF registers are written by this
        * instruction.
@@ -2131,8 +2111,14 @@ fs_visitor::compute_to_mrf()
 	    if (scan_inst->is_partial_write())
 	       break;
 
-	    /* SEND instructions can't have MRF as a destination before Gen7. */
-	    if (brw->gen < 7 && scan_inst->mlen)
+            /* Things returning more than one register would need us to
+             * understand coalescing out more than one MOV at a time.
+             */
+            if (scan_inst->regs_written > 1)
+               break;
+
+	    /* SEND instructions can't have MRF as a destination. */
+	    if (scan_inst->mlen)
 	       break;
 
 	    if (brw->gen == 6) {
@@ -2143,35 +2129,6 @@ fs_visitor::compute_to_mrf()
 		  break;
 	       }
 	    }
-
-            /* We have a contiguous block of mov to MRF that aligns with the
-             * return registers of a send instruction.  Modify the send
-             * instruction to just return in the MRFs.
-             */
-            if (scan_inst->mlen > 0 &&
-                scan_inst->regs_written == block_size && block_size > 1) {
-               int i = 0;
-
-               scan_inst->dst.file = MRF;
-               scan_inst->dst.reg = block_start->dst.reg;
-               assert(!block_start->saturate);
-
-               for (fs_inst *next, *mov = block_start;
-                    i < block_size;
-                    mov = next, i++) {
-                  next = (fs_inst *) mov->next;
-                  mov->remove();
-               }
-
-               progress = true;
-               break;
-            }
-
-            /* If the block size we've tracked doesn't match the regs_written
-             * of the instruction, we can't do anything.
-             */
-            if (scan_inst->regs_written > 1)
-               break;
 
 	    if (scan_inst->dst.reg_offset == inst->src[0].reg_offset) {
 	       /* Found the creator of our MRF's source value. */
