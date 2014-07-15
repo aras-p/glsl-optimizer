@@ -32,6 +32,7 @@
 /* Look for and eliminate dead control flow:
  *
  *   - if/endif
+ *   . else in else/endif
  *   - if/else/endif
  */
 bool
@@ -54,24 +55,28 @@ dead_control_flow_eliminate(backend_visitor *v)
 
       backend_instruction *if_inst = NULL, *else_inst = NULL;
       backend_instruction *prev_inst = (backend_instruction *) endif_inst->prev;
+      if (prev_inst->opcode == BRW_OPCODE_ELSE) {
+         else_inst = prev_inst;
+         found = true;
+
+         prev_inst = (backend_instruction *) prev_inst->prev;
+      }
+
       if (prev_inst->opcode == BRW_OPCODE_IF) {
          if_inst = prev_inst;
          found = true;
-      } else if (prev_inst->opcode == BRW_OPCODE_ELSE) {
-         else_inst = prev_inst;
-
-         prev_inst = (backend_instruction *) prev_inst->prev;
-         if (prev_inst->opcode == BRW_OPCODE_IF) {
-            if_inst = prev_inst;
-            found = true;
-         }
+      } else {
+         /* Don't remove the ENDIF if we didn't find a dead IF. */
+         endif_inst = NULL;
       }
 
       if (found) {
-         if_inst->remove();
+         if (if_inst)
+            if_inst->remove();
          if (else_inst)
             else_inst->remove();
-         endif_inst->remove();
+         if (endif_inst)
+            endif_inst->remove();
          progress = true;
       }
    }
