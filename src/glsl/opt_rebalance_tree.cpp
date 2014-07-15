@@ -217,7 +217,9 @@ is_reduction(ir_instruction *ir, void *data)
     * constant fold once split up. Handling matrices will need some more
     * work.
     */
-   if (expr->type->is_matrix()) {
+   if (expr->type->is_matrix() ||
+       expr->operands[0]->type->is_matrix() ||
+       (expr->operands[1] && expr->operands[1]->type->is_matrix())) {
       ird->is_reduction = false;
       return;
    }
