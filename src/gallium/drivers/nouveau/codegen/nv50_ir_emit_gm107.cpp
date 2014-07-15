@@ -2100,6 +2100,7 @@ CodeEmitterGM107::emitLDC()
 {
    emitInsn (0xef900000);
    emitLDSTs(0x30, insn->dType);
+   emitField(0x2c, 2, insn->subOp);
    emitCBUF (0x24, 0x08, 0x14, 16, 0, insn->src(0));
    emitGPR  (0x00, insn->def(0));
 }
