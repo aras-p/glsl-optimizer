@@ -91,7 +91,7 @@ _mesa_GetActiveUniformsiv(GLuint program,
 
    if (uniformCount < 0) {
       _mesa_error(ctx, GL_INVALID_VALUE,
-		  "glGetUniformIndices(uniformCount < 0)");
+		  "glGetActiveUniformsiv(uniformCount < 0)");
       return;
    }
 
