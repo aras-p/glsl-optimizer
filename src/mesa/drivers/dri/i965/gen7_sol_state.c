@@ -223,27 +223,13 @@ upload_3dstate_streamout(struct brw_context *brw, bool active,
    uint32_t dw1 = 0, dw2 = 0;
    int i;
 
-   /*
-    * From ARB_transform_feedback3:
-    *
-    *   "When a generated primitive query for a vertex stream is active, the
-    *   primitives-generated count is incremented every time a primitive
-    *   emitted to that stream reaches the Discarding Rasterization stage
-    *   (see Section 3.x) right before rasterization. This counter is
-    *   incremented whether or not transform feedback is active."
-    *
-    * Since we can only keep track of generated primitives for each stream
-    * in the SOL stage we need to make sure it is always active even if
-    * transform beedback is not. This way we can track primitives generated
-    * in each stream via SO_PRIMITIVE_STORAGE_NEEDED.
-    */
-   dw1 |= SO_FUNCTION_ENABLE;
-   dw1 |= SO_STATISTICS_ENABLE;
-
    if (active) {
       int urb_entry_read_offset = 0;
       int urb_entry_read_length = (vue_map->num_slots + 1) / 2 -
 	 urb_entry_read_offset;
+
+      dw1 |= SO_FUNCTION_ENABLE;
+      dw1 |= SO_STATISTICS_ENABLE;
 
       /* _NEW_LIGHT */
       if (ctx->Light.ProvokingVertex != GL_FIRST_VERTEX_CONVENTION)

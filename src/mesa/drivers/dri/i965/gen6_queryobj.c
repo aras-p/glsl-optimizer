@@ -84,16 +84,11 @@ brw_store_register_mem64(struct brw_context *brw,
 
 static void
 write_primitives_generated(struct brw_context *brw,
-                           drm_intel_bo *query_bo, int stream, int idx)
+                           drm_intel_bo *query_bo, int idx)
 {
    intel_batchbuffer_emit_mi_flush(brw);
 
-   if (brw->gen >= 7) {
-      brw_store_register_mem64(brw, query_bo,
-                               GEN7_SO_PRIM_STORAGE_NEEDED(stream), idx);
-   } else {
-      brw_store_register_mem64(brw, query_bo, CL_INVOCATION_COUNT, idx);
-   }
+   brw_store_register_mem64(brw, query_bo, CL_INVOCATION_COUNT, idx);
 }
 
 static void
@@ -244,7 +239,7 @@ gen6_begin_query(struct gl_context *ctx, struct gl_query_object *q)
       break;
 
    case GL_PRIMITIVES_GENERATED:
-      write_primitives_generated(brw, query->bo, query->Base.Stream, 0);
+      write_primitives_generated(brw, query->bo, 0);
       break;
 
    case GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN:
@@ -282,7 +277,7 @@ gen6_end_query(struct gl_context *ctx, struct gl_query_object *q)
       break;
 
    case GL_PRIMITIVES_GENERATED:
-      write_primitives_generated(brw, query->bo, query->Base.Stream, 1);
+      write_primitives_generated(brw, query->bo, 1);
       break;
 
    case GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN:
