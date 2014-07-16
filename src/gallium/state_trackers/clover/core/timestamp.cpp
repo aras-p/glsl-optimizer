@@ -30,6 +30,7 @@ using namespace clover;
 timestamp::query::query(command_queue &q) :
    q(q),
    _query(q.pipe->create_query(q.pipe, PIPE_QUERY_TIMESTAMP, 0)) {
+   q.pipe->end_query(q.pipe, _query);
 }
 
 timestamp::query::query(query &&other) :
