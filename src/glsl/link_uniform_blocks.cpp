@@ -68,7 +68,8 @@ private:
    }
 
    virtual void visit_field(const glsl_type *type, const char *name,
-                            bool row_major, const glsl_type *record_type)
+                            bool row_major, const glsl_type *record_type,
+                            bool last_field)
    {
       assert(this->index < this->num_variables);
 

@@ -138,11 +138,15 @@ protected:
     * \param name  Fully qualified name of the field.
     * \param row_major  For a matrix type, is it stored row-major.
     * \param record_type  Type of the record containing the field.
+    * \param last_field   Set if \c name is the last field of the structure
+    *                     containing it.  This will always be false for items
+    *                     not contained in a structure or interface block.
     *
     * The default implementation just calls the other \c visit_field method.
     */
    virtual void visit_field(const glsl_type *type, const char *name,
-                            bool row_major, const glsl_type *record_type);
+                            bool row_major, const glsl_type *record_type,
+                            bool last_field);
 
    /**
     * Method invoked for each leaf of the variable
@@ -168,9 +172,13 @@ private:
    /**
     * \param name_length  Length of the current name \b not including the
     *                     terminating \c NUL character.
+    * \param last_field   Set if \c name is the last field of the structure
+    *                     containing it.  This will always be false for items
+    *                     not contained in a structure or interface block.
     */
    void recursion(const glsl_type *t, char **name, size_t name_length,
-                  bool row_major, const glsl_type *record_type);
+                  bool row_major, const glsl_type *record_type,
+                  bool last_field);
 };
 
 void
