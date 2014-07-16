@@ -408,6 +408,95 @@ void compute_memory_demote_item(struct compute_memory_pool *pool,
 	item->start_in_dw = -1;
 }
 
+/**
+ * Moves the item \a item forward in the pool to \a new_start_in_dw
+ *
+ * This function assumes two things:
+ * 1) The item is \b only moved forward
+ * 2) The item \b won't change it's position inside the \a item_list
+ *
+ * \param item			The item that will be moved
+ * \param new_start_in_dw	The new position of the item in \a item_list
+ */
+void compute_memory_move_item(struct compute_memory_pool *pool,
+	struct compute_memory_item *item, uint64_t new_start_in_dw,
+	struct pipe_context *pipe)
+{
+	struct pipe_screen *screen = (struct pipe_screen *)pool->screen;
+	struct r600_context *rctx = (struct r600_context *)pipe;
+	struct pipe_resource *src = (struct pipe_resource *)pool->bo;
+	struct pipe_resource *dst;
+	struct pipe_box box;
+
+	struct compute_memory_item *prev;
+
+	COMPUTE_DBG(pool->screen, "* compute_memory_move_item()\n"
+			"  + Moving item %i from %u (%u bytes) to %u (%u bytes)\n",
+			item->id, item->start_in_dw, item->start_in_dw * 4,
+			new_start_in_dw, new_start_in_dw * 4);
+
+	if (pool->item_list != item->link.prev) {
+		prev = container_of(item->link.prev, item, link);
+		assert(prev->start_in_dw + prev->size_in_dw <= new_start_in_dw);
+	}
+
+	u_box_1d(item->start_in_dw * 4, item->size_in_dw * 4, &box);
+
+	/* If the ranges don't overlap, we can just copy the item directly */
+	if (new_start_in_dw + item->size_in_dw <= item->start_in_dw) {
+		dst = (struct pipe_resource *)pool->bo;
+
+		rctx->b.b.resource_copy_region(pipe,
+			dst, 0, new_start_in_dw * 4, 0, 0,
+			src, 0, &box);
+	} else {
+		/* The ranges overlap, we will try first to use an intermediate
+		 * resource to move the item */
+		dst = (struct pipe_resource *)r600_compute_buffer_alloc_vram(
+				pool->screen, item->size_in_dw * 4);
+
+		if (dst != NULL) {
+			rctx->b.b.resource_copy_region(pipe,
+				dst, 0, 0, 0, 0,
+				src, 0, &box);
+
+			src = dst;
+			dst = (struct pipe_resource *)pool->bo;
+
+			box.x = 0;
+
+			rctx->b.b.resource_copy_region(pipe,
+				dst, 0, new_start_in_dw * 4, 0, 0,
+				src, 0, &box);
+
+			pool->screen->b.b.resource_destroy(screen, src);
+
+		} else {
+			/* The allocation of the temporary resource failed,
+			 * falling back to use mappings */
+			uint32_t *map;
+			int64_t offset;
+			struct pipe_transfer *trans;
+
+			offset = item->start_in_dw - new_start_in_dw;
+
+			u_box_1d(new_start_in_dw * 4, (offset + item->size_in_dw) * 4, &box);
+
+			map = pipe->transfer_map(pipe, src, 0, PIPE_TRANSFER_READ_WRITE,
+				&box, &trans);
+
+			assert(map);
+			assert(trans);
+
+			memmove(map, map + offset, item->size_in_dw * 4);
+
+			pipe->transfer_unmap(pipe, trans);
+		}
+	}
+
+	item->start_in_dw = new_start_in_dw;
+}
+
 void compute_memory_free(struct compute_memory_pool* pool, int64_t id)
 {
 	struct compute_memory_item *item, *next;
