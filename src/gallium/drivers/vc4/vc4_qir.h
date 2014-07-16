@@ -55,6 +55,7 @@ enum qop {
         QOP_SNE,
         QOP_SGE,
         QOP_SLT,
+        QOP_CMP,
 
         QOP_FTOI,
         QOP_RCP,

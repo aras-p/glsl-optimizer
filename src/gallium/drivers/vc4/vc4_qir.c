@@ -48,6 +48,7 @@ static const struct qir_op_info qir_op_info[] = {
         [QOP_SNE] = { "sne", 1, 2 },
         [QOP_SGE] = { "sge", 1, 2 },
         [QOP_SLT] = { "slt", 1, 2 },
+        [QOP_CMP] = { "cmp", 1, 3 },
 
         [QOP_FTOI] = { "ftoi", 1, 1 },
         [QOP_RCP] = { "rcp", 1, 1 },

@@ -332,6 +332,46 @@ vc4_generate_code(struct qcompile *c)
                         }
                         break;
 
+                case QOP_CMP:
+                        queue(c, qpu_inst(qpu_a_MOV(qpu_ra(QPU_W_NOP),
+                                                    src[0]),
+                                          qpu_m_NOP()));
+                        *last_inst(c) |= QPU_SF;
+
+                        if (dst.mux <= QPU_MUX_R3) {
+                                fixup_raddr_conflict(c, src[1], &src[2]);
+                                queue(c, qpu_inst(qpu_a_MOV(dst, src[1]),
+                                                  qpu_m_MOV(dst, src[2])));
+                                *last_inst(c) = ((*last_inst(c) & ~(QPU_COND_ADD_MASK |
+                                                                    QPU_COND_MUL_MASK))
+                                                 | QPU_SET_FIELD(QPU_COND_NS,
+                                                                 QPU_COND_ADD)
+                                                 | QPU_SET_FIELD(QPU_COND_NC,
+                                                                 QPU_COND_MUL));
+                        } else {
+                                if (dst.mux == src[1].mux &&
+                                    dst.addr == src[1].addr) {
+                                        queue(c, qpu_inst(qpu_a_MOV(dst, src[1]),
+                                                          qpu_m_NOP()));
+
+                                        queue(c, qpu_inst(qpu_a_MOV(dst, src[2]),
+                                                          qpu_m_NOP()));
+                                        *last_inst(c) = ((*last_inst(c) & ~(QPU_COND_ADD_MASK))
+                                                         | QPU_SET_FIELD(QPU_COND_NC,
+                                                                         QPU_COND_ADD));
+                                } else {
+                                        queue(c, qpu_inst(qpu_a_MOV(dst, src[2]),
+                                                          qpu_m_NOP()));
+
+                                        queue(c, qpu_inst(qpu_a_MOV(dst, src[1]),
+                                                          qpu_m_NOP()));
+                                        *last_inst(c) = ((*last_inst(c) & ~(QPU_COND_ADD_MASK))
+                                                         | QPU_SET_FIELD(QPU_COND_NS,
+                                                                         QPU_COND_ADD));
+                                }
+                        }
+                        break;
+
                 case QOP_SEQ:
                 case QOP_SNE:
                 case QOP_SGE:
