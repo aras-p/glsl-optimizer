@@ -302,6 +302,30 @@ int compute_memory_finalize_pending(struct compute_memory_pool* pool,
 	return 0;
 }
 
+/**
+ * Defragments the pool, so that there's no gap between items.
+ * \param pool	The pool to be defragmented
+ */
+void compute_memory_defrag(struct compute_memory_pool *pool,
+	struct pipe_context *pipe)
+{
+	struct compute_memory_item *item;
+	int64_t last_pos;
+
+	COMPUTE_DBG(pool->screen, "* compute_memory_defrag()\n");
+
+	last_pos = 0;
+	LIST_FOR_EACH_ENTRY(item, pool->item_list, link) {
+		if (item->start_in_dw != last_pos) {
+			assert(last_pos < item->start_in_dw);
+
+			compute_memory_move_item(pool, item, last_pos, pipe);
+		}
+
+		last_pos += align(item->size_in_dw, ITEM_ALIGNMENT);
+	}
+}
+
 int compute_memory_promote_item(struct compute_memory_pool *pool,
 		struct compute_memory_item *item, struct pipe_context *pipe,
 		int64_t allocated)
@@ -417,6 +441,7 @@ void compute_memory_demote_item(struct compute_memory_pool *pool,
  *
  * \param item			The item that will be moved
  * \param new_start_in_dw	The new position of the item in \a item_list
+ * \see compute_memory_defrag
  */
 void compute_memory_move_item(struct compute_memory_pool *pool,
 	struct compute_memory_item *item, uint64_t new_start_in_dw,

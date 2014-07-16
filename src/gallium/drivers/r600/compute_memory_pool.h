@@ -86,6 +86,9 @@ void compute_memory_shadow(struct compute_memory_pool* pool,
 int compute_memory_finalize_pending(struct compute_memory_pool* pool,
 	struct pipe_context * pipe);
 
+void compute_memory_defrag(struct compute_memory_pool *pool,
+	struct pipe_context *pipe);
+
 int compute_memory_promote_item(struct compute_memory_pool *pool,
 		struct compute_memory_item *item, struct pipe_context *pipe,
 		int64_t allocated);
