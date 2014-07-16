@@ -258,6 +258,10 @@ emit_tgsi_instruction(struct tgsi_to_qir *trans,
                 [TGSI_OPCODE_DP2] = { 0, tgsi_to_qir_dp2 },
                 [TGSI_OPCODE_DP3] = { 0, tgsi_to_qir_dp3 },
                 [TGSI_OPCODE_DP4] = { 0, tgsi_to_qir_dp4 },
+                [TGSI_OPCODE_RCP] = { QOP_RCP, tgsi_to_qir_alu },
+                [TGSI_OPCODE_RSQ] = { QOP_RSQ, tgsi_to_qir_alu },
+                [TGSI_OPCODE_EX2] = { QOP_EXP2, tgsi_to_qir_alu },
+                [TGSI_OPCODE_LG2] = { QOP_LOG2, tgsi_to_qir_alu },
                 [TGSI_OPCODE_LIT] = { QOP_MOV, tgsi_to_qir_alu }, /* XXX */
         };
         static int asdf = 0;

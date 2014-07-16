@@ -196,6 +196,43 @@ vc4_generate_code(struct qcompile *c)
                                                qpu_m_NOP());
                         break;
 
+                case QOP_RCP:
+                case QOP_RSQ:
+                case QOP_EXP2:
+                case QOP_LOG2:
+                        switch (qinst->op) {
+                        case QOP_RCP:
+                                insts[ni++] = qpu_inst(qpu_a_MOV(qpu_rb(QPU_W_SFU_RECIP),
+                                                                 src[0]),
+                                                       qpu_m_NOP());
+                                break;
+                        case QOP_RSQ:
+                                insts[ni++] = qpu_inst(qpu_a_MOV(qpu_rb(QPU_W_SFU_RECIPSQRT),
+                                                                 src[0]),
+                                                       qpu_m_NOP());
+                                break;
+                        case QOP_EXP2:
+                                insts[ni++] = qpu_inst(qpu_a_MOV(qpu_rb(QPU_W_SFU_EXP),
+                                                                 src[0]),
+                                                       qpu_m_NOP());
+                                break;
+                        case QOP_LOG2:
+                                insts[ni++] = qpu_inst(qpu_a_MOV(qpu_rb(QPU_W_SFU_LOG),
+                                                                 src[0]),
+                                                       qpu_m_NOP());
+                                break;
+                        default:
+                                abort();
+                        }
+
+                        insts[ni++] = qpu_inst(qpu_a_NOP(), qpu_m_NOP());
+                        insts[ni++] = qpu_inst(qpu_a_NOP(), qpu_m_NOP());
+
+                        insts[ni++] = qpu_inst(qpu_a_MOV(dst, qpu_r4()),
+                                               qpu_m_NOP());
+
+                        break;
+
                 case QOP_PACK_COLORS:
                         for (int i = 0; i < 4; i++) {
                                 insts[ni++] = qpu_inst(qpu_a_NOP(),
@@ -207,7 +244,6 @@ vc4_generate_code(struct qcompile *c)
 
                         insts[ni++] = qpu_inst(qpu_a_MOV(dst, qpu_r5()),
                                                qpu_m_NOP());
-
                         break;
 
                 case QOP_TLB_COLOR_WRITE:
