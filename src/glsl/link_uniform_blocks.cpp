@@ -92,13 +92,13 @@ private:
          unsigned len = strlen(close_bracket + 1) + 1;
 
          memmove(open_bracket, close_bracket + 1, len);
-     } else {
+      } else {
          v->IndexName = v->Name;
       }
 
       const unsigned alignment = record_type
-	 ? record_type->std140_base_alignment(v->RowMajor)
-	 : type->std140_base_alignment(v->RowMajor);
+         ? record_type->std140_base_alignment(v->RowMajor)
+         : type->std140_base_alignment(v->RowMajor);
       unsigned size = type->std140_size(v->RowMajor);
 
       this->offset = glsl_align(this->offset, alignment);
