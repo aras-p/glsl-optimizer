@@ -262,23 +262,10 @@ int compute_memory_finalize_pending(struct compute_memory_pool* pool,
 			unallocated += align(item->size_in_dw, ITEM_ALIGNMENT);
 	}
 
-	/* If we require more space than the size of the pool, then grow the
-	 * pool.
-	 *
-	 * XXX: I'm pretty sure this won't work.  Imagine this scenario:
-	 *
-	 * Offset Item Size
-	 *   0    A    50
-	 * 200    B    50
-	 * 400    C    50
-	 *
-	 * Total size = 450
-	 * Allocated size = 150
-	 * Pending Item D Size = 200
-	 *
-	 * In this case, there are 300 units of free space in the pool, but
-	 * they aren't contiguous, so it will be impossible to allocate Item D.
-	 */
+	if (pool->status & POOL_FRAGMENTED) {
+		compute_memory_defrag(pool, pipe);
+	}
+
 	if (pool->size_in_dw < allocated + unallocated) {
 		err = compute_memory_grow_pool(pool, pipe, allocated + unallocated);
 		if (err == -1)
@@ -324,6 +311,8 @@ void compute_memory_defrag(struct compute_memory_pool *pool,
 
 		last_pos += align(item->size_in_dw, ITEM_ALIGNMENT);
 	}
+
+	pool->status &= ~POOL_FRAGMENTED;
 }
 
 int compute_memory_promote_item(struct compute_memory_pool *pool,
@@ -430,6 +419,10 @@ void compute_memory_demote_item(struct compute_memory_pool *pool,
 
 	/* Remember to mark the buffer as 'pending' by setting start_in_dw to -1 */
 	item->start_in_dw = -1;
+
+	if (item->link.next != pool->item_list) {
+		pool->status |= POOL_FRAGMENTED;
+	}
 }
 
 /**
@@ -533,6 +526,11 @@ void compute_memory_free(struct compute_memory_pool* pool, int64_t id)
 	LIST_FOR_EACH_ENTRY_SAFE(item, next, pool->item_list, link) {
 
 		if (item->id == id) {
+
+			if (item->link.next != pool->item_list) {
+				pool->status |= POOL_FRAGMENTED;
+			}
+
 			list_del(&item->link);
 
 			if (item->real_buffer) {

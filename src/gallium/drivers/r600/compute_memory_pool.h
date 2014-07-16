@@ -32,6 +32,8 @@
 #define ITEM_FOR_PROMOTING      (1<<2)
 #define ITEM_FOR_DEMOTING       (1<<3)
 
+#define POOL_FRAGMENTED (1<<0)
+
 struct compute_memory_pool;
 
 struct compute_memory_item
@@ -59,6 +61,8 @@ struct compute_memory_pool
 	struct r600_screen *screen;
 
 	uint32_t *shadow; ///host copy of the pool, used for defragmentation
+
+	uint32_t status;	/**< Status of the pool */
 
 	struct list_head *item_list; ///Allocated memory chunks in the buffer,they must be ordered by "start_in_dw"
 	struct list_head *unallocated_list; ///Unallocated memory chunks
