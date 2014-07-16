@@ -239,6 +239,7 @@ int compute_memory_finalize_pending(struct compute_memory_pool* pool,
 
 	int64_t allocated = 0;
 	int64_t unallocated = 0;
+	int64_t last_pos;
 
 	int err = 0;
 
@@ -276,14 +277,18 @@ int compute_memory_finalize_pending(struct compute_memory_pool* pool,
 			return -1;
 	}
 
+	/* After defragmenting the pool, allocated is equal to the first available
+	 * position for new items in the pool */
+	last_pos = allocated;
+
 	/* Loop through all the unallocated items, check if they are marked
 	 * for promoting, allocate space for them and add them to the item_list. */
 	LIST_FOR_EACH_ENTRY_SAFE(item, next, pool->unallocated_list, link) {
 		if (item->status & ITEM_FOR_PROMOTING) {
-			err = compute_memory_promote_item(pool, item, pipe, allocated);
-			item->status ^= ITEM_FOR_PROMOTING;
+			err = compute_memory_promote_item(pool, item, pipe, last_pos);
+			item->status &= ~ITEM_FOR_PROMOTING;
 
-			allocated += align(item->size_in_dw, ITEM_ALIGNMENT);
+			last_pos += align(item->size_in_dw, ITEM_ALIGNMENT);
 
 			if (err == -1)
 				return -1;
@@ -321,42 +326,14 @@ void compute_memory_defrag(struct compute_memory_pool *pool,
 
 int compute_memory_promote_item(struct compute_memory_pool *pool,
 		struct compute_memory_item *item, struct pipe_context *pipe,
-		int64_t allocated)
+		int64_t start_in_dw)
 {
 	struct pipe_screen *screen = (struct pipe_screen *)pool->screen;
 	struct r600_context *rctx = (struct r600_context *)pipe;
 	struct pipe_resource *src = (struct pipe_resource *)item->real_buffer;
-	struct pipe_resource *dst = NULL;
+	struct pipe_resource *dst = (struct pipe_resource *)pool->bo;
 	struct pipe_box box;
 
-	struct list_head *pos;
-	int64_t start_in_dw;
-	int err = 0;
-
-
-	/* Search for free space in the pool for this item. */
-	while ((start_in_dw=compute_memory_prealloc_chunk(pool,
-					item->size_in_dw)) == -1) {
-		int64_t need = item->size_in_dw + 2048 -
-			(pool->size_in_dw - allocated);
-
-		if (need <= 0) {
-			/* There's enough free space, but it's too
-			 * fragmented. Assume half of the item can fit
-			 * int the last chunk */
-			need = (item->size_in_dw / 2) + ITEM_ALIGNMENT;
-		}
-
-		need = align(need, ITEM_ALIGNMENT);
-
-		err = compute_memory_grow_pool(pool,
-				pipe,
-				pool->size_in_dw + need);
-
-		if (err == -1)
-			return -1;
-	}
-	dst = (struct pipe_resource *)pool->bo;
 	COMPUTE_DBG(pool->screen, "  + Found space for Item %p id = %u "
 			"start_in_dw = %u (%u bytes) size_in_dw = %u (%u bytes)\n",
 			item, item->id, start_in_dw, start_in_dw * 4,
@@ -366,8 +343,7 @@ int compute_memory_promote_item(struct compute_memory_pool *pool,
 	list_del(&item->link);
 
 	/* Add it back to the item_list */
-	pos = compute_memory_postalloc_chunk(pool, start_in_dw);
-	list_add(&item->link, pos);
+	list_addtail(&item->link, pool->item_list);
 	item->start_in_dw = start_in_dw;
 
 	if (src != NULL) {

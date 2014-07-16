@@ -95,7 +95,7 @@ void compute_memory_defrag(struct compute_memory_pool *pool,
 
 int compute_memory_promote_item(struct compute_memory_pool *pool,
 		struct compute_memory_item *item, struct pipe_context *pipe,
-		int64_t allocated);
+		int64_t start_in_dw);
 
 void compute_memory_demote_item(struct compute_memory_pool *pool,
 	struct compute_memory_item *item, struct pipe_context *pipe);
