@@ -513,7 +513,7 @@ private:
 
    virtual void visit_field(const glsl_type *type, const char *name,
                             bool row_major, const glsl_type *record_type,
-                            bool /* last_field */)
+                            bool last_field)
    {
       assert(!type->without_array()->is_record());
       assert(!type->without_array()->is_interface());
@@ -581,6 +581,9 @@ private:
 	 this->ubo_byte_offset = glsl_align(this->ubo_byte_offset, alignment);
 	 this->uniforms[id].offset = this->ubo_byte_offset;
 	 this->ubo_byte_offset += type->std140_size(ubo_row_major);
+
+         if (last_field)
+            this->ubo_byte_offset = glsl_align(this->ubo_byte_offset, 16);
 
 	 if (type->is_array()) {
 	    this->uniforms[id].array_stride =

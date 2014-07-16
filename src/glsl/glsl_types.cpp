@@ -934,14 +934,20 @@ glsl_type::std140_size(bool row_major) const
     */
    if (this->is_record()) {
       unsigned size = 0;
+      unsigned max_align = 0;
+
       for (unsigned i = 0; i < this->length; i++) {
 	 const struct glsl_type *field_type = this->fields.structure[i].type;
 	 unsigned align = field_type->std140_base_alignment(row_major);
 	 size = glsl_align(size, align);
 	 size += field_type->std140_size(row_major);
+
+         max_align = MAX2(align, max_align);
+
+         if (field_type->is_record() && (i + 1 < this->length))
+            size = glsl_align(size, 16);
       }
-      size = glsl_align(size,
-			this->fields.structure[0].type->std140_base_alignment(row_major));
+      size = glsl_align(size, max_align);
       return size;
    }
 

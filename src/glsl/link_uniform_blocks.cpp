@@ -104,7 +104,20 @@ private:
 
       this->offset = glsl_align(this->offset, alignment);
       v->Offset = this->offset;
+
+      /* If this is the last field of a structure, apply rule #9.  The
+       * GL_ARB_uniform_buffer_object spec says:
+       *
+       *     "The structure may have padding at the end; the base offset of
+       *     the member following the sub-structure is rounded up to the next
+       *     multiple of the base alignment of the structure."
+       *
+       * last_field won't be set if this is the last field of a UBO that is
+       * not a named instance.
+       */
       this->offset += size;
+      if (last_field)
+         this->offset = glsl_align(this->offset, 16);
 
       /* From the GL_ARB_uniform_buffer_object spec:
        *
