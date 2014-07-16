@@ -225,6 +225,42 @@ tgsi_to_qir_mad(struct tgsi_to_qir *trans,
 }
 
 static struct qreg
+tgsi_to_qir_lit(struct tgsi_to_qir *trans,
+                 struct tgsi_full_instruction *tgsi_inst,
+                 enum qop op, struct qreg *src, int i)
+{
+        struct qcompile *c = trans->c;
+        struct qreg x = src[0 * 4 + 0];
+        struct qreg y = src[0 * 4 + 1];
+        struct qreg w = src[0 * 4 + 3];
+
+        switch (i) {
+        case 0:
+        case 3:
+                return qir_uniform_f(trans, 1.0);
+        case 1:
+                return qir_FMAX(c, src[0 * 4 + 0], qir_uniform_f(trans, 0.0));
+        case 2: {
+                struct qreg zero = qir_uniform_f(trans, 0.0);
+
+                /* XXX: Clamp w to -128..128 */
+                return qir_CMP(c,
+                               x,
+                               zero,
+                               qir_EXP2(c, qir_FMUL(c,
+                                                    w,
+                                                    qir_LOG2(c,
+                                                             qir_FMAX(c,
+                                                                      y,
+                                                                      zero)))));
+        }
+        default:
+                assert(!"not reached");
+                return c->undef;
+        }
+}
+
+static struct qreg
 tgsi_to_qir_lrp(struct tgsi_to_qir *trans,
                  struct tgsi_full_instruction *tgsi_inst,
                  enum qop op, struct qreg *src, int i)
@@ -372,7 +408,7 @@ emit_tgsi_instruction(struct tgsi_to_qir *trans,
                 [TGSI_OPCODE_RSQ] = { QOP_RSQ, tgsi_to_qir_alu },
                 [TGSI_OPCODE_EX2] = { QOP_EXP2, tgsi_to_qir_alu },
                 [TGSI_OPCODE_LG2] = { QOP_LOG2, tgsi_to_qir_alu },
-                [TGSI_OPCODE_LIT] = { QOP_MOV, tgsi_to_qir_alu }, /* XXX */
+                [TGSI_OPCODE_LIT] = { 0, tgsi_to_qir_lit },
                 [TGSI_OPCODE_LRP] = { 0, tgsi_to_qir_lrp },
                 [TGSI_OPCODE_POW] = { 0, tgsi_to_qir_pow },
         };
