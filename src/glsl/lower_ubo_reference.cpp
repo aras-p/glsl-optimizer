@@ -355,10 +355,17 @@ lower_ubo_reference_visitor::emit_ubo_loads(ir_dereference *deref,
 	    new(mem_ctx) ir_dereference_array(deref->clone(mem_ctx, NULL),
 					      col);
 
-	 /* std140 always rounds the stride of arrays (and matrices)
-	  * to a vec4, so matrices are always 16 between columns/rows.
-	  */
-	 emit_ubo_loads(col_deref, base_offset, deref_offset + i * 16);
+         if (ubo_var->RowMajor) {
+            /* For a row-major matrix, the next column starts at the next
+             * element.
+             */
+            emit_ubo_loads(col_deref, base_offset, deref_offset + i * 4);
+         } else {
+            /* std140 always rounds the stride of arrays (and matrices) to a
+             * vec4, so matrices are always 16 between columns/rows.
+             */
+            emit_ubo_loads(col_deref, base_offset, deref_offset + i * 16);
+         }
       }
       return;
    }
