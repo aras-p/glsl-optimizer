@@ -262,6 +262,10 @@ int compute_memory_finalize_pending(struct compute_memory_pool* pool,
 			unallocated += align(item->size_in_dw, ITEM_ALIGNMENT);
 	}
 
+	if (unallocated == 0) {
+		return 0;
+	}
+
 	if (pool->status & POOL_FRAGMENTED) {
 		compute_memory_defrag(pool, pipe);
 	}
