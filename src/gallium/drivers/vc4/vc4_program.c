@@ -244,6 +244,20 @@ tgsi_to_qir_lrp(struct tgsi_to_qir *trans,
 }
 
 static struct qreg
+tgsi_to_qir_pow(struct tgsi_to_qir *trans,
+                struct tgsi_full_instruction *tgsi_inst,
+                enum qop op, struct qreg *src, int i)
+{
+        struct qcompile *c = trans->c;
+
+        /* Note that this instruction replicates its result from the x channel
+         */
+        return qir_EXP2(c, qir_FMUL(c,
+                                    src[1 * 4 + 0],
+                                    qir_LOG2(c, src[0 * 4 + 0])));
+}
+
+static struct qreg
 tgsi_to_qir_dp(struct tgsi_to_qir *trans,
                struct tgsi_full_instruction *tgsi_inst,
                int num, struct qreg *src, int i)
@@ -360,6 +374,7 @@ emit_tgsi_instruction(struct tgsi_to_qir *trans,
                 [TGSI_OPCODE_LG2] = { QOP_LOG2, tgsi_to_qir_alu },
                 [TGSI_OPCODE_LIT] = { QOP_MOV, tgsi_to_qir_alu }, /* XXX */
                 [TGSI_OPCODE_LRP] = { 0, tgsi_to_qir_lrp },
+                [TGSI_OPCODE_POW] = { 0, tgsi_to_qir_pow },
         };
         static int asdf = 0;
         uint32_t tgsi_op = tgsi_inst->Instruction.Opcode;
