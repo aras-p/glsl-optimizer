@@ -4477,7 +4477,8 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 
 	if (inst->Instruction.Opcode == TGSI_OPCODE_TEX2 ||
 	    inst->Instruction.Opcode == TGSI_OPCODE_TXB2 ||
-	    inst->Instruction.Opcode == TGSI_OPCODE_TXL2)
+	    inst->Instruction.Opcode == TGSI_OPCODE_TXL2 ||
+	    inst->Instruction.Opcode == TGSI_OPCODE_TG4)
 		sampler_src_reg = 2;
 
 	src_gpr = tgsi_tex_get_src_gpr(ctx, 0);
@@ -5079,6 +5080,13 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 		case FETCH_OP_SAMPLE_G:
 			opcode = FETCH_OP_SAMPLE_C_G;
 			break;
+		/* Texture gather variants */
+		case FETCH_OP_GATHER4:
+			tex.op = FETCH_OP_GATHER4_C;
+			break;
+		case FETCH_OP_GATHER4_O:
+			tex.op = FETCH_OP_GATHER4_C_O;
+			break;
 		}
 	}
 
@@ -5089,9 +5097,21 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 	tex.resource_id = tex.sampler_id + R600_MAX_CONST_BUFFERS;
 	tex.src_gpr = src_gpr;
 	tex.dst_gpr = ctx->file_offset[inst->Dst[0].Register.File] + inst->Dst[0].Register.Index;
-	tex.dst_sel_x = (inst->Dst[0].Register.WriteMask & 1) ? 0 : 7;
-	tex.dst_sel_y = (inst->Dst[0].Register.WriteMask & 2) ? 1 : 7;
-	tex.dst_sel_z = (inst->Dst[0].Register.WriteMask & 4) ? 2 : 7;
+
+	if (inst->Instruction.Opcode == TGSI_OPCODE_TG4) {
+		int8_t texture_component_select = ctx->literals[4 * inst->Src[1].Register.Index + inst->Src[1].Register.SwizzleX];
+		tex.inst_mod = texture_component_select;
+
+		/* GATHER4 result order is different from TGSI TG4 */
+		tex.dst_sel_x = (inst->Dst[0].Register.WriteMask & 2) ? 1 : 7;
+		tex.dst_sel_y = (inst->Dst[0].Register.WriteMask & 4) ? 2 : 7;
+		tex.dst_sel_z = (inst->Dst[0].Register.WriteMask & 1) ? 0 : 7;
+	}
+	else {
+		tex.dst_sel_x = (inst->Dst[0].Register.WriteMask & 1) ? 0 : 7;
+		tex.dst_sel_y = (inst->Dst[0].Register.WriteMask & 2) ? 1 : 7;
+		tex.dst_sel_z = (inst->Dst[0].Register.WriteMask & 4) ? 2 : 7;
+	}
 	tex.dst_sel_w = (inst->Dst[0].Register.WriteMask & 8) ? 3 : 7;
 
 	if (inst->Instruction.Opcode == TGSI_OPCODE_TXQ_LZ) {
@@ -5132,7 +5152,13 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 
 	tex.offset_x = offset_x;
 	tex.offset_y = offset_y;
-	tex.offset_z = offset_z;
+	if (inst->Instruction.Opcode == TGSI_OPCODE_TG4 &&
+		inst->Texture.Texture == TGSI_TEXTURE_2D_ARRAY) {
+		tex.offset_z = 0;
+	}
+	else {
+		tex.offset_z = offset_z;
+	}
 
 	/* Put the depth for comparison in W.
 	 * TGSI_TEXTURE_SHADOW2D_ARRAY already has the depth in W.
@@ -5166,7 +5192,7 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 		tex.coord_type_z = 0;
 
 	/* mask unused source components */
-	if (opcode == FETCH_OP_SAMPLE) {
+	if (opcode == FETCH_OP_SAMPLE || opcode == FETCH_OP_GATHER4) {
 		switch (inst->Texture.Texture) {
 		case TGSI_TEXTURE_2D:
 		case TGSI_TEXTURE_RECT:
@@ -6640,6 +6666,9 @@ static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_TEX2,	0, FETCH_OP_SAMPLE, tgsi_tex},
 	{TGSI_OPCODE_TXB2,	0, FETCH_OP_SAMPLE_LB, tgsi_tex},
 	{TGSI_OPCODE_TXL2,	0, FETCH_OP_SAMPLE_L, tgsi_tex},
+	{TGSI_OPCODE_IMUL_HI, 0, ALU_OP0_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_UMUL_HI, 0, ALU_OP0_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_TG4,   0, FETCH_OP_GATHER4, tgsi_unsupported},
 	{TGSI_OPCODE_LAST,	0, ALU_OP0_NOP, tgsi_unsupported},
 };
 
@@ -6832,6 +6861,9 @@ static struct r600_shader_tgsi_instruction eg_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_TEX2,	0, FETCH_OP_SAMPLE, tgsi_tex},
 	{TGSI_OPCODE_TXB2,	0, FETCH_OP_SAMPLE_LB, tgsi_tex},
 	{TGSI_OPCODE_TXL2,	0, FETCH_OP_SAMPLE_L, tgsi_tex},
+	{TGSI_OPCODE_IMUL_HI, 0, ALU_OP0_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_UMUL_HI, 0, ALU_OP0_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_TG4,   0, FETCH_OP_GATHER4, tgsi_tex},
 	{TGSI_OPCODE_LAST,	0, ALU_OP0_NOP, tgsi_unsupported},
 };
 
@@ -7025,5 +7057,8 @@ static struct r600_shader_tgsi_instruction cm_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_TEX2,	0, FETCH_OP_SAMPLE, tgsi_tex},
 	{TGSI_OPCODE_TXB2,	0, FETCH_OP_SAMPLE_LB, tgsi_tex},
 	{TGSI_OPCODE_TXL2,	0, FETCH_OP_SAMPLE_L, tgsi_tex},
+	{TGSI_OPCODE_IMUL_HI, 0, ALU_OP0_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_UMUL_HI, 0, ALU_OP0_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_TG4,   0, FETCH_OP_GATHER4, tgsi_tex},
 	{TGSI_OPCODE_LAST,	0, ALU_OP0_NOP, tgsi_unsupported},
 };
