@@ -31,8 +31,8 @@
 #include "ilo_screen.h"
 #include "ilo_format.h"
 
-/* stolen from classic i965 */
-struct surface_format_info {
+/* this idea is taken from i965 */
+struct ilo_format_info {
    bool exists;
    int sampling;
    int filtering;
@@ -45,293 +45,265 @@ struct surface_format_info {
    int color_processing;
 };
 
-/* This macro allows us to write the table almost as it appears in the PRM,
- * while restructuring it to turn it into the C code we want.
- */
-#define SF(sampl, filt, shad, ck, rt, ab, vb, so, color, sf) \
-   [sf] = { true, sampl, filt, shad, ck, rt, ab, vb, so, color },
+#define FI_INITIALIZER(exist, sampl, filt, shad, ck, rt, ab, vb, so, color) \
+   { exist, ILO_GEN(sampl), ILO_GEN(filt), ILO_GEN(shad), ILO_GEN(ck),      \
+     ILO_GEN(rt), ILO_GEN(ab), ILO_GEN(vb), ILO_GEN(so), ILO_GEN(color) }
 
-#define Y 0
-#define x 999
-/**
- * This is the table of support for surface (texture, renderbuffer, and vertex
- * buffer, but not depthbuffer) formats across the various hardware generations.
+#define FI_ENTRY(sampl, filt, shad, ck, rt, ab, vb, so, color, sf)          \
+   [GEN6_FORMAT_ ## sf] = FI_INITIALIZER(true,                              \
+         sampl, filt, shad, ck, rt, ab, vb, so, color)
+
+#define X 999
+
+static const struct ilo_format_info ilo_format_nonexist =
+   FI_INITIALIZER(false, X, X, X, X, X, X, X, X, X);
+
+/*
+ * This table is based on:
  *
- * The table is formatted to match the documentation, except that the docs have
- * this ridiculous mapping of Y[*+~^#&] for "supported on DevWhatever".  To put
- * it in our table, here's the mapping:
- *
- * Y*: 45
- * Y+: 45 (g45/gm45)
- * Y~: 50 (gen5)
- * Y^: 60 (gen6)
- * Y#: 70 (gen7)
- *
- * The abbreviations in the header below are:
- * smpl  - Sampling Engine
- * filt  - Sampling Engine Filtering
- * shad  - Sampling Engine Shadow Map
- * CK    - Sampling Engine Chroma Key
- * RT    - Render Target
- * AB    - Alpha Blend Render Target
- * VB    - Input Vertex Buffer
- * SO    - Steamed Output Vertex Buffers (transform feedback)
- * color - Color Processing
- *
- * See page 88 of the Sandybridge PRM VOL4_Part1 PDF.
- *
- * As of Ivybridge, the columns are no longer in that table and the
- * information can be found spread across:
- *
- * - VOL2_Part1 section 2.5.11 Format Conversion (vertex fetch).
- * - VOL4_Part1 section 2.12.2.1.2 Sampler Output Channel Mapping.
- * - VOL4_Part1 section 3.9.11 Render Target Write.
+ *  - the Sandy Bridge PRM, volume 4 part 1, page 88-97
+ *  - the Ivy Bridge PRM, volume 2 part 1, page 97-99 and 195
+ *  - the Ivy Bridge PRM, volume 4 part 1, page 84-87, 172, and 277-278
+ *  - the Haswell PRM, volume 7, page 262-264, 467-470, and 535.
+ *  - i965 surface_format_info (for BC6/BC7)
  */
-const struct surface_format_info surface_formats[] = {
-/* smpl filt shad CK  RT  AB  VB  SO  color */
-   SF( Y, 50,  x,  x,  Y,  Y,  Y,  Y,  x, GEN6_FORMAT_R32G32B32A32_FLOAT)
-   SF( Y,  x,  x,  x,  Y,  x,  Y,  Y,  x, GEN6_FORMAT_R32G32B32A32_SINT)
-   SF( Y,  x,  x,  x,  Y,  x,  Y,  Y,  x, GEN6_FORMAT_R32G32B32A32_UINT)
-   SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, GEN6_FORMAT_R32G32B32A32_UNORM)
-   SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, GEN6_FORMAT_R32G32B32A32_SNORM)
-   SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, GEN6_FORMAT_R64G64_FLOAT)
-   SF( Y, 50,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_R32G32B32X32_FLOAT)
-   SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, GEN6_FORMAT_R32G32B32A32_SSCALED)
-   SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, GEN6_FORMAT_R32G32B32A32_USCALED)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_R32G32B32A32_SFIXED)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_R64G64_PASSTHRU)
-   SF( Y, 50,  x,  x,  x,  x,  Y,  Y,  x, GEN6_FORMAT_R32G32B32_FLOAT)
-   SF( Y,  x,  x,  x,  x,  x,  Y,  Y,  x, GEN6_FORMAT_R32G32B32_SINT)
-   SF( Y,  x,  x,  x,  x,  x,  Y,  Y,  x, GEN6_FORMAT_R32G32B32_UINT)
-   SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, GEN6_FORMAT_R32G32B32_UNORM)
-   SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, GEN6_FORMAT_R32G32B32_SNORM)
-   SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, GEN6_FORMAT_R32G32B32_SSCALED)
-   SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, GEN6_FORMAT_R32G32B32_USCALED)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_R32G32B32_SFIXED)
-   SF( Y,  Y,  x,  x,  Y, 45,  Y,  x, 60, GEN6_FORMAT_R16G16B16A16_UNORM)
-   SF( Y,  Y,  x,  x,  Y, 60,  Y,  x,  x, GEN6_FORMAT_R16G16B16A16_SNORM)
-   SF( Y,  x,  x,  x,  Y,  x,  Y,  x,  x, GEN6_FORMAT_R16G16B16A16_SINT)
-   SF( Y,  x,  x,  x,  Y,  x,  Y,  x,  x, GEN6_FORMAT_R16G16B16A16_UINT)
-   SF( Y,  Y,  x,  x,  Y,  Y,  Y,  x,  x, GEN6_FORMAT_R16G16B16A16_FLOAT)
-   SF( Y, 50,  x,  x,  Y,  Y,  Y,  Y,  x, GEN6_FORMAT_R32G32_FLOAT)
-   SF( Y,  x,  x,  x,  Y,  x,  Y,  Y,  x, GEN6_FORMAT_R32G32_SINT)
-   SF( Y,  x,  x,  x,  Y,  x,  Y,  Y,  x, GEN6_FORMAT_R32G32_UINT)
-   SF( Y, 50,  Y,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_R32_FLOAT_X8X24_TYPELESS)
-   SF( Y,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_X32_TYPELESS_G8X24_UINT)
-   SF( Y, 50,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_L32A32_FLOAT)
-   SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, GEN6_FORMAT_R32G32_UNORM)
-   SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, GEN6_FORMAT_R32G32_SNORM)
-   SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, GEN6_FORMAT_R64_FLOAT)
-   SF( Y,  Y,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_R16G16B16X16_UNORM)
-   SF( Y,  Y,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_R16G16B16X16_FLOAT)
-   SF( Y, 50,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_A32X32_FLOAT)
-   SF( Y, 50,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_L32X32_FLOAT)
-   SF( Y, 50,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_I32X32_FLOAT)
-   SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, GEN6_FORMAT_R16G16B16A16_SSCALED)
-   SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, GEN6_FORMAT_R16G16B16A16_USCALED)
-   SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, GEN6_FORMAT_R32G32_SSCALED)
-   SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, GEN6_FORMAT_R32G32_USCALED)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_R32G32_SFIXED)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_R64_PASSTHRU)
-   SF( Y,  Y,  x,  Y,  Y,  Y,  Y,  x, 60, GEN6_FORMAT_B8G8R8A8_UNORM)
-   SF( Y,  Y,  x,  x,  Y,  Y,  x,  x,  x, GEN6_FORMAT_B8G8R8A8_UNORM_SRGB)
-/* smpl filt shad CK  RT  AB  VB  SO  color */
-   SF( Y,  Y,  x,  x,  Y,  Y,  Y,  x, 60, GEN6_FORMAT_R10G10B10A2_UNORM)
-   SF( Y,  Y,  x,  x,  x,  x,  x,  x, 60, GEN6_FORMAT_R10G10B10A2_UNORM_SRGB)
-   SF( Y,  x,  x,  x,  Y,  x,  Y,  x,  x, GEN6_FORMAT_R10G10B10A2_UINT)
-   SF( Y,  Y,  x,  x,  x,  Y,  Y,  x,  x, GEN6_FORMAT_R10G10B10_SNORM_A2_UNORM)
-   SF( Y,  Y,  x,  x,  Y,  Y,  Y,  x, 60, GEN6_FORMAT_R8G8B8A8_UNORM)
-   SF( Y,  Y,  x,  x,  Y,  Y,  x,  x, 60, GEN6_FORMAT_R8G8B8A8_UNORM_SRGB)
-   SF( Y,  Y,  x,  x,  Y, 60,  Y,  x,  x, GEN6_FORMAT_R8G8B8A8_SNORM)
-   SF( Y,  x,  x,  x,  Y,  x,  Y,  x,  x, GEN6_FORMAT_R8G8B8A8_SINT)
-   SF( Y,  x,  x,  x,  Y,  x,  Y,  x,  x, GEN6_FORMAT_R8G8B8A8_UINT)
-   SF( Y,  Y,  x,  x,  Y, 45,  Y,  x,  x, GEN6_FORMAT_R16G16_UNORM)
-   SF( Y,  Y,  x,  x,  Y, 60,  Y,  x,  x, GEN6_FORMAT_R16G16_SNORM)
-   SF( Y,  x,  x,  x,  Y,  x,  Y,  x,  x, GEN6_FORMAT_R16G16_SINT)
-   SF( Y,  x,  x,  x,  Y,  x,  Y,  x,  x, GEN6_FORMAT_R16G16_UINT)
-   SF( Y,  Y,  x,  x,  Y,  Y,  Y,  x,  x, GEN6_FORMAT_R16G16_FLOAT)
-   SF( Y,  Y,  x,  x,  Y,  Y,  x,  x, 60, GEN6_FORMAT_B10G10R10A2_UNORM)
-   SF( Y,  Y,  x,  x,  Y,  Y,  x,  x, 60, GEN6_FORMAT_B10G10R10A2_UNORM_SRGB)
-   SF( Y,  Y,  x,  x,  Y,  Y,  Y,  x,  x, GEN6_FORMAT_R11G11B10_FLOAT)
-   SF( Y,  x,  x,  x,  Y,  x,  Y,  Y,  x, GEN6_FORMAT_R32_SINT)
-   SF( Y,  x,  x,  x,  Y,  x,  Y,  Y,  x, GEN6_FORMAT_R32_UINT)
-   SF( Y, 50,  Y,  x,  Y,  Y,  Y,  Y,  x, GEN6_FORMAT_R32_FLOAT)
-   SF( Y, 50,  Y,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_R24_UNORM_X8_TYPELESS)
-   SF( Y,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_X24_TYPELESS_G8_UINT)
-   SF( Y,  Y,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_L16A16_UNORM)
-   SF( Y, 50,  Y,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_I24X8_UNORM)
-   SF( Y, 50,  Y,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_L24X8_UNORM)
-   SF( Y, 50,  Y,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_A24X8_UNORM)
-   SF( Y, 50,  Y,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_I32_FLOAT)
-   SF( Y, 50,  Y,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_L32_FLOAT)
-   SF( Y, 50,  Y,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_A32_FLOAT)
-   SF( Y,  Y,  x,  Y,  x,  x,  x,  x, 60, GEN6_FORMAT_B8G8R8X8_UNORM)
-   SF( Y,  Y,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_B8G8R8X8_UNORM_SRGB)
-   SF( Y,  Y,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_R8G8B8X8_UNORM)
-   SF( Y,  Y,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_R8G8B8X8_UNORM_SRGB)
-   SF( Y,  Y,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_R9G9B9E5_SHAREDEXP)
-   SF( Y,  Y,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_B10G10R10X2_UNORM)
-   SF( Y,  Y,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_L16A16_FLOAT)
-   SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, GEN6_FORMAT_R32_UNORM)
-   SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, GEN6_FORMAT_R32_SNORM)
-/* smpl filt shad CK  RT  AB  VB  SO  color */
-   SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, GEN6_FORMAT_R10G10B10X2_USCALED)
-   SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, GEN6_FORMAT_R8G8B8A8_SSCALED)
-   SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, GEN6_FORMAT_R8G8B8A8_USCALED)
-   SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, GEN6_FORMAT_R16G16_SSCALED)
-   SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, GEN6_FORMAT_R16G16_USCALED)
-   SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, GEN6_FORMAT_R32_SSCALED)
-   SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, GEN6_FORMAT_R32_USCALED)
-   SF( Y,  Y,  x,  Y,  Y,  Y,  x,  x,  x, GEN6_FORMAT_B5G6R5_UNORM)
-   SF( Y,  Y,  x,  x,  Y,  Y,  x,  x,  x, GEN6_FORMAT_B5G6R5_UNORM_SRGB)
-   SF( Y,  Y,  x,  Y,  Y,  Y,  x,  x,  x, GEN6_FORMAT_B5G5R5A1_UNORM)
-   SF( Y,  Y,  x,  x,  Y,  Y,  x,  x,  x, GEN6_FORMAT_B5G5R5A1_UNORM_SRGB)
-   SF( Y,  Y,  x,  Y,  Y,  Y,  x,  x,  x, GEN6_FORMAT_B4G4R4A4_UNORM)
-   SF( Y,  Y,  x,  x,  Y,  Y,  x,  x,  x, GEN6_FORMAT_B4G4R4A4_UNORM_SRGB)
-   SF( Y,  Y,  x,  x,  Y,  Y,  Y,  x,  x, GEN6_FORMAT_R8G8_UNORM)
-   SF( Y,  Y,  x,  Y,  Y, 60,  Y,  x,  x, GEN6_FORMAT_R8G8_SNORM)
-   SF( Y,  x,  x,  x,  Y,  x,  Y,  x,  x, GEN6_FORMAT_R8G8_SINT)
-   SF( Y,  x,  x,  x,  Y,  x,  Y,  x,  x, GEN6_FORMAT_R8G8_UINT)
-   SF( Y,  Y,  Y,  x,  Y, 45,  Y,  x, 70, GEN6_FORMAT_R16_UNORM)
-   SF( Y,  Y,  x,  x,  Y, 60,  Y,  x,  x, GEN6_FORMAT_R16_SNORM)
-   SF( Y,  x,  x,  x,  Y,  x,  Y,  x,  x, GEN6_FORMAT_R16_SINT)
-   SF( Y,  x,  x,  x,  Y,  x,  Y,  x,  x, GEN6_FORMAT_R16_UINT)
-   SF( Y,  Y,  x,  x,  Y,  Y,  Y,  x,  x, GEN6_FORMAT_R16_FLOAT)
-   SF(50, 50,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_A8P8_UNORM_PALETTE0)
-   SF(50, 50,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_A8P8_UNORM_PALETTE1)
-   SF( Y,  Y,  Y,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_I16_UNORM)
-   SF( Y,  Y,  Y,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_L16_UNORM)
-   SF( Y,  Y,  Y,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_A16_UNORM)
-   SF( Y,  Y,  x,  Y,  x,  x,  x,  x,  x, GEN6_FORMAT_L8A8_UNORM)
-   SF( Y,  Y,  Y,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_I16_FLOAT)
-   SF( Y,  Y,  Y,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_L16_FLOAT)
-   SF( Y,  Y,  Y,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_A16_FLOAT)
-   SF(45, 45,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_L8A8_UNORM_SRGB)
-   SF( Y,  Y,  x,  Y,  x,  x,  x,  x,  x, GEN6_FORMAT_R5G5_SNORM_B6_UNORM)
-   SF( x,  x,  x,  x,  Y,  Y,  x,  x,  x, GEN6_FORMAT_B5G5R5X1_UNORM)
-   SF( x,  x,  x,  x,  Y,  Y,  x,  x,  x, GEN6_FORMAT_B5G5R5X1_UNORM_SRGB)
-   SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, GEN6_FORMAT_R8G8_SSCALED)
-   SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, GEN6_FORMAT_R8G8_USCALED)
-/* smpl filt shad CK  RT  AB  VB  SO  color */
-   SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, GEN6_FORMAT_R16_SSCALED)
-   SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, GEN6_FORMAT_R16_USCALED)
-   SF(50, 50,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_P8A8_UNORM_PALETTE0)
-   SF(50, 50,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_P8A8_UNORM_PALETTE1)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_A1B5G5R5_UNORM)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_A4B4G4R4_UNORM)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_L8A8_UINT)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_L8A8_SINT)
-   SF( Y,  Y,  x, 45,  Y,  Y,  Y,  x,  x, GEN6_FORMAT_R8_UNORM)
-   SF( Y,  Y,  x,  x,  Y, 60,  Y,  x,  x, GEN6_FORMAT_R8_SNORM)
-   SF( Y,  x,  x,  x,  Y,  x,  Y,  x,  x, GEN6_FORMAT_R8_SINT)
-   SF( Y,  x,  x,  x,  Y,  x,  Y,  x,  x, GEN6_FORMAT_R8_UINT)
-   SF( Y,  Y,  x,  Y,  Y,  Y,  x,  x,  x, GEN6_FORMAT_A8_UNORM)
-   SF( Y,  Y,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_I8_UNORM)
-   SF( Y,  Y,  x,  Y,  x,  x,  x,  x,  x, GEN6_FORMAT_L8_UNORM)
-   SF( Y,  Y,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_P4A4_UNORM_PALETTE0)
-   SF( Y,  Y,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_A4P4_UNORM_PALETTE0)
-   SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, GEN6_FORMAT_R8_SSCALED)
-   SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, GEN6_FORMAT_R8_USCALED)
-   SF(45, 45,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_P8_UNORM_PALETTE0)
-   SF(45, 45,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_L8_UNORM_SRGB)
-   SF(45, 45,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_P8_UNORM_PALETTE1)
-   SF(45, 45,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_P4A4_UNORM_PALETTE1)
-   SF(45, 45,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_A4P4_UNORM_PALETTE1)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_Y8_UNORM)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_L8_UINT)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_L8_SINT)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_I8_UINT)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_I8_SINT)
-   SF(45, 45,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_DXT1_RGB_SRGB)
-   SF( Y,  Y,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_R1_UNORM)
-   SF( Y,  Y,  x,  Y,  Y,  x,  x,  x, 60, GEN6_FORMAT_YCRCB_NORMAL)
-   SF( Y,  Y,  x,  Y,  Y,  x,  x,  x, 60, GEN6_FORMAT_YCRCB_SWAPUVY)
-   SF(45, 45,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_P2_UNORM_PALETTE0)
-   SF(45, 45,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_P2_UNORM_PALETTE1)
-   SF( Y,  Y,  x,  Y,  x,  x,  x,  x,  x, GEN6_FORMAT_BC1_UNORM)
-   SF( Y,  Y,  x,  Y,  x,  x,  x,  x,  x, GEN6_FORMAT_BC2_UNORM)
-   SF( Y,  Y,  x,  Y,  x,  x,  x,  x,  x, GEN6_FORMAT_BC3_UNORM)
-   SF( Y,  Y,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_BC4_UNORM)
-   SF( Y,  Y,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_BC5_UNORM)
-   SF( Y,  Y,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_BC1_UNORM_SRGB)
-   SF( Y,  Y,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_BC2_UNORM_SRGB)
-   SF( Y,  Y,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_BC3_UNORM_SRGB)
-   SF( Y,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_MONO8)
-   SF( Y,  Y,  x,  x,  Y,  x,  x,  x, 60, GEN6_FORMAT_YCRCB_SWAPUV)
-   SF( Y,  Y,  x,  x,  Y,  x,  x,  x, 60, GEN6_FORMAT_YCRCB_SWAPY)
-   SF( Y,  Y,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_DXT1_RGB)
-/* smpl filt shad CK  RT  AB  VB  SO  color */
-   SF( Y,  Y,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_FXT1)
-   SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, GEN6_FORMAT_R8G8B8_UNORM)
-   SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, GEN6_FORMAT_R8G8B8_SNORM)
-   SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, GEN6_FORMAT_R8G8B8_SSCALED)
-   SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, GEN6_FORMAT_R8G8B8_USCALED)
-   SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, GEN6_FORMAT_R64G64B64A64_FLOAT)
-   SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, GEN6_FORMAT_R64G64B64_FLOAT)
-   SF( Y,  Y,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_BC4_SNORM)
-   SF( Y,  Y,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_BC5_SNORM)
-   SF(50, 50,  x,  x,  x,  x, 60,  x,  x, GEN6_FORMAT_R16G16B16_FLOAT)
-   SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, GEN6_FORMAT_R16G16B16_UNORM)
-   SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, GEN6_FORMAT_R16G16B16_SNORM)
-   SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, GEN6_FORMAT_R16G16B16_SSCALED)
-   SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, GEN6_FORMAT_R16G16B16_USCALED)
-   SF(70, 70,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_BC6H_SF16)
-   SF(70, 70,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_BC7_UNORM)
-   SF(70, 70,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_BC7_UNORM_SRGB)
-   SF(70, 70,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_BC6H_UF16)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_PLANAR_420_8)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_R8G8B8_UNORM_SRGB)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_ETC1_RGB8)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_ETC2_RGB8)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_EAC_R11)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_EAC_RG11)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_EAC_SIGNED_R11)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_EAC_SIGNED_RG11)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_ETC2_SRGB8)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_R16G16B16_UINT)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_R16G16B16_SINT)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_R32_SFIXED)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_R10G10B10A2_SNORM)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_R10G10B10A2_USCALED)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_R10G10B10A2_SSCALED)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_R10G10B10A2_SINT)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_B10G10R10A2_SNORM)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_B10G10R10A2_USCALED)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_B10G10R10A2_SSCALED)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_B10G10R10A2_UINT)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_B10G10R10A2_SINT)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_R64G64B64A64_PASSTHRU)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_R64G64B64_PASSTHRU)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_ETC2_RGB8_PTA)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_ETC2_SRGB8_PTA)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_ETC2_EAC_RGBA8)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_ETC2_EAC_SRGB8_A8)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_R8G8B8_UINT)
-   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, GEN6_FORMAT_R8G8B8_SINT)
+static const struct ilo_format_info ilo_format_table[] = {
+/*        sampl filt shad   ck   rt   ab   vb   so  color */
+   FI_ENTRY(  1,   5,   X,   X,   1,   1,   1,   1,   X, R32G32B32A32_FLOAT),
+   FI_ENTRY(  1,   X,   X,   X,   1,   X,   1,   1,   X, R32G32B32A32_SINT),
+   FI_ENTRY(  1,   X,   X,   X,   1,   X,   1,   1,   X, R32G32B32A32_UINT),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R32G32B32A32_UNORM),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R32G32B32A32_SNORM),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R64G64_FLOAT),
+   FI_ENTRY(  1,   5,   X,   X,   X,   X,   X,   X,   X, R32G32B32X32_FLOAT),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R32G32B32A32_SSCALED),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R32G32B32A32_USCALED),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, R32G32B32A32_SFIXED),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, R64G64_PASSTHRU),
+   FI_ENTRY(  1,   5,   X,   X,   X,   X,   1,   1,   X, R32G32B32_FLOAT),
+   FI_ENTRY(  1,   X,   X,   X,   X,   X,   1,   1,   X, R32G32B32_SINT),
+   FI_ENTRY(  1,   X,   X,   X,   X,   X,   1,   1,   X, R32G32B32_UINT),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R32G32B32_UNORM),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R32G32B32_SNORM),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R32G32B32_SSCALED),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R32G32B32_USCALED),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, R32G32B32_SFIXED),
+   FI_ENTRY(  1,   1,   X,   X,   1, 4.5,   1,   X,   6, R16G16B16A16_UNORM),
+   FI_ENTRY(  1,   1,   X,   X,   1,   6,   1,   X,   X, R16G16B16A16_SNORM),
+   FI_ENTRY(  1,   X,   X,   X,   1,   X,   1,   X,   X, R16G16B16A16_SINT),
+   FI_ENTRY(  1,   X,   X,   X,   1,   X,   1,   X,   X, R16G16B16A16_UINT),
+   FI_ENTRY(  1,   1,   X,   X,   1,   1,   1,   X,   X, R16G16B16A16_FLOAT),
+   FI_ENTRY(  1,   5,   X,   X,   1,   1,   1,   1,   X, R32G32_FLOAT),
+   FI_ENTRY(  1,   X,   X,   X,   1,   X,   1,   1,   X, R32G32_SINT),
+   FI_ENTRY(  1,   X,   X,   X,   1,   X,   1,   1,   X, R32G32_UINT),
+   FI_ENTRY(  1,   5,   1,   X,   X,   X,   X,   X,   X, R32_FLOAT_X8X24_TYPELESS),
+   FI_ENTRY(  1,   X,   X,   X,   X,   X,   X,   X,   X, X32_TYPELESS_G8X24_UINT),
+   FI_ENTRY(  1,   5,   X,   X,   X,   X,   X,   X,   X, L32A32_FLOAT),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R32G32_UNORM),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R32G32_SNORM),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R64_FLOAT),
+   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, R16G16B16X16_UNORM),
+   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, R16G16B16X16_FLOAT),
+   FI_ENTRY(  1,   5,   X,   X,   X,   X,   X,   X,   X, A32X32_FLOAT),
+   FI_ENTRY(  1,   5,   X,   X,   X,   X,   X,   X,   X, L32X32_FLOAT),
+   FI_ENTRY(  1,   5,   X,   X,   X,   X,   X,   X,   X, I32X32_FLOAT),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R16G16B16A16_SSCALED),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R16G16B16A16_USCALED),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R32G32_SSCALED),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R32G32_USCALED),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, R32G32_SFIXED),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, R64_PASSTHRU),
+   FI_ENTRY(  1,   1,   X,   1,   1,   1,   1,   X,   6, B8G8R8A8_UNORM),
+   FI_ENTRY(  1,   1,   X,   X,   1,   1,   X,   X,   X, B8G8R8A8_UNORM_SRGB),
+   FI_ENTRY(  1,   1,   X,   X,   1,   1,   1,   X,   6, R10G10B10A2_UNORM),
+   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   6, R10G10B10A2_UNORM_SRGB),
+   FI_ENTRY(  1,   X,   X,   X,   1,   X,   1,   X,   X, R10G10B10A2_UINT),
+   FI_ENTRY(  1,   1,   X,   X,   X,   X,   1,   X,   X, R10G10B10_SNORM_A2_UNORM),
+   FI_ENTRY(  1,   1,   X,   X,   1,   1,   1,   X,   6, R8G8B8A8_UNORM),
+   FI_ENTRY(  1,   1,   X,   X,   1,   1,   X,   X,   6, R8G8B8A8_UNORM_SRGB),
+   FI_ENTRY(  1,   1,   X,   X,   1,   6,   1,   X,   X, R8G8B8A8_SNORM),
+   FI_ENTRY(  1,   X,   X,   X,   1,   X,   1,   X,   X, R8G8B8A8_SINT),
+   FI_ENTRY(  1,   X,   X,   X,   1,   X,   1,   X,   X, R8G8B8A8_UINT),
+   FI_ENTRY(  1,   1,   X,   X,   1, 4.5,   1,   X,   X, R16G16_UNORM),
+   FI_ENTRY(  1,   1,   X,   X,   1,   6,   1,   X,   X, R16G16_SNORM),
+   FI_ENTRY(  1,   X,   X,   X,   1,   X,   1,   X,   X, R16G16_SINT),
+   FI_ENTRY(  1,   X,   X,   X,   1,   X,   1,   X,   X, R16G16_UINT),
+   FI_ENTRY(  1,   1,   X,   X,   1,   1,   1,   X,   X, R16G16_FLOAT),
+   FI_ENTRY(  1,   1,   X,   X,   1,   1,   X,   X,   6, B10G10R10A2_UNORM),
+   FI_ENTRY(  1,   1,   X,   X,   1,   1,   X,   X,   6, B10G10R10A2_UNORM_SRGB),
+   FI_ENTRY(  1,   1,   X,   X,   1,   1,   1,   X,   X, R11G11B10_FLOAT),
+   FI_ENTRY(  1,   X,   X,   X,   1,   X,   1,   1,   X, R32_SINT),
+   FI_ENTRY(  1,   X,   X,   X,   1,   X,   1,   1,   X, R32_UINT),
+   FI_ENTRY(  1,   5,   1,   X,   1,   1,   1,   1,   X, R32_FLOAT),
+   FI_ENTRY(  1,   5,   1,   X,   X,   X,   X,   X,   X, R24_UNORM_X8_TYPELESS),
+   FI_ENTRY(  1,   X,   X,   X,   X,   X,   X,   X,   X, X24_TYPELESS_G8_UINT),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, L32_UNORM),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, A32_UNORM),
+   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, L16A16_UNORM),
+   FI_ENTRY(  1,   5,   1,   X,   X,   X,   X,   X,   X, I24X8_UNORM),
+   FI_ENTRY(  1,   5,   1,   X,   X,   X,   X,   X,   X, L24X8_UNORM),
+   FI_ENTRY(  1,   5,   1,   X,   X,   X,   X,   X,   X, A24X8_UNORM),
+   FI_ENTRY(  1,   5,   1,   X,   X,   X,   X,   X,   X, I32_FLOAT),
+   FI_ENTRY(  1,   5,   1,   X,   X,   X,   X,   X,   X, L32_FLOAT),
+   FI_ENTRY(  1,   5,   1,   X,   X,   X,   X,   X,   X, A32_FLOAT),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, X8B8_UNORM_G8R8_SNORM),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, A8X8_UNORM_G8R8_SNORM),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, B8X8_UNORM_G8R8_SNORM),
+   FI_ENTRY(  1,   1,   X,   1,   X,   X,   X,   X,   6, B8G8R8X8_UNORM),
+   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, B8G8R8X8_UNORM_SRGB),
+   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, R8G8B8X8_UNORM),
+   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, R8G8B8X8_UNORM_SRGB),
+   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, R9G9B9E5_SHAREDEXP),
+   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, B10G10R10X2_UNORM),
+   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, L16A16_FLOAT),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R32_UNORM),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R32_SNORM),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R10G10B10X2_USCALED),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R8G8B8A8_SSCALED),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R8G8B8A8_USCALED),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R16G16_SSCALED),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R16G16_USCALED),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R32_SSCALED),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R32_USCALED),
+   FI_ENTRY(  1,   1,   X,   1,   1,   1,   X,   X,   X, B5G6R5_UNORM),
+   FI_ENTRY(  1,   1,   X,   X,   1,   1,   X,   X,   X, B5G6R5_UNORM_SRGB),
+   FI_ENTRY(  1,   1,   X,   1,   1,   1,   X,   X,   X, B5G5R5A1_UNORM),
+   FI_ENTRY(  1,   1,   X,   X,   1,   1,   X,   X,   X, B5G5R5A1_UNORM_SRGB),
+   FI_ENTRY(  1,   1,   X,   1,   1,   1,   X,   X,   X, B4G4R4A4_UNORM),
+   FI_ENTRY(  1,   1,   X,   X,   1,   1,   X,   X,   X, B4G4R4A4_UNORM_SRGB),
+   FI_ENTRY(  1,   1,   X,   X,   1,   1,   1,   X,   X, R8G8_UNORM),
+   FI_ENTRY(  1,   1,   X,   1,   1,   6,   1,   X,   X, R8G8_SNORM),
+   FI_ENTRY(  1,   X,   X,   X,   1,   X,   1,   X,   X, R8G8_SINT),
+   FI_ENTRY(  1,   X,   X,   X,   1,   X,   1,   X,   X, R8G8_UINT),
+   FI_ENTRY(  1,   1,   1,   X,   1, 4.5,   1,   X,   7, R16_UNORM),
+   FI_ENTRY(  1,   1,   X,   X,   1,   6,   1,   X,   X, R16_SNORM),
+   FI_ENTRY(  1,   X,   X,   X,   1,   X,   1,   X,   X, R16_SINT),
+   FI_ENTRY(  1,   X,   X,   X,   1,   X,   1,   X,   X, R16_UINT),
+   FI_ENTRY(  1,   1,   X,   X,   1,   1,   1,   X,   X, R16_FLOAT),
+   FI_ENTRY(  5,   5,   X,   X,   X,   X,   X,   X,   X, A8P8_UNORM_PALETTE0),
+   FI_ENTRY(  5,   5,   X,   X,   X,   X,   X,   X,   X, A8P8_UNORM_PALETTE1),
+   FI_ENTRY(  1,   1,   1,   X,   X,   X,   X,   X,   X, I16_UNORM),
+   FI_ENTRY(  1,   1,   1,   X,   X,   X,   X,   X,   X, L16_UNORM),
+   FI_ENTRY(  1,   1,   1,   X,   X,   X,   X,   X,   X, A16_UNORM),
+   FI_ENTRY(  1,   1,   X,   1,   X,   X,   X,   X,   X, L8A8_UNORM),
+   FI_ENTRY(  1,   1,   1,   X,   X,   X,   X,   X,   X, I16_FLOAT),
+   FI_ENTRY(  1,   1,   1,   X,   X,   X,   X,   X,   X, L16_FLOAT),
+   FI_ENTRY(  1,   1,   1,   X,   X,   X,   X,   X,   X, A16_FLOAT),
+   FI_ENTRY(4.5, 4.5,   X,   X,   X,   X,   X,   X,   X, L8A8_UNORM_SRGB),
+   FI_ENTRY(  1,   1,   X,   1,   X,   X,   X,   X,   X, R5G5_SNORM_B6_UNORM),
+   FI_ENTRY(  X,   X,   X,   X,   1,   1,   X,   X,   X, B5G5R5X1_UNORM),
+   FI_ENTRY(  X,   X,   X,   X,   1,   1,   X,   X,   X, B5G5R5X1_UNORM_SRGB),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R8G8_SSCALED),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R8G8_USCALED),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R16_SSCALED),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R16_USCALED),
+   FI_ENTRY(  5,   5,   X,   X,   X,   X,   X,   X,   X, P8A8_UNORM_PALETTE0),
+   FI_ENTRY(  5,   5,   X,   X,   X,   X,   X,   X,   X, P8A8_UNORM_PALETTE1),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, A1B5G5R5_UNORM),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, A4B4G4R4_UNORM),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, L8A8_UINT),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, L8A8_SINT),
+   FI_ENTRY(  1,   1,   X, 4.5,   1,   1,   1,   X,   X, R8_UNORM),
+   FI_ENTRY(  1,   1,   X,   X,   1,   6,   1,   X,   X, R8_SNORM),
+   FI_ENTRY(  1,   X,   X,   X,   1,   X,   1,   X,   X, R8_SINT),
+   FI_ENTRY(  1,   X,   X,   X,   1,   X,   1,   X,   X, R8_UINT),
+   FI_ENTRY(  1,   1,   X,   1,   1,   1,   X,   X,   X, A8_UNORM),
+   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, I8_UNORM),
+   FI_ENTRY(  1,   1,   X,   1,   X,   X,   X,   X,   X, L8_UNORM),
+   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, P4A4_UNORM_PALETTE0),
+   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, A4P4_UNORM_PALETTE0),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R8_SSCALED),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R8_USCALED),
+   FI_ENTRY(4.5, 4.5,   X,   X,   X,   X,   X,   X,   X, P8_UNORM_PALETTE0),
+   FI_ENTRY(4.5, 4.5,   X,   X,   X,   X,   X,   X,   X, L8_UNORM_SRGB),
+   FI_ENTRY(4.5, 4.5,   X,   X,   X,   X,   X,   X,   X, P8_UNORM_PALETTE1),
+   FI_ENTRY(4.5, 4.5,   X,   X,   X,   X,   X,   X,   X, P4A4_UNORM_PALETTE1),
+   FI_ENTRY(4.5, 4.5,   X,   X,   X,   X,   X,   X,   X, A4P4_UNORM_PALETTE1),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, Y8_UNORM),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, L8_UINT),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, L8_SINT),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, I8_UINT),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, I8_SINT),
+   FI_ENTRY(4.5, 4.5,   X,   X,   X,   X,   X,   X,   X, DXT1_RGB_SRGB),
+   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, R1_UNORM),
+   FI_ENTRY(  1,   1,   X,   1,   1,   X,   X,   X,   6, YCRCB_NORMAL),
+   FI_ENTRY(  1,   1,   X,   1,   1,   X,   X,   X,   6, YCRCB_SWAPUVY),
+   FI_ENTRY(4.5, 4.5,   X,   X,   X,   X,   X,   X,   X, P2_UNORM_PALETTE0),
+   FI_ENTRY(4.5, 4.5,   X,   X,   X,   X,   X,   X,   X, P2_UNORM_PALETTE1),
+   FI_ENTRY(  1,   1,   X,   1,   X,   X,   X,   X,   X, BC1_UNORM),
+   FI_ENTRY(  1,   1,   X,   1,   X,   X,   X,   X,   X, BC2_UNORM),
+   FI_ENTRY(  1,   1,   X,   1,   X,   X,   X,   X,   X, BC3_UNORM),
+   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, BC4_UNORM),
+   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, BC5_UNORM),
+   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, BC1_UNORM_SRGB),
+   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, BC2_UNORM_SRGB),
+   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, BC3_UNORM_SRGB),
+   FI_ENTRY(  1,   X,   X,   X,   X,   X,   X,   X,   X, MONO8),
+   FI_ENTRY(  1,   1,   X,   X,   1,   X,   X,   X,   6, YCRCB_SWAPUV),
+   FI_ENTRY(  1,   1,   X,   X,   1,   X,   X,   X,   6, YCRCB_SWAPY),
+   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, DXT1_RGB),
+   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, FXT1),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R8G8B8_UNORM),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R8G8B8_SNORM),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R8G8B8_SSCALED),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R8G8B8_USCALED),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R64G64B64A64_FLOAT),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R64G64B64_FLOAT),
+   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, BC4_SNORM),
+   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, BC5_SNORM),
+   FI_ENTRY(  5,   5,   X,   X,   X,   X,   6,   X,   X, R16G16B16_FLOAT),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R16G16B16_UNORM),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R16G16B16_SNORM),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R16G16B16_SSCALED),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R16G16B16_USCALED),
+   FI_ENTRY(  7,   7,   X,   X,   X,   X,   X,   X,   X, BC6H_SF16),
+   FI_ENTRY(  7,   7,   X,   X,   X,   X,   X,   X,   X, BC7_UNORM),
+   FI_ENTRY(  7,   7,   X,   X,   X,   X,   X,   X,   X, BC7_UNORM_SRGB),
+   FI_ENTRY(  7,   7,   X,   X,   X,   X,   X,   X,   X, BC6H_UF16),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, PLANAR_420_8),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, R8G8B8_UNORM_SRGB),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, ETC1_RGB8),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, ETC2_RGB8),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, EAC_R11),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, EAC_RG11),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, EAC_SIGNED_R11),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, EAC_SIGNED_RG11),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, ETC2_SRGB8),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, R16G16B16_UINT),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, R16G16B16_SINT),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, R32_SFIXED),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, R10G10B10A2_SNORM),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, R10G10B10A2_USCALED),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, R10G10B10A2_SSCALED),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, R10G10B10A2_SINT),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, B10G10R10A2_SNORM),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, B10G10R10A2_USCALED),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, B10G10R10A2_SSCALED),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, B10G10R10A2_UINT),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, B10G10R10A2_SINT),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, R64G64B64A64_PASSTHRU),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, R64G64B64_PASSTHRU),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, ETC2_RGB8_PTA),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, ETC2_SRGB8_PTA),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, ETC2_EAC_RGBA8),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, ETC2_EAC_SRGB8_A8),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, R8G8B8_UINT),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, R8G8B8_SINT),
+   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, RAW),
 };
-#undef x
-#undef Y
 
-static const struct surface_format_info *
-lookup_surface_format_info(enum pipe_format format, unsigned bind)
+#undef X
+#undef FI_ENTRY
+#undef FI_INITIALIZER
+
+static const struct ilo_format_info *
+lookup_format_info(enum pipe_format format, unsigned bind)
 {
-   static const struct surface_format_info nonexist = {
-      .exists = false,
-      .sampling = 999,
-      .filtering = 999,
-      .shadow_compare = 999,
-      .chroma_key = 999,
-      .render_target = 999,
-      .alpha_blend = 999,
-      .input_vb = 999,
-      .streamed_output_vb = 999,
-      .color_processing = 999,
-   };
    const int surfaceformat = ilo_translate_format(format, bind);
 
-   return (surfaceformat >= 0 && surfaceformat < Elements(surface_formats) &&
-           surface_formats[surfaceformat].exists) ?
-      &surface_formats[surfaceformat] : &nonexist;
+   return (surfaceformat >= 0 && surfaceformat < Elements(ilo_format_table) &&
+           ilo_format_table[surfaceformat].exists) ?
+      &ilo_format_table[surfaceformat] : &ilo_format_nonexist;
 }
 
 /**
@@ -608,9 +580,9 @@ ilo_is_format_supported(struct pipe_screen *screen,
                         unsigned bindings)
 {
    struct ilo_screen *is = ilo_screen(screen);
-   const int gen = ILO_GEN_GET_MAJOR(is->dev.gen * 10);
+   const int gen = is->dev.gen;
    const bool is_pure_int = util_format_is_pure_integer(format);
-   const struct surface_format_info *info;
+   const struct ilo_format_info *info;
    unsigned bind;
 
    if (!util_format_is_supported(format, bindings))
@@ -638,7 +610,7 @@ ilo_is_format_supported(struct pipe_screen *screen,
 
    bind = (bindings & PIPE_BIND_RENDER_TARGET);
    if (bind) {
-      info = lookup_surface_format_info(format, bind);
+      info = lookup_format_info(format, bind);
 
       if (gen < info->render_target)
          return false;
@@ -649,7 +621,7 @@ ilo_is_format_supported(struct pipe_screen *screen,
 
    bind = (bindings & PIPE_BIND_SAMPLER_VIEW);
    if (bind) {
-      info = lookup_surface_format_info(format, bind);
+      info = lookup_format_info(format, bind);
 
       if (gen < info->sampling)
          return false;
@@ -660,7 +632,7 @@ ilo_is_format_supported(struct pipe_screen *screen,
 
    bind = (bindings & PIPE_BIND_VERTEX_BUFFER);
    if (bind) {
-      info = lookup_surface_format_info(format, bind);
+      info = lookup_format_info(format, bind);
 
       if (gen < info->input_vb)
          return false;
