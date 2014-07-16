@@ -266,11 +266,18 @@ vc4_generate_code(struct qcompile *c)
                                 src[i] = qpu_rn(0);
                                 break;
                         case QFILE_TEMP:
-                                assert(reg_allocated[index] != -1);
-                                src[i] = allocate_to_qpu_reg[reg_allocated[index]];
-                                reg_uses_remaining[index]--;
-                                if (reg_uses_remaining[index] == 0)
-                                        reg_in_use[reg_allocated[index]] = false;
+                                if (reg_allocated[index] == -1) {
+                                        fprintf(stderr, "undefined reg use: ");
+                                        qir_dump_inst(qinst);
+                                        fprintf(stderr, "\n");
+
+                                        src[i] = qpu_rn(0);
+                                } else {
+                                        src[i] = allocate_to_qpu_reg[reg_allocated[index]];
+                                        reg_uses_remaining[index]--;
+                                        if (reg_uses_remaining[index] == 0)
+                                                reg_in_use[reg_allocated[index]] = false;
+                                }
                                 break;
                         case QFILE_UNIF:
                                 src[i] = qpu_unif();
