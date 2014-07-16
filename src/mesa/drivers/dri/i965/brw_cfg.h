@@ -58,6 +58,8 @@ struct bblock_t {
    bblock_t();
 
    void add_successor(void *mem_ctx, bblock_t *successor);
+   bool is_predecessor_of(const bblock_t *block) const;
+   bool is_successor_of(const bblock_t *block) const;
    void dump(backend_visitor *v);
 #endif
 

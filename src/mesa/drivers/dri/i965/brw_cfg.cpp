@@ -71,6 +71,30 @@ bblock_t::add_successor(void *mem_ctx, bblock_t *successor)
    children.push_tail(::link(mem_ctx, successor));
 }
 
+bool
+bblock_t::is_predecessor_of(const bblock_t *block) const
+{
+   foreach_list_typed_safe (bblock_link, parent, link, &block->parents) {
+      if (parent->block == this) {
+         return true;
+      }
+   }
+
+   return false;
+}
+
+bool
+bblock_t::is_successor_of(const bblock_t *block) const
+{
+   foreach_list_typed_safe (bblock_link, child, link, &block->children) {
+      if (child->block == this) {
+         return true;
+      }
+   }
+
+   return false;
+}
+
 void
 bblock_t::dump(backend_visitor *v)
 {
