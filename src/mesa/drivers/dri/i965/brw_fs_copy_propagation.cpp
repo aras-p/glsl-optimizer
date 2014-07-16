@@ -338,12 +338,9 @@ fs_visitor::try_copy_propagate(fs_inst *inst, int arg, acp_entry *entry)
    if (has_source_modifiers && entry->dst.type != inst->src[arg].type)
       return false;
 
-   if (brw->gen >= 8) {
-      if (entry->src.negate) {
-         if (is_logic_op(inst->opcode)) {
-            return false;
-         }
-      }
+   if (brw->gen >= 8 && (entry->src.negate || entry->src.abs) &&
+       is_logic_op(inst->opcode)) {
+      return false;
    }
 
    inst->src[arg].file = entry->src.file;
