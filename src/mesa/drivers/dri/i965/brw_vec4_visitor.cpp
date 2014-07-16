@@ -639,6 +639,20 @@ src_reg::src_reg(class vec4_visitor *v, const struct glsl_type *type)
    this->type = brw_type_for_base_type(type);
 }
 
+src_reg::src_reg(class vec4_visitor *v, const struct glsl_type *type, int size)
+{
+   assert(size > 0);
+
+   init();
+
+   this->file = GRF;
+   this->reg = v->virtual_grf_alloc(type_size(type) * size);
+
+   this->swizzle = BRW_SWIZZLE_NOOP;
+
+   this->type = brw_type_for_base_type(type);
+}
+
 dst_reg::dst_reg(class vec4_visitor *v, const struct glsl_type *type)
 {
    init();

@@ -107,6 +107,7 @@ public:
    bool equals(const src_reg &r) const;
 
    src_reg(class vec4_visitor *v, const struct glsl_type *type);
+   src_reg(class vec4_visitor *v, const struct glsl_type *type, int size);
 
    explicit src_reg(dst_reg reg);
 
