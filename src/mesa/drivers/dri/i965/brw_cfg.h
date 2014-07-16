@@ -76,15 +76,13 @@ struct bblock_t {
    struct exec_list children;
    int num;
 
-   /* If the current basic block ends in an IF, ELSE, or ENDIF instruction,
-    * these pointers will hold the locations of the other associated control
-    * flow instructions.
+   /* If the current basic block ends in an IF or ELSE instruction, these will
+    * point to the basic blocks containing the other associated instruction.
     *
     * Otherwise they are NULL.
     */
-   struct backend_instruction *if_inst;
-   struct backend_instruction *else_inst;
-   struct backend_instruction *endif_inst;
+   struct bblock_t *if_block;
+   struct bblock_t *else_block;
 };
 
 struct cfg_t {

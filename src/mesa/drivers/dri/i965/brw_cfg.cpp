@@ -51,17 +51,14 @@ link(void *mem_ctx, bblock_t *block)
 }
 
 bblock_t::bblock_t(cfg_t *cfg) :
-   cfg(cfg), start_ip(0), end_ip(0), num(0)
+   cfg(cfg), start_ip(0), end_ip(0), num(0),
+   if_block(NULL), else_block(NULL)
 {
    start = NULL;
    end = NULL;
 
    parents.make_empty();
    children.make_empty();
-
-   if_inst = NULL;
-   else_inst = NULL;
-   endif_inst = NULL;
 }
 
 void
@@ -183,32 +180,25 @@ cfg_t::cfg_t(exec_list *instructions)
             set_next_block(&cur, cur_endif, ip - 1);
          }
 
-         backend_instruction *else_inst = NULL;
          if (cur_else) {
-            else_inst = (backend_instruction *)cur_else->end;
-
             cur_else->add_successor(mem_ctx, cur_endif);
          } else {
             cur_if->add_successor(mem_ctx, cur_endif);
          }
 
          assert(cur_if->end->opcode == BRW_OPCODE_IF);
-         assert(!else_inst || else_inst->opcode == BRW_OPCODE_ELSE);
-         assert(inst->opcode == BRW_OPCODE_ENDIF);
+         assert(!cur_else || cur_else->end->opcode == BRW_OPCODE_ELSE);
 
-         cur_if->if_inst = cur_if->end;
-         cur_if->else_inst = else_inst;
-         cur_if->endif_inst = inst;
+         cur_if->if_block = cur_if;
+         cur_if->else_block = cur_else;
 
 	 if (cur_else) {
-            cur_else->if_inst = cur_if->end;
-            cur_else->else_inst = else_inst;
-            cur_else->endif_inst = inst;
+            cur_else->if_block = cur_if;
+            cur_else->else_block = cur_else;
          }
 
-         cur->if_inst = cur_if->end;
-         cur->else_inst = else_inst;
-         cur->endif_inst = inst;
+         cur->if_block = cur_if;
+         cur->else_block = cur_else;
 
 	 /* Pop the stack so we're in the previous if/else/endif */
 	 cur_if = pop_stack(&if_stack);

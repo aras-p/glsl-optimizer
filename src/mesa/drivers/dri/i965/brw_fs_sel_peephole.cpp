@@ -137,10 +137,10 @@ fs_visitor::opt_peephole_sel()
       if (if_inst->opcode != BRW_OPCODE_IF)
          continue;
 
-      if (!block->else_inst)
+      if (!block->else_block)
          continue;
 
-      fs_inst *else_inst = (fs_inst *) block->else_inst;
+      fs_inst *else_inst = (fs_inst *) block->else_block->end;
       assert(else_inst->opcode == BRW_OPCODE_ELSE);
 
       fs_inst *else_mov[MAX_MOVS] = { NULL };
