@@ -1305,12 +1305,16 @@ fs_visitor::emit_sampleid_setup(ir_variable *ir)
        * and then reading from it using vstride=1, width=4, hstride=0.
        * These computations hold good for 4x multisampling as well.
        */
-      emit(BRW_OPCODE_AND, t1,
-           fs_reg(retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_UD)),
-           fs_reg(0xc0));
-      emit(BRW_OPCODE_SHR, t1, t1, fs_reg(5));
+      fs_inst *inst;
+      inst = emit(BRW_OPCODE_AND, t1,
+                  fs_reg(retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_UD)),
+                  fs_reg(0xc0));
+      inst->force_writemask_all = true;
+      inst = emit(BRW_OPCODE_SHR, t1, t1, fs_reg(5));
+      inst->force_writemask_all = true;
       /* This works for both SIMD8 and SIMD16 */
-      emit(MOV(t2, brw_imm_v(0x3210)));
+      inst = emit(MOV(t2, brw_imm_v(0x3210)));
+      inst->force_writemask_all = true;
       /* This special instruction takes care of setting vstride=1,
        * width=4, hstride=0 of t2 during an ADD instruction.
        */
