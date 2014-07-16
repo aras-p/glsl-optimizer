@@ -54,64 +54,64 @@
       &glsl_type::_struct_##NAME##_type;
 
 static const struct glsl_struct_field gl_DepthRangeParameters_fields[] = {
-   { glsl_type::float_type, "near", false, -1 },
-   { glsl_type::float_type, "far",  false, -1 },
-   { glsl_type::float_type, "diff", false, -1 },
+   { glsl_type::float_type, "near", -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::float_type, "far",  -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::float_type, "diff", -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
 };
 
 static const struct glsl_struct_field gl_PointParameters_fields[] = {
-   { glsl_type::float_type, "size", false, -1 },
-   { glsl_type::float_type, "sizeMin", false, -1 },
-   { glsl_type::float_type, "sizeMax", false, -1 },
-   { glsl_type::float_type, "fadeThresholdSize", false, -1 },
-   { glsl_type::float_type, "distanceConstantAttenuation", false, -1 },
-   { glsl_type::float_type, "distanceLinearAttenuation", false, -1 },
-   { glsl_type::float_type, "distanceQuadraticAttenuation", false, -1 },
+   { glsl_type::float_type, "size", -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::float_type, "sizeMin", -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::float_type, "sizeMax", -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::float_type, "fadeThresholdSize", -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::float_type, "distanceConstantAttenuation", -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::float_type, "distanceLinearAttenuation", -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::float_type, "distanceQuadraticAttenuation", -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
 };
 
 static const struct glsl_struct_field gl_MaterialParameters_fields[] = {
-   { glsl_type::vec4_type, "emission", false, -1 },
-   { glsl_type::vec4_type, "ambient", false, -1 },
-   { glsl_type::vec4_type, "diffuse", false, -1 },
-   { glsl_type::vec4_type, "specular", false, -1 },
-   { glsl_type::float_type, "shininess", false, -1 },
+   { glsl_type::vec4_type, "emission", -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::vec4_type, "ambient", -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::vec4_type, "diffuse", -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::vec4_type, "specular", -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::float_type, "shininess", -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
 };
 
 static const struct glsl_struct_field gl_LightSourceParameters_fields[] = {
-   { glsl_type::vec4_type, "ambient", false, -1 },
-   { glsl_type::vec4_type, "diffuse", false, -1 },
-   { glsl_type::vec4_type, "specular", false, -1 },
-   { glsl_type::vec4_type, "position", false, -1 },
-   { glsl_type::vec4_type, "halfVector", false, -1 },
-   { glsl_type::vec3_type, "spotDirection", false, -1 },
-   { glsl_type::float_type, "spotExponent", false, -1 },
-   { glsl_type::float_type, "spotCutoff", false, -1 },
-   { glsl_type::float_type, "spotCosCutoff", false, -1 },
-   { glsl_type::float_type, "constantAttenuation", false, -1 },
-   { glsl_type::float_type, "linearAttenuation", false, -1 },
-   { glsl_type::float_type, "quadraticAttenuation", false, -1 },
+   { glsl_type::vec4_type, "ambient", -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::vec4_type, "diffuse", -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::vec4_type, "specular", -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::vec4_type, "position", -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::vec4_type, "halfVector", -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::vec3_type, "spotDirection", -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::float_type, "spotExponent", -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::float_type, "spotCutoff", -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::float_type, "spotCosCutoff", -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::float_type, "constantAttenuation", -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::float_type, "linearAttenuation", -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::float_type, "quadraticAttenuation", -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
 };
 
 static const struct glsl_struct_field gl_LightModelParameters_fields[] = {
-   { glsl_type::vec4_type, "ambient", false, -1 },
+   { glsl_type::vec4_type, "ambient", -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
 };
 
 static const struct glsl_struct_field gl_LightModelProducts_fields[] = {
-   { glsl_type::vec4_type, "sceneColor", false, -1 },
+   { glsl_type::vec4_type, "sceneColor", -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
 };
 
 static const struct glsl_struct_field gl_LightProducts_fields[] = {
-   { glsl_type::vec4_type, "ambient", false, -1 },
-   { glsl_type::vec4_type, "diffuse", false, -1 },
-   { glsl_type::vec4_type, "specular", false, -1 },
+   { glsl_type::vec4_type, "ambient", -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::vec4_type, "diffuse", -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::vec4_type, "specular", -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
 };
 
 static const struct glsl_struct_field gl_FogParameters_fields[] = {
-   { glsl_type::vec4_type, "color", false, -1 },
-   { glsl_type::float_type, "density", false, -1 },
-   { glsl_type::float_type, "start", false, -1 },
-   { glsl_type::float_type, "end", false, -1 },
-   { glsl_type::float_type, "scale", false, -1 },
+   { glsl_type::vec4_type, "color", -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::float_type, "density", -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::float_type, "start", -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::float_type, "end", -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
+   { glsl_type::float_type, "scale", -1, 0, 0, 0, GLSL_MATRIX_LAYOUT_INHERITED, 0 },
 };
 
 #include "builtin_type_macros.h"

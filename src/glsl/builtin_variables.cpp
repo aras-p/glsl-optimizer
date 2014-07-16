@@ -317,7 +317,7 @@ per_vertex_accumulator::add_field(int slot, const glsl_type *type,
    assert(this->num_fields < ARRAY_SIZE(this->fields));
    this->fields[this->num_fields].type = type;
    this->fields[this->num_fields].name = name;
-   this->fields[this->num_fields].row_major = false;
+   this->fields[this->num_fields].matrix_layout = GLSL_MATRIX_LAYOUT_INHERITED;
    this->fields[this->num_fields].location = slot;
    this->fields[this->num_fields].interpolation = INTERP_QUALIFIER_NONE;
    this->fields[this->num_fields].centroid = 0;

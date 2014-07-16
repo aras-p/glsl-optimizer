@@ -182,7 +182,8 @@ program_resource_visitor::recursion(const glsl_type *t, char **name,
          }
 
          recursion(t->fields.structure[i].type, name, new_length,
-                   t->fields.structure[i].row_major, record_type,
+                   t->fields.structure[i].matrix_layout == GLSL_MATRIX_LAYOUT_ROW_MAJOR,
+                   record_type,
                    (i + 1) == t->length);
 
          /* Only the first leaf-field of the record gets called with the

@@ -108,7 +108,7 @@ glsl_type::glsl_type(const glsl_struct_field *fields, unsigned num_fields,
       this->fields.structure[i].interpolation = fields[i].interpolation;
       this->fields.structure[i].centroid = fields[i].centroid;
       this->fields.structure[i].sample = fields[i].sample;
-      this->fields.structure[i].row_major = fields[i].row_major;
+      this->fields.structure[i].matrix_layout = fields[i].matrix_layout;
    }
 }
 
@@ -136,7 +136,7 @@ glsl_type::glsl_type(const glsl_struct_field *fields, unsigned num_fields,
       this->fields.structure[i].interpolation = fields[i].interpolation;
       this->fields.structure[i].centroid = fields[i].centroid;
       this->fields.structure[i].sample = fields[i].sample;
-      this->fields.structure[i].row_major = fields[i].row_major;
+      this->fields.structure[i].matrix_layout = fields[i].matrix_layout;
    }
 }
 
@@ -496,8 +496,8 @@ glsl_type::record_compare(const glsl_type *b) const
       if (strcmp(this->fields.structure[i].name,
 		 b->fields.structure[i].name) != 0)
 	 return false;
-      if (this->fields.structure[i].row_major
-         != b->fields.structure[i].row_major)
+      if (this->fields.structure[i].matrix_layout
+         != b->fields.structure[i].matrix_layout)
         return false;
       if (this->fields.structure[i].location
           != b->fields.structure[i].location)
@@ -826,9 +826,18 @@ glsl_type::std140_base_alignment(bool row_major) const
    if (this->is_record()) {
       unsigned base_alignment = 16;
       for (unsigned i = 0; i < this->length; i++) {
+         bool field_row_major = row_major;
+         const enum glsl_matrix_layout matrix_layout =
+            glsl_matrix_layout(this->fields.structure[i].matrix_layout);
+         if (matrix_layout == GLSL_MATRIX_LAYOUT_ROW_MAJOR) {
+            field_row_major = true;
+         } else if (matrix_layout == GLSL_MATRIX_LAYOUT_COLUMN_MAJOR) {
+            field_row_major = false;
+         }
+
 	 const struct glsl_type *field_type = this->fields.structure[i].type;
 	 base_alignment = MAX2(base_alignment,
-			       field_type->std140_base_alignment(row_major));
+			       field_type->std140_base_alignment(field_row_major));
       }
       return base_alignment;
    }
@@ -937,10 +946,19 @@ glsl_type::std140_size(bool row_major) const
       unsigned max_align = 0;
 
       for (unsigned i = 0; i < this->length; i++) {
+         bool field_row_major = row_major;
+         const enum glsl_matrix_layout matrix_layout =
+            glsl_matrix_layout(this->fields.structure[i].matrix_layout);
+         if (matrix_layout == GLSL_MATRIX_LAYOUT_ROW_MAJOR) {
+            field_row_major = true;
+         } else if (matrix_layout == GLSL_MATRIX_LAYOUT_COLUMN_MAJOR) {
+            field_row_major = false;
+         }
+
 	 const struct glsl_type *field_type = this->fields.structure[i].type;
-	 unsigned align = field_type->std140_base_alignment(row_major);
+	 unsigned align = field_type->std140_base_alignment(field_row_major);
 	 size = glsl_align(size, align);
-	 size += field_type->std140_size(row_major);
+	 size += field_type->std140_size(field_row_major);
 
          max_align = MAX2(align, max_align);
 

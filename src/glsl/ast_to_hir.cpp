@@ -5204,11 +5204,13 @@ ast_process_structure_or_interface_block(exec_list *instructions,
          }
 
          if (field_type->without_array()->is_matrix()) {
-            fields[i].row_major = block_row_major;
+            fields[i].matrix_layout = block_row_major
+               ? GLSL_MATRIX_LAYOUT_ROW_MAJOR
+               : GLSL_MATRIX_LAYOUT_COLUMN_MAJOR;
             if (qual->flags.q.row_major)
-               fields[i].row_major = true;
+               fields[i].matrix_layout = GLSL_MATRIX_LAYOUT_ROW_MAJOR;
             else if (qual->flags.q.column_major)
-               fields[i].row_major = false;
+               fields[i].matrix_layout = GLSL_MATRIX_LAYOUT_COLUMN_MAJOR;
          }
 
          i++;
