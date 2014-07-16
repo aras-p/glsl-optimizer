@@ -122,6 +122,7 @@ i965_FILES = \
 	gen6_depth_state.c \
 	gen6_depthstencil.c \
 	gen6_gs_state.c \
+	gen6_gs_visitor.cpp \
         gen6_multisample_state.c \
 	gen6_queryobj.c \
 	gen6_sampler_state.c \
