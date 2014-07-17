@@ -85,7 +85,7 @@ vc4_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
         uint32_t tilew = align(width, 64) / 64;
         uint32_t tileh = align(height, 64) / 64;
 
-        uint32_t tile_alloc_size = 32 * tilew * tileh;
+        uint32_t tile_alloc_size = 32 * tilew * tileh * 16;
         uint32_t tile_state_size = 48 * tilew * tileh;
         if (!vc4->tile_alloc || vc4->tile_alloc->size < tile_alloc_size) {
                 vc4_bo_unreference(&vc4->tile_alloc);
@@ -107,7 +107,7 @@ vc4_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
         cl_start_reloc(&vc4->bcl, 2);
         cl_u8(&vc4->bcl, VC4_PACKET_TILE_BINNING_MODE_CONFIG);
         cl_reloc(vc4, &vc4->bcl, vc4->tile_alloc, 0);
-        cl_u32(&vc4->bcl, 0x8000); /* tile allocation memory size */
+        cl_u32(&vc4->bcl, vc4->tile_alloc->size);
         cl_reloc(vc4, &vc4->bcl, vc4->tile_state, 0);
         cl_u8(&vc4->bcl, tilew);
         cl_u8(&vc4->bcl, tileh);
