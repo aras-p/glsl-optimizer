@@ -303,6 +303,22 @@ tgsi_to_qir_tex(struct tgsi_to_qir *trans,
                 t = qir_FMUL(c, t, proj);
         }
 
+        /* There is no native support for GL texture rectangle coordinates, so
+         * we have to rescale from ([0, width], [0, height]) to ([0, 1], [0,
+         * 1]).
+         */
+        if (tgsi_inst->Texture.Texture == TGSI_TEXTURE_RECT) {
+                uint32_t sampler = 0; /* XXX */
+                s = qir_FMUL(c, s,
+                             get_temp_for_uniform(trans,
+                                                  QUNIFORM_TEXRECT_SCALE_X,
+                                                  sampler));
+                t = qir_FMUL(c, t,
+                             get_temp_for_uniform(trans,
+                                                  QUNIFORM_TEXRECT_SCALE_Y,
+                                                  sampler));
+        }
+
         uint32_t tex_and_sampler = 0; /* XXX */
         qir_TEX_T(c, t, add_uniform(trans, QUNIFORM_TEXTURE_CONFIG_P0,
                                     tex_and_sampler));
@@ -1170,6 +1186,22 @@ get_texture_p1(struct vc4_texture_stateobj *texstate,
                 (translate_wrap(sampler->wrap_s) << 0));
 }
 
+static uint32_t
+get_texrect_scale(struct vc4_texture_stateobj *texstate,
+                  enum quniform_contents contents,
+                  uint32_t data)
+{
+        struct pipe_sampler_view *texture = texstate->textures[data];
+        uint32_t dim;
+
+        if (contents == QUNIFORM_TEXRECT_SCALE_X)
+                dim = texture->texture->width0;
+        else
+                dim = texture->texture->height0;
+
+        return fui(1.0f / dim);
+}
+
 void
 vc4_get_uniform_bo(struct vc4_context *vc4, struct vc4_compiled_shader *shader,
                    struct vc4_constbuf_stateobj *cb,
@@ -1204,6 +1236,13 @@ vc4_get_uniform_bo(struct vc4_context *vc4, struct vc4_compiled_shader *shader,
 
                 case QUNIFORM_TEXTURE_CONFIG_P1:
                         map[i] = get_texture_p1(texstate, uinfo->data[i]);
+                        break;
+
+                case QUNIFORM_TEXRECT_SCALE_X:
+                case QUNIFORM_TEXRECT_SCALE_Y:
+                        map[i] = get_texrect_scale(texstate,
+                                                   uinfo->contents[i],
+                                                   uinfo->data[i]);
                         break;
                 }
 #if 0

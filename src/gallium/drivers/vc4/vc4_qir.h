@@ -157,6 +157,9 @@ enum quniform_contents {
          * sequence.
          */
         QUNIFORM_TEXTURE_CONFIG_P1,
+
+        QUNIFORM_TEXRECT_SCALE_X,
+        QUNIFORM_TEXRECT_SCALE_Y,
 };
 
 struct qcompile {
