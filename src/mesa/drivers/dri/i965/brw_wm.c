@@ -275,6 +275,8 @@ brw_wm_debug_recompile(struct brw_context *brw,
                       old_key->stats_wm, key->stats_wm);
    found |= key_debug(brw, "flat shading",
                       old_key->flat_shade, key->flat_shade);
+   found |= key_debug(brw, "per-sample shading",
+                      old_key->persample_shading, key->persample_shading);
    found |= key_debug(brw, "number of color buffers",
                       old_key->nr_color_regions, key->nr_color_regions);
    found |= key_debug(brw, "MRT alpha test or alpha-to-coverage",
