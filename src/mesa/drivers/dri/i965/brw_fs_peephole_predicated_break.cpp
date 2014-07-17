@@ -51,15 +51,16 @@ fs_visitor::opt_peephole_predicated_break()
       /* BREAK and CONTINUE instructions, by definition, can only be found at
        * the ends of basic blocks.
        */
-      fs_inst *inst = (fs_inst *) block->end;
-      if (inst->opcode != BRW_OPCODE_BREAK && inst->opcode != BRW_OPCODE_CONTINUE)
+      fs_inst *jump_inst = (fs_inst *)block->end;
+      if (jump_inst->opcode != BRW_OPCODE_BREAK &&
+          jump_inst->opcode != BRW_OPCODE_CONTINUE)
          continue;
 
-      fs_inst *if_inst = (fs_inst *) inst->prev;
+      fs_inst *if_inst = (fs_inst *)jump_inst->prev;
       if (if_inst->opcode != BRW_OPCODE_IF)
          continue;
 
-      fs_inst *endif_inst = (fs_inst *) inst->next;
+      fs_inst *endif_inst = (fs_inst *)jump_inst->next;
       if (endif_inst->opcode != BRW_OPCODE_ENDIF)
          continue;
 
@@ -70,10 +71,10 @@ fs_visitor::opt_peephole_predicated_break()
          fs_inst *cmp_inst = CMP(reg_null_d, if_inst->src[0], if_inst->src[1],
                                  if_inst->conditional_mod);
          if_inst->insert_before(cmp_inst);
-         inst->predicate = BRW_PREDICATE_NORMAL;
+         jump_inst->predicate = BRW_PREDICATE_NORMAL;
       } else {
-         inst->predicate = if_inst->predicate;
-         inst->predicate_inverse = if_inst->predicate_inverse;
+         jump_inst->predicate = if_inst->predicate;
+         jump_inst->predicate_inverse = if_inst->predicate_inverse;
       }
 
       if_inst->remove();
