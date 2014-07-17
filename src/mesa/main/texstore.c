@@ -68,6 +68,7 @@
 #include "texcompress_rgtc.h"
 #include "texcompress_s3tc.h"
 #include "texcompress_etc.h"
+#include "texcompress_bptc.h"
 #include "teximage.h"
 #include "texstore.h"
 #include "enums.h"
@@ -1425,6 +1426,15 @@ texstore_compressed(TEXSTORE_PARAMS)
          _mesa_texstore_etc2_rgb8_punchthrough_alpha1;
       table[MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1] =
          _mesa_texstore_etc2_srgb8_punchthrough_alpha1;
+
+      table[MESA_FORMAT_BPTC_RGBA_UNORM] =
+         _mesa_texstore_bptc_rgba_unorm;
+      table[MESA_FORMAT_BPTC_SRGB_ALPHA_UNORM] =
+         _mesa_texstore_bptc_rgba_unorm;
+      table[MESA_FORMAT_BPTC_RGB_SIGNED_FLOAT] =
+         _mesa_texstore_bptc_rgb_signed_float;
+      table[MESA_FORMAT_BPTC_RGB_UNSIGNED_FLOAT] =
+         _mesa_texstore_bptc_rgb_unsigned_float;
 
       initialized = GL_TRUE;
    }

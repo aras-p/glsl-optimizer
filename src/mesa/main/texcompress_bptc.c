@@ -69,6 +69,12 @@ struct bptc_float_mode {
    struct bptc_float_bitfield bitfields[24];
 };
 
+struct bit_writer {
+   uint8_t buf;
+   int pos;
+   uint8_t *dst;
+};
+
 static const struct bptc_unorm_mode
 bptc_unorm_modes[] = {
    /* 0 */ { 3, 4, false, false, 4, 0, true,  false, 3, 0 },
@@ -957,4 +963,687 @@ _mesa_get_bptc_fetch_func(mesa_format format)
    default:
       return NULL;
    }
+}
+
+static void
+write_bits(struct bit_writer *writer, int n_bits, int value)
+{
+   do {
+      if (n_bits + writer->pos >= 8) {
+         *(writer->dst++) = writer->buf | (value << writer->pos);
+         writer->buf = 0;
+         value >>= (8 - writer->pos);
+         n_bits -= (8 - writer->pos);
+         writer->pos = 0;
+      } else {
+         writer->buf |= value << writer->pos;
+         writer->pos += n_bits;
+         break;
+      }
+   } while (n_bits > 0);
+}
+
+static void
+get_average_luminance_alpha_unorm(int width, int height,
+                                  const uint8_t *src, int src_rowstride,
+                                  int *average_luminance, int *average_alpha)
+{
+   int luminance_sum = 0, alpha_sum = 0;
+   int y, x;
+
+   for (y = 0; y < height; y++) {
+      for (x = 0; x < width; x++) {
+         luminance_sum += src[0] + src[1] + src[2];
+         alpha_sum += src[3];
+         src += 4;
+      }
+      src += src_rowstride - width * 4;
+   }
+
+   *average_luminance = luminance_sum / (width * height);
+   *average_alpha = alpha_sum / (width * height);
+}
+
+static void
+get_rgba_endpoints_unorm(int width, int height,
+                         const uint8_t *src, int src_rowstride,
+                         int average_luminance, int average_alpha,
+                         uint8_t endpoints[][4])
+{
+   int endpoint_luminances[2];
+   int midpoint;
+   int sums[2][4];
+   int endpoint;
+   int luminance;
+   uint8_t temp[3];
+   const uint8_t *p = src;
+   int rgb_left_endpoint_count = 0;
+   int alpha_left_endpoint_count = 0;
+   int y, x, i;
+
+   memset(sums, 0, sizeof sums);
+
+   for (y = 0; y < height; y++) {
+      for (x = 0; x < width; x++) {
+         luminance = p[0] + p[1] + p[2];
+         if (luminance < average_luminance) {
+            endpoint = 0;
+            rgb_left_endpoint_count++;
+         } else {
+            endpoint = 1;
+         }
+         for (i = 0; i < 3; i++)
+            sums[endpoint][i] += p[i];
+
+         if (p[2] < average_alpha) {
+            endpoint = 0;
+            alpha_left_endpoint_count++;
+         } else {
+            endpoint = 1;
+         }
+         sums[endpoint][3] += p[3];
+
+         p += 4;
+      }
+
+      p += src_rowstride - width * 4;
+   }
+
+   if (rgb_left_endpoint_count == 0 ||
+       rgb_left_endpoint_count == width * height) {
+      for (i = 0; i < 3; i++)
+         endpoints[0][i] = endpoints[1][i] =
+            (sums[0][i] + sums[1][i]) / (width * height);
+   } else {
+      for (i = 0; i < 3; i++) {
+         endpoints[0][i] = sums[0][i] / rgb_left_endpoint_count;
+         endpoints[1][i] = (sums[1][i] /
+                            (width * height - rgb_left_endpoint_count));
+      }
+   }
+
+   if (alpha_left_endpoint_count == 0 ||
+       alpha_left_endpoint_count == width * height) {
+      endpoints[0][3] = endpoints[1][3] =
+         (sums[0][3] + sums[1][3]) / (width * height);
+   } else {
+         endpoints[0][3] = sums[0][3] / alpha_left_endpoint_count;
+         endpoints[1][3] = (sums[1][3] /
+                            (width * height - alpha_left_endpoint_count));
+   }
+
+   /* We may need to swap the endpoints to ensure the most-significant bit of
+    * the first index is zero */
+
+   for (endpoint = 0; endpoint < 2; endpoint++) {
+      endpoint_luminances[endpoint] =
+         endpoints[endpoint][0] +
+         endpoints[endpoint][1] +
+         endpoints[endpoint][2];
+   }
+   midpoint = (endpoint_luminances[0] + endpoint_luminances[1]) / 2;
+
+   if ((src[0] + src[1] + src[2] <= midpoint) !=
+       (endpoint_luminances[0] <= midpoint)) {
+      memcpy(temp, endpoints[0], 3);
+      memcpy(endpoints[0], endpoints[1], 3);
+      memcpy(endpoints[1], temp, 3);
+   }
+
+   /* Same for the alpha endpoints */
+
+   midpoint = (endpoints[0][3] + endpoints[1][3]) / 2;
+
+   if ((src[3] <= midpoint) != (endpoints[0][3] <= midpoint)) {
+      temp[0] = endpoints[0][3];
+      endpoints[0][3] = endpoints[1][3];
+      endpoints[1][3] = temp[0];
+   }
+}
+
+static void
+write_rgb_indices_unorm(struct bit_writer *writer,
+                        int src_width, int src_height,
+                        const uint8_t *src, int src_rowstride,
+                        uint8_t endpoints[][4])
+{
+   int luminance;
+   int endpoint_luminances[2];
+   int endpoint;
+   int index;
+   int y, x;
+
+   for (endpoint = 0; endpoint < 2; endpoint++) {
+      endpoint_luminances[endpoint] =
+         endpoints[endpoint][0] +
+         endpoints[endpoint][1] +
+         endpoints[endpoint][2];
+   }
+
+   /* If the endpoints have the same luminance then we'll just use index 0 for
+    * all of the texels */
+   if (endpoint_luminances[0] == endpoint_luminances[1]) {
+      write_bits(writer, BLOCK_SIZE * BLOCK_SIZE * 2 - 1, 0);
+      return;
+   }
+
+   for (y = 0; y < src_height; y++) {
+      for (x = 0; x < src_width; x++) {
+         luminance = src[0] + src[1] + src[2];
+
+         index = ((luminance - endpoint_luminances[0]) * 3 /
+                  (endpoint_luminances[1] - endpoint_luminances[0]));
+         if (index < 0)
+            index = 0;
+         else if (index > 3)
+            index = 3;
+
+         assert(x != 0 || y != 0 || index < 2);
+
+         write_bits(writer, (x == 0 && y == 0) ? 1 : 2, index);
+
+         src += 4;
+      }
+
+      /* Pad the indices out to the block size */
+      if (src_width < BLOCK_SIZE)
+         write_bits(writer, 2 * (BLOCK_SIZE - src_width), 0);
+
+      src += src_rowstride - src_width * 4;
+   }
+
+   /* Pad the indices out to the block size */
+   if (src_height < BLOCK_SIZE)
+      write_bits(writer, 2 * BLOCK_SIZE * (BLOCK_SIZE - src_height), 0);
+}
+
+static void
+write_alpha_indices_unorm(struct bit_writer *writer,
+                          int src_width, int src_height,
+                          const uint8_t *src, int src_rowstride,
+                          uint8_t endpoints[][4])
+{
+   int index;
+   int y, x;
+
+   /* If the endpoints have the same alpha then we'll just use index 0 for
+    * all of the texels */
+   if (endpoints[0][3] == endpoints[1][3]) {
+      write_bits(writer, BLOCK_SIZE * BLOCK_SIZE * 3 - 1, 0);
+      return;
+   }
+
+   for (y = 0; y < src_height; y++) {
+      for (x = 0; x < src_width; x++) {
+         index = (((int) src[3] - (int) endpoints[0][3]) * 7 /
+                  ((int) endpoints[1][3] - endpoints[0][3]));
+         if (index < 0)
+            index = 0;
+         else if (index > 7)
+            index = 7;
+
+         assert(x != 0 || y != 0 || index < 4);
+
+         /* The first index has one less bit */
+         write_bits(writer, (x == 0 && y == 0) ? 2 : 3, index);
+
+         src += 4;
+      }
+
+      /* Pad the indices out to the block size */
+      if (src_width < BLOCK_SIZE)
+         write_bits(writer, 3 * (BLOCK_SIZE - src_width), 0);
+
+      src += src_rowstride - src_width * 4;
+   }
+
+   /* Pad the indices out to the block size */
+   if (src_height < BLOCK_SIZE)
+      write_bits(writer, 3 * BLOCK_SIZE * (BLOCK_SIZE - src_height), 0);
+}
+
+static void
+compress_rgba_unorm_block(int src_width, int src_height,
+                          const uint8_t *src, int src_rowstride,
+                          uint8_t *dst)
+{
+   int average_luminance, average_alpha;
+   uint8_t endpoints[2][4];
+   struct bit_writer writer;
+   int component, endpoint;
+
+   get_average_luminance_alpha_unorm(src_width, src_height, src, src_rowstride,
+                                     &average_luminance, &average_alpha);
+   get_rgba_endpoints_unorm(src_width, src_height, src, src_rowstride,
+                            average_luminance, average_alpha,
+                            endpoints);
+
+   writer.dst = dst;
+   writer.pos = 0;
+   writer.buf = 0;
+
+   write_bits(&writer, 5, 0x10); /* mode 4 */
+   write_bits(&writer, 2, 0); /* rotation 0 */
+   write_bits(&writer, 1, 0); /* index selection bit */
+
+   /* Write the color endpoints */
+   for (component = 0; component < 3; component++)
+      for (endpoint = 0; endpoint < 2; endpoint++)
+         write_bits(&writer, 5, endpoints[endpoint][component] >> 3);
+
+   /* Write the alpha endpoints */
+   for (endpoint = 0; endpoint < 2; endpoint++)
+      write_bits(&writer, 6, endpoints[endpoint][3] >> 2);
+
+   write_rgb_indices_unorm(&writer,
+                           src_width, src_height,
+                           src, src_rowstride,
+                           endpoints);
+   write_alpha_indices_unorm(&writer,
+                             src_width, src_height,
+                             src, src_rowstride,
+                             endpoints);
+}
+
+static void
+compress_rgba_unorm(int width, int height,
+                    const uint8_t *src, int src_rowstride,
+                    uint8_t *dst, int dst_rowstride)
+{
+   int dst_row_diff;
+   int y, x;
+
+   if (dst_rowstride >= width * 4)
+      dst_row_diff = dst_rowstride - ((width + 3) & ~3) * 4;
+   else
+      dst_row_diff = 0;
+
+   for (y = 0; y < height; y += BLOCK_SIZE) {
+      for (x = 0; x < width; x += BLOCK_SIZE) {
+         compress_rgba_unorm_block(MIN2(width - x, BLOCK_SIZE),
+                                   MIN2(height - y, BLOCK_SIZE),
+                                   src + x * 4 + y * src_rowstride,
+                                   src_rowstride,
+                                   dst);
+         dst += BLOCK_BYTES;
+      }
+      dst += dst_row_diff;
+   }
+}
+
+GLboolean
+_mesa_texstore_bptc_rgba_unorm(TEXSTORE_PARAMS)
+{
+   const GLubyte *pixels;
+   const GLubyte *tempImage = NULL;
+   GLenum baseFormat;
+   int rowstride;
+
+   if (srcFormat != GL_RGBA ||
+       srcType != GL_UNSIGNED_BYTE ||
+       ctx->_ImageTransferState ||
+       srcPacking->SwapBytes) {
+      /* convert image to RGBA/ubyte */
+      baseFormat = _mesa_get_format_base_format(dstFormat);
+      tempImage = _mesa_make_temp_ubyte_image(ctx, dims,
+                                              baseInternalFormat,
+                                              baseFormat,
+                                              srcWidth, srcHeight, srcDepth,
+                                              srcFormat, srcType, srcAddr,
+                                              srcPacking);
+      if (!tempImage)
+         return GL_FALSE; /* out of memory */
+
+      pixels = tempImage;
+      rowstride = srcWidth * 4;
+   } else {
+      pixels = _mesa_image_address2d(srcPacking, srcAddr, srcWidth, srcHeight,
+                                     srcFormat, srcType, 0, 0);
+      rowstride = _mesa_image_row_stride(srcPacking, srcWidth,
+                                         srcFormat, srcType);
+   }
+
+   compress_rgba_unorm(srcWidth, srcHeight,
+                       pixels, rowstride,
+                       dstSlices[0], dstRowStride);
+
+   free((void *) tempImage);
+
+   return GL_TRUE;
+}
+
+static float
+get_average_luminance_float(int width, int height,
+                            const float *src, int src_rowstride)
+{
+   float luminance_sum = 0;
+   int y, x;
+
+   for (y = 0; y < height; y++) {
+      for (x = 0; x < width; x++) {
+         luminance_sum += src[0] + src[1] + src[2];
+         src += 3;
+      }
+      src += (src_rowstride - width * 3 * sizeof (float)) / sizeof (float);
+   }
+
+   return luminance_sum / (width * height);
+}
+
+static float
+clamp_value(float value, bool is_signed)
+{
+   if (value > 65504.0f)
+      return 65504.0f;
+
+   if (is_signed) {
+      if (value < -65504.0f)
+         return -65504.0f;
+      else
+         return value;
+   }
+
+   if (value < 0.0f)
+      return 0.0f;
+
+   return value;
+}
+
+static void
+get_endpoints_float(int width, int height,
+                    const float *src, int src_rowstride,
+                    float average_luminance, float endpoints[][3],
+                    bool is_signed)
+{
+   float endpoint_luminances[2];
+   float midpoint;
+   float sums[2][3];
+   int endpoint, component;
+   float luminance;
+   float temp[3];
+   const float *p = src;
+   int left_endpoint_count = 0;
+   int y, x, i;
+
+   memset(sums, 0, sizeof sums);
+
+   for (y = 0; y < height; y++) {
+      for (x = 0; x < width; x++) {
+         luminance = p[0] + p[1] + p[2];
+         if (luminance < average_luminance) {
+            endpoint = 0;
+            left_endpoint_count++;
+         } else {
+            endpoint = 1;
+         }
+         for (i = 0; i < 3; i++)
+            sums[endpoint][i] += p[i];
+
+         p += 3;
+      }
+
+      p += (src_rowstride - width * 3 * sizeof (float)) / sizeof (float);
+   }
+
+   if (left_endpoint_count == 0 ||
+       left_endpoint_count == width * height) {
+      for (i = 0; i < 3; i++)
+         endpoints[0][i] = endpoints[1][i] =
+            (sums[0][i] + sums[1][i]) / (width * height);
+   } else {
+      for (i = 0; i < 3; i++) {
+         endpoints[0][i] = sums[0][i] / left_endpoint_count;
+         endpoints[1][i] = sums[1][i] / (width * height - left_endpoint_count);
+      }
+   }
+
+   /* Clamp the endpoints to the range of a half float and strip out
+    * infinities */
+   for (endpoint = 0; endpoint < 2; endpoint++) {
+      for (component = 0; component < 3; component++) {
+         endpoints[endpoint][component] =
+            clamp_value(endpoints[endpoint][component], is_signed);
+      }
+   }
+
+   /* We may need to swap the endpoints to ensure the most-significant bit of
+    * the first index is zero */
+
+   for (endpoint = 0; endpoint < 2; endpoint++) {
+      endpoint_luminances[endpoint] =
+         endpoints[endpoint][0] +
+         endpoints[endpoint][1] +
+         endpoints[endpoint][2];
+   }
+   midpoint = (endpoint_luminances[0] + endpoint_luminances[1]) / 2.0f;
+
+   if ((src[0] + src[1] + src[2] <= midpoint) !=
+       (endpoint_luminances[0] <= midpoint)) {
+      memcpy(temp, endpoints[0], sizeof temp);
+      memcpy(endpoints[0], endpoints[1], sizeof temp);
+      memcpy(endpoints[1], temp, sizeof temp);
+   }
+}
+
+static void
+write_rgb_indices_float(struct bit_writer *writer,
+                        int src_width, int src_height,
+                        const float *src, int src_rowstride,
+                        float endpoints[][3])
+{
+   float luminance;
+   float endpoint_luminances[2];
+   int endpoint;
+   int index;
+   int y, x;
+
+   for (endpoint = 0; endpoint < 2; endpoint++) {
+      endpoint_luminances[endpoint] =
+         endpoints[endpoint][0] +
+         endpoints[endpoint][1] +
+         endpoints[endpoint][2];
+   }
+
+   /* If the endpoints have the same luminance then we'll just use index 0 for
+    * all of the texels */
+   if (endpoint_luminances[0] == endpoint_luminances[1]) {
+      write_bits(writer, BLOCK_SIZE * BLOCK_SIZE * 4 - 1, 0);
+      return;
+   }
+
+   for (y = 0; y < src_height; y++) {
+      for (x = 0; x < src_width; x++) {
+         luminance = src[0] + src[1] + src[2];
+
+         index = ((luminance - endpoint_luminances[0]) * 15 /
+                  (endpoint_luminances[1] - endpoint_luminances[0]));
+         if (index < 0)
+            index = 0;
+         else if (index > 15)
+            index = 15;
+
+         assert(x != 0 || y != 0 || index < 8);
+
+         write_bits(writer, (x == 0 && y == 0) ? 3 : 4, index);
+
+         src += 3;
+      }
+
+      /* Pad the indices out to the block size */
+      if (src_width < BLOCK_SIZE)
+         write_bits(writer, 4 * (BLOCK_SIZE - src_width), 0);
+
+      src += (src_rowstride - src_width * 3 * sizeof (float)) / sizeof (float);
+   }
+
+   /* Pad the indices out to the block size */
+   if (src_height < BLOCK_SIZE)
+      write_bits(writer, 4 * BLOCK_SIZE * (BLOCK_SIZE - src_height), 0);
+}
+
+static int
+get_endpoint_value(float value, bool is_signed)
+{
+   bool sign = false;
+   int half;
+
+   if (is_signed) {
+      half = _mesa_float_to_half(value);
+
+      if (half & 0x8000) {
+         half &= 0x7fff;
+         sign = true;
+      }
+
+      half = (32 * half / 31) >> 6;
+
+      if (sign)
+         half = -half & ((1 << 10) - 1);
+
+      return half;
+   } else {
+      if (value <= 0.0f)
+         return 0;
+
+      half = _mesa_float_to_half(value);
+
+      return (64 * half / 31) >> 6;
+   }
+}
+
+static void
+compress_rgb_float_block(int src_width, int src_height,
+                         const float *src, int src_rowstride,
+                         uint8_t *dst,
+                         bool is_signed)
+{
+   float average_luminance;
+   float endpoints[2][3];
+   struct bit_writer writer;
+   int component, endpoint;
+   int endpoint_value;
+
+   average_luminance =
+      get_average_luminance_float(src_width, src_height, src, src_rowstride);
+   get_endpoints_float(src_width, src_height, src, src_rowstride,
+                       average_luminance, endpoints, is_signed);
+
+   writer.dst = dst;
+   writer.pos = 0;
+   writer.buf = 0;
+
+   write_bits(&writer, 5, 3); /* mode 3 */
+
+   /* Write the endpoints */
+   for (endpoint = 0; endpoint < 2; endpoint++) {
+      for (component = 0; component < 3; component++) {
+         endpoint_value =
+            get_endpoint_value(endpoints[endpoint][component], is_signed);
+         write_bits(&writer, 10, endpoint_value);
+      }
+   }
+
+   write_rgb_indices_float(&writer,
+                           src_width, src_height,
+                           src, src_rowstride,
+                           endpoints);
+}
+
+static void
+compress_rgb_float(int width, int height,
+                   const float *src, int src_rowstride,
+                   uint8_t *dst, int dst_rowstride,
+                   bool is_signed)
+{
+   int dst_row_diff;
+   int y, x;
+
+   if (dst_rowstride >= width * 4)
+      dst_row_diff = dst_rowstride - ((width + 3) & ~3) * 4;
+   else
+      dst_row_diff = 0;
+
+   for (y = 0; y < height; y += BLOCK_SIZE) {
+      for (x = 0; x < width; x += BLOCK_SIZE) {
+         compress_rgb_float_block(MIN2(width - x, BLOCK_SIZE),
+                                  MIN2(height - y, BLOCK_SIZE),
+                                  src + x * 3 +
+                                  y * src_rowstride / sizeof (float),
+                                  src_rowstride,
+                                  dst,
+                                  is_signed);
+         dst += BLOCK_BYTES;
+      }
+      dst += dst_row_diff;
+   }
+}
+
+static GLboolean
+texstore_bptc_rgb_float(TEXSTORE_PARAMS,
+                        bool is_signed)
+{
+   const float *pixels;
+   const float *tempImage = NULL;
+   GLenum baseFormat;
+   int rowstride;
+
+   if (srcFormat != GL_RGB ||
+       srcType != GL_FLOAT ||
+       ctx->_ImageTransferState ||
+       srcPacking->SwapBytes) {
+      /* convert image to RGB/float */
+      baseFormat = _mesa_get_format_base_format(dstFormat);
+      tempImage = _mesa_make_temp_float_image(ctx, dims,
+                                              baseInternalFormat,
+                                              baseFormat,
+                                              srcWidth, srcHeight, srcDepth,
+                                              srcFormat, srcType, srcAddr,
+                                              srcPacking,
+                                              ctx->_ImageTransferState);
+      if (!tempImage)
+         return GL_FALSE; /* out of memory */
+
+      pixels = tempImage;
+      rowstride = srcWidth * sizeof(float) * 3;
+   } else {
+      pixels = _mesa_image_address2d(srcPacking, srcAddr, srcWidth, srcHeight,
+                                     srcFormat, srcType, 0, 0);
+      rowstride = _mesa_image_row_stride(srcPacking, srcWidth,
+                                         srcFormat, srcType);
+   }
+
+   compress_rgb_float(srcWidth, srcHeight,
+                      pixels, rowstride,
+                      dstSlices[0], dstRowStride,
+                      is_signed);
+
+   free((void *) tempImage);
+
+   return GL_TRUE;
+}
+
+GLboolean
+_mesa_texstore_bptc_rgb_signed_float(TEXSTORE_PARAMS)
+{
+   ASSERT(dstFormat == MESA_FORMAT_BPTC_RGB_SIGNED_FLOAT);
+
+   return texstore_bptc_rgb_float(ctx, dims, baseInternalFormat,
+                                  dstFormat, dstRowStride, dstSlices,
+                                  srcWidth, srcHeight, srcDepth,
+                                  srcFormat, srcType,
+                                  srcAddr, srcPacking,
+                                  true /* signed */);
+}
+
+GLboolean
+_mesa_texstore_bptc_rgb_unsigned_float(TEXSTORE_PARAMS)
+{
+   ASSERT(dstFormat == MESA_FORMAT_BPTC_RGB_UNSIGNED_FLOAT);
+
+   return texstore_bptc_rgb_float(ctx, dims, baseInternalFormat,
+                                  dstFormat, dstRowStride, dstSlices,
+                                  srcWidth, srcHeight, srcDepth,
+                                  srcFormat, srcType,
+                                  srcAddr, srcPacking,
+                                  false /* unsigned */);
 }
