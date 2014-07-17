@@ -212,23 +212,26 @@ fs_visitor::opt_peephole_sel()
       if (brw->gen == 6 && if_inst->conditional_mod) {
          fs_inst *cmp_inst = CMP(reg_null_d, if_inst->src[0], if_inst->src[1],
                                  if_inst->conditional_mod);
-         if_inst->insert_before(cmp_inst);
+         if_inst->insert_before(block, cmp_inst);
       }
+
+      bblock_t *then_block = (bblock_t *)block->link.next;
+      bblock_t *else_block = (bblock_t *)block->else_block->link.next;
 
       for (int i = 0; i < movs; i++) {
          if (mov_imm_inst[i])
-            if_inst->insert_before(mov_imm_inst[i]);
-         if_inst->insert_before(sel_inst[i]);
+            if_inst->insert_before(block, mov_imm_inst[i]);
+         if_inst->insert_before(block, sel_inst[i]);
 
-         then_mov[i]->remove();
-         else_mov[i]->remove();
+         then_mov[i]->remove(then_block);
+         else_mov[i]->remove(else_block);
       }
 
       progress = true;
    }
 
    if (progress)
-      invalidate_live_intervals();
+      invalidate_live_intervals(false);
 
    return progress;
 }
