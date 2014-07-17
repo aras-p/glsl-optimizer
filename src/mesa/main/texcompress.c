@@ -42,6 +42,7 @@
 #include "texcompress_rgtc.h"
 #include "texcompress_s3tc.h"
 #include "texcompress_etc.h"
+#include "texcompress_bptc.h"
 
 
 /**
@@ -610,6 +611,11 @@ _mesa_get_compressed_fetch_func(mesa_format format)
       return _mesa_get_compressed_rgtc_func(format);
    case MESA_FORMAT_ETC1_RGB8:
       return _mesa_get_etc_fetch_func(format);
+   case MESA_FORMAT_BPTC_RGBA_UNORM:
+   case MESA_FORMAT_BPTC_SRGB_ALPHA_UNORM:
+   case MESA_FORMAT_BPTC_RGB_SIGNED_FLOAT:
+   case MESA_FORMAT_BPTC_RGB_UNSIGNED_FLOAT:
+      return _mesa_get_bptc_fetch_func(format);
    default:
       return NULL;
    }
