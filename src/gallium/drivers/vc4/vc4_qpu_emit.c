@@ -218,7 +218,9 @@ vc4_generate_code(struct qcompile *c)
         switch (c->stage) {
         case QSTAGE_VERT:
         case QSTAGE_COORD:
-                queue(c, qpu_load_imm_ui(qpu_vrsetup(), 0x00401a00));
+                queue(c, qpu_load_imm_ui(qpu_vrsetup(),
+                                         (0x00001a00 +
+                                          0x00100000 * c->num_inputs)));
                 queue(c, qpu_load_imm_ui(qpu_vwsetup(), 0x00001a00));
                 break;
         case QSTAGE_FRAG:

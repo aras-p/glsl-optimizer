@@ -132,6 +132,7 @@ struct qcompile {
         uint64_t *qpu_insts;
         uint32_t qpu_inst_count;
         uint32_t qpu_inst_size;
+        uint32_t num_inputs;
 };
 
 struct qcompile *qir_compile_init(void);

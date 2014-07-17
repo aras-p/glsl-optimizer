@@ -121,13 +121,18 @@ vc4_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
         vc4_emit_state(pctx);
 
         /* the actual draw call. */
-        uint32_t nr_attributes = 1;
+        struct vc4_vertex_stateobj *vtx = vc4->vtx;
+        struct vc4_vertexbuf_stateobj *vertexbuf = &vc4->vertexbuf;
         cl_u8(&vc4->bcl, VC4_PACKET_GL_SHADER_STATE);
+        assert(vtx->num_elements <= 8);
 #ifndef USE_VC4_SIMULATOR
-        cl_u32(&vc4->bcl, nr_attributes & 0x7); /* offset into shader_rec */
+        /* Note that number of attributes == 0 in the packet means 8
+         * attributes.  This field also contains the offset into shader_rec.
+         */
+        cl_u32(&vc4->bcl, vtx->num_elements & 0x7);
 #else
         cl_u32(&vc4->bcl, simpenrose_hw_addr(vc4->shader_rec.next) |
-               (nr_attributes & 0x7));
+               (vtx->num_elements & 0x7));
 #endif
 
         /* Note that the primitive type fields match with OpenGL/gallium
@@ -174,7 +179,7 @@ vc4_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
                            &vc4->constbuf[PIPE_SHADER_VERTEX],
                            1, &cs_ubo, &cs_ubo_offset);
 
-        cl_start_shader_reloc(&vc4->shader_rec, 7);
+        cl_start_shader_reloc(&vc4->shader_rec, 6 + vtx->num_elements);
         cl_u16(&vc4->shader_rec, VC4_SHADER_FLAG_ENABLE_CLIPPING);
         cl_u8(&vc4->shader_rec, 0); /* fs num uniforms (unused) */
         cl_u8(&vc4->shader_rec, vc4->prog.fs->num_inputs);
@@ -182,35 +187,36 @@ vc4_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
         cl_reloc(vc4, &vc4->shader_rec, fs_ubo, fs_ubo_offset);
 
         cl_u16(&vc4->shader_rec, 0); /* vs num uniforms */
-        cl_u8(&vc4->shader_rec, 1); /* vs attribute array bitfield */
-        cl_u8(&vc4->shader_rec, 16); /* vs total attribute size */
+        cl_u8(&vc4->shader_rec, (1 << vtx->num_elements) - 1); /* vs attribute array bitfield */
+        cl_u8(&vc4->shader_rec, 16 * vtx->num_elements); /* vs total attribute size */
         cl_reloc(vc4, &vc4->shader_rec, vc4->prog.vs->bo, 0);
         cl_reloc(vc4, &vc4->shader_rec, vs_ubo, vs_ubo_offset);
 
         cl_u16(&vc4->shader_rec, 0); /* cs num uniforms */
-        cl_u8(&vc4->shader_rec, 1); /* cs attribute array bitfield */
-        cl_u8(&vc4->shader_rec, 16); /* vs total attribute size */
+        cl_u8(&vc4->shader_rec, (1 << vtx->num_elements) - 1); /* cs attribute array bitfield */
+        cl_u8(&vc4->shader_rec, 16 * vtx->num_elements); /* vs total attribute size */
         cl_reloc(vc4, &vc4->shader_rec, vc4->prog.vs->bo,
                 vc4->prog.vs->coord_shader_offset);
         cl_reloc(vc4, &vc4->shader_rec, cs_ubo, cs_ubo_offset);
 
-        struct vc4_vertex_stateobj *vtx = vc4->vtx;
-        struct vc4_vertexbuf_stateobj *vertexbuf = &vc4->vertexbuf;
         for (int i = 0; i < vtx->num_elements; i++) {
                 struct pipe_vertex_element *elem = &vtx->pipe[i];
                 struct pipe_vertex_buffer *vb =
                         &vertexbuf->vb[elem->vertex_buffer_index];
                 struct vc4_resource *rsc = vc4_resource(vb->buffer);
 
+                if (elem->src_format != PIPE_FORMAT_R32G32B32A32_FLOAT) {
+                        fprintf(stderr, "Unsupported attribute format %s\n",
+                                util_format_name(elem->src_format));
+                }
+
                 cl_reloc(vc4, &vc4->shader_rec, rsc->bo,
                          vb->buffer_offset + elem->src_offset);
                 cl_u8(&vc4->shader_rec,
                       util_format_get_blocksize(elem->src_format) - 1);
                 cl_u8(&vc4->shader_rec, vb->stride);
-                cl_u8(&vc4->shader_rec, 0); /* VS VPM offset */
-                cl_u8(&vc4->shader_rec, 0); /* CS VPM offset */
-
-                break; /* XXX: just the 1 for now. */
+                cl_u8(&vc4->shader_rec, i * 16); /* VS VPM offset */
+                cl_u8(&vc4->shader_rec, i * 16); /* CS VPM offset */
         }
 
 

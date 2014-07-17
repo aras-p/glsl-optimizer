@@ -53,7 +53,6 @@ struct tgsi_to_qir {
         uint32_t *uniform_data;
         enum quniform_contents *uniform_contents;
         uint32_t num_uniforms;
-        uint32_t num_inputs;
         uint32_t num_outputs;
 };
 
@@ -351,25 +350,28 @@ emit_tgsi_declaration(struct tgsi_to_qir *trans,
 
         switch (decl->Declaration.File) {
         case TGSI_FILE_INPUT:
-                if (c->stage == QSTAGE_FRAG) {
-                        for (int index = decl->Range.First;
-                             index <= decl->Range.Last;
-                             index++) {
-                                for (int i = 0; i < 4; i++) {
-                                        struct qreg vary = {
-                                                QFILE_VARY,
-                                                index * 4 + i
-                                        };
+                for (int i = decl->Range.First * 4;
+                     i < (decl->Range.Last + 1) * 4;
+                     i++) {
+                        if (c->stage == QSTAGE_FRAG) {
+                                struct qreg vary = {
+                                        QFILE_VARY,
+                                        i
+                                };
 
-                                        /* XXX: multiply by W */
-                                        trans->inputs[index * 4 + i] =
-                                                qir_VARY_ADD_C(c,
-                                                               qir_MOV(c,
-                                                                       vary));
-
-                                        trans->num_inputs++;
-                                }
+                                trans->inputs[i] =
+                                        qir_VARY_ADD_C(c, qir_MOV(c, vary));
+                        } else {
+                                struct qreg dst = qir_get_temp(c);
+                                /* XXX: attribute type/size/count */
+                                qir_emit(c, qir_inst(QOP_VPM_READ,
+                                                     dst,
+                                                     c->undef,
+                                                     c->undef));
+                                trans->inputs[i] = dst;
                         }
+
+                        c->num_inputs++;
                 }
                 break;
         }
@@ -463,37 +465,6 @@ parse_tgsi_immediate(struct tgsi_to_qir *trans, struct tgsi_full_immediate *imm)
         for (int i = 0; i < 4; i++) {
                 unsigned n = trans->num_consts++;
                 trans->consts[n] = qir_uniform_ui(trans, imm->u[i].Uint);
-        }
-}
-
-static void
-emit_frag_init(struct tgsi_to_qir *trans)
-{
-}
-
-static void
-emit_vert_init(struct tgsi_to_qir *trans)
-{
-        struct qcompile *c = trans->c;
-
-        /* XXX: attribute type/size/count */
-        for (int i = 0; i < 4; i++) {
-                trans->inputs[i] = qir_get_temp(c);
-                qir_emit(c, qir_inst(QOP_VPM_READ, trans->inputs[i],
-                                     c->undef, c->undef));
-        }
-}
-
-static void
-emit_coord_init(struct tgsi_to_qir *trans)
-{
-        struct qcompile *c = trans->c;
-
-        /* XXX: attribute type/size/count */
-        for (int i = 0; i < 4; i++) {
-                trans->inputs[i] = qir_get_temp(c);
-                qir_emit(c, qir_inst(QOP_VPM_READ, trans->inputs[i],
-                                     c->undef, c->undef));
         }
 }
 
@@ -619,15 +590,12 @@ vc4_shader_tgsi_to_qir(struct vc4_compiled_shader *shader, enum qstage stage,
         switch (stage) {
         case QSTAGE_FRAG:
                 trans->fs_key = (struct vc4_fs_key *)key;
-                emit_frag_init(trans);
                 break;
         case QSTAGE_VERT:
                 trans->vs_key = (struct vc4_vs_key *)key;
-                emit_vert_init(trans);
                 break;
         case QSTAGE_COORD:
                 trans->vs_key = (struct vc4_vs_key *)key;
-                emit_coord_init(trans);
                 break;
         }
 
@@ -721,7 +689,7 @@ vc4_fs_compile(struct vc4_context *vc4, struct vc4_compiled_shader *shader,
 {
         struct tgsi_to_qir *trans = vc4_shader_tgsi_to_qir(shader, QSTAGE_FRAG,
                                                            &key->base);
-        shader->num_inputs = trans->num_inputs;
+        shader->num_inputs = trans->c->num_inputs;
         copy_uniform_state_to_shader(shader, 0, trans);
         shader->bo = vc4_bo_alloc_mem(vc4->screen, trans->c->qpu_insts,
                                       trans->c->qpu_inst_count * sizeof(uint64_t),
