@@ -149,7 +149,7 @@ vec4_gs_visitor::emit_prolog()
     */
    this->current_annotation = "clear r0.2";
    dst_reg r0(retype(brw_vec4_grf(0, 0), BRW_REGISTER_TYPE_UD));
-   vec4_instruction *inst = emit(GS_OPCODE_SET_DWORD_2_IMMED, r0, 0u);
+   vec4_instruction *inst = emit(GS_OPCODE_SET_DWORD_2, r0, 0u);
    inst->force_writemask_all = true;
 
    /* Create a virtual register to hold the vertex count */

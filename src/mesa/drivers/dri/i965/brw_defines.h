@@ -984,11 +984,9 @@ enum opcode {
    GS_OPCODE_SET_VERTEX_COUNT,
 
    /**
-    * Set DWORD 2 of dst to the immediate value in src.  Used by geometry
-    * shaders to initialize DWORD 2 of R0, which needs to be 0 in order for
-    * scratch reads and writes to operate correctly.
+    * Set DWORD 2 of dst to the value in src.
     */
-   GS_OPCODE_SET_DWORD_2_IMMED,
+   GS_OPCODE_SET_DWORD_2,
 
    /**
     * Prepare the dst register for storage in the "Channel Mask" fields of a

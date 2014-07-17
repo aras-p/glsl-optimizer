@@ -653,7 +653,7 @@ private:
                                      struct brw_reg src1);
    void generate_gs_set_vertex_count(struct brw_reg dst,
                                      struct brw_reg src);
-   void generate_gs_set_dword_2_immed(struct brw_reg dst, struct brw_reg src);
+   void generate_gs_set_dword_2(struct brw_reg dst, struct brw_reg src);
    void generate_gs_prepare_channel_masks(struct brw_reg dst);
    void generate_gs_set_channel_masks(struct brw_reg dst, struct brw_reg src);
    void generate_gs_get_instance_id(struct brw_reg dst);

@@ -574,16 +574,12 @@ vec4_generator::generate_gs_set_vertex_count(struct brw_reg dst,
 }
 
 void
-vec4_generator::generate_gs_set_dword_2_immed(struct brw_reg dst,
-                                              struct brw_reg src)
+vec4_generator::generate_gs_set_dword_2(struct brw_reg dst, struct brw_reg src)
 {
-   assert(src.file == BRW_IMMEDIATE_VALUE);
-
    brw_push_insn_state(p);
    brw_set_default_access_mode(p, BRW_ALIGN_1);
    brw_set_default_mask_control(p, BRW_MASK_DISABLE);
-   brw_MOV(p, suboffset(vec1(dst), 2), src);
-   brw_set_default_access_mode(p, BRW_ALIGN_16);
+   brw_MOV(p, suboffset(vec1(dst), 2), suboffset(vec1(src), 0));
    brw_pop_insn_state(p);
 }
 
@@ -1355,8 +1351,8 @@ vec4_generator::generate_code(const cfg_t *cfg)
          generate_gs_ff_sync(inst, dst, src[0]);
          break;
 
-      case GS_OPCODE_SET_DWORD_2_IMMED:
-         generate_gs_set_dword_2_immed(dst, src[0]);
+      case GS_OPCODE_SET_DWORD_2:
+         generate_gs_set_dword_2(dst, src[0]);
          break;
 
       case GS_OPCODE_PREPARE_CHANNEL_MASKS:
