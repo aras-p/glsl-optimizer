@@ -888,7 +888,7 @@ pack_float_R_UNORM8(const GLfloat src[4], void *dst)
 static void
 pack_ubyte_R8G8_UNORM(const GLubyte src[4], void *dst)
 {
-   GLubyte *d = ((GLubyte *) dst);
+   GLushort *d = ((GLushort *) dst);
    *d = PACK_COLOR_88(src[GCOMP], src[RCOMP]);
 }
 
