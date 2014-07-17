@@ -667,6 +667,12 @@ intelTexSubImage(struct gl_context * ctx,
 {
    bool ok;
 
+   DBG("%s mesa_format %s target %s format %s type %s level %d %dx%dx%d\n",
+       __FUNCTION__, _mesa_get_format_name(texImage->TexFormat),
+       _mesa_lookup_enum_by_nr(texImage->TexObject->Target),
+       _mesa_lookup_enum_by_nr(format), _mesa_lookup_enum_by_nr(type),
+       texImage->Level, texImage->Width, texImage->Height, texImage->Depth);
+
    ok = intel_texsubimage_tiled_memcpy(ctx, dims, texImage,
                                        xoffset, yoffset, zoffset,
                                        width, height, depth,
