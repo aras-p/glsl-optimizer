@@ -389,11 +389,12 @@ RegAlloc::PhiMovesPass::visit(BasicBlock *bb)
          pb->insertTail(new_FlowInstruction(func, OP_BRA, bb));
 
       for (phi = bb->getPhi(); phi && phi->op == OP_PHI; phi = phi->next) {
-         mov = new_Instruction(func, OP_MOV, TYPE_U32);
+         LValue *tmp = new_LValue(func, phi->getDef(0)->asLValue());
+         mov = new_Instruction(func, OP_MOV, typeOfSize(tmp->reg.size));
 
          mov->setSrc(0, phi->getSrc(j));
-         mov->setDef(0, new_LValue(func, phi->getDef(0)->asLValue()));
-         phi->setSrc(j, mov->getDef(0));
+         mov->setDef(0, tmp);
+         phi->setSrc(j, tmp);
 
          pb->insertBefore(pb->getExit(), mov);
       }
