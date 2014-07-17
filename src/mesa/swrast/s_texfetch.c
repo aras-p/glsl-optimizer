@@ -512,6 +512,30 @@ texfetch_funcs[] =
       fetch_compressed,
       fetch_compressed,
       fetch_compressed
+   },
+   {
+      MESA_FORMAT_BPTC_RGBA_UNORM,
+      fetch_compressed,
+      fetch_compressed,
+      fetch_compressed
+   },
+   {
+      MESA_FORMAT_BPTC_SRGB_ALPHA_UNORM,
+      fetch_compressed,
+      fetch_compressed,
+      fetch_compressed
+   },
+   {
+      MESA_FORMAT_BPTC_RGB_SIGNED_FLOAT,
+      fetch_compressed,
+      fetch_compressed,
+      fetch_compressed
+   },
+   {
+      MESA_FORMAT_BPTC_RGB_UNSIGNED_FLOAT,
+      fetch_compressed,
+      fetch_compressed,
+      fetch_compressed
    }
 };
 

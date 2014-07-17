@@ -520,6 +520,20 @@ _mesa_base_tex_format( struct gl_context *ctx, GLint internalFormat )
       }
    }
 
+   if (_mesa_is_desktop_gl(ctx) &&
+       ctx->Extensions.ARB_texture_compression_bptc) {
+      switch (internalFormat) {
+      case GL_COMPRESSED_RGBA_BPTC_UNORM:
+      case GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM:
+         return GL_RGBA;
+      case GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT:
+      case GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT:
+         return GL_RGB;
+      default:
+         ; /* fallthrough */
+      }
+   }
+
    if (ctx->API == API_OPENGLES) {
       switch (internalFormat) {
       case GL_PALETTE4_RGB8_OES:

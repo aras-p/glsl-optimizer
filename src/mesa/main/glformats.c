@@ -787,6 +787,10 @@ _mesa_is_color_format(GLenum format)
       case GL_COMPRESSED_SIGNED_RG11_EAC:
       case GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2:
       case GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2:
+      case GL_COMPRESSED_RGBA_BPTC_UNORM:
+      case GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM:
+      case GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT:
+      case GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT:
       /* generic integer formats */
       case GL_RED_INTEGER_EXT:
       case GL_GREEN_INTEGER_EXT:
@@ -1040,6 +1044,12 @@ _mesa_is_compressed_format(struct gl_context *ctx, GLenum format)
    case GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2:
    case GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2:
       return _mesa_is_gles3(ctx) || ctx->Extensions.ARB_ES3_compatibility;
+   case GL_COMPRESSED_RGBA_BPTC_UNORM:
+   case GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM:
+   case GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT:
+   case GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT:
+      return _mesa_is_desktop_gl(ctx) &&
+         ctx->Extensions.ARB_texture_compression_bptc;
    case GL_PALETTE4_RGB8_OES:
    case GL_PALETTE4_RGBA8_OES:
    case GL_PALETTE4_R5_G6_B5_OES:

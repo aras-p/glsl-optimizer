@@ -235,6 +235,12 @@ _mesa_gl_compressed_format_base_format(GLenum format)
  * GL_EXT_texture_compression_latc.  At the very least, Catalyst 11.6 does not
  * expose the 3dc formats through this mechanism.
  *
+ * The spec for GL_ARB_texture_compression_bptc doesn't mention whether it
+ * should be included in GL_COMPRESSED_TEXTURE_FORMATS. However as it takes a
+ * very long time to compress the textures in this format it's probably not
+ * very useful as a general format where the GL will have to compress it on
+ * the fly.
+ *
  * \param ctx  the GL context
  * \param formats  the resulting format list (may be NULL).
  *
@@ -434,6 +440,15 @@ _mesa_glenum_to_compressed_format(GLenum format)
    case GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2:
       return MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1;
 
+   case GL_COMPRESSED_RGBA_BPTC_UNORM:
+      return MESA_FORMAT_BPTC_RGBA_UNORM;
+   case GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM:
+      return MESA_FORMAT_BPTC_SRGB_ALPHA_UNORM;
+   case GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT:
+      return MESA_FORMAT_BPTC_RGB_SIGNED_FLOAT;
+   case GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT:
+      return MESA_FORMAT_BPTC_RGB_UNSIGNED_FLOAT;
+
    default:
       return MESA_FORMAT_NONE;
    }
@@ -514,6 +529,15 @@ _mesa_compressed_format_to_glenum(struct gl_context *ctx, mesa_format mesaFormat
       return GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2;
    case MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1:
       return GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2;
+
+   case MESA_FORMAT_BPTC_RGBA_UNORM:
+      return GL_COMPRESSED_RGBA_BPTC_UNORM;
+   case MESA_FORMAT_BPTC_SRGB_ALPHA_UNORM:
+      return GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM;
+   case MESA_FORMAT_BPTC_RGB_SIGNED_FLOAT:
+      return GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT;
+   case MESA_FORMAT_BPTC_RGB_UNSIGNED_FLOAT:
+      return GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT;
 
    default:
       _mesa_problem(ctx, "Unexpected mesa texture format in"

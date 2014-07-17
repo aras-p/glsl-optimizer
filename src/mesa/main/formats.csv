@@ -280,3 +280,9 @@ MESA_FORMAT_ETC2_SIGNED_R11_EAC           , etc2  , 4, 4, x64 ,     ,     ,     
 MESA_FORMAT_ETC2_SIGNED_RG11_EAC          , etc2  , 4, 4, x128,     ,     ,     , xy01, rgb
 MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1 , etc2  , 4, 4, x64 ,     ,     ,     , xyzw, rgb
 MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1, etc2  , 4, 4, x64 ,     ,     ,     , xyzw, srgb
+
+# BPTC compressed formats
+MESA_FORMAT_BPTC_RGBA_UNORM               , bptc  , 4, 4, x128,     ,     ,     , xyzw, rgb
+MESA_FORMAT_BPTC_SRGB_ALPHA_UNORM         , bptc  , 4, 4, x128,     ,     ,     , xyzw, srgb
+MESA_FORMAT_BPTC_RGB_SIGNED_FLOAT         , bptc  , 4, 4, x128,     ,     ,     , xyz1, rgb
+MESA_FORMAT_BPTC_RGB_UNSIGNED_FLOAT       , bptc  , 4, 4, x128,     ,     ,     , xyz1, rgb

@@ -369,6 +369,7 @@ _mesa_get_format_color_encoding(mesa_format format)
    case MESA_FORMAT_ETC2_SRGB8_ALPHA8_EAC:
    case MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1:
    case MESA_FORMAT_B8G8R8X8_SRGB:
+   case MESA_FORMAT_BPTC_SRGB_ALPHA_UNORM:
       return GL_SRGB;
    default:
       return GL_LINEAR;
@@ -451,6 +452,9 @@ _mesa_get_srgb_format_linear(mesa_format format)
    case MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1:
       format = MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1;
       break;
+   case MESA_FORMAT_BPTC_SRGB_ALPHA_UNORM:
+      format = MESA_FORMAT_BPTC_RGBA_UNORM;
+      break;
    case MESA_FORMAT_B8G8R8X8_SRGB:
       format = MESA_FORMAT_B8G8R8X8_UNORM;
       break;
@@ -516,6 +520,12 @@ _mesa_get_uncompressed_format(mesa_format format)
    case MESA_FORMAT_ETC2_RG11_EAC:
    case MESA_FORMAT_ETC2_SIGNED_RG11_EAC:
       return MESA_FORMAT_R16G16_UNORM;
+   case MESA_FORMAT_BPTC_RGBA_UNORM:
+   case MESA_FORMAT_BPTC_SRGB_ALPHA_UNORM:
+      return MESA_FORMAT_A8B8G8R8_UNORM;
+   case MESA_FORMAT_BPTC_RGB_UNSIGNED_FLOAT:
+   case MESA_FORMAT_BPTC_RGB_SIGNED_FLOAT:
+      return MESA_FORMAT_RGB_FLOAT32;
    default:
 #ifdef DEBUG
       assert(!_mesa_is_format_compressed(format));
@@ -993,6 +1003,10 @@ _mesa_format_to_type_and_comps(mesa_format format,
    case MESA_FORMAT_ETC2_SIGNED_RG11_EAC:
    case MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1:
    case MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1:
+   case MESA_FORMAT_BPTC_RGBA_UNORM:
+   case MESA_FORMAT_BPTC_SRGB_ALPHA_UNORM:
+   case MESA_FORMAT_BPTC_RGB_SIGNED_FLOAT:
+   case MESA_FORMAT_BPTC_RGB_UNSIGNED_FLOAT:
       /* XXX generate error instead? */
       *datatype = GL_UNSIGNED_BYTE;
       *comps = 0;
@@ -1547,6 +1561,12 @@ _mesa_format_matches_format_and_type(mesa_format mesa_format,
    case MESA_FORMAT_RGBA_DXT1:
    case MESA_FORMAT_RGBA_DXT3:
    case MESA_FORMAT_RGBA_DXT5:
+      return GL_FALSE;
+
+   case MESA_FORMAT_BPTC_RGBA_UNORM:
+   case MESA_FORMAT_BPTC_SRGB_ALPHA_UNORM:
+   case MESA_FORMAT_BPTC_RGB_SIGNED_FLOAT:
+   case MESA_FORMAT_BPTC_RGB_UNSIGNED_FLOAT:
       return GL_FALSE;
 
    case MESA_FORMAT_RGBA_FLOAT32:
