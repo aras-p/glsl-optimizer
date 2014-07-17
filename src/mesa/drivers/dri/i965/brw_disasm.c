@@ -213,7 +213,7 @@ static const char *const accwr[2] = {
 };
 
 static const char *const wectrl[2] = {
-   [0] = "WE_normal",
+   [0] = "",
    [1] = "WE_all"
 };
 
