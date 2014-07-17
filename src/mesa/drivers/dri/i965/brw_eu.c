@@ -241,7 +241,8 @@ brw_disassemble(struct brw_context *brw,
       brw_inst *insn = assembly + offset;
       brw_inst uncompacted;
       bool compacted = brw_inst_cmpt_control(brw, insn);
-      fprintf(out, "0x%08x: ", offset);
+      if (0)
+         fprintf(out, "0x%08x: ", offset);
 
       if (compacted) {
          brw_compact_inst *compacted = (void *)insn;
