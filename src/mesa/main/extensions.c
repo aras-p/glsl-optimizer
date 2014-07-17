@@ -157,6 +157,7 @@ static const struct extension extension_table[] = {
    { "GL_ARB_texture_buffer_object_rgb32",         o(ARB_texture_buffer_object_rgb32),         GLC,            2009 },
    { "GL_ARB_texture_buffer_range",                o(ARB_texture_buffer_range),                GLC,            2012 },
    { "GL_ARB_texture_compression",                 o(dummy_true),                              GLL,            2000 },
+   { "GL_ARB_texture_compression_bptc",            o(ARB_texture_compression_bptc),            GL,             2010 },
    { "GL_ARB_texture_compression_rgtc",            o(ARB_texture_compression_rgtc),            GL,             2004 },
    { "GL_ARB_texture_cube_map",                    o(ARB_texture_cube_map),                    GLL,            1999 },
    { "GL_ARB_texture_cube_map_array",              o(ARB_texture_cube_map_array),              GL,             2009 },
