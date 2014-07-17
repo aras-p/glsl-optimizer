@@ -1702,6 +1702,14 @@ GCRA::resolveSplitsAndMerges()
          Value *v = merge->getSrc(s);
          v->reg.data.id = regs.bytesToId(v, reg);
          v->join = v;
+         // If the value is defined by a phi/union node, we also need to
+         // perform the same fixup on that node's sources, since after RA
+         // their registers should be identical.
+         if (v->getInsn()->op == OP_PHI || v->getInsn()->op == OP_UNION) {
+            Instruction *phi = v->getInsn();
+            for (int phis = 0; phi->srcExists(phis); ++phis)
+               phi->getSrc(phis)->join = v;
+         }
          reg += v->reg.size;
       }
    }
