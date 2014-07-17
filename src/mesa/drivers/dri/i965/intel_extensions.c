@@ -303,6 +303,8 @@ intelInitExtensions(struct gl_context *ctx)
          ctx->Extensions.ARB_viewport_array = true;
          ctx->Extensions.AMD_vertex_shader_viewport_index = true;
       }
+
+      ctx->Extensions.ARB_texture_compression_bptc = true;
    }
 
    if (brw->gen >= 8) {
