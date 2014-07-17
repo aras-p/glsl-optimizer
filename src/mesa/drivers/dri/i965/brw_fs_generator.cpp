@@ -1620,9 +1620,9 @@ fs_generator::generate_code(exec_list *instructions)
       case SHADER_OPCODE_INT_REMAINDER:
       case SHADER_OPCODE_POW:
          assert(brw->gen < 6 || inst->mlen == 0);
-	 if (brw->gen >= 7) {
+	 if (brw->gen >= 7 && inst->opcode == SHADER_OPCODE_POW) {
             gen6_math(p, dst, brw_math_function(inst->opcode), src[0], src[1]);
-	 } else if (brw->gen == 6) {
+	 } else if (brw->gen >= 6) {
 	    generate_math_gen6(inst, dst, src[0], src[1]);
 	 } else {
 	    generate_math_gen4(inst, dst, src[0]);

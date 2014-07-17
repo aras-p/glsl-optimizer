@@ -1404,18 +1404,6 @@ fs_visitor::emit_math(enum opcode opcode, fs_reg dst, fs_reg src0, fs_reg src1)
    int base_mrf = 2;
    fs_inst *inst;
 
-   switch (opcode) {
-   case SHADER_OPCODE_INT_QUOTIENT:
-   case SHADER_OPCODE_INT_REMAINDER:
-      if (brw->gen >= 7)
-	 no16("SIMD16 INTDIV unsupported\n");
-      break;
-   case SHADER_OPCODE_POW:
-      break;
-   default:
-      unreachable("not reached: unsupported binary math opcode.");
-   }
-
    if (brw->gen >= 8) {
       inst = emit(opcode, dst, src0, src1);
    } else if (brw->gen >= 6) {
