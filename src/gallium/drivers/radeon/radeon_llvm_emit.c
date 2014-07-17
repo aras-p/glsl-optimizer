@@ -26,6 +26,7 @@
 #include "radeon_llvm_emit.h"
 #include "radeon_elf_util.h"
 #include "util/u_memory.h"
+#include "pipe/p_shader_tokens.h"
 
 #include <llvm-c/Target.h>
 #include <llvm-c/TargetMachine.h>
@@ -50,6 +51,10 @@ void radeon_llvm_shader_type(LLVMValueRef F, unsigned type)
   sprintf(Str, "%1d", type);
 
   LLVMAddTargetDependentFunctionAttr(F, "ShaderType", Str);
+
+  if (type != TGSI_PROCESSOR_COMPUTE) {
+    LLVMAddTargetDependentFunctionAttr(F, "unsafe-fp-math", "true");
+  }
 }
 
 static void init_r600_target() {
