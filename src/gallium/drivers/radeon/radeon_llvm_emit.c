@@ -47,17 +47,18 @@
  */
 void radeon_llvm_shader_type(LLVMValueRef F, unsigned type)
 {
-  char Str[2];
-  sprintf(Str, "%1d", type);
+	char Str[2];
+	sprintf(Str, "%1d", type);
 
-  LLVMAddTargetDependentFunctionAttr(F, "ShaderType", Str);
+	LLVMAddTargetDependentFunctionAttr(F, "ShaderType", Str);
 
-  if (type != TGSI_PROCESSOR_COMPUTE) {
-    LLVMAddTargetDependentFunctionAttr(F, "unsafe-fp-math", "true");
-  }
+	if (type != TGSI_PROCESSOR_COMPUTE) {
+		LLVMAddTargetDependentFunctionAttr(F, "unsafe-fp-math", "true");
+	}
 }
 
-static void init_r600_target() {
+static void init_r600_target()
+{
 	static unsigned initialized = 0;
 	if (!initialized) {
 		LLVMInitializeR600TargetInfo();
@@ -68,7 +69,8 @@ static void init_r600_target() {
 	}
 }
 
-static LLVMTargetRef get_r600_target() {
+static LLVMTargetRef get_r600_target()
+{
 	LLVMTargetRef target = NULL;
 
 	for (target = LLVMGetFirstTarget(); target;
@@ -87,7 +89,8 @@ static LLVMTargetRef get_r600_target() {
 
 #if HAVE_LLVM >= 0x0305
 
-static void radeonDiagnosticHandler(LLVMDiagnosticInfoRef di, void *context) {
+static void radeonDiagnosticHandler(LLVMDiagnosticInfoRef di, void *context)
+{
 	if (LLVMGetDiagInfoSeverity(di) == LLVMDSError) {
 		unsigned int *diagnosticflag = (unsigned int *)context;
 		char *diaginfo_message = LLVMGetDiagInfoDescription(di);
@@ -106,7 +109,8 @@ static void radeonDiagnosticHandler(LLVMDiagnosticInfoRef di, void *context) {
  * @returns 0 for success, 1 for failure
  */
 unsigned radeon_llvm_compile(LLVMModuleRef M, struct radeon_shader_binary *binary,
-					  const char * gpu_family, unsigned dump) {
+					  const char *gpu_family, unsigned dump)
+{
 
 	LLVMTargetRef target;
 	LLVMTargetMachineRef tm;
