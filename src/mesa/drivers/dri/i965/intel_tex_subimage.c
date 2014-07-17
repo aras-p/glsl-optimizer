@@ -585,6 +585,17 @@ intel_texsubimage_tiled_memcpy(struct gl_context * ctx,
       } else if (format == GL_RGBA) {
          mem_copy = rgba8_copy;
       }
+   } else if ((texImage->TexFormat == MESA_FORMAT_R8G8B8A8_UNORM) ||
+              (texImage->TexFormat == MESA_FORMAT_R8G8B8X8_UNORM)) {
+      cpp = 4;
+      if (format == GL_BGRA) {
+         /* Copying from RGBA to BGRA is the same as BGRA to RGBA so we can
+          * use the same function.
+          */
+         mem_copy = rgba8_copy;
+      } else if (format == GL_RGBA) {
+         mem_copy = memcpy;
+      }
    }
    if (!mem_copy)
       return false;
