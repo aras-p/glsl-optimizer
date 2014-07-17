@@ -2929,7 +2929,7 @@ vec4_visitor::emit_ndc_computation()
 }
 
 void
-vec4_visitor::emit_psiz_and_flags(struct brw_reg reg)
+vec4_visitor::emit_psiz_and_flags(dst_reg reg)
 {
    if (brw->gen < 6 &&
        ((prog_data->vue_map.slots_valid & VARYING_BIT_PSIZ) ||
@@ -2989,16 +2989,21 @@ vec4_visitor::emit_psiz_and_flags(struct brw_reg reg)
    } else {
       emit(MOV(retype(reg, BRW_REGISTER_TYPE_D), src_reg(0)));
       if (prog_data->vue_map.slots_valid & VARYING_BIT_PSIZ) {
-         emit(MOV(brw_writemask(reg, WRITEMASK_W),
-                  src_reg(output_reg[VARYING_SLOT_PSIZ])));
+         dst_reg reg_w = reg;
+         reg_w.writemask = WRITEMASK_W;
+         emit(MOV(reg_w, src_reg(output_reg[VARYING_SLOT_PSIZ])));
       }
       if (prog_data->vue_map.slots_valid & VARYING_BIT_LAYER) {
-         emit(MOV(retype(brw_writemask(reg, WRITEMASK_Y), BRW_REGISTER_TYPE_D),
-                  src_reg(output_reg[VARYING_SLOT_LAYER])));
+         dst_reg reg_y = reg;
+         reg_y.writemask = WRITEMASK_Y;
+         reg_y.type = BRW_REGISTER_TYPE_D;
+         emit(MOV(reg_y, src_reg(output_reg[VARYING_SLOT_LAYER])));
       }
       if (prog_data->vue_map.slots_valid & VARYING_BIT_VIEWPORT) {
-         emit(MOV(retype(brw_writemask(reg, WRITEMASK_Z), BRW_REGISTER_TYPE_D),
-                  src_reg(output_reg[VARYING_SLOT_VIEWPORT])));
+         dst_reg reg_z = reg;
+         reg_z.writemask = WRITEMASK_Z;
+         reg_z.type = BRW_REGISTER_TYPE_D;
+         emit(MOV(reg_z, src_reg(output_reg[VARYING_SLOT_VIEWPORT])));
       }
    }
 }
@@ -3051,18 +3056,18 @@ vec4_visitor::emit_generic_urb_slot(dst_reg reg, int varying)
 }
 
 void
-vec4_visitor::emit_urb_slot(int mrf, int varying)
+vec4_visitor::emit_urb_slot(dst_reg reg, int varying)
 {
-   struct brw_reg hw_reg = brw_message_reg(mrf);
-   dst_reg reg = dst_reg(MRF, mrf);
    reg.type = BRW_REGISTER_TYPE_F;
 
    switch (varying) {
    case VARYING_SLOT_PSIZ:
+   {
       /* PSIZ is always in slot 0, and is coupled with other flags. */
       current_annotation = "indices, point width, clip flags";
-      emit_psiz_and_flags(hw_reg);
+      emit_psiz_and_flags(reg);
       break;
+   }
    case BRW_VARYING_SLOT_NDC:
       current_annotation = "NDC";
       emit(MOV(reg, src_reg(output_reg[BRW_VARYING_SLOT_NDC])));
@@ -3170,7 +3175,8 @@ vec4_visitor::emit_vertex()
 
       mrf = base_mrf + 1;
       for (; slot < prog_data->vue_map.num_slots; ++slot) {
-         emit_urb_slot(mrf++, prog_data->vue_map.slot_to_varying[slot]);
+         emit_urb_slot(dst_reg(MRF, mrf++),
+                       prog_data->vue_map.slot_to_varying[slot]);
 
          /* If this was max_usable_mrf, we can't fit anything more into this
           * URB WRITE.

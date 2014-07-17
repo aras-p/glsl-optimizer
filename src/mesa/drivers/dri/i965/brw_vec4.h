@@ -533,10 +533,10 @@ public:
    void swizzle_result(ir_texture *ir, src_reg orig_val, uint32_t sampler);
 
    void emit_ndc_computation();
-   void emit_psiz_and_flags(struct brw_reg reg);
+   void emit_psiz_and_flags(dst_reg reg);
    void emit_clip_distances(dst_reg reg, int offset);
    void emit_generic_urb_slot(dst_reg reg, int varying);
-   void emit_urb_slot(int mrf, int varying);
+   void emit_urb_slot(dst_reg reg, int varying);
 
    void emit_shader_time_begin();
    void emit_shader_time_end();
