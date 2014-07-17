@@ -1410,8 +1410,10 @@ brw_disassemble_inst(FILE *file, struct brw_context *brw, brw_inst *inst,
                err |= control(file, "urb used", urb_used,
                               brw_inst_urb_used(brw, inst), &space);
             }
-            err |= control(file, "urb complete", urb_complete,
-                           brw_inst_urb_complete(brw, inst), &space);
+            if (brw->gen < 8) {
+               err |= control(file, "urb complete", urb_complete,
+                              brw_inst_urb_complete(brw, inst), &space);
+            }
             break;
          case BRW_SFID_THREAD_SPAWNER:
             break;
