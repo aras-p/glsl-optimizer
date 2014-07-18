@@ -49,7 +49,7 @@ struct tgsi_to_qir {
         struct qreg *consts;
         uint32_t num_consts;
 
-        struct vc4_shader_state *shader_state;
+        struct pipe_shader_state *shader_state;
         struct vc4_fs_key *fs_key;
         struct vc4_vs_key *vs_key;
 
@@ -60,7 +60,7 @@ struct tgsi_to_qir {
 };
 
 struct vc4_key {
-        struct vc4_shader_state *shader_state;
+        struct pipe_shader_state *shader_state;
 };
 
 struct vc4_fs_key {
@@ -836,12 +836,12 @@ vc4_shader_tgsi_to_qir(struct vc4_compiled_shader *shader, enum qstage stage,
 
         trans->shader_state = key->shader_state;
         trans->c = c;
-        ret = tgsi_parse_init(&trans->parser, trans->shader_state->base.tokens);
+        ret = tgsi_parse_init(&trans->parser, trans->shader_state->tokens);
         assert(ret == TGSI_PARSE_OK);
 
         if (vc4_debug & VC4_DEBUG_TGSI) {
                 fprintf(stderr, "TGSI:\n");
-                tgsi_dump(trans->shader_state->base.tokens, 0);
+                tgsi_dump(trans->shader_state->tokens, 0);
         }
 
         switch (stage) {
@@ -914,11 +914,11 @@ static void *
 vc4_shader_state_create(struct pipe_context *pctx,
                         const struct pipe_shader_state *cso)
 {
-        struct vc4_shader_state *so = CALLOC_STRUCT(vc4_shader_state);
+        struct pipe_shader_state *so = CALLOC_STRUCT(pipe_shader_state);
         if (!so)
                 return NULL;
 
-        so->base.tokens = tgsi_dup_tokens(cso->tokens);
+        so->tokens = tgsi_dup_tokens(cso->tokens);
 
         return so;
 }
@@ -1071,7 +1071,7 @@ vs_cache_compare(void *key1, void *key2)
 
 struct delete_state {
         struct vc4_context *vc4;
-        struct vc4_shader_state *shader_state;
+        struct pipe_shader_state *shader_state;
 };
 
 static enum pipe_error
@@ -1110,7 +1110,7 @@ static void
 vc4_shader_state_delete(struct pipe_context *pctx, void *hwcso)
 {
         struct vc4_context *vc4 = vc4_context(pctx);
-        struct vc4_shader_state *so = hwcso;
+        struct pipe_shader_state *so = hwcso;
         struct delete_state del;
 
         del.vc4 = vc4;
@@ -1118,7 +1118,7 @@ vc4_shader_state_delete(struct pipe_context *pctx, void *hwcso)
         util_hash_table_foreach(vc4->fs_cache, fs_delete_from_cache, &del);
         util_hash_table_foreach(vc4->vs_cache, vs_delete_from_cache, &del);
 
-        free((void *)so->base.tokens);
+        free((void *)so->tokens);
         free(so);
 }
 

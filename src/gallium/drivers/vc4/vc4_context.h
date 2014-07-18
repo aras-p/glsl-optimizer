@@ -70,10 +70,6 @@ struct vc4_shader_uniform_info {
         uint32_t count;
 };
 
-struct vc4_shader_state {
-        struct pipe_shader_state base;
-};
-
 struct vc4_compiled_shader {
         struct vc4_bo *bo;
 
@@ -84,7 +80,7 @@ struct vc4_compiled_shader {
 };
 
 struct vc4_program_stateobj {
-        struct vc4_shader_state *bind_vs, *bind_fs;
+        struct pipe_shader_state *bind_vs, *bind_fs;
         struct vc4_compiled_shader *vs, *fs;
         uint32_t dirty;
         uint8_t num_exports;
