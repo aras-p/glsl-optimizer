@@ -515,6 +515,11 @@ static inline unsigned r600_tex_aniso_filter(unsigned filter)
 	 /* else */        return 4;
 }
 
+#define COMPUTE_DBG(rscreen, fmt, args...) \
+	do { \
+		if ((rscreen->b.debug_flags & DBG_COMPUTE)) fprintf(stderr, fmt, ##args); \
+	} while (0);
+
 #define R600_ERR(fmt, args...) \
 	fprintf(stderr, "EE %s:%d %s - "fmt, __FILE__, __LINE__, __func__, ##args)
 

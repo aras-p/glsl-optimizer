@@ -163,6 +163,11 @@ static void si_launch_grid(
 
 	memcpy(kernel_args + (num_work_size_bytes / 4), input, program->input_size);
 
+	for (i = 0; i < (kernel_args_size / 4); i++) {
+		COMPUTE_DBG(sctx->screen, "input %u : %u\n", i,
+			kernel_args[i]);
+	}
+
 	si_upload_const_buffer(sctx, &kernel_args_buffer, (uint8_t*)kernel_args,
 					kernel_args_size, &kernel_args_offset);
 	kernel_args_va = r600_resource_va(ctx->screen,

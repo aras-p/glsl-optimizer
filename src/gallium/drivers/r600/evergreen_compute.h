@@ -59,17 +59,4 @@ void r600_compute_global_transfer_flush_region( struct pipe_context *, struct pi
 void r600_compute_global_transfer_inline_write( struct pipe_context *, struct pipe_resource *, unsigned level,
                                                 unsigned usage, const struct pipe_box *, const void *data, unsigned stride, unsigned layer_stride);
 
-
-static inline void COMPUTE_DBG(struct r600_screen *rscreen, const char *fmt, ...)
-{
-	if (!(rscreen->b.debug_flags & DBG_COMPUTE)) {
-		return;
-	}
-
-	va_list ap;
-	va_start(ap, fmt);
-	_debug_vprintf(fmt, ap);
-	va_end(ap);
-}
-
 #endif
