@@ -6498,8 +6498,7 @@ static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_SUB,	0, ALU_OP2_ADD, tgsi_op2},
 	{TGSI_OPCODE_LRP,	0, ALU_OP0_NOP, tgsi_lrp},
 	{TGSI_OPCODE_CND,	0, ALU_OP0_NOP, tgsi_unsupported},
-	/* gap */
-	{20,			0, ALU_OP0_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_SQRT,	0, ALU_OP1_SQRT_IEEE, tgsi_trans_srcx_replicate},
 	{TGSI_OPCODE_DP2A,	0, ALU_OP0_NOP, tgsi_unsupported},
 	/* gap */
 	{22,			0, ALU_OP0_NOP, tgsi_unsupported},
@@ -6693,8 +6692,7 @@ static struct r600_shader_tgsi_instruction eg_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_SUB,	0, ALU_OP2_ADD, tgsi_op2},
 	{TGSI_OPCODE_LRP,	0, ALU_OP0_NOP, tgsi_lrp},
 	{TGSI_OPCODE_CND,	0, ALU_OP0_NOP, tgsi_unsupported},
-	/* gap */
-	{20,			0, ALU_OP0_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_SQRT,	0, ALU_OP1_SQRT_IEEE, tgsi_trans_srcx_replicate},
 	{TGSI_OPCODE_DP2A,	0, ALU_OP0_NOP, tgsi_unsupported},
 	/* gap */
 	{22,			0, ALU_OP0_NOP, tgsi_unsupported},
@@ -6888,8 +6886,7 @@ static struct r600_shader_tgsi_instruction cm_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_SUB,	0, ALU_OP2_ADD, tgsi_op2},
 	{TGSI_OPCODE_LRP,	0, ALU_OP0_NOP, tgsi_lrp},
 	{TGSI_OPCODE_CND,	0, ALU_OP0_NOP, tgsi_unsupported},
-	/* gap */
-	{20,			0, ALU_OP0_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_SQRT,	0, ALU_OP1_SQRT_IEEE, cayman_emit_float_instr},
 	{TGSI_OPCODE_DP2A,	0, ALU_OP0_NOP, tgsi_unsupported},
 	/* gap */
 	{22,			0, ALU_OP0_NOP, tgsi_unsupported},
