@@ -41,12 +41,20 @@ gen6_update_sol_surfaces(struct brw_context *brw)
    /* BRW_NEW_TRANSFORM_FEEDBACK */
    struct gl_transform_feedback_object *xfb_obj =
       ctx->TransformFeedback.CurrentObject;
-   /* BRW_NEW_VERTEX_PROGRAM */
-   const struct gl_shader_program *shaderprog =
-      ctx->_Shader->CurrentProgram[MESA_SHADER_VERTEX];
-   const struct gl_transform_feedback_info *linked_xfb_info =
-      &shaderprog->LinkedTransformFeedback;
+   const struct gl_shader_program *shaderprog;
+   const struct gl_transform_feedback_info *linked_xfb_info;
    int i;
+
+   if (brw->geometry_program) {
+      /* BRW_NEW_GEOMETRY_PROGRAM */
+      shaderprog =
+         ctx->_Shader->CurrentProgram[MESA_SHADER_GEOMETRY];
+   } else {
+      /* BRW_NEW_VERTEX_PROGRAM */
+      shaderprog =
+         ctx->_Shader->CurrentProgram[MESA_SHADER_VERTEX];
+   }
+   linked_xfb_info = &shaderprog->LinkedTransformFeedback;
 
    for (i = 0; i < BRW_MAX_SOL_BINDINGS; ++i) {
       const int surf_index = SURF_INDEX_GEN6_SOL_BINDING(i);
@@ -56,12 +64,24 @@ gen6_update_sol_surfaces(struct brw_context *brw)
          unsigned buffer_offset =
             xfb_obj->Offset[buffer] / 4 +
             linked_xfb_info->Outputs[i].DstOffset;
-         brw_update_sol_surface(
-            brw, xfb_obj->Buffers[buffer], &brw->ff_gs.surf_offset[surf_index],
-            linked_xfb_info->Outputs[i].NumComponents,
-            linked_xfb_info->BufferStride[buffer], buffer_offset);
+         if (brw->geometry_program) {
+            brw_update_sol_surface(
+               brw, xfb_obj->Buffers[buffer],
+               &brw->gs.base.surf_offset[surf_index],
+               linked_xfb_info->Outputs[i].NumComponents,
+               linked_xfb_info->BufferStride[buffer], buffer_offset);
+         } else {
+            brw_update_sol_surface(
+               brw, xfb_obj->Buffers[buffer],
+               &brw->ff_gs.surf_offset[surf_index],
+               linked_xfb_info->Outputs[i].NumComponents,
+               linked_xfb_info->BufferStride[buffer], buffer_offset);
+         }
       } else {
-         brw->ff_gs.surf_offset[surf_index] = 0;
+         if (!brw->geometry_program)
+            brw->ff_gs.surf_offset[surf_index] = 0;
+         else
+            brw->gs.base.surf_offset[surf_index] = 0;
       }
    }
 
@@ -73,6 +93,7 @@ const struct brw_tracked_state gen6_sol_surface = {
       .mesa = 0,
       .brw = (BRW_NEW_BATCH |
               BRW_NEW_VERTEX_PROGRAM |
+              BRW_NEW_GEOMETRY_PROGRAM |
               BRW_NEW_TRANSFORM_FEEDBACK),
       .cache = 0
    },
@@ -86,38 +107,50 @@ const struct brw_tracked_state gen6_sol_surface = {
 static void
 brw_gs_upload_binding_table(struct brw_context *brw)
 {
-   struct gl_context *ctx = &brw->ctx;
-   /* BRW_NEW_VERTEX_PROGRAM */
-   const struct gl_shader_program *shaderprog =
-      ctx->_Shader->CurrentProgram[MESA_SHADER_VERTEX];
-   bool has_surfaces = false;
    uint32_t *bind;
 
-   if (shaderprog) {
-      const struct gl_transform_feedback_info *linked_xfb_info =
-	 &shaderprog->LinkedTransformFeedback;
-      /* Currently we only ever upload surfaces for SOL. */
-      has_surfaces = linked_xfb_info->NumOutputs != 0;
-   }
+   if (!brw->geometry_program) {
+      struct gl_context *ctx = &brw->ctx;
+      /* BRW_NEW_VERTEX_PROGRAM */
+      const struct gl_shader_program *shaderprog =
+         ctx->_Shader->CurrentProgram[MESA_SHADER_VERTEX];
+      bool has_surfaces = false;
 
-   /* Skip making a binding table if we don't have anything to put in it. */
-   if (!has_surfaces) {
-      if (brw->ff_gs.bind_bo_offset != 0) {
-	 brw->state.dirty.brw |= BRW_NEW_GS_BINDING_TABLE;
-	 brw->ff_gs.bind_bo_offset = 0;
+      if (shaderprog) {
+         const struct gl_transform_feedback_info *linked_xfb_info =
+            &shaderprog->LinkedTransformFeedback;
+         /* Currently we only ever upload surfaces for SOL. */
+         has_surfaces = linked_xfb_info->NumOutputs != 0;
+
+         /* Skip making a binding table if we don't have anything to put in it. */
+         if (!has_surfaces) {
+            if (brw->ff_gs.bind_bo_offset != 0) {
+               brw->state.dirty.brw |= BRW_NEW_GS_BINDING_TABLE;
+               brw->ff_gs.bind_bo_offset = 0;
+            }
+            return;
+         }
       }
-      return;
    }
 
    /* Might want to calculate nr_surfaces first, to avoid taking up so much
     * space for the binding table.
     */
-   bind = brw_state_batch(brw, AUB_TRACE_BINDING_TABLE,
-			  sizeof(uint32_t) * BRW_MAX_GEN6_GS_SURFACES,
-			  32, &brw->ff_gs.bind_bo_offset);
+   if (brw->geometry_program) {
+      bind = brw_state_batch(brw, AUB_TRACE_BINDING_TABLE,
+                             sizeof(uint32_t) * BRW_MAX_GEN6_GS_SURFACES,
+                             32, &brw->gs.base.bind_bo_offset);
 
-   /* BRW_NEW_SURFACES */
-   memcpy(bind, brw->ff_gs.surf_offset, BRW_MAX_GEN6_GS_SURFACES * sizeof(uint32_t));
+      /* BRW_NEW_SURFACES */
+      memcpy(bind, brw->gs.base.surf_offset, BRW_MAX_GEN6_GS_SURFACES * sizeof(uint32_t));
+   } else {
+      bind = brw_state_batch(brw, AUB_TRACE_BINDING_TABLE,
+                             sizeof(uint32_t) * BRW_MAX_GEN6_GS_SURFACES,
+                             32, &brw->ff_gs.bind_bo_offset);
+
+      /* BRW_NEW_SURFACES */
+      memcpy(bind, brw->ff_gs.surf_offset, BRW_MAX_GEN6_GS_SURFACES * sizeof(uint32_t));
+   }
 
    brw->state.dirty.brw |= BRW_NEW_GS_BINDING_TABLE;
 }
@@ -126,8 +159,9 @@ const struct brw_tracked_state gen6_gs_binding_table = {
    .dirty = {
       .mesa = 0,
       .brw = (BRW_NEW_BATCH |
-	      BRW_NEW_VERTEX_PROGRAM |
-	      BRW_NEW_SURFACES),
+              BRW_NEW_VERTEX_PROGRAM |
+              BRW_NEW_GEOMETRY_PROGRAM |
+              BRW_NEW_SURFACES),
       .cache = 0
    },
    .emit = brw_gs_upload_binding_table,
@@ -174,14 +208,23 @@ brw_begin_transform_feedback(struct gl_context *ctx, GLenum mode,
 			     struct gl_transform_feedback_object *obj)
 {
    struct brw_context *brw = brw_context(ctx);
-   const struct gl_shader_program *vs_prog =
-      ctx->_Shader->CurrentProgram[MESA_SHADER_VERTEX];
-   const struct gl_transform_feedback_info *linked_xfb_info =
-      &vs_prog->LinkedTransformFeedback;
+   const struct gl_shader_program *shaderprog;
+   const struct gl_transform_feedback_info *linked_xfb_info;
    struct gl_transform_feedback_object *xfb_obj =
       ctx->TransformFeedback.CurrentObject;
 
    assert(brw->gen == 6);
+
+   if (brw->geometry_program) {
+      /* BRW_NEW_GEOMETRY_PROGRAM */
+      shaderprog =
+         ctx->_Shader->CurrentProgram[MESA_SHADER_GEOMETRY];
+   } else {
+      /* BRW_NEW_VERTEX_PROGRAM */
+      shaderprog =
+         ctx->_Shader->CurrentProgram[MESA_SHADER_VERTEX];
+   }
+   linked_xfb_info = &shaderprog->LinkedTransformFeedback;
 
    /* Compute the maximum number of vertices that we can write without
     * overflowing any of the buffers currently being used for feedback.
