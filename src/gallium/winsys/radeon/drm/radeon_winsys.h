@@ -199,6 +199,8 @@ struct radeon_info {
     uint32_t                    vram_size;
     uint32_t                    max_sclk;
     uint32_t                    max_compute_units;
+    uint32_t                    max_se;
+    uint32_t                    max_sh_per_se;
 
     uint32_t                    drm_major; /* version */
     uint32_t                    drm_minor;

@@ -389,6 +389,12 @@ static boolean do_winsys_init(struct radeon_drm_winsys *ws)
     radeon_get_drm_value(ws->fd, RADEON_INFO_ACTIVE_CU_COUNT, NULL,
                          &ws->info.max_compute_units);
 
+    radeon_get_drm_value(ws->fd, RADEON_INFO_MAX_SE, NULL,
+                         &ws->info.max_se);
+
+    radeon_get_drm_value(ws->fd, RADEON_INFO_MAX_SH_PER_SE, NULL,
+                         &ws->info.max_sh_per_se);
+
     if (radeon_get_drm_value(ws->fd, RADEON_INFO_SI_TILE_MODE_ARRAY, NULL,
                              ws->info.si_tile_mode_array)) {
         ws->info.si_tile_mode_array_valid = TRUE;
