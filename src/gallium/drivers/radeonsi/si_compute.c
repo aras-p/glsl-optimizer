@@ -32,6 +32,11 @@
 #include "radeon_llvm_util.h"
 
 #define MAX_GLOBAL_BUFFERS 20
+#if HAVE_LLVM < 0x0305
+#define NUM_USER_SGPRS 2
+#else
+#define NUM_USER_SGPRS 4
+#endif
 
 struct si_pipe_compute {
 	struct si_context *ctx;
@@ -132,7 +137,7 @@ static void si_launch_grid(
 	uint32_t *kernel_args;
 	uint64_t kernel_args_va;
 	uint64_t shader_va;
-	unsigned arg_user_sgpr_count = 2;
+	unsigned arg_user_sgpr_count = NUM_USER_SGPRS;
 	unsigned i;
 	struct si_pipe_shader *shader = &program->kernels[pc];
 	unsigned lds_blocks;
