@@ -16,5 +16,6 @@ C_SOURCES := \
 	vc4_resource.c \
 	vc4_screen.c \
 	vc4_simulator.c \
+	vc4_simulator_validate.c \
 	vc4_state.c \
 	$()

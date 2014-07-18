@@ -28,10 +28,6 @@
 
 #include "util/u_math.h"
 
-#ifdef USE_VC4_SIMULATOR
-#include "simpenrose/simpenrose.h"
-#endif
-
 #include "vc4_packet.h"
 
 struct vc4_bo;
@@ -80,6 +76,16 @@ cl_u32(struct vc4_cl *cl, uint32_t n)
 }
 
 static inline void
+cl_ptr(struct vc4_cl *cl, void *ptr)
+{
+        if (cl->next + sizeof(void *) > cl->end)
+                vc4_grow_cl(cl);
+
+        *(void **)cl->next = ptr;
+        cl->next += sizeof(void *);
+}
+
+static inline void
 cl_f(struct vc4_cl *cl, float f)
 {
         cl_u32(cl, fui(f));
@@ -92,12 +98,10 @@ cl_start_reloc(struct vc4_cl *cl, uint32_t n)
         assert(cl->reloc_count == 0);
         cl->reloc_count = n;
 
-#ifndef USE_VC4_SIMULATOR
         cl_u8(cl, GEM_HANDLES);
         cl->reloc_next = cl->next - cl->base;
         cl_u32(cl, 0); /* Space where hindex will be written. */
         cl_u32(cl, 0); /* Space where hindex will be written. */
-#endif
 }
 
 static inline void
@@ -107,22 +111,16 @@ cl_start_shader_reloc(struct vc4_cl *cl, uint32_t n)
         cl->reloc_count = n;
         cl->reloc_next = cl->next - cl->base;
 
-#ifndef USE_VC4_SIMULATOR
         for (int i = 0; i < n; i++)
                 cl_u32(cl, 0); /* Space where hindex will be written. */
-#endif
 }
 
 static inline void
 cl_reloc(struct vc4_context *vc4, struct vc4_cl *cl,
          struct vc4_bo *bo, uint32_t offset)
 {
-#ifndef USE_VC4_SIMULATOR
         *(uint32_t *)(cl->base + cl->reloc_next) = vc4_gem_hindex(vc4, bo);
         cl->reloc_next += 4;
-#else
-        offset += simpenrose_hw_addr(bo->map);
-#endif
 
         cl->reloc_count--;
 

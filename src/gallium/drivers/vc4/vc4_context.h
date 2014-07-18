@@ -29,6 +29,8 @@
 #include "pipe/p_state.h"
 #include "util/u_slab.h"
 
+#define __user
+#include "vc4_drm.h"
 #include "vc4_bufmgr.h"
 #include "vc4_resource.h"
 #include "vc4_cl.h"
@@ -119,6 +121,9 @@ struct vc4_context {
         struct vc4_cl rcl;
         struct vc4_cl shader_rec;
         struct vc4_cl bo_handles;
+#ifdef USE_VC4_SIMULATOR
+        struct vc4_cl bo_pointers;
+#endif
         uint32_t shader_rec_count;
 
         struct vc4_bo *tile_alloc;
@@ -186,9 +191,9 @@ void vc4_draw_init(struct pipe_context *pctx);
 void vc4_state_init(struct pipe_context *pctx);
 void vc4_program_init(struct pipe_context *pctx);
 void vc4_simulator_init(struct vc4_screen *screen);
-void vc4_simulator_flush(struct vc4_context *vc4,
-                         struct vc4_surface *color_surf);
-void *vc4_simulator_alloc(struct vc4_screen *screen, uint32_t size);
+int vc4_simulator_flush(struct vc4_context *vc4,
+                        struct drm_vc4_submit_cl *args,
+                        struct vc4_surface *color_surf);
 
 void vc4_get_uniform_bo(struct vc4_context *vc4,
                         struct vc4_compiled_shader *shader,

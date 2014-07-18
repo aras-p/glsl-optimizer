@@ -44,7 +44,6 @@ struct vc4_screen {
         int fd;
 
         void *simulator_mem_base;
-        uint32_t simulator_mem_next;
         uint32_t simulator_mem_size;
 };
 

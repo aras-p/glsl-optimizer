@@ -125,15 +125,10 @@ vc4_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
         struct vc4_vertexbuf_stateobj *vertexbuf = &vc4->vertexbuf;
         cl_u8(&vc4->bcl, VC4_PACKET_GL_SHADER_STATE);
         assert(vtx->num_elements <= 8);
-#ifndef USE_VC4_SIMULATOR
         /* Note that number of attributes == 0 in the packet means 8
          * attributes.  This field also contains the offset into shader_rec.
          */
         cl_u32(&vc4->bcl, vtx->num_elements & 0x7);
-#else
-        cl_u32(&vc4->bcl, simpenrose_hw_addr(vc4->shader_rec.next) |
-               (vtx->num_elements & 0x7));
-#endif
 
         /* Note that the primitive type fields match with OpenGL/gallium
          * definitions, up to but not including QUADS.

@@ -60,7 +60,10 @@ vc4_bo_alloc(struct vc4_screen *screen, uint32_t size, const char *name)
         bo->handle = create.handle;
         assert(create.size >= size);
 #else /* USE_VC4_SIMULATOR */
-        bo->map = vc4_simulator_alloc(screen, size);
+        static int next_handle = 0;
+        bo->handle = next_handle++;
+
+        bo->map = malloc(size);
 #endif /* USE_VC4_SIMULATOR */
 
         return bo;
@@ -77,6 +80,8 @@ vc4_bo_free(struct vc4_bo *bo)
         int ret = drmIoctl(screen->fd, DRM_IOCTL_GEM_CLOSE, &c);
         if (ret != 0)
                 fprintf(stderr, "close object %d: %s\n", bo->handle, strerror(errno));
+#else
+        free(bo->map);
 #endif
 
         free(bo);
@@ -107,7 +112,7 @@ vc4_bo_open_name(struct vc4_screen *screen, uint32_t name,
         vc4_bo_map(bo);
         bo->simulator_winsys_map = bo->map;
         bo->simulator_winsys_stride = winsys_stride;
-        bo->map = vc4_simulator_alloc(screen, bo->size);
+        bo->map = malloc(bo->size);
 #endif
 
         return bo;

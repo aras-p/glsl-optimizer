@@ -32,8 +32,6 @@
 #include "indices/u_primconvert.h"
 #include "pipe/p_screen.h"
 
-#define __user
-#include "vc4_drm.h"
 #include "vc4_screen.h"
 #include "vc4_context.h"
 #include "vc4_resource.h"
@@ -111,19 +109,24 @@ vc4_flush(struct pipe_context *pctx)
         submit.shader_record_count = vc4->shader_rec_count;
 
         if (!(vc4_debug & VC4_DEBUG_NORAST)) {
+                int ret;
+
 #ifndef USE_VC4_SIMULATOR
-                int ret = drmIoctl(vc4->fd, DRM_IOCTL_VC4_SUBMIT_CL, &submit);
+                ret = drmIoctl(vc4->fd, DRM_IOCTL_VC4_SUBMIT_CL, &submit);
+#else
+                ret = vc4_simulator_flush(vc4, &submit, csurf);
+#endif
                 if (ret)
                         errx(1, "VC4 submit failed\n");
-#else
-                vc4_simulator_flush(vc4, csurf);
-#endif
         }
 
         vc4_reset_cl(&vc4->bcl);
         vc4_reset_cl(&vc4->rcl);
         vc4_reset_cl(&vc4->shader_rec);
         vc4_reset_cl(&vc4->bo_handles);
+#ifdef USE_VC4_SIMULATOR
+        vc4_reset_cl(&vc4->bo_pointers);
+#endif
         vc4->shader_rec_count = 0;
 
         vc4->needs_flush = false;

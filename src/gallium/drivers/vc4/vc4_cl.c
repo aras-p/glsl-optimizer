@@ -27,12 +27,6 @@
 void
 vc4_init_cl(struct vc4_context *vc4, struct vc4_cl *cl)
 {
-#ifdef USE_VC4_SIMULATOR
-        uint32_t size = 256 * 1024;
-        cl->base = vc4_simulator_alloc(vc4->screen, size);
-        cl->end = cl->base + size;
-        cl->next = cl->base;
-#endif
 }
 
 void
@@ -41,9 +35,6 @@ vc4_grow_cl(struct vc4_cl *cl)
         uint32_t size = MAX2((cl->end - cl->base) * 2, 4096);
         uint32_t offset = cl->next -cl->base;
 
-#ifdef USE_VC4_SIMULATOR
-        assert(!"not reached");
-#endif
         cl->base = realloc(cl->base, size);
         cl->end = cl->base + size;
         cl->next = cl->base + offset;
@@ -70,5 +61,10 @@ vc4_gem_hindex(struct vc4_context *vc4, struct vc4_bo *bo)
         }
 
         cl_u32(&vc4->bo_handles, bo->handle);
+
+#ifdef USE_VC4_SIMULATOR
+        cl_ptr(&vc4->bo_pointers, bo);
+#endif
+
         return hindex;
 }
