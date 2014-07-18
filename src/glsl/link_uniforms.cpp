@@ -445,7 +445,6 @@ public:
           */
          if (var->is_interface_instance()) {
             ubo_byte_offset = 0;
-            ubo_row_major = false;
          } else {
             const struct gl_uniform_block *const block =
                &prog->UniformBlocks[ubo_block_index];
@@ -455,7 +454,6 @@ public:
             const struct gl_uniform_buffer_variable *const ubo_var =
                &block->Uniforms[var->data.location];
 
-            ubo_row_major = ubo_var->RowMajor;
             ubo_byte_offset = ubo_var->Offset;
          }
 
@@ -470,7 +468,6 @@ public:
 
    int ubo_block_index;
    int ubo_byte_offset;
-   bool ubo_row_major;
    gl_shader_stage shader_type;
 
 private:
@@ -536,8 +533,6 @@ private:
       assert(!type->without_array()->is_record());
       assert(!type->without_array()->is_interface());
 
-      (void) row_major;
-
       unsigned id;
       bool found = this->map->get(id, name);
       assert(found);
@@ -594,25 +589,25 @@ private:
 	 this->uniforms[id].block_index = this->ubo_block_index;
 
 	 const unsigned alignment = record_type
-	    ? record_type->std140_base_alignment(ubo_row_major)
-	    : type->std140_base_alignment(ubo_row_major);
+	    ? record_type->std140_base_alignment(row_major)
+	    : type->std140_base_alignment(row_major);
 	 this->ubo_byte_offset = glsl_align(this->ubo_byte_offset, alignment);
 	 this->uniforms[id].offset = this->ubo_byte_offset;
-	 this->ubo_byte_offset += type->std140_size(ubo_row_major);
+	 this->ubo_byte_offset += type->std140_size(row_major);
 
          if (last_field)
             this->ubo_byte_offset = glsl_align(this->ubo_byte_offset, 16);
 
 	 if (type->is_array()) {
 	    this->uniforms[id].array_stride =
-	       glsl_align(type->fields.array->std140_size(ubo_row_major), 16);
+	       glsl_align(type->fields.array->std140_size(row_major), 16);
 	 } else {
 	    this->uniforms[id].array_stride = 0;
 	 }
 
 	 if (type->without_array()->is_matrix()) {
 	    this->uniforms[id].matrix_stride = 16;
-	    this->uniforms[id].row_major = ubo_row_major;
+	    this->uniforms[id].row_major = row_major;
 	 } else {
 	    this->uniforms[id].matrix_stride = 0;
 	    this->uniforms[id].row_major = false;
