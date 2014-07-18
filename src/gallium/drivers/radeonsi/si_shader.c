@@ -2553,7 +2553,7 @@ int si_compile_llvm(struct si_context *sctx, struct si_pipe_shader *shader,
 {
 	unsigned r; /* llvm_compile result */
 	unsigned i;
-	uint32_t *ptr;
+	unsigned char *ptr;
 	struct radeon_shader_binary binary;
 	bool dump = r600_can_dump_shader(&sctx->screen->b,
 			shader->selector ? shader->selector->tokens : NULL);
@@ -2619,22 +2619,13 @@ int si_compile_llvm(struct si_context *sctx, struct si_pipe_shader *shader,
 		return -ENOMEM;
 	}
 
-	ptr = (uint32_t*)sctx->b.ws->buffer_map(shader->bo->cs_buf, sctx->b.rings.gfx.cs, PIPE_TRANSFER_WRITE);
-	if (SI_BIG_ENDIAN) {
-		for (i = 0; i < binary.code_size / 4; ++i) {
-			ptr[i] = util_cpu_to_le32((*(uint32_t*)(binary.code + i*4)));
-		}
-		ptr += (binary.code_size / 4);
-		for (i = 0; i < binary.rodata_size / 4; ++i) {
-			ptr[i] = util_cpu_to_le32((*(uint32_t*)(binary.rodata + i * 4)));
-		}
-	} else {
-		memcpy(ptr, binary.code, binary.code_size);
-		if (binary.rodata_size > 0) {
-			ptr += (binary.code_size / 4);
-			memcpy(ptr, binary.rodata, binary.rodata_size);
-		}
+	ptr = sctx->b.ws->buffer_map(shader->bo->cs_buf, sctx->b.rings.gfx.cs, PIPE_TRANSFER_WRITE);
+	util_memcpy_cpu_to_le32(ptr, binary.code, binary.code_size);
+	if (binary.rodata_size > 0) {
+		ptr += binary.code_size;
+		util_memcpy_cpu_to_le32(ptr, binary.rodata, binary.rodata_size);
 	}
+
 	sctx->b.ws->buffer_unmap(shader->bo->cs_buf);
 
 	free(binary.code);
