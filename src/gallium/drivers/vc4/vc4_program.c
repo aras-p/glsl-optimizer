@@ -606,7 +606,8 @@ vc4_get_uniform_bo(struct vc4_context *vc4, struct vc4_shader_state *shader,
                    uint32_t *out_offset)
 {
         struct vc4_shader_uniform_info *uinfo = &shader->uniforms[shader_index];
-        struct vc4_bo *ubo = vc4_bo_alloc(vc4->screen, uinfo->count * 4, "ubo");
+        struct vc4_bo *ubo = vc4_bo_alloc(vc4->screen,
+                                          MAX2(1, uinfo->count * 4), "ubo");
         uint32_t *map = vc4_bo_map(ubo);
 
         for (int i = 0; i < uinfo->count; i++) {
