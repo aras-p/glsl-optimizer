@@ -219,7 +219,8 @@ lower_ubo_reference_visitor::handle_rvalue(ir_rvalue **rvalue)
          if (array_index->type->base_type == GLSL_TYPE_INT)
             array_index = i2u(array_index);
 
-	 ir_constant *const_index = array_index->as_constant();
+	 ir_constant *const_index =
+            array_index->constant_expression_value(NULL);
 	 if (const_index) {
 	    const_offset += array_stride * const_index->value.u[0];
 	 } else {
