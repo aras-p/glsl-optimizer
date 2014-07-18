@@ -178,10 +178,12 @@ struct si_pipe_shader {
 	struct si_shader		shader;
 	struct si_pm4_state		*pm4;
 	struct r600_resource		*bo;
+	struct r600_resource		*scratch_bo;
 	unsigned			num_sgprs;
 	unsigned			num_vgprs;
 	unsigned			lds_size;
 	unsigned			spi_ps_input_ena;
+	unsigned			scratch_bytes_per_wave;
 	unsigned			spi_shader_col_format;
 	unsigned			spi_shader_z_format;
 	unsigned			db_shader_control;

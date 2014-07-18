@@ -122,6 +122,43 @@ static void si_set_global_binding(
 	}
 }
 
+/**
+ * This function computes the value for R_00B860_COMPUTE_TMPRING_SIZE.WAVES
+ * /p block_layout is the number of threads in each work group.
+ * /p grid layout is the number of work groups.
+ */
+static unsigned compute_num_waves_for_scratch(
+		const struct radeon_info *info,
+		const uint *block_layout,
+		const uint *grid_layout)
+{
+	unsigned num_sh = MAX2(info->max_sh_per_se, 1);
+	unsigned num_se = MAX2(info->max_se, 1);
+	unsigned num_blocks = 1;
+	unsigned threads_per_block = 1;
+	unsigned waves_per_block;
+	unsigned waves_per_sh;
+	unsigned waves;
+	unsigned scratch_waves;
+	unsigned i;
+
+	for (i = 0; i < 3; i++) {
+		threads_per_block *= block_layout[i];
+		num_blocks *= grid_layout[i];
+	}
+
+	waves_per_block = align(threads_per_block, 64) / 64;
+	waves = waves_per_block * num_blocks;
+	waves_per_sh = align(waves, num_sh * num_se) / (num_sh * num_se);
+	scratch_waves = waves_per_sh * num_sh * num_se;
+
+	if (waves_per_block > waves_per_sh) {
+		scratch_waves = waves_per_block * num_sh * num_se;
+	}
+
+	return scratch_waves;
+}
+
 static void si_launch_grid(
 		struct pipe_context *ctx,
 		const uint *block_layout, const uint *grid_layout,
@@ -136,11 +173,13 @@ static void si_launch_grid(
 	uint32_t kernel_args_offset = 0;
 	uint32_t *kernel_args;
 	uint64_t kernel_args_va;
+	uint64_t scratch_buffer_va = 0;
 	uint64_t shader_va;
 	unsigned arg_user_sgpr_count = NUM_USER_SGPRS;
 	unsigned i;
 	struct si_pipe_shader *shader = &program->kernels[pc];
 	unsigned lds_blocks;
+	unsigned num_waves_for_scratch;
 
 	pm4->compute_pkt = true;
 	si_cmd_context_control(pm4);
@@ -158,7 +197,8 @@ static void si_launch_grid(
 	/* Upload the kernel arguments */
 
 	/* The extra num_work_size_bytes are for work group / work item size information */
-	kernel_args_size = program->input_size + num_work_size_bytes;
+	kernel_args_size = program->input_size + num_work_size_bytes + 8 /* For scratch va */;
+
 	kernel_args = MALLOC(kernel_args_size);
 	for (i = 0; i < 3; i++) {
 		kernel_args[i] = grid_layout[i];
@@ -166,7 +206,30 @@ static void si_launch_grid(
 		kernel_args[i + 6] = block_layout[i];
 	}
 
+	num_waves_for_scratch =	compute_num_waves_for_scratch(
+		&sctx->screen->b.info, block_layout, grid_layout);
+
 	memcpy(kernel_args + (num_work_size_bytes / 4), input, program->input_size);
+
+	if (shader->scratch_bytes_per_wave > 0) {
+		unsigned scratch_bytes = shader->scratch_bytes_per_wave *
+						num_waves_for_scratch;
+
+		COMPUTE_DBG(sctx->screen, "Waves: %u; Scratch per wave: %u bytes; "
+		            "Total Scratch: %u bytes\n", num_waves_for_scratch,
+			    shader->scratch_bytes_per_wave, scratch_bytes);
+		if (!shader->scratch_bo) {
+			shader->scratch_bo = (struct r600_resource*)
+				si_resource_create_custom(sctx->b.b.screen,
+				PIPE_USAGE_DEFAULT, scratch_bytes);
+		}
+		scratch_buffer_va = r600_resource_va(ctx->screen,
+				(struct pipe_resource*)shader->scratch_bo);
+		si_pm4_add_bo(pm4, shader->scratch_bo,
+				RADEON_USAGE_READWRITE,
+				RADEON_PRIO_SHADER_RESOURCE_RW);
+
+	}
 
 	for (i = 0; i < (kernel_args_size / 4); i++) {
 		COMPUTE_DBG(sctx->screen, "input %u : %u\n", i,
@@ -183,6 +246,10 @@ static void si_launch_grid(
 
 	si_pm4_set_reg(pm4, R_00B900_COMPUTE_USER_DATA_0, kernel_args_va);
 	si_pm4_set_reg(pm4, R_00B900_COMPUTE_USER_DATA_0 + 4, S_008F04_BASE_ADDRESS_HI (kernel_args_va >> 32) | S_008F04_STRIDE(0));
+	si_pm4_set_reg(pm4, R_00B900_COMPUTE_USER_DATA_0 + 8, scratch_buffer_va);
+	si_pm4_set_reg(pm4, R_00B900_COMPUTE_USER_DATA_0 + 12,
+		S_008F04_BASE_ADDRESS_HI(scratch_buffer_va >> 32)
+		|  S_008F04_STRIDE(shader->scratch_bytes_per_wave / 64));
 
 	si_pm4_set_reg(pm4, R_00B810_COMPUTE_START_X, 0);
 	si_pm4_set_reg(pm4, R_00B814_COMPUTE_START_Y, 0);
@@ -252,7 +319,7 @@ static void si_launch_grid(
 	assert(lds_blocks <= 0xFF);
 
 	si_pm4_set_reg(pm4, R_00B84C_COMPUTE_PGM_RSRC2,
-		S_00B84C_SCRATCH_EN(0)
+		S_00B84C_SCRATCH_EN(shader->scratch_bytes_per_wave > 0)
 		| S_00B84C_USER_SGPR(arg_user_sgpr_count)
 		| S_00B84C_TGID_X_EN(1)
 		| S_00B84C_TGID_Y_EN(1)
@@ -272,6 +339,15 @@ static void si_launch_grid(
 	si_pm4_set_reg(pm4, R_00B85C_COMPUTE_STATIC_THREAD_MGMT_SE1,
 		S_00B85C_SH0_CU_EN(0xffff /* Default value */)
 		| S_00B85C_SH1_CU_EN(0xffff /* Default value */))
+		;
+
+	si_pm4_set_reg(pm4, R_00B860_COMPUTE_TMPRING_SIZE,
+		/* The maximum value for WAVES is 32 * num CU.
+		 * If you program this value incorrectly, the GPU will hang if
+		 * COMPUTE_PGM_RSRC2.SCRATCH_EN is enabled.
+		 */
+		S_00B860_WAVES(num_waves_for_scratch)
+		| S_00B860_WAVESIZE(shader->scratch_bytes_per_wave >> 10))
 		;
 
 	si_pm4_cmd_begin(pm4, PKT3_DISPATCH_DIRECT);

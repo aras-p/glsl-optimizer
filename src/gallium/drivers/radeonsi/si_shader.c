@@ -2598,6 +2598,11 @@ int si_compile_llvm(struct si_context *sctx, struct si_pipe_shader *shader,
 		case R_0286CC_SPI_PS_INPUT_ENA:
 			shader->spi_ps_input_ena = value;
 			break;
+		case R_00B860_COMPUTE_TMPRING_SIZE:
+			/* WAVESIZE is in units of 256 dwords. */
+			shader->scratch_bytes_per_wave =
+				G_00B860_WAVESIZE(value) * 256 * 4 * 1;
+			break;
 		default:
 			fprintf(stderr, "Warning: Compiler emitted unknown "
 				"config register: 0x%x\n", reg);
