@@ -220,6 +220,9 @@ public:
    enum brw_urb_write_flags urb_write_flags;
    bool header_present;
 
+   unsigned sol_binding; /**< gen6: SOL binding table index */
+   bool sol_final_write; /**< gen6: send commit message */
+
    bool is_send_from_grf();
    bool can_reswizzle(int dst_writemask, int swizzle, int swizzle_mask);
    void reswizzle(int dst_writemask, int swizzle);
@@ -654,6 +657,10 @@ private:
                                      struct brw_reg src1);
    void generate_gs_set_vertex_count(struct brw_reg dst,
                                      struct brw_reg src);
+   void generate_gs_svb_write(vec4_instruction *inst,
+                              struct brw_reg dst,
+                              struct brw_reg src0,
+                              struct brw_reg src1);
    void generate_gs_set_dword_2(struct brw_reg dst, struct brw_reg src);
    void generate_gs_prepare_channel_masks(struct brw_reg dst);
    void generate_gs_set_channel_masks(struct brw_reg dst, struct brw_reg src);

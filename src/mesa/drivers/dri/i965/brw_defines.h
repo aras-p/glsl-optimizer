@@ -1043,6 +1043,18 @@ enum opcode {
     * - dst is the GRF where PrimitiveID information will be moved.
     */
    GS_OPCODE_SET_PRIMITIVE_ID,
+
+   /**
+    * Write transform feedback data to the SVB by sending a SVB WRITE message.
+    * Used in gen6.
+    *
+    * - dst is the MRF register containing the message header.
+    *
+    * - src0 is the register where the vertex data is going to be copied from.
+    *
+    * - src1 is the destination register when write commit occurs.
+    */
+   GS_OPCODE_SVB_WRITE,
 };
 
 enum brw_derivative_quality {

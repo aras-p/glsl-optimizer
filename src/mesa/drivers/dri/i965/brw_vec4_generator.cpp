@@ -574,6 +574,44 @@ vec4_generator::generate_gs_set_vertex_count(struct brw_reg dst,
 }
 
 void
+vec4_generator::generate_gs_svb_write(vec4_instruction *inst,
+                                      struct brw_reg dst,
+                                      struct brw_reg src0,
+                                      struct brw_reg src1)
+{
+   int binding = inst->sol_binding;
+   bool final_write = inst->sol_final_write;
+
+   brw_push_insn_state(p);
+   /* Copy Vertex data into M0.x */
+   brw_MOV(p, stride(dst, 4, 4, 1),
+           stride(retype(src0, BRW_REGISTER_TYPE_UD), 4, 4, 1));
+
+   /* Send SVB Write */
+   brw_svb_write(p,
+                 final_write ? src1 : brw_null_reg(), /* dest == src1 */
+                 1, /* msg_reg_nr */
+                 dst, /* src0 == previous dst */
+                 SURF_INDEX_GEN6_SOL_BINDING(binding), /* binding_table_index */
+                 final_write); /* send_commit_msg */
+
+   /* Finally, wait for the write commit to occur so that we can proceed to
+    * other things safely.
+    *
+    * From the Sandybridge PRM, Volume 4, Part 1, Section 3.3:
+    *
+    *   The write commit does not modify the destination register, but
+    *   merely clears the dependency associated with the destination
+    *   register. Thus, a simple “mov” instruction using the register as a
+    *   source is sufficient to wait for the write commit to occur.
+    */
+   if (final_write) {
+      brw_MOV(p, src1, src1);
+   }
+   brw_pop_insn_state(p);
+}
+
+void
 vec4_generator::generate_gs_set_dword_2(struct brw_reg dst, struct brw_reg src)
 {
    brw_push_insn_state(p);
@@ -1345,6 +1383,10 @@ vec4_generator::generate_code(const cfg_t *cfg)
 
       case GS_OPCODE_URB_WRITE_ALLOCATE:
          generate_gs_urb_write_allocate(inst);
+         break;
+
+      case GS_OPCODE_SVB_WRITE:
+         generate_gs_svb_write(inst, dst, src[0], src[1]);
          break;
 
       case GS_OPCODE_THREAD_END:

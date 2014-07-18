@@ -528,6 +528,8 @@ brw_instruction_name(enum opcode op)
       return "ff_sync";
    case GS_OPCODE_SET_PRIMITIVE_ID:
       return "set_primitive_id";
+   case GS_OPCODE_SVB_WRITE:
+      return "gs_svb_write";
 
    default:
       /* Yes, this leaks.  It's in debug code, it should never occur, and if
