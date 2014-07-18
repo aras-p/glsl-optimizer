@@ -612,6 +612,20 @@ vec4_generator::generate_gs_svb_write(vec4_instruction *inst,
 }
 
 void
+vec4_generator::generate_gs_svb_set_destination_index(vec4_instruction *inst,
+                                                      struct brw_reg dst,
+                                                      struct brw_reg src)
+{
+
+   int vertex = inst->sol_vertex;
+   brw_push_insn_state(p);
+   brw_set_default_access_mode(p, BRW_ALIGN_1);
+   brw_set_default_mask_control(p, BRW_MASK_DISABLE);
+   brw_MOV(p, get_element_ud(dst, 5), get_element_ud(src, vertex));
+   brw_pop_insn_state(p);
+}
+
+void
 vec4_generator::generate_gs_set_dword_2(struct brw_reg dst, struct brw_reg src)
 {
    brw_push_insn_state(p);
@@ -1387,6 +1401,10 @@ vec4_generator::generate_code(const cfg_t *cfg)
 
       case GS_OPCODE_SVB_WRITE:
          generate_gs_svb_write(inst, dst, src[0], src[1]);
+         break;
+
+      case GS_OPCODE_SVB_SET_DST_INDEX:
+         generate_gs_svb_set_destination_index(inst, dst, src[0]);
          break;
 
       case GS_OPCODE_THREAD_END:

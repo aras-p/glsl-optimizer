@@ -1055,6 +1055,15 @@ enum opcode {
     * - src1 is the destination register when write commit occurs.
     */
    GS_OPCODE_SVB_WRITE,
+
+   /**
+    * Set destination index in the SVB write message payload (M0.5). Used
+    * in gen6 for transform feedback.
+    *
+    * - dst is the header to save the destination indices for SVB WRITE.
+    * - src is the register that holds the destination indices value.
+    */
+   GS_OPCODE_SVB_SET_DST_INDEX,
 };
 
 enum brw_derivative_quality {

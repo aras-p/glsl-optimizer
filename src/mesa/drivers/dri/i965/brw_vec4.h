@@ -222,6 +222,7 @@ public:
 
    unsigned sol_binding; /**< gen6: SOL binding table index */
    bool sol_final_write; /**< gen6: send commit message */
+   unsigned sol_vertex; /**< gen6: used for setting dst index in SVB header */
 
    bool is_send_from_grf();
    bool can_reswizzle(int dst_writemask, int swizzle, int swizzle_mask);
@@ -661,6 +662,9 @@ private:
                               struct brw_reg dst,
                               struct brw_reg src0,
                               struct brw_reg src1);
+   void generate_gs_svb_set_destination_index(vec4_instruction *inst,
+                                              struct brw_reg dst,
+                                              struct brw_reg src);
    void generate_gs_set_dword_2(struct brw_reg dst, struct brw_reg src);
    void generate_gs_prepare_channel_masks(struct brw_reg dst);
    void generate_gs_set_channel_masks(struct brw_reg dst, struct brw_reg src);
