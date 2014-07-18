@@ -556,48 +556,6 @@ struct brw_vs_prog_data {
    bool uses_instanceid;
 };
 
-
-/* Note: brw_gs_prog_data_compare() must be updated when adding fields to
- * this struct!
- */
-struct brw_gs_prog_data
-{
-   struct brw_vec4_prog_data base;
-
-   /**
-    * Size of an output vertex, measured in HWORDS (32 bytes).
-    */
-   unsigned output_vertex_size_hwords;
-
-   unsigned output_topology;
-
-   /**
-    * Size of the control data (cut bits or StreamID bits), in hwords (32
-    * bytes).  0 if there is no control data.
-    */
-   unsigned control_data_header_size_hwords;
-
-   /**
-    * Format of the control data (either GEN7_GS_CONTROL_DATA_FORMAT_GSCTL_SID
-    * if the control data is StreamID bits, or
-    * GEN7_GS_CONTROL_DATA_FORMAT_GSCTL_CUT if the control data is cut bits).
-    * Ignored if control_data_header_size is 0.
-    */
-   unsigned control_data_format;
-
-   bool include_primitive_id;
-
-   int invocations;
-
-   /**
-    * Dispatch mode, can be any of:
-    * GEN7_GS_DISPATCH_MODE_DUAL_OBJECT
-    * GEN7_GS_DISPATCH_MODE_DUAL_INSTANCE
-    * GEN7_GS_DISPATCH_MODE_SINGLE
-    */
-   int dispatch_mode;
-};
-
 /** Number of texture sampler units */
 #define BRW_MAX_TEX_UNIT 32
 
@@ -643,6 +601,77 @@ struct brw_gs_prog_data
 
 #define SURF_INDEX_GEN6_SOL_BINDING(t) (t)
 #define BRW_MAX_GEN6_GS_SURFACES       SURF_INDEX_GEN6_SOL_BINDING(BRW_MAX_SOL_BINDINGS)
+
+/* Note: brw_gs_prog_data_compare() must be updated when adding fields to
+ * this struct!
+ */
+struct brw_gs_prog_data
+{
+   struct brw_vec4_prog_data base;
+
+   /**
+    * Size of an output vertex, measured in HWORDS (32 bytes).
+    */
+   unsigned output_vertex_size_hwords;
+
+   unsigned output_topology;
+
+   /**
+    * Size of the control data (cut bits or StreamID bits), in hwords (32
+    * bytes).  0 if there is no control data.
+    */
+   unsigned control_data_header_size_hwords;
+
+   /**
+    * Format of the control data (either GEN7_GS_CONTROL_DATA_FORMAT_GSCTL_SID
+    * if the control data is StreamID bits, or
+    * GEN7_GS_CONTROL_DATA_FORMAT_GSCTL_CUT if the control data is cut bits).
+    * Ignored if control_data_header_size is 0.
+    */
+   unsigned control_data_format;
+
+   bool include_primitive_id;
+
+   int invocations;
+
+   /**
+    * Dispatch mode, can be any of:
+    * GEN7_GS_DISPATCH_MODE_DUAL_OBJECT
+    * GEN7_GS_DISPATCH_MODE_DUAL_INSTANCE
+    * GEN7_GS_DISPATCH_MODE_SINGLE
+    */
+   int dispatch_mode;
+
+   /**
+    * Gen6 transform feedback enabled flag.
+    */
+   bool gen6_xfb_enabled;
+
+   /**
+    * Gen6: Provoking vertex convention for odd-numbered triangles
+    * in tristrips.
+    */
+   GLuint pv_first:1;
+
+   /**
+    * Gen6: Number of varyings that are output to transform feedback.
+    */
+   GLuint num_transform_feedback_bindings:7; /* 0-BRW_MAX_SOL_BINDINGS */
+
+   /**
+    * Gen6: Map from the index of a transform feedback binding table entry to the
+    * gl_varying_slot that should be streamed out through that binding table
+    * entry.
+    */
+   unsigned char transform_feedback_bindings[BRW_MAX_SOL_BINDINGS];
+
+   /**
+    * Gen6: Map from the index of a transform feedback binding table entry to the
+    * swizzles that should be used when streaming out data through that
+    * binding table entry.
+    */
+   unsigned char transform_feedback_swizzles[BRW_MAX_SOL_BINDINGS];
+};
 
 /**
  * Stride in bytes between shader_time entries.

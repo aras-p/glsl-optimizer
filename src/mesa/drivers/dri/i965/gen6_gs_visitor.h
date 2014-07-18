@@ -55,12 +55,25 @@ protected:
    virtual void setup_payload();
 
 private:
+   void xfb_write();
+   void xfb_buffer_output();
+   void xfb_program(unsigned num_verts);
+
    src_reg vertex_output;
    src_reg vertex_output_offset;
    src_reg temp;
    src_reg first_vertex;
    src_reg prim_count;
    src_reg primitive_id;
+
+   /* Transform Feedback members */
+   src_reg xfb_output;
+   src_reg xfb_output_offset;
+   src_reg sol_prim_written;
+   src_reg svbi;
+   src_reg max_svbi;
+   src_reg destination_indices;
+   unsigned current_vertex;
 };
 
 } /* namespace brw */
