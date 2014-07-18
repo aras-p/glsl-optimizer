@@ -277,6 +277,8 @@ brw_wm_debug_recompile(struct brw_context *brw,
                       old_key->flat_shade, key->flat_shade);
    found |= key_debug(brw, "per-sample shading",
                       old_key->persample_shading, key->persample_shading);
+   found |= key_debug(brw, "per-sample shading and 2x MSAA",
+                      old_key->persample_2x, key->persample_2x);
    found |= key_debug(brw, "number of color buffers",
                       old_key->nr_color_regions, key->nr_color_regions);
    found |= key_debug(brw, "MRT alpha test or alpha-to-coverage",
@@ -522,6 +524,8 @@ static void brw_wm_populate_key( struct brw_context *brw,
    /* Ignore sample qualifier while computing this flag. */
    key->persample_shading =
       _mesa_get_min_invocations_per_fragment(ctx, &fp->program, true) > 1;
+   if (key->persample_shading)
+      key->persample_2x = ctx->DrawBuffer->Visual.samples == 2;
 
    key->compute_pos_offset =
       _mesa_get_min_invocations_per_fragment(ctx, &fp->program, false) > 1 &&

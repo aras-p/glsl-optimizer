@@ -1304,6 +1304,11 @@ fs_visitor::emit_sampleid_setup(ir_variable *ir)
        * populating a temporary variable with the sequence (0, 1, 2, 3),
        * and then reading from it using vstride=1, width=4, hstride=0.
        * These computations hold good for 4x multisampling as well.
+       *
+       * For 2x MSAA and SIMD16, we want to use the sequence (0, 1, 0, 1):
+       * the first four slots are sample 0 of subspan 0; the next four
+       * are sample 1 of subspan 0; the third group is sample 0 of
+       * subspan 1, and finally sample 1 of subspan 1.
        */
       fs_inst *inst;
       inst = emit(BRW_OPCODE_AND, t1,
@@ -1313,7 +1318,7 @@ fs_visitor::emit_sampleid_setup(ir_variable *ir)
       inst = emit(BRW_OPCODE_SHR, t1, t1, fs_reg(5));
       inst->force_writemask_all = true;
       /* This works for both SIMD8 and SIMD16 */
-      inst = emit(MOV(t2, brw_imm_v(0x3210)));
+      inst = emit(MOV(t2, brw_imm_v(key->persample_2x ? 0x1010 : 0x3210)));
       inst->force_writemask_all = true;
       /* This special instruction takes care of setting vstride=1,
        * width=4, hstride=0 of t2 during an ADD instruction.

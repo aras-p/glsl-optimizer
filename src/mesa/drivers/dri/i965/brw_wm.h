@@ -62,6 +62,7 @@ struct brw_wm_prog_key {
    GLuint stats_wm:1;
    GLuint flat_shade:1;
    GLuint persample_shading:1;
+   GLuint persample_2x:1;
    GLuint nr_color_regions:5;
    GLuint replicate_alpha:1;
    GLuint render_to_fbo:1;
