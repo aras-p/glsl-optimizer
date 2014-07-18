@@ -154,10 +154,7 @@ upload_gs_state(struct brw_context *brw)
                 GEN6_GS_SO_STATISTICS_ENABLE |
                 GEN6_GS_RENDERING_ENABLE);
 
-      /* FIXME: Enable SVBI payload only when TF is enable in SNB for
-       * user-provided GS.
-       */
-      if (0) {
+      if (brw->gs.prog_data->gen6_xfb_enabled) {
          /* GEN6_GS_REORDER is equivalent to GEN7_GS_REORDER_TRAILING
           * in gen7. SNB and IVB specs are the same regarding the reordering of
           * TRISTRIP/TRISTRIP_REV vertices and triangle orientation, so we do
@@ -166,9 +163,6 @@ upload_gs_state(struct brw_context *brw)
           */
          OUT_BATCH(GEN6_GS_REORDER |
                    GEN6_GS_SVBI_PAYLOAD_ENABLE |
-                   GEN6_GS_SVBI_POSTINCREMENT_ENABLE |
-                   /* FIXME: prog_data->svbi_postincrement_value instead of 0 */
-                   (0 << GEN6_GS_SVBI_POSTINCREMENT_VALUE_SHIFT) |
                    GEN6_GS_ENABLE);
       } else {
          OUT_BATCH(GEN6_GS_REORDER | GEN6_GS_ENABLE);
@@ -202,7 +196,10 @@ upload_gs_state(struct brw_context *brw)
 const struct brw_tracked_state gen6_gs_state = {
    .dirty = {
       .mesa  = _NEW_TRANSFORM | _NEW_PROGRAM_CONSTANTS,
-      .brw   = BRW_NEW_CONTEXT | BRW_NEW_PUSH_CONSTANT_ALLOCATION,
+      .brw   = (BRW_NEW_CONTEXT |
+                BRW_NEW_PUSH_CONSTANT_ALLOCATION |
+                BRW_NEW_GEOMETRY_PROGRAM |
+                BRW_NEW_BATCH),
       .cache = (CACHE_NEW_GS_PROG | CACHE_NEW_FF_GS_PROG)
    },
    .emit = upload_gs_state,

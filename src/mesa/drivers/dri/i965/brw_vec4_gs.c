@@ -105,6 +105,12 @@ do_gs_prog(struct brw_context *brw,
    } else {
       /* There are no control data bits in gen6. */
       c.control_data_bits_per_vertex = 0;
+
+      /* If it is using transform feedback, enable it */
+      if (prog->TransformFeedback.NumVarying)
+         c.prog_data.gen6_xfb_enabled = true;
+      else
+         c.prog_data.gen6_xfb_enabled = false;
    }
    c.control_data_header_size_bits =
       gp->program.VerticesOut * c.control_data_bits_per_vertex;
