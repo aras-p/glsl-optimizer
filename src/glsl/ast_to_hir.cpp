@@ -5203,7 +5203,13 @@ ast_process_structure_or_interface_block(exec_list *instructions,
                              "in uniform blocks or structures.");
          }
 
-         if (field_type->without_array()->is_matrix()) {
+         /* Propogate row- / column-major information down the fields of the
+          * structure or interface block.  Structures need this data because
+          * the structure may contain a structure that contains ... a matrix
+          * that need the proper layout.
+          */
+         if (field_type->without_array()->is_matrix()
+             || field_type->without_array()->is_record()) {
             fields[i].matrix_layout = block_row_major
                ? GLSL_MATRIX_LAYOUT_ROW_MAJOR
                : GLSL_MATRIX_LAYOUT_COLUMN_MAJOR;
