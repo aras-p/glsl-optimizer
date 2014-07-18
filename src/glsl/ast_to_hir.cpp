@@ -5072,7 +5072,7 @@ ast_process_structure_or_interface_block(exec_list *instructions,
                                          YYLTYPE &loc,
                                          glsl_struct_field **fields_ret,
                                          bool is_interface,
-                                         bool block_row_major,
+                                         enum glsl_matrix_layout matrix_layout,
                                          bool allow_reserved_names,
                                          ir_variable_mode var_mode)
 {
@@ -5210,13 +5210,22 @@ ast_process_structure_or_interface_block(exec_list *instructions,
           */
          if (field_type->without_array()->is_matrix()
              || field_type->without_array()->is_record()) {
-            fields[i].matrix_layout = block_row_major
-               ? GLSL_MATRIX_LAYOUT_ROW_MAJOR
-               : GLSL_MATRIX_LAYOUT_COLUMN_MAJOR;
+            /* If no layout is specified for the field, inherit the layout
+             * from the block.
+             */
+            fields[i].matrix_layout = matrix_layout;
+
             if (qual->flags.q.row_major)
                fields[i].matrix_layout = GLSL_MATRIX_LAYOUT_ROW_MAJOR;
             else if (qual->flags.q.column_major)
                fields[i].matrix_layout = GLSL_MATRIX_LAYOUT_COLUMN_MAJOR;
+
+            /* If we're processing an interface block, the matrix layout must
+             * be decided by this point.
+             */
+            assert(!is_interface
+                   || fields[i].matrix_layout == GLSL_MATRIX_LAYOUT_ROW_MAJOR
+                   || fields[i].matrix_layout == GLSL_MATRIX_LAYOUT_COLUMN_MAJOR);
          }
 
          i++;
@@ -5271,7 +5280,7 @@ ast_struct_specifier::hir(exec_list *instructions,
                                                loc,
                                                &fields,
                                                false,
-                                               false,
+                                               GLSL_MATRIX_LAYOUT_INHERITED,
                                                false /* allow_reserved_names */,
                                                ir_var_auto);
 
@@ -5371,8 +5380,13 @@ ast_interface_block::hir(exec_list *instructions,
       assert(!"interface block layout qualifier not found!");
    }
 
+   enum glsl_matrix_layout matrix_layout = GLSL_MATRIX_LAYOUT_INHERITED;
+   if (this->layout.flags.q.row_major)
+      matrix_layout = GLSL_MATRIX_LAYOUT_ROW_MAJOR;
+   else if (this->layout.flags.q.column_major)
+      matrix_layout = GLSL_MATRIX_LAYOUT_COLUMN_MAJOR;
+
    bool redeclaring_per_vertex = strcmp(this->block_name, "gl_PerVertex") == 0;
-   bool block_row_major = this->layout.flags.q.row_major;
    exec_list declared_variables;
    glsl_struct_field *fields;
 
@@ -5388,7 +5402,7 @@ ast_interface_block::hir(exec_list *instructions,
                                                loc,
                                                &fields,
                                                true,
-                                               block_row_major,
+                                               matrix_layout,
                                                redeclaring_per_vertex,
                                                var_mode);
 
@@ -5596,6 +5610,9 @@ ast_interface_block::hir(exec_list *instructions,
                                       var_mode);
       }
 
+      var->data.matrix_layout = matrix_layout == GLSL_MATRIX_LAYOUT_INHERITED
+         ? GLSL_MATRIX_LAYOUT_COLUMN_MAJOR : matrix_layout;
+
       if (state->stage == MESA_SHADER_GEOMETRY && var_mode == ir_var_shader_in)
          handle_geometry_shader_input_decl(state, loc, var);
 
@@ -5635,6 +5652,13 @@ ast_interface_block::hir(exec_list *instructions,
          var->data.centroid = fields[i].centroid;
          var->data.sample = fields[i].sample;
          var->init_interface_type(block_type);
+
+         if (fields[i].matrix_layout == GLSL_MATRIX_LAYOUT_INHERITED) {
+            var->data.matrix_layout = matrix_layout == GLSL_MATRIX_LAYOUT_INHERITED
+               ? GLSL_MATRIX_LAYOUT_COLUMN_MAJOR : matrix_layout;
+         } else {
+            var->data.matrix_layout = fields[i].matrix_layout;
+         }
 
          if (fields[i].stream != -1 &&
              ((unsigned)fields[i].stream) != this->layout.stream) {

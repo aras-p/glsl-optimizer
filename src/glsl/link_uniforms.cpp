@@ -71,6 +71,8 @@ void
 program_resource_visitor::process(ir_variable *var)
 {
    const glsl_type *t = var->type;
+   const bool row_major =
+      var->data.matrix_layout == GLSL_MATRIX_LAYOUT_ROW_MAJOR;
 
    /* false is always passed for the row_major parameter to the other
     * processing functions because no information is available to do
@@ -108,7 +110,7 @@ program_resource_visitor::process(ir_variable *var)
           * lowering is only applied to non-uniform interface blocks, so we
           * can safely pass false for row_major.
           */
-         recursion(var->type, &name, new_length, false, NULL, false);
+         recursion(var->type, &name, new_length, row_major, NULL, false);
       }
       ralloc_free(name);
    } else if (var->data.from_named_ifc_block_nonarray) {
@@ -132,22 +134,22 @@ program_resource_visitor::process(ir_variable *var)
        * is only applied to non-uniform interface blocks, so we can safely
        * pass false for row_major.
        */
-      recursion(var->type, &name, strlen(name), false, NULL, false);
+      recursion(var->type, &name, strlen(name), row_major, NULL, false);
       ralloc_free(name);
    } else if (t->without_array()->is_record()) {
       char *name = ralloc_strdup(NULL, var->name);
-      recursion(var->type, &name, strlen(name), false, NULL, false);
+      recursion(var->type, &name, strlen(name), row_major, NULL, false);
       ralloc_free(name);
    } else if (t->is_interface()) {
       char *name = ralloc_strdup(NULL, var->type->name);
-      recursion(var->type, &name, strlen(name), false, NULL, false);
+      recursion(var->type, &name, strlen(name), row_major, NULL, false);
       ralloc_free(name);
    } else if (t->is_array() && t->fields.array->is_interface()) {
       char *name = ralloc_strdup(NULL, var->type->fields.array->name);
-      recursion(var->type, &name, strlen(name), false, NULL, false);
+      recursion(var->type, &name, strlen(name), row_major, NULL, false);
       ralloc_free(name);
    } else {
-      this->visit_field(t, var->name, false, NULL, false);
+      this->visit_field(t, var->name, row_major, NULL, false);
    }
 }
 
@@ -181,8 +183,23 @@ program_resource_visitor::recursion(const glsl_type *t, char **name,
             ralloc_asprintf_rewrite_tail(name, &new_length, ".%s", field);
          }
 
+         /* The layout of structures at the top level of the block is set
+          * during parsing.  For matrices contained in multiple levels of
+          * structures in the block, the inner structures have no layout.
+          * These cases must potentially inherit the layout from the outer
+          * levels.
+          */
+         bool field_row_major = row_major;
+         const enum glsl_matrix_layout matrix_layout =
+            glsl_matrix_layout(t->fields.structure[i].matrix_layout);
+         if (matrix_layout == GLSL_MATRIX_LAYOUT_ROW_MAJOR) {
+            field_row_major = true;
+         } else if (matrix_layout == GLSL_MATRIX_LAYOUT_COLUMN_MAJOR) {
+            field_row_major = false;
+         }
+
          recursion(t->fields.structure[i].type, name, new_length,
-                   t->fields.structure[i].matrix_layout == GLSL_MATRIX_LAYOUT_ROW_MAJOR,
+                   field_row_major,
                    record_type,
                    (i + 1) == t->length);
 

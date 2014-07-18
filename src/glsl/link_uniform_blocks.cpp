@@ -77,7 +77,7 @@ private:
 
       v->Name = ralloc_strdup(mem_ctx, name);
       v->Type = type;
-      v->RowMajor = row_major;
+      v->RowMajor = type->without_array()->is_matrix() && row_major;
 
       if (this->is_array_instance) {
          v->IndexName = ralloc_strdup(mem_ctx, name);
