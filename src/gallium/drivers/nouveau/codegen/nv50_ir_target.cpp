@@ -379,9 +379,13 @@ Program::emitBinary(struct nv50_ir_prog_info *info)
 
       assert(emit->getCodeSize() == fn->binPos);
 
-      for (int b = 0; b < fn->bbCount; ++b)
-         for (Instruction *i = fn->bbArray[b]->getEntry(); i; i = i->next)
+      for (int b = 0; b < fn->bbCount; ++b) {
+         for (Instruction *i = fn->bbArray[b]->getEntry(); i; i = i->next) {
             emit->emitInstruction(i);
+            if (i->sType == TYPE_F64 || i->dType == TYPE_F64)
+               info->io.fp64 = true;
+         }
+      }
    }
    info->bin.relocData = emit->getRelocInfo();
 

@@ -183,6 +183,7 @@ struct nv50_ir_prog_info
       boolean sampleInterp;      /* perform sample interp on all fp inputs */
       uint8_t backFaceColor[2];  /* input/output indices of back face colour */
       uint8_t globalAccess;      /* 1 for read, 2 for wr, 3 for rw */
+      boolean fp64;              /* program uses fp64 math */
       boolean nv50styleSurfaces; /* generate gX[] access for raw buffers */
       uint8_t resInfoCBSlot;     /* cX[] used for tex handles, surface info */
       uint16_t texBindBase;      /* base address for tex handles (nve4) */
