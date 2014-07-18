@@ -58,6 +58,8 @@ private:
    src_reg vertex_output;
    src_reg vertex_output_offset;
    src_reg temp;
+   src_reg first_vertex;
+   src_reg prim_count;
 };
 
 } /* namespace brw */

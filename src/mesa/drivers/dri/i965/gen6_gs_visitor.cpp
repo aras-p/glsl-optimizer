@@ -79,6 +79,21 @@ gen6_gs_visitor::emit_prolog()
     * and URB_WRITE messages.
     */
    this->temp = src_reg(this, glsl_type::uint_type);
+
+   /* This will be used to know when we are processing the first vertex of
+    * a primitive. We will set this to URB_WRITE_PRIM_START only when we know
+    * that we are processing the first vertex in the primitive and to zero
+    * otherwise. This way we can use its value directly in the URB write
+    * headers.
+    */
+   this->first_vertex = src_reg(this, glsl_type::uint_type);
+   emit(MOV(dst_reg(this->first_vertex), URB_WRITE_PRIM_START));
+
+   /* The FF_SYNC message requires to know the number of primitives generated,
+    * so keep a counter for this.
+    */
+   this->prim_count = src_reg(this, glsl_type::uint_type);
+   emit(MOV(dst_reg(this->prim_count), 0u));
 }
 
 void
@@ -109,18 +124,26 @@ gen6_gs_visitor::visit(ir_emit_vertex *)
                   this->vertex_output_offset, 1u));
       }
 
-      /* Now buffer flags for this vertex (we only support point output
-       * for now).
-       */
+      /* Now buffer flags for this vertex */
       dst_reg dst(this->vertex_output);
       dst.reladdr = ralloc(mem_ctx, src_reg);
       memcpy(dst.reladdr, &this->vertex_output_offset, sizeof(src_reg));
-      /* If we are outputting points, then every vertex has PrimStart and
-       * PrimEnd set.
-       */
       if (c->gp->program.OutputType == GL_POINTS) {
+         /* If we are outputting points, then every vertex has PrimStart and
+          * PrimEnd set.
+          */
          emit(MOV(dst, (_3DPRIM_POINTLIST << URB_WRITE_PRIM_TYPE_SHIFT) |
                   URB_WRITE_PRIM_START | URB_WRITE_PRIM_END));
+         emit(ADD(dst_reg(this->prim_count), this->prim_count, 1u));
+      } else {
+         /* Otherwise, we can only set the PrimStart flag, which we have stored
+          * in the first_vertex register. We will have to wait until we execute
+          * EndPrimitive() or we end the thread to set the PrimEnd flag on a
+          * vertex.
+          */
+         emit(OR(dst, this->first_vertex,
+                 (c->prog_data.output_topology << URB_WRITE_PRIM_TYPE_SHIFT)));
+         emit(MOV(dst_reg(this->first_vertex), 0u));
       }
       emit(ADD(dst_reg(this->vertex_output_offset),
                this->vertex_output_offset, 1u));
@@ -140,6 +163,41 @@ gen6_gs_visitor::visit(ir_end_primitive *)
     */
    if (c->gp->program.OutputType == GL_POINTS)
       return;
+
+   /* Otherwise we know that the last vertex we have processed was the last
+    * vertex in the primitive and we need to set its PrimEnd flag, so do this
+    * unless we haven't emitted that vertex at all.
+    *
+    * Notice that we have already incremented vertex_count when we processed
+    * the last emit_vertex, so we need to take that into account in the
+    * comparison below (hence the num_output_vertices + 1 in the comparison
+    * below).
+    */
+   unsigned num_output_vertices = c->gp->program.VerticesOut;
+   emit(CMP(dst_null_d(), this->vertex_count, src_reg(num_output_vertices + 1),
+            BRW_CONDITIONAL_L));
+   emit(IF(BRW_PREDICATE_NORMAL));
+   {
+      /* vertex_output_offset is already pointing at the first entry of the
+       * next vertex. So subtract 1 to modify the flags for the previous
+       * vertex.
+       */
+      src_reg offset(this, glsl_type::uint_type);
+      emit(ADD(dst_reg(offset), this->vertex_output_offset, brw_imm_d(-1)));
+
+      src_reg dst(this->vertex_output);
+      dst.reladdr = ralloc(mem_ctx, src_reg);
+      memcpy(dst.reladdr, &offset, sizeof(src_reg));
+
+      emit(OR(dst_reg(dst), dst, URB_WRITE_PRIM_END));
+      emit(ADD(dst_reg(this->prim_count), this->prim_count, 1u));
+
+      /* Set the first vertex flag to indicate that the next vertex will start
+       * a primitive.
+       */
+      emit(MOV(dst_reg(this->first_vertex), URB_WRITE_PRIM_START));
+   }
+   emit(BRW_OPCODE_ENDIF);
 }
 
 void
@@ -234,7 +292,7 @@ gen6_gs_visitor::emit_thread_end()
    /* Issue the FF_SYNC message and obtain the initial VUE handle. */
    this->current_annotation = "gen6 thread end: ff_sync";
    vec4_instruction *inst =
-      emit(GS_OPCODE_FF_SYNC, dst_reg(this->temp), this->vertex_count);
+      emit(GS_OPCODE_FF_SYNC, dst_reg(this->temp), this->prim_count);
    inst->base_mrf = base_mrf;
 
    /* Loop over all buffered vertices and emit URB write messages */
