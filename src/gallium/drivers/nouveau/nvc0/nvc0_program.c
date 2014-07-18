@@ -629,7 +629,7 @@ nvc0_program_translate(struct nvc0_program *prog, uint16_t chipset)
    if (info->bin.tlsSpace) {
       assert(info->bin.tlsSpace < (1 << 24));
       prog->hdr[0] |= 1 << 26;
-      prog->hdr[1] |= info->bin.tlsSpace; /* l[] size */
+      prog->hdr[1] |= align(info->bin.tlsSpace, 0x10); /* l[] size */
       prog->need_tls = TRUE;
    }
    /* TODO: factor 2 only needed where joinat/precont is used,
