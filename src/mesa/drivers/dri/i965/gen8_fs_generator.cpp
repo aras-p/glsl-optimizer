@@ -715,13 +715,8 @@ gen8_fs_generator::generate_set_omask(fs_inst *inst,
              mask.hstride == BRW_HORIZONTAL_STRIDE_0);
    }
 
-   unsigned save_exec_size = default_state.exec_size;
-   default_state.exec_size = BRW_EXECUTE_8;
-
    gen8_instruction *mov = MOV(dst, retype(mask, dst.type));
    gen8_set_mask_control(mov, BRW_MASK_DISABLE);
-
-   default_state.exec_size = save_exec_size;
 }
 
 /**
