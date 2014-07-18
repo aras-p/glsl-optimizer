@@ -643,6 +643,8 @@ nvc0_program_translate(struct nvc0_program *prog, uint16_t chipset)
    */
    if (info->io.globalAccess)
       prog->hdr[0] |= 1 << 16;
+   if (info->io.fp64)
+      prog->hdr[0] |= 1 << 27;
 
    if (prog->pipe.stream_output.num_outputs)
       prog->tfb = nvc0_program_create_tfb_state(info,
