@@ -1,0 +1,127 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>Mesa Release Notes</title>
+  <link rel="stylesheet" type="text/css" href="../mesa.css">
+</head>
+<body>
+
+<div class="header">
+  <h1>The Mesa 3D Graphics Library</h1>
+</div>
+
+<iframe src="../contents.html"></iframe>
+<div class="content">
+
+<h1>Mesa 10.2.4 Release Notes / July 18, 2014</h1>
+
+<p>
+Mesa 10.2.4 is a bug fix release which fixes bugs found since the 10.2.3 release.
+</p>
+<p>
+Mesa 10.2.4 implements the OpenGL 3.3 API, but the version reported by
+glGetString(GL_VERSION) or glGetIntegerv(GL_MAJOR_VERSION) /
+glGetIntegerv(GL_MINOR_VERSION) depends on the particular driver being used.
+Some drivers don't support all the features required in OpenGL 3.3.  OpenGL
+3.3 is <strong>only</strong> available if requested at context creation
+because compatibility contexts are not supported.
+</p>
+
+
+<h2>SHA256 checksums</h2>
+<pre>
+06a2341244eb85c283f59f70161e06ded106f835ed9b6be1ef0243bd9344811a  MesaLib-10.2.4.tar.bz2
+33e3c8b4343503e7d7d17416c670438860a2fd99ec93ea3327f73c3abe33b5e4  MesaLib-10.2.4.tar.gz
+e26791a4a62a61b82e506e6ba031812d09697d1a831e8239af67e5722a8ee538  MesaLib-10.2.4.zip
+</pre>
+
+<h2>New features</h2>
+<p>None</p>
+
+<h2>Bug fixes</h2>
+
+<p>This list is likely incomplete.</p>
+
+<ul>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=81157">Bug 81157</a> - [BDW]Piglit some spec_glsl-1.50_execution_built-in-functions* cases fail</li>
+
+</ul>
+
+<h2>Changes</h2>
+
+<p>Abdiel Janulgue (3):</p>
+<ul>
+  <li>i965/fs: Refactor check for potential copy propagated instructions.</li>
+  <li>i965/fs: skip copy-propate for logical instructions with negated src entries</li>
+  <li>i965/vec4: skip copy-propate for logical instructions with negated src entries</li>
+</ul>
+
+<p>Brian Paul (3):</p>
+<ul>
+  <li>mesa: fix geometry shader memory leaks</li>
+  <li>st/mesa: fix geometry shader memory leak</li>
+  <li>gallium/u_blitter: fix some shader memory leaks</li>
+</ul>
+
+<p>Carl Worth (2):</p>
+<ul>
+  <li>docs: Add sha256 checksums for the 10.2.3 release</li>
+  <li>Update VERSION to 10.2.4</li>
+</ul>
+
+<p>Eric Anholt (1):</p>
+<ul>
+  <li>i965: Generalize the pixel_x/y workaround for all UW types.</li>
+</ul>
+
+<p>Ilia Mirkin (4):</p>
+<ul>
+  <li>nv50/ir: retrieve shadow compare from first arg</li>
+  <li>nv50/ir: ignore bias for samplerCubeShadow on nv50</li>
+  <li>nvc0/ir: do quadops on the right texture coordinates for TXD</li>
+  <li>nvc0/ir: use manual TXD when offsets are involved</li>
+</ul>
+
+<p>Jordan Justen (1):</p>
+<ul>
+  <li>i965: Add auxiliary surface field #defines for Broadwell.</li>
+</ul>
+
+<p>Kenneth Graunke (9):</p>
+<ul>
+  <li>i965: Don't copy propagate abs into Broadwell logic instructions.</li>
+  <li>i965: Set execution size to 8 for instructions with force_sechalf set.</li>
+  <li>i965/fs: Set force_uncompressed and force_sechalf on samplepos setup.</li>
+  <li>i965/fs: Use WE_all for gl_SampleID header register munging.</li>
+  <li>i965: Add plumbing for Broadwell's auxiliary surface support.</li>
+  <li>i965: Drop SINT workaround for CMS layout on Broadwell.</li>
+  <li>i965: Hook up the MCS buffers in SURFACE_STATE on Broadwell.</li>
+  <li>i965: Add 2x MSAA support to the MCS allocation function.</li>
+  <li>i965: Enable compressed multisample support (CMS) on Broadwell.</li>
+</ul>
+
+<p>Marek Olšák (4):</p>
+<ul>
+  <li>gallium: fix u_default_transfer_inline_write for textures</li>
+  <li>st/mesa: fix samplerCubeShadow with bias</li>
+  <li>radeonsi: fix samplerCubeShadow with bias</li>
+  <li>radeonsi: add support for TXB2</li>
+</ul>
+
+<p>Matt Turner (8):</p>
+<ul>
+  <li>i965/vec4: Don't return void from a void function.</li>
+  <li>i965/vec4: Don't fix_math_operand() on Gen &gt;= 8.</li>
+  <li>i965/fs: Don't fix_math_operand() on Gen &gt;= 8.</li>
+  <li>i965/fs: Make try_constant_propagate() static.</li>
+  <li>i965/fs: Constant propagate into 2-src math instructions on Gen8.</li>
+  <li>i965/vec4: Constant propagate into 2-src math instructions on Gen8.</li>
+  <li>i965/fs: Don't use brw_imm_* unnecessarily.</li>
+  <li>i965/fs: Set correct number of regs_written for MCS fetches.</li>
+</ul>
+
+</div>
+</body>
+</html>
