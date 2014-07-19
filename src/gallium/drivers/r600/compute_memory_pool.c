@@ -169,10 +169,12 @@ struct list_head *compute_memory_postalloc_chunk(
  * Reallocates pool, conserves data.
  * @returns -1 if it fails, 0 otherwise
  */
-int compute_memory_grow_pool(struct compute_memory_pool* pool,
-	struct pipe_context * pipe, int new_size_in_dw)
+int compute_memory_grow_defrag_pool(struct compute_memory_pool *pool,
+	struct pipe_context *pipe, int new_size_in_dw)
 {
-	COMPUTE_DBG(pool->screen, "* compute_memory_grow_pool() "
+	new_size_in_dw = align(new_size_in_dw, ITEM_ALIGNMENT);
+
+	COMPUTE_DBG(pool->screen, "* compute_memory_grow_defrag_pool() "
 		"new_size_in_dw = %d (%d bytes)\n",
 		new_size_in_dw, new_size_in_dw * 4);
 
@@ -183,27 +185,17 @@ int compute_memory_grow_pool(struct compute_memory_pool* pool,
 	} else {
 		struct r600_resource *temp = NULL;
 
-		new_size_in_dw = align(new_size_in_dw, ITEM_ALIGNMENT);
-
-		COMPUTE_DBG(pool->screen, "  Aligned size = %d (%d bytes)\n",
-			new_size_in_dw, new_size_in_dw * 4);
-
 		temp = (struct r600_resource *)r600_compute_buffer_alloc_vram(
 							pool->screen, new_size_in_dw * 4);
 
 		if (temp != NULL) {
-			struct r600_context *rctx = (struct r600_context *)pipe;
 			struct pipe_resource *src = (struct pipe_resource *)pool->bo;
 			struct pipe_resource *dst = (struct pipe_resource *)temp;
-			struct pipe_box box;
 
-			COMPUTE_DBG(pool->screen, "  Growing the pool using a temporary resource\n");
+			COMPUTE_DBG(pool->screen, "  Growing and defragmenting the pool "
+					"using a temporary resource\n");
 
-			u_box_1d(0, pool->size_in_dw * 4, &box);
-
-			rctx->b.b.resource_copy_region(pipe,
-					dst, 0, 0, 0 ,0,
-					src, 0, &box);
+			compute_memory_defrag(pool, src, dst, pipe);
 
 			pool->screen->b.b.resource_destroy(
 					(struct pipe_screen *)pool->screen,
@@ -229,6 +221,11 @@ int compute_memory_grow_pool(struct compute_memory_pool* pool,
 					pool->screen,
 					pool->size_in_dw * 4);
 			compute_memory_shadow(pool, pipe, 0);
+
+			if (pool->status & POOL_FRAGMENTED) {
+				struct pipe_resource *src = (struct pipe_resource *)pool->bo;
+				compute_memory_defrag(pool, src, src, pipe);
+			}
 		}
 	}
 
@@ -292,15 +289,14 @@ int compute_memory_finalize_pending(struct compute_memory_pool* pool,
 		return 0;
 	}
 
-	if (pool->status & POOL_FRAGMENTED) {
-		struct pipe_resource *src = (struct pipe_resource *)pool->bo;
-		compute_memory_defrag(pool, src, src, pipe);
-	}
-
 	if (pool->size_in_dw < allocated + unallocated) {
-		err = compute_memory_grow_pool(pool, pipe, allocated + unallocated);
+		err = compute_memory_grow_defrag_pool(pool, pipe, allocated + unallocated);
 		if (err == -1)
 			return -1;
+	}
+	else if (pool->status & POOL_FRAGMENTED) {
+		struct pipe_resource *src = (struct pipe_resource *)pool->bo;
+		compute_memory_defrag(pool, src, src, pipe);
 	}
 
 	/* After defragmenting the pool, allocated is equal to the first available

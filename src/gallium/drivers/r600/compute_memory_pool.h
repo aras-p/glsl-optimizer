@@ -81,7 +81,7 @@ int64_t compute_memory_prealloc_chunk(struct compute_memory_pool* pool, int64_t 
 
 struct list_head *compute_memory_postalloc_chunk(struct compute_memory_pool* pool, int64_t start_in_dw); ///search for the chunk where we can link our new chunk after it
 
-int compute_memory_grow_pool(struct compute_memory_pool* pool, struct pipe_context * pipe,
+int compute_memory_grow_defrag_pool(struct compute_memory_pool* pool, struct pipe_context * pipe,
 	int new_size_in_dw);
 
 void compute_memory_shadow(struct compute_memory_pool* pool,
