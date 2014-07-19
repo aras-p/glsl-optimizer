@@ -560,7 +560,7 @@ intel_texsubimage_tiled_memcpy(struct gl_context * ctx,
     * we need tests.
     */
    if (!brw->has_llc ||
-       type != GL_UNSIGNED_BYTE ||
+       !(type == GL_UNSIGNED_BYTE || type == GL_UNSIGNED_INT_8_8_8_8_REV) ||
        texImage->TexObject->Target != GL_TEXTURE_2D ||
        pixels == NULL ||
        _mesa_is_bufferobj(packing->BufferObj) ||
@@ -572,6 +572,10 @@ intel_texsubimage_tiled_memcpy(struct gl_context * ctx,
        packing->LsbFirst ||
        packing->Invert)
       return false;
+
+   if (type == GL_UNSIGNED_INT_8_8_8_8_REV &&
+       !(format == GL_RGBA || format == GL_BGRA))
+      return false; /* Invalid type/format combination */
 
    if ((texImage->TexFormat == MESA_FORMAT_L_UNORM8 && format == GL_LUMINANCE) ||
        (texImage->TexFormat == MESA_FORMAT_A_UNORM8 && format == GL_ALPHA)) {
