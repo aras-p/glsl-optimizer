@@ -327,7 +327,6 @@ lower_ubo_reference_visitor::handle_rvalue(ir_rvalue **rvalue)
 	 const glsl_type *struct_type = deref_record->record->type;
 	 unsigned intra_struct_offset = 0;
 
-	 unsigned max_field_align = 16;
 	 for (unsigned int i = 0; i < struct_type->length; i++) {
 	    const glsl_type *type = struct_type->fields.structure[i].type;
 
@@ -341,7 +340,6 @@ lower_ubo_reference_visitor::handle_rvalue(ir_rvalue **rvalue)
 
             unsigned field_align = type->std140_base_alignment(field_row_major);
 
-	    max_field_align = MAX2(field_align, max_field_align);
 	    intra_struct_offset = glsl_align(intra_struct_offset, field_align);
 
 	    if (strcmp(struct_type->fields.structure[i].name,
@@ -350,7 +348,6 @@ lower_ubo_reference_visitor::handle_rvalue(ir_rvalue **rvalue)
             intra_struct_offset += type->std140_size(field_row_major);
 	 }
 
-	 const_offset = glsl_align(const_offset, max_field_align);
 	 const_offset += intra_struct_offset;
 
 	 deref = deref_record->record->as_dereference();
