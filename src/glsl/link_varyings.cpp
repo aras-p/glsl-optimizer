@@ -1068,10 +1068,8 @@ private:
    virtual void visit_field(const glsl_type *type, const char *name,
                             bool row_major)
    {
-      assert(!type->is_record());
-      assert(!(type->is_array() && type->fields.array->is_record()));
-      assert(!type->is_interface());
-      assert(!(type->is_array() && type->fields.array->is_interface()));
+      assert(!type->without_array()->is_record());
+      assert(!type->without_array()->is_interface());
 
       (void) row_major;
 

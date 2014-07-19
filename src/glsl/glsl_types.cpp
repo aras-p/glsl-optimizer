@@ -872,8 +872,7 @@ glsl_type::std140_size(bool row_major) const
     *     and <R> rows, the matrix is stored identically to a row of <S>*<R>
     *     row vectors with <C> components each, according to rule (4).
     */
-   if (this->is_matrix() || (this->is_array() &&
-			     this->fields.array->is_matrix())) {
+   if (this->without_array()->is_matrix()) {
       const struct glsl_type *element_type;
       const struct glsl_type *vec_type;
       unsigned int array_len;

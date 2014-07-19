@@ -59,10 +59,8 @@ values_for_type(const glsl_type *type)
 void
 program_resource_visitor::process(const glsl_type *type, const char *name)
 {
-   assert(type->is_record()
-          || (type->is_array() && type->fields.array->is_record())
-          || type->is_interface()
-          || (type->is_array() && type->fields.array->is_interface()));
+   assert(type->without_array()->is_record()
+          || type->without_array()->is_interface());
 
    char *name_copy = ralloc_strdup(NULL, name);
    recursion(type, &name_copy, strlen(name), false, NULL);
@@ -136,7 +134,7 @@ program_resource_visitor::process(ir_variable *var)
        */
       recursion(var->type, &name, strlen(name), false, NULL);
       ralloc_free(name);
-   } else if (t->is_record() || (t->is_array() && t->fields.array->is_record())) {
+   } else if (t->without_array()->is_record()) {
       char *name = ralloc_strdup(NULL, var->name);
       recursion(var->type, &name, strlen(name), false, NULL);
       ralloc_free(name);
@@ -299,10 +297,8 @@ private:
    virtual void visit_field(const glsl_type *type, const char *name,
                             bool row_major)
    {
-      assert(!type->is_record());
-      assert(!(type->is_array() && type->fields.array->is_record()));
-      assert(!type->is_interface());
-      assert(!(type->is_array() && type->fields.array->is_interface()));
+      assert(!type->without_array()->is_record());
+      assert(!type->without_array()->is_interface());
 
       (void) row_major;
 
@@ -514,10 +510,8 @@ private:
    virtual void visit_field(const glsl_type *type, const char *name,
                             bool row_major, const glsl_type *record_type)
    {
-      assert(!type->is_record());
-      assert(!(type->is_array() && type->fields.array->is_record()));
-      assert(!type->is_interface());
-      assert(!(type->is_array() && type->fields.array->is_interface()));
+      assert(!type->without_array()->is_record());
+      assert(!type->without_array()->is_interface());
 
       (void) row_major;
 
@@ -590,8 +584,7 @@ private:
 	    this->uniforms[id].array_stride = 0;
 	 }
 
-	 if (type->is_matrix() ||
-	     (type->is_array() && type->fields.array->is_matrix())) {
+	 if (type->without_array()->is_matrix()) {
 	    this->uniforms[id].matrix_stride = 16;
 	    this->uniforms[id].row_major = ubo_row_major;
 	 } else {

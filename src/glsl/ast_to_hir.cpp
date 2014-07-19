@@ -5203,8 +5203,7 @@ ast_process_structure_or_interface_block(exec_list *instructions,
                              "in uniform blocks or structures.");
          }
 
-         if (field_type->is_matrix() ||
-             (field_type->is_array() && field_type->fields.array->is_matrix())) {
+         if (field_type->without_array()->is_matrix()) {
             fields[i].row_major = block_row_major;
             if (qual->flags.q.row_major)
                fields[i].row_major = true;
