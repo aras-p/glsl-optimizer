@@ -91,6 +91,7 @@ int compute_memory_finalize_pending(struct compute_memory_pool* pool,
 	struct pipe_context * pipe);
 
 void compute_memory_defrag(struct compute_memory_pool *pool,
+	struct pipe_resource *src, struct pipe_resource *dst,
 	struct pipe_context *pipe);
 
 int compute_memory_promote_item(struct compute_memory_pool *pool,

@@ -268,7 +268,8 @@ int compute_memory_finalize_pending(struct compute_memory_pool* pool,
 	}
 
 	if (pool->status & POOL_FRAGMENTED) {
-		compute_memory_defrag(pool, pipe);
+		struct pipe_resource *src = (struct pipe_resource *)pool->bo;
+		compute_memory_defrag(pool, src, src, pipe);
 	}
 
 	if (pool->size_in_dw < allocated + unallocated) {
@@ -303,20 +304,20 @@ int compute_memory_finalize_pending(struct compute_memory_pool* pool,
  * \param pool	The pool to be defragmented
  */
 void compute_memory_defrag(struct compute_memory_pool *pool,
+	struct pipe_resource *src, struct pipe_resource *dst,
 	struct pipe_context *pipe)
 {
 	struct compute_memory_item *item;
-	struct pipe_resource *src = (struct pipe_resource *)pool->bo;
 	int64_t last_pos;
 
 	COMPUTE_DBG(pool->screen, "* compute_memory_defrag()\n");
 
 	last_pos = 0;
 	LIST_FOR_EACH_ENTRY(item, pool->item_list, link) {
-		if (item->start_in_dw != last_pos) {
-			assert(last_pos < item->start_in_dw);
+		if (src != dst || item->start_in_dw != last_pos) {
+			assert(last_pos <= item->start_in_dw);
 
-			compute_memory_move_item(pool, src, src,
+			compute_memory_move_item(pool, src, dst,
 					item, last_pos, pipe);
 		}
 
