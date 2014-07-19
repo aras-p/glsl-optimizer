@@ -465,6 +465,18 @@ struct glsl_type {
    }
 
    /**
+    * Get the type stripped of any arrays
+    *
+    * \return
+    * Pointer to the type of elements of the first non-array type for array
+    * types, or pointer to itself for non-array types.
+    */
+   const glsl_type *without_array() const
+   {
+      return this->is_array() ? this->fields.array : this;
+   }
+
+   /**
     * Return the amount of atomic counter storage required for a type.
     */
    unsigned atomic_size() const
