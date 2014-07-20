@@ -105,49 +105,54 @@ endif
 
 
 ##
-## Gallium state trackers
+## Gallium state trackers and their users (targets)
 ##
 
+if NEED_GALLIUM_LOADER
+SUBDIRS += targets/pipe-loader
+endif
+
 if HAVE_CLOVER
-SUBDIRS += state_trackers/clover
+SUBDIRS += state_trackers/clover targets/opencl
 endif
 
 if HAVE_DRICOMMON
-SUBDIRS += state_trackers/dri
+SUBDIRS += state_trackers/dri targets/dri
 endif
 
-if HAVE_GALLIUM_EGL
-SUBDIRS += state_trackers/egl
-endif
-
-if HAVE_GALLIUM_GBM
-SUBDIRS += state_trackers/gbm
-endif
-
-if HAVE_X11_DRIVER
-SUBDIRS += state_trackers/glx/xlib
-endif
-
-if HAVE_ST_OMX
-SUBDIRS += state_trackers/omx
-endif
-
-if HAVE_GALLIUM_OSMESA
-SUBDIRS += state_trackers/osmesa
-endif
-
-if HAVE_ST_VDPAU
-SUBDIRS += state_trackers/vdpau
-endif
-
+## the egl target depends on vega
 if HAVE_OPENVG
 SUBDIRS += state_trackers/vega
 endif
 
+if HAVE_GALLIUM_EGL
+SUBDIRS += state_trackers/egl targets/egl-static
+endif
+
+if HAVE_GALLIUM_GBM
+SUBDIRS += state_trackers/gbm targets/gbm
+endif
+
+if HAVE_X11_DRIVER
+SUBDIRS += state_trackers/glx/xlib targets/libgl-xlib
+endif
+
+if HAVE_ST_OMX
+SUBDIRS += state_trackers/omx targets/omx
+endif
+
+if HAVE_GALLIUM_OSMESA
+SUBDIRS += state_trackers/osmesa targets/osmesa
+endif
+
+if HAVE_ST_VDPAU
+SUBDIRS += state_trackers/vdpau targets/vdpau
+endif
+
 if HAVE_ST_XA
-SUBDIRS += state_trackers/xa
+SUBDIRS += state_trackers/xa targets/xa
 endif
 
 if HAVE_ST_XVMC
-SUBDIRS += state_trackers/xvmc
+SUBDIRS += state_trackers/xvmc targets/xvmc
 endif

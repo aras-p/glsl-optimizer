@@ -50,8 +50,7 @@ endif
 if HAVE_GALLIUM
 SUBDIRS +=			\
 	gallium/auxiliary	\
-	gallium			\
-	gallium/targets
+	gallium
 
 if HAVE_GALLIUM_TESTS
 SUBDIRS +=			\
