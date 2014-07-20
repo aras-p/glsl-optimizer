@@ -52,6 +52,9 @@ LOCAL_C_INCLUDES += \
 	$(DRM_TOP)
 endif
 
+ifneq ($(filter freedreno, $(MESA_GPU_DRIVERS)),)
+LOCAL_CFLAGS += -DGALLIUM_FREEDRENO
+endif
 ifneq ($(filter i915g, $(MESA_GPU_DRIVERS)),)
 LOCAL_CFLAGS += -DGALLIUM_I915
 endif
