@@ -30,9 +30,7 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := $(C_SOURCES)
 
-LOCAL_C_INCLUDES := \
-	$(DRM_TOP) \
-	$(DRM_TOP)/include/drm
+LOCAL_C_INCLUDES := $(TARGET_OUT_HEADERS)/libdrm
 
 LOCAL_MODULE := libmesa_winsys_radeon
 

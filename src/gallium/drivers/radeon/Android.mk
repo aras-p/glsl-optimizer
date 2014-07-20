@@ -1,7 +1,7 @@
 # Mesa 3-D graphics library
 #
-# Copyright (C) 2010-2011 Chia-I Wu <olvaffe@gmail.com>
-# Copyright (C) 2010-2011 LunarG Inc.
+# Copyright (C) 2011 Chia-I Wu <olvaffe@gmail.com>
+# Copyright (C) 2011 LunarG Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -32,7 +32,7 @@ LOCAL_SRC_FILES := $(C_SOURCES)
 
 LOCAL_C_INCLUDES := $(TARGET_OUT_HEADERS)/libdrm
 
-LOCAL_MODULE := libmesa_pipe_radeonsi
+LOCAL_MODULE := libmesa_pipe_radeon
 
 include $(GALLIUM_COMMON_MK)
 include $(BUILD_STATIC_LIBRARY)
