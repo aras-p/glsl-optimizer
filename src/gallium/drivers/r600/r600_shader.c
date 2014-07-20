@@ -5251,6 +5251,35 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 	}
 
 	opcode = ctx->inst_info->op;
+	if (opcode == FETCH_OP_GATHER4 &&
+		inst->TexOffsets[0].File != TGSI_FILE_NULL &&
+		inst->TexOffsets[0].File != TGSI_FILE_IMMEDIATE) {
+		opcode = FETCH_OP_GATHER4_O;
+
+		/* GATHER4_O/GATHER4_C_O use offset values loaded by
+		   SET_TEXTURE_OFFSETS instruction. The immediate offset values
+		   encoded in the instruction are ignored. */
+		memset(&tex, 0, sizeof(struct r600_bytecode_tex));
+		tex.op = FETCH_OP_SET_TEXTURE_OFFSETS;
+		tex.sampler_id = tgsi_tex_get_src_gpr(ctx, sampler_src_reg);
+		tex.resource_id = tex.sampler_id + R600_MAX_CONST_BUFFERS;
+
+		tex.src_gpr = ctx->file_offset[inst->TexOffsets[0].File] + inst->TexOffsets[0].Index;
+		tex.src_sel_x = inst->TexOffsets[0].SwizzleX;
+		tex.src_sel_y = inst->TexOffsets[0].SwizzleY;
+		tex.src_sel_z = inst->TexOffsets[0].SwizzleZ;
+		tex.src_sel_w = 4;
+
+		tex.dst_sel_x = 7;
+		tex.dst_sel_y = 7;
+		tex.dst_sel_z = 7;
+		tex.dst_sel_w = 7;
+
+		r = r600_bytecode_add_tex(ctx->bc, &tex);
+		if (r)
+			return r;
+	}
+
 	if (inst->Texture.Texture == TGSI_TEXTURE_SHADOW1D ||
 	    inst->Texture.Texture == TGSI_TEXTURE_SHADOW2D ||
 	    inst->Texture.Texture == TGSI_TEXTURE_SHADOWRECT ||
@@ -5273,10 +5302,10 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 			break;
 		/* Texture gather variants */
 		case FETCH_OP_GATHER4:
-			tex.op = FETCH_OP_GATHER4_C;
+			opcode = FETCH_OP_GATHER4_C;
 			break;
 		case FETCH_OP_GATHER4_O:
-			tex.op = FETCH_OP_GATHER4_C_O;
+			opcode = FETCH_OP_GATHER4_C_O;
 			break;
 		}
 	}
@@ -5352,7 +5381,8 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 	tex.offset_x = offset_x;
 	tex.offset_y = offset_y;
 	if (inst->Instruction.Opcode == TGSI_OPCODE_TG4 &&
-		inst->Texture.Texture == TGSI_TEXTURE_2D_ARRAY) {
+		(inst->Texture.Texture == TGSI_TEXTURE_2D_ARRAY ||
+		 inst->Texture.Texture == TGSI_TEXTURE_SHADOW2D_ARRAY)) {
 		tex.offset_z = 0;
 	}
 	else {

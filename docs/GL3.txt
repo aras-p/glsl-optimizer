@@ -106,7 +106,7 @@ GL 4.0:
   - Implicit signed -> unsigned conversions            DONE
   - Fused multiply-add                                 DONE (i965, nvc0)
   - Packing/bitfield/conversion functions              DONE (i965, nvc0, r600)
-  - Enhanced textureGather                             DONE (i965, nvc0, radeonsi)
+  - Enhanced textureGather                             DONE (i965, nvc0, r600, radeonsi)
   - Geometry shader instancing                         DONE (i965, nvc0)
   - Geometry shader multiple streams                   DONE (i965, nvc0)
   - Enhanced per-sample shading                        DONE (i965, r600)
@@ -118,7 +118,7 @@ GL 4.0:
   GL_ARB_tessellation_shader                           started (Fabian)
   GL_ARB_texture_buffer_object_rgb32                   DONE (i965, nvc0, r600, radeonsi, softpipe)
   GL_ARB_texture_cube_map_array                        DONE (i965, nv50, nvc0, r600, radeonsi, softpipe)
-  GL_ARB_texture_gather                                DONE (i965, nv50, nvc0, radeonsi, r600)
+  GL_ARB_texture_gather                                DONE (i965, nv50, nvc0, r600, radeonsi)
   GL_ARB_texture_query_lod                             DONE (i965, nv50, nvc0, r600, radeonsi)
   GL_ARB_transform_feedback2                           DONE (i965, nv50, nvc0, r600, radeonsi)
   GL_ARB_transform_feedback3                           DONE (i965, nv50, nvc0, r600, radeonsi)
