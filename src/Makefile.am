@@ -48,15 +48,7 @@ SUBDIRS += egl/main
 endif
 
 if HAVE_GALLIUM
-SUBDIRS +=			\
-	gallium/auxiliary	\
-	gallium
-
-if HAVE_GALLIUM_TESTS
-SUBDIRS +=			\
-	gallium/tests/trivial	\
-	gallium/tests/unit
-endif
+SUBDIRS += gallium
 endif
 
 EXTRA_DIST = getopt

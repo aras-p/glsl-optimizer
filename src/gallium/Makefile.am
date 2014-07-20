@@ -1,6 +1,12 @@
 SUBDIRS =
 
 ##
+## Gallium auxiliary module
+##
+
+SUBDIRS += auxiliary
+
+##
 ## Gallium pipe drivers and their respective winsys'
 ##
 
@@ -155,4 +161,14 @@ endif
 
 if HAVE_ST_XVMC
 SUBDIRS += state_trackers/xvmc targets/xvmc
+endif
+
+##
+## Gallium tests
+##
+
+if HAVE_GALLIUM_TESTS
+SUBDIRS += \
+	tests/trivial \
+	tests/unit
 endif
