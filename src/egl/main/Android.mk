@@ -102,16 +102,21 @@ endif
 # r300g/r600g/radeonsi
 ifneq ($(filter r300g r600g radeonsi, $(MESA_GPU_DRIVERS)),)
 gallium_DRIVERS += libmesa_winsys_radeon
+LOCAL_SHARED_LIBRARIES += libdrm_radeon
 ifneq ($(filter r300g, $(MESA_GPU_DRIVERS)),)
 gallium_DRIVERS += libmesa_pipe_r300
-endif
+endif # r300g
+ifneq ($(filter r600g radeonsi, $(MESA_GPU_DRIVERS)),)
 ifneq ($(filter r600g, $(MESA_GPU_DRIVERS)),)
 gallium_DRIVERS += libmesa_pipe_r600
-endif
+LOCAL_SHARED_LIBRARIES += libstlport
+endif # r600g
 ifneq ($(filter radeonsi, $(MESA_GPU_DRIVERS)),)
 gallium_DRIVERS += libmesa_pipe_radeonsi
-endif
-endif
+endif # radeonsi
+gallium_DRIVERS += libmesa_pipe_radeon
+endif # r600g || radeonsi
+endif # r300g || r600g || radeonsi
 
 # vmwgfx
 ifneq ($(filter vmwgfx, $(MESA_GPU_DRIVERS)),)
