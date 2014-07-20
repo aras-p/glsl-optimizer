@@ -26,10 +26,11 @@
 GALLIUM_TOP := $(call my-dir)
 GALLIUM_COMMON_MK := $(GALLIUM_TOP)/Android.common.mk
 
-SUBDIRS := \
-	targets/egl-static \
-	state_trackers/egl \
-	auxiliary
+SUBDIRS := auxiliary
+
+#
+# Gallium drivers and their respective winsys
+#
 
 # swrast
 SUBDIRS += winsys/sw/android drivers/softpipe
@@ -77,6 +78,11 @@ endif
 ifneq ($(filter vmwgfx, $(MESA_GPU_DRIVERS)),)
 SUBDIRS += winsys/svga/drm drivers/svga
 endif
+
+#
+# Gallium state trackers and their users (targets)
+#
+SUBDIRS += state_trackers/egl targets/egl-static
 
 mkfiles := $(patsubst %,$(GALLIUM_TOP)/%/Android.mk,$(SUBDIRS))
 include $(mkfiles)
