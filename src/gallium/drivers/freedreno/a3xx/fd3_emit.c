@@ -486,9 +486,15 @@ fd3_emit_state(struct fd_context *ctx, struct fd_ringbuffer *ring,
 		fd3_program_emit(ring, prog, key);
 	}
 
+	/* TODO we should not need this or fd_wfi() before emit_constants():
+	 */
+	OUT_PKT3(ring, CP_EVENT_WRITE, 1);
+	OUT_RING(ring, HLSQ_FLUSH);
+
 	if ((dirty & (FD_DIRTY_PROG | FD_DIRTY_CONSTBUF)) &&
 			/* evil hack to deal sanely with clear path: */
 			(prog == &ctx->prog)) {
+		fd_wfi(ctx, ring);
 		emit_constants(ring,  SB_VERT_SHADER,
 				&ctx->constbuf[PIPE_SHADER_VERTEX],
 				(prog->dirty & FD_SHADER_DIRTY_VP) ? vp : NULL);
@@ -525,6 +531,8 @@ fd3_emit_state(struct fd_context *ctx, struct fd_ringbuffer *ring,
 				A3XX_RB_BLEND_ALPHA_FLOAT(bcolor->color[3]));
 	}
 
+	if (dirty & (FD_DIRTY_VERTTEX | FD_DIRTY_FRAGTEX))
+		fd_wfi(ctx, ring);
 
 	if (dirty & FD_DIRTY_VERTTEX) {
 		if (vp->has_samp)
