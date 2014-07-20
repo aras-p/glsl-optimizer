@@ -28,18 +28,19 @@ include $(LOCAL_PATH)/Makefile.sources
 
 include $(CLEAR_VARS)
 
-LOCAL_SRC_FILES := $(C_SOURCES) \
+LOCAL_SRC_FILES := \
+	$(C_SOURCES) \
 	$(NV30_C_SOURCES) \
 	$(NV50_CODEGEN_SOURCES) \
 	$(NV50_C_SOURES) \
 	$(NVC0_CODEGEN_SOURCES) \
 	$(NVC0_C_SOURCES)
 
-LOCAL_C_INCLUDES := $(DRM_TOP) \
-	$(DRM_TOP)/include/drm \
-	$(DRM_TOP)/nouveau
+LOCAL_C_INCLUDES := \
+	$(TARGET_OUT_HEADERS)/libdrm
 
 LOCAL_MODULE := libmesa_pipe_nouveau
 
+include external/stlport/libstlport.mk
 include $(GALLIUM_COMMON_MK)
 include $(BUILD_STATIC_LIBRARY)
