@@ -94,13 +94,9 @@ endif
 
 # nouveau
 ifneq ($(filter nouveau, $(MESA_GPU_DRIVERS)),)
-gallium_DRIVERS += \
-	libmesa_winsys_nouveau \
-	libmesa_pipe_nvfx \
-	libmesa_pipe_nv50 \
-	libmesa_pipe_nvc0 \
-	libmesa_pipe_nouveau
+gallium_DRIVERS +=  libmesa_winsys_nouveau libmesa_pipe_nouveau
 LOCAL_SHARED_LIBRARIES += libdrm_nouveau
+LOCAL_SHARED_LIBRARIES += libstlport
 endif
 
 # r300g/r600g/radeonsi
