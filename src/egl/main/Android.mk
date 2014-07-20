@@ -25,25 +25,10 @@
 
 LOCAL_PATH := $(call my-dir)
 
-# from Makefile
-SOURCES = \
-	eglapi.c \
-	eglarray.c \
-	eglconfig.c \
-	eglcontext.c \
-	eglcurrent.c \
-	egldisplay.c \
-	egldriver.c \
-	eglfallbacks.c \
-	eglglobals.c \
-	eglimage.c \
-	egllog.c \
-	eglmisc.c \
-	eglmode.c \
-	eglscreen.c \
-	eglstring.c \
-	eglsurface.c \
-	eglsync.c
+include $(LOCAL_PATH)/Makefile.sources
+
+SOURCES := \
+	${LIBEGL_C_FILES}
 
 # ---------------------------------------
 # Build libGLES_mesa
