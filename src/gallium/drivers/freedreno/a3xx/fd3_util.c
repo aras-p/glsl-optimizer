@@ -44,9 +44,11 @@ fd3_pipe2vtx(enum pipe_format format)
 		return VFMT_NORM_BYTE_8;
 
 	case PIPE_FORMAT_R8_UINT:
+	case PIPE_FORMAT_R8_USCALED:
 		return VFMT_UBYTE_8;
 
 	case PIPE_FORMAT_R8_SINT:
+	case PIPE_FORMAT_R8_SSCALED:
 		return VFMT_BYTE_8;
 
 	/* 16-bit buffers. */
@@ -58,9 +60,11 @@ fd3_pipe2vtx(enum pipe_format format)
 		return VFMT_NORM_SHORT_16;
 
 	case PIPE_FORMAT_R16_UINT:
+	case PIPE_FORMAT_R16_USCALED:
 		return VFMT_USHORT_16;
 
 	case PIPE_FORMAT_R16_SINT:
+	case PIPE_FORMAT_R16_SSCALED:
 		return VFMT_SHORT_16;
 
 	case PIPE_FORMAT_R16_FLOAT:
@@ -73,9 +77,11 @@ fd3_pipe2vtx(enum pipe_format format)
 		return VFMT_NORM_BYTE_8_8;
 
 	case PIPE_FORMAT_R8G8_UINT:
+	case PIPE_FORMAT_R8G8_USCALED:
 		return VFMT_UBYTE_8_8;
 
 	case PIPE_FORMAT_R8G8_SINT:
+	case PIPE_FORMAT_R8G8_SSCALED:
 		return VFMT_BYTE_8_8;
 
 	/* 24-bit buffers. */
@@ -86,9 +92,11 @@ fd3_pipe2vtx(enum pipe_format format)
 		return VFMT_NORM_BYTE_8_8_8;
 
 	case PIPE_FORMAT_R8G8B8_UINT:
+	case PIPE_FORMAT_R8G8B8_USCALED:
 		return VFMT_UBYTE_8_8_8;
 
 	case PIPE_FORMAT_R8G8B8_SINT:
+	case PIPE_FORMAT_R8G8B8_SSCALED:
 		return VFMT_BYTE_8_8_8;
 
 	/* 32-bit buffers. */
@@ -102,18 +110,22 @@ fd3_pipe2vtx(enum pipe_format format)
 		return VFMT_NORM_BYTE_8_8_8_8;
 
 	case PIPE_FORMAT_R8G8B8A8_UINT:
+	case PIPE_FORMAT_R8G8B8A8_USCALED:
 		return VFMT_UBYTE_8_8_8_8;
 
 	case PIPE_FORMAT_R8G8B8A8_SINT:
+	case PIPE_FORMAT_R8G8B8A8_SSCALED:
 		return VFMT_BYTE_8_8_8_8;
 
 	case PIPE_FORMAT_R16G16_SSCALED:
+	case PIPE_FORMAT_R16G16_SINT:
 		return VFMT_SHORT_16_16;
 
 	case PIPE_FORMAT_R16G16_FLOAT:
 		return VFMT_FLOAT_16_16;
 
 	case PIPE_FORMAT_R16G16_UINT:
+	case PIPE_FORMAT_R16G16_USCALED:
 		return VFMT_USHORT_16_16;
 
 	case PIPE_FORMAT_R16G16_UNORM:
@@ -128,6 +140,7 @@ fd3_pipe2vtx(enum pipe_format format)
 	case PIPE_FORMAT_R10G10B10A2_SNORM:
 		return VFMT_NORM_INT_10_10_10_2;
 
+	case PIPE_FORMAT_R10G10B10A2_UINT:
 	case PIPE_FORMAT_R10G10B10A2_USCALED:
 		return VFMT_UINT_10_10_10_2;
 
@@ -138,10 +151,12 @@ fd3_pipe2vtx(enum pipe_format format)
 	case PIPE_FORMAT_R16G16B16_FLOAT:
 		return VFMT_FLOAT_16_16_16;
 
+	case PIPE_FORMAT_R16G16B16_SINT:
 	case PIPE_FORMAT_R16G16B16_SSCALED:
 		return VFMT_SHORT_16_16_16;
 
 	case PIPE_FORMAT_R16G16B16_UINT:
+	case PIPE_FORMAT_R16G16B16_USCALED:
 		return VFMT_USHORT_16_16_16;
 
 	case PIPE_FORMAT_R16G16B16_SNORM:
@@ -165,9 +180,11 @@ fd3_pipe2vtx(enum pipe_format format)
 		return VFMT_NORM_SHORT_16_16_16_16;
 
 	case PIPE_FORMAT_R16G16B16A16_UINT:
+	case PIPE_FORMAT_R16G16B16A16_USCALED:
 		return VFMT_USHORT_16_16_16_16;
 
 	case PIPE_FORMAT_R16G16B16A16_SINT:
+	case PIPE_FORMAT_R16G16B16A16_SSCALED:
 		return VFMT_SHORT_16_16_16_16;
 
 	case PIPE_FORMAT_R32G32_FLOAT:
