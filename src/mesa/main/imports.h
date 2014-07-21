@@ -274,10 +274,12 @@ static inline int IROUND_POS(float f)
    return (int) (f + 0.5F);
 }
 
+#ifdef __x86_64__
+#  include <xmmintrin.h>
+#endif
 
 /**
  * Convert float to int using a fast method.  The rounding mode may vary.
- * XXX We could use an x86-64/SSE2 version here.
  */
 static inline int F_TO_I(float f)
 {
@@ -292,6 +294,8 @@ static inline int F_TO_I(float f)
 	 fistp r
 	}
    return r;
+#elif defined(__x86_64__)
+   return _mm_cvt_ss2si(_mm_load_ss(&f));
 #else
    return IROUND(f);
 #endif
