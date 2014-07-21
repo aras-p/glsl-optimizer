@@ -49,9 +49,8 @@ protected:
    virtual void visit(ir_end_primitive *);
    virtual void emit_urb_write_header(int mrf);
    virtual void emit_urb_write_opcode(bool complete,
-                                      src_reg vertex,
                                       int base_mrf,
-                                      int mlen,
+                                      int last_mrf,
                                       int urb_offset);
 
 private:

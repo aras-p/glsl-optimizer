@@ -166,7 +166,7 @@ gen6_gs_visitor::visit(ir_end_primitive *)
 
    /* Otherwise we know that the last vertex we have processed was the last
     * vertex in the primitive and we need to set its PrimEnd flag, so do this
-    * unless we haven't emitted that vertex at all.
+    * unless we haven't emitted that vertex at all (vertex_count != 0).
     *
     * Notice that we have already incremented vertex_count when we processed
     * the last emit_vertex, so we need to take that into account in the
@@ -176,6 +176,10 @@ gen6_gs_visitor::visit(ir_end_primitive *)
    unsigned num_output_vertices = c->gp->program.VerticesOut;
    emit(CMP(dst_null_d(), this->vertex_count, src_reg(num_output_vertices + 1),
             BRW_CONDITIONAL_L));
+   vec4_instruction *inst = emit(CMP(dst_null_d(),
+                                     this->vertex_count, 0u,
+                                     BRW_CONDITIONAL_NEQ));
+   inst->predicate = BRW_PREDICATE_NORMAL;
    emit(IF(BRW_PREDICATE_NORMAL));
    {
       /* vertex_output_offset is already pointing at the first entry of the
@@ -224,47 +228,40 @@ gen6_gs_visitor::emit_urb_write_header(int mrf)
 }
 
 void
-gen6_gs_visitor::emit_urb_write_opcode(bool complete, src_reg vertex,
-                                       int base_mrf, int mlen, int urb_offset)
+gen6_gs_visitor::emit_urb_write_opcode(bool complete, int base_mrf,
+                                       int last_mrf, int urb_offset)
 {
    vec4_instruction *inst = NULL;
 
-   /* If the vertex is not complete we don't have to do anything special */
    if (!complete) {
+      /* If the vertex is not complete we don't have to do anything special */
       inst = emit(GS_OPCODE_URB_WRITE);
       inst->urb_write_flags = BRW_URB_WRITE_NO_FLAGS;
-      inst->base_mrf = base_mrf;
-      inst->mlen = mlen;
-      inst->offset = urb_offset;
-      return;
-   }
-
-   /* Otherwise, if this is not the last vertex we are going to write,
-    * we have to request a new VUE handle for the next vertex.
-    *
-    * Notice that the vertex parameter has been pre-incremented in
-    * emit_thread_end() to make this comparison easier.
-    */
-   emit(CMP(dst_null_d(), vertex, this->vertex_count, BRW_CONDITIONAL_L));
-   emit(IF(BRW_PREDICATE_NORMAL));
-   {
+   } else {
+      /* Otherwise we always request to allocate a new VUE handle. If this is
+       * the last write before the EOT message and the new handle never gets
+       * used it will be dereferenced when we send the EOT message. This is
+       * necessary to avoid different setups for the EOT message (one for the
+       * case when there is no output and another for the case when there is)
+       * which would require to end the program with an IF/ELSE/ENDIF block,
+       * something we do not want.
+       */
       inst = emit(GS_OPCODE_URB_WRITE_ALLOCATE);
       inst->urb_write_flags = BRW_URB_WRITE_COMPLETE;
-      inst->base_mrf = base_mrf;
-      inst->mlen = mlen;
-      inst->offset = urb_offset;
       inst->dst = dst_reg(MRF, base_mrf);
       inst->src[0] = this->temp;
    }
-   emit(BRW_OPCODE_ELSE);
-   {
-      inst = emit(GS_OPCODE_URB_WRITE);
-      inst->urb_write_flags = BRW_URB_WRITE_COMPLETE;
-      inst->base_mrf = base_mrf;
-      inst->mlen = mlen;
-      inst->offset = urb_offset;
-   }
-   emit(BRW_OPCODE_ENDIF);
+
+   inst->base_mrf = base_mrf;
+   /* URB data written (does not include the message header reg) must
+    * be a multiple of 256 bits, or 2 VS registers.  See vol5c.5,
+    * section 5.4.3.2.2: URB_INTERLEAVED.
+    */
+   int mlen = last_mrf - base_mrf;
+   if ((mlen % 2) != 1)
+      mlen++;
+   inst->mlen = mlen;
+   inst->offset = urb_offset;
 }
 
 void
@@ -303,113 +300,113 @@ gen6_gs_visitor::emit_thread_end()
    int max_usable_mrf = 13;
 
    /* Issue the FF_SYNC message and obtain the initial VUE handle. */
-   this->current_annotation = "gen6 thread end: ff_sync";
-   vec4_instruction *inst =
-      emit(GS_OPCODE_FF_SYNC, dst_reg(this->temp), this->prim_count);
-   inst->base_mrf = base_mrf;
-
-   /* Loop over all buffered vertices and emit URB write messages */
-   this->current_annotation = "gen6 thread end: urb writes init";
-   src_reg vertex(this, glsl_type::uint_type);
-   emit(MOV(dst_reg(vertex), 0u));
-   emit(MOV(dst_reg(this->vertex_output_offset), 0u));
-
-   this->current_annotation = "gen6 thread end: urb writes";
-   emit(BRW_OPCODE_DO);
+   emit(CMP(dst_null_d(), this->vertex_count, 0u, BRW_CONDITIONAL_G));
+   emit(IF(BRW_PREDICATE_NORMAL));
    {
-      emit(CMP(dst_null_d(), vertex, this->vertex_count, BRW_CONDITIONAL_GE));
-      inst = emit(BRW_OPCODE_BREAK);
-      inst->predicate = BRW_PREDICATE_NORMAL;
+      this->current_annotation = "gen6 thread end: ff_sync";
+      vec4_instruction *inst =
+         emit(GS_OPCODE_FF_SYNC, dst_reg(this->temp), this->prim_count);
+      inst->base_mrf = base_mrf;
 
-      /* First we prepare the message header */
-      emit_urb_write_header(base_mrf);
+      /* Loop over all buffered vertices and emit URB write messages */
+      this->current_annotation = "gen6 thread end: urb writes init";
+      src_reg vertex(this, glsl_type::uint_type);
+      emit(MOV(dst_reg(vertex), 0u));
+      emit(MOV(dst_reg(this->vertex_output_offset), 0u));
 
-      /* Then add vertex data to the message in interleaved fashion */
-      int slot = 0;
-      bool complete = false;
-      do {
-         int mrf = base_mrf + 1;
+      this->current_annotation = "gen6 thread end: urb writes";
+      emit(BRW_OPCODE_DO);
+      {
+         emit(CMP(dst_null_d(), vertex, this->vertex_count, BRW_CONDITIONAL_GE));
+         inst = emit(BRW_OPCODE_BREAK);
+         inst->predicate = BRW_PREDICATE_NORMAL;
 
-         /* URB offset is in URB row increments, and each of our MRFs is half
-          * of one of those, since we're doing interleaved writes.
-          */
-         int urb_offset = slot / 2;
+         /* First we prepare the message header */
+         emit_urb_write_header(base_mrf);
 
-         for (; slot < prog_data->vue_map.num_slots; ++slot) {
-            int varying = prog_data->vue_map.slot_to_varying[slot];
-            current_annotation = output_reg_annotation[varying];
+         /* Then add vertex data to the message in interleaved fashion */
+         int slot = 0;
+         bool complete = false;
+         do {
+            int mrf = base_mrf + 1;
 
-            /* Compute offset of this slot for the current vertex
-             * in vertex_output
+            /* URB offset is in URB row increments, and each of our MRFs is half
+             * of one of those, since we're doing interleaved writes.
              */
-            src_reg data(this->vertex_output);
-            data.reladdr = ralloc(mem_ctx, src_reg);
-            memcpy(data.reladdr, &this->vertex_output_offset, sizeof(src_reg));
+            int urb_offset = slot / 2;
 
-            if (varying == VARYING_SLOT_PSIZ) {
-               /* We did not buffer PSIZ, emit it directly here */
-               emit_urb_slot(dst_reg(MRF, mrf), varying);
-            } else {
-               /* Copy this slot to the appropriate message register */
-               dst_reg reg = dst_reg(MRF, mrf);
-               reg.type = output_reg[varying].type;
-               data.type = reg.type;
-               vec4_instruction *inst = emit(MOV(reg, data));
-               inst->force_writemask_all = true;
+            for (; slot < prog_data->vue_map.num_slots; ++slot) {
+               int varying = prog_data->vue_map.slot_to_varying[slot];
+               current_annotation = output_reg_annotation[varying];
+
+               /* Compute offset of this slot for the current vertex
+                * in vertex_output
+                */
+               src_reg data(this->vertex_output);
+               data.reladdr = ralloc(mem_ctx, src_reg);
+               memcpy(data.reladdr, &this->vertex_output_offset,
+                      sizeof(src_reg));
+
+               if (varying == VARYING_SLOT_PSIZ) {
+                  /* We did not buffer PSIZ, emit it directly here */
+                  emit_urb_slot(dst_reg(MRF, mrf), varying);
+               } else {
+                  /* Copy this slot to the appropriate message register */
+                  dst_reg reg = dst_reg(MRF, mrf);
+                  reg.type = output_reg[varying].type;
+                  data.type = reg.type;
+                  vec4_instruction *inst = emit(MOV(reg, data));
+                  inst->force_writemask_all = true;
+               }
+
+               mrf++;
+               emit(ADD(dst_reg(this->vertex_output_offset),
+                        this->vertex_output_offset, 1u));
+
+               /* If this was max_usable_mrf, we can't fit anything more into
+                * this URB WRITE.
+                */
+               if (mrf > max_usable_mrf) {
+                  slot++;
+                  break;
+               }
             }
 
-            mrf++;
-            emit(ADD(dst_reg(this->vertex_output_offset),
-                     this->vertex_output_offset, 1u));
+            complete = slot >= prog_data->vue_map.num_slots;
+            emit_urb_write_opcode(complete, base_mrf, mrf, urb_offset);
+         } while (!complete);
 
-            /* If this was max_usable_mrf, we can't fit anything more into this
-             * URB WRITE.
-             */
-            if (mrf > max_usable_mrf) {
-               slot++;
-               break;
-            }
-         }
-
-         complete = slot >= prog_data->vue_map.num_slots;
-
-         /* When we emit the URB_WRITE below we need to do different things
-          * depending on whether this is the last vertex we are going to
-          * write. That means that we will need to check if
-          * vertex >= vertex_count - 1. However, by increasing vertex early
-          * we transform that comparison into vertex >= vertex_count, which
-          * is more convenient.
+         /* Skip over the flags data item so that vertex_output_offset points
+          * to the first data item of the next vertex, so that we can start
+          * writing the next vertex.
           */
-         if (complete)
-            emit(ADD(dst_reg(vertex), vertex, 1u));
+         emit(ADD(dst_reg(this->vertex_output_offset),
+                  this->vertex_output_offset, 1u));
 
-         /* URB data written (does not include the message header reg) must
-          * be a multiple of 256 bits, or 2 VS registers.  See vol5c.5,
-          * section 5.4.3.2.2: URB_INTERLEAVED.
-          */
-         int mlen = mrf - base_mrf;
-         if ((mlen % 2) != 1)
-            mlen++;
-         emit_urb_write_opcode(complete, vertex, base_mrf, mlen, urb_offset);
-      } while (!complete);
-
-      /* Skip over the flags data item so that vertex_output_offset points to
-       * the first data item of the next vertex, so that we can start writing
-       * the next vertex.
-       */
-       emit(ADD(dst_reg(this->vertex_output_offset),
-                this->vertex_output_offset, 1u));
+         emit(ADD(dst_reg(vertex), vertex, 1u));
+      }
+      emit(BRW_OPCODE_WHILE);
    }
-   emit(BRW_OPCODE_WHILE);
+   emit(BRW_OPCODE_ENDIF);
 
    /* Finally, emit EOT message.
     *
-    * In gen6 it looks like we have to set the complete flag too, otherwise
-    * the GPU hangs.
+    * In gen6 we need to end the thread differently depending on whether we have
+    * emitted at least one vertex or not. In case we did, the EOT message must
+    * always include the COMPLETE flag or else the GPU hangs. If we have not
+    * produced any output we can't use the COMPLETE flag.
+    *
+    * However, this would lead us to end the program with an ENDIF opcode,
+    * which we want to avoid, so what we do is that we always request a new
+    * VUE handle every time we do a URB WRITE, even for the last vertex we emit.
+    * With this we make sure that whether we have emitted at least one vertex
+    * or none at all, we have to finish the thread without writing to the URB,
+    * which works for both cases by setting the COMPLETE and UNUSED flags in
+    * the EOT message.
     */
    this->current_annotation = "gen6 thread end: EOT";
-   inst = emit(GS_OPCODE_THREAD_END);
-   inst->urb_write_flags = BRW_URB_WRITE_COMPLETE;
+   vec4_instruction *inst = emit(GS_OPCODE_THREAD_END);
+   inst->urb_write_flags = BRW_URB_WRITE_COMPLETE | BRW_URB_WRITE_UNUSED;
    inst->base_mrf = base_mrf;
    inst->mlen = 1;
 }
