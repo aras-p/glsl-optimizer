@@ -330,6 +330,9 @@ def parse(filename):
             continue
 
         fields = [field.strip() for field in line.split(',')]
+        if len (fields) == 10:
+           fields += fields[4:9]
+        assert len (fields) == 15
         
         name = fields[0]
         layout = fields[1]
@@ -339,8 +342,8 @@ def parse(filename):
         le_swizzles = [_swizzle_parse_map[swizzle] for swizzle in fields[8]]
         le_channels = _parse_channels(fields[4:8], layout, colorspace, le_swizzles)
 
-        be_swizzles = [_swizzle_parse_map[swizzle] for swizzle in fields[8]]
-        be_channels = _parse_channels(fields[4:8], layout, colorspace, be_swizzles)
+        be_swizzles = [_swizzle_parse_map[swizzle] for swizzle in fields[14]]
+        be_channels = _parse_channels(fields[10:14], layout, colorspace, be_swizzles)
 
         le_shift = 0
         for channel in le_channels:
@@ -353,6 +356,8 @@ def parse(filename):
             be_shift += channel.size
 
         assert le_shift == be_shift
+        for i in range(4):
+            assert (le_swizzles[i] != SWIZZLE_NONE) == (be_swizzles[i] != SWIZZLE_NONE)
 
         format = Format(name, layout, block_width, block_height, le_channels, le_swizzles, be_channels, be_swizzles, colorspace)
         formats.append(format)

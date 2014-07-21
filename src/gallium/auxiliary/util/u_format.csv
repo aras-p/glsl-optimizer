@@ -46,6 +46,8 @@
 #   - number of bits
 # - channel swizzle 
 # - color space: rgb, yub, sz
+# - (optional) channel encoding for big-endian targets
+# - (optional) channel swizzle for big-endian targets
 #
 # See also:
 # - http://msdn.microsoft.com/en-us/library/bb172558.aspx (D3D9)
@@ -70,20 +72,20 @@ PIPE_FORMAT_A8B8G8R8_UNORM        , plain, 1, 1, un8 , un8 , un8 , un8 , wzyx, r
 PIPE_FORMAT_X8B8G8R8_UNORM        , plain, 1, 1, x8  , un8 , un8 , un8 , wzy1, rgb
 # PIPE_FORMAT_R8G8B8A8_UNORM is below
 PIPE_FORMAT_R8G8B8X8_UNORM        , plain, 1, 1, un8 , un8 , un8 , x8  , xyz1, rgb
-PIPE_FORMAT_B5G5R5X1_UNORM        , plain, 1, 1, un5 , un5 , un5 , x1  , zyx1, rgb
-PIPE_FORMAT_B5G5R5A1_UNORM        , plain, 1, 1, un5 , un5 , un5 , un1 , zyxw, rgb
-PIPE_FORMAT_B4G4R4A4_UNORM        , plain, 1, 1, un4 , un4 , un4 , un4 , zyxw, rgb
-PIPE_FORMAT_B4G4R4X4_UNORM        , plain, 1, 1, un4 , un4 , un4 , x4  , zyx1, rgb
-PIPE_FORMAT_B5G6R5_UNORM          , plain, 1, 1, un5 , un6 , un5 ,     , zyx1, rgb
-PIPE_FORMAT_R10G10B10A2_UNORM     , plain, 1, 1, un10, un10, un10, un2 , xyzw, rgb
-PIPE_FORMAT_B10G10R10A2_UNORM     , plain, 1, 1, un10, un10, un10, un2 , zyxw, rgb
-PIPE_FORMAT_B2G3R3_UNORM          , plain, 1, 1, un2 , un3 , un3 ,     , zyx1, rgb
+PIPE_FORMAT_B5G5R5X1_UNORM        , plain, 1, 1, un5 , un5 , un5 , x1  , zyx1, rgb, x1  , un5 , un5 , un5 , yzw1
+PIPE_FORMAT_B5G5R5A1_UNORM        , plain, 1, 1, un5 , un5 , un5 , un1 , zyxw, rgb, un1 , un5 , un5 , un5 , yzwx
+PIPE_FORMAT_B4G4R4A4_UNORM        , plain, 1, 1, un4 , un4 , un4 , un4 , zyxw, rgb, un4 , un4 , un4 , un4 , yzwx
+PIPE_FORMAT_B4G4R4X4_UNORM        , plain, 1, 1, un4 , un4 , un4 , x4  , zyx1, rgb, x4  , un4 , un4 , un4 , yzw1
+PIPE_FORMAT_B5G6R5_UNORM          , plain, 1, 1, un5 , un6 , un5 ,     , zyx1, rgb, un5 , un6 , un5 ,     , xyz1
+PIPE_FORMAT_R10G10B10A2_UNORM     , plain, 1, 1, un10, un10, un10, un2 , xyzw, rgb, un2 , un10, un10, un10, wzyx
+PIPE_FORMAT_B10G10R10A2_UNORM     , plain, 1, 1, un10, un10, un10, un2 , zyxw, rgb, un2 , un10, un10, un10, yzwx
+PIPE_FORMAT_B2G3R3_UNORM          , plain, 1, 1, un2 , un3 , un3 ,     , zyx1, rgb, un3 , un3 , un2 ,     , xyz1
 
 # Luminance/Intensity/Alpha formats
 PIPE_FORMAT_L8_UNORM              , plain, 1, 1, un8 ,     ,     ,     , xxx1, rgb
 PIPE_FORMAT_A8_UNORM              , plain, 1, 1, un8 ,     ,     ,     , 000x, rgb
 PIPE_FORMAT_I8_UNORM              , plain, 1, 1, un8 ,     ,     ,     , xxxx, rgb
-PIPE_FORMAT_L4A4_UNORM            , plain, 1, 1, un4 , un4 ,     ,     , xxxy, rgb
+PIPE_FORMAT_L4A4_UNORM            , plain, 1, 1, un4 , un4 ,     ,     , xxxy, rgb, un4 , un4 ,     ,     , yyyx
 PIPE_FORMAT_L8A8_UNORM            , plain, 1, 1, un8 , un8 ,     ,     , xxxy, rgb
 PIPE_FORMAT_L16_UNORM             , plain, 1, 1, un16,     ,     ,     , xxx1, rgb
 PIPE_FORMAT_A16_UNORM             , plain, 1, 1, un16,     ,     ,     , 000x, rgb
@@ -120,22 +122,22 @@ PIPE_FORMAT_X8R8G8B8_SRGB         , plain, 1, 1, x8  , un8 , un8 , un8 , yzw1, s
 
 # Mixed-sign formats (typically used for bump map textures)
 PIPE_FORMAT_R8SG8SB8UX8U_NORM     , plain, 1, 1, sn8 , sn8 , un8 , x8  , xyz1, rgb
-PIPE_FORMAT_R10SG10SB10SA2U_NORM  , plain, 1, 1, sn10, sn10, sn10, un2 , xyzw, rgb
-PIPE_FORMAT_R5SG5SB6U_NORM        , plain, 1, 1, sn5 , sn5 , un6 ,     , xyz1, rgb
+PIPE_FORMAT_R10SG10SB10SA2U_NORM  , plain, 1, 1, sn10, sn10, sn10, un2 , xyzw, rgb, un2 , sn10, sn10, sn10, wzyx
+PIPE_FORMAT_R5SG5SB6U_NORM        , plain, 1, 1, sn5 , sn5 , un6 ,     , xyz1, rgb, un6 , sn5 , sn5 ,     , zyx1
 
 # Depth-stencil formats
 PIPE_FORMAT_S8_UINT                 , plain, 1, 1, up8 ,     ,     ,     , _x__, zs
 PIPE_FORMAT_Z16_UNORM               , plain, 1, 1, un16,     ,     ,     , x___, zs
 PIPE_FORMAT_Z32_UNORM               , plain, 1, 1, un32,     ,     ,     , x___, zs
 PIPE_FORMAT_Z32_FLOAT               , plain, 1, 1, f32 ,     ,     ,     , x___, zs
-PIPE_FORMAT_Z24_UNORM_S8_UINT       , plain, 1, 1, un24, up8 ,     ,     , xy__, zs
-PIPE_FORMAT_S8_UINT_Z24_UNORM       , plain, 1, 1, up8 , un24,     ,     , yx__, zs
-PIPE_FORMAT_X24S8_UINT              , plain, 1, 1, x24 , up8 ,     ,     , _y__, zs
-PIPE_FORMAT_S8X24_UINT              , plain, 1, 1, up8 , x24 ,     ,     , _x__, zs
-PIPE_FORMAT_Z24X8_UNORM             , plain, 1, 1, un24, x8  ,     ,     , x___, zs
-PIPE_FORMAT_X8Z24_UNORM             , plain, 1, 1, x8  , un24,     ,     , y___, zs
-PIPE_FORMAT_Z32_FLOAT_S8X24_UINT    , plain, 1, 1, f32 , up8 ,  x24,     , xy__, zs
-PIPE_FORMAT_X32_S8X24_UINT          , plain, 1, 1, x32 , up8 ,  x24,     , _y__, zs
+PIPE_FORMAT_Z24_UNORM_S8_UINT       , plain, 1, 1, un24, up8 ,     ,     , xy__, zs,    up8 , un24,     ,     , yx__
+PIPE_FORMAT_S8_UINT_Z24_UNORM       , plain, 1, 1, up8 , un24,     ,     , yx__, zs,    un24, up8 ,     ,     , xy__
+PIPE_FORMAT_X24S8_UINT              , plain, 1, 1, x24 , up8 ,     ,     , _y__, zs,    up8 , x24 ,     ,     , _x__
+PIPE_FORMAT_S8X24_UINT              , plain, 1, 1, up8 , x24 ,     ,     , _x__, zs,    x24 , up8 ,     ,     , _y__
+PIPE_FORMAT_Z24X8_UNORM             , plain, 1, 1, un24, x8  ,     ,     , x___, zs,    x8  , un24,     ,     , y___
+PIPE_FORMAT_X8Z24_UNORM             , plain, 1, 1, x8  , un24,     ,     , y___, zs,    un24, x8  ,     ,     , x___
+PIPE_FORMAT_Z32_FLOAT_S8X24_UINT    , plain, 1, 1, f32 , up8 ,  x24,     , xy__, zs,    f32 , x24 ,  up8,     , xz__
+PIPE_FORMAT_X32_S8X24_UINT          , plain, 1, 1, x32 , up8 ,  x24,     , _y__, zs,    x32 , x24 ,  up8,     , _z__
 
 # YUV formats
 # http://www.fourcc.org/yuv.php#UYVY
@@ -267,9 +269,9 @@ PIPE_FORMAT_R32G32B32A32_FIXED    , plain, 1, 1, h32 , h32 , h32 , h32 , xyzw, r
 # See also:
 # - http://msdn.microsoft.com/en-us/library/bb172533.aspx
 # A.k.a. D3DDECLTYPE_UDEC3
-PIPE_FORMAT_R10G10B10X2_USCALED   , plain, 1, 1, u10 , u10 , u10  , x2 , xyz1, rgb
+PIPE_FORMAT_R10G10B10X2_USCALED   , plain, 1, 1, u10 , u10 , u10  , x2 , xyz1, rgb, x2  , u10 , u10 , u10 , wzy1
 # A.k.a. D3DDECLTYPE_DEC3N
-PIPE_FORMAT_R10G10B10X2_SNORM     , plain, 1, 1, sn10, sn10, sn10 , x2 , xyz1, rgb
+PIPE_FORMAT_R10G10B10X2_SNORM     , plain, 1, 1, sn10, sn10, sn10 , x2 , xyz1, rgb, x2  , sn10, sn10, sn10, wzy1
 
 PIPE_FORMAT_YV12                  , other, 1, 1, x8  , x8  , x8  , x8  , xyzw, yuv
 PIPE_FORMAT_YV16                  , other, 1, 1, x8  , x8  , x8  , x8  , xyzw, yuv
@@ -278,18 +280,18 @@ PIPE_FORMAT_NV12                  , other, 1, 1, x8  , x8  , x8  , x8  , xyzw, y
 PIPE_FORMAT_NV21                  , other, 1, 1, x8  , x8  , x8  , x8  , xyzw, yuv
 
 # Usually used to implement IA44 and AI44 formats in video decoding
-PIPE_FORMAT_A4R4_UNORM            , plain, 1, 1, un4 , un4 ,     ,     , y00x, rgb
-PIPE_FORMAT_R4A4_UNORM            , plain, 1, 1, un4 , un4 ,     ,     , x00y, rgb
+PIPE_FORMAT_A4R4_UNORM            , plain, 1, 1, un4 , un4 ,     ,     , y00x, rgb, un4, un4 ,     ,     , x00y
+PIPE_FORMAT_R4A4_UNORM            , plain, 1, 1, un4 , un4 ,     ,     , x00y, rgb, un4, un4 ,     ,     , y00x
 PIPE_FORMAT_R8A8_UNORM            , plain, 1, 1, un8 , un8 ,     ,     , x00y, rgb
 PIPE_FORMAT_A8R8_UNORM            , plain, 1, 1, un8 , un8 ,     ,     , y00x, rgb
 
 # ARB_vertex_type_10_10_10_2_REV
-PIPE_FORMAT_R10G10B10A2_USCALED     , plain, 1, 1, u10, u10, u10, u2, xyzw, rgb
-PIPE_FORMAT_R10G10B10A2_SSCALED     , plain, 1, 1, s10, s10, s10, s2, xyzw, rgb
-PIPE_FORMAT_R10G10B10A2_SNORM       , plain, 1, 1, sn10, sn10, sn10, sn2, xyzw, rgb
-PIPE_FORMAT_B10G10R10A2_USCALED     , plain, 1, 1, u10, u10, u10, u2, zyxw, rgb
-PIPE_FORMAT_B10G10R10A2_SSCALED     , plain, 1, 1, s10, s10, s10, s2, zyxw, rgb
-PIPE_FORMAT_B10G10R10A2_SNORM       , plain, 1, 1, sn10, sn10, sn10, sn2, zyxw, rgb
+PIPE_FORMAT_R10G10B10A2_USCALED     , plain, 1, 1, u10 , u10 , u10 , u2  , xyzw, rgb, u2  , u10 , u10 , u10 , wzyx
+PIPE_FORMAT_R10G10B10A2_SSCALED     , plain, 1, 1, s10 , s10 , s10 , s2  , xyzw, rgb, s2  , s10 , s10 , s10 , wzyx
+PIPE_FORMAT_R10G10B10A2_SNORM       , plain, 1, 1, sn10, sn10, sn10, sn2 , xyzw, rgb, sn2 , sn10, sn10, sn10, wzyx
+PIPE_FORMAT_B10G10R10A2_USCALED     , plain, 1, 1, u10 , u10 , u10 , u2  , zyxw, rgb, u2  , u10 , u10 , u10 , yzwx
+PIPE_FORMAT_B10G10R10A2_SSCALED     , plain, 1, 1, s10 , s10 , s10 , s2  , zyxw, rgb, s2  , s10 , s10 , s10 , yzwx
+PIPE_FORMAT_B10G10R10A2_SNORM       , plain, 1, 1, sn10, sn10, sn10, sn2 , zyxw, rgb, sn2 , sn10, sn10, sn10, yzwx
 
 PIPE_FORMAT_R8_UINT                 , plain, 1, 1, up8, , , , x001, rgb
 PIPE_FORMAT_R8G8_UINT               , plain, 1, 1, up8, up8, , , xy01, rgb
@@ -351,13 +353,13 @@ PIPE_FORMAT_I32_SINT                , plain, 1, 1, sp32, , , , xxxx, rgb
 PIPE_FORMAT_L32_SINT                , plain, 1, 1, sp32, , , , xxx1, rgb
 PIPE_FORMAT_L32A32_SINT             , plain, 1, 1, sp32, sp32, , , xxxy, rgb
 
-PIPE_FORMAT_B10G10R10A2_UINT        , plain, 1, 1, up10, up10, up10, up2, zyxw, rgb
+PIPE_FORMAT_B10G10R10A2_UINT        , plain, 1, 1, up10, up10, up10, up2, zyxw, rgb, up2 , up10, up10, up10, yzwx
 
 PIPE_FORMAT_R8G8B8X8_SNORM          , plain, 1, 1, sn8,  sn8,  sn8,  x8,  xyz1, rgb
 PIPE_FORMAT_R8G8B8X8_SRGB           , plain, 1, 1, un8,  un8,  un8,  x8,  xyz1, srgb
 PIPE_FORMAT_R8G8B8X8_UINT           , plain, 1, 1, up8,  up8,  up8,  x8,  xyz1, rgb
 PIPE_FORMAT_R8G8B8X8_SINT           , plain, 1, 1, sp8,  sp8,  sp8,  x8,  xyz1, rgb
-PIPE_FORMAT_B10G10R10X2_UNORM       , plain, 1, 1, un10, un10, un10, x2,  zyx1, rgb
+PIPE_FORMAT_B10G10R10X2_UNORM       , plain, 1, 1, un10, un10, un10, x2,  zyx1, rgb, x2  , un10, un10, un10, yzw1
 PIPE_FORMAT_R16G16B16X16_UNORM      , plain, 1, 1, un16, un16, un16, x16, xyz1, rgb
 PIPE_FORMAT_R16G16B16X16_SNORM      , plain, 1, 1, sn16, sn16, sn16, x16, xyz1, rgb
 PIPE_FORMAT_R16G16B16X16_FLOAT      , plain, 1, 1, f16,  f16,  f16,  x16, xyz1, rgb
@@ -378,7 +380,7 @@ PIPE_FORMAT_R16A16_UINT             , plain, 1, 1, up16 , up16 ,     ,     , x00
 PIPE_FORMAT_R16A16_SINT             , plain, 1, 1, sp16 , sp16 ,     ,     , x00y, rgb
 PIPE_FORMAT_R32A32_UINT             , plain, 1, 1, up32 , up32 ,     ,     , x00y, rgb
 PIPE_FORMAT_R32A32_SINT             , plain, 1, 1, sp32 , sp32 ,     ,     , x00y, rgb
-PIPE_FORMAT_R10G10B10A2_UINT        , plain, 1, 1, up10 , up10 , up10, up2 , xyzw, rgb
+PIPE_FORMAT_R10G10B10A2_UINT        , plain, 1, 1, up10 , up10 , up10, up2 , xyzw, rgb, up2 , up10, up10, up10, wzyx
 
-PIPE_FORMAT_B5G6R5_SRGB             , plain, 1, 1, un5 , un6 , un5 ,     , zyx1, srgb
+PIPE_FORMAT_B5G6R5_SRGB             , plain, 1, 1, un5 , un6 , un5 ,     , zyx1, srgb, un5 , un6 , un5 ,     , xyz1
 
