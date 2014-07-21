@@ -131,7 +131,7 @@ STATIC_TARGET_LIB_DEPS += \
 endif
 
 if HAVE_GALLIUM_FREEDRENO
-MEGADRIVERS += freedreno
+MEGADRIVERS += msm kgsl
 STATIC_TARGET_CPPFLAGS += -DGALLIUM_FREEDRENO
 STATIC_TARGET_LIB_DEPS += \
 	$(top_builddir)/src/gallium/winsys/freedreno/drm/libfreedrenodrm.la \

@@ -225,9 +225,17 @@ pipe_vmwgfx_create_screen(int fd)
 #if defined(GALLIUM_FREEDRENO)
 #if defined(DRI_TARGET)
 
-const __DRIextension **__driDriverGetExtensions_freedreno(void);
+const __DRIextension **__driDriverGetExtensions_msm(void);
 
-PUBLIC const __DRIextension **__driDriverGetExtensions_freedreno(void)
+PUBLIC const __DRIextension **__driDriverGetExtensions_msm(void)
+{
+   globalDriverAPI = &galliumdrm_driver_api;
+   return galliumdrm_driver_extensions;
+}
+
+const __DRIextension **__driDriverGetExtensions_kgsl(void);
+
+PUBLIC const __DRIextension **__driDriverGetExtensions_kgsl(void)
 {
    globalDriverAPI = &galliumdrm_driver_api;
    return galliumdrm_driver_extensions;
