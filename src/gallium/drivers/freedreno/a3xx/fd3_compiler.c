@@ -348,41 +348,6 @@ pop_block(struct fd3_compile_context *ctx)
 	compile_assert(ctx, ctx->block);
 }
 
-static void
-ssa_dst(struct fd3_compile_context *ctx, struct ir3_instruction *instr,
-		const struct tgsi_dst_register *dst, unsigned chan)
-{
-	unsigned n = regid(dst->Index, chan);
-	unsigned idx = ctx->num_output_updates;
-
-	compile_assert(ctx, idx < ARRAY_SIZE(ctx->output_updates));
-
-	/* NOTE: defer update of temporaries[idx] or output[idx]
-	 * until instr_finish(), so that if the current instruction
-	 * reads the same TEMP/OUT[] it gets the old value:
-	 *
-	 * bleh.. this might be a bit easier to just figure out
-	 * in instr_finish().  But at that point we've already
-	 * lost information about OUTPUT vs TEMPORARY register
-	 * file..
-	 */
-
-	switch (dst->File) {
-	case TGSI_FILE_OUTPUT:
-		compile_assert(ctx, n < ctx->block->noutputs);
-		ctx->output_updates[idx].instrp = &ctx->block->outputs[n];
-		ctx->output_updates[idx].instr = instr;
-		ctx->num_output_updates++;
-		break;
-	case TGSI_FILE_TEMPORARY:
-		compile_assert(ctx, n < ctx->block->ntemporaries);
-		ctx->output_updates[idx].instrp = &ctx->block->temporaries[n];
-		ctx->output_updates[idx].instr = instr;
-		ctx->num_output_updates++;
-		break;
-	}
-}
-
 static struct ir3_instruction *
 create_output(struct ir3_block *block, struct ir3_instruction *instr,
 		unsigned n)
@@ -465,6 +430,41 @@ create_immed(struct fd3_compile_context *ctx, float val)
 	ir3_reg_create(instr, 0, 0);
 	ir3_reg_create(instr, 0, IR3_REG_IMMED)->fim_val = val;
 	return instr;
+}
+
+static void
+ssa_dst(struct fd3_compile_context *ctx, struct ir3_instruction *instr,
+		const struct tgsi_dst_register *dst, unsigned chan)
+{
+	unsigned n = regid(dst->Index, chan);
+	unsigned idx = ctx->num_output_updates;
+
+	compile_assert(ctx, idx < ARRAY_SIZE(ctx->output_updates));
+
+	/* NOTE: defer update of temporaries[idx] or output[idx]
+	 * until instr_finish(), so that if the current instruction
+	 * reads the same TEMP/OUT[] it gets the old value:
+	 *
+	 * bleh.. this might be a bit easier to just figure out
+	 * in instr_finish().  But at that point we've already
+	 * lost information about OUTPUT vs TEMPORARY register
+	 * file..
+	 */
+
+	switch (dst->File) {
+	case TGSI_FILE_OUTPUT:
+		compile_assert(ctx, n < ctx->block->noutputs);
+		ctx->output_updates[idx].instrp = &ctx->block->outputs[n];
+		ctx->output_updates[idx].instr = instr;
+		ctx->num_output_updates++;
+		break;
+	case TGSI_FILE_TEMPORARY:
+		compile_assert(ctx, n < ctx->block->ntemporaries);
+		ctx->output_updates[idx].instrp = &ctx->block->temporaries[n];
+		ctx->output_updates[idx].instr = instr;
+		ctx->num_output_updates++;
+		break;
+	}
 }
 
 static void
