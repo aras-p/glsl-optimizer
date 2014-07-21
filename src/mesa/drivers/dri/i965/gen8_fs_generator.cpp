@@ -116,10 +116,8 @@ gen8_fs_generator::generate_fb_write(fs_inst *ir)
 
    uint32_t msg_control = msg_type;
 
-   /* "Last Render Target Select" must be set on all writes to the last of
-    * the render targets (if using MRT), or always for a single RT scenario.
-    */
-   if ((ir->target == key->nr_color_regions - 1) || !key->nr_color_regions)
+   /* Set "Last Render Target Select" on the final FB write. */
+   if (ir->eot)
       msg_control |= (1 << 4); /* Last Render Target Select */
 
    uint32_t surf_index =
