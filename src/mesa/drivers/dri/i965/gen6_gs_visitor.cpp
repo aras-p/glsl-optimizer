@@ -270,6 +270,19 @@ gen6_gs_visitor::emit_urb_write_opcode(bool complete, src_reg vertex,
 void
 gen6_gs_visitor::emit_thread_end()
 {
+   /* Make sure the current primitive is ended: we know it is not ended when
+    * first_vertex is not zero. This is only relevant for outputs other than
+    * points because in the point case we set PrimEnd on all vertices.
+    */
+   if (c->gp->program.OutputType != GL_POINTS) {
+      emit(CMP(dst_null_d(), this->first_vertex, 0u, BRW_CONDITIONAL_Z));
+      emit(IF(BRW_PREDICATE_NORMAL));
+      {
+         visit((ir_end_primitive *) NULL);
+      }
+      emit(BRW_OPCODE_ENDIF);
+   }
+
    /* Here we have to:
     * 1) Emit an FF_SYNC messsage to obtain an initial VUE handle.
     * 2) Loop over all buffered vertex data and write it to corresponding
