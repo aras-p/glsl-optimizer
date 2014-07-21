@@ -522,9 +522,20 @@ lp_build_add(struct lp_build_context *bld,
          return lp_build_intrinsic_binary(builder, intrinsic, lp_build_vec_type(bld->gallivm, bld->type), a, b);
    }
 
-   /* TODO: handle signed case */
-   if(type.norm && !type.floating && !type.fixed && !type.sign)
-      a = lp_build_min_simple(bld, a, lp_build_comp(bld, b), GALLIVM_NAN_BEHAVIOR_UNDEFINED);
+   if(type.norm && !type.floating && !type.fixed) {
+      if (type.sign) {
+         uint64_t sign = (uint64_t)1 << (type.width - 1);
+         LLVMValueRef max_val = lp_build_const_int_vec(bld->gallivm, type, sign - 1);
+         LLVMValueRef min_val = lp_build_const_int_vec(bld->gallivm, type, sign);
+         /* a_clamp_max is the maximum a for positive b,
+            a_clamp_min is the minimum a for negative b. */
+         LLVMValueRef a_clamp_max = lp_build_min_simple(bld, a, LLVMBuildSub(builder, max_val, b, ""), GALLIVM_NAN_BEHAVIOR_UNDEFINED);
+         LLVMValueRef a_clamp_min = lp_build_max_simple(bld, a, LLVMBuildSub(builder, min_val, b, ""), GALLIVM_NAN_BEHAVIOR_UNDEFINED);
+         a = lp_build_select(bld, lp_build_cmp(bld, PIPE_FUNC_GREATER, b, bld->zero), a_clamp_max, a_clamp_min);
+      } else {
+         a = lp_build_min_simple(bld, a, lp_build_comp(bld, b), GALLIVM_NAN_BEHAVIOR_UNDEFINED);
+      }
+   }
 
    if(LLVMIsConstant(a) && LLVMIsConstant(b))
       if (type.floating)
@@ -803,9 +814,20 @@ lp_build_sub(struct lp_build_context *bld,
          return lp_build_intrinsic_binary(builder, intrinsic, lp_build_vec_type(bld->gallivm, bld->type), a, b);
    }
 
-   /* TODO: handle signed case */
-   if(type.norm && !type.floating && !type.fixed && !type.sign)
-      a = lp_build_max_simple(bld, a, b, GALLIVM_NAN_BEHAVIOR_UNDEFINED);
+   if(type.norm && !type.floating && !type.fixed) {
+      if (type.sign) {
+         uint64_t sign = (uint64_t)1 << (type.width - 1);
+         LLVMValueRef max_val = lp_build_const_int_vec(bld->gallivm, type, sign - 1);
+         LLVMValueRef min_val = lp_build_const_int_vec(bld->gallivm, type, sign);
+         /* a_clamp_max is the maximum a for negative b,
+            a_clamp_min is the minimum a for positive b. */
+         LLVMValueRef a_clamp_max = lp_build_min_simple(bld, a, LLVMBuildAdd(builder, max_val, b, ""), GALLIVM_NAN_BEHAVIOR_UNDEFINED);
+         LLVMValueRef a_clamp_min = lp_build_max_simple(bld, a, LLVMBuildAdd(builder, min_val, b, ""), GALLIVM_NAN_BEHAVIOR_UNDEFINED);
+         a = lp_build_select(bld, lp_build_cmp(bld, PIPE_FUNC_GREATER, b, bld->zero), a_clamp_min, a_clamp_max);
+      } else {
+         a = lp_build_max_simple(bld, a, b, GALLIVM_NAN_BEHAVIOR_UNDEFINED);
+      }
+   }
 
    if(LLVMIsConstant(a) && LLVMIsConstant(b))
       if (type.floating)
