@@ -70,6 +70,7 @@ struct ir3_register {
 		 */
 		IR3_REG_SSA    = 0x1000,   /* 'instr' is ptr to assigning instr */
 		IR3_REG_IA     = 0x2000,   /* meta-input dst is "assigned" */
+		IR3_REG_ADDR   = 0x4000,   /* register is a0.x */
 	} flags;
 	union {
 		/* normal registers:
@@ -232,6 +233,8 @@ struct ir3_block {
 	struct ir3_instruction **temporaries;
 	struct ir3_instruction **inputs;
 	struct ir3_instruction **outputs;
+	/* only a single address register: */
+	struct ir3_instruction *address;
 	struct ir3_block *parent;
 	struct ir3_instruction *head;
 };
@@ -351,10 +354,24 @@ static inline bool is_meta(struct ir3_instruction *instr)
 	return (instr->category == -1);
 }
 
+static inline bool is_deref(struct ir3_instruction *instr)
+{
+	return is_meta(instr) && (instr->opc == OPC_META_DEREF);
+}
+
+static inline bool writes_addr(struct ir3_instruction *instr)
+{
+	if (instr->regs_count > 0) {
+		struct ir3_register *dst = instr->regs[0];
+		return !!(dst->flags & IR3_REG_ADDR);
+	}
+	return false;
+}
+
 /* TODO combine is_gpr()/reg_gpr().. */
 static inline bool reg_gpr(struct ir3_register *r)
 {
-	if (r->flags & (IR3_REG_CONST | IR3_REG_IMMED | IR3_REG_RELATIV | IR3_REG_SSA))
+	if (r->flags & (IR3_REG_CONST | IR3_REG_IMMED | IR3_REG_RELATIV | IR3_REG_SSA | IR3_REG_ADDR))
 		return false;
 	if ((reg_num(r) == REG_A0) || (reg_num(r) == REG_P0))
 		return false;

@@ -204,6 +204,8 @@ typedef enum {
 	/* branches/flow control */
 	OPC_META_FLOW = 4,
 	OPC_META_PHI = 5,
+	/* relative addressing */
+	OPC_META_DEREF = 6,
 
 
 } opc_t;
@@ -242,6 +244,16 @@ static inline uint32_t type_size(type_t type)
 static inline int type_float(type_t type)
 {
 	return (type == TYPE_F32) || (type == TYPE_F16);
+}
+
+static inline int type_uint(type_t type)
+{
+	return (type == TYPE_U32) || (type == TYPE_U16) || (type == TYPE_U8);
+}
+
+static inline int type_sint(type_t type)
+{
+	return (type == TYPE_S32) || (type == TYPE_S16) || (type == TYPE_S8);
 }
 
 typedef union PACKED {

@@ -82,8 +82,8 @@ static struct ir3_ra_assignment ra_calc(struct ir3_instruction *instr);
  * Register Allocation:
  */
 
-#define REG(n, wm) (struct ir3_register){ \
-		/*.flags  = ((so)->half_precision) ? IR3_REG_HALF : 0,*/ \
+#define REG(n, wm, f) (struct ir3_register){ \
+		.flags  = (f), \
 		.num    = (n), \
 		.wrmask = TGSI_WRITEMASK_ ## wm, \
 	}
@@ -145,7 +145,7 @@ static void compute_liveregs(struct ir3_ra_ctx *ctx,
 
 	/* be sure to account for output registers too: */
 	for (i = 0; i < block->noutputs; i++) {
-		struct ir3_register reg = REG(output_base(ctx) + i, X);
+		struct ir3_register reg = REG(output_base(ctx) + i, X, 0);
 		regmask_set_if_not(liveregs, &reg, &written);
 	}
 }
@@ -212,14 +212,15 @@ static bool compute_clobbers(struct ir3_ra_ctx *ctx,
 	return live || was_live;
 }
 
-static int find_available(regmask_t *liveregs, int size)
+static int find_available(regmask_t *liveregs, int size, bool half)
 {
 	unsigned i;
+	unsigned f = half ? IR3_REG_HALF : 0;
 	for (i = 0; i < MAX_REG - size; i++) {
-		if (!regmask_get(liveregs, &REG(i, X))) {
+		if (!regmask_get(liveregs, &REG(i, X, f))) {
 			unsigned start = i++;
 			for (; (i < MAX_REG) && ((i - start) < size); i++)
-				if (regmask_get(liveregs, &REG(i, X)))
+				if (regmask_get(liveregs, &REG(i, X, f)))
 					break;
 			if ((i - start) >= size)
 				return start;
@@ -240,7 +241,9 @@ static int alloc_block(struct ir3_ra_ctx *ctx,
 		 */
 		return 0;
 	} else {
+		struct ir3_register *dst = instr->regs[0];
 		regmask_t liveregs;
+
 		compute_liveregs(ctx, instr, &liveregs);
 
 		// XXX XXX XXX XXX XXX XXX XXX XXX XXX
@@ -257,7 +260,9 @@ static int alloc_block(struct ir3_ra_ctx *ctx,
 		} else
 		// XXX XXX XXX XXX XXX XXX XXX XXX XXX
 		compute_clobbers(ctx, instr->next, instr, &liveregs);
-		return find_available(&liveregs, size);
+
+		return find_available(&liveregs, size,
+				!!(dst->flags & IR3_REG_HALF));
 	}
 }
 
@@ -547,24 +552,32 @@ static void ra_assign(struct ir3_ra_ctx *ctx,
 static void ir3_instr_ra(struct ir3_ra_ctx *ctx,
 		struct ir3_instruction *instr)
 {
-	struct ir3_ra_assignment a;
+	struct ir3_register *dst;
 	unsigned num;
 
 	/* skip over nop's */
 	if (instr->regs_count == 0)
 		return;
 
-	/* skip writes to a0, p0, etc */
-	if (!reg_gpr(instr->regs[0]))
-		return;
+	dst = instr->regs[0];
 
 	/* if we've already visited this instruction, bail now: */
 	if (instr->flags & IR3_INSTR_MARK)
 		return;
 
 	/* allocate register(s): */
-	a = ra_calc(instr);
-	num = alloc_block(ctx, instr, a.num) + a.off;
+	if (is_deref(instr)) {
+		num = instr->regs[2]->num;
+	} else if (reg_gpr(dst)) {
+		struct ir3_ra_assignment a;
+		a = ra_calc(instr);
+		num = alloc_block(ctx, instr, a.num) + a.off;
+	} else if (dst->flags & IR3_REG_ADDR) {
+		dst->flags &= ~IR3_REG_ADDR;
+		num = regid(REG_A0, 0) | REG_HALF;
+	} else {
+		assert(0);
+	}
 
 	ra_assign(ctx, instr, num);
 }
@@ -578,6 +591,7 @@ static void legalize(struct ir3_ra_ctx *ctx, struct ir3_block *block)
 	struct ir3_instruction *end =
 			ir3_instr_create(block, 0, OPC_END);
 	struct ir3_instruction *last_input = NULL;
+	struct ir3_instruction *last_rel = NULL;
 	regmask_t needs_ss_war;       /* write after read */
 	regmask_t needs_ss;
 	regmask_t needs_sy;
@@ -614,6 +628,13 @@ static void legalize(struct ir3_ra_ctx *ctx, struct ir3_block *block)
 					regmask_init(&needs_sy);
 				}
 			}
+
+			/* TODO: is it valid to have address reg loaded from a
+			 * relative src (ie. mova a0, c<a0.x+4>)?  If so, the
+			 * last_rel check below should be moved ahead of this:
+			 */
+			if (reg->flags & IR3_REG_RELATIV)
+				last_rel = n;
 		}
 
 		if (n->regs_count > 0) {
@@ -621,6 +642,11 @@ static void legalize(struct ir3_ra_ctx *ctx, struct ir3_block *block)
 			if (regmask_get(&needs_ss_war, reg)) {
 				n->flags |= IR3_INSTR_SS;
 				regmask_init(&needs_ss_war); // ??? I assume?
+			}
+
+			if (last_rel && (reg->num == regid(REG_A0, 0))) {
+				last_rel->flags |= IR3_INSTR_UL;
+				last_rel = NULL;
 			}
 		}
 
@@ -684,6 +710,9 @@ static void legalize(struct ir3_ra_ctx *ctx, struct ir3_block *block)
 
 	if (last_input)
 		last_input->regs[0]->flags |= IR3_REG_EI;
+
+	if (last_rel)
+		last_rel->flags |= IR3_INSTR_UL;
 
 	shader->instrs[shader->instrs_count++] = end;
 

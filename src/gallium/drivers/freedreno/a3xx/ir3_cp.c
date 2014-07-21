@@ -43,10 +43,13 @@ static bool is_eligible_mov(struct ir3_instruction *instr)
 {
 	if ((instr->category == 1) &&
 			(instr->cat1.src_type == instr->cat1.dst_type)) {
+		struct ir3_register *dst = instr->regs[0];
 		struct ir3_register *src = instr->regs[1];
+		if (dst->flags & IR3_REG_ADDR)
+			return false;
 		if ((src->flags & IR3_REG_SSA) &&
 				/* TODO: propagate abs/neg modifiers if possible */
-				!(src->flags & (IR3_REG_ABS | IR3_REG_NEGATE)))
+				!(src->flags & (IR3_REG_ABS | IR3_REG_NEGATE | IR3_REG_RELATIV)))
 			return true;
 	}
 	return false;

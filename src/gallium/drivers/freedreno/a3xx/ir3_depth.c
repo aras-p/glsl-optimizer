@@ -63,6 +63,9 @@ int ir3_delayslots(struct ir3_instruction *assigner,
 	if (is_meta(assigner))
 		return 0;
 
+	if (writes_addr(assigner))
+		return 6;
+
 	/* handled via sync flags: */
 	if (is_sfu(assigner) || is_tex(assigner))
 		return 0;
