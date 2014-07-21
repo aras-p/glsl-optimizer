@@ -26,15 +26,20 @@
 
 #include <stdbool.h>
 #include <string.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <errno.h>
 
+#include "vc4_context.h"
+#include "vc4_qpu_defines.h"
+
 #define DRM_INFO(...) fprintf(stderr, __VA_ARGS__)
 #define DRM_ERROR(...) fprintf(stderr, __VA_ARGS__)
 #define kmalloc(size, arg) malloc(size)
+#define kcalloc(size, count, arg) calloc(size, count)
 #define kfree(ptr) free(ptr)
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+#define krealloc(ptr, size, args) realloc(ptr, size)
 #define roundup(x, y) align(x, y)
 
 static inline int
@@ -64,6 +69,9 @@ struct drm_gem_cma_object {
 };
 
 struct exec_info {
+	/* Kernel-space copy of the ioctl arguments */
+	struct drm_vc4_submit_cl *args;
+
 	/* This is the array of BOs that were looked up at the start of exec.
 	 * Command validation will use indices into this array.
 	 */
@@ -79,9 +87,8 @@ struct exec_info {
 	uint32_t bo_index[2];
 	uint32_t max_width, max_height;
 
-	/**
-	 * This is the BO where we store the validated command lists
-	 * and shader records.
+	/* This is the BO where we store the validated command lists, shader
+	 * records, and uniforms.
 	 */
 	struct drm_gem_cma_object *exec_bo;
 
@@ -108,6 +115,50 @@ struct exec_info {
 	uint32_t ct0ca, ct0ea;
 	uint32_t ct1ca, ct1ea;
 	uint32_t shader_paddr;
+
+	/* Pointers to the uniform data.  These pointers are incremented, and
+	 * size decremented, as each batch of uniforms is uploaded.
+	 */
+	void *uniforms_u;
+	void *uniforms_v;
+	uint32_t uniforms_p;
+	uint32_t uniforms_size;
+};
+
+/**
+ * struct vc4_texture_sample_info - saves the offsets into the UBO for texture
+ * setup parameters.
+ *
+ * This will be used at draw time to relocate the reference to the texture
+ * contents in p0, and validate that the offset combined with
+ * width/height/stride/etc. from p1 and p2/p3 doesn't sample outside the BO.
+ * Note that the hardware treats unprovided config parameters as 0, so not all
+ * of them need to be set up for every texure sample, and we'll store ~0 as
+ * the offset to mark the unused ones.
+ *
+ * See the VC4 3D architecture guide page 41 ("Texture and Memory Lookup Unit
+ * Setup") for definitions of the texture parameters.
+ */
+struct vc4_texture_sample_info {
+	uint32_t p_offset[4];
+};
+
+/**
+ * struct vc4_validated_shader_info - information about validated shaders that
+ * needs to be used from command list validation.
+ *
+ * For a given shader, each time a shader state record references it, we need
+ * to verify that the shader doesn't read more uniforms than the shader state
+ * record's uniform BO pointer can provide, and we need to apply relocations
+ * and validate the shader state record's uniforms that define the texture
+ * samples.
+ */
+struct vc4_validated_shader_info
+{
+	uint32_t uniforms_size;
+	uint32_t uniforms_src_size;
+	uint32_t num_texture_samples;
+	struct vc4_texture_sample_info *texture_samples;
 };
 
 int vc4_validate_cl(struct drm_device *dev,
@@ -122,5 +173,9 @@ int vc4_validate_shader_recs(struct drm_device *dev,
                              void *unvalidated,
                              uint32_t len,
                              struct exec_info *exec);
+
+struct vc4_validated_shader_info *
+vc4_validate_shader(struct drm_gem_cma_object *shader_obj,
+                    uint32_t start_offset);
 
 #endif /* VC4_SIMULATOR_VALIDATE_H */

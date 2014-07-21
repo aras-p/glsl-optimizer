@@ -70,6 +70,7 @@ struct vc4_shader_uniform_info {
         enum quniform_contents *contents;
         uint32_t *data;
         uint32_t count;
+        uint32_t num_texture_samples;
 };
 
 struct vc4_compiled_shader {
@@ -120,6 +121,7 @@ struct vc4_context {
         struct vc4_cl bcl;
         struct vc4_cl rcl;
         struct vc4_cl shader_rec;
+        struct vc4_cl uniforms;
         struct vc4_cl bo_handles;
 #ifdef USE_VC4_SIMULATOR
         struct vc4_cl bo_pointers;
@@ -195,12 +197,11 @@ int vc4_simulator_flush(struct vc4_context *vc4,
                         struct drm_vc4_submit_cl *args,
                         struct vc4_surface *color_surf);
 
-void vc4_get_uniform_bo(struct vc4_context *vc4,
+void vc4_write_uniforms(struct vc4_context *vc4,
                         struct vc4_compiled_shader *shader,
                         struct vc4_constbuf_stateobj *cb,
                         struct vc4_texture_stateobj *texstate,
-                        int shader_index, struct vc4_bo **out_bo,
-                        uint32_t *out_offset);
+                        int shader_index);
 
 void vc4_flush(struct pipe_context *pctx);
 void vc4_emit_state(struct pipe_context *pctx);

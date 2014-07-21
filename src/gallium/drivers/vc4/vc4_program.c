@@ -57,6 +57,7 @@ struct tgsi_to_qir {
         enum quniform_contents *uniform_contents;
         uint32_t num_uniforms;
         uint32_t num_outputs;
+        uint32_t num_texture_samples;
 };
 
 struct vc4_key {
@@ -332,6 +333,7 @@ tgsi_to_qir_tex(struct tgsi_to_qir *trans,
                 qir_TEX_S(c, s, sampler_p1);
         }
 
+        trans->num_texture_samples++;
         qir_emit(c, qir_inst(QOP_TEX_RESULT, c->undef, c->undef, c->undef));
 
         for (int i = 0; i < 4; i++) {
@@ -938,6 +940,7 @@ copy_uniform_state_to_shader(struct vc4_compiled_shader *shader,
         uinfo->contents = malloc(count * sizeof(*uinfo->contents));
         memcpy(uinfo->contents, trans->uniform_contents,
                count * sizeof(*uinfo->contents));
+        uinfo->num_texture_samples = trans->num_texture_samples;
 }
 
 static void
@@ -1141,26 +1144,23 @@ static uint32_t translate_wrap(uint32_t p_wrap)
         }
 }
 
-static uint32_t
-get_texture_p0(struct vc4_texture_stateobj *texstate,
-               uint32_t tex_and_sampler)
+static void
+write_texture_p0(struct vc4_context *vc4,
+                 struct vc4_texture_stateobj *texstate,
+                 uint32_t tex_and_sampler)
 {
         uint32_t texi = (tex_and_sampler >> 0) & 0xff;
         struct pipe_sampler_view *texture = texstate->textures[texi];
         struct vc4_resource *rsc = vc4_resource(texture->texture);
 
-        return (texture->u.tex.last_level |
-#if USE_VC4_SIMULATOR
-                simpenrose_hw_addr(rsc->bo->map) /* XXX */
-#else
-                0 /* XXX */
-#endif
-                /* XXX: data type */);
+        cl_reloc(vc4, &vc4->uniforms, rsc->bo,
+                 texture->u.tex.last_level);
 }
 
-static uint32_t
-get_texture_p1(struct vc4_texture_stateobj *texstate,
-               uint32_t tex_and_sampler)
+static void
+write_texture_p1(struct vc4_context *vc4,
+                 struct vc4_texture_stateobj *texstate,
+                 uint32_t tex_and_sampler)
 {
         uint32_t texi = (tex_and_sampler >> 0) & 0xff;
         uint32_t sampi = (tex_and_sampler >> 8) & 0xff;
@@ -1176,14 +1176,15 @@ get_texture_p1(struct vc4_texture_stateobj *texstate,
                 [PIPE_TEX_FILTER_LINEAR] = 0,
         };
 
-        return ((1 << 31) /* XXX: data type */|
-                (texture->texture->height0 << 20) |
-                (texture->texture->width0 << 8) |
-                (imgfilter_map[sampler->mag_img_filter] << 7) |
-                ((imgfilter_map[sampler->min_img_filter] +
-                  mipfilter_map[sampler->min_mip_filter]) << 4) |
-                (translate_wrap(sampler->wrap_t) << 2) |
-                (translate_wrap(sampler->wrap_s) << 0));
+        cl_u32(&vc4->uniforms,
+               (1 << 31) /* XXX: data type */|
+               (texture->texture->height0 << 20) |
+               (texture->texture->width0 << 8) |
+               (imgfilter_map[sampler->mag_img_filter] << 7) |
+               ((imgfilter_map[sampler->min_img_filter] +
+                 mipfilter_map[sampler->min_mip_filter]) << 4) |
+               (translate_wrap(sampler->wrap_t) << 2) |
+               (translate_wrap(sampler->wrap_s) << 0));
 }
 
 static uint32_t
@@ -1203,56 +1204,57 @@ get_texrect_scale(struct vc4_texture_stateobj *texstate,
 }
 
 void
-vc4_get_uniform_bo(struct vc4_context *vc4, struct vc4_compiled_shader *shader,
+vc4_write_uniforms(struct vc4_context *vc4, struct vc4_compiled_shader *shader,
                    struct vc4_constbuf_stateobj *cb,
                    struct vc4_texture_stateobj *texstate,
-                   int shader_index, struct vc4_bo **out_bo,
-                   uint32_t *out_offset)
+                   int shader_index)
 {
         struct vc4_shader_uniform_info *uinfo = &shader->uniforms[shader_index];
-        struct vc4_bo *ubo = vc4_bo_alloc(vc4->screen,
-                                          MAX2(1, uinfo->count * 4), "ubo");
-        uint32_t *map = vc4_bo_map(ubo);
+        const uint32_t *gallium_uniforms = cb->cb[0].user_buffer;
+
+        cl_start_shader_reloc(&vc4->uniforms, uinfo->num_texture_samples);
 
         for (int i = 0; i < uinfo->count; i++) {
 
                 switch (uinfo->contents[i]) {
                 case QUNIFORM_CONSTANT:
-                        map[i] = uinfo->data[i];
+                        cl_u32(&vc4->uniforms, uinfo->data[i]);
                         break;
                 case QUNIFORM_UNIFORM:
-                        map[i] = ((uint32_t *)cb->cb[0].user_buffer)[uinfo->data[i]];
+                        cl_u32(&vc4->uniforms,
+                               gallium_uniforms[uinfo->data[i]]);
                         break;
                 case QUNIFORM_VIEWPORT_X_SCALE:
-                        map[i] = fui(vc4->framebuffer.width * 16.0f / 2.0f);
+                        cl_u32(&vc4->uniforms, fui(vc4->framebuffer.width *
+                                                   16.0f / 2.0f));
                         break;
                 case QUNIFORM_VIEWPORT_Y_SCALE:
-                        map[i] = fui(vc4->framebuffer.height * -16.0f / 2.0f);
+                        cl_u32(&vc4->uniforms, fui(vc4->framebuffer.height *
+                                                   -16.0f / 2.0f));
                         break;
 
                 case QUNIFORM_TEXTURE_CONFIG_P0:
-                        map[i] = get_texture_p0(texstate, uinfo->data[i]);
+                        write_texture_p0(vc4, texstate, uinfo->data[i]);
                         break;
 
                 case QUNIFORM_TEXTURE_CONFIG_P1:
-                        map[i] = get_texture_p1(texstate, uinfo->data[i]);
+                        write_texture_p1(vc4, texstate, uinfo->data[i]);
                         break;
 
                 case QUNIFORM_TEXRECT_SCALE_X:
                 case QUNIFORM_TEXRECT_SCALE_Y:
-                        map[i] = get_texrect_scale(texstate,
-                                                   uinfo->contents[i],
-                                                   uinfo->data[i]);
+                        cl_u32(&vc4->uniforms,
+                               get_texrect_scale(texstate,
+                                                 uinfo->contents[i],
+                                                 uinfo->data[i]));
                         break;
                 }
 #if 0
+                uint32_t written_val = *(uint32_t *)(vc4->uniforms.next - 4);
                 fprintf(stderr, "%p/%d: %d: 0x%08x (%f)\n",
-                        shader, shader_index, i, map[i], uif(map[i]));
+                        shader, shader_index, i, written_val, uif(written_val));
 #endif
         }
-
-        *out_bo = ubo;
-        *out_offset = 0;
 }
 
 static void

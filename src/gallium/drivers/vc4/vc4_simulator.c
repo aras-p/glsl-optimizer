@@ -63,9 +63,9 @@ drm_gem_cma_create(struct drm_device *dev, size_t size)
 }
 
 static int
-vc4_simulator_pin_bos(struct drm_device *dev, struct drm_vc4_submit_cl *args,
-                      struct exec_info *exec)
+vc4_simulator_pin_bos(struct drm_device *dev, struct exec_info *exec)
 {
+        struct drm_vc4_submit_cl *args = exec->args;
         struct vc4_context *vc4 = dev->vc4;
         struct vc4_bo **bos = vc4->bo_pointers.base;
 
@@ -84,8 +84,7 @@ vc4_simulator_pin_bos(struct drm_device *dev, struct drm_vc4_submit_cl *args,
 }
 
 static int
-vc4_simulator_unpin_bos(struct drm_vc4_submit_cl *args,
-                        struct exec_info *exec)
+vc4_simulator_unpin_bos(struct exec_info *exec)
 {
         for (int i = 0; i < exec->bo_count; i++) {
                 struct drm_gem_cma_object *obj = exec->bo[i];
@@ -102,9 +101,9 @@ vc4_simulator_unpin_bos(struct drm_vc4_submit_cl *args,
 }
 
 static int
-vc4_cl_validate(struct drm_device *dev, struct drm_vc4_submit_cl *args,
-		struct exec_info *exec)
+vc4_cl_validate(struct drm_device *dev, struct exec_info *exec)
 {
+	struct drm_vc4_submit_cl *args = exec->args;
 	void *temp = NULL;
 	void *bin, *render, *shader_rec;
 	int ret = 0;
@@ -112,12 +111,14 @@ vc4_cl_validate(struct drm_device *dev, struct drm_vc4_submit_cl *args,
 	uint32_t render_offset = bin_offset + args->bin_cl_len;
 	uint32_t shader_rec_offset = roundup(render_offset +
 					     args->render_cl_len, 16);
-	uint32_t exec_size = shader_rec_offset + args->shader_record_len;
+	uint32_t uniforms_offset = shader_rec_offset + args->shader_record_len;
+	uint32_t exec_size = uniforms_offset + args->uniforms_len;
 	uint32_t temp_size = exec_size + (sizeof(struct vc4_shader_state) *
 					  args->shader_record_count);
 
 	if (shader_rec_offset < render_offset ||
-	    exec_size < shader_rec_offset ||
+	    uniforms_offset < shader_rec_offset ||
+	    exec_size < uniforms_offset ||
 	    args->shader_record_count >= (UINT_MAX /
 					  sizeof(struct vc4_shader_state)) ||
 	    temp_size < exec_size) {
@@ -142,6 +143,7 @@ vc4_cl_validate(struct drm_device *dev, struct drm_vc4_submit_cl *args,
 	bin = temp + bin_offset;
 	render = temp + render_offset;
 	shader_rec = temp + shader_rec_offset;
+	exec->uniforms_u = temp + uniforms_offset;
 	exec->shader_state = temp + exec_size;
 	exec->shader_state_size = args->shader_record_count;
 
@@ -164,6 +166,13 @@ vc4_cl_validate(struct drm_device *dev, struct drm_vc4_submit_cl *args,
 		goto fail;
 	}
 
+	ret = copy_from_user(exec->uniforms_u, args->uniforms,
+			     args->uniforms_len);
+	if (ret) {
+		DRM_ERROR("Failed to copy in uniforms cl\n");
+		goto fail;
+	}
+
 	exec->exec_bo = drm_gem_cma_create(dev, exec_size);
 #if 0
 	if (IS_ERR(exec->exec_bo)) {
@@ -179,6 +188,10 @@ vc4_cl_validate(struct drm_device *dev, struct drm_vc4_submit_cl *args,
 	exec->ct1ca = exec->exec_bo->paddr + render_offset;
 	exec->ct1ea = exec->ct1ca + args->render_cl_len;
 	exec->shader_paddr = exec->exec_bo->paddr + shader_rec_offset;
+
+	exec->uniforms_v = exec->exec_bo->vaddr + uniforms_offset;
+	exec->uniforms_p = exec->exec_bo->paddr + uniforms_offset;
+	exec->uniforms_size = args->uniforms_len;
 
 	ret = vc4_validate_cl(dev,
 			      exec->exec_bo->vaddr + bin_offset,
@@ -243,18 +256,20 @@ vc4_simulator_flush(struct vc4_context *vc4, struct drm_vc4_submit_cl *args,
                 }
         }
 
-        ret = vc4_simulator_pin_bos(dev, args, &exec);
+        exec.args = args;
+
+        ret = vc4_simulator_pin_bos(dev, &exec);
         if (ret)
                 return ret;
 
-        ret = vc4_cl_validate(dev, args, &exec);
+        ret = vc4_cl_validate(dev, &exec);
         if (ret)
                 return ret;
 
         simpenrose_do_binning(exec.ct0ca, exec.ct0ea);
         simpenrose_do_rendering(exec.ct1ca, exec.ct1ea);
 
-        ret = vc4_simulator_unpin_bos(args, &exec);
+        ret = vc4_simulator_unpin_bos(&exec);
         if (ret)
                 return ret;
 

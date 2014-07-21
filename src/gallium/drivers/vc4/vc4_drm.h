@@ -74,6 +74,21 @@ struct drm_vc4_submit_cl {
 	 */
 	void __user *shader_records;
 
+	/* Pointer to uniform data and texture handles for the textures
+	 * referenced by the shader.
+	 *
+	 * For each shader state record, there is a set of uniform data in the
+	 * order referenced by the record (FS, VS, then CS).  Each set of
+	 * uniform data has a uint32_t index into bo_handles per texture
+	 * sample operation, in the order the QPU_W_TMUn_S writes appear in
+	 * the program.  Following the texture BO handle indices is the actual
+	 * uniform data.
+	 *
+	 * The individual uniform state blocks don't have sizes passed in,
+	 * because the kernel has to determine the sizes anyway during shader
+	 * code validation.
+	 */
+	void __user *uniforms;
 	void __user *bo_handles;
 
 	/* Size in bytes of the binner command list. */
@@ -84,11 +99,13 @@ struct drm_vc4_submit_cl {
 	uint32_t shader_record_len;
 	/* Number of shader records.
 	 *
-	 * This could just be computed from the contents of shader_records,
-	 * but it keeps the kernel from having to resize various allocations
-	 * it makes.
+	 * This could just be computed from the contents of shader_records and
+	 * the address bits of references to them from the bin CL, but it
+	 * keeps the kernel from having to resize some allocations it makes.
 	 */
 	uint32_t shader_record_count;
+	/** Size in bytes of the uniform state. */
+	uint32_t uniforms_len;
 
 	/* Number of BO handles passed in (size is that times 4). */
 	uint32_t bo_handle_count;

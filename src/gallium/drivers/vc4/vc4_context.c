@@ -107,6 +107,8 @@ vc4_flush(struct pipe_context *pctx)
         submit.shader_records = vc4->shader_rec.base;
         submit.shader_record_len = vc4->shader_rec.next - vc4->shader_rec.base;
         submit.shader_record_count = vc4->shader_rec_count;
+        submit.uniforms = vc4->uniforms.base;
+        submit.uniforms_len = vc4->uniforms.next - vc4->uniforms.base;
 
         if (!(vc4_debug & VC4_DEBUG_NORAST)) {
                 int ret;
@@ -123,6 +125,7 @@ vc4_flush(struct pipe_context *pctx)
         vc4_reset_cl(&vc4->bcl);
         vc4_reset_cl(&vc4->rcl);
         vc4_reset_cl(&vc4->shader_rec);
+        vc4_reset_cl(&vc4->uniforms);
         vc4_reset_cl(&vc4->bo_handles);
 #ifdef USE_VC4_SIMULATOR
         vc4_reset_cl(&vc4->bo_pointers);

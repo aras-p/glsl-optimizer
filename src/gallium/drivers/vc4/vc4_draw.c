@@ -162,40 +162,38 @@ vc4_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
 
 // Shader Record
 
-        struct vc4_bo *fs_ubo, *vs_ubo, *cs_ubo;
-        uint32_t fs_ubo_offset, vs_ubo_offset, cs_ubo_offset;
-        vc4_get_uniform_bo(vc4, vc4->prog.fs,
+        vc4_write_uniforms(vc4, vc4->prog.fs,
                            &vc4->constbuf[PIPE_SHADER_FRAGMENT],
                            &vc4->fragtex,
-                           0, &fs_ubo, &fs_ubo_offset);
-        vc4_get_uniform_bo(vc4, vc4->prog.vs,
+                           0);
+        vc4_write_uniforms(vc4, vc4->prog.vs,
                            &vc4->constbuf[PIPE_SHADER_VERTEX],
                            &vc4->verttex,
-                           0, &vs_ubo, &vs_ubo_offset);
-        vc4_get_uniform_bo(vc4, vc4->prog.vs,
+                           0);
+        vc4_write_uniforms(vc4, vc4->prog.vs,
                            &vc4->constbuf[PIPE_SHADER_VERTEX],
                            &vc4->verttex,
-                           1, &cs_ubo, &cs_ubo_offset);
+                           1);
 
-        cl_start_shader_reloc(&vc4->shader_rec, 6 + vtx->num_elements);
+        cl_start_shader_reloc(&vc4->shader_rec, 3 + vtx->num_elements);
         cl_u16(&vc4->shader_rec, VC4_SHADER_FLAG_ENABLE_CLIPPING);
         cl_u8(&vc4->shader_rec, 0); /* fs num uniforms (unused) */
         cl_u8(&vc4->shader_rec, vc4->prog.fs->num_inputs);
         cl_reloc(vc4, &vc4->shader_rec, vc4->prog.fs->bo, 0);
-        cl_reloc(vc4, &vc4->shader_rec, fs_ubo, fs_ubo_offset);
+        cl_u32(&vc4->shader_rec, 0); /* UBO offset written by kernel */
 
         cl_u16(&vc4->shader_rec, 0); /* vs num uniforms */
         cl_u8(&vc4->shader_rec, (1 << vtx->num_elements) - 1); /* vs attribute array bitfield */
         cl_u8(&vc4->shader_rec, 16 * vtx->num_elements); /* vs total attribute size */
         cl_reloc(vc4, &vc4->shader_rec, vc4->prog.vs->bo, 0);
-        cl_reloc(vc4, &vc4->shader_rec, vs_ubo, vs_ubo_offset);
+        cl_u32(&vc4->shader_rec, 0); /* UBO offset written by kernel */
 
         cl_u16(&vc4->shader_rec, 0); /* cs num uniforms */
         cl_u8(&vc4->shader_rec, (1 << vtx->num_elements) - 1); /* cs attribute array bitfield */
         cl_u8(&vc4->shader_rec, 16 * vtx->num_elements); /* vs total attribute size */
         cl_reloc(vc4, &vc4->shader_rec, vc4->prog.vs->bo,
                 vc4->prog.vs->coord_shader_offset);
-        cl_reloc(vc4, &vc4->shader_rec, cs_ubo, cs_ubo_offset);
+        cl_u32(&vc4->shader_rec, 0); /* UBO offset written by kernel */
 
         for (int i = 0; i < vtx->num_elements; i++) {
                 struct pipe_vertex_element *elem = &vtx->pipe[i];
