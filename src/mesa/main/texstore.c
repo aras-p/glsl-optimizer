@@ -3830,6 +3830,21 @@ _mesa_texstore_can_use_memcpy(struct gl_context *ctx,
       return GL_FALSE;
    }
 
+   /* Depth texture data needs clamping in following cases:
+    * - Floating point dstFormat with signed srcType: clamp to [0.0, 1.0].
+    * - Fixed point dstFormat with signed srcType: clamp to [0, 2^n -1].
+    *
+    * All the cases except one (float dstFormat with float srcType) are ruled
+    * out by _mesa_format_matches_format_and_type() check above. Handle the
+    * remaining case here.
+    */
+   if ((baseInternalFormat == GL_DEPTH_COMPONENT ||
+        baseInternalFormat == GL_DEPTH_STENCIL) &&
+       (srcType == GL_FLOAT ||
+        srcType == GL_FLOAT_32_UNSIGNED_INT_24_8_REV)) {
+      return GL_FALSE;
+   }
+
    return GL_TRUE;
 }
 
