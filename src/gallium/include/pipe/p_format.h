@@ -344,6 +344,11 @@ enum pipe_format {
 
    PIPE_FORMAT_B5G6R5_SRGB             = 254,
 
+   PIPE_FORMAT_BPTC_RGBA_UNORM         = 255,
+   PIPE_FORMAT_BPTC_SRGBA              = 256,
+   PIPE_FORMAT_BPTC_RGB_FLOAT          = 257,
+   PIPE_FORMAT_BPTC_RGB_UFLOAT         = 258,
+
    PIPE_FORMAT_COUNT
 };
 

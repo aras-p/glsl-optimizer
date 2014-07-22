@@ -496,6 +496,10 @@ util_format_fits_8unorm(const struct util_format_description *format_desc)
           format_desc->format == PIPE_FORMAT_LATC2_SNORM)
          return FALSE;
       return TRUE;
+   case UTIL_FORMAT_LAYOUT_BPTC:
+      if (format_desc->format == PIPE_FORMAT_BPTC_RGBA_UNORM)
+         return TRUE;
+      return FALSE;
 
    case UTIL_FORMAT_LAYOUT_PLAIN:
       /*

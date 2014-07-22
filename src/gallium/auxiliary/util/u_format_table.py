@@ -90,6 +90,7 @@ def write_format_table(formats):
     print '#include "u_format_rgtc.h"'
     print '#include "u_format_latc.h"'
     print '#include "u_format_etc.h"'
+    print '#include "u_format_bptc.h"'
     print
     
     u_format_pack.generate(formats)
@@ -141,7 +142,7 @@ def write_format_table(formats):
         if format.colorspace != ZS and not format.is_pure_color():
             print "   &util_format_%s_unpack_rgba_8unorm," % format.short_name() 
             print "   &util_format_%s_pack_rgba_8unorm," % format.short_name() 
-            if format.layout == 's3tc' or format.layout == 'rgtc':
+            if format.layout == 's3tc' or format.layout == 'rgtc' or format.layout == 'bptc':
                 print "   &util_format_%s_fetch_rgba_8unorm," % format.short_name()
             else:
                 print "   NULL, /* fetch_rgba_8unorm */" 
