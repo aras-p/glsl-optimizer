@@ -154,11 +154,13 @@ st_mesa_format_to_pipe_format(struct st_context *st, mesa_format mesaFormat)
    case MESA_FORMAT_BGR_SRGB8:
       return PIPE_FORMAT_R8G8B8_SRGB;
    case MESA_FORMAT_A8B8G8R8_SRGB:
-      return PIPE_FORMAT_A8B8G8R8_SRGB;
-   case MESA_FORMAT_B8G8R8A8_SRGB:
-      return PIPE_FORMAT_B8G8R8A8_SRGB;
+      return PIPE_FORMAT_ABGR8888_SRGB;
    case MESA_FORMAT_R8G8B8A8_SRGB:
-      return PIPE_FORMAT_R8G8B8A8_SRGB;
+      return PIPE_FORMAT_RGBA8888_SRGB;
+   case MESA_FORMAT_B8G8R8A8_SRGB:
+      return PIPE_FORMAT_BGRA8888_SRGB;
+   case MESA_FORMAT_A8R8G8B8_SRGB:
+      return PIPE_FORMAT_ARGB8888_SRGB;
    case MESA_FORMAT_RGBA_FLOAT32:
       return PIPE_FORMAT_R32G32B32A32_FLOAT;
    case MESA_FORMAT_RGBA_FLOAT16:
@@ -355,7 +357,9 @@ st_mesa_format_to_pipe_format(struct st_context *st, mesa_format mesaFormat)
    case MESA_FORMAT_G8R8_SNORM:
       return PIPE_FORMAT_GR88_SNORM;
    case MESA_FORMAT_R8G8B8A8_SNORM:
-      return PIPE_FORMAT_R8G8B8A8_SNORM;
+      return PIPE_FORMAT_RGBA8888_SNORM;
+   case MESA_FORMAT_A8B8G8R8_SNORM:
+      return PIPE_FORMAT_ABGR8888_SNORM;
 
    case MESA_FORMAT_A_SNORM8:
       return PIPE_FORMAT_A8_SNORM;
@@ -400,9 +404,13 @@ st_mesa_format_to_pipe_format(struct st_context *st, mesa_format mesaFormat)
    case MESA_FORMAT_B5G5R5X1_UNORM:
       return PIPE_FORMAT_B5G5R5X1_UNORM;
    case MESA_FORMAT_R8G8B8X8_SNORM:
-      return PIPE_FORMAT_R8G8B8X8_SNORM;
+      return PIPE_FORMAT_RGBX8888_SNORM;
+   case MESA_FORMAT_X8B8G8R8_SNORM:
+      return PIPE_FORMAT_XBGR8888_SNORM;
    case MESA_FORMAT_R8G8B8X8_SRGB:
-      return PIPE_FORMAT_R8G8B8X8_SRGB;
+      return PIPE_FORMAT_RGBX8888_SRGB;
+   case MESA_FORMAT_X8B8G8R8_SRGB:
+      return PIPE_FORMAT_XBGR8888_SRGB;
    case MESA_FORMAT_RGBX_UINT8:
       return PIPE_FORMAT_R8G8B8X8_UINT;
    case MESA_FORMAT_RGBX_SINT8:
@@ -427,7 +435,9 @@ st_mesa_format_to_pipe_format(struct st_context *st, mesa_format mesaFormat)
       return PIPE_FORMAT_R32G32B32X32_SINT;
 
    case MESA_FORMAT_B8G8R8X8_SRGB:
-      return PIPE_FORMAT_B8G8R8X8_SRGB;
+      return PIPE_FORMAT_BGRX8888_SRGB;
+   case MESA_FORMAT_X8R8G8B8_SRGB:
+      return PIPE_FORMAT_XRGB8888_SRGB;
 
    /* ETC2 formats are emulated as uncompressed ones.
     * The destination formats mustn't be changed, because they are also
@@ -564,10 +574,14 @@ st_pipe_format_to_mesa_format(enum pipe_format format)
       return MESA_FORMAT_L_SRGB8;
    case PIPE_FORMAT_R8G8B8_SRGB:
       return MESA_FORMAT_BGR_SRGB8;
-   case PIPE_FORMAT_A8B8G8R8_SRGB:
+   case PIPE_FORMAT_ABGR8888_SRGB:
       return MESA_FORMAT_A8B8G8R8_SRGB;
-   case PIPE_FORMAT_B8G8R8A8_SRGB:
+   case PIPE_FORMAT_RGBA8888_SRGB:
+      return MESA_FORMAT_R8G8B8A8_SRGB;
+   case PIPE_FORMAT_BGRA8888_SRGB:
       return MESA_FORMAT_B8G8R8A8_SRGB;
+   case PIPE_FORMAT_ARGB8888_SRGB:
+      return MESA_FORMAT_A8R8G8B8_SRGB;
    case PIPE_FORMAT_R32G32B32A32_FLOAT:
       return MESA_FORMAT_RGBA_FLOAT32;
    case PIPE_FORMAT_R16G16B16A16_FLOAT:
@@ -758,8 +772,10 @@ st_pipe_format_to_mesa_format(enum pipe_format format)
       return MESA_FORMAT_R8G8_SNORM;
    case PIPE_FORMAT_GR88_SNORM:
       return MESA_FORMAT_G8R8_SNORM;
-   case PIPE_FORMAT_R8G8B8A8_SNORM:
+   case PIPE_FORMAT_RGBA8888_SNORM:
       return MESA_FORMAT_R8G8B8A8_SNORM;
+   case PIPE_FORMAT_ABGR8888_SNORM:
+      return MESA_FORMAT_A8B8G8R8_SNORM;
 
    case PIPE_FORMAT_A8_SNORM:
       return MESA_FORMAT_A_SNORM8;
@@ -804,10 +820,14 @@ st_pipe_format_to_mesa_format(enum pipe_format format)
       return MESA_FORMAT_B4G4R4X4_UNORM;
    case PIPE_FORMAT_B5G5R5X1_UNORM:
       return MESA_FORMAT_B5G5R5X1_UNORM;
-   case PIPE_FORMAT_R8G8B8X8_SNORM:
+   case PIPE_FORMAT_RGBX8888_SNORM:
       return MESA_FORMAT_R8G8B8X8_SNORM;
-   case PIPE_FORMAT_R8G8B8X8_SRGB:
+   case PIPE_FORMAT_XBGR8888_SNORM:
+      return MESA_FORMAT_X8B8G8R8_SNORM;
+   case PIPE_FORMAT_RGBX8888_SRGB:
       return MESA_FORMAT_R8G8B8X8_SRGB;
+   case PIPE_FORMAT_XBGR8888_SRGB:
+      return MESA_FORMAT_X8B8G8R8_SRGB;
    case PIPE_FORMAT_R8G8B8X8_UINT:
       return MESA_FORMAT_RGBX_UINT8;
    case PIPE_FORMAT_R8G8B8X8_SINT:
@@ -831,10 +851,10 @@ st_pipe_format_to_mesa_format(enum pipe_format format)
    case PIPE_FORMAT_R32G32B32X32_SINT:
       return MESA_FORMAT_RGBX_SINT32;
 
-   case PIPE_FORMAT_B8G8R8X8_SRGB:
+   case PIPE_FORMAT_BGRX8888_SRGB:
       return MESA_FORMAT_B8G8R8X8_SRGB;
-   case PIPE_FORMAT_R8G8B8A8_SRGB:
-      return MESA_FORMAT_R8G8B8A8_SRGB;
+   case PIPE_FORMAT_XRGB8888_SRGB:
+      return MESA_FORMAT_X8R8G8B8_SRGB;
 
    default:
       return MESA_FORMAT_NONE;
