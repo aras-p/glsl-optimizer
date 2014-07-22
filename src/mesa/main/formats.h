@@ -265,6 +265,7 @@ typedef enum
    MESA_FORMAT_R8G8_SNORM,       /*                     GGGG GGGG RRRR RRRR */
    MESA_FORMAT_G8R8_SNORM,       /*                     RRRR RRRR GGGG GGGG */
    MESA_FORMAT_L8A8_SNORM,       /*                     AAAA AAAA LLLL LLLL */
+   MESA_FORMAT_A8L8_SNORM,       /*                     LLLL LLLL AAAA AAAA */
 
    /* Array signed/normalized formats */
    MESA_FORMAT_A_SNORM8,      /* byte[i] = A */
@@ -287,6 +288,7 @@ typedef enum
    MESA_FORMAT_R8G8B8A8_SRGB,    /* AAAA AAAA BBBB BBBB GGGG GGGG RRRR RRRR */
    MESA_FORMAT_R8G8B8X8_SRGB,    /* xxxx xxxx BBBB BBBB GGGG GGGG RRRR RRRR */
    MESA_FORMAT_L8A8_SRGB,                            /* AAAA AAAA LLLL LLLL */
+   MESA_FORMAT_A8L8_SRGB,                            /* LLLL LLLL AAAA AAAA */
 
    /* Array sRGB formats */
    MESA_FORMAT_L_SRGB8,       /* ubyte[i] = L */

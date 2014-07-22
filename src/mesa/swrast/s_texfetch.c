@@ -210,6 +210,7 @@ texfetch_funcs[] =
    FETCH_FUNCS(R8G8_SNORM),
    FETCH_NULL(G8R8_SNORM),
    FETCH_FUNCS(L8A8_SNORM),
+   FETCH_FUNCS(A8L8_SNORM),
 
    /* Array signed/normalized formats */
    FETCH_FUNCS(A_SNORM8),
@@ -232,6 +233,7 @@ texfetch_funcs[] =
    FETCH_FUNCS(R8G8B8A8_SRGB),
    FETCH_FUNCS(R8G8B8X8_SRGB),
    FETCH_FUNCS(L8A8_SRGB),
+   FETCH_FUNCS(A8L8_SRGB),
 
    /* Array sRGB formats */
    FETCH_FUNCS(L_SRGB8),

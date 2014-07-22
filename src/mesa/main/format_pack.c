@@ -1129,6 +1129,16 @@ pack_ubyte_L8A8_SRGB(const GLubyte src[4], void *dst)
    *d = PACK_COLOR_88(src[ACOMP], l);
 }
 
+/* MESA_FORMAT_A8L8_SRGB */
+
+static void
+pack_ubyte_A8L8_SRGB(const GLubyte src[4], void *dst)
+{
+   GLushort *d = ((GLushort *) dst);
+   GLubyte l = util_format_linear_to_srgb_8unorm(src[RCOMP]);
+   *d = PACK_COLOR_88(l, src[ACOMP]);
+}
+
 static void
 pack_float_L8A8_SRGB(const GLfloat src[4], void *dst)
 {
@@ -1136,6 +1146,15 @@ pack_float_L8A8_SRGB(const GLfloat src[4], void *dst)
    GLubyte a, l = util_format_linear_float_to_srgb_8unorm(src[RCOMP]);
    CLAMPED_FLOAT_TO_UBYTE(a, src[ACOMP]);
    *d = PACK_COLOR_88(a, l);
+}
+
+static void
+pack_float_A8L8_SRGB(const GLfloat src[4], void *dst)
+{
+   GLushort *d = ((GLushort *) dst);
+   GLubyte a, l = util_format_linear_float_to_srgb_8unorm(src[RCOMP]);
+   CLAMPED_FLOAT_TO_UBYTE(a, src[ACOMP]);
+   *d = PACK_COLOR_88(l, a);
 }
 
 
@@ -1563,6 +1582,20 @@ pack_float_L8A8_SNORM(const GLfloat src[4], void *dst)
 
 
 /*
+ * MESA_FORMAT_A8L8_SNORM
+ */
+
+static void
+pack_float_A8L8_SNORM(const GLfloat src[4], void *dst)
+{
+   GLushort *d = (GLushort *) dst;
+   GLbyte l = FLOAT_TO_BYTE(CLAMP(src[RCOMP], -1.0f, 1.0f));
+   GLbyte a = FLOAT_TO_BYTE(CLAMP(src[ACOMP], -1.0f, 1.0f));
+   *d = (l << 8) | a;
+}
+
+
+/*
  * MESA_FORMAT_A_SNORM16
  */
 
@@ -1936,6 +1969,7 @@ _mesa_get_pack_ubyte_rgba_function(mesa_format format)
       table[MESA_FORMAT_R8G8B8A8_SRGB] = pack_ubyte_R8G8B8A8_SRGB;
       table[MESA_FORMAT_L_SRGB8] = pack_ubyte_L_SRGB8;
       table[MESA_FORMAT_L8A8_SRGB] = pack_ubyte_L8A8_SRGB;
+      table[MESA_FORMAT_A8L8_SRGB] = pack_ubyte_A8L8_SRGB;
       /* n/a */
       table[MESA_FORMAT_SRGB_DXT1] = NULL; /* pack_ubyte_SRGB_DXT1; */
       table[MESA_FORMAT_SRGBA_DXT1] = NULL; /* pack_ubyte_SRGBA_DXT1; */
@@ -1989,6 +2023,7 @@ _mesa_get_pack_ubyte_rgba_function(mesa_format format)
       table[MESA_FORMAT_A_SNORM8] = NULL;
       table[MESA_FORMAT_L_SNORM8] = NULL;
       table[MESA_FORMAT_L8A8_SNORM] = NULL;
+      table[MESA_FORMAT_A8L8_SNORM] = NULL;
       table[MESA_FORMAT_I_SNORM8] = NULL;
       table[MESA_FORMAT_A_SNORM16] = NULL;
       table[MESA_FORMAT_L_SNORM16] = NULL;
@@ -2099,6 +2134,7 @@ _mesa_get_pack_float_rgba_function(mesa_format format)
       table[MESA_FORMAT_R8G8B8A8_SRGB] = pack_float_R8G8B8A8_SRGB;
       table[MESA_FORMAT_L_SRGB8] = pack_float_L_SRGB8;
       table[MESA_FORMAT_L8A8_SRGB] = pack_float_L8A8_SRGB;
+      table[MESA_FORMAT_A8L8_SRGB] = pack_float_A8L8_SRGB;
 
       /* n/a */
       table[MESA_FORMAT_SRGB_DXT1] = NULL;
@@ -2153,6 +2189,7 @@ _mesa_get_pack_float_rgba_function(mesa_format format)
       table[MESA_FORMAT_A_SNORM8] = pack_float_A_SNORM8;
       table[MESA_FORMAT_L_SNORM8] = pack_float_L_SNORM8;
       table[MESA_FORMAT_L8A8_SNORM] = pack_float_L8A8_SNORM;
+      table[MESA_FORMAT_A8L8_SNORM] = pack_float_A8L8_SNORM;
       table[MESA_FORMAT_I_SNORM8] = pack_float_L_SNORM8; /* reused */
       table[MESA_FORMAT_A_SNORM16] = pack_float_A_SNORM16;
       table[MESA_FORMAT_L_SNORM16] = pack_float_L_SNORM16;

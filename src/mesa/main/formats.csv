@@ -119,6 +119,7 @@ MESA_FORMAT_G16R16_SNORM                  , packed, 1, 1, sn16, sn16,     ,     
 MESA_FORMAT_R8G8_SNORM                    , packed, 1, 1, sn8 , sn8 ,     ,     , xy01, rgb
 MESA_FORMAT_G8R8_SNORM                    , packed, 1, 1, sn8 , sn8 ,     ,     , yx01, rgb
 MESA_FORMAT_L8A8_SNORM                    , packed, 1, 1, sn8 , sn8 ,     ,     , xxxy, rgb
+MESA_FORMAT_A8L8_SNORM                    , packed, 1, 1, sn8 , sn8 ,     ,     , yyyx, rgb
 
 # Array signed/normalized formats
 MESA_FORMAT_A_SNORM8                      , array , 1, 1, sn8 ,     ,     ,     , 000x, rgb
@@ -141,6 +142,7 @@ MESA_FORMAT_B8G8R8X8_SRGB                 , packed, 1, 1, un8 , un8 , un8 , x8  
 MESA_FORMAT_R8G8B8A8_SRGB                 , packed, 1, 1, un8 , un8 , un8 , un8 , xyzw, srgb
 MESA_FORMAT_R8G8B8X8_SRGB                 , packed, 1, 1, un8 , un8 , un8 , x8  , xyz1, srgb
 MESA_FORMAT_L8A8_SRGB                     , packed, 1, 1, un8 , un8 ,     ,     , xxxy, srgb
+MESA_FORMAT_A8L8_SRGB                     , packed, 1, 1, un8 , un8 ,     ,     , yyyx, srgb
 
 # Array sRGB formats
 MESA_FORMAT_L_SRGB8                       , array , 1, 1, un8 ,     ,     ,     , xxx1, srgb

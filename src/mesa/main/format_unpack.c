@@ -809,6 +809,19 @@ unpack_L8A8_SRGB(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
+unpack_A8L8_SRGB(const void *src, GLfloat dst[][4], GLuint n)
+{
+   const GLushort *s = (const GLushort *) src;
+   GLuint i;
+   for (i = 0; i < n; i++) {
+      dst[i][RCOMP] =
+      dst[i][GCOMP] =
+      dst[i][BCOMP] = util_format_srgb_8unorm_to_linear_float(s[i] >> 8);
+      dst[i][ACOMP] = UBYTE_TO_FLOAT(s[i] & 0xff); /* linear! */
+   }
+}
+
+static void
 unpack_SRGB_DXT1(const void *src, GLfloat dst[][4], GLuint n)
 {
 }
@@ -1965,6 +1978,20 @@ unpack_L8A8_SNORM(const void *src, GLfloat dst[][4], GLuint n)
    }
 }
 
+
+static void
+unpack_A8L8_SNORM(const void *src, GLfloat dst[][4], GLuint n)
+{
+   const GLshort *s = ((const GLshort *) src);
+   GLuint i;
+   for (i = 0; i < n; i++) {
+      dst[i][RCOMP] =
+      dst[i][GCOMP] =
+      dst[i][BCOMP] = BYTE_TO_FLOAT_TEX( (GLbyte) (s[i] >> 8) );
+      dst[i][ACOMP] = BYTE_TO_FLOAT_TEX( (GLbyte) (s[i] & 0xff) );
+   }
+}
+
 static void
 unpack_I_SNORM8(const void *src, GLfloat dst[][4], GLuint n)
 {
@@ -2364,6 +2391,7 @@ get_unpack_rgba_function(mesa_format format)
       table[MESA_FORMAT_R8G8B8A8_SRGB] = unpack_R8G8B8A8_SRGB;
       table[MESA_FORMAT_L_SRGB8] = unpack_L_SRGB8;
       table[MESA_FORMAT_L8A8_SRGB] = unpack_L8A8_SRGB;
+      table[MESA_FORMAT_A8L8_SRGB] = unpack_A8L8_SRGB;
       table[MESA_FORMAT_SRGB_DXT1] = unpack_SRGB_DXT1;
       table[MESA_FORMAT_SRGBA_DXT1] = unpack_SRGBA_DXT1;
       table[MESA_FORMAT_SRGBA_DXT3] = unpack_SRGBA_DXT3;
@@ -2483,6 +2511,7 @@ get_unpack_rgba_function(mesa_format format)
       table[MESA_FORMAT_A_SNORM8] = unpack_A_SNORM8;
       table[MESA_FORMAT_L_SNORM8] = unpack_L_SNORM8;
       table[MESA_FORMAT_L8A8_SNORM] = unpack_L8A8_SNORM;
+      table[MESA_FORMAT_A8L8_SNORM] = unpack_A8L8_SNORM;
       table[MESA_FORMAT_I_SNORM8] = unpack_I_SNORM8;
       table[MESA_FORMAT_A_SNORM16] = unpack_A_SNORM16;
       table[MESA_FORMAT_L_SNORM16] = unpack_L_SNORM16;
