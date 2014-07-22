@@ -211,9 +211,19 @@ dri_load_driver(struct gbm_dri_device *dri)
    char *get_extensions_name;
 
    search_paths = NULL;
+   /* don't allow setuid apps to use LIBGL_DRIVERS_PATH or GBM_DRIVERS_PATH */
    if (geteuid() == getuid()) {
-      /* don't allow setuid apps to use GBM_DRIVERS_PATH */
+      /* Read GBM_DRIVERS_PATH first for compatibility, but LIBGL_DRIVERS_PATH
+       * is recommended over GBM_DRIVERS_PATH.
+       */
       search_paths = getenv("GBM_DRIVERS_PATH");
+
+      /* Read LIBGL_DRIVERS_PATH if GBM_DRIVERS_PATH was not set.
+       * LIBGL_DRIVERS_PATH is recommended over GBM_DRIVERS_PATH.
+       */
+      if (search_paths == NULL) {
+         search_paths = getenv("LIBGL_DRIVERS_PATH");
+      }
    }
    if (search_paths == NULL)
       search_paths = DEFAULT_DRIVER_DIR;
