@@ -517,6 +517,12 @@ void st_init_extensions(struct pipe_screen *screen,
           PIPE_FORMAT_DXT3_RGBA,
           PIPE_FORMAT_DXT5_RGBA } },
 
+      { { o(ARB_texture_compression_bptc) },
+        { PIPE_FORMAT_BPTC_RGBA_UNORM,
+          PIPE_FORMAT_BPTC_SRGBA,
+          PIPE_FORMAT_BPTC_RGB_FLOAT,
+          PIPE_FORMAT_BPTC_RGB_UFLOAT } },
+
       { { o(EXT_texture_shared_exponent) },
         { PIPE_FORMAT_R9G9B9E5_FLOAT } },
 

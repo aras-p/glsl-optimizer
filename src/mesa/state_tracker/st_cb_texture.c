@@ -1016,6 +1016,7 @@ st_GetTexImage(struct gl_context * ctx,
       case PIPE_FORMAT_RGTC1_UNORM:
       case PIPE_FORMAT_RGTC2_UNORM:
       case PIPE_FORMAT_ETC1_RGB8:
+      case PIPE_FORMAT_BPTC_RGBA_UNORM:
          dst_glformat = GL_RGBA8;
          break;
       case PIPE_FORMAT_RGTC1_SNORM:
@@ -1024,7 +1025,12 @@ st_GetTexImage(struct gl_context * ctx,
             goto fallback;
          dst_glformat = GL_RGBA8_SNORM;
          break;
-      /* TODO: for BPTC_*FLOAT, set RGBA32F and check for ARB_texture_float */
+      case PIPE_FORMAT_BPTC_RGB_FLOAT:
+      case PIPE_FORMAT_BPTC_RGB_UFLOAT:
+         if (!ctx->Extensions.ARB_texture_float)
+            goto fallback;
+         dst_glformat = GL_RGBA32F;
+         break;
       default:
          assert(0);
          goto fallback;
