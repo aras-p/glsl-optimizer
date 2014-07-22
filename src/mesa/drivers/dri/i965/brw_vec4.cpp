@@ -1668,15 +1668,45 @@ vec4_visitor::run()
    move_push_constants_to_pull_constants();
    split_virtual_grfs();
 
+   const char *stage_name = stage == MESA_SHADER_GEOMETRY ? "gs" : "vs";
+
+#define OPT(pass, args...) do {                                        \
+      pass_num++;                                                      \
+      bool this_progress = pass(args);                                 \
+                                                                       \
+      if (unlikely(INTEL_DEBUG & DEBUG_OPTIMIZER) && this_progress) {  \
+         char filename[64];                                            \
+         snprintf(filename, 64, "%s-%04d-%02d-%02d-" #pass,            \
+                  stage_name, shader_prog->Name, iteration, pass_num); \
+                                                                       \
+         backend_visitor::dump_instructions(filename);                 \
+      }                                                                \
+                                                                       \
+      progress = progress || this_progress;                            \
+   } while (false)
+
+
+   if (unlikely(INTEL_DEBUG & DEBUG_OPTIMIZER)) {
+      char filename[64];
+      snprintf(filename, 64, "%s-%04d-00-start",
+               stage_name, shader_prog->Name);
+
+      backend_visitor::dump_instructions(filename);
+   }
+
    bool progress;
+   int iteration = 0;
    do {
       progress = false;
-      progress = dead_code_eliminate() || progress;
-      progress = dead_control_flow_eliminate(this) || progress;
-      progress = opt_copy_propagation() || progress;
-      progress = opt_algebraic() || progress;
-      progress = opt_cse() || progress;
-      progress = opt_register_coalesce() || progress;
+      iteration++;
+      int pass_num = 0;
+
+      OPT(dead_code_eliminate);
+      OPT(dead_control_flow_eliminate, this);
+      OPT(opt_copy_propagation);
+      OPT(opt_algebraic);
+      OPT(opt_cse);
+      OPT(opt_register_coalesce);
    } while (progress);
 
 
