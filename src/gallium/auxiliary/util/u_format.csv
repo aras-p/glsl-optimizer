@@ -393,3 +393,6 @@ PIPE_FORMAT_G8R8_UNORM            , plain, 1, 1, un8 , un8 , , , yx01, rgb
 PIPE_FORMAT_G8R8_SNORM            , plain, 1, 1, sn8 , sn8 , , , yx01, rgb
 PIPE_FORMAT_G16R16_UNORM          , plain, 1, 1, un16, un16, , , yx01, rgb
 PIPE_FORMAT_G16R16_SNORM          , plain, 1, 1, sn16, sn16, , , yx01, rgb
+
+PIPE_FORMAT_A8B8G8R8_SNORM        , plain, 1, 1, sn8 , sn8 , sn8 , sn8 , wzyx, rgb
+PIPE_FORMAT_X8B8G8R8_SNORM        , plain, 1, 1, x8,   sn8,  sn8,  sn8,  wzy1, rgb

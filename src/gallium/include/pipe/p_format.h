@@ -359,6 +359,9 @@ enum pipe_format {
    PIPE_FORMAT_G16R16_UNORM            = 265,
    PIPE_FORMAT_G16R16_SNORM            = 266,
 
+   PIPE_FORMAT_A8B8G8R8_SNORM          = 267,
+   PIPE_FORMAT_X8B8G8R8_SNORM          = 268,
+
    PIPE_FORMAT_COUNT
 };
 
