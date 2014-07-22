@@ -357,6 +357,7 @@ _mesa_get_format_color_encoding(mesa_format format)
    case MESA_FORMAT_BGR_SRGB8:
    case MESA_FORMAT_A8B8G8R8_SRGB:
    case MESA_FORMAT_B8G8R8A8_SRGB:
+   case MESA_FORMAT_A8R8G8B8_SRGB:
    case MESA_FORMAT_R8G8B8A8_SRGB:
    case MESA_FORMAT_L_SRGB8:
    case MESA_FORMAT_L8A8_SRGB:
@@ -420,6 +421,9 @@ _mesa_get_srgb_format_linear(mesa_format format)
    case MESA_FORMAT_B8G8R8A8_SRGB:
       format = MESA_FORMAT_B8G8R8A8_UNORM;
       break;
+   case MESA_FORMAT_A8R8G8B8_SRGB:
+      format = MESA_FORMAT_A8R8G8B8_UNORM;
+      break;
    case MESA_FORMAT_R8G8B8A8_SRGB:
       format = MESA_FORMAT_R8G8B8A8_UNORM;
       break;
@@ -447,6 +451,9 @@ _mesa_get_srgb_format_linear(mesa_format format)
    case MESA_FORMAT_R8G8B8X8_SRGB:
       format = MESA_FORMAT_R8G8B8X8_UNORM;
       break;
+   case MESA_FORMAT_X8B8G8R8_SRGB:
+      format = MESA_FORMAT_X8B8G8R8_UNORM;
+      break;
    case MESA_FORMAT_ETC2_SRGB8:
       format = MESA_FORMAT_ETC2_RGB8;
       break;
@@ -461,6 +468,9 @@ _mesa_get_srgb_format_linear(mesa_format format)
       break;
    case MESA_FORMAT_B8G8R8X8_SRGB:
       format = MESA_FORMAT_B8G8R8X8_UNORM;
+      break;
+   case MESA_FORMAT_X8R8G8B8_SRGB:
+      format = MESA_FORMAT_X8R8G8B8_UNORM;
       break;
    default:
       break;
@@ -966,6 +976,7 @@ _mesa_format_to_type_and_comps(mesa_format format,
       return;
    case MESA_FORMAT_A8B8G8R8_SRGB:
    case MESA_FORMAT_B8G8R8A8_SRGB:
+   case MESA_FORMAT_A8R8G8B8_SRGB:
    case MESA_FORMAT_R8G8B8A8_SRGB:
       *datatype = GL_UNSIGNED_BYTE;
       *comps = 4;
@@ -1241,6 +1252,7 @@ _mesa_format_to_type_and_comps(mesa_format format,
       return;
 
    case MESA_FORMAT_R8G8B8X8_SRGB:
+   case MESA_FORMAT_X8B8G8R8_SRGB:
    case MESA_FORMAT_RGBX_UINT8:
       *datatype = GL_UNSIGNED_BYTE;
       *comps = 4;
@@ -1305,6 +1317,7 @@ _mesa_format_to_type_and_comps(mesa_format format,
       return;
 
    case MESA_FORMAT_B8G8R8X8_SRGB:
+   case MESA_FORMAT_X8R8G8B8_SRGB:
       *datatype = GL_UNSIGNED_BYTE;
       *comps = 4;
       return;
@@ -1420,6 +1433,7 @@ _mesa_format_matches_format_and_type(mesa_format mesa_format,
       return GL_FALSE;
 
    case MESA_FORMAT_A8R8G8B8_UNORM:
+   case MESA_FORMAT_A8R8G8B8_SRGB:
       if (format == GL_BGRA && type == GL_UNSIGNED_INT_8_8_8_8 && !swapBytes)
          return GL_TRUE;
 
@@ -1849,6 +1863,7 @@ _mesa_format_matches_format_and_type(mesa_format mesa_format,
    case MESA_FORMAT_B5G5R5X1_UNORM:
    case MESA_FORMAT_R8G8B8X8_SNORM:
    case MESA_FORMAT_R8G8B8X8_SRGB:
+   case MESA_FORMAT_X8B8G8R8_SRGB:
    case MESA_FORMAT_RGBX_UINT8:
    case MESA_FORMAT_RGBX_SINT8:
    case MESA_FORMAT_B10G10R10X2_UNORM:
@@ -1875,6 +1890,7 @@ _mesa_format_matches_format_and_type(mesa_format mesa_format,
          !swapBytes;
 
    case MESA_FORMAT_B8G8R8X8_SRGB:
+   case MESA_FORMAT_X8R8G8B8_SRGB:
       return GL_FALSE;
    }
 

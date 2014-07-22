@@ -769,6 +769,18 @@ FETCH(B8G8R8A8_SRGB)(const struct swrast_texture_image *texImage,
 
 
 static void
+FETCH(A8R8G8B8_SRGB)(const struct swrast_texture_image *texImage,
+                     GLint i, GLint j, GLint k, GLfloat *texel)
+{
+   const GLuint s = *TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
+   texel[RCOMP] = util_format_srgb_8unorm_to_linear_float( (s >>  8) & 0xff );
+   texel[GCOMP] = util_format_srgb_8unorm_to_linear_float( (s >> 16) & 0xff );
+   texel[BCOMP] = util_format_srgb_8unorm_to_linear_float( (s >> 24) );
+   texel[ACOMP] = UBYTE_TO_FLOAT( s & 0xff ); /* linear! */
+}
+
+
+static void
 FETCH(R8G8B8A8_SRGB)(const struct swrast_texture_image *texImage,
                      GLint i, GLint j, GLint k, GLfloat *texel)
 {
@@ -788,6 +800,18 @@ FETCH(R8G8B8X8_SRGB)(const struct swrast_texture_image *texImage,
    texel[RCOMP] = util_format_srgb_8unorm_to_linear_float( (s      ) & 0xff );
    texel[GCOMP] = util_format_srgb_8unorm_to_linear_float( (s >>  8) & 0xff );
    texel[BCOMP] = util_format_srgb_8unorm_to_linear_float( (s >> 16) & 0xff );
+   texel[ACOMP] = 1.0f;
+}
+
+
+static void
+FETCH(X8B8G8R8_SRGB)(const struct swrast_texture_image *texImage,
+                     GLint i, GLint j, GLint k, GLfloat *texel)
+{
+   const GLuint s = *TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
+   texel[RCOMP] = util_format_srgb_8unorm_to_linear_float( (s >> 24) );
+   texel[GCOMP] = util_format_srgb_8unorm_to_linear_float( (s >> 16) & 0xff );
+   texel[BCOMP] = util_format_srgb_8unorm_to_linear_float( (s >>  8) & 0xff );
    texel[ACOMP] = 1.0f;
 }
 
