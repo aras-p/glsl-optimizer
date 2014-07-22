@@ -384,3 +384,12 @@ PIPE_FORMAT_R10G10B10A2_UINT        , plain, 1, 1, up10 , up10 , up10, up2 , xyz
 
 PIPE_FORMAT_B5G6R5_SRGB             , plain, 1, 1, un5 , un6 , un5 ,     , zyx1, srgb, un5 , un6 , un5 ,     , xyz1
 
+PIPE_FORMAT_A8L8_UNORM            , plain, 1, 1, un8 , un8 , , , yyyx, rgb
+PIPE_FORMAT_A8L8_SNORM            , plain, 1, 1, sn8 , sn8 , , , yyyx, rgb
+PIPE_FORMAT_A8L8_SRGB             , plain, 1, 1, un8 , un8 , , , yyyx, srgb
+PIPE_FORMAT_A16L16_UNORM          , plain, 1, 1, un16, un16, , , yyyx, rgb
+
+PIPE_FORMAT_G8R8_UNORM            , plain, 1, 1, un8 , un8 , , , yx01, rgb
+PIPE_FORMAT_G8R8_SNORM            , plain, 1, 1, sn8 , sn8 , , , yx01, rgb
+PIPE_FORMAT_G16R16_UNORM          , plain, 1, 1, un16, un16, , , yx01, rgb
+PIPE_FORMAT_G16R16_SNORM          , plain, 1, 1, sn16, sn16, , , yx01, rgb

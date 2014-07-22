@@ -349,6 +349,16 @@ enum pipe_format {
    PIPE_FORMAT_BPTC_RGB_FLOAT          = 257,
    PIPE_FORMAT_BPTC_RGB_UFLOAT         = 258,
 
+   PIPE_FORMAT_A8L8_UNORM              = 259,
+   PIPE_FORMAT_A8L8_SNORM              = 260,
+   PIPE_FORMAT_A8L8_SRGB               = 261,
+   PIPE_FORMAT_A16L16_UNORM            = 262,
+
+   PIPE_FORMAT_G8R8_UNORM              = 263,
+   PIPE_FORMAT_G8R8_SNORM              = 264,
+   PIPE_FORMAT_G16R16_UNORM            = 265,
+   PIPE_FORMAT_G16R16_SNORM            = 266,
+
    PIPE_FORMAT_COUNT
 };
 
