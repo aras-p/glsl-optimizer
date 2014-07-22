@@ -550,7 +550,8 @@ backend_visitor::backend_visitor(struct brw_context *brw,
      shader_prog(shader_prog),
      prog(prog),
      stage_prog_data(stage_prog_data),
-     cfg(NULL)
+     cfg(NULL),
+     stage(stage)
 {
 }
 
