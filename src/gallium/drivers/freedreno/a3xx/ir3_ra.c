@@ -576,7 +576,8 @@ static void ir3_instr_ra(struct ir3_ra_ctx *ctx,
 		dst->flags &= ~IR3_REG_ADDR;
 		num = regid(REG_A0, 0) | REG_HALF;
 	} else {
-		assert(0);
+		/* predicate register (p0).. etc */
+		return;
 	}
 
 	ra_assign(ctx, instr, num);
