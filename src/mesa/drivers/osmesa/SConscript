@@ -3,6 +3,7 @@ Import('*')
 env = env.Clone()
 
 env.Prepend(CPPPATH = [
+    '#src',
     '#src/mapi',
     '#src/mesa',
     Dir('../../../mapi'), # src/mapi build path for python-generated GL API files/headers

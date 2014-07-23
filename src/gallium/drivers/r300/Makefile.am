@@ -4,7 +4,7 @@ include Makefile.sources
 include $(top_srcdir)/src/gallium/Automake.inc
 
 AM_CFLAGS = \
-	-I$(top_srcdir)/src/util \
+	-I$(top_srcdir)/src \
 	-I$(top_srcdir)/src/mesa/program \
 	-I$(top_srcdir)/src/mesa \
 	-I$(top_srcdir)/src/glsl \

@@ -53,7 +53,8 @@ extern "C" {
 #include <stddef.h>
 #include <stdarg.h>
 #include <stdbool.h>
-#include "main/compiler.h"
+
+#include "macros.h"
 
 /**
  * \def ralloc(ctx, type)

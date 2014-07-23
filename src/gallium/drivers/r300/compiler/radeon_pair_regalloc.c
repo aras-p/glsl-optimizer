@@ -33,7 +33,7 @@
 #include "main/glheader.h"
 #include "program/register_allocate.h"
 #include "util/u_memory.h"
-#include "ralloc.h"
+#include "util/ralloc.h"
 
 #include "r300_fragprog_swizzle.h"
 #include "radeon_compiler.h"

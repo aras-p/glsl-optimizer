@@ -26,6 +26,7 @@ noinst_LTLIBRARIES = libloader.la
 libloader_la_CPPFLAGS = \
 	$(DEFINES) \
 	-I$(top_srcdir)/include \
+	-I$(top_srcdir)/src \
 	$(VISIBILITY_CFLAGS) \
 	$(LIBUDEV_CFLAGS)
 

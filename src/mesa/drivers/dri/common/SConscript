@@ -10,6 +10,7 @@ drienv.Replace(CPPPATH = [
     xmlpool_options.dir.dir, # Dir to generated xmlpool/options.h
     '#include',
     '#include/GL/internal',
+    '#src',
     '#src/mapi',
     '#src/gallium/include',
     '#src/gallium/auxiliary',

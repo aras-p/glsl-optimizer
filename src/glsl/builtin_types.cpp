@@ -36,6 +36,7 @@
 
 #include "glsl_types.h"
 #include "glsl_parser_extras.h"
+#include "util/macros.h"
 
 /**
  * Declarations of type flyweights (glsl_type::_foo_type) and
@@ -48,7 +49,7 @@
 
 #define STRUCT_TYPE(NAME)                                       \
    const glsl_type glsl_type::_struct_##NAME##_type =           \
-      glsl_type(NAME##_fields, Elements(NAME##_fields), #NAME); \
+      glsl_type(NAME##_fields, ARRAY_SIZE(NAME##_fields), #NAME); \
    const glsl_type *const glsl_type::struct_##NAME##_type =     \
       &glsl_type::_struct_##NAME##_type;
 
@@ -265,7 +266,7 @@ _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state)
 {
    struct glsl_symbol_table *symbols = state->symbols;
 
-   for (unsigned i = 0; i < Elements(builtin_type_versions); i++) {
+   for (unsigned i = 0; i < ARRAY_SIZE(builtin_type_versions); i++) {
       const struct builtin_type_versions *const t = &builtin_type_versions[i];
       if (state->is_version(t->min_gl, t->min_es)) {
          add_type(symbols, t->type);
@@ -276,7 +277,7 @@ _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state)
     * they're still present.  We've removed them in 1.40+ (OpenGL 3.1+).
     */
    if (!state->es_shader && state->language_version < 140) {
-      for (unsigned i = 0; i < Elements(deprecated_types); i++) {
+      for (unsigned i = 0; i < ARRAY_SIZE(deprecated_types); i++) {
          add_type(symbols, deprecated_types[i]);
       }
    }

@@ -11,6 +11,7 @@ env.PkgUseModules(['DRM'])
 #env.Append(CPPDEFINES = [('__NOT_HAVE_DRM_H', '1')])
 
 env.Append(CPPPATH = [
+    '#/src',
     '#/src/mapi',
     '#/src/mesa',
     '#/src/gallium/state_trackers/dri/common',

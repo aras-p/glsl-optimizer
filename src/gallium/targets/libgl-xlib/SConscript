@@ -29,6 +29,7 @@ env.Prepend(LIBS = [
     ws_xlib,
     mesautil,
     glapi,
+    mesautil,
     mesa,
     glsl,
     gallium,

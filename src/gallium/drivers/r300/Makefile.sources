@@ -67,5 +67,4 @@ COMPILER_TESTS_SOURCES := \
 	compiler/tests/unit_test.c
 
 HELPER_SOURCES := \
-	ralloc.c \
 	register_allocate.c
