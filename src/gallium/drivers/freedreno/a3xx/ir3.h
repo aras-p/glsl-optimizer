@@ -217,13 +217,13 @@ struct ir3_instruction {
 #endif
 };
 
-#define MAX_INSTRS 1024
+struct ir3_heap_chunk;
 
 struct ir3_shader {
-	unsigned instrs_count;
-	struct ir3_instruction *instrs[MAX_INSTRS];
-	uint32_t heap[128 * MAX_INSTRS];
+	unsigned instrs_count, instrs_sz;
+	struct ir3_instruction **instrs;
 	unsigned heap_idx;
+	struct ir3_heap_chunk *chunk;
 };
 
 struct ir3_block {

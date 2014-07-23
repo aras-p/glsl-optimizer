@@ -33,23 +33,54 @@
 #include "freedreno_util.h"
 #include "instr-a3xx.h"
 
+#define CHUNK_SZ 1020
+
+struct ir3_heap_chunk {
+	struct ir3_heap_chunk *next;
+	uint32_t heap[CHUNK_SZ];
+};
+
+static void grow_heap(struct ir3_shader *shader)
+{
+	struct ir3_heap_chunk *chunk = calloc(1, sizeof(*chunk));
+	chunk->next = shader->chunk;
+	shader->chunk = chunk;
+	shader->heap_idx = 0;
+}
+
 /* simple allocator to carve allocations out of an up-front allocated heap,
  * so that we can free everything easily in one shot.
  */
 void * ir3_alloc(struct ir3_shader *shader, int sz)
 {
-	void *ptr = &shader->heap[shader->heap_idx];
-	shader->heap_idx += align(sz, 4);
+	void *ptr;
+
+	sz = align(sz, 4) / 4;
+
+	if ((shader->heap_idx + sz) > CHUNK_SZ)
+		grow_heap(shader);
+
+	ptr = &shader->chunk->heap[shader->heap_idx];
+	shader->heap_idx += sz;
+
 	return ptr;
 }
 
 struct ir3_shader * ir3_shader_create(void)
 {
-	return calloc(1, sizeof(struct ir3_shader));
+	struct ir3_shader *shader =
+			calloc(1, sizeof(struct ir3_shader));
+	grow_heap(shader);
+	return shader;
 }
 
 void ir3_shader_destroy(struct ir3_shader *shader)
 {
+	while (shader->chunk) {
+		struct ir3_heap_chunk *chunk = shader->chunk;
+		shader->chunk = chunk->next;
+		free(chunk);
+	}
 	free(shader);
 }
 
@@ -559,7 +590,11 @@ static void insert_instr(struct ir3_shader *shader,
 	static uint32_t serialno = 0;
 	instr->serialno = ++serialno;
 #endif
-	assert(shader->instrs_count < ARRAY_SIZE(shader->instrs));
+	if (shader->instrs_count == shader->instrs_sz) {
+		shader->instrs_sz = MAX2(2 * shader->instrs_sz, 16);
+		shader->instrs = realloc(shader->instrs,
+				shader->instrs_sz * sizeof(shader->instrs[0]));
+	}
 	shader->instrs[shader->instrs_count++] = instr;
 }
 
