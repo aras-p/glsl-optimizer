@@ -1998,6 +1998,10 @@ if test -n "$with_gallium_drivers"; then
             if test "x$enable_dri" = xyes; then
                 GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS dri/swrast"
             fi
+
+            if test "x$have_libdrm" = xyes; then
+                GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS dri/kms-swrast"
+            fi
             ;;
         *)
             AC_MSG_ERROR([Unknown Gallium driver: $driver])
@@ -2234,6 +2238,7 @@ AC_CONFIG_FILES([Makefile
 		src/gallium/winsys/svga/drm/Makefile
 		src/gallium/winsys/sw/dri/Makefile
 		src/gallium/winsys/sw/fbdev/Makefile
+		src/gallium/winsys/sw/kms-dri/Makefile
 		src/gallium/winsys/sw/null/Makefile
 		src/gallium/winsys/sw/wayland/Makefile
 		src/gallium/winsys/sw/wrapper/Makefile

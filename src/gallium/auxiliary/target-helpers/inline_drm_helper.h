@@ -8,6 +8,11 @@
 #include "dri_screen.h"
 #endif
 
+#if GALLIUM_SOFTPIPE
+#include "target-helpers/inline_sw_helper.h"
+#include "sw/kms-dri/kms_dri_sw_winsys.h"
+#endif
+
 #if GALLIUM_I915
 #include "i915/drm/i915_drm_public.h"
 #include "i915/i915_public.h"
@@ -52,6 +57,33 @@
 static char* driver_name = NULL;
 
 /* XXX: We need to teardown the winsys if *screen_create() fails. */
+
+#if defined(GALLIUM_SOFTPIPE)
+#if defined(DRI_TARGET)
+
+const __DRIextension **__driDriverGetExtensions_kms_swrast(void);
+
+PUBLIC const __DRIextension **__driDriverGetExtensions_kms_swrast(void)
+{
+   globalDriverAPI = &dri_kms_driver_api;
+   return galliumdrm_driver_extensions;
+}
+
+struct pipe_screen *
+kms_swrast_create_screen(int fd)
+{
+   struct sw_winsys *sws;
+   struct pipe_screen *screen;
+
+   sws = kms_dri_create_winsys(fd);
+   if (!sws)
+      return NULL;
+
+   screen = sw_screen_create(sws);
+   return screen ? debug_screen_wrap(screen) : NULL;
+}
+#endif
+#endif
 
 #if defined(GALLIUM_I915)
 #if defined(DRI_TARGET)

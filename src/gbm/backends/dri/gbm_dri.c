@@ -403,12 +403,13 @@ dri_load_driver_swrast(struct gbm_dri_device *dri)
 }
 
 static int
-dri_screen_create(struct gbm_dri_device *dri)
+dri_screen_create_dri2(struct gbm_dri_device *dri,
+                       const char *driver_name)
 {
    const __DRIextension **extensions;
    int ret = 0;
 
-   dri->base.driver_name = loader_get_driver_for_fd(dri->base.base.fd, 0);
+   dri->base.driver_name = driver_name;
    if (dri->base.driver_name == NULL)
       return -1;
 
@@ -488,6 +489,35 @@ dri_screen_create_swrast(struct gbm_dri_device *dri)
    dri->lookup_user_data = NULL;
 
    return 0;
+}
+
+static int
+dri_screen_create(struct gbm_dri_device *dri)
+{
+   const char *driver_name;
+
+   driver_name = loader_get_driver_for_fd(dri->base.base.fd, 0);
+   if (!driver_name)
+      return -1;
+
+   return dri_screen_create_dri2(dri, driver_name);
+}
+
+static int
+dri_screen_create_sw(struct gbm_dri_device *dri)
+{
+   const char *driver_name;
+   int ret;
+
+   driver_name = strdup("kms_swrast");
+   if (!driver_name)
+      return -errno;
+
+   ret = dri_screen_create_dri2(dri, driver_name);
+   if (ret == 0)
+      return ret;
+
+   return dri_screen_create_swrast(dri);
 }
 
 static int
@@ -920,9 +950,9 @@ dri_device_create(int fd)
    if (!force_sw) {
       ret = dri_screen_create(dri);
       if (ret)
-         ret = dri_screen_create_swrast(dri);
+         ret = dri_screen_create_sw(dri);
    } else {
-      ret = dri_screen_create_swrast(dri);
+      ret = dri_screen_create_sw(dri);
    }
 
    if (ret)

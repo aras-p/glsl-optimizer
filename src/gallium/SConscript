@@ -71,6 +71,10 @@ if env['dri']:
     ])
 
     SConscript([
+        'winsys/sw/kms-dri/SConscript',
+    ])
+
+    SConscript([
         'winsys/svga/drm/SConscript',
     ])
 

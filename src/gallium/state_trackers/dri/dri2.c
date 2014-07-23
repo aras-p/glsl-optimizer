@@ -1297,6 +1297,48 @@ fail:
    return NULL;
 }
 
+/**
+ * This is the driver specific part of the createNewScreen entry point.
+ *
+ * Returns the struct gl_config supported by this driver.
+ */
+static const __DRIconfig **
+dri_kms_init_screen(__DRIscreen * sPriv)
+{
+#if GALLIUM_STATIC_TARGETS
+   const __DRIconfig **configs;
+   struct dri_screen *screen;
+   struct pipe_screen *pscreen = NULL;
+
+   screen = CALLOC_STRUCT(dri_screen);
+   if (!screen)
+      return NULL;
+
+   screen->sPriv = sPriv;
+   screen->fd = sPriv->fd;
+
+   sPriv->driverPrivate = (void *)screen;
+
+   pscreen = kms_swrast_create_screen(screen->fd);
+   sPriv->extensions = dri_screen_extensions;
+
+   /* dri_init_screen_helper checks pscreen for us */
+   configs = dri_init_screen_helper(screen, pscreen, "swrast");
+   if (!configs)
+      goto fail;
+
+   screen->auto_fake_front = dri_with_format(sPriv);
+   screen->broken_invalidate = !sPriv->dri2.useInvalidate;
+   screen->lookup_egl_image = dri2_lookup_egl_image;
+
+   return configs;
+fail:
+   dri_destroy_screen_helper(screen);
+   FREE(screen);
+#endif // GALLIUM_STATIC_TARGETS
+   return NULL;
+}
+
 static boolean
 dri2_create_buffer(__DRIscreen * sPriv,
                    __DRIdrawable * dPriv,
@@ -1323,6 +1365,27 @@ dri2_create_buffer(__DRIscreen * sPriv,
  */
 const struct __DriverAPIRec galliumdrm_driver_api = {
    .InitScreen = dri2_init_screen,
+   .DestroyScreen = dri_destroy_screen,
+   .CreateContext = dri_create_context,
+   .DestroyContext = dri_destroy_context,
+   .CreateBuffer = dri2_create_buffer,
+   .DestroyBuffer = dri_destroy_buffer,
+   .MakeCurrent = dri_make_current,
+   .UnbindContext = dri_unbind_context,
+
+   .AllocateBuffer = dri2_allocate_buffer,
+   .ReleaseBuffer  = dri2_release_buffer,
+};
+
+/**
+ * DRI driver virtual function table.
+ *
+ * KMS/DRM version of the DriverAPI above sporting a different InitScreen
+ * hook. The latter is used to explicitly initialise the kms_swrast driver
+ * rather than selecting the approapriate driver as suggested by the loader.
+ */
+const struct __DriverAPIRec dri_kms_driver_api = {
+   .InitScreen = dri_kms_init_screen,
    .DestroyScreen = dri_destroy_screen,
    .CreateContext = dri_create_context,
    .DestroyContext = dri_destroy_context,
