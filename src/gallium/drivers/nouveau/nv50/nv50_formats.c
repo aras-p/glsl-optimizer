@@ -62,12 +62,14 @@
 # define U_IC  U_IB
 # define U_TCV U_TBV
 # define U_ICV U_IBV
+# define U_t   U_T
 # define U_tV  U_TV
 #else
 # define U_TC  U_TR
 # define U_IC  U_IR
 # define U_TCV U_TRV
 # define U_ICV U_IRV
+# define U_t   0
 # define U_tV  U_V
 #endif
 
@@ -284,6 +286,11 @@ const struct nv50_format nv50_format_table[PIPE_FORMAT_COUNT] =
    F3B(LATC1_SNORM, NONE, C0, C0, C0, xx, SNORM, RGTC1, T),
    C4B(LATC2_UNORM, NONE, C0, C0, C0, C1, UNORM, RGTC2, T),
    C4B(LATC2_SNORM, NONE, C0, C0, C0, C1, SNORM, RGTC2, T),
+
+   C4B(BPTC_RGBA_UNORM, NONE, C0, C1, C2, C3, UNORM, BPTC, t),
+   C4B(BPTC_SRGBA,      NONE, C0, C1, C2, C3, UNORM, BPTC, t),
+   F3B(BPTC_RGB_FLOAT,  NONE, C0, C1, C2, xx, FLOAT, BPTC_FLOAT, t),
+   F3B(BPTC_RGB_UFLOAT, NONE, C0, C1, C2, xx, FLOAT, BPTC_UFLOAT, t),
 
    C4A(R32G32B32A32_FLOAT, RGBA32_FLOAT, C0, C1, C2, C3, FLOAT, 32_32_32_32,
        IBV, 0),
