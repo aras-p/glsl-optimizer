@@ -304,6 +304,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_CUBE_MAP_ARRAY:
 	case PIPE_CAP_TGSI_VS_LAYER_VIEWPORT:
 	case PIPE_CAP_MAX_TEXTURE_GATHER_COMPONENTS:
+	case PIPE_CAP_TEXTURE_QUERY_LOD:
 		return family >= CHIP_CEDAR ? 1 : 0;
 
 	/* Unsupported features. */
@@ -314,7 +315,6 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_VERTEX_COLOR_CLAMPED:
 	case PIPE_CAP_USER_VERTEX_BUFFERS:
 	case PIPE_CAP_TEXTURE_GATHER_SM5:
-	case PIPE_CAP_TEXTURE_QUERY_LOD:
 	case PIPE_CAP_SAMPLE_SHADING:
 	case PIPE_CAP_TEXTURE_GATHER_OFFSETS:
 	case PIPE_CAP_DRAW_INDIRECT:

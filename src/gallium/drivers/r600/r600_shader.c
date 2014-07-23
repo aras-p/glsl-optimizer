@@ -5104,13 +5104,21 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 		tex.dst_sel_x = (inst->Dst[0].Register.WriteMask & 2) ? 1 : 7;
 		tex.dst_sel_y = (inst->Dst[0].Register.WriteMask & 4) ? 2 : 7;
 		tex.dst_sel_z = (inst->Dst[0].Register.WriteMask & 1) ? 0 : 7;
+		tex.dst_sel_w = (inst->Dst[0].Register.WriteMask & 8) ? 3 : 7;
+	}
+	else if (inst->Instruction.Opcode == TGSI_OPCODE_LODQ) {
+		tex.dst_sel_x = (inst->Dst[0].Register.WriteMask & 2) ? 1 : 7;
+		tex.dst_sel_y = (inst->Dst[0].Register.WriteMask & 1) ? 0 : 7;
+		tex.dst_sel_z = 7;
+		tex.dst_sel_w = 7;
 	}
 	else {
 		tex.dst_sel_x = (inst->Dst[0].Register.WriteMask & 1) ? 0 : 7;
 		tex.dst_sel_y = (inst->Dst[0].Register.WriteMask & 2) ? 1 : 7;
 		tex.dst_sel_z = (inst->Dst[0].Register.WriteMask & 4) ? 2 : 7;
+		tex.dst_sel_w = (inst->Dst[0].Register.WriteMask & 8) ? 3 : 7;
 	}
-	tex.dst_sel_w = (inst->Dst[0].Register.WriteMask & 8) ? 3 : 7;
+
 
 	if (inst->Instruction.Opcode == TGSI_OPCODE_TXQ_LZ) {
 		tex.src_sel_x = 4;
@@ -6666,6 +6674,7 @@ static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_IMUL_HI, 0, ALU_OP0_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_UMUL_HI, 0, ALU_OP0_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_TG4,   0, FETCH_OP_GATHER4, tgsi_unsupported},
+	{TGSI_OPCODE_LODQ,	0, FETCH_OP_GET_LOD, tgsi_unsupported},
 	{TGSI_OPCODE_LAST,	0, ALU_OP0_NOP, tgsi_unsupported},
 };
 
@@ -6860,6 +6869,7 @@ static struct r600_shader_tgsi_instruction eg_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_IMUL_HI, 0, ALU_OP0_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_UMUL_HI, 0, ALU_OP0_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_TG4,   0, FETCH_OP_GATHER4, tgsi_tex},
+	{TGSI_OPCODE_LODQ,	0, FETCH_OP_GET_LOD, tgsi_tex},
 	{TGSI_OPCODE_LAST,	0, ALU_OP0_NOP, tgsi_unsupported},
 };
 
@@ -7055,5 +7065,6 @@ static struct r600_shader_tgsi_instruction cm_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_IMUL_HI, 0, ALU_OP0_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_UMUL_HI, 0, ALU_OP0_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_TG4,   0, FETCH_OP_GATHER4, tgsi_tex},
+	{TGSI_OPCODE_LODQ,	0, FETCH_OP_GET_LOD, tgsi_tex},
 	{TGSI_OPCODE_LAST,	0, ALU_OP0_NOP, tgsi_unsupported},
 };
