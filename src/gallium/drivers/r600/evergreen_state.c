@@ -2841,8 +2841,14 @@ void evergreen_update_ps_state(struct pipe_context *ctx, struct r600_pipe_shader
 		   POSITION goes via GPRs from the SC so isn't counted */
 		if (rshader->input[i].name == TGSI_SEMANTIC_POSITION)
 			pos_index = i;
-		else if (rshader->input[i].name == TGSI_SEMANTIC_FACE)
-			face_index = i;
+		else if (rshader->input[i].name == TGSI_SEMANTIC_FACE) {
+			if (face_index == -1)
+				face_index = i;
+		}
+		else if (rshader->input[i].name == TGSI_SEMANTIC_SAMPLEMASK) {
+			if (face_index == -1)
+				face_index = i; /* lives in same register, same enable bit */
+		}
 		else {
 			ninterp++;
 			if (rshader->input[i].interpolate == TGSI_INTERPOLATE_LINEAR)

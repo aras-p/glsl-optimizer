@@ -109,7 +109,7 @@ GL 4.0:
   - Enhanced textureGather                             DONE (i965, nvc0, radeonsi)
   - Geometry shader instancing                         DONE (i965, nvc0)
   - Geometry shader multiple streams                   DONE (i965, nvc0)
-  - Enhanced per-sample shading                        DONE (i965)
+  - Enhanced per-sample shading                        DONE (i965, r600)
   - Interpolation functions                            DONE (i965)
   - New overload resolution rules                      DONE
   GL_ARB_gpu_shader_fp64                               started (Dave)

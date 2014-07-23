@@ -287,7 +287,9 @@ struct r600_shader_ctx {
 	boolean                                 input_linear;
 	boolean                                 input_perspective;
 	int					num_interp_gpr;
+	/* evergreen/cayman also store sample mask in face register */
 	int					face_gpr;
+	boolean					has_samplemask;
 	int					colors_used;
 	boolean                 clip_vertex_write;
 	unsigned                cv_output;
@@ -498,7 +500,8 @@ static int r600_spi_sid(struct r600_shader_io * io)
 	if (name == TGSI_SEMANTIC_POSITION ||
 	    name == TGSI_SEMANTIC_PSIZE ||
 	    name == TGSI_SEMANTIC_EDGEFLAG ||
-	    name == TGSI_SEMANTIC_FACE)
+	    name == TGSI_SEMANTIC_FACE ||
+	    name == TGSI_SEMANTIC_SAMPLEMASK)
 		index = 0;
 	else {
 		if (name == TGSI_SEMANTIC_GENERIC) {
@@ -585,7 +588,8 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 			ctx->shader->input[i].spi_sid = r600_spi_sid(&ctx->shader->input[i]);
 			switch (ctx->shader->input[i].name) {
 			case TGSI_SEMANTIC_FACE:
-				ctx->face_gpr = ctx->shader->input[i].gpr;
+				if (ctx->face_gpr == -1)
+					ctx->face_gpr = ctx->shader->input[i].gpr;
 				break;
 			case TGSI_SEMANTIC_COLOR:
 				ctx->colors_used++;
@@ -675,7 +679,14 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 		break;
 
 	case TGSI_FILE_SYSTEM_VALUE:
-		if (d->Semantic.Name == TGSI_SEMANTIC_INSTANCEID) {
+		if (d->Semantic.Name == TGSI_SEMANTIC_SAMPLEMASK) {
+			ctx->has_samplemask = true;
+			/* lives in Front Face GPR */
+			if (ctx->face_gpr == -1)
+				ctx->face_gpr = ctx->file_offset[TGSI_FILE_SYSTEM_VALUE] + d->Range.First;
+			break;
+		}
+		else if (d->Semantic.Name == TGSI_SEMANTIC_INSTANCEID) {
 			if (!ctx->native_integers) {
 				struct r600_bytecode_alu alu;
 				memset(&alu, 0, sizeof(struct r600_bytecode_alu));
@@ -729,7 +740,8 @@ static int evergreen_gpr_count(struct r600_shader_ctx *ctx)
 	for (i = 0; i < ctx->info.num_inputs; i++) {
 		/* skip position/face */
 		if (ctx->info.input_semantic_name[i] == TGSI_SEMANTIC_POSITION ||
-		    ctx->info.input_semantic_name[i] == TGSI_SEMANTIC_FACE)
+		    ctx->info.input_semantic_name[i] == TGSI_SEMANTIC_FACE ||
+		    ctx->info.input_semantic_name[i] == TGSI_SEMANTIC_SAMPLEMASK)
 			continue;
 		if (ctx->info.input_interpolate[i] == TGSI_INTERPOLATE_LINEAR)
 			ctx->input_linear = TRUE;
@@ -781,7 +793,13 @@ static void tgsi_src(struct r600_shader_ctx *ctx,
 		r600_src->sel = V_SQ_ALU_SRC_LITERAL;
 		memcpy(r600_src->value, ctx->literals + index * 4, sizeof(r600_src->value));
 	} else if (tgsi_src->Register.File == TGSI_FILE_SYSTEM_VALUE) {
-		if (ctx->info.system_value_semantic_name[tgsi_src->Register.Index] == TGSI_SEMANTIC_INSTANCEID) {
+		if (ctx->info.system_value_semantic_name[tgsi_src->Register.Index] == TGSI_SEMANTIC_SAMPLEMASK) {
+			r600_src->swizzle[0] = 2; // Z value
+			r600_src->swizzle[0] = 2;
+			r600_src->swizzle[0] = 2;
+			r600_src->swizzle[0] = 2;
+			r600_src->sel = ctx->face_gpr;
+		} else if (ctx->info.system_value_semantic_name[tgsi_src->Register.Index] == TGSI_SEMANTIC_INSTANCEID) {
 			r600_src->swizzle[0] = 3;
 			r600_src->swizzle[1] = 3;
 			r600_src->swizzle[2] = 3;
@@ -1585,6 +1603,7 @@ static int r600_shader_from_tgsi(struct r600_context *rctx,
 	ctx.gs_next_vertex = 0;
 
 	ctx.face_gpr = -1;
+	ctx.has_samplemask = false;
 	ctx.fragcoord_input = -1;
 	ctx.colors_used = 0;
 	ctx.clip_vertex_write = 0;
@@ -1743,6 +1762,14 @@ static int r600_shader_from_tgsi(struct r600_context *rctx,
 	}
 	
 	shader->ring_item_size = ctx.next_ring_offset;
+
+	/* Need to tell setup to program FACE register */
+	if (ctx.has_samplemask && ctx.face_gpr != -1) {
+		i = ctx.shader->ninput++;
+		ctx.shader->input[i].name = TGSI_SEMANTIC_SAMPLEMASK;
+		ctx.shader->input[i].spi_sid = 0;
+		ctx.shader->input[i].gpr = ctx.face_gpr;
+	}
 
 	/* Process two side if needed */
 	if (shader->two_side && ctx.colors_used) {
