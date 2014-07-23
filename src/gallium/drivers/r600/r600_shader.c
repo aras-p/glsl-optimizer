@@ -854,7 +854,6 @@ static int tgsi_fetch_rel_const(struct r600_shader_ctx *ctx,
 	vtx.data_format = FMT_32_32_32_32_FLOAT;
 	vtx.num_format_all = 2;		/* NUM_FORMAT_SCALED */
 	vtx.format_comp_all = 1;	/* FORMAT_COMP_SIGNED */
-	vtx.srf_mode_all = 1;		/* SRF_MODE_NO_ZERO */
 	vtx.endian = r600_endian_swap(32);
 
 	if ((r = r600_bytecode_add_vtx(ctx->bc, &vtx)))
@@ -4354,7 +4353,6 @@ static int do_vtx_fetch_inst(struct r600_shader_ctx *ctx, boolean src_requires_l
 	vtx.dst_sel_z = (inst->Dst[0].Register.WriteMask & 4) ? 2 : 7;		/* SEL_Z */
 	vtx.dst_sel_w = (inst->Dst[0].Register.WriteMask & 8) ? 3 : 7;		/* SEL_W */
 	vtx.use_const_fields = 1;
-	vtx.srf_mode_all = 1;		/* SRF_MODE_NO_ZERO */
 
 	if ((r = r600_bytecode_add_vtx(ctx->bc, &vtx)))
 		return r;

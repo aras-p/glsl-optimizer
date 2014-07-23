@@ -618,7 +618,6 @@ texture_buffer_sampler_view(struct r600_pipe_sampler_view *view,
 		S_038008_DATA_FORMAT(format) |
 		S_038008_NUM_FORMAT_ALL(num_format) |
 		S_038008_FORMAT_COMP_ALL(format_comp) |
-		S_038008_SRF_MODE_ALL(1) |
 		S_038008_ENDIAN_SWAP(endian);
 	view->tex_resource_words[3] = 0;
 	/*
@@ -729,7 +728,6 @@ r600_create_sampler_view_custom(struct pipe_context *ctx,
 		view->tex_resource_words[3] = tmp->surface.level[offset_level + 1].offset >> 8;
 	}
 	view->tex_resource_words[4] = (word4 |
-				       S_038010_SRF_MODE_ALL(V_038010_SRF_MODE_ZERO_CLAMP_MINUS_ONE) |
 				       S_038010_REQUEST_SIZE(1) |
 				       S_038010_ENDIAN_SWAP(endian) |
 				       S_038010_BASE_LEVEL(0));

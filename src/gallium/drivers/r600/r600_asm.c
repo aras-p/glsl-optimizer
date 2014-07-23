@@ -2375,7 +2375,6 @@ void *r600_create_vertex_fetch_shader(struct pipe_context *ctx,
 		vtx.data_format = format;
 		vtx.num_format_all = num_format;
 		vtx.format_comp_all = format_comp;
-		vtx.srf_mode_all = 1;
 		vtx.offset = elements[i].src_offset;
 		vtx.endian = endian;
 
