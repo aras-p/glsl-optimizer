@@ -756,7 +756,8 @@ vec4_generator::generate_gs_ff_sync_set_primitives(struct brw_reg dst,
 void
 vec4_generator::generate_gs_ff_sync(vec4_instruction *inst,
                                     struct brw_reg dst,
-                                    struct brw_reg src0)
+                                    struct brw_reg src0,
+                                    struct brw_reg src1)
 {
    /* This opcode uses an implied MRF register for:
     *  - the header of the ff_sync message. And as such it is expected to be
@@ -766,14 +767,13 @@ vec4_generator::generate_gs_ff_sync(vec4_instruction *inst,
    struct brw_reg header =
       retype(brw_message_reg(inst->base_mrf), BRW_REGISTER_TYPE_UD);
 
-   /* Overwrite dword 0 of the header (cleared for now since we are not doing
-    * transform feedback) and dword 1 (to hold the number of primitives
-    * written).
+   /* Overwrite dword 0 of the header (SO vertices to write) and
+    * dword 1 (number of primitives written).
     */
    brw_push_insn_state(p);
    brw_set_default_mask_control(p, BRW_MASK_DISABLE);
    brw_set_default_access_mode(p, BRW_ALIGN_1);
-   brw_MOV(p, get_element_ud(header, 0), brw_imm_ud(0));
+   brw_MOV(p, get_element_ud(header, 0), get_element_ud(src1, 0));
    brw_MOV(p, get_element_ud(header, 1), get_element_ud(src0, 0));
    brw_pop_insn_state(p);
 
@@ -791,6 +791,11 @@ vec4_generator::generate_gs_ff_sync(vec4_instruction *inst,
    brw_set_default_access_mode(p, BRW_ALIGN_1);
    brw_set_default_mask_control(p, BRW_MASK_DISABLE);
    brw_MOV(p, get_element_ud(header, 0), get_element_ud(dst, 0));
+
+   /* src1 is not an immediate when we use transform feedback */
+   if (src1.file != BRW_IMMEDIATE_VALUE)
+      brw_MOV(p, brw_vec4_grf(src1.nr, 0), brw_vec4_grf(dst.nr, 1));
+
    brw_pop_insn_state(p);
 }
 
@@ -1441,7 +1446,7 @@ vec4_generator::generate_code(const cfg_t *cfg)
          break;
 
       case GS_OPCODE_FF_SYNC:
-         generate_gs_ff_sync(inst, dst, src[0]);
+         generate_gs_ff_sync(inst, dst, src[0], src[1]);
          break;
 
       case GS_OPCODE_FF_SYNC_SET_PRIMITIVES:

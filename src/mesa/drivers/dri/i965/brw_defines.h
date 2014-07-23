@@ -1028,6 +1028,10 @@ enum opcode {
     *
     * - src0 is the number of primitives written.
     *
+    * - src1 is the value to hold in M0.0: number of SO vertices to write
+    *   and number of SO primitives needed. Its value will be overwritten
+    *   with the SVBI values if transform feedback is enabled.
+    *
     * Note: This opcode uses an implicit MRF register for the ff_sync message
     * header, so the caller is expected to set inst->base_mrf and initialize
     * that MRF register to r0. This opcode will also write to this MRF register

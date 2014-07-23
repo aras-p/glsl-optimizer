@@ -331,7 +331,8 @@ gen6_gs_visitor::emit_thread_end()
    {
       this->current_annotation = "gen6 thread end: ff_sync";
       vec4_instruction *inst =
-         emit(GS_OPCODE_FF_SYNC, dst_reg(this->temp), this->prim_count);
+         emit(GS_OPCODE_FF_SYNC, dst_reg(this->temp), this->prim_count,
+              brw_imm_ud(0u));
       inst->base_mrf = base_mrf;
 
       /* Loop over all buffered vertices and emit URB write messages */
