@@ -532,6 +532,8 @@ brw_instruction_name(enum opcode op)
       return "gs_svb_write";
    case GS_OPCODE_SVB_SET_DST_INDEX:
       return "gs_svb_set_dst_index";
+   case GS_OPCODE_FF_SYNC_SET_PRIMITIVES:
+      return "gs_ff_sync_set_primitives";
 
    default:
       /* Yes, this leaks.  It's in debug code, it should never occur, and if

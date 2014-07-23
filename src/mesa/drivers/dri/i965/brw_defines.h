@@ -1064,6 +1064,21 @@ enum opcode {
     * - src is the register that holds the destination indices value.
     */
    GS_OPCODE_SVB_SET_DST_INDEX,
+
+   /**
+    * Prepare Mx.0 subregister for being used in the FF_SYNC message header.
+    * Used in gen6 for transform feedback.
+    *
+    * - dst will hold the register with the final Mx.0 value.
+    *
+    * - src0 has the number of vertices emitted in SO (NumSOVertsToWrite)
+    *
+    * - src1 has the number of needed primitives for SO (NumSOPrimsNeeded)
+    *
+    * - src2 is the value to hold in M0: number of SO vertices to write
+    *   and number of SO primitives needed.
+    */
+   GS_OPCODE_FF_SYNC_SET_PRIMITIVES,
 };
 
 enum brw_derivative_quality {

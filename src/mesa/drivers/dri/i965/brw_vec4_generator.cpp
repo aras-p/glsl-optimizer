@@ -733,6 +733,27 @@ vec4_generator::generate_gs_get_instance_id(struct brw_reg dst)
 }
 
 void
+vec4_generator::generate_gs_ff_sync_set_primitives(struct brw_reg dst,
+                                                   struct brw_reg src0,
+                                                   struct brw_reg src1,
+                                                   struct brw_reg src2)
+{
+   brw_push_insn_state(p);
+   brw_set_default_access_mode(p, BRW_ALIGN_1);
+   /* Save src0 data in 16:31 bits of dst.0 */
+   brw_AND(p, suboffset(vec1(dst), 0), suboffset(vec1(src0), 0),
+           brw_imm_ud(0xffffu));
+   brw_SHL(p, suboffset(vec1(dst), 0), suboffset(vec1(dst), 0), brw_imm_ud(16));
+   /* Save src1 data in 0:15 bits of dst.0 */
+   brw_AND(p, suboffset(vec1(src2), 0), suboffset(vec1(src1), 0),
+           brw_imm_ud(0xffffu));
+   brw_OR(p, suboffset(vec1(dst), 0),
+          suboffset(vec1(dst), 0),
+          suboffset(vec1(src2), 0));
+   brw_pop_insn_state(p);
+}
+
+void
 vec4_generator::generate_gs_ff_sync(vec4_instruction *inst,
                                     struct brw_reg dst,
                                     struct brw_reg src0)
@@ -1421,6 +1442,10 @@ vec4_generator::generate_code(const cfg_t *cfg)
 
       case GS_OPCODE_FF_SYNC:
          generate_gs_ff_sync(inst, dst, src[0]);
+         break;
+
+      case GS_OPCODE_FF_SYNC_SET_PRIMITIVES:
+         generate_gs_ff_sync_set_primitives(dst, src[0], src[1], src[2]);
          break;
 
       case GS_OPCODE_SET_PRIMITIVE_ID:

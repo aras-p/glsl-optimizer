@@ -669,6 +669,10 @@ private:
    void generate_gs_prepare_channel_masks(struct brw_reg dst);
    void generate_gs_set_channel_masks(struct brw_reg dst, struct brw_reg src);
    void generate_gs_get_instance_id(struct brw_reg dst);
+   void generate_gs_ff_sync_set_primitives(struct brw_reg dst,
+                                           struct brw_reg src0,
+                                           struct brw_reg src1,
+                                           struct brw_reg src2);
    void generate_gs_ff_sync(vec4_instruction *inst,
                             struct brw_reg dst,
                             struct brw_reg src0);
