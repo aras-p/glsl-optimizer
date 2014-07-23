@@ -70,6 +70,7 @@ struct dri_screen
 
    /* drm */
    int fd;
+   boolean can_share_buffer;
 
    struct pipe_loader_device *dev;
 

@@ -231,6 +231,8 @@ kms_sw_displaytarget_from_handle(struct sw_winsys *ws,
    struct kms_sw_winsys *kms_sw = kms_sw_winsys(ws);
    struct kms_sw_displaytarget *kms_sw_dt;
 
+   assert(whandle->type == DRM_API_HANDLE_TYPE_KMS);
+
    LIST_FOR_EACH_ENTRY(kms_sw_dt, &kms_sw->bo_list, link) {
       if (kms_sw_dt->handle == whandle->handle) {
          kms_sw_dt->ref_count++;
@@ -253,9 +255,13 @@ kms_sw_displaytarget_get_handle(struct sw_winsys *winsys,
 {
    struct kms_sw_displaytarget *kms_sw_dt = kms_sw_displaytarget(dt);
 
-   assert(whandle->type == DRM_API_HANDLE_TYPE_SHARED);
-   whandle->handle = kms_sw_dt->handle;
-   whandle->stride = kms_sw_dt->stride;
+   if (whandle->type == DRM_API_HANDLE_TYPE_KMS) {
+      whandle->handle = kms_sw_dt->handle;
+      whandle->stride = kms_sw_dt->stride;
+   } else {
+      whandle->handle = 0;
+      whandle->stride = 0;
+   }
    return TRUE;
 }
 

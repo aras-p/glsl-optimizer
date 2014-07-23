@@ -1005,7 +1005,7 @@ struct __DRIdri2ExtensionRec {
  * extensions.
  */
 #define __DRI_IMAGE "DRI_IMAGE"
-#define __DRI_IMAGE_VERSION 9
+#define __DRI_IMAGE_VERSION 10
 
 /**
  * These formats correspond to the similarly named MESA_FORMAT_*
@@ -1131,6 +1131,13 @@ enum __DRIChromaSiting {
 
 /** Client requested an invalid texture object */
 #define __DRI_IMAGE_ERROR_BAD_PARAMETER 3
+/*@}*/
+
+/**
+ * \name Capabilities that might be returned by __DRIimageExtensionRec::getCapabilities
+ */
+/*@{*/
+#define __DRI_IMAGE_CAP_GLOBAL_NAMES 1
 /*@}*/
 
 /**
@@ -1261,6 +1268,14 @@ struct __DRIimageExtensionRec {
                      int dstx0, int dsty0, int dstwidth, int dstheight,
                      int srcx0, int srcy0, int srcwidth, int srcheight,
                      int flush_flag);
+
+   /**
+    * Query for general capabilities of the driver that concern
+    * buffer sharing and image importing.
+    *
+    * \since 10
+    */
+   int (*getCapabilities)(__DRIscreen *screen);
 };
 
 

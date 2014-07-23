@@ -685,8 +685,18 @@ dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp)
       disp->Extensions.EXT_buffer_age = EGL_TRUE;
 
 #ifdef HAVE_WAYLAND_PLATFORM
-   if (dri2_dpy->image)
-      disp->Extensions.WL_bind_wayland_display = EGL_TRUE;
+   if (dri2_dpy->image) {
+       if (dri2_dpy->image->base.version >= 10 &&
+           dri2_dpy->image->getCapabilities != NULL) {
+           int capabilities;
+
+           capabilities =
+               dri2_dpy->image->getCapabilities(dri2_dpy->dri_screen);
+           disp->Extensions.WL_bind_wayland_display =
+               (capabilities & __DRI_IMAGE_CAP_GLOBAL_NAMES) != 0;
+       } else
+           disp->Extensions.WL_bind_wayland_display = EGL_TRUE;
+   }
 #endif
 
    /* we're supporting EGL 1.4 */

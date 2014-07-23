@@ -322,7 +322,11 @@ dri2_allocate_buffer(__DRIscreen *sPriv,
    }
 
    memset(&whandle, 0, sizeof(whandle));
-   whandle.type = DRM_API_HANDLE_TYPE_SHARED;
+   if (screen->can_share_buffer)
+      whandle.type = DRM_API_HANDLE_TYPE_SHARED;
+   else
+      whandle.type = DRM_API_HANDLE_TYPE_KMS;
+
    screen->base.screen->resource_get_handle(screen->base.screen,
          buffer->resource, &whandle);
 
@@ -501,10 +505,12 @@ dri2_allocate_textures(struct dri_context *ctx,
          templ.height0 = dri_drawable->h;
          templ.format = format;
          templ.bind = bind;
-         whandle.type = DRM_API_HANDLE_TYPE_SHARED;
          whandle.handle = buf->name;
          whandle.stride = buf->pitch;
-
+         if (screen->can_share_buffer)
+            whandle.type = DRM_API_HANDLE_TYPE_SHARED;
+         else
+            whandle.type = DRM_API_HANDLE_TYPE_KMS;
          drawable->textures[statt] =
             screen->base.screen->resource_from_handle(screen->base.screen,
                   &templ, &whandle);
@@ -1186,9 +1192,17 @@ dri2_destroy_image(__DRIimage *img)
    FREE(img);
 }
 
+static int
+dri2_get_capabilities(__DRIscreen *_screen)
+{
+   struct dri_screen *screen = dri_screen(_screen);
+
+   return (screen->can_share_buffer ? __DRI_IMAGE_CAP_GLOBAL_NAMES : 0);
+}
+
 /* The extension is modified during runtime if DRI_PRIME is detected */
 static __DRIimageExtension dri2ImageExtension = {
-    .base = { __DRI_IMAGE, 9 },
+    .base = { __DRI_IMAGE, 10 },
 
     .createImageFromName          = dri2_create_image_from_name,
     .createImageFromRenderbuffer  = dri2_create_image_from_renderbuffer,
@@ -1203,6 +1217,7 @@ static __DRIimageExtension dri2ImageExtension = {
     .createImageFromFds           = NULL,
     .createImageFromDmaBufs       = NULL,
     .blitImage                    = dri2_blit_image,
+    .getCapabilities              = dri2_get_capabilities,
 };
 
 /*
@@ -1282,6 +1297,7 @@ dri2_init_screen(__DRIscreen * sPriv)
    if (!configs)
       goto fail;
 
+   screen->can_share_buffer = true;
    screen->auto_fake_front = dri_with_format(sPriv);
    screen->broken_invalidate = !sPriv->dri2.useInvalidate;
    screen->lookup_egl_image = dri2_lookup_egl_image;
@@ -1327,6 +1343,7 @@ dri_kms_init_screen(__DRIscreen * sPriv)
    if (!configs)
       goto fail;
 
+   screen->can_share_buffer = false;
    screen->auto_fake_front = dri_with_format(sPriv);
    screen->broken_invalidate = !sPriv->dri2.useInvalidate;
    screen->lookup_egl_image = dri2_lookup_egl_image;
