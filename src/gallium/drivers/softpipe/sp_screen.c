@@ -322,6 +322,11 @@ softpipe_is_format_supported( struct pipe_screen *screen,
          return FALSE;
    }
 
+   if (format_desc->layout == UTIL_FORMAT_LAYOUT_BPTC) {
+      /* Software decoding is not hooked up. */
+      return FALSE;
+   }
+
    /*
     * All other operations (sampling, transfer, etc).
     */
