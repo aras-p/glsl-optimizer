@@ -282,7 +282,13 @@ gbm_gallium_drm_device_create(int fd)
    if (gdrm->screen == NULL)
       goto out_no_screen;
 
+#if GALLIUM_STATIC_TARGETS
+   gdrm->base.driver_name = strdup(dd_driver_name());
+#else
+#ifdef HAVE_PIPE_LOADER_DRM
    gdrm->base.driver_name = strdup(gdrm->dev->driver_name);
+#endif /* HAVE_PIPE_LOADER_DRM */
+#endif
    return &gdrm->base.base;
 
 out_no_screen:
