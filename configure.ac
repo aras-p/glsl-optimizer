@@ -1238,12 +1238,10 @@ if test "x$enable_osmesa" = xyes -o "x$enable_gallium_osmesa" = xyes; then
     else
         OSMESA_LIB_DEPS=""
     fi
-    OSMESA_MESA_DEPS=""
     OSMESA_PC_LIB_PRIV="-lm $PTHREAD_LIBS $SELINUX_LIBS $DLOPEN_LIBS"
 fi
 
 AC_SUBST([OSMESA_LIB_DEPS])
-AC_SUBST([OSMESA_MESA_DEPS])
 AC_SUBST([OSMESA_PC_REQ])
 AC_SUBST([OSMESA_PC_LIB_PRIV])
 
