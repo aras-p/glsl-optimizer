@@ -1384,7 +1384,7 @@ layout_qualifier_id:
                                 "invalid %s of %d specified",
                                 local_size_qualifiers[i], $3);
                YYERROR;
-            } else if (!state->is_version(430, 0) &&
+            } else if (!state->is_version(430, 310) &&
                        !state->ARB_compute_shader_enable) {
                _mesa_glsl_error(& @3, state,
                                 "%s qualifier requires GLSL 4.30 or "

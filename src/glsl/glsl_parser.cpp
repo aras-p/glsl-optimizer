@@ -4764,7 +4764,7 @@ yyreduce:
                                 "invalid %s of %d specified",
                                 local_size_qualifiers[i], (yyvsp[(3) - (3)].n));
                YYERROR;
-            } else if (!state->is_version(430, 0) &&
+            } else if (!state->is_version(430, 310) &&
                        !state->ARB_compute_shader_enable) {
                _mesa_glsl_error(& (yylsp[(3) - (3)]), state,
                                 "%s qualifier requires GLSL 4.30 or "

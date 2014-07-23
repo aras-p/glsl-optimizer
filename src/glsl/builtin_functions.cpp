@@ -262,7 +262,7 @@ texture_array(const _mesa_glsl_parse_state *state)
 static bool
 texture_multisample(const _mesa_glsl_parse_state *state)
 {
-   return state->is_version(150, 0) ||
+   return state->is_version(150, 310) ||
           state->ARB_texture_multisample_enable;
 }
 
@@ -298,7 +298,7 @@ texture_query_lod(const _mesa_glsl_parse_state *state)
 static bool
 texture_gather(const _mesa_glsl_parse_state *state)
 {
-   return state->is_version(400, 0) ||
+   return state->is_version(400, 310) ||
           state->ARB_texture_gather_enable ||
           state->ARB_gpu_shader5_enable;
 }
@@ -309,7 +309,7 @@ texture_gather(const _mesa_glsl_parse_state *state)
 static bool
 texture_gather_only(const _mesa_glsl_parse_state *state)
 {
-   return !state->is_version(400, 0) &&
+   return !state->is_version(400, 310) &&
           !state->ARB_gpu_shader5_enable &&
           state->ARB_texture_gather_enable;
 }
@@ -369,7 +369,7 @@ shader_trinary_minmax(const _mesa_glsl_parse_state *state)
 static bool
 shader_image_load_store(const _mesa_glsl_parse_state *state)
 {
-   return (state->is_version(420, 0) ||
+   return (state->is_version(420, 310) ||
            state->ARB_shader_image_load_store_enable);
 }
 

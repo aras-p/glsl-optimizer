@@ -39,7 +39,8 @@ enum glslopt_options {
 enum glslopt_target {
 	kGlslTargetOpenGL = 0,
 	kGlslTargetOpenGLES20 = 1,
-	kGlslTargetOpenGLES30 = 2
+	kGlslTargetOpenGLES30 = 2,
+	kGlslTargetOpenGLES31 = 3
 };
 
 glslopt_ctx* glslopt_initialize (glslopt_target target);

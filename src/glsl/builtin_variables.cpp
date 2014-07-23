@@ -698,7 +698,7 @@ builtin_variable_generator::generate_constants()
       add_const("gl_MaxTessEvaluationAtomicCounters", 0);
    }
 
-   if (state->is_version(430, 0) || state->ARB_compute_shader_enable) {
+   if (state->is_version(430, 310) || state->ARB_compute_shader_enable) {
       add_const_ivec3("gl_MaxComputeWorkGroupCount",
                       state->Const.MaxComputeWorkGroupCount[0],
                       state->Const.MaxComputeWorkGroupCount[1],
@@ -729,7 +729,7 @@ builtin_variable_generator::generate_constants()
        */
    }
 
-   if (state->is_version(420, 0) ||
+   if (state->is_version(420, 310) ||
        state->ARB_shader_image_load_store_enable) {
       add_const("gl_MaxImageUnits",
                 state->Const.MaxImageUnits);

@@ -1350,6 +1350,7 @@ struct gl_extensions
    GLboolean MESA_pack_invert;
    GLboolean MESA_ycbcr_texture;
    GLboolean NV_conditional_render;
+   GLboolean NV_ES3_1_compatibility;
    GLboolean NV_fog_distance;
    GLboolean NV_fragment_program_option;
    GLboolean NV_point_sprite;

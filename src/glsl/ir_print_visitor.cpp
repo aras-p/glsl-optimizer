@@ -395,7 +395,7 @@ void ir_print_visitor::visit(ir_constant *ir)
 	 if (i != 0)
 	    printf(" ");
 	 switch (ir->type->base_type) {
-	 case GLSL_TYPE_UINT:  printf("%u", ir->value.u[i]); break;
+	 case GLSL_TYPE_UINT:  printf("%uu", ir->value.u[i]); break;
 	 case GLSL_TYPE_INT:   printf("%d", ir->value.i[i]); break;
 	 case GLSL_TYPE_FLOAT:
             if (ir->value.f[i] == 0.0f)

@@ -938,6 +938,10 @@ void ir_print_glsl_visitor::visit(ir_swizzle *ir)
 		return;
 	}
 
+	// Swizzling scalar types is not allowed so just return now.
+  	if (ir->val->type->vector_elements == 1)
+		return;
+
    buffer.asprintf_append (".");
    for (unsigned i = 0; i < ir->mask.num_components; i++) {
 		buffer.asprintf_append ("%c", "xyzw"[swiz[i]]);
@@ -1452,7 +1456,17 @@ bool ir_print_glsl_visitor::emit_canonical_for (ir_loop* ir)
 			if (indvar->initial_value)
 			{
 				buffer.asprintf_append (" = ");
+				// if the var is an array add the proper initializer
+				if(var->type->is_vector())
+				{
+					print_type(buffer, var->type, false);
+					buffer.asprintf_append ("(");
+				}
 				indvar->initial_value->accept(this);
+				if(var->type->is_vector())
+				{
+					buffer.asprintf_append (")");
+				}
 			}
 		}
 	}

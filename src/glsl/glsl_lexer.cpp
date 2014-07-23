@@ -2090,17 +2090,17 @@ KEYWORD(130, 300, 130, 300, USAMPLER2DARRAY);
 case 94:
 YY_RULE_SETUP
 #line 326 "src/glsl/glsl_lexer.ll"
-KEYWORD_WITH_ALT(150, 300, 150, 0, yyextra->ARB_texture_multisample_enable, SAMPLER2DMS);
+KEYWORD_WITH_ALT(150, 300, 150, 310, yyextra->ARB_texture_multisample_enable, SAMPLER2DMS);
 	YY_BREAK
 case 95:
 YY_RULE_SETUP
 #line 327 "src/glsl/glsl_lexer.ll"
-KEYWORD_WITH_ALT(150, 300, 150, 0, yyextra->ARB_texture_multisample_enable, ISAMPLER2DMS);
+KEYWORD_WITH_ALT(150, 300, 150, 310, yyextra->ARB_texture_multisample_enable, ISAMPLER2DMS);
 	YY_BREAK
 case 96:
 YY_RULE_SETUP
 #line 328 "src/glsl/glsl_lexer.ll"
-KEYWORD_WITH_ALT(150, 300, 150, 0, yyextra->ARB_texture_multisample_enable, USAMPLER2DMS);
+KEYWORD_WITH_ALT(150, 300, 150, 310, yyextra->ARB_texture_multisample_enable, USAMPLER2DMS);
 	YY_BREAK
 case 97:
 YY_RULE_SETUP
@@ -2157,12 +2157,12 @@ KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, 
 case 106:
 YY_RULE_SETUP
 #line 348 "src/glsl/glsl_lexer.ll"
-KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, IMAGE2D);
+KEYWORD_WITH_ALT(130, 300, 420, 310, yyextra->ARB_shader_image_load_store_enable, IMAGE2D);
 	YY_BREAK
 case 107:
 YY_RULE_SETUP
 #line 349 "src/glsl/glsl_lexer.ll"
-KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, IMAGE3D);
+KEYWORD_WITH_ALT(130, 300, 420, 310, yyextra->ARB_shader_image_load_store_enable, IMAGE3D);
 	YY_BREAK
 case 108:
 YY_RULE_SETUP
@@ -2172,7 +2172,7 @@ KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, 
 case 109:
 YY_RULE_SETUP
 #line 351 "src/glsl/glsl_lexer.ll"
-KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, IMAGECUBE);
+KEYWORD_WITH_ALT(130, 300, 420, 310, yyextra->ARB_shader_image_load_store_enable, IMAGECUBE);
 	YY_BREAK
 case 110:
 YY_RULE_SETUP
@@ -2187,7 +2187,7 @@ KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, 
 case 112:
 YY_RULE_SETUP
 #line 354 "src/glsl/glsl_lexer.ll"
-KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, IMAGE2DARRAY);
+KEYWORD_WITH_ALT(130, 300, 420, 310, yyextra->ARB_shader_image_load_store_enable, IMAGE2DARRAY);
 	YY_BREAK
 case 113:
 YY_RULE_SETUP
@@ -2212,12 +2212,12 @@ KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, 
 case 117:
 YY_RULE_SETUP
 #line 359 "src/glsl/glsl_lexer.ll"
-KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, IIMAGE2D);
+KEYWORD_WITH_ALT(130, 300, 420, 310, yyextra->ARB_shader_image_load_store_enable, IIMAGE2D);
 	YY_BREAK
 case 118:
 YY_RULE_SETUP
 #line 360 "src/glsl/glsl_lexer.ll"
-KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, IIMAGE3D);
+KEYWORD_WITH_ALT(130, 300, 420, 310, yyextra->ARB_shader_image_load_store_enable, IIMAGE3D);
 	YY_BREAK
 case 119:
 YY_RULE_SETUP
@@ -2227,7 +2227,7 @@ KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, 
 case 120:
 YY_RULE_SETUP
 #line 362 "src/glsl/glsl_lexer.ll"
-KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, IIMAGECUBE);
+KEYWORD_WITH_ALT(130, 300, 420, 310, yyextra->ARB_shader_image_load_store_enable, IIMAGECUBE);
 	YY_BREAK
 case 121:
 YY_RULE_SETUP
@@ -2242,7 +2242,7 @@ KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, 
 case 123:
 YY_RULE_SETUP
 #line 365 "src/glsl/glsl_lexer.ll"
-KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, IIMAGE2DARRAY);
+KEYWORD_WITH_ALT(130, 300, 420, 310, yyextra->ARB_shader_image_load_store_enable, IIMAGE2DARRAY);
 	YY_BREAK
 case 124:
 YY_RULE_SETUP
@@ -2267,12 +2267,12 @@ KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, 
 case 128:
 YY_RULE_SETUP
 #line 370 "src/glsl/glsl_lexer.ll"
-KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, UIMAGE2D);
+KEYWORD_WITH_ALT(130, 300, 420, 310, yyextra->ARB_shader_image_load_store_enable, UIMAGE2D);
 	YY_BREAK
 case 129:
 YY_RULE_SETUP
 #line 371 "src/glsl/glsl_lexer.ll"
-KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, UIMAGE3D);
+KEYWORD_WITH_ALT(130, 300, 420, 310, yyextra->ARB_shader_image_load_store_enable, UIMAGE3D);
 	YY_BREAK
 case 130:
 YY_RULE_SETUP
@@ -2282,7 +2282,7 @@ KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, 
 case 131:
 YY_RULE_SETUP
 #line 373 "src/glsl/glsl_lexer.ll"
-KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, UIMAGECUBE);
+KEYWORD_WITH_ALT(130, 300, 420, 310, yyextra->ARB_shader_image_load_store_enable, UIMAGECUBE);
 	YY_BREAK
 case 132:
 YY_RULE_SETUP
@@ -2297,7 +2297,7 @@ KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, 
 case 134:
 YY_RULE_SETUP
 #line 376 "src/glsl/glsl_lexer.ll"
-KEYWORD_WITH_ALT(130, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, UIMAGE2DARRAY);
+KEYWORD_WITH_ALT(130, 300, 420, 310, yyextra->ARB_shader_image_load_store_enable, UIMAGE2DARRAY);
 	YY_BREAK
 case 135:
 YY_RULE_SETUP
@@ -2337,32 +2337,32 @@ KEYWORD(130, 300, 0, 0, IMAGE2DARRAYSHADOW);
 case 142:
 YY_RULE_SETUP
 #line 385 "src/glsl/glsl_lexer.ll"
-KEYWORD_WITH_ALT(420, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, COHERENT);
+KEYWORD_WITH_ALT(420, 300, 420, 310, yyextra->ARB_shader_image_load_store_enable, COHERENT);
 	YY_BREAK
 case 143:
 YY_RULE_SETUP
 #line 386 "src/glsl/glsl_lexer.ll"
-KEYWORD_WITH_ALT(110, 100, 420, 0, yyextra->ARB_shader_image_load_store_enable, VOLATILE);
+KEYWORD_WITH_ALT(110, 100, 420, 310, yyextra->ARB_shader_image_load_store_enable, VOLATILE);
 	YY_BREAK
 case 144:
 YY_RULE_SETUP
 #line 387 "src/glsl/glsl_lexer.ll"
-KEYWORD_WITH_ALT(420, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, RESTRICT);
+KEYWORD_WITH_ALT(420, 300, 420, 310, yyextra->ARB_shader_image_load_store_enable, RESTRICT);
 	YY_BREAK
 case 145:
 YY_RULE_SETUP
 #line 388 "src/glsl/glsl_lexer.ll"
-KEYWORD_WITH_ALT(420, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, READONLY);
+KEYWORD_WITH_ALT(420, 300, 420, 310, yyextra->ARB_shader_image_load_store_enable, READONLY);
 	YY_BREAK
 case 146:
 YY_RULE_SETUP
 #line 389 "src/glsl/glsl_lexer.ll"
-KEYWORD_WITH_ALT(420, 300, 420, 0, yyextra->ARB_shader_image_load_store_enable, WRITEONLY);
+KEYWORD_WITH_ALT(420, 300, 420, 310, yyextra->ARB_shader_image_load_store_enable, WRITEONLY);
 	YY_BREAK
 case 147:
 YY_RULE_SETUP
 #line 391 "src/glsl/glsl_lexer.ll"
-KEYWORD_WITH_ALT(420, 300, 420, 0, yyextra->ARB_shader_atomic_counters_enable, ATOMIC_UINT);
+KEYWORD_WITH_ALT(420, 300, 420, 310, yyextra->ARB_shader_atomic_counters_enable, ATOMIC_UINT);
 	YY_BREAK
 case 148:
 YY_RULE_SETUP

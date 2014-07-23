@@ -121,6 +121,7 @@ void initialize_context_to_defaults(struct gl_context *ctx, gl_api api)
    ctx->Extensions.EXT_texture_array = true;
 
    ctx->Extensions.NV_texture_rectangle = true;
+   ctx->Extensions.NV_ES3_1_compatibility = true;
 
    ctx->Const.GLSLVersion = 120;
 

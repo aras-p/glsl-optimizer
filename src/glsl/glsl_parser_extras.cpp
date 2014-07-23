@@ -174,6 +174,11 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
       this->supported_versions[this->num_supported_versions].es = true;
       this->num_supported_versions++;
    }
+   if (_mesa_is_gles3(ctx) || ctx->Extensions.NV_ES3_1_compatibility) {
+      this->supported_versions[this->num_supported_versions].ver = 310;
+      this->supported_versions[this->num_supported_versions].es = true;
+      this->num_supported_versions++;
+   }
    assert(this->num_supported_versions
           <= ARRAY_SIZE(this->supported_versions));
 

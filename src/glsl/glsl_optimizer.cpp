@@ -35,6 +35,7 @@ initialize_mesa_context(struct gl_context *ctx, glslopt_target api)
 			mesaAPI = API_OPENGLES2;
 			break;
 		case kGlslTargetOpenGLES30:
+		case kGlslTargetOpenGLES31:
 			mesaAPI = API_OPENGL_CORE;
 			break;
 	}
@@ -53,6 +54,9 @@ initialize_mesa_context(struct gl_context *ctx, glslopt_target api)
 		break;
 	case kGlslTargetOpenGLES30:
 		ctx->Extensions.ARB_ES3_compatibility = true;
+		break;
+	case kGlslTargetOpenGLES31:
+		ctx->Extensions.NV_ES3_1_compatibility = true;
 		break;
 	}
 	
