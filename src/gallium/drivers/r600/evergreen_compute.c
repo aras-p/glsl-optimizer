@@ -994,7 +994,7 @@ void *r600_compute_global_transfer_map(
 			"width = %u, height = %u, depth = %u)\n", level, usage,
 			box->x, box->y, box->z, box->width, box->height,
 			box->depth);
-	COMPUTE_DBG(rctx->screen, "Buffer id = %" PRId64 " offset = "
+	COMPUTE_DBG(rctx->screen, "Buffer id = %u offset = "
 		"%u (box.x)\n", item->id, box->x);
 
 

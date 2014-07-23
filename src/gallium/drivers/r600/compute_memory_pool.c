@@ -70,7 +70,7 @@ static void compute_memory_pool_init(struct compute_memory_pool * pool,
 	unsigned initial_size_in_dw)
 {
 
-	COMPUTE_DBG(pool->screen, "* compute_memory_pool_init() initial_size_in_dw = %u\n",
+	COMPUTE_DBG(pool->screen, "* compute_memory_pool_init() initial_size_in_dw = %ld\n",
 		initial_size_in_dw);
 
 	pool->shadow = (uint32_t*)CALLOC(initial_size_in_dw, 4);
@@ -110,7 +110,7 @@ int64_t compute_memory_prealloc_chunk(
 
 	assert(size_in_dw <= pool->size_in_dw);
 
-	COMPUTE_DBG(pool->screen, "* compute_memory_prealloc_chunk() size_in_dw = %" PRId64 "\n",
+	COMPUTE_DBG(pool->screen, "* compute_memory_prealloc_chunk() size_in_dw = %ld\n",
 		size_in_dw);
 
 	LIST_FOR_EACH_ENTRY(item, pool->item_list, link) {
@@ -139,7 +139,7 @@ struct list_head *compute_memory_postalloc_chunk(
 	struct compute_memory_item *next;
 	struct list_head *next_link;
 
-	COMPUTE_DBG(pool->screen, "* compute_memory_postalloc_chunck() start_in_dw = %" PRId64 "\n",
+	COMPUTE_DBG(pool->screen, "* compute_memory_postalloc_chunck() start_in_dw = %ld\n",
 		start_in_dw);
 
 	/* Check if we can insert it in the front of the list */
@@ -246,8 +246,8 @@ int compute_memory_finalize_pending(struct compute_memory_pool* pool,
 	COMPUTE_DBG(pool->screen, "* compute_memory_finalize_pending()\n");
 
 	LIST_FOR_EACH_ENTRY(item, pool->item_list, link) {
-		COMPUTE_DBG(pool->screen, "  + list: offset = %" PRId64 " id = %" PRId64 " size = %" PRId64
-			" (%" PRId64 " bytes)\n",item->start_in_dw, item->id,
+		COMPUTE_DBG(pool->screen, "  + list: offset = %i id = %i size = %i "
+			"(%i bytes)\n",item->start_in_dw, item->id,
 			item->size_in_dw, item->size_in_dw * 4);
 	}
 
@@ -334,9 +334,8 @@ int compute_memory_promote_item(struct compute_memory_pool *pool,
 	struct pipe_resource *dst = (struct pipe_resource *)pool->bo;
 	struct pipe_box box;
 
-	COMPUTE_DBG(pool->screen, "  + Found space for Item %p id = %" PRId64
-			" start_in_dw = %" PRId64 " (%" PRId64 " bytes) "
-			"size_in_dw = %" PRId64 " (%" PRId64 " bytes)\n",
+	COMPUTE_DBG(pool->screen, "  + Found space for Item %p id = %u "
+			"start_in_dw = %u (%u bytes) size_in_dw = %u (%u bytes)\n",
 			item, item->id, start_in_dw, start_in_dw * 4,
 			item->size_in_dw, item->size_in_dw * 4);
 
@@ -430,8 +429,7 @@ void compute_memory_move_item(struct compute_memory_pool *pool,
 	struct compute_memory_item *prev;
 
 	COMPUTE_DBG(pool->screen, "* compute_memory_move_item()\n"
-			"  + Moving item %" PRId64 " from %" PRId64
-			" (%" PRId64 " bytes) to %" PRId64 " (%" PRId64 " bytes)\n",
+			"  + Moving item %i from %u (%u bytes) to %u (%u bytes)\n",
 			item->id, item->start_in_dw, item->start_in_dw * 4,
 			new_start_in_dw, new_start_in_dw * 4);
 
@@ -503,7 +501,7 @@ void compute_memory_free(struct compute_memory_pool* pool, int64_t id)
 	struct pipe_screen *screen = (struct pipe_screen *)pool->screen;
 	struct pipe_resource *res;
 
-	COMPUTE_DBG(pool->screen, "* compute_memory_free() id + %" PRId64 "\n", id);
+	COMPUTE_DBG(pool->screen, "* compute_memory_free() id + %ld \n", id);
 
 	LIST_FOR_EACH_ENTRY_SAFE(item, next, pool->item_list, link) {
 
@@ -559,8 +557,7 @@ struct compute_memory_item* compute_memory_alloc(
 {
 	struct compute_memory_item *new_item = NULL;
 
-	COMPUTE_DBG(pool->screen, "* compute_memory_alloc() size_in_dw = %" PRId64
-	                          " (%" PRId64 " bytes)\n",
+	COMPUTE_DBG(pool->screen, "* compute_memory_alloc() size_in_dw = %ld (%ld bytes)\n",
 			size_in_dw, 4 * size_in_dw);
 
 	new_item = (struct compute_memory_item *)
@@ -576,8 +573,7 @@ struct compute_memory_item* compute_memory_alloc(
 
 	list_addtail(&new_item->link, pool->unallocated_list);
 
-	COMPUTE_DBG(pool->screen, "  + Adding item %p id = %" PRId64 " size = %" PRId64
-	                          " (%" PRId64 " bytes)\n",
+	COMPUTE_DBG(pool->screen, "  + Adding item %p id = %u size = %u (%u bytes)\n",
 			new_item, new_item->id, new_item->size_in_dw,
 			new_item->size_in_dw * 4);
 	return new_item;
