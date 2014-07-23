@@ -25,22 +25,20 @@
 #include <stdio.h>
 
 #include "util/u_format.h"
+#include "util/u_pack_color.h"
 #include "indices/u_primconvert.h"
 
 #include "vc4_context.h"
 #include "vc4_resource.h"
 
+/**
+ * Does the initial bining command list setup for drawing to a given FBO.
+ */
 static void
-vc4_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
+vc4_start_draw(struct vc4_context *vc4)
 {
-        struct vc4_context *vc4 = vc4_context(pctx);
-
-        if (info->mode >= PIPE_PRIM_QUADS) {
-                util_primconvert_save_index_buffer(vc4->primconvert, &vc4->indexbuf);
-                util_primconvert_save_rasterizer_state(vc4->primconvert, &vc4->rasterizer->base);
-                util_primconvert_draw_vbo(vc4->primconvert, info);
+        if (vc4->needs_flush)
                 return;
-        }
 
         uint32_t width = vc4->framebuffer.width;
         uint32_t height = vc4->framebuffer.height;
@@ -60,10 +58,6 @@ vc4_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
                                                "tile_state");
         }
 
-        vc4_update_compiled_shaders(vc4);
-
-        vc4->needs_flush = true;
-
         //   Tile state data is 48 bytes per tile, I think it can be thrown away
         //   as soon as binning is finished.
         cl_start_reloc(&vc4->bcl, 2);
@@ -79,6 +73,25 @@ vc4_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
 
         cl_u8(&vc4->bcl, VC4_PACKET_PRIMITIVE_LIST_FORMAT);
         cl_u8(&vc4->bcl, 0x12); // 16 bit triangle
+
+        vc4->needs_flush = true;
+        vc4->draw_call_queued = true;
+}
+
+static void
+vc4_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
+{
+        struct vc4_context *vc4 = vc4_context(pctx);
+
+        if (info->mode >= PIPE_PRIM_QUADS) {
+                util_primconvert_save_index_buffer(vc4->primconvert, &vc4->indexbuf);
+                util_primconvert_save_rasterizer_state(vc4->primconvert, &vc4->rasterizer->base);
+                util_primconvert_draw_vbo(vc4->primconvert, info);
+                return;
+        }
+
+        vc4_start_draw(vc4);
+        vc4_update_compiled_shaders(vc4);
 
         vc4_emit_state(pctx);
 
@@ -168,10 +181,22 @@ vc4_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
                 cl_u8(&vc4->shader_rec, i * 16); /* CS VPM offset */
         }
 
+        if (vc4->zsa && vc4->zsa->depth.enabled) {
+                vc4->resolve |= PIPE_CLEAR_DEPTH;
+        }
+        vc4->resolve |= PIPE_CLEAR_COLOR0;
 
         vc4->shader_rec_count++;
 
         vc4_flush(pctx);
+}
+
+static uint32_t
+pack_rgba(enum pipe_format format, const float *rgba)
+{
+        union util_color uc;
+        util_pack_color(rgba, format, &uc);
+        return uc.ui[0];
 }
 
 static void
@@ -180,7 +205,22 @@ vc4_clear(struct pipe_context *pctx, unsigned buffers,
 {
         struct vc4_context *vc4 = vc4_context(pctx);
 
-        vc4->needs_flush = true;
+        /* We can't flag new buffers for clearing once we've queued draws.  We
+         * could avoid this by using the 3d engine to clear.
+         */
+        if (vc4->draw_call_queued)
+                vc4_flush(pctx);
+
+        if (buffers & PIPE_CLEAR_COLOR0) {
+                vc4->clear_color[0] = vc4->clear_color[1] =
+                        pack_rgba(vc4->framebuffer.cbufs[0]->format,
+                                  color->f);
+        }
+
+        vc4->cleared |= buffers;
+        vc4->resolve |= buffers;
+
+        vc4_start_draw(vc4);
 }
 
 static void

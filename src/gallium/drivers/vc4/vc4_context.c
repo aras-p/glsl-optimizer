@@ -89,14 +89,22 @@ vc4_setup_rcl(struct vc4_context *vc4)
 {
         struct vc4_surface *csurf = vc4_surface(vc4->framebuffer.cbufs[0]);
         struct vc4_resource *ctex = vc4_resource(csurf->base.texture);
+        uint32_t resolve_uncleared = vc4->resolve & ~vc4->cleared;
         uint32_t width = vc4->framebuffer.width;
         uint32_t height = vc4->framebuffer.height;
         uint32_t xtiles = align(width, 64) / 64;
         uint32_t ytiles = align(height, 64) / 64;
 
+#if 0
+        fprintf(stderr, "RCL: resolve 0x%x clear 0x%x resolve uncleared 0x%x\n",
+                vc4->resolve,
+                vc4->cleared,
+                resolve_uncleared);
+#endif
+
         cl_u8(&vc4->rcl, VC4_PACKET_CLEAR_COLORS);
-        cl_u32(&vc4->rcl, 0xff000000); // Opaque Black
-        cl_u32(&vc4->rcl, 0xff000000); // 32 bit clear colours need to be repeated twice
+        cl_u32(&vc4->rcl, vc4->clear_color[0]);
+        cl_u32(&vc4->rcl, vc4->clear_color[1]);
         cl_u32(&vc4->rcl, 0);
         cl_u8(&vc4->rcl, 0);
 
@@ -109,44 +117,60 @@ vc4_setup_rcl(struct vc4_context *vc4)
                           VC4_RENDER_CONFIG_FORMAT_RGBA8888));
         cl_u8(&vc4->rcl, 0);
 
-        // Do a store of the first tile to force the tile buffer to be cleared
-        /* XXX: I think these two packets may be unnecessary. */
-        if (0) {
+        /* The tile buffer normally gets cleared when the previous tile is
+         * stored.  If the clear values changed between frames, then the tile
+         * buffer has stale clear values in it, so we have to do a store in
+         * None mode (no writes) so that we trigger the tile buffer clear.
+         */
+        if (vc4->cleared & PIPE_CLEAR_COLOR0) {
                 cl_u8(&vc4->rcl, VC4_PACKET_TILE_COORDINATES);
                 cl_u8(&vc4->rcl, 0);
                 cl_u8(&vc4->rcl, 0);
 
                 cl_u8(&vc4->rcl, VC4_PACKET_STORE_TILE_BUFFER_GENERAL);
-                cl_u16(&vc4->rcl, 0); // Store nothing (just clear)
-                cl_u32(&vc4->rcl, 0); // no address is needed
+                cl_u16(&vc4->rcl, VC4_LOADSTORE_TILE_BUFFER_NONE);
+                cl_u32(&vc4->rcl, 0); /* no address, since we're in None mode */
         }
 
         for (int x = 0; x < xtiles; x++) {
                 for (int y = 0; y < ytiles; y++) {
+                        bool end_of_frame = (x == xtiles - 1 &&
+                                             y == ytiles - 1);
+
+                        /* Note that the load doesn't actually occur until the
+                         * tile coords packet is processed.
+                         */
+                        if (resolve_uncleared & PIPE_CLEAR_COLOR) {
+                                cl_start_reloc(&vc4->rcl, 1);
+                                cl_u8(&vc4->rcl, VC4_PACKET_LOAD_TILE_BUFFER_GENERAL);
+                                cl_u8(&vc4->rcl,
+                                      VC4_LOADSTORE_TILE_BUFFER_COLOR |
+                                      VC4_LOADSTORE_TILE_BUFFER_FORMAT_RASTER);
+                                cl_u8(&vc4->rcl,
+                                      VC4_LOADSTORE_TILE_BUFFER_RGBA8888);
+                                cl_reloc(vc4, &vc4->rcl, ctex->bo,
+                                         csurf->offset);
+                        }
+
                         cl_u8(&vc4->rcl, VC4_PACKET_TILE_COORDINATES);
                         cl_u8(&vc4->rcl, x);
                         cl_u8(&vc4->rcl, y);
-
-                        cl_start_reloc(&vc4->rcl, 1);
-                        cl_u8(&vc4->rcl, VC4_PACKET_LOAD_TILE_BUFFER_GENERAL);
-                        cl_u8(&vc4->rcl,
-                              VC4_LOADSTORE_TILE_BUFFER_COLOR |
-                              VC4_LOADSTORE_TILE_BUFFER_FORMAT_RASTER);
-                        cl_u8(&vc4->rcl,
-                              VC4_LOADSTORE_TILE_BUFFER_RGBA8888);
-                        cl_reloc(vc4, &vc4->rcl, ctex->bo, csurf->offset);
 
                         cl_start_reloc(&vc4->rcl, 1);
                         cl_u8(&vc4->rcl, VC4_PACKET_BRANCH_TO_SUB_LIST);
                         cl_reloc(vc4, &vc4->rcl, vc4->tile_alloc,
                                  (y * xtiles + x) * 32);
 
-                        if (x == xtiles - 1 && y == ytiles - 1) {
-                                cl_u8(&vc4->rcl,
-                                      VC4_PACKET_STORE_MS_TILE_BUFFER_AND_EOF);
+                        if (vc4->resolve & PIPE_CLEAR_COLOR0) {
+                                if (end_of_frame) {
+                                        cl_u8(&vc4->rcl,
+                                              VC4_PACKET_STORE_MS_TILE_BUFFER_AND_EOF);
+                                } else {
+                                        cl_u8(&vc4->rcl,
+                                              VC4_PACKET_STORE_MS_TILE_BUFFER);
+                                }
                         } else {
-                                cl_u8(&vc4->rcl,
-                                      VC4_PACKET_STORE_MS_TILE_BUFFER);
+                                assert(!"unfinished: Need to end the frame\n");
                         }
                 }
         }
@@ -168,6 +192,7 @@ vc4_flush(struct pipe_context *pctx)
 
         struct vc4_surface *csurf = vc4_surface(vc4->framebuffer.cbufs[0]);
         struct vc4_resource *ctex = vc4_resource(csurf->base.texture);
+
         struct drm_vc4_submit_cl submit;
         memset(&submit, 0, sizeof(submit));
 
@@ -207,7 +232,10 @@ vc4_flush(struct pipe_context *pctx)
         vc4->shader_rec_count = 0;
 
         vc4->needs_flush = false;
+        vc4->draw_call_queued = false;
         vc4->dirty = ~0;
+        vc4->resolve = 0;
+        vc4->cleared = 0;
 
         dump_fbo(vc4, ctex->bo);
 }

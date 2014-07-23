@@ -136,6 +136,15 @@ struct vc4_context {
 
         /** bitfield of VC4_DIRTY_* */
         uint32_t dirty;
+        /* Bitmask of PIPE_CLEAR_* of buffers that were cleared before the
+         * first rendering.
+         */
+        uint32_t cleared;
+        /* Bitmask of PIPE_CLEAR_* of buffers that have been rendered to
+         * (either clears or draws).
+         */
+        uint32_t resolve;
+        uint32_t clear_color[2];
 
         /**
          * Set if some drawing (triangles, blits, or just a glClear()) has
@@ -143,6 +152,12 @@ struct vc4_context {
          * DRM_IOCTL_VC4_SUBMIT_CL.
          */
         bool needs_flush;
+
+        /**
+         * Set when needs_flush, and the queued rendering is not just composed
+         * of full-buffer clears.
+         */
+        bool draw_call_queued;
 
         struct primconvert_context *primconvert;
 
