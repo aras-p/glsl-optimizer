@@ -105,7 +105,7 @@ vc4_cl_validate(struct drm_device *dev, struct exec_info *exec)
 {
 	struct drm_vc4_submit_cl *args = exec->args;
 	void *temp = NULL;
-	void *bin, *render, *shader_rec;
+	void *bin, *render;
 	int ret = 0;
 	uint32_t bin_offset = 0;
 	uint32_t render_offset = bin_offset + args->bin_cl_len;
@@ -142,7 +142,7 @@ vc4_cl_validate(struct drm_device *dev, struct exec_info *exec)
 	}
 	bin = temp + bin_offset;
 	render = temp + render_offset;
-	shader_rec = temp + shader_rec_offset;
+	exec->shader_rec_u = temp + shader_rec_offset;
 	exec->uniforms_u = temp + uniforms_offset;
 	exec->shader_state = temp + exec_size;
 	exec->shader_state_size = args->shader_record_count;
@@ -159,7 +159,7 @@ vc4_cl_validate(struct drm_device *dev, struct exec_info *exec)
 		goto fail;
 	}
 
-	ret = copy_from_user(shader_rec, args->shader_records,
+	ret = copy_from_user(exec->shader_rec_u, args->shader_records,
 			     args->shader_record_len);
 	if (ret) {
 		DRM_ERROR("Failed to copy in shader recs\n");
@@ -187,7 +187,10 @@ vc4_cl_validate(struct drm_device *dev, struct exec_info *exec)
 	exec->ct0ea = exec->ct0ca + args->bin_cl_len;
 	exec->ct1ca = exec->exec_bo->paddr + render_offset;
 	exec->ct1ea = exec->ct1ca + args->render_cl_len;
-	exec->shader_paddr = exec->exec_bo->paddr + shader_rec_offset;
+
+	exec->shader_rec_v = exec->exec_bo->vaddr + shader_rec_offset;
+	exec->shader_rec_p = exec->exec_bo->paddr + shader_rec_offset;
+	exec->shader_rec_size = args->shader_record_len;
 
 	exec->uniforms_v = exec->exec_bo->vaddr + uniforms_offset;
 	exec->uniforms_p = exec->exec_bo->paddr + uniforms_offset;
@@ -211,11 +214,7 @@ vc4_cl_validate(struct drm_device *dev, struct exec_info *exec)
 	if (ret)
 		goto fail;
 
-	ret = vc4_validate_shader_recs(dev,
-				       exec->exec_bo->vaddr + shader_rec_offset,
-				       shader_rec,
-				       args->shader_record_len,
-				       exec);
+	ret = vc4_validate_shader_recs(dev, exec);
 
 fail:
 	kfree(temp);

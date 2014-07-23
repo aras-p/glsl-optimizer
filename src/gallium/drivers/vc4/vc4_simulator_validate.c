@@ -47,6 +47,18 @@
 	void *validated,				\
 	void *untrusted
 
+static uint32_t
+gl_shader_rec_size(uint32_t pointer_bits)
+{
+	uint32_t attribute_count = pointer_bits & 7;
+	bool extended = pointer_bits & 8;
+
+	if (attribute_count == 0)
+		attribute_count = 8;
+
+	return 36 + attribute_count * (extended ? 12 : 8);
+}
+
 static int
 validate_branch_to_sublist(VALIDATE_ARGS)
 {
@@ -123,8 +135,15 @@ validate_gl_shader_state(VALIDATE_ARGS)
 	exec->shader_state[i].packet = VC4_PACKET_GL_SHADER_STATE;
 	exec->shader_state[i].addr = *(uint32_t *)untrusted;
 
-	*(uint32_t *)validated = exec->shader_state[i].addr +
-		exec->shader_paddr;
+	if (exec->shader_state[i].addr & ~0xf) {
+		DRM_ERROR("high bits set in GL shader rec reference\n");
+		return -EINVAL;
+	}
+
+	*(uint32_t *)validated = (exec->shader_rec_p +
+				  exec->shader_state[i].addr);
+
+	exec->shader_rec_p += gl_shader_rec_size(exec->shader_state[i].addr);
 
 	return 0;
 }
@@ -148,8 +167,8 @@ validate_nv_shader_state(VALIDATE_ARGS)
 		return -EINVAL;
 	}
 
-	*(uint32_t *)validated =
-		exec->shader_state[i].addr + exec->shader_paddr;
+	*(uint32_t *)validated = (exec->shader_state[i].addr +
+				  exec->shader_rec_p);
 
 	return 0;
 }
@@ -374,14 +393,10 @@ reloc_tex(struct exec_info *exec,
 static int
 validate_shader_rec(struct drm_device *dev,
 		    struct exec_info *exec,
-		    void *validated,
-		    void *unvalidated,
-		    uint32_t len,
 		    struct vc4_shader_state *state)
 {
-	uint32_t *src_handles = unvalidated;
-	void *src_pkt;
-	void *dst_pkt = validated;
+	uint32_t *src_handles;
+	void *pkt_u, *pkt_v;
 	enum shader_rec_reloc_type {
 		RELOC_CODE,
 		RELOC_VBO,
@@ -401,35 +416,49 @@ validate_shader_rec(struct drm_device *dev,
 	};
 	const struct shader_rec_reloc *relocs;
 	struct drm_gem_cma_object *bo[ARRAY_SIZE(gl_relocs) + 8];
-	uint32_t nr_attributes = 0, nr_relocs, packet_size;
+	uint32_t nr_attributes = 0, nr_fixed_relocs, nr_relocs, packet_size;
 	int i;
 	struct vc4_validated_shader_info *validated_shader = NULL;
 
 	if (state->packet == VC4_PACKET_NV_SHADER_STATE) {
 		relocs = nv_relocs;
-		nr_relocs = ARRAY_SIZE(nv_relocs);
+		nr_fixed_relocs = ARRAY_SIZE(nv_relocs);
 
 		packet_size = 16;
 	} else {
 		relocs = gl_relocs;
-		nr_relocs = ARRAY_SIZE(gl_relocs);
+		nr_fixed_relocs = ARRAY_SIZE(gl_relocs);
 
 		nr_attributes = state->addr & 0x7;
 		if (nr_attributes == 0)
 			nr_attributes = 8;
-		packet_size = 36 + nr_attributes * 8;
+		packet_size = gl_shader_rec_size(state->addr);
 	}
-	if ((nr_relocs + nr_attributes) * 4 + packet_size > len) {
-		DRM_ERROR("overflowed shader packet read "
-			  "(handles %d, packet %d, len %d)\n",
-			  (nr_relocs + nr_attributes) * 4, packet_size, len);
+	nr_relocs = nr_fixed_relocs + nr_attributes;
+
+	if (nr_relocs * 4 > exec->shader_rec_size) {
+		DRM_ERROR("overflowed shader recs reading %d handles "
+			  "from %d bytes left\n",
+			  nr_relocs, exec->shader_rec_size);
 		return -EINVAL;
 	}
+	src_handles = exec->shader_rec_u;
+	exec->shader_rec_u += nr_relocs * 4;
+	exec->shader_rec_size -= nr_relocs * 4;
 
-	src_pkt = unvalidated + 4 * (nr_relocs + nr_attributes);
-	memcpy(dst_pkt, src_pkt, packet_size);
+	if (packet_size > exec->shader_rec_size) {
+		DRM_ERROR("overflowed shader recs copying %db packet "
+			  "from %d bytes left\n",
+			  packet_size, exec->shader_rec_size);
+		return -EINVAL;
+	}
+	pkt_u = exec->shader_rec_u;
+	pkt_v = exec->shader_rec_v;
+	memcpy(pkt_v, pkt_u, packet_size);
+	exec->shader_rec_u += packet_size;
+	exec->shader_rec_v += packet_size;
 
-	for (i = 0; i < nr_relocs + nr_attributes; i++) {
+	for (i = 0; i < nr_relocs; i++) {
 		if (src_handles[i] >= exec->bo_count) {
 			DRM_ERROR("shader rec bo index %d > %d\n",
 				  src_handles[i], exec->bo_count);
@@ -438,13 +467,14 @@ validate_shader_rec(struct drm_device *dev,
 		bo[i] = exec->bo[src_handles[i]];
 	}
 
-	for (i = 0; i < nr_relocs; i++) {
+	for (i = 0; i < nr_fixed_relocs; i++) {
 		uint32_t o = relocs[i].offset;
-		uint32_t src_offset = *(uint32_t *)(src_pkt + o);
-		*(uint32_t *)(dst_pkt + o) = bo[i]->paddr + src_offset;
+		uint32_t src_offset = *(uint32_t *)(pkt_u + o);
 		uint32_t *texture_handles_u;
 		void *uniform_data_u;
 		uint32_t tex;
+
+		*(uint32_t *)(pkt_v + o) = bo[i]->paddr + src_offset;
 
 		switch (relocs[i].type) {
 		case RELOC_CODE:
@@ -478,7 +508,7 @@ validate_shader_rec(struct drm_device *dev,
 				}
 			}
 
-			*(uint32_t *)(dst_pkt + o + 4) = exec->uniforms_p;
+			*(uint32_t *)(pkt_v + o + 4) = exec->uniforms_p;
 
 			exec->uniforms_u += validated_shader->uniforms_src_size;
 			exec->uniforms_v += validated_shader->uniforms_size;
@@ -494,8 +524,8 @@ validate_shader_rec(struct drm_device *dev,
 	for (i = 0; i < nr_attributes; i++) {
 		/* XXX: validation */
 		uint32_t o = 36 + i * 8;
-		*(uint32_t *)(dst_pkt + o) =
-			bo[nr_relocs + i]->paddr + *(uint32_t *)(src_pkt + o);
+		*(uint32_t *)(pkt_v + o) = (bo[nr_fixed_relocs + i]->paddr +
+					    *(uint32_t *)(pkt_u + o));
 	}
 
 	kfree(validated_shader);
@@ -509,38 +539,15 @@ fail:
 
 int
 vc4_validate_shader_recs(struct drm_device *dev,
-			 void *validated,
-			 void *unvalidated,
-			 uint32_t len,
 			 struct exec_info *exec)
 {
-	uint32_t dst_offset = 0;
-	uint32_t src_offset = 0;
 	uint32_t i;
 	int ret = 0;
 
 	for (i = 0; i < exec->shader_state_count; i++) {
-		if ((exec->shader_state[i].addr & ~0xf) !=
-		    (validated - exec->exec_bo->vaddr -
-		     (exec->shader_paddr - exec->exec_bo->paddr))) {
-			DRM_ERROR("unexpected shader rec offset: "
-				  "0x%08x vs 0x%08x\n",
-				  exec->shader_state[i].addr & ~0xf,
-				  (int)(validated -
-					exec->exec_bo->vaddr -
-					(exec->shader_paddr -
-					 exec->exec_bo->paddr)));
-			return -EINVAL;
-		}
-
-		ret = validate_shader_rec(dev, exec,
-					  validated + dst_offset,
-					  unvalidated + src_offset,
-					  len - src_offset,
-					  &exec->shader_state[i]);
+		ret = validate_shader_rec(dev, exec, &exec->shader_state[i]);
 		if (ret)
 			return ret;
-		/* XXX: incr dst/src offset */
 	}
 
 	return ret;

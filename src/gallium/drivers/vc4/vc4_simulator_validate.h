@@ -114,7 +114,16 @@ struct exec_info {
 	 */
 	uint32_t ct0ca, ct0ea;
 	uint32_t ct1ca, ct1ea;
-	uint32_t shader_paddr;
+
+	/* Pointers to the shader recs.  These paddr gets incremented as CL
+	 * packets are relocated in validate_gl_shader_state, and the vaddrs
+	 * (u and v) get incremented and size decremented as the shader recs
+	 * themselves are validated.
+	 */
+	void *shader_rec_u;
+	void *shader_rec_v;
+	uint32_t shader_rec_p;
+	uint32_t shader_rec_size;
 
 	/* Pointers to the uniform data.  These pointers are incremented, and
 	 * size decremented, as each batch of uniforms is uploaded.
@@ -168,11 +177,7 @@ int vc4_validate_cl(struct drm_device *dev,
                     bool is_bin,
                     struct exec_info *exec);
 
-int vc4_validate_shader_recs(struct drm_device *dev,
-                             void *validated,
-                             void *unvalidated,
-                             uint32_t len,
-                             struct exec_info *exec);
+int vc4_validate_shader_recs(struct drm_device *dev, struct exec_info *exec);
 
 struct vc4_validated_shader_info *
 vc4_validate_shader(struct drm_gem_cma_object *shader_obj,
