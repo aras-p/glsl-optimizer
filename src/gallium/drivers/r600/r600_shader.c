@@ -4191,6 +4191,172 @@ static int tgsi_ssg(struct r600_shader_ctx *ctx)
 	return 0;
 }
 
+static int tgsi_bfi(struct r600_shader_ctx *ctx)
+{
+	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
+	struct r600_bytecode_alu alu;
+	int i, r, t1, t2;
+
+	unsigned write_mask = inst->Dst[0].Register.WriteMask;
+	int last_inst = tgsi_last_instruction(write_mask);
+
+	t1 = ctx->temp_reg;
+
+	for (i = 0; i < 4; i++) {
+		if (!(write_mask & (1<<i)))
+			continue;
+
+		/* create mask tmp */
+		memset(&alu, 0, sizeof(struct r600_bytecode_alu));
+		alu.op = ALU_OP2_BFM_INT;
+		alu.dst.sel = t1;
+		alu.dst.chan = i;
+		alu.dst.write = 1;
+		alu.last = i == last_inst;
+
+		r600_bytecode_src(&alu.src[0], &ctx->src[3], i);
+		r600_bytecode_src(&alu.src[1], &ctx->src[2], i);
+
+		r = r600_bytecode_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
+	}
+
+	t2 = r600_get_temp(ctx);
+
+	for (i = 0; i < 4; i++) {
+		if (!(write_mask & (1<<i)))
+			continue;
+
+		/* shift insert left */
+		memset(&alu, 0, sizeof(struct r600_bytecode_alu));
+		alu.op = ALU_OP2_LSHL_INT;
+		alu.dst.sel = t2;
+		alu.dst.chan = i;
+		alu.dst.write = 1;
+		alu.last = i == last_inst;
+
+		r600_bytecode_src(&alu.src[0], &ctx->src[1], i);
+		r600_bytecode_src(&alu.src[1], &ctx->src[2], i);
+
+		r = r600_bytecode_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
+	}
+
+	for (i = 0; i < 4; i++) {
+		if (!(write_mask & (1<<i)))
+			continue;
+
+		/* actual bitfield insert */
+		memset(&alu, 0, sizeof(struct r600_bytecode_alu));
+		alu.op = ALU_OP3_BFI_INT;
+		alu.is_op3 = 1;
+		tgsi_dst(ctx, &inst->Dst[0], i, &alu.dst);
+		alu.dst.chan = i;
+		alu.dst.write = 1;
+		alu.last = i == last_inst;
+
+		alu.src[0].sel = t1;
+		alu.src[0].chan = i;
+		alu.src[1].sel = t2;
+		alu.src[1].chan = i;
+		r600_bytecode_src(&alu.src[2], &ctx->src[0], i);
+
+		r = r600_bytecode_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
+	}
+
+	return 0;
+}
+
+static int tgsi_msb(struct r600_shader_ctx *ctx)
+{
+	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
+	struct r600_bytecode_alu alu;
+	int i, r, t1, t2;
+
+	unsigned write_mask = inst->Dst[0].Register.WriteMask;
+	int last_inst = tgsi_last_instruction(write_mask);
+
+	assert(ctx->inst_info->op == ALU_OP1_FFBH_INT ||
+		ctx->inst_info->op == ALU_OP1_FFBH_UINT);
+
+	t1 = ctx->temp_reg;
+
+	/* bit position is indexed from lsb by TGSI, and from msb by the hardware */
+	for (i = 0; i < 4; i++) {
+		if (!(write_mask & (1<<i)))
+			continue;
+
+		/* t1 = FFBH_INT / FFBH_UINT */
+		memset(&alu, 0, sizeof(struct r600_bytecode_alu));
+		alu.op = ctx->inst_info->op;
+		alu.dst.sel = t1;
+		alu.dst.chan = i;
+		alu.dst.write = 1;
+		alu.last = i == last_inst;
+
+		r600_bytecode_src(&alu.src[0], &ctx->src[0], i);
+
+		r = r600_bytecode_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
+	}
+
+	t2 = r600_get_temp(ctx);
+
+	for (i = 0; i < 4; i++) {
+		if (!(write_mask & (1<<i)))
+			continue;
+
+		/* t2 = 31 - t1 */
+		memset(&alu, 0, sizeof(struct r600_bytecode_alu));
+		alu.op = ALU_OP2_SUB_INT;
+		alu.dst.sel = t2;
+		alu.dst.chan = i;
+		alu.dst.write = 1;
+		alu.last = i == last_inst;
+
+		alu.src[0].sel = V_SQ_ALU_SRC_LITERAL;
+		alu.src[0].value = 31;
+		alu.src[1].sel = t1;
+		alu.src[1].chan = i;
+
+		r = r600_bytecode_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
+	}
+
+	for (i = 0; i < 4; i++) {
+		if (!(write_mask & (1<<i)))
+			continue;
+
+		/* result = t1 >= 0 ? t2 : t1 */
+		memset(&alu, 0, sizeof(struct r600_bytecode_alu));
+		alu.op = ALU_OP3_CNDGE_INT;
+		alu.is_op3 = 1;
+		tgsi_dst(ctx, &inst->Dst[0], i, &alu.dst);
+		alu.dst.chan = i;
+		alu.dst.write = 1;
+		alu.last = i == last_inst;
+
+		alu.src[0].sel = t1;
+		alu.src[0].chan = i;
+		alu.src[1].sel = t2;
+		alu.src[1].chan = i;
+		alu.src[2].sel = t1;
+		alu.src[2].chan = i;
+
+		r = r600_bytecode_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
+	}
+
+	return 0;
+}
+
 static int tgsi_helper_copy(struct r600_shader_ctx *ctx, struct tgsi_full_instruction *inst)
 {
 	struct r600_bytecode_alu alu;
@@ -6675,6 +6841,14 @@ static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_UMUL_HI,	0, ALU_OP2_MULHI_UINT, tgsi_op2_trans},
 	{TGSI_OPCODE_TG4,   0, FETCH_OP_GATHER4, tgsi_unsupported},
 	{TGSI_OPCODE_LODQ,	0, FETCH_OP_GET_LOD, tgsi_unsupported},
+	{TGSI_OPCODE_IBFE,	1, ALU_OP3_BFE_INT, tgsi_unsupported},
+	{TGSI_OPCODE_UBFE,	1, ALU_OP3_BFE_UINT, tgsi_unsupported},
+	{TGSI_OPCODE_BFI,	0, ALU_OP0_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_BREV,	0, ALU_OP1_BFREV_INT, tgsi_unsupported},
+	{TGSI_OPCODE_POPC,	0, ALU_OP1_BCNT_INT, tgsi_unsupported},
+	{TGSI_OPCODE_LSB,	0, ALU_OP1_FFBL_INT, tgsi_unsupported},
+	{TGSI_OPCODE_IMSB,	0, ALU_OP1_FFBH_INT, tgsi_unsupported},
+	{TGSI_OPCODE_UMSB,	0, ALU_OP1_FFBH_UINT, tgsi_unsupported},
 	{TGSI_OPCODE_LAST,	0, ALU_OP0_NOP, tgsi_unsupported},
 };
 
@@ -6870,6 +7044,14 @@ static struct r600_shader_tgsi_instruction eg_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_UMUL_HI,	0, ALU_OP2_MULHI_UINT, tgsi_op2_trans},
 	{TGSI_OPCODE_TG4,   0, FETCH_OP_GATHER4, tgsi_tex},
 	{TGSI_OPCODE_LODQ,	0, FETCH_OP_GET_LOD, tgsi_tex},
+	{TGSI_OPCODE_IBFE,	1, ALU_OP3_BFE_INT, tgsi_op3},
+	{TGSI_OPCODE_UBFE,	1, ALU_OP3_BFE_UINT, tgsi_op3},
+	{TGSI_OPCODE_BFI,	0, ALU_OP0_NOP, tgsi_bfi},
+	{TGSI_OPCODE_BREV,	0, ALU_OP1_BFREV_INT, tgsi_op2},
+	{TGSI_OPCODE_POPC,	0, ALU_OP1_BCNT_INT, tgsi_op2},
+	{TGSI_OPCODE_LSB,	0, ALU_OP1_FFBL_INT, tgsi_op2},
+	{TGSI_OPCODE_IMSB,	0, ALU_OP1_FFBH_INT, tgsi_msb},
+	{TGSI_OPCODE_UMSB,	0, ALU_OP1_FFBH_UINT, tgsi_msb},
 	{TGSI_OPCODE_LAST,	0, ALU_OP0_NOP, tgsi_unsupported},
 };
 
@@ -7066,5 +7248,13 @@ static struct r600_shader_tgsi_instruction cm_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_UMUL_HI,	0, ALU_OP2_MULHI_UINT, cayman_mul_int_instr},
 	{TGSI_OPCODE_TG4,   0, FETCH_OP_GATHER4, tgsi_tex},
 	{TGSI_OPCODE_LODQ,	0, FETCH_OP_GET_LOD, tgsi_tex},
+	{TGSI_OPCODE_IBFE,	1, ALU_OP3_BFE_INT, tgsi_op3},
+	{TGSI_OPCODE_UBFE,	1, ALU_OP3_BFE_UINT, tgsi_op3},
+	{TGSI_OPCODE_BFI,	0, ALU_OP0_NOP, tgsi_bfi},
+	{TGSI_OPCODE_BREV,	0, ALU_OP1_BFREV_INT, tgsi_op2},
+	{TGSI_OPCODE_POPC,	0, ALU_OP1_BCNT_INT, tgsi_op2},
+	{TGSI_OPCODE_LSB,	0, ALU_OP1_FFBL_INT, tgsi_op2},
+	{TGSI_OPCODE_IMSB,	0, ALU_OP1_FFBH_INT, tgsi_msb},
+	{TGSI_OPCODE_UMSB,	0, ALU_OP1_FFBH_UINT, tgsi_msb},
 	{TGSI_OPCODE_LAST,	0, ALU_OP0_NOP, tgsi_unsupported},
 };
