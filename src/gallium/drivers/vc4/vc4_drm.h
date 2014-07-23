@@ -72,7 +72,7 @@ struct drm_vc4_submit_cl {
 	 * and an attribute count), so those BO indices into bo_handles are
 	 * just stored as uint32_ts before each shader record passed in.
 	 */
-	void __user *shader_records;
+	void __user *shader_rec;
 
 	/* Pointer to uniform data and texture handles for the textures
 	 * referenced by the shader.
@@ -92,20 +92,20 @@ struct drm_vc4_submit_cl {
 	void __user *bo_handles;
 
 	/* Size in bytes of the binner command list. */
-	uint32_t bin_cl_len;
+	uint32_t bin_cl_size;
 	/* Size in bytes of the render command list */
-	uint32_t render_cl_len;
-	/* Size in bytes of the list of shader records. */
-	uint32_t shader_record_len;
+	uint32_t render_cl_size;
+	/* Size in bytes of the set of shader records. */
+	uint32_t shader_rec_size;
 	/* Number of shader records.
 	 *
 	 * This could just be computed from the contents of shader_records and
 	 * the address bits of references to them from the bin CL, but it
 	 * keeps the kernel from having to resize some allocations it makes.
 	 */
-	uint32_t shader_record_count;
-	/** Size in bytes of the uniform state. */
-	uint32_t uniforms_len;
+	uint32_t shader_rec_count;
+	/* Size in bytes of the uniform state. */
+	uint32_t uniforms_size;
 
 	/* Number of BO handles passed in (size is that times 4). */
 	uint32_t bo_handle_count;

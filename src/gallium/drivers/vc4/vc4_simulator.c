@@ -108,18 +108,18 @@ vc4_cl_validate(struct drm_device *dev, struct exec_info *exec)
 	void *bin, *render;
 	int ret = 0;
 	uint32_t bin_offset = 0;
-	uint32_t render_offset = bin_offset + args->bin_cl_len;
+	uint32_t render_offset = bin_offset + args->bin_cl_size;
 	uint32_t shader_rec_offset = roundup(render_offset +
-					     args->render_cl_len, 16);
-	uint32_t uniforms_offset = shader_rec_offset + args->shader_record_len;
-	uint32_t exec_size = uniforms_offset + args->uniforms_len;
+					     args->render_cl_size, 16);
+	uint32_t uniforms_offset = shader_rec_offset + args->shader_rec_size;
+	uint32_t exec_size = uniforms_offset + args->uniforms_size;
 	uint32_t temp_size = exec_size + (sizeof(struct vc4_shader_state) *
-					  args->shader_record_count);
+					  args->shader_rec_count);
 
 	if (shader_rec_offset < render_offset ||
 	    uniforms_offset < shader_rec_offset ||
 	    exec_size < uniforms_offset ||
-	    args->shader_record_count >= (UINT_MAX /
+	    args->shader_rec_count >= (UINT_MAX /
 					  sizeof(struct vc4_shader_state)) ||
 	    temp_size < exec_size) {
 		DRM_ERROR("overflow in exec arguments\n");
@@ -145,29 +145,29 @@ vc4_cl_validate(struct drm_device *dev, struct exec_info *exec)
 	exec->shader_rec_u = temp + shader_rec_offset;
 	exec->uniforms_u = temp + uniforms_offset;
 	exec->shader_state = temp + exec_size;
-	exec->shader_state_size = args->shader_record_count;
+	exec->shader_state_size = args->shader_rec_count;
 
-	ret = copy_from_user(bin, args->bin_cl, args->bin_cl_len);
+	ret = copy_from_user(bin, args->bin_cl, args->bin_cl_size);
 	if (ret) {
 		DRM_ERROR("Failed to copy in bin cl\n");
 		goto fail;
 	}
 
-	ret = copy_from_user(render, args->render_cl, args->render_cl_len);
+	ret = copy_from_user(render, args->render_cl, args->render_cl_size);
 	if (ret) {
 		DRM_ERROR("Failed to copy in render cl\n");
 		goto fail;
 	}
 
-	ret = copy_from_user(exec->shader_rec_u, args->shader_records,
-			     args->shader_record_len);
+	ret = copy_from_user(exec->shader_rec_u, args->shader_rec,
+			     args->shader_rec_size);
 	if (ret) {
 		DRM_ERROR("Failed to copy in shader recs\n");
 		goto fail;
 	}
 
 	ret = copy_from_user(exec->uniforms_u, args->uniforms,
-			     args->uniforms_len);
+			     args->uniforms_size);
 	if (ret) {
 		DRM_ERROR("Failed to copy in uniforms cl\n");
 		goto fail;
@@ -184,22 +184,22 @@ vc4_cl_validate(struct drm_device *dev, struct exec_info *exec)
 #endif
 
 	exec->ct0ca = exec->exec_bo->paddr + bin_offset;
-	exec->ct0ea = exec->ct0ca + args->bin_cl_len;
+	exec->ct0ea = exec->ct0ca + args->bin_cl_size;
 	exec->ct1ca = exec->exec_bo->paddr + render_offset;
-	exec->ct1ea = exec->ct1ca + args->render_cl_len;
+	exec->ct1ea = exec->ct1ca + args->render_cl_size;
 
 	exec->shader_rec_v = exec->exec_bo->vaddr + shader_rec_offset;
 	exec->shader_rec_p = exec->exec_bo->paddr + shader_rec_offset;
-	exec->shader_rec_size = args->shader_record_len;
+	exec->shader_rec_size = args->shader_rec_size;
 
 	exec->uniforms_v = exec->exec_bo->vaddr + uniforms_offset;
 	exec->uniforms_p = exec->exec_bo->paddr + uniforms_offset;
-	exec->uniforms_size = args->uniforms_len;
+	exec->uniforms_size = args->uniforms_size;
 
 	ret = vc4_validate_cl(dev,
 			      exec->exec_bo->vaddr + bin_offset,
 			      bin,
-			      args->bin_cl_len,
+			      args->bin_cl_size,
 			      true,
 			      exec);
 	if (ret)
@@ -208,7 +208,7 @@ vc4_cl_validate(struct drm_device *dev, struct exec_info *exec)
 	ret = vc4_validate_cl(dev,
 			      exec->exec_bo->vaddr + render_offset,
 			      render,
-			      args->render_cl_len,
+			      args->render_cl_size,
 			      false,
 			      exec);
 	if (ret)
