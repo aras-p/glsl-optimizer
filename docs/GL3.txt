@@ -157,7 +157,7 @@ GL 4.3:
   GL_ARB_arrays_of_arrays                              started (Timothy)
   GL_ARB_ES3_compatibility                             DONE (i965)
   GL_ARB_clear_buffer_object                           DONE (all drivers)
-  GL_ARB_compute_shader                                started (Paul Berry)
+  GL_ARB_compute_shader                                started (currently stalled)
   GL_ARB_copy_image                                    not started
   GL_KHR_debug                                         DONE (all drivers)
   GL_ARB_explicit_uniform_location                     DONE (all drivers that support GLSL)
