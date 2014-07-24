@@ -155,10 +155,10 @@ void
 ilo_init_resource_functions(struct ilo_screen *is);
 
 bool
-ilo_buffer_alloc_bo(struct ilo_buffer *buf);
+ilo_buffer_rename_bo(struct ilo_buffer *buf);
 
 bool
-ilo_texture_alloc_bo(struct ilo_texture *tex);
+ilo_texture_rename_bo(struct ilo_texture *tex);
 
 static inline struct ilo_texture_slice *
 ilo_texture_get_slice(const struct ilo_texture *tex,

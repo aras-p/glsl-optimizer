@@ -141,7 +141,7 @@ ilo_blitter_set_rectlist(struct ilo_blitter *blitter,
 
    /* buffer is full */
    if (blitter->buffer.offset + sizeof(vertices) > blitter->buffer.size) {
-      if (!ilo_buffer_alloc_bo(ilo_buffer(blitter->buffer.res)))
+      if (!ilo_buffer_rename_bo(ilo_buffer(blitter->buffer.res)))
          usage &= ~PIPE_TRANSFER_UNSYNCHRONIZED;
 
       blitter->buffer.offset = 0;

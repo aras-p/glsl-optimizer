@@ -605,7 +605,7 @@ tex_layout_init_tiling(struct tex_layout *layout)
    /* no conflicting binding flags */
    assert(valid_tilings);
 
-   /* prefer tiled than linear */
+   /* prefer tiled over linear */
    if (valid_tilings & tile_y)
       layout->tiling = INTEL_TILING_Y;
    else if (valid_tilings & tile_x)
@@ -1108,42 +1108,38 @@ tex_alloc_slices(struct ilo_texture *tex)
 }
 
 static bool
-tex_create_bo(struct ilo_texture *tex,
-              const struct winsys_handle *handle)
+tex_import_handle(struct ilo_texture *tex,
+                  const struct tex_layout *layout,
+                  const struct winsys_handle *handle)
 {
    struct ilo_screen *is = ilo_screen(tex->base.screen);
    const char *name = resource_get_bo_name(&tex->base);
-   struct intel_bo *bo;
+   enum intel_tiling_mode tiling;
+   unsigned long pitch;
 
-   if (handle) {
-      enum intel_tiling_mode tiling;
-      unsigned long pitch;
-
-      bo = intel_winsys_import_handle(is->winsys, name, handle,
-            tex->bo_height, &tiling, &pitch);
-
-      if (bo) {
-         tex->tiling = tiling;
-         tex->bo_stride = pitch;
-      }
-   }
-   else {
-      const enum intel_domain_flag initial_domain =
-         resource_get_bo_initial_domain(&tex->base);
-
-      bo = intel_winsys_alloc_bo(is->winsys, name, tex->tiling,
-            tex->bo_stride, tex->bo_height, initial_domain);
-   }
-
-   if (!bo)
+   tex->bo = intel_winsys_import_handle(is->winsys, name, handle,
+         tex->bo_height, &tiling, &pitch);
+   if (!tex->bo)
       return false;
 
-   if (tex->bo)
-      intel_bo_unreference(tex->bo);
-
-   tex->bo = bo;
+   tex->tiling = tiling;
+   tex->bo_stride = pitch;
 
    return true;
+}
+
+static bool
+tex_create_bo(struct ilo_texture *tex)
+{
+   struct ilo_screen *is = ilo_screen(tex->base.screen);
+   const char *name = resource_get_bo_name(&tex->base);
+   const enum intel_domain_flag initial_domain =
+      resource_get_bo_initial_domain(&tex->base);
+
+   tex->bo = intel_winsys_alloc_bo(is->winsys, name, tex->tiling,
+         tex->bo_stride, tex->bo_height, initial_domain);
+
+   return (tex->bo != NULL);
 }
 
 static bool
@@ -1281,8 +1277,14 @@ tex_apply_layout(struct ilo_texture *tex,
    tex->array_spacing_full = layout->array_spacing_full;
    tex->interleaved = layout->interleaved;
 
-   if (!tex_create_bo(tex, handle))
-      return false;
+   if (handle) {
+      if (!tex_import_handle(tex, layout, handle))
+         return false;
+   }
+   else {
+      if (!tex_create_bo(tex))
+         return false;
+   }
 
    /* allocate separate stencil resource */
    if (layout->separate_stencil && !tex_create_separate_stencil(tex))
@@ -1390,19 +1392,11 @@ buf_create_bo(struct ilo_buffer *buf)
    const char *name = resource_get_bo_name(&buf->base);
    const enum intel_domain_flag initial_domain =
       resource_get_bo_initial_domain(&buf->base);
-   struct intel_bo *bo;
 
-   bo = intel_winsys_alloc_buffer(is->winsys, name,
+   buf->bo = intel_winsys_alloc_buffer(is->winsys, name,
          buf->bo_size, initial_domain);
-   if (!bo)
-      return false;
 
-   if (buf->bo)
-      intel_bo_unreference(buf->bo);
-
-   buf->bo = bo;
-
-   return true;
+   return (buf->bo != NULL);
 }
 
 static void
@@ -1547,19 +1541,37 @@ ilo_init_resource_functions(struct ilo_screen *is)
 }
 
 bool
-ilo_buffer_alloc_bo(struct ilo_buffer *buf)
+ilo_buffer_rename_bo(struct ilo_buffer *buf)
 {
-   return buf_create_bo(buf);
+   struct intel_bo *old_bo = buf->bo;
+
+   if (buf_create_bo(buf)) {
+      intel_bo_unreference(old_bo);
+      return true;
+   }
+   else {
+      buf->bo = old_bo;
+      return false;
+   }
 }
 
 bool
-ilo_texture_alloc_bo(struct ilo_texture *tex)
+ilo_texture_rename_bo(struct ilo_texture *tex)
 {
-   /* a shared bo cannot be reallocated */
+   struct intel_bo *old_bo = tex->bo;
+
+   /* an imported texture cannot be renamed */
    if (tex->imported)
       return false;
 
-   return tex_create_bo(tex, NULL);
+   if (tex_create_bo(tex)) {
+      intel_bo_unreference(old_bo);
+      return true;
+   }
+   else {
+      tex->bo = old_bo;
+      return false;
+   }
 }
 
 /**
