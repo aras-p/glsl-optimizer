@@ -519,6 +519,13 @@ static int r600_get_compute_param(struct pipe_screen *screen,
 			*max_compute_units = MAX2(rscreen->info.max_compute_units, 1);
 		}
 		return sizeof(uint32_t);
+
+	case PIPE_COMPUTE_CAP_IMAGES_SUPPORTED:
+		if (ret) {
+			uint32_t *images_supported = ret;
+			*images_supported = 0;
+		}
+		return sizeof(uint32_t);
 	}
 
         fprintf(stderr, "unknown PIPE_COMPUTE_CAP %d\n", param);

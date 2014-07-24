@@ -332,6 +332,8 @@ pipe_screen::get_compute_param.
   clock in MHz. Value type: ``uint32_t``
 * ``PIPE_COMPUTE_CAP_MAX_COMPUTE_UNITS``: Maximum number of compute units
   Value type: ``uint32_t``
+* ``PIPE_COMPUTE_CAP_IMAGES_SUPPORTED``: Whether images are supported
+  non-zero means yes, zero means no. Value type: ``uint32_t``
 
 .. _pipe_bind:
 
