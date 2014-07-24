@@ -7,6 +7,7 @@ env = env.Clone()
 
 env.Prepend(LIBS = [
     ws_xlib,
+    mesautil,
     gallium,
 ])
 

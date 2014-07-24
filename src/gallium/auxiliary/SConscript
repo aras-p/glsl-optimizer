@@ -3,6 +3,7 @@ Import('*')
 from sys import executable as python_cmd
 
 env.Append(CPPPATH = [
+    '#src',
     'indices',
     'util',
 ])
@@ -17,13 +18,6 @@ env.CodeGenerate(
 env.CodeGenerate(
     target = 'indices/u_unfilled_gen.c', 
     script = 'indices/u_unfilled_gen.py', 
-    source = [],
-    command = python_cmd + ' $SCRIPT > $TARGET'
-)
-
-env.CodeGenerate(
-    target = 'util/u_format_srgb.c', 
-    script = 'util/u_format_srgb.py', 
     source = [],
     command = python_cmd + ' $SCRIPT > $TARGET'
 )

@@ -1,3 +1,6 @@
 MESA_UTIL_FILES :=	\
 	hash_table.c	\
 	ralloc.c
+
+MESA_UTIL_GENERATED_FILES = \
+	format_srgb.c

@@ -20,7 +20,7 @@ env.Alias('llvmpipe', llvmpipe)
 if not env['embedded']:
     env = env.Clone()
 
-    env.Prepend(LIBS = [llvmpipe] + gallium)
+    env.Prepend(LIBS = [llvmpipe, gallium, mesautil])
 
     tests = [
         'format',

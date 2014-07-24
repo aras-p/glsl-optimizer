@@ -109,7 +109,7 @@ def generate_srgb_tables():
         start = ((127 - numexp) << 23) + bucket*(bucketsize << stepshift)
         sum_a = 0.0
         sum_b = 0.0
- 
+
         for i in range(0, bucketsize):
             j = (i << stepshift) >> mantshift
             fint = start + (i << stepshift)
@@ -123,7 +123,7 @@ def generate_srgb_tables():
 
         scaled_a = solved_a * 65536.0 / 512.0
         scaled_b = solved_b * 65536.0
- 
+
         int_a = int(scaled_a + 0.5)
         int_b = int(scaled_b + 0.5)
 
@@ -146,9 +146,9 @@ def main():
     # This will print the copyright message on the top of this file
     print CopyRight.strip()
     print
-    print '#include "u_format_srgb.h"'
+    print '#include "format_srgb.h"'
     print
-    generate_srgb_tables()    
+    generate_srgb_tables()
 
 
 if __name__ == '__main__':

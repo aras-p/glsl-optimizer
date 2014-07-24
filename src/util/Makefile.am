@@ -23,6 +23,10 @@ SUBDIRS = . tests
 
 include Makefile.sources
 
+BUILT_SOURCES = $(MESA_UTIL_GENERATED_FILES)
+
+CLEANFILES = $(BUILT_SOURCES)
+
 noinst_LTLIBRARIES = libmesautil.la
 
 libmesautil_la_CPPFLAGS = \
@@ -30,7 +34,12 @@ libmesautil_la_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	$(VISIBILITY_CFLAGS)
 
-libmesautil_la_SOURCES = $(MESA_UTIL_FILES)
+libmesautil_la_SOURCES = \
+	$(MESA_UTIL_FILES) \
+        $(MESA_UTIL_GENERATED_FILES)
+
+format_srgb.c: $(srcdir)/format_srgb.py
+	$(AM_V_GEN) $(PYTHON2) $< > $@
 
 ### Tests:
 

@@ -24,7 +24,7 @@
 #include "util/u_helpers.h"
 #include "util/u_inlines.h"
 #include "util/u_transfer.h"
-#include "util/u_format_srgb.h"
+#include "util/format_srgb.h"
 
 #include "tgsi/tgsi_parse.h"
 

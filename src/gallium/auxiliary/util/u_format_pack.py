@@ -669,7 +669,7 @@ def generate(formats):
     print '#include "u_half.h"'
     print '#include "u_format.h"'
     print '#include "u_format_other.h"'
-    print '#include "u_format_srgb.h"'
+    print '#include "util/format_srgb.h"'
     print '#include "u_format_yuv.h"'
     print '#include "u_format_zs.h"'
     print

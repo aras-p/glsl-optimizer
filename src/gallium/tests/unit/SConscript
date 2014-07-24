@@ -2,7 +2,7 @@ Import('*')
 
 env = env.Clone()
 
-env.Prepend(LIBS = [gallium])
+env.Prepend(LIBS = [mesautil, gallium])
 
 if env['platform'] in ('freebsd8', 'sunos'):
     env.Append(LIBS = ['m'])

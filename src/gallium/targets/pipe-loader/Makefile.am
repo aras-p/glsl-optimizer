@@ -38,6 +38,7 @@ pipe_LTLIBRARIES =
 
 PIPE_LIBS = \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
+        $(top_builddir)/src/util/libmesautil.la \
 	$(top_builddir)/src/gallium/drivers/rbug/librbug.la \
 	$(top_builddir)/src/gallium/drivers/trace/libtrace.la \
 	$(top_builddir)/src/gallium/drivers/galahad/libgalahad.la \
@@ -96,7 +97,6 @@ nodist_EXTRA_pipe_r300_la_SOURCES = dummy.cpp
 pipe_r300_la_LIBADD = \
 	$(PIPE_LIBS) \
 	$(top_builddir)/src/gallium/winsys/radeon/drm/libradeonwinsys.la \
-        $(top_builddir)/src/util/libmesautil.la \
 	$(top_builddir)/src/gallium/drivers/r300/libr300-helper.la \
 	$(top_builddir)/src/gallium/drivers/r300/libr300.la \
 	$(LIBDRM_LIBS) \
