@@ -448,9 +448,11 @@ wglChoosePixelFormatARB(
     */
    for (i = 0; i < count; i++) {
       if (scores[i].points > 0) {
-         if (*nNumFormats < nMaxFormats)
-            piFormats[*nNumFormats] = scores[i].index + 1;
+	 piFormats[*nNumFormats] = scores[i].index + 1;
          (*nNumFormats)++;
+	 if (*nNumFormats >= nMaxFormats) {
+	    break;
+	 }
       }
    }
 
