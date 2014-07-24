@@ -43,7 +43,7 @@ struct tex_layout {
    bool compressed;
 
    enum intel_tiling_mode tiling;
-   bool can_be_linear;
+   unsigned valid_tilings; /* bitmask of valid tiling modes */
 
    bool array_spacing_full;
    bool interleaved;
@@ -561,32 +561,36 @@ tex_layout_init_tiling(struct tex_layout *layout)
       }
    }
 
-   if (templ->bind & (PIPE_BIND_RENDER_TARGET | PIPE_BIND_SAMPLER_VIEW)) {
-      if (templ->bind & PIPE_BIND_RENDER_TARGET) {
-         /*
-          * From the Sandy Bridge PRM, volume 1 part 2, page 32:
-          *
-          *     "NOTE: 128BPE Format Color buffer ( render target ) MUST be
-          *      either TileX or Linear."
-          */
-         if (layout->block_size == 16)
-            valid_tilings &= ~tile_y;
-
-         /*
-          * From the Ivy Bridge PRM, volume 4 part 1, page 63:
-          *
-          *     "This field (Surface Vertical Aligment) must be set to
-          *      VALIGN_4 for all tiled Y Render Target surfaces."
-          *
-          *     "VALIGN_4 is not supported for surface format
-          *      R32G32B32_FLOAT."
-          */
-         if (layout->dev->gen >= ILO_GEN(7) && layout->block_size == 12)
-            valid_tilings &= ~tile_y;
-      }
+   if (templ->bind & PIPE_BIND_RENDER_TARGET) {
+      /*
+       * From the Sandy Bridge PRM, volume 1 part 2, page 32:
+       *
+       *     "NOTE: 128BPE Format Color buffer ( render target ) MUST be
+       *      either TileX or Linear."
+       */
+      if (layout->block_size == 16)
+         valid_tilings &= ~tile_y;
 
       /*
-       * Also, heuristically set a minimum width/height for enabling tiling.
+       * From the Ivy Bridge PRM, volume 4 part 1, page 63:
+       *
+       *     "This field (Surface Vertical Aligment) must be set to VALIGN_4
+       *      for all tiled Y Render Target surfaces."
+       *
+       *     "VALIGN_4 is not supported for surface format R32G32B32_FLOAT."
+       */
+      if (layout->dev->gen >= ILO_GEN(7) && layout->block_size == 12)
+         valid_tilings &= ~tile_y;
+   }
+
+   /* no conflicting binding flags */
+   assert(valid_tilings);
+
+   layout->valid_tilings = valid_tilings;
+
+   if (templ->bind & (PIPE_BIND_RENDER_TARGET | PIPE_BIND_SAMPLER_VIEW)) {
+      /*
+       * heuristically set a minimum width/height for enabling tiling
        */
       if (templ->width0 < 64 && (valid_tilings & ~tile_x))
          valid_tilings &= ~tile_x;
@@ -602,9 +606,6 @@ tex_layout_init_tiling(struct tex_layout *layout)
          valid_tilings &= tile_none;
    }
 
-   /* no conflicting binding flags */
-   assert(valid_tilings);
-
    /* prefer tiled over linear */
    if (valid_tilings & tile_y)
       layout->tiling = INTEL_TILING_Y;
@@ -612,8 +613,6 @@ tex_layout_init_tiling(struct tex_layout *layout)
       layout->tiling = INTEL_TILING_X;
    else
       layout->tiling = INTEL_TILING_NONE;
-
-   layout->can_be_linear = valid_tilings & tile_none;
 }
 
 static void
@@ -996,7 +995,7 @@ tex_layout_calculate_bo_size(struct tex_layout *layout)
           * VALIGN_2 if the layout was Y-tiled, but let's keep it simple.
           */
          if (mappable_gtt_size / w / 4 < h) {
-            if (layout->can_be_linear) {
+            if (layout->valid_tilings & (1 << INTEL_TILING_NONE)) {
                layout->tiling = INTEL_TILING_NONE;
                continue;
             }
@@ -1121,6 +1120,13 @@ tex_import_handle(struct ilo_texture *tex,
          tex->bo_height, &tiling, &pitch);
    if (!tex->bo)
       return false;
+
+   if (!(layout->valid_tilings & (1 << tiling))) {
+      ilo_err("imported handle has incompatible tiling\n");
+      intel_bo_unreference(tex->bo);
+      tex->bo = NULL;
+      return false;
+   }
 
    tex->tiling = tiling;
    tex->bo_stride = pitch;
