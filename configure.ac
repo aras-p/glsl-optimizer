@@ -1352,6 +1352,10 @@ if test "x$enable_gallium_gbm" = xyes; then
         AC_MSG_ERROR([gbm_gallium requires --enable-dri to build])
     fi
 
+    if test "x$enable_gallium_egl" != xyes; then
+        AC_MSG_ERROR([gbm_gallium is only used by egl_gallium])
+    fi
+
     GALLIUM_STATE_TRACKERS_DIRS="gbm $GALLIUM_STATE_TRACKERS_DIRS"
     GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS gbm"
     enable_gallium_loader=yes
