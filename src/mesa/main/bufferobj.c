@@ -832,6 +832,9 @@ _mesa_init_buffer_objects( struct gl_context *ctx )
    _mesa_reference_buffer_object(ctx, &ctx->UniformBuffer,
 				 ctx->Shared->NullBufferObj);
 
+   _mesa_reference_buffer_object(ctx, &ctx->AtomicBuffer,
+				 ctx->Shared->NullBufferObj);
+
    _mesa_reference_buffer_object(ctx, &ctx->DrawIndirectBuffer,
 				 ctx->Shared->NullBufferObj);
 
@@ -841,6 +844,14 @@ _mesa_init_buffer_objects( struct gl_context *ctx )
 				    ctx->Shared->NullBufferObj);
       ctx->UniformBufferBindings[i].Offset = -1;
       ctx->UniformBufferBindings[i].Size = -1;
+   }
+
+   for (i = 0; i < MAX_COMBINED_ATOMIC_BUFFERS; i++) {
+      _mesa_reference_buffer_object(ctx,
+				    &ctx->AtomicBufferBindings[i].BufferObject,
+				    ctx->Shared->NullBufferObj);
+      ctx->AtomicBufferBindings[i].Offset = -1;
+      ctx->AtomicBufferBindings[i].Size = -1;
    }
 }
 
@@ -857,6 +868,8 @@ _mesa_free_buffer_objects( struct gl_context *ctx )
 
    _mesa_reference_buffer_object(ctx, &ctx->UniformBuffer, NULL);
 
+   _mesa_reference_buffer_object(ctx, &ctx->AtomicBuffer, NULL);
+
    _mesa_reference_buffer_object(ctx, &ctx->DrawIndirectBuffer, NULL);
 
    for (i = 0; i < MAX_COMBINED_UNIFORM_BUFFERS; i++) {
@@ -864,6 +877,13 @@ _mesa_free_buffer_objects( struct gl_context *ctx )
 				    &ctx->UniformBufferBindings[i].BufferObject,
 				    NULL);
    }
+
+   for (i = 0; i < MAX_COMBINED_ATOMIC_BUFFERS; i++) {
+      _mesa_reference_buffer_object(ctx,
+				    &ctx->AtomicBufferBindings[i].BufferObject,
+				    NULL);
+   }
+
 }
 
 bool
@@ -1198,6 +1218,17 @@ _mesa_DeleteBuffers(GLsizei n, const GLuint *ids)
 
          if (ctx->UniformBuffer == bufObj) {
             _mesa_BindBuffer( GL_UNIFORM_BUFFER, 0 );
+         }
+
+         /* unbind Atomci Buffer binding points */
+         for (j = 0; j < ctx->Const.MaxAtomicBufferBindings; j++) {
+            if (ctx->AtomicBufferBindings[j].BufferObject == bufObj) {
+               _mesa_BindBufferBase( GL_ATOMIC_COUNTER_BUFFER, j, 0 );
+            }
+         }
+
+         if (ctx->UniformBuffer == bufObj) {
+            _mesa_BindBuffer( GL_ATOMIC_COUNTER_BUFFER, 0 );
          }
 
          /* unbind any pixel pack/unpack pointers bound to this buffer */
