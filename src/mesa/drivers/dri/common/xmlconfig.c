@@ -45,6 +45,8 @@
 extern char *program_invocation_name, *program_invocation_short_name;
 #    endif
 #    define GET_PROGRAM_NAME() program_invocation_short_name
+#elif defined(__CYGWIN__)
+#    define GET_PROGRAM_NAME() program_invocation_short_name
 #elif defined(__FreeBSD__) && (__FreeBSD__ >= 2)
 #    include <osreldate.h>
 #    if (__FreeBSD_version >= 440000)
