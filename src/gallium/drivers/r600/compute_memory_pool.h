@@ -101,6 +101,7 @@ void compute_memory_demote_item(struct compute_memory_pool *pool,
 	struct compute_memory_item *item, struct pipe_context *pipe);
 
 void compute_memory_move_item(struct compute_memory_pool *pool,
+	struct pipe_resource *src, struct pipe_resource *dst,
 	struct compute_memory_item *item, uint64_t new_start_in_dw,
 	struct pipe_context *pipe);
 

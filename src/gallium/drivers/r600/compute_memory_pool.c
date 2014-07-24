@@ -306,6 +306,7 @@ void compute_memory_defrag(struct compute_memory_pool *pool,
 	struct pipe_context *pipe)
 {
 	struct compute_memory_item *item;
+	struct pipe_resource *src = (struct pipe_resource *)pool->bo;
 	int64_t last_pos;
 
 	COMPUTE_DBG(pool->screen, "* compute_memory_defrag()\n");
@@ -315,7 +316,8 @@ void compute_memory_defrag(struct compute_memory_pool *pool,
 		if (item->start_in_dw != last_pos) {
 			assert(last_pos < item->start_in_dw);
 
-			compute_memory_move_item(pool, item, last_pos, pipe);
+			compute_memory_move_item(pool, src, src,
+					item, last_pos, pipe);
 		}
 
 		last_pos += align(item->size_in_dw, ITEM_ALIGNMENT);
@@ -406,7 +408,8 @@ void compute_memory_demote_item(struct compute_memory_pool *pool,
 }
 
 /**
- * Moves the item \a item forward in the pool to \a new_start_in_dw
+ * Moves the item \a item forward from the resource \a src to the
+ * resource \a dst at \a new_start_in_dw
  *
  * This function assumes two things:
  * 1) The item is \b only moved forward
@@ -417,13 +420,12 @@ void compute_memory_demote_item(struct compute_memory_pool *pool,
  * \see compute_memory_defrag
  */
 void compute_memory_move_item(struct compute_memory_pool *pool,
+	struct pipe_resource *src, struct pipe_resource *dst,
 	struct compute_memory_item *item, uint64_t new_start_in_dw,
 	struct pipe_context *pipe)
 {
 	struct pipe_screen *screen = (struct pipe_screen *)pool->screen;
 	struct r600_context *rctx = (struct r600_context *)pipe;
-	struct pipe_resource *src = (struct pipe_resource *)pool->bo;
-	struct pipe_resource *dst;
 	struct pipe_box box;
 
 	struct compute_memory_item *prev;
@@ -440,9 +442,9 @@ void compute_memory_move_item(struct compute_memory_pool *pool,
 
 	u_box_1d(item->start_in_dw * 4, item->size_in_dw * 4, &box);
 
-	/* If the ranges don't overlap, we can just copy the item directly */
-	if (new_start_in_dw + item->size_in_dw <= item->start_in_dw) {
-		dst = (struct pipe_resource *)pool->bo;
+	/* If the ranges don't overlap, or we are copying from one resource
+	 * to another, we can just copy the item directly */
+	if (src != dst || new_start_in_dw + item->size_in_dw <= item->start_in_dw) {
 
 		rctx->b.b.resource_copy_region(pipe,
 			dst, 0, new_start_in_dw * 4, 0, 0,
@@ -450,24 +452,21 @@ void compute_memory_move_item(struct compute_memory_pool *pool,
 	} else {
 		/* The ranges overlap, we will try first to use an intermediate
 		 * resource to move the item */
-		dst = (struct pipe_resource *)r600_compute_buffer_alloc_vram(
-				pool->screen, item->size_in_dw * 4);
+		struct pipe_resource *tmp = (struct pipe_resource *)
+			r600_compute_buffer_alloc_vram(pool->screen, item->size_in_dw * 4);
 
-		if (dst != NULL) {
+		if (tmp != NULL) {
 			rctx->b.b.resource_copy_region(pipe,
-				dst, 0, 0, 0, 0,
+				tmp, 0, 0, 0, 0,
 				src, 0, &box);
-
-			src = dst;
-			dst = (struct pipe_resource *)pool->bo;
 
 			box.x = 0;
 
 			rctx->b.b.resource_copy_region(pipe,
 				dst, 0, new_start_in_dw * 4, 0, 0,
-				src, 0, &box);
+				tmp, 0, &box);
 
-			pool->screen->b.b.resource_destroy(screen, src);
+			pool->screen->b.b.resource_destroy(screen, tmp);
 
 		} else {
 			/* The allocation of the temporary resource failed,
