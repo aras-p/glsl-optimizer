@@ -63,6 +63,7 @@ namespace clover {
       cl_ulong max_mem_alloc_size() const;
       cl_uint max_clock_frequency() const;
       cl_uint max_compute_units() const;
+      bool image_support() const;
 
       std::vector<size_t> max_block_size() const;
       std::string device_name() const;

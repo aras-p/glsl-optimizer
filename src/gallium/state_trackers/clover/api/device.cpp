@@ -184,7 +184,7 @@ clGetDeviceInfo(cl_device_id d_dev, cl_device_info param,
       break;
 
    case CL_DEVICE_IMAGE_SUPPORT:
-      buf.as_scalar<cl_bool>() = CL_TRUE;
+      buf.as_scalar<cl_bool>() = dev.image_support();
       break;
 
    case CL_DEVICE_MAX_PARAMETER_SIZE:

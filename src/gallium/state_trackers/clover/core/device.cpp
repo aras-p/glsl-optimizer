@@ -169,6 +169,12 @@ device::max_compute_units() const {
                                       PIPE_COMPUTE_CAP_MAX_COMPUTE_UNITS)[0];
 }
 
+bool
+device::image_support() const {
+   return get_compute_param<uint32_t>(pipe,
+                                      PIPE_COMPUTE_CAP_IMAGES_SUPPORTED)[0];
+}
+
 std::vector<size_t>
 device::max_block_size() const {
    auto v = get_compute_param<uint64_t>(pipe, PIPE_COMPUTE_CAP_MAX_BLOCK_SIZE);
