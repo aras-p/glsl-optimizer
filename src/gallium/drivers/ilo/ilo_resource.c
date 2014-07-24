@@ -71,6 +71,53 @@ struct tex_layout {
  */
 static const size_t max_resource_size = 1u << 31;
 
+static const char *
+resource_get_bo_name(const struct pipe_resource *templ)
+{
+   static const char *target_names[PIPE_MAX_TEXTURE_TYPES] = {
+      [PIPE_BUFFER] = "buf",
+      [PIPE_TEXTURE_1D] = "tex-1d",
+      [PIPE_TEXTURE_2D] = "tex-2d",
+      [PIPE_TEXTURE_3D] = "tex-3d",
+      [PIPE_TEXTURE_CUBE] = "tex-cube",
+      [PIPE_TEXTURE_RECT] = "tex-rect",
+      [PIPE_TEXTURE_1D_ARRAY] = "tex-1d-array",
+      [PIPE_TEXTURE_2D_ARRAY] = "tex-2d-array",
+      [PIPE_TEXTURE_CUBE_ARRAY] = "tex-cube-array",
+   };
+   const char *name = target_names[templ->target];
+
+   if (templ->target == PIPE_BUFFER) {
+      switch (templ->bind) {
+      case PIPE_BIND_VERTEX_BUFFER:
+         name = "buf-vb";
+         break;
+      case PIPE_BIND_INDEX_BUFFER:
+         name = "buf-ib";
+         break;
+      case PIPE_BIND_CONSTANT_BUFFER:
+         name = "buf-cb";
+         break;
+      case PIPE_BIND_STREAM_OUTPUT:
+         name = "buf-so";
+         break;
+      default:
+         break;
+      }
+   }
+
+   return name;
+}
+
+static enum intel_domain_flag
+resource_get_bo_initial_domain(const struct pipe_resource *templ)
+{
+   return (templ->bind & (PIPE_BIND_DEPTH_STENCIL |
+                          PIPE_BIND_RENDER_TARGET |
+                          PIPE_BIND_STREAM_OUTPUT)) ?
+      INTEL_DOMAIN_RENDER : 0;
+}
+
 static void
 tex_layout_init_qpitch(struct tex_layout *layout)
 {
@@ -1065,38 +1112,8 @@ tex_create_bo(struct ilo_texture *tex,
               const struct winsys_handle *handle)
 {
    struct ilo_screen *is = ilo_screen(tex->base.screen);
-   const char *name;
+   const char *name = resource_get_bo_name(&tex->base);
    struct intel_bo *bo;
-
-   switch (tex->base.target) {
-   case PIPE_TEXTURE_1D:
-      name = "1D texture";
-      break;
-   case PIPE_TEXTURE_2D:
-      name = "2D texture";
-      break;
-   case PIPE_TEXTURE_3D:
-      name = "3D texture";
-      break;
-   case PIPE_TEXTURE_CUBE:
-      name = "cube texture";
-      break;
-   case PIPE_TEXTURE_RECT:
-      name = "rectangle texture";
-      break;
-   case PIPE_TEXTURE_1D_ARRAY:
-      name = "1D array texture";
-      break;
-   case PIPE_TEXTURE_2D_ARRAY:
-      name = "2D array texture";
-      break;
-   case PIPE_TEXTURE_CUBE_ARRAY:
-      name = "cube array texture";
-      break;
-   default:
-      name ="unknown texture";
-      break;
-   }
 
    if (handle) {
       enum intel_tiling_mode tiling;
@@ -1111,10 +1128,8 @@ tex_create_bo(struct ilo_texture *tex,
       }
    }
    else {
-      const uint32_t initial_domain =
-         (tex->base.bind & (PIPE_BIND_DEPTH_STENCIL |
-                            PIPE_BIND_RENDER_TARGET)) ?
-         INTEL_DOMAIN_RENDER : 0;
+      const enum intel_domain_flag initial_domain =
+         resource_get_bo_initial_domain(&tex->base);
 
       bo = intel_winsys_alloc_bo(is->winsys, name, tex->tiling,
             tex->bo_stride, tex->bo_height, initial_domain);
@@ -1371,33 +1386,14 @@ tex_get_handle(struct ilo_texture *tex, struct winsys_handle *handle)
 static bool
 buf_create_bo(struct ilo_buffer *buf)
 {
-   const uint32_t initial_domain =
-      (buf->base.bind & PIPE_BIND_STREAM_OUTPUT) ?
-      INTEL_DOMAIN_RENDER : 0;
    struct ilo_screen *is = ilo_screen(buf->base.screen);
-   const char *name;
+   const char *name = resource_get_bo_name(&buf->base);
+   const enum intel_domain_flag initial_domain =
+      resource_get_bo_initial_domain(&buf->base);
    struct intel_bo *bo;
 
-   switch (buf->base.bind) {
-   case PIPE_BIND_VERTEX_BUFFER:
-      name = "vertex buffer";
-      break;
-   case PIPE_BIND_INDEX_BUFFER:
-      name = "index buffer";
-      break;
-   case PIPE_BIND_CONSTANT_BUFFER:
-      name = "constant buffer";
-      break;
-   case PIPE_BIND_STREAM_OUTPUT:
-      name = "stream output";
-      break;
-   default:
-      name = "unknown buffer";
-      break;
-   }
-
-   bo = intel_winsys_alloc_buffer(is->winsys,
-         name, buf->bo_size, initial_domain);
+   bo = intel_winsys_alloc_buffer(is->winsys, name,
+         buf->bo_size, initial_domain);
    if (!bo)
       return false;
 
