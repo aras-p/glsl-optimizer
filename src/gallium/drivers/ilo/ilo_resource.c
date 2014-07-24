@@ -1419,6 +1419,7 @@ buf_destroy(struct ilo_buffer *buf)
 static struct pipe_resource *
 buf_create(struct pipe_screen *screen, const struct pipe_resource *templ)
 {
+   const struct ilo_screen *is = ilo_screen(screen);
    struct ilo_buffer *buf;
 
    buf = CALLOC_STRUCT(ilo_buffer);
@@ -1442,7 +1443,8 @@ buf_create(struct pipe_screen *screen, const struct pipe_resource *templ)
    if (templ->bind & PIPE_BIND_SAMPLER_VIEW)
       buf->bo_size = align(buf->bo_size, 256) + 16;
 
-   if (templ->bind & PIPE_BIND_VERTEX_BUFFER) {
+   if ((templ->bind & PIPE_BIND_VERTEX_BUFFER) &&
+        is->dev.gen < ILO_GEN(7.5)) {
       /*
        * As noted in ilo_translate_format(), we treat some 3-component formats
        * as 4-component formats to work around hardware limitations.  Imagine

@@ -93,6 +93,9 @@ ilo_translate_format(const struct ilo_dev_info *dev,
       }
       break;
    case PIPE_BIND_VERTEX_BUFFER:
+      if (dev->gen >= ILO_GEN(7.5))
+         return ilo_translate_color_format(dev, format);
+
       /*
        * Some 3-component formats are not supported as vertex element formats.
        * But since we move between vertices using vb->stride, we should be
