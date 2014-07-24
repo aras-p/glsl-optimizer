@@ -43,6 +43,7 @@
 #include "texstore.h"
 #include "macros.h"
 #include "format_unpack.h"
+#include "util/format_srgb.h"
 
 
 struct etc2_block {
@@ -1307,9 +1308,9 @@ fetch_etc2_srgb8(const GLubyte *map,
    etc2_rgb8_fetch_texel(&block, i % 4, j % 4, dst,
                          false /* punchthrough_alpha */);
 
-   texel[RCOMP] = _mesa_nonlinear_to_linear(dst[0]);
-   texel[GCOMP] = _mesa_nonlinear_to_linear(dst[1]);
-   texel[BCOMP] = _mesa_nonlinear_to_linear(dst[2]);
+   texel[RCOMP] = util_format_srgb_8unorm_to_linear_float(dst[0]);
+   texel[GCOMP] = util_format_srgb_8unorm_to_linear_float(dst[1]);
+   texel[BCOMP] = util_format_srgb_8unorm_to_linear_float(dst[2]);
    texel[ACOMP] = 1.0f;
 }
 
@@ -1345,9 +1346,9 @@ fetch_etc2_srgb8_alpha8_eac(const GLubyte *map,
    etc2_rgba8_parse_block(&block, src);
    etc2_rgba8_fetch_texel(&block, i % 4, j % 4, dst);
 
-   texel[RCOMP] = _mesa_nonlinear_to_linear(dst[0]);
-   texel[GCOMP] = _mesa_nonlinear_to_linear(dst[1]);
-   texel[BCOMP] = _mesa_nonlinear_to_linear(dst[2]);
+   texel[RCOMP] = util_format_srgb_8unorm_to_linear_float(dst[0]);
+   texel[GCOMP] = util_format_srgb_8unorm_to_linear_float(dst[1]);
+   texel[BCOMP] = util_format_srgb_8unorm_to_linear_float(dst[2]);
    texel[ACOMP] = UBYTE_TO_FLOAT(dst[3]);
 }
 
@@ -1473,9 +1474,9 @@ fetch_etc2_srgb8_punchthrough_alpha1(const GLubyte *map,
                          true /* punchthrough alpha */);
    etc2_rgb8_fetch_texel(&block, i % 4, j % 4, dst,
                          true /* punchthrough alpha */);
-   texel[RCOMP] = _mesa_nonlinear_to_linear(dst[0]);
-   texel[GCOMP] = _mesa_nonlinear_to_linear(dst[1]);
-   texel[BCOMP] = _mesa_nonlinear_to_linear(dst[2]);
+   texel[RCOMP] = util_format_srgb_8unorm_to_linear_float(dst[0]);
+   texel[GCOMP] = util_format_srgb_8unorm_to_linear_float(dst[1]);
+   texel[BCOMP] = util_format_srgb_8unorm_to_linear_float(dst[2]);
    texel[ACOMP] = UBYTE_TO_FLOAT(dst[3]);
 }
 

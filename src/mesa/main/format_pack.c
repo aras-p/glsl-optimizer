@@ -41,6 +41,7 @@
 #include "macros.h"
 #include "../../gallium/auxiliary/util/u_format_rgb9e5.h"
 #include "../../gallium/auxiliary/util/u_format_r11g11b10f.h"
+#include "util/format_srgb.h"
 
 
 /** Helper struct for MESA_FORMAT_Z32_FLOAT_S8X24_UINT */
@@ -56,39 +57,6 @@ typedef void (*pack_ubyte_rgba_row_func)(GLuint n,
 
 typedef void (*pack_float_rgba_row_func)(GLuint n,
                                          const GLfloat src[][4], void *dst);
-
-
-
-static inline GLfloat
-linear_to_srgb(GLfloat cl)
-{
-   if (cl < 0.0f)
-      return 0.0f;
-   else if (cl < 0.0031308f)
-      return 12.92f * cl;
-   else if (cl < 1.0f)
-      return 1.055f * powf(cl, 0.41666f) - 0.055f;
-   else
-      return 1.0f;
-}
-
-
-static inline GLubyte
-linear_float_to_srgb_ubyte(GLfloat cl)
-{
-   GLubyte res = FLOAT_TO_UBYTE(linear_to_srgb(cl));
-   return res;
-}
-
-
-static inline GLubyte
-linear_ubyte_to_srgb_ubyte(GLubyte cl)
-{
-   GLubyte res = FLOAT_TO_UBYTE(linear_to_srgb(cl / 255.0f));
-   return res;
-}
-
-
 
 
 /*
@@ -1043,18 +1011,18 @@ static void
 pack_ubyte_BGR_SRGB8(const GLubyte src[4], void *dst)
 {
    GLubyte *d = ((GLubyte *) dst);
-   d[2] = linear_ubyte_to_srgb_ubyte(src[RCOMP]);
-   d[1] = linear_ubyte_to_srgb_ubyte(src[GCOMP]);
-   d[0] = linear_ubyte_to_srgb_ubyte(src[BCOMP]);
+   d[2] = util_format_linear_to_srgb_8unorm(src[RCOMP]);
+   d[1] = util_format_linear_to_srgb_8unorm(src[GCOMP]);
+   d[0] = util_format_linear_to_srgb_8unorm(src[BCOMP]);
 }
 
 static void
 pack_float_BGR_SRGB8(const GLfloat src[4], void *dst)
 {
    GLubyte *d = ((GLubyte *) dst);
-   d[2] = linear_float_to_srgb_ubyte(src[RCOMP]);
-   d[1] = linear_float_to_srgb_ubyte(src[GCOMP]);
-   d[0] = linear_float_to_srgb_ubyte(src[BCOMP]);
+   d[2] = util_format_linear_float_to_srgb_8unorm(src[RCOMP]);
+   d[1] = util_format_linear_float_to_srgb_8unorm(src[GCOMP]);
+   d[0] = util_format_linear_float_to_srgb_8unorm(src[BCOMP]);
 }
 
 
@@ -1064,9 +1032,9 @@ static void
 pack_ubyte_A8B8G8R8_SRGB(const GLubyte src[4], void *dst)
 {
    GLuint *d = ((GLuint *) dst);
-   GLubyte r = linear_ubyte_to_srgb_ubyte(src[RCOMP]);
-   GLubyte g = linear_ubyte_to_srgb_ubyte(src[GCOMP]);
-   GLubyte b = linear_ubyte_to_srgb_ubyte(src[BCOMP]);
+   GLubyte r = util_format_linear_to_srgb_8unorm(src[RCOMP]);
+   GLubyte g = util_format_linear_to_srgb_8unorm(src[GCOMP]);
+   GLubyte b = util_format_linear_to_srgb_8unorm(src[BCOMP]);
    *d = PACK_COLOR_8888(r, g, b, src[ACOMP]);
 }
 
@@ -1075,9 +1043,9 @@ pack_float_A8B8G8R8_SRGB(const GLfloat src[4], void *dst)
 {
    GLuint *d = ((GLuint *) dst);
    GLubyte r, g, b, a;
-   r = linear_float_to_srgb_ubyte(src[RCOMP]);
-   g = linear_float_to_srgb_ubyte(src[GCOMP]);
-   b = linear_float_to_srgb_ubyte(src[BCOMP]);
+   r = util_format_linear_float_to_srgb_8unorm(src[RCOMP]);
+   g = util_format_linear_float_to_srgb_8unorm(src[GCOMP]);
+   b = util_format_linear_float_to_srgb_8unorm(src[BCOMP]);
    UNCLAMPED_FLOAT_TO_UBYTE(a, src[ACOMP]);
    *d = PACK_COLOR_8888(r, g, b, a);
 }
@@ -1089,9 +1057,9 @@ static void
 pack_ubyte_B8G8R8A8_SRGB(const GLubyte src[4], void *dst)
 {
    GLuint *d = ((GLuint *) dst);
-   GLubyte r = linear_ubyte_to_srgb_ubyte(src[RCOMP]);
-   GLubyte g = linear_ubyte_to_srgb_ubyte(src[GCOMP]);
-   GLubyte b = linear_ubyte_to_srgb_ubyte(src[BCOMP]);
+   GLubyte r = util_format_linear_to_srgb_8unorm(src[RCOMP]);
+   GLubyte g = util_format_linear_to_srgb_8unorm(src[GCOMP]);
+   GLubyte b = util_format_linear_to_srgb_8unorm(src[BCOMP]);
    *d = PACK_COLOR_8888(src[ACOMP], r, g, b);
 }
 
@@ -1100,9 +1068,9 @@ pack_float_B8G8R8A8_SRGB(const GLfloat src[4], void *dst)
 {
    GLuint *d = ((GLuint *) dst);
    GLubyte r, g, b, a;
-   r = linear_float_to_srgb_ubyte(src[RCOMP]);
-   g = linear_float_to_srgb_ubyte(src[GCOMP]);
-   b = linear_float_to_srgb_ubyte(src[BCOMP]);
+   r = util_format_linear_float_to_srgb_8unorm(src[RCOMP]);
+   g = util_format_linear_float_to_srgb_8unorm(src[GCOMP]);
+   b = util_format_linear_float_to_srgb_8unorm(src[BCOMP]);
    UNCLAMPED_FLOAT_TO_UBYTE(a, src[ACOMP]);
    *d = PACK_COLOR_8888(a, r, g, b);
 }
@@ -1114,9 +1082,9 @@ static void
 pack_ubyte_R8G8B8A8_SRGB(const GLubyte src[4], void *dst)
 {
    GLuint *d = ((GLuint *) dst);
-   GLubyte r = linear_ubyte_to_srgb_ubyte(src[RCOMP]);
-   GLubyte g = linear_ubyte_to_srgb_ubyte(src[GCOMP]);
-   GLubyte b = linear_ubyte_to_srgb_ubyte(src[BCOMP]);
+   GLubyte r = util_format_linear_to_srgb_8unorm(src[RCOMP]);
+   GLubyte g = util_format_linear_to_srgb_8unorm(src[GCOMP]);
+   GLubyte b = util_format_linear_to_srgb_8unorm(src[BCOMP]);
    *d = PACK_COLOR_8888(src[ACOMP], b, g, r);
 }
 
@@ -1125,9 +1093,9 @@ pack_float_R8G8B8A8_SRGB(const GLfloat src[4], void *dst)
 {
    GLuint *d = ((GLuint *) dst);
    GLubyte r, g, b, a;
-   r = linear_float_to_srgb_ubyte(src[RCOMP]);
-   g = linear_float_to_srgb_ubyte(src[GCOMP]);
-   b = linear_float_to_srgb_ubyte(src[BCOMP]);
+   r = util_format_linear_float_to_srgb_8unorm(src[RCOMP]);
+   g = util_format_linear_float_to_srgb_8unorm(src[GCOMP]);
+   b = util_format_linear_float_to_srgb_8unorm(src[BCOMP]);
    UNCLAMPED_FLOAT_TO_UBYTE(a, src[ACOMP]);
    *d = PACK_COLOR_8888(a, b, g, r);
 }
@@ -1139,14 +1107,14 @@ static void
 pack_ubyte_L_SRGB8(const GLubyte src[4], void *dst)
 {
    GLubyte *d = ((GLubyte *) dst);
-   *d = linear_ubyte_to_srgb_ubyte(src[RCOMP]);
+   *d = util_format_linear_to_srgb_8unorm(src[RCOMP]);
 }
 
 static void
 pack_float_L_SRGB8(const GLfloat src[4], void *dst)
 {
    GLubyte *d = ((GLubyte *) dst);
-   GLubyte l = linear_float_to_srgb_ubyte(src[RCOMP]);
+   GLubyte l = util_format_linear_float_to_srgb_8unorm(src[RCOMP]);
    *d = l;
 }
 
@@ -1157,7 +1125,7 @@ static void
 pack_ubyte_L8A8_SRGB(const GLubyte src[4], void *dst)
 {
    GLushort *d = ((GLushort *) dst);
-   GLubyte l = linear_ubyte_to_srgb_ubyte(src[RCOMP]);
+   GLubyte l = util_format_linear_to_srgb_8unorm(src[RCOMP]);
    *d = PACK_COLOR_88(src[ACOMP], l);
 }
 
@@ -1165,7 +1133,7 @@ static void
 pack_float_L8A8_SRGB(const GLfloat src[4], void *dst)
 {
    GLushort *d = ((GLushort *) dst);
-   GLubyte a, l = linear_float_to_srgb_ubyte(src[RCOMP]);
+   GLubyte a, l = util_format_linear_float_to_srgb_8unorm(src[RCOMP]);
    CLAMPED_FLOAT_TO_UBYTE(a, src[ACOMP]);
    *d = PACK_COLOR_88(a, l);
 }
@@ -1742,9 +1710,9 @@ static void
 pack_float_R8G8B8X8_SRGB(const GLfloat src[4], void *dst)
 {
    GLuint *d = (GLuint *) dst;
-   GLubyte r = linear_float_to_srgb_ubyte(src[RCOMP]);
-   GLubyte g = linear_float_to_srgb_ubyte(src[GCOMP]);
-   GLubyte b = linear_float_to_srgb_ubyte(src[BCOMP]);
+   GLubyte r = util_format_linear_float_to_srgb_8unorm(src[RCOMP]);
+   GLubyte g = util_format_linear_float_to_srgb_8unorm(src[GCOMP]);
+   GLubyte b = util_format_linear_float_to_srgb_8unorm(src[BCOMP]);
    *d = PACK_COLOR_8888(127, b, g, r);
 }
 
@@ -1892,9 +1860,9 @@ static void
 pack_float_B8G8R8X8_SRGB(const GLfloat src[4], void *dst)
 {
    GLuint *d = (GLuint *) dst;
-   GLubyte r = linear_float_to_srgb_ubyte(src[RCOMP]);
-   GLubyte g = linear_float_to_srgb_ubyte(src[GCOMP]);
-   GLubyte b = linear_float_to_srgb_ubyte(src[BCOMP]);
+   GLubyte r = util_format_linear_float_to_srgb_8unorm(src[RCOMP]);
+   GLubyte g = util_format_linear_float_to_srgb_8unorm(src[GCOMP]);
+   GLubyte b = util_format_linear_float_to_srgb_8unorm(src[BCOMP]);
    *d = PACK_COLOR_8888(127, r, g, b);
 }
 

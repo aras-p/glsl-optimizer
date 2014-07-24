@@ -38,6 +38,7 @@
 #define U_FORMAT_SRGB_H_
 
 #include <stdint.h>
+#include <math.h>
 
 extern const float
 util_format_srgb_8unorm_to_linear_float_table[256];
@@ -50,6 +51,20 @@ util_format_linear_to_srgb_8unorm_table[256];
 
 extern const unsigned
 util_format_linear_to_srgb_helper_table[104];
+
+
+static inline float
+util_format_linear_to_srgb_float(float cl)
+{
+   if (cl < 0.0f)
+      return 0.0f;
+   else if (cl < 0.0031308f)
+      return 12.92f * cl;
+   else if (cl < 1.0f)
+      return 1.055f * powf(cl, 0.41666f) - 0.055f;
+   else
+      return 1.0f;
+}
 
 
 /**

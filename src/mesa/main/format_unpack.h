@@ -25,9 +25,6 @@
 #ifndef FORMAT_UNPACK_H
 #define FORMAT_UNPACK_H
 
-extern GLfloat
-_mesa_nonlinear_to_linear(GLubyte cs8);
-
 extern void
 _mesa_unpack_rgba_row(mesa_format format, GLuint n,
                       const void *src, GLfloat dst[][4]);
