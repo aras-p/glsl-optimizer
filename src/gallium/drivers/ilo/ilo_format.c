@@ -297,9 +297,10 @@ static const struct ilo_format_info ilo_format_table[] = {
 #undef FI_INITIALIZER
 
 static const struct ilo_format_info *
-lookup_format_info(enum pipe_format format, unsigned bind)
+lookup_format_info(const struct ilo_dev_info *dev,
+                   enum pipe_format format, unsigned bind)
 {
-   const int surfaceformat = ilo_translate_format(format, bind);
+   const int surfaceformat = ilo_translate_format(dev, format, bind);
 
    return (surfaceformat >= 0 && surfaceformat < Elements(ilo_format_table) &&
            ilo_format_table[surfaceformat].exists) ?
@@ -311,7 +312,8 @@ lookup_format_info(enum pipe_format format, unsigned bind)
  * format.  Return -1 on errors.
  */
 int
-ilo_translate_color_format(enum pipe_format format)
+ilo_translate_color_format(const struct ilo_dev_info *dev,
+                           enum pipe_format format)
 {
    static const int format_mapping[PIPE_FORMAT_COUNT] = {
       [PIPE_FORMAT_NONE]                  = 0,
@@ -581,7 +583,7 @@ ilo_is_format_supported(struct pipe_screen *screen,
                         unsigned bindings)
 {
    struct ilo_screen *is = ilo_screen(screen);
-   const int gen = is->dev.gen;
+   const struct ilo_dev_info *dev = &is->dev;
    const bool is_pure_int = util_format_is_pure_integer(format);
    const struct ilo_format_info *info;
    unsigned bind;
@@ -611,31 +613,31 @@ ilo_is_format_supported(struct pipe_screen *screen,
 
    bind = (bindings & PIPE_BIND_RENDER_TARGET);
    if (bind) {
-      info = lookup_format_info(format, bind);
+      info = lookup_format_info(dev, format, bind);
 
-      if (gen < info->render_target)
+      if (dev->gen < info->render_target)
          return false;
 
-      if (!is_pure_int && gen < info->alpha_blend)
+      if (!is_pure_int && dev->gen < info->alpha_blend)
          return false;
    }
 
    bind = (bindings & PIPE_BIND_SAMPLER_VIEW);
    if (bind) {
-      info = lookup_format_info(format, bind);
+      info = lookup_format_info(dev, format, bind);
 
-      if (gen < info->sampling)
+      if (dev->gen < info->sampling)
          return false;
 
-      if (!is_pure_int && gen < info->filtering)
+      if (!is_pure_int && dev->gen < info->filtering)
          return false;
    }
 
    bind = (bindings & PIPE_BIND_VERTEX_BUFFER);
    if (bind) {
-      info = lookup_format_info(format, bind);
+      info = lookup_format_info(dev, format, bind);
 
-      if (gen < info->input_vb)
+      if (dev->gen < info->input_vb)
          return false;
    }
 

@@ -319,7 +319,7 @@ ilo_gpe_init_view_surface_for_buffer_gen7(const struct ilo_dev_info *dev,
    surface_type = (structured) ? GEN7_SURFTYPE_STRBUF : GEN6_SURFTYPE_BUFFER;
 
    surface_format = (typed) ?
-      ilo_translate_color_format(elem_format) : GEN6_FORMAT_RAW;
+      ilo_translate_color_format(dev, elem_format) : GEN6_FORMAT_RAW;
 
    num_entries = size / struct_size;
    /* see if there is enough space to fit another element */
@@ -447,9 +447,9 @@ ilo_gpe_init_view_surface_for_texture_gen7(const struct ilo_dev_info *dev,
       format = PIPE_FORMAT_Z32_FLOAT;
 
    if (is_rt)
-      surface_format = ilo_translate_render_format(format);
+      surface_format = ilo_translate_render_format(dev, format);
    else
-      surface_format = ilo_translate_texture_format(format);
+      surface_format = ilo_translate_texture_format(dev, format);
    assert(surface_format >= 0);
 
    width = tex->base.width0;

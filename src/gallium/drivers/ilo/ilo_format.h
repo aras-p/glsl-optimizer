@@ -38,17 +38,19 @@ void
 ilo_init_format_functions(struct ilo_screen *is);
 
 int
-ilo_translate_color_format(enum pipe_format format);
+ilo_translate_color_format(const struct ilo_dev_info *dev,
+                           enum pipe_format format);
 
 /**
  * Translate a pipe format to a hardware surface format suitable for
  * the given purpose.  Return -1 on errors.
  *
  * This is an inline function not only for performance reasons.  There are
- * caveats that the callers should that before calling this function.
+ * caveats that the callers should be aware of before calling this function.
  */
 static inline int
-ilo_translate_format(enum pipe_format format, unsigned bind)
+ilo_translate_format(const struct ilo_dev_info *dev,
+                     enum pipe_format format, unsigned bind)
 {
    switch (bind) {
    case PIPE_BIND_RENDER_TARGET:
@@ -61,7 +63,7 @@ ilo_translate_format(enum pipe_format format, unsigned bind)
       case PIPE_FORMAT_B8G8R8X8_UNORM:
          return GEN6_FORMAT_B8G8R8A8_UNORM;
       default:
-         return ilo_translate_color_format(format);
+         return ilo_translate_color_format(dev, format);
       }
       break;
    case PIPE_BIND_SAMPLER_VIEW:
@@ -87,7 +89,7 @@ ilo_translate_format(enum pipe_format format, unsigned bind)
       case PIPE_FORMAT_ETC1_RGB8:
          return GEN6_FORMAT_R8G8B8X8_UNORM;
       default:
-         return ilo_translate_color_format(format);
+         return ilo_translate_color_format(dev, format);
       }
       break;
    case PIPE_BIND_VERTEX_BUFFER:
@@ -110,7 +112,7 @@ ilo_translate_format(enum pipe_format format, unsigned bind)
       case PIPE_FORMAT_R8G8B8_SINT:
          return GEN6_FORMAT_R8G8B8A8_SINT;
       default:
-         return ilo_translate_color_format(format);
+         return ilo_translate_color_format(dev, format);
       }
       break;
    default:
@@ -122,21 +124,24 @@ ilo_translate_format(enum pipe_format format, unsigned bind)
 }
 
 static inline int
-ilo_translate_render_format(enum pipe_format format)
+ilo_translate_render_format(const struct ilo_dev_info *dev,
+                            enum pipe_format format)
 {
-   return ilo_translate_format(format, PIPE_BIND_RENDER_TARGET);
+   return ilo_translate_format(dev, format, PIPE_BIND_RENDER_TARGET);
 }
 
 static inline int
-ilo_translate_texture_format(enum pipe_format format)
+ilo_translate_texture_format(const struct ilo_dev_info *dev,
+                             enum pipe_format format)
 {
-   return ilo_translate_format(format, PIPE_BIND_SAMPLER_VIEW);
+   return ilo_translate_format(dev, format, PIPE_BIND_SAMPLER_VIEW);
 }
 
 static inline int
-ilo_translate_vertex_format(enum pipe_format format)
+ilo_translate_vertex_format(const struct ilo_dev_info *dev,
+                            enum pipe_format format)
 {
-   return ilo_translate_format(format, PIPE_BIND_VERTEX_BUFFER);
+   return ilo_translate_format(dev, format, PIPE_BIND_VERTEX_BUFFER);
 }
 
 #endif /* ILO_FORMAT_H */

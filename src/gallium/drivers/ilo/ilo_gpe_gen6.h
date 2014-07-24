@@ -2124,7 +2124,7 @@ gen6_emit_BLEND_STATE(const struct ilo_dev_info *dev,
          switch (format_desc->format) {
          case PIPE_FORMAT_B8G8R8X8_UNORM:
             /* force alpha to one when the HW format has alpha */
-            assert(ilo_translate_render_format(PIPE_FORMAT_B8G8R8X8_UNORM)
+            assert(ilo_translate_render_format(dev, PIPE_FORMAT_B8G8R8X8_UNORM)
                   == GEN6_FORMAT_B8G8R8A8_UNORM);
             rt_dst_alpha_forced_one = true;
             break;

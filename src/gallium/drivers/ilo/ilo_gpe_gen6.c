@@ -271,7 +271,7 @@ ve_init_cso(const struct ilo_dev_info *dev,
                      GEN6_VFCOMP_STORE_1_FP;
    }
 
-   format = ilo_translate_vertex_format(state->src_format);
+   format = ilo_translate_vertex_format(dev, state->src_format);
 
    STATIC_ASSERT(Elements(cso->payload) >= 2);
    cso->payload[0] =
@@ -1831,7 +1831,7 @@ ilo_gpe_init_view_surface_for_buffer_gen6(const struct ilo_dev_info *dev,
     * structure in a buffer.
     */
 
-   surface_format = ilo_translate_color_format(elem_format);
+   surface_format = ilo_translate_color_format(dev, elem_format);
 
    num_entries = size / struct_size;
    /* see if there is enough space to fit another element */
@@ -1929,9 +1929,9 @@ ilo_gpe_init_view_surface_for_texture_gen6(const struct ilo_dev_info *dev,
       format = PIPE_FORMAT_Z32_FLOAT;
 
    if (is_rt)
-      surface_format = ilo_translate_render_format(format);
+      surface_format = ilo_translate_render_format(dev, format);
    else
-      surface_format = ilo_translate_texture_format(format);
+      surface_format = ilo_translate_texture_format(dev, format);
    assert(surface_format >= 0);
 
    width = tex->base.width0;
