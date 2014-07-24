@@ -31,6 +31,8 @@
 
 #include "gen6_gs_visitor.h"
 
+const unsigned MAX_GS_INPUT_VERTICES = 6;
+
 namespace brw {
 
 void
@@ -94,6 +96,30 @@ gen6_gs_visitor::emit_prolog()
     */
    this->prim_count = src_reg(this, glsl_type::uint_type);
    emit(MOV(dst_reg(this->prim_count), 0u));
+
+   /* PrimitveID is delivered in r0.1 of the thread payload. If the program
+    * needs it we have to move it to a separate register where we can map
+    * the atttribute.
+    *
+    * Notice that we cannot use a virtual register for this, because we need to
+    * map all input attributes to hardware registers in setup_payload(),
+    * which happens before virtual registers are mapped to hardware registers.
+    * We could work around that issue if we were able to compute the first
+    * non-payload register here and move the PrimitiveID information to that
+    * register, but we can't because at this point we don't know the final
+    * number uniforms that will be included in the payload.
+    *
+    * So, what we do is to place PrimitiveID information in r1, which is always
+    * delivered as part of the payload, but its only populated with data
+    * relevant for transform feedback when we set GEN6_GS_SVBI_PAYLOAD_ENABLE
+    * in the 3DSTATE_GS state packet. That information can be obtained by other
+    * means though, so we can safely use r1 for this purpose.
+    */
+   if (c->prog_data.include_primitive_id) {
+      this->primitive_id =
+         src_reg(retype(brw_vec8_grf(1, 0), BRW_REGISTER_TYPE_UD));
+      emit(GS_OPCODE_SET_PRIMITIVE_ID, dst_reg(this->primitive_id));
+   }
 }
 
 void
@@ -409,6 +435,47 @@ gen6_gs_visitor::emit_thread_end()
    inst->urb_write_flags = BRW_URB_WRITE_COMPLETE | BRW_URB_WRITE_UNUSED;
    inst->base_mrf = base_mrf;
    inst->mlen = 1;
+}
+
+void
+gen6_gs_visitor::setup_payload()
+{
+   int attribute_map[BRW_VARYING_SLOT_COUNT * MAX_GS_INPUT_VERTICES];
+
+   /* Attributes are going to be interleaved, so one register contains two
+    * attribute slots.
+    */
+   int attributes_per_reg = 2;
+
+   /* If a geometry shader tries to read from an input that wasn't written by
+    * the vertex shader, that produces undefined results, but it shouldn't
+    * crash anything.  So initialize attribute_map to zeros--that ensures that
+    * these undefined results are read from r0.
+    */
+   memset(attribute_map, 0, sizeof(attribute_map));
+
+   int reg = 0;
+
+   /* The payload always contains important data in r0. */
+   reg++;
+
+   /* r1 is always part of the payload and it holds information relevant
+    * for transform feedback when we set the GEN6_GS_SVBI_PAYLOAD_ENABLE bit in
+    * the 3DSTATE_GS packet. We will overwrite it with the PrimitiveID
+    * information (and move the original value to a virtual register if
+    * necessary).
+    */
+   if (c->prog_data.include_primitive_id)
+      attribute_map[VARYING_SLOT_PRIMITIVE_ID] = attributes_per_reg * reg;
+   reg++;
+
+   reg = setup_uniforms(reg);
+
+   reg = setup_varying_inputs(reg, attribute_map, attributes_per_reg);
+
+   lower_attributes_to_hw_regs(attribute_map, true);
+
+   this->first_non_payload_grf = reg;
 }
 
 } /* namespace brw */

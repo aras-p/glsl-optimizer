@@ -52,6 +52,7 @@ protected:
                                       int base_mrf,
                                       int last_mrf,
                                       int urb_offset);
+   virtual void setup_payload();
 
 private:
    src_reg vertex_output;
@@ -59,6 +60,7 @@ private:
    src_reg temp;
    src_reg first_vertex;
    src_reg prim_count;
+   src_reg primitive_id;
 };
 
 } /* namespace brw */
