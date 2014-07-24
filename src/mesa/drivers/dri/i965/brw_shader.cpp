@@ -526,6 +526,8 @@ brw_instruction_name(enum opcode op)
       return "get_instance_id";
    case GS_OPCODE_FF_SYNC:
       return "ff_sync";
+   case GS_OPCODE_SET_PRIMITIVE_ID:
+      return "set_primitive_id";
 
    default:
       /* Yes, this leaks.  It's in debug code, it should never occur, and if

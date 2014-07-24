@@ -722,6 +722,18 @@ vec4_generator::generate_gs_ff_sync(vec4_instruction *inst,
 }
 
 void
+vec4_generator::generate_gs_set_primitive_id(struct brw_reg dst)
+{
+   /* In gen6, PrimitiveID is delivered in R0.1 of the payload */
+   struct brw_reg src = brw_vec8_grf(0, 0);
+   brw_push_insn_state(p);
+   brw_set_default_mask_control(p, BRW_MASK_DISABLE);
+   brw_set_default_access_mode(p, BRW_ALIGN_1);
+   brw_MOV(p, get_element_ud(dst, 0), get_element_ud(src, 1));
+   brw_pop_insn_state(p);
+}
+
+void
 vec4_generator::generate_oword_dual_block_offsets(struct brw_reg m1,
                                                   struct brw_reg index)
 {
@@ -1349,6 +1361,10 @@ vec4_generator::generate_code(const cfg_t *cfg)
 
       case GS_OPCODE_FF_SYNC:
          generate_gs_ff_sync(inst, dst, src[0]);
+         break;
+
+      case GS_OPCODE_SET_PRIMITIVE_ID:
+         generate_gs_set_primitive_id(dst);
          break;
 
       case GS_OPCODE_SET_DWORD_2:

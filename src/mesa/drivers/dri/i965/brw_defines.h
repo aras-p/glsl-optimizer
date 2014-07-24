@@ -1035,6 +1035,14 @@ enum opcode {
     * the header in the URB write operation we are allocating the handle for.
     */
    GS_OPCODE_FF_SYNC,
+
+   /**
+    * Move r0.1 (which holds PrimitiveID information in gen6) to a separate
+    * register.
+    *
+    * - dst is the GRF where PrimitiveID information will be moved.
+    */
+   GS_OPCODE_SET_PRIMITIVE_ID,
 };
 
 enum brw_derivative_quality {
