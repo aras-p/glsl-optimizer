@@ -97,17 +97,27 @@ upload_clip_state(struct brw_context *brw)
            GEN6_USER_CLIP_CLIP_DISTANCES_SHIFT);
 
    dw2 |= GEN6_CLIP_GB_TEST;
-   for (unsigned i = 0; i < ctx->Const.MaxViewports; i++) {
-      if (ctx->ViewportArray[i].X != 0 ||
-          ctx->ViewportArray[i].Y != 0 ||
-          ctx->ViewportArray[i].Width != (float) fb->Width ||
-          ctx->ViewportArray[i].Height != (float) fb->Height) {
-         dw2 &= ~GEN6_CLIP_GB_TEST;
-         if (brw->gen >= 8) {
-            perf_debug("Disabling GB clipping due to lack of Gen8 viewport "
-                       "clipping setup code.  This should be fixed.\n");
+
+   /* If the viewport dimensions are smaller than the drawable dimensions,
+    * we have to disable guardband clipping prior to Gen8.  We always program
+    * the guardband to a fixed size, which is almost always larger than the
+    * viewport.  Any geometry which intersects the viewport but lies within
+    * the guardband would bypass the 3D clipping stage, so it wouldn't be
+    * clipped to the viewport.  Rendering would happen beyond the viewport,
+    * but still inside the drawable.
+    *
+    * Gen8+ introduces a viewport extents test which restricts rendering to
+    * the viewport, so we can ignore this restriction.
+    */
+   if (brw->gen < 8) {
+      for (unsigned i = 0; i < ctx->Const.MaxViewports; i++) {
+         if (ctx->ViewportArray[i].X != 0 ||
+             ctx->ViewportArray[i].Y != 0 ||
+             ctx->ViewportArray[i].Width != (float) fb->Width ||
+             ctx->ViewportArray[i].Height != (float) fb->Height) {
+            dw2 &= ~GEN6_CLIP_GB_TEST;
+            break;
          }
-         break;
       }
    }
 
