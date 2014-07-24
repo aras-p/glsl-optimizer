@@ -32,7 +32,7 @@
 
 #if defined(PIPE_SUBSYSTEM_WINDOWS_USER)
 #  include <windows.h>
-#elif defined(__GLIBC__)
+#elif defined(__GLIBC__) || defined(__CYGWIN__)
 #  include <errno.h>
 #elif defined(PIPE_OS_BSD) || defined(PIPE_OS_APPLE)
 #  include <stdlib.h>
@@ -68,7 +68,7 @@ os_get_process_name(char *procname, size_t size)
 
    name = lpProcessName;
 
-#elif defined(__GLIBC__)
+#elif defined(__GLIBC__) || defined(__CYGWIN__)
    name = program_invocation_short_name;
 #elif defined(PIPE_OS_BSD) || defined(PIPE_OS_APPLE)
    /* *BSD and OS X */
