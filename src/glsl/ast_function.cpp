@@ -450,20 +450,21 @@ match_function_by_name(const char *name,
       goto done; /* no match */
 
    if (f != NULL) {
+      /* In desktop GL, the presence of a user-defined signature hides any
+       * built-in signatures, so we must ignore them.  In contrast, in ES2
+       * user-defined signatures add new overloads, so we must consider them.
+       */
+      bool allow_builtins = state->es_shader || !f->has_user_signature();
+
       /* Look for a match in the local shader.  If exact, we're done. */
       bool is_exact = false;
       sig = local_sig = f->matching_signature(state, actual_parameters,
-                                              &is_exact);
+                                              allow_builtins, &is_exact);
       if (is_exact)
 	 goto done;
 
-      if (!state->es_shader && f->has_user_signature()) {
-	 /* In desktop GL, the presence of a user-defined signature hides any
-	  * built-in signatures, so we must ignore them.  In contrast, in ES2
-	  * user-defined signatures add new overloads, so we must proceed.
-	  */
+      if (!allow_builtins)
 	 goto done;
-      }
    }
 
    /* Local shader has no exact candidates; check the built-ins. */

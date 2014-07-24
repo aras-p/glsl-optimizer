@@ -706,7 +706,8 @@ builtin_builder::find(_mesa_glsl_parse_state *state,
    if (f == NULL)
       return NULL;
 
-   ir_function_signature *sig = f->matching_signature(state, actual_parameters);
+   ir_function_signature *sig =
+      f->matching_signature(state, actual_parameters, true);
    if (sig == NULL)
       return NULL;
 

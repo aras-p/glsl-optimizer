@@ -979,6 +979,7 @@ public:
     */
    ir_function_signature *matching_signature(_mesa_glsl_parse_state *state,
                                              const exec_list *actual_param,
+                                             bool allow_builtins,
 					     bool *match_is_exact);
 
    /**
@@ -986,7 +987,8 @@ public:
     * conversions into account.
     */
    ir_function_signature *matching_signature(_mesa_glsl_parse_state *state,
-                                             const exec_list *actual_param);
+                                             const exec_list *actual_param,
+                                             bool allow_builtins);
 
    /**
     * Find a signature that exactly matches a set of actual parameters without

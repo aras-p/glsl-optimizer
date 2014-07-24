@@ -655,7 +655,7 @@ lower_packed_varyings(void *mem_ctx, unsigned locations_used,
    ir_function *main_func = shader->symbols->get_function("main");
    exec_list void_parameters;
    ir_function_signature *main_func_sig
-      = main_func->matching_signature(NULL, &void_parameters);
+      = main_func->matching_signature(NULL, &void_parameters, false);
    exec_list new_instructions;
    lower_packed_varyings_visitor visitor(mem_ctx, locations_used, mode,
                                          gs_input_vertices, &new_instructions);

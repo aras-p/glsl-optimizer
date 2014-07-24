@@ -1129,7 +1129,8 @@ get_main_function_signature(gl_shader *sh)
        * We don't have to check for multiple definitions of main (in multiple
        * shaders) because that would have already been caught above.
        */
-      ir_function_signature *sig = f->matching_signature(NULL, &void_parameters);
+      ir_function_signature *sig =
+         f->matching_signature(NULL, &void_parameters, false);
       if ((sig != NULL) && sig->is_defined) {
 	 return sig;
       }

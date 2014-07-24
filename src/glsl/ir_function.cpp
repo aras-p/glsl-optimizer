@@ -281,15 +281,18 @@ choose_best_inexact_overload(_mesa_glsl_parse_state *state,
 
 ir_function_signature *
 ir_function::matching_signature(_mesa_glsl_parse_state *state,
-                                const exec_list *actual_parameters)
+                                const exec_list *actual_parameters,
+                                bool allow_builtins)
 {
    bool is_exact;
-   return matching_signature(state, actual_parameters, &is_exact);
+   return matching_signature(state, actual_parameters, allow_builtins,
+                             &is_exact);
 }
 
 ir_function_signature *
 ir_function::matching_signature(_mesa_glsl_parse_state *state,
                                 const exec_list *actual_parameters,
+                                bool allow_builtins,
                                 bool *is_exact)
 {
    ir_function_signature **inexact_matches = NULL;
@@ -308,7 +311,8 @@ ir_function::matching_signature(_mesa_glsl_parse_state *state,
     */
    foreach_in_list(ir_function_signature, sig, &this->signatures) {
       /* Skip over any built-ins that aren't available in this shader. */
-      if (sig->is_builtin() && !sig->is_builtin_available(state))
+      if (sig->is_builtin() && (!allow_builtins ||
+                                !sig->is_builtin_available(state)))
          continue;
 
       switch (parameter_lists_match(state, & sig->parameters, actual_parameters)) {
