@@ -136,7 +136,7 @@ device::max_mem_input() const {
 cl_ulong
 device::max_const_buffer_size() const {
    return pipe->get_shader_param(pipe, PIPE_SHADER_COMPUTE,
-                                 PIPE_SHADER_CAP_MAX_CONSTS) * 16;
+                                 PIPE_SHADER_CAP_MAX_CONST_BUFFER_SIZE);
 }
 
 cl_uint

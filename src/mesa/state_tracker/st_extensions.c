@@ -146,7 +146,7 @@ void st_init_limits(struct st_context *st)
 
    c->MaxUniformBlockSize =
       screen->get_shader_param(screen, PIPE_SHADER_FRAGMENT,
-                               PIPE_SHADER_CAP_MAX_CONSTS) * 16;
+                               PIPE_SHADER_CAP_MAX_CONST_BUFFER_SIZE);
    if (c->MaxUniformBlockSize < 16384) {
       can_ubo = FALSE;
    }
@@ -194,7 +194,8 @@ void st_init_limits(struct st_context *st)
          _min(screen->get_shader_param(screen, sh, PIPE_SHADER_CAP_MAX_ADDRS),
               MAX_PROGRAM_ADDRESS_REGS);
       pc->MaxParameters      = pc->MaxNativeParameters      =
-         screen->get_shader_param(screen, sh, PIPE_SHADER_CAP_MAX_CONSTS);
+         screen->get_shader_param(screen, sh,
+                   PIPE_SHADER_CAP_MAX_CONST_BUFFER_SIZE) / sizeof(float[4]);
 
       pc->MaxUniformComponents = 4 * MIN2(pc->MaxNativeParameters, MAX_UNIFORMS);
 

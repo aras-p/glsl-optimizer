@@ -350,8 +350,8 @@ static int si_get_shader_param(struct pipe_screen* pscreen, unsigned shader, enu
 	case PIPE_SHADER_CAP_MAX_ADDRS:
 		/* FIXME Isn't this equal to TEMPS? */
 		return 1; /* Max native address registers */
-	case PIPE_SHADER_CAP_MAX_CONSTS:
-		return 4096; /* actually only memory limits this */
+	case PIPE_SHADER_CAP_MAX_CONST_BUFFER_SIZE:
+		return 4096 * sizeof(float[4]); /* actually only memory limits this */
 	case PIPE_SHADER_CAP_MAX_CONST_BUFFERS:
 		return SI_NUM_USER_CONST_BUFFERS;
 	case PIPE_SHADER_CAP_MAX_PREDS:

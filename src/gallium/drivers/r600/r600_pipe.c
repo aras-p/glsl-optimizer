@@ -419,7 +419,7 @@ static int r600_get_shader_param(struct pipe_screen* pscreen, unsigned shader, e
 	case PIPE_SHADER_CAP_MAX_ADDRS:
 		/* XXX Isn't this equal to TEMPS? */
 		return 1; /* Max native address registers */
-	case PIPE_SHADER_CAP_MAX_CONSTS:
+	case PIPE_SHADER_CAP_MAX_CONST_BUFFER_SIZE:
 		return R600_MAX_CONST_BUFFER_SIZE;
 	case PIPE_SHADER_CAP_MAX_CONST_BUFFERS:
 		return R600_MAX_USER_CONST_BUFFERS;

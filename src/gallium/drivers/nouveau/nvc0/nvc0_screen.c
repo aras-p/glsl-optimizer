@@ -238,8 +238,8 @@ nvc0_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader,
        * and excludes 0x60 per-patch inputs.
        */
       return 0x200 / 16;
-   case PIPE_SHADER_CAP_MAX_CONSTS:
-      return 65536 / 16;
+   case PIPE_SHADER_CAP_MAX_CONST_BUFFER_SIZE:
+      return 65536;
    case PIPE_SHADER_CAP_MAX_CONST_BUFFERS:
       if (shader == PIPE_SHADER_COMPUTE && class_3d >= NVE4_3D_CLASS)
          return NVE4_MAX_PIPE_CONSTBUFS_COMPUTE;

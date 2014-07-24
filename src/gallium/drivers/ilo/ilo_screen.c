@@ -116,8 +116,8 @@ ilo_get_shader_param(struct pipe_screen *screen, unsigned shader,
    case PIPE_SHADER_CAP_MAX_INPUTS:
       /* this is limited by how many attributes SF can remap */
       return 16;
-   case PIPE_SHADER_CAP_MAX_CONSTS:
-      return 1024;
+   case PIPE_SHADER_CAP_MAX_CONST_BUFFER_SIZE:
+      return 1024 * sizeof(float[4]);
    case PIPE_SHADER_CAP_MAX_CONST_BUFFERS:
       return ILO_MAX_CONST_BUFFERS;
    case PIPE_SHADER_CAP_MAX_TEMPS:

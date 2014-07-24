@@ -250,7 +250,7 @@ support different features.
 * ``PIPE_SHADER_CAP_MAX_TEX_INDIRECTIONS``: The maximum number of texture indirections.
 * ``PIPE_SHADER_CAP_MAX_CONTROL_FLOW_DEPTH``: The maximum nested control flow depth.
 * ``PIPE_SHADER_CAP_MAX_INPUTS``: The maximum number of input registers.
-* ``PIPE_SHADER_CAP_MAX_CONSTS``: The maximum number of constants.
+* ``PIPE_SHADER_CAP_MAX_CONST_BUFFER_SIZE``: The maximum size per constant buffer in bytes.
 * ``PIPE_SHADER_CAP_MAX_CONST_BUFFERS``: Maximum number of constant buffers that can be bound
   to any shader stage using ``set_constant_buffer``. If 0 or 1, the pipe will
   only permit binding one constant buffer per shader, and the shaders will

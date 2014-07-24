@@ -215,9 +215,9 @@ struct tgsi_sampler
  */
 #define TGSI_EXEC_MAX_INPUT_ATTRIBS PIPE_MAX_SHADER_INPUTS
 
-/* The maximum number of constant vectors per constant buffer.
+/* The maximum number of bytes per constant buffer.
  */
-#define TGSI_EXEC_MAX_CONST_BUFFER  4096
+#define TGSI_EXEC_MAX_CONST_BUFFER_SIZE  (4096 * sizeof(float[4]))
 
 /* The maximum number of vertices per primitive */
 #define TGSI_MAX_PRIM_VERTICES 6
@@ -427,8 +427,8 @@ tgsi_exec_get_shader_param(enum pipe_shader_cap param)
       return TGSI_EXEC_MAX_NESTING;
    case PIPE_SHADER_CAP_MAX_INPUTS:
       return TGSI_EXEC_MAX_INPUT_ATTRIBS;
-   case PIPE_SHADER_CAP_MAX_CONSTS:
-      return TGSI_EXEC_MAX_CONST_BUFFER;
+   case PIPE_SHADER_CAP_MAX_CONST_BUFFER_SIZE:
+      return TGSI_EXEC_MAX_CONST_BUFFER_SIZE;
    case PIPE_SHADER_CAP_MAX_CONST_BUFFERS:
       return PIPE_MAX_CONSTANT_BUFFERS;
    case PIPE_SHADER_CAP_MAX_TEMPS:
