@@ -4110,12 +4110,27 @@ ast_function::hir(exec_list *instructions,
                        name);
    }
 
+   /* Create an ir_function if one doesn't already exist. */
+   f = state->symbols->get_function(name);
+   if (f == NULL) {
+      f = new(ctx) ir_function(name);
+      if (!state->symbols->add_function(f)) {
+         /* This function name shadows a non-function use of the same name. */
+         YYLTYPE loc = this->get_location();
+
+         _mesa_glsl_error(&loc, state, "function name `%s' conflicts with "
+                          "non-function", name);
+         return NULL;
+      }
+
+      emit_function(state, f);
+   }
+
    /* Verify that this function's signature either doesn't match a previously
     * seen signature for a function with the same name, or, if a match is found,
     * that the previously seen signature does not have an associated definition.
     */
-   f = state->symbols->get_function(name);
-   if (f != NULL && (state->es_shader || f->has_user_signature())) {
+   if (state->es_shader || f->has_user_signature()) {
       sig = f->exact_matching_signature(state, &hir_parameters);
       if (sig != NULL) {
          const char *badvar = sig->qualifiers_match(&hir_parameters);
@@ -4146,18 +4161,6 @@ ast_function::hir(exec_list *instructions,
             }
          }
       }
-   } else {
-      f = new(ctx) ir_function(name);
-      if (!state->symbols->add_function(f)) {
-         /* This function name shadows a non-function use of the same name. */
-         YYLTYPE loc = this->get_location();
-
-         _mesa_glsl_error(&loc, state, "function name `%s' conflicts with "
-                          "non-function", name);
-         return NULL;
-      }
-
-      emit_function(state, f);
    }
 
    /* Verify the return type of main() */
