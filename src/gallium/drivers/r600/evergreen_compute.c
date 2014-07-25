@@ -100,7 +100,7 @@ struct r600_resource* r600_compute_buffer_alloc_vram(
 
 static void evergreen_set_rat(
 	struct r600_pipe_compute *pipe,
-	int id,
+	unsigned id,
 	struct r600_resource* bo,
 	int start,
 	int size)
@@ -276,7 +276,7 @@ void evergreen_compute_upload_input(
 {
 	struct r600_context *ctx = (struct r600_context *)ctx_;
 	struct r600_pipe_compute *shader = ctx->cs_shader_state.shader;
-	int i;
+	unsigned i;
 	/* We need to reserve 9 dwords (36 bytes) for implicit kernel
 	 * parameters.
 	 */
@@ -405,7 +405,7 @@ static void compute_emit_cs(struct r600_context *ctx, const uint *block_layout,
 		const uint *grid_layout)
 {
 	struct radeon_winsys_cs *cs = ctx->b.rings.gfx.cs;
-	int i;
+	unsigned i;
 
 	/* make sure that the gfx ring is only one active */
 	if (ctx->b.rings.dma.cs && ctx->b.rings.dma.cs->cdw) {
@@ -598,7 +598,7 @@ static void evergreen_set_compute_resources(struct pipe_context * ctx_,
 	COMPUTE_DBG(ctx->screen, "*** evergreen_set_compute_resources: start = %u count = %u\n",
 			start, count);
 
-	for (int i = 0; i < count; i++)	{
+	for (unsigned i = 0; i < count; i++) {
 		/* The First two vertex buffers are reserved for parameters and
 		 * global buffers. */
 		unsigned vtx_id = 2 + i;
@@ -629,7 +629,7 @@ void evergreen_set_cs_sampler_view(struct pipe_context *ctx_,
 	struct r600_pipe_sampler_view **resource =
 		(struct r600_pipe_sampler_view **)views;
 
-	for (int i = 0; i < count; i++)	{
+	for (unsigned i = 0; i < count; i++)	{
 		if (resource[i]) {
 			assert(i+1 < 12);
 			/* XXX: Implement */
@@ -661,7 +661,7 @@ static void evergreen_set_global_binding(
 
 	/* We mark these items for promotion to the pool if they
 	 * aren't already there */
-	for (int i = 0; i < n; i++) {
+	for (unsigned i = 0; i < n; i++) {
 		struct compute_memory_item *item = buffers[i]->chunk;
 
 		if (!is_item_in_pool(item))
@@ -673,7 +673,7 @@ static void evergreen_set_global_binding(
 		return;
 	}
 
-	for (int i = 0; i < n; i++)
+	for (unsigned i = 0; i < n; i++)
 	{
 		uint32_t buffer_offset;
 		uint32_t handle;
