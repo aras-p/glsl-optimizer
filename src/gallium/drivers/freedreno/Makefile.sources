@@ -33,8 +33,6 @@ a2xx_SOURCES := \
 
 a3xx_SOURCES := \
 	a3xx/fd3_blend.c \
-	a3xx/fd3_compiler.c \
-	a3xx/fd3_compiler_old.c \
 	a3xx/fd3_context.c \
 	a3xx/fd3_draw.c \
 	a3xx/fd3_emit.c \
@@ -45,12 +43,17 @@ a3xx_SOURCES := \
 	a3xx/fd3_screen.c \
 	a3xx/fd3_texture.c \
 	a3xx/fd3_util.c \
-	a3xx/fd3_zsa.c \
-	a3xx/disasm-a3xx.c \
-	a3xx/ir3_cp.c \
-	a3xx/ir3_depth.c \
-	a3xx/ir3_dump.c \
-	a3xx/ir3_flatten.c \
-	a3xx/ir3_ra.c \
-	a3xx/ir3_sched.c \
-	a3xx/ir3.c
+	a3xx/fd3_zsa.c
+
+ir3_SOURCES := \
+	ir3/disasm-a3xx.c \
+	ir3/ir3_compiler.c \
+	ir3/ir3_compiler_old.c \
+	ir3/ir3_shader.c \
+	ir3/ir3_cp.c \
+	ir3/ir3_depth.c \
+	ir3/ir3_dump.c \
+	ir3/ir3_flatten.c \
+	ir3/ir3_ra.c \
+	ir3/ir3_sched.c \
+	ir3/ir3.c

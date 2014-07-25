@@ -87,7 +87,7 @@ static void
 emit_constants(struct fd_ringbuffer *ring,
 		enum adreno_state_block sb,
 		struct fd_constbuf_stateobj *constbuf,
-		struct fd3_shader_variant *shader)
+		struct ir3_shader_variant *shader)
 {
 	uint32_t enabled_mask = constbuf->enabled_mask;
 	uint32_t first_immediate;
@@ -291,7 +291,7 @@ fd3_emit_gmem_restore_tex(struct fd_ringbuffer *ring, struct pipe_surface *psurf
 
 void
 fd3_emit_vertex_bufs(struct fd_ringbuffer *ring,
-		struct fd3_shader_variant *vp,
+		struct ir3_shader_variant *vp,
 		struct fd3_vertex_buf *vbufs, uint32_t n)
 {
 	uint32_t i, j, last = 0;
@@ -350,10 +350,10 @@ fd3_emit_vertex_bufs(struct fd_ringbuffer *ring,
 void
 fd3_emit_state(struct fd_context *ctx, struct fd_ringbuffer *ring,
 		struct fd_program_stateobj *prog, uint32_t dirty,
-		struct fd3_shader_key key)
+		struct ir3_shader_key key)
 {
-	struct fd3_shader_variant *vp;
-	struct fd3_shader_variant *fp;
+	struct ir3_shader_variant *vp;
+	struct ir3_shader_variant *fp;
 
 	fp = fd3_shader_variant(prog->fp, key);
 	vp = fd3_shader_variant(prog->vp, key);

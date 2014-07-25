@@ -38,176 +38,23 @@
 #include "freedreno_program.h"
 
 #include "fd3_program.h"
-#include "fd3_compiler.h"
 #include "fd3_emit.h"
 #include "fd3_texture.h"
 #include "fd3_util.h"
 
 static void
-delete_variant(struct fd3_shader_variant *v)
+delete_shader_stateobj(struct fd3_shader_stateobj *so)
 {
-	ir3_destroy(v->ir);
-	fd_bo_del(v->bo);
-	free(v);
-}
-
-static void
-assemble_variant(struct fd3_shader_variant *so)
-{
-	struct fd_context *ctx = fd_context(so->so->pctx);
-	uint32_t sz, *bin;
-
-	bin = ir3_assemble(so->ir, &so->info);
-	sz = so->info.sizedwords * 4;
-
-	so->bo = fd_bo_new(ctx->dev, sz,
-			DRM_FREEDRENO_GEM_CACHE_WCOMBINE |
-			DRM_FREEDRENO_GEM_TYPE_KMEM);
-
-	memcpy(fd_bo_map(so->bo), bin, sz);
-
-	free(bin);
-
-	so->instrlen = so->info.sizedwords / 8;
-	so->constlen = so->info.max_const + 1;
-}
-
-/* for vertex shader, the inputs are loaded into registers before the shader
- * is executed, so max_regs from the shader instructions might not properly
- * reflect the # of registers actually used:
- */
-static void
-fixup_vp_regfootprint(struct fd3_shader_variant *so)
-{
-	unsigned i;
-	for (i = 0; i < so->inputs_count; i++) {
-		if (so->inputs[i].compmask) {
-			uint32_t regid = (so->inputs[i].regid + 3) >> 2;
-			so->info.max_reg = MAX2(so->info.max_reg, regid);
-		}
-	}
-	for (i = 0; i < so->outputs_count; i++) {
-		uint32_t regid = (so->outputs[i].regid + 3) >> 2;
-		so->info.max_reg = MAX2(so->info.max_reg, regid);
-	}
-}
-
-static struct fd3_shader_variant *
-create_variant(struct fd3_shader_stateobj *so, struct fd3_shader_key key)
-{
-	struct fd3_shader_variant *v = CALLOC_STRUCT(fd3_shader_variant);
-	const struct tgsi_token *tokens = so->tokens;
-	int ret;
-
-	if (!v)
-		return NULL;
-
-	v->so = so;
-	v->key = key;
-	v->type = so->type;
-
-	if (fd_mesa_debug & FD_DBG_DISASM) {
-		DBG("dump tgsi: type=%d, k={bp=%u,cts=%u,hp=%u}", so->type,
-			key.binning_pass, key.color_two_side, key.half_precision);
-		tgsi_dump(tokens, 0);
-	}
-
-	if (!(fd_mesa_debug & FD_DBG_NOOPT)) {
-		ret = fd3_compile_shader(v, tokens, key);
-		if (ret) {
-			debug_error("new compiler failed, trying fallback!");
-
-			v->inputs_count = 0;
-			v->outputs_count = 0;
-			v->total_in = 0;
-			v->has_samp = false;
-			v->immediates_count = 0;
-		}
-	} else {
-		ret = -1;  /* force fallback to old compiler */
-	}
-
-	if (ret)
-		ret = fd3_compile_shader_old(v, tokens, key);
-
-	if (ret) {
-		debug_error("compile failed!");
-		goto fail;
-	}
-
-	assemble_variant(v);
-	if (!v->bo) {
-		debug_error("assemble failed!");
-		goto fail;
-	}
-
-	if (so->type == SHADER_VERTEX)
-		fixup_vp_regfootprint(v);
-
-	if (fd_mesa_debug & FD_DBG_DISASM) {
-		DBG("disassemble: type=%d, k={bp=%u,cts=%u,hp=%u}", v->type,
-			key.binning_pass, key.color_two_side, key.half_precision);
-		disasm_a3xx(fd_bo_map(v->bo), v->info.sizedwords, 0, v->type);
-	}
-
-	return v;
-
-fail:
-	delete_variant(v);
-	return NULL;
-}
-
-struct fd3_shader_variant *
-fd3_shader_variant(struct fd3_shader_stateobj *so, struct fd3_shader_key key)
-{
-	struct fd3_shader_variant *v;
-
-	/* some shader key values only apply to vertex or frag shader,
-	 * so normalize the key to avoid constructing multiple identical
-	 * variants:
-	 */
-	if (so->type == SHADER_FRAGMENT) {
-		key.binning_pass = false;
-	}
-	if (so->type == SHADER_VERTEX) {
-		key.color_two_side = false;
-		key.half_precision = false;
-	}
-
-	for (v = so->variants; v; v = v->next)
-		if (!memcmp(&key, &v->key, sizeof(key)))
-			return v;
-
-	/* compile new variant if it doesn't exist already: */
-	v = create_variant(so, key);
-	v->next = so->variants;
-	so->variants = v;
-
-	return v;
-}
-
-
-static void
-delete_shader(struct fd3_shader_stateobj *so)
-{
-	struct fd3_shader_variant *v, *t;
-	for (v = so->variants; v; ) {
-		t = v;
-		v = v->next;
-		delete_variant(t);
-	}
-	free((void *)so->tokens);
+	ir3_shader_destroy(so->shader);
 	free(so);
 }
 
 static struct fd3_shader_stateobj *
-create_shader(struct pipe_context *pctx, const struct pipe_shader_state *cso,
+create_shader_stateobj(struct pipe_context *pctx, const struct pipe_shader_state *cso,
 		enum shader_t type)
 {
 	struct fd3_shader_stateobj *so = CALLOC_STRUCT(fd3_shader_stateobj);
-	so->pctx = pctx;
-	so->type = type;
-	so->tokens = tgsi_dup_tokens(cso->tokens);
+	so->shader = ir3_shader_create(pctx, cso->tokens, type);
 	return so;
 }
 
@@ -215,32 +62,32 @@ static void *
 fd3_fp_state_create(struct pipe_context *pctx,
 		const struct pipe_shader_state *cso)
 {
-	return create_shader(pctx, cso, SHADER_FRAGMENT);
+	return create_shader_stateobj(pctx, cso, SHADER_FRAGMENT);
 }
 
 static void
 fd3_fp_state_delete(struct pipe_context *pctx, void *hwcso)
 {
 	struct fd3_shader_stateobj *so = hwcso;
-	delete_shader(so);
+	delete_shader_stateobj(so);
 }
 
 static void *
 fd3_vp_state_create(struct pipe_context *pctx,
 		const struct pipe_shader_state *cso)
 {
-	return create_shader(pctx, cso, SHADER_VERTEX);
+	return create_shader_stateobj(pctx, cso, SHADER_VERTEX);
 }
 
 static void
 fd3_vp_state_delete(struct pipe_context *pctx, void *hwcso)
 {
 	struct fd3_shader_stateobj *so = hwcso;
-	delete_shader(so);
+	delete_shader_stateobj(so);
 }
 
 static void
-emit_shader(struct fd_ringbuffer *ring, const struct fd3_shader_variant *so)
+emit_shader(struct fd_ringbuffer *ring, const struct ir3_shader_variant *so)
 {
 	const struct ir3_info *si = &so->info;
 	enum adreno_state_block sb;
@@ -281,7 +128,7 @@ emit_shader(struct fd_ringbuffer *ring, const struct fd3_shader_variant *so)
 }
 
 static int
-find_output(const struct fd3_shader_variant *so, fd3_semantic semantic)
+find_output(const struct ir3_shader_variant *so, ir3_semantic semantic)
 {
 	int j;
 
@@ -297,7 +144,7 @@ find_output(const struct fd3_shader_variant *so, fd3_semantic semantic)
 	 */
 	if (sem2name(semantic) == TGSI_SEMANTIC_BCOLOR) {
 		unsigned idx = sem2idx(semantic);
-		return find_output(so, fd3_semantic_name(TGSI_SEMANTIC_COLOR, idx));
+		return find_output(so, ir3_semantic_name(TGSI_SEMANTIC_COLOR, idx));
 	}
 
 	debug_assert(0);
@@ -306,7 +153,7 @@ find_output(const struct fd3_shader_variant *so, fd3_semantic semantic)
 }
 
 static int
-next_varying(const struct fd3_shader_variant *so, int i)
+next_varying(const struct ir3_shader_variant *so, int i)
 {
 	while (++i < so->inputs_count)
 		if (so->inputs[i].compmask && so->inputs[i].bary)
@@ -315,7 +162,7 @@ next_varying(const struct fd3_shader_variant *so, int i)
 }
 
 static uint32_t
-find_output_regid(const struct fd3_shader_variant *so, fd3_semantic semantic)
+find_output_regid(const struct ir3_shader_variant *so, ir3_semantic semantic)
 {
 	int j;
 	for (j = 0; j < so->outputs_count; j++)
@@ -326,9 +173,9 @@ find_output_regid(const struct fd3_shader_variant *so, fd3_semantic semantic)
 
 void
 fd3_program_emit(struct fd_ringbuffer *ring,
-		struct fd_program_stateobj *prog, struct fd3_shader_key key)
+		struct fd_program_stateobj *prog, struct ir3_shader_key key)
 {
-	const struct fd3_shader_variant *vp, *fp;
+	const struct ir3_shader_variant *vp, *fp;
 	const struct ir3_info *vsi, *fsi;
 	uint32_t pos_regid, posz_regid, psize_regid, color_regid;
 	int i, j, k;
@@ -337,7 +184,7 @@ fd3_program_emit(struct fd_ringbuffer *ring,
 
 	if (key.binning_pass) {
 		/* use dummy stateobj to simplify binning vs non-binning: */
-		static const struct fd3_shader_variant binning_fp = {};
+		static const struct ir3_shader_variant binning_fp = {};
 		fp = &binning_fp;
 	} else {
 		fp = fd3_shader_variant(prog->fp, key);
@@ -347,13 +194,13 @@ fd3_program_emit(struct fd_ringbuffer *ring,
 	fsi = &fp->info;
 
 	pos_regid = find_output_regid(vp,
-		fd3_semantic_name(TGSI_SEMANTIC_POSITION, 0));
+		ir3_semantic_name(TGSI_SEMANTIC_POSITION, 0));
 	posz_regid = find_output_regid(fp,
-		fd3_semantic_name(TGSI_SEMANTIC_POSITION, 0));
+		ir3_semantic_name(TGSI_SEMANTIC_POSITION, 0));
 	psize_regid = find_output_regid(vp,
-		fd3_semantic_name(TGSI_SEMANTIC_PSIZE, 0));
+		ir3_semantic_name(TGSI_SEMANTIC_PSIZE, 0));
 	color_regid = find_output_regid(fp,
-		fd3_semantic_name(TGSI_SEMANTIC_COLOR, 0));
+		ir3_semantic_name(TGSI_SEMANTIC_COLOR, 0));
 
 	/* we could probably divide this up into things that need to be
 	 * emitted if frag-prog is dirty vs if vert-prog is dirty..
@@ -522,16 +369,16 @@ fd3_program_emit(struct fd_ringbuffer *ring,
 				A3XX_VPC_PACK_NUMNONPOSVSVAR(fp->total_in));
 
 		OUT_PKT0(ring, REG_A3XX_VPC_VARYING_INTERP_MODE(0), 4);
-		OUT_RING(ring, fp->so->vinterp[0]);    /* VPC_VARYING_INTERP[0].MODE */
-		OUT_RING(ring, fp->so->vinterp[1]);    /* VPC_VARYING_INTERP[1].MODE */
-		OUT_RING(ring, fp->so->vinterp[2]);    /* VPC_VARYING_INTERP[2].MODE */
-		OUT_RING(ring, fp->so->vinterp[3]);    /* VPC_VARYING_INTERP[3].MODE */
+		OUT_RING(ring, fp->shader->vinterp[0]);    /* VPC_VARYING_INTERP[0].MODE */
+		OUT_RING(ring, fp->shader->vinterp[1]);    /* VPC_VARYING_INTERP[1].MODE */
+		OUT_RING(ring, fp->shader->vinterp[2]);    /* VPC_VARYING_INTERP[2].MODE */
+		OUT_RING(ring, fp->shader->vinterp[3]);    /* VPC_VARYING_INTERP[3].MODE */
 
 		OUT_PKT0(ring, REG_A3XX_VPC_VARYING_PS_REPL_MODE(0), 4);
-		OUT_RING(ring, fp->so->vpsrepl[0]);    /* VPC_VARYING_PS_REPL[0].MODE */
-		OUT_RING(ring, fp->so->vpsrepl[1]);    /* VPC_VARYING_PS_REPL[1].MODE */
-		OUT_RING(ring, fp->so->vpsrepl[2]);    /* VPC_VARYING_PS_REPL[2].MODE */
-		OUT_RING(ring, fp->so->vpsrepl[3]);    /* VPC_VARYING_PS_REPL[3].MODE */
+		OUT_RING(ring, fp->shader->vpsrepl[0]);    /* VPC_VARYING_PS_REPL[0].MODE */
+		OUT_RING(ring, fp->shader->vpsrepl[1]);    /* VPC_VARYING_PS_REPL[1].MODE */
+		OUT_RING(ring, fp->shader->vpsrepl[2]);    /* VPC_VARYING_PS_REPL[2].MODE */
+		OUT_RING(ring, fp->shader->vpsrepl[3]);    /* VPC_VARYING_PS_REPL[3].MODE */
 	}
 
 	OUT_PKT0(ring, REG_A3XX_VFD_VS_THREADING_THRESHOLD, 1);
@@ -558,10 +405,10 @@ fix_blit_fp(struct pipe_context *pctx)
 	struct fd_context *ctx = fd_context(pctx);
 	struct fd3_shader_stateobj *so = ctx->blit_prog.fp;
 
-	so->vpsrepl[0] = 0x99999999;
-	so->vpsrepl[1] = 0x99999999;
-	so->vpsrepl[2] = 0x99999999;
-	so->vpsrepl[3] = 0x99999999;
+	so->shader->vpsrepl[0] = 0x99999999;
+	so->shader->vpsrepl[1] = 0x99999999;
+	so->shader->vpsrepl[2] = 0x99999999;
+	so->shader->vpsrepl[3] = 0x99999999;
 }
 
 void

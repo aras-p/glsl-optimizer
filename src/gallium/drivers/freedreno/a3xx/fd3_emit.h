@@ -33,7 +33,7 @@
 
 #include "freedreno_context.h"
 #include "fd3_util.h"
-
+#include "ir3_shader.h"
 
 struct fd_ringbuffer;
 enum adreno_state_block;
@@ -56,11 +56,11 @@ struct fd3_vertex_buf {
 };
 
 void fd3_emit_vertex_bufs(struct fd_ringbuffer *ring,
-		struct fd3_shader_variant *vp,
+		struct ir3_shader_variant *vp,
 		struct fd3_vertex_buf *vbufs, uint32_t n);
 void fd3_emit_state(struct fd_context *ctx, struct fd_ringbuffer *ring,
 		struct fd_program_stateobj *prog, uint32_t dirty,
-		struct fd3_shader_key key);
+		struct ir3_shader_key key);
 void fd3_emit_restore(struct fd_context *ctx);
 
 #endif /* FD3_EMIT_H */

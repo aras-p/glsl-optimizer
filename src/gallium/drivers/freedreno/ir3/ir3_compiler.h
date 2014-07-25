@@ -29,15 +29,14 @@
 #ifndef FD3_COMPILER_H_
 #define FD3_COMPILER_H_
 
-#include "fd3_program.h"
-#include "fd3_util.h"
+#include "ir3_shader.h"
 
 
-int fd3_compile_shader(struct fd3_shader_variant *so,
+int ir3_compile_shader(struct ir3_shader_variant *so,
 		const struct tgsi_token *tokens,
-		struct fd3_shader_key key);
-int fd3_compile_shader_old(struct fd3_shader_variant *so,
+		struct ir3_shader_key key);
+int ir3_compile_shader_old(struct ir3_shader_variant *so,
 		const struct tgsi_token *tokens,
-		struct fd3_shader_key key);
+		struct ir3_shader_key key);
 
 #endif /* FD3_COMPILER_H_ */

@@ -40,18 +40,19 @@
 #include "tgsi/tgsi_scan.h"
 
 #include "freedreno_lowering.h"
+#include "freedreno_util.h"
 
-#include "fd3_compiler.h"
-#include "fd3_program.h"
+#include "ir3_compiler.h"
+#include "ir3_shader.h"
 
 #include "instr-a3xx.h"
 #include "ir3.h"
 
-struct fd3_compile_context {
+struct ir3_compile_context {
 	const struct tgsi_token *tokens;
 	bool free_tokens;
 	struct ir3 *ir;
-	struct fd3_shader_variant *so;
+	struct ir3_shader_variant *so;
 
 	struct ir3_block *block;
 	struct ir3_instruction *current_instr;
@@ -117,15 +118,15 @@ struct fd3_compile_context {
 };
 
 
-static void vectorize(struct fd3_compile_context *ctx,
+static void vectorize(struct ir3_compile_context *ctx,
 		struct ir3_instruction *instr, struct tgsi_dst_register *dst,
 		int nsrcs, ...);
-static void create_mov(struct fd3_compile_context *ctx,
+static void create_mov(struct ir3_compile_context *ctx,
 		struct tgsi_dst_register *dst, struct tgsi_src_register *src);
-static type_t get_ftype(struct fd3_compile_context *ctx);
+static type_t get_ftype(struct ir3_compile_context *ctx);
 
 static unsigned
-compile_init(struct fd3_compile_context *ctx, struct fd3_shader_variant *so,
+compile_init(struct ir3_compile_context *ctx, struct ir3_shader_variant *so,
 		const struct tgsi_token *tokens)
 {
 	unsigned ret;
@@ -188,7 +189,7 @@ compile_init(struct fd3_compile_context *ctx, struct fd3_shader_variant *so,
 }
 
 static void
-compile_error(struct fd3_compile_context *ctx, const char *format, ...)
+compile_error(struct ir3_compile_context *ctx, const char *format, ...)
 {
 	va_list ap;
 	va_start(ap, format);
@@ -203,7 +204,7 @@ compile_error(struct fd3_compile_context *ctx, const char *format, ...)
 	} while (0)
 
 static void
-compile_free(struct fd3_compile_context *ctx)
+compile_free(struct ir3_compile_context *ctx)
 {
 	if (ctx->free_tokens)
 		free((void *)ctx->tokens);
@@ -212,7 +213,7 @@ compile_free(struct fd3_compile_context *ctx)
 
 struct instr_translater {
 	void (*fxn)(const struct instr_translater *t,
-			struct fd3_compile_context *ctx,
+			struct ir3_compile_context *ctx,
 			struct tgsi_full_instruction *inst);
 	unsigned tgsi_opc;
 	opc_t opc;
@@ -221,7 +222,7 @@ struct instr_translater {
 };
 
 static void
-instr_finish(struct fd3_compile_context *ctx)
+instr_finish(struct ir3_compile_context *ctx)
 {
 	unsigned i;
 
@@ -243,34 +244,34 @@ instr_finish(struct fd3_compile_context *ctx)
  * stuff.
  */
 static void
-instr_atomic_start(struct fd3_compile_context *ctx)
+instr_atomic_start(struct ir3_compile_context *ctx)
 {
 	ctx->atomic = true;
 }
 
 static void
-instr_atomic_end(struct fd3_compile_context *ctx)
+instr_atomic_end(struct ir3_compile_context *ctx)
 {
 	ctx->atomic = false;
 	instr_finish(ctx);
 }
 
 static struct ir3_instruction *
-instr_create(struct fd3_compile_context *ctx, int category, opc_t opc)
+instr_create(struct ir3_compile_context *ctx, int category, opc_t opc)
 {
 	instr_finish(ctx);
 	return (ctx->current_instr = ir3_instr_create(ctx->block, category, opc));
 }
 
 static struct ir3_instruction *
-instr_clone(struct fd3_compile_context *ctx, struct ir3_instruction *instr)
+instr_clone(struct ir3_compile_context *ctx, struct ir3_instruction *instr)
 {
 	instr_finish(ctx);
 	return (ctx->current_instr = ir3_instr_clone(instr));
 }
 
 static struct ir3_block *
-push_block(struct fd3_compile_context *ctx)
+push_block(struct ir3_compile_context *ctx)
 {
 	struct ir3_block *block;
 	unsigned ntmp, nin, nout;
@@ -320,7 +321,7 @@ push_block(struct fd3_compile_context *ctx)
 }
 
 static void
-pop_block(struct fd3_compile_context *ctx)
+pop_block(struct ir3_compile_context *ctx)
 {
 	ctx->block = ctx->block->parent;
 	compile_assert(ctx, ctx->block);
@@ -390,7 +391,7 @@ block_temporary(struct ir3_block *block, unsigned n)
 }
 
 static struct ir3_instruction *
-create_immed(struct fd3_compile_context *ctx, float val)
+create_immed(struct ir3_compile_context *ctx, float val)
 {
 	/* NOTE: *don't* use instr_create() here!
 	 */
@@ -404,7 +405,7 @@ create_immed(struct fd3_compile_context *ctx, float val)
 }
 
 static void
-ssa_dst(struct fd3_compile_context *ctx, struct ir3_instruction *instr,
+ssa_dst(struct ir3_compile_context *ctx, struct ir3_instruction *instr,
 		const struct tgsi_dst_register *dst, unsigned chan)
 {
 	unsigned n = regid(dst->Index, chan);
@@ -445,7 +446,7 @@ ssa_dst(struct fd3_compile_context *ctx, struct ir3_instruction *instr,
 }
 
 static void
-ssa_src(struct fd3_compile_context *ctx, struct ir3_register *reg,
+ssa_src(struct ir3_compile_context *ctx, struct ir3_register *reg,
 		const struct tgsi_src_register *src, unsigned chan)
 {
 	struct ir3_block *block = ctx->block;
@@ -490,7 +491,7 @@ ssa_src(struct fd3_compile_context *ctx, struct ir3_register *reg,
 }
 
 static struct ir3_register *
-add_dst_reg_wrmask(struct fd3_compile_context *ctx,
+add_dst_reg_wrmask(struct ir3_compile_context *ctx,
 		struct ir3_instruction *instr, const struct tgsi_dst_register *dst,
 		unsigned chan, unsigned wrmask)
 {
@@ -557,14 +558,14 @@ add_dst_reg_wrmask(struct fd3_compile_context *ctx,
 }
 
 static struct ir3_register *
-add_dst_reg(struct fd3_compile_context *ctx, struct ir3_instruction *instr,
+add_dst_reg(struct ir3_compile_context *ctx, struct ir3_instruction *instr,
 		const struct tgsi_dst_register *dst, unsigned chan)
 {
 	return add_dst_reg_wrmask(ctx, instr, dst, chan, 0x1);
 }
 
 static struct ir3_register *
-add_src_reg_wrmask(struct fd3_compile_context *ctx,
+add_src_reg_wrmask(struct ir3_compile_context *ctx,
 		struct ir3_instruction *instr, const struct tgsi_src_register *src,
 		unsigned chan, unsigned wrmask)
 {
@@ -668,7 +669,7 @@ add_src_reg_wrmask(struct fd3_compile_context *ctx,
 }
 
 static struct ir3_register *
-add_src_reg(struct fd3_compile_context *ctx, struct ir3_instruction *instr,
+add_src_reg(struct ir3_compile_context *ctx, struct ir3_instruction *instr,
 		const struct tgsi_src_register *src, unsigned chan)
 {
 	return add_src_reg_wrmask(ctx, instr, src, chan, 0x1);
@@ -693,7 +694,7 @@ src_from_dst(struct tgsi_src_register *src, struct tgsi_dst_register *dst)
  * generated by a single TGSI op.
  */
 static struct tgsi_src_register *
-get_internal_temp(struct fd3_compile_context *ctx,
+get_internal_temp(struct ir3_compile_context *ctx,
 		struct tgsi_dst_register *tmp_dst)
 {
 	struct tgsi_src_register *tmp_src;
@@ -736,13 +737,13 @@ is_rel_or_const(struct tgsi_src_register *src)
 }
 
 static type_t
-get_ftype(struct fd3_compile_context *ctx)
+get_ftype(struct ir3_compile_context *ctx)
 {
 	return TYPE_F32;
 }
 
 static type_t
-get_utype(struct fd3_compile_context *ctx)
+get_utype(struct ir3_compile_context *ctx)
 {
 	return TYPE_U32;
 }
@@ -764,7 +765,7 @@ src_swiz(struct tgsi_src_register *src, int chan)
  * generate a move to temporary gpr:
  */
 static struct tgsi_src_register *
-get_unconst(struct fd3_compile_context *ctx, struct tgsi_src_register *src)
+get_unconst(struct ir3_compile_context *ctx, struct tgsi_src_register *src)
 {
 	struct tgsi_dst_register tmp_dst;
 	struct tgsi_src_register *tmp_src;
@@ -779,7 +780,7 @@ get_unconst(struct fd3_compile_context *ctx, struct tgsi_src_register *src)
 }
 
 static void
-get_immediate(struct fd3_compile_context *ctx,
+get_immediate(struct ir3_compile_context *ctx,
 		struct tgsi_src_register *reg, uint32_t val)
 {
 	unsigned neg, swiz, idx, i;
@@ -826,7 +827,7 @@ get_immediate(struct fd3_compile_context *ctx,
 }
 
 static void
-create_mov(struct fd3_compile_context *ctx, struct tgsi_dst_register *dst,
+create_mov(struct ir3_compile_context *ctx, struct tgsi_dst_register *dst,
 		struct tgsi_src_register *src)
 {
 	type_t type_mov = get_ftype(ctx);
@@ -855,7 +856,7 @@ create_mov(struct fd3_compile_context *ctx, struct tgsi_dst_register *dst,
 }
 
 static void
-create_clamp(struct fd3_compile_context *ctx,
+create_clamp(struct ir3_compile_context *ctx,
 		struct tgsi_dst_register *dst, struct tgsi_src_register *val,
 		struct tgsi_src_register *minval, struct tgsi_src_register *maxval)
 {
@@ -869,7 +870,7 @@ create_clamp(struct fd3_compile_context *ctx,
 }
 
 static void
-create_clamp_imm(struct fd3_compile_context *ctx,
+create_clamp_imm(struct ir3_compile_context *ctx,
 		struct tgsi_dst_register *dst,
 		uint32_t minval, uint32_t maxval)
 {
@@ -885,7 +886,7 @@ create_clamp_imm(struct fd3_compile_context *ctx,
 }
 
 static struct tgsi_dst_register *
-get_dst(struct fd3_compile_context *ctx, struct tgsi_full_instruction *inst)
+get_dst(struct ir3_compile_context *ctx, struct tgsi_full_instruction *inst)
 {
 	struct tgsi_dst_register *dst = &inst->Dst[0].Register;
 	unsigned i;
@@ -908,7 +909,7 @@ get_dst(struct fd3_compile_context *ctx, struct tgsi_full_instruction *inst)
 }
 
 static void
-put_dst(struct fd3_compile_context *ctx, struct tgsi_full_instruction *inst,
+put_dst(struct ir3_compile_context *ctx, struct tgsi_full_instruction *inst,
 		struct tgsi_dst_register *dst)
 {
 	/* if necessary, add mov back into original dst: */
@@ -921,7 +922,7 @@ put_dst(struct fd3_compile_context *ctx, struct tgsi_full_instruction *inst,
  * to turn a scalar instruction into a vector operation:
  */
 static void
-vectorize(struct fd3_compile_context *ctx, struct ir3_instruction *instr,
+vectorize(struct ir3_compile_context *ctx, struct ir3_instruction *instr,
 		struct tgsi_dst_register *dst, int nsrcs, ...)
 {
 	va_list ap;
@@ -992,7 +993,7 @@ vectorize(struct fd3_compile_context *ctx, struct ir3_instruction *instr,
 
 static void
 trans_clamp(const struct instr_translater *t,
-		struct fd3_compile_context *ctx,
+		struct ir3_compile_context *ctx,
 		struct tgsi_full_instruction *inst)
 {
 	struct tgsi_dst_register *dst = get_dst(ctx, inst);
@@ -1008,7 +1009,7 @@ trans_clamp(const struct instr_translater *t,
 /* ARL(x) = x, but mova from hrN.x to a0.. */
 static void
 trans_arl(const struct instr_translater *t,
-		struct fd3_compile_context *ctx,
+		struct ir3_compile_context *ctx,
 		struct tgsi_full_instruction *inst)
 {
 	struct ir3_instruction *instr;
@@ -1059,7 +1060,7 @@ struct tex_info {
 };
 
 static const struct tex_info *
-get_tex_info(struct fd3_compile_context *ctx,
+get_tex_info(struct ir3_compile_context *ctx,
 		struct tgsi_full_instruction *inst)
 {
 	static const struct tex_info tex1d = {
@@ -1171,7 +1172,7 @@ get_tex_info(struct fd3_compile_context *ctx,
 }
 
 static struct tgsi_src_register *
-get_tex_coord(struct fd3_compile_context *ctx,
+get_tex_coord(struct ir3_compile_context *ctx,
 		struct tgsi_full_instruction *inst,
 		const struct tex_info *tinf)
 {
@@ -1238,7 +1239,7 @@ get_tex_coord(struct fd3_compile_context *ctx,
 
 static void
 trans_samp(const struct instr_translater *t,
-		struct fd3_compile_context *ctx,
+		struct ir3_compile_context *ctx,
 		struct tgsi_full_instruction *inst)
 {
 	struct ir3_instruction *instr;
@@ -1291,7 +1292,7 @@ trans_samp(const struct instr_translater *t,
  */
 static void
 trans_cmp(const struct instr_translater *t,
-		struct fd3_compile_context *ctx,
+		struct ir3_compile_context *ctx,
 		struct tgsi_full_instruction *inst)
 {
 	struct ir3_instruction *instr;
@@ -1405,7 +1406,7 @@ trans_cmp(const struct instr_translater *t,
  */
 static void
 trans_icmp(const struct instr_translater *t,
-		struct fd3_compile_context *ctx,
+		struct ir3_compile_context *ctx,
 		struct tgsi_full_instruction *inst)
 {
 	struct ir3_instruction *instr;
@@ -1475,7 +1476,7 @@ trans_icmp(const struct instr_translater *t,
  */
 
 static void
-push_branch(struct fd3_compile_context *ctx, bool inv,
+push_branch(struct ir3_compile_context *ctx, bool inv,
 		struct ir3_instruction *instr, struct ir3_instruction *cond)
 {
 	unsigned int idx = ctx->branch_count++;
@@ -1488,7 +1489,7 @@ push_branch(struct fd3_compile_context *ctx, bool inv,
 }
 
 static struct ir3_instruction *
-pop_branch(struct fd3_compile_context *ctx)
+pop_branch(struct ir3_compile_context *ctx)
 {
 	unsigned int idx = --ctx->branch_count;
 	return ctx->branch[idx].instr;
@@ -1496,7 +1497,7 @@ pop_branch(struct fd3_compile_context *ctx)
 
 static void
 trans_if(const struct instr_translater *t,
-		struct fd3_compile_context *ctx,
+		struct ir3_compile_context *ctx,
 		struct tgsi_full_instruction *inst)
 {
 	struct ir3_instruction *instr, *cond;
@@ -1532,7 +1533,7 @@ trans_if(const struct instr_translater *t,
 
 static void
 trans_else(const struct instr_translater *t,
-		struct fd3_compile_context *ctx,
+		struct ir3_compile_context *ctx,
 		struct tgsi_full_instruction *inst)
 {
 	struct ir3_instruction *instr;
@@ -1565,7 +1566,7 @@ find_output(struct ir3_block *block, unsigned n)
 }
 
 static struct ir3_instruction *
-create_phi(struct fd3_compile_context *ctx, struct ir3_instruction *cond,
+create_phi(struct ir3_compile_context *ctx, struct ir3_instruction *cond,
 		struct ir3_instruction *a, struct ir3_instruction *b)
 {
 	struct ir3_instruction *phi;
@@ -1598,7 +1599,7 @@ create_phi(struct fd3_compile_context *ctx, struct ir3_instruction *cond,
 
 static void
 trans_endif(const struct instr_translater *t,
-		struct fd3_compile_context *ctx,
+		struct ir3_compile_context *ctx,
 		struct tgsi_full_instruction *inst)
 {
 	struct ir3_instruction *instr;
@@ -1715,7 +1716,7 @@ trans_endif(const struct instr_translater *t,
 
 static void
 trans_kill(const struct instr_translater *t,
-		struct fd3_compile_context *ctx,
+		struct ir3_compile_context *ctx,
 		struct tgsi_full_instruction *inst)
 {
 	struct ir3_instruction *instr, *immed, *cond = NULL;
@@ -1762,7 +1763,7 @@ trans_kill(const struct instr_translater *t,
 
 static void
 trans_killif(const struct instr_translater *t,
-		struct fd3_compile_context *ctx,
+		struct ir3_compile_context *ctx,
 		struct tgsi_full_instruction *inst)
 {
 	struct tgsi_src_register *src = &inst->Src[0].Register;
@@ -1795,7 +1796,7 @@ trans_killif(const struct instr_translater *t,
 
 static void
 trans_cov(const struct instr_translater *t,
-		struct fd3_compile_context *ctx,
+		struct ir3_compile_context *ctx,
 		struct tgsi_full_instruction *inst)
 {
 	struct ir3_instruction *instr;
@@ -1833,7 +1834,7 @@ trans_cov(const struct instr_translater *t,
 
 static void
 instr_cat0(const struct instr_translater *t,
-		struct fd3_compile_context *ctx,
+		struct ir3_compile_context *ctx,
 		struct tgsi_full_instruction *inst)
 {
 	instr_create(ctx, 0, t->opc);
@@ -1841,7 +1842,7 @@ instr_cat0(const struct instr_translater *t,
 
 static void
 instr_cat1(const struct instr_translater *t,
-		struct fd3_compile_context *ctx,
+		struct ir3_compile_context *ctx,
 		struct tgsi_full_instruction *inst)
 {
 	struct tgsi_dst_register *dst = get_dst(ctx, inst);
@@ -1852,7 +1853,7 @@ instr_cat1(const struct instr_translater *t,
 
 static void
 instr_cat2(const struct instr_translater *t,
-		struct fd3_compile_context *ctx,
+		struct ir3_compile_context *ctx,
 		struct tgsi_full_instruction *inst)
 {
 	struct tgsi_dst_register *dst = get_dst(ctx, inst);
@@ -1906,7 +1907,7 @@ instr_cat2(const struct instr_translater *t,
 
 static void
 instr_cat3(const struct instr_translater *t,
-		struct fd3_compile_context *ctx,
+		struct ir3_compile_context *ctx,
 		struct tgsi_full_instruction *inst)
 {
 	struct tgsi_dst_register *dst = get_dst(ctx, inst);
@@ -1936,7 +1937,7 @@ instr_cat3(const struct instr_translater *t,
 
 static void
 instr_cat4(const struct instr_translater *t,
-		struct fd3_compile_context *ctx,
+		struct ir3_compile_context *ctx,
 		struct tgsi_full_instruction *inst)
 {
 	struct tgsi_dst_register *dst = get_dst(ctx, inst);
@@ -2035,14 +2036,14 @@ static const struct instr_translater translaters[TGSI_OPCODE_LAST] = {
 	INSTR(F2U,          trans_cov),
 };
 
-static fd3_semantic
+static ir3_semantic
 decl_semantic(const struct tgsi_declaration_semantic *sem)
 {
-	return fd3_semantic_name(sem->Name, sem->Index);
+	return ir3_semantic_name(sem->Name, sem->Index);
 }
 
 static struct ir3_instruction *
-decl_in_frag_bary(struct fd3_compile_context *ctx, unsigned regid,
+decl_in_frag_bary(struct ir3_compile_context *ctx, unsigned regid,
 		unsigned j, unsigned inloc)
 {
 	struct ir3_instruction *instr;
@@ -2073,7 +2074,7 @@ decl_in_frag_bary(struct fd3_compile_context *ctx, unsigned regid,
  * of the interpolated vertex position W component.
  */
 static struct ir3_instruction *
-decl_in_frag_coord(struct fd3_compile_context *ctx, unsigned regid,
+decl_in_frag_coord(struct ir3_compile_context *ctx, unsigned regid,
 		unsigned j)
 {
 	struct ir3_instruction *instr, *src;
@@ -2137,7 +2138,7 @@ decl_in_frag_coord(struct fd3_compile_context *ctx, unsigned regid,
  * back-facing polygon.
  */
 static struct ir3_instruction *
-decl_in_frag_face(struct fd3_compile_context *ctx, unsigned regid,
+decl_in_frag_face(struct ir3_compile_context *ctx, unsigned regid,
 		unsigned j)
 {
 	struct ir3_instruction *instr, *src;
@@ -2194,9 +2195,9 @@ decl_in_frag_face(struct fd3_compile_context *ctx, unsigned regid,
 }
 
 static void
-decl_in(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
+decl_in(struct ir3_compile_context *ctx, struct tgsi_full_declaration *decl)
 {
-	struct fd3_shader_variant *so = ctx->so;
+	struct ir3_shader_variant *so = ctx->so;
 	unsigned name = decl->Semantic.Name;
 	unsigned i;
 
@@ -2259,9 +2260,9 @@ decl_in(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
 }
 
 static void
-decl_out(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
+decl_out(struct ir3_compile_context *ctx, struct tgsi_full_declaration *decl)
 {
-	struct fd3_shader_variant *so = ctx->so;
+	struct ir3_shader_variant *so = ctx->so;
 	unsigned comp = 0;
 	unsigned name = decl->Semantic.Name;
 	unsigned i;
@@ -2328,9 +2329,9 @@ decl_out(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
  * frag_face.
  */
 static void
-fixup_frag_inputs(struct fd3_compile_context *ctx)
+fixup_frag_inputs(struct ir3_compile_context *ctx)
 {
-	struct fd3_shader_variant *so = ctx->so;
+	struct ir3_shader_variant *so = ctx->so;
 	struct ir3_block *block = ctx->block;
 	struct ir3_instruction **inputs;
 	struct ir3_instruction *instr;
@@ -2395,7 +2396,7 @@ fixup_frag_inputs(struct fd3_compile_context *ctx)
 }
 
 static void
-compile_instructions(struct fd3_compile_context *ctx)
+compile_instructions(struct ir3_compile_context *ctx)
 {
 	push_block(ctx);
 
@@ -2473,7 +2474,7 @@ compile_instructions(struct fd3_compile_context *ctx)
 }
 
 static void
-compile_dump(struct fd3_compile_context *ctx)
+compile_dump(struct ir3_compile_context *ctx)
 {
 	const char *name = (ctx->so->type == SHADER_VERTEX) ? "vert" : "frag";
 	static unsigned n = 0;
@@ -2489,10 +2490,10 @@ compile_dump(struct fd3_compile_context *ctx)
 }
 
 int
-fd3_compile_shader(struct fd3_shader_variant *so,
-		const struct tgsi_token *tokens, struct fd3_shader_key key)
+ir3_compile_shader(struct ir3_shader_variant *so,
+		const struct tgsi_token *tokens, struct ir3_shader_key key)
 {
-	struct fd3_compile_context ctx;
+	struct ir3_compile_context ctx;
 	struct ir3_block *block;
 	struct ir3_instruction **inputs;
 	unsigned i, j, actual_in;

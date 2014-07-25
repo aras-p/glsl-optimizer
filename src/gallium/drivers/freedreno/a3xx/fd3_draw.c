@@ -44,7 +44,7 @@
 
 static void
 emit_vertexbufs(struct fd_context *ctx, struct fd_ringbuffer *ring,
-		struct fd3_shader_key key)
+		struct ir3_shader_key key)
 {
 	struct fd_vertex_stateobj *vtx = ctx->vtx;
 	struct fd_vertexbuf_stateobj *vertexbuf = &ctx->vertexbuf;
@@ -70,7 +70,7 @@ emit_vertexbufs(struct fd_context *ctx, struct fd_ringbuffer *ring,
 
 static void
 draw_impl(struct fd_context *ctx, const struct pipe_draw_info *info,
-		struct fd_ringbuffer *ring, unsigned dirty, struct fd3_shader_key key)
+		struct fd_ringbuffer *ring, unsigned dirty, struct ir3_shader_key key)
 {
 	fd3_emit_state(ctx, ring, &ctx->prog, dirty, key);
 
@@ -99,7 +99,7 @@ static void
 fd3_draw(struct fd_context *ctx, const struct pipe_draw_info *info)
 {
 	unsigned dirty = ctx->dirty;
-	struct fd3_shader_key key = {
+	struct ir3_shader_key key = {
 			/* do binning pass first: */
 			.binning_pass = true,
 			.color_two_side = ctx->rasterizer ? ctx->rasterizer->light_twoside : false,
@@ -127,7 +127,7 @@ fd3_clear_binning(struct fd_context *ctx, unsigned dirty)
 {
 	struct fd3_context *fd3_ctx = fd3_context(ctx);
 	struct fd_ringbuffer *ring = ctx->binning_ring;
-	struct fd3_shader_key key = {
+	struct ir3_shader_key key = {
 			.binning_pass = true,
 			.half_precision = true,
 	};
@@ -168,7 +168,7 @@ fd3_clear(struct fd_context *ctx, unsigned buffers,
 	struct fd_ringbuffer *ring = ctx->ring;
 	unsigned dirty = ctx->dirty;
 	unsigned ce, i;
-	struct fd3_shader_key key = {
+	struct ir3_shader_key key = {
 			.half_precision = true,
 	};
 
