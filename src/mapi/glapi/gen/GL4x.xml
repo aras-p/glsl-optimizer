@@ -12,6 +12,32 @@
   <function name="MinSampleShading" offset="assign">
     <param name="value" type="GLfloat"/>
   </function>
+
+  <function name="BlendFunci" static_dispatch="false" alias="BlendFunciARB">
+    <param name="buf" type="GLuint"/>
+    <param name="sfactor" type="GLenum"/>
+    <param name="dfactor" type="GLenum"/>
+  </function>
+
+  <function name="BlendFuncSeparatei" static_dispatch="false" alias="BlendFuncSeparateiARB">
+    <param name="buf" type="GLuint"/>
+    <param name="sfactorRGB" type="GLenum"/>
+    <param name="dfactorRGB" type="GLenum"/>
+    <param name="sfactorAlpha" type="GLenum"/>
+    <param name="dfactorAlpha" type="GLenum"/>
+  </function>
+
+  <function name="BlendEquationi" static_dispatch="false" alias="BlendEquationiARB">
+    <param name="buf" type="GLuint"/>
+    <param name="mode" type="GLenum"/>
+  </function>
+
+  <function name="BlendEquationSeparatei" static_dispatch="false" alias="BlendEquationSeparateiARB" >
+    <param name="buf" type="GLuint"/>
+    <param name="modeRGB" type="GLenum"/>
+    <param name="modeA" type="GLenum"/>
+  </function>
+
 </category>
 
 <category name="4.3">

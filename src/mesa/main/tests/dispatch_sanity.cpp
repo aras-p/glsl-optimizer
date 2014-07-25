@@ -542,11 +542,11 @@ const struct function gl_core_functions_possible[] = {
    { "glVertexAttribDivisor", 33, -1 },
 
    /* GL 4.0 */
-   { "glMinSampleShading", 40, -1 },                    // XXX: Add to xml
-// { "glBlendEquationi", 40, -1 },                      // XXX: Add to xml
-// { "glBlendEquationSeparatei", 40, -1 },              // XXX: Add to xml
-// { "glBlendFunci", 40, -1 },                          // XXX: Add to xml
-// { "glBlendFuncSeparatei", 40, -1 },                  // XXX: Add to xml
+   { "glMinSampleShading", 40, -1 },
+   { "glBlendEquationi", 40, -1 },
+   { "glBlendEquationSeparatei", 40, -1 },
+   { "glBlendFunci", 40, -1 },
+   { "glBlendFuncSeparatei", 40, -1 },
 
    /* GL 4.3 */
    { "glIsRenderbuffer", 43, -1 },
