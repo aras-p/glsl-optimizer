@@ -115,7 +115,7 @@ ureg_get_tokens( struct ureg_program *ureg,
 /*
  * Returns the number of currently declared outputs.
  */
-const unsigned
+unsigned
 ureg_get_nr_outputs( const struct ureg_program *ureg );
 
 

@@ -1808,7 +1808,7 @@ no_ureg:
 }
 
 
-const unsigned
+unsigned
 ureg_get_nr_outputs( const struct ureg_program *ureg )
 {
    if (!ureg)
