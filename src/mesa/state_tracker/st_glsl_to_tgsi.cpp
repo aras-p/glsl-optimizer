@@ -4334,9 +4334,8 @@ dst_register(struct st_translate *t,
       return ureg_dst_undef();
 
    case PROGRAM_TEMPORARY:
-      assert(index >= 0);
-      assert(index < (int) Elements(t->temps));
- 
+      assert(index < Elements(t->temps));
+
       if (ureg_dst_is_undef(t->temps[index]))
          t->temps[index] = ureg_DECL_local_temporary(t->ureg);
 
@@ -4345,8 +4344,7 @@ dst_register(struct st_translate *t,
    case PROGRAM_ARRAY:
       array = index >> 16;
 
-      assert(array >= 0);
-      assert(array < (int) Elements(t->arrays));
+      assert(array < Elements(t->arrays));
 
       if (ureg_dst_is_undef(t->arrays[array]))
          t->arrays[array] = ureg_DECL_array_temporary(
