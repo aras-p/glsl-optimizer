@@ -233,8 +233,6 @@ static const struct debug_named_value common_debug_options[] = {
 	{ "vm", DBG_VM, "Print virtual addresses when creating resources" },
 	{ "trace_cs", DBG_TRACE_CS, "Trace cs and write rlockup_<csid>.c file with faulty cs" },
 
-	/* features */
-	{ "nodma", DBG_NO_ASYNC_DMA, "Disable asynchronous DMA" },
 
 	/* shaders */
 	{ "fs", DBG_FS, "Print fetch shaders" },
@@ -243,9 +241,13 @@ static const struct debug_named_value common_debug_options[] = {
 	{ "ps", DBG_PS, "Print pixel shaders" },
 	{ "cs", DBG_CS, "Print compute shaders" },
 
+	/* features */
+	{ "nodma", DBG_NO_ASYNC_DMA, "Disable asynchronous DMA" },
 	{ "hyperz", DBG_HYPERZ, "Enable Hyper-Z" },
 	/* GL uses the word INVALIDATE, gallium uses the word DISCARD */
 	{ "noinvalrange", DBG_NO_DISCARD_RANGE, "Disable handling of INVALIDATE_RANGE map flags" },
+	{ "no2d", DBG_NO_2D_TILING, "Disable 2D tiling" },
+	{ "notiling", DBG_NO_TILING, "Disable tiling" },
 
 	DEBUG_NAMED_VALUE_END /* must be last */
 };

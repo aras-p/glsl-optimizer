@@ -737,6 +737,13 @@ static unsigned r600_choose_tiling(struct r600_common_screen *rscreen,
 	 * Compressed textures must always be tiled. */
 	if (!(templ->flags & R600_RESOURCE_FLAG_FORCE_TILING) &&
 	    !util_format_is_compressed(templ->format)) {
+		/* Not everything can be linear, so we cannot enforce it
+		 * for all textures. */
+		if ((rscreen->debug_flags & DBG_NO_TILING) &&
+		    (!util_format_is_depth_or_stencil(templ->format) ||
+		     !(templ->flags & R600_RESOURCE_FLAG_FLUSHED_DEPTH)))
+			return RADEON_SURF_MODE_LINEAR_ALIGNED;
+
 		/* Tiling doesn't work with the 422 (SUBSAMPLED) formats on R600+. */
 		if (desc->layout == UTIL_FORMAT_LAYOUT_SUBSAMPLED)
 			return RADEON_SURF_MODE_LINEAR_ALIGNED;
@@ -763,7 +770,8 @@ static unsigned r600_choose_tiling(struct r600_common_screen *rscreen,
 	}
 
 	/* Make small textures 1D tiled. */
-	if (templ->width0 <= 16 || templ->height0 <= 16)
+	if (templ->width0 <= 16 || templ->height0 <= 16 ||
+	    (rscreen->debug_flags & DBG_NO_2D_TILING))
 		return RADEON_SURF_MODE_1D;
 
 	/* The allocator will switch to 1D if needed. */

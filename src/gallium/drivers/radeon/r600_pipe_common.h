@@ -80,17 +80,18 @@
 #define DBG_COMPUTE		(1 << 2)
 #define DBG_VM			(1 << 3)
 #define DBG_TRACE_CS		(1 << 4)
+/* shader logging */
+#define DBG_FS			(1 << 5)
+#define DBG_VS			(1 << 6)
+#define DBG_GS			(1 << 7)
+#define DBG_PS			(1 << 8)
+#define DBG_CS			(1 << 9)
 /* features */
-#define DBG_NO_ASYNC_DMA	(1 << 5)
-/* shaders */
-#define DBG_FS			(1 << 8)
-#define DBG_VS			(1 << 9)
-#define DBG_GS			(1 << 10)
-#define DBG_PS			(1 << 11)
-#define DBG_CS			(1 << 12)
-/* features */
-#define DBG_HYPERZ		(1 << 13)
-#define DBG_NO_DISCARD_RANGE	(1 << 14)
+#define DBG_NO_ASYNC_DMA	(1 << 10)
+#define DBG_HYPERZ		(1 << 11)
+#define DBG_NO_DISCARD_RANGE	(1 << 12)
+#define DBG_NO_2D_TILING	(1 << 13)
+#define DBG_NO_TILING		(1 << 14)
 /* The maximum allowed bit is 15. */
 
 #define R600_MAP_BUFFER_ALIGNMENT 64
