@@ -325,6 +325,7 @@ SPARC_FILES =			\
 COMMON_DRIVER_FILES =			\
 	$(SRCDIR)drivers/common/driverfuncs.c	\
 	$(SRCDIR)drivers/common/meta_blit.c	\
+	$(SRCDIR)drivers/common/meta_copy_image.c	\
 	$(SRCDIR)drivers/common/meta_generate_mipmap.c	\
 	$(SRCDIR)drivers/common/meta.c
 
