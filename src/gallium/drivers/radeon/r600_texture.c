@@ -388,7 +388,7 @@ static void si_texture_get_cmask_info(struct r600_common_screen *rscreen,
 				      struct r600_cmask_info *out)
 {
 	unsigned pipe_interleave_bytes = rscreen->tiling_info.group_bytes;
-	unsigned num_pipes = rscreen->tiling_info.num_channels;
+	unsigned num_pipes = rscreen->info.r600_num_tile_pipes;
 	unsigned cl_width, cl_height;
 
 	switch (num_pipes) {
@@ -485,7 +485,7 @@ static unsigned si_texture_htile_alloc_size(struct r600_common_screen *rscreen,
 {
 	unsigned cl_width, cl_height, width, height;
 	unsigned slice_elements, slice_bytes, pipe_interleave_bytes, base_align;
-	unsigned num_pipes = rscreen->tiling_info.num_channels;
+	unsigned num_pipes = rscreen->info.r600_num_tile_pipes;
 
 	/* HTILE is broken with 1D tiling on old kernels and CIK. */
 	if (rtex->surface.level[0].mode == RADEON_SURF_MODE_1D &&
