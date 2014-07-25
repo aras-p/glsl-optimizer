@@ -4597,12 +4597,6 @@ ast_case_statement_list::hir(exec_list *instructions,
     */
    if (!default_case.is_empty()) {
 
-      /* Default case was the last one, no checks required. */
-      if (after_default.is_empty()) {
-         instructions->append_list(&default_case);
-         return NULL;
-      }
-
       ir_rvalue *const true_val = new (state) ir_constant(true);
       ir_dereference_variable *deref_run_default_var =
          new(state) ir_dereference_variable(state->switch_state.run_default);
@@ -4613,6 +4607,12 @@ ast_case_statement_list::hir(exec_list *instructions,
       ir_assignment *const init_var =
          new(state) ir_assignment(deref_run_default_var, true_val);
       instructions->push_tail(init_var);
+
+      /* Default case was the last one, no checks required. */
+      if (after_default.is_empty()) {
+         instructions->append_list(&default_case);
+         return NULL;
+      }
 
       foreach_in_list(ir_instruction, ir, &after_default) {
          ir_assignment *assign = ir->as_assignment();
