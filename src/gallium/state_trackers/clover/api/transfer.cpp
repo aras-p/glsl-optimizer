@@ -101,6 +101,9 @@ namespace {
                    const vector_t &orig, const vector_t &region) {
       vector_t size = { img.width(), img.height(), img.depth() };
 
+      if (!q.device().image_support())
+         throw error(CL_INVALID_OPERATION);
+
       if (img.context() != q.context())
          throw error(CL_INVALID_CONTEXT);
 

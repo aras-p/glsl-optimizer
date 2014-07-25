@@ -106,6 +106,9 @@ clCreateImage2D(cl_context d_ctx, cl_mem_flags flags,
                 void *host_ptr, cl_int *r_errcode) try {
    auto &ctx = obj(d_ctx);
 
+   if (!any_of(std::mem_fn(&device::image_support), ctx.devices()))
+      throw error(CL_INVALID_OPERATION);
+
    if (flags & ~(CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY | CL_MEM_READ_ONLY |
                  CL_MEM_USE_HOST_PTR | CL_MEM_ALLOC_HOST_PTR |
                  CL_MEM_COPY_HOST_PTR))
@@ -140,6 +143,9 @@ clCreateImage3D(cl_context d_ctx, cl_mem_flags flags,
                 size_t row_pitch, size_t slice_pitch,
                 void *host_ptr, cl_int *r_errcode) try {
    auto &ctx = obj(d_ctx);
+
+   if (!any_of(std::mem_fn(&device::image_support), ctx.devices()))
+      throw error(CL_INVALID_OPERATION);
 
    if (flags & ~(CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY | CL_MEM_READ_ONLY |
                  CL_MEM_USE_HOST_PTR | CL_MEM_ALLOC_HOST_PTR |

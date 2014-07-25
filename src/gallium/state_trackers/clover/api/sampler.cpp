@@ -31,6 +31,9 @@ clCreateSampler(cl_context d_ctx, cl_bool norm_mode,
                 cl_int *r_errcode) try {
    auto &ctx = obj(d_ctx);
 
+   if (!any_of(std::mem_fn(&device::image_support), ctx.devices()))
+      throw error(CL_INVALID_OPERATION);
+
    ret_error(r_errcode, CL_SUCCESS);
    return new sampler(ctx, norm_mode, addr_mode, filter_mode);
 
