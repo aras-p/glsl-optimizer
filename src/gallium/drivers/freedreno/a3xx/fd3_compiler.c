@@ -43,30 +43,9 @@
 
 #include "fd3_compiler.h"
 #include "fd3_program.h"
-#include "fd3_util.h"
 
 #include "instr-a3xx.h"
 #include "ir3.h"
-
-/* NOTE on half/full precision:
- * Currently, the front end (ie. basically this file) does everything in
- * full precision (with the exception of trans_arl() which doesn't work
- * currently.. we reject anything with relative addressing and fallback
- * to old compiler).
- *
- * In the RA step, if half_precision, it will assign the output to hr0.x
- * but use full precision everywhere else.
- *
- * Eventually we'll need a better way to communicate type information
- * to RA so that it can more properly assign both half and full precision
- * registers.  (And presumably double precision pairs for a4xx?)  This
- * would let us make more use of half precision registers, while still
- * keeping things like tex coords in full precision registers.
- *
- * Since the RA is dealing with patching instruction types for half
- * precision output, we can ignore that in the front end and just always
- * create full precision instructions.
- */
 
 struct fd3_compile_context {
 	const struct tgsi_token *tokens;

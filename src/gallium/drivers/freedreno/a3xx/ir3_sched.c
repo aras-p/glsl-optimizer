@@ -52,7 +52,7 @@ enum {
 
 struct ir3_sched_ctx {
 	struct ir3_instruction *scheduled; /* last scheduled instr */
-	struct ir3_instruction *deref;     /* current deref, if any */
+	struct ir3_instruction *addr;      /* current a0.x user, if any */
 	unsigned cnt;
 };
 
@@ -130,8 +130,8 @@ static void schedule(struct ir3_sched_ctx *ctx,
 	}
 
 	if (writes_addr(instr)) {
-		assert(ctx->deref == NULL);
-		ctx->deref = instr;
+		assert(ctx->addr == NULL);
+		ctx->addr = instr;
 	}
 
 	instr->flags |= IR3_INSTR_MARK;
@@ -227,8 +227,8 @@ static int trysched(struct ir3_sched_ctx *ctx,
 	/* if this is a write to address register, and addr register
 	 * is currently in use, we need to defer until it is free:
 	 */
-	if (writes_addr(instr) && ctx->deref) {
-		assert(ctx->deref != instr);
+	if (writes_addr(instr) && ctx->addr) {
+		assert(ctx->addr != instr);
 		return DELAYED;
 	}
 
@@ -248,17 +248,17 @@ static struct ir3_instruction * reverse(struct ir3_instruction *instr)
 	return reversed;
 }
 
-static bool uses_current_deref(struct ir3_sched_ctx *ctx,
+static bool uses_current_addr(struct ir3_sched_ctx *ctx,
 		struct ir3_instruction *instr)
 {
 	unsigned i;
 	for (i = 1; i < instr->regs_count; i++) {
 		struct ir3_register *reg = instr->regs[i];
 		if (reg->flags & IR3_REG_SSA) {
-			if (is_deref(reg->instr)) {
-				struct ir3_instruction *deref;
-				deref = reg->instr->regs[1]->instr; /* the mova */
-				if (ctx->deref == deref)
+			if (is_addr(reg->instr)) {
+				struct ir3_instruction *addr;
+				addr = reg->instr->regs[1]->instr; /* the mova */
+				if (ctx->addr == addr)
 					return true;
 			}
 		}
@@ -274,26 +274,28 @@ static int block_sched_undelayed(struct ir3_sched_ctx *ctx,
 		struct ir3_block *block)
 {
 	struct ir3_instruction *instr = block->head;
-	bool in_use = false;
+	bool addr_in_use = false;
 	unsigned cnt = ~0;
 
 	while (instr) {
 		struct ir3_instruction *next = instr->next;
+		bool addr = uses_current_addr(ctx, instr);
 
-		if (uses_current_deref(ctx, instr)) {
+		if (addr) {
 			int ret = trysched(ctx, instr);
 			if (ret == SCHEDULED)
 				cnt = 0;
 			else if (ret > 0)
 				cnt = MIN2(cnt, ret);
-			in_use = true;
+			if (addr)
+				addr_in_use = true;
 		}
 
 		instr = next;
 	}
 
-	if (!in_use)
-		ctx->deref = NULL;
+	if (!addr_in_use)
+		ctx->addr = NULL;
 
 	return cnt;
 }

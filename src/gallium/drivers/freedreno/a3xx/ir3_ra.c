@@ -566,7 +566,7 @@ static void ir3_instr_ra(struct ir3_ra_ctx *ctx,
 		return;
 
 	/* allocate register(s): */
-	if (is_deref(instr)) {
+	if (is_addr(instr)) {
 		num = instr->regs[2]->num;
 	} else if (reg_gpr(dst)) {
 		struct ir3_ra_assignment a;

@@ -354,7 +354,7 @@ static inline bool is_meta(struct ir3_instruction *instr)
 	return (instr->category == -1);
 }
 
-static inline bool is_deref(struct ir3_instruction *instr)
+static inline bool is_addr(struct ir3_instruction *instr)
 {
 	return is_meta(instr) && (instr->opc == OPC_META_DEREF);
 }
@@ -368,7 +368,6 @@ static inline bool writes_addr(struct ir3_instruction *instr)
 	return false;
 }
 
-/* TODO combine is_gpr()/reg_gpr().. */
 static inline bool reg_gpr(struct ir3_register *r)
 {
 	if (r->flags & (IR3_REG_CONST | IR3_REG_IMMED | IR3_REG_RELATIV | IR3_REG_SSA | IR3_REG_ADDR))
