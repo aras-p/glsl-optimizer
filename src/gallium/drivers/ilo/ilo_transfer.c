@@ -36,6 +36,159 @@
 #include "ilo_state.h"
 #include "ilo_transfer.h"
 
+/*
+ * For buffers that are not busy, we want to map/unmap them directly.  For
+ * those that are busy, we have to worry about synchronization.  We could wait
+ * for GPU to finish, but there are cases where we could avoid waiting.
+ *
+ *  - When PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE is set, the contents of the
+ *    buffer can be discarded.  We can replace the backing bo by a new one of
+ *    the same size (renaming).
+ *  - When PIPE_TRANSFER_DISCARD_RANGE is set, the contents of the mapped
+ *    range can be discarded.  We can allocate and map a staging bo on
+ *    mapping, and (pipelined-)copy it over to the real bo on unmapping.
+ *  - When PIPE_TRANSFER_FLUSH_EXPLICIT is set, there is no reading and only
+ *    flushed regions need to be written.  We can still allocate and map a
+ *    staging bo, but should copy only the flushed regions over.
+ *
+ * However, there are other flags to consider.
+ *
+ *  - When PIPE_TRANSFER_UNSYNCHRONIZED is set, we do not need to worry about
+ *    synchronization at all on mapping.
+ *  - When PIPE_TRANSFER_MAP_DIRECTLY is set, no staging area is allowed.
+ *  - When PIPE_TRANSFER_DONTBLOCK is set, we should fail if we have to block.
+ *
+ * These also apply to textures, except that we may additionally need to do
+ * format conversion or tiling/untiling.
+ */
+
+/**
+ * Return a transfer method suitable for the usage.  The returned method will
+ * correctly block when the resource is busy.
+ */
+static bool
+resource_get_transfer_method(struct pipe_resource *res, unsigned usage,
+                             enum ilo_transfer_map_method *method)
+{
+   const struct ilo_screen *is = ilo_screen(res->screen);
+   enum ilo_transfer_map_method m;
+   bool tiled;
+
+   if (res->target == PIPE_BUFFER) {
+      tiled = false;
+   }
+   else {
+      struct ilo_texture *tex = ilo_texture(res);
+      bool need_convert = true;
+
+      /* we may need to convert on the fly */
+      if (tex->separate_s8 || tex->bo_format == PIPE_FORMAT_S8_UINT)
+         m = ILO_TRANSFER_MAP_SW_ZS;
+      else if (tex->bo_format != tex->base.format)
+         m = ILO_TRANSFER_MAP_SW_CONVERT;
+      else
+         need_convert = false;
+
+      if (need_convert) {
+         if (usage & PIPE_TRANSFER_MAP_DIRECTLY)
+            return false;
+
+         *method = m;
+         return true;
+      }
+
+      tiled = (tex->tiling != INTEL_TILING_NONE);
+   }
+
+   if (tiled)
+      m = ILO_TRANSFER_MAP_GTT; /* to have a linear view */
+   else if (is->dev.has_llc)
+      m = ILO_TRANSFER_MAP_CPU; /* fast and mostly coherent */
+   else if (usage & PIPE_TRANSFER_READ)
+      m = ILO_TRANSFER_MAP_CPU; /* gtt read is too slow */
+   else
+      m = ILO_TRANSFER_MAP_GTT;
+
+   *method = m;
+
+   return true;
+}
+
+/**
+ * Return the bo of the resource.
+ */
+static struct intel_bo *
+resource_get_bo(struct pipe_resource *res)
+{
+   return (res->target == PIPE_BUFFER) ?
+      ilo_buffer(res)->bo : ilo_texture(res)->bo;
+}
+
+/**
+ * Rename the bo of the resource.
+ */
+static bool
+resource_rename_bo(struct pipe_resource *res)
+{
+   return (res->target == PIPE_BUFFER) ?
+      ilo_buffer_rename_bo(ilo_buffer(res)) :
+      ilo_texture_rename_bo(ilo_texture(res));
+}
+
+/**
+ * Return true if usage allows the use of staging bo to avoid blocking.
+ */
+static bool
+usage_allows_staging_bo(unsigned usage)
+{
+   /* do we know how to write the data back to the resource? */
+   const unsigned can_writeback = (PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE |
+                                   PIPE_TRANSFER_DISCARD_RANGE |
+                                   PIPE_TRANSFER_FLUSH_EXPLICIT);
+   const unsigned reasons_against = (PIPE_TRANSFER_READ |
+                                     PIPE_TRANSFER_MAP_DIRECTLY);
+
+   return (usage & can_writeback) && !(usage & reasons_against);
+}
+
+/**
+ * Use an alternative transfer method or rename the resource to unblock an
+ * otherwise blocking transfer.
+ */
+static bool
+xfer_unblock(struct ilo_transfer *xfer, bool *resource_renamed)
+{
+   struct pipe_resource *res = xfer->base.resource;
+   bool unblocked = false, renamed = false;
+
+   switch (xfer->method) {
+   case ILO_TRANSFER_MAP_CPU:
+   case ILO_TRANSFER_MAP_GTT:
+      if (xfer->base.usage & PIPE_TRANSFER_UNSYNCHRONIZED) {
+         xfer->method = ILO_TRANSFER_MAP_UNSYNC;
+         unblocked = true;
+      }
+      else if ((xfer->base.usage & PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE) &&
+               resource_rename_bo(res)) {
+         renamed = true;
+         unblocked = true;
+      }
+      else if (usage_allows_staging_bo(xfer->base.usage)) {
+         /* TODO */
+      }
+      break;
+   case ILO_TRANSFER_MAP_UNSYNC:
+      unblocked = true;
+      break;
+   default:
+      break;
+   }
+
+   *resource_renamed = renamed;
+
+   return unblocked;
+}
+
 static bool
 is_bo_busy(struct ilo_context *ilo, struct intel_bo *bo, bool *need_flush)
 {
@@ -83,99 +236,26 @@ static bool
 choose_transfer_method(struct ilo_context *ilo, struct ilo_transfer *xfer)
 {
    struct pipe_resource *res = xfer->base.resource;
-   const unsigned usage = xfer->base.usage;
-   /* prefer map() when there is the last-level cache */
-   const bool prefer_cpu =
-      (ilo->dev->has_llc || (usage & PIPE_TRANSFER_READ));
-   struct ilo_texture *tex;
-   struct ilo_buffer *buf;
-   struct intel_bo *bo;
-   bool tiled, need_flush;
+   bool need_flush;
 
-   if (res->target == PIPE_BUFFER) {
-      tex = NULL;
+   if (!resource_get_transfer_method(res, xfer->base.usage, &xfer->method))
+      return false;
 
-      buf = ilo_buffer(res);
-      bo = buf->bo;
-      tiled = false;
-   }
-   else {
-      buf = NULL;
+   /* see if we can avoid blocking */
+   if (is_bo_busy(ilo, resource_get_bo(res), &need_flush)) {
+      bool resource_renamed;
 
-      tex = ilo_texture(res);
-      bo = tex->bo;
-      tiled = (tex->tiling != INTEL_TILING_NONE);
-   }
-
-   /* choose between mapping through CPU or GTT */
-   if (usage & PIPE_TRANSFER_MAP_DIRECTLY) {
-      /* we do not want fencing */
-      if (tiled || prefer_cpu)
-         xfer->method = ILO_TRANSFER_MAP_CPU;
-      else
-         xfer->method = ILO_TRANSFER_MAP_GTT;
-   }
-   else {
-      if (!tiled && prefer_cpu)
-         xfer->method = ILO_TRANSFER_MAP_CPU;
-      else
-         xfer->method = ILO_TRANSFER_MAP_GTT;
-   }
-
-   /* see if we can avoid stalling */
-   if (is_bo_busy(ilo, bo, &need_flush)) {
-      bool will_stall = true;
-
-      if (usage & PIPE_TRANSFER_MAP_DIRECTLY) {
-         /* nothing we can do */
-      }
-      else if (usage & PIPE_TRANSFER_UNSYNCHRONIZED) {
-         /* unsynchronized gtt mapping does not stall */
-         xfer->method = ILO_TRANSFER_MAP_UNSYNC;
-         will_stall = false;
-      }
-      else if (usage & PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE) {
-         /* discard old bo and allocate a new one for mapping */
-         if ((tex && ilo_texture_rename_bo(tex)) ||
-             (buf && ilo_buffer_rename_bo(buf))) {
-            ilo_mark_states_with_resource_dirty(ilo, res);
-            will_stall = false;
-         }
-      }
-      else if (usage & PIPE_TRANSFER_FLUSH_EXPLICIT) {
-         /*
-          * We could allocate and return a system buffer here.  When a region of
-          * the buffer is explicitly flushed, we pwrite() the region to a
-          * temporary bo and emit pipelined copy blit.
-          *
-          * For now, do nothing.
-          */
-      }
-      else if (usage & PIPE_TRANSFER_DISCARD_RANGE) {
-         /*
-          * We could allocate a temporary bo for mapping, and emit pipelined copy
-          * blit upon unmapping.
-          *
-          * For now, do nothing.
-          */
-      }
-
-      if (will_stall) {
-         if (usage & PIPE_TRANSFER_DONTBLOCK)
+      if (!xfer_unblock(xfer, &resource_renamed)) {
+         if (xfer->base.usage & PIPE_TRANSFER_DONTBLOCK)
             return false;
 
-         /* flush to make bo busy (so that map() stalls as it should be) */
+         /* flush to make bo really busy so that map() correctly blocks */
          if (need_flush)
             ilo_cp_flush(ilo->cp, "syncing for transfers");
       }
-   }
 
-   if (tex && !(usage & PIPE_TRANSFER_MAP_DIRECTLY)) {
-      if (tex->separate_s8 || tex->bo_format == PIPE_FORMAT_S8_UINT)
-         xfer->method = ILO_TRANSFER_MAP_SW_ZS;
-      /* need to convert on-the-fly */
-      else if (tex->bo_format != tex->base.format)
-         xfer->method = ILO_TRANSFER_MAP_SW_CONVERT;
+      if (resource_renamed)
+         ilo_mark_states_with_resource_dirty(ilo, res);
    }
 
    return true;
