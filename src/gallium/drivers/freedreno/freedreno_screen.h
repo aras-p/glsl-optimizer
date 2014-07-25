@@ -73,7 +73,7 @@ struct pipe_screen * fd_screen_create(struct fd_device *dev);
 static inline boolean
 is_a3xx_p0(struct fd_screen *screen)
 {
-	return (screen->gpu_id & 0xff0000ff) == 0x0300000000;
+	return (screen->gpu_id & 0xff0000ff) == 0x03000000;
 }
 
 #endif /* FREEDRENO_SCREEN_H_ */
