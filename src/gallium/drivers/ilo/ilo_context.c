@@ -63,28 +63,13 @@ ilo_flush(struct pipe_context *pipe,
 {
    struct ilo_context *ilo = ilo_context(pipe);
 
-   if (f) {
-      struct ilo_fence *fence;
-
-      fence = CALLOC_STRUCT(ilo_fence);
-      if (fence) {
-         pipe_reference_init(&fence->reference, 1);
-
-         /* reference the batch bo that we want to wait on */
-         if (ilo_cp_empty(ilo->cp))
-            fence->bo = ilo->last_cp_bo;
-         else
-            fence->bo = ilo->cp->bo;
-
-         if (fence->bo)
-            intel_bo_reference(fence->bo);
-      }
-
-      *f = (struct pipe_fence_handle *) fence;
-   }
-
    ilo_cp_flush(ilo->cp,
          (flags & PIPE_FLUSH_END_OF_FRAME) ? "frame end" : "user request");
+
+   if (f) {
+      *f = (struct pipe_fence_handle *)
+         ilo_fence_create(pipe->screen, ilo->last_cp_bo);
+   }
 }
 
 static void

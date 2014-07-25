@@ -60,4 +60,7 @@ ilo_fence(struct pipe_fence_handle *fence)
    return (struct ilo_fence *) fence;
 }
 
+struct ilo_fence *
+ilo_fence_create(struct pipe_screen *screen, struct intel_bo *bo);
+
 #endif /* ILO_SCREEN_H */

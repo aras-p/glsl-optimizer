@@ -575,6 +575,28 @@ ilo_fence_finish(struct pipe_screen *screen,
    return true;
 }
 
+/**
+ * Create a fence for \p bo.  When \p bo is not NULL, it must be submitted
+ * before waited on or checked.
+ */
+struct ilo_fence *
+ilo_fence_create(struct pipe_screen *screen, struct intel_bo *bo)
+{
+   struct ilo_fence *fence;
+
+   fence = CALLOC_STRUCT(ilo_fence);
+   if (!fence)
+      return NULL;
+
+   pipe_reference_init(&fence->reference, 1);
+
+   if (bo)
+      intel_bo_reference(bo);
+   fence->bo = bo;
+
+   return fence;
+}
+
 static void
 ilo_screen_destroy(struct pipe_screen *screen)
 {
