@@ -368,6 +368,15 @@ static inline bool writes_addr(struct ir3_instruction *instr)
 	return false;
 }
 
+static inline bool writes_pred(struct ir3_instruction *instr)
+{
+	if (instr->regs_count > 0) {
+		struct ir3_register *dst = instr->regs[0];
+		return reg_num(dst) == REG_P0;
+	}
+	return false;
+}
+
 static inline bool reg_gpr(struct ir3_register *r)
 {
 	if (r->flags & (IR3_REG_CONST | IR3_REG_IMMED | IR3_REG_RELATIV | IR3_REG_SSA | IR3_REG_ADDR))

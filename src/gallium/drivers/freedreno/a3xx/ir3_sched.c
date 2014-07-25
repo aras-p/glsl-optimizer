@@ -48,11 +48,21 @@ enum {
  * reach the end of depth sorted list without being able to insert any
  * instruction, insert nop's.  Repeat until no more unscheduled
  * instructions.
+ *
+ * There are a few special cases that need to be handled, since sched
+ * is currently independent of register allocation.  Usages of address
+ * register (a0.x) or predicate register (p0.x) must be serialized.  Ie.
+ * if you have two pairs of instructions that write the same special
+ * register and then read it, then those pairs cannot be interleaved.
+ * To solve this, when we are in such a scheduling "critical section",
+ * and we encounter a conflicting write to a special register, we try
+ * to schedule any remaining instructions that use that value first.
  */
 
 struct ir3_sched_ctx {
 	struct ir3_instruction *scheduled; /* last scheduled instr */
 	struct ir3_instruction *addr;      /* current a0.x user, if any */
+	struct ir3_instruction *pred;      /* current p0.x user, if any */
 	unsigned cnt;
 };
 
@@ -132,6 +142,11 @@ static void schedule(struct ir3_sched_ctx *ctx,
 	if (writes_addr(instr)) {
 		assert(ctx->addr == NULL);
 		ctx->addr = instr;
+	}
+
+	if (writes_pred(instr)) {
+		assert(ctx->pred == NULL);
+		ctx->pred = instr;
 	}
 
 	instr->flags |= IR3_INSTR_MARK;
@@ -224,11 +239,16 @@ static int trysched(struct ir3_sched_ctx *ctx,
 	if (delay)
 		return delay;
 
-	/* if this is a write to address register, and addr register
-	 * is currently in use, we need to defer until it is free:
+	/* if this is a write to address/predicate register, and that
+	 * register is currently in use, we need to defer until it is
+	 * free:
 	 */
 	if (writes_addr(instr) && ctx->addr) {
 		assert(ctx->addr != instr);
+		return DELAYED;
+	}
+	if (writes_pred(instr) && ctx->pred) {
+		assert(ctx->pred != instr);
 		return DELAYED;
 	}
 
@@ -266,6 +286,18 @@ static bool uses_current_addr(struct ir3_sched_ctx *ctx,
 	return false;
 }
 
+static bool uses_current_pred(struct ir3_sched_ctx *ctx,
+		struct ir3_instruction *instr)
+{
+	unsigned i;
+	for (i = 1; i < instr->regs_count; i++) {
+		struct ir3_register *reg = instr->regs[i];
+		if ((reg->flags & IR3_REG_SSA) && (ctx->pred == reg->instr))
+				return true;
+	}
+	return false;
+}
+
 /* when we encounter an instruction that writes to the address register
  * when it is in use, we delay that instruction and try to schedule all
  * other instructions using the current address register:
@@ -275,13 +307,15 @@ static int block_sched_undelayed(struct ir3_sched_ctx *ctx,
 {
 	struct ir3_instruction *instr = block->head;
 	bool addr_in_use = false;
+	bool pred_in_use = false;
 	unsigned cnt = ~0;
 
 	while (instr) {
 		struct ir3_instruction *next = instr->next;
 		bool addr = uses_current_addr(ctx, instr);
+		bool pred = uses_current_pred(ctx, instr);
 
-		if (addr) {
+		if (addr || pred) {
 			int ret = trysched(ctx, instr);
 			if (ret == SCHEDULED)
 				cnt = 0;
@@ -289,6 +323,8 @@ static int block_sched_undelayed(struct ir3_sched_ctx *ctx,
 				cnt = MIN2(cnt, ret);
 			if (addr)
 				addr_in_use = true;
+			if (pred)
+				pred_in_use = true;
 		}
 
 		instr = next;
@@ -296,6 +332,9 @@ static int block_sched_undelayed(struct ir3_sched_ctx *ctx,
 
 	if (!addr_in_use)
 		ctx->addr = NULL;
+
+	if (!pred_in_use)
+		ctx->pred = NULL;
 
 	return cnt;
 }
