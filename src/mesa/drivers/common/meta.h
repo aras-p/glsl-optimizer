@@ -570,7 +570,7 @@ void
 _mesa_meta_glsl_generate_mipmap_cleanup(struct gen_mipmap_state *mipmap);
 
 void
-_mesa_meta_bind_fbo_image(GLenum attachment,
+_mesa_meta_bind_fbo_image(GLenum target, GLenum attachment,
                           struct gl_texture_image *texImage, GLuint layer);
 
 #endif /* META_H */

@@ -101,18 +101,18 @@ static void meta_decompress_cleanup(struct decompress_state *decompress);
 static void meta_drawpix_cleanup(struct drawpix_state *drawpix);
 
 void
-_mesa_meta_bind_fbo_image(GLenum attachment,
+_mesa_meta_bind_fbo_image(GLenum fboTarget, GLenum attachment,
                           struct gl_texture_image *texImage, GLuint layer)
 {
    struct gl_texture_object *texObj = texImage->TexObject;
    int level = texImage->Level;
-   GLenum target = texObj->Target;
+   GLenum texTarget = texObj->Target;
 
-   switch (target) {
+   switch (texTarget) {
    case GL_TEXTURE_1D:
-      _mesa_FramebufferTexture1D(GL_FRAMEBUFFER,
+      _mesa_FramebufferTexture1D(fboTarget,
                                  attachment,
-                                 target,
+                                 texTarget,
                                  texObj->Name,
                                  level);
       break;
@@ -121,19 +121,19 @@ _mesa_meta_bind_fbo_image(GLenum attachment,
    case GL_TEXTURE_2D_MULTISAMPLE_ARRAY:
    case GL_TEXTURE_CUBE_MAP_ARRAY:
    case GL_TEXTURE_3D:
-      _mesa_FramebufferTextureLayer(GL_FRAMEBUFFER,
+      _mesa_FramebufferTextureLayer(fboTarget,
                                     attachment,
                                     texObj->Name,
                                     level,
                                     layer);
       break;
    default: /* 2D / cube */
-      if (target == GL_TEXTURE_CUBE_MAP)
-         target = GL_TEXTURE_CUBE_MAP_POSITIVE_X + texImage->Face;
+      if (texTarget == GL_TEXTURE_CUBE_MAP)
+         texTarget = GL_TEXTURE_CUBE_MAP_POSITIVE_X + texImage->Face;
 
-      _mesa_FramebufferTexture2D(GL_FRAMEBUFFER,
+      _mesa_FramebufferTexture2D(fboTarget,
                                  attachment,
-                                 target,
+                                 texTarget,
                                  texObj->Name,
                                  level);
    }
@@ -2802,17 +2802,20 @@ copytexsubimage_using_blit_framebuffer(struct gl_context *ctx, GLuint dims,
 
    if (rb->_BaseFormat == GL_DEPTH_STENCIL ||
        rb->_BaseFormat == GL_DEPTH_COMPONENT) {
-      _mesa_meta_bind_fbo_image(GL_DEPTH_ATTACHMENT, texImage, zoffset);
+      _mesa_meta_bind_fbo_image(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+                                texImage, zoffset);
       mask = GL_DEPTH_BUFFER_BIT;
 
       if (rb->_BaseFormat == GL_DEPTH_STENCIL &&
           texImage->_BaseFormat == GL_DEPTH_STENCIL) {
-         _mesa_meta_bind_fbo_image(GL_STENCIL_ATTACHMENT, texImage, zoffset);
+         _mesa_meta_bind_fbo_image(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT,
+                                   texImage, zoffset);
          mask |= GL_STENCIL_BUFFER_BIT;
       }
       _mesa_DrawBuffer(GL_NONE);
    } else {
-      _mesa_meta_bind_fbo_image(GL_COLOR_ATTACHMENT0, texImage, zoffset);
+      _mesa_meta_bind_fbo_image(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                                texImage, zoffset);
       mask = GL_COLOR_BUFFER_BIT;
       _mesa_DrawBuffer(GL_COLOR_ATTACHMENT0);
    }
@@ -3356,7 +3359,8 @@ cleartexsubimage_color(struct gl_context *ctx,
    GLenum datatype;
    GLenum status;
 
-   _mesa_meta_bind_fbo_image(GL_COLOR_ATTACHMENT0, texImage, zoffset);
+   _mesa_meta_bind_fbo_image(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                             texImage, zoffset);
 
    status = _mesa_CheckFramebufferStatus(GL_DRAW_FRAMEBUFFER);
    if (status != GL_FRAMEBUFFER_COMPLETE)
@@ -3402,10 +3406,12 @@ cleartexsubimage_depth_stencil(struct gl_context *ctx,
    GLfloat depthValue;
    GLenum status;
 
-   _mesa_meta_bind_fbo_image(GL_DEPTH_ATTACHMENT, texImage, zoffset);
+   _mesa_meta_bind_fbo_image(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+                             texImage, zoffset);
 
    if (texImage->_BaseFormat == GL_DEPTH_STENCIL)
-      _mesa_meta_bind_fbo_image(GL_STENCIL_ATTACHMENT, texImage, zoffset);
+      _mesa_meta_bind_fbo_image(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT,
+                                texImage, zoffset);
 
    status = _mesa_CheckFramebufferStatus(GL_DRAW_FRAMEBUFFER);
    if (status != GL_FRAMEBUFFER_COMPLETE)
