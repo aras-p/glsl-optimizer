@@ -58,8 +58,8 @@ struct fd3_shader_variant {
 
 	struct fd3_shader_key key;
 
-	struct ir3_shader_info info;
-	struct ir3_shader *ir;
+	struct ir3_info info;
+	struct ir3 *ir;
 
 	/* the instructions length is in units of instruction groups
 	 * (4 instructions, 8 dwords):

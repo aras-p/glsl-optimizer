@@ -40,7 +40,7 @@ struct ir3_heap_chunk {
 	uint32_t heap[CHUNK_SZ];
 };
 
-static void grow_heap(struct ir3_shader *shader)
+static void grow_heap(struct ir3 *shader)
 {
 	struct ir3_heap_chunk *chunk = calloc(1, sizeof(*chunk));
 	chunk->next = shader->chunk;
@@ -51,7 +51,7 @@ static void grow_heap(struct ir3_shader *shader)
 /* simple allocator to carve allocations out of an up-front allocated heap,
  * so that we can free everything easily in one shot.
  */
-void * ir3_alloc(struct ir3_shader *shader, int sz)
+void * ir3_alloc(struct ir3 *shader, int sz)
 {
 	void *ptr;
 
@@ -66,15 +66,15 @@ void * ir3_alloc(struct ir3_shader *shader, int sz)
 	return ptr;
 }
 
-struct ir3_shader * ir3_shader_create(void)
+struct ir3 * ir3_create(void)
 {
-	struct ir3_shader *shader =
-			calloc(1, sizeof(struct ir3_shader));
+	struct ir3 *shader =
+			calloc(1, sizeof(struct ir3));
 	grow_heap(shader);
 	return shader;
 }
 
-void ir3_shader_destroy(struct ir3_shader *shader)
+void ir3_destroy(struct ir3 *shader)
 {
 	while (shader->chunk) {
 		struct ir3_heap_chunk *chunk = shader->chunk;
@@ -90,7 +90,7 @@ void ir3_shader_destroy(struct ir3_shader *shader)
 		return -1; \
 	} } while (0)
 
-static uint32_t reg(struct ir3_register *reg, struct ir3_shader_info *info,
+static uint32_t reg(struct ir3_register *reg, struct ir3_info *info,
 		uint32_t repeat, uint32_t valid_flags)
 {
 	reg_t val = { .dummy32 = 0 };
@@ -124,7 +124,7 @@ static uint32_t reg(struct ir3_register *reg, struct ir3_shader_info *info,
 }
 
 static int emit_cat0(struct ir3_instruction *instr, void *ptr,
-		struct ir3_shader_info *info)
+		struct ir3_info *info)
 {
 	instr_cat0_t *cat0 = ptr;
 
@@ -147,7 +147,7 @@ static uint32_t type_flags(type_t type)
 }
 
 static int emit_cat1(struct ir3_instruction *instr, void *ptr,
-		struct ir3_shader_info *info)
+		struct ir3_info *info)
 {
 	struct ir3_register *dst = instr->regs[0];
 	struct ir3_register *src = instr->regs[1];
@@ -192,7 +192,7 @@ static int emit_cat1(struct ir3_instruction *instr, void *ptr,
 }
 
 static int emit_cat2(struct ir3_instruction *instr, void *ptr,
-		struct ir3_shader_info *info)
+		struct ir3_info *info)
 {
 	struct ir3_register *dst = instr->regs[0];
 	struct ir3_register *src1 = instr->regs[1];
@@ -273,7 +273,7 @@ static int emit_cat2(struct ir3_instruction *instr, void *ptr,
 }
 
 static int emit_cat3(struct ir3_instruction *instr, void *ptr,
-		struct ir3_shader_info *info)
+		struct ir3_info *info)
 {
 	struct ir3_register *dst = instr->regs[0];
 	struct ir3_register *src1 = instr->regs[1];
@@ -368,7 +368,7 @@ static int emit_cat3(struct ir3_instruction *instr, void *ptr,
 }
 
 static int emit_cat4(struct ir3_instruction *instr, void *ptr,
-		struct ir3_shader_info *info)
+		struct ir3_info *info)
 {
 	struct ir3_register *dst = instr->regs[0];
 	struct ir3_register *src = instr->regs[1];
@@ -416,7 +416,7 @@ static int emit_cat4(struct ir3_instruction *instr, void *ptr,
 }
 
 static int emit_cat5(struct ir3_instruction *instr, void *ptr,
-		struct ir3_shader_info *info)
+		struct ir3_info *info)
 {
 	struct ir3_register *dst = instr->regs[0];
 	struct ir3_register *src1 = instr->regs[1];
@@ -470,7 +470,7 @@ static int emit_cat5(struct ir3_instruction *instr, void *ptr,
 }
 
 static int emit_cat6(struct ir3_instruction *instr, void *ptr,
-		struct ir3_shader_info *info)
+		struct ir3_info *info)
 {
 	struct ir3_register *dst = instr->regs[0];
 	struct ir3_register *src = instr->regs[1];
@@ -534,11 +534,11 @@ static int emit_cat6(struct ir3_instruction *instr, void *ptr,
 }
 
 static int (*emit[])(struct ir3_instruction *instr, void *ptr,
-		struct ir3_shader_info *info) = {
+		struct ir3_info *info) = {
 	emit_cat0, emit_cat1, emit_cat2, emit_cat3, emit_cat4, emit_cat5, emit_cat6,
 };
 
-void * ir3_shader_assemble(struct ir3_shader *shader, struct ir3_shader_info *info)
+void * ir3_assemble(struct ir3 *shader, struct ir3_info *info)
 {
 	uint32_t *ptr, *dwords;
 	uint32_t i;
@@ -572,7 +572,7 @@ fail:
 	return NULL;
 }
 
-static struct ir3_register * reg_create(struct ir3_shader *shader,
+static struct ir3_register * reg_create(struct ir3 *shader,
 		int num, int flags)
 {
 	struct ir3_register *reg =
@@ -583,7 +583,7 @@ static struct ir3_register * reg_create(struct ir3_shader *shader,
 	return reg;
 }
 
-static void insert_instr(struct ir3_shader *shader,
+static void insert_instr(struct ir3 *shader,
 		struct ir3_instruction *instr)
 {
 #ifdef DEBUG
@@ -598,7 +598,7 @@ static void insert_instr(struct ir3_shader *shader,
 	shader->instrs[shader->instrs_count++] = instr;
 }
 
-struct ir3_block * ir3_block_create(struct ir3_shader *shader,
+struct ir3_block * ir3_block_create(struct ir3 *shader,
 		unsigned ntmp, unsigned nin, unsigned nout)
 {
 	struct ir3_block *block;

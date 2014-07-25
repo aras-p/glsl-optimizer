@@ -396,6 +396,6 @@ static void block_sched(struct ir3_sched_ctx *ctx, struct ir3_block *block)
 void ir3_block_sched(struct ir3_block *block)
 {
 	struct ir3_sched_ctx ctx = {0};
-	ir3_shader_clear_mark(block->shader);
+	ir3_clear_mark(block->shader);
 	block_sched(&ctx, block);
 }

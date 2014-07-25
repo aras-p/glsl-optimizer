@@ -32,13 +32,13 @@
 
 /* low level intermediate representation of an adreno shader program */
 
-struct ir3_shader;
+struct ir3;
 struct ir3_instruction;
 struct ir3_block;
 
-struct ir3_shader * fd_asm_parse(const char *src);
+struct ir3 * fd_asm_parse(const char *src);
 
-struct ir3_shader_info {
+struct ir3_info {
 	uint16_t sizedwords;
 	uint16_t instrs_count;   /* expanded to account for rpt's */
 	/* NOTE: max_reg, etc, does not include registers not touched
@@ -219,7 +219,7 @@ struct ir3_instruction {
 
 struct ir3_heap_chunk;
 
-struct ir3_shader {
+struct ir3 {
 	unsigned instrs_count, instrs_sz;
 	struct ir3_instruction **instrs;
 	unsigned heap_idx;
@@ -227,7 +227,7 @@ struct ir3_shader {
 };
 
 struct ir3_block {
-	struct ir3_shader *shader;
+	struct ir3 *shader;
 	unsigned ntemporaries, ninputs, noutputs;
 	/* maps TGSI_FILE_TEMPORARY index back to the assigning instruction: */
 	struct ir3_instruction **temporaries;
@@ -239,13 +239,13 @@ struct ir3_block {
 	struct ir3_instruction *head;
 };
 
-struct ir3_shader * ir3_shader_create(void);
-void ir3_shader_destroy(struct ir3_shader *shader);
-void * ir3_shader_assemble(struct ir3_shader *shader,
-		struct ir3_shader_info *info);
-void * ir3_alloc(struct ir3_shader *shader, int sz);
+struct ir3 * ir3_create(void);
+void ir3_destroy(struct ir3 *shader);
+void * ir3_assemble(struct ir3 *shader,
+		struct ir3_info *info);
+void * ir3_alloc(struct ir3 *shader, int sz);
 
-struct ir3_block * ir3_block_create(struct ir3_shader *shader,
+struct ir3_block * ir3_block_create(struct ir3 *shader,
 		unsigned ntmp, unsigned nin, unsigned nout);
 
 struct ir3_instruction * ir3_instr_create(struct ir3_block *block,
@@ -265,7 +265,7 @@ static inline bool ir3_instr_check_mark(struct ir3_instruction *instr)
 	return false;
 }
 
-static inline void ir3_shader_clear_mark(struct ir3_shader *shader)
+static inline void ir3_clear_mark(struct ir3 *shader)
 {
 	/* TODO would be nice to drop the instruction array.. for
 	 * new compiler, _clear_mark() is all we use it for, and
@@ -388,8 +388,8 @@ static inline bool reg_gpr(struct ir3_register *r)
 
 /* dump: */
 #include <stdio.h>
-void ir3_shader_dump(struct ir3_shader *shader, const char *name,
-		struct ir3_block *block /* XXX maybe 'block' ptr should move to ir3_shader? */,
+void ir3_dump(struct ir3 *shader, const char *name,
+		struct ir3_block *block /* XXX maybe 'block' ptr should move to ir3? */,
 		FILE *f);
 void ir3_dump_instr_single(struct ir3_instruction *instr);
 void ir3_dump_instr_list(struct ir3_instruction *instr);

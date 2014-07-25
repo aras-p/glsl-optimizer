@@ -50,7 +50,7 @@
 struct fd3_compile_context {
 	const struct tgsi_token *tokens;
 	bool free_tokens;
-	struct ir3_shader *ir;
+	struct ir3 *ir;
 	struct fd3_shader_variant *so;
 
 	struct ir3_block *block;
@@ -2484,7 +2484,7 @@ compile_dump(struct fd3_compile_context *ctx)
 	if (!f)
 		return;
 	ir3_block_depth(ctx->block);
-	ir3_shader_dump(ctx->ir, name, ctx->block, f);
+	ir3_dump(ctx->ir, name, ctx->block, f);
 	fclose(f);
 }
 
@@ -2500,7 +2500,7 @@ fd3_compile_shader(struct fd3_shader_variant *so,
 
 	assert(!so->ir);
 
-	so->ir = ir3_shader_create();
+	so->ir = ir3_create();
 
 	assert(so->ir);
 
@@ -2629,7 +2629,7 @@ fd3_compile_shader(struct fd3_shader_variant *so,
 
 out:
 	if (ret) {
-		ir3_shader_destroy(so->ir);
+		ir3_destroy(so->ir);
 		so->ir = NULL;
 	}
 	compile_free(&ctx);

@@ -588,7 +588,7 @@ static void ir3_instr_ra(struct ir3_ra_ctx *ctx,
 static void legalize(struct ir3_ra_ctx *ctx, struct ir3_block *block)
 {
 	struct ir3_instruction *n;
-	struct ir3_shader *shader = block->shader;
+	struct ir3 *shader = block->shader;
 	struct ir3_instruction *end =
 			ir3_instr_create(block, 0, OPC_END);
 	struct ir3_instruction *last_input = NULL;
@@ -782,7 +782,7 @@ int ir3_block_ra(struct ir3_block *block, enum shader_t type,
 	};
 	int ret;
 
-	ir3_shader_clear_mark(block->shader);
+	ir3_clear_mark(block->shader);
 	ret = block_ra(&ctx, block);
 	*has_samp = ctx.has_samp;
 

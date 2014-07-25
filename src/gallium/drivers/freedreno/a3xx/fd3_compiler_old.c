@@ -52,7 +52,7 @@
 struct fd3_compile_context {
 	const struct tgsi_token *tokens;
 	bool free_tokens;
-	struct ir3_shader *ir;
+	struct ir3 *ir;
 	struct ir3_block *block;
 	struct fd3_shader_variant *so;
 
@@ -1427,7 +1427,7 @@ decl_samp(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
 static void
 compile_instructions(struct fd3_compile_context *ctx)
 {
-	struct ir3_shader *ir = ctx->ir;
+	struct ir3 *ir = ctx->ir;
 	int nop = 0;
 
 	while (!tgsi_parse_end_of_tokens(&ctx->parser)) {
@@ -1509,7 +1509,7 @@ fd3_compile_shader_old(struct fd3_shader_variant *so,
 
 	assert(!so->ir);
 
-	so->ir = ir3_shader_create();
+	so->ir = ir3_create();
 
 	assert(so->ir);
 

@@ -146,7 +146,7 @@ int ir3_block_flatten(struct ir3_block *block)
 	};
 	unsigned i;
 
-	ir3_shader_clear_mark(block->shader);
+	ir3_clear_mark(block->shader);
 	for(i = 0; i < block->noutputs; i++)
 		if (block->outputs[i])
 			ir3_instr_flatten(&ctx, block->outputs[i]);

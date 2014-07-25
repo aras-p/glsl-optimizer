@@ -153,6 +153,6 @@ static void block_cp(struct ir3_block *block)
 
 void ir3_block_cp(struct ir3_block *block)
 {
-	ir3_shader_clear_mark(block->shader);
+	ir3_clear_mark(block->shader);
 	block_cp(block);
 }

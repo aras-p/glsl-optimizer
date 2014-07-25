@@ -46,7 +46,7 @@
 static void
 delete_variant(struct fd3_shader_variant *v)
 {
-	ir3_shader_destroy(v->ir);
+	ir3_destroy(v->ir);
 	fd_bo_del(v->bo);
 	free(v);
 }
@@ -57,7 +57,7 @@ assemble_variant(struct fd3_shader_variant *so)
 	struct fd_context *ctx = fd_context(so->so->pctx);
 	uint32_t sz, *bin;
 
-	bin = ir3_shader_assemble(so->ir, &so->info);
+	bin = ir3_assemble(so->ir, &so->info);
 	sz = so->info.sizedwords * 4;
 
 	so->bo = fd_bo_new(ctx->dev, sz,
@@ -242,7 +242,7 @@ fd3_vp_state_delete(struct pipe_context *pctx, void *hwcso)
 static void
 emit_shader(struct fd_ringbuffer *ring, const struct fd3_shader_variant *so)
 {
-	const struct ir3_shader_info *si = &so->info;
+	const struct ir3_info *si = &so->info;
 	enum adreno_state_block sb;
 	enum adreno_state_src src;
 	uint32_t i, sz, *bin;
@@ -329,7 +329,7 @@ fd3_program_emit(struct fd_ringbuffer *ring,
 		struct fd_program_stateobj *prog, struct fd3_shader_key key)
 {
 	const struct fd3_shader_variant *vp, *fp;
-	const struct ir3_shader_info *vsi, *fsi;
+	const struct ir3_info *vsi, *fsi;
 	uint32_t pos_regid, posz_regid, psize_regid, color_regid;
 	int i, j, k;
 

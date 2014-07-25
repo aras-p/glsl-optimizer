@@ -372,14 +372,14 @@ static void ir3_block_dump(struct ir3_dump_ctx *ctx,
 	}
 }
 
-void ir3_shader_dump(struct ir3_shader *shader, const char *name,
-		struct ir3_block *block /* XXX maybe 'block' ptr should move to ir3_shader? */,
+void ir3_dump(struct ir3 *shader, const char *name,
+		struct ir3_block *block /* XXX maybe 'block' ptr should move to ir3? */,
 		FILE *f)
 {
 	struct ir3_dump_ctx ctx = {
 			.f = f,
 	};
-	ir3_shader_clear_mark(shader);
+	ir3_clear_mark(shader);
 	fprintf(ctx.f, "digraph G {\n");
 	fprintf(ctx.f, "rankdir=RL;\n");
 	fprintf(ctx.f, "nodesep=0.25;\n");

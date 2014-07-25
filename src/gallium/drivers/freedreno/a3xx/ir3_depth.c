@@ -145,7 +145,7 @@ void ir3_block_depth(struct ir3_block *block)
 
 	block->head = NULL;
 
-	ir3_shader_clear_mark(block->shader);
+	ir3_clear_mark(block->shader);
 	for (i = 0; i < block->noutputs; i++)
 		if (block->outputs[i])
 			ir3_instr_depth(block->outputs[i]);
