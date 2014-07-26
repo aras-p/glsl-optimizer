@@ -243,6 +243,24 @@ void gen7_upload_3dstate_so_decl_list(struct brw_context *brw,
 void gen8_init_vtable_surface_functions(struct brw_context *brw);
 
 /* brw_sampler_state.c */
+void brw_emit_sampler_state(struct brw_context *brw,
+                            uint32_t *sampler_state,
+                            uint32_t batch_offset_for_sampler_state,
+                            unsigned min_filter,
+                            unsigned mag_filter,
+                            unsigned mip_filter,
+                            unsigned max_anisotropy,
+                            unsigned address_rounding,
+                            unsigned wrap_s,
+                            unsigned wrap_t,
+                            unsigned wrap_r,
+                            unsigned min_lod,
+                            unsigned max_lod,
+                            int lod_bias,
+                            unsigned base_level,
+                            unsigned shadow_function,
+                            bool non_normalized_coordinates,
+                            uint32_t border_color_offset);
 uint32_t translate_wrap_mode(struct brw_context *brw,
                              GLenum wrap, bool using_nearest);
 void upload_default_color(struct brw_context *brw,

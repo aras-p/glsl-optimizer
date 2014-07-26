@@ -70,6 +70,81 @@ gen7_emit_sampler_state_pointers_xs(struct brw_context *brw,
    ADVANCE_BATCH();
 }
 
+/**
+ * Emit a SAMPLER_STATE structure, given all the fields.
+ */
+void
+brw_emit_sampler_state(struct brw_context *brw,
+                       uint32_t *ss,
+                       uint32_t batch_offset_for_sampler_state,
+                       unsigned min_filter,
+                       unsigned mag_filter,
+                       unsigned mip_filter,
+                       unsigned max_anisotropy,
+                       unsigned address_rounding,
+                       unsigned wrap_s,
+                       unsigned wrap_t,
+                       unsigned wrap_r,
+                       unsigned min_lod,
+                       unsigned max_lod,
+                       int lod_bias,
+                       unsigned base_level,
+                       unsigned shadow_function,
+                       bool non_normalized_coordinates,
+                       uint32_t border_color_offset)
+{
+   ss[0] = BRW_SAMPLER_LOD_PRECLAMP_ENABLE |
+           SET_FIELD(base_level, BRW_SAMPLER_BASE_MIPLEVEL) |
+           SET_FIELD(mip_filter, BRW_SAMPLER_MIP_FILTER) |
+           SET_FIELD(mag_filter, BRW_SAMPLER_MAG_FILTER) |
+           SET_FIELD(min_filter, BRW_SAMPLER_MIN_FILTER);
+
+   ss[2] = border_color_offset;
+   if (brw->gen < 6) {
+      ss[2] += brw->batch.bo->offset64; /* reloc */
+      drm_intel_bo_emit_reloc(brw->batch.bo,
+                              batch_offset_for_sampler_state + 8,
+                              brw->batch.bo, border_color_offset,
+                              I915_GEM_DOMAIN_SAMPLER, 0);
+   }
+
+   ss[3] = SET_FIELD(max_anisotropy, BRW_SAMPLER_MAX_ANISOTROPY) |
+           SET_FIELD(address_rounding, BRW_SAMPLER_ADDRESS_ROUNDING);
+
+   if (brw->gen >= 7) {
+      ss[0] |= SET_FIELD(lod_bias & 0x1fff, GEN7_SAMPLER_LOD_BIAS);
+
+      if (min_filter == BRW_MAPFILTER_ANISOTROPIC)
+         ss[0] |= GEN7_SAMPLER_EWA_ANISOTROPIC_ALGORIHTM;
+
+      ss[1] = SET_FIELD(min_lod, GEN7_SAMPLER_MIN_LOD) |
+              SET_FIELD(max_lod, GEN7_SAMPLER_MAX_LOD) |
+              SET_FIELD(shadow_function, GEN7_SAMPLER_SHADOW_FUNCTION);
+
+      ss[3] |= SET_FIELD(wrap_s, BRW_SAMPLER_TCX_WRAP_MODE) |
+               SET_FIELD(wrap_t, BRW_SAMPLER_TCY_WRAP_MODE) |
+               SET_FIELD(wrap_r, BRW_SAMPLER_TCZ_WRAP_MODE);
+
+      if (non_normalized_coordinates)
+         ss[3] |= GEN7_SAMPLER_NON_NORMALIZED_COORDINATES;
+   } else {
+      ss[0] |= SET_FIELD(lod_bias & 0x7ff, GEN4_SAMPLER_LOD_BIAS) |
+               SET_FIELD(shadow_function, GEN4_SAMPLER_SHADOW_FUNCTION);
+
+      if (brw->gen == 6 && min_filter != mag_filter)
+         ss[0] |= GEN6_SAMPLER_MIN_MAG_NOT_EQUAL;
+
+      ss[1] = SET_FIELD(min_lod, GEN4_SAMPLER_MIN_LOD) |
+              SET_FIELD(max_lod, GEN4_SAMPLER_MAX_LOD) |
+              SET_FIELD(wrap_s, BRW_SAMPLER_TCX_WRAP_MODE) |
+              SET_FIELD(wrap_t, BRW_SAMPLER_TCY_WRAP_MODE) |
+              SET_FIELD(wrap_r, BRW_SAMPLER_TCZ_WRAP_MODE);
+
+      if (brw->gen >= 6 && non_normalized_coordinates)
+         ss[3] |= GEN6_SAMPLER_NON_NORMALIZED_COORDINATES;
+   }
+}
+
 uint32_t
 translate_wrap_mode(struct brw_context *brw, GLenum wrap, bool using_nearest)
 {
