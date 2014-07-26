@@ -39,10 +39,36 @@
 #include "brw_context.h"
 #include "brw_state.h"
 #include "brw_defines.h"
+#include "intel_batchbuffer.h"
 #include "intel_mipmap_tree.h"
 
 #include "main/macros.h"
 #include "main/samplerobj.h"
+
+/**
+ * Emit a 3DSTATE_SAMPLER_STATE_POINTERS_{VS,HS,GS,DS,PS} packet.
+ */
+static void
+gen7_emit_sampler_state_pointers_xs(struct brw_context *brw,
+                                    struct brw_stage_state *stage_state)
+{
+   static const uint16_t packet_headers[] = {
+      [MESA_SHADER_VERTEX] = _3DSTATE_SAMPLER_STATE_POINTERS_VS,
+      [MESA_SHADER_GEOMETRY] = _3DSTATE_SAMPLER_STATE_POINTERS_GS,
+      [MESA_SHADER_FRAGMENT] = _3DSTATE_SAMPLER_STATE_POINTERS_PS,
+   };
+
+   /* Ivybridge requires a workaround flush before VS packets. */
+   if (brw->gen == 7 && !brw->is_haswell && !brw->is_baytrail &&
+       stage_state->stage == MESA_SHADER_VERTEX) {
+      gen7_emit_vs_workaround_flush(brw);
+   }
+
+   BEGIN_BATCH(2);
+   OUT_BATCH(packet_headers[stage_state->stage] << 16 | (2 - 2));
+   OUT_BATCH(stage_state->sampler_offset);
+   ADVANCE_BATCH();
+}
 
 uint32_t
 translate_wrap_mode(struct brw_context *brw, GLenum wrap, bool using_nearest)
@@ -402,9 +428,16 @@ brw_upload_sampler_state_table(struct brw_context *brw,
       if (SamplersUsed & (1 << s)) {
          const unsigned unit = prog->SamplerUnits[s];
          if (ctx->Texture.Unit[unit]._Current) {
-            brw_update_sampler_state(brw, unit,
-                                     (struct brw_sampler_state *) sampler_state,
-                                     batch_offset_for_sampler_state);
+            if (brw->gen >= 7) {
+               gen7_update_sampler_state(brw, unit,
+                                         (struct gen7_sampler_state *)
+                                         sampler_state);
+            } else {
+               brw_update_sampler_state(brw, unit,
+                                        (struct brw_sampler_state *)
+                                        sampler_state,
+                                        batch_offset_for_sampler_state);
+            }
          }
       }
 
@@ -412,7 +445,15 @@ brw_upload_sampler_state_table(struct brw_context *brw,
       batch_offset_for_sampler_state += size_in_bytes;
    }
 
-   brw->state.dirty.cache |= CACHE_NEW_SAMPLER;
+   if (brw->gen >= 7) {
+      /* Emit a 3DSTATE_SAMPLER_STATE_POINTERS_XS packet. */
+      gen7_emit_sampler_state_pointers_xs(brw, stage_state);
+   } else {
+      /* Flag that the sampler state table pointer has changed; later atoms
+       * will handle it.
+       */
+      brw->state.dirty.cache |= CACHE_NEW_SAMPLER;
+   }
 }
 
 static void

@@ -33,7 +33,7 @@
 /**
  * Sets the sampler state for a single unit.
  */
-static void
+void
 gen7_update_sampler_state(struct brw_context *brw, int unit,
 			  struct gen7_sampler_state *sampler)
 {
