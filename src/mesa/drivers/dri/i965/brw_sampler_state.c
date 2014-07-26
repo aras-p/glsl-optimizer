@@ -29,6 +29,12 @@
   *   Keith Whitwell <keithw@vmware.com>
   */
 
+/**
+ * @file brw_sampler_state.c
+ *
+ * This file contains code for emitting SAMPLER_STATE structures, which
+ * specifies filter modes, wrap modes, border color, and so on.
+ */
 
 #include "brw_context.h"
 #include "brw_state.h"
@@ -37,13 +43,6 @@
 
 #include "main/macros.h"
 #include "main/samplerobj.h"
-
-
-/* Samplers aren't strictly wm state from the hardware's perspective,
- * but that is the only situation in which we use them in this driver.
- */
-
-
 
 uint32_t
 translate_wrap_mode(struct brw_context *brw, GLenum wrap, bool using_nearest)
