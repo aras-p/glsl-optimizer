@@ -33,6 +33,7 @@
 #include "util/u_format.h"
 #include "util/u_index_modify.h"
 #include "util/u_memory.h"
+#include "util/u_prim.h"
 #include "util/u_upload_mgr.h"
 
 /*
@@ -408,6 +409,19 @@ static bool si_update_draw_info_state(struct si_context *sctx,
 					(rs ? rs->line_stipple_enable : false);
 		/* If the WD switch is false, the IA switch must be false too. */
 		bool ia_switch_on_eop = wd_switch_on_eop;
+		unsigned primgroup_size = 64;
+
+		/* Hawaii hangs if instancing is enabled and each instance
+		 * is smaller than a prim group and WD_SWITCH_ON_EOP is 0.
+		 * We don't know that for indirect drawing, so treat it as
+		 * always problematic. */
+		if (sctx->b.family == CHIP_HAWAII &&
+		    (info->indirect ||
+		     (info->instance_count > 1 &&
+		      u_prims_for_vertices(info->mode, info->count) < primgroup_size))) {
+			wd_switch_on_eop = true;
+			ia_switch_on_eop = true;
+		}
 
 		si_pm4_set_reg(pm4, R_028B74_VGT_DISPATCH_DRAW_INDEX,
 			       ib->index_size == 4 ? 0xFC000000 : 0xFC00);
@@ -417,7 +431,7 @@ static bool si_update_draw_info_state(struct si_context *sctx,
 		si_pm4_cmd_add(pm4, /* IA_MULTI_VGT_PARAM */
 			       S_028AA8_SWITCH_ON_EOP(ia_switch_on_eop) |
 			       S_028AA8_PARTIAL_VS_WAVE_ON(1) |
-			       S_028AA8_PRIMGROUP_SIZE(63) |
+			       S_028AA8_PRIMGROUP_SIZE(primgroup_size - 1) |
 			       S_028AA8_WD_SWITCH_ON_EOP(wd_switch_on_eop));
 		si_pm4_cmd_add(pm4, 0); /* VGT_LS_HS_CONFIG */
 		si_pm4_cmd_end(pm4, false);
