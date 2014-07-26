@@ -380,7 +380,6 @@ brw_upload_sampler_state_table(struct brw_context *brw,
                                struct brw_stage_state *stage_state)
 {
    struct gl_context *ctx = &brw->ctx;
-   struct brw_sampler_state *samplers;
    uint32_t sampler_count = stage_state->sampler_count;
 
    GLbitfield SamplersUsed = prog->SamplersUsed;
@@ -388,21 +387,29 @@ brw_upload_sampler_state_table(struct brw_context *brw,
    if (sampler_count == 0)
       return;
 
-   samplers = brw_state_batch(brw, AUB_TRACE_SAMPLER_STATE,
-			      sampler_count * sizeof(*samplers),
-			      32, &stage_state->sampler_offset);
-   memset(samplers, 0, sampler_count * sizeof(*samplers));
+   /* SAMPLER_STATE is 4 DWords on all platforms. */
+   const int dwords = 4;
+   const int size_in_bytes = dwords * sizeof(uint32_t);
+
+   uint32_t *sampler_state = brw_state_batch(brw, AUB_TRACE_SAMPLER_STATE,
+                                             sampler_count * size_in_bytes,
+                                             32, &stage_state->sampler_offset);
+   memset(sampler_state, 0, sampler_count * size_in_bytes);
+
+   uint32_t batch_offset_for_sampler_state = stage_state->sampler_offset;
 
    for (unsigned s = 0; s < sampler_count; s++) {
       if (SamplersUsed & (1 << s)) {
          const unsigned unit = prog->SamplerUnits[s];
          if (ctx->Texture.Unit[unit]._Current) {
-            uint32_t batch_offset_for_sampler_state =
-               stage_state->sampler_offset + s * sizeof(*samplers);
-            brw_update_sampler_state(brw, unit, &samplers[s],
+            brw_update_sampler_state(brw, unit,
+                                     (struct brw_sampler_state *) sampler_state,
                                      batch_offset_for_sampler_state);
          }
       }
+
+      sampler_state += dwords;
+      batch_offset_for_sampler_state += size_in_bytes;
    }
 
    brw->state.dirty.cache |= CACHE_NEW_SAMPLER;
