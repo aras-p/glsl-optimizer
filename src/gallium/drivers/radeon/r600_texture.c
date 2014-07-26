@@ -380,7 +380,8 @@ void r600_texture_get_cmask_info(struct r600_common_screen *rscreen,
 
 	out->slice_tile_max = ((pitch_elements * height) / (128*128)) - 1;
 	out->alignment = MAX2(256, base_align);
-	out->size = rtex->surface.array_size * align(slice_bytes, base_align);
+	out->size = (util_max_layer(&rtex->resource.b.b, 0) + 1) *
+		    align(slice_bytes, base_align);
 }
 
 static void si_texture_get_cmask_info(struct r600_common_screen *rscreen,
@@ -427,7 +428,8 @@ static void si_texture_get_cmask_info(struct r600_common_screen *rscreen,
 		out->slice_tile_max -= 1;
 
 	out->alignment = MAX2(256, base_align);
-	out->size = rtex->surface.array_size * align(slice_bytes, base_align);
+	out->size = (util_max_layer(&rtex->resource.b.b, 0) + 1) *
+		    align(slice_bytes, base_align);
 }
 
 static void r600_texture_allocate_cmask(struct r600_common_screen *rscreen,
@@ -523,7 +525,8 @@ static unsigned si_texture_htile_alloc_size(struct r600_common_screen *rscreen,
 	pipe_interleave_bytes = rscreen->tiling_info.group_bytes;
 	base_align = num_pipes * pipe_interleave_bytes;
 
-	return rtex->surface.array_size * align(slice_bytes, base_align);
+	return (util_max_layer(&rtex->resource.b.b, 0) + 1) *
+		align(slice_bytes, base_align);
 }
 
 static unsigned r600_texture_htile_alloc_size(struct r600_common_screen *rscreen,

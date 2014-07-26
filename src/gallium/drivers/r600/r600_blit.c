@@ -429,7 +429,8 @@ static void r600_clear(struct pipe_context *ctx, unsigned buffers,
 		 * disable fast clear for texture array.
 		 */
 		/* Only use htile for first level */
-		if (rtex->htile_buffer && !level && rtex->surface.array_size == 1) {
+		if (rtex->htile_buffer && !level &&
+		    util_max_layer(&rtex->resource.b.b, level) == 0) {
 			if (rtex->depth_clear_value != depth) {
 				rtex->depth_clear_value = depth;
 				rctx->db_state.atom.dirty = true;
@@ -828,7 +829,7 @@ static void r600_flush_resource(struct pipe_context *ctx,
 
 	if (!rtex->is_depth && rtex->cmask.size) {
 		r600_blit_decompress_color(ctx, rtex, 0, res->last_level,
-					   0, res->array_size - 1);
+					   0, util_max_layer(res, 0));
 	}
 }
 
