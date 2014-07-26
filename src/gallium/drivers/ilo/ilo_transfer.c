@@ -1026,7 +1026,7 @@ ilo_transfer_map(struct pipe_context *pipe,
 
    if (!success) {
       pipe_resource_reference(&xfer->base.resource, NULL);
-      FREE(xfer);
+      util_slab_free(&ilo->transfer_mempool, xfer);
       *transfer = NULL;
       return NULL;
    }
