@@ -311,100 +311,102 @@ upload_default_color(struct brw_context *brw,
 static void
 brw_update_sampler_state(struct brw_context *brw,
                          int unit,
-                         struct brw_sampler_state *sampler,
+                         uint32_t *sampler_state,
                          uint32_t batch_offset_for_sampler_state)
 {
    struct gl_context *ctx = &brw->ctx;
-   struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
-   struct gl_texture_object *texObj = texUnit->_Current;
-   struct gl_sampler_object *gl_sampler = _mesa_get_samplerobj(ctx, unit);
-   bool using_nearest = false;
+   const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
+   const struct gl_texture_object *texObj = texUnit->_Current;
+   const struct gl_sampler_object *sampler = _mesa_get_samplerobj(ctx, unit);
 
    /* These don't use samplers at all. */
    if (texObj->Target == GL_TEXTURE_BUFFER)
       return;
 
-   switch (gl_sampler->MinFilter) {
+   unsigned min_filter, mag_filter, mip_filter;
+
+   /* Select min and mip filters. */
+   switch (sampler->MinFilter) {
    case GL_NEAREST:
-      sampler->ss0.min_filter = BRW_MAPFILTER_NEAREST;
-      sampler->ss0.mip_filter = BRW_MIPFILTER_NONE;
-      using_nearest = true;
+      min_filter = BRW_MAPFILTER_NEAREST;
+      mip_filter = BRW_MIPFILTER_NONE;
       break;
    case GL_LINEAR:
-      sampler->ss0.min_filter = BRW_MAPFILTER_LINEAR;
-      sampler->ss0.mip_filter = BRW_MIPFILTER_NONE;
+      min_filter = BRW_MAPFILTER_LINEAR;
+      mip_filter = BRW_MIPFILTER_NONE;
       break;
    case GL_NEAREST_MIPMAP_NEAREST:
-      sampler->ss0.min_filter = BRW_MAPFILTER_NEAREST;
-      sampler->ss0.mip_filter = BRW_MIPFILTER_NEAREST;
+      min_filter = BRW_MAPFILTER_NEAREST;
+      mip_filter = BRW_MIPFILTER_NEAREST;
       break;
    case GL_LINEAR_MIPMAP_NEAREST:
-      sampler->ss0.min_filter = BRW_MAPFILTER_LINEAR;
-      sampler->ss0.mip_filter = BRW_MIPFILTER_NEAREST;
+      min_filter = BRW_MAPFILTER_LINEAR;
+      mip_filter = BRW_MIPFILTER_NEAREST;
       break;
    case GL_NEAREST_MIPMAP_LINEAR:
-      sampler->ss0.min_filter = BRW_MAPFILTER_NEAREST;
-      sampler->ss0.mip_filter = BRW_MIPFILTER_LINEAR;
+      min_filter = BRW_MAPFILTER_NEAREST;
+      mip_filter = BRW_MIPFILTER_LINEAR;
       break;
    case GL_LINEAR_MIPMAP_LINEAR:
-      sampler->ss0.min_filter = BRW_MAPFILTER_LINEAR;
-      sampler->ss0.mip_filter = BRW_MIPFILTER_LINEAR;
+      min_filter = BRW_MAPFILTER_LINEAR;
+      mip_filter = BRW_MIPFILTER_LINEAR;
       break;
    default:
       break;
    }
 
-   /* Set Anisotropy:
-    */
-   if (gl_sampler->MaxAnisotropy > 1.0) {
-      sampler->ss0.min_filter = BRW_MAPFILTER_ANISOTROPIC;
-      sampler->ss0.mag_filter = BRW_MAPFILTER_ANISOTROPIC;
+   /* Select mag filter. */
+   if (sampler->MagFilter == GL_LINEAR)
+      mag_filter = BRW_MAPFILTER_LINEAR;
+   else
+      mag_filter = BRW_MAPFILTER_NEAREST;
 
-      if (gl_sampler->MaxAnisotropy > 2.0) {
-	 sampler->ss3.max_aniso = MIN2((gl_sampler->MaxAnisotropy - 2) / 2,
-				       BRW_ANISORATIO_16);
-      }
-   }
-   else {
-      switch (gl_sampler->MagFilter) {
-      case GL_NEAREST:
-	 sampler->ss0.mag_filter = BRW_MAPFILTER_NEAREST;
-	 using_nearest = true;
-	 break;
-      case GL_LINEAR:
-	 sampler->ss0.mag_filter = BRW_MAPFILTER_LINEAR;
-	 break;
-      default:
-	 break;
+   /* Enable anisotropic filtering if desired. */
+   unsigned max_anisotropy = BRW_ANISORATIO_2;
+   if (sampler->MaxAnisotropy > 1.0) {
+      min_filter = BRW_MAPFILTER_ANISOTROPIC;
+      mag_filter = BRW_MAPFILTER_ANISOTROPIC;
+
+      if (sampler->MaxAnisotropy > 2.0) {
+	 max_anisotropy =
+            MIN2((sampler->MaxAnisotropy - 2) / 2, BRW_ANISORATIO_16);
       }
    }
 
-   sampler->ss1.r_wrap_mode = translate_wrap_mode(brw, gl_sampler->WrapR,
-						  using_nearest);
-   sampler->ss1.s_wrap_mode = translate_wrap_mode(brw, gl_sampler->WrapS,
-						  using_nearest);
-   sampler->ss1.t_wrap_mode = translate_wrap_mode(brw, gl_sampler->WrapT,
-						  using_nearest);
+   /* Set address rounding bits if not using nearest filtering. */
+   unsigned address_rounding = 0;
+   if (min_filter != BRW_MAPFILTER_NEAREST) {
+      address_rounding |= BRW_ADDRESS_ROUNDING_ENABLE_U_MIN |
+                          BRW_ADDRESS_ROUNDING_ENABLE_V_MIN |
+                          BRW_ADDRESS_ROUNDING_ENABLE_R_MIN;
+   }
+   if (mag_filter != BRW_MAPFILTER_NEAREST) {
+      address_rounding |= BRW_ADDRESS_ROUNDING_ENABLE_U_MAG |
+                          BRW_ADDRESS_ROUNDING_ENABLE_V_MAG |
+                          BRW_ADDRESS_ROUNDING_ENABLE_R_MAG;
+   }
 
-   if (brw->gen >= 6 &&
-       sampler->ss0.min_filter != sampler->ss0.mag_filter)
-	sampler->ss0.min_mag_neq = 1;
+   bool either_nearest =
+      sampler->MinFilter == GL_NEAREST || sampler->MagFilter == GL_NEAREST;
+   unsigned wrap_s = translate_wrap_mode(brw, sampler->WrapS, either_nearest);
+   unsigned wrap_t = translate_wrap_mode(brw, sampler->WrapT, either_nearest);
+   unsigned wrap_r = translate_wrap_mode(brw, sampler->WrapR, either_nearest);
 
-   /* Cube-maps on 965 and later must use the same wrap mode for all 3
-    * coordinate dimensions.  Futher, only CUBE and CLAMP are valid.
-    */
    if (texObj->Target == GL_TEXTURE_CUBE_MAP ||
        texObj->Target == GL_TEXTURE_CUBE_MAP_ARRAY) {
-      if ((ctx->Texture.CubeMapSeamless || gl_sampler->CubeMapSeamless) &&
-	  (gl_sampler->MinFilter != GL_NEAREST ||
-	   gl_sampler->MagFilter != GL_NEAREST)) {
-	 sampler->ss1.r_wrap_mode = BRW_TEXCOORDMODE_CUBE;
-	 sampler->ss1.s_wrap_mode = BRW_TEXCOORDMODE_CUBE;
-	 sampler->ss1.t_wrap_mode = BRW_TEXCOORDMODE_CUBE;
+      /* Cube maps must use the same wrap mode for all three coordinate
+       * dimensions.  Prior to Haswell, only CUBE and CLAMP are valid.
+       */
+      if ((ctx->Texture.CubeMapSeamless || sampler->CubeMapSeamless) &&
+         (sampler->MinFilter != GL_NEAREST ||
+          sampler->MagFilter != GL_NEAREST)) {
+	 wrap_s = BRW_TEXCOORDMODE_CUBE;
+	 wrap_t = BRW_TEXCOORDMODE_CUBE;
+	 wrap_r = BRW_TEXCOORDMODE_CUBE;
       } else {
-	 sampler->ss1.r_wrap_mode = BRW_TEXCOORDMODE_CLAMP;
-	 sampler->ss1.s_wrap_mode = BRW_TEXCOORDMODE_CLAMP;
-	 sampler->ss1.t_wrap_mode = BRW_TEXCOORDMODE_CLAMP;
+	 wrap_s = BRW_TEXCOORDMODE_CLAMP;
+	 wrap_t = BRW_TEXCOORDMODE_CLAMP;
+	 wrap_r = BRW_TEXCOORDMODE_CLAMP;
       }
    } else if (texObj->Target == GL_TEXTURE_1D) {
       /* There's a bug in 1D texture sampling - it actually pays
@@ -412,66 +414,38 @@ brw_update_sampler_state(struct brw_context *brw,
        * Override the wrap_t value here to GL_REPEAT to keep
        * any nonexistent border pixels from floating in.
        */
-      sampler->ss1.t_wrap_mode = BRW_TEXCOORDMODE_WRAP;
+      wrap_t = BRW_TEXCOORDMODE_WRAP;
    }
 
-
-   /* Set shadow function:
-    */
-   if (gl_sampler->CompareMode == GL_COMPARE_R_TO_TEXTURE_ARB) {
-      /* Shadowing is "enabled" by emitting a particular sampler
-       * message (sample_c).  So need to recompile WM program when
-       * shadow comparison is enabled on each/any texture unit.
-       */
-      sampler->ss0.shadow_function =
-	 intel_translate_shadow_compare_func(gl_sampler->CompareFunc);
+   /* Set shadow function. */
+   unsigned shadow_function = 0;
+   if (sampler->CompareMode == GL_COMPARE_R_TO_TEXTURE_ARB) {
+      shadow_function =
+	 intel_translate_shadow_compare_func(sampler->CompareFunc);
    }
 
-   /* Set LOD bias:
-    */
-   sampler->ss0.lod_bias = S_FIXED(CLAMP(texUnit->LodBias +
-					 gl_sampler->LodBias, -16, 15), 6);
+   const unsigned min_lod = U_FIXED(CLAMP(sampler->MinLod, 0, 13), 6);
+   const unsigned max_lod = U_FIXED(CLAMP(sampler->MaxLod, 0, 13), 6);
+   const int lod_bias =
+      S_FIXED(CLAMP(texUnit->LodBias + sampler->LodBias, -16, 15), 6);
+   const unsigned base_level = U_FIXED(0, 1);
 
-   sampler->ss0.lod_preclamp = 1; /* OpenGL mode */
-   sampler->ss0.default_color_mode = 0; /* OpenGL/DX10 mode */
+   uint32_t border_color_offset;
+   upload_default_color(brw, sampler, unit, &border_color_offset);
 
-   sampler->ss0.base_level = U_FIXED(0, 1);
+   const bool non_normalized_coords = texObj->Target == GL_TEXTURE_RECTANGLE;
 
-   sampler->ss1.max_lod = U_FIXED(CLAMP(gl_sampler->MaxLod, 0, 13), 6);
-   sampler->ss1.min_lod = U_FIXED(CLAMP(gl_sampler->MinLod, 0, 13), 6);
-
-   /* On Gen6+, the sampler can handle non-normalized texture
-    * rectangle coordinates natively
-    */
-   if (brw->gen >= 6 && texObj->Target == GL_TEXTURE_RECTANGLE) {
-      sampler->ss3.non_normalized_coord = 1;
-   }
-
-   uint32_t sdc_offset;
-   upload_default_color(brw, gl_sampler, unit, &sdc_offset);
-
-   if (brw->gen >= 6) {
-      sampler->ss2.default_color_pointer = sdc_offset >> 5;
-   } else {
-      /* reloc */
-      sampler->ss2.default_color_pointer =
-         (brw->batch.bo->offset64 + sdc_offset) >> 5;
-
-      drm_intel_bo_emit_reloc(brw->batch.bo,
-			      batch_offset_for_sampler_state +
-			      offsetof(struct brw_sampler_state, ss2),
-			      brw->batch.bo, sdc_offset,
-			      I915_GEM_DOMAIN_SAMPLER, 0);
-   }
-
-   if (sampler->ss0.min_filter != BRW_MAPFILTER_NEAREST)
-      sampler->ss3.address_round |= BRW_ADDRESS_ROUNDING_ENABLE_U_MIN |
-                                    BRW_ADDRESS_ROUNDING_ENABLE_V_MIN |
-                                    BRW_ADDRESS_ROUNDING_ENABLE_R_MIN;
-   if (sampler->ss0.mag_filter != BRW_MAPFILTER_NEAREST)
-      sampler->ss3.address_round |= BRW_ADDRESS_ROUNDING_ENABLE_U_MAG |
-                                    BRW_ADDRESS_ROUNDING_ENABLE_V_MAG |
-                                    BRW_ADDRESS_ROUNDING_ENABLE_R_MAG;
+   brw_emit_sampler_state(brw,
+                          sampler_state,
+                          batch_offset_for_sampler_state,
+                          min_filter, mag_filter, mip_filter,
+                          max_anisotropy,
+                          address_rounding,
+                          wrap_s, wrap_t, wrap_r,
+                          min_lod, max_lod, lod_bias, base_level,
+                          shadow_function,
+                          non_normalized_coords,
+                          border_color_offset);
 }
 
 
@@ -509,7 +483,6 @@ brw_upload_sampler_state_table(struct brw_context *brw,
                                          sampler_state);
             } else {
                brw_update_sampler_state(brw, unit,
-                                        (struct brw_sampler_state *)
                                         sampler_state,
                                         batch_offset_for_sampler_state);
             }
