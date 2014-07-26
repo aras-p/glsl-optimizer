@@ -138,7 +138,6 @@ i965_FILES = \
 	gen7_disable.c \
         gen7_gs_state.c \
 	gen7_misc_state.c \
-	gen7_sampler_state.c \
 	gen7_sf_state.c \
 	gen7_sol_state.c \
 	gen7_urb.c \

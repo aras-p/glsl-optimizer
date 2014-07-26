@@ -478,15 +478,8 @@ brw_upload_sampler_state_table(struct brw_context *brw,
       if (SamplersUsed & (1 << s)) {
          const unsigned unit = prog->SamplerUnits[s];
          if (ctx->Texture.Unit[unit]._Current) {
-            if (brw->gen >= 7) {
-               gen7_update_sampler_state(brw, unit,
-                                         (struct gen7_sampler_state *)
-                                         sampler_state);
-            } else {
-               brw_update_sampler_state(brw, unit,
-                                        sampler_state,
-                                        batch_offset_for_sampler_state);
-            }
+            brw_update_sampler_state(brw, unit, sampler_state,
+                                     batch_offset_for_sampler_state);
          }
       }
 

@@ -268,11 +268,6 @@ void upload_default_color(struct brw_context *brw,
 			  int unit,
                           uint32_t *sdc_offset);
 
-/* gen7_sampler_state.c */
-void gen7_update_sampler_state(struct brw_context *brw,
-                               int unit,
-                               struct gen7_sampler_state *sampler_state);
-
 /* gen6_sf_state.c */
 void
 calculate_attr_overrides(const struct brw_context *brw,
