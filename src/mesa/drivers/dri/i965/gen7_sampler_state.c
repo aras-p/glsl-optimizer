@@ -34,7 +34,7 @@
  * Sets the sampler state for a single unit.
  */
 static void
-gen7_update_sampler_state(struct brw_context *brw, int unit, int ss_index,
+gen7_update_sampler_state(struct brw_context *brw, int unit,
 			  struct gen7_sampler_state *sampler)
 {
    struct gl_context *ctx = &brw->ctx;
@@ -207,7 +207,7 @@ gen7_upload_sampler_state_table(struct brw_context *brw,
       if (SamplersUsed & (1 << s)) {
          const unsigned unit = prog->SamplerUnits[s];
          if (ctx->Texture.Unit[unit]._Current)
-            gen7_update_sampler_state(brw, unit, s, &samplers[s]);
+            gen7_update_sampler_state(brw, unit, &samplers[s]);
       }
    }
 
