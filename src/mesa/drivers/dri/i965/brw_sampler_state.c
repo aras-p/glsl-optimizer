@@ -186,6 +186,16 @@ translate_wrap_mode(struct brw_context *brw, GLenum wrap, bool using_nearest)
 }
 
 /**
+ * Return true if the given wrap mode requires the border color to exist.
+ */
+static bool
+wrap_mode_needs_border_color(unsigned wrap_mode)
+{
+   return wrap_mode == BRW_TEXCOORDMODE_CLAMP_BORDER ||
+          wrap_mode == GEN8_TEXCOORDMODE_HALF_BORDER;
+}
+
+/**
  * Upload SAMPLER_BORDER_COLOR_STATE.
  */
 static void
@@ -431,8 +441,16 @@ brw_update_sampler_state(struct brw_context *brw,
       S_FIXED(CLAMP(texUnit->LodBias + sampler->LodBias, -16, 15), lod_bits);
    const unsigned base_level = U_FIXED(0, 1);
 
-   uint32_t border_color_offset;
-   upload_default_color(brw, sampler, unit, &border_color_offset);
+   /* Upload the border color if necessary.  If not, just point it at
+    * offset 0 (the start of the batch) - the color should be ignored,
+    * but that address won't fault in case something reads it anyway.
+    */
+   uint32_t border_color_offset = 0;
+   if (wrap_mode_needs_border_color(wrap_s) ||
+       wrap_mode_needs_border_color(wrap_t) ||
+       wrap_mode_needs_border_color(wrap_r)) {
+      upload_default_color(brw, sampler, unit, &border_color_offset);
+   }
 
    const bool non_normalized_coords = texObj->Target == GL_TEXTURE_RECTANGLE;
 
