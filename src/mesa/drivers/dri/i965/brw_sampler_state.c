@@ -424,10 +424,11 @@ brw_update_sampler_state(struct brw_context *brw,
 	 intel_translate_shadow_compare_func(sampler->CompareFunc);
    }
 
-   const unsigned min_lod = U_FIXED(CLAMP(sampler->MinLod, 0, 13), 6);
-   const unsigned max_lod = U_FIXED(CLAMP(sampler->MaxLod, 0, 13), 6);
+   const int lod_bits = brw->gen >= 7 ? 8 : 6;
+   const unsigned min_lod = U_FIXED(CLAMP(sampler->MinLod, 0, 13), lod_bits);
+   const unsigned max_lod = U_FIXED(CLAMP(sampler->MaxLod, 0, 13), lod_bits);
    const int lod_bias =
-      S_FIXED(CLAMP(texUnit->LodBias + sampler->LodBias, -16, 15), 6);
+      S_FIXED(CLAMP(texUnit->LodBias + sampler->LodBias, -16, 15), lod_bits);
    const unsigned base_level = U_FIXED(0, 1);
 
    uint32_t border_color_offset;
