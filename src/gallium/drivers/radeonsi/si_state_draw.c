@@ -868,11 +868,15 @@ void si_emit_cache_flush(struct r600_common_context *sctx, struct r600_atom *ato
 		radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0));
 		radeon_emit(cs, EVENT_TYPE(V_028A90_VGT_FLUSH) | EVENT_INDEX(0));
 	}
+	if (sctx->flags & R600_CONTEXT_VGT_STREAMOUT_SYNC) {
+		radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0));
+		radeon_emit(cs, EVENT_TYPE(V_028A90_VGT_STREAMOUT_SYNC) | EVENT_INDEX(0));
+	}
 
 	sctx->flags = 0;
 }
 
-const struct r600_atom si_atom_cache_flush = { si_emit_cache_flush, 13 }; /* number of CS dwords */
+const struct r600_atom si_atom_cache_flush = { si_emit_cache_flush, 17 }; /* number of CS dwords */
 
 static void si_get_draw_start_count(struct si_context *sctx,
 				    const struct pipe_draw_info *info,
@@ -984,6 +988,14 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		si_trace_emit(sctx);
 	}
 #endif
+
+	/* Workaround for a VGT hang when streamout is enabled.
+	 * It must be done after drawing. */
+	if (sctx->b.family == CHIP_HAWAII &&
+	    (sctx->b.streamout.streamout_enabled ||
+	     sctx->b.streamout.prims_gen_query_enabled)) {
+		sctx->b.flags |= R600_CONTEXT_VGT_STREAMOUT_SYNC;
+	}
 
 	/* Set the depth buffer as dirty. */
 	if (sctx->framebuffer.state.zsbuf) {
