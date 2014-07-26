@@ -249,13 +249,11 @@ void upload_default_color(struct brw_context *brw,
 			  struct gl_sampler_object *sampler,
 			  int unit,
                           uint32_t *sdc_offset);
-void gen4_init_vtable_sampler_functions(struct brw_context *brw);
 
 /* gen7_sampler_state.c */
 void gen7_update_sampler_state(struct brw_context *brw,
                                int unit,
                                struct gen7_sampler_state *sampler_state);
-void gen7_init_vtable_sampler_functions(struct brw_context *brw);
 
 /* gen6_sf_state.c */
 void

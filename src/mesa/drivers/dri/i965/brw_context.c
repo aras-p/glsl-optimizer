@@ -639,15 +639,12 @@ brwCreateContext(gl_api api,
    brw->wm.base.stage = MESA_SHADER_FRAGMENT;
    if (brw->gen >= 8) {
       gen8_init_vtable_surface_functions(brw);
-      gen7_init_vtable_sampler_functions(brw);
       brw->vtbl.emit_depth_stencil_hiz = gen8_emit_depth_stencil_hiz;
    } else if (brw->gen >= 7) {
       gen7_init_vtable_surface_functions(brw);
-      gen7_init_vtable_sampler_functions(brw);
       brw->vtbl.emit_depth_stencil_hiz = gen7_emit_depth_stencil_hiz;
    } else {
       gen4_init_vtable_surface_functions(brw);
-      gen4_init_vtable_sampler_functions(brw);
       brw->vtbl.emit_depth_stencil_hiz = brw_emit_depth_stencil_hiz;
    }
 

@@ -461,7 +461,7 @@ brw_upload_fs_samplers(struct brw_context *brw)
 {
    /* BRW_NEW_FRAGMENT_PROGRAM */
    struct gl_program *fs = (struct gl_program *) brw->fragment_program;
-   brw->vtbl.upload_sampler_state_table(brw, fs, &brw->wm.base);
+   brw_upload_sampler_state_table(brw, fs, &brw->wm.base);
 }
 
 const struct brw_tracked_state brw_fs_samplers = {
@@ -479,7 +479,7 @@ brw_upload_vs_samplers(struct brw_context *brw)
 {
    /* BRW_NEW_VERTEX_PROGRAM */
    struct gl_program *vs = (struct gl_program *) brw->vertex_program;
-   brw->vtbl.upload_sampler_state_table(brw, vs, &brw->vs.base);
+   brw_upload_sampler_state_table(brw, vs, &brw->vs.base);
 }
 
 
@@ -502,7 +502,7 @@ brw_upload_gs_samplers(struct brw_context *brw)
    if (!gs)
       return;
 
-   brw->vtbl.upload_sampler_state_table(brw, gs, &brw->gs.base);
+   brw_upload_sampler_state_table(brw, gs, &brw->gs.base);
 }
 
 
@@ -515,10 +515,3 @@ const struct brw_tracked_state brw_gs_samplers = {
    },
    .emit = brw_upload_gs_samplers,
 };
-
-
-void
-gen4_init_vtable_sampler_functions(struct brw_context *brw)
-{
-   brw->vtbl.upload_sampler_state_table = brw_upload_sampler_state_table;
-}

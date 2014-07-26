@@ -929,11 +929,6 @@ struct brw_context
                                         unsigned mocs,
                                         bool rw);
 
-      /** Upload a SAMPLER_STATE table. */
-      void (*upload_sampler_state_table)(struct brw_context *brw,
-                                         struct gl_program *prog,
-                                         struct brw_stage_state *stage_state);
-
       /**
        * Send the appropriate state packets to configure depth, stencil, and
        * HiZ buffers (i965+ only)
