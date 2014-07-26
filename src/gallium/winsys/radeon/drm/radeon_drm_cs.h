@@ -50,8 +50,8 @@ struct radeon_cs_context {
 
     int                         reloc_indices_hashlist[512];
 
-    unsigned                    used_vram;
-    unsigned                    used_gart;
+    uint64_t                    used_vram;
+    uint64_t                    used_gart;
 };
 
 struct radeon_drm_cs {

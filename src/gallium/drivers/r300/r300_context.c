@@ -37,6 +37,8 @@
 #include "r300_screen_buffer.h"
 #include "compiler/radeon_regalloc.h"
 
+#include <inttypes.h>
+
 static void r300_release_referenced_objects(struct r300_context *r300)
 {
     struct pipe_framebuffer_state *fb =
@@ -482,7 +484,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 #endif
         fprintf(stderr,
                 "r300: DRM version: %d.%d.%d, Name: %s, ID: 0x%04x, GB: %d, Z: %d\n"
-                "r300: GART size: %d MB, VRAM size: %d MB\n"
+                "r300: GART size: %"PRIu64" MB, VRAM size: %"PRIu64" MB\n"
                 "r300: AA compression RAM: %s, Z compression RAM: %s, HiZ RAM: %s\n",
                 r300->screen->info.drm_major,
                 r300->screen->info.drm_minor,

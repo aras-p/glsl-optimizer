@@ -199,8 +199,8 @@ struct radeon_info {
     uint32_t                    pci_id;
     enum radeon_family          family;
     enum chip_class             chip_class;
-    uint32_t                    gart_size;
-    uint32_t                    vram_size;
+    uint64_t                    gart_size;
+    uint64_t                    vram_size;
     uint32_t                    max_sclk;
     uint32_t                    max_compute_units;
     uint32_t                    max_se;
