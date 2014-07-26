@@ -86,6 +86,7 @@ i965_FILES = \
 	brw_primitive_restart.c \
 	brw_queryobj.c \
 	brw_reset.c \
+	brw_sampler_state.c \
 	brw_schedule_instructions.cpp \
 	brw_sf.c \
 	brw_sf_emit.c \
@@ -116,7 +117,6 @@ i965_FILES = \
 	brw_vs_surface_state.c \
 	brw_wm.c \
 	brw_wm_iz.cpp \
-	brw_wm_sampler_state.c \
 	brw_wm_state.c \
 	brw_wm_surface_state.c \
 	gen6_blorp.cpp \
