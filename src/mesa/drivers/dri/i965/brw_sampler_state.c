@@ -207,11 +207,11 @@ upload_default_color(struct brw_context *brw,
  * Sets the sampler state for a single unit based off of the sampler key
  * entry.
  */
-static void brw_update_sampler_state(struct brw_context *brw,
-				     int unit,
-                                     int ss_index,
-                                     struct brw_sampler_state *sampler,
-                                     uint32_t sampler_state_table_offset)
+static void
+brw_update_sampler_state(struct brw_context *brw,
+                         int unit,
+                         struct brw_sampler_state *sampler,
+                         uint32_t batch_offset_for_sampler_state)
 {
    struct gl_context *ctx = &brw->ctx;
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
@@ -357,8 +357,7 @@ static void brw_update_sampler_state(struct brw_context *brw,
          (brw->batch.bo->offset64 + sdc_offset) >> 5;
 
       drm_intel_bo_emit_reloc(brw->batch.bo,
-			      sampler_state_table_offset +
-			      ss_index * sizeof(struct brw_sampler_state) +
+			      batch_offset_for_sampler_state +
 			      offsetof(struct brw_sampler_state, ss2),
 			      brw->batch.bo, sdc_offset,
 			      I915_GEM_DOMAIN_SAMPLER, 0);
@@ -397,9 +396,12 @@ brw_upload_sampler_state_table(struct brw_context *brw,
    for (unsigned s = 0; s < sampler_count; s++) {
       if (SamplersUsed & (1 << s)) {
          const unsigned unit = prog->SamplerUnits[s];
-         if (ctx->Texture.Unit[unit]._Current)
-            brw_update_sampler_state(brw, unit, s, &samplers[s],
-                                     stage_state->sampler_offset);
+         if (ctx->Texture.Unit[unit]._Current) {
+            uint32_t batch_offset_for_sampler_state =
+               stage_state->sampler_offset + s * sizeof(*samplers);
+            brw_update_sampler_state(brw, unit, &samplers[s],
+                                     batch_offset_for_sampler_state);
+         }
       }
    }
 
