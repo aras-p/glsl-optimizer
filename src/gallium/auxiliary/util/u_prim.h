@@ -136,6 +136,21 @@ u_prim_vertex_count(unsigned prim)
    return (likely(prim < PIPE_PRIM_MAX)) ? &prim_table[prim] : NULL;
 }
 
+/**
+ * Given a vertex count, return the number of primitives.
+ * For polygons, return the number of triangles.
+ */
+static INLINE unsigned
+u_prims_for_vertices(unsigned prim, unsigned num)
+{
+   const struct u_prim_vertex_count *info = u_prim_vertex_count(prim);
+
+   if (num < info->min)
+      return 0;
+
+   return 1 + ((num - info->min) / info->incr);
+}
+
 static INLINE boolean u_validate_pipe_prim( unsigned pipe_prim, unsigned nr )
 {
    const struct u_prim_vertex_count *count = u_prim_vertex_count(pipe_prim);
