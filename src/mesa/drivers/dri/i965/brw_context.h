@@ -890,9 +890,6 @@ struct brw_stage_state
    /** SAMPLER_STATE count and table offset */
    uint32_t sampler_count;
    uint32_t sampler_offset;
-
-   /** Offsets in the batch to sampler default colors (texture border color) */
-   uint32_t sdc_offset[BRW_MAX_TEX_UNIT];
 };
 
 

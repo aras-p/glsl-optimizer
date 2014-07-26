@@ -35,8 +35,7 @@
  */
 static void
 gen7_update_sampler_state(struct brw_context *brw, int unit, int ss_index,
-			  struct gen7_sampler_state *sampler,
-                          uint32_t *sdc_offset)
+			  struct gen7_sampler_state *sampler)
 {
    struct gl_context *ctx = &brw->ctx;
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
@@ -164,9 +163,10 @@ gen7_update_sampler_state(struct brw_context *brw, int unit, int ss_index,
       sampler->ss3.non_normalized_coord = 1;
    }
 
-   upload_default_color(brw, gl_sampler, unit, sdc_offset);
+   uint32_t sdc_offset;
+   upload_default_color(brw, gl_sampler, unit, &sdc_offset);
 
-   sampler->ss2.default_color_pointer = *sdc_offset >> 5;
+   sampler->ss2.default_color_pointer = sdc_offset >> 5;
 
    if (sampler->ss0.min_filter != BRW_MAPFILTER_NEAREST)
       sampler->ss3.address_round |= BRW_ADDRESS_ROUNDING_ENABLE_U_MIN |
@@ -207,8 +207,7 @@ gen7_upload_sampler_state_table(struct brw_context *brw,
       if (SamplersUsed & (1 << s)) {
          const unsigned unit = prog->SamplerUnits[s];
          if (ctx->Texture.Unit[unit]._Current)
-            gen7_update_sampler_state(brw, unit, s, &samplers[s],
-                                      &stage_state->sdc_offset[s]);
+            gen7_update_sampler_state(brw, unit, s, &samplers[s]);
       }
    }
 
