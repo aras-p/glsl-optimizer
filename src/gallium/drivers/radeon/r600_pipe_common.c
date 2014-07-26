@@ -142,7 +142,13 @@ bool r600_common_context_init(struct r600_common_context *rctx,
 	rctx->ws = rscreen->ws;
 	rctx->family = rscreen->family;
 	rctx->chip_class = rscreen->chip_class;
-	rctx->max_db = rscreen->chip_class >= EVERGREEN ? 8 : 4;
+
+	if (rscreen->family == CHIP_HAWAII)
+		rctx->max_db = 16;
+	else if (rscreen->chip_class >= EVERGREEN)
+		rctx->max_db = 8;
+	else
+		rctx->max_db = 4;
 
 	rctx->b.transfer_map = u_transfer_map_vtbl;
 	rctx->b.transfer_flush_region = u_default_transfer_flush_region;
