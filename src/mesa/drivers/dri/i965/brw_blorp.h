@@ -420,6 +420,10 @@ gen6_blorp_emit_clip_disable(struct brw_context *brw,
 void
 gen6_blorp_emit_drawing_rectangle(struct brw_context *brw,
                                   const brw_blorp_params *params);
+
+uint32_t
+gen6_blorp_emit_sampler_state(struct brw_context *brw,
+                              const brw_blorp_params *params);
 /** \} */
 
 #endif /* __cplusplus */
