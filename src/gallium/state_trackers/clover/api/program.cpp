@@ -180,6 +180,11 @@ clUnloadCompiler() {
 }
 
 CLOVER_API cl_int
+clUnloadPlatformCompiler(cl_platform_id d_platform) {
+   return CL_SUCCESS;
+}
+
+CLOVER_API cl_int
 clGetProgramInfo(cl_program d_prog, cl_program_info param,
                  size_t size, void *r_buf, size_t *r_size) try {
    property_buffer buf { r_buf, size, r_size };
