@@ -267,11 +267,11 @@ gen8_fs_generator::generate_tex(fs_inst *ir,
           * offset, and each sampler state is only 16-bytes, so we can't
           * exclusively use the offset - we have to use both.
           */
+         const int sampler_state_size = 16; /* 16 bytes */
          gen8_instruction *add =
             ADD(get_element_ud(src, 3),
                 get_element_ud(brw_vec8_grf(0, 0), 3),
-                brw_imm_ud(16 * (ir->sampler / 16) *
-                           sizeof(gen7_sampler_state)));
+                brw_imm_ud(16 * (ir->sampler / 16) * sampler_state_size));
          gen8_set_mask_control(add, BRW_MASK_DISABLE);
       }
 

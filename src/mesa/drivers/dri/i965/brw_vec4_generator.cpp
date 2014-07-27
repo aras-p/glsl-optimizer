@@ -347,12 +347,12 @@ vec4_generator::generate_tex(vec4_instruction *inst,
              * offset, and each sampler state is only 16-bytes, so we can't
              * exclusively use the offset - we have to use both.
              */
+            const int sampler_state_size = 16; /* 16 bytes */
             assert(brw->gen >= 8 || brw->is_haswell);
             brw_ADD(p,
                     get_element_ud(header, 3),
                     get_element_ud(brw_vec8_grf(0, 0), 3),
-                    brw_imm_ud(16 * (inst->sampler / 16) *
-                               sizeof(gen7_sampler_state)));
+                    brw_imm_ud(16 * (inst->sampler / 16) * sampler_state_size));
          }
          brw_pop_insn_state(p);
       }

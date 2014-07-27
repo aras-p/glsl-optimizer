@@ -576,11 +576,11 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
              * exclusively use the offset - we have to use both.
              */
             assert(brw->gen >= 8 || brw->is_haswell);
+            const int sampler_state_size = 16; /* 16 bytes */
             brw_ADD(p,
                     get_element_ud(header_reg, 3),
                     get_element_ud(brw_vec8_grf(0, 0), 3),
-                    brw_imm_ud(16 * (inst->sampler / 16) *
-                               sizeof(gen7_sampler_state)));
+                    brw_imm_ud(16 * (inst->sampler / 16) * sampler_state_size));
          }
          brw_pop_insn_state(p);
       }
