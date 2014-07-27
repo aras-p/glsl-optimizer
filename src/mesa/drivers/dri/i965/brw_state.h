@@ -261,12 +261,6 @@ void brw_emit_sampler_state(struct brw_context *brw,
                             unsigned shadow_function,
                             bool non_normalized_coordinates,
                             uint32_t border_color_offset);
-uint32_t translate_wrap_mode(struct brw_context *brw,
-                             GLenum wrap, bool using_nearest);
-void upload_default_color(struct brw_context *brw,
-			  const struct gl_sampler_object *sampler,
-			  int unit,
-                          uint32_t *sdc_offset);
 
 /* gen6_sf_state.c */
 void

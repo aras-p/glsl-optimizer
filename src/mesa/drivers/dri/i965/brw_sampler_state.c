@@ -145,7 +145,7 @@ brw_emit_sampler_state(struct brw_context *brw,
    }
 }
 
-uint32_t
+static uint32_t
 translate_wrap_mode(struct brw_context *brw, GLenum wrap, bool using_nearest)
 {
    switch( wrap ) {
@@ -188,7 +188,7 @@ translate_wrap_mode(struct brw_context *brw, GLenum wrap, bool using_nearest)
 /**
  * Upload SAMPLER_BORDER_COLOR_STATE.
  */
-void
+static void
 upload_default_color(struct brw_context *brw,
                      const struct gl_sampler_object *sampler,
                      int unit,
