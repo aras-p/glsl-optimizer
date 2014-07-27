@@ -106,6 +106,28 @@ clCreateProgramWithBinary(cl_context d_ctx, cl_uint n,
    return NULL;
 }
 
+CLOVER_API cl_program
+clCreateProgramWithBuiltInKernels(cl_context d_ctx, cl_uint n,
+                                  const cl_device_id *d_devs,
+                                  const char *kernel_names,
+                                  cl_int *r_errcode) try {
+   auto &ctx = obj(d_ctx);
+   auto devs = objs(d_devs, n);
+
+   if (any_of([&](const device &dev) {
+            return !count(dev, ctx.devices());
+         }, devs))
+      throw error(CL_INVALID_DEVICE);
+
+   // No currently supported built-in kernels.
+   throw error(CL_INVALID_VALUE);
+
+} catch (error &e) {
+   ret_error(r_errcode, e);
+   return NULL;
+}
+
+
 CLOVER_API cl_int
 clRetainProgram(cl_program d_prog) try {
    obj(d_prog).retain();
