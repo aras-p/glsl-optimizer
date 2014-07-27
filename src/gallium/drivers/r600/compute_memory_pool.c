@@ -382,10 +382,12 @@ int compute_memory_promote_item(struct compute_memory_pool *pool,
 	struct pipe_resource *dst = (struct pipe_resource *)pool->bo;
 	struct pipe_box box;
 
-	COMPUTE_DBG(pool->screen, "  + Found space for Item %p id = %u "
-			"start_in_dw = %u (%u bytes) size_in_dw = %u (%u bytes)\n",
-			item, item->id, start_in_dw, start_in_dw * 4,
-			item->size_in_dw, item->size_in_dw * 4);
+	COMPUTE_DBG(pool->screen, "* compute_memory_promote_item()\n"
+			"  + Promoting Item: %i , starting at: %u (%u bytes) "
+			"size: %u (%u bytes)\n\t\t\tnew start: %u (%u bytes)\n",
+			item->id, item->start_in_dw, item->start_in_dw * 4,
+			item->size_in_dw, item->size_in_dw * 4,
+			start_in_dw, start_in_dw * 4);
 
 	/* Remove the item from the unallocated list */
 	list_del(&item->link);
@@ -426,6 +428,11 @@ void compute_memory_demote_item(struct compute_memory_pool *pool,
 	struct pipe_resource *src = (struct pipe_resource *)pool->bo;
 	struct pipe_resource *dst;
 	struct pipe_box box;
+
+	COMPUTE_DBG(pool->screen, "* compute_memory_demote_item()\n"
+			"  + Demoting Item: %i, starting at: %u (%u bytes) "
+			"size: %u (%u bytes)\n", item->id, item->start_in_dw,
+			item->start_in_dw * 4, item->size_in_dw, item->size_in_dw * 4);
 
 	/* First, we remove the item from the item_list */
 	list_del(&item->link);
