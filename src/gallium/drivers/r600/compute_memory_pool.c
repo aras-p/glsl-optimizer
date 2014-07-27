@@ -44,7 +44,7 @@
 
 #define ITEM_ALIGNMENT 1024
 /**
- * Creates a new pool
+ * Creates a new pool.
  */
 struct compute_memory_pool* compute_memory_pool_new(
 	struct r600_screen * rscreen)
@@ -66,6 +66,12 @@ struct compute_memory_pool* compute_memory_pool_new(
 	return pool;
 }
 
+/**
+ * Initializes the pool with a size of \a initial_size_in_dw.
+ * \param pool			The pool to be initialized.
+ * \param initial_size_in_dw	The initial size.
+ * \see compute_memory_grow_defrag_pool
+ */
 static void compute_memory_pool_init(struct compute_memory_pool * pool,
 	unsigned initial_size_in_dw)
 {
@@ -79,7 +85,7 @@ static void compute_memory_pool_init(struct compute_memory_pool * pool,
 }
 
 /**
- * Frees all stuff in the pool and the pool struct itself too
+ * Frees all stuff in the pool and the pool struct itself too.
  */
 void compute_memory_pool_delete(struct compute_memory_pool* pool)
 {
@@ -94,7 +100,9 @@ void compute_memory_pool_delete(struct compute_memory_pool* pool)
 
 /**
  * Searches for an empty space in the pool, return with the pointer to the
- * allocatable space in the pool, returns -1 on failure.
+ * allocatable space in the pool.
+ * \param size_in_dw	The size of the space we are looking for.
+ * \return -1 on failure
  */
 int64_t compute_memory_prealloc_chunk(
 	struct compute_memory_pool* pool,
@@ -126,6 +134,8 @@ int64_t compute_memory_prealloc_chunk(
 
 /**
  *  Search for the chunk where we can link our new chunk after it.
+ *  \param start_in_dw	The position of the item we want to add to the pool.
+ *  \return The item that is just before the passed position
  */
 struct list_head *compute_memory_postalloc_chunk(
 	struct compute_memory_pool* pool,
@@ -166,8 +176,9 @@ struct list_head *compute_memory_postalloc_chunk(
 }
 
 /**
- * Reallocates pool, conserves data.
- * @returns -1 if it fails, 0 otherwise
+ * Reallocates and defragments the pool, conserves data.
+ * \returns -1 if it fails, 0 otherwise
+ * \see compute_memory_finalize_pending
  */
 int compute_memory_grow_defrag_pool(struct compute_memory_pool *pool,
 	struct pipe_context *pipe, int new_size_in_dw)
@@ -234,6 +245,8 @@ int compute_memory_grow_defrag_pool(struct compute_memory_pool *pool,
 
 /**
  * Copy pool from device to host, or host to device.
+ * \param device_to_host 1 for device->host, 0 for host->device
+ * \see compute_memory_grow_defrag_pool
  */
 void compute_memory_shadow(struct compute_memory_pool* pool,
 	struct pipe_context * pipe, int device_to_host)
@@ -251,8 +264,10 @@ void compute_memory_shadow(struct compute_memory_pool* pool,
 }
 
 /**
- * Allocates pending allocations in the pool
- * @returns -1 if it fails, 0 otherwise
+ * Moves all the items marked for promotion from the \a unallocated_list
+ * to the \a item_list.
+ * \return -1 if it fails, 0 otherwise
+ * \see evergreen_set_global_binding
  */
 int compute_memory_finalize_pending(struct compute_memory_pool* pool,
 	struct pipe_context * pipe)
@@ -323,6 +338,9 @@ int compute_memory_finalize_pending(struct compute_memory_pool* pool,
 /**
  * Defragments the pool, so that there's no gap between items.
  * \param pool	The pool to be defragmented
+ * \param src	The origin resource
+ * \param dst	The destination resource
+ * \see compute_memory_grow_defrag_pool and compute_memory_finalize_pending
  */
 void compute_memory_defrag(struct compute_memory_pool *pool,
 	struct pipe_resource *src, struct pipe_resource *dst,
@@ -348,6 +366,12 @@ void compute_memory_defrag(struct compute_memory_pool *pool,
 	pool->status &= ~POOL_FRAGMENTED;
 }
 
+/**
+ * Moves an item from the \a unallocated_list to the \a item_list.
+ * \param item	The item that will be promoted.
+ * \return -1 if it fails, 0 otherwise
+ * \see compute_memory_finalize_pending
+ */
 int compute_memory_promote_item(struct compute_memory_pool *pool,
 		struct compute_memory_item *item, struct pipe_context *pipe,
 		int64_t start_in_dw)
@@ -390,6 +414,11 @@ int compute_memory_promote_item(struct compute_memory_pool *pool,
 	return 0;
 }
 
+/**
+ * Moves an item from the \a item_list to the \a unallocated_list.
+ * \param item	The item that will be demoted
+ * \see r600_compute_global_transfer_map
+ */
 void compute_memory_demote_item(struct compute_memory_pool *pool,
 	struct compute_memory_item *item, struct pipe_context *pipe)
 {
@@ -434,7 +463,7 @@ void compute_memory_demote_item(struct compute_memory_pool *pool,
  * resource \a dst at \a new_start_in_dw
  *
  * This function assumes two things:
- * 1) The item is \b only moved forward
+ * 1) The item is \b only moved forward, unless src is different from dst
  * 2) The item \b won't change it's position inside the \a item_list
  *
  * \param item			The item that will be moved
@@ -516,6 +545,10 @@ void compute_memory_move_item(struct compute_memory_pool *pool,
 	item->start_in_dw = new_start_in_dw;
 }
 
+/**
+ * Frees the memory asociated to the item with id \a id from the pool.
+ * \param id	The id of the item to be freed.
+ */
 void compute_memory_free(struct compute_memory_pool* pool, int64_t id)
 {
 	struct compute_memory_item *item, *next;
@@ -570,7 +603,11 @@ void compute_memory_free(struct compute_memory_pool* pool, int64_t id)
 }
 
 /**
- * Creates pending allocations
+ * Creates pending allocations for new items, these items are
+ * placed in the unallocated_list.
+ * \param size_in_dw	The size, in double words, of the new item.
+ * \return The new item
+ * \see r600_compute_global_buffer_create
  */
 struct compute_memory_item* compute_memory_alloc(
 	struct compute_memory_pool* pool,
@@ -601,7 +638,9 @@ struct compute_memory_item* compute_memory_alloc(
 }
 
 /**
- * Transfer data host<->device, offset and size is in bytes
+ * Transfer data host<->device, offset and size is in bytes.
+ * \param device_to_host 1 for device->host, 0 for host->device.
+ * \see compute_memory_shadow
  */
 void compute_memory_transfer(
 	struct compute_memory_pool* pool,
