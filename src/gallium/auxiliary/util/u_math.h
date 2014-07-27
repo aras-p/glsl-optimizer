@@ -149,28 +149,6 @@ roundf(float x)
 #endif /* _MSC_VER */
 
 
-#ifdef PIPE_OS_ANDROID
-
-static INLINE
-double log2(double d)
-{
-   return log(d) * (1.0 / M_LN2);
-}
-
-/* workaround a conflict with main/imports.h */
-#ifdef log2f
-#undef log2f
-#endif
-
-static INLINE
-float log2f(float f)
-{
-   return logf(f) * (float) (1.0 / M_LN2);
-}
-
-#endif
-
-
 #if __STDC_VERSION__ < 199901L && (!defined(__cplusplus) || defined(_MSC_VER))
 static INLINE long int
 lrint(double d)
