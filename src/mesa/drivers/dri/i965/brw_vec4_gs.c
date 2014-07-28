@@ -298,16 +298,16 @@ brw_upload_gs_prog(struct brw_context *brw)
       (struct brw_geometry_program *) brw->geometry_program;
 
    if (gp == NULL) {
-      if (brw->gen == 6) {
-         if (brw->state.dirty.brw & BRW_NEW_TRANSFORM_FEEDBACK)
-            gen6_brw_upload_ff_gs_prog(brw);
-         return;
-      }
-
       /* No geometry shader.  Vertex data just passes straight through. */
       if (brw->state.dirty.brw & BRW_NEW_VUE_MAP_VS) {
          brw->vue_map_geom_out = brw->vue_map_vs;
          brw->state.dirty.brw |= BRW_NEW_VUE_MAP_GEOM_OUT;
+      }
+
+      if (brw->gen == 6 &&
+          (brw->state.dirty.brw & BRW_NEW_TRANSFORM_FEEDBACK)) {
+         gen6_brw_upload_ff_gs_prog(brw);
+         return;
       }
 
       /* Other state atoms had better not try to access prog_data, since

@@ -498,7 +498,7 @@ static void brw_upload_vs_prog(struct brw_context *brw)
               sizeof(brw->vue_map_geom_out)) != 0) {
       brw->vue_map_vs = brw->vs.prog_data->base.vue_map;
       brw->state.dirty.brw |= BRW_NEW_VUE_MAP_VS;
-      if (brw->gen < 7) {
+      if (brw->gen < 6) {
          /* No geometry shader support, so the VS VUE map is the VUE map for
           * the output of the "geometry" portion of the pipeline.
           */
