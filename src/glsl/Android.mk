@@ -39,12 +39,12 @@ LOCAL_SRC_FILES := \
 	$(LIBGLSL_FILES)
 
 LOCAL_C_INCLUDES := \
-	external/astl/include \
 	$(MESA_TOP)/src/mapi \
 	$(MESA_TOP)/src/mesa
 
 LOCAL_MODULE := libmesa_glsl
 
+include external/stlport/libstlport.mk
 include $(LOCAL_PATH)/Android.gen.mk
 include $(MESA_COMMON_MK)
 include $(BUILD_STATIC_LIBRARY)
