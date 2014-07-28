@@ -1279,14 +1279,13 @@ tex_apply_layout(struct ilo_texture *tex,
                  const struct winsys_handle *handle)
 {
    tex->bo_format = layout->format;
+   tex->block_width = layout->block_width;
+   tex->block_height = layout->block_height;
+   tex->block_size = layout->block_size;
 
    tex->tiling = layout->tiling;
    tex->bo_stride = layout->bo_stride;
    tex->bo_height = layout->bo_height;
-
-   tex->block_width = layout->block_width;
-   tex->block_height = layout->block_height;
-   tex->block_size = layout->block_size;
 
    tex->halign_8 = (layout->align_i == 8);
    tex->valign_4 = (layout->align_j == 4);
@@ -1315,6 +1314,44 @@ tex_apply_layout(struct ilo_texture *tex,
    return true;
 }
 
+/**
+ * The texutre is for transfer only.  We can define our own layout to save
+ * space.
+ */
+static bool
+tex_apply_transfer_layout(struct ilo_texture *tex)
+{
+   const struct pipe_resource *templ = &tex->base;
+   const unsigned num_slices = (templ->target == PIPE_TEXTURE_3D) ?
+      templ->depth0 : templ->array_size;
+   unsigned slice_width, slice_height, i;
+
+   assert(templ->last_level == 0);
+
+   tex->bo_format = templ->format;
+   tex->block_width = util_format_get_blockwidth(templ->format);
+   tex->block_height = util_format_get_blockheight(templ->format);
+   tex->block_size = util_format_get_blocksize(templ->format);
+
+   assert(util_is_power_of_two(tex->block_width) &&
+          util_is_power_of_two(tex->block_height));
+
+   /* use packed layout */
+   slice_width = align(templ->width0, tex->block_width);
+   slice_height = align(templ->height0, tex->block_height);
+   for (i = 0; i < num_slices; i++) {
+      tex->slices[0][i].x = 0;
+      tex->slices[0][i].y = slice_height * i;
+   }
+
+   tex->tiling = INTEL_TILING_NONE;
+   tex->bo_stride = (slice_width / tex->block_width) * tex->block_size;
+   tex->bo_stride = align(tex->bo_stride, 64);
+   tex->bo_height = (slice_height / tex->block_height) * num_slices;
+
+   return tex_create_bo(tex);
+}
+
 static void
 tex_destroy(struct ilo_texture *tex)
 {
@@ -1338,6 +1375,7 @@ tex_create(struct pipe_screen *screen,
 {
    struct tex_layout layout;
    struct ilo_texture *tex;
+   bool transfer_only;
 
    tex = CALLOC_STRUCT(ilo_texture);
    if (!tex)
@@ -1353,6 +1391,18 @@ tex_create(struct pipe_screen *screen,
    }
 
    tex->imported = (handle != NULL);
+
+   /* use transfer layout when the texture is never bound to GPU */
+   transfer_only = !(templ->bind & ~(PIPE_BIND_TRANSFER_WRITE |
+                                     PIPE_BIND_TRANSFER_READ));
+   if (transfer_only && templ->last_level == 0) {
+      if (!tex_apply_transfer_layout(tex)) {
+         tex_destroy(tex);
+         return NULL;
+      }
+
+      return &tex->base;
+   }
 
    if (!tex_layout_init(&layout, screen, templ, tex->slices)) {
       tex_destroy(tex);

@@ -34,6 +34,7 @@
 #include "ilo_context.h"
 #include "ilo_format.h"
 #include "ilo_resource.h"
+#include "ilo_transfer.h" /* for ILO_TRANSFER_MAP_BUFFER_ALIGNMENT */
 #include "ilo_public.h"
 #include "ilo_screen.h"
 
@@ -397,7 +398,7 @@ ilo_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_TEXTURE_MULTISAMPLE:
       return false; /* TODO */
    case PIPE_CAP_MIN_MAP_BUFFER_ALIGNMENT:
-      return 64;
+      return ILO_TRANSFER_MAP_BUFFER_ALIGNMENT;
    case PIPE_CAP_CUBE_MAP_ARRAY:
    case PIPE_CAP_TEXTURE_BUFFER_OBJECTS:
       return true;
