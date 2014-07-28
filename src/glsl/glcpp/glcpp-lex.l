@@ -355,6 +355,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	if (parser->commented_newlines) {
 		BEGIN NEWLINE_CATCHUP;
 	}
+	yyextra->space_tokens = 1;
 	yyextra->lexing_directive = 0;
 	yylineno++;
 	yycolumn = 0;
