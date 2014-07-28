@@ -47,8 +47,6 @@ struct ilo_transfer {
    struct pipe_transfer base;
 
    enum ilo_transfer_map_method method;
-   void *ptr;
-
    void *staging_sys;
 };
 

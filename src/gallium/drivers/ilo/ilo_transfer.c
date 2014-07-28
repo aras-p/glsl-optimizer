@@ -213,35 +213,36 @@ xfer_alloc_staging_sys(struct ilo_transfer *xfer)
 }
 
 /**
- * Map a transfer and set the pointer according to the method.  The staging
- * system buffer should have been allocated if the method requires it.
+ * Map according to the method.  The staging system buffer should have been
+ * allocated if the method requires it.
  */
-static bool
+static void *
 xfer_map(struct ilo_transfer *xfer)
 {
+   void *ptr;
+
    switch (xfer->method) {
    case ILO_TRANSFER_MAP_CPU:
-      xfer->ptr = intel_bo_map(resource_get_bo(xfer->base.resource),
+      ptr = intel_bo_map(resource_get_bo(xfer->base.resource),
             xfer->base.usage & PIPE_TRANSFER_WRITE);
       break;
    case ILO_TRANSFER_MAP_GTT:
-      xfer->ptr = intel_bo_map_gtt(resource_get_bo(xfer->base.resource));
+      ptr = intel_bo_map_gtt(resource_get_bo(xfer->base.resource));
       break;
    case ILO_TRANSFER_MAP_GTT_UNSYNC:
-      xfer->ptr =
-         intel_bo_map_unsynchronized(resource_get_bo(xfer->base.resource));
+      ptr = intel_bo_map_unsynchronized(resource_get_bo(xfer->base.resource));
       break;
    case ILO_TRANSFER_MAP_SW_CONVERT:
    case ILO_TRANSFER_MAP_SW_ZS:
-      xfer->ptr = xfer->staging_sys;
+      ptr = xfer->staging_sys;
       break;
    default:
       assert(!"unknown mapping method");
-      xfer->ptr = NULL;
+      ptr = NULL;
       break;
    }
 
-   return (xfer->ptr != NULL);
+   return ptr;
 }
 
 /**
@@ -884,25 +885,23 @@ tex_staging_sys_readback(struct ilo_transfer *xfer)
    return success;
 }
 
-static bool
+static void *
 tex_map(struct ilo_transfer *xfer)
 {
-   bool success;
+   void *ptr;
 
    switch (xfer->method) {
    case ILO_TRANSFER_MAP_CPU:
    case ILO_TRANSFER_MAP_GTT:
    case ILO_TRANSFER_MAP_GTT_UNSYNC:
-      success = xfer_map(xfer);
-      if (success) {
+      ptr = xfer_map(xfer);
+      if (ptr) {
          const struct ilo_texture *tex = ilo_texture(xfer->base.resource);
 
-         xfer->ptr += tex_get_box_offset(tex,
-               xfer->base.level, &xfer->base.box);
+         ptr += tex_get_box_offset(tex, xfer->base.level, &xfer->base.box);
 
          /* stride is for a block row, not a texel row */
          xfer->base.stride = tex->bo_stride;
-
          /* note that slice stride is not always available */
          xfer->base.layer_stride = (xfer->base.box.depth > 1) ?
             tex_get_slice_stride(tex, xfer->base.level) : 0;
@@ -910,26 +909,30 @@ tex_map(struct ilo_transfer *xfer)
       break;
    case ILO_TRANSFER_MAP_SW_CONVERT:
    case ILO_TRANSFER_MAP_SW_ZS:
-      success = (xfer_alloc_staging_sys(xfer) &&
-                 tex_staging_sys_readback(xfer) &&
-                 xfer_map(xfer));
+      if (xfer_alloc_staging_sys(xfer) && tex_staging_sys_readback(xfer))
+         ptr = xfer_map(xfer);
+      else
+         ptr = NULL;
       break;
    default:
       assert(!"unknown mapping method");
-      success = false;
+      ptr = NULL;
       break;
    }
 
-   return success;
+   return ptr;
 }
 
-static bool
+static void *
 buf_map(struct ilo_transfer *xfer)
 {
-   if (!xfer_map(xfer))
-      return false;
+   void *ptr;
 
-   xfer->ptr += xfer->base.box.x;
+   ptr = xfer_map(xfer);
+   if (!ptr)
+      return NULL;
+
+   ptr += xfer->base.box.x;
    xfer->base.stride = 0;
    xfer->base.layer_stride = 0;
 
@@ -939,7 +942,7 @@ buf_map(struct ilo_transfer *xfer)
    assert(xfer->base.box.height == 1);
    assert(xfer->base.box.depth == 1);
 
-   return true;
+   return ptr;
 }
 
 static bool
@@ -1063,7 +1066,7 @@ ilo_transfer_map(struct pipe_context *pipe,
 {
    struct ilo_context *ilo = ilo_context(pipe);
    struct ilo_transfer *xfer;
-   bool success;
+   void *ptr;
 
    /* note that xfer is not zero'd */
    xfer = util_slab_alloc(&ilo->transfer_mempool);
@@ -1082,15 +1085,15 @@ ilo_transfer_map(struct pipe_context *pipe,
 
    if (choose_transfer_method(ilo, xfer)) {
       if (res->target == PIPE_BUFFER)
-         success = buf_map(xfer);
+         ptr = buf_map(xfer);
       else
-         success = tex_map(xfer);
+         ptr = tex_map(xfer);
    }
    else {
-      success = false;
+      ptr = NULL;
    }
 
-   if (!success) {
+   if (!ptr) {
       pipe_resource_reference(&xfer->base.resource, NULL);
       util_slab_free(&ilo->transfer_mempool, xfer);
       *transfer = NULL;
@@ -1099,7 +1102,7 @@ ilo_transfer_map(struct pipe_context *pipe,
 
    *transfer = &xfer->base;
 
-   return xfer->ptr;
+   return ptr;
 }
 
 static void
