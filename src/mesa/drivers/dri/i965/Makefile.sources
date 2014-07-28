@@ -1,7 +1,3 @@
-i965_INCLUDES = \
-	$(MESA_TOP)/src \
-	$(MESA_TOP)/src/mesa/drivers/dri/intel
-
 i965_FILES = \
 	intel_asm_annotation.c \
 	intel_batchbuffer.c \
@@ -159,5 +155,4 @@ i965_FILES = \
 	gen8_viewport_state.c \
 	gen8_vs_state.c \
 	gen8_wm_depth_stencil.c \
-	gen8_ps_state.c \
-        $()
+	gen8_ps_state.c

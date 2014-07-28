@@ -29,7 +29,7 @@ LOCAL_MODULE := i965_dri
 LOCAL_MODULE_PATH := $(MESA_DRI_MODULE_PATH)
 LOCAL_UNSTRIPPED_PATH := $(MESA_DRI_MODULE_UNSTRIPPED_PATH)
 
-# Import variables i965_*.
+# Import variables i965_FILES.
 include $(LOCAL_PATH)/Makefile.sources
 
 LOCAL_CFLAGS := \
@@ -41,7 +41,6 @@ LOCAL_CFLAGS += \
 endif
 
 LOCAL_C_INCLUDES := \
-	$(i965_INCLUDES) \
 	$(MESA_DRI_C_INCLUDES)
 
 LOCAL_SRC_FILES := \

@@ -29,7 +29,7 @@ LOCAL_MODULE := i915_dri
 LOCAL_MODULE_PATH := $(MESA_DRI_MODULE_PATH)
 LOCAL_UNSTRIPPED_PATH := $(MESA_DRI_MODULE_UNSTRIPPED_PATH)
 
-# Import variables i915_*.
+# Import variables i915_FILES.
 include $(LOCAL_PATH)/Makefile.sources
 
 LOCAL_CFLAGS := \
@@ -37,7 +37,6 @@ LOCAL_CFLAGS := \
 	-DI915
 
 LOCAL_C_INCLUDES := \
-	$(addprefix $(MESA_TOP)/,$(i915_INCLUDES)) \
 	$(MESA_DRI_C_INCLUDES)
 
 LOCAL_SRC_FILES := \
