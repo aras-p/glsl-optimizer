@@ -1121,27 +1121,45 @@ buf_pwrite(struct ilo_context *ilo, struct ilo_buffer *buf,
 {
    bool need_flush;
 
-   /* see if we can avoid stalling */
+   /* see if we can avoid blocking */
    if (is_bo_busy(ilo, buf->bo, &need_flush)) {
-      bool will_stall = true;
+      bool unblocked = false;
 
-      if (usage & PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE) {
-         /* old data not needed so discard the old bo to avoid stalling */
-         if (ilo_buffer_rename_bo(buf)) {
-            ilo_mark_states_with_resource_dirty(ilo, &buf->base);
-            will_stall = false;
-         }
+      if ((usage & PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE) &&
+          ilo_buffer_rename_bo(buf)) {
+         ilo_mark_states_with_resource_dirty(ilo, &buf->base);
+         unblocked = true;
       }
       else {
+         struct pipe_resource templ, *staging;
+
          /*
-          * We could allocate a temporary bo to hold the data and emit
-          * pipelined copy blit to move them to buf->bo.  But for now, do
-          * nothing.
+          * allocate a staging buffer to hold the data and pipelined copy it
+          * over
           */
+         templ = buf->base;
+         templ.width0 = size;
+         templ.usage = PIPE_USAGE_STAGING;
+         templ.bind = PIPE_BIND_TRANSFER_WRITE;
+         staging = ilo->base.screen->resource_create(ilo->base.screen, &templ);
+         if (staging) {
+            struct pipe_box staging_box;
+
+            intel_bo_pwrite(ilo_buffer(staging)->bo, 0, size, data);
+
+            u_box_1d(0, size, &staging_box);
+            ilo_blitter_blt_copy_resource(ilo->blitter,
+                  &buf->base, 0, offset, 0, 0,
+                  staging, 0, &staging_box);
+
+            pipe_resource_reference(&staging, NULL);
+
+            return;
+         }
       }
 
-      /* flush to make bo busy (so that pwrite() stalls as it should be) */
-      if (will_stall && need_flush)
+      /* flush to make bo really busy so that pwrite() correctly blocks */
+      if (!unblocked && need_flush)
          ilo_cp_flush(ilo->cp, "syncing for pwrites");
    }
 
