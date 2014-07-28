@@ -817,7 +817,7 @@ util_memcpy_cpu_to_le32(void * restrict dest, const void * restrict src, size_t 
 {
 #ifdef PIPE_ARCH_BIG_ENDIAN
    size_t i, e;
-   asset(n % 4 == 0);
+   assert(n % 4 == 0);
 
    for (i = 0, e = n / 4; i < e; i++) {
       uint32_t * restrict d = (uint32_t* restrict)dest;
