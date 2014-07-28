@@ -57,6 +57,15 @@
  *    synchronization at all on mapping.
  *  - When PIPE_TRANSFER_MAP_DIRECTLY is set, no staging area is allowed.
  *  - When PIPE_TRANSFER_DONTBLOCK is set, we should fail if we have to block.
+ *  - When PIPE_TRANSFER_PERSISTENT is set, GPU may access the buffer while it
+ *    is mapped.  Synchronization is done by defining memory barriers,
+ *    explicitly via memory_barrier() or implicitly via
+ *    transfer_flush_region(), as well as GPU fences.
+ *  - When PIPE_TRANSFER_COHERENT is set, updates by either CPU or GPU should
+ *    be made visible to the other side immediately.  Since the kernel flushes
+ *    GPU caches at the end of each batch buffer, CPU always sees GPU updates.
+ *    We could use a coherent mapping to make all persistent mappings
+ *    coherent.
  *
  * These also apply to textures, except that we may additionally need to do
  * format conversion or tiling/untiling.
@@ -90,7 +99,7 @@ resource_get_transfer_method(struct pipe_resource *res, unsigned usage,
          need_convert = false;
 
       if (need_convert) {
-         if (usage & PIPE_TRANSFER_MAP_DIRECTLY)
+         if (usage & (PIPE_TRANSFER_MAP_DIRECTLY | PIPE_TRANSFER_PERSISTENT))
             return false;
 
          *method = m;
@@ -104,6 +113,8 @@ resource_get_transfer_method(struct pipe_resource *res, unsigned usage,
       m = ILO_TRANSFER_MAP_GTT; /* to have a linear view */
    else if (is->dev.has_llc)
       m = ILO_TRANSFER_MAP_CPU; /* fast and mostly coherent */
+   else if (usage & PIPE_TRANSFER_PERSISTENT)
+      m = ILO_TRANSFER_MAP_GTT; /* for coherency */
    else if (usage & PIPE_TRANSFER_READ)
       m = ILO_TRANSFER_MAP_CPU; /* gtt read is too slow */
    else
@@ -146,7 +157,8 @@ usage_allows_staging_bo(unsigned usage)
                                    PIPE_TRANSFER_DISCARD_RANGE |
                                    PIPE_TRANSFER_FLUSH_EXPLICIT);
    const unsigned reasons_against = (PIPE_TRANSFER_READ |
-                                     PIPE_TRANSFER_MAP_DIRECTLY);
+                                     PIPE_TRANSFER_MAP_DIRECTLY |
+                                     PIPE_TRANSFER_PERSISTENT);
 
    return (usage & can_writeback) && !(usage & reasons_against);
 }

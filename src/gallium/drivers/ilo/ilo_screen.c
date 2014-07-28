@@ -362,10 +362,6 @@ ilo_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return ILO_MAX_SO_BINDINGS / ILO_MAX_SO_BUFFERS;
    case PIPE_CAP_MAX_STREAM_OUTPUT_INTERLEAVED_COMPONENTS:
       return ILO_MAX_SO_BINDINGS;
-   case PIPE_CAP_MAX_GEOMETRY_OUTPUT_VERTICES:
-   case PIPE_CAP_MAX_GEOMETRY_TOTAL_OUTPUT_COMPONENTS:
-   case PIPE_CAP_MAX_VERTEX_STREAMS:
-      return 0;
    case PIPE_CAP_STREAM_OUTPUT_PAUSE_RESUME:
       if (is->dev.gen >= ILO_GEN(7))
          return is->dev.has_gen7_sol_reset;
@@ -424,14 +420,20 @@ ilo_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_MIXED_FRAMEBUFFER_SIZES:
       return true;
    case PIPE_CAP_TGSI_VS_LAYER_VIEWPORT:
+   case PIPE_CAP_MAX_GEOMETRY_OUTPUT_VERTICES:
+   case PIPE_CAP_MAX_GEOMETRY_TOTAL_OUTPUT_COMPONENTS:
    case PIPE_CAP_MAX_TEXTURE_GATHER_COMPONENTS:
    case PIPE_CAP_TEXTURE_GATHER_SM5:
+      return 0;
    case PIPE_CAP_BUFFER_MAP_PERSISTENT_COHERENT:
+      return true;
    case PIPE_CAP_FAKE_SW_MSAA:
    case PIPE_CAP_TEXTURE_QUERY_LOD:
    case PIPE_CAP_SAMPLE_SHADING:
    case PIPE_CAP_TEXTURE_GATHER_OFFSETS:
    case PIPE_CAP_TGSI_VS_WINDOW_SPACE_POSITION:
+   case PIPE_CAP_MAX_VERTEX_STREAMS:
+   case PIPE_CAP_DRAW_INDIRECT:
       return 0;
 
    default:

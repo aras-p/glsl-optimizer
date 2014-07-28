@@ -710,7 +710,7 @@ tex_layout_init_hiz(struct tex_layout *layout)
    }
 }
 
-static void
+static bool
 tex_layout_init(struct tex_layout *layout,
                 struct pipe_screen *screen,
                 const struct pipe_resource *templ,
@@ -732,12 +732,22 @@ tex_layout_init(struct tex_layout *layout,
    tex_layout_init_alignments(layout);
    tex_layout_init_qpitch(layout);
 
+   if (templ->flags & PIPE_RESOURCE_FLAG_MAP_PERSISTENT) {
+      /* require on-the-fly tiling/untiling or format conversion */
+      if (layout->separate_stencil ||
+          layout->format == PIPE_FORMAT_S8_UINT ||
+          layout->format != templ->format)
+         return false;
+   }
+
    if (slices) {
       int lv;
 
       for (lv = 0; lv <= templ->last_level; lv++)
          layout->levels[lv].slices = slices[lv];
    }
+
+   return true;
 }
 
 static void
@@ -1344,7 +1354,10 @@ tex_create(struct pipe_screen *screen,
 
    tex->imported = (handle != NULL);
 
-   tex_layout_init(&layout, screen, templ, tex->slices);
+   if (!tex_layout_init(&layout, screen, templ, tex->slices)) {
+      tex_destroy(tex);
+      return NULL;
+   }
 
    switch (templ->target) {
    case PIPE_TEXTURE_1D:
