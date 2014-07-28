@@ -37,8 +37,7 @@ MESA_DRI_CFLAGS := \
 MESA_DRI_C_INCLUDES := \
 	$(call intermediates-dir-for,STATIC_LIBRARIES,libmesa_dri_common) \
 	$(addprefix $(MESA_TOP)/, $(mesa_dri_common_INCLUDES)) \
-	$(DRM_TOP) \
-	$(DRM_TOP)/include/drm \
+	$(TARGET_OUT_HEADERS)/libdrm \
 	external/expat/lib
 
 MESA_DRI_WHOLE_STATIC_LIBRARIES := \

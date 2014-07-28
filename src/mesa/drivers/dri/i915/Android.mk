@@ -38,8 +38,7 @@ LOCAL_CFLAGS := \
 
 LOCAL_C_INCLUDES := \
 	$(addprefix $(MESA_TOP)/,$(i915_INCLUDES)) \
-	$(MESA_DRI_C_INCLUDES) \
-	$(DRM_TOP)/intel
+	$(MESA_DRI_C_INCLUDES)
 
 LOCAL_SRC_FILES := \
 	$(i915_FILES)

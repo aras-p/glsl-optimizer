@@ -42,8 +42,7 @@ endif
 
 LOCAL_C_INCLUDES := \
 	$(i965_INCLUDES) \
-	$(MESA_DRI_C_INCLUDES) \
-	$(DRM_TOP)/intel
+	$(MESA_DRI_C_INCLUDES)
 
 LOCAL_SRC_FILES := \
 	$(i965_FILES)
