@@ -127,16 +127,6 @@ resource_get_transfer_method(struct pipe_resource *res, unsigned usage,
 }
 
 /**
- * Return the bo of the resource.
- */
-static struct intel_bo *
-resource_get_bo(struct pipe_resource *res)
-{
-   return (res->target == PIPE_BUFFER) ?
-      ilo_buffer(res)->bo : ilo_texture(res)->bo;
-}
-
-/**
  * Rename the bo of the resource.
  */
 static bool
@@ -285,19 +275,20 @@ xfer_map(struct ilo_transfer *xfer)
 
    switch (xfer->method) {
    case ILO_TRANSFER_MAP_CPU:
-      ptr = intel_bo_map(resource_get_bo(xfer->base.resource),
+      ptr = intel_bo_map(ilo_resource_get_bo(xfer->base.resource),
             xfer->base.usage & PIPE_TRANSFER_WRITE);
       break;
    case ILO_TRANSFER_MAP_GTT:
-      ptr = intel_bo_map_gtt(resource_get_bo(xfer->base.resource));
+      ptr = intel_bo_map_gtt(ilo_resource_get_bo(xfer->base.resource));
       break;
    case ILO_TRANSFER_MAP_GTT_UNSYNC:
-      ptr = intel_bo_map_unsynchronized(resource_get_bo(xfer->base.resource));
+      ptr = intel_bo_map_unsynchronized(
+            ilo_resource_get_bo(xfer->base.resource));
       break;
    case ILO_TRANSFER_MAP_STAGING:
       {
          const struct ilo_screen *is = ilo_screen(xfer->staging.res->screen);
-         struct intel_bo *bo = resource_get_bo(xfer->staging.res);
+         struct intel_bo *bo = ilo_resource_get_bo(xfer->staging.res);
 
          /*
           * We want a writable, optionally persistent and coherent, mapping
@@ -337,10 +328,10 @@ xfer_unmap(struct ilo_transfer *xfer)
    case ILO_TRANSFER_MAP_CPU:
    case ILO_TRANSFER_MAP_GTT:
    case ILO_TRANSFER_MAP_GTT_UNSYNC:
-      intel_bo_unmap(resource_get_bo(xfer->base.resource));
+      intel_bo_unmap(ilo_resource_get_bo(xfer->base.resource));
       break;
    case ILO_TRANSFER_MAP_STAGING:
-      intel_bo_unmap(resource_get_bo(xfer->staging.res));
+      intel_bo_unmap(ilo_resource_get_bo(xfer->staging.res));
       break;
    default:
       break;
@@ -1096,7 +1087,7 @@ choose_transfer_method(struct ilo_context *ilo, struct ilo_transfer *xfer)
       return false;
 
    /* see if we can avoid blocking */
-   if (is_bo_busy(ilo, resource_get_bo(res), &need_flush)) {
+   if (is_bo_busy(ilo, ilo_resource_get_bo(res), &need_flush)) {
       bool resource_renamed;
 
       if (!xfer_unblock(xfer, &resource_renamed)) {

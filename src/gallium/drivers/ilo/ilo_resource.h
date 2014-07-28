@@ -160,6 +160,16 @@ ilo_buffer_rename_bo(struct ilo_buffer *buf);
 bool
 ilo_texture_rename_bo(struct ilo_texture *tex);
 
+/**
+ * Return the bo of the resource.
+ */
+static inline struct intel_bo *
+ilo_resource_get_bo(struct pipe_resource *res)
+{
+   return (res->target == PIPE_BUFFER) ?
+      ilo_buffer(res)->bo : ilo_texture(res)->bo;
+}
+
 static inline struct ilo_texture_slice *
 ilo_texture_get_slice(const struct ilo_texture *tex,
                       unsigned level, unsigned slice)
