@@ -36,7 +36,7 @@ enum ilo_transfer_map_method {
    /* map() / map_gtt() / map_unsynchronized() */
    ILO_TRANSFER_MAP_CPU,
    ILO_TRANSFER_MAP_GTT,
-   ILO_TRANSFER_MAP_UNSYNC,
+   ILO_TRANSFER_MAP_GTT_UNSYNC,
 
    /* use staging system buffer */
    ILO_TRANSFER_MAP_SW_CONVERT,

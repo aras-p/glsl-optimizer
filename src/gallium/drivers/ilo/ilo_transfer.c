@@ -165,7 +165,7 @@ xfer_unblock(struct ilo_transfer *xfer, bool *resource_renamed)
    case ILO_TRANSFER_MAP_CPU:
    case ILO_TRANSFER_MAP_GTT:
       if (xfer->base.usage & PIPE_TRANSFER_UNSYNCHRONIZED) {
-         xfer->method = ILO_TRANSFER_MAP_UNSYNC;
+         xfer->method = ILO_TRANSFER_MAP_GTT_UNSYNC;
          unblocked = true;
       }
       else if ((xfer->base.usage & PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE) &&
@@ -177,7 +177,7 @@ xfer_unblock(struct ilo_transfer *xfer, bool *resource_renamed)
          /* TODO */
       }
       break;
-   case ILO_TRANSFER_MAP_UNSYNC:
+   case ILO_TRANSFER_MAP_GTT_UNSYNC:
       unblocked = true;
       break;
    default:
@@ -227,7 +227,7 @@ xfer_map(struct ilo_transfer *xfer)
    case ILO_TRANSFER_MAP_GTT:
       xfer->ptr = intel_bo_map_gtt(resource_get_bo(xfer->base.resource));
       break;
-   case ILO_TRANSFER_MAP_UNSYNC:
+   case ILO_TRANSFER_MAP_GTT_UNSYNC:
       xfer->ptr =
          intel_bo_map_unsynchronized(resource_get_bo(xfer->base.resource));
       break;
@@ -253,7 +253,7 @@ xfer_unmap(struct ilo_transfer *xfer)
    switch (xfer->method) {
    case ILO_TRANSFER_MAP_CPU:
    case ILO_TRANSFER_MAP_GTT:
-   case ILO_TRANSFER_MAP_UNSYNC:
+   case ILO_TRANSFER_MAP_GTT_UNSYNC:
       intel_bo_unmap(resource_get_bo(xfer->base.resource));
       break;
    default:
@@ -892,7 +892,7 @@ tex_map(struct ilo_transfer *xfer)
    switch (xfer->method) {
    case ILO_TRANSFER_MAP_CPU:
    case ILO_TRANSFER_MAP_GTT:
-   case ILO_TRANSFER_MAP_UNSYNC:
+   case ILO_TRANSFER_MAP_GTT_UNSYNC:
       success = xfer_map(xfer);
       if (success) {
          const struct ilo_texture *tex = ilo_texture(xfer->base.resource);
