@@ -50,8 +50,8 @@
 #include "freedreno_query.h"
 #include "freedreno_util.h"
 
-#include "fd2_screen.h"
-#include "fd3_screen.h"
+#include "a2xx/fd2_screen.h"
+#include "a3xx/fd3_screen.h"
 
 /* XXX this should go away */
 #include "state_tracker/drm_driver.h"
