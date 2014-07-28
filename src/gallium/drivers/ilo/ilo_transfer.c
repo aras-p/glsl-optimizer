@@ -1100,7 +1100,7 @@ choose_transfer_method(struct ilo_context *ilo, struct ilo_transfer *xfer)
       }
 
       if (resource_renamed)
-         ilo_mark_states_with_resource_dirty(ilo, res);
+         ilo_mark_states_with_resource_renamed(ilo, res);
    }
 
    return true;
@@ -1118,7 +1118,7 @@ buf_pwrite(struct ilo_context *ilo, struct ilo_buffer *buf,
 
       if ((usage & PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE) &&
           ilo_buffer_rename_bo(buf)) {
-         ilo_mark_states_with_resource_dirty(ilo, &buf->base);
+         ilo_mark_states_with_resource_renamed(ilo, &buf->base);
          unblocked = true;
       }
       else {

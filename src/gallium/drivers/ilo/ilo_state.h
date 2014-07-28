@@ -133,8 +133,8 @@ ilo_finalize_3d_states(struct ilo_context *ilo,
                        const struct pipe_draw_info *draw);
 
 void
-ilo_mark_states_with_resource_dirty(struct ilo_context *ilo,
-                                    const struct pipe_resource *res);
+ilo_mark_states_with_resource_renamed(struct ilo_context *ilo,
+                                      struct pipe_resource *res);
 
 void
 ilo_dump_dirty_flags(uint32_t dirty);

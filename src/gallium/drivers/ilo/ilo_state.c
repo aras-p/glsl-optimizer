@@ -1236,9 +1236,10 @@ ilo_cleanup_states(struct ilo_context *ilo)
  * Mark all states that have the resource dirty.
  */
 void
-ilo_mark_states_with_resource_dirty(struct ilo_context *ilo,
-                                    const struct pipe_resource *res)
+ilo_mark_states_with_resource_renamed(struct ilo_context *ilo,
+                                      struct pipe_resource *res)
 {
+   struct intel_bo *bo = ilo_resource_get_bo(res);
    uint32_t states = 0;
    unsigned sh, i;
 
@@ -1277,15 +1278,16 @@ ilo_mark_states_with_resource_dirty(struct ilo_context *ilo,
 
    for (sh = 0; sh < PIPE_SHADER_TYPES; sh++) {
       for (i = 0; i < ilo->view[sh].count; i++) {
-         struct pipe_sampler_view *view = ilo->view[sh].states[i];
+         struct ilo_view_cso *cso = (struct ilo_view_cso *) ilo->view[sh].states[i];
 
-         if (view->texture == res) {
+         if (cso->base.texture == res) {
             static const unsigned view_dirty_bits[PIPE_SHADER_TYPES] = {
                [PIPE_SHADER_VERTEX]    = ILO_DIRTY_VIEW_VS,
                [PIPE_SHADER_FRAGMENT]  = ILO_DIRTY_VIEW_FS,
                [PIPE_SHADER_GEOMETRY]  = ILO_DIRTY_VIEW_GS,
                [PIPE_SHADER_COMPUTE]   = ILO_DIRTY_VIEW_CS,
             };
+            cso->surface.bo = bo;
 
             states |= view_dirty_bits[sh];
             break;
@@ -1297,6 +1299,7 @@ ilo_mark_states_with_resource_dirty(struct ilo_context *ilo,
             struct ilo_cbuf_cso *cbuf = &ilo->cbuf[sh].cso[i];
 
             if (cbuf->resource == res) {
+               cbuf->surface.bo = bo;
                states |= ILO_DIRTY_CBUF;
                break;
             }
@@ -1305,7 +1308,11 @@ ilo_mark_states_with_resource_dirty(struct ilo_context *ilo,
    }
 
    for (i = 0; i < ilo->resource.count; i++) {
-      if (ilo->resource.states[i]->texture == res) {
+      struct ilo_surface_cso *cso =
+         (struct ilo_surface_cso *) ilo->resource.states[i];
+
+      if (cso->base.texture == res) {
+         cso->u.rt.bo = bo;
          states |= ILO_DIRTY_RESOURCE;
          break;
       }
@@ -1314,20 +1321,29 @@ ilo_mark_states_with_resource_dirty(struct ilo_context *ilo,
    /* for now? */
    if (res->target != PIPE_BUFFER) {
       for (i = 0; i < ilo->fb.state.nr_cbufs; i++) {
-         const struct pipe_surface *surf = ilo->fb.state.cbufs[i];
-         if (surf && surf->texture == res) {
+         struct ilo_surface_cso *cso =
+            (struct ilo_surface_cso *) ilo->fb.state.cbufs[i];
+         if (cso && cso->base.texture == res) {
+            cso->u.rt.bo = bo;
             states |= ILO_DIRTY_FB;
             break;
          }
       }
 
-      if (ilo->fb.state.zsbuf && ilo->fb.state.zsbuf->texture == res)
+      if (ilo->fb.state.zsbuf && ilo->fb.state.zsbuf->texture == res) {
+         struct ilo_surface_cso *cso =
+            (struct ilo_surface_cso *) ilo->fb.state.zsbuf;
+
+         cso->u.rt.bo = bo;
          states |= ILO_DIRTY_FB;
+      }
    }
 
    for (i = 0; i < ilo->cs_resource.count; i++) {
-      pipe_surface_reference(&ilo->cs_resource.states[i], NULL);
-      if (ilo->cs_resource.states[i]->texture == res) {
+      struct ilo_surface_cso *cso =
+         (struct ilo_surface_cso *) ilo->cs_resource.states[i];
+      if (cso->base.texture == res) {
+         cso->u.rt.bo = bo;
          states |= ILO_DIRTY_CS_RESOURCE;
          break;
       }
