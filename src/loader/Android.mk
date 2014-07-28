@@ -35,11 +35,9 @@ LOCAL_SRC_FILES := \
 
 # swrast only
 ifeq ($(MESA_GPU_DRIVERS),swrast)
-	LOCAL_CFLAGS += -D__NOT_HAVE_DRM_H
+LOCAL_CFLAGS += -D__NOT_HAVE_DRM_H
 else
-LOCAL_C_INCLUDES += \
-	$(DRM_TOP)/include/drm \
-	$(DRM_TOP)
+LOCAL_C_INCLUDES += $(TARGET_OUT_HEADERS)/libdrm
 endif
 
 LOCAL_MODULE := libloader
