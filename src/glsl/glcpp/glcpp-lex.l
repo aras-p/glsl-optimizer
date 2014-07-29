@@ -350,7 +350,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 
 <HASH>error.* {
 	BEGIN INITIAL;
-	RETURN_STRING_TOKEN (ERROR);
+	RETURN_STRING_TOKEN (ERROR_TOKEN);
 }
 
 	/* After we see a "#define" we enter the <DEFINE> start state
