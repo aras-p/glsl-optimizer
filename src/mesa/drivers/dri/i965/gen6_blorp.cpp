@@ -465,8 +465,6 @@ gen6_blorp_emit_sampler_state(struct brw_context *brw,
    sampler->ss1.s_wrap_mode = BRW_TEXCOORDMODE_CLAMP;
    sampler->ss1.t_wrap_mode = BRW_TEXCOORDMODE_CLAMP;
 
-   sampler->ss0.min_mag_neq = 1;
-
    /* Set LOD bias:
     */
    sampler->ss0.lod_bias = 0;
