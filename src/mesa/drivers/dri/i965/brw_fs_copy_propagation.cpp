@@ -311,6 +311,10 @@ fs_visitor::try_copy_propagate(fs_inst *inst, int arg, acp_entry *entry)
        !inst->can_do_source_mods(brw))
       return false;
 
+   if (has_source_modifiers &&
+       inst->opcode == SHADER_OPCODE_GEN4_SCRATCH_WRITE)
+      return false;
+
    /* Bail if the result of composing both strides would exceed the
     * hardware limit.
     */
