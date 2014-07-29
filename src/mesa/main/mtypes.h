@@ -1693,6 +1693,9 @@ struct gl_array_attrib
 
    /** One of the DRAW_xxx flags, not consumed by drivers */
    gl_draw_method DrawMethod;
+
+   /** Legal array datatypes */
+   GLbitfield LegalTypesMask;
 };
 
 

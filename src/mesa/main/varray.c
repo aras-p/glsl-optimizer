@@ -179,6 +179,53 @@ vertex_binding_divisor(struct gl_context *ctx, GLuint bindingIndex,
 
 
 /**
+ * Examine the API profile and extensions to determine which types are legal
+ * for vertex arrays.  This is called once from update_array_format().
+ */
+static GLbitfield
+get_legal_types_mask(const struct gl_context *ctx)
+{
+   GLbitfield legalTypesMask = ~0u; /* all */
+
+   if (_mesa_is_gles(ctx)) {
+      legalTypesMask &= ~(FIXED_GL_BIT |
+                          DOUBLE_BIT |
+                          UNSIGNED_INT_10F_11F_11F_REV_BIT);
+
+      /* GL_INT and GL_UNSIGNED_INT data is not allowed in OpenGL ES until
+       * 3.0.  The 2_10_10_10 types are added in OpenGL ES 3.0 or
+       * GL_OES_vertex_type_10_10_10_2.  GL_HALF_FLOAT data is not allowed
+       * until 3.0 or with the GL_OES_vertex_half float extension, which isn't
+       * quite as trivial as we'd like because it uses a different enum value
+       * for GL_HALF_FLOAT_OES.
+       */
+      if (ctx->Version < 30) {
+         legalTypesMask &= ~(UNSIGNED_INT_BIT |
+                             INT_BIT |
+                             UNSIGNED_INT_2_10_10_10_REV_BIT |
+                             INT_2_10_10_10_REV_BIT |
+                             HALF_BIT);
+      }
+   }
+   else {
+      legalTypesMask &= ~FIXED_ES_BIT;
+
+      if (!ctx->Extensions.ARB_ES2_compatibility)
+         legalTypesMask &= ~FIXED_GL_BIT;
+
+      if (!ctx->Extensions.ARB_vertex_type_2_10_10_10_rev)
+         legalTypesMask &= ~(UNSIGNED_INT_2_10_10_10_REV_BIT |
+                             INT_2_10_10_10_REV_BIT);
+
+      if (!ctx->Extensions.ARB_vertex_type_10f_11f_11f_rev)
+         legalTypesMask &= ~UNSIGNED_INT_10F_11F_11F_REV_BIT;
+   }
+
+   return legalTypesMask;
+}
+
+
+/**
  * Does error checking and updates the format in an attrib array.
  *
  * Called by update_array() and VertexAttrib*Format().
@@ -208,40 +255,19 @@ update_array_format(struct gl_context *ctx,
    GLuint elementSize;
    GLenum format = GL_RGBA;
 
-   if (_mesa_is_gles(ctx)) {
-      legalTypesMask &= ~(FIXED_GL_BIT | DOUBLE_BIT | UNSIGNED_INT_10F_11F_11F_REV_BIT);
-
-      /* GL_INT and GL_UNSIGNED_INT data is not allowed in OpenGL ES until
-       * 3.0.  The 2_10_10_10 types are added in OpenGL ES 3.0 or
-       * GL_OES_vertex_type_10_10_10_2.  GL_HALF_FLOAT data is not allowed
-       * until 3.0 or with the GL_OES_vertex_half float extension, which isn't
-       * quite as trivial as we'd like because it uses a different enum value
-       * for GL_HALF_FLOAT_OES.
+   if (ctx->Array.LegalTypesMask == 0) {
+      /* One-time initialization.  We can't do this in _mesa_init_varrays()
+       * below because extensions are not yet enabled at that point.
        */
-      if (ctx->Version < 30) {
-         legalTypesMask &= ~(UNSIGNED_INT_BIT
-                             | INT_BIT
-                             | UNSIGNED_INT_2_10_10_10_REV_BIT
-                             | INT_2_10_10_10_REV_BIT
-                             | HALF_BIT);
-      }
+      ctx->Array.LegalTypesMask = get_legal_types_mask(ctx);
+   }
 
+   legalTypesMask &= ctx->Array.LegalTypesMask;
+
+   if (_mesa_is_gles(ctx) && sizeMax == BGRA_OR_4) {
       /* BGRA ordering is not supported in ES contexts.
        */
-      if (sizeMax == BGRA_OR_4)
-         sizeMax = 4;
-   } else {
-      legalTypesMask &= ~FIXED_ES_BIT;
-
-      if (!ctx->Extensions.ARB_ES2_compatibility)
-         legalTypesMask &= ~FIXED_GL_BIT;
-
-      if (!ctx->Extensions.ARB_vertex_type_2_10_10_10_rev)
-         legalTypesMask &= ~(UNSIGNED_INT_2_10_10_10_REV_BIT |
-                             INT_2_10_10_10_REV_BIT);
-
-      if (!ctx->Extensions.ARB_vertex_type_10f_11f_11f_rev)
-         legalTypesMask &= ~UNSIGNED_INT_10F_11F_11F_REV_BIT;
+      sizeMax = 4;
    }
 
    typeBit = type_to_bit(ctx, type);
