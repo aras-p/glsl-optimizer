@@ -96,6 +96,7 @@ LIBGLSL_FILES = \
 	$(GLSL_SRCDIR)/opt_flip_matrices.cpp \
 	$(GLSL_SRCDIR)/opt_function_inlining.cpp \
 	$(GLSL_SRCDIR)/opt_if_simplification.cpp \
+	$(GLSL_SRCDIR)/opt_minmax.cpp \
 	$(GLSL_SRCDIR)/opt_noop_swizzle.cpp \
 	$(GLSL_SRCDIR)/opt_rebalance_tree.cpp \
 	$(GLSL_SRCDIR)/opt_redundant_jumps.cpp \
