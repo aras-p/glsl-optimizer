@@ -290,7 +290,7 @@ hiz_align_fb(struct ilo_blitter *blitter)
 
    if (blitter->fb.width % align_w || blitter->fb.height % align_h) {
       blitter->fb.width = align(blitter->fb.width, align_w);
-      blitter->fb.height = align(blitter->fb.width, align_h);
+      blitter->fb.height = align(blitter->fb.height, align_h);
 
       assert(!blitter->fb.dst.is_rt);
       zs_align_surface(blitter->ilo->dev, align_w, align_h,
