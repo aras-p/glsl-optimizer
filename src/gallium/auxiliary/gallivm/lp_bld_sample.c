@@ -927,6 +927,7 @@ lp_build_nearest_mip_level(struct lp_build_sample_context *bld,
                                                                 bld->int_coord_bld.type,
                                                                 out);
       }
+      level = lp_build_andnot(&bld->int_coord_bld, level, *out_of_bounds);
       *level_out = level;
    }
    else {
