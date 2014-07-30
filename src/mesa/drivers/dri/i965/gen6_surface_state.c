@@ -114,28 +114,6 @@ gen6_update_renderbuffer_surface(struct brw_context *brw,
 	      (tile_y / 2) << BRW_SURFACE_Y_OFFSET_SHIFT |
 	      (mt->align_h == 4 ? BRW_SURFACE_VERTICAL_ALIGN_ENABLE : 0));
 
-   if (brw->gen < 6) {
-      /* _NEW_COLOR */
-      if (!ctx->Color.ColorLogicOpEnabled &&
-	  (ctx->Color.BlendEnabled & (1 << unit)))
-	 surf[0] |= BRW_SURFACE_BLEND_ENABLED;
-
-      if (!ctx->Color.ColorMask[unit][0])
-	 surf[0] |= 1 << BRW_SURFACE_WRITEDISABLE_R_SHIFT;
-      if (!ctx->Color.ColorMask[unit][1])
-	 surf[0] |= 1 << BRW_SURFACE_WRITEDISABLE_G_SHIFT;
-      if (!ctx->Color.ColorMask[unit][2])
-	 surf[0] |= 1 << BRW_SURFACE_WRITEDISABLE_B_SHIFT;
-
-      /* As mentioned above, disable writes to the alpha component when the
-       * renderbuffer is XRGB.
-       */
-      if (ctx->DrawBuffer->Visual.alphaBits == 0 ||
-	  !ctx->Color.ColorMask[unit][3]) {
-	 surf[0] |= 1 << BRW_SURFACE_WRITEDISABLE_A_SHIFT;
-      }
-   }
-
    drm_intel_bo_emit_reloc(brw->batch.bo,
 			   brw->wm.base.surf_offset[surf_index] + 4,
 			   mt->bo,
