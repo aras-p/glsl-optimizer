@@ -246,7 +246,7 @@ void gen8_init_vtable_surface_functions(struct brw_context *brw);
 uint32_t translate_wrap_mode(struct brw_context *brw,
                              GLenum wrap, bool using_nearest);
 void upload_default_color(struct brw_context *brw,
-			  struct gl_sampler_object *sampler,
+			  const struct gl_sampler_object *sampler,
 			  int unit,
                           uint32_t *sdc_offset);
 
