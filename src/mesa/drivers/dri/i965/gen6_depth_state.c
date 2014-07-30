@@ -58,21 +58,11 @@ gen6_emit_depth_stencil_hiz(struct brw_context *brw,
    /* 3DSTATE_DEPTH_BUFFER, 3DSTATE_STENCIL_BUFFER are both
     * non-pipelined state that will need the PIPE_CONTROL workaround.
     */
-   if (brw->gen == 6) {
-      intel_emit_post_sync_nonzero_flush(brw);
-      intel_emit_depth_stall_flushes(brw);
-   }
+   intel_emit_post_sync_nonzero_flush(brw);
+   intel_emit_depth_stall_flushes(brw);
 
-   unsigned int len;
-   if (brw->gen >= 6)
-      len = 7;
-   else if (brw->is_g4x || brw->gen == 5)
-      len = 6;
-   else
-      len = 5;
-
-   BEGIN_BATCH(len);
-   OUT_BATCH(_3DSTATE_DEPTH_BUFFER << 16 | (len - 2));
+   BEGIN_BATCH(7);
+   OUT_BATCH(_3DSTATE_DEPTH_BUFFER << 16 | (7 - 2));
    OUT_BATCH((depth_mt ? depth_mt->pitch - 1 : 0) |
              (depthbuffer_format << 18) |
              ((enable_hiz_ss ? 1 : 0) << 21) | /* separate stencil enable */
@@ -94,13 +84,9 @@ gen6_emit_depth_stencil_hiz(struct brw_context *brw,
              ((height + tile_y - 1) << 19));
    OUT_BATCH(0);
 
-   if (brw->is_g4x || brw->gen >= 5)
-      OUT_BATCH(tile_x | (tile_y << 16));
-   else
-      assert(tile_x == 0 && tile_y == 0);
+   OUT_BATCH(tile_x | (tile_y << 16));
 
-   if (brw->gen >= 6)
-      OUT_BATCH(0);
+   OUT_BATCH(0);
 
    ADVANCE_BATCH();
 
@@ -162,15 +148,12 @@ gen6_emit_depth_stencil_hiz(struct brw_context *brw,
     *     3DSTATE_CLEAR_PARAMS packet must follow the DEPTH_BUFFER_STATE packet
     *     when HiZ is enabled and the DEPTH_BUFFER_STATE changes.
     */
-   if (brw->gen >= 6 || hiz) {
-      if (brw->gen == 6)
-	 intel_emit_post_sync_nonzero_flush(brw);
+   intel_emit_post_sync_nonzero_flush(brw);
 
-      BEGIN_BATCH(2);
-      OUT_BATCH(_3DSTATE_CLEAR_PARAMS << 16 |
-		GEN5_DEPTH_CLEAR_VALID |
-		(2 - 2));
-      OUT_BATCH(depth_mt ? depth_mt->depth_clear_value : 0);
-      ADVANCE_BATCH();
-   }
+   BEGIN_BATCH(2);
+   OUT_BATCH(_3DSTATE_CLEAR_PARAMS << 16 |
+             GEN5_DEPTH_CLEAR_VALID |
+             (2 - 2));
+   OUT_BATCH(depth_mt ? depth_mt->depth_clear_value : 0);
+   ADVANCE_BATCH();
 }
