@@ -575,6 +575,7 @@ gen6_blorp_emit_gs_disable(struct brw_context *brw,
    OUT_BATCH(0);
    OUT_BATCH(0);
    ADVANCE_BATCH();
+   brw->gs.enabled = false;
 }
 
 
