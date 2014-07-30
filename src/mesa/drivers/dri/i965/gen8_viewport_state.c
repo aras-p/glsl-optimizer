@@ -100,7 +100,7 @@ gen8_upload_sf_clip_viewport(struct brw_context *brw)
       vp[10] = -gby; /* y-min */
       vp[11] =  gby; /* y-max */
 
-      /* _NEW_SCISSOR | _NEW_VIEWPORT | _NEW_BUFFERS: Screen Space Viewport
+      /* _NEW_VIEWPORT | _NEW_BUFFERS: Screen Space Viewport
        * The hardware will take the intersection of the drawing rectangle,
        * scissor rectangle, and the viewport extents. We don't need to be
        * smart, and can therefore just program the viewport extents.
@@ -130,7 +130,7 @@ gen8_upload_sf_clip_viewport(struct brw_context *brw)
 
 const struct brw_tracked_state gen8_sf_clip_viewport = {
    .dirty = {
-      .mesa = _NEW_BUFFERS | _NEW_SCISSOR | _NEW_VIEWPORT,
+      .mesa = _NEW_BUFFERS | _NEW_VIEWPORT,
       .brw = BRW_NEW_BATCH,
       .cache = 0,
    },
