@@ -176,16 +176,33 @@ gen6_gs_visitor::visit(ir_emit_vertex *)
 
       /* Buffer all output slots for this vertex in vertex_output */
       for (int slot = 0; slot < prog_data->vue_map.num_slots; ++slot) {
-         /* We will handle PSIZ for each vertex at thread end time since it
-          * is not computed by the GS algorithm and requires specific handling.
-          */
          int varying = prog_data->vue_map.slot_to_varying[slot];
          if (varying != VARYING_SLOT_PSIZ) {
             dst_reg dst(this->vertex_output);
             dst.reladdr = ralloc(mem_ctx, src_reg);
             memcpy(dst.reladdr, &this->vertex_output_offset, sizeof(src_reg));
             emit_urb_slot(dst, varying);
+         } else {
+            /* The PSIZ slot can pack multiple varyings in different channels
+             * and emit_urb_slot() will produce a MOV instruction for each of
+             * them. Since we are writing to an array, that will translate to
+             * possibly multiple MOV instructions with an array destination and
+             * each will generate a scratch write with the same offset into
+             * scratch space (thus, each one overwriting the previous). This is
+             * not what we want. What we will do instead is emit PSIZ to a
+             * a regular temporary register, then move that resgister into the
+             * array. This way we only have one instruction with an array
+             * destination and we only produce a single scratch write.
+             */
+            dst_reg tmp = dst_reg(src_reg(this, glsl_type::uvec4_type));
+            emit_urb_slot(tmp, varying);
+            dst_reg dst(this->vertex_output);
+            dst.reladdr = ralloc(mem_ctx, src_reg);
+            memcpy(dst.reladdr, &this->vertex_output_offset, sizeof(src_reg));
+            vec4_instruction *inst = emit(MOV(dst, src_reg(tmp)));
+            inst->force_writemask_all = true;
          }
+
          emit(ADD(dst_reg(this->vertex_output_offset),
                   this->vertex_output_offset, 1u));
       }
@@ -426,17 +443,12 @@ gen6_gs_visitor::emit_thread_end()
                memcpy(data.reladdr, &this->vertex_output_offset,
                       sizeof(src_reg));
 
-               if (varying == VARYING_SLOT_PSIZ) {
-                  /* We did not buffer PSIZ, emit it directly here */
-                  emit_urb_slot(dst_reg(MRF, mrf), varying);
-               } else {
-                  /* Copy this slot to the appropriate message register */
-                  dst_reg reg = dst_reg(MRF, mrf);
-                  reg.type = output_reg[varying].type;
-                  data.type = reg.type;
-                  vec4_instruction *inst = emit(MOV(reg, data));
-                  inst->force_writemask_all = true;
-               }
+               /* Copy this slot to the appropriate message register */
+               dst_reg reg = dst_reg(MRF, mrf);
+               reg.type = output_reg[varying].type;
+               data.type = reg.type;
+               vec4_instruction *inst = emit(MOV(reg, data));
+               inst->force_writemask_all = true;
 
                mrf++;
                emit(ADD(dst_reg(this->vertex_output_offset),
@@ -584,22 +596,19 @@ gen6_gs_visitor::xfb_buffer_output()
    /* Buffer all TF outputs for this vertex in xfb_output */
    for (int binding = 0; binding < prog_data->num_transform_feedback_bindings;
         binding++) {
-      /* We will handle PSIZ for each vertex at thread end time since it
-       * is not computed by the GS algorithm and requires specific handling.
-       */
       unsigned varying =
          prog_data->transform_feedback_bindings[binding];
-      if (varying != VARYING_SLOT_PSIZ) {
-         dst_reg dst(this->xfb_output);
-         dst.reladdr = ralloc(mem_ctx, src_reg);
-         memcpy(dst.reladdr, &this->xfb_output_offset, sizeof(src_reg));
-         dst.type = output_reg[varying].type;
+      dst_reg dst(this->xfb_output);
+      dst.reladdr = ralloc(mem_ctx, src_reg);
+      memcpy(dst.reladdr, &this->xfb_output_offset, sizeof(src_reg));
+      dst.type = output_reg[varying].type;
 
-         this->current_annotation = output_reg_annotation[varying];
-         src_reg out_reg = src_reg(output_reg[varying]);
-         out_reg.swizzle = prog_data->transform_feedback_swizzles[binding];
-         emit(MOV(dst, out_reg));
-      }
+      this->current_annotation = output_reg_annotation[varying];
+      src_reg out_reg = src_reg(output_reg[varying]);
+      out_reg.swizzle = varying == VARYING_SLOT_PSIZ
+         ? BRW_SWIZZLE_WWWW : prog_data->transform_feedback_swizzles[binding];
+      emit(MOV(dst, out_reg));
+
       emit(ADD(dst_reg(this->xfb_output_offset), this->xfb_output_offset, 1u));
    }
 }
@@ -743,18 +752,12 @@ gen6_gs_visitor::xfb_program(unsigned num_verts)
          src_reg out_reg;
          this->current_annotation = output_reg_annotation[varying];
 
-         if (varying == VARYING_SLOT_PSIZ) {
-            /* We did not buffer PSIZ, emit it directly here */
-            out_reg = src_reg(output_reg[varying]);
-            out_reg.swizzle = BRW_SWIZZLE_WWWW;
-         } else {
-            /* Copy this varying to the appropriate message register */
-            out_reg = src_reg(this, glsl_type::uvec4_type);
-            out_reg.type = output_reg[varying].type;
+         /* Copy this varying to the appropriate message register */
+         out_reg = src_reg(this, glsl_type::uvec4_type);
+         out_reg.type = output_reg[varying].type;
 
-            data.type = output_reg[varying].type;
-            emit(MOV(dst_reg(out_reg), data));
-         }
+         data.type = output_reg[varying].type;
+         emit(MOV(dst_reg(out_reg), data));
 
          /* Write data and send SVB Write */
          inst = emit(GS_OPCODE_SVB_WRITE, mrf_reg, out_reg, sol_temp);
