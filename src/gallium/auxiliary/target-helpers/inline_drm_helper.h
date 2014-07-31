@@ -60,6 +60,7 @@ static char* driver_name = NULL;
 
 #if defined(GALLIUM_SOFTPIPE)
 #if defined(DRI_TARGET)
+#if defined(HAVE_LIBDRM)
 
 const __DRIextension **__driDriverGetExtensions_kms_swrast(void);
 
@@ -82,6 +83,7 @@ kms_swrast_create_screen(int fd)
    screen = sw_screen_create(sws);
    return screen ? debug_screen_wrap(screen) : NULL;
 }
+#endif
 #endif
 #endif
 
