@@ -757,34 +757,21 @@ alloc_image_data(struct llvmpipe_resource *lpr)
    uint level;
    uint offset = 0;
 
-   if (lpr->dt) {
-      /* we get the linear memory from the winsys, and it has
-       * already been zeroed
-       */
-      struct llvmpipe_screen *screen = llvmpipe_screen(lpr->base.screen);
-      struct sw_winsys *winsys = screen->winsys;
+   assert(!lpr->dt);
 
-      assert(lpr->base.last_level == 0);
-
-      lpr->tex_data =
-         winsys->displaytarget_map(winsys, lpr->dt,
-                                   PIPE_TRANSFER_READ_WRITE);
+   /* not a display target - allocate regular memory */
+   /*
+    * Offset calculation for start of a specific mip/layer is always
+    * offset = lpr->linear_mip_offsets[level] + lpr->img_stride[level] * layer
+    */
+   for (level = 0; level <= lpr->base.last_level; level++) {
+      uint buffer_size = tex_image_size(lpr, level);
+      lpr->mip_offsets[level] = offset;
+      offset += align(buffer_size, alignment);
    }
-   else {
-      /* not a display target - allocate regular memory */
-      /*
-       * Offset calculation for start of a specific mip/layer is always
-       * offset = lpr->linear_mip_offsets[level] + lpr->img_stride[level] * layer
-       */
-      for (level = 0; level <= lpr->base.last_level; level++) {
-         uint buffer_size = tex_image_size(lpr, level);
-         lpr->mip_offsets[level] = offset;
-         offset += align(buffer_size, alignment);
-      }
-      lpr->tex_data = align_malloc(offset, alignment);
-      if (lpr->tex_data) {
-         memset(lpr->tex_data, 0, offset);
-      }
+   lpr->tex_data = align_malloc(offset, alignment);
+   if (lpr->tex_data) {
+      memset(lpr->tex_data, 0, offset);
    }
 }
 
