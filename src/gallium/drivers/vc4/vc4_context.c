@@ -84,6 +84,47 @@ dump_fbo(struct vc4_context *vc4, struct vc4_bo *fbo)
 #endif
 }
 
+static void
+vc4_rcl_tile_calls(struct vc4_context *vc4)
+{
+        struct vc4_surface *csurf = vc4_surface(vc4->framebuffer.cbufs[0]);
+        struct vc4_resource *ctex = vc4_resource(csurf->base.texture);
+        uint32_t width = vc4->framebuffer.width;
+        uint32_t height = vc4->framebuffer.height;
+        uint32_t xtiles = align(width, 64) / 64;
+        uint32_t ytiles = align(height, 64) / 64;
+
+        for (int x = 0; x < xtiles; x++) {
+                for (int y = 0; y < ytiles; y++) {
+                        cl_u8(&vc4->rcl, VC4_PACKET_TILE_COORDINATES);
+                        cl_u8(&vc4->rcl, x);
+                        cl_u8(&vc4->rcl, y);
+
+                        cl_start_reloc(&vc4->rcl, 1);
+                        cl_u8(&vc4->rcl, VC4_PACKET_LOAD_TILE_BUFFER_GENERAL);
+                        cl_u8(&vc4->rcl,
+                              VC4_LOADSTORE_TILE_BUFFER_COLOR |
+                              VC4_LOADSTORE_TILE_BUFFER_FORMAT_RASTER);
+                        cl_u8(&vc4->rcl,
+                              VC4_LOADSTORE_TILE_BUFFER_RGBA8888);
+                        cl_reloc(vc4, &vc4->rcl, ctex->bo, csurf->offset);
+
+                        cl_start_reloc(&vc4->rcl, 1);
+                        cl_u8(&vc4->rcl, VC4_PACKET_BRANCH_TO_SUB_LIST);
+                        cl_reloc(vc4, &vc4->rcl, vc4->tile_alloc,
+                                 (y * xtiles + x) * 32);
+
+                        if (x == xtiles - 1 && y == ytiles - 1) {
+                                cl_u8(&vc4->rcl,
+                                      VC4_PACKET_STORE_MS_TILE_BUFFER_AND_EOF);
+                        } else {
+                                cl_u8(&vc4->rcl,
+                                      VC4_PACKET_STORE_MS_TILE_BUFFER);
+                        }
+                }
+        }
+}
+
 void
 vc4_flush(struct pipe_context *pctx)
 {
@@ -100,6 +141,8 @@ vc4_flush(struct pipe_context *pctx)
         struct vc4_resource *ctex = vc4_resource(csurf->base.texture);
         struct drm_vc4_submit_cl submit;
         memset(&submit, 0, sizeof(submit));
+
+        vc4_rcl_tile_calls(vc4);
 
         submit.bo_handles = vc4->bo_handles.base;
         submit.bo_handle_count = (vc4->bo_handles.next -
