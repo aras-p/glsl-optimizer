@@ -343,13 +343,23 @@ struct gen_mipmap_state
 };
 
 /**
+ * One of the FBO states for decompress_state. There will be one for each
+ * required renderbuffer format.
+ */
+struct decompress_fbo_state
+{
+   GLuint FBO, RBO;
+   GLint Width, Height;
+};
+
+/**
  * State for texture decompression
  */
 struct decompress_state
 {
    GLuint VAO;
-   GLuint VBO, FBO, RBO, Sampler;
-   GLint Width, Height;
+   struct decompress_fbo_state byteFBO, floatFBO;
+   GLuint VBO, Sampler;
 
    struct blit_shader_table shaders;
 };
