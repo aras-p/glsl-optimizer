@@ -132,8 +132,8 @@ vc4_setup_rcl(struct vc4_context *vc4)
                 cl_u32(&vc4->rcl, 0); /* no address, since we're in None mode */
         }
 
-        for (int x = 0; x < xtiles; x++) {
-                for (int y = 0; y < ytiles; y++) {
+        for (int y = 0; y < ytiles; y++) {
+                for (int x = 0; x < xtiles; x++) {
                         bool end_of_frame = (x == xtiles - 1 &&
                                              y == ytiles - 1);
 
