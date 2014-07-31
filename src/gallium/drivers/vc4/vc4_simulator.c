@@ -184,9 +184,7 @@ vc4_cl_validate(struct drm_device *dev, struct exec_info *exec)
 #endif
 
 	exec->ct0ca = exec->exec_bo->paddr + bin_offset;
-	exec->ct0ea = exec->ct0ca + args->bin_cl_size;
 	exec->ct1ca = exec->exec_bo->paddr + render_offset;
-	exec->ct1ea = exec->ct1ca + args->render_cl_size;
 
 	exec->shader_rec_v = exec->exec_bo->vaddr + shader_rec_offset;
 	exec->shader_rec_p = exec->exec_bo->paddr + shader_rec_offset;

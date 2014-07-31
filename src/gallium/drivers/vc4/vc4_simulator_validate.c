@@ -363,6 +363,11 @@ vc4_validate_cl(struct drm_device *dev,
 			break;
 	}
 
+	if (is_bin)
+		exec->ct0ea = exec->ct0ca + dst_offset;
+	else
+		exec->ct1ea = exec->ct1ca + dst_offset;
+
 	return 0;
 }
 
