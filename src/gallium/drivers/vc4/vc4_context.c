@@ -85,7 +85,7 @@ dump_fbo(struct vc4_context *vc4, struct vc4_bo *fbo)
 }
 
 static void
-vc4_rcl_tile_calls(struct vc4_context *vc4)
+vc4_setup_rcl(struct vc4_context *vc4)
 {
         struct vc4_surface *csurf = vc4_surface(vc4->framebuffer.cbufs[0]);
         struct vc4_resource *ctex = vc4_resource(csurf->base.texture);
@@ -93,6 +93,33 @@ vc4_rcl_tile_calls(struct vc4_context *vc4)
         uint32_t height = vc4->framebuffer.height;
         uint32_t xtiles = align(width, 64) / 64;
         uint32_t ytiles = align(height, 64) / 64;
+
+        cl_u8(&vc4->rcl, VC4_PACKET_CLEAR_COLORS);
+        cl_u32(&vc4->rcl, 0xff000000); // Opaque Black
+        cl_u32(&vc4->rcl, 0xff000000); // 32 bit clear colours need to be repeated twice
+        cl_u32(&vc4->rcl, 0);
+        cl_u8(&vc4->rcl, 0);
+
+        cl_start_reloc(&vc4->rcl, 1);
+        cl_u8(&vc4->rcl, VC4_PACKET_TILE_RENDERING_MODE_CONFIG);
+        cl_reloc(vc4, &vc4->rcl, ctex->bo, csurf->offset);
+        cl_u16(&vc4->rcl, width);
+        cl_u16(&vc4->rcl, height);
+        cl_u8(&vc4->rcl, (VC4_RENDER_CONFIG_MEMORY_FORMAT_LINEAR |
+                          VC4_RENDER_CONFIG_FORMAT_RGBA8888));
+        cl_u8(&vc4->rcl, 0);
+
+        // Do a store of the first tile to force the tile buffer to be cleared
+        /* XXX: I think these two packets may be unnecessary. */
+        if (0) {
+                cl_u8(&vc4->rcl, VC4_PACKET_TILE_COORDINATES);
+                cl_u8(&vc4->rcl, 0);
+                cl_u8(&vc4->rcl, 0);
+
+                cl_u8(&vc4->rcl, VC4_PACKET_STORE_TILE_BUFFER_GENERAL);
+                cl_u16(&vc4->rcl, 0); // Store nothing (just clear)
+                cl_u32(&vc4->rcl, 0); // no address is needed
+        }
 
         for (int x = 0; x < xtiles; x++) {
                 for (int y = 0; y < ytiles; y++) {
@@ -137,12 +164,12 @@ vc4_flush(struct pipe_context *pctx)
         cl_u8(&vc4->bcl, VC4_PACKET_NOP);
         cl_u8(&vc4->bcl, VC4_PACKET_HALT);
 
+        vc4_setup_rcl(vc4);
+
         struct vc4_surface *csurf = vc4_surface(vc4->framebuffer.cbufs[0]);
         struct vc4_resource *ctex = vc4_resource(csurf->base.texture);
         struct drm_vc4_submit_cl submit;
         memset(&submit, 0, sizeof(submit));
-
-        vc4_rcl_tile_calls(vc4);
 
         submit.bo_handles = vc4->bo_handles.base;
         submit.bo_handle_count = (vc4->bo_handles.next -
