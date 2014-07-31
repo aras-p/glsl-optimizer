@@ -61,10 +61,7 @@ vc4_gem_hindex(struct vc4_context *vc4, struct vc4_bo *bo)
         }
 
         cl_u32(&vc4->bo_handles, bo->handle);
-
-#ifdef USE_VC4_SIMULATOR
-        cl_ptr(&vc4->bo_pointers, bo);
-#endif
+        cl_ptr(&vc4->bo_pointers, vc4_bo_reference(bo));
 
         return hindex;
 }

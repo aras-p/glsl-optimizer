@@ -123,9 +123,7 @@ struct vc4_context {
         struct vc4_cl shader_rec;
         struct vc4_cl uniforms;
         struct vc4_cl bo_handles;
-#ifdef USE_VC4_SIMULATOR
         struct vc4_cl bo_pointers;
-#endif
         uint32_t shader_rec_count;
 
         struct vc4_bo *tile_alloc;

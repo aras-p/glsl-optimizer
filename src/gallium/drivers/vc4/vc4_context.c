@@ -226,9 +226,10 @@ vc4_flush(struct pipe_context *pctx)
         vc4_reset_cl(&vc4->shader_rec);
         vc4_reset_cl(&vc4->uniforms);
         vc4_reset_cl(&vc4->bo_handles);
-#ifdef USE_VC4_SIMULATOR
+        struct vc4_bo **referenced_bos = vc4->bo_pointers.base;
+        for (int i = 0; i < submit.bo_handle_count; i++)
+                vc4_bo_unreference(&referenced_bos[i]);
         vc4_reset_cl(&vc4->bo_pointers);
-#endif
         vc4->shader_rec_count = 0;
 
         vc4->needs_flush = false;
