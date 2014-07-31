@@ -462,6 +462,7 @@ validate_shader_rec(struct drm_device *dev,
 	memcpy(pkt_v, pkt_u, packet_size);
 	exec->shader_rec_u += packet_size;
 	exec->shader_rec_v += packet_size;
+	exec->shader_rec_size -= packet_size;
 
 	for (i = 0; i < nr_relocs; i++) {
 		if (src_handles[i] >= exec->bo_count) {
