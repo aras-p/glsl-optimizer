@@ -156,10 +156,6 @@ vc4_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
                 cl_u32(&vc4->bcl, info->start);
         }
 
-        cl_u8(&vc4->bcl, VC4_PACKET_FLUSH_ALL);
-        cl_u8(&vc4->bcl, VC4_PACKET_NOP);
-        cl_u8(&vc4->bcl, VC4_PACKET_HALT);
-
 // Shader Record
 
         vc4_write_uniforms(vc4, vc4->prog.fs,

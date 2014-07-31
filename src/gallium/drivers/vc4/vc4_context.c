@@ -92,6 +92,10 @@ vc4_flush(struct pipe_context *pctx)
         if (!vc4->needs_flush)
                 return;
 
+        cl_u8(&vc4->bcl, VC4_PACKET_FLUSH_ALL);
+        cl_u8(&vc4->bcl, VC4_PACKET_NOP);
+        cl_u8(&vc4->bcl, VC4_PACKET_HALT);
+
         struct vc4_surface *csurf = vc4_surface(vc4->framebuffer.cbufs[0]);
         struct vc4_resource *ctex = vc4_resource(csurf->base.texture);
         struct drm_vc4_submit_cl submit;
