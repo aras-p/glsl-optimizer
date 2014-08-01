@@ -146,6 +146,12 @@ struct ra_node {
     */
    bool in_stack;
 
+   /**
+    * The q total, as defined in the Runeson/Nyström paper, for all the
+    * interfering nodes not in the stack.
+    */
+   unsigned int q_total;
+
    /* For an implementation that needs register spilling, this is the
     * approximate cost of spilling this node.
     */
@@ -354,6 +360,12 @@ ra_add_node_adjacency(struct ra_graph *g, unsigned int n1, unsigned int n2)
 {
    BITSET_SET(g->nodes[n1].adjacency, n2);
 
+   if (n1 != n2) {
+      int n1_class = g->nodes[n1].class;
+      int n2_class = g->nodes[n2].class;
+      g->nodes[n1].q_total += g->regs->classes[n1_class]->q[n2_class];
+   }
+
    if (g->nodes[n1].adjacency_count >=
        g->nodes[n1].adjacency_list_size) {
       g->nodes[n1].adjacency_list_size *= 2;
@@ -387,6 +399,7 @@ ra_alloc_interference_graph(struct ra_regs *regs, unsigned int count)
       g->nodes[i].adjacency_list =
          ralloc_array(g, unsigned int, g->nodes[i].adjacency_list_size);
       g->nodes[i].adjacency_count = 0;
+      g->nodes[i].q_total = 0;
 
       ra_add_node_adjacency(g, i, i);
       g->nodes[i].reg = NO_REG;
@@ -415,20 +428,25 @@ ra_add_node_interference(struct ra_graph *g,
 static bool
 pq_test(struct ra_graph *g, unsigned int n)
 {
-   unsigned int j;
-   unsigned int q = 0;
    int n_class = g->nodes[n].class;
 
-   for (j = 0; j < g->nodes[n].adjacency_count; j++) {
-      unsigned int n2 = g->nodes[n].adjacency_list[j];
+   return g->nodes[n].q_total < g->regs->classes[n_class]->p;
+}
+
+static void
+decrement_q(struct ra_graph *g, unsigned int n)
+{
+   unsigned int i;
+   int n_class = g->nodes[n].class;
+
+   for (i = 0; i < g->nodes[n].adjacency_count; i++) {
+      unsigned int n2 = g->nodes[n].adjacency_list[i];
       unsigned int n2_class = g->nodes[n2].class;
 
       if (n != n2 && !g->nodes[n2].in_stack) {
-	 q += g->regs->classes[n_class]->q[n2_class];
+	 g->nodes[n2].q_total -= g->regs->classes[n2_class]->q[n_class];
       }
    }
-
-   return q < g->regs->classes[n_class]->p;
 }
 
 /**
@@ -454,6 +472,7 @@ ra_simplify(struct ra_graph *g)
 	    continue;
 
 	 if (pq_test(g, i)) {
+	    decrement_q(g, i);
 	    g->stack[g->stack_count] = i;
 	    g->stack_count++;
 	    g->nodes[i].in_stack = true;
