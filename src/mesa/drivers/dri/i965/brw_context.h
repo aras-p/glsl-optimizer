@@ -600,7 +600,6 @@ struct brw_vs_prog_data {
                             2 /* shader time, pull constants */)
 
 #define SURF_INDEX_GEN6_SOL_BINDING(t) (t)
-#define BRW_MAX_GEN6_GS_SURFACES       SURF_INDEX_GEN6_SOL_BINDING(BRW_MAX_SOL_BINDINGS)
 
 /* Note: brw_gs_prog_data_compare() must be updated when adding fields to
  * this struct!
@@ -1260,7 +1259,12 @@ struct brw_context
       uint32_t state_offset;
 
       uint32_t bind_bo_offset;
-      uint32_t surf_offset[BRW_MAX_GEN6_GS_SURFACES];
+      /**
+       * Surface offsets for the binding table. We only need surfaces to
+       * implement transform feedback so BRW_MAX_SOL_BINDINGS is all that we
+       * need in this case.
+       */
+      uint32_t surf_offset[BRW_MAX_SOL_BINDINGS];
    } ff_gs;
 
    struct {

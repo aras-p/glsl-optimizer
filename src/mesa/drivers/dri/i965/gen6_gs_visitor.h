@@ -43,6 +43,7 @@ public:
       vec4_gs_visitor(brw, c, prog, mem_ctx, no_spills) {}
 
 protected:
+   virtual void assign_binding_table_offsets();
    virtual void emit_prolog();
    virtual void emit_thread_end();
    virtual void visit(ir_emit_vertex *);

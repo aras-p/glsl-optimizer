@@ -36,6 +36,15 @@ const unsigned MAX_GS_INPUT_VERTICES = 6;
 namespace brw {
 
 void
+gen6_gs_visitor::assign_binding_table_offsets()
+{
+   /* In gen6 we reserve the first BRW_MAX_SOL_BINDINGS entries for transform
+    * feedback surfaces.
+    */
+   assign_common_binding_table_offsets(BRW_MAX_SOL_BINDINGS);
+}
+
+void
 gen6_gs_visitor::emit_prolog()
 {
    vec4_gs_visitor::emit_prolog();

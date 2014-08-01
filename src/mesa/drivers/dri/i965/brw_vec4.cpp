@@ -1612,6 +1612,12 @@ vec4_vs_visitor::setup_payload(void)
    this->first_non_payload_grf = reg;
 }
 
+void
+vec4_visitor::assign_binding_table_offsets()
+{
+   assign_common_binding_table_offsets(0);
+}
+
 src_reg
 vec4_visitor::get_timestamp()
 {
@@ -1711,7 +1717,7 @@ vec4_visitor::run()
    if (INTEL_DEBUG & DEBUG_SHADER_TIME)
       emit_shader_time_begin();
 
-   assign_common_binding_table_offsets(0);
+   assign_binding_table_offsets();
 
    emit_prolog();
 

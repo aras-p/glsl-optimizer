@@ -108,48 +108,76 @@ static void
 brw_gs_upload_binding_table(struct brw_context *brw)
 {
    uint32_t *bind;
+   struct gl_context *ctx = &brw->ctx;
+   const struct gl_shader_program *shaderprog;
+   bool need_binding_table = false;
+
+   /* We have two scenarios here:
+    * 1) We are using a geometry shader only to implement transform feedback
+    *    for a vertex shader (brw->geometry_program == NULL). In this case, we
+    *    only need surfaces for transform feedback in the GS stage.
+    * 2) We have a user-provided geometry shader. In this case we may need
+    *    surfaces for transform feedback and/or other stuff, like textures,
+    *    in the GS stage.
+    */
 
    if (!brw->geometry_program) {
-      struct gl_context *ctx = &brw->ctx;
       /* BRW_NEW_VERTEX_PROGRAM */
-      const struct gl_shader_program *shaderprog =
-         ctx->_Shader->CurrentProgram[MESA_SHADER_VERTEX];
-      bool has_surfaces = false;
-
+      shaderprog = ctx->_Shader->CurrentProgram[MESA_SHADER_VERTEX];
       if (shaderprog) {
+         /* Skip making a binding table if we don't have anything to put in it */
          const struct gl_transform_feedback_info *linked_xfb_info =
             &shaderprog->LinkedTransformFeedback;
-         /* Currently we only ever upload surfaces for SOL. */
-         has_surfaces = linked_xfb_info->NumOutputs != 0;
-
-         /* Skip making a binding table if we don't have anything to put in it. */
-         if (!has_surfaces) {
-            if (brw->ff_gs.bind_bo_offset != 0) {
-               brw->state.dirty.brw |= BRW_NEW_GS_BINDING_TABLE;
-               brw->ff_gs.bind_bo_offset = 0;
-            }
-            return;
-         }
+         need_binding_table = linked_xfb_info->NumOutputs > 0;
       }
-   }
+      if (!need_binding_table) {
+         if (brw->ff_gs.bind_bo_offset != 0) {
+            brw->state.dirty.brw |= BRW_NEW_GS_BINDING_TABLE;
+            brw->ff_gs.bind_bo_offset = 0;
+         }
+         return;
+      }
 
-   /* Might want to calculate nr_surfaces first, to avoid taking up so much
-    * space for the binding table.
-    */
-   if (brw->geometry_program) {
+      /* Might want to calculate nr_surfaces first, to avoid taking up so much
+       * space for the binding table. Anyway, in this case we know that we only
+       * use BRW_MAX_SOL_BINDINGS surfaces at most.
+       */
       bind = brw_state_batch(brw, AUB_TRACE_BINDING_TABLE,
-                             sizeof(uint32_t) * BRW_MAX_GEN6_GS_SURFACES,
-                             32, &brw->gs.base.bind_bo_offset);
-
-      /* BRW_NEW_SURFACES */
-      memcpy(bind, brw->gs.base.surf_offset, BRW_MAX_GEN6_GS_SURFACES * sizeof(uint32_t));
-   } else {
-      bind = brw_state_batch(brw, AUB_TRACE_BINDING_TABLE,
-                             sizeof(uint32_t) * BRW_MAX_GEN6_GS_SURFACES,
+                             sizeof(uint32_t) * BRW_MAX_SOL_BINDINGS,
                              32, &brw->ff_gs.bind_bo_offset);
 
       /* BRW_NEW_SURFACES */
-      memcpy(bind, brw->ff_gs.surf_offset, BRW_MAX_GEN6_GS_SURFACES * sizeof(uint32_t));
+      memcpy(bind, brw->ff_gs.surf_offset,
+             BRW_MAX_SOL_BINDINGS * sizeof(uint32_t));
+   } else {
+      /* BRW_NEW_GEOMETRY_PROGRAM */
+      shaderprog = ctx->_Shader->CurrentProgram[MESA_SHADER_GEOMETRY];
+      if (shaderprog) {
+         /* Skip making a binding table if we don't have anything to put in it */
+         struct brw_stage_prog_data *prog_data = brw->gs.base.prog_data;
+         const struct gl_transform_feedback_info *linked_xfb_info =
+            &shaderprog->LinkedTransformFeedback;
+         need_binding_table = linked_xfb_info->NumOutputs > 0 ||
+                              prog_data->binding_table.size_bytes > 0;
+      }
+      if (!need_binding_table) {
+         if (brw->gs.base.bind_bo_offset != 0) {
+            brw->gs.base.bind_bo_offset = 0;
+            brw->state.dirty.brw |= BRW_NEW_GS_BINDING_TABLE;
+         }
+         return;
+      }
+
+      /* Might want to calculate nr_surfaces first, to avoid taking up so much
+       * space for the binding table.
+       */
+      bind = brw_state_batch(brw, AUB_TRACE_BINDING_TABLE,
+                             sizeof(uint32_t) * BRW_MAX_SURFACES,
+                             32, &brw->gs.base.bind_bo_offset);
+
+      /* BRW_NEW_SURFACES */
+      memcpy(bind, brw->gs.base.surf_offset,
+             BRW_MAX_SURFACES * sizeof(uint32_t));
    }
 
    brw->state.dirty.brw |= BRW_NEW_GS_BINDING_TABLE;
