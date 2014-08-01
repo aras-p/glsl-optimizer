@@ -66,10 +66,7 @@ void ra_add_node_interference(struct ra_graph *g,
 /** @} */
 
 /** @{ Graph-coloring register allocation */
-bool ra_simplify(struct ra_graph *g);
-void ra_optimistic_color(struct ra_graph *g);
-bool ra_select(struct ra_graph *g);
-bool ra_allocate_no_spills(struct ra_graph *g);
+bool ra_allocate(struct ra_graph *g);
 
 unsigned int ra_get_node_reg(struct ra_graph *g, unsigned int n);
 void ra_set_node_reg(struct ra_graph * g, unsigned int n, unsigned int reg);

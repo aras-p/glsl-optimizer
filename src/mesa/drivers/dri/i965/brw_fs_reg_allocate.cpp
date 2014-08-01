@@ -486,7 +486,7 @@ fs_visitor::assign_regs(bool allow_spilling)
       }
    }
 
-   if (!ra_allocate_no_spills(g)) {
+   if (!ra_allocate(g)) {
       /* Failed to allocate registers.  Spill a reg, and the caller will
        * loop back into here to try again.
        */

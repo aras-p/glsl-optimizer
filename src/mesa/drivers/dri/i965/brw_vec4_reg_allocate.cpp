@@ -207,7 +207,7 @@ vec4_visitor::reg_allocate()
 
    setup_payload_interference(g, first_payload_node, node_count);
 
-   if (!ra_allocate_no_spills(g)) {
+   if (!ra_allocate(g)) {
       /* Failed to allocate registers.  Spill a reg, and the caller will
        * loop back into here to try again.
        */

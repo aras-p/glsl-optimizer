@@ -440,7 +440,7 @@ pq_test(struct ra_graph *g, unsigned int n)
  * means that either spilling will be required, or optimistic coloring
  * should be applied.
  */
-bool
+static bool
 ra_simplify(struct ra_graph *g)
 {
    bool progress = true;
@@ -477,7 +477,7 @@ ra_simplify(struct ra_graph *g)
  * If all nodes were trivially colorable, then this must succeed.  If
  * not (optimistic coloring), then it may return false;
  */
-bool
+static bool
 ra_select(struct ra_graph *g)
 {
    int i;
@@ -530,7 +530,7 @@ ra_select(struct ra_graph *g)
  * locally-colorable and the rest of the register allocation
  * will succeed.
  */
-void
+static void
 ra_optimistic_color(struct ra_graph *g)
 {
    unsigned int i;
@@ -547,7 +547,7 @@ ra_optimistic_color(struct ra_graph *g)
 }
 
 bool
-ra_allocate_no_spills(struct ra_graph *g)
+ra_allocate(struct ra_graph *g)
 {
    if (!ra_simplify(g)) {
       ra_optimistic_color(g);
@@ -618,11 +618,11 @@ ra_get_best_spill_node(struct ra_graph *g)
 
    /* For any registers not in the stack to be colored, consider them for
     * spilling.  This will mostly collect nodes that were being optimistally
-    * colored as part of ra_allocate_no_spills() if we didn't successfully
+    * colored as part of ra_allocate() if we didn't successfully
     * optimistically color.
     *
     * It also includes nodes not trivially colorable by ra_simplify() if it
-    * was used directly instead of as part of ra_allocate_no_spills().
+    * was used directly instead of as part of ra_allocate().
     */
    for (n = 0; n < g->count; n++) {
       float cost = g->nodes[n].spill_cost;
