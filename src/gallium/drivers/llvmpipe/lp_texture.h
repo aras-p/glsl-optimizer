@@ -64,10 +64,10 @@ struct llvmpipe_resource
    unsigned row_stride[LP_MAX_TEXTURE_LEVELS];
    /** Image stride (for cube maps, array or 3D textures) in bytes */
    unsigned img_stride[LP_MAX_TEXTURE_LEVELS];
-   /** Number of 3D slices or cube faces per level */
-   unsigned num_slices_faces[LP_MAX_TEXTURE_LEVELS];
    /** Offset to start of mipmap level, in bytes */
    unsigned mip_offsets[LP_MAX_TEXTURE_LEVELS];
+   /** allocated total size (for non-display target texture resources only) */
+   unsigned total_alloc_size;
 
    /**
     * Display target, for textures with the PIPE_BIND_DISPLAY_TARGET
