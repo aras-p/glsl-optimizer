@@ -552,6 +552,11 @@ _mesa_float_to_half(float f);
 extern float
 _mesa_half_to_float(GLhalfARB h);
 
+static inline bool
+_mesa_half_is_negative(GLhalfARB h)
+{
+   return h & 0x8000;
+}
 
 extern void *
 _mesa_bsearch( const void *key, const void *base, size_t nmemb, size_t size, 
