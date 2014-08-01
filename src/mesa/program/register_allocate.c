@@ -168,16 +168,6 @@ struct ra_graph {
 
    unsigned int *stack;
    unsigned int stack_count;
-
-   /**
-    * Tracks the start of the set of optimistically-colored registers in the
-    * stack.
-    *
-    * Along with any registers not in the stack (if one called ra_simplify()
-    * and didn't do optimistic coloring), these need to be considered for
-    * spilling.
-    */
-   unsigned int stack_optimistic_start;
 };
 
 /**
@@ -528,11 +518,16 @@ ra_select(struct ra_graph *g)
 	 if (i == g->nodes[n].adjacency_count)
 	    break;
       }
+
+      /* set this to false even if we return here so that
+       * ra_get_best_spill_node() considers this node later.
+       */
+      g->nodes[n].in_stack = false;
+
       if (ri == g->regs->count)
 	 return false;
 
       g->nodes[n].reg = r;
-      g->nodes[n].in_stack = false;
       g->stack_count--;
 
       if (g->regs->round_robin)
@@ -554,7 +549,6 @@ ra_optimistic_color(struct ra_graph *g)
 {
    unsigned int i;
 
-   g->stack_optimistic_start = g->stack_count;
    for (i = 0; i < g->count; i++) {
       if (g->nodes[i].in_stack || g->nodes[i].reg != NO_REG)
 	 continue;
@@ -633,15 +627,12 @@ ra_get_best_spill_node(struct ra_graph *g)
 {
    unsigned int best_node = -1;
    float best_benefit = 0.0;
-   unsigned int n, i;
+   unsigned int n;
 
-   /* For any registers not in the stack to be colored, consider them for
-    * spilling.  This will mostly collect nodes that were being optimistally
-    * colored as part of ra_allocate() if we didn't successfully
-    * optimistically color.
-    *
-    * It also includes nodes not trivially colorable by ra_simplify() if it
-    * was used directly instead of as part of ra_allocate().
+   /* Consider any nodes that we colored successfully or the node we failed to
+    * color for spilling. When we failed to color a node in ra_select(), we
+    * only considered these nodes, so spilling any other ones would not result
+    * in us making progress.
     */
    for (n = 0; n < g->count; n++) {
       float cost = g->nodes[n].spill_cost;
@@ -658,26 +649,6 @@ ra_get_best_spill_node(struct ra_graph *g)
       if (benefit / cost > best_benefit) {
 	 best_benefit = benefit / cost;
 	 best_node = n;
-      }
-   }
-
-   /* Also consider spilling any nodes that were set up to be optimistically
-    * colored that we couldn't manage to color in ra_select().
-    */
-   for (i = g->stack_optimistic_start; i < g->stack_count; i++) {
-      float cost, benefit;
-
-      n = g->stack[i];
-      cost = g->nodes[n].spill_cost;
-
-      if (cost <= 0.0)
-         continue;
-
-      benefit = ra_get_spill_benefit(g, n);
-
-      if (benefit / cost > best_benefit) {
-         best_benefit = benefit / cost;
-         best_node = n;
       }
    }
 
