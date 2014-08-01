@@ -235,6 +235,9 @@ dnl
 dnl Optional flags, check for compiler support
 dnl
 AX_CHECK_COMPILE_FLAG([-msse4.1], [SSE41_SUPPORTED=1], [SSE41_SUPPORTED=0])
+if test "x$SSE41_SUPPORTED" = x1; then
+    DEFINES="$DEFINES -DUSE_SSE41"
+fi
 AM_CONDITIONAL([SSE41_SUPPORTED], [test x$SSE41_SUPPORTED = x1])
 
 dnl

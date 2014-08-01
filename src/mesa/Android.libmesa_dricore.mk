@@ -50,6 +50,7 @@ endif # MESA_ENABLE_ASM
 ifeq ($(ARCH_X86_HAVE_SSE4_1),true)
 LOCAL_SRC_FILES += \
 	$(SRCDIR)main/streaming-load-memcpy.c
+LOCAL_CFLAGS := -msse4.1
 endif
 
 LOCAL_C_INCLUDES := \
