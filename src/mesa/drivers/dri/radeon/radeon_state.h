@@ -50,6 +50,7 @@ extern void radeonUpdateDrawBuffer( struct gl_context *ctx );
 extern void radeonUploadTexMatrix( r100ContextPtr rmesa,
 				   int unit, GLboolean swapcols );
 
+extern GLboolean r100ValidateBuffers(struct gl_context *ctx);
 extern GLboolean radeonValidateState( struct gl_context *ctx );
 
 

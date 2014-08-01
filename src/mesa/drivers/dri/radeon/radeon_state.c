@@ -1992,7 +1992,7 @@ static void update_texturematrix( struct gl_context *ctx )
    }
 }
 
-static GLboolean r100ValidateBuffers(struct gl_context *ctx)
+GLboolean r100ValidateBuffers(struct gl_context *ctx)
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
    struct radeon_renderbuffer *rrb;

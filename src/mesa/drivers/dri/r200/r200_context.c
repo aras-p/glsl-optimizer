@@ -190,6 +190,7 @@ static void r200_init_vtbl(radeonContextPtr radeon)
    radeon->vtbl.check_blit = r200_check_blit;
    radeon->vtbl.blit = r200_blit;
    radeon->vtbl.is_format_renderable = radeonIsFormatRenderable;
+   radeon->vtbl.revalidate_all_buffers = r200ValidateBuffers;
 }
 
 
