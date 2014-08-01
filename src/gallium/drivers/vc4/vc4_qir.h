@@ -140,6 +140,9 @@ enum quniform_contents {
         QUNIFORM_VIEWPORT_Y_SCALE,
         /** @} */
 
+        QUNIFORM_VIEWPORT_Z_OFFSET,
+        QUNIFORM_VIEWPORT_Z_SCALE,
+
         /**
          * A reference to a texture config parameter 0 uniform.
          *
