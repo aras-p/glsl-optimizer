@@ -248,6 +248,54 @@ vc4_pipe_flush(struct pipe_context *pctx, struct pipe_fence_handle **fence,
         vc4_flush(pctx);
 }
 
+/**
+ * Flushes the current command lists if they reference the given BO.
+ *
+ * This helps avoid flushing the command buffers when unnecessary.
+ */
+void
+vc4_flush_for_bo(struct pipe_context *pctx, struct vc4_bo *bo)
+{
+        struct vc4_context *vc4 = vc4_context(pctx);
+
+        if (!vc4->needs_flush)
+                return;
+
+        /* Walk all the referenced BOs in the drawing command list to see if
+         * they match.
+         */
+        struct vc4_bo **referenced_bos = vc4->bo_pointers.base;
+        for (int i = 0; i < (vc4->bo_handles.next -
+                             vc4->bo_handles.base) / 4; i++) {
+                if (referenced_bos[i] == bo) {
+                        vc4_flush(pctx);
+                        return;
+                }
+        }
+
+        /* Also check for the Z/color buffers, since the references to those
+         * are only added immediately before submit.
+         */
+        struct vc4_surface *csurf = vc4_surface(vc4->framebuffer.cbufs[0]);
+        if (csurf) {
+                struct vc4_resource *ctex = vc4_resource(csurf->base.texture);
+                if (ctex->bo == bo) {
+                        vc4_flush(pctx);
+                        return;
+                }
+        }
+
+        struct vc4_surface *zsurf = vc4_surface(vc4->framebuffer.zsbuf);
+        if (zsurf) {
+                struct vc4_resource *ztex =
+                        vc4_resource(zsurf->base.texture);
+                if (ztex->bo == bo) {
+                        vc4_flush(pctx);
+                        return;
+                }
+        }
+}
+
 static void
 vc4_context_destroy(struct pipe_context *pctx)
 {

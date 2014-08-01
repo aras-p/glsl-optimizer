@@ -57,7 +57,7 @@ vc4_resource_transfer_map(struct pipe_context *pctx,
         enum pipe_format format = prsc->format;
         char *buf;
 
-        vc4_flush(pctx);
+        vc4_flush_for_bo(pctx, rsc->bo);
 
         ptrans = util_slab_alloc(&vc4->transfer_pool);
         if (!ptrans)
