@@ -444,11 +444,12 @@ decrement_q(struct ra_graph *g, unsigned int n)
  * trivially-colorable nodes into a stack of nodes to be colored,
  * removing them from the graph, and rinsing and repeating.
  *
- * Returns true if all nodes were removed from the graph.  false
- * means that either spilling will be required, or optimistic coloring
- * should be applied.
+ * If we encounter a case where we can't push any nodes on the stack, then
+ * we optimistically choose a node and push it on the stack. We heuristically
+ * push the node with the lowest total q value, since it has the fewest
+ * neighbors and therefore is most likely to be allocated.
  */
-static bool
+static void
 ra_simplify(struct ra_graph *g)
 {
    bool progress = true;
@@ -456,6 +457,9 @@ ra_simplify(struct ra_graph *g)
 
    while (progress) {
       progress = false;
+
+      unsigned int best_optimistic_node = ~0;
+      unsigned int lowest_q_total = ~0;
 
       for (i = g->count - 1; i >= 0; i--) {
 	 if (g->nodes[i].in_stack || g->nodes[i].reg != NO_REG)
@@ -467,16 +471,23 @@ ra_simplify(struct ra_graph *g)
 	    g->stack_count++;
 	    g->nodes[i].in_stack = true;
 	    progress = true;
+	 } else {
+	    unsigned int new_q_total = g->nodes[i].q_total;
+	    if (new_q_total < lowest_q_total) {
+	       best_optimistic_node = i;
+	       lowest_q_total = new_q_total;
+	    }
 	 }
       }
-   }
 
-   for (i = 0; i < g->count; i++) {
-      if (!g->nodes[i].in_stack && g->nodes[i].reg == -1)
-	 return false;
+      if (!progress && best_optimistic_node != ~0) {
+	 decrement_q(g, best_optimistic_node);
+	 g->stack[g->stack_count] = best_optimistic_node;
+	 g->stack_count++;
+	 g->nodes[best_optimistic_node].in_stack = true;
+	 progress = true;
+      }
    }
-
-   return true;
 }
 
 /**
@@ -537,34 +548,10 @@ ra_select(struct ra_graph *g)
    return true;
 }
 
-/**
- * Optimistic register coloring: Just push the remaining nodes
- * on the stack.  They'll be colored first in ra_select(), and
- * if they succeed then the locally-colorable nodes are still
- * locally-colorable and the rest of the register allocation
- * will succeed.
- */
-static void
-ra_optimistic_color(struct ra_graph *g)
-{
-   unsigned int i;
-
-   for (i = 0; i < g->count; i++) {
-      if (g->nodes[i].in_stack || g->nodes[i].reg != NO_REG)
-	 continue;
-
-      g->stack[g->stack_count] = i;
-      g->stack_count++;
-      g->nodes[i].in_stack = true;
-   }
-}
-
 bool
 ra_allocate(struct ra_graph *g)
 {
-   if (!ra_simplify(g)) {
-      ra_optimistic_color(g);
-   }
+   ra_simplify(g);
    return ra_select(g);
 }
 
