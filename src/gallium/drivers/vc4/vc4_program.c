@@ -370,6 +370,64 @@ tgsi_to_qir_abs(struct tgsi_to_qir *trans,
 }
 
 static void
+emit_vertex_input(struct tgsi_to_qir *trans, int attr)
+{
+        enum pipe_format format = trans->vs_key->attr_formats[attr];
+        struct qcompile *c = trans->c;
+        struct qreg vpm_reads[4];
+
+        /* Right now, we're setting the VPM offsets to be 16 bytes wide every
+         * time, so we always read 4 32-bit VPM entries.
+         */
+        for (int i = 0; i < 4; i++) {
+                vpm_reads[i] = qir_get_temp(c);
+                qir_emit(c, qir_inst(QOP_VPM_READ,
+                                     vpm_reads[i],
+                                     c->undef,
+                                     c->undef));
+                c->num_inputs++;
+        }
+
+        bool format_warned = false;
+        const struct util_format_description *desc =
+                util_format_description(format);
+
+        for (int i = 0; i < 4; i++) {
+                uint8_t swiz = desc->swizzle[i];
+
+                switch (swiz) {
+                case UTIL_FORMAT_SWIZZLE_NONE:
+                        if (!format_warned) {
+                                fprintf(stderr,
+                                        "vtx element %d NONE swizzle: %s\n",
+                                        attr, util_format_name(format));
+                                format_warned = true;
+                        }
+                        /* FALLTHROUGH */
+                case UTIL_FORMAT_SWIZZLE_0:
+                        trans->inputs[attr * 4 + i] = qir_uniform_ui(trans, 0);
+                        break;
+                case UTIL_FORMAT_SWIZZLE_1:
+                        trans->inputs[attr * 4 + i] = qir_uniform_ui(trans,
+                                                                     fui(1.0));
+                        break;
+                default:
+                        if (!format_warned &&
+                            (desc->channel[swiz].type != UTIL_FORMAT_TYPE_FLOAT ||
+                             desc->channel[swiz].size != 32)) {
+                                fprintf(stderr,
+                                        "vtx element %d unsupported type: %s\n",
+                                        attr, util_format_name(format));
+                                format_warned = true;
+                        }
+
+                        trans->inputs[attr * 4 + i] = vpm_reads[swiz];
+                        break;
+                }
+        }
+}
+
+static void
 emit_tgsi_declaration(struct tgsi_to_qir *trans,
                       struct tgsi_full_declaration *decl)
 {
@@ -377,28 +435,25 @@ emit_tgsi_declaration(struct tgsi_to_qir *trans,
 
         switch (decl->Declaration.File) {
         case TGSI_FILE_INPUT:
-                for (int i = decl->Range.First * 4;
-                     i < (decl->Range.Last + 1) * 4;
-                     i++) {
-                        if (c->stage == QSTAGE_FRAG) {
+                if (c->stage == QSTAGE_FRAG) {
+                        for (int i = decl->Range.First * 4;
+                             i < (decl->Range.Last + 1) * 4;
+                             i++) {
                                 struct qreg vary = {
                                         QFILE_VARY,
                                         i
                                 };
-
                                 trans->inputs[i] =
                                         qir_VARY_ADD_C(c, qir_MOV(c, vary));
-                        } else {
-                                struct qreg dst = qir_get_temp(c);
-                                /* XXX: attribute type/size/count */
-                                qir_emit(c, qir_inst(QOP_VPM_READ,
-                                                     dst,
-                                                     c->undef,
-                                                     c->undef));
-                                trans->inputs[i] = dst;
-                        }
 
-                        c->num_inputs++;
+                                c->num_inputs++;
+                        }
+                } else {
+                        for (int i = decl->Range.First;
+                             i <= decl->Range.Last;
+                             i++) {
+                                emit_vertex_input(trans, i);
+                        }
                 }
                 break;
         }
@@ -792,6 +847,9 @@ vc4_update_compiled_vs(struct vc4_context *vc4)
 
         memset(key, 0, sizeof(*key));
         key->base.shader_state = vc4->prog.bind_vs;
+
+        for (int i = 0; i < ARRAY_SIZE(key->attr_formats); i++)
+                key->attr_formats[i] = vc4->vtx->pipe[i].src_format;
 
         vc4->prog.vs = util_hash_table_get(vc4->vs_cache, key);
         if (vc4->prog.vs)

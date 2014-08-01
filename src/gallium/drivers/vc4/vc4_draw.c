@@ -205,11 +205,6 @@ vc4_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
                         &vertexbuf->vb[elem->vertex_buffer_index];
                 struct vc4_resource *rsc = vc4_resource(vb->buffer);
 
-                if (elem->src_format != PIPE_FORMAT_R32G32B32A32_FLOAT) {
-                        fprintf(stderr, "Unsupported attribute format %s\n",
-                                util_format_name(elem->src_format));
-                }
-
                 cl_reloc(vc4, &vc4->shader_rec, rsc->bo,
                          vb->buffer_offset + elem->src_offset);
                 cl_u8(&vc4->shader_rec,
