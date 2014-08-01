@@ -135,22 +135,20 @@ endif
 libmesa_la_SOURCES = \
 	$(MESA_FILES) \
 	$(PROGRAM_FILES) \
-        $(MESA_ASM_FILES_FOR_ARCH)
+	$(MESA_ASM_FILES_FOR_ARCH)
 
 libmesa_la_LIBADD = \
-        $(top_builddir)/src/glsl/libglsl.la \
-	$(ARCH_LIBS) \
-        $()
+	$(top_builddir)/src/glsl/libglsl.la \
+	$(ARCH_LIBS)
 
 libmesagallium_la_SOURCES = \
 	$(MESA_GALLIUM_FILES) \
 	$(PROGRAM_FILES) \
-        $(MESA_ASM_FILES_FOR_ARCH)
+	$(MESA_ASM_FILES_FOR_ARCH)
 
 libmesagallium_la_LIBADD = \
-        $(top_builddir)/src/glsl/libglsl.la \
-	$(ARCH_LIBS) \
-        $()
+	$(top_builddir)/src/glsl/libglsl.la \
+	$(ARCH_LIBS)
 
 libmesa_sse41_la_SOURCES = \
 	main/streaming-load-memcpy.c
