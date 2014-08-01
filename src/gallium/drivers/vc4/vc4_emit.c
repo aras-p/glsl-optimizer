@@ -36,11 +36,17 @@ vc4_emit_state(struct pipe_context *pctx)
                 cl_u16(&vc4->bcl, vc4->scissor.maxy - vc4->scissor.miny);
         }
 
-        if (vc4->dirty & VC4_DIRTY_RASTERIZER) {
+        if (vc4->dirty & (VC4_DIRTY_RASTERIZER | VC4_DIRTY_ZSA)) {
                 cl_u8(&vc4->bcl, VC4_PACKET_CONFIGURATION_BITS);
-                cl_u8(&vc4->bcl, vc4->rasterizer->config_bits[0]);
-                cl_u8(&vc4->bcl, vc4->rasterizer->config_bits[1]);
-                cl_u8(&vc4->bcl, vc4->rasterizer->config_bits[2]);
+                cl_u8(&vc4->bcl,
+                      vc4->rasterizer->config_bits[0] |
+                      vc4->zsa->config_bits[0]);
+                cl_u8(&vc4->bcl,
+                      vc4->rasterizer->config_bits[1] |
+                      vc4->zsa->config_bits[1]);
+                cl_u8(&vc4->bcl,
+                      vc4->rasterizer->config_bits[2] |
+                      vc4->zsa->config_bits[2]);
         }
 
         if (vc4->dirty & VC4_DIRTY_VIEWPORT) {

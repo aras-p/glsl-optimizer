@@ -143,6 +143,7 @@ struct vc4_context {
          */
         uint32_t resolve;
         uint32_t clear_color[2];
+        uint32_t clear_depth; /**< 24-bit unorm depth */
 
         /**
          * Set if some drawing (triangles, blits, or just a glClear()) has
@@ -165,7 +166,7 @@ struct vc4_context {
         struct pipe_scissor_state scissor;
         struct pipe_blend_state *blend;
         struct vc4_rasterizer_state *rasterizer;
-        struct pipe_depth_stencil_alpha_state *zsa;
+        struct vc4_depth_stencil_alpha_state *zsa;
 
         struct vc4_texture_stateobj verttex, fragtex;
 
@@ -192,6 +193,13 @@ struct vc4_rasterizer_state {
         uint8_t config_bits[3];
 
         float point_size;
+};
+
+struct vc4_depth_stencil_alpha_state {
+        struct pipe_depth_stencil_alpha_state base;
+
+        /* VC4_CONFIGURATION_BITS */
+        uint8_t config_bits[3];
 };
 
 static inline struct vc4_context *

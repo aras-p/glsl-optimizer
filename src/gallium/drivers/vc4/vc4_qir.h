@@ -70,6 +70,7 @@ enum qop {
         QOP_PACK_COLORS,
         QOP_VPM_WRITE,
         QOP_VPM_READ,
+        QOP_TLB_PASSTHROUGH_Z_WRITE,
         QOP_TLB_COLOR_WRITE,
         QOP_VARY_ADD_C,
 

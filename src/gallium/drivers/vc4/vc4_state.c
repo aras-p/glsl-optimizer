@@ -107,8 +107,6 @@ vc4_create_rasterizer_state(struct pipe_context *pctx,
         if (cso->offset_tri)
                 so->config_bits[0] |= VC4_CONFIG_BITS_ENABLE_DEPTH_OFFSET;
 
-        so->config_bits[2] |= VC4_CONFIG_BITS_EARLY_Z_UPDATE;
-
         return so;
 }
 
@@ -124,7 +122,26 @@ static void *
 vc4_create_depth_stencil_alpha_state(struct pipe_context *pctx,
                                      const struct pipe_depth_stencil_alpha_state *cso)
 {
-        return vc4_generic_cso_state_create(cso, sizeof(*cso));
+        struct vc4_depth_stencil_alpha_state *so;
+
+        so = CALLOC_STRUCT(vc4_depth_stencil_alpha_state);
+        if (!so)
+                return NULL;
+
+        so->base = *cso;
+
+        if (cso->depth.enabled) {
+                if (cso->depth.writemask) {
+                        so->config_bits[1] |= VC4_CONFIG_BITS_Z_UPDATE;
+                }
+                so->config_bits[1] |= (cso->depth.func <<
+                                       VC4_CONFIG_BITS_DEPTH_FUNC_SHIFT);
+        } else {
+                so->config_bits[1] |= (PIPE_FUNC_ALWAYS <<
+                                       VC4_CONFIG_BITS_DEPTH_FUNC_SHIFT);
+        }
+
+        return so;
 }
 
 static void

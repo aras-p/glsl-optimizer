@@ -67,6 +67,7 @@ enum qpu_op_mul {
 };
 
 enum qpu_raddr {
+        QPU_R_FRAG_PAYLOAD_ZW = 15, /* W for A file, Z for B file */
         /* 0-31 are the plain regfile a or b fields */
         QPU_R_UNIF = 32,
         QPU_R_VARY = 35,

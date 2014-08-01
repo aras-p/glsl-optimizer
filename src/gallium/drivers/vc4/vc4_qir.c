@@ -61,6 +61,7 @@ static const struct qir_op_info qir_op_info[] = {
         [QOP_PACK_SCALED] = { "pack_scaled", 1, 2 },
         [QOP_VPM_WRITE] = { "vpm_write", 0, 1, true },
         [QOP_VPM_READ] = { "vpm_read", 0, 1, true },
+        [QOP_TLB_PASSTHROUGH_Z_WRITE] = { "tlb_passthrough_z", 0, 0, true },
         [QOP_TLB_COLOR_WRITE] = { "tlb_color", 0, 1, true },
         [QOP_VARY_ADD_C] = { "vary_add_c", 1, 1 },
 

@@ -213,6 +213,8 @@ vc4_generate_code(struct qcompile *c)
                         if (qinst->src[i].file == QFILE_TEMP)
                                 reg_uses_remaining[qinst->src[i].index]++;
                 }
+                if (qinst->op == QOP_TLB_PASSTHROUGH_Z_WRITE)
+                        reg_in_use[3 + 32 + QPU_R_FRAG_PAYLOAD_ZW] = true;
         }
 
         switch (c->stage) {
@@ -456,6 +458,12 @@ vc4_generate_code(struct qcompile *c)
                         queue(c, qpu_inst(qpu_a_MOV(dst, qpu_r3()),
                                           qpu_m_NOP()));
 
+                        break;
+
+                case QOP_TLB_PASSTHROUGH_Z_WRITE:
+                        queue(c, qpu_inst(qpu_a_MOV(qpu_ra(QPU_W_TLB_Z),
+                                                    qpu_rb(QPU_R_FRAG_PAYLOAD_ZW)),
+                                          qpu_m_NOP()));
                         break;
 
                 case QOP_TLB_COLOR_WRITE:

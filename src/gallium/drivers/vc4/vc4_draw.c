@@ -181,7 +181,7 @@ vc4_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
                 cl_u8(&vc4->shader_rec, i * 16); /* CS VPM offset */
         }
 
-        if (vc4->zsa && vc4->zsa->depth.enabled) {
+        if (vc4->zsa && vc4->zsa->base.depth.enabled) {
                 vc4->resolve |= PIPE_CLEAR_DEPTH;
         }
         vc4->resolve |= PIPE_CLEAR_COLOR0;
@@ -214,6 +214,9 @@ vc4_clear(struct pipe_context *pctx, unsigned buffers,
                         pack_rgba(vc4->framebuffer.cbufs[0]->format,
                                   color->f);
         }
+
+        if (buffers & PIPE_CLEAR_DEPTH)
+                vc4->clear_depth = util_pack_z(PIPE_FORMAT_Z24X8_UNORM, depth);
 
         vc4->cleared |= buffers;
         vc4->resolve |= buffers;

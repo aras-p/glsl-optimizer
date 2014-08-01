@@ -113,9 +113,9 @@ vc4_setup_rcl(struct vc4_context *vc4)
         cl_reloc(vc4, &vc4->rcl, ctex->bo, csurf->offset);
         cl_u16(&vc4->rcl, width);
         cl_u16(&vc4->rcl, height);
-        cl_u8(&vc4->rcl, (VC4_RENDER_CONFIG_MEMORY_FORMAT_LINEAR |
-                          VC4_RENDER_CONFIG_FORMAT_RGBA8888));
-        cl_u8(&vc4->rcl, 0);
+        cl_u16(&vc4->rcl, (VC4_RENDER_CONFIG_MEMORY_FORMAT_LINEAR |
+                           VC4_RENDER_CONFIG_FORMAT_RGBA8888 |
+                           VC4_RENDER_CONFIG_EARLY_Z_COVERAGE_DISABLE));
 
         /* The tile buffer normally gets cleared when the previous tile is
          * stored.  If the clear values changed between frames, then the tile

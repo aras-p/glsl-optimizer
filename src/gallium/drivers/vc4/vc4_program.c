@@ -67,6 +67,7 @@ struct vc4_key {
 struct vc4_fs_key {
         struct vc4_key base;
         enum pipe_format color_format;
+        bool depth_enabled;
 };
 
 struct vc4_vs_key {
@@ -738,6 +739,11 @@ emit_frag_end(struct tgsi_to_qir *trans)
                 trans->outputs[format_desc->swizzle[3]],
         };
 
+        if (trans->fs_key->depth_enabled) {
+                qir_emit(c, qir_inst(QOP_TLB_PASSTHROUGH_Z_WRITE, c->undef,
+                                     c->undef, c->undef));
+        }
+
         qir_emit(c, qir_inst4(QOP_PACK_COLORS, t,
                               swizzled_outputs[0],
                               swizzled_outputs[1],
@@ -1000,6 +1006,8 @@ vc4_update_compiled_fs(struct vc4_context *vc4)
 
         if (vc4->framebuffer.cbufs[0])
                 key->color_format = vc4->framebuffer.cbufs[0]->format;
+
+        key->depth_enabled = vc4->zsa->base.depth.enabled;
 
         vc4->prog.fs = util_hash_table_get(vc4->fs_cache, key);
         if (vc4->prog.fs)
