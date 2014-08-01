@@ -59,16 +59,15 @@ static struct llvmpipe_resource resource_list;
 #endif
 static unsigned id_counter = 0;
 
-static void
-alloc_image_data(struct llvmpipe_resource *lpr);
 
 /**
  * Conventional allocation path for non-display textures:
- * Just compute row strides here.  Storage is allocated on demand later.
+ * Compute strides and allocate data (unless asked not to).
  */
 static boolean
 llvmpipe_texture_layout(struct llvmpipe_screen *screen,
-                        struct llvmpipe_resource *lpr)
+                        struct llvmpipe_resource *lpr,
+                        boolean allocate)
 {
    struct pipe_resource *pt = &lpr->base;
    unsigned level;
@@ -77,11 +76,20 @@ llvmpipe_texture_layout(struct llvmpipe_screen *screen,
    unsigned depth = pt->depth0;
    uint64_t total_size = 0;
    unsigned layers = pt->array_size;
+   /* XXX:
+    * This alignment here (same for displaytarget) was added for the purpose of
+    * ARB_map_buffer_alignment. I am not convinced it's needed for non-buffer
+    * resources. Otherwise we'd want the max of cacheline size and 16 (max size
+    * of a block for all formats) though this should not be strictly necessary
+    * neither. In any case it can only affect compressed or 1d textures.
+    */
+   unsigned mip_align = MAX2(64, util_cpu_caps.cacheline);
 
    assert(LP_MAX_TEXTURE_2D_LEVELS <= LP_MAX_TEXTURE_LEVELS);
    assert(LP_MAX_TEXTURE_3D_LEVELS <= LP_MAX_TEXTURE_LEVELS);
 
    for (level = 0; level <= pt->last_level; level++) {
+      uint64_t mipsize;
 
       /* Row stride and image stride */
       {
@@ -143,14 +151,15 @@ llvmpipe_texture_layout(struct llvmpipe_screen *screen,
       }
 
       /* if img_stride * num_slices_faces > LP_MAX_TEXTURE_SIZE */
-      if (lpr->img_stride[level] >
-          LP_MAX_TEXTURE_SIZE / lpr->num_slices_faces[level]) {
+      mipsize = (uint64_t)lpr->num_slices_faces[level] * lpr->img_stride[level];
+      if (mipsize > LP_MAX_TEXTURE_SIZE) {
          /* volume too large */
          goto fail;
       }
 
-      total_size += (uint64_t) lpr->num_slices_faces[level]
-                  * (uint64_t) lpr->img_stride[level];
+      lpr->mip_offsets[level] = total_size;
+
+      total_size += align((unsigned)mipsize, mip_align);
       if (total_size > LP_MAX_TEXTURE_SIZE) {
          goto fail;
       }
@@ -159,6 +168,16 @@ llvmpipe_texture_layout(struct llvmpipe_screen *screen,
       width = u_minify(width, 1);
       height = u_minify(height, 1);
       depth = u_minify(depth, 1);
+   }
+
+   if (allocate) {
+      lpr->tex_data = align_malloc(total_size, mip_align);
+      if (!lpr->tex_data) {
+         return FALSE;
+      }
+      else {
+         memset(lpr->tex_data, 0, total_size);
+      }
    }
 
    return TRUE;
@@ -179,7 +198,7 @@ llvmpipe_can_create_resource(struct pipe_screen *screen,
    struct llvmpipe_resource lpr;
    memset(&lpr, 0, sizeof(lpr));
    lpr.base = *res;
-   return llvmpipe_texture_layout(llvmpipe_screen(screen), &lpr);
+   return llvmpipe_texture_layout(llvmpipe_screen(screen), &lpr, false);
 }
 
 
@@ -247,13 +266,8 @@ llvmpipe_resource_create(struct pipe_screen *_screen,
       }
       else {
          /* texture map */
-         if (!llvmpipe_texture_layout(screen, lpr))
+         if (!llvmpipe_texture_layout(screen, lpr, true))
             goto fail;
-
-         alloc_image_data(lpr);
-         if (!lpr->tex_data) {
-            goto fail;
-         }
       }
    }
    else {
@@ -743,36 +757,6 @@ llvmpipe_get_texture_image_address(struct llvmpipe_resource *lpr,
       offset += face_slice * tex_image_face_size(lpr, level);
 
    return (ubyte *) lpr->tex_data + offset;
-}
-
-
-/**
- * Allocate storage for a linear image
- * (all cube faces and all 3D slices, all levels).
- */
-static void
-alloc_image_data(struct llvmpipe_resource *lpr)
-{
-   uint alignment = MAX2(64, util_cpu_caps.cacheline);
-   uint level;
-   uint offset = 0;
-
-   assert(!lpr->dt);
-
-   /* not a display target - allocate regular memory */
-   /*
-    * Offset calculation for start of a specific mip/layer is always
-    * offset = lpr->linear_mip_offsets[level] + lpr->img_stride[level] * layer
-    */
-   for (level = 0; level <= lpr->base.last_level; level++) {
-      uint buffer_size = tex_image_size(lpr, level);
-      lpr->mip_offsets[level] = offset;
-      offset += align(buffer_size, alignment);
-   }
-   lpr->tex_data = align_malloc(offset, alignment);
-   if (lpr->tex_data) {
-      memset(lpr->tex_data, 0, offset);
-   }
 }
 
 
