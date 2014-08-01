@@ -296,7 +296,7 @@ static void impl_tss_dtor_invoke()
 static inline void
 call_once(once_flag *flag, void (*func)(void))
 {
-    assert(!flag && !func);
+    assert(flag && func);
 #ifdef EMULATED_THREADS_USE_NATIVE_CALL_ONCE
     {
     struct impl_call_once_param param;
