@@ -137,10 +137,21 @@ analyse_tex(struct analysis_context *ctx,
       case TGSI_TEXTURE_SHADOWCUBE:
          readmask = TGSI_WRITEMASK_XYZW;
          break;
+      case TGSI_TEXTURE_CUBE_ARRAY:
+         readmask = TGSI_WRITEMASK_XYZW;
+         break;
+      case TGSI_TEXTURE_SHADOWCUBE_ARRAY:
+         readmask = TGSI_WRITEMASK_XYZW;
+         break;
       default:
          assert(0);
          return;
       }
+      /* XXX
+       * For cube map arrays, this will not analyze lod or shadow argument.
+       * For shadow cube, this will not analyze lod bias argument.
+       * "Indirect" really has no meaning for such textures anyway though.
+       */
 
       if (modifier == LP_BLD_TEX_MODIFIER_EXPLICIT_DERIV) {
          /* We don't track explicit derivatives, although we could */
@@ -295,6 +306,15 @@ analyse_instruction(struct analysis_context *ctx,
          break;
       case TGSI_OPCODE_TXP:
          analyse_tex(ctx, inst, LP_BLD_TEX_MODIFIER_PROJECTED);
+         break;
+      case TGSI_OPCODE_TEX2:
+         analyse_tex(ctx, inst, LP_BLD_TEX_MODIFIER_NONE);
+         break;
+      case TGSI_OPCODE_TXB2:
+         analyse_tex(ctx, inst, LP_BLD_TEX_MODIFIER_LOD_BIAS);
+         break;
+      case TGSI_OPCODE_TXL2:
+         analyse_tex(ctx, inst, LP_BLD_TEX_MODIFIER_EXPLICIT_LOD);
          break;
       case TGSI_OPCODE_SAMPLE:
          analyse_sample(ctx, inst, LP_BLD_TEX_MODIFIER_NONE, FALSE);
