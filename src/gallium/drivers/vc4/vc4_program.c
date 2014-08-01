@@ -579,7 +579,7 @@ emit_frag_end(struct tgsi_to_qir *trans)
 }
 
 static void
-emit_scaled_viewport_write(struct tgsi_to_qir *trans)
+emit_scaled_viewport_write(struct tgsi_to_qir *trans, struct qreg rcp_w)
 {
         struct qcompile *c = trans->c;
         struct qreg xyi[2];
@@ -588,28 +588,30 @@ emit_scaled_viewport_write(struct tgsi_to_qir *trans)
                 struct qreg scale =
                         add_uniform(trans, QUNIFORM_VIEWPORT_X_SCALE + i, 0);
 
-                xyi[i] = qir_FTOI(c, qir_FMUL(c, trans->outputs[i], scale));
+                xyi[i] = qir_FTOI(c, qir_FMUL(c,
+                                              qir_FMUL(c,
+                                                       trans->outputs[i],
+                                                       scale),
+                                              rcp_w));
         }
 
         qir_VPM_WRITE(c, qir_PACK_SCALED(c, xyi[0], xyi[1]));
 }
 
 static void
-emit_zs_write(struct tgsi_to_qir *trans)
+emit_zs_write(struct tgsi_to_qir *trans, struct qreg rcp_w)
 {
         struct qcompile *c = trans->c;
 
-        /* XXX: rescale */
-        qir_VPM_WRITE(c, trans->outputs[2]);
+        qir_VPM_WRITE(c, qir_FMUL(c, trans->outputs[2], rcp_w));
 }
 
 static void
-emit_1_wc_write(struct tgsi_to_qir *trans)
+emit_rcp_wc_write(struct tgsi_to_qir *trans, struct qreg rcp_w)
 {
         struct qcompile *c = trans->c;
 
-        /* XXX: RCP */
-        qir_VPM_WRITE(c, trans->outputs[3]);
+        qir_VPM_WRITE(c, rcp_w);
 }
 
 static void
@@ -617,9 +619,11 @@ emit_vert_end(struct tgsi_to_qir *trans)
 {
         struct qcompile *c = trans->c;
 
-        emit_scaled_viewport_write(trans);
-        emit_zs_write(trans);
-        emit_1_wc_write(trans);
+        struct qreg rcp_w = qir_RCP(c, trans->outputs[3]);
+
+        emit_scaled_viewport_write(trans, rcp_w);
+        emit_zs_write(trans, rcp_w);
+        emit_rcp_wc_write(trans, rcp_w);
 
         for (int i = 4; i < trans->num_outputs; i++) {
                 qir_VPM_WRITE(c, trans->outputs[i]);
@@ -631,12 +635,14 @@ emit_coord_end(struct tgsi_to_qir *trans)
 {
         struct qcompile *c = trans->c;
 
+        struct qreg rcp_w = qir_RCP(c, trans->outputs[3]);
+
         for (int i = 0; i < 4; i++)
                 qir_VPM_WRITE(c, trans->outputs[i]);
 
-        emit_scaled_viewport_write(trans);
-        emit_zs_write(trans);
-        emit_1_wc_write(trans);
+        emit_scaled_viewport_write(trans, rcp_w);
+        emit_zs_write(trans, rcp_w);
+        emit_rcp_wc_write(trans, rcp_w);
 }
 
 static struct tgsi_to_qir *
