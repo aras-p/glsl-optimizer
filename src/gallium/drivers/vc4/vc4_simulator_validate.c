@@ -143,7 +143,8 @@ validate_gl_shader_state(VALIDATE_ARGS)
 	*(uint32_t *)validated = (exec->shader_rec_p +
 				  exec->shader_state[i].addr);
 
-	exec->shader_rec_p += gl_shader_rec_size(exec->shader_state[i].addr);
+	exec->shader_rec_p +=
+		roundup(gl_shader_rec_size(exec->shader_state[i].addr), 16);
 
 	return 0;
 }
@@ -461,7 +462,13 @@ validate_shader_rec(struct drm_device *dev,
 	pkt_v = exec->shader_rec_v;
 	memcpy(pkt_v, pkt_u, packet_size);
 	exec->shader_rec_u += packet_size;
-	exec->shader_rec_v += packet_size;
+	/* Shader recs have to be aligned to 16 bytes (due to the attribute
+	 * flags being in the low bytes), so round the next validated shader
+	 * rec address up.  This should be safe, since we've got so many
+	 * relocations in a shader rec packet.
+	 */
+	BUG_ON(roundup(packet_size, 16) - packet_size > nr_relocs * 4);
+	exec->shader_rec_v += roundup(packet_size, 16);
 	exec->shader_rec_size -= packet_size;
 
 	for (i = 0; i < nr_relocs; i++) {

@@ -41,6 +41,7 @@
 #define kfree(ptr) free(ptr)
 #define krealloc(ptr, size, args) realloc(ptr, size)
 #define roundup(x, y) align(x, y)
+#define BUG_ON(condition) assert(!(condition))
 
 static inline int
 copy_from_user(void *dst, void *src, size_t size)
