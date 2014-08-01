@@ -347,7 +347,8 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
           target == PIPE_TEXTURE_2D_ARRAY ||
           target == PIPE_TEXTURE_RECT ||
           target == PIPE_TEXTURE_3D ||
-          target == PIPE_TEXTURE_CUBE);
+          target == PIPE_TEXTURE_CUBE ||
+          target == PIPE_TEXTURE_CUBE_ARRAY);
 
    if (sample_count > 1)
       return FALSE;

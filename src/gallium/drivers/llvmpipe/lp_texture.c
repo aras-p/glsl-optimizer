@@ -137,7 +137,8 @@ llvmpipe_texture_layout(struct llvmpipe_screen *screen,
       else if (lpr->base.target == PIPE_TEXTURE_3D)
          num_slices = depth;
       else if (lpr->base.target == PIPE_TEXTURE_1D_ARRAY ||
-               lpr->base.target == PIPE_TEXTURE_2D_ARRAY)
+               lpr->base.target == PIPE_TEXTURE_2D_ARRAY ||
+               lpr->base.target == PIPE_TEXTURE_CUBE_ARRAY)
          num_slices = layers;
       else
          num_slices = 1;

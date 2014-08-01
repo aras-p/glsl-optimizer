@@ -144,6 +144,7 @@ llvmpipe_resource_is_texture(const struct pipe_resource *resource)
    case PIPE_TEXTURE_RECT:
    case PIPE_TEXTURE_3D:
    case PIPE_TEXTURE_CUBE:
+   case PIPE_TEXTURE_CUBE_ARRAY:
       return TRUE;
    default:
       assert(0);
@@ -165,6 +166,7 @@ llvmpipe_resource_is_1d(const struct pipe_resource *resource)
    case PIPE_TEXTURE_RECT:
    case PIPE_TEXTURE_3D:
    case PIPE_TEXTURE_CUBE:
+   case PIPE_TEXTURE_CUBE_ARRAY:
       return FALSE;
    default:
       assert(0);
