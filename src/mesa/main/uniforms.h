@@ -364,25 +364,6 @@ _mesa_uniform_merge_location_offset(const struct gl_shader_program *prog,
    return prog->UniformStorage[storage_index].remap_location +
       uniform_array_index;
 }
-
-/**
- * Separate the uniform storage index and array index
- */
-static inline void
-_mesa_uniform_split_location_offset(const struct gl_shader_program *prog,
-                                    GLint location, unsigned *storage_index,
-				    unsigned *uniform_array_index)
-{
-   *storage_index = prog->UniformRemapTable[location] - prog->UniformStorage;
-   *uniform_array_index = location -
-      prog->UniformRemapTable[location]->remap_location;
-
-   /*gl_uniform_storage in UniformStorage with the calculated base_location
-    * must match with the entry in remap table
-    */
-   assert(&prog->UniformStorage[*storage_index] ==
-          prog->UniformRemapTable[location]);
-}
 /*@}*/
 
 

@@ -267,9 +267,7 @@ validate_uniform_parameters(struct gl_context *ctx,
        INACTIVE_UNIFORM_EXPLICIT_LOCATION)
       return NULL;
 
-   unsigned loc;
-   _mesa_uniform_split_location_offset(shProg, location, &loc, array_index);
-   struct gl_uniform_storage *const uni = &shProg->UniformStorage[loc];
+   struct gl_uniform_storage *const uni = shProg->UniformRemapTable[location];
 
    if (uni->array_elements == 0 && count > 1) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
@@ -277,6 +275,11 @@ validate_uniform_parameters(struct gl_context *ctx,
 		  caller, location);
       return NULL;
    }
+
+   /* The array index specified by the uniform location is just the uniform
+    * location minus the base location of of the uniform.
+    */
+   *array_index = location - uni->remap_location;
 
    /* If the uniform is an array, check that array_index is in bounds.
     * If not an array, check that array_index is zero.
