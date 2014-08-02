@@ -72,7 +72,13 @@ enum vc4_packet {
         VC4_PACKET_TILE_RENDERING_MODE_CONFIG = 113,
         VC4_PACKET_CLEAR_COLORS = 114,
         VC4_PACKET_TILE_COORDINATES = 115,
-        GEM_HANDLES = 254,
+
+        /* Not an actual hardware packet -- this is what we use to put
+         * references to GEM bos in the command stream, since we need the u32
+         * int the actual address packet in order to store the offset from the
+         * start of the BO.
+         */
+        VC4_PACKET_GEM_HANDLES = 254,
 } __attribute__ ((__packed__));
 
 /** @{

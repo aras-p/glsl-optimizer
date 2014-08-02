@@ -98,7 +98,7 @@ cl_start_reloc(struct vc4_cl *cl, uint32_t n)
         assert(cl->reloc_count == 0);
         cl->reloc_count = n;
 
-        cl_u8(cl, GEM_HANDLES);
+        cl_u8(cl, VC4_PACKET_GEM_HANDLES);
         cl->reloc_next = cl->next - cl->base;
         cl_u32(cl, 0); /* Space where hindex will be written. */
         cl_u32(cl, 0); /* Space where hindex will be written. */
