@@ -38,6 +38,16 @@
 struct pipe_resource;
 
 
+struct st_texture_image_transfer {
+   struct pipe_transfer *transfer;
+
+   /* For ETC fallback. */
+   GLubyte *temp_data; /**< Temporary ETC texture storage. */
+   unsigned temp_stride; /**< Stride of the ETC texture storage. */
+   GLubyte *map; /**< Saved map pointer of the uncompressed transfer. */
+};
+
+
 /**
  * Subclass of gl_texure_image.
  */
@@ -59,7 +69,7 @@ struct st_texture_image
    /* List of transfers, allocated on demand.
     * transfer[layer] is a mapping for that layer.
     */
-   struct pipe_transfer **transfer;
+   struct st_texture_image_transfer *transfer;
    unsigned num_transfers;
 };
 

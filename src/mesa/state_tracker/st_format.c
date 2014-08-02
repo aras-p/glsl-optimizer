@@ -402,6 +402,26 @@ st_mesa_format_to_pipe_format(mesa_format mesaFormat)
    case MESA_FORMAT_B8G8R8X8_SRGB:
       return PIPE_FORMAT_B8G8R8X8_SRGB;
 
+   /* ETC2 formats are emulated as uncompressed ones.
+    * The destination formats mustn't be changed, because they are also
+    * destination formats of the unpack/decompression function. */
+   case MESA_FORMAT_ETC2_RGB8:
+   case MESA_FORMAT_ETC2_RGBA8_EAC:
+   case MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1:
+      return PIPE_FORMAT_R8G8B8A8_UNORM;
+   case MESA_FORMAT_ETC2_SRGB8:
+   case MESA_FORMAT_ETC2_SRGB8_ALPHA8_EAC:
+   case MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1:
+      return PIPE_FORMAT_B8G8R8A8_SRGB;
+   case MESA_FORMAT_ETC2_R11_EAC:
+      return PIPE_FORMAT_R16_UNORM;
+   case MESA_FORMAT_ETC2_RG11_EAC:
+      return PIPE_FORMAT_R16G16_UNORM;
+   case MESA_FORMAT_ETC2_SIGNED_R11_EAC:
+      return PIPE_FORMAT_R16_SNORM;
+   case MESA_FORMAT_ETC2_SIGNED_RG11_EAC:
+      return PIPE_FORMAT_R16G16_SNORM;
+
    default:
       return PIPE_FORMAT_NONE;
    }
@@ -781,6 +801,10 @@ test_format_conversion(void)
 
    /* test all Mesa formats */
    for (i = 1; i < MESA_FORMAT_COUNT; i++) {
+      /* ETC2 formats are translated differently, skip them. */
+      if (_mesa_is_format_etc2(i))
+         continue;
+
       enum pipe_format pf = st_mesa_format_to_pipe_format(i);
       if (pf != PIPE_FORMAT_NONE) {
          mesa_format mf = st_pipe_format_to_mesa_format(pf);

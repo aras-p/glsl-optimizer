@@ -269,14 +269,15 @@ st_texture_image_map(struct st_context *st, struct st_texture_image *stImage,
          unsigned new_size = z + 1;
 
          stImage->transfer = realloc(stImage->transfer,
-                                     new_size * sizeof(void*));
+                     new_size * sizeof(struct st_texture_image_transfer));
          memset(&stImage->transfer[stImage->num_transfers], 0,
-               (new_size - stImage->num_transfers) * sizeof(void*));
+                (new_size - stImage->num_transfers) *
+                sizeof(struct st_texture_image_transfer));
          stImage->num_transfers = new_size;
       }
 
-      assert(!stImage->transfer[z]);
-      stImage->transfer[z] = *transfer;
+      assert(!stImage->transfer[z].transfer);
+      stImage->transfer[z].transfer = *transfer;
    }
    return map;
 }
@@ -288,7 +289,7 @@ st_texture_image_unmap(struct st_context *st,
 {
    struct pipe_context *pipe = st->pipe;
    struct pipe_transfer **transfer =
-      &stImage->transfer[slice + stImage->base.Face];
+      &stImage->transfer[slice + stImage->base.Face].transfer;
 
    DBG("%s\n", __FUNCTION__);
 
