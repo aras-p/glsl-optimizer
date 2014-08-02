@@ -74,10 +74,8 @@ check_register_write(uint32_t waddr, bool is_b)
 	case QPU_W_TLB_COLOR_MS:
 	case QPU_W_TLB_COLOR_ALL:
 	case QPU_W_TLB_Z:
-		/* XXX: We need to track which buffers get written by the
-		 * shader, to make sure that we have those buffers set up by
-		 * the config packets.  But we need to pass them for now to
-		 * get things up and running.
+		/* These only interact with the tile buffer, not main memory,
+		 * so they're safe.
 		 */
 		return true;
 
