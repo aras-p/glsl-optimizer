@@ -147,7 +147,7 @@ GL 4.2, GLSL 4.20:
 GL 4.3, GLSL 4.30:
 
   GL_ARB_arrays_of_arrays                              started (Timothy)
-  GL_ARB_ES3_compatibility                             DONE (i965)
+  GL_ARB_ES3_compatibility                             DONE (all drivers that support GLSL 3.30)
   GL_ARB_clear_buffer_object                           DONE (all drivers)
   GL_ARB_compute_shader                                started (currently stalled)
   GL_ARB_copy_image                                    DONE (i965)

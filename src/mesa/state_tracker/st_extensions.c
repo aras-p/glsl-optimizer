@@ -826,4 +826,32 @@ void st_init_extensions(struct st_context *st)
    }
    if (ctx->Const.MaxProgramTextureGatherComponents > 0)
       ctx->Extensions.ARB_texture_gather = GL_TRUE;
+
+   /* GL_ARB_ES3_compatibility.
+    *
+    * Assume that ES3 is supported if GLSL 3.30 is supported.
+    * (OpenGL 3.3 is a requirement for that extension.)
+    */
+   if (ctx->Const.GLSLVersion >= 330 &&
+       /* Requirements for ETC2 emulation. */
+       screen->is_format_supported(screen, PIPE_FORMAT_R8G8B8A8_UNORM,
+                                   PIPE_TEXTURE_2D, 0,
+                                   PIPE_BIND_SAMPLER_VIEW) &&
+       screen->is_format_supported(screen, PIPE_FORMAT_B8G8R8A8_SRGB,
+                                   PIPE_TEXTURE_2D, 0,
+                                   PIPE_BIND_SAMPLER_VIEW) &&
+       screen->is_format_supported(screen, PIPE_FORMAT_R16_UNORM,
+                                   PIPE_TEXTURE_2D, 0,
+                                   PIPE_BIND_SAMPLER_VIEW) &&
+       screen->is_format_supported(screen, PIPE_FORMAT_R16G16_UNORM,
+                                   PIPE_TEXTURE_2D, 0,
+                                   PIPE_BIND_SAMPLER_VIEW) &&
+       screen->is_format_supported(screen, PIPE_FORMAT_R16_SNORM,
+                                   PIPE_TEXTURE_2D, 0,
+                                   PIPE_BIND_SAMPLER_VIEW) &&
+       screen->is_format_supported(screen, PIPE_FORMAT_R16G16_SNORM,
+                                   PIPE_TEXTURE_2D, 0,
+                                   PIPE_BIND_SAMPLER_VIEW)) {
+      ctx->Extensions.ARB_ES3_compatibility = GL_TRUE;
+   }
 }
