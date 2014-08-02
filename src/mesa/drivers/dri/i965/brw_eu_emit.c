@@ -760,6 +760,21 @@ brw_set_sampler_message(struct brw_compile *p,
    }
 }
 
+void brw_set_indirect_send_descriptor(struct brw_compile *p,
+                                      brw_inst *insn,
+                                      unsigned sfid,
+                                      struct brw_reg descriptor)
+{
+   /* Only a0.0 may be used as SEND's descriptor operand. */
+   assert(descriptor.file == BRW_ARCHITECTURE_REGISTER_FILE);
+   assert(descriptor.type == BRW_REGISTER_TYPE_UD);
+   assert(descriptor.nr == BRW_ARF_ADDRESS);
+   assert(descriptor.subnr == 0);
+
+   brw_set_message_descriptor(p, insn, sfid, 0, 0, false, false);
+   brw_set_src1(p, insn, descriptor);
+}
+
 static void
 gen7_set_dp_scratch_message(struct brw_compile *p,
                             brw_inst *inst,

@@ -205,6 +205,11 @@ void brw_set_sampler_message(struct brw_compile *p,
                              unsigned simd_mode,
                              unsigned return_format);
 
+void brw_set_indirect_send_descriptor(struct brw_compile *p,
+                                      brw_inst *insn,
+                                      unsigned sfid,
+                                      struct brw_reg descriptor);
+
 void brw_set_dp_read_message(struct brw_compile *p,
 			     brw_inst *insn,
 			     unsigned binding_table_index,
