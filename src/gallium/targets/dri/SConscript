@@ -29,6 +29,7 @@ env.Append(CPPDEFINES = [
     'GALLIUM_VMWGFX',
     'GALLIUM_SOFTPIPE',
     'DRI_TARGET',
+    'HAVE_LIBDRM',
 ])
 
 env.Prepend(LIBS = [
