@@ -993,9 +993,7 @@ _mesa_uniform_matrix(struct gl_context *ctx, struct gl_shader_program *shProg,
  *
  * Returns the uniform index into UniformStorage (also the
  * glGetActiveUniformsiv uniform index), and stores the referenced
- * array offset in *offset, or GL_INVALID_INDEX (-1).  Those two
- * return values can be encoded into a uniform location for
- * glUniform* using _mesa_uniform_merge_location_offset(index, offset).
+ * array offset in *offset, or GL_INVALID_INDEX (-1).
  */
 extern "C" unsigned
 _mesa_get_uniform_location(struct gl_context *ctx,

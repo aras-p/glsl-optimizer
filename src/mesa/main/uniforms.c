@@ -932,7 +932,8 @@ _mesa_GetUniformLocation(GLuint programObj, const GLcharARB *name)
        shProg->UniformStorage[index].atomic_buffer_index != -1)
       return -1;
 
-   return _mesa_uniform_merge_location_offset(shProg, index, offset);
+   /* location in remap table + array element offset */
+   return shProg->UniformStorage[index].remap_location + offset;
 }
 
 GLuint GLAPIENTRY
