@@ -513,7 +513,9 @@ void st_init_extensions(struct st_context *st)
         GL_TRUE }, /* at least one format must be supported */
 
       { { o(OES_compressed_ETC1_RGB8_texture) },
-        { PIPE_FORMAT_ETC1_RGB8 } },
+        { PIPE_FORMAT_ETC1_RGB8,
+          PIPE_FORMAT_R8G8B8A8_UNORM },
+        GL_TRUE }, /* at least one format must be supported */
 
       { { o(ARB_stencil_texturing) },
         { PIPE_FORMAT_X24S8_UINT,

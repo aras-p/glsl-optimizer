@@ -208,7 +208,8 @@ st_MapTextureImage(struct gl_context *ctx,
    map = st_texture_image_map(st, stImage, pipeMode, x, y, slice, w, h, 1,
                               &transfer);
    if (map) {
-      if (_mesa_is_format_etc2(texImage->TexFormat)) {
+      if (_mesa_is_format_etc2(texImage->TexFormat) ||
+          (texImage->TexFormat == MESA_FORMAT_ETC1_RGB8 && !st->has_etc1)) {
          /* ETC isn't supported by gallium and it's represented
           * by uncompressed formats. Only write transfers with precompressed
           * data are supported by ES3, which makes this really simple.
@@ -250,7 +251,8 @@ st_UnmapTextureImage(struct gl_context *ctx,
    struct st_context *st = st_context(ctx);
    struct st_texture_image *stImage  = st_texture_image(texImage);
 
-   if (_mesa_is_format_etc2(texImage->TexFormat)) {
+   if (_mesa_is_format_etc2(texImage->TexFormat) ||
+       (texImage->TexFormat == MESA_FORMAT_ETC1_RGB8 && !st->has_etc1)) {
       /* Decompress the ETC texture to the mapped one. */
       unsigned z = slice + stImage->base.Face;
       struct st_texture_image_transfer *itransfer = &stImage->transfer[z];
@@ -258,10 +260,18 @@ st_UnmapTextureImage(struct gl_context *ctx,
 
       assert(z == transfer->box.z);
 
-      _mesa_unpack_etc2_format(itransfer->map, transfer->stride,
-                               itransfer->temp_data, itransfer->temp_stride,
-                               transfer->box.width, transfer->box.height,
-                               texImage->TexFormat);
+      if (texImage->TexFormat == MESA_FORMAT_ETC1_RGB8) {
+         _mesa_etc1_unpack_rgba8888(itransfer->map, transfer->stride,
+                                    itransfer->temp_data,
+                                    itransfer->temp_stride,
+                                    transfer->box.width, transfer->box.height);
+      }
+      else {
+         _mesa_unpack_etc2_format(itransfer->map, transfer->stride,
+                                  itransfer->temp_data, itransfer->temp_stride,
+                                  transfer->box.width, transfer->box.height,
+                                  texImage->TexFormat);
+      }
 
       free(itransfer->temp_data);
       itransfer->temp_data = NULL;
@@ -657,7 +667,8 @@ st_TexSubImage(struct gl_context *ctx, GLuint dims,
    unsigned bind;
    GLubyte *map;
 
-   assert(!_mesa_is_format_etc2(texImage->TexFormat));
+   assert(!_mesa_is_format_etc2(texImage->TexFormat) &&
+          texImage->TexFormat != MESA_FORMAT_ETC1_RGB8);
 
    if (!st->prefer_blit_based_texture_transfer) {
       goto fallback;
@@ -918,7 +929,8 @@ st_GetTexImage(struct gl_context * ctx,
    ubyte *map = NULL;
    boolean done = FALSE;
 
-   assert(!_mesa_is_format_etc2(texImage->TexFormat));
+   assert(!_mesa_is_format_etc2(texImage->TexFormat) &&
+          texImage->TexFormat != MESA_FORMAT_ETC1_RGB8);
 
    if (!st->prefer_blit_based_texture_transfer &&
        !_mesa_is_format_compressed(texImage->TexFormat)) {
@@ -1356,7 +1368,8 @@ st_CopyTexSubImage(struct gl_context *ctx, GLuint dims,
    unsigned bind;
    GLint srcY0, srcY1;
 
-   assert(!_mesa_is_format_etc2(texImage->TexFormat));
+   assert(!_mesa_is_format_etc2(texImage->TexFormat) &&
+          texImage->TexFormat != MESA_FORMAT_ETC1_RGB8);
 
    if (!strb || !strb->surface || !stImage->pt) {
       debug_printf("%s: null strb or stImage\n", __FUNCTION__);

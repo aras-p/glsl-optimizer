@@ -323,8 +323,10 @@ st_mesa_format_to_pipe_format(struct st_context *st, mesa_format mesaFormat)
    case MESA_FORMAT_LA_LATC2_SNORM:
       return PIPE_FORMAT_LATC2_SNORM;
 
+   /* The destination RGBA format mustn't be changed, because it's also
+    * a destination format of the unpack/decompression function. */
    case MESA_FORMAT_ETC1_RGB8:
-      return PIPE_FORMAT_ETC1_RGB8;
+      return st->has_etc1 ? PIPE_FORMAT_ETC1_RGB8 : PIPE_FORMAT_R8G8B8A8_UNORM;
 
    /* signed normalized formats */
    case MESA_FORMAT_R_SNORM8:
@@ -801,8 +803,10 @@ test_format_conversion(struct st_context *st)
 
    /* test all Mesa formats */
    for (i = 1; i < MESA_FORMAT_COUNT; i++) {
-      /* ETC2 formats are translated differently, skip them. */
+      /* ETC formats are translated differently, skip them. */
       if (_mesa_is_format_etc2(i))
+         continue;
+      if (i == MESA_FORMAT_ETC1_RGB8 && !st->has_etc1)
          continue;
 
       enum pipe_format pf = st_mesa_format_to_pipe_format(st, i);
@@ -815,6 +819,11 @@ test_format_conversion(struct st_context *st)
    /* Test all Gallium formats */
    for (i = 1; i < PIPE_FORMAT_COUNT; i++) {
       mesa_format mf = st_pipe_format_to_mesa_format(i);
+
+      /* ETC formats are translated differently, skip them. */
+      if (i == PIPE_FORMAT_ETC1_RGB8 && !st->has_etc1)
+         continue;
+
       if (mf != MESA_FORMAT_NONE) {
          enum pipe_format pf = st_mesa_format_to_pipe_format(st, mf);
          assert(pf == i);
