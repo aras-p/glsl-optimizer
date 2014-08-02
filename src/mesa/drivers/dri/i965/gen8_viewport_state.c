@@ -71,10 +71,24 @@ gen8_upload_sf_clip_viewport(struct brw_context *brw)
        * maximum screen space coordinates of a small object may larger, but we
        * have no way to enforce the object size other than through clipping.
        *
-       * If you're surprised that we set clip to -gbx to +gbx and it seems like
-       * we'll end up with 16384 wide, note that for a 8192-wide render target,
-       * we'll end up with a normal (-1, 1) clip volume that just covers the
-       * drawable.
+       * The goal is to create the maximum sized guardband (8K x 8K) with the
+       * viewport rectangle in the center of the guardband. This looks weird
+       * because the hardware wants coordinates that are scaled to the viewport
+       * in NDC. In other words, an 8K x 8K viewport would have [-1,1] for X and Y.
+       * A 4K viewport would be [-2,2], 2K := [-4,4] etc.
+       *
+       * --------------------------------
+       * |Guardband                     |
+       * |                              |
+       * |         ------------         |
+       * |         |viewport  |         |
+       * |         |          |         |
+       * |         |          |         |
+       * |         |__________|         |
+       * |                              |
+       * |                              |
+       * |______________________________|
+       *
        */
       const float maximum_guardband_extent = 8192;
       float gbx = maximum_guardband_extent / ctx->ViewportArray[i].Width;
