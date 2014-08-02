@@ -377,6 +377,31 @@ _mesa_get_format_color_encoding(mesa_format format)
 
 
 /**
+ * Return TRUE if format is an ETC2 compressed format specified
+ * by GL_ARB_ES3_compatibility.
+ */
+bool
+_mesa_is_format_etc2(mesa_format format)
+{
+   switch (format) {
+   case MESA_FORMAT_ETC2_RGB8:
+   case MESA_FORMAT_ETC2_SRGB8:
+   case MESA_FORMAT_ETC2_RGBA8_EAC:
+   case MESA_FORMAT_ETC2_SRGB8_ALPHA8_EAC:
+   case MESA_FORMAT_ETC2_R11_EAC:
+   case MESA_FORMAT_ETC2_RG11_EAC:
+   case MESA_FORMAT_ETC2_SIGNED_R11_EAC:
+   case MESA_FORMAT_ETC2_SIGNED_RG11_EAC:
+   case MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1:
+   case MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1:
+      return GL_TRUE;
+   default:
+      return GL_FALSE;
+   }
+}
+
+
+/**
  * For an sRGB format, return the corresponding linear color space format.
  * For non-sRGB formats, return the format as-is.
  */

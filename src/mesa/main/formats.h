@@ -476,6 +476,9 @@ _mesa_is_format_signed(mesa_format format);
 extern GLboolean
 _mesa_is_format_integer(mesa_format format);
 
+extern bool
+_mesa_is_format_etc2(mesa_format format);
+
 extern GLenum
 _mesa_get_format_color_encoding(mesa_format format);
 
