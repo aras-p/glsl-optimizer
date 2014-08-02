@@ -54,7 +54,7 @@
  * Translate Mesa format to Gallium format.
  */
 enum pipe_format
-st_mesa_format_to_pipe_format(mesa_format mesaFormat)
+st_mesa_format_to_pipe_format(struct st_context *st, mesa_format mesaFormat)
 {
    switch (mesaFormat) {
    case MESA_FORMAT_A8B8G8R8_UNORM:
@@ -795,7 +795,7 @@ st_pipe_format_to_mesa_format(enum pipe_format format)
  * Mesa formats to Gallium formats and back again.
  */
 static void
-test_format_conversion(void)
+test_format_conversion(struct st_context *st)
 {
    GLuint i;
 
@@ -805,7 +805,7 @@ test_format_conversion(void)
       if (_mesa_is_format_etc2(i))
          continue;
 
-      enum pipe_format pf = st_mesa_format_to_pipe_format(i);
+      enum pipe_format pf = st_mesa_format_to_pipe_format(st, i);
       if (pf != PIPE_FORMAT_NONE) {
          mesa_format mf = st_pipe_format_to_mesa_format(pf);
          assert(mf == i);
@@ -816,7 +816,7 @@ test_format_conversion(void)
    for (i = 1; i < PIPE_FORMAT_COUNT; i++) {
       mesa_format mf = st_pipe_format_to_mesa_format(i);
       if (mf != MESA_FORMAT_NONE) {
-         enum pipe_format pf = st_mesa_format_to_pipe_format(mf);
+         enum pipe_format pf = st_mesa_format_to_pipe_format(st, mf);
          assert(pf == i);
       }
    }
@@ -1704,7 +1704,7 @@ st_choose_format(struct st_context *st, GLenum internalFormat,
    {
       static boolean firstCall = TRUE;
       if (firstCall) {
-         test_format_conversion();
+         test_format_conversion(st);
          firstCall = FALSE;
       }
    }
@@ -1770,9 +1770,10 @@ st_choose_renderbuffer_format(struct st_context *st,
  * If no format is supported, return PIPE_FORMAT_NONE.
  */
 enum pipe_format
-st_choose_matching_format(struct pipe_screen *screen, unsigned bind,
+st_choose_matching_format(struct st_context *st, unsigned bind,
 			  GLenum format, GLenum type, GLboolean swapBytes)
 {
+   struct pipe_screen *screen = st->pipe->screen;
    mesa_format mesa_format;
 
    for (mesa_format = 1; mesa_format < MESA_FORMAT_COUNT; mesa_format++) {
@@ -1788,7 +1789,8 @@ st_choose_matching_format(struct pipe_screen *screen, unsigned bind,
 
       if (_mesa_format_matches_format_and_type(mesa_format, format, type,
                                                swapBytes)) {
-         enum pipe_format format = st_mesa_format_to_pipe_format(mesa_format);
+         enum pipe_format format =
+            st_mesa_format_to_pipe_format(st, mesa_format);
 
          if (format &&
              screen->is_format_supported(screen, format, PIPE_TEXTURE_2D, 0,
@@ -1858,16 +1860,14 @@ st_ChooseTextureFormat(struct gl_context *ctx, GLenum target,
        * with the "format".
        */
       if (iformat == baseFormat && iformat == basePackFormat) {
-         pFormat = st_choose_matching_format(st->pipe->screen, bindings,
-                                             format, type,
+         pFormat = st_choose_matching_format(st, bindings, format, type,
                                              ctx->Unpack.SwapBytes);
 
          if (pFormat != PIPE_FORMAT_NONE)
             return st_pipe_format_to_mesa_format(pFormat);
 
          /* try choosing format again, this time without render target bindings */
-         pFormat = st_choose_matching_format(st->pipe->screen,
-                                             PIPE_BIND_SAMPLER_VIEW,
+         pFormat = st_choose_matching_format(st, PIPE_BIND_SAMPLER_VIEW,
                                              format, type,
                                              ctx->Unpack.SwapBytes);
          if (pFormat != PIPE_FORMAT_NONE)

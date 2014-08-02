@@ -197,7 +197,8 @@ st_gl_texture_dims_to_pipe_dims(GLenum texture,
  * Check if a texture image can be pulled into a unified mipmap texture.
  */
 GLboolean
-st_texture_match_image(const struct pipe_resource *pt,
+st_texture_match_image(struct st_context *st,
+                       const struct pipe_resource *pt,
                        const struct gl_texture_image *image)
 {
    GLuint ptWidth, ptHeight, ptDepth, ptLayers;
@@ -209,7 +210,7 @@ st_texture_match_image(const struct pipe_resource *pt,
 
    /* Check if this image's format matches the established texture's format.
     */
-   if (st_mesa_format_to_pipe_format(image->TexFormat) != pt->format)
+   if (st_mesa_format_to_pipe_format(st, image->TexFormat) != pt->format)
       return GL_FALSE;
 
    st_gl_texture_dims_to_pipe_dims(image->TexObject->Target,

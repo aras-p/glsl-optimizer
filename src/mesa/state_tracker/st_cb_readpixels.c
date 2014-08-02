@@ -143,7 +143,7 @@ st_readpixels(struct gl_context *ctx, GLint x, GLint y,
 
    /* Choose the destination format by finding the best match
     * for the format+type combo. */
-   dst_format = st_choose_matching_format(screen, bind, format, type,
+   dst_format = st_choose_matching_format(st, bind, format, type,
                                           pack->SwapBytes);
    if (dst_format == PIPE_FORMAT_NONE) {
       goto fallback;

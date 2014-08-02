@@ -199,7 +199,8 @@ st_gl_texture_dims_to_pipe_dims(GLenum texture,
 /* Check if an image fits into an existing texture object.
  */
 extern GLboolean
-st_texture_match_image(const struct pipe_resource *pt,
+st_texture_match_image(struct st_context *st,
+                       const struct pipe_resource *pt,
                        const struct gl_texture_image *image);
 
 /* Return a pointer to an image within a texture.  Return image stride as

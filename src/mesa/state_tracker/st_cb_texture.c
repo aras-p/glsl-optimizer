@@ -442,7 +442,7 @@ guess_and_alloc_texture(struct st_context *st,
    stObj->height0 = height;
    stObj->depth0 = depth;
 
-   fmt = st_mesa_format_to_pipe_format(stImage->base.TexFormat);
+   fmt = st_mesa_format_to_pipe_format(st, stImage->base.TexFormat);
 
    bindings = default_bindings(st, fmt);
 
@@ -493,7 +493,7 @@ st_AllocTextureImageBuffer(struct gl_context *ctx,
    /* Look if the parent texture object has space for this image */
    if (stObj->pt &&
        level <= stObj->pt->last_level &&
-       st_texture_match_image(stObj->pt, texImage)) {
+       st_texture_match_image(st, stObj->pt, texImage)) {
       /* this image will fit in the existing texture object's memory */
       pipe_resource_reference(&stImage->pt, stObj->pt);
       return GL_TRUE;
@@ -516,7 +516,7 @@ st_AllocTextureImageBuffer(struct gl_context *ctx,
    }
 
    if (stObj->pt &&
-       st_texture_match_image(stObj->pt, texImage)) {
+       st_texture_match_image(st, stObj->pt, texImage)) {
       /* The image will live in the object's mipmap memory */
       pipe_resource_reference(&stImage->pt, stObj->pt);
       assert(stImage->pt);
@@ -530,7 +530,7 @@ st_AllocTextureImageBuffer(struct gl_context *ctx,
        * level.
        */
       enum pipe_format format =
-         st_mesa_format_to_pipe_format(texImage->TexFormat);
+         st_mesa_format_to_pipe_format(st, texImage->TexFormat);
       GLuint bindings = default_bindings(st, format);
       GLuint ptWidth, ptHeight, ptDepth, ptLayers;
 
@@ -706,7 +706,7 @@ st_TexSubImage(struct gl_context *ctx, GLuint dims,
    }
 
    /* Choose the source format. */
-   src_format = st_choose_matching_format(screen, PIPE_BIND_SAMPLER_VIEW,
+   src_format = st_choose_matching_format(st, PIPE_BIND_SAMPLER_VIEW,
                                           format, type, unpack->SwapBytes);
    if (!src_format) {
       goto fallback;
@@ -982,7 +982,7 @@ st_GetTexImage(struct gl_context * ctx,
 
    /* Choose the destination format by finding the best match
     * for the format+type combo. */
-   dst_format = st_choose_matching_format(screen, bind, format, type,
+   dst_format = st_choose_matching_format(st, bind, format, type,
 					  ctx->Pack.SwapBytes);
 
    if (dst_format == PIPE_FORMAT_NONE) {
@@ -1581,7 +1581,8 @@ st_finalize_texture(struct gl_context *ctx,
    }
 
    /* Find gallium format for the Mesa texture */
-   firstImageFormat = st_mesa_format_to_pipe_format(firstImage->base.TexFormat);
+   firstImageFormat =
+      st_mesa_format_to_pipe_format(st, firstImage->base.TexFormat);
 
    /* Find size of level=0 Gallium mipmap image, plus number of texture layers */
    {
@@ -1699,7 +1700,7 @@ st_AllocTextureStorage(struct gl_context *ctx,
    stObj->depth0 = depth;
    stObj->lastLevel = levels - 1;
 
-   fmt = st_mesa_format_to_pipe_format(texImage->TexFormat);
+   fmt = st_mesa_format_to_pipe_format(st, texImage->TexFormat);
 
    bindings = default_bindings(st, fmt);
 
@@ -1778,7 +1779,7 @@ st_TestProxyTexImage(struct gl_context *ctx, GLenum target,
       memset(&pt, 0, sizeof(pt));
 
       pt.target = gl_target_to_pipe(target);
-      pt.format = st_mesa_format_to_pipe_format(format);
+      pt.format = st_mesa_format_to_pipe_format(st, format);
 
       st_gl_texture_dims_to_pipe_dims(target,
                                       width, height, depth,

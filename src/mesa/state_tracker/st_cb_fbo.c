@@ -588,7 +588,7 @@ st_validate_attachment(struct gl_context *ctx,
    if (!ctx->Extensions.EXT_framebuffer_sRGB &&
        _mesa_get_format_color_encoding(texFormat) == GL_SRGB) {
       const mesa_format linearFormat = _mesa_get_srgb_format_linear(texFormat);
-      format = st_mesa_format_to_pipe_format(linearFormat);
+      format = st_mesa_format_to_pipe_format(st_context(ctx), linearFormat);
    }
 
    valid = screen->is_format_supported(screen, format,

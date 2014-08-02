@@ -338,7 +338,7 @@ update_single_texture(struct st_context *st,
    /* Determine the format of the texture sampler view */
    if (texObj->Target == GL_TEXTURE_BUFFER) {
       view_format =
-         st_mesa_format_to_pipe_format(stObj->base._BufferObjectFormat);
+         st_mesa_format_to_pipe_format(st, stObj->base._BufferObjectFormat);
    }
    else {
       view_format =

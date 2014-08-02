@@ -491,7 +491,7 @@ make_texture(struct st_context *st,
    /* Choose a pixel format for the temp texture which will hold the
     * image to draw.
     */
-   pipeFormat = st_choose_matching_format(pipe->screen, PIPE_BIND_SAMPLER_VIEW,
+   pipeFormat = st_choose_matching_format(st, PIPE_BIND_SAMPLER_VIEW,
                                           format, type, unpack->SwapBytes);
 
    if (pipeFormat == PIPE_FORMAT_NONE) {
