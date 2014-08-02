@@ -47,6 +47,44 @@
 	void *validated,				\
 	void *untrusted
 
+static bool
+vc4_use_bo(struct exec_info *exec,
+	   uint32_t hindex,
+	   enum vc4_bo_mode mode,
+	   struct drm_gem_cma_object **obj)
+{
+	*obj = NULL;
+
+	if (hindex >= exec->bo_count) {
+		DRM_ERROR("BO index %d greater than BO count %d\n",
+			  hindex, exec->bo_count);
+		return false;
+	}
+
+	if (exec->bo[hindex].mode != mode) {
+		if (exec->bo[hindex].mode == VC4_MODE_UNDECIDED) {
+			exec->bo[hindex].mode = mode;
+		} else {
+			DRM_ERROR("BO index %d reused with mode %d vs %d\n",
+				  hindex, exec->bo[hindex].mode, mode);
+			return false;
+		}
+	}
+
+	*obj = exec->bo[hindex].bo;
+	return true;
+}
+
+static bool
+vc4_use_handle(struct exec_info *exec,
+	       uint32_t gem_handles_packet_index,
+	       enum vc4_bo_mode mode,
+	       struct drm_gem_cma_object **obj)
+{
+	return vc4_use_bo(exec, exec->bo_index[gem_handles_packet_index],
+			  mode, obj);
+}
+
 static uint32_t
 gl_shader_rec_size(uint32_t pointer_bits)
 {
@@ -66,7 +104,8 @@ validate_branch_to_sublist(VALIDATE_ARGS)
 
 	/* XXX: Validate address jumped to */
 
-	target = exec->bo[exec->bo_index[0]];
+	if (!vc4_use_handle(exec, 0, VC4_MODE_TILE_ALLOC, &target))
+		return -EINVAL;
 
 	*(uint32_t *)(validated + 0) =
 		*(uint32_t *)(untrusted + 0) + target->paddr;
@@ -78,10 +117,13 @@ static int
 validate_loadstore_tile_buffer_general(VALIDATE_ARGS)
 {
 	uint32_t packet_b0 = *(uint8_t *)(untrusted + 0);
-	struct drm_gem_cma_object *fbo = exec->bo[exec->bo_index[0]];
+	struct drm_gem_cma_object *fbo;
 
 	if ((packet_b0 & 0xf) == VC4_LOADSTORE_TILE_BUFFER_NONE)
 		return 0;
+
+	if (!vc4_use_handle(exec, 0, VC4_MODE_RENDER, &fbo))
+		return -EINVAL;
 
 	/* XXX: Validate address offset */
 	*(uint32_t *)(validated + 2) =
@@ -109,7 +151,9 @@ validate_indexed_prim_list(VALIDATE_ARGS)
 		return -EINVAL;
 	}
 
-	ib = exec->bo[exec->bo_index[0]];
+
+	if (!vc4_use_handle(exec, 0, VC4_MODE_RENDER, &ib))
+		return -EINVAL;
 	if (ib_access_end > ib->base.size) {
 		DRM_ERROR("IB access out of bounds (%d/%d)\n",
 			  ib_access_end, ib->base.size);
@@ -180,8 +224,9 @@ validate_tile_binning_config(VALIDATE_ARGS)
 	struct drm_gem_cma_object *tile_allocation;
 	struct drm_gem_cma_object *tile_state_data_array;
 
-	tile_allocation = exec->bo[exec->bo_index[0]];
-	tile_state_data_array = exec->bo[exec->bo_index[1]];
+	if (!vc4_use_handle(exec, 0, VC4_MODE_TILE_ALLOC, &tile_allocation) ||
+	    !vc4_use_handle(exec, 1, VC4_MODE_TSDA, &tile_state_data_array))
+		return -EINVAL;
 
 	/* XXX: Validate offsets */
 	*(uint32_t *)validated =
@@ -198,7 +243,8 @@ validate_tile_rendering_mode_config(VALIDATE_ARGS)
 {
 	struct drm_gem_cma_object *fbo;
 
-	fbo = exec->bo[exec->bo_index[0]];
+	if (!vc4_use_handle(exec, 0, VC4_MODE_RENDER, &fbo))
+		return -EINVAL;
 
 	/* XXX: Validate offsets */
 	*(uint32_t *)validated =
@@ -210,18 +256,7 @@ validate_tile_rendering_mode_config(VALIDATE_ARGS)
 static int
 validate_gem_handles(VALIDATE_ARGS)
 {
-	int i;
-
 	memcpy(exec->bo_index, untrusted, sizeof(exec->bo_index));
-
-	for (i = 0; i < ARRAY_SIZE(exec->bo_index); i++) {
-		if (exec->bo_index[i] >= exec->bo_count) {
-			DRM_ERROR("Validated BO index %d >= %d\n",
-				  exec->bo_index[i], exec->bo_count);
-			return -EINVAL;
-		}
-	}
-
 	return 0;
 }
 
@@ -379,12 +414,8 @@ reloc_tex(struct exec_info *exec,
 						sample->p_offset[0]);
 	uint32_t *validated_p0 = exec->uniforms_v + sample->p_offset[0];
 
-	if (texture_handle_index >= exec->bo_count) {
-		DRM_ERROR("texture handle index %d >= %d\n",
-			  texture_handle_index, exec->bo_count);
+	if (!vc4_use_bo(exec, texture_handle_index, VC4_MODE_RENDER, &tex))
 		return false;
-	}
-	tex = exec->bo[texture_handle_index];
 
 	*validated_p0 = tex->paddr + unvalidated_p0;
 
@@ -467,12 +498,16 @@ validate_shader_rec(struct drm_device *dev,
 	exec->shader_rec_size -= packet_size;
 
 	for (i = 0; i < nr_relocs; i++) {
-		if (src_handles[i] >= exec->bo_count) {
-			DRM_ERROR("shader rec bo index %d > %d\n",
-				  src_handles[i], exec->bo_count);
-			return -EINVAL;
+		enum vc4_bo_mode mode;
+
+		if (i < nr_fixed_relocs && relocs[i].type == RELOC_CODE)
+			mode = VC4_MODE_SHADER;
+		else
+			mode = VC4_MODE_RENDER;
+
+		if (!vc4_use_bo(exec, src_handles[i], mode, &bo[i])) {
+			return false;
 		}
-		bo[i] = exec->bo[src_handles[i]];
 	}
 
 	for (i = 0; i < nr_fixed_relocs; i++) {

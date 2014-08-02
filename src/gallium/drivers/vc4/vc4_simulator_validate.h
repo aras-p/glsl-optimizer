@@ -69,6 +69,19 @@ struct drm_gem_cma_object {
         void *vaddr;
 };
 
+enum vc4_bo_mode {
+	VC4_MODE_UNDECIDED,
+	VC4_MODE_TILE_ALLOC,
+	VC4_MODE_TSDA,
+	VC4_MODE_RENDER,
+	VC4_MODE_SHADER,
+};
+
+struct vc4_bo_exec_state {
+	struct drm_gem_cma_object *bo;
+	enum vc4_bo_mode mode;
+};
+
 struct exec_info {
 	/* Kernel-space copy of the ioctl arguments */
 	struct drm_vc4_submit_cl *args;
@@ -76,14 +89,11 @@ struct exec_info {
 	/* This is the array of BOs that were looked up at the start of exec.
 	 * Command validation will use indices into this array.
 	 */
-	struct drm_gem_cma_object **bo;
+	struct vc4_bo_exec_state *bo;
 	uint32_t bo_count;
 
-	/* Current indices into @bo loaded by the non-hardware packet
-	 * that passes in indices.  This can be used even without
-	 * checking that we've seen one of those packets, because
-	 * @bo_count is always >= 1, and this struct is initialized to
-	 * 0.
+	/* Current unvalidated indices into @bo loaded by the non-hardware
+	 * VC4_PACKET_GEM_HANDLES.
 	 */
 	uint32_t bo_index[2];
 	uint32_t max_width, max_height;

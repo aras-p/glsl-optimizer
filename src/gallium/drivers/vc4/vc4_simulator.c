@@ -70,16 +70,15 @@ vc4_simulator_pin_bos(struct drm_device *dev, struct exec_info *exec)
         struct vc4_bo **bos = vc4->bo_pointers.base;
 
         exec->bo_count = args->bo_handle_count;
-        exec->bo = calloc(exec->bo_count, sizeof(void *));
+        exec->bo = calloc(exec->bo_count, sizeof(struct vc4_bo_exec_state));
         for (int i = 0; i < exec->bo_count; i++) {
                 struct vc4_bo *bo = bos[i];
                 struct drm_gem_cma_object *obj = vc4_wrap_bo_with_cma(dev, bo);
 
                 memcpy(obj->vaddr, bo->map, bo->size);
 
-                exec->bo[i] = obj;
+                exec->bo[i].bo = obj;
         }
-
         return 0;
 }
 
@@ -87,7 +86,7 @@ static int
 vc4_simulator_unpin_bos(struct exec_info *exec)
 {
         for (int i = 0; i < exec->bo_count; i++) {
-                struct drm_gem_cma_object *obj = exec->bo[i];
+                struct drm_gem_cma_object *obj = exec->bo[i].bo;
                 struct vc4_bo *bo = obj->bo;
 
                 memcpy(bo->map, obj->vaddr, bo->size);
