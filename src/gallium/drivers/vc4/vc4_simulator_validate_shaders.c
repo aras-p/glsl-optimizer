@@ -61,66 +61,6 @@ is_tmu_write(uint32_t waddr)
 }
 
 static bool
-check_register_write(uint32_t waddr, bool is_b)
-{
-	switch (waddr) {
-	case QPU_W_UNIFORMS_ADDRESS:
-		/* XXX: We'll probably need to support this for reladdr, but
-		 * it's definitely a security-related one.
-		 */
-		DRM_ERROR("uniforms address load unsupported\n");
-		return false;
-
-	case QPU_W_TLB_COLOR_MS:
-	case QPU_W_TLB_COLOR_ALL:
-	case QPU_W_TLB_Z:
-		/* These only interact with the tile buffer, not main memory,
-		 * so they're safe.
-		 */
-		return true;
-
-	case QPU_W_TMU0_S:
-	case QPU_W_TMU0_T:
-	case QPU_W_TMU0_R:
-	case QPU_W_TMU0_B:
-	case QPU_W_TMU1_S:
-	case QPU_W_TMU1_T:
-	case QPU_W_TMU1_R:
-	case QPU_W_TMU1_B:
-		/* XXX: We need to track where the uniforms get loaded for
-		 * texturing so that we can do relocations, and to validate
-		 * those uniform contents.
-		 */
-		return true;
-
-	case QPU_W_HOST_INT:
-	case QPU_W_TMU_NOSWAP:
-	case QPU_W_TLB_STENCIL_SETUP:
-	case QPU_W_TLB_ALPHA_MASK:
-	case QPU_W_MUTEX_RELEASE:
-		/* XXX: I haven't thought about these, so don't support them
-		 * for now.
-		 */
-		DRM_ERROR("Unsupported waddr %d\n", waddr);
-		return false;
-
-	case QPU_W_VPM_ADDR:
-		DRM_ERROR("General VPM DMA unsupported\n");
-		return false;
-
-	case QPU_W_VPM:
-	case QPU_W_VPMVCD_SETUP:
-		/* We allow VPM setup in general, even including VPM DMA
-		 * configuration setup, because the (unsafe) DMA can only be
-		 * triggered by QPU_W_VPM_ADDR writes.
-		 */
-		return true;
-	}
-
-	return true;
-}
-
-static bool
 record_validated_texture_sample(struct vc4_validated_shader_info *validated_shader,
 				struct vc4_shader_validation_state *validation_state,
 				int tmu)
@@ -148,10 +88,9 @@ record_validated_texture_sample(struct vc4_validated_shader_info *validated_shad
 }
 
 static bool
-check_tmu_writes(uint64_t inst,
-		 struct vc4_validated_shader_info *validated_shader,
-		 struct vc4_shader_validation_state *validation_state,
-		 uint32_t waddr)
+check_tmu_write(struct vc4_validated_shader_info *validated_shader,
+		struct vc4_shader_validation_state *validation_state,
+		uint32_t waddr)
 {
 	int tmu = waddr > QPU_W_TMU0_B;
 
@@ -181,31 +120,79 @@ check_tmu_writes(uint64_t inst,
 }
 
 static bool
+check_register_write(struct vc4_validated_shader_info *validated_shader,
+		     struct vc4_shader_validation_state *validation_state,
+		     uint32_t waddr)
+{
+	switch (waddr) {
+	case QPU_W_UNIFORMS_ADDRESS:
+		/* XXX: We'll probably need to support this for reladdr, but
+		 * it's definitely a security-related one.
+		 */
+		DRM_ERROR("uniforms address load unsupported\n");
+		return false;
+
+	case QPU_W_TLB_COLOR_MS:
+	case QPU_W_TLB_COLOR_ALL:
+	case QPU_W_TLB_Z:
+		/* These only interact with the tile buffer, not main memory,
+		 * so they're safe.
+		 */
+		return true;
+
+	case QPU_W_TMU0_S:
+	case QPU_W_TMU0_T:
+	case QPU_W_TMU0_R:
+	case QPU_W_TMU0_B:
+	case QPU_W_TMU1_S:
+	case QPU_W_TMU1_T:
+	case QPU_W_TMU1_R:
+	case QPU_W_TMU1_B:
+		return check_tmu_write(validated_shader, validation_state,
+				       waddr);
+
+	case QPU_W_HOST_INT:
+	case QPU_W_TMU_NOSWAP:
+	case QPU_W_TLB_STENCIL_SETUP:
+	case QPU_W_TLB_ALPHA_MASK:
+	case QPU_W_MUTEX_RELEASE:
+		/* XXX: I haven't thought about these, so don't support them
+		 * for now.
+		 */
+		DRM_ERROR("Unsupported waddr %d\n", waddr);
+		return false;
+
+	case QPU_W_VPM_ADDR:
+		DRM_ERROR("General VPM DMA unsupported\n");
+		return false;
+
+	case QPU_W_VPM:
+	case QPU_W_VPMVCD_SETUP:
+		/* We allow VPM setup in general, even including VPM DMA
+		 * configuration setup, because the (unsafe) DMA can only be
+		 * triggered by QPU_W_VPM_ADDR writes.
+		 */
+		return true;
+	}
+
+	return true;
+}
+
+static bool
 check_instruction_writes(uint64_t inst,
 			 struct vc4_validated_shader_info *validated_shader,
 			 struct vc4_shader_validation_state *validation_state)
 {
 	uint32_t waddr_add = QPU_GET_FIELD(inst, QPU_WADDR_ADD);
 	uint32_t waddr_mul = QPU_GET_FIELD(inst, QPU_WADDR_MUL);
-	bool ws = inst & QPU_WS;
 
 	if (is_tmu_write(waddr_add) && is_tmu_write(waddr_mul)) {
 		DRM_ERROR("ADD and MUL both set up textures\n");
 		return false;
 	}
 
-	if (!check_tmu_writes(inst, validated_shader, validation_state,
-			      waddr_add)) {
-		return false;
-	}
-
-	if (!check_tmu_writes(inst, validated_shader, validation_state,
-			      waddr_mul)) {
-		return false;
-	}
-
-	return (check_register_write(waddr_add, ws) &&
-		check_register_write(waddr_mul, !ws));
+	return (check_register_write(validated_shader, validation_state, waddr_add) &&
+		check_register_write(validated_shader, validation_state, waddr_mul));
 }
 
 static bool
