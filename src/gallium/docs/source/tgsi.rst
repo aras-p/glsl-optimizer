@@ -584,25 +584,44 @@ This instruction replicates its result.
   for array textures src0.y contains the slice for 1D,
   and src0.z contain the slice for 2D.
 
-  for shadow textures with no arrays, src0.z contains
-  the reference value.
+  for shadow textures with no arrays (and not cube map),
+  src0.z contains the reference value.
 
   for shadow textures with arrays, src0.z contains
   the reference value for 1D arrays, and src0.w contains
-  the reference value for 2D arrays.
+  the reference value for 2D arrays and cube maps.
 
-  There is no way to pass a bias in the .w value for
-  shadow arrays, and GLSL doesn't allow this.
-  GLSL does allow cube shadows maps to take a bias value,
-  and we have to determine how this will look in TGSI.
+  for cube map array shadow textures, the reference value
+  cannot be passed in src0.w, and TEX2 must be used instead.
 
 .. math::
 
   coord = src0
 
-  bias = 0.0
+  shadow_ref = src0.z or src0.w (optional)
 
-  dst = texture\_sample(unit, coord, bias)
+  unit = src1
+
+  dst = texture\_sample(unit, coord, shadow_ref)
+
+
+.. opcode:: TEX2 - Texture Lookup (for shadow cube map arrays only)
+
+  this is the same as TEX, but uses another reg to encode the
+  reference value.
+
+.. math::
+
+  coord = src0
+
+  shadow_ref = src1.x
+
+  unit = src2
+
+  dst = texture\_sample(unit, coord, shadow_ref)
+
+
+
 
 .. opcode:: TXD - Texture Lookup with Derivatives
 
@@ -614,26 +633,26 @@ This instruction replicates its result.
 
   ddy = src2
 
-  bias = 0.0
+  unit = src3
 
-  dst = texture\_sample\_deriv(unit, coord, bias, ddx, ddy)
+  dst = texture\_sample\_deriv(unit, coord, ddx, ddy)
 
 
 .. opcode:: TXP - Projective Texture Lookup
 
 .. math::
 
-  coord.x = src0.x / src.w
+  coord.x = src0.x / src0.w
 
-  coord.y = src0.y / src.w
+  coord.y = src0.y / src0.w
 
-  coord.z = src0.z / src.w
+  coord.z = src0.z / src0.w
 
   coord.w = src0.w
 
-  bias = 0.0
+  unit = src1
 
-  dst = texture\_sample(unit, coord, bias)
+  dst = texture\_sample(unit, coord)
 
 
 .. opcode:: UP2H - Unpack Two 16-Bit Floats
@@ -763,17 +782,46 @@ This instruction replicates its result.
 
 .. opcode:: TXB - Texture Lookup With Bias
 
+  for cube map array textures and shadow cube maps, the bias value
+  cannot be passed in src0.w, and TXB2 must be used instead.
+
+  if the target is a shadow texture, the reference value is always
+  in src.z (this prevents shadow 3d and shadow 2d arrays from
+  using this instruction, but this is not needed).
+
 .. math::
 
-  coord.x = src.x
+  coord.x = src0.x
 
-  coord.y = src.y
+  coord.y = src0.y
 
-  coord.z = src.z
+  coord.z = src0.z
 
-  coord.w = 1.0
+  coord.w = none
 
-  bias = src.z
+  bias = src0.w
+
+  unit = src1
+
+  dst = texture\_sample(unit, coord, bias)
+
+
+.. opcode:: TXB2 - Texture Lookup With Bias (some cube maps only)
+
+  this is the same as TXB, but uses another reg to encode the
+  lod bias value for cube map arrays and shadow cube maps.
+  Presumably shadow 2d arrays and shadow 3d targets could use
+  this encoding too, but this is not legal.
+
+  shadow cube map arrays are neither possible nor required.
+
+.. math::
+
+  coord = src0
+
+  bias = src1.x
+
+  unit = src2
 
   dst = texture\_sample(unit, coord, bias)
 
@@ -815,6 +863,13 @@ This instruction replicates its result.
 
 .. opcode:: TXL - Texture Lookup With explicit LOD
 
+  for cube map array textures, the explicit lod value
+  cannot be passed in src0.w, and TXL2 must be used instead.
+
+  if the target is a shadow texture, the reference value is always
+  in src.z (this prevents shadow 3d / 2d array / cube targets from
+  using this instruction, but this is not needed).
+
 .. math::
 
   coord.x = src0.x
@@ -823,9 +878,31 @@ This instruction replicates its result.
 
   coord.z = src0.z
 
-  coord.w = 1.0
+  coord.w = none
 
   lod = src0.w
+
+  unit = src1
+
+  dst = texture\_sample(unit, coord, lod)
+
+
+.. opcode:: TXL2 - Texture Lookup With explicit LOD (for cube map arrays only)
+
+  this is the same as TXL, but uses another reg to encode the
+  explicit lod value.
+  Presumably shadow 3d / 2d array / cube targets could use
+  this encoding too, but this is not legal.
+
+  shadow cube map arrays are neither possible nor required.
+
+.. math::
+
+  coord = src0
+
+  lod = src1.x
+
+  unit = src2
 
   dst = texture\_sample(unit, coord, lod)
 
@@ -954,9 +1031,9 @@ XXX doesn't look like most of the opcodes really belong here.
   As per NV_gpu_shader4, extract a single texel from a specified texture
   image. The source sampler may not be a CUBE or SHADOW.  src 0 is a
   four-component signed integer vector used to identify the single texel
-  accessed. 3 components + level.  src 1 is a 3 component constant signed
-  integer vector, with each component only have a range of -8..+8 (hw only
-  seems to deal with this range, interface allows for up to unsigned int).
+  accessed. 3 components + level.  Just like texture instructions, an optional
+  offset vector is provided, which is subject to various driver restrictions
+  (regarding range, source of offsets).
   TXF(uint_vec coord, int_vec offset).
 
 
