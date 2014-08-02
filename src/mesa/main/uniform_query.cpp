@@ -282,9 +282,7 @@ validate_uniform_parameters(struct gl_context *ctx,
     * If not an array, check that array_index is zero.
     * array_index is unsigned so no need to check for less than zero.
     */
-   unsigned limit = uni->array_elements;
-   if (limit == 0)
-      limit = 1;
+   const unsigned limit = MAX2(uni->array_elements, 1);
    if (*array_index >= limit) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "%s(location=%d)",
 		  caller, location);
