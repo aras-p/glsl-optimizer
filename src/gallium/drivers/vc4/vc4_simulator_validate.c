@@ -232,63 +232,58 @@ static const struct cmd_info {
 	const char *name;
 	int (*func)(struct exec_info *exec, void *validated, void *untrusted);
 } cmd_info[] = {
-	[0] = { 1, 1, 1, "halt", NULL },
-	[1] = { 1, 1, 1, "nop", NULL },
-	[4] = { 1, 1, 1, "flush", NULL },
-	[5] = { 1, 0, 1, "flush all state", NULL },
-	[6] = { 1, 0, 1, "start tile binning", NULL },
-	[7] = { 1, 0, 1, "increment semaphore", NULL },
-	[8] = { 1, 1, 1, "wait on semaphore", NULL },
-	[17] = { 1, 1, 5, "branch to sublist", validate_branch_to_sublist },
-	[24] = { 0, 1, 1, "store MS resolved tile color buffer", NULL },
-	[25] = { 0, 1, 1, "store MS resolved tile color buffer and EOF", NULL },
+	[VC4_PACKET_HALT] = { 1, 1, 1, "halt", NULL },
+	[VC4_PACKET_NOP] = { 1, 1, 1, "nop", NULL },
+	[VC4_PACKET_FLUSH] = { 1, 1, 1, "flush", NULL },
+	[VC4_PACKET_FLUSH_ALL] = { 1, 0, 1, "flush all state", NULL },
+	[VC4_PACKET_START_TILE_BINNING] = { 1, 0, 1, "start tile binning", NULL },
+	[VC4_PACKET_INCREMENT_SEMAPHORE] = { 1, 0, 1, "increment semaphore", NULL },
+	[VC4_PACKET_WAIT_ON_SEMAPHORE] = { 1, 1, 1, "wait on semaphore", NULL },
+	[VC4_PACKET_BRANCH_TO_SUB_LIST] = { 1, 1, 5, "branch to sublist", validate_branch_to_sublist },
+	[VC4_PACKET_STORE_MS_TILE_BUFFER] = { 0, 1, 1, "store MS resolved tile color buffer", NULL },
+	[VC4_PACKET_STORE_MS_TILE_BUFFER_AND_EOF] = { 0, 1, 1, "store MS resolved tile color buffer and EOF", NULL },
 
-	[28] = { 0, 1, 7, "Store Tile Buffer General",
-		 validate_loadstore_tile_buffer_general },
-	[29] = { 0, 1, 7, "Load Tile Buffer General",
-		 validate_loadstore_tile_buffer_general },
+	[VC4_PACKET_STORE_TILE_BUFFER_GENERAL] = { 0, 1, 7, "Store Tile Buffer General", validate_loadstore_tile_buffer_general },
+	[VC4_PACKET_LOAD_TILE_BUFFER_GENERAL] = { 0, 1, 7, "Load Tile Buffer General", validate_loadstore_tile_buffer_general },
 
-	[32] = { 1, 1, 14, "Indexed Primitive List",
-		 validate_indexed_prim_list },
+	[VC4_PACKET_GL_INDEXED_PRIMITIVE] = { 1, 1, 14, "Indexed Primitive List", validate_indexed_prim_list },
 
 	/* XXX: bounds check verts? */
-	[33] = { 1, 1, 10, "Vertex Array Primitives", NULL },
+	[VC4_PACKET_GL_ARRAY_PRIMITIVE] = { 1, 1, 10, "Vertex Array Primitives", NULL },
 
-	[56] = { 1, 1, 2, "primitive list format", NULL }, /* XXX: bin valid? */
+	[VC4_PACKET_PRIMITIVE_LIST_FORMAT] = { 1, 1, 2, "primitive list format", NULL }, /* XXX: bin valid? */
 
-	[64] = { 1, 1, 5, "GL Shader State", validate_gl_shader_state },
-	[65] = { 1, 1, 5, "NV Shader State", validate_nv_shader_state },
+	[VC4_PACKET_GL_SHADER_STATE] = { 1, 1, 5, "GL Shader State", validate_gl_shader_state },
+	[VC4_PACKET_NV_SHADER_STATE] = { 1, 1, 5, "NV Shader State", validate_nv_shader_state },
 
-	[96] = { 1, 1, 4, "configuration bits", NULL },
-	[97] = { 1, 1, 5, "flat shade flags", NULL },
-	[98] = { 1, 1, 5, "point size", NULL },
-	[99] = { 1, 1, 5, "line width", NULL },
-	[100] = { 1, 1, 3, "RHT X boundary", NULL },
-	[101] = { 1, 1, 5, "Depth Offset", NULL },
-	[102] = { 1, 1, 9, "Clip Window", NULL },
-	[103] = { 1, 1, 5, "Viewport Offset", NULL },
-	[105] = { 1, 1, 9, "Clipper XY Scaling", NULL },
+	[VC4_PACKET_CONFIGURATION_BITS] = { 1, 1, 4, "configuration bits", NULL },
+	[VC4_PACKET_FLAT_SHADE_FLAGS] = { 1, 1, 5, "flat shade flags", NULL },
+	[VC4_PACKET_POINT_SIZE] = { 1, 1, 5, "point size", NULL },
+	[VC4_PACKET_LINE_WIDTH] = { 1, 1, 5, "line width", NULL },
+	[VC4_PACKET_RHT_X_BOUNDARY] = { 1, 1, 3, "RHT X boundary", NULL },
+	[VC4_PACKET_DEPTH_OFFSET] = { 1, 1, 5, "Depth Offset", NULL },
+	[VC4_PACKET_CLIP_WINDOW] = { 1, 1, 9, "Clip Window", NULL },
+	[VC4_PACKET_VIEWPORT_OFFSET] = { 1, 1, 5, "Viewport Offset", NULL },
+	[VC4_PACKET_CLIPPER_XY_SCALING] = { 1, 1, 9, "Clipper XY Scaling", NULL },
 	/* Note: The docs say this was also 105, but it was 106 in the
 	 * initial userland code drop.
 	 */
-	[106] = { 1, 1, 9, "Clipper Z Scale and Offset", NULL },
+	[VC4_PACKET_CLIPPER_Z_SCALING] = { 1, 1, 9, "Clipper Z Scale and Offset", NULL },
 
-	[112] = { 1, 0, 16, "tile binning configuration",
-		  validate_tile_binning_config },
+	[VC4_PACKET_TILE_BINNING_MODE_CONFIG] = { 1, 0, 16, "tile binning configuration", validate_tile_binning_config },
 
 	/* XXX: Do we need to validate this one?  It's got width/height in it.
 	 */
-	[113] = { 0, 1, 11, "tile rendering mode configuration",
-		  validate_tile_rendering_mode_config},
+	[VC4_PACKET_TILE_RENDERING_MODE_CONFIG] = { 0, 1, 11, "tile rendering mode configuration", validate_tile_rendering_mode_config},
 
-	[114] = { 0, 1, 14, "Clear Colors", NULL },
+	[VC4_PACKET_CLEAR_COLORS] = { 0, 1, 14, "Clear Colors", NULL },
 
 	/* XXX: Do we need to validate here?  It's got tile x/y number for
 	 * rendering
 	 */
-	[115] = { 0, 1, 3, "Tile Coordinates", NULL },
+	[VC4_PACKET_TILE_COORDINATES] = { 0, 1, 3, "Tile Coordinates", NULL },
 
-	[254] = { 1, 1, 9, "GEM handles", validate_gem_handles },
+	[VC4_PACKET_GEM_HANDLES] = { 1, 1, 9, "GEM handles", validate_gem_handles },
 };
 
 int
@@ -342,7 +337,7 @@ vc4_validate_cl(struct drm_device *dev,
 			return -EINVAL;
 		}
 
-		if (cmd != 254)
+		if (cmd != VC4_PACKET_GEM_HANDLES)
 			memcpy(dst_pkt, src_pkt, info->len);
 
 		if (info->func && info->func(exec,
@@ -356,11 +351,11 @@ vc4_validate_cl(struct drm_device *dev,
 
 		src_offset += info->len;
 		/* GEM handle loading doesn't produce HW packets. */
-		if (cmd != 254)
+		if (cmd != VC4_PACKET_GEM_HANDLES)
 			dst_offset += info->len;
 
 		/* When the CL hits halt, it'll stop reading anything else. */
-		if (cmd == 0)
+		if (cmd == VC4_PACKET_HALT)
 			break;
 	}
 
