@@ -119,6 +119,12 @@ struct exec_info {
 	/** How many shader state records the validator has seen. */
 	uint32_t shader_state_count;
 
+	bool found_tile_binning_mode_config_packet;
+	bool found_start_tile_binning_packet;
+	uint8_t bin_tiles_x, bin_tiles_y;
+	uint32_t tile_alloc_init_block_size;
+	struct drm_gem_cma_object *tile_alloc_bo;
+
 	/**
 	 * Computed addresses pointing into exec_bo where we start the
 	 * bin thread (ct0) and render thread (ct1).

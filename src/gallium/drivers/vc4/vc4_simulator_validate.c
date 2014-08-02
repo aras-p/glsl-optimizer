@@ -98,17 +98,46 @@ gl_shader_rec_size(uint32_t pointer_bits)
 }
 
 static int
+validate_start_tile_binning(VALIDATE_ARGS)
+{
+	if (exec->found_start_tile_binning_packet) {
+		DRM_ERROR("Duplicate VC4_PACKET_START_TILE_BINNING\n");
+		return -EINVAL;
+	}
+	exec->found_start_tile_binning_packet = true;
+
+	if (!exec->found_tile_binning_mode_config_packet) {
+		DRM_ERROR("missing VC4_PACKET_TILE_BINNING_MODE_CONFIG\n");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+static int
 validate_branch_to_sublist(VALIDATE_ARGS)
 {
 	struct drm_gem_cma_object *target;
-
-	/* XXX: Validate address jumped to */
+	uint32_t offset;
 
 	if (!vc4_use_handle(exec, 0, VC4_MODE_TILE_ALLOC, &target))
 		return -EINVAL;
 
-	*(uint32_t *)(validated + 0) =
-		*(uint32_t *)(untrusted + 0) + target->paddr;
+	if (target != exec->tile_alloc_bo) {
+		DRM_ERROR("Juimping to BOs other than tile alloc unsupported\n");
+		return -EINVAL;
+	}
+
+	offset = *(uint32_t *)(untrusted + 0);
+	if (offset % exec->tile_alloc_init_block_size ||
+	    offset / exec->tile_alloc_init_block_size >
+	    exec->bin_tiles_x * exec->bin_tiles_y) {
+		DRM_ERROR("VC4_PACKET_BRANCH_TO_SUB_LIST must jump to initial "
+			  "tile allocation space.\n");
+		return -EINVAL;
+	}
+
+	*(uint32_t *)(validated + 0) = target->paddr + offset;
 
 	return 0;
 }
@@ -223,17 +252,79 @@ validate_tile_binning_config(VALIDATE_ARGS)
 {
 	struct drm_gem_cma_object *tile_allocation;
 	struct drm_gem_cma_object *tile_state_data_array;
+	uint8_t flags;
+	uint32_t tile_allocation_size;
 
 	if (!vc4_use_handle(exec, 0, VC4_MODE_TILE_ALLOC, &tile_allocation) ||
 	    !vc4_use_handle(exec, 1, VC4_MODE_TSDA, &tile_state_data_array))
 		return -EINVAL;
 
-	/* XXX: Validate offsets */
-	*(uint32_t *)validated =
-		*(uint32_t *)untrusted + tile_allocation->paddr;
+	if (exec->found_tile_binning_mode_config_packet) {
+		DRM_ERROR("Duplicate VC4_PACKET_TILE_BINNING_MODE_CONFIG\n");
+		return -EINVAL;
+	}
+	exec->found_tile_binning_mode_config_packet = true;
 
-	*(uint32_t *)(validated + 8) =
-		*(uint32_t *)(untrusted + 8) + tile_state_data_array->paddr;
+	exec->bin_tiles_x = *(uint8_t *)(untrusted + 12);
+	exec->bin_tiles_y = *(uint8_t *)(untrusted + 13);
+	flags = *(uint8_t *)(untrusted + 14);
+
+	if (exec->bin_tiles_x == 0 ||
+	    exec->bin_tiles_y == 0) {
+		DRM_ERROR("Tile binning config of %dx%d too small\n",
+			  exec->bin_tiles_x, exec->bin_tiles_y);
+		return -EINVAL;
+	}
+
+	/* Our validation relies on the user not getting to set up their own
+	 * tile state/tile allocation BO contents.
+	 */
+	if (!(flags & VC4_BIN_CONFIG_AUTO_INIT_TSDA)) {
+		DRM_ERROR("binning config missing "
+			  "VC4_BIN_CONFIG_AUTO_INIT_TSDA\n");
+		return -EINVAL;
+	}
+
+	if (flags & (VC4_BIN_CONFIG_DB_NON_MS |
+		     VC4_BIN_CONFIG_TILE_BUFFER_64BIT |
+		     VC4_BIN_CONFIG_MS_MODE_4X)) {
+		DRM_ERROR("unsupported bining config flags 0x%02x\n", flags);
+		return -EINVAL;
+	}
+
+	if (*(uint32_t *)(untrusted + 0) != 0) {
+		DRM_ERROR("tile allocation offset != 0 unsupported\n");
+		return -EINVAL;
+	}
+	tile_allocation_size = *(uint32_t *)(untrusted + 4);
+	if (tile_allocation_size > tile_allocation->base.size) {
+		DRM_ERROR("tile allocation size %d > BO size %d",
+			  tile_allocation_size, tile_allocation->base.size);
+		return -EINVAL;
+	}
+	*(uint32_t *)validated = tile_allocation->paddr;
+	exec->tile_alloc_bo = tile_allocation;
+
+	exec->tile_alloc_init_block_size = 1 << (5 + ((flags >> 5) & 3));
+	if (exec->bin_tiles_x * exec->bin_tiles_y *
+	    exec->tile_alloc_init_block_size > tile_allocation_size) {
+		DRM_ERROR("tile init exceeds tile alloc size (%d vs %d)\n",
+			  exec->bin_tiles_x * exec->bin_tiles_y *
+			  exec->tile_alloc_init_block_size,
+			  tile_allocation_size);
+		return -EINVAL;
+	}
+	if (*(uint32_t *)(untrusted + 8) != 0) {
+		DRM_ERROR("TSDA offset != 0 unsupported\n");
+		return -EINVAL;
+	}
+	if (exec->bin_tiles_x * exec->bin_tiles_y * 48 >
+	    tile_state_data_array->base.size) {
+		DRM_ERROR("TSDA of %db too small for %dx%d bin config\n",
+			  tile_state_data_array->base.size,
+			  exec->bin_tiles_x, exec->bin_tiles_y);
+	}
+	*(uint32_t *)(validated + 8) = tile_state_data_array->paddr;
 
 	return 0;
 }
@@ -249,6 +340,25 @@ validate_tile_rendering_mode_config(VALIDATE_ARGS)
 	/* XXX: Validate offsets */
 	*(uint32_t *)validated =
 		*(uint32_t *)untrusted + fbo->paddr;
+
+	return 0;
+}
+
+static int
+validate_tile_coordinates(VALIDATE_ARGS)
+{
+	uint8_t tile_x = *(uint8_t *)(untrusted + 0);
+	uint8_t tile_y = *(uint8_t *)(untrusted + 1);
+
+	if (tile_x >= exec->bin_tiles_x ||
+	    tile_y >= exec->bin_tiles_y) {
+		DRM_ERROR("Tile coordinates %d,%d > bin config %d,%d\n",
+			  tile_x,
+			  tile_y,
+			  exec->bin_tiles_x,
+			  exec->bin_tiles_y);
+		return -EINVAL;
+	}
 
 	return 0;
 }
@@ -271,10 +381,14 @@ static const struct cmd_info {
 	[VC4_PACKET_NOP] = { 1, 1, 1, "nop", NULL },
 	[VC4_PACKET_FLUSH] = { 1, 1, 1, "flush", NULL },
 	[VC4_PACKET_FLUSH_ALL] = { 1, 0, 1, "flush all state", NULL },
-	[VC4_PACKET_START_TILE_BINNING] = { 1, 0, 1, "start tile binning", NULL },
+	[VC4_PACKET_START_TILE_BINNING] = { 1, 0, 1, "start tile binning", validate_start_tile_binning },
 	[VC4_PACKET_INCREMENT_SEMAPHORE] = { 1, 0, 1, "increment semaphore", NULL },
 	[VC4_PACKET_WAIT_ON_SEMAPHORE] = { 1, 1, 1, "wait on semaphore", NULL },
-	[VC4_PACKET_BRANCH_TO_SUB_LIST] = { 1, 1, 5, "branch to sublist", validate_branch_to_sublist },
+	/* BRANCH_TO_SUB_LIST is actually supported in the binner as well, but
+	 * we only use it from the render CL in order to jump into the tile
+	 * allocation BO.
+	 */
+	[VC4_PACKET_BRANCH_TO_SUB_LIST] = { 0, 1, 5, "branch to sublist", validate_branch_to_sublist },
 	[VC4_PACKET_STORE_MS_TILE_BUFFER] = { 0, 1, 1, "store MS resolved tile color buffer", NULL },
 	[VC4_PACKET_STORE_MS_TILE_BUFFER_AND_EOF] = { 0, 1, 1, "store MS resolved tile color buffer and EOF", NULL },
 
@@ -313,10 +427,7 @@ static const struct cmd_info {
 
 	[VC4_PACKET_CLEAR_COLORS] = { 0, 1, 14, "Clear Colors", NULL },
 
-	/* XXX: Do we need to validate here?  It's got tile x/y number for
-	 * rendering
-	 */
-	[VC4_PACKET_TILE_COORDINATES] = { 0, 1, 3, "Tile Coordinates", NULL },
+	[VC4_PACKET_TILE_COORDINATES] = { 0, 1, 3, "Tile Coordinates", validate_tile_coordinates },
 
 	[VC4_PACKET_GEM_HANDLES] = { 1, 1, 9, "GEM handles", validate_gem_handles },
 };
@@ -394,10 +505,16 @@ vc4_validate_cl(struct drm_device *dev,
 			break;
 	}
 
-	if (is_bin)
+	if (is_bin) {
 		exec->ct0ea = exec->ct0ca + dst_offset;
-	else
+
+		if (!exec->found_start_tile_binning_packet) {
+			DRM_ERROR("Bin CL missing VC4_PACKET_START_TILE_BINNING\n");
+			return -EINVAL;
+		}
+	} else {
 		exec->ct1ea = exec->ct1ca + dst_offset;
+	}
 
 	return 0;
 }
