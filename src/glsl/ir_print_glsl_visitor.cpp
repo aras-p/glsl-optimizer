@@ -1203,6 +1203,14 @@ static void print_float (string_buffer& buffer, float f)
 	if (!posE)
 		posE = strchr(tmp, 'E');
 
+	// snprintf formats infinity as inf.0 or -inf.0, which isn't useful here.
+	// GLSL has no infinity constant so print an equivalent expression instead.
+	if (f == INFINITY)
+		strcpy(tmp, "(1.0/0.0)");
+
+	if (f == -INFINITY)
+		strcpy(tmp, "(-1.0/0.0)");
+
 	#if _MSC_VER
 	// While gcc would print something like 1.0e+07, MSVC will print 1.0e+007 -
 	// only for exponential notation, it seems, will add one extra useless zero. Let's try to remove
