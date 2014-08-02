@@ -1,6 +1,14 @@
 GLSL optimizer Change Log
 =========================
 
+2014 08
+-------
+
+Fixes:
+
+* Fixed printing of infinities & NaNs
+
+
 2014 06
 -------
 
