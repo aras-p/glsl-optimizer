@@ -168,7 +168,7 @@ _mesa_get_gl_version_override(void)
  * MESA_GLSL_VERSION_OVERRIDE are integers, such as "130".
  */
 void
-_mesa_override_glsl_version(struct gl_context *ctx)
+_mesa_override_glsl_version(struct gl_constants *consts)
 {
    const char *env_var = "MESA_GLSL_VERSION_OVERRIDE";
    const char *version;
@@ -179,7 +179,7 @@ _mesa_override_glsl_version(struct gl_context *ctx)
       return;
    }
 
-   n = sscanf(version, "%u", &ctx->Const.GLSLVersion);
+   n = sscanf(version, "%u", &consts->GLSLVersion);
    if (n != 1) {
       fprintf(stderr, "error: invalid value for %s: %s\n", env_var, version);
       return;

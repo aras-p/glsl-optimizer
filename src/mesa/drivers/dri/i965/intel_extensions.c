@@ -249,7 +249,7 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Const.GLSLVersion = 140;
    else
       ctx->Const.GLSLVersion = 120;
-   _mesa_override_glsl_version(ctx);
+   _mesa_override_glsl_version(&ctx->Const);
 
    if (brw->gen >= 6) {
       uint64_t dummy;

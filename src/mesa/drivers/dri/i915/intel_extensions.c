@@ -78,7 +78,7 @@ intelInitExtensions(struct gl_context *ctx)
    ctx->Extensions.OES_draw_texture = true;
 
    ctx->Const.GLSLVersion = 120;
-   _mesa_override_glsl_version(ctx);
+   _mesa_override_glsl_version(&ctx->Const);
 
    if (intel->gen >= 3) {
       ctx->Extensions.ARB_ES2_compatibility = true;

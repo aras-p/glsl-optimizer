@@ -617,7 +617,7 @@ void st_init_extensions(struct st_context *st)
    if (glsl_feature_level >= 330)
       ctx->Const.GLSLVersion = 330;
 
-   _mesa_override_glsl_version(st->ctx);
+   _mesa_override_glsl_version(&st->ctx->Const);
 
    if (st->options.force_glsl_version > 0 &&
        st->options.force_glsl_version <= ctx->Const.GLSLVersion) {

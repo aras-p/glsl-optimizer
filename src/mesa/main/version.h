@@ -29,6 +29,7 @@
 
 
 struct gl_context;
+struct gl_constants;
 
 
 extern void
@@ -38,7 +39,7 @@ extern void
 _mesa_override_gl_version(struct gl_context *ctx);
 
 extern void
-_mesa_override_glsl_version(struct gl_context *ctx);
+_mesa_override_glsl_version(struct gl_constants *consts);
 
 extern int
 _mesa_get_gl_version_override(void);

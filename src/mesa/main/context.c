@@ -641,7 +641,7 @@ _mesa_init_constants(struct gl_context *ctx)
    /* Shading language version */
    if (_mesa_is_desktop_gl(ctx)) {
       ctx->Const.GLSLVersion = 120;
-      _mesa_override_glsl_version(ctx);
+      _mesa_override_glsl_version(&ctx->Const);
    }
    else if (ctx->API == API_OPENGLES2) {
       ctx->Const.GLSLVersion = 100;
