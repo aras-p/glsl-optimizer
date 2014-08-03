@@ -540,7 +540,19 @@ brw_set_message_descriptor(struct brw_compile *p,
    struct brw_context *brw = p->brw;
 
    brw_set_src1(p, inst, brw_imm_d(0));
-   brw_inst_set_sfid(brw, inst, sfid);
+
+   /* For indirect sends, `inst` will not be the SEND/SENDC instruction
+    * itself; instead, it will be a MOV/OR into the address register.
+    *
+    * In this case, we avoid setting the extended message descriptor bits,
+    * since they go on the later SEND/SENDC instead and if set here would
+    * instead clobber the conditionalmod bits.
+    */
+   unsigned opcode = brw_inst_opcode(brw, inst);
+   if (opcode == BRW_OPCODE_SEND || opcode == BRW_OPCODE_SENDC) {
+      brw_inst_set_sfid(brw, inst, sfid);
+   }
+
    brw_inst_set_mlen(brw, inst, msg_length);
    brw_inst_set_rlen(brw, inst, response_length);
    brw_inst_set_eot(brw, inst, end_of_thread);
