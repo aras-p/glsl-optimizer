@@ -181,6 +181,7 @@ vc4_resource_create(struct pipe_screen *pscreen,
 
         vc4_setup_slices(rsc);
 
+        rsc->tiling = VC4_TILING_FORMAT_LINEAR;
         rsc->bo = vc4_bo_alloc(vc4_screen(pscreen),
                                rsc->slices[0].offset +
                                rsc->slices[0].size0 * prsc->depth0,
@@ -206,6 +207,7 @@ vc4_resource_from_handle(struct pipe_screen *pscreen,
         if (!rsc)
                 return NULL;
 
+        rsc->tiling = VC4_TILING_FORMAT_LINEAR;
         rsc->bo = vc4_screen_bo_from_handle(pscreen, handle, &slice->stride);
         if (!rsc->bo)
                 goto fail;

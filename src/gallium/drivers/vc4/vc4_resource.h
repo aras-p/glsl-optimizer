@@ -48,6 +48,8 @@ struct vc4_resource {
         struct vc4_bo *bo;
         struct vc4_resource_slice slices[VC4_MAX_MIP_LEVELS];
         int cpp;
+        /** One of VC4_TILING_FORMAT_* */
+        uint8_t tiling;
 };
 
 static INLINE struct vc4_resource *

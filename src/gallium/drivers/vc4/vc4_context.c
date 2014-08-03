@@ -113,7 +113,8 @@ vc4_setup_rcl(struct vc4_context *vc4)
         cl_reloc(vc4, &vc4->rcl, ctex->bo, csurf->offset);
         cl_u16(&vc4->rcl, width);
         cl_u16(&vc4->rcl, height);
-        cl_u16(&vc4->rcl, (VC4_RENDER_CONFIG_MEMORY_FORMAT_LINEAR |
+        cl_u16(&vc4->rcl, ((ctex->tiling <<
+                            VC4_RENDER_CONFIG_MEMORY_FORMAT_SHIFT) |
                            VC4_RENDER_CONFIG_FORMAT_RGBA8888 |
                            VC4_RENDER_CONFIG_EARLY_Z_COVERAGE_DISABLE));
 
@@ -145,7 +146,8 @@ vc4_setup_rcl(struct vc4_context *vc4)
                                 cl_u8(&vc4->rcl, VC4_PACKET_LOAD_TILE_BUFFER_GENERAL);
                                 cl_u8(&vc4->rcl,
                                       VC4_LOADSTORE_TILE_BUFFER_COLOR |
-                                      VC4_LOADSTORE_TILE_BUFFER_FORMAT_RASTER);
+                                      (ctex->tiling <<
+                                       VC4_LOADSTORE_TILE_BUFFER_FORMAT_SHIFT));
                                 cl_u8(&vc4->rcl,
                                       VC4_LOADSTORE_TILE_BUFFER_RGBA8888);
                                 cl_reloc(vc4, &vc4->rcl, ctex->bo,
