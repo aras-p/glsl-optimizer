@@ -41,6 +41,8 @@
 #define kfree(ptr) free(ptr)
 #define krealloc(ptr, size, args) realloc(ptr, size)
 #define roundup(x, y) align(x, y)
+#define max(x, y) MAX2(x, y)
+#define min(x, y) MiN2(x, y)
 #define BUG_ON(condition) assert(!(condition))
 
 static inline int

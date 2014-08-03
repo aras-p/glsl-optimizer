@@ -101,8 +101,9 @@ gl_shader_rec_size(uint32_t pointer_bits)
 }
 
 static bool
-check_fbo_size(struct exec_info *exec, struct drm_gem_cma_object *fbo,
-	       uint32_t offset, uint8_t tiling_format, uint8_t cpp)
+check_tex_size(struct exec_info *exec, struct drm_gem_cma_object *fbo,
+	       uint32_t offset, uint8_t tiling_format,
+	       uint32_t width, uint32_t height, uint8_t cpp)
 {
 	uint32_t width_align, height_align;
 	uint32_t aligned_row_len, aligned_h, size;
@@ -125,14 +126,14 @@ check_fbo_size(struct exec_info *exec, struct drm_gem_cma_object *fbo,
 		return false;
 	}
 
-	/* The values are limited by the packet bitfields, so we don't need to
-	 * worry as much about integer overflow.
+	/* The values are limited by the packet/texture parameter bitfields,
+	 * so we don't need to worry as much about integer overflow.
 	 */
-	BUG_ON(exec->fb_width > 65535);
-	BUG_ON(exec->fb_height > 65535);
+	BUG_ON(width > 65535);
+	BUG_ON(height > 65535);
 
-	aligned_row_len = roundup(exec->fb_width * cpp, width_align);
-	aligned_h = roundup(exec->fb_height, height_align);
+	aligned_row_len = roundup(width * cpp, width_align);
+	aligned_h = roundup(height, height_align);
 
 	if (INT_MAX / aligned_row_len < aligned_h) {
 		DRM_ERROR("Overflow in fbo size (%d * %d)\n",
@@ -144,8 +145,7 @@ check_fbo_size(struct exec_info *exec, struct drm_gem_cma_object *fbo,
 	if (size + offset < size ||
 	    size + offset > fbo->base.size) {
 		DRM_ERROR("Overflow in %dx%d fbo size (%d + %d > %d)\n",
-			  exec->fb_width, exec->fb_height, size, offset,
-			  fbo->base.size);
+			  width, height, size, offset, fbo->base.size);
 		return false;
 	}
 
@@ -247,11 +247,11 @@ validate_loadstore_tile_buffer_general(VALIDATE_ARGS)
 
 	offset = *(uint32_t *)(untrusted + 2);
 
-	if (!check_fbo_size(exec, fbo, offset,
+	if (!check_tex_size(exec, fbo, offset,
 			    ((packet_b0 &
 			      VC4_LOADSTORE_TILE_BUFFER_FORMAT_MASK) >>
 			     VC4_LOADSTORE_TILE_BUFFER_FORMAT_SHIFT),
-			    cpp)) {
+			    exec->fb_width, exec->fb_height, cpp)) {
 		return -EINVAL;
 	}
 
@@ -499,11 +499,11 @@ validate_tile_rendering_mode_config(VALIDATE_ARGS)
 	}
 
 	offset = *(uint32_t *)untrusted;
-	if (!check_fbo_size(exec, fbo, offset,
+	if (!check_tex_size(exec, fbo, offset,
 			    ((flags &
 			      VC4_RENDER_CONFIG_MEMORY_FORMAT_MASK) >>
 			     VC4_RENDER_CONFIG_MEMORY_FORMAT_SHIFT),
-			    cpp)) {
+			    exec->fb_width, exec->fb_height, cpp)) {
 		return -EINVAL;
 	}
 
@@ -699,14 +699,91 @@ reloc_tex(struct exec_info *exec,
 
 {
 	struct drm_gem_cma_object *tex;
-	uint32_t unvalidated_p0 = *(uint32_t *)(uniform_data_u +
-						sample->p_offset[0]);
+	uint32_t p0 = *(uint32_t *)(uniform_data_u + sample->p_offset[0]);
+	uint32_t p1 = *(uint32_t *)(uniform_data_u + sample->p_offset[1]);
 	uint32_t *validated_p0 = exec->uniforms_v + sample->p_offset[0];
+	uint32_t offset = p0 & ~0xfff;
+	uint32_t miplevels = (p0 & 0x15);
+	uint32_t width = (p1 >> 8) & 2047;
+	uint32_t height = (p1 >> 20) & 2047;
+	uint32_t type, cpp, tiling_format;
+	int i;
+
+	if (width == 0)
+		width = 2048;
+	if (height == 0)
+		height = 2048;
+
+	if (p0 & (1 << 9)) {
+		DRM_ERROR("Cube maps unsupported\n");
+		return false;
+	}
+
+	type = ((p0 >> 4) & 15) | ((p1 >> 31) << 4);
+
+	switch (type) {
+	case 0: /* RGBA8888 */
+	case 1: /* RGBX8888 */
+	case 16: /* RGBA32R */
+		cpp = 4;
+		break;
+	case 2: /* RGBA4444 */
+	case 3: /* RGBA5551 */
+	case 4: /* RGB565 */
+	case 7: /* LUMALPHA */
+	case 9: /* S16F */
+	case 11: /* S16 */
+		cpp = 2;
+		break;
+	case 5: /* LUMINANCE */
+	case 6: /* ALPHA */
+	case 10: /* S8 */
+		cpp = 1;
+		break;
+	case 8: /* ETC1 */
+	case 12: /* BW1 */
+	case 13: /* A4 */
+	case 14: /* A1 */
+	case 15: /* RGBA64 */
+	case 17: /* YUV422R */
+	default:
+		DRM_ERROR("Texture format %d unsupported\n", type);
+		return false;
+	}
+
+	if (type == 16) {
+		tiling_format = VC4_TILING_FORMAT_LINEAR;
+	} else {
+		DRM_ERROR("Tiling formats not yet supported\n");
+		return false;
+	}
 
 	if (!vc4_use_bo(exec, texture_handle_index, VC4_MODE_RENDER, &tex))
 		return false;
 
-	*validated_p0 = tex->paddr + unvalidated_p0;
+	if (!check_tex_size(exec, tex, offset, tiling_format,
+			    width, height, cpp)) {
+		return false;
+	}
+
+	/* The mipmap levels are stored before the base of the texture.  Make
+	 * sure there is actually space in the BO.
+	 */
+	for (i = 1; i <= miplevels; i++) {
+		uint32_t level_width = align(max(width >> i, 1), 16 / cpp);
+		uint32_t level_height = max(height >> i, 1);
+		uint32_t level_size = level_width * level_height * cpp;
+
+		if (offset < level_size) {
+			DRM_ERROR("Level %d (%dx%d) size %db overflowed "
+				  "buffer bounds (offset %d)\n",
+				  i, level_width, level_height,
+				  level_size, offset);
+			return false;
+		}
+	}
+
+	*validated_p0 = tex->paddr + p0;
 
 	return true;
 }
