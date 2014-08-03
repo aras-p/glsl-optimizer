@@ -27,3 +27,6 @@ int
 _mesa_get_sampler_uniform_value(class ir_dereference *sampler,
 				struct gl_shader_program *shader_program,
 				const struct gl_program *prog);
+
+class ir_rvalue *
+_mesa_get_sampler_array_nonconst_index(class ir_dereference *sampler);

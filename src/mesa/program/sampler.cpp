@@ -134,3 +134,14 @@ _mesa_get_sampler_uniform_value(class ir_dereference *sampler,
    return shader_program->UniformStorage[location].sampler[shader].index +
           getname.offset;
 }
+
+
+extern "C" class ir_rvalue *
+_mesa_get_sampler_array_nonconst_index(class ir_dereference *sampler)
+{
+   ir_dereference_array *deref_arr = sampler->as_dereference_array();
+   if (!deref_arr || deref_arr->array_index->as_constant())
+      return NULL;
+
+   return deref_arr->array_index;
+}
