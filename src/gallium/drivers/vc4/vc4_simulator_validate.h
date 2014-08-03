@@ -96,7 +96,6 @@ struct exec_info {
 	 * VC4_PACKET_GEM_HANDLES.
 	 */
 	uint32_t bo_index[2];
-	uint32_t max_width, max_height;
 
 	/* This is the BO where we store the validated command lists, shader
 	 * records, and uniforms.
@@ -120,8 +119,10 @@ struct exec_info {
 	uint32_t shader_state_count;
 
 	bool found_tile_binning_mode_config_packet;
+	bool found_tile_rendering_mode_config_packet;
 	bool found_start_tile_binning_packet;
 	uint8_t bin_tiles_x, bin_tiles_y;
+	uint32_t fb_width, fb_height;
 	uint32_t tile_alloc_init_block_size;
 	struct drm_gem_cma_object *tile_alloc_bo;
 

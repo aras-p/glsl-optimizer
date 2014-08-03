@@ -97,6 +97,58 @@ gl_shader_rec_size(uint32_t pointer_bits)
 	return 36 + attribute_count * (extended ? 12 : 8);
 }
 
+static bool
+check_fbo_size(struct exec_info *exec, struct drm_gem_cma_object *fbo,
+	       uint32_t offset, uint8_t tiling_format, uint8_t cpp)
+{
+	uint32_t width_align, height_align;
+	uint32_t aligned_row_len, aligned_h, size;
+
+	switch (tiling_format) {
+	case VC4_TILING_FORMAT_LINEAR:
+		width_align = 16;
+		height_align = 1;
+		break;
+	case VC4_TILING_FORMAT_T:
+		width_align = 128;
+		height_align = 32;
+		break;
+	case VC4_TILING_FORMAT_LT:
+		width_align = 16;
+		height_align = 4;
+		break;
+	default:
+		DRM_ERROR("buffer tiling %d unsupported\n", tiling_format);
+		return false;
+	}
+
+	/* The values are limited by the packet bitfields, so we don't need to
+	 * worry as much about integer overflow.
+	 */
+	BUG_ON(exec->fb_width > 65535);
+	BUG_ON(exec->fb_height > 65535);
+
+	aligned_row_len = roundup(exec->fb_width * cpp, width_align);
+	aligned_h = roundup(exec->fb_height, height_align);
+
+	if (INT_MAX / aligned_row_len < aligned_h) {
+		DRM_ERROR("Overflow in fbo size (%d * %d)\n",
+			  aligned_row_len, aligned_h);
+		return false;
+	}
+	size = aligned_row_len * aligned_h;
+
+	if (size + offset < size ||
+	    size + offset > fbo->base.size) {
+		DRM_ERROR("Overflow in %dx%d fbo size (%d + %d > %d)\n",
+			  exec->fb_width, exec->fb_height, size, offset,
+			  fbo->base.size);
+		return false;
+	}
+
+	return true;
+}
+
 static int
 validate_start_tile_binning(VALIDATE_ARGS)
 {
@@ -124,7 +176,7 @@ validate_branch_to_sublist(VALIDATE_ARGS)
 		return -EINVAL;
 
 	if (target != exec->tile_alloc_bo) {
-		DRM_ERROR("Juimping to BOs other than tile alloc unsupported\n");
+		DRM_ERROR("Jumping to BOs other than tile alloc unsupported\n");
 		return -EINVAL;
 	}
 
@@ -142,21 +194,65 @@ validate_branch_to_sublist(VALIDATE_ARGS)
 	return 0;
 }
 
+/**
+ * validate_loadstore_tile_buffer_general() - Validation for
+ * VC4_PACKET_LOAD_TILE_BUFFER_GENERAL and
+ * VC4_PACKET_STORE_TILE_BUFFER_GENERAL.
+ *
+ * The two packets are nearly the same, except for the TLB-clearing management
+ * bits not being present for loads.  Additionally, while stores are executed
+ * immediately (using the current tile coordinates), loads are queued to be
+ * executed when the tile coordinates packet occurs.
+ *
+ * Note that coordinates packets are validated to be within the declared
+ * bin_x/y, which themselves are verified to match the rendering-configuration
+ * FB width and height (which the hardware uses to clip loads and stores).
+ */
 static int
 validate_loadstore_tile_buffer_general(VALIDATE_ARGS)
 {
 	uint32_t packet_b0 = *(uint8_t *)(untrusted + 0);
+	uint32_t packet_b1 = *(uint8_t *)(untrusted + 1);
 	struct drm_gem_cma_object *fbo;
+	uint32_t buffer_type = packet_b0 & 0xf;
+	uint32_t offset, cpp;
 
-	if ((packet_b0 & 0xf) == VC4_LOADSTORE_TILE_BUFFER_NONE)
+	switch (buffer_type) {
+	case VC4_LOADSTORE_TILE_BUFFER_NONE:
 		return 0;
+	case VC4_LOADSTORE_TILE_BUFFER_COLOR:
+		if ((packet_b1 & VC4_LOADSTORE_TILE_BUFFER_MASK) ==
+		    VC4_LOADSTORE_TILE_BUFFER_RGBA8888) {
+			cpp = 4;
+		} else {
+			cpp = 2;
+		}
+		break;
+
+	case VC4_LOADSTORE_TILE_BUFFER_Z:
+	case VC4_LOADSTORE_TILE_BUFFER_ZS:
+		cpp = 4;
+		break;
+
+	default:
+		DRM_ERROR("Load/store type %d unsupported\n", buffer_type);
+		return -EINVAL;
+	}
 
 	if (!vc4_use_handle(exec, 0, VC4_MODE_RENDER, &fbo))
 		return -EINVAL;
 
-	/* XXX: Validate address offset */
-	*(uint32_t *)(validated + 2) =
-		*(uint32_t *)(untrusted + 2) + fbo->paddr;
+	offset = *(uint32_t *)(untrusted + 2);
+
+	if (!check_fbo_size(exec, fbo, offset,
+			    ((packet_b0 &
+			      VC4_LOADSTORE_TILE_BUFFER_FORMAT_MASK) >>
+			     VC4_LOADSTORE_TILE_BUFFER_FORMAT_SHIFT),
+			    cpp)) {
+		return -EINVAL;
+	}
+
+	*(uint32_t *)(validated + 2) = offset + fbo->paddr;
 
 	return 0;
 }
@@ -333,13 +429,53 @@ static int
 validate_tile_rendering_mode_config(VALIDATE_ARGS)
 {
 	struct drm_gem_cma_object *fbo;
+	uint32_t flags, offset, cpp;
+
+	if (exec->found_tile_rendering_mode_config_packet) {
+		DRM_ERROR("Duplicate VC4_PACKET_TILE_RENDERING_MODE_CONFIG\n");
+		return -EINVAL;
+	}
+	exec->found_tile_rendering_mode_config_packet = true;
 
 	if (!vc4_use_handle(exec, 0, VC4_MODE_RENDER, &fbo))
 		return -EINVAL;
 
-	/* XXX: Validate offsets */
-	*(uint32_t *)validated =
-		*(uint32_t *)untrusted + fbo->paddr;
+	exec->fb_width = *(uint16_t *)(untrusted + 4);
+	exec->fb_height = *(uint16_t *)(untrusted + 6);
+
+	/* Make sure that the fb width/height matches the binning config -- we
+	 * rely on being able to interchange these for various assertions.
+	 * (Within a tile, loads and stores will be clipped to the
+	 * width/height, but we allow load/storing to any binned tile).
+	 */
+	if (exec->fb_width <= (exec->bin_tiles_x - 1) * 64 ||
+	    exec->fb_width > exec->bin_tiles_x * 64 ||
+	    exec->fb_height <= (exec->bin_tiles_y - 1) * 64 ||
+	    exec->fb_height > exec->bin_tiles_y * 64) {
+		DRM_ERROR("bin config %dx%d doesn't match FB %dx%d\n",
+			  exec->bin_tiles_x, exec->bin_tiles_y,
+			  exec->fb_width, exec->fb_height);
+		return -EINVAL;
+	}
+
+	flags = *(uint16_t *)(untrusted + 8);
+	if ((flags & VC4_RENDER_CONFIG_FORMAT_MASK) ==
+	    VC4_RENDER_CONFIG_FORMAT_RGBA8888) {
+		cpp = 4;
+	} else {
+		cpp = 2;
+	}
+
+	offset = *(uint32_t *)untrusted;
+	if (!check_fbo_size(exec, fbo, offset,
+			    ((flags &
+			      VC4_RENDER_CONFIG_MEMORY_FORMAT_MASK) >>
+			     VC4_RENDER_CONFIG_MEMORY_FORMAT_SHIFT),
+			    cpp)) {
+		return -EINVAL;
+	}
+
+	*(uint32_t *)validated = fbo->paddr + offset;
 
 	return 0;
 }
@@ -421,8 +557,6 @@ static const struct cmd_info {
 
 	[VC4_PACKET_TILE_BINNING_MODE_CONFIG] = { 1, 0, 16, "tile binning configuration", validate_tile_binning_config },
 
-	/* XXX: Do we need to validate this one?  It's got width/height in it.
-	 */
 	[VC4_PACKET_TILE_RENDERING_MODE_CONFIG] = { 0, 1, 11, "tile rendering mode configuration", validate_tile_rendering_mode_config},
 
 	[VC4_PACKET_CLEAR_COLORS] = { 0, 1, 14, "Clear Colors", NULL },
@@ -513,6 +647,10 @@ vc4_validate_cl(struct drm_device *dev,
 			return -EINVAL;
 		}
 	} else {
+		if (!exec->found_tile_rendering_mode_config_packet) {
+			DRM_ERROR("Render CL missing VC4_PACKET_TILE_RENDERING_MODE_CONFIG\n");
+			return -EINVAL;
+		}
 		exec->ct1ea = exec->ct1ca + dst_offset;
 	}
 
