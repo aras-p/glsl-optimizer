@@ -793,7 +793,7 @@ init_attrib_groups(struct gl_context *ctx)
    _mesa_init_constants( ctx );
 
    /* Extensions */
-   _mesa_init_extensions( ctx );
+   _mesa_init_extensions(&ctx->Extensions);
 
    /* Attribute Groups */
    _mesa_init_accum( ctx );

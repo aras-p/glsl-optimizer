@@ -667,9 +667,9 @@ _mesa_one_time_init_extension_overrides(void)
  * Note: Sets gl_extensions.dummy_true to true.
  */
 void
-_mesa_init_extensions( struct gl_context *ctx )
+_mesa_init_extensions(struct gl_extensions *extensions)
 {
-   GLboolean *base = (GLboolean *) &ctx->Extensions;
+   GLboolean *base = (GLboolean *) extensions;
    GLboolean *sentinel = base + o(extension_sentinel);
    GLboolean *i;
 
@@ -678,8 +678,8 @@ _mesa_init_extensions( struct gl_context *ctx )
       *i = GL_FALSE;
 
    /* Then, selectively turn default extensions on. */
-   ctx->Extensions.dummy_true = GL_TRUE;
-   ctx->Extensions.EXT_texture3D = GL_TRUE;
+   extensions->dummy_true = GL_TRUE;
+   extensions->EXT_texture3D = GL_TRUE;
 }
 
 
