@@ -30,6 +30,10 @@
 #include "mtypes.h"
 
 
+extern GLuint
+_mesa_get_version(const struct gl_extensions *extensions,
+                  struct gl_constants *consts, gl_api api);
+
 extern void
 _mesa_compute_version(struct gl_context *ctx);
 
