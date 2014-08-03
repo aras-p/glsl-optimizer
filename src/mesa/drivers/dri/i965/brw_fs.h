@@ -717,7 +717,8 @@ private:
    void generate_fb_write(fs_inst *inst);
    void generate_linterp(fs_inst *inst, struct brw_reg dst,
                          struct brw_reg *src);
-   void generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src);
+   void generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src,
+                     struct brw_reg sampler_index);
    void generate_math1(fs_inst *inst, struct brw_reg dst, struct brw_reg src);
    void generate_math2(fs_inst *inst, struct brw_reg dst,
                        struct brw_reg src0, struct brw_reg src1);
