@@ -340,14 +340,15 @@ struct st_extension_format_mapping {
  *
  * target and bind_flags are passed to is_format_supported.
  */
-static void init_format_extensions(struct st_context *st,
-                           const struct st_extension_format_mapping *mapping,
-                           unsigned num_mappings,
-                           enum pipe_texture_target target,
-                           unsigned bind_flags)
+static void
+init_format_extensions(struct pipe_screen *screen,
+                       struct gl_extensions *extensions,
+                       const struct st_extension_format_mapping *mapping,
+                       unsigned num_mappings,
+                       enum pipe_texture_target target,
+                       unsigned bind_flags)
 {
-   struct pipe_screen *screen = st->pipe->screen;
-   GLboolean *extensions = (GLboolean *) &st->ctx->Extensions;
+   GLboolean *extension_table = (GLboolean *) extensions;
    unsigned i;
    int j;
    int num_formats = Elements(mapping->format);
@@ -371,9 +372,35 @@ static void init_format_extensions(struct st_context *st,
 
       /* Enable all extensions in the list. */
       for (j = 0; j < num_ext && mapping[i].extension_offset[j]; j++)
-         extensions[mapping[i].extension_offset[j]] = GL_TRUE;
+         extension_table[mapping[i].extension_offset[j]] = GL_TRUE;
    }
 }
+
+
+/**
+ * Given a list of formats and bind flags, return the maximum number
+ * of samples supported by any of those formats.
+ */
+static unsigned
+get_max_samples_for_formats(struct pipe_screen *screen,
+                            unsigned num_formats,
+                            enum pipe_format *formats,
+                            unsigned max_samples,
+                            unsigned bind)
+{
+   unsigned i, f;
+
+   for (i = max_samples; i > 0; --i) {
+      for (f = 0; f < num_formats; f++) {
+         if (screen->is_format_supported(screen, formats[f],
+                                         PIPE_TEXTURE_2D, i, bind)) {
+            return i;
+         }
+      }
+   }
+   return 0;
+}
+
 
 /**
  * Use pipe_screen::get_param() to query PIPE_CAP_ values to determine
@@ -382,12 +409,15 @@ static void init_format_extensions(struct st_context *st,
  * features or can be built on top of other gallium features.
  * Some fine tuning may still be needed.
  */
-void st_init_extensions(struct st_context *st)
+void st_init_extensions(struct pipe_screen *screen,
+                        gl_api api,
+                        struct gl_constants *consts,
+                        struct gl_extensions *extensions,
+                        struct st_config_options *options,
+                        boolean has_lib_dxtc)
 {
-   struct pipe_screen *screen = st->pipe->screen;
-   struct gl_context *ctx = st->ctx;
    int i, glsl_feature_level;
-   GLboolean *extensions = (GLboolean *) &ctx->Extensions;
+   GLboolean *extension_table = (GLboolean *) extensions;
 
    static const struct st_extension_cap_mapping cap_mapping[] = {
       { o(ARB_base_instance),                PIPE_CAP_START_INSTANCE                   },
@@ -549,256 +579,245 @@ void st_init_extensions(struct st_context *st)
    /*
     * Extensions that are supported by all Gallium drivers:
     */
-   ctx->Extensions.ARB_ES2_compatibility = GL_TRUE;
-   ctx->Extensions.ARB_draw_elements_base_vertex = GL_TRUE;
-   ctx->Extensions.ARB_explicit_attrib_location = GL_TRUE;
-   ctx->Extensions.ARB_explicit_uniform_location = GL_TRUE;
-   ctx->Extensions.ARB_fragment_coord_conventions = GL_TRUE;
-   ctx->Extensions.ARB_fragment_program = GL_TRUE;
-   ctx->Extensions.ARB_fragment_shader = GL_TRUE;
-   ctx->Extensions.ARB_half_float_vertex = GL_TRUE;
-   ctx->Extensions.ARB_internalformat_query = GL_TRUE;
-   ctx->Extensions.ARB_map_buffer_range = GL_TRUE;
-   ctx->Extensions.ARB_texture_border_clamp = GL_TRUE; /* XXX temp */
-   ctx->Extensions.ARB_texture_cube_map = GL_TRUE;
-   ctx->Extensions.ARB_texture_env_combine = GL_TRUE;
-   ctx->Extensions.ARB_texture_env_crossbar = GL_TRUE;
-   ctx->Extensions.ARB_texture_env_dot3 = GL_TRUE;
-   ctx->Extensions.ARB_vertex_program = GL_TRUE;
-   ctx->Extensions.ARB_vertex_shader = GL_TRUE;
+   extensions->ARB_ES2_compatibility = GL_TRUE;
+   extensions->ARB_draw_elements_base_vertex = GL_TRUE;
+   extensions->ARB_explicit_attrib_location = GL_TRUE;
+   extensions->ARB_explicit_uniform_location = GL_TRUE;
+   extensions->ARB_fragment_coord_conventions = GL_TRUE;
+   extensions->ARB_fragment_program = GL_TRUE;
+   extensions->ARB_fragment_shader = GL_TRUE;
+   extensions->ARB_half_float_vertex = GL_TRUE;
+   extensions->ARB_internalformat_query = GL_TRUE;
+   extensions->ARB_map_buffer_range = GL_TRUE;
+   extensions->ARB_texture_border_clamp = GL_TRUE; /* XXX temp */
+   extensions->ARB_texture_cube_map = GL_TRUE;
+   extensions->ARB_texture_env_combine = GL_TRUE;
+   extensions->ARB_texture_env_crossbar = GL_TRUE;
+   extensions->ARB_texture_env_dot3 = GL_TRUE;
+   extensions->ARB_vertex_program = GL_TRUE;
+   extensions->ARB_vertex_shader = GL_TRUE;
 
-   ctx->Extensions.EXT_blend_color = GL_TRUE;
-   ctx->Extensions.EXT_blend_func_separate = GL_TRUE;
-   ctx->Extensions.EXT_blend_minmax = GL_TRUE;
-   ctx->Extensions.EXT_gpu_program_parameters = GL_TRUE;
-   ctx->Extensions.EXT_pixel_buffer_object = GL_TRUE;
-   ctx->Extensions.EXT_point_parameters = GL_TRUE;
-   ctx->Extensions.EXT_provoking_vertex = GL_TRUE;
+   extensions->EXT_blend_color = GL_TRUE;
+   extensions->EXT_blend_func_separate = GL_TRUE;
+   extensions->EXT_blend_minmax = GL_TRUE;
+   extensions->EXT_gpu_program_parameters = GL_TRUE;
+   extensions->EXT_pixel_buffer_object = GL_TRUE;
+   extensions->EXT_point_parameters = GL_TRUE;
+   extensions->EXT_provoking_vertex = GL_TRUE;
 
-   ctx->Extensions.EXT_texture_env_dot3 = GL_TRUE;
-   ctx->Extensions.EXT_vertex_array_bgra = GL_TRUE;
+   extensions->EXT_texture_env_dot3 = GL_TRUE;
+   extensions->EXT_vertex_array_bgra = GL_TRUE;
 
-   ctx->Extensions.ATI_texture_env_combine3 = GL_TRUE;
+   extensions->ATI_texture_env_combine3 = GL_TRUE;
 
-   ctx->Extensions.MESA_pack_invert = GL_TRUE;
+   extensions->MESA_pack_invert = GL_TRUE;
 
-   ctx->Extensions.NV_fog_distance = GL_TRUE;
-   ctx->Extensions.NV_texture_env_combine4 = GL_TRUE;
-   ctx->Extensions.NV_texture_rectangle = GL_TRUE;
-   ctx->Extensions.NV_vdpau_interop = GL_TRUE;
+   extensions->NV_fog_distance = GL_TRUE;
+   extensions->NV_texture_env_combine4 = GL_TRUE;
+   extensions->NV_texture_rectangle = GL_TRUE;
+   extensions->NV_vdpau_interop = GL_TRUE;
 
-   ctx->Extensions.OES_EGL_image = GL_TRUE;
-   ctx->Extensions.OES_EGL_image_external = GL_TRUE;
-   ctx->Extensions.OES_draw_texture = GL_TRUE;
+   extensions->OES_EGL_image = GL_TRUE;
+   extensions->OES_EGL_image_external = GL_TRUE;
+   extensions->OES_draw_texture = GL_TRUE;
 
    /* Expose the extensions which directly correspond to gallium caps. */
    for (i = 0; i < Elements(cap_mapping); i++) {
       if (screen->get_param(screen, cap_mapping[i].cap)) {
-         extensions[cap_mapping[i].extension_offset] = GL_TRUE;
+         extension_table[cap_mapping[i].extension_offset] = GL_TRUE;
       }
    }
 
    /* Expose the extensions which directly correspond to gallium formats. */
-   init_format_extensions(st, rendertarget_mapping,
+   init_format_extensions(screen, extensions, rendertarget_mapping,
                           Elements(rendertarget_mapping), PIPE_TEXTURE_2D,
                           PIPE_BIND_RENDER_TARGET | PIPE_BIND_SAMPLER_VIEW);
-   init_format_extensions(st, depthstencil_mapping,
+   init_format_extensions(screen, extensions, depthstencil_mapping,
                           Elements(depthstencil_mapping), PIPE_TEXTURE_2D,
                           PIPE_BIND_DEPTH_STENCIL | PIPE_BIND_SAMPLER_VIEW);
-   init_format_extensions(st, texture_mapping, Elements(texture_mapping),
-                          PIPE_TEXTURE_2D, PIPE_BIND_SAMPLER_VIEW);
-   init_format_extensions(st, vertex_mapping, Elements(vertex_mapping),
-                          PIPE_BUFFER, PIPE_BIND_VERTEX_BUFFER);
+   init_format_extensions(screen, extensions, texture_mapping,
+                          Elements(texture_mapping), PIPE_TEXTURE_2D,
+                          PIPE_BIND_SAMPLER_VIEW);
+   init_format_extensions(screen, extensions, vertex_mapping,
+                          Elements(vertex_mapping), PIPE_BUFFER,
+                          PIPE_BIND_VERTEX_BUFFER);
 
    /* Figure out GLSL support. */
    glsl_feature_level = screen->get_param(screen, PIPE_CAP_GLSL_FEATURE_LEVEL);
 
-   ctx->Const.GLSLVersion = glsl_feature_level;
+   consts->GLSLVersion = glsl_feature_level;
    if (glsl_feature_level >= 330)
-      ctx->Const.GLSLVersion = 330;
+      consts->GLSLVersion = 330;
 
-   _mesa_override_glsl_version(&st->ctx->Const);
+   _mesa_override_glsl_version(consts);
 
-   if (st->options.force_glsl_version > 0 &&
-       st->options.force_glsl_version <= ctx->Const.GLSLVersion) {
-      ctx->Const.ForceGLSLVersion = st->options.force_glsl_version;
+   if (options->force_glsl_version > 0 &&
+       options->force_glsl_version <= consts->GLSLVersion) {
+      consts->ForceGLSLVersion = options->force_glsl_version;
    }
 
    /* This extension needs full OpenGL 3.2, but we don't know if that's
     * supported at this point. Only check the GLSL version. */
-   if (ctx->Const.GLSLVersion >= 150 &&
+   if (consts->GLSLVersion >= 150 &&
        screen->get_param(screen, PIPE_CAP_TGSI_VS_LAYER_VIEWPORT)) {
-      ctx->Extensions.AMD_vertex_shader_layer = GL_TRUE;
+      extensions->AMD_vertex_shader_layer = GL_TRUE;
    }
 
-   if (ctx->Const.GLSLVersion >= 130) {
-      ctx->Const.NativeIntegers = GL_TRUE;
-      ctx->Const.MaxClipPlanes = 8;
+   if (consts->GLSLVersion >= 130) {
+      consts->NativeIntegers = GL_TRUE;
+      consts->MaxClipPlanes = 8;
 
       /* Extensions that either depend on GLSL 1.30 or are a subset thereof. */
-      ctx->Extensions.ARB_conservative_depth = GL_TRUE;
-      ctx->Extensions.ARB_shading_language_packing = GL_TRUE;
-      ctx->Extensions.OES_depth_texture_cube_map = GL_TRUE;
-      ctx->Extensions.ARB_shading_language_420pack = GL_TRUE;
-      ctx->Extensions.ARB_texture_query_levels = GL_TRUE;
+      extensions->ARB_conservative_depth = GL_TRUE;
+      extensions->ARB_shading_language_packing = GL_TRUE;
+      extensions->OES_depth_texture_cube_map = GL_TRUE;
+      extensions->ARB_shading_language_420pack = GL_TRUE;
+      extensions->ARB_texture_query_levels = GL_TRUE;
 
-      if (!st->options.disable_shader_bit_encoding) {
-         ctx->Extensions.ARB_shader_bit_encoding = GL_TRUE;
+      if (!options->disable_shader_bit_encoding) {
+         extensions->ARB_shader_bit_encoding = GL_TRUE;
       }
 
-      ctx->Extensions.EXT_shader_integer_mix = GL_TRUE;
+      extensions->EXT_shader_integer_mix = GL_TRUE;
    } else {
       /* Optional integer support for GLSL 1.2. */
       if (screen->get_shader_param(screen, PIPE_SHADER_VERTEX,
                                    PIPE_SHADER_CAP_INTEGERS) &&
           screen->get_shader_param(screen, PIPE_SHADER_FRAGMENT,
                                    PIPE_SHADER_CAP_INTEGERS)) {
-         ctx->Const.NativeIntegers = GL_TRUE;
+         consts->NativeIntegers = GL_TRUE;
 
-         ctx->Extensions.EXT_shader_integer_mix = GL_TRUE;
+         extensions->EXT_shader_integer_mix = GL_TRUE;
       }
    }
 
    /* Below are the cases which cannot be moved into tables easily. */
 
-   if (!ctx->Mesa_DXTn && !st->options.force_s3tc_enable) {
-      ctx->Extensions.EXT_texture_compression_s3tc = GL_FALSE;
-      ctx->Extensions.ANGLE_texture_compression_dxt = GL_FALSE;
+   if (!has_lib_dxtc && !options->force_s3tc_enable) {
+      extensions->EXT_texture_compression_s3tc = GL_FALSE;
+      extensions->ANGLE_texture_compression_dxt = GL_FALSE;
    }
 
    if (screen->get_shader_param(screen, PIPE_SHADER_GEOMETRY,
                                 PIPE_SHADER_CAP_MAX_INSTRUCTIONS) > 0) {
 #if 0 /* XXX re-enable when GLSL compiler again supports geometry shaders */
-      ctx->Extensions.ARB_geometry_shader4 = GL_TRUE;
+      extensions->ARB_geometry_shader4 = GL_TRUE;
 #endif
    }
 
-   ctx->Extensions.NV_primitive_restart = GL_TRUE;
+   extensions->NV_primitive_restart = GL_TRUE;
    if (!screen->get_param(screen, PIPE_CAP_PRIMITIVE_RESTART)) {
-      ctx->Const.PrimitiveRestartInSoftware = GL_TRUE;
+      consts->PrimitiveRestartInSoftware = GL_TRUE;
    }
 
    /* ARB_color_buffer_float. */
    if (screen->get_param(screen, PIPE_CAP_VERTEX_COLOR_UNCLAMPED)) {
-      ctx->Extensions.ARB_color_buffer_float = GL_TRUE;
-
-      if (!screen->get_param(screen, PIPE_CAP_VERTEX_COLOR_CLAMPED)) {
-         st->clamp_vert_color_in_shader = TRUE;
-      }
-
-      if (!screen->get_param(screen, PIPE_CAP_FRAGMENT_COLOR_CLAMPED)) {
-         st->clamp_frag_color_in_shader = TRUE;
-      }
-
-      /* For drivers which cannot do color clamping, it's better to just
-       * disable ARB_color_buffer_float in the core profile, because
-       * the clamping is deprecated there anyway. */
-      if (ctx->API == API_OPENGL_CORE &&
-          (st->clamp_frag_color_in_shader || st->clamp_vert_color_in_shader)) {
-         st->clamp_vert_color_in_shader = GL_FALSE;
-         st->clamp_frag_color_in_shader = GL_FALSE;
-         ctx->Extensions.ARB_color_buffer_float = GL_FALSE;
-      }
+      extensions->ARB_color_buffer_float = GL_TRUE;
    }
 
    if (screen->fence_finish) {
-      ctx->Extensions.ARB_sync = GL_TRUE;
+      extensions->ARB_sync = GL_TRUE;
    }
 
    /* Maximum sample count. */
-   for (i = 16; i > 0; --i) {
-      enum pipe_format pformat = st_choose_format(st, GL_RGBA,
-                                                  GL_NONE, GL_NONE,
-                                                  PIPE_TEXTURE_2D, i,
-                                                  PIPE_BIND_RENDER_TARGET, FALSE);
-      if (pformat != PIPE_FORMAT_NONE) {
-         ctx->Const.MaxSamples = i;
-         ctx->Const.MaxColorTextureSamples = i;
-         break;
-      }
+   {
+      enum pipe_format color_formats[] = {
+         PIPE_FORMAT_R8G8B8A8_UNORM,
+         PIPE_FORMAT_B8G8R8A8_UNORM,
+         PIPE_FORMAT_A8R8G8B8_UNORM,
+         PIPE_FORMAT_A8B8G8R8_UNORM,
+      };
+      enum pipe_format depth_formats[] = {
+         PIPE_FORMAT_Z16_UNORM,
+         PIPE_FORMAT_Z24X8_UNORM,
+         PIPE_FORMAT_X8Z24_UNORM,
+         PIPE_FORMAT_Z32_UNORM,
+         PIPE_FORMAT_Z32_FLOAT
+      };
+      enum pipe_format int_formats[] = {
+         PIPE_FORMAT_R8G8B8A8_SINT
+      };
+
+      consts->MaxSamples =
+         get_max_samples_for_formats(screen, Elements(color_formats),
+                                     color_formats, 16,
+                                     PIPE_BIND_RENDER_TARGET);
+
+      consts->MaxColorTextureSamples =
+         get_max_samples_for_formats(screen, Elements(color_formats),
+                                     color_formats, consts->MaxSamples,
+                                     PIPE_BIND_SAMPLER_VIEW);
+
+      consts->MaxDepthTextureSamples =
+         get_max_samples_for_formats(screen, Elements(depth_formats),
+                                     depth_formats, consts->MaxSamples,
+                                     PIPE_BIND_SAMPLER_VIEW);
+
+      consts->MaxIntegerSamples =
+         get_max_samples_for_formats(screen, Elements(int_formats),
+                                     int_formats, consts->MaxSamples,
+                                     PIPE_BIND_SAMPLER_VIEW);
    }
-   for (i = ctx->Const.MaxSamples; i > 0; --i) {
-      enum pipe_format pformat = st_choose_format(st, GL_DEPTH_STENCIL,
-                                                  GL_NONE, GL_NONE,
-                                                  PIPE_TEXTURE_2D, i,
-                                                  PIPE_BIND_DEPTH_STENCIL, FALSE);
-      if (pformat != PIPE_FORMAT_NONE) {
-         ctx->Const.MaxDepthTextureSamples = i;
-         break;
-      }
-   }
-   for (i = ctx->Const.MaxSamples; i > 0; --i) {
-      enum pipe_format pformat = st_choose_format(st, GL_RGBA_INTEGER,
-                                                  GL_NONE, GL_NONE,
-                                                  PIPE_TEXTURE_2D, i,
-                                                  PIPE_BIND_RENDER_TARGET, FALSE);
-      if (pformat != PIPE_FORMAT_NONE) {
-         ctx->Const.MaxIntegerSamples = i;
-         break;
-      }
-   }
-   if (ctx->Const.MaxSamples == 1) {
+   if (consts->MaxSamples == 1) {
       /* one sample doesn't really make sense */
-      ctx->Const.MaxSamples = 0;
+      consts->MaxSamples = 0;
    }
-   else if (ctx->Const.MaxSamples >= 2) {
-      ctx->Extensions.EXT_framebuffer_multisample = GL_TRUE;
-      ctx->Extensions.EXT_framebuffer_multisample_blit_scaled = GL_TRUE;
-   }
-
-   if (ctx->Const.MaxSamples == 0 && screen->get_param(screen, PIPE_CAP_FAKE_SW_MSAA)) {
-	ctx->Const.FakeSWMSAA = GL_TRUE;
-        ctx->Extensions.EXT_framebuffer_multisample = GL_TRUE;
-        ctx->Extensions.EXT_framebuffer_multisample_blit_scaled = GL_TRUE;
-        ctx->Extensions.ARB_texture_multisample = GL_TRUE;
+   else if (consts->MaxSamples >= 2) {
+      extensions->EXT_framebuffer_multisample = GL_TRUE;
+      extensions->EXT_framebuffer_multisample_blit_scaled = GL_TRUE;
    }
 
-   if (ctx->Const.MaxDualSourceDrawBuffers > 0 &&
-       !st->options.disable_blend_func_extended)
-      ctx->Extensions.ARB_blend_func_extended = GL_TRUE;
-
-   st->has_time_elapsed =
-      screen->get_param(screen, PIPE_CAP_QUERY_TIME_ELAPSED);
-
-   if (st->has_time_elapsed ||
-       ctx->Extensions.ARB_timer_query) {
-      ctx->Extensions.EXT_timer_query = GL_TRUE;
+   if (consts->MaxSamples == 0 && screen->get_param(screen, PIPE_CAP_FAKE_SW_MSAA)) {
+	consts->FakeSWMSAA = GL_TRUE;
+        extensions->EXT_framebuffer_multisample = GL_TRUE;
+        extensions->EXT_framebuffer_multisample_blit_scaled = GL_TRUE;
+        extensions->ARB_texture_multisample = GL_TRUE;
    }
 
-   if (ctx->Extensions.ARB_transform_feedback2 &&
-       ctx->Extensions.ARB_draw_instanced) {
-      ctx->Extensions.ARB_transform_feedback_instanced = GL_TRUE;
+   if (consts->MaxDualSourceDrawBuffers > 0 &&
+       !options->disable_blend_func_extended)
+      extensions->ARB_blend_func_extended = GL_TRUE;
+
+   if (screen->get_param(screen, PIPE_CAP_QUERY_TIME_ELAPSED) ||
+       extensions->ARB_timer_query) {
+      extensions->EXT_timer_query = GL_TRUE;
    }
-   if (st->options.force_glsl_extensions_warn)
-      ctx->Const.ForceGLSLExtensionsWarn = 1;
 
-   if (st->options.disable_glsl_line_continuations)
-      ctx->Const.DisableGLSLLineContinuations = 1;
+   if (extensions->ARB_transform_feedback2 &&
+       extensions->ARB_draw_instanced) {
+      extensions->ARB_transform_feedback_instanced = GL_TRUE;
+   }
+   if (options->force_glsl_extensions_warn)
+      consts->ForceGLSLExtensionsWarn = 1;
 
-   if (st->options.allow_glsl_extension_directive_midshader)
-      ctx->Const.AllowGLSLExtensionDirectiveMidShader = GL_TRUE;
+   if (options->disable_glsl_line_continuations)
+      consts->DisableGLSLLineContinuations = 1;
 
-   ctx->Const.MinMapBufferAlignment =
+   if (options->allow_glsl_extension_directive_midshader)
+      consts->AllowGLSLExtensionDirectiveMidShader = GL_TRUE;
+
+   consts->MinMapBufferAlignment =
       screen->get_param(screen, PIPE_CAP_MIN_MAP_BUFFER_ALIGNMENT);
 
    if (screen->get_param(screen, PIPE_CAP_TEXTURE_BUFFER_OBJECTS)) {
-      ctx->Extensions.ARB_texture_buffer_object = GL_TRUE;
+      extensions->ARB_texture_buffer_object = GL_TRUE;
 
-      ctx->Const.MaxTextureBufferSize =
+      consts->MaxTextureBufferSize =
          _min(screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_BUFFER_SIZE),
               (1u << 31) - 1);
-      ctx->Const.TextureBufferOffsetAlignment =
+      consts->TextureBufferOffsetAlignment =
          screen->get_param(screen, PIPE_CAP_TEXTURE_BUFFER_OFFSET_ALIGNMENT);
 
-      if (ctx->Const.TextureBufferOffsetAlignment)
-         ctx->Extensions.ARB_texture_buffer_range = GL_TRUE;
+      if (consts->TextureBufferOffsetAlignment)
+         extensions->ARB_texture_buffer_range = GL_TRUE;
 
-      init_format_extensions(st, tbo_rgb32, Elements(tbo_rgb32),
-                             PIPE_BUFFER, PIPE_BIND_SAMPLER_VIEW);
+      init_format_extensions(screen, extensions, tbo_rgb32,
+                             Elements(tbo_rgb32), PIPE_BUFFER,
+                             PIPE_BIND_SAMPLER_VIEW);
    }
 
    if (screen->get_param(screen, PIPE_CAP_MIXED_FRAMEBUFFER_SIZES)) {
-      ctx->Extensions.ARB_framebuffer_object = GL_TRUE;
+      extensions->ARB_framebuffer_object = GL_TRUE;
    }
 
    /* Unpacking a varying in the fragment shader costs 1 texture indirection.
@@ -811,30 +830,30 @@ void st_init_extensions(struct st_context *st)
       /* We can't disable varying packing if transform feedback is available,
        * because transform feedback code assumes a packed varying layout.
        */
-      if (!ctx->Extensions.EXT_transform_feedback)
-         ctx->Const.DisableVaryingPacking = GL_TRUE;
+      if (!extensions->EXT_transform_feedback)
+         consts->DisableVaryingPacking = GL_TRUE;
    }
 
-   if (ctx->API == API_OPENGL_CORE) {
-      ctx->Const.MaxViewports = screen->get_param(screen, PIPE_CAP_MAX_VIEWPORTS);
-      if (ctx->Const.MaxViewports >= 16) {
-         ctx->Const.ViewportBounds.Min = -16384.0;
-         ctx->Const.ViewportBounds.Max = 16384.0;
-         ctx->Extensions.ARB_viewport_array = GL_TRUE;
-         ctx->Extensions.ARB_fragment_layer_viewport = GL_TRUE;
-         if (ctx->Extensions.AMD_vertex_shader_layer)
-            ctx->Extensions.AMD_vertex_shader_viewport_index = GL_TRUE;
+   if (api == API_OPENGL_CORE) {
+      consts->MaxViewports = screen->get_param(screen, PIPE_CAP_MAX_VIEWPORTS);
+      if (consts->MaxViewports >= 16) {
+         consts->ViewportBounds.Min = -16384.0;
+         consts->ViewportBounds.Max = 16384.0;
+         extensions->ARB_viewport_array = GL_TRUE;
+         extensions->ARB_fragment_layer_viewport = GL_TRUE;
+         if (extensions->AMD_vertex_shader_layer)
+            extensions->AMD_vertex_shader_viewport_index = GL_TRUE;
       }
    }
-   if (ctx->Const.MaxProgramTextureGatherComponents > 0)
-      ctx->Extensions.ARB_texture_gather = GL_TRUE;
+   if (consts->MaxProgramTextureGatherComponents > 0)
+      extensions->ARB_texture_gather = GL_TRUE;
 
    /* GL_ARB_ES3_compatibility.
     *
     * Assume that ES3 is supported if GLSL 3.30 is supported.
     * (OpenGL 3.3 is a requirement for that extension.)
     */
-   if (ctx->Const.GLSLVersion >= 330 &&
+   if (consts->GLSLVersion >= 330 &&
        /* Requirements for ETC2 emulation. */
        screen->is_format_supported(screen, PIPE_FORMAT_R8G8B8A8_UNORM,
                                    PIPE_TEXTURE_2D, 0,
@@ -854,6 +873,6 @@ void st_init_extensions(struct st_context *st)
        screen->is_format_supported(screen, PIPE_FORMAT_R16G16_SNORM,
                                    PIPE_TEXTURE_2D, 0,
                                    PIPE_BIND_SAMPLER_VIEW)) {
-      ctx->Extensions.ARB_ES3_compatibility = GL_TRUE;
+      extensions->ARB_ES3_compatibility = GL_TRUE;
    }
 }

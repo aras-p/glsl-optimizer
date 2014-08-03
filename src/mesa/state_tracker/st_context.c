@@ -201,10 +201,34 @@ st_create_context_priv( struct gl_context *ctx, struct pipe_context *pipe,
       !!(screen->get_param(screen, PIPE_CAP_TEXTURE_BORDER_COLOR_QUIRK) &
          (PIPE_QUIRK_TEXTURE_BORDER_COLOR_SWIZZLE_NV50 |
           PIPE_QUIRK_TEXTURE_BORDER_COLOR_SWIZZLE_R600));
+   st->has_time_elapsed =
+      screen->get_param(screen, PIPE_CAP_QUERY_TIME_ELAPSED);
 
    /* GL limits and extensions */
    st_init_limits(st);
-   st_init_extensions(st);
+   st_init_extensions(st->pipe->screen, ctx->API, &ctx->Const,
+                      &ctx->Extensions, &st->options, ctx->Mesa_DXTn);
+
+   /* Enable shader-based fallbacks for ARB_color_buffer_float if needed. */
+   if (screen->get_param(screen, PIPE_CAP_VERTEX_COLOR_UNCLAMPED)) {
+      if (!screen->get_param(screen, PIPE_CAP_VERTEX_COLOR_CLAMPED)) {
+         st->clamp_vert_color_in_shader = GL_TRUE;
+      }
+
+      if (!screen->get_param(screen, PIPE_CAP_FRAGMENT_COLOR_CLAMPED)) {
+         st->clamp_frag_color_in_shader = GL_TRUE;
+      }
+
+      /* For drivers which cannot do color clamping, it's better to just
+       * disable ARB_color_buffer_float in the core profile, because
+       * the clamping is deprecated there anyway. */
+      if (ctx->API == API_OPENGL_CORE &&
+          (st->clamp_frag_color_in_shader || st->clamp_vert_color_in_shader)) {
+         st->clamp_vert_color_in_shader = GL_FALSE;
+         st->clamp_frag_color_in_shader = GL_FALSE;
+         ctx->Extensions.ARB_color_buffer_float = GL_FALSE;
+      }
+   }
 
    _mesa_compute_version(ctx);
 
