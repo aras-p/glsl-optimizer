@@ -1300,24 +1300,24 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       mlen += reg_width;
    }
 
-   fs_inst *inst = NULL;
+   enum opcode opcode;
    switch (ir->op) {
    case ir_tex:
-      inst = emit(SHADER_OPCODE_TEX, dst, reg_undef);
+      opcode = SHADER_OPCODE_TEX;
       break;
    case ir_txb:
       mlen = MAX2(mlen, header_present + 4 * reg_width);
       emit(MOV(fs_reg(MRF, base_mrf + mlen), lod));
       mlen += reg_width;
 
-      inst = emit(FS_OPCODE_TXB, dst, reg_undef);
+      opcode = FS_OPCODE_TXB;
       break;
    case ir_txl:
       mlen = MAX2(mlen, header_present + 4 * reg_width);
       emit(MOV(fs_reg(MRF, base_mrf + mlen), lod));
       mlen += reg_width;
 
-      inst = emit(SHADER_OPCODE_TXL, dst, reg_undef);
+      opcode = SHADER_OPCODE_TXL;
       break;
    case ir_txd: {
       mlen = MAX2(mlen, header_present + 4 * reg_width); /* skip over 'ai' */
@@ -1341,23 +1341,26 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
 	 mlen += reg_width;
       }
 
-      inst = emit(SHADER_OPCODE_TXD, dst);
+      opcode = SHADER_OPCODE_TXD;
       break;
    }
    case ir_txs:
       emit(MOV(fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_UD), lod));
       mlen += reg_width;
-      inst = emit(SHADER_OPCODE_TXS, dst, reg_undef);
+
+      opcode = SHADER_OPCODE_TXS;
       break;
    case ir_query_levels:
       emit(MOV(fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_UD), fs_reg(0u)));
       mlen += reg_width;
-      inst = emit(SHADER_OPCODE_TXS, dst, reg_undef);
+
+      opcode = SHADER_OPCODE_TXS;
       break;
    case ir_txf:
       mlen = header_present + 4 * reg_width;
       emit(MOV(fs_reg(MRF, base_mrf + mlen - reg_width, BRW_REGISTER_TYPE_UD), lod));
-      inst = emit(SHADER_OPCODE_TXF, dst, reg_undef);
+
+      opcode = SHADER_OPCODE_TXF;
       break;
    case ir_txf_ms:
       mlen = header_present + 4 * reg_width;
@@ -1367,18 +1370,20 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       /* sample index */
       emit(MOV(fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_UD), sample_index));
       mlen += reg_width;
-      inst = emit(SHADER_OPCODE_TXF_CMS, dst, reg_undef);
+
+      opcode = SHADER_OPCODE_TXF_CMS;
       break;
    case ir_lod:
-      inst = emit(SHADER_OPCODE_LOD, dst, reg_undef);
+      opcode = SHADER_OPCODE_LOD;
       break;
    case ir_tg4:
-      inst = emit(SHADER_OPCODE_TG4, dst, reg_undef);
+      opcode = SHADER_OPCODE_TG4;
       break;
    default:
-      fail("unrecognized texture opcode");
-      break;
+      unreachable("not reached");
    }
+
+   fs_inst *inst = emit(opcode, dst, reg_undef);
    inst->base_mrf = base_mrf;
    inst->mlen = mlen;
    inst->header_present = header_present;
