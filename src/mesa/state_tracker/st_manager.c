@@ -26,6 +26,7 @@
  */
 
 #include "main/mtypes.h"
+#include "main/extensions.h"
 #include "main/context.h"
 #include "main/texobj.h"
 #include "main/teximage.h"
@@ -38,6 +39,7 @@
 #include "st_texture.h"
 
 #include "st_context.h"
+#include "st_extensions.h"
 #include "st_format.h"
 #include "st_cb_fbo.h"
 #include "st_cb_flush.h"
@@ -910,6 +912,27 @@ st_manager_add_color_renderbuffer(struct st_context *st,
    return TRUE;
 }
 
+static unsigned get_version(struct pipe_screen *screen,
+                            struct st_config_options *options, gl_api api)
+{
+   struct gl_constants consts = {0};
+   struct gl_extensions extensions = {0};
+   GLuint version;
+
+   if ((api == API_OPENGL_COMPAT || api == API_OPENGL_CORE) &&
+       _mesa_override_gl_version_contextless(&consts, &api, &version)) {
+      return version;
+   }
+
+   _mesa_init_constants(&consts, api);
+   _mesa_init_extensions(&extensions);
+
+   st_init_limits(screen, &consts, &extensions);
+   st_init_extensions(screen, api, &consts, &extensions, options, GL_TRUE);
+
+   return _mesa_get_version(&extensions, &consts, api);
+}
+
 static void
 st_api_query_versions(struct st_api *stapi, struct st_manager *sm,
                       struct st_config_options *options,
@@ -918,10 +941,10 @@ st_api_query_versions(struct st_api *stapi, struct st_manager *sm,
                       int *gl_es1_version,
                       int *gl_es2_version)
 {
-   *gl_core_version = 33;
-   *gl_compat_version = 30;
-   *gl_es1_version = 11;
-   *gl_es2_version = 30;
+   *gl_core_version = get_version(sm->screen, options, API_OPENGL_CORE);
+   *gl_compat_version = get_version(sm->screen, options, API_OPENGL_COMPAT);
+   *gl_es1_version = get_version(sm->screen, options, API_OPENGLES);
+   *gl_es2_version = get_version(sm->screen, options, API_OPENGLES2);
 }
 
 static const struct st_api st_gl_api = {
