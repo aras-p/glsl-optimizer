@@ -369,12 +369,22 @@ vg_api_destroy(struct st_api *stapi)
 {
 }
 
+static void
+vg_api_query_versions(struct st_api *stapi, struct st_manager *sm,
+                      int *gl_core_version,
+                      int *gl_compat_version,
+                      int *gl_es1_version,
+                      int *gl_es2_version)
+{
+}
+
 static const struct st_api vg_api = {
    "Vega " PACKAGE_VERSION,
    ST_API_OPENVG,
    ST_PROFILE_DEFAULT_MASK,
    0,
    vg_api_destroy,
+   vg_api_query_versions,
    vg_api_get_proc_address,
    vg_api_create_context,
    vg_api_make_current,

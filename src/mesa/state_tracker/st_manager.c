@@ -910,6 +910,19 @@ st_manager_add_color_renderbuffer(struct st_context *st,
    return TRUE;
 }
 
+static void
+st_api_query_versions(struct st_api *stapi, struct st_manager *sm,
+                      int *gl_core_version,
+                      int *gl_compat_version,
+                      int *gl_es1_version,
+                      int *gl_es2_version)
+{
+   *gl_core_version = 33;
+   *gl_compat_version = 30;
+   *gl_es1_version = 11;
+   *gl_es2_version = 30;
+}
+
 static const struct st_api st_gl_api = {
    "Mesa " PACKAGE_VERSION,
    ST_API_OPENGL,
@@ -920,6 +933,7 @@ static const struct st_api st_gl_api = {
    0,
    ST_API_FEATURE_MS_VISUALS_MASK,
    st_api_destroy,
+   st_api_query_versions,
    st_api_get_proc_address,
    st_api_create_context,
    st_api_make_current,

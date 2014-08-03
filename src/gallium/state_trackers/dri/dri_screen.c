@@ -455,18 +455,11 @@ dri_init_screen_helper(struct dri_screen *screen,
 
    dri_postprocessing_init(screen);
 
-   /* gallium drivers don't declare what version of GL they support, so we
-    * check the computed Mesa context version after context creation and fail
-    * out then.
-    */
-   if (screen->st_api->profile_mask & ST_PROFILE_DEFAULT_MASK)
-      screen->sPriv->max_gl_compat_version = 30;
-   if (screen->st_api->profile_mask & ST_PROFILE_OPENGL_CORE_MASK)
-      screen->sPriv->max_gl_core_version = 33;
-   if (screen->st_api->profile_mask & ST_PROFILE_OPENGL_ES1_MASK)
-      screen->sPriv->max_gl_es1_version = 11;
-   if (screen->st_api->profile_mask & ST_PROFILE_OPENGL_ES2_MASK)
-      screen->sPriv->max_gl_es2_version = 30;
+   screen->st_api->query_versions(screen->st_api, &screen->base,
+                                  &screen->sPriv->max_gl_core_version,
+                                  &screen->sPriv->max_gl_compat_version,
+                                  &screen->sPriv->max_gl_es1_version,
+                                  &screen->sPriv->max_gl_es2_version);
 
    return dri_fill_in_modes(screen);
 }
