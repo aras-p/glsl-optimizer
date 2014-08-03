@@ -241,8 +241,8 @@ public:
    void visit(ir_emit_vertex *);
    void visit(ir_end_primitive *);
 
-   uint32_t gather_channel(ir_texture *ir, int sampler);
-   void swizzle_result(ir_texture *ir, fs_reg orig_val, int sampler);
+   uint32_t gather_channel(ir_texture *ir, uint32_t sampler);
+   void swizzle_result(ir_texture *ir, fs_reg orig_val, uint32_t sampler);
 
    fs_inst *emit(fs_inst *inst);
    void emit(exec_list list);
@@ -371,16 +371,17 @@ public:
    void emit_interpolation_setup_gen6();
    void compute_sample_position(fs_reg dst, fs_reg int_sample_pos);
    fs_reg rescale_texcoord(ir_texture *ir, fs_reg coordinate,
-                           bool is_rect, int sampler, int texunit);
+                           bool is_rect, uint32_t sampler, int texunit);
    fs_inst *emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
-			      fs_reg shadow_comp, fs_reg lod, fs_reg lod2);
+                              fs_reg shadow_comp, fs_reg lod, fs_reg lod2,
+                              uint32_t sampler);
    fs_inst *emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
                               fs_reg shadow_comp, fs_reg lod, fs_reg lod2,
-                              fs_reg sample_index);
+                              fs_reg sample_index, uint32_t sampler);
    fs_inst *emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
                               fs_reg shadow_comp, fs_reg lod, fs_reg lod2,
-                              fs_reg sample_index, fs_reg mcs, int sampler);
-   fs_reg emit_mcs_fetch(ir_texture *ir, fs_reg coordinate, int sampler);
+                              fs_reg sample_index, fs_reg mcs, uint32_t sampler);
+   fs_reg emit_mcs_fetch(ir_texture *ir, fs_reg coordinate, uint32_t sampler);
    void emit_gen6_gather_wa(uint8_t wa, fs_reg dst);
    fs_reg fix_math_operand(fs_reg src);
    fs_inst *emit_math(enum opcode op, fs_reg dst, fs_reg src0);

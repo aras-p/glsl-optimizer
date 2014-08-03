@@ -1095,7 +1095,8 @@ fs_visitor::visit(ir_assignment *ir)
 
 fs_inst *
 fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
-			      fs_reg shadow_c, fs_reg lod, fs_reg dPdy)
+                              fs_reg shadow_c, fs_reg lod, fs_reg dPdy,
+                              uint32_t sampler)
 {
    int mlen;
    int base_mrf = 1;
@@ -1240,7 +1241,7 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       unreachable("not reached");
    }
 
-   fs_inst *inst = emit(opcode, dst, reg_undef);
+   fs_inst *inst = emit(opcode, dst, reg_undef, fs_reg(sampler));
    inst->base_mrf = base_mrf;
    inst->mlen = mlen;
    inst->header_present = true;
@@ -1268,7 +1269,7 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
 fs_inst *
 fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
                               fs_reg shadow_c, fs_reg lod, fs_reg lod2,
-                              fs_reg sample_index)
+                              fs_reg sample_index, uint32_t sampler)
 {
    int mlen = 0;
    int base_mrf = 2;
@@ -1383,7 +1384,7 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       unreachable("not reached");
    }
 
-   fs_inst *inst = emit(opcode, dst, reg_undef);
+   fs_inst *inst = emit(opcode, dst, reg_undef, fs_reg(sampler));
    inst->base_mrf = base_mrf;
    inst->mlen = mlen;
    inst->header_present = header_present;
@@ -1400,7 +1401,7 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
 fs_inst *
 fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
                               fs_reg shadow_c, fs_reg lod, fs_reg lod2,
-                              fs_reg sample_index, fs_reg mcs, int sampler)
+                              fs_reg sample_index, fs_reg mcs, uint32_t sampler)
 {
    int reg_width = dispatch_width / 8;
    bool header_present = false;
@@ -1586,7 +1587,7 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    default:
       unreachable("not reached");
    }
-   fs_inst *inst = emit(opcode, dst, src_payload);
+   fs_inst *inst = emit(opcode, dst, src_payload, fs_reg(sampler));
    inst->base_mrf = -1;
    if (reg_width == 2)
       inst->mlen = length * reg_width - header_present;
@@ -1605,7 +1606,7 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
 
 fs_reg
 fs_visitor::rescale_texcoord(ir_texture *ir, fs_reg coordinate,
-                             bool is_rect, int sampler, int texunit)
+                             bool is_rect, uint32_t sampler, int texunit)
 {
    fs_inst *inst = NULL;
    bool needs_gl_clamp = true;
@@ -1719,7 +1720,7 @@ fs_visitor::rescale_texcoord(ir_texture *ir, fs_reg coordinate,
 
 /* Sample from the MCS surface attached to this multisample texture. */
 fs_reg
-fs_visitor::emit_mcs_fetch(ir_texture *ir, fs_reg coordinate, int sampler)
+fs_visitor::emit_mcs_fetch(ir_texture *ir, fs_reg coordinate, uint32_t sampler)
 {
    int reg_width = dispatch_width / 8;
    int length = ir->coordinate->type->vector_elements;
@@ -1737,7 +1738,7 @@ fs_visitor::emit_mcs_fetch(ir_texture *ir, fs_reg coordinate, int sampler)
 
    emit(LOAD_PAYLOAD(payload, sources, length));
 
-   fs_inst *inst = emit(SHADER_OPCODE_TXF_MCS, dest, payload);
+   fs_inst *inst = emit(SHADER_OPCODE_TXF_MCS, dest, payload, fs_reg(sampler));
    inst->base_mrf = -1;
    inst->mlen = length * reg_width;
    inst->header_present = false;
@@ -1754,7 +1755,7 @@ fs_visitor::visit(ir_texture *ir)
 {
    fs_inst *inst = NULL;
 
-   int sampler =
+   uint32_t sampler =
       _mesa_get_sampler_uniform_value(ir->sampler, shader_prog, prog);
    /* FINISHME: We're failing to recompile our programs when the sampler is
     * updated.  This only matters for the texture rectangle scale parameters
@@ -1854,10 +1855,10 @@ fs_visitor::visit(ir_texture *ir)
                                lod, lod2, sample_index, mcs, sampler);
    } else if (brw->gen >= 5) {
       inst = emit_texture_gen5(ir, dst, coordinate, shadow_comparitor,
-                               lod, lod2, sample_index);
+                               lod, lod2, sample_index, sampler);
    } else {
       inst = emit_texture_gen4(ir, dst, coordinate, shadow_comparitor,
-                               lod, lod2);
+                               lod, lod2, sampler);
    }
 
    if (ir->offset != NULL && ir->op != ir_txf)
@@ -1936,7 +1937,7 @@ fs_visitor::emit_gen6_gather_wa(uint8_t wa, fs_reg dst)
  * Set up the gather channel based on the swizzle, for gather4.
  */
 uint32_t
-fs_visitor::gather_channel(ir_texture *ir, int sampler)
+fs_visitor::gather_channel(ir_texture *ir, uint32_t sampler)
 {
    ir_constant *chan = ir->lod_info.component->as_constant();
    int swiz = GET_SWZ(key->tex.swizzles[sampler], chan->value.i[0]);
@@ -1961,7 +1962,7 @@ fs_visitor::gather_channel(ir_texture *ir, int sampler)
  * EXT_texture_swizzle as well as DEPTH_TEXTURE_MODE for shadow comparisons.
  */
 void
-fs_visitor::swizzle_result(ir_texture *ir, fs_reg orig_val, int sampler)
+fs_visitor::swizzle_result(ir_texture *ir, fs_reg orig_val, uint32_t sampler)
 {
    if (ir->op == ir_query_levels) {
       /* # levels is in .w */
