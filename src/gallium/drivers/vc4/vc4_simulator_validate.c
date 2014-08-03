@@ -90,7 +90,6 @@ gl_shader_rec_size(uint32_t pointer_bits)
 {
 	uint32_t attribute_count = pointer_bits & 7;
 	bool extended = pointer_bits & 8;
-	uint32_t size;
 
 	if (attribute_count == 0)
 		attribute_count = 8;
@@ -265,32 +264,60 @@ static int
 validate_indexed_prim_list(VALIDATE_ARGS)
 {
 	struct drm_gem_cma_object *ib;
+	uint32_t length = *(uint32_t *)(untrusted + 1);
+	uint32_t offset = *(uint32_t *)(untrusted + 5);
 	uint32_t max_index = *(uint32_t *)(untrusted + 9);
 	uint32_t index_size = (*(uint8_t *)(untrusted + 0) >> 4) ? 2 : 1;
-	uint32_t ib_access_end = (max_index + 1) * index_size;
+	struct vc4_shader_state *shader_state;
 
 	/* Check overflow condition */
-	if (max_index == ~0) {
-		DRM_ERROR("unlimited max index\n");
+	if (exec->shader_state_count == 0) {
+		DRM_ERROR("shader state must precede primitives\n");
 		return -EINVAL;
 	}
+	shader_state = &exec->shader_state[exec->shader_state_count - 1];
 
-	if (ib_access_end < max_index) {
-		DRM_ERROR("IB access overflow\n");
-		return -EINVAL;
-	}
-
+	if (max_index > shader_state->max_index)
+		shader_state->max_index = max_index;
 
 	if (!vc4_use_handle(exec, 0, VC4_MODE_RENDER, &ib))
 		return -EINVAL;
-	if (ib_access_end > ib->base.size) {
-		DRM_ERROR("IB access out of bounds (%d/%d)\n",
-			  ib_access_end, ib->base.size);
+
+	if (offset > ib->base.size ||
+	    (ib->base.size - offset) / index_size < length) {
+		DRM_ERROR("IB access overflow (%d + %d*%d > %d)\n",
+			  offset, length, index_size, ib->base.size);
 		return -EINVAL;
 	}
 
-	*(uint32_t *)(validated + 5) =
-		*(uint32_t *)(untrusted + 5) + ib->paddr;
+	*(uint32_t *)(validated + 5) = ib->paddr + offset;
+
+	return 0;
+}
+
+static int
+validate_gl_array_primitive(VALIDATE_ARGS)
+{
+	uint32_t length = *(uint32_t *)(untrusted + 1);
+	uint32_t base_index = *(uint32_t *)(untrusted + 5);
+	uint32_t max_index;
+	struct vc4_shader_state *shader_state;
+
+	/* Check overflow condition */
+	if (exec->shader_state_count == 0) {
+		DRM_ERROR("shader state must precede primitives\n");
+		return -EINVAL;
+	}
+	shader_state = &exec->shader_state[exec->shader_state_count - 1];
+
+	if (length + base_index < length) {
+		DRM_ERROR("primitive vertex count overflow\n");
+		return -EINVAL;
+	}
+	max_index = length + base_index - 1;
+
+	if (max_index > shader_state->max_index)
+		shader_state->max_index = max_index;
 
 	return 0;
 }
@@ -300,13 +327,14 @@ validate_gl_shader_state(VALIDATE_ARGS)
 {
 	uint32_t i = exec->shader_state_count++;
 
-	if (i >= exec->shader_state_size) { /* XXX? */
+	if (i >= exec->shader_state_size) {
 		DRM_ERROR("More requests for shader states than declared\n");
 		return -EINVAL;
 	}
 
 	exec->shader_state[i].packet = VC4_PACKET_GL_SHADER_STATE;
 	exec->shader_state[i].addr = *(uint32_t *)untrusted;
+	exec->shader_state[i].max_index = 0;
 
 	if (exec->shader_state[i].addr & ~0xf) {
 		DRM_ERROR("high bits set in GL shader rec reference\n");
@@ -537,8 +565,7 @@ static const struct cmd_info {
 
 	[VC4_PACKET_GL_INDEXED_PRIMITIVE] = { 1, 1, 14, "Indexed Primitive List", validate_indexed_prim_list },
 
-	/* XXX: bounds check verts? */
-	[VC4_PACKET_GL_ARRAY_PRIMITIVE] = { 1, 1, 10, "Vertex Array Primitives", NULL },
+	[VC4_PACKET_GL_ARRAY_PRIMITIVE] = { 1, 1, 10, "Vertex Array Primitives", validate_gl_array_primitive },
 
 	[VC4_PACKET_PRIMITIVE_LIST_FORMAT] = { 1, 1, 2, "primitive list format", NULL }, /* XXX: bin valid? */
 
@@ -824,10 +851,32 @@ validate_shader_rec(struct drm_device *dev,
 	}
 
 	for (i = 0; i < nr_attributes; i++) {
-		/* XXX: validation */
+		struct drm_gem_cma_object *vbo = bo[nr_fixed_relocs + i];
 		uint32_t o = 36 + i * 8;
-		*(uint32_t *)(pkt_v + o) = (bo[nr_fixed_relocs + i]->paddr +
-					    *(uint32_t *)(pkt_u + o));
+		uint32_t offset = *(uint32_t *)(pkt_u + o + 0);
+		uint32_t attr_size = *(uint8_t *)(pkt_u + o + 4) + 1;
+		uint32_t stride = *(uint8_t *)(pkt_u + o + 5);
+		uint32_t max_index;
+
+		if (state->addr & 0x8)
+			stride |= (*(uint32_t *)(pkt_u + 100 + i * 4)) & ~0xff;
+
+		if (vbo->base.size < offset ||
+		    vbo->base.size - offset < attr_size ||
+		    stride == 0) {
+			DRM_ERROR("BO offset overflow (%d + %d > %d)\n",
+				  offset, attr_size, vbo->base.size);
+			return -EINVAL;
+		}
+
+		max_index = (vbo->base.size - offset - attr_size) / stride;
+		if (state->max_index > max_index) {
+			DRM_ERROR("primitives use index %d out of supplied %d\n",
+				  state->max_index, max_index);
+			return -EINVAL;
+		}
+
+		*(uint32_t *)(pkt_v + o) = vbo->paddr + offset;
 	}
 
 	kfree(validated_shader);
