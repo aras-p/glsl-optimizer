@@ -1227,29 +1227,20 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
                     BRW_REGISTER_TYPE_F));
    }
 
-   fs_inst *inst = NULL;
+   enum opcode opcode;
+
    switch (ir->op) {
-   case ir_tex:
-      inst = emit(SHADER_OPCODE_TEX, dst, reg_undef);
-      break;
-   case ir_txb:
-      inst = emit(FS_OPCODE_TXB, dst, reg_undef);
-      break;
-   case ir_txl:
-      inst = emit(SHADER_OPCODE_TXL, dst, reg_undef);
-      break;
-   case ir_txd:
-      inst = emit(SHADER_OPCODE_TXD, dst, reg_undef);
-      break;
-   case ir_txs:
-      inst = emit(SHADER_OPCODE_TXS, dst, reg_undef);
-      break;
-   case ir_txf:
-      inst = emit(SHADER_OPCODE_TXF, dst, reg_undef);
-      break;
+   case ir_tex: opcode = SHADER_OPCODE_TEX; break;
+   case ir_txb: opcode = FS_OPCODE_TXB; break;
+   case ir_txl: opcode = SHADER_OPCODE_TXL; break;
+   case ir_txd: opcode = SHADER_OPCODE_TXD; break;
+   case ir_txs: opcode = SHADER_OPCODE_TXS; break;
+   case ir_txf: opcode = SHADER_OPCODE_TXF; break;
    default:
-      fail("unrecognized texture opcode");
+      unreachable("not reached");
    }
+
+   fs_inst *inst = emit(opcode, dst, reg_undef);
    inst->base_mrf = base_mrf;
    inst->mlen = mlen;
    inst->header_present = true;
