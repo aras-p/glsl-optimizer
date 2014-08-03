@@ -242,7 +242,7 @@ int test_optpass(int argc, char **argv)
    if (!state->error) {
       GLboolean progress;
       const struct gl_shader_compiler_options *options =
-         &ctx->ShaderCompilerOptions[_mesa_shader_enum_to_shader_stage(shader_type)];
+         &ctx->Const.ShaderCompilerOptions[_mesa_shader_enum_to_shader_stage(shader_type)];
       do {
          progress = do_optimization_passes(shader->ir, &argv[optind],
                                            argc - optind, quiet != 0, options);

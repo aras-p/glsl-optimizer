@@ -158,15 +158,15 @@ void st_init_limits(struct st_context *st)
       switch (sh) {
       case PIPE_SHADER_FRAGMENT:
          pc = &c->Program[MESA_SHADER_FRAGMENT];
-         options = &st->ctx->ShaderCompilerOptions[MESA_SHADER_FRAGMENT];
+         options = &c->ShaderCompilerOptions[MESA_SHADER_FRAGMENT];
          break;
       case PIPE_SHADER_VERTEX:
          pc = &c->Program[MESA_SHADER_VERTEX];
-         options = &st->ctx->ShaderCompilerOptions[MESA_SHADER_VERTEX];
+         options = &c->ShaderCompilerOptions[MESA_SHADER_VERTEX];
          break;
       case PIPE_SHADER_GEOMETRY:
          pc = &c->Program[MESA_SHADER_GEOMETRY];
-         options = &st->ctx->ShaderCompilerOptions[MESA_SHADER_GEOMETRY];
+         options = &c->ShaderCompilerOptions[MESA_SHADER_GEOMETRY];
          break;
       default:
          /* compute shader, etc. */

@@ -3529,6 +3529,8 @@ struct gl_constants
    GLfloat MaxFragmentInterpolationOffset;
 
    GLboolean FakeSWMSAA;
+
+   struct gl_shader_compiler_options ShaderCompilerOptions[MESA_SHADER_STAGES];
 };
 
 
@@ -4171,8 +4173,6 @@ struct gl_context
     * \c NULL.
     */
    struct gl_pipeline_object *_Shader;
-
-   struct gl_shader_compiler_options ShaderCompilerOptions[MESA_SHADER_STAGES];
 
    struct gl_query_state Query;  /**< occlusion, timer queries */
 

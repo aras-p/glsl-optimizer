@@ -268,7 +268,7 @@ struct st_context *st_create_context(gl_api api, struct pipe_context *pipe,
     * driver prefers DP4 or MUL/MAD for vertex transformation.
     */
    if (debug_get_option_mesa_mvp_dp4())
-      ctx->ShaderCompilerOptions[MESA_SHADER_VERTEX].OptimizeForAOS = GL_TRUE;
+      ctx->Const.ShaderCompilerOptions[MESA_SHADER_VERTEX].OptimizeForAOS = GL_TRUE;
 
    return st_create_context_priv(ctx, pipe, options);
 }

@@ -122,7 +122,7 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
 
    for (stage = 0; stage < ARRAY_SIZE(shProg->_LinkedShaders); stage++) {
       const struct gl_shader_compiler_options *options =
-         &ctx->ShaderCompilerOptions[stage];
+         &ctx->Const.ShaderCompilerOptions[stage];
       struct brw_shader *shader =
 	 (struct brw_shader *)shProg->_LinkedShaders[stage];
 

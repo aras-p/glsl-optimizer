@@ -218,7 +218,7 @@ _mesa_insert_mvp_mad_code(struct gl_context *ctx, struct gl_vertex_program *vpro
 void
 _mesa_insert_mvp_code(struct gl_context *ctx, struct gl_vertex_program *vprog)
 {
-   if (ctx->ShaderCompilerOptions[MESA_SHADER_VERTEX].OptimizeForAOS)
+   if (ctx->Const.ShaderCompilerOptions[MESA_SHADER_VERTEX].OptimizeForAOS)
       _mesa_insert_mvp_dp4_code( ctx, vprog );
    else
       _mesa_insert_mvp_mad_code( ctx, vprog );

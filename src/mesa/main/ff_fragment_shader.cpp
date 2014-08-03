@@ -1252,7 +1252,7 @@ create_new_program(struct gl_context *ctx, struct state_key *key)
    validate_ir_tree(p.shader->ir);
 
    const struct gl_shader_compiler_options *options =
-      &ctx->ShaderCompilerOptions[MESA_SHADER_FRAGMENT];
+      &ctx->Const.ShaderCompilerOptions[MESA_SHADER_FRAGMENT];
 
    while (do_common_optimization(p.shader->ir, false, false, options,
                                  ctx->Const.NativeIntegers))

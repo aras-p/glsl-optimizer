@@ -119,7 +119,7 @@ _mesa_init_shader_state(struct gl_context *ctx)
    options.DefaultPragmas.Optimize = GL_TRUE;
 
    for (sh = 0; sh < MESA_SHADER_STAGES; ++sh)
-      memcpy(&ctx->ShaderCompilerOptions[sh], &options, sizeof(options));
+      memcpy(&ctx->Const.ShaderCompilerOptions[sh], &options, sizeof(options));
 
    ctx->Shader.Flags = _mesa_get_shader_flags();
 
@@ -826,7 +826,7 @@ compile_shader(struct gl_context *ctx, GLuint shaderObj)
    if (!sh)
       return;
 
-   options = &ctx->ShaderCompilerOptions[sh->Stage];
+   options = &ctx->Const.ShaderCompilerOptions[sh->Stage];
 
    /* set default pragma state for shader */
    sh->Pragmas = options->DefaultPragmas;

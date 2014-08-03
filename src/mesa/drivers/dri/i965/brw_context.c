@@ -482,21 +482,21 @@ brw_initialize_context_constants(struct brw_context *brw)
 
    /* We want the GLSL compiler to emit code that uses condition codes */
    for (int i = 0; i < MESA_SHADER_STAGES; i++) {
-      ctx->ShaderCompilerOptions[i].MaxIfDepth = brw->gen < 6 ? 16 : UINT_MAX;
-      ctx->ShaderCompilerOptions[i].EmitCondCodes = true;
-      ctx->ShaderCompilerOptions[i].EmitNoNoise = true;
-      ctx->ShaderCompilerOptions[i].EmitNoMainReturn = true;
-      ctx->ShaderCompilerOptions[i].EmitNoIndirectInput = true;
-      ctx->ShaderCompilerOptions[i].EmitNoIndirectOutput =
+      ctx->Const.ShaderCompilerOptions[i].MaxIfDepth = brw->gen < 6 ? 16 : UINT_MAX;
+      ctx->Const.ShaderCompilerOptions[i].EmitCondCodes = true;
+      ctx->Const.ShaderCompilerOptions[i].EmitNoNoise = true;
+      ctx->Const.ShaderCompilerOptions[i].EmitNoMainReturn = true;
+      ctx->Const.ShaderCompilerOptions[i].EmitNoIndirectInput = true;
+      ctx->Const.ShaderCompilerOptions[i].EmitNoIndirectOutput =
 	 (i == MESA_SHADER_FRAGMENT);
-      ctx->ShaderCompilerOptions[i].EmitNoIndirectTemp =
+      ctx->Const.ShaderCompilerOptions[i].EmitNoIndirectTemp =
 	 (i == MESA_SHADER_FRAGMENT);
-      ctx->ShaderCompilerOptions[i].EmitNoIndirectUniform = false;
-      ctx->ShaderCompilerOptions[i].LowerClipDistance = true;
+      ctx->Const.ShaderCompilerOptions[i].EmitNoIndirectUniform = false;
+      ctx->Const.ShaderCompilerOptions[i].LowerClipDistance = true;
    }
 
-   ctx->ShaderCompilerOptions[MESA_SHADER_VERTEX].OptimizeForAOS = true;
-   ctx->ShaderCompilerOptions[MESA_SHADER_GEOMETRY].OptimizeForAOS = true;
+   ctx->Const.ShaderCompilerOptions[MESA_SHADER_VERTEX].OptimizeForAOS = true;
+   ctx->Const.ShaderCompilerOptions[MESA_SHADER_GEOMETRY].OptimizeForAOS = true;
 
    /* ARB_viewport_array */
    if (brw->gen >= 7 && ctx->API == API_OPENGL_CORE) {

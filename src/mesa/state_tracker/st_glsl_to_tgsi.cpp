@@ -5176,7 +5176,7 @@ get_mesa_program(struct gl_context *ctx,
    GLenum target = _mesa_shader_stage_to_program(shader->Stage);
    bool progress;
    struct gl_shader_compiler_options *options =
-         &ctx->ShaderCompilerOptions[_mesa_shader_enum_to_shader_stage(shader->Type)];
+         &ctx->Const.ShaderCompilerOptions[_mesa_shader_enum_to_shader_stage(shader->Type)];
    struct pipe_screen *pscreen = ctx->st->pipe->screen;
    unsigned ptarget = shader_stage_to_ptarget(shader->Stage);
 
@@ -5365,7 +5365,7 @@ st_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
       bool progress;
       exec_list *ir = prog->_LinkedShaders[i]->ir;
       const struct gl_shader_compiler_options *options =
-            &ctx->ShaderCompilerOptions[_mesa_shader_enum_to_shader_stage(prog->_LinkedShaders[i]->Type)];
+            &ctx->Const.ShaderCompilerOptions[_mesa_shader_enum_to_shader_stage(prog->_LinkedShaders[i]->Type)];
 
       /* If there are forms of indirect addressing that the driver
        * cannot handle, perform the lowering pass.

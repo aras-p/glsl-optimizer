@@ -1676,7 +1676,7 @@ _mesa_get_fixed_func_vertex_program(struct gl_context *ctx)
          return NULL;
 
       create_new_program( &key, prog,
-                          ctx->ShaderCompilerOptions[MESA_SHADER_VERTEX].OptimizeForAOS,
+                          ctx->Const.ShaderCompilerOptions[MESA_SHADER_VERTEX].OptimizeForAOS,
                           ctx->Const.Program[MESA_SHADER_VERTEX].MaxTemps );
 
 #if 0

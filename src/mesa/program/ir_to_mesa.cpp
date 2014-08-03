@@ -2795,7 +2795,7 @@ get_mesa_program(struct gl_context *ctx,
    GLenum target = _mesa_shader_stage_to_program(shader->Stage);
    const char *target_string = _mesa_shader_stage_to_string(shader->Stage);
    struct gl_shader_compiler_options *options =
-         &ctx->ShaderCompilerOptions[shader->Stage];
+         &ctx->Const.ShaderCompilerOptions[shader->Stage];
 
    validate_ir_tree(shader->ir);
 
@@ -2980,7 +2980,7 @@ _mesa_ir_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
       bool progress;
       exec_list *ir = prog->_LinkedShaders[i]->ir;
       const struct gl_shader_compiler_options *options =
-            &ctx->ShaderCompilerOptions[prog->_LinkedShaders[i]->Stage];
+            &ctx->Const.ShaderCompilerOptions[prog->_LinkedShaders[i]->Stage];
 
       do {
 	 progress = false;
