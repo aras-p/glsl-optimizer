@@ -2393,33 +2393,17 @@ vec4_visitor::visit(ir_texture *ir)
       break;
    }
 
-   vec4_instruction *inst = NULL;
+   enum opcode opcode;
    switch (ir->op) {
-   case ir_tex:
-   case ir_txl:
-      inst = new(mem_ctx) vec4_instruction(this, SHADER_OPCODE_TXL);
-      break;
-   case ir_txd:
-      inst = new(mem_ctx) vec4_instruction(this, SHADER_OPCODE_TXD);
-      break;
-   case ir_txf:
-      inst = new(mem_ctx) vec4_instruction(this, SHADER_OPCODE_TXF);
-      break;
-   case ir_txf_ms:
-      inst = new(mem_ctx) vec4_instruction(this, SHADER_OPCODE_TXF_CMS);
-      break;
-   case ir_txs:
-      inst = new(mem_ctx) vec4_instruction(this, SHADER_OPCODE_TXS);
-      break;
-   case ir_tg4:
-      if (has_nonconstant_offset)
-         inst = new(mem_ctx) vec4_instruction(this, SHADER_OPCODE_TG4_OFFSET);
-      else
-         inst = new(mem_ctx) vec4_instruction(this, SHADER_OPCODE_TG4);
-      break;
-   case ir_query_levels:
-      inst = new(mem_ctx) vec4_instruction(this, SHADER_OPCODE_TXS);
-      break;
+   case ir_tex: opcode = SHADER_OPCODE_TXL; break;
+   case ir_txl: opcode = SHADER_OPCODE_TXL; break;
+   case ir_txd: opcode = SHADER_OPCODE_TXD; break;
+   case ir_txf: opcode = SHADER_OPCODE_TXF; break;
+   case ir_txf_ms: opcode = SHADER_OPCODE_TXF_CMS; break;
+   case ir_txs: opcode = SHADER_OPCODE_TXS; break;
+   case ir_tg4: opcode = has_nonconstant_offset
+                         ? SHADER_OPCODE_TG4_OFFSET : SHADER_OPCODE_TG4; break;
+   case ir_query_levels: opcode = SHADER_OPCODE_TXS; break;
    case ir_txb:
       unreachable("TXB is not valid for vertex shaders.");
    case ir_lod:
@@ -2427,6 +2411,8 @@ vec4_visitor::visit(ir_texture *ir)
    default:
       unreachable("Unrecognized tex op");
    }
+
+   vec4_instruction *inst = new(mem_ctx) vec4_instruction(this, opcode);
 
    if (ir->offset != NULL && ir->op != ir_txf)
       inst->texture_offset = brw_texture_offset(ctx, ir->offset->as_constant());
