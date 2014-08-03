@@ -124,8 +124,9 @@ create_version_string(struct gl_context *ctx, const char *prefix)
  * 3.1: select a Core profile with GL version 3.1
  * 3.1FC: select a Core+Forward Compatible profile with GL version 3.1
  */
-void
-_mesa_override_gl_version(struct gl_context *ctx)
+bool
+_mesa_override_gl_version_contextless(struct gl_constants *consts,
+                                      gl_api *apiOut, GLuint *versionOut)
 {
    int version;
    GLboolean fwd_context;
@@ -133,15 +134,25 @@ _mesa_override_gl_version(struct gl_context *ctx)
    get_gl_override(&version, &fwd_context);
 
    if (version > 0) {
-      ctx->Version = version;
+      *versionOut = version;
       if (version >= 30 && fwd_context) {
-         ctx->API = API_OPENGL_CORE;
-         ctx->Const.ContextFlags |= GL_CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT;
+         *apiOut = API_OPENGL_CORE;
+         consts->ContextFlags |= GL_CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT;
       } else if (version >= 31) {
-         ctx->API = API_OPENGL_CORE;
+         *apiOut = API_OPENGL_CORE;
       } else {
-         ctx->API = API_OPENGL_COMPAT;
+         *apiOut = API_OPENGL_COMPAT;
       }
+      return GL_TRUE;
+   }
+   return GL_FALSE;
+}
+
+void
+_mesa_override_gl_version(struct gl_context *ctx)
+{
+   if (_mesa_override_gl_version_contextless(&ctx->Const, &ctx->API,
+                                             &ctx->Version)) {
       create_version_string(ctx, "");
    }
 }

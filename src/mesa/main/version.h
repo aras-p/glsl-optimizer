@@ -27,13 +27,15 @@
 #ifndef VERSION_H
 #define VERSION_H
 
-
-struct gl_context;
-struct gl_constants;
+#include "mtypes.h"
 
 
 extern void
 _mesa_compute_version(struct gl_context *ctx);
+
+extern bool
+_mesa_override_gl_version_contextless(struct gl_constants *consts,
+                                      gl_api *apiOut, GLuint *versionOut);
 
 extern void
 _mesa_override_gl_version(struct gl_context *ctx);
