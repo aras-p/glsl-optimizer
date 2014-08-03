@@ -58,7 +58,7 @@ typedef struct driOptionInfo {
     char *name;             /**< \brief Name */
     driOptionType type;     /**< \brief Type */
     driOptionRange *ranges; /**< \brief Array of ranges */
-    uint nRanges;         /**< \brief Number of ranges */
+    unsigned int nRanges;   /**< \brief Number of ranges */
 } driOptionInfo;
 
 /** \brief Option cache
@@ -76,7 +76,7 @@ typedef struct driOptionCache {
    * \li Default values in screen
    * \li Actual values in contexts 
    */
-    uint tableSize;
+    unsigned int tableSize;
   /**< \brief Size of the arrays
    *
    * In the current implementation it's not actually a size but log2(size).
