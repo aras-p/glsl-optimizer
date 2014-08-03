@@ -368,7 +368,8 @@ fs_generator::generate_math_g45(fs_inst *inst,
 }
 
 void
-fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
+fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src,
+                           struct brw_reg sampler_index)
 {
    int msg_type = -1;
    int rlen = 4;
@@ -536,6 +537,11 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
       src.nr++;
    }
 
+   assert(sampler_index.file == BRW_IMMEDIATE_VALUE);
+   assert(sampler_index.type == BRW_REGISTER_TYPE_UD);
+
+   uint32_t sampler = sampler_index.dw1.ud;
+
    /* Load the message header if present.  If there's a texture offset,
     * we need to set it up explicitly and load the offset bitfield.
     * Otherwise, we can use an implied move from g0 to the first message reg.
@@ -566,7 +572,7 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
                        brw_imm_ud(inst->texture_offset));
          }
 
-         if (inst->sampler >= 16) {
+         if (sampler >= 16) {
             /* The "Sampler Index" field can only store values between 0 and 15.
              * However, we can add an offset to the "Sampler State Pointer"
              * field, effectively selecting a different set of 16 samplers.
@@ -580,7 +586,7 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
             brw_ADD(p,
                     get_element_ud(header_reg, 3),
                     get_element_ud(brw_vec8_grf(0, 0), 3),
-                    brw_imm_ud(16 * (inst->sampler / 16) * sampler_state_size));
+                    brw_imm_ud(16 * (sampler / 16) * sampler_state_size));
          }
          brw_pop_insn_state(p);
       }
@@ -589,14 +595,14 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
    uint32_t surface_index = ((inst->opcode == SHADER_OPCODE_TG4 ||
       inst->opcode == SHADER_OPCODE_TG4_OFFSET)
       ? prog_data->base.binding_table.gather_texture_start
-      : prog_data->base.binding_table.texture_start) + inst->sampler;
+      : prog_data->base.binding_table.texture_start) + sampler;
 
    brw_SAMPLE(p,
 	      retype(dst, BRW_REGISTER_TYPE_UW),
 	      inst->base_mrf,
 	      src,
               surface_index,
-	      inst->sampler % 16,
+	      sampler % 16,
 	      msg_type,
 	      rlen,
 	      inst->mlen,
@@ -1645,7 +1651,7 @@ fs_generator::generate_code(exec_list *instructions)
       case SHADER_OPCODE_LOD:
       case SHADER_OPCODE_TG4:
       case SHADER_OPCODE_TG4_OFFSET:
-	 generate_tex(inst, dst, src[0]);
+	 generate_tex(inst, dst, src[0], src[1]);
 	 break;
       case FS_OPCODE_DDX:
 	 generate_ddx(inst, dst, src[0]);
