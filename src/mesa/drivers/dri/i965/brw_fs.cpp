@@ -348,7 +348,6 @@ fs_inst::equals(fs_inst *inst) const
            conditional_mod == inst->conditional_mod &&
            mlen == inst->mlen &&
            base_mrf == inst->base_mrf &&
-           sampler == inst->sampler &&
            target == inst->target &&
            eot == inst->eot &&
            header_present == inst->header_present &&

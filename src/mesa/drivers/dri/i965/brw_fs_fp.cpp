@@ -498,7 +498,6 @@ fs_visitor::emit_fragment_program_code()
             inst = emit_texture_gen4(ir, dst, coordinate, shadow_c, lod, dpdy, fpi->TexSrcUnit);
          }
 
-         inst->sampler = fpi->TexSrcUnit;
          inst->shadow_compare = fpi->TexShadow;
 
          /* Reuse the GLSL swizzle_result() handler. */

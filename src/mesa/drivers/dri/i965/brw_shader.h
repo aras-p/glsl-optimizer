@@ -108,7 +108,6 @@ struct backend_instruction {
 
    uint32_t texture_offset; /**< Texture offset bitfield */
    uint32_t offset; /**< spill/unspill offset */
-   uint8_t sampler;
    uint8_t mlen; /**< SEND message length */
    int8_t base_mrf; /**< First MRF in the SEND message, if mlen is nonzero. */
    uint8_t target; /**< MRT target. */

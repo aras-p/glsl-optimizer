@@ -45,7 +45,6 @@ vec4_instruction::vec4_instruction(vec4_visitor *v,
    this->no_dd_check = false;
    this->writes_accumulator = false;
    this->conditional_mod = BRW_CONDITIONAL_NONE;
-   this->sampler = 0;
    this->texture_offset = 0;
    this->target = 0;
    this->shadow_compare = false;
@@ -2282,7 +2281,6 @@ vec4_visitor::emit_mcs_fetch(ir_texture *ir, src_reg coordinate, uint32_t sample
    vec4_instruction *inst = new(mem_ctx) vec4_instruction(this, SHADER_OPCODE_TXF_MCS);
    inst->base_mrf = 2;
    inst->mlen = 1;
-   inst->sampler = sampler;
    inst->dst = dst_reg(this, glsl_type::uvec4_type);
    inst->dst.writemask = WRITEMASK_XYZW;
 
@@ -2434,7 +2432,6 @@ vec4_visitor::visit(ir_texture *ir)
       sampler >= 16;
    inst->base_mrf = 2;
    inst->mlen = inst->header_present + 1; /* always at least one */
-   inst->sampler = sampler;
    inst->dst = dst_reg(this, ir->type);
    inst->dst.writemask = WRITEMASK_XYZW;
    inst->shadow_compare = ir->shadow_comparitor != NULL;

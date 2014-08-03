@@ -157,7 +157,6 @@ instructions_match(fs_inst *a, fs_inst *b)
                           a->mlen == b->mlen &&
                           a->regs_written == b->regs_written &&
                           a->base_mrf == b->base_mrf &&
-                          a->sampler == b->sampler &&
                           a->eot == b->eot &&
                           a->header_present == b->header_present &&
                           a->shadow_compare == b->shadow_compare)
