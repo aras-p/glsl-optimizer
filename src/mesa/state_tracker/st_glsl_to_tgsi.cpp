@@ -1354,7 +1354,7 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
 
    /* Quick peephole: Emit OPCODE_MAD(-a, -b, a) instead of AND(a, NOT(b))
     */
-   if (ir->operation == ir_binop_logic_and) {
+   if (!native_integers && ir->operation == ir_binop_logic_and) {
       if (try_emit_mad_for_and_not(ir, 1))
 	 return;
       if (try_emit_mad_for_and_not(ir, 0))
