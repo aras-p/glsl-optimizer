@@ -205,7 +205,7 @@ st_create_context_priv( struct gl_context *ctx, struct pipe_context *pipe,
       screen->get_param(screen, PIPE_CAP_QUERY_TIME_ELAPSED);
 
    /* GL limits and extensions */
-   st_init_limits(st);
+   st_init_limits(st->pipe->screen, &ctx->Const, &ctx->Extensions);
    st_init_extensions(st->pipe->screen, ctx->API, &ctx->Const,
                       &ctx->Extensions, &st->options, ctx->Mesa_DXTn);
 
@@ -229,6 +229,12 @@ st_create_context_priv( struct gl_context *ctx, struct pipe_context *pipe,
          ctx->Extensions.ARB_color_buffer_float = GL_FALSE;
       }
    }
+
+   /* called after _mesa_create_context/_mesa_init_point, fix default user
+    * settable max point size up
+    */
+   st->ctx->Point.MaxSize = MAX2(ctx->Const.MaxPointSize,
+                                 ctx->Const.MaxPointSizeAA);
 
    _mesa_compute_version(ctx);
 

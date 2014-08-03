@@ -70,10 +70,9 @@ static int _clamp(int a, int min, int max)
  * Query driver to get implementation limits.
  * Note that we have to limit/clamp against Mesa's internal limits too.
  */
-void st_init_limits(struct st_context *st)
+void st_init_limits(struct pipe_screen *screen,
+                    struct gl_constants *c, struct gl_extensions *extensions)
 {
-   struct pipe_screen *screen = st->pipe->screen;
-   struct gl_constants *c = &st->ctx->Const;
    unsigned sh;
    boolean can_ubo = TRUE;
 
@@ -124,10 +123,7 @@ void st_init_limits(struct st_context *st)
    c->MaxPointSizeAA
       = _maxf(1.0f, screen->get_paramf(screen,
                                        PIPE_CAPF_MAX_POINT_WIDTH_AA));
-   /* called after _mesa_create_context/_mesa_init_point, fix default user
-    * settable max point size up
-    */
-   st->ctx->Point.MaxSize = MAX2(c->MaxPointSize, c->MaxPointSizeAA);
+
    /* these are not queryable. Note that GL basically mandates a 1.0 minimum
     * for non-aa sizes, but we can go down to 0.0 for aa points.
     */
@@ -300,7 +296,7 @@ void st_init_limits(struct st_context *st)
       screen->get_param(screen, PIPE_CAP_TGSI_CAN_COMPACT_CONSTANTS);
 
    if (can_ubo) {
-      st->ctx->Extensions.ARB_uniform_buffer_object = GL_TRUE;
+      extensions->ARB_uniform_buffer_object = GL_TRUE;
       c->UniformBufferOffsetAlignment =
          screen->get_param(screen, PIPE_CAP_CONSTANT_BUFFER_OFFSET_ALIGNMENT);
       c->MaxCombinedUniformBlocks = c->MaxUniformBufferBindings =
