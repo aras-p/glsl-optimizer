@@ -464,7 +464,7 @@ _mesa_init_current(struct gl_context *ctx)
  * Important: drivers should override these with actual limits.
  */
 static void
-init_program_limits(struct gl_context *ctx, gl_shader_stage stage,
+init_program_limits(struct gl_constants *consts, gl_shader_stage stage,
                     struct gl_program_constants *prog)
 {
    prog->MaxInstructions = MAX_PROGRAM_INSTRUCTIONS;
@@ -546,7 +546,7 @@ init_program_limits(struct gl_context *ctx, gl_shader_stage stage,
 
    prog->MaxUniformBlocks = 12;
    prog->MaxCombinedUniformComponents = (prog->MaxUniformComponents +
-                                         ctx->Const.MaxUniformBlockSize / 4 *
+                                         consts->MaxUniformBlockSize / 4 *
                                          prog->MaxUniformBlocks);
 
    prog->MaxAtomicBuffers = 0;
@@ -559,161 +559,161 @@ init_program_limits(struct gl_context *ctx, gl_shader_stage stage,
  * Use defaults from config.h.  The device drivers will often override
  * some of these values (such as number of texture units).
  */
-static void 
-_mesa_init_constants(struct gl_context *ctx)
+void
+_mesa_init_constants(struct gl_constants *consts, gl_api api)
 {
    int i;
-   assert(ctx);
+   assert(consts);
 
    /* Constants, may be overriden (usually only reduced) by device drivers */
-   ctx->Const.MaxTextureMbytes = MAX_TEXTURE_MBYTES;
-   ctx->Const.MaxTextureLevels = MAX_TEXTURE_LEVELS;
-   ctx->Const.Max3DTextureLevels = MAX_3D_TEXTURE_LEVELS;
-   ctx->Const.MaxCubeTextureLevels = MAX_CUBE_TEXTURE_LEVELS;
-   ctx->Const.MaxTextureRectSize = MAX_TEXTURE_RECT_SIZE;
-   ctx->Const.MaxArrayTextureLayers = MAX_ARRAY_TEXTURE_LAYERS;
-   ctx->Const.MaxTextureCoordUnits = MAX_TEXTURE_COORD_UNITS;
-   ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits = MAX_TEXTURE_IMAGE_UNITS;
-   ctx->Const.MaxTextureUnits = MIN2(ctx->Const.MaxTextureCoordUnits,
-                                     ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits);
-   ctx->Const.MaxTextureMaxAnisotropy = MAX_TEXTURE_MAX_ANISOTROPY;
-   ctx->Const.MaxTextureLodBias = MAX_TEXTURE_LOD_BIAS;
-   ctx->Const.MaxTextureBufferSize = 65536;
-   ctx->Const.TextureBufferOffsetAlignment = 1;
-   ctx->Const.MaxArrayLockSize = MAX_ARRAY_LOCK_SIZE;
-   ctx->Const.SubPixelBits = SUB_PIXEL_BITS;
-   ctx->Const.MinPointSize = MIN_POINT_SIZE;
-   ctx->Const.MaxPointSize = MAX_POINT_SIZE;
-   ctx->Const.MinPointSizeAA = MIN_POINT_SIZE;
-   ctx->Const.MaxPointSizeAA = MAX_POINT_SIZE;
-   ctx->Const.PointSizeGranularity = (GLfloat) POINT_SIZE_GRANULARITY;
-   ctx->Const.MinLineWidth = MIN_LINE_WIDTH;
-   ctx->Const.MaxLineWidth = MAX_LINE_WIDTH;
-   ctx->Const.MinLineWidthAA = MIN_LINE_WIDTH;
-   ctx->Const.MaxLineWidthAA = MAX_LINE_WIDTH;
-   ctx->Const.LineWidthGranularity = (GLfloat) LINE_WIDTH_GRANULARITY;
-   ctx->Const.MaxClipPlanes = 6;
-   ctx->Const.MaxLights = MAX_LIGHTS;
-   ctx->Const.MaxShininess = 128.0;
-   ctx->Const.MaxSpotExponent = 128.0;
-   ctx->Const.MaxViewportWidth = MAX_VIEWPORT_WIDTH;
-   ctx->Const.MaxViewportHeight = MAX_VIEWPORT_HEIGHT;
-   ctx->Const.MinMapBufferAlignment = 64;
+   consts->MaxTextureMbytes = MAX_TEXTURE_MBYTES;
+   consts->MaxTextureLevels = MAX_TEXTURE_LEVELS;
+   consts->Max3DTextureLevels = MAX_3D_TEXTURE_LEVELS;
+   consts->MaxCubeTextureLevels = MAX_CUBE_TEXTURE_LEVELS;
+   consts->MaxTextureRectSize = MAX_TEXTURE_RECT_SIZE;
+   consts->MaxArrayTextureLayers = MAX_ARRAY_TEXTURE_LAYERS;
+   consts->MaxTextureCoordUnits = MAX_TEXTURE_COORD_UNITS;
+   consts->Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits = MAX_TEXTURE_IMAGE_UNITS;
+   consts->MaxTextureUnits = MIN2(consts->MaxTextureCoordUnits,
+                                     consts->Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits);
+   consts->MaxTextureMaxAnisotropy = MAX_TEXTURE_MAX_ANISOTROPY;
+   consts->MaxTextureLodBias = MAX_TEXTURE_LOD_BIAS;
+   consts->MaxTextureBufferSize = 65536;
+   consts->TextureBufferOffsetAlignment = 1;
+   consts->MaxArrayLockSize = MAX_ARRAY_LOCK_SIZE;
+   consts->SubPixelBits = SUB_PIXEL_BITS;
+   consts->MinPointSize = MIN_POINT_SIZE;
+   consts->MaxPointSize = MAX_POINT_SIZE;
+   consts->MinPointSizeAA = MIN_POINT_SIZE;
+   consts->MaxPointSizeAA = MAX_POINT_SIZE;
+   consts->PointSizeGranularity = (GLfloat) POINT_SIZE_GRANULARITY;
+   consts->MinLineWidth = MIN_LINE_WIDTH;
+   consts->MaxLineWidth = MAX_LINE_WIDTH;
+   consts->MinLineWidthAA = MIN_LINE_WIDTH;
+   consts->MaxLineWidthAA = MAX_LINE_WIDTH;
+   consts->LineWidthGranularity = (GLfloat) LINE_WIDTH_GRANULARITY;
+   consts->MaxClipPlanes = 6;
+   consts->MaxLights = MAX_LIGHTS;
+   consts->MaxShininess = 128.0;
+   consts->MaxSpotExponent = 128.0;
+   consts->MaxViewportWidth = MAX_VIEWPORT_WIDTH;
+   consts->MaxViewportHeight = MAX_VIEWPORT_HEIGHT;
+   consts->MinMapBufferAlignment = 64;
 
    /* Driver must override these values if ARB_viewport_array is supported. */
-   ctx->Const.MaxViewports = 1;
-   ctx->Const.ViewportSubpixelBits = 0;
-   ctx->Const.ViewportBounds.Min = 0;
-   ctx->Const.ViewportBounds.Max = 0;
+   consts->MaxViewports = 1;
+   consts->ViewportSubpixelBits = 0;
+   consts->ViewportBounds.Min = 0;
+   consts->ViewportBounds.Max = 0;
 
    /** GL_ARB_uniform_buffer_object */
-   ctx->Const.MaxCombinedUniformBlocks = 36;
-   ctx->Const.MaxUniformBufferBindings = 36;
-   ctx->Const.MaxUniformBlockSize = 16384;
-   ctx->Const.UniformBufferOffsetAlignment = 1;
+   consts->MaxCombinedUniformBlocks = 36;
+   consts->MaxUniformBufferBindings = 36;
+   consts->MaxUniformBlockSize = 16384;
+   consts->UniformBufferOffsetAlignment = 1;
 
    /* GL_ARB_explicit_uniform_location, GL_MAX_UNIFORM_LOCATIONS */
-   ctx->Const.MaxUserAssignableUniformLocations =
+   consts->MaxUserAssignableUniformLocations =
       4 * MESA_SHADER_STAGES * MAX_UNIFORMS;
 
    for (i = 0; i < MESA_SHADER_STAGES; i++)
-      init_program_limits(ctx, i, &ctx->Const.Program[i]);
+      init_program_limits(consts, i, &consts->Program[i]);
 
-   ctx->Const.MaxProgramMatrices = MAX_PROGRAM_MATRICES;
-   ctx->Const.MaxProgramMatrixStackDepth = MAX_PROGRAM_MATRIX_STACK_DEPTH;
+   consts->MaxProgramMatrices = MAX_PROGRAM_MATRICES;
+   consts->MaxProgramMatrixStackDepth = MAX_PROGRAM_MATRIX_STACK_DEPTH;
 
    /* CheckArrayBounds is overriden by drivers/x11 for X server */
-   ctx->Const.CheckArrayBounds = GL_FALSE;
+   consts->CheckArrayBounds = GL_FALSE;
 
    /* GL_ARB_draw_buffers */
-   ctx->Const.MaxDrawBuffers = MAX_DRAW_BUFFERS;
+   consts->MaxDrawBuffers = MAX_DRAW_BUFFERS;
 
-   ctx->Const.MaxColorAttachments = MAX_COLOR_ATTACHMENTS;
-   ctx->Const.MaxRenderbufferSize = MAX_RENDERBUFFER_SIZE;
+   consts->MaxColorAttachments = MAX_COLOR_ATTACHMENTS;
+   consts->MaxRenderbufferSize = MAX_RENDERBUFFER_SIZE;
 
-   ctx->Const.Program[MESA_SHADER_VERTEX].MaxTextureImageUnits = MAX_TEXTURE_IMAGE_UNITS;
-   ctx->Const.MaxCombinedTextureImageUnits = MAX_COMBINED_TEXTURE_IMAGE_UNITS;
-   ctx->Const.MaxVarying = 16; /* old limit not to break tnl and swrast */
-   ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxTextureImageUnits = MAX_TEXTURE_IMAGE_UNITS;
-   ctx->Const.MaxGeometryOutputVertices = MAX_GEOMETRY_OUTPUT_VERTICES;
-   ctx->Const.MaxGeometryTotalOutputComponents = MAX_GEOMETRY_TOTAL_OUTPUT_COMPONENTS;
+   consts->Program[MESA_SHADER_VERTEX].MaxTextureImageUnits = MAX_TEXTURE_IMAGE_UNITS;
+   consts->MaxCombinedTextureImageUnits = MAX_COMBINED_TEXTURE_IMAGE_UNITS;
+   consts->MaxVarying = 16; /* old limit not to break tnl and swrast */
+   consts->Program[MESA_SHADER_GEOMETRY].MaxTextureImageUnits = MAX_TEXTURE_IMAGE_UNITS;
+   consts->MaxGeometryOutputVertices = MAX_GEOMETRY_OUTPUT_VERTICES;
+   consts->MaxGeometryTotalOutputComponents = MAX_GEOMETRY_TOTAL_OUTPUT_COMPONENTS;
 
    /* Shading language version */
-   if (_mesa_is_desktop_gl(ctx)) {
-      ctx->Const.GLSLVersion = 120;
-      _mesa_override_glsl_version(&ctx->Const);
+   if (api == API_OPENGL_COMPAT || api == API_OPENGL_CORE) {
+      consts->GLSLVersion = 120;
+      _mesa_override_glsl_version(consts);
    }
-   else if (ctx->API == API_OPENGLES2) {
-      ctx->Const.GLSLVersion = 100;
+   else if (api == API_OPENGLES2) {
+      consts->GLSLVersion = 100;
    }
-   else if (ctx->API == API_OPENGLES) {
-      ctx->Const.GLSLVersion = 0; /* GLSL not supported */
+   else if (api == API_OPENGLES) {
+      consts->GLSLVersion = 0; /* GLSL not supported */
    }
 
    /* GL_ARB_framebuffer_object */
-   ctx->Const.MaxSamples = 0;
+   consts->MaxSamples = 0;
 
    /* GL_ARB_sync */
-   ctx->Const.MaxServerWaitTimeout = 0x1fff7fffffffULL;
+   consts->MaxServerWaitTimeout = 0x1fff7fffffffULL;
 
    /* GL_EXT_provoking_vertex */
-   ctx->Const.QuadsFollowProvokingVertexConvention = GL_TRUE;
+   consts->QuadsFollowProvokingVertexConvention = GL_TRUE;
 
    /* GL_EXT_transform_feedback */
-   ctx->Const.MaxTransformFeedbackBuffers = MAX_FEEDBACK_BUFFERS;
-   ctx->Const.MaxTransformFeedbackSeparateComponents = 4 * MAX_FEEDBACK_ATTRIBS;
-   ctx->Const.MaxTransformFeedbackInterleavedComponents = 4 * MAX_FEEDBACK_ATTRIBS;
-   ctx->Const.MaxVertexStreams = 1;
+   consts->MaxTransformFeedbackBuffers = MAX_FEEDBACK_BUFFERS;
+   consts->MaxTransformFeedbackSeparateComponents = 4 * MAX_FEEDBACK_ATTRIBS;
+   consts->MaxTransformFeedbackInterleavedComponents = 4 * MAX_FEEDBACK_ATTRIBS;
+   consts->MaxVertexStreams = 1;
 
    /* GL 3.2  */
-   ctx->Const.ProfileMask = ctx->API == API_OPENGL_CORE
+   consts->ProfileMask = api == API_OPENGL_CORE
                           ? GL_CONTEXT_CORE_PROFILE_BIT
                           : GL_CONTEXT_COMPATIBILITY_PROFILE_BIT;
 
    /** GL_EXT_gpu_shader4 */
-   ctx->Const.MinProgramTexelOffset = -8;
-   ctx->Const.MaxProgramTexelOffset = 7;
+   consts->MinProgramTexelOffset = -8;
+   consts->MaxProgramTexelOffset = 7;
 
    /* GL_ARB_texture_gather */
-   ctx->Const.MinProgramTextureGatherOffset = -8;
-   ctx->Const.MaxProgramTextureGatherOffset = 7;
+   consts->MinProgramTextureGatherOffset = -8;
+   consts->MaxProgramTextureGatherOffset = 7;
 
    /* GL_ARB_robustness */
-   ctx->Const.ResetStrategy = GL_NO_RESET_NOTIFICATION_ARB;
+   consts->ResetStrategy = GL_NO_RESET_NOTIFICATION_ARB;
 
    /* PrimitiveRestart */
-   ctx->Const.PrimitiveRestartInSoftware = GL_FALSE;
+   consts->PrimitiveRestartInSoftware = GL_FALSE;
 
    /* ES 3.0 or ARB_ES3_compatibility */
-   ctx->Const.MaxElementIndex = 0xffffffffu;
+   consts->MaxElementIndex = 0xffffffffu;
 
    /* GL_ARB_texture_multisample */
-   ctx->Const.MaxColorTextureSamples = 1;
-   ctx->Const.MaxDepthTextureSamples = 1;
-   ctx->Const.MaxIntegerSamples = 1;
+   consts->MaxColorTextureSamples = 1;
+   consts->MaxDepthTextureSamples = 1;
+   consts->MaxIntegerSamples = 1;
 
    /* GL_ARB_shader_atomic_counters */
-   ctx->Const.MaxAtomicBufferBindings = MAX_COMBINED_ATOMIC_BUFFERS;
-   ctx->Const.MaxAtomicBufferSize = MAX_ATOMIC_COUNTERS * ATOMIC_COUNTER_SIZE;
-   ctx->Const.MaxCombinedAtomicBuffers = MAX_COMBINED_ATOMIC_BUFFERS;
-   ctx->Const.MaxCombinedAtomicCounters = MAX_ATOMIC_COUNTERS;
+   consts->MaxAtomicBufferBindings = MAX_COMBINED_ATOMIC_BUFFERS;
+   consts->MaxAtomicBufferSize = MAX_ATOMIC_COUNTERS * ATOMIC_COUNTER_SIZE;
+   consts->MaxCombinedAtomicBuffers = MAX_COMBINED_ATOMIC_BUFFERS;
+   consts->MaxCombinedAtomicCounters = MAX_ATOMIC_COUNTERS;
 
    /* GL_ARB_vertex_attrib_binding */
-   ctx->Const.MaxVertexAttribRelativeOffset = 2047;
-   ctx->Const.MaxVertexAttribBindings = MAX_VERTEX_GENERIC_ATTRIBS;
+   consts->MaxVertexAttribRelativeOffset = 2047;
+   consts->MaxVertexAttribBindings = MAX_VERTEX_GENERIC_ATTRIBS;
 
    /* GL_ARB_compute_shader */
-   ctx->Const.MaxComputeWorkGroupCount[0] = 65535;
-   ctx->Const.MaxComputeWorkGroupCount[1] = 65535;
-   ctx->Const.MaxComputeWorkGroupCount[2] = 65535;
-   ctx->Const.MaxComputeWorkGroupSize[0] = 1024;
-   ctx->Const.MaxComputeWorkGroupSize[1] = 1024;
-   ctx->Const.MaxComputeWorkGroupSize[2] = 64;
-   ctx->Const.MaxComputeWorkGroupInvocations = 1024;
+   consts->MaxComputeWorkGroupCount[0] = 65535;
+   consts->MaxComputeWorkGroupCount[1] = 65535;
+   consts->MaxComputeWorkGroupCount[2] = 65535;
+   consts->MaxComputeWorkGroupSize[0] = 1024;
+   consts->MaxComputeWorkGroupSize[1] = 1024;
+   consts->MaxComputeWorkGroupSize[2] = 64;
+   consts->MaxComputeWorkGroupInvocations = 1024;
 
    /** GL_ARB_gpu_shader5 */
-   ctx->Const.MinFragmentInterpolationOffset = MIN_FRAGMENT_INTERPOLATION_OFFSET;
-   ctx->Const.MaxFragmentInterpolationOffset = MAX_FRAGMENT_INTERPOLATION_OFFSET;
+   consts->MinFragmentInterpolationOffset = MIN_FRAGMENT_INTERPOLATION_OFFSET;
+   consts->MaxFragmentInterpolationOffset = MAX_FRAGMENT_INTERPOLATION_OFFSET;
 }
 
 
@@ -790,7 +790,7 @@ init_attrib_groups(struct gl_context *ctx)
    assert(ctx);
 
    /* Constants */
-   _mesa_init_constants( ctx );
+   _mesa_init_constants(&ctx->Const, ctx->API);
 
    /* Extensions */
    _mesa_init_extensions(&ctx->Extensions);

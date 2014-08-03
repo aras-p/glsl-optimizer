@@ -144,6 +144,9 @@ _mesa_get_current_context(void);
 /*@}*/
 
 extern void
+_mesa_init_constants(struct gl_constants *consts, gl_api api);
+
+extern void
 _mesa_init_get_hash(struct gl_context *ctx);
 
 extern void
