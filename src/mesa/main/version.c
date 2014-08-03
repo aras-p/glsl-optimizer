@@ -204,7 +204,7 @@ static GLuint
 compute_version(const struct gl_extensions *extensions,
                 const struct gl_constants *consts, gl_api api)
 {
-   GLuint major, minor;
+   GLuint major, minor, version;
 
    const GLboolean ver_1_3 = (extensions->ARB_texture_border_clamp &&
                               extensions->ARB_texture_cube_map &&
@@ -331,7 +331,12 @@ compute_version(const struct gl_extensions *extensions,
       minor = 2;
    }
 
-   return major * 10 + minor;
+   version = major * 10 + minor;
+
+   if (api == API_OPENGL_CORE && version < 31)
+      return 0;
+
+   return version;
 }
 
 static GLuint
