@@ -490,6 +490,7 @@ struct st_api
     * The format is (major*10+minor).
     */
    void (*query_versions)(struct st_api *stapi, struct st_manager *sm,
+                          struct st_config_options *options,
                           int *gl_core_version,
                           int *gl_compat_version,
                           int *gl_es1_version,

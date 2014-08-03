@@ -65,6 +65,8 @@ struct dri_screen
    /** The screen's effective configuration options */
    driOptionCache optionCache;
 
+   struct st_config_options options;
+
    /* Which postprocessing filters are enabled. */
    unsigned pp_enabled[PP_FILTERS];
 

@@ -371,6 +371,7 @@ vg_api_destroy(struct st_api *stapi)
 
 static void
 vg_api_query_versions(struct st_api *stapi, struct st_manager *sm,
+                      struct st_config_options *options,
                       int *gl_core_version,
                       int *gl_compat_version,
                       int *gl_es1_version,

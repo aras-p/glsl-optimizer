@@ -912,6 +912,7 @@ st_manager_add_color_renderbuffer(struct st_context *st,
 
 static void
 st_api_query_versions(struct st_api *stapi, struct st_manager *sm,
+                      struct st_config_options *options,
                       int *gl_core_version,
                       int *gl_compat_version,
                       int *gl_es1_version,
