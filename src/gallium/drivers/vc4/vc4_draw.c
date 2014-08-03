@@ -71,9 +71,6 @@ vc4_start_draw(struct vc4_context *vc4)
 
         cl_u8(&vc4->bcl, VC4_PACKET_START_TILE_BINNING);
 
-        cl_u8(&vc4->bcl, VC4_PACKET_PRIMITIVE_LIST_FORMAT);
-        cl_u8(&vc4->bcl, 0x12); // 16 bit triangle
-
         vc4->needs_flush = true;
         vc4->draw_call_queued = true;
 }

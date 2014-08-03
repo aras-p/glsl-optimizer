@@ -567,7 +567,10 @@ static const struct cmd_info {
 
 	[VC4_PACKET_GL_ARRAY_PRIMITIVE] = { 1, 1, 10, "Vertex Array Primitives", validate_gl_array_primitive },
 
-	[VC4_PACKET_PRIMITIVE_LIST_FORMAT] = { 1, 1, 2, "primitive list format", NULL }, /* XXX: bin valid? */
+	/* This is only used by clipped primitives (packets 48 and 49), which
+	 * we don't support parsing yet.
+	 */
+	[VC4_PACKET_PRIMITIVE_LIST_FORMAT] = { 1, 1, 2, "primitive list format", NULL },
 
 	[VC4_PACKET_GL_SHADER_STATE] = { 1, 1, 5, "GL Shader State", validate_gl_shader_state },
 	[VC4_PACKET_NV_SHADER_STATE] = { 1, 1, 5, "NV Shader State", validate_nv_shader_state },
