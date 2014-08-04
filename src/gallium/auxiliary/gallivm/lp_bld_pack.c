@@ -464,6 +464,7 @@ lp_build_pack2(struct gallivm_state *gallivm,
    if((util_cpu_caps.has_sse2 || util_cpu_caps.has_altivec) &&
        src_type.width * src_type.length >= 128) {
       const char *intrinsic = NULL;
+      boolean swap_intrinsic_operands = FALSE;
 
       switch(src_type.width) {
       case 32:
@@ -482,6 +483,9 @@ lp_build_pack2(struct gallivm_state *gallivm,
            } else {
               intrinsic = "llvm.ppc.altivec.vpkuwus";
            }
+#ifdef PIPE_ARCH_LITTLE_ENDIAN
+           swap_intrinsic_operands = TRUE;
+#endif
          }
          break;
       case 16:
@@ -490,12 +494,18 @@ lp_build_pack2(struct gallivm_state *gallivm,
               intrinsic = "llvm.x86.sse2.packsswb.128";
             } else if (util_cpu_caps.has_altivec) {
               intrinsic = "llvm.ppc.altivec.vpkshss";
+#ifdef PIPE_ARCH_LITTLE_ENDIAN
+              swap_intrinsic_operands = TRUE;
+#endif
             }
          } else {
             if (util_cpu_caps.has_sse2) {
               intrinsic = "llvm.x86.sse2.packuswb.128";
             } else if (util_cpu_caps.has_altivec) {
 	      intrinsic = "llvm.ppc.altivec.vpkshus";
+#ifdef PIPE_ARCH_LITTLE_ENDIAN
+              swap_intrinsic_operands = TRUE;
+#endif
             }
          }
          break;
@@ -504,7 +514,11 @@ lp_build_pack2(struct gallivm_state *gallivm,
       if (intrinsic) {
          if (src_type.width * src_type.length == 128) {
             LLVMTypeRef intr_vec_type = lp_build_vec_type(gallivm, intr_type);
-            res = lp_build_intrinsic_binary(builder, intrinsic, intr_vec_type, lo, hi);
+            if (swap_intrinsic_operands) {
+               res = lp_build_intrinsic_binary(builder, intrinsic, intr_vec_type, hi, lo);
+            } else {
+               res = lp_build_intrinsic_binary(builder, intrinsic, intr_vec_type, lo, hi);
+            }
             if (dst_vec_type != intr_vec_type) {
                res = LLVMBuildBitCast(builder, res, dst_vec_type, "");
             }
@@ -513,6 +527,8 @@ lp_build_pack2(struct gallivm_state *gallivm,
             int num_split = src_type.width * src_type.length / 128;
             int i;
             int nlen = 128 / src_type.width;
+            int lo_off = swap_intrinsic_operands ? nlen : 0;
+            int hi_off = swap_intrinsic_operands ? 0 : nlen;
             struct lp_type ndst_type = lp_type_unorm(dst_type.width, 128);
             struct lp_type nintr_type = lp_type_unorm(intr_type.width, 128);
             LLVMValueRef tmpres[LP_MAX_VECTOR_WIDTH / 128];
@@ -524,9 +540,9 @@ lp_build_pack2(struct gallivm_state *gallivm,
 
             for (i = 0; i < num_split / 2; i++) {
                tmplo = lp_build_extract_range(gallivm,
-                                              lo, i*nlen*2, nlen);
+                                              lo, i*nlen*2 + lo_off, nlen);
                tmphi = lp_build_extract_range(gallivm,
-                                              lo, i*nlen*2 + nlen, nlen);
+                                              lo, i*nlen*2 + hi_off, nlen);
                tmpres[i] = lp_build_intrinsic_binary(builder, intrinsic,
                                                      nintr_vec_type, tmplo, tmphi);
                if (ndst_vec_type != nintr_vec_type) {
@@ -535,9 +551,9 @@ lp_build_pack2(struct gallivm_state *gallivm,
             }
             for (i = 0; i < num_split / 2; i++) {
                tmplo = lp_build_extract_range(gallivm,
-                                              hi, i*nlen*2, nlen);
+                                              hi, i*nlen*2 + lo_off, nlen);
                tmphi = lp_build_extract_range(gallivm,
-                                              hi, i*nlen*2 + nlen, nlen);
+                                              hi, i*nlen*2 + hi_off, nlen);
                tmpres[i+num_split/2] = lp_build_intrinsic_binary(builder, intrinsic,
                                                                  nintr_vec_type,
                                                                  tmplo, tmphi);
