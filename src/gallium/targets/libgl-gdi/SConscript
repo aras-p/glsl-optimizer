@@ -6,6 +6,7 @@ Import('*')
 env = env.Clone()
 
 env.Append(CPPPATH = [
+    '#src',
     '#src/gallium/state_trackers/wgl',
     '#src/gallium/winsys/sw',
 ])
@@ -16,6 +17,8 @@ env.Append(LIBS = [
     'kernel32',
     'ws2_32',
 ])
+
+env.Prepend(LIBS = [mesautil])
 
 sources = ['libgl_gdi.c']
 drivers = []
