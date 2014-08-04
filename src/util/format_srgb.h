@@ -39,6 +39,7 @@
 
 #include <stdint.h>
 #include <math.h>
+#include "c99_compat.h"
 
 extern const float
 util_format_srgb_8unorm_to_linear_float_table[256];
