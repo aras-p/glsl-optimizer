@@ -106,6 +106,7 @@ vc4_bo_open_name(struct vc4_screen *screen, uint32_t name,
         bo->screen = screen;
         bo->handle = o.handle;
         bo->size = o.size;
+        bo->name = "winsys";
 
 #ifdef USE_VC4_SIMULATOR
         vc4_bo_map(bo);
