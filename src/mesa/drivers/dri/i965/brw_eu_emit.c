@@ -1532,35 +1532,23 @@ brw_BREAK(struct brw_compile *p)
 }
 
 brw_inst *
-gen6_CONT(struct brw_compile *p)
-{
-   const struct brw_context *brw = p->brw;
-   brw_inst *insn;
-
-   insn = next_insn(p, BRW_OPCODE_CONTINUE);
-   brw_set_dest(p, insn, brw_ip_reg());
-   brw_set_src0(p, insn, brw_ip_reg());
-   brw_set_src1(p, insn, brw_imm_d(0x0));
-
-   brw_inst_set_qtr_control(brw, insn, BRW_COMPRESSION_NONE);
-   brw_inst_set_exec_size(brw, insn, BRW_EXECUTE_8);
-   return insn;
-}
-
-brw_inst *
 brw_CONT(struct brw_compile *p)
 {
    const struct brw_context *brw = p->brw;
    brw_inst *insn;
+
    insn = next_insn(p, BRW_OPCODE_CONTINUE);
    brw_set_dest(p, insn, brw_ip_reg());
    brw_set_src0(p, insn, brw_ip_reg());
    brw_set_src1(p, insn, brw_imm_d(0x0));
+
+   if (brw->gen < 6) {
+      brw_inst_set_gen4_pop_count(brw, insn,
+                                  p->if_depth_in_loop[p->loop_stack_depth]);
+   }
+
    brw_inst_set_qtr_control(brw, insn, BRW_COMPRESSION_NONE);
    brw_inst_set_exec_size(brw, insn, BRW_EXECUTE_8);
-   /* insn->header.mask_control = BRW_MASK_DISABLE; */
-   brw_inst_set_gen4_pop_count(brw, insn,
-                               p->if_depth_in_loop[p->loop_stack_depth]);
    return insn;
 }
 

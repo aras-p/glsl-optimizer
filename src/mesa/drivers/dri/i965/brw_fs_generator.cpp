@@ -1582,11 +1582,7 @@ fs_generator::generate_code(exec_list *instructions)
 	 brw_set_default_predicate_control(p, BRW_PREDICATE_NONE);
 	 break;
       case BRW_OPCODE_CONTINUE:
-	 /* FINISHME: We need to write the loop instruction support still. */
-	 if (brw->gen >= 6)
-	    gen6_CONT(p);
-	 else
-	    brw_CONT(p);
+         brw_CONT(p);
 	 brw_set_default_predicate_control(p, BRW_PREDICATE_NONE);
 	 break;
 

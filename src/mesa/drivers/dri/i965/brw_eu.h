@@ -334,7 +334,6 @@ brw_inst *brw_WHILE(struct brw_compile *p);
 
 brw_inst *brw_BREAK(struct brw_compile *p);
 brw_inst *brw_CONT(struct brw_compile *p);
-brw_inst *gen6_CONT(struct brw_compile *p);
 brw_inst *gen6_HALT(struct brw_compile *p);
 
 /* Forward jumps:
