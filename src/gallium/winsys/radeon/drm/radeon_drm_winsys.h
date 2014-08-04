@@ -55,6 +55,7 @@ struct radeon_drm_winsys {
     enum radeon_generation gen;
     struct radeon_info info;
     uint32_t va_start;
+    uint32_t accel_working2;
 
     struct pb_manager *kman;
     struct pb_manager *cman_vram;
