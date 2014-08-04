@@ -27,7 +27,6 @@ if env['gles']:
 env.Prepend(LIBS = [
     st_xlib,
     ws_xlib,
-    mesautil,
     glapi,
     mesautil,
     mesa,
