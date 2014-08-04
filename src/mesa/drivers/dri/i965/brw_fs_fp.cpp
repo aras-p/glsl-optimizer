@@ -480,10 +480,8 @@ fs_visitor::emit_fragment_program_code()
          ir_constant_data junk_data;
          ir->coordinate = new(mem_ctx) ir_constant(coordinate_type, &junk_data);
 
-         if (fpi->TexShadow) {
+         if (fpi->TexShadow)
             shadow_c = offset(coordinate, 2);
-            ir->shadow_comparitor = new(mem_ctx) ir_constant(0.0f);
-         }
 
          coordinate = rescale_texcoord(ir, coordinate,
                                        fpi->TexSrcTarget == TEXTURE_RECT_INDEX,
