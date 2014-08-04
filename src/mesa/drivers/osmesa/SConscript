@@ -10,6 +10,7 @@ env.Prepend(CPPPATH = [
 ])
 
 env.Prepend(LIBS = [
+    mesautil,
     glapi,
     mesa,
     glsl,
