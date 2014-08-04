@@ -27,6 +27,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/src/mapi \
 	-I$(top_srcdir)/src/mesa \
+	-I$(top_srcdir)/src \
 	-I$(top_srcdir)/src/mesa/main \
 	$(X11_INCLUDES) \
 	$(DEFINES)
