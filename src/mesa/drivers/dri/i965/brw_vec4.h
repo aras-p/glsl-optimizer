@@ -727,7 +727,8 @@ private:
                                   struct brw_reg *src);
 
    void generate_tex(vec4_instruction *inst,
-                     struct brw_reg dst);
+                     struct brw_reg dst,
+                     struct brw_reg sampler_index);
 
    void generate_urb_write(vec4_instruction *ir, bool copy_g0);
    void generate_gs_thread_end(vec4_instruction *ir);
