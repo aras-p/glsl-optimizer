@@ -1538,8 +1538,6 @@ gen6_CONT(struct brw_compile *p)
    brw_inst *insn;
 
    insn = next_insn(p, BRW_OPCODE_CONTINUE);
-   brw_set_dest(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
-   brw_set_src0(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
    brw_set_dest(p, insn, brw_ip_reg());
    brw_set_src0(p, insn, brw_ip_reg());
    brw_set_src1(p, insn, brw_imm_d(0x0));
