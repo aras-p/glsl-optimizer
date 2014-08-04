@@ -343,16 +343,18 @@ _mesa_get_x86_features(void)
 #endif
 
 #elif defined(USE_X86_64_ASM)
-   unsigned int uninitialized_var(eax), uninitialized_var(ebx),
-                uninitialized_var(ecx), uninitialized_var(edx);
+   {
+      unsigned int uninitialized_var(eax), uninitialized_var(ebx),
+                   uninitialized_var(ecx), uninitialized_var(edx);
 
-   /* Always available on x86-64. */
-   _mesa_x86_cpu_features |= X86_FEATURE_XMM | X86_FEATURE_XMM2;
+      /* Always available on x86-64. */
+      _mesa_x86_cpu_features |= X86_FEATURE_XMM | X86_FEATURE_XMM2;
 
-   __get_cpuid(1, &eax, &ebx, &ecx, &edx);
+      __get_cpuid(1, &eax, &ebx, &ecx, &edx);
 
-   if (ecx & bit_SSE4_1)
-      _mesa_x86_cpu_features |= X86_FEATURE_SSE4_1;
+      if (ecx & bit_SSE4_1)
+         _mesa_x86_cpu_features |= X86_FEATURE_SSE4_1;
+   }
 #endif /* USE_X86_64_ASM */
 
    (void) detection_debug;
