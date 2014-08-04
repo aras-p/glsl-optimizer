@@ -1,0 +1,7 @@
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/obj/STATIC_LIBRARIES/libmesa_*_intermediates)
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/obj/SHARED_LIBRARIES/i9*5_dri_intermediates)
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/obj/SHARED_LIBRARIES/libglapi_intermediates)
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/obj/SHARED_LIBRARIES/libGLES_mesa_intermediates)
+$(call add-clean-step, rm -rf $(OUT_DIR)/host/$(HOST_OS)-$(HOST_ARCH)/obj/EXECUTABLES/mesa_*_intermediates)
+$(call add-clean-step, rm -rf $(OUT_DIR)/host/$(HOST_OS)-$(HOST_ARCH)/obj/EXECUTABLES/glsl_compiler_intermediates)
+$(call add-clean-step, rm -rf $(OUT_DIR)/host/$(HOST_OS)-$(HOST_ARCH)/obj/STATIC_LIBRARIES/libmesa_glsl_utils_intermediates)
