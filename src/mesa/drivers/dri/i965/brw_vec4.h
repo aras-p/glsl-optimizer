@@ -644,8 +644,9 @@ private:
                            struct brw_reg src1);
 
    void generate_tex(vec4_instruction *inst,
-		     struct brw_reg dst,
-		     struct brw_reg src);
+                     struct brw_reg dst,
+                     struct brw_reg src,
+                     struct brw_reg sampler_index);
 
    void generate_vs_urb_write(vec4_instruction *inst);
    void generate_gs_urb_write(vec4_instruction *inst);

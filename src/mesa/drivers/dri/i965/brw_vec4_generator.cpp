@@ -225,7 +225,8 @@ vec4_generator::generate_math2_gen4(vec4_instruction *inst,
 void
 vec4_generator::generate_tex(vec4_instruction *inst,
                              struct brw_reg dst,
-                             struct brw_reg src)
+                             struct brw_reg src,
+                             struct brw_reg sampler_index)
 {
    int msg_type = -1;
 
@@ -313,6 +314,11 @@ vec4_generator::generate_tex(vec4_instruction *inst,
 
    assert(msg_type != -1);
 
+   assert(sampler_index.file == BRW_IMMEDIATE_VALUE);
+   assert(sampler_index.type == BRW_REGISTER_TYPE_UD);
+
+   uint32_t sampler = sampler_index.dw1.ud;
+
    /* Load the message header if present.  If there's a texture offset, we need
     * to set it up explicitly and load the offset bitfield.  Otherwise, we can
     * use an implied move from g0 to the first message register.
@@ -338,7 +344,7 @@ vec4_generator::generate_tex(vec4_instruction *inst,
                     brw_imm_ud(inst->texture_offset));
          }
 
-         if (inst->sampler >= 16) {
+         if (sampler >= 16) {
             /* The "Sampler Index" field can only store values between 0 and 15.
              * However, we can add an offset to the "Sampler State Pointer"
              * field, effectively selecting a different set of 16 samplers.
@@ -352,7 +358,7 @@ vec4_generator::generate_tex(vec4_instruction *inst,
             brw_ADD(p,
                     get_element_ud(header, 3),
                     get_element_ud(brw_vec8_grf(0, 0), 3),
-                    brw_imm_ud(16 * (inst->sampler / 16) * sampler_state_size));
+                    brw_imm_ud(16 * (sampler / 16) * sampler_state_size));
          }
          brw_pop_insn_state(p);
       }
@@ -375,14 +381,14 @@ vec4_generator::generate_tex(vec4_instruction *inst,
    uint32_t surface_index = ((inst->opcode == SHADER_OPCODE_TG4 ||
       inst->opcode == SHADER_OPCODE_TG4_OFFSET)
       ? prog_data->base.binding_table.gather_texture_start
-      : prog_data->base.binding_table.texture_start) + inst->sampler;
+      : prog_data->base.binding_table.texture_start) + sampler;
 
    brw_SAMPLE(p,
 	      dst,
 	      inst->base_mrf,
 	      src,
               surface_index,
-	      inst->sampler % 16,
+	      sampler % 16,
 	      msg_type,
 	      1, /* response length */
 	      inst->mlen,
@@ -1131,7 +1137,7 @@ vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
    case SHADER_OPCODE_TXS:
    case SHADER_OPCODE_TG4:
    case SHADER_OPCODE_TG4_OFFSET:
-      generate_tex(inst, dst, src[0]);
+      generate_tex(inst, dst, src[0], src[1]);
       break;
 
    case VS_OPCODE_URB_WRITE:
