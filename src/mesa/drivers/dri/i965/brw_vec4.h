@@ -526,10 +526,10 @@ public:
    void emit_pack_half_2x16(dst_reg dst, src_reg src0);
    void emit_unpack_half_2x16(dst_reg dst, src_reg src0);
 
-   uint32_t gather_channel(ir_texture *ir, int sampler);
-   src_reg emit_mcs_fetch(ir_texture *ir, src_reg coordinate, int sampler);
+   uint32_t gather_channel(ir_texture *ir, uint32_t sampler);
+   src_reg emit_mcs_fetch(ir_texture *ir, src_reg coordinate, uint32_t sampler);
    void emit_gen6_gather_wa(uint8_t wa, dst_reg dst);
-   void swizzle_result(ir_texture *ir, src_reg orig_val, int sampler);
+   void swizzle_result(ir_texture *ir, src_reg orig_val, uint32_t sampler);
 
    void emit_ndc_computation();
    void emit_psiz_and_flags(struct brw_reg reg);

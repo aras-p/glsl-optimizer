@@ -2277,7 +2277,7 @@ vec4_visitor::visit(ir_call *ir)
 }
 
 src_reg
-vec4_visitor::emit_mcs_fetch(ir_texture *ir, src_reg coordinate, int sampler)
+vec4_visitor::emit_mcs_fetch(ir_texture *ir, src_reg coordinate, uint32_t sampler)
 {
    vec4_instruction *inst = new(mem_ctx) vec4_instruction(this, SHADER_OPCODE_TXF_MCS);
    inst->base_mrf = 2;
@@ -2285,6 +2285,8 @@ vec4_visitor::emit_mcs_fetch(ir_texture *ir, src_reg coordinate, int sampler)
    inst->sampler = sampler;
    inst->dst = dst_reg(this, glsl_type::uvec4_type);
    inst->dst.writemask = WRITEMASK_XYZW;
+
+   inst->src[1] = src_reg(sampler);
 
    /* parameters are: u, v, r, lod; lod will always be zero due to api restrictions */
    int param_base = inst->base_mrf;
@@ -2304,7 +2306,7 @@ vec4_visitor::emit_mcs_fetch(ir_texture *ir, src_reg coordinate, int sampler)
 void
 vec4_visitor::visit(ir_texture *ir)
 {
-   int sampler =
+   uint32_t sampler =
       _mesa_get_sampler_uniform_value(ir->sampler, shader_prog, prog);
 
    /* When tg4 is used with the degenerate ZERO/ONE swizzles, don't bother
@@ -2436,6 +2438,8 @@ vec4_visitor::visit(ir_texture *ir)
    inst->dst = dst_reg(this, ir->type);
    inst->dst.writemask = WRITEMASK_XYZW;
    inst->shadow_compare = ir->shadow_comparitor != NULL;
+
+   inst->src[1] = src_reg(sampler);
 
    /* MRF for the first parameter */
    int param_base = inst->base_mrf + inst->header_present;
@@ -2588,7 +2592,7 @@ vec4_visitor::emit_gen6_gather_wa(uint8_t wa, dst_reg dst)
  * Set up the gather channel based on the swizzle, for gather4.
  */
 uint32_t
-vec4_visitor::gather_channel(ir_texture *ir, int sampler)
+vec4_visitor::gather_channel(ir_texture *ir, uint32_t sampler)
 {
    ir_constant *chan = ir->lod_info.component->as_constant();
    int swiz = GET_SWZ(key->tex.swizzles[sampler], chan->value.i[0]);
@@ -2609,7 +2613,7 @@ vec4_visitor::gather_channel(ir_texture *ir, int sampler)
 }
 
 void
-vec4_visitor::swizzle_result(ir_texture *ir, src_reg orig_val, int sampler)
+vec4_visitor::swizzle_result(ir_texture *ir, src_reg orig_val, uint32_t sampler)
 {
    int s = key->tex.swizzles[sampler];
 
