@@ -539,6 +539,11 @@ void brw_draw_prims( struct gl_context *ctx,
 
    assert(unused_tfb_object == NULL);
 
+   if (ctx->Query.CondRenderQuery) {
+      perf_debug("Conditional rendering is implemented in software and may "
+                 "stall.  This should be fixed in the driver.\n");
+   }
+
    if (!_mesa_check_conditional_render(ctx))
       return;
 
