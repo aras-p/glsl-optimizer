@@ -45,11 +45,12 @@ check_PROGRAMS = \
 TESTS = $(check_PROGRAMS)
 
 TEST_LIBS = \
-	    libllvmpipe.la \
-	    $(top_builddir)/src/gallium/auxiliary/libgallium.la \
-	    $(LLVM_LIBS) \
-	    $(DLOPEN_LIBS) \
-	    $(PTHREAD_LIBS)
+	libllvmpipe.la \
+	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
+	$(top_builddir)/src/util/libmesautil.la \
+	$(LLVM_LIBS) \
+	$(DLOPEN_LIBS) \
+	$(PTHREAD_LIBS)
 
 lp_test_format_SOURCES = lp_test_format.c lp_test_main.c
 lp_test_format_LDADD = $(TEST_LIBS)
