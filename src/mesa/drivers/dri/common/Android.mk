@@ -88,13 +88,13 @@ include $(MESA_COMMON_MK)
 include $(BUILD_STATIC_LIBRARY)
 
 #
-# Build libmegadriver_stub
+# Build libmesa_megadriver_stub
 #
 
 include $(CLEAR_VARS)
 include $(LOCAL_PATH)/Makefile.sources
 
-LOCAL_MODULE := libmegadriver_stub
+LOCAL_MODULE := libmesa_megadriver_stub
 LOCAL_MODULE_CLASS := STATIC_LIBRARIES
 LOCAL_C_INCLUDES := \
     $(MESA_DRI_C_INCLUDES)
