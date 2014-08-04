@@ -45,7 +45,6 @@ vc4_bo_alloc(struct vc4_screen *screen, uint32_t size, const char *name)
         bo->size = size;
         bo->name = name;
 
-#ifndef USE_VC4_SIMULATOR
         struct drm_mode_create_dumb create;
         memset(&create, 0, sizeof(create));
 
@@ -59,12 +58,6 @@ vc4_bo_alloc(struct vc4_screen *screen, uint32_t size, const char *name)
 
         bo->handle = create.handle;
         assert(create.size >= size);
-#else /* USE_VC4_SIMULATOR */
-        static int next_handle = 0;
-        bo->handle = next_handle++;
-
-        bo->map = malloc(size);
-#endif /* USE_VC4_SIMULATOR */
 
         return bo;
 }
@@ -72,20 +65,23 @@ vc4_bo_alloc(struct vc4_screen *screen, uint32_t size, const char *name)
 void
 vc4_bo_free(struct vc4_bo *bo)
 {
-#ifndef USE_VC4_SIMULATOR
         struct vc4_screen *screen = bo->screen;
 
-        if (bo->map)
+        if (bo->map) {
+#ifdef USE_VC4_SIMULATOR
+                if (bo->simulator_winsys_map) {
+                        free(bo->map);
+                        bo->map = bo->simulator_winsys_map;
+                }
+#endif
                 munmap(bo->map, bo->size);
+        }
 
         struct drm_gem_close c;
         c.handle = bo->handle;
         int ret = drmIoctl(screen->fd, DRM_IOCTL_GEM_CLOSE, &c);
         if (ret != 0)
                 fprintf(stderr, "close object %d: %s\n", bo->handle, strerror(errno));
-#else
-        free(bo->map);
-#endif
 
         free(bo);
 }
@@ -137,7 +133,6 @@ vc4_bo_alloc_mem(struct vc4_screen *screen, const void *data, uint32_t size,
 bool
 vc4_bo_flink(struct vc4_bo *bo, uint32_t *name)
 {
-#ifndef USE_VC4_SIMULATOR
         struct drm_gem_flink flink = {
                 .handle = bo->handle,
         };
@@ -150,7 +145,6 @@ vc4_bo_flink(struct vc4_bo *bo, uint32_t *name)
         }
 
         *name = flink.name;
-#endif /* USE_VC4_SIMULATOR */
 
         return true;
 }

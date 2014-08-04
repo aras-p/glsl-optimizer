@@ -75,6 +75,7 @@ vc4_simulator_pin_bos(struct drm_device *dev, struct exec_info *exec)
                 struct vc4_bo *bo = bos[i];
                 struct drm_gem_cma_object *obj = vc4_wrap_bo_with_cma(dev, bo);
 
+                vc4_bo_map(bo);
                 memcpy(obj->vaddr, bo->map, bo->size);
 
                 exec->bo[i].bo = obj;
