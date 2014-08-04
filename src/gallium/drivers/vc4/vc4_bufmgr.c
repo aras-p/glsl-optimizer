@@ -75,6 +75,9 @@ vc4_bo_free(struct vc4_bo *bo)
 #ifndef USE_VC4_SIMULATOR
         struct vc4_screen *screen = bo->screen;
 
+        if (bo->map)
+                munmap(bo->map, bo->size);
+
         struct drm_gem_close c;
         c.handle = bo->handle;
         int ret = drmIoctl(screen->fd, DRM_IOCTL_GEM_CLOSE, &c);
