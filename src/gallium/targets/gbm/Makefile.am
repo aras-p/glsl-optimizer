@@ -34,6 +34,7 @@ gbm_gallium_drm_la_SOURCES =
 gbm_gallium_drm_la_LIBADD = \
 	$(top_builddir)/src/gallium/state_trackers/gbm/libgbm.la \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
+	$(top_builddir)/src/util/libmesautil.la \
 	$(LIBDRM_LIBS) \
 	$(GALLIUM_COMMON_LIB_DEPS)
 
