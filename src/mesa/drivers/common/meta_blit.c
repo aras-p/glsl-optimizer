@@ -709,6 +709,9 @@ _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
     */
    _mesa_meta_begin(ctx, MESA_META_ALL & ~MESA_META_DRAW_BUFFERS);
 
+   /* Dithering shouldn't be performed for glBlitFramebuffer */
+   _mesa_set_enable(ctx, GL_DITHER, GL_FALSE);
+
    /* If the clipping earlier changed the destination rect at all, then
     * enable the scissor to clip to it.
     */
