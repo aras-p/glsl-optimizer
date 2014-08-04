@@ -10,7 +10,7 @@ env.Append(CPPPATH = [
 ])
 
 env.Prepend(LIBS = [
-    mesautils,
+    mesautil,
     gallium,
     'gdi32',
     'user32',
