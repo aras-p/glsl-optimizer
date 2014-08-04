@@ -25,7 +25,7 @@ LOCAL_PATH := $(call my-dir)
 include $(LOCAL_PATH)/Makefile.sources
 
 # ---------------------------------------
-# Build libloader
+# Build libmesa_loader
 # ---------------------------------------
 
 include $(CLEAR_VARS)
@@ -40,7 +40,7 @@ else
 LOCAL_C_INCLUDES += $(TARGET_OUT_HEADERS)/libdrm
 endif
 
-LOCAL_MODULE := libloader
+LOCAL_MODULE := libmesa_loader
 
 include $(MESA_COMMON_MK)
 include $(BUILD_STATIC_LIBRARY)

@@ -44,7 +44,7 @@ LOCAL_C_INCLUDES := \
 	$(DRM_GRALLOC_TOP)
 
 LOCAL_STATIC_LIBRARIES := \
-	libloader
+	libmesa_loader
 
 LOCAL_MODULE := libmesa_egl_dri2
 
