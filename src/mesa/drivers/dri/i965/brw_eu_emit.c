@@ -1526,7 +1526,8 @@ brw_BREAK(struct brw_compile *p)
                                   p->if_depth_in_loop[p->loop_stack_depth]);
    }
    brw_inst_set_qtr_control(brw, insn, BRW_COMPRESSION_NONE);
-   brw_inst_set_exec_size(brw, insn, BRW_EXECUTE_8);
+   brw_inst_set_exec_size(brw, insn, p->compressed ? BRW_EXECUTE_16
+                                                   : BRW_EXECUTE_8);
 
    return insn;
 }
@@ -1546,9 +1547,9 @@ brw_CONT(struct brw_compile *p)
       brw_inst_set_gen4_pop_count(brw, insn,
                                   p->if_depth_in_loop[p->loop_stack_depth]);
    }
-
    brw_inst_set_qtr_control(brw, insn, BRW_COMPRESSION_NONE);
-   brw_inst_set_exec_size(brw, insn, BRW_EXECUTE_8);
+   brw_inst_set_exec_size(brw, insn, p->compressed ? BRW_EXECUTE_16
+                                                   : BRW_EXECUTE_8);
    return insn;
 }
 
@@ -1664,7 +1665,8 @@ brw_WHILE(struct brw_compile *p)
       brw_set_src1(p, insn, brw_imm_ud(0));
       brw_inst_set_jip(brw, insn, br * (do_insn - insn));
 
-      brw_inst_set_exec_size(brw, insn, BRW_EXECUTE_8);
+      brw_inst_set_exec_size(brw, insn, p->compressed ? BRW_EXECUTE_16
+                                                      : BRW_EXECUTE_8);
    } else if (brw->gen == 6) {
       insn = next_insn(p, BRW_OPCODE_WHILE);
       do_insn = get_inner_do_insn(p);
@@ -1674,7 +1676,8 @@ brw_WHILE(struct brw_compile *p)
       brw_set_src0(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
       brw_set_src1(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
 
-      brw_inst_set_exec_size(brw, insn, BRW_EXECUTE_8);
+      brw_inst_set_exec_size(brw, insn, p->compressed ? BRW_EXECUTE_16
+                                                      : BRW_EXECUTE_8);
    } else {
       if (p->single_program_flow) {
 	 insn = next_insn(p, BRW_OPCODE_ADD);
