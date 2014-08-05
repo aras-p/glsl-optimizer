@@ -2280,7 +2280,6 @@ AC_CONFIG_FILES([Makefile
 		src/mesa/drivers/x11/Makefile
 		src/mesa/main/tests/Makefile
 		src/util/Makefile
-		src/util/tests/Makefile
 		src/util/tests/hash_table/Makefile])
 
 dnl Sort the dirs alphabetically

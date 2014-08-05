@@ -19,13 +19,9 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-SUBDIRS = . tests
+SUBDIRS = . tests/hash_table
 
 include Makefile.sources
-
-BUILT_SOURCES = $(MESA_UTIL_GENERATED_FILES)
-
-CLEANFILES = $(BUILT_SOURCES)
 
 noinst_LTLIBRARIES = libmesautil.la
 
@@ -36,26 +32,10 @@ libmesautil_la_CPPFLAGS = \
 
 libmesautil_la_SOURCES = \
 	$(MESA_UTIL_FILES) \
-        $(MESA_UTIL_GENERATED_FILES)
+	$(MESA_UTIL_GENERATED_FILES)
+
+BUILT_SOURCES = $(MESA_UTIL_GENERATED_FILES)
+CLEANFILES = $(BUILT_SOURCES)
 
 format_srgb.c: $(srcdir)/format_srgb.py
 	$(AM_V_GEN) $(PYTHON2) $< > $@
-
-### Tests:
-
-CFLAGS_FOR_TESTS = $(PTHREAD_CFLAGS)
-CPPFLAGS_FOR_TESTS = \
-	$(libmesautil_la_CPPFLAGS) \
-	-I$(top_srcdir)/src/gtest/include
-LDADD_FOR_TESTS =                               \
-	$(top_builddir)/src/gtest/libgtest.la   \
-	$(top_builddir)/src/util/libmesautil.la \
-	$(PTHREAD_LIBS)
-
-TESTS = tests/ralloc_test
-check_PROGRAMS = $(TESTS)
-
-tests_ralloc_test_SOURCES = tests/ralloc_test.cpp
-tests_ralloc_test_CFLAGS = $(CFLAGS_FOR_TESTS)
-tests_ralloc_test_CPPFLAGS = $(CPPFLAGS_FOR_TESTS)
-tests_ralloc_test_LDADD = $(LDADD_FOR_TESTS)
