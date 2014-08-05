@@ -942,18 +942,20 @@ validate_shader_rec(struct drm_device *dev,
 			stride |= (*(uint32_t *)(pkt_u + 100 + i * 4)) & ~0xff;
 
 		if (vbo->base.size < offset ||
-		    vbo->base.size - offset < attr_size ||
-		    stride == 0) {
+		    vbo->base.size - offset < attr_size) {
 			DRM_ERROR("BO offset overflow (%d + %d > %d)\n",
 				  offset, attr_size, vbo->base.size);
 			return -EINVAL;
 		}
 
-		max_index = (vbo->base.size - offset - attr_size) / stride;
-		if (state->max_index > max_index) {
-			DRM_ERROR("primitives use index %d out of supplied %d\n",
-				  state->max_index, max_index);
-			return -EINVAL;
+		if (stride != 0) {
+			max_index = ((vbo->base.size - offset - attr_size) /
+				     stride);
+			if (state->max_index > max_index) {
+				DRM_ERROR("primitives use index %d out of supplied %d\n",
+					  state->max_index, max_index);
+				return -EINVAL;
+			}
 		}
 
 		*(uint32_t *)(pkt_v + o) = vbo->paddr + offset;
