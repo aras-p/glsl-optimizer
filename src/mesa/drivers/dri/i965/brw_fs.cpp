@@ -1250,13 +1250,12 @@ fs_visitor::compute_sample_position(fs_reg dst, fs_reg int_sample_pos)
 }
 
 fs_reg *
-fs_visitor::emit_samplepos_setup(ir_variable *ir)
+fs_visitor::emit_samplepos_setup()
 {
    assert(brw->gen >= 6);
-   assert(ir->type == glsl_type::vec2_type);
 
    this->current_annotation = "compute sample position";
-   fs_reg *reg = new(this->mem_ctx) fs_reg(this, ir->type);
+   fs_reg *reg = new(this->mem_ctx) fs_reg(this, glsl_type::vec2_type);
    fs_reg pos = *reg;
    fs_reg int_sample_x = fs_reg(this, glsl_type::int_type);
    fs_reg int_sample_y = fs_reg(this, glsl_type::int_type);

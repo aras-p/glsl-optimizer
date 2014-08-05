@@ -366,7 +366,7 @@ public:
                          glsl_interp_qualifier interpolation_mode,
                          bool is_centroid, bool is_sample);
    fs_reg *emit_frontfacing_interpolation();
-   fs_reg *emit_samplepos_setup(ir_variable *ir);
+   fs_reg *emit_samplepos_setup();
    fs_reg *emit_sampleid_setup(ir_variable *ir);
    fs_reg *emit_general_interpolation(ir_variable *ir);
    void emit_interpolation_setup_gen4();
