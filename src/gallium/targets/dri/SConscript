@@ -40,6 +40,7 @@ env.Prepend(LIBS = [
     ws_kms_dri,
     softpipe,
     libloader,
+    mesautil,
     mesa,
     glsl,
     gallium,
