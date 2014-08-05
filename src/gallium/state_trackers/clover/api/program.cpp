@@ -232,6 +232,17 @@ clGetProgramInfo(cl_program d_prog, cl_program_info param,
          prog.devices());
       break;
 
+   case CL_PROGRAM_NUM_KERNELS:
+      buf.as_scalar<cl_uint>() = prog.symbols().size();
+      break;
+
+   case CL_PROGRAM_KERNEL_NAMES:
+      buf.as_string() = fold([](const std::string &a, const module::symbol &s) {
+            return ((a.empty() ? "" : a + ";") +
+                    std::string(s.name.begin(), s.name.size()));
+         }, std::string(), prog.symbols());
+      break;
+
    default:
       throw error(CL_INVALID_VALUE);
    }
