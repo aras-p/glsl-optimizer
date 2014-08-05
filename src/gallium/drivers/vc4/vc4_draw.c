@@ -45,7 +45,15 @@ vc4_start_draw(struct vc4_context *vc4)
         uint32_t tilew = align(width, 64) / 64;
         uint32_t tileh = align(height, 64) / 64;
 
-        uint32_t tile_alloc_size = 32 * tilew * tileh * 16;
+        /* Tile alloc memory setup: We use an initial alloc size of 32b.  The
+         * hardware then aligns that to 256b (we use 4096, because all of our
+         * BO allocations align to that anyway), then for some reason the
+         * simulator wants an extra page available, even if you have overflow
+         * memory set up.
+         */
+        uint32_t tile_alloc_size = 32 * tilew * tileh;
+        tile_alloc_size = align(tile_alloc_size, 4096);
+        tile_alloc_size += 4096;
         uint32_t tile_state_size = 48 * tilew * tileh;
         if (!vc4->tile_alloc || vc4->tile_alloc->size < tile_alloc_size) {
                 vc4_bo_unreference(&vc4->tile_alloc);
