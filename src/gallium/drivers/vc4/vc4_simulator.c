@@ -32,6 +32,8 @@
 #include "vc4_simulator_validate.h"
 #include "simpenrose/simpenrose.h"
 
+#define OVERFLOW_SIZE (32 * 1024 * 1024)
+
 static struct drm_gem_cma_object *
 vc4_wrap_bo_with_cma(struct drm_device *dev, struct vc4_bo *bo)
 {
@@ -234,7 +236,7 @@ vc4_simulator_flush(struct vc4_context *vc4, struct drm_vc4_submit_cl *args,
         struct exec_info exec;
         struct drm_device local_dev = {
                 .vc4 = vc4,
-                .simulator_mem_next = 0,
+                .simulator_mem_next = OVERFLOW_SIZE,
         };
         struct drm_device *dev = &local_dev;
         int ret;
@@ -290,9 +292,23 @@ vc4_simulator_flush(struct vc4_context *vc4, struct drm_vc4_submit_cl *args,
 void
 vc4_simulator_init(struct vc4_screen *screen)
 {
-        simpenrose_init_hardware();
-        screen->simulator_mem_base = simpenrose_get_mem_start();
-        screen->simulator_mem_size = simpenrose_get_mem_size();
+        screen->simulator_mem_size = 256 * 1024 * 1024;
+        screen->simulator_mem_base = malloc(screen->simulator_mem_size);
+
+        /* We supply our own memory so that we can have more aperture
+         * available (256MB instead of simpenrose's default 64MB).
+         */
+        simpenrose_init_hardware_supply_mem(screen->simulator_mem_base,
+                                            screen->simulator_mem_size);
+
+        /* Carve out low memory for tile allocation overflow.  The kernel
+         * should be automatically handling overflow memory setup on real
+         * hardware, but for simulation we just get one shot to set up enough
+         * overflow memory before execution.  This overflow mem will be used
+         * up over the whole lifetime of simpenrose (not reused on each
+         * flush), so it had better be big.
+         */
+        simpenrose_supply_overflow_mem(0, OVERFLOW_SIZE);
 }
 
 #endif /* USE_VC4_SIMULATOR */
