@@ -301,6 +301,23 @@ tgsi_to_qir_trunc(struct tgsi_to_qir *trans,
         return qir_ITOF(c, qir_FTOI(c, src[0 * 4 + i]));
 }
 
+/**
+ * Computes x - floor(x), which is tricky because our FTOI truncates (rounds
+ * to zero).
+ */
+static struct qreg
+tgsi_to_qir_frc(struct tgsi_to_qir *trans,
+                struct tgsi_full_instruction *tgsi_inst,
+                enum qop op, struct qreg *src, int i)
+{
+        struct qcompile *c = trans->c;
+        struct qreg trunc = qir_ITOF(c, qir_FTOI(c, src[0 * 4 + i]));
+        struct qreg diff = qir_FSUB(c, src[0 * 4 + i], trunc);
+        return qir_CMP(c,
+                       diff,
+                       qir_FADD(c, diff, qir_uniform_f(trans, 1.0)),
+                       diff);
+}
 
 static struct qreg
 tgsi_to_qir_dp(struct tgsi_to_qir *trans,
@@ -424,6 +441,7 @@ emit_tgsi_instruction(struct tgsi_to_qir *trans,
                 [TGSI_OPCODE_LRP] = { 0, tgsi_to_qir_lrp },
                 [TGSI_OPCODE_POW] = { 0, tgsi_to_qir_pow },
                 [TGSI_OPCODE_TRUNC] = { 0, tgsi_to_qir_trunc },
+                [TGSI_OPCODE_FRC] = { 0, tgsi_to_qir_frc },
         };
         static int asdf = 0;
         uint32_t tgsi_op = tgsi_inst->Instruction.Opcode;
