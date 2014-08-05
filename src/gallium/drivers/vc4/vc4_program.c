@@ -570,6 +570,24 @@ emit_vertex_input(struct tgsi_to_qir *trans, int attr)
 }
 
 static void
+emit_fragment_input(struct tgsi_to_qir *trans, int attr)
+{
+        struct qcompile *c = trans->c;
+
+        for (int i = 0; i < 4; i++) {
+                struct qreg vary = {
+                        QFILE_VARY,
+                        attr * 4 + i
+                };
+
+                /* XXX: multiply by W */
+                trans->inputs[attr * 4 + i] =
+                        qir_VARY_ADD_C(c, qir_MOV(c, vary));
+                c->num_inputs++;
+        }
+}
+
+static void
 emit_tgsi_declaration(struct tgsi_to_qir *trans,
                       struct tgsi_full_declaration *decl)
 {
@@ -577,23 +595,12 @@ emit_tgsi_declaration(struct tgsi_to_qir *trans,
 
         switch (decl->Declaration.File) {
         case TGSI_FILE_INPUT:
-                if (c->stage == QSTAGE_FRAG) {
-                        for (int i = decl->Range.First * 4;
-                             i < (decl->Range.Last + 1) * 4;
-                             i++) {
-                                struct qreg vary = {
-                                        QFILE_VARY,
-                                        i
-                                };
-                                trans->inputs[i] =
-                                        qir_VARY_ADD_C(c, qir_MOV(c, vary));
-
-                                c->num_inputs++;
-                        }
-                } else {
-                        for (int i = decl->Range.First;
-                             i <= decl->Range.Last;
-                             i++) {
+                for (int i = decl->Range.First;
+                     i <= decl->Range.Last;
+                     i++) {
+                        if (c->stage == QSTAGE_FRAG) {
+                                emit_fragment_input(trans, i);
+                        } else {
                                 emit_vertex_input(trans, i);
                         }
                 }
