@@ -249,6 +249,7 @@ vc4_generate_code(struct qcompile *c)
                         A(FMINABS),
                         A(FMAXABS),
                         A(FTOI),
+                        A(ITOF),
 
                         M(FMUL),
                 };

@@ -59,6 +59,7 @@ enum qop {
         QOP_CMP,
 
         QOP_FTOI,
+        QOP_ITOF,
         QOP_RCP,
         QOP_RSQ,
         QOP_EXP2,
@@ -186,6 +187,7 @@ QIR_ALU2(FMAX)
 QIR_ALU2(FMINABS)
 QIR_ALU2(FMAXABS)
 QIR_ALU1(FTOI)
+QIR_ALU1(ITOF)
 QIR_ALU1(RCP)
 QIR_ALU1(RSQ)
 QIR_ALU1(EXP2)

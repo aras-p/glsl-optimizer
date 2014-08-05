@@ -293,6 +293,16 @@ tgsi_to_qir_pow(struct tgsi_to_qir *trans,
 }
 
 static struct qreg
+tgsi_to_qir_trunc(struct tgsi_to_qir *trans,
+                struct tgsi_full_instruction *tgsi_inst,
+                enum qop op, struct qreg *src, int i)
+{
+        struct qcompile *c = trans->c;
+        return qir_ITOF(c, qir_FTOI(c, src[0 * 4 + i]));
+}
+
+
+static struct qreg
 tgsi_to_qir_dp(struct tgsi_to_qir *trans,
                struct tgsi_full_instruction *tgsi_inst,
                int num, struct qreg *src, int i)
@@ -413,6 +423,7 @@ emit_tgsi_instruction(struct tgsi_to_qir *trans,
                 [TGSI_OPCODE_LIT] = { 0, tgsi_to_qir_lit },
                 [TGSI_OPCODE_LRP] = { 0, tgsi_to_qir_lrp },
                 [TGSI_OPCODE_POW] = { 0, tgsi_to_qir_pow },
+                [TGSI_OPCODE_TRUNC] = { 0, tgsi_to_qir_trunc },
         };
         static int asdf = 0;
         uint32_t tgsi_op = tgsi_inst->Instruction.Opcode;
