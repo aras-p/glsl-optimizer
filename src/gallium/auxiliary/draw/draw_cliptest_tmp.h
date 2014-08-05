@@ -62,6 +62,7 @@ static boolean TAG(do_cliptest)( struct pt_post_vs *pvs,
       ucp_enable = (1 << num_written_clipdistance) - 1;
    }
 
+   assert(pos != -1);
    for (j = 0; j < info->count; j++) {
       float *position = out->data[pos];
       unsigned mask = 0x0;
@@ -84,8 +85,10 @@ static boolean TAG(do_cliptest)( struct pt_post_vs *pvs,
                    DO_CLIP_FULL_Z | DO_CLIP_HALF_Z | DO_CLIP_USER)) {
          float *clipvertex = position;
 
-         if ((flags & DO_CLIP_USER) && cv != pos)
+         if ((flags & DO_CLIP_USER) && cv != pos) {
+            assert(cv != -1);
             clipvertex = out->data[cv];
+         }
 
          for (i = 0; i < 4; i++) {
             out->clip[i] = clipvertex[i];

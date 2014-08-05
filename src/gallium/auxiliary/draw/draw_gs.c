@@ -791,6 +791,7 @@ draw_create_geometry_shader(struct draw_context *draw,
     */
    gs->primitive_boundary = gs->max_output_vertices + 1;
 
+   gs->position_output = -1;
    for (i = 0; i < gs->info.num_outputs; i++) {
       if (gs->info.output_semantic_name[i] == TGSI_SEMANTIC_POSITION &&
           gs->info.output_semantic_index[i] == 0)
