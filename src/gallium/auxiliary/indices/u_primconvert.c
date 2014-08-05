@@ -121,6 +121,8 @@ util_primconvert_draw_vbo(struct primconvert_context *pc,
    memset(&new_ib, 0, sizeof(new_ib));
    util_draw_init_info(&new_info);
    new_info.indexed = true;
+   new_info.min_index = info->min_index;
+   new_info.max_index = info->max_index;
 
    if (info->indexed) {
       u_index_translator(pc->primtypes_mask,
@@ -152,13 +154,9 @@ util_primconvert_draw_vbo(struct primconvert_context *pc,
                       &dst_transfer);
 
    if (info->indexed) {
-      new_info.min_index = 0;
-      new_info.max_index = ~0;
       trans_func(src, info->start, new_info.count, dst);
    }
    else {
-      new_info.min_index = info->start;
-      new_info.max_index = info->start + new_info.count;
       gen_func(info->start, new_info.count, dst);
    }
 
