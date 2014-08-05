@@ -1185,9 +1185,9 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
 }
 
 fs_reg *
-fs_visitor::emit_frontfacing_interpolation(ir_variable *ir)
+fs_visitor::emit_frontfacing_interpolation()
 {
-   fs_reg *reg = new(this->mem_ctx) fs_reg(this, ir->type);
+   fs_reg *reg = new(this->mem_ctx) fs_reg(this, glsl_type::bool_type);
 
    if (brw->gen >= 6) {
       /* Bit 15 of g0.0 is 0 if the polygon is front facing. We want to create
@@ -1217,7 +1217,7 @@ fs_visitor::emit_frontfacing_interpolation(ir_variable *ir)
        * Instead, use ASR (which will give ~0/true or 0/false) followed by an
        * AND 1.
        */
-      fs_reg asr = fs_reg(this, ir->type);
+      fs_reg asr = fs_reg(this, glsl_type::bool_type);
       fs_reg g1_6 = fs_reg(retype(brw_vec1_grf(1, 6), BRW_REGISTER_TYPE_D));
       g1_6.negate = true;
 

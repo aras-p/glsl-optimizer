@@ -609,7 +609,7 @@ fs_visitor::setup_fp_regs()
             fp_input_regs[i] = *emit_fragcoord_interpolation(ir);
             break;
          case VARYING_SLOT_FACE:
-            fp_input_regs[i] = *emit_frontfacing_interpolation(ir);
+            fp_input_regs[i] = *emit_frontfacing_interpolation();
             break;
          default:
             fp_input_regs[i] = *emit_general_interpolation(ir);
