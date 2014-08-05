@@ -5113,8 +5113,7 @@ st_translate_program(
       unsigned num_ubos = program->shader->NumUniformBlocks;
 
       for (i = 0; i < num_ubos; i++) {
-         unsigned size =
-            program->shader_program->UniformBlocks[i].UniformBufferSize;
+         unsigned size = program->shader->UniformBlocks[i].UniformBufferSize;
          unsigned num_const_vecs = (size + 15) / 16;
          unsigned first, last;
          assert(num_const_vecs > 0);
