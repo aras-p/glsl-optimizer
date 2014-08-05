@@ -74,6 +74,11 @@ enum qop {
         QOP_TLB_COLOR_WRITE,
         QOP_VARY_ADD_C,
 
+        QOP_FRAG_X,
+        QOP_FRAG_Y,
+        QOP_FRAG_Z,
+        QOP_FRAG_RCP_W,
+
         /** Texture x coordinate parameter write */
         QOP_TEX_S,
         /** Texture y coordinate parameter write */
@@ -204,6 +209,15 @@ bool qir_opt_algebraic(struct qcompile *c);
 bool qir_opt_copy_propagation(struct qcompile *c);
 bool qir_opt_dead_code(struct qcompile *c);
 
+#define QIR_ALU0(name)                                                   \
+static inline struct qreg                                                \
+qir_##name(struct qcompile *c)                                           \
+{                                                                        \
+        struct qreg t = qir_get_temp(c);                                 \
+        qir_emit(c, qir_inst(QOP_##name, t, c->undef, c->undef));        \
+        return t;                                                        \
+}
+
 #define QIR_ALU1(name)                                                   \
 static inline struct qreg                                                \
 qir_##name(struct qcompile *c, struct qreg a)                            \
@@ -257,6 +271,10 @@ QIR_NODST_2(TEX_S)
 QIR_NODST_2(TEX_T)
 QIR_NODST_2(TEX_R)
 QIR_NODST_2(TEX_B)
+QIR_ALU0(FRAG_X)
+QIR_ALU0(FRAG_Y)
+QIR_ALU0(FRAG_Z)
+QIR_ALU0(FRAG_RCP_W)
 
 static inline struct qreg
 qir_CMP(struct qcompile *c, struct qreg cmp, struct qreg a, struct qreg b)

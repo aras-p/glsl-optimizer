@@ -570,6 +570,20 @@ emit_vertex_input(struct tgsi_to_qir *trans, int attr)
 }
 
 static void
+emit_fragcoord_input(struct tgsi_to_qir *trans, int attr)
+{
+        struct qcompile *c = trans->c;
+
+        trans->inputs[attr * 4 + 0] = qir_FRAG_X(c);
+        trans->inputs[attr * 4 + 1] = qir_FRAG_Y(c);
+        trans->inputs[attr * 4 + 2] =
+                qir_FMUL(c,
+                         qir_FRAG_Z(c),
+                         qir_uniform_f(trans, 1.0 / 0xffffff));
+        trans->inputs[attr * 4 + 3] = qir_FRAG_RCP_W(c);
+}
+
+static void
 emit_fragment_input(struct tgsi_to_qir *trans, int attr)
 {
         struct qcompile *c = trans->c;
@@ -599,7 +613,12 @@ emit_tgsi_declaration(struct tgsi_to_qir *trans,
                      i <= decl->Range.Last;
                      i++) {
                         if (c->stage == QSTAGE_FRAG) {
-                                emit_fragment_input(trans, i);
+                                if (decl->Semantic.Name ==
+                                    TGSI_SEMANTIC_POSITION) {
+                                        emit_fragcoord_input(trans, i);
+                                } else {
+                                        emit_fragment_input(trans, i);
+                                }
                         } else {
                                 emit_vertex_input(trans, i);
                         }

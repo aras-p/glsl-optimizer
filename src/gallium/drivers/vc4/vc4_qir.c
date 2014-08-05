@@ -65,6 +65,11 @@ static const struct qir_op_info qir_op_info[] = {
         [QOP_TLB_COLOR_WRITE] = { "tlb_color", 0, 1, true },
         [QOP_VARY_ADD_C] = { "vary_add_c", 1, 1 },
 
+        [QOP_FRAG_X] = { "frag_x", 1, 0 },
+        [QOP_FRAG_Y] = { "frag_y", 1, 0 },
+        [QOP_FRAG_Z] = { "frag_z", 1, 0 },
+        [QOP_FRAG_RCP_W] = { "frag_rcp_w", 1, 0 },
+
         [QOP_TEX_S] = { "tex_s", 0, 2 },
         [QOP_TEX_T] = { "tex_t", 0, 2 },
         [QOP_TEX_R] = { "tex_r", 0, 2 },

@@ -213,7 +213,8 @@ vc4_generate_code(struct qcompile *c)
                         if (qinst->src[i].file == QFILE_TEMP)
                                 reg_uses_remaining[qinst->src[i].index]++;
                 }
-                if (qinst->op == QOP_TLB_PASSTHROUGH_Z_WRITE)
+                if (qinst->op == QOP_TLB_PASSTHROUGH_Z_WRITE ||
+                    qinst->op == QOP_FRAG_Z)
                         reg_in_use[3 + 32 + QPU_R_FRAG_PAYLOAD_ZW] = true;
         }
 
@@ -458,6 +459,33 @@ vc4_generate_code(struct qcompile *c)
                         queue(c, qpu_inst(qpu_a_MOV(dst, qpu_r3()),
                                           qpu_m_NOP()));
 
+                        break;
+
+                case QOP_FRAG_X:
+                        queue(c, qpu_inst(qpu_a_ITOF(dst,
+                                                     qpu_ra(QPU_R_XY_PIXEL_COORD)),
+                                          qpu_m_NOP()));
+                        break;
+
+                case QOP_FRAG_Y:
+                        queue(c, qpu_inst(qpu_a_ITOF(dst,
+                                                     qpu_rb(QPU_R_XY_PIXEL_COORD)),
+                                          qpu_m_NOP()));
+                        break;
+
+                case QOP_FRAG_Z:
+                        queue(c, qpu_inst(qpu_a_ITOF(dst,
+                                                     qpu_rb(QPU_R_FRAG_PAYLOAD_ZW)),
+                                          qpu_m_NOP()));
+                        break;
+
+                case QOP_FRAG_RCP_W:
+                        queue(c, qpu_inst(qpu_a_MOV(qpu_rb(QPU_W_SFU_RECIP),
+                                                    qpu_ra(QPU_R_FRAG_PAYLOAD_ZW)),
+                                          qpu_m_NOP()));
+
+                        queue(c, qpu_inst(qpu_a_MOV(dst, qpu_r4()),
+                                          qpu_m_NOP()));
                         break;
 
                 case QOP_TLB_PASSTHROUGH_Z_WRITE:
