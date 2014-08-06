@@ -33,15 +33,6 @@
 #include "r600_pipe_common.h"
 #include "r600d_common.h"
 
-static INLINE uint64_t r600_resource_va(struct pipe_screen *screen,
-					struct pipe_resource *resource)
-{
-	struct r600_common_screen *rscreen = (struct r600_common_screen*)screen;
-	struct r600_resource *rresource = (struct r600_resource*)resource;
-
-	return rscreen->ws->buffer_get_virtual_address(rresource->cs_buf);
-}
-
 static INLINE unsigned r600_context_bo_reloc(struct r600_common_context *rctx,
 					     struct r600_ring *ring,
 					     struct r600_resource *rbo,
