@@ -75,8 +75,8 @@ static void si_dma_copy_buffer(struct si_context *ctx,
 	util_range_add(&rdst->valid_buffer_range, dst_offset,
 		       dst_offset + size);
 
-	dst_offset += r600_resource_va(&ctx->screen->b.b, dst);
-	src_offset += r600_resource_va(&ctx->screen->b.b, src);
+	dst_offset += rdst->gpu_address;
+	src_offset += rsrc->gpu_address;
 
 	/* see if we use dword or byte copy */
 	if (!(dst_offset % 4) && !(src_offset % 4) && !(size % 4)) {
@@ -175,8 +175,8 @@ static void si_dma_copy_tile(struct si_context *ctx,
 						     util_format_has_stencil(util_format_description(src->format)));
 		nbanks = si_num_banks(sscreen, rsrc->surface.bpe, rsrc->surface.tile_split,
 				      tile_mode_index);
-		base += r600_resource_va(&ctx->screen->b.b, src);
-		addr += r600_resource_va(&ctx->screen->b.b, dst);
+		base += rsrc->resource.gpu_address;
+		addr += rdst->resource.gpu_address;
 	} else {
 		/* L2T */
 		array_mode = si_array_mode(dst_mode);
@@ -204,8 +204,8 @@ static void si_dma_copy_tile(struct si_context *ctx,
 						     util_format_has_stencil(util_format_description(dst->format)));
 		nbanks = si_num_banks(sscreen, rdst->surface.bpe, rdst->surface.tile_split,
 				      tile_mode_index);
-		base += r600_resource_va(&ctx->screen->b.b, dst);
-		addr += r600_resource_va(&ctx->screen->b.b, src);
+		base += rdst->resource.gpu_address;
+		addr += rsrc->resource.gpu_address;
 	}
 
 	pipe_config = cik_db_pipe_config(sscreen, tile_mode_index);

@@ -176,7 +176,7 @@ void si_trace_emit(struct si_context *sctx)
 	struct radeon_winsys_cs *cs = sctx->cs;
 	uint64_t va;
 
-	va = r600_resource_va(&sscreen->screen, (void*)sscreen->b.trace_bo);
+	va = sscreen->b.trace_bo->gpu_address;
 	r600_context_bo_reloc(sctx, sscreen->b.trace_bo, RADEON_USAGE_READWRITE);
 	cs->buf[cs->cdw++] = PKT3(PKT3_WRITE_DATA, 4, 0);
 	cs->buf[cs->cdw++] = PKT3_WRITE_DATA_DST_SEL(PKT3_WRITE_DATA_DST_SEL_MEM_SYNC) |

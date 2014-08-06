@@ -114,7 +114,7 @@ static void si_set_global_binding(
 		uint64_t va;
 		uint32_t offset;
 		program->global_buffers[i] = resources[i];
-		va = r600_resource_va(ctx->screen, resources[i]);
+		va = r600_resource(resources[i])->gpu_address;
 		offset = util_le32_to_cpu(*handles[i]);
 		va += offset;
 		va = util_cpu_to_le64(va);
@@ -223,8 +223,7 @@ static void si_launch_grid(
 				si_resource_create_custom(sctx->b.b.screen,
 				PIPE_USAGE_DEFAULT, scratch_bytes);
 		}
-		scratch_buffer_va = r600_resource_va(ctx->screen,
-				(struct pipe_resource*)shader->scratch_bo);
+		scratch_buffer_va = shader->scratch_bo->gpu_address;
 		si_pm4_add_bo(pm4, shader->scratch_bo,
 				RADEON_USAGE_READWRITE,
 				RADEON_PRIO_SHADER_RESOURCE_RW);
@@ -238,8 +237,7 @@ static void si_launch_grid(
 
 	si_upload_const_buffer(sctx, &kernel_args_buffer, (uint8_t*)kernel_args,
 					kernel_args_size, &kernel_args_offset);
-	kernel_args_va = r600_resource_va(ctx->screen,
-				(struct pipe_resource*)kernel_args_buffer);
+	kernel_args_va = kernel_args_buffer->gpu_address;
 	kernel_args_va += kernel_args_offset;
 
 	si_pm4_add_bo(pm4, kernel_args_buffer, RADEON_USAGE_READ, RADEON_PRIO_SHADER_DATA);
@@ -285,7 +283,7 @@ static void si_launch_grid(
 						0x190 /* Default value */);
 	}
 
-	shader_va = r600_resource_va(ctx->screen, (void *)shader->bo);
+	shader_va = shader->bo->gpu_address;
 	si_pm4_add_bo(pm4, shader->bo, RADEON_USAGE_READ, RADEON_PRIO_SHADER_DATA);
 	si_pm4_set_reg(pm4, R_00B830_COMPUTE_PGM_LO, (shader_va >> 8) & 0xffffffff);
 	si_pm4_set_reg(pm4, R_00B834_COMPUTE_PGM_HI, shader_va >> 40);

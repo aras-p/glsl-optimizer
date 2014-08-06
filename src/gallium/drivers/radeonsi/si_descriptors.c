@@ -113,8 +113,6 @@ static void si_init_descriptors(struct si_context *sctx,
 				unsigned num_elements,
 				void (*emit_func)(struct si_context *ctx, struct r600_atom *state))
 {
-	uint64_t va;
-
 	assert(num_elements <= sizeof(desc->enabled_mask)*8);
 	assert(num_elements <= sizeof(desc->dirty_mask)*8);
 
@@ -131,11 +129,11 @@ static void si_init_descriptors(struct si_context *sctx,
 
 	r600_context_bo_reloc(&sctx->b, &sctx->b.rings.gfx, desc->buffer,
 			      RADEON_USAGE_READWRITE, RADEON_PRIO_SHADER_DATA);
-	va = r600_resource_va(sctx->b.b.screen, &desc->buffer->b.b);
 
 	/* We don't check for CS space here, because this should be called
 	 * only once at context initialization. */
-	si_emit_cp_dma_clear_buffer(sctx, va, desc->buffer->b.b.width0, 0,
+	si_emit_cp_dma_clear_buffer(sctx, desc->buffer->gpu_address,
+				    desc->buffer->b.b.width0, 0,
 				    R600_CP_DMA_SYNC);
 }
 
@@ -170,7 +168,7 @@ static void si_emit_shader_pointer(struct si_context *sctx,
 {
 	struct si_descriptors *desc = (struct si_descriptors*)atom;
 	struct radeon_winsys_cs *cs = sctx->b.rings.gfx.cs;
-	uint64_t va = r600_resource_va(sctx->b.b.screen, &desc->buffer->b.b) +
+	uint64_t va = desc->buffer->gpu_address +
 		      desc->current_context_id * desc->context_size +
 		      desc->buffer_offset;
 
@@ -205,7 +203,7 @@ static void si_emit_descriptors(struct si_context *sctx,
 
 	assert(dirty_mask);
 
-	va_base = r600_resource_va(sctx->b.b.screen, &desc->buffer->b.b);
+	va_base = desc->buffer->gpu_address;
 
 	/* Copy the descriptors to a new context slot. */
 	/* XXX Consider using TC or L2 for this copy on CIK. */
@@ -567,7 +565,6 @@ static void si_vertex_buffers_begin_new_cs(struct si_context *sctx)
 
 void si_update_vertex_buffers(struct si_context *sctx)
 {
-	struct pipe_context *ctx = &sctx->b.b;
 	struct si_descriptors *desc = &sctx->vertex_buffers;
 	bool bound[SI_NUM_VERTEX_BUFFERS] = {};
 	unsigned i, count = sctx->vertex_elements->count;
@@ -611,9 +608,7 @@ void si_update_vertex_buffers(struct si_context *sctx)
 		}
 
 		offset = vb->buffer_offset + ve->src_offset;
-
-		va = r600_resource_va(ctx->screen, (void*)rbuffer);
-		va += offset;
+		va = rbuffer->gpu_address + offset;
 
 		/* Fill in T# buffer resource description */
 		desc[0] = va & 0xFFFFFFFF;
@@ -703,10 +698,10 @@ static void si_set_constant_buffer(struct pipe_context *ctx, uint shader, uint s
 			si_upload_const_buffer(sctx,
 					       (struct r600_resource**)&buffer, input->user_buffer,
 					       input->buffer_size, &buffer_offset);
-			va = r600_resource_va(ctx->screen, buffer) + buffer_offset;
+			va = r600_resource(buffer)->gpu_address + buffer_offset;
 		} else {
 			pipe_resource_reference(&buffer, input->buffer);
-			va = r600_resource_va(ctx->screen, buffer) + input->buffer_offset;
+			va = r600_resource(buffer)->gpu_address + input->buffer_offset;
 		}
 
 		/* Set the descriptor. */
@@ -760,7 +755,7 @@ void si_set_ring_buffer(struct pipe_context *ctx, uint shader, uint slot,
 	if (input && input->buffer) {
 		uint64_t va;
 
-		va = r600_resource_va(ctx->screen, input->buffer);
+		va = r600_resource(input->buffer)->gpu_address;
 
 		switch (element_size) {
 		default:
@@ -856,7 +851,7 @@ static void si_set_streamout_targets(struct pipe_context *ctx,
 
 		if (targets[i]) {
 			struct pipe_resource *buffer = targets[i]->buffer;
-			uint64_t va = r600_resource_va(ctx->screen, buffer);
+			uint64_t va = r600_resource(buffer)->gpu_address;
 
 			/* Set the descriptor. */
 			uint32_t *desc = buffers->desc_data[bufidx];
@@ -909,7 +904,7 @@ static void si_desc_reset_buffer_offset(struct pipe_context *ctx,
 	uint64_t offset_within_buffer = old_desc_va - old_buf_va;
 
 	/* Update the descriptor. */
-	uint64_t va = r600_resource_va(ctx->screen, new_buf) + offset_within_buffer;
+	uint64_t va = r600_resource(new_buf)->gpu_address + offset_within_buffer;
 
 	desc[0] = va;
 	desc[1] = (desc[1] & C_008F04_BASE_ADDRESS_HI) |
@@ -930,7 +925,7 @@ static void si_invalidate_buffer(struct pipe_context *ctx, struct pipe_resource 
 	struct si_context *sctx = (struct si_context*)ctx;
 	struct r600_resource *rbuffer = r600_resource(buf);
 	unsigned i, shader, alignment = rbuffer->buf->alignment;
-	uint64_t old_va = r600_resource_va(ctx->screen, buf);
+	uint64_t old_va = rbuffer->gpu_address;
 	unsigned num_elems = sctx->vertex_elements ?
 				       sctx->vertex_elements->count : 0;
 
@@ -1076,7 +1071,7 @@ static void si_clear_buffer(struct pipe_context *ctx, struct pipe_resource *dst,
 		return;
 	}
 
-	uint64_t va = r600_resource_va(&sctx->screen->b.b, dst) + offset;
+	uint64_t va = r600_resource(dst)->gpu_address + offset;
 
 	/* Flush the caches where the resource is bound. */
 	/* XXX only flush the caches where the buffer is bound. */
@@ -1142,8 +1137,8 @@ void si_copy_buffer(struct si_context *sctx,
 	util_range_add(&r600_resource(dst)->valid_buffer_range, dst_offset,
 		       dst_offset + size);
 
-	dst_offset += r600_resource_va(&sctx->screen->b.b, dst);
-	src_offset += r600_resource_va(&sctx->screen->b.b, src);
+	dst_offset += r600_resource(dst)->gpu_address;
+	src_offset += r600_resource(src)->gpu_address;
 
 	/* Flush the caches where the resource is bound. */
 	sctx->b.flags |= R600_CONTEXT_INV_TEX_CACHE |

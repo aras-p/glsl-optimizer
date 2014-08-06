@@ -54,7 +54,7 @@ static void si_pipe_shader_es(struct pipe_context *ctx, struct si_pipe_shader *s
 	if (pm4 == NULL)
 		return;
 
-	va = r600_resource_va(ctx->screen, (void *)shader->bo);
+	va = shader->bo->gpu_address;
 	si_pm4_add_bo(pm4, shader->bo, RADEON_USAGE_READ, RADEON_PRIO_SHADER_DATA);
 
 	vgpr_comp_cnt = shader->shader.uses_instanceid ? 3 : 0;
@@ -129,7 +129,7 @@ static void si_pipe_shader_gs(struct pipe_context *ctx, struct si_pipe_shader *s
 
 	si_pm4_set_reg(pm4, R_028B5C_VGT_GS_VERT_ITEMSIZE, gs_vert_itemsize);
 
-	va = r600_resource_va(ctx->screen, (void *)shader->bo);
+	va = shader->bo->gpu_address;
 	si_pm4_add_bo(pm4, shader->bo, RADEON_USAGE_READ, RADEON_PRIO_SHADER_DATA);
 	si_pm4_set_reg(pm4, R_00B220_SPI_SHADER_PGM_LO_GS, va >> 8);
 	si_pm4_set_reg(pm4, R_00B224_SPI_SHADER_PGM_HI_GS, va >> 40);
@@ -166,7 +166,7 @@ static void si_pipe_shader_vs(struct pipe_context *ctx, struct si_pipe_shader *s
 	if (pm4 == NULL)
 		return;
 
-	va = r600_resource_va(ctx->screen, (void *)shader->bo);
+	va = shader->bo->gpu_address;
 	si_pm4_add_bo(pm4, shader->bo, RADEON_USAGE_READ, RADEON_PRIO_SHADER_DATA);
 
 	vgpr_comp_cnt = shader->shader.uses_instanceid ? 3 : 0;
@@ -298,7 +298,7 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 		       shader->spi_shader_col_format);
 	si_pm4_set_reg(pm4, R_02823C_CB_SHADER_MASK, shader->cb_shader_mask);
 
-	va = r600_resource_va(ctx->screen, (void *)shader->bo);
+	va = shader->bo->gpu_address;
 	si_pm4_add_bo(pm4, shader->bo, RADEON_USAGE_READ, RADEON_PRIO_SHADER_DATA);
 	si_pm4_set_reg(pm4, R_00B020_SPI_SHADER_PGM_LO_PS, va >> 8);
 	si_pm4_set_reg(pm4, R_00B024_SPI_SHADER_PGM_HI_PS, va >> 40);
@@ -715,9 +715,8 @@ static void si_state_draw(struct si_context *sctx,
 	if (info->count_from_stream_output) {
 		struct r600_so_target *t =
 			(struct r600_so_target*)info->count_from_stream_output;
-		uint64_t va = r600_resource_va(&sctx->screen->b.b,
-					       &t->buf_filled_size->b.b);
-		va += t->buf_filled_size_offset;
+		uint64_t va = t->buf_filled_size->gpu_address +
+			      t->buf_filled_size_offset;
 
 		si_pm4_set_reg(pm4, R_028B30_VGT_STRMOUT_DRAW_OPAQUE_VERTEX_STRIDE,
 			       t->stride_in_dw);
@@ -764,16 +763,13 @@ static void si_state_draw(struct si_context *sctx,
 	if (info->indexed) {
 		uint32_t max_size = (ib->buffer->width0 - ib->offset) /
 				 sctx->index_buffer.index_size;
-		uint64_t va;
-		va = r600_resource_va(&sctx->screen->b.b, ib->buffer);
-		va += ib->offset;
+		uint64_t va = r600_resource(ib->buffer)->gpu_address + ib->offset;
 
 		si_pm4_add_bo(pm4, (struct r600_resource *)ib->buffer, RADEON_USAGE_READ,
 			      RADEON_PRIO_MIN);
 
 		if (info->indirect) {
-			uint64_t indirect_va = r600_resource_va(&sctx->screen->b.b,
-								info->indirect);
+			uint64_t indirect_va = r600_resource(info->indirect)->gpu_address;
 			si_cmd_draw_index_indirect(pm4, indirect_va, va, max_size,
 						   info->indirect_offset,
 						   sh_base_reg + SI_SGPR_BASE_VERTEX * 4,
@@ -787,8 +783,7 @@ static void si_state_draw(struct si_context *sctx,
 		}
 	} else {
 		if (info->indirect) {
-			uint64_t indirect_va = r600_resource_va(&sctx->screen->b.b,
-								info->indirect);
+			uint64_t indirect_va = r600_resource(info->indirect)->gpu_address;
 			si_cmd_draw_indirect(pm4, indirect_va, info->indirect_offset,
 					     sh_base_reg + SI_SGPR_BASE_VERTEX * 4,
 					     sh_base_reg + SI_SGPR_START_INSTANCE * 4,

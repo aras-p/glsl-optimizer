@@ -1680,7 +1680,7 @@ static void si_initialize_color_surface(struct si_context *sctx,
 		}
 	}
 
-	offset += r600_resource_va(sctx->b.b.screen, surf->base.texture);
+	offset += rtex->resource.gpu_address;
 
 	surf->cb_color_base = offset >> 8;
 	surf->cb_color_pitch = color_pitch;
@@ -1758,7 +1758,7 @@ static void si_init_depth_surface(struct si_context *sctx,
 	}
 	assert(format != V_028040_Z_INVALID);
 
-	s_offs = z_offs = r600_resource_va(sctx->b.b.screen, surf->base.texture);
+	s_offs = z_offs = rtex->resource.gpu_address;
 	z_offs += rtex->surface.level[level].offset;
 	s_offs += rtex->surface.stencil_level[level].offset;
 
@@ -1841,7 +1841,7 @@ static void si_init_depth_surface(struct si_context *sctx,
 			s_info |= S_028044_TILE_STENCIL_DISABLE(1);
 		}
 
-		uint64_t va = r600_resource_va(&sctx->screen->b.b, &rtex->htile_buffer->b.b);
+		uint64_t va = rtex->htile_buffer->gpu_address;
 		db_htile_data_base = va >> 8;
 		db_htile_surface = S_028ABC_FULL_CACHE(1);
 	} else {
@@ -2388,7 +2388,7 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 		desc = util_format_description(state->format);
 		first_non_void = util_format_get_first_non_void_channel(state->format);
 		stride = desc->block.bits / 8;
-		va = r600_resource_va(ctx->screen, texture) + state->u.buf.first_element*stride;
+		va = tmp->resource.gpu_address + state->u.buf.first_element*stride;
 		format = si_translate_buffer_dataformat(ctx->screen, desc, first_non_void);
 		num_format = si_translate_buffer_numformat(ctx->screen, desc, first_non_void);
 
@@ -2533,8 +2533,7 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 	} else if (texture->target == PIPE_TEXTURE_CUBE_ARRAY)
 		depth = texture->array_size / 6;
 
-	va = r600_resource_va(ctx->screen, texture);
-	va += surflevel[0].offset;
+	va = tmp->resource.gpu_address + surflevel[0].offset;
 	va += tmp->mipmap_shift * surflevel[texture->last_level].slice_size * tmp->surface.array_size;
 
 	view->state[0] = va >> 8;
@@ -2563,7 +2562,7 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 
 	/* Initialize the sampler view for FMASK. */
 	if (tmp->fmask.size) {
-		uint64_t va = r600_resource_va(ctx->screen, texture) + tmp->fmask.offset;
+		uint64_t va = tmp->resource.gpu_address + tmp->fmask.offset;
 		uint32_t fmask_format;
 
 		switch (texture->nr_samples) {
@@ -2722,9 +2721,7 @@ static void si_set_border_colors(struct si_context *sctx, unsigned count,
 	if (border_color_table) {
 		struct si_pm4_state *pm4 = si_pm4_alloc_state(sctx);
 
-		uint64_t va_offset =
-			r600_resource_va(&sctx->screen->b.b,
-					 (void*)sctx->border_color_table);
+		uint64_t va_offset = sctx->border_color_table->gpu_address;
 
 		si_pm4_set_reg(pm4, R_028080_TA_BC_BASE_ADDR, va_offset >> 8);
 		if (sctx->b.chip_class >= CIK)
