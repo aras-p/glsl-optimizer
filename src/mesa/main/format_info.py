@@ -62,7 +62,9 @@ def get_gl_base_format(fmat):
 
 def get_gl_data_type(fmat):
    if fmat.is_compressed():
-      if 'SIGNED' in fmat.name or 'SNORM' in fmat.name:
+      if 'FLOAT' in fmat.name:
+         return 'GL_FLOAT'
+      elif 'SIGNED' in fmat.name or 'SNORM' in fmat.name:
          return 'GL_SIGNED_NORMALIZED'
       else:
          return 'GL_UNSIGNED_NORMALIZED'
