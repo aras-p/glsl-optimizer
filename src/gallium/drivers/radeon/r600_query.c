@@ -171,8 +171,7 @@ static void r600_emit_query_begin(struct r600_common_context *ctx, struct r600_q
 	}
 
 	/* emit begin query */
-	va = r600_resource_va(ctx->b.screen, (void*)query->buffer.buf);
-	va += query->buffer.results_end;
+	va = query->buffer.buf->gpu_address + query->buffer.results_end;
 
 	switch (query->type) {
 	case PIPE_QUERY_OCCLUSION_COUNTER:
@@ -233,7 +232,8 @@ static void r600_emit_query_end(struct r600_common_context *ctx, struct r600_que
 		ctx->need_gfx_cs_space(&ctx->b, query->num_cs_dw, FALSE);
 	}
 
-	va = r600_resource_va(ctx->b.screen, (void*)query->buffer.buf);
+	va = query->buffer.buf->gpu_address;
+
 	/* emit end query */
 	switch (query->type) {
 	case PIPE_QUERY_OCCLUSION_COUNTER:
@@ -329,7 +329,7 @@ static void r600_emit_query_predication(struct r600_common_context *ctx, struct 
 		/* emit predicate packets for all data blocks */
 		for (qbuf = &query->buffer; qbuf; qbuf = qbuf->previous) {
 			unsigned results_base = 0;
-			uint64_t va = r600_resource_va(ctx->b.screen, &qbuf->buf->b.b);
+			uint64_t va = qbuf->buf->gpu_address;
 
 			while (results_base < qbuf->results_end) {
 				radeon_emit(cs, PKT3(PKT3_SET_PREDICATION, 1, 0));
@@ -826,7 +826,6 @@ void r600_query_init_backend_mask(struct r600_common_context *ctx)
 	uint32_t *results;
 	unsigned num_backends = ctx->screen->info.r600_num_backends;
 	unsigned i, mask = 0;
-	uint64_t va;
 
 	/* if backend_map query is supported by the kernel */
 	if (ctx->screen->info.r600_backend_map_valid) {
@@ -861,7 +860,6 @@ void r600_query_init_backend_mask(struct r600_common_context *ctx)
 				   PIPE_USAGE_STAGING, ctx->max_db*16);
 	if (!buffer)
 		goto err;
-	va = r600_resource_va(ctx->b.screen, (void*)buffer);
 
 	/* initialize buffer with zeroes */
 	results = r600_buffer_map_sync_with_rings(ctx, buffer, PIPE_TRANSFER_WRITE);
@@ -872,8 +870,8 @@ void r600_query_init_backend_mask(struct r600_common_context *ctx)
 		/* emit EVENT_WRITE for ZPASS_DONE */
 		radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 2, 0));
 		radeon_emit(cs, EVENT_TYPE(EVENT_TYPE_ZPASS_DONE) | EVENT_INDEX(1));
-		radeon_emit(cs, va);
-		radeon_emit(cs, va >> 32);
+		radeon_emit(cs, buffer->gpu_address);
+		radeon_emit(cs, buffer->gpu_address >> 32);
 
 		r600_emit_reloc(ctx, &ctx->rings.gfx, buffer, RADEON_USAGE_WRITE, RADEON_PRIO_MIN);
 

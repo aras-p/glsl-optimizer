@@ -473,8 +473,7 @@ static void r600_texture_alloc_cmask_separate(struct r600_common_screen *rscreen
 	}
 
 	/* update colorbuffer state bits */
-	rtex->cmask.base_address_reg =
-		r600_resource_va(&rscreen->b, &rtex->cmask_buffer->b.b) >> 8;
+	rtex->cmask.base_address_reg = rtex->cmask_buffer->gpu_address >> 8;
 
 	if (rscreen->chip_class >= SI)
 		rtex->cb_color_info |= SI_S_028C70_FAST_CLEAR(1);
@@ -597,7 +596,6 @@ r600_texture_create_object(struct pipe_screen *screen,
 	struct r600_texture *rtex;
 	struct r600_resource *resource;
 	struct r600_common_screen *rscreen = (struct r600_common_screen*)screen;
-	uint64_t va;
 
 	rtex = CALLOC_STRUCT(r600_texture);
 	if (rtex == NULL)
@@ -666,13 +664,13 @@ r600_texture_create_object(struct pipe_screen *screen,
 	}
 
 	/* Initialize the CMASK base register value. */
-	va = r600_resource_va(&rscreen->b, &rtex->resource.b.b);
-	rtex->cmask.base_address_reg = (va + rtex->cmask.offset) >> 8;
+	rtex->cmask.base_address_reg =
+		(rtex->resource.gpu_address + rtex->cmask.offset) >> 8;
 
 	if (rscreen->debug_flags & DBG_VM) {
 		fprintf(stderr, "VM start=0x%"PRIX64"  end=0x%"PRIX64" | Texture %ix%ix%i, %i levels, %i samples, %s\n",
-			r600_resource_va(screen, &rtex->resource.b.b),
-			r600_resource_va(screen, &rtex->resource.b.b) + rtex->resource.buf->size,
+			rtex->resource.gpu_address,
+			rtex->resource.gpu_address + rtex->resource.buf->size,
 			base->width0, base->height0, util_max_layer(base, 0)+1, base->last_level+1,
 			base->nr_samples ? base->nr_samples : 1, util_format_short_name(base->format));
 	}
