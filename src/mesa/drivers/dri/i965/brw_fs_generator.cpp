@@ -1483,6 +1483,7 @@ void
 fs_generator::generate_code(const cfg_t *cfg)
 {
    int start_offset = p->next_insn_offset;
+   int loop_count = 0;
 
    struct annotation_info annotation;
    memset(&annotation, 0, sizeof(annotation));
@@ -1739,6 +1740,7 @@ fs_generator::generate_code(const cfg_t *cfg)
 
       case BRW_OPCODE_WHILE:
 	 brw_WHILE(p);
+         loop_count++;
 	 break;
 
       case SHADER_OPCODE_RCP:
@@ -1966,9 +1968,9 @@ fs_generator::generate_code(const cfg_t *cfg)
          fprintf(stderr, "Native code for blorp program (SIMD%d dispatch):\n",
                  dispatch_width);
       }
-      fprintf(stderr, "SIMD%d shader: %d instructions. Compacted %d to %d"
+      fprintf(stderr, "SIMD%d shader: %d instructions. %d loops. Compacted %d to %d"
                       " bytes (%.0f%%)\n",
-              dispatch_width, before_size / 16, before_size, after_size,
+              dispatch_width, before_size / 16, loop_count, before_size, after_size,
               100.0f * (before_size - after_size) / before_size);
 
       const struct gl_program *prog = fp ? &fp->Base : NULL;

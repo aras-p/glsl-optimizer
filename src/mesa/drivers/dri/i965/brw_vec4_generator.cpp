@@ -982,6 +982,7 @@ vec4_generator::generate_code(const cfg_t *cfg)
 {
    struct annotation_info annotation;
    memset(&annotation, 0, sizeof(annotation));
+   int loop_count = 0;
 
    foreach_block_and_inst (block, vec4_instruction, inst, cfg) {
       struct brw_reg src[3], dst;
@@ -1199,6 +1200,7 @@ vec4_generator::generate_code(const cfg_t *cfg)
 
       case BRW_OPCODE_WHILE:
          brw_WHILE(p);
+         loop_count++;
          break;
 
       case SHADER_OPCODE_RCP:
@@ -1351,9 +1353,9 @@ vec4_generator::generate_code(const cfg_t *cfg)
       } else {
          fprintf(stderr, "Native code for vertex program %d:\n", prog->Id);
       }
-      fprintf(stderr, "vec4 shader: %d instructions. Compacted %d to %d"
+      fprintf(stderr, "vec4 shader: %d instructions. %d loops. Compacted %d to %d"
                       " bytes (%.0f%%)\n",
-              before_size / 16, before_size, after_size,
+              before_size / 16, loop_count, before_size, after_size,
               100.0f * (before_size - after_size) / before_size);
 
       dump_assembly(p->store, annotation.ann_count, annotation.ann, brw, prog);
