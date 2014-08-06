@@ -198,7 +198,7 @@ static void compute_offset( struct brw_clip_compile *c )
    struct brw_reg dir = c->reg.dir;
 
    brw_math_invert(p, get_element(off, 2), get_element(dir, 2));
-   brw_MUL(p, vec2(off), dir, get_element(off, 2));
+   brw_MUL(p, vec2(off), vec2(dir), get_element(off, 2));
 
    brw_CMP(p,
 	   vec1(brw_null_reg()),
@@ -210,8 +210,8 @@ static void compute_offset( struct brw_clip_compile *c )
            brw_abs(get_element(off, 0)), brw_abs(get_element(off, 1)));
    brw_inst_set_pred_control(brw, brw_last_inst, BRW_PREDICATE_NORMAL);
 
-   brw_MUL(p, vec1(off), off, brw_imm_f(c->key.offset_factor));
-   brw_ADD(p, vec1(off), off, brw_imm_f(c->key.offset_units));
+   brw_MUL(p, vec1(off), vec1(off), brw_imm_f(c->key.offset_factor));
+   brw_ADD(p, vec1(off), vec1(off), brw_imm_f(c->key.offset_units));
 }
 
 
