@@ -655,6 +655,7 @@ r600_texture_create_object(struct pipe_screen *screen,
 	} else {
 		resource->buf = buf;
 		resource->cs_buf = rscreen->ws->buffer_get_cs_handle(buf);
+		resource->gpu_address = rscreen->ws->buffer_get_virtual_address(resource->cs_buf);
 		resource->domains = rscreen->ws->buffer_get_initial_domain(resource->cs_buf);
 	}
 

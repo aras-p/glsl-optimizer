@@ -127,6 +127,7 @@ struct r600_resource {
 	/* Winsys objects. */
 	struct pb_buffer		*buf;
 	struct radeon_winsys_cs_handle	*cs_buf;
+	uint64_t			gpu_address;
 
 	/* Resource state. */
 	enum radeon_bo_domain		domains;

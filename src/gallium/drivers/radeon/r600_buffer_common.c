@@ -168,14 +168,17 @@ bool r600_init_resource(struct r600_common_screen *rscreen,
 	old_buf = res->buf;
 	res->cs_buf = rscreen->ws->buffer_get_cs_handle(new_buf); /* should be atomic */
 	res->buf = new_buf; /* should be atomic */
+
+	if (rscreen->info.r600_virtual_address)
+		res->gpu_address = rscreen->ws->buffer_get_virtual_address(res->cs_buf);
+
 	pb_reference(&old_buf, NULL);
 
 	util_range_set_empty(&res->valid_buffer_range);
 
 	if (rscreen->debug_flags & DBG_VM && res->b.b.target == PIPE_BUFFER) {
 		fprintf(stderr, "VM start=0x%"PRIX64"  end=0x%"PRIX64" | Buffer %u bytes\n",
-			r600_resource_va(&rscreen->b, &res->b.b),
-			r600_resource_va(&rscreen->b, &res->b.b) + res->buf->size,
+			res->gpu_address, res->gpu_address + res->buf->size,
 			res->buf->size);
 	}
 	return true;
