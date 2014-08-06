@@ -521,12 +521,9 @@ void evergreen_emit_cs_shader(
 	struct r600_pipe_compute *shader = state->shader;
 	struct r600_kernel *kernel = &shader->kernels[state->kernel_index];
 	struct radeon_winsys_cs *cs = rctx->b.rings.gfx.cs;
-	uint64_t va;
-
-	va = r600_resource_va(&rctx->screen->b.b, &kernel->code_bo->b.b);
 
 	r600_write_compute_context_reg_seq(cs, R_0288D0_SQ_PGM_START_LS, 3);
-	radeon_emit(cs, va >> 8); /* R_0288D0_SQ_PGM_START_LS */
+	radeon_emit(cs, kernel->code_bo->gpu_address >> 8); /* R_0288D0_SQ_PGM_START_LS */
 	radeon_emit(cs,           /* R_0288D4_SQ_PGM_RESOURCES_LS */
 			S_0288D4_NUM_GPRS(kernel->bc.ngpr)
 			| S_0288D4_STACK_SIZE(kernel->bc.nstack));

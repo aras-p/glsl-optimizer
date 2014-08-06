@@ -46,8 +46,8 @@ void evergreen_dma_copy_buffer(struct r600_context *rctx,
 	util_range_add(&rdst->valid_buffer_range, dst_offset,
 		       dst_offset + size);
 
-	dst_offset += r600_resource_va(&rctx->screen->b.b, dst);
-	src_offset += r600_resource_va(&rctx->screen->b.b, src);
+	dst_offset += rdst->gpu_address;
+	src_offset += rsrc->gpu_address;
 
 	/* see if we use dword or byte copy */
 	if (!(dst_offset % 4) && !(src_offset % 4) && !(size % 4)) {
@@ -97,7 +97,7 @@ void evergreen_cp_dma_clear_buffer(struct r600_context *rctx,
 	util_range_add(&r600_resource(dst)->valid_buffer_range, offset,
 		       offset + size);
 
-	offset += r600_resource_va(&rctx->screen->b.b, dst);
+	offset += r600_resource(dst)->gpu_address;
 
 	/* Flush the cache where the resource is bound. */
 	rctx->b.flags |= R600_CONTEXT_INV_CONST_CACHE |

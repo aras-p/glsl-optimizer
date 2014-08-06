@@ -376,8 +376,8 @@ void r600_cp_dma_copy_buffer(struct r600_context *rctx,
 	util_range_add(&r600_resource(dst)->valid_buffer_range, dst_offset,
 		       dst_offset + size);
 
-	dst_offset += r600_resource_va(&rctx->screen->b.b, dst);
-	src_offset += r600_resource_va(&rctx->screen->b.b, src);
+	dst_offset += r600_resource(dst)->gpu_address;
+	src_offset += r600_resource(src)->gpu_address;
 
 	/* Flush the caches where the resources are bound. */
 	rctx->b.flags |= R600_CONTEXT_INV_CONST_CACHE |
