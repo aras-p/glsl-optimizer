@@ -411,14 +411,11 @@ static bool si_update_draw_info_state(struct si_context *sctx,
 		bool ia_switch_on_eop = wd_switch_on_eop;
 		unsigned primgroup_size = 64;
 
-		/* Hawaii hangs if instancing is enabled and each instance
-		 * is smaller than a prim group and WD_SWITCH_ON_EOP is 0.
+		/* Hawaii hangs if instancing is enabled and WD_SWITCH_ON_EOP is 0.
 		 * We don't know that for indirect drawing, so treat it as
 		 * always problematic. */
 		if (sctx->b.family == CHIP_HAWAII &&
-		    (info->indirect ||
-		     (info->instance_count > 1 &&
-		      u_prims_for_vertices(info->mode, info->count) < primgroup_size))) {
+		    (info->indirect || info->instance_count > 1)) {
 			wd_switch_on_eop = true;
 			ia_switch_on_eop = true;
 		}
