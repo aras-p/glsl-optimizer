@@ -393,13 +393,12 @@ st_translate_vertex_program(struct st_context *st,
                                       &vpv->tgsi.stream_output);
    }
 
-   vpv->driver_shader = pipe->create_vs_state(pipe, &vpv->tgsi);
-
    if (ST_DEBUG & DEBUG_TGSI) {
-      tgsi_dump( vpv->tgsi.tokens, 0 );
+      tgsi_dump(vpv->tgsi.tokens, 0);
       debug_printf("\n");
    }
 
+   vpv->driver_shader = pipe->create_vs_state(pipe, &vpv->tgsi);
    return vpv;
 
 fail:
@@ -804,14 +803,14 @@ st_translate_fragment_program(struct st_context *st,
    variant->tgsi.tokens = ureg_get_tokens( ureg, NULL );
    ureg_destroy( ureg );
 
+   if (ST_DEBUG & DEBUG_TGSI) {
+      tgsi_dump(variant->tgsi.tokens, 0/*TGSI_DUMP_VERBOSE*/);
+      debug_printf("\n");
+   }
+
    /* fill in variant */
    variant->driver_shader = pipe->create_fs_state(pipe, &variant->tgsi);
    variant->key = *key;
-
-   if (ST_DEBUG & DEBUG_TGSI) {
-      tgsi_dump( variant->tgsi.tokens, 0/*TGSI_DUMP_VERBOSE*/ );
-      debug_printf("\n");
-   }
 
    if (deleteFP) {
       /* Free the temporary program made above */
@@ -1173,10 +1172,6 @@ st_translate_geometry_program(struct st_context *st,
                                       &stgp->tgsi.stream_output);
    }
 
-   /* fill in new variant */
-   gpv->driver_shader = pipe->create_gs_state(pipe, &stgp->tgsi);
-   gpv->key = *key;
-
    if ((ST_DEBUG & DEBUG_TGSI) && (ST_DEBUG & DEBUG_MESA)) {
       _mesa_print_program(&stgp->Base.Base);
       debug_printf("\n");
@@ -1187,6 +1182,9 @@ st_translate_geometry_program(struct st_context *st,
       debug_printf("\n");
    }
 
+   /* fill in new variant */
+   gpv->driver_shader = pipe->create_gs_state(pipe, &stgp->tgsi);
+   gpv->key = *key;
    return gpv;
 }
 
