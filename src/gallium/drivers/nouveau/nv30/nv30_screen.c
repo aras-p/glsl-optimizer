@@ -207,8 +207,6 @@ nv30_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader,
       case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
       case PIPE_SHADER_CAP_MAX_SAMPLER_VIEWS:
          return 0;
-      case PIPE_SHADER_CAP_MAX_ADDRS:
-         return 2;
       case PIPE_SHADER_CAP_MAX_PREDS:
       case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:
       case PIPE_SHADER_CAP_TGSI_SQRT_SUPPORTED:
@@ -241,8 +239,6 @@ nv30_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader,
          return 1;
       case PIPE_SHADER_CAP_MAX_TEMPS:
          return 32;
-      case PIPE_SHADER_CAP_MAX_ADDRS:
-         return (eng3d->oclass >= NV40_3D_CLASS) ? 1 : 0;
       case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
       case PIPE_SHADER_CAP_MAX_SAMPLER_VIEWS:
          return 16;

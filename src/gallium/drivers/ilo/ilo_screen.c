@@ -122,8 +122,6 @@ ilo_get_shader_param(struct pipe_screen *screen, unsigned shader,
       return ILO_MAX_CONST_BUFFERS;
    case PIPE_SHADER_CAP_MAX_TEMPS:
       return 256;
-   case PIPE_SHADER_CAP_MAX_ADDRS:
-      return (shader == PIPE_SHADER_FRAGMENT) ? 0 : 1;
    case PIPE_SHADER_CAP_MAX_PREDS:
       return 0;
    case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:

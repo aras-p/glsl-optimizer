@@ -193,7 +193,6 @@ struct tgsi_sampler
 #define TGSI_EXEC_NUM_TEMP_R        4
 
 #define TGSI_EXEC_TEMP_ADDR         (TGSI_EXEC_NUM_TEMPS + 8)
-#define TGSI_EXEC_NUM_ADDRS         1
 
 /* predicate register */
 #define TGSI_EXEC_TEMP_P0           (TGSI_EXEC_NUM_TEMPS + 9)
@@ -433,8 +432,6 @@ tgsi_exec_get_shader_param(enum pipe_shader_cap param)
       return PIPE_MAX_CONSTANT_BUFFERS;
    case PIPE_SHADER_CAP_MAX_TEMPS:
       return TGSI_EXEC_NUM_TEMPS;
-   case PIPE_SHADER_CAP_MAX_ADDRS:
-      return TGSI_EXEC_NUM_ADDRS;
    case PIPE_SHADER_CAP_MAX_PREDS:
       return TGSI_EXEC_NUM_PREDS;
    case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:

@@ -187,8 +187,7 @@ void st_init_limits(struct pipe_screen *screen,
       pc->MaxTemps           = pc->MaxNativeTemps           =
          screen->get_shader_param(screen, sh, PIPE_SHADER_CAP_MAX_TEMPS);
       pc->MaxAddressRegs     = pc->MaxNativeAddressRegs     =
-         _min(screen->get_shader_param(screen, sh, PIPE_SHADER_CAP_MAX_ADDRS),
-              MAX_PROGRAM_ADDRESS_REGS);
+         sh == PIPE_SHADER_VERTEX ? 1 : 0;
       pc->MaxParameters      = pc->MaxNativeParameters      =
          screen->get_shader_param(screen, sh,
                    PIPE_SHADER_CAP_MAX_CONST_BUFFER_SIZE) / sizeof(float[4]);

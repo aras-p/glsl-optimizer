@@ -244,8 +244,6 @@ nvc0_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader,
       if (shader == PIPE_SHADER_COMPUTE && class_3d >= NVE4_3D_CLASS)
          return NVE4_MAX_PIPE_CONSTBUFS_COMPUTE;
       return NVC0_MAX_PIPE_CONSTBUFS;
-   case PIPE_SHADER_CAP_MAX_ADDRS:
-      return 1;
    case PIPE_SHADER_CAP_INDIRECT_INPUT_ADDR:
    case PIPE_SHADER_CAP_INDIRECT_OUTPUT_ADDR:
       return shader != PIPE_SHADER_FRAGMENT;

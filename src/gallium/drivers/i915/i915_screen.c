@@ -135,8 +135,6 @@ i915_get_shader_param(struct pipe_screen *screen, unsigned shader, enum pipe_sha
          return 1;
       case PIPE_SHADER_CAP_MAX_TEMPS:
          return 12; /* XXX: 12 -> 32 ? */
-      case PIPE_SHADER_CAP_MAX_ADDRS:
-         return 0;
       case PIPE_SHADER_CAP_MAX_PREDS:
          return 0;
       case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:

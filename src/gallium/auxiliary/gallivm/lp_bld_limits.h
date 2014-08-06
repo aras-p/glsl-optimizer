@@ -103,8 +103,6 @@ gallivm_get_shader_param(enum pipe_shader_cap param)
       return PIPE_MAX_CONSTANT_BUFFERS;
    case PIPE_SHADER_CAP_MAX_TEMPS:
       return LP_MAX_TGSI_TEMPS;
-   case PIPE_SHADER_CAP_MAX_ADDRS:
-      return LP_MAX_TGSI_ADDRS;
    case PIPE_SHADER_CAP_MAX_PREDS:
       return LP_MAX_TGSI_PREDS;
    case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:

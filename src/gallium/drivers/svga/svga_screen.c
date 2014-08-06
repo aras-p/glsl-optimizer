@@ -321,7 +321,6 @@ static int svga_get_shader_param(struct pipe_screen *screen, unsigned shader, en
          if (!sws->get_cap(sws, SVGA3D_DEVCAP_MAX_FRAGMENT_SHADER_TEMPS, &result))
             return 32;
          return MIN2(result.u, SVGA3D_TEMPREG_MAX);
-      case PIPE_SHADER_CAP_MAX_ADDRS:
       case PIPE_SHADER_CAP_INDIRECT_INPUT_ADDR:
 	 /* 
 	  * Although PS 3.0 has some addressing abilities it can only represent
@@ -379,8 +378,6 @@ static int svga_get_shader_param(struct pipe_screen *screen, unsigned shader, en
          if (!sws->get_cap(sws, SVGA3D_DEVCAP_MAX_VERTEX_SHADER_TEMPS, &result))
             return 32;
          return MIN2(result.u, SVGA3D_TEMPREG_MAX);
-      case PIPE_SHADER_CAP_MAX_ADDRS:
-         return 1;
       case PIPE_SHADER_CAP_MAX_PREDS:
          return 1;
       case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:
