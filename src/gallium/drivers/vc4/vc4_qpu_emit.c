@@ -470,18 +470,25 @@ vc4_generate_code(struct qcompile *c)
                                           qpu_m_NOP()));
                         break;
 
-                case QOP_PACK_SCALED:
-                        queue(c, qpu_inst(qpu_a_MOV(dst, src[0]),
-                                          qpu_m_NOP()));
-                        *last_inst(c) |= QPU_SET_FIELD(QPU_PACK_A_16A,
-                                                       QPU_PACK);
+                case QOP_PACK_SCALED: {
+                        uint64_t a = (qpu_inst(qpu_a_MOV(dst, src[0]),
+                                               qpu_m_NOP()) |
+                                      QPU_SET_FIELD(QPU_PACK_A_16A,
+                                                    QPU_PACK));
+                        uint64_t b = (qpu_inst(qpu_a_MOV(dst, src[1]),
+                                               qpu_m_NOP()) |
+                                      QPU_SET_FIELD(QPU_PACK_A_16B,
+                                                    QPU_PACK));
 
-                        queue(c, qpu_inst(qpu_a_MOV(dst, src[1]),
-                                          qpu_m_NOP()));
-                        *last_inst(c) |= QPU_SET_FIELD(QPU_PACK_A_16B,
-                                                       QPU_PACK);
-
+                        if (dst.mux == src[1].mux && dst.addr == src[1].addr) {
+                                queue(c, b);
+                                queue(c, a);
+                        } else {
+                                queue(c, a);
+                                queue(c, b);
+                        }
                         break;
+                }
 
                 default:
                         assert(qinst->op < ARRAY_SIZE(translate));
