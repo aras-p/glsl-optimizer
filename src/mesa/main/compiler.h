@@ -265,25 +265,7 @@ static INLINE GLuint CPU_TO_LE32(GLuint x)
 #define FLT_MAX_EXP 128
 #endif
 
-
-/**
- * USE_IEEE: Determine if we're using IEEE floating point
- */
-#if defined(__i386__) || defined(__386__) || defined(__sparc__) || \
-    defined(__s390__) || defined(__s390x__) || defined(__powerpc__) || \
-    defined(__x86_64__) || \
-    defined(__m68k__) || \
-    defined(ia64) || defined(__ia64__) || \
-    defined(__hppa__) || defined(hpux) || \
-    defined(__mips) || defined(_MIPS_ARCH) || \
-    defined(__arm__) || defined(__aarch64__) || \
-    defined(__sh__) || defined(__m32r__) || \
-    (defined(__sun) && defined(_IEEE_754)) || \
-    defined(__alpha__)
-#define USE_IEEE
 #define IEEE_ONE 0x3f800000
-#endif
-
 
 /**
  * START/END_FAST_MATH macros:

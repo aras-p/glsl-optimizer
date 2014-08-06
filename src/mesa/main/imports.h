@@ -164,7 +164,6 @@ INV_SQRTF(float x)
  ***/
 static inline GLfloat LOG2(GLfloat x)
 {
-#ifdef USE_IEEE
 #if 0
    /* This is pretty fast, but not accurate enough (only 2 fractional bits).
     * Based on code from http://www.stereopsis.com/log2.html
@@ -186,13 +185,6 @@ static inline GLfloat LOG2(GLfloat x)
    num.i += 127 << 23;
    num.f = ((-1.0f/3) * num.f + 2) * num.f - 2.0f/3;
    return num.f + log_2;
-#else
-   /*
-    * NOTE: log_base_2(x) = log(x) / log(2)
-    * NOTE: 1.442695 = 1/log(2).
-    */
-   return (GLfloat) (log(x) * 1.442695F);
-#endif
 }
 
 
@@ -200,14 +192,7 @@ static inline GLfloat LOG2(GLfloat x)
 /***
  *** IS_INF_OR_NAN: test if float is infinite or NaN
  ***/
-#ifdef USE_IEEE
-static inline int IS_INF_OR_NAN( float x )
-{
-   fi_type tmp;
-   tmp.f = x;
-   return !(int)((unsigned int)((tmp.i & 0x7fffffff)-0x7f800000) >> 31);
-}
-#elif defined(isfinite)
+#if defined(isfinite)
 #define IS_INF_OR_NAN(x)        (!isfinite(x))
 #elif defined(finite)
 #define IS_INF_OR_NAN(x)        (!finite(x))
@@ -321,7 +306,7 @@ static inline int IFLOOR(float f)
    __asm__ ("fstps %0" : "=m" (ai) : "t" (af) : "st");
    __asm__ ("fstps %0" : "=m" (bi) : "t" (bf) : "st");
    return (ai - bi) >> 1;
-#elif defined(USE_IEEE)
+#else
    int ai, bi;
    double af, bf;
    fi_type u;
@@ -330,9 +315,6 @@ static inline int IFLOOR(float f)
    u.f = (float) af;  ai = u.i;
    u.f = (float) bf;  bi = u.i;
    return (ai - bi) >> 1;
-#else
-   int i = IROUND(f);
-   return (i > f) ? i - 1 : i;
 #endif
 }
 
@@ -356,7 +338,7 @@ static inline int ICEIL(float f)
    __asm__ ("fstps %0" : "=m" (ai) : "t" (af) : "st");
    __asm__ ("fstps %0" : "=m" (bi) : "t" (bf) : "st");
    return (ai - bi + 1) >> 1;
-#elif defined(USE_IEEE)
+#else
    int ai, bi;
    double af, bf;
    fi_type u;
@@ -365,9 +347,6 @@ static inline int ICEIL(float f)
    u.f = (float) af; ai = u.i;
    u.f = (float) bf; bi = u.i;
    return (ai - bi + 1) >> 1;
-#else
-   int i = IROUND(f);
-   return (i < f) ? i + 1 : i;
 #endif
 }
 

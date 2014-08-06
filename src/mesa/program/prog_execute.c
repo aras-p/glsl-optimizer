@@ -52,7 +52,6 @@
 /**
  * Set x to positive or negative infinity.
  */
-#if defined(USE_IEEE) || defined(_WIN32)
 #define SET_POS_INFINITY(x)                  \
    do {                                      \
          fi_type fi;                         \
@@ -65,10 +64,6 @@
          fi.i = 0xFF800000;                  \
          x = fi.f;                           \
    } while (0)
-#else
-#define SET_POS_INFINITY(x)  x = (GLfloat) HUGE_VAL
-#define SET_NEG_INFINITY(x)  x = (GLfloat) -HUGE_VAL
-#endif
 
 #define SET_FLOAT_BITS(x, bits) ((fi_type *) (void *) &(x))->i = bits
 
