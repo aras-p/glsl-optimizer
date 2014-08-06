@@ -392,6 +392,26 @@ static boolean do_winsys_init(struct radeon_drm_winsys *ws)
     radeon_get_drm_value(ws->fd, RADEON_INFO_MAX_SE, NULL,
                          &ws->info.max_se);
 
+    if (!ws->info.max_se) {
+        switch (ws->info.family) {
+        default:
+            ws->info.max_se = 1;
+            break;
+        case CHIP_CYPRESS:
+        case CHIP_HEMLOCK:
+        case CHIP_BARTS:
+        case CHIP_CAYMAN:
+        case CHIP_TAHITI:
+        case CHIP_PITCAIRN:
+        case CHIP_BONAIRE:
+            ws->info.max_se = 2;
+            break;
+        case CHIP_HAWAII:
+            ws->info.max_se = 4;
+            break;
+        }
+    }
+
     radeon_get_drm_value(ws->fd, RADEON_INFO_MAX_SH_PER_SE, NULL,
                          &ws->info.max_sh_per_se);
 

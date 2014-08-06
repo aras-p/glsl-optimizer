@@ -401,24 +401,39 @@ static bool si_update_draw_info_state(struct si_context *sctx,
 
 	if (sctx->b.chip_class >= CIK) {
 		struct si_state_rasterizer *rs = sctx->queued.named.rasterizer;
-		bool wd_switch_on_eop = prim == V_008958_DI_PT_POLYGON ||
-					prim == V_008958_DI_PT_LINELOOP ||
-					prim == V_008958_DI_PT_TRIFAN ||
-					prim == V_008958_DI_PT_TRISTRIP_ADJ ||
-					info->primitive_restart ||
-					(rs ? rs->line_stipple_enable : false);
-		/* If the WD switch is false, the IA switch must be false too. */
-		bool ia_switch_on_eop = wd_switch_on_eop;
 		unsigned primgroup_size = 64;
+
+		/* SWITCH_ON_EOP(0) is always preferable. */
+		bool wd_switch_on_eop = false;
+		bool ia_switch_on_eop = false;
+
+		/* WD_SWITCH_ON_EOP has no effect on GPUs with less than
+		 * 4 shader engines. Set 1 to pass the assertion below.
+		 * The other cases are hardware requirements. */
+		if (sctx->b.screen->info.max_se < 4 ||
+		    prim == V_008958_DI_PT_POLYGON ||
+		    prim == V_008958_DI_PT_LINELOOP ||
+		    prim == V_008958_DI_PT_TRIFAN ||
+		    prim == V_008958_DI_PT_TRISTRIP_ADJ ||
+		    info->primitive_restart)
+			wd_switch_on_eop = true;
 
 		/* Hawaii hangs if instancing is enabled and WD_SWITCH_ON_EOP is 0.
 		 * We don't know that for indirect drawing, so treat it as
 		 * always problematic. */
 		if (sctx->b.family == CHIP_HAWAII &&
-		    (info->indirect || info->instance_count > 1)) {
+		    (info->indirect || info->instance_count > 1))
 			wd_switch_on_eop = true;
+
+		/* This is a hardware requirement. */
+		if ((rs && rs->line_stipple_enable) ||
+		    (sctx->b.screen->debug_flags & DBG_SWITCH_ON_EOP)) {
 			ia_switch_on_eop = true;
+			wd_switch_on_eop = true;
 		}
+
+		/* If the WD switch is false, the IA switch must be false too. */
+		assert(wd_switch_on_eop || !ia_switch_on_eop);
 
 		si_pm4_set_reg(pm4, R_028B74_VGT_DISPATCH_DRAW_INDEX,
 			       ib->index_size == 4 ? 0xFC000000 : 0xFC00);
