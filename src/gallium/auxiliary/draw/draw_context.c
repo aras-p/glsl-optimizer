@@ -818,11 +818,15 @@ draw_current_shader_uses_viewport_index(const struct draw_context *draw)
 
 /**
  * Return the index of the shader output which will contain the
- * vertex position.
+ * clip vertex position.
+ * Note we don't support clipvertex output in the gs. For clipping
+ * to work correctly hence we return ordinary position output instead.
  */
 uint
 draw_current_shader_clipvertex_output(const struct draw_context *draw)
 {
+   if (draw->gs.geometry_shader)
+      return draw->gs.position_output;
    return draw->vs.clipvertex_output;
 }
 
