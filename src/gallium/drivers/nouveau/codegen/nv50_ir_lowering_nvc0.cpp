@@ -603,10 +603,18 @@ NVC0LoweringPass::handleTEX(TexInstruction *i)
       Value *ticRel = i->getIndirectR();
       Value *tscRel = i->getIndirectS();
 
-      if (ticRel)
+      if (ticRel) {
          i->setSrc(i->tex.rIndirectSrc, NULL);
-      if (tscRel)
+         if (i->tex.r)
+            ticRel = bld.mkOp2v(OP_ADD, TYPE_U32, bld.getScratch(),
+                                ticRel, bld.mkImm(i->tex.r));
+      }
+      if (tscRel) {
          i->setSrc(i->tex.sIndirectSrc, NULL);
+         if (i->tex.s)
+            tscRel = bld.mkOp2v(OP_ADD, TYPE_U32, bld.getScratch(),
+                                tscRel, bld.mkImm(i->tex.s));
+      }
 
       Value *arrayIndex = i->tex.target.isArray() ? i->getSrc(lyr) : NULL;
       for (int s = dim; s >= 1; --s)
