@@ -274,9 +274,9 @@ MESA_FORMAT_ETC2_RGB8                     , etc2  , 4, 4, x64 ,     ,     ,     
 MESA_FORMAT_ETC2_SRGB8                    , etc2  , 4, 4, x64 ,     ,     ,     , xyz1, srgb
 MESA_FORMAT_ETC2_RGBA8_EAC                , etc2  , 4, 4, x128,     ,     ,     , xyzw, rgb
 MESA_FORMAT_ETC2_SRGB8_ALPHA8_EAC         , etc2  , 4, 4, x128,     ,     ,     , xyzw, srgb
-MESA_FORMAT_ETC2_R11_EAC                  , etc2  , 4, 4, x64 ,     ,     ,     , xyzw, rgb
-MESA_FORMAT_ETC2_RG11_EAC                 , etc2  , 4, 4, x128,     ,     ,     , xyzw, rgb
-MESA_FORMAT_ETC2_SIGNED_R11_EAC           , etc2  , 4, 4, x64 ,     ,     ,     , xyzw, rgb
-MESA_FORMAT_ETC2_SIGNED_RG11_EAC          , etc2  , 4, 4, x128,     ,     ,     , xyzw, rgb
+MESA_FORMAT_ETC2_R11_EAC                  , etc2  , 4, 4, x64 ,     ,     ,     , x001, rgb
+MESA_FORMAT_ETC2_RG11_EAC                 , etc2  , 4, 4, x128,     ,     ,     , xy01, rgb
+MESA_FORMAT_ETC2_SIGNED_R11_EAC           , etc2  , 4, 4, x64 ,     ,     ,     , x001, rgb
+MESA_FORMAT_ETC2_SIGNED_RG11_EAC          , etc2  , 4, 4, x128,     ,     ,     , xy01, rgb
 MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1 , etc2  , 4, 4, x64 ,     ,     ,     , xyzw, rgb
 MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1, etc2  , 4, 4, x128,     ,     ,     , xyzw, srgb
