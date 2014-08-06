@@ -562,6 +562,21 @@ emit_frag_end(struct tgsi_to_qir *trans)
         const struct util_format_description *format_desc =
                 util_format_description(trans->fs_key->color_format);
 
+        /* Debug: Sometimes you're getting a black output and just want to see
+         * if the FS is getting executed at all.  Spam magenta into the color
+         * output.
+         */
+        if (0) {
+                trans->outputs[format_desc->swizzle[0]] =
+                        qir_uniform_ui(trans, fui(1.0));
+                trans->outputs[format_desc->swizzle[1]] =
+                        qir_uniform_ui(trans, fui(0.0));
+                trans->outputs[format_desc->swizzle[2]] =
+                        qir_uniform_ui(trans, fui(1.0));
+                trans->outputs[format_desc->swizzle[3]] =
+                        qir_uniform_ui(trans, fui(0.5));
+        }
+
         struct qreg swizzled_outputs[4] = {
                 trans->outputs[format_desc->swizzle[0]],
                 trans->outputs[format_desc->swizzle[1]],
