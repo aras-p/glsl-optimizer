@@ -1408,11 +1408,23 @@ emit_fetch_gs_input(
 {
    struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
    struct gallivm_state *gallivm = bld->bld_base.base.gallivm;
+   const struct tgsi_shader_info *info = bld->bld_base.info;
    LLVMBuilderRef builder = gallivm->builder;
    LLVMValueRef attrib_index = NULL;
    LLVMValueRef vertex_index = NULL;
    LLVMValueRef swizzle_index = lp_build_const_int32(gallivm, swizzle);
    LLVMValueRef res;
+
+   if (info->input_semantic_name[reg->Register.Index] == TGSI_SEMANTIC_PRIMID) {
+      /* This is really a system value not a regular input */
+      assert(!reg->Register.Indirect);
+      assert(!reg->Dimension.Indirect);
+      res = bld->system_values.prim_id;
+      if (stype != TGSI_TYPE_UNSIGNED && stype != TGSI_TYPE_SIGNED) {
+         res = LLVMBuildBitCast(builder, res, bld_base->base.vec_type, "");
+      }
+      return res;
+   }
 
    if (reg->Register.Indirect) {
       attrib_index = get_indirect_index(bld,
