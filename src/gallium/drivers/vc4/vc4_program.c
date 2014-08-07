@@ -403,6 +403,43 @@ tgsi_to_qir_sin(struct tgsi_to_qir *trans,
         return sum;
 }
 
+/* Note that this instruction replicates its result from the x channel */
+static struct qreg
+tgsi_to_qir_cos(struct tgsi_to_qir *trans,
+                struct tgsi_full_instruction *tgsi_inst,
+                enum qop op, struct qreg *src, int i)
+{
+        struct qcompile *c = trans->c;
+        float coeff[] = {
+                1.0f,
+                -pow(2.0 * M_PI, 2) / (2 * 1),
+                pow(2.0 * M_PI, 4) / (4 * 3 * 2 * 1),
+                -pow(2.0 * M_PI, 6) / (6 * 5 * 4 * 3 * 2 * 1),
+        };
+
+        struct qreg scaled_x =
+                qir_FMUL(c, src[0 * 4 + 0],
+                         qir_uniform_f(trans, 1.0f / (M_PI * 2.0f)));
+        struct qreg x_frac = tgsi_to_qir_frc(trans, NULL, 0, &scaled_x, 0);
+
+        struct qreg sum = qir_uniform_f(trans, coeff[0]);
+        struct qreg x2 = qir_FMUL(c, x_frac, x_frac);
+        struct qreg x = x2; /* Current x^2, x^4, or x^6 */
+        for (int i = 1; i < ARRAY_SIZE(coeff); i++) {
+                if (i != 1)
+                        x = qir_FMUL(c, x, x2);
+
+                struct qreg mul = qir_FMUL(c,
+                                           x,
+                                           qir_uniform_f(trans, coeff[i]));
+                if (i == 0)
+                        sum = mul;
+                else
+                        sum = qir_FADD(c, sum, mul);
+        }
+        return sum;
+}
+
 static void
 emit_vertex_input(struct tgsi_to_qir *trans, int attr)
 {
@@ -532,6 +569,7 @@ emit_tgsi_instruction(struct tgsi_to_qir *trans,
                 [TGSI_OPCODE_TRUNC] = { 0, tgsi_to_qir_trunc },
                 [TGSI_OPCODE_FRC] = { 0, tgsi_to_qir_frc },
                 [TGSI_OPCODE_SIN] = { 0, tgsi_to_qir_sin },
+                [TGSI_OPCODE_COS] = { 0, tgsi_to_qir_cos },
         };
         static int asdf = 0;
         uint32_t tgsi_op = tgsi_inst->Instruction.Opcode;
