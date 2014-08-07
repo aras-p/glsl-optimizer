@@ -123,7 +123,7 @@ brw_get_renderer_string(unsigned deviceID)
 }
 
 static const GLubyte *
-intelGetString(struct gl_context * ctx, GLenum name)
+intel_get_string(struct gl_context * ctx, GLenum name)
 {
    const struct brw_context *const brw = brw_context(ctx);
 
@@ -153,7 +153,7 @@ intel_viewport(struct gl_context *ctx)
 }
 
 static void
-intelInvalidateState(struct gl_context * ctx, GLuint new_state)
+intel_update_state(struct gl_context * ctx, GLuint new_state)
 {
    struct brw_context *brw = brw_context(ctx);
 
@@ -209,8 +209,8 @@ intel_glFlush(struct gl_context *ctx)
       brw->need_throttle = true;
 }
 
-void
-intelFinish(struct gl_context * ctx)
+static void
+intel_finish(struct gl_context * ctx)
 {
    struct brw_context *brw = brw_context(ctx);
 
@@ -237,9 +237,9 @@ brw_init_driver_functions(struct brw_context *brw,
       functions->Viewport = intel_viewport;
 
    functions->Flush = intel_glFlush;
-   functions->Finish = intelFinish;
-   functions->GetString = intelGetString;
-   functions->UpdateState = intelInvalidateState;
+   functions->Finish = intel_finish;
+   functions->GetString = intel_get_string;
+   functions->UpdateState = intel_update_state;
 
    intelInitTextureFuncs(functions);
    intelInitTextureImageFuncs(functions);

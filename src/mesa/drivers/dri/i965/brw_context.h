@@ -1373,8 +1373,6 @@ extern const char *const brw_vendor_string;
 
 extern const char *brw_get_renderer_string(unsigned deviceID);
 
-extern void intelFinish(struct gl_context * ctx);
-
 enum {
    DRI_CONF_BO_REUSE_DISABLED,
    DRI_CONF_BO_REUSE_ALL
