@@ -23,6 +23,7 @@
 
 #include "si_pipe.h"
 #include "si_public.h"
+#include "sid.h"
 
 #include "radeon/radeon_uvd.h"
 #include "util/u_blitter.h"
@@ -397,6 +398,57 @@ static void si_destroy_screen(struct pipe_screen* pscreen)
 	r600_destroy_common_screen(&sscreen->b);
 }
 
+#define SI_TILE_MODE_COLOR_2D_8BPP  14
+
+/* Initialize pipe config. This is especially important for GPUs
+ * with 16 pipes and more where it's initialized incorrectly by
+ * the TILING_CONFIG ioctl. */
+static bool si_initialize_pipe_config(struct si_screen *sscreen)
+{
+	unsigned mode2d;
+
+	/* This is okay, because there can be no 2D tiling without
+	 * the tile mode array, so we won't need the pipe config.
+	 * Return "success".
+	 */
+	if (!sscreen->b.info.si_tile_mode_array_valid)
+		return true;
+
+	/* The same index is used for the 2D mode on CIK too. */
+	mode2d = sscreen->b.info.si_tile_mode_array[SI_TILE_MODE_COLOR_2D_8BPP];
+
+	switch (G_009910_PIPE_CONFIG(mode2d)) {
+	case V_02803C_ADDR_SURF_P2:
+		sscreen->b.tiling_info.num_channels = 2;
+		break;
+	case V_02803C_X_ADDR_SURF_P4_8X16:
+	case V_02803C_X_ADDR_SURF_P4_16X16:
+	case V_02803C_X_ADDR_SURF_P4_16X32:
+	case V_02803C_X_ADDR_SURF_P4_32X32:
+		sscreen->b.tiling_info.num_channels = 4;
+		break;
+	case V_02803C_X_ADDR_SURF_P8_16X16_8X16:
+	case V_02803C_X_ADDR_SURF_P8_16X32_8X16:
+	case V_02803C_X_ADDR_SURF_P8_32X32_8X16:
+	case V_02803C_X_ADDR_SURF_P8_16X32_16X16:
+	case V_02803C_X_ADDR_SURF_P8_32X32_16X16:
+	case V_02803C_X_ADDR_SURF_P8_32X32_16X32:
+	case V_02803C_X_ADDR_SURF_P8_32X64_32X32:
+		sscreen->b.tiling_info.num_channels = 8;
+		break;
+	case V_02803C_X_ADDR_SURF_P16_32X32_8X16:
+	case V_02803C_X_ADDR_SURF_P16_32X32_16X16:
+		sscreen->b.tiling_info.num_channels = 16;
+		break;
+	default:
+		assert(0);
+		fprintf(stderr, "radeonsi: Unknown pipe config %i.\n",
+			G_009910_PIPE_CONFIG(mode2d));
+		return false;
+	}
+	return true;
+}
+
 struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws)
 {
 	struct si_screen *sscreen = CALLOC_STRUCT(si_screen);
@@ -412,7 +464,8 @@ struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws)
 	sscreen->b.b.is_format_supported = si_is_format_supported;
 	sscreen->b.b.resource_create = r600_resource_create_common;
 
-	if (!r600_common_screen_init(&sscreen->b, ws)) {
+	if (!r600_common_screen_init(&sscreen->b, ws) ||
+	    !si_initialize_pipe_config(sscreen)) {
 		FREE(sscreen);
 		return NULL;
 	}
