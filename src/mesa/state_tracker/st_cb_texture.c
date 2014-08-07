@@ -719,6 +719,8 @@ st_TexSubImage(struct gl_context *ctx, GLuint dims,
 
    /* From now on, we need the gallium representation of dimensions. */
    if (gl_target == GL_TEXTURE_1D_ARRAY) {
+      zoffset = yoffset;
+      yoffset = 0;
       depth = height;
       height = 1;
    }
