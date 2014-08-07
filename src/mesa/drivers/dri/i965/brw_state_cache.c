@@ -380,7 +380,7 @@ brw_clear_cache(struct brw_context *brw, struct brw_cache *cache)
     * any offsets leftover in brw_context will no longer be valid.
     */
    SET_DIRTY_ALL(mesa);
-   SET_DIRTY_ALL(brw);
+   SET_DIRTY64_ALL(brw);
    SET_DIRTY_ALL(cache);
    intel_batchbuffer_flush(brw);
 }

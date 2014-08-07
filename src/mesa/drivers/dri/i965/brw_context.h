@@ -229,7 +229,7 @@ struct brw_state_flags {
    /**
     * State update flags signalled as the result of brw_tracked_state updates
     */
-   GLuint brw;
+   uint64_t brw;
    /**
     * State update flags that used to be signalled by brw_state_cache.c
     * searches.
@@ -279,6 +279,18 @@ typedef enum {
       STATIC_ASSERT(sizeof(brw->state.pipeline_dirty[0].FIELD) == 4); \
       for (int pipeline = 0; pipeline < BRW_NUM_PIPELINES; pipeline++) \
          brw->state.pipeline_dirty[pipeline].FIELD = ~0; \
+   } while (false)
+
+
+/**
+ * Set all of the bits in a field of brw_state_flags.
+ */
+#define SET_DIRTY64_ALL(FIELD) \
+   do { \
+      /* ~0ULL == 0xffffffffffffffff, so make sure field is <= 64 bits */ \
+      STATIC_ASSERT(sizeof(brw->state.pipeline_dirty[0].FIELD) == 8); \
+      for (int pipeline = 0; pipeline < BRW_NUM_PIPELINES; pipeline++) \
+         brw->state.pipeline_dirty[pipeline].FIELD = ~(0ULL); \
    } while (false)
 
 

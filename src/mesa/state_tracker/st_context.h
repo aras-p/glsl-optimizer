@@ -56,7 +56,7 @@ struct u_upload_mgr;
 
 struct st_state_flags {
    GLuint mesa;
-   GLuint st;
+   uint64_t st;
 };
 
 struct st_tracked_state {
