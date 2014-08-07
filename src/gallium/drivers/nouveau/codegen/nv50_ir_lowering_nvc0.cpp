@@ -567,6 +567,31 @@ NVC0LoweringPass::handleTEX(TexInstruction *i)
    const int lyr = arg - (i->tex.target.isMS() ? 2 : 1);
    const int chipset = prog->getTarget()->getChipset();
 
+   // Arguments to the TEX instruction are a little insane. Even though the
+   // encoding is identical between SM20 and SM30, the arguments mean
+   // different things between Fermi and Kepler+. A lot of arguments are
+   // optional based on flags passed to the instruction. This summarizes the
+   // order of things.
+   //
+   // Fermi:
+   //  array/indirect
+   //  coords
+   //  sample
+   //  lod bias
+   //  depth compare
+   //  offsets:
+   //    - tg4: 8 bits each, either 2 (1 offset reg) or 8 (2 offset reg)
+   //    - other: 4 bits each, single reg
+   //
+   // Kepler+:
+   //  indirect handle
+   //  array (+ offsets for txd in upper 16 bits)
+   //  coords
+   //  sample
+   //  lod bias
+   //  depth compare
+   //  offsets (same as fermi, except txd which takes it with array)
+
    if (chipset >= NVISA_GK104_CHIPSET) {
       if (i->tex.rIndirectSrc >= 0 || i->tex.sIndirectSrc >= 0) {
          // XXX this ignores tsc, and assumes a 1:1 mapping
