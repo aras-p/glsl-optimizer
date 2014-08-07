@@ -1174,20 +1174,6 @@ vec4_visitor::try_emit_b2f_of_compare(ir_expression *ir)
 }
 
 void
-vec4_visitor::emit_bool_comparison(unsigned int op,
-				 dst_reg dst, src_reg src0, src_reg src1)
-{
-   /* original gen4 does destination conversion before comparison. */
-   if (brw->gen < 5)
-      dst.type = src0.type;
-
-   emit(CMP(dst, src0, src1, brw_conditional_for_comparison(op)));
-
-   dst.type = BRW_REGISTER_TYPE_D;
-   emit(AND(dst, src_reg(dst), src_reg(0x1)));
-}
-
-void
 vec4_visitor::emit_minmax(enum brw_conditional_mod conditionalmod, dst_reg dst,
                           src_reg src0, src_reg src1)
 {

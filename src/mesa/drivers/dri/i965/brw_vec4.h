@@ -486,7 +486,6 @@ public:
                     src_reg src0, src_reg src1, src_reg one);
 
    void emit_bool_to_cond_code(ir_rvalue *ir, enum brw_predicate *predicate);
-   void emit_bool_comparison(unsigned int op, dst_reg dst, src_reg src0, src_reg src1);
    void emit_if_gen6(ir_if *ir);
 
    void emit_minmax(enum brw_conditional_mod conditionalmod, dst_reg dst,
