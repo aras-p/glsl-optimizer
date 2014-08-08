@@ -302,40 +302,6 @@ static void brw_merge_inputs( struct brw_context *brw,
    }
 }
 
-/*
- * \brief Resolve buffers before drawing.
- *
- * Resolve the depth buffer's HiZ buffer, resolve the depth buffer of each
- * enabled depth texture, and flush the render cache for any dirty textures.
- *
- * (In the future, this will also perform MSAA resolves).
- */
-static void
-brw_predraw_resolve_buffers(struct brw_context *brw)
-{
-   struct gl_context *ctx = &brw->ctx;
-   struct intel_renderbuffer *depth_irb;
-   struct intel_texture_object *tex_obj;
-
-   /* Resolve the depth buffer's HiZ buffer. */
-   depth_irb = intel_get_renderbuffer(ctx->DrawBuffer, BUFFER_DEPTH);
-   if (depth_irb)
-      intel_renderbuffer_resolve_hiz(brw, depth_irb);
-
-   /* Resolve depth buffer and render cache of each enabled texture. */
-   int maxEnabledUnit = ctx->Texture._MaxEnabledTexImageUnit;
-   for (int i = 0; i <= maxEnabledUnit; i++) {
-      if (!ctx->Texture.Unit[i]._Current)
-	 continue;
-      tex_obj = intel_texture_object(ctx->Texture.Unit[i]._Current);
-      if (!tex_obj || !tex_obj->mt)
-	 continue;
-      intel_miptree_all_slices_resolve_depth(brw, tex_obj->mt);
-      intel_miptree_resolve_color(brw, tex_obj->mt);
-      brw_render_cache_set_check_flush(brw, tex_obj->mt->bo);
-   }
-}
-
 /**
  * \brief Call this after drawing to mark which buffers need resolving
  *
@@ -431,12 +397,6 @@ static bool brw_try_draw_prims( struct gl_context *ctx,
     * may flush the batchbuffer for a blit, affecting the state flags.
     */
    brw_workaround_depthstencil_alignment(brw, 0);
-
-   /* Resolves must occur after updating renderbuffers, updating context state,
-    * and finalizing textures but before setting up any hardware state for
-    * this draw call.
-    */
-   brw_predraw_resolve_buffers(brw);
 
    /* Bind all inputs, derive varying and size information:
     */

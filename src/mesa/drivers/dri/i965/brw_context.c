@@ -40,6 +40,7 @@
 #include "main/points.h"
 #include "main/version.h"
 #include "main/vtxfmt.h"
+#include "main/texobj.h"
 
 #include "vbo/vbo_context.h"
 
@@ -156,12 +157,36 @@ static void
 intel_update_state(struct gl_context * ctx, GLuint new_state)
 {
    struct brw_context *brw = brw_context(ctx);
+   struct intel_texture_object *tex_obj;
+   struct intel_renderbuffer *depth_irb;
 
    if (ctx->swrast_context)
       _swrast_InvalidateState(ctx, new_state);
    _vbo_InvalidateState(ctx, new_state);
 
    brw->NewGLState |= new_state;
+
+   _mesa_unlock_context_textures(ctx);
+
+   /* Resolve the depth buffer's HiZ buffer. */
+   depth_irb = intel_get_renderbuffer(ctx->DrawBuffer, BUFFER_DEPTH);
+   if (depth_irb)
+      intel_renderbuffer_resolve_hiz(brw, depth_irb);
+
+   /* Resolve depth buffer and render cache of each enabled texture. */
+   int maxEnabledUnit = ctx->Texture._MaxEnabledTexImageUnit;
+   for (int i = 0; i <= maxEnabledUnit; i++) {
+      if (!ctx->Texture.Unit[i]._Current)
+	 continue;
+      tex_obj = intel_texture_object(ctx->Texture.Unit[i]._Current);
+      if (!tex_obj || !tex_obj->mt)
+	 continue;
+      intel_miptree_all_slices_resolve_depth(brw, tex_obj->mt);
+      intel_miptree_resolve_color(brw, tex_obj->mt);
+      brw_render_cache_set_check_flush(brw, tex_obj->mt->bo);
+   }
+
+   _mesa_lock_context_textures(ctx);
 }
 
 #define flushFront(screen)      ((screen)->image.loader ? (screen)->image.loader->flushFrontBuffer : (screen)->dri2.loader->flushFrontBuffer)
