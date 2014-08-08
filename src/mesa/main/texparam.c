@@ -1384,7 +1384,7 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
    if (!obj)
       return;
 
-   _mesa_lock_texture(ctx, obj);
+   _mesa_lock_context_textures(ctx);
    switch (pname) {
       case GL_TEXTURE_MAG_FILTER:
 	 *params = ENUM_TO_FLOAT(obj->Sampler.MagFilter);
@@ -1591,11 +1591,11 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
    }
 
    /* no error if we get here */
-   _mesa_unlock_texture(ctx, obj);
+   _mesa_unlock_context_textures(ctx);
    return;
 
 invalid_pname:
-   _mesa_unlock_texture(ctx, obj);
+   _mesa_unlock_context_textures(ctx);
    _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexParameterfv(pname=0x%x)", pname);
 }
 
