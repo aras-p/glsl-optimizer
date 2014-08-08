@@ -521,19 +521,20 @@ tex_clear_region(struct ilo_blitter *blitter,
    if (dst->separate_s8)
       return false;
 
-   if (dst->bo_stride > max_extent)
+   if (dst->layout.bo_stride > max_extent)
       return false;
 
    swctrl = ilo_blitter_blt_begin(blitter, dst_box->depth * 6,
-         dst->bo, dst->tiling, NULL, INTEL_TILING_NONE);
+         dst->bo, dst->layout.tiling, NULL, INTEL_TILING_NONE);
 
    for (slice = 0; slice < dst_box->depth; slice++) {
-      const struct ilo_texture_slice *dst_slice =
-         ilo_texture_get_slice(dst, dst_level, dst_box->z + slice);
       unsigned x1, y1, x2, y2;
 
-      x1 = dst_slice->x + dst_box->x;
-      y1 = dst_slice->y + dst_box->y;
+      ilo_layout_get_slice_pos(&dst->layout,
+            dst_level, dst_box->z + slice, &x1, &y1);
+
+      x1 += dst_box->x;
+      y1 += dst_box->y;
       x2 = x1 + dst_box->width;
       y2 = y1 + dst_box->height;
 
@@ -542,7 +543,7 @@ tex_clear_region(struct ilo_blitter *blitter,
          break;
 
       gen6_emit_XY_COLOR_BLT(ilo->dev,
-            dst->bo, dst->tiling, dst->bo_stride, 0,
+            dst->bo, dst->layout.tiling, dst->layout.bo_stride, 0,
             x1, y1, x2, y2, val, rop, value_mask, write_mask,
             ilo->cp);
    }
@@ -562,7 +563,7 @@ tex_copy_region(struct ilo_blitter *blitter,
                 const struct pipe_box *src_box)
 {
    const struct util_format_description *desc =
-      util_format_description(dst->bo_format);
+      util_format_description(dst->layout.format);
    const unsigned max_extent = 32767; /* INT16_MAX */
    const uint8_t rop = 0xcc; /* SRCCOPY */
    struct ilo_context *ilo = blitter->ilo;
@@ -574,7 +575,8 @@ tex_copy_region(struct ilo_blitter *blitter,
    if (dst->separate_s8 || src->separate_s8)
       return false;
 
-   if (dst->bo_stride > max_extent || src->bo_stride > max_extent)
+   if (dst->layout.bo_stride > max_extent ||
+       src->layout.bo_stride > max_extent)
       return false;
 
    cpp = desc->block.bits / 8;
@@ -605,21 +607,23 @@ tex_copy_region(struct ilo_blitter *blitter,
    }
 
    swctrl = ilo_blitter_blt_begin(blitter, src_box->depth * 8,
-         dst->bo, dst->tiling, src->bo, src->tiling);
+         dst->bo, dst->layout.tiling, src->bo, src->layout.tiling);
 
    for (slice = 0; slice < src_box->depth; slice++) {
-      const struct ilo_texture_slice *dst_slice =
-         ilo_texture_get_slice(dst, dst_level, dst_z + slice);
-      const struct ilo_texture_slice *src_slice =
-         ilo_texture_get_slice(src, src_level, src_box->z + slice);
       unsigned x1, y1, x2, y2, src_x, src_y;
 
-      x1 = (dst_slice->x + dst_x) * xscale;
-      y1 = dst_slice->y + dst_y;
+      ilo_layout_get_slice_pos(&dst->layout,
+            dst_level, dst_z + slice, &x1, &y1);
+      x1 = (x1 + dst_x) * xscale;
+      y1 = y1 + dst_y;
       x2 = (x1 + src_box->width) * xscale;
       y2 = y1 + src_box->height;
-      src_x = (src_slice->x + src_box->x) * xscale;
-      src_y = src_slice->y + src_box->y;
+
+      ilo_layout_get_slice_pos(&src->layout,
+            src_level, src_box->z + slice, &src_x, &src_y);
+
+      src_x = (src_x + src_box->x) * xscale;
+      src_y += src_box->y;
 
       /* in blocks */
       x1 /= desc->block.width;
@@ -635,9 +639,9 @@ tex_copy_region(struct ilo_blitter *blitter,
          break;
 
       gen6_emit_XY_SRC_COPY_BLT(ilo->dev,
-            dst->bo, dst->tiling, dst->bo_stride, 0,
+            dst->bo, dst->layout.tiling, dst->layout.bo_stride, 0,
             x1, y1, x2, y2,
-            src->bo, src->tiling, src->bo_stride, 0,
+            src->bo, src->layout.tiling, src->layout.bo_stride, 0,
             src_x, src_y, rop, mask, mask,
             ilo->cp);
    }

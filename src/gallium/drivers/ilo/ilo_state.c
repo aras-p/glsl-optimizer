@@ -924,7 +924,7 @@ ilo_create_sampler_view(struct pipe_context *pipe,
       struct ilo_texture *tex = ilo_texture(res);
 
       /* warn about degraded performance because of a missing binding flag */
-      if (tex->tiling == INTEL_TILING_NONE &&
+      if (tex->layout.tiling == INTEL_TILING_NONE &&
           !(tex->base.bind & PIPE_BIND_SAMPLER_VIEW)) {
          ilo_warn("creating sampler view for a resource "
                   "not created for sampling\n");

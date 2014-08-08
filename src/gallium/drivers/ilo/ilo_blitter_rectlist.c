@@ -173,11 +173,13 @@ ilo_blitter_set_dsa(struct ilo_blitter *blitter,
 
 static void
 ilo_blitter_set_fb(struct ilo_blitter *blitter,
-                   const struct pipe_resource *res, unsigned level,
+                   struct pipe_resource *res, unsigned level,
                    const struct ilo_surface_cso *cso)
 {
-   blitter->fb.width = u_minify(res->width0, level);
-   blitter->fb.height = u_minify(res->height0, level);
+   struct ilo_texture *tex = ilo_texture(res);
+
+   blitter->fb.width = u_minify(tex->layout.width0, level);
+   blitter->fb.height = u_minify(tex->layout.height0, level);
 
    blitter->fb.num_samples = res->nr_samples;
    if (!blitter->fb.num_samples)
@@ -375,7 +377,7 @@ hiz_can_clear_zs(const struct ilo_blitter *blitter,
     * The truth is when HiZ is enabled, separate stencil is also enabled on
     * all GENs.  The depth buffer format cannot be combined depth/stencil.
     */
-   switch (tex->bo_format) {
+   switch (tex->layout.format) {
    case PIPE_FORMAT_Z16_UNORM:
       if (blitter->ilo->dev->gen == ILO_GEN(6) && tex->base.width0 % 16)
          return false;
@@ -410,7 +412,7 @@ ilo_blitter_rectlist_clear_zs(struct ilo_blitter *blitter,
    if (!hiz_can_clear_zs(blitter, tex))
       return false;
 
-   clear_value = util_pack_z(tex->bo_format, depth);
+   clear_value = util_pack_z(tex->layout.format, depth);
 
    ilo_blit_resolve_surface(blitter->ilo, zs,
          ILO_TEXTURE_RENDER_WRITE | ILO_TEXTURE_CLEAR);

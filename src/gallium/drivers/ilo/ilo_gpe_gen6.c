@@ -1075,11 +1075,11 @@ zs_init_info(const struct ilo_dev_info *dev,
 
    if (format != PIPE_FORMAT_S8_UINT) {
       info->zs.bo = tex->bo;
-      info->zs.stride = tex->bo_stride;
-      info->zs.tiling = tex->tiling;
+      info->zs.stride = tex->layout.bo_stride;
+      info->zs.tiling = tex->layout.tiling;
 
       if (offset_to_layer) {
-         info->zs.offset = ilo_texture_get_slice_offset(tex,
+         info->zs.offset = ilo_layout_get_slice_tile_offset(&tex->layout,
                level, first_layer, &x_offset[0], &y_offset[0]);
       }
    }
@@ -1096,22 +1096,23 @@ zs_init_info(const struct ilo_dev_info *dev,
        *     "The pitch must be set to 2x the value computed based on width,
        *       as the stencil buffer is stored with two rows interleaved."
        *
-       * According to the classic driver, we need to do the same for GEN7+
-       * even though the Ivy Bridge PRM does not say anything about it.
+       * For GEN7, we still dobule the stride because we did not double the
+       * slice widths when initializing the layout.
        */
-      info->stencil.stride = s8_tex->bo_stride * 2;
+      info->stencil.stride = s8_tex->layout.bo_stride * 2;
 
-      info->stencil.tiling = s8_tex->tiling;
+      info->stencil.tiling = s8_tex->layout.tiling;
 
       if (offset_to_layer) {
-         info->stencil.offset = ilo_texture_get_slice_offset(s8_tex,
-               level, first_layer, &x_offset[1], &y_offset[1]);
+         info->stencil.offset =
+            ilo_layout_get_slice_tile_offset(&s8_tex->layout,
+                  level, first_layer, &x_offset[1], &y_offset[1]);
       }
    }
 
    if (ilo_texture_can_enable_hiz(tex, level, first_layer, num_layers)) {
-      info->hiz.bo = tex->hiz.bo;
-      info->hiz.stride = tex->hiz.bo_stride;
+      info->hiz.bo = tex->aux_bo;
+      info->hiz.stride = tex->layout.aux_stride;
       info->hiz.tiling = INTEL_TILING_Y;
 
       /*
@@ -1128,8 +1129,8 @@ zs_init_info(const struct ilo_dev_info *dev,
       }
    }
 
-   info->width = tex->base.width0;
-   info->height = tex->base.height0;
+   info->width = tex->layout.width0;
+   info->height = tex->layout.height0;
    info->depth = (tex->base.target == PIPE_TEXTURE_3D) ?
       tex->base.depth0 : num_layers;
 
@@ -1934,11 +1935,11 @@ ilo_gpe_init_view_surface_for_texture_gen6(const struct ilo_dev_info *dev,
       surface_format = ilo_translate_texture_format(dev, format);
    assert(surface_format >= 0);
 
-   width = tex->base.width0;
-   height = tex->base.height0;
+   width = tex->layout.width0;
+   height = tex->layout.height0;
    depth = (tex->base.target == PIPE_TEXTURE_3D) ?
       tex->base.depth0 : num_layers;
-   pitch = tex->bo_stride;
+   pitch = tex->layout.bo_stride;
 
    if (surface_type == GEN6_SURFTYPE_CUBE) {
       /*
@@ -1992,10 +1993,10 @@ ilo_gpe_init_view_surface_for_texture_gen6(const struct ilo_dev_info *dev,
    }
 
    /* non-full array spacing is supported only on GEN7+ */
-   assert(tex->array_spacing_full);
+   assert(tex->layout.walk != ILO_LAYOUT_WALK_LOD);
    /* non-interleaved samples are supported only on GEN7+ */
    if (tex->base.nr_samples > 1)
-      assert(tex->interleaved);
+      assert(tex->layout.interleaved_samples);
 
    if (is_rt) {
       assert(num_levels == 1);
@@ -2014,7 +2015,7 @@ ilo_gpe_init_view_surface_for_texture_gen6(const struct ilo_dev_info *dev,
       /* we lose the capability for layered rendering */
       assert(is_rt && num_layers == 1);
 
-      layer_offset = ilo_texture_get_slice_offset(tex,
+      layer_offset = ilo_layout_get_slice_tile_offset(&tex->layout,
             first_level, first_layer, &x_offset, &y_offset);
 
       assert(x_offset % 4 == 0);
@@ -2056,7 +2057,7 @@ ilo_gpe_init_view_surface_for_texture_gen6(const struct ilo_dev_info *dev,
     *
     *     "For linear surfaces, this field (X Offset) must be zero"
     */
-   if (tex->tiling == INTEL_TILING_NONE) {
+   if (tex->layout.tiling == INTEL_TILING_NONE) {
       if (is_rt) {
          const int elem_size = util_format_get_blocksize(format);
          assert(layer_offset % elem_size == 0);
@@ -2089,7 +2090,7 @@ ilo_gpe_init_view_surface_for_texture_gen6(const struct ilo_dev_info *dev,
 
    dw[3] = (depth - 1) << GEN6_SURFACE_DW3_DEPTH__SHIFT |
            (pitch - 1) << GEN6_SURFACE_DW3_PITCH__SHIFT |
-           ilo_gpe_gen6_translate_winsys_tiling(tex->tiling);
+           ilo_gpe_gen6_translate_winsys_tiling(tex->layout.tiling);
 
    dw[4] = first_level << GEN6_SURFACE_DW4_MIN_LOD__SHIFT |
            first_layer << 17 |
@@ -2099,7 +2100,9 @@ ilo_gpe_init_view_surface_for_texture_gen6(const struct ilo_dev_info *dev,
 
    dw[5] = x_offset << GEN6_SURFACE_DW5_X_OFFSET__SHIFT |
            y_offset << GEN6_SURFACE_DW5_Y_OFFSET__SHIFT;
-   if (tex->valign_4)
+
+   assert(tex->layout.align_j == 2 || tex->layout.align_j == 4);
+   if (tex->layout.align_j == 4)
       dw[5] |= GEN6_SURFACE_DW5_VALIGN_4;
 
    /* do not increment reference count */

@@ -92,9 +92,9 @@ resource_get_transfer_method(struct pipe_resource *res, unsigned usage,
       bool need_convert = true;
 
       /* we may need to convert on the fly */
-      if (tex->separate_s8 || tex->bo_format == PIPE_FORMAT_S8_UINT)
+      if (tex->separate_s8 || tex->layout.format == PIPE_FORMAT_S8_UINT)
          m = ILO_TRANSFER_MAP_SW_ZS;
-      else if (tex->bo_format != tex->base.format)
+      else if (tex->layout.format != tex->base.format)
          m = ILO_TRANSFER_MAP_SW_CONVERT;
       else
          need_convert = false;
@@ -107,7 +107,7 @@ resource_get_transfer_method(struct pipe_resource *res, unsigned usage,
          return true;
       }
 
-      tiled = (tex->tiling != INTEL_TILING_NONE);
+      tiled = (tex->layout.tiling != INTEL_TILING_NONE);
    }
 
    if (tiled)
@@ -194,8 +194,10 @@ xfer_alloc_staging_res(struct ilo_transfer *xfer)
 
    xfer->staging.res = res->screen->resource_create(res->screen, &templ);
 
-   if (xfer->staging.res && xfer->staging.res->target != PIPE_BUFFER)
-      assert(ilo_texture(xfer->staging.res)->tiling == INTEL_TILING_NONE);
+   if (xfer->staging.res && xfer->staging.res->target != PIPE_BUFFER) {
+      assert(ilo_texture(xfer->staging.res)->layout.tiling ==
+            INTEL_TILING_NONE);
+   }
 
    return (xfer->staging.res != NULL);
 }
@@ -344,17 +346,13 @@ tex_get_box_origin(const struct ilo_texture *tex,
                    const struct pipe_box *box,
                    unsigned *mem_x, unsigned *mem_y)
 {
-   const struct ilo_texture_slice *s =
-      ilo_texture_get_slice(tex, level, slice + box->z);
    unsigned x, y;
 
-   x = s->x + box->x;
-   y = s->y + box->y;
+   ilo_layout_get_slice_pos(&tex->layout, level, box->z + slice, &x, &y);
+   x += box->x;
+   y += box->y;
 
-   assert(x % tex->block_width == 0 && y % tex->block_height == 0);
-
-   *mem_x = x / tex->block_width * tex->block_size;
-   *mem_y = y / tex->block_height;
+   ilo_layout_pos_to_mem(&tex->layout, x, y, mem_x, mem_y);
 }
 
 static unsigned
@@ -365,36 +363,13 @@ tex_get_box_offset(const struct ilo_texture *tex, unsigned level,
 
    tex_get_box_origin(tex, level, 0, box, &mem_x, &mem_y);
 
-   return mem_y * tex->bo_stride + mem_x;
+   return ilo_layout_mem_to_linear(&tex->layout, mem_x, mem_y);
 }
 
 static unsigned
 tex_get_slice_stride(const struct ilo_texture *tex, unsigned level)
 {
-   const struct ilo_texture_slice *s0, *s1;
-   unsigned qpitch;
-
-   /* there is no 3D array texture */
-   assert(tex->base.array_size == 1 || tex->base.depth0 == 1);
-
-   if (tex->base.array_size == 1) {
-      /* non-array, non-3D */
-      if (tex->base.depth0 == 1)
-         return 0;
-
-      /* only the first level has a fixed slice stride */
-      if (level > 0) {
-         assert(!"no slice stride for 3D texture with level > 0");
-         return 0;
-      }
-   }
-
-   s0 = ilo_texture_get_slice(tex, level, 0);
-   s1 = ilo_texture_get_slice(tex, level, 1);
-   qpitch = s1->y - s0->y;
-   assert(qpitch % tex->block_height == 0);
-
-   return (qpitch / tex->block_height) * tex->bo_stride;
+   return ilo_layout_get_slice_stride(&tex->layout, level);
 }
 
 static unsigned
@@ -542,22 +517,22 @@ static tex_tile_offset_func
 tex_tile_choose_offset_func(const struct ilo_texture *tex,
                             unsigned *tiles_per_row)
 {
-   switch (tex->tiling) {
+   switch (tex->layout.tiling) {
    case INTEL_TILING_X:
-      *tiles_per_row = tex->bo_stride / 512;
+      *tiles_per_row = tex->layout.bo_stride / 512;
       return tex_tile_x_offset;
    case INTEL_TILING_Y:
-      *tiles_per_row = tex->bo_stride / 128;
+      *tiles_per_row = tex->layout.bo_stride / 128;
       return tex_tile_y_offset;
    case INTEL_TILING_NONE:
    default:
       /* W-tiling */
-      if (tex->bo_format == PIPE_FORMAT_S8_UINT) {
-         *tiles_per_row = tex->bo_stride / 64;
+      if (tex->layout.format == PIPE_FORMAT_S8_UINT) {
+         *tiles_per_row = tex->layout.bo_stride / 64;
          return tex_tile_w_offset;
       }
       else {
-         *tiles_per_row = tex->bo_stride;
+         *tiles_per_row = tex->layout.bo_stride;
          return tex_tile_none_offset;
       }
    }
@@ -572,7 +547,8 @@ tex_staging_sys_map_bo(struct ilo_texture *tex,
    const bool prefer_cpu = (is->dev.has_llc || for_read_back);
    void *ptr;
 
-   if (prefer_cpu && (tex->tiling == INTEL_TILING_NONE || !linear_view))
+   if (prefer_cpu && (tex->layout.tiling == INTEL_TILING_NONE ||
+                      !linear_view))
       ptr = intel_bo_map(tex->bo, !for_read_back);
    else
       ptr = intel_bo_map_gtt(tex->bo);
@@ -604,7 +580,7 @@ tex_staging_sys_zs_read(struct ilo_texture *tex,
 
    tile_offset = tex_tile_choose_offset_func(tex, &tiles_per_row);
 
-   assert(tex->block_width == 1 && tex->block_height == 1);
+   assert(tex->layout.block_width == 1 && tex->layout.block_height == 1);
 
    if (tex->separate_s8) {
       struct ilo_texture *s8_tex = tex->separate_s8;
@@ -622,7 +598,7 @@ tex_staging_sys_zs_read(struct ilo_texture *tex,
       s8_tile_offset = tex_tile_choose_offset_func(s8_tex, &s8_tiles_per_row);
 
       if (tex->base.format == PIPE_FORMAT_Z24_UNORM_S8_UINT) {
-         assert(tex->bo_format == PIPE_FORMAT_Z24X8_UNORM);
+         assert(tex->layout.format == PIPE_FORMAT_Z24X8_UNORM);
 
          dst_cpp = 4;
          dst_s8_pos = 3;
@@ -630,7 +606,7 @@ tex_staging_sys_zs_read(struct ilo_texture *tex,
       }
       else {
          assert(tex->base.format == PIPE_FORMAT_Z32_FLOAT_S8X24_UINT);
-         assert(tex->bo_format == PIPE_FORMAT_Z32_FLOAT);
+         assert(tex->layout.format == PIPE_FORMAT_Z32_FLOAT);
 
          dst_cpp = 8;
          dst_s8_pos = 4;
@@ -663,7 +639,7 @@ tex_staging_sys_zs_read(struct ilo_texture *tex,
                d[dst_s8_pos] = s8_src[s8_offset];
 
                d += dst_cpp;
-               x += tex->block_size;
+               x += tex->layout.block_size;
                s8_x++;
             }
 
@@ -676,7 +652,7 @@ tex_staging_sys_zs_read(struct ilo_texture *tex,
       tex_staging_sys_unmap_bo(s8_tex);
    }
    else {
-      assert(tex->bo_format == PIPE_FORMAT_S8_UINT);
+      assert(tex->layout.format == PIPE_FORMAT_S8_UINT);
 
       for (slice = 0; slice < box->depth; slice++) {
          unsigned mem_x, mem_y;
@@ -731,7 +707,7 @@ tex_staging_sys_zs_write(struct ilo_texture *tex,
 
    tile_offset = tex_tile_choose_offset_func(tex, &tiles_per_row);
 
-   assert(tex->block_width == 1 && tex->block_height == 1);
+   assert(tex->layout.block_width == 1 && tex->layout.block_height == 1);
 
    if (tex->separate_s8) {
       struct ilo_texture *s8_tex = tex->separate_s8;
@@ -749,7 +725,7 @@ tex_staging_sys_zs_write(struct ilo_texture *tex,
       s8_tile_offset = tex_tile_choose_offset_func(s8_tex, &s8_tiles_per_row);
 
       if (tex->base.format == PIPE_FORMAT_Z24_UNORM_S8_UINT) {
-         assert(tex->bo_format == PIPE_FORMAT_Z24X8_UNORM);
+         assert(tex->layout.format == PIPE_FORMAT_Z24X8_UNORM);
 
          src_cpp = 4;
          src_s8_pos = 3;
@@ -757,7 +733,7 @@ tex_staging_sys_zs_write(struct ilo_texture *tex,
       }
       else {
          assert(tex->base.format == PIPE_FORMAT_Z32_FLOAT_S8X24_UINT);
-         assert(tex->bo_format == PIPE_FORMAT_Z32_FLOAT);
+         assert(tex->layout.format == PIPE_FORMAT_Z32_FLOAT);
 
          src_cpp = 8;
          src_s8_pos = 4;
@@ -790,7 +766,7 @@ tex_staging_sys_zs_write(struct ilo_texture *tex,
                s8_dst[s8_offset] = s[src_s8_pos];
 
                s += src_cpp;
-               x += tex->block_size;
+               x += tex->layout.block_size;
                s8_x++;
             }
 
@@ -803,7 +779,7 @@ tex_staging_sys_zs_write(struct ilo_texture *tex,
       tex_staging_sys_unmap_bo(s8_tex);
    }
    else {
-      assert(tex->bo_format == PIPE_FORMAT_S8_UINT);
+      assert(tex->layout.format == PIPE_FORMAT_S8_UINT);
 
       for (slice = 0; slice < box->depth; slice++) {
          unsigned mem_x, mem_y;
@@ -861,9 +837,9 @@ tex_staging_sys_convert_write(struct ilo_texture *tex,
    else
       dst_slice_stride = 0;
 
-   if (unlikely(tex->bo_format == tex->base.format)) {
-      util_copy_box(dst, tex->bo_format, tex->bo_stride, dst_slice_stride,
-            0, 0, 0, box->width, box->height, box->depth,
+   if (unlikely(tex->layout.format == tex->base.format)) {
+      util_copy_box(dst, tex->layout.format, tex->layout.bo_stride,
+            dst_slice_stride, 0, 0, 0, box->width, box->height, box->depth,
             xfer->staging.sys, xfer->base.stride, xfer->base.layer_stride,
             0, 0, 0);
 
@@ -874,14 +850,14 @@ tex_staging_sys_convert_write(struct ilo_texture *tex,
 
    switch (tex->base.format) {
    case PIPE_FORMAT_ETC1_RGB8:
-      assert(tex->bo_format == PIPE_FORMAT_R8G8B8X8_UNORM);
+      assert(tex->layout.format == PIPE_FORMAT_R8G8B8X8_UNORM);
 
       for (slice = 0; slice < box->depth; slice++) {
          const void *src =
             xfer->staging.sys + xfer->base.layer_stride * slice;
 
          util_format_etc1_rgb8_unpack_rgba_8unorm(dst,
-               tex->bo_stride, src, xfer->base.stride,
+               tex->layout.bo_stride, src, xfer->base.stride,
                box->width, box->height);
 
          dst += dst_slice_stride;
@@ -977,7 +953,7 @@ tex_map(struct ilo_transfer *xfer)
          ptr += tex_get_box_offset(tex, xfer->base.level, &xfer->base.box);
 
          /* stride is for a block row, not a texel row */
-         xfer->base.stride = tex->bo_stride;
+         xfer->base.stride = tex->layout.bo_stride;
          /* note that slice stride is not always available */
          xfer->base.layer_stride = (xfer->base.box.depth > 1) ?
             tex_get_slice_stride(tex, xfer->base.level) : 0;
@@ -987,7 +963,7 @@ tex_map(struct ilo_transfer *xfer)
       ptr = xfer_map(xfer);
       if (ptr) {
          const struct ilo_texture *staging = ilo_texture(xfer->staging.res);
-         xfer->base.stride = staging->bo_stride;
+         xfer->base.stride = staging->layout.bo_stride;
          xfer->base.layer_stride = tex_get_slice_stride(staging, 0);
       }
       break;
