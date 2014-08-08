@@ -31,6 +31,7 @@
  */
 
 #include <stdbool.h>
+#include <inttypes.h>  /* for PRId64 macro */
 #include "glheader.h"
 #include "enums.h"
 #include "hash.h"
@@ -2824,8 +2825,8 @@ bind_buffers_check_offset_and_size(struct gl_context *ctx,
       *     value in <offsets> is less than zero (per binding)."
       */
       _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glBindBuffersRange(offsets[%u]=%lld < 0)",
-                  index, (long long int) offsets[index]);
+                  "glBindBuffersRange(offsets[%u]=%" PRId64 " < 0)",
+                  index, (int64_t) offsets[index]);
       return false;
    }
 
@@ -2836,8 +2837,8 @@ bind_buffers_check_offset_and_size(struct gl_context *ctx,
       *      value in <sizes> is less than or equal to zero (per binding)."
       */
       _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glBindBuffersRange(sizes[%u]=%lld <= 0)",
-                  index, (long long int) sizes[index]);
+                  "glBindBuffersRange(sizes[%u]=%" PRId64 " <= 0)",
+                  index, (int64_t) sizes[index]);
       return false;
    }
 
@@ -3032,11 +3033,11 @@ bind_uniform_buffers_range(struct gl_context *ctx, GLuint first, GLsizei count,
        */
       if (offsets[i] & (ctx->Const.UniformBufferOffsetAlignment - 1)) {
          _mesa_error(ctx, GL_INVALID_VALUE,
-                     "glBindBuffersRange(offsets[%u]=%lld is misaligned; "
-                     "it must be a multiple of the value of "
+                     "glBindBuffersRange(offsets[%u]=%" PRId64
+                     " is misaligned; it must be a multiple of the value of "
                      "GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT=%u when "
                      "target=GL_UNIFORM_BUFFER)",
-                     i, (long long int) offsets[i],
+                     i, (int64_t) offsets[i],
                      ctx->Const.UniformBufferOffsetAlignment);
          continue;
       }
@@ -3270,19 +3271,19 @@ bind_xfb_buffers_range(struct gl_context *ctx,
        */
       if (offsets[i] & 0x3) {
          _mesa_error(ctx, GL_INVALID_VALUE,
-                     "glBindBuffersRange(offsets[%u]=%lld is misaligned; "
-                     "it must be a multiple of 4 when "
+                     "glBindBuffersRange(offsets[%u]=%" PRId64
+                     " is misaligned; it must be a multiple of 4 when "
                      "target=GL_TRANSFORM_FEEDBACK_BUFFER)",
-                     i, (long long int) offsets[i]);
+                     i, (int64_t) offsets[i]);
          continue;
       }
 
       if (sizes[i] & 0x3) {
          _mesa_error(ctx, GL_INVALID_VALUE,
-                     "glBindBuffersRange(sizes[%u]=%lld is misaligned; "
-                     "it must be a multiple of 4 when "
+                     "glBindBuffersRange(sizes[%u]=%" PRId64
+                     " is misaligned; it must be a multiple of 4 when "
                      "target=GL_TRANSFORM_FEEDBACK_BUFFER)",
-                     i, (long long int) sizes[i]);
+                     i, (int64_t) sizes[i]);
          continue;
       }
 
@@ -3488,10 +3489,10 @@ bind_atomic_buffers_range(struct gl_context *ctx,
        */
       if (offsets[i] & (ATOMIC_COUNTER_SIZE - 1)) {
          _mesa_error(ctx, GL_INVALID_VALUE,
-                     "glBindBuffersRange(offsets[%u]=%lld is misaligned; "
-                     "it must be a multiple of %d when "
+                     "glBindBuffersRange(offsets[%u]=%" PRId64
+                     " is misaligned; it must be a multiple of %d when "
                      "target=GL_ATOMIC_COUNTER_BUFFER)",
-                     i, (long long int) offsets[i], ATOMIC_COUNTER_SIZE);
+                     i, (int64_t) offsets[i], ATOMIC_COUNTER_SIZE);
          continue;
       }
 

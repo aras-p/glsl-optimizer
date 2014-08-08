@@ -24,6 +24,8 @@
  */
 
 
+#include <inttypes.h>  /* for PRId64 macro */
+
 #include "glheader.h"
 #include "imports.h"
 #include "bufferobj.h"
@@ -1424,7 +1426,8 @@ _mesa_BindVertexBuffer(GLuint bindingIndex, GLuint buffer, GLintptr offset,
     */
    if (offset < 0) {
       _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glBindVertexBuffer(offset=%lld < 0)", (long long)offset);
+                  "glBindVertexBuffer(offset=%" PRId64 " < 0)",
+                  (int64_t) offset);
       return;
    }
 
@@ -1550,15 +1553,15 @@ _mesa_BindVertexBuffers(GLuint first, GLsizei count, const GLuint *buffers,
        */
       if (offsets[i] < 0) {
          _mesa_error(ctx, GL_INVALID_VALUE,
-                     "glBindVertexBuffer(offsets[%u]=%lldd < 0)",
-                     i, (long long int) offsets[i]);
+                     "glBindVertexBuffer(offsets[%u]=%" PRId64 " < 0)",
+                     i, (int64_t) offsets[i]);
          continue;
       }
 
       if (strides[i] < 0) {
          _mesa_error(ctx, GL_INVALID_VALUE,
-                     "glBindVertexBuffer(strides[%u]=%lld < 0)",
-                     i, (long long int) strides[i]);
+                     "glBindVertexBuffer(strides[%u]=%d < 0)",
+                     i, strides[i]);
          continue;
       }
 
