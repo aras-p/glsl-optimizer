@@ -41,6 +41,7 @@ gen8_emit_vertices(struct brw_context *brw)
    struct gl_context *ctx = &brw->ctx;
 
    brw_prepare_vertices(brw);
+   brw_prepare_shader_draw_parameters(brw);
 
    if (brw->vs.prog_data->uses_vertexid) {
       unsigned vue = brw->vb.nr_enabled;

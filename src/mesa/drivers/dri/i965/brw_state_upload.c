@@ -98,7 +98,7 @@ static const struct brw_tracked_state *gen4_atoms[] =
    &brw_psp_urb_cbs,
 
    &brw_drawing_rect,
-   &brw_indices,
+   &brw_indices, /* must come before brw_vertices */
    &brw_index_buffer,
    &brw_vertices,
 
@@ -169,7 +169,7 @@ static const struct brw_tracked_state *gen6_atoms[] =
 
    &brw_drawing_rect,
 
-   &brw_indices,
+   &brw_indices, /* must come before brw_vertices */
    &brw_index_buffer,
    &brw_vertices,
 };
@@ -244,7 +244,7 @@ static const struct brw_tracked_state *gen7_atoms[] =
 
    &brw_drawing_rect,
 
-   &brw_indices,
+   &brw_indices, /* must come before brw_vertices */
    &brw_index_buffer,
    &brw_vertices,
 

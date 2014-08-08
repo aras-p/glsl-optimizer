@@ -1062,6 +1062,14 @@ struct brw_context
    bool no_depth_or_stencil;
 
    struct {
+      /** Does the current draw use the index buffer? */
+      bool indexed;
+
+      int start_vertex_location;
+      int base_vertex_location;
+   } draw;
+
+   struct {
       struct brw_vertex_element inputs[VERT_ATTRIB_MAX];
       struct brw_vertex_buffer buffers[VERT_ATTRIB_MAX];
 

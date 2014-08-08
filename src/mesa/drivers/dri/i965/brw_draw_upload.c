@@ -604,12 +604,24 @@ brw_prepare_vertices(struct brw_context *brw)
    brw->vb.nr_buffers = j;
 }
 
+void
+brw_prepare_shader_draw_parameters(struct brw_context *brw)
+{
+   if (brw->draw.indexed) {
+      brw->draw.start_vertex_location += brw->ib.start_vertex_offset;
+      brw->draw.base_vertex_location += brw->vb.start_vertex_bias;
+   } else {
+      brw->draw.start_vertex_location += brw->vb.start_vertex_bias;
+   }
+}
+
 static void brw_emit_vertices(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->ctx;
    GLuint i, nr_elements;
 
    brw_prepare_vertices(brw);
+   brw_prepare_shader_draw_parameters(brw);
 
    brw_emit_query_begin(brw);
 
