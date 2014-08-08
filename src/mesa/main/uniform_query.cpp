@@ -799,9 +799,9 @@ _mesa_uniform(struct gl_context *ctx, struct gl_shader_program *shProg,
 
       for (i = 0; i < elems; i++) {
 	 if (basicType == GLSL_TYPE_FLOAT) {
-	    dst[i].i = src[i].f != 0.0f ? 1 : 0;
+            dst[i].i = src[i].f != 0.0f ? ctx->Const.UniformBooleanTrue : 0;
 	 } else {
-	    dst[i].i = src[i].i != 0    ? 1 : 0;
+            dst[i].i = src[i].i != 0    ? ctx->Const.UniformBooleanTrue : 0;
 	 }
       }
    }
