@@ -64,6 +64,8 @@ fs_visitor::assign_regs_trivial()
    if (this->grf_used >= max_grf) {
       fail("Ran out of regs on trivial allocator (%d/%d)\n",
 	   this->grf_used, max_grf);
+   } else {
+      this->virtual_grf_count = this->grf_used;
    }
 
 }
@@ -522,6 +524,8 @@ fs_visitor::assign_regs(bool allow_spilling)
          assign_reg(hw_reg_mapping, &inst->src[i], reg_width);
       }
    }
+
+   this->virtual_grf_count = this->grf_used;
 
    ralloc_free(g);
 
