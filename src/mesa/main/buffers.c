@@ -567,16 +567,11 @@ _mesa_drawbuffers(struct gl_context *ctx, GLuint n, const GLenum *buffers,
 void
 _mesa_update_draw_buffers(struct gl_context *ctx)
 {
-   GLenum buffers[MAX_DRAW_BUFFERS];
-   GLuint i;
-
    /* should be a window system FBO */
    assert(_mesa_is_winsys_fbo(ctx->DrawBuffer));
 
-   for (i = 0; i < ctx->Const.MaxDrawBuffers; i++)
-      buffers[i] = ctx->Color.DrawBuffer[i];
-
-   _mesa_drawbuffers(ctx, ctx->Const.MaxDrawBuffers, buffers, NULL);
+   _mesa_drawbuffers(ctx, ctx->Const.MaxDrawBuffers,
+                     ctx->Color.DrawBuffer, NULL);
 }
 
 
