@@ -31,281 +31,380 @@
 #include "ilo_screen.h"
 #include "ilo_format.h"
 
-/* this idea is taken from i965 */
-struct ilo_format_info {
-   bool exists;
-   int sampling;
-   int filtering;
-   int shadow_compare;
-   int chroma_key;
-   int render_target;
-   int alpha_blend;
-   int input_vb;
-   int streamed_output_vb;
-   int color_processing;
+struct ilo_vf_cap {
+   int vertex_element;
 };
 
-#define FI_INITIALIZER(exist, sampl, filt, shad, ck, rt, ab, vb, so, color) \
-   { exist, ILO_GEN(sampl), ILO_GEN(filt), ILO_GEN(shad), ILO_GEN(ck),      \
-     ILO_GEN(rt), ILO_GEN(ab), ILO_GEN(vb), ILO_GEN(so), ILO_GEN(color) }
+struct ilo_sol_cap {
+   int buffer;
+};
 
-#define FI_ENTRY(sampl, filt, shad, ck, rt, ab, vb, so, color, sf)          \
-   [GEN6_FORMAT_ ## sf] = FI_INITIALIZER(true,                              \
-         sampl, filt, shad, ck, rt, ab, vb, so, color)
+struct ilo_sampler_cap {
+   int sampling;
+   int filtering;
+   int shadow_map;
+   int chroma_key;
+};
 
-#define X 999
-
-static const struct ilo_format_info ilo_format_nonexist =
-   FI_INITIALIZER(false, X, X, X, X, X, X, X, X, X);
+struct ilo_dp_cap {
+   int rt_write;
+   int rt_write_blending;
+   int typed_write;
+   int media_color_processing;
+};
 
 /*
  * This table is based on:
  *
  *  - the Sandy Bridge PRM, volume 4 part 1, page 88-97
- *  - the Ivy Bridge PRM, volume 2 part 1, page 97-99 and 195
- *  - the Ivy Bridge PRM, volume 4 part 1, page 84-87, 172, and 277-278
- *  - the Haswell PRM, volume 7, page 262-264, 467-470, and 535.
- *  - i965 surface_format_info (for BC6/BC7)
+ *  - the Ivy Bridge PRM, volume 2 part 1, page 97-99
+ *  - the Haswell PRM, volume 7, page 467-470
  */
-static const struct ilo_format_info ilo_format_table[] = {
-/*        sampl filt shad   ck   rt   ab   vb   so  color */
-   FI_ENTRY(  1,   5,   X,   X,   1,   1,   1,   1,   X, R32G32B32A32_FLOAT),
-   FI_ENTRY(  1,   X,   X,   X,   1,   X,   1,   1,   X, R32G32B32A32_SINT),
-   FI_ENTRY(  1,   X,   X,   X,   1,   X,   1,   1,   X, R32G32B32A32_UINT),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R32G32B32A32_UNORM),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R32G32B32A32_SNORM),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R64G64_FLOAT),
-   FI_ENTRY(  1,   5,   X,   X,   X,   X,   X,   X,   X, R32G32B32X32_FLOAT),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R32G32B32A32_SSCALED),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R32G32B32A32_USCALED),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X, 7.5,   X,   X, R32G32B32A32_SFIXED),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, R64G64_PASSTHRU),
-   FI_ENTRY(  1,   5,   X,   X,   X,   X,   1,   1,   X, R32G32B32_FLOAT),
-   FI_ENTRY(  1,   X,   X,   X,   X,   X,   1,   1,   X, R32G32B32_SINT),
-   FI_ENTRY(  1,   X,   X,   X,   X,   X,   1,   1,   X, R32G32B32_UINT),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R32G32B32_UNORM),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R32G32B32_SNORM),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R32G32B32_SSCALED),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R32G32B32_USCALED),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X, 7.5,   X,   X, R32G32B32_SFIXED),
-   FI_ENTRY(  1,   1,   X,   X,   1, 4.5,   1,   X,   6, R16G16B16A16_UNORM),
-   FI_ENTRY(  1,   1,   X,   X,   1,   6,   1,   X,   X, R16G16B16A16_SNORM),
-   FI_ENTRY(  1,   X,   X,   X,   1,   X,   1,   X,   X, R16G16B16A16_SINT),
-   FI_ENTRY(  1,   X,   X,   X,   1,   X,   1,   X,   X, R16G16B16A16_UINT),
-   FI_ENTRY(  1,   1,   X,   X,   1,   1,   1,   X,   X, R16G16B16A16_FLOAT),
-   FI_ENTRY(  1,   5,   X,   X,   1,   1,   1,   1,   X, R32G32_FLOAT),
-   FI_ENTRY(  1,   X,   X,   X,   1,   X,   1,   1,   X, R32G32_SINT),
-   FI_ENTRY(  1,   X,   X,   X,   1,   X,   1,   1,   X, R32G32_UINT),
-   FI_ENTRY(  1,   5,   1,   X,   X,   X,   X,   X,   X, R32_FLOAT_X8X24_TYPELESS),
-   FI_ENTRY(  1,   X,   X,   X,   X,   X,   X,   X,   X, X32_TYPELESS_G8X24_UINT),
-   FI_ENTRY(  1,   5,   X,   X,   X,   X,   X,   X,   X, L32A32_FLOAT),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R32G32_UNORM),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R32G32_SNORM),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R64_FLOAT),
-   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, R16G16B16X16_UNORM),
-   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, R16G16B16X16_FLOAT),
-   FI_ENTRY(  1,   5,   X,   X,   X,   X,   X,   X,   X, A32X32_FLOAT),
-   FI_ENTRY(  1,   5,   X,   X,   X,   X,   X,   X,   X, L32X32_FLOAT),
-   FI_ENTRY(  1,   5,   X,   X,   X,   X,   X,   X,   X, I32X32_FLOAT),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R16G16B16A16_SSCALED),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R16G16B16A16_USCALED),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R32G32_SSCALED),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R32G32_USCALED),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X, 7.5,   X,   X, R32G32_SFIXED),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, R64_PASSTHRU),
-   FI_ENTRY(  1,   1,   X,   1,   1,   1,   1,   X,   6, B8G8R8A8_UNORM),
-   FI_ENTRY(  1,   1,   X,   X,   1,   1,   X,   X,   X, B8G8R8A8_UNORM_SRGB),
-   FI_ENTRY(  1,   1,   X,   X,   1,   1,   1,   X,   6, R10G10B10A2_UNORM),
-   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   6, R10G10B10A2_UNORM_SRGB),
-   FI_ENTRY(  1,   X,   X,   X,   1,   X,   1,   X,   X, R10G10B10A2_UINT),
-   FI_ENTRY(  1,   1,   X,   X,   X,   X,   1,   X,   X, R10G10B10_SNORM_A2_UNORM),
-   FI_ENTRY(  1,   1,   X,   X,   1,   1,   1,   X,   6, R8G8B8A8_UNORM),
-   FI_ENTRY(  1,   1,   X,   X,   1,   1,   X,   X,   6, R8G8B8A8_UNORM_SRGB),
-   FI_ENTRY(  1,   1,   X,   X,   1,   6,   1,   X,   X, R8G8B8A8_SNORM),
-   FI_ENTRY(  1,   X,   X,   X,   1,   X,   1,   X,   X, R8G8B8A8_SINT),
-   FI_ENTRY(  1,   X,   X,   X,   1,   X,   1,   X,   X, R8G8B8A8_UINT),
-   FI_ENTRY(  1,   1,   X,   X,   1, 4.5,   1,   X,   X, R16G16_UNORM),
-   FI_ENTRY(  1,   1,   X,   X,   1,   6,   1,   X,   X, R16G16_SNORM),
-   FI_ENTRY(  1,   X,   X,   X,   1,   X,   1,   X,   X, R16G16_SINT),
-   FI_ENTRY(  1,   X,   X,   X,   1,   X,   1,   X,   X, R16G16_UINT),
-   FI_ENTRY(  1,   1,   X,   X,   1,   1,   1,   X,   X, R16G16_FLOAT),
-   FI_ENTRY(  1,   1,   X,   X,   1,   1, 7.5,   X,   6, B10G10R10A2_UNORM),
-   FI_ENTRY(  1,   1,   X,   X,   1,   1,   X,   X,   6, B10G10R10A2_UNORM_SRGB),
-   FI_ENTRY(  1,   1,   X,   X,   1,   1,   1,   X,   X, R11G11B10_FLOAT),
-   FI_ENTRY(  1,   X,   X,   X,   1,   X,   1,   1,   X, R32_SINT),
-   FI_ENTRY(  1,   X,   X,   X,   1,   X,   1,   1,   X, R32_UINT),
-   FI_ENTRY(  1,   5,   1,   X,   1,   1,   1,   1,   X, R32_FLOAT),
-   FI_ENTRY(  1,   5,   1,   X,   X,   X,   X,   X,   X, R24_UNORM_X8_TYPELESS),
-   FI_ENTRY(  1,   X,   X,   X,   X,   X,   X,   X,   X, X24_TYPELESS_G8_UINT),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, L32_UNORM),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, A32_UNORM),
-   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, L16A16_UNORM),
-   FI_ENTRY(  1,   5,   1,   X,   X,   X,   X,   X,   X, I24X8_UNORM),
-   FI_ENTRY(  1,   5,   1,   X,   X,   X,   X,   X,   X, L24X8_UNORM),
-   FI_ENTRY(  1,   5,   1,   X,   X,   X,   X,   X,   X, A24X8_UNORM),
-   FI_ENTRY(  1,   5,   1,   X,   X,   X,   X,   X,   X, I32_FLOAT),
-   FI_ENTRY(  1,   5,   1,   X,   X,   X,   X,   X,   X, L32_FLOAT),
-   FI_ENTRY(  1,   5,   1,   X,   X,   X,   X,   X,   X, A32_FLOAT),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, X8B8_UNORM_G8R8_SNORM),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, A8X8_UNORM_G8R8_SNORM),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, B8X8_UNORM_G8R8_SNORM),
-   FI_ENTRY(  1,   1,   X,   1,   X,   X,   X,   X,   6, B8G8R8X8_UNORM),
-   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, B8G8R8X8_UNORM_SRGB),
-   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, R8G8B8X8_UNORM),
-   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, R8G8B8X8_UNORM_SRGB),
-   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, R9G9B9E5_SHAREDEXP),
-   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, B10G10R10X2_UNORM),
-   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, L16A16_FLOAT),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R32_UNORM),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R32_SNORM),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R10G10B10X2_USCALED),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R8G8B8A8_SSCALED),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R8G8B8A8_USCALED),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R16G16_SSCALED),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R16G16_USCALED),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R32_SSCALED),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R32_USCALED),
-   FI_ENTRY(  1,   1,   X,   1,   1,   1,   X,   X,   X, B5G6R5_UNORM),
-   FI_ENTRY(  1,   1,   X,   X,   1,   1,   X,   X,   X, B5G6R5_UNORM_SRGB),
-   FI_ENTRY(  1,   1,   X,   1,   1,   1,   X,   X,   X, B5G5R5A1_UNORM),
-   FI_ENTRY(  1,   1,   X,   X,   1,   1,   X,   X,   X, B5G5R5A1_UNORM_SRGB),
-   FI_ENTRY(  1,   1,   X,   1,   1,   1,   X,   X,   X, B4G4R4A4_UNORM),
-   FI_ENTRY(  1,   1,   X,   X,   1,   1,   X,   X,   X, B4G4R4A4_UNORM_SRGB),
-   FI_ENTRY(  1,   1,   X,   X,   1,   1,   1,   X,   X, R8G8_UNORM),
-   FI_ENTRY(  1,   1,   X,   1,   1,   6,   1,   X,   X, R8G8_SNORM),
-   FI_ENTRY(  1,   X,   X,   X,   1,   X,   1,   X,   X, R8G8_SINT),
-   FI_ENTRY(  1,   X,   X,   X,   1,   X,   1,   X,   X, R8G8_UINT),
-   FI_ENTRY(  1,   1,   1,   X,   1, 4.5,   1,   X,   7, R16_UNORM),
-   FI_ENTRY(  1,   1,   X,   X,   1,   6,   1,   X,   X, R16_SNORM),
-   FI_ENTRY(  1,   X,   X,   X,   1,   X,   1,   X,   X, R16_SINT),
-   FI_ENTRY(  1,   X,   X,   X,   1,   X,   1,   X,   X, R16_UINT),
-   FI_ENTRY(  1,   1,   X,   X,   1,   1,   1,   X,   X, R16_FLOAT),
-   FI_ENTRY(  5,   5,   X,   X,   X,   X,   X,   X,   X, A8P8_UNORM_PALETTE0),
-   FI_ENTRY(  5,   5,   X,   X,   X,   X,   X,   X,   X, A8P8_UNORM_PALETTE1),
-   FI_ENTRY(  1,   1,   1,   X,   X,   X,   X,   X,   X, I16_UNORM),
-   FI_ENTRY(  1,   1,   1,   X,   X,   X,   X,   X,   X, L16_UNORM),
-   FI_ENTRY(  1,   1,   1,   X,   X,   X,   X,   X,   X, A16_UNORM),
-   FI_ENTRY(  1,   1,   X,   1,   X,   X,   X,   X,   X, L8A8_UNORM),
-   FI_ENTRY(  1,   1,   1,   X,   X,   X,   X,   X,   X, I16_FLOAT),
-   FI_ENTRY(  1,   1,   1,   X,   X,   X,   X,   X,   X, L16_FLOAT),
-   FI_ENTRY(  1,   1,   1,   X,   X,   X,   X,   X,   X, A16_FLOAT),
-   FI_ENTRY(4.5, 4.5,   X,   X,   X,   X,   X,   X,   X, L8A8_UNORM_SRGB),
-   FI_ENTRY(  1,   1,   X,   1,   X,   X,   X,   X,   X, R5G5_SNORM_B6_UNORM),
-   FI_ENTRY(  X,   X,   X,   X,   1,   1,   X,   X,   X, B5G5R5X1_UNORM),
-   FI_ENTRY(  X,   X,   X,   X,   1,   1,   X,   X,   X, B5G5R5X1_UNORM_SRGB),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R8G8_SSCALED),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R8G8_USCALED),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R16_SSCALED),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R16_USCALED),
-   FI_ENTRY(  5,   5,   X,   X,   X,   X,   X,   X,   X, P8A8_UNORM_PALETTE0),
-   FI_ENTRY(  5,   5,   X,   X,   X,   X,   X,   X,   X, P8A8_UNORM_PALETTE1),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, A1B5G5R5_UNORM),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, A4B4G4R4_UNORM),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, L8A8_UINT),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, L8A8_SINT),
-   FI_ENTRY(  1,   1,   X, 4.5,   1,   1,   1,   X,   X, R8_UNORM),
-   FI_ENTRY(  1,   1,   X,   X,   1,   6,   1,   X,   X, R8_SNORM),
-   FI_ENTRY(  1,   X,   X,   X,   1,   X,   1,   X,   X, R8_SINT),
-   FI_ENTRY(  1,   X,   X,   X,   1,   X,   1,   X,   X, R8_UINT),
-   FI_ENTRY(  1,   1,   X,   1,   1,   1,   X,   X,   X, A8_UNORM),
-   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, I8_UNORM),
-   FI_ENTRY(  1,   1,   X,   1,   X,   X,   X,   X,   X, L8_UNORM),
-   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, P4A4_UNORM_PALETTE0),
-   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, A4P4_UNORM_PALETTE0),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R8_SSCALED),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R8_USCALED),
-   FI_ENTRY(4.5, 4.5,   X,   X,   X,   X,   X,   X,   X, P8_UNORM_PALETTE0),
-   FI_ENTRY(4.5, 4.5,   X,   X,   X,   X,   X,   X,   X, L8_UNORM_SRGB),
-   FI_ENTRY(4.5, 4.5,   X,   X,   X,   X,   X,   X,   X, P8_UNORM_PALETTE1),
-   FI_ENTRY(4.5, 4.5,   X,   X,   X,   X,   X,   X,   X, P4A4_UNORM_PALETTE1),
-   FI_ENTRY(4.5, 4.5,   X,   X,   X,   X,   X,   X,   X, A4P4_UNORM_PALETTE1),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, Y8_UNORM),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, L8_UINT),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, L8_SINT),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, I8_UINT),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, I8_SINT),
-   FI_ENTRY(4.5, 4.5,   X,   X,   X,   X,   X,   X,   X, DXT1_RGB_SRGB),
-   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, R1_UNORM),
-   FI_ENTRY(  1,   1,   X,   1,   1,   X,   X,   X,   6, YCRCB_NORMAL),
-   FI_ENTRY(  1,   1,   X,   1,   1,   X,   X,   X,   6, YCRCB_SWAPUVY),
-   FI_ENTRY(4.5, 4.5,   X,   X,   X,   X,   X,   X,   X, P2_UNORM_PALETTE0),
-   FI_ENTRY(4.5, 4.5,   X,   X,   X,   X,   X,   X,   X, P2_UNORM_PALETTE1),
-   FI_ENTRY(  1,   1,   X,   1,   X,   X,   X,   X,   X, BC1_UNORM),
-   FI_ENTRY(  1,   1,   X,   1,   X,   X,   X,   X,   X, BC2_UNORM),
-   FI_ENTRY(  1,   1,   X,   1,   X,   X,   X,   X,   X, BC3_UNORM),
-   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, BC4_UNORM),
-   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, BC5_UNORM),
-   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, BC1_UNORM_SRGB),
-   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, BC2_UNORM_SRGB),
-   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, BC3_UNORM_SRGB),
-   FI_ENTRY(  1,   X,   X,   X,   X,   X,   X,   X,   X, MONO8),
-   FI_ENTRY(  1,   1,   X,   X,   1,   X,   X,   X,   6, YCRCB_SWAPUV),
-   FI_ENTRY(  1,   1,   X,   X,   1,   X,   X,   X,   6, YCRCB_SWAPY),
-   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, DXT1_RGB),
-   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, FXT1),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R8G8B8_UNORM),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R8G8B8_SNORM),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R8G8B8_SSCALED),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R8G8B8_USCALED),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R64G64B64A64_FLOAT),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R64G64B64_FLOAT),
-   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, BC4_SNORM),
-   FI_ENTRY(  1,   1,   X,   X,   X,   X,   X,   X,   X, BC5_SNORM),
-   FI_ENTRY(  5,   5,   X,   X,   X,   X,   6,   X,   X, R16G16B16_FLOAT),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R16G16B16_UNORM),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R16G16B16_SNORM),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R16G16B16_SSCALED),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   1,   X,   X, R16G16B16_USCALED),
-   FI_ENTRY(  7,   7,   X,   X,   X,   X,   X,   X,   X, BC6H_SF16),
-   FI_ENTRY(  7,   7,   X,   X,   X,   X,   X,   X,   X, BC7_UNORM),
-   FI_ENTRY(  7,   7,   X,   X,   X,   X,   X,   X,   X, BC7_UNORM_SRGB),
-   FI_ENTRY(  7,   7,   X,   X,   X,   X,   X,   X,   X, BC6H_UF16),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, PLANAR_420_8),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, R8G8B8_UNORM_SRGB),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, ETC1_RGB8),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, ETC2_RGB8),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, EAC_R11),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, EAC_RG11),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, EAC_SIGNED_R11),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, EAC_SIGNED_RG11),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, ETC2_SRGB8),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X, 7.5,   X,   X, R16G16B16_UINT),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X, 7.5,   X,   X, R16G16B16_SINT),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X, 7.5,   X,   X, R32_SFIXED),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X, 7.5,   X,   X, R10G10B10A2_SNORM),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X, 7.5,   X,   X, R10G10B10A2_USCALED),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X, 7.5,   X,   X, R10G10B10A2_SSCALED),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X, 7.5,   X,   X, R10G10B10A2_SINT),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X, 7.5,   X,   X, B10G10R10A2_SNORM),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X, 7.5,   X,   X, B10G10R10A2_USCALED),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X, 7.5,   X,   X, B10G10R10A2_SSCALED),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X, 7.5,   X,   X, B10G10R10A2_UINT),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X, 7.5,   X,   X, B10G10R10A2_SINT),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, R64G64B64A64_PASSTHRU),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, R64G64B64_PASSTHRU),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, ETC2_RGB8_PTA),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, ETC2_SRGB8_PTA),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, ETC2_EAC_RGBA8),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, ETC2_EAC_SRGB8_A8),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X, 7.5,   X,   X, R8G8B8_UINT),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X, 7.5,   X,   X, R8G8B8_SINT),
-   FI_ENTRY(  X,   X,   X,   X,   X,   X,   X,   X,   X, RAW),
+static const struct ilo_vf_cap ilo_vf_caps[] = {
+#define CAP(vertex_element) { ILO_GEN(vertex_element) }
+   [GEN6_FORMAT_R32G32B32A32_FLOAT]       = CAP(  1),
+   [GEN6_FORMAT_R32G32B32A32_SINT]        = CAP(  1),
+   [GEN6_FORMAT_R32G32B32A32_UINT]        = CAP(  1),
+   [GEN6_FORMAT_R32G32B32A32_UNORM]       = CAP(  1),
+   [GEN6_FORMAT_R32G32B32A32_SNORM]       = CAP(  1),
+   [GEN6_FORMAT_R64G64_FLOAT]             = CAP(  1),
+   [GEN6_FORMAT_R32G32B32A32_SSCALED]     = CAP(  1),
+   [GEN6_FORMAT_R32G32B32A32_USCALED]     = CAP(  1),
+   [GEN6_FORMAT_R32G32B32A32_SFIXED]      = CAP(7.5),
+   [GEN6_FORMAT_R32G32B32_FLOAT]          = CAP(  1),
+   [GEN6_FORMAT_R32G32B32_SINT]           = CAP(  1),
+   [GEN6_FORMAT_R32G32B32_UINT]           = CAP(  1),
+   [GEN6_FORMAT_R32G32B32_UNORM]          = CAP(  1),
+   [GEN6_FORMAT_R32G32B32_SNORM]          = CAP(  1),
+   [GEN6_FORMAT_R32G32B32_SSCALED]        = CAP(  1),
+   [GEN6_FORMAT_R32G32B32_USCALED]        = CAP(  1),
+   [GEN6_FORMAT_R32G32B32_SFIXED]         = CAP(7.5),
+   [GEN6_FORMAT_R16G16B16A16_UNORM]       = CAP(  1),
+   [GEN6_FORMAT_R16G16B16A16_SNORM]       = CAP(  1),
+   [GEN6_FORMAT_R16G16B16A16_SINT]        = CAP(  1),
+   [GEN6_FORMAT_R16G16B16A16_UINT]        = CAP(  1),
+   [GEN6_FORMAT_R16G16B16A16_FLOAT]       = CAP(  1),
+   [GEN6_FORMAT_R32G32_FLOAT]             = CAP(  1),
+   [GEN6_FORMAT_R32G32_SINT]              = CAP(  1),
+   [GEN6_FORMAT_R32G32_UINT]              = CAP(  1),
+   [GEN6_FORMAT_R32G32_UNORM]             = CAP(  1),
+   [GEN6_FORMAT_R32G32_SNORM]             = CAP(  1),
+   [GEN6_FORMAT_R64_FLOAT]                = CAP(  1),
+   [GEN6_FORMAT_R16G16B16A16_SSCALED]     = CAP(  1),
+   [GEN6_FORMAT_R16G16B16A16_USCALED]     = CAP(  1),
+   [GEN6_FORMAT_R32G32_SSCALED]           = CAP(  1),
+   [GEN6_FORMAT_R32G32_USCALED]           = CAP(  1),
+   [GEN6_FORMAT_R32G32_SFIXED]            = CAP(7.5),
+   [GEN6_FORMAT_B8G8R8A8_UNORM]           = CAP(  1),
+   [GEN6_FORMAT_R10G10B10A2_UNORM]        = CAP(  1),
+   [GEN6_FORMAT_R10G10B10A2_UINT]         = CAP(  1),
+   [GEN6_FORMAT_R10G10B10_SNORM_A2_UNORM] = CAP(  1),
+   [GEN6_FORMAT_R8G8B8A8_UNORM]           = CAP(  1),
+   [GEN6_FORMAT_R8G8B8A8_SNORM]           = CAP(  1),
+   [GEN6_FORMAT_R8G8B8A8_SINT]            = CAP(  1),
+   [GEN6_FORMAT_R8G8B8A8_UINT]            = CAP(  1),
+   [GEN6_FORMAT_R16G16_UNORM]             = CAP(  1),
+   [GEN6_FORMAT_R16G16_SNORM]             = CAP(  1),
+   [GEN6_FORMAT_R16G16_SINT]              = CAP(  1),
+   [GEN6_FORMAT_R16G16_UINT]              = CAP(  1),
+   [GEN6_FORMAT_R16G16_FLOAT]             = CAP(  1),
+   [GEN6_FORMAT_B10G10R10A2_UNORM]        = CAP(7.5),
+   [GEN6_FORMAT_R11G11B10_FLOAT]          = CAP(  1),
+   [GEN6_FORMAT_R32_SINT]                 = CAP(  1),
+   [GEN6_FORMAT_R32_UINT]                 = CAP(  1),
+   [GEN6_FORMAT_R32_FLOAT]                = CAP(  1),
+   [GEN6_FORMAT_R32_UNORM]                = CAP(  1),
+   [GEN6_FORMAT_R32_SNORM]                = CAP(  1),
+   [GEN6_FORMAT_R10G10B10X2_USCALED]      = CAP(  1),
+   [GEN6_FORMAT_R8G8B8A8_SSCALED]         = CAP(  1),
+   [GEN6_FORMAT_R8G8B8A8_USCALED]         = CAP(  1),
+   [GEN6_FORMAT_R16G16_SSCALED]           = CAP(  1),
+   [GEN6_FORMAT_R16G16_USCALED]           = CAP(  1),
+   [GEN6_FORMAT_R32_SSCALED]              = CAP(  1),
+   [GEN6_FORMAT_R32_USCALED]              = CAP(  1),
+   [GEN6_FORMAT_R8G8_UNORM]               = CAP(  1),
+   [GEN6_FORMAT_R8G8_SNORM]               = CAP(  1),
+   [GEN6_FORMAT_R8G8_SINT]                = CAP(  1),
+   [GEN6_FORMAT_R8G8_UINT]                = CAP(  1),
+   [GEN6_FORMAT_R16_UNORM]                = CAP(  1),
+   [GEN6_FORMAT_R16_SNORM]                = CAP(  1),
+   [GEN6_FORMAT_R16_SINT]                 = CAP(  1),
+   [GEN6_FORMAT_R16_UINT]                 = CAP(  1),
+   [GEN6_FORMAT_R16_FLOAT]                = CAP(  1),
+   [GEN6_FORMAT_R8G8_SSCALED]             = CAP(  1),
+   [GEN6_FORMAT_R8G8_USCALED]             = CAP(  1),
+   [GEN6_FORMAT_R16_SSCALED]              = CAP(  1),
+   [GEN6_FORMAT_R16_USCALED]              = CAP(  1),
+   [GEN6_FORMAT_R8_UNORM]                 = CAP(  1),
+   [GEN6_FORMAT_R8_SNORM]                 = CAP(  1),
+   [GEN6_FORMAT_R8_SINT]                  = CAP(  1),
+   [GEN6_FORMAT_R8_UINT]                  = CAP(  1),
+   [GEN6_FORMAT_R8_SSCALED]               = CAP(  1),
+   [GEN6_FORMAT_R8_USCALED]               = CAP(  1),
+   [GEN6_FORMAT_R8G8B8_UNORM]             = CAP(  1),
+   [GEN6_FORMAT_R8G8B8_SNORM]             = CAP(  1),
+   [GEN6_FORMAT_R8G8B8_SSCALED]           = CAP(  1),
+   [GEN6_FORMAT_R8G8B8_USCALED]           = CAP(  1),
+   [GEN6_FORMAT_R64G64B64A64_FLOAT]       = CAP(  1),
+   [GEN6_FORMAT_R64G64B64_FLOAT]          = CAP(  1),
+   [GEN6_FORMAT_R16G16B16_FLOAT]          = CAP(  6),
+   [GEN6_FORMAT_R16G16B16_UNORM]          = CAP(  1),
+   [GEN6_FORMAT_R16G16B16_SNORM]          = CAP(  1),
+   [GEN6_FORMAT_R16G16B16_SSCALED]        = CAP(  1),
+   [GEN6_FORMAT_R16G16B16_USCALED]        = CAP(  1),
+   [GEN6_FORMAT_R16G16B16_UINT]           = CAP(7.5),
+   [GEN6_FORMAT_R16G16B16_SINT]           = CAP(7.5),
+   [GEN6_FORMAT_R32_SFIXED]               = CAP(7.5),
+   [GEN6_FORMAT_R10G10B10A2_SNORM]        = CAP(7.5),
+   [GEN6_FORMAT_R10G10B10A2_USCALED]      = CAP(7.5),
+   [GEN6_FORMAT_R10G10B10A2_SSCALED]      = CAP(7.5),
+   [GEN6_FORMAT_R10G10B10A2_SINT]         = CAP(7.5),
+   [GEN6_FORMAT_B10G10R10A2_SNORM]        = CAP(7.5),
+   [GEN6_FORMAT_B10G10R10A2_USCALED]      = CAP(7.5),
+   [GEN6_FORMAT_B10G10R10A2_SSCALED]      = CAP(7.5),
+   [GEN6_FORMAT_B10G10R10A2_UINT]         = CAP(7.5),
+   [GEN6_FORMAT_B10G10R10A2_SINT]         = CAP(7.5),
+   [GEN6_FORMAT_R8G8B8_UINT]              = CAP(7.5),
+   [GEN6_FORMAT_R8G8B8_SINT]              = CAP(7.5),
+#undef CAP
 };
 
-#undef X
-#undef FI_ENTRY
-#undef FI_INITIALIZER
+/*
+ * This table is based on:
+ *
+ *  - the Sandy Bridge PRM, volume 4 part 1, page 88-97
+ *  - the Ivy Bridge PRM, volume 2 part 1, page 195
+ *  - the Haswell PRM, volume 7, page 535
+ */
+static const struct ilo_sol_cap ilo_sol_caps[] = {
+#define CAP(buffer) { ILO_GEN(buffer) }
+   [GEN6_FORMAT_R32G32B32A32_FLOAT]       = CAP(  1),
+   [GEN6_FORMAT_R32G32B32A32_SINT]        = CAP(  1),
+   [GEN6_FORMAT_R32G32B32A32_UINT]        = CAP(  1),
+   [GEN6_FORMAT_R32G32B32_FLOAT]          = CAP(  1),
+   [GEN6_FORMAT_R32G32B32_SINT]           = CAP(  1),
+   [GEN6_FORMAT_R32G32B32_UINT]           = CAP(  1),
+   [GEN6_FORMAT_R32G32_FLOAT]             = CAP(  1),
+   [GEN6_FORMAT_R32G32_SINT]              = CAP(  1),
+   [GEN6_FORMAT_R32G32_UINT]              = CAP(  1),
+   [GEN6_FORMAT_R32_SINT]                 = CAP(  1),
+   [GEN6_FORMAT_R32_UINT]                 = CAP(  1),
+   [GEN6_FORMAT_R32_FLOAT]                = CAP(  1),
+#undef CAP
+};
 
-static const struct ilo_format_info *
-lookup_format_info(const struct ilo_dev_info *dev,
-                   enum pipe_format format, unsigned bind)
-{
-   const int surfaceformat = ilo_translate_format(dev, format, bind);
+/*
+ * This table is based on:
+ *
+ *  - the Sandy Bridge PRM, volume 4 part 1, page 88-97
+ *  - the Ivy Bridge PRM, volume 4 part 1, page 84-87
+ */
+static const struct ilo_sampler_cap ilo_sampler_caps[] = {
+#define CAP(sampling, filtering, shadow_map, chroma_key) \
+   { ILO_GEN(sampling), ILO_GEN(filtering), ILO_GEN(shadow_map), ILO_GEN(chroma_key) }
+   [GEN6_FORMAT_R32G32B32A32_FLOAT]       = CAP(  1,   5,   0,   0),
+   [GEN6_FORMAT_R32G32B32A32_SINT]        = CAP(  1,   0,   0,   0),
+   [GEN6_FORMAT_R32G32B32A32_UINT]        = CAP(  1,   0,   0,   0),
+   [GEN6_FORMAT_R32G32B32X32_FLOAT]       = CAP(  1,   5,   0,   0),
+   [GEN6_FORMAT_R32G32B32_FLOAT]          = CAP(  1,   5,   0,   0),
+   [GEN6_FORMAT_R32G32B32_SINT]           = CAP(  1,   0,   0,   0),
+   [GEN6_FORMAT_R32G32B32_UINT]           = CAP(  1,   0,   0,   0),
+   [GEN6_FORMAT_R16G16B16A16_UNORM]       = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_R16G16B16A16_SNORM]       = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_R16G16B16A16_SINT]        = CAP(  1,   0,   0,   0),
+   [GEN6_FORMAT_R16G16B16A16_UINT]        = CAP(  1,   0,   0,   0),
+   [GEN6_FORMAT_R16G16B16A16_FLOAT]       = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_R32G32_FLOAT]             = CAP(  1,   5,   0,   0),
+   [GEN6_FORMAT_R32G32_SINT]              = CAP(  1,   0,   0,   0),
+   [GEN6_FORMAT_R32G32_UINT]              = CAP(  1,   0,   0,   0),
+   [GEN6_FORMAT_R32_FLOAT_X8X24_TYPELESS] = CAP(  1,   5,   1,   0),
+   [GEN6_FORMAT_X32_TYPELESS_G8X24_UINT]  = CAP(  1,   0,   0,   0),
+   [GEN6_FORMAT_L32A32_FLOAT]             = CAP(  1,   5,   0,   0),
+   [GEN6_FORMAT_R16G16B16X16_UNORM]       = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_R16G16B16X16_FLOAT]       = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_A32X32_FLOAT]             = CAP(  1,   5,   0,   0),
+   [GEN6_FORMAT_L32X32_FLOAT]             = CAP(  1,   5,   0,   0),
+   [GEN6_FORMAT_I32X32_FLOAT]             = CAP(  1,   5,   0,   0),
+   [GEN6_FORMAT_B8G8R8A8_UNORM]           = CAP(  1,   1,   0,   1),
+   [GEN6_FORMAT_B8G8R8A8_UNORM_SRGB]      = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_R10G10B10A2_UNORM]        = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_R10G10B10A2_UNORM_SRGB]   = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_R10G10B10A2_UINT]         = CAP(  1,   0,   0,   0),
+   [GEN6_FORMAT_R10G10B10_SNORM_A2_UNORM] = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_R8G8B8A8_UNORM]           = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_R8G8B8A8_UNORM_SRGB]      = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_R8G8B8A8_SNORM]           = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_R8G8B8A8_SINT]            = CAP(  1,   0,   0,   0),
+   [GEN6_FORMAT_R8G8B8A8_UINT]            = CAP(  1,   0,   0,   0),
+   [GEN6_FORMAT_R16G16_UNORM]             = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_R16G16_SNORM]             = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_R16G16_SINT]              = CAP(  1,   0,   0,   0),
+   [GEN6_FORMAT_R16G16_UINT]              = CAP(  1,   0,   0,   0),
+   [GEN6_FORMAT_R16G16_FLOAT]             = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_B10G10R10A2_UNORM]        = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_B10G10R10A2_UNORM_SRGB]   = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_R11G11B10_FLOAT]          = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_R32_SINT]                 = CAP(  1,   0,   0,   0),
+   [GEN6_FORMAT_R32_UINT]                 = CAP(  1,   0,   0,   0),
+   [GEN6_FORMAT_R32_FLOAT]                = CAP(  1,   5,   1,   0),
+   [GEN6_FORMAT_R24_UNORM_X8_TYPELESS]    = CAP(  1,   5,   1,   0),
+   [GEN6_FORMAT_X24_TYPELESS_G8_UINT]     = CAP(  1,   0,   0,   0),
+   [GEN6_FORMAT_L16A16_UNORM]             = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_I24X8_UNORM]              = CAP(  1,   5,   1,   0),
+   [GEN6_FORMAT_L24X8_UNORM]              = CAP(  1,   5,   1,   0),
+   [GEN6_FORMAT_A24X8_UNORM]              = CAP(  1,   5,   1,   0),
+   [GEN6_FORMAT_I32_FLOAT]                = CAP(  1,   5,   1,   0),
+   [GEN6_FORMAT_L32_FLOAT]                = CAP(  1,   5,   1,   0),
+   [GEN6_FORMAT_A32_FLOAT]                = CAP(  1,   5,   1,   0),
+   [GEN6_FORMAT_B8G8R8X8_UNORM]           = CAP(  1,   1,   0,   1),
+   [GEN6_FORMAT_B8G8R8X8_UNORM_SRGB]      = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_R8G8B8X8_UNORM]           = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_R8G8B8X8_UNORM_SRGB]      = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_R9G9B9E5_SHAREDEXP]       = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_B10G10R10X2_UNORM]        = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_L16A16_FLOAT]             = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_B5G6R5_UNORM]             = CAP(  1,   1,   0,   1),
+   [GEN6_FORMAT_B5G6R5_UNORM_SRGB]        = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_B5G5R5A1_UNORM]           = CAP(  1,   1,   0,   1),
+   [GEN6_FORMAT_B5G5R5A1_UNORM_SRGB]      = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_B4G4R4A4_UNORM]           = CAP(  1,   1,   0,   1),
+   [GEN6_FORMAT_B4G4R4A4_UNORM_SRGB]      = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_R8G8_UNORM]               = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_R8G8_SNORM]               = CAP(  1,   1,   0,   1),
+   [GEN6_FORMAT_R8G8_SINT]                = CAP(  1,   0,   0,   0),
+   [GEN6_FORMAT_R8G8_UINT]                = CAP(  1,   0,   0,   0),
+   [GEN6_FORMAT_R16_UNORM]                = CAP(  1,   1,   1,   0),
+   [GEN6_FORMAT_R16_SNORM]                = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_R16_SINT]                 = CAP(  1,   0,   0,   0),
+   [GEN6_FORMAT_R16_UINT]                 = CAP(  1,   0,   0,   0),
+   [GEN6_FORMAT_R16_FLOAT]                = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_A8P8_UNORM_PALETTE0]      = CAP(  5,   5,   0,   0),
+   [GEN6_FORMAT_A8P8_UNORM_PALETTE1]      = CAP(  5,   5,   0,   0),
+   [GEN6_FORMAT_I16_UNORM]                = CAP(  1,   1,   1,   0),
+   [GEN6_FORMAT_L16_UNORM]                = CAP(  1,   1,   1,   0),
+   [GEN6_FORMAT_A16_UNORM]                = CAP(  1,   1,   1,   0),
+   [GEN6_FORMAT_L8A8_UNORM]               = CAP(  1,   1,   0,   1),
+   [GEN6_FORMAT_I16_FLOAT]                = CAP(  1,   1,   1,   0),
+   [GEN6_FORMAT_L16_FLOAT]                = CAP(  1,   1,   1,   0),
+   [GEN6_FORMAT_A16_FLOAT]                = CAP(  1,   1,   1,   0),
+   [GEN6_FORMAT_L8A8_UNORM_SRGB]          = CAP(4.5, 4.5,   0,   0),
+   [GEN6_FORMAT_R5G5_SNORM_B6_UNORM]      = CAP(  1,   1,   0,   1),
+   [GEN6_FORMAT_P8A8_UNORM_PALETTE0]      = CAP(  5,   5,   0,   0),
+   [GEN6_FORMAT_P8A8_UNORM_PALETTE1]      = CAP(  5,   5,   0,   0),
+   [GEN6_FORMAT_R8_UNORM]                 = CAP(  1,   1,   0, 4.5),
+   [GEN6_FORMAT_R8_SNORM]                 = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_R8_SINT]                  = CAP(  1,   0,   0,   0),
+   [GEN6_FORMAT_R8_UINT]                  = CAP(  1,   0,   0,   0),
+   [GEN6_FORMAT_A8_UNORM]                 = CAP(  1,   1,   0,   1),
+   [GEN6_FORMAT_I8_UNORM]                 = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_L8_UNORM]                 = CAP(  1,   1,   0,   1),
+   [GEN6_FORMAT_P4A4_UNORM_PALETTE0]      = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_A4P4_UNORM_PALETTE0]      = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_P8_UNORM_PALETTE0]        = CAP(4.5, 4.5,   0,   0),
+   [GEN6_FORMAT_L8_UNORM_SRGB]            = CAP(4.5, 4.5,   0,   0),
+   [GEN6_FORMAT_P8_UNORM_PALETTE1]        = CAP(4.5, 4.5,   0,   0),
+   [GEN6_FORMAT_P4A4_UNORM_PALETTE1]      = CAP(4.5, 4.5,   0,   0),
+   [GEN6_FORMAT_A4P4_UNORM_PALETTE1]      = CAP(4.5, 4.5,   0,   0),
+   [GEN6_FORMAT_DXT1_RGB_SRGB]            = CAP(4.5, 4.5,   0,   0),
+   [GEN6_FORMAT_R1_UNORM]                 = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_YCRCB_NORMAL]             = CAP(  1,   1,   0,   1),
+   [GEN6_FORMAT_YCRCB_SWAPUVY]            = CAP(  1,   1,   0,   1),
+   [GEN6_FORMAT_P2_UNORM_PALETTE0]        = CAP(4.5, 4.5,   0,   0),
+   [GEN6_FORMAT_P2_UNORM_PALETTE1]        = CAP(4.5, 4.5,   0,   0),
+   [GEN6_FORMAT_BC1_UNORM]                = CAP(  1,   1,   0,   1),
+   [GEN6_FORMAT_BC2_UNORM]                = CAP(  1,   1,   0,   1),
+   [GEN6_FORMAT_BC3_UNORM]                = CAP(  1,   1,   0,   1),
+   [GEN6_FORMAT_BC4_UNORM]                = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_BC5_UNORM]                = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_BC1_UNORM_SRGB]           = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_BC2_UNORM_SRGB]           = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_BC3_UNORM_SRGB]           = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_MONO8]                    = CAP(  1,   0,   0,   0),
+   [GEN6_FORMAT_YCRCB_SWAPUV]             = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_YCRCB_SWAPY]              = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_DXT1_RGB]                 = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_FXT1]                     = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_BC4_SNORM]                = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_BC5_SNORM]                = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_R16G16B16_FLOAT]          = CAP(  5,   5,   0,   0),
+   [GEN6_FORMAT_BC6H_SF16]                = CAP(  7,   7,   0,   0),
+   [GEN6_FORMAT_BC7_UNORM]                = CAP(  7,   7,   0,   0),
+   [GEN6_FORMAT_BC7_UNORM_SRGB]           = CAP(  7,   7,   0,   0),
+   [GEN6_FORMAT_BC6H_UF16]                = CAP(  7,   7,   0,   0),
+#undef CAP
+};
 
-   return (surfaceformat >= 0 && surfaceformat < Elements(ilo_format_table) &&
-           ilo_format_table[surfaceformat].exists) ?
-      &ilo_format_table[surfaceformat] : &ilo_format_nonexist;
-}
+/*
+ * This table is based on:
+ *
+ *  - the Sandy Bridge PRM, volume 4 part 1, page 88-97
+ *  - the Ivy Bridge PRM, volume 4 part 1, page 172, 252-253, and 277-278
+ *  - the Haswell PRM, volume 7, page 262-264
+ */
+static const struct ilo_dp_cap ilo_dp_caps[] = {
+#define CAP(rt_write, rt_write_blending, typed_write, media_color_processing) \
+   { ILO_GEN(rt_write), ILO_GEN(rt_write_blending), ILO_GEN(typed_write), ILO_GEN(media_color_processing) }
+   [GEN6_FORMAT_R32G32B32A32_FLOAT]       = CAP(  1,   1,   7,   0),
+   [GEN6_FORMAT_R32G32B32A32_SINT]        = CAP(  1,   0,   7,   0),
+   [GEN6_FORMAT_R32G32B32A32_UINT]        = CAP(  1,   0,   7,   0),
+   [GEN6_FORMAT_R16G16B16A16_UNORM]       = CAP(  1, 4.5,   7,   6),
+   [GEN6_FORMAT_R16G16B16A16_SNORM]       = CAP(  1,   6,   7,   0),
+   [GEN6_FORMAT_R16G16B16A16_SINT]        = CAP(  1,   0,   7,   0),
+   [GEN6_FORMAT_R16G16B16A16_UINT]        = CAP(  1,   0,   7,   0),
+   [GEN6_FORMAT_R16G16B16A16_FLOAT]       = CAP(  1,   1,   7,   0),
+   [GEN6_FORMAT_R32G32_FLOAT]             = CAP(  1,   1,   7,   0),
+   [GEN6_FORMAT_R32G32_SINT]              = CAP(  1,   0,   7,   0),
+   [GEN6_FORMAT_R32G32_UINT]              = CAP(  1,   0,   7,   0),
+   [GEN6_FORMAT_B8G8R8A8_UNORM]           = CAP(  1,   1,   7,   6),
+   [GEN6_FORMAT_B8G8R8A8_UNORM_SRGB]      = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_R10G10B10A2_UNORM]        = CAP(  1,   1,   7,   6),
+   [GEN6_FORMAT_R10G10B10A2_UNORM_SRGB]   = CAP(  0,   0,   0,   6),
+   [GEN6_FORMAT_R10G10B10A2_UINT]         = CAP(  1,   0,   7,   0),
+   [GEN6_FORMAT_R8G8B8A8_UNORM]           = CAP(  1,   1,   7,   6),
+   [GEN6_FORMAT_R8G8B8A8_UNORM_SRGB]      = CAP(  1,   1,   0,   6),
+   [GEN6_FORMAT_R8G8B8A8_SNORM]           = CAP(  1,   6,   7,   0),
+   [GEN6_FORMAT_R8G8B8A8_SINT]            = CAP(  1,   0,   7,   0),
+   [GEN6_FORMAT_R8G8B8A8_UINT]            = CAP(  1,   0,   7,   0),
+   [GEN6_FORMAT_R16G16_UNORM]             = CAP(  1, 4.5,   7,   0),
+   [GEN6_FORMAT_R16G16_SNORM]             = CAP(  1,   6,   7,   0),
+   [GEN6_FORMAT_R16G16_SINT]              = CAP(  1,   0,   7,   0),
+   [GEN6_FORMAT_R16G16_UINT]              = CAP(  1,   0,   7,   0),
+   [GEN6_FORMAT_R16G16_FLOAT]             = CAP(  1,   1,   7,   0),
+   [GEN6_FORMAT_B10G10R10A2_UNORM]        = CAP(  1,   1,   7,   6),
+   [GEN6_FORMAT_B10G10R10A2_UNORM_SRGB]   = CAP(  1,   1,   0,   6),
+   [GEN6_FORMAT_R11G11B10_FLOAT]          = CAP(  1,   1,   7,   0),
+   [GEN6_FORMAT_R32_SINT]                 = CAP(  1,   0,   7,   0),
+   [GEN6_FORMAT_R32_UINT]                 = CAP(  1,   0,   7,   0),
+   [GEN6_FORMAT_R32_FLOAT]                = CAP(  1,   1,   7,   0),
+   [GEN6_FORMAT_B8G8R8X8_UNORM]           = CAP(  0,   0,   0,   6),
+   [GEN6_FORMAT_B5G6R5_UNORM]             = CAP(  1,   1,   7,   0),
+   [GEN6_FORMAT_B5G6R5_UNORM_SRGB]        = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_B5G5R5A1_UNORM]           = CAP(  1,   1,   7,   0),
+   [GEN6_FORMAT_B5G5R5A1_UNORM_SRGB]      = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_B4G4R4A4_UNORM]           = CAP(  1,   1,   7,   0),
+   [GEN6_FORMAT_B4G4R4A4_UNORM_SRGB]      = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_R8G8_UNORM]               = CAP(  1,   1,   7,   0),
+   [GEN6_FORMAT_R8G8_SNORM]               = CAP(  1,   6,   7,   0),
+   [GEN6_FORMAT_R8G8_SINT]                = CAP(  1,   0,   7,   0),
+   [GEN6_FORMAT_R8G8_UINT]                = CAP(  1,   0,   7,   0),
+   [GEN6_FORMAT_R16_UNORM]                = CAP(  1, 4.5,   7,   7),
+   [GEN6_FORMAT_R16_SNORM]                = CAP(  1,   6,   7,   0),
+   [GEN6_FORMAT_R16_SINT]                 = CAP(  1,   0,   7,   0),
+   [GEN6_FORMAT_R16_UINT]                 = CAP(  1,   0,   7,   0),
+   [GEN6_FORMAT_R16_FLOAT]                = CAP(  1,   1,   7,   0),
+   [GEN6_FORMAT_B5G5R5X1_UNORM]           = CAP(  1,   1,   7,   0),
+   [GEN6_FORMAT_B5G5R5X1_UNORM_SRGB]      = CAP(  1,   1,   0,   0),
+   [GEN6_FORMAT_R8_UNORM]                 = CAP(  1,   1,   7,   0),
+   [GEN6_FORMAT_R8_SNORM]                 = CAP(  1,   6,   7,   0),
+   [GEN6_FORMAT_R8_SINT]                  = CAP(  1,   0,   7,   0),
+   [GEN6_FORMAT_R8_UINT]                  = CAP(  1,   0,   7,   0),
+   [GEN6_FORMAT_A8_UNORM]                 = CAP(  1,   1,   7,   0),
+   [GEN6_FORMAT_YCRCB_NORMAL]             = CAP(  1,   0,   0,   6),
+   [GEN6_FORMAT_YCRCB_SWAPUVY]            = CAP(  1,   0,   0,   6),
+   [GEN6_FORMAT_YCRCB_SWAPUV]             = CAP(  1,   0,   0,   6),
+   [GEN6_FORMAT_YCRCB_SWAPY]              = CAP(  1,   0,   0,   6),
+#undef CAP
+};
 
 /**
  * Translate a color (non-depth/stencil) pipe format to the matching hardware
@@ -575,6 +674,69 @@ ilo_translate_color_format(const struct ilo_dev_info *dev,
    return sfmt;
 }
 
+static bool
+ilo_format_supports_zs(const struct ilo_dev_info *dev,
+                       enum pipe_format format)
+{
+   switch (format) {
+   case PIPE_FORMAT_Z16_UNORM:
+   case PIPE_FORMAT_Z24X8_UNORM:
+   case PIPE_FORMAT_Z32_FLOAT:
+   case PIPE_FORMAT_Z24_UNORM_S8_UINT:
+   case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
+      return true;
+   case PIPE_FORMAT_S8_UINT:
+      /* TODO separate stencil */
+   default:
+      return false;
+   }
+}
+
+static bool
+ilo_format_supports_rt(const struct ilo_dev_info *dev,
+                       enum pipe_format format)
+{
+   const int idx = ilo_translate_format(dev, format, PIPE_BIND_RENDER_TARGET);
+   const struct ilo_dp_cap *cap = (idx >= 0 && idx < Elements(ilo_dp_caps)) ?
+      &ilo_dp_caps[idx] : NULL;
+
+   if (!cap || !cap->rt_write)
+      return false;
+
+   assert(!cap->rt_write_blending || cap->rt_write_blending >= cap->rt_write);
+
+   return util_format_is_pure_integer(format) ? (dev->gen >= cap->rt_write) :
+      (cap->rt_write_blending) ? (dev->gen >= cap->rt_write_blending) : false;
+}
+
+static bool
+ilo_format_supports_sampler(const struct ilo_dev_info *dev,
+                            enum pipe_format format)
+{
+   const int idx = ilo_translate_format(dev, format, PIPE_BIND_SAMPLER_VIEW);
+   const struct ilo_sampler_cap *cap = (idx >= 0 &&
+         idx < Elements(ilo_sampler_caps)) ? &ilo_sampler_caps[idx] : NULL;
+
+   if (!cap || !cap->sampling)
+      return false;
+
+   assert(!cap->filtering || cap->filtering >= cap->sampling);
+
+   return util_format_is_pure_integer(format) ? (dev->gen >= cap->sampling) :
+      (cap->filtering) ? (dev->gen >= cap->filtering) : false;
+}
+
+static bool
+ilo_format_supports_vb(const struct ilo_dev_info *dev,
+                       enum pipe_format format)
+{
+   const int idx = ilo_translate_format(dev, format, PIPE_BIND_VERTEX_BUFFER);
+   const struct ilo_vf_cap *cap = (idx >= 0 && idx < Elements(ilo_vf_caps)) ?
+      &ilo_vf_caps[idx] : NULL;
+
+   return (cap && cap->vertex_element && dev->gen >= cap->vertex_element);
+}
+
 static boolean
 ilo_is_format_supported(struct pipe_screen *screen,
                         enum pipe_format format,
@@ -584,8 +746,6 @@ ilo_is_format_supported(struct pipe_screen *screen,
 {
    struct ilo_screen *is = ilo_screen(screen);
    const struct ilo_dev_info *dev = &is->dev;
-   const bool is_pure_int = util_format_is_pure_integer(format);
-   const struct ilo_format_info *info;
    unsigned bind;
 
    if (!util_format_is_supported(format, bindings))
@@ -596,50 +756,22 @@ ilo_is_format_supported(struct pipe_screen *screen,
       return false;
 
    bind = (bindings & PIPE_BIND_DEPTH_STENCIL);
-   if (bind) {
-      switch (format) {
-      case PIPE_FORMAT_Z16_UNORM:
-      case PIPE_FORMAT_Z24X8_UNORM:
-      case PIPE_FORMAT_Z32_FLOAT:
-      case PIPE_FORMAT_Z24_UNORM_S8_UINT:
-      case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
-         break;
-      case PIPE_FORMAT_S8_UINT:
-         /* TODO separate stencil */
-      default:
-         return false;
-      }
-   }
+   if (bind && !ilo_format_supports_zs(dev, format))
+      return false;
 
    bind = (bindings & PIPE_BIND_RENDER_TARGET);
-   if (bind) {
-      info = lookup_format_info(dev, format, bind);
-
-      if (dev->gen < info->render_target)
-         return false;
-
-      if (!is_pure_int && dev->gen < info->alpha_blend)
-         return false;
-   }
+   if (bind && !ilo_format_supports_rt(dev, format))
+      return false;
 
    bind = (bindings & PIPE_BIND_SAMPLER_VIEW);
-   if (bind) {
-      info = lookup_format_info(dev, format, bind);
-
-      if (dev->gen < info->sampling)
-         return false;
-
-      if (!is_pure_int && dev->gen < info->filtering)
-         return false;
-   }
+   if (bind && !ilo_format_supports_sampler(dev, format))
+      return false;
 
    bind = (bindings & PIPE_BIND_VERTEX_BUFFER);
-   if (bind) {
-      info = lookup_format_info(dev, format, bind);
+   if (bind && !ilo_format_supports_vb(dev, format))
+      return false;
 
-      if (dev->gen < info->input_vb)
-         return false;
-   }
+   (void) ilo_sol_caps;
 
    return true;
 }
