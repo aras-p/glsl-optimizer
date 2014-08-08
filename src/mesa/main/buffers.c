@@ -494,10 +494,11 @@ _mesa_drawbuffers(struct gl_context *ctx, GLuint n, const GLenum *buffers,
    }
 
    /*
-    * If n==1, destMask[0] may have up to four bits set.
+    * destMask[0] may have up to four bits set
+    * (ex: glDrawBuffer(GL_FRONT_AND_BACK)).
     * Otherwise, destMask[x] can only have one bit set.
     */
-   if (n == 1) {
+   if (_mesa_bitcount(destMask[0]) > 1) {
       GLuint count = 0, destMask0 = destMask[0];
       while (destMask0) {
          GLint bufIndex = ffs(destMask0) - 1;
