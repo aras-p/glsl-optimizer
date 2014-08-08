@@ -48,7 +48,7 @@ struct si_pipe_compute {
 	struct si_pipe_shader *kernels;
 	unsigned num_user_sgprs;
 
-        struct pipe_resource *global_buffers[MAX_GLOBAL_BUFFERS];
+	struct pipe_resource *global_buffers[MAX_GLOBAL_BUFFERS];
 
 	LLVMContextRef llvm_ctx;
 };
@@ -390,7 +390,6 @@ static void si_delete_compute_state(struct pipe_context *ctx, void* state){
 				si_pipe_shader_destroy(ctx, &program->kernels[i]);
 			}
 		}
-		
 		FREE(program->kernels);
 	}
 
