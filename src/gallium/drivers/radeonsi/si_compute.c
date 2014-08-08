@@ -372,8 +372,8 @@ static void si_launch_grid(
 	}
 #endif
 
-	FREE(pm4);
 	FREE(kernel_args);
+	si_pm4_free_state(sctx, pm4, ~0);
 }
 
 
