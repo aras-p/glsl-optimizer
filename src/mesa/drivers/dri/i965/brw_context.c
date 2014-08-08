@@ -570,6 +570,9 @@ brw_process_driconf_options(struct brw_context *brw)
 
    ctx->Const.DisableGLSLLineContinuations =
       driQueryOptionb(options, "disable_glsl_line_continuations");
+
+   ctx->Const.AllowGLSLExtensionDirectiveMidShader =
+      driQueryOptionb(options, "allow_glsl_extension_directive_midshader");
 }
 
 GLboolean
