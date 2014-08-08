@@ -226,27 +226,24 @@ _mesa_find_line_column(const GLubyte *string, const GLubyte *pos,
 
 
 /**
- * Initialize a new vertex/fragment program object.
+ * Initialize a new gl_program object.
  */
-static struct gl_program *
-_mesa_init_program_struct( struct gl_context *ctx, struct gl_program *prog,
-                           GLenum target, GLuint id)
+static void
+init_program_struct(struct gl_program *prog, GLenum target, GLuint id)
 {
-   (void) ctx;
-   if (prog) {
-      GLuint i;
-      memset(prog, 0, sizeof(*prog));
-      prog->Id = id;
-      prog->Target = target;
-      prog->RefCount = 1;
-      prog->Format = GL_PROGRAM_FORMAT_ASCII_ARB;
+   GLuint i;
 
-      /* default mapping from samplers to texture units */
-      for (i = 0; i < MAX_SAMPLERS; i++)
-         prog->SamplerUnits[i] = i;
-   }
+   assert(prog);
 
-   return prog;
+   memset(prog, 0, sizeof(*prog));
+   prog->Id = id;
+   prog->Target = target;
+   prog->RefCount = 1;
+   prog->Format = GL_PROGRAM_FORMAT_ASCII_ARB;
+
+   /* default mapping from samplers to texture units */
+   for (i = 0; i < MAX_SAMPLERS; i++)
+      prog->SamplerUnits[i] = i;
 }
 
 
@@ -257,10 +254,11 @@ struct gl_program *
 _mesa_init_fragment_program( struct gl_context *ctx, struct gl_fragment_program *prog,
                              GLenum target, GLuint id)
 {
-   if (prog)
-      return _mesa_init_program_struct( ctx, &prog->Base, target, id );
-   else
-      return NULL;
+   if (prog) {
+      init_program_struct(&prog->Base, target, id);
+      return &prog->Base;
+   }
+   return NULL;
 }
 
 
@@ -271,10 +269,11 @@ struct gl_program *
 _mesa_init_vertex_program( struct gl_context *ctx, struct gl_vertex_program *prog,
                            GLenum target, GLuint id)
 {
-   if (prog)
-      return _mesa_init_program_struct( ctx, &prog->Base, target, id );
-   else
-      return NULL;
+   if (prog) {
+      init_program_struct(&prog->Base, target, id);
+      return &prog->Base;
+   }
+   return NULL;
 }
 
 
@@ -286,10 +285,11 @@ _mesa_init_compute_program(struct gl_context *ctx,
                            struct gl_compute_program *prog, GLenum target,
                            GLuint id)
 {
-   if (prog)
-      return _mesa_init_program_struct( ctx, &prog->Base, target, id );
-   else
-      return NULL;
+   if (prog) {
+      init_program_struct(&prog->Base, target, id);
+      return &prog->Base;
+   }
+   return NULL;
 }
 
 
@@ -300,10 +300,11 @@ struct gl_program *
 _mesa_init_geometry_program( struct gl_context *ctx, struct gl_geometry_program *prog,
                              GLenum target, GLuint id)
 {
-   if (prog)
-      return _mesa_init_program_struct( ctx, &prog->Base, target, id );
-   else
-      return NULL;
+   if (prog) {
+      init_program_struct(&prog->Base, target, id);
+      return &prog->Base;
+   }
+   return NULL;
 }
 
 
