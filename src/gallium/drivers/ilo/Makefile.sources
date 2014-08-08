@@ -15,6 +15,7 @@ C_SOURCES := \
 	ilo_gpe_gen6.c \
 	ilo_gpe_gen7.c \
 	ilo_gpgpu.c \
+	ilo_layout.c \
 	ilo_query.c \
 	ilo_resource.c \
 	ilo_screen.c \
