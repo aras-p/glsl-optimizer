@@ -625,9 +625,52 @@ brw_prepare_shader_draw_parameters(struct brw_context *brw)
    }
 }
 
-static void brw_emit_vertices(struct brw_context *brw)
+/**
+ * Emit a VERTEX_BUFFER_STATE entry (part of 3DSTATE_VERTEX_BUFFERS).
+ */
+static void
+emit_vertex_buffer_state(struct brw_context *brw,
+                         unsigned buffer_nr,
+                         drm_intel_bo *bo,
+                         unsigned bo_ending_address,
+                         unsigned bo_offset,
+                         unsigned stride,
+                         unsigned step_rate)
 {
    struct gl_context *ctx = &brw->ctx;
+   uint32_t dw0;
+
+   if (brw->gen >= 6) {
+      dw0 = (buffer_nr << GEN6_VB0_INDEX_SHIFT) |
+            (step_rate ? GEN6_VB0_ACCESS_INSTANCEDATA
+                       : GEN6_VB0_ACCESS_VERTEXDATA);
+   } else {
+      dw0 = (buffer_nr << BRW_VB0_INDEX_SHIFT) |
+            (step_rate ? BRW_VB0_ACCESS_INSTANCEDATA
+                       : BRW_VB0_ACCESS_VERTEXDATA);
+   }
+
+   if (brw->gen >= 7)
+      dw0 |= GEN7_VB0_ADDRESS_MODIFYENABLE;
+
+   if (brw->gen == 7)
+      dw0 |= GEN7_MOCS_L3 << 16;
+
+   WARN_ONCE(stride >= (brw->gen >= 5 ? 2048 : 2047),
+             "VBO stride %d too large, bad rendering may occur\n",
+             stride);
+   OUT_BATCH(dw0 | (stride << BRW_VB0_PITCH_SHIFT));
+   OUT_RELOC(bo, I915_GEM_DOMAIN_VERTEX, 0, bo_offset);
+   if (brw->gen >= 5) {
+      OUT_RELOC(bo, I915_GEM_DOMAIN_VERTEX, 0, bo_ending_address);
+   } else {
+      OUT_BATCH(0);
+   }
+   OUT_BATCH(step_rate);
+}
+
+static void brw_emit_vertices(struct brw_context *brw)
+{
    GLuint i, nr_elements;
 
    brw_prepare_vertices(brw);
@@ -680,36 +723,10 @@ static void brw_emit_vertices(struct brw_context *brw)
       OUT_BATCH((_3DSTATE_VERTEX_BUFFERS << 16) | (4*brw->vb.nr_buffers - 1));
       for (i = 0; i < brw->vb.nr_buffers; i++) {
 	 struct brw_vertex_buffer *buffer = &brw->vb.buffers[i];
-	 uint32_t dw0;
+         emit_vertex_buffer_state(brw, i, buffer->bo, buffer->bo->size - 1,
+                                  buffer->offset, buffer->stride,
+                                  buffer->step_rate);
 
-	 if (brw->gen >= 6) {
-	    dw0 = buffer->step_rate
-	             ? GEN6_VB0_ACCESS_INSTANCEDATA
-	             : GEN6_VB0_ACCESS_VERTEXDATA;
-	    dw0 |= i << GEN6_VB0_INDEX_SHIFT;
-	 } else {
-	    dw0 = buffer->step_rate
-	             ? BRW_VB0_ACCESS_INSTANCEDATA
-	             : BRW_VB0_ACCESS_VERTEXDATA;
-	    dw0 |= i << BRW_VB0_INDEX_SHIFT;
-	 }
-
-	 if (brw->gen >= 7)
-	    dw0 |= GEN7_VB0_ADDRESS_MODIFYENABLE;
-
-         if (brw->gen == 7)
-	    dw0 |= GEN7_MOCS_L3 << 16;
-
-         WARN_ONCE(buffer->stride >= (brw->gen >= 5 ? 2048 : 2047),
-                   "VBO stride %d too large, bad rendering may occur\n",
-                   buffer->stride);
-	 OUT_BATCH(dw0 | (buffer->stride << BRW_VB0_PITCH_SHIFT));
-	 OUT_RELOC(buffer->bo, I915_GEM_DOMAIN_VERTEX, 0, buffer->offset);
-	 if (brw->gen >= 5) {
-	    OUT_RELOC(buffer->bo, I915_GEM_DOMAIN_VERTEX, 0, buffer->bo->size - 1);
-	 } else
-	    OUT_BATCH(0);
-	 OUT_BATCH(buffer->step_rate);
       }
       ADVANCE_BATCH();
    }
