@@ -92,8 +92,8 @@ is_active_attrib(const ir_variable *var)
        * are enumerated, including the special built-in inputs gl_VertexID
        * and gl_InstanceID."
        */
-      return !strcmp(var->name, "gl_VertexID") ||
-             !strcmp(var->name, "gl_InstanceID");
+      return var->data.location == SYSTEM_VALUE_VERTEX_ID ||
+             var->data.location == SYSTEM_VALUE_INSTANCE_ID;
 
    default:
       return false;
