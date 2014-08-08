@@ -103,7 +103,7 @@ is_expression(const fs_inst *const inst)
    case SHADER_OPCODE_LOAD_PAYLOAD:
       return !is_copy_payload(inst);
    default:
-      return inst->is_send_from_grf();
+      return inst->is_send_from_grf() && !inst->has_side_effects();
    }
 }
 

@@ -82,7 +82,7 @@ is_expression(const vec4_instruction *const inst)
    case SHADER_OPCODE_COS:
       return inst->mlen == 0;
    default:
-      return false;
+      return !inst->has_side_effects();
    }
 }
 
