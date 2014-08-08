@@ -313,7 +313,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
             }
          }
          break;
-      case GL_CLIP_DISTANCE0:
+      case GL_CLIP_DISTANCE0: /* aka GL_CLIP_PLANE0 */
       case GL_CLIP_DISTANCE1:
       case GL_CLIP_DISTANCE2:
       case GL_CLIP_DISTANCE3:
@@ -1202,7 +1202,7 @@ _mesa_IsEnabled( GLenum cap )
 	 return ctx->Eval.AutoNormal;
       case GL_BLEND:
          return ctx->Color.BlendEnabled & 1;  /* return state for buffer[0] */
-      case GL_CLIP_DISTANCE0:
+      case GL_CLIP_DISTANCE0: /* aka GL_CLIP_PLANE0 */
       case GL_CLIP_DISTANCE1:
       case GL_CLIP_DISTANCE2:
       case GL_CLIP_DISTANCE3:
