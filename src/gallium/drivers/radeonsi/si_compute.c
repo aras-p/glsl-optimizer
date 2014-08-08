@@ -105,7 +105,7 @@ static void si_set_global_binding(
 
 	if (!resources) {
 		for (i = first; i < first + n; i++) {
-			program->global_buffers[i] = NULL;
+			pipe_resource_reference(&program->global_buffers[i], NULL);
 		}
 		return;
 	}
@@ -113,7 +113,7 @@ static void si_set_global_binding(
 	for (i = first; i < first + n; i++) {
 		uint64_t va;
 		uint32_t offset;
-		program->global_buffers[i] = resources[i];
+		pipe_resource_reference(&program->global_buffers[i], resources[i]);
 		va = r600_resource(resources[i])->gpu_address;
 		offset = util_le32_to_cpu(*handles[i]);
 		va += offset;
