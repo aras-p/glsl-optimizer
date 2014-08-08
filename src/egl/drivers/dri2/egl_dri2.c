@@ -1678,36 +1678,13 @@ dri2_check_dma_buf_format(const _EGLImageAttribs *attrs)
 /**
  * The spec says:
  *
- * "If eglCreateImageKHR is successful for a EGL_LINUX_DMA_BUF_EXT target,
- *  the EGL takes ownership of the file descriptor and is responsible for
- *  closing it, which it may do at any time while the EGLDisplay is
- *  initialized."
+ * "If eglCreateImageKHR is successful for a EGL_LINUX_DMA_BUF_EXT target, the
+ *  EGL will take a reference to the dma_buf(s) which it will release at any
+ *  time while the EGLDisplay is initialized. It is the responsibility of the
+ *  application to close the dma_buf file descriptors."
+ *
+ * Therefore we must never close or otherwise modify the file descriptors.
  */
-static void
-dri2_take_dma_buf_ownership(const int *fds, unsigned num_fds)
-{
-   int already_closed[num_fds];
-   unsigned num_closed = 0;
-   unsigned i, j;
-
-   for (i = 0; i < num_fds; ++i) {
-      /**
-       * The same file descriptor can be referenced multiple times in case more
-       * than one plane is found in the same buffer, just with a different
-       * offset.
-       */
-      for (j = 0; j < num_closed; ++j) {
-         if (already_closed[j] == fds[i])
-            break;
-      }
-
-      if (j == num_closed) {
-         close(fds[i]);
-         already_closed[num_closed++] = fds[i];
-      }
-   }
-}
-
 static _EGLImage *
 dri2_create_image_dma_buf(_EGLDisplay *disp, _EGLContext *ctx,
 			  EGLClientBuffer buffer, const EGLint *attr_list)
@@ -1770,8 +1747,6 @@ dri2_create_image_dma_buf(_EGLDisplay *disp, _EGLContext *ctx,
       return EGL_NO_IMAGE_KHR;
 
    res = dri2_create_image_from_dri(disp, dri_image);
-   if (res)
-      dri2_take_dma_buf_ownership(fds, num_fds);
 
    return res;
 }
