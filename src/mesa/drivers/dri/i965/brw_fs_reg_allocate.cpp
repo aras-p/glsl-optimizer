@@ -56,9 +56,9 @@ fs_visitor::assign_regs_trivial()
 
    foreach_in_list(fs_inst, inst, &instructions) {
       assign_reg(hw_reg_mapping, &inst->dst, reg_width);
-      assign_reg(hw_reg_mapping, &inst->src[0], reg_width);
-      assign_reg(hw_reg_mapping, &inst->src[1], reg_width);
-      assign_reg(hw_reg_mapping, &inst->src[2], reg_width);
+      for (i = 0; i < inst->sources; i++) {
+         assign_reg(hw_reg_mapping, &inst->src[i], reg_width);
+      }
    }
 
    if (this->grf_used >= max_grf) {
@@ -518,9 +518,9 @@ fs_visitor::assign_regs(bool allow_spilling)
 
    foreach_in_list(fs_inst, inst, &instructions) {
       assign_reg(hw_reg_mapping, &inst->dst, reg_width);
-      assign_reg(hw_reg_mapping, &inst->src[0], reg_width);
-      assign_reg(hw_reg_mapping, &inst->src[1], reg_width);
-      assign_reg(hw_reg_mapping, &inst->src[2], reg_width);
+      for (int i = 0; i < inst->sources; i++) {
+         assign_reg(hw_reg_mapping, &inst->src[i], reg_width);
+      }
    }
 
    ralloc_free(g);
