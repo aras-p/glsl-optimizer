@@ -46,21 +46,22 @@
 /** Used to indicate which GL datatypes are accepted by each of the
  * glVertex/Color/Attrib/EtcPointer() functions.
  */
-#define BOOL_BIT             0x1
-#define BYTE_BIT             0x2
-#define UNSIGNED_BYTE_BIT    0x4
-#define SHORT_BIT            0x8
-#define UNSIGNED_SHORT_BIT   0x10
-#define INT_BIT              0x20
-#define UNSIGNED_INT_BIT     0x40
-#define HALF_BIT             0x80
-#define FLOAT_BIT            0x100
-#define DOUBLE_BIT           0x200
-#define FIXED_ES_BIT         0x400
-#define FIXED_GL_BIT         0x800
-#define UNSIGNED_INT_2_10_10_10_REV_BIT 0x1000
-#define INT_2_10_10_10_REV_BIT 0x2000
-#define UNSIGNED_INT_10F_11F_11F_REV_BIT 0x4000
+#define BOOL_BIT                          (1 << 0)
+#define BYTE_BIT                          (1 << 1)
+#define UNSIGNED_BYTE_BIT                 (1 << 2)
+#define SHORT_BIT                         (1 << 3)
+#define UNSIGNED_SHORT_BIT                (1 << 4)
+#define INT_BIT                           (1 << 5)
+#define UNSIGNED_INT_BIT                  (1 << 6)
+#define HALF_BIT                          (1 << 7)
+#define FLOAT_BIT                         (1 << 8)
+#define DOUBLE_BIT                        (1 << 9)
+#define FIXED_ES_BIT                      (1 << 10)
+#define FIXED_GL_BIT                      (1 << 11)
+#define UNSIGNED_INT_2_10_10_10_REV_BIT   (1 << 12)
+#define INT_2_10_10_10_REV_BIT            (1 << 13)
+#define UNSIGNED_INT_10F_11F_11F_REV_BIT  (1 << 14)
+#define ALL_TYPE_BITS                    ((1 << 15) - 1)
 
 
 /** Convert GL datatype enum into a <type>_BIT value seen above */
@@ -185,7 +186,7 @@ vertex_binding_divisor(struct gl_context *ctx, GLuint bindingIndex,
 static GLbitfield
 get_legal_types_mask(const struct gl_context *ctx)
 {
-   GLbitfield legalTypesMask = ~0u; /* all */
+   GLbitfield legalTypesMask = ALL_TYPE_BITS;
 
    if (_mesa_is_gles(ctx)) {
       legalTypesMask &= ~(FIXED_GL_BIT |
