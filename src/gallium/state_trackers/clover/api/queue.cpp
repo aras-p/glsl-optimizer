@@ -58,7 +58,11 @@ clRetainCommandQueue(cl_command_queue d_q) try {
 
 CLOVER_API cl_int
 clReleaseCommandQueue(cl_command_queue d_q) try {
-   if (obj(d_q).release())
+   auto &q = obj(d_q);
+
+   q.flush();
+
+   if (q.release())
       delete pobj(d_q);
 
    return CL_SUCCESS;
