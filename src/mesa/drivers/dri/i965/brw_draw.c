@@ -434,6 +434,20 @@ static bool brw_try_draw_prims( struct gl_context *ctx,
       brw->draw.start_vertex_location = prims[i].start;
       brw->draw.base_vertex_location = prims[i].basevertex;
 
+      if (prims[i].is_indirect) {
+         /* Point draw_params_bo at the indirect buffer. */
+         brw->draw.draw_params_bo =
+            intel_buffer_object(ctx->DrawIndirectBuffer)->buffer;
+         brw->draw.draw_params_offset =
+            prims[i].indirect_offset + (prims[i].indexed ? 12 : 8);
+      } else {
+         /* Set draw_params_bo to NULL so brw_prepare_vertices knows it
+          * has to upload gl_BaseVertex and such if they're needed.
+          */
+         brw->draw.draw_params_bo = NULL;
+         brw->draw.draw_params_offset = 0;
+      }
+
       if (brw->gen < 6)
 	 brw_set_prim(brw, &prims[i]);
       else

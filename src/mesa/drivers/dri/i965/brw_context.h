@@ -1067,6 +1067,13 @@ struct brw_context
 
       int start_vertex_location;
       int base_vertex_location;
+
+      /**
+       * Buffer and offset used for GL_ARB_shader_draw_parameters
+       * (for now, only gl_BaseVertex).
+       */
+      drm_intel_bo *draw_params_bo;
+      uint32_t draw_params_offset;
    } draw;
 
    struct {
