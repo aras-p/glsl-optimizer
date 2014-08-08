@@ -712,21 +712,33 @@ static void brw_emit_vertices(struct brw_context *brw)
    /* Now emit VB and VEP state packets.
     */
 
-   if (brw->vb.nr_buffers) {
+   unsigned nr_buffers =
+      brw->vb.nr_buffers + brw->vs.prog_data->uses_vertexid;
+
+   if (nr_buffers) {
       if (brw->gen >= 6) {
-	 assert(brw->vb.nr_buffers <= 33);
+	 assert(nr_buffers <= 33);
       } else {
-	 assert(brw->vb.nr_buffers <= 17);
+	 assert(nr_buffers <= 17);
       }
 
-      BEGIN_BATCH(1 + 4*brw->vb.nr_buffers);
-      OUT_BATCH((_3DSTATE_VERTEX_BUFFERS << 16) | (4*brw->vb.nr_buffers - 1));
+      BEGIN_BATCH(1 + 4 * nr_buffers);
+      OUT_BATCH((_3DSTATE_VERTEX_BUFFERS << 16) | (4 * nr_buffers - 1));
       for (i = 0; i < brw->vb.nr_buffers; i++) {
 	 struct brw_vertex_buffer *buffer = &brw->vb.buffers[i];
          emit_vertex_buffer_state(brw, i, buffer->bo, buffer->bo->size - 1,
                                   buffer->offset, buffer->stride,
                                   buffer->step_rate);
 
+      }
+
+      if (brw->vs.prog_data->uses_vertexid) {
+         emit_vertex_buffer_state(brw, brw->vb.nr_buffers,
+                                  brw->draw.draw_params_bo,
+                                  brw->draw.draw_params_bo->size - 1,
+                                  brw->draw.draw_params_offset,
+                                  0,  /* stride */
+                                  0); /* step rate */
       }
       ADVANCE_BATCH();
    }
@@ -815,15 +827,19 @@ static void brw_emit_vertices(struct brw_context *brw)
    if (brw->vs.prog_data->uses_vertexid) {
       uint32_t dw0 = 0, dw1 = 0;
 
-      dw1 = ((BRW_VE1_COMPONENT_STORE_VID << BRW_VE1_COMPONENT_0_SHIFT) |
-	     (BRW_VE1_COMPONENT_STORE_IID << BRW_VE1_COMPONENT_1_SHIFT) |
-	     (BRW_VE1_COMPONENT_STORE_0 << BRW_VE1_COMPONENT_2_SHIFT) |
-	     (BRW_VE1_COMPONENT_STORE_0 << BRW_VE1_COMPONENT_3_SHIFT));
+      dw1 = (BRW_VE1_COMPONENT_STORE_SRC << BRW_VE1_COMPONENT_0_SHIFT) |
+            (BRW_VE1_COMPONENT_STORE_0   << BRW_VE1_COMPONENT_1_SHIFT) |
+            (BRW_VE1_COMPONENT_STORE_VID << BRW_VE1_COMPONENT_2_SHIFT) |
+            (BRW_VE1_COMPONENT_STORE_IID << BRW_VE1_COMPONENT_3_SHIFT);
 
       if (brw->gen >= 6) {
-	 dw0 |= GEN6_VE0_VALID;
+         dw0 |= GEN6_VE0_VALID |
+                brw->vb.nr_buffers << GEN6_VE0_INDEX_SHIFT |
+                BRW_SURFACEFORMAT_R32_UINT << BRW_VE0_FORMAT_SHIFT;
       } else {
-	 dw0 |= BRW_VE0_VALID;
+         dw0 |= BRW_VE0_VALID |
+                brw->vb.nr_buffers << BRW_VE0_INDEX_SHIFT |
+                BRW_SURFACEFORMAT_R32_UINT << BRW_VE0_FORMAT_SHIFT;
 	 dw1 |= (i * 4) << BRW_VE1_DST_OFFSET_SHIFT;
       }
 

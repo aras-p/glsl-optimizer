@@ -56,11 +56,17 @@ gen8_emit_vertices(struct brw_context *brw)
       BEGIN_BATCH(2);
       OUT_BATCH(_3DSTATE_VF_SGVS << 16 | (2 - 2));
       OUT_BATCH(GEN8_SGVS_ENABLE_VERTEX_ID |
-                (0 << GEN8_SGVS_VERTEX_ID_COMPONENT_SHIFT) |   /* .x channel */
+                (2 << GEN8_SGVS_VERTEX_ID_COMPONENT_SHIFT) |   /* .z channel */
                 (vue << GEN8_SGVS_VERTEX_ID_ELEMENT_OFFSET_SHIFT) |
                 GEN8_SGVS_ENABLE_INSTANCE_ID |
-                (1 << GEN8_SGVS_INSTANCE_ID_COMPONENT_SHIFT) | /* .y channel */
+                (3 << GEN8_SGVS_INSTANCE_ID_COMPONENT_SHIFT) | /* .w channel */
                 (vue << GEN8_SGVS_INSTANCE_ID_ELEMENT_OFFSET_SHIFT));
+      ADVANCE_BATCH();
+
+      BEGIN_BATCH(3);
+      OUT_BATCH(_3DSTATE_VF_INSTANCING << 16 | (3 - 2));
+      OUT_BATCH(brw->vb.nr_buffers | GEN8_VF_INSTANCING_ENABLE);
+      OUT_BATCH(0);
       ADVANCE_BATCH();
    } else {
       BEGIN_BATCH(2);
@@ -92,11 +98,12 @@ gen8_emit_vertices(struct brw_context *brw)
    }
 
    /* Now emit 3DSTATE_VERTEX_BUFFERS and 3DSTATE_VERTEX_ELEMENTS packets. */
-   if (brw->vb.nr_buffers) {
-      assert(brw->vb.nr_buffers <= 33);
+   unsigned nr_buffers = brw->vb.nr_buffers + brw->vs.prog_data->uses_vertexid;
+   if (nr_buffers) {
+      assert(nr_buffers <= 33);
 
-      BEGIN_BATCH(1 + 4*brw->vb.nr_buffers);
-      OUT_BATCH((_3DSTATE_VERTEX_BUFFERS << 16) | (4*brw->vb.nr_buffers - 1));
+      BEGIN_BATCH(1 + 4 * nr_buffers);
+      OUT_BATCH((_3DSTATE_VERTEX_BUFFERS << 16) | (4 * nr_buffers - 1));
       for (unsigned i = 0; i < brw->vb.nr_buffers; i++) {
          struct brw_vertex_buffer *buffer = &brw->vb.buffers[i];
          uint32_t dw0 = 0;
@@ -110,10 +117,19 @@ gen8_emit_vertices(struct brw_context *brw)
          OUT_RELOC64(buffer->bo, I915_GEM_DOMAIN_VERTEX, 0, buffer->offset);
          OUT_BATCH(buffer->bo->size);
       }
+
+      if (brw->vs.prog_data->uses_vertexid) {
+         OUT_BATCH(brw->vb.nr_buffers << GEN6_VB0_INDEX_SHIFT |
+                   GEN7_VB0_ADDRESS_MODIFYENABLE |
+                   BDW_MOCS_WB << 16);
+         OUT_RELOC64(brw->draw.draw_params_bo, I915_GEM_DOMAIN_VERTEX, 0,
+                     brw->draw.draw_params_offset);
+         OUT_BATCH(brw->draw.draw_params_bo->size);
+      }
       ADVANCE_BATCH();
    }
 
-   unsigned nr_elements = brw->vb.nr_enabled;
+   unsigned nr_elements = brw->vb.nr_enabled + brw->vs.prog_data->uses_vertexid;
 
    /* The hardware allows one more VERTEX_ELEMENTS than VERTEX_BUFFERS,
     * presumably for VertexID/InstanceID.
@@ -176,6 +192,16 @@ gen8_emit_vertices(struct brw_context *brw)
                 GEN6_VE0_EDGE_FLAG_ENABLE |
                 (format << BRW_VE0_FORMAT_SHIFT) |
                 (gen6_edgeflag_input->offset << BRW_VE0_SRC_OFFSET_SHIFT));
+      OUT_BATCH((BRW_VE1_COMPONENT_STORE_SRC << BRW_VE1_COMPONENT_0_SHIFT) |
+                (BRW_VE1_COMPONENT_STORE_0 << BRW_VE1_COMPONENT_1_SHIFT) |
+                (BRW_VE1_COMPONENT_STORE_0 << BRW_VE1_COMPONENT_2_SHIFT) |
+                (BRW_VE1_COMPONENT_STORE_0 << BRW_VE1_COMPONENT_3_SHIFT));
+   }
+
+   if (brw->vs.prog_data->uses_vertexid) {
+      OUT_BATCH(GEN6_VE0_VALID |
+                brw->vb.nr_buffers << GEN6_VE0_INDEX_SHIFT |
+                BRW_SURFACEFORMAT_R32_UINT << BRW_VE0_FORMAT_SHIFT);
       OUT_BATCH((BRW_VE1_COMPONENT_STORE_SRC << BRW_VE1_COMPONENT_0_SHIFT) |
                 (BRW_VE1_COMPONENT_STORE_0 << BRW_VE1_COMPONENT_1_SHIFT) |
                 (BRW_VE1_COMPONENT_STORE_0 << BRW_VE1_COMPONENT_2_SHIFT) |

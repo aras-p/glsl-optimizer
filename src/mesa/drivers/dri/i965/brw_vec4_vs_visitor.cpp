@@ -154,12 +154,15 @@ vec4_vs_visitor::make_reg_for_system_value(ir_variable *ir)
    vs_prog_data->uses_vertexid = true;
 
    switch (ir->data.location) {
-   case SYSTEM_VALUE_VERTEX_ID:
-   case SYSTEM_VALUE_VERTEX_ID_ZERO_BASE:
+   case SYSTEM_VALUE_BASE_VERTEX:
       reg->writemask = WRITEMASK_X;
       break;
+   case SYSTEM_VALUE_VERTEX_ID:
+   case SYSTEM_VALUE_VERTEX_ID_ZERO_BASE:
+      reg->writemask = WRITEMASK_Z;
+      break;
    case SYSTEM_VALUE_INSTANCE_ID:
-      reg->writemask = WRITEMASK_Y;
+      reg->writemask = WRITEMASK_W;
       break;
    default:
       unreachable("not reached");
