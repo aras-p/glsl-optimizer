@@ -1618,8 +1618,8 @@ fs_visitor::rescale_texcoord(ir_texture *ir, fs_reg coordinate,
     */
    if (is_rect &&
        (brw->gen < 6 ||
-	(brw->gen >= 6 && (key->tex.gl_clamp_mask[0] & (1 << sampler) ||
-			     key->tex.gl_clamp_mask[1] & (1 << sampler))))) {
+        (brw->gen >= 6 && (key->tex.gl_clamp_mask[0] & (1 << sampler) ||
+                           key->tex.gl_clamp_mask[1] & (1 << sampler))))) {
       struct gl_program_parameter_list *params = prog->Parameters;
       int tokens[STATE_LENGTH] = {
 	 STATE_INTERNAL,
