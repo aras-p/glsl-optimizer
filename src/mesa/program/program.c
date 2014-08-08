@@ -251,8 +251,9 @@ init_program_struct(struct gl_program *prog, GLenum target, GLuint id)
  * Initialize a new fragment program object.
  */
 struct gl_program *
-_mesa_init_fragment_program( struct gl_context *ctx, struct gl_fragment_program *prog,
-                             GLenum target, GLuint id)
+_mesa_init_fragment_program(struct gl_context *ctx,
+                            struct gl_fragment_program *prog,
+                            GLenum target, GLuint id)
 {
    if (prog) {
       init_program_struct(&prog->Base, target, id);
@@ -266,8 +267,9 @@ _mesa_init_fragment_program( struct gl_context *ctx, struct gl_fragment_program 
  * Initialize a new vertex program object.
  */
 struct gl_program *
-_mesa_init_vertex_program( struct gl_context *ctx, struct gl_vertex_program *prog,
-                           GLenum target, GLuint id)
+_mesa_init_vertex_program(struct gl_context *ctx,
+                          struct gl_vertex_program *prog,
+                          GLenum target, GLuint id)
 {
    if (prog) {
       init_program_struct(&prog->Base, target, id);
@@ -282,8 +284,8 @@ _mesa_init_vertex_program( struct gl_context *ctx, struct gl_vertex_program *pro
  */
 struct gl_program *
 _mesa_init_compute_program(struct gl_context *ctx,
-                           struct gl_compute_program *prog, GLenum target,
-                           GLuint id)
+                           struct gl_compute_program *prog,
+                           GLenum target, GLuint id)
 {
    if (prog) {
       init_program_struct(&prog->Base, target, id);
@@ -297,8 +299,9 @@ _mesa_init_compute_program(struct gl_context *ctx,
  * Initialize a new geometry program object.
  */
 struct gl_program *
-_mesa_init_geometry_program( struct gl_context *ctx, struct gl_geometry_program *prog,
-                             GLenum target, GLuint id)
+_mesa_init_geometry_program(struct gl_context *ctx,
+                            struct gl_geometry_program *prog,
+                            GLenum target, GLuint id)
 {
    if (prog) {
       init_program_struct(&prog->Base, target, id);
