@@ -2355,6 +2355,41 @@ void brw_SAMPLE(struct brw_compile *p,
                            return_format);
 }
 
+/* Adjust the message header's sampler state pointer to
+ * select the correct group of 16 samplers.
+ */
+void brw_adjust_sampler_state_pointer(struct brw_compile *p,
+                                      struct brw_reg header,
+                                      struct brw_reg sampler_index,
+                                      struct brw_reg scratch)
+{
+   /* The "Sampler Index" field can only store values between 0 and 15.
+    * However, we can add an offset to the "Sampler State Pointer"
+    * field, effectively selecting a different set of 16 samplers.
+    *
+    * The "Sampler State Pointer" needs to be aligned to a 32-byte
+    * offset, and each sampler state is only 16-bytes, so we can't
+    * exclusively use the offset - we have to use both.
+    */
+
+   struct brw_context *brw = p->brw;
+
+   if (sampler_index.file == BRW_IMMEDIATE_VALUE) {
+      const int sampler_state_size = 16; /* 16 bytes */
+      uint32_t sampler = sampler_index.dw1.ud;
+
+      if (sampler >= 16) {
+         assert(brw->is_haswell || brw->gen >= 8);
+         brw_ADD(p,
+                 get_element_ud(header, 3),
+                 get_element_ud(brw_vec8_grf(0, 0), 3),
+                 brw_imm_ud(16 * (sampler / 16) * sampler_state_size));
+      }
+   } else {
+      /* XXX: Non-const sampler array indexing case */
+   }
+}
+
 /* All these variables are pretty confusing - we might be better off
  * using bitmasks and macros for this, in the old style.  Or perhaps
  * just having the caller instantiate the fields in dword3 itself.

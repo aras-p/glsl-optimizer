@@ -281,6 +281,11 @@ void brw_SAMPLE(struct brw_compile *p,
 		unsigned simd_mode,
 		unsigned return_format);
 
+void brw_adjust_sampler_state_pointer(struct brw_compile *p,
+                                      struct brw_reg header,
+                                      struct brw_reg sampler_index,
+                                      struct brw_reg scratch);
+
 void gen4_math(struct brw_compile *p,
 	       struct brw_reg dest,
 	       unsigned function,
