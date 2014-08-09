@@ -1732,8 +1732,8 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
 
       if (pos != -1 && cv != -1) {
          /* store original positions in clip before further manipulation */
-         store_clip(gallivm, vs_type, io, outputs, 0, cv);
-         store_clip(gallivm, vs_type, io, outputs, 1, pos);
+         store_clip(gallivm, vs_type, io, outputs, FALSE, key->clip_user ? cv : pos);
+         store_clip(gallivm, vs_type, io, outputs, TRUE, pos);
 
          /* do cliptest */
          if (enable_cliptest) {
