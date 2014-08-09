@@ -240,12 +240,6 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
 
       brw_add_texrect_params(prog);
 
-      /* This has to be done last.  Any operation that can cause
-       * prog->ParameterValues to get reallocated (e.g., anything that adds a
-       * program constant) has to happen before creating this linkage.
-       */
-      _mesa_associate_uniform_storage(ctx, shProg, prog->Parameters);
-
       _mesa_reference_program(ctx, &prog, NULL);
 
       if (ctx->_Shader->Flags & GLSL_DUMP) {
