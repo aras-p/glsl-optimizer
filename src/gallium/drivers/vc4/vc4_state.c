@@ -101,7 +101,7 @@ vc4_create_rasterizer_state(struct pipe_context *pctx,
         /* XXX: per_vertex */
         so->point_size = cso->point_size;
 
-        if (!cso->front_ccw)
+        if (cso->front_ccw)
                 so->config_bits[0] |= VC4_CONFIG_BITS_CW_PRIMITIVES;
 
         if (cso->offset_tri)
