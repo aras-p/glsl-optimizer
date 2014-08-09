@@ -538,10 +538,7 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
       src.nr++;
    }
 
-   assert(sampler_index.file == BRW_IMMEDIATE_VALUE);
    assert(sampler_index.type == BRW_REGISTER_TYPE_UD);
-
-   uint32_t sampler = sampler_index.dw1.ud;
 
    /* Load the message header if present.  If there's a texture offset,
     * we need to set it up explicitly and load the offset bitfield.
@@ -578,25 +575,31 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
       }
    }
 
-   uint32_t surface_index = ((inst->opcode == SHADER_OPCODE_TG4 ||
-      inst->opcode == SHADER_OPCODE_TG4_OFFSET)
-      ? prog_data->base.binding_table.gather_texture_start
-      : prog_data->base.binding_table.texture_start) + sampler;
+   uint32_t base_binding_table_index = (inst->opcode == SHADER_OPCODE_TG4 ||
+         inst->opcode == SHADER_OPCODE_TG4_OFFSET)
+         ? prog_data->base.binding_table.gather_texture_start
+         : prog_data->base.binding_table.texture_start;
 
-   brw_SAMPLE(p,
-	      retype(dst, BRW_REGISTER_TYPE_UW),
-	      inst->base_mrf,
-	      src,
-              surface_index,
-	      sampler % 16,
-	      msg_type,
-	      rlen,
-	      inst->mlen,
-	      inst->header_present,
-	      simd_mode,
-	      return_format);
+   if (sampler_index.file == BRW_IMMEDIATE_VALUE) {
+      uint32_t sampler = sampler_index.dw1.ud;
 
-   brw_mark_surface_used(&prog_data->base, surface_index);
+      brw_SAMPLE(p,
+                 retype(dst, BRW_REGISTER_TYPE_UW),
+                 inst->base_mrf,
+                 src,
+                 sampler + base_binding_table_index,
+                 sampler % 16,
+                 msg_type,
+                 rlen,
+                 inst->mlen,
+                 inst->header_present,
+                 simd_mode,
+                 return_format);
+
+      brw_mark_surface_used(&prog_data->base, sampler + base_binding_table_index);
+   } else {
+      /* XXX: Non-const sampler index */
+   }
 }
 
 
