@@ -841,7 +841,8 @@ link_set_image_access_qualifiers(struct gl_shader_program *prog)
 }
 
 void
-link_assign_uniform_locations(struct gl_shader_program *prog)
+link_assign_uniform_locations(struct gl_shader_program *prog,
+                              unsigned int boolean_true)
 {
    ralloc_free(prog->UniformStorage);
    prog->UniformStorage = NULL;
@@ -1014,7 +1015,7 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
    prog->UniformStorage = uniforms;
 
    link_set_image_access_qualifiers(prog);
-   link_set_uniform_initializers(prog);
+   link_set_uniform_initializers(prog, boolean_true);
 
    return;
 }

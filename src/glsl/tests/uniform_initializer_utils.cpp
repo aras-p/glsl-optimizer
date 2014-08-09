@@ -187,14 +187,15 @@ generate_array_data(void *mem_ctx, enum glsl_base_type base_type,
  */
 void
 verify_data(gl_constant_value *storage, unsigned storage_array_size,
-	    ir_constant *val, unsigned red_zone_size)
+            ir_constant *val, unsigned red_zone_size,
+            unsigned int boolean_true)
 {
    if (val->type->base_type == GLSL_TYPE_ARRAY) {
       const glsl_type *const element_type = val->array_elements[0]->type;
 
       for (unsigned i = 0; i < storage_array_size; i++) {
 	 verify_data(storage + (i * element_type->components()), 0,
-		     val->array_elements[i], 0);
+		     val->array_elements[i], 0, boolean_true);
       }
 
       const unsigned components = element_type->components();
@@ -217,7 +218,7 @@ verify_data(gl_constant_value *storage, unsigned storage_array_size,
 	    EXPECT_EQ(val->value.f[i], storage[i].f);
 	    break;
 	 case GLSL_TYPE_BOOL:
-	    EXPECT_EQ(int(val->value.b[i]), storage[i].i);
+	    EXPECT_EQ(val->value.b[i] ? boolean_true : 0, storage[i].i);
 	    break;
          case GLSL_TYPE_ATOMIC_UINT:
 	 case GLSL_TYPE_STRUCT:

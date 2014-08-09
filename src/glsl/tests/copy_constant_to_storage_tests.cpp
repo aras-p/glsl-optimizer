@@ -32,7 +32,8 @@ extern void
 copy_constant_to_storage(union gl_constant_value *storage,
 			 const ir_constant *val,
 			 const enum glsl_base_type base_type,
-			 const unsigned int elements);
+                         const unsigned int elements,
+                         unsigned int boolean_true);
 }
 
 class copy_constant_to_storage : public ::testing::Test {
@@ -77,9 +78,10 @@ copy_constant_to_storage::int_test(unsigned rows)
    linker::copy_constant_to_storage(storage,
 				    val,
 				    val->type->base_type,
-				    val->type->components());
+                                    val->type->components(),
+                                    0xF00F);
 
-   verify_data(storage, 0, val, red_zone_size);
+   verify_data(storage, 0, val, red_zone_size, 0xF00F);
 }
 
 void
@@ -96,9 +98,10 @@ copy_constant_to_storage::uint_test(unsigned rows)
    linker::copy_constant_to_storage(storage,
 				    val,
 				    val->type->base_type,
-				    val->type->components());
+                                    val->type->components(),
+                                    0xF00F);
 
-   verify_data(storage, 0, val, red_zone_size);
+   verify_data(storage, 0, val, red_zone_size, 0xF00F);
 }
 
 void
@@ -115,9 +118,10 @@ copy_constant_to_storage::float_test(unsigned columns, unsigned rows)
    linker::copy_constant_to_storage(storage,
 				    val,
 				    val->type->base_type,
-				    val->type->components());
+                                    val->type->components(),
+                                    0xF00F);
 
-   verify_data(storage, 0, val, red_zone_size);
+   verify_data(storage, 0, val, red_zone_size, 0xF00F);
 }
 
 void
@@ -134,9 +138,10 @@ copy_constant_to_storage::bool_test(unsigned rows)
    linker::copy_constant_to_storage(storage,
 				    val,
 				    val->type->base_type,
-				    val->type->components());
+                                    val->type->components(),
+                                    0xF00F);
 
-   verify_data(storage, 0, val, red_zone_size);
+   verify_data(storage, 0, val, red_zone_size, 0xF00F);
 }
 
 /**
@@ -158,9 +163,10 @@ copy_constant_to_storage::sampler_test(void)
    linker::copy_constant_to_storage(storage,
 				    val,
 				    GLSL_TYPE_SAMPLER,
-				    val->type->components());
+                                    val->type->components(),
+                                    0xF00F);
 
-   verify_data(storage, 0, val, red_zone_size);
+   verify_data(storage, 0, val, red_zone_size, 0xF00F);
 }
 
 TEST_F(copy_constant_to_storage, bool_uniform)

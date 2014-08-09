@@ -2821,7 +2821,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
       goto done;
 
    update_array_sizes(prog);
-   link_assign_uniform_locations(prog);
+   link_assign_uniform_locations(prog, ctx->Const.UniformBooleanTrue);
    link_assign_atomic_counter_resources(ctx, prog);
    store_fragdepth_layout(prog);
 

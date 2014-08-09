@@ -44,4 +44,5 @@ generate_array_data(void *mem_ctx, enum glsl_base_type base_type,
 
 extern void
 verify_data(gl_constant_value *storage, unsigned storage_array_size,
-	    ir_constant *val, unsigned red_zone_size);
+            ir_constant *val, unsigned red_zone_size,
+            unsigned int boolean_true);

@@ -31,7 +31,7 @@ namespace linker {
 extern void
 set_uniform_initializer(void *mem_ctx, gl_shader_program *prog,
 			const char *name, const glsl_type *type,
-			ir_constant *val);
+                        ir_constant *val, unsigned int boolean_true);
 }
 
 class set_uniform_initializer : public ::testing::Test {
@@ -179,11 +179,11 @@ non_array_test(void *mem_ctx, struct gl_shader_program *prog,
    ir_constant *val;
    generate_data(mem_ctx, base_type, columns, rows, val);
 
-   linker::set_uniform_initializer(mem_ctx, prog, name, type, val);
+   linker::set_uniform_initializer(mem_ctx, prog, name, type, val, 0xF00F);
 
    verify_initialization(prog, actual_index);
    verify_data(prog->UniformStorage[actual_index].storage, 0, val,
-	       red_zone_components);
+	       red_zone_components, 0xF00F);
 }
 
 TEST_F(set_uniform_initializer, int_uniform)
@@ -335,11 +335,12 @@ array_test(void *mem_ctx, struct gl_shader_program *prog,
    generate_array_data(mem_ctx, base_type, columns, rows,
 		       array_size + excess_data_size, val);
 
-   linker::set_uniform_initializer(mem_ctx, prog, name, element_type, val);
+   linker::set_uniform_initializer(mem_ctx, prog, name, element_type, val,
+                                   0xF00F);
 
    verify_initialization(prog, actual_index);
    verify_data(prog->UniformStorage[actual_index].storage, array_size,
-	       val, red_zone_components);
+	       val, red_zone_components, 0xF00F);
 }
 
 TEST_F(set_uniform_initializer, int_array_uniform)

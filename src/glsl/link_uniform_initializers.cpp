@@ -60,7 +60,8 @@ void
 copy_constant_to_storage(union gl_constant_value *storage,
 			 const ir_constant *val,
 			 const enum glsl_base_type base_type,
-			 const unsigned int elements)
+                         const unsigned int elements,
+                         unsigned int boolean_true)
 {
    for (unsigned int i = 0; i < elements; i++) {
       switch (base_type) {
@@ -75,7 +76,7 @@ copy_constant_to_storage(union gl_constant_value *storage,
 	 storage[i].f = val->value.f[i];
 	 break;
       case GLSL_TYPE_BOOL:
-	 storage[i].b = int(val->value.b[i]);
+	 storage[i].b = val->value.b[i] ? boolean_true : 0;
 	 break;
       case GLSL_TYPE_ARRAY:
       case GLSL_TYPE_STRUCT:
@@ -156,7 +157,7 @@ set_block_binding(gl_shader_program *prog, const char *block_name, int binding)
 void
 set_uniform_initializer(void *mem_ctx, gl_shader_program *prog,
 			const char *name, const glsl_type *type,
-			ir_constant *val)
+                        ir_constant *val, unsigned int boolean_true)
 {
    if (type->is_record()) {
       ir_constant *field_constant;
@@ -168,7 +169,7 @@ set_uniform_initializer(void *mem_ctx, gl_shader_program *prog,
 	 const char *field_name = ralloc_asprintf(mem_ctx, "%s.%s", name,
 					    type->fields.structure[i].name);
 	 set_uniform_initializer(mem_ctx, prog, field_name,
-				 field_type, field_constant);
+                                 field_type, field_constant, boolean_true);
 	 field_constant = (ir_constant *)field_constant->next;
       }
       return;
@@ -179,7 +180,8 @@ set_uniform_initializer(void *mem_ctx, gl_shader_program *prog,
 	 const char *element_name = ralloc_asprintf(mem_ctx, "%s[%d]", name, i);
 
 	 set_uniform_initializer(mem_ctx, prog, element_name,
-				 element_type, val->array_elements[i]);
+                                 element_type, val->array_elements[i],
+                                 boolean_true);
       }
       return;
    }
@@ -204,7 +206,8 @@ set_uniform_initializer(void *mem_ctx, gl_shader_program *prog,
 	 copy_constant_to_storage(& storage->storage[idx],
 				  val->array_elements[i],
 				  base_type,
-				  elements);
+                                  elements,
+                                  boolean_true);
 
 	 idx += elements;
       }
@@ -212,7 +215,8 @@ set_uniform_initializer(void *mem_ctx, gl_shader_program *prog,
       copy_constant_to_storage(storage->storage,
 			       val,
 			       val->type->base_type,
-			       val->type->components());
+                               val->type->components(),
+                               boolean_true);
 
       if (storage->type->is_sampler()) {
          for (int sh = 0; sh < MESA_SHADER_STAGES; sh++) {
@@ -232,7 +236,8 @@ set_uniform_initializer(void *mem_ctx, gl_shader_program *prog,
 }
 
 void
-link_set_uniform_initializers(struct gl_shader_program *prog)
+link_set_uniform_initializers(struct gl_shader_program *prog,
+                              unsigned int boolean_true)
 {
    void *mem_ctx = NULL;
 
@@ -301,7 +306,8 @@ link_set_uniform_initializers(struct gl_shader_program *prog)
             }
          } else if (var->constant_value) {
             linker::set_uniform_initializer(mem_ctx, prog, var->name,
-                                            var->type, var->constant_value);
+                                            var->type, var->constant_value,
+                                            boolean_true);
          }
       }
    }
