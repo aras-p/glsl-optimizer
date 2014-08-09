@@ -2228,72 +2228,105 @@ fs_visitor::emit_bool_to_cond_code(ir_rvalue *ir)
 {
    ir_expression *expr = ir->as_expression();
 
-   if (expr &&
-       expr->operation != ir_binop_logic_and &&
-       expr->operation != ir_binop_logic_or &&
-       expr->operation != ir_binop_logic_xor) {
-      fs_reg op[2];
-      fs_inst *inst;
+   if (!expr) {
+      ir->accept(this);
 
-      assert(expr->get_num_operands() <= 2);
-      for (unsigned int i = 0; i < expr->get_num_operands(); i++) {
-	 assert(expr->operands[i]->type->is_scalar());
-
-	 expr->operands[i]->accept(this);
-	 op[i] = this->result;
-
-	 resolve_ud_negate(&op[i]);
-      }
-
-      switch (expr->operation) {
-      case ir_unop_logic_not:
-	 inst = emit(AND(reg_null_d, op[0], fs_reg(1)));
-	 inst->conditional_mod = BRW_CONDITIONAL_Z;
-	 break;
-
-      case ir_unop_f2b:
-	 if (brw->gen >= 6) {
-	    emit(CMP(reg_null_d, op[0], fs_reg(0.0f), BRW_CONDITIONAL_NZ));
-	 } else {
-	    inst = emit(MOV(reg_null_f, op[0]));
-            inst->conditional_mod = BRW_CONDITIONAL_NZ;
-	 }
-	 break;
-
-      case ir_unop_i2b:
-	 if (brw->gen >= 6) {
-	    emit(CMP(reg_null_d, op[0], fs_reg(0), BRW_CONDITIONAL_NZ));
-	 } else {
-	    inst = emit(MOV(reg_null_d, op[0]));
-            inst->conditional_mod = BRW_CONDITIONAL_NZ;
-	 }
-	 break;
-
-      case ir_binop_greater:
-      case ir_binop_gequal:
-      case ir_binop_less:
-      case ir_binop_lequal:
-      case ir_binop_equal:
-      case ir_binop_all_equal:
-      case ir_binop_nequal:
-      case ir_binop_any_nequal:
-	 resolve_bool_comparison(expr->operands[0], &op[0]);
-	 resolve_bool_comparison(expr->operands[1], &op[1]);
-
-	 emit(CMP(reg_null_d, op[0], op[1],
-                  brw_conditional_for_comparison(expr->operation)));
-	 break;
-
-      default:
-	 unreachable("not reached");
-      }
+      fs_inst *inst = emit(AND(reg_null_d, this->result, fs_reg(1)));
+      inst->conditional_mod = BRW_CONDITIONAL_NZ;
       return;
    }
 
-   ir->accept(this);
+   fs_reg op[2];
+   fs_inst *inst;
 
-   fs_inst *inst = emit(AND(reg_null_d, this->result, fs_reg(1)));
-   inst->conditional_mod = BRW_CONDITIONAL_NZ;
+   assert(expr->get_num_operands() <= 2);
+   for (unsigned int i = 0; i < expr->get_num_operands(); i++) {
+      assert(expr->operands[i]->type->is_scalar());
+
+      expr->operands[i]->accept(this);
+      op[i] = this->result;
+
+      resolve_ud_negate(&op[i]);
+   }
+
+   switch (expr->operation) {
+   case ir_unop_logic_not:
+      inst = emit(AND(reg_null_d, op[0], fs_reg(1)));
+      inst->conditional_mod = BRW_CONDITIONAL_Z;
+      break;
+
+   case ir_binop_logic_xor:
+      if (ctx->Const.UniformBooleanTrue == 1) {
+         fs_reg dst = fs_reg(this, glsl_type::uint_type);
+         emit(XOR(dst, op[0], op[1]));
+         inst = emit(AND(reg_null_d, dst, fs_reg(1)));
+         inst->conditional_mod = BRW_CONDITIONAL_NZ;
+      } else {
+         inst = emit(XOR(reg_null_d, op[0], op[1]));
+         inst->conditional_mod = BRW_CONDITIONAL_NZ;
+      }
+      break;
+
+   case ir_binop_logic_or:
+      if (ctx->Const.UniformBooleanTrue == 1) {
+         fs_reg dst = fs_reg(this, glsl_type::uint_type);
+         emit(OR(dst, op[0], op[1]));
+         inst = emit(AND(reg_null_d, dst, fs_reg(1)));
+         inst->conditional_mod = BRW_CONDITIONAL_NZ;
+      } else {
+         inst = emit(OR(reg_null_d, op[0], op[1]));
+         inst->conditional_mod = BRW_CONDITIONAL_NZ;
+      }
+      break;
+
+   case ir_binop_logic_and:
+      if (ctx->Const.UniformBooleanTrue == 1) {
+         fs_reg dst = fs_reg(this, glsl_type::uint_type);
+         emit(AND(dst, op[0], op[1]));
+         inst = emit(AND(reg_null_d, dst, fs_reg(1)));
+         inst->conditional_mod = BRW_CONDITIONAL_NZ;
+      } else {
+         inst = emit(AND(reg_null_d, op[0], op[1]));
+         inst->conditional_mod = BRW_CONDITIONAL_NZ;
+      }
+      break;
+
+   case ir_unop_f2b:
+      if (brw->gen >= 6) {
+         emit(CMP(reg_null_d, op[0], fs_reg(0.0f), BRW_CONDITIONAL_NZ));
+      } else {
+         inst = emit(MOV(reg_null_f, op[0]));
+         inst->conditional_mod = BRW_CONDITIONAL_NZ;
+      }
+      break;
+
+   case ir_unop_i2b:
+      if (brw->gen >= 6) {
+         emit(CMP(reg_null_d, op[0], fs_reg(0), BRW_CONDITIONAL_NZ));
+      } else {
+         inst = emit(MOV(reg_null_d, op[0]));
+         inst->conditional_mod = BRW_CONDITIONAL_NZ;
+      }
+      break;
+
+   case ir_binop_greater:
+   case ir_binop_gequal:
+   case ir_binop_less:
+   case ir_binop_lequal:
+   case ir_binop_equal:
+   case ir_binop_all_equal:
+   case ir_binop_nequal:
+   case ir_binop_any_nequal:
+      resolve_bool_comparison(expr->operands[0], &op[0]);
+      resolve_bool_comparison(expr->operands[1], &op[1]);
+
+      emit(CMP(reg_null_d, op[0], op[1],
+               brw_conditional_for_comparison(expr->operation)));
+      break;
+
+   default:
+      unreachable("not reached");
+   }
 }
 
 /**
