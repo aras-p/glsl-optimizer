@@ -2231,7 +2231,9 @@ vec4_visitor::emit_constant_values(dst_reg *dst, ir_constant *ir)
 	 emit(MOV(*dst, src_reg(ir->value.u[i])));
 	 break;
       case GLSL_TYPE_BOOL:
-	 emit(MOV(*dst, src_reg(ir->value.b[i])));
+         emit(MOV(*dst,
+                  src_reg(ir->value.b[i] != 0 ? ctx->Const.UniformBooleanTrue
+                                              : 0)));
 	 break;
       default:
 	 unreachable("Non-float/uint/int/bool constant");

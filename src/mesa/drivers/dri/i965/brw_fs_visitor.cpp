@@ -2209,7 +2209,9 @@ fs_visitor::visit(ir_constant *ir)
 	    emit(MOV(dst_reg, fs_reg(ir->value.i[i])));
 	    break;
 	 case GLSL_TYPE_BOOL:
-	    emit(MOV(dst_reg, fs_reg((int)ir->value.b[i])));
+            emit(MOV(dst_reg,
+                     fs_reg(ir->value.b[i] != 0 ? ctx->Const.UniformBooleanTrue
+                                                : 0)));
 	    break;
 	 default:
 	    unreachable("Non-float/uint/int/bool constant");
