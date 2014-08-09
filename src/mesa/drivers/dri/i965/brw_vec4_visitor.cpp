@@ -2305,7 +2305,7 @@ vec4_visitor::visit(ir_call *ir)
 }
 
 src_reg
-vec4_visitor::emit_mcs_fetch(ir_texture *ir, src_reg coordinate, uint32_t sampler)
+vec4_visitor::emit_mcs_fetch(ir_texture *ir, src_reg coordinate, src_reg sampler)
 {
    vec4_instruction *inst = new(mem_ctx) vec4_instruction(this, SHADER_OPCODE_TXF_MCS);
    inst->base_mrf = 2;
@@ -2313,7 +2313,7 @@ vec4_visitor::emit_mcs_fetch(ir_texture *ir, src_reg coordinate, uint32_t sample
    inst->dst = dst_reg(this, glsl_type::uvec4_type);
    inst->dst.writemask = WRITEMASK_XYZW;
 
-   inst->src[1] = src_reg(sampler);
+   inst->src[1] = sampler;
 
    /* parameters are: u, v, r, lod; lod will always be zero due to api restrictions */
    int param_base = inst->base_mrf;
@@ -2330,11 +2330,55 @@ vec4_visitor::emit_mcs_fetch(ir_texture *ir, src_reg coordinate, uint32_t sample
    return src_reg(inst->dst);
 }
 
+static bool
+is_high_sampler(struct brw_context *brw, src_reg sampler)
+{
+   if (brw->gen < 8 && !brw->is_haswell)
+      return false;
+
+   return sampler.file != IMM || sampler.fixed_hw_reg.dw1.ud >= 16;
+}
+
 void
 vec4_visitor::visit(ir_texture *ir)
 {
    uint32_t sampler =
       _mesa_get_sampler_uniform_value(ir->sampler, shader_prog, prog);
+
+   ir_rvalue *nonconst_sampler_index =
+      _mesa_get_sampler_array_nonconst_index(ir->sampler);
+
+   /* Handle non-constant sampler array indexing */
+   src_reg sampler_reg;
+   if (nonconst_sampler_index) {
+      /* The highest sampler which may be used by this operation is
+       * the last element of the array. Mark it here, because the generator
+       * doesn't have enough information to determine the bound.
+       */
+      uint32_t array_size = ir->sampler->as_dereference_array()
+         ->array->type->array_size();
+
+      uint32_t max_used = sampler + array_size - 1;
+      if (ir->op == ir_tg4 && brw->gen < 8) {
+         max_used += prog_data->base.binding_table.gather_texture_start;
+      } else {
+         max_used += prog_data->base.binding_table.texture_start;
+      }
+
+      brw_mark_surface_used(&prog_data->base, max_used);
+
+      /* Emit code to evaluate the actual indexing expression */
+      nonconst_sampler_index->accept(this);
+      dst_reg temp(this, glsl_type::uint_type);
+      emit(ADD(temp, this->result, src_reg(sampler)))
+         ->force_writemask_all = true;
+      sampler_reg = src_reg(temp);
+   } else {
+      /* Single sampler, or constant array index; the indexing expression
+       * is just an immediate.
+       */
+      sampler_reg = src_reg(sampler);
+   }
 
    /* When tg4 is used with the degenerate ZERO/ONE swizzles, don't bother
     * emitting anything other than setting up the constant result.
@@ -2403,7 +2447,7 @@ vec4_visitor::visit(ir_texture *ir)
       sample_index_type = ir->lod_info.sample_index->type;
 
       if (brw->gen >= 7 && key->tex.compressed_multisample_layout_mask & (1<<sampler))
-         mcs = emit_mcs_fetch(ir, coordinate, sampler);
+         mcs = emit_mcs_fetch(ir, coordinate, sampler_reg);
       else
          mcs = src_reg(0u);
       break;
@@ -2458,14 +2502,14 @@ vec4_visitor::visit(ir_texture *ir)
     */
    inst->header_present =
       brw->gen < 5 || inst->texture_offset != 0 || ir->op == ir_tg4 ||
-      sampler >= 16;
+      is_high_sampler(brw, sampler_reg);
    inst->base_mrf = 2;
    inst->mlen = inst->header_present + 1; /* always at least one */
    inst->dst = dst_reg(this, ir->type);
    inst->dst.writemask = WRITEMASK_XYZW;
    inst->shadow_compare = ir->shadow_comparitor != NULL;
 
-   inst->src[1] = src_reg(sampler);
+   inst->src[1] = sampler_reg;
 
    /* MRF for the first parameter */
    int param_base = inst->base_mrf + inst->header_present;

@@ -526,7 +526,7 @@ public:
    void emit_unpack_half_2x16(dst_reg dst, src_reg src0);
 
    uint32_t gather_channel(ir_texture *ir, uint32_t sampler);
-   src_reg emit_mcs_fetch(ir_texture *ir, src_reg coordinate, uint32_t sampler);
+   src_reg emit_mcs_fetch(ir_texture *ir, src_reg coordinate, src_reg sampler);
    void emit_gen6_gather_wa(uint8_t wa, dst_reg dst);
    void swizzle_result(ir_texture *ir, src_reg orig_val, uint32_t sampler);
 
