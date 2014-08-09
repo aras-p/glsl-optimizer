@@ -2386,7 +2386,19 @@ void brw_adjust_sampler_state_pointer(struct brw_compile *p,
                  brw_imm_ud(16 * (sampler / 16) * sampler_state_size));
       }
    } else {
-      /* XXX: Non-const sampler array indexing case */
+      /* Non-const sampler array indexing case */
+      if (brw->gen < 8 && !brw->is_haswell) {
+         return;
+      }
+
+      struct brw_reg temp = vec1(retype(scratch, BRW_REGISTER_TYPE_UD));
+
+      brw_AND(p, temp, sampler_index, brw_imm_ud(0x0f0));
+      brw_SHL(p, temp, temp, brw_imm_ud(4));
+      brw_ADD(p,
+              get_element_ud(header, 3),
+              get_element_ud(brw_vec8_grf(0, 0), 3),
+              temp);
    }
 }
 
