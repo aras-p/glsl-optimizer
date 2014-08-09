@@ -483,7 +483,32 @@ brw_initialize_context_constants(struct brw_context *brw)
       ctx->Const.QuadsFollowProvokingVertexConvention = false;
 
    ctx->Const.NativeIntegers = true;
-   ctx->Const.UniformBooleanTrue = 1;
+
+   /* Regarding the CMP instruction, the Ivybridge PRM says:
+    *
+    *   "For each enabled channel 0b or 1b is assigned to the appropriate flag
+    *    bit and 0/all zeros or all ones (e.g, byte 0xFF, word 0xFFFF, DWord
+    *    0xFFFFFFFF) is assigned to dst."
+    *
+    * but PRMs for earlier generations say
+    *
+    *   "In dword format, one GRF may store up to 8 results. When the register
+    *    is used later as a vector of Booleans, as only LSB at each channel
+    *    contains meaning [sic] data, software should make sure all higher bits
+    *    are masked out (e.g. by 'and-ing' an [sic] 0x01 constant)."
+    *
+    * We select the representation of a true boolean uniform to match what the
+    * CMP instruction returns.
+    *
+    * The Sandybridge BSpec's description of the CMP instruction matches that
+    * of the Ivybridge PRM. (The description in the Sandybridge PRM is seems
+    * to have not been updated from Ironlake). Its CMP instruction behaves like
+    * Ivybridge and newer.
+    */
+   if (brw->gen >= 6)
+      ctx->Const.UniformBooleanTrue = ~0;
+   else
+      ctx->Const.UniformBooleanTrue = 1;
 
    /* From the gen4 PRM, volume 4 page 127:
     *

@@ -526,10 +526,11 @@ fs_visitor::visit(ir_expression *ir)
 
    switch (ir->operation) {
    case ir_unop_logic_not:
-      /* Note that BRW_OPCODE_NOT is not appropriate here, since it is
-       * ones complement of the whole register, not just bit 0.
-       */
-      emit(XOR(this->result, op[0], fs_reg(1)));
+      if (ctx->Const.UniformBooleanTrue != 1) {
+         emit(NOT(this->result, op[0]));
+      } else {
+         emit(XOR(this->result, op[0], fs_reg(1)));
+      }
       break;
    case ir_unop_neg:
       op[0].negate = !op[0].negate;
@@ -697,8 +698,10 @@ fs_visitor::visit(ir_expression *ir)
    case ir_binop_all_equal:
    case ir_binop_nequal:
    case ir_binop_any_nequal:
-      resolve_bool_comparison(ir->operands[0], &op[0]);
-      resolve_bool_comparison(ir->operands[1], &op[1]);
+      if (ctx->Const.UniformBooleanTrue == 1) {
+         resolve_bool_comparison(ir->operands[0], &op[0]);
+         resolve_bool_comparison(ir->operands[1], &op[1]);
+      }
 
       emit(CMP(this->result, op[0], op[1],
                brw_conditional_for_comparison(ir->operation)));
@@ -769,9 +772,16 @@ fs_visitor::visit(ir_expression *ir)
       emit(AND(this->result, op[0], fs_reg(1)));
       break;
    case ir_unop_b2f:
-      temp = fs_reg(this, glsl_type::int_type);
-      emit(AND(temp, op[0], fs_reg(1)));
-      emit(MOV(this->result, temp));
+      if (ctx->Const.UniformBooleanTrue != 1) {
+         op[0].type = BRW_REGISTER_TYPE_UD;
+         this->result.type = BRW_REGISTER_TYPE_UD;
+         emit(AND(this->result, op[0], fs_reg(0x3f800000u)));
+         this->result.type = BRW_REGISTER_TYPE_F;
+      } else {
+         temp = fs_reg(this, glsl_type::int_type);
+         emit(AND(temp, op[0], fs_reg(1)));
+         emit(MOV(this->result, temp));
+      }
       break;
 
    case ir_unop_f2b:
@@ -2317,8 +2327,10 @@ fs_visitor::emit_bool_to_cond_code(ir_rvalue *ir)
    case ir_binop_all_equal:
    case ir_binop_nequal:
    case ir_binop_any_nequal:
-      resolve_bool_comparison(expr->operands[0], &op[0]);
-      resolve_bool_comparison(expr->operands[1], &op[1]);
+      if (ctx->Const.UniformBooleanTrue == 1) {
+         resolve_bool_comparison(expr->operands[0], &op[0]);
+         resolve_bool_comparison(expr->operands[1], &op[1]);
+      }
 
       emit(CMP(reg_null_d, op[0], op[1],
                brw_conditional_for_comparison(expr->operation)));
@@ -2379,8 +2391,10 @@ fs_visitor::emit_if_gen6(ir_if *ir)
       case ir_binop_all_equal:
       case ir_binop_nequal:
       case ir_binop_any_nequal:
-	 resolve_bool_comparison(expr->operands[0], &op[0]);
-	 resolve_bool_comparison(expr->operands[1], &op[1]);
+         if (ctx->Const.UniformBooleanTrue == 1) {
+            resolve_bool_comparison(expr->operands[0], &op[0]);
+            resolve_bool_comparison(expr->operands[1], &op[1]);
+         }
 
 	 emit(IF(op[0], op[1],
                  brw_conditional_for_comparison(expr->operation)));
@@ -3220,6 +3234,8 @@ fs_visitor::resolve_ud_negate(fs_reg *reg)
 void
 fs_visitor::resolve_bool_comparison(ir_rvalue *rvalue, fs_reg *reg)
 {
+   assert(ctx->Const.UniformBooleanTrue == 1);
+
    if (rvalue->type != glsl_type::bool_type)
       return;
 

@@ -1190,11 +1190,11 @@ fs_visitor::emit_frontfacing_interpolation(ir_variable *ir)
 
    /* The frontfacing comes in as a bit in the thread payload. */
    if (brw->gen >= 6) {
-      emit(BRW_OPCODE_ASR, *reg,
+      emit(BRW_OPCODE_SHL, *reg,
 	   fs_reg(retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_D)),
-	   fs_reg(15));
+           fs_reg(16));
       emit(BRW_OPCODE_NOT, *reg, *reg);
-      emit(BRW_OPCODE_AND, *reg, *reg, fs_reg(1));
+      emit(BRW_OPCODE_ASR, *reg, *reg, fs_reg(31));
    } else {
       struct brw_reg r1_6ud = retype(brw_vec1_grf(1, 6), BRW_REGISTER_TYPE_UD);
       /* bit 31 is "primitive is back face", so checking < (1 << 31) gives

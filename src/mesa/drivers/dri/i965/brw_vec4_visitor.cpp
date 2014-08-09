@@ -1281,10 +1281,11 @@ vec4_visitor::visit(ir_expression *ir)
 
    switch (ir->operation) {
    case ir_unop_logic_not:
-      /* Note that BRW_OPCODE_NOT is not appropriate here, since it is
-       * ones complement of the whole register, not just bit 0.
-       */
-      emit(XOR(result_dst, op[0], src_reg(1)));
+      if (ctx->Const.UniformBooleanTrue != 1) {
+         emit(NOT(result_dst, op[0]));
+      } else {
+         emit(XOR(result_dst, op[0], src_reg(1)));
+      }
       break;
    case ir_unop_neg:
       op[0].negate = !op[0].negate;
@@ -1468,7 +1469,9 @@ vec4_visitor::visit(ir_expression *ir)
    case ir_binop_nequal: {
       emit(CMP(result_dst, op[0], op[1],
 	       brw_conditional_for_comparison(ir->operation)));
-      emit(AND(result_dst, result_src, src_reg(0x1)));
+      if (ctx->Const.UniformBooleanTrue == 1) {
+         emit(AND(result_dst, result_src, src_reg(1)));
+      }
       break;
    }
 
@@ -1478,11 +1481,13 @@ vec4_visitor::visit(ir_expression *ir)
 	  ir->operands[1]->type->is_vector()) {
 	 emit(CMP(dst_null_d(), op[0], op[1], BRW_CONDITIONAL_Z));
 	 emit(MOV(result_dst, src_reg(0)));
-	 inst = emit(MOV(result_dst, src_reg(1)));
+         inst = emit(MOV(result_dst, src_reg(ctx->Const.UniformBooleanTrue)));
 	 inst->predicate = BRW_PREDICATE_ALIGN16_ALL4H;
       } else {
 	 emit(CMP(result_dst, op[0], op[1], BRW_CONDITIONAL_Z));
-	 emit(AND(result_dst, result_src, src_reg(0x1)));
+         if (ctx->Const.UniformBooleanTrue == 1) {
+            emit(AND(result_dst, result_src, src_reg(1)));
+         }
       }
       break;
    case ir_binop_any_nequal:
@@ -1492,11 +1497,13 @@ vec4_visitor::visit(ir_expression *ir)
 	 emit(CMP(dst_null_d(), op[0], op[1], BRW_CONDITIONAL_NZ));
 
 	 emit(MOV(result_dst, src_reg(0)));
-	 inst = emit(MOV(result_dst, src_reg(1)));
+         inst = emit(MOV(result_dst, src_reg(ctx->Const.UniformBooleanTrue)));
 	 inst->predicate = BRW_PREDICATE_ALIGN16_ANY4H;
       } else {
 	 emit(CMP(result_dst, op[0], op[1], BRW_CONDITIONAL_NZ));
-	 emit(AND(result_dst, result_src, src_reg(0x1)));
+         if (ctx->Const.UniformBooleanTrue == 1) {
+            emit(AND(result_dst, result_src, src_reg(1)));
+         }
       }
       break;
 
@@ -1504,7 +1511,7 @@ vec4_visitor::visit(ir_expression *ir)
       emit(CMP(dst_null_d(), op[0], src_reg(0), BRW_CONDITIONAL_NZ));
       emit(MOV(result_dst, src_reg(0)));
 
-      inst = emit(MOV(result_dst, src_reg(1)));
+      inst = emit(MOV(result_dst, src_reg(ctx->Const.UniformBooleanTrue)));
       inst->predicate = BRW_PREDICATE_ALIGN16_ANY4H;
       break;
 
@@ -1553,18 +1560,34 @@ vec4_visitor::visit(ir_expression *ir)
    case ir_unop_i2u:
    case ir_unop_u2i:
    case ir_unop_u2f:
-   case ir_unop_b2f:
-   case ir_unop_b2i:
    case ir_unop_f2i:
    case ir_unop_f2u:
       emit(MOV(result_dst, op[0]));
       break;
-   case ir_unop_f2b:
-   case ir_unop_i2b: {
-      emit(CMP(result_dst, op[0], src_reg(0.0f), BRW_CONDITIONAL_NZ));
-      emit(AND(result_dst, result_src, src_reg(1)));
+   case ir_unop_b2i:
+      if (ctx->Const.UniformBooleanTrue != 1) {
+         emit(AND(result_dst, op[0], src_reg(1)));
+      } else {
+         emit(MOV(result_dst, op[0]));
+      }
       break;
-   }
+   case ir_unop_b2f:
+      if (ctx->Const.UniformBooleanTrue != 1) {
+         op[0].type = BRW_REGISTER_TYPE_UD;
+         result_dst.type = BRW_REGISTER_TYPE_UD;
+         emit(AND(result_dst, op[0], src_reg(0x3f800000u)));
+         result_dst.type = BRW_REGISTER_TYPE_F;
+      } else {
+         emit(MOV(result_dst, op[0]));
+      }
+      break;
+   case ir_unop_f2b:
+   case ir_unop_i2b:
+      emit(CMP(result_dst, op[0], src_reg(0.0f), BRW_CONDITIONAL_NZ));
+      if (ctx->Const.UniformBooleanTrue == 1) {
+         emit(AND(result_dst, result_src, src_reg(1)));
+      }
+      break;
 
    case ir_unop_trunc:
       emit(RNDZ(result_dst, op[0]));
@@ -1703,11 +1726,15 @@ vec4_visitor::visit(ir_expression *ir)
                                             const_offset % 16 / 4,
                                             const_offset % 16 / 4);
 
-      /* UBO bools are any nonzero int.  We store bools as either 0 or 1. */
+      /* UBO bools are any nonzero int.  We need to convert them to use the
+       * value of true stored in ctx->Const.UniformBooleanTrue.
+       */
       if (ir->type->base_type == GLSL_TYPE_BOOL) {
          emit(CMP(result_dst, packed_consts, src_reg(0u),
                   BRW_CONDITIONAL_NZ));
-         emit(AND(result_dst, result, src_reg(0x1)));
+         if (ctx->Const.UniformBooleanTrue == 1) {
+            emit(AND(result_dst, result, src_reg(1)));
+         }
       } else {
          emit(MOV(result_dst, packed_consts));
       }
