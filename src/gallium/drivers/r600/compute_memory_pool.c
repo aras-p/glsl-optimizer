@@ -76,7 +76,7 @@ static void compute_memory_pool_init(struct compute_memory_pool * pool,
 	unsigned initial_size_in_dw)
 {
 
-	COMPUTE_DBG(pool->screen, "* compute_memory_pool_init() initial_size_in_dw = %ld\n",
+	COMPUTE_DBG(pool->screen, "* compute_memory_pool_init() initial_size_in_dw = %u\n",
 		initial_size_in_dw);
 
 	pool->size_in_dw = initial_size_in_dw;
@@ -283,8 +283,8 @@ int compute_memory_finalize_pending(struct compute_memory_pool* pool,
 	COMPUTE_DBG(pool->screen, "* compute_memory_finalize_pending()\n");
 
 	LIST_FOR_EACH_ENTRY(item, pool->item_list, link) {
-		COMPUTE_DBG(pool->screen, "  + list: offset = %i id = %i size = %i "
-			"(%i bytes)\n",item->start_in_dw, item->id,
+		COMPUTE_DBG(pool->screen, "  + list: offset = %"PRIi64" id = %"PRIi64" size = %"PRIi64" "
+			"(%"PRIi64" bytes)\n", item->start_in_dw, item->id,
 			item->size_in_dw, item->size_in_dw * 4);
 	}
 
@@ -383,8 +383,8 @@ int compute_memory_promote_item(struct compute_memory_pool *pool,
 	struct pipe_box box;
 
 	COMPUTE_DBG(pool->screen, "* compute_memory_promote_item()\n"
-			"  + Promoting Item: %i , starting at: %u (%u bytes) "
-			"size: %u (%u bytes)\n\t\t\tnew start: %u (%u bytes)\n",
+			"  + Promoting Item: %"PRIi64" , starting at: %"PRIi64" (%"PRIi64" bytes) "
+			"size: %"PRIi64" (%"PRIi64" bytes)\n\t\t\tnew start: %"PRIi64" (%"PRIi64" bytes)\n",
 			item->id, item->start_in_dw, item->start_in_dw * 4,
 			item->size_in_dw, item->size_in_dw * 4,
 			start_in_dw, start_in_dw * 4);
@@ -430,8 +430,8 @@ void compute_memory_demote_item(struct compute_memory_pool *pool,
 	struct pipe_box box;
 
 	COMPUTE_DBG(pool->screen, "* compute_memory_demote_item()\n"
-			"  + Demoting Item: %i, starting at: %u (%u bytes) "
-			"size: %u (%u bytes)\n", item->id, item->start_in_dw,
+			"  + Demoting Item: %"PRIi64", starting at: %"PRIi64" (%"PRIi64" bytes) "
+			"size: %"PRIi64" (%"PRIi64" bytes)\n", item->id, item->start_in_dw,
 			item->start_in_dw * 4, item->size_in_dw, item->size_in_dw * 4);
 
 	/* First, we remove the item from the item_list */
@@ -489,7 +489,7 @@ void compute_memory_move_item(struct compute_memory_pool *pool,
 	struct compute_memory_item *prev;
 
 	COMPUTE_DBG(pool->screen, "* compute_memory_move_item()\n"
-			"  + Moving item %i from %u (%u bytes) to %u (%u bytes)\n",
+			"  + Moving item %"PRIi64" from %"PRIi64" (%"PRIi64" bytes) to %"PRIu64" (%"PRIu64" bytes)\n",
 			item->id, item->start_in_dw, item->start_in_dw * 4,
 			new_start_in_dw, new_start_in_dw * 4);
 
@@ -638,7 +638,7 @@ struct compute_memory_item* compute_memory_alloc(
 
 	list_addtail(&new_item->link, pool->unallocated_list);
 
-	COMPUTE_DBG(pool->screen, "  + Adding item %p id = %u size = %u (%u bytes)\n",
+	COMPUTE_DBG(pool->screen, "  + Adding item %p id = %"PRIi64" size = %"PRIi64" (%"PRIi64" bytes)\n",
 			new_item, new_item->id, new_item->size_in_dw,
 			new_item->size_in_dw * 4);
 	return new_item;

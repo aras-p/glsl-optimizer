@@ -49,6 +49,7 @@
 #ifdef HAVE_OPENCL
 #include "radeon_llvm_util.h"
 #endif
+#include <inttypes.h>
 
 /**
 RAT0 is for global binding write
@@ -991,7 +992,7 @@ void *r600_compute_global_transfer_map(
 			"width = %u, height = %u, depth = %u)\n", level, usage,
 			box->x, box->y, box->z, box->width, box->height,
 			box->depth);
-	COMPUTE_DBG(rctx->screen, "Buffer id = %u offset = "
+	COMPUTE_DBG(rctx->screen, "Buffer id = %"PRIi64" offset = "
 		"%u (box.x)\n", item->id, box->x);
 
 
