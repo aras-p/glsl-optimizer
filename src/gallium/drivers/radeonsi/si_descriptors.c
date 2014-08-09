@@ -648,25 +648,11 @@ void si_update_vertex_buffers(struct si_context *sctx)
 void si_upload_const_buffer(struct si_context *sctx, struct r600_resource **rbuffer,
 			    const uint8_t *ptr, unsigned size, uint32_t *const_offset)
 {
-	if (SI_BIG_ENDIAN) {
-		uint32_t *tmpPtr;
-		unsigned i;
+	void *tmp;
 
-		if (!(tmpPtr = malloc(size))) {
-			R600_ERR("Failed to allocate BE swap buffer.\n");
-			return;
-		}
-
-		util_memcpy_cpu_to_le32(tmpPtr, ptr, size);
-
-		u_upload_data(sctx->b.uploader, 0, size, tmpPtr, const_offset,
-				(struct pipe_resource**)rbuffer);
-
-		free(tmpPtr);
-	} else {
-		u_upload_data(sctx->b.uploader, 0, size, ptr, const_offset,
-					(struct pipe_resource**)rbuffer);
-	}
+	u_upload_alloc(sctx->b.uploader, 0, size, const_offset,
+		       (struct pipe_resource**)rbuffer, &tmp);
+	util_memcpy_cpu_to_le32(tmp, ptr, size);
 }
 
 static void si_set_constant_buffer(struct pipe_context *ctx, uint shader, uint slot,
