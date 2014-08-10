@@ -657,6 +657,9 @@ void st_init_extensions(struct pipe_screen *screen,
       consts->ForceGLSLVersion = options->force_glsl_version;
    }
 
+   if (glsl_feature_level >= 400)
+      extensions->ARB_gpu_shader5 = GL_TRUE;
+
    /* This extension needs full OpenGL 3.2, but we don't know if that's
     * supported at this point. Only check the GLSL version. */
    if (consts->GLSLVersion >= 150 &&
