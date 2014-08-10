@@ -329,4 +329,7 @@ intelInitExtensions(struct gl_context *ctx)
 
    if (brw->gen >= 7)
       ctx->Extensions.ARB_shader_atomic_counters = true;
+
+   if (brw->gen == 7)
+      ctx->Extensions.ARB_gpu_shader5 = true;
 }
