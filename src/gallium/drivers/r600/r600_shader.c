@@ -1019,6 +1019,7 @@ static int tgsi_split_constant(struct r600_shader_ctx *ctx)
 				alu.src[0].sel = ctx->src[i].sel;
 				alu.src[0].chan = k;
 				alu.src[0].rel = ctx->src[i].rel;
+				alu.src[0].kc_bank = ctx->src[i].kc_bank;
 				alu.dst.sel = treg;
 				alu.dst.chan = k;
 				alu.dst.write = 1;
