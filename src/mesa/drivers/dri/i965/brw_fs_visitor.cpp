@@ -1434,10 +1434,19 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    return inst;
 }
 
+static bool
+is_high_sampler(struct brw_context *brw, fs_reg sampler)
+{
+   if (brw->gen < 8 && !brw->is_haswell)
+      return false;
+
+   return sampler.file != IMM || sampler.fixed_hw_reg.dw1.ud >= 16;
+}
+
 fs_inst *
 fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
                               fs_reg shadow_c, fs_reg lod, fs_reg lod2,
-                              fs_reg sample_index, fs_reg mcs, uint32_t sampler)
+                              fs_reg sample_index, fs_reg mcs, fs_reg sampler)
 {
    int reg_width = dispatch_width / 8;
    bool header_present = false;
@@ -1448,7 +1457,8 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    }
    int length = 0;
 
-   if (ir->op == ir_tg4 || (ir->offset && ir->op != ir_txf) || sampler >= 16) {
+   if (ir->op == ir_tg4 || (ir->offset && ir->op != ir_txf) ||
+       is_high_sampler(brw, sampler)) {
       /* For general texture offsets (no txf workaround), we need a header to
        * put them in.  Note that for SIMD16 we're making space for two actual
        * hardware registers here, so the emit will have to fix up for this.
@@ -1623,7 +1633,7 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    default:
       unreachable("not reached");
    }
-   fs_inst *inst = emit(opcode, dst, src_payload, fs_reg(sampler));
+   fs_inst *inst = emit(opcode, dst, src_payload, sampler);
    inst->base_mrf = -1;
    if (reg_width == 2)
       inst->mlen = length * reg_width - header_present;
@@ -1756,7 +1766,7 @@ fs_visitor::rescale_texcoord(ir_texture *ir, fs_reg coordinate,
 
 /* Sample from the MCS surface attached to this multisample texture. */
 fs_reg
-fs_visitor::emit_mcs_fetch(ir_texture *ir, fs_reg coordinate, uint32_t sampler)
+fs_visitor::emit_mcs_fetch(ir_texture *ir, fs_reg coordinate, fs_reg sampler)
 {
    int reg_width = dispatch_width / 8;
    int length = ir->coordinate->type->vector_elements;
@@ -1774,7 +1784,7 @@ fs_visitor::emit_mcs_fetch(ir_texture *ir, fs_reg coordinate, uint32_t sampler)
 
    emit(LOAD_PAYLOAD(payload, sources, length));
 
-   fs_inst *inst = emit(SHADER_OPCODE_TXF_MCS, dest, payload, fs_reg(sampler));
+   fs_inst *inst = emit(SHADER_OPCODE_TXF_MCS, dest, payload, sampler);
    inst->base_mrf = -1;
    inst->mlen = length * reg_width;
    inst->header_present = false;
@@ -1792,6 +1802,42 @@ fs_visitor::visit(ir_texture *ir)
 
    uint32_t sampler =
       _mesa_get_sampler_uniform_value(ir->sampler, shader_prog, prog);
+
+   ir_rvalue *nonconst_sampler_index =
+      _mesa_get_sampler_array_nonconst_index(ir->sampler);
+
+   /* Handle non-constant sampler array indexing */
+   fs_reg sampler_reg;
+   if (nonconst_sampler_index) {
+      /* The highest sampler which may be used by this operation is
+       * the last element of the array. Mark it here, because the generator
+       * doesn't have enough information to determine the bound.
+       */
+      uint32_t array_size = ir->sampler->as_dereference_array()
+         ->array->type->array_size();
+
+      uint32_t max_used = sampler + array_size - 1;
+      if (ir->op == ir_tg4 && brw->gen < 8) {
+         max_used += prog_data->base.binding_table.gather_texture_start;
+      } else {
+         max_used += prog_data->base.binding_table.texture_start;
+      }
+
+      brw_mark_surface_used(&prog_data->base, max_used);
+
+      /* Emit code to evaluate the actual indexing expression */
+      nonconst_sampler_index->accept(this);
+      fs_reg temp(this, glsl_type::uint_type);
+      emit(ADD(temp, this->result, fs_reg(sampler)))
+            ->force_writemask_all = true;
+      sampler_reg = temp;
+   } else {
+      /* Single sampler, or constant array index; the indexing expression
+       * is just an immediate.
+       */
+      sampler_reg = fs_reg(sampler);
+   }
+
    /* FINISHME: We're failing to recompile our programs when the sampler is
     * updated.  This only matters for the texture rectangle scale parameters
     * (pre-gen6, or gen6+ with GL_CLAMP).
@@ -1872,7 +1918,7 @@ fs_visitor::visit(ir_texture *ir)
       sample_index = this->result;
 
       if (brw->gen >= 7 && key->tex.compressed_multisample_layout_mask & (1<<sampler))
-         mcs = emit_mcs_fetch(ir, coordinate, sampler);
+         mcs = emit_mcs_fetch(ir, coordinate, sampler_reg);
       else
          mcs = fs_reg(0u);
       break;
@@ -1887,7 +1933,7 @@ fs_visitor::visit(ir_texture *ir)
 
    if (brw->gen >= 7) {
       inst = emit_texture_gen7(ir, dst, coordinate, shadow_comparitor,
-                               lod, lod2, sample_index, mcs, sampler);
+                               lod, lod2, sample_index, mcs, sampler_reg);
    } else if (brw->gen >= 5) {
       inst = emit_texture_gen5(ir, dst, coordinate, shadow_comparitor,
                                lod, lod2, sample_index, sampler);

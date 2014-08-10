@@ -380,8 +380,8 @@ public:
                               fs_reg sample_index, uint32_t sampler);
    fs_inst *emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
                               fs_reg shadow_comp, fs_reg lod, fs_reg lod2,
-                              fs_reg sample_index, fs_reg mcs, uint32_t sampler);
-   fs_reg emit_mcs_fetch(ir_texture *ir, fs_reg coordinate, uint32_t sampler);
+                              fs_reg sample_index, fs_reg mcs, fs_reg sampler);
+   fs_reg emit_mcs_fetch(ir_texture *ir, fs_reg coordinate, fs_reg sampler);
    void emit_gen6_gather_wa(uint8_t wa, fs_reg dst);
    fs_reg fix_math_operand(fs_reg src);
    fs_inst *emit_math(enum opcode op, fs_reg dst, fs_reg src0);
