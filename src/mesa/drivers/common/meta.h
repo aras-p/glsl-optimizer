@@ -511,6 +511,9 @@ _mesa_meta_DrawTex(struct gl_context *ctx, GLfloat x, GLfloat y, GLfloat z,
                    GLfloat width, GLfloat height);
 
 /* meta-internal functions */
+void
+_mesa_meta_drawbuffers_from_bitfield(GLbitfield bits);
+
 GLuint
 _mesa_meta_compile_shader_with_debug(struct gl_context *ctx, GLenum target,
                                      const GLcharARB *source);

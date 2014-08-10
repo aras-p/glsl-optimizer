@@ -1653,8 +1653,8 @@ meta_glsl_clear_cleanup(struct clear_state *clear)
  * Since the bitfield has no associated order, the assignment of draw buffer
  * indices to color attachment indices is rather arbitrary.
  */
-static void
-drawbuffers_from_bitfield(GLbitfield bits)
+void
+_mesa_meta_drawbuffers_from_bitfield(GLbitfield bits)
 {
    GLenum enums[MAX_DRAW_BUFFERS];
    int i = 0;
@@ -1767,7 +1767,7 @@ meta_clear(struct gl_context *ctx, GLbitfield buffers, bool glsl)
    /* GL_COLOR_BUFFER_BIT */
    if (buffers & BUFFER_BITS_COLOR) {
       /* Only draw to the buffers we were asked to clear. */
-      drawbuffers_from_bitfield(buffers & BUFFER_BITS_COLOR);
+      _mesa_meta_drawbuffers_from_bitfield(buffers & BUFFER_BITS_COLOR);
 
       /* leave colormask state as-is */
 
