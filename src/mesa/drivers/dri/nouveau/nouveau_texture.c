@@ -345,16 +345,19 @@ relayout_texture(struct gl_context *ctx, struct gl_texture_object *t)
 			height = minify(height, 1);
 		}
 
-		/* Get new storage. */
-		size = align(offset, 64);
+		if (t->BaseLevel <= last) {
+			/* Get new storage. */
+			size = align(offset, 64);
+			assert(size);
 
-		ret = nouveau_bo_new(context_dev(ctx), NOUVEAU_BO_MAP |
-				     NOUVEAU_BO_GART | NOUVEAU_BO_VRAM,
-				     0, size, NULL, &ss[last].bo);
-		assert(!ret);
+			ret = nouveau_bo_new(context_dev(ctx), NOUVEAU_BO_MAP |
+					     NOUVEAU_BO_GART | NOUVEAU_BO_VRAM,
+					     0, size, NULL, &ss[last].bo);
+			assert(!ret);
 
-		for (i = t->BaseLevel; i < last; i++)
-			nouveau_bo_ref(ss[last].bo, &ss[i].bo);
+			for (i = t->BaseLevel; i < last; i++)
+				nouveau_bo_ref(ss[last].bo, &ss[i].bo);
+		}
 	}
 }
 
