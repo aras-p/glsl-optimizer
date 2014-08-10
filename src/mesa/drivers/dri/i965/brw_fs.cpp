@@ -1188,13 +1188,22 @@ fs_visitor::emit_frontfacing_interpolation(ir_variable *ir)
 {
    fs_reg *reg = new(this->mem_ctx) fs_reg(this, ir->type);
 
-   /* The frontfacing comes in as a bit in the thread payload. */
    if (brw->gen >= 6) {
-      emit(BRW_OPCODE_SHL, *reg,
-	   fs_reg(retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_D)),
-           fs_reg(16));
-      emit(BRW_OPCODE_NOT, *reg, *reg);
-      emit(BRW_OPCODE_ASR, *reg, *reg, fs_reg(31));
+      /* Bit 15 of g0.0 is 0 if the polygon is front facing. We want to create
+       * a boolean result from this (~0/true or 0/false).
+       *
+       * We can use the fact that bit 15 is the MSB of g0.0:W to accomplish
+       * this task in only one instruction:
+       *    - a negation source modifier will flip the bit; and
+       *    - a W -> D type conversion will sign extend the bit into the high
+       *      word of the destination.
+       *
+       * An ASR 15 fills the low word of the destination.
+       */
+      fs_reg g0 = fs_reg(retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_W));
+      g0.negate = true;
+
+      emit(ASR(*reg, g0, fs_reg(15)));
    } else {
       struct brw_reg r1_6ud = retype(brw_vec1_grf(1, 6), BRW_REGISTER_TYPE_UD);
       /* bit 31 is "primitive is back face", so checking < (1 << 31) gives
