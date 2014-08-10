@@ -1265,10 +1265,15 @@ brw_IF(struct brw_compile *p, unsigned execute_size)
       brw_inst_set_gen6_jump_count(brw, insn, 0);
       brw_set_src0(p, insn, vec1(retype(brw_null_reg(), BRW_REGISTER_TYPE_D)));
       brw_set_src1(p, insn, vec1(retype(brw_null_reg(), BRW_REGISTER_TYPE_D)));
-   } else {
+   } else if (brw->gen == 7) {
       brw_set_dest(p, insn, vec1(retype(brw_null_reg(), BRW_REGISTER_TYPE_D)));
       brw_set_src0(p, insn, vec1(retype(brw_null_reg(), BRW_REGISTER_TYPE_D)));
       brw_set_src1(p, insn, brw_imm_ud(0));
+      brw_inst_set_jip(brw, insn, 0);
+      brw_inst_set_uip(brw, insn, 0);
+   } else {
+      brw_set_dest(p, insn, vec1(retype(brw_null_reg(), BRW_REGISTER_TYPE_D)));
+      brw_set_src0(p, insn, brw_imm_d(0));
       brw_inst_set_jip(brw, insn, 0);
       brw_inst_set_uip(brw, insn, 0);
    }
@@ -1461,10 +1466,15 @@ brw_ELSE(struct brw_compile *p)
       brw_inst_set_gen6_jump_count(brw, insn, 0);
       brw_set_src0(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
       brw_set_src1(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
-   } else {
+   } else if (brw->gen == 7) {
       brw_set_dest(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
       brw_set_src0(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
       brw_set_src1(p, insn, brw_imm_ud(0));
+      brw_inst_set_jip(brw, insn, 0);
+      brw_inst_set_uip(brw, insn, 0);
+   } else {
+      brw_set_dest(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
+      brw_set_src0(p, insn, brw_imm_d(0));
       brw_inst_set_jip(brw, insn, 0);
       brw_inst_set_uip(brw, insn, 0);
    }
@@ -1533,10 +1543,12 @@ brw_ENDIF(struct brw_compile *p)
       brw_set_dest(p, insn, brw_imm_w(0));
       brw_set_src0(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
       brw_set_src1(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
-   } else {
+   } else if (brw->gen == 7) {
       brw_set_dest(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
       brw_set_src0(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
       brw_set_src1(p, insn, brw_imm_ud(0));
+   } else {
+      brw_set_src0(p, insn, brw_imm_d(0));
    }
 
    brw_inst_set_qtr_control(brw, insn, BRW_COMPRESSION_NONE);
@@ -1563,7 +1575,10 @@ brw_BREAK(struct brw_compile *p)
    brw_inst *insn;
 
    insn = next_insn(p, BRW_OPCODE_BREAK);
-   if (brw->gen >= 6) {
+   if (brw->gen >= 8) {
+      brw_set_dest(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
+      brw_set_src0(p, insn, brw_imm_d(0x0));
+   } else if (brw->gen >= 6) {
       brw_set_dest(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
       brw_set_src0(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
       brw_set_src1(p, insn, brw_imm_d(0x0));
@@ -1589,8 +1604,12 @@ brw_CONT(struct brw_compile *p)
 
    insn = next_insn(p, BRW_OPCODE_CONTINUE);
    brw_set_dest(p, insn, brw_ip_reg());
-   brw_set_src0(p, insn, brw_ip_reg());
-   brw_set_src1(p, insn, brw_imm_d(0x0));
+   if (brw->gen >= 8) {
+      brw_set_src0(p, insn, brw_imm_d(0x0));
+   } else {
+      brw_set_src0(p, insn, brw_ip_reg());
+      brw_set_src1(p, insn, brw_imm_d(0x0));
+   }
 
    if (brw->gen < 6) {
       brw_inst_set_gen4_pop_count(brw, insn,
@@ -1610,8 +1629,12 @@ gen6_HALT(struct brw_compile *p)
 
    insn = next_insn(p, BRW_OPCODE_HALT);
    brw_set_dest(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
-   brw_set_src0(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
-   brw_set_src1(p, insn, brw_imm_d(0x0)); /* UIP and JIP, updated later. */
+   if (brw->gen >= 8) {
+      brw_set_src0(p, insn, brw_imm_d(0x0));
+   } else {
+      brw_set_src0(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
+      brw_set_src1(p, insn, brw_imm_d(0x0)); /* UIP and JIP, updated later. */
+   }
 
    if (p->compressed) {
       brw_inst_set_exec_size(brw, insn, BRW_EXECUTE_16);
@@ -1708,7 +1731,11 @@ brw_WHILE(struct brw_compile *p)
       insn = next_insn(p, BRW_OPCODE_WHILE);
       do_insn = get_inner_do_insn(p);
 
-      if (brw->gen == 7) {
+      if (brw->gen >= 8) {
+         brw_set_dest(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
+         brw_set_src0(p, insn, brw_imm_d(0));
+         brw_inst_set_jip(brw, insn, br * (do_insn - insn));
+      } else if (brw->gen == 7) {
          brw_set_dest(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
          brw_set_src0(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
          brw_set_src1(p, insn, brw_imm_ud(0));
