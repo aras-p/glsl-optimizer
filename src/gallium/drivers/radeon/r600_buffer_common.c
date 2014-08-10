@@ -171,6 +171,8 @@ bool r600_init_resource(struct r600_common_screen *rscreen,
 
 	if (rscreen->info.r600_virtual_address)
 		res->gpu_address = rscreen->ws->buffer_get_virtual_address(res->cs_buf);
+	else
+		res->gpu_address = 0;
 
 	pb_reference(&old_buf, NULL);
 
