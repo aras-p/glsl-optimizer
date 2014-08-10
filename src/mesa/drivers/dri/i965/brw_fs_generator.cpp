@@ -154,6 +154,7 @@ fs_generator::generate_fb_write(fs_inst *inst)
       brw_set_default_mask_control(p, BRW_MASK_DISABLE);
       brw_set_default_predicate_control(p, BRW_PREDICATE_NONE);
       brw_set_default_compression_control(p, BRW_COMPRESSION_NONE);
+      brw_set_default_flag_reg(p, 0, 0);
 
       /* On HSW, the GPU will use the predicate on SENDC, unless the header is
        * present.
