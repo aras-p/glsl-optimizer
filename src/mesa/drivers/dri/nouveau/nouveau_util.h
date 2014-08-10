@@ -31,7 +31,7 @@
 #include "main/colormac.h"
 
 static inline unsigned
-pack_rgba_i(mesa_format f, uint8_t c[])
+pack_rgba_i(mesa_format f, const uint8_t c[])
 {
 	switch (f) {
 	case MESA_FORMAT_B8G8R8A8_UNORM:
@@ -69,7 +69,7 @@ pack_zs_i(mesa_format f, uint32_t z, uint8_t s)
 }
 
 static inline unsigned
-pack_rgba_f(mesa_format f, float c[])
+pack_rgba_f(mesa_format f, const float c[])
 {
 	return pack_rgba_i(f, (uint8_t []) {
 			   FLOAT_TO_UBYTE(c[RCOMP]),
@@ -79,7 +79,7 @@ pack_rgba_f(mesa_format f, float c[])
 }
 
 static inline unsigned
-pack_rgba_clamp_f(mesa_format f, float c[])
+pack_rgba_clamp_f(mesa_format f, const float c[])
 {
 	GLubyte bytes[4];
 	_mesa_unclamped_float_rgba_to_ubyte(bytes, c);
@@ -90,6 +90,15 @@ static inline unsigned
 pack_zs_f(mesa_format f, float z, uint8_t s)
 {
 	return pack_zs_i(f, FLOAT_TO_UINT(z), s);
+}
+
+static inline unsigned
+pack_la_clamp_f(mesa_format f, float l, float a)
+{
+	GLubyte lb, ab;
+	UNCLAMPED_FLOAT_TO_UBYTE(lb, l);
+	UNCLAMPED_FLOAT_TO_UBYTE(ab, a);
+	return pack_rgba_i(f, (uint8_t []) { lb, lb, lb, ab });
 }
 
 /* Integer base-2 logarithm, rounded towards zero. */

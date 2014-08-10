@@ -114,8 +114,16 @@ nouveau_clear(struct gl_context *ctx, GLbitfield buffers)
 			fb->Attachment[i].Renderbuffer)->surface;
 
 		if (buf & BUFFER_BITS_COLOR) {
+			const float *color = ctx->Color.ClearColor.f;
+
+			if (fb->Attachment[i].Renderbuffer->_BaseFormat ==
+			    GL_LUMINANCE_ALPHA)
+				value = pack_la_clamp_f(
+						s->format, color[0], color[3]);
+			else
+				value = pack_rgba_clamp_f(s->format, color);
+
 			mask = pack_rgba_i(s->format, ctx->Color.ColorMask[0]);
-			value = pack_rgba_clamp_f(s->format, ctx->Color.ClearColor.f);
 
 			if (mask)
 				context_drv(ctx)->surface_fill(
