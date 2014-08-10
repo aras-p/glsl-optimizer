@@ -94,18 +94,18 @@ GL 4.0, GLSL 4.00:
 
   GL_ARB_draw_buffers_blend                            DONE (i965, nv50, nvc0, r600, radeonsi, softpipe)
   GL_ARB_draw_indirect                                 DONE (i965, nvc0, radeonsi, softpipe, llvmpipe)
-  GL_ARB_gpu_shader5                                   DONE (nvc0)
+  GL_ARB_gpu_shader5                                   DONE (i965, nvc0)
   - 'precise' qualifier                                DONE
   - Dynamically uniform sampler array indices          DONE ()
-  - Dynamically uniform UBO array indices              DONE (i965)
+  - Dynamically uniform UBO array indices              DONE ()
   - Implicit signed -> unsigned conversions            DONE
-  - Fused multiply-add                                 DONE (i965)
-  - Packing/bitfield/conversion functions              DONE (i965, r600)
-  - Enhanced textureGather                             DONE (i965, r600, radeonsi)
-  - Geometry shader instancing                         DONE (i965)
-  - Geometry shader multiple streams                   DONE (i965)
-  - Enhanced per-sample shading                        DONE (i965, r600)
-  - Interpolation functions                            DONE (i965)
+  - Fused multiply-add                                 DONE ()
+  - Packing/bitfield/conversion functions              DONE (r600)
+  - Enhanced textureGather                             DONE (r600, radeonsi)
+  - Geometry shader instancing                         DONE ()
+  - Geometry shader multiple streams                   DONE ()
+  - Enhanced per-sample shading                        DONE (r600)
+  - Interpolation functions                            DONE ()
   - New overload resolution rules                      DONE
   GL_ARB_gpu_shader_fp64                               started (Dave)
   GL_ARB_sample_shading                                DONE (i965, nv50, nvc0, radeonsi)
