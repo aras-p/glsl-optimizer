@@ -1205,12 +1205,23 @@ fs_visitor::emit_frontfacing_interpolation(ir_variable *ir)
 
       emit(ASR(*reg, g0, fs_reg(15)));
    } else {
-      struct brw_reg r1_6ud = retype(brw_vec1_grf(1, 6), BRW_REGISTER_TYPE_UD);
-      /* bit 31 is "primitive is back face", so checking < (1 << 31) gives
-       * us front face
+      /* Bit 31 of g1.6 is 0 if the polygon is front facing. We want to create
+       * a boolean result from this (1/true or 0/false).
+       *
+       * Like in the above case, since the bit is the MSB of g1.6:UD we can use
+       * the negation source modifier to flip it. Unfortunately the SHR
+       * instruction only operates on UD (or D with an abs source modifier)
+       * sources without negation.
+       *
+       * Instead, use ASR (which will give ~0/true or 0/false) followed by an
+       * AND 1.
        */
-      emit(CMP(*reg, fs_reg(r1_6ud), fs_reg(1u << 31), BRW_CONDITIONAL_L));
-      emit(BRW_OPCODE_AND, *reg, *reg, fs_reg(1u));
+      fs_reg asr = fs_reg(this, ir->type);
+      fs_reg g1_6 = fs_reg(retype(brw_vec1_grf(1, 6), BRW_REGISTER_TYPE_D));
+      g1_6.negate = true;
+
+      emit(ASR(asr, g1_6, fs_reg(31)));
+      emit(AND(*reg, asr, fs_reg(1)));
    }
 
    return reg;
