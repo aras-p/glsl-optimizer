@@ -1704,25 +1704,21 @@ brw_WHILE(struct brw_compile *p)
    brw_inst *insn, *do_insn;
    unsigned br = brw_jump_scale(brw);
 
-   if (brw->gen >= 7) {
+   if (brw->gen >= 6) {
       insn = next_insn(p, BRW_OPCODE_WHILE);
       do_insn = get_inner_do_insn(p);
 
-      brw_set_dest(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
-      brw_set_src0(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
-      brw_set_src1(p, insn, brw_imm_ud(0));
-      brw_inst_set_jip(brw, insn, br * (do_insn - insn));
-
-      brw_inst_set_exec_size(brw, insn, p->compressed ? BRW_EXECUTE_16
-                                                      : BRW_EXECUTE_8);
-   } else if (brw->gen == 6) {
-      insn = next_insn(p, BRW_OPCODE_WHILE);
-      do_insn = get_inner_do_insn(p);
-
-      brw_set_dest(p, insn, brw_imm_w(0));
-      brw_inst_set_gen6_jump_count(brw, insn, br * (do_insn - insn));
-      brw_set_src0(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
-      brw_set_src1(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
+      if (brw->gen == 7) {
+         brw_set_dest(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
+         brw_set_src0(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
+         brw_set_src1(p, insn, brw_imm_ud(0));
+         brw_inst_set_jip(brw, insn, br * (do_insn - insn));
+      } else {
+         brw_set_dest(p, insn, brw_imm_w(0));
+         brw_inst_set_gen6_jump_count(brw, insn, br * (do_insn - insn));
+         brw_set_src0(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
+         brw_set_src1(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
+      }
 
       brw_inst_set_exec_size(brw, insn, p->compressed ? BRW_EXECUTE_16
                                                       : BRW_EXECUTE_8);
