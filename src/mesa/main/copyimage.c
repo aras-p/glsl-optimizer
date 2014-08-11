@@ -253,7 +253,7 @@ check_region_bounds(struct gl_context *ctx, struct gl_texture_image *tex_image,
    return true;
 }
 
-void
+void GLAPIENTRY
 _mesa_CopyImageSubData(GLuint srcName, GLenum srcTarget, GLint srcLevel,
                        GLint srcX, GLint srcY, GLint srcZ,
                        GLuint dstName, GLenum dstTarget, GLint dstLevel,
