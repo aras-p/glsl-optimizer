@@ -67,12 +67,14 @@ gen6_upload_push_constants(struct brw_context *brw,
    if (prog_data->nr_params == 0) {
       stage_state->push_const_size = 0;
    } else {
-      float *param;
+      gl_constant_value *param;
       int i;
 
       param = brw_state_batch(brw, type,
-			      prog_data->nr_params * sizeof(float),
+			      prog_data->nr_params * sizeof(gl_constant_value),
 			      32, &stage_state->push_const_offset);
+
+      STATIC_ASSERT(sizeof(gl_constant_value) == sizeof(float));
 
       /* _NEW_PROGRAM_CONSTANTS
        *
@@ -91,7 +93,7 @@ gen6_upload_push_constants(struct brw_context *brw,
 	    if ((i & 7) == 0)
 	       fprintf(stderr, "g%d: ",
                        prog_data->dispatch_grf_start_reg + i / 8);
-	    fprintf(stderr, "%8f ", param[i]);
+	    fprintf(stderr, "%8f ", param[i].f);
 	    if ((i & 7) == 7)
 	       fprintf(stderr, "\n");
 	 }

@@ -691,11 +691,11 @@ vec4_visitor::setup_uniform_values(ir_variable *ir)
 
          int i;
          for (i = 0; i < uniform_vector_size[uniforms]; i++) {
-            stage_prog_data->param[uniforms * 4 + i] = &components->f;
+            stage_prog_data->param[uniforms * 4 + i] = components;
             components++;
          }
          for (; i < 4; i++) {
-            static float zero = 0;
+            static gl_constant_value zero = { .f = 0.0 };
             stage_prog_data->param[uniforms * 4 + i] = &zero;
          }
 
@@ -715,7 +715,8 @@ vec4_visitor::setup_uniform_clipplane_values()
       this->userplane[i] = dst_reg(UNIFORM, this->uniforms);
       this->userplane[i].type = BRW_REGISTER_TYPE_F;
       for (int j = 0; j < 4; ++j) {
-         stage_prog_data->param[this->uniforms * 4 + j] = &clip_planes[i][j];
+         stage_prog_data->param[this->uniforms * 4 + j] =
+            (gl_constant_value *) &clip_planes[i][j];
       }
       ++this->uniforms;
    }
@@ -739,7 +740,8 @@ vec4_visitor::setup_builtin_uniform_values(ir_variable *ir)
        */
       int index = _mesa_add_state_reference(this->prog->Parameters,
 					    (gl_state_index *)slots[i].tokens);
-      float *values = &this->prog->Parameters->ParameterValues[index][0].f;
+      gl_constant_value *values =
+         &this->prog->Parameters->ParameterValues[index][0];
 
       assert(this->uniforms < uniform_array_size);
       this->uniform_vector_size[this->uniforms] = 0;
@@ -3309,7 +3311,8 @@ vec4_visitor::move_uniform_array_access_to_pull_constants()
 	  * add it.
 	  */
 	 if (pull_constant_loc[uniform] == -1) {
-	    const float **values = &stage_prog_data->param[uniform * 4];
+	    const gl_constant_value **values =
+               &stage_prog_data->param[uniform * 4];
 
 	    pull_constant_loc[uniform] = stage_prog_data->nr_pull_params / 4;
 

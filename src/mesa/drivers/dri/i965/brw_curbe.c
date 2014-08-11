@@ -196,7 +196,7 @@ brw_upload_constant_buffer(struct brw_context *brw)
    /* BRW_NEW_CURBE_OFFSETS */
    const GLuint sz = brw->curbe.total_size;
    const GLuint bufsz = sz * 16 * sizeof(GLfloat);
-   GLfloat *buf;
+   gl_constant_value *buf;
    GLuint i;
    gl_clip_plane *clip_planes;
 
@@ -206,6 +206,8 @@ brw_upload_constant_buffer(struct brw_context *brw)
 
    buf = intel_upload_space(brw, bufsz, 64,
                             &brw->curbe.curbe_bo, &brw->curbe.curbe_offset);
+
+   STATIC_ASSERT(sizeof(gl_constant_value) == sizeof(float));
 
    /* fragment shader constants */
    if (brw->curbe.wm_size) {
@@ -226,10 +228,10 @@ brw_upload_constant_buffer(struct brw_context *brw)
       /* If any planes are going this way, send them all this way:
        */
       for (i = 0; i < 6; i++) {
-	 buf[offset + i * 4 + 0] = fixed_plane[i][0];
-	 buf[offset + i * 4 + 1] = fixed_plane[i][1];
-	 buf[offset + i * 4 + 2] = fixed_plane[i][2];
-	 buf[offset + i * 4 + 3] = fixed_plane[i][3];
+	 buf[offset + i * 4 + 0].f = fixed_plane[i][0];
+	 buf[offset + i * 4 + 1].f = fixed_plane[i][1];
+	 buf[offset + i * 4 + 2].f = fixed_plane[i][2];
+	 buf[offset + i * 4 + 3].f = fixed_plane[i][3];
       }
 
       /* Clip planes: _NEW_TRANSFORM plus _NEW_PROJECTION to get to
@@ -238,10 +240,10 @@ brw_upload_constant_buffer(struct brw_context *brw)
       clip_planes = brw_select_clip_planes(ctx);
       for (j = 0; j < MAX_CLIP_PLANES; j++) {
 	 if (ctx->Transform.ClipPlanesEnabled & (1<<j)) {
-	    buf[offset + i * 4 + 0] = clip_planes[j][0];
-	    buf[offset + i * 4 + 1] = clip_planes[j][1];
-	    buf[offset + i * 4 + 2] = clip_planes[j][2];
-	    buf[offset + i * 4 + 3] = clip_planes[j][3];
+	    buf[offset + i * 4 + 0].f = clip_planes[j][0];
+	    buf[offset + i * 4 + 1].f = clip_planes[j][1];
+	    buf[offset + i * 4 + 2].f = clip_planes[j][2];
+	    buf[offset + i * 4 + 3].f = clip_planes[j][3];
 	    i++;
 	 }
       }
@@ -260,7 +262,7 @@ brw_upload_constant_buffer(struct brw_context *brw)
    if (0) {
       for (i = 0; i < sz*16; i+=4)
 	 fprintf(stderr, "curbe %d.%d: %f %f %f %f\n", i/8, i&4,
-                 buf[i+0], buf[i+1], buf[i+2], buf[i+3]);
+                 buf[i+0].f, buf[i+1].f, buf[i+2].f, buf[i+3].f);
    }
 
    /* Because this provokes an action (ie copy the constants into the

@@ -76,8 +76,10 @@ brw_upload_pull_constants(struct brw_context *brw,
    uint32_t size = prog_data->nr_pull_params * 4;
    drm_intel_bo *const_bo = NULL;
    uint32_t const_offset;
-   float *constants = intel_upload_space(brw, size, 64,
-                                         &const_bo, &const_offset);
+   gl_constant_value *constants = intel_upload_space(brw, size, 64,
+                                                     &const_bo, &const_offset);
+
+   STATIC_ASSERT(sizeof(gl_constant_value) == sizeof(float));
 
    for (i = 0; i < prog_data->nr_pull_params; i++) {
       constants[i] = *prog_data->pull_param[i];
@@ -85,9 +87,9 @@ brw_upload_pull_constants(struct brw_context *brw,
 
    if (0) {
       for (i = 0; i < ALIGN(prog_data->nr_pull_params, 4) / 4; i++) {
-	 float *row = &constants[i * 4];
+	 const gl_constant_value *row = &constants[i * 4];
 	 fprintf(stderr, "const surface %3d: %4.3f %4.3f %4.3f %4.3f\n",
-                 i, row[0], row[1], row[2], row[3]);
+                 i, row[0].f, row[1].f, row[2].f, row[3].f);
       }
    }
 

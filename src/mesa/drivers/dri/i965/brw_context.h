@@ -41,6 +41,7 @@
 #include "main/mtypes.h"
 #include "brw_structs.h"
 #include "intel_aub.h"
+#include "program/prog_parameter.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -309,8 +310,8 @@ struct brw_stage_prog_data {
     * These must be the last fields of the struct (see
     * brw_stage_prog_data_compare()).
     */
-   const float **param;
-   const float **pull_param;
+   const gl_constant_value **param;
+   const gl_constant_value **pull_param;
 };
 
 /* Data about a particular attempt to compile a program.  Note that

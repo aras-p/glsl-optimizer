@@ -1639,7 +1639,7 @@ fs_visitor::rescale_texcoord(ir_texture *ir, fs_reg coordinate,
       /* Try to find existing copies of the texrect scale uniforms. */
       for (unsigned i = 0; i < uniforms; i++) {
          if (stage_prog_data->param[i] ==
-             &prog->Parameters->ParameterValues[index][0].f) {
+             &prog->Parameters->ParameterValues[index][0]) {
             scale_x = fs_reg(UNIFORM, i);
             scale_y = fs_reg(UNIFORM, i + 1);
             break;
@@ -1652,9 +1652,9 @@ fs_visitor::rescale_texcoord(ir_texture *ir, fs_reg coordinate,
          scale_y = fs_reg(UNIFORM, uniforms + 1);
 
          stage_prog_data->param[uniforms++] =
-            &prog->Parameters->ParameterValues[index][0].f;
+            &prog->Parameters->ParameterValues[index][0];
          stage_prog_data->param[uniforms++] =
-            &prog->Parameters->ParameterValues[index][1].f;
+            &prog->Parameters->ParameterValues[index][1];
       }
    }
 

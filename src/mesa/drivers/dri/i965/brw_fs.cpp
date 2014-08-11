@@ -961,7 +961,7 @@ fs_visitor::setup_uniform_values(ir_variable *ir)
          slots *= storage->array_elements;
 
       for (unsigned i = 0; i < slots; i++) {
-         stage_prog_data->param[uniforms++] = &storage->storage[i].f;
+         stage_prog_data->param[uniforms++] = &storage->storage[i];
       }
    }
 
@@ -1000,7 +1000,7 @@ fs_visitor::setup_builtin_uniform_values(ir_variable *ir)
 	 last_swiz = swiz;
 
          stage_prog_data->param[uniforms++] =
-            &fp->Base.Parameters->ParameterValues[index][swiz].f;
+            &fp->Base.Parameters->ParameterValues[index][swiz];
       }
    }
 }
@@ -1794,7 +1794,7 @@ fs_visitor::move_uniform_array_access_to_pull_constants()
           * add it.
           */
          if (pull_constant_loc[uniform] == -1) {
-            const float **values = &stage_prog_data->param[uniform];
+            const gl_constant_value **values = &stage_prog_data->param[uniform];
 
             assert(param_size[uniform]);
 

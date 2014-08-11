@@ -65,9 +65,9 @@ do_gs_prog(struct brw_context *brw,
    param_count += MAX_CLIP_PLANES * 4;
 
    c.prog_data.base.base.param =
-      rzalloc_array(NULL, const float *, param_count);
+      rzalloc_array(NULL, const gl_constant_value *, param_count);
    c.prog_data.base.base.pull_param =
-      rzalloc_array(NULL, const float *, param_count);
+      rzalloc_array(NULL, const gl_constant_value *, param_count);
    /* Setting nr_params here NOT to the size of the param and pull_param
     * arrays, but to the number of uniform components vec4_visitor
     * needs. vec4_visitor::setup_uniforms() will set it back to a proper value.

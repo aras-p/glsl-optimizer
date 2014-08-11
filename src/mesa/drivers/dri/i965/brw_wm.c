@@ -169,9 +169,10 @@ bool do_wm_prog(struct brw_context *brw,
    }
    /* The backend also sometimes adds params for texture size. */
    param_count += 2 * ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits;
-   prog_data.base.param = rzalloc_array(NULL, const float *, param_count);
+   prog_data.base.param =
+      rzalloc_array(NULL, const gl_constant_value *, param_count);
    prog_data.base.pull_param =
-   rzalloc_array(NULL, const float *, param_count);
+      rzalloc_array(NULL, const gl_constant_value *, param_count);
    prog_data.base.nr_params = param_count;
 
    prog_data.barycentric_interp_modes =

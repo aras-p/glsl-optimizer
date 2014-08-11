@@ -401,7 +401,7 @@ vec4_vs_visitor::emit_program_code()
       unsigned i;
       for (i = 0; i < params->NumParameters * 4; i++) {
          stage_prog_data->pull_param[i] =
-            &params->ParameterValues[i / 4][i % 4].f;
+            &params->ParameterValues[i / 4][i % 4];
       }
       stage_prog_data->nr_pull_params = i;
    }
@@ -432,7 +432,7 @@ vec4_vs_visitor::setup_vp_regs()
       this->uniform_vector_size[this->uniforms] = components;
       for (unsigned i = 0; i < 4; i++) {
          stage_prog_data->param[this->uniforms * 4 + i] = i >= components
-            ? 0 : &plist->ParameterValues[p][i].f;
+            ? 0 : &plist->ParameterValues[p][i];
       }
       this->uniforms++; /* counted in vec4 units */
    }

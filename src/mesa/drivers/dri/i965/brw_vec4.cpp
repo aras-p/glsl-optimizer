@@ -667,7 +667,7 @@ vec4_visitor::move_push_constants_to_pull_constants()
       pull_constant_loc[i / 4] = -1;
 
       if (i >= max_uniform_components) {
-	 const float **values = &stage_prog_data->param[i];
+	 const gl_constant_value **values = &stage_prog_data->param[i];
 
 	 /* Try to find an existing copy of this uniform in the pull
 	  * constants if it was part of an array access already.
@@ -1490,10 +1490,10 @@ vec4_visitor::setup_uniforms(int reg)
       this->uniform_vector_size[this->uniforms] = 1;
 
       stage_prog_data->param =
-         reralloc(NULL, stage_prog_data->param, const float *, 4);
+         reralloc(NULL, stage_prog_data->param, const gl_constant_value *, 4);
       for (unsigned int i = 0; i < 4; i++) {
 	 unsigned int slot = this->uniforms * 4 + i;
-	 static float zero = 0.0;
+	 static gl_constant_value zero = { .f = 0.0 };
 	 stage_prog_data->param[slot] = &zero;
       }
 
