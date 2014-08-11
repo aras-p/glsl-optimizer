@@ -189,7 +189,9 @@ gen8_vec4_generator::generate_gs_set_vertex_count(struct brw_reg eot_mrf_header,
    /* Move the vertex count into the second MRF for the EOT write. */
    assert(eot_mrf_header.file == BRW_MESSAGE_REGISTER_FILE);
    int dst_nr = GEN7_MRF_HACK_START + eot_mrf_header.nr + 1;
-   MOV(retype(brw_vec8_grf(dst_nr, 0), BRW_REGISTER_TYPE_UD), src);
+   gen8_instruction *inst =
+      MOV(retype(brw_vec8_grf(dst_nr, 0), BRW_REGISTER_TYPE_UD), src);
+   gen8_set_mask_control(inst, BRW_MASK_DISABLE);
 }
 
 void
