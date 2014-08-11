@@ -249,8 +249,6 @@ vc4_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader,
                 return 16;
         case PIPE_SHADER_CAP_MAX_TEMPS:
                 return 64; /* Max native temporaries. */
-        case PIPE_SHADER_CAP_MAX_ADDRS:
-                return 1; /* Max native address registers */
         case PIPE_SHADER_CAP_MAX_CONST_BUFFER_SIZE:
                 return 64 * sizeof(float[4]);
         case PIPE_SHADER_CAP_MAX_CONST_BUFFERS:
