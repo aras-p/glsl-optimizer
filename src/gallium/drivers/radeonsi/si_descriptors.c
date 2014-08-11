@@ -914,6 +914,7 @@ static void si_invalidate_buffer(struct pipe_context *ctx, struct pipe_resource 
 	uint64_t old_va = rbuffer->gpu_address;
 	unsigned num_elems = sctx->vertex_elements ?
 				       sctx->vertex_elements->count : 0;
+	struct si_pipe_sampler_view *view;
 
 	/* Reallocate the buffer in the same pipe_resource. */
 	r600_init_resource(&sctx->screen->b, rbuffer, rbuffer->b.b.width0,
@@ -1000,7 +1001,13 @@ static void si_invalidate_buffer(struct pipe_context *ctx, struct pipe_resource 
 		}
 	}
 
-	/* Texture buffers. */
+	/* Texture buffers - update virtual addresses in sampler view descriptors. */
+	LIST_FOR_EACH_ENTRY(view, &sctx->b.texture_buffers, list) {
+		if (view->base.texture == buf) {
+			si_desc_reset_buffer_offset(ctx, view->state, old_va, buf);
+		}
+	}
+	/* Texture buffers - update bindings. */
 	for (shader = 0; shader < SI_NUM_SHADERS; shader++) {
 		struct si_sampler_views *views = &sctx->samplers[shader].views;
 		bool found = false;
@@ -1009,10 +1016,6 @@ static void si_invalidate_buffer(struct pipe_context *ctx, struct pipe_resource 
 		while (mask) {
 			unsigned i = u_bit_scan(&mask);
 			if (views->views[i]->texture == buf) {
-				/* This updates the sampler view directly. */
-				si_desc_reset_buffer_offset(ctx, views->desc_data[i],
-							    old_va, buf);
-
 				r600_context_bo_reloc(&sctx->b, &sctx->b.rings.gfx,
 						      rbuffer, RADEON_USAGE_READ,
 						      RADEON_PRIO_SHADER_BUFFER_RO);

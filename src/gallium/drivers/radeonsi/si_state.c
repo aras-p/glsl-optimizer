@@ -2358,6 +2358,7 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 							struct pipe_resource *texture,
 							const struct pipe_sampler_view *state)
 {
+	struct si_context *sctx = (struct si_context*)ctx;
 	struct si_pipe_sampler_view *view = CALLOC_STRUCT(si_pipe_sampler_view);
 	struct r600_texture *tmp = (struct r600_texture*)texture;
 	const struct util_format_description *desc;
@@ -2402,6 +2403,8 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 				 S_008F0C_DST_SEL_W(si_map_swizzle(desc->swizzle[3])) |
 				 S_008F0C_NUM_FORMAT(num_format) |
 				 S_008F0C_DATA_FORMAT(format);
+
+		LIST_ADDTAIL(&view->list, &sctx->b.texture_buffers);
 		return &view->base;
 	}
 
@@ -2606,10 +2609,13 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 static void si_sampler_view_destroy(struct pipe_context *ctx,
 				    struct pipe_sampler_view *state)
 {
-	struct r600_pipe_sampler_view *resource = (struct r600_pipe_sampler_view *)state;
+	struct si_pipe_sampler_view *view = (struct si_pipe_sampler_view *)state;
+
+	if (view->resource->b.b.target == PIPE_BUFFER)
+		LIST_DELINIT(&view->list);
 
 	pipe_resource_reference(&state->texture, NULL);
-	FREE(resource);
+	FREE(view);
 }
 
 static bool wrap_mode_uses_border_color(unsigned wrap, bool linear_filter)

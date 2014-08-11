@@ -47,6 +47,7 @@ struct si_screen {
 
 struct si_pipe_sampler_view {
 	struct pipe_sampler_view	base;
+	struct list_head		list;
 	struct r600_resource		*resource;
 	uint32_t			state[8];
 	uint32_t			fmask_state[8];
