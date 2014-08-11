@@ -376,6 +376,15 @@ vc4_screen_is_format_supported(struct pipe_screen *pscreen,
         if (usage & PIPE_BIND_TRANSFER_WRITE)
                 retval |= PIPE_BIND_TRANSFER_WRITE;
 
+#if 0
+	if (retval != usage) {
+		fprintf(stderr,
+                        "not supported: format=%s, target=%d, sample_count=%d, "
+                        "usage=0x%x, retval=0x%x\n", util_format_name(format),
+                        target, sample_count, usage, retval);
+	}
+#endif
+
         return retval == usage;
 }
 
