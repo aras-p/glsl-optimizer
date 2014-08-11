@@ -794,7 +794,6 @@ vec4_generator::generate_pull_constant_load(vec4_instruction *inst,
                                             struct brw_reg index,
                                             struct brw_reg offset)
 {
-   assert(brw->gen <= 7);
    assert(index.file == BRW_IMMEDIATE_VALUE &&
 	  index.type == BRW_REGISTER_TYPE_UD);
    uint32_t surf_index = index.dw1.ud;
