@@ -1749,6 +1749,20 @@ fs_visitor::compact_virtual_grfs()
             inst->src[i].reg = remap_table[inst->src[i].reg];
       }
    }
+
+   /* Patch all the references to delta_x/delta_y, since they're used in
+    * register allocation.
+    */
+   for (unsigned i = 0; i < ARRAY_SIZE(delta_x); i++) {
+      if (delta_x[i].file == GRF && remap_table[delta_x[i].reg] != -1) {
+         delta_x[i].reg = remap_table[delta_x[i].reg];
+      }
+   }
+   for (unsigned i = 0; i < ARRAY_SIZE(delta_y); i++) {
+      if (delta_y[i].file == GRF && remap_table[delta_y[i].reg] != -1) {
+         delta_y[i].reg = remap_table[delta_y[i].reg];
+      }
+   }
 }
 
 /*
