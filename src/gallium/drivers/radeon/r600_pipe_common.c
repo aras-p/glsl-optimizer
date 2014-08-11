@@ -157,6 +157,8 @@ bool r600_common_context_init(struct r600_common_context *rctx,
         rctx->b.memory_barrier = r600_memory_barrier;
 	rctx->b.flush = r600_flush_from_st;
 
+	LIST_INITHEAD(&rctx->texture_buffers);
+
 	r600_init_context_texture_functions(rctx);
 	r600_streamout_init(rctx);
 	r600_query_init(rctx);

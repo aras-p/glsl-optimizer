@@ -596,7 +596,8 @@ static void *evergreen_create_sampler_state(struct pipe_context *ctx,
 }
 
 static struct pipe_sampler_view *
-texture_buffer_sampler_view(struct r600_pipe_sampler_view *view,
+texture_buffer_sampler_view(struct r600_context *rctx,
+			    struct r600_pipe_sampler_view *view,
 			    unsigned width0, unsigned height0)
 			    
 {
@@ -644,6 +645,9 @@ texture_buffer_sampler_view(struct r600_pipe_sampler_view *view,
 	view->tex_resource_words[4] = 0;
 	view->tex_resource_words[5] = view->tex_resource_words[6] = 0;
 	view->tex_resource_words[7] = S_03001C_TYPE(V_03001C_SQ_TEX_VTX_VALID_BUFFER);
+
+	if (tmp->resource.gpu_address)
+		LIST_ADDTAIL(&view->list, &rctx->b.texture_buffers);
 	return &view->base;
 }
 
@@ -654,6 +658,7 @@ evergreen_create_sampler_view_custom(struct pipe_context *ctx,
 				     unsigned width0, unsigned height0,
 				     unsigned force_level)
 {
+	struct r600_context *rctx = (struct r600_context*)ctx;
 	struct r600_screen *rscreen = (struct r600_screen*)ctx->screen;
 	struct r600_pipe_sampler_view *view = CALLOC_STRUCT(r600_pipe_sampler_view);
 	struct r600_texture *tmp = (struct r600_texture*)texture;
@@ -679,7 +684,7 @@ evergreen_create_sampler_view_custom(struct pipe_context *ctx,
 	view->base.context = ctx;
 
 	if (texture->target == PIPE_BUFFER)
-		return texture_buffer_sampler_view(view, width0, height0);
+		return texture_buffer_sampler_view(rctx, view, width0, height0);
 
 	swizzle[0] = state->swizzle_r;
 	swizzle[1] = state->swizzle_g;

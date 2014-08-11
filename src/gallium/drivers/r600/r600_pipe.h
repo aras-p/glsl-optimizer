@@ -222,6 +222,7 @@ struct r600_screen {
 
 struct r600_pipe_sampler_view {
 	struct pipe_sampler_view	base;
+	struct list_head		list;
 	struct r600_resource		*tex_resource;
 	uint32_t			tex_resource_words[8];
 	bool				skip_mip_address_reloc;

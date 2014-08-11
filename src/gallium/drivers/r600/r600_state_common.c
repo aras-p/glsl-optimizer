@@ -354,10 +354,14 @@ static void r600_delete_rs_state(struct pipe_context *ctx, void *state)
 static void r600_sampler_view_destroy(struct pipe_context *ctx,
 				      struct pipe_sampler_view *state)
 {
-	struct r600_pipe_sampler_view *resource = (struct r600_pipe_sampler_view *)state;
+	struct r600_pipe_sampler_view *view = (struct r600_pipe_sampler_view *)state;
+
+	if (view->tex_resource->gpu_address &&
+	    view->tex_resource->b.b.target == PIPE_BUFFER)
+		LIST_DELINIT(&view->list);
 
 	pipe_resource_reference(&state->texture, NULL);
-	FREE(resource);
+	FREE(view);
 }
 
 void r600_sampler_states_dirty(struct r600_context *rctx,
@@ -2314,6 +2318,7 @@ static void r600_invalidate_buffer(struct pipe_context *ctx, struct pipe_resourc
 	struct r600_context *rctx = (struct r600_context*)ctx;
 	struct r600_resource *rbuffer = r600_resource(buf);
 	unsigned i, shader, mask, alignment = rbuffer->buf->alignment;
+	struct r600_pipe_sampler_view *view;
 
 	/* Reallocate the buffer in the same pipe_resource. */
 	r600_init_resource(&rctx->screen->b, rbuffer, rbuffer->b.b.width0,
@@ -2358,7 +2363,35 @@ static void r600_invalidate_buffer(struct pipe_context *ctx, struct pipe_resourc
 		}
 	}
 
-	/* XXX TODO: texture buffer objects */
+	/* Texture buffer objects - update the virtual addresses in descriptors. */
+	LIST_FOR_EACH_ENTRY(view, &rctx->b.texture_buffers, list) {
+		if (view->base.texture == &rbuffer->b.b) {
+			unsigned stride = util_format_get_blocksize(view->base.format);
+			uint64_t offset = (uint64_t)view->base.u.buf.first_element * stride;
+			uint64_t va = rbuffer->gpu_address + offset;
+
+			view->tex_resource_words[0] = va;
+			view->tex_resource_words[2] &= C_038008_BASE_ADDRESS_HI;
+			view->tex_resource_words[2] |= S_038008_BASE_ADDRESS_HI(va >> 32);
+		}
+	}
+	/* Texture buffer objects - make bindings dirty if needed. */
+	for (shader = 0; shader < PIPE_SHADER_TYPES; shader++) {
+		struct r600_samplerview_state *state = &rctx->samplers[shader].views;
+		bool found = false;
+		uint32_t mask = state->enabled_mask;
+
+		while (mask) {
+			unsigned i = u_bit_scan(&mask);
+			if (state->views[i]->base.texture == &rbuffer->b.b) {
+				found = true;
+				state->dirty_mask |= 1 << i;
+			}
+		}
+		if (found) {
+			r600_sampler_views_dirty(rctx, state);
+		}
+	}
 }
 
 static void r600_set_occlusion_query_state(struct pipe_context *ctx, bool enable)

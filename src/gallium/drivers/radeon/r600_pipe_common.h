@@ -375,6 +375,11 @@ struct r600_common_context {
 	float				sample_locations_8x[8][2];
 	float				sample_locations_16x[16][2];
 
+	/* The list of all texture buffer objects in this context.
+	 * This list is walked when a buffer is invalidated/reallocated and
+	 * the GPU addresses are updated. */
+	struct list_head		texture_buffers;
+
 	/* Copy one resource to another using async DMA. */
 	void (*dma_copy)(struct pipe_context *ctx,
 			 struct pipe_resource *dst,
