@@ -202,10 +202,9 @@ gen8_vec4_generator::generate_gs_thread_end(vec4_instruction *ir)
 
    /* Enable Channel Masks in the URB_WRITE_HWORD message header */
    default_state.access_mode = BRW_ALIGN_1;
-   inst = OR(retype(brw_vec1_grf(GEN7_MRF_HACK_START + ir->base_mrf, 5),
-                    BRW_REGISTER_TYPE_UD),
-             retype(brw_vec1_grf(0, 5), BRW_REGISTER_TYPE_UD),
-             brw_imm_ud(0xff00)); /* could be 0x1100 but shouldn't matter */
+   inst = MOV(retype(brw_vec1_grf(GEN7_MRF_HACK_START + ir->base_mrf, 5),
+                     BRW_REGISTER_TYPE_UD),
+              brw_imm_ud(0xff00)); /* could be 0x1100 but shouldn't matter */
    gen8_set_mask_control(inst, BRW_MASK_DISABLE);
    default_state.access_mode = BRW_ALIGN_16;
 
