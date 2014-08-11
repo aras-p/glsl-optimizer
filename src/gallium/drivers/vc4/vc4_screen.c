@@ -356,8 +356,7 @@ vc4_screen_is_format_supported(struct pipe_screen *pscreen,
 
         if ((usage & PIPE_BIND_SAMPLER_VIEW) &&
             (vc4_get_texture_format(format) != ~0)) {
-                retval |= usage & (PIPE_BIND_SAMPLER_VIEW |
-                                   PIPE_BIND_VERTEX_BUFFER);
+                retval |= PIPE_BIND_SAMPLER_VIEW;
         }
 
         if ((usage & PIPE_BIND_DEPTH_STENCIL) &&
