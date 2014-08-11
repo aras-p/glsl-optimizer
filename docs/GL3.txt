@@ -183,5 +183,21 @@ GL 4.4, GLSL 4.40:
   GL_ARB_vertex_type_10f_11f_11f_rev                   DONE (i965, nv50, nvc0, r600, radeonsi)
 
 
+GL 4.5, GLSL 4.50:
+
+  GL_ARB_ES3_1_compatibility                           not started
+  GL_ARB_clip_control                                  not started
+  GL_ARB_conditional_render_inverted                   not started
+  GL_ARB_cull_distance                                 not started
+  GL_ARB_derivative_control                            not started
+  GL_ARB_direct_state_access                           not started
+  GL_ARB_get_texture_sub_image                         started (Brian Paul)
+  GL_ARB_shader_texture_image_samples                  not started
+  GL_ARB_texture_barrier                               started (Ilia Mirkin)
+  GL_KHR_context_flush_control                         not started
+  GL_KHR_robust_buffer_access_behavior                 not started
+  GL_KHR_robustness                                    90% done (the ARB variant)
+
+
 More info about these features and the work involved can be found at
 http://dri.freedesktop.org/wiki/MissingFunctionality
