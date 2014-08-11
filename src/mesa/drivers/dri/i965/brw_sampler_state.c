@@ -352,7 +352,7 @@ brw_update_sampler_state(struct brw_context *brw,
       mip_filter = BRW_MIPFILTER_LINEAR;
       break;
    default:
-      break;
+      unreachable("not reached");
    }
 
    /* Select mag filter. */
