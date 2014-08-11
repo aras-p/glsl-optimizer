@@ -40,7 +40,6 @@ extern "C" {
 
 #ifdef __cplusplus
 }; /* extern "C" */
-#include "gen8_generator.h"
 #endif
 
 #include "glsl/ir.h"
@@ -701,72 +700,6 @@ private:
    void *mem_ctx;
    const bool debug_flag;
 };
-
-/**
- * The vertex shader code generator.
- *
- * Translates VS IR to actual i965 assembly code.
- */
-class gen8_vec4_generator : public gen8_generator
-{
-public:
-   gen8_vec4_generator(struct brw_context *brw,
-                       struct gl_shader_program *shader_prog,
-                       struct gl_program *prog,
-                       struct brw_vec4_prog_data *prog_data,
-                       void *mem_ctx,
-                       bool debug_flag);
-   ~gen8_vec4_generator();
-
-   const unsigned *generate_assembly(exec_list *insts, unsigned *asm_size);
-
-private:
-   void generate_code(exec_list *instructions);
-   void generate_vec4_instruction(vec4_instruction *inst,
-                                  struct brw_reg dst,
-                                  struct brw_reg *src);
-
-   void generate_tex(vec4_instruction *inst,
-                     struct brw_reg dst,
-                     struct brw_reg sampler_index);
-
-   void generate_urb_write(vec4_instruction *ir, bool copy_g0);
-   void generate_gs_thread_end(vec4_instruction *ir);
-   void generate_gs_set_write_offset(struct brw_reg dst,
-                                     struct brw_reg src0,
-                                     struct brw_reg src1);
-   void generate_gs_set_vertex_count(struct brw_reg dst,
-                                     struct brw_reg src);
-   void generate_gs_set_dword_2_immed(struct brw_reg dst, struct brw_reg src);
-   void generate_gs_prepare_channel_masks(struct brw_reg dst);
-   void generate_gs_set_channel_masks(struct brw_reg dst, struct brw_reg src);
-
-   void generate_oword_dual_block_offsets(struct brw_reg m1,
-                                          struct brw_reg index);
-   void generate_scratch_write(vec4_instruction *inst,
-                               struct brw_reg dst,
-                               struct brw_reg src,
-                               struct brw_reg index);
-   void generate_scratch_read(vec4_instruction *inst,
-                              struct brw_reg dst,
-                              struct brw_reg index);
-   void generate_pull_constant_load(vec4_instruction *inst,
-                                    struct brw_reg dst,
-                                    struct brw_reg index,
-                                    struct brw_reg offset);
-   void generate_untyped_atomic(vec4_instruction *ir,
-                                struct brw_reg dst,
-                                struct brw_reg atomic_op,
-                                struct brw_reg surf_index);
-   void generate_untyped_surface_read(vec4_instruction *ir,
-                                      struct brw_reg dst,
-                                      struct brw_reg surf_index);
-
-   struct brw_vec4_prog_data *prog_data;
-
-   const bool debug_flag;
-};
-
 
 } /* namespace brw */
 #endif /* __cplusplus */

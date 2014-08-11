@@ -150,16 +150,12 @@ i965_FILES = \
 	gen8_depth_state.c \
 	gen8_disable.c \
 	gen8_draw_upload.c \
-	gen8_fs_generator.cpp \
-	gen8_generator.cpp \
-	gen8_instruction.c \
 	gen8_gs_state.c \
 	gen8_misc_state.c \
 	gen8_multisample_state.c \
 	gen8_sf_state.c \
 	gen8_sol_state.c \
 	gen8_surface_state.c \
-	gen8_vec4_generator.cpp \
 	gen8_viewport_state.c \
 	gen8_vs_state.c \
 	gen8_wm_depth_stencil.c \
