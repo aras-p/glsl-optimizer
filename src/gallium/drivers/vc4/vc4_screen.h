@@ -37,7 +37,7 @@ struct vc4_bo;
 #define VC4_DEBUG_PERF      0x0020
 #define VC4_DEBUG_NORAST    0x0040
 
-#define VC4_MAX_MIP_LEVELS 11
+#define VC4_MAX_MIP_LEVELS 12
 
 struct vc4_screen {
         struct pipe_screen base;
