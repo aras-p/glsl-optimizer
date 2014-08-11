@@ -121,6 +121,8 @@ struct pipe_video_buffer *r600_video_buffer_create(struct pipe_context *pipe,
 		/* recreate the CS handle */
 		resources[i]->resource.cs_buf = ctx->b.ws->buffer_get_cs_handle(
 			resources[i]->resource.buf);
+		resources[i]->resource.gpu_address = ctx->b.ws->buffer_get_virtual_address(
+			resources[i]->resource.cs_buf);
 	}
 
 	template.height *= array_size;
