@@ -545,11 +545,18 @@ vec4_vs_visitor::get_vp_src_reg(const prog_src_register &src)
 
          result = src_reg(this, glsl_type::vec4_type);
          src_reg surf_index = src_reg(unsigned(prog_data->base.binding_table.pull_constants_start));
-         vec4_instruction *load =
-            new(mem_ctx) vec4_instruction(this, VS_OPCODE_PULL_CONSTANT_LOAD,
-                                          dst_reg(result), surf_index, reladdr);
-         load->base_mrf = 14;
-         load->mlen = 1;
+         vec4_instruction *load;
+         if (brw->gen >= 7) {
+            load = new(mem_ctx)
+               vec4_instruction(this, VS_OPCODE_PULL_CONSTANT_LOAD_GEN7,
+                                dst_reg(result), surf_index, reladdr);
+         } else {
+            load = new(mem_ctx)
+               vec4_instruction(this, VS_OPCODE_PULL_CONSTANT_LOAD,
+                                dst_reg(result), surf_index, reladdr);
+            load->base_mrf = 14;
+            load->mlen = 1;
+         }
          emit(load);
          break;
       }
