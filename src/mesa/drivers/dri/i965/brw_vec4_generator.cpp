@@ -437,7 +437,7 @@ vec4_generator::generate_gs_thread_end(vec4_instruction *inst)
                  inst->base_mrf, /* starting mrf reg nr */
                  src,
                  BRW_URB_WRITE_EOT,
-                 1,              /* message len */
+                 brw->gen >= 8 ? 2 : 1,/* message len */
                  0,              /* response len */
                  0,              /* urb destination offset */
                  BRW_URB_SWIZZLE_INTERLEAVE);
@@ -480,25 +480,32 @@ vec4_generator::generate_gs_set_vertex_count(struct brw_reg dst,
                                              struct brw_reg src)
 {
    brw_push_insn_state(p);
-   brw_set_default_access_mode(p, BRW_ALIGN_1);
    brw_set_default_mask_control(p, BRW_MASK_DISABLE);
 
-   /* If we think of the src and dst registers as composed of 8 DWORDs each,
-    * we want to pick up the contents of DWORDs 0 and 4 from src, truncate
-    * them to WORDs, and then pack them into DWORD 2 of dst.
-    *
-    * It's easier to get the EU to do this if we think of the src and dst
-    * registers as composed of 16 WORDS each; then, we want to pick up the
-    * contents of WORDs 0 and 8 from src, and pack them into WORDs 4 and 5 of
-    * dst.
-    *
-    * We can do that by the following EU instruction:
-    *
-    *     mov (2) dst.4<1>:uw src<8;1,0>:uw   { Align1, Q1, NoMask }
-    */
-   brw_MOV(p, suboffset(stride(retype(dst, BRW_REGISTER_TYPE_UW), 2, 2, 1), 4),
-           stride(retype(src, BRW_REGISTER_TYPE_UW), 8, 1, 0));
-   brw_set_default_access_mode(p, BRW_ALIGN_16);
+   if (brw->gen >= 8) {
+      /* Move the vertex count into the second MRF for the EOT write. */
+      brw_MOV(p, retype(brw_message_reg(dst.nr + 1), BRW_REGISTER_TYPE_UD),
+              src);
+   } else {
+      /* If we think of the src and dst registers as composed of 8 DWORDs each,
+       * we want to pick up the contents of DWORDs 0 and 4 from src, truncate
+       * them to WORDs, and then pack them into DWORD 2 of dst.
+       *
+       * It's easier to get the EU to do this if we think of the src and dst
+       * registers as composed of 16 WORDS each; then, we want to pick up the
+       * contents of WORDs 0 and 8 from src, and pack them into WORDs 4 and 5
+       * of dst.
+       *
+       * We can do that by the following EU instruction:
+       *
+       *     mov (2) dst.4<1>:uw src<8;1,0>:uw   { Align1, Q1, NoMask }
+       */
+      brw_set_default_access_mode(p, BRW_ALIGN_1);
+      brw_MOV(p,
+              suboffset(stride(retype(dst, BRW_REGISTER_TYPE_UW), 2, 2, 1), 4),
+              stride(retype(src, BRW_REGISTER_TYPE_UW), 8, 1, 0));
+      brw_set_default_access_mode(p, BRW_ALIGN_16);
+   }
    brw_pop_insn_state(p);
 }
 
