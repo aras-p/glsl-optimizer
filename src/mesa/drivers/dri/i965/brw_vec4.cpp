@@ -1794,15 +1794,9 @@ brw_vs_emit(struct brw_context *brw,
    }
 
    const unsigned *assembly = NULL;
-   if (brw->gen >= 8 && getenv("GEN8") != NULL) {
-      gen8_vec4_generator g(brw, prog, &c->vp->program.Base, &prog_data->base,
-                            mem_ctx, INTEL_DEBUG & DEBUG_VS);
-      assembly = g.generate_assembly(&v.instructions, final_assembly_size);
-   } else {
-      vec4_generator g(brw, prog, &c->vp->program.Base, &prog_data->base,
-                       mem_ctx, INTEL_DEBUG & DEBUG_VS);
-      assembly = g.generate_assembly(&v.instructions, final_assembly_size);
-   }
+   vec4_generator g(brw, prog, &c->vp->program.Base, &prog_data->base,
+                    mem_ctx, INTEL_DEBUG & DEBUG_VS);
+   assembly = g.generate_assembly(&v.instructions, final_assembly_size);
 
    if (unlikely(brw->perf_debug) && shader) {
       if (shader->compiled_once) {
