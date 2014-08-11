@@ -358,7 +358,7 @@ dri2_bind_extensions(struct dri2_egl_display *dri2_dpy,
    for (j = 0; matches[j].name; j++) {
       field = ((char *) dri2_dpy + matches[j].offset);
       if (*(const __DRIextension **) field == NULL) {
-	 _eglLog(_EGL_FATAL, "DRI2: did not find extension %s version %d",
+	 _eglLog(_EGL_WARNING, "DRI2: did not find extension %s version %d",
 		 matches[j].name, matches[j].version);
 	 ret = EGL_FALSE;
       }
