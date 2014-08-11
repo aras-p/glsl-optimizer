@@ -338,8 +338,13 @@ vc4_screen_is_format_supported(struct pipe_screen *pscreen,
                 return FALSE;
         }
 
-        if (usage & PIPE_BIND_VERTEX_BUFFER)
-                retval |= PIPE_BIND_VERTEX_BUFFER; /* XXX */
+        if (usage & PIPE_BIND_VERTEX_BUFFER &&
+            (format == PIPE_FORMAT_R32G32B32A32_FLOAT ||
+             format == PIPE_FORMAT_R32G32B32_FLOAT ||
+             format == PIPE_FORMAT_R32G32_FLOAT ||
+             format == PIPE_FORMAT_R32_FLOAT)) {
+                retval |= PIPE_BIND_VERTEX_BUFFER;
+        }
 
         if ((usage & PIPE_BIND_RENDER_TARGET) &&
             (format == PIPE_FORMAT_B8G8R8A8_UNORM ||
