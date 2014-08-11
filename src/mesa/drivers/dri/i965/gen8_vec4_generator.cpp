@@ -872,6 +872,7 @@ gen8_vec4_generator::generate_code(exec_list *instructions)
       default_state.predicate = ir->predicate;
       default_state.predicate_inverse = ir->predicate_inverse;
       default_state.saturate = ir->saturate;
+      default_state.mask_control = ir->force_writemask_all;
 
       const unsigned pre_emit_nr_inst = nr_inst;
 
