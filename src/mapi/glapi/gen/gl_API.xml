@@ -8364,6 +8364,10 @@
 
 <xi:include href="ARB_multi_bind.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
+<!-- ARB extensions 148 - 166 -->
+
+<xi:include href="ARB_texture_barrier.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
 <!-- Non-ARB extensions sorted by extension number. -->
 
 <category name="GL_EXT_blend_color" number="2">

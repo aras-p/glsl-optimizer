@@ -145,6 +145,7 @@ API_XML = \
 	ARB_shader_atomic_counters.xml \
 	ARB_shader_image_load_store.xml \
 	ARB_sync.xml \
+	ARB_texture_barrier.xml \
 	ARB_texture_buffer_object.xml \
 	ARB_texture_buffer_range.xml \
 	ARB_texture_compression_rgtc.xml \

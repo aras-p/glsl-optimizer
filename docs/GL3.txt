@@ -192,7 +192,7 @@ GL 4.5, GLSL 4.50:
   GL_ARB_direct_state_access                           not started
   GL_ARB_get_texture_sub_image                         started (Brian Paul)
   GL_ARB_shader_texture_image_samples                  not started
-  GL_ARB_texture_barrier                               started (Ilia Mirkin)
+  GL_ARB_texture_barrier                               DONE (nv50, nvc0, r300, r600, radeonsi)
   GL_KHR_context_flush_control                         not started
   GL_KHR_robust_buffer_access_behavior                 not started
   GL_KHR_robustness                                    90% done (the ARB variant)
