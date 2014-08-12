@@ -176,7 +176,8 @@ vc4_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
         case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
                 return VC4_MAX_MIP_LEVELS;
         case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
-                return 1;
+                /* Note: Not supported in hardware, just faking it. */
+                return 5;
         case PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS:
                 return 0;
 
