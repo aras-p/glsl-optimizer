@@ -872,7 +872,7 @@ svga3dsurface_get_serialized_size(SVGA3dSurfaceFormat format,
 				  bool cubemap)
 {
 	const struct svga3d_surface_desc *desc = svga3dsurface_get_desc(format);
-	uint32 total_size = 0;
+	uint64_t total_size = 0;
 	uint32 mip;
 
 	for (mip = 0; mip < num_mip_levels; mip++) {
@@ -885,7 +885,8 @@ svga3dsurface_get_serialized_size(SVGA3dSurfaceFormat format,
 	if (cubemap)
 		total_size *= SVGA3D_MAX_SURFACE_FACES;
 
-	return total_size;
+	return (total_size > (uint64_t) MAX_UINT32) ? MAX_UINT32 : 
+                                                      (uint32) total_size;
 }
 
 

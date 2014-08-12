@@ -49,6 +49,21 @@
 
 #define VMW_MUST_FLUSH_STACK 8
 
+/*
+ * A factor applied to the maximum mob memory size to determine
+ * the optimial time to preemptively flush the command buffer.
+ * The constant is based on some performance trials with SpecViewperf.
+ */
+#define VMW_MAX_MOB_MEM_FACTOR  2
+
+/*
+ * A factor applied to the maximum surface memory size to determine
+ * the optimial time to preemptively flush the command buffer.
+ * The constant is based on some performance trials with SpecViewperf.
+ */
+#define VMW_MAX_SURF_MEM_FACTOR 2
+
+
 struct vmw_buffer_relocation
 {
    struct pb_buffer *buffer;
@@ -395,7 +410,7 @@ vmw_swc_mob_relocation(struct svga_winsys_context *swc,
    if (vmw_swc_add_validate_buffer(vswc, reloc->buffer, flags)) {
       vswc->seen_mobs += reloc->buffer->size;
       /* divide by 5, tested for best performance */
-      if (vswc->seen_mobs >= vswc->vws->ioctl.max_mob_memory / 5)
+      if (vswc->seen_mobs >= vswc->vws->ioctl.max_mob_memory / VMW_MAX_MOB_MEM_FACTOR)
          vswc->preemptive_flush = TRUE;
    }
 
@@ -457,7 +472,7 @@ vmw_swc_surface_only_relocation(struct svga_winsys_context *swc,
 
       vswc->seen_surfaces += vsurf->size;
       /* divide by 5 not well tuned for performance */
-      if (vswc->seen_surfaces >= vswc->vws->ioctl.max_surface_memory / 5)
+      if (vswc->seen_surfaces >= vswc->vws->ioctl.max_surface_memory / VMW_MAX_SURF_MEM_FACTOR)
          vswc->preemptive_flush = TRUE;
    }
 

@@ -51,6 +51,8 @@
 #include <errno.h>
 #include <unistd.h>
 
+#define VMW_MAX_DEFAULT_TEXTURE_SIZE   (128 * 1024 * 1024)
+
 struct vmw_region
 {
    uint32_t handle;
@@ -904,6 +906,18 @@ vmw_ioctl_init(struct vmw_winsys_screen *vws)
       } else {
          vws->ioctl.max_mob_memory = gp_arg.value;
       }
+
+      memset(&gp_arg, 0, sizeof(gp_arg));
+      gp_arg.param = DRM_VMW_PARAM_MAX_MOB_SIZE;
+      ret = drmCommandWriteRead(vws->ioctl.drm_fd, DRM_VMW_GET_PARAM,
+                                &gp_arg, sizeof(gp_arg));
+
+      if (ret || gp_arg.value == 0) {
+           vws->ioctl.max_texture_size = VMW_MAX_DEFAULT_TEXTURE_SIZE;
+      } else {
+           vws->ioctl.max_texture_size = gp_arg.value;
+      }
+
       /* Never early flush surfaces, mobs do accounting. */
       vws->ioctl.max_surface_memory = -1;
    } else {
@@ -920,6 +934,9 @@ vmw_ioctl_init(struct vmw_winsys_screen *vws)
       } else {
          vws->ioctl.max_surface_memory = gp_arg.value;
       }
+
+      vws->ioctl.max_texture_size = VMW_MAX_DEFAULT_TEXTURE_SIZE;
+
       size = SVGA_FIFO_3D_CAPS_SIZE * sizeof(uint32_t);
    }
 

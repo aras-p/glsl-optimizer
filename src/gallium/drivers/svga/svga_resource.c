@@ -30,6 +30,7 @@
 #include "svga_resource_texture.h"
 #include "svga_context.h"
 #include "svga_screen.h"
+#include "svga_format.h"
 
 
 static struct pipe_resource *
@@ -55,6 +56,47 @@ svga_resource_from_handle(struct pipe_screen * screen,
 }
 
 
+/**
+ * Check if a resource (texture, buffer) of the given size
+ * and format can be created.
+ * \Return TRUE if OK, FALSE if too large.
+ */
+static boolean
+svga_can_create_resource(struct pipe_screen *screen,
+                         const struct pipe_resource *res)
+{
+   struct svga_screen *svgascreen = svga_screen(screen);
+   struct svga_winsys_screen *sws = svgascreen->sws;
+   SVGA3dSurfaceFormat format;
+   SVGA3dSize base_level_size;
+   uint32 numFaces;
+   uint32 numMipLevels;
+
+   if (res->target == PIPE_BUFFER) {
+      format = SVGA3D_BUFFER;
+      base_level_size.width = res->width0;
+      base_level_size.height = 1;
+      base_level_size.depth = 1;
+      numFaces = 1;
+      numMipLevels = 1;
+
+   } else {
+      format = svga_translate_format(svgascreen, res->format, res->bind);
+      if (format == SVGA3D_FORMAT_INVALID)
+         return FALSE;
+
+      base_level_size.width = res->width0;
+      base_level_size.height = res->height0;
+      base_level_size.depth = res->depth0;
+      numFaces = (res->target == PIPE_TEXTURE_CUBE) ? 6 : 1;
+      numMipLevels = res->last_level + 1;
+   }
+
+   return sws->surface_can_create(sws, format, base_level_size, 
+                                  numFaces, numMipLevels);
+}
+
+
 void
 svga_init_resource_functions(struct svga_context *svga)
 {
@@ -71,4 +113,5 @@ svga_init_screen_resource_functions(struct svga_screen *is)
    is->screen.resource_from_handle = svga_resource_from_handle;
    is->screen.resource_get_handle = u_resource_get_handle_vtbl;
    is->screen.resource_destroy = u_resource_destroy_vtbl;
+   is->screen.can_create_resource = svga_can_create_resource;
 }

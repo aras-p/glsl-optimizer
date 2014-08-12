@@ -727,8 +727,10 @@ svga_texture_create(struct pipe_screen *screen,
 
    SVGA_DBG(DEBUG_DMA, "surface_create for texture\n", tex->handle);
    tex->handle = svga_screen_surface_create(svgascreen, &tex->key);
-   if (tex->handle)
-      SVGA_DBG(DEBUG_DMA, "  --> got sid %p (texture)\n", tex->handle);
+   if (!tex->handle)
+       goto error2;
+
+   SVGA_DBG(DEBUG_DMA, "  --> got sid %p (texture)\n", tex->handle);
 
    debug_reference(&tex->b.b.reference,
                    (debug_reference_descriptor)debug_describe_resource, 0);

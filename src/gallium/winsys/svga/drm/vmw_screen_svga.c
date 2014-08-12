@@ -164,6 +164,10 @@ vmw_svga_winsys_surface_create(struct svga_winsys_screen *sws,
     * when to flush on non-GB hosts.
     */
    buffer_size = svga3dsurface_get_serialized_size(format, size, numMipLevels, (numFaces == 6));
+   if (buffer_size > vws->ioctl.max_texture_size) {
+      goto no_sid;
+   }
+
    if (sws->have_gb_objects) {
       SVGAGuestPtr ptr = {0,0};
 
@@ -247,6 +251,25 @@ no_sid:
    FREE(surface);
 no_surface:
    return NULL;
+}
+
+static boolean
+vmw_svga_winsys_surface_can_create(struct svga_winsys_screen *sws,
+                               SVGA3dSurfaceFormat format,
+                               SVGA3dSize size,
+                               uint32 numFaces,
+                               uint32 numMipLevels)
+{
+   struct vmw_winsys_screen *vws = vmw_winsys_screen(sws);
+   uint32_t buffer_size;
+
+   buffer_size = svga3dsurface_get_serialized_size(format, size, 
+                                                   numMipLevels, 
+                                                   (numFaces == 6));
+   if (buffer_size > vws->ioctl.max_texture_size) {
+	return FALSE;
+   }
+   return TRUE;
 }
 
 
@@ -371,6 +394,7 @@ vmw_winsys_screen_init_svga(struct vmw_winsys_screen *vws)
    vws->base.surface_create = vmw_svga_winsys_surface_create;
    vws->base.surface_is_flushed = vmw_svga_winsys_surface_is_flushed;
    vws->base.surface_reference = vmw_svga_winsys_surface_ref;
+   vws->base.surface_can_create = vmw_svga_winsys_surface_can_create;
    vws->base.buffer_create = vmw_svga_winsys_buffer_create;
    vws->base.buffer_map = vmw_svga_winsys_buffer_map;
    vws->base.buffer_unmap = vmw_svga_winsys_buffer_unmap;

@@ -335,6 +335,18 @@ struct svga_winsys_screen
 			struct svga_winsys_surface *src);
 
    /**
+    * Check if a resource (texture, buffer) of the given size
+    * and format can be created.
+    * \Return TRUE if OK, FALSE if too large.
+    */
+   boolean
+   (*surface_can_create)(struct svga_winsys_screen *sws,
+                         SVGA3dSurfaceFormat format,
+                         SVGA3dSize size,
+                         uint32 numFaces,
+                         uint32 numMipLevels);
+
+   /**
     * Buffer management. Buffer attributes are mostly fixed over its lifetime.
     *
     * @param usage bitmask of SVGA_BUFFER_USAGE_* flags.

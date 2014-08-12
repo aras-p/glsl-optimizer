@@ -74,6 +74,7 @@ struct vmw_winsys_screen
       struct vmw_cap_3d *cap_3d;
       uint64_t max_mob_memory;
       uint64_t max_surface_memory;
+      uint64_t max_texture_size;
       boolean have_drm_2_6;
    } ioctl;
 
