@@ -1323,7 +1323,6 @@ dri_kms_init_screen(__DRIscreen * sPriv)
 {
 #if GALLIUM_STATIC_TARGETS
 #if defined(GALLIUM_SOFTPIPE)
-#if defined(DRI_TARGET)
    const __DRIconfig **configs;
    struct dri_screen *screen;
    struct pipe_screen *pscreen = NULL;
@@ -1354,7 +1353,6 @@ dri_kms_init_screen(__DRIscreen * sPriv)
 fail:
    dri_destroy_screen_helper(screen);
    FREE(screen);
-#endif // DRI_TARGET
 #endif // GALLIUM_SOFTPIPE
 #endif // GALLIUM_STATIC_TARGETS
    return NULL;
