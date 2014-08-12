@@ -142,19 +142,27 @@ vc4_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
                 vc4->prog.vs->coord_shader_offset);
         cl_u32(&vc4->shader_rec, 0); /* UBO offset written by kernel */
 
+        uint32_t max_index = 0xffff;
         for (int i = 0; i < vtx->num_elements; i++) {
                 struct pipe_vertex_element *elem = &vtx->pipe[i];
                 struct pipe_vertex_buffer *vb =
                         &vertexbuf->vb[elem->vertex_buffer_index];
                 struct vc4_resource *rsc = vc4_resource(vb->buffer);
+                uint32_t offset = vb->buffer_offset + elem->src_offset;
+                uint32_t vb_size = rsc->bo->size - offset;
+                uint32_t elem_size =
+                        util_format_get_blocksize(elem->src_format);
 
-                cl_reloc(vc4, &vc4->shader_rec, rsc->bo,
-                         vb->buffer_offset + elem->src_offset);
-                cl_u8(&vc4->shader_rec,
-                      util_format_get_blocksize(elem->src_format) - 1);
+                cl_reloc(vc4, &vc4->shader_rec, rsc->bo, offset);
+                cl_u8(&vc4->shader_rec, elem_size - 1);
                 cl_u8(&vc4->shader_rec, vb->stride);
                 cl_u8(&vc4->shader_rec, i * 16); /* VS VPM offset */
                 cl_u8(&vc4->shader_rec, i * 16); /* CS VPM offset */
+
+                if (vb->stride > 0) {
+                        max_index = MIN2(max_index,
+                                         (vb_size - elem_size) / vb->stride);
+                }
         }
 
         /* the actual draw call. */
@@ -183,7 +191,7 @@ vc4_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
                        VC4_INDEX_BUFFER_U8));
                 cl_u32(&vc4->bcl, info->count);
                 cl_reloc(vc4, &vc4->bcl, rsc->bo, vc4->indexbuf.offset);
-                cl_u32(&vc4->bcl, info->max_index);
+                cl_u32(&vc4->bcl, max_index);
         } else {
                 cl_u8(&vc4->bcl, VC4_PACKET_GL_ARRAY_PRIMITIVE);
                 cl_u8(&vc4->bcl, info->mode);
