@@ -96,48 +96,13 @@ vc4_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
                 return;
         }
 
+        struct vc4_vertex_stateobj *vtx = vc4->vtx;
+        struct vc4_vertexbuf_stateobj *vertexbuf = &vc4->vertexbuf;
+
         vc4_start_draw(vc4);
         vc4_update_compiled_shaders(vc4, info->mode);
 
         vc4_emit_state(pctx);
-
-        /* the actual draw call. */
-        struct vc4_vertex_stateobj *vtx = vc4->vtx;
-        struct vc4_vertexbuf_stateobj *vertexbuf = &vc4->vertexbuf;
-        cl_u8(&vc4->bcl, VC4_PACKET_GL_SHADER_STATE);
-        assert(vtx->num_elements <= 8);
-        /* Note that number of attributes == 0 in the packet means 8
-         * attributes.  This field also contains the offset into shader_rec.
-         */
-        cl_u32(&vc4->bcl, vtx->num_elements & 0x7);
-
-        /* Note that the primitive type fields match with OpenGL/gallium
-         * definitions, up to but not including QUADS.
-         */
-        if (info->indexed) {
-                struct vc4_resource *rsc = vc4_resource(vc4->indexbuf.buffer);
-
-                assert(vc4->indexbuf.index_size == 1 ||
-                       vc4->indexbuf.index_size == 2);
-
-                cl_start_reloc(&vc4->bcl, 1);
-                cl_u8(&vc4->bcl, VC4_PACKET_GL_INDEXED_PRIMITIVE);
-                cl_u8(&vc4->bcl,
-                      info->mode |
-                      (vc4->indexbuf.index_size == 2 ?
-                       VC4_INDEX_BUFFER_U16:
-                       VC4_INDEX_BUFFER_U8));
-                cl_u32(&vc4->bcl, info->count);
-                cl_reloc(vc4, &vc4->bcl, rsc->bo, vc4->indexbuf.offset);
-                cl_u32(&vc4->bcl, info->max_index);
-        } else {
-                cl_u8(&vc4->bcl, VC4_PACKET_GL_ARRAY_PRIMITIVE);
-                cl_u8(&vc4->bcl, info->mode);
-                cl_u32(&vc4->bcl, info->count);
-                cl_u32(&vc4->bcl, info->start);
-        }
-
-// Shader Record
 
         vc4_write_uniforms(vc4, vc4->prog.fs,
                            &vc4->constbuf[PIPE_SHADER_FRAGMENT],
@@ -152,6 +117,7 @@ vc4_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
                            &vc4->verttex,
                            1);
 
+        /* Emit the shader record. */
         cl_start_shader_reloc(&vc4->shader_rec, 3 + vtx->num_elements);
         cl_u16(&vc4->shader_rec,
                VC4_SHADER_FLAG_ENABLE_CLIPPING |
@@ -189,6 +155,40 @@ vc4_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
                 cl_u8(&vc4->shader_rec, vb->stride);
                 cl_u8(&vc4->shader_rec, i * 16); /* VS VPM offset */
                 cl_u8(&vc4->shader_rec, i * 16); /* CS VPM offset */
+        }
+
+        /* the actual draw call. */
+        cl_u8(&vc4->bcl, VC4_PACKET_GL_SHADER_STATE);
+        assert(vtx->num_elements <= 8);
+        /* Note that number of attributes == 0 in the packet means 8
+         * attributes.  This field also contains the offset into shader_rec.
+         */
+        cl_u32(&vc4->bcl, vtx->num_elements & 0x7);
+
+        /* Note that the primitive type fields match with OpenGL/gallium
+         * definitions, up to but not including QUADS.
+         */
+        if (info->indexed) {
+                struct vc4_resource *rsc = vc4_resource(vc4->indexbuf.buffer);
+
+                assert(vc4->indexbuf.index_size == 1 ||
+                       vc4->indexbuf.index_size == 2);
+
+                cl_start_reloc(&vc4->bcl, 1);
+                cl_u8(&vc4->bcl, VC4_PACKET_GL_INDEXED_PRIMITIVE);
+                cl_u8(&vc4->bcl,
+                      info->mode |
+                      (vc4->indexbuf.index_size == 2 ?
+                       VC4_INDEX_BUFFER_U16:
+                       VC4_INDEX_BUFFER_U8));
+                cl_u32(&vc4->bcl, info->count);
+                cl_reloc(vc4, &vc4->bcl, rsc->bo, vc4->indexbuf.offset);
+                cl_u32(&vc4->bcl, info->max_index);
+        } else {
+                cl_u8(&vc4->bcl, VC4_PACKET_GL_ARRAY_PRIMITIVE);
+                cl_u8(&vc4->bcl, info->mode);
+                cl_u32(&vc4->bcl, info->count);
+                cl_u32(&vc4->bcl, info->start);
         }
 
         if (vc4->zsa && vc4->zsa->base.depth.enabled) {
