@@ -803,13 +803,15 @@ test_format_conversion(struct st_context *st)
 
    /* test all Mesa formats */
    for (i = 1; i < MESA_FORMAT_COUNT; i++) {
+      enum pipe_format pf;
+
       /* ETC formats are translated differently, skip them. */
       if (_mesa_is_format_etc2(i))
          continue;
       if (i == MESA_FORMAT_ETC1_RGB8 && !st->has_etc1)
          continue;
 
-      enum pipe_format pf = st_mesa_format_to_pipe_format(st, i);
+      pf = st_mesa_format_to_pipe_format(st, i);
       if (pf != PIPE_FORMAT_NONE) {
          mesa_format mf = st_pipe_format_to_mesa_format(pf);
          assert(mf == i);
