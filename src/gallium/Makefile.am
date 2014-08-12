@@ -1,0 +1,104 @@
+SUBDIRS =
+
+##
+## Gallium pipe drivers and their respective winsys'
+##
+
+SUBDIRS += \
+	drivers/galahad \
+	drivers/identity \
+	drivers/noop \
+	drivers/trace \
+	drivers/rbug
+
+## freedreno/msm/kgsl
+if HAVE_GALLIUM_FREEDRENO
+SUBDIRS += drivers/freedreno winsys/freedreno/drm
+endif
+
+## i915g/i915
+if HAVE_GALLIUM_I915
+SUBDIRS += drivers/i915 winsys/i915/drm
+endif
+
+## ilo/i965
+if HAVE_GALLIUM_ILO
+SUBDIRS += drivers/ilo winsys/intel/drm
+endif
+
+## nouveau
+if HAVE_GALLIUM_NOUVEAU
+SUBDIRS += drivers/nouveau winsys/nouveau/drm
+endif
+
+## vmwgfx/svga
+if HAVE_GALLIUM_SVGA
+SUBDIRS += drivers/svga winsys/svga/drm
+endif
+
+## r300
+if HAVE_GALLIUM_R300
+SUBDIRS += drivers/r300
+endif
+
+## radeon - linked into r600 and radeonsi
+if HAVE_GALLIUM_RADEON_COMMON
+SUBDIRS += drivers/radeon
+endif
+
+## r600
+if HAVE_GALLIUM_R600
+SUBDIRS += drivers/r600
+endif
+
+## radeonsi
+if HAVE_GALLIUM_RADEONSI
+SUBDIRS += drivers/radeonsi
+endif
+
+## the radeon winsys - linked in by r300, r600 and radeonsi
+if NEED_RADEON_DRM_WINSYS
+SUBDIRS += winsys/radeon/drm
+endif
+
+## swrast/softpipe
+if NEED_GALLIUM_SOFTPIPE_DRIVER
+SUBDIRS += drivers/softpipe
+
+## swrast/llvmpipe
+if NEED_GALLIUM_LLVMPIPE_DRIVER
+SUBDIRS += drivers/llvmpipe
+endif
+endif
+
+## vc4/rpi
+if HAVE_GALLIUM_VC4
+SUBDIRS += drivers/vc4 winsys/vc4/drm
+endif
+
+## the sw winsys'
+SUBDIRS += winsys/sw/null
+
+if NEED_WINSYS_XLIB
+SUBDIRS += winsys/sw/xlib
+endif
+
+if HAVE_DRISW
+SUBDIRS += winsys/sw/dri
+endif
+
+if HAVE_DRI2
+SUBDIRS += winsys/sw/kms-dri
+endif
+
+if HAVE_EGL_PLATFORM_FBDEV
+SUBDIRS += winsys/sw/fbdev
+endif
+
+if HAVE_EGL_PLATFORM_WAYLAND
+SUBDIRS += winsys/sw/wayland
+endif
+
+if NEED_WINSYS_WRAPPER
+SUBDIRS += winsys/sw/wrapper
+endif

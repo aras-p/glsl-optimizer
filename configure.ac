@@ -2205,9 +2205,9 @@ AC_CONFIG_FILES([Makefile
 		src/egl/wayland/wayland-drm/Makefile
 		src/egl/wayland/wayland-egl/Makefile
 		src/egl/wayland/wayland-egl/wayland-egl.pc
+		src/gallium/Makefile
 		src/gallium/auxiliary/Makefile
 		src/gallium/auxiliary/pipe-loader/Makefile
-		src/gallium/drivers/Makefile
 		src/gallium/drivers/freedreno/Makefile
 		src/gallium/drivers/galahad/Makefile
 		src/gallium/drivers/i915/Makefile
@@ -2253,7 +2253,6 @@ AC_CONFIG_FILES([Makefile
 		src/gallium/targets/xvmc/Makefile
 		src/gallium/tests/trivial/Makefile
 		src/gallium/tests/unit/Makefile
-		src/gallium/winsys/Makefile
 		src/gallium/winsys/freedreno/drm/Makefile
 		src/gallium/winsys/i915/drm/Makefile
 		src/gallium/winsys/intel/drm/Makefile

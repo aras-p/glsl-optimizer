@@ -50,9 +50,8 @@ endif
 if HAVE_GALLIUM
 SUBDIRS +=			\
 	gallium/auxiliary	\
-	gallium/drivers		\
+	gallium			\
 	gallium/state_trackers	\
-	gallium/winsys		\
 	gallium/targets
 
 if HAVE_GALLIUM_TESTS
