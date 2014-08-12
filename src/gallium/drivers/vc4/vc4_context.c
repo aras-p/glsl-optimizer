@@ -144,9 +144,6 @@ vc4_flush(struct pipe_context *pctx)
 
         vc4_setup_rcl(vc4);
 
-        struct vc4_surface *csurf = vc4_surface(vc4->framebuffer.cbufs[0]);
-        struct vc4_resource *ctex = vc4_resource(csurf->base.texture);
-
         struct drm_vc4_submit_cl submit;
         memset(&submit, 0, sizeof(submit));
 
@@ -169,7 +166,7 @@ vc4_flush(struct pipe_context *pctx)
 #ifndef USE_VC4_SIMULATOR
                 ret = drmIoctl(vc4->fd, DRM_IOCTL_VC4_SUBMIT_CL, &submit);
 #else
-                ret = vc4_simulator_flush(vc4, &submit, csurf);
+                ret = vc4_simulator_flush(vc4, &submit);
 #endif
                 if (ret)
                         errx(1, "VC4 submit failed\n");

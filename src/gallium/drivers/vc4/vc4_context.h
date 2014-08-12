@@ -215,8 +215,7 @@ void vc4_state_init(struct pipe_context *pctx);
 void vc4_program_init(struct pipe_context *pctx);
 void vc4_simulator_init(struct vc4_screen *screen);
 int vc4_simulator_flush(struct vc4_context *vc4,
-                        struct drm_vc4_submit_cl *args,
-                        struct vc4_surface *color_surf);
+                        struct drm_vc4_submit_cl *args);
 
 void vc4_write_uniforms(struct vc4_context *vc4,
                         struct vc4_compiled_shader *shader,

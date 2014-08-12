@@ -226,9 +226,9 @@ fail:
 }
 
 int
-vc4_simulator_flush(struct vc4_context *vc4, struct drm_vc4_submit_cl *args,
-                    struct vc4_surface *csurf)
+vc4_simulator_flush(struct vc4_context *vc4, struct drm_vc4_submit_cl *args)
 {
+        struct vc4_surface *csurf = vc4_surface(vc4->framebuffer.cbufs[0]);
         struct vc4_resource *ctex = vc4_resource(csurf->base.texture);
         uint32_t winsys_stride = ctex->bo->simulator_winsys_stride;
         uint32_t sim_stride = ctex->slices[0].stride;
