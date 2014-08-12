@@ -47,6 +47,8 @@ struct tgsi_to_qir {
         struct qreg *outputs;
         struct qreg *uniforms;
         struct qreg *consts;
+        struct qreg line_x, point_x, point_y;
+
         uint32_t num_consts;
 
         struct pipe_shader_state *shader_state;
@@ -68,6 +70,8 @@ struct vc4_fs_key {
         struct vc4_key base;
         enum pipe_format color_format;
         bool depth_enabled;
+        bool is_points;
+        bool is_lines;
 };
 
 struct vc4_vs_key {
@@ -600,20 +604,28 @@ emit_fragcoord_input(struct tgsi_to_qir *trans, int attr)
         trans->inputs[attr * 4 + 3] = qir_FRAG_RCP_W(c);
 }
 
+static struct qreg
+emit_fragment_varying(struct tgsi_to_qir *trans, int index)
+{
+        struct qcompile *c = trans->c;
+
+        struct qreg vary = {
+                QFILE_VARY,
+                index
+        };
+
+        /* XXX: multiply by W */
+        return qir_VARY_ADD_C(c, qir_MOV(c, vary));
+}
+
 static void
 emit_fragment_input(struct tgsi_to_qir *trans, int attr)
 {
         struct qcompile *c = trans->c;
 
         for (int i = 0; i < 4; i++) {
-                struct qreg vary = {
-                        QFILE_VARY,
-                        attr * 4 + i
-                };
-
-                /* XXX: multiply by W */
                 trans->inputs[attr * 4 + i] =
-                        qir_VARY_ADD_C(c, qir_MOV(c, vary));
+                        emit_fragment_varying(trans, attr * 4 + i);
                 c->num_inputs++;
         }
 }
@@ -906,6 +918,12 @@ vc4_shader_tgsi_to_qir(struct vc4_compiled_shader *shader, enum qstage stage,
         switch (stage) {
         case QSTAGE_FRAG:
                 trans->fs_key = (struct vc4_fs_key *)key;
+                if (trans->fs_key->is_points) {
+                        trans->point_x = emit_fragment_varying(trans, 0);
+                        trans->point_y = emit_fragment_varying(trans, 0);
+                } else if (trans->fs_key->is_lines) {
+                        trans->line_x = emit_fragment_varying(trans, 0);
+                }
                 break;
         case QSTAGE_VERT:
                 trans->vs_key = (struct vc4_vs_key *)key;
@@ -1047,13 +1065,16 @@ vc4_vs_compile(struct vc4_context *vc4, struct vc4_compiled_shader *shader,
 }
 
 static void
-vc4_update_compiled_fs(struct vc4_context *vc4)
+vc4_update_compiled_fs(struct vc4_context *vc4, uint8_t prim_mode)
 {
         struct vc4_fs_key local_key;
         struct vc4_fs_key *key = &local_key;
 
         memset(key, 0, sizeof(*key));
         key->base.shader_state = vc4->prog.bind_fs;
+        key->is_points = (prim_mode == PIPE_PRIM_POINTS);
+        key->is_lines = (prim_mode >= PIPE_PRIM_LINES &&
+                         prim_mode <= PIPE_PRIM_LINE_STRIP);
 
         if (vc4->framebuffer.cbufs[0])
                 key->color_format = vc4->framebuffer.cbufs[0]->format;
@@ -1101,9 +1122,9 @@ vc4_update_compiled_vs(struct vc4_context *vc4)
 }
 
 void
-vc4_update_compiled_shaders(struct vc4_context *vc4)
+vc4_update_compiled_shaders(struct vc4_context *vc4, uint8_t prim_mode)
 {
-        vc4_update_compiled_fs(vc4);
+        vc4_update_compiled_fs(vc4, prim_mode);
         vc4_update_compiled_vs(vc4);
 }
 
