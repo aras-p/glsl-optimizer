@@ -51,7 +51,6 @@ if HAVE_GALLIUM
 SUBDIRS +=			\
 	gallium/auxiliary	\
 	gallium			\
-	gallium/state_trackers	\
 	gallium/targets
 
 if HAVE_GALLIUM_TESTS

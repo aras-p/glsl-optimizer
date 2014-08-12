@@ -102,3 +102,52 @@ endif
 if NEED_WINSYS_WRAPPER
 SUBDIRS += winsys/sw/wrapper
 endif
+
+
+##
+## Gallium state trackers
+##
+
+if HAVE_CLOVER
+SUBDIRS += state_trackers/clover
+endif
+
+if HAVE_DRICOMMON
+SUBDIRS += state_trackers/dri
+endif
+
+if HAVE_GALLIUM_EGL
+SUBDIRS += state_trackers/egl
+endif
+
+if HAVE_GALLIUM_GBM
+SUBDIRS += state_trackers/gbm
+endif
+
+if HAVE_X11_DRIVER
+SUBDIRS += state_trackers/glx/xlib
+endif
+
+if HAVE_ST_OMX
+SUBDIRS += state_trackers/omx
+endif
+
+if HAVE_GALLIUM_OSMESA
+SUBDIRS += state_trackers/osmesa
+endif
+
+if HAVE_ST_VDPAU
+SUBDIRS += state_trackers/vdpau
+endif
+
+if HAVE_OPENVG
+SUBDIRS += state_trackers/vega
+endif
+
+if HAVE_ST_XA
+SUBDIRS += state_trackers/xa
+endif
+
+if HAVE_ST_XVMC
+SUBDIRS += state_trackers/xvmc
+endif
