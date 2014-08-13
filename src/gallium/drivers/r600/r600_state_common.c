@@ -1971,6 +1971,30 @@ uint32_t r600_translate_texformat(struct pipe_screen *screen,
 		}
 	}
 
+	if (desc->layout == UTIL_FORMAT_LAYOUT_BPTC) {
+		if (!enable_s3tc)
+			goto out_unknown;
+
+		if (rscreen->b.chip_class < EVERGREEN)
+			goto out_unknown;
+
+		switch (format) {
+			case PIPE_FORMAT_BPTC_RGBA_UNORM:
+			case PIPE_FORMAT_BPTC_SRGBA:
+				result = FMT_BC7;
+				is_srgb_valid = TRUE;
+				goto out_word4;
+			case PIPE_FORMAT_BPTC_RGB_FLOAT:
+				word4 |= sign_bit[0] | sign_bit[1] | sign_bit[2];
+				/* fall through */
+			case PIPE_FORMAT_BPTC_RGB_UFLOAT:
+				result = FMT_BC6;
+				goto out_word4;
+			default:
+				goto out_unknown;
+		}
+	}
+
 	if (desc->layout == UTIL_FORMAT_LAYOUT_SUBSAMPLED) {
 		switch (format) {
 		case PIPE_FORMAT_R8G8_B8G8_UNORM:

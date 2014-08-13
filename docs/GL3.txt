@@ -131,7 +131,7 @@ GL 4.1, GLSL 4.10:
 
 GL 4.2, GLSL 4.20:
 
-  GL_ARB_texture_compression_bptc                      DONE (i965, nvc0)
+  GL_ARB_texture_compression_bptc                      DONE (i965, nvc0, r600)
   GL_ARB_compressed_texture_pixel_storage              DONE (all drivers)
   GL_ARB_shader_atomic_counters                        DONE (i965)
   GL_ARB_texture_storage                               DONE (all drivers)
