@@ -2921,7 +2921,9 @@ fs_visitor::dump_instruction(backend_instruction *be_inst, FILE *file)
    switch (inst->dst.file) {
    case GRF:
       fprintf(file, "vgrf%d", inst->dst.reg);
-      if (virtual_grf_sizes[inst->dst.reg] != 1 ||
+      if (inst->dst.width != dispatch_width)
+         fprintf(file, "@%d", inst->dst.width);
+      if (virtual_grf_sizes[inst->dst.reg] != inst->dst.width / 8 ||
           inst->dst.subreg_offset)
          fprintf(file, "+%d.%d",
                  inst->dst.reg_offset, inst->dst.subreg_offset);
@@ -2976,7 +2978,9 @@ fs_visitor::dump_instruction(backend_instruction *be_inst, FILE *file)
       switch (inst->src[i].file) {
       case GRF:
          fprintf(file, "vgrf%d", inst->src[i].reg);
-         if (virtual_grf_sizes[inst->src[i].reg] != 1 ||
+         if (inst->src[i].width != dispatch_width)
+            fprintf(file, "@%d", inst->src[i].width);
+         if (virtual_grf_sizes[inst->src[i].reg] != inst->src[i].width / 8 ||
              inst->src[i].subreg_offset)
             fprintf(file, "+%d.%d", inst->src[i].reg_offset,
                     inst->src[i].subreg_offset);
