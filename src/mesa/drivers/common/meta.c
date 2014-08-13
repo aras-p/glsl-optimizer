@@ -1527,12 +1527,12 @@ meta_glsl_clear_init(struct gl_context *ctx, struct clear_state *clear)
 {
    const char *vs_source =
       "#extension GL_AMD_vertex_shader_layer : enable\n"
+      "#extension GL_ARB_draw_instanced : enable\n"
       "attribute vec4 position;\n"
-      "uniform int layer;\n"
       "void main()\n"
       "{\n"
       "#ifdef GL_AMD_vertex_shader_layer\n"
-      "   gl_Layer = layer;\n"
+      "   gl_Layer = gl_InstanceID;\n"
       "#endif\n"
       "   gl_Position = position;\n"
       "}\n";
@@ -1568,7 +1568,6 @@ meta_glsl_clear_init(struct gl_context *ctx, struct clear_state *clear)
    _mesa_LinkProgram(clear->ShaderProg);
 
    clear->ColorLocation = _mesa_GetUniformLocation(clear->ShaderProg, "color");
-   clear->LayerLocation = _mesa_GetUniformLocation(clear->ShaderProg, "layer");
 
    has_integer_textures = _mesa_is_gles3(ctx) ||
       (_mesa_is_desktop_gl(ctx) && ctx->Const.GLSLVersion >= 130);
@@ -1579,12 +1578,12 @@ meta_glsl_clear_init(struct gl_context *ctx, struct clear_state *clear)
          ralloc_asprintf(shader_source_mem_ctx,
                          "#version 130\n"
                          "#extension GL_AMD_vertex_shader_layer : enable\n"
+                         "#extension GL_ARB_draw_instanced : enable\n"
                          "in vec4 position;\n"
-                         "uniform int layer;\n"
                          "void main()\n"
                          "{\n"
                          "#ifdef GL_AMD_vertex_shader_layer\n"
-                         "   gl_Layer = layer;\n"
+                         "   gl_Layer = gl_InstanceID;\n"
                          "#endif\n"
                          "   gl_Position = position;\n"
                          "}\n");
@@ -1623,8 +1622,6 @@ meta_glsl_clear_init(struct gl_context *ctx, struct clear_state *clear)
 
       clear->IntegerColorLocation =
 	 _mesa_GetUniformLocation(clear->IntegerShaderProg, "color");
-      clear->IntegerLayerLocation =
-         _mesa_GetUniformLocation(clear->IntegerShaderProg, "layer");
    }
 }
 
@@ -1832,15 +1829,7 @@ meta_clear(struct gl_context *ctx, GLbitfield buffers, bool glsl)
 
    /* draw quad(s) */
    if (fb->MaxNumLayers > 0) {
-      unsigned layer;
-      assert(glsl && clear->LayerLocation != -1);
-      for (layer = 0; layer < fb->MaxNumLayers; layer++) {
-         if (fb->_IntegerColor)
-            _mesa_Uniform1i(clear->IntegerLayerLocation, layer);
-         else
-            _mesa_Uniform1i(clear->LayerLocation, layer);
-         _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
-      }
+      _mesa_DrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, fb->MaxNumLayers);
    } else {
       _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
    }
