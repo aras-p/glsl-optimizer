@@ -303,7 +303,7 @@ vc4_context_create(struct pipe_screen *pscreen, void *priv)
                 goto fail;
 
         vc4->primconvert = util_primconvert_create(pctx,
-                                                   !((1 << PIPE_PRIM_QUADS) - 1));
+                                                   (1 << PIPE_PRIM_QUADS) - 1);
         if (!vc4->primconvert)
                 goto fail;
 
