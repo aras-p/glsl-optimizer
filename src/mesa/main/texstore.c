@@ -1498,6 +1498,9 @@ texstore_swizzle(TEXSTORE_PARAMS)
    if (srcFormat == GL_COLOR_INDEX)
       return GL_FALSE;
 
+   if (_mesa_texstore_needs_transfer_ops(ctx, baseInternalFormat, dstFormat))
+      return GL_FALSE;
+
    switch (srcType) {
    case GL_FLOAT:
    case GL_UNSIGNED_BYTE:
