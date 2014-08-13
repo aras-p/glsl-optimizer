@@ -62,7 +62,7 @@ vlVdpPresentationQueueCreate(VdpDevice device,
    if (!pq)
       return VDP_STATUS_RESOURCES;
 
-   pq->device = dev;
+   DeviceReference(&pq->device, dev);
    pq->drawable = pqt->drawable;
 
    pipe_mutex_lock(dev->mutex);
@@ -83,6 +83,7 @@ vlVdpPresentationQueueCreate(VdpDevice device,
 
 no_handle:
 no_compositor:
+   DeviceReference(&pq->device, NULL);
    FREE(pq);
    return ret;
 }
@@ -104,6 +105,7 @@ vlVdpPresentationQueueDestroy(VdpPresentationQueue presentation_queue)
    pipe_mutex_unlock(pq->device->mutex);
 
    vlRemoveDataHTAB(presentation_queue);
+   DeviceReference(&pq->device, NULL);
    FREE(pq);
 
    return VDP_STATUS_OK;

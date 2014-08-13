@@ -59,6 +59,8 @@ vdp_imp_device_create_x11(Display *display, int screen, VdpDevice *device,
       goto no_dev;
    }
 
+   pipe_reference_init(&dev->reference, 1);
+
    dev->vscreen = vl_screen_create(display, screen);
    if (!dev->vscreen) {
       ret = VDP_STATUS_RESOURCES;
@@ -124,7 +126,7 @@ vlVdpPresentationQueueTargetCreateX11(VdpDevice device, Drawable drawable,
    if (!pqt)
       return VDP_STATUS_RESOURCES;
 
-   pqt->device = dev;
+   DeviceReference(&pqt->device, dev);
    pqt->drawable = drawable;
 
    *target = vlAddDataHTAB(pqt);
@@ -153,6 +155,7 @@ vlVdpPresentationQueueTargetDestroy(VdpPresentationQueueTarget presentation_queu
       return VDP_STATUS_INVALID_HANDLE;
 
    vlRemoveDataHTAB(presentation_queue_target);
+   DeviceReference(&pqt->device, NULL);
    FREE(pqt);
 
    return VDP_STATUS_OK;
@@ -168,16 +171,24 @@ vlVdpDeviceDestroy(VdpDevice device)
    if (!dev)
       return VDP_STATUS_INVALID_HANDLE;
 
+   vlRemoveDataHTAB(device);
+   DeviceReference(&dev, NULL);
+
+   return VDP_STATUS_OK;
+}
+
+/**
+ * Free a VdpDevice.
+ */
+void
+vlVdpDeviceFree(vlVdpDevice *dev)
+{
    pipe_mutex_destroy(dev->mutex);
    vl_compositor_cleanup(&dev->compositor);
    dev->context->destroy(dev->context);
    vl_screen_destroy(dev->vscreen);
-
-   vlRemoveDataHTAB(device);
    FREE(dev);
    vlDestroyHTAB();
-
-   return VDP_STATUS_OK;
 }
 
 /**

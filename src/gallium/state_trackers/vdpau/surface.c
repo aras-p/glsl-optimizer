@@ -74,7 +74,7 @@ vlVdpVideoSurfaceCreate(VdpDevice device, VdpChromaType chroma_type,
       goto inv_device;
    }
 
-   p_surf->device = dev;
+   DeviceReference(&p_surf->device, dev);
    pipe = dev->context;
 
    pipe_mutex_lock(dev->mutex);
@@ -115,6 +115,7 @@ no_handle:
    p_surf->video_buffer->destroy(p_surf->video_buffer);
 
 inv_device:
+   DeviceReference(&p_surf->device, NULL);
    FREE(p_surf);
 
 no_res:
@@ -140,6 +141,7 @@ vlVdpVideoSurfaceDestroy(VdpVideoSurface surface)
    pipe_mutex_unlock(p_surf->device->mutex);
 
    vlRemoveDataHTAB(surface);
+   DeviceReference(&p_surf->device, NULL);
    FREE(p_surf);
 
    return VDP_STATUS_OK;

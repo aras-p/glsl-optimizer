@@ -60,7 +60,7 @@ vlVdpVideoMixerCreate(VdpDevice device,
    if (!vmixer)
       return VDP_STATUS_RESOURCES;
 
-   vmixer->device = dev;
+   DeviceReference(&vmixer->device, dev);
 
    pipe_mutex_lock(dev->mutex);
 
@@ -160,6 +160,7 @@ no_params:
 no_handle:
    vl_compositor_cleanup_state(&vmixer->cstate);
    pipe_mutex_unlock(dev->mutex);
+   DeviceReference(&vmixer->device, NULL);
    FREE(vmixer);
    return ret;
 }
@@ -199,6 +200,7 @@ vlVdpVideoMixerDestroy(VdpVideoMixer mixer)
       FREE(vmixer->sharpness.filter);
    }
    pipe_mutex_unlock(vmixer->device->mutex);
+   DeviceReference(&vmixer->device, NULL);
 
    FREE(vmixer);
 

@@ -69,7 +69,7 @@ vlVdpOutputSurfaceCreate(VdpDevice device,
    if (!vlsurface)
       return VDP_STATUS_RESOURCES;
 
-   vlsurface->device = dev;
+   DeviceReference(&vlsurface->device, dev);
 
    memset(&res_tmpl, 0, sizeof(res_tmpl));
 
@@ -120,6 +120,7 @@ err_resource:
    pipe_resource_reference(&res, NULL);
 err_unlock:
    pipe_mutex_unlock(dev->mutex);
+   DeviceReference(&vlsurface->device, NULL);
    FREE(vlsurface);
    return VDP_STATUS_ERROR;
 }
@@ -149,6 +150,7 @@ vlVdpOutputSurfaceDestroy(VdpOutputSurface surface)
    pipe_mutex_unlock(vlsurface->device->mutex);
 
    vlRemoveDataHTAB(surface);
+   DeviceReference(&vlsurface->device, NULL);
    FREE(vlsurface);
 
    return VDP_STATUS_OK;

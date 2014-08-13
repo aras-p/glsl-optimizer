@@ -67,7 +67,7 @@ vlVdpBitmapSurfaceCreate(VdpDevice device,
    if (!vlsurface)
       return VDP_STATUS_RESOURCES;
 
-   vlsurface->device = dev;
+   DeviceReference(&vlsurface->device, dev);
 
    memset(&res_tmpl, 0, sizeof(res_tmpl));
    res_tmpl.target = PIPE_TEXTURE_2D;
@@ -117,6 +117,7 @@ err_sampler:
    pipe_sampler_view_reference(&vlsurface->sampler_view, NULL);
 err_unlock:
    pipe_mutex_unlock(dev->mutex);
+   DeviceReference(&vlsurface->device, NULL);
    FREE(vlsurface);
    return ret;
 }
@@ -138,6 +139,7 @@ vlVdpBitmapSurfaceDestroy(VdpBitmapSurface surface)
    pipe_mutex_unlock(vlsurface->device->mutex);
 
    vlRemoveDataHTAB(surface);
+   DeviceReference(&vlsurface->device, NULL);
    FREE(vlsurface);
 
    return VDP_STATUS_OK;
