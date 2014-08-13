@@ -348,6 +348,7 @@ typedef struct
    struct vl_screen *vscreen;
    struct pipe_context *context;
    struct vl_compositor compositor;
+   struct pipe_sampler_view *dummy_sv;
    pipe_mutex mutex;
 
    struct {
