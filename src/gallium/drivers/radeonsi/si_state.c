@@ -1102,6 +1102,22 @@ static uint32_t si_translate_texformat(struct pipe_screen *screen,
 		}
 	}
 
+	if (desc->layout == UTIL_FORMAT_LAYOUT_BPTC) {
+		if (!enable_s3tc)
+			goto out_unknown;
+
+		switch (format) {
+		case PIPE_FORMAT_BPTC_RGBA_UNORM:
+		case PIPE_FORMAT_BPTC_SRGBA:
+			return V_008F14_IMG_DATA_FORMAT_BC7;
+		case PIPE_FORMAT_BPTC_RGB_FLOAT:
+		case PIPE_FORMAT_BPTC_RGB_UFLOAT:
+			return V_008F14_IMG_DATA_FORMAT_BC6;
+		default:
+			goto out_unknown;
+		}
+	}
+
 	if (desc->layout == UTIL_FORMAT_LAYOUT_SUBSAMPLED) {
 		switch (format) {
 		case PIPE_FORMAT_R8G8_B8G8_UNORM:
@@ -2470,12 +2486,16 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 				case PIPE_FORMAT_DXT1_SRGBA:
 				case PIPE_FORMAT_DXT3_SRGBA:
 				case PIPE_FORMAT_DXT5_SRGBA:
+				case PIPE_FORMAT_BPTC_SRGBA:
 					num_format = V_008F14_IMG_NUM_FORMAT_SRGB;
 					break;
 				case PIPE_FORMAT_RGTC1_SNORM:
 				case PIPE_FORMAT_LATC1_SNORM:
 				case PIPE_FORMAT_RGTC2_SNORM:
 				case PIPE_FORMAT_LATC2_SNORM:
+				/* implies float, so use SNORM/UNORM to determine
+				   whether data is signed or not */
+				case PIPE_FORMAT_BPTC_RGB_FLOAT:
 					num_format = V_008F14_IMG_NUM_FORMAT_SNORM;
 					break;
 				default:
