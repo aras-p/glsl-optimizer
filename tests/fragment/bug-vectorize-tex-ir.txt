@@ -1,0 +1,43 @@
+uniform sampler2D _MainTex;
+uniform sampler2D _RampTex;
+varying vec2 varUV;
+void main ()
+{
+  vec4 color_1;
+  float bb_2;
+  float gg_3;
+  float rr_4;
+  vec4 orig_5;
+  vec4 tmpvar_6;
+  tmpvar_6 = texture2D (_MainTex, varUV);
+  vec4 tmpvar_7;
+  tmpvar_7 = tmpvar_6;
+  orig_5 = tmpvar_7;
+  vec4 tmpvar_8;
+  tmpvar_8 = texture2D (_RampTex, orig_5.xx);
+  float tmpvar_9;
+  tmpvar_9 = tmpvar_8.x;
+  rr_4 = tmpvar_9;
+  vec4 tmpvar_10;
+  tmpvar_10 = texture2D (_RampTex, orig_5.yy);
+  float tmpvar_11;
+  tmpvar_11 = tmpvar_10.y;
+  gg_3 = tmpvar_11;
+  vec4 tmpvar_12;
+  tmpvar_12 = texture2D (_RampTex, orig_5.zz);
+  float tmpvar_13;
+  tmpvar_13 = tmpvar_12.z;
+  bb_2 = tmpvar_13;
+  vec4 tmpvar_14;
+  tmpvar_14.x = rr_4;
+  tmpvar_14.y = gg_3;
+  tmpvar_14.z = bb_2;
+  tmpvar_14.w = orig_5.w;
+  vec4 tmpvar_15;
+  tmpvar_15 = tmpvar_14;
+  color_1 = tmpvar_15;
+  vec4 tmpvar_16;
+  tmpvar_16 = color_1;
+  gl_FragData[0] = tmpvar_16;
+}
+

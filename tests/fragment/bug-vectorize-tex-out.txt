@@ -1,0 +1,15 @@
+uniform sampler2D _MainTex;
+uniform sampler2D _RampTex;
+varying vec2 varUV;
+void main ()
+{
+  vec4 tmpvar_1;
+  tmpvar_1 = texture2D (_MainTex, varUV);
+  vec4 tmpvar_2;
+  tmpvar_2.xyz = texture2DProj (_RampTex, tmpvar_1.xyz).xyz;
+  tmpvar_2.w = tmpvar_1.w;
+  gl_FragData[0] = tmpvar_2;
+}
+
+
+// inputs: 1, stats: 0 alu 2 tex 0 flow
