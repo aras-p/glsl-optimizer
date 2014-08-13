@@ -422,6 +422,7 @@ fs_reg::fs_reg(float f)
    this->file = IMM;
    this->type = BRW_REGISTER_TYPE_F;
    this->fixed_hw_reg.dw1.f = f;
+   this->width = 1;
 }
 
 /** Immediate value constructor. */
@@ -431,6 +432,7 @@ fs_reg::fs_reg(int32_t i)
    this->file = IMM;
    this->type = BRW_REGISTER_TYPE_D;
    this->fixed_hw_reg.dw1.d = i;
+   this->width = 1;
 }
 
 /** Immediate value constructor. */
@@ -440,6 +442,7 @@ fs_reg::fs_reg(uint32_t u)
    this->file = IMM;
    this->type = BRW_REGISTER_TYPE_UD;
    this->fixed_hw_reg.dw1.ud = u;
+   this->width = 1;
 }
 
 /** Fixed brw_reg. */
@@ -449,6 +452,7 @@ fs_reg::fs_reg(struct brw_reg fixed_hw_reg)
    this->file = HW_REG;
    this->fixed_hw_reg = fixed_hw_reg;
    this->type = fixed_hw_reg.type;
+   this->width = 1 << fixed_hw_reg.width;
 }
 
 bool
@@ -462,9 +466,31 @@ fs_reg::equals(const fs_reg &r) const
            negate == r.negate &&
            abs == r.abs &&
            !reladdr && !r.reladdr &&
-           memcmp(&fixed_hw_reg, &r.fixed_hw_reg,
-                  sizeof(fixed_hw_reg)) == 0 &&
+           memcmp(&fixed_hw_reg, &r.fixed_hw_reg, sizeof(fixed_hw_reg)) == 0 &&
+           width == r.width &&
            stride == r.stride);
+}
+
+uint8_t
+fs_reg::effective_width(const fs_visitor *v) const
+{
+   switch (this->file) {
+   case BAD_FILE:
+      return 8;
+   case UNIFORM:
+   case IMM:
+      assert(this->width == 1);
+      return v->dispatch_width;
+   case GRF:
+   case HW_REG:
+      assert(this->width > 1 && this->width <= v->dispatch_width);
+      assert(this->width % 8 == 0);
+      return this->width;
+   case MRF:
+      unreachable("MRF registers cannot be used as sources");
+   default:
+      unreachable("Invalid register file");
+   }
 }
 
 fs_reg &
@@ -880,6 +906,14 @@ fs_reg::fs_reg(enum register_file file, int reg)
    this->file = file;
    this->reg = reg;
    this->type = BRW_REGISTER_TYPE_F;
+
+   switch (file) {
+   case UNIFORM:
+      this->width = 1;
+      break;
+   default:
+      this->width = 8;
+   }
 }
 
 /** Fixed HW reg constructor. */
@@ -889,10 +923,29 @@ fs_reg::fs_reg(enum register_file file, int reg, enum brw_reg_type type)
    this->file = file;
    this->reg = reg;
    this->type = type;
+
+   switch (file) {
+   case UNIFORM:
+      this->width = 1;
+      break;
+   default:
+      this->width = 8;
+   }
+}
+
+/** Fixed HW reg constructor. */
+fs_reg::fs_reg(enum register_file file, int reg, enum brw_reg_type type,
+               uint8_t width)
+{
+   init();
+   this->file = file;
+   this->reg = reg;
+   this->type = type;
+   this->width = width;
 }
 
 /** Automatic reg constructor. */
-fs_reg::fs_reg(class fs_visitor *v, const struct glsl_type *type)
+fs_reg::fs_reg(fs_visitor *v, const struct glsl_type *type)
 {
    init();
 
@@ -900,6 +953,8 @@ fs_reg::fs_reg(class fs_visitor *v, const struct glsl_type *type)
    this->reg = v->virtual_grf_alloc(v->type_size(type));
    this->reg_offset = 0;
    this->type = brw_type_for_base_type(type);
+   this->width = v->dispatch_width;
+   assert(this->width == 8 || this->width == 16);
 }
 
 fs_reg *

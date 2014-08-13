@@ -62,6 +62,8 @@ namespace brw {
    class fs_live_variables;
 }
 
+class fs_visitor;
+
 class fs_reg : public backend_reg {
 public:
    DECLARE_RALLOC_CXX_OPERATORS(fs_reg)
@@ -75,7 +77,8 @@ public:
    fs_reg(struct brw_reg fixed_hw_reg);
    fs_reg(enum register_file file, int reg);
    fs_reg(enum register_file file, int reg, enum brw_reg_type type);
-   fs_reg(class fs_visitor *v, const struct glsl_type *type);
+   fs_reg(enum register_file file, int reg, enum brw_reg_type type, uint8_t width);
+   fs_reg(fs_visitor *v, const struct glsl_type *type);
 
    bool equals(const fs_reg &r) const;
    bool is_valid_3src() const;
@@ -92,6 +95,22 @@ public:
    int subreg_offset;
 
    fs_reg *reladdr;
+
+   /**
+    * The register width.  This indicates how many hardware values are
+    * represented by each virtual value.  Valid values are 1, 8, or 16.
+    * For immediate values, this is 1.  Most of the rest of the time, it
+    * will be equal to the dispatch width.
+    */
+   uint8_t width;
+
+   /**
+    * Returns the effective register width when used as a source in the
+    * given instruction.  Registers such as uniforms and immediates
+    * effectively take on the width of the instruction in which they are
+    * used.
+    */
+   uint8_t effective_width(const fs_visitor *v) const;
 
    /** Register region horizontal stride */
    uint8_t stride;
