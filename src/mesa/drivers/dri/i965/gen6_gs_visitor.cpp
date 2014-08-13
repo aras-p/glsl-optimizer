@@ -98,30 +98,6 @@ gen6_gs_visitor::emit_prolog()
    emit(MOV(dst_reg(this->prim_count), 0u));
 
    if (c->prog_data.gen6_xfb_enabled) {
-      const struct gl_transform_feedback_info *linked_xfb_info =
-         &this->shader_prog->LinkedTransformFeedback;
-
-      /* Gen6 geometry shaders are required to ask for Streamed Vertex Buffer
-       * Indices values via FF_SYNC message, when Transform Feedback is
-       * enabled.
-       *
-       * To achieve this we buffer the Transform feedback outputs for each
-       * emitted vertex in xfb_output during operation. Then, when we have
-       * processed the last vertex (that is, at thread end time), we know all
-       * the required data for the FF_SYNC message header in order to receive
-       * the SVBI in the writeback.
-       *
-       * For each emitted vertex, xfb_output will hold
-       * num_transform_feedback_bindings data items plus one, which will
-       * indicate the end of the primitive. Next vertex's data comes right
-       * after.
-       */
-      this->xfb_output = src_reg(this,
-                                 glsl_type::uint_type,
-                                 linked_xfb_info->NumOutputs *
-                                 c->gp->program.VerticesOut);
-      this->xfb_output_offset = src_reg(this, glsl_type::uint_type);
-      emit(MOV(dst_reg(this->xfb_output_offset), src_reg(0u)));
       /* Create a virtual register to hold destination indices in SOL */
       this->destination_indices = src_reg(this, glsl_type::uvec4_type);
       /* Create a virtual register to hold number of written primitives */
@@ -132,6 +108,8 @@ gen6_gs_visitor::emit_prolog()
       this->max_svbi = src_reg(this, glsl_type::uvec4_type);
       emit(MOV(dst_reg(this->max_svbi),
                src_reg(retype(brw_vec1_grf(1, 4), BRW_REGISTER_TYPE_UD))));
+
+      xfb_setup();
    }
 
    /* PrimitveID is delivered in r0.1 of the thread payload. If the program
@@ -171,9 +149,6 @@ gen6_gs_visitor::visit(ir_emit_vertex *)
             BRW_CONDITIONAL_L));
    emit(IF(BRW_PREDICATE_NORMAL));
    {
-      if (c->prog_data.gen6_xfb_enabled)
-         xfb_buffer_output();
-
       /* Buffer all output slots for this vertex in vertex_output */
       for (int slot = 0; slot < prog_data->vue_map.num_slots; ++slot) {
          int varying = prog_data->vue_map.slot_to_varying[slot];
@@ -556,7 +531,7 @@ gen6_gs_visitor::setup_payload()
 }
 
 void
-gen6_gs_visitor::xfb_buffer_output()
+gen6_gs_visitor::xfb_setup()
 {
    static const unsigned swizzle_for_offset[4] = {
       BRW_SWIZZLE4(0, 1, 2, 3),
@@ -568,48 +543,27 @@ gen6_gs_visitor::xfb_buffer_output()
    struct brw_gs_prog_data *prog_data =
       (struct brw_gs_prog_data *) &c->prog_data;
 
-   if (!prog_data->num_transform_feedback_bindings) {
-      const struct gl_transform_feedback_info *linked_xfb_info =
-         &this->shader_prog->LinkedTransformFeedback;
-      int i;
+   const struct gl_transform_feedback_info *linked_xfb_info =
+      &this->shader_prog->LinkedTransformFeedback;
+   int i;
 
-      /* Make sure that the VUE slots won't overflow the unsigned chars in
-       * prog_data->transform_feedback_bindings[].
-       */
-      STATIC_ASSERT(BRW_VARYING_SLOT_COUNT <= 256);
+   /* Make sure that the VUE slots won't overflow the unsigned chars in
+    * prog_data->transform_feedback_bindings[].
+    */
+   STATIC_ASSERT(BRW_VARYING_SLOT_COUNT <= 256);
 
-      /* Make sure that we don't need more binding table entries than we've
-       * set aside for use in transform feedback.  (We shouldn't, since we
-       * set aside enough binding table entries to have one per component).
-       */
-      assert(linked_xfb_info->NumOutputs <= BRW_MAX_SOL_BINDINGS);
+   /* Make sure that we don't need more binding table entries than we've
+    * set aside for use in transform feedback.  (We shouldn't, since we
+    * set aside enough binding table entries to have one per component).
+    */
+   assert(linked_xfb_info->NumOutputs <= BRW_MAX_SOL_BINDINGS);
 
-      prog_data->num_transform_feedback_bindings = linked_xfb_info->NumOutputs;
-      for (i = 0; i < prog_data->num_transform_feedback_bindings; i++) {
-         prog_data->transform_feedback_bindings[i] =
-            linked_xfb_info->Outputs[i].OutputRegister;
-         prog_data->transform_feedback_swizzles[i] =
-            swizzle_for_offset[linked_xfb_info->Outputs[i].ComponentOffset];
-      }
-   }
-
-   /* Buffer all TF outputs for this vertex in xfb_output */
-   for (int binding = 0; binding < prog_data->num_transform_feedback_bindings;
-        binding++) {
-      unsigned varying =
-         prog_data->transform_feedback_bindings[binding];
-      dst_reg dst(this->xfb_output);
-      dst.reladdr = ralloc(mem_ctx, src_reg);
-      memcpy(dst.reladdr, &this->xfb_output_offset, sizeof(src_reg));
-      dst.type = output_reg[varying].type;
-
-      this->current_annotation = output_reg_annotation[varying];
-      src_reg out_reg = src_reg(output_reg[varying]);
-      out_reg.swizzle = varying == VARYING_SLOT_PSIZ
-         ? BRW_SWIZZLE_WWWW : prog_data->transform_feedback_swizzles[binding];
-      emit(MOV(dst, out_reg));
-
-      emit(ADD(dst_reg(this->xfb_output_offset), this->xfb_output_offset, 1u));
+   prog_data->num_transform_feedback_bindings = linked_xfb_info->NumOutputs;
+   for (i = 0; i < prog_data->num_transform_feedback_bindings; i++) {
+      prog_data->transform_feedback_bindings[i] =
+         linked_xfb_info->Outputs[i].OutputRegister;
+      prog_data->transform_feedback_swizzles[i] =
+         swizzle_for_offset[linked_xfb_info->Outputs[i].ComponentOffset];
    }
 }
 
@@ -649,7 +603,7 @@ gen6_gs_visitor::xfb_write()
 
    this->current_annotation = "gen6 thread end: svb writes init";
 
-   emit(MOV(dst_reg(this->xfb_output_offset), 0u));
+   emit(MOV(dst_reg(this->vertex_output_offset), 0u));
    emit(MOV(dst_reg(this->sol_prim_written), 0u));
 
    /* Check that at least one primitive can be written
@@ -682,24 +636,21 @@ gen6_gs_visitor::xfb_write()
    }
    emit(BRW_OPCODE_ENDIF);
 
-   this->current_vertex = 0;
-   /* Make sure we do not emit more transform feedback data than the amount
-    * we have buffered.
-    */
+   /* Write transform feedback data for all processed vertices. */
    for (int i = 0; i < c->gp->program.VerticesOut; i++) {
       emit(MOV(dst_reg(sol_temp), i));
       emit(CMP(dst_null_d(), sol_temp, this->vertex_count,
                BRW_CONDITIONAL_L));
       emit(IF(BRW_PREDICATE_NORMAL));
       {
-         xfb_program(num_verts);
+         xfb_program(i, num_verts);
       }
       emit(BRW_OPCODE_ENDIF);
    }
 }
 
 void
-gen6_gs_visitor::xfb_program(unsigned num_verts)
+gen6_gs_visitor::xfb_program(unsigned vertex, unsigned num_verts)
 {
    struct brw_gs_prog_data *prog_data =
       (struct brw_gs_prog_data *) &c->prog_data;
@@ -707,16 +658,15 @@ gen6_gs_visitor::xfb_program(unsigned num_verts)
    unsigned num_bindings = prog_data->num_transform_feedback_bindings;
    src_reg sol_temp(this, glsl_type::uvec4_type);
 
-   /* Check if we can write one primitive more */
+   /* Check for buffer overflow: we need room to write the complete primitive
+    * (all vertices). Otherwise, avoid writing any vertices for it
+    */
    emit(ADD(dst_reg(sol_temp), this->sol_prim_written, 1u));
    emit(MUL(dst_reg(sol_temp), sol_temp, brw_imm_ud(num_verts)));
    emit(ADD(dst_reg(sol_temp), sol_temp, this->svbi));
    emit(CMP(dst_null_d(), sol_temp, this->max_svbi, BRW_CONDITIONAL_LE));
    emit(IF(BRW_PREDICATE_NORMAL));
    {
-      if (this->current_vertex >= num_verts)
-         this->current_vertex = 0;
-
       /* Avoid overwriting MRF 1 as it is used as URB write message header */
       dst_reg mrf_reg(MRF, 2);
 
@@ -725,14 +675,14 @@ gen6_gs_visitor::xfb_program(unsigned num_verts)
        * appropriate binding table entry.
        */
       for (binding = 0; binding < num_bindings; ++binding) {
+         unsigned char varying =
+            prog_data->transform_feedback_bindings[binding];
+
          /* Set up the correct destination index for this vertex */
          vec4_instruction *inst = emit(GS_OPCODE_SVB_SET_DST_INDEX,
                                        mrf_reg,
                                        this->destination_indices);
-         inst->sol_vertex = this->current_vertex;
-
-         unsigned char varying =
-            prog_data->transform_feedback_bindings[binding];
+         inst->sol_vertex = vertex % num_verts;
 
          /* From the Sandybridge PRM, Volume 2, Part 1, Section 4.5.1:
           *
@@ -741,31 +691,35 @@ gen6_gs_visitor::xfb_program(unsigned num_verts)
           *   write as a committed write."
           */
          bool final_write = binding == (unsigned) num_bindings - 1 &&
-                            this->current_vertex == num_verts - 1;
+                            inst->sol_vertex == num_verts - 1;
 
          /* Compute offset of this varying for the current vertex
-          * in xfb_output
+          * in vertex_output
           */
-         src_reg data(this->xfb_output);
-         data.reladdr = ralloc(mem_ctx, src_reg);
-         memcpy(data.reladdr, &this->xfb_output_offset, sizeof(src_reg));
-         src_reg out_reg;
          this->current_annotation = output_reg_annotation[varying];
-
-         /* Copy this varying to the appropriate message register */
-         out_reg = src_reg(this, glsl_type::uvec4_type);
-         out_reg.type = output_reg[varying].type;
-
+         src_reg data(this->vertex_output);
+         data.reladdr = ralloc(mem_ctx, src_reg);
+         int offset = get_vertex_output_offset_for_varying(vertex, varying);
+         emit(MOV(dst_reg(this->vertex_output_offset), offset));
+         memcpy(data.reladdr, &this->vertex_output_offset, sizeof(src_reg));
          data.type = output_reg[varying].type;
-         emit(MOV(dst_reg(out_reg), data));
 
-         /* Write data and send SVB Write */
-         inst = emit(GS_OPCODE_SVB_WRITE, mrf_reg, out_reg, sol_temp);
+         /* PSIZ, LAYER and VIEWPORT are packed in different channels of the
+          * same slot, so make sure we write the appropriate channel
+          */
+         if (varying == VARYING_SLOT_PSIZ)
+            data.swizzle = BRW_SWIZZLE_WWWW;
+         else if (varying == VARYING_SLOT_LAYER)
+            data.swizzle = BRW_SWIZZLE_YYYY;
+         else if (varying == VARYING_SLOT_VIEWPORT)
+            data.swizzle = BRW_SWIZZLE_ZZZZ;
+         else
+            data.swizzle = prog_data->transform_feedback_swizzles[binding];
+
+         /* Write data */
+         inst = emit(GS_OPCODE_SVB_WRITE, mrf_reg, data, sol_temp);
          inst->sol_binding = binding;
          inst->sol_final_write = final_write;
-
-         emit(ADD(dst_reg(this->xfb_output_offset),
-                  this->xfb_output_offset, 1u));
 
          if (final_write) {
             /* This is the last vertex of the primitive, then increment
@@ -779,10 +733,35 @@ gen6_gs_visitor::xfb_program(unsigned num_verts)
          }
 
       }
-      this->current_vertex++;
       this->current_annotation = NULL;
    }
    emit(BRW_OPCODE_ENDIF);
+}
+
+int
+gen6_gs_visitor::get_vertex_output_offset_for_varying(int vertex, int varying)
+{
+   /* Find the output slot assigned to this varying.
+    *
+    * VARYING_SLOT_LAYER and VARYING_SLOT_VIEWPORT are packed in the same slot
+    * as VARYING_SLOT_PSIZ.
+    */
+   if (varying == VARYING_SLOT_LAYER || varying == VARYING_SLOT_VIEWPORT)
+      varying = VARYING_SLOT_PSIZ;
+   int slot = prog_data->vue_map.varying_to_slot[varying];
+
+   if (slot < 0) {
+      /* This varying does not exist in the VUE so we are not writing to it
+       * and its value is undefined. We still want to return a valid offset
+       * into vertex_output though, to prevent any out-of-bound accesses into
+       * the vertex_output array. Since the value for this varying is undefined
+       * we don't really care for the value we assign to it, so any offset
+       * within the limits of vertex_output will do.
+       */
+      slot = 0;
+   }
+
+   return vertex * (prog_data->vue_map.num_slots + 1) + slot;
 }
 
 } /* namespace brw */

@@ -56,8 +56,9 @@ protected:
 
 private:
    void xfb_write();
-   void xfb_buffer_output();
-   void xfb_program(unsigned num_verts);
+   void xfb_program(unsigned vertex, unsigned num_verts);
+   void xfb_setup();
+   int get_vertex_output_offset_for_varying(int vertex, int varying);
 
    src_reg vertex_output;
    src_reg vertex_output_offset;
@@ -67,13 +68,10 @@ private:
    src_reg primitive_id;
 
    /* Transform Feedback members */
-   src_reg xfb_output;
-   src_reg xfb_output_offset;
    src_reg sol_prim_written;
    src_reg svbi;
    src_reg max_svbi;
    src_reg destination_indices;
-   unsigned current_vertex;
 };
 
 } /* namespace brw */
