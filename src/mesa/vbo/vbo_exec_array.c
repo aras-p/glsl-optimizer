@@ -1890,6 +1890,12 @@ _mesa_DrawArrays(GLenum mode, GLint first, GLsizei count)
    vbo_exec_DrawArrays(mode, first, count);
 }
 
+void GLAPIENTRY
+_mesa_DrawArraysInstanced(GLenum mode, GLint first, GLsizei count,
+                          GLsizei primcount)
+{
+   vbo_exec_DrawArraysInstanced(mode, first, count, primcount);
+}
 
 void GLAPIENTRY
 _mesa_DrawElements(GLenum mode, GLsizei count, GLenum type,

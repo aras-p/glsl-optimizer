@@ -272,6 +272,10 @@ extern void GLAPIENTRY
 _mesa_DrawArrays(GLenum mode, GLint first, GLsizei count);
 
 extern void GLAPIENTRY
+_mesa_DrawArraysInstanced(GLenum mode, GLint first, GLsizei count,
+                          GLsizei primcount);
+
+extern void GLAPIENTRY
 _mesa_DrawElements(GLenum mode, GLsizei count, GLenum type,
                    const GLvoid *indices);
 
