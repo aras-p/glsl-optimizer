@@ -568,11 +568,10 @@ emit_vertex_input(struct tgsi_to_qir *trans, int attr)
                         }
                         /* FALLTHROUGH */
                 case UTIL_FORMAT_SWIZZLE_0:
-                        trans->inputs[attr * 4 + i] = qir_uniform_ui(trans, 0);
+                        trans->inputs[attr * 4 + i] = qir_uniform_f(trans, 0.0);
                         break;
                 case UTIL_FORMAT_SWIZZLE_1:
-                        trans->inputs[attr * 4 + i] = qir_uniform_ui(trans,
-                                                                     fui(1.0));
+                        trans->inputs[attr * 4 + i] = qir_uniform_f(trans, 1.0);
                         break;
                 default:
                         if (!format_warned &&
@@ -779,13 +778,13 @@ emit_frag_end(struct tgsi_to_qir *trans)
          */
         if (0) {
                 trans->outputs[format_desc->swizzle[0]] =
-                        qir_uniform_ui(trans, fui(1.0));
+                        qir_uniform_f(trans, 1.0);
                 trans->outputs[format_desc->swizzle[1]] =
-                        qir_uniform_ui(trans, fui(0.0));
+                        qir_uniform_f(trans, 0.0);
                 trans->outputs[format_desc->swizzle[2]] =
-                        qir_uniform_ui(trans, fui(1.0));
+                        qir_uniform_f(trans, 1.0);
                 trans->outputs[format_desc->swizzle[3]] =
-                        qir_uniform_ui(trans, fui(0.5));
+                        qir_uniform_f(trans, 0.5);
         }
 
         struct qreg swizzled_outputs[4] = {
