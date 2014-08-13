@@ -243,39 +243,6 @@ if test "x$SSE41_SUPPORTED" = x1; then
 fi
 AM_CONDITIONAL([SSE41_SUPPORTED], [test x$SSE41_SUPPORTED = x1])
 
-dnl
-dnl Hacks to enable 32 or 64 bit build
-dnl
-AC_ARG_ENABLE([32-bit],
-    [AS_HELP_STRING([--enable-32-bit],
-        [build 32-bit libraries @<:@default=auto@:>@])],
-    [enable_32bit="$enableval"],
-    [enable_32bit=auto]
-)
-if test "x$enable_32bit" = xyes; then
-    if test "x$GCC" = xyes; then
-        CFLAGS="$CFLAGS -m32"
-        CCASFLAGS="$CCASFLAGS -m32"
-    fi
-    if test "x$GXX" = xyes; then
-        CXXFLAGS="$CXXFLAGS -m32"
-    fi
-fi
-AC_ARG_ENABLE([64-bit],
-    [AS_HELP_STRING([--enable-64-bit],
-        [build 64-bit libraries @<:@default=auto@:>@])],
-    [enable_64bit="$enableval"],
-    [enable_64bit=auto]
-)
-if test "x$enable_64bit" = xyes; then
-    if test "x$GCC" = xyes; then
-        CFLAGS="$CFLAGS -m64"
-    fi
-    if test "x$GXX" = xyes; then
-        CXXFLAGS="$CXXFLAGS -m64"
-    fi
-fi
-
 dnl Can't have static and shared libraries, default to static if user
 dnl explicitly requested. If both disabled, set to static since shared
 dnl was explicitly requested.
@@ -487,10 +454,7 @@ if test "x$enable_asm" = xyes; then
     case "$host_cpu" in
     i?86)
         case "$host_os" in
-        linux* | *freebsd* | dragonfly* | *netbsd* | openbsd*)
-            test "x$enable_64bit" = xyes && asm_arch=x86_64 || asm_arch=x86
-            ;;
-        gnu*)
+        linux* | *freebsd* | dragonfly* | *netbsd* | openbsd* | gnu*)
             asm_arch=x86
             ;;
         esac
@@ -498,7 +462,7 @@ if test "x$enable_asm" = xyes; then
     x86_64|amd64)
         case "$host_os" in
         linux* | *freebsd* | dragonfly* | *netbsd* | openbsd*)
-            test "x$enable_32bit" = xyes && asm_arch=x86 || asm_arch=x86_64
+            asm_arch=x86_64
             ;;
         esac
         ;;
