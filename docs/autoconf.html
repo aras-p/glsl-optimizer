@@ -97,20 +97,22 @@ shared libraries in a single pass.</p>
 <dt><code>CC, CFLAGS, CXX, CXXFLAGS</code></dt>
 <dd><p>These environment variables
 control the C and C++ compilers used during the build. By default,
-<code>gcc</code> and <code>g++</code> are used with the options
-<code>"-g -O2"</code>.</p>
+<code>gcc</code> and <code>g++</code> are used and the debug/optimisation
+level is left unchanged.</p>
 </dd>
 
 <dt><code>LDFLAGS</code></dt>
 <dd><p>An environment variable specifying flags to
-pass when linking programs. These are normally empty, but can be used
-to direct the linker to use libraries in nonstandard directories. For
-example, <code>LDFLAGS="-L/usr/X11R6/lib"</code>.</p>
+pass when linking programs. These should be empty and
+<code>PKG_CONFIG_PATH</code> is recommended to be used instead. If needed
+it can be used to direct the linker to use libraries in nonstandard
+directories. For example, <code>LDFLAGS="-L/usr/X11R6/lib"</code>.</p>
 </dd>
 
 <dt><code>PKG_CONFIG_PATH</code></dt>
-<dd><p>When available, the
-<code>pkg-config</code> utility is used to search for external libraries
+<dd><p>The
+<code>pkg-config</code> utility is a hard requirement for cofiguring and
+building mesa. It is used to search for external libraries
 on the system. This environment variable is used to control the search
 path for <code>pkg-config</code>. For instance, setting
 <code>PKG_CONFIG_PATH=/usr/X11R6/lib/pkgconfig</code> will search for
@@ -135,14 +137,30 @@ one of these architectures is detected. This option ensures that
 assembly will not be used.</p>
 </dd>
 
-<dt><code>--enable-32-bit</code></dt>
-<dt><code>--enable-64-bit</code></dt>
-<dd><p>By default, the build will compile code as directed by the environment
-variables
-<code>CC</code>, <code>CFLAGS</code>, etc. If the compiler is
-<code>gcc</code>, these options offer a helper to add the compiler flags
-to force 32- or 64-bit code generation as used on the x86 and x86_64
-architectures. Note that these options are mutually exclusive.</p>
+<dt><code>--build=</code></dt>
+<dt><code>--host=</code></dt>
+<dd><p>By default, the build will compile code for the architecture that
+it's running on. In order to build cross-compile Mesa on a x86-64 machine
+that is to run on a i686, one would need to set the options to:</p>
+
+<p><code>--build=i686-pc-linux-gnu --host=i686-pc-linux-gnu</code></p>
+
+Note that these can vary from distribution to distribution. For more
+information check with the
+<a href="https://www.gnu.org/savannah-checkouts/gnu/autoconf/manual/autoconf-2.69/html_node/Specifying-Target-Triplets.html">
+autoconf manual</a>.
+
+
+<p>In some cases a single compiler is capable of handling both architectures
+(multilib) in that case one would need to set the <code>CC,CXX</code> variables
+appending the correct machine options. Seek your compiler documentation for
+further information -
+<a href="https://gcc.gnu.org/onlinedocs/gcc/Submodel-Options.html"> gcc
+machine dependent options</a></p>
+
+<p>The following should be sufficient to configure multilib Mesa</p>
+
+<code>./configure CC="gcc -m32" CXX="g++ -m32" --build=i686-pc-linux-gnu --host=i686-pc-linux-gnu ...</code>
 </dd>
 </dl>
 
@@ -194,7 +212,9 @@ kernel DRM modules are not available.
 <dt><code>--enable-glx-tls</code> <dd><p>
 Enable Thread Local Storage (TLS) in
 GLX.
-<dt><code>--with-expat=DIR</code> <dd> The DRI-enabled libGL uses expat to
+<dt><code>--with-expat=DIR</code>
+<dd><p><strong>DEPRECATED</strong>, use <code>PKG_CONFIG_PATH</code> instead.</p>
+<p>The DRI-enabled libGL uses expat to
 parse the DRI configuration files in <code>/etc/drirc</code> and
 <code>~/.drirc</code>. This option allows a specific expat installation
 to be used. For example, <code>--with-expat=/usr/local</code> will
