@@ -52,7 +52,7 @@
 #define SVGA3D_SURFACE_HINT_SCANOUT (1 << 9)
 
 
-static INLINE void
+static void
 svga_transfer_dma_band(struct svga_context *svga,
                        struct svga_transfer *st,
                        SVGA3dTransferType transfer,
@@ -104,7 +104,7 @@ svga_transfer_dma_band(struct svga_context *svga,
 }
 
 
-static INLINE void
+static void
 svga_transfer_dma(struct svga_context *svga,
                   struct svga_transfer *st,
                   SVGA3dTransferType transfer,

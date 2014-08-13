@@ -290,7 +290,7 @@ svga_surface_destroy(struct pipe_context *pipe,
 }
 
 
-static INLINE void 
+static void 
 svga_mark_surface_dirty(struct pipe_surface *surf)
 {
    struct svga_surface *s = svga_surface(surf);

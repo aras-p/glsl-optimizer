@@ -88,7 +88,7 @@ svga_screen_cache_bucket(const struct svga_host_surface_cache_key *key)
  * found, remove it from the cache and return the surface pointer.
  * Return NULL otherwise.
  */
-static INLINE struct svga_winsys_surface *
+static struct svga_winsys_surface *
 svga_screen_cache_lookup(struct svga_screen *svgascreen,
                          const struct svga_host_surface_cache_key *key)
 {
@@ -197,7 +197,7 @@ svga_screen_cache_shrink(struct svga_screen *svgascreen,
 /**
  * Transfers a handle reference.
  */
-static INLINE void
+static void
 svga_screen_cache_add(struct svga_screen *svgascreen,
                       const struct svga_host_surface_cache_key *key,
                       struct svga_winsys_surface **p_handle)
