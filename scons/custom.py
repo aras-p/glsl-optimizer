@@ -276,6 +276,9 @@ def parse_source_list(env, filename, names=None):
                     # Prefer relative source paths, as absolute files tend to
                     # cause duplicate actions.
                     f = f[len(cur_srcdir + '/'):]
+                # do not include any headers
+                if f.endswith('.h'):
+                    continue
                 srcs.append(f)
 
         src_lists[sym] = srcs
