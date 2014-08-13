@@ -1495,6 +1495,9 @@ texstore_swizzle(TEXSTORE_PARAMS)
    if (!is_array)
       return GL_FALSE;
 
+   if (srcFormat == GL_COLOR_INDEX)
+      return GL_FALSE;
+
    switch (srcType) {
    case GL_FLOAT:
    case GL_UNSIGNED_BYTE:
