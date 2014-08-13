@@ -203,7 +203,7 @@ qir_dump_inst(struct qinst *inst)
 }
 
 void
-qir_dump(struct qcompile *c)
+qir_dump(struct vc4_compile *c)
 {
         struct simple_node *node;
 
@@ -215,7 +215,7 @@ qir_dump(struct qcompile *c)
 }
 
 struct qreg
-qir_get_temp(struct qcompile *c)
+qir_get_temp(struct vc4_compile *c)
 {
         struct qreg reg;
 
@@ -260,7 +260,7 @@ qir_inst4(enum qop op, struct qreg dst,
 }
 
 void
-qir_emit(struct qcompile *c, struct qinst *inst)
+qir_emit(struct vc4_compile *c, struct qinst *inst)
 {
         insert_at_tail(&c->instructions, &inst->link);
 }
@@ -271,10 +271,10 @@ qir_reg_equals(struct qreg a, struct qreg b)
         return a.file == b.file && a.index == b.index;
 }
 
-struct qcompile *
+struct vc4_compile *
 qir_compile_init(void)
 {
-        struct qcompile *c = CALLOC_STRUCT(qcompile);
+        struct vc4_compile *c = CALLOC_STRUCT(vc4_compile);
 
         make_empty_list(&c->instructions);
 
@@ -282,7 +282,7 @@ qir_compile_init(void)
 }
 
 void
-qir_compile_destroy(struct qcompile *c)
+qir_compile_destroy(struct vc4_compile *c)
 {
         free(c);
 }
@@ -313,7 +313,7 @@ qir_get_stage_name(enum qstage stage)
         } while (0)
 
 void
-qir_optimize(struct qcompile *c)
+qir_optimize(struct vc4_compile *c)
 {
         bool print_opt_debug = false;
         int pass = 1;

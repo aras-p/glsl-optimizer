@@ -34,7 +34,7 @@
 #include "vc4_qir.h"
 
 bool
-qir_opt_dead_code(struct qcompile *c)
+qir_opt_dead_code(struct vc4_compile *c)
 {
         bool progress = false;
         bool debug = false;

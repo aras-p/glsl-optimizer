@@ -117,7 +117,7 @@ vc4_find_cse(struct hash_table *ht, struct qinst *inst, uint32_t sf_count,
 }
 
 bool
-qir_opt_cse(struct qcompile *c)
+qir_opt_cse(struct vc4_compile *c)
 {
         bool progress = false;
         struct simple_node *node, *t;

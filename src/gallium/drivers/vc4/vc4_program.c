@@ -28,7 +28,6 @@
 #include "util/u_hash_table.h"
 #include "util/u_hash.h"
 #include "util/u_memory.h"
-#include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_dump.h"
 #include "tgsi/tgsi_info.h"
 
@@ -38,31 +37,6 @@
 #ifdef USE_VC4_SIMULATOR
 #include "simpenrose/simpenrose.h"
 #endif
-
-struct tgsi_to_qir {
-        struct tgsi_parse_context parser;
-        struct qcompile *c;
-        struct qreg *temps;
-        struct qreg *inputs;
-        struct qreg *outputs;
-        struct qreg *uniforms;
-        struct qreg *consts;
-        struct qreg line_x, point_x, point_y;
-        struct qreg discard;
-
-        uint32_t num_consts;
-
-        struct pipe_shader_state *shader_state;
-        struct vc4_key *key;
-        struct vc4_fs_key *fs_key;
-        struct vc4_vs_key *vs_key;
-
-        uint32_t *uniform_data;
-        enum quniform_contents *uniform_contents;
-        uint32_t num_uniforms;
-        uint32_t num_outputs;
-        uint32_t num_texture_samples;
-};
 
 struct vc4_key {
         struct pipe_shader_state *shader_state;
@@ -85,55 +59,52 @@ struct vc4_vs_key {
 };
 
 static struct qreg
-add_uniform(struct tgsi_to_qir *trans,
+add_uniform(struct vc4_compile *c,
             enum quniform_contents contents,
             uint32_t data)
 {
-        uint32_t uniform = trans->num_uniforms++;
+        uint32_t uniform = c->num_uniforms++;
         struct qreg u = { QFILE_UNIF, uniform };
 
-        trans->uniform_contents[uniform] = contents;
-        trans->uniform_data[uniform] = data;
+        c->uniform_contents[uniform] = contents;
+        c->uniform_data[uniform] = data;
 
         return u;
 }
 
 static struct qreg
-get_temp_for_uniform(struct tgsi_to_qir *trans, enum quniform_contents contents,
+get_temp_for_uniform(struct vc4_compile *c, enum quniform_contents contents,
                      uint32_t data)
 {
-        struct qcompile *c = trans->c;
-
-        for (int i = 0; i < trans->num_uniforms; i++) {
-                if (trans->uniform_contents[i] == contents &&
-                    trans->uniform_data[i] == data)
-                        return trans->uniforms[i];
+        for (int i = 0; i < c->num_uniforms; i++) {
+                if (c->uniform_contents[i] == contents &&
+                    c->uniform_data[i] == data)
+                        return c->uniforms[i];
         }
 
-        struct qreg u = add_uniform(trans, contents, data);
+        struct qreg u = add_uniform(c, contents, data);
         struct qreg t = qir_MOV(c, u);
 
-        trans->uniforms[u.index] = t;
+        c->uniforms[u.index] = t;
         return t;
 }
 
 static struct qreg
-qir_uniform_ui(struct tgsi_to_qir *trans, uint32_t ui)
+qir_uniform_ui(struct vc4_compile *c, uint32_t ui)
 {
-        return get_temp_for_uniform(trans, QUNIFORM_CONSTANT, ui);
+        return get_temp_for_uniform(c, QUNIFORM_CONSTANT, ui);
 }
 
 static struct qreg
-qir_uniform_f(struct tgsi_to_qir *trans, float f)
+qir_uniform_f(struct vc4_compile *c, float f)
 {
-        return qir_uniform_ui(trans, fui(f));
+        return qir_uniform_ui(c, fui(f));
 }
 
 static struct qreg
-get_src(struct tgsi_to_qir *trans, unsigned tgsi_op,
+get_src(struct vc4_compile *c, unsigned tgsi_op,
         struct tgsi_src_register *src, int i)
 {
-        struct qcompile *c = trans->c;
         struct qreg r = c->undef;
 
         uint32_t s = i;
@@ -160,17 +131,17 @@ get_src(struct tgsi_to_qir *trans, unsigned tgsi_op,
         case TGSI_FILE_NULL:
                 return r;
         case TGSI_FILE_TEMPORARY:
-                r = trans->temps[src->Index * 4 + s];
+                r = c->temps[src->Index * 4 + s];
                 break;
         case TGSI_FILE_IMMEDIATE:
-                r = trans->consts[src->Index * 4 + s];
+                r = c->consts[src->Index * 4 + s];
                 break;
         case TGSI_FILE_CONSTANT:
-                r = get_temp_for_uniform(trans, QUNIFORM_UNIFORM,
+                r = get_temp_for_uniform(c, QUNIFORM_UNIFORM,
                                          src->Index * 4 + s);
                 break;
         case TGSI_FILE_INPUT:
-                r = trans->inputs[src->Index * 4 + s];
+                r = c->inputs[src->Index * 4 + s];
                 break;
         case TGSI_FILE_SAMPLER:
         case TGSI_FILE_SAMPLER_VIEW:
@@ -188,10 +159,10 @@ get_src(struct tgsi_to_qir *trans, unsigned tgsi_op,
                 switch (tgsi_opcode_infer_src_type(tgsi_op)) {
                 case TGSI_TYPE_SIGNED:
                 case TGSI_TYPE_UNSIGNED:
-                        r = qir_SUB(c, qir_uniform_ui(trans, 0), r);
+                        r = qir_SUB(c, qir_uniform_ui(c, 0), r);
                         break;
                 default:
-                        r = qir_FSUB(c, qir_uniform_f(trans, 0.0), r);
+                        r = qir_FSUB(c, qir_uniform_f(c, 0.0), r);
                         break;
                 }
         }
@@ -201,7 +172,7 @@ get_src(struct tgsi_to_qir *trans, unsigned tgsi_op,
 
 
 static void
-update_dst(struct tgsi_to_qir *trans, struct tgsi_full_instruction *tgsi_inst,
+update_dst(struct vc4_compile *c, struct tgsi_full_instruction *tgsi_inst,
            int i, struct qreg val)
 {
         struct tgsi_dst_register *tgsi_dst = &tgsi_inst->Dst[0].Register;
@@ -210,12 +181,12 @@ update_dst(struct tgsi_to_qir *trans, struct tgsi_full_instruction *tgsi_inst,
 
         switch (tgsi_dst->File) {
         case TGSI_FILE_TEMPORARY:
-                trans->temps[tgsi_dst->Index * 4 + i] = val;
+                c->temps[tgsi_dst->Index * 4 + i] = val;
                 break;
         case TGSI_FILE_OUTPUT:
-                trans->outputs[tgsi_dst->Index * 4 + i] = val;
-                trans->num_outputs = MAX2(trans->num_outputs,
-                                          tgsi_dst->Index * 4 + i + 1);
+                c->outputs[tgsi_dst->Index * 4 + i] = val;
+                c->num_outputs = MAX2(c->num_outputs,
+                                      tgsi_dst->Index * 4 + i + 1);
                 break;
         default:
                 fprintf(stderr, "unknown dst file %d\n", tgsi_dst->File);
@@ -224,7 +195,7 @@ update_dst(struct tgsi_to_qir *trans, struct tgsi_full_instruction *tgsi_inst,
 };
 
 static struct qreg
-get_swizzled_channel(struct tgsi_to_qir *trans,
+get_swizzled_channel(struct vc4_compile *c,
                      struct qreg *srcs, int swiz)
 {
         switch (swiz) {
@@ -233,9 +204,9 @@ get_swizzled_channel(struct tgsi_to_qir *trans,
                 fprintf(stderr, "warning: unknown swizzle\n");
                 /* FALLTHROUGH */
         case UTIL_FORMAT_SWIZZLE_0:
-                return qir_uniform_f(trans, 0.0);
+                return qir_uniform_f(c, 0.0);
         case UTIL_FORMAT_SWIZZLE_1:
-                return qir_uniform_f(trans, 1.0);
+                return qir_uniform_f(c, 1.0);
         case UTIL_FORMAT_SWIZZLE_X:
         case UTIL_FORMAT_SWIZZLE_Y:
         case UTIL_FORMAT_SWIZZLE_Z:
@@ -245,11 +216,10 @@ get_swizzled_channel(struct tgsi_to_qir *trans,
 }
 
 static struct qreg
-tgsi_to_qir_alu(struct tgsi_to_qir *trans,
+tgsi_to_qir_alu(struct vc4_compile *c,
                 struct tgsi_full_instruction *tgsi_inst,
                 enum qop op, struct qreg *src, int i)
 {
-        struct qcompile *c = trans->c;
         struct qreg dst = qir_get_temp(c);
         qir_emit(c, qir_inst4(op, dst,
                               src[0 * 4 + i],
@@ -260,20 +230,18 @@ tgsi_to_qir_alu(struct tgsi_to_qir *trans,
 }
 
 static struct qreg
-tgsi_to_qir_umul(struct tgsi_to_qir *trans,
+tgsi_to_qir_umul(struct vc4_compile *c,
                  struct tgsi_full_instruction *tgsi_inst,
                  enum qop op, struct qreg *src, int i)
 {
-        struct qcompile *c = trans->c;
-
         struct qreg src0_hi = qir_SHR(c, src[0 * 4 + i],
-                                      qir_uniform_ui(trans, 16));
+                                      qir_uniform_ui(c, 16));
         struct qreg src0_lo = qir_AND(c, src[0 * 4 + i],
-                                      qir_uniform_ui(trans, 0xffff));
+                                      qir_uniform_ui(c, 0xffff));
         struct qreg src1_hi = qir_SHR(c, src[1 * 4 + i],
-                                      qir_uniform_ui(trans, 16));
+                                      qir_uniform_ui(c, 16));
         struct qreg src1_lo = qir_AND(c, src[1 * 4 + i],
-                                      qir_uniform_ui(trans, 0xffff));
+                                      qir_uniform_ui(c, 0xffff));
 
         struct qreg hilo = qir_MUL24(c, src0_hi, src1_lo);
         struct qreg lohi = qir_MUL24(c, src0_lo, src1_hi);
@@ -281,155 +249,140 @@ tgsi_to_qir_umul(struct tgsi_to_qir *trans,
 
         return qir_ADD(c, lolo, qir_SHL(c,
                                         qir_ADD(c, hilo, lohi),
-                                        qir_uniform_ui(trans, 16)));
+                                        qir_uniform_ui(c, 16)));
 }
 
 static struct qreg
-tgsi_to_qir_idiv(struct tgsi_to_qir *trans,
+tgsi_to_qir_idiv(struct vc4_compile *c,
                  struct tgsi_full_instruction *tgsi_inst,
                  enum qop op, struct qreg *src, int i)
 {
-        struct qcompile *c = trans->c;
         return qir_FTOI(c, qir_FMUL(c,
                                     qir_ITOF(c, src[0 * 4 + i]),
                                     qir_RCP(c, qir_ITOF(c, src[1 * 4 + i]))));
 }
 
 static struct qreg
-tgsi_to_qir_ineg(struct tgsi_to_qir *trans,
+tgsi_to_qir_ineg(struct vc4_compile *c,
                  struct tgsi_full_instruction *tgsi_inst,
                  enum qop op, struct qreg *src, int i)
 {
-        struct qcompile *c = trans->c;
-        return qir_SUB(c, qir_uniform_ui(trans, 0), src[0 * 4 + i]);
+        return qir_SUB(c, qir_uniform_ui(c, 0), src[0 * 4 + i]);
 }
 
 static struct qreg
-tgsi_to_qir_seq(struct tgsi_to_qir *trans,
+tgsi_to_qir_seq(struct vc4_compile *c,
                 struct tgsi_full_instruction *tgsi_inst,
                 enum qop op, struct qreg *src, int i)
 {
-        struct qcompile *c = trans->c;
         qir_SF(c, qir_FSUB(c, src[0 * 4 + i], src[1 * 4 + i]));
-        return qir_SEL_X_0_ZS(c, qir_uniform_f(trans, 1.0));
+        return qir_SEL_X_0_ZS(c, qir_uniform_f(c, 1.0));
 }
 
 static struct qreg
-tgsi_to_qir_sne(struct tgsi_to_qir *trans,
+tgsi_to_qir_sne(struct vc4_compile *c,
                 struct tgsi_full_instruction *tgsi_inst,
                 enum qop op, struct qreg *src, int i)
 {
-        struct qcompile *c = trans->c;
         qir_SF(c, qir_FSUB(c, src[0 * 4 + i], src[1 * 4 + i]));
-        return qir_SEL_X_0_ZC(c, qir_uniform_f(trans, 1.0));
+        return qir_SEL_X_0_ZC(c, qir_uniform_f(c, 1.0));
 }
 
 static struct qreg
-tgsi_to_qir_slt(struct tgsi_to_qir *trans,
+tgsi_to_qir_slt(struct vc4_compile *c,
                 struct tgsi_full_instruction *tgsi_inst,
                 enum qop op, struct qreg *src, int i)
 {
-        struct qcompile *c = trans->c;
         qir_SF(c, qir_FSUB(c, src[0 * 4 + i], src[1 * 4 + i]));
-        return qir_SEL_X_0_NS(c, qir_uniform_f(trans, 1.0));
+        return qir_SEL_X_0_NS(c, qir_uniform_f(c, 1.0));
 }
 
 static struct qreg
-tgsi_to_qir_sge(struct tgsi_to_qir *trans,
+tgsi_to_qir_sge(struct vc4_compile *c,
                 struct tgsi_full_instruction *tgsi_inst,
                 enum qop op, struct qreg *src, int i)
 {
-        struct qcompile *c = trans->c;
         qir_SF(c, qir_FSUB(c, src[0 * 4 + i], src[1 * 4 + i]));
-        return qir_SEL_X_0_NC(c, qir_uniform_f(trans, 1.0));
+        return qir_SEL_X_0_NC(c, qir_uniform_f(c, 1.0));
 }
 
 static struct qreg
-tgsi_to_qir_fseq(struct tgsi_to_qir *trans,
+tgsi_to_qir_fseq(struct vc4_compile *c,
                  struct tgsi_full_instruction *tgsi_inst,
                  enum qop op, struct qreg *src, int i)
 {
-        struct qcompile *c = trans->c;
         qir_SF(c, qir_FSUB(c, src[0 * 4 + i], src[1 * 4 + i]));
-        return qir_SEL_X_0_ZS(c, qir_uniform_ui(trans, ~0));
+        return qir_SEL_X_0_ZS(c, qir_uniform_ui(c, ~0));
 }
 
 static struct qreg
-tgsi_to_qir_fsne(struct tgsi_to_qir *trans,
+tgsi_to_qir_fsne(struct vc4_compile *c,
                  struct tgsi_full_instruction *tgsi_inst,
                  enum qop op, struct qreg *src, int i)
 {
-        struct qcompile *c = trans->c;
         qir_SF(c, qir_FSUB(c, src[0 * 4 + i], src[1 * 4 + i]));
-        return qir_SEL_X_0_ZC(c, qir_uniform_ui(trans, ~0));
+        return qir_SEL_X_0_ZC(c, qir_uniform_ui(c, ~0));
 }
 
 static struct qreg
-tgsi_to_qir_fslt(struct tgsi_to_qir *trans,
+tgsi_to_qir_fslt(struct vc4_compile *c,
                  struct tgsi_full_instruction *tgsi_inst,
                  enum qop op, struct qreg *src, int i)
 {
-        struct qcompile *c = trans->c;
         qir_SF(c, qir_FSUB(c, src[0 * 4 + i], src[1 * 4 + i]));
-        return qir_SEL_X_0_NS(c, qir_uniform_ui(trans, ~0));
+        return qir_SEL_X_0_NS(c, qir_uniform_ui(c, ~0));
 }
 
 static struct qreg
-tgsi_to_qir_fsge(struct tgsi_to_qir *trans,
+tgsi_to_qir_fsge(struct vc4_compile *c,
                  struct tgsi_full_instruction *tgsi_inst,
                  enum qop op, struct qreg *src, int i)
 {
-        struct qcompile *c = trans->c;
         qir_SF(c, qir_FSUB(c, src[0 * 4 + i], src[1 * 4 + i]));
-        return qir_SEL_X_0_NC(c, qir_uniform_ui(trans, ~0));
+        return qir_SEL_X_0_NC(c, qir_uniform_ui(c, ~0));
 }
 
 static struct qreg
-tgsi_to_qir_useq(struct tgsi_to_qir *trans,
+tgsi_to_qir_useq(struct vc4_compile *c,
                  struct tgsi_full_instruction *tgsi_inst,
                  enum qop op, struct qreg *src, int i)
 {
-        struct qcompile *c = trans->c;
         qir_SF(c, qir_SUB(c, src[0 * 4 + i], src[1 * 4 + i]));
-        return qir_SEL_X_0_ZS(c, qir_uniform_ui(trans, ~0));
+        return qir_SEL_X_0_ZS(c, qir_uniform_ui(c, ~0));
 }
 
 static struct qreg
-tgsi_to_qir_usne(struct tgsi_to_qir *trans,
+tgsi_to_qir_usne(struct vc4_compile *c,
                  struct tgsi_full_instruction *tgsi_inst,
                  enum qop op, struct qreg *src, int i)
 {
-        struct qcompile *c = trans->c;
         qir_SF(c, qir_SUB(c, src[0 * 4 + i], src[1 * 4 + i]));
-        return qir_SEL_X_0_ZC(c, qir_uniform_ui(trans, ~0));
+        return qir_SEL_X_0_ZC(c, qir_uniform_ui(c, ~0));
 }
 
 static struct qreg
-tgsi_to_qir_islt(struct tgsi_to_qir *trans,
+tgsi_to_qir_islt(struct vc4_compile *c,
                  struct tgsi_full_instruction *tgsi_inst,
                  enum qop op, struct qreg *src, int i)
 {
-        struct qcompile *c = trans->c;
         qir_SF(c, qir_SUB(c, src[0 * 4 + i], src[1 * 4 + i]));
-        return qir_SEL_X_0_NS(c, qir_uniform_ui(trans, ~0));
+        return qir_SEL_X_0_NS(c, qir_uniform_ui(c, ~0));
 }
 
 static struct qreg
-tgsi_to_qir_isge(struct tgsi_to_qir *trans,
+tgsi_to_qir_isge(struct vc4_compile *c,
                  struct tgsi_full_instruction *tgsi_inst,
                  enum qop op, struct qreg *src, int i)
 {
-        struct qcompile *c = trans->c;
         qir_SF(c, qir_SUB(c, src[0 * 4 + i], src[1 * 4 + i]));
-        return qir_SEL_X_0_NC(c, qir_uniform_ui(trans, ~0));
+        return qir_SEL_X_0_NC(c, qir_uniform_ui(c, ~0));
 }
 
 static struct qreg
-tgsi_to_qir_cmp(struct tgsi_to_qir *trans,
+tgsi_to_qir_cmp(struct vc4_compile *c,
                 struct tgsi_full_instruction *tgsi_inst,
                 enum qop op, struct qreg *src, int i)
 {
-        struct qcompile *c = trans->c;
         qir_SF(c, src[0 * 4 + i]);
         return qir_SEL_X_Y_NS(c,
                               src[1 * 4 + i],
@@ -437,11 +390,10 @@ tgsi_to_qir_cmp(struct tgsi_to_qir *trans,
 }
 
 static struct qreg
-tgsi_to_qir_mad(struct tgsi_to_qir *trans,
+tgsi_to_qir_mad(struct vc4_compile *c,
                 struct tgsi_full_instruction *tgsi_inst,
                 enum qop op, struct qreg *src, int i)
 {
-        struct qcompile *c = trans->c;
         return qir_FADD(c,
                         qir_FMUL(c,
                                  src[0 * 4 + i],
@@ -450,11 +402,10 @@ tgsi_to_qir_mad(struct tgsi_to_qir *trans,
 }
 
 static struct qreg
-tgsi_to_qir_lit(struct tgsi_to_qir *trans,
+tgsi_to_qir_lit(struct vc4_compile *c,
                  struct tgsi_full_instruction *tgsi_inst,
                  enum qop op, struct qreg *src, int i)
 {
-        struct qcompile *c = trans->c;
         struct qreg x = src[0 * 4 + 0];
         struct qreg y = src[0 * 4 + 1];
         struct qreg w = src[0 * 4 + 3];
@@ -462,11 +413,11 @@ tgsi_to_qir_lit(struct tgsi_to_qir *trans,
         switch (i) {
         case 0:
         case 3:
-                return qir_uniform_f(trans, 1.0);
+                return qir_uniform_f(c, 1.0);
         case 1:
-                return qir_FMAX(c, src[0 * 4 + 0], qir_uniform_f(trans, 0.0));
+                return qir_FMAX(c, src[0 * 4 + 0], qir_uniform_f(c, 0.0));
         case 2: {
-                struct qreg zero = qir_uniform_f(trans, 0.0);
+                struct qreg zero = qir_uniform_f(c, 0.0);
 
                 qir_SF(c, x);
                 /* XXX: Clamp w to -128..128 */
@@ -485,11 +436,10 @@ tgsi_to_qir_lit(struct tgsi_to_qir *trans,
 }
 
 static struct qreg
-tgsi_to_qir_lrp(struct tgsi_to_qir *trans,
+tgsi_to_qir_lrp(struct vc4_compile *c,
                  struct tgsi_full_instruction *tgsi_inst,
                  enum qop op, struct qreg *src, int i)
 {
-        struct qcompile *c = trans->c;
         struct qreg src0 = src[0 * 4 + i];
         struct qreg src1 = src[1 * 4 + i];
         struct qreg src2 = src[2 * 4 + i];
@@ -504,12 +454,10 @@ tgsi_to_qir_lrp(struct tgsi_to_qir *trans,
 }
 
 static void
-tgsi_to_qir_tex(struct tgsi_to_qir *trans,
+tgsi_to_qir_tex(struct vc4_compile *c,
                 struct tgsi_full_instruction *tgsi_inst,
                 enum qop op, struct qreg *src)
 {
-        struct qcompile *c = trans->c;
-
         assert(!tgsi_inst->Instruction.Saturate);
 
         struct qreg s = src[0 * 4 + 0];
@@ -528,52 +476,49 @@ tgsi_to_qir_tex(struct tgsi_to_qir *trans,
          */
         if (tgsi_inst->Texture.Texture == TGSI_TEXTURE_RECT) {
                 s = qir_FMUL(c, s,
-                             get_temp_for_uniform(trans,
+                             get_temp_for_uniform(c,
                                                   QUNIFORM_TEXRECT_SCALE_X,
                                                   unit));
                 t = qir_FMUL(c, t,
-                             get_temp_for_uniform(trans,
+                             get_temp_for_uniform(c,
                                                   QUNIFORM_TEXRECT_SCALE_Y,
                                                   unit));
         }
 
-        qir_TEX_T(c, t, add_uniform(trans, QUNIFORM_TEXTURE_CONFIG_P0,
-                                    unit));
+        qir_TEX_T(c, t, add_uniform(c, QUNIFORM_TEXTURE_CONFIG_P0, unit));
 
-        struct qreg sampler_p1 = add_uniform(trans, QUNIFORM_TEXTURE_CONFIG_P1,
+        struct qreg sampler_p1 = add_uniform(c, QUNIFORM_TEXTURE_CONFIG_P1,
                                              unit);
         if (tgsi_inst->Instruction.Opcode == TGSI_OPCODE_TXB) {
                 qir_TEX_B(c, src[0 * 4 + 3], sampler_p1);
-                qir_TEX_S(c, s, add_uniform(trans, QUNIFORM_CONSTANT, 0));
+                qir_TEX_S(c, s, add_uniform(c, QUNIFORM_CONSTANT, 0));
         } else {
                 qir_TEX_S(c, s, sampler_p1);
         }
 
-        trans->num_texture_samples++;
+        c->num_texture_samples++;
         qir_emit(c, qir_inst(QOP_TEX_RESULT, c->undef, c->undef, c->undef));
 
         struct qreg unpacked[4];
         for (int i = 0; i < 4; i++)
                 unpacked[i] = qir_R4_UNPACK(c, i);
 
-        enum pipe_format format = trans->key->tex_format[unit];
+        enum pipe_format format = c->key->tex_format[unit];
         const uint8_t *swiz = vc4_get_format_swizzle(format);
         for (int i = 0; i < 4; i++) {
                 if (!(tgsi_inst->Dst[0].Register.WriteMask & (1 << i)))
                         continue;
 
-                update_dst(trans, tgsi_inst, i,
-                           get_swizzled_channel(trans, unpacked, swiz[i]));
+                update_dst(c, tgsi_inst, i,
+                           get_swizzled_channel(c, unpacked, swiz[i]));
         }
 }
 
 static struct qreg
-tgsi_to_qir_pow(struct tgsi_to_qir *trans,
+tgsi_to_qir_pow(struct vc4_compile *c,
                 struct tgsi_full_instruction *tgsi_inst,
                 enum qop op, struct qreg *src, int i)
 {
-        struct qcompile *c = trans->c;
-
         /* Note that this instruction replicates its result from the x channel
          */
         return qir_EXP2(c, qir_FMUL(c,
@@ -582,11 +527,10 @@ tgsi_to_qir_pow(struct tgsi_to_qir *trans,
 }
 
 static struct qreg
-tgsi_to_qir_trunc(struct tgsi_to_qir *trans,
+tgsi_to_qir_trunc(struct vc4_compile *c,
                 struct tgsi_full_instruction *tgsi_inst,
                 enum qop op, struct qreg *src, int i)
 {
-        struct qcompile *c = trans->c;
         return qir_ITOF(c, qir_FTOI(c, src[0 * 4 + i]));
 }
 
@@ -595,16 +539,15 @@ tgsi_to_qir_trunc(struct tgsi_to_qir *trans,
  * to zero).
  */
 static struct qreg
-tgsi_to_qir_frc(struct tgsi_to_qir *trans,
+tgsi_to_qir_frc(struct vc4_compile *c,
                 struct tgsi_full_instruction *tgsi_inst,
                 enum qop op, struct qreg *src, int i)
 {
-        struct qcompile *c = trans->c;
         struct qreg trunc = qir_ITOF(c, qir_FTOI(c, src[0 * 4 + i]));
         struct qreg diff = qir_FSUB(c, src[0 * 4 + i], trunc);
         qir_SF(c, diff);
         return qir_SEL_X_Y_NS(c,
-                              qir_FADD(c, diff, qir_uniform_f(trans, 1.0)),
+                              qir_FADD(c, diff, qir_uniform_f(c, 1.0)),
                               diff);
 }
 
@@ -613,11 +556,10 @@ tgsi_to_qir_frc(struct tgsi_to_qir *trans,
  * zero).
  */
 static struct qreg
-tgsi_to_qir_flr(struct tgsi_to_qir *trans,
+tgsi_to_qir_flr(struct vc4_compile *c,
                 struct tgsi_full_instruction *tgsi_inst,
                 enum qop op, struct qreg *src, int i)
 {
-        struct qcompile *c = trans->c;
         struct qreg trunc = qir_ITOF(c, qir_FTOI(c, src[0 * 4 + i]));
 
         /* This will be < 0 if we truncated and the truncation was of a value
@@ -626,17 +568,15 @@ tgsi_to_qir_flr(struct tgsi_to_qir *trans,
         qir_SF(c, qir_FSUB(c, src[0 * 4 + i], trunc));
 
         return qir_SEL_X_Y_NS(c,
-                              qir_FSUB(c, trunc, qir_uniform_f(trans, 1.0)),
+                              qir_FSUB(c, trunc, qir_uniform_f(c, 1.0)),
                               trunc);
 }
 
 static struct qreg
-tgsi_to_qir_dp(struct tgsi_to_qir *trans,
+tgsi_to_qir_dp(struct vc4_compile *c,
                struct tgsi_full_instruction *tgsi_inst,
                int num, struct qreg *src, int i)
 {
-        struct qcompile *c = trans->c;
-
         struct qreg sum = qir_FMUL(c, src[0 * 4 + 0], src[1 * 4 + 0]);
         for (int j = 1; j < num; j++) {
                 sum = qir_FADD(c, sum, qir_FMUL(c,
@@ -647,46 +587,44 @@ tgsi_to_qir_dp(struct tgsi_to_qir *trans,
 }
 
 static struct qreg
-tgsi_to_qir_dp2(struct tgsi_to_qir *trans,
+tgsi_to_qir_dp2(struct vc4_compile *c,
                  struct tgsi_full_instruction *tgsi_inst,
                  enum qop op, struct qreg *src, int i)
 {
-        return tgsi_to_qir_dp(trans, tgsi_inst, 2, src, i);
+        return tgsi_to_qir_dp(c, tgsi_inst, 2, src, i);
 }
 
 static struct qreg
-tgsi_to_qir_dp3(struct tgsi_to_qir *trans,
+tgsi_to_qir_dp3(struct vc4_compile *c,
                  struct tgsi_full_instruction *tgsi_inst,
                  enum qop op, struct qreg *src, int i)
 {
-        return tgsi_to_qir_dp(trans, tgsi_inst, 3, src, i);
+        return tgsi_to_qir_dp(c, tgsi_inst, 3, src, i);
 }
 
 static struct qreg
-tgsi_to_qir_dp4(struct tgsi_to_qir *trans,
+tgsi_to_qir_dp4(struct vc4_compile *c,
                  struct tgsi_full_instruction *tgsi_inst,
                  enum qop op, struct qreg *src, int i)
 {
-        return tgsi_to_qir_dp(trans, tgsi_inst, 4, src, i);
+        return tgsi_to_qir_dp(c, tgsi_inst, 4, src, i);
 }
 
 static struct qreg
-tgsi_to_qir_abs(struct tgsi_to_qir *trans,
+tgsi_to_qir_abs(struct vc4_compile *c,
                 struct tgsi_full_instruction *tgsi_inst,
                 enum qop op, struct qreg *src, int i)
 {
-        struct qcompile *c = trans->c;
         struct qreg arg = src[0 * 4 + i];
         return qir_FMAXABS(c, arg, arg);
 }
 
 /* Note that this instruction replicates its result from the x channel */
 static struct qreg
-tgsi_to_qir_sin(struct tgsi_to_qir *trans,
+tgsi_to_qir_sin(struct vc4_compile *c,
                 struct tgsi_full_instruction *tgsi_inst,
                 enum qop op, struct qreg *src, int i)
 {
-        struct qcompile *c = trans->c;
         float coeff[] = {
                 2.0 * M_PI,
                 -pow(2.0 * M_PI, 3) / (3 * 2 * 1),
@@ -697,30 +635,29 @@ tgsi_to_qir_sin(struct tgsi_to_qir *trans,
         struct qreg scaled_x =
                 qir_FMUL(c,
                          src[0 * 4 + 0],
-                         qir_uniform_f(trans, 1.0f / (M_PI * 2.0f)));
+                         qir_uniform_f(c, 1.0f / (M_PI * 2.0f)));
 
 
-        struct qreg x = tgsi_to_qir_frc(trans, NULL, 0, &scaled_x, 0);
+        struct qreg x = tgsi_to_qir_frc(c, NULL, 0, &scaled_x, 0);
         struct qreg x2 = qir_FMUL(c, x, x);
-        struct qreg sum = qir_FMUL(c, x, qir_uniform_f(trans, coeff[0]));
+        struct qreg sum = qir_FMUL(c, x, qir_uniform_f(c, coeff[0]));
         for (int i = 1; i < ARRAY_SIZE(coeff); i++) {
                 x = qir_FMUL(c, x, x2);
                 sum = qir_FADD(c,
                                sum,
                                qir_FMUL(c,
                                         x,
-                                        qir_uniform_f(trans, coeff[i])));
+                                        qir_uniform_f(c, coeff[i])));
         }
         return sum;
 }
 
 /* Note that this instruction replicates its result from the x channel */
 static struct qreg
-tgsi_to_qir_cos(struct tgsi_to_qir *trans,
+tgsi_to_qir_cos(struct vc4_compile *c,
                 struct tgsi_full_instruction *tgsi_inst,
                 enum qop op, struct qreg *src, int i)
 {
-        struct qcompile *c = trans->c;
         float coeff[] = {
                 1.0f,
                 -pow(2.0 * M_PI, 2) / (2 * 1),
@@ -730,10 +667,10 @@ tgsi_to_qir_cos(struct tgsi_to_qir *trans,
 
         struct qreg scaled_x =
                 qir_FMUL(c, src[0 * 4 + 0],
-                         qir_uniform_f(trans, 1.0f / (M_PI * 2.0f)));
-        struct qreg x_frac = tgsi_to_qir_frc(trans, NULL, 0, &scaled_x, 0);
+                         qir_uniform_f(c, 1.0f / (M_PI * 2.0f)));
+        struct qreg x_frac = tgsi_to_qir_frc(c, NULL, 0, &scaled_x, 0);
 
-        struct qreg sum = qir_uniform_f(trans, coeff[0]);
+        struct qreg sum = qir_uniform_f(c, coeff[0]);
         struct qreg x2 = qir_FMUL(c, x_frac, x_frac);
         struct qreg x = x2; /* Current x^2, x^4, or x^6 */
         for (int i = 1; i < ARRAY_SIZE(coeff); i++) {
@@ -742,7 +679,7 @@ tgsi_to_qir_cos(struct tgsi_to_qir *trans,
 
                 struct qreg mul = qir_FMUL(c,
                                            x,
-                                           qir_uniform_f(trans, coeff[i]));
+                                           qir_uniform_f(c, coeff[i]));
                 if (i == 0)
                         sum = mul;
                 else
@@ -752,10 +689,9 @@ tgsi_to_qir_cos(struct tgsi_to_qir *trans,
 }
 
 static void
-emit_vertex_input(struct tgsi_to_qir *trans, int attr)
+emit_vertex_input(struct vc4_compile *c, int attr)
 {
-        enum pipe_format format = trans->vs_key->attr_formats[attr];
-        struct qcompile *c = trans->c;
+        enum pipe_format format = c->vs_key->attr_formats[attr];
         struct qreg vpm_reads[4];
 
         /* Right now, we're setting the VPM offsets to be 16 bytes wide every
@@ -787,43 +723,36 @@ emit_vertex_input(struct tgsi_to_qir *trans, int attr)
                         format_warned = true;
                 }
 
-                trans->inputs[attr * 4 + i] =
-                        get_swizzled_channel(trans, vpm_reads, swiz);
+                c->inputs[attr * 4 + i] =
+                        get_swizzled_channel(c, vpm_reads, swiz);
         }
 }
 
 static void
-tgsi_to_qir_kill_if(struct tgsi_to_qir *trans, struct qreg *src, int i)
+tgsi_to_qir_kill_if(struct vc4_compile *c, struct qreg *src, int i)
 {
-        struct qcompile *c = trans->c;
-
-        if (trans->discard.file == QFILE_NULL)
-                trans->discard = qir_uniform_f(trans, 0.0);
+        if (c->discard.file == QFILE_NULL)
+                c->discard = qir_uniform_f(c, 0.0);
         qir_SF(c, src[0 * 4 + i]);
-        trans->discard = qir_SEL_X_Y_NS(c,
-                                        qir_uniform_f(trans, 1.0),
-                                        trans->discard);
+        c->discard = qir_SEL_X_Y_NS(c, qir_uniform_f(c, 1.0),
+                                    c->discard);
 }
 
 static void
-emit_fragcoord_input(struct tgsi_to_qir *trans, int attr)
+emit_fragcoord_input(struct vc4_compile *c, int attr)
 {
-        struct qcompile *c = trans->c;
-
-        trans->inputs[attr * 4 + 0] = qir_FRAG_X(c);
-        trans->inputs[attr * 4 + 1] = qir_FRAG_Y(c);
-        trans->inputs[attr * 4 + 2] =
+        c->inputs[attr * 4 + 0] = qir_FRAG_X(c);
+        c->inputs[attr * 4 + 1] = qir_FRAG_Y(c);
+        c->inputs[attr * 4 + 2] =
                 qir_FMUL(c,
                          qir_FRAG_Z(c),
-                         qir_uniform_f(trans, 1.0 / 0xffffff));
-        trans->inputs[attr * 4 + 3] = qir_FRAG_RCP_W(c);
+                         qir_uniform_f(c, 1.0 / 0xffffff));
+        c->inputs[attr * 4 + 3] = qir_FRAG_RCP_W(c);
 }
 
 static struct qreg
-emit_fragment_varying(struct tgsi_to_qir *trans, int index)
+emit_fragment_varying(struct vc4_compile *c, int index)
 {
-        struct qcompile *c = trans->c;
-
         struct qreg vary = {
                 QFILE_VARY,
                 index
@@ -834,23 +763,19 @@ emit_fragment_varying(struct tgsi_to_qir *trans, int index)
 }
 
 static void
-emit_fragment_input(struct tgsi_to_qir *trans, int attr)
+emit_fragment_input(struct vc4_compile *c, int attr)
 {
-        struct qcompile *c = trans->c;
-
         for (int i = 0; i < 4; i++) {
-                trans->inputs[attr * 4 + i] =
-                        emit_fragment_varying(trans, attr * 4 + i);
+                c->inputs[attr * 4 + i] =
+                        emit_fragment_varying(c, attr * 4 + i);
                 c->num_inputs++;
         }
 }
 
 static void
-emit_tgsi_declaration(struct tgsi_to_qir *trans,
+emit_tgsi_declaration(struct vc4_compile *c,
                       struct tgsi_full_declaration *decl)
 {
-        struct qcompile *c = trans->c;
-
         switch (decl->Declaration.File) {
         case TGSI_FILE_INPUT:
                 for (int i = decl->Range.First;
@@ -859,12 +784,12 @@ emit_tgsi_declaration(struct tgsi_to_qir *trans,
                         if (c->stage == QSTAGE_FRAG) {
                                 if (decl->Semantic.Name ==
                                     TGSI_SEMANTIC_POSITION) {
-                                        emit_fragcoord_input(trans, i);
+                                        emit_fragcoord_input(c, i);
                                 } else {
-                                        emit_fragment_input(trans, i);
+                                        emit_fragment_input(c, i);
                                 }
                         } else {
-                                emit_vertex_input(trans, i);
+                                emit_vertex_input(c, i);
                         }
                 }
                 break;
@@ -872,13 +797,12 @@ emit_tgsi_declaration(struct tgsi_to_qir *trans,
 }
 
 static void
-emit_tgsi_instruction(struct tgsi_to_qir *trans,
+emit_tgsi_instruction(struct vc4_compile *c,
                       struct tgsi_full_instruction *tgsi_inst)
 {
-        struct qcompile *c = trans->c;
         struct {
                 enum qop op;
-                struct qreg (*func)(struct tgsi_to_qir *trans,
+                struct qreg (*func)(struct vc4_compile *c,
                                     struct tgsi_full_instruction *tgsi_inst,
                                     enum qop op,
                                     struct qreg *src, int i);
@@ -949,7 +873,7 @@ emit_tgsi_instruction(struct tgsi_to_qir *trans,
         for (int s = 0; s < 3; s++) {
                 for (int i = 0; i < 4; i++) {
                         src_regs[4 * s + i] =
-                                get_src(trans, tgsi_inst->Instruction.Opcode,
+                                get_src(c, tgsi_inst->Instruction.Opcode,
                                         &tgsi_inst->Src[s].Register, i);
                 }
         }
@@ -958,15 +882,15 @@ emit_tgsi_instruction(struct tgsi_to_qir *trans,
         case TGSI_OPCODE_TEX:
         case TGSI_OPCODE_TXP:
         case TGSI_OPCODE_TXB:
-                tgsi_to_qir_tex(trans, tgsi_inst,
+                tgsi_to_qir_tex(c, tgsi_inst,
                                 op_trans[tgsi_op].op, src_regs);
                 return;
         case TGSI_OPCODE_KILL:
-                trans->discard = qir_uniform_f(trans, 1.0);
+                c->discard = qir_uniform_f(c, 1.0);
                 return;
         case TGSI_OPCODE_KILL_IF:
                 for (int i = 0; i < 4; i++)
-                        tgsi_to_qir_kill_if(trans, src_regs, i);
+                        tgsi_to_qir_kill_if(c, src_regs, i);
                 return;
         default:
                 break;
@@ -985,7 +909,7 @@ emit_tgsi_instruction(struct tgsi_to_qir *trans,
 
                 struct qreg result;
 
-                result = op_trans[tgsi_op].func(trans, tgsi_inst,
+                result = op_trans[tgsi_op].func(c, tgsi_inst,
                                                 op_trans[tgsi_op].op,
                                                 src_regs, i);
 
@@ -995,33 +919,31 @@ emit_tgsi_instruction(struct tgsi_to_qir *trans,
                         result = qir_FMAX(c,
                                           qir_FMIN(c,
                                                    result,
-                                                   qir_uniform_f(trans, 1.0)),
-                                          qir_uniform_f(trans, low));
+                                                   qir_uniform_f(c, 1.0)),
+                                          qir_uniform_f(c, low));
                 }
 
-                update_dst(trans, tgsi_inst, i, result);
+                update_dst(c, tgsi_inst, i, result);
         }
 }
 
 static void
-parse_tgsi_immediate(struct tgsi_to_qir *trans, struct tgsi_full_immediate *imm)
+parse_tgsi_immediate(struct vc4_compile *c, struct tgsi_full_immediate *imm)
 {
         for (int i = 0; i < 4; i++) {
-                unsigned n = trans->num_consts++;
-                trans->consts[n] = qir_uniform_ui(trans, imm->u[i].Uint);
+                unsigned n = c->num_consts++;
+                c->consts[n] = qir_uniform_ui(c, imm->u[i].Uint);
         }
 }
 
 static struct qreg
-vc4_blend_channel(struct tgsi_to_qir *trans,
+vc4_blend_channel(struct vc4_compile *c,
                   struct qreg *dst,
                   struct qreg *src,
                   struct qreg val,
                   unsigned factor,
                   int channel)
 {
-        struct qcompile *c = trans->c;
-
         switch(factor) {
         case PIPE_BLENDFACTOR_ONE:
                 return val;
@@ -1035,42 +957,42 @@ vc4_blend_channel(struct tgsi_to_qir *trans,
                 return qir_FMUL(c, val, dst[channel]);
         case PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE:
                 return qir_FMIN(c, src[3], qir_FSUB(c,
-                                                    qir_uniform_f(trans, 1.0),
+                                                    qir_uniform_f(c, 1.0),
                                                     dst[3]));
         case PIPE_BLENDFACTOR_CONST_COLOR:
                 return qir_FMUL(c, val,
-                                get_temp_for_uniform(trans,
+                                get_temp_for_uniform(c,
                                                      QUNIFORM_BLEND_CONST_COLOR,
                                                      channel));
         case PIPE_BLENDFACTOR_CONST_ALPHA:
                 return qir_FMUL(c, val,
-                                get_temp_for_uniform(trans,
+                                get_temp_for_uniform(c,
                                                      QUNIFORM_BLEND_CONST_COLOR,
                                                      3));
         case PIPE_BLENDFACTOR_ZERO:
-                return qir_uniform_f(trans, 0.0);
+                return qir_uniform_f(c, 0.0);
         case PIPE_BLENDFACTOR_INV_SRC_COLOR:
-                return qir_FMUL(c, val, qir_FSUB(c, qir_uniform_f(trans, 1.0),
+                return qir_FMUL(c, val, qir_FSUB(c, qir_uniform_f(c, 1.0),
                                                  src[channel]));
         case PIPE_BLENDFACTOR_INV_SRC_ALPHA:
-                return qir_FMUL(c, val, qir_FSUB(c, qir_uniform_f(trans, 1.0),
+                return qir_FMUL(c, val, qir_FSUB(c, qir_uniform_f(c, 1.0),
                                                  src[3]));
         case PIPE_BLENDFACTOR_INV_DST_ALPHA:
-                return qir_FMUL(c, val, qir_FSUB(c, qir_uniform_f(trans, 1.0),
+                return qir_FMUL(c, val, qir_FSUB(c, qir_uniform_f(c, 1.0),
                                                  dst[3]));
         case PIPE_BLENDFACTOR_INV_DST_COLOR:
-                return qir_FMUL(c, val, qir_FSUB(c, qir_uniform_f(trans, 1.0),
+                return qir_FMUL(c, val, qir_FSUB(c, qir_uniform_f(c, 1.0),
                                                  dst[channel]));
         case PIPE_BLENDFACTOR_INV_CONST_COLOR:
                 return qir_FMUL(c, val,
-                                qir_FSUB(c, qir_uniform_f(trans, 1.0),
-                                         get_temp_for_uniform(trans,
+                                qir_FSUB(c, qir_uniform_f(c, 1.0),
+                                         get_temp_for_uniform(c,
                                                               QUNIFORM_BLEND_CONST_COLOR,
                                                               channel)));
         case PIPE_BLENDFACTOR_INV_CONST_ALPHA:
                 return qir_FMUL(c, val,
-                                qir_FSUB(c, qir_uniform_f(trans, 1.0),
-                                         get_temp_for_uniform(trans,
+                                qir_FSUB(c, qir_uniform_f(c, 1.0),
+                                         get_temp_for_uniform(c,
                                                               QUNIFORM_BLEND_CONST_COLOR,
                                                               3)));
 
@@ -1086,12 +1008,10 @@ vc4_blend_channel(struct tgsi_to_qir *trans,
 }
 
 static struct qreg
-vc4_blend_func(struct tgsi_to_qir *trans,
+vc4_blend_func(struct vc4_compile *c,
                struct qreg src, struct qreg dst,
                unsigned func)
 {
-        struct qcompile *c = trans->c;
-
         switch (func) {
         case PIPE_BLEND_ADD:
                 return qir_FADD(c, src, dst);
@@ -1122,10 +1042,10 @@ vc4_blend_func(struct tgsi_to_qir *trans,
  * output color appropriately.
  */
 static void
-vc4_blend(struct tgsi_to_qir *trans, struct qreg *result,
+vc4_blend(struct vc4_compile *c, struct qreg *result,
           struct qreg *dst_color, struct qreg *src_color)
 {
-        struct pipe_rt_blend_state *blend = &trans->fs_key->blend;
+        struct pipe_rt_blend_state *blend = &c->fs_key->blend;
 
         if (!blend->blend_enable) {
                 for (int i = 0; i < 4; i++)
@@ -1135,68 +1055,65 @@ vc4_blend(struct tgsi_to_qir *trans, struct qreg *result,
 
         struct qreg src_blend[4], dst_blend[4];
         for (int i = 0; i < 3; i++) {
-                src_blend[i] = vc4_blend_channel(trans,
+                src_blend[i] = vc4_blend_channel(c,
                                                  dst_color, src_color,
                                                  src_color[i],
                                                  blend->rgb_src_factor, i);
-                dst_blend[i] = vc4_blend_channel(trans,
+                dst_blend[i] = vc4_blend_channel(c,
                                                  dst_color, src_color,
                                                  dst_color[i],
                                                  blend->rgb_dst_factor, i);
         }
-        src_blend[3] = vc4_blend_channel(trans,
+        src_blend[3] = vc4_blend_channel(c,
                                          dst_color, src_color,
                                          src_color[3],
                                          blend->alpha_src_factor, 3);
-        dst_blend[3] = vc4_blend_channel(trans,
+        dst_blend[3] = vc4_blend_channel(c,
                                          dst_color, src_color,
                                          dst_color[3],
                                          blend->alpha_dst_factor, 3);
 
         for (int i = 0; i < 3; i++) {
-                result[i] = vc4_blend_func(trans,
+                result[i] = vc4_blend_func(c,
                                            src_blend[i], dst_blend[i],
                                            blend->rgb_func);
         }
-        result[3] = vc4_blend_func(trans,
+        result[3] = vc4_blend_func(c,
                                    src_blend[3], dst_blend[3],
                                    blend->alpha_func);
 }
 
 static void
-emit_frag_end(struct tgsi_to_qir *trans)
+emit_frag_end(struct vc4_compile *c)
 {
-        struct qcompile *c = trans->c;
-
         struct qreg src_color[4] = {
-                trans->outputs[0], trans->outputs[1],
-                trans->outputs[2], trans->outputs[3],
+                c->outputs[0], c->outputs[1], c->outputs[2], c->outputs[3],
         };
 
-        enum pipe_format color_format = trans->fs_key->color_format;
+        enum pipe_format color_format = c->fs_key->color_format;
         const uint8_t *format_swiz = vc4_get_format_swizzle(color_format);
         struct qreg tlb_read_color[4] = { c->undef, c->undef, c->undef, c->undef };
         struct qreg dst_color[4] = { c->undef, c->undef, c->undef, c->undef };
-        if (trans->fs_key->blend.blend_enable ||
-            trans->fs_key->blend.colormask != 0xf) {
+        if (c->fs_key->blend.blend_enable ||
+            c->fs_key->blend.colormask != 0xf) {
                 qir_emit(c, qir_inst(QOP_TLB_COLOR_READ, c->undef,
                                      c->undef, c->undef));
                 for (int i = 0; i < 4; i++)
                         tlb_read_color[i] = qir_R4_UNPACK(c, i);
                 for (int i = 0; i < 4; i++)
-                        dst_color[i] = get_swizzled_channel(trans,
+                        dst_color[i] = get_swizzled_channel(c,
                                                             tlb_read_color,
                                                             format_swiz[i]);
         }
 
         struct qreg blend_color[4];
-        vc4_blend(trans, blend_color, dst_color, src_color);
+        vc4_blend(c, blend_color, dst_color, src_color);
 
         /* If the bit isn't set in the color mask, then just return the
          * original dst color, instead.
          */
         for (int i = 0; i < 4; i++) {
-                if (!(trans->fs_key->blend.colormask & (1 << i))) {
+                if (!(c->fs_key->blend.colormask & (1 << i))) {
                         blend_color[i] = dst_color[i];
                 }
         }
@@ -1206,22 +1123,22 @@ emit_frag_end(struct tgsi_to_qir *trans)
          * output.
          */
         if (0) {
-                blend_color[0] = qir_uniform_f(trans, 1.0);
-                blend_color[1] = qir_uniform_f(trans, 0.0);
-                blend_color[2] = qir_uniform_f(trans, 1.0);
-                blend_color[3] = qir_uniform_f(trans, 0.5);
+                blend_color[0] = qir_uniform_f(c, 1.0);
+                blend_color[1] = qir_uniform_f(c, 0.0);
+                blend_color[2] = qir_uniform_f(c, 1.0);
+                blend_color[3] = qir_uniform_f(c, 0.5);
         }
 
         struct qreg swizzled_outputs[4];
         for (int i = 0; i < 4; i++) {
-                swizzled_outputs[i] = get_swizzled_channel(trans, blend_color,
+                swizzled_outputs[i] = get_swizzled_channel(c, blend_color,
                                                            format_swiz[i]);
         }
 
-        if (trans->discard.file != QFILE_NULL)
-                qir_TLB_DISCARD_SETUP(c, trans->discard);
+        if (c->discard.file != QFILE_NULL)
+                qir_TLB_DISCARD_SETUP(c, c->discard);
 
-        if (trans->fs_key->depth_enabled) {
+        if (c->fs_key->depth_enabled) {
                 qir_emit(c, qir_inst(QOP_TLB_PASSTHROUGH_Z_WRITE, c->undef,
                                      c->undef, c->undef));
         }
@@ -1240,7 +1157,7 @@ emit_frag_end(struct tgsi_to_qir *trans)
                  */
                 for (int i = 0; i < 4; i++) {
                         if (swizzled_outputs[i].file == QFILE_NULL)
-                                swizzled_outputs[i] = qir_uniform_f(trans, 0.0);
+                                swizzled_outputs[i] = qir_uniform_f(c, 0.0);
                 }
                 packed_color = qir_get_temp(c);
                 qir_emit(c, qir_inst4(QOP_PACK_COLORS, packed_color,
@@ -1249,7 +1166,7 @@ emit_frag_end(struct tgsi_to_qir *trans)
                                       swizzled_outputs[2],
                                       swizzled_outputs[3]));
         } else {
-                packed_color = qir_uniform_ui(trans, 0);
+                packed_color = qir_uniform_ui(c, 0);
         }
 
         qir_emit(c, qir_inst(QOP_TLB_COLOR_WRITE, c->undef,
@@ -1257,18 +1174,17 @@ emit_frag_end(struct tgsi_to_qir *trans)
 }
 
 static void
-emit_scaled_viewport_write(struct tgsi_to_qir *trans, struct qreg rcp_w)
+emit_scaled_viewport_write(struct vc4_compile *c, struct qreg rcp_w)
 {
-        struct qcompile *c = trans->c;
         struct qreg xyi[2];
 
         for (int i = 0; i < 2; i++) {
                 struct qreg scale =
-                        add_uniform(trans, QUNIFORM_VIEWPORT_X_SCALE + i, 0);
+                        add_uniform(c, QUNIFORM_VIEWPORT_X_SCALE + i, 0);
 
                 xyi[i] = qir_FTOI(c, qir_FMUL(c,
                                               qir_FMUL(c,
-                                                       trans->outputs[i],
+                                                       c->outputs[i],
                                                        scale),
                                               rcp_w));
         }
@@ -1277,145 +1193,133 @@ emit_scaled_viewport_write(struct tgsi_to_qir *trans, struct qreg rcp_w)
 }
 
 static void
-emit_zs_write(struct tgsi_to_qir *trans, struct qreg rcp_w)
+emit_zs_write(struct vc4_compile *c, struct qreg rcp_w)
 {
-        struct qcompile *c = trans->c;
-
-        struct qreg zscale = add_uniform(trans, QUNIFORM_VIEWPORT_Z_SCALE, 0);
-        struct qreg zoffset = add_uniform(trans, QUNIFORM_VIEWPORT_Z_OFFSET, 0);
+        struct qreg zscale = add_uniform(c, QUNIFORM_VIEWPORT_Z_SCALE, 0);
+        struct qreg zoffset = add_uniform(c, QUNIFORM_VIEWPORT_Z_OFFSET, 0);
 
         qir_VPM_WRITE(c, qir_FMUL(c, qir_FADD(c, qir_FMUL(c,
-                                                          trans->outputs[2],
+                                                          c->outputs[2],
                                                           zscale),
                                               zoffset),
                                   rcp_w));
 }
 
 static void
-emit_rcp_wc_write(struct tgsi_to_qir *trans, struct qreg rcp_w)
+emit_rcp_wc_write(struct vc4_compile *c, struct qreg rcp_w)
 {
-        struct qcompile *c = trans->c;
-
         qir_VPM_WRITE(c, rcp_w);
 }
 
 static void
-emit_vert_end(struct tgsi_to_qir *trans)
+emit_vert_end(struct vc4_compile *c)
 {
-        struct qcompile *c = trans->c;
+        struct qreg rcp_w = qir_RCP(c, c->outputs[3]);
 
-        struct qreg rcp_w = qir_RCP(c, trans->outputs[3]);
+        emit_scaled_viewport_write(c, rcp_w);
+        emit_zs_write(c, rcp_w);
+        emit_rcp_wc_write(c, rcp_w);
 
-        emit_scaled_viewport_write(trans, rcp_w);
-        emit_zs_write(trans, rcp_w);
-        emit_rcp_wc_write(trans, rcp_w);
-
-        for (int i = 4; i < trans->num_outputs; i++) {
-                qir_VPM_WRITE(c, trans->outputs[i]);
+        for (int i = 4; i < c->num_outputs; i++) {
+                qir_VPM_WRITE(c, c->outputs[i]);
         }
 }
 
 static void
-emit_coord_end(struct tgsi_to_qir *trans)
+emit_coord_end(struct vc4_compile *c)
 {
-        struct qcompile *c = trans->c;
-
-        struct qreg rcp_w = qir_RCP(c, trans->outputs[3]);
+        struct qreg rcp_w = qir_RCP(c, c->outputs[3]);
 
         for (int i = 0; i < 4; i++)
-                qir_VPM_WRITE(c, trans->outputs[i]);
+                qir_VPM_WRITE(c, c->outputs[i]);
 
-        emit_scaled_viewport_write(trans, rcp_w);
-        emit_zs_write(trans, rcp_w);
-        emit_rcp_wc_write(trans, rcp_w);
+        emit_scaled_viewport_write(c, rcp_w);
+        emit_zs_write(c, rcp_w);
+        emit_rcp_wc_write(c, rcp_w);
 }
 
-static struct tgsi_to_qir *
+static struct vc4_compile *
 vc4_shader_tgsi_to_qir(struct vc4_compiled_shader *shader, enum qstage stage,
                        struct vc4_key *key)
 {
-        struct tgsi_to_qir *trans = CALLOC_STRUCT(tgsi_to_qir);
-        struct qcompile *c;
+        struct vc4_compile *c = qir_compile_init();
         int ret;
 
-        c = qir_compile_init();
         c->stage = stage;
 
-        memset(trans, 0, sizeof(*trans));
         /* XXX sizing */
-        trans->temps = calloc(sizeof(struct qreg), 1024);
-        trans->inputs = calloc(sizeof(struct qreg), 8 * 4);
-        trans->outputs = calloc(sizeof(struct qreg), 1024);
-        trans->uniforms = calloc(sizeof(struct qreg), 1024);
-        trans->consts = calloc(sizeof(struct qreg), 1024);
+        c->temps = calloc(sizeof(struct qreg), 1024);
+        c->inputs = calloc(sizeof(struct qreg), 8 * 4);
+        c->outputs = calloc(sizeof(struct qreg), 1024);
+        c->uniforms = calloc(sizeof(struct qreg), 1024);
+        c->consts = calloc(sizeof(struct qreg), 1024);
 
-        trans->uniform_data = calloc(sizeof(uint32_t), 1024);
-        trans->uniform_contents = calloc(sizeof(enum quniform_contents), 1024);
+        c->uniform_data = calloc(sizeof(uint32_t), 1024);
+        c->uniform_contents = calloc(sizeof(enum quniform_contents), 1024);
 
-        trans->shader_state = key->shader_state;
-        trans->c = c;
-        ret = tgsi_parse_init(&trans->parser, trans->shader_state->tokens);
+        c->shader_state = key->shader_state;
+        ret = tgsi_parse_init(&c->parser, c->shader_state->tokens);
         assert(ret == TGSI_PARSE_OK);
 
         if (vc4_debug & VC4_DEBUG_TGSI) {
                 fprintf(stderr, "TGSI:\n");
-                tgsi_dump(trans->shader_state->tokens, 0);
+                tgsi_dump(c->shader_state->tokens, 0);
         }
 
-        trans->key = key;
+        c->key = key;
         switch (stage) {
         case QSTAGE_FRAG:
-                trans->fs_key = (struct vc4_fs_key *)key;
-                if (trans->fs_key->is_points) {
-                        trans->point_x = emit_fragment_varying(trans, 0);
-                        trans->point_y = emit_fragment_varying(trans, 0);
-                } else if (trans->fs_key->is_lines) {
-                        trans->line_x = emit_fragment_varying(trans, 0);
+                c->fs_key = (struct vc4_fs_key *)key;
+                if (c->fs_key->is_points) {
+                        c->point_x = emit_fragment_varying(c, 0);
+                        c->point_y = emit_fragment_varying(c, 0);
+                } else if (c->fs_key->is_lines) {
+                        c->line_x = emit_fragment_varying(c, 0);
                 }
                 break;
         case QSTAGE_VERT:
-                trans->vs_key = (struct vc4_vs_key *)key;
+                c->vs_key = (struct vc4_vs_key *)key;
                 break;
         case QSTAGE_COORD:
-                trans->vs_key = (struct vc4_vs_key *)key;
+                c->vs_key = (struct vc4_vs_key *)key;
                 break;
         }
 
-        while (!tgsi_parse_end_of_tokens(&trans->parser)) {
-                tgsi_parse_token(&trans->parser);
+        while (!tgsi_parse_end_of_tokens(&c->parser)) {
+                tgsi_parse_token(&c->parser);
 
-                switch (trans->parser.FullToken.Token.Type) {
+                switch (c->parser.FullToken.Token.Type) {
                 case TGSI_TOKEN_TYPE_DECLARATION:
-                        emit_tgsi_declaration(trans,
-                                              &trans->parser.FullToken.FullDeclaration);
+                        emit_tgsi_declaration(c,
+                                              &c->parser.FullToken.FullDeclaration);
                         break;
 
                 case TGSI_TOKEN_TYPE_INSTRUCTION:
-                        emit_tgsi_instruction(trans,
-                                              &trans->parser.FullToken.FullInstruction);
+                        emit_tgsi_instruction(c,
+                                              &c->parser.FullToken.FullInstruction);
                         break;
 
                 case TGSI_TOKEN_TYPE_IMMEDIATE:
-                        parse_tgsi_immediate(trans,
-                                             &trans->parser.FullToken.FullImmediate);
+                        parse_tgsi_immediate(c,
+                                             &c->parser.FullToken.FullImmediate);
                         break;
                 }
         }
 
         switch (stage) {
         case QSTAGE_FRAG:
-                emit_frag_end(trans);
+                emit_frag_end(c);
                 break;
         case QSTAGE_VERT:
-                emit_vert_end(trans);
+                emit_vert_end(c);
                 break;
         case QSTAGE_COORD:
-                emit_coord_end(trans);
+                emit_coord_end(c);
                 break;
         }
 
-        tgsi_parse_free(&trans->parser);
-        free(trans->temps);
+        tgsi_parse_free(&c->parser);
+        free(c->temps);
 
         qir_optimize(c);
 
@@ -1429,10 +1333,10 @@ vc4_shader_tgsi_to_qir(struct vc4_compiled_shader *shader, enum qstage stage,
                 fprintf(stderr, "SHADER-DB: %s: %d instructions\n",
                         qir_get_stage_name(c->stage), c->qpu_inst_count);
                 fprintf(stderr, "SHADER-DB: %s: %d uniforms\n",
-                        qir_get_stage_name(c->stage), trans->num_uniforms);
+                        qir_get_stage_name(c->stage), c->num_uniforms);
         }
 
-        return trans;
+        return c;
 }
 
 static void *
@@ -1451,65 +1355,64 @@ vc4_shader_state_create(struct pipe_context *pctx,
 static void
 copy_uniform_state_to_shader(struct vc4_compiled_shader *shader,
                              int shader_index,
-                             struct tgsi_to_qir *trans)
+                             struct vc4_compile *c)
 {
-        int count = trans->num_uniforms;
+        int count = c->num_uniforms;
         struct vc4_shader_uniform_info *uinfo = &shader->uniforms[shader_index];
 
         uinfo->count = count;
         uinfo->data = malloc(count * sizeof(*uinfo->data));
-        memcpy(uinfo->data, trans->uniform_data,
+        memcpy(uinfo->data, c->uniform_data,
                count * sizeof(*uinfo->data));
         uinfo->contents = malloc(count * sizeof(*uinfo->contents));
-        memcpy(uinfo->contents, trans->uniform_contents,
+        memcpy(uinfo->contents, c->uniform_contents,
                count * sizeof(*uinfo->contents));
-        uinfo->num_texture_samples = trans->num_texture_samples;
+        uinfo->num_texture_samples = c->num_texture_samples;
 }
 
 static void
 vc4_fs_compile(struct vc4_context *vc4, struct vc4_compiled_shader *shader,
                struct vc4_fs_key *key)
 {
-        struct tgsi_to_qir *trans = vc4_shader_tgsi_to_qir(shader, QSTAGE_FRAG,
-                                                           &key->base);
-        shader->num_inputs = trans->c->num_inputs;
-        copy_uniform_state_to_shader(shader, 0, trans);
-        shader->bo = vc4_bo_alloc_mem(vc4->screen, trans->c->qpu_insts,
-                                      trans->c->qpu_inst_count * sizeof(uint64_t),
+        struct vc4_compile *c = vc4_shader_tgsi_to_qir(shader, QSTAGE_FRAG,
+                                                       &key->base);
+        shader->num_inputs = c->num_inputs;
+        copy_uniform_state_to_shader(shader, 0, c);
+        shader->bo = vc4_bo_alloc_mem(vc4->screen, c->qpu_insts,
+                                      c->qpu_inst_count * sizeof(uint64_t),
                                       "fs_code");
 
-        qir_compile_destroy(trans->c);
-        free(trans);
+        qir_compile_destroy(c);
 }
 
 static void
 vc4_vs_compile(struct vc4_context *vc4, struct vc4_compiled_shader *shader,
                struct vc4_vs_key *key)
 {
-        struct tgsi_to_qir *vs_trans = vc4_shader_tgsi_to_qir(shader,
-                                                              QSTAGE_VERT,
-                                                              &key->base);
-        copy_uniform_state_to_shader(shader, 0, vs_trans);
+        struct vc4_compile *vs_c = vc4_shader_tgsi_to_qir(shader,
+                                                          QSTAGE_VERT,
+                                                          &key->base);
+        copy_uniform_state_to_shader(shader, 0, vs_c);
 
-        struct tgsi_to_qir *cs_trans = vc4_shader_tgsi_to_qir(shader,
-                                                              QSTAGE_COORD,
-                                                              &key->base);
-        copy_uniform_state_to_shader(shader, 1, cs_trans);
+        struct vc4_compile *cs_c = vc4_shader_tgsi_to_qir(shader,
+                                                          QSTAGE_COORD,
+                                                          &key->base);
+        copy_uniform_state_to_shader(shader, 1, cs_c);
 
-        uint32_t vs_size = vs_trans->c->qpu_inst_count * sizeof(uint64_t);
-        uint32_t cs_size = cs_trans->c->qpu_inst_count * sizeof(uint64_t);
+        uint32_t vs_size = vs_c->qpu_inst_count * sizeof(uint64_t);
+        uint32_t cs_size = cs_c->qpu_inst_count * sizeof(uint64_t);
         shader->coord_shader_offset = vs_size; /* XXX: alignment? */
         shader->bo = vc4_bo_alloc(vc4->screen,
                                   shader->coord_shader_offset + cs_size,
                                   "vs_code");
 
         void *map = vc4_bo_map(shader->bo);
-        memcpy(map, vs_trans->c->qpu_insts, vs_size);
+        memcpy(map, vs_c->qpu_insts, vs_size);
         memcpy(map + shader->coord_shader_offset,
-               cs_trans->c->qpu_insts, cs_size);
+               cs_c->qpu_insts, cs_size);
 
-        qir_compile_destroy(vs_trans->c);
-        qir_compile_destroy(cs_trans->c);
+        qir_compile_destroy(vs_c);
+        qir_compile_destroy(cs_c);
 }
 
 static void

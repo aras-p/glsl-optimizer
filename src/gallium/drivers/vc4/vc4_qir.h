@@ -31,6 +31,7 @@
 #include <string.h>
 
 #include "util/u_simple_list.h"
+#include "tgsi/tgsi_parse.h"
 
 enum qfile {
         QFILE_NULL,
@@ -200,7 +201,28 @@ enum quniform_contents {
         QUNIFORM_BLEND_CONST_COLOR,
 };
 
-struct qcompile {
+struct vc4_compile {
+        struct tgsi_parse_context parser;
+        struct qreg *temps;
+        struct qreg *inputs;
+        struct qreg *outputs;
+        struct qreg *uniforms;
+        struct qreg *consts;
+        uint32_t num_consts;
+        struct qreg line_x, point_x, point_y;
+        struct qreg discard;
+
+        struct pipe_shader_state *shader_state;
+        struct vc4_key *key;
+        struct vc4_fs_key *fs_key;
+        struct vc4_vs_key *vs_key;
+
+        uint32_t *uniform_data;
+        enum quniform_contents *uniform_contents;
+        uint32_t num_uniforms;
+        uint32_t num_outputs;
+        uint32_t num_texture_samples;
+
         struct qreg undef;
         enum qstage stage;
         uint32_t num_temps;
@@ -214,8 +236,8 @@ struct qcompile {
         uint32_t num_inputs;
 };
 
-struct qcompile *qir_compile_init(void);
-void qir_compile_destroy(struct qcompile *c);
+struct vc4_compile *qir_compile_init(void);
+void qir_compile_destroy(struct vc4_compile *c);
 struct qinst *qir_inst(enum qop op, struct qreg dst,
                        struct qreg src0, struct qreg src1);
 struct qinst *qir_inst4(enum qop op, struct qreg dst,
@@ -223,8 +245,8 @@ struct qinst *qir_inst4(enum qop op, struct qreg dst,
                         struct qreg b,
                         struct qreg c,
                         struct qreg d);
-void qir_emit(struct qcompile *c, struct qinst *inst);
-struct qreg qir_get_temp(struct qcompile *c);
+void qir_emit(struct vc4_compile *c, struct qinst *inst);
+struct qreg qir_get_temp(struct vc4_compile *c);
 int qir_get_op_nsrc(enum qop qop);
 bool qir_reg_equals(struct qreg a, struct qreg b);
 bool qir_has_side_effects(struct qinst *inst);
@@ -232,19 +254,19 @@ bool qir_depends_on_flags(struct qinst *inst);
 bool qir_writes_r4(struct qinst *inst);
 bool qir_reads_r4(struct qinst *inst);
 
-void qir_dump(struct qcompile *c);
+void qir_dump(struct vc4_compile *c);
 void qir_dump_inst(struct qinst *inst);
 const char *qir_get_stage_name(enum qstage stage);
 
-void qir_optimize(struct qcompile *c);
-bool qir_opt_algebraic(struct qcompile *c);
-bool qir_opt_copy_propagation(struct qcompile *c);
-bool qir_opt_cse(struct qcompile *c);
-bool qir_opt_dead_code(struct qcompile *c);
+void qir_optimize(struct vc4_compile *c);
+bool qir_opt_algebraic(struct vc4_compile *c);
+bool qir_opt_copy_propagation(struct vc4_compile *c);
+bool qir_opt_cse(struct vc4_compile *c);
+bool qir_opt_dead_code(struct vc4_compile *c);
 
 #define QIR_ALU0(name)                                                   \
 static inline struct qreg                                                \
-qir_##name(struct qcompile *c)                                           \
+qir_##name(struct vc4_compile *c)                                        \
 {                                                                        \
         struct qreg t = qir_get_temp(c);                                 \
         qir_emit(c, qir_inst(QOP_##name, t, c->undef, c->undef));        \
@@ -253,7 +275,7 @@ qir_##name(struct qcompile *c)                                           \
 
 #define QIR_ALU1(name)                                                   \
 static inline struct qreg                                                \
-qir_##name(struct qcompile *c, struct qreg a)                            \
+qir_##name(struct vc4_compile *c, struct qreg a)                         \
 {                                                                        \
         struct qreg t = qir_get_temp(c);                                 \
         qir_emit(c, qir_inst(QOP_##name, t, a, c->undef));               \
@@ -262,7 +284,7 @@ qir_##name(struct qcompile *c, struct qreg a)                            \
 
 #define QIR_ALU2(name)                                                   \
 static inline struct qreg                                                \
-qir_##name(struct qcompile *c, struct qreg a, struct qreg b)             \
+qir_##name(struct vc4_compile *c, struct qreg a, struct qreg b)          \
 {                                                                        \
         struct qreg t = qir_get_temp(c);                                 \
         qir_emit(c, qir_inst(QOP_##name, t, a, b));                      \
@@ -271,14 +293,14 @@ qir_##name(struct qcompile *c, struct qreg a, struct qreg b)             \
 
 #define QIR_NODST_1(name)                                               \
 static inline void                                                      \
-qir_##name(struct qcompile *c, struct qreg a)                           \
+qir_##name(struct vc4_compile *c, struct qreg a)                        \
 {                                                                       \
         qir_emit(c, qir_inst(QOP_##name, c->undef, a, c->undef));       \
 }
 
 #define QIR_NODST_2(name)                                               \
 static inline void                                                      \
-qir_##name(struct qcompile *c, struct qreg a, struct qreg b)            \
+qir_##name(struct vc4_compile *c, struct qreg a, struct qreg b)         \
 {                                                                       \
         qir_emit(c, qir_inst(QOP_##name, c->undef, a, b));       \
 }
@@ -334,7 +356,7 @@ QIR_ALU0(FRAG_RCP_W)
 QIR_NODST_1(TLB_DISCARD_SETUP)
 
 static inline struct qreg
-qir_R4_UNPACK(struct qcompile *c, int i)
+qir_R4_UNPACK(struct vc4_compile *c, int i)
 {
         struct qreg t = qir_get_temp(c);
         qir_emit(c, qir_inst(QOP_R4_UNPACK_A + i, t, c->undef, c->undef));
@@ -342,7 +364,7 @@ qir_R4_UNPACK(struct qcompile *c, int i)
 }
 
 static inline struct qreg
-qir_SEL_X_0_COND(struct qcompile *c, int i)
+qir_SEL_X_0_COND(struct vc4_compile *c, int i)
 {
         struct qreg t = qir_get_temp(c);
         qir_emit(c, qir_inst(QOP_R4_UNPACK_A + i, t, c->undef, c->undef));

@@ -35,7 +35,7 @@
 #include "vc4_qir.h"
 
 bool
-qir_opt_algebraic(struct qcompile *c)
+qir_opt_algebraic(struct vc4_compile *c)
 {
         bool progress = false;
         struct simple_node *node;

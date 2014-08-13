@@ -28,7 +28,7 @@
 #include "vc4_qpu.h"
 
 static void
-vc4_dump_program(struct qcompile *c)
+vc4_dump_program(struct vc4_compile *c)
 {
         fprintf(stderr, "%s:\n", qir_get_stage_name(c->stage));
 
@@ -45,7 +45,7 @@ struct queued_qpu_inst {
 };
 
 static void
-queue(struct qcompile *c, uint64_t inst)
+queue(struct vc4_compile *c, uint64_t inst)
 {
         struct queued_qpu_inst *q = calloc(1, sizeof(*q));
         q->inst = inst;
@@ -53,7 +53,7 @@ queue(struct qcompile *c, uint64_t inst)
 }
 
 static uint64_t *
-last_inst(struct qcompile *c)
+last_inst(struct vc4_compile *c)
 {
         struct queued_qpu_inst *q =
                 (struct queued_qpu_inst *)last_elem(&c->qpu_inst_list);
@@ -61,7 +61,7 @@ last_inst(struct qcompile *c)
 }
 
 static void
-set_last_cond_add(struct qcompile *c, uint32_t cond)
+set_last_cond_add(struct vc4_compile *c, uint32_t cond)
 {
         *last_inst(c) = qpu_set_cond_add(*last_inst(c), cond);
 }
@@ -76,7 +76,7 @@ set_last_cond_add(struct qcompile *c, uint32_t cond)
  * instruction, instead.
  */
 static void
-fixup_raddr_conflict(struct qcompile *c,
+fixup_raddr_conflict(struct vc4_compile *c,
                struct qpu_reg src0, struct qpu_reg *src1)
 {
         if ((src0.mux == QPU_MUX_A || src0.mux == QPU_MUX_B) &&
@@ -88,7 +88,7 @@ fixup_raddr_conflict(struct qcompile *c,
 }
 
 static void
-serialize_one_inst(struct qcompile *c, uint64_t inst)
+serialize_one_inst(struct vc4_compile *c, uint64_t inst)
 {
         if (c->qpu_inst_count >= c->qpu_inst_size) {
                 c->qpu_inst_size = MAX2(16, c->qpu_inst_size * 2);
@@ -99,7 +99,7 @@ serialize_one_inst(struct qcompile *c, uint64_t inst)
 }
 
 static void
-serialize_insts(struct qcompile *c)
+serialize_insts(struct vc4_compile *c)
 {
         int last_sfu_write = -10;
         bool scoreboard_wait_emitted = false;
@@ -208,7 +208,7 @@ serialize_insts(struct qcompile *c)
 }
 
 void
-vc4_generate_code(struct qcompile *c)
+vc4_generate_code(struct vc4_compile *c)
 {
         struct qpu_reg allocate_to_qpu_reg[3 + 32 + 32];
         bool reg_in_use[ARRAY_SIZE(allocate_to_qpu_reg)];
