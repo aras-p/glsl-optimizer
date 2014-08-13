@@ -1060,6 +1060,7 @@ vl_compositor_render(struct vl_compositor_state *s,
       s->scissor.maxx = dst_surface->width;
       s->scissor.maxy = dst_surface->height;
    }
+   c->pipe->set_scissor_states(c->pipe, 0, 1, &s->scissor);
 
    gen_vertex_data(c, s, dirty_area);
 
@@ -1072,7 +1073,6 @@ vl_compositor_render(struct vl_compositor_state *s,
       dirty_area->x1 = dirty_area->y1 = MIN_DIRTY;
    }
 
-   c->pipe->set_scissor_states(c->pipe, 0, 1, &s->scissor);
    c->pipe->set_framebuffer_state(c->pipe, &c->fb_state);
    c->pipe->bind_vs_state(c->pipe, c->vs);
    c->pipe->set_vertex_buffers(c->pipe, 0, 1, &c->vertex_buf);
