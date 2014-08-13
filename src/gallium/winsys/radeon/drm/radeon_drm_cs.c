@@ -447,7 +447,7 @@ static void radeon_drm_cs_flush(struct radeon_winsys_cs *rcs,
         /* pad DMA ring to 8 DWs to meet CP fetch alignment requirements
          * r6xx, requires at least 4 dw alignment to avoid a hw bug.
          * hawaii with old firmware needs type2 nop packet.
-         * accel_working2 with value 2 indicates the new firmware.
+         * accel_working2 with value 3 indicates the new firmware.
          */
         if (cs->ws->info.chip_class <= SI ||
             (cs->ws->info.family == CHIP_HAWAII &&
