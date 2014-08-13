@@ -6,7 +6,8 @@ GLSL optimizer Change Log
 
 Fixes:
 
-* Fixed printing of infinities & NaNs
+* Fixed printing of infinities & NaNs.
+* Fixed vectorization pass in some cases going wrong on texture lookups.
 
 
 2014 06
