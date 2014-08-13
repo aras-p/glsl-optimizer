@@ -371,6 +371,12 @@ retype(struct brw_reg reg, enum brw_reg_type type)
 }
 
 static inline struct brw_reg
+firsthalf(struct brw_reg reg)
+{
+   return reg;
+}
+
+static inline struct brw_reg
 sechalf(struct brw_reg reg)
 {
    if (reg.vstride)
