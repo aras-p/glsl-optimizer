@@ -1459,6 +1459,10 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
    case ir_unop_interpolate_at_centroid:
    case ir_binop_interpolate_at_offset:
    case ir_binop_interpolate_at_sample:
+   case ir_unop_dFdx_coarse:
+   case ir_unop_dFdx_fine:
+   case ir_unop_dFdy_coarse:
+   case ir_unop_dFdy_fine:
       assert(!"not supported");
       break;
 
