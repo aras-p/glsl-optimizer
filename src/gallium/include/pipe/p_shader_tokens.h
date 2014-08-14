@@ -352,7 +352,10 @@ struct tgsi_property_data {
 #define TGSI_OPCODE_UIF                 75
 #define TGSI_OPCODE_ELSE                77
 #define TGSI_OPCODE_ENDIF               78
-                                /* gap */
+
+#define TGSI_OPCODE_DDX_FINE            79
+#define TGSI_OPCODE_DDY_FINE            80
+
 #define TGSI_OPCODE_PUSHA               81
 #define TGSI_OPCODE_POPA                82
 #define TGSI_OPCODE_CEIL                83

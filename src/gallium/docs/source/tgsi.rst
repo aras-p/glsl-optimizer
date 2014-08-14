@@ -433,7 +433,11 @@ This instruction replicates its result.
   dst = \cos{src.x}
 
 
-.. opcode:: DDX - Derivative Relative To X
+.. opcode:: DDX, DDX_FINE - Derivative Relative To X
+
+The fine variant is only used when ``PIPE_CAP_TGSI_FS_FINE_DERIVATIVE`` is
+advertised. When it is, the fine version guarantees one derivative per row
+while DDX is allowed to be the same for the entire 2x2 quad.
 
 .. math::
 
@@ -446,7 +450,11 @@ This instruction replicates its result.
   dst.w = partialx(src.w)
 
 
-.. opcode:: DDY - Derivative Relative To Y
+.. opcode:: DDY, DDY_FINE - Derivative Relative To Y
+
+The fine variant is only used when ``PIPE_CAP_TGSI_FS_FINE_DERIVATIVE`` is
+advertised. When it is, the fine version guarantees one derivative per column
+while DDY is allowed to be the same for the entire 2x2 quad.
 
 .. math::
 
