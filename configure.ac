@@ -2237,7 +2237,6 @@ AC_CONFIG_FILES([Makefile
 		src/loader/Makefile
 		src/mapi/Makefile
 		src/mapi/es1api/glesv1_cm.pc
-		src/mapi/es2api/Makefile
 		src/mapi/es2api/glesv2.pc
 		src/mapi/glapi/Makefile
 		src/mapi/glapi/gen/Makefile

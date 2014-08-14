@@ -110,7 +110,47 @@ es1api/glapi_mapi_tmp.h: glapi/gen/gl_and_es_API.xml $(glapi_gen_mapi_deps)
 endif
 
 if HAVE_OPENGL_ES2
-SUBDIRS += es2api
+TESTS += es2api/ABI-check
+
+BUILT_SOURCES += es2api/glapi_mapi_tmp.h
+
+pkgconfig_DATA += es2api/glesv2.pc
+
+GLES2_includedir = $(includedir)/GLES2
+GLES2_include_HEADERS = \
+	$(top_srcdir)/include/GLES2/gl2.h \
+	$(top_srcdir)/include/GLES2/gl2ext.h \
+	$(top_srcdir)/include/GLES2/gl2platform.h
+GLES3_includedir = $(includedir)/GLES3
+GLES3_include_HEADERS = \
+	$(top_srcdir)/include/GLES3/gl3.h \
+	$(top_srcdir)/include/GLES3/gl31.h \
+	$(top_srcdir)/include/GLES3/gl3ext.h \
+	$(top_srcdir)/include/GLES3/gl3platform.h
+
+lib_LTLIBRARIES += es2api/libGLESv2.la
+
+es2api_libGLESv2_la_SOURCES = entry.c es2api/glapi_mapi_tmp.h
+es2api_libGLESv2_la_CFLAGS = \
+	$(AM_CFLAGS) \
+	$(VISIBILITY_CFLAGS)
+es2api_libGLESv2_la_CPPFLAGS = \
+	$(AM_CPPFLAGS) \
+	-DMAPI_MODE_BRIDGE \
+	-DMAPI_ABI_HEADER=\"es2api/glapi_mapi_tmp.h\"
+es2api_libGLESv2_la_LIBADD = $(GLESv2_LIB_DEPS)
+es2api_libGLESv2_la_LDFLAGS = \
+	-no-undefined \
+	-version-number 2 \
+	$(GC_SECTIONS) \
+	$(LD_NO_UNDEFINED)
+
+if HAVE_SHARED_GLAPI
+es2api_libGLESv2_la_LIBADD += shared-glapi/libglapi.la
+endif
+
+es2api/glapi_mapi_tmp.h: glapi/gen/gl_and_es_API.xml $(glapi_gen_mapi_deps)
+	$(call glapi_gen_mapi,$<,es2api)
 endif
 
 if HAVE_OPENVG
