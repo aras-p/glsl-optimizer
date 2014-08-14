@@ -712,6 +712,9 @@ descriptor=[
   [ "MAX_GEOMETRY_INPUT_COMPONENTS", "CONTEXT_INT(Const.Program[MESA_SHADER_GEOMETRY].MaxInputComponents), extra_version_32" ],
   [ "MAX_GEOMETRY_OUTPUT_COMPONENTS", "CONTEXT_INT(Const.Program[MESA_SHADER_GEOMETRY].MaxOutputComponents), extra_version_32" ],
 
+# GL 4.4
+  [ "MAX_VERTEX_ATTRIB_STRIDE", "CONTEXT_ENUM(Const.MaxVertexAttribStride), NO_EXTRA" ],
+
 # GL_ARB_robustness
   [ "RESET_NOTIFICATION_STRATEGY_ARB", "CONTEXT_ENUM(Const.ResetStrategy), NO_EXTRA" ],
 

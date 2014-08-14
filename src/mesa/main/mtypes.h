@@ -3414,6 +3414,9 @@ struct gl_constants
    /** OpenGL version 3.2 */
    GLbitfield ProfileMask;   /**< Mask of CONTEXT_x_PROFILE_BIT */
 
+   /** OpenGL version 4.4 */
+   GLuint MaxVertexAttribStride;
+
    /** GL_EXT_transform_feedback */
    GLuint MaxTransformFeedbackBuffers;
    GLuint MaxTransformFeedbackSeparateComponents;

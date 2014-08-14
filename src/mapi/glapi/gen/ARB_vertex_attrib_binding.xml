@@ -53,6 +53,7 @@
     <enum name="VERTEX_BINDING_STRIDE" value="0x82D8"/>
     <enum name="MAX_VERTEX_ATTRIB_RELATIVE_OFFSET" value="0x82D9"/>
     <enum name="MAX_VERTEX_ATTRIB_BINDINGS" value="0x82DA"/>
+    <enum name="MAX_VERTEX_ATTRIB_STRIDE" value="0x82E5"/>
 
 </category>
 </OpenGLAPI>

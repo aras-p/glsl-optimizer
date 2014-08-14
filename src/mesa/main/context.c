@@ -670,6 +670,9 @@ _mesa_init_constants(struct gl_constants *consts, gl_api api)
                           ? GL_CONTEXT_CORE_PROFILE_BIT
                           : GL_CONTEXT_COMPATIBILITY_PROFILE_BIT;
 
+   /* GL 4.4 */
+   consts->MaxVertexAttribStride = 2048;
+
    /** GL_EXT_gpu_shader4 */
    consts->MinProgramTexelOffset = -8;
    consts->MaxProgramTexelOffset = 7;

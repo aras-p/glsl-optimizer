@@ -424,6 +424,13 @@ update_array(struct gl_context *ctx,
       return;
    }
 
+   if (ctx->API == API_OPENGL_CORE && ctx->Version >= 44 &&
+       stride > ctx->Const.MaxVertexAttribStride) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "%s(stride=%d > "
+                  "GL_MAX_VERTEX_ATTRIB_STRIDE)", func, stride);
+      return;
+   }
+
    /* Page 29 (page 44 of the PDF) of the OpenGL 3.3 spec says:
     *
     *     "An INVALID_OPERATION error is generated under any of the following
@@ -1437,6 +1444,13 @@ _mesa_BindVertexBuffer(GLuint bindingIndex, GLuint buffer, GLintptr offset,
       return;
    }
 
+   if (ctx->API == API_OPENGL_CORE && ctx->Version >= 44 &&
+       stride > ctx->Const.MaxVertexAttribStride) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glBindVertexBuffer(stride=%d > "
+                  "GL_MAX_VERTEX_ATTRIB_STRIDE)", stride);
+      return;
+   }
+
    if (buffer == vao->VertexBinding[VERT_ATTRIB_GENERIC(bindingIndex)].BufferObj->Name) {
       vbo = vao->VertexBinding[VERT_ATTRIB_GENERIC(bindingIndex)].BufferObj;
    } else if (buffer != 0) {
@@ -1562,6 +1576,14 @@ _mesa_BindVertexBuffers(GLuint first, GLsizei count, const GLuint *buffers,
          _mesa_error(ctx, GL_INVALID_VALUE,
                      "glBindVertexBuffers(strides[%u]=%d < 0)",
                      i, strides[i]);
+         continue;
+      }
+
+      if (ctx->API == API_OPENGL_CORE && ctx->Version >= 44 &&
+          strides[i] > ctx->Const.MaxVertexAttribStride) {
+         _mesa_error(ctx, GL_INVALID_VALUE,
+                     "glBindVertexBuffers(strides[%u]=%d > "
+                     "GL_MAX_VERTEX_ATTRIB_STRIDE)", i, strides[i]);
          continue;
       }
 
