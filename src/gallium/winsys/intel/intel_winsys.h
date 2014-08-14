@@ -91,6 +91,9 @@ intel_winsys_destroy(struct intel_winsys *winsys);
 const struct intel_winsys_info *
 intel_winsys_get_info(const struct intel_winsys *winsys);
 
+int
+intel_winsys_get_aperture_size(const struct intel_winsys *winsys);
+
 /**
  * Create a logical context for use with the render ring.
  */

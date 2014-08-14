@@ -301,7 +301,7 @@ i915_get_param(struct pipe_screen *screen, enum pipe_cap cap)
       if (!os_get_total_physical_memory(&system_memory))
          return 0;
 
-      return MIN2(gpu_mappable_megabytes, (int) (system_memory >> 20));
+      return MIN2(gpu_mappable_megabytes, (int)(system_memory >> 20));
    }
    case PIPE_CAP_UMA:
       return 1;

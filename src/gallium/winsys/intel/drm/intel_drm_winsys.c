@@ -223,6 +223,16 @@ intel_winsys_get_info(const struct intel_winsys *winsys)
    return &winsys->info;
 }
 
+int
+intel_winsys_get_aperture_size(const struct intel_winsys *winsys)
+{
+   size_t aper_size, mappable_size;
+
+   drm_intel_get_aperture_sizes(winsys->fd, &mappable_size, &aper_size);
+
+   return aper_size >> 20;
+}
+
 struct intel_context *
 intel_winsys_create_context(struct intel_winsys *winsys)
 {

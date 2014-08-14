@@ -25,6 +25,7 @@
  *    Chia-I Wu <olv@lunarg.com>
  */
 
+#include "os/os_misc.h"
 #include "util/u_format_s3tc.h"
 #include "vl/vl_decoder.h"
 #include "vl/vl_video_buffer.h"
@@ -435,6 +436,29 @@ ilo_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_DRAW_INDIRECT:
    case PIPE_CAP_TGSI_FS_FINE_DERIVATIVE:
       return 0;
+
+   case PIPE_CAP_VENDOR_ID:
+      return 0x8086;
+   case PIPE_CAP_DEVICE_ID:
+      return is->dev.devid;
+   case PIPE_CAP_ACCELERATED:
+      return true;
+   case PIPE_CAP_VIDEO_MEMORY: {
+      /* Once a batch uses more than 75% of the maximum mappable size, we
+       * assume that there's some fragmentation, and we start doing extra
+       * flushing, etc.  That's the big cliff apps will care about.
+       */
+      const int gpu_mappable_megabytes =
+         intel_winsys_get_aperture_size(is->winsys) * 3 / 4;
+      uint64_t system_memory;
+
+      if (!os_get_total_physical_memory(&system_memory))
+         return 0;
+
+      return MIN2(gpu_mappable_megabytes, (int)(system_memory >> 20));
+   }
+   case PIPE_CAP_UMA:
+      return true;
 
    default:
       return 0;
