@@ -1462,9 +1462,15 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
       break;
 
    case ir_unop_dFdx:
+   case ir_unop_dFdx_coarse:
       emit(ir, TGSI_OPCODE_DDX, result_dst, op[0]);
       break;
+   case ir_unop_dFdx_fine:
+      emit(ir, TGSI_OPCODE_DDX_FINE, result_dst, op[0]);
+      break;
    case ir_unop_dFdy:
+   case ir_unop_dFdy_coarse:
+   case ir_unop_dFdy_fine:
    {
       /* The X component contains 1 or -1 depending on whether the framebuffer
        * is a FBO or the window system buffer, respectively.
@@ -1485,7 +1491,8 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
       st_src_reg temp = get_temp(glsl_type::vec4_type);
 
       emit(ir, TGSI_OPCODE_MUL, st_dst_reg(temp), transform_y, op[0]);
-      emit(ir, TGSI_OPCODE_DDY, result_dst, temp);
+      emit(ir, ir->operation == ir_unop_dFdy_fine ?
+           TGSI_OPCODE_DDY_FINE : TGSI_OPCODE_DDY, result_dst, temp);
       break;
    }
 
