@@ -31,6 +31,7 @@
 #if defined(HAVE_DRI3)
 #include "dri3_priv.h"
 #endif
+#include "drisw_priv.h"
 
 #define __RENDERER(attrib) \
     { GLX_RENDERER_##attrib##_MESA, __DRI2_RENDERER_##attrib }
@@ -142,5 +143,44 @@ dri3_query_renderer_string(struct glx_screen *base, int attribute,
    return psc->rendererQuery->queryString(psc->driScreen, dri_attribute, value);
 }
 #endif /* HAVE_DRI3 */
+
+_X_HIDDEN int
+drisw_query_renderer_integer(struct glx_screen *base, int attribute,
+                             unsigned int *value)
+{
+   struct drisw_screen *const psc = (struct drisw_screen *) base;
+
+   /* Even though there are invalid values (and
+    * dri2_convert_glx_query_renderer_attribs may return -1), the higher level
+    * GLX code is required to perform the filtering.  Assume that we got a
+    * good value.
+    */
+   const int dri_attribute = dri2_convert_glx_query_renderer_attribs(attribute);
+
+   if (psc->rendererQuery == NULL)
+      return -1;
+
+   return psc->rendererQuery->queryInteger(psc->driScreen, dri_attribute,
+                                           value);
+}
+
+_X_HIDDEN int
+drisw_query_renderer_string(struct glx_screen *base, int attribute,
+                            const char **value)
+{
+   struct drisw_screen *const psc = (struct drisw_screen *) base;
+
+   /* Even though queryString only accepts a subset of the possible GLX
+    * queries, the higher level GLX code is required to perform the filtering.
+    * Assume that we got a good value.
+    */
+   const int dri_attribute = dri2_convert_glx_query_renderer_attribs(attribute);
+
+   if (psc->rendererQuery == NULL)
+      return -1;
+
+   return psc->rendererQuery->queryString(psc->driScreen, dri_attribute, value);
+}
+
 
 #endif /* GLX_DIRECT_RENDERING */

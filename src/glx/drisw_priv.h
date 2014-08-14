@@ -45,6 +45,7 @@ struct drisw_screen
    const __DRIswrastExtension *swrast;
    const __DRItexBufferExtension *texBuffer;
    const __DRIcopySubBufferExtension *copySubBuffer;
+   const __DRI2rendererQueryExtension *rendererQuery;
 
    const __DRIconfig **driver_configs;
 
@@ -62,3 +63,10 @@ struct drisw_drawable
    XVisualInfo *visinfo;
    XImage *ximage;
 };
+
+_X_HIDDEN int
+drisw_query_renderer_integer(struct glx_screen *base, int attribute,
+                             unsigned int *value);
+_X_HIDDEN int
+drisw_query_renderer_string(struct glx_screen *base, int attribute,
+                            const char **value);

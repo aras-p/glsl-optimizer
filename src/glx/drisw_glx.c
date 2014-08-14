@@ -599,8 +599,8 @@ driOpenSwrast(void)
 static const struct glx_screen_vtable drisw_screen_vtable = {
    .create_context         = drisw_create_context,
    .create_context_attribs = drisw_create_context_attribs,
-   .query_renderer_integer = NULL,
-   .query_renderer_string  = NULL,
+   .query_renderer_integer = drisw_query_renderer_integer,
+   .query_renderer_string  = drisw_query_renderer_string,
 };
 
 static void
@@ -628,6 +628,14 @@ driswBindExtensions(struct drisw_screen *psc, const __DRIextension **extensions)
       if ((strcmp(extensions[i]->name, __DRI_TEX_BUFFER) == 0)) {
 	 psc->texBuffer = (__DRItexBufferExtension *) extensions[i];
 	 __glXEnableDirectExtension(&psc->base, "GLX_EXT_texture_from_pixmap");
+      }
+      /* DRISW version 3 is also required because GLX_MESA_query_renderer
+       * requires GLX_ARB_create_context_profile.
+       */
+      if (psc->swrast->base.version >= 3
+          && strcmp(extensions[i]->name, __DRI2_RENDERER_QUERY) == 0) {
+         psc->rendererQuery = (__DRI2rendererQueryExtension *) extensions[i];
+         __glXEnableDirectExtension(&psc->base, "GLX_MESA_query_renderer");
       }
    }
 }
