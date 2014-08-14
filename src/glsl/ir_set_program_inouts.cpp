@@ -306,7 +306,9 @@ ir_visitor_status
 ir_set_program_inouts_visitor::visit_enter(ir_expression *ir)
 {
    if (this->shader_stage == MESA_SHADER_FRAGMENT &&
-       ir->operation == ir_unop_dFdy) {
+       (ir->operation == ir_unop_dFdy ||
+        ir->operation == ir_unop_dFdy_coarse ||
+        ir->operation == ir_unop_dFdy_fine)) {
       gl_fragment_program *fprog = (gl_fragment_program *) prog;
       fprog->UsesDFdy = true;
    }
