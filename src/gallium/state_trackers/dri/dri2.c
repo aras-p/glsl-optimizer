@@ -42,6 +42,7 @@
 #include "dri_screen.h"
 #include "dri_context.h"
 #include "dri_drawable.h"
+#include "dri_query_renderer.h"
 #include "dri2_buffer.h"
 
 static int convert_fourcc(int format, int *dri_components_p)
@@ -1228,6 +1229,7 @@ static const __DRIextension *dri_screen_extensions[] = {
    &driTexBufferExtension.base,
    &dri2FlushExtension.base,
    &dri2ImageExtension.base,
+   &dri2RendererQueryExtension.base,
    &dri2ConfigQueryExtension.base,
    &dri2ThrottleExtension.base,
    NULL

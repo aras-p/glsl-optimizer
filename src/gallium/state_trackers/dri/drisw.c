@@ -45,6 +45,7 @@
 #include "dri_screen.h"
 #include "dri_context.h"
 #include "dri_drawable.h"
+#include "dri_query_renderer.h"
 
 DEBUG_GET_ONCE_BOOL_OPTION(swrast_no_present, "SWRAST_NO_PRESENT", FALSE);
 static boolean swrast_no_present = FALSE;
@@ -331,6 +332,7 @@ drisw_update_tex_buffer(struct dri_drawable *drawable,
 
 static const __DRIextension *drisw_screen_extensions[] = {
    &driTexBufferExtension.base,
+   &dri2RendererQueryExtension.base,
    NULL
 };
 
