@@ -494,6 +494,13 @@ vc4_generate_code(struct qcompile *c)
                                           qpu_m_NOP()));
                         break;
 
+                case QOP_TLB_COLOR_READ:
+                        queue(c, qpu_inst(qpu_a_NOP(), qpu_m_NOP()));
+                        *last_inst(c) = qpu_set_sig(*last_inst(c),
+                                                    QPU_SIG_COLOR_LOAD);
+
+                        break;
+
                 case QOP_TLB_COLOR_WRITE:
                         queue(c, qpu_inst(qpu_a_MOV(qpu_tlbc(),
                                                     src[0]),

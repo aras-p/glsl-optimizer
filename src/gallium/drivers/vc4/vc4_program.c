@@ -72,6 +72,8 @@ struct vc4_fs_key {
         bool depth_enabled;
         bool is_points;
         bool is_lines;
+
+        struct pipe_rt_blend_state blend;
 };
 
 struct vc4_vs_key {
@@ -762,6 +764,169 @@ parse_tgsi_immediate(struct tgsi_to_qir *trans, struct tgsi_full_immediate *imm)
         }
 }
 
+static struct qreg
+vc4_blend_channel(struct tgsi_to_qir *trans,
+                  struct qreg *dst,
+                  struct qreg *src,
+                  struct qreg val,
+                  unsigned factor,
+                  int channel)
+{
+        struct qcompile *c = trans->c;
+
+        switch(factor) {
+        case PIPE_BLENDFACTOR_ONE:
+                return val;
+        case PIPE_BLENDFACTOR_SRC_COLOR:
+                return qir_FMUL(c, val, src[channel]);
+        case PIPE_BLENDFACTOR_SRC_ALPHA:
+                return qir_FMUL(c, val, src[3]);
+        case PIPE_BLENDFACTOR_DST_ALPHA:
+                return qir_FMUL(c, val, dst[3]);
+        case PIPE_BLENDFACTOR_DST_COLOR:
+                return qir_FMUL(c, val, dst[channel]);
+        case PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE:
+                return qir_FMIN(c, src[3], qir_FSUB(c,
+                                                    qir_uniform_f(trans, 1.0),
+                                                    dst[3]));
+        case PIPE_BLENDFACTOR_CONST_COLOR:
+                return qir_FMUL(c, val,
+                                get_temp_for_uniform(trans,
+                                                     QUNIFORM_BLEND_CONST_COLOR,
+                                                     channel));
+        case PIPE_BLENDFACTOR_CONST_ALPHA:
+                return qir_FMUL(c, val,
+                                get_temp_for_uniform(trans,
+                                                     QUNIFORM_BLEND_CONST_COLOR,
+                                                     3));
+        case PIPE_BLENDFACTOR_ZERO:
+                return qir_uniform_f(trans, 0.0);
+        case PIPE_BLENDFACTOR_INV_SRC_COLOR:
+                return qir_FMUL(c, val, qir_FSUB(c, qir_uniform_f(trans, 1.0),
+                                                 src[channel]));
+        case PIPE_BLENDFACTOR_INV_SRC_ALPHA:
+                return qir_FMUL(c, val, qir_FSUB(c, qir_uniform_f(trans, 1.0),
+                                                 src[3]));
+        case PIPE_BLENDFACTOR_INV_DST_ALPHA:
+                return qir_FMUL(c, val, qir_FSUB(c, qir_uniform_f(trans, 1.0),
+                                                 dst[3]));
+        case PIPE_BLENDFACTOR_INV_DST_COLOR:
+                return qir_FMUL(c, val, qir_FSUB(c, qir_uniform_f(trans, 1.0),
+                                                 dst[channel]));
+        case PIPE_BLENDFACTOR_INV_CONST_COLOR:
+                return qir_FMUL(c, val,
+                                qir_FSUB(c, qir_uniform_f(trans, 1.0),
+                                         get_temp_for_uniform(trans,
+                                                              QUNIFORM_BLEND_CONST_COLOR,
+                                                              channel)));
+        case PIPE_BLENDFACTOR_INV_CONST_ALPHA:
+                return qir_FMUL(c, val,
+                                qir_FSUB(c, qir_uniform_f(trans, 1.0),
+                                         get_temp_for_uniform(trans,
+                                                              QUNIFORM_BLEND_CONST_COLOR,
+                                                              3)));
+
+        default:
+        case PIPE_BLENDFACTOR_SRC1_COLOR:
+        case PIPE_BLENDFACTOR_SRC1_ALPHA:
+        case PIPE_BLENDFACTOR_INV_SRC1_COLOR:
+        case PIPE_BLENDFACTOR_INV_SRC1_ALPHA:
+                /* Unsupported. */
+                fprintf(stderr, "Unknown blend factor %d\n", factor);
+                return val;
+        }
+}
+
+static struct qreg
+vc4_blend_func(struct tgsi_to_qir *trans,
+               struct qreg src, struct qreg dst,
+               unsigned func)
+{
+        struct qcompile *c = trans->c;
+
+        switch (func) {
+        case PIPE_BLEND_ADD:
+                return qir_FADD(c, src, dst);
+        case PIPE_BLEND_SUBTRACT:
+                return qir_FSUB(c, src, dst);
+        case PIPE_BLEND_REVERSE_SUBTRACT:
+                return qir_FSUB(c, dst, src);
+        case PIPE_BLEND_MIN:
+                return qir_FMIN(c, src, dst);
+        case PIPE_BLEND_MAX:
+                return qir_FMAX(c, src, dst);
+
+        default:
+                /* Unsupported. */
+                fprintf(stderr, "Unknown blend func %d\n", func);
+                return src;
+
+        }
+}
+
+/**
+ * Implements fixed function blending in shader code.
+ *
+ * VC4 doesn't have any hardware support for blending.  Instead, you read the
+ * current contents of the destination from the tile buffer after having
+ * waited for the scoreboard (which is handled by vc4_qpu_emit.c), then do
+ * math using your output color and that destination value, and update the
+ * output color appropriately.
+ */
+static void
+vc4_blend(struct tgsi_to_qir *trans, struct qreg *result,
+          struct qreg *src_color)
+{
+        struct qcompile *c = trans->c;
+        struct pipe_rt_blend_state *blend = &trans->fs_key->blend;
+
+        if (!blend->blend_enable) {
+                for (int i = 0; i < 4; i++)
+                        result[i] = src_color[i];
+                return;
+        }
+
+        qir_emit(c, qir_inst(QOP_TLB_COLOR_READ, c->undef,
+                             c->undef, c->undef));
+        struct qreg dst_color[4];
+        for (int i = 0; i < 4; i++) {
+                dst_color[i] = qir_get_temp(c);
+                qir_emit(c, qir_inst(QOP_R4_UNPACK_A + i,
+                                     dst_color[i],
+                                     c->undef, c->undef));
+                /* XXX: Swizzles? */
+        }
+
+        struct qreg src_blend[4], dst_blend[4];
+        for (int i = 0; i < 3; i++) {
+                src_blend[i] = vc4_blend_channel(trans,
+                                                 dst_color, src_color,
+                                                 src_color[i],
+                                                 blend->rgb_src_factor, i);
+                dst_blend[i] = vc4_blend_channel(trans,
+                                                 dst_color, src_color,
+                                                 dst_color[i],
+                                                 blend->rgb_dst_factor, i);
+        }
+        src_blend[3] = vc4_blend_channel(trans,
+                                         dst_color, src_color,
+                                         src_color[3],
+                                         blend->alpha_src_factor, 3);
+        dst_blend[3] = vc4_blend_channel(trans,
+                                         dst_color, src_color,
+                                         dst_color[3],
+                                         blend->alpha_dst_factor, 3);
+
+        for (int i = 0; i < 3; i++) {
+                result[i] = vc4_blend_func(trans,
+                                           src_blend[i], dst_blend[i],
+                                           blend->rgb_func);
+        }
+        result[3] = vc4_blend_func(trans,
+                                   src_blend[3], dst_blend[3],
+                                   blend->alpha_func);
+}
+
 static void
 emit_frag_end(struct tgsi_to_qir *trans)
 {
@@ -772,26 +937,30 @@ emit_frag_end(struct tgsi_to_qir *trans)
         const struct util_format_description *format_desc =
                 util_format_description(trans->fs_key->color_format);
 
+        struct qreg output_color[4] = {
+                trans->outputs[0], trans->outputs[1],
+                trans->outputs[2], trans->outputs[3],
+        };
+
+        struct qreg blend_color[4];
+        vc4_blend(trans, blend_color, output_color);
+
         /* Debug: Sometimes you're getting a black output and just want to see
          * if the FS is getting executed at all.  Spam magenta into the color
          * output.
          */
         if (0) {
-                trans->outputs[format_desc->swizzle[0]] =
-                        qir_uniform_f(trans, 1.0);
-                trans->outputs[format_desc->swizzle[1]] =
-                        qir_uniform_f(trans, 0.0);
-                trans->outputs[format_desc->swizzle[2]] =
-                        qir_uniform_f(trans, 1.0);
-                trans->outputs[format_desc->swizzle[3]] =
-                        qir_uniform_f(trans, 0.5);
+                blend_color[0] = qir_uniform_f(trans, 1.0);
+                blend_color[1] = qir_uniform_f(trans, 0.0);
+                blend_color[2] = qir_uniform_f(trans, 1.0);
+                blend_color[3] = qir_uniform_f(trans, 0.5);
         }
 
         struct qreg swizzled_outputs[4] = {
-                trans->outputs[format_desc->swizzle[0]],
-                trans->outputs[format_desc->swizzle[1]],
-                trans->outputs[format_desc->swizzle[2]],
-                trans->outputs[format_desc->swizzle[3]],
+                blend_color[format_desc->swizzle[0]],
+                blend_color[format_desc->swizzle[1]],
+                blend_color[format_desc->swizzle[2]],
+                blend_color[format_desc->swizzle[3]],
         };
 
         if (trans->fs_key->depth_enabled) {
@@ -1074,6 +1243,7 @@ vc4_update_compiled_fs(struct vc4_context *vc4, uint8_t prim_mode)
         key->is_points = (prim_mode == PIPE_PRIM_POINTS);
         key->is_lines = (prim_mode >= PIPE_PRIM_LINES &&
                          prim_mode <= PIPE_PRIM_LINE_STRIP);
+        key->blend = vc4->blend->rt[0];
 
         if (vc4->framebuffer.cbufs[0])
                 key->color_format = vc4->framebuffer.cbufs[0]->format;
@@ -1333,6 +1503,11 @@ vc4_write_uniforms(struct vc4_context *vc4, struct vc4_compiled_shader *shader,
                                get_texrect_scale(texstate,
                                                  uinfo->contents[i],
                                                  uinfo->data[i]));
+                        break;
+
+                case QUNIFORM_BLEND_CONST_COLOR:
+                        cl_f(&vc4->uniforms,
+                             vc4->blend_color.color[uinfo->data[i]]);
                         break;
                 }
 #if 0
