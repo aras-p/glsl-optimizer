@@ -125,7 +125,7 @@ GL 4.1, GLSL 4.10:
   GL_ARB_get_program_binary                            DONE (0 binary formats)
   GL_ARB_separate_shader_objects                       DONE (all drivers)
   GL_ARB_shader_precision                              started (Micah)
-  GL_ARB_vertex_attrib_64bit                           not started
+  GL_ARB_vertex_attrib_64bit                           started (Dave)
   GL_ARB_viewport_array                                DONE (i965, nv50, nvc0, r600)
 
 
