@@ -305,6 +305,7 @@ intelInitExtensions(struct gl_context *ctx)
       }
 
       ctx->Extensions.ARB_texture_compression_bptc = true;
+      ctx->Extensions.ARB_derivative_control = true;
    }
 
    if (brw->gen >= 8) {
