@@ -393,6 +393,8 @@ struct _mesa_glsl_parse_state {
    bool ARB_compute_shader_warn;
    bool ARB_conservative_depth_enable;
    bool ARB_conservative_depth_warn;
+   bool ARB_derivative_control_enable;
+   bool ARB_derivative_control_warn;
    bool ARB_draw_buffers_enable;
    bool ARB_draw_buffers_warn;
    bool ARB_draw_instanced_enable;

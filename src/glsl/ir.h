@@ -1205,7 +1205,11 @@ enum ir_expression_operation {
     */
    /*@{*/
    ir_unop_dFdx,
+   ir_unop_dFdx_coarse,
+   ir_unop_dFdx_fine,
    ir_unop_dFdy,
+   ir_unop_dFdy_coarse,
+   ir_unop_dFdy_fine,
    /*@}*/
 
    /**

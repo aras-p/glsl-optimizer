@@ -248,7 +248,11 @@ ir_expression::ir_expression(int op, ir_rvalue *op0)
    case ir_unop_sin_reduced:
    case ir_unop_cos_reduced:
    case ir_unop_dFdx:
+   case ir_unop_dFdx_coarse:
+   case ir_unop_dFdx_fine:
    case ir_unop_dFdy:
+   case ir_unop_dFdy_coarse:
+   case ir_unop_dFdy_fine:
    case ir_unop_bitfield_reverse:
    case ir_unop_interpolate_at_centroid:
       this->type = op0->type;
@@ -509,7 +513,11 @@ static const char *const operator_strs[] = {
    "sin_reduced",
    "cos_reduced",
    "dFdx",
+   "dFdxCoarse",
+   "dFdxFine",
    "dFdy",
+   "dFdyCoarse",
+   "dFdyFine",
    "packSnorm2x16",
    "packSnorm4x8",
    "packUnorm2x16",
