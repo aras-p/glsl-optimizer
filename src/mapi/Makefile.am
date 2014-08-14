@@ -20,6 +20,7 @@
 # IN THE SOFTWARE.
 
 SUBDIRS = glapi/gen .
+TESTS =
 
 TOP = $(top_srcdir)
 
@@ -27,6 +28,8 @@ BUILT_SOURCES =
 CLEANFILES = $(BUILT_SOURCES)
 
 lib_LTLIBRARIES =
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA =
 
 AM_CFLAGS = $(PTHREAD_CFLAGS)
 AM_CPPFLAGS =							\
@@ -68,7 +71,42 @@ SUBDIRS += glapi
 endif
 
 if HAVE_OPENGL_ES1
-SUBDIRS += es1api
+TESTS += es1api/ABI-check
+
+BUILT_SOURCES += es1api/glapi_mapi_tmp.h
+
+pkgconfig_DATA += es1api/glesv1_cm.pc
+
+GLES_includedir = $(includedir)/GLES
+GLES_include_HEADERS = \
+	$(top_srcdir)/include/GLES/egl.h \
+	$(top_srcdir)/include/GLES/gl.h \
+	$(top_srcdir)/include/GLES/glext.h \
+	$(top_srcdir)/include/GLES/glplatform.h
+
+lib_LTLIBRARIES += es1api/libGLESv1_CM.la
+
+es1api_libGLESv1_CM_la_SOURCES = entry.c es1api/glapi_mapi_tmp.h
+es1api_libGLESv1_CM_la_CFLAGS = \
+	$(AM_CFLAGS) \
+	$(VISIBILITY_CFLAGS)
+es1api_libGLESv1_CM_la_CPPFLAGS = \
+	$(AM_CPPFLAGS) \
+	-DMAPI_MODE_BRIDGE \
+	-DMAPI_ABI_HEADER=\"es1api/glapi_mapi_tmp.h\"
+es1api_libGLESv1_CM_la_LIBADD = $(GLESv1_CM_LIB_DEPS)
+es1api_libGLESv1_CM_la_LDFLAGS = \
+	-no-undefined \
+	-version-number 1:1 \
+	$(GC_SECTIONS) \
+	$(LD_NO_UNDEFINED)
+
+if HAVE_SHARED_GLAPI
+es1api_libGLESv1_CM_la_LIBADD += shared-glapi/libglapi.la
+endif
+
+es1api/glapi_mapi_tmp.h: glapi/gen/gl_and_es_API.xml $(glapi_gen_mapi_deps)
+	$(call glapi_gen_mapi,$<,es1api)
 endif
 
 if HAVE_OPENGL_ES2
