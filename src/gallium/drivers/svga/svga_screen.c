@@ -288,6 +288,18 @@ svga_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return 1;
    case PIPE_CAP_ENDIANNESS:
       return PIPE_ENDIAN_LITTLE;
+
+   case PIPE_CAP_VENDOR_ID:
+      return 0x15ad; /* VMware Inc. */
+   case PIPE_CAP_DEVICE_ID:
+      return 0x0405; /* assume SVGA II */
+   case PIPE_CAP_ACCELERATED:
+      return 0; /* XXX: */
+   case PIPE_CAP_VIDEO_MEMORY:
+      /* XXX: Query the host ? */
+      return 1;
+   case PIPE_CAP_UMA:
+      return 0;
    }
 
    debug_printf("Unexpected PIPE_CAP_ query %u\n", param);
