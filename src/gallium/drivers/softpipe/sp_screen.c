@@ -30,6 +30,7 @@
 #include "util/u_format.h"
 #include "util/u_format_s3tc.h"
 #include "util/u_video.h"
+#include "os/os_misc.h"
 #include "os/os_time.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
@@ -203,6 +204,24 @@ softpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return 0;
    case PIPE_CAP_DRAW_INDIRECT:
       return 1;
+
+   case PIPE_CAP_VENDOR_ID:
+      return 0xFFFFFFFF;
+   case PIPE_CAP_DEVICE_ID:
+      return 0xFFFFFFFF;
+   case PIPE_CAP_ACCELERATED:
+      return 0;
+   case PIPE_CAP_VIDEO_MEMORY: {
+      /* XXX: Do we want to return the full amount fo system memory ? */
+      uint64_t system_memory;
+
+      if (!os_get_total_physical_memory(&system_memory))
+         return 0;
+
+      return (int)(system_memory >> 20);
+   }
+   case PIPE_CAP_UMA:
+      return 0;
    }
    /* should only get here on unhandled cases */
    debug_printf("Unexpected PIPE_CAP %d query\n", param);
