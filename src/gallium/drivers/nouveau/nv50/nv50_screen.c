@@ -20,6 +20,9 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <errno.h>
+#include <xf86drm.h>
+#include <nouveau_drm.h>
 #include "util/u_format.h"
 #include "util/u_format_s3tc.h"
 #include "pipe/p_screen.h"
@@ -30,11 +33,6 @@
 #include "nouveau_vp3_video.h"
 
 #include "nv_object.xml.h"
-#include <errno.h>
-
-#ifndef NOUVEAU_GETPARAM_GRAPH_UNITS
-# define NOUVEAU_GETPARAM_GRAPH_UNITS 13
-#endif
 
 /* affected by LOCAL_WARPS_LOG_ALLOC / LOCAL_WARPS_NO_CLAMP */
 #define LOCAL_WARPS_ALLOC 32
@@ -83,6 +81,7 @@ static int
 nv50_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 {
    const uint16_t class_3d = nouveau_screen(pscreen)->class_3d;
+   struct nouveau_device *dev = nouveau_screen(pscreen)->device;
 
    switch (param) {
    /* non-boolean caps */
@@ -201,6 +200,23 @@ nv50_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_TGSI_VS_WINDOW_SPACE_POSITION:
    case PIPE_CAP_COMPUTE:
    case PIPE_CAP_DRAW_INDIRECT:
+      return 0;
+
+   case PIPE_CAP_VENDOR_ID:
+      return 0x10de;
+   case PIPE_CAP_DEVICE_ID: {
+      uint64_t device_id;
+      if (nouveau_getparam(dev, NOUVEAU_GETPARAM_PCI_DEVICE, &device_id)) {
+         NOUVEAU_ERR("NOUVEAU_GETPARAM_PCI_DEVICE failed.\n");
+         return -1;
+      }
+      return device_id;
+   }
+   case PIPE_CAP_ACCELERATED:
+      return 1;
+   case PIPE_CAP_VIDEO_MEMORY:
+      return dev->vram_size >> 20;
+   case PIPE_CAP_UMA:
       return 0;
    }
 

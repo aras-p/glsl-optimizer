@@ -23,6 +23,8 @@
  *
  */
 
+#include <xf86drm.h>
+#include <nouveau_drm.h>
 #include "util/u_format.h"
 #include "util/u_format_s3tc.h"
 
@@ -49,6 +51,7 @@ nv30_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 {
    struct nv30_screen *screen = nv30_screen(pscreen);
    struct nouveau_object *eng3d = screen->eng3d;
+   struct nouveau_device *dev = nouveau_screen(pscreen)->device;
 
    switch (param) {
    /* non-boolean capabilities */
@@ -149,6 +152,23 @@ nv30_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_COMPUTE:
    case PIPE_CAP_DRAW_INDIRECT:
    case PIPE_CAP_TGSI_FS_FINE_DERIVATIVE:
+      return 0;
+
+   case PIPE_CAP_VENDOR_ID:
+      return 0x10de;
+   case PIPE_CAP_DEVICE_ID: {
+      uint64_t device_id;
+      if (nouveau_getparam(dev, NOUVEAU_GETPARAM_PCI_DEVICE, &device_id)) {
+         NOUVEAU_ERR("NOUVEAU_GETPARAM_PCI_DEVICE failed.\n");
+         return -1;
+      }
+      return device_id;
+   }
+   case PIPE_CAP_ACCELERATED:
+      return 1;
+   case PIPE_CAP_VIDEO_MEMORY:
+      return dev->vram_size >> 20;
+   case PIPE_CAP_UMA:
       return 0;
    }
 
