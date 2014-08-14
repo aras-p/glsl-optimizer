@@ -202,12 +202,7 @@ brw_blorp_clear_params::brw_blorp_clear_params(struct brw_context *brw,
       y1 = rb->Height - fb->_Ymin;
    }
 
-   float *push_consts = (float *)&wm_push_consts;
-
-   push_consts[0] = ctx->Color.ClearColor.f[0];
-   push_consts[1] = ctx->Color.ClearColor.f[1];
-   push_consts[2] = ctx->Color.ClearColor.f[2];
-   push_consts[3] = ctx->Color.ClearColor.f[3];
+   memcpy(&wm_push_consts.dst_x0, ctx->Color.ClearColor.f, sizeof(float) * 4);
 
    use_wm_prog = true;
 
@@ -250,7 +245,7 @@ brw_blorp_clear_params::brw_blorp_clear_params(struct brw_context *brw,
    if (irb->mt->fast_clear_state != INTEL_FAST_CLEAR_STATE_NO_MCS &&
        !partial_clear && wm_prog_key.use_simd16_replicated_data &&
        is_color_fast_clear_compatible(brw, format, &ctx->Color.ClearColor)) {
-      memset(push_consts, 0xff, 4*sizeof(float));
+      memset(&wm_push_consts, 0xff, 4*sizeof(float));
       fast_clear_op = GEN7_FAST_CLEAR_OP_FAST_CLEAR;
 
       /* Figure out what the clear rectangle needs to be aligned to, and how
