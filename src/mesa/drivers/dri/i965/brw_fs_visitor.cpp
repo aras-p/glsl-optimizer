@@ -944,7 +944,7 @@ fs_visitor::visit(ir_expression *ir)
          packed_consts.type = result.type;
 
          fs_reg const_offset_reg = fs_reg(const_offset->value.u[0] & ~15);
-         emit(new(mem_ctx) fs_inst(FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD,
+         emit(new(mem_ctx) fs_inst(FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD, 8,
                                    packed_consts, surf_index, const_offset_reg));
 
          for (int i = 0; i < ir->type->vector_elements; i++) {

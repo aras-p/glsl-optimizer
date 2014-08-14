@@ -193,18 +193,29 @@ public:
 class fs_inst : public backend_instruction {
    fs_inst &operator=(const fs_inst &);
 
+   void init(enum opcode opcode, uint8_t exec_width, const fs_reg &dst,
+             fs_reg *src, int sources);
+
 public:
    DECLARE_RALLOC_CXX_OPERATORS(fs_inst)
 
-   void init(enum opcode opcode, const fs_reg &dst, fs_reg *src, int sources);
-
-   fs_inst(enum opcode opcode = BRW_OPCODE_NOP, const fs_reg &dst = reg_undef);
+   fs_inst();
+   fs_inst(enum opcode opcode, uint8_t exec_size);
+   fs_inst(enum opcode opcode, const fs_reg &dst);
+   fs_inst(enum opcode opcode, uint8_t exec_size, const fs_reg &dst,
+           const fs_reg &src0);
    fs_inst(enum opcode opcode, const fs_reg &dst, const fs_reg &src0);
+   fs_inst(enum opcode opcode, uint8_t exec_size, const fs_reg &dst,
+           const fs_reg &src0, const fs_reg &src1);
    fs_inst(enum opcode opcode, const fs_reg &dst, const fs_reg &src0,
            const fs_reg &src1);
+   fs_inst(enum opcode opcode, uint8_t exec_size, const fs_reg &dst,
+           const fs_reg &src0, const fs_reg &src1, const fs_reg &src2);
    fs_inst(enum opcode opcode, const fs_reg &dst, const fs_reg &src0,
            const fs_reg &src1, const fs_reg &src2);
    fs_inst(enum opcode opcode, const fs_reg &dst, fs_reg src[], int sources);
+   fs_inst(enum opcode opcode, uint8_t exec_size, const fs_reg &dst,
+           fs_reg src[], int sources);
    fs_inst(const fs_inst &that);
 
    void resize_sources(uint8_t num_sources);
@@ -223,6 +234,13 @@ public:
    fs_reg *src;
 
    uint8_t sources; /**< Number of fs_reg sources. */
+
+   /**
+    * Execution size of the instruction.  This is used by the generator to
+    * generate the correct binary for the given fs_inst.  Current valid
+    * values are 1, 8, 16.
+    */
+   uint8_t exec_size;
 
    /* Chooses which flag subregister (f0.0 or f0.1) is used for conditional
     * mod and predication.

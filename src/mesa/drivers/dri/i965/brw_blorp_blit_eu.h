@@ -65,7 +65,7 @@ protected:
    {
       emit_cmp(op, x, y);
 
-      fs_inst *mv = new (mem_ctx) fs_inst(BRW_OPCODE_MOV, dst, src);
+      fs_inst *mv = new (mem_ctx) fs_inst(BRW_OPCODE_MOV, 16, dst, src);
       mv->predicate = BRW_PREDICATE_NORMAL;
       insts.push_tail(mv);
    }
@@ -82,17 +82,17 @@ protected:
                         const struct brw_reg &src3)
    {
       insts.push_tail(
-         new (mem_ctx) fs_inst(BRW_OPCODE_LRP, dst, src1, src2, src3));
+         new (mem_ctx) fs_inst(BRW_OPCODE_LRP, 16, dst, src1, src2, src3));
    }
 
    inline void emit_mov(const struct brw_reg& dst, const struct brw_reg& src)
    {
-      insts.push_tail(new (mem_ctx) fs_inst(BRW_OPCODE_MOV, dst, src));
+      insts.push_tail(new (mem_ctx) fs_inst(BRW_OPCODE_MOV, 16, dst, src));
    }
 
    inline void emit_mov_8(const struct brw_reg& dst, const struct brw_reg& src)
    {
-      fs_inst *mv = new (mem_ctx) fs_inst(BRW_OPCODE_MOV, dst, src);
+      fs_inst *mv = new (mem_ctx) fs_inst(BRW_OPCODE_MOV, 8, dst, src);
       mv->force_uncompressed = true;
       insts.push_tail(mv);
    }
@@ -101,21 +101,21 @@ protected:
                         const struct brw_reg& src1,
                         const struct brw_reg& src2)
    {
-      insts.push_tail(new (mem_ctx) fs_inst(BRW_OPCODE_AND, dst, src1, src2));
+      insts.push_tail(new (mem_ctx) fs_inst(BRW_OPCODE_AND, 16, dst, src1, src2));
    }
 
    inline void emit_add(const struct brw_reg& dst,
                         const struct brw_reg& src1,
                         const struct brw_reg& src2)
    {
-      insts.push_tail(new (mem_ctx) fs_inst(BRW_OPCODE_ADD, dst, src1, src2));
+      insts.push_tail(new (mem_ctx) fs_inst(BRW_OPCODE_ADD, 16, dst, src1, src2));
    }
 
    inline void emit_add_8(const struct brw_reg& dst,
                           const struct brw_reg& src1,
                           const struct brw_reg& src2)
    {
-      fs_inst *add = new (mem_ctx) fs_inst(BRW_OPCODE_ADD, dst, src1, src2);
+      fs_inst *add = new (mem_ctx) fs_inst(BRW_OPCODE_ADD, 8, dst, src1, src2);
       add->force_uncompressed = true;
       insts.push_tail(add);
    }
@@ -124,40 +124,40 @@ protected:
                         const struct brw_reg& src1,
                         const struct brw_reg& src2)
    {
-      insts.push_tail(new (mem_ctx) fs_inst(BRW_OPCODE_MUL, dst, src1, src2));
+      insts.push_tail(new (mem_ctx) fs_inst(BRW_OPCODE_MUL, 16, dst, src1, src2));
    }
 
    inline void emit_shr(const struct brw_reg& dst,
                         const struct brw_reg& src1,
                         const struct brw_reg& src2)
    {
-      insts.push_tail(new (mem_ctx) fs_inst(BRW_OPCODE_SHR, dst, src1, src2));
+      insts.push_tail(new (mem_ctx) fs_inst(BRW_OPCODE_SHR, 16, dst, src1, src2));
    }
 
    inline void emit_shl(const struct brw_reg& dst,
                         const struct brw_reg& src1,
                         const struct brw_reg& src2)
    {
-      insts.push_tail(new (mem_ctx) fs_inst(BRW_OPCODE_SHL, dst, src1, src2));
+      insts.push_tail(new (mem_ctx) fs_inst(BRW_OPCODE_SHL, 16, dst, src1, src2));
    }
 
    inline void emit_or(const struct brw_reg& dst,
                        const struct brw_reg& src1,
                        const struct brw_reg& src2)
    {
-      insts.push_tail(new (mem_ctx) fs_inst(BRW_OPCODE_OR, dst, src1, src2));
+      insts.push_tail(new (mem_ctx) fs_inst(BRW_OPCODE_OR, 16, dst, src1, src2));
    }
 
    inline void emit_frc(const struct brw_reg& dst,
                         const struct brw_reg& src)
    {
-      insts.push_tail(new (mem_ctx) fs_inst(BRW_OPCODE_FRC, dst, src));
+      insts.push_tail(new (mem_ctx) fs_inst(BRW_OPCODE_FRC, 16, dst, src));
    }
 
    inline void emit_rndd(const struct brw_reg& dst,
                          const struct brw_reg& src)
    {
-      insts.push_tail(new (mem_ctx) fs_inst(BRW_OPCODE_RNDD, dst, src));
+      insts.push_tail(new (mem_ctx) fs_inst(BRW_OPCODE_RNDD, 16, dst, src));
    }
 
    inline void emit_cmp_if(enum brw_conditional_mod op,
@@ -165,17 +165,17 @@ protected:
                            const struct brw_reg &y)
    {
       emit_cmp(op, x, y);
-      insts.push_tail(new (mem_ctx) fs_inst(BRW_OPCODE_IF));
+      insts.push_tail(new (mem_ctx) fs_inst(BRW_OPCODE_IF, 16));
    }
 
    inline void emit_else(void)
    {
-      insts.push_tail(new (mem_ctx) fs_inst(BRW_OPCODE_ELSE));
+      insts.push_tail(new (mem_ctx) fs_inst(BRW_OPCODE_ELSE, 16));
    }
 
    inline void emit_endif(void)
    {
-      insts.push_tail(new (mem_ctx) fs_inst(BRW_OPCODE_ENDIF));
+      insts.push_tail(new (mem_ctx) fs_inst(BRW_OPCODE_ENDIF, 16));
    }
 
 private:
