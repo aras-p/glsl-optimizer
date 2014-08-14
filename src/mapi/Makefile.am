@@ -1,4 +1,4 @@
-# Copyright © 2013 Intel Corporation
+# Copyright © 2013, 2014 Intel Corporation
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -19,10 +19,48 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-SUBDIRS = glapi/gen
+SUBDIRS = glapi/gen .
+
+TOP = $(top_srcdir)
+
+BUILT_SOURCES =
+CLEANFILES = $(BUILT_SOURCES)
+
+lib_LTLIBRARIES =
+
+AM_CFLAGS = $(PTHREAD_CFLAGS)
+AM_CPPFLAGS =							\
+	$(DEFINES)						\
+	$(SELINUX_CFLAGS)					\
+	-I$(top_srcdir)/include					\
+	-I$(top_srcdir)/src/mapi				\
+	-I$(top_builddir)/src/mapi
+
+GLAPI = $(top_srcdir)/src/mapi/glapi
+include Makefile.sources
+include glapi/gen/glapi_gen.mk
 
 if HAVE_SHARED_GLAPI
-SUBDIRS += shared-glapi
+SUBDIRS += shared-glapi/tests
+
+BUILT_SOURCES += shared-glapi/glapi_mapi_tmp.h
+
+lib_LTLIBRARIES += shared-glapi/libglapi.la
+shared_glapi_libglapi_la_SOURCES = $(MAPI_GLAPI_FILES)
+shared_glapi_libglapi_la_CPPFLAGS = \
+	$(AM_CPPFLAGS) \
+	-DMAPI_MODE_GLAPI \
+	-DMAPI_ABI_HEADER=\"shared-glapi/glapi_mapi_tmp.h\"
+shared_glapi_libglapi_la_LIBADD = \
+	$(PTHREAD_LIBS) \
+	$(SELINUX_LIBS)
+shared_glapi_libglapi_la_LDFLAGS = \
+	-no-undefined \
+	$(GC_SECTIONS) \
+	$(LD_NO_UNDEFINED)
+
+shared-glapi/glapi_mapi_tmp.h : $(GLAPI)/gen/gl_and_es_API.xml $(glapi_gen_mapi_deps)
+	$(call glapi_gen_mapi,$<,shared-glapi)
 endif
 
 if HAVE_OPENGL
@@ -40,3 +78,5 @@ endif
 if HAVE_OPENVG
 SUBDIRS += vgapi
 endif
+
+include $(top_srcdir)/install-lib-links.mk
