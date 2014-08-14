@@ -1553,14 +1553,14 @@ _mesa_BindVertexBuffers(GLuint first, GLsizei count, const GLuint *buffers,
        */
       if (offsets[i] < 0) {
          _mesa_error(ctx, GL_INVALID_VALUE,
-                     "glBindVertexBuffer(offsets[%u]=%" PRId64 " < 0)",
+                     "glBindVertexBuffers(offsets[%u]=%" PRId64 " < 0)",
                      i, (int64_t) offsets[i]);
          continue;
       }
 
       if (strides[i] < 0) {
          _mesa_error(ctx, GL_INVALID_VALUE,
-                     "glBindVertexBuffer(strides[%u]=%d < 0)",
+                     "glBindVertexBuffers(strides[%u]=%d < 0)",
                      i, strides[i]);
          continue;
       }
