@@ -604,9 +604,9 @@ private:
    void generate_math_g45(fs_inst *inst,
 			  struct brw_reg dst,
 			  struct brw_reg src);
-   void generate_ddx(fs_inst *inst, struct brw_reg dst, struct brw_reg src);
+   void generate_ddx(fs_inst *inst, struct brw_reg dst, struct brw_reg src, struct brw_reg quality);
    void generate_ddy(fs_inst *inst, struct brw_reg dst, struct brw_reg src,
-                     bool negate_value);
+                     struct brw_reg quality, bool negate_value);
    void generate_scratch_write(fs_inst *inst, struct brw_reg src);
    void generate_scratch_read(fs_inst *inst, struct brw_reg dst);
    void generate_scratch_read_gen7(fs_inst *inst, struct brw_reg dst);

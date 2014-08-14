@@ -237,7 +237,11 @@ ir_channel_expressions_visitor::visit_leave(ir_assignment *ir)
    case ir_unop_sin_reduced:
    case ir_unop_cos_reduced:
    case ir_unop_dFdx:
+   case ir_unop_dFdx_coarse:
+   case ir_unop_dFdx_fine:
    case ir_unop_dFdy:
+   case ir_unop_dFdy_coarse:
+   case ir_unop_dFdy_fine:
    case ir_unop_bitfield_reverse:
    case ir_unop_bit_count:
    case ir_unop_find_msb:

@@ -644,11 +644,17 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
  * appropriate swizzling.
  */
 void
-fs_generator::generate_ddx(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
+fs_generator::generate_ddx(fs_inst *inst, struct brw_reg dst, struct brw_reg src,
+                           struct brw_reg quality)
 {
    unsigned vstride, width;
+   assert(quality.file == BRW_IMMEDIATE_VALUE);
+   assert(quality.type == BRW_REGISTER_TYPE_D);
 
-   if (key->high_quality_derivatives) {
+   int quality_value = quality.dw1.d;
+
+   if (quality_value == BRW_DERIVATIVE_FINE ||
+      (key->high_quality_derivatives && quality_value != BRW_DERIVATIVE_COARSE)) {
       /* produce accurate derivatives */
       vstride = BRW_VERTICAL_STRIDE_2;
       width = BRW_WIDTH_2;
@@ -680,9 +686,15 @@ fs_generator::generate_ddx(fs_inst *inst, struct brw_reg dst, struct brw_reg src
  */
 void
 fs_generator::generate_ddy(fs_inst *inst, struct brw_reg dst, struct brw_reg src,
-                         bool negate_value)
+                         struct brw_reg quality, bool negate_value)
 {
-   if (key->high_quality_derivatives) {
+   assert(quality.file == BRW_IMMEDIATE_VALUE);
+   assert(quality.type == BRW_REGISTER_TYPE_D);
+
+   int quality_value = quality.dw1.d;
+
+   if (quality_value == BRW_DERIVATIVE_FINE ||
+      (key->high_quality_derivatives && quality_value != BRW_DERIVATIVE_COARSE)) {
       /* From the Ivy Bridge PRM, volume 4 part 3, section 3.3.9 (Register
        * Region Restrictions):
        *
@@ -1655,14 +1667,14 @@ fs_generator::generate_code(exec_list *instructions)
 	 generate_tex(inst, dst, src[0], src[1]);
 	 break;
       case FS_OPCODE_DDX:
-	 generate_ddx(inst, dst, src[0]);
+	 generate_ddx(inst, dst, src[0], src[1]);
 	 break;
       case FS_OPCODE_DDY:
          /* Make sure fp->UsesDFdy flag got set (otherwise there's no
           * guarantee that key->render_to_fbo is set).
           */
          assert(fp->UsesDFdy);
-	 generate_ddy(inst, dst, src[0], key->render_to_fbo);
+	 generate_ddy(inst, dst, src[0], src[1], key->render_to_fbo);
 	 break;
 
       case SHADER_OPCODE_GEN4_SCRATCH_WRITE:

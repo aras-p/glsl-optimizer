@@ -1004,6 +1004,12 @@ enum opcode {
    GS_OPCODE_GET_INSTANCE_ID,
 };
 
+enum brw_derivative_quality {
+   BRW_DERIVATIVE_BY_HINT = 0,
+   BRW_DERIVATIVE_FINE = 1,
+   BRW_DERIVATIVE_COARSE = 2,
+};
+
 enum brw_urb_write_flags {
    BRW_URB_WRITE_NO_FLAGS = 0,
 

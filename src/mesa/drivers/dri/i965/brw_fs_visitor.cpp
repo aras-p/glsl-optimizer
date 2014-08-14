@@ -593,10 +593,22 @@ fs_visitor::visit(ir_expression *ir)
       break;
 
    case ir_unop_dFdx:
-      emit(FS_OPCODE_DDX, this->result, op[0]);
+      emit(FS_OPCODE_DDX, this->result, op[0], fs_reg(BRW_DERIVATIVE_BY_HINT));
+      break;
+   case ir_unop_dFdx_coarse:
+      emit(FS_OPCODE_DDX, this->result, op[0], fs_reg(BRW_DERIVATIVE_COARSE));
+      break;
+   case ir_unop_dFdx_fine:
+      emit(FS_OPCODE_DDX, this->result, op[0], fs_reg(BRW_DERIVATIVE_FINE));
       break;
    case ir_unop_dFdy:
-      emit(FS_OPCODE_DDY, this->result, op[0]);
+      emit(FS_OPCODE_DDY, this->result, op[0], fs_reg(BRW_DERIVATIVE_BY_HINT));
+      break;
+   case ir_unop_dFdy_coarse:
+      emit(FS_OPCODE_DDY, this->result, op[0], fs_reg(BRW_DERIVATIVE_COARSE));
+      break;
+   case ir_unop_dFdy_fine:
+      emit(FS_OPCODE_DDY, this->result, op[0], fs_reg(BRW_DERIVATIVE_FINE));
       break;
 
    case ir_binop_add:
