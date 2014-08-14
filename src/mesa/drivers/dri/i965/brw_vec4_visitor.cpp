@@ -1350,7 +1350,11 @@ vec4_visitor::visit(ir_expression *ir)
       break;
 
    case ir_unop_dFdx:
+   case ir_unop_dFdx_coarse:
+   case ir_unop_dFdx_fine:
    case ir_unop_dFdy:
+   case ir_unop_dFdy_coarse:
+   case ir_unop_dFdy_fine:
       unreachable("derivatives not valid in vertex shader");
 
    case ir_unop_bitfield_reverse:
