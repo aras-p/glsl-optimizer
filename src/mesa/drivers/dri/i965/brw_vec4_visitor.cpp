@@ -695,7 +695,7 @@ vec4_visitor::setup_uniform_values(ir_variable *ir)
             components++;
          }
          for (; i < 4; i++) {
-            static gl_constant_value zero = { .f = 0.0 };
+            static gl_constant_value zero = { 0.0 };
             stage_prog_data->param[uniforms * 4 + i] = &zero;
          }
 

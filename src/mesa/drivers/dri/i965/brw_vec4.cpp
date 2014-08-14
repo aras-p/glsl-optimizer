@@ -1493,7 +1493,7 @@ vec4_visitor::setup_uniforms(int reg)
          reralloc(NULL, stage_prog_data->param, const gl_constant_value *, 4);
       for (unsigned int i = 0; i < 4; i++) {
 	 unsigned int slot = this->uniforms * 4 + i;
-	 static gl_constant_value zero = { .f = 0.0 };
+	 static gl_constant_value zero = { 0.0 };
 	 stage_prog_data->param[slot] = &zero;
       }
 
