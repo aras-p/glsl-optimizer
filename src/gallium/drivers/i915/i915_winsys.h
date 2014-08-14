@@ -247,6 +247,11 @@ struct i915_winsys {
                        struct pipe_fence_handle *fence);
    /*@}*/
 
+   /**
+    * Retrieve the aperture size (in MiB) of the device.
+    */
+   int (*aperture_size)(struct i915_winsys *iws);
+
 
    /**
     * Destroy the winsys.

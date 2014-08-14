@@ -27,6 +27,7 @@
 
 
 #include "draw/draw_context.h"
+#include "os/os_misc.h"
 #include "util/u_format.h"
 #include "util/u_format_s3tc.h"
 #include "util/u_inlines.h"
@@ -282,6 +283,28 @@ i915_get_param(struct pipe_screen *screen, enum pipe_cap cap)
       return 0;
    case PIPE_CAP_ENDIANNESS:
       return PIPE_ENDIAN_LITTLE;
+
+   case PIPE_CAP_VENDOR_ID:
+      return 0x8086;
+   case PIPE_CAP_DEVICE_ID:
+      return is->iws->pci_id;
+   case PIPE_CAP_ACCELERATED:
+      return 1;
+   case PIPE_CAP_VIDEO_MEMORY: {
+      /* Once a batch uses more than 75% of the maximum mappable size, we
+       * assume that there's some fragmentation, and we start doing extra
+       * flushing, etc.  That's the big cliff apps will care about.
+       */
+      const int gpu_mappable_megabytes = is->iws->aperture_size(is->iws) * 3 / 4;
+      uint64_t system_memory;
+
+      if (!os_get_total_physical_memory(&system_memory))
+         return 0;
+
+      return MIN2(gpu_mappable_megabytes, (int) (system_memory >> 20));
+   }
+   case PIPE_CAP_UMA:
+      return 1;
 
    default:
       debug_printf("%s: Unknown cap %u.\n", __FUNCTION__, cap);

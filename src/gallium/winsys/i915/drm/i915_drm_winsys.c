@@ -28,6 +28,17 @@ i915_drm_get_device_id(int fd, unsigned int *device_id)
    assert(ret == 0);
 }
 
+static int
+i915_drm_aperture_size(struct i915_winsys *iws)
+{
+   struct i915_drm_winsys *idws = i915_drm_winsys(iws);
+   size_t aper_size, mappable_size;
+
+   drm_intel_get_aperture_sizes(idws->fd, &mappable_size, &aper_size);
+
+   return aper_size >> 20;
+}
+
 static void
 i915_drm_winsys_destroy(struct i915_winsys *iws)
 {
@@ -58,6 +69,7 @@ i915_drm_winsys_create(int drmFD)
    idws->base.pci_id = deviceID;
    idws->max_batch_size = 1 * 4096;
 
+   idws->base.aperture_size = i915_drm_aperture_size;
    idws->base.destroy = i915_drm_winsys_destroy;
 
    idws->gem_manager = drm_intel_bufmgr_gem_init(idws->fd, idws->max_batch_size);
