@@ -2352,8 +2352,10 @@ void brw_urb_WRITE(struct brw_compile *p,
       brw_push_insn_state(p);
       brw_set_default_access_mode(p, BRW_ALIGN_1);
       brw_set_default_mask_control(p, BRW_MASK_DISABLE);
-      brw_MOV(p, get_element_ud(brw_message_reg(msg_reg_nr), 5),
-                 brw_imm_ud(0xff00));
+      brw_OR(p, retype(brw_vec1_reg(BRW_MESSAGE_REGISTER_FILE, msg_reg_nr, 5),
+		       BRW_REGISTER_TYPE_UD),
+	        retype(brw_vec1_grf(0, 5), BRW_REGISTER_TYPE_UD),
+		brw_imm_ud(0xff00));
       brw_pop_insn_state(p);
    }
 
