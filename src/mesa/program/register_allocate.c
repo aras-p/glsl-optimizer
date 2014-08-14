@@ -456,10 +456,10 @@ ra_simplify(struct ra_graph *g)
    int i;
 
    while (progress) {
-      progress = false;
-
       unsigned int best_optimistic_node = ~0;
       unsigned int lowest_q_total = ~0;
+
+      progress = false;
 
       for (i = g->count - 1; i >= 0; i--) {
 	 if (g->nodes[i].in_stack || g->nodes[i].reg != NO_REG)
