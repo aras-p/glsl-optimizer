@@ -201,6 +201,18 @@ vc4_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
         case PIPE_CAP_MIN_MAP_BUFFER_ALIGNMENT:
                 return 64;
 
+        case PIPE_CAP_VENDOR_ID:
+                return 0x14E4;
+        case PIPE_CAP_DEVICE_ID:
+                return 0xFFFFFFFF;
+        case PIPE_CAP_ACCELERATED:
+                return 1;
+        case PIPE_CAP_VIDEO_MEMORY:
+                fprintf(stderr, "FINISHME: The value returned is incorrect\n");
+                return 10;
+        case PIPE_CAP_UMA:
+                return 1;
+
         default:
                 fprintf(stderr, "unknown param %d\n", param);
                 return 0;
