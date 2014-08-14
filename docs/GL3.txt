@@ -174,7 +174,7 @@ GL 4.3, GLSL 4.30:
 
 GL 4.4, GLSL 4.40:
 
-  GL_MAX_VERTEX_ATTRIB_STRIDE                          not started
+  GL_MAX_VERTEX_ATTRIB_STRIDE                          DONE (all drivers)
   GL_ARB_buffer_storage                                DONE (i965, nv30, nv50, nvc0, r300, r600, radeonsi)
   GL_ARB_clear_texture                                 DONE (i965)
   GL_ARB_enhanced_layouts                              not started
