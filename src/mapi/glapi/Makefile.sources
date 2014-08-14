@@ -1,22 +1,22 @@
 # src/mapi/glapi/Makefile.sources
 
 GLAPI_UTIL_SOURCES = \
-	glapi_gentable.c
+	$(top_builddir)/src/mapi/glapi/glapi_gentable.c
 
 GLAPI_SOURCES = \
-	glapi_dispatch.c \
-	glapi_entrypoint.c \
-	glapi_getproc.c \
-	glapi_nop.c \
-	glapi.c \
-	glapi.h \
-	glapi_priv.h
+	$(top_srcdir)/src/mapi/glapi/glapi_dispatch.c \
+	$(top_srcdir)/src/mapi/glapi/glapi_entrypoint.c \
+	$(top_srcdir)/src/mapi/glapi/glapi_getproc.c \
+	$(top_srcdir)/src/mapi/glapi/glapi_nop.c \
+	$(top_srcdir)/src/mapi/glapi/glapi.c \
+	$(top_srcdir)/src/mapi/glapi/glapi.h \
+	$(top_srcdir)/src/mapi/glapi/glapi_priv.h
 
 X86_API =			\
-	glapi_x86.S
+	$(top_builddir)/src/mapi/glapi/glapi_x86.S
 
 X86_64_API =			\
-	glapi_x86-64.S
+	$(top_builddir)/src/mapi/glapi/glapi_x86-64.S
 
 SPARC_API =			\
-	glapi_sparc.S
+	$(top_builddir)/src/mapi/glapi/glapi_sparc.S

@@ -41,6 +41,7 @@ AM_CPPFLAGS =							\
 
 GLAPI = $(top_srcdir)/src/mapi/glapi
 include Makefile.sources
+include glapi/Makefile.sources
 include glapi/gen/glapi_gen.mk
 
 if HAVE_SHARED_GLAPI
@@ -67,7 +68,40 @@ shared-glapi/glapi_mapi_tmp.h : $(GLAPI)/gen/gl_and_es_API.xml $(glapi_gen_mapi_
 endif
 
 if HAVE_OPENGL
-SUBDIRS += glapi
+SUBDIRS += glapi/tests
+
+noinst_LTLIBRARIES = glapi/libglapi.la
+
+if HAVE_X86_ASM
+if HAVE_X86_64_ASM
+GLAPI_ASM_SOURCES = $(X86_64_API)
+else
+GLAPI_ASM_SOURCES = $(X86_API)
+endif
+endif
+if HAVE_SPARC_ASM
+GLAPI_ASM_SOURCES = $(SPARC_API)
+endif
+
+glapi_libglapi_la_SOURCES = $(GLAPI_UTIL_SOURCES)
+glapi_libglapi_la_CPPFLAGS = \
+	$(AM_CPPFLAGS) \
+	-I$(top_srcdir)/src/mapi/glapi \
+	-I$(top_srcdir)/src/mesa
+
+if HAVE_SHARED_GLAPI
+glapi_libglapi_la_SOURCES += $(MAPI_BRIDGE_FILES)
+glapi_libglapi_la_CPPFLAGS += \
+	-DMAPI_MODE_BRIDGE \
+	-DMAPI_ABI_HEADER=\"glapi/glapi_mapi_tmp.h\"
+else
+glapi_libglapi_la_CPPFLAGS += \
+	-DMAPI_MODE_UTIL
+glapi_libglapi_la_SOURCES += \
+	$(GLAPI_SOURCES) \
+	$(GLAPI_ASM_SOURCES) \
+	$(MAPI_UTIL_FILES)
+endif
 endif
 
 if HAVE_OPENGL_ES1
