@@ -188,7 +188,7 @@ GL 4.5, GLSL 4.50:
   GL_ARB_clip_control                                  not started
   GL_ARB_conditional_render_inverted                   not started
   GL_ARB_cull_distance                                 not started
-  GL_ARB_derivative_control                            not started
+  GL_ARB_derivative_control                            DONE (nv50, nvc0)
   GL_ARB_direct_state_access                           not started
   GL_ARB_get_texture_sub_image                         started (Brian Paul)
   GL_ARB_shader_texture_image_samples                  not started
