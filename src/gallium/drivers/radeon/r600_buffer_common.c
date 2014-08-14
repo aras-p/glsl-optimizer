@@ -303,26 +303,22 @@ static void *r600_buffer_transfer_map(struct pipe_context *ctx,
 		 !(usage & PIPE_TRANSFER_WRITE) &&
 		 rbuffer->domains == RADEON_DOMAIN_VRAM &&
 		 r600_can_dma_copy_buffer(rctx, 0, box->x, box->width)) {
-		unsigned offset;
-		struct r600_resource *staging = NULL;
+		struct r600_resource *staging;
 
-		u_upload_alloc(rctx->uploader, 0,
-			       box->width + (box->x % R600_MAP_BUFFER_ALIGNMENT),
-			       &offset, (struct pipe_resource**)&staging, (void**)&data);
-
+		staging = (struct r600_resource*) pipe_buffer_create(
+				ctx->screen, PIPE_BIND_TRANSFER_READ, PIPE_USAGE_STAGING,
+				box->width + (box->x % R600_MAP_BUFFER_ALIGNMENT));
 		if (staging) {
-			data += box->x % R600_MAP_BUFFER_ALIGNMENT;
-
 			/* Copy the VRAM buffer to the staging buffer. */
 			rctx->dma_copy(ctx, &staging->b.b, 0,
-				       offset + box->x % R600_MAP_BUFFER_ALIGNMENT,
+				       box->x % R600_MAP_BUFFER_ALIGNMENT,
 				       0, 0, resource, level, box);
 
-			/* Just do the synchronization. The buffer is mapped already. */
-			r600_buffer_map_sync_with_rings(rctx, staging, PIPE_TRANSFER_READ);
+			data = r600_buffer_map_sync_with_rings(rctx, staging, PIPE_TRANSFER_READ);
+			data += box->x % R600_MAP_BUFFER_ALIGNMENT;
 
 			return r600_buffer_get_transfer(ctx, resource, level, usage, box,
-							ptransfer, data, staging, offset);
+							ptransfer, data, staging, 0);
 		}
 	}
 
