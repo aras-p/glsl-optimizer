@@ -532,7 +532,6 @@ hud_draw(struct hud_context *hud, struct pipe_resource *tex)
    pipe_resource_reference(&hud->text.vbuf.buffer, NULL);
 
    /* draw the rest */
-   cso_set_vertex_elements(cso, 1, hud->velems);
    LIST_FOR_EACH_ENTRY(pane, &hud->pane_list, head) {
       if (pane)
          hud_pane_draw_colored_objects(hud, pane);
