@@ -97,11 +97,12 @@ void
 nv10_emit_depth(struct gl_context *ctx, int emit)
 {
 	struct nouveau_pushbuf *push = context_push(ctx);
+	struct gl_framebuffer *fb = ctx->DrawBuffer;
 
 	BEGIN_NV04(push, NV10_3D(DEPTH_TEST_ENABLE), 1);
-	PUSH_DATAb(push, ctx->Depth.Test);
+	PUSH_DATAb(push, ctx->Depth.Test && fb->Visual.depthBits > 0);
 	BEGIN_NV04(push, NV10_3D(DEPTH_WRITE_ENABLE), 1);
-	PUSH_DATAb(push, ctx->Depth.Mask);
+	PUSH_DATAb(push, ctx->Depth.Mask && fb->Visual.depthBits > 0);
 	BEGIN_NV04(push, NV10_3D(DEPTH_FUNC), 1);
 	PUSH_DATA (push, nvgl_comparison_op(ctx->Depth.Func));
 }

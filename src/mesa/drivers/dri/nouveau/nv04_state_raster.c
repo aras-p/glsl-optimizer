@@ -123,6 +123,7 @@ void
 nv04_emit_control(struct gl_context *ctx, int emit)
 {
 	struct nv04_context *nv04 = to_nv04_context(ctx);
+	struct gl_framebuffer *fb = ctx->DrawBuffer;
 	int cull = ctx->Polygon.CullFaceMode;
 	int front = ctx->Polygon.FrontFace;
 
@@ -146,9 +147,9 @@ nv04_emit_control(struct gl_context *ctx, int emit)
 				 NV04_TEXTURED_TRIANGLE_CONTROL_CULL_MODE_CCW;
 
 	/* Depth test. */
-	if (ctx->Depth.Test)
+	if (ctx->Depth.Test && fb->Visual.depthBits > 0)
 		nv04->ctrl[0] |= NV04_TEXTURED_TRIANGLE_CONTROL_Z_ENABLE;
-	if (ctx->Depth.Mask)
+	if (ctx->Depth.Mask && fb->Visual.depthBits > 0)
 		nv04->ctrl[0] |= NV04_TEXTURED_TRIANGLE_CONTROL_Z_WRITE;
 
 	nv04->ctrl[0] |= get_comparison_op(ctx->Depth.Func) << 16;

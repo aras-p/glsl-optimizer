@@ -128,6 +128,7 @@ nv20_emit_framebuffer(struct gl_context *ctx, int emit)
 	/* Recompute the viewport/scissor state. */
 	context_dirty(ctx, VIEWPORT);
 	context_dirty(ctx, SCISSOR);
+	context_dirty(ctx, DEPTH);
 }
 
 void

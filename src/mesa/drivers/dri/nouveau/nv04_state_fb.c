@@ -93,6 +93,7 @@ nv04_emit_framebuffer(struct gl_context *ctx, int emit)
 
 	/* Recompute the scissor state. */
 	context_dirty(ctx, SCISSOR);
+	context_dirty(ctx, CONTROL);
 }
 
 void
