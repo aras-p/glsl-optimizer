@@ -61,46 +61,46 @@ extern "C" {
 #endif
 
 
-#if defined(_MSC_VER) 
+#if defined(_MSC_VER)
 
 #if _MSC_VER < 1400 && !defined(__cplusplus)
- 
-static INLINE float cosf( float f ) 
+
+static INLINE float cosf( float f )
 {
    return (float) cos( (double) f );
 }
 
-static INLINE float sinf( float f ) 
+static INLINE float sinf( float f )
 {
    return (float) sin( (double) f );
 }
 
-static INLINE float ceilf( float f ) 
+static INLINE float ceilf( float f )
 {
    return (float) ceil( (double) f );
 }
 
-static INLINE float floorf( float f ) 
+static INLINE float floorf( float f )
 {
    return (float) floor( (double) f );
 }
 
-static INLINE float powf( float f, float g ) 
+static INLINE float powf( float f, float g )
 {
    return (float) pow( (double) f, (double) g );
 }
 
-static INLINE float sqrtf( float f ) 
+static INLINE float sqrtf( float f )
 {
    return (float) sqrt( (double) f );
 }
 
-static INLINE float fabsf( float f ) 
+static INLINE float fabsf( float f )
 {
    return (float) fabs( (double) f );
 }
 
-static INLINE float logf( float f ) 
+static INLINE float logf( float f )
 {
    return (float) log( (double) f );
 }
@@ -236,7 +236,8 @@ union di {
  * Extract the IEEE float32 exponent.
  */
 static INLINE signed
-util_get_float32_exponent(float x) {
+util_get_float32_exponent(float x)
+{
    union fi f;
 
    f.f = x;
@@ -536,7 +537,8 @@ unsigned ffs( unsigned u )
  * Find last bit set in a word.  The least significant bit is 1.
  * Return 0 if no bits are set.
  */
-static INLINE unsigned util_last_bit(unsigned u)
+static INLINE unsigned
+util_last_bit(unsigned u)
 {
 #if defined(__GNUC__) && ((__GNUC__ * 100 + __GNUC_MINOR__) >= 304)
    return u == 0 ? 0 : 32 - __builtin_clz(u);
@@ -555,7 +557,8 @@ static INLINE unsigned util_last_bit(unsigned u)
  * significant bit is 1.
  * Return 0 if no bits are set.
  */
-static INLINE unsigned util_last_bit_signed(int i)
+static INLINE unsigned
+util_last_bit_signed(int i)
 {
 #if defined(__GNUC__) && ((__GNUC__ * 100 + __GNUC_MINOR__) >= 407) && !defined(__INTEL_COMPILER)
    return 31 - __builtin_clrsb(i);
@@ -573,9 +576,10 @@ static INLINE unsigned util_last_bit_signed(int i)
  *   int i = u_bit_scan(&mymask);
  *   ... process element i
  * }
- * 
+ *
  */
-static INLINE int u_bit_scan(unsigned *mask)
+static INLINE int
+u_bit_scan(unsigned *mask)
 {
    int i = ffs(*mask) - 1;
    *mask &= ~(1 << i);
@@ -885,12 +889,14 @@ do {                                     \
 #endif
 
 
-static INLINE uint32_t util_unsigned_fixed(float value, unsigned frac_bits)
+static INLINE uint32_t
+util_unsigned_fixed(float value, unsigned frac_bits)
 {
    return value < 0 ? 0 : (uint32_t)(value * (1<<frac_bits));
 }
 
-static INLINE int32_t util_signed_fixed(float value, unsigned frac_bits)
+static INLINE int32_t
+util_signed_fixed(float value, unsigned frac_bits)
 {
    return (int32_t)(value * (1<<frac_bits));
 }
