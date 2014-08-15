@@ -81,9 +81,9 @@ void radeon_dump_cs_on_lockup(struct radeon_drm_cs *cs, struct radeon_cs_context
     }
     fprintf(dump, "/* To build this file you will need to copy radeon_ctx.h\n");
     fprintf(dump, " * in same directory. You can find radeon_ctx.h in mesa tree :\n");
-    fprintf(dump, " * mesa/src/gallium/winsys/radeon/tools/radeon_ctx.h\n");
+    fprintf(dump, " * mesa/src/gallium/winsys/radeon/drm/radeon_ctx.h\n");
     fprintf(dump, " * Build with :\n");
-    fprintf(dump, " * gcc -O0 -g %s -ldrm -o rlockup_0x%08x -I/usr/include/libdrm\n", fname, csc->cs_trace_id);
+    fprintf(dump, " * gcc -O0 -g `pkg-config --cflags --libs libdrm` %s -o rlockup_0x%08x \n", fname, csc->cs_trace_id);
     fprintf(dump, " */\n");
     fprintf(dump, " /* timeout on cs lockup likely happen at cs 0x%08x dw 0x%08x*/\n", ptr[1], ptr[0]);
     fprintf(dump, "#include <stdio.h>\n");
