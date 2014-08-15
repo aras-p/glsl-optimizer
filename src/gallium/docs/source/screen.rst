@@ -215,6 +215,14 @@ The integer capabilities:
   See pipe_draw_info.
 * ``PIPE_CAP_TGSI_FS_FINE_DERIVATIVE``: Whether the fragment shader supports
   the FINE versions of DDX/DDY.
+* ``PIPE_CAP_VENDOR_ID``: The vendor ID of the underlying hardware. If it's
+  not available one should return 0xFFFFFFFF.
+* ``PIPE_CAP_DEVICE_ID``: The device ID (PCI ID) of the underlying hardware.
+  0xFFFFFFFF if not available.
+* ``PIPE_CAP_ACCELERATED``: Whether the renderer is hardware accelerated.
+* ``PIPE_CAP_VIDEO_MEMORY``: The amount of video memory in megabytes.
+* ``PIPE_CAP_UMA``: If the device has a unified memory architecture or on-card
+  memory and GART.
 
 
 .. _pipe_capf:
