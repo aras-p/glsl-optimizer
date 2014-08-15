@@ -944,24 +944,27 @@ vec4_instruction::can_reswizzle_dst(int dst_writemask,
       return false;
 
    switch (opcode) {
+   default:
+      if (!brw_is_single_value_swizzle(swizzle)) {
+         /* Check if there happens to be no reswizzling required. */
+         for (int c = 0; c < 4; c++) {
+            int bit = 1 << BRW_GET_SWZ(swizzle, c);
+            /* Skip components of the swizzle not used by the dst. */
+            if (!(dst_writemask & (1 << c)))
+               continue;
+
+            /* We don't do the reswizzling yet, so just sanity check that we
+             * don't have to.
+             */
+            if (bit != (1 << c))
+               return false;
+         }
+         return true;
+      }
+      /* fallthrough */
    case BRW_OPCODE_DP4:
    case BRW_OPCODE_DP3:
    case BRW_OPCODE_DP2:
-      return true;
-   default:
-      /* Check if there happens to be no reswizzling required. */
-      for (int c = 0; c < 4; c++) {
-         int bit = 1 << BRW_GET_SWZ(swizzle, c);
-         /* Skip components of the swizzle not used by the dst. */
-         if (!(dst_writemask & (1 << c)))
-            continue;
-
-         /* We don't do the reswizzling yet, so just sanity check that we
-          * don't have to.
-          */
-         if (bit != (1 << c))
-            return false;
-      }
       return true;
    }
 }
@@ -979,6 +982,21 @@ vec4_instruction::reswizzle_dst(int dst_writemask, int swizzle)
    int new_writemask = 0;
 
    switch (opcode) {
+   default:
+      if (!brw_is_single_value_swizzle(swizzle)) {
+         for (int c = 0; c < 4; c++) {
+            /* Skip components of the swizzle not used by the dst. */
+            if (!(dst_writemask & (1 << c)))
+               continue;
+
+            /* We don't do the reswizzling yet, so just sanity check that we
+             * don't have to.
+             */
+            assert((1 << BRW_GET_SWZ(swizzle, c)) == (1 << c));
+         }
+         break;
+      }
+      /* fallthrough */
    case BRW_OPCODE_DP4:
    case BRW_OPCODE_DP3:
    case BRW_OPCODE_DP2:
@@ -994,18 +1012,6 @@ vec4_instruction::reswizzle_dst(int dst_writemask, int swizzle)
             new_writemask |= (1 << c);
       }
       dst.writemask = new_writemask;
-      break;
-   default:
-      for (int c = 0; c < 4; c++) {
-         /* Skip components of the swizzle not used by the dst. */
-         if (!(dst_writemask & (1 << c)))
-            continue;
-
-         /* We don't do the reswizzling yet, so just sanity check that we
-          * don't have to.
-          */
-         assert((1 << BRW_GET_SWZ(swizzle, c)) == (1 << c));
-      }
       break;
    }
 }
