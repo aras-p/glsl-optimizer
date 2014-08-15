@@ -379,6 +379,53 @@ static unsigned si_conv_prim_to_gs_out(unsigned mode)
 	return prim_conv[mode];
 }
 
+static unsigned si_get_ia_multi_vgt_param(struct si_context *sctx,
+					  const struct pipe_draw_info *info)
+{
+	struct si_state_rasterizer *rs = sctx->queued.named.rasterizer;
+	unsigned prim = info->mode;
+	unsigned primgroup_size = 64;
+
+	/* SWITCH_ON_EOP(0) is always preferable. */
+	bool wd_switch_on_eop = false;
+	bool ia_switch_on_eop = false;
+
+	/* This is a hardware requirement. */
+	if ((rs && rs->line_stipple_enable) ||
+	    (sctx->b.screen->debug_flags & DBG_SWITCH_ON_EOP)) {
+		ia_switch_on_eop = true;
+		wd_switch_on_eop = true;
+	}
+
+	if (sctx->b.chip_class >= CIK) {
+		/* WD_SWITCH_ON_EOP has no effect on GPUs with less than
+		 * 4 shader engines. Set 1 to pass the assertion below.
+		 * The other cases are hardware requirements. */
+		if (sctx->b.screen->info.max_se < 4 ||
+		    prim == PIPE_PRIM_POLYGON ||
+		    prim == PIPE_PRIM_LINE_LOOP ||
+		    prim == PIPE_PRIM_TRIANGLE_FAN ||
+		    prim == PIPE_PRIM_TRIANGLE_STRIP_ADJACENCY ||
+		    info->primitive_restart)
+			wd_switch_on_eop = true;
+
+		/* Hawaii hangs if instancing is enabled and WD_SWITCH_ON_EOP is 0.
+		 * We don't know that for indirect drawing, so treat it as
+		 * always problematic. */
+		if (sctx->b.family == CHIP_HAWAII &&
+		    (info->indirect || info->instance_count > 1))
+			wd_switch_on_eop = true;
+
+		/* If the WD switch is false, the IA switch must be false too. */
+		assert(wd_switch_on_eop || !ia_switch_on_eop);
+	}
+
+	return S_028AA8_SWITCH_ON_EOP(ia_switch_on_eop) |
+		S_028AA8_PARTIAL_VS_WAVE_ON(1) |
+		S_028AA8_PRIMGROUP_SIZE(primgroup_size - 1) |
+		S_028AA8_WD_SWITCH_ON_EOP(sctx->b.chip_class >= CIK ? wd_switch_on_eop : 0);
+}
+
 static bool si_update_draw_info_state(struct si_context *sctx,
 				      const struct pipe_draw_info *info,
 				      const struct pipe_index_buffer *ib)
@@ -391,6 +438,7 @@ static bool si_update_draw_info_state(struct si_context *sctx,
 				       sctx->gs_shader->current->shader.gs_output_prim :
 				       info->mode);
 	unsigned ls_mask = 0;
+	unsigned ia_multi_vgt_param = si_get_ia_multi_vgt_param(sctx, info);
 
 	if (pm4 == NULL)
 		return false;
@@ -401,55 +449,17 @@ static bool si_update_draw_info_state(struct si_context *sctx,
 	}
 
 	if (sctx->b.chip_class >= CIK) {
-		struct si_state_rasterizer *rs = sctx->queued.named.rasterizer;
-		unsigned primgroup_size = 64;
-
-		/* SWITCH_ON_EOP(0) is always preferable. */
-		bool wd_switch_on_eop = false;
-		bool ia_switch_on_eop = false;
-
-		/* WD_SWITCH_ON_EOP has no effect on GPUs with less than
-		 * 4 shader engines. Set 1 to pass the assertion below.
-		 * The other cases are hardware requirements. */
-		if (sctx->b.screen->info.max_se < 4 ||
-		    prim == V_008958_DI_PT_POLYGON ||
-		    prim == V_008958_DI_PT_LINELOOP ||
-		    prim == V_008958_DI_PT_TRIFAN ||
-		    prim == V_008958_DI_PT_TRISTRIP_ADJ ||
-		    info->primitive_restart)
-			wd_switch_on_eop = true;
-
-		/* Hawaii hangs if instancing is enabled and WD_SWITCH_ON_EOP is 0.
-		 * We don't know that for indirect drawing, so treat it as
-		 * always problematic. */
-		if (sctx->b.family == CHIP_HAWAII &&
-		    (info->indirect || info->instance_count > 1))
-			wd_switch_on_eop = true;
-
-		/* This is a hardware requirement. */
-		if ((rs && rs->line_stipple_enable) ||
-		    (sctx->b.screen->debug_flags & DBG_SWITCH_ON_EOP)) {
-			ia_switch_on_eop = true;
-			wd_switch_on_eop = true;
-		}
-
-		/* If the WD switch is false, the IA switch must be false too. */
-		assert(wd_switch_on_eop || !ia_switch_on_eop);
-
 		si_pm4_set_reg(pm4, R_028B74_VGT_DISPATCH_DRAW_INDEX,
 			       ib->index_size == 4 ? 0xFC000000 : 0xFC00);
 
 		si_pm4_cmd_begin(pm4, PKT3_DRAW_PREAMBLE);
 		si_pm4_cmd_add(pm4, prim); /* VGT_PRIMITIVE_TYPE */
-		si_pm4_cmd_add(pm4, /* IA_MULTI_VGT_PARAM */
-			       S_028AA8_SWITCH_ON_EOP(ia_switch_on_eop) |
-			       S_028AA8_PARTIAL_VS_WAVE_ON(1) |
-			       S_028AA8_PRIMGROUP_SIZE(primgroup_size - 1) |
-			       S_028AA8_WD_SWITCH_ON_EOP(wd_switch_on_eop));
+		si_pm4_cmd_add(pm4, ia_multi_vgt_param); /* IA_MULTI_VGT_PARAM */
 		si_pm4_cmd_add(pm4, 0); /* VGT_LS_HS_CONFIG */
 		si_pm4_cmd_end(pm4, false);
 	} else {
 		si_pm4_set_reg(pm4, R_008958_VGT_PRIMITIVE_TYPE, prim);
+		si_pm4_set_reg(pm4, R_028AA8_IA_MULTI_VGT_PARAM, ia_multi_vgt_param);
 	}
 
 	si_pm4_set_reg(pm4, R_028A6C_VGT_GS_OUT_PRIM_TYPE, gs_out_prim);
