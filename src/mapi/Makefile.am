@@ -46,8 +46,6 @@ include glapi/Makefile.sources
 include glapi/gen/glapi_gen.mk
 
 if HAVE_SHARED_GLAPI
-SUBDIRS += shared-glapi/tests
-
 BUILT_SOURCES += shared-glapi/glapi_mapi_tmp.h
 
 lib_LTLIBRARIES += shared-glapi/libglapi.la
@@ -66,6 +64,17 @@ shared_glapi_libglapi_la_LDFLAGS = \
 
 shared-glapi/glapi_mapi_tmp.h : $(GLAPI)/gen/gl_and_es_API.xml $(glapi_gen_mapi_deps)
 	$(call glapi_gen_mapi,$<,shared-glapi)
+
+TESTS += shared-glapi-test
+check_PROGRAMS += shared-glapi-test
+
+shared_glapi_test_SOURCES = shared-glapi/tests/check_table.cpp
+shared_glapi_test_CPPFLAGS = \
+	$(AM_CPPFLAGS) \
+	-I$(top_srcdir)/src/gtest/include
+shared_glapi_test_LDADD = \
+	$(top_builddir)/src/mapi/shared-glapi/libglapi.la \
+	$(top_builddir)/src/gtest/libgtest.la
 endif
 
 if HAVE_OPENGL
