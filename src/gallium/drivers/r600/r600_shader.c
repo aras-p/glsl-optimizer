@@ -5319,6 +5319,11 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 	tex.src_gpr = src_gpr;
 	tex.dst_gpr = ctx->file_offset[inst->Dst[0].Register.File] + inst->Dst[0].Register.Index;
 
+	if (inst->Instruction.Opcode == TGSI_OPCODE_DDX_FINE ||
+		inst->Instruction.Opcode == TGSI_OPCODE_DDY_FINE) {
+		tex.inst_mod = 1; /* per pixel gradient calculation instead of per 2x2 quad */
+	}
+
 	if (inst->Instruction.Opcode == TGSI_OPCODE_TG4) {
 		int8_t texture_component_select = ctx->literals[4 * inst->Src[1].Register.Index + inst->Src[1].Register.SwizzleX];
 		tex.inst_mod = texture_component_select;
@@ -6789,9 +6794,8 @@ static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[] = {
 	{76,			0, ALU_OP0_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_ELSE,	0, ALU_OP0_NOP, tgsi_else},
 	{TGSI_OPCODE_ENDIF,	0, ALU_OP0_NOP, tgsi_endif},
-	/* gap */
-	{79,			0, ALU_OP0_NOP, tgsi_unsupported},
-	{80,			0, ALU_OP0_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_DDX_FINE,	0, ALU_OP0_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_DDY_FINE,	0, ALU_OP0_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_PUSHA,	0, ALU_OP0_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_POPA,	0, ALU_OP0_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_CEIL,	0, ALU_OP1_CEIL, tgsi_op2},
@@ -6992,9 +6996,8 @@ static struct r600_shader_tgsi_instruction eg_shader_tgsi_instruction[] = {
 	{76,			0, ALU_OP0_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_ELSE,	0, ALU_OP0_NOP, tgsi_else},
 	{TGSI_OPCODE_ENDIF,	0, ALU_OP0_NOP, tgsi_endif},
-	/* gap */
-	{79,			0, ALU_OP0_NOP, tgsi_unsupported},
-	{80,			0, ALU_OP0_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_DDX_FINE,	0, FETCH_OP_GET_GRADIENTS_H, tgsi_tex},
+	{TGSI_OPCODE_DDY_FINE,	0, FETCH_OP_GET_GRADIENTS_V, tgsi_tex},
 	{TGSI_OPCODE_PUSHA,	0, ALU_OP0_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_POPA,	0, ALU_OP0_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_CEIL,	0, ALU_OP1_CEIL, tgsi_op2},
@@ -7195,9 +7198,8 @@ static struct r600_shader_tgsi_instruction cm_shader_tgsi_instruction[] = {
 	{76,			0, ALU_OP0_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_ELSE,	0, ALU_OP0_NOP, tgsi_else},
 	{TGSI_OPCODE_ENDIF,	0, ALU_OP0_NOP, tgsi_endif},
-	/* gap */
-	{79,			0, ALU_OP0_NOP, tgsi_unsupported},
-	{80,			0, ALU_OP0_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_DDX_FINE,	0, FETCH_OP_GET_GRADIENTS_H, tgsi_tex},
+	{TGSI_OPCODE_DDY_FINE,	0, FETCH_OP_GET_GRADIENTS_V, tgsi_tex},
 	{TGSI_OPCODE_PUSHA,	0, ALU_OP0_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_POPA,	0, ALU_OP0_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_CEIL,	0, ALU_OP1_CEIL, tgsi_op2},
