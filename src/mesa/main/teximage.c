@@ -4182,9 +4182,9 @@ out:
 
 /**
  * Error checking for glCompressedTexSubImage[123]D().
- * \return error code or GL_NO_ERROR.
+ * \return GL_TRUE if error, GL_FALSE if no error
  */
-static GLenum
+static GLboolean
 compressed_subtexture_error_check(struct gl_context *ctx, GLint dims,
                                   GLenum target, GLint level,
                                   GLint xoffset, GLint yoffset, GLint zoffset,
@@ -4246,7 +4246,7 @@ compressed_subtexture_error_check(struct gl_context *ctx, GLint dims,
    if (!_mesa_compressed_pixel_storage_error_check(ctx, dims,
                                                 &ctx->Unpack,
                                                 "glCompressedTexSubImage")) {
-      return GL_FALSE;
+      return GL_TRUE;
    }
 
    expectedSize = compressed_tex_size(width, height, depth, format);
