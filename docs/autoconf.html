@@ -143,12 +143,13 @@ assembly will not be used.</p>
 it's running on. In order to build cross-compile Mesa on a x86-64 machine
 that is to run on a i686, one would need to set the options to:</p>
 
-<p><code>--build=i686-pc-linux-gnu --host=i686-pc-linux-gnu</code></p>
+<p><code>--build=x86_64-pc-linux-gnu --host=i686-pc-linux-gnu</code></p>
 
 Note that these can vary from distribution to distribution. For more
 information check with the
 <a href="https://www.gnu.org/savannah-checkouts/gnu/autoconf/manual/autoconf-2.69/html_node/Specifying-Target-Triplets.html">
 autoconf manual</a>.
+Note that you will need to correctly set <code>PKG_CONFIG_PATH</code> as well.
 
 
 <p>In some cases a single compiler is capable of handling both architectures
@@ -158,9 +159,10 @@ further information -
 <a href="https://gcc.gnu.org/onlinedocs/gcc/Submodel-Options.html"> gcc
 machine dependent options</a></p>
 
-<p>The following should be sufficient to configure multilib Mesa</p>
+<p>In addition to specifying correct <code>PKG_CONFIG_PATH</code> for the target
+architecture, the following should be sufficient to configure multilib Mesa</p>
 
-<code>./configure CC="gcc -m32" CXX="g++ -m32" --build=i686-pc-linux-gnu --host=i686-pc-linux-gnu ...</code>
+<code>./configure CC="gcc -m32" CXX="g++ -m32" --build=x86_64-pc-linux-gnu --host=i686-pc-linux-gnu ...</code>
 </dd>
 </dl>
 
