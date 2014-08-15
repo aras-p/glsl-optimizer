@@ -41,6 +41,7 @@
 #include "imports.h"
 #include "macros.h"
 #include "multisample.h"
+#include "pixelstore.h"
 #include "state.h"
 #include "texcompress.h"
 #include "texcompress_cpal.h"
@@ -2264,36 +2265,6 @@ texture_error_check( struct gl_context *ctx,
 }
 
 
-bool
-_mesa_compressed_texture_pixel_storage_error_check(struct gl_context *ctx,
-                                             GLint dimensions,
-                                             struct gl_pixelstore_attrib *packing,
-                                             const char *caller)
-{
-   if (!_mesa_is_desktop_gl(ctx) || !packing->CompressedBlockSize)
-      return true;
-
-   if (packing->CompressedBlockWidth && packing->SkipPixels % packing->CompressedBlockWidth) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "%s(skip-pixels %% block-width)", caller);
-      return false;
-   }
-
-   if (dimensions > 1 && packing->CompressedBlockHeight && packing->SkipRows % packing->CompressedBlockHeight) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "%s(skip-rows %% block-height)", caller);
-      return false;
-   }
-
-   if (dimensions > 2 && packing->CompressedBlockDepth && packing->SkipImages % packing->CompressedBlockDepth) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "%s(skip-images %% block-depth)", caller);
-      return false;
-   }
-
-   return true;
-}
-
 /**
  * Error checking for glCompressedTexImage[123]D().
  * Note that the width, height and depth values are not fully error checked
@@ -2403,9 +2374,9 @@ compressed_texture_error_check(struct gl_context *ctx, GLint dimensions,
    }
 
    /* Check for invalid pixel storage modes */
-   if (!_mesa_compressed_texture_pixel_storage_error_check(ctx, dimensions,
-                                                           &ctx->Unpack,
-                                                           "glCompressedTexImage")) {
+   if (!_mesa_compressed_pixel_storage_error_check(ctx, dimensions,
+                                                   &ctx->Unpack,
+                                                   "glCompressedTexImage")) {
       return GL_FALSE;
    }
 
@@ -4272,12 +4243,11 @@ compressed_subtexture_error_check(struct gl_context *ctx, GLint dims,
    }
 
    /* Check for invalid pixel storage modes */
-   if (!_mesa_compressed_texture_pixel_storage_error_check(ctx, dims,
-                                                           &ctx->Unpack,
-                                                           "glCompressedTexSubImage")) {
+   if (!_mesa_compressed_pixel_storage_error_check(ctx, dims,
+                                                &ctx->Unpack,
+                                                "glCompressedTexSubImage")) {
       return GL_FALSE;
    }
-
 
    expectedSize = compressed_tex_size(width, height, depth, format);
    if (expectedSize != imageSize) {

@@ -284,3 +284,45 @@ _mesa_init_pixelstore( struct gl_context *ctx )
    _mesa_reference_buffer_object(ctx, &ctx->DefaultPacking.BufferObj,
                                  ctx->Shared->NullBufferObj);
 }
+
+
+/**
+ * Check if the given compressed pixel storage parameters are legal.
+ * Record a GL error if illegal.
+ * \return  true if legal, false if illegal
+ */
+bool
+_mesa_compressed_pixel_storage_error_check(
+   struct gl_context *ctx,
+   GLint dimensions,
+   const struct gl_pixelstore_attrib *packing,
+   const char *caller)
+{
+   if (!_mesa_is_desktop_gl(ctx) || !packing->CompressedBlockSize)
+      return true;
+
+   if (packing->CompressedBlockWidth &&
+       packing->SkipPixels % packing->CompressedBlockWidth) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "%s(skip-pixels %% block-width)", caller);
+      return false;
+   }
+
+   if (dimensions > 1 &&
+       packing->CompressedBlockHeight &&
+       packing->SkipRows % packing->CompressedBlockHeight) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "%s(skip-rows %% block-height)", caller);
+      return false;
+   }
+
+   if (dimensions > 2 &&
+       packing->CompressedBlockDepth &&
+       packing->SkipImages % packing->CompressedBlockDepth) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "%s(skip-images %% block-depth)", caller);
+      return false;
+   }
+
+   return true;
+}

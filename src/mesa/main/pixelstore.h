@@ -49,4 +49,12 @@ extern void
 _mesa_init_pixelstore( struct gl_context *ctx );
 
 
+extern bool
+_mesa_compressed_pixel_storage_error_check(
+   struct gl_context *ctx,
+   GLint dimensions,
+   const struct gl_pixelstore_attrib *packing,
+   const char *caller);
+
+
 #endif
