@@ -150,10 +150,11 @@ struct compressed_pixelstore {
 
 
 extern void
-_mesa_compute_compressed_pixelstore(GLuint dims, struct gl_texture_image *texImage,
-                              GLsizei width, GLsizei height, GLsizei depth,
-                              const struct gl_pixelstore_attrib *packing,
-                              struct compressed_pixelstore *store);
+_mesa_compute_compressed_pixelstore(GLuint dims, mesa_format texFormat,
+                                    GLsizei width, GLsizei height,
+                                    GLsizei depth,
+                                    const struct gl_pixelstore_attrib *packing,
+                                    struct compressed_pixelstore *store);
 
 
 #endif

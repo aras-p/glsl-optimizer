@@ -2191,14 +2191,23 @@ _mesa_store_compressed_teximage(struct gl_context *ctx, GLuint dims,
 }
 
 
+/**
+ * Compute compressed_pixelstore parameters for copying compressed
+ * texture data.
+ * \param dims  number of texture image dimensions: 1, 2 or 3
+ * \param texFormat  the compressed texture format
+ * \param width, height, depth  size of image to copy
+ * \param packing  pixelstore parameters describing user-space image packing
+ * \param store  returns the compressed_pixelstore parameters
+ */
 void
-_mesa_compute_compressed_pixelstore(GLuint dims, struct gl_texture_image *texImage,
-                              GLsizei width, GLsizei height, GLsizei depth,
-                              const struct gl_pixelstore_attrib *packing,
-                              struct compressed_pixelstore *store)
+_mesa_compute_compressed_pixelstore(GLuint dims, mesa_format texFormat,
+                                    GLsizei width, GLsizei height,
+                                    GLsizei depth,
+                                    const struct gl_pixelstore_attrib *packing,
+                                    struct compressed_pixelstore *store)
 {
    GLuint bw, bh;
-   const mesa_format texFormat = texImage->TexFormat;
 
    _mesa_get_format_block_size(texFormat, &bw, &bh);
 
@@ -2268,8 +2277,9 @@ _mesa_store_compressed_texsubimage(struct gl_context *ctx, GLuint dims,
       return;
    }
 
-   _mesa_compute_compressed_pixelstore(dims, texImage, width, height, depth,
-                                 &ctx->Unpack, &store);
+   _mesa_compute_compressed_pixelstore(dims, texImage->TexFormat,
+                                       width, height, depth,
+                                       &ctx->Unpack, &store);
 
    /* get pointer to src pixels (may be in a pbo which we'll map here) */
    data = _mesa_validate_pbo_compressed_teximage(ctx, dims, imageSize, data,

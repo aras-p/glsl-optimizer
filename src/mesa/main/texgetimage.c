@@ -693,7 +693,7 @@ _mesa_get_compressed_teximage(struct gl_context *ctx,
    GLuint i, slice;
    GLubyte *dest;
 
-   _mesa_compute_compressed_pixelstore(dimensions, texImage,
+   _mesa_compute_compressed_pixelstore(dimensions, texImage->TexFormat,
                                        texImage->Width, texImage->Height,
                                        texImage->Depth,
                                        &ctx->Pack,
