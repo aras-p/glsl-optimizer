@@ -1,2 +1,3 @@
 C_SOURCES := \
+	nouveau_drm_public.h \
 	nouveau_drm_winsys.c

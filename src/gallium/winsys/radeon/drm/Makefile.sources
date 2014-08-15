@@ -1,5 +1,13 @@
 C_SOURCES := \
 	radeon_drm_bo.c \
+	radeon_drm_bo.h \
 	radeon_drm_cs.c \
 	radeon_drm_cs_dump.c \
-	radeon_drm_winsys.c
+	radeon_drm_cs.h \
+	radeon_drm_public.h \
+	radeon_drm_winsys.c \
+	radeon_drm_winsys.h \
+	radeon_winsys.h
+
+TOOLS_HDR := \
+	radeon_ctx.h

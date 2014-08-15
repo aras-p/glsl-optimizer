@@ -1,2 +1,3 @@
 C_SOURCES := \
+	freedreno_drm_public.h \
 	freedreno_drm_winsys.c

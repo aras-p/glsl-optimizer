@@ -1,12 +1,20 @@
 C_SOURCES := \
-        vmw_buffer.c \
-        vmw_context.c  \
-        vmw_fence.c  \
-        vmw_screen.c  \
-        vmw_screen_dri.c  \
-        vmw_screen_ioctl.c  \
-        vmw_screen_pools.c  \
-        vmw_screen_svga.c  \
-        vmw_surface.c \
-        vmw_shader.c \
-        pb_buffer_simple_fenced.c
+	pb_buffer_simple_fenced.c \
+	svga_drm_public.h \
+	vmw_buffer.c \
+	vmw_buffer.h \
+	vmw_context.c \
+	vmw_context.h \
+	vmw_fence.c \
+	vmw_fence.h \
+	vmwgfx_drm.h \
+	vmw_screen.c \
+	vmw_screen_dri.c \
+	vmw_screen.h \
+	vmw_screen_ioctl.c \
+	vmw_screen_pools.c \
+	vmw_screen_svga.c \
+	vmw_surface.c \
+	vmw_surface.h \
+	vmw_shader.c \
+	vmw_shader.h
