@@ -28,6 +28,7 @@ BUILT_SOURCES =
 CLEANFILES = $(BUILT_SOURCES)
 
 lib_LTLIBRARIES =
+check_PROGRAMS =
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA =
 
@@ -68,8 +69,6 @@ shared-glapi/glapi_mapi_tmp.h : $(GLAPI)/gen/gl_and_es_API.xml $(glapi_gen_mapi_
 endif
 
 if HAVE_OPENGL
-SUBDIRS += glapi/tests
-
 noinst_LTLIBRARIES = glapi/libglapi.la
 
 if HAVE_X86_ASM
@@ -101,6 +100,18 @@ glapi_libglapi_la_SOURCES += \
 	$(GLAPI_SOURCES) \
 	$(GLAPI_ASM_SOURCES) \
 	$(MAPI_UTIL_FILES)
+
+TESTS += glapi-test
+check_PROGRAMS += glapi-test
+
+glapi_test_SOURCES = glapi/tests/check_table.cpp
+glapi_test_CPPFLAGS = \
+	$(AM_CPPFLAGS) \
+	-I$(top_srcdir)/src/gtest/include
+
+glapi_test_LDADD = \
+	$(top_builddir)/src/mapi/glapi/libglapi.la \
+	$(top_builddir)/src/gtest/libgtest.la
 endif
 endif
 
