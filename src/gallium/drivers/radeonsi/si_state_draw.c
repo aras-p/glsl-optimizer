@@ -389,6 +389,7 @@ static unsigned si_get_ia_multi_vgt_param(struct si_context *sctx,
 	/* SWITCH_ON_EOP(0) is always preferable. */
 	bool wd_switch_on_eop = false;
 	bool ia_switch_on_eop = false;
+	bool partial_vs_wave = false;
 
 	/* This is a hardware requirement. */
 	if ((rs && rs->line_stipple_enable) ||
@@ -396,6 +397,10 @@ static unsigned si_get_ia_multi_vgt_param(struct si_context *sctx,
 		ia_switch_on_eop = true;
 		wd_switch_on_eop = true;
 	}
+
+	if (sctx->b.streamout.streamout_enabled ||
+	    sctx->b.streamout.prims_gen_query_enabled)
+		partial_vs_wave = true;
 
 	if (sctx->b.chip_class >= CIK) {
 		/* WD_SWITCH_ON_EOP has no effect on GPUs with less than
@@ -421,7 +426,7 @@ static unsigned si_get_ia_multi_vgt_param(struct si_context *sctx,
 	}
 
 	return S_028AA8_SWITCH_ON_EOP(ia_switch_on_eop) |
-		S_028AA8_PARTIAL_VS_WAVE_ON(1) |
+		S_028AA8_PARTIAL_VS_WAVE_ON(partial_vs_wave) |
 		S_028AA8_PRIMGROUP_SIZE(primgroup_size - 1) |
 		S_028AA8_WD_SWITCH_ON_EOP(sctx->b.chip_class >= CIK ? wd_switch_on_eop : 0);
 }
