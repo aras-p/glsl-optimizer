@@ -277,6 +277,12 @@ _mesa_CopyImageSubData(GLuint srcName, GLenum srcTarget, GLint srcLevel,
                   dstX, dstY, dstZ,
                   srcWidth, srcHeight, srcWidth);
 
+   if (!ctx->Extensions.ARB_copy_image) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glCopyImageSubData(extension not available)");
+      return;
+   }
+
    if (!prepare_target(ctx, srcName, &srcTarget, srcLevel,
                        &srcTexObj, &srcTexImage, &tmpTexNames[0], "src"))
       goto cleanup;
@@ -328,7 +334,7 @@ _mesa_CopyImageSubData(GLuint srcName, GLenum srcTarget, GLint srcLevel,
                                                    srcTexImage->InternalFormat,
                                                    dstTexImage->InternalFormat)) {
    } else {
-      return; /* Error loged by _mesa_texture_view_compatible_format */
+      return; /* Error logged by _mesa_texture_view_compatible_format */
    }
 
    for (i = 0; i < srcDepth; ++i) {
