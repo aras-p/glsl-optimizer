@@ -97,7 +97,9 @@ brw_bind_rep_write_shader(struct brw_context *brw, float *color)
       "uniform int layer;\n"
       "void main()\n"
       "{\n"
+      "#ifdef GL_AMD_vertex_shader_layer\n"
       "   gl_Layer = gl_InstanceID;\n"
+      "#endif\n"
       "   gl_Position = position;\n"
       "}\n";
    const char *fs_source =
