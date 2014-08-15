@@ -304,7 +304,7 @@ fs_generator::generate_math_gen6(fs_inst *inst,
                                  struct brw_reg src1)
 {
    int op = brw_math_function(inst->opcode);
-   bool binop = src1.file == BRW_GENERAL_REGISTER_FILE;
+   bool binop = src1.file != BRW_ARCHITECTURE_REGISTER_FILE;
 
    brw_set_default_compression_control(p, BRW_COMPRESSION_NONE);
    gen6_math(p, dst, op, src0, src1);
