@@ -137,7 +137,7 @@ rbug_sampler_view_create(struct rbug_context *rb_context,
    rb_view->base.reference.count = 1;
    rb_view->base.texture = NULL;
    pipe_resource_reference(&rb_view->base.texture, &rb_resource->base);
-   rb_view->base.context = rb_context->pipe;
+   rb_view->base.context = &rb_context->base;
    rb_view->sampler_view = view;
 
    return &rb_view->base;
