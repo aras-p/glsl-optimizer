@@ -85,11 +85,11 @@ fs_live_variables::setup_one_read(bblock_t *block, fs_inst *inst,
     * would get stomped by the first decode as well.
     */
    int end_ip = ip;
-   if (v->dispatch_width == 16 && (reg.stride == 0 ||
-                                   reg.type == BRW_REGISTER_TYPE_UW ||
-                                   reg.type == BRW_REGISTER_TYPE_W ||
-                                   reg.type == BRW_REGISTER_TYPE_UB ||
-                                   reg.type == BRW_REGISTER_TYPE_B)) {
+   if (inst->exec_size == 16 && (reg.stride == 0 ||
+                                 reg.type == BRW_REGISTER_TYPE_UW ||
+                                 reg.type == BRW_REGISTER_TYPE_W ||
+                                 reg.type == BRW_REGISTER_TYPE_UB ||
+                                 reg.type == BRW_REGISTER_TYPE_B)) {
       end_ip++;
    }
 
