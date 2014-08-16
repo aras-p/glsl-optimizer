@@ -11,14 +11,10 @@ if env['gcc'] or env['clang'] or env['icc']:
         'HAVE_SYS_TYPES_H',
         '-D_FILE_OFFSET_BITS=64',
     ])
-    
+
 env.Prepend(CPPPATH = [
-    'include',
     '#/src/gallium/drivers/svga',
     '#/src/gallium/drivers/svga/include',
-])
-
-env.Append(CPPDEFINES = [
 ])
 
 sources = env.ParseSourceList('Makefile.sources', 'C_SOURCES')
