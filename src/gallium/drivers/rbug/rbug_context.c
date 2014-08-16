@@ -758,7 +758,7 @@ rbug_set_vertex_buffers(struct pipe_context *_pipe,
 
    pipe_mutex_lock(rb_pipe->call_mutex);
 
-   if (num_buffers) {
+   if (num_buffers && _buffers) {
       memcpy(unwrapped_buffers, _buffers, num_buffers * sizeof(*_buffers));
       for (i = 0; i < num_buffers; i++)
          unwrapped_buffers[i].buffer = rbug_resource_unwrap(_buffers[i].buffer);
