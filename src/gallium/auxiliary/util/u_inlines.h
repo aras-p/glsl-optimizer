@@ -565,6 +565,9 @@ util_pipe_tex_to_tgsi_tex(enum pipe_texture_target pipe_tex_target,
                           unsigned nr_samples)
 {
    switch (pipe_tex_target) {
+   case PIPE_BUFFER:
+      return TGSI_TEXTURE_BUFFER;
+
    case PIPE_TEXTURE_1D:
       assert(nr_samples <= 1);
       return TGSI_TEXTURE_1D;
