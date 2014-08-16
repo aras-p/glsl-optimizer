@@ -86,6 +86,7 @@ nouveau_bufferobj_data(struct gl_context *ctx, GLenum target, GLsizeiptrARB size
 	/* Free previous storage */
 	nouveau_bo_ref(NULL, &nbo->bo);
 	free(nbo->sys);
+	nbo->sys = NULL;
 
 	if (target == GL_ELEMENT_ARRAY_BUFFER_ARB ||
 	    (size < 512 && usage == GL_DYNAMIC_DRAW_ARB) ||
