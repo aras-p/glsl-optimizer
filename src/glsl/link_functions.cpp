@@ -154,6 +154,8 @@ public:
 
       linked_sig->replace_parameters(&formal_parameters);
 
+      linked_sig->is_intrinsic = sig->is_intrinsic;
+
       if (sig->is_defined) {
          foreach_in_list(const ir_instruction, original, &sig->body) {
             ir_instruction *copy = original->clone(linked, ht);
