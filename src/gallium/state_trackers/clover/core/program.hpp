@@ -60,7 +60,11 @@ namespace clover {
 
       const compat::vector<module::symbol> &symbols() const;
 
+      unsigned kernel_ref_count() const;
+
       const intrusive_ref<clover::context> context;
+
+      friend class kernel;
 
    private:
       std::vector<intrusive_ref<device>> _devices;
@@ -68,6 +72,7 @@ namespace clover {
       std::map<const device *, std::string> _logs;
       std::map<const device *, std::string> _opts;
       std::string _source;
+      ref_counter _kernel_ref_counter;
    };
 }
 

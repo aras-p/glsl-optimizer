@@ -26,14 +26,14 @@
 using namespace clover;
 
 program::program(clover::context &ctx, const std::string &source) :
-   has_source(true), context(ctx), _source(source) {
+   has_source(true), context(ctx), _source(source), _kernel_ref_counter(0) {
 }
 
 program::program(clover::context &ctx,
                  const ref_vector<device> &devs,
                  const std::vector<module> &binaries) :
    has_source(false), context(ctx),
-   _devices(devs) {
+   _devices(devs), _kernel_ref_counter(0) {
    for_each([&](device &dev, const module &bin) {
          _binaries.insert({ &dev, bin });
       },
@@ -109,4 +109,9 @@ program::symbols() const {
       throw error(CL_INVALID_PROGRAM_EXECUTABLE);
 
    return _binaries.begin()->second.syms;
+}
+
+unsigned
+program::kernel_ref_count() const {
+   return _kernel_ref_counter.ref_count();
 }

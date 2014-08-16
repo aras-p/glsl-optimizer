@@ -30,7 +30,8 @@ using namespace clover;
 
 kernel::kernel(clover::program &prog, const std::string &name,
                const std::vector<module::argument> &margs) :
-   program(prog), _name(name), exec(*this) {
+   program(prog), _name(name), exec(*this),
+   program_ref(prog._kernel_ref_counter) {
    for (auto &marg : margs) {
       if (marg.type == module::argument::scalar)
          _args.emplace_back(new scalar_argument(marg.size));

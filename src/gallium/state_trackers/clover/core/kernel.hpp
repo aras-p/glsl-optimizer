@@ -225,6 +225,7 @@ namespace clover {
       std::vector<std::unique_ptr<argument>> _args;
       std::string _name;
       exec_context exec;
+      const ref_holder program_ref;
    };
 }
 

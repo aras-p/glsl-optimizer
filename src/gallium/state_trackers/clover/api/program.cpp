@@ -167,6 +167,9 @@ clBuildProgram(cl_program d_prog, cl_uint num_devs,
          }, devs))
       throw error(CL_INVALID_DEVICE);
 
+   if (prog.kernel_ref_count())
+      throw error(CL_INVALID_OPERATION);
+
    prog.build(devs, opts);
    return CL_SUCCESS;
 
