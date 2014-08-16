@@ -77,8 +77,14 @@ _mesa_BeginConditionalRender(GLuint queryId, GLenum mode)
    case GL_QUERY_NO_WAIT:
    case GL_QUERY_BY_REGION_WAIT:
    case GL_QUERY_BY_REGION_NO_WAIT:
-      /* OK */
-      break;
+      break; /* OK */
+   case GL_QUERY_WAIT_INVERTED:
+   case GL_QUERY_NO_WAIT_INVERTED:
+   case GL_QUERY_BY_REGION_WAIT_INVERTED:
+   case GL_QUERY_BY_REGION_NO_WAIT_INVERTED:
+      if (ctx->Extensions.ARB_conditional_render_inverted)
+         break; /* OK */
+      /* fallthrough - invalid */
    default:
       _mesa_error(ctx, GL_INVALID_ENUM, "glBeginConditionalRender(mode=%s)",
                   _mesa_lookup_enum_by_nr(mode));
