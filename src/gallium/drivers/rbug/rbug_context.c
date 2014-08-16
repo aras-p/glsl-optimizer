@@ -40,10 +40,12 @@
 static void
 rbug_destroy(struct pipe_context *_pipe)
 {
+   struct rbug_screen *rb_screen = rbug_screen(_pipe->screen);
    struct rbug_context *rb_pipe = rbug_context(_pipe);
    struct pipe_context *pipe = rb_pipe->pipe;
 
-   remove_from_list(&rb_pipe->list);
+   rbug_screen_remove_from_list(rb_screen, contexts, rb_pipe);
+
    pipe_mutex_lock(rb_pipe->call_mutex);
    pipe->destroy(pipe);
    rb_pipe->pipe = NULL;
