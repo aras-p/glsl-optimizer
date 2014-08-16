@@ -396,25 +396,6 @@ _mesa_meta_init(struct gl_context *ctx)
    ctx->Meta = CALLOC_STRUCT(gl_meta_state);
 }
 
-static GLenum
-gl_buffer_index_to_drawbuffers_enum(gl_buffer_index bufindex)
-{
-   assert(bufindex < BUFFER_COUNT);
-
-   if (bufindex >= BUFFER_COLOR0)
-      return GL_COLOR_ATTACHMENT0 + bufindex - BUFFER_COLOR0;
-   else if (bufindex == BUFFER_FRONT_LEFT)
-      return GL_FRONT_LEFT;
-   else if (bufindex == BUFFER_FRONT_RIGHT)
-      return GL_FRONT_RIGHT;
-   else if (bufindex == BUFFER_BACK_LEFT)
-      return GL_BACK_LEFT;
-   else if (bufindex == BUFFER_BACK_RIGHT)
-      return GL_BACK_RIGHT;
-
-   return GL_NONE;
-}
-
 /**
  * Free context meta-op state.
  * To be called once during context destruction.
@@ -806,20 +787,9 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
    }
 
    if (state & MESA_META_DRAW_BUFFERS) {
-      int buf, real_color_buffers = 0;
-      memset(save->ColorDrawBuffers, 0, sizeof(save->ColorDrawBuffers));
-
-      for (buf = 0; buf < ctx->Const.MaxDrawBuffers; buf++) {
-         int buf_index = ctx->DrawBuffer->_ColorDrawBufferIndexes[buf];
-         if (buf_index == -1)
-            continue;
-
-         save->ColorDrawBuffers[buf] =
-            gl_buffer_index_to_drawbuffers_enum(buf_index);
-
-         if (++real_color_buffers >= ctx->DrawBuffer->_NumColorDrawBuffers)
-            break;
-      }
+      struct gl_framebuffer *fb = ctx->DrawBuffer;
+      memcpy(save->ColorDrawBuffers, fb->ColorDrawBuffer,
+             sizeof(save->ColorDrawBuffers));
    }
 
    /* misc */
@@ -1224,7 +1194,7 @@ _mesa_meta_end(struct gl_context *ctx)
       _mesa_BindRenderbuffer(GL_RENDERBUFFER, save->RenderbufferName);
 
    if (state & MESA_META_DRAW_BUFFERS) {
-      _mesa_DrawBuffers(ctx->Const.MaxDrawBuffers, save->ColorDrawBuffers);
+      _mesa_drawbuffers(ctx, ctx->Const.MaxDrawBuffers, save->ColorDrawBuffers, NULL);
    }
 
    ctx->Meta->SaveStackDepth--;
