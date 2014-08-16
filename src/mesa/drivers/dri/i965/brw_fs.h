@@ -145,10 +145,12 @@ byte_offset(fs_reg reg, unsigned delta)
  * Note: this also works if \c reg represents a SIMD16 pair of registers.
  */
 static inline fs_reg
-half(const fs_reg &reg, unsigned idx)
+half(fs_reg reg, unsigned idx)
 {
    assert(idx < 2);
    assert(idx == 0 || (reg.file != HW_REG && reg.file != IMM));
+   assert(reg.width == 16);
+   reg.width = 8;
    return byte_offset(reg, 8 * idx * reg.stride * type_sz(reg.type));
 }
 
