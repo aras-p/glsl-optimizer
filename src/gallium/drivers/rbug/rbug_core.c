@@ -204,6 +204,7 @@ rbug_texture_info(struct rbug_rbug *tr_rbug, struct rbug_header *header, uint32_
    struct rbug_proto_texture_info *gpti = (struct rbug_proto_texture_info *)header;
    struct rbug_list *ptr;
    struct pipe_resource *t;
+   unsigned num_layers;
 
    pipe_mutex_lock(rb_screen->list_mutex);
    foreach(ptr, &rb_screen->resources) {
@@ -219,11 +220,13 @@ rbug_texture_info(struct rbug_rbug *tr_rbug, struct rbug_header *header, uint32_
    }
 
    t = tr_tex->resource;
+   num_layers = util_max_layer(t, 0) + 1;
+
    rbug_send_texture_info_reply(tr_rbug->con, serial,
                                t->target, t->format,
                                &t->width0, 1,
                                &t->height0, 1,
-                               &t->depth0, 1,
+                               &num_layers, 1,
                                util_format_get_blockwidth(t->format),
                                util_format_get_blockheight(t->format),
                                util_format_get_blocksize(t->format),
