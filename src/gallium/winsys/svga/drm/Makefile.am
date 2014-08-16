@@ -35,3 +35,5 @@ CFLAGS += -std=gnu99 -D_FILE_OFFSET_BITS=64
 noinst_LTLIBRARIES = libsvgadrm.la
 
 libsvgadrm_la_SOURCES = $(C_SOURCES)
+
+EXTRA_DIST = Android.mk SConscript
