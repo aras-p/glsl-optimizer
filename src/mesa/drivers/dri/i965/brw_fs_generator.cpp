@@ -1532,12 +1532,25 @@ fs_generator::generate_code(const cfg_t *cfg)
       brw_set_default_mask_control(p, inst->force_writemask_all);
       brw_set_default_acc_write_control(p, inst->writes_accumulator);
 
-      if (inst->force_uncompressed || dispatch_width == 8) {
-	 brw_set_default_compression_control(p, BRW_COMPRESSION_NONE);
-      } else if (inst->force_sechalf) {
-	 brw_set_default_compression_control(p, BRW_COMPRESSION_2NDHALF);
-      } else {
-	 brw_set_default_compression_control(p, BRW_COMPRESSION_COMPRESSED);
+      switch (inst->exec_size) {
+      case 1:
+      case 2:
+      case 4:
+         assert(inst->force_writemask_all);
+         brw_set_default_compression_control(p, BRW_COMPRESSION_NONE);
+         break;
+      case 8:
+         if (inst->force_sechalf) {
+            brw_set_default_compression_control(p, BRW_COMPRESSION_2NDHALF);
+         } else {
+            brw_set_default_compression_control(p, BRW_COMPRESSION_NONE);
+         }
+         break;
+      case 16:
+         brw_set_default_compression_control(p, BRW_COMPRESSION_COMPRESSED);
+         break;
+      default:
+         unreachable(!"Invalid instruction width");
       }
 
       switch (inst->opcode) {
