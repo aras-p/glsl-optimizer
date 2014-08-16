@@ -2812,6 +2812,9 @@ fs_inst *
 fs_visitor::emit(fs_inst *inst)
 {
    if (force_uncompressed_stack > 0)
+      inst->exec_size = 8;
+
+   if (dispatch_width == 16 && inst->exec_size == 8)
       inst->force_uncompressed = true;
 
    inst->annotation = this->current_annotation;
