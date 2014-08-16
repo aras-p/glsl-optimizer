@@ -1236,7 +1236,7 @@ nvc0_blit_eng2d(struct nvc0_context *nvc0, const struct pipe_blit_info *info)
    }
 
    if (nvc0->cond_query && info->render_condition_enable)
-      IMMED_NVC0(push, NVC0_2D(COND_MODE), NVC0_2D_COND_MODE_RES_NON_ZERO);
+      IMMED_NVC0(push, NVC0_2D(COND_MODE), nvc0->cond_condmode);
 
    if (mask != 0xffffffff) {
       IMMED_NVC0(push, NVC0_2D(ROP), 0xca); /* DPSDxax */

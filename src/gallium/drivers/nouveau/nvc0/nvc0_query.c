@@ -542,45 +542,50 @@ nvc0_render_condition(struct pipe_context *pipe,
    struct nouveau_pushbuf *push = nvc0->base.pushbuf;
    struct nvc0_query *q;
    uint32_t cond;
-   boolean negated = FALSE;
    boolean wait =
       mode != PIPE_RENDER_COND_NO_WAIT &&
       mode != PIPE_RENDER_COND_BY_REGION_NO_WAIT;
 
+   if (!pq) {
+      cond = NVC0_3D_COND_MODE_ALWAYS;
+   }
+   else {
+      q = nvc0_query(pq);
+      /* NOTE: comparison of 2 queries only works if both have completed */
+      switch (q->type) {
+      case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
+         cond = condition ? NVC0_3D_COND_MODE_EQUAL :
+                          NVC0_3D_COND_MODE_NOT_EQUAL;
+         wait = TRUE;
+         break;
+      case PIPE_QUERY_OCCLUSION_COUNTER:
+      case PIPE_QUERY_OCCLUSION_PREDICATE:
+         if (likely(!condition)) {
+            if (unlikely(q->nesting))
+               cond = wait ? NVC0_3D_COND_MODE_NOT_EQUAL :
+                             NVC0_3D_COND_MODE_ALWAYS;
+            else
+               cond = NVC0_3D_COND_MODE_RES_NON_ZERO;
+         } else {
+            cond = wait ? NVC0_3D_COND_MODE_EQUAL : NVC0_3D_COND_MODE_ALWAYS;
+         }
+         break;
+      default:
+         assert(!"render condition query not a predicate");
+         cond = NVC0_3D_COND_MODE_ALWAYS;
+         break;
+      }
+   }
+
    nvc0->cond_query = pq;
    nvc0->cond_cond = condition;
+   nvc0->cond_condmode = cond;
    nvc0->cond_mode = mode;
 
    if (!pq) {
       PUSH_SPACE(push, 1);
-      IMMED_NVC0(push, NVC0_3D(COND_MODE), NVC0_3D_COND_MODE_ALWAYS);
+      IMMED_NVC0(push, NVC0_3D(COND_MODE), cond);
       return;
-   }
-   q = nvc0_query(pq);
-
-   /* NOTE: comparison of 2 queries only works if both have completed */
-   switch (q->type) {
-   case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
-      cond = negated ? NVC0_3D_COND_MODE_EQUAL :
-                       NVC0_3D_COND_MODE_NOT_EQUAL;
-      wait = TRUE;
-      break;
-   case PIPE_QUERY_OCCLUSION_COUNTER:
-   case PIPE_QUERY_OCCLUSION_PREDICATE:
-      if (likely(!negated)) {
-         if (unlikely(q->nesting))
-            cond = wait ? NVC0_3D_COND_MODE_NOT_EQUAL :
-                          NVC0_3D_COND_MODE_ALWAYS;
-         else
-            cond = NVC0_3D_COND_MODE_RES_NON_ZERO;
-      } else {
-         cond = wait ? NVC0_3D_COND_MODE_EQUAL : NVC0_3D_COND_MODE_ALWAYS;
-      }
-      break;
-   default:
-      assert(!"render condition query not a predicate");
-      mode = NVC0_3D_COND_MODE_ALWAYS;
-      break;
    }
 
    if (wait)

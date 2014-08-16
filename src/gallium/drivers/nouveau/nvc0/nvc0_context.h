@@ -196,8 +196,9 @@ struct nvc0_context {
    unsigned num_tfbbufs;
 
    struct pipe_query *cond_query;
-   boolean cond_cond;
+   boolean cond_cond; /* inverted rendering condition */
    uint cond_mode;
+   uint32_t cond_condmode; /* the calculated condition */
 
    struct nvc0_blitctx *blit;
 
