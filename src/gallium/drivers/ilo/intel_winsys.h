@@ -81,9 +81,6 @@ struct intel_winsys_info {
    bool has_gen7_sol_reset;
 };
 
-struct intel_winsys *
-intel_winsys_create_for_fd(int fd);
-
 void
 intel_winsys_destroy(struct intel_winsys *winsys);
 

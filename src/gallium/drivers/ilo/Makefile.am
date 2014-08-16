@@ -27,7 +27,6 @@ include Makefile.sources
 include $(top_srcdir)/src/gallium/Automake.inc
 
 AM_CPPFLAGS = \
-	-I$(top_srcdir)/src/gallium/winsys/intel \
 	$(GALLIUM_DRIVER_CFLAGS)
 
 noinst_LTLIBRARIES = libilo.la

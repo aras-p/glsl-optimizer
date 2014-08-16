@@ -28,8 +28,7 @@ include $(LOCAL_PATH)/Makefile.sources
 include $(CLEAR_VARS)
 
 LOCAL_C_INCLUDES := \
-	$(LOCAL_PATH)/include \
-	$(GALLIUM_TOP)/winsys/intel
+	$(LOCAL_PATH)/include
 
 LOCAL_SRC_FILES := $(C_SOURCES)
 

@@ -19,7 +19,7 @@
 #endif
 
 #if GALLIUM_ILO
-#include "intel/intel_winsys.h"
+#include "intel/drm/intel_drm_public.h"
 #include "ilo/ilo_public.h"
 #endif
 
