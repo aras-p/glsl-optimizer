@@ -26,8 +26,8 @@
 #ifndef R600_PIPE_H
 #define R600_PIPE_H
 
-#include "../radeon/r600_pipe_common.h"
-#include "../radeon/r600_cs.h"
+#include "radeon/r600_pipe_common.h"
+#include "radeon/r600_cs.h"
 
 #include "r600_llvm.h"
 #include "r600_public.h"

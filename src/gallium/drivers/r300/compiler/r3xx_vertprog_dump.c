@@ -22,7 +22,7 @@
 
 #include "radeon_compiler.h"
 #include "radeon_code.h"
-#include "../r300_reg.h"
+#include "r300_reg.h"
 
 #include <stdio.h>
 

@@ -40,7 +40,7 @@
 
 #include "vl/vl_video_buffer.h"
 
-#include "../../winsys/radeon/drm/radeon_winsys.h"
+#include "radeon/drm/radeon_winsys.h"
 #include "radeon_video.h"
 #include "radeon_vce.h"
 

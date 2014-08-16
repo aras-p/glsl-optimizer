@@ -4,7 +4,7 @@
 
 #if defined R600_USE_LLVM || defined HAVE_OPENCL
 
-#include "radeon_llvm.h"
+#include "radeon/radeon_llvm.h"
 #include <llvm-c/Core.h>
 
 struct r600_bytecode;

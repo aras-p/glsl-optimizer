@@ -41,7 +41,7 @@
 
 #include "r500_fragprog.h"
 
-#include "../r300_reg.h"
+#include "r300_reg.h"
 
 #include "radeon_program_pair.h"
 

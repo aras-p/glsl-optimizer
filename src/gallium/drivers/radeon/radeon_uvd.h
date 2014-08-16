@@ -34,7 +34,7 @@
 #ifndef RADEON_UVD_H
 #define RADEON_UVD_H
 
-#include "../../winsys/radeon/drm/radeon_winsys.h"
+#include "radeon/drm/radeon_winsys.h"
 #include "vl/vl_video_buffer.h"
 
 /* UVD uses PM4 packet type 0 and 2 */

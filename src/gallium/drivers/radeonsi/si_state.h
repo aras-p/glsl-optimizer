@@ -28,7 +28,7 @@
 #define SI_STATE_H
 
 #include "si_pm4.h"
-#include "../radeon/r600_pipe_common.h"
+#include "radeon/r600_pipe_common.h"
 
 struct si_screen;
 

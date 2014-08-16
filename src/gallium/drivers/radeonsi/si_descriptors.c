@@ -23,7 +23,7 @@
  * Authors:
  *      Marek Olšák <marek.olsak@amd.com>
  */
-#include "../radeon/r600_cs.h"
+#include "radeon/r600_cs.h"
 #include "si_pipe.h"
 #include "si_shader.h"
 #include "sid.h"

@@ -26,7 +26,7 @@
 
 #include "si_pipe.h"
 #include "si_shader.h"
-#include "../radeon/r600_cs.h"
+#include "radeon/r600_cs.h"
 #include "sid.h"
 
 #include "util/u_format.h"

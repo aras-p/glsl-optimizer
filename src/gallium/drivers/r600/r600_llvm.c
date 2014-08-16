@@ -13,8 +13,8 @@
 #include "r600_opcodes.h"
 #include "r600_shader.h"
 #include "r600_pipe.h"
-#include "radeon_llvm.h"
-#include "radeon_llvm_emit.h"
+#include "radeon/radeon_llvm.h"
+#include "radeon/radeon_llvm_emit.h"
 
 #include <stdio.h>
 

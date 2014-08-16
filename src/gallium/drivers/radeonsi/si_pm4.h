@@ -27,7 +27,7 @@
 #ifndef SI_PM4_H
 #define SI_PM4_H
 
-#include "../../winsys/radeon/drm/radeon_winsys.h"
+#include "radeon/drm/radeon_winsys.h"
 
 #define SI_PM4_MAX_DW		256
 #define SI_PM4_MAX_BO		32

@@ -24,12 +24,12 @@
 
 #include "util/u_memory.h"
 
-#include "../radeon/r600_cs.h"
+#include "radeon/r600_cs.h"
 #include "si_pipe.h"
 #include "si_shader.h"
 #include "sid.h"
 
-#include "radeon_llvm_util.h"
+#include "radeon/radeon_llvm_util.h"
 
 #define MAX_GLOBAL_BUFFERS 20
 #if HAVE_LLVM < 0x0305

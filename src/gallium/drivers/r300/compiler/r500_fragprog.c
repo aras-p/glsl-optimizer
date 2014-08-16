@@ -32,7 +32,7 @@
 #include "radeon_compiler_util.h"
 #include "radeon_list.h"
 #include "radeon_variable.h"
-#include "../r300_reg.h"
+#include "r300_reg.h"
 
 /**
  * Rewrite IF instructions to use the ALU result special register.

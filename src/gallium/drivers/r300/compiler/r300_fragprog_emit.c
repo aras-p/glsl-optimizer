@@ -38,7 +38,7 @@
 
 #include "r300_fragprog.h"
 
-#include "../r300_reg.h"
+#include "r300_reg.h"
 
 #include "radeon_program_pair.h"
 #include "r300_fragprog_swizzle.h"

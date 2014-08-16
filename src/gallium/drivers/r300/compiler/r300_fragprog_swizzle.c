@@ -35,7 +35,7 @@
 
 #include <stdio.h>
 
-#include "../r300_reg.h"
+#include "r300_reg.h"
 #include "radeon_compiler.h"
 
 #define MAKE_SWZ3(x, y, z) (RC_MAKE_SWIZZLE(RC_SWIZZLE_##x, RC_SWIZZLE_##y, RC_SWIZZLE_##z, RC_SWIZZLE_ZERO))

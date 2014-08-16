@@ -25,7 +25,7 @@
 #define R300_SCREEN_H
 
 #include "r300_chipset.h"
-#include "../../winsys/radeon/drm/radeon_winsys.h"
+#include "radeon/drm/radeon_winsys.h"
 #include "pipe/p_screen.h"
 #include "util/u_slab.h"
 #include "os/os_thread.h"

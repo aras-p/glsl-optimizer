@@ -29,7 +29,7 @@
 
 #include <stdio.h>
 
-#include "../r300_reg.h"
+#include "r300_reg.h"
 
 static void presub_string(char out[10], unsigned int inst)
 {

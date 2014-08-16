@@ -27,7 +27,7 @@
 #include "si_pipe.h"
 #include "si_shader.h"
 #include "sid.h"
-#include "../radeon/r600_cs.h"
+#include "radeon/r600_cs.h"
 
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_scan.h"

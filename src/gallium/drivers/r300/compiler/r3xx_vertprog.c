@@ -24,7 +24,7 @@
 
 #include <stdio.h>
 
-#include "../r300_reg.h"
+#include "r300_reg.h"
 
 #include "radeon_compiler_util.h"
 #include "radeon_dataflow.h"

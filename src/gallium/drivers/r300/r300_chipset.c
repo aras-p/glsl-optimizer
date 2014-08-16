@@ -22,7 +22,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
 #include "r300_chipset.h"
-#include "../../winsys/radeon/drm/radeon_winsys.h"
+#include "radeon/drm/radeon_winsys.h"
 
 #include "util/u_debug.h"
 #include "util/u_memory.h"

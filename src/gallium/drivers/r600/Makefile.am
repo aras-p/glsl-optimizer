@@ -20,8 +20,7 @@ libr600_la_SOURCES = \
 if NEED_RADEON_LLVM
 
 AM_CFLAGS += \
-	$(LLVM_CFLAGS) \
-	-I$(top_srcdir)/src/gallium/drivers/radeon/
+	$(LLVM_CFLAGS)
 
 libr600_la_SOURCES += \
 	$(LLVM_C_SOURCES)
