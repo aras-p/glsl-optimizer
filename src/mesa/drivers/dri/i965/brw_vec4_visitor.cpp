@@ -1135,6 +1135,13 @@ vec4_visitor::try_emit_mad(ir_expression *ir)
 bool
 vec4_visitor::try_emit_b2f_of_compare(ir_expression *ir)
 {
+   /* This optimization relies on CMP setting the destination to 0 when
+    * false.  Early hardware only sets the least significant bit, and
+    * leaves the other bits undefined.  So we can't use it.
+    */
+   if (brw->gen < 6)
+      return false;
+
    ir_expression *const cmp = ir->operands[0]->as_expression();
 
    if (cmp == NULL)
