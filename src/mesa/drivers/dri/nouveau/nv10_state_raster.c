@@ -145,7 +145,7 @@ nv10_emit_stencil_func(struct gl_context *ctx, int emit)
 	struct nouveau_pushbuf *push = context_push(ctx);
 
 	BEGIN_NV04(push, NV10_3D(STENCIL_ENABLE), 1);
-	PUSH_DATAb(push, ctx->Stencil.Enabled);
+	PUSH_DATAb(push, ctx->Stencil._Enabled);
 
 	BEGIN_NV04(push, NV10_3D(STENCIL_FUNC_FUNC), 3);
 	PUSH_DATA (push, nvgl_comparison_op(ctx->Stencil.Function[0]));

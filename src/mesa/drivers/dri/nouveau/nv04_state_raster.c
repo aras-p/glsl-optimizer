@@ -175,7 +175,7 @@ nv04_emit_control(struct gl_context *ctx, int emit)
 	if (ctx->Stencil.WriteMask[0])
 		nv04->ctrl[0] |= NV04_MULTITEX_TRIANGLE_CONTROL0_STENCIL_WRITE;
 
-	if (ctx->Stencil.Enabled)
+	if (ctx->Stencil._Enabled)
 		nv04->ctrl[1] |= NV04_MULTITEX_TRIANGLE_CONTROL1_STENCIL_ENABLE;
 
 	nv04->ctrl[1] |= get_comparison_op(ctx->Stencil.Function[0]) << 4 |
