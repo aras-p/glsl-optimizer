@@ -173,8 +173,7 @@ static void si_dma_copy_tile(struct si_context *ctx,
 		tile_split = cik_tile_split(rsrc->surface.tile_split);
 		tile_mode_index = si_tile_mode_index(rsrc, src_level,
 						     util_format_has_stencil(util_format_description(src->format)));
-		nbanks = si_num_banks(sscreen, rsrc->surface.bpe, rsrc->surface.tile_split,
-				      tile_mode_index);
+		nbanks = si_num_banks(sscreen, rsrc);
 		base += rsrc->resource.gpu_address;
 		addr += rdst->resource.gpu_address;
 	} else {
@@ -202,8 +201,7 @@ static void si_dma_copy_tile(struct si_context *ctx,
 		tile_split = cik_tile_split(rdst->surface.tile_split);
 		tile_mode_index = si_tile_mode_index(rdst, dst_level,
 						     util_format_has_stencil(util_format_description(dst->format)));
-		nbanks = si_num_banks(sscreen, rdst->surface.bpe, rdst->surface.tile_split,
-				      tile_mode_index);
+		nbanks = si_num_banks(sscreen, rdst);
 		base += rdst->resource.gpu_address;
 		addr += rsrc->resource.gpu_address;
 	}

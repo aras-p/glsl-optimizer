@@ -263,8 +263,7 @@ unsigned cik_bank_wh(unsigned bankwh);
 unsigned cik_db_pipe_config(struct si_screen *sscreen, unsigned tile_mode);
 unsigned cik_macro_tile_aspect(unsigned macro_tile_aspect);
 unsigned cik_tile_split(unsigned tile_split);
-uint32_t si_num_banks(struct si_screen *sscreen, unsigned bpe, unsigned tile_split,
-		      unsigned tile_mode_index);
+uint32_t si_num_banks(struct si_screen *sscreen, struct r600_texture *tex);
 unsigned si_tile_mode_index(struct r600_texture *rtex, unsigned level, bool stencil);
 
 /* si_state_draw.c */
