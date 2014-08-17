@@ -46,3 +46,5 @@ xa_include_HEADERS = \
 noinst_LTLIBRARIES = libxatracker.la
 
 libxatracker_la_SOURCES = $(C_SOURCES)
+
+EXTRA_DIST = README xa-indent
