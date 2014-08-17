@@ -42,6 +42,8 @@ noinst_PROGRAMS = \
 	tests/test_blocks \
 	tests/test_rendering
 
+noinst_HEADERS = tests/testlib.h
+
 TEST_LIBS = $(XVMC_LIBS) -lXvMCW
 tests_test_context_SOURCES = tests/test_context.c tests/testlib.c
 tests_test_context_LDADD = $(TEST_LIBS)
