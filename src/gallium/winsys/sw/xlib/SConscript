@@ -11,14 +11,11 @@ if env['platform'] in ('cygwin', 'darwin', 'freebsd', 'linux', 'sunos'):
     env.Append(CPPPATH = [
         '#/src/gallium/include',
         '#/src/gallium/auxiliary',
-        '#/src/gallium/drivers',
     ])
 
     ws_xlib = env.ConvenienceLibrary(
         target = 'ws_xlib',
-        source = [
-           'xlib_sw_winsys.c',
-        ]
+        source = env.ParseSourceList('Makefile.sources', 'C_SOURCES'),
     )
     env.Alias('ws_xlib', ws_xlib)
     Export('ws_xlib')

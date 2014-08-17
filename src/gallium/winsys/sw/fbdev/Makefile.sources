@@ -1,0 +1,3 @@
+C_SOURCES := \
+	fbdev_sw_winsys.c \
+	fbdev_sw_winsys.h

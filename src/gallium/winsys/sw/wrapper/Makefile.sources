@@ -1,0 +1,3 @@
+C_SOURCES := \
+	wrapper_sw_winsys.c \
+	wrapper_sw_winsys.h

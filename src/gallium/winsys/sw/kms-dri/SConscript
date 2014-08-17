@@ -12,15 +12,12 @@ env = env.Clone()
 env.PkgUseModules('DRM')
 
 env.Append(CPPPATH = [
-#    'include',
     '#/src/gallium/include',
     '#/src/gallium/auxiliary',
 ])
 
 ws_kms_dri = env.ConvenienceLibrary(
     target = 'ws_kms_dri',
-    source = [
-       'kms_dri_sw_winsys.c',
-    ]
+    source = env.ParseSourceList('Makefile.sources', 'C_SOURCES'),
 )
 Export('ws_kms_dri')

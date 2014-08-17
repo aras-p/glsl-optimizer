@@ -9,14 +9,11 @@ env = env.Clone()
 env.Append(CPPPATH = [
     '#/src/gallium/include',
     '#/src/gallium/auxiliary',
-    '#/src/gallium/drivers',
 ])
 
 ws_null = env.ConvenienceLibrary(
     target = 'ws_null',
-    source = [
-       'null_sw_winsys.c',
-    ]
+    source = env.ParseSourceList('Makefile.sources', 'C_SOURCES'),
 )
 env.Alias('ws_null', ws_null)
 Export('ws_null')

@@ -11,13 +11,10 @@ if env['platform'] in ('linux', 'sunos'):
     env.Append(CPPPATH = [
         '#/src/gallium/include',
         '#/src/gallium/auxiliary',
-        '#/src/gallium/drivers',
     ])
 
     ws_dri = env.ConvenienceLibrary(
         target = 'ws_dri',
-        source = [
-           'dri_sw_winsys.c',
-        ]
+        source = env.ParseSourceList('Makefile.sources', 'C_SOURCES'),
     )
     Export('ws_dri')

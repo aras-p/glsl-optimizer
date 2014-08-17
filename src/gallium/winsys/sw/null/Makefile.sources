@@ -1,0 +1,3 @@
+C_SOURCES := \
+	null_sw_winsys.c \
+	null_sw_winsys.h
