@@ -1075,6 +1075,7 @@ zs_init_info(const struct ilo_dev_info *dev,
       info->zs.bo = tex->bo;
       info->zs.stride = tex->layout.bo_stride;
       info->zs.tiling = tex->layout.tiling;
+      info->zs.offset = 0;
    }
 
    if (tex->separate_s8 || format == PIPE_FORMAT_S8_UINT) {
@@ -1095,12 +1096,27 @@ zs_init_info(const struct ilo_dev_info *dev,
       info->stencil.stride = s8_tex->layout.bo_stride * 2;
 
       info->stencil.tiling = s8_tex->layout.tiling;
+
+      if (dev->gen == ILO_GEN(6)) {
+         unsigned x, y;
+
+         assert(s8_tex->layout.walk == ILO_LAYOUT_WALK_LOD);
+
+         /* offset to the level */
+         ilo_layout_get_slice_pos(&s8_tex->layout, level, 0, &x, &y);
+         ilo_layout_pos_to_mem(&s8_tex->layout, x, y, &x, &y);
+         info->stencil.offset = ilo_layout_mem_to_raw(&s8_tex->layout, x, y);
+      }
    }
 
    if (ilo_texture_can_enable_hiz(tex, level, first_layer, num_layers)) {
       info->hiz.bo = tex->aux_bo;
       info->hiz.stride = tex->layout.aux_stride;
       info->hiz.tiling = INTEL_TILING_Y;
+
+      /* offset to the level */
+      if (dev->gen == ILO_GEN(6))
+         info->hiz.offset = tex->layout.aux_offsets[level];
    }
 
    info->width = tex->layout.width0;

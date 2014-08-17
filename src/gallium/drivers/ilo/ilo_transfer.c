@@ -77,10 +77,12 @@
  * correctly block when the resource is busy.
  */
 static bool
-resource_get_transfer_method(struct pipe_resource *res, unsigned usage,
+resource_get_transfer_method(struct pipe_resource *res,
+                             const struct pipe_transfer *transfer,
                              enum ilo_transfer_map_method *method)
 {
    const struct ilo_screen *is = ilo_screen(res->screen);
+   const unsigned usage = transfer->usage;
    enum ilo_transfer_map_method m;
    bool tiled;
 
@@ -89,15 +91,21 @@ resource_get_transfer_method(struct pipe_resource *res, unsigned usage,
    }
    else {
       struct ilo_texture *tex = ilo_texture(res);
-      bool need_convert = true;
+      bool need_convert = false;
 
       /* we may need to convert on the fly */
-      if (tex->separate_s8 || tex->layout.format == PIPE_FORMAT_S8_UINT)
-         m = ILO_TRANSFER_MAP_SW_ZS;
-      else if (tex->layout.format != tex->base.format)
+      if (tex->separate_s8 || tex->layout.format == PIPE_FORMAT_S8_UINT) {
+         /* on GEN6, separate stencil is enabled only when HiZ is */
+         if (is->dev.gen >= ILO_GEN(7) ||
+             ilo_texture_can_enable_hiz(tex, transfer->level,
+                transfer->box.z, transfer->box.depth)) {
+            m = ILO_TRANSFER_MAP_SW_ZS;
+            need_convert = true;
+         }
+      } else if (tex->layout.format != tex->base.format) {
          m = ILO_TRANSFER_MAP_SW_CONVERT;
-      else
-         need_convert = false;
+         need_convert = true;
+      }
 
       if (need_convert) {
          if (usage & (PIPE_TRANSFER_MAP_DIRECTLY | PIPE_TRANSFER_PERSISTENT))
@@ -1059,7 +1067,7 @@ choose_transfer_method(struct ilo_context *ilo, struct ilo_transfer *xfer)
    struct pipe_resource *res = xfer->base.resource;
    bool need_flush;
 
-   if (!resource_get_transfer_method(res, xfer->base.usage, &xfer->method))
+   if (!resource_get_transfer_method(res, &xfer->base, &xfer->method))
       return false;
 
    /* see if we can avoid blocking */

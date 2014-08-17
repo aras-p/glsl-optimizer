@@ -769,7 +769,6 @@ layout_want_hiz(const struct ilo_layout *layout,
    const struct pipe_resource *templ = params->templ;
    const struct util_format_description *desc =
       util_format_description(templ->format);
-   bool want_hiz = false;
 
    if (ilo_debug & ILO_DEBUG_NOHIZ)
       return false;
@@ -784,29 +783,19 @@ layout_want_hiz(const struct ilo_layout *layout,
    if (templ->usage == PIPE_USAGE_STAGING)
       return false;
 
-   if (params->dev->gen >= ILO_GEN(7)) {
-      want_hiz = true;
-   } else {
-      /*
-       * From the Sandy Bridge PRM, volume 2 part 1, page 312:
-       *
-       *     "The hierarchical depth buffer does not support the LOD field, it
-       *      is assumed by hardware to be zero. A separate hierarachical
-       *      depth buffer is required for each LOD used, and the
-       *      corresponding buffer's state delivered to hardware each time a
-       *      new depth buffer state with modified LOD is delivered."
-       *
-       * But we have a stronger requirement.  Because of layer offsetting
-       * (check out the callers of ilo_layout_get_slice_tile_offset()), we
-       * already have to require the texture to be non-mipmapped and
-       * non-array.
-       */
-      if (templ->last_level == 0 && templ->array_size == 1 &&
-          templ->depth0 == 1)
-         want_hiz = true;
-   }
+   /*
+    * As can be seen in layout_calculate_hiz_size(), HiZ may not be enabled
+    * for every level.  This is generally fine except on GEN6, where HiZ and
+    * separate stencil are enabled and disabled at the same time.  When the
+    * format is PIPE_FORMAT_Z32_FLOAT_S8X24_UINT, enabling and disabling HiZ
+    * can result in incompatible formats.
+    */
+   if (params->dev->gen == ILO_GEN(6) &&
+       templ->format == PIPE_FORMAT_Z32_FLOAT_S8X24_UINT &&
+       templ->last_level)
+      return false;
 
-   return want_hiz;
+   return true;
 }
 
 static void
