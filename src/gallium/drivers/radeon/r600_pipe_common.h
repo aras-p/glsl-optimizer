@@ -36,6 +36,7 @@
 
 #include "../../winsys/radeon/drm/radeon_winsys.h"
 
+#include "util/u_blitter.h"
 #include "util/u_double_list.h"
 #include "util/u_range.h"
 #include "util/u_slab.h"
@@ -73,6 +74,9 @@
 #define R600_CONTEXT_WAIT_CP_DMA_IDLE		(1 << 18)
 #define R600_CONTEXT_VGT_FLUSH			(1 << 19)
 #define R600_CONTEXT_VGT_STREAMOUT_SYNC		(1 << 20)
+
+/* special primitive types */
+#define R600_PRIM_RECTANGLE_LIST	PIPE_PRIM_MAX
 
 /* Debug flags. */
 /* logging */
@@ -427,6 +431,10 @@ struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 					 unsigned alignment);
 
 /* r600_common_pipe.c */
+void r600_draw_rectangle(struct blitter_context *blitter,
+			 int x1, int y1, int x2, int y2, float depth,
+			 enum blitter_attrib_type type,
+			 const union pipe_color_union *attrib);
 bool r600_common_screen_init(struct r600_common_screen *rscreen,
 			     struct radeon_winsys *ws);
 void r600_destroy_common_screen(struct r600_common_screen *rscreen);

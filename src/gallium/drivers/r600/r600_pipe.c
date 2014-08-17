@@ -30,7 +30,6 @@
 
 #include <errno.h>
 #include "pipe/p_shader_tokens.h"
-#include "util/u_blitter.h"
 #include "util/u_debug.h"
 #include "util/u_memory.h"
 #include "util/u_simple_shaders.h"
