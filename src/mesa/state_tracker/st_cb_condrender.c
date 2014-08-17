@@ -55,6 +55,8 @@ st_BeginConditionalRender(struct gl_context *ctx, struct gl_query_object *q,
    struct st_query_object *stq = st_query_object(q);
    struct st_context *st = st_context(ctx);
    uint m;
+   /* Don't invert the condition for rendering by default */
+   boolean inverted = FALSE;
 
    st_flush_bitmap_cache(st);
 
@@ -71,12 +73,28 @@ st_BeginConditionalRender(struct gl_context *ctx, struct gl_query_object *q,
    case GL_QUERY_BY_REGION_NO_WAIT:
       m = PIPE_RENDER_COND_BY_REGION_NO_WAIT;
       break;
+   case GL_QUERY_WAIT_INVERTED:
+      m = PIPE_RENDER_COND_WAIT;
+      inverted = TRUE;
+      break;
+   case GL_QUERY_NO_WAIT_INVERTED:
+      m = PIPE_RENDER_COND_NO_WAIT;
+      inverted = TRUE;
+      break;
+   case GL_QUERY_BY_REGION_WAIT_INVERTED:
+      m = PIPE_RENDER_COND_BY_REGION_WAIT;
+      inverted = TRUE;
+      break;
+   case GL_QUERY_BY_REGION_NO_WAIT_INVERTED:
+      m = PIPE_RENDER_COND_BY_REGION_NO_WAIT;
+      inverted = TRUE;
+      break;
    default:
       assert(0 && "bad mode in st_BeginConditionalRender");
       m = PIPE_RENDER_COND_WAIT;
    }
 
-   cso_set_render_condition(st->cso_context, stq->pq, FALSE, m);
+   cso_set_render_condition(st->cso_context, stq->pq, inverted, m);
 }
 
 
