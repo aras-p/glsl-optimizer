@@ -223,6 +223,8 @@ The integer capabilities:
 * ``PIPE_CAP_VIDEO_MEMORY``: The amount of video memory in megabytes.
 * ``PIPE_CAP_UMA``: If the device has a unified memory architecture or on-card
   memory and GART.
+* ``PIPE_CAP_CONDITIONAL_RENDER_INVERTED``: Whether the driver supports inverted
+  condition for conditional rendering.
 
 
 .. _pipe_capf:
