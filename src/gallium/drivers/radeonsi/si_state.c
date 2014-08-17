@@ -458,18 +458,20 @@ static void si_set_scissor_states(struct pipe_context *ctx,
                                   const struct pipe_scissor_state *state)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
-	struct si_pm4_state *pm4 = si_pm4_alloc_state(sctx);
+	struct si_state_scissor *scissor = CALLOC_STRUCT(si_state_scissor);
+	struct si_pm4_state *pm4 = &scissor->pm4;
 
-	if (pm4 == NULL)
+	if (scissor == NULL)
 		return;
 
+	scissor->scissor = *state;
 	si_pm4_set_reg(pm4, R_028250_PA_SC_VPORT_SCISSOR_0_TL,
 		       S_028250_TL_X(state->minx) | S_028250_TL_Y(state->miny) |
 		       S_028250_WINDOW_OFFSET_DISABLE(1));
 	si_pm4_set_reg(pm4, R_028254_PA_SC_VPORT_SCISSOR_0_BR,
 		       S_028254_BR_X(state->maxx) | S_028254_BR_Y(state->maxy));
 
-	si_pm4_set_state(sctx, scissor, pm4);
+	si_pm4_set_state(sctx, scissor, scissor);
 }
 
 static void si_set_viewport_states(struct pipe_context *ctx,
@@ -2774,16 +2776,18 @@ static void si_bind_sampler_states(struct pipe_context *ctx, unsigned shader,
 static void si_set_sample_mask(struct pipe_context *ctx, unsigned sample_mask)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
-	struct si_pm4_state *pm4 = si_pm4_alloc_state(sctx);
+	struct si_state_sample_mask *state = CALLOC_STRUCT(si_state_sample_mask);
+	struct si_pm4_state *pm4 = &state->pm4;
 	uint16_t mask = sample_mask;
 
-        if (pm4 == NULL)
+        if (state == NULL)
                 return;
 
+	state->sample_mask = mask;
 	si_pm4_set_reg(pm4, R_028C38_PA_SC_AA_MASK_X0Y0_X1Y0, mask | (mask << 16));
 	si_pm4_set_reg(pm4, R_028C3C_PA_SC_AA_MASK_X0Y1_X1Y1, mask | (mask << 16));
 
-	si_pm4_set_state(sctx, sample_mask, pm4);
+	si_pm4_set_state(sctx, sample_mask, state);
 }
 
 static void si_delete_sampler_state(struct pipe_context *ctx, void *state)

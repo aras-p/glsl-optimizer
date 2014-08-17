@@ -38,6 +38,16 @@ struct si_state_blend {
 	bool			alpha_to_one;
 };
 
+struct si_state_sample_mask {
+	struct si_pm4_state	pm4;
+	uint16_t		sample_mask;
+};
+
+struct si_state_scissor {
+	struct si_pm4_state		pm4;
+	struct pipe_scissor_state	scissor;
+};
+
 struct si_state_viewport {
 	struct si_pm4_state		pm4;
 	struct pipe_viewport_state	viewport;
@@ -82,8 +92,8 @@ union si_state {
 		struct si_state_blend		*blend;
 		struct si_pm4_state		*blend_color;
 		struct si_pm4_state		*clip;
-		struct si_pm4_state		*sample_mask;
-		struct si_pm4_state		*scissor;
+		struct si_state_sample_mask	*sample_mask;
+		struct si_state_scissor		*scissor;
 		struct si_state_viewport	*viewport;
 		struct si_state_rasterizer	*rasterizer;
 		struct si_state_dsa		*dsa;

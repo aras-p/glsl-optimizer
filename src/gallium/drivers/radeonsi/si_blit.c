@@ -59,8 +59,15 @@ static void si_blitter_begin(struct pipe_context *ctx, enum si_blitter_op op)
 	util_blitter_save_geometry_shader(sctx->blitter, sctx->gs_shader);
 	util_blitter_save_vertex_shader(sctx->blitter, sctx->vs_shader);
 	util_blitter_save_vertex_elements(sctx->blitter, sctx->vertex_elements);
+	if (sctx->queued.named.sample_mask) {
+		util_blitter_save_sample_mask(sctx->blitter,
+					      sctx->queued.named.sample_mask->sample_mask);
+	}
 	if (sctx->queued.named.viewport) {
 		util_blitter_save_viewport(sctx->blitter, &sctx->queued.named.viewport->viewport);
+	}
+	if (sctx->queued.named.scissor) {
+		util_blitter_save_scissor(sctx->blitter, &sctx->queued.named.scissor->scissor);
 	}
 	util_blitter_save_vertex_buffer_slot(sctx->blitter, sctx->vertex_buffer);
 	util_blitter_save_so_targets(sctx->blitter, sctx->b.streamout.num_targets,
