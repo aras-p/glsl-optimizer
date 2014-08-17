@@ -1,5 +1,7 @@
-C_SOURCES := 	\
+C_SOURCES := \
 	api.c \
+	api.h \
+	api_consts.h \
 	api_context.c \
 	api_filters.c \
 	api_images.c \
@@ -12,19 +14,39 @@ C_SOURCES := 	\
 	api_transform.c \
 	arc.c \
 	bezier.c \
+	bezier.h \
 	handle.c \
+	handle.h \
 	image.c \
+	image.h \
 	mask.c \
+	mask.h \
+	matrix.h \
 	paint.c \
+	paint.h \
 	path.c \
+	path.h \
+	path_utils.h \
 	polygon.c \
+	polygon.h \
 	renderer.c \
+	renderer.h \
 	shader.c \
+	shader.h \
 	shaders_cache.c \
+	shaders_cache.h \
 	stroker.c \
+	stroker.h \
 	text.c \
+	text.h \
+	util_array.h \
+	vg_api.h \
 	vg_context.c \
+	vg_context.h \
 	vg_manager.c \
+	vg_manager.h \
 	vg_state.c \
+	vg_state.h \
 	vg_translate.c \
+	vg_translate.h \
 	vgu.c

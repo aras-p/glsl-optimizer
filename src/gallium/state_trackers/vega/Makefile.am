@@ -38,3 +38,5 @@ CLEANFILES = api_tmp.h
 api_tmp.h: $(top_srcdir)/src/mapi/vgapi/vgapi.csv $(top_srcdir)/src/mapi/mapi_abi.py
 	$(AM_V_GEN) $(PYTHON2) $(PYTHON_FLAGS) $(top_srcdir)/src/mapi/mapi_abi.py \
 			--printer vgapi --mode app $< > $@
+
+EXTRA_DIST = SConscript
