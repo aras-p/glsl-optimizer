@@ -31,10 +31,10 @@ namespace clover {
    ///
    class ref_counter {
    public:
-      ref_counter() : _ref_count(1) {}
+      ref_counter(unsigned value = 1) : _ref_count(value) {}
 
       unsigned
-      ref_count() {
+      ref_count() const {
          return _ref_count;
       }
 
