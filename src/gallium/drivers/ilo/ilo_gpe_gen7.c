@@ -430,12 +430,11 @@ ilo_gpe_init_view_surface_for_texture_gen7(const struct ilo_dev_info *dev,
                                            unsigned num_levels,
                                            unsigned first_layer,
                                            unsigned num_layers,
-                                           bool is_rt, bool offset_to_layer,
+                                           bool is_rt,
                                            struct ilo_view_surface *surf)
 {
    int surface_type, surface_format;
    int width, height, depth, pitch, lod;
-   unsigned layer_offset, x_offset, y_offset;
    uint32_t *dw;
 
    ILO_GPE_VALID_GEN(dev, 7, 7.5);
@@ -514,39 +513,6 @@ ilo_gpe_init_view_surface_for_texture_gen7(const struct ilo_dev_info *dev,
    }
 
    /*
-    * Offset to the layer.  When rendering, the hardware requires LOD and
-    * Depth to be the same for all render targets and the depth buffer.  We
-    * need to offset to the layer manually and always set LOD and Depth to 0.
-    */
-   if (offset_to_layer) {
-      /* we lose the capability for layered rendering */
-      assert(is_rt && num_layers == 1);
-
-      layer_offset = ilo_layout_get_slice_tile_offset(&tex->layout,
-            first_level, first_layer, &x_offset, &y_offset);
-
-      assert(x_offset % 4 == 0);
-      assert(y_offset % 2 == 0);
-      x_offset /= 4;
-      y_offset /= 2;
-
-      /* derive the size for the LOD */
-      width = u_minify(width, first_level);
-      height = u_minify(height, first_level);
-
-      first_level = 0;
-      first_layer = 0;
-
-      lod = 0;
-      depth = 1;
-   }
-   else {
-      layer_offset = 0;
-      x_offset = 0;
-      y_offset = 0;
-   }
-
-   /*
     * From the Ivy Bridge PRM, volume 4 part 1, page 68:
     *
     *     "The Base Address for linear render target surfaces and surfaces
@@ -572,11 +538,8 @@ ilo_gpe_init_view_surface_for_texture_gen7(const struct ilo_dev_info *dev,
    if (tex->layout.tiling == INTEL_TILING_NONE) {
       if (is_rt) {
          const int elem_size = util_format_get_blocksize(format);
-         assert(layer_offset % elem_size == 0);
          assert(pitch % elem_size == 0);
       }
-
-      assert(!x_offset);
    }
 
    STATIC_ASSERT(Elements(surf->payload) >= 8);
@@ -624,7 +587,7 @@ ilo_gpe_init_view_surface_for_texture_gen7(const struct ilo_dev_info *dev,
    if (surface_type == GEN6_SURFTYPE_CUBE && !is_rt)
       dw[0] |= GEN7_SURFACE_DW0_CUBE_FACE_ENABLES__MASK;
 
-   dw[1] = layer_offset;
+   dw[1] = 0;
 
    dw[2] = SET_FIELD(height - 1, GEN7_SURFACE_DW2_HEIGHT) |
            SET_FIELD(width - 1, GEN7_SURFACE_DW2_WIDTH);
@@ -655,9 +618,7 @@ ilo_gpe_init_view_surface_for_texture_gen7(const struct ilo_dev_info *dev,
    else
       dw[4] |= GEN7_SURFACE_DW4_MULTISAMPLECOUNT_1;
 
-   dw[5] = x_offset << GEN7_SURFACE_DW5_X_OFFSET__SHIFT |
-           y_offset << GEN7_SURFACE_DW5_Y_OFFSET__SHIFT |
-           SET_FIELD(first_level, GEN7_SURFACE_DW5_MIN_LOD) |
+   dw[5] = SET_FIELD(first_level, GEN7_SURFACE_DW5_MIN_LOD) |
            lod;
 
    dw[6] = 0;

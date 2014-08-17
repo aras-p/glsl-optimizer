@@ -936,7 +936,7 @@ ilo_create_sampler_view(struct pipe_context *pipe,
             templ->u.tex.last_level - templ->u.tex.first_level + 1,
             templ->u.tex.first_layer,
             templ->u.tex.last_layer - templ->u.tex.first_layer + 1,
-            false, false, &view->surface);
+            false, &view->surface);
    }
 
    return &view->base;
@@ -984,7 +984,7 @@ ilo_create_surface(struct pipe_context *pipe,
             templ->format, templ->u.tex.level, 1,
             templ->u.tex.first_layer,
             templ->u.tex.last_layer - templ->u.tex.first_layer + 1,
-            true, false, &surf->u.rt);
+            true, &surf->u.rt);
    }
    else {
       assert(res->target != PIPE_BUFFER);
@@ -993,7 +993,7 @@ ilo_create_surface(struct pipe_context *pipe,
             templ->format, templ->u.tex.level,
             templ->u.tex.first_layer,
             templ->u.tex.last_layer - templ->u.tex.first_layer + 1,
-            false, &surf->u.zs);
+            &surf->u.zs);
    }
 
    return &surf->base;
@@ -1183,7 +1183,7 @@ ilo_init_states(struct ilo_context *ilo)
    ilo_gpe_set_scissor_null(ilo->dev, &ilo->scissor);
 
    ilo_gpe_init_zs_surface(ilo->dev, NULL, PIPE_FORMAT_NONE,
-         0, 0, 1, false, &ilo->fb.null_zs);
+         0, 0, 1, &ilo->fb.null_zs);
 
    ilo->dirty = ILO_DIRTY_ALL;
 }

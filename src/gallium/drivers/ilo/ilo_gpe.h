@@ -260,7 +260,6 @@ struct ilo_fb_state {
    struct ilo_zs_surface null_zs;
 
    unsigned num_samples;
-   bool offset_to_layers;
 };
 
 struct ilo_global_binding {
@@ -383,7 +382,7 @@ ilo_gpe_init_view_surface_for_texture_gen6(const struct ilo_dev_info *dev,
                                            unsigned num_levels,
                                            unsigned first_layer,
                                            unsigned num_layers,
-                                           bool is_rt, bool offset_to_layer,
+                                           bool is_rt,
                                            struct ilo_view_surface *surf);
 
 void
@@ -409,7 +408,7 @@ ilo_gpe_init_view_surface_for_texture_gen7(const struct ilo_dev_info *dev,
                                            unsigned num_levels,
                                            unsigned first_layer,
                                            unsigned num_layers,
-                                           bool is_rt, bool offset_to_layer,
+                                           bool is_rt,
                                            struct ilo_view_surface *surf);
 
 static inline void
@@ -455,18 +454,18 @@ ilo_gpe_init_view_surface_for_texture(const struct ilo_dev_info *dev,
                                       unsigned num_levels,
                                       unsigned first_layer,
                                       unsigned num_layers,
-                                      bool is_rt, bool offset_to_layer,
+                                      bool is_rt,
                                       struct ilo_view_surface *surf)
 {
    if (dev->gen >= ILO_GEN(7)) {
       ilo_gpe_init_view_surface_for_texture_gen7(dev, tex, format,
             first_level, num_levels, first_layer, num_layers,
-            is_rt, offset_to_layer, surf);
+            is_rt, surf);
    }
    else {
       ilo_gpe_init_view_surface_for_texture_gen6(dev, tex, format,
             first_level, num_levels, first_layer, num_layers,
-            is_rt, offset_to_layer, surf);
+            is_rt, surf);
    }
 }
 
@@ -475,7 +474,7 @@ ilo_gpe_init_zs_surface(const struct ilo_dev_info *dev,
                         const struct ilo_texture *tex,
                         enum pipe_format format, unsigned level,
                         unsigned first_layer, unsigned num_layers,
-                        bool offset_to_layer, struct ilo_zs_surface *zs);
+                        struct ilo_zs_surface *zs);
 
 void
 ilo_gpe_init_vs_cso(const struct ilo_dev_info *dev,

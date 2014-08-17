@@ -289,9 +289,4 @@ ilo_layout_get_slice_pos(const struct ilo_layout *layout,
          layout->bo_height * layout->block_height);
 }
 
-unsigned
-ilo_layout_get_slice_tile_offset(const struct ilo_layout *layout,
-                                 unsigned level, unsigned slice,
-                                 unsigned *x_offset, unsigned *y_offset);
-
 #endif /* ILO_LAYOUT_H */
