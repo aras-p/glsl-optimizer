@@ -520,7 +520,7 @@ int bc_parser::decode_fetch_clause(cf_node* cf) {
 
 int bc_parser::prepare_fetch_clause(cf_node *cf) {
 
-	vvec grad_v, grad_h;
+	vvec grad_v, grad_h, texture_offsets;
 
 	for (node_iterator I = cf->begin(), E = cf->end(); I != E; ++I) {
 
@@ -538,7 +538,7 @@ int bc_parser::prepare_fetch_clause(cf_node *cf) {
 			sh->uses_gradients = true;
 		}
 
-		if (flags & FF_SETGRAD) {
+		if (flags & (FF_SETGRAD | FF_SET_TEXTURE_OFFSETS)) {
 
 			vvec *grad = NULL;
 
@@ -548,6 +548,9 @@ int bc_parser::prepare_fetch_clause(cf_node *cf) {
 					break;
 				case FETCH_OP_SET_GRADIENTS_H:
 					grad = &grad_h;
+					break;
+				case FETCH_OP_SET_TEXTURE_OFFSETS:
+					grad = &texture_offsets;
 					break;
 				default:
 					assert(!"unexpected SET_GRAD instruction");
@@ -568,11 +571,15 @@ int bc_parser::prepare_fetch_clause(cf_node *cf) {
 					(*grad)[s] = sh->get_const_value(1.0f);
 			}
 		} else {
-
+			// Fold source values for instructions with hidden target values in to the instructions
+			// using them. The set instructions are later re-emitted by bc_finalizer
 			if (flags & FF_USEGRAD) {
 				n->src.resize(12);
 				std::copy(grad_v.begin(), grad_v.end(), n->src.begin() + 4);
 				std::copy(grad_h.begin(), grad_h.end(), n->src.begin() + 8);
+			} else if (flags & FF_USE_TEXTURE_OFFSETS) {
+				n->src.resize(8);
+				std::copy(texture_offsets.begin(), texture_offsets.end(), n->src.begin() + 4);
 			} else {
 				n->src.resize(4);
 			}

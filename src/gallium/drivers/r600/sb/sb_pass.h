@@ -713,6 +713,9 @@ public:
 
 	void cf_peephole();
 
+private:
+	void copy_fetch_src(fetch_node &dst, fetch_node &src, unsigned arg_start);
+	void emit_set_texture_offsets(fetch_node &f);
 };
 
 

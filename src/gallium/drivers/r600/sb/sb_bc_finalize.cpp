@@ -394,6 +394,64 @@ void bc_finalizer::finalize_alu_src(alu_group_node* g, alu_node* a) {
 	}
 }
 
+void bc_finalizer::copy_fetch_src(fetch_node &dst, fetch_node &src, unsigned arg_start)
+{
+	int reg = -1;
+
+	for (unsigned chan = 0; chan < 4; ++chan) {
+
+		dst.bc.dst_sel[chan] = SEL_MASK;
+
+		unsigned sel = SEL_MASK;
+
+		value *v = src.src[arg_start + chan];
+
+		if (!v || v->is_undef()) {
+			sel = SEL_MASK;
+		} else if (v->is_const()) {
+			literal l = v->literal_value;
+			if (l == literal(0))
+				sel = SEL_0;
+			else if (l == literal(1.0f))
+				sel = SEL_1;
+			else {
+				sblog << "invalid fetch constant operand  " << chan << " ";
+				dump::dump_op(&src);
+				sblog << "\n";
+				abort();
+			}
+
+		} else if (v->is_any_gpr()) {
+			unsigned vreg = v->gpr.sel();
+			unsigned vchan = v->gpr.chan();
+
+			if (reg == -1)
+				reg = vreg;
+			else if ((unsigned)reg != vreg) {
+				sblog << "invalid fetch source operand  " << chan << " ";
+				dump::dump_op(&src);
+				sblog << "\n";
+				abort();
+			}
+
+			sel = vchan;
+
+		} else {
+			sblog << "invalid fetch source operand  " << chan << " ";
+			dump::dump_op(&src);
+			sblog << "\n";
+			abort();
+		}
+
+		dst.bc.src_sel[chan] = sel;
+	}
+
+	if (reg >= 0)
+		update_ngpr(reg);
+
+	dst.bc.src_gpr = reg >= 0 ? reg : 0;
+}
+
 void bc_finalizer::emit_set_grad(fetch_node* f) {
 
 	assert(f->src.size() == 12);
@@ -405,68 +463,25 @@ void bc_finalizer::emit_set_grad(fetch_node* f) {
 		fetch_node *n = sh.create_fetch();
 		n->bc.set_op(ops[op]);
 
-		// FIXME extract this loop into a separate method and reuse it
-
-		int reg = -1;
-
 		arg_start += 4;
 
-		for (unsigned chan = 0; chan < 4; ++chan) {
-
-			n->bc.dst_sel[chan] = SEL_MASK;
-
-			unsigned sel = SEL_MASK;
-
-			value *v = f->src[arg_start + chan];
-
-			if (!v || v->is_undef()) {
-				sel = SEL_MASK;
-			} else if (v->is_const()) {
-				literal l = v->literal_value;
-				if (l == literal(0))
-					sel = SEL_0;
-				else if (l == literal(1.0f))
-					sel = SEL_1;
-				else {
-					sblog << "invalid fetch constant operand  " << chan << " ";
-					dump::dump_op(f);
-					sblog << "\n";
-					abort();
-				}
-
-			} else if (v->is_any_gpr()) {
-				unsigned vreg = v->gpr.sel();
-				unsigned vchan = v->gpr.chan();
-
-				if (reg == -1)
-					reg = vreg;
-				else if ((unsigned)reg != vreg) {
-					sblog << "invalid fetch source operand  " << chan << " ";
-					dump::dump_op(f);
-					sblog << "\n";
-					abort();
-				}
-
-				sel = vchan;
-
-			} else {
-				sblog << "invalid fetch source operand  " << chan << " ";
-				dump::dump_op(f);
-				sblog << "\n";
-				abort();
-			}
-
-			n->bc.src_sel[chan] = sel;
-		}
-
-		if (reg >= 0)
-			update_ngpr(reg);
-
-		n->bc.src_gpr = reg >= 0 ? reg : 0;
+		copy_fetch_src(*n, *f, arg_start);
 
 		f->insert_before(n);
 	}
 
+}
+
+void bc_finalizer::emit_set_texture_offsets(fetch_node &f) {
+	assert(f.src.size() == 8);
+
+	fetch_node *n = sh.create_fetch();
+
+	n->bc.set_op(FETCH_OP_SET_TEXTURE_OFFSETS);
+
+	copy_fetch_src(*n, f, 4);
+
+	f.insert_before(n);
 }
 
 void bc_finalizer::finalize_fetch(fetch_node* f) {
@@ -483,6 +498,8 @@ void bc_finalizer::finalize_fetch(fetch_node* f) {
 		src_count = 1;
 	} else if (flags & FF_USEGRAD) {
 		emit_set_grad(f);
+	} else if (flags & FF_USE_TEXTURE_OFFSETS) {
+		emit_set_texture_offsets(*f);
 	}
 
 	for (unsigned chan = 0; chan < src_count; ++chan) {

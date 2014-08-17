@@ -123,6 +123,9 @@ enum fetch_op_flags
 
 	FF_VTX		= (1<<5),
 	FF_MEM		= (1<<6),
+
+	FF_SET_TEXTURE_OFFSETS = (1<<7),
+	FF_USE_TEXTURE_OFFSETS = (1<<8),
 };
 
 /* flags for CF instructions */
@@ -523,7 +526,7 @@ static const struct fetch_op_info fetch_op_table[] = {
 		{"GET_GRADIENTS_H_FINE",          {       -1,        -1,  0x000107,  0x000107 }, FF_GETGRAD },
 		{"GET_GRADIENTS_V_FINE",          {       -1,        -1,  0x000108,  0x000108 }, FF_GETGRAD },
 		{"GET_LERP",                      { 0x000009,  0x000009,        -1,        -1 }, 0 },
-		{"SET_TEXTURE_OFFSETS",           {       -1,        -1,  0x000009,  0x000009 }, 0 },
+		{"SET_TEXTURE_OFFSETS",           {       -1,        -1,  0x000009,  0x000009 }, FF_SET_TEXTURE_OFFSETS },
 		{"KEEP_GRADIENTS",                {       -1,  0x00000A,  0x00000A,  0x00000A }, 0 },
 		{"SET_GRADIENTS_H",               { 0x00000B,  0x00000B,  0x00000B,  0x00000B }, FF_SETGRAD },
 		{"SET_GRADIENTS_V",               { 0x00000C,  0x00000C,  0x00000C,  0x00000C }, FF_SETGRAD },
@@ -550,7 +553,7 @@ static const struct fetch_op_info fetch_op_table[] = {
 		{"GATHER4",                       {       -1,        -1,  0x000015,  0x000015 }, FF_TEX },
 		{"SAMPLE_G_LB",                   { 0x000016,  0x000016,  0x000016,  0x000016 }, FF_TEX | FF_USEGRAD},
 		{"SAMPLE_G_LZ",                   { 0x000017,  0x000017,        -1,        -1 }, FF_TEX | FF_USEGRAD},
-		{"GATHER4_O",                     {       -1,        -1,  0x000017,  0x000017 }, FF_TEX },
+		{"GATHER4_O",                     {       -1,        -1,  0x000017,  0x000017 }, FF_TEX | FF_USE_TEXTURE_OFFSETS},
 		{"SAMPLE_C",                      { 0x000018,  0x000018,  0x000018,  0x000018 }, FF_TEX },
 		{"SAMPLE_C_L",                    { 0x000019,  0x000019,  0x000019,  0x000019 }, FF_TEX },
 		{"SAMPLE_C_LB",                   { 0x00001A,  0x00001A,  0x00001A,  0x00001A }, FF_TEX },
@@ -560,7 +563,7 @@ static const struct fetch_op_info fetch_op_table[] = {
 		{"GATHER4_C",                     {       -1,        -1,  0x00001D,  0x00001D }, FF_TEX },
 		{"SAMPLE_C_G_LB",                 { 0x00001E,  0x00001E,  0x00001E,  0x00001E }, FF_TEX | FF_USEGRAD},
 		{"SAMPLE_C_G_LZ",                 { 0x00001F,  0x00001F,        -1,        -1 }, FF_TEX | FF_USEGRAD},
-		{"GATHER4_C_O",                   {       -1,        -1,  0x00001F,  0x00001F }, FF_TEX }
+		{"GATHER4_C_O",                   {       -1,        -1,  0x00001F,  0x00001F }, FF_TEX | FF_USE_TEXTURE_OFFSETS}
 };
 
 static const struct cf_op_info cf_op_table[] = {
