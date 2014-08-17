@@ -629,7 +629,7 @@ AC_ARG_ENABLE([xvmc],
    [AS_HELP_STRING([--enable-xvmc],
          [enable xvmc library @<:@default=auto@:>@])],
    [enable_xvmc="$enableval"],
-   [enable_xvmc=no])
+   [enable_xvmc=auto])
 AC_ARG_ENABLE([vdpau],
    [AS_HELP_STRING([--enable-vdpau],
          [enable vdpau library @<:@default=auto@:>@])],
