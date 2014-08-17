@@ -96,7 +96,8 @@ endif
 if HAVE_DRICOMMON
 libglx_la_SOURCES += \
 	  xfont.c \
-	  dri_common.c
+	  dri_common.c \
+	  dri_common_query_renderer.c
 endif
 
 if HAVE_DRI2
@@ -104,8 +105,7 @@ libglx_la_SOURCES += \
 	  dri_glx.c \
 	  XF86dri.c \
 	  dri2_glx.c \
-	  dri2.c \
-	  dri2_query_renderer.c
+	  dri2.c
 endif
 
 if HAVE_DRI3

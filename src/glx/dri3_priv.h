@@ -195,3 +195,12 @@ struct dri3_drawable {
    xcb_gcontext_t gc;
    xcb_special_event_t *special_event;
 };
+
+
+_X_HIDDEN int
+dri3_query_renderer_integer(struct glx_screen *base, int attribute,
+                            unsigned int *value);
+
+_X_HIDDEN int
+dri3_query_renderer_string(struct glx_screen *base, int attribute,
+                           const char **value);
