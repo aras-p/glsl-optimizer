@@ -3,4 +3,7 @@ C_SOURCES := \
 	glx_getproc.c \
 	glx_usefont.c \
 	xm_api.c \
-	xm_st.c
+	xm_api.h \
+	xm_public.h \
+	xm_st.c \
+	xm_st.h

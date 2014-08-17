@@ -9,7 +9,6 @@ env.Append(CPPPATH = [
     '#/src',
     '#/src/mapi',
     '#/src/mesa',
-    '#/src/mesa/main',
 ])
 
 st_xlib = env.ConvenienceLibrary(
