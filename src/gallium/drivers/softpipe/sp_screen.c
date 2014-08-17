@@ -223,7 +223,7 @@ softpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_UMA:
       return 0;
    case PIPE_CAP_CONDITIONAL_RENDER_INVERTED:
-      return 0;
+      return 1;
    }
    /* should only get here on unhandled cases */
    debug_printf("Unexpected PIPE_CAP %d query\n", param);
