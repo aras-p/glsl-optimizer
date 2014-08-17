@@ -30,3 +30,5 @@ AM_CFLAGS = \
 noinst_LTLIBRARIES = libws_xlib.la
 
 libws_xlib_la_SOURCES = $(C_SOURCES)
+
+EXTRA_DIST = SConscript

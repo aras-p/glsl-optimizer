@@ -109,6 +109,15 @@ if NEED_WINSYS_WRAPPER
 SUBDIRS += winsys/sw/wrapper
 endif
 
+##
+## Don't forget to bundle the remaining (non autotools) winsys'
+##
+
+EXTRA_DIST = \
+	winsys/sw/android \
+	winsys/sw/gdi \
+	winsys/sw/hgl
+
 
 ##
 ## Gallium state trackers and their users (targets)

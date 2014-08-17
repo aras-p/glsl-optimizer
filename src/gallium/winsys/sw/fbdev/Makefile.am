@@ -29,3 +29,5 @@ AM_CFLAGS = \
 noinst_LTLIBRARIES = libfbdev.la
 
 libfbdev_la_SOURCES = $(C_SOURCES)
+
+EXTRA_DIST = SConscript

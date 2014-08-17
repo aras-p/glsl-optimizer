@@ -29,3 +29,5 @@ AM_CFLAGS = \
 noinst_LTLIBRARIES = libswdri.la
 
 libswdri_la_SOURCES = $(C_SOURCES)
+
+EXTRA_DIST = SConscript
