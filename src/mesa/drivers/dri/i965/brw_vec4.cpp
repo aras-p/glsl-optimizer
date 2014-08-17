@@ -311,6 +311,103 @@ src_reg::equals(const src_reg &r) const
 		  sizeof(fixed_hw_reg)) == 0);
 }
 
+/* Replaces unused channels of a swizzle with channels that are used.
+ *
+ * For instance, this pass transforms
+ *
+ *    mov vgrf4.yz, vgrf5.wxzy
+ *
+ * into
+ *
+ *    mov vgrf4.yz, vgrf5.xxzx
+ *
+ * This eliminates false uses of some channels, letting dead code elimination
+ * remove the instructions that wrote them.
+ */
+bool
+vec4_visitor::opt_reduce_swizzle()
+{
+   bool progress = false;
+
+   foreach_in_list_safe(vec4_instruction, inst, &instructions) {
+      if (inst->dst.file == BAD_FILE || inst->dst.file == HW_REG)
+         continue;
+
+      int swizzle[4];
+
+      /* Determine which channels of the sources are read. */
+      switch (inst->opcode) {
+      case BRW_OPCODE_DP4:
+      case BRW_OPCODE_DPH: /* FINISHME: DPH reads only three channels of src0,
+                            *           but all four of src1.
+                            */
+         swizzle[0] = 0;
+         swizzle[1] = 1;
+         swizzle[2] = 2;
+         swizzle[3] = 3;
+         break;
+      case BRW_OPCODE_DP3:
+         swizzle[0] = 0;
+         swizzle[1] = 1;
+         swizzle[2] = 2;
+         swizzle[3] = -1;
+         break;
+      case BRW_OPCODE_DP2:
+         swizzle[0] = 0;
+         swizzle[1] = 1;
+         swizzle[2] = -1;
+         swizzle[3] = -1;
+         break;
+      default:
+         swizzle[0] = inst->dst.writemask & WRITEMASK_X ? 0 : -1;
+         swizzle[1] = inst->dst.writemask & WRITEMASK_Y ? 1 : -1;
+         swizzle[2] = inst->dst.writemask & WRITEMASK_Z ? 2 : -1;
+         swizzle[3] = inst->dst.writemask & WRITEMASK_W ? 3 : -1;
+         break;
+      }
+
+      /* Resolve unread channels (-1) by assigning them the swizzle of the
+       * first channel that is used.
+       */
+      int first_used_channel = 0;
+      for (int i = 0; i < 4; i++) {
+         if (swizzle[i] != -1) {
+            first_used_channel = swizzle[i];
+            break;
+         }
+      }
+      for (int i = 0; i < 4; i++) {
+         if (swizzle[i] == -1) {
+            swizzle[i] = first_used_channel;
+         }
+      }
+
+      /* Update sources' swizzles. */
+      for (int i = 0; i < 3; i++) {
+         if (inst->src[i].file != GRF &&
+             inst->src[i].file != ATTR &&
+             inst->src[i].file != UNIFORM)
+            continue;
+
+         int swiz[4];
+         for (int j = 0; j < 4; j++) {
+            swiz[j] = BRW_GET_SWZ(inst->src[i].swizzle, swizzle[j]);
+         }
+
+         unsigned new_swizzle = BRW_SWIZZLE4(swiz[0], swiz[1], swiz[2], swiz[3]);
+         if (inst->src[i].swizzle != new_swizzle) {
+            inst->src[i].swizzle = new_swizzle;
+            progress = true;
+         }
+      }
+   }
+
+   if (progress)
+      invalidate_live_intervals();
+
+   return progress;
+}
+
 static bool
 try_eliminate_instruction(vec4_instruction *inst, int new_writemask,
                           const struct brw_context *brw)
@@ -1699,6 +1796,7 @@ vec4_visitor::run()
       iteration++;
       int pass_num = 0;
 
+      OPT(opt_reduce_swizzle);
       OPT(dead_code_eliminate);
       OPT(dead_control_flow_eliminate, this);
       OPT(opt_copy_propagation);

@@ -380,6 +380,7 @@ public:
    void calculate_live_intervals();
    void invalidate_live_intervals();
    void split_virtual_grfs();
+   bool opt_reduce_swizzle();
    bool dead_code_eliminate();
    bool virtual_grf_interferes(int a, int b);
    bool opt_copy_propagation();
