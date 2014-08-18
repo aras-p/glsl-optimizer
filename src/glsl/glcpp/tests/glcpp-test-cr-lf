@@ -111,7 +111,7 @@ rm -rf ./subtest-cr-lf
 mkdir subtest-cr-lf
 for file in "$testdir"/*.c; do
     base=$(basename "$file")
-    sed -e 's/$/\r/' < "$file" > subtest-cr-lf/"$base"
+    sed -e 's/$//' < "$file" > subtest-cr-lf/"$base"
     cp subtest-lf/"$base".out subtest-cr-lf/"$base".expected
 done
 
@@ -124,7 +124,7 @@ rm -rf ./subtest-lf-cr
 mkdir subtest-lf-cr
 for file in "$testdir"/*.c; do
     base=$(basename "$file")
-    tr "\n" "\r" < "$file" | sed -e 's/\r/\n\r/g' > subtest-lf-cr/"$base"
+    sed -e 's/$//' < "$file" | tr "\n\r" "\r\n" > subtest-lf-cr/"$base"
     cp subtest-lf/"$base".out subtest-lf-cr/"$base".expected
 done
 
