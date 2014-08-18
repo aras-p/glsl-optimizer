@@ -1,4 +1,47 @@
 CPP_SOURCES := \
+	api/context.cpp \
+	api/device.cpp \
+	api/dispatch.cpp \
+	api/dispatch.hpp \
+	api/event.cpp \
+	api/kernel.cpp \
+	api/memory.cpp \
+	api/platform.cpp \
+	api/program.cpp \
+	api/queue.cpp \
+	api/sampler.cpp \
+	api/transfer.cpp \
+	api/util.hpp \
+	core/compiler.hpp \
+	core/context.cpp \
+	core/context.hpp \
+	core/device.cpp \
+	core/device.hpp \
+	core/error.hpp \
+	core/event.cpp \
+	core/event.hpp \
+	core/format.cpp \
+	core/format.hpp \
+	core/kernel.cpp \
+	core/kernel.hpp \
+	core/memory.cpp \
+	core/memory.hpp \
+	core/module.cpp \
+	core/module.hpp \
+	core/object.hpp \
+	core/platform.cpp \
+	core/platform.hpp \
+	core/program.cpp \
+	core/program.hpp \
+	core/property.hpp \
+	core/queue.cpp \
+	core/queue.hpp \
+	core/resource.cpp \
+	core/resource.hpp \
+	core/sampler.cpp \
+	core/sampler.hpp \
+	core/timestamp.cpp \
+	core/timestamp.hpp \
 	util/adaptor.hpp \
 	util/algebra.hpp \
 	util/algorithm.hpp \
@@ -9,47 +52,10 @@ CPP_SOURCES := \
 	util/lazy.hpp \
 	util/pointer.hpp \
 	util/range.hpp \
-	util/tuple.hpp \
-	core/object.hpp \
-	core/error.hpp \
-	core/compiler.hpp \
-	core/device.hpp \
-	core/device.cpp \
-	core/context.hpp \
-	core/context.cpp \
-	core/queue.hpp \
-	core/queue.cpp \
-	core/format.hpp \
-	core/format.cpp \
-	core/memory.hpp \
-	core/memory.cpp \
-	core/platform.hpp \
-	core/platform.cpp \
-	core/resource.hpp \
-	core/resource.cpp \
-	core/sampler.hpp \
-	core/sampler.cpp \
-	core/timestamp.hpp \
-	core/timestamp.cpp \
-	core/event.hpp \
-	core/event.cpp \
-	core/program.hpp \
-	core/program.cpp \
-	core/property.hpp \
-	core/kernel.hpp \
-	core/kernel.cpp \
-	core/module.hpp \
-	core/module.cpp \
-	api/util.hpp \
-	api/dispatch.hpp \
-	api/dispatch.cpp \
-	api/platform.cpp \
-	api/device.cpp \
-	api/context.cpp \
-	api/queue.cpp \
-	api/memory.cpp \
-	api/transfer.cpp \
-	api/sampler.cpp \
-	api/event.cpp \
-	api/program.cpp \
-	api/kernel.cpp
+	util/tuple.hpp
+
+LLVM_SOURCES := \
+	llvm/invocation.cpp
+
+TGSI_SOURCES := \
+	tgsi/compiler.cpp

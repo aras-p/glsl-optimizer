@@ -37,8 +37,7 @@ libcltgsi_la_CXXFLAGS = \
 	-std=c++0x \
 	$(VISIBILITY_CXXFLAGS)
 
-libcltgsi_la_SOURCES = \
-	tgsi/compiler.cpp
+libcltgsi_la_SOURCES = $(TGSI_SOURCES)
 
 libclllvm_la_CXXFLAGS = \
 	$(VISIBILITY_CXXFLAGS) \
@@ -48,8 +47,7 @@ libclllvm_la_CXXFLAGS = \
 	-DLIBCLC_LIBEXECDIR=\"$(LIBCLC_LIBEXECDIR)/\" \
 	-DCLANG_RESOURCE_DIR=\"$(CLANG_RESOURCE_DIR)\"
 
-libclllvm_la_SOURCES = \
-	llvm/invocation.cpp
+libclllvm_la_SOURCES = $(LLVM_SOURCES)
 
 libclover_la_CXXFLAGS = \
 	-std=c++11 \
