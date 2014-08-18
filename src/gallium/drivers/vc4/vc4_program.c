@@ -1474,12 +1474,10 @@ vc4_write_uniforms(struct vc4_context *vc4, struct vc4_compiled_shader *shader,
                                gallium_uniforms[uinfo->data[i]]);
                         break;
                 case QUNIFORM_VIEWPORT_X_SCALE:
-                        cl_f(&vc4->uniforms,
-                             vc4->framebuffer.width * 16.0f / 2.0f);
+                        cl_f(&vc4->uniforms, vc4->viewport.scale[0] * 16.0f);
                         break;
                 case QUNIFORM_VIEWPORT_Y_SCALE:
-                        cl_f(&vc4->uniforms,
-                             vc4->framebuffer.height * -16.0f / 2.0f);
+                        cl_f(&vc4->uniforms, vc4->viewport.scale[1] * 16.0f);
                         break;
 
                 case QUNIFORM_VIEWPORT_Z_OFFSET:
