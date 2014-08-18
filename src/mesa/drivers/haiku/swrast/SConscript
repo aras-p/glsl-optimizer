@@ -3,6 +3,7 @@ Import('*')
 env = env.Clone()
 
 env.Append(CPPPATH = [
+    '#/src',
     '#/src/mapi',
     '#/src/mesa',
     '#/src/mesa/main',
