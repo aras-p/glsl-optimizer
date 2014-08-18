@@ -36,6 +36,9 @@
 #  include <errno.h>
 #elif defined(PIPE_OS_BSD) || defined(PIPE_OS_APPLE)
 #  include <stdlib.h>
+#elif defined(PIPE_OS_HAIKU)
+#  include <kernel/OS.h>
+#  include <kernel/image.h>
 #else
 #warning unexpected platform in os_process.c
 #endif
@@ -73,6 +76,10 @@ os_get_process_name(char *procname, size_t size)
 #elif defined(PIPE_OS_BSD) || defined(PIPE_OS_APPLE)
    /* *BSD and OS X */
    name = getprogname();
+#elif defined(PIPE_OS_HAIKU)
+   image_info info;
+   get_image_info(B_CURRENT_TEAM, &info);
+   name = info.name;
 #else
 #warning unexpected platform in os_process.c
    return FALSE;
