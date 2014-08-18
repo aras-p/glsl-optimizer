@@ -57,7 +57,6 @@
 #define QUOTEME(x) #x
 #define TOSTRING(x) QUOTEME(x)
 #define INFORMATION_STRING TOSTRING(INFORMATION)
-#define VL_HANDLES
 
 static inline enum pipe_video_chroma_format
 ChromaToPipe(VdpChromaType vdpau_type)
