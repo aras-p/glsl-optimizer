@@ -1403,7 +1403,7 @@ write_texture_p0(struct vc4_context *vc4,
         struct vc4_resource *rsc = vc4_resource(texture->texture);
 
         cl_reloc(vc4, &vc4->uniforms, rsc->bo,
-                 texture->u.tex.last_level);
+                 rsc->slices[0].offset | texture->u.tex.last_level);
 }
 
 static void
