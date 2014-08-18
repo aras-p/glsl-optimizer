@@ -293,7 +293,7 @@ vc4_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader,
                 return 0;
         case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
         case PIPE_SHADER_CAP_MAX_SAMPLER_VIEWS:
-                return 16;
+                return VC4_MAX_TEXTURE_SAMPLERS;
         case PIPE_SHADER_CAP_PREFERRED_IR:
                 return PIPE_SHADER_IR_TGSI;
         default:

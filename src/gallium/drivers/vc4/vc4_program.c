@@ -52,6 +52,7 @@ struct tgsi_to_qir {
         uint32_t num_consts;
 
         struct pipe_shader_state *shader_state;
+        struct vc4_key *key;
         struct vc4_fs_key *fs_key;
         struct vc4_vs_key *vs_key;
 
@@ -64,6 +65,7 @@ struct tgsi_to_qir {
 
 struct vc4_key {
         struct pipe_shader_state *shader_state;
+        enum pipe_format tex_format[VC4_MAX_TEXTURE_SAMPLERS];
 };
 
 struct vc4_fs_key {
@@ -325,6 +327,7 @@ tgsi_to_qir_tex(struct tgsi_to_qir *trans,
 
         struct qreg s = src[0 * 4 + 0];
         struct qreg t = src[0 * 4 + 1];
+        uint32_t sampler = 0; /* XXX */
 
         if (tgsi_inst->Instruction.Opcode == TGSI_OPCODE_TXP) {
                 struct qreg proj = qir_RCP(c, src[0 * 4 + 3]);
@@ -337,7 +340,6 @@ tgsi_to_qir_tex(struct tgsi_to_qir *trans,
          * 1]).
          */
         if (tgsi_inst->Texture.Texture == TGSI_TEXTURE_RECT) {
-                uint32_t sampler = 0; /* XXX */
                 s = qir_FMUL(c, s,
                              get_temp_for_uniform(trans,
                                                   QUNIFORM_TEXRECT_SCALE_X,
@@ -364,12 +366,32 @@ tgsi_to_qir_tex(struct tgsi_to_qir *trans,
         trans->num_texture_samples++;
         qir_emit(c, qir_inst(QOP_TEX_RESULT, c->undef, c->undef, c->undef));
 
+        struct qreg unpacked[4];
+        for (int i = 0; i < 4; i++)
+                unpacked[i] = qir_R4_UNPACK(c, i);
+
+        bool format_warned = false;
         for (int i = 0; i < 4; i++) {
                 if (!(tgsi_inst->Dst[0].Register.WriteMask & (1 << i)))
                         continue;
 
-                struct qreg dst = qir_R4_UNPACK(c, i);
-                update_dst(trans, tgsi_inst, i, dst);
+                enum pipe_format format = trans->key->tex_format[sampler];
+                const struct util_format_description *desc =
+                        util_format_description(format);
+
+                uint8_t swiz = desc->swizzle[i];
+                if (!format_warned &&
+                    swiz <= UTIL_FORMAT_SWIZZLE_W &&
+                    (desc->channel[swiz].type != UTIL_FORMAT_TYPE_UNSIGNED ||
+                     desc->channel[swiz].size != 8)) {
+                        fprintf(stderr,
+                                "tex channel %d unsupported type: %s\n",
+                                i, util_format_name(format));
+                        format_warned = true;
+                }
+
+                update_dst(trans, tgsi_inst, i,
+                           get_swizzled_channel(trans, unpacked, swiz));
         }
 }
 
@@ -1094,6 +1116,7 @@ vc4_shader_tgsi_to_qir(struct vc4_compiled_shader *shader, enum qstage stage,
                 tgsi_dump(trans->shader_state->tokens, 0);
         }
 
+        trans->key = key;
         switch (stage) {
         case QSTAGE_FRAG:
                 trans->fs_key = (struct vc4_fs_key *)key;
@@ -1244,12 +1267,22 @@ vc4_vs_compile(struct vc4_context *vc4, struct vc4_compiled_shader *shader,
 }
 
 static void
+vc4_setup_shared_key(struct vc4_key *key, struct vc4_texture_stateobj *texstate)
+{
+        for (int i = 0; i < texstate->num_textures; i++) {
+                struct pipe_resource *prsc = texstate->textures[i]->texture;
+                key->tex_format[i] = prsc->format;
+        }
+}
+
+static void
 vc4_update_compiled_fs(struct vc4_context *vc4, uint8_t prim_mode)
 {
         struct vc4_fs_key local_key;
         struct vc4_fs_key *key = &local_key;
 
         memset(key, 0, sizeof(*key));
+        vc4_setup_shared_key(&key->base, &vc4->fragtex);
         key->base.shader_state = vc4->prog.bind_fs;
         key->is_points = (prim_mode == PIPE_PRIM_POINTS);
         key->is_lines = (prim_mode >= PIPE_PRIM_LINES &&
@@ -1282,6 +1315,7 @@ vc4_update_compiled_vs(struct vc4_context *vc4)
         struct vc4_vs_key *key = &local_key;
 
         memset(key, 0, sizeof(*key));
+        vc4_setup_shared_key(&key->base, &vc4->verttex);
         key->base.shader_state = vc4->prog.bind_vs;
 
         for (int i = 0; i < ARRAY_SIZE(key->attr_formats); i++)

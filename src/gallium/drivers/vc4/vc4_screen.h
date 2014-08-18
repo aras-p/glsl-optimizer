@@ -38,6 +38,7 @@ struct vc4_bo;
 #define VC4_DEBUG_NORAST    0x0040
 
 #define VC4_MAX_MIP_LEVELS 12
+#define VC4_MAX_TEXTURE_SAMPLERS 16
 
 struct vc4_screen {
         struct pipe_screen base;
