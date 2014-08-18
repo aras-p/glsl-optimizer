@@ -872,24 +872,14 @@ vc4_blend_func(struct tgsi_to_qir *trans,
  */
 static void
 vc4_blend(struct tgsi_to_qir *trans, struct qreg *result,
-          struct qreg *src_color)
+          struct qreg *dst_color, struct qreg *src_color)
 {
-        struct qcompile *c = trans->c;
         struct pipe_rt_blend_state *blend = &trans->fs_key->blend;
 
         if (!blend->blend_enable) {
                 for (int i = 0; i < 4; i++)
                         result[i] = src_color[i];
                 return;
-        }
-
-        qir_emit(c, qir_inst(QOP_TLB_COLOR_READ, c->undef,
-                             c->undef, c->undef));
-        struct qreg dst_color[4];
-        for (int i = 0; i < 4; i++) {
-                dst_color[i] = qir_R4_UNPACK(c, i);
-
-                /* XXX: Swizzles? */
         }
 
         struct qreg src_blend[4], dst_blend[4];
@@ -932,13 +922,34 @@ emit_frag_end(struct tgsi_to_qir *trans)
         const struct util_format_description *format_desc =
                 util_format_description(trans->fs_key->color_format);
 
-        struct qreg output_color[4] = {
+        struct qreg src_color[4] = {
                 trans->outputs[0], trans->outputs[1],
                 trans->outputs[2], trans->outputs[3],
         };
 
+        struct qreg dst_color[4] = { c->undef, c->undef, c->undef, c->undef };
+        if (trans->fs_key->blend.blend_enable ||
+            trans->fs_key->blend.colormask != 0xf) {
+                qir_emit(c, qir_inst(QOP_TLB_COLOR_READ, c->undef,
+                                     c->undef, c->undef));
+                for (int i = 0; i < 4; i++) {
+                        dst_color[i] = qir_R4_UNPACK(c, i);
+
+                        /* XXX: Swizzles? */
+                }
+        }
+
         struct qreg blend_color[4];
-        vc4_blend(trans, blend_color, output_color);
+        vc4_blend(trans, blend_color, dst_color, src_color);
+
+        /* If the bit isn't set in the color mask, then just return the
+         * original dst color, instead.
+         */
+        for (int i = 0; i < 4; i++) {
+                if (!(trans->fs_key->blend.colormask & (1 << i))) {
+                        blend_color[i] = dst_color[i];
+                }
+        }
 
         /* Debug: Sometimes you're getting a black output and just want to see
          * if the FS is getting executed at all.  Spam magenta into the color
