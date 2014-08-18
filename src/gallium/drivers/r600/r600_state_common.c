@@ -1418,6 +1418,30 @@ static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info 
 		r600_emit_atom(rctx, rctx->atoms[i]);
 	}
 
+	if (rctx->b.chip_class == CAYMAN) {
+		/* Copied from radeonsi. */
+		unsigned primgroup_size = 128; /* recommended without a GS */
+		bool ia_switch_on_eop = false;
+		bool partial_vs_wave = false;
+
+		if (rctx->gs_shader)
+			primgroup_size = 64; /* recommended with a GS */
+
+		if ((rctx->rasterizer && rctx->rasterizer->pa_sc_line_stipple) ||
+		    (rctx->b.screen->debug_flags & DBG_SWITCH_ON_EOP)) {
+			ia_switch_on_eop = true;
+		}
+
+		if (rctx->b.streamout.streamout_enabled ||
+		    rctx->b.streamout.prims_gen_query_enabled)
+			partial_vs_wave = true;
+
+		r600_write_context_reg(cs, CM_R_028AA8_IA_MULTI_VGT_PARAM,
+				       S_028AA8_SWITCH_ON_EOP(ia_switch_on_eop) |
+				       S_028AA8_PARTIAL_VS_WAVE_ON(partial_vs_wave) |
+				       S_028AA8_PRIMGROUP_SIZE(primgroup_size - 1));
+	}
+
 	/* On R6xx, CULL_FRONT=1 culls all points, lines, and rectangles,
 	 * even though it should have no effect on those. */
 	if (rctx->b.chip_class == R600 && rctx->rasterizer) {
