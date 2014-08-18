@@ -661,6 +661,8 @@ brw_meta_resolve_color(struct brw_context *brw,
    GLuint fbo, rbo;
    struct rect rect;
 
+   intel_batchbuffer_emit_mi_flush(brw);
+
    _mesa_meta_begin(ctx, MESA_META_ALL);
 
    _mesa_GenFramebuffers(1, &fbo);
@@ -692,8 +694,6 @@ brw_meta_resolve_color(struct brw_context *brw,
    _mesa_DeleteFramebuffers(1, &fbo);
 
    _mesa_meta_end(ctx);
-
-   intel_batchbuffer_emit_mi_flush(brw);
 
    /* We're typically called from intel_update_state() and we're supposed to
     * return with the state all updated to what it was before
