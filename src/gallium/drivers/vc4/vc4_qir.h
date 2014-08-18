@@ -287,4 +287,12 @@ qir_CMP(struct qcompile *c, struct qreg cmp, struct qreg a, struct qreg b)
         return t;
 }
 
+static inline struct qreg
+qir_R4_UNPACK(struct qcompile *c, int i)
+{
+        struct qreg t = qir_get_temp(c);
+        qir_emit(c, qir_inst(QOP_R4_UNPACK_A + i, t, c->undef, c->undef));
+        return t;
+}
+
 #endif /* VC4_QIR_H */

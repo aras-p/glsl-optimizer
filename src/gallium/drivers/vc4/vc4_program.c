@@ -347,10 +347,7 @@ tgsi_to_qir_tex(struct tgsi_to_qir *trans,
                 if (!(tgsi_inst->Dst[0].Register.WriteMask & (1 << i)))
                         continue;
 
-                struct qreg dst = qir_get_temp(c);
-                qir_emit(c, qir_inst(QOP_R4_UNPACK_A + i,
-                                     dst,
-                                     c->undef, c->undef));
+                struct qreg dst = qir_R4_UNPACK(c, i);
                 update_dst(trans, tgsi_inst, i, dst);
         }
 }
@@ -890,10 +887,8 @@ vc4_blend(struct tgsi_to_qir *trans, struct qreg *result,
                              c->undef, c->undef));
         struct qreg dst_color[4];
         for (int i = 0; i < 4; i++) {
-                dst_color[i] = qir_get_temp(c);
-                qir_emit(c, qir_inst(QOP_R4_UNPACK_A + i,
-                                     dst_color[i],
-                                     c->undef, c->undef));
+                dst_color[i] = qir_R4_UNPACK(c, i);
+
                 /* XXX: Swizzles? */
         }
 
