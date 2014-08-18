@@ -4,6 +4,7 @@ env.Prepend(LIBS = [
     ws_haiku,
     trace,
     rbug,
+    mesautil,
     mesa,
     glsl,
     gallium
