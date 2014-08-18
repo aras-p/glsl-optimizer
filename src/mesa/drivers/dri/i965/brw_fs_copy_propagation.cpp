@@ -42,6 +42,7 @@ namespace { /* avoid conflict with opt_copy_propagation_elements */
 struct acp_entry : public exec_node {
    fs_reg dst;
    fs_reg src;
+   uint8_t regs_written;
    enum opcode opcode;
    bool saturate;
 };
@@ -295,11 +296,10 @@ fs_visitor::try_copy_propagate(fs_inst *inst, int arg, acp_entry *entry)
    /* Bail if inst is reading a range that isn't contained in the range
     * that entry is writing.
     */
-   int reg_size = dispatch_width * sizeof(float);
    if (inst->src[arg].reg_offset < entry->dst.reg_offset ||
-       (inst->src[arg].reg_offset * reg_size + inst->src[arg].subreg_offset +
-        inst->regs_read(this, arg) * inst->src[arg].stride * reg_size) >
-       (entry->dst.reg_offset + 1) * reg_size)
+       (inst->src[arg].reg_offset * 32 + inst->src[arg].subreg_offset +
+        inst->regs_read(this, arg) * inst->src[arg].stride * 32) >
+       (entry->dst.reg_offset + entry->regs_written) * 32)
       return false;
 
    /* See resolve_ud_negate() and comment in brw_fs_emit.cpp. */
@@ -371,16 +371,25 @@ fs_visitor::try_copy_propagate(fs_inst *inst, int arg, acp_entry *entry)
    inst->saturate = inst->saturate || entry->saturate;
 
    switch (entry->src.file) {
+   case UNIFORM:
+      assert(entry->src.width == 1);
    case BAD_FILE:
    case HW_REG:
-   case UNIFORM:
+      inst->src[arg].width = entry->src.width;
       inst->src[arg].reg_offset = entry->src.reg_offset;
       inst->src[arg].subreg_offset = entry->src.subreg_offset;
       break;
    case GRF:
       {
-         /* In this case, we have to deal with mapping parts of vgrfs to
-          * other parts of vgrfs so we have to do some reg_offset magic.
+         assert(entry->src.width % inst->src[arg].width == 0);
+         /* In this case, we'll just leave the width alone.  The source
+          * register could have different widths depending on how it is
+          * being used.  For instance, if only half of the register was
+          * used then we want to preserve that and continue to only use
+          * half.
+          *
+          * Also, we have to deal with mapping parts of vgrfs to other
+          * parts of vgrfs so we have to do some reg_offset magic.
           */
 
          /* Compute the offset of inst->src[arg] relative to inst->dst */
@@ -389,10 +398,10 @@ fs_visitor::try_copy_propagate(fs_inst *inst, int arg, acp_entry *entry)
          int rel_suboffset = inst->src[arg].subreg_offset;
 
          /* Compute the final register offset (in bytes) */
-         int offset = entry->src.reg_offset * reg_size + entry->src.subreg_offset;
-         offset += rel_offset * reg_size + rel_suboffset;
-         inst->src[arg].reg_offset = offset / reg_size;
-         inst->src[arg].subreg_offset = offset % reg_size;
+         int offset = entry->src.reg_offset * 32 + entry->src.subreg_offset;
+         offset += rel_offset * 32 + rel_suboffset;
+         inst->src[arg].reg_offset = offset / 32;
+         inst->src[arg].subreg_offset = offset % 32;
       }
       break;
    default:
@@ -429,11 +438,10 @@ fs_visitor::try_constant_propagate(fs_inst *inst, acp_entry *entry)
       /* Bail if inst is reading a range that isn't contained in the range
        * that entry is writing.
        */
-      int reg_size = dispatch_width * sizeof(float);
       if (inst->src[i].reg_offset < entry->dst.reg_offset ||
-          (inst->src[i].reg_offset * reg_size + inst->src[i].subreg_offset +
-           inst->regs_read(this, i) * inst->src[i].stride * reg_size) >
-          (entry->dst.reg_offset + 1) * reg_size)
+          (inst->src[i].reg_offset * 32 + inst->src[i].subreg_offset +
+           inst->regs_read(this, i) * inst->src[i].stride * 32) >
+          (entry->dst.reg_offset + entry->regs_written) * 32)
          continue;
 
       /* Don't bother with cases that should have been taken care of by the
@@ -623,17 +631,23 @@ fs_visitor::opt_copy_propagate_local(void *copy_prop_ctx, bblock_t *block,
 	 acp_entry *entry = ralloc(copy_prop_ctx, acp_entry);
 	 entry->dst = inst->dst;
 	 entry->src = inst->src[0];
+         entry->regs_written = inst->regs_written;
          entry->opcode = inst->opcode;
          entry->saturate = inst->saturate;
 	 acp[entry->dst.reg % ACP_HASH_SIZE].push_tail(entry);
       } else if (inst->opcode == SHADER_OPCODE_LOAD_PAYLOAD &&
                  inst->dst.file == GRF) {
+         int offset = 0;
          for (int i = 0; i < inst->sources; i++) {
+            int regs_written = ((inst->src[i].effective_width(this) *
+                                 type_sz(inst->src[i].type)) + 31) / 32;
             if (inst->src[i].file == GRF) {
                acp_entry *entry = ralloc(copy_prop_ctx, acp_entry);
                entry->dst = inst->dst;
-               entry->dst.reg_offset = i;
+               entry->dst.reg_offset = offset;
+               entry->dst.width = inst->src[i].effective_width(this);
                entry->src = inst->src[i];
+               entry->regs_written = regs_written;
                entry->opcode = inst->opcode;
                if (!entry->dst.equals(inst->src[i])) {
                   acp[entry->dst.reg % ACP_HASH_SIZE].push_tail(entry);
@@ -641,6 +655,7 @@ fs_visitor::opt_copy_propagate_local(void *copy_prop_ctx, bblock_t *block,
                   ralloc_free(entry);
                }
             }
+            offset += regs_written;
          }
       }
    }

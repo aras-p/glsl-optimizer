@@ -69,16 +69,12 @@ is_copy_payload(const fs_visitor *v, const fs_inst *inst)
    if (v->virtual_grf_sizes[inst->src[0].reg] != inst->regs_written)
       return false;
 
-   const int reg = inst->src[0].reg;
-   if (inst->src[0].reg_offset != 0)
-      return false;
+   fs_reg reg = inst->src[0];
 
-   for (int i = 1; i < inst->sources; i++) {
-      if (inst->src[i].reg != reg ||
-          inst->src[i].reg_offset != i) {
+   for (int i = 0; i < inst->sources; i++)
+      if (!inst->src[i].equals(offset(reg, i)))
          return false;
-      }
-   }
+
    return true;
 }
 
@@ -186,6 +182,7 @@ fs_visitor::register_coalesce()
          src_size = virtual_grf_sizes[inst->src[0].reg];
          assert(src_size <= MAX_SAMPLER_MESSAGE_SIZE);
 
+         assert(inst->src[0].width % 8 == 0);
          channels_remaining = src_size;
          memset(mov, 0, sizeof(mov));
 
@@ -200,12 +197,14 @@ fs_visitor::register_coalesce()
             reg_to_offset[i] = i;
          }
          mov[0] = inst;
-         channels_remaining -= inst->sources;
+         channels_remaining -= inst->regs_written;
       } else {
          const int offset = inst->src[0].reg_offset;
          reg_to_offset[offset] = inst->dst.reg_offset;
+         if (inst->src[0].width == 16)
+            reg_to_offset[offset + 1] = inst->dst.reg_offset + 1;
          mov[offset] = inst;
-         channels_remaining--;
+         channels_remaining -= inst->regs_written;
       }
 
       if (channels_remaining)

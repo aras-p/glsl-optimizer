@@ -795,7 +795,7 @@ fs_instruction_scheduler::calculate_deps()
       for (int i = 0; i < inst->sources; i++) {
 	 if (inst->src[i].file == GRF) {
             if (post_reg_alloc) {
-               for (int r = 0; r < reg_width * inst->regs_read(v, i); r++)
+               for (int r = 0; r < inst->regs_read(v, i); r++)
                   add_dep(last_grf_write[inst->src[i].reg + r], n);
             } else {
                for (int r = 0; r < inst->regs_read(v, i); r++) {
@@ -847,7 +847,7 @@ fs_instruction_scheduler::calculate_deps()
       /* write-after-write deps. */
       if (inst->dst.file == GRF) {
          if (post_reg_alloc) {
-            for (int r = 0; r < inst->regs_written * reg_width; r++) {
+            for (int r = 0; r < inst->regs_written; r++) {
                add_dep(last_grf_write[inst->dst.reg + r], n);
                last_grf_write[inst->dst.reg + r] = n;
             }
@@ -923,7 +923,7 @@ fs_instruction_scheduler::calculate_deps()
       for (int i = 0; i < inst->sources; i++) {
 	 if (inst->src[i].file == GRF) {
             if (post_reg_alloc) {
-               for (int r = 0; r < reg_width * inst->regs_read(v, i); r++)
+               for (int r = 0; r < inst->regs_read(v, i); r++)
                   add_dep(n, last_grf_write[inst->src[i].reg + r]);
             } else {
                for (int r = 0; r < inst->regs_read(v, i); r++) {
@@ -977,7 +977,7 @@ fs_instruction_scheduler::calculate_deps()
        */
       if (inst->dst.file == GRF) {
          if (post_reg_alloc) {
-            for (int r = 0; r < inst->regs_written * reg_width; r++)
+            for (int r = 0; r < inst->regs_written; r++)
                last_grf_write[inst->dst.reg + r] = n;
          } else {
             for (int r = 0; r < inst->regs_written; r++) {
@@ -1300,7 +1300,8 @@ fs_instruction_scheduler::choose_instruction_to_schedule()
                 * single-result send is probably actually reducing register
                 * pressure.
                 */
-               if (inst->regs_written <= 1 && chosen_inst->regs_written > 1) {
+               if (inst->regs_written <= inst->dst.width / 8 &&
+                   chosen_inst->regs_written > chosen_inst->dst.width / 8) {
                   chosen = n;
                   continue;
                } else if (inst->regs_written > chosen_inst->regs_written) {

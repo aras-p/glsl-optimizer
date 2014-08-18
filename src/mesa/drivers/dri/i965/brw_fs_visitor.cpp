@@ -287,7 +287,8 @@ fs_visitor::try_emit_saturate(ir_expression *ir)
     * src, just set the saturate flag instead of emmitting a separate mov.
     */
    fs_inst *modify = get_instruction_generating_reg(pre_inst, last_inst, src);
-   if (modify && modify->regs_written == 1 && modify->can_do_saturate()) {
+   if (modify && modify->regs_written == modify->dst.width / 8 &&
+       modify->can_do_saturate()) {
       modify->saturate = true;
       this->result = src;
       return true;
@@ -1434,7 +1435,7 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    inst->base_mrf = base_mrf;
    inst->mlen = mlen;
    inst->header_present = header_present;
-   inst->regs_written = 4;
+   inst->regs_written = 4 * reg_width;
 
    if (mlen > MAX_SAMPLER_MESSAGE_SIZE) {
       fail("Message length >" STRINGIFY(MAX_SAMPLER_MESSAGE_SIZE)
@@ -1480,7 +1481,7 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
        * need to offset the Sampler State Pointer in the header.
        */
       header_present = true;
-      sources[length] = reg_undef;
+      sources[0] = fs_reg(GRF, virtual_grf_alloc(1), BRW_REGISTER_TYPE_UD);
       length++;
    }
 
@@ -1618,7 +1619,13 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       }
    }
 
-   fs_reg src_payload = fs_reg(GRF, virtual_grf_alloc(length),
+   int mlen;
+   if (reg_width == 2)
+      mlen = length * reg_width - header_present;
+   else
+      mlen = length * reg_width;
+
+   fs_reg src_payload = fs_reg(GRF, virtual_grf_alloc(mlen),
                                BRW_REGISTER_TYPE_F);
    emit(LOAD_PAYLOAD(src_payload, sources, length));
 
@@ -1645,12 +1652,9 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    }
    fs_inst *inst = emit(opcode, dst, src_payload, sampler);
    inst->base_mrf = -1;
-   if (reg_width == 2)
-      inst->mlen = length * reg_width - header_present;
-   else
-      inst->mlen = length * reg_width;
+   inst->mlen = mlen;
    inst->header_present = header_present;
-   inst->regs_written = 4;
+   inst->regs_written = 4 * reg_width;
 
    if (inst->mlen > MAX_SAMPLER_MESSAGE_SIZE) {
       fail("Message length >" STRINGIFY(MAX_SAMPLER_MESSAGE_SIZE)
@@ -1784,7 +1788,7 @@ fs_visitor::emit_mcs_fetch(ir_texture *ir, fs_reg coordinate, fs_reg sampler)
 {
    int reg_width = dispatch_width / 8;
    int length = ir->coordinate->type->vector_elements;
-   fs_reg payload = fs_reg(GRF, virtual_grf_alloc(length),
+   fs_reg payload = fs_reg(GRF, virtual_grf_alloc(length * reg_width),
                            BRW_REGISTER_TYPE_F);
    fs_reg dest = fs_reg(this, glsl_type::uvec4_type);
    fs_reg *sources = ralloc_array(mem_ctx, fs_reg, length);
@@ -1802,9 +1806,10 @@ fs_visitor::emit_mcs_fetch(ir_texture *ir, fs_reg coordinate, fs_reg sampler)
    inst->base_mrf = -1;
    inst->mlen = length * reg_width;
    inst->header_present = false;
-   inst->regs_written = 4; /* we only care about one reg of response,
-                            * but the sampler always writes 4/8
-                            */
+   inst->regs_written = 4 * reg_width; /* we only care about one reg of
+                                        * response, but the sampler always
+                                        * writes 4/8
+                                        */
 
    return dest;
 }
@@ -1979,14 +1984,15 @@ fs_visitor::visit(ir_texture *ir)
          emit_math(SHADER_OPCODE_INT_QUOTIENT, fixed_depth, depth, fs_reg(6));
 
          fs_reg *fixed_payload = ralloc_array(mem_ctx, fs_reg, inst->regs_written);
-         for (int i = 0; i < inst->regs_written; i++) {
+         int components = inst->regs_written / (dst.width / 8);
+         for (int i = 0; i < components; i++) {
             if (i == 2) {
                fixed_payload[i] = fixed_depth;
             } else {
                fixed_payload[i] = offset(dst, i);
             }
          }
-         emit(LOAD_PAYLOAD(dst, fixed_payload, inst->regs_written));
+         emit(LOAD_PAYLOAD(dst, fixed_payload, components));
       }
    }
 

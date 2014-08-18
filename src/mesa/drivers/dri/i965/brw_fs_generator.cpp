@@ -542,15 +542,8 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
       dst = vec16(dst);
    }
 
-   if (brw->gen >= 7 && inst->header_present && dispatch_width == 16) {
-      /* The send-from-GRF for SIMD16 texturing with a header has an extra
-       * hardware register allocated to it, which we need to skip over (since
-       * our coordinates in the payload are in the even-numbered registers,
-       * and the header comes right before the first one).
-       */
-      assert(src.file == BRW_GENERAL_REGISTER_FILE);
-      src.nr++;
-   }
+   assert(brw->gen < 7 || !inst->header_present ||
+          src.file == BRW_GENERAL_REGISTER_FILE);
 
    assert(sampler_index.type == BRW_REGISTER_TYPE_UD);
 

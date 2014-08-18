@@ -202,19 +202,21 @@ fs_visitor::opt_cse_local(bblock_t *block)
             bool no_existing_temp = entry->tmp.file == BAD_FILE;
             if (no_existing_temp && !entry->generator->dst.is_null()) {
                int written = entry->generator->regs_written;
+               int dst_width = entry->generator->dst.width / 8;
+               assert(written % dst_width == 0);
 
                fs_reg orig_dst = entry->generator->dst;
                fs_reg tmp = fs_reg(GRF, virtual_grf_alloc(written),
-                                   orig_dst.type);
+                                   orig_dst.type, orig_dst.width);
                entry->tmp = tmp;
                entry->generator->dst = tmp;
 
                fs_inst *copy;
-               if (written > 1) {
-                  fs_reg *sources = ralloc_array(mem_ctx, fs_reg, written);
-                  for (int i = 0; i < written; i++)
+               if (written > dst_width) {
+                  fs_reg *sources = ralloc_array(mem_ctx, fs_reg, written / dst_width);
+                  for (int i = 0; i < written / dst_width; i++)
                      sources[i] = offset(tmp, i);
-                  copy = LOAD_PAYLOAD(orig_dst, sources, written);
+                  copy = LOAD_PAYLOAD(orig_dst, sources, written / dst_width);
                } else {
                   copy = MOV(orig_dst, tmp);
                   copy->force_writemask_all =
@@ -226,16 +228,18 @@ fs_visitor::opt_cse_local(bblock_t *block)
             /* dest <- temp */
             if (!inst->dst.is_null()) {
                int written = inst->regs_written;
+               int dst_width = inst->dst.width / 8;
                assert(written == entry->generator->regs_written);
+               assert(dst_width == entry->generator->dst.width / 8);
                assert(inst->dst.type == entry->tmp.type);
                fs_reg dst = inst->dst;
                fs_reg tmp = entry->tmp;
                fs_inst *copy;
-               if (written > 1) {
-                  fs_reg *sources = ralloc_array(mem_ctx, fs_reg, written);
-                  for (int i = 0; i < written; i++)
+               if (written > dst_width) {
+                  fs_reg *sources = ralloc_array(mem_ctx, fs_reg, written / dst_width);
+                  for (int i = 0; i < written / dst_width; i++)
                      sources[i] = offset(tmp, i);
-                  copy = LOAD_PAYLOAD(dst, sources, written);
+                  copy = LOAD_PAYLOAD(dst, sources, written / dst_width);
                } else {
                   copy = MOV(dst, tmp);
                   copy->force_writemask_all = inst->force_writemask_all;
