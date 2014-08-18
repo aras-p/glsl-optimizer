@@ -211,6 +211,27 @@ update_dst(struct tgsi_to_qir *trans, struct tgsi_full_instruction *tgsi_inst,
 };
 
 static struct qreg
+get_swizzled_channel(struct tgsi_to_qir *trans,
+                     struct qreg *srcs, int swiz)
+{
+        switch (swiz) {
+        default:
+        case UTIL_FORMAT_SWIZZLE_NONE:
+                fprintf(stderr, "warning: unknown swizzle\n");
+                /* FALLTHROUGH */
+        case UTIL_FORMAT_SWIZZLE_0:
+                return qir_uniform_f(trans, 0.0);
+        case UTIL_FORMAT_SWIZZLE_1:
+                return qir_uniform_f(trans, 1.0);
+        case UTIL_FORMAT_SWIZZLE_X:
+        case UTIL_FORMAT_SWIZZLE_Y:
+        case UTIL_FORMAT_SWIZZLE_Z:
+        case UTIL_FORMAT_SWIZZLE_W:
+                return srcs[swiz];
+        }
+}
+
+static struct qreg
 tgsi_to_qir_alu(struct tgsi_to_qir *trans,
                 struct tgsi_full_instruction *tgsi_inst,
                 enum qop op, struct qreg *src, int i)
@@ -557,34 +578,18 @@ emit_vertex_input(struct tgsi_to_qir *trans, int attr)
         for (int i = 0; i < 4; i++) {
                 uint8_t swiz = desc->swizzle[i];
 
-                switch (swiz) {
-                case UTIL_FORMAT_SWIZZLE_NONE:
-                        if (!format_warned) {
-                                fprintf(stderr,
-                                        "vtx element %d NONE swizzle: %s\n",
-                                        attr, util_format_name(format));
-                                format_warned = true;
-                        }
-                        /* FALLTHROUGH */
-                case UTIL_FORMAT_SWIZZLE_0:
-                        trans->inputs[attr * 4 + i] = qir_uniform_f(trans, 0.0);
-                        break;
-                case UTIL_FORMAT_SWIZZLE_1:
-                        trans->inputs[attr * 4 + i] = qir_uniform_f(trans, 1.0);
-                        break;
-                default:
-                        if (!format_warned &&
-                            (desc->channel[swiz].type != UTIL_FORMAT_TYPE_FLOAT ||
-                             desc->channel[swiz].size != 32)) {
-                                fprintf(stderr,
-                                        "vtx element %d unsupported type: %s\n",
-                                        attr, util_format_name(format));
-                                format_warned = true;
-                        }
-
-                        trans->inputs[attr * 4 + i] = vpm_reads[swiz];
-                        break;
+                if (swiz <= UTIL_FORMAT_SWIZZLE_W &&
+                    !format_warned &&
+                    (desc->channel[swiz].type != UTIL_FORMAT_TYPE_FLOAT ||
+                     desc->channel[swiz].size != 32)) {
+                        fprintf(stderr,
+                                "vtx element %d unsupported type: %s\n",
+                                attr, util_format_name(format));
+                        format_warned = true;
                 }
+
+                trans->inputs[attr * 4 + i] =
+                        get_swizzled_channel(trans, vpm_reads, swiz);
         }
 }
 
