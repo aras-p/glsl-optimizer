@@ -327,7 +327,7 @@ tgsi_to_qir_tex(struct tgsi_to_qir *trans,
 
         struct qreg s = src[0 * 4 + 0];
         struct qreg t = src[0 * 4 + 1];
-        uint32_t sampler = 0; /* XXX */
+        uint32_t unit = tgsi_inst->Src[1].Register.Index;
 
         if (tgsi_inst->Instruction.Opcode == TGSI_OPCODE_TXP) {
                 struct qreg proj = qir_RCP(c, src[0 * 4 + 3]);
@@ -343,19 +343,18 @@ tgsi_to_qir_tex(struct tgsi_to_qir *trans,
                 s = qir_FMUL(c, s,
                              get_temp_for_uniform(trans,
                                                   QUNIFORM_TEXRECT_SCALE_X,
-                                                  sampler));
+                                                  unit));
                 t = qir_FMUL(c, t,
                              get_temp_for_uniform(trans,
                                                   QUNIFORM_TEXRECT_SCALE_Y,
-                                                  sampler));
+                                                  unit));
         }
 
-        uint32_t tex_and_sampler = 0; /* XXX */
         qir_TEX_T(c, t, add_uniform(trans, QUNIFORM_TEXTURE_CONFIG_P0,
-                                    tex_and_sampler));
+                                    unit));
 
         struct qreg sampler_p1 = add_uniform(trans, QUNIFORM_TEXTURE_CONFIG_P1,
-                                             tex_and_sampler);
+                                             unit);
         if (tgsi_inst->Instruction.Opcode == TGSI_OPCODE_TXB) {
                 qir_TEX_B(c, src[0 * 4 + 3], sampler_p1);
                 qir_TEX_S(c, s, add_uniform(trans, QUNIFORM_CONSTANT, 0));
@@ -375,7 +374,7 @@ tgsi_to_qir_tex(struct tgsi_to_qir *trans,
                 if (!(tgsi_inst->Dst[0].Register.WriteMask & (1 << i)))
                         continue;
 
-                enum pipe_format format = trans->key->tex_format[sampler];
+                enum pipe_format format = trans->key->tex_format[unit];
                 const struct util_format_description *desc =
                         util_format_description(format);
 
@@ -1444,10 +1443,9 @@ static uint32_t translate_wrap(uint32_t p_wrap)
 static void
 write_texture_p0(struct vc4_context *vc4,
                  struct vc4_texture_stateobj *texstate,
-                 uint32_t tex_and_sampler)
+                 uint32_t unit)
 {
-        uint32_t texi = (tex_and_sampler >> 0) & 0xff;
-        struct pipe_sampler_view *texture = texstate->textures[texi];
+        struct pipe_sampler_view *texture = texstate->textures[unit];
         struct vc4_resource *rsc = vc4_resource(texture->texture);
 
         cl_reloc(vc4, &vc4->uniforms, rsc->bo,
@@ -1457,12 +1455,10 @@ write_texture_p0(struct vc4_context *vc4,
 static void
 write_texture_p1(struct vc4_context *vc4,
                  struct vc4_texture_stateobj *texstate,
-                 uint32_t tex_and_sampler)
+                 uint32_t unit)
 {
-        uint32_t texi = (tex_and_sampler >> 0) & 0xff;
-        uint32_t sampi = (tex_and_sampler >> 8) & 0xff;
-        struct pipe_sampler_view *texture = texstate->textures[texi];
-        struct pipe_sampler_state *sampler = texstate->samplers[sampi];
+        struct pipe_sampler_view *texture = texstate->textures[unit];
+        struct pipe_sampler_state *sampler = texstate->samplers[unit];
         static const uint32_t mipfilter_map[] = {
                 [PIPE_TEX_MIPFILTER_NEAREST] = 2,
                 [PIPE_TEX_MIPFILTER_LINEAR] = 4,
