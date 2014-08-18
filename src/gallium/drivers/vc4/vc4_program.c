@@ -1270,8 +1270,11 @@ static void
 vc4_setup_shared_key(struct vc4_key *key, struct vc4_texture_stateobj *texstate)
 {
         for (int i = 0; i < texstate->num_textures; i++) {
-                struct pipe_resource *prsc = texstate->textures[i]->texture;
-                key->tex_format[i] = prsc->format;
+                struct pipe_sampler_view *sampler = texstate->textures[i];
+                if (sampler) {
+                        struct pipe_resource *prsc = sampler->texture;
+                        key->tex_format[i] = prsc->format;
+                }
         }
 }
 
