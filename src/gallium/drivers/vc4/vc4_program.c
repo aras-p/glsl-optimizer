@@ -967,12 +967,12 @@ emit_frag_end(struct tgsi_to_qir *trans)
                 blend_color[3] = qir_uniform_f(trans, 0.5);
         }
 
-        struct qreg swizzled_outputs[4] = {
-                blend_color[format_desc->swizzle[0]],
-                blend_color[format_desc->swizzle[1]],
-                blend_color[format_desc->swizzle[2]],
-                blend_color[format_desc->swizzle[3]],
-        };
+        struct qreg swizzled_outputs[4];
+        for (int i = 0; i < 4; i++) {
+                swizzled_outputs[i] =
+                        get_swizzled_channel(trans, blend_color,
+                                             format_desc->swizzle[i]);
+        }
 
         if (trans->fs_key->depth_enabled) {
                 qir_emit(c, qir_inst(QOP_TLB_PASSTHROUGH_Z_WRITE, c->undef,
