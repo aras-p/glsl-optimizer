@@ -104,3 +104,5 @@ if HAVE_OPENVG
 AM_CPPFLAGS += \
 	-DFEATURE_VG=1
 endif
+
+EXTRA_DIST = Android.mk SConscript

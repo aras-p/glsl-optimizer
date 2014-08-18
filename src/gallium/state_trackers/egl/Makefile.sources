@@ -1,18 +1,28 @@
 common_FILES := \
 	common/egl_g3d_api.c \
+	common/egl_g3d_api.h \
 	common/egl_g3d.c \
+	common/egl_g3d.h \
 	common/egl_g3d_image.c \
+	common/egl_g3d_image.h \
+	common/egl_g3d_loader.h \
 	common/egl_g3d_st.c \
+	common/egl_g3d_st.h \
 	common/egl_g3d_sync.c \
+	common/egl_g3d_sync.h \
 	common/native_helper.c \
-	common/native_wayland_drm_bufmgr.c
+	common/native_helper.h \
+	common/native_modeset.h \
+	common/native_wayland_drm_bufmgr.c \
+	common/native_wayland_drm_bufmgr.h
 
 android_FILES := \
 	android/native_android.cpp
 
 drm_FILES := \
 	drm/modeset.c \
-	drm/native_drm.c
+	drm/native_drm.c \
+	drm/native_drm.h
 
 fbdev_FILES := \
 	fbdev/native_fbdev.c
@@ -23,17 +33,22 @@ gdi_FILES := \
 null_FILES := \
 	null/native_null.c
 
-x11_FILES := \
-	x11/glxinit.c \
-	x11/native_dri2.c \
-	x11/native_x11.c \
-	x11/native_ximage.c
-
-x11_drm_FILES := \
-	x11/x11_screen.c \
-	x11/dri2.c
-
 wayland_FILES := \
 	wayland/native_drm.c \
 	wayland/native_shm.c \
-	wayland/native_wayland.c
+	wayland/native_wayland.c \
+	wayland/native_wayland.h
+
+x11_FILES := \
+	x11/glcore.h \
+	x11/glxinit.c \
+	x11/glxinit.h \
+	x11/native_dri2.c \
+	x11/native_x11.c \
+	x11/native_x11.h \
+	x11/native_ximage.c
+
+x11_drm_FILES := \
+	x11/dri2.c \
+	x11/x11_screen.c \
+	x11/x11_screen.h
