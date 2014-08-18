@@ -66,65 +66,81 @@ namespace clover {
          typedef std::ptrdiff_t difference_type;
          typedef std::size_t size_type;
 
-         vector() : p(NULL), n(0) {
+         vector() : p(NULL), _size(0), _capacity(0) {
          }
 
-         vector(const vector &v) : p(alloc(v.n, v.p, v.n)), n(v.n) {
+         vector(const vector &v) :
+            p(alloc(v._size, v.p, v._size)),
+            _size(v._size), _capacity(v._size) {
          }
 
-         vector(const_iterator p, size_type n) : p(alloc(n, p, n)), n(n) {
+         vector(const_iterator p, size_type n) :
+            p(alloc(n, p, n)), _size(n), _capacity(n) {
          }
 
          template<typename C>
          vector(const C &v) :
-            p(alloc(v.size(), &*v.begin(), v.size())), n(v.size()) {
+            p(alloc(v.size(), &*v.begin(), v.size())),
+            _size(v.size()) , _capacity(v.size()) {
          }
 
          ~vector() {
-            free(n, p);
+            free(_size, p);
          }
 
          vector &
          operator=(const vector &v) {
-            free(n, p);
+            free(_size, p);
 
-            p = alloc(v.n, v.p, v.n);
-            n = v.n;
+            p = alloc(v._size, v.p, v._size);
+            _size = v._size;
+            _capacity = v._size;
 
             return *this;
          }
 
          void
-         reserve(size_type m) {
-            if (n < m) {
-               T *q = alloc(m, p, n);
-               free(n, p);
+         reserve(size_type n) {
+            if (_capacity < n) {
+               T *q = alloc(n, p, _size);
+               free(_size, p);
 
                p = q;
-               n = m;
+               _capacity = n;
             }
          }
 
          void
-         resize(size_type m, T x = T()) {
-            size_type n = size();
+         resize(size_type n, T x = T()) {
+            if (n <= _size) {
+               for (size_type i = n; i < _size; ++i)
+                  p[i].~T();
 
-            reserve(m);
+            } else {
+               reserve(n);
 
-            for (size_type i = n; i < m; ++i)
-               new(&p[i]) T(x);
+               for (size_type i = _size; i < n; ++i)
+                  new(&p[i]) T(x);
+            }
+
+            _size = n;
          }
 
          void
          push_back(const T &x) {
-            size_type n = size();
-            reserve(n + 1);
-            new(&p[n]) T(x);
+            reserve(_size + 1);
+            new(&p[_size]) T(x);
+            ++_size;
          }
 
          size_type
          size() const {
-            return n;
+            return _size;
+         }
+
+         size_type
+         capacity() const {
+            return _capacity;
          }
 
          iterator
@@ -139,12 +155,12 @@ namespace clover {
 
          iterator
          end() {
-            return p + n;
+            return p + _size;
          }
 
          const_iterator
          end() const {
-            return p + n;
+            return p + _size;
          }
 
          reference
@@ -159,7 +175,8 @@ namespace clover {
 
       private:
          iterator p;
-         size_type n;
+         size_type _size;
+         size_type _capacity;
       };
 
       template<typename T>
