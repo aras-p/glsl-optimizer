@@ -361,7 +361,9 @@ namespace clover {
 
          const char *
          c_str() const {
-            return begin();
+            v.reserve(size() + 1);
+            *v.end() = 0;
+            return v.begin();
          }
 
          const char *
