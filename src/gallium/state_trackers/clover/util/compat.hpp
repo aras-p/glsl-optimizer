@@ -280,20 +280,83 @@ namespace clover {
          size_t offset;
       };
 
-      class string : public vector<char> {
+      class string {
       public:
-         string() : vector() {
+         typedef char *iterator;
+         typedef const char *const_iterator;
+         typedef char value_type;
+         typedef char &reference;
+         typedef const char &const_reference;
+         typedef std::ptrdiff_t difference_type;
+         typedef std::size_t size_type;
+
+         string() : v() {
          }
 
-         string(const char *p) : vector(p, std::strlen(p)) {
+         string(const char *p) : v(p, std::strlen(p)) {
          }
 
          template<typename C>
-         string(const C &v) : vector(v) {
+         string(const C &v) : v(v) {
          }
 
          operator std::string() const {
-            return std::string(begin(), end());
+            return std::string(v.begin(), v.end());
+         }
+
+         void
+         reserve(size_type n) {
+            v.reserve(n);
+         }
+
+         void
+         resize(size_type n, char x = char()) {
+            v.resize(n, x);
+         }
+
+         void
+         push_back(char x) {
+            v.push_back(x);
+         }
+
+         size_type
+         size() const {
+            return v.size();
+         }
+
+         size_type
+         capacity() const {
+            return v.capacity();
+         }
+
+         iterator
+         begin() {
+            return v.begin();
+         }
+
+         const_iterator
+         begin() const {
+            return v.begin();
+         }
+
+         iterator
+         end() {
+            return v.end();
+         }
+
+         const_iterator
+         end() const {
+            return v.end();
+         }
+
+         reference
+         operator[](size_type i) {
+            return v[i];
+         }
+
+         const_reference
+         operator[](size_type i) const {
+            return v[i];
          }
 
          const char *
@@ -310,6 +373,9 @@ namespace clover {
 
             return end();
          }
+
+      private:
+         mutable vector<char> v;
       };
 
       template<typename T>
