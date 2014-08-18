@@ -384,12 +384,15 @@ static unsigned si_get_ia_multi_vgt_param(struct si_context *sctx,
 {
 	struct si_state_rasterizer *rs = sctx->queued.named.rasterizer;
 	unsigned prim = info->mode;
-	unsigned primgroup_size = 64;
+	unsigned primgroup_size = 128; /* recommended without a GS */
 
 	/* SWITCH_ON_EOP(0) is always preferable. */
 	bool wd_switch_on_eop = false;
 	bool ia_switch_on_eop = false;
 	bool partial_vs_wave = false;
+
+	if (sctx->gs_shader)
+		primgroup_size = 64; /* recommended with a GS */
 
 	/* This is a hardware requirement. */
 	if ((rs && rs->line_stipple_enable) ||
