@@ -239,6 +239,7 @@ vc4_create_surface(struct pipe_context *pctx,
                    const struct pipe_surface *surf_tmpl)
 {
         struct vc4_surface *surface = CALLOC_STRUCT(vc4_surface);
+        struct vc4_resource *rsc = vc4_resource(ptex);
 
         if (!surface)
                 return NULL;
@@ -258,6 +259,7 @@ vc4_create_surface(struct pipe_context *pctx,
         psurf->u.tex.level = level;
         psurf->u.tex.first_layer = surf_tmpl->u.tex.first_layer;
         psurf->u.tex.last_layer = surf_tmpl->u.tex.last_layer;
+        surface->offset = rsc->slices[level].offset;
 
         return &surface->base;
 }
