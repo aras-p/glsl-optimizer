@@ -289,8 +289,14 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 }
 
 	/* Swallow empty #pragma directives, (to avoid confusing the
-	 * downstream compiler). */
-<HASH>pragma{HSPACE}*/{NEWLINE} {
+	 * downstream compiler).
+	 *
+	 * Note: We use a simple regular expression for the lookahead
+	 * here. Specifically, we cannot use the complete {NEWLINE} expression
+	 * since it uses alternation and we've found that there's a flex bug
+	 * where using alternation in the lookahead portion of a pattern
+	 * triggers a buffer overrun. */
+<HASH>pragma{HSPACE}*/[\r\n] {
 	BEGIN INITIAL;
 }
 
