@@ -61,9 +61,9 @@ program::build(const ref_vector<device> &devs, const char *opts) {
                                                 dev.ir_target(), build_opts(dev),
                                                 log));
             _binaries.insert({ &dev, module });
-            _logs.insert({ &dev, std::string(log.c_str()) });
+            _logs.insert({ &dev, log });
          } catch (const build_error &) {
-            _logs.insert({ &dev, std::string(log.c_str()) });
+            _logs.insert({ &dev, log });
             throw;
          }
       }
