@@ -31,7 +31,8 @@ AM_CFLAGS = \
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/egl/main \
-	-I$(top_builddir)/src/egl/wayland/wayland-drm/
+	-I$(top_builddir)/src/egl/wayland/wayland-drm/ \
+	-I$(top_srcdir)/src/gallium/winsys
 
 noinst_LTLIBRARIES = libegl.la
 libegl_la_SOURCES = $(common_FILES)
@@ -43,8 +44,6 @@ AM_CFLAGS += \
 	$(LIBDRM_CFLAGS) \
 	$(DRI2PROTO_CFLAGS)
 AM_CPPFLAGS += \
-	-I$(top_srcdir)/src/gallium/winsys \
-	-I$(top_srcdir)/src/gallium/drivers \
 	-I$(top_srcdir)/src/glx \
 	-I$(top_srcdir)/src/mapi \
 	-I$(top_srcdir)/src/mesa \
@@ -57,7 +56,6 @@ AM_CFLAGS += \
 	$(LIBDRM_CFLAGS) \
 	$(WAYLAND_CFLAGS)
 AM_CPPFLAGS += \
-	-I$(top_srcdir)/src/gallium/winsys \
 	-I$(top_srcdir)/src/egl/wayland/wayland-egl \
 	-I$(top_srcdir)/src/egl/wayland/wayland-drm \
 	-I$(top_builddir)/src/egl/wayland/wayland-drm \
@@ -70,7 +68,6 @@ AM_CFLAGS += \
 	$(LIBDRM_CFLAGS)
 AM_CPPFLAGS += \
 	-I$(top_srcdir)/src/loader \
-	-I$(top_srcdir)/src/gallium/winsys \
 	-I$(top_srcdir)/src/gbm/main \
 	-I$(top_srcdir)/src/gallium/state_trackers/gbm \
 	-DHAVE_DRM_BACKEND
@@ -79,14 +76,12 @@ endif
 if HAVE_EGL_PLATFORM_FBDEV
 libegl_la_SOURCES += $(fbdev_FILES)
 AM_CPPFLAGS += \
-	-I$(top_srcdir)/src/gallium/winsys/sw \
 	-DHAVE_FBDEV_BACKEND
 endif
 
 if HAVE_EGL_PLATFORM_NULL
 libegl_la_SOURCES += $(null_FILES)
 AM_CPPFLAGS += \
-	-I$(top_srcdir)/src/gallium/winsys/sw \
 	-DHAVE_NULL_BACKEND
 endif
 

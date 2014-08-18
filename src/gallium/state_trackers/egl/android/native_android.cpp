@@ -65,8 +65,8 @@ extern "C" {
 #include "util/u_box.h"
 #include "common/native.h"
 #include "common/native_helper.h"
-#include "android/android_sw_winsys.h"
 #include "state_tracker/drm_driver.h"
+#include "sw/android/android_sw_winsys.h"
 
 struct android_config;
 

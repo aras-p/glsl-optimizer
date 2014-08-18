@@ -31,10 +31,11 @@
 #include "util/u_memory.h"
 #include "util/u_format.h"
 #include "util/u_inlines.h"
-#include "gdi/gdi_sw_winsys.h"
 
 #include "common/native_helper.h"
 #include "common/native.h"
+
+#include "sw/gdi/gdi_sw_winsys.h"
 
 struct gdi_display {
    struct native_display base;

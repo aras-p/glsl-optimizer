@@ -54,7 +54,7 @@
 
 #include "common/native.h"
 #include "common/native_helper.h"
-#include "fbdev/fbdev_sw_winsys.h"
+#include "sw/fbdev/fbdev_sw_winsys.h"
 
 struct fbdev_display {
    struct native_display base;

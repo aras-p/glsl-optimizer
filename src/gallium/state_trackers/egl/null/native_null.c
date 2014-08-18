@@ -33,8 +33,8 @@
  */
 
 #include "util/u_memory.h"
-#include "null/null_sw_winsys.h"
 #include "common/native.h"
+#include "sw/null/null_sw_winsys.h"
 
 struct null_display {
    struct native_display base;

@@ -39,7 +39,7 @@ LOCAL_CFLAGS := \
 
 LOCAL_C_INCLUDES := \
 	$(GALLIUM_TOP)/state_trackers/egl \
-	$(GALLIUM_TOP)/winsys/sw \
+	$(GALLIUM_TOP)/winsys \
 	$(MESA_TOP)/src/egl/main
 
 # swrast only
