@@ -184,6 +184,7 @@ struct dri2_egl_display
 
 #ifdef HAVE_X11_PLATFORM
    xcb_connection_t         *conn;
+   int                      screen;
 #endif
 
 #ifdef HAVE_WAYLAND_PLATFORM
