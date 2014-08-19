@@ -22,6 +22,7 @@ r300_compiler_tests_LDADD = libr300.la libr300-helper.la \
 	$(top_builddir)/src/util/libmesautil.la \
 	$(GALLIUM_COMMON_LIB_DEPS)
 r300_compiler_tests_CPPFLAGS = \
+	-DTEST_PATH=\"$(top_srcdir)/src/gallium/drivers/r300/compiler/tests\" \
 	-I$(top_srcdir)/src/gallium/drivers/r300/compiler
 r300_compiler_tests_SOURCES = $(COMPILER_TESTS_SOURCES)
 

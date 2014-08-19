@@ -543,7 +543,7 @@ unsigned load_program(
 	unsigned i = 0;
 
 	memset(line, 0, sizeof(line));
-	snprintf(path, MAX_PATH_LENGTH, "compiler/tests/%s", filename);
+	snprintf(path, MAX_PATH_LENGTH, TEST_PATH "/%s", filename);
 	file = fopen(path, "r");
 	if (!file) {
 		return 0;
