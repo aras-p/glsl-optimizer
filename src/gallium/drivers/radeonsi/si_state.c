@@ -1750,7 +1750,8 @@ static void si_init_depth_surface(struct si_context *sctx,
 	struct si_screen *sscreen = sctx->screen;
 	struct r600_texture *rtex = (struct r600_texture*)surf->base.texture;
 	unsigned level = surf->base.u.tex.level;
-	unsigned pitch, slice, format, tile_mode_index, array_mode;
+	struct radeon_surface_level *levelinfo = &rtex->surface.level[level];
+	unsigned format, tile_mode_index, array_mode;
 	unsigned macro_aspect, tile_split, stile_split, bankh, bankw, nbanks, pipe_config;
 	uint32_t z_info, s_info, db_depth_info;
 	uint64_t z_offs, s_offs;
@@ -1785,12 +1786,6 @@ static void si_init_depth_surface(struct si_context *sctx,
 	s_offs = z_offs = rtex->resource.gpu_address;
 	z_offs += rtex->surface.level[level].offset;
 	s_offs += rtex->surface.stencil_level[level].offset;
-
-	pitch = (rtex->surface.level[level].nblk_x / 8) - 1;
-	slice = (rtex->surface.level[level].nblk_x * rtex->surface.level[level].nblk_y) / 64;
-	if (slice) {
-		slice = slice - 1;
-	}
 
 	db_depth_info = S_02803C_ADDR5_SWIZZLE_MASK(1);
 
@@ -1872,6 +1867,8 @@ static void si_init_depth_surface(struct si_context *sctx,
 		db_htile_surface = 0;
 	}
 
+	assert(levelinfo->nblk_x % 8 == 0 && levelinfo->nblk_y % 8 == 0);
+
 	surf->db_depth_view = S_028008_SLICE_START(surf->base.u.tex.first_layer) |
 			      S_028008_SLICE_MAX(surf->base.u.tex.last_layer);
 	surf->db_htile_data_base = db_htile_data_base;
@@ -1880,8 +1877,10 @@ static void si_init_depth_surface(struct si_context *sctx,
 	surf->db_stencil_info = s_info;
 	surf->db_depth_base = z_offs >> 8;
 	surf->db_stencil_base = s_offs >> 8;
-	surf->db_depth_size = S_028058_PITCH_TILE_MAX(pitch);
-	surf->db_depth_slice = S_02805C_SLICE_TILE_MAX(slice);
+	surf->db_depth_size = S_028058_PITCH_TILE_MAX((levelinfo->nblk_x / 8) - 1) |
+			      S_028058_HEIGHT_TILE_MAX((levelinfo->nblk_y / 8) - 1);
+	surf->db_depth_slice = S_02805C_SLICE_TILE_MAX((levelinfo->nblk_x *
+							levelinfo->nblk_y) / 64 - 1);
 	surf->db_htile_surface = db_htile_surface;
 	surf->pa_su_poly_offset_db_fmt_cntl = pa_su_poly_offset_db_fmt_cntl;
 
