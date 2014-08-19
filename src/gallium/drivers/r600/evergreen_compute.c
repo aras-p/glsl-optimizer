@@ -648,6 +648,7 @@ static void evergreen_set_global_binding(
 	struct compute_memory_pool *pool = ctx->screen->global_pool;
 	struct r600_resource_global **buffers =
 		(struct r600_resource_global **)resources;
+	unsigned i;
 
 	COMPUTE_DBG(ctx->screen, "*** evergreen_set_global_binding first = %u n = %u\n",
 			first, n);
@@ -659,7 +660,7 @@ static void evergreen_set_global_binding(
 
 	/* We mark these items for promotion to the pool if they
 	 * aren't already there */
-	for (unsigned i = 0; i < n; i++) {
+	for (i = first; i < first + n; i++) {
 		struct compute_memory_item *item = buffers[i]->chunk;
 
 		if (!is_item_in_pool(item))
@@ -671,7 +672,7 @@ static void evergreen_set_global_binding(
 		return;
 	}
 
-	for (unsigned i = 0; i < n; i++)
+	for (i = first; i < first + n; i++)
 	{
 		uint32_t buffer_offset;
 		uint32_t handle;
