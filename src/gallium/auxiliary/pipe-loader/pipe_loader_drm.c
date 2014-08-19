@@ -63,6 +63,20 @@ struct pipe_loader_drm_device {
 
 static struct pipe_loader_ops pipe_loader_drm_ops;
 
+#ifdef HAVE_PIPE_LOADER_XCB
+
+static xcb_screen_t *
+get_xcb_screen(xcb_screen_iterator_t iter, int screen)
+{
+    for (; iter.rem; --screen, xcb_screen_next(&iter))
+        if (screen == 0)
+            return iter.data;
+
+    return NULL;
+}
+
+#endif
+
 static void
 pipe_loader_drm_x_auth(int fd)
 {
@@ -77,8 +91,9 @@ pipe_loader_drm_x_auth(int fd)
    drm_magic_t magic;
    xcb_dri2_authenticate_cookie_t authenticate_cookie;
    xcb_dri2_authenticate_reply_t *authenticate;
+   int screen;
 
-   xcb_conn = xcb_connect(NULL,  NULL);
+   xcb_conn = xcb_connect(NULL, &screen);
 
    if(!xcb_conn)
       return;
@@ -89,7 +104,8 @@ pipe_loader_drm_x_auth(int fd)
     goto disconnect;
 
    s = xcb_setup_roots_iterator(xcb_setup);
-   connect_cookie = xcb_dri2_connect_unchecked(xcb_conn, s.data->root,
+   connect_cookie = xcb_dri2_connect_unchecked(xcb_conn,
+                                               get_xcb_screen(s, screen)->root,
                                                XCB_DRI2_DRIVER_TYPE_DRI);
    connect = xcb_dri2_connect_reply(xcb_conn, connect_cookie, NULL);
 
