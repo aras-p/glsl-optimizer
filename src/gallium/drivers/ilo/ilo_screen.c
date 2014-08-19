@@ -448,13 +448,13 @@ ilo_get_param(struct pipe_screen *screen, enum pipe_cap param)
        * assume that there's some fragmentation, and we start doing extra
        * flushing, etc.  That's the big cliff apps will care about.
        */
-      const uint64_t gpu_mappable_megabytes = is->dev.aperture_total * 3 / 4;
+      const uint64_t gpu_memory = is->dev.aperture_total * 3 / 4;
       uint64_t system_memory;
 
       if (!os_get_total_physical_memory(&system_memory))
          return 0;
 
-      return MIN2(gpu_mappable_megabytes, (int)(system_memory >> 20));
+      return (int) (MIN2(gpu_memory, system_memory) >> 20);
    }
    case PIPE_CAP_UMA:
       return true;
