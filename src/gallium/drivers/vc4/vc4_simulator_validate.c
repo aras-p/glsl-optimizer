@@ -706,8 +706,9 @@ reloc_tex(struct exec_info *exec,
 	uint32_t miplevels = (p0 & 0x15);
 	uint32_t width = (p1 >> 8) & 2047;
 	uint32_t height = (p1 >> 20) & 2047;
-	uint32_t type, cpp, tiling_format;
+	uint32_t cpp, tiling_format;
 	int i;
+	enum vc4_texture_data_type type;
 
 	if (width == 0)
 		width = 2048;
@@ -722,36 +723,36 @@ reloc_tex(struct exec_info *exec,
 	type = ((p0 >> 4) & 15) | ((p1 >> 31) << 4);
 
 	switch (type) {
-	case 0: /* RGBA8888 */
-	case 1: /* RGBX8888 */
-	case 16: /* RGBA32R */
+	case VC4_TEXTURE_TYPE_RGBA8888:
+	case VC4_TEXTURE_TYPE_RGBX8888:
+	case VC4_TEXTURE_TYPE_RGBA32R:
 		cpp = 4;
 		break;
-	case 2: /* RGBA4444 */
-	case 3: /* RGBA5551 */
-	case 4: /* RGB565 */
-	case 7: /* LUMALPHA */
-	case 9: /* S16F */
-	case 11: /* S16 */
+	case VC4_TEXTURE_TYPE_RGBA4444:
+	case VC4_TEXTURE_TYPE_RGBA5551:
+	case VC4_TEXTURE_TYPE_RGB565:
+	case VC4_TEXTURE_TYPE_LUMALPHA:
+	case VC4_TEXTURE_TYPE_S16F:
+	case VC4_TEXTURE_TYPE_S16:
 		cpp = 2;
 		break;
-	case 5: /* LUMINANCE */
-	case 6: /* ALPHA */
-	case 10: /* S8 */
+	case VC4_TEXTURE_TYPE_LUMINANCE:
+	case VC4_TEXTURE_TYPE_ALPHA:
+	case VC4_TEXTURE_TYPE_S8:
 		cpp = 1;
 		break;
-	case 8: /* ETC1 */
-	case 12: /* BW1 */
-	case 13: /* A4 */
-	case 14: /* A1 */
-	case 15: /* RGBA64 */
-	case 17: /* YUV422R */
+	case VC4_TEXTURE_TYPE_ETC1:
+	case VC4_TEXTURE_TYPE_BW1:
+	case VC4_TEXTURE_TYPE_A4:
+	case VC4_TEXTURE_TYPE_A1:
+	case VC4_TEXTURE_TYPE_RGBA64:
+	case VC4_TEXTURE_TYPE_YUV422R:
 	default:
 		DRM_ERROR("Texture format %d unsupported\n", type);
 		return false;
 	}
 
-	if (type == 16) {
+	if (type == VC4_TEXTURE_TYPE_RGBA32R) {
 		tiling_format = VC4_TILING_FORMAT_LINEAR;
 	} else {
 		DRM_ERROR("Tiling formats not yet supported\n");
