@@ -256,7 +256,7 @@ pipe_loader_drm_release(struct pipe_loader_device **dev)
       util_dl_close(ddev->lib);
 
    close(ddev->fd);
-   /* XXX: Free ddev->base.driver_name - strdup at loader_get_driver_for_fd */
+   FREE(ddev->base.driver_name);
    FREE(ddev);
    *dev = NULL;
 }
