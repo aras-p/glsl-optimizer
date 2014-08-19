@@ -23,8 +23,6 @@
 
 #ifdef USE_VC4_SIMULATOR
 
-#include <stdio.h>
-
 #include "util/u_memory.h"
 
 #include "vc4_screen.h"

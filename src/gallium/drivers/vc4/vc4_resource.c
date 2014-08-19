@@ -22,8 +22,6 @@
  * IN THE SOFTWARE.
  */
 
-#include <stdio.h>
-
 #include "util/u_memory.h"
 #include "util/u_format.h"
 #include "util/u_inlines.h"

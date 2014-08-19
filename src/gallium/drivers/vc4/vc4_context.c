@@ -23,7 +23,6 @@
 
 #include <xf86drm.h>
 #include <err.h>
-#include <stdio.h>
 
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"

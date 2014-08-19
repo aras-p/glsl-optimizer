@@ -22,8 +22,6 @@
  * IN THE SOFTWARE.
  */
 
-#include <stdio.h>
-
 #include "util/u_format.h"
 #include "util/u_pack_color.h"
 #include "indices/u_primconvert.h"

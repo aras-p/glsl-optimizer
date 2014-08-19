@@ -22,7 +22,6 @@
  * IN THE SOFTWARE.
  */
 
-#include <stdio.h>
 #include <inttypes.h>
 #include "pipe/p_state.h"
 #include "util/u_format.h"

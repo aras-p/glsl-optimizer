@@ -32,8 +32,6 @@
  * there's no killing to worry about.
  */
 
-#include <stdlib.h>
-#include <stdio.h>
 #include "vc4_qir.h"
 
 bool

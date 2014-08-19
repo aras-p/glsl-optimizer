@@ -22,8 +22,6 @@
  * IN THE SOFTWARE.
  */
 
-#include <stdio.h>
-
 #include "os/os_misc.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"

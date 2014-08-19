@@ -22,8 +22,6 @@
  * IN THE SOFTWARE.
  */
 
-#include <stdio.h>
-
 #include "pipe/p_state.h"
 #include "util/u_inlines.h"
 #include "util/u_math.h"

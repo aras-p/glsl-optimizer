@@ -31,8 +31,6 @@
  * instructions as used.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include "vc4_qir.h"
 
 bool

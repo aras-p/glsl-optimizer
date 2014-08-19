@@ -21,8 +21,6 @@
  * IN THE SOFTWARE.
  */
 
-#include <stdio.h>
-
 #include "util/u_memory.h"
 #include "util/u_simple_list.h"
 

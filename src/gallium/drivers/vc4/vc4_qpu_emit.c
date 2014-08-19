@@ -21,7 +21,6 @@
  * IN THE SOFTWARE.
  */
 
-#include <stdio.h>
 #include <inttypes.h>
 
 #include "vc4_context.h"

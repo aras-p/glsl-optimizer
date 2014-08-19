@@ -32,7 +32,6 @@
  * later be copy-propagated out.
  */
 
-#include <stdio.h>
 #include "vc4_qir.h"
 
 bool

@@ -23,7 +23,6 @@
 
 #include <errno.h>
 #include <err.h>
-#include <stdio.h>
 #include <sys/mman.h>
 #include <xf86drm.h>
 #include <xf86drmMode.h>

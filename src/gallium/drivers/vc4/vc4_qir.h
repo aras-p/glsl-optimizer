@@ -24,6 +24,8 @@
 #ifndef VC4_QIR_H
 #define VC4_QIR_H
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <stdbool.h>
 #include <stdint.h>
 

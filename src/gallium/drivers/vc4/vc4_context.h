@@ -25,6 +25,8 @@
 #ifndef VC4_CONTEXT_H
 #define VC4_CONTEXT_H
 
+#include <stdio.h>
+
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
 #include "util/u_slab.h"
