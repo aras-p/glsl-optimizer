@@ -64,8 +64,6 @@ vc4_screen_bo_from_handle(struct pipe_screen *pscreen,
                           struct winsys_handle *whandle,
                           unsigned *out_stride);
 
-uint8_t vc4_get_texture_format(enum pipe_format format);
-
 extern uint32_t vc4_debug;
 
 #endif /* VC4_SCREEN_H */

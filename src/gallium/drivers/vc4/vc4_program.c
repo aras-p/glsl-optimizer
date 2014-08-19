@@ -1438,7 +1438,8 @@ write_texture_p0(struct vc4_context *vc4,
         struct vc4_resource *rsc = vc4_resource(texture->texture);
 
         cl_reloc(vc4, &vc4->uniforms, rsc->bo,
-                 rsc->slices[0].offset | texture->u.tex.last_level);
+                 rsc->slices[0].offset | texture->u.tex.last_level |
+                 ((rsc->vc4_format & 7) << 4));
 }
 
 static void
@@ -1447,6 +1448,7 @@ write_texture_p1(struct vc4_context *vc4,
                  uint32_t unit)
 {
         struct pipe_sampler_view *texture = texstate->textures[unit];
+        struct vc4_resource *rsc = vc4_resource(texture->texture);
         struct pipe_sampler_state *sampler = texstate->samplers[unit];
         static const uint32_t mipfilter_map[] = {
                 [PIPE_TEX_MIPFILTER_NEAREST] = 2,
@@ -1459,7 +1461,7 @@ write_texture_p1(struct vc4_context *vc4,
         };
 
         cl_u32(&vc4->uniforms,
-               (1 << 31) /* XXX: data type */|
+               ((rsc->vc4_format >> 4) << 31) |
                (texture->texture->height0 << 20) |
                (texture->texture->width0 << 8) |
                (imgfilter_map[sampler->mag_img_filter] << 7) |

@@ -302,7 +302,7 @@ vc4_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader,
         return 0;
 }
 
-uint8_t
+static uint8_t
 vc4_get_texture_format(enum pipe_format format)
 {
         switch (format) {

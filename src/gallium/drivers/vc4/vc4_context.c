@@ -64,7 +64,7 @@ vc4_setup_rcl(struct vc4_context *vc4)
         cl_reloc(vc4, &vc4->rcl, ctex->bo, csurf->offset);
         cl_u16(&vc4->rcl, width);
         cl_u16(&vc4->rcl, height);
-        cl_u16(&vc4->rcl, ((ctex->tiling <<
+        cl_u16(&vc4->rcl, ((csurf->tiling <<
                             VC4_RENDER_CONFIG_MEMORY_FORMAT_SHIFT) |
                            VC4_RENDER_CONFIG_FORMAT_RGBA8888 |
                            VC4_RENDER_CONFIG_EARLY_Z_COVERAGE_DISABLE));
@@ -97,7 +97,7 @@ vc4_setup_rcl(struct vc4_context *vc4)
                                 cl_u8(&vc4->rcl, VC4_PACKET_LOAD_TILE_BUFFER_GENERAL);
                                 cl_u8(&vc4->rcl,
                                       VC4_LOADSTORE_TILE_BUFFER_COLOR |
-                                      (ctex->tiling <<
+                                      (csurf->tiling <<
                                        VC4_LOADSTORE_TILE_BUFFER_FORMAT_SHIFT));
                                 cl_u8(&vc4->rcl,
                                       VC4_LOADSTORE_TILE_BUFFER_RGBA8888);
@@ -295,7 +295,7 @@ vc4_context_create(struct pipe_screen *pscreen, void *priv)
         vc4->dirty = ~0;
         vc4->fd = screen->fd;
 
-        util_slab_create(&vc4->transfer_pool, sizeof(struct pipe_transfer),
+        util_slab_create(&vc4->transfer_pool, sizeof(struct vc4_transfer),
                          16, UTIL_SLAB_SINGLETHREADED);
         vc4->blitter = util_blitter_create(pctx);
         if (!vc4->blitter)

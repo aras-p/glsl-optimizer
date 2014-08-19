@@ -26,12 +26,20 @@
 #define VC4_RESOURCE_H
 
 #include "vc4_screen.h"
+#include "vc4_packet.h"
 #include "util/u_transfer.h"
+
+struct vc4_transfer {
+        struct pipe_transfer base;
+        void *map;
+};
 
 struct vc4_resource_slice {
         uint32_t offset;
         uint32_t stride;
         uint32_t size0;
+        /** One of VC4_TILING_FORMAT_* */
+        uint8_t tiling;
 };
 
 struct vc4_surface {
@@ -41,6 +49,7 @@ struct vc4_surface {
         uint32_t width;
         uint16_t height;
         uint16_t depth;
+        uint8_t tiling;
 };
 
 struct vc4_resource {
@@ -48,8 +57,9 @@ struct vc4_resource {
         struct vc4_bo *bo;
         struct vc4_resource_slice slices[VC4_MAX_MIP_LEVELS];
         int cpp;
-        /** One of VC4_TILING_FORMAT_* */
-        uint8_t tiling;
+        bool tiled;
+        /** One of VC4_TEXTURE_TYPE_* */
+        enum vc4_texture_data_type vc4_format;
 };
 
 static INLINE struct vc4_resource *
@@ -62,6 +72,12 @@ static INLINE struct vc4_surface *
 vc4_surface(struct pipe_surface *psurf)
 {
         return (struct vc4_surface *)psurf;
+}
+
+static INLINE struct vc4_transfer *
+vc4_transfer(struct pipe_transfer *ptrans)
+{
+        return (struct vc4_transfer *)ptrans;
 }
 
 void vc4_resource_screen_init(struct pipe_screen *pscreen);

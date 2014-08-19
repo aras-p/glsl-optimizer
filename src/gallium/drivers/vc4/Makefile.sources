@@ -19,4 +19,5 @@ C_SOURCES := \
 	vc4_simulator_validate.c \
 	vc4_simulator_validate_shaders.c \
 	vc4_state.c \
+	vc4_tiling.c \
 	$()
