@@ -499,7 +499,20 @@ static int r600_get_compute_param(struct pipe_screen *screen,
 	//TODO: select these params by asic
 	switch (param) {
 	case PIPE_COMPUTE_CAP_IR_TARGET: {
-		const char *gpu = r600_get_llvm_processor_name(rscreen->family);
+		const char *gpu;
+		switch(rscreen->family) {
+		/* Clang < 3.6 is missing Hainan in its list of
+		 * GPUs, so we need to use the name of a similar GPU.
+		 */
+#if HAVE_LLVM < 0x0306
+		case CHIP_HAINAN:
+			gpu = "oland";
+			break;
+#endif
+		default:
+			gpu = r600_get_llvm_processor_name(rscreen->family);
+			break;
+		}
 		if (ret) {
 			sprintf(ret, "%s-r600--", gpu);
 		}
