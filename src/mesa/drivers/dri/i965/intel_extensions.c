@@ -272,6 +272,7 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Extensions.ARB_texture_multisample = true;
       ctx->Extensions.ARB_sample_shading = true;
       ctx->Extensions.ARB_texture_gather = true;
+      ctx->Extensions.ARB_conditional_render_inverted = true;
 
       /* Test if the kernel has the ioctl. */
       if (drm_intel_reg_read(brw->bufmgr, TIMESTAMP, &dummy) == 0)
