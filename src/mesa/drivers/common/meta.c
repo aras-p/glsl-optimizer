@@ -2773,7 +2773,6 @@ copytexsubimage_using_blit_framebuffer(struct gl_context *ctx, GLuint dims,
                                        GLint x, GLint y,
                                        GLsizei width, GLsizei height)
 {
-   struct gl_texture_object *texObj = texImage->TexObject;
    GLuint fbo;
    bool success = false;
    GLbitfield mask;
@@ -2781,8 +2780,6 @@ copytexsubimage_using_blit_framebuffer(struct gl_context *ctx, GLuint dims,
 
    if (!ctx->Extensions.ARB_framebuffer_object)
       return false;
-
-   _mesa_unlock_texture(ctx, texObj);
 
    _mesa_meta_begin(ctx, MESA_META_ALL & ~MESA_META_DRAW_BUFFERS);
 
@@ -2834,7 +2831,6 @@ copytexsubimage_using_blit_framebuffer(struct gl_context *ctx, GLuint dims,
    success = mask == 0x0;
 
  out:
-   _mesa_lock_texture(ctx, texObj);
    _mesa_DeleteFramebuffers(1, &fbo);
    _mesa_meta_end(ctx);
    return success;
@@ -2852,7 +2848,6 @@ _mesa_meta_CopyTexSubImage(struct gl_context *ctx, GLuint dims,
                            GLint x, GLint y,
                            GLsizei width, GLsizei height)
 {
-   struct gl_texture_object *texObj = texImage->TexObject;
    GLenum format, type;
    GLint bpp;
    void *buf;
@@ -2897,8 +2892,6 @@ _mesa_meta_CopyTexSubImage(struct gl_context *ctx, GLuint dims,
       return;
    }
 
-   _mesa_unlock_texture(ctx, texObj); /* need to unlock first */
-
    /*
     * Read image from framebuffer (disable pixel transfer ops)
     */
@@ -2926,8 +2919,6 @@ _mesa_meta_CopyTexSubImage(struct gl_context *ctx, GLuint dims,
    }
 
    _mesa_meta_end(ctx);
-
-   _mesa_lock_texture(ctx, texObj); /* re-lock */
 
    free(buf);
 }
@@ -3206,12 +3197,9 @@ _mesa_meta_GetTexImage(struct gl_context *ctx,
                        struct gl_texture_image *texImage)
 {
    if (_mesa_is_format_compressed(texImage->TexFormat)) {
-      struct gl_texture_object *texObj = texImage->TexObject;
       GLuint slice;
       bool result;
 
-      /* Need to unlock the texture here to prevent deadlock... */
-      _mesa_unlock_texture(ctx, texObj);
       for (slice = 0; slice < texImage->Depth; slice++) {
          void *dst;
          if (texImage->TexObject->Target == GL_TEXTURE_2D_ARRAY
@@ -3236,8 +3224,6 @@ _mesa_meta_GetTexImage(struct gl_context *ctx,
          if (!result)
             break;
       }
-      /* ... and relock it */
-      _mesa_lock_texture(ctx, texObj);
 
       if (result)
          return;
@@ -3539,14 +3525,10 @@ _mesa_meta_ClearTexSubImage(struct gl_context *ctx,
 {
    bool res;
 
-   _mesa_unlock_texture(ctx, texImage->TexObject);
-
    res = cleartexsubimage_using_fbo(ctx, texImage,
                                     xoffset, yoffset, zoffset,
                                     width, height, depth,
                                     clearValue);
-
-   _mesa_lock_texture(ctx, texImage->TexObject);
 
    if (res)
       return;

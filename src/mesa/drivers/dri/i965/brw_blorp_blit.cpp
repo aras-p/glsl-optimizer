@@ -266,16 +266,12 @@ brw_blorp_copytexsubimage(struct brw_context *brw,
    int dst_slice = slice + dst_image->TexObject->MinLayer + dst_image->Face;
    int dst_level = dst_image->Level + dst_image->TexObject->MinLevel;
 
-   _mesa_unlock_texture(ctx, dst_image->TexObject);
-
    brw_blorp_blit_miptrees(brw,
                            src_mt, src_irb->mt_level, src_irb->mt_layer,
                            dst_mt, dst_level, dst_slice,
                            srcX0, srcY0, srcX1, srcY1,
                            dstX0, dstY0, dstX1, dstY1,
                            GL_NEAREST, false, mirror_y);
-
-   _mesa_lock_texture(ctx, dst_image->TexObject);
 
    /* If we're copying to a packed depth stencil texture and the source
     * framebuffer has separate stencil, we need to also copy the stencil data
