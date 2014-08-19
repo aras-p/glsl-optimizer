@@ -1099,9 +1099,8 @@ static void r600_init_depth_surface(struct r600_context *rctx,
 	if (rtex->htile_buffer && !level) {
 		surf->db_htile_data_base = 0;
 		surf->db_htile_surface = S_028D24_HTILE_WIDTH(1) |
-					S_028D24_HTILE_HEIGHT(1) |
-					S_028D24_FULL_CACHE(1) |
-					S_028D24_LINEAR(1);
+					 S_028D24_HTILE_HEIGHT(1) |
+					 S_028D24_FULL_CACHE(1);
 		/* preload is not working properly on r6xx/r7xx */
 		surf->db_depth_info |= S_028010_TILE_SURFACE_ENABLE(1);
 	}

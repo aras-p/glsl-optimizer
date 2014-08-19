@@ -1264,9 +1264,8 @@ static void evergreen_init_depth_surface(struct r600_context *rctx,
 		uint64_t va = rtex->htile_buffer->gpu_address;
 		surf->db_htile_data_base = va >> 8;
 		surf->db_htile_surface = S_028ABC_HTILE_WIDTH(1) |
-					S_028ABC_HTILE_HEIGHT(1) |
-					S_028ABC_FULL_CACHE(1) |
-					S_028ABC_LINEAR(1);
+					 S_028ABC_HTILE_HEIGHT(1) |
+					 S_028ABC_FULL_CACHE(1);
 		surf->db_z_info |= S_028040_TILE_SURFACE_ENABLE(1);
 		surf->db_preload_control = 0;
 	}

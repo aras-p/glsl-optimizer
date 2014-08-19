@@ -481,19 +481,34 @@ static void r600_texture_alloc_cmask_separate(struct r600_common_screen *rscreen
 		rtex->cb_color_info |= EG_S_028C70_FAST_CLEAR(1);
 }
 
-static unsigned si_texture_htile_alloc_size(struct r600_common_screen *rscreen,
+static unsigned r600_texture_get_htile_size(struct r600_common_screen *rscreen,
 					    struct r600_texture *rtex)
 {
 	unsigned cl_width, cl_height, width, height;
 	unsigned slice_elements, slice_bytes, pipe_interleave_bytes, base_align;
 	unsigned num_pipes = rscreen->tiling_info.num_channels;
 
+	if (rscreen->chip_class <= EVERGREEN &&
+	    rscreen->info.drm_minor < 26)
+		return 0;
+
+	/* HW bug on R6xx. */
+	if (rscreen->chip_class == R600 &&
+	    (rtex->surface.level[0].npix_x > 7680 ||
+	     rtex->surface.level[0].npix_y > 7680))
+		return 0;
+
 	/* HTILE is broken with 1D tiling on old kernels and CIK. */
-	if (rtex->surface.level[0].mode == RADEON_SURF_MODE_1D &&
-	    rscreen->chip_class >= CIK && rscreen->info.drm_minor < 38)
+	if (rscreen->chip_class >= CIK &&
+	    rtex->surface.level[0].mode == RADEON_SURF_MODE_1D &&
+	    rscreen->info.drm_minor < 38)
 		return 0;
 
 	switch (num_pipes) {
+	case 1:
+		cl_width = 32;
+		cl_height = 16;
+		break;
 	case 2:
 		cl_width = 32;
 		cl_height = 32;
@@ -528,51 +543,14 @@ static unsigned si_texture_htile_alloc_size(struct r600_common_screen *rscreen,
 		align(slice_bytes, base_align);
 }
 
-static unsigned r600_texture_htile_alloc_size(struct r600_common_screen *rscreen,
-					      struct r600_texture *rtex)
-{
-	unsigned sw = rtex->surface.level[0].nblk_x * rtex->surface.blk_w;
-	unsigned sh = rtex->surface.level[0].nblk_y * rtex->surface.blk_h;
-	unsigned npipes = rscreen->info.r600_num_tile_pipes;
-	unsigned htile_size;
-
-	/* XXX also use it for other texture targets */
-	if (rscreen->info.drm_minor < 26 ||
-	    rtex->resource.b.b.target != PIPE_TEXTURE_2D ||
-	    rtex->surface.level[0].nblk_x < 32 ||
-	    rtex->surface.level[0].nblk_y < 32) {
-		return 0;
-	}
-
-	/* HW bug on R6xx. */
-	if (rscreen->chip_class == R600 &&
-	    (rtex->surface.level[0].npix_x > 7680 ||
-	     rtex->surface.level[0].npix_y > 7680))
-		return 0;
-
-	/* this alignment and htile size only apply to linear htile buffer */
-	sw = align(sw, 16 << 3);
-	sh = align(sh, npipes << 3);
-	htile_size = (sw >> 3) * (sh >> 3) * 4;
-	/* must be aligned with 2K * npipes */
-	htile_size = align(htile_size, (2 << 10) * npipes);
-	return htile_size;
-}
-
 static void r600_texture_allocate_htile(struct r600_common_screen *rscreen,
 					struct r600_texture *rtex)
 {
-	unsigned htile_size;
-	if (rscreen->chip_class >= SI) {
-		htile_size = si_texture_htile_alloc_size(rscreen, rtex);
-	} else {
-		htile_size = r600_texture_htile_alloc_size(rscreen, rtex);
-	}
+	unsigned htile_size = r600_texture_get_htile_size(rscreen, rtex);
 
 	if (!htile_size)
 		return;
 
-	/* XXX don't allocate it separately */
 	rtex->htile_buffer = (struct r600_resource*)
 			     pipe_buffer_create(&rscreen->b, PIPE_BIND_CUSTOM,
 						PIPE_USAGE_DEFAULT, htile_size);
