@@ -892,9 +892,6 @@ void evergreen_init_compute_state_functions(struct r600_context *ctx)
 	ctx->b.b.set_global_binding = evergreen_set_global_binding;
 	ctx->b.b.launch_grid = evergreen_launch_grid;
 
-	/* We always use at least one vertex buffer for parameters (id = 1)*/
-	ctx->cs_vertex_buffer_state.enabled_mask =
-	ctx->cs_vertex_buffer_state.dirty_mask = 0x2;
 }
 
 struct pipe_resource *r600_compute_global_buffer_create(
