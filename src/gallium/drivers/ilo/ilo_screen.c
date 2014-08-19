@@ -448,8 +448,7 @@ ilo_get_param(struct pipe_screen *screen, enum pipe_cap param)
        * assume that there's some fragmentation, and we start doing extra
        * flushing, etc.  That's the big cliff apps will care about.
        */
-      const int gpu_mappable_megabytes =
-         intel_winsys_get_aperture_size(is->winsys) * 3 / 4;
+      const uint64_t gpu_mappable_megabytes = is->dev.aperture_total * 3 / 4;
       uint64_t system_memory;
 
       if (!os_get_total_physical_memory(&system_memory))
@@ -638,6 +637,8 @@ static bool
 init_dev(struct ilo_dev_info *dev, const struct intel_winsys_info *info)
 {
    dev->devid = info->devid;
+   dev->aperture_total = info->aperture_total;
+   dev->aperture_mappable = info->aperture_mappable;
    dev->max_batch_size = info->max_batch_size;
    dev->has_llc = info->has_llc;
    dev->has_address_swizzling = info->has_address_swizzling;

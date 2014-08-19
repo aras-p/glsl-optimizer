@@ -139,6 +139,12 @@ probe_winsys(struct intel_winsys *winsys)
 
    info->devid = drm_intel_bufmgr_gem_get_devid(winsys->bufmgr);
 
+   if (drm_intel_get_aperture_sizes(winsys->fd,
+         &info->aperture_mappable, &info->aperture_total)) {
+      debug_error("failed to query aperture sizes");
+      return false;
+   }
+
    info->max_batch_size = BATCH_SZ;
 
    get_param(winsys, I915_PARAM_HAS_LLC, &val);
@@ -221,16 +227,6 @@ const struct intel_winsys_info *
 intel_winsys_get_info(const struct intel_winsys *winsys)
 {
    return &winsys->info;
-}
-
-int
-intel_winsys_get_aperture_size(const struct intel_winsys *winsys)
-{
-   size_t aper_size, mappable_size;
-
-   drm_intel_get_aperture_sizes(winsys->fd, &mappable_size, &aper_size);
-
-   return aper_size >> 20;
 }
 
 struct intel_context *

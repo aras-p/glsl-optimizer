@@ -69,6 +69,10 @@ struct intel_bo;
 struct intel_winsys_info {
    int devid;
 
+   /* the sizes of the aperture in bytes */
+   size_t aperture_total;
+   size_t aperture_mappable;
+
    int max_batch_size;
    bool has_llc;
    bool has_address_swizzling;
@@ -90,9 +94,6 @@ intel_winsys_destroy(struct intel_winsys *winsys);
 
 const struct intel_winsys_info *
 intel_winsys_get_info(const struct intel_winsys *winsys);
-
-int
-intel_winsys_get_aperture_size(const struct intel_winsys *winsys);
 
 /**
  * Create a logical context for use with the render ring.
