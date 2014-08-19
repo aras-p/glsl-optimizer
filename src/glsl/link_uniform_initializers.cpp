@@ -259,8 +259,7 @@ link_set_uniform_initializers(struct gl_shader_program *prog,
          if (var->data.explicit_binding) {
             const glsl_type *const type = var->type;
 
-            if (type->is_sampler()
-                || (type->is_array() && type->fields.array->is_sampler())) {
+            if (type->without_array()->is_sampler()) {
                linker::set_sampler_binding(prog, var->name, var->data.binding);
             } else if (var->is_in_uniform_block()) {
                const glsl_type *const iface_type = var->get_interface_type();
