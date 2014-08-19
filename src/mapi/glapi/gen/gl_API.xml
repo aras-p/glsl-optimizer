@@ -8364,7 +8364,16 @@
 
 <xi:include href="ARB_multi_bind.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
-<!-- ARB extensions 148 - 166 -->
+<!-- ARB extensions 148 - 160 -->
+
+<category name="GL_ARB_conditional_render_inverted" number="161">
+    <enum name="QUERY_WAIT_INVERTED"                      value="0x8E17"/>
+    <enum name="QUERY_NO_WAIT_INVERTED"                   value="0x8E18"/>
+    <enum name="QUERY_BY_REGION_WAIT_INVERTED"            value="0x8E19"/>
+    <enum name="QUERY_BY_REGION_NO_WAIT_INVERTED"         value="0x8E1A"/>
+</category>
+
+<!-- ARB extensions 162 - 166 -->
 
 <xi:include href="ARB_texture_barrier.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
