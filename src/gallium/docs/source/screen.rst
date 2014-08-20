@@ -225,6 +225,7 @@ The integer capabilities:
   memory and GART.
 * ``PIPE_CAP_CONDITIONAL_RENDER_INVERTED``: Whether the driver supports inverted
   condition for conditional rendering.
+* ``PIPE_CAP_MAX_VERTEX_ATTRIB_STRIDE``: The maximum supported vertex stride.
 
 
 .. _pipe_capf:

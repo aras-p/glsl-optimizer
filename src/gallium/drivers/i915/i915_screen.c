@@ -275,6 +275,9 @@ i915_get_param(struct pipe_screen *screen, enum pipe_cap cap)
    case PIPE_CAP_MAX_VERTEX_STREAMS:
       return 0;
 
+   case PIPE_CAP_MAX_VERTEX_ATTRIB_STRIDE:
+      return 2048;
+
    /* Fragment coordinate conventions. */
    case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:
    case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER:

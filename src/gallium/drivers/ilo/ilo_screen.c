@@ -382,6 +382,8 @@ ilo_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_VERTEX_BUFFER_STRIDE_4BYTE_ALIGNED_ONLY:
    case PIPE_CAP_VERTEX_ELEMENT_SRC_OFFSET_4BYTE_ALIGNED_ONLY:
       return false;
+   case PIPE_CAP_MAX_VERTEX_ATTRIB_STRIDE:
+      return 2048;
    case PIPE_CAP_COMPUTE:
       return false; /* TODO */
    case PIPE_CAP_USER_INDEX_BUFFERS:

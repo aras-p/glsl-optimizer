@@ -289,6 +289,9 @@ void st_init_limits(struct pipe_screen *screen,
    /* The vertex stream must fit into pipe_stream_output_info::stream */
    assert(c->MaxVertexStreams <= 4);
 
+   c->MaxVertexAttribStride
+      = screen->get_param(screen, PIPE_CAP_MAX_VERTEX_ATTRIB_STRIDE);
+
    c->StripTextureBorder = GL_TRUE;
 
    c->GLSLSkipStrictMaxUniformLimitCheck =

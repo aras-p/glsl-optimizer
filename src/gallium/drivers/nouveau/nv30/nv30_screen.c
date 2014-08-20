@@ -71,6 +71,8 @@ nv30_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
       return 16;
    case PIPE_CAP_MAX_VIEWPORTS:
       return 1;
+   case PIPE_CAP_MAX_VERTEX_ATTRIB_STRIDE:
+      return 2048;
    /* supported capabilities */
    case PIPE_CAP_TWO_SIDED_STENCIL:
    case PIPE_CAP_ANISOTROPIC_FILTER:

@@ -285,6 +285,8 @@ svga_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return 64;
    case PIPE_CAP_VERTEX_ELEMENT_SRC_OFFSET_4BYTE_ALIGNED_ONLY:
       return 1;
+   case PIPE_CAP_MAX_VERTEX_ATTRIB_STRIDE:
+      return 2048;
    case PIPE_CAP_MAX_VIEWPORTS:
       return 1;
    case PIPE_CAP_ENDIANNESS:

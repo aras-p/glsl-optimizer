@@ -117,6 +117,8 @@ nv50_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
       return 1024;
    case PIPE_CAP_MAX_VERTEX_STREAMS:
       return 1;
+   case PIPE_CAP_MAX_VERTEX_ATTRIB_STRIDE:
+      return 2048;
    case PIPE_CAP_CONSTANT_BUFFER_OFFSET_ALIGNMENT:
       return 256;
    case PIPE_CAP_TEXTURE_BUFFER_OFFSET_ALIGNMENT:
