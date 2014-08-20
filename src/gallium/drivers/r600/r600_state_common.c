@@ -1227,7 +1227,9 @@ static bool r600_update_derived_state(struct r600_context *rctx)
 	if (unlikely(!rctx->ps_shader->current))
 		return false;
 
-	if (unlikely(ps_dirty || rctx->pixel_shader.shader != rctx->ps_shader->current)) {
+	if (unlikely(ps_dirty || rctx->pixel_shader.shader != rctx->ps_shader->current ||
+		rctx->rasterizer->sprite_coord_enable != rctx->ps_shader->current->sprite_coord_enable ||
+		rctx->rasterizer->flatshade != rctx->ps_shader->current->flatshade)) {
 
 		if (rctx->cb_misc_state.nr_ps_color_outputs != rctx->ps_shader->current->nr_ps_color_outputs) {
 			rctx->cb_misc_state.nr_ps_color_outputs = rctx->ps_shader->current->nr_ps_color_outputs;
