@@ -97,6 +97,7 @@ static void
 serialize_insts(struct qcompile *c)
 {
         int last_sfu_write = -10;
+        bool scoreboard_wait_emitted = false;
 
         while (!is_empty_list(&c->qpu_inst_list)) {
                 struct queued_qpu_inst *q =
@@ -171,6 +172,30 @@ serialize_insts(struct qcompile *c)
                 if ((waddr_a >= QPU_W_SFU_RECIP && waddr_a <= QPU_W_SFU_LOG) ||
                     (waddr_m >= QPU_W_SFU_RECIP && waddr_m <= QPU_W_SFU_LOG)) {
                         last_sfu_write = c->qpu_inst_count;
+                }
+
+                /* "A scoreboard wait must not occur in the first two
+                 *  instructions of a fragment shader. This is either the
+                 *  explicit Wait for Scoreboard signal or an implicit wait
+                 *  with the first tile-buffer read or write instruction."
+                 */
+                if (!scoreboard_wait_emitted &&
+                    (waddr_a == QPU_W_TLB_Z || waddr_m == QPU_W_TLB_Z ||
+                     waddr_a == QPU_W_TLB_COLOR_MS ||
+                     waddr_m == QPU_W_TLB_COLOR_MS ||
+                     waddr_a == QPU_W_TLB_COLOR_ALL ||
+                     waddr_m == QPU_W_TLB_COLOR_ALL ||
+                     QPU_GET_FIELD(q->inst, QPU_SIG) == QPU_SIG_COLOR_LOAD)) {
+                        while (c->qpu_inst_count < 3 ||
+                               QPU_GET_FIELD(c->qpu_insts[c->qpu_inst_count - 1],
+                                             QPU_SIG) != QPU_SIG_NONE) {
+                                serialize_one_inst(c, qpu_inst(qpu_a_NOP(),
+                                                               qpu_m_NOP()));
+                        }
+                        c->qpu_insts[c->qpu_inst_count - 1] =
+                                qpu_set_sig(c->qpu_insts[c->qpu_inst_count - 1],
+                                            QPU_SIG_WAIT_FOR_SCOREBOARD);
+                        scoreboard_wait_emitted = true;
                 }
 
                 serialize_one_inst(c, q->inst);
@@ -613,8 +638,6 @@ vc4_generate_code(struct qcompile *c)
         case QSTAGE_COORD:
                 break;
         case QSTAGE_FRAG:
-                c->qpu_insts[2] = qpu_set_sig(c->qpu_insts[2],
-                                              QPU_SIG_WAIT_FOR_SCOREBOARD);
                 c->qpu_insts[c->qpu_inst_count - 1] =
                         qpu_set_sig(c->qpu_insts[c->qpu_inst_count - 1],
                                     QPU_SIG_SCOREBOARD_UNLOCK);
