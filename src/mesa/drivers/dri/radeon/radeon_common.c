@@ -515,9 +515,6 @@ static INLINE void radeonEmitAtoms(radeonContextPtr radeon, GLboolean emitAll)
 {
 	struct radeon_state_atom *atom;
 
-	if (radeon->vtbl.pre_emit_atoms)
-		radeon->vtbl.pre_emit_atoms(radeon);
-
 	/* Emit actual atoms */
 	if (radeon->hw.all_dirty || emitAll) {
 		foreach(atom, &radeon->hw.atomlist)

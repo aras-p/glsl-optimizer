@@ -92,29 +92,6 @@ static const struct tnl_pipeline_stage *radeon_pipeline[] = {
    NULL,
 };
 
-static void r100_get_lock(radeonContextPtr radeon)
-{
-   r100ContextPtr rmesa = (r100ContextPtr)radeon;
-   drm_radeon_sarea_t *sarea = radeon->sarea;
-
-   RADEON_STATECHANGE(rmesa, ctx);
-   if (rmesa->radeon.sarea->tiling_enabled) {
-      rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] |=
-	 RADEON_COLOR_TILE_ENABLE;
-   } else {
-      rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] &=
-	 ~RADEON_COLOR_TILE_ENABLE;
-   }
-   
-   if (sarea->ctx_owner != rmesa->radeon.dri.hwContext) {
-      sarea->ctx_owner = rmesa->radeon.dri.hwContext;
-   }
-}
-
-static void r100_vtbl_emit_cs_header(struct radeon_cs *cs, radeonContextPtr rmesa)
-{
-}
-
 static void r100_vtbl_pre_emit_state(radeonContextPtr radeon)
 {
    r100ContextPtr rmesa = (r100ContextPtr)radeon;
@@ -146,9 +123,6 @@ static void r100_emit_query_finish(radeonContextPtr radeon)
 
 static void r100_init_vtbl(radeonContextPtr radeon)
 {
-   radeon->vtbl.get_lock = r100_get_lock;
-   radeon->vtbl.update_viewport_offset = radeonUpdateViewportOffset;
-   radeon->vtbl.emit_cs_header = r100_vtbl_emit_cs_header;
    radeon->vtbl.swtcl_flush = r100_swtcl_flush;
    radeon->vtbl.pre_emit_state = r100_vtbl_pre_emit_state;
    radeon->vtbl.fallback = radeonFallback;

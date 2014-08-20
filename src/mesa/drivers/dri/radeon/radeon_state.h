@@ -44,7 +44,6 @@ extern void radeonInitStateFuncs( struct gl_context *ctx );
 
 extern void radeonUpdateMaterial( struct gl_context *ctx );
 
-extern void radeonUpdateViewportOffset( struct gl_context *ctx );
 extern void radeonUpdateWindow( struct gl_context *ctx );
 extern void radeonUpdateDrawBuffer( struct gl_context *ctx );
 extern void radeonUploadTexMatrix( r100ContextPtr rmesa,

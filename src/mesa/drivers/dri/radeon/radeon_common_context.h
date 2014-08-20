@@ -464,11 +464,7 @@ struct radeon_context {
    } query;
 
    struct {
-	   void (*get_lock)(radeonContextPtr radeon);
-	   void (*update_viewport_offset)(struct gl_context *ctx);
-	   void (*emit_cs_header)(struct radeon_cs *cs, radeonContextPtr rmesa);
 	   void (*swtcl_flush)(struct gl_context *ctx, uint32_t offset);
-	   void (*pre_emit_atoms)(radeonContextPtr rmesa);
 	   void (*pre_emit_state)(radeonContextPtr rmesa);
 	   void (*fallback)(struct gl_context *ctx, GLuint bit, GLboolean mode);
 	   void (*free_context)(struct gl_context *ctx);

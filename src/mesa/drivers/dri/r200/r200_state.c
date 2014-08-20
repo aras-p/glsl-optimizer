@@ -1616,58 +1616,6 @@ static void r200DepthRange(struct gl_context *ctx)
    r200UpdateWindow( ctx );
 }
 
-void r200UpdateViewportOffset( struct gl_context *ctx )
-{
-   r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   __DRIdrawable *dPriv = radeon_get_drawable(&rmesa->radeon);
-   GLfloat xoffset = (GLfloat)0;
-   GLfloat yoffset = (GLfloat)dPriv->h;
-   const GLfloat *v = ctx->ViewportArray[0]._WindowMap.m;
-
-   float_ui32_type tx;
-   float_ui32_type ty;
-
-   tx.f = v[MAT_TX] + xoffset;
-   ty.f = (- v[MAT_TY]) + yoffset;
-
-   if ( rmesa->hw.vpt.cmd[VPT_SE_VPORT_XOFFSET] != tx.ui32 ||
-	rmesa->hw.vpt.cmd[VPT_SE_VPORT_YOFFSET] != ty.ui32 )
-   {
-      /* Note: this should also modify whatever data the context reset
-       * code uses...
-       */
-      R200_STATECHANGE( rmesa, vpt );
-      rmesa->hw.vpt.cmd[VPT_SE_VPORT_XOFFSET] = tx.ui32;
-      rmesa->hw.vpt.cmd[VPT_SE_VPORT_YOFFSET] = ty.ui32;
-
-      /* update polygon stipple x/y screen offset */
-      {
-         GLuint stx, sty;
-         GLuint m = rmesa->hw.msc.cmd[MSC_RE_MISC];
-
-         m &= ~(R200_STIPPLE_X_OFFSET_MASK |
-                R200_STIPPLE_Y_OFFSET_MASK);
-
-         /* add magic offsets, then invert */
-         stx = 31 - ((-1) & R200_STIPPLE_COORD_MASK);
-         sty = 31 - ((dPriv->h - 1)
-                     & R200_STIPPLE_COORD_MASK);
-
-         m |= ((stx << R200_STIPPLE_X_OFFSET_SHIFT) |
-               (sty << R200_STIPPLE_Y_OFFSET_SHIFT));
-
-         if ( rmesa->hw.msc.cmd[MSC_RE_MISC] != m ) {
-            R200_STATECHANGE( rmesa, msc );
-	    rmesa->hw.msc.cmd[MSC_RE_MISC] = m;
-         }
-      }
-   }
-
-   radeonUpdateScissor( ctx );
-}
-
-
-
 /* =============================================================
  * Miscellaneous
  */
