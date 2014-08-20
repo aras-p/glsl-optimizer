@@ -66,7 +66,9 @@ vc4_setup_rcl(struct vc4_context *vc4)
         cl_u16(&vc4->rcl, height);
         cl_u16(&vc4->rcl, ((csurf->tiling <<
                             VC4_RENDER_CONFIG_MEMORY_FORMAT_SHIFT) |
-                           VC4_RENDER_CONFIG_FORMAT_RGBA8888 |
+                           (vc4_rt_format_is_565(csurf->base.format) ?
+                            VC4_RENDER_CONFIG_FORMAT_BGR565 :
+                            VC4_RENDER_CONFIG_FORMAT_RGBA8888) |
                            VC4_RENDER_CONFIG_EARLY_Z_COVERAGE_DISABLE));
 
         /* The tile buffer normally gets cleared when the previous tile is
@@ -100,6 +102,8 @@ vc4_setup_rcl(struct vc4_context *vc4)
                                       (csurf->tiling <<
                                        VC4_LOADSTORE_TILE_BUFFER_FORMAT_SHIFT));
                                 cl_u8(&vc4->rcl,
+                                      vc4_rt_format_is_565(csurf->base.format) ?
+                                      VC4_LOADSTORE_TILE_BUFFER_BGR565 :
                                       VC4_LOADSTORE_TILE_BUFFER_RGBA8888);
                                 cl_reloc(vc4, &vc4->rcl, ctex->bo,
                                          csurf->offset);

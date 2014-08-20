@@ -231,4 +231,10 @@ void vc4_emit_state(struct pipe_context *pctx);
 void vc4_generate_code(struct qcompile *c);
 void vc4_update_compiled_shaders(struct vc4_context *vc4, uint8_t prim_mode);
 
+bool vc4_rt_format_supported(enum pipe_format f);
+bool vc4_rt_format_is_565(enum pipe_format f);
+bool vc4_tex_format_supported(enum pipe_format f);
+uint8_t vc4_get_tex_format(enum pipe_format f);
+const uint8_t *vc4_get_format_swizzle(enum pipe_format f);
+
 #endif /* VC4_CONTEXT_H */

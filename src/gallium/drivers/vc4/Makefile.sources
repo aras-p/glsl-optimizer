@@ -4,6 +4,7 @@ C_SOURCES := \
 	vc4_context.c \
 	vc4_draw.c \
 	vc4_emit.c \
+	vc4_formats.c \
 	vc4_opt_algebraic.c \
 	vc4_opt_copy_propagation.c \
 	vc4_opt_dead_code.c \

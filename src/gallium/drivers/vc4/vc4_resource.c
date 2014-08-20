@@ -267,11 +267,14 @@ static enum vc4_texture_data_type
 get_resource_texture_format(struct pipe_resource *prsc)
 {
         struct vc4_resource *rsc = vc4_resource(prsc);
+        uint8_t format = vc4_get_tex_format(prsc->format);
 
-        if (rsc->tiled)
-                return VC4_TEXTURE_TYPE_RGBA8888;
-        else
+        if (!rsc->tiled) {
+                assert(format == VC4_TEXTURE_TYPE_RGBA8888);
                 return VC4_TEXTURE_TYPE_RGBA32R;
+        }
+
+        return format;
 }
 
 static struct pipe_resource *

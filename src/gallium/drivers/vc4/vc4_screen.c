@@ -302,46 +302,6 @@ vc4_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader,
         return 0;
 }
 
-static uint8_t
-vc4_get_texture_format(enum pipe_format format)
-{
-        switch (format) {
-        case PIPE_FORMAT_B8G8R8A8_UNORM:
-                return 0;
-        case PIPE_FORMAT_B8G8R8X8_UNORM:
-                return 1;
-        case PIPE_FORMAT_R8G8B8A8_UNORM:
-                return 0;
-        case PIPE_FORMAT_R8G8B8X8_UNORM:
-                return 1;
-        case PIPE_FORMAT_A8R8G8B8_UNORM:
-                return 0;
-        case PIPE_FORMAT_X8R8G8B8_UNORM:
-                return 1;
-        case PIPE_FORMAT_A8B8G8R8_UNORM:
-                return 0;
-        case PIPE_FORMAT_X8B8G8R8_UNORM:
-                return 1;
-/*
-        case PIPE_FORMAT_R4G4B4A4_UNORM:
-                return 2;
-        case PIPE_FORMAT_R5G5B5A1_UNORM:
-                return 3;
-        case PIPE_FORMAT_R5G6B5_UNORM:
-                return 4;
-*/
-        case PIPE_FORMAT_L8_UNORM:
-                return 5;
-        case PIPE_FORMAT_A8_UNORM:
-                return 6;
-        case PIPE_FORMAT_L8A8_UNORM:
-                return 7;
-                /* XXX: ETC1 and more*/
-        default:
-                return ~0;
-        }
-}
-
 static boolean
 vc4_screen_is_format_supported(struct pipe_screen *pscreen,
                                enum pipe_format format,
@@ -366,20 +326,12 @@ vc4_screen_is_format_supported(struct pipe_screen *pscreen,
         }
 
         if ((usage & PIPE_BIND_RENDER_TARGET) &&
-            (format == PIPE_FORMAT_B8G8R8A8_UNORM ||
-             format == PIPE_FORMAT_B8G8R8X8_UNORM || /* XXX: really? */
-             format == PIPE_FORMAT_R8G8B8A8_UNORM ||
-             format == PIPE_FORMAT_R8G8B8X8_UNORM || /* XXX: really? */
-             format == PIPE_FORMAT_A8B8G8R8_UNORM ||
-             format == PIPE_FORMAT_X8B8G8R8_UNORM || /* XXX: really? */
-             format == PIPE_FORMAT_A8R8G8B8_UNORM ||
-             format == PIPE_FORMAT_X8R8G8B8_UNORM || /* XXX: really? */
-             format == PIPE_FORMAT_R16G16B16A16_FLOAT)) {
+            vc4_rt_format_supported(format)) {
                 retval |= PIPE_BIND_RENDER_TARGET;
         }
 
         if ((usage & PIPE_BIND_SAMPLER_VIEW) &&
-            (vc4_get_texture_format(format) != ~0)) {
+            (vc4_tex_format_supported(format))) {
                 retval |= PIPE_BIND_SAMPLER_VIEW;
         }
 

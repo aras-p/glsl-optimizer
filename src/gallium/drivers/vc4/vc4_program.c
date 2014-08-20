@@ -368,18 +368,14 @@ tgsi_to_qir_tex(struct tgsi_to_qir *trans,
         for (int i = 0; i < 4; i++)
                 unpacked[i] = qir_R4_UNPACK(c, i);
 
+        enum pipe_format format = trans->key->tex_format[unit];
+        const uint8_t *swiz = vc4_get_format_swizzle(format);
         for (int i = 0; i < 4; i++) {
                 if (!(tgsi_inst->Dst[0].Register.WriteMask & (1 << i)))
                         continue;
 
-                enum pipe_format format = trans->key->tex_format[unit];
-                const struct util_format_description *desc =
-                        util_format_description(format);
-
-                uint8_t swiz = desc->swizzle[i];
-
                 update_dst(trans, tgsi_inst, i,
-                           get_swizzled_channel(trans, unpacked, swiz));
+                           get_swizzled_channel(trans, unpacked, swiz[i]));
         }
 }
 
@@ -934,24 +930,25 @@ emit_frag_end(struct tgsi_to_qir *trans)
 
         struct qreg t = qir_get_temp(c);
 
-        const struct util_format_description *format_desc =
-                util_format_description(trans->fs_key->color_format);
-
         struct qreg src_color[4] = {
                 trans->outputs[0], trans->outputs[1],
                 trans->outputs[2], trans->outputs[3],
         };
 
+        enum pipe_format color_format = trans->fs_key->color_format;
+        const uint8_t *format_swiz = vc4_get_format_swizzle(color_format);
+        struct qreg tlb_read_color[4] = { c->undef, c->undef, c->undef, c->undef };
         struct qreg dst_color[4] = { c->undef, c->undef, c->undef, c->undef };
         if (trans->fs_key->blend.blend_enable ||
             trans->fs_key->blend.colormask != 0xf) {
                 qir_emit(c, qir_inst(QOP_TLB_COLOR_READ, c->undef,
                                      c->undef, c->undef));
-                for (int i = 0; i < 4; i++) {
-                        dst_color[i] = qir_R4_UNPACK(c, i);
-
-                        /* XXX: Swizzles? */
-                }
+                for (int i = 0; i < 4; i++)
+                        tlb_read_color[i] = qir_R4_UNPACK(c, i);
+                for (int i = 0; i < 4; i++)
+                        dst_color[i] = get_swizzled_channel(trans,
+                                                            tlb_read_color,
+                                                            format_swiz[i]);
         }
 
         struct qreg blend_color[4];
@@ -979,9 +976,8 @@ emit_frag_end(struct tgsi_to_qir *trans)
 
         struct qreg swizzled_outputs[4];
         for (int i = 0; i < 4; i++) {
-                swizzled_outputs[i] =
-                        get_swizzled_channel(trans, blend_color,
-                                             format_desc->swizzle[i]);
+                swizzled_outputs[i] = get_swizzled_channel(trans, blend_color,
+                                                           format_swiz[i]);
         }
 
         if (trans->fs_key->depth_enabled) {
