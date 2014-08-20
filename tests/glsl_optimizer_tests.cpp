@@ -250,7 +250,11 @@ static bool CheckGLSL (bool vertex, bool gles, const std::string& testName, cons
 		replace_string (src, "#extension GL_EXT_shadow_samplers : enable", "", 0);
 		replace_string (src, "#extension GL_EXT_frag_depth : enable", "", 0);
 		replace_string (src, "precision ", "// precision ", 0);
-		replace_string (src, "#version 300 es", "#version 330", 0);
+		replace_string (src, "#version 300 es", "", 0);
+	}
+	if (gles && need3)
+	{
+		src = "#version 330\n" + src;
 	}
 	const char* sourcePtr = src.c_str();
 
@@ -264,6 +268,7 @@ static bool CheckGLSL (bool vertex, bool gles, const std::string& testName, cons
 	if (status == 0)
 	{
 		char log[4096];
+		log[0] = 0;
 		GLsizei logLength;
 		glGetInfoLogARB (shader, sizeof(log), &logLength, log);
 		printf ("\n  %s: real glsl compiler error on %s:\n%s\n", testName.c_str(), prefix, log);
@@ -359,12 +364,28 @@ static void DeleteFile (const std::string& path)
 static void MassageVertexForGLES (std::string& s)
 {
 	std::string pre;
-	pre += "#define gl_Vertex _glesVertex\nattribute highp vec4 _glesVertex;\n";
-	pre += "#define gl_Normal _glesNormal\nattribute mediump vec3 _glesNormal;\n";
-	pre += "#define gl_MultiTexCoord0 _glesMultiTexCoord0\nattribute highp vec4 _glesMultiTexCoord0;\n";
-	pre += "#define gl_MultiTexCoord1 _glesMultiTexCoord1\nattribute highp vec4 _glesMultiTexCoord1;\n";
-	pre += "#define gl_Color _glesColor\nattribute lowp vec4 _glesColor;\n";
-	s = pre + s;
+	std::string version = "#version 300 es\n";
+	size_t insertPoint = s.find(version);
+	if (insertPoint != std::string::npos)
+	{
+		insertPoint += version.size();
+		pre += "#define gl_Vertex _glesVertex\nin highp vec4 _glesVertex;\n";
+		pre += "#define gl_Normal _glesNormal\nin mediump vec3 _glesNormal;\n";
+		pre += "#define gl_MultiTexCoord0 _glesMultiTexCoord0\nin highp vec4 _glesMultiTexCoord0;\n";
+		pre += "#define gl_MultiTexCoord1 _glesMultiTexCoord1\nin highp vec4 _glesMultiTexCoord1;\n";
+		pre += "#define gl_Color _glesColor\nin lowp vec4 _glesColor;\n";
+	}
+	else
+	{
+		insertPoint = 0;
+		pre += "#define gl_Vertex _glesVertex\nattribute highp vec4 _glesVertex;\n";
+		pre += "#define gl_Normal _glesNormal\nattribute mediump vec3 _glesNormal;\n";
+		pre += "#define gl_MultiTexCoord0 _glesMultiTexCoord0\nattribute highp vec4 _glesMultiTexCoord0;\n";
+		pre += "#define gl_MultiTexCoord1 _glesMultiTexCoord1\nattribute highp vec4 _glesMultiTexCoord1;\n";
+		pre += "#define gl_Color _glesColor\nattribute lowp vec4 _glesColor;\n";
+	}
+	
+	s.insert (insertPoint, pre);
 }
 
 static void MassageFragmentForGLES (std::string& s)
@@ -520,7 +541,7 @@ int main (int argc, const char** argv)
 				//	continue;
 				std::string hirname = inname.substr (0,inname.size()-strlen(kApiIn[api])) + kApiIR[api];
 				std::string outname = inname.substr (0,inname.size()-strlen(kApiIn[api])) + kApiOut[api];
-				bool ok = TestFile (ctx[api], type==0, inname, testFolder + "/" + inname, testFolder + "/" + hirname, testFolder + "/" + outname, api==0, hasOpenGL);
+				bool ok = TestFile (ctx[api], type==0, inname, testFolder + "/" + inname, testFolder + "/" + hirname, testFolder + "/" + outname, api<=1, hasOpenGL);
 				if (!ok)
 				{
 					++errors;
