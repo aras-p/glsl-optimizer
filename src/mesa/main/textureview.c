@@ -536,6 +536,9 @@ _mesa_TextureView(GLuint texture, GLenum target, GLuint origtexture,
    /* Adjust width, height, depth to be appropriate for new target */
    switch (target) {
    case GL_TEXTURE_1D:
+      height = 1;
+      break;
+
    case GL_TEXTURE_3D:
       break;
 
