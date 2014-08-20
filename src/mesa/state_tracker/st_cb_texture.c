@@ -829,12 +829,12 @@ st_TexSubImage(struct gl_context *ctx, GLuint dims,
    blit.src.level = 0;
    blit.src.format = src_format;
    blit.dst.resource = dst;
-   blit.dst.level = stObj->pt != stImage->pt ? 0 : texImage->Level;
+   blit.dst.level = stObj->pt != stImage->pt ? 0 : texImage->TexObject->MinLevel + texImage->Level;
    blit.dst.format = dst_format;
    blit.src.box.x = blit.src.box.y = blit.src.box.z = 0;
    blit.dst.box.x = xoffset;
    blit.dst.box.y = yoffset;
-   blit.dst.box.z = zoffset + texImage->Face;
+   blit.dst.box.z = zoffset + texImage->Face + texImage->TexObject->MinLayer;
    blit.src.box.width = blit.dst.box.width = width;
    blit.src.box.height = blit.dst.box.height = height;
    blit.src.box.depth = blit.dst.box.depth = depth;
@@ -916,7 +916,8 @@ st_GetTexImage(struct gl_context * ctx,
    GLuint height = texImage->Height;
    GLuint depth = texImage->Depth;
    struct st_texture_image *stImage = st_texture_image(texImage);
-   struct pipe_resource *src = st_texture_object(texImage->TexObject)->pt;
+   struct st_texture_object *stObj = st_texture_object(texImage->TexObject);
+   struct pipe_resource *src = stObj->pt;
    struct pipe_resource *dst = NULL;
    struct pipe_resource dst_templ;
    enum pipe_format dst_format, src_format;
@@ -970,7 +971,10 @@ st_GetTexImage(struct gl_context * ctx,
     * - Luminance alpha must be returned as (L,0,0,A).
     * - Intensity must be returned as (I,0,0,1)
     */
-   src_format = util_format_linear(src->format);
+   if (stObj->surface_based)
+      src_format = util_format_linear(stObj->surface_format);
+   else
+      src_format = util_format_linear(src->format);
    src_format = util_format_luminance_to_red(src_format);
    src_format = util_format_intensity_to_red(src_format);
 
@@ -1069,14 +1073,14 @@ st_GetTexImage(struct gl_context * ctx,
 
    memset(&blit, 0, sizeof(blit));
    blit.src.resource = src;
-   blit.src.level = texImage->Level;
+   blit.src.level = texImage->Level + texImage->TexObject->MinLevel;
    blit.src.format = src_format;
    blit.dst.resource = dst;
    blit.dst.level = 0;
    blit.dst.format = dst->format;
    blit.src.box.x = blit.dst.box.x = 0;
    blit.src.box.y = blit.dst.box.y = 0;
-   blit.src.box.z = texImage->Face;
+   blit.src.box.z = texImage->Face + texImage->TexObject->MinLayer;
    blit.dst.box.z = 0;
    blit.src.box.width = blit.dst.box.width = width;
    blit.src.box.height = blit.dst.box.height = height;
@@ -1441,10 +1445,10 @@ st_CopyTexSubImage(struct gl_context *ctx, GLuint dims,
    blit.src.box.depth = 1;
    blit.dst.resource = stImage->pt;
    blit.dst.format = dst_format;
-   blit.dst.level = stObj->pt != stImage->pt ? 0 : texImage->Level;
+   blit.dst.level = stObj->pt != stImage->pt ? 0 : texImage->Level + texImage->TexObject->MinLevel;
    blit.dst.box.x = destX;
    blit.dst.box.y = destY;
-   blit.dst.box.z = stImage->base.Face + slice;
+   blit.dst.box.z = stImage->base.Face + slice + texImage->TexObject->MinLayer;
    blit.dst.box.width = width;
    blit.dst.box.height = height;
    blit.dst.box.depth = 1;
@@ -1544,6 +1548,9 @@ st_finalize_texture(struct gl_context *ctx,
    struct st_texture_image *firstImage;
    enum pipe_format firstImageFormat;
    GLuint ptWidth, ptHeight, ptDepth, ptLayers, ptNumSamples;
+
+   if (tObj->Immutable)
+      return GL_TRUE;
 
    if (_mesa_is_texture_complete(tObj, &tObj->Sampler)) {
       /* The texture is complete and we know exactly how many mipmap levels
@@ -1824,6 +1831,44 @@ st_TestProxyTexImage(struct gl_context *ctx, GLenum target,
    }
 }
 
+static GLboolean
+st_TextureView(struct gl_context *ctx,
+               struct gl_texture_object *texObj,
+               struct gl_texture_object *origTexObj)
+{
+   struct st_texture_object *orig = st_texture_object(origTexObj);
+   struct st_texture_object *tex = st_texture_object(texObj);
+   struct gl_texture_image *image = texObj->Image[0][0];
+
+   const int numFaces = _mesa_num_tex_faces(texObj->Target);
+   const int numLevels = texObj->NumLevels;
+
+   int face;
+   int level;
+
+   pipe_resource_reference(&tex->pt, orig->pt);
+
+   /* Set image resource pointers */
+   for (level = 0; level < numLevels; level++) {
+      for (face = 0; face < numFaces; face++) {
+         struct st_texture_image *stImage =
+            st_texture_image(texObj->Image[face][level]);
+         pipe_resource_reference(&stImage->pt, tex->pt);
+      }
+   }
+
+   tex->surface_based = GL_TRUE;
+   tex->surface_format =
+      st_mesa_format_to_pipe_format(st_context(ctx), image->TexFormat);
+
+   tex->width0 = image->Width;
+   tex->height0 = image->Height;
+   tex->depth0 = image->Depth;
+   tex->lastLevel = numLevels - 1;
+
+   return GL_TRUE;
+}
+
 
 void
 st_init_texture_functions(struct dd_function_table *functions)
@@ -1855,4 +1900,5 @@ st_init_texture_functions(struct dd_function_table *functions)
    functions->TestProxyTexImage = st_TestProxyTexImage;
 
    functions->AllocTextureStorage = st_AllocTextureStorage;
+   functions->TextureView = st_TextureView;
 }

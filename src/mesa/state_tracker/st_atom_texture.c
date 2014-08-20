@@ -192,9 +192,9 @@ get_texture_format_swizzle(const struct st_texture_object *stObj)
    return swizzle_swizzle(stObj->base._Swizzle, tex_swizzle);
 }
 
-                            
+
 /**
- * Return TRUE if the texture's sampler view swizzle is equal to
+ * Return TRUE if the texture's sampler view swizzle is not equal to
  * the texture's swizzle.
  *
  * \param stObj  the st texture object,
@@ -214,9 +214,20 @@ check_sampler_swizzle(const struct st_texture_object *stObj,
 
 static unsigned last_level(struct st_texture_object *stObj)
 {
-   return MIN2(stObj->base._MaxLevel, stObj->pt->last_level);
+   unsigned ret = MIN2(stObj->base.MinLevel + stObj->base._MaxLevel,
+                       stObj->pt->last_level);
+   if (stObj->base.Immutable)
+      ret = MIN2(ret, stObj->base.MinLevel + stObj->base.NumLevels - 1);
+   return ret;
 }
 
+static unsigned last_layer(struct st_texture_object *stObj)
+{
+   if (stObj->base.Immutable)
+      return MIN2(stObj->base.MinLayer + stObj->base.NumLayers - 1,
+                  stObj->pt->array_size - 1);
+   return stObj->pt->array_size - 1;
+}
 
 static struct pipe_sampler_view *
 st_create_texture_sampler_view_from_stobj(struct pipe_context *pipe,
@@ -249,9 +260,13 @@ st_create_texture_sampler_view_from_stobj(struct pipe_context *pipe,
       templ.u.buf.first_element = f;
       templ.u.buf.last_element  = f + (n - 1);
    } else {
-      templ.u.tex.first_level = stObj->base.BaseLevel;
+      templ.u.tex.first_level = stObj->base.MinLevel + stObj->base.BaseLevel;
       templ.u.tex.last_level = last_level(stObj);
       assert(templ.u.tex.first_level <= templ.u.tex.last_level);
+      templ.u.tex.first_layer = stObj->base.MinLayer;
+      templ.u.tex.last_layer = last_layer(stObj);
+      assert(templ.u.tex.first_layer <= templ.u.tex.last_layer);
+      templ.target = gl_target_to_pipe(stObj->base.Target);
    }
 
    if (swizzle != SWIZZLE_NOOP) {
@@ -287,8 +302,11 @@ st_get_texture_sampler_view_from_stobj(struct st_context *st,
    if (*sv) {
       if (check_sampler_swizzle(stObj, *sv) ||
 	  (format != (*sv)->format) ||
-          stObj->base.BaseLevel != (*sv)->u.tex.first_level ||
-          last_level(stObj) != (*sv)->u.tex.last_level) {
+          gl_target_to_pipe(stObj->base.Target) != (*sv)->target ||
+          stObj->base.MinLevel + stObj->base.BaseLevel != (*sv)->u.tex.first_level ||
+          last_level(stObj) != (*sv)->u.tex.last_level ||
+          stObj->base.MinLayer != (*sv)->u.tex.first_layer ||
+          last_layer(stObj) != (*sv)->u.tex.last_layer) {
 	 pipe_sampler_view_reference(sv, NULL);
       }
    }

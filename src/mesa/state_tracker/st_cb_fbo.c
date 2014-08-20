@@ -450,6 +450,16 @@ st_update_renderbuffer_surface(struct st_context *st,
       last_layer = strb->rtt_face + strb->rtt_slice;
    }
 
+   /* Adjust for texture views */
+   if (strb->is_rtt) {
+      struct gl_texture_object *tex = strb->Base.TexImage->TexObject;
+      first_layer += tex->MinLayer;
+      if (!strb->rtt_layered)
+         last_layer += tex->MinLayer;
+      else
+         last_layer = MIN2(first_layer + tex->NumLayers - 1, last_layer);
+   }
+
    if (!strb->surface ||
        strb->surface->texture->nr_samples != strb->Base.NumSamples ||
        strb->surface->format != format ||
