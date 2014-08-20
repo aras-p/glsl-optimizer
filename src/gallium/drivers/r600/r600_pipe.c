@@ -261,6 +261,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_TEXTURE_MULTISAMPLE:
 	case PIPE_CAP_BUFFER_MAP_PERSISTENT_COHERENT:
 	case PIPE_CAP_TGSI_VS_WINDOW_SPACE_POSITION:
+	case PIPE_CAP_TGSI_VS_LAYER_VIEWPORT:
 		return 1;
 
 	case PIPE_CAP_COMPUTE:
@@ -301,7 +302,6 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	/* Supported on Evergreen. */
 	case PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE:
 	case PIPE_CAP_CUBE_MAP_ARRAY:
-	case PIPE_CAP_TGSI_VS_LAYER_VIEWPORT:
 	case PIPE_CAP_TEXTURE_GATHER_SM5:
 	case PIPE_CAP_TEXTURE_QUERY_LOD:
 	case PIPE_CAP_TGSI_FS_FINE_DERIVATIVE:
