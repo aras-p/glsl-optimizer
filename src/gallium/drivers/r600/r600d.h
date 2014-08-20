@@ -889,6 +889,7 @@
 #define   S_028A40_CUT_MODE(x)                         (((x) & 0x3) << 3)
 #define   G_028A40_CUT_MODE(x)                         (((x) >> 3) & 0x3)
 #define   C_028A40_CUT_MODE                            0xFFFFFFE7
+#define R_028A50_VGT_ENHANCE                         0x028A50
 #define R_028A6C_VGT_GS_OUT_PRIM_TYPE                0x028A6C
 #define   S_028A6C_OUTPRIM_TYPE(x)                     (((x) & 0x3F) << 0)
 #define     V_028A6C_OUTPRIM_TYPE_POINTLIST            0
