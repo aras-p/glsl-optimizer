@@ -1610,6 +1610,13 @@ static void r600_emit_db_misc_state(struct r600_context *rctx, struct r600_atom 
 				     S_028D0C_STENCIL_COPY_ENABLE(a->copy_stencil) |
 				     S_028D0C_COPY_CENTROID(1) |
 				     S_028D0C_COPY_SAMPLE(a->copy_sample);
+
+		if (rctx->b.chip_class == R600)
+			db_render_override |= S_028D10_NOOP_CULL_DISABLE(1);
+
+		if (rctx->b.family == CHIP_RV610 || rctx->b.family == CHIP_RV630 ||
+		    rctx->b.family == CHIP_RV620 || rctx->b.family == CHIP_RV635)
+			db_render_override |= S_028D10_FORCE_HIZ_ENABLE(V_028D10_FORCE_DISABLE);
 	} else if (a->flush_depthstencil_in_place) {
 		db_render_control |= S_028D0C_DEPTH_COMPRESS_DISABLE(1) |
 				     S_028D0C_STENCIL_COMPRESS_DISABLE(1);
