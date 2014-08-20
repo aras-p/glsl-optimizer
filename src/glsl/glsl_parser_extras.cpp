@@ -527,6 +527,7 @@ static const _mesa_glsl_extension _mesa_glsl_supported_extensions[] = {
    EXT(OES_standard_derivatives,       false,  true,     OES_standard_derivatives),
    EXT(EXT_shadow_samplers,            false,  true,     EXT_shadow_samplers),
    EXT(EXT_frag_depth,                 false,  true,     EXT_frag_depth),
+   EXT(EXT_shader_framebuffer_fetch,   false,  true,     EXT_shader_framebuffer_fetch),
    EXT(ARB_texture_cube_map_array,     true,  false,     ARB_texture_cube_map_array),
    EXT(ARB_shading_language_packing,   true,  false,     ARB_shading_language_packing),
    EXT(ARB_shading_language_420pack,   true,  false,     ARB_shading_language_420pack),

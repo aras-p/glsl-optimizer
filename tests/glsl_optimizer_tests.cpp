@@ -236,6 +236,11 @@ static bool CheckGLSL (bool vertex, bool gles, const std::string& testName, cons
 		src += "#define texture2DGradEXT texture2DGradARB\n";
 		src += "#define textureCubeGradEXT textureCubeGradARB\n";
 		src += "#define gl_FragDepthEXT gl_FragDepth\n";
+		if (!need3)
+		{
+			src += "#define gl_LastFragData _glesLastFragData\n";
+			src += "varying lowp vec4 _glesLastFragData[4];\n";
+		}
 		src += "float shadow2DEXT (sampler2DShadow s, vec3 p) { return shadow2D(s,p).r; }\n";
 		src += "float shadow2DProjEXT (sampler2DShadow s, vec4 p) { return shadow2DProj(s,p).r; }\n";
 	}
@@ -252,6 +257,8 @@ static bool CheckGLSL (bool vertex, bool gles, const std::string& testName, cons
 		replace_string (src, "precision ", "// precision ", 0);
 		replace_string (src, "#version 300 es", "", 0);
 	}
+	replace_string (src, "#extension GL_EXT_shader_framebuffer_fetch : require", "", 0);
+	replace_string (src, "#extension GL_EXT_shader_framebuffer_fetch : enable", "", 0);
 	if (gles && need3)
 	{
 		src = "#version 330\n" + src;

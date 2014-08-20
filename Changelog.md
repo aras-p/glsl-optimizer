@@ -4,6 +4,10 @@ GLSL optimizer Change Log
 2014 08
 -------
 
+Goodies:
+
+* Supports GL_EXT_shader_framebuffer_fetch now, in both ES2.0 & 3.0.
+
 Fixes:
 
 * Fixed printing of infinities & NaNs.
