@@ -62,13 +62,6 @@ static void r200Clear( struct gl_context *ctx, GLbitfield mask )
                    BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL |
                    BUFFER_BIT_COLOR0;
 
-   if ( R200_DEBUG & RADEON_IOCTL ) {
-	   if (rmesa->radeon.sarea)
-	       fprintf( stderr, "r200Clear %x %d\n", mask, rmesa->radeon.sarea->pfCurrentPage);
-	   else
-	       fprintf( stderr, "r200Clear %x radeon->sarea is NULL\n", mask);
-   }
-
    radeonFlush( ctx );
 
    hwmask = mask & hwbits;

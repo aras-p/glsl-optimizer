@@ -406,7 +406,6 @@ struct radeon_context {
 
    /* Drawable information */
    unsigned int lastStamp;
-   drm_radeon_sarea_t *sarea;	/* Private SAREA data */
 
    /* Mirrors of some DRI state */
    struct radeon_dri_mirror dri;
