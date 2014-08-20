@@ -1161,21 +1161,19 @@ static void evergreen_init_depth_surface(struct r600_context *rctx,
 {
 	struct r600_screen *rscreen = rctx->screen;
 	struct r600_texture *rtex = (struct r600_texture*)surf->base.texture;
+	unsigned level = surf->base.u.tex.level;
+	struct radeon_surface_level *levelinfo = &rtex->surface.level[level];
 	uint64_t offset;
-	unsigned level, pitch, slice, format, array_mode;
+	unsigned format, array_mode;
 	unsigned macro_aspect, tile_split, bankh, bankw, nbanks;
 
-	level = surf->base.u.tex.level;
+
 	format = r600_translate_dbformat(surf->base.format);
 	assert(format != ~0);
 
 	offset = rtex->resource.gpu_address;
 	offset += rtex->surface.level[level].offset;
-	pitch = (rtex->surface.level[level].nblk_x / 8) - 1;
-	slice = (rtex->surface.level[level].nblk_x * rtex->surface.level[level].nblk_y) / 64;
-	if (slice) {
-		slice = slice - 1;
-	}
+
 	switch (rtex->surface.level[level].mode) {
 	case RADEON_SURF_MODE_2D:
 		array_mode = V_028C70_ARRAY_2D_TILED_THIN1;
@@ -1208,11 +1206,16 @@ static void evergreen_init_depth_surface(struct r600_context *rctx,
 	if (rscreen->b.chip_class == CAYMAN && rtex->resource.b.b.nr_samples > 1) {
 		surf->db_z_info |= S_028040_NUM_SAMPLES(util_logbase2(rtex->resource.b.b.nr_samples));
 	}
+
+	assert(levelinfo->nblk_x % 8 == 0 && levelinfo->nblk_y % 8 == 0);
+
 	surf->db_depth_base = offset;
 	surf->db_depth_view = S_028008_SLICE_START(surf->base.u.tex.first_layer) |
 			      S_028008_SLICE_MAX(surf->base.u.tex.last_layer);
-	surf->db_depth_size = S_028058_PITCH_TILE_MAX(pitch);
-	surf->db_depth_slice = S_02805C_SLICE_TILE_MAX(slice);
+	surf->db_depth_size = S_028058_PITCH_TILE_MAX(levelinfo->nblk_x / 8 - 1) |
+			      S_028058_HEIGHT_TILE_MAX(levelinfo->nblk_y / 8 - 1);
+	surf->db_depth_slice = S_02805C_SLICE_TILE_MAX(levelinfo->nblk_x *
+						       levelinfo->nblk_y / 64 - 1);
 
 	switch (surf->base.format) {
 	case PIPE_FORMAT_Z24X8_UNORM:
