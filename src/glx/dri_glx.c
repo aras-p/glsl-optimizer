@@ -40,7 +40,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "glxclient.h"
 #include "xf86dri.h"
 #include "dri2.h"
-#include "sarea.h"
+#include "dri_sarea.h"
 #include <dlfcn.h>
 #include <sys/types.h>
 #include <sys/mman.h>

@@ -1,5 +1,5 @@
 /**
- * \file sarea.h 
+ * \file dri_sarea.h
  * SAREA definitions.
  * 
  * \author Kevin E. Martin <kevin@precisioninsight.com>
