@@ -45,6 +45,7 @@ default_template(struct pipe_sampler_view *view,
    /* XXX: Check if format is compatible with texture->format.
     */
 
+   view->target = texture->target;
    view->format = format;
    view->u.tex.first_level = 0;
    view->u.tex.last_level = texture->last_level;

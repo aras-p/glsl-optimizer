@@ -320,6 +320,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_TEXTURE_GATHER_OFFSETS:
 	case PIPE_CAP_DRAW_INDIRECT:
 	case PIPE_CAP_CONDITIONAL_RENDER_INVERTED:
+	case PIPE_CAP_SAMPLER_VIEW_TARGET:
 		return 0;
 
 	/* Stream output. */

@@ -361,6 +361,7 @@ struct pipe_surface
 struct pipe_sampler_view
 {
    struct pipe_reference reference;
+   enum pipe_texture_target target; /**< PIPE_TEXTURE_x */
    enum pipe_format format;      /**< typed PIPE_FORMAT_x */
    struct pipe_resource *texture; /**< texture into which this is a view  */
    struct pipe_context *context; /**< context this view belongs to */
