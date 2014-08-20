@@ -70,6 +70,12 @@ reads_a_reg(uint64_t inst, uint32_t r)
 }
 
 static bool
+reads_b_reg(uint64_t inst, uint32_t r)
+{
+        return _reads_reg(inst, r, true, false);
+}
+
+static bool
 writes_sfu(uint64_t inst)
 {
         return (writes_reg(inst, QPU_W_SFU_RECIP) ||
@@ -167,10 +173,19 @@ vc4_qpu_validate(uint64_t *insts, uint32_t num_inst)
         for (int i = 0; i < num_inst - 1; i++) {
                 uint64_t inst = insts[i];
                 uint32_t add_waddr = QPU_GET_FIELD(inst, QPU_WADDR_ADD);
-                uint32_t mul_waddr = QPU_GET_FIELD(inst, QPU_WADDR_ADD);
+                uint32_t mul_waddr = QPU_GET_FIELD(inst, QPU_WADDR_MUL);
+                uint32_t waddr_a, waddr_b;
 
-                assert(add_waddr >= 32 || !reads_reg(insts[i + 1], add_waddr));
-                assert(mul_waddr >= 32 || !reads_reg(insts[i + 1], mul_waddr));
+                if (inst & QPU_WS) {
+                        waddr_b = add_waddr;
+                        waddr_a = mul_waddr;
+                } else {
+                        waddr_a = add_waddr;
+                        waddr_b = mul_waddr;
+                }
+
+                assert(waddr_a >= 32 || !reads_a_reg(insts[i + 1], waddr_a));
+                assert(waddr_b >= 32 || !reads_b_reg(insts[i + 1], waddr_b));
         }
 
         /* "After an SFU lookup instruction, accumulator r4 must not be read
