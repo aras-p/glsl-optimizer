@@ -81,7 +81,7 @@
  * Note: the definition looks odd, but there's branches which use a different
  * number of max shader variants.
  */
-#define LP_MAX_SHADER_INSTRUCTIONS MAX2(128*1024, 512*LP_MAX_SHADER_VARIANTS)
+#define LP_MAX_SHADER_INSTRUCTIONS MAX2(256*1024, 512*LP_MAX_SHADER_VARIANTS)
 
 /**
  * Max number of setup variants that will be kept around.
