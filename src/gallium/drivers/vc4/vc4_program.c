@@ -431,8 +431,14 @@ tgsi_to_qir_flr(struct tgsi_to_qir *trans,
 {
         struct qcompile *c = trans->c;
         struct qreg trunc = qir_ITOF(c, qir_FTOI(c, src[0 * 4 + i]));
+
+        /* This will be < 0 if we truncated and the truncation was of a value
+         * that was < 0 in the first place.
+         */
+        struct qreg diff = qir_FSUB(c, src[0 * 4 + i], trunc);
+
         return qir_CMP(c,
-                       src[0 * 4 + i],
+                       diff,
                        qir_FSUB(c, trunc, qir_uniform_f(trans, 1.0)),
                        trunc);
 }
