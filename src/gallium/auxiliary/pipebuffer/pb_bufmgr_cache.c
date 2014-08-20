@@ -84,6 +84,7 @@ struct pb_cache_manager
    pb_size numDelayed;
    float size_factor;
    unsigned bypass_usage;
+   uint64_t cache_size, max_cache_size;
 };
 
 
@@ -114,6 +115,7 @@ _pb_cache_buffer_destroy(struct pb_cache_buffer *buf)
    LIST_DEL(&buf->head);
    assert(mgr->numDelayed);
    --mgr->numDelayed;
+   mgr->cache_size -= buf->base.size;
    assert(!pipe_is_referenced(&buf->base.reference));
    pb_reference(&buf->buffer, NULL);
    FREE(buf);
@@ -158,11 +160,20 @@ pb_cache_buffer_destroy(struct pb_buffer *_buf)
    assert(!pipe_is_referenced(&buf->base.reference));
    
    _pb_cache_buffer_list_check_free(mgr);
-   
+
+   /* Directly release any buffer that exceeds the limit. */
+   if (mgr->cache_size + buf->base.size > mgr->max_cache_size) {
+      pb_reference(&buf->buffer, NULL);
+      FREE(buf);
+      pipe_mutex_unlock(mgr->mutex);
+      return;
+   }
+
    buf->start = os_time_get();
    buf->end = buf->start + mgr->usecs;
    LIST_ADDTAIL(&buf->head, &mgr->delayed);
    ++mgr->numDelayed;
+   mgr->cache_size += buf->base.size;
    pipe_mutex_unlock(mgr->mutex);
 }
 
@@ -314,6 +325,7 @@ pb_cache_manager_create_buffer(struct pb_manager *_mgr,
    }
    
    if(buf) {
+      mgr->cache_size -= buf->base.size;
       LIST_DEL(&buf->head);
       --mgr->numDelayed;
       pipe_mutex_unlock(mgr->mutex);
@@ -400,12 +412,15 @@ pb_cache_manager_destroy(struct pb_manager *mgr)
  * the requested size as cache hits.
  * @param bypass_usage Bitmask. If (requested usage & bypass_usage) != 0,
  * buffer allocation requests are redirected to the provider.
+ * @param maximum_cache_size  Maximum size of all unused buffers the cache can
+ * hold.
  */
 struct pb_manager *
 pb_cache_manager_create(struct pb_manager *provider, 
                         unsigned usecs,
                         float size_factor,
-                        unsigned bypass_usage)
+                        unsigned bypass_usage,
+                        uint64_t maximum_cache_size)
 {
    struct pb_cache_manager *mgr;
 
@@ -425,6 +440,7 @@ pb_cache_manager_create(struct pb_manager *provider,
    mgr->bypass_usage = bypass_usage;
    LIST_INITHEAD(&mgr->delayed);
    mgr->numDelayed = 0;
+   mgr->max_cache_size = maximum_cache_size;
    pipe_mutex_init(mgr->mutex);
       
    return &mgr->base;

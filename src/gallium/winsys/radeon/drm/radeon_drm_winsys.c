@@ -671,16 +671,20 @@ radeon_drm_winsys_create(int fd, radeon_screen_create_t screen_create)
     ws->kman = radeon_bomgr_create(ws);
     if (!ws->kman)
         goto fail;
-    ws->cman_vram = pb_cache_manager_create(ws->kman, 1000000, 2.0f, 0);
+    ws->cman_vram = pb_cache_manager_create(ws->kman, 1000000, 2.0f, 0,
+                                            ws->info.vram_size / 8);
     if (!ws->cman_vram)
         goto fail;
-    ws->cman_vram_gtt_wc = pb_cache_manager_create(ws->kman, 1000000, 2.0f, 0);
+    ws->cman_vram_gtt_wc = pb_cache_manager_create(ws->kman, 1000000, 2.0f, 0,
+                                                   ws->info.vram_size / 8);
     if (!ws->cman_vram_gtt_wc)
         goto fail;
-    ws->cman_gtt = pb_cache_manager_create(ws->kman, 1000000, 2.0f, 0);
+    ws->cman_gtt = pb_cache_manager_create(ws->kman, 1000000, 2.0f, 0,
+                                           ws->info.gart_size / 8);
     if (!ws->cman_gtt)
         goto fail;
-    ws->cman_gtt_wc = pb_cache_manager_create(ws->kman, 1000000, 2.0f, 0);
+    ws->cman_gtt_wc = pb_cache_manager_create(ws->kman, 1000000, 2.0f, 0,
+                                              ws->info.gart_size / 8);
     if (!ws->cman_gtt_wc)
         goto fail;
 

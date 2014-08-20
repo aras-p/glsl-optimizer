@@ -124,7 +124,8 @@ vmw_mob_pools_init(struct vmw_winsys_screen *vws)
 
    vws->pools.mob_cache = 
       pb_cache_manager_create(vws->pools.gmr, 100000, 2.0f,
-                              VMW_BUFFER_USAGE_SHARED);
+                              VMW_BUFFER_USAGE_SHARED,
+                              64 * 1024 * 1024);
    if (!vws->pools.mob_cache)
       return FALSE;
 
