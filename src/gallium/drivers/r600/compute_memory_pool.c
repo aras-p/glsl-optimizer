@@ -95,6 +95,12 @@ void compute_memory_pool_delete(struct compute_memory_pool* pool)
 		pool->screen->b.b.resource_destroy((struct pipe_screen *)
 			pool->screen, (struct pipe_resource *)pool->bo);
 	}
+	/* In theory, all of the items were freed in compute_memory_free.
+	 * Just delete the list heads
+	 */
+	free(pool->item_list);
+	free(pool->unallocated_list);
+	/* And then the pool itself */
 	free(pool);
 }
 
