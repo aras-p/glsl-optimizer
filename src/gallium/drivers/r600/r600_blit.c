@@ -429,7 +429,8 @@ static void r600_clear(struct pipe_context *ctx, unsigned buffers,
 		 */
 		/* Only use htile for first level */
 		if (rtex->htile_buffer && !level &&
-		    util_max_layer(&rtex->resource.b.b, level) == 0) {
+                   fb->zsbuf->u.tex.first_layer == 0 &&
+                   fb->zsbuf->u.tex.last_layer == util_max_layer(&rtex->resource.b.b, level)) {
 			if (rtex->depth_clear_value != depth) {
 				rtex->depth_clear_value = depth;
 				rctx->db_state.atom.dirty = true;
