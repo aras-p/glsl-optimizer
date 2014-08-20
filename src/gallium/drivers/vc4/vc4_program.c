@@ -368,7 +368,6 @@ tgsi_to_qir_tex(struct tgsi_to_qir *trans,
         for (int i = 0; i < 4; i++)
                 unpacked[i] = qir_R4_UNPACK(c, i);
 
-        bool format_warned = false;
         for (int i = 0; i < 4; i++) {
                 if (!(tgsi_inst->Dst[0].Register.WriteMask & (1 << i)))
                         continue;
@@ -378,15 +377,6 @@ tgsi_to_qir_tex(struct tgsi_to_qir *trans,
                         util_format_description(format);
 
                 uint8_t swiz = desc->swizzle[i];
-                if (!format_warned &&
-                    swiz <= UTIL_FORMAT_SWIZZLE_W &&
-                    (desc->channel[swiz].type != UTIL_FORMAT_TYPE_UNSIGNED ||
-                     desc->channel[swiz].size != 8)) {
-                        fprintf(stderr,
-                                "tex channel %d unsupported type: %s\n",
-                                i, util_format_name(format));
-                        format_warned = true;
-                }
 
                 update_dst(trans, tgsi_inst, i,
                            get_swizzled_channel(trans, unpacked, swiz));
