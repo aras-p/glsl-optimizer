@@ -23,12 +23,12 @@
 
 /** @file brw_eu_compact.c
  *
- * Instruction compaction is a feature of gm45 and newer hardware that allows
+ * Instruction compaction is a feature of G45 and newer hardware that allows
  * for a smaller instruction encoding.
  *
  * The instruction cache is on the order of 32KB, and many programs generate
  * far more instructions than that.  The instruction cache is built to barely
- * keep up with instruction dispatch abaility in cache hit cases -- L1
+ * keep up with instruction dispatch ability in cache hit cases -- L1
  * instruction cache misses that still hit in the next level could limit
  * throughput by around 50%.
  *
@@ -1207,14 +1207,15 @@ static void
 update_gen4_jump_count(struct brw_context *brw, brw_inst *insn,
                        int this_old_ip, int *compacted_counts)
 {
-   assert(brw->gen == 5);
+   assert(brw->gen == 5 || brw->is_g4x);
 
    /* Jump Count is in units of:
+    *    - uncompacted instructions on G45; and
     *    - compacted instructions on Gen5.
     */
    int jump_count = brw_inst_gen4_jump_count(brw, insn);
-   int jump_count_compacted = jump_count;
-   int jump_count_uncompacted = jump_count / 2;
+   int jump_count_compacted = jump_count * (brw->is_g4x ? 2 : 1);
+   int jump_count_uncompacted = jump_count / (brw->is_g4x ? 1 : 2);
 
    int target_old_ip = this_old_ip + jump_count_uncompacted;
 
@@ -1222,7 +1223,8 @@ update_gen4_jump_count(struct brw_context *brw, brw_inst *insn,
    int target_compacted_count = compacted_counts[target_old_ip];
 
    jump_count_compacted -= (target_compacted_count - this_compacted_count);
-   brw_inst_set_gen4_jump_count(brw, insn, jump_count_compacted);
+   brw_inst_set_gen4_jump_count(brw, insn, jump_count_compacted /
+                                           (brw->is_g4x ? 2 : 1));
 }
 
 void
@@ -1265,13 +1267,14 @@ brw_init_compaction_tables(struct brw_context *brw)
       src_index_table = gen6_src_index_table;
       break;
    case 5:
+   case 4:
       control_index_table = g45_control_index_table;
       datatype_table = g45_datatype_table;
       subreg_table = g45_subreg_table;
       src_index_table = g45_src_index_table;
       break;
    default:
-      return;
+      unreachable("unknown generation");
    }
 }
 
@@ -1282,7 +1285,8 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
    struct brw_context *brw = p->brw;
    void *store = p->store + start_offset / 16;
    /* For an instruction at byte offset 16*i before compaction, this is the
-    * number of compacted instructions that preceded it.
+    * number of compacted instructions minus the number of padding NOP/NENOPs
+    * that preceded it.
     */
    int compacted_counts[(p->next_insn_offset - start_offset) / sizeof(brw_inst)];
    /* For an instruction at byte offset 8*i after compaction, this was its IP
@@ -1290,7 +1294,7 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
     */
    int old_ip[(p->next_insn_offset - start_offset) / sizeof(brw_compact_inst)];
 
-   if (brw->gen == 4)
+   if (brw->gen == 4 && !brw->is_g4x)
       return;
 
    int offset = 0;
@@ -1319,17 +1323,22 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
          offset += sizeof(brw_compact_inst);
       } else {
          /* It appears that the end of thread SEND instruction needs to be
-          * aligned, or the GPU hangs.
+          * aligned, or the GPU hangs. All uncompacted instructions need to be
+          * aligned on G45.
           */
-         if ((brw_inst_opcode(brw, src) == BRW_OPCODE_SEND ||
-              brw_inst_opcode(brw, src) == BRW_OPCODE_SENDC) &&
-             brw_inst_eot(brw, src) &&
-             (offset & sizeof(brw_compact_inst)) != 0) {
+         if ((offset & sizeof(brw_compact_inst)) != 0 &&
+             (((brw_inst_opcode(brw, src) == BRW_OPCODE_SEND ||
+                brw_inst_opcode(brw, src) == BRW_OPCODE_SENDC) &&
+               brw_inst_eot(brw, src)) ||
+              brw->is_g4x)) {
             brw_compact_inst *align = store + offset;
             memset(align, 0, sizeof(*align));
-            brw_compact_inst_set_opcode(align, BRW_OPCODE_NOP);
+            brw_compact_inst_set_opcode(align, brw->is_g4x ? BRW_OPCODE_NENOP :
+                                                             BRW_OPCODE_NOP);
             brw_compact_inst_set_cmpt_control(align, true);
             offset += sizeof(brw_compact_inst);
+            compacted_count--;
+            compacted_counts[src_offset / sizeof(brw_inst)] = compacted_count;
             old_ip[offset / sizeof(brw_compact_inst)] = src_offset / sizeof(brw_inst);
 
             dst = store + offset;
