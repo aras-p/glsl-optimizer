@@ -703,7 +703,7 @@ reloc_tex(struct exec_info *exec,
 	uint32_t p1 = *(uint32_t *)(uniform_data_u + sample->p_offset[1]);
 	uint32_t *validated_p0 = exec->uniforms_v + sample->p_offset[0];
 	uint32_t offset = p0 & ~0xfff;
-	uint32_t miplevels = (p0 & 0x15);
+	uint32_t miplevels = (p0 & 15);
 	uint32_t width = (p1 >> 8) & 2047;
 	uint32_t height = (p1 >> 20) & 2047;
 	uint32_t cpp, tiling_format;
