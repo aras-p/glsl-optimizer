@@ -421,7 +421,11 @@ lp_build_create_jit_compiler_for_module(LLVMExecutionEngineRef *OutJIT,
    using namespace llvm;
 
    std::string Error;
+#if HAVE_LLVM >= 0x0306
+   EngineBuilder builder(std::unique_ptr<Module>(unwrap(M)));
+#else
    EngineBuilder builder(unwrap(M));
+#endif
 
    /**
     * LLVM 3.1+ haven't more "extern unsigned llvm::StackAlignmentOverride" and
