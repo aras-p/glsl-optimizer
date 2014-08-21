@@ -61,10 +61,10 @@ nvc0_create_sampler_view(struct pipe_context *pipe,
 {
    uint32_t flags = 0;
 
-   if (res->target == PIPE_TEXTURE_RECT || res->target == PIPE_BUFFER)
+   if (templ->target == PIPE_TEXTURE_RECT || templ->target == PIPE_BUFFER)
       flags |= NV50_TEXVIEW_SCALED_COORDS;
 
-   return nvc0_create_texture_view(pipe, res, templ, flags, res->target);
+   return nvc0_create_texture_view(pipe, res, templ, flags, templ->target);
 }
 
 struct pipe_sampler_view *

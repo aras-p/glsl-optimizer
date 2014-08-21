@@ -170,6 +170,7 @@ nvc0_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_TEXTURE_GATHER_SM5:
    case PIPE_CAP_TGSI_FS_FINE_DERIVATIVE:
    case PIPE_CAP_CONDITIONAL_RENDER_INVERTED:
+   case PIPE_CAP_SAMPLER_VIEW_TARGET:
       return 1;
    case PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE:
       return (class_3d >= NVE4_3D_CLASS) ? 1 : 0;
@@ -187,7 +188,6 @@ nvc0_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_TGSI_VS_LAYER_VIEWPORT:
    case PIPE_CAP_FAKE_SW_MSAA:
    case PIPE_CAP_TGSI_VS_WINDOW_SPACE_POSITION:
-   case PIPE_CAP_SAMPLER_VIEW_TARGET:
       return 0;
 
    case PIPE_CAP_VENDOR_ID:
