@@ -216,3 +216,17 @@ qpu_set_sig(uint64_t inst, uint32_t sig)
         return (inst & ~QPU_SIG_MASK) | QPU_SET_FIELD(sig, QPU_SIG);
 }
 
+uint64_t
+qpu_set_cond_add(uint64_t inst, uint32_t sig)
+{
+        assert(QPU_GET_FIELD(inst, QPU_COND_ADD) == QPU_COND_ALWAYS);
+        return (inst & ~QPU_COND_ADD_MASK) | QPU_SET_FIELD(sig, QPU_COND_ADD);
+}
+
+uint64_t
+qpu_set_cond_mul(uint64_t inst, uint32_t sig)
+{
+        assert(QPU_GET_FIELD(inst, QPU_COND_MUL) == QPU_COND_ALWAYS);
+        return (inst & ~QPU_COND_MUL_MASK) | QPU_SET_FIELD(sig, QPU_COND_MUL);
+}
+

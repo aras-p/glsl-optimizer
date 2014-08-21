@@ -379,12 +379,10 @@ vc4_generate_code(struct qcompile *c)
                                 fixup_raddr_conflict(c, src[1], &src[2]);
                                 queue(c, qpu_inst(qpu_a_MOV(dst, src[1]),
                                                   qpu_m_MOV(dst, src[2])));
-                                *last_inst(c) = ((*last_inst(c) & ~(QPU_COND_ADD_MASK |
-                                                                    QPU_COND_MUL_MASK))
-                                                 | QPU_SET_FIELD(QPU_COND_NS,
-                                                                 QPU_COND_ADD)
-                                                 | QPU_SET_FIELD(QPU_COND_NC,
-                                                                 QPU_COND_MUL));
+                                *last_inst(c) = qpu_set_cond_add(*last_inst(c),
+                                                                 QPU_COND_NS);
+                                *last_inst(c) = qpu_set_cond_mul(*last_inst(c),
+                                                                 QPU_COND_NC);
                         } else {
                                 if (dst.mux == src[1].mux &&
                                     dst.addr == src[1].addr) {
@@ -393,18 +391,16 @@ vc4_generate_code(struct qcompile *c)
 
                                         queue(c, qpu_inst(qpu_a_MOV(dst, src[2]),
                                                           qpu_m_NOP()));
-                                        *last_inst(c) = ((*last_inst(c) & ~(QPU_COND_ADD_MASK))
-                                                         | QPU_SET_FIELD(QPU_COND_NC,
-                                                                         QPU_COND_ADD));
+                                        *last_inst(c) = qpu_set_cond_add(*last_inst(c),
+                                                                         QPU_COND_NC);
                                 } else {
                                         queue(c, qpu_inst(qpu_a_MOV(dst, src[2]),
                                                           qpu_m_NOP()));
 
                                         queue(c, qpu_inst(qpu_a_MOV(dst, src[1]),
                                                           qpu_m_NOP()));
-                                        *last_inst(c) = ((*last_inst(c) & ~(QPU_COND_ADD_MASK))
-                                                         | QPU_SET_FIELD(QPU_COND_NS,
-                                                                         QPU_COND_ADD));
+                                        *last_inst(c) = qpu_set_cond_add(*last_inst(c),
+                                                                         QPU_COND_NS);
                                 }
                         }
                         break;
@@ -421,9 +417,9 @@ vc4_generate_code(struct qcompile *c)
 
                         queue(c, qpu_load_imm_f(dst, 0.0));
                         queue(c, qpu_load_imm_f(dst, 1.0));
-                        *last_inst(c) = ((*last_inst(c) & ~QPU_COND_ADD_MASK)
-                                         | QPU_SET_FIELD(compareflags[qinst->op - QOP_SEQ],
-                                                         QPU_COND_ADD));
+                        *last_inst(c) = qpu_set_cond_add(*last_inst(c),
+                                                         compareflags[qinst->op - QOP_SEQ]);
+
 
                         break;
 
