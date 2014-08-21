@@ -915,7 +915,7 @@ fs_visitor::visit(ir_expression *ir)
          /* The block index is a constant, so just emit the binding table entry
           * as an immediate.
           */
-         surf_index = fs_reg(prog_data->base.binding_table.ubo_start +
+         surf_index = fs_reg(stage_prog_data->binding_table.ubo_start +
                                  const_uniform_block->value.u[0]);
       } else {
          /* The block index is not a constant. Evaluate the index expression
@@ -924,14 +924,14 @@ fs_visitor::visit(ir_expression *ir)
           */
          surf_index = fs_reg(this, glsl_type::uint_type);
          emit(ADD(surf_index, op[0],
-                  fs_reg(prog_data->base.binding_table.ubo_start)))
+                  fs_reg(stage_prog_data->binding_table.ubo_start)))
             ->force_writemask_all = true;
 
          /* Assume this may touch any UBO. It would be nice to provide
           * a tighter bound, but the array information is already lowered away.
           */
          brw_mark_surface_used(&prog_data->base,
-                               prog_data->base.binding_table.ubo_start +
+                               stage_prog_data->binding_table.ubo_start +
                                shader_prog->NumUniformBlocks - 1);
       }
 
@@ -1825,9 +1825,9 @@ fs_visitor::visit(ir_texture *ir)
 
       uint32_t max_used = sampler + array_size - 1;
       if (ir->op == ir_tg4 && brw->gen < 8) {
-         max_used += prog_data->base.binding_table.gather_texture_start;
+         max_used += stage_prog_data->binding_table.gather_texture_start;
       } else {
-         max_used += prog_data->base.binding_table.texture_start;
+         max_used += stage_prog_data->binding_table.texture_start;
       }
 
       brw_mark_surface_used(&prog_data->base, max_used);
@@ -2584,7 +2584,7 @@ fs_visitor::visit_atomic_counter_intrinsic(ir_call *ir)
    ir_dereference *deref = static_cast<ir_dereference *>(
       ir->actual_parameters.get_head());
    ir_variable *location = deref->variable_referenced();
-   unsigned surf_index = (prog_data->base.binding_table.abo_start +
+   unsigned surf_index = (stage_prog_data->binding_table.abo_start +
                           location->data.binding);
 
    /* Calculate the surface offset */
