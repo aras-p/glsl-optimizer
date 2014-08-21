@@ -218,15 +218,93 @@ commit ID of the commit of interest (as it appears in the mesa master branch).
 
 The latest set of patches that have been nominated, accepted, or rejected for
 the upcoming stable release can always be seen on the
-<a href=http://cworth.org/~cworth/mesa-stable-queue/">Mesa Stable Queue</a>
+<a href="http://cworth.org/~cworth/mesa-stable-queue/">Mesa Stable Queue</a>
 page.
 
-<h2>Cherry-picking candidates for a stable branch</h2>
+<h2>Criteria for accepting patches to the stable branch</h2>
 
-<p>
-Please use <code>git cherry-pick -x &lt;commit&gt;</code> for cherry-picking a commit
-from master to a stable branch.
-</p>
+Mesa has a designated release manager for each stable branch, and the release
+manager is the only developer that should be pushing changes to these
+branches. Everyone else should simply nominate patches using the mechanism
+described above.
+
+The stable-release manager will work with the list of nominated patches, and
+for each patch that meets the crtieria below will cherry-pick the patch with:
+<code>git cherry-pick -x &lt;commit&gt;</code>. The <code>-x</code> option is
+important so that the picked patch references the comit ID of the original
+patch.
+
+The stable-release manager may at times need to force-push changes to the
+stable branches, for example, to drop a previously-picked patch that was later
+identified as causing a regression). These force-pushes may cause changes to
+be lost from the stable branch if developers push things directly. Consider
+yourself warned.
+
+The stable-release manager is also given broad discretion in rejecting patches
+that have been nominated for the stable branch. The most basic rule is that
+the stable branch is for bug fixes only, (no new features, no
+regressions). Here is a non-exhaustive list of some reasons that a patch may
+be rejected:
+
+<ul>
+  <li>Patch introduces a regression. Any reported build breakage or other
+  regression caused by a particular patch, (game no longer work, piglit test
+  changes from PASS to FAIL), is justification for rejecting a patch.</li>
+
+  <li>Patch is too large, (say, larger than 100 lines)</li>
+
+  <li>Patch is not a fix. For example, a commit that moves code around with no
+  functional change should be rejected.</li>
+
+  <li>Patch fix is not clearly described. For example, a commit message
+  of only a single line, no description of the bug, no mention of bugzilla,
+  etc.</li>
+
+  <li>Patch has not obviously been reviewed, For example, the commit message
+  has no Reviewed-by, Signed-off-by, nor Tested-by tags from anyone but the
+  author.</li>
+
+  <li>Patch has not already been merged to the master branch. As a rule, bug
+  fixes should never be applied first to a stable branch. Patches should land
+  first on the master branch and then be cherry-picked to a stable
+  branch. (This is to avoid future releases causing regressions if the patch
+  is not also applied to master.) The only things that might look like
+  exceptions would be backports of patches from master that happen to look
+  significantly different.</li>
+
+  <li>Patch depends on too many other patches. Ideally, all stable-branch
+  patches should be self-contained. It sometimes occurs that a single, logical
+  bug-fix occurs as two separate patches on master, (such as an original
+  patch, then a subsequent fix-up to that patch). In such a case, these two
+  patches should be squashed into a single, self-contained patch for the
+  stable branch. (Of course, if the squashing makes the patch too large, then
+  that could be a reason to reject the patch.)</li>
+
+  <li>Patch includes new feature development, not bug fixes. New OpenGL
+  features, extensions, etc. should be applied to Mesa master and included in
+  the next major release. Stable releases are intended only for bug fixes.
+
+  Note: As an exception to this rule, the stable-release manager may accept
+  hardware-enabling "features". For example, backports of new code to support
+  a newly-developed hardware product can be accepted if they can be reasonably
+  determined to not have effects on other hardware.</li>
+
+  <li>Patch is a performance optimization. As a rule, performance patches are
+  not candidates for the stable branch. The only exception might be a case
+  where an application's performance was recently severely impacted so as to
+  become unusable. The fix for this performance regression could then be
+  considered for a stable branch. The optimization must also be
+  non-controversial and the patches still need to meet the other criteria of
+  being simple and self-contained</li>
+
+  <li>Patch introduces a new failure mode (such as an assert). While the new
+  assert might technically be correct, for example to make Mesa more
+  conformant, this is not the kind of "bug fix" we want in a stable
+  release. The potential problem here is that an OpenGL program that was
+  previously working, (even if technically non-compliant with the
+  specification), could stop working after this patch. So that would be a
+  regression that is unaacceptable for the stable branch.</li>
+</ul>
 
 <h2>Making a New Mesa Release</h2>
 
