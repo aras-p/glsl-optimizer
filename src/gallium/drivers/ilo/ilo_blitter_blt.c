@@ -35,13 +35,6 @@
 #include "ilo_resource.h"
 #include "ilo_blitter.h"
 
-#define MI_FLUSH_DW           GEN_MI_CMD(MI_FLUSH_DW)
-#define MI_LOAD_REGISTER_IMM  GEN_MI_CMD(MI_LOAD_REGISTER_IMM)
-#define COLOR_BLT             GEN_BLITTER_CMD(COLOR_BLT)
-#define XY_COLOR_BLT          GEN_BLITTER_CMD(XY_COLOR_BLT)
-#define SRC_COPY_BLT          GEN_BLITTER_CMD(SRC_COPY_BLT)
-#define XY_SRC_COPY_BLT       GEN_BLITTER_CMD(XY_SRC_COPY_BLT)
-
 enum gen6_blt_mask {
    GEN6_BLT_MASK_8,
    GEN6_BLT_MASK_16,
@@ -67,9 +60,10 @@ static void
 gen6_emit_MI_FLUSH_DW(struct ilo_dev_info *dev, struct ilo_cp *cp)
 {
    const uint8_t cmd_len = 4;
+   const uint32_t dw0 = GEN6_MI_CMD(MI_FLUSH_DW) | (cmd_len - 2);
 
    ilo_cp_begin(cp, cmd_len);
-   ilo_cp_write(cp, MI_FLUSH_DW | (cmd_len - 2));
+   ilo_cp_write(cp, dw0);
    ilo_cp_write(cp, 0);
    ilo_cp_write(cp, 0);
    ilo_cp_write(cp, 0);
@@ -82,9 +76,10 @@ gen6_emit_MI_LOAD_REGISTER_IMM(struct ilo_dev_info *dev,
                                struct ilo_cp *cp)
 {
    const uint8_t cmd_len = 3;
+   const uint32_t dw0 = GEN6_MI_CMD(MI_LOAD_REGISTER_IMM) | (cmd_len - 2);
 
    ilo_cp_begin(cp, cmd_len);
-   ilo_cp_write(cp, MI_LOAD_REGISTER_IMM | (cmd_len - 2));
+   ilo_cp_write(cp, dw0);
    ilo_cp_write(cp, reg);
    ilo_cp_write(cp, val);
    ilo_cp_end(cp);
@@ -136,7 +131,7 @@ gen6_emit_COLOR_BLT(struct ilo_dev_info *dev,
    const int cpp = gen6_translate_blt_cpp(value_mask);
    uint32_t dw0, dw1;
 
-   dw0 = COLOR_BLT |
+   dw0 = GEN6_BLITTER_CMD(COLOR_BLT) |
          gen6_translate_blt_write_mask(write_mask) |
          (cmd_len - 2);
 
@@ -174,7 +169,7 @@ gen6_emit_XY_COLOR_BLT(struct ilo_dev_info *dev,
    int dst_align, dst_pitch_shift;
    uint32_t dw0, dw1;
 
-   dw0 = XY_COLOR_BLT |
+   dw0 = GEN6_BLITTER_CMD(XY_COLOR_BLT) |
          gen6_translate_blt_write_mask(write_mask) |
          (cmd_len - 2);
 
@@ -224,7 +219,7 @@ gen6_emit_SRC_COPY_BLT(struct ilo_dev_info *dev,
    const int cpp = gen6_translate_blt_cpp(value_mask);
    uint32_t dw0, dw1;
 
-   dw0 = SRC_COPY_BLT |
+   dw0 = GEN6_BLITTER_CMD(SRC_COPY_BLT) |
          gen6_translate_blt_write_mask(write_mask) |
          (cmd_len - 2);
 
@@ -271,7 +266,7 @@ gen6_emit_XY_SRC_COPY_BLT(struct ilo_dev_info *dev,
    int src_align, src_pitch_shift;
    uint32_t dw0, dw1;
 
-   dw0 = XY_SRC_COPY_BLT |
+   dw0 = GEN6_BLITTER_CMD(XY_SRC_COPY_BLT) |
          gen6_translate_blt_write_mask(write_mask) |
          (cmd_len - 2);
 
