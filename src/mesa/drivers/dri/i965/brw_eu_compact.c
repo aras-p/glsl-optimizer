@@ -1038,7 +1038,8 @@ update_uip_jip(struct brw_context *brw, brw_inst *insn,
    brw_inst_set_jip(brw, insn, jip * scale);
 
    if (brw_inst_opcode(brw, insn) == BRW_OPCODE_ENDIF ||
-       brw_inst_opcode(brw, insn) == BRW_OPCODE_WHILE)
+       brw_inst_opcode(brw, insn) == BRW_OPCODE_WHILE ||
+       (brw_inst_opcode(brw, insn) == BRW_OPCODE_ELSE && brw->gen <= 7))
       return;
 
    int32_t uip = brw_inst_uip(brw, insn) / scale;
