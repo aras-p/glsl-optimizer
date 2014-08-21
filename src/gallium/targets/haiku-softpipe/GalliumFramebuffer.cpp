@@ -93,7 +93,7 @@ hgl_framebuffer_validate(struct st_context_iface* stctx,
 
 	if (context->stVisual && context->manager && context->manager->screen) {
 		TRACE("%s: Updating resources\n", __func__);
-		int i;
+		unsigned i;
 		for (i = 0; i < count; i++) {
 			enum pipe_format format = PIPE_FORMAT_NONE;
 			unsigned bind = 0;

@@ -355,7 +355,7 @@ SoftwareRenderer::_AllocateBitmap()
 		return;
 	}
 
-	TRACE("%s: New bitmap size: %d x %d\n", __func__,
+	TRACE("%s: New bitmap size: %ld x %ld\n", __func__,
 		fBitmap->Bounds().IntegerWidth(), fBitmap->Bounds().IntegerHeight());
 
 	fContextObj->ResizeViewport(fWidth, fHeight);
