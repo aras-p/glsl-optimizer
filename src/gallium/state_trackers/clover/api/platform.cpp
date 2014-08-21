@@ -61,7 +61,7 @@ clover::GetPlatformInfo(cl_platform_id d_platform, cl_platform_info param,
       break;
 
    case CL_PLATFORM_NAME:
-      buf.as_string() = "Default";
+      buf.as_string() = "Clover";
       break;
 
    case CL_PLATFORM_VENDOR:
