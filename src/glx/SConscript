@@ -81,7 +81,7 @@ sources = [
     'glxhash.c',
     'dri2_glx.c',
     'dri2.c',
-    'dri2_query_renderer.c',
+    'dri_common_query_renderer.c',
     #'dri3_glx.c',
     'applegl_glx.c',
 ]
