@@ -69,70 +69,6 @@ hgl_viewport(struct gl_context* glContext)
 }
 
 
-static st_visual*
-hgl_fill_st_visual(gl_config* glVisual)
-{
-	struct st_visual* stVisual = CALLOC_STRUCT(st_visual);
-	if (!stVisual) {
-		ERROR("%s: Couldn't allocate st_visual\n", __func__);
-		return NULL;
-	}
-
-	// Determine color format
-	if (glVisual->redBits == 8) {
-		if (glVisual->alphaBits == 8)
-			stVisual->color_format = PIPE_FORMAT_A8R8G8B8_UNORM;
-		else
-			stVisual->color_format = PIPE_FORMAT_X8R8G8B8_UNORM;
-	} else {
-		// TODO: I think this should be RGB vs BGR
-		stVisual->color_format = PIPE_FORMAT_B5G6R5_UNORM;
-	}
-
-	// Determine depth stencil format
-	switch (glVisual->depthBits) {
-		default:
-		case 0:
-			stVisual->depth_stencil_format = PIPE_FORMAT_NONE;
-			break;
-		case 16:
-			stVisual->depth_stencil_format = PIPE_FORMAT_Z16_UNORM;
-			break;
-		case 24:
-			if (glVisual->stencilBits == 0) {
-				stVisual->depth_stencil_format = PIPE_FORMAT_X8Z24_UNORM;
-			} else {
-				stVisual->depth_stencil_format = PIPE_FORMAT_S8_UINT_Z24_UNORM;
-			}
-			break;
-		case 32:
-			stVisual->depth_stencil_format = PIPE_FORMAT_Z32_UNORM;
-			break;
-	}
-
-	stVisual->accum_format = (glVisual->haveAccumBuffer)
-		? PIPE_FORMAT_R16G16B16A16_SNORM : PIPE_FORMAT_NONE;
-
-	stVisual->buffer_mask |= ST_ATTACHMENT_FRONT_LEFT_MASK;
-	stVisual->render_buffer = ST_ATTACHMENT_FRONT_LEFT;
-	if (glVisual->doubleBufferMode) {
-		stVisual->buffer_mask |= ST_ATTACHMENT_BACK_LEFT_MASK;
-		stVisual->render_buffer = ST_ATTACHMENT_BACK_LEFT;
-	}
-
-	if (glVisual->stereoMode) {
-		stVisual->buffer_mask |= ST_ATTACHMENT_FRONT_RIGHT_MASK;
-		if (glVisual->doubleBufferMode)
-			stVisual->buffer_mask |= ST_ATTACHMENT_BACK_RIGHT_MASK;
-	}
-
-	if (glVisual->haveDepthBuffer || glVisual->haveStencilBuffer)
-		stVisual->buffer_mask |= ST_ATTACHMENT_DEPTH_STENCIL_MASK;
-
-	return stVisual;
-}
-
-
 static int
 hook_stm_get_param(struct st_manager *smapi, enum st_manager_param param)
 {
@@ -181,6 +117,95 @@ GalliumContext::~GalliumContext()
 	pipe_mutex_destroy(fMutex);
 
 	// TODO: Destroy fScreen
+}
+
+
+struct st_visual*
+GalliumContext::CreateVisual()
+{
+	struct st_visual* visual = CALLOC_STRUCT(st_visual);
+	if (!visual) {
+		ERROR("%s: Couldn't allocate st_visual\n", __func__);
+		return NULL;
+	}
+
+	// Calculate visual configuration
+	const GLboolean rgbFlag		= ((fOptions & BGL_INDEX) == 0);
+	const GLboolean alphaFlag	= ((fOptions & BGL_ALPHA) == BGL_ALPHA);
+	const GLboolean dblFlag		= ((fOptions & BGL_DOUBLE) == BGL_DOUBLE);
+	const GLboolean stereoFlag	= false;
+	const GLint depth			= (fOptions & BGL_DEPTH) ? 24 : 0;
+	const GLint stencil			= (fOptions & BGL_STENCIL) ? 8 : 0;
+	const GLint accum			= (fOptions & BGL_ACCUM) ? 16 : 0;
+	const GLint red				= rgbFlag ? 8 : 5;
+	const GLint green			= rgbFlag ? 8 : 5;
+	const GLint blue			= rgbFlag ? 8 : 5;
+	const GLint alpha			= alphaFlag ? 8 : 0;
+
+	TRACE("rgb      :\t%d\n", (bool)rgbFlag);
+	TRACE("alpha    :\t%d\n", (bool)alphaFlag);
+	TRACE("dbl      :\t%d\n", (bool)dblFlag);
+	TRACE("stereo   :\t%d\n", (bool)stereoFlag);
+	TRACE("depth    :\t%d\n", depth);
+	TRACE("stencil  :\t%d\n", stencil);
+	TRACE("accum    :\t%d\n", accum);
+	TRACE("red      :\t%d\n", red);
+	TRACE("green    :\t%d\n", green);
+	TRACE("blue     :\t%d\n", blue);
+	TRACE("alpha    :\t%d\n", alpha);
+
+	// Determine color format
+	if (red == 8) {
+		if (alpha == 8)
+			visual->color_format = PIPE_FORMAT_A8R8G8B8_UNORM;
+		else
+			visual->color_format = PIPE_FORMAT_X8R8G8B8_UNORM;
+	} else {
+		// TODO: I think this should be RGB vs BGR
+		visual->color_format = PIPE_FORMAT_B5G6R5_UNORM;
+	}
+
+	// Determine depth stencil format
+	switch (depth) {
+		default:
+		case 0:
+			visual->depth_stencil_format = PIPE_FORMAT_NONE;
+			break;
+		case 16:
+			visual->depth_stencil_format = PIPE_FORMAT_Z16_UNORM;
+			break;
+		case 24:
+			if ((fOptions & BGL_STENCIL) != 0)
+				visual->depth_stencil_format = PIPE_FORMAT_S8_UINT_Z24_UNORM;
+			else
+				visual->depth_stencil_format = PIPE_FORMAT_X8Z24_UNORM;
+			break;
+		case 32:
+			visual->depth_stencil_format = PIPE_FORMAT_Z32_UNORM;
+			break;
+	}
+
+	visual->accum_format = (fOptions & BGL_ACCUM)
+		? PIPE_FORMAT_R16G16B16A16_SNORM : PIPE_FORMAT_NONE;
+
+	visual->buffer_mask |= ST_ATTACHMENT_FRONT_LEFT_MASK;
+	visual->render_buffer = ST_ATTACHMENT_FRONT_LEFT;
+
+	if (dblFlag) {
+		visual->buffer_mask |= ST_ATTACHMENT_BACK_LEFT_MASK;
+		visual->render_buffer = ST_ATTACHMENT_BACK_LEFT;
+	}
+
+	if (stereoFlag) {
+		visual->buffer_mask |= ST_ATTACHMENT_FRONT_RIGHT_MASK;
+		if (dblFlag)
+			visual->buffer_mask |= ST_ATTACHMENT_BACK_RIGHT_MASK;
+	}
+
+	if ((fOptions & BGL_DEPTH) || (fOptions & BGL_STENCIL)) 
+		visual->buffer_mask |= ST_ATTACHMENT_DEPTH_STENCIL_MASK;
+
+	return visual;
 }
 
 
@@ -246,51 +271,19 @@ GalliumContext::CreateContext(Bitmap *bitmap)
 	}
 	context->manager->get_param = hook_stm_get_param;
 
-	// Calculate visual configuration
-	const GLboolean rgbFlag		= ((fOptions & BGL_INDEX) == 0);
-	const GLboolean alphaFlag	= ((fOptions & BGL_ALPHA) == BGL_ALPHA);
-	const GLboolean dblFlag		= ((fOptions & BGL_DOUBLE) == BGL_DOUBLE);
-	const GLboolean stereoFlag	= false;
-	const GLint depth			= (fOptions & BGL_DEPTH) ? 24 : 0;
-	const GLint stencil			= (fOptions & BGL_STENCIL) ? 8 : 0;
-	const GLint accum			= (fOptions & BGL_ACCUM) ? 16 : 0;
-	const GLint red				= rgbFlag ? 8 : 5;
-	const GLint green			= rgbFlag ? 8 : 5;
-	const GLint blue			= rgbFlag ? 8 : 5;
-	const GLint alpha			= alphaFlag ? 8 : 0;
-
-	TRACE("rgb      :\t%d\n", (bool)rgbFlag);
-	TRACE("alpha    :\t%d\n", (bool)alphaFlag);
-	TRACE("dbl      :\t%d\n", (bool)dblFlag);
-	TRACE("stereo   :\t%d\n", (bool)stereoFlag);
-	TRACE("depth    :\t%d\n", depth);
-	TRACE("stencil  :\t%d\n", stencil);
-	TRACE("accum    :\t%d\n", accum);
-	TRACE("red      :\t%d\n", red);
-	TRACE("green    :\t%d\n", green);
-	TRACE("blue     :\t%d\n", blue);
-	TRACE("alpha    :\t%d\n", alpha);
-
-	gl_config* glVisual = _mesa_create_visual(dblFlag, stereoFlag, red, green,
-		blue, alpha, depth, stencil, accum, accum, accum, alpha ? accum : 0, 1);
-
-	if (!glVisual) {
-		ERROR("%s: Couldn't create Mesa visual!\n", __func__);
+	// Create state tracker visual
+	context->stVisual = CreateVisual();
+	if (context->stVisual == NULL) {
+		ERROR("%s: Couldn't create state_tracker visual!\n", __func__);
 		return -1;
 	}
-
-	TRACE("depthBits   :\t%d\n", glVisual->depthBits);
-	TRACE("stencilBits :\t%d\n", glVisual->stencilBits);
-
-	// Convert Mesa calculated visual into state tracker visual
-	context->stVisual = hgl_fill_st_visual(glVisual);
 
 	context->draw = new GalliumFramebuffer(context->stVisual, (void*)this);
 	context->read = new GalliumFramebuffer(context->stVisual, (void*)this);
 
 	if (!context->draw || !context->read) {
 		ERROR("%s: Problem allocating framebuffer!\n", __func__);
-		_mesa_destroy_visual(glVisual);
+		FREE(context->stVisual);
 		return -1;
 	}
 
@@ -341,6 +334,7 @@ GalliumContext::CreateContext(Bitmap *bitmap)
 				break;
 		}
 
+		FREE(context->stVisual);
 		FREE(context);
 		return -1;
 	}
@@ -372,8 +366,8 @@ GalliumContext::CreateContext(Bitmap *bitmap)
 		ERROR("%s: The next context is invalid... something went wrong!\n",
 			__func__);
 		//st_destroy_context(context->st);
+		FREE(context->stVisual);
 		FREE(context);
-		_mesa_destroy_visual(glVisual);
 		return -1;
 	}
 
