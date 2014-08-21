@@ -315,64 +315,205 @@ These are the instructions for making a new Mesa release.
 <h3>Get latest source files</h3>
 <p>
 Use git to get the latest Mesa files from the git repository, from whatever
-branch is relevant.
+branch is relevant. This document uses the convention X.Y.Z for the release
+being created, which should be created from a branch named X.Y.
 </p>
 
-
-<h3>Verify and update version info in VERSION</h3>
-
+<h3>Perform basic testing</h3>
 <p>
-Create a docs/relnotes/x.y.z.html file.
-The bin/bugzilla_mesa.sh and bin/shortlog_mesa.sh scripts can be used to
-create the HTML-formatted lists of bugfixes and changes to include in the file.
-Link the new docs/relnotes/x.y.z.html file into the main <a href="relnotes.html">relnotes.html</a> file.
-</p>
-
-<p>
-Update <a href="index.html">docs/index.html</a>.
+The release manager should, at the very least, test the code by compiling it,
+installing it, and running the latest piglit to ensure that no piglit tests
+have regressed since the previous release.
 </p>
 
 <p>
-Tag the files with the release name (in the form <b>mesa-x.y</b>)
-with: <code>git tag -s mesa-x.y -m "Mesa x.y Release"</code>
-Then: <code>git push origin mesa-x.y</code>
+The release manager should do this testing with at least one hardware driver,
+(say, whatever is contained in the local development machine), as well as on
+both Gallium and non-Gallium software drivers. The software testing can be
+performed by running piglit with the following environment-variable set:
 </p>
 
-
-<h3>Make the tarballs</h3>
-<p>
-Make the distribution files.  From inside the Mesa directory:
 <pre>
-	./autogen.sh
-	make tarballs
+LIBGL_ALWAYS_SOFTWARE=1
+</pre>
+
+And Gallium vs. non-Gallium software drivers can be obtained by using the
+following configure flags on separate builds:
+
+<pre>
+--with-dri-drivers=swrast
+--with-gallium-drivers=swrast
 </pre>
 
 <p>
-After the tarballs are created, the md5 checksums for the files will
-be computed.
-Add them to the docs/relnotes/x.y.html file.
+Note: If both options are given in one build, both swrast_dri.so drivers will
+be compiled, but only one will be installed. The following command can be used
+to ensure the correct driver is being tested:
+</p>
+
+<pre>
+LIBGL_ALWAYS_SOFTWARE=1 glxinfo | grep "renderer string"
+</pre>
+
+If any regressions are found in this testing with piglit, stop here, and do
+not perform a release until regressions are fixed.
+
+<h3>Update version in file VERSION</h3>
+
+<p>
+Increment the version contained in the file VERSION at Mesa's top-level, then
+commit this change.
+</p>
+
+<h3>Create release notes for the new release</h3>
+
+<p>
+Create a new file docs/relnotes/X.Y.Z.html, (follow the style of the previous
+release notes). Note that the sha256sums section of the release notes should
+be empty at this point.
 </p>
 
 <p>
-Copy the distribution files to a temporary directory, unpack them,
-compile everything, and run some demos to be sure everything works.
-</p>
+Two scripts are available to help generate portions of the release notes:
 
-<h3>Update the website and announce the release</h3>
-<p>
-Make a new directory for the release on annarchy.freedesktop.org with:
-<br>
-<code>
-mkdir /srv/ftp.freedesktop.org/pub/mesa/x.y
-</code>
-</p>
+<pre>
+	./bin/bugzilla_mesa.sh
+	./bin/shortlog_mesa.sh
+</pre>
 
 <p>
-Basically, to upload the tarball files with:
-<br>
-<code>
-rsync -avP -e ssh MesaLib-x.y.* USERNAME@annarchy.freedesktop.org:/srv/ftp.freedesktop.org/pub/mesa/x.y/
-</code>
+The first script identifies commits that reference bugzilla bugs and obtains
+the descriptions of those bugs from bugzilla. The second script generates a
+log of all commits. In both cases, HTML-formatted lists are printed to stdout
+to be included in the release notes.
+</p>
+
+<p>
+Commit these changes
+</p>
+
+<h3>Make the release archives, signatures, and the release tag</h3>
+<p>
+From inside the Mesa directory:
+<pre>
+	./autogen.sh
+	make -j1 tarballs
+</pre>
+
+<p>
+After the tarballs are created, the sha256 checksums for the files will
+be computed and printed. These will be used in a step below.
+</p>
+
+<p>
+It's important at this point to also verify that the constructed tar file
+actually builds:
+</p>
+
+<pre>
+	tar xjf MesaLib-X.Y.Z.tar.bz2
+	cd Mesa-X.Y.Z
+	./configure --enable-gallium-llvm
+	make -j6
+	make install
+</pre>
+
+<p>
+Some touch testing should also be performed at this point, (run glxgears or
+more involved OpenGL programs against the installed Mesa).
+</p>
+
+<p>
+Create detached GPG signatures for each of the archive files created above:
+</p>
+
+<pre>
+	gpg --sign --detach MesaLib-X.Y.Z.tar.gz
+	gpg --sign --detach MesaLib-X.Y.Z.tar.bz2
+	gpg --sign --detach MesaLib-X.Y.Z.zip
+</pre>
+
+<p>
+Tag the commit used for the build:
+</p>
+
+<pre>
+	git tag -s mesa-X.Y.X -m "Mesa X.Y.Z release"
+</pre>
+
+<p>
+Note: It would be nice to investigate and fix the issue that causes the
+tarballs target to fail with multiple build process, such as with "-j4". It
+would also be nice to incorporate all of the above commands into a single
+makefile target. And instead of a custom "tarballs" target, we should
+incorporate things into the standard "make dist" and "make distcheck" targets.
+</p>
+
+<h3>Add the sha256sums to the release notes</h3>
+
+<p>
+Edit docs/relnotes/X.Y.Z.html to add the sha256sums printed as part of "make
+tarballs" in the previous step. Commit this change.
+</p>
+
+<h3>Push all commits and the tag creates above</h3>
+
+<p>
+This is the first step that cannot easily be undone. The release is going
+forward from this point:
+</p>
+
+<pre>
+	git push origin X.Y --tags
+</pre>
+
+<h3>Install the release files and signatures on the distribution server</h3>
+
+<p>
+The following commands can be used to copy the release archive files and
+signatures to the freedesktop.org server:
+</p>
+
+<pre>
+	scp MesaLib-X.Y.Z* people.freedesktop.org:
+	ssh people.freedesktop.org
+	cd /srv/ftp.freedesktop.org/pub/mesa
+	mkdir X.Y.Z
+	cd X.Y.Z
+	mv ~/MesaLib-X.Y.Z* .
+</pre>
+
+<h3>Back on mesa master, andd the new release notes into the tree</h3>
+
+<p>
+Something like the following steps will do the trick:
+</p>
+
+<pre>
+	cp docs/relnotes/X.Y.Z.html /tmp
+        git checkout master
+        cp /tmp/X.Y.Z.html docs/relnotes
+        git add docs/relnotes/X.Y.Z.html
+</pre>
+
+<p>
+Also, edit docs/relnotes.html to add a link to the new release notes, and edit
+docs/index.html to add a news entry. Then commit and push:
+</p>
+
+<pre>
+	git commit -a -m "docs: Import X.Y.Z release notes, add news item."
+        git push origin
+</pre>
+
+<h3>Update the mesa3d.org website</h3>
+
+<p>
+NOTE: The recent release managers have not been performing this step
+themselves, but leaving this to Brian Paul, (who has access to the
+sourceforge.net hosting for mesa3d.org). Brian is more than willing to grant
+the permission necessary to future release managers to do this step on their
+own.
 </p>
 
 <p>
@@ -384,13 +525,22 @@ sftp USERNAME,mesa3d@web.sourceforge.net
 </code>
 </p>
 
+
+<h3>Announce the release</h3>
 <p>
 Make an announcement on the mailing lists:
 
 <em>mesa-dev@lists.freedesktop.org</em>,
-<em>mesa-users@lists.freedesktop.org</em>
 and
 <em>mesa-announce@lists.freedesktop.org</em>
+
+Follow the template of previously-sent release announcements. The following
+command can be used to generate the log of changes to be included in the
+release announcement:
+
+<pre>
+	git shortlog mesa-X.Y.Z-1..mesa-X.Y.Z
+</pre>
 </p>
 
 </div>
