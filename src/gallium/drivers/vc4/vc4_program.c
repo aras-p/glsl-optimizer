@@ -47,6 +47,7 @@ struct tgsi_to_qir {
         struct qreg *uniforms;
         struct qreg *consts;
         struct qreg line_x, point_x, point_y;
+        struct qreg discard;
 
         uint32_t num_consts;
 
@@ -606,6 +607,19 @@ emit_vertex_input(struct tgsi_to_qir *trans, int attr)
 }
 
 static void
+tgsi_to_qir_kill_if(struct tgsi_to_qir *trans, struct qreg *src, int i)
+{
+        struct qcompile *c = trans->c;
+
+        if (trans->discard.file == QFILE_NULL)
+                trans->discard = qir_uniform_f(trans, 0.0);
+        trans->discard = qir_CMP(c,
+                                 src[0 * 4 + i],
+                                 qir_uniform_f(trans, 1.0),
+                                 trans->discard);
+}
+
+static void
 emit_fragcoord_input(struct tgsi_to_qir *trans, int attr)
 {
         struct qcompile *c = trans->c;
@@ -733,6 +747,13 @@ emit_tgsi_instruction(struct tgsi_to_qir *trans,
         case TGSI_OPCODE_TXB:
                 tgsi_to_qir_tex(trans, tgsi_inst,
                                 op_trans[tgsi_op].op, src_regs);
+                return;
+        case TGSI_OPCODE_KILL:
+                trans->discard = qir_uniform_f(trans, 1.0);
+                return;
+        case TGSI_OPCODE_KILL_IF:
+                for (int i = 0; i < 4; i++)
+                        tgsi_to_qir_kill_if(trans, src_regs, i);
                 return;
         default:
                 break;
@@ -983,6 +1004,9 @@ emit_frag_end(struct tgsi_to_qir *trans)
                 swizzled_outputs[i] = get_swizzled_channel(trans, blend_color,
                                                            format_swiz[i]);
         }
+
+        if (trans->discard.file != QFILE_NULL)
+                qir_TLB_DISCARD_SETUP(c, trans->discard);
 
         if (trans->fs_key->depth_enabled) {
                 qir_emit(c, qir_inst(QOP_TLB_PASSTHROUGH_Z_WRITE, c->undef,

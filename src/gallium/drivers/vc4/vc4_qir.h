@@ -72,6 +72,7 @@ enum qop {
         QOP_PACK_COLORS,
         QOP_VPM_WRITE,
         QOP_VPM_READ,
+        QOP_TLB_DISCARD_SETUP,
         QOP_TLB_PASSTHROUGH_Z_WRITE,
         QOP_TLB_COLOR_WRITE,
         QOP_TLB_COLOR_READ,
@@ -280,6 +281,7 @@ QIR_ALU0(FRAG_X)
 QIR_ALU0(FRAG_Y)
 QIR_ALU0(FRAG_Z)
 QIR_ALU0(FRAG_RCP_W)
+QIR_NODST_1(TLB_DISCARD_SETUP)
 
 static inline struct qreg
 qir_CMP(struct qcompile *c, struct qreg cmp, struct qreg a, struct qreg b)

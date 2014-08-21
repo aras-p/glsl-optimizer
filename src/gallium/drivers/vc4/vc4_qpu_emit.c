@@ -213,6 +213,7 @@ vc4_generate_code(struct qcompile *c)
         int *reg_allocated = calloc(c->num_temps, sizeof(*reg_allocated));
         int *reg_uses_remaining =
                 calloc(c->num_temps, sizeof(*reg_uses_remaining));
+        bool discard = false;
 
         for (int i = 0; i < ARRAY_SIZE(reg_in_use); i++)
                 reg_in_use[i] = false;
@@ -508,10 +509,21 @@ vc4_generate_code(struct qcompile *c)
                                           qpu_m_NOP()));
                         break;
 
+                case QOP_TLB_DISCARD_SETUP:
+                        discard = true;
+                        queue(c, qpu_inst(qpu_a_MOV(src[0], src[0]),
+                                          qpu_m_NOP()));
+                        *last_inst(c) |= QPU_SF;
+                        break;
+
                 case QOP_TLB_PASSTHROUGH_Z_WRITE:
                         queue(c, qpu_inst(qpu_a_MOV(qpu_ra(QPU_W_TLB_Z),
                                                     qpu_rb(QPU_R_FRAG_PAYLOAD_ZW)),
                                           qpu_m_NOP()));
+                        if (discard) {
+                                *last_inst(c) = qpu_set_cond_add(*last_inst(c),
+                                                                 QPU_COND_ZS);
+                        }
                         break;
 
                 case QOP_TLB_COLOR_READ:
@@ -525,6 +537,10 @@ vc4_generate_code(struct qcompile *c)
                         queue(c, qpu_inst(qpu_a_MOV(qpu_tlbc(),
                                                     src[0]),
                                           qpu_m_NOP()));
+                        if (discard) {
+                                *last_inst(c) = qpu_set_cond_add(*last_inst(c),
+                                                                 QPU_COND_ZS);
+                        }
                         break;
 
                 case QOP_VARY_ADD_C:
