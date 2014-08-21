@@ -934,8 +934,6 @@ emit_frag_end(struct tgsi_to_qir *trans)
 {
         struct qcompile *c = trans->c;
 
-        struct qreg t = qir_get_temp(c);
-
         struct qreg src_color[4] = {
                 trans->outputs[0], trans->outputs[1],
                 trans->outputs[2], trans->outputs[3],
@@ -991,13 +989,34 @@ emit_frag_end(struct tgsi_to_qir *trans)
                                      c->undef, c->undef));
         }
 
-        qir_emit(c, qir_inst4(QOP_PACK_COLORS, t,
-                              swizzled_outputs[0],
-                              swizzled_outputs[1],
-                              swizzled_outputs[2],
-                              swizzled_outputs[3]));
+        bool color_written = false;
+        for (int i = 0; i < 4; i++) {
+                if (swizzled_outputs[i].file != QFILE_NULL)
+                        color_written = true;
+        }
+
+        struct qreg packed_color;
+        if (color_written) {
+                /* Fill in any undefined colors.  The simulator will assertion
+                 * fail if we read something that wasn't written, and I don't
+                 * know what hardware does.
+                 */
+                for (int i = 0; i < 4; i++) {
+                        if (swizzled_outputs[i].file == QFILE_NULL)
+                                swizzled_outputs[i] = qir_uniform_f(trans, 0.0);
+                }
+                packed_color = qir_get_temp(c);
+                qir_emit(c, qir_inst4(QOP_PACK_COLORS, packed_color,
+                                      swizzled_outputs[0],
+                                      swizzled_outputs[1],
+                                      swizzled_outputs[2],
+                                      swizzled_outputs[3]));
+        } else {
+                packed_color = qir_uniform_ui(trans, 0);
+        }
+
         qir_emit(c, qir_inst(QOP_TLB_COLOR_WRITE, c->undef,
-                             t, c->undef));
+                             packed_color, c->undef));
 }
 
 static void
