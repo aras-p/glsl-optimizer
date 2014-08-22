@@ -70,6 +70,9 @@ vc4_bo_reference(struct vc4_bo *bo)
 static inline void
 vc4_bo_unreference(struct vc4_bo **bo)
 {
+        if (!*bo)
+                return;
+
         if (pipe_reference(&(*bo)->reference, NULL))
                 vc4_bo_free(*bo);
         *bo = NULL;

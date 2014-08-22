@@ -73,15 +73,20 @@ vc4_resource_transfer_map(struct pipe_context *pctx,
         enum pipe_format format = prsc->format;
         char *buf;
 
-        vc4_flush_for_bo(pctx, rsc->bo);
+        if (usage & PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE) {
+                uint32_t size = rsc->bo->size;
+                vc4_bo_unreference(&rsc->bo);
+                rsc->bo = vc4_bo_alloc(vc4->screen, size, "resource");
+        }
+
+        if (!(usage & PIPE_TRANSFER_UNSYNCHRONIZED))
+                vc4_flush_for_bo(pctx, rsc->bo);
 
         trans = util_slab_alloc(&vc4->transfer_pool);
         if (!trans)
                 return NULL;
 
-        /* XXX: Handle DISCARD_WHOLE_RESOURCE, DONTBLOCK, UNSYNCHRONIZED,
-         * DISCARD_WHOLE_RESOURCE, PERSISTENT, COHERENT.
-         */
+        /* XXX: Handle DONTBLOCK, DISCARD_RANGE, PERSISTENT, COHERENT. */
 
         /* util_slab_alloc() doesn't zero: */
         memset(trans, 0, sizeof(*trans));
