@@ -39,7 +39,9 @@ static void
 vc4_setup_rcl(struct vc4_context *vc4)
 {
         struct vc4_surface *csurf = vc4_surface(vc4->framebuffer.cbufs[0]);
-        struct vc4_resource *ctex = vc4_resource(csurf->base.texture);
+        struct vc4_resource *ctex = csurf ? vc4_resource(csurf->base.texture) : NULL;
+        struct vc4_surface *zsurf = vc4_surface(vc4->framebuffer.zsbuf);
+        struct vc4_resource *ztex = zsurf ? vc4_resource(zsurf->base.texture) : NULL;
         uint32_t resolve_uncleared = vc4->resolve & ~vc4->cleared;
         uint32_t width = vc4->framebuffer.width;
         uint32_t height = vc4->framebuffer.height;
@@ -95,11 +97,12 @@ vc4_setup_rcl(struct vc4_context *vc4)
                 for (int x = 0; x < xtiles; x++) {
                         bool end_of_frame = (x == xtiles - 1 &&
                                              y == ytiles - 1);
+                        bool coords_emitted = false;
 
                         /* Note that the load doesn't actually occur until the
                          * tile coords packet is processed.
                          */
-                        if (resolve_uncleared & PIPE_CLEAR_COLOR) {
+                        if (csurf && (resolve_uncleared & PIPE_CLEAR_COLOR)) {
                                 cl_start_reloc(&vc4->rcl, 1);
                                 cl_u8(&vc4->rcl, VC4_PACKET_LOAD_TILE_BUFFER_GENERAL);
                                 cl_u8(&vc4->rcl,
@@ -112,16 +115,62 @@ vc4_setup_rcl(struct vc4_context *vc4)
                                       VC4_LOADSTORE_TILE_BUFFER_RGBA8888);
                                 cl_reloc(vc4, &vc4->rcl, ctex->bo,
                                          csurf->offset);
+
+                                cl_u8(&vc4->rcl, VC4_PACKET_TILE_COORDINATES);
+                                cl_u8(&vc4->rcl, x);
+                                cl_u8(&vc4->rcl, y);
+                                coords_emitted = true;
                         }
 
-                        cl_u8(&vc4->rcl, VC4_PACKET_TILE_COORDINATES);
-                        cl_u8(&vc4->rcl, x);
-                        cl_u8(&vc4->rcl, y);
+                        if (zsurf && (resolve_uncleared & (PIPE_CLEAR_DEPTH |
+                                                           PIPE_CLEAR_STENCIL))) {
+                                cl_start_reloc(&vc4->rcl, 1);
+                                cl_u8(&vc4->rcl, VC4_PACKET_LOAD_TILE_BUFFER_GENERAL);
+                                cl_u8(&vc4->rcl,
+                                      VC4_LOADSTORE_TILE_BUFFER_ZS |
+                                      (zsurf->tiling <<
+                                       VC4_LOADSTORE_TILE_BUFFER_FORMAT_SHIFT));
+                                cl_u8(&vc4->rcl, 0);
+                                cl_reloc(vc4, &vc4->rcl, ztex->bo,
+                                         zsurf->offset);
+
+                                cl_u8(&vc4->rcl, VC4_PACKET_TILE_COORDINATES);
+                                cl_u8(&vc4->rcl, x);
+                                cl_u8(&vc4->rcl, y);
+                                coords_emitted = true;
+                        }
+
+                        /* Clipping depends on tile coordinates having been
+                         * emitted, so make sure it's happened even if
+                         * everything was cleared to start.
+                         */
+                        if (!coords_emitted) {
+                                cl_u8(&vc4->rcl, VC4_PACKET_TILE_COORDINATES);
+                                cl_u8(&vc4->rcl, x);
+                                cl_u8(&vc4->rcl, y);
+                        }
 
                         cl_start_reloc(&vc4->rcl, 1);
                         cl_u8(&vc4->rcl, VC4_PACKET_BRANCH_TO_SUB_LIST);
                         cl_reloc(vc4, &vc4->rcl, vc4->tile_alloc,
                                  (y * xtiles + x) * 32);
+
+                        if (zsurf && (vc4->resolve & (PIPE_CLEAR_DEPTH |
+                                                      PIPE_CLEAR_STENCIL))) {
+                                cl_start_reloc(&vc4->rcl, 1);
+                                cl_u8(&vc4->rcl, VC4_PACKET_STORE_TILE_BUFFER_GENERAL);
+                                cl_u8(&vc4->rcl,
+                                      VC4_LOADSTORE_TILE_BUFFER_Z |
+                                      (zsurf->tiling <<
+                                       VC4_LOADSTORE_TILE_BUFFER_FORMAT_SHIFT));
+                                cl_u8(&vc4->rcl,
+                                      VC4_STORE_TILE_BUFFER_DISABLE_COLOR_CLEAR);
+                                cl_reloc(vc4, &vc4->rcl, ztex->bo,
+                                         zsurf->offset |
+                                         ((end_of_frame &&
+                                           !(vc4->resolve & PIPE_CLEAR_COLOR0)) ?
+                                          VC4_LOADSTORE_TILE_BUFFER_EOF : 0));
+                        }
 
                         if (vc4->resolve & PIPE_CLEAR_COLOR0) {
                                 if (end_of_frame) {
@@ -131,9 +180,14 @@ vc4_setup_rcl(struct vc4_context *vc4)
                                         cl_u8(&vc4->rcl,
                                               VC4_PACKET_STORE_MS_TILE_BUFFER);
                                 }
-                        } else {
-                                assert(!"unfinished: Need to end the frame\n");
                         }
+
+                        /* One of the bits needs to have been set that would
+                         * have triggered an EOFq
+                         */
+                        assert(vc4->resolve & (PIPE_CLEAR_COLOR0 |
+                                               PIPE_CLEAR_DEPTH |
+                                               PIPE_CLEAR_STENCIL));
                 }
         }
 }

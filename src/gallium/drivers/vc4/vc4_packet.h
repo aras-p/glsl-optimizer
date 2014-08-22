@@ -96,6 +96,7 @@ enum vc4_packet {
  * VC4_PACKET_LOAD_TILE_BUFFER_GENERAL (low bits of the address)
  */
 
+#define VC4_LOADSTORE_TILE_BUFFER_EOF                  (1 << 3)
 #define VC4_LOADSTORE_TILE_BUFFER_DISABLE_FULL_VG_MASK (1 << 2)
 #define VC4_LOADSTORE_TILE_BUFFER_DISABLE_FULL_ZS      (1 << 1)
 #define VC4_LOADSTORE_TILE_BUFFER_DISABLE_FULL_COLOR   (1 << 0)
