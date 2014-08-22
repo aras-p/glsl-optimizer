@@ -805,19 +805,41 @@ emit_vertex_input(struct vc4_compile *c, int attr)
 
         for (int i = 0; i < 4; i++) {
                 uint8_t swiz = desc->swizzle[i];
+                struct qreg result;
 
-                if (swiz <= UTIL_FORMAT_SWIZZLE_W &&
-                    !format_warned &&
-                    (desc->channel[swiz].type != UTIL_FORMAT_TYPE_FLOAT ||
-                     desc->channel[swiz].size != 32)) {
-                        fprintf(stderr,
-                                "vtx element %d unsupported type: %s\n",
-                                attr, util_format_name(format));
-                        format_warned = true;
+                if (swiz > UTIL_FORMAT_SWIZZLE_W)
+                        result = get_swizzled_channel(c, vpm_reads, swiz);
+                else if (desc->channel[swiz].size == 32 &&
+                         desc->channel[swiz].type == UTIL_FORMAT_TYPE_FLOAT) {
+                        result = get_swizzled_channel(c, vpm_reads, swiz);
+                } else if (desc->channel[swiz].size == 8 &&
+                           (desc->channel[swiz].type == UTIL_FORMAT_TYPE_UNSIGNED ||
+                            desc->channel[swiz].type == UTIL_FORMAT_TYPE_SIGNED) &&
+                           desc->channel[swiz].normalized) {
+                        struct qreg vpm = vpm_reads[0];
+                        if (desc->channel[swiz].type == UTIL_FORMAT_TYPE_SIGNED)
+                                vpm = qir_XOR(c, vpm, qir_uniform_ui(c, 0x80808080));
+                        result = qir_UNPACK_8(c, vpm, swiz);
+                } else {
+                        if (!format_warned) {
+                                fprintf(stderr,
+                                        "vtx element %d unsupported type: %s\n",
+                                        attr, util_format_name(format));
+                                format_warned = true;
+                        }
+                        result = qir_uniform_f(c, 0.0);
                 }
 
-                c->inputs[attr * 4 + i] =
-                        get_swizzled_channel(c, vpm_reads, swiz);
+                if (desc->channel[swiz].normalized &&
+                    desc->channel[swiz].type == UTIL_FORMAT_TYPE_SIGNED) {
+                        result = qir_FSUB(c,
+                                          qir_FMUL(c,
+                                                   result,
+                                                   qir_uniform_f(c, 2.0)),
+                                          qir_uniform_f(c, 1.0));
+                }
+
+                c->inputs[attr * 4 + i] = result;
         }
 }
 

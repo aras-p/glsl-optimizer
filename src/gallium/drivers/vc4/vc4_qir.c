@@ -97,6 +97,10 @@ static const struct qir_op_info qir_op_info[] = {
         [QOP_R4_UNPACK_B] = { "r4_unpack_b", 1, 1 },
         [QOP_R4_UNPACK_C] = { "r4_unpack_c", 1, 1 },
         [QOP_R4_UNPACK_D] = { "r4_unpack_d", 1, 1 },
+        [QOP_UNPACK_8A] = { "unpack_8a", 1, 1 },
+        [QOP_UNPACK_8B] = { "unpack_8b", 1, 1 },
+        [QOP_UNPACK_8C] = { "unpack_8c", 1, 1 },
+        [QOP_UNPACK_8D] = { "unpack_8d", 1, 1 },
 };
 
 static const char *

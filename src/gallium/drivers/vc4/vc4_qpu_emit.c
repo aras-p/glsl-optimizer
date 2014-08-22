@@ -490,6 +490,31 @@ vc4_generate_code(struct vc4_context *vc4, struct vc4_compile *c)
 
                         break;
 
+                case QOP_UNPACK_8A:
+                case QOP_UNPACK_8B:
+                case QOP_UNPACK_8C:
+                case QOP_UNPACK_8D: {
+                        assert(src[0].mux == QPU_MUX_A);
+
+                        /* And, since we're setting the pack bits, if the
+                         * destination is in A it would get re-packed.
+                         */
+                        struct qpu_reg orig_dst = dst;
+                        if (orig_dst.mux == QPU_MUX_A)
+                                dst = qpu_rn(3);
+
+                        queue(c, qpu_a_FMAX(dst, src[0], src[0]));
+                        *last_inst(c) |= QPU_SET_FIELD(QPU_UNPACK_8A +
+                                                       (qinst->op -
+                                                        QOP_UNPACK_8A),
+                                                       QPU_UNPACK);
+
+                        if (orig_dst.mux == QPU_MUX_A) {
+                                queue(c, qpu_a_MOV(orig_dst, dst));
+                        }
+                }
+                        break;
+
                 default:
                         assert(qinst->op < ARRAY_SIZE(translate));
                         assert(translate[qinst->op].op != 0); /* NOPs */

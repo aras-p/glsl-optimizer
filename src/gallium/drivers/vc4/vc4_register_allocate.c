@@ -212,6 +212,14 @@ vc4_register_allocate(struct vc4_context *vc4, struct vc4_compile *c)
                         ra_set_node_class(g, inst->dst.index, vc4->reg_class_a);
                         break;
 
+                case QOP_UNPACK_8A:
+                case QOP_UNPACK_8B:
+                case QOP_UNPACK_8C:
+                case QOP_UNPACK_8D:
+                        /* The unpack flags require an A-file src register. */
+                        ra_set_node_class(g, inst->src[0].index, vc4->reg_class_a);
+                        break;
+
                 default:
                         break;
                 }

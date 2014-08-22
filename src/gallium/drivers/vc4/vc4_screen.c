@@ -327,12 +327,25 @@ vc4_screen_is_format_supported(struct pipe_screen *pscreen,
                 return FALSE;
         }
 
-        if (usage & PIPE_BIND_VERTEX_BUFFER &&
-            (format == PIPE_FORMAT_R32G32B32A32_FLOAT ||
-             format == PIPE_FORMAT_R32G32B32_FLOAT ||
-             format == PIPE_FORMAT_R32G32_FLOAT ||
-             format == PIPE_FORMAT_R32_FLOAT)) {
-                retval |= PIPE_BIND_VERTEX_BUFFER;
+        if (usage & PIPE_BIND_VERTEX_BUFFER) {
+                switch (format) {
+                case PIPE_FORMAT_R32G32B32A32_FLOAT:
+                case PIPE_FORMAT_R32G32B32_FLOAT:
+                case PIPE_FORMAT_R32G32_FLOAT:
+                case PIPE_FORMAT_R32_FLOAT:
+                case PIPE_FORMAT_R8G8B8A8_UNORM:
+                case PIPE_FORMAT_R8G8B8_UNORM:
+                case PIPE_FORMAT_R8G8_UNORM:
+                case PIPE_FORMAT_R8_UNORM:
+                case PIPE_FORMAT_R8G8B8A8_SNORM:
+                case PIPE_FORMAT_R8G8B8_SNORM:
+                case PIPE_FORMAT_R8G8_SNORM:
+                case PIPE_FORMAT_R8_SNORM:
+                        retval |= PIPE_BIND_VERTEX_BUFFER;
+                        break;
+                default:
+                        break;
+                }
         }
 
         if ((usage & PIPE_BIND_RENDER_TARGET) &&

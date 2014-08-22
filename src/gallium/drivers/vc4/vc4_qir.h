@@ -108,6 +108,11 @@ enum qop {
         QOP_FRAG_Z,
         QOP_FRAG_W,
 
+        QOP_UNPACK_8A,
+        QOP_UNPACK_8B,
+        QOP_UNPACK_8C,
+        QOP_UNPACK_8D,
+
         /** Texture x coordinate parameter write */
         QOP_TEX_S,
         /** Texture y coordinate parameter write */
@@ -383,6 +388,14 @@ qir_SEL_X_0_COND(struct vc4_compile *c, int i)
 {
         struct qreg t = qir_get_temp(c);
         qir_emit(c, qir_inst(QOP_R4_UNPACK_A + i, t, c->undef, c->undef));
+        return t;
+}
+
+static inline struct qreg
+qir_UNPACK_8(struct vc4_compile *c, struct qreg src, int i)
+{
+        struct qreg t = qir_get_temp(c);
+        qir_emit(c, qir_inst(QOP_UNPACK_8A + i, t, src, c->undef));
         return t;
 }
 
