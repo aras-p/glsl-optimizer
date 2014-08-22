@@ -777,10 +777,10 @@ vec4_visitor::emit_bool_to_cond_code(ir_rvalue *ir,
    *predicate = BRW_PREDICATE_NORMAL;
 
    if (expr) {
-      src_reg op[2];
+      src_reg op[3];
       vec4_instruction *inst;
 
-      assert(expr->get_num_operands() <= 2);
+      assert(expr->get_num_operands() <= 3);
       for (unsigned int i = 0; i < expr->get_num_operands(); i++) {
 	 expr->operands[i]->accept(this);
 	 op[i] = this->result;
@@ -851,6 +851,22 @@ vec4_visitor::emit_bool_to_cond_code(ir_rvalue *ir,
 	 emit(CMP(dst_null_d(), op[0], op[1],
 		  brw_conditional_for_comparison(expr->operation)));
 	 break;
+
+      case ir_triop_csel: {
+         /* Expand the boolean condition into the flag register. */
+         inst = emit(MOV(dst_null_d(), op[0]));
+         inst->conditional_mod = BRW_CONDITIONAL_NZ;
+
+         /* Select which boolean to return. */
+         dst_reg temp(this, expr->operands[1]->type);
+         inst = emit(BRW_OPCODE_SEL, temp, op[1], op[2]);
+         inst->predicate = BRW_PREDICATE_NORMAL;
+
+         /* Expand the result to a condition code. */
+         inst = emit(MOV(dst_null_d(), src_reg(temp)));
+         inst->conditional_mod = BRW_CONDITIONAL_NZ;
+         break;
+      }
 
       default:
 	 unreachable("not reached");
