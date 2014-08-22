@@ -239,18 +239,8 @@ static void cso_init_vbuf(struct cso_context *cso)
 {
    struct u_vbuf_caps caps;
 
-   u_vbuf_get_caps(cso->pipe->screen, &caps);
-
    /* Install u_vbuf if there is anything unsupported. */
-   if (!caps.buffer_offset_unaligned ||
-       !caps.buffer_stride_unaligned ||
-       !caps.velem_src_offset_unaligned ||
-       !caps.format_fixed32 ||
-       !caps.format_float16 ||
-       !caps.format_float64 ||
-       !caps.format_norm32 ||
-       !caps.format_scaled32 ||
-       !caps.user_vertex_buffers) {
+   if (u_vbuf_get_caps(cso->pipe->screen, &caps)) {
       cso->vbuf = u_vbuf_create(cso->pipe, &caps,
                                 cso->aux_vertex_buffer_index);
    }

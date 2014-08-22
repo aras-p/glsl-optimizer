@@ -191,47 +191,90 @@ u_vbuf_create_vertex_elements(struct u_vbuf *mgr, unsigned count,
                               const struct pipe_vertex_element *attribs);
 static void u_vbuf_delete_vertex_elements(struct u_vbuf *mgr, void *cso);
 
+static const struct {
+   enum pipe_format from, to;
+} vbuf_format_fallbacks[] = {
+   { PIPE_FORMAT_R32_FIXED,            PIPE_FORMAT_R32_FLOAT },
+   { PIPE_FORMAT_R32G32_FIXED,         PIPE_FORMAT_R32G32_FLOAT },
+   { PIPE_FORMAT_R32G32B32_FIXED,      PIPE_FORMAT_R32G32B32_FLOAT },
+   { PIPE_FORMAT_R32G32B32A32_FIXED,   PIPE_FORMAT_R32G32B32A32_FLOAT },
+   { PIPE_FORMAT_R16_FLOAT,            PIPE_FORMAT_R32_FLOAT },
+   { PIPE_FORMAT_R16G16_FLOAT,         PIPE_FORMAT_R32G32_FLOAT },
+   { PIPE_FORMAT_R16G16B16_FLOAT,      PIPE_FORMAT_R32G32B32_FLOAT },
+   { PIPE_FORMAT_R16G16B16A16_FLOAT,   PIPE_FORMAT_R32G32B32A32_FLOAT },
+   { PIPE_FORMAT_R64_FLOAT,            PIPE_FORMAT_R32_FLOAT },
+   { PIPE_FORMAT_R64G64_FLOAT,         PIPE_FORMAT_R32G32_FLOAT },
+   { PIPE_FORMAT_R64G64B64_FLOAT,      PIPE_FORMAT_R32G32B32_FLOAT },
+   { PIPE_FORMAT_R64G64B64A64_FLOAT,   PIPE_FORMAT_R32G32B32A32_FLOAT },
+   { PIPE_FORMAT_R32_UNORM,            PIPE_FORMAT_R32_FLOAT },
+   { PIPE_FORMAT_R32G32_UNORM,         PIPE_FORMAT_R32G32_FLOAT },
+   { PIPE_FORMAT_R32G32B32_UNORM,      PIPE_FORMAT_R32G32B32_FLOAT },
+   { PIPE_FORMAT_R32G32B32A32_UNORM,   PIPE_FORMAT_R32G32B32A32_FLOAT },
+   { PIPE_FORMAT_R32_SNORM,            PIPE_FORMAT_R32_FLOAT },
+   { PIPE_FORMAT_R32G32_SNORM,         PIPE_FORMAT_R32G32_FLOAT },
+   { PIPE_FORMAT_R32G32B32_SNORM,      PIPE_FORMAT_R32G32B32_FLOAT },
+   { PIPE_FORMAT_R32G32B32A32_SNORM,   PIPE_FORMAT_R32G32B32A32_FLOAT },
+   { PIPE_FORMAT_R32_USCALED,          PIPE_FORMAT_R32_FLOAT },
+   { PIPE_FORMAT_R32G32_USCALED,       PIPE_FORMAT_R32G32_FLOAT },
+   { PIPE_FORMAT_R32G32B32_USCALED,    PIPE_FORMAT_R32G32B32_FLOAT },
+   { PIPE_FORMAT_R32G32B32A32_USCALED, PIPE_FORMAT_R32G32B32A32_FLOAT },
+   { PIPE_FORMAT_R32_SSCALED,          PIPE_FORMAT_R32_FLOAT },
+   { PIPE_FORMAT_R32G32_SSCALED,       PIPE_FORMAT_R32G32_FLOAT },
+   { PIPE_FORMAT_R32G32B32_SSCALED,    PIPE_FORMAT_R32G32B32_FLOAT },
+   { PIPE_FORMAT_R32G32B32A32_SSCALED, PIPE_FORMAT_R32G32B32A32_FLOAT },
+};
 
-void u_vbuf_get_caps(struct pipe_screen *screen, struct u_vbuf_caps *caps)
+boolean u_vbuf_get_caps(struct pipe_screen *screen, struct u_vbuf_caps *caps)
 {
-   caps->format_fixed32 =
-      screen->is_format_supported(screen, PIPE_FORMAT_R32_FIXED, PIPE_BUFFER,
-                                  0, PIPE_BIND_VERTEX_BUFFER);
+   unsigned i;
+   boolean fallback = FALSE;
 
-   caps->format_float16 =
-      screen->is_format_supported(screen, PIPE_FORMAT_R16_FLOAT, PIPE_BUFFER,
-                                  0, PIPE_BIND_VERTEX_BUFFER);
+   /* I'd rather have a bitfield of which formats are supported and a static
+    * table of the translations indexed by format, but since we don't have C99
+    * we can't easily make a sparsely-populated table indexed by format.  So,
+    * we construct the sparse table here.
+    */
+   for (i = 0; i < PIPE_FORMAT_COUNT; i++)
+      caps->format_translation[i] = i;
 
-   caps->format_float64 =
-      screen->is_format_supported(screen, PIPE_FORMAT_R64_FLOAT, PIPE_BUFFER,
-                                  0, PIPE_BIND_VERTEX_BUFFER);
+   for (i = 0; i < Elements(vbuf_format_fallbacks); i++) {
+      enum pipe_format format = vbuf_format_fallbacks[i].from;
 
-   caps->format_norm32 =
-      screen->is_format_supported(screen, PIPE_FORMAT_R32_UNORM, PIPE_BUFFER,
-                                  0, PIPE_BIND_VERTEX_BUFFER) &&
-      screen->is_format_supported(screen, PIPE_FORMAT_R32_SNORM, PIPE_BUFFER,
-                                  0, PIPE_BIND_VERTEX_BUFFER);
+      if (!screen->is_format_supported(screen, format, PIPE_BUFFER, 0,
+                                       PIPE_BIND_VERTEX_BUFFER)) {
+         caps->format_translation[format] = vbuf_format_fallbacks[i].to;
+         fallback = TRUE;
+      }
+   }
 
-   caps->format_scaled32 =
-      screen->is_format_supported(screen, PIPE_FORMAT_R32_USCALED, PIPE_BUFFER,
-                                  0, PIPE_BIND_VERTEX_BUFFER) &&
-      screen->is_format_supported(screen, PIPE_FORMAT_R32_SSCALED, PIPE_BUFFER,
-                                  0, PIPE_BIND_VERTEX_BUFFER);
+   if (!screen->get_param(screen,
+                          PIPE_CAP_VERTEX_BUFFER_OFFSET_4BYTE_ALIGNED_ONLY)) {
+      caps->buffer_offset_unaligned = TRUE;
+   } else {
+      fallback = TRUE;
+   }
 
-   caps->buffer_offset_unaligned =
-      !screen->get_param(screen,
-                        PIPE_CAP_VERTEX_BUFFER_OFFSET_4BYTE_ALIGNED_ONLY);
+   if (!screen->get_param(screen,
+                          PIPE_CAP_VERTEX_BUFFER_STRIDE_4BYTE_ALIGNED_ONLY)) {
+      caps->buffer_stride_unaligned = TRUE;
+   } else {
+      fallback = TRUE;
+   }
 
-   caps->buffer_stride_unaligned =
-      !screen->get_param(screen,
-                        PIPE_CAP_VERTEX_BUFFER_STRIDE_4BYTE_ALIGNED_ONLY);
+   if (!screen->get_param(screen,
+                          PIPE_CAP_VERTEX_ELEMENT_SRC_OFFSET_4BYTE_ALIGNED_ONLY)) {
+      caps->velem_src_offset_unaligned = TRUE;
+   } else {
+      fallback = TRUE;
+   }
 
-   caps->velem_src_offset_unaligned =
-      !screen->get_param(screen,
-                        PIPE_CAP_VERTEX_ELEMENT_SRC_OFFSET_4BYTE_ALIGNED_ONLY);
+   if (screen->get_param(screen, PIPE_CAP_USER_VERTEX_BUFFERS)) {
+      caps->user_vertex_buffers = TRUE;
+   } else {
+      fallback = TRUE;
+   }
 
-   caps->user_vertex_buffers =
-      screen->get_param(screen, PIPE_CAP_USER_VERTEX_BUFFERS);
+   return fallback;
 }
 
 struct u_vbuf *
@@ -664,9 +707,6 @@ static void u_vbuf_translate_end(struct u_vbuf *mgr)
    }
 }
 
-#define FORMAT_REPLACE(what, withwhat) \
-    case PIPE_FORMAT_##what: format = PIPE_FORMAT_##withwhat; break
-
 static void *
 u_vbuf_create_vertex_elements(struct u_vbuf *mgr, unsigned count,
                               const struct pipe_vertex_element *attribs)
@@ -695,62 +735,7 @@ u_vbuf_create_vertex_elements(struct u_vbuf *mgr, unsigned count,
          ve->noninstance_vb_mask_any |= 1 << ve->ve[i].vertex_buffer_index;
       }
 
-      /* Choose a native format.
-       * For now we don't care about the alignment, that's going to
-       * be sorted out later. */
-      if (!mgr->caps.format_fixed32) {
-         switch (format) {
-            FORMAT_REPLACE(R32_FIXED,           R32_FLOAT);
-            FORMAT_REPLACE(R32G32_FIXED,        R32G32_FLOAT);
-            FORMAT_REPLACE(R32G32B32_FIXED,     R32G32B32_FLOAT);
-            FORMAT_REPLACE(R32G32B32A32_FIXED,  R32G32B32A32_FLOAT);
-            default:;
-         }
-      }
-      if (!mgr->caps.format_float16) {
-         switch (format) {
-            FORMAT_REPLACE(R16_FLOAT,           R32_FLOAT);
-            FORMAT_REPLACE(R16G16_FLOAT,        R32G32_FLOAT);
-            FORMAT_REPLACE(R16G16B16_FLOAT,     R32G32B32_FLOAT);
-            FORMAT_REPLACE(R16G16B16A16_FLOAT,  R32G32B32A32_FLOAT);
-            default:;
-         }
-      }
-      if (!mgr->caps.format_float64) {
-         switch (format) {
-            FORMAT_REPLACE(R64_FLOAT,           R32_FLOAT);
-            FORMAT_REPLACE(R64G64_FLOAT,        R32G32_FLOAT);
-            FORMAT_REPLACE(R64G64B64_FLOAT,     R32G32B32_FLOAT);
-            FORMAT_REPLACE(R64G64B64A64_FLOAT,  R32G32B32A32_FLOAT);
-            default:;
-         }
-      }
-      if (!mgr->caps.format_norm32) {
-         switch (format) {
-            FORMAT_REPLACE(R32_UNORM,           R32_FLOAT);
-            FORMAT_REPLACE(R32G32_UNORM,        R32G32_FLOAT);
-            FORMAT_REPLACE(R32G32B32_UNORM,     R32G32B32_FLOAT);
-            FORMAT_REPLACE(R32G32B32A32_UNORM,  R32G32B32A32_FLOAT);
-            FORMAT_REPLACE(R32_SNORM,           R32_FLOAT);
-            FORMAT_REPLACE(R32G32_SNORM,        R32G32_FLOAT);
-            FORMAT_REPLACE(R32G32B32_SNORM,     R32G32B32_FLOAT);
-            FORMAT_REPLACE(R32G32B32A32_SNORM,  R32G32B32A32_FLOAT);
-            default:;
-         }
-      }
-      if (!mgr->caps.format_scaled32) {
-         switch (format) {
-            FORMAT_REPLACE(R32_USCALED,         R32_FLOAT);
-            FORMAT_REPLACE(R32G32_USCALED,      R32G32_FLOAT);
-            FORMAT_REPLACE(R32G32B32_USCALED,   R32G32B32_FLOAT);
-            FORMAT_REPLACE(R32G32B32A32_USCALED,R32G32B32A32_FLOAT);
-            FORMAT_REPLACE(R32_SSCALED,         R32_FLOAT);
-            FORMAT_REPLACE(R32G32_SSCALED,      R32G32_FLOAT);
-            FORMAT_REPLACE(R32G32B32_SSCALED,   R32G32B32_FLOAT);
-            FORMAT_REPLACE(R32G32B32A32_SSCALED,R32G32B32A32_FLOAT);
-            default:;
-         }
-      }
+      format = mgr->caps.format_translation[format];
 
       driver_attribs[i].src_format = format;
       ve->native_format[i] = format;

@@ -35,19 +35,14 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
+#include "pipe/p_format.h"
 
 struct cso_context;
 struct u_vbuf;
 
 /* Hardware vertex fetcher limitations can be described by this structure. */
 struct u_vbuf_caps {
-   /* Vertex format CAPs. */
-   /* TRUE if hardware supports it. */
-   unsigned format_fixed32:1;    /* PIPE_FORMAT_*32*_FIXED */
-   unsigned format_float16:1;    /* PIPE_FORMAT_*16*_FLOAT */
-   unsigned format_float64:1;    /* PIPE_FORMAT_*64*_FLOAT */
-   unsigned format_norm32:1;     /* PIPE_FORMAT_*32*NORM */
-   unsigned format_scaled32:1;   /* PIPE_FORMAT_*32*SCALED */
+   enum pipe_format format_translation[PIPE_FORMAT_COUNT];
 
    /* Whether vertex fetches don't have to be 4-byte-aligned. */
    /* TRUE if hardware supports it. */
@@ -60,7 +55,7 @@ struct u_vbuf_caps {
 };
 
 
-void u_vbuf_get_caps(struct pipe_screen *screen, struct u_vbuf_caps *caps);
+boolean u_vbuf_get_caps(struct pipe_screen *screen, struct u_vbuf_caps *caps);
 
 struct u_vbuf *
 u_vbuf_create(struct pipe_context *pipe,
