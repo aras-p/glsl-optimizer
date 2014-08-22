@@ -1029,19 +1029,17 @@ update_uip_jip(struct brw_context *brw, brw_inst *insn,
 {
    int scale = brw->gen >= 8 ? sizeof(brw_compact_inst) : 1;
 
-   int32_t jip = brw_inst_jip(brw, insn);
-   jip -= scale *
-      compacted_between(this_old_ip, this_old_ip + jip, compacted_counts);
-   brw_inst_set_jip(brw, insn, jip);
+   int32_t jip = brw_inst_jip(brw, insn) / scale;
+   jip -= compacted_between(this_old_ip, this_old_ip + jip, compacted_counts);
+   brw_inst_set_jip(brw, insn, jip * scale);
 
    if (brw_inst_opcode(brw, insn) == BRW_OPCODE_ENDIF ||
        brw_inst_opcode(brw, insn) == BRW_OPCODE_WHILE)
       return;
 
-   int32_t uip = brw_inst_uip(brw, insn);
-   uip -= scale *
-      compacted_between(this_old_ip, this_old_ip + uip, compacted_counts);
-   brw_inst_set_uip(brw, insn, uip);
+   int32_t uip = brw_inst_uip(brw, insn) / scale;
+   uip -= compacted_between(this_old_ip, this_old_ip + uip, compacted_counts);
+   brw_inst_set_uip(brw, insn, uip * scale);
 }
 
 void
