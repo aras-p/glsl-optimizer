@@ -304,7 +304,36 @@ fail:
 	return NULL;
 }
 
-static bool render_blit(struct pipe_context *pctx, struct pipe_blit_info *info);
+static void fd_blitter_pipe_begin(struct fd_context *ctx);
+static void fd_blitter_pipe_end(struct fd_context *ctx);
+
+/**
+ * _copy_region using pipe (3d engine)
+ */
+static bool
+fd_blitter_pipe_copy_region(struct fd_context *ctx,
+		struct pipe_resource *dst,
+		unsigned dst_level,
+		unsigned dstx, unsigned dsty, unsigned dstz,
+		struct pipe_resource *src,
+		unsigned src_level,
+		const struct pipe_box *src_box)
+{
+	/* not until we allow rendertargets to be buffers */
+	if (dst->target == PIPE_BUFFER || src->target == PIPE_BUFFER)
+		return false;
+
+	if (!util_blitter_is_copy_supported(ctx->blitter, dst, src))
+		return false;
+
+	fd_blitter_pipe_begin(ctx);
+	util_blitter_copy_texture(ctx->blitter,
+			dst, dst_level, dstx, dsty, dstz,
+			src, src_level, src_box);
+	fd_blitter_pipe_end(ctx);
+
+	return true;
+}
 
 /**
  * Copy a block of pixels from one resource to another.
@@ -320,40 +349,33 @@ fd_resource_copy_region(struct pipe_context *pctx,
 		unsigned src_level,
 		const struct pipe_box *src_box)
 {
+	struct fd_context *ctx = fd_context(pctx);
+
 	/* TODO if we have 2d core, or other DMA engine that could be used
 	 * for simple copies and reasonably easily synchronized with the 3d
 	 * core, this is where we'd plug it in..
 	 */
-	struct pipe_blit_info info = {
-		.dst = {
-			.resource = dst,
-			.box = {
-				.x      = dstx,
-				.y      = dsty,
-				.z      = dstz,
-				.width  = src_box->width,
-				.height = src_box->height,
-				.depth  = src_box->depth,
-			},
-			.format = util_format_linear(dst->format),
-		},
-		.src = {
-			.resource = src,
-			.box      = *src_box,
-			.format   = util_format_linear(src->format),
-		},
-		.mask = PIPE_MASK_RGBA,
-		.filter = PIPE_TEX_FILTER_NEAREST,
-	};
-	render_blit(pctx, &info);
+
+	/* try blit on 3d pipe: */
+	if (fd_blitter_pipe_copy_region(ctx,
+			dst, dst_level, dstx, dsty, dstz,
+			src, src_level, src_box))
+		return;
+
+	/* else fallback to pure sw: */
+	util_resource_copy_region(pctx,
+			dst, dst_level, dstx, dsty, dstz,
+			src, src_level, src_box);
 }
 
-/* Optimal hardware path for blitting pixels.
+/**
+ * Optimal hardware path for blitting pixels.
  * Scaling, format conversion, up- and downsampling (resolve) are allowed.
  */
 static void
 fd_blit(struct pipe_context *pctx, const struct pipe_blit_info *blit_info)
 {
+	struct fd_context *ctx = fd_context(pctx);
 	struct pipe_blit_info info = *blit_info;
 
 	if (info.src.resource->nr_samples > 1 &&
@@ -373,21 +395,21 @@ fd_blit(struct pipe_context *pctx, const struct pipe_blit_info *blit_info)
 		info.mask &= ~PIPE_MASK_S;
 	}
 
-	render_blit(pctx, &info);
-}
-
-static bool
-render_blit(struct pipe_context *pctx, struct pipe_blit_info *info)
-{
-	struct fd_context *ctx = fd_context(pctx);
-
-	if (!util_blitter_is_blit_supported(ctx->blitter, info)) {
+	if (!util_blitter_is_blit_supported(ctx->blitter, &info)) {
 		DBG("blit unsupported %s -> %s",
-				util_format_short_name(info->src.resource->format),
-				util_format_short_name(info->dst.resource->format));
-		return false;
+				util_format_short_name(info.src.resource->format),
+				util_format_short_name(info.dst.resource->format));
+		return;
 	}
 
+	fd_blitter_pipe_begin(ctx);
+	util_blitter_blit(ctx->blitter, &info);
+	fd_blitter_pipe_end(ctx);
+}
+
+static void
+fd_blitter_pipe_begin(struct fd_context *ctx)
+{
 	util_blitter_save_vertex_buffer_slot(ctx->blitter, ctx->vertexbuf.vb);
 	util_blitter_save_vertex_elements(ctx->blitter, ctx->vtx);
 	util_blitter_save_vertex_shader(ctx->blitter, ctx->prog.vp);
@@ -407,10 +429,12 @@ render_blit(struct pipe_context *pctx, struct pipe_blit_info *info)
 			ctx->fragtex.num_textures, ctx->fragtex.textures);
 
 	fd_hw_query_set_stage(ctx, ctx->ring, FD_STAGE_BLIT);
-	util_blitter_blit(ctx->blitter, info);
-	fd_hw_query_set_stage(ctx, ctx->ring, FD_STAGE_NULL);
+}
 
-	return true;
+static void
+fd_blitter_pipe_end(struct fd_context *ctx)
+{
+	fd_hw_query_set_stage(ctx, ctx->ring, FD_STAGE_NULL);
 }
 
 static void
