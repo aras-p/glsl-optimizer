@@ -110,7 +110,10 @@ has_jip(struct brw_context *brw, enum opcode opcode)
    return opcode == BRW_OPCODE_IF ||
           opcode == BRW_OPCODE_ELSE ||
           opcode == BRW_OPCODE_ENDIF ||
-          opcode == BRW_OPCODE_WHILE;
+          opcode == BRW_OPCODE_WHILE ||
+          opcode == BRW_OPCODE_BREAK ||
+          opcode == BRW_OPCODE_CONTINUE ||
+          opcode == BRW_OPCODE_HALT;
 }
 
 static bool
