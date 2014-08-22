@@ -195,15 +195,15 @@ enum qpu_pack_a {
         QPU_PACK_A_8D_SAT,
 };
 
-enum qpu_unpack_r4 {
-        QPU_UNPACK_R4_NOP,
-        QPU_UNPACK_R4_F16A_TO_F32,
-        QPU_UNPACK_R4_F16B_TO_F32,
-        QPU_UNPACK_R4_8D_REP,
-        QPU_UNPACK_R4_8A,
-        QPU_UNPACK_R4_8B,
-        QPU_UNPACK_R4_8C,
-        QPU_UNPACK_R4_8D,
+enum qpu_unpack {
+        QPU_UNPACK_NOP,
+        QPU_UNPACK_F16A_TO_F32,
+        QPU_UNPACK_F16B_TO_F32,
+        QPU_UNPACK_8D_REP,
+        QPU_UNPACK_8A,
+        QPU_UNPACK_8B,
+        QPU_UNPACK_8C,
+        QPU_UNPACK_8D,
 };
 
 #define QPU_MASK(high, low) ((((uint64_t)1<<((high)-(low)+1))-1)<<(low))

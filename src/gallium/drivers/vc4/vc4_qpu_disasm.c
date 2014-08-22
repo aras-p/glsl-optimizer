@@ -93,15 +93,18 @@ static const char *qpu_pack_mul[] = {
         [QPU_PACK_MUL_8D] = "8d",
 };
 
-static const char *qpu_unpack_r4[] = {
-        [QPU_UNPACK_R4_NOP] = "",
-        [QPU_UNPACK_R4_F16A_TO_F32] = "f16a",
-        [QPU_UNPACK_R4_F16B_TO_F32] = "f16b",
-        [QPU_UNPACK_R4_8D_REP] = "8d_rep",
-        [QPU_UNPACK_R4_8A] = "8a",
-        [QPU_UNPACK_R4_8B] = "8b",
-        [QPU_UNPACK_R4_8C] = "8c",
-        [QPU_UNPACK_R4_8D] = "8d",
+/* The QPU unpack for A and R4 files can be described the same, it's just that
+ * the R4 variants are convert-to-float only, with no int support.
+ */
+static const char *qpu_unpack[] = {
+        [QPU_UNPACK_NOP] = "",
+        [QPU_UNPACK_F16A_TO_F32] = "f16a",
+        [QPU_UNPACK_F16B_TO_F32] = "f16b",
+        [QPU_UNPACK_8D_REP] = "8d_rep",
+        [QPU_UNPACK_8A] = "8a",
+        [QPU_UNPACK_8B] = "8b",
+        [QPU_UNPACK_8C] = "8c",
+        [QPU_UNPACK_8D] = "8d",
 };
 
 static const char *special_read_a[] = {
@@ -300,9 +303,10 @@ print_alu_src(uint64_t inst, uint32_t mux)
                         fprintf(stderr, "%s", DESC(special_read_b, raddr - 32));
         }
 
-        if (mux == QPU_MUX_R4 && (inst & QPU_PM) &&
-            unpack != QPU_UNPACK_R4_NOP) {
-                fprintf(stderr, ".%s", DESC(qpu_unpack_r4, unpack));
+        if (unpack != QPU_UNPACK_NOP &&
+            ((mux == QPU_MUX_A && !(inst & QPU_PM)) ||
+             (mux == QPU_MUX_R4) && (inst & QPU_PM))) {
+                fprintf(stderr, ".%s", DESC(qpu_unpack, unpack));
         }
 }
 

@@ -483,7 +483,7 @@ vc4_generate_code(struct vc4_context *vc4, struct vc4_compile *c)
                         assert(src[0].mux == QPU_MUX_R4);
                         queue(c, qpu_a_MOV(dst, src[0]));
                         *last_inst(c) |= QPU_PM;
-                        *last_inst(c) |= QPU_SET_FIELD(QPU_UNPACK_R4_8A +
+                        *last_inst(c) |= QPU_SET_FIELD(QPU_UNPACK_8A +
                                                        (qinst->op -
                                                         QOP_R4_UNPACK_A),
                                                        QPU_UNPACK);
