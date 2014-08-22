@@ -1328,6 +1328,7 @@ dri_kms_init_screen(__DRIscreen * sPriv)
    const __DRIconfig **configs;
    struct dri_screen *screen;
    struct pipe_screen *pscreen = NULL;
+   uint64_t cap;
 
    screen = CALLOC_STRUCT(dri_screen);
    if (!screen)
@@ -1339,6 +1340,13 @@ dri_kms_init_screen(__DRIscreen * sPriv)
    sPriv->driverPrivate = (void *)screen;
 
    pscreen = kms_swrast_create_screen(screen->fd);
+
+   if (drmGetCap(sPriv->fd, DRM_CAP_PRIME, &cap) == 0 &&
+          (cap & DRM_PRIME_CAP_IMPORT)) {
+      dri2ImageExtension.createImageFromFds = dri2_from_fds;
+      dri2ImageExtension.createImageFromDmaBufs = dri2_from_dma_bufs;
+   }
+
    sPriv->extensions = dri_screen_extensions;
 
    /* dri_init_screen_helper checks pscreen for us */

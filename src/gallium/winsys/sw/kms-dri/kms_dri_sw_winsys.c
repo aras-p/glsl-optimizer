@@ -38,6 +38,7 @@
 #include <sys/mman.h>
 #include <unistd.h>
 #include <dlfcn.h>
+#include <fcntl.h>
 #include <xf86drm.h>
 
 #include "pipe/p_compiler.h"
@@ -121,7 +122,7 @@ kms_sw_displaytarget_create(struct sw_winsys *ws,
    int ret;
 
    kms_sw_dt = CALLOC_STRUCT(kms_sw_displaytarget);
-   if(!kms_sw_dt)
+   if (!kms_sw_dt)
       goto no_dt;
 
    kms_sw_dt->ref_count = 1;
@@ -210,6 +211,38 @@ kms_sw_displaytarget_map(struct sw_winsys *ws,
    return kms_sw_dt->mapped;
 }
 
+static struct kms_sw_displaytarget *
+kms_sw_displaytarget_add_from_prime(struct kms_sw_winsys *kms_sw, int fd)
+{
+   uint32_t handle = -1;
+   struct kms_sw_displaytarget * kms_sw_dt;
+   int ret;
+
+   ret = drmPrimeFDToHandle(kms_sw->fd, fd, &handle);
+
+   if (ret)
+      return NULL;
+
+   kms_sw_dt = CALLOC_STRUCT(kms_sw_displaytarget);
+   if (!kms_sw_dt)
+      return NULL;
+
+   kms_sw_dt->ref_count = 1;
+   kms_sw_dt->handle = handle;
+   kms_sw_dt->size = lseek(fd, 0, SEEK_END);
+
+   if (kms_sw_dt->size == (off_t)-1) {
+      FREE(kms_sw_dt);
+      return NULL;
+   }
+
+   lseek(fd, 0, SEEK_SET);
+
+   list_add(&kms_sw_dt->link, &kms_sw->bo_list);
+
+   return kms_sw_dt;
+}
+
 static void
 kms_sw_displaytarget_unmap(struct sw_winsys *ws,
                            struct sw_displaytarget *dt)
@@ -231,17 +264,34 @@ kms_sw_displaytarget_from_handle(struct sw_winsys *ws,
    struct kms_sw_winsys *kms_sw = kms_sw_winsys(ws);
    struct kms_sw_displaytarget *kms_sw_dt;
 
-   assert(whandle->type == DRM_API_HANDLE_TYPE_KMS);
+   assert(whandle->type == DRM_API_HANDLE_TYPE_KMS ||
+          whandle->type == DRM_API_HANDLE_TYPE_FD);
 
-   LIST_FOR_EACH_ENTRY(kms_sw_dt, &kms_sw->bo_list, link) {
-      if (kms_sw_dt->handle == whandle->handle) {
+   switch(whandle->type) {
+   case DRM_API_HANDLE_TYPE_FD:
+      kms_sw_dt = kms_sw_displaytarget_add_from_prime(kms_sw, whandle->handle);
+      if (kms_sw_dt) {
          kms_sw_dt->ref_count++;
-
-         DEBUG("KMS-DEBUG: imported buffer %u (size %u)\n", kms_sw_dt->handle, kms_sw_dt->size);
-
+         kms_sw_dt->width = templ->width0;
+         kms_sw_dt->height = templ->height0;
+         kms_sw_dt->stride = whandle->stride;
          *stride = kms_sw_dt->stride;
-         return (struct sw_displaytarget *)kms_sw_dt;
       }
+      return (struct sw_displaytarget *)kms_sw_dt;
+   case DRM_API_HANDLE_TYPE_KMS:
+      LIST_FOR_EACH_ENTRY(kms_sw_dt, &kms_sw->bo_list, link) {
+         if (kms_sw_dt->handle == whandle->handle) {
+            kms_sw_dt->ref_count++;
+
+            DEBUG("KMS-DEBUG: imported buffer %u (size %u)\n", kms_sw_dt->handle, kms_sw_dt->size);
+
+            *stride = kms_sw_dt->stride;
+            return (struct sw_displaytarget *)kms_sw_dt;
+         }
+      }
+      /* fallthrough */
+   default:
+      break;
    }
 
    assert(0);
@@ -253,16 +303,26 @@ kms_sw_displaytarget_get_handle(struct sw_winsys *winsys,
                                 struct sw_displaytarget *dt,
                                 struct winsys_handle *whandle)
 {
+   struct kms_sw_winsys *kms_sw = kms_sw_winsys(winsys);
    struct kms_sw_displaytarget *kms_sw_dt = kms_sw_displaytarget(dt);
 
-   if (whandle->type == DRM_API_HANDLE_TYPE_KMS) {
+   switch(whandle->type) {
+   case DRM_API_HANDLE_TYPE_KMS:
       whandle->handle = kms_sw_dt->handle;
       whandle->stride = kms_sw_dt->stride;
-   } else {
+      return TRUE;
+   case DRM_API_HANDLE_TYPE_FD:
+      if (!drmPrimeHandleToFD(kms_sw->fd, kms_sw_dt->handle,
+                             DRM_CLOEXEC, &whandle->handle)) {
+         whandle->stride = kms_sw_dt->stride;
+         return TRUE;
+      }
+      /* fallthrough */
+   default:
       whandle->handle = 0;
       whandle->stride = 0;
+      return FALSE;
    }
-   return TRUE;
 }
 
 static void
