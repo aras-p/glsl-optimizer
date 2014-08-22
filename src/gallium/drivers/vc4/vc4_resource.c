@@ -407,11 +407,11 @@ render_blit(struct pipe_context *ctx, struct pipe_blit_info *info)
 
         util_blitter_save_vertex_buffer_slot(vc4->blitter, vc4->vertexbuf.vb);
         util_blitter_save_vertex_elements(vc4->blitter, vc4->vtx);
-        util_blitter_save_vertex_shader(vc4->blitter, vc4->prog.vs);
+        util_blitter_save_vertex_shader(vc4->blitter, vc4->prog.bind_vs);
         util_blitter_save_rasterizer(vc4->blitter, vc4->rasterizer);
         util_blitter_save_viewport(vc4->blitter, &vc4->viewport);
         util_blitter_save_scissor(vc4->blitter, &vc4->scissor);
-        util_blitter_save_fragment_shader(vc4->blitter, vc4->prog.fs);
+        util_blitter_save_fragment_shader(vc4->blitter, vc4->prog.bind_fs);
         util_blitter_save_blend(vc4->blitter, vc4->blend);
         util_blitter_save_depth_stencil_alpha(vc4->blitter, vc4->zsa);
         util_blitter_save_stencil_ref(vc4->blitter, &vc4->stencil_ref);
