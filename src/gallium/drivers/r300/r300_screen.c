@@ -424,6 +424,44 @@ util_format_is_rgba1010102_variant(const struct util_format_description *desc)
    return TRUE;
 }
 
+static bool r300_is_blending_supported(struct r300_screen *rscreen,
+                                       enum pipe_format format)
+{
+    int c;
+    const struct util_format_description *desc =
+        util_format_description(format);
+
+    if (desc->layout != UTIL_FORMAT_LAYOUT_PLAIN)
+        return false;
+
+    c = util_format_get_first_non_void_channel(format);
+
+    /* RGBA16F */
+    if (rscreen->caps.is_r500 &&
+        desc->nr_channels == 4 &&
+        desc->channel[c].size == 16 &&
+        desc->channel[c].type == UTIL_FORMAT_TYPE_FLOAT)
+        return true;
+
+    if (desc->channel[c].normalized &&
+        desc->channel[c].type == UTIL_FORMAT_TYPE_UNSIGNED &&
+        desc->channel[c].size >= 4 &&
+        desc->channel[c].size <= 10) {
+        /* RGB10_A2, RGBA8, RGB5_A1, RGBA4, RGB565 */
+        if (desc->nr_channels >= 3)
+            return true;
+
+        if (format == PIPE_FORMAT_R8G8_UNORM)
+            return true;
+
+        /* R8, I8, L8, A8 */
+        if (desc->nr_channels == 1)
+            return true;
+    }
+
+    return false;
+}
+
 static boolean r300_is_format_supported(struct pipe_screen* screen,
                                         enum pipe_format format,
                                         enum pipe_texture_target target,
@@ -525,7 +563,8 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
     if ((usage & (PIPE_BIND_RENDER_TARGET |
                   PIPE_BIND_DISPLAY_TARGET |
                   PIPE_BIND_SCANOUT |
-                  PIPE_BIND_SHARED)) &&
+                  PIPE_BIND_SHARED |
+                  PIPE_BIND_BLENDABLE)) &&
         /* 2101010 cannot be rendered to on non-r5xx. */
         (!is_color2101010 || (is_r500 && drm_2_8_0)) &&
         r300_is_colorbuffer_format_supported(format)) {
@@ -534,6 +573,10 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
              PIPE_BIND_DISPLAY_TARGET |
              PIPE_BIND_SCANOUT |
              PIPE_BIND_SHARED);
+
+        if (r300_is_blending_supported(r300_screen(screen), format)) {
+            retval |= usage & PIPE_BIND_BLENDABLE;
+        }
     }
 
     /* Check depth-stencil format support. */
