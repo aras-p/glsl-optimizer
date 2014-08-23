@@ -438,8 +438,12 @@ fd_blitter_pipe_end(struct fd_context *ctx)
 }
 
 static void
-fd_flush_resource(struct pipe_context *ctx, struct pipe_resource *resource)
+fd_flush_resource(struct pipe_context *pctx, struct pipe_resource *prsc)
 {
+	struct fd_resource *rsc = fd_resource(prsc);
+
+	if (rsc->dirty)
+		fd_context_render(pctx);
 }
 
 void
