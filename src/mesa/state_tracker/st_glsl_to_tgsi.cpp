@@ -75,14 +75,6 @@ extern "C" {
                            (1 << PROGRAM_UNIFORM))
 
 /**
- * Maximum number of temporary registers.
- *
- * It is too big for stack allocated arrays -- it will cause stack overflow on
- * Windows and likely Mac OS X.
- */
-#define MAX_TEMPS         4096
-
-/**
  * Maximum number of arrays
  */
 #define MAX_ARRAYS        256
@@ -3256,14 +3248,10 @@ get_src_arg_mask(st_dst_reg dst, st_src_reg src)
 void
 glsl_to_tgsi_visitor::simplify_cmp(void)
 {
-   unsigned *tempWrites;
+   int tempWritesSize = 0;
+   unsigned *tempWrites = NULL;
    unsigned outputWrites[MAX_PROGRAM_OUTPUTS];
 
-   tempWrites = new unsigned[MAX_TEMPS];
-   if (!tempWrites) {
-      return;
-   }
-   memset(tempWrites, 0, sizeof(unsigned) * MAX_TEMPS);
    memset(outputWrites, 0, sizeof(outputWrites));
 
    foreach_in_list(glsl_to_tgsi_instruction, inst, &this->instructions) {
@@ -3285,7 +3273,19 @@ glsl_to_tgsi_visitor::simplify_cmp(void)
          prevWriteMask = outputWrites[inst->dst.index];
          outputWrites[inst->dst.index] |= inst->dst.writemask;
       } else if (inst->dst.file == PROGRAM_TEMPORARY) {
-         assert(inst->dst.index < MAX_TEMPS);
+         if (inst->dst.index >= tempWritesSize) {
+            const int inc = 4096;
+
+            tempWrites = (unsigned*)
+                         realloc(tempWrites,
+                                 (tempWritesSize + inc) * sizeof(unsigned));
+            if (!tempWrites)
+               return;
+
+            memset(tempWrites + tempWritesSize, 0, inc * sizeof(unsigned));
+            tempWritesSize += inc;
+         }
+
          prevWriteMask = tempWrites[inst->dst.index];
          tempWrites[inst->dst.index] |= inst->dst.writemask;
       } else
@@ -3304,7 +3304,7 @@ glsl_to_tgsi_visitor::simplify_cmp(void)
       }
    }
 
-   delete [] tempWrites;
+   free(tempWrites);
 }
 
 /* Replaces all references to a temporary register index with another index. */
@@ -4113,7 +4113,9 @@ struct label {
 struct st_translate {
    struct ureg_program *ureg;
 
-   struct ureg_dst temps[MAX_TEMPS];
+   unsigned temps_size;
+   struct ureg_dst *temps;
+
    struct ureg_dst arrays[MAX_ARRAYS];
    struct ureg_src *constants;
    struct ureg_src *immediates;
@@ -4254,7 +4256,19 @@ dst_register(struct st_translate *t,
       return ureg_dst_undef();
 
    case PROGRAM_TEMPORARY:
-      assert(index < Elements(t->temps));
+      /* Allocate space for temporaries on demand. */
+      if (index >= t->temps_size) {
+         const int inc = 4096;
+
+         t->temps = (struct ureg_dst*)
+                    realloc(t->temps,
+                            (t->temps_size + inc) * sizeof(struct ureg_dst));
+         if (!t->temps)
+            return ureg_dst_undef();
+
+         memset(t->temps + t->temps_size, 0, inc * sizeof(struct ureg_dst));
+         t->temps_size += inc;
+      }
 
       if (ureg_dst_is_undef(t->temps[index]))
          t->temps[index] = ureg_DECL_local_temporary(t->ureg);
@@ -5113,6 +5127,7 @@ st_translate_program(
 
 out:
    if (t) {
+      free(t->temps);
       free(t->insn);
       free(t->labels);
       free(t->constants);
