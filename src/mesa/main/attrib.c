@@ -1449,7 +1449,7 @@ copy_array_object(struct gl_context *ctx,
    /* In theory must be the same anyway, but on recreate make sure it matches */
    dest->ARBsemantics = src->ARBsemantics;
 
-   for (i = 0; i < Elements(src->_VertexAttrib); i++) {
+   for (i = 0; i < Elements(src->VertexAttrib); i++) {
       _mesa_copy_client_array(ctx, &dest->_VertexAttrib[i], &src->_VertexAttrib[i]);
       _mesa_copy_vertex_attrib_array(ctx, &dest->VertexAttrib[i], &src->VertexAttrib[i]);
       _mesa_copy_vertex_buffer_binding(ctx, &dest->VertexBinding[i], &src->VertexBinding[i]);

@@ -230,7 +230,7 @@ _mesa_initialize_vao(struct gl_context *ctx,
    obj->RefCount = 1;
 
    /* Init the individual arrays */
-   for (i = 0; i < Elements(obj->_VertexAttrib); i++) {
+   for (i = 0; i < Elements(obj->VertexAttrib); i++) {
       switch (i) {
       case VERT_ATTRIB_WEIGHT:
          init_array(ctx, obj, VERT_ATTRIB_WEIGHT, 1, GL_FLOAT);
