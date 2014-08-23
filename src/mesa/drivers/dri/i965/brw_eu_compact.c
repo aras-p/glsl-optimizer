@@ -1160,7 +1160,8 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
 
    /* Fix up control flow offsets. */
    p->next_insn_offset = start_offset + offset;
-   for (offset = 0; offset < p->next_insn_offset - start_offset;) {
+   for (offset = 0; offset < p->next_insn_offset - start_offset;
+        offset = next_offset(brw, store, offset)) {
       brw_inst *insn = store + offset;
       int this_old_ip = old_ip[offset / 8];
       int this_compacted_count = compacted_counts[this_old_ip];
@@ -1188,8 +1189,6 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
          }
          break;
       }
-
-      offset = next_offset(brw, store, offset);
    }
 
    /* p->nr_insn is counting the number of uncompacted instructions still, so
