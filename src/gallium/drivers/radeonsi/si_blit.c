@@ -114,7 +114,6 @@ static void si_blit_decompress_depth(struct pipe_context *ctx,
 	unsigned layer, level, sample, checked_last_layer, max_layer, max_sample;
 	float depth = 1.0f;
 	const struct util_format_description *desc;
-	void **custom_dsa;
 	struct r600_texture *flushed_depth_texture = staging ?
 			staging : texture->flushed_depth_texture;
 
@@ -124,20 +123,13 @@ static void si_blit_decompress_depth(struct pipe_context *ctx,
 	max_sample = u_max_sample(&texture->resource.b.b);
 
 	desc = util_format_description(flushed_depth_texture->resource.b.b.format);
-	switch (util_format_has_depth(desc) | util_format_has_stencil(desc) << 1) {
-	default:
-		assert(!"No depth or stencil to uncompress");
-		return;
-	case 3:
-		custom_dsa = sctx->custom_dsa_flush_depth_stencil;
-		break;
-	case 2:
-		custom_dsa = sctx->custom_dsa_flush_stencil;
-		break;
-	case 1:
-		custom_dsa = sctx->custom_dsa_flush_depth;
-		break;
-	}
+
+	if (util_format_has_depth(desc))
+		sctx->dbcb_depth_copy_enabled = true;
+	if (util_format_has_stencil(desc))
+		sctx->dbcb_stencil_copy_enabled = true;
+
+	assert(sctx->dbcb_depth_copy_enabled || sctx->dbcb_stencil_copy_enabled);
 
 	for (level = first_level; level <= last_level; level++) {
 		if (!staging && !(texture->dirty_level_mask & (1 << level)))
@@ -152,6 +144,8 @@ static void si_blit_decompress_depth(struct pipe_context *ctx,
 			for (sample = first_sample; sample <= last_sample; sample++) {
 				struct pipe_surface *zsurf, *cbsurf, surf_tmpl;
 
+				sctx->dbcb_copy_sample = sample;
+
 				surf_tmpl.format = texture->resource.b.b.format;
 				surf_tmpl.u.tex.level = level;
 				surf_tmpl.u.tex.first_layer = layer;
@@ -165,7 +159,7 @@ static void si_blit_decompress_depth(struct pipe_context *ctx,
 
 				si_blitter_begin(ctx, SI_DECOMPRESS);
 				util_blitter_custom_depth_stencil(sctx->blitter, zsurf, cbsurf, 1 << sample,
-								  custom_dsa[sample], depth);
+								  sctx->custom_dsa_flush, depth);
 				si_blitter_end(ctx);
 
 				pipe_surface_reference(&zsurf, NULL);
@@ -181,6 +175,9 @@ static void si_blit_decompress_depth(struct pipe_context *ctx,
 			texture->dirty_level_mask &= ~(1 << level);
 		}
 	}
+
+	sctx->dbcb_depth_copy_enabled = false;
+	sctx->dbcb_stencil_copy_enabled = false;
 }
 
 static void si_blit_decompress_depth_in_place(struct si_context *sctx,
@@ -190,6 +187,8 @@ static void si_blit_decompress_depth_in_place(struct si_context *sctx,
 {
 	struct pipe_surface *zsurf, surf_tmpl = {{0}};
 	unsigned layer, max_layer, checked_last_layer, level;
+
+	sctx->db_inplace_flush_enabled = true;
 
 	surf_tmpl.format = texture->resource.b.b.format;
 
@@ -212,7 +211,7 @@ static void si_blit_decompress_depth_in_place(struct si_context *sctx,
 
 			si_blitter_begin(&sctx->b.b, SI_DECOMPRESS);
 			util_blitter_custom_depth_stencil(sctx->blitter, zsurf, NULL, ~0,
-							  sctx->custom_dsa_flush_inplace,
+							  sctx->custom_dsa_flush,
 							  1.0f);
 			si_blitter_end(&sctx->b.b);
 
@@ -225,6 +224,8 @@ static void si_blit_decompress_depth_in_place(struct si_context *sctx,
 			texture->dirty_level_mask &= ~(1 << level);
 		}
 	}
+
+	sctx->db_inplace_flush_enabled = false;
 }
 
 void si_flush_depth_textures(struct si_context *sctx,

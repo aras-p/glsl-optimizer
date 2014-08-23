@@ -739,6 +739,22 @@ static void si_state_draw(struct si_context *sctx,
 		}
 	}
 
+	/* DB_RENDER_CONTROL */
+	if (sctx->dbcb_depth_copy_enabled ||
+	    sctx->dbcb_stencil_copy_enabled) {
+		si_pm4_set_reg(pm4, R_028000_DB_RENDER_CONTROL,
+			       S_028000_DEPTH_COPY(sctx->dbcb_depth_copy_enabled) |
+			       S_028000_STENCIL_COPY(sctx->dbcb_stencil_copy_enabled) |
+			       S_028000_COPY_CENTROID(1) |
+			       S_028000_COPY_SAMPLE(sctx->dbcb_copy_sample));
+	} else if (sctx->db_inplace_flush_enabled) {
+		si_pm4_set_reg(pm4, R_028000_DB_RENDER_CONTROL,
+			       S_028000_DEPTH_COMPRESS_DISABLE(1) |
+			       S_028000_STENCIL_COMPRESS_DISABLE(1));
+	} else {
+		si_pm4_set_reg(pm4, R_028000_DB_RENDER_CONTROL, 0);
+	}
+
 	if (info->count_from_stream_output) {
 		struct r600_so_target *t =
 			(struct r600_so_target*)info->count_from_stream_output;

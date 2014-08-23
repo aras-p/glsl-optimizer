@@ -757,7 +757,6 @@ static void *si_create_dsa_state(struct pipe_context *ctx,
 	struct si_state_dsa *dsa = CALLOC_STRUCT(si_state_dsa);
 	struct si_pm4_state *pm4 = &dsa->pm4;
 	unsigned db_depth_control;
-	unsigned db_render_control;
 	uint32_t db_stencil_control = 0;
 
 	if (dsa == NULL) {
@@ -802,9 +801,7 @@ static void *si_create_dsa_state(struct pipe_context *ctx,
 	}
 
 	/* misc */
-	db_render_control = 0;
 	si_pm4_set_reg(pm4, R_028800_DB_DEPTH_CONTROL, db_depth_control);
-	si_pm4_set_reg(pm4, R_028000_DB_RENDER_CONTROL, db_render_control);
 	si_pm4_set_reg(pm4, R_02842C_DB_STENCIL_CONTROL, db_stencil_control);
 
 	return dsa;
@@ -828,28 +825,11 @@ static void si_delete_dsa_state(struct pipe_context *ctx, void *state)
 	si_pm4_delete_state(sctx, dsa, (struct si_state_dsa *)state);
 }
 
-static void *si_create_db_flush_dsa(struct si_context *sctx, bool copy_depth,
-				    bool copy_stencil, int sample)
+static void *si_create_db_flush_dsa(struct si_context *sctx)
 {
-	struct pipe_depth_stencil_alpha_state dsa;
-        struct si_state_dsa *state;
+	struct pipe_depth_stencil_alpha_state dsa = {};
 
-	memset(&dsa, 0, sizeof(dsa));
-
-	state = sctx->b.b.create_depth_stencil_alpha_state(&sctx->b.b, &dsa);
-	if (copy_depth || copy_stencil) {
-		si_pm4_set_reg(&state->pm4, R_028000_DB_RENDER_CONTROL,
-			       S_028000_DEPTH_COPY(copy_depth) |
-			       S_028000_STENCIL_COPY(copy_stencil) |
-			       S_028000_COPY_CENTROID(1) |
-			       S_028000_COPY_SAMPLE(sample));
-	} else {
-		si_pm4_set_reg(&state->pm4, R_028000_DB_RENDER_CONTROL,
-			       S_028000_DEPTH_COMPRESS_DISABLE(1) |
-			       S_028000_STENCIL_COMPRESS_DISABLE(1));
-	}
-
-        return state;
+	return sctx->b.b.create_depth_stencil_alpha_state(&sctx->b.b, &dsa);
 }
 
 /*
@@ -2933,8 +2913,6 @@ static void si_need_gfx_cs_space(struct pipe_context *ctx, unsigned num_dw,
 
 void si_init_state_functions(struct si_context *sctx)
 {
-	int i;
-
 	si_init_atom(&sctx->framebuffer.atom, &sctx->atoms.s.framebuffer, si_emit_framebuffer_state, 0);
 
 	sctx->b.b.create_blend_state = si_create_blend_state;
@@ -2950,12 +2928,7 @@ void si_init_state_functions(struct si_context *sctx)
 	sctx->b.b.bind_depth_stencil_alpha_state = si_bind_dsa_state;
 	sctx->b.b.delete_depth_stencil_alpha_state = si_delete_dsa_state;
 
-	for (i = 0; i < 8; i++) {
-		sctx->custom_dsa_flush_depth_stencil[i] = si_create_db_flush_dsa(sctx, true, true, i);
-		sctx->custom_dsa_flush_depth[i] = si_create_db_flush_dsa(sctx, true, false, i);
-		sctx->custom_dsa_flush_stencil[i] = si_create_db_flush_dsa(sctx, false, true, i);
-	}
-	sctx->custom_dsa_flush_inplace = si_create_db_flush_dsa(sctx, false, false, 0);
+	sctx->custom_dsa_flush = si_create_db_flush_dsa(sctx);
 	sctx->custom_blend_resolve = si_create_blend_custom(sctx, V_028808_CB_RESOLVE);
 	sctx->custom_blend_decompress = si_create_blend_custom(sctx, V_028808_CB_FMASK_DECOMPRESS);
 	sctx->custom_blend_fastclear = si_create_blend_custom(sctx, V_028808_CB_ELIMINATE_FAST_CLEAR);

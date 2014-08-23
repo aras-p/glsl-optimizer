@@ -86,10 +86,7 @@ struct si_framebuffer {
 struct si_context {
 	struct r600_common_context	b;
 	struct blitter_context		*blitter;
-	void				*custom_dsa_flush_depth_stencil[8];
-	void				*custom_dsa_flush_depth[8];
-	void				*custom_dsa_flush_stencil[8];
-	void				*custom_dsa_flush_inplace;
+	void				*custom_dsa_flush;
 	void				*custom_blend_resolve;
 	void				*custom_blend_decompress;
 	void				*custom_blend_fastclear;
@@ -161,6 +158,12 @@ struct si_context {
 	/* SI state handling */
 	union si_state	queued;
 	union si_state	emitted;
+
+	/* Additional DB state. */
+	bool dbcb_depth_copy_enabled;
+	bool dbcb_stencil_copy_enabled;
+	unsigned dbcb_copy_sample;
+	bool db_inplace_flush_enabled;
 };
 
 /* si_blit.c */
