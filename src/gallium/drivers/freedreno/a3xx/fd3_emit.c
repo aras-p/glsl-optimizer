@@ -215,14 +215,19 @@ emit_textures(struct fd_ringbuffer *ring,
 		OUT_RING(ring, CP_LOAD_STATE_1_STATE_TYPE(ST_CONSTANTS) |
 				CP_LOAD_STATE_1_EXT_SRC_ADDR(0));
 		for (i = 0; i < tex->num_textures; i++) {
-			static const struct fd3_pipe_sampler_view dummy_view = {};
+			static const struct fd3_pipe_sampler_view dummy_view = {
+					.base.u.tex.first_level = 1,
+			};
 			const struct fd3_pipe_sampler_view *view = tex->textures[i] ?
 					fd3_pipe_sampler_view(tex->textures[i]) :
 					&dummy_view;
 			struct fd_resource *rsc = view->tex_resource;
+			unsigned start = view->base.u.tex.first_level;
+			unsigned end   = view->base.u.tex.last_level;
 
-			for (j = 0; j < view->mipaddrs; j++) {
-				struct fd_resource_slice *slice = fd_resource_slice(rsc, j);
+			for (j = 0; j < (end - start + 1); j++) {
+				struct fd_resource_slice *slice =
+						fd_resource_slice(rsc, j + start);
 				OUT_RELOC(ring, rsc->bo, slice->offset, 0, 0);
 			}
 
