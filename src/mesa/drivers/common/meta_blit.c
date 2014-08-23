@@ -70,6 +70,16 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
    const char *sampler_array_suffix = "";
    char *name;
    const char *texcoord_type = "vec2";
+   const int samples = MAX2(src_rb->NumSamples, 1);
+   int shader_offset = 0;
+
+   /* We expect only power of 2 samples in source multisample buffer. */
+   assert((samples & (samples - 1)) == 0);
+   while (samples >> (shader_offset + 1)) {
+      shader_offset++;
+   }
+   /* Update the assert if we plan to support more than 16X MSAA. */
+   assert(shader_offset >= 0 && shader_offset <= 4);
 
    if (src_rb) {
       src_datatype = _mesa_get_format_datatype(src_rb->Format);
@@ -107,13 +117,15 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
       } else {
          if (dst_is_msaa)
             shader_index = BLIT_MSAA_SHADER_2D_MULTISAMPLE_COPY;
-         else
-            shader_index = BLIT_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE;
+         else {
+            shader_index = BLIT_1X_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE +
+                           shader_offset;
+         }
       }
 
       if (target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY) {
-         shader_index += (BLIT_MSAA_SHADER_2D_MULTISAMPLE_ARRAY_RESOLVE -
-                          BLIT_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE);
+         shader_index += (BLIT_1X_MSAA_SHADER_2D_MULTISAMPLE_ARRAY_RESOLVE -
+                          BLIT_1X_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE);
          sampler_array_suffix = "Array";
          texcoord_type = "vec3";
       }
@@ -121,19 +133,19 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
    default:
       _mesa_problem(ctx, "Unkown texture target %s\n",
                     _mesa_lookup_enum_by_nr(target));
-      shader_index = BLIT_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE;
+      shader_index = BLIT_2X_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE;
    }
 
    /* We rely on the enum being sorted this way. */
-   STATIC_ASSERT(BLIT_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE_INT ==
-                 BLIT_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE + 1);
-   STATIC_ASSERT(BLIT_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE_UINT ==
-                 BLIT_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE + 2);
+   STATIC_ASSERT(BLIT_1X_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE_INT ==
+                 BLIT_1X_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE + 5);
+   STATIC_ASSERT(BLIT_1X_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE_UINT ==
+                 BLIT_1X_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE + 10);
    if (src_datatype == GL_INT) {
-      shader_index++;
+      shader_index += 5;
       vec4_prefix = "i";
    } else if (src_datatype == GL_UNSIGNED_INT) {
-      shader_index += 2;
+      shader_index += 10;
       vec4_prefix = "u";
    } else {
       vec4_prefix = "";
@@ -209,15 +221,12 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
       /* You can create 2D_MULTISAMPLE textures with 0 sample count (meaning 1
        * sample).  Yes, this is ridiculous.
        */
-      int samples;
       char *sample_resolve;
       const char *arb_sample_shading_extension_string;
       const char *merge_function;
       name = ralloc_asprintf(mem_ctx, "%svec4 MSAA %s",
                              vec4_prefix,
                              dst_is_msaa ? "copy" : "resolve");
-
-      samples = MAX2(src_rb->NumSamples, 1);
 
       if (dst_is_msaa) {
          arb_sample_shading_extension_string = "#extension GL_ARB_sample_shading : enable";
