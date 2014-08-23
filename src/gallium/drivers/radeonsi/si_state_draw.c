@@ -729,6 +729,14 @@ static void si_state_draw(struct si_context *sctx,
 				       S_028004_PERFECT_ZPASS_COUNTS(1) |
 				       S_028004_SAMPLE_RATE(sctx->framebuffer.log_samples));
 		}
+	} else {
+		/* Disable occlusion queries. */
+		if (sctx->b.chip_class >= CIK) {
+			si_pm4_set_reg(pm4, R_028004_DB_COUNT_CONTROL, 0);
+		} else {
+			si_pm4_set_reg(pm4, R_028004_DB_COUNT_CONTROL,
+				       S_028004_ZPASS_INCREMENT_DISABLE(1));
+		}
 	}
 
 	if (info->count_from_stream_output) {
