@@ -1928,7 +1928,7 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 	si_update_fb_blend_state(sctx);
 
 	sctx->framebuffer.atom.num_dw = state->nr_cbufs*15 + (8 - state->nr_cbufs)*3;
-	sctx->framebuffer.atom.num_dw += state->zsbuf ? 23 : 4;
+	sctx->framebuffer.atom.num_dw += state->zsbuf ? 26 : 4;
 	sctx->framebuffer.atom.num_dw += 3; /* WINDOW_SCISSOR_BR */
 	sctx->framebuffer.atom.num_dw += 18; /* MSAA sample locations */
 	sctx->framebuffer.atom.dirty = true;
@@ -2046,6 +2046,7 @@ static void si_emit_framebuffer_state(struct si_context *sctx, struct r600_atom 
 		radeon_emit(cs, zb->db_depth_slice);	/* R_02805C_DB_DEPTH_SLICE */
 
 		r600_write_context_reg(cs, R_028ABC_DB_HTILE_SURFACE, zb->db_htile_surface);
+		r600_write_context_reg(cs, R_02802C_DB_DEPTH_CLEAR, fui(rtex->depth_clear_value));
 		r600_write_context_reg(cs, R_028B78_PA_SU_POLY_OFFSET_DB_FMT_CNTL,
 				       zb->pa_su_poly_offset_db_fmt_cntl);
 	} else {
@@ -3090,7 +3091,6 @@ void si_init_config(struct si_context *sctx)
 	si_pm4_set_reg(pm4, R_028020_DB_DEPTH_BOUNDS_MIN, 0x00000000);
 	si_pm4_set_reg(pm4, R_028024_DB_DEPTH_BOUNDS_MAX, 0x00000000);
 	si_pm4_set_reg(pm4, R_028028_DB_STENCIL_CLEAR, 0x00000000);
-	si_pm4_set_reg(pm4, R_02802C_DB_DEPTH_CLEAR, 0x3F800000);
 	si_pm4_set_reg(pm4, R_028AC0_DB_SRESULTS_COMPARE_STATE0, 0x0);
 	si_pm4_set_reg(pm4, R_028AC4_DB_SRESULTS_COMPARE_STATE1, 0x0);
 	si_pm4_set_reg(pm4, R_028AC8_DB_PRELOAD_CONTROL, 0x0);

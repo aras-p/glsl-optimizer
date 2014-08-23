@@ -164,6 +164,7 @@ struct si_context {
 	bool dbcb_stencil_copy_enabled;
 	unsigned dbcb_copy_sample;
 	bool db_inplace_flush_enabled;
+	bool db_depth_clear;
 };
 
 /* si_blit.c */

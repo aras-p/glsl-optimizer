@@ -751,6 +751,9 @@ static void si_state_draw(struct si_context *sctx,
 		si_pm4_set_reg(pm4, R_028000_DB_RENDER_CONTROL,
 			       S_028000_DEPTH_COMPRESS_DISABLE(1) |
 			       S_028000_STENCIL_COMPRESS_DISABLE(1));
+	} else if (sctx->db_depth_clear) {
+		si_pm4_set_reg(pm4, R_028000_DB_RENDER_CONTROL,
+			       S_028000_DEPTH_CLEAR_ENABLE(1));
 	} else {
 		si_pm4_set_reg(pm4, R_028000_DB_RENDER_CONTROL, 0);
 	}

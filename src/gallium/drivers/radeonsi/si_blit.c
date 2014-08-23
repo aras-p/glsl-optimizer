@@ -328,6 +328,9 @@ static void si_clear(struct pipe_context *ctx, unsigned buffers,
 {
 	struct si_context *sctx = (struct si_context *)ctx;
 	struct pipe_framebuffer_state *fb = &sctx->framebuffer.state;
+	struct pipe_surface *zsbuf = fb->zsbuf;
+	struct r600_texture *zstex =
+		zsbuf ? (struct r600_texture*)zsbuf->texture : NULL;
 
 	if (buffers & PIPE_CLEAR_COLOR) {
 		evergreen_do_fast_color_clear(&sctx->b, fb, &sctx->framebuffer.atom,
@@ -354,11 +357,23 @@ static void si_clear(struct pipe_context *ctx, unsigned buffers,
 		}
 	}
 
+	if (buffers & PIPE_CLEAR_DEPTH &&
+	    zstex && zstex->htile_buffer &&
+	    zsbuf->u.tex.level == 0 &&
+	    zsbuf->u.tex.first_layer == 0 &&
+	    zsbuf->u.tex.last_layer == util_max_layer(&zstex->resource.b.b, 0)) {
+		zstex->depth_clear_value = depth;
+		sctx->framebuffer.atom.dirty = true; /* updates DB_DEPTH_CLEAR */
+		sctx->db_depth_clear = true;
+	}
+
 	si_blitter_begin(ctx, SI_CLEAR);
 	util_blitter_clear(sctx->blitter, fb->width, fb->height,
 			   util_framebuffer_get_num_layers(fb),
 			   buffers, color, depth, stencil);
 	si_blitter_end(ctx);
+
+	sctx->db_depth_clear = false;
 }
 
 static void si_clear_render_target(struct pipe_context *ctx,
