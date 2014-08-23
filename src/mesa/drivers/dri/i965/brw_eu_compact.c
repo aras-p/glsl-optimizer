@@ -1098,11 +1098,11 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
    /* For an instruction at byte offset 8*i before compaction, this is the number
     * of compacted instructions that preceded it.
     */
-   int compacted_counts[(p->next_insn_offset - start_offset) / 8];
+   int compacted_counts[(p->next_insn_offset - start_offset) / sizeof(brw_compact_inst)];
    /* For an instruction at byte offset 8*i after compaction, this is the
     * 8-byte offset it was at before compaction.
     */
-   int old_ip[(p->next_insn_offset - start_offset) / 8];
+   int old_ip[(p->next_insn_offset - start_offset) / sizeof(brw_compact_inst)];
 
    if (brw->gen < 6)
       return;
@@ -1114,8 +1114,8 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
       brw_inst *src = store + src_offset;
       void *dst = store + offset;
 
-      old_ip[offset / 8] = src_offset / 8;
-      compacted_counts[src_offset / 8] = compacted_count;
+      old_ip[offset / sizeof(brw_compact_inst)] = src_offset / sizeof(brw_compact_inst);
+      compacted_counts[src_offset / sizeof(brw_compact_inst)] = compacted_count;
 
       brw_inst saved = *src;
 
@@ -1130,7 +1130,7 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
             }
          }
 
-         offset += 8;
+         offset += sizeof(brw_compact_inst);
       } else {
          /* It appears that the end of thread SEND instruction needs to be
           * aligned, or the GPU hangs.
@@ -1138,13 +1138,14 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
          if ((brw_inst_opcode(brw, src) == BRW_OPCODE_SEND ||
               brw_inst_opcode(brw, src) == BRW_OPCODE_SENDC) &&
              brw_inst_eot(brw, src) &&
-             (offset & 8) != 0) {
+             (offset & sizeof(brw_compact_inst)) != 0) {
             brw_compact_inst *align = store + offset;
             memset(align, 0, sizeof(*align));
             brw_compact_inst_set_opcode(align, BRW_OPCODE_NOP);
             brw_compact_inst_set_cmpt_control(align, true);
-            offset += 8;
-            old_ip[offset / 8] = src_offset / 8;
+            offset += sizeof(brw_compact_inst);
+            old_ip[offset / sizeof(brw_compact_inst)] = src_offset / sizeof(brw_compact_inst);
+
             dst = store + offset;
          }
 
@@ -1163,7 +1164,7 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
    for (offset = 0; offset < p->next_insn_offset - start_offset;
         offset = next_offset(brw, store, offset)) {
       brw_inst *insn = store + offset;
-      int this_old_ip = old_ip[offset / 8];
+      int this_old_ip = old_ip[offset / sizeof(brw_compact_inst)];
       int this_compacted_count = compacted_counts[this_old_ip];
       int target_old_ip, target_compacted_count;
 
@@ -1196,21 +1197,22 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
     * alignment padding, so that the next compression pass (for the FS 8/16
     * compile passes) parses correctly.
     */
-   if (p->next_insn_offset & 8) {
+   if (p->next_insn_offset & sizeof(brw_compact_inst)) {
       brw_compact_inst *align = store + offset;
       memset(align, 0, sizeof(*align));
       brw_compact_inst_set_opcode(align, BRW_OPCODE_NOP);
       brw_compact_inst_set_cmpt_control(align, true);
-      p->next_insn_offset += 8;
+      p->next_insn_offset += sizeof(brw_compact_inst);
    }
-   p->nr_insn = p->next_insn_offset / 16;
+   p->nr_insn = p->next_insn_offset / sizeof(brw_inst);
 
    /* Update the instruction offsets for each annotation. */
    if (annotation) {
       for (int offset = 0, i = 0; i < num_annotations; i++) {
-         while (start_offset + old_ip[offset / 8] * 8 != annotation[i].offset) {
-            assert(start_offset + old_ip[offset / 8] * 8 <
-                   annotation[i].offset);
+         while (start_offset + old_ip[offset / sizeof(brw_compact_inst)] *
+                sizeof(brw_compact_inst) != annotation[i].offset) {
+            assert(start_offset + old_ip[offset / sizeof(brw_compact_inst)] *
+                   sizeof(brw_compact_inst) < annotation[i].offset);
             offset = next_offset(brw, store, offset);
          }
 
