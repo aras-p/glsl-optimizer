@@ -1107,10 +1107,10 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
    if (brw->gen < 6)
       return;
 
-   int src_offset;
    int offset = 0;
    int compacted_count = 0;
-   for (src_offset = 0; src_offset < p->next_insn_offset - start_offset;) {
+   for (int src_offset = 0; src_offset < p->next_insn_offset - start_offset;
+        src_offset += sizeof(brw_inst)) {
       brw_inst *src = store + src_offset;
       void *dst = store + offset;
 
@@ -1131,10 +1131,7 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
          }
 
          offset += 8;
-         src_offset += 16;
       } else {
-         int size = brw_inst_cmpt_control(brw, src) ? 8 : 16;
-
          /* It appears that the end of thread SEND instruction needs to be
           * aligned, or the GPU hangs.
           */
@@ -1155,10 +1152,9 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
           * place.
           */
          if (offset != src_offset) {
-            memmove(dst, src, size);
+            memmove(dst, src, sizeof(brw_inst));
          }
-         offset += size;
-         src_offset += size;
+         offset += sizeof(brw_inst);
       }
    }
 
