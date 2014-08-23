@@ -1752,7 +1752,10 @@ static void evergreen_emit_db_misc_state(struct r600_context *rctx, struct r600_
 	unsigned db_count_control = 0;
 	unsigned db_render_override =
 		S_02800C_FORCE_HIS_ENABLE0(V_02800C_FORCE_DISABLE) |
-		S_02800C_FORCE_HIS_ENABLE1(V_02800C_FORCE_DISABLE);
+		S_02800C_FORCE_HIS_ENABLE1(V_02800C_FORCE_DISABLE) |
+		/* There is a hang with HTILE if stencil is used and
+		 * fast stencil is enabled. */
+		S_02800C_FAST_STENCIL_DISABLE(1);
 
 	if (a->occlusion_query_enabled) {
 		db_count_control |= S_028004_PERFECT_ZPASS_COUNTS(1);

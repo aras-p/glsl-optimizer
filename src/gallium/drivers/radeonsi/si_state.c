@@ -1843,8 +1843,6 @@ static void si_init_depth_surface(struct si_context *sctx,
 	/* HiZ aka depth buffer htile */
 	/* use htile only for first level */
 	if (rtex->htile_buffer && !level) {
-		const struct util_format_description *fmt_desc;
-
 		z_info |= S_028040_TILE_SURFACE_ENABLE(1);
 
 		/* This is optimal for the clear value of 1.0 and using
@@ -1853,11 +1851,9 @@ static void si_init_depth_surface(struct si_context *sctx,
 		 * clearing. */
 		z_info |= S_028040_ZRANGE_PRECISION(1);
 
-		fmt_desc = util_format_description(rtex->resource.b.b.format);
-		if (!util_format_has_stencil(fmt_desc)) {
-			/* Use all of the htile_buffer for depth */
-			s_info |= S_028044_TILE_STENCIL_DISABLE(1);
-		}
+		/* Use all of the htile_buffer for depth, because we don't
+		 * use HTILE for stencil because of FAST_STENCIL_DISABLE. */
+		s_info |= S_028044_TILE_STENCIL_DISABLE(1);
 
 		uint64_t va = rtex->htile_buffer->gpu_address;
 		db_htile_data_base = va >> 8;
@@ -3125,9 +3121,15 @@ void si_init_config(struct si_context *sctx)
 	si_pm4_set_reg(pm4, R_028AC0_DB_SRESULTS_COMPARE_STATE0, 0x0);
 	si_pm4_set_reg(pm4, R_028AC4_DB_SRESULTS_COMPARE_STATE1, 0x0);
 	si_pm4_set_reg(pm4, R_028AC8_DB_PRELOAD_CONTROL, 0x0);
+
+	/* There is a hang if stencil is used and fast stencil is enabled
+	 * regardless of whether HTILE is depth-only or not.
+	 */
 	si_pm4_set_reg(pm4, R_02800C_DB_RENDER_OVERRIDE,
 		       S_02800C_FORCE_HIS_ENABLE0(V_02800C_FORCE_DISABLE) |
-		       S_02800C_FORCE_HIS_ENABLE1(V_02800C_FORCE_DISABLE));
+		       S_02800C_FORCE_HIS_ENABLE1(V_02800C_FORCE_DISABLE) |
+		       S_02800C_FAST_STENCIL_DISABLE(1));
+
 	si_pm4_set_reg(pm4, R_028400_VGT_MAX_VTX_INDX, ~0);
 	si_pm4_set_reg(pm4, R_028404_VGT_MIN_VTX_INDX, 0);
 	si_pm4_set_reg(pm4, R_028408_VGT_INDX_OFFSET, 0);
