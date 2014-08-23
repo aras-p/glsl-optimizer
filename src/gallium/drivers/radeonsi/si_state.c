@@ -1823,7 +1823,8 @@ static void si_init_depth_surface(struct si_context *sctx,
 	/* HiZ aka depth buffer htile */
 	/* use htile only for first level */
 	if (rtex->htile_buffer && !level) {
-		z_info |= S_028040_TILE_SURFACE_ENABLE(1);
+		z_info |= S_028040_TILE_SURFACE_ENABLE(1) |
+			  S_028040_ALLOW_EXPCLEAR(1);
 
 		/* This is optimal for the clear value of 1.0 and using
 		 * the LESS and LEQUAL test functions. Set this to 0

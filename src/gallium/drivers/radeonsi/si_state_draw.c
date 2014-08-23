@@ -758,6 +758,14 @@ static void si_state_draw(struct si_context *sctx,
 		si_pm4_set_reg(pm4, R_028000_DB_RENDER_CONTROL, 0);
 	}
 
+	/* DB_RENDER_OVERRIDE2 */
+	if (sctx->db_depth_disable_expclear) {
+		si_pm4_set_reg(pm4, R_028010_DB_RENDER_OVERRIDE2,
+			       S_028010_DISABLE_ZMASK_EXPCLEAR_OPTIMIZATION(1));
+	} else {
+		si_pm4_set_reg(pm4, R_028010_DB_RENDER_OVERRIDE2, 0);
+	}
+
 	if (info->count_from_stream_output) {
 		struct r600_so_target *t =
 			(struct r600_so_target*)info->count_from_stream_output;

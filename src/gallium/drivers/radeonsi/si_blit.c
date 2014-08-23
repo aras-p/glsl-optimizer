@@ -362,6 +362,12 @@ static void si_clear(struct pipe_context *ctx, unsigned buffers,
 	    zsbuf->u.tex.level == 0 &&
 	    zsbuf->u.tex.first_layer == 0 &&
 	    zsbuf->u.tex.last_layer == util_max_layer(&zstex->resource.b.b, 0)) {
+		/* Need to disable EXPCLEAR temporarily if clearing
+		 * to a new value. */
+		if (zstex->depth_cleared && zstex->depth_clear_value != depth) {
+			sctx->db_depth_disable_expclear = true;
+		}
+
 		zstex->depth_clear_value = depth;
 		sctx->framebuffer.atom.dirty = true; /* updates DB_DEPTH_CLEAR */
 		sctx->db_depth_clear = true;
@@ -373,7 +379,11 @@ static void si_clear(struct pipe_context *ctx, unsigned buffers,
 			   buffers, color, depth, stencil);
 	si_blitter_end(ctx);
 
-	sctx->db_depth_clear = false;
+	if (sctx->db_depth_clear) {
+		sctx->db_depth_clear = false;
+		sctx->db_depth_disable_expclear = false;
+		zstex->depth_cleared = true;
+	}
 }
 
 static void si_clear_render_target(struct pipe_context *ctx,

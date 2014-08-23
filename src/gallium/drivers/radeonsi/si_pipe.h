@@ -165,6 +165,7 @@ struct si_context {
 	unsigned dbcb_copy_sample;
 	bool db_inplace_flush_enabled;
 	bool db_depth_clear;
+	bool db_depth_disable_expclear;
 };
 
 /* si_blit.c */
