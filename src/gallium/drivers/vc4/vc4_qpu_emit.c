@@ -411,7 +411,7 @@ vc4_generate_code(struct qcompile *c)
                 case QOP_SGE:
                 case QOP_SLT:
                         fixup_raddr_conflict(c, src[0], &src[1]);
-                        queue(c, qpu_inst(qpu_a_SUB(qpu_ra(QPU_W_NOP),
+                        queue(c, qpu_inst(qpu_a_FSUB(qpu_ra(QPU_W_NOP),
                                                     src[0], src[1]),
                                           qpu_m_NOP()));
                         *last_inst(c) |= QPU_SF;
