@@ -1033,20 +1033,32 @@ static void
 update_uip_jip(struct brw_context *brw, brw_inst *insn,
                int this_old_ip, int *compacted_counts)
 {
-   int scale = brw->gen >= 8 ? sizeof(brw_compact_inst) : 1;
-
-   int32_t jip = brw_inst_jip(brw, insn) / scale;
-   jip -= compacted_between(this_old_ip, this_old_ip + jip, compacted_counts);
-   brw_inst_set_jip(brw, insn, jip * scale);
+   /* JIP and UIP are in units of:
+    *    - bytes on Gen8+; and
+    *    - compacted instructions on Gen6+.
+    */
+   int32_t jip = brw_inst_jip(brw, insn);
+   int32_t jip_compacted = jip / (brw->gen >= 8 ? sizeof(brw_compact_inst) : 1);
+   int32_t jip_uncompacted = jip / (brw->gen >= 8 ? sizeof(brw_inst) : 2);
+   jip_compacted -= compacted_between(this_old_ip,
+                                      this_old_ip + jip_uncompacted,
+                                      compacted_counts);
+   brw_inst_set_jip(brw, insn,
+                    jip_compacted * (brw->gen >= 8 ? sizeof(brw_compact_inst) : 1));
 
    if (brw_inst_opcode(brw, insn) == BRW_OPCODE_ENDIF ||
        brw_inst_opcode(brw, insn) == BRW_OPCODE_WHILE ||
        (brw_inst_opcode(brw, insn) == BRW_OPCODE_ELSE && brw->gen <= 7))
       return;
 
-   int32_t uip = brw_inst_uip(brw, insn) / scale;
-   uip -= compacted_between(this_old_ip, this_old_ip + uip, compacted_counts);
-   brw_inst_set_uip(brw, insn, uip * scale);
+   int32_t uip = brw_inst_uip(brw, insn);
+   int32_t uip_compacted = uip / (brw->gen >= 8 ? sizeof(brw_compact_inst) : 1);
+   int32_t uip_uncompacted = uip / (brw->gen >= 8 ? sizeof(brw_inst) : 2);
+   uip_compacted -= compacted_between(this_old_ip,
+                                      this_old_ip + uip_uncompacted,
+                                      compacted_counts);
+   brw_inst_set_uip(brw, insn,
+                    uip_compacted * (brw->gen >= 8 ? sizeof(brw_compact_inst) : 1));
 }
 
 void
@@ -1095,12 +1107,12 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
 {
    struct brw_context *brw = p->brw;
    void *store = p->store + start_offset / 16;
-   /* For an instruction at byte offset 8*i before compaction, this is the number
-    * of compacted instructions that preceded it.
+   /* For an instruction at byte offset 16*i before compaction, this is the
+    * number of compacted instructions that preceded it.
     */
-   int compacted_counts[(p->next_insn_offset - start_offset) / sizeof(brw_compact_inst)];
-   /* For an instruction at byte offset 8*i after compaction, this is the
-    * 8-byte offset it was at before compaction.
+   int compacted_counts[(p->next_insn_offset - start_offset) / sizeof(brw_inst)];
+   /* For an instruction at byte offset 8*i after compaction, this was its IP
+    * (in 16-byte units) before compaction.
     */
    int old_ip[(p->next_insn_offset - start_offset) / sizeof(brw_compact_inst)];
 
@@ -1114,8 +1126,8 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
       brw_inst *src = store + src_offset;
       void *dst = store + offset;
 
-      old_ip[offset / sizeof(brw_compact_inst)] = src_offset / sizeof(brw_compact_inst);
-      compacted_counts[src_offset / sizeof(brw_compact_inst)] = compacted_count;
+      old_ip[offset / sizeof(brw_compact_inst)] = src_offset / sizeof(brw_inst);
+      compacted_counts[src_offset / sizeof(brw_inst)] = compacted_count;
 
       brw_inst saved = *src;
 
@@ -1144,7 +1156,7 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
             brw_compact_inst_set_opcode(align, BRW_OPCODE_NOP);
             brw_compact_inst_set_cmpt_control(align, true);
             offset += sizeof(brw_compact_inst);
-            old_ip[offset / sizeof(brw_compact_inst)] = src_offset / sizeof(brw_compact_inst);
+            old_ip[offset / sizeof(brw_compact_inst)] = src_offset / sizeof(brw_inst);
 
             dst = store + offset;
          }
@@ -1182,11 +1194,14 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
          if (brw->gen >= 7) {
             update_uip_jip(brw, insn, this_old_ip, compacted_counts);
          } else if (brw->gen == 6) {
-            int gen6_jump_count = brw_inst_gen6_jump_count(brw, insn);
-            target_old_ip = this_old_ip + gen6_jump_count;
+            /* Jump Count is in units of compacted instructions on Gen6. */
+            int jump_count_compacted = brw_inst_gen6_jump_count(brw, insn);
+            int jump_count_uncompacted = jump_count_compacted / 2;
+
+            target_old_ip = this_old_ip + jump_count_uncompacted;
             target_compacted_count = compacted_counts[target_old_ip];
-            gen6_jump_count -= (target_compacted_count - this_compacted_count);
-            brw_inst_set_gen6_jump_count(brw, insn, gen6_jump_count);
+            jump_count_compacted -= (target_compacted_count - this_compacted_count);
+            brw_inst_set_gen6_jump_count(brw, insn, jump_count_compacted);
          }
          break;
       }
@@ -1210,9 +1225,9 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
    if (annotation) {
       for (int offset = 0, i = 0; i < num_annotations; i++) {
          while (start_offset + old_ip[offset / sizeof(brw_compact_inst)] *
-                sizeof(brw_compact_inst) != annotation[i].offset) {
+                sizeof(brw_inst) != annotation[i].offset) {
             assert(start_offset + old_ip[offset / sizeof(brw_compact_inst)] *
-                   sizeof(brw_compact_inst) < annotation[i].offset);
+                   sizeof(brw_inst) < annotation[i].offset);
             offset = next_offset(brw, store, offset);
          }
 
