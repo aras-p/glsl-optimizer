@@ -54,11 +54,21 @@ enum qop {
         QOP_FMINABS,
         QOP_FMAXABS,
 
-        QOP_SEQ,
-        QOP_SNE,
-        QOP_SGE,
-        QOP_SLT,
-        QOP_CMP,
+        /* Sets the flag register according to src. */
+        QOP_SF,
+
+        /* Note: Orderings of these compares must be the same as in
+         * qpu_defines.h.  Selects the src[0] if the ns flag bit is set,
+         * otherwise 0. */
+        QOP_SEL_X_0_ZS,
+        QOP_SEL_X_0_ZC,
+        QOP_SEL_X_0_NS,
+        QOP_SEL_X_0_NC,
+        /* Selects the src[0] if the ns flag bit is set, otherwise src[1]. */
+        QOP_SEL_X_Y_ZS,
+        QOP_SEL_X_Y_ZC,
+        QOP_SEL_X_Y_NS,
+        QOP_SEL_X_Y_NC,
 
         QOP_FTOI,
         QOP_ITOF,
@@ -260,6 +270,15 @@ QIR_ALU1(MOV)
 QIR_ALU2(FADD)
 QIR_ALU2(FSUB)
 QIR_ALU2(FMUL)
+QIR_NODST_1(SF)
+QIR_ALU1(SEL_X_0_ZS)
+QIR_ALU1(SEL_X_0_ZC)
+QIR_ALU1(SEL_X_0_NS)
+QIR_ALU1(SEL_X_0_NC)
+QIR_ALU2(SEL_X_Y_ZS)
+QIR_ALU2(SEL_X_Y_ZC)
+QIR_ALU2(SEL_X_Y_NS)
+QIR_ALU2(SEL_X_Y_NC)
 QIR_ALU2(FMIN)
 QIR_ALU2(FMAX)
 QIR_ALU2(FMINABS)
@@ -282,14 +301,6 @@ QIR_ALU0(FRAG_Y)
 QIR_ALU0(FRAG_Z)
 QIR_ALU0(FRAG_RCP_W)
 QIR_NODST_1(TLB_DISCARD_SETUP)
-
-static inline struct qreg
-qir_CMP(struct qcompile *c, struct qreg cmp, struct qreg a, struct qreg b)
-{
-        struct qreg t = qir_get_temp(c);
-        qir_emit(c, qir_inst4(QOP_CMP, t, cmp, a, b, c->undef));
-        return t;
-}
 
 static inline struct qreg
 qir_R4_UNPACK(struct qcompile *c, int i)

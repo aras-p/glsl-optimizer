@@ -249,6 +249,58 @@ tgsi_to_qir_alu(struct tgsi_to_qir *trans,
 }
 
 static struct qreg
+tgsi_to_qir_seq(struct tgsi_to_qir *trans,
+                struct tgsi_full_instruction *tgsi_inst,
+                enum qop op, struct qreg *src, int i)
+{
+        struct qcompile *c = trans->c;
+        qir_SF(c, qir_FSUB(c, src[0 * 4 + i], src[1 * 4 + i]));
+        return qir_SEL_X_0_ZS(c, qir_uniform_f(trans, 1.0));
+}
+
+static struct qreg
+tgsi_to_qir_sne(struct tgsi_to_qir *trans,
+                struct tgsi_full_instruction *tgsi_inst,
+                enum qop op, struct qreg *src, int i)
+{
+        struct qcompile *c = trans->c;
+        qir_SF(c, qir_FSUB(c, src[0 * 4 + i], src[1 * 4 + i]));
+        return qir_SEL_X_0_ZC(c, qir_uniform_f(trans, 1.0));
+}
+
+static struct qreg
+tgsi_to_qir_slt(struct tgsi_to_qir *trans,
+                struct tgsi_full_instruction *tgsi_inst,
+                enum qop op, struct qreg *src, int i)
+{
+        struct qcompile *c = trans->c;
+        qir_SF(c, qir_FSUB(c, src[0 * 4 + i], src[1 * 4 + i]));
+        return qir_SEL_X_0_NS(c, qir_uniform_f(trans, 1.0));
+}
+
+static struct qreg
+tgsi_to_qir_sge(struct tgsi_to_qir *trans,
+                struct tgsi_full_instruction *tgsi_inst,
+                enum qop op, struct qreg *src, int i)
+{
+        struct qcompile *c = trans->c;
+        qir_SF(c, qir_FSUB(c, src[0 * 4 + i], src[1 * 4 + i]));
+        return qir_SEL_X_0_NC(c, qir_uniform_f(trans, 1.0));
+}
+
+static struct qreg
+tgsi_to_qir_cmp(struct tgsi_to_qir *trans,
+                struct tgsi_full_instruction *tgsi_inst,
+                enum qop op, struct qreg *src, int i)
+{
+        struct qcompile *c = trans->c;
+        qir_SF(c, src[0 * 4 + i]);
+        return qir_SEL_X_Y_NS(c,
+                              src[1 * 4 + i],
+                              src[2 * 4 + i]);
+}
+
+static struct qreg
 tgsi_to_qir_mad(struct tgsi_to_qir *trans,
                 struct tgsi_full_instruction *tgsi_inst,
                 enum qop op, struct qreg *src, int i)
@@ -280,16 +332,15 @@ tgsi_to_qir_lit(struct tgsi_to_qir *trans,
         case 2: {
                 struct qreg zero = qir_uniform_f(trans, 0.0);
 
+                qir_SF(c, x);
                 /* XXX: Clamp w to -128..128 */
-                return qir_CMP(c,
-                               x,
-                               zero,
-                               qir_EXP2(c, qir_FMUL(c,
-                                                    w,
-                                                    qir_LOG2(c,
-                                                             qir_FMAX(c,
-                                                                      y,
-                                                                      zero)))));
+                return qir_SEL_X_0_NC(c,
+                                      qir_EXP2(c, qir_FMUL(c,
+                                                           w,
+                                                           qir_LOG2(c,
+                                                                    qir_FMAX(c,
+                                                                             y,
+                                                                             zero)))));
         }
         default:
                 assert(!"not reached");
@@ -415,10 +466,10 @@ tgsi_to_qir_frc(struct tgsi_to_qir *trans,
         struct qcompile *c = trans->c;
         struct qreg trunc = qir_ITOF(c, qir_FTOI(c, src[0 * 4 + i]));
         struct qreg diff = qir_FSUB(c, src[0 * 4 + i], trunc);
-        return qir_CMP(c,
-                       diff,
-                       qir_FADD(c, diff, qir_uniform_f(trans, 1.0)),
-                       diff);
+        qir_SF(c, diff);
+        return qir_SEL_X_Y_NS(c,
+                              qir_FADD(c, diff, qir_uniform_f(trans, 1.0)),
+                              diff);
 }
 
 /**
@@ -436,12 +487,11 @@ tgsi_to_qir_flr(struct tgsi_to_qir *trans,
         /* This will be < 0 if we truncated and the truncation was of a value
          * that was < 0 in the first place.
          */
-        struct qreg diff = qir_FSUB(c, src[0 * 4 + i], trunc);
+        qir_SF(c, qir_FSUB(c, src[0 * 4 + i], trunc));
 
-        return qir_CMP(c,
-                       diff,
-                       qir_FSUB(c, trunc, qir_uniform_f(trans, 1.0)),
-                       trunc);
+        return qir_SEL_X_Y_NS(c,
+                              qir_FSUB(c, trunc, qir_uniform_f(trans, 1.0)),
+                              trunc);
 }
 
 static struct qreg
@@ -613,10 +663,10 @@ tgsi_to_qir_kill_if(struct tgsi_to_qir *trans, struct qreg *src, int i)
 
         if (trans->discard.file == QFILE_NULL)
                 trans->discard = qir_uniform_f(trans, 0.0);
-        trans->discard = qir_CMP(c,
-                                 src[0 * 4 + i],
-                                 qir_uniform_f(trans, 1.0),
-                                 trans->discard);
+        qir_SF(c, src[0 * 4 + i]);
+        trans->discard = qir_SEL_X_Y_NS(c,
+                                        qir_uniform_f(trans, 1.0),
+                                        trans->discard);
 }
 
 static void
@@ -705,11 +755,11 @@ emit_tgsi_instruction(struct tgsi_to_qir *trans,
                 [TGSI_OPCODE_MIN] = { QOP_FMIN, tgsi_to_qir_alu },
                 [TGSI_OPCODE_MAX] = { QOP_FMAX, tgsi_to_qir_alu },
                 [TGSI_OPCODE_RSQ] = { QOP_RSQ, tgsi_to_qir_alu },
-                [TGSI_OPCODE_SEQ] = { QOP_SEQ, tgsi_to_qir_alu },
-                [TGSI_OPCODE_SNE] = { QOP_SNE, tgsi_to_qir_alu },
-                [TGSI_OPCODE_SGE] = { QOP_SGE, tgsi_to_qir_alu },
-                [TGSI_OPCODE_SLT] = { QOP_SLT, tgsi_to_qir_alu },
-                [TGSI_OPCODE_CMP] = { QOP_CMP, tgsi_to_qir_alu },
+                [TGSI_OPCODE_SEQ] = { 0, tgsi_to_qir_seq },
+                [TGSI_OPCODE_SNE] = { 0, tgsi_to_qir_sne },
+                [TGSI_OPCODE_SGE] = { 0, tgsi_to_qir_sge },
+                [TGSI_OPCODE_SLT] = { 0, tgsi_to_qir_slt },
+                [TGSI_OPCODE_CMP] = { 0, tgsi_to_qir_cmp },
                 [TGSI_OPCODE_MAD] = { 0, tgsi_to_qir_mad },
                 [TGSI_OPCODE_DP2] = { 0, tgsi_to_qir_dp2 },
                 [TGSI_OPCODE_DP3] = { 0, tgsi_to_qir_dp3 },

@@ -60,6 +60,12 @@ last_inst(struct qcompile *c)
         return &q->inst;
 }
 
+static void
+set_last_cond_add(struct qcompile *c, uint32_t cond)
+{
+        *last_inst(c) = qpu_set_cond_add(*last_inst(c), cond);
+}
+
 /**
  * This is used to resolve the fact that we might register-allocate two
  * different operands of an instruction to the same physical register file
@@ -278,13 +284,6 @@ vc4_generate_code(struct qcompile *c)
                         M(FMUL),
                 };
 
-                static const uint32_t compareflags[] = {
-                        [QOP_SEQ - QOP_SEQ] = QPU_COND_ZS,
-                        [QOP_SNE - QOP_SEQ] = QPU_COND_ZC,
-                        [QOP_SLT - QOP_SEQ] = QPU_COND_NS,
-                        [QOP_SGE - QOP_SEQ] = QPU_COND_NC,
-                };
-
                 struct qpu_reg src[4];
                 for (int i = 0; i < qir_get_op_nsrc(qinst->op); i++) {
                         int index = qinst->src[i].index;
@@ -365,32 +364,36 @@ vc4_generate_code(struct qcompile *c)
                         }
                         break;
 
-                case QOP_CMP:
+                case QOP_SF:
+                        fixup_raddr_conflict(c, src[0], &src[1]);
                         queue(c, qpu_a_MOV(qpu_ra(QPU_W_NOP), src[0]));
                         *last_inst(c) |= QPU_SF;
-
-                        queue(c, qpu_a_MOV(dst, src[1]));
-                        *last_inst(c) = qpu_set_cond_add(*last_inst(c),
-                                                         QPU_COND_NS);
-
-                        queue(c, qpu_a_MOV(dst, src[2]));
-                        *last_inst(c) = qpu_set_cond_add(*last_inst(c),
-                                                         QPU_COND_NC);
                         break;
 
-                case QOP_SEQ:
-                case QOP_SNE:
-                case QOP_SGE:
-                case QOP_SLT:
-                        fixup_raddr_conflict(c, src[0], &src[1]);
-                        queue(c, qpu_a_FSUB(qpu_ra(QPU_W_NOP), src[0], src[1]));
-                        *last_inst(c) |= QPU_SF;
+                case QOP_SEL_X_0_ZS:
+                case QOP_SEL_X_0_ZC:
+                case QOP_SEL_X_0_NS:
+                case QOP_SEL_X_0_NC:
+                        queue(c, qpu_a_MOV(dst, src[0]));
+                        set_last_cond_add(c, qinst->op - QOP_SEL_X_0_ZS +
+                                          QPU_COND_ZS);
 
-                        queue(c, qpu_load_imm_f(dst, 0.0));
-                        queue(c, qpu_load_imm_f(dst, 1.0));
-                        *last_inst(c) = qpu_set_cond_add(*last_inst(c),
-                                                         compareflags[qinst->op - QOP_SEQ]);
+                        queue(c, qpu_a_XOR(dst, qpu_r0(), qpu_r0()));
+                        set_last_cond_add(c, ((qinst->op - QOP_SEL_X_0_ZS) ^
+                                              1) + QPU_COND_ZS);
+                        break;
 
+                case QOP_SEL_X_Y_ZS:
+                case QOP_SEL_X_Y_ZC:
+                case QOP_SEL_X_Y_NS:
+                case QOP_SEL_X_Y_NC:
+                        queue(c, qpu_a_MOV(dst, src[0]));
+                        set_last_cond_add(c, qinst->op - QOP_SEL_X_Y_ZS +
+                                          QPU_COND_ZS);
+
+                        queue(c, qpu_a_MOV(dst, src[1]));
+                        set_last_cond_add(c, ((qinst->op - QOP_SEL_X_Y_ZS) ^
+                                              1) + QPU_COND_ZS);
 
                         break;
 
@@ -475,8 +478,7 @@ vc4_generate_code(struct qcompile *c)
                         queue(c, qpu_a_MOV(qpu_ra(QPU_W_TLB_Z),
                                            qpu_rb(QPU_R_FRAG_PAYLOAD_ZW)));
                         if (discard) {
-                                *last_inst(c) = qpu_set_cond_add(*last_inst(c),
-                                                                 QPU_COND_ZS);
+                                set_last_cond_add(c, QPU_COND_ZS);
                         }
                         break;
 
@@ -490,8 +492,7 @@ vc4_generate_code(struct qcompile *c)
                 case QOP_TLB_COLOR_WRITE:
                         queue(c, qpu_a_MOV(qpu_tlbc(), src[0]));
                         if (discard) {
-                                *last_inst(c) = qpu_set_cond_add(*last_inst(c),
-                                                                 QPU_COND_ZS);
+                                set_last_cond_add(c, QPU_COND_ZS);
                         }
                         break;
 

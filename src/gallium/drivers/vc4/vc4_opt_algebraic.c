@@ -45,9 +45,12 @@ qir_opt_algebraic(struct qcompile *c)
                 struct qinst *inst = (struct qinst *)node;
 
                 switch (inst->op) {
-                case QOP_CMP:
-                        /* Turn "dst = (a < 0) ? b : b)" into "dst = b" */
-                        if (qir_reg_equals(inst->src[1], inst->src[2])) {
+                case QOP_SEL_X_Y_ZS:
+                case QOP_SEL_X_Y_ZC:
+                case QOP_SEL_X_Y_NS:
+                case QOP_SEL_X_Y_NC:
+                        /* Turn "dst = (sf == x) ? a : a)" into "dst = a" */
+                        if (qir_reg_equals(inst->src[0], inst->src[1])) {
                                 if (debug) {
                                         fprintf(stderr, "optimizing: ");
                                         qir_dump_inst(inst);
