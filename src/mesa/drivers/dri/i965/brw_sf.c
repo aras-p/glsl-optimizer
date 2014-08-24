@@ -108,7 +108,10 @@ static void compile_sf_prog( struct brw_context *brw,
       unreachable("not reached");
    }
 
-   brw_compact_instructions(&c.func, 0, 0, NULL);
+   /* FINISHME: SF programs use calculated jumps (i.e., JMPI with a register
+    * source). Compacting would be difficult.
+    */
+   /* brw_compact_instructions(&c.func, 0, 0, NULL); */
 
    /* get the program
     */
