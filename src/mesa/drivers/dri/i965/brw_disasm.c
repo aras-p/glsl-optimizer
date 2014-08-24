@@ -1264,7 +1264,8 @@ brw_disassemble_inst(FILE *file, struct brw_context *brw, brw_inst *inst,
       pad(file, 16);
       format(file, "Pop: %d", brw_inst_gen4_pop_count(brw, inst));
    } else if (opcode == BRW_OPCODE_JMPI) {
-      format(file, " %d", brw_inst_imm_d(brw, inst));
+      pad(file, 16);
+      err |= src1(file, brw, inst);
    } else if (opcode_descs[opcode].nsrc == 3) {
       pad(file, 16);
       err |= dest_3src(file, brw, inst);
