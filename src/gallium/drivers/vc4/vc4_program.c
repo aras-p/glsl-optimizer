@@ -30,6 +30,7 @@
 #include "util/u_memory.h"
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_dump.h"
+#include "tgsi/tgsi_info.h"
 
 #include "vc4_context.h"
 #include "vc4_qpu.h"
@@ -129,7 +130,8 @@ qir_uniform_f(struct tgsi_to_qir *trans, float f)
 }
 
 static struct qreg
-get_src(struct tgsi_to_qir *trans, struct tgsi_src_register *src, int i)
+get_src(struct tgsi_to_qir *trans, unsigned tgsi_op,
+        struct tgsi_src_register *src, int i)
 {
         struct qcompile *c = trans->c;
         struct qreg r = c->undef;
@@ -182,8 +184,17 @@ get_src(struct tgsi_to_qir *trans, struct tgsi_src_register *src, int i)
         if (src->Absolute)
                 r = qir_FMAXABS(c, r, r);
 
-        if (src->Negate)
-                r = qir_FSUB(c, qir_uniform_f(trans, 0), r);
+        if (src->Negate) {
+                switch (tgsi_opcode_infer_src_type(tgsi_op)) {
+                case TGSI_TYPE_SIGNED:
+                case TGSI_TYPE_UNSIGNED:
+                        r = qir_SUB(c, qir_uniform_ui(trans, 0), r);
+                        break;
+                default:
+                        r = qir_FSUB(c, qir_uniform_f(trans, 0.0), r);
+                        break;
+                }
+        }
 
         return r;
 };
@@ -249,6 +260,51 @@ tgsi_to_qir_alu(struct tgsi_to_qir *trans,
 }
 
 static struct qreg
+tgsi_to_qir_umul(struct tgsi_to_qir *trans,
+                 struct tgsi_full_instruction *tgsi_inst,
+                 enum qop op, struct qreg *src, int i)
+{
+        struct qcompile *c = trans->c;
+
+        struct qreg src0_hi = qir_SHR(c, src[0 * 4 + i],
+                                      qir_uniform_ui(trans, 16));
+        struct qreg src0_lo = qir_AND(c, src[0 * 4 + i],
+                                      qir_uniform_ui(trans, 0xffff));
+        struct qreg src1_hi = qir_SHR(c, src[1 * 4 + i],
+                                      qir_uniform_ui(trans, 16));
+        struct qreg src1_lo = qir_AND(c, src[1 * 4 + i],
+                                      qir_uniform_ui(trans, 0xffff));
+
+        struct qreg hilo = qir_MUL24(c, src0_hi, src1_lo);
+        struct qreg lohi = qir_MUL24(c, src0_lo, src1_hi);
+        struct qreg lolo = qir_MUL24(c, src0_lo, src1_lo);
+
+        return qir_ADD(c, lolo, qir_SHL(c,
+                                        qir_ADD(c, hilo, lohi),
+                                        qir_uniform_ui(trans, 16)));
+}
+
+static struct qreg
+tgsi_to_qir_idiv(struct tgsi_to_qir *trans,
+                 struct tgsi_full_instruction *tgsi_inst,
+                 enum qop op, struct qreg *src, int i)
+{
+        struct qcompile *c = trans->c;
+        return qir_FTOI(c, qir_FMUL(c,
+                                    qir_ITOF(c, src[0 * 4 + i]),
+                                    qir_RCP(c, qir_ITOF(c, src[1 * 4 + i]))));
+}
+
+static struct qreg
+tgsi_to_qir_ineg(struct tgsi_to_qir *trans,
+                 struct tgsi_full_instruction *tgsi_inst,
+                 enum qop op, struct qreg *src, int i)
+{
+        struct qcompile *c = trans->c;
+        return qir_SUB(c, qir_uniform_ui(trans, 0), src[0 * 4 + i]);
+}
+
+static struct qreg
 tgsi_to_qir_seq(struct tgsi_to_qir *trans,
                 struct tgsi_full_instruction *tgsi_inst,
                 enum qop op, struct qreg *src, int i)
@@ -286,6 +342,86 @@ tgsi_to_qir_sge(struct tgsi_to_qir *trans,
         struct qcompile *c = trans->c;
         qir_SF(c, qir_FSUB(c, src[0 * 4 + i], src[1 * 4 + i]));
         return qir_SEL_X_0_NC(c, qir_uniform_f(trans, 1.0));
+}
+
+static struct qreg
+tgsi_to_qir_fseq(struct tgsi_to_qir *trans,
+                 struct tgsi_full_instruction *tgsi_inst,
+                 enum qop op, struct qreg *src, int i)
+{
+        struct qcompile *c = trans->c;
+        qir_SF(c, qir_FSUB(c, src[0 * 4 + i], src[1 * 4 + i]));
+        return qir_SEL_X_0_ZS(c, qir_uniform_ui(trans, ~0));
+}
+
+static struct qreg
+tgsi_to_qir_fsne(struct tgsi_to_qir *trans,
+                 struct tgsi_full_instruction *tgsi_inst,
+                 enum qop op, struct qreg *src, int i)
+{
+        struct qcompile *c = trans->c;
+        qir_SF(c, qir_FSUB(c, src[0 * 4 + i], src[1 * 4 + i]));
+        return qir_SEL_X_0_ZC(c, qir_uniform_ui(trans, ~0));
+}
+
+static struct qreg
+tgsi_to_qir_fslt(struct tgsi_to_qir *trans,
+                 struct tgsi_full_instruction *tgsi_inst,
+                 enum qop op, struct qreg *src, int i)
+{
+        struct qcompile *c = trans->c;
+        qir_SF(c, qir_FSUB(c, src[0 * 4 + i], src[1 * 4 + i]));
+        return qir_SEL_X_0_NS(c, qir_uniform_ui(trans, ~0));
+}
+
+static struct qreg
+tgsi_to_qir_fsge(struct tgsi_to_qir *trans,
+                 struct tgsi_full_instruction *tgsi_inst,
+                 enum qop op, struct qreg *src, int i)
+{
+        struct qcompile *c = trans->c;
+        qir_SF(c, qir_FSUB(c, src[0 * 4 + i], src[1 * 4 + i]));
+        return qir_SEL_X_0_NC(c, qir_uniform_ui(trans, ~0));
+}
+
+static struct qreg
+tgsi_to_qir_useq(struct tgsi_to_qir *trans,
+                 struct tgsi_full_instruction *tgsi_inst,
+                 enum qop op, struct qreg *src, int i)
+{
+        struct qcompile *c = trans->c;
+        qir_SF(c, qir_SUB(c, src[0 * 4 + i], src[1 * 4 + i]));
+        return qir_SEL_X_0_ZS(c, qir_uniform_ui(trans, ~0));
+}
+
+static struct qreg
+tgsi_to_qir_usne(struct tgsi_to_qir *trans,
+                 struct tgsi_full_instruction *tgsi_inst,
+                 enum qop op, struct qreg *src, int i)
+{
+        struct qcompile *c = trans->c;
+        qir_SF(c, qir_SUB(c, src[0 * 4 + i], src[1 * 4 + i]));
+        return qir_SEL_X_0_ZC(c, qir_uniform_ui(trans, ~0));
+}
+
+static struct qreg
+tgsi_to_qir_islt(struct tgsi_to_qir *trans,
+                 struct tgsi_full_instruction *tgsi_inst,
+                 enum qop op, struct qreg *src, int i)
+{
+        struct qcompile *c = trans->c;
+        qir_SF(c, qir_SUB(c, src[0 * 4 + i], src[1 * 4 + i]));
+        return qir_SEL_X_0_NS(c, qir_uniform_ui(trans, ~0));
+}
+
+static struct qreg
+tgsi_to_qir_isge(struct tgsi_to_qir *trans,
+                 struct tgsi_full_instruction *tgsi_inst,
+                 enum qop op, struct qreg *src, int i)
+{
+        struct qcompile *c = trans->c;
+        qir_SF(c, qir_SUB(c, src[0 * 4 + i], src[1 * 4 + i]));
+        return qir_SEL_X_0_NC(c, qir_uniform_ui(trans, ~0));
 }
 
 static struct qreg
@@ -754,11 +890,37 @@ emit_tgsi_instruction(struct tgsi_to_qir *trans,
                 [TGSI_OPCODE_SUB] = { QOP_FSUB, tgsi_to_qir_alu },
                 [TGSI_OPCODE_MIN] = { QOP_FMIN, tgsi_to_qir_alu },
                 [TGSI_OPCODE_MAX] = { QOP_FMAX, tgsi_to_qir_alu },
+                [TGSI_OPCODE_F2I] = { QOP_FTOI, tgsi_to_qir_alu },
+                [TGSI_OPCODE_I2F] = { QOP_ITOF, tgsi_to_qir_alu },
+                [TGSI_OPCODE_UADD] = { QOP_ADD, tgsi_to_qir_alu },
+                [TGSI_OPCODE_USHR] = { QOP_SHR, tgsi_to_qir_alu },
+                [TGSI_OPCODE_ISHR] = { QOP_ASR, tgsi_to_qir_alu },
+                [TGSI_OPCODE_SHL] = { QOP_SHL, tgsi_to_qir_alu },
+                [TGSI_OPCODE_IMIN] = { QOP_MIN, tgsi_to_qir_alu },
+                [TGSI_OPCODE_IMAX] = { QOP_MAX, tgsi_to_qir_alu },
+                [TGSI_OPCODE_AND] = { QOP_AND, tgsi_to_qir_alu },
+                [TGSI_OPCODE_OR] = { QOP_OR, tgsi_to_qir_alu },
+                [TGSI_OPCODE_XOR] = { QOP_XOR, tgsi_to_qir_alu },
+                [TGSI_OPCODE_NOT] = { QOP_NOT, tgsi_to_qir_alu },
+
+                [TGSI_OPCODE_UMUL] = { 0, tgsi_to_qir_umul },
+                [TGSI_OPCODE_IDIV] = { 0, tgsi_to_qir_idiv },
+                [TGSI_OPCODE_INEG] = { 0, tgsi_to_qir_ineg },
+
                 [TGSI_OPCODE_RSQ] = { QOP_RSQ, tgsi_to_qir_alu },
                 [TGSI_OPCODE_SEQ] = { 0, tgsi_to_qir_seq },
                 [TGSI_OPCODE_SNE] = { 0, tgsi_to_qir_sne },
                 [TGSI_OPCODE_SGE] = { 0, tgsi_to_qir_sge },
                 [TGSI_OPCODE_SLT] = { 0, tgsi_to_qir_slt },
+                [TGSI_OPCODE_FSEQ] = { 0, tgsi_to_qir_fseq },
+                [TGSI_OPCODE_FSNE] = { 0, tgsi_to_qir_fsne },
+                [TGSI_OPCODE_FSGE] = { 0, tgsi_to_qir_fsge },
+                [TGSI_OPCODE_FSLT] = { 0, tgsi_to_qir_fslt },
+                [TGSI_OPCODE_USEQ] = { 0, tgsi_to_qir_useq },
+                [TGSI_OPCODE_USNE] = { 0, tgsi_to_qir_usne },
+                [TGSI_OPCODE_ISGE] = { 0, tgsi_to_qir_isge },
+                [TGSI_OPCODE_ISLT] = { 0, tgsi_to_qir_islt },
+
                 [TGSI_OPCODE_CMP] = { 0, tgsi_to_qir_cmp },
                 [TGSI_OPCODE_MAD] = { 0, tgsi_to_qir_mad },
                 [TGSI_OPCODE_DP2] = { 0, tgsi_to_qir_dp2 },
@@ -787,7 +949,8 @@ emit_tgsi_instruction(struct tgsi_to_qir *trans,
         for (int s = 0; s < 3; s++) {
                 for (int i = 0; i < 4; i++) {
                         src_regs[4 * s + i] =
-                                get_src(trans, &tgsi_inst->Src[s].Register, i);
+                                get_src(trans, tgsi_inst->Instruction.Opcode,
+                                        &tgsi_inst->Src[s].Register, i);
                 }
         }
 

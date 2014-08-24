@@ -291,6 +291,7 @@ vc4_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader,
         case PIPE_SHADER_CAP_TGSI_SQRT_SUPPORTED:
                 return 0;
         case PIPE_SHADER_CAP_INTEGERS:
+                return 1;
         case PIPE_SHADER_CAP_DOUBLES:
                 return 0;
         case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:

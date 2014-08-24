@@ -280,8 +280,20 @@ vc4_generate_code(struct qcompile *c)
                         A(FMAXABS),
                         A(FTOI),
                         A(ITOF),
+                        A(ADD),
+                        A(SUB),
+                        A(SHL),
+                        A(SHR),
+                        A(ASR),
+                        A(MIN),
+                        A(MAX),
+                        A(AND),
+                        A(OR),
+                        A(XOR),
+                        A(NOT),
 
                         M(FMUL),
+                        M(MUL24),
                 };
 
                 struct qpu_reg src[4];

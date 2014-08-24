@@ -49,10 +49,22 @@ enum qop {
         QOP_FADD,
         QOP_FSUB,
         QOP_FMUL,
+        QOP_MUL24,
         QOP_FMIN,
         QOP_FMAX,
         QOP_FMINABS,
         QOP_FMAXABS,
+        QOP_ADD,
+        QOP_SUB,
+        QOP_SHL,
+        QOP_SHR,
+        QOP_ASR,
+        QOP_MIN,
+        QOP_MAX,
+        QOP_AND,
+        QOP_OR,
+        QOP_XOR,
+        QOP_NOT,
 
         /* Sets the flag register according to src. */
         QOP_SF,
@@ -270,6 +282,7 @@ QIR_ALU1(MOV)
 QIR_ALU2(FADD)
 QIR_ALU2(FSUB)
 QIR_ALU2(FMUL)
+QIR_ALU2(MUL24)
 QIR_NODST_1(SF)
 QIR_ALU1(SEL_X_0_ZS)
 QIR_ALU1(SEL_X_0_ZC)
@@ -285,6 +298,19 @@ QIR_ALU2(FMINABS)
 QIR_ALU2(FMAXABS)
 QIR_ALU1(FTOI)
 QIR_ALU1(ITOF)
+
+QIR_ALU2(ADD)
+QIR_ALU2(SUB)
+QIR_ALU2(SHL)
+QIR_ALU2(SHR)
+QIR_ALU2(ASR)
+QIR_ALU2(MIN)
+QIR_ALU2(MAX)
+QIR_ALU2(AND)
+QIR_ALU2(OR)
+QIR_ALU2(XOR)
+QIR_ALU1(NOT)
+
 QIR_ALU1(RCP)
 QIR_ALU1(RSQ)
 QIR_ALU1(EXP2)
@@ -304,6 +330,14 @@ QIR_NODST_1(TLB_DISCARD_SETUP)
 
 static inline struct qreg
 qir_R4_UNPACK(struct qcompile *c, int i)
+{
+        struct qreg t = qir_get_temp(c);
+        qir_emit(c, qir_inst(QOP_R4_UNPACK_A + i, t, c->undef, c->undef));
+        return t;
+}
+
+static inline struct qreg
+qir_SEL_X_0_COND(struct qcompile *c, int i)
 {
         struct qreg t = qir_get_temp(c);
         qir_emit(c, qir_inst(QOP_R4_UNPACK_A + i, t, c->undef, c->undef));
