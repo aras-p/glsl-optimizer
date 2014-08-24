@@ -137,8 +137,8 @@ is_logic_instruction(unsigned opcode)
 
 const char *const conditional_modifier[16] = {
    [BRW_CONDITIONAL_NONE] = "",
-   [BRW_CONDITIONAL_Z]    = ".e",
-   [BRW_CONDITIONAL_NZ]   = ".ne",
+   [BRW_CONDITIONAL_Z]    = ".z",
+   [BRW_CONDITIONAL_NZ]   = ".nz",
    [BRW_CONDITIONAL_G]    = ".g",
    [BRW_CONDITIONAL_GE]   = ".ge",
    [BRW_CONDITIONAL_L]    = ".l",
