@@ -85,6 +85,7 @@ if not env['embedded']:
 
     if env['platform'] == 'haiku':
         SConscript([
+            'state_trackers/hgl/SConscript',
             'targets/haiku-softpipe/SConscript',
         ])
 

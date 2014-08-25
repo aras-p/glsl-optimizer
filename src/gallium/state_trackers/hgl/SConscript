@@ -1,0 +1,23 @@
+#######################################################################
+# SConscript for Haiku state_tracker
+
+Import('*')
+
+env = env.Clone()
+
+env.Append(CPPPATH = [
+    '#/src',
+    '#/src/mapi',
+    '#/src/mesa',
+])
+
+sources = [
+    'hgl.c',
+	'bitmap_wrapper.cpp',
+]
+
+st_haiku = env.ConvenienceLibrary(
+    target = 'st_haiku',
+    source = sources
+)
+Export('st_haiku')

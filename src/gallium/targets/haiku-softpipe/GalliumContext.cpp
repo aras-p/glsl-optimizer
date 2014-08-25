@@ -278,8 +278,8 @@ GalliumContext::CreateContext(Bitmap *bitmap)
 		return -1;
 	}
 
-	context->draw = new GalliumFramebuffer(context->stVisual, (void*)this);
-	context->read = new GalliumFramebuffer(context->stVisual, (void*)this);
+	context->draw = hgl_create_st_framebuffer(context);
+	context->read = hgl_create_st_framebuffer(context);
 
 	if (!context->draw || !context->read) {
 		ERROR("%s: Problem allocating framebuffer!\n", __func__);
@@ -448,12 +448,8 @@ GalliumContext::SetCurrentContext(Bitmap *bitmap, context_id contextID)
 	}
 
 	// We need to lock and unlock framebuffers before accessing them
-	context->draw->Lock();
-	context->read->Lock();
-	api->make_current(context->api, context->st, context->draw->fBuffer,
-		context->read->fBuffer);
-	context->draw->Unlock();
-	context->read->Unlock();
+	api->make_current(context->api, context->st, context->draw->stfbi,
+		context->read->stfbi);
 
 	if (context->textures[ST_ATTACHMENT_BACK_LEFT]
 		&& context->textures[ST_ATTACHMENT_DEPTH_STENCIL]
@@ -486,7 +482,7 @@ GalliumContext::SwapBuffers(context_id contextID)
 	}
 
 	// TODO: Where did st_notify_swapbuffers go?
-	//st_notify_swapbuffers(context->draw->stfb);
+	//st_notify_swapbuffers(context->draw->stfbi);
 
 	context->st->flush(context->st, ST_FLUSH_FRONT, NULL);
 

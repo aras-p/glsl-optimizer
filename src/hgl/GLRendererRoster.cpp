@@ -17,7 +17,7 @@
 #include <Directory.h>
 #include <FindDirectory.h>
 #include <Path.h>
-#include <String.h>
+#include <strings.h>
 #include "GLDispatcher.h"
 #include "GLRendererRoster.h"
 

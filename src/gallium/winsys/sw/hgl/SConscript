@@ -12,13 +12,13 @@ if env['platform'] in ('haiku'):
         '#/src/gallium/include',
         '#/src/gallium/auxiliary',
         '#/src/gallium/drivers',
+        '#/src/gallium/state_trackers/hgl',
     ])
 
     ws_haiku = env.ConvenienceLibrary(
         target = 'ws_haiku',
         source = [
            'hgl_sw_winsys.c',
-           'bitmap_wrapper.cpp',
         ]
     )
     Export('ws_haiku')
