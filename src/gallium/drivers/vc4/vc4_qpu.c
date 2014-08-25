@@ -107,6 +107,7 @@ qpu_a_MOV(struct qpu_reg dst, struct qpu_reg src)
         inst |= QPU_SET_FIELD(src.mux, QPU_ADD_B);
         inst |= set_src_raddr(inst, src);
         inst |= QPU_SET_FIELD(QPU_SIG_NONE, QPU_SIG);
+        inst |= QPU_SET_FIELD(QPU_W_NOP, QPU_WADDR_MUL);
 
         return inst;
 }
@@ -123,6 +124,7 @@ qpu_m_MOV(struct qpu_reg dst, struct qpu_reg src)
         inst |= QPU_SET_FIELD(src.mux, QPU_MUL_B);
         inst |= set_src_raddr(inst, src);
         inst |= QPU_SET_FIELD(QPU_SIG_NONE, QPU_SIG);
+        inst |= QPU_SET_FIELD(QPU_W_NOP, QPU_WADDR_ADD);
 
         return inst;
 }
@@ -133,7 +135,7 @@ qpu_load_imm_ui(struct qpu_reg dst, uint32_t val)
         uint64_t inst = 0;
 
         inst |= qpu_a_dst(dst);
-        inst |= qpu_m_dst(qpu_rb(QPU_W_NOP));
+        inst |= QPU_SET_FIELD(QPU_W_NOP, QPU_WADDR_MUL);
         inst |= QPU_SET_FIELD(QPU_COND_ALWAYS, QPU_COND_ADD);
         inst |= QPU_SET_FIELD(QPU_COND_ALWAYS, QPU_COND_MUL);
         inst |= QPU_SET_FIELD(QPU_SIG_LOAD_IMM, QPU_SIG);
@@ -156,6 +158,7 @@ qpu_a_alu2(enum qpu_op_add op,
         inst |= QPU_SET_FIELD(src1.mux, QPU_ADD_B);
         inst |= set_src_raddr(inst, src1);
         inst |= QPU_SET_FIELD(QPU_SIG_NONE, QPU_SIG);
+        inst |= QPU_SET_FIELD(QPU_W_NOP, QPU_WADDR_MUL);
 
         return inst;
 }
@@ -177,6 +180,7 @@ qpu_m_alu2(enum qpu_op_mul op,
         inst |= QPU_SET_FIELD(src1.mux, QPU_MUL_B);
         inst |= set_src_raddr(inst, src1);
         inst |= QPU_SET_FIELD(QPU_SIG_NONE, QPU_SIG);
+        inst |= QPU_SET_FIELD(QPU_W_NOP, QPU_WADDR_ADD);
 
         return inst;
 }
