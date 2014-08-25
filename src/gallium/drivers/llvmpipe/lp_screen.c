@@ -168,6 +168,7 @@ llvmpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return 0;
    case PIPE_CAP_TGSI_INSTANCEID:
    case PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR:
+   case PIPE_CAP_START_INSTANCE:
       return 1;
    case PIPE_CAP_FRAGMENT_COLOR_CLAMPED:
       return 0;
@@ -223,7 +224,6 @@ llvmpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
 
    case PIPE_CAP_CONSTANT_BUFFER_OFFSET_ALIGNMENT:
       return 16;
-   case PIPE_CAP_START_INSTANCE:
    case PIPE_CAP_TEXTURE_MULTISAMPLE:
    case PIPE_CAP_CUBE_MAP_ARRAY:
       return 0;
