@@ -192,7 +192,8 @@ qpu_m_alu2(enum qpu_op_mul op,
 uint64_t
 qpu_inst(uint64_t add, uint64_t mul)
 {
-        uint64_t merge = add | mul;
+        uint64_t merge = ((add & ~QPU_WADDR_MUL_MASK) |
+                          (mul & ~QPU_WADDR_ADD_MASK));
 
         /* If either one has no signal field, then use the other's signal field.
          * (since QPU_SIG_NONE != 0).
