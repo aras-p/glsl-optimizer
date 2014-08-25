@@ -22,6 +22,7 @@
  */
 
 #include "brw_vec4.h"
+#include "brw_cfg.h"
 #include "glsl/ir_uniform.h"
 extern "C" {
 #include "program/sampler.h"
@@ -66,12 +67,13 @@ vec4_visitor::emit(vec4_instruction *inst)
 }
 
 vec4_instruction *
-vec4_visitor::emit_before(vec4_instruction *inst, vec4_instruction *new_inst)
+vec4_visitor::emit_before(bblock_t *block, vec4_instruction *inst,
+                          vec4_instruction *new_inst)
 {
    new_inst->ir = inst->ir;
    new_inst->annotation = inst->annotation;
 
-   inst->insert_before(new_inst);
+   inst->insert_before(block, new_inst);
 
    return inst;
 }
@@ -3198,7 +3200,7 @@ vec4_visitor::emit_vertex()
 
 
 src_reg
-vec4_visitor::get_scratch_offset(vec4_instruction *inst,
+vec4_visitor::get_scratch_offset(bblock_t *block, vec4_instruction *inst,
 				 src_reg *reladdr, int reg_offset)
 {
    /* Because we store the values to scratch interleaved like our
@@ -3215,9 +3217,10 @@ vec4_visitor::get_scratch_offset(vec4_instruction *inst,
    if (reladdr) {
       src_reg index = src_reg(this, glsl_type::int_type);
 
-      emit_before(inst, ADD(dst_reg(index), *reladdr, src_reg(reg_offset)));
-      emit_before(inst, MUL(dst_reg(index),
-			    index, src_reg(message_header_scale)));
+      emit_before(block, inst, ADD(dst_reg(index), *reladdr,
+                                   src_reg(reg_offset)));
+      emit_before(block, inst, MUL(dst_reg(index), index,
+                                   src_reg(message_header_scale)));
 
       return index;
    } else {
@@ -3226,26 +3229,27 @@ vec4_visitor::get_scratch_offset(vec4_instruction *inst,
 }
 
 src_reg
-vec4_visitor::get_pull_constant_offset(vec4_instruction *inst,
+vec4_visitor::get_pull_constant_offset(bblock_t * block, vec4_instruction *inst,
 				       src_reg *reladdr, int reg_offset)
 {
    if (reladdr) {
       src_reg index = src_reg(this, glsl_type::int_type);
 
-      emit_before(inst, ADD(dst_reg(index), *reladdr, src_reg(reg_offset)));
+      emit_before(block, inst, ADD(dst_reg(index), *reladdr,
+                                   src_reg(reg_offset)));
 
       /* Pre-gen6, the message header uses byte offsets instead of vec4
        * (16-byte) offset units.
        */
       if (brw->gen < 6) {
-	 emit_before(inst, MUL(dst_reg(index), index, src_reg(16)));
+         emit_before(block, inst, MUL(dst_reg(index), index, src_reg(16)));
       }
 
       return index;
    } else if (brw->gen >= 8) {
       /* Store the offset in a GRF so we can send-from-GRF. */
       src_reg offset = src_reg(this, glsl_type::int_type);
-      emit_before(inst, MOV(dst_reg(offset), src_reg(reg_offset)));
+      emit_before(block, inst, MOV(dst_reg(offset), src_reg(reg_offset)));
       return offset;
    } else {
       int message_header_scale = brw->gen < 6 ? 16 : 1;
@@ -3260,14 +3264,15 @@ vec4_visitor::get_pull_constant_offset(vec4_instruction *inst,
  * @base_offset is measured in 32-byte units (the size of a register).
  */
 void
-vec4_visitor::emit_scratch_read(vec4_instruction *inst,
+vec4_visitor::emit_scratch_read(bblock_t *block, vec4_instruction *inst,
 				dst_reg temp, src_reg orig_src,
 				int base_offset)
 {
    int reg_offset = base_offset + orig_src.reg_offset;
-   src_reg index = get_scratch_offset(inst, orig_src.reladdr, reg_offset);
+   src_reg index = get_scratch_offset(block, inst, orig_src.reladdr,
+                                      reg_offset);
 
-   emit_before(inst, SCRATCH_READ(temp, index));
+   emit_before(block, inst, SCRATCH_READ(temp, index));
 }
 
 /**
@@ -3277,10 +3282,12 @@ vec4_visitor::emit_scratch_read(vec4_instruction *inst,
  * @base_offset is measured in 32-byte units (the size of a register).
  */
 void
-vec4_visitor::emit_scratch_write(vec4_instruction *inst, int base_offset)
+vec4_visitor::emit_scratch_write(bblock_t *block, vec4_instruction *inst,
+                                 int base_offset)
 {
    int reg_offset = base_offset + inst->dst.reg_offset;
-   src_reg index = get_scratch_offset(inst, inst->dst.reladdr, reg_offset);
+   src_reg index = get_scratch_offset(block, inst, inst->dst.reladdr,
+                                      reg_offset);
 
    /* Create a temporary register to store *inst's result in.
     *
@@ -3307,7 +3314,7 @@ vec4_visitor::emit_scratch_write(vec4_instruction *inst, int base_offset)
    write->predicate = inst->predicate;
    write->ir = inst->ir;
    write->annotation = inst->annotation;
-   inst->insert_after(write);
+   inst->insert_after(block, write);
 
    inst->dst.file = temp.file;
    inst->dst.reg = temp.reg;
@@ -3330,11 +3337,13 @@ vec4_visitor::move_grf_array_access_to_scratch()
       scratch_loc[i] = -1;
    }
 
+   calculate_cfg();
+
    /* First, calculate the set of virtual GRFs that need to be punted
     * to scratch due to having any array access on them, and where in
     * scratch.
     */
-   foreach_in_list(vec4_instruction, inst, &instructions) {
+   foreach_block_and_inst(block, vec4_instruction, inst, cfg) {
       if (inst->dst.file == GRF && inst->dst.reladdr &&
 	  scratch_loc[inst->dst.reg] == -1) {
 	 scratch_loc[inst->dst.reg] = c->last_scratch;
@@ -3357,13 +3366,13 @@ vec4_visitor::move_grf_array_access_to_scratch()
     * we may generate a new scratch_write instruction after the one
     * we're processing.
     */
-   foreach_in_list_safe(vec4_instruction, inst, &instructions) {
+   foreach_block_and_inst_safe(block, vec4_instruction, inst, cfg) {
       /* Set up the annotation tracking for new generated instructions. */
       base_ir = inst->ir;
       current_annotation = inst->annotation;
 
       if (inst->dst.file == GRF && scratch_loc[inst->dst.reg] != -1) {
-	 emit_scratch_write(inst, scratch_loc[inst->dst.reg]);
+	 emit_scratch_write(block, inst, scratch_loc[inst->dst.reg]);
       }
 
       for (int i = 0 ; i < 3; i++) {
@@ -3372,7 +3381,7 @@ vec4_visitor::move_grf_array_access_to_scratch()
 
 	 dst_reg temp = dst_reg(this, glsl_type::vec4_type);
 
-	 emit_scratch_read(inst, temp, inst->src[i],
+	 emit_scratch_read(block, inst, temp, inst->src[i],
 			   scratch_loc[inst->src[i].reg]);
 
 	 inst->src[i].file = temp.file;
@@ -3388,19 +3397,20 @@ vec4_visitor::move_grf_array_access_to_scratch()
  * from the pull constant buffer (surface) at @base_offset to @temp.
  */
 void
-vec4_visitor::emit_pull_constant_load(vec4_instruction *inst,
+vec4_visitor::emit_pull_constant_load(bblock_t *block, vec4_instruction *inst,
 				      dst_reg temp, src_reg orig_src,
 				      int base_offset)
 {
    int reg_offset = base_offset + orig_src.reg_offset;
    src_reg index = src_reg(prog_data->base.binding_table.pull_constants_start);
-   src_reg offset = get_pull_constant_offset(inst, orig_src.reladdr, reg_offset);
+   src_reg offset = get_pull_constant_offset(block, inst, orig_src.reladdr,
+                                             reg_offset);
    vec4_instruction *load;
 
    if (brw->gen >= 7) {
       dst_reg grf_offset = dst_reg(this, glsl_type::int_type);
       grf_offset.type = offset.type;
-      emit_before(inst, MOV(grf_offset, offset));
+      emit_before(block, inst, MOV(grf_offset, offset));
 
       load = new(mem_ctx) vec4_instruction(this,
                                            VS_OPCODE_PULL_CONSTANT_LOAD_GEN7,
@@ -3411,7 +3421,7 @@ vec4_visitor::emit_pull_constant_load(vec4_instruction *inst,
       load->base_mrf = 14;
       load->mlen = 1;
    }
-   emit_before(inst, load);
+   emit_before(block, inst, load);
 }
 
 /**
@@ -3435,13 +3445,15 @@ vec4_visitor::move_uniform_array_access_to_pull_constants()
       pull_constant_loc[i] = -1;
    }
 
+   calculate_cfg();
+
    /* Walk through and find array access of uniforms.  Put a copy of that
     * uniform in the pull constant buffer.
     *
     * Note that we don't move constant-indexed accesses to arrays.  No
     * testing has been done of the performance impact of this choice.
     */
-   foreach_in_list_safe(vec4_instruction, inst, &instructions) {
+   foreach_block_and_inst_safe(block, vec4_instruction, inst, cfg) {
       for (int i = 0 ; i < 3; i++) {
 	 if (inst->src[i].file != UNIFORM || !inst->src[i].reladdr)
 	    continue;
@@ -3470,7 +3482,7 @@ vec4_visitor::move_uniform_array_access_to_pull_constants()
 
 	 dst_reg temp = dst_reg(this, glsl_type::vec4_type);
 
-	 emit_pull_constant_load(inst, temp, inst->src[i],
+	 emit_pull_constant_load(block, inst, temp, inst->src[i],
 				 pull_constant_loc[uniform]);
 
 	 inst->src[i].file = temp.file;

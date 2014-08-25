@@ -410,7 +410,8 @@ public:
    vec4_instruction *emit(enum opcode opcode, dst_reg dst,
 			  src_reg src0, src_reg src1, src_reg src2);
 
-   vec4_instruction *emit_before(vec4_instruction *inst,
+   vec4_instruction *emit_before(bblock_t *block,
+                                 vec4_instruction *inst,
 				 vec4_instruction *new_inst);
 
    vec4_instruction *MOV(const dst_reg &dst, const src_reg &src0);
@@ -554,17 +555,17 @@ public:
    void emit_untyped_surface_read(unsigned surf_index, dst_reg dst,
                                   src_reg offset);
 
-   src_reg get_scratch_offset(vec4_instruction *inst,
+   src_reg get_scratch_offset(bblock_t *block, vec4_instruction *inst,
 			      src_reg *reladdr, int reg_offset);
-   src_reg get_pull_constant_offset(vec4_instruction *inst,
+   src_reg get_pull_constant_offset(bblock_t *block, vec4_instruction *inst,
 				    src_reg *reladdr, int reg_offset);
-   void emit_scratch_read(vec4_instruction *inst,
+   void emit_scratch_read(bblock_t *block, vec4_instruction *inst,
 			  dst_reg dst,
 			  src_reg orig_src,
 			  int base_offset);
-   void emit_scratch_write(vec4_instruction *inst,
+   void emit_scratch_write(bblock_t *block, vec4_instruction *inst,
 			   int base_offset);
-   void emit_pull_constant_load(vec4_instruction *inst,
+   void emit_pull_constant_load(bblock_t *block, vec4_instruction *inst,
 				dst_reg dst,
 				src_reg orig_src,
 				int base_offset);

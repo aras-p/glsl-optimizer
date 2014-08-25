@@ -807,10 +807,12 @@ vec4_visitor::move_push_constants_to_pull_constants()
       }
    }
 
+   calculate_cfg();
+
    /* Now actually rewrite usage of the things we've moved to pull
     * constants.
     */
-   foreach_in_list_safe(vec4_instruction, inst, &instructions) {
+   foreach_block_and_inst_safe(block, vec4_instruction, inst, cfg) {
       for (int i = 0 ; i < 3; i++) {
 	 if (inst->src[i].file != UNIFORM ||
 	     pull_constant_loc[inst->src[i].reg] == -1)
@@ -820,7 +822,7 @@ vec4_visitor::move_push_constants_to_pull_constants()
 
 	 dst_reg temp = dst_reg(this, glsl_type::vec4_type);
 
-	 emit_pull_constant_load(inst, temp, inst->src[i],
+	 emit_pull_constant_load(block, inst, temp, inst->src[i],
 				 pull_constant_loc[uniform]);
 
 	 inst->src[i].file = temp.file;

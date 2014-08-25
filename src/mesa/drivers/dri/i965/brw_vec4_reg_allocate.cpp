@@ -28,6 +28,7 @@ extern "C" {
 
 #include "brw_vec4.h"
 #include "brw_vs.h"
+#include "brw_cfg.h"
 
 using namespace brw;
 
@@ -326,8 +327,10 @@ vec4_visitor::spill_reg(int spill_reg_nr)
    assert(virtual_grf_sizes[spill_reg_nr] == 1);
    unsigned int spill_offset = c->last_scratch++;
 
+   calculate_cfg();
+
    /* Generate spill/unspill instructions for the objects being spilled. */
-   foreach_in_list(vec4_instruction, inst, &instructions) {
+   foreach_block_and_inst(block, vec4_instruction, inst, cfg) {
       for (unsigned int i = 0; i < 3; i++) {
          if (inst->src[i].file == GRF && inst->src[i].reg == spill_reg_nr) {
             src_reg spill_reg = inst->src[i];
@@ -342,16 +345,16 @@ vec4_visitor::spill_reg(int spill_reg_nr)
                temp.writemask |= (1 << BRW_GET_SWZ(inst->src[i].swizzle, c));
             assert(temp.writemask != 0);
 
-            emit_scratch_read(inst, temp, spill_reg, spill_offset);
+            emit_scratch_read(block, inst, temp, spill_reg, spill_offset);
          }
       }
 
       if (inst->dst.file == GRF && inst->dst.reg == spill_reg_nr) {
-         emit_scratch_write(inst, spill_offset);
+         emit_scratch_write(block, inst, spill_offset);
       }
    }
 
-   invalidate_live_intervals();
+   invalidate_live_intervals(false);
 }
 
 } /* namespace brw */
