@@ -426,7 +426,7 @@ try_eliminate_instruction(vec4_instruction *inst, int new_writemask,
       if (inst->writes_accumulator || inst->writes_flag()) {
          inst->dst = dst_reg(retype(brw_null_reg(), inst->dst.type));
       } else {
-         inst->remove();
+         inst->opcode = BRW_OPCODE_NOP;
       }
 
       return true;
@@ -465,7 +465,7 @@ vec4_visitor::dead_code_eliminate()
 
    calculate_live_intervals();
 
-   foreach_in_list_safe(vec4_instruction, inst, &instructions) {
+   foreach_block_and_inst(block, vec4_instruction, inst, cfg) {
       pc++;
 
       bool inst_writes_flag = false;
@@ -526,7 +526,7 @@ vec4_visitor::dead_code_eliminate()
 
          if (inst_writes_flag) {
             if (scan_inst->dst.is_null() && scan_inst->writes_flag()) {
-               scan_inst->remove();
+               scan_inst->opcode = BRW_OPCODE_NOP;
                progress = true;
                continue;
             } else if (scan_inst->reads_flag()) {
@@ -556,8 +556,15 @@ vec4_visitor::dead_code_eliminate()
       }
    }
 
-   if (progress)
-      invalidate_live_intervals();
+   if (progress) {
+      foreach_block_and_inst_safe (block, backend_instruction, inst, cfg) {
+         if (inst->opcode == BRW_OPCODE_NOP) {
+            inst->remove(block);
+         }
+      }
+
+      invalidate_live_intervals(false);
+   }
 
    return progress;
 }
@@ -693,7 +700,9 @@ vec4_visitor::opt_algebraic()
 {
    bool progress = false;
 
-   foreach_in_list(vec4_instruction, inst, &instructions) {
+   calculate_cfg();
+
+   foreach_block_and_inst(block, vec4_instruction, inst, cfg) {
       switch (inst->opcode) {
       case BRW_OPCODE_ADD:
 	 if (inst->src[1].is_zero()) {
@@ -733,7 +742,7 @@ vec4_visitor::opt_algebraic()
    }
 
    if (progress)
-      invalidate_live_intervals();
+      invalidate_live_intervals(false);
 
    return progress;
 }
