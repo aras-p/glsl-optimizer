@@ -2154,7 +2154,7 @@ fs_visitor::opt_register_renaming()
    }
 
    if (progress) {
-      invalidate_live_intervals();
+      invalidate_live_intervals(false);
 
       for (unsigned i = 0; i < ARRAY_SIZE(delta_x); i++) {
          if (delta_x[i].file == GRF && remap[delta_x[i].reg] != -1) {
@@ -2498,7 +2498,7 @@ fs_visitor::remove_duplicate_mrf_writes()
    }
 
    if (progress)
-      invalidate_live_intervals();
+      invalidate_live_intervals(false);
 
    return progress;
 }
@@ -2549,7 +2549,8 @@ clear_deps_for_inst_src(fs_inst *inst, int dispatch_width, bool *deps,
  *      same time that both consider ‘r3’ as the target of their final writes.
  */
 void
-fs_visitor::insert_gen4_pre_send_dependency_workarounds(fs_inst *inst)
+fs_visitor::insert_gen4_pre_send_dependency_workarounds(bblock_t *block,
+                                                        fs_inst *inst)
 {
    int reg_size = dispatch_width / 8;
    int write_len = inst->regs_written * reg_size;
@@ -2578,7 +2579,7 @@ fs_visitor::insert_gen4_pre_send_dependency_workarounds(fs_inst *inst)
       if (scan_inst->is_control_flow()) {
          for (int i = 0; i < write_len; i++) {
             if (needs_dep[i]) {
-               inst->insert_before(DEP_RESOLVE_MOV(first_write_grf + i));
+               inst->insert_before(block, DEP_RESOLVE_MOV(first_write_grf + i));
             }
          }
          return;
@@ -2599,7 +2600,7 @@ fs_visitor::insert_gen4_pre_send_dependency_workarounds(fs_inst *inst)
             if (reg >= first_write_grf &&
                 reg < first_write_grf + write_len &&
                 needs_dep[reg - first_write_grf]) {
-               inst->insert_before(DEP_RESOLVE_MOV(reg));
+               inst->insert_before(block, DEP_RESOLVE_MOV(reg));
                needs_dep[reg - first_write_grf] = false;
                if (scan_inst_simd16)
                   needs_dep[reg - first_write_grf + 1] = false;
@@ -2630,7 +2631,7 @@ fs_visitor::insert_gen4_pre_send_dependency_workarounds(fs_inst *inst)
  *      instruction with a different destination register.
  */
 void
-fs_visitor::insert_gen4_post_send_dependency_workarounds(fs_inst *inst)
+fs_visitor::insert_gen4_post_send_dependency_workarounds(bblock_t *block, fs_inst *inst)
 {
    int write_len = inst->regs_written * dispatch_width / 8;
    int first_write_grf = inst->dst.reg;
@@ -2649,7 +2650,8 @@ fs_visitor::insert_gen4_post_send_dependency_workarounds(fs_inst *inst)
       if (scan_inst->is_control_flow()) {
          for (int i = 0; i < write_len; i++) {
             if (needs_dep[i])
-               scan_inst->insert_before(DEP_RESOLVE_MOV(first_write_grf + i));
+               scan_inst->insert_before(block,
+                                        DEP_RESOLVE_MOV(first_write_grf + i));
          }
          return;
       }
@@ -2665,7 +2667,7 @@ fs_visitor::insert_gen4_post_send_dependency_workarounds(fs_inst *inst)
           scan_inst->dst.reg >= first_write_grf &&
           scan_inst->dst.reg < first_write_grf + write_len &&
           needs_dep[scan_inst->dst.reg - first_write_grf]) {
-         scan_inst->insert_before(DEP_RESOLVE_MOV(scan_inst->dst.reg));
+         scan_inst->insert_before(block, DEP_RESOLVE_MOV(scan_inst->dst.reg));
          needs_dep[scan_inst->dst.reg - first_write_grf] = false;
       }
 
@@ -2686,7 +2688,7 @@ fs_visitor::insert_gen4_post_send_dependency_workarounds(fs_inst *inst)
    assert(last_inst->eot);
    for (int i = 0; i < write_len; i++) {
       if (needs_dep[i])
-         last_inst->insert_before(DEP_RESOLVE_MOV(first_write_grf + i));
+         last_inst->insert_before(block, DEP_RESOLVE_MOV(first_write_grf + i));
    }
 }
 
@@ -2702,16 +2704,18 @@ fs_visitor::insert_gen4_send_dependency_workarounds()
     * have a .reg_offset of 0.
     */
 
-   foreach_in_list_safe(fs_inst, inst, &instructions) {
+   calculate_cfg();
+
+   foreach_block_and_inst(block, fs_inst, inst, cfg) {
       if (inst->mlen != 0 && inst->dst.file == GRF) {
-         insert_gen4_pre_send_dependency_workarounds(inst);
-         insert_gen4_post_send_dependency_workarounds(inst);
+         insert_gen4_pre_send_dependency_workarounds(block, inst);
+         insert_gen4_post_send_dependency_workarounds(block, inst);
          progress = true;
       }
    }
 
    if (progress)
-      invalidate_live_intervals();
+      invalidate_live_intervals(false);
 }
 
 /**

@@ -348,8 +348,10 @@ public:
    bool virtual_grf_interferes(int a, int b);
    void schedule_instructions(instruction_scheduler_mode mode);
    void insert_gen4_send_dependency_workarounds();
-   void insert_gen4_pre_send_dependency_workarounds(fs_inst *inst);
-   void insert_gen4_post_send_dependency_workarounds(fs_inst *inst);
+   void insert_gen4_pre_send_dependency_workarounds(bblock_t *block,
+                                                    fs_inst *inst);
+   void insert_gen4_post_send_dependency_workarounds(bblock_t *block,
+                                                     fs_inst *inst);
    void vfail(const char *msg, va_list args);
    void fail(const char *msg, ...);
    void no16(const char *msg, ...);
