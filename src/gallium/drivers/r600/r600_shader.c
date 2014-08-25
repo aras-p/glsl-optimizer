@@ -706,6 +706,8 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 			break;
 		} else if (d->Semantic.Name == TGSI_SEMANTIC_VERTEXID)
 			break;
+		else if (d->Semantic.Name == TGSI_SEMANTIC_INVOCATIONID)
+			break;
 	default:
 		R600_ERR("unsupported file %d declaration\n", d->Declaration.File);
 		return -EINVAL;
@@ -811,6 +813,12 @@ static void tgsi_src(struct r600_shader_ctx *ctx,
 			r600_src->swizzle[2] = 0;
 			r600_src->swizzle[3] = 0;
 			r600_src->sel = 0;
+		} else if (ctx->info.system_value_semantic_name[tgsi_src->Register.Index] == TGSI_SEMANTIC_INVOCATIONID) {
+			r600_src->swizzle[0] = 3;
+			r600_src->swizzle[1] = 3;
+			r600_src->swizzle[2] = 3;
+			r600_src->swizzle[3] = 3;
+			r600_src->sel = 1;
 		}
 	} else {
 		if (tgsi_src->Register.Indirect)
@@ -1752,6 +1760,9 @@ static int r600_shader_from_tgsi(struct r600_context *rctx,
 				break;
 			case TGSI_PROPERTY_GS_MAX_OUTPUT_VERTICES:
 				shader->gs_max_out_vertices = property->u[0].Data;
+				break;
+			case TGSI_PROPERTY_GS_INVOCATIONS:
+				shader->gs_num_invocations = property->u[0].Data;
 				break;
 			}
 			break;

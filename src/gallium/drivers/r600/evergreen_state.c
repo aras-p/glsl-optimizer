@@ -2963,8 +2963,8 @@ void evergreen_update_gs_state(struct pipe_context *ctx, struct r600_pipe_shader
 
 	if (rctx->screen->b.info.drm_minor >= 35) {
 		r600_store_context_reg(cb, R_028B90_VGT_GS_INSTANCE_CNT,
-				S_028B90_CNT(0) |
-				S_028B90_ENABLE(0));
+				S_028B90_CNT(MIN2(rshader->gs_num_invocations, 127)) |
+				S_028B90_ENABLE(rshader->gs_num_invocations > 0));
 	}
 	r600_store_context_reg_seq(cb, R_02891C_SQ_GS_VERT_ITEMSIZE, 4);
 	r600_store_value(cb, cp_shader->ring_item_size >> 2);

@@ -104,7 +104,7 @@ GL 4.0, GLSL 4.00:
   - Fused multiply-add                                 DONE ()
   - Packing/bitfield/conversion functions              DONE (r600)
   - Enhanced textureGather                             DONE (r600, radeonsi)
-  - Geometry shader instancing                         DONE ()
+  - Geometry shader instancing                         DONE (r600)
   - Geometry shader multiple streams                   DONE ()
   - Enhanced per-sample shading                        DONE (r600)
   - Interpolation functions                            DONE ()
