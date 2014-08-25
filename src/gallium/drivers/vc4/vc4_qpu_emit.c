@@ -369,30 +369,13 @@ vc4_generate_code(struct qcompile *c)
                         queue(c, qpu_a_MOV(qpu_ra(QPU_W_NOP), src[0]));
                         *last_inst(c) |= QPU_SF;
 
-                        if (dst.mux <= QPU_MUX_R3) {
-                                fixup_raddr_conflict(c, src[1], &src[2]);
-                                queue(c, qpu_inst(qpu_a_MOV(dst, src[1]),
-                                                  qpu_m_MOV(dst, src[2])));
-                                *last_inst(c) = qpu_set_cond_add(*last_inst(c),
-                                                                 QPU_COND_NS);
-                                *last_inst(c) = qpu_set_cond_mul(*last_inst(c),
-                                                                 QPU_COND_NC);
-                        } else {
-                                if (dst.mux == src[1].mux &&
-                                    dst.addr == src[1].addr) {
-                                        queue(c, qpu_a_MOV(dst, src[1]));
+                        queue(c, qpu_a_MOV(dst, src[1]));
+                        *last_inst(c) = qpu_set_cond_add(*last_inst(c),
+                                                         QPU_COND_NS);
 
-                                        queue(c, qpu_a_MOV(dst, src[2]));
-                                        *last_inst(c) = qpu_set_cond_add(*last_inst(c),
-                                                                         QPU_COND_NC);
-                                } else {
-                                        queue(c, qpu_a_MOV(dst, src[2]));
-
-                                        queue(c, qpu_a_MOV(dst, src[1]));
-                                        *last_inst(c) = qpu_set_cond_add(*last_inst(c),
-                                                                         QPU_COND_NS);
-                                }
-                        }
+                        queue(c, qpu_a_MOV(dst, src[2]));
+                        *last_inst(c) = qpu_set_cond_add(*last_inst(c),
+                                                         QPU_COND_NC);
                         break;
 
                 case QOP_SEQ:
