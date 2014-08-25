@@ -46,23 +46,15 @@ set_src_raddr(uint64_t inst, struct qpu_reg src)
 }
 
 uint64_t
-qpu_a_NOP()
+qpu_NOP()
 {
         uint64_t inst = 0;
 
         inst |= QPU_SET_FIELD(QPU_A_NOP, QPU_OP_ADD);
-        inst |= QPU_SET_FIELD(QPU_W_NOP, QPU_WADDR_ADD);
-        inst |= QPU_SET_FIELD(QPU_SIG_NONE, QPU_SIG);
-
-        return inst;
-}
-
-uint64_t
-qpu_m_NOP()
-{
-        uint64_t inst = 0;
-
         inst |= QPU_SET_FIELD(QPU_M_NOP, QPU_OP_MUL);
+
+        /* Note: These field values are actually non-zero */
+        inst |= QPU_SET_FIELD(QPU_W_NOP, QPU_WADDR_ADD);
         inst |= QPU_SET_FIELD(QPU_W_NOP, QPU_WADDR_MUL);
         inst |= QPU_SET_FIELD(QPU_SIG_NONE, QPU_SIG);
 

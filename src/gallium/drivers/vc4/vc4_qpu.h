@@ -120,10 +120,9 @@ static inline struct qpu_reg qpu_r3(void) { return qpu_rn(3); }
 static inline struct qpu_reg qpu_r4(void) { return qpu_rn(4); }
 static inline struct qpu_reg qpu_r5(void) { return qpu_rn(5); }
 
+uint64_t qpu_NOP(void);
 uint64_t qpu_a_MOV(struct qpu_reg dst, struct qpu_reg src);
 uint64_t qpu_m_MOV(struct qpu_reg dst, struct qpu_reg src);
-uint64_t qpu_a_NOP(void);
-uint64_t qpu_m_NOP(void);
 uint64_t qpu_a_alu2(enum qpu_op_add op, struct qpu_reg dst,
                     struct qpu_reg src0, struct qpu_reg src1);
 uint64_t qpu_m_alu2(enum qpu_op_mul op, struct qpu_reg dst,
