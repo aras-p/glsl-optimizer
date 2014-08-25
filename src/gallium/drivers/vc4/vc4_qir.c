@@ -127,6 +127,54 @@ qir_has_side_effects(struct qinst *inst)
         return qir_op_info[inst->op].has_side_effects;
 }
 
+bool
+qir_depends_on_flags(struct qinst *inst)
+{
+        switch (inst->op) {
+        case QOP_SEL_X_0_NS:
+        case QOP_SEL_X_0_NC:
+        case QOP_SEL_X_0_ZS:
+        case QOP_SEL_X_0_ZC:
+        case QOP_SEL_X_Y_NS:
+        case QOP_SEL_X_Y_NC:
+        case QOP_SEL_X_Y_ZS:
+        case QOP_SEL_X_Y_ZC:
+                return true;
+        default:
+                return false;
+        }
+}
+
+bool
+qir_writes_r4(struct qinst *inst)
+{
+        switch (inst->op) {
+        case QOP_TEX_RESULT:
+        case QOP_TLB_COLOR_READ:
+        case QOP_RCP:
+        case QOP_RSQ:
+        case QOP_EXP2:
+        case QOP_LOG2:
+                return true;
+        default:
+                return false;
+        }
+}
+
+bool
+qir_reads_r4(struct qinst *inst)
+{
+        switch (inst->op) {
+        case QOP_R4_UNPACK_A:
+        case QOP_R4_UNPACK_B:
+        case QOP_R4_UNPACK_C:
+        case QOP_R4_UNPACK_D:
+                return true;
+        default:
+                return false;
+        }
+}
+
 static void
 qir_print_reg(struct qreg reg)
 {
@@ -274,6 +322,7 @@ qir_optimize(struct qcompile *c)
                 bool progress = false;
 
                 OPTPASS(qir_opt_algebraic);
+                OPTPASS(qir_opt_cse);
                 OPTPASS(qir_opt_copy_propagation);
                 OPTPASS(qir_opt_dead_code);
 
