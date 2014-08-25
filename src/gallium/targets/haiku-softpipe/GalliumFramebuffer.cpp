@@ -100,8 +100,10 @@ hgl_framebuffer_validate(struct st_context_iface* stctx,
 	
 			switch(statts[i]) {
 				case ST_ATTACHMENT_FRONT_LEFT:
+				case ST_ATTACHMENT_BACK_LEFT:
 					format = context->stVisual->color_format;
-					bind = PIPE_BIND_RENDER_TARGET;
+					bind = PIPE_BIND_DISPLAY_TARGET
+						| PIPE_BIND_RENDER_TARGET;
 					break;
 				case ST_ATTACHMENT_DEPTH_STENCIL:
 					format = context->stVisual->depth_stencil_format;
@@ -112,14 +114,18 @@ hgl_framebuffer_validate(struct st_context_iface* stctx,
 					bind = PIPE_BIND_RENDER_TARGET;
 					break;
 				default:
-					ERROR("%s: Unexpected attachment type!\n", __func__);
+					format = PIPE_FORMAT_NONE;
+					break;
 			}
-			templat.format = format;
-			templat.bind = bind;
 
-			struct pipe_screen* screen = context->manager->screen;
-			context->textures[i] = screen->resource_create(screen, &templat);
-			out[i] = context->textures[i];
+			if (format != PIPE_FORMAT_NONE) {
+				templat.format = format;
+				templat.bind = bind;
+
+				struct pipe_screen* screen = context->manager->screen;
+				context->textures[i] = screen->resource_create(screen, &templat);
+				out[i] = context->textures[i];
+			}
 		}
 	}
 
