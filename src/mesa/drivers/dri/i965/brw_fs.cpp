@@ -1514,9 +1514,8 @@ fs_visitor::calculate_urb_setup()
    brw_wm_prog_data *prog_data = (brw_wm_prog_data*) this->prog_data;
    brw_wm_prog_key *key = (brw_wm_prog_key*) this->key;
 
-   for (unsigned int i = 0; i < VARYING_SLOT_MAX; i++) {
-      prog_data->urb_setup[i] = -1;
-   }
+   memset(prog_data->urb_setup, -1,
+          sizeof(prog_data->urb_setup[0]) * VARYING_SLOT_MAX);
 
    int urb_next = 0;
    /* Figure out where each of the incoming setup attributes lands. */
@@ -1820,10 +1819,7 @@ fs_visitor::move_uniform_array_access_to_pull_constants()
       return;
 
    pull_constant_loc = ralloc_array(mem_ctx, int, uniforms);
-
-   for (unsigned int i = 0; i < uniforms; i++) {
-      pull_constant_loc[i] = -1;
-   }
+   memset(pull_constant_loc, -1, sizeof(pull_constant_loc[0]) * uniforms);
 
    /* Walk through and find array access of uniforms.  Put a copy of that
     * uniform in the pull constant buffer.
