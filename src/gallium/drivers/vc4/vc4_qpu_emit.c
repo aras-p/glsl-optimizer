@@ -76,8 +76,7 @@ fixup_raddr_conflict(struct qcompile *c,
         if ((src0.mux == QPU_MUX_A || src0.mux == QPU_MUX_B) &&
             (src1->mux == QPU_MUX_A || src1->mux == QPU_MUX_B) &&
             src0.addr != src1->addr) {
-                queue(c, qpu_inst(qpu_a_MOV(qpu_r3(), *src1),
-                                  qpu_NOP()));
+                queue(c, qpu_a_MOV(qpu_r3(), *src1));
                 *src1 = qpu_r3();
         }
 }
@@ -362,15 +361,12 @@ vc4_generate_code(struct qcompile *c)
                         /* Skip emitting the MOV if it's a no-op. */
                         if (dst.mux == QPU_MUX_A || dst.mux == QPU_MUX_B ||
                             dst.mux != src[0].mux || dst.addr != src[0].addr) {
-                                queue(c, qpu_inst(qpu_a_MOV(dst, src[0]),
-                                                  qpu_NOP()));
+                                queue(c, qpu_a_MOV(dst, src[0]));
                         }
                         break;
 
                 case QOP_CMP:
-                        queue(c, qpu_inst(qpu_a_MOV(qpu_ra(QPU_W_NOP),
-                                                    src[0]),
-                                          qpu_NOP()));
+                        queue(c, qpu_a_MOV(qpu_ra(QPU_W_NOP), src[0]));
                         *last_inst(c) |= QPU_SF;
 
                         if (dst.mux <= QPU_MUX_R3) {
@@ -384,19 +380,15 @@ vc4_generate_code(struct qcompile *c)
                         } else {
                                 if (dst.mux == src[1].mux &&
                                     dst.addr == src[1].addr) {
-                                        queue(c, qpu_inst(qpu_a_MOV(dst, src[1]),
-                                                          qpu_NOP()));
+                                        queue(c, qpu_a_MOV(dst, src[1]));
 
-                                        queue(c, qpu_inst(qpu_a_MOV(dst, src[2]),
-                                                          qpu_NOP()));
+                                        queue(c, qpu_a_MOV(dst, src[2]));
                                         *last_inst(c) = qpu_set_cond_add(*last_inst(c),
                                                                          QPU_COND_NC);
                                 } else {
-                                        queue(c, qpu_inst(qpu_a_MOV(dst, src[2]),
-                                                          qpu_NOP()));
+                                        queue(c, qpu_a_MOV(dst, src[2]));
 
-                                        queue(c, qpu_inst(qpu_a_MOV(dst, src[1]),
-                                                          qpu_NOP()));
+                                        queue(c, qpu_a_MOV(dst, src[1]));
                                         *last_inst(c) = qpu_set_cond_add(*last_inst(c),
                                                                          QPU_COND_NS);
                                 }
@@ -408,9 +400,7 @@ vc4_generate_code(struct qcompile *c)
                 case QOP_SGE:
                 case QOP_SLT:
                         fixup_raddr_conflict(c, src[0], &src[1]);
-                        queue(c, qpu_inst(qpu_a_FSUB(qpu_ra(QPU_W_NOP),
-                                                    src[0], src[1]),
-                                          qpu_NOP()));
+                        queue(c, qpu_a_FSUB(qpu_ra(QPU_W_NOP), src[0], src[1]));
                         *last_inst(c) |= QPU_SF;
 
                         queue(c, qpu_load_imm_f(dst, 0.0));
@@ -422,13 +412,11 @@ vc4_generate_code(struct qcompile *c)
                         break;
 
                 case QOP_VPM_WRITE:
-                        queue(c, qpu_inst(qpu_a_MOV(qpu_ra(QPU_W_VPM), src[0]),
-                                          qpu_NOP()));
+                        queue(c, qpu_a_MOV(qpu_ra(QPU_W_VPM), src[0]));
                         break;
 
                 case QOP_VPM_READ:
-                        queue(c, qpu_inst(qpu_a_MOV(dst, qpu_ra(QPU_R_VPM)),
-                                          qpu_NOP()));
+                        queue(c, qpu_a_MOV(dst, qpu_ra(QPU_R_VPM)));
                         break;
 
                 case QOP_RCP:
@@ -437,86 +425,72 @@ vc4_generate_code(struct qcompile *c)
                 case QOP_LOG2:
                         switch (qinst->op) {
                         case QOP_RCP:
-                                queue(c, qpu_inst(qpu_a_MOV(qpu_rb(QPU_W_SFU_RECIP),
-                                                            src[0]),
-                                                  qpu_NOP()));
+                                queue(c, qpu_a_MOV(qpu_rb(QPU_W_SFU_RECIP),
+                                                   src[0]));
                                 break;
                         case QOP_RSQ:
-                                queue(c, qpu_inst(qpu_a_MOV(qpu_rb(QPU_W_SFU_RECIPSQRT),
-                                                            src[0]),
-                                                  qpu_NOP()));
+                                queue(c, qpu_a_MOV(qpu_rb(QPU_W_SFU_RECIPSQRT),
+                                                   src[0]));
                                 break;
                         case QOP_EXP2:
-                                queue(c, qpu_inst(qpu_a_MOV(qpu_rb(QPU_W_SFU_EXP),
-                                                            src[0]),
-                                                  qpu_NOP()));
+                                queue(c, qpu_a_MOV(qpu_rb(QPU_W_SFU_EXP),
+                                                   src[0]));
                                 break;
                         case QOP_LOG2:
-                                queue(c, qpu_inst(qpu_a_MOV(qpu_rb(QPU_W_SFU_LOG),
-                                                            src[0]),
-                                                  qpu_NOP()));
+                                queue(c, qpu_a_MOV(qpu_rb(QPU_W_SFU_LOG),
+                                                   src[0]));
                                 break;
                         default:
                                 abort();
                         }
 
-                        queue(c, qpu_inst(qpu_a_MOV(dst, qpu_r4()),
-                                          qpu_NOP()));
+                        queue(c, qpu_a_MOV(dst, qpu_r4()));
 
                         break;
 
                 case QOP_PACK_COLORS:
                         for (int i = 0; i < 4; i++) {
-                                queue(c, qpu_inst(qpu_NOP(),
-                                                  qpu_m_MOV(qpu_r3(), src[i])));
+                                queue(c, qpu_m_MOV(qpu_r3(), src[i]));
                                 *last_inst(c) |= QPU_PM;
                                 *last_inst(c) |= QPU_SET_FIELD(QPU_PACK_MUL_8A + i,
                                                                QPU_PACK);
                         }
 
-                        queue(c, qpu_inst(qpu_a_MOV(dst, qpu_r3()),
-                                          qpu_NOP()));
+                        queue(c, qpu_a_MOV(dst, qpu_r3()));
 
                         break;
 
                 case QOP_FRAG_X:
-                        queue(c, qpu_inst(qpu_a_ITOF(dst,
-                                                     qpu_ra(QPU_R_XY_PIXEL_COORD)),
-                                          qpu_NOP()));
+                        queue(c, qpu_a_ITOF(dst,
+                                            qpu_ra(QPU_R_XY_PIXEL_COORD)));
                         break;
 
                 case QOP_FRAG_Y:
-                        queue(c, qpu_inst(qpu_a_ITOF(dst,
-                                                     qpu_rb(QPU_R_XY_PIXEL_COORD)),
-                                          qpu_NOP()));
+                        queue(c, qpu_a_ITOF(dst,
+                                            qpu_rb(QPU_R_XY_PIXEL_COORD)));
                         break;
 
                 case QOP_FRAG_Z:
-                        queue(c, qpu_inst(qpu_a_ITOF(dst,
-                                                     qpu_rb(QPU_R_FRAG_PAYLOAD_ZW)),
-                                          qpu_NOP()));
+                        queue(c, qpu_a_ITOF(dst,
+                                            qpu_rb(QPU_R_FRAG_PAYLOAD_ZW)));
                         break;
 
                 case QOP_FRAG_RCP_W:
-                        queue(c, qpu_inst(qpu_a_MOV(qpu_rb(QPU_W_SFU_RECIP),
-                                                    qpu_ra(QPU_R_FRAG_PAYLOAD_ZW)),
-                                          qpu_NOP()));
+                        queue(c, qpu_a_MOV(qpu_rb(QPU_W_SFU_RECIP),
+                                           qpu_ra(QPU_R_FRAG_PAYLOAD_ZW)));
 
-                        queue(c, qpu_inst(qpu_a_MOV(dst, qpu_r4()),
-                                          qpu_NOP()));
+                        queue(c, qpu_a_MOV(dst, qpu_r4()));
                         break;
 
                 case QOP_TLB_DISCARD_SETUP:
                         discard = true;
-                        queue(c, qpu_inst(qpu_a_MOV(src[0], src[0]),
-                                          qpu_NOP()));
+                        queue(c, qpu_a_MOV(src[0], src[0]));
                         *last_inst(c) |= QPU_SF;
                         break;
 
                 case QOP_TLB_PASSTHROUGH_Z_WRITE:
-                        queue(c, qpu_inst(qpu_a_MOV(qpu_ra(QPU_W_TLB_Z),
-                                                    qpu_rb(QPU_R_FRAG_PAYLOAD_ZW)),
-                                          qpu_NOP()));
+                        queue(c, qpu_a_MOV(qpu_ra(QPU_W_TLB_Z),
+                                           qpu_rb(QPU_R_FRAG_PAYLOAD_ZW)));
                         if (discard) {
                                 *last_inst(c) = qpu_set_cond_add(*last_inst(c),
                                                                  QPU_COND_ZS);
@@ -531,9 +505,7 @@ vc4_generate_code(struct qcompile *c)
                         break;
 
                 case QOP_TLB_COLOR_WRITE:
-                        queue(c, qpu_inst(qpu_a_MOV(qpu_tlbc(),
-                                                    src[0]),
-                                          qpu_NOP()));
+                        queue(c, qpu_a_MOV(qpu_tlbc(), src[0]));
                         if (discard) {
                                 *last_inst(c) = qpu_set_cond_add(*last_inst(c),
                                                                  QPU_COND_ZS);
@@ -541,18 +513,14 @@ vc4_generate_code(struct qcompile *c)
                         break;
 
                 case QOP_VARY_ADD_C:
-                        queue(c, qpu_inst(qpu_a_FADD(dst,
-                                                     src[0], qpu_r5()),
-                                          qpu_NOP()));
+                        queue(c, qpu_a_FADD(dst, src[0], qpu_r5()));
                         break;
 
                 case QOP_PACK_SCALED: {
-                        uint64_t a = (qpu_inst(qpu_a_MOV(dst, src[0]),
-                                               qpu_NOP()) |
+                        uint64_t a = (qpu_a_MOV(dst, src[0]) |
                                       QPU_SET_FIELD(QPU_PACK_A_16A,
                                                     QPU_PACK));
-                        uint64_t b = (qpu_inst(qpu_a_MOV(dst, src[1]),
-                                               qpu_NOP()) |
+                        uint64_t b = (qpu_a_MOV(dst, src[1]) |
                                       QPU_SET_FIELD(QPU_PACK_A_16B,
                                                     QPU_PACK));
 
@@ -570,11 +538,9 @@ vc4_generate_code(struct qcompile *c)
                 case QOP_TEX_T:
                 case QOP_TEX_R:
                 case QOP_TEX_B:
-                        queue(c, qpu_inst(qpu_a_MOV(qpu_rb(QPU_W_TMU0_S +
-                                                           (qinst->op -
-                                                            QOP_TEX_S)),
-                                                    src[0]),
-                                          qpu_NOP()));
+                        queue(c, qpu_a_MOV(qpu_rb(QPU_W_TMU0_S +
+                                                  (qinst->op - QOP_TEX_S)),
+                                           src[0]));
                         break;
 
                 case QOP_TEX_RESULT:
@@ -588,8 +554,7 @@ vc4_generate_code(struct qcompile *c)
                 case QOP_R4_UNPACK_B:
                 case QOP_R4_UNPACK_C:
                 case QOP_R4_UNPACK_D:
-                        queue(c, qpu_inst(qpu_a_MOV(dst, qpu_r4()),
-                                          qpu_NOP()));
+                        queue(c, qpu_a_MOV(dst, qpu_r4()));
                         *last_inst(c) |= QPU_PM;
                         *last_inst(c) |= QPU_SET_FIELD(QPU_UNPACK_R4_8A +
                                                        (qinst->op -
@@ -612,15 +577,13 @@ vc4_generate_code(struct qcompile *c)
                         fixup_raddr_conflict(c, src[0], &src[1]);
 
                         if (translate[qinst->op].is_mul) {
-                                queue(c, qpu_inst(qpu_NOP(),
-                                                  qpu_m_alu2(translate[qinst->op].op,
-                                                             dst,
-                                                             src[0], src[1])));
+                                queue(c, qpu_m_alu2(translate[qinst->op].op,
+                                                    dst,
+                                                    src[0], src[1]));
                         } else {
-                                queue(c, qpu_inst(qpu_a_alu2(translate[qinst->op].op,
-                                                             dst,
-                                                             src[0], src[1]),
-                                                  qpu_NOP()));
+                                queue(c, qpu_a_alu2(translate[qinst->op].op,
+                                                    dst,
+                                                    src[0], src[1]));
                         }
                         break;
                 }
