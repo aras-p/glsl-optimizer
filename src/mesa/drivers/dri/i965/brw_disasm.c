@@ -1259,7 +1259,7 @@ brw_disassemble_inst(FILE *file, struct brw_context *brw, brw_inst *inst,
                                opcode == BRW_OPCODE_IFF ||
                                opcode == BRW_OPCODE_HALT)) {
       pad(file, 16);
-      format(file, "Jump: %d", brw_inst_gen4_pop_count(brw, inst));
+      format(file, "Jump: %d", brw_inst_gen4_jump_count(brw, inst));
    } else if (brw->gen < 6 && opcode == BRW_OPCODE_ENDIF) {
       pad(file, 16);
       format(file, "Pop: %d", brw_inst_gen4_pop_count(brw, inst));
