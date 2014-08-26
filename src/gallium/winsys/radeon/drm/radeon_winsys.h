@@ -66,7 +66,8 @@ enum radeon_bo_domain { /* bitfield */
 };
 
 enum radeon_bo_flag { /* bitfield */
-   RADEON_FLAG_GTT_WC = (1 << 0)
+    RADEON_FLAG_GTT_WC =     (1 << 0),
+    RADEON_FLAG_CPU_ACCESS = (1 << 1),
 };
 
 enum radeon_bo_usage { /* bitfield */
