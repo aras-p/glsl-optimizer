@@ -39,10 +39,10 @@
 #define ILO_TRANSFER_MAP_BUFFER_ALIGNMENT 64
 
 enum ilo_transfer_map_method {
-   /* map() / map_gtt() / map_unsynchronized() */
+   /* map() / map_gtt() / map_gtt_async() */
    ILO_TRANSFER_MAP_CPU,
    ILO_TRANSFER_MAP_GTT,
-   ILO_TRANSFER_MAP_GTT_UNSYNC,
+   ILO_TRANSFER_MAP_GTT_ASYNC,
 
    /* use staging resource */
    ILO_TRANSFER_MAP_STAGING,

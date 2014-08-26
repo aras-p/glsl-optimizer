@@ -510,7 +510,7 @@ intel_bo_map_gtt(struct intel_bo *bo)
 }
 
 void *
-intel_bo_map_unsynchronized(struct intel_bo *bo)
+intel_bo_map_gtt_async(struct intel_bo *bo)
 {
    int err;
 

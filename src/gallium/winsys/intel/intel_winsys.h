@@ -226,8 +226,7 @@ intel_bo_unreference(struct intel_bo *bo);
  * sequential writes, but reads would be very slow.  Callers always have a
  * linear view of the bo.
  *
- * map_unsynchronized() is similar to map_gtt(), except that it does not
- * block.
+ * map_gtt_async() is similar to map_gtt(), except that it does not block.
  */
 void *
 intel_bo_map(struct intel_bo *bo, bool write_enable);
@@ -236,7 +235,7 @@ void *
 intel_bo_map_gtt(struct intel_bo *bo);
 
 void *
-intel_bo_map_unsynchronized(struct intel_bo *bo);
+intel_bo_map_gtt_async(struct intel_bo *bo);
 
 /**
  * Unmap \p bo.
