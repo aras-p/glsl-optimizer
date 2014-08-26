@@ -104,7 +104,6 @@ ilo_context_create(struct pipe_screen *screen, void *priv)
 {
    struct ilo_screen *is = ilo_screen(screen);
    struct ilo_context *ilo;
-   int cp_size;
 
    ilo = CALLOC_STRUCT(ilo_context);
    if (!ilo)
@@ -121,11 +120,7 @@ ilo_context_create(struct pipe_screen *screen, void *priv)
          sizeof(struct ilo_transfer), 64, UTIL_SLAB_SINGLETHREADED);
 
    /* 8192 DWords */
-   cp_size = 8192;
-   if (cp_size * 4 > is->dev.max_batch_size)
-      cp_size = is->dev.max_batch_size / 4;
-
-   ilo->cp = ilo_cp_create(ilo->winsys, cp_size, is->dev.has_llc);
+   ilo->cp = ilo_cp_create(ilo->winsys, 8192, is->dev.has_llc);
    ilo->shader_cache = ilo_shader_cache_create();
    if (ilo->cp)
       ilo->hw3d = ilo_3d_create(ilo->cp, ilo->dev);

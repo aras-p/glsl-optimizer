@@ -640,7 +640,6 @@ init_dev(struct ilo_dev_info *dev, const struct intel_winsys_info *info)
    dev->devid = info->devid;
    dev->aperture_total = info->aperture_total;
    dev->aperture_mappable = info->aperture_mappable;
-   dev->max_batch_size = info->max_batch_size;
    dev->has_llc = info->has_llc;
    dev->has_address_swizzling = info->has_address_swizzling;
    dev->has_logical_context = info->has_logical_context;

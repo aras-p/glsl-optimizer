@@ -69,7 +69,6 @@ struct intel_winsys_info {
    size_t aperture_total;
    size_t aperture_mappable;
 
-   int max_batch_size;
    bool has_llc;
    bool has_address_swizzling;
    bool has_logical_context;

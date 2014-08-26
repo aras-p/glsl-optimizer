@@ -43,8 +43,6 @@
 #include "util/u_debug.h"
 #include "../intel_winsys.h"
 
-#define BATCH_SZ (8192 * sizeof(uint32_t))
-
 struct intel_winsys {
    int fd;
    drm_intel_bufmgr *bufmgr;
@@ -145,8 +143,6 @@ probe_winsys(struct intel_winsys *winsys)
       return false;
    }
 
-   info->max_batch_size = BATCH_SZ;
-
    get_param(winsys, I915_PARAM_HAS_LLC, &val);
    info->has_llc = val;
    info->has_address_swizzling = test_address_swizzling(winsys);
@@ -169,6 +165,8 @@ probe_winsys(struct intel_winsys *winsys)
 struct intel_winsys *
 intel_winsys_create_for_fd(int fd)
 {
+   /* so that we can have enough (up to 4094) relocs per bo */
+   const int batch_size = sizeof(uint32_t) * 8192;
    struct intel_winsys *winsys;
 
    winsys = CALLOC_STRUCT(intel_winsys);
@@ -177,7 +175,7 @@ intel_winsys_create_for_fd(int fd)
 
    winsys->fd = fd;
 
-   winsys->bufmgr = drm_intel_bufmgr_gem_init(winsys->fd, BATCH_SZ);
+   winsys->bufmgr = drm_intel_bufmgr_gem_init(winsys->fd, batch_size);
    if (!winsys->bufmgr) {
       debug_error("failed to create GEM buffer manager");
       FREE(winsys);
