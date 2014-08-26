@@ -429,8 +429,10 @@ static void
 __driUtilMessage(const char *f, ...)
 {
     va_list args;
+    const char *libgl_debug;
 
-    if (getenv("LIBGL_DEBUG")) {
+    libgl_debug=getenv("LIBGL_DEBUG");
+    if (libgl_debug && !strstr(libgl_debug, "quiet")) {
         fprintf(stderr, "libGL: ");
         va_start(args, f);
         vfprintf(stderr, f, args);
