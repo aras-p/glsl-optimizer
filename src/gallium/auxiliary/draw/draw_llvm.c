@@ -588,15 +588,11 @@ generate_vs(struct draw_llvm_variant *variant,
       draw_jit_context_vs_constants(variant->gallivm, context_ptr);
    LLVMValueRef num_consts_ptr =
       draw_jit_context_num_vs_constants(variant->gallivm, context_ptr);
-   struct lp_build_sampler_soa *sampler = 0;
 
    if (gallivm_debug & (GALLIVM_DEBUG_TGSI | GALLIVM_DEBUG_IR)) {
       tgsi_dump(tokens, 0);
       draw_llvm_dump_variant_key(&variant->key);
    }
-
-   if (llvm->draw->num_sampler_views && llvm->draw->num_samplers)
-      sampler = draw_sampler;
 
    lp_build_tgsi_soa(variant->gallivm,
                      tokens,
@@ -607,7 +603,7 @@ generate_vs(struct draw_llvm_variant *variant,
                      system_values,
                      inputs,
                      outputs,
-                     sampler,
+                     draw_sampler,
                      &llvm->draw->vs.vertex_shader->info,
                      NULL);
 
