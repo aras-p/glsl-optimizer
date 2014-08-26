@@ -195,12 +195,7 @@ intel_winsys_create_for_fd(int fd)
 
    /*
     * No need to implicitly set up a fence register for each non-linear reloc
-    * entry.  When a fence register is needed for a reloc entry,
-    * drm_intel_bo_emit_reloc_fence() will be called explicitly.
-    *
-    * intel_bo_add_reloc() currently lacks "bool fenced" for this to work.
-    * But we never need a fence register on GEN4+ so we do not need to worry
-    * about it yet.
+    * entry.  INTEL_RELOC_FENCE will be set on reloc entries that need them.
     */
    drm_intel_bufmgr_gem_enable_fenced_relocs(winsys->bufmgr);
 
@@ -266,10 +261,8 @@ intel_winsys_alloc_bo(struct intel_winsys *winsys,
                       enum intel_tiling_mode tiling,
                       unsigned long pitch,
                       unsigned long height,
-                      uint32_t initial_domain)
+                      bool cpu_init)
 {
-   const bool for_render =
-      (initial_domain & (INTEL_DOMAIN_RENDER | INTEL_DOMAIN_INSTRUCTION));
    const unsigned int alignment = 4096; /* always page-aligned */
    unsigned long size;
    drm_intel_bo *bo;
@@ -292,12 +285,12 @@ intel_winsys_alloc_bo(struct intel_winsys *winsys,
 
    size = pitch * height;
 
-   if (for_render) {
-      bo = drm_intel_bo_alloc_for_render(winsys->bufmgr,
-            name, size, alignment);
+   if (cpu_init) {
+      bo = drm_intel_bo_alloc(winsys->bufmgr, name, size, alignment);
    }
    else {
-      bo = drm_intel_bo_alloc(winsys->bufmgr, name, size, alignment);
+      bo = drm_intel_bo_alloc_for_render(winsys->bufmgr,
+            name, size, alignment);
    }
 
    if (bo && tiling != INTEL_TILING_NONE) {
@@ -558,14 +551,37 @@ intel_bo_pread(struct intel_bo *bo, unsigned long offset,
 int
 intel_bo_add_reloc(struct intel_bo *bo, uint32_t offset,
                    struct intel_bo *target_bo, uint32_t target_offset,
-                   uint32_t read_domains, uint32_t write_domain,
-                   uint64_t *presumed_offset)
+                   uint32_t flags, uint64_t *presumed_offset)
 {
+   uint32_t read_domains, write_domain;
    int err;
 
-   err = drm_intel_bo_emit_reloc(gem_bo(bo), offset,
-         gem_bo(target_bo), target_offset,
-         read_domains, write_domain);
+   if (flags & INTEL_RELOC_WRITE) {
+      /*
+       * Because of the translation to domains, INTEL_RELOC_GGTT should only
+       * be set on GEN6 when the bo is written by MI_* or PIPE_CONTROL.  The
+       * kernel will translate it back to INTEL_RELOC_GGTT.
+       */
+      write_domain = (flags & INTEL_RELOC_GGTT) ?
+         I915_GEM_DOMAIN_INSTRUCTION : I915_GEM_DOMAIN_RENDER;
+      read_domains = write_domain;
+   } else {
+      write_domain = 0;
+      read_domains = I915_GEM_DOMAIN_RENDER |
+                     I915_GEM_DOMAIN_SAMPLER |
+                     I915_GEM_DOMAIN_INSTRUCTION |
+                     I915_GEM_DOMAIN_VERTEX;
+   }
+
+   if (flags & INTEL_RELOC_FENCE) {
+      err = drm_intel_bo_emit_reloc_fence(gem_bo(bo), offset,
+            gem_bo(target_bo), target_offset,
+            read_domains, write_domain);
+   } else {
+      err = drm_intel_bo_emit_reloc(gem_bo(bo), offset,
+            gem_bo(target_bo), target_offset,
+            read_domains, write_domain);
+   }
 
    *presumed_offset = gem_bo(target_bo)->offset64 + target_offset;
 

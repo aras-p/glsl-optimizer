@@ -153,8 +153,7 @@ gen6_emit_COLOR_BLT(struct ilo_dev_info *dev,
    ilo_cp_write(cp, dw0);
    ilo_cp_write(cp, dw1);
    ilo_cp_write(cp, height << 16 | width);
-   ilo_cp_write_bo(cp, dst_offset, dst_bo, INTEL_DOMAIN_RENDER,
-                                           INTEL_DOMAIN_RENDER);
+   ilo_cp_write_bo(cp, dst_offset, dst_bo, INTEL_RELOC_WRITE);
    ilo_cp_write(cp, pattern);
    ilo_cp_end(cp);
 }
@@ -204,8 +203,7 @@ gen6_emit_XY_COLOR_BLT(struct ilo_dev_info *dev,
    ilo_cp_write(cp, dw1);
    ilo_cp_write(cp, y1 << 16 | x1);
    ilo_cp_write(cp, y2 << 16 | x2);
-   ilo_cp_write_bo(cp, dst_offset, dst_bo,
-                   INTEL_DOMAIN_RENDER, INTEL_DOMAIN_RENDER);
+   ilo_cp_write_bo(cp, dst_offset, dst_bo, INTEL_RELOC_WRITE);
    ilo_cp_write(cp, pattern);
    ilo_cp_end(cp);
 }
@@ -247,10 +245,9 @@ gen6_emit_SRC_COPY_BLT(struct ilo_dev_info *dev,
    ilo_cp_write(cp, dw0);
    ilo_cp_write(cp, dw1);
    ilo_cp_write(cp, height << 16 | width);
-   ilo_cp_write_bo(cp, dst_offset, dst_bo, INTEL_DOMAIN_RENDER,
-                                           INTEL_DOMAIN_RENDER);
+   ilo_cp_write_bo(cp, dst_offset, dst_bo, INTEL_RELOC_WRITE);
    ilo_cp_write(cp, src_pitch);
-   ilo_cp_write_bo(cp, src_offset, src_bo, INTEL_DOMAIN_RENDER, 0);
+   ilo_cp_write_bo(cp, src_offset, src_bo, 0);
    ilo_cp_end(cp);
 }
 
@@ -316,11 +313,10 @@ gen6_emit_XY_SRC_COPY_BLT(struct ilo_dev_info *dev,
    ilo_cp_write(cp, dw1);
    ilo_cp_write(cp, y1 << 16 | x1);
    ilo_cp_write(cp, y2 << 16 | x2);
-   ilo_cp_write_bo(cp, dst_offset, dst_bo, INTEL_DOMAIN_RENDER,
-                                           INTEL_DOMAIN_RENDER);
+   ilo_cp_write_bo(cp, dst_offset, dst_bo, INTEL_RELOC_WRITE);
    ilo_cp_write(cp, src_y << 16 | src_x);
    ilo_cp_write(cp, src_pitch >> src_pitch_shift);
-   ilo_cp_write_bo(cp, src_offset, src_bo, INTEL_DOMAIN_RENDER, 0);
+   ilo_cp_write_bo(cp, src_offset, src_bo, 0);
    ilo_cp_end(cp);
 }
 

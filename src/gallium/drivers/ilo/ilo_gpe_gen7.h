@@ -1036,8 +1036,8 @@ gen7_emit_3DSTATE_SO_BUFFER(const struct ilo_dev_info *dev,
    ilo_cp_write(cp, cmd | (cmd_len - 2));
    ilo_cp_write(cp, index << GEN7_SO_BUF_DW1_INDEX__SHIFT |
                     stride);
-   ilo_cp_write_bo(cp, base, buf->bo, INTEL_DOMAIN_RENDER, INTEL_DOMAIN_RENDER);
-   ilo_cp_write_bo(cp, end, buf->bo, INTEL_DOMAIN_RENDER, INTEL_DOMAIN_RENDER);
+   ilo_cp_write_bo(cp, base, buf->bo, INTEL_RELOC_WRITE);
+   ilo_cp_write_bo(cp, end, buf->bo, INTEL_RELOC_WRITE);
    ilo_cp_end(cp);
 }
 

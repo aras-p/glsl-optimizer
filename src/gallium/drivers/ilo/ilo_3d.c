@@ -746,7 +746,7 @@ upload_shaders(struct ilo_3d *hw3d, struct ilo_shader_cache *shc)
          intel_bo_unreference(hw3d->kernel.bo);
 
       hw3d->kernel.bo = intel_winsys_alloc_buffer(hw3d->cp->winsys,
-            "kernel bo", new_size, INTEL_DOMAIN_CPU);
+            "kernel bo", new_size, true);
       if (!hw3d->kernel.bo) {
          ilo_err("failed to allocate kernel bo\n");
          return false;

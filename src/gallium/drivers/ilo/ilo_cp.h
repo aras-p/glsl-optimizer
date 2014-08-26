@@ -320,14 +320,14 @@ ilo_cp_write_multi(struct ilo_cp *cp, const void *vals, int num_vals)
  * bo to the buffer, it also emits a relocation.
  */
 static inline void
-ilo_cp_write_bo(struct ilo_cp *cp, uint32_t val, struct intel_bo *bo,
-                uint32_t read_domains, uint32_t write_domain)
+ilo_cp_write_bo(struct ilo_cp *cp, uint32_t val,
+                struct intel_bo *bo, uint32_t flags)
 {
    uint64_t presumed_offset;
 
    if (bo) {
-      intel_bo_add_reloc(cp->bo, cp->cmd_cur * 4, bo, val,
-            read_domains, write_domain, &presumed_offset);
+      intel_bo_add_reloc(cp->bo, cp->cmd_cur * 4, bo, val, flags,
+            &presumed_offset);
    }
    else {
       presumed_offset = 0;

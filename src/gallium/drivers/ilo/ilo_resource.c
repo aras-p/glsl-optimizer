@@ -76,13 +76,12 @@ resource_get_bo_name(const struct pipe_resource *templ)
    return name;
 }
 
-static enum intel_domain_flag
-resource_get_bo_initial_domain(const struct pipe_resource *templ)
+static bool
+resource_get_cpu_init(const struct pipe_resource *templ)
 {
    return (templ->bind & (PIPE_BIND_DEPTH_STENCIL |
                           PIPE_BIND_RENDER_TARGET |
-                          PIPE_BIND_STREAM_OUTPUT)) ?
-      INTEL_DOMAIN_RENDER : 0;
+                          PIPE_BIND_STREAM_OUTPUT)) ? false : true;
 }
 
 static void
@@ -152,11 +151,10 @@ tex_create_bo(struct ilo_texture *tex)
 {
    struct ilo_screen *is = ilo_screen(tex->base.screen);
    const char *name = resource_get_bo_name(&tex->base);
-   const enum intel_domain_flag initial_domain =
-      resource_get_bo_initial_domain(&tex->base);
+   const bool cpu_init = resource_get_cpu_init(&tex->base);
 
    tex->bo = intel_winsys_alloc_bo(is->winsys, name, tex->layout.tiling,
-         tex->layout.bo_stride, tex->layout.bo_height, initial_domain);
+         tex->layout.bo_stride, tex->layout.bo_height, cpu_init);
 
    return (tex->bo != NULL);
 }
@@ -194,7 +192,7 @@ tex_create_hiz(struct ilo_texture *tex)
 
    tex->aux_bo = intel_winsys_alloc_bo(is->winsys, "hiz texture",
          INTEL_TILING_Y, tex->layout.aux_stride, tex->layout.aux_height,
-         INTEL_DOMAIN_RENDER);
+         false);
    if (!tex->aux_bo)
       return false;
 
@@ -224,7 +222,7 @@ tex_create_mcs(struct ilo_texture *tex)
 
    tex->aux_bo = intel_winsys_alloc_bo(is->winsys, "mcs texture",
          INTEL_TILING_Y, tex->layout.aux_stride, tex->layout.aux_height,
-         INTEL_DOMAIN_RENDER);
+         false);
    if (!tex->aux_bo)
       return false;
 
@@ -357,11 +355,10 @@ buf_create_bo(struct ilo_buffer *buf)
 {
    struct ilo_screen *is = ilo_screen(buf->base.screen);
    const char *name = resource_get_bo_name(&buf->base);
-   const enum intel_domain_flag initial_domain =
-      resource_get_bo_initial_domain(&buf->base);
+   const bool cpu_init = resource_get_cpu_init(&buf->base);
 
    buf->bo = intel_winsys_alloc_buffer(is->winsys, name,
-         buf->bo_size, initial_domain);
+         buf->bo_size, cpu_init);
 
    return (buf->bo != NULL);
 }

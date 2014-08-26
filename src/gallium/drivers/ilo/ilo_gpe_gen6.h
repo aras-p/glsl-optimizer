@@ -253,8 +253,6 @@ gen6_emit_MI_STORE_DATA_IMM(const struct ilo_dev_info *dev,
    const uint8_t cmd_len = (store_qword) ? 5 : 4;
    /* must use GGTT on GEN6 as in PIPE_CONTROL */
    const uint32_t cmd_flags = (dev->gen == ILO_GEN(6)) ? (1 << 22) : 0;
-   const uint32_t read_domains = INTEL_DOMAIN_INSTRUCTION;
-   const uint32_t write_domain = INTEL_DOMAIN_INSTRUCTION;
 
    ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
@@ -263,7 +261,7 @@ gen6_emit_MI_STORE_DATA_IMM(const struct ilo_dev_info *dev,
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | cmd_flags | (cmd_len - 2));
    ilo_cp_write(cp, 0);
-   ilo_cp_write_bo(cp, bo_offset, bo, read_domains, write_domain);
+   ilo_cp_write_bo(cp, bo_offset, bo, INTEL_RELOC_WRITE | INTEL_RELOC_GGTT);
    ilo_cp_write(cp, (uint32_t) val);
 
    if (store_qword)
@@ -302,8 +300,6 @@ gen6_emit_MI_STORE_REGISTER_MEM(const struct ilo_dev_info *dev,
    const uint8_t cmd_len = 3;
    /* must use GGTT on GEN6 as in PIPE_CONTROL */
    const uint32_t cmd_flags = (dev->gen == ILO_GEN(6)) ? (1 << 22) : 0;
-   const uint32_t read_domains = INTEL_DOMAIN_INSTRUCTION;
-   const uint32_t write_domain = INTEL_DOMAIN_INSTRUCTION;
 
    ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
@@ -312,7 +308,7 @@ gen6_emit_MI_STORE_REGISTER_MEM(const struct ilo_dev_info *dev,
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | cmd_flags | (cmd_len - 2));
    ilo_cp_write(cp, reg);
-   ilo_cp_write_bo(cp, bo_offset, bo, read_domains, write_domain);
+   ilo_cp_write_bo(cp, bo_offset, bo, INTEL_RELOC_WRITE | INTEL_RELOC_GGTT);
    ilo_cp_end(cp);
 }
 
@@ -323,8 +319,6 @@ gen6_emit_MI_REPORT_PERF_COUNT(const struct ilo_dev_info *dev,
 {
    const uint32_t cmd = ILO_GPE_MI(0x28);
    const uint8_t cmd_len = 3;
-   const uint32_t read_domains = INTEL_DOMAIN_INSTRUCTION;
-   const uint32_t write_domain = INTEL_DOMAIN_INSTRUCTION;
 
    ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
@@ -336,7 +330,7 @@ gen6_emit_MI_REPORT_PERF_COUNT(const struct ilo_dev_info *dev,
 
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | (cmd_len - 2));
-   ilo_cp_write_bo(cp, bo_offset, bo, read_domains, write_domain);
+   ilo_cp_write_bo(cp, bo_offset, bo, INTEL_RELOC_WRITE | INTEL_RELOC_GGTT);
    ilo_cp_write(cp, report_id);
    ilo_cp_end(cp);
 }
@@ -366,26 +360,14 @@ gen6_emit_STATE_BASE_ADDRESS(const struct ilo_dev_info *dev,
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | (cmd_len - 2));
 
-   ilo_cp_write_bo(cp, 1, general_state_bo,
-                       INTEL_DOMAIN_RENDER,
-                       0);
-   ilo_cp_write_bo(cp, 1, surface_state_bo,
-                       INTEL_DOMAIN_SAMPLER,
-                       0);
-   ilo_cp_write_bo(cp, 1, dynamic_state_bo,
-                       INTEL_DOMAIN_RENDER | INTEL_DOMAIN_INSTRUCTION,
-                       0);
-   ilo_cp_write_bo(cp, 1, indirect_object_bo,
-                       0,
-                       0);
-   ilo_cp_write_bo(cp, 1, instruction_bo,
-                       INTEL_DOMAIN_INSTRUCTION,
-                       0);
+   ilo_cp_write_bo(cp, 1, general_state_bo, 0);
+   ilo_cp_write_bo(cp, 1, surface_state_bo, 0);
+   ilo_cp_write_bo(cp, 1, dynamic_state_bo, 0);
+   ilo_cp_write_bo(cp, 1, indirect_object_bo, 0);
+   ilo_cp_write_bo(cp, 1, instruction_bo, 0);
 
    if (general_state_size) {
-      ilo_cp_write_bo(cp, general_state_size | 1, general_state_bo,
-                          INTEL_DOMAIN_RENDER,
-                          0);
+      ilo_cp_write_bo(cp, general_state_size | 1, general_state_bo, 0);
    }
    else {
       /* skip range check */
@@ -393,9 +375,7 @@ gen6_emit_STATE_BASE_ADDRESS(const struct ilo_dev_info *dev,
    }
 
    if (dynamic_state_size) {
-      ilo_cp_write_bo(cp, dynamic_state_size | 1, dynamic_state_bo,
-                          INTEL_DOMAIN_RENDER | INTEL_DOMAIN_INSTRUCTION,
-                          0);
+      ilo_cp_write_bo(cp, dynamic_state_size | 1, dynamic_state_bo, 0);
    }
    else {
       /* skip range check */
@@ -403,9 +383,7 @@ gen6_emit_STATE_BASE_ADDRESS(const struct ilo_dev_info *dev,
    }
 
    if (indirect_object_size) {
-      ilo_cp_write_bo(cp, indirect_object_size | 1, indirect_object_bo,
-                          0,
-                          0);
+      ilo_cp_write_bo(cp, indirect_object_size | 1, indirect_object_bo, 0);
    }
    else {
       /* skip range check */
@@ -413,9 +391,7 @@ gen6_emit_STATE_BASE_ADDRESS(const struct ilo_dev_info *dev,
    }
 
    if (instruction_size) {
-      ilo_cp_write_bo(cp, instruction_size | 1, instruction_bo,
-                          INTEL_DOMAIN_INSTRUCTION,
-                          0);
+      ilo_cp_write_bo(cp, instruction_size | 1, instruction_bo, 0);
    }
    else {
       /* skip range check */
@@ -741,8 +717,8 @@ gen6_emit_3DSTATE_VERTEX_BUFFERS(const struct ilo_dev_info *dev,
          dw |= cso->stride << GEN6_VB_STATE_DW0_PITCH__SHIFT;
 
          ilo_cp_write(cp, dw);
-         ilo_cp_write_bo(cp, start_offset, buf->bo, INTEL_DOMAIN_VERTEX, 0);
-         ilo_cp_write_bo(cp, end_offset, buf->bo, INTEL_DOMAIN_VERTEX, 0);
+         ilo_cp_write_bo(cp, start_offset, buf->bo, 0);
+         ilo_cp_write_bo(cp, end_offset, buf->bo, 0);
          ilo_cp_write(cp, instance_divisor);
       }
       else {
@@ -951,8 +927,8 @@ gen6_emit_3DSTATE_INDEX_BUFFER(const struct ilo_dev_info *dev,
    ilo_cp_write(cp, cmd | (cmd_len - 2) |
                     ((enable_cut_index) ? GEN6_IB_DW0_CUT_INDEX_ENABLE : 0) |
                     format);
-   ilo_cp_write_bo(cp, start_offset, buf->bo, INTEL_DOMAIN_VERTEX, 0);
-   ilo_cp_write_bo(cp, end_offset, buf->bo, INTEL_DOMAIN_VERTEX, 0);
+   ilo_cp_write_bo(cp, start_offset, buf->bo, 0);
+   ilo_cp_write_bo(cp, end_offset, buf->bo, 0);
    ilo_cp_end(cp);
 }
 
@@ -1527,8 +1503,7 @@ gen6_emit_3DSTATE_DEPTH_BUFFER(const struct ilo_dev_info *dev,
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | (cmd_len - 2));
    ilo_cp_write(cp, zs->payload[0]);
-   ilo_cp_write_bo(cp, zs->payload[1], zs->bo,
-         INTEL_DOMAIN_RENDER, INTEL_DOMAIN_RENDER);
+   ilo_cp_write_bo(cp, zs->payload[1], zs->bo, INTEL_RELOC_WRITE);
    ilo_cp_write(cp, zs->payload[2]);
    ilo_cp_write(cp, zs->payload[3]);
    ilo_cp_write(cp, zs->payload[4]);
@@ -1713,8 +1688,7 @@ gen6_emit_3DSTATE_STENCIL_BUFFER(const struct ilo_dev_info *dev,
    ilo_cp_write(cp, cmd | (cmd_len - 2));
    /* see ilo_gpe_init_zs_surface() */
    ilo_cp_write(cp, zs->payload[6]);
-   ilo_cp_write_bo(cp, zs->payload[7], zs->separate_s8_bo,
-         INTEL_DOMAIN_RENDER, INTEL_DOMAIN_RENDER);
+   ilo_cp_write_bo(cp, zs->payload[7], zs->separate_s8_bo, INTEL_RELOC_WRITE);
    ilo_cp_end(cp);
 }
 
@@ -1734,8 +1708,7 @@ gen6_emit_3DSTATE_HIER_DEPTH_BUFFER(const struct ilo_dev_info *dev,
    ilo_cp_write(cp, cmd | (cmd_len - 2));
    /* see ilo_gpe_init_zs_surface() */
    ilo_cp_write(cp, zs->payload[8]);
-   ilo_cp_write_bo(cp, zs->payload[9], zs->hiz_bo,
-         INTEL_DOMAIN_RENDER, INTEL_DOMAIN_RENDER);
+   ilo_cp_write_bo(cp, zs->payload[9], zs->hiz_bo, INTEL_RELOC_WRITE);
    ilo_cp_end(cp);
 }
 
@@ -1765,8 +1738,6 @@ gen6_emit_PIPE_CONTROL(const struct ilo_dev_info *dev,
 {
    const uint32_t cmd = ILO_GPE_CMD(0x3, 0x2, 0x00);
    const uint8_t cmd_len = (write_qword) ? 5 : 4;
-   const uint32_t read_domains = INTEL_DOMAIN_INSTRUCTION;
-   const uint32_t write_domain = INTEL_DOMAIN_INSTRUCTION;
 
    ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
@@ -1839,7 +1810,7 @@ gen6_emit_PIPE_CONTROL(const struct ilo_dev_info *dev,
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | (cmd_len - 2));
    ilo_cp_write(cp, dw1);
-   ilo_cp_write_bo(cp, bo_offset, bo, read_domains, write_domain);
+   ilo_cp_write_bo(cp, bo_offset, bo, INTEL_RELOC_WRITE | INTEL_RELOC_GGTT);
    ilo_cp_write(cp, 0);
    if (write_qword)
       ilo_cp_write(cp, 0);
@@ -2286,26 +2257,16 @@ gen6_emit_SURFACE_STATE(const struct ilo_dev_info *dev,
    const int state_align = 32 / 4;
    const int state_len = (dev->gen >= ILO_GEN(7)) ? 8 : 6;
    uint32_t state_offset;
-   uint32_t read_domains, write_domain;
 
    ILO_GPE_VALID_GEN(dev, 6, 7.5);
-
-   if (for_render) {
-      read_domains = INTEL_DOMAIN_RENDER;
-      write_domain = INTEL_DOMAIN_RENDER;
-   }
-   else {
-      read_domains = INTEL_DOMAIN_SAMPLER;
-      write_domain = 0;
-   }
 
    ilo_cp_steal(cp, "SURFACE_STATE", state_len, state_align, &state_offset);
 
    STATIC_ASSERT(Elements(surf->payload) >= 8);
 
    ilo_cp_write(cp, surf->payload[0]);
-   ilo_cp_write_bo(cp, surf->payload[1],
-         surf->bo, read_domains, write_domain);
+   ilo_cp_write_bo(cp, surf->payload[1], surf->bo,
+         (for_render) ? INTEL_RELOC_WRITE : 0);
    ilo_cp_write(cp, surf->payload[2]);
    ilo_cp_write(cp, surf->payload[3]);
    ilo_cp_write(cp, surf->payload[4]);

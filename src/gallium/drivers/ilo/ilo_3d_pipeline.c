@@ -95,7 +95,7 @@ ilo_3d_pipeline_create(struct ilo_cp *cp, const struct ilo_dev_info *dev)
    p->invalidate_flags = ILO_3D_PIPELINE_INVALIDATE_ALL;
 
    p->workaround_bo = intel_winsys_alloc_buffer(p->cp->winsys,
-         "PIPE_CONTROL workaround", 4096, INTEL_DOMAIN_INSTRUCTION);
+         "PIPE_CONTROL workaround", 4096, false);
    if (!p->workaround_bo) {
       ilo_warn("failed to allocate PIPE_CONTROL workaround bo\n");
       FREE(p);
