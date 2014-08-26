@@ -102,4 +102,4 @@ checksums: $(ARCHIVES)
 	@-sha256sum $(PACKAGE_NAME).tar.bz2
 	@-sha256sum $(PACKAGE_NAME).zip
 
-.PHONY: tarballs md5
+.PHONY: tarballs checksums
