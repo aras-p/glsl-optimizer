@@ -678,12 +678,17 @@ glsl_type::component_slots() const
 unsigned
 glsl_type::uniform_locations() const
 {
-   if (this->is_matrix())
-      return 1;
-
    unsigned size = 0;
 
    switch (this->base_type) {
+   case GLSL_TYPE_UINT:
+   case GLSL_TYPE_INT:
+   case GLSL_TYPE_FLOAT:
+   case GLSL_TYPE_BOOL:
+   case GLSL_TYPE_SAMPLER:
+   case GLSL_TYPE_IMAGE:
+      return 1;
+
    case GLSL_TYPE_STRUCT:
    case GLSL_TYPE_INTERFACE:
       for (unsigned i = 0; i < this->length; i++)
@@ -692,13 +697,8 @@ glsl_type::uniform_locations() const
    case GLSL_TYPE_ARRAY:
       return this->length * this->fields.array->uniform_locations();
    default:
-      break;
+      return 0;
    }
-
-   /* The location count for many types match with component_slots() result,
-    * all expections should be handled above.
-    */
-   return component_slots();
 }
 
 bool
