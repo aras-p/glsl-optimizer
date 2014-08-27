@@ -130,6 +130,7 @@ struct blitter_context_priv
    unsigned dst_height;
 
    boolean has_geometry_shader;
+   boolean has_layered;
    boolean has_stream_out;
    boolean has_stencil_export;
    boolean has_texture_multisample;
@@ -288,28 +289,24 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
       }
    }
 
-   /* Fragment shaders are created on-demand, except these.
-    * The interpolation must be constant for integer texture clearing to work.
-    */
-   ctx->fs_empty = util_make_empty_fragment_shader(pipe);
-   ctx->fs_write_one_cbuf =
-      util_make_fragment_passthrough_shader(pipe, TGSI_SEMANTIC_GENERIC,
-                                            TGSI_INTERPOLATE_CONSTANT, FALSE);
-   ctx->fs_write_all_cbufs =
-      util_make_fragment_passthrough_shader(pipe, TGSI_SEMANTIC_GENERIC,
-                                            TGSI_INTERPOLATE_CONSTANT, TRUE);
+   ctx->has_layered =
+      pipe->screen->get_param(pipe->screen, PIPE_CAP_TGSI_INSTANCEID) &&
+      pipe->screen->get_param(pipe->screen, PIPE_CAP_TGSI_VS_LAYER_VIEWPORT);
 
-   /* vertex shaders */
-   {
-      const uint semantic_names[] = { TGSI_SEMANTIC_POSITION,
-                                      TGSI_SEMANTIC_GENERIC };
-      const uint semantic_indices[] = { 0, 0 };
-      ctx->vs =
-         util_make_vertex_passthrough_shader(pipe, 2, semantic_names,
-                                             semantic_indices);
-   }
+   /* set invariant vertex coordinates */
+   for (i = 0; i < 4; i++)
+      ctx->vertices[i][0][3] = 1; /*v.w*/
 
-   if (ctx->has_stream_out) {
+   ctx->upload = u_upload_create(pipe, 65536, 4, PIPE_BIND_VERTEX_BUFFER);
+
+   return &ctx->base;
+}
+
+static void bind_vs_pos_only(struct blitter_context_priv *ctx)
+{
+   struct pipe_context *pipe = ctx->base.pipe;
+
+   if (!ctx->vs_pos_only) {
       struct pipe_stream_output_info so;
       const uint semantic_names[] = { TGSI_SEMANTIC_POSITION };
       const uint semantic_indices[] = { 0 };
@@ -324,18 +321,71 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
                                                      semantic_indices, &so);
    }
 
-   if (pipe->screen->get_param(pipe->screen, PIPE_CAP_TGSI_INSTANCEID) &&
-       pipe->screen->get_param(pipe->screen, PIPE_CAP_TGSI_VS_LAYER_VIEWPORT)) {
+   pipe->bind_vs_state(pipe, ctx->vs_pos_only);
+}
+
+static void bind_vs_passthrough(struct blitter_context_priv *ctx)
+{
+   struct pipe_context *pipe = ctx->base.pipe;
+
+   if (!ctx->vs) {
+      const uint semantic_names[] = { TGSI_SEMANTIC_POSITION,
+                                      TGSI_SEMANTIC_GENERIC };
+      const uint semantic_indices[] = { 0, 0 };
+      ctx->vs =
+         util_make_vertex_passthrough_shader(pipe, 2, semantic_names,
+                                             semantic_indices);
+   }
+
+   pipe->bind_vs_state(pipe, ctx->vs);
+}
+
+static void bind_vs_layered(struct blitter_context_priv *ctx)
+{
+   struct pipe_context *pipe = ctx->base.pipe;
+
+   if (!ctx->vs_layered) {
       ctx->vs_layered = util_make_layered_clear_vertex_shader(pipe);
    }
 
-   /* set invariant vertex coordinates */
-   for (i = 0; i < 4; i++)
-      ctx->vertices[i][0][3] = 1; /*v.w*/
+   pipe->bind_vs_state(pipe, ctx->vs_layered);
+}
 
-   ctx->upload = u_upload_create(pipe, 65536, 4, PIPE_BIND_VERTEX_BUFFER);
+static void bind_fs_empty(struct blitter_context_priv *ctx)
+{
+   struct pipe_context *pipe = ctx->base.pipe;
 
-   return &ctx->base;
+   if (!ctx->fs_empty) {
+      ctx->fs_empty = util_make_empty_fragment_shader(pipe);
+   }
+
+   pipe->bind_fs_state(pipe, ctx->fs_empty);
+}
+
+static void bind_fs_write_one_cbuf(struct blitter_context_priv *ctx)
+{
+   struct pipe_context *pipe = ctx->base.pipe;
+
+   if (!ctx->fs_write_one_cbuf) {
+      ctx->fs_write_one_cbuf =
+         util_make_fragment_passthrough_shader(pipe, TGSI_SEMANTIC_GENERIC,
+                                               TGSI_INTERPOLATE_CONSTANT, FALSE);
+   }
+
+   pipe->bind_fs_state(pipe, ctx->fs_write_one_cbuf);
+}
+
+static void bind_fs_write_all_cbufs(struct blitter_context_priv *ctx)
+{
+   struct pipe_context *pipe = ctx->base.pipe;
+
+   if (!ctx->fs_write_all_cbufs) {
+      ctx->fs_write_all_cbufs =
+         util_make_fragment_passthrough_shader(pipe, TGSI_SEMANTIC_GENERIC,
+                                               TGSI_INTERPOLATE_CONSTANT, TRUE);
+   }
+
+   pipe->bind_fs_state(pipe, ctx->fs_write_all_cbufs);
 }
 
 void util_blitter_destroy(struct blitter_context *blitter)
@@ -361,7 +411,8 @@ void util_blitter_destroy(struct blitter_context *blitter)
    pipe->delete_rasterizer_state(pipe, ctx->rs_state_scissor);
    if (ctx->rs_discard_state)
       pipe->delete_rasterizer_state(pipe, ctx->rs_discard_state);
-   pipe->delete_vs_state(pipe, ctx->vs);
+   if (ctx->vs)
+      pipe->delete_vs_state(pipe, ctx->vs);
    if (ctx->vs_pos_only)
       pipe->delete_vs_state(pipe, ctx->vs_pos_only);
    if (ctx->vs_layered)
@@ -408,9 +459,12 @@ void util_blitter_destroy(struct blitter_context *blitter)
                ctx->delete_fs_state(pipe, ctx->fs_resolve_uint[i][j][f]);
    }
 
-   ctx->delete_fs_state(pipe, ctx->fs_empty);
-   ctx->delete_fs_state(pipe, ctx->fs_write_one_cbuf);
-   ctx->delete_fs_state(pipe, ctx->fs_write_all_cbufs);
+   if (ctx->fs_empty)
+      ctx->delete_fs_state(pipe, ctx->fs_empty);
+   if (ctx->fs_write_one_cbuf)
+      ctx->delete_fs_state(pipe, ctx->fs_write_one_cbuf);
+   if (ctx->fs_write_all_cbufs)
+      ctx->delete_fs_state(pipe, ctx->fs_write_all_cbufs);
 
    pipe->delete_sampler_state(pipe, ctx->sampler_state_rect_linear);
    pipe->delete_sampler_state(pipe, ctx->sampler_state_rect);
@@ -1021,7 +1075,11 @@ static void blitter_set_common_draw_rect_state(struct blitter_context_priv *ctx,
 
    pipe->bind_rasterizer_state(pipe, scissor ? ctx->rs_state_scissor
                                              : ctx->rs_state);
-   pipe->bind_vs_state(pipe, vs_layered ? ctx->vs_layered : ctx->vs);
+   if (vs_layered)
+      bind_vs_layered(ctx);
+   else
+      bind_vs_passthrough(ctx);
+
    if (ctx->has_geometry_shader)
       pipe->bind_gs_state(pipe, NULL);
    if (ctx->has_stream_out)
@@ -1118,7 +1176,7 @@ static void util_blitter_clear_custom(struct blitter_context *blitter,
    struct pipe_context *pipe = ctx->base.pipe;
    struct pipe_stencil_ref sr = { { 0 } };
 
-   assert(ctx->vs_layered || num_layers <= 1);
+   assert(ctx->has_layered || num_layers <= 1);
 
    blitter_set_running_flag(ctx);
    blitter_check_saved_vertex_states(ctx);
@@ -1148,12 +1206,12 @@ static void util_blitter_clear_custom(struct blitter_context *blitter,
    pipe->set_stencil_ref(pipe, &sr);
 
    pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
-   ctx->bind_fs_state(pipe, ctx->fs_write_all_cbufs);
+   bind_fs_write_all_cbufs(ctx);
    pipe->set_sample_mask(pipe, ~0);
 
    blitter_set_dst_dimensions(ctx, width, height);
 
-   if (num_layers > 1 && ctx->vs_layered) {
+   if (num_layers > 1 && ctx->has_layered) {
       blitter_set_common_draw_rect_state(ctx, FALSE, TRUE);
       blitter_set_clear_color(ctx, color);
       blitter_draw(ctx, 0, 0, width, height, depth, num_layers);
@@ -1680,7 +1738,7 @@ void util_blitter_clear_render_target(struct blitter_context *blitter,
    /* bind states */
    pipe->bind_blend_state(pipe, ctx->blend[PIPE_MASK_RGBA]);
    pipe->bind_depth_stencil_alpha_state(pipe, ctx->dsa_keep_depth_stencil);
-   ctx->bind_fs_state(pipe, ctx->fs_write_one_cbuf);
+   bind_fs_write_one_cbuf(ctx);
    pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
 
    /* set a framebuffer state */
@@ -1748,7 +1806,7 @@ void util_blitter_clear_depth_stencil(struct blitter_context *blitter,
       /* hmm that should be illegal probably, or make it a no-op somewhere */
       pipe->bind_depth_stencil_alpha_state(pipe, ctx->dsa_keep_depth_stencil);
 
-   ctx->bind_fs_state(pipe, ctx->fs_empty);
+   bind_fs_empty(ctx);
    pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
 
    /* set a framebuffer state */
@@ -1799,7 +1857,10 @@ void util_blitter_custom_depth_stencil(struct blitter_context *blitter,
    pipe->bind_blend_state(pipe, cbsurf ? ctx->blend[PIPE_MASK_RGBA] :
                                          ctx->blend[0]);
    pipe->bind_depth_stencil_alpha_state(pipe, dsa_stage);
-   ctx->bind_fs_state(pipe, cbsurf ? ctx->fs_write_one_cbuf : ctx->fs_empty);
+   if (cbsurf)
+      bind_fs_write_one_cbuf(ctx);
+   else
+      bind_fs_empty(ctx);
    pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
 
    /* set a framebuffer state */
@@ -1876,7 +1937,7 @@ void util_blitter_copy_buffer(struct blitter_context *blitter,
 
    pipe->set_vertex_buffers(pipe, ctx->base.vb_slot, 1, &vb);
    pipe->bind_vertex_elements_state(pipe, ctx->velem_state_readbuf[0]);
-   pipe->bind_vs_state(pipe, ctx->vs_pos_only);
+   bind_vs_pos_only(ctx);
    if (ctx->has_geometry_shader)
       pipe->bind_gs_state(pipe, NULL);
    pipe->bind_rasterizer_state(pipe, ctx->rs_discard_state);
@@ -1936,7 +1997,7 @@ void util_blitter_clear_buffer(struct blitter_context *blitter,
    pipe->set_vertex_buffers(pipe, ctx->base.vb_slot, 1, &vb);
    pipe->bind_vertex_elements_state(pipe,
                                     ctx->velem_state_readbuf[num_channels-1]);
-   pipe->bind_vs_state(pipe, ctx->vs_pos_only);
+   bind_vs_pos_only(ctx);
    if (ctx->has_geometry_shader)
       pipe->bind_gs_state(pipe, NULL);
    pipe->bind_rasterizer_state(pipe, ctx->rs_discard_state);
@@ -1978,7 +2039,7 @@ void util_blitter_custom_resolve_color(struct blitter_context *blitter,
    pipe->bind_blend_state(pipe, custom_blend);
    pipe->bind_depth_stencil_alpha_state(pipe, ctx->dsa_keep_depth_stencil);
    pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
-   ctx->bind_fs_state(pipe, ctx->fs_write_one_cbuf);
+   bind_fs_write_one_cbuf(ctx);
    pipe->set_sample_mask(pipe, sample_mask);
 
    memset(&surf_tmpl, 0, sizeof(surf_tmpl));
@@ -2041,7 +2102,7 @@ void util_blitter_custom_color(struct blitter_context *blitter,
    pipe->bind_blend_state(pipe, custom_blend ? custom_blend
                                              : ctx->blend[PIPE_MASK_RGBA]);
    pipe->bind_depth_stencil_alpha_state(pipe, ctx->dsa_keep_depth_stencil);
-   ctx->bind_fs_state(pipe, ctx->fs_write_one_cbuf);
+   bind_fs_write_one_cbuf(ctx);
    pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
    pipe->set_sample_mask(pipe, (1ull << MAX2(1, dstsurf->texture->nr_samples)) - 1);
 
