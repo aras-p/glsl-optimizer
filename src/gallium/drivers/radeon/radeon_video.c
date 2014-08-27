@@ -254,7 +254,6 @@ int rvid_get_video_param(struct pipe_screen *screen,
 			/* MPEG2 only with shaders and no support for
 			   interlacing on R6xx style UVD */
 			return codec != PIPE_VIDEO_FORMAT_MPEG12 &&
-			       /* TODO: RV770 might actually work */
 			       rscreen->family > CHIP_RV770;
 		default:
 			break;
