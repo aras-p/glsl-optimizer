@@ -2586,7 +2586,7 @@ get_nearest_unorm_wrap(unsigned mode)
    case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
       return wrap_nearest_unorm_clamp_to_border;
    default:
-      assert(0);
+      debug_printf("illegal wrap mode %d with non-normalized coords\n", mode);
       return wrap_nearest_unorm_clamp;
    }
 }
@@ -2630,7 +2630,7 @@ get_linear_unorm_wrap(unsigned mode)
    case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
       return wrap_linear_unorm_clamp_to_border;
    default:
-      assert(0);
+      debug_printf("illegal wrap mode %d with non-normalized coords\n", mode);
       return wrap_linear_unorm_clamp;
    }
 }
