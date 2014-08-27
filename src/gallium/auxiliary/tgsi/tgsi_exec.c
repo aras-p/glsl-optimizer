@@ -1949,7 +1949,8 @@ exec_txd(struct tgsi_exec_machine *mach,
    case TGSI_TEXTURE_3D:
    case TGSI_TEXTURE_CUBE:
    case TGSI_TEXTURE_CUBE_ARRAY:
-      /* only TEXTURE_CUBE_ARRAY actually needs W */
+   case TGSI_TEXTURE_SHADOWCUBE:
+      /* only TEXTURE_CUBE_ARRAY and TEXTURE_SHADOWCUBE actually need W */
       FETCH(&r[0], 0, TGSI_CHAN_X);
       FETCH(&r[1], 0, TGSI_CHAN_Y);
       FETCH(&r[2], 0, TGSI_CHAN_Z);
@@ -2004,6 +2005,7 @@ exec_txf(struct tgsi_exec_machine *mach,
    case TGSI_TEXTURE_3D:
    case TGSI_TEXTURE_2D_ARRAY:
    case TGSI_TEXTURE_SHADOW2D_ARRAY:
+   case TGSI_TEXTURE_2D_ARRAY_MSAA:
       IFETCH(&r[2], 0, TGSI_CHAN_Z);
       /* fallthrough */
    case TGSI_TEXTURE_2D:
@@ -2012,6 +2014,7 @@ exec_txf(struct tgsi_exec_machine *mach,
    case TGSI_TEXTURE_SHADOW2D:
    case TGSI_TEXTURE_SHADOWRECT:
    case TGSI_TEXTURE_1D_ARRAY:
+   case TGSI_TEXTURE_2D_MSAA:
       IFETCH(&r[1], 0, TGSI_CHAN_Y);
       /* fallthrough */
    case TGSI_TEXTURE_BUFFER:
