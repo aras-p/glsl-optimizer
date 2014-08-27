@@ -64,7 +64,7 @@ draw_gs_get_input_index(int semantic, int index,
  * We execute geometry shaders in the SOA mode, so ideally we want to
  * flush when the number of currently fetched primitives is equal to
  * the number of elements in the SOA vector. This ensures that the
- * throughput is optimized for the given vector instrunction set.
+ * throughput is optimized for the given vector instruction set.
  */
 static INLINE boolean
 draw_gs_should_flush(struct draw_geometry_shader *shader)
@@ -90,7 +90,7 @@ tgsi_fetch_gs_outputs(struct draw_geometry_shader *shader,
 
    for (prim_idx = 0; prim_idx < num_primitives; ++prim_idx) {
       unsigned num_verts_per_prim = machine->Primitives[prim_idx];
-      shader->primitive_lengths[prim_idx +   shader->emitted_primitives] =
+      shader->primitive_lengths[prim_idx + shader->emitted_primitives] =
          machine->Primitives[prim_idx];
       shader->emitted_vertices += num_verts_per_prim;
       for (j = 0; j < num_verts_per_prim; j++, current_idx++) {
@@ -110,7 +110,6 @@ tgsi_fetch_gs_outputs(struct draw_geometry_shader *shader,
                          output[slot][2],
                          output[slot][3]);
 #endif
-            debug_assert(!util_is_inf_or_nan(output[slot][0]));
          }
          output = (float (*)[4])((char *)output + shader->vertex_size);
       }
