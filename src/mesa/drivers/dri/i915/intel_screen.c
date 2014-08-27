@@ -616,6 +616,8 @@ intel_create_image_from_fds(__DRIscreen *screen,
       return NULL;
    }
 
+   intel_setup_image_from_dimensions(image);
+
    image->planar_format = f;
    for (i = 0; i < f->nplanes; i++) {
       index = f->planes[i].buffer_index;
