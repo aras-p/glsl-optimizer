@@ -36,6 +36,7 @@
 #include "util/u_framebuffer.h"
 #include "util/u_helpers.h"
 #include "util/u_memory.h"
+#include "util/u_simple_shaders.h"
 
 static void si_init_atom(struct r600_atom *atom, struct r600_atom **list_elem,
 			 void (*emit)(struct si_context *ctx, struct r600_atom *state),
@@ -2283,8 +2284,16 @@ static void si_bind_ps_shader(struct pipe_context *ctx, void *state)
 		return;
 
 	/* use dummy shader if supplied shader is corrupt */
-	if (!sel || !sel->current)
+	if (!sel || !sel->current) {
+		if (!sctx->dummy_pixel_shader) {
+			sctx->dummy_pixel_shader =
+				util_make_fragment_cloneinput_shader(&sctx->b.b, 0,
+								     TGSI_SEMANTIC_GENERIC,
+								     TGSI_INTERPOLATE_CONSTANT);
+		}
+
 		sel = sctx->dummy_pixel_shader;
+	}
 
 	sctx->ps_shader = sel;
 }

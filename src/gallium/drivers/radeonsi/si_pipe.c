@@ -27,7 +27,6 @@
 
 #include "radeon/radeon_uvd.h"
 #include "util/u_memory.h"
-#include "util/u_simple_shaders.h"
 #include "vl/vl_decoder.h"
 
 /*
@@ -123,12 +122,6 @@ static struct pipe_context *si_create_context(struct pipe_screen *screen, void *
 	if (sctx->blitter == NULL)
 		goto fail;
 	sctx->blitter->draw_rectangle = r600_draw_rectangle;
-
-	sctx->dummy_pixel_shader =
-		util_make_fragment_cloneinput_shader(&sctx->b.b, 0,
-						     TGSI_SEMANTIC_GENERIC,
-						     TGSI_INTERPOLATE_CONSTANT);
-	sctx->b.b.bind_fs_state(&sctx->b.b, sctx->dummy_pixel_shader);
 
 	/* these must be last */
 	si_begin_new_cs(sctx);
