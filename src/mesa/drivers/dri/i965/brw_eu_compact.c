@@ -749,11 +749,15 @@ brw_try_compact_instruction(struct brw_context *brw, brw_compact_inst *dst,
       return false;
    }
 
-   if (brw->gen >= 8 && is_3src(brw_inst_opcode(brw, src))) {
-      memset(&temp, 0, sizeof(temp));
-      if (brw_try_compact_3src_instruction(brw, &temp, src)) {
-         *dst = temp;
-         return true;
+   if (is_3src(brw_inst_opcode(brw, src))) {
+      if (brw->gen >= 8) {
+         memset(&temp, 0, sizeof(temp));
+         if (brw_try_compact_3src_instruction(brw, &temp, src)) {
+            *dst = temp;
+            return true;
+         } else {
+            return false;
+         }
       } else {
          return false;
       }
