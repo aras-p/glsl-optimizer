@@ -211,8 +211,13 @@ namespace {
                                  &c.getDiagnosticOpts()));
 #endif
 
+#if HAVE_LLVM >= 0x0306
+      c.getPreprocessorOpts().addRemappedFile(name,
+                                              llvm::MemoryBuffer::getMemBuffer(source).release());
+#else
       c.getPreprocessorOpts().addRemappedFile(name,
                                       llvm::MemoryBuffer::getMemBuffer(source));
+#endif
 
       // Setting this attribute tells clang to link this file before
       // performing any optimizations.  This is required so that
