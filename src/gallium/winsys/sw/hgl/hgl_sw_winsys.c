@@ -27,13 +27,32 @@
 
 
 #include "pipe/p_compiler.h"
+#include "pipe/p_defines.h"
 #include "pipe/p_format.h"
 #include "util/u_inlines.h"
 #include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "state_tracker/st_api.h"
+#include "state_tracker/sw_winsys.h"
 
+#include "bitmap_wrapper.h"
 #include "hgl_sw_winsys.h"
+
+
+struct haiku_displaytarget
+{
+	enum pipe_format format;
+	color_space colorSpace;
+
+	unsigned width;
+	unsigned height;
+	unsigned stride;
+
+	unsigned size;
+
+	void* data;
+};
 
 
 // Cast

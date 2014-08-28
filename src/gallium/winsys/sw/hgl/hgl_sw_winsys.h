@@ -27,30 +27,9 @@
 #ifndef _HGL_SOFTWAREWINSYS_H
 #define _HGL_SOFTWAREWINSYS_H
 
+struct sw_winsys;
 
-#include "pipe/p_defines.h"
-#include "state_tracker/st_api.h"
-#include "state_tracker/sw_winsys.h"
-
-#include "bitmap_wrapper.h"
-
-
-struct haiku_displaytarget
-{
-	enum pipe_format format;
-	color_space colorSpace;
-
-	unsigned width;
-	unsigned height;
-	unsigned stride;
-
-	unsigned size;
-
-	void* data;
-};
-
-
-struct sw_winsys* hgl_create_sw_winsys();
+struct sw_winsys* hgl_create_sw_winsys(void);
 
 
 #endif
