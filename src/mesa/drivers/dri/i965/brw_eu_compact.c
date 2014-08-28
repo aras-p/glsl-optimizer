@@ -879,19 +879,6 @@ brw_try_compact_instruction(struct brw_context *brw, brw_compact_inst *dst,
 
    assert(brw_inst_cmpt_control(brw, src) == 0);
 
-   if (brw_inst_opcode(brw, src) == BRW_OPCODE_IF ||
-       brw_inst_opcode(brw, src) == BRW_OPCODE_IFF ||
-       brw_inst_opcode(brw, src) == BRW_OPCODE_ELSE ||
-       brw_inst_opcode(brw, src) == BRW_OPCODE_ENDIF ||
-       brw_inst_opcode(brw, src) == BRW_OPCODE_HALT ||
-       brw_inst_opcode(brw, src) == BRW_OPCODE_DO ||
-       brw_inst_opcode(brw, src) == BRW_OPCODE_WHILE) {
-      /* FINISHME: The fixup code below, and brw_set_uip_jip and friends, needs
-       * to be able to handle compacted flow control instructions..
-       */
-      return false;
-   }
-
    if (is_3src(brw_inst_opcode(brw, src))) {
       if (brw->gen >= 8) {
          memset(&temp, 0, sizeof(temp));
@@ -1380,8 +1367,23 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
       case BRW_OPCODE_ENDIF:
       case BRW_OPCODE_WHILE:
          if (brw->gen >= 7) {
-            update_uip_jip(brw, insn, this_old_ip, compacted_counts);
+            if (brw_inst_cmpt_control(brw, insn)) {
+               brw_inst uncompacted;
+               brw_uncompact_instruction(brw, &uncompacted,
+                                         (brw_compact_inst *)insn);
+
+               update_uip_jip(brw, &uncompacted, this_old_ip, compacted_counts);
+
+               bool ret = brw_try_compact_instruction(brw,
+                                                      (brw_compact_inst *)insn,
+                                                      &uncompacted);
+               assert(ret); (void)ret;
+            } else {
+               update_uip_jip(brw, insn, this_old_ip, compacted_counts);
+            }
          } else if (brw->gen == 6) {
+            assert(!brw_inst_cmpt_control(brw, insn));
+
             /* Jump Count is in units of compacted instructions on Gen6. */
             int jump_count_compacted = brw_inst_gen6_jump_count(brw, insn);
             int jump_count_uncompacted = jump_count_compacted / 2;
