@@ -41,6 +41,7 @@
 #include "sp_query.h"
 #include "sp_state.h"
 #include "sp_texture.h"
+#include "sp_screen.h"
 
 #include "draw/draw_context.h"
 
@@ -123,6 +124,15 @@ softpipe_draw_vbo(struct pipe_context *pipe,
    draw_set_mapped_so_targets(draw, sp->num_so_targets,
                               sp->so_targets);
 
+   if (softpipe_screen(sp->pipe.screen)->use_llvm) {
+      softpipe_prepare_vertex_sampling(sp,
+                                       sp->num_sampler_views[PIPE_SHADER_VERTEX],
+                                       sp->sampler_views[PIPE_SHADER_VERTEX]);
+      softpipe_prepare_geometry_sampling(sp,
+                                         sp->num_sampler_views[PIPE_SHADER_GEOMETRY],
+                                         sp->sampler_views[PIPE_SHADER_GEOMETRY]);
+   }
+
    if (sp->gs && !sp->gs->shader.tokens) {
       /* we have an empty geometry shader with stream output, so
          attach the stream output info to the current vertex shader */
@@ -145,6 +155,11 @@ softpipe_draw_vbo(struct pipe_context *pipe,
    }
 
    draw_set_mapped_so_targets(draw, 0, NULL);
+
+   if (softpipe_screen(sp->pipe.screen)->use_llvm) {
+      softpipe_cleanup_vertex_sampling(sp);
+      softpipe_cleanup_geometry_sampling(sp);
+   }
 
    /*
     * TODO: Flush only when a user vertex/index buffer is present

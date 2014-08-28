@@ -266,7 +266,7 @@ prepare_shader_sampling(
                /* probably don't really need to fill that out */
                mip_offsets[0] = 0;
                row_stride[0] = 0;
-               row_stride[0] = 0;
+               img_stride[0] = 0;
 
                /* everything specified in number of elements here. */
                width0 = view->u.buf.last_element - view->u.buf.first_element + 1;

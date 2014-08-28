@@ -873,7 +873,7 @@ lp_setup_set_fragment_sampler_views(struct lp_setup_context *setup,
                   /* probably don't really need to fill that out */
                   jit_tex->mip_offsets[0] = 0;
                   jit_tex->row_stride[0] = 0;
-                  jit_tex->row_stride[0] = 0;
+                  jit_tex->img_stride[0] = 0;
 
                   /* everything specified in number of elements here. */
                   jit_tex->width = view->u.buf.last_element - view->u.buf.first_element + 1;

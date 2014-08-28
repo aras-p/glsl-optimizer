@@ -63,7 +63,9 @@ softpipe_resource_layout(struct pipe_screen *screen,
    uint64_t buffer_size = 0;
 
    for (level = 0; level <= pt->last_level; level++) {
-      unsigned slices;
+      unsigned slices, nblocksy;
+
+      nblocksy = util_format_get_nblocksy(pt->format, height);
 
       if (pt->target == PIPE_TEXTURE_CUBE)
          slices = 6;
@@ -76,8 +78,15 @@ softpipe_resource_layout(struct pipe_screen *screen,
 
       spr->level_offset[level] = buffer_size;
 
-      buffer_size += (uint64_t) util_format_get_nblocksy(pt->format, height) *
-                     slices * spr->stride[level];
+      /* if row_stride * height > SP_MAX_TEXTURE_SIZE */
+      if ((uint64_t)spr->stride[level] * nblocksy > SP_MAX_TEXTURE_SIZE) {
+         /* image too large */
+         return FALSE;
+      }
+
+      spr->img_stride[level] = spr->stride[level] * nblocksy;
+
+      buffer_size += (uint64_t) spr->img_stride[level] * slices;
 
       width  = u_minify(width, 1);
       height = u_minify(height, 1);
@@ -253,22 +262,9 @@ static unsigned
 sp_get_tex_image_offset(const struct softpipe_resource *spr,
                         unsigned level, unsigned layer)
 {
-   const unsigned hgt = u_minify(spr->base.height0, level);
-   const unsigned nblocksy = util_format_get_nblocksy(spr->base.format, hgt);
    unsigned offset = spr->level_offset[level];
 
-   if (spr->base.target == PIPE_TEXTURE_CUBE ||
-       spr->base.target == PIPE_TEXTURE_CUBE_ARRAY ||
-       spr->base.target == PIPE_TEXTURE_3D ||
-       spr->base.target == PIPE_TEXTURE_2D_ARRAY) {
-      offset += layer * nblocksy * spr->stride[level];
-   }
-   else if (spr->base.target == PIPE_TEXTURE_1D_ARRAY) {
-      offset += layer * spr->stride[level];
-   }
-   else {
-      assert(layer == 0);
-   }
+   offset += layer * spr->img_stride[level];
 
    return offset;
 }
@@ -354,8 +350,6 @@ softpipe_transfer_map(struct pipe_context *pipe,
    struct softpipe_transfer *spt;
    struct pipe_transfer *pt;
    enum pipe_format format = resource->format;
-   const unsigned hgt = u_minify(spr->base.height0, level);
-   const unsigned nblocksy = util_format_get_nblocksy(format, hgt);
    uint8_t *map;
 
    assert(resource);
@@ -414,7 +408,7 @@ softpipe_transfer_map(struct pipe_context *pipe,
    pt->usage = usage;
    pt->box = *box;
    pt->stride = spr->stride[level];
-   pt->layer_stride = pt->stride * nblocksy;
+   pt->layer_stride = spr->img_stride[level];
 
    spt->offset = sp_get_tex_image_offset(spr, level, box->z);
 

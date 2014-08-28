@@ -47,6 +47,7 @@ struct softpipe_resource
 
    unsigned long level_offset[SP_MAX_TEXTURE_2D_LEVELS];
    unsigned stride[SP_MAX_TEXTURE_2D_LEVELS];
+   unsigned img_stride[SP_MAX_TEXTURE_2D_LEVELS];
 
    /**
     * Display target, only valid for PIPE_TEXTURE_2D with the

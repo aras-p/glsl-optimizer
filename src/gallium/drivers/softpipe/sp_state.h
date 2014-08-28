@@ -192,5 +192,20 @@ softpipe_find_fs_variant(struct softpipe_context *softpipe,
                          struct sp_fragment_shader *fs,
                          const struct sp_fragment_shader_variant_key *key);
 
+void
+softpipe_prepare_vertex_sampling(struct softpipe_context *ctx,
+                                 unsigned num,
+                                 struct pipe_sampler_view **views);
+void
+softpipe_cleanup_vertex_sampling(struct softpipe_context *ctx);
+
+
+void
+softpipe_prepare_geometry_sampling(struct softpipe_context *ctx,
+                                   unsigned num,
+                                   struct pipe_sampler_view **views);
+void
+softpipe_cleanup_geometry_sampling(struct softpipe_context *ctx);
+
 
 #endif
