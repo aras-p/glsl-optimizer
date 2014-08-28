@@ -114,7 +114,7 @@ GL 4.0, GLSL 4.00:
   GL_ARB_shader_subroutine                             not started
   GL_ARB_tessellation_shader                           started (Chris, Ilia)
   GL_ARB_texture_buffer_object_rgb32                   DONE (i965, nvc0, r600, radeonsi, llvmpipe, softpipe)
-  GL_ARB_texture_cube_map_array                        DONE (i965, nv50, nvc0, r600, radeonsi, softpipe)
+  GL_ARB_texture_cube_map_array                        DONE (i965, nv50, nvc0, r600, radeonsi, llvmpipe, softpipe)
   GL_ARB_texture_gather                                DONE (i965, nv50, nvc0, r600, radeonsi)
   GL_ARB_texture_query_lod                             DONE (i965, nv50, nvc0, r600, radeonsi)
   GL_ARB_transform_feedback2                           DONE (i965, nv50, nvc0, r600, radeonsi)
