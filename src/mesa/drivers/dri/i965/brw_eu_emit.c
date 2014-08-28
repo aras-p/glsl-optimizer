@@ -2557,12 +2557,15 @@ brw_set_uip_jip(struct brw_compile *p)
          assert(brw_inst_jip(brw, insn) != 0);
 	 break;
 
-      case BRW_OPCODE_ENDIF:
-         if (block_end_offset == 0)
-            brw_inst_set_jip(brw, insn, 1 * br);
+      case BRW_OPCODE_ENDIF: {
+         int32_t jump = (block_end_offset == 0) ?
+                        1 * br : (block_end_offset - offset) / scale;
+         if (brw->gen >= 7)
+            brw_inst_set_jip(brw, insn, jump);
          else
-            brw_inst_set_jip(brw, insn, (block_end_offset - offset) / scale);
+            brw_inst_set_gen6_jump_count(brw, insn, jump);
 	 break;
+      }
 
       case BRW_OPCODE_HALT:
 	 /* From the Sandy Bridge PRM (volume 4, part 2, section 8.3.19):
