@@ -7,4 +7,4 @@
 
 // Projects needing GL/glu.h and GL/glut.h should now
 // include these headers independently as glu and glut
-// are no longe core parts of mesa
+// are no longer core parts of mesa
