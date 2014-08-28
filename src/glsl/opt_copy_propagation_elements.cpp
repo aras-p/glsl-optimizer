@@ -207,7 +207,7 @@ ir_copy_propagation_elements_visitor::handle_rvalue(ir_rvalue **ir)
    int swizzle_chan[4];
    ir_dereference_variable *deref_var;
    ir_variable *source[4] = {NULL, NULL, NULL, NULL};
-   int source_chan[4];
+   int source_chan[4] = {0, 0, 0, 0};
    int chans;
 
    if (!*ir)
