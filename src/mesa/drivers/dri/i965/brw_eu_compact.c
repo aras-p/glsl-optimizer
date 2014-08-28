@@ -35,6 +35,41 @@
  * The idea of instruction compaction is that most instructions use a tiny
  * subset of the GPU functionality, so we can encode what would be a 16 byte
  * instruction in 8 bytes using some lookup tables for various fields.
+ *
+ *
+ * Instruction compaction capabilities vary subtly by generation.
+ *
+ * G45's support for instruction compaction is very limited. Jump counts on
+ * this generation are in units of 16-byte uncompacted instructions. As such,
+ * all jump targets must be 16-byte aligned. Also, all instructions must be
+ * naturally aligned, i.e. uncompacted instructions must be 16-byte aligned.
+ * A G45-only instruction, NENOP, must be used to provide padding to align
+ * uncompacted instructions.
+ *
+ * Gen5 removes these restrictions and changes jump counts to be in units of
+ * 8-byte compacted instructions, allowing jump targets to be only 8-byte
+ * aligned. Uncompacted instructions can also be placed on 8-byte boundaries.
+ *
+ * Gen6 adds the ability to compact instructions with a limited range of
+ * immediate values. Compactable immediates have 12 unrestricted bits, and a
+ * 13th bit that's replicated through the high 20 bits, to create the 32-bit
+ * value of DW3 in the uncompacted instruction word.
+ *
+ * On Gen7 we can compact some control flow instructions with a small positive
+ * immediate in the low bits of DW3, like ENDIF with the JIP field. Other
+ * control flow instructions with UIP cannot be compacted, because of the
+ * replicated 13th bit. No control flow instructions can be compacted on Gen6
+ * since the jump count field is not in DW3.
+ *
+ *    break    JIP/UIP
+ *    cont     JIP/UIP
+ *    halt     JIP/UIP
+ *    if       JIP/UIP
+ *    else     JIP (plus UIP on BDW+)
+ *    endif    JIP
+ *    while    JIP (must be negative)
+ *
+ * Gen 8 adds support for compacting 3-src instructions.
  */
 
 #include "brw_context.h"
