@@ -288,6 +288,7 @@ ir_copy_propagation_elements_visitor::handle_rvalue(ir_rvalue **ir)
 					source_chan[2],
 					source_chan[3],
 					chans);
+   progress = true;
 
    if (debug) {
       printf("to:\n");
