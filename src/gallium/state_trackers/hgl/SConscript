@@ -13,7 +13,7 @@ env.Append(CPPPATH = [
 
 sources = [
     'hgl.c',
-	'bitmap_wrapper.cpp',
+    'bitmap_wrapper.cpp',
 ]
 
 st_haiku = env.ConvenienceLibrary(

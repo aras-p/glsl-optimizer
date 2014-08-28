@@ -95,7 +95,7 @@ hgl_st_framebuffer_validate(struct st_context_iface *stctx,
 		for (unsigned i = 0; i < count; i++) {
 			enum pipe_format format = PIPE_FORMAT_NONE;
 			unsigned bind = 0;
-	
+
 			switch(statts[i]) {
 				case ST_ATTACHMENT_FRONT_LEFT:
 				case ST_ATTACHMENT_BACK_LEFT:

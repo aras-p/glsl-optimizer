@@ -173,6 +173,14 @@ SUBDIRS += state_trackers/xvmc targets/xvmc
 endif
 
 ##
+## Don't forget to bundle the remaining (non autotools) state-trackers/targets
+##
+
+EXTRA_DIST += \
+	state_trackers/hgl targets/haiku-softpipe
+
+
+##
 ## Gallium tests
 ##
 

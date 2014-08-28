@@ -2,7 +2,7 @@ Import('*')
 
 env.Prepend(LIBS = [
     ws_haiku,
-	st_haiku,
+    st_haiku,
     trace,
     rbug,
     mesautil,
