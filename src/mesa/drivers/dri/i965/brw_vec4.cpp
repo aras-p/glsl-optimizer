@@ -1778,7 +1778,7 @@ vec4_visitor::run()
       if (unlikely(INTEL_DEBUG & DEBUG_OPTIMIZER) && this_progress) {  \
          char filename[64];                                            \
          snprintf(filename, 64, "%s-%04d-%02d-%02d-" #pass,            \
-                  stage_name, shader_prog->Name, iteration, pass_num); \
+                  stage_name, shader_prog ? shader_prog->Name : 0, iteration, pass_num); \
                                                                        \
          backend_visitor::dump_instructions(filename);                 \
       }                                                                \
@@ -1790,7 +1790,7 @@ vec4_visitor::run()
    if (unlikely(INTEL_DEBUG & DEBUG_OPTIMIZER)) {
       char filename[64];
       snprintf(filename, 64, "%s-%04d-00-start",
-               stage_name, shader_prog->Name);
+               stage_name, shader_prog ? shader_prog->Name : 0);
 
       backend_visitor::dump_instructions(filename);
    }
