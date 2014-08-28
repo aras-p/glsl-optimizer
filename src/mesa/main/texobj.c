@@ -772,18 +772,21 @@ _mesa_get_fallback_texture(struct gl_context *ctx, gl_texture_index tex)
 {
    if (!ctx->Shared->FallbackTex[tex]) {
       /* create fallback texture now */
-      const GLsizei width = 1, height = 1, depth = 1;
-      GLubyte texel[4];
+      const GLsizei width = 1, height = 1;
+      GLsizei depth = 1;
+      GLubyte texel[24];
       struct gl_texture_object *texObj;
       struct gl_texture_image *texImage;
       mesa_format texFormat;
       GLuint dims, face, numFaces = 1;
       GLenum target;
 
-      texel[0] =
-      texel[1] =
-      texel[2] = 0x0;
-      texel[3] = 0xff;
+      for (face = 0; face < 6; face++) {
+         texel[4*face + 0] =
+         texel[4*face + 1] =
+         texel[4*face + 2] = 0x0;
+         texel[4*face + 3] = 0xff;
+      }
 
       switch (tex) {
       case TEXTURE_2D_ARRAY_INDEX:
@@ -822,6 +825,7 @@ _mesa_get_fallback_texture(struct gl_context *ctx, gl_texture_index tex)
       case TEXTURE_CUBE_ARRAY_INDEX:
          dims = 3;
          target = GL_TEXTURE_CUBE_MAP_ARRAY;
+         depth = 6;
          break;
       case TEXTURE_EXTERNAL_INDEX:
          dims = 2;
