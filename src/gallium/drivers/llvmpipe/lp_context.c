@@ -93,6 +93,9 @@ static void llvmpipe_destroy( struct pipe_context *pipe )
 
    lp_delete_setup_variants(llvmpipe);
 
+   LLVMContextDispose(llvmpipe->context);
+   llvmpipe->context = NULL;
+
    align_free( llvmpipe );
 }
 
@@ -160,6 +163,10 @@ llvmpipe_create_context( struct pipe_screen *screen, void *priv )
    llvmpipe_init_rasterizer_funcs(llvmpipe);
    llvmpipe_init_context_resource_funcs( &llvmpipe->pipe );
    llvmpipe_init_surface_functions(llvmpipe);
+
+   llvmpipe->context = LLVMContextCreate();
+   if (!llvmpipe->context)
+      goto fail;
 
    /*
     * Create drawing context and plug our rendering stage into it.

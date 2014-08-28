@@ -94,7 +94,7 @@ test_printf(unsigned verbose, FILE *fp,
    test_printf_t test_printf_func;
    boolean success = TRUE;
 
-   gallivm = gallivm_create("test_module");
+   gallivm = gallivm_create("test_module", LLVMGetGlobalContext());
 
    test = add_printf_test(gallivm);
 

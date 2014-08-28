@@ -153,6 +153,9 @@ struct llvmpipe_context {
    struct pipe_query *render_cond_query;
    uint render_cond_mode;
    boolean render_cond_cond;
+
+   /** The LLVMContext to use for LLVM related work */
+   LLVMContextRef context;
 };
 
 

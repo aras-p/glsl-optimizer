@@ -211,7 +211,7 @@ test_one(unsigned verbose,
 
    eps = MAX2(lp_const_eps(src_type), lp_const_eps(dst_type));
 
-   gallivm = gallivm_create("test_module");
+   gallivm = gallivm_create("test_module", LLVMGetGlobalContext());
 
    func = add_conv_test(gallivm, src_type, num_srcs, dst_type, num_dsts);
 

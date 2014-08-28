@@ -461,6 +461,8 @@ struct llvm_geometry_shader {
 struct draw_llvm {
    struct draw_context *draw;
 
+   LLVMContextRef context;
+
    struct draw_jit_context jit_context;
    struct draw_gs_jit_context gs_jit_context;
 

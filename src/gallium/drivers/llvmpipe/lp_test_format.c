@@ -138,7 +138,7 @@ test_format_float(unsigned verbose, FILE *fp,
    boolean success = TRUE;
    unsigned i, j, k, l;
 
-   gallivm = gallivm_create("test_module_float");
+   gallivm = gallivm_create("test_module_float", LLVMGetGlobalContext());
 
    fetch = add_fetch_rgba_test(gallivm, verbose, desc, lp_float32_vec4_type());
 

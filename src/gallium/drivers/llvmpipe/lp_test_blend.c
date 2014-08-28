@@ -450,7 +450,7 @@ test_one(unsigned verbose,
    if(verbose >= 1)
       dump_blend_type(stdout, blend, type);
 
-   gallivm = gallivm_create("test_module");
+   gallivm = gallivm_create("test_module", LLVMGetGlobalContext());
 
    func = add_blend_test(gallivm, blend, type);
 

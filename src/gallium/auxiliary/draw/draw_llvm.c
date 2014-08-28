@@ -493,6 +493,10 @@ draw_llvm_create(struct draw_context *draw)
 
    llvm->draw = draw;
 
+   llvm->context = LLVMContextCreate();
+   if (!llvm->context)
+      goto fail;
+
    llvm->nr_variants = 0;
    make_empty_list(&llvm->vs_variants_list);
 
@@ -500,6 +504,10 @@ draw_llvm_create(struct draw_context *draw)
    make_empty_list(&llvm->gs_variants_list);
 
    return llvm;
+
+fail:
+   draw_llvm_destroy(llvm);
+   return NULL;
 }
 
 
@@ -509,6 +517,9 @@ draw_llvm_create(struct draw_context *draw)
 void
 draw_llvm_destroy(struct draw_llvm *llvm)
 {
+   LLVMContextDispose(llvm->context);
+   llvm->context = NULL;
+
    /* XXX free other draw_llvm data? */
    FREE(llvm);
 }
@@ -540,7 +551,7 @@ draw_llvm_create_variant(struct draw_llvm *llvm,
    util_snprintf(module_name, sizeof(module_name), "draw_llvm_vs_variant%u",
                  variant->shader->variants_cached);
 
-   variant->gallivm = gallivm_create(module_name);
+   variant->gallivm = gallivm_create(module_name, llvm->context);
 
    create_jit_types(variant);
 
@@ -2195,7 +2206,7 @@ draw_gs_llvm_create_variant(struct draw_llvm *llvm,
    util_snprintf(module_name, sizeof(module_name), "draw_llvm_gs_variant%u",
                  variant->shader->variants_cached);
 
-   variant->gallivm = gallivm_create(module_name);
+   variant->gallivm = gallivm_create(module_name, llvm->context);
 
    create_gs_jit_types(variant);
 

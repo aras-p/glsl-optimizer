@@ -354,7 +354,7 @@ test_unary(unsigned verbose, FILE *fp, const struct unary_test_t *test)
       in[i] = 1.0;
    }
 
-   gallivm = gallivm_create("test_module");
+   gallivm = gallivm_create("test_module", LLVMGetGlobalContext());
 
    test_func = build_unary_test_func(gallivm, test);
 
