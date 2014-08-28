@@ -108,8 +108,10 @@ vc4_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
         case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER:
                 return 1;
 
-                /* Unsupported features. */
         case PIPE_CAP_MIXED_FRAMEBUFFER_SIZES:
+                return 1;
+
+                /* Unsupported features. */
         case PIPE_CAP_ANISOTROPIC_FILTER:
         case PIPE_CAP_TEXTURE_BUFFER_OBJECTS:
         case PIPE_CAP_CUBE_MAP_ARRAY:
