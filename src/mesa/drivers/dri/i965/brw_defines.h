@@ -731,7 +731,7 @@ enum PACKED brw_conditional_mod {
    BRW_CONDITIONAL_GE   = 4,
    BRW_CONDITIONAL_L    = 5,
    BRW_CONDITIONAL_LE   = 6,
-   BRW_CONDITIONAL_R    = 7,
+   BRW_CONDITIONAL_R    = 7,    /* Gen <= 5 */
    BRW_CONDITIONAL_O    = 8,
    BRW_CONDITIONAL_U    = 9,
 };
