@@ -279,30 +279,22 @@ boolean u_vbuf_get_caps(struct pipe_screen *screen, struct u_vbuf_caps *caps)
       }
    }
 
-   if (!screen->get_param(screen,
-                          PIPE_CAP_VERTEX_BUFFER_OFFSET_4BYTE_ALIGNED_ONLY)) {
-      caps->buffer_offset_unaligned = TRUE;
-   } else {
-      fallback = TRUE;
-   }
+   caps->buffer_offset_unaligned =
+      !screen->get_param(screen,
+                         PIPE_CAP_VERTEX_BUFFER_OFFSET_4BYTE_ALIGNED_ONLY);
+   caps->buffer_stride_unaligned =
+     !screen->get_param(screen,
+                        PIPE_CAP_VERTEX_BUFFER_STRIDE_4BYTE_ALIGNED_ONLY);
+   caps->velem_src_offset_unaligned =
+      !screen->get_param(screen,
+                         PIPE_CAP_VERTEX_ELEMENT_SRC_OFFSET_4BYTE_ALIGNED_ONLY);
+   caps->user_vertex_buffers =
+      screen->get_param(screen, PIPE_CAP_USER_VERTEX_BUFFERS);
 
-   if (!screen->get_param(screen,
-                          PIPE_CAP_VERTEX_BUFFER_STRIDE_4BYTE_ALIGNED_ONLY)) {
-      caps->buffer_stride_unaligned = TRUE;
-   } else {
-      fallback = TRUE;
-   }
-
-   if (!screen->get_param(screen,
-                          PIPE_CAP_VERTEX_ELEMENT_SRC_OFFSET_4BYTE_ALIGNED_ONLY)) {
-      caps->velem_src_offset_unaligned = TRUE;
-   } else {
-      fallback = TRUE;
-   }
-
-   if (screen->get_param(screen, PIPE_CAP_USER_VERTEX_BUFFERS)) {
-      caps->user_vertex_buffers = TRUE;
-   } else {
+   if (!caps->buffer_offset_unaligned ||
+       !caps->buffer_stride_unaligned ||
+       !caps->velem_src_offset_unaligned ||
+       !caps->user_vertex_buffers) {
       fallback = TRUE;
    }
 
