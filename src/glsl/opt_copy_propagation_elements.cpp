@@ -209,6 +209,7 @@ ir_copy_propagation_elements_visitor::handle_rvalue(ir_rvalue **ir)
    ir_variable *source[4] = {NULL, NULL, NULL, NULL};
    int source_chan[4] = {0, 0, 0, 0};
    int chans;
+   bool noop_swizzle = true;
 
    if (!*ir)
       return;
@@ -250,6 +251,9 @@ ir_copy_propagation_elements_visitor::handle_rvalue(ir_rvalue **ir)
 	    if (entry->write_mask & (1 << swizzle_chan[c])) {
 	       source[c] = entry->rhs;
 	       source_chan[c] = entry->swizzle[swizzle_chan[c]];
+
+               if (source_chan[c] != swizzle_chan[c])
+                  noop_swizzle = false;
 	    }
 	 }
       }
@@ -265,6 +269,12 @@ ir_copy_propagation_elements_visitor::handle_rvalue(ir_rvalue **ir)
 
    if (!shader_mem_ctx)
       shader_mem_ctx = ralloc_parent(deref_var);
+
+   /* Don't pointlessly replace the rvalue with itself (or a noop swizzle
+    * of itself, which would just be deleted by opt_noop_swizzle).
+    */
+   if (source[0] == var && noop_swizzle)
+      return;
 
    if (debug) {
       printf("Copy propagation from:\n");
