@@ -100,7 +100,6 @@ _mesa_init_program(struct gl_context *ctx)
    /* right now by default we don't have a geometry program */
    _mesa_reference_geomprog(ctx, &ctx->GeometryProgram.Current,
                             NULL);
-   ctx->GeometryProgram.Cache = _mesa_new_program_cache();
 
    /* XXX probably move this stuff */
    ctx->ATIFragmentShader.Enabled = GL_FALSE;
@@ -121,7 +120,6 @@ _mesa_free_program_data(struct gl_context *ctx)
    _mesa_reference_fragprog(ctx, &ctx->FragmentProgram.Current, NULL);
    _mesa_delete_shader_cache(ctx, ctx->FragmentProgram.Cache);
    _mesa_reference_geomprog(ctx, &ctx->GeometryProgram.Current, NULL);
-   _mesa_delete_program_cache(ctx, ctx->GeometryProgram.Cache);
 
    /* XXX probably move this stuff */
    if (ctx->ATIFragmentShader.Current) {

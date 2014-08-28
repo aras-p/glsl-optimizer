@@ -2317,9 +2317,6 @@ struct gl_geometry_program_state
    struct gl_geometry_program *_Current;
 
    GLfloat Parameters[MAX_PROGRAM_ENV_PARAMS][4]; /**< Env params */
-
-   /** Cache of fixed-function programs */
-   struct gl_program_cache *Cache;
 };
 
 /**
