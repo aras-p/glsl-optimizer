@@ -13,6 +13,10 @@ C_SOURCES := \
 	api_text.c \
 	api_transform.c \
 	arc.c \
+	arc.h \
+	asm_fill.h \
+	asm_filters.h \
+	asm_util.h \
 	bezier.c \
 	bezier.h \
 	handle.c \
