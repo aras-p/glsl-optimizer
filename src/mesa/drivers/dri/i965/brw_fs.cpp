@@ -3234,7 +3234,7 @@ fs_visitor::run()
       if (unlikely(INTEL_DEBUG & DEBUG_OPTIMIZER) && this_progress) {      \
          char filename[64];                                                \
          snprintf(filename, 64, "fs%d-%04d-%02d-%02d-" #pass,              \
-                  dispatch_width, shader_prog->Name, iteration, pass_num); \
+                  dispatch_width, shader_prog ? shader_prog->Name : 0, iteration, pass_num); \
                                                                            \
          backend_visitor::dump_instructions(filename);                     \
       }                                                                    \
@@ -3245,7 +3245,7 @@ fs_visitor::run()
       if (unlikely(INTEL_DEBUG & DEBUG_OPTIMIZER)) {
          char filename[64];
          snprintf(filename, 64, "fs%d-%04d-00-start",
-                  dispatch_width, shader_prog->Name);
+                  dispatch_width, shader_prog ? shader_prog->Name : 0);
 
          backend_visitor::dump_instructions(filename);
       }
