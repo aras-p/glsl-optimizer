@@ -3,11 +3,17 @@ C_SOURCES := \
 	si_commands.c \
 	si_compute.c \
 	si_descriptors.c \
+	sid.h \
 	si_dma.c \
 	si_hw_context.c \
 	si_pipe.c \
+	si_pipe.h \
 	si_pm4.c \
+	si_pm4.h \
+	si_public.h \
 	si_shader.c \
+	si_shader.h \
 	si_state.c \
 	si_state_draw.c \
+	si_state.h \
 	si_uvd.c

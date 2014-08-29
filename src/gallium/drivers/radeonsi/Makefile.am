@@ -31,3 +31,5 @@ AM_CFLAGS = \
 noinst_LTLIBRARIES = libradeonsi.la
 
 libradeonsi_la_SOURCES = $(C_SOURCES)
+
+EXTRA_DIST = Android.mk
