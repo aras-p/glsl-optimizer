@@ -46,7 +46,7 @@ fs_generator::fs_generator(struct brw_context *brw,
                            bool debug_flag)
 
    : brw(brw), stage(MESA_SHADER_FRAGMENT), key(key),
-     prog_data(prog_data), shader_prog(shader_prog), fp(fp),
+     prog_data(prog_data), shader_prog(shader_prog), prog(&fp->Base),
      runtime_check_aads_emit(runtime_check_aads_emit),
      debug_flag(debug_flag), mem_ctx(mem_ctx)
 {
@@ -145,6 +145,8 @@ fs_generator::fire_fb_write(fs_inst *inst,
 void
 fs_generator::generate_fb_write(fs_inst *inst)
 {
+   assert(stage == MESA_SHADER_FRAGMENT);
+   gl_fragment_program *fp = (gl_fragment_program *) prog;
    struct brw_reg implied_header;
 
    /* Header is 2 regs, g0 and g1 are the contents. g0 will be implied
@@ -1808,7 +1810,8 @@ fs_generator::generate_code(const cfg_t *cfg)
          /* Make sure fp->UsesDFdy flag got set (otherwise there's no
           * guarantee that key->render_to_fbo is set).
           */
-         assert(fp->UsesDFdy);
+         assert(stage == MESA_SHADER_FRAGMENT &&
+                ((gl_fragment_program *) prog)->UsesDFdy);
 	 generate_ddy(inst, dst, src[0], src[1], key->render_to_fbo);
 	 break;
 
@@ -1961,10 +1964,10 @@ fs_generator::generate_code(const cfg_t *cfg)
                  "Native code for %s fragment shader %d (SIMD%d dispatch):\n",
                  shader_prog->Label ? shader_prog->Label : "unnamed",
                  shader_prog->Name, dispatch_width);
-      } else if (fp) {
+      } else if (prog) {
          fprintf(stderr,
                  "Native code for fragment program %d (SIMD%d dispatch):\n",
-                 fp->Base.Id, dispatch_width);
+                 prog->Id, dispatch_width);
       } else {
          fprintf(stderr, "Native code for blorp program (SIMD%d dispatch):\n",
                  dispatch_width);
@@ -1973,8 +1976,6 @@ fs_generator::generate_code(const cfg_t *cfg)
                       " bytes (%.0f%%)\n",
               dispatch_width, before_size / 16, loop_count, before_size, after_size,
               100.0f * (before_size - after_size) / before_size);
-
-      const struct gl_program *prog = fp ? &fp->Base : NULL;
 
       dump_assembly(p->store, annotation.ann_count, annotation.ann, brw, prog);
       ralloc_free(annotation.ann);

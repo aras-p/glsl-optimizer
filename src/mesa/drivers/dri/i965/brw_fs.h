@@ -684,7 +684,7 @@ private:
    struct brw_wm_prog_data *prog_data;
 
    struct gl_shader_program * const shader_prog;
-   const struct gl_fragment_program *fp;
+   const struct gl_program *prog;
 
    unsigned dispatch_width; /**< 8 or 16 */
 
