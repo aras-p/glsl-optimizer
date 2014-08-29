@@ -192,3 +192,7 @@ SUBDIRS += \
 	tests/trivial \
 	tests/unit
 endif
+
+EXTRA_DIST += \
+	tests/graw \
+	tests/python
