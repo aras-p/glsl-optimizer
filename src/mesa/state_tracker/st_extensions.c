@@ -620,7 +620,6 @@ void st_init_extensions(struct pipe_screen *screen,
    extensions->NV_fog_distance = GL_TRUE;
    extensions->NV_texture_env_combine4 = GL_TRUE;
    extensions->NV_texture_rectangle = GL_TRUE;
-   extensions->NV_vdpau_interop = GL_TRUE;
 
    extensions->OES_EGL_image = GL_TRUE;
    extensions->OES_EGL_image_external = GL_TRUE;
@@ -884,5 +883,12 @@ void st_init_extensions(struct pipe_screen *screen,
                                    PIPE_TEXTURE_2D, 0,
                                    PIPE_BIND_SAMPLER_VIEW)) {
       extensions->ARB_ES3_compatibility = GL_TRUE;
+   }
+
+   if (screen->get_video_param &&
+       screen->get_video_param(screen, PIPE_VIDEO_PROFILE_UNKNOWN,
+                               PIPE_VIDEO_ENTRYPOINT_BITSTREAM,
+                               PIPE_VIDEO_CAP_SUPPORTS_INTERLACED)) {
+      extensions->NV_vdpau_interop = GL_TRUE;
    }
 }
