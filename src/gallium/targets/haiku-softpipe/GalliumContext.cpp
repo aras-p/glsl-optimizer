@@ -69,23 +69,6 @@ hgl_viewport(struct gl_context* glContext)
 }
 
 
-static int
-hook_stm_get_param(struct st_manager *smapi, enum st_manager_param param)
-{
-	CALLED();
-
-	switch (param) {
-		case ST_MANAGER_BROKEN_INVALIDATE:
-			TRACE("%s: TODO: How should we handle BROKEN_INVALIDATE calls?\n",
-				__func__);
-			// For now we force validation of the framebuffer.
-			return 1;
-	}
-
-	return 0;
-}
-
-
 GalliumContext::GalliumContext(ulong options)
 	:
 	fOptions(options),
@@ -264,12 +247,8 @@ GalliumContext::CreateContext(Bitmap *bitmap)
 		return -1;
 	}
 
-	context->manager = CALLOC_STRUCT(st_manager);
-	if (!context->manager) {
-		ERROR("%s: Couldn't allocate Mesa state tracker manager!\n", __func__);
-		return -1;
-	}
-	context->manager->get_param = hook_stm_get_param;
+	// Create state_tracker manager
+	context->manager = hgl_create_st_manager(fScreen);
 
 	// Create state tracker visual
 	context->stVisual = CreateVisual();
@@ -286,9 +265,6 @@ GalliumContext::CreateContext(Bitmap *bitmap)
 		FREE(context->stVisual);
 		return -1;
 	}
-
-	// We need to assign the screen *before* calling st_api create_context
-	context->manager->screen = fScreen;
 
 	// Build state tracker attributes
 	struct st_context_attribs attribs;
@@ -405,7 +381,7 @@ GalliumContext::DestroyContext(context_id contextID)
 		FREE(fContext[contextID]->stVisual);
 
 	if (fContext[contextID]->manager)
-		FREE(fContext[contextID]->manager);
+		hgl_destroy_st_manager(fContext[contextID]->manager);
 
 	FREE(fContext[contextID]);
 }
@@ -523,7 +499,7 @@ GalliumContext::ResizeViewport(int32 width, int32 height)
 		if (fContext[i] && fContext[i]->st) {
 			struct st_context *stContext = (struct st_context*)fContext[i]->st;
 			_mesa_set_viewport(stContext->ctx, 0, 0, 0, width, height);
-        		st_manager_validate_framebuffers(stContext);
+			st_manager_validate_framebuffers(stContext);
 		}
 	}
 }

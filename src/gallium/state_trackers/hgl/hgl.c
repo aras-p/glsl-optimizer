@@ -131,6 +131,23 @@ hgl_st_framebuffer_validate(struct st_context_iface *stctx,
 }
 
 
+static int
+hgl_st_manager_get_param(struct st_manager *smapi, enum st_manager_param param)
+{
+    CALLED();
+
+	switch (param) {
+		case ST_MANAGER_BROKEN_INVALIDATE:
+			TRACE("%s: TODO: How should we handle BROKEN_INVALIDATE calls?\n",
+				__func__);
+			// For now we force validation of the framebuffer.
+			return 1;
+	}
+
+	return 0;
+}
+
+
 /**
  * Create new framebuffer
  */
@@ -148,7 +165,7 @@ hgl_create_st_framebuffer(struct hgl_context* context)
 		// Copy context visual into framebuffer
 		memcpy(&buffer->visual, context->stVisual, sizeof(struct st_visual));
 
-		// calloc our st_framebuffer interface
+		// calloc and configure our st_framebuffer interface
 		buffer->stfbi = CALLOC_STRUCT(st_framebuffer_iface);
 		if (!buffer->stfbi) {
 			ERROR("%s: Couldn't calloc framebuffer!\n", __func__);
@@ -166,4 +183,35 @@ hgl_create_st_framebuffer(struct hgl_context* context)
 	}
 
    return buffer;
+}
+
+
+struct st_manager *
+hgl_create_st_manager(struct pipe_screen* screen)
+{
+	CALLED();
+
+	assert(screen);
+	struct st_manager* manager = CALLOC_STRUCT(st_manager);
+
+	if (!manager) {
+		ERROR("%s: Couldn't allocate state tracker manager!\n", __func__);
+		return NULL;
+	}
+
+	//manager->display = dpy;
+	manager->screen = screen;
+	manager->get_param = hgl_st_manager_get_param;
+
+	return manager;
+}
+
+
+void
+hgl_destroy_st_manager(struct st_manager *manager)
+{
+	CALLED();
+
+	if (manager)
+		FREE(manager);
 }

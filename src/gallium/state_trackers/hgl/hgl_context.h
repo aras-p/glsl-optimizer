@@ -73,7 +73,12 @@ struct hgl_context
 };
 
 
+// hgl state_tracker framebuffer
 struct hgl_buffer* hgl_create_st_framebuffer(struct hgl_context* context);
+
+// hgl state_tracker manager
+struct st_manager* hgl_create_st_manager(struct pipe_screen* screen);
+void hgl_destroy_st_manager(struct st_manager *manager);
 
 
 #endif /* HGL_CONTEXT_H */
