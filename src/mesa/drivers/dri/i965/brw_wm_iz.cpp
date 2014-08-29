@@ -125,6 +125,8 @@ void fs_visitor::setup_payload_gen4()
    GLuint reg = 2;
    bool kill_stats_promoted_workaround = false;
    int lookup = key->iz_lookup;
+   assert(stage == MESA_SHADER_FRAGMENT);
+   gl_fragment_program *fp = (gl_fragment_program*) prog;
    bool uses_depth =
       (fp->Base.InputsRead & (1 << VARYING_SLOT_POS)) != 0;
 

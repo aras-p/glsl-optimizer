@@ -602,8 +602,12 @@ fs_visitor::setup_fp_regs()
 
          switch (i) {
          case VARYING_SLOT_POS:
-            ir->data.pixel_center_integer = fp->PixelCenterInteger;
-            ir->data.origin_upper_left = fp->OriginUpperLeft;
+            {
+               assert(stage == MESA_SHADER_FRAGMENT);
+               gl_fragment_program *fp = (gl_fragment_program*) prog;
+               ir->data.pixel_center_integer = fp->PixelCenterInteger;
+               ir->data.origin_upper_left = fp->OriginUpperLeft;
+            }
             fp_input_regs[i] = *emit_fragcoord_interpolation(ir);
             break;
          case VARYING_SLOT_FACE:

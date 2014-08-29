@@ -3267,7 +3267,6 @@ fs_visitor::fs_visitor(struct brw_context *brw,
      key(key), prog_data(prog_data),
      dispatch_width(dispatch_width)
 {
-   this->fp = fp;
    this->mem_ctx = mem_ctx;
    init();
 }
