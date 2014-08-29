@@ -2691,7 +2691,7 @@ fs_visitor::emit_untyped_atomic(unsigned atomic_op, unsigned surf_index,
    emit(MOV(brw_uvec_mrf(8, mlen, 0), fs_reg(0u)))
       ->force_writemask_all = true;
 
-   if (fp->UsesKill) {
+   if (prog_data->uses_kill) {
       emit(MOV(brw_uvec_mrf(1, mlen, 7), brw_flag_reg(0, 1)))
          ->force_writemask_all = true;
    } else {
@@ -2736,7 +2736,7 @@ fs_visitor::emit_untyped_surface_read(unsigned surf_index, fs_reg dst,
    emit(MOV(brw_uvec_mrf(8, mlen, 0), fs_reg(0u)))
       ->force_writemask_all = true;
 
-   if (fp->UsesKill) {
+   if (prog_data->uses_kill) {
       emit(MOV(brw_uvec_mrf(1, mlen, 7), brw_flag_reg(0, 1)))
          ->force_writemask_all = true;
    } else {
@@ -3054,7 +3054,7 @@ fs_visitor::emit_fb_writes()
     *      thread message and on all dual-source messages."
     */
    if (brw->gen >= 6 &&
-       (brw->is_haswell || brw->gen >= 8 || !this->fp->UsesKill) &&
+       (brw->is_haswell || brw->gen >= 8 || !this->prog_data->uses_kill) &&
        !do_dual_src &&
        key->nr_color_regions == 1) {
       header_present = false;
@@ -3151,7 +3151,7 @@ fs_visitor::emit_fb_writes()
       inst->mlen = nr - base_mrf;
       inst->eot = true;
       inst->header_present = header_present;
-      if ((brw->gen >= 8 || brw->is_haswell) && fp->UsesKill) {
+      if ((brw->gen >= 8 || brw->is_haswell) && prog_data->uses_kill) {
          inst->predicate = BRW_PREDICATE_NORMAL;
          inst->flag_subreg = 1;
       }
@@ -3200,7 +3200,7 @@ fs_visitor::emit_fb_writes()
          inst->mlen = nr - base_mrf;
       inst->eot = eot;
       inst->header_present = header_present;
-      if ((brw->gen >= 8 || brw->is_haswell) && fp->UsesKill) {
+      if ((brw->gen >= 8 || brw->is_haswell) && prog_data->uses_kill) {
          inst->predicate = BRW_PREDICATE_NORMAL;
          inst->flag_subreg = 1;
       }
@@ -3221,7 +3221,7 @@ fs_visitor::emit_fb_writes()
       inst->mlen = nr - base_mrf;
       inst->eot = true;
       inst->header_present = header_present;
-      if ((brw->gen >= 8 || brw->is_haswell) && fp->UsesKill) {
+      if ((brw->gen >= 8 || brw->is_haswell) && prog_data->uses_kill) {
          inst->predicate = BRW_PREDICATE_NORMAL;
          inst->flag_subreg = 1;
       }

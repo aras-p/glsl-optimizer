@@ -156,6 +156,7 @@ bool do_wm_prog(struct brw_context *brw,
       fs = prog->_LinkedShaders[MESA_SHADER_FRAGMENT];
 
    memset(&prog_data, 0, sizeof(prog_data));
+   prog_data.uses_kill = fp->program.UsesKill;
 
    /* Allocate the references to the uniforms that will end up in the
     * prog_data associated with the compiled program, and which will be freed
