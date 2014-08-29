@@ -57,3 +57,5 @@ libclover_la_LIBADD = \
 	libcltgsi.la libclllvm.la
 
 libclover_la_SOURCES = $(CPP_SOURCES)
+
+EXTRA_DIST = Doxyfile
