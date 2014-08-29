@@ -633,6 +633,9 @@ fs_visitor::setup_fp_regs()
 fs_reg
 fs_visitor::get_fp_dst_reg(const prog_dst_register *dst)
 {
+   assert(stage == MESA_SHADER_FRAGMENT);
+   brw_wm_prog_key *key = (brw_wm_prog_key*) this->key;
+
    switch (dst->File) {
    case PROGRAM_TEMPORARY:
       return fp_temp_regs[dst->Index];

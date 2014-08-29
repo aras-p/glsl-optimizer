@@ -77,6 +77,8 @@ fs_visitor::visit(ir_variable *ir)
          this->do_dual_src = true;
       } else if (ir->data.location == FRAG_RESULT_COLOR) {
 	 /* Writing gl_FragColor outputs to all color regions. */
+         assert(stage == MESA_SHADER_FRAGMENT);
+         brw_wm_prog_key *key = (brw_wm_prog_key*) this->key;
 	 for (unsigned int i = 0; i < MAX2(key->nr_color_regions, 1); i++) {
 	    this->outputs[i] = *reg;
 	    this->output_components[i] = 4;
@@ -354,6 +356,9 @@ fs_visitor::emit_interpolate_expression(ir_expression *ir)
     * the FS payload. this requires a bit of extra work to support.
     */
    no16("interpolate_at_* not yet supported in SIMD16 mode.");
+
+   assert(stage == MESA_SHADER_FRAGMENT);
+   brw_wm_prog_key *key = (brw_wm_prog_key*) this->key;
 
    ir_dereference * deref = ir->operands[0]->as_dereference();
    ir_swizzle * swiz = NULL;
@@ -1666,7 +1671,7 @@ fs_visitor::rescale_texcoord(ir_texture *ir, fs_reg coordinate,
    fs_reg scale_x, scale_y;
    const struct brw_sampler_prog_key_data *tex =
       (stage == MESA_SHADER_FRAGMENT) ?
-      &this->key->tex : NULL;
+      &((brw_wm_prog_key*) this->key)->tex : NULL;
    assert(tex);
 
    /* The 965 requires the EU to do the normalization of GL rectangle
@@ -1811,7 +1816,7 @@ fs_visitor::visit(ir_texture *ir)
 {
    const struct brw_sampler_prog_key_data *tex =
       (stage == MESA_SHADER_FRAGMENT) ?
-      &this->key->tex : NULL;
+      &((brw_wm_prog_key*) this->key)->tex : NULL;
    assert(tex);
    fs_inst *inst = NULL;
 
@@ -2035,7 +2040,7 @@ fs_visitor::gather_channel(ir_texture *ir, uint32_t sampler)
 {
    const struct brw_sampler_prog_key_data *tex =
       (stage == MESA_SHADER_FRAGMENT) ?
-      &this->key->tex : NULL;
+      &((brw_wm_prog_key*) this->key)->tex : NULL;
    assert(tex);
    ir_constant *chan = ir->lod_info.component->as_constant();
    int swiz = GET_SWZ(tex->swizzles[sampler], chan->value.i[0]);
@@ -2079,7 +2084,7 @@ fs_visitor::swizzle_result(ir_texture *ir, fs_reg orig_val, uint32_t sampler)
 
    const struct brw_sampler_prog_key_data *tex =
       (stage == MESA_SHADER_FRAGMENT) ?
-      &this->key->tex : NULL;
+      &((brw_wm_prog_key*) this->key)->tex : NULL;
    assert(tex);
 
    if (ir->type == glsl_type::float_type) {
@@ -2955,6 +2960,8 @@ fs_visitor::emit_interpolation_setup_gen6()
 void
 fs_visitor::emit_color_write(int target, int index, int first_color_mrf)
 {
+   assert(stage == MESA_SHADER_FRAGMENT);
+   brw_wm_prog_key *key = (brw_wm_prog_key*) this->key;
    int reg_width = dispatch_width / 8;
    fs_inst *inst;
    fs_reg color = outputs[target];
@@ -3051,6 +3058,8 @@ cond_for_alpha_func(GLenum func)
 void
 fs_visitor::emit_alpha_test()
 {
+   assert(stage == MESA_SHADER_FRAGMENT);
+   brw_wm_prog_key *key = (brw_wm_prog_key*) this->key;
    this->current_annotation = "Alpha test";
 
    fs_inst *cmp;
@@ -3081,6 +3090,7 @@ fs_visitor::emit_fb_writes()
 {
    assert(stage == MESA_SHADER_FRAGMENT);
    brw_wm_prog_data *prog_data = (brw_wm_prog_data*) this->prog_data;
+   brw_wm_prog_key *key = (brw_wm_prog_key*) this->key;
 
    this->current_annotation = "FB write header";
    bool header_present = true;

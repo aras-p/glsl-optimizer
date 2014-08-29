@@ -1009,6 +1009,8 @@ fs_visitor::setup_builtin_uniform_values(ir_variable *ir)
 fs_reg *
 fs_visitor::emit_fragcoord_interpolation(ir_variable *ir)
 {
+   assert(stage == MESA_SHADER_FRAGMENT);
+   brw_wm_prog_key *key = (brw_wm_prog_key*) this->key;
    fs_reg *reg = new(this->mem_ctx) fs_reg(this, ir->type);
    fs_reg wpos = *reg;
    bool flip = !ir->data.origin_upper_left ^ key->render_to_fbo;
@@ -1098,6 +1100,7 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
 
    assert(stage == MESA_SHADER_FRAGMENT);
    brw_wm_prog_data *prog_data = (brw_wm_prog_data*) this->prog_data;
+   brw_wm_prog_key *key = (brw_wm_prog_key*) this->key;
 
    unsigned int array_elements;
    const glsl_type *type;
@@ -1234,6 +1237,8 @@ fs_visitor::emit_frontfacing_interpolation()
 void
 fs_visitor::compute_sample_position(fs_reg dst, fs_reg int_sample_pos)
 {
+   assert(stage == MESA_SHADER_FRAGMENT);
+   brw_wm_prog_key *key = (brw_wm_prog_key*) this->key;
    assert(dst.type == BRW_REGISTER_TYPE_F);
 
    if (key->compute_pos_offset) {
@@ -1303,6 +1308,8 @@ fs_visitor::emit_samplepos_setup()
 fs_reg *
 fs_visitor::emit_sampleid_setup(ir_variable *ir)
 {
+   assert(stage == MESA_SHADER_FRAGMENT);
+   brw_wm_prog_key *key = (brw_wm_prog_key*) this->key;
    assert(brw->gen >= 6);
 
    this->current_annotation = "compute sample id";
@@ -1505,6 +1512,7 @@ fs_visitor::calculate_urb_setup()
 {
    assert(stage == MESA_SHADER_FRAGMENT);
    brw_wm_prog_data *prog_data = (brw_wm_prog_data*) this->prog_data;
+   brw_wm_prog_key *key = (brw_wm_prog_key*) this->key;
 
    for (unsigned int i = 0; i < VARYING_SLOT_MAX; i++) {
       prog_data->urb_setup[i] = -1;
@@ -3104,6 +3112,7 @@ fs_visitor::setup_payload_gen6()
 
    if (stage == MESA_SHADER_FRAGMENT) {
       brw_wm_prog_data *prog_data = (brw_wm_prog_data*) this->prog_data;
+      brw_wm_prog_key *key = (brw_wm_prog_key*) this->key;
       prog_data->uses_pos_offset = key->compute_pos_offset;
       /* R31: MSAA position offsets. */
       if (prog_data->uses_pos_offset) {
@@ -3136,6 +3145,7 @@ fs_visitor::assign_binding_table_offsets()
 {
    assert(stage == MESA_SHADER_FRAGMENT);
    brw_wm_prog_data *prog_data = (brw_wm_prog_data*) this->prog_data;
+   brw_wm_prog_key *key = (brw_wm_prog_key*) this->key;
    uint32_t next_binding_table_offset = 0;
 
    /* If there are no color regions, we still perform an FB write to a null
@@ -3225,7 +3235,10 @@ fs_visitor::run()
       bool uses_kill =
          (stage == MESA_SHADER_FRAGMENT) &&
          ((brw_wm_prog_data*) this->prog_data)->uses_kill;
-      if (uses_kill || key->alpha_test_func) {
+      bool alpha_test_func =
+         (stage == MESA_SHADER_FRAGMENT) &&
+         ((brw_wm_prog_key*) this->key)->alpha_test_func;
+      if (uses_kill || alpha_test_func) {
          fs_inst *discard_init = emit(FS_OPCODE_MOV_DISPATCH_TO_FLAGS);
          discard_init->flag_subreg = 1;
       }
@@ -3248,7 +3261,7 @@ fs_visitor::run()
 
       emit(FS_OPCODE_PLACEHOLDER_HALT);
 
-      if (key->alpha_test_func)
+      if (alpha_test_func)
          emit_alpha_test();
 
       emit_fb_writes();
