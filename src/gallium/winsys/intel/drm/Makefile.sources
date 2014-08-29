@@ -1,4 +1,3 @@
 C_SOURCES := \
 	intel_drm_public.h \
-	intel_drm_winsys.c \
-	intel_winsys.h
+	intel_drm_winsys.c
