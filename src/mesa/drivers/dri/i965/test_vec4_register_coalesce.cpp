@@ -241,8 +241,5 @@ TEST_F(register_coalesce_test, test_channel_mul_grf)
 
    register_coalesce(v);
 
-   /* This path isn't supported yet in the reswizzling code, so we're checking
-    * that we haven't done anything bad to scalar non-DP[234]s.
-    */
-   EXPECT_NE(mul->dst.reg, to.reg);
+   EXPECT_EQ(mul->dst.reg, to.reg);
 }
