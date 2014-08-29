@@ -16,3 +16,5 @@ libfreedreno_la_SOURCES = \
 	$(a2xx_SOURCES) \
 	$(a3xx_SOURCES) \
 	$(ir3_SOURCES)
+
+EXTRA_DIST = Android.mk

@@ -1,59 +1,110 @@
 C_SOURCES := \
-	freedreno_util.c \
-	freedreno_lowering.c \
-	freedreno_program.c \
-	freedreno_query.c \
-	freedreno_query_hw.c \
-	freedreno_query_sw.c \
-	freedreno_fence.c \
-	freedreno_resource.c \
-	freedreno_surface.c \
-	freedreno_draw.c \
-	freedreno_state.c \
-	freedreno_texture.c \
+	adreno_common.xml.h \
+	adreno_pm4.xml.h \
+	disasm.h \
 	freedreno_context.c \
+	freedreno_context.h \
+	freedreno_draw.c \
+	freedreno_draw.h \
+	freedreno_fence.c \
+	freedreno_fence.h \
+	freedreno_gmem.c \
+	freedreno_gmem.h \
+	freedreno_lowering.c \
+	freedreno_lowering.h \
+	freedreno_program.c \
+	freedreno_program.h \
+	freedreno_query.c \
+	freedreno_query.h \
+	freedreno_query_hw.c \
+	freedreno_query_hw.h \
+	freedreno_query_sw.c \
+	freedreno_query_sw.h \
+	freedreno_resource.c \
+	freedreno_resource.h \
 	freedreno_screen.c \
-	freedreno_gmem.c
+	freedreno_screen.h \
+	freedreno_state.c \
+	freedreno_state.h \
+	freedreno_surface.c \
+	freedreno_surface.h \
+	freedreno_texture.c \
+	freedreno_texture.h \
+	freedreno_util.c \
+	freedreno_util.h
 
 a2xx_SOURCES := \
-	a2xx/fd2_blend.c \
-	a2xx/fd2_compiler.c \
-	a2xx/fd2_context.c \
-	a2xx/fd2_draw.c \
-	a2xx/fd2_emit.c \
-	a2xx/fd2_gmem.c \
-	a2xx/fd2_program.c \
-	a2xx/fd2_rasterizer.c \
-	a2xx/fd2_screen.c \
-	a2xx/fd2_texture.c \
-	a2xx/fd2_util.c \
-	a2xx/fd2_zsa.c \
+	a2xx/a2xx.xml.h \
 	a2xx/disasm-a2xx.c \
-	a2xx/ir-a2xx.c
+	a2xx/fd2_blend.c \
+	a2xx/fd2_blend.h \
+	a2xx/fd2_compiler.c \
+	a2xx/fd2_compiler.h \
+	a2xx/fd2_context.c \
+	a2xx/fd2_context.h \
+	a2xx/fd2_draw.c \
+	a2xx/fd2_draw.h \
+	a2xx/fd2_emit.c \
+	a2xx/fd2_emit.h \
+	a2xx/fd2_gmem.c \
+	a2xx/fd2_gmem.h \
+	a2xx/fd2_program.c \
+	a2xx/fd2_program.h \
+	a2xx/fd2_rasterizer.c \
+	a2xx/fd2_rasterizer.h \
+	a2xx/fd2_screen.c \
+	a2xx/fd2_screen.h \
+	a2xx/fd2_texture.c \
+	a2xx/fd2_texture.h \
+	a2xx/fd2_util.c \
+	a2xx/fd2_util.h \
+	a2xx/fd2_zsa.c \
+	a2xx/fd2_zsa.h \
+	a2xx/instr-a2xx.h \
+	a2xx/ir-a2xx.c \
+	a2xx/ir-a2xx.h
 
 a3xx_SOURCES := \
+	a3xx/a3xx.xml.h \
 	a3xx/fd3_blend.c \
+	a3xx/fd3_blend.h \
 	a3xx/fd3_context.c \
+	a3xx/fd3_context.h \
 	a3xx/fd3_draw.c \
+	a3xx/fd3_draw.h \
 	a3xx/fd3_emit.c \
+	a3xx/fd3_emit.h \
 	a3xx/fd3_gmem.c \
+	a3xx/fd3_gmem.h \
 	a3xx/fd3_program.c \
+	a3xx/fd3_program.h \
 	a3xx/fd3_query.c \
+	a3xx/fd3_query.h \
 	a3xx/fd3_rasterizer.c \
+	a3xx/fd3_rasterizer.h \
 	a3xx/fd3_screen.c \
+	a3xx/fd3_screen.h \
 	a3xx/fd3_texture.c \
+	a3xx/fd3_texture.h \
 	a3xx/fd3_util.c \
-	a3xx/fd3_zsa.c
+	a3xx/fd3_util.h \
+	a3xx/fd3_zsa.c \
+	a3xx/fd3_zsa.h
 
 ir3_SOURCES := \
 	ir3/disasm-a3xx.c \
+	ir3/instr-a3xx.h \
+	ir3/ir3.c \
 	ir3/ir3_compiler.c \
+	ir3/ir3_compiler.h \
 	ir3/ir3_compiler_old.c \
-	ir3/ir3_shader.c \
 	ir3/ir3_cp.c \
 	ir3/ir3_depth.c \
 	ir3/ir3_dump.c \
 	ir3/ir3_flatten.c \
+	ir3/ir3.h \
 	ir3/ir3_ra.c \
 	ir3/ir3_sched.c \
-	ir3/ir3.c
+	ir3/ir3_shader.c \
+	ir3/ir3_shader.h \
+	ir3/ir3_visitor.h
