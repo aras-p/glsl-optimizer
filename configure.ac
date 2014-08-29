@@ -57,6 +57,8 @@ AC_CHECK_PROGS([PYTHON2], [python2 python])
 AC_PROG_SED
 AC_PROG_MKDIR_P
 
+AC_SYS_LARGEFILE
+
 LT_PREREQ([2.2])
 LT_INIT([disable-static])
 

@@ -24,7 +24,6 @@
  * of the Software.
  */
 
-#define _FILE_OFFSET_BITS 64
 #include "radeon_drm_cs.h"
 
 #include "util/u_hash_table.h"
