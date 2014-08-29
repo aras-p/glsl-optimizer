@@ -1096,6 +1096,9 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
    reg->type = brw_type_for_base_type(ir->type->get_scalar_type());
    fs_reg attr = *reg;
 
+   assert(stage == MESA_SHADER_FRAGMENT);
+   brw_wm_prog_data *prog_data = (brw_wm_prog_data*) this->prog_data;
+
    unsigned int array_elements;
    const glsl_type *type;
 
@@ -1458,12 +1461,14 @@ void
 fs_visitor::assign_curb_setup()
 {
    if (dispatch_width == 8) {
-      prog_data->base.dispatch_grf_start_reg = payload.num_regs;
+      prog_data->dispatch_grf_start_reg = payload.num_regs;
    } else {
+      assert(stage == MESA_SHADER_FRAGMENT);
+      brw_wm_prog_data *prog_data = (brw_wm_prog_data*) this->prog_data;
       prog_data->dispatch_grf_start_reg_16 = payload.num_regs;
    }
 
-   prog_data->base.curb_read_length = ALIGN(stage_prog_data->nr_params, 8) / 8;
+   prog_data->curb_read_length = ALIGN(stage_prog_data->nr_params, 8) / 8;
 
    /* Map the offsets in the UNIFORM file to fixed HW regs. */
    foreach_in_list(fs_inst, inst, &instructions) {
@@ -1498,6 +1503,9 @@ fs_visitor::assign_curb_setup()
 void
 fs_visitor::calculate_urb_setup()
 {
+   assert(stage == MESA_SHADER_FRAGMENT);
+   brw_wm_prog_data *prog_data = (brw_wm_prog_data*) this->prog_data;
+
    for (unsigned int i = 0; i < VARYING_SLOT_MAX; i++) {
       prog_data->urb_setup[i] = -1;
    }
@@ -1583,6 +1591,9 @@ fs_visitor::calculate_urb_setup()
 void
 fs_visitor::assign_urb_setup()
 {
+   assert(stage == MESA_SHADER_FRAGMENT);
+   brw_wm_prog_data *prog_data = (brw_wm_prog_data*) this->prog_data;
+
    int urb_start = payload.num_regs + prog_data->base.curb_read_length;
 
    /* Offset all the urb_setup[] index by the actual position of the
@@ -3045,7 +3056,9 @@ fs_visitor::setup_payload_gen6()
 {
    bool uses_depth =
       (prog->InputsRead & (1 << VARYING_SLOT_POS)) != 0;
-   unsigned barycentric_interp_modes = prog_data->barycentric_interp_modes;
+   unsigned barycentric_interp_modes =
+      (stage == MESA_SHADER_FRAGMENT) ?
+      ((brw_wm_prog_data*) this->prog_data)->barycentric_interp_modes : 0;
 
    assert(brw->gen >= 6);
 
@@ -3089,11 +3102,14 @@ fs_visitor::setup_payload_gen6()
       }
    }
 
-   prog_data->uses_pos_offset = key->compute_pos_offset;
-   /* R31: MSAA position offsets. */
-   if (prog_data->uses_pos_offset) {
-      payload.sample_pos_reg = payload.num_regs;
-      payload.num_regs++;
+   if (stage == MESA_SHADER_FRAGMENT) {
+      brw_wm_prog_data *prog_data = (brw_wm_prog_data*) this->prog_data;
+      prog_data->uses_pos_offset = key->compute_pos_offset;
+      /* R31: MSAA position offsets. */
+      if (prog_data->uses_pos_offset) {
+         payload.sample_pos_reg = payload.num_regs;
+         payload.num_regs++;
+      }
    }
 
    /* R32: MSAA input coverage mask */
@@ -3118,6 +3134,8 @@ fs_visitor::setup_payload_gen6()
 void
 fs_visitor::assign_binding_table_offsets()
 {
+   assert(stage == MESA_SHADER_FRAGMENT);
+   brw_wm_prog_data *prog_data = (brw_wm_prog_data*) this->prog_data;
    uint32_t next_binding_table_offset = 0;
 
    /* If there are no color regions, we still perform an FB write to a null
@@ -3204,7 +3222,10 @@ fs_visitor::run()
       /* We handle discards by keeping track of the still-live pixels in f0.1.
        * Initialize it with the dispatched pixels.
        */
-      if (prog_data->uses_kill || key->alpha_test_func) {
+      bool uses_kill =
+         (stage == MESA_SHADER_FRAGMENT) &&
+         ((brw_wm_prog_data*) this->prog_data)->uses_kill;
+      if (uses_kill || key->alpha_test_func) {
          fs_inst *discard_init = emit(FS_OPCODE_MOV_DISPATCH_TO_FLAGS);
          discard_init->flag_subreg = 1;
       }
@@ -3358,16 +3379,19 @@ fs_visitor::run()
       schedule_instructions(SCHEDULE_POST);
 
    if (last_scratch > 0) {
-      prog_data->base.total_scratch = brw_get_scratch_size(last_scratch);
+      prog_data->total_scratch = brw_get_scratch_size(last_scratch);
    }
 
    if (brw->use_rep_send)
       try_rep_send();
 
-   if (dispatch_width == 8)
-      prog_data->reg_blocks = brw_register_blocks(grf_used);
-   else
-      prog_data->reg_blocks_16 = brw_register_blocks(grf_used);
+   if (stage == MESA_SHADER_FRAGMENT) {
+      brw_wm_prog_data *prog_data = (brw_wm_prog_data*) this->prog_data;
+      if (dispatch_width == 8)
+         prog_data->reg_blocks = brw_register_blocks(grf_used);
+      else
+         prog_data->reg_blocks_16 = brw_register_blocks(grf_used);
+   }
 
    /* If any state parameters were appended, then ParameterValues could have
     * been realloced, in which case the driver uniform storage set up by

@@ -930,7 +930,7 @@ fs_visitor::visit(ir_expression *ir)
          /* Assume this may touch any UBO. It would be nice to provide
           * a tighter bound, but the array information is already lowered away.
           */
-         brw_mark_surface_used(&prog_data->base,
+         brw_mark_surface_used(prog_data,
                                stage_prog_data->binding_table.ubo_start +
                                shader_prog->NumUniformBlocks - 1);
       }
@@ -1830,7 +1830,7 @@ fs_visitor::visit(ir_texture *ir)
          max_used += stage_prog_data->binding_table.texture_start;
       }
 
-      brw_mark_surface_used(&prog_data->base, max_used);
+      brw_mark_surface_used(prog_data, max_used);
 
       /* Emit code to evaluate the actual indexing expression */
       nonconst_sampler_index->accept(this);
@@ -2707,6 +2707,9 @@ fs_visitor::emit_untyped_atomic(unsigned atomic_op, unsigned surf_index,
                                 fs_reg dst, fs_reg offset, fs_reg src0,
                                 fs_reg src1)
 {
+   bool uses_kill =
+      (stage == MESA_SHADER_FRAGMENT) &&
+      ((brw_wm_prog_data*) this->prog_data)->uses_kill;
    const unsigned operand_len = dispatch_width / 8;
    unsigned mlen = 0;
    fs_inst *inst;
@@ -2715,7 +2718,7 @@ fs_visitor::emit_untyped_atomic(unsigned atomic_op, unsigned surf_index,
    emit(MOV(brw_uvec_mrf(8, mlen, 0), fs_reg(0u)))
       ->force_writemask_all = true;
 
-   if (prog_data->uses_kill) {
+   if (uses_kill) {
       emit(MOV(brw_uvec_mrf(1, mlen, 7), brw_flag_reg(0, 1)))
          ->force_writemask_all = true;
    } else {
@@ -2752,6 +2755,9 @@ void
 fs_visitor::emit_untyped_surface_read(unsigned surf_index, fs_reg dst,
                                       fs_reg offset)
 {
+   bool uses_kill =
+      (stage == MESA_SHADER_FRAGMENT) &&
+      ((brw_wm_prog_data*) this->prog_data)->uses_kill;
    const unsigned operand_len = dispatch_width / 8;
    unsigned mlen = 0;
    fs_inst *inst;
@@ -2760,7 +2766,7 @@ fs_visitor::emit_untyped_surface_read(unsigned surf_index, fs_reg dst,
    emit(MOV(brw_uvec_mrf(8, mlen, 0), fs_reg(0u)))
       ->force_writemask_all = true;
 
-   if (prog_data->uses_kill) {
+   if (uses_kill) {
       emit(MOV(brw_uvec_mrf(1, mlen, 7), brw_flag_reg(0, 1)))
          ->force_writemask_all = true;
    } else {
@@ -2831,6 +2837,8 @@ fs_visitor::emit_dummy_fs()
 struct brw_reg
 fs_visitor::interp_reg(int location, int channel)
 {
+   assert(stage == MESA_SHADER_FRAGMENT);
+   brw_wm_prog_data *prog_data = (brw_wm_prog_data*) this->prog_data;
    int regnr = prog_data->urb_setup[location] * 2 + channel / 2;
    int stride = (channel & 1) * 4;
 
@@ -3054,6 +3062,9 @@ fs_visitor::emit_alpha_test()
 void
 fs_visitor::emit_fb_writes()
 {
+   assert(stage == MESA_SHADER_FRAGMENT);
+   brw_wm_prog_data *prog_data = (brw_wm_prog_data*) this->prog_data;
+
    this->current_annotation = "FB write header";
    bool header_present = true;
    /* We can potentially have a message length of up to 15, so we have to set
@@ -3078,7 +3089,7 @@ fs_visitor::emit_fb_writes()
     *      thread message and on all dual-source messages."
     */
    if (brw->gen >= 6 &&
-       (brw->is_haswell || brw->gen >= 8 || !this->prog_data->uses_kill) &&
+       (brw->is_haswell || brw->gen >= 8 || !prog_data->uses_kill) &&
        !do_dual_src &&
        key->nr_color_regions == 1) {
       header_present = false;
@@ -3288,7 +3299,7 @@ fs_visitor::fs_visitor(struct brw_context *brw,
                        unsigned dispatch_width)
    : backend_visitor(brw, shader_prog, &fp->Base, &prog_data->base,
                      MESA_SHADER_FRAGMENT),
-     key(key), prog_data(prog_data),
+     key(key), prog_data(&prog_data->base),
      dispatch_width(dispatch_width)
 {
    this->mem_ctx = mem_ctx;

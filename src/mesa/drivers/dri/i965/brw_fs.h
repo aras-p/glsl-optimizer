@@ -470,7 +470,7 @@ public:
    void visit_atomic_counter_intrinsic(ir_call *ir);
 
    const struct brw_wm_prog_key *const key;
-   struct brw_wm_prog_data *prog_data;
+   struct brw_stage_prog_data *prog_data;
    unsigned int sanity_param_count;
 
    int *param_size;
