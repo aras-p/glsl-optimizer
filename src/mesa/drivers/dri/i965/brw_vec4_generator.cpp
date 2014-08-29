@@ -977,342 +977,6 @@ vec4_generator::generate_untyped_surface_read(vec4_instruction *inst,
    brw_mark_surface_used(&prog_data->base, surf_index.dw1.ud);
 }
 
-/**
- * Generate assembly for a Vec4 IR instruction.
- *
- * \param instruction The Vec4 IR instruction to generate code for.
- * \param dst         The destination register.
- * \param src         An array of up to three source registers.
- */
-void
-vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
-                                          struct brw_reg dst,
-                                          struct brw_reg *src)
-{
-   vec4_instruction *inst = (vec4_instruction *) instruction;
-
-   if (dst.width == BRW_WIDTH_4) {
-      /* This happens in attribute fixups for "dual instanced" geometry
-       * shaders, since they use attributes that are vec4's.  Since the exec
-       * width is only 4, it's essential that the caller set
-       * force_writemask_all in order to make sure the instruction is executed
-       * regardless of which channels are enabled.
-       */
-      assert(inst->force_writemask_all);
-
-      /* Fix up any <8;8,1> or <0;4,1> source registers to <4;4,1> to satisfy
-       * the following register region restrictions (from Graphics BSpec:
-       * 3D-Media-GPGPU Engine > EU Overview > Registers and Register Regions
-       * > Register Region Restrictions)
-       *
-       *     1. ExecSize must be greater than or equal to Width.
-       *
-       *     2. If ExecSize = Width and HorzStride != 0, VertStride must be set
-       *        to Width * HorzStride."
-       */
-      for (int i = 0; i < 3; i++) {
-         if (src[i].file == BRW_GENERAL_REGISTER_FILE)
-            src[i] = stride(src[i], 4, 4, 1);
-      }
-   }
-
-   switch (inst->opcode) {
-   case BRW_OPCODE_MOV:
-      brw_MOV(p, dst, src[0]);
-      break;
-   case BRW_OPCODE_ADD:
-      brw_ADD(p, dst, src[0], src[1]);
-      break;
-   case BRW_OPCODE_MUL:
-      brw_MUL(p, dst, src[0], src[1]);
-      break;
-   case BRW_OPCODE_MACH:
-      brw_MACH(p, dst, src[0], src[1]);
-      break;
-
-   case BRW_OPCODE_MAD:
-      assert(brw->gen >= 6);
-      brw_MAD(p, dst, src[0], src[1], src[2]);
-      break;
-
-   case BRW_OPCODE_FRC:
-      brw_FRC(p, dst, src[0]);
-      break;
-   case BRW_OPCODE_RNDD:
-      brw_RNDD(p, dst, src[0]);
-      break;
-   case BRW_OPCODE_RNDE:
-      brw_RNDE(p, dst, src[0]);
-      break;
-   case BRW_OPCODE_RNDZ:
-      brw_RNDZ(p, dst, src[0]);
-      break;
-
-   case BRW_OPCODE_AND:
-      brw_AND(p, dst, src[0], src[1]);
-      break;
-   case BRW_OPCODE_OR:
-      brw_OR(p, dst, src[0], src[1]);
-      break;
-   case BRW_OPCODE_XOR:
-      brw_XOR(p, dst, src[0], src[1]);
-      break;
-   case BRW_OPCODE_NOT:
-      brw_NOT(p, dst, src[0]);
-      break;
-   case BRW_OPCODE_ASR:
-      brw_ASR(p, dst, src[0], src[1]);
-      break;
-   case BRW_OPCODE_SHR:
-      brw_SHR(p, dst, src[0], src[1]);
-      break;
-   case BRW_OPCODE_SHL:
-      brw_SHL(p, dst, src[0], src[1]);
-      break;
-
-   case BRW_OPCODE_CMP:
-      brw_CMP(p, dst, inst->conditional_mod, src[0], src[1]);
-      break;
-   case BRW_OPCODE_SEL:
-      brw_SEL(p, dst, src[0], src[1]);
-      break;
-
-   case BRW_OPCODE_DPH:
-      brw_DPH(p, dst, src[0], src[1]);
-      break;
-
-   case BRW_OPCODE_DP4:
-      brw_DP4(p, dst, src[0], src[1]);
-      break;
-
-   case BRW_OPCODE_DP3:
-      brw_DP3(p, dst, src[0], src[1]);
-      break;
-
-   case BRW_OPCODE_DP2:
-      brw_DP2(p, dst, src[0], src[1]);
-      break;
-
-   case BRW_OPCODE_F32TO16:
-      assert(brw->gen >= 7);
-      brw_F32TO16(p, dst, src[0]);
-      break;
-
-   case BRW_OPCODE_F16TO32:
-      assert(brw->gen >= 7);
-      brw_F16TO32(p, dst, src[0]);
-      break;
-
-   case BRW_OPCODE_LRP:
-      assert(brw->gen >= 6);
-      brw_LRP(p, dst, src[0], src[1], src[2]);
-      break;
-
-   case BRW_OPCODE_BFREV:
-      assert(brw->gen >= 7);
-      /* BFREV only supports UD type for src and dst. */
-      brw_BFREV(p, retype(dst, BRW_REGISTER_TYPE_UD),
-                   retype(src[0], BRW_REGISTER_TYPE_UD));
-      break;
-   case BRW_OPCODE_FBH:
-      assert(brw->gen >= 7);
-      /* FBH only supports UD type for dst. */
-      brw_FBH(p, retype(dst, BRW_REGISTER_TYPE_UD), src[0]);
-      break;
-   case BRW_OPCODE_FBL:
-      assert(brw->gen >= 7);
-      /* FBL only supports UD type for dst. */
-      brw_FBL(p, retype(dst, BRW_REGISTER_TYPE_UD), src[0]);
-      break;
-   case BRW_OPCODE_CBIT:
-      assert(brw->gen >= 7);
-      /* CBIT only supports UD type for dst. */
-      brw_CBIT(p, retype(dst, BRW_REGISTER_TYPE_UD), src[0]);
-      break;
-   case BRW_OPCODE_ADDC:
-      assert(brw->gen >= 7);
-      brw_ADDC(p, dst, src[0], src[1]);
-      break;
-   case BRW_OPCODE_SUBB:
-      assert(brw->gen >= 7);
-      brw_SUBB(p, dst, src[0], src[1]);
-      break;
-   case BRW_OPCODE_MAC:
-      brw_MAC(p, dst, src[0], src[1]);
-      break;
-
-   case BRW_OPCODE_BFE:
-      assert(brw->gen >= 7);
-      brw_BFE(p, dst, src[0], src[1], src[2]);
-      break;
-
-   case BRW_OPCODE_BFI1:
-      assert(brw->gen >= 7);
-      brw_BFI1(p, dst, src[0], src[1]);
-      break;
-   case BRW_OPCODE_BFI2:
-      assert(brw->gen >= 7);
-      brw_BFI2(p, dst, src[0], src[1], src[2]);
-      break;
-
-   case BRW_OPCODE_IF:
-      if (inst->src[0].file != BAD_FILE) {
-         /* The instruction has an embedded compare (only allowed on gen6) */
-         assert(brw->gen == 6);
-         gen6_IF(p, inst->conditional_mod, src[0], src[1]);
-      } else {
-         brw_inst *if_inst = brw_IF(p, BRW_EXECUTE_8);
-         brw_inst_set_pred_control(brw, if_inst, inst->predicate);
-      }
-      break;
-
-   case BRW_OPCODE_ELSE:
-      brw_ELSE(p);
-      break;
-   case BRW_OPCODE_ENDIF:
-      brw_ENDIF(p);
-      break;
-
-   case BRW_OPCODE_DO:
-      brw_DO(p, BRW_EXECUTE_8);
-      break;
-
-   case BRW_OPCODE_BREAK:
-      brw_BREAK(p);
-      brw_set_default_predicate_control(p, BRW_PREDICATE_NONE);
-      break;
-   case BRW_OPCODE_CONTINUE:
-      brw_CONT(p);
-      brw_set_default_predicate_control(p, BRW_PREDICATE_NONE);
-      break;
-
-   case BRW_OPCODE_WHILE:
-      brw_WHILE(p);
-      break;
-
-   case SHADER_OPCODE_RCP:
-   case SHADER_OPCODE_RSQ:
-   case SHADER_OPCODE_SQRT:
-   case SHADER_OPCODE_EXP2:
-   case SHADER_OPCODE_LOG2:
-   case SHADER_OPCODE_SIN:
-   case SHADER_OPCODE_COS:
-      if (brw->gen >= 7) {
-         gen6_math(p, dst, brw_math_function(inst->opcode), src[0],
-                   brw_null_reg());
-      } else if (brw->gen == 6) {
-	 generate_math_gen6(inst, dst, src[0], brw_null_reg());
-      } else {
-	 generate_math1_gen4(inst, dst, src[0]);
-      }
-      break;
-
-   case SHADER_OPCODE_POW:
-   case SHADER_OPCODE_INT_QUOTIENT:
-   case SHADER_OPCODE_INT_REMAINDER:
-      if (brw->gen >= 7) {
-         gen6_math(p, dst, brw_math_function(inst->opcode), src[0], src[1]);
-      } else if (brw->gen == 6) {
-	 generate_math_gen6(inst, dst, src[0], src[1]);
-      } else {
-	 generate_math2_gen4(inst, dst, src[0], src[1]);
-      }
-      break;
-
-   case SHADER_OPCODE_TEX:
-   case SHADER_OPCODE_TXD:
-   case SHADER_OPCODE_TXF:
-   case SHADER_OPCODE_TXF_CMS:
-   case SHADER_OPCODE_TXF_MCS:
-   case SHADER_OPCODE_TXL:
-   case SHADER_OPCODE_TXS:
-   case SHADER_OPCODE_TG4:
-   case SHADER_OPCODE_TG4_OFFSET:
-      generate_tex(inst, dst, src[0], src[1]);
-      break;
-
-   case VS_OPCODE_URB_WRITE:
-      generate_vs_urb_write(inst);
-      break;
-
-   case SHADER_OPCODE_GEN4_SCRATCH_READ:
-      generate_scratch_read(inst, dst, src[0]);
-      break;
-
-   case SHADER_OPCODE_GEN4_SCRATCH_WRITE:
-      generate_scratch_write(inst, dst, src[0], src[1]);
-      break;
-
-   case VS_OPCODE_PULL_CONSTANT_LOAD:
-      generate_pull_constant_load(inst, dst, src[0], src[1]);
-      break;
-
-   case VS_OPCODE_PULL_CONSTANT_LOAD_GEN7:
-      generate_pull_constant_load_gen7(inst, dst, src[0], src[1]);
-      break;
-
-   case GS_OPCODE_URB_WRITE:
-      generate_gs_urb_write(inst);
-      break;
-
-   case GS_OPCODE_THREAD_END:
-      generate_gs_thread_end(inst);
-      break;
-
-   case GS_OPCODE_SET_WRITE_OFFSET:
-      generate_gs_set_write_offset(dst, src[0], src[1]);
-      break;
-
-   case GS_OPCODE_SET_VERTEX_COUNT:
-      generate_gs_set_vertex_count(dst, src[0]);
-      break;
-
-   case GS_OPCODE_SET_DWORD_2_IMMED:
-      generate_gs_set_dword_2_immed(dst, src[0]);
-      break;
-
-   case GS_OPCODE_PREPARE_CHANNEL_MASKS:
-      generate_gs_prepare_channel_masks(dst);
-      break;
-
-   case GS_OPCODE_SET_CHANNEL_MASKS:
-      generate_gs_set_channel_masks(dst, src[0]);
-      break;
-
-   case GS_OPCODE_GET_INSTANCE_ID:
-      generate_gs_get_instance_id(dst);
-      break;
-
-   case SHADER_OPCODE_SHADER_TIME_ADD:
-      brw_shader_time_add(p, src[0],
-                          prog_data->base.binding_table.shader_time_start);
-      brw_mark_surface_used(&prog_data->base,
-                            prog_data->base.binding_table.shader_time_start);
-      break;
-
-   case SHADER_OPCODE_UNTYPED_ATOMIC:
-      generate_untyped_atomic(inst, dst, src[0], src[1]);
-      break;
-
-   case SHADER_OPCODE_UNTYPED_SURFACE_READ:
-      generate_untyped_surface_read(inst, dst, src[0]);
-      break;
-
-   case VS_OPCODE_UNPACK_FLAGS_SIMD4X2:
-      generate_unpack_flags(inst, dst);
-      break;
-
-   default:
-      if (inst->opcode < (int) ARRAY_SIZE(opcode_descs)) {
-         _mesa_problem(&brw->ctx, "Unsupported opcode in `%s' in vec4\n",
-                       opcode_descs[inst->opcode].name);
-      } else {
-         _mesa_problem(&brw->ctx, "Unsupported opcode %d in vec4", inst->opcode);
-      }
-      abort();
-   }
-}
-
 void
 vec4_generator::generate_code(const cfg_t *cfg)
 {
@@ -1338,7 +1002,326 @@ vec4_generator::generate_code(const cfg_t *cfg)
 
       unsigned pre_emit_nr_insn = p->nr_insn;
 
-      generate_vec4_instruction(inst, dst, src);
+      if (dst.width == BRW_WIDTH_4) {
+         /* This happens in attribute fixups for "dual instanced" geometry
+          * shaders, since they use attributes that are vec4's.  Since the exec
+          * width is only 4, it's essential that the caller set
+          * force_writemask_all in order to make sure the instruction is executed
+          * regardless of which channels are enabled.
+          */
+         assert(inst->force_writemask_all);
+
+         /* Fix up any <8;8,1> or <0;4,1> source registers to <4;4,1> to satisfy
+          * the following register region restrictions (from Graphics BSpec:
+          * 3D-Media-GPGPU Engine > EU Overview > Registers and Register Regions
+          * > Register Region Restrictions)
+          *
+          *     1. ExecSize must be greater than or equal to Width.
+          *
+          *     2. If ExecSize = Width and HorzStride != 0, VertStride must be set
+          *        to Width * HorzStride."
+          */
+         for (int i = 0; i < 3; i++) {
+            if (src[i].file == BRW_GENERAL_REGISTER_FILE)
+               src[i] = stride(src[i], 4, 4, 1);
+         }
+      }
+
+      switch (inst->opcode) {
+      case BRW_OPCODE_MOV:
+         brw_MOV(p, dst, src[0]);
+         break;
+      case BRW_OPCODE_ADD:
+         brw_ADD(p, dst, src[0], src[1]);
+         break;
+      case BRW_OPCODE_MUL:
+         brw_MUL(p, dst, src[0], src[1]);
+         break;
+      case BRW_OPCODE_MACH:
+         brw_MACH(p, dst, src[0], src[1]);
+         break;
+
+      case BRW_OPCODE_MAD:
+         assert(brw->gen >= 6);
+         brw_MAD(p, dst, src[0], src[1], src[2]);
+         break;
+
+      case BRW_OPCODE_FRC:
+         brw_FRC(p, dst, src[0]);
+         break;
+      case BRW_OPCODE_RNDD:
+         brw_RNDD(p, dst, src[0]);
+         break;
+      case BRW_OPCODE_RNDE:
+         brw_RNDE(p, dst, src[0]);
+         break;
+      case BRW_OPCODE_RNDZ:
+         brw_RNDZ(p, dst, src[0]);
+         break;
+
+      case BRW_OPCODE_AND:
+         brw_AND(p, dst, src[0], src[1]);
+         break;
+      case BRW_OPCODE_OR:
+         brw_OR(p, dst, src[0], src[1]);
+         break;
+      case BRW_OPCODE_XOR:
+         brw_XOR(p, dst, src[0], src[1]);
+         break;
+      case BRW_OPCODE_NOT:
+         brw_NOT(p, dst, src[0]);
+         break;
+      case BRW_OPCODE_ASR:
+         brw_ASR(p, dst, src[0], src[1]);
+         break;
+      case BRW_OPCODE_SHR:
+         brw_SHR(p, dst, src[0], src[1]);
+         break;
+      case BRW_OPCODE_SHL:
+         brw_SHL(p, dst, src[0], src[1]);
+         break;
+
+      case BRW_OPCODE_CMP:
+         brw_CMP(p, dst, inst->conditional_mod, src[0], src[1]);
+         break;
+      case BRW_OPCODE_SEL:
+         brw_SEL(p, dst, src[0], src[1]);
+         break;
+
+      case BRW_OPCODE_DPH:
+         brw_DPH(p, dst, src[0], src[1]);
+         break;
+
+      case BRW_OPCODE_DP4:
+         brw_DP4(p, dst, src[0], src[1]);
+         break;
+
+      case BRW_OPCODE_DP3:
+         brw_DP3(p, dst, src[0], src[1]);
+         break;
+
+      case BRW_OPCODE_DP2:
+         brw_DP2(p, dst, src[0], src[1]);
+         break;
+
+      case BRW_OPCODE_F32TO16:
+         assert(brw->gen >= 7);
+         brw_F32TO16(p, dst, src[0]);
+         break;
+
+      case BRW_OPCODE_F16TO32:
+         assert(brw->gen >= 7);
+         brw_F16TO32(p, dst, src[0]);
+         break;
+
+      case BRW_OPCODE_LRP:
+         assert(brw->gen >= 6);
+         brw_LRP(p, dst, src[0], src[1], src[2]);
+         break;
+
+      case BRW_OPCODE_BFREV:
+         assert(brw->gen >= 7);
+         /* BFREV only supports UD type for src and dst. */
+         brw_BFREV(p, retype(dst, BRW_REGISTER_TYPE_UD),
+                   retype(src[0], BRW_REGISTER_TYPE_UD));
+         break;
+      case BRW_OPCODE_FBH:
+         assert(brw->gen >= 7);
+         /* FBH only supports UD type for dst. */
+         brw_FBH(p, retype(dst, BRW_REGISTER_TYPE_UD), src[0]);
+         break;
+      case BRW_OPCODE_FBL:
+         assert(brw->gen >= 7);
+         /* FBL only supports UD type for dst. */
+         brw_FBL(p, retype(dst, BRW_REGISTER_TYPE_UD), src[0]);
+         break;
+      case BRW_OPCODE_CBIT:
+         assert(brw->gen >= 7);
+         /* CBIT only supports UD type for dst. */
+         brw_CBIT(p, retype(dst, BRW_REGISTER_TYPE_UD), src[0]);
+         break;
+      case BRW_OPCODE_ADDC:
+         assert(brw->gen >= 7);
+         brw_ADDC(p, dst, src[0], src[1]);
+         break;
+      case BRW_OPCODE_SUBB:
+         assert(brw->gen >= 7);
+         brw_SUBB(p, dst, src[0], src[1]);
+         break;
+      case BRW_OPCODE_MAC:
+         brw_MAC(p, dst, src[0], src[1]);
+         break;
+
+      case BRW_OPCODE_BFE:
+         assert(brw->gen >= 7);
+         brw_BFE(p, dst, src[0], src[1], src[2]);
+         break;
+
+      case BRW_OPCODE_BFI1:
+         assert(brw->gen >= 7);
+         brw_BFI1(p, dst, src[0], src[1]);
+         break;
+      case BRW_OPCODE_BFI2:
+         assert(brw->gen >= 7);
+         brw_BFI2(p, dst, src[0], src[1], src[2]);
+         break;
+
+      case BRW_OPCODE_IF:
+         if (inst->src[0].file != BAD_FILE) {
+            /* The instruction has an embedded compare (only allowed on gen6) */
+            assert(brw->gen == 6);
+            gen6_IF(p, inst->conditional_mod, src[0], src[1]);
+         } else {
+            brw_inst *if_inst = brw_IF(p, BRW_EXECUTE_8);
+            brw_inst_set_pred_control(brw, if_inst, inst->predicate);
+         }
+         break;
+
+      case BRW_OPCODE_ELSE:
+         brw_ELSE(p);
+         break;
+      case BRW_OPCODE_ENDIF:
+         brw_ENDIF(p);
+         break;
+
+      case BRW_OPCODE_DO:
+         brw_DO(p, BRW_EXECUTE_8);
+         break;
+
+      case BRW_OPCODE_BREAK:
+         brw_BREAK(p);
+         brw_set_default_predicate_control(p, BRW_PREDICATE_NONE);
+         break;
+      case BRW_OPCODE_CONTINUE:
+         brw_CONT(p);
+         brw_set_default_predicate_control(p, BRW_PREDICATE_NONE);
+         break;
+
+      case BRW_OPCODE_WHILE:
+         brw_WHILE(p);
+         break;
+
+      case SHADER_OPCODE_RCP:
+      case SHADER_OPCODE_RSQ:
+      case SHADER_OPCODE_SQRT:
+      case SHADER_OPCODE_EXP2:
+      case SHADER_OPCODE_LOG2:
+      case SHADER_OPCODE_SIN:
+      case SHADER_OPCODE_COS:
+         if (brw->gen >= 7) {
+            gen6_math(p, dst, brw_math_function(inst->opcode), src[0],
+                      brw_null_reg());
+         } else if (brw->gen == 6) {
+            generate_math_gen6(inst, dst, src[0], brw_null_reg());
+         } else {
+            generate_math1_gen4(inst, dst, src[0]);
+         }
+         break;
+
+      case SHADER_OPCODE_POW:
+      case SHADER_OPCODE_INT_QUOTIENT:
+      case SHADER_OPCODE_INT_REMAINDER:
+         if (brw->gen >= 7) {
+            gen6_math(p, dst, brw_math_function(inst->opcode), src[0], src[1]);
+         } else if (brw->gen == 6) {
+            generate_math_gen6(inst, dst, src[0], src[1]);
+         } else {
+            generate_math2_gen4(inst, dst, src[0], src[1]);
+         }
+         break;
+
+      case SHADER_OPCODE_TEX:
+      case SHADER_OPCODE_TXD:
+      case SHADER_OPCODE_TXF:
+      case SHADER_OPCODE_TXF_CMS:
+      case SHADER_OPCODE_TXF_MCS:
+      case SHADER_OPCODE_TXL:
+      case SHADER_OPCODE_TXS:
+      case SHADER_OPCODE_TG4:
+      case SHADER_OPCODE_TG4_OFFSET:
+         generate_tex(inst, dst, src[0], src[1]);
+         break;
+
+      case VS_OPCODE_URB_WRITE:
+         generate_vs_urb_write(inst);
+         break;
+
+      case SHADER_OPCODE_GEN4_SCRATCH_READ:
+         generate_scratch_read(inst, dst, src[0]);
+         break;
+
+      case SHADER_OPCODE_GEN4_SCRATCH_WRITE:
+         generate_scratch_write(inst, dst, src[0], src[1]);
+         break;
+
+      case VS_OPCODE_PULL_CONSTANT_LOAD:
+         generate_pull_constant_load(inst, dst, src[0], src[1]);
+         break;
+
+      case VS_OPCODE_PULL_CONSTANT_LOAD_GEN7:
+         generate_pull_constant_load_gen7(inst, dst, src[0], src[1]);
+         break;
+
+      case GS_OPCODE_URB_WRITE:
+         generate_gs_urb_write(inst);
+         break;
+
+      case GS_OPCODE_THREAD_END:
+         generate_gs_thread_end(inst);
+         break;
+
+      case GS_OPCODE_SET_WRITE_OFFSET:
+         generate_gs_set_write_offset(dst, src[0], src[1]);
+         break;
+
+      case GS_OPCODE_SET_VERTEX_COUNT:
+         generate_gs_set_vertex_count(dst, src[0]);
+         break;
+
+      case GS_OPCODE_SET_DWORD_2_IMMED:
+         generate_gs_set_dword_2_immed(dst, src[0]);
+         break;
+
+      case GS_OPCODE_PREPARE_CHANNEL_MASKS:
+         generate_gs_prepare_channel_masks(dst);
+         break;
+
+      case GS_OPCODE_SET_CHANNEL_MASKS:
+         generate_gs_set_channel_masks(dst, src[0]);
+         break;
+
+      case GS_OPCODE_GET_INSTANCE_ID:
+         generate_gs_get_instance_id(dst);
+         break;
+
+      case SHADER_OPCODE_SHADER_TIME_ADD:
+         brw_shader_time_add(p, src[0],
+                             prog_data->base.binding_table.shader_time_start);
+         brw_mark_surface_used(&prog_data->base,
+                               prog_data->base.binding_table.shader_time_start);
+         break;
+
+      case SHADER_OPCODE_UNTYPED_ATOMIC:
+         generate_untyped_atomic(inst, dst, src[0], src[1]);
+         break;
+
+      case SHADER_OPCODE_UNTYPED_SURFACE_READ:
+         generate_untyped_surface_read(inst, dst, src[0]);
+         break;
+
+      case VS_OPCODE_UNPACK_FLAGS_SIMD4X2:
+         generate_unpack_flags(inst, dst);
+         break;
+
+      default:
+         if (inst->opcode < (int) ARRAY_SIZE(opcode_descs)) {
+            _mesa_problem(&brw->ctx, "Unsupported opcode in `%s' in vec4\n",
+                          opcode_descs[inst->opcode].name);
+         } else {
+            _mesa_problem(&brw->ctx, "Unsupported opcode %d in vec4", inst->opcode);
+         }
+         abort();
+      }
 
       if (inst->no_dd_clear || inst->no_dd_check || inst->conditional_mod) {
          assert(p->nr_insn == pre_emit_nr_insn + 1 ||

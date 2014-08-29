@@ -627,9 +627,6 @@ public:
 
 private:
    void generate_code(const cfg_t *cfg);
-   void generate_vec4_instruction(vec4_instruction *inst,
-                                  struct brw_reg dst,
-                                  struct brw_reg *src);
 
    void generate_math1_gen4(vec4_instruction *inst,
 			    struct brw_reg dst,
