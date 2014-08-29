@@ -622,7 +622,7 @@ fs_visitor::emit_shader_time_write(enum shader_time_shader_type type,
                                    fs_reg value)
 {
    int shader_time_index =
-      brw_get_shader_time_index(brw, shader_prog, &fp->Base, type);
+      brw_get_shader_time_index(brw, shader_prog, prog, type);
    fs_reg offset = fs_reg(shader_time_index * SHADER_TIME_STRIDE);
 
    fs_reg payload;
@@ -986,7 +986,7 @@ fs_visitor::setup_builtin_uniform_values(ir_variable *ir)
       /* This state reference has already been setup by ir_to_mesa, but we'll
        * get the same index back here.
        */
-      int index = _mesa_add_state_reference(this->fp->Base.Parameters,
+      int index = _mesa_add_state_reference(this->prog->Parameters,
 					    (gl_state_index *)slots[i].tokens);
 
       /* Add each of the unique swizzles of the element as a parameter.
@@ -1001,7 +1001,7 @@ fs_visitor::setup_builtin_uniform_values(ir_variable *ir)
 	 last_swiz = swiz;
 
          stage_prog_data->param[uniforms++] =
-            &fp->Base.Parameters->ParameterValues[index][swiz];
+            &prog->Parameters->ParameterValues[index][swiz];
       }
    }
 }
@@ -1505,7 +1505,7 @@ fs_visitor::calculate_urb_setup()
    int urb_next = 0;
    /* Figure out where each of the incoming setup attributes lands. */
    if (brw->gen >= 6) {
-      if (_mesa_bitcount_64(fp->Base.InputsRead &
+      if (_mesa_bitcount_64(prog->InputsRead &
                             BRW_FS_VARYING_INPUT_MASK) <= 16) {
          /* The SF/SBE pipeline stage can do arbitrary rearrangement of the
           * first 16 varying inputs, so we can put them wherever we want.
@@ -1517,7 +1517,7 @@ fs_visitor::calculate_urb_setup()
           * a different vertex (or geometry) shader.
           */
          for (unsigned int i = 0; i < VARYING_SLOT_MAX; i++) {
-            if (fp->Base.InputsRead & BRW_FS_VARYING_INPUT_MASK &
+            if (prog->InputsRead & BRW_FS_VARYING_INPUT_MASK &
                 BITFIELD64_BIT(i)) {
                prog_data->urb_setup[i] = urb_next++;
             }
@@ -1540,7 +1540,7 @@ fs_visitor::calculate_urb_setup()
              * unused.
              */
             if (varying != BRW_VARYING_SLOT_COUNT &&
-                (fp->Base.InputsRead & BRW_FS_VARYING_INPUT_MASK &
+                (prog->InputsRead & BRW_FS_VARYING_INPUT_MASK &
                  BITFIELD64_BIT(varying))) {
                prog_data->urb_setup[varying] = slot - first_slot;
             }
@@ -1573,7 +1573,7 @@ fs_visitor::calculate_urb_setup()
        *
        * See compile_sf_prog() for more info.
        */
-      if (fp->Base.InputsRead & BITFIELD64_BIT(VARYING_SLOT_PNTC))
+      if (prog->InputsRead & BITFIELD64_BIT(VARYING_SLOT_PNTC))
          prog_data->urb_setup[VARYING_SLOT_PNTC] = urb_next++;
    }
 
@@ -2329,7 +2329,7 @@ fs_visitor::try_rep_send()
     * also requires that the render target be tiled, which might not be the
     * case for some EGLImage paths or if we some day do rendering to PBOs.
     */
-   if (fp->Base.OutputsWritten & BITFIELD64_BIT(FRAG_RESULT_DEPTH) ||
+   if (prog->OutputsWritten & BITFIELD64_BIT(FRAG_RESULT_DEPTH) ||
        payload.aa_dest_stencil_reg ||
        payload.dest_depth_reg ||
        dual_src_output.file != BAD_FILE)
@@ -3031,7 +3031,7 @@ void
 fs_visitor::setup_payload_gen6()
 {
    bool uses_depth =
-      (fp->Base.InputsRead & (1 << VARYING_SLOT_POS)) != 0;
+      (prog->InputsRead & (1 << VARYING_SLOT_POS)) != 0;
    unsigned barycentric_interp_modes = prog_data->barycentric_interp_modes;
 
    assert(brw->gen >= 6);
@@ -3084,7 +3084,7 @@ fs_visitor::setup_payload_gen6()
    }
 
    /* R32: MSAA input coverage mask */
-   if (fp->Base.SystemValuesRead & SYSTEM_BIT_SAMPLE_MASK_IN) {
+   if (prog->SystemValuesRead & SYSTEM_BIT_SAMPLE_MASK_IN) {
       assert(brw->gen >= 7);
       payload.sample_mask_in_reg = payload.num_regs;
       payload.num_regs++;
@@ -3097,7 +3097,7 @@ fs_visitor::setup_payload_gen6()
    /* R34-: bary for 32-pixel. */
    /* R58-59: interp W for 32-pixel. */
 
-   if (fp->Base.OutputsWritten & BITFIELD64_BIT(FRAG_RESULT_DEPTH)) {
+   if (prog->OutputsWritten & BITFIELD64_BIT(FRAG_RESULT_DEPTH)) {
       source_depth_to_render_target = true;
    }
 }
@@ -3164,7 +3164,7 @@ fs_visitor::opt_drop_redundant_mov_to_flags()
 bool
 fs_visitor::run()
 {
-   sanity_param_count = fp->Base.Parameters->NumParameters;
+   sanity_param_count = prog->Parameters->NumParameters;
    bool allocated_without_spills;
 
    assign_binding_table_offsets();
@@ -3181,7 +3181,7 @@ fs_visitor::run()
          emit_shader_time_begin();
 
       calculate_urb_setup();
-      if (fp->Base.InputsRead > 0) {
+      if (prog->InputsRead > 0) {
          if (brw->gen < 6)
             emit_interpolation_setup_gen4();
          else
@@ -3361,7 +3361,7 @@ fs_visitor::run()
     * _mesa_associate_uniform_storage() would point to freed memory.  Make
     * sure that didn't happen.
     */
-   assert(sanity_param_count == fp->Base.Parameters->NumParameters);
+   assert(sanity_param_count == prog->Parameters->NumParameters);
 
    calculate_cfg();
 
