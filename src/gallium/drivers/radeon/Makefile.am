@@ -28,3 +28,6 @@ libradeon_la_LDFLAGS = \
 	$(LLVM_LDFLAGS)
 
 endif
+
+EXTRA_DIST = Android.mk \
+	LLVM_REVISION.txt
