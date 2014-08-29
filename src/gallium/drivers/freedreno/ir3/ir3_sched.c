@@ -64,6 +64,7 @@ struct ir3_sched_ctx {
 	struct ir3_instruction *addr;      /* current a0.x user, if any */
 	struct ir3_instruction *pred;      /* current p0.x user, if any */
 	unsigned cnt;
+	bool error;
 };
 
 static struct ir3_instruction *
@@ -308,6 +309,7 @@ static int block_sched_undelayed(struct ir3_sched_ctx *ctx,
 	struct ir3_instruction *instr = block->head;
 	bool addr_in_use = false;
 	bool pred_in_use = false;
+	bool all_delayed = true;
 	unsigned cnt = ~0;
 
 	while (instr) {
@@ -317,6 +319,10 @@ static int block_sched_undelayed(struct ir3_sched_ctx *ctx,
 
 		if (addr || pred) {
 			int ret = trysched(ctx, instr);
+
+			if (ret != DELAYED)
+				all_delayed = false;
+
 			if (ret == SCHEDULED)
 				cnt = 0;
 			else if (ret > 0)
@@ -335,6 +341,12 @@ static int block_sched_undelayed(struct ir3_sched_ctx *ctx,
 
 	if (!pred_in_use)
 		ctx->pred = NULL;
+
+	/* detect if we've gotten ourselves into an impossible situation
+	 * and bail if needed
+	 */
+	if (all_delayed)
+		ctx->error = true;
 
 	return cnt;
 }
@@ -356,7 +368,7 @@ static void block_sched(struct ir3_sched_ctx *ctx, struct ir3_block *block)
 		}
 	}
 
-	while ((instr = block->head)) {
+	while ((instr = block->head) && !ctx->error) {
 		/* NOTE: always grab next *before* trysched(), in case the
 		 * instruction is actually scheduled (and therefore moved
 		 * from depth list into scheduled list)
@@ -393,9 +405,12 @@ static void block_sched(struct ir3_sched_ctx *ctx, struct ir3_block *block)
 	block->head = reverse(ctx->scheduled);
 }
 
-void ir3_block_sched(struct ir3_block *block)
+int ir3_block_sched(struct ir3_block *block)
 {
 	struct ir3_sched_ctx ctx = {0};
 	ir3_clear_mark(block->shader);
 	block_sched(&ctx, block);
+	if (ctx.error)
+		return -1;
+	return 0;
 }

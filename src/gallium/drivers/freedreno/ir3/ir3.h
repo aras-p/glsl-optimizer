@@ -406,7 +406,7 @@ void ir3_block_depth(struct ir3_block *block);
 void ir3_block_cp(struct ir3_block *block);
 
 /* scheduling: */
-void ir3_block_sched(struct ir3_block *block);
+int ir3_block_sched(struct ir3_block *block);
 
 /* register assignment: */
 int ir3_block_ra(struct ir3_block *block, enum shader_t type,

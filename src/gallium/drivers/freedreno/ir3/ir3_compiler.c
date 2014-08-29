@@ -2574,7 +2574,9 @@ ir3_compile_shader(struct ir3_shader_variant *so,
 		ir3_dump_instr_list(block->head);
 	}
 
-	ir3_block_sched(block);
+	ret = ir3_block_sched(block);
+	if (ret)
+		goto out;
 
 	if (fd_mesa_debug & FD_DBG_OPTMSGS) {
 		printf("AFTER SCHED:\n");
