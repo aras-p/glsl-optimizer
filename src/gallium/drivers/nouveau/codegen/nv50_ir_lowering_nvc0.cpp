@@ -174,14 +174,30 @@ NVC0LegalizePostRA::findOverwritingDefs(const Instruction *texi,
 }
 
 void
-NVC0LegalizePostRA::findFirstUses(const Instruction *texi,
-                                  const Instruction *insn,
-                                  std::list<TexUse> &uses)
+NVC0LegalizePostRA::findFirstUses(
+      const Instruction *texi,
+      const Instruction *insn,
+      std::list<TexUse> &uses,
+      std::tr1::unordered_set<const Instruction *>& visited)
 {
    for (int d = 0; insn->defExists(d); ++d) {
       Value *v = insn->getDef(d);
       for (Value::UseIterator u = v->uses.begin(); u != v->uses.end(); ++u) {
          Instruction *usei = (*u)->getInsn();
+
+         /* XXX HACK ALERT XXX
+          *
+          * This shouldn't have to be here, we should always be making forward
+          * progress by looking at the uses. However this somehow does not
+          * appear to be the case. Probably because this is being done right
+          * after RA, when the defs/uses lists have been messed with by node
+          * merging. This should probably be moved to being done right before
+          * RA. But this will do for now.
+          */
+         if (visited.find(usei) != visited.end())
+            continue;
+
+         visited.insert(usei);
 
          if (usei->op == OP_PHI || usei->op == OP_UNION) {
             // need a barrier before WAW cases
@@ -197,11 +213,11 @@ NVC0LegalizePostRA::findFirstUses(const Instruction *texi,
              usei->op == OP_PHI ||
              usei->op == OP_UNION) {
             // these uses don't manifest in the machine code
-            findFirstUses(texi, usei, uses);
+            findFirstUses(texi, usei, uses, visited);
          } else
          if (usei->op == OP_MOV && usei->getDef(0)->equals(usei->getSrc(0)) &&
              usei->subOp != NV50_IR_SUBOP_MOV_FINAL) {
-            findFirstUses(texi, usei, uses);
+            findFirstUses(texi, usei, uses, visited);
          } else {
             addTexUse(uses, usei, insn);
          }
@@ -257,8 +273,10 @@ NVC0LegalizePostRA::insertTextureBarriers(Function *fn)
    uses = new std::list<TexUse>[texes.size()];
    if (!uses)
       return false;
-   for (size_t i = 0; i < texes.size(); ++i)
-      findFirstUses(texes[i], texes[i], uses[i]);
+   for (size_t i = 0; i < texes.size(); ++i) {
+      std::tr1::unordered_set<const Instruction *> visited;
+      findFirstUses(texes[i], texes[i], uses[i], visited);
+   }
 
    // determine the barrier level at each use
    for (size_t i = 0; i < texes.size(); ++i) {
