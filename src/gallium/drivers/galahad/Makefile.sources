@@ -1,4 +1,8 @@
 C_SOURCES := \
-	glhd_objects.c \
 	glhd_context.c \
-	glhd_screen.c
+	glhd_context.h \
+	glhd_objects.c \
+	glhd_objects.h \
+	glhd_public.h \
+	glhd_screen.c \
+	glhd_screen.h

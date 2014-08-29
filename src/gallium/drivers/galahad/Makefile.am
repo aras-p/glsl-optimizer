@@ -12,3 +12,5 @@ AM_CFLAGS = \
 noinst_LTLIBRARIES = libgalahad.la
 
 libgalahad_la_SOURCES = $(C_SOURCES)
+
+EXTRA_DIST = SConscript
