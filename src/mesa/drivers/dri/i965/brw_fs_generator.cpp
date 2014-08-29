@@ -46,8 +46,8 @@ fs_generator::fs_generator(struct brw_context *brw,
                            bool debug_flag)
 
    : brw(brw), stage(MESA_SHADER_FRAGMENT), key(key),
-     prog_data(prog_data), shader_prog(shader_prog), prog(&fp->Base),
-     runtime_check_aads_emit(runtime_check_aads_emit),
+     prog_data(&prog_data->base), shader_prog(shader_prog),
+     prog(&fp->Base), runtime_check_aads_emit(runtime_check_aads_emit),
      debug_flag(debug_flag), mem_ctx(mem_ctx)
 {
    ctx = &brw->ctx;
@@ -105,6 +105,9 @@ fs_generator::fire_fb_write(fs_inst *inst,
 {
    uint32_t msg_control;
 
+   assert(stage == MESA_SHADER_FRAGMENT);
+   brw_wm_prog_data *prog_data = (brw_wm_prog_data*) this->prog_data;
+
    if (brw->gen < 6) {
       brw_push_insn_state(p);
       brw_set_default_mask_control(p, BRW_MASK_DISABLE);
@@ -148,6 +151,9 @@ fs_generator::generate_fb_write(fs_inst *inst)
    assert(stage == MESA_SHADER_FRAGMENT);
    gl_fragment_program *fp = (gl_fragment_program *) prog;
    struct brw_reg implied_header;
+
+   assert(stage == MESA_SHADER_FRAGMENT);
+   brw_wm_prog_data *prog_data = (brw_wm_prog_data*) this->prog_data;
 
    /* Header is 2 regs, g0 and g1 are the contents. g0 will be implied
     * move, here's g1.
@@ -582,8 +588,8 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
 
    uint32_t base_binding_table_index = (inst->opcode == SHADER_OPCODE_TG4 ||
          inst->opcode == SHADER_OPCODE_TG4_OFFSET)
-         ? prog_data->base.binding_table.gather_texture_start
-         : prog_data->base.binding_table.texture_start;
+         ? prog_data->binding_table.gather_texture_start
+         : prog_data->binding_table.texture_start;
 
    if (sampler_index.file == BRW_IMMEDIATE_VALUE) {
       uint32_t sampler = sampler_index.dw1.ud;
@@ -601,7 +607,7 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
                  simd_mode,
                  return_format);
 
-      brw_mark_surface_used(&prog_data->base, sampler + base_binding_table_index);
+      brw_mark_surface_used(prog_data, sampler + base_binding_table_index);
    } else {
       /* Non-const sampler index */
       /* Note: this clobbers `dst` as a temporary before emitting the send */
@@ -878,7 +884,7 @@ fs_generator::generate_uniform_pull_constant_load(fs_inst *inst,
    brw_oword_block_read(p, dst, brw_message_reg(inst->base_mrf),
 			read_offset, surf_index);
 
-   brw_mark_surface_used(&prog_data->base, surf_index);
+   brw_mark_surface_used(prog_data, surf_index);
 }
 
 void
@@ -922,7 +928,7 @@ fs_generator::generate_uniform_pull_constant_load_gen7(fs_inst *inst,
                               BRW_SAMPLER_SIMD_MODE_SIMD4X2,
                               0);
 
-      brw_mark_surface_used(&prog_data->base, surf_index);
+      brw_mark_surface_used(prog_data, surf_index);
 
    } else {
 
@@ -1036,7 +1042,7 @@ fs_generator::generate_varying_pull_constant_load(fs_inst *inst,
                            simd_mode,
                            return_format);
 
-   brw_mark_surface_used(&prog_data->base, surf_index);
+   brw_mark_surface_used(prog_data, surf_index);
 }
 
 void
@@ -1081,7 +1087,7 @@ fs_generator::generate_varying_pull_constant_load_gen7(fs_inst *inst,
                               simd_mode,
                               0);
 
-      brw_mark_surface_used(&prog_data->base, surf_index);
+      brw_mark_surface_used(prog_data, surf_index);
 
    } else {
 
@@ -1444,11 +1450,11 @@ fs_generator::generate_shader_time_add(fs_inst *inst,
    brw_MOV(p, payload_offset, offset);
    brw_MOV(p, payload_value, value);
    brw_shader_time_add(p, payload,
-                       prog_data->base.binding_table.shader_time_start);
+                       prog_data->binding_table.shader_time_start);
    brw_pop_insn_state(p);
 
-   brw_mark_surface_used(&prog_data->base,
-                         prog_data->base.binding_table.shader_time_start);
+   brw_mark_surface_used(prog_data,
+                         prog_data->binding_table.shader_time_start);
 }
 
 void
@@ -1465,7 +1471,7 @@ fs_generator::generate_untyped_atomic(fs_inst *inst, struct brw_reg dst,
                       atomic_op.dw1.ud, surf_index.dw1.ud,
                       inst->mlen, dispatch_width / 8);
 
-   brw_mark_surface_used(&prog_data->base, surf_index.dw1.ud);
+   brw_mark_surface_used(prog_data, surf_index.dw1.ud);
 }
 
 void
@@ -1479,7 +1485,7 @@ fs_generator::generate_untyped_surface_read(fs_inst *inst, struct brw_reg dst,
                             surf_index.dw1.ud,
                             inst->mlen, dispatch_width / 8);
 
-   brw_mark_surface_used(&prog_data->base, surf_index.dw1.ud);
+   brw_mark_surface_used(prog_data, surf_index.dw1.ud);
 }
 
 void
@@ -1999,6 +2005,9 @@ fs_generator::generate_assembly(const cfg_t *simd8_cfg,
       while (p->next_insn_offset % 64) {
          brw_NOP(p);
       }
+
+      assert(stage == MESA_SHADER_FRAGMENT);
+      brw_wm_prog_data *prog_data = (brw_wm_prog_data*) this->prog_data;
 
       /* Save off the start of this SIMD16 program */
       prog_data->prog_offset_16 = p->next_insn_offset;
