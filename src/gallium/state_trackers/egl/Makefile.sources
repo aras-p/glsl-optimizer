@@ -10,9 +10,12 @@ common_FILES := \
 	common/egl_g3d_st.h \
 	common/egl_g3d_sync.c \
 	common/egl_g3d_sync.h \
+	common/native.h \
+	common/native_buffer.h \
 	common/native_helper.c \
 	common/native_helper.h \
 	common/native_modeset.h \
+	common/native_wayland_bufmgr.h \
 	common/native_wayland_drm_bufmgr.c \
 	common/native_wayland_drm_bufmgr.h
 

@@ -105,4 +105,6 @@ AM_CPPFLAGS += \
 	-DFEATURE_VG=1
 endif
 
-EXTRA_DIST = Android.mk SConscript
+EXTRA_DIST = \
+	Android.mk SConscript \
+	$(android_FILES) $(gdi_FILES)
