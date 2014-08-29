@@ -29,3 +29,5 @@ AM_CFLAGS = \
 noinst_LTLIBRARIES = libi915.la
 
 libi915_la_SOURCES = $(C_SOURCES)
+
+EXTRA_DIST = Android.mk TODO
