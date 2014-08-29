@@ -177,6 +177,7 @@ endif
 ##
 
 EXTRA_DIST += \
+	state_trackers/README \
 	state_trackers/wgl targets/libgl-gdi \
 	targets/graw-gdi targets/graw-null  targets/graw-xlib \
 	state_trackers/hgl targets/haiku-softpipe
