@@ -1,26 +1,49 @@
 C_SOURCES := \
 	lp_bld_alpha.c \
-	lp_bld_blend.c \
+	lp_bld_alpha.h \
 	lp_bld_blend_aos.c \
+	lp_bld_blend.c \
+	lp_bld_blend.h \
 	lp_bld_blend_logicop.c \
 	lp_bld_depth.c \
+	lp_bld_depth.h \
 	lp_bld_interp.c \
+	lp_bld_interp.h \
 	lp_clear.c \
+	lp_clear.h \
 	lp_context.c \
+	lp_context.h \
+	lp_debug.h \
 	lp_draw_arrays.c \
 	lp_fence.c \
+	lp_fence.h \
 	lp_flush.c \
+	lp_flush.h \
 	lp_jit.c \
+	lp_jit.h \
+	lp_limits.h \
 	lp_memory.c \
+	lp_memory.h \
 	lp_perf.c \
+	lp_perf.h \
+	lp_public.h \
 	lp_query.c \
+	lp_query.h \
 	lp_rast.c \
 	lp_rast_debug.c \
+	lp_rast.h \
+	lp_rast_priv.h \
 	lp_rast_tri.c \
+	lp_rast_tri_tmp.h \
 	lp_scene.c \
+	lp_scene.h \
 	lp_scene_queue.c \
+	lp_scene_queue.h \
 	lp_screen.c \
+	lp_screen.h \
 	lp_setup.c \
+	lp_setup_context.h \
+	lp_setup.h \
 	lp_setup_line.c \
 	lp_setup_point.c \
 	lp_setup_tri.c \
@@ -29,14 +52,20 @@ C_SOURCES := \
 	lp_state_clip.c \
 	lp_state_derived.c \
 	lp_state_fs.c \
-	lp_state_setup.c \
+	lp_state_fs.h \
 	lp_state_gs.c \
+	lp_state.h \
 	lp_state_rasterizer.c \
 	lp_state_sampler.c \
+	lp_state_setup.c \
+	lp_state_setup.h \
 	lp_state_so.c \
 	lp_state_surface.c \
 	lp_state_vertex.c \
 	lp_state_vs.c \
 	lp_surface.c \
+	lp_surface.h \
 	lp_tex_sample.c \
-	lp_texture.c
+	lp_tex_sample.h \
+	lp_texture.c \
+	lp_texture.h
