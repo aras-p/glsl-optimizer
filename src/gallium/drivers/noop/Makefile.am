@@ -12,3 +12,5 @@ AM_CFLAGS = \
 noinst_LTLIBRARIES = libnoop.la
 
 libnoop_la_SOURCES = $(C_SOURCES)
+
+EXTRA_DIST = SConscript
