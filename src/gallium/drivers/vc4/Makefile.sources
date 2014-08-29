@@ -1,25 +1,37 @@
 C_SOURCES := \
 	vc4_bufmgr.c \
+	vc4_bufmgr.h \
 	vc4_cl.c \
+	vc4_cl.h \
 	vc4_context.c \
+	vc4_context.h \
 	vc4_draw.c \
+	vc4_drm.h \
 	vc4_emit.c \
 	vc4_formats.c \
 	vc4_opt_algebraic.c \
 	vc4_opt_copy_propagation.c \
 	vc4_opt_cse.c \
 	vc4_opt_dead_code.c \
+	vc4_packet.h \
 	vc4_program.c \
 	vc4_qir.c \
-	vc4_qpu_emit.c \
+	vc4_qir.h \
 	vc4_qpu.c \
+	vc4_qpu_defines.h \
 	vc4_qpu_disasm.c \
+	vc4_qpu_emit.c \
+	vc4_qpu.h \
 	vc4_qpu_validate.c \
 	vc4_resource.c \
+	vc4_resource.h \
 	vc4_screen.c \
+	vc4_screen.h \
 	vc4_simulator.c \
 	vc4_simulator_validate.c \
+	vc4_simulator_validate.h \
 	vc4_simulator_validate_shaders.c \
 	vc4_state.c \
 	vc4_tiling.c \
+	vc4_tiling.h \
 	$()
