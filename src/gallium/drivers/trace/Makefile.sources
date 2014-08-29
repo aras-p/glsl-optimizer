@@ -1,6 +1,13 @@
 C_SOURCES := \
 	tr_context.c \
+	tr_context.h \
 	tr_dump.c \
+	tr_dump_defines.h \
+	tr_dump.h \
 	tr_dump_state.c \
+	tr_dump_state.h \
+	tr_public.h \
 	tr_screen.c \
-	tr_texture.c
+	tr_screen.h \
+	tr_texture.c \
+	tr_texture.h
