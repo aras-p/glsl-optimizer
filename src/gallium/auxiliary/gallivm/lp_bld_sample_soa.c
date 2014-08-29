@@ -752,10 +752,14 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
          lp_build_name(z, "tex.z.wrapped");
       }
    }
-   if (bld->static_texture_state->target == PIPE_TEXTURE_CUBE ||
-       bld->static_texture_state->target == PIPE_TEXTURE_1D_ARRAY ||
-       bld->static_texture_state->target == PIPE_TEXTURE_2D_ARRAY) {
-      z = coords[2];
+   if (has_layer_coord(bld->static_texture_state->target)) {
+      if (bld->static_texture_state->target == PIPE_TEXTURE_CUBE_ARRAY) {
+         /* add cube layer to face */
+         z = lp_build_add(&bld->int_coord_bld, coords[2], coords[3]);
+      }
+      else {
+         z = coords[2];
+      }
       lp_build_name(z, "tex.z.layer");
    }
 
@@ -868,7 +872,8 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
    int chan, texel_index;
    boolean seamless_cube_filter, accurate_cube_corners;
 
-   seamless_cube_filter = bld->static_texture_state->target == PIPE_TEXTURE_CUBE &&
+   seamless_cube_filter = (bld->static_texture_state->target == PIPE_TEXTURE_CUBE ||
+                           bld->static_texture_state->target == PIPE_TEXTURE_CUBE_ARRAY) &&
                           bld->static_sampler_state->seamless_cube_map;
    accurate_cube_corners = ACCURATE_CUBE_CORNERS && seamless_cube_filter;
 
@@ -923,10 +928,15 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
             lp_build_name(z1, "tex.z1.wrapped");
          }
       }
-      if (bld->static_texture_state->target == PIPE_TEXTURE_CUBE ||
-          bld->static_texture_state->target == PIPE_TEXTURE_1D_ARRAY ||
-          bld->static_texture_state->target == PIPE_TEXTURE_2D_ARRAY) {
-         z00 = z01 = z10 = z11 = z1 = coords[2];  /* cube face or layer */
+      if (has_layer_coord(bld->static_texture_state->target)) {
+         if (bld->static_texture_state->target == PIPE_TEXTURE_CUBE_ARRAY) {
+            /* add cube layer to face */
+            z00 = z01 = z10 = z11 = z1 =
+               lp_build_add(&bld->int_coord_bld, coords[2], coords[3]);
+         }
+         else {
+            z00 = z01 = z10 = z11 = z1 = coords[2];  /* cube face or layer */
+         }
          lp_build_name(z00, "tex.z0.layer");
          lp_build_name(z1, "tex.z1.layer");
       }
@@ -1047,6 +1057,14 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
       z10 = lp_build_select(ivec_bld, fall_off_yp_notxm, new_faces[3], z10);
       z11 = lp_build_select(ivec_bld, fall_off_yp_notxp, new_faces[3], z11);
 
+      if (bld->static_texture_state->target == PIPE_TEXTURE_CUBE_ARRAY) {
+         /* now can add cube layer to face (per sample) */
+         z00 = lp_build_add(ivec_bld, z00, coords[3]);
+         z01 = lp_build_add(ivec_bld, z01, coords[3]);
+         z10 = lp_build_add(ivec_bld, z10, coords[3]);
+         z11 = lp_build_add(ivec_bld, z11, coords[3]);
+      }
+
       LLVMBuildStore(builder, x00, xs[0]);
       LLVMBuildStore(builder, x01, xs[1]);
       LLVMBuildStore(builder, x10, xs[2]);
@@ -1070,10 +1088,19 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
       LLVMBuildStore(builder, y0, ys[1]);
       LLVMBuildStore(builder, y1, ys[2]);
       LLVMBuildStore(builder, y1, ys[3]);
-      LLVMBuildStore(builder, face, zs[0]);
-      LLVMBuildStore(builder, face, zs[1]);
-      LLVMBuildStore(builder, face, zs[2]);
-      LLVMBuildStore(builder, face, zs[3]);
+      if (bld->static_texture_state->target == PIPE_TEXTURE_CUBE_ARRAY) {
+         LLVMValueRef cube_layer = lp_build_add(ivec_bld, face, coords[3]);
+         LLVMBuildStore(builder, cube_layer, zs[0]);
+         LLVMBuildStore(builder, cube_layer, zs[1]);
+         LLVMBuildStore(builder, cube_layer, zs[2]);
+         LLVMBuildStore(builder, cube_layer, zs[3]);
+      }
+      else {
+         LLVMBuildStore(builder, face, zs[0]);
+         LLVMBuildStore(builder, face, zs[1]);
+         LLVMBuildStore(builder, face, zs[2]);
+         LLVMBuildStore(builder, face, zs[3]);
+      }
 
       lp_build_endif(&edge_if);
 
@@ -1644,6 +1671,7 @@ lp_build_sample_mipmap_both(struct lp_build_sample_context *bld,
 static LLVMValueRef
 lp_build_layer_coord(struct lp_build_sample_context *bld,
                      unsigned texture_unit,
+                     boolean is_cube_array,
                      LLVMValueRef layer,
                      LLVMValueRef *out_of_bounds)
 {
@@ -1655,6 +1683,7 @@ lp_build_layer_coord(struct lp_build_sample_context *bld,
 
    if (out_of_bounds) {
       LLVMValueRef out1, out;
+      assert(!is_cube_array);
       num_layers = lp_build_broadcast_scalar(int_coord_bld, num_layers);
       out = lp_build_cmp(int_coord_bld, PIPE_FUNC_LESS, layer, int_coord_bld->zero);
       out1 = lp_build_cmp(int_coord_bld, PIPE_FUNC_GEQUAL, layer, num_layers);
@@ -1663,7 +1692,9 @@ lp_build_layer_coord(struct lp_build_sample_context *bld,
    }
    else {
       LLVMValueRef maxlayer;
-      maxlayer = lp_build_sub(&bld->int_bld, num_layers, bld->int_bld.one);
+      LLVMValueRef s = is_cube_array ? lp_build_const_int32(bld->gallivm, 6) :
+                                       bld->int_bld.one;
+      maxlayer = lp_build_sub(&bld->int_bld, num_layers, s);
       maxlayer = lp_build_broadcast_scalar(int_coord_bld, maxlayer);
       return lp_build_clamp(int_coord_bld, layer, int_coord_bld->zero, maxlayer);
    }
@@ -1703,7 +1734,7 @@ lp_build_sample_common(struct lp_build_sample_context *bld,
     * Choose cube face, recompute texcoords for the chosen face and
     * compute rho here too (as it requires transform of derivatives).
     */
-   if (target == PIPE_TEXTURE_CUBE) {
+   if (target == PIPE_TEXTURE_CUBE || target == PIPE_TEXTURE_CUBE_ARRAY) {
       boolean need_derivs;
       need_derivs = ((min_filter != mag_filter ||
                       mip_filter != PIPE_TEX_MIPFILTER_NONE) &&
@@ -1711,11 +1742,19 @@ lp_build_sample_common(struct lp_build_sample_context *bld,
                       !explicit_lod);
       lp_build_cube_lookup(bld, coords, derivs, &cube_rho, &cube_derivs, need_derivs);
       derivs = &cube_derivs;
+      if (target == PIPE_TEXTURE_CUBE_ARRAY) {
+         /* calculate cube layer coord now */
+         LLVMValueRef layer = lp_build_iround(&bld->coord_bld, coords[3]);
+         LLVMValueRef six = lp_build_const_int_vec(bld->gallivm, bld->int_coord_type, 6);
+         layer = lp_build_mul(&bld->int_coord_bld, layer, six);
+         coords[3] = lp_build_layer_coord(bld, texture_index, TRUE, layer, NULL);
+         /* because of seamless filtering can't add it to face (coords[2]) here. */
+      }
    }
    else if (target == PIPE_TEXTURE_1D_ARRAY ||
             target == PIPE_TEXTURE_2D_ARRAY) {
       coords[2] = lp_build_iround(&bld->coord_bld, coords[2]);
-      coords[2] = lp_build_layer_coord(bld, texture_index, coords[2], NULL);
+      coords[2] = lp_build_layer_coord(bld, texture_index, FALSE, coords[2], NULL);
    }
 
    if (bld->static_sampler_state->compare_mode != PIPE_TEX_COMPARE_NONE) {
@@ -2223,11 +2262,11 @@ lp_build_fetch_texel(struct lp_build_sample_context *bld,
    if (target == PIPE_TEXTURE_1D_ARRAY ||
        target == PIPE_TEXTURE_2D_ARRAY) {
       if (out_of_bound_ret_zero) {
-         z = lp_build_layer_coord(bld, texture_unit, z, &out1);
+         z = lp_build_layer_coord(bld, texture_unit, FALSE, z, &out1);
          out_of_bounds = lp_build_or(int_coord_bld, out_of_bounds, out1);
       }
       else {
-         z = lp_build_layer_coord(bld, texture_unit, z, NULL);
+         z = lp_build_layer_coord(bld, texture_unit, FALSE, z, NULL);
       }
    }
 
@@ -2463,7 +2502,8 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
 
    if ((gallivm_debug & GALLIVM_DEBUG_NO_QUAD_LOD) &&
        (gallivm_debug & GALLIVM_DEBUG_NO_RHO_APPROX) &&
-       (static_texture_state->target == PIPE_TEXTURE_CUBE) &&
+       (static_texture_state->target == PIPE_TEXTURE_CUBE ||
+        static_texture_state->target == PIPE_TEXTURE_CUBE_ARRAY) &&
        (!is_fetch && mip_filter != PIPE_TEX_MIPFILTER_NONE)) {
       /*
        * special case for using per-pixel lod even for implicit lod,
@@ -2601,7 +2641,8 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
             use_aos &= lp_is_simple_wrap_mode(derived_sampler_state.wrap_r);
          }
       }
-      if (static_texture_state->target == PIPE_TEXTURE_CUBE &&
+      if ((static_texture_state->target == PIPE_TEXTURE_CUBE ||
+           static_texture_state->target == PIPE_TEXTURE_CUBE_ARRAY) &&
           derived_sampler_state.seamless_cube_map &&
           (derived_sampler_state.min_img_filter == PIPE_TEX_FILTER_LINEAR ||
            derived_sampler_state.mag_img_filter == PIPE_TEX_FILTER_LINEAR)) {
@@ -2630,6 +2671,13 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
                              derivs, lod_bias, explicit_lod,
                              &lod_positive, &lod_fpart,
                              &ilevel0, &ilevel1);
+
+      if (use_aos && static_texture_state->target == PIPE_TEXTURE_CUBE_ARRAY) {
+         /* The aos path doesn't do seamless filtering so simply add cube layer
+          * to face now.
+          */
+         newcoords[2] = lp_build_add(&bld.int_coord_bld, newcoords[2], newcoords[3]);
+      }
 
       /*
        * we only try 8-wide sampling with soa as it appears to
@@ -2695,7 +2743,8 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
          bld4.num_mips = bld4.num_lods = 1;
          if ((gallivm_debug & GALLIVM_DEBUG_NO_QUAD_LOD) &&
              (gallivm_debug & GALLIVM_DEBUG_NO_RHO_APPROX) &&
-             (static_texture_state->target == PIPE_TEXTURE_CUBE) &&
+             (static_texture_state->target == PIPE_TEXTURE_CUBE ||
+              static_texture_state->target == PIPE_TEXTURE_CUBE_ARRAY) &&
              (!is_fetch && mip_filter != PIPE_TEX_MIPFILTER_NONE)) {
             bld4.num_mips = type4.length;
             bld4.num_lods = type4.length;
@@ -2891,6 +2940,7 @@ lp_build_size_query_soa(struct gallivm_state *gallivm,
    switch (target) {
    case PIPE_TEXTURE_1D_ARRAY:
    case PIPE_TEXTURE_2D_ARRAY:
+   case PIPE_TEXTURE_CUBE_ARRAY:
       has_array = TRUE;
       break;
    default:
@@ -2932,10 +2982,20 @@ lp_build_size_query_soa(struct gallivm_state *gallivm,
 
    size = lp_build_minify(&bld_int_vec4, size, lod, TRUE);
 
-   if (has_array)
-      size = LLVMBuildInsertElement(gallivm->builder, size,
-                                    dynamic_state->depth(dynamic_state, gallivm, texture_unit),
+   if (has_array) {
+      LLVMValueRef layers = dynamic_state->depth(dynamic_state, gallivm, texture_unit);
+      if (target == PIPE_TEXTURE_CUBE_ARRAY) {
+         /*
+          * It looks like GL wants number of cubes, d3d10.1 has it undefined?
+          * Could avoid this by passing in number of cubes instead of total
+          * number of layers (might make things easier elsewhere too).
+          */
+         LLVMValueRef six = lp_build_const_int32(gallivm, 6);
+         layers = LLVMBuildSDiv(gallivm->builder, layers, six, "");
+      }
+      size = LLVMBuildInsertElement(gallivm->builder, size, layers,
                                     lp_build_const_int32(gallivm, dims), "");
+   }
 
    /*
     * d3d10 requires zero for x/y/z values (but not w, i.e. mip levels)

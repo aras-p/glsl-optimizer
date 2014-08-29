@@ -704,9 +704,7 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
          offset = lp_build_add(&bld->int_coord_bld, offset, z_offset);
       }
    }
-   if (bld->static_texture_state->target == PIPE_TEXTURE_CUBE ||
-       bld->static_texture_state->target == PIPE_TEXTURE_1D_ARRAY ||
-       bld->static_texture_state->target == PIPE_TEXTURE_2D_ARRAY) {
+   if (has_layer_coord(bld->static_texture_state->target)) {
       LLVMValueRef z_offset;
       /* The r coord is the cube face in [0,5] or array layer */
       z_offset = lp_build_mul(&bld->int_coord_bld, r, img_stride_vec);
@@ -781,9 +779,7 @@ lp_build_sample_image_nearest_afloat(struct lp_build_sample_context *bld,
                                             &z_icoord);
       }
    }
-   if (bld->static_texture_state->target == PIPE_TEXTURE_CUBE ||
-       bld->static_texture_state->target == PIPE_TEXTURE_1D_ARRAY ||
-       bld->static_texture_state->target == PIPE_TEXTURE_2D_ARRAY) {
+   if (has_layer_coord(bld->static_texture_state->target)) {
       z_icoord = r;
    }
 
@@ -1130,9 +1126,7 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
                                    &x_subcoord[0], &x_subcoord[1]);
 
    /* add potential cube/array/mip offsets now as they are constant per pixel */
-   if (bld->static_texture_state->target == PIPE_TEXTURE_CUBE ||
-       bld->static_texture_state->target == PIPE_TEXTURE_1D_ARRAY ||
-       bld->static_texture_state->target == PIPE_TEXTURE_2D_ARRAY) {
+   if (has_layer_coord(bld->static_texture_state->target)) {
       LLVMValueRef z_offset;
       z_offset = lp_build_mul(&bld->int_coord_bld, r, img_stride_vec);
       /* The r coord is the cube face in [0,5] or array layer */
@@ -1301,9 +1295,7 @@ lp_build_sample_image_linear_afloat(struct lp_build_sample_context *bld,
                                   &x_offset1, &x_subcoord[1]);
 
    /* add potential cube/array/mip offsets now as they are constant per pixel */
-   if (bld->static_texture_state->target == PIPE_TEXTURE_CUBE ||
-       bld->static_texture_state->target == PIPE_TEXTURE_1D_ARRAY ||
-       bld->static_texture_state->target == PIPE_TEXTURE_2D_ARRAY) {
+   if (has_layer_coord(bld->static_texture_state->target)) {
       LLVMValueRef z_offset;
       z_offset = lp_build_mul(&bld->int_coord_bld, r, img_stride_vec);
       /* The r coord is the cube face in [0,5] or array layer */

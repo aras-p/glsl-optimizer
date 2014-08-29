@@ -356,15 +356,28 @@ texture_dims(enum pipe_texture_target tex)
    case PIPE_TEXTURE_2D_ARRAY:
    case PIPE_TEXTURE_RECT:
    case PIPE_TEXTURE_CUBE:
-      return 2;
    case PIPE_TEXTURE_CUBE_ARRAY:
-      assert(0);
       return 2;
    case PIPE_TEXTURE_3D:
       return 3;
    default:
       assert(0 && "bad texture target in texture_dims()");
       return 2;
+   }
+}
+
+static INLINE boolean
+has_layer_coord(enum pipe_texture_target tex)
+{
+   switch (tex) {
+   case PIPE_TEXTURE_1D_ARRAY:
+   case PIPE_TEXTURE_2D_ARRAY:
+   /* cube is not layered but 3rd coord (after cube mapping) behaves the same */
+   case PIPE_TEXTURE_CUBE:
+   case PIPE_TEXTURE_CUBE_ARRAY:
+      return TRUE;
+   default:
+      return FALSE;
    }
 }
 

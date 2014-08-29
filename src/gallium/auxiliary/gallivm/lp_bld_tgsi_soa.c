@@ -2333,7 +2333,7 @@ emit_fetch_texels( struct lp_build_tgsi_soa_context *bld,
    unsigned unit, target;
    LLVMValueRef coord_undef = LLVMGetUndef(bld->bld_base.base.int_vec_type);
    LLVMValueRef explicit_lod = NULL;
-   LLVMValueRef coords[3];
+   LLVMValueRef coords[5];
    LLVMValueRef offsets[3] = { NULL };
    enum lp_sampler_lod_property lod_property = LP_SAMPLER_LOD_SCALAR;
    unsigned dims, i;
@@ -2395,7 +2395,8 @@ emit_fetch_texels( struct lp_build_tgsi_soa_context *bld,
    for (i = 0; i < dims; i++) {
       coords[i] = lp_build_emit_fetch(&bld->bld_base, inst, 0, i);
    }
-   for (i = dims; i < 3; i++) {
+   /* never use more than 3 coords here but emit_fetch_texel copies all 5 anyway */
+   for (i = dims; i < 5; i++) {
       coords[i] = coord_undef;
    }
    if (layer_coord)

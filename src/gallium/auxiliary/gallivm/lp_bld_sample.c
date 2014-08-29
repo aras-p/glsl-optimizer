@@ -1313,10 +1313,7 @@ lp_build_mipmap_level_sizes(struct lp_build_sample_context *bld,
                                                       bld->row_stride_array,
                                                       ilevel);
    }
-   if (dims == 3 ||
-       bld->static_texture_state->target == PIPE_TEXTURE_CUBE ||
-       bld->static_texture_state->target == PIPE_TEXTURE_1D_ARRAY ||
-       bld->static_texture_state->target == PIPE_TEXTURE_2D_ARRAY) {
+   if (dims == 3 || has_layer_coord(bld->static_texture_state->target)) {
       *img_stride_vec = lp_build_get_level_stride_vec(bld,
                                                       bld->img_stride_array,
                                                       ilevel);
