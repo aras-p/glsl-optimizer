@@ -1,13 +1,17 @@
 C_SOURCES := \
-	svgadump/svga_shader_dump.c \
-	svgadump/svga_shader_op.c \
-	svgadump/svga_dump.c \
 	svga_cmd.c \
+	svga_cmd.h \
 	svga_context.c \
-	svga_draw.c \
+	svga_context.h \
+	svga_debug.h \
 	svga_draw_arrays.c \
+	svga_draw.c \
 	svga_draw_elements.c \
+	svga_draw.h \
+	svga_draw_private.h \
 	svga_format.c \
+	svga_format.h \
+	svga_hw_reg.h \
 	svga_pipe_blend.c \
 	svga_pipe_blit.c \
 	svga_pipe_clear.c \
@@ -22,27 +26,68 @@ C_SOURCES := \
 	svga_pipe_sampler.c \
 	svga_pipe_vertex.c \
 	svga_pipe_vs.c \
+	svga_public.h \
+	svga_resource_buffer.c \
+	svga_resource_buffer.h \
+	svga_resource_buffer_upload.c \
+	svga_resource_buffer_upload.h \
+	svga_resource.c \
+	svga_resource.h \
+	svga_resource_texture.c \
+	svga_resource_texture.h \
+	svga_sampler_view.c \
+	svga_sampler_view.h \
 	svga_screen.c \
 	svga_screen_cache.c \
+	svga_screen_cache.h \
+	svga_screen.h \
 	svga_shader.c \
+	svga_shader.h \
 	svga_state.c \
-	svga_state_need_swtnl.c \
 	svga_state_constants.c \
 	svga_state_framebuffer.c \
+	svga_state_fs.c \
+	svga_state.h \
+	svga_state_need_swtnl.c \
 	svga_state_rss.c \
 	svga_state_tss.c \
 	svga_state_vdecl.c \
-	svga_state_fs.c \
 	svga_state_vs.c \
+	svga_surface.c \
+	svga_surface.h \
 	svga_swtnl_backend.c \
 	svga_swtnl_draw.c \
+	svga_swtnl.h \
+	svga_swtnl_private.h \
 	svga_swtnl_state.c \
 	svga_tgsi.c \
 	svga_tgsi_decl_sm30.c \
+	svga_tgsi_emit.h \
+	svga_tgsi.h \
 	svga_tgsi_insn.c \
-	svga_sampler_view.c \
-	svga_surface.c \
-	svga_resource.c \
-	svga_resource_texture.c \
-	svga_resource_buffer.c \
-	svga_resource_buffer_upload.c 
+	svga_winsys.h \
+	\
+	svgadump/svga_dump.c \
+	svgadump/svga_dump.h \
+	svgadump/svga_shader_dump.c \
+	svgadump/svga_shader_dump.h \
+	svgadump/svga_shader.h \
+	svgadump/svga_shader_op.c \
+	svgadump/svga_shader_op.h
+
+SVGA_H_FILES := \
+	include/includeCheck.h \
+	include/svga3d_caps.h \
+	include/svga3d_cmd.h \
+	include/svga3d_devcaps.h \
+	include/svga3d_limits.h \
+	include/svga3d_reg.h \
+	include/svga3d_shaderdefs.h \
+	include/svga3d_surfacedefs.h \
+	include/svga3d_types.h \
+	include/svga_escape.h \
+	include/svga_overlay.h \
+	include/svga_reg.h \
+	include/svga_types.h \
+	include/vmware_pack_begin.h \
+	include/vmware_pack_end.h
