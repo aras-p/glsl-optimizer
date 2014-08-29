@@ -80,5 +80,9 @@ struct hgl_buffer* hgl_create_st_framebuffer(struct hgl_context* context);
 struct st_manager* hgl_create_st_manager(struct pipe_screen* screen);
 void hgl_destroy_st_manager(struct st_manager *manager);
 
+// hgl state_tracker visual
+struct st_visual* hgl_create_st_visual(ulong options);
+void hgl_destroy_st_visual(struct st_visual* visual);
+
 
 #endif /* HGL_CONTEXT_H */

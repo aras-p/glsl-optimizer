@@ -8,6 +8,8 @@
  */
 
 
+#include "GLView.h"
+
 #include "main/context.h"
 #include "main/framebuffer.h"
 #include "main/renderbuffer.h"
@@ -134,7 +136,7 @@ hgl_st_framebuffer_validate(struct st_context_iface *stctx,
 static int
 hgl_st_manager_get_param(struct st_manager *smapi, enum st_manager_param param)
 {
-    CALLED();
+	CALLED();
 
 	switch (param) {
 		case ST_MANAGER_BROKEN_INVALIDATE:
@@ -214,4 +216,103 @@ hgl_destroy_st_manager(struct st_manager *manager)
 
 	if (manager)
 		FREE(manager);
+}
+
+
+struct st_visual*
+hgl_create_st_visual(ulong options)
+{
+	struct st_visual* visual = CALLOC_STRUCT(st_visual);
+	if (!visual) {
+		ERROR("%s: Couldn't allocate st_visual\n", __func__);
+		return NULL;
+	}
+
+	// Calculate visual configuration
+	const GLboolean rgbFlag     = ((options & BGL_INDEX) == 0);
+	const GLboolean alphaFlag   = ((options & BGL_ALPHA) == BGL_ALPHA);
+	const GLboolean dblFlag     = ((options & BGL_DOUBLE) == BGL_DOUBLE);
+	const GLboolean stereoFlag  = false;
+	const GLint depth           = (options & BGL_DEPTH) ? 24 : 0;
+	const GLint stencil         = (options & BGL_STENCIL) ? 8 : 0;
+	const GLint accum           = (options & BGL_ACCUM) ? 16 : 0;
+	const GLint red             = rgbFlag ? 8 : 5;
+	const GLint green           = rgbFlag ? 8 : 5;
+	const GLint blue            = rgbFlag ? 8 : 5;
+	const GLint alpha           = alphaFlag ? 8 : 0;
+
+	TRACE("rgb      :\t%d\n", (bool)rgbFlag);
+	TRACE("alpha    :\t%d\n", (bool)alphaFlag);
+	TRACE("dbl      :\t%d\n", (bool)dblFlag);
+	TRACE("stereo   :\t%d\n", (bool)stereoFlag);
+	TRACE("depth    :\t%d\n", depth);
+	TRACE("stencil  :\t%d\n", stencil);
+	TRACE("accum    :\t%d\n", accum);
+	TRACE("red      :\t%d\n", red);
+	TRACE("green    :\t%d\n", green);
+	TRACE("blue     :\t%d\n", blue);
+	TRACE("alpha    :\t%d\n", alpha);
+
+	// Determine color format
+	if (red == 8) {
+		if (alpha == 8)
+			visual->color_format = PIPE_FORMAT_A8R8G8B8_UNORM;
+		else
+			visual->color_format = PIPE_FORMAT_X8R8G8B8_UNORM;
+	} else {
+		// TODO: I think this should be RGB vs BGR
+		visual->color_format = PIPE_FORMAT_B5G6R5_UNORM;
+    }
+
+	// Determine depth stencil format
+	switch (depth) {
+		default:
+		case 0:
+			visual->depth_stencil_format = PIPE_FORMAT_NONE;
+			break;
+		case 16:
+			visual->depth_stencil_format = PIPE_FORMAT_Z16_UNORM;
+			break;
+		case 24:
+			if ((options & BGL_STENCIL) != 0)
+				visual->depth_stencil_format = PIPE_FORMAT_S8_UINT_Z24_UNORM;
+			else
+				visual->depth_stencil_format = PIPE_FORMAT_X8Z24_UNORM;
+			break;
+		case 32:
+			visual->depth_stencil_format = PIPE_FORMAT_Z32_UNORM;
+			break;
+	}
+
+	visual->accum_format = (options & BGL_ACCUM)
+		? PIPE_FORMAT_R16G16B16A16_SNORM : PIPE_FORMAT_NONE;
+
+	visual->buffer_mask |= ST_ATTACHMENT_FRONT_LEFT_MASK;
+	visual->render_buffer = ST_ATTACHMENT_FRONT_LEFT;
+
+	if (dblFlag) {
+		visual->buffer_mask |= ST_ATTACHMENT_BACK_LEFT_MASK;
+		visual->render_buffer = ST_ATTACHMENT_BACK_LEFT;
+	}
+
+	if (stereoFlag) {
+		visual->buffer_mask |= ST_ATTACHMENT_FRONT_RIGHT_MASK;
+		if (dblFlag)
+			visual->buffer_mask |= ST_ATTACHMENT_BACK_RIGHT_MASK;
+    }
+
+	if ((options & BGL_DEPTH) || (options & BGL_STENCIL))
+		visual->buffer_mask |= ST_ATTACHMENT_DEPTH_STENCIL_MASK;
+
+	return visual;
+}
+
+
+void
+hgl_destroy_st_visual(struct st_visual* visual)
+{
+	CALLED();
+
+	if (visual)
+		FREE(visual);
 }

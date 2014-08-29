@@ -33,8 +33,6 @@ public:
 		void				Lock();
 		void				Unlock();
 
-		struct st_visual*	CreateVisual();
-
 		context_id			CreateContext(Bitmap* bitmap);
 		void				DestroyContext(context_id contextID);
 		context_id			GetCurrentContext() { return fCurrentContext; };
