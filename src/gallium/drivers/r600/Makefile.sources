@@ -1,25 +1,41 @@
 C_SOURCES = \
-	r600_asm.c \
-	r600_blit.c \
-	r600_hw_context.c \
-	r600_isa.c \
-	r600_pipe.c \
-	r600_shader.c \
-	r600_state.c \
-	r700_asm.c \
+	compute_memory_pool.c \
+	compute_memory_pool.h \
+	eg_asm.c \
+	eg_sq.h \
+	evergreen_compute.c \
+	evergreen_compute.h \
+	evergreen_compute_internal.h \
+	evergreend.h \
 	evergreen_hw_context.c \
 	evergreen_state.c \
-	eg_asm.c \
+	r600_asm.c \
+	r600_asm.h \
+	r600_blit.c \
+	r600d.h \
+	r600_formats.h \
+	r600_hw_context.c \
+	r600_isa.c \
+	r600_isa.h \
+	r600_opcodes.h \
+	r600_pipe.c \
+	r600_pipe.h \
+	r600_public.h \
+	r600_shader.c \
+	r600_shader.h \
+	r600_sq.h \
+	r600_state.c \
 	r600_state_common.c \
-	evergreen_compute.c \
-	compute_memory_pool.c \
-	r600_uvd.c
+	r600_uvd.c \
+	r700_asm.c \
+	r700_sq.h
 
 CXX_SOURCES = \
 	sb/sb_bc_builder.cpp \
 	sb/sb_bc_decoder.cpp \
 	sb/sb_bc_dump.cpp \
 	sb/sb_bc_finalize.cpp \
+	sb/sb_bc.h \
 	sb/sb_bc_parser.cpp \
 	sb/sb_context.cpp \
 	sb/sb_core.cpp \
@@ -27,20 +43,28 @@ CXX_SOURCES = \
 	sb/sb_def_use.cpp \
 	sb/sb_dump.cpp \
 	sb/sb_expr.cpp \
+	sb/sb_expr.h \
 	sb/sb_gcm.cpp \
 	sb/sb_gvn.cpp \
 	sb/sb_if_conversion.cpp \
 	sb/sb_ir.cpp \
+	sb/sb_ir.h \
 	sb/sb_liveness.cpp \
 	sb/sb_pass.cpp \
+	sb/sb_pass.h \
 	sb/sb_peephole.cpp \
 	sb/sb_psi_ops.cpp \
+	sb/sb_public.h \
 	sb/sb_ra_checker.cpp \
 	sb/sb_ra_coalesce.cpp \
 	sb/sb_ra_init.cpp \
 	sb/sb_sched.cpp \
+	sb/sb_sched.h \
 	sb/sb_shader.cpp \
+	sb/sb_shader.h \
 	sb/sb_ssa_builder.cpp \
 	sb/sb_valtable.cpp
 
-LLVM_C_SOURCES = r600_llvm.c
+LLVM_C_SOURCES = \
+	r600_llvm.c \
+	r600_llvm.h
