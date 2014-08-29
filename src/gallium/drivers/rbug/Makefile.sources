@@ -1,5 +1,9 @@
 C_SOURCES := \
-	rbug_core.c \
 	rbug_context.c \
+	rbug_context.h \
+	rbug_core.c \
 	rbug_objects.c \
-	rbug_screen.c
+	rbug_objects.h \
+	rbug_public.h \
+	rbug_screen.c \
+	rbug_screen.h
