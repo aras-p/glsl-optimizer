@@ -1,36 +1,80 @@
 C_SOURCES := \
 	ilo_3d.c \
+	ilo_3d.h \
 	ilo_3d_pipeline.c \
 	ilo_3d_pipeline_dump.c \
 	ilo_3d_pipeline_gen6.c \
+	ilo_3d_pipeline_gen6.h \
 	ilo_3d_pipeline_gen7.c \
+	ilo_3d_pipeline_gen7.h \
+	ilo_3d_pipeline.h \
 	ilo_blit.c \
+	ilo_blit.h \
 	ilo_blitter.c \
+	ilo_blitter.h \
 	ilo_blitter_blt.c \
 	ilo_blitter_pipe.c \
 	ilo_blitter_rectlist.c \
+	ilo_common.h \
 	ilo_context.c \
+	ilo_context.h \
 	ilo_cp.c \
+	ilo_cp.h \
 	ilo_format.c \
+	ilo_format.h \
 	ilo_gpe_gen6.c \
+	ilo_gpe_gen6.h \
 	ilo_gpe_gen7.c \
+	ilo_gpe_gen7.h \
+	ilo_gpe.h \
 	ilo_gpgpu.c \
+	ilo_gpgpu.h \
 	ilo_layout.c \
+	ilo_layout.h \
+	ilo_public.h \
 	ilo_query.c \
+	ilo_query.h \
 	ilo_resource.c \
+	ilo_resource.h \
 	ilo_screen.c \
+	ilo_screen.h \
 	ilo_shader.c \
+	ilo_shader.h \
 	ilo_state.c \
+	ilo_state.h \
 	ilo_transfer.c \
+	ilo_transfer.h \
 	ilo_video.c \
+	ilo_video.h \
+	include \
+	intel_winsys.h \
+	\
 	shader/ilo_shader_cs.c \
 	shader/ilo_shader_fs.c \
 	shader/ilo_shader_gs.c \
+	shader/ilo_shader_internal.h \
 	shader/ilo_shader_vs.c \
 	shader/toy_compiler.c \
+	shader/toy_compiler.h \
 	shader/toy_compiler_asm.c \
 	shader/toy_compiler_disasm.c \
+	shader/toy_compiler_reg.h \
+	shader/toy_helpers.h \
 	shader/toy_legalize.c \
+	shader/toy_legalize.h \
 	shader/toy_legalize_ra.c \
 	shader/toy_optimize.c \
-	shader/toy_tgsi.c
+	shader/toy_optimize.h \
+	shader/toy_tgsi.c \
+	shader/toy_tgsi.h
+
+GENHW_FILES := \
+	genhw/gen_blitter.xml.h \
+	genhw/gen_eu_isa.xml.h \
+	genhw/gen_eu_message.xml.h \
+	genhw/genhw.h \
+	genhw/gen_mi.xml.h \
+	genhw/gen_regs.xml.h \
+	genhw/gen_render_3d.xml.h \
+	genhw/gen_render_dynamic.xml.h \
+	genhw/gen_render_surface.xml.h
