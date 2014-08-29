@@ -37,3 +37,7 @@ libr300_la_SOURCES = $(C_SOURCES)
 # in place of libmesagallium.
 libr300_helper_la_CPPFLAGS = -I$(top_srcdir)/src
 libr300_helper_la_SOURCES = $(HELPER_SOURCES)
+
+EXTRA_DIST = Android.mk \
+	compiler/tests/omod_two_writers.test \
+	compiler/tests/regalloc_tex_1d_swizzle.test
