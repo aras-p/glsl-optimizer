@@ -154,6 +154,7 @@ fs_generator::generate_fb_write(fs_inst *inst)
 
    assert(stage == MESA_SHADER_FRAGMENT);
    brw_wm_prog_data *prog_data = (brw_wm_prog_data*) this->prog_data;
+   const brw_wm_prog_key * const key = (brw_wm_prog_key * const) this->key;
 
    /* Header is 2 regs, g0 and g1 are the contents. g0 will be implied
     * move, here's g1.
@@ -700,6 +701,9 @@ fs_generator::generate_ddx(fs_inst *inst, struct brw_reg dst, struct brw_reg src
    assert(quality.file == BRW_IMMEDIATE_VALUE);
    assert(quality.type == BRW_REGISTER_TYPE_D);
 
+   assert(stage == MESA_SHADER_FRAGMENT);
+   const brw_wm_prog_key * const key = (brw_wm_prog_key * const) this->key;
+
    int quality_value = quality.dw1.d;
 
    if (quality_value == BRW_DERIVATIVE_FINE ||
@@ -739,6 +743,9 @@ fs_generator::generate_ddy(fs_inst *inst, struct brw_reg dst, struct brw_reg src
 {
    assert(quality.file == BRW_IMMEDIATE_VALUE);
    assert(quality.type == BRW_REGISTER_TYPE_D);
+
+   assert(stage == MESA_SHADER_FRAGMENT);
+   const brw_wm_prog_key * const key = (brw_wm_prog_key * const) this->key;
 
    int quality_value = quality.dw1.d;
 
@@ -1818,7 +1825,8 @@ fs_generator::generate_code(const cfg_t *cfg)
           */
          assert(stage == MESA_SHADER_FRAGMENT &&
                 ((gl_fragment_program *) prog)->UsesDFdy);
-	 generate_ddy(inst, dst, src[0], src[1], key->render_to_fbo);
+         generate_ddy(inst, dst, src[0], src[1],
+                      ((brw_wm_prog_key * const) this->key)->render_to_fbo);
 	 break;
 
       case SHADER_OPCODE_GEN4_SCRATCH_WRITE:

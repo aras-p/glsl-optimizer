@@ -680,7 +680,7 @@ private:
 
    struct brw_compile *p;
    gl_shader_stage stage;
-   const struct brw_wm_prog_key *const key;
+   const void * const key;
    struct brw_stage_prog_data * const prog_data;
 
    struct gl_shader_program * const shader_prog;
