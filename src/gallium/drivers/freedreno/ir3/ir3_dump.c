@@ -322,7 +322,8 @@ static void ir3_block_dump(struct ir3_dump_ctx *ctx,
 
 	/* draw instruction graph: */
 	for (i = 0; i < block->noutputs; i++)
-		dump_instr(ctx, block->outputs[i]);
+		if (block->outputs[i])
+			dump_instr(ctx, block->outputs[i]);
 
 	/* draw outputs: */
 	fprintf(ctx->f, "output%lx [shape=record,label=\"outputs", PTRID(block));
