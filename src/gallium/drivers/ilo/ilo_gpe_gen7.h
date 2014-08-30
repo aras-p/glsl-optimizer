@@ -774,15 +774,15 @@ gen7_emit_3dstate_urb(const struct ilo_dev_info *dev,
 
    switch (subop) {
    case GEN7_RENDER_OPCODE_3DSTATE_URB_VS:
-      min_entries = 32;
-
       switch (dev->gen) {
       case ILO_GEN(7.5):
-         max_entries = (dev->gt >= 2) ? 1644 : 640;
+         max_entries = (dev->gt >= 2) ? 1664 : 640;
+         min_entries = (dev->gt >= 2) ? 64 : 32;
          break;
       case ILO_GEN(7):
       default:
          max_entries = (dev->gt == 2) ? 704 : 512;
+         min_entries = 32;
          break;
       }
 
