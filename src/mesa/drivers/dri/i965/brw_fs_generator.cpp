@@ -388,7 +388,7 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
 {
    int msg_type = -1;
    int rlen = 4;
-   uint32_t simd_mode = BRW_SAMPLER_SIMD_MODE_SIMD8;
+   uint32_t simd_mode;
    uint32_t return_format;
 
    switch (dst.type) {
@@ -403,9 +403,16 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
       break;
    }
 
-   if (dispatch_width == 16 &&
-      !inst->force_uncompressed && !inst->force_sechalf)
+   switch (inst->exec_size) {
+   case 8:
+      simd_mode = BRW_SAMPLER_SIMD_MODE_SIMD8;
+      break;
+   case 16:
       simd_mode = BRW_SAMPLER_SIMD_MODE_SIMD16;
+      break;
+   default:
+      unreachable("Invalid width for texture instruction");
+   }
 
    if (brw->gen >= 5) {
       switch (inst->opcode) {
