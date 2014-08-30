@@ -291,7 +291,6 @@ void gen4_math(struct brw_compile *p,
 	       unsigned function,
 	       unsigned msg_reg_nr,
 	       struct brw_reg src,
-	       unsigned data_type,
 	       unsigned precision );
 
 void gen6_math(struct brw_compile *p,

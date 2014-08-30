@@ -342,7 +342,6 @@ fs_generator::generate_math_gen4(fs_inst *inst,
    gen4_math(p, dst,
 	     op,
 	     inst->base_mrf, src,
-	     BRW_MATH_DATA_VECTOR,
 	     BRW_MATH_PRECISION_FULL);
 
    if (dispatch_width == 16) {
@@ -350,7 +349,6 @@ fs_generator::generate_math_gen4(fs_inst *inst,
       gen4_math(p, sechalf(dst),
 	        op,
 	        inst->base_mrf + 1, sechalf(src),
-	        BRW_MATH_DATA_VECTOR,
 	        BRW_MATH_PRECISION_FULL);
 
       brw_set_default_compression_control(p, BRW_COMPRESSION_COMPRESSED);
@@ -376,7 +374,6 @@ fs_generator::generate_math_g45(fs_inst *inst,
    gen4_math(p, dst,
              op,
              inst->base_mrf, src,
-             BRW_MATH_DATA_VECTOR,
              BRW_MATH_PRECISION_FULL);
 }
 

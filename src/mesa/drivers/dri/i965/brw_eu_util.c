@@ -44,8 +44,7 @@ void brw_math_invert( struct brw_compile *p,
 	     BRW_MATH_FUNCTION_INV,
 	     0,
 	     src,
-	     BRW_MATH_PRECISION_FULL,
-	     BRW_MATH_DATA_VECTOR );
+	     BRW_MATH_PRECISION_FULL);
 }
 
 

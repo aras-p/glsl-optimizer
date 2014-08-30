@@ -327,7 +327,6 @@ static void invert_det( struct brw_sf_compile *c)
 	     BRW_MATH_FUNCTION_INV,
 	     0,
 	     c->det,
-	     BRW_MATH_DATA_SCALAR,
 	     BRW_MATH_PRECISION_FULL);
 
 }
@@ -616,7 +615,6 @@ void brw_emit_point_sprite_setup(struct brw_sf_compile *c, bool allocate)
 		   BRW_MATH_FUNCTION_INV,
 		   0,
 		   c->dx0,
-		   BRW_MATH_DATA_SCALAR,
 		   BRW_MATH_PRECISION_FULL);
 
 	 brw_set_default_access_mode(p, BRW_ALIGN_16);

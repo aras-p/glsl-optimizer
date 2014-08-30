@@ -157,7 +157,6 @@ vec4_generator::generate_math1_gen4(vec4_instruction *inst,
 	     brw_math_function(inst->opcode),
 	     inst->base_mrf,
 	     src,
-	     BRW_MATH_DATA_VECTOR,
 	     BRW_MATH_PRECISION_FULL);
 }
 
@@ -218,7 +217,6 @@ vec4_generator::generate_math2_gen4(vec4_instruction *inst,
 	     brw_math_function(inst->opcode),
 	     inst->base_mrf,
 	     op0,
-	     BRW_MATH_DATA_VECTOR,
 	     BRW_MATH_PRECISION_FULL);
 }
 
