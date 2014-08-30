@@ -26,7 +26,8 @@
  **************************************************************************/
 
 #include <assert.h>
-#include <error.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "testlib.h"
 
 int main(int argc, char **argv)
@@ -58,7 +59,8 @@ int main(int argc, char **argv)
 	))
 	{
 		XCloseDisplay(display);
-		error(1, 0, "Error, unable to find a good port.\n");
+		fprintf(stderr, "Error, unable to find a good port.\n");
+		exit(1);
 	}
 
 	if (is_overlay)

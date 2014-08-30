@@ -28,7 +28,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
-#include <error.h>
+#include <stdlib.h>
 #include "testlib.h"
 
 #define BLOCK_WIDTH			8
@@ -84,9 +84,9 @@ static void ParseArgs(int argc, char **argv, unsigned int *output_width, unsigne
 	}
 
 	if (fail)
-		error
-		(
-			1, 0,
+	{
+		fprintf(
+			stderr,
 			"Bad argument.\n"
 			"\n"
 			"Usage: %s [options]\n"
@@ -96,6 +96,8 @@ static void ParseArgs(int argc, char **argv, unsigned int *output_width, unsigne
 			"\t-p\tPrompt for quit\n",
 			argv[0]
 		);
+		exit(1);
+	}
 }
 
 static void Gradient(short *block, unsigned int start, unsigned int stop, int horizontal, unsigned int intra_unsigned)
@@ -166,7 +168,8 @@ int main(int argc, char **argv)
 	))
 	{
 		XCloseDisplay(display);
-		error(1, 0, "Error, unable to find a good port.\n");
+		fprintf(stderr, "Error, unable to find a good port.\n");
+		exit(1);
 	}
 
 	if (is_overlay)
