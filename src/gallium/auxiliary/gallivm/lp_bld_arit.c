@@ -205,17 +205,17 @@ lp_build_min_simple(struct lp_build_context *bld,
           nan_behavior != GALLIVM_NAN_BEHAVIOR_UNDEFINED &&
           nan_behavior != GALLIVM_NAN_RETURN_OTHER_SECOND_NONNAN &&
           nan_behavior != GALLIVM_NAN_RETURN_NAN_FIRST_NONNAN) {
-         LLVMValueRef isnan, max;
-         max = lp_build_intrinsic_binary_anylength(bld->gallivm, intrinsic,
+         LLVMValueRef isnan, min;
+         min = lp_build_intrinsic_binary_anylength(bld->gallivm, intrinsic,
                                                    type,
                                                    intr_size, a, b);
          if (nan_behavior == GALLIVM_NAN_RETURN_OTHER) {
             isnan = lp_build_isnan(bld, b);
-            return lp_build_select(bld, isnan, a, max);
+            return lp_build_select(bld, isnan, a, min);
          } else {
             assert(nan_behavior == GALLIVM_NAN_RETURN_NAN);
             isnan = lp_build_isnan(bld, a);
-            return lp_build_select(bld, isnan, a, max);
+            return lp_build_select(bld, isnan, a, min);
          }
       } else {
          return lp_build_intrinsic_binary_anylength(bld->gallivm, intrinsic,
@@ -381,17 +381,17 @@ lp_build_max_simple(struct lp_build_context *bld,
           nan_behavior != GALLIVM_NAN_BEHAVIOR_UNDEFINED &&
           nan_behavior != GALLIVM_NAN_RETURN_OTHER_SECOND_NONNAN &&
           nan_behavior != GALLIVM_NAN_RETURN_NAN_FIRST_NONNAN) {
-         LLVMValueRef isnan, min;
-         min = lp_build_intrinsic_binary_anylength(bld->gallivm, intrinsic,
+         LLVMValueRef isnan, max;
+         max = lp_build_intrinsic_binary_anylength(bld->gallivm, intrinsic,
                                                    type,
                                                    intr_size, a, b);
          if (nan_behavior == GALLIVM_NAN_RETURN_OTHER) {
             isnan = lp_build_isnan(bld, b);
-            return lp_build_select(bld, isnan, a, min);
+            return lp_build_select(bld, isnan, a, max);
          } else {
             assert(nan_behavior == GALLIVM_NAN_RETURN_NAN);
             isnan = lp_build_isnan(bld, a);
-            return lp_build_select(bld, isnan, a, min);
+            return lp_build_select(bld, isnan, a, max);
          }
       } else {
          return lp_build_intrinsic_binary_anylength(bld->gallivm, intrinsic,
