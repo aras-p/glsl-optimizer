@@ -115,7 +115,7 @@ util_primconvert_draw_vbo(struct primconvert_context *pc,
    struct pipe_transfer *src_transfer = NULL, *dst_transfer = NULL;
    u_translate_func trans_func;
    u_generate_func gen_func;
-   const void *src;
+   const void *src = NULL;
    void *dst;
 
    memset(&new_ib, 0, sizeof(new_ib));
