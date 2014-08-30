@@ -1123,6 +1123,7 @@ get_tex_info(struct ir3_compile_context *ctx,
 
 	switch (inst->Instruction.Opcode) {
 	case TGSI_OPCODE_TEX:
+	case TGSI_OPCODE_TXB:
 		switch (tex) {
 		case TGSI_TEXTURE_1D:
 			return &tex1d;
@@ -1259,6 +1260,9 @@ trans_samp(const struct instr_translater *t,
 
 	add_dst_reg_wrmask(ctx, instr, dst, 0, dst->WriteMask);
 	add_src_reg_wrmask(ctx, instr, coord, coord->SwizzleX, tinf->src_wrmask);
+
+	if (t->tgsi_opc == TGSI_OPCODE_TXB)
+		add_src_reg_wrmask(ctx, instr, coord, coord->SwizzleW, 0x1);
 }
 
 /*
@@ -2005,6 +2009,7 @@ static const struct instr_translater translaters[TGSI_OPCODE_LAST] = {
 	INSTR(SIN,          instr_cat4, .opc = OPC_SIN),
 	INSTR(TEX,          trans_samp, .opc = OPC_SAM, .arg = TGSI_OPCODE_TEX),
 	INSTR(TXP,          trans_samp, .opc = OPC_SAM, .arg = TGSI_OPCODE_TXP),
+	INSTR(TXB,          trans_samp, .opc = OPC_SAMB, .arg = TGSI_OPCODE_TXB),
 	INSTR(SGT,          trans_cmp),
 	INSTR(SLT,          trans_cmp),
 	INSTR(FSLT,         trans_cmp),
