@@ -943,30 +943,10 @@ vec4_instruction::can_reswizzle(int dst_writemask,
    if (dst.writemask & ~swizzle_mask)
       return false;
 
-   switch (opcode) {
-   default:
-      if (!brw_is_single_value_swizzle(swizzle)) {
-         /* Check if there happens to be no reswizzling required. */
-         for (int c = 0; c < 4; c++) {
-            int bit = 1 << BRW_GET_SWZ(swizzle, c);
-            /* Skip components of the swizzle not used by the dst. */
-            if (!(dst_writemask & (1 << c)))
-               continue;
+   if (inst->mlen > 0)
+      return false;
 
-            /* We don't do the reswizzling yet, so just sanity check that we
-             * don't have to.
-             */
-            if (bit != (1 << c))
-               return false;
-         }
-         return true;
-      }
-      /* fallthrough */
-   case BRW_OPCODE_DP4:
-   case BRW_OPCODE_DP3:
-   case BRW_OPCODE_DP2:
-      return true;
-   }
+   return true;
 }
 
 /**
@@ -982,22 +962,9 @@ vec4_instruction::reswizzle(int dst_writemask, int swizzle)
    int new_writemask = 0;
    int new_swizzle[4] = { 0 };
 
-   switch (opcode) {
-   default:
-      if (!brw_is_single_value_swizzle(swizzle)) {
-         for (int c = 0; c < 4; c++) {
-            /* Skip components of the swizzle not used by the dst. */
-            if (!(dst_writemask & (1 << c)))
-               continue;
-
-            /* We don't do the reswizzling yet, so just sanity check that we
-             * don't have to.
-             */
-            assert((1 << BRW_GET_SWZ(swizzle, c)) == (1 << c));
-         }
-         break;
-      }
-
+   /* Dot product instructions write a single result into all channels. */
+   if (opcode != BRW_OPCODE_DP4 && opcode != BRW_OPCODE_DPH &&
+       opcode != BRW_OPCODE_DP3 && opcode != BRW_OPCODE_DP2) {
       for (int i = 0; i < 3; i++) {
          if (src[i].file == BAD_FILE || src[i].file == IMM)
             continue;
@@ -1009,25 +976,20 @@ vec4_instruction::reswizzle(int dst_writemask, int swizzle)
          src[i].swizzle = BRW_SWIZZLE4(new_swizzle[0], new_swizzle[1],
                                        new_swizzle[2], new_swizzle[3]);
       }
-
-      /* fallthrough */
-   case BRW_OPCODE_DP4:
-   case BRW_OPCODE_DP3:
-   case BRW_OPCODE_DP2:
-      for (int c = 0; c < 4; c++) {
-         int bit = 1 << BRW_GET_SWZ(swizzle, c);
-         /* Skip components of the swizzle not used by the dst. */
-         if (!(dst_writemask & (1 << c)))
-            continue;
-         /* If we were populating this component, then populate the
-          * corresponding channel of the new dst.
-          */
-         if (dst.writemask & bit)
-            new_writemask |= (1 << c);
-      }
-      dst.writemask = new_writemask;
-      break;
    }
+
+   for (int c = 0; c < 4; c++) {
+      int bit = 1 << BRW_GET_SWZ(swizzle, c);
+      /* Skip components of the swizzle not used by the dst. */
+      if (!(dst_writemask & (1 << c)))
+         continue;
+      /* If we were populating this component, then populate the
+       * corresponding channel of the new dst.
+       */
+      if (dst.writemask & bit)
+         new_writemask |= (1 << c);
+   }
+   dst.writemask = new_writemask;
 }
 
 /*
