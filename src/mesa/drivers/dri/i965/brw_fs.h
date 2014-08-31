@@ -215,6 +215,7 @@ public:
               struct gl_fragment_program *fp,
               unsigned dispatch_width);
    ~fs_visitor();
+   void init();
 
    fs_reg *variable_storage(ir_variable *var);
    int virtual_grf_alloc(int size);

@@ -3271,6 +3271,12 @@ fs_visitor::fs_visitor(struct brw_context *brw,
 {
    this->fp = fp;
    this->mem_ctx = mem_ctx;
+   init();
+}
+
+void
+fs_visitor::init()
+{
    this->failed = false;
    this->simd16_unsupported = false;
    this->no16_msg = NULL;
