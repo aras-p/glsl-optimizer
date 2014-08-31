@@ -64,7 +64,7 @@ IGNORE_FILES = \
 
 parsers: configure
 	$(MAKE) -C src/glsl glsl_parser.cpp glsl_parser.h glsl_lexer.cpp glcpp/glcpp-lex.c glcpp/glcpp-parse.c glcpp/glcpp-parse.h
-	$(MAKE) -C src/mesa program/lex.yy.c program/program_parse.tab.c program/program_parse.tab.h
+	$(MAKE) -C src/mesa ../../src/mesa/program/lex.yy.c ../../src/mesa/program/program_parse.tab.c ../../src/mesa/program/program_parse.tab.h
 
 # Everything for new a Mesa release:
 ARCHIVES = $(PACKAGE_NAME).tar.gz \

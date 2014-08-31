@@ -36,7 +36,8 @@ endif
 gldir = $(includedir)/GL
 gl_HEADERS = $(top_srcdir)/include/GL/*.h
 
-.PHONY: $(BUILDDIR)main/git_sha1.h.tmp
+.PHONY: $(BUILDDIR)main/git_sha1.h.tmp $(BUILDDIR)program/lex.yy.c $(BUILDDIR)program/program_parse.tab.c $(BUILDDIR)program/program_parse.tab.h
+
 $(BUILDDIR)main/git_sha1.h.tmp:
 	@touch main/git_sha1.h.tmp
 	@if test -d $(top_srcdir)/.git; then \
