@@ -933,9 +933,9 @@ vec4_visitor::opt_set_dependency_control()
 }
 
 bool
-vec4_instruction::can_reswizzle_dst(int dst_writemask,
-                                    int swizzle,
-                                    int swizzle_mask)
+vec4_instruction::can_reswizzle(int dst_writemask,
+                                int swizzle,
+                                int swizzle_mask)
 {
    /* If this instruction sets anything not referenced by swizzle, then we'd
     * totally break it when we reswizzle.
@@ -977,9 +977,10 @@ vec4_instruction::can_reswizzle_dst(int dst_writemask,
  * e.g. for swizzle=yywx, MUL a.xy b c -> MUL a.yy_x b.yy z.yy_x
  */
 void
-vec4_instruction::reswizzle_dst(int dst_writemask, int swizzle)
+vec4_instruction::reswizzle(int dst_writemask, int swizzle)
 {
    int new_writemask = 0;
+   int new_swizzle[4] = { 0 };
 
    switch (opcode) {
    default:
@@ -996,6 +997,19 @@ vec4_instruction::reswizzle_dst(int dst_writemask, int swizzle)
          }
          break;
       }
+
+      for (int i = 0; i < 3; i++) {
+         if (src[i].file == BAD_FILE || src[i].file == IMM)
+            continue;
+
+         for (int c = 0; c < 4; c++) {
+            new_swizzle[c] = BRW_GET_SWZ(src[i].swizzle, BRW_GET_SWZ(swizzle, c));
+         }
+
+         src[i].swizzle = BRW_SWIZZLE4(new_swizzle[0], new_swizzle[1],
+                                       new_swizzle[2], new_swizzle[3]);
+      }
+
       /* fallthrough */
    case BRW_OPCODE_DP4:
    case BRW_OPCODE_DP3:
@@ -1102,9 +1116,9 @@ vec4_visitor::opt_register_coalesce()
             }
 
             /* If we can't handle the swizzle, bail. */
-            if (!scan_inst->can_reswizzle_dst(inst->dst.writemask,
-                                              inst->src[0].swizzle,
-                                              swizzle_mask)) {
+            if (!scan_inst->can_reswizzle(inst->dst.writemask,
+                                          inst->src[0].swizzle,
+                                          swizzle_mask)) {
                break;
             }
 
@@ -1190,8 +1204,8 @@ vec4_visitor::opt_register_coalesce()
 	    if (scan_inst->dst.file == GRF &&
 		scan_inst->dst.reg == inst->src[0].reg &&
 		scan_inst->dst.reg_offset == inst->src[0].reg_offset) {
-               scan_inst->reswizzle_dst(inst->dst.writemask,
-                                        inst->src[0].swizzle);
+               scan_inst->reswizzle(inst->dst.writemask,
+                                    inst->src[0].swizzle);
 	       scan_inst->dst.file = inst->dst.file;
 	       scan_inst->dst.reg = inst->dst.reg;
 	       scan_inst->dst.reg_offset = inst->dst.reg_offset;

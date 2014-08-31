@@ -220,8 +220,8 @@ public:
    bool header_present;
 
    bool is_send_from_grf();
-   bool can_reswizzle_dst(int dst_writemask, int swizzle, int swizzle_mask);
-   void reswizzle_dst(int dst_writemask, int swizzle);
+   bool can_reswizzle(int dst_writemask, int swizzle, int swizzle_mask);
+   void reswizzle(int dst_writemask, int swizzle);
    bool can_do_source_mods(struct brw_context *brw);
 
    bool reads_flag()
