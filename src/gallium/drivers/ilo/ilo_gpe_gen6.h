@@ -246,6 +246,7 @@ gen6_emit_MI_STORE_DATA_IMM(const struct ilo_dev_info *dev,
 {
    const uint8_t cmd_len = (store_qword) ? 5 : 4;
    uint32_t dw0 = GEN6_MI_CMD(MI_STORE_DATA_IMM) | (cmd_len - 2);
+   uint32_t reloc_flags = INTEL_RELOC_WRITE;
 
    ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
@@ -254,12 +255,13 @@ gen6_emit_MI_STORE_DATA_IMM(const struct ilo_dev_info *dev,
    /* must use GGTT on GEN6 as in PIPE_CONTROL */
    if (dev->gen == ILO_GEN(6)) {
       dw0 |= GEN6_MI_STORE_DATA_IMM_DW0_USE_GGTT;
+      reloc_flags |= INTEL_RELOC_GGTT;
    }
 
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, dw0);
    ilo_cp_write(cp, 0);
-   ilo_cp_write_bo(cp, bo_offset, bo, INTEL_RELOC_WRITE | INTEL_RELOC_GGTT);
+   ilo_cp_write_bo(cp, bo_offset, bo, reloc_flags);
    ilo_cp_write(cp, (uint32_t) val);
 
    if (store_qword)
@@ -296,6 +298,7 @@ gen6_emit_MI_STORE_REGISTER_MEM(const struct ilo_dev_info *dev,
 {
    const uint8_t cmd_len = 3;
    uint32_t dw0 = GEN6_MI_CMD(MI_STORE_REGISTER_MEM) | (cmd_len - 2);
+   uint32_t reloc_flags = INTEL_RELOC_WRITE;
 
    ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
@@ -304,12 +307,13 @@ gen6_emit_MI_STORE_REGISTER_MEM(const struct ilo_dev_info *dev,
    /* must use GGTT on GEN6 as in PIPE_CONTROL */
    if (dev->gen == ILO_GEN(6)) {
       dw0 |= GEN6_MI_STORE_REGISTER_MEM_DW0_USE_GGTT;
+      reloc_flags |= INTEL_RELOC_GGTT;
    }
 
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, dw0);
    ilo_cp_write(cp, reg);
-   ilo_cp_write_bo(cp, bo_offset, bo, INTEL_RELOC_WRITE | INTEL_RELOC_GGTT);
+   ilo_cp_write_bo(cp, bo_offset, bo, reloc_flags);
    ilo_cp_end(cp);
 }
 
@@ -320,18 +324,21 @@ gen6_emit_MI_REPORT_PERF_COUNT(const struct ilo_dev_info *dev,
 {
    const uint8_t cmd_len = 3;
    const uint32_t dw0 = GEN6_MI_CMD(MI_REPORT_PERF_COUNT) | (cmd_len - 2);
+   uint32_t reloc_flags = INTEL_RELOC_WRITE;
 
    ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    assert(bo_offset % 64 == 0);
 
    /* must use GGTT on GEN6 as in PIPE_CONTROL */
-   if (dev->gen == ILO_GEN(6))
-      bo_offset |= 0x1;
+   if (dev->gen == ILO_GEN(6)) {
+      bo_offset |= GEN6_MI_REPORT_PERF_COUNT_DW1_USE_GGTT;
+      reloc_flags |= INTEL_RELOC_GGTT;
+   }
 
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, dw0);
-   ilo_cp_write_bo(cp, bo_offset, bo, INTEL_RELOC_WRITE | INTEL_RELOC_GGTT);
+   ilo_cp_write_bo(cp, bo_offset, bo, reloc_flags);
    ilo_cp_write(cp, report_id);
    ilo_cp_end(cp);
 }
@@ -1794,6 +1801,7 @@ gen6_emit_PIPE_CONTROL(const struct ilo_dev_info *dev,
 {
    const uint8_t cmd_len = (write_qword) ? 5 : 4;
    const uint32_t dw0 = GEN6_RENDER_CMD(3D, PIPE_CONTROL) | (cmd_len - 2);
+   uint32_t reloc_flags = INTEL_RELOC_WRITE;
 
    ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
@@ -1860,13 +1868,15 @@ gen6_emit_PIPE_CONTROL(const struct ilo_dev_info *dev,
     * The kernel will add the mapping automatically (when write domain is
     * INTEL_DOMAIN_INSTRUCTION).
     */
-   if (dev->gen == ILO_GEN(6) && bo)
+   if (dev->gen == ILO_GEN(6) && bo) {
       bo_offset |= GEN6_PIPE_CONTROL_DW2_USE_GGTT;
+      reloc_flags |= INTEL_RELOC_GGTT;
+   }
 
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, dw0);
    ilo_cp_write(cp, dw1);
-   ilo_cp_write_bo(cp, bo_offset, bo, INTEL_RELOC_WRITE | INTEL_RELOC_GGTT);
+   ilo_cp_write_bo(cp, bo_offset, bo, reloc_flags);
    ilo_cp_write(cp, 0);
    if (write_qword)
       ilo_cp_write(cp, 0);
