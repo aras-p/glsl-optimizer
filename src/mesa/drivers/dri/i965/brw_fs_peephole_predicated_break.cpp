@@ -87,13 +87,18 @@ fs_visitor::opt_peephole_predicated_break()
       }
 
       if_inst->remove(if_block);
+
+      bblock_t *later_block = endif_block;
+      if (endif_block->start_ip == endif_block->end_ip) {
+         later_block = (bblock_t *)endif_block->link.next;
+      }
       endif_inst->remove(endif_block);
 
-      if_block->children.make_empty();
-      endif_block->parents.make_empty();
+      earlier_block->children.make_empty();
+      later_block->parents.make_empty();
 
-      if_block->add_successor(cfg->mem_ctx, jump_block);
-      jump_block->add_successor(cfg->mem_ctx, endif_block);
+      earlier_block->add_successor(cfg->mem_ctx, jump_block);
+      jump_block->add_successor(cfg->mem_ctx, later_block);
 
       if (earlier_block->can_combine_with(jump_block)) {
          earlier_block->combine_with(jump_block);
