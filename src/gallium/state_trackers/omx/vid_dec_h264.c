@@ -681,7 +681,7 @@ static void slice_header(vid_dec_PrivateType *priv, struct vl_rbsp *rbsp,
       if (priv->picture.h264.field_pic_flag) {
          unsigned bottom_field_flag = vl_rbsp_u(rbsp, 1);
 
-         if (bottom_field_flag != priv->picture.h264.bottom_field_flag);
+         if (bottom_field_flag != priv->picture.h264.bottom_field_flag)
             vid_dec_h264_EndFrame(priv);
 
          priv->picture.h264.bottom_field_flag = bottom_field_flag;
