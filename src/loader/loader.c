@@ -402,7 +402,7 @@ int loader_get_user_preferred_fd(int default_fd, int *different_device)
    }
 
    fd = drm_open_device(device_name);
-   if (fd > 0) {
+   if (fd >= 0) {
       close(default_fd);
    } else {
       fd = default_fd;
