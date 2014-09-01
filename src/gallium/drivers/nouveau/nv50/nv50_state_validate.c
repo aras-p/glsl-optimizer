@@ -54,8 +54,8 @@ nv50_validate_fb(struct nv50_context *nv50)
       assert(mt->layout_3d || !array_mode || array_size == 1);
 
       BEGIN_NV04(push, NV50_3D(RT_ADDRESS_HIGH(i)), 5);
-      PUSH_DATAh(push, bo->offset + sf->offset);
-      PUSH_DATA (push, bo->offset + sf->offset);
+      PUSH_DATAh(push, mt->base.address + sf->offset);
+      PUSH_DATA (push, mt->base.address + sf->offset);
       PUSH_DATA (push, nv50_format_table[sf->base.format].rt);
       if (likely(nouveau_bo_memtype(bo))) {
          PUSH_DATA (push, mt->level[sf->base.u.tex.level].tile_mode);
@@ -97,8 +97,8 @@ nv50_validate_fb(struct nv50_context *nv50)
       int unk = mt->base.base.target == PIPE_TEXTURE_3D || sf->depth == 1;
 
       BEGIN_NV04(push, NV50_3D(ZETA_ADDRESS_HIGH), 5);
-      PUSH_DATAh(push, bo->offset + sf->offset);
-      PUSH_DATA (push, bo->offset + sf->offset);
+      PUSH_DATAh(push, mt->base.address + sf->offset);
+      PUSH_DATA (push, mt->base.address + sf->offset);
       PUSH_DATA (push, nv50_format_table[fb->zsbuf->format].rt);
       PUSH_DATA (push, mt->level[sf->base.u.tex.level].tile_mode);
       PUSH_DATA (push, mt->layer_stride >> 2);

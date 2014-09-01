@@ -114,8 +114,8 @@ nv50_2d_texture_set(struct nouveau_pushbuf *push, int dst,
       PUSH_DATA (push, mt->level[level].pitch);
       PUSH_DATA (push, width);
       PUSH_DATA (push, height);
-      PUSH_DATAh(push, bo->offset + offset);
-      PUSH_DATA (push, bo->offset + offset);
+      PUSH_DATAh(push, mt->base.address + offset);
+      PUSH_DATA (push, mt->base.address + offset);
    } else {
       BEGIN_NV04(push, SUBC_2D(mthd), 5);
       PUSH_DATA (push, format);
@@ -126,8 +126,8 @@ nv50_2d_texture_set(struct nouveau_pushbuf *push, int dst,
       BEGIN_NV04(push, SUBC_2D(mthd + 0x18), 4);
       PUSH_DATA (push, width);
       PUSH_DATA (push, height);
-      PUSH_DATAh(push, bo->offset + offset);
-      PUSH_DATA (push, bo->offset + offset);
+      PUSH_DATAh(push, mt->base.address + offset);
+      PUSH_DATA (push, mt->base.address + offset);
    }
 
 #if 0
@@ -299,8 +299,8 @@ nv50_clear_render_target(struct pipe_context *pipe,
    BEGIN_NV04(push, NV50_3D(RT_CONTROL), 1);
    PUSH_DATA (push, 1);
    BEGIN_NV04(push, NV50_3D(RT_ADDRESS_HIGH(0)), 5);
-   PUSH_DATAh(push, bo->offset + sf->offset);
-   PUSH_DATA (push, bo->offset + sf->offset);
+   PUSH_DATAh(push, mt->base.address + sf->offset);
+   PUSH_DATA (push, mt->base.address + sf->offset);
    PUSH_DATA (push, nv50_format_table[dst->format].rt);
    PUSH_DATA (push, mt->level[sf->base.u.tex.level].tile_mode);
    PUSH_DATA (push, mt->layer_stride >> 2);
@@ -381,8 +381,8 @@ nv50_clear_depth_stencil(struct pipe_context *pipe,
    nv50->scissors_dirty |= 1;
 
    BEGIN_NV04(push, NV50_3D(ZETA_ADDRESS_HIGH), 5);
-   PUSH_DATAh(push, bo->offset + sf->offset);
-   PUSH_DATA (push, bo->offset + sf->offset);
+   PUSH_DATAh(push, mt->base.address + sf->offset);
+   PUSH_DATA (push, mt->base.address + sf->offset);
    PUSH_DATA (push, nv50_format_table[dst->format].rt);
    PUSH_DATA (push, mt->level[sf->base.u.tex.level].tile_mode);
    PUSH_DATA (push, mt->layer_stride >> 2);
