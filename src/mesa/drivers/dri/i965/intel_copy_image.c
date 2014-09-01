@@ -243,9 +243,11 @@ intel_copy_image_sub_data(struct gl_context *ctx,
    intel_miptree_all_slices_resolve_depth(brw, intel_dst_image->mt);
    intel_miptree_resolve_color(brw, intel_dst_image->mt);
 
-   if (copy_image_with_blitter(brw, intel_src_image->mt, src_image->Level,
+   unsigned src_level = src_image->Level + src_image->TexObject->MinLevel;
+   unsigned dst_level = dst_image->Level + dst_image->TexObject->MinLevel;
+   if (copy_image_with_blitter(brw, intel_src_image->mt, src_level,
                                src_x, src_y, src_z,
-                               intel_dst_image->mt, src_image->Level,
+                               intel_dst_image->mt, dst_level,
                                dst_x, dst_y, dst_z,
                                src_width, src_height))
       return;
@@ -253,9 +255,9 @@ intel_copy_image_sub_data(struct gl_context *ctx,
    /* This is a worst-case scenario software fallback that maps the two
     * textures and does a memcpy between them.
     */
-   copy_image_with_memcpy(brw, intel_src_image->mt, src_image->Level,
+   copy_image_with_memcpy(brw, intel_src_image->mt, src_level,
                           src_x, src_y, src_z,
-                          intel_dst_image->mt, src_image->Level,
+                          intel_dst_image->mt, dst_level,
                           dst_x, dst_y, dst_z,
                           src_width, src_height);
 }
