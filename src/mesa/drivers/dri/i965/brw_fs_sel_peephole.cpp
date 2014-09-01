@@ -128,14 +128,14 @@ fs_visitor::opt_peephole_sel()
       /* IF instructions, by definition, can only be found at the ends of
        * basic blocks.
        */
-      fs_inst *if_inst = (fs_inst *) block->end;
+      fs_inst *if_inst = (fs_inst *)block->end();
       if (if_inst->opcode != BRW_OPCODE_IF)
          continue;
 
       if (!block->else_block)
          continue;
 
-      assert(block->else_block->end->opcode == BRW_OPCODE_ELSE);
+      assert(block->else_block->end()->opcode == BRW_OPCODE_ELSE);
 
       fs_inst *else_mov[MAX_MOVS] = { NULL };
       fs_inst *then_mov[MAX_MOVS] = { NULL };

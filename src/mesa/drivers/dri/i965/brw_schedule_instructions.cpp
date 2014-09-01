@@ -631,10 +631,10 @@ instruction_scheduler::add_insts_from_block(bblock_t *block)
    /* Removing the last instruction from a basic block removes the block as
     * well, so put a NOP at the end to keep it alive.
     */
-   if (!block->end->is_control_flow()) {
+   if (!block->end()->is_control_flow()) {
       backend_instruction *nop = new(mem_ctx) backend_instruction();
       nop->opcode = BRW_OPCODE_NOP;
-      block->end->insert_after(block, nop);
+      block->end()->insert_after(block, nop);
    }
 
    foreach_inst_in_block_safe(backend_instruction, inst, block) {
@@ -1370,7 +1370,7 @@ void
 instruction_scheduler::schedule_instructions(bblock_t *block)
 {
    struct brw_context *brw = bv->brw;
-   backend_instruction *inst = block->end;
+   backend_instruction *inst = block->end();
    time = 0;
 
    /* Remove non-DAG heads from the list. */
@@ -1448,8 +1448,8 @@ instruction_scheduler::schedule_instructions(bblock_t *block)
       }
    }
 
-   if (block->end->opcode == BRW_OPCODE_NOP)
-      block->end->remove(block);
+   if (block->end()->opcode == BRW_OPCODE_NOP)
+      block->end()->remove(block);
    assert(instructions_to_schedule == 0);
 }
 

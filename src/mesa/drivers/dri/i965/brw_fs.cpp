@@ -2258,7 +2258,7 @@ fs_visitor::compute_to_mrf()
 	  * values that end up in MRFs are shortly before the MRF
 	  * write anyway.
 	  */
-	 if (block->start == scan_inst)
+	 if (block->start() == scan_inst)
 	    break;
 
 	 /* You can't read from an MRF, so if someone else reads our
@@ -2562,7 +2562,7 @@ fs_visitor::insert_gen4_pre_send_dependency_workarounds(bblock_t *block,
       /* If we hit control flow, assume that there *are* outstanding
        * dependencies, and force their cleanup before our instruction.
        */
-      if (block->start == scan_inst) {
+      if (block->start() == scan_inst) {
          for (int i = 0; i < write_len; i++) {
             if (needs_dep[i]) {
                inst->insert_before(block, DEP_RESOLVE_MOV(first_write_grf + i));
@@ -2631,7 +2631,7 @@ fs_visitor::insert_gen4_post_send_dependency_workarounds(bblock_t *block, fs_ins
     */
    foreach_inst_in_block_starting_from(fs_inst, scan_inst, inst, block) {
       /* If we hit control flow, force resolve all remaining dependencies. */
-      if (block->end == scan_inst) {
+      if (block->end() == scan_inst) {
          for (int i = 0; i < write_len; i++) {
             if (needs_dep[i])
                scan_inst->insert_before(block,

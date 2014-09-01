@@ -47,19 +47,19 @@ dead_control_flow_eliminate(backend_visitor *v)
       /* ENDIF instructions, by definition, can only be found at the start of
        * basic blocks.
        */
-      backend_instruction *endif_inst = endif_block->start;
+      backend_instruction *endif_inst = endif_block->start();
       if (endif_inst->opcode != BRW_OPCODE_ENDIF)
          continue;
 
       backend_instruction *if_inst = NULL, *else_inst = NULL;
-      backend_instruction *prev_inst = ((bblock_t *)endif_block->link.prev)->end;
+      backend_instruction *prev_inst = ((bblock_t *)endif_block->link.prev)->end();
       if (prev_inst->opcode == BRW_OPCODE_ELSE) {
          else_inst = prev_inst;
          else_block = (bblock_t *)endif_block->link.prev;
          found = true;
 
          if (else_block->start_ip == else_block->end_ip)
-            prev_inst = ((bblock_t *)else_block->link.prev)->end;
+            prev_inst = ((bblock_t *)else_block->link.prev)->end();
       }
 
       if (prev_inst->opcode == BRW_OPCODE_IF) {

@@ -778,9 +778,6 @@ backend_instruction::insert_after(bblock_t *block, backend_instruction *inst)
 
    adjust_later_block_ips(block, 1);
 
-   if (block->end == this)
-      block->end = inst;
-
    exec_node::insert_after(inst);
 }
 
@@ -792,9 +789,6 @@ backend_instruction::insert_before(bblock_t *block, backend_instruction *inst)
    block->end_ip++;
 
    adjust_later_block_ips(block, 1);
-
-   if (block->start == this)
-      block->start = inst;
 
    exec_node::insert_before(inst);
 }
@@ -810,9 +804,6 @@ backend_instruction::insert_before(bblock_t *block, exec_list *list)
 
    adjust_later_block_ips(block, num_inst);
 
-   if (block->start == this)
-      block->start = (backend_instruction *)list->get_head();
-
    exec_node::insert_before(list);
 }
 
@@ -827,11 +818,6 @@ backend_instruction::remove(bblock_t *block)
       block->cfg->remove_block(block);
    } else {
       block->end_ip--;
-
-      if (block->start == this)
-         block->start = (backend_instruction *)this->next;
-      if (block->end == this)
-         block->end = (backend_instruction *)this->prev;
    }
 
    exec_node::remove();

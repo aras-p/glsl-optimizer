@@ -114,7 +114,7 @@ void annotate(struct brw_context *brw,
       ann->annotation = inst->annotation;
    }
 
-   if (cfg->blocks[annotation->cur_block]->start == inst) {
+   if (bblock_start(cfg->blocks[annotation->cur_block]) == inst) {
       ann->block_start = cfg->blocks[annotation->cur_block];
    }
 
@@ -130,7 +130,7 @@ void annotate(struct brw_context *brw,
       annotation->ann_count--;
    }
 
-   if (cfg->blocks[annotation->cur_block]->end == inst) {
+   if (bblock_end(cfg->blocks[annotation->cur_block]) == inst) {
       ann->block_end = cfg->blocks[annotation->cur_block];
       annotation->cur_block++;
    }

@@ -254,12 +254,6 @@ fs_visitor::opt_cse_local(bblock_t *block)
             fs_inst *prev = (fs_inst *)inst->prev;
 
             inst->remove(block);
-
-            /* Appending an instruction may have changed our bblock end. */
-            if (inst == block->end) {
-               block->end = prev;
-            }
-
             inst = prev;
          }
       }

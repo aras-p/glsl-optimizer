@@ -193,7 +193,7 @@ brw_fs_alloc_reg_sets(struct intel_screen *screen)
 static int
 count_to_loop_end(const bblock_t *block)
 {
-   if (block->end->opcode == BRW_OPCODE_WHILE)
+   if (block->end()->opcode == BRW_OPCODE_WHILE)
       return block->end_ip;
 
    int depth = 1;
@@ -203,9 +203,9 @@ count_to_loop_end(const bblock_t *block)
    for (block = (bblock_t *)block->link.next;
         depth > 0;
         block = (bblock_t *)block->link.next) {
-      if (block->start->opcode == BRW_OPCODE_DO)
+      if (block->start()->opcode == BRW_OPCODE_DO)
          depth++;
-      if (block->end->opcode == BRW_OPCODE_WHILE) {
+      if (block->end()->opcode == BRW_OPCODE_WHILE) {
          depth--;
          if (depth == 0)
             return block->end_ip;
