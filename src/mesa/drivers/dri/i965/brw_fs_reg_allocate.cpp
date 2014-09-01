@@ -190,27 +190,28 @@ brw_fs_alloc_reg_sets(struct intel_screen *screen)
    brw_alloc_reg_set(screen, 2);
 }
 
-int
-count_to_loop_end(fs_inst *do_inst)
+static int
+count_to_loop_end(const bblock_t *block)
 {
+   if (block->end->opcode == BRW_OPCODE_WHILE)
+      return block->end_ip;
+
    int depth = 1;
-   int ip = 1;
-   for (fs_inst *inst = (fs_inst *)do_inst->next;
+   /* Skip the first block, since we don't want to count the do the calling
+    * function found.
+    */
+   for (block = (bblock_t *)block->link.next;
         depth > 0;
-        inst = (fs_inst *)inst->next) {
-      switch (inst->opcode) {
-      case BRW_OPCODE_DO:
+        block = (bblock_t *)block->link.next) {
+      if (block->start->opcode == BRW_OPCODE_DO)
          depth++;
-         break;
-      case BRW_OPCODE_WHILE:
+      if (block->end->opcode == BRW_OPCODE_WHILE) {
          depth--;
-         break;
-      default:
-         break;
+         if (depth == 0)
+            return block->end_ip;
       }
-      ip++;
    }
-   return ip;
+   unreachable("not reached");
 }
 
 /**
@@ -253,7 +254,7 @@ fs_visitor::setup_payload_interference(struct ra_graph *g,
           * the end now.
           */
          if (loop_depth == 1)
-            loop_end_ip = ip + count_to_loop_end(inst);
+            loop_end_ip = count_to_loop_end(block);
          break;
       case BRW_OPCODE_WHILE:
          loop_depth--;
