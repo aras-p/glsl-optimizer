@@ -784,8 +784,6 @@ static void r300_draw_vbo(struct pipe_context* pipe,
     struct r300_context* r300 = r300_context(pipe);
     struct pipe_draw_info info = *dinfo;
 
-    info.indexed = info.indexed;
-
     if (r300->skip_rendering ||
         !u_trim_pipe_prim(info.mode, &info.count)) {
         return;
