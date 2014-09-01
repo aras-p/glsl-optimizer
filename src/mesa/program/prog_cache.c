@@ -143,7 +143,7 @@ _mesa_new_program_cache(void)
    if (cache) {
       cache->size = 17;
       cache->items =
-         calloc(1, cache->size * sizeof(struct cache_item));
+         calloc(cache->size, sizeof(struct cache_item *));
       if (!cache->items) {
          free(cache);
          return NULL;
