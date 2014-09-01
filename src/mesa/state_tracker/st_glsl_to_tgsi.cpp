@@ -3172,6 +3172,7 @@ glsl_to_tgsi_visitor::glsl_to_tgsi_visitor()
    shader_program = NULL;
    shader = NULL;
    options = NULL;
+   have_sqrt = false;
 }
 
 glsl_to_tgsi_visitor::~glsl_to_tgsi_visitor()
