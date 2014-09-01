@@ -854,7 +854,7 @@ backend_visitor::dump_instructions(const char *name)
    }
 
    int ip = 0;
-   foreach_in_list(backend_instruction, inst, &instructions) {
+   foreach_block_and_inst(block, backend_instruction, inst, cfg) {
       if (!name)
          fprintf(stderr, "%d: ", ip++);
       dump_instruction(inst, file);

@@ -214,7 +214,7 @@ vec4_visitor::calculate_live_intervals()
     * flow.
     */
    int ip = 0;
-   foreach_in_list(vec4_instruction, inst, &instructions) {
+   foreach_block_and_inst(block, vec4_instruction, inst, cfg) {
       for (unsigned int i = 0; i < 3; i++) {
 	 if (inst->src[i].file == GRF) {
 	    int reg = inst->src[i].reg;

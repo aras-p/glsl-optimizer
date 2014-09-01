@@ -57,7 +57,7 @@ vec4_visitor::reg_allocate_trivial()
       virtual_grf_used[i] = false;
    }
 
-   foreach_in_list(vec4_instruction, inst, &instructions) {
+   foreach_block_and_inst(block, vec4_instruction, inst, cfg) {
       if (inst->dst.file == GRF)
 	 virtual_grf_used[inst->dst.reg] = true;
 
@@ -77,7 +77,7 @@ vec4_visitor::reg_allocate_trivial()
    }
    prog_data->total_grf = next;
 
-   foreach_in_list(vec4_instruction, inst, &instructions) {
+   foreach_block_and_inst(block, vec4_instruction, inst, cfg) {
       assign(hw_reg_mapping, &inst->dst);
       assign(hw_reg_mapping, &inst->src[0]);
       assign(hw_reg_mapping, &inst->src[1]);
@@ -238,7 +238,7 @@ vec4_visitor::reg_allocate()
 				  hw_reg_mapping[i] + virtual_grf_sizes[i]);
    }
 
-   foreach_in_list(vec4_instruction, inst, &instructions) {
+   foreach_block_and_inst(block, vec4_instruction, inst, cfg) {
       assign(hw_reg_mapping, &inst->dst);
       assign(hw_reg_mapping, &inst->src[0]);
       assign(hw_reg_mapping, &inst->src[1]);
@@ -264,7 +264,7 @@ vec4_visitor::evaluate_spill_costs(float *spill_costs, bool *no_spill)
     * spill/unspill we'll have to do, and guess that the insides of
     * loops run 10 times.
     */
-   foreach_in_list(vec4_instruction, inst, &instructions) {
+   foreach_block_and_inst(block, vec4_instruction, inst, cfg) {
       for (unsigned int i = 0; i < 3; i++) {
 	 if (inst->src[i].file == GRF) {
 	    spill_costs[inst->src[i].reg] += loop_scale;

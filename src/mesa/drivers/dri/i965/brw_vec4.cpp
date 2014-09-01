@@ -332,7 +332,7 @@ vec4_visitor::opt_reduce_swizzle()
 {
    bool progress = false;
 
-   foreach_in_list_safe(vec4_instruction, inst, &instructions) {
+   foreach_block_and_inst_safe(block, vec4_instruction, inst, cfg) {
       if (inst->dst.file == BAD_FILE || inst->dst.file == HW_REG)
          continue;
 
@@ -579,7 +579,7 @@ vec4_visitor::split_uniform_registers()
     * vector.  The goal is to make elimination of unused uniform
     * components easier later.
     */
-   foreach_in_list(vec4_instruction, inst, &instructions) {
+   foreach_block_and_inst(block, vec4_instruction, inst, cfg) {
       for (int i = 0 ; i < 3; i++) {
 	 if (inst->src[i].file != UNIFORM)
 	    continue;
@@ -612,7 +612,7 @@ vec4_visitor::pack_uniform_registers()
     * expect unused vector elements when we've moved array access out
     * to pull constants, and from some GLSL code generators like wine.
     */
-   foreach_in_list(vec4_instruction, inst, &instructions) {
+   foreach_block_and_inst(block, vec4_instruction, inst, cfg) {
       for (int i = 0 ; i < 3; i++) {
 	 if (inst->src[i].file != UNIFORM)
 	    continue;
@@ -665,7 +665,7 @@ vec4_visitor::pack_uniform_registers()
    this->uniforms = new_uniform_count;
 
    /* Now, update the instructions for our repacked uniforms. */
-   foreach_in_list(vec4_instruction, inst, &instructions) {
+   foreach_block_and_inst(block, vec4_instruction, inst, cfg) {
       for (int i = 0 ; i < 3; i++) {
 	 int src = inst->src[i].reg;
 
@@ -1223,7 +1223,7 @@ vec4_visitor::split_virtual_grfs()
    /* Check that the instructions are compatible with the registers we're trying
     * to split.
     */
-   foreach_in_list(vec4_instruction, inst, &instructions) {
+   foreach_block_and_inst(block, vec4_instruction, inst, cfg) {
       /* If there's a SEND message loading from a GRF on gen7+, it needs to be
        * contiguous.
        */
@@ -1252,7 +1252,7 @@ vec4_visitor::split_virtual_grfs()
       this->virtual_grf_sizes[i] = 1;
    }
 
-   foreach_in_list(vec4_instruction, inst, &instructions) {
+   foreach_block_and_inst(block, vec4_instruction, inst, cfg) {
       if (inst->dst.file == GRF && split_grf[inst->dst.reg] &&
           inst->dst.reg_offset != 0) {
          inst->dst.reg = (new_virtual_grf[inst->dst.reg] +
@@ -1477,7 +1477,7 @@ void
 vec4_visitor::lower_attributes_to_hw_regs(const int *attribute_map,
                                           bool interleaved)
 {
-   foreach_in_list(vec4_instruction, inst, &instructions) {
+   foreach_block_and_inst(block, vec4_instruction, inst, cfg) {
       /* We have to support ATTR as a destination for GL_FIXED fixup. */
       if (inst->dst.file == ATTR) {
 	 int grf = attribute_map[inst->dst.reg + inst->dst.reg_offset];

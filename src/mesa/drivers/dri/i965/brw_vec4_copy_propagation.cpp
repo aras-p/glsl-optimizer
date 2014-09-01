@@ -30,6 +30,7 @@
  */
 
 #include "brw_vec4.h"
+#include "brw_cfg.h"
 extern "C" {
 #include "main/macros.h"
 }
@@ -336,7 +337,7 @@ vec4_visitor::opt_copy_propagation()
 
    memset(&entries, 0, sizeof(entries));
 
-   foreach_in_list(vec4_instruction, inst, &instructions) {
+   foreach_block_and_inst(block, vec4_instruction, inst, cfg) {
       /* This pass only works on basic blocks.  If there's flow
        * control, throw out all our information and start from
        * scratch.
