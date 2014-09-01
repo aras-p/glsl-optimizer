@@ -358,6 +358,24 @@ LDFLAGS=$save_LDFLAGS
 AM_CONDITIONAL(HAVE_LD_VERSION_SCRIPT, test "$have_ld_version_script" = "yes")
 
 dnl
+dnl Check if linker supports dynamic list files
+dnl
+AC_MSG_CHECKING([if the linker supports --dynamic-list])
+save_LDFLAGS=$LDFLAGS
+LDFLAGS="$LDFLAGS -Wl,--dynamic-list=conftest.dyn"
+cat > conftest.dyn <<EOF
+{
+	radeon_drm_winsys_create;
+};
+EOF
+AC_LINK_IFELSE(
+    [AC_LANG_SOURCE([int main() { return 0;}])],
+    [have_ld_dynamic_list=yes;AC_MSG_RESULT(yes)],
+    [have_ld_dynamic_list=no; AC_MSG_RESULT(no)])
+LDFLAGS=$save_LDFLAGS
+AM_CONDITIONAL(HAVE_LD_DYNAMIC_LIST, test "$have_ld_dynamic_list" = "yes")
+
+dnl
 dnl compatibility symlinks
 dnl
 case "$host_os" in

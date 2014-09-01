@@ -26,13 +26,17 @@ gallium_dri_la_LDFLAGS = \
 	-shrext .so \
 	-module \
 	-avoid-version \
-	-Wl,--dynamic-list=$(top_srcdir)/src/gallium/targets/dri-vdpau.dyn \
 	$(GC_SECTIONS)
 
 if HAVE_LD_VERSION_SCRIPT
 gallium_dri_la_LDFLAGS += \
 	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/dri/dri.sym
 endif # HAVE_LD_VERSION_SCRIPT
+
+if HAVE_LD_DYNAMIC_LIST
+gallium_dri_la_LDFLAGS += \
+	-Wl,--dynamic-list=$(top_srcdir)/src/gallium/targets/dri-vdpau.dyn
+endif # HAVE_LD_DYNAMIC_LIST
 
 gallium_dri_la_LIBADD = \
 	$(top_builddir)/src/mesa/libmesagallium.la \

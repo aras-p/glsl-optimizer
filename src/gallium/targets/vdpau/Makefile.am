@@ -15,7 +15,6 @@ libvdpau_gallium_la_LDFLAGS = \
 	-module \
 	-no-undefined \
 	-version-number $(VDPAU_MAJOR):$(VDPAU_MINOR) \
-	-Wl,--dynamic-list=$(top_srcdir)/src/gallium/targets/dri-vdpau.dyn \
 	$(GC_SECTIONS) \
 	$(LD_NO_UNDEFINED)
 
@@ -23,6 +22,11 @@ if HAVE_LD_VERSION_SCRIPT
 libvdpau_gallium_la_LDFLAGS += \
 	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/vdpau/vdpau.sym
 endif # HAVE_LD_VERSION_SCRIPT
+
+if HAVE_LD_DYNAMIC_LIST
+libvdpau_gallium_la_LDFLAGS += \
+	-Wl,--dynamic-list=$(top_srcdir)/src/gallium/targets/dri-vdpau.dyn
+endif # HAVE_LD_DYNAMIC_LIST
 
 libvdpau_gallium_la_LIBADD = \
 	$(top_builddir)/src/gallium/state_trackers/vdpau/libvdpautracker.la \
