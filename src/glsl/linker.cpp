@@ -2439,8 +2439,10 @@ check_explicit_uniform_locations(struct gl_context *ctx,
          ir_variable *var = node->as_variable();
          if ((var && var->data.mode == ir_var_uniform) &&
              var->data.explicit_location) {
-            if (!reserve_explicit_locations(prog, uniform_map, var))
+            if (!reserve_explicit_locations(prog, uniform_map, var)) {
+               delete uniform_map;
                return;
+            }
          }
       }
    }
