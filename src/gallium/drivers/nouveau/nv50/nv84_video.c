@@ -609,7 +609,6 @@ nv84_video_buffer_create(struct pipe_context *pipe,
    struct pipe_sampler_view sv_templ;
    struct pipe_surface surf_templ;
    struct nv50_miptree *mt0, *mt1;
-   struct nouveau_bo *empty = NULL;
    struct nouveau_screen *screen = &((struct nv50_context *)pipe)->screen->base;
    union nouveau_bo_config cfg;
    unsigned bo_size;

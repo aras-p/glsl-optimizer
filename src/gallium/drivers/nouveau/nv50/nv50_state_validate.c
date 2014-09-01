@@ -93,7 +93,6 @@ nv50_validate_fb(struct nv50_context *nv50)
    if (fb->zsbuf) {
       struct nv50_miptree *mt = nv50_miptree(fb->zsbuf->texture);
       struct nv50_surface *sf = nv50_surface(fb->zsbuf);
-      struct nouveau_bo *bo = mt->base.bo;
       int unk = mt->base.base.target == PIPE_TEXTURE_3D || sf->depth == 1;
 
       BEGIN_NV04(push, NV50_3D(ZETA_ADDRESS_HIGH), 5);
