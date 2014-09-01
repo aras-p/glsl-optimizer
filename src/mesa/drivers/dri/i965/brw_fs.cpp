@@ -1721,7 +1721,7 @@ fs_visitor::split_virtual_grfs()
 	 }
       }
    }
-   invalidate_live_intervals(false);
+   invalidate_live_intervals();
 }
 
 /**
@@ -1759,7 +1759,7 @@ fs_visitor::compact_virtual_grfs()
       if (remap_table[i] != -1) {
          remap_table[i] = new_index;
          virtual_grf_sizes[new_index] = virtual_grf_sizes[i];
-         invalidate_live_intervals(false);
+         invalidate_live_intervals();
          ++new_index;
       }
    }
@@ -1993,7 +1993,7 @@ fs_visitor::demote_pull_constants()
          inst->src[i].reg_offset = 0;
       }
    }
-   invalidate_live_intervals(false);
+   invalidate_live_intervals();
 }
 
 bool
@@ -2154,7 +2154,7 @@ fs_visitor::opt_register_renaming()
    }
 
    if (progress) {
-      invalidate_live_intervals(false);
+      invalidate_live_intervals();
 
       for (unsigned i = 0; i < ARRAY_SIZE(delta_x); i++) {
          if (delta_x[i].file == GRF && remap[delta_x[i].reg] != -1) {
@@ -2328,7 +2328,7 @@ fs_visitor::compute_to_mrf()
    }
 
    if (progress)
-      invalidate_live_intervals(false);
+      invalidate_live_intervals();
 
    return progress;
 }
@@ -2498,7 +2498,7 @@ fs_visitor::remove_duplicate_mrf_writes()
    }
 
    if (progress)
-      invalidate_live_intervals(false);
+      invalidate_live_intervals();
 
    return progress;
 }
@@ -2715,7 +2715,7 @@ fs_visitor::insert_gen4_send_dependency_workarounds()
    }
 
    if (progress)
-      invalidate_live_intervals(false);
+      invalidate_live_intervals();
 }
 
 /**
@@ -2773,7 +2773,7 @@ fs_visitor::lower_uniform_pull_constant_loads()
          inst->opcode = FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD_GEN7;
          inst->src[1] = payload;
 
-         invalidate_live_intervals(false);
+         invalidate_live_intervals();
       } else {
          /* Before register allocation, we didn't tell the scheduler about the
           * MRF we use.  We know it's safe to use this MRF because nothing
@@ -2814,7 +2814,7 @@ fs_visitor::lower_load_payload()
    }
 
    if (progress)
-      invalidate_live_intervals(false);
+      invalidate_live_intervals();
 
    return progress;
 }
@@ -3164,7 +3164,7 @@ fs_visitor::assign_binding_table_offsets()
 void
 fs_visitor::calculate_register_pressure()
 {
-   invalidate_live_intervals(false);
+   invalidate_live_intervals();
    calculate_live_intervals();
 
    unsigned num_instructions = instructions.length();

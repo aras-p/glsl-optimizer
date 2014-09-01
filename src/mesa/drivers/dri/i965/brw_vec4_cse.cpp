@@ -260,7 +260,7 @@ vec4_visitor::opt_cse()
    }
 
    if (progress)
-      invalidate_live_intervals(false);
+      invalidate_live_intervals();
 
    return progress;
 }

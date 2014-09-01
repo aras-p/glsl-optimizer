@@ -1511,7 +1511,7 @@ fs_visitor::schedule_instructions(instruction_scheduler_mode mode)
              dispatch_width, sched.time);
    }
 
-   invalidate_live_intervals(false);
+   invalidate_live_intervals();
 }
 
 void
@@ -1524,5 +1524,5 @@ vec4_visitor::opt_schedule_instructions()
       fprintf(stderr, "vec4 estimated execution time: %d cycles\n", sched.time);
    }
 
-   invalidate_live_intervals(false);
+   invalidate_live_intervals();
 }

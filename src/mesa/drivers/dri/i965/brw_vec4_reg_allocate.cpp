@@ -354,7 +354,7 @@ vec4_visitor::spill_reg(int spill_reg_nr)
       }
    }
 
-   invalidate_live_intervals(false);
+   invalidate_live_intervals();
 }
 
 } /* namespace brw */

@@ -231,7 +231,7 @@ fs_visitor::opt_peephole_sel()
    }
 
    if (progress)
-      invalidate_live_intervals(false);
+      invalidate_live_intervals();
 
    return progress;
 }

@@ -110,7 +110,7 @@ fs_visitor::opt_peephole_predicated_break()
    }
 
    if (progress)
-      invalidate_live_intervals(false);
+      invalidate_live_intervals();
 
    return progress;
 }

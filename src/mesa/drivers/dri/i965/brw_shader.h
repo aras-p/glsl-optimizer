@@ -182,7 +182,7 @@ public:
 
    void assign_common_binding_table_offsets(uint32_t next_binding_table_offset);
 
-   virtual void invalidate_live_intervals(bool invalidate_cfg = true) = 0;
+   virtual void invalidate_live_intervals() = 0;
 };
 
 uint32_t brw_texture_offset(struct gl_context *ctx, ir_constant *offset);

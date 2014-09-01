@@ -728,5 +728,5 @@ fs_visitor::spill_reg(int spill_reg)
       }
    }
 
-   invalidate_live_intervals(false);
+   invalidate_live_intervals();
 }

@@ -280,7 +280,7 @@ fs_visitor::register_coalesce()
          }
       }
 
-      invalidate_live_intervals(false);
+      invalidate_live_intervals();
    }
 
    return progress;

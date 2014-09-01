@@ -124,7 +124,7 @@ dead_control_flow_eliminate(backend_visitor *v)
    }
 
    if (progress)
-      v->invalidate_live_intervals(false);
+      v->invalidate_live_intervals();
 
    return progress;
 }

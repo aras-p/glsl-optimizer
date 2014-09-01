@@ -406,7 +406,7 @@ vec4_visitor::opt_reduce_swizzle()
    }
 
    if (progress)
-      invalidate_live_intervals(false);
+      invalidate_live_intervals();
 
    return progress;
 }
@@ -563,7 +563,7 @@ vec4_visitor::dead_code_eliminate()
          }
       }
 
-      invalidate_live_intervals(false);
+      invalidate_live_intervals();
    }
 
    return progress;
@@ -742,7 +742,7 @@ vec4_visitor::opt_algebraic()
    }
 
    if (progress)
-      invalidate_live_intervals(false);
+      invalidate_live_intervals();
 
    return progress;
 }
@@ -1195,7 +1195,7 @@ vec4_visitor::opt_register_coalesce()
    }
 
    if (progress)
-      invalidate_live_intervals(false);
+      invalidate_live_intervals();
 
    return progress;
 }
@@ -1274,7 +1274,7 @@ vec4_visitor::split_virtual_grfs()
          }
       }
    }
-   invalidate_live_intervals(false);
+   invalidate_live_intervals();
 }
 
 void
