@@ -685,17 +685,14 @@ nv84_video_buffer_create(struct pipe_context *pipe,
                       bo_size, &cfg, &buffer->full))
       goto error;
 
-   mt0->base.bo = buffer->interlaced;
+   nouveau_bo_ref(buffer->interlaced, &mt0->base.bo);
    mt0->base.domain = NOUVEAU_BO_VRAM;
-   mt0->base.offset = 0;
-   mt0->base.address = buffer->interlaced->offset + mt0->base.offset;
-   nouveau_bo_ref(buffer->interlaced, &empty);
+   mt0->base.address = buffer->interlaced->offset;
 
-   mt1->base.bo = buffer->interlaced;
+   nouveau_bo_ref(buffer->interlaced, &mt1->base.bo);
    mt1->base.domain = NOUVEAU_BO_VRAM;
-   mt1->base.offset = mt0->layer_stride * 2;
-   mt1->base.address = buffer->interlaced->offset + mt1->base.offset;
-   nouveau_bo_ref(buffer->interlaced, &empty);
+   mt1->base.offset = mt0->total_size;
+   mt1->base.address = buffer->interlaced->offset + mt0->total_size;
 
    memset(&sv_templ, 0, sizeof(sv_templ));
    for (component = 0, i = 0; i < 2; ++i ) {
