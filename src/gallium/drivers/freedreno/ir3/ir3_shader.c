@@ -45,7 +45,8 @@
 static void
 delete_variant(struct ir3_shader_variant *v)
 {
-	ir3_destroy(v->ir);
+	if (v->ir)
+		ir3_destroy(v->ir);
 	fd_bo_del(v->bo);
 	free(v);
 }
@@ -69,6 +70,10 @@ assemble_variant(struct ir3_shader_variant *v)
 
 	v->instrlen = v->info.sizedwords / 8;
 	v->constlen = v->info.max_const + 1;
+
+	/* no need to keep the ir around beyond this point: */
+	ir3_destroy(v->ir);
+	v->ir = NULL;
 }
 
 /* for vertex shader, the inputs are loaded into registers before the shader
