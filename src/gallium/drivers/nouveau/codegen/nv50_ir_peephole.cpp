@@ -567,6 +567,10 @@ ConstantFolding::expr(Instruction *i,
       ImmediateValue src0;
       if (i->src(0).getImmediate(src0))
          expr(i, src0, *i->getSrc(1)->asImm());
+      if (i->saturate && !prog->getTarget()->isSatSupported(i)) {
+         bld.setPosition(i, false);
+         i->setSrc(1, bld.loadImm(NULL, res.data.u32));
+      }
    } else {
       i->op = i->saturate ? OP_SAT : OP_MOV; /* SAT handled by unary() */
    }
