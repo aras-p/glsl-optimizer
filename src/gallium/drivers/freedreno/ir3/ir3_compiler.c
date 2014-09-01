@@ -1172,6 +1172,15 @@ get_tex_info(struct ir3_compile_context *ctx,
 	return NULL;
 }
 
+static bool check_swiz(struct tgsi_src_register *src, int8_t order[4])
+{
+	unsigned i;
+	for (i = 1; (i < 4) && order[i] >= 0; i++)
+		if (src_swiz(src, i) != (src_swiz(src, 0) + order[i]))
+			return false;
+	return true;
+}
+
 static struct tgsi_src_register *
 get_tex_coord(struct ir3_compile_context *ctx,
 		struct tgsi_full_instruction *inst,
@@ -1181,7 +1190,6 @@ get_tex_coord(struct ir3_compile_context *ctx,
 	struct ir3_instruction *instr;
 	unsigned tex = inst->Texture.Texture;
 	bool needs_mov = false;
-	unsigned i;
 
 	/* cat5 instruction cannot seem to handle const or relative: */
 	if (is_rel_or_const(coord))
@@ -1197,9 +1205,8 @@ get_tex_coord(struct ir3_compile_context *ctx,
 	 * might need to emit some mov instructions to shuffle things
 	 * around:
 	 */
-	for (i = 1; (i < 4) && (tinf->order[i] >= 0) && !needs_mov; i++)
-		if (src_swiz(coord, i) != (src_swiz(coord, 0) + tinf->order[i]))
-			needs_mov = true;
+	if (!needs_mov)
+		needs_mov = !check_swiz(coord, tinf->order);
 
 	if (needs_mov) {
 		struct tgsi_dst_register tmp_dst;
@@ -1263,6 +1270,46 @@ trans_samp(const struct instr_translater *t,
 
 	if (t->tgsi_opc == TGSI_OPCODE_TXB)
 		add_src_reg_wrmask(ctx, instr, coord, coord->SwizzleW, 0x1);
+}
+
+/* DDX/DDY */
+static void
+trans_deriv(const struct instr_translater *t,
+		struct ir3_compile_context *ctx,
+		struct tgsi_full_instruction *inst)
+{
+	struct ir3_instruction *instr;
+	struct tgsi_dst_register *dst = &inst->Dst[0].Register;
+	struct tgsi_src_register *src = &inst->Src[0].Register;
+	static const int8_t order[4] = {0, 1, 2, 3};
+
+	if (!check_swiz(src, order)) {
+		struct tgsi_dst_register tmp_dst;
+		struct tgsi_src_register *tmp_src;
+
+		tmp_src = get_internal_temp(ctx, &tmp_dst);
+		create_mov(ctx, &tmp_dst, src);
+
+		src = tmp_src;
+	}
+
+	/* This might be a workaround for hw bug?  Blob compiler always
+	 * seems to work two components at a time for dsy/dsx.  It does
+	 * actually seem to work in some cases (or at least some piglit
+	 * tests) for four components at a time.  But seems more reliable
+	 * to split this into two instructions like the blob compiler
+	 * does:
+	 */
+
+	instr = instr_create(ctx, 5, t->opc);
+	instr->cat5.type = get_ftype(ctx);
+	add_dst_reg_wrmask(ctx, instr, dst, 0, dst->WriteMask & 0x3);
+	add_src_reg_wrmask(ctx, instr, src, 0, dst->WriteMask & 0x3);
+
+	instr = instr_create(ctx, 5, t->opc);
+	instr->cat5.type = get_ftype(ctx);
+	add_dst_reg_wrmask(ctx, instr, dst, 2, (dst->WriteMask >> 2) & 0x3);
+	add_src_reg_wrmask(ctx, instr, src, 2, (dst->WriteMask >> 2) & 0x3);
 }
 
 /*
@@ -2010,6 +2057,8 @@ static const struct instr_translater translaters[TGSI_OPCODE_LAST] = {
 	INSTR(TEX,          trans_samp, .opc = OPC_SAM, .arg = TGSI_OPCODE_TEX),
 	INSTR(TXP,          trans_samp, .opc = OPC_SAM, .arg = TGSI_OPCODE_TXP),
 	INSTR(TXB,          trans_samp, .opc = OPC_SAMB, .arg = TGSI_OPCODE_TXB),
+	INSTR(DDX,          trans_deriv, .opc = OPC_DSX),
+	INSTR(DDY,          trans_deriv, .opc = OPC_DSY),
 	INSTR(SGT,          trans_cmp),
 	INSTR(SLT,          trans_cmp),
 	INSTR(FSLT,         trans_cmp),
