@@ -553,7 +553,7 @@ nouveau_create_decoder(struct pipe_context *context,
                                &mpeg);
    if (ret < 0) {
       debug_printf("Creation failed: %s (%i)\n", strerror(-ret), ret);
-      return NULL;
+      goto fail;
    }
 
    dec->mpeg = mpeg;
