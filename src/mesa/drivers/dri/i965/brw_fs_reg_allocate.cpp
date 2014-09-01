@@ -55,7 +55,7 @@ fs_visitor::assign_regs_trivial()
    }
    this->grf_used = hw_reg_mapping[this->virtual_grf_count];
 
-   foreach_in_list(fs_inst, inst, &instructions) {
+   foreach_block_and_inst(block, fs_inst, inst, cfg) {
       assign_reg(hw_reg_mapping, &inst->dst, reg_width);
       for (i = 0; i < inst->sources; i++) {
          assign_reg(hw_reg_mapping, &inst->src[i], reg_width);
@@ -242,7 +242,7 @@ fs_visitor::setup_payload_interference(struct ra_graph *g,
    int payload_last_use_ip[payload_node_count];
    memset(payload_last_use_ip, 0, sizeof(payload_last_use_ip));
    int ip = 0;
-   foreach_in_list(fs_inst, inst, &instructions) {
+   foreach_block_and_inst(block, fs_inst, inst, cfg) {
       switch (inst->opcode) {
       case BRW_OPCODE_DO:
          loop_depth++;
@@ -362,7 +362,7 @@ fs_visitor::get_used_mrfs(bool *mrf_used)
 
    memset(mrf_used, 0, BRW_MAX_MRF * sizeof(bool));
 
-   foreach_in_list(fs_inst, inst, &instructions) {
+   foreach_block_and_inst(block, fs_inst, inst, cfg) {
       if (inst->dst.file == MRF) {
          int reg = inst->dst.reg & ~BRW_MRF_COMPR4;
          mrf_used[reg] = true;
@@ -520,7 +520,7 @@ fs_visitor::assign_regs(bool allow_spilling)
 			    reg_width);
    }
 
-   foreach_in_list(fs_inst, inst, &instructions) {
+   foreach_block_and_inst(block, fs_inst, inst, cfg) {
       assign_reg(hw_reg_mapping, &inst->dst, reg_width);
       for (int i = 0; i < inst->sources; i++) {
          assign_reg(hw_reg_mapping, &inst->src[i], reg_width);
@@ -578,7 +578,7 @@ fs_visitor::choose_spill_reg(struct ra_graph *g)
     * spill/unspill we'll have to do, and guess that the insides of
     * loops run 10 times.
     */
-   foreach_in_list(fs_inst, inst, &instructions) {
+   foreach_block_and_inst(block, fs_inst, inst, cfg) {
       for (unsigned int i = 0; i < inst->sources; i++) {
 	 if (inst->src[i].file == GRF) {
 	    spill_costs[inst->src[i].reg] += loop_scale;

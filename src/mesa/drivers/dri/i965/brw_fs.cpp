@@ -1478,7 +1478,7 @@ fs_visitor::assign_curb_setup()
    prog_data->curb_read_length = ALIGN(stage_prog_data->nr_params, 8) / 8;
 
    /* Map the offsets in the UNIFORM file to fixed HW regs. */
-   foreach_in_list(fs_inst, inst, &instructions) {
+   foreach_block_and_inst(block, fs_inst, inst, cfg) {
       for (unsigned int i = 0; i < inst->sources; i++) {
 	 if (inst->src[i].file == UNIFORM) {
             int uniform_nr = inst->src[i].reg + inst->src[i].reg_offset;
@@ -1607,7 +1607,7 @@ fs_visitor::assign_urb_setup()
    /* Offset all the urb_setup[] index by the actual position of the
     * setup regs, now that the location of the constants has been chosen.
     */
-   foreach_in_list(fs_inst, inst, &instructions) {
+   foreach_block_and_inst(block, fs_inst, inst, cfg) {
       if (inst->opcode == FS_OPCODE_LINTERP) {
 	 assert(inst->src[2].file == HW_REG);
 	 inst->src[2].fixed_hw_reg.nr += urb_start;
@@ -1668,7 +1668,7 @@ fs_visitor::split_virtual_grfs()
          false;
    }
 
-   foreach_in_list(fs_inst, inst, &instructions) {
+   foreach_block_and_inst(block, fs_inst, inst, cfg) {
       /* If there's a SEND message that requires contiguous destination
        * registers, no splitting is allowed.
        */
@@ -1703,7 +1703,7 @@ fs_visitor::split_virtual_grfs()
       }
    }
 
-   foreach_in_list(fs_inst, inst, &instructions) {
+   foreach_block_and_inst(block, fs_inst, inst, cfg) {
       if (inst->dst.file == GRF &&
 	  split_grf[inst->dst.reg] &&
 	  inst->dst.reg_offset != 0) {
@@ -1743,7 +1743,7 @@ fs_visitor::compact_virtual_grfs()
    int remap_table[this->virtual_grf_count];
    memset(remap_table, -1, sizeof(remap_table));
 
-   foreach_in_list(const fs_inst, inst, &instructions) {
+   foreach_block_and_inst(block, const fs_inst, inst, cfg) {
       if (inst->dst.file == GRF)
          remap_table[inst->dst.reg] = 0;
 
@@ -1767,7 +1767,7 @@ fs_visitor::compact_virtual_grfs()
    this->virtual_grf_count = new_index;
 
    /* Patch all the instructions to use the newly renumbered registers */
-   foreach_in_list(fs_inst, inst, &instructions) {
+   foreach_block_and_inst(block, fs_inst, inst, cfg) {
       if (inst->dst.file == GRF)
          inst->dst.reg = remap_table[inst->dst.reg];
 
@@ -1831,7 +1831,7 @@ fs_visitor::move_uniform_array_access_to_pull_constants()
     * Note that we don't move constant-indexed accesses to arrays.  No
     * testing has been done of the performance impact of this choice.
     */
-   foreach_in_list_safe(fs_inst, inst, &instructions) {
+   foreach_block_and_inst_safe(block, fs_inst, inst, cfg) {
       for (int i = 0 ; i < inst->sources; i++) {
          if (inst->src[i].file != UNIFORM || !inst->src[i].reladdr)
             continue;
@@ -1879,7 +1879,7 @@ fs_visitor::assign_constant_locations()
       is_live[i] = false;
    }
 
-   foreach_in_list(fs_inst, inst, &instructions) {
+   foreach_block_and_inst(block, fs_inst, inst, cfg) {
       for (int i = 0; i < inst->sources; i++) {
          if (inst->src[i].file != UNIFORM)
             continue;
@@ -1999,7 +1999,7 @@ fs_visitor::opt_algebraic()
 {
    bool progress = false;
 
-   foreach_in_list(fs_inst, inst, &instructions) {
+   foreach_block_and_inst(block, fs_inst, inst, cfg) {
       switch (inst->opcode) {
       case BRW_OPCODE_MUL:
 	 if (inst->src[1].file != IMM)
@@ -2112,7 +2112,7 @@ fs_visitor::opt_register_renaming()
    int remap[virtual_grf_count];
    memset(remap, -1, sizeof(int) * virtual_grf_count);
 
-   foreach_in_list(fs_inst, inst, &this->instructions) {
+   foreach_block_and_inst(block, fs_inst, inst, cfg) {
       if (inst->opcode == BRW_OPCODE_IF || inst->opcode == BRW_OPCODE_DO) {
          depth++;
       } else if (inst->opcode == BRW_OPCODE_ENDIF ||
@@ -2827,7 +2827,7 @@ fs_visitor::dump_instructions(const char *name)
    }
 
    int ip = 0, max_pressure = 0;
-   foreach_in_list(backend_instruction, inst, &instructions) {
+   foreach_block_and_inst(block, backend_instruction, inst, cfg) {
       max_pressure = MAX2(max_pressure, regs_live_at_ip[ip]);
       fprintf(file, "{%3d} %4d: ", regs_live_at_ip[ip], ip);
       dump_instruction(inst, file);

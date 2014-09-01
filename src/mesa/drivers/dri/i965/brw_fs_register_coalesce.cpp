@@ -113,7 +113,7 @@ is_coalesce_candidate(const fs_inst *inst, const int *virtual_grf_sizes)
 
 static bool
 can_coalesce_vars(brw::fs_live_variables *live_intervals,
-                  const exec_list *instructions, const fs_inst *inst,
+                  const cfg_t *cfg, const fs_inst *inst,
                   int var_to, int var_from)
 {
    if (!live_intervals->vars_interfere(var_from, var_to))
@@ -132,7 +132,7 @@ can_coalesce_vars(brw::fs_live_variables *live_intervals,
    int start_ip = MIN2(start_to, start_from);
    int scan_ip = -1;
 
-   foreach_in_list(fs_inst, scan_inst, instructions) {
+   foreach_block_and_inst(block, fs_inst, scan_inst, cfg) {
       scan_ip++;
 
       if (scan_ip < start_ip)
@@ -145,7 +145,7 @@ can_coalesce_vars(brw::fs_live_variables *live_intervals,
          continue;
 
       if (scan_ip > live_intervals->end[var_to])
-         break;
+         return true;
 
       if (scan_inst->dst.equals(inst->dst) ||
           scan_inst->dst.equals(inst->src[0]))
@@ -170,7 +170,7 @@ fs_visitor::register_coalesce()
    int var_to[MAX_SAMPLER_MESSAGE_SIZE];
    int var_from[MAX_SAMPLER_MESSAGE_SIZE];
 
-   foreach_in_list(fs_inst, inst, &instructions) {
+   foreach_block_and_inst(block, fs_inst, inst, cfg) {
       if (!is_coalesce_candidate(inst, virtual_grf_sizes))
          continue;
 
@@ -216,7 +216,7 @@ fs_visitor::register_coalesce()
          var_to[i] = live_intervals->var_from_vgrf[reg_to] + reg_to_offset[i];
          var_from[i] = live_intervals->var_from_vgrf[reg_from] + i;
 
-         if (!can_coalesce_vars(live_intervals, &instructions, inst,
+         if (!can_coalesce_vars(live_intervals, cfg, inst,
                                 var_to[i], var_from[i])) {
             can_coalesce = false;
             reg_from = -1;
@@ -241,7 +241,7 @@ fs_visitor::register_coalesce()
          }
       }
 
-      foreach_in_list(fs_inst, scan_inst, &instructions) {
+      foreach_block_and_inst(block, fs_inst, scan_inst, cfg) {
          for (int i = 0; i < src_size; i++) {
             if (mov[i] || was_load_payload) {
                if (scan_inst->dst.file == GRF &&
