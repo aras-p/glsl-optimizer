@@ -3337,8 +3337,6 @@ vec4_visitor::move_grf_array_access_to_scratch()
       scratch_loc[i] = -1;
    }
 
-   calculate_cfg();
-
    /* First, calculate the set of virtual GRFs that need to be punted
     * to scratch due to having any array access on them, and where in
     * scratch.
@@ -3444,8 +3442,6 @@ vec4_visitor::move_uniform_array_access_to_pull_constants()
    for (int i = 0; i < this->uniforms; i++) {
       pull_constant_loc[i] = -1;
    }
-
-   calculate_cfg();
 
    /* Walk through and find array access of uniforms.  Put a copy of that
     * uniform in the pull constant buffer.

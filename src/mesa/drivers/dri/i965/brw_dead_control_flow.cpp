@@ -40,8 +40,6 @@ dead_control_flow_eliminate(backend_visitor *v)
 {
    bool progress = false;
 
-   v->calculate_cfg();
-
    foreach_block_safe (block, v->cfg) {
       bblock_t *if_block = NULL, *else_block = NULL, *endif_block = block;
       bool found = false;

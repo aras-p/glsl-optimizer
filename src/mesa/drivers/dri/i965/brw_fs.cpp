@@ -1951,8 +1951,6 @@ fs_visitor::assign_constant_locations()
 void
 fs_visitor::demote_pull_constants()
 {
-   calculate_cfg();
-
    foreach_block_and_inst (block, fs_inst, inst, cfg) {
       for (int i = 0; i < inst->sources; i++) {
 	 if (inst->src[i].file != UNIFORM)
@@ -2448,8 +2446,6 @@ fs_visitor::remove_duplicate_mrf_writes()
 
    memset(last_mrf_move, 0, sizeof(last_mrf_move));
 
-   calculate_cfg();
-
    foreach_block_and_inst_safe (block, fs_inst, inst, cfg) {
       if (inst->is_control_flow()) {
 	 memset(last_mrf_move, 0, sizeof(last_mrf_move));
@@ -2704,8 +2700,6 @@ fs_visitor::insert_gen4_send_dependency_workarounds()
     * have a .reg_offset of 0.
     */
 
-   calculate_cfg();
-
    foreach_block_and_inst(block, fs_inst, inst, cfg) {
       if (inst->mlen != 0 && inst->dst.file == GRF) {
          insert_gen4_pre_send_dependency_workarounds(block, inst);
@@ -2737,8 +2731,6 @@ fs_visitor::insert_gen4_send_dependency_workarounds()
 void
 fs_visitor::lower_uniform_pull_constant_loads()
 {
-   calculate_cfg();
-
    foreach_block_and_inst (block, fs_inst, inst, cfg) {
       if (inst->opcode != FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD)
          continue;
@@ -2790,8 +2782,6 @@ bool
 fs_visitor::lower_load_payload()
 {
    bool progress = false;
-
-   calculate_cfg();
 
    foreach_block_and_inst_safe (block, fs_inst, inst, cfg) {
       if (inst->opcode == SHADER_OPCODE_LOAD_PAYLOAD) {
@@ -3270,6 +3260,8 @@ fs_visitor::run()
 
       emit_fb_writes();
 
+      calculate_cfg();
+
       split_virtual_grfs();
 
       move_uniform_array_access_to_pull_constants();
@@ -3416,8 +3408,6 @@ fs_visitor::run()
     * sure that didn't happen.
     */
    assert(sanity_param_count == prog->Parameters->NumParameters);
-
-   calculate_cfg();
 
    return !failed;
 }

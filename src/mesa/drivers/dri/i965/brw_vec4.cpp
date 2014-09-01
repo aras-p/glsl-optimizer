@@ -700,8 +700,6 @@ vec4_visitor::opt_algebraic()
 {
    bool progress = false;
 
-   calculate_cfg();
-
    foreach_block_and_inst(block, vec4_instruction, inst, cfg) {
       switch (inst->opcode) {
       case BRW_OPCODE_ADD:
@@ -807,8 +805,6 @@ vec4_visitor::move_push_constants_to_pull_constants()
       }
    }
 
-   calculate_cfg();
-
    /* Now actually rewrite usage of the things we've moved to pull
     * constants.
     */
@@ -858,8 +854,6 @@ vec4_visitor::opt_set_dependency_control()
    uint8_t grf_channels_written[BRW_MAX_GRF];
    vec4_instruction *last_mrf_write[BRW_MAX_GRF];
    uint8_t mrf_channels_written[BRW_MAX_GRF];
-
-   calculate_cfg();
 
    assert(prog_data->total_grf ||
           !"Must be called after register allocation");
@@ -1747,6 +1741,8 @@ vec4_visitor::run()
 
    emit_thread_end();
 
+   calculate_cfg();
+
    /* Before any optimization, push array accesses out to scratch
     * space where we need them to be.  This pass may allocate new
     * virtual GRFs, so we want to do it early.  It also makes sure
@@ -1845,8 +1841,6 @@ vec4_visitor::run()
     * sure that didn't happen.
     */
    assert(sanity_param_count == prog->Parameters->NumParameters);
-
-   calculate_cfg();
 
    return !failed;
 }

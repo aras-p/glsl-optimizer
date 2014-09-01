@@ -670,8 +670,6 @@ fs_visitor::spill_reg(int spill_reg)
 
    last_scratch += size * reg_size;
 
-   calculate_cfg();
-
    /* Generate spill/unspill instructions for the objects being
     * spilled.  Right now, we spill or unspill the whole thing to a
     * virtual grf of the same size.  For most instructions, though, we

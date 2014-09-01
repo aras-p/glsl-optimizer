@@ -608,8 +608,6 @@ fs_visitor::opt_copy_propagate_local(void *copy_prop_ctx, bblock_t *block,
 bool
 fs_visitor::opt_copy_propagate()
 {
-   calculate_cfg();
-
    bool progress = false;
    void *copy_prop_ctx = ralloc_context(NULL);
    exec_list *out_acp[cfg->num_blocks];

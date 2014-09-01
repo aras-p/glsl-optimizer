@@ -45,8 +45,6 @@ fs_visitor::opt_peephole_predicated_break()
 {
    bool progress = false;
 
-   calculate_cfg();
-
    foreach_block (block, cfg) {
       /* BREAK and CONTINUE instructions, by definition, can only be found at
        * the ends of basic blocks.

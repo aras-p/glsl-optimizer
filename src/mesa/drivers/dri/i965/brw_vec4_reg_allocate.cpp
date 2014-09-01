@@ -327,8 +327,6 @@ vec4_visitor::spill_reg(int spill_reg_nr)
    assert(virtual_grf_sizes[spill_reg_nr] == 1);
    unsigned int spill_offset = c->last_scratch++;
 
-   calculate_cfg();
-
    /* Generate spill/unspill instructions for the objects being spilled. */
    foreach_block_and_inst(block, vec4_instruction, inst, cfg) {
       for (unsigned int i = 0; i < 3; i++) {

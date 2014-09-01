@@ -413,7 +413,6 @@ public:
          this->remaining_grf_uses = NULL;
          this->grf_active = NULL;
       }
-      v->calculate_cfg();
    }
 
    ~instruction_scheduler()

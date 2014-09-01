@@ -127,8 +127,6 @@ fs_visitor::opt_peephole_sel()
 {
    bool progress = false;
 
-   calculate_cfg();
-
    foreach_block (block, cfg) {
       /* IF instructions, by definition, can only be found at the ends of
        * basic blocks.

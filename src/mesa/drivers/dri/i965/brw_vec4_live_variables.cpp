@@ -247,7 +247,6 @@ vec4_visitor::calculate_live_intervals()
     * The control flow-aware analysis was done at a channel level, while at
     * this point we're distilling it down to vgrfs.
     */
-   calculate_cfg();
    vec4_live_variables livevars(this, cfg);
 
    foreach_block (block, cfg) {
