@@ -261,7 +261,6 @@ nvc0_miptree_create(struct pipe_screen *pscreen,
 
    if (pt->usage == PIPE_USAGE_STAGING) {
       switch (pt->target) {
-      case PIPE_TEXTURE_1D:
       case PIPE_TEXTURE_2D:
       case PIPE_TEXTURE_RECT:
          if (pt->last_level == 0 &&
