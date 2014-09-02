@@ -142,4 +142,14 @@ struct cfg_t {
         __inst != __block->start->prev;                        \
         __inst = (__type *)__inst->prev)
 
+#define foreach_inst_in_block_starting_from(__type, __scan_inst, __inst, __block) \
+   for (__type *__scan_inst = (__type *)__inst->next;          \
+        __scan_inst != __block->end->next;                     \
+        __scan_inst = (__type *)__scan_inst->next)
+
+#define foreach_inst_in_block_reverse_starting_from(__type, __scan_inst, __inst, __block) \
+   for (__type *__scan_inst = (__type *)__inst->prev;          \
+        __scan_inst != __block->start->prev;                   \
+        __scan_inst = (__type *)__scan_inst->prev)
+
 #endif /* BRW_CFG_H */
