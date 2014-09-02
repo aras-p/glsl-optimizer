@@ -2213,10 +2213,7 @@ fs_visitor::compute_to_mrf()
       /* Found a move of a GRF to a MRF.  Let's see if we can go
        * rewrite the thing that made this GRF to write into the MRF.
        */
-      fs_inst *scan_inst;
-      for (scan_inst = (fs_inst *)inst->prev;
-           !scan_inst->is_head_sentinel();
-	   scan_inst = (fs_inst *)scan_inst->prev) {
+      foreach_inst_in_block_reverse_starting_from(fs_inst, scan_inst, inst, block) {
 	 if (scan_inst->dst.file == GRF &&
 	     scan_inst->dst.reg == inst->src[0].reg) {
 	    /* Found the last thing to write our reg we want to turn
@@ -2265,7 +2262,7 @@ fs_visitor::compute_to_mrf()
 	  * values that end up in MRFs are shortly before the MRF
 	  * write anyway.
 	  */
-	 if (scan_inst->is_control_flow() && scan_inst->opcode != BRW_OPCODE_IF)
+	 if (block->start == scan_inst)
 	    break;
 
 	 /* You can't read from an MRF, so if someone else reads our
@@ -2565,14 +2562,11 @@ fs_visitor::insert_gen4_pre_send_dependency_workarounds(bblock_t *block,
     * we assume that there are no outstanding dependencies on entry to the
     * program.
     */
-   for (fs_inst *scan_inst = (fs_inst *)inst->prev;
-        !scan_inst->is_head_sentinel();
-        scan_inst = (fs_inst *)scan_inst->prev) {
-
+   foreach_inst_in_block_reverse_starting_from(fs_inst, scan_inst, inst, block) {
       /* If we hit control flow, assume that there *are* outstanding
        * dependencies, and force their cleanup before our instruction.
        */
-      if (scan_inst->is_control_flow()) {
+      if (block->start == scan_inst) {
          for (int i = 0; i < write_len; i++) {
             if (needs_dep[i]) {
                inst->insert_before(block, DEP_RESOLVE_MOV(first_write_grf + i));
@@ -2639,11 +2633,9 @@ fs_visitor::insert_gen4_post_send_dependency_workarounds(bblock_t *block, fs_ins
    /* Walk forwards looking for writes to registers we're writing which aren't
     * read before being written.
     */
-   for (fs_inst *scan_inst = (fs_inst *)inst->next;
-        !scan_inst->is_tail_sentinel();
-        scan_inst = (fs_inst *)scan_inst->next) {
+   foreach_inst_in_block_starting_from(fs_inst, scan_inst, inst, block) {
       /* If we hit control flow, force resolve all remaining dependencies. */
-      if (scan_inst->is_control_flow()) {
+      if (block->end == scan_inst) {
          for (int i = 0; i < write_len; i++) {
             if (needs_dep[i])
                scan_inst->insert_before(block,

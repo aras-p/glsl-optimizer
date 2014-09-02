@@ -46,6 +46,9 @@ fs_visitor::opt_peephole_predicated_break()
    bool progress = false;
 
    foreach_block (block, cfg) {
+      if (block->start_ip != block->end_ip)
+         continue;
+
       /* BREAK and CONTINUE instructions, by definition, can only be found at
        * the ends of basic blocks.
        */
@@ -54,11 +57,11 @@ fs_visitor::opt_peephole_predicated_break()
           jump_inst->opcode != BRW_OPCODE_CONTINUE)
          continue;
 
-      fs_inst *if_inst = (fs_inst *)jump_inst->prev;
+      fs_inst *if_inst = (fs_inst *)((bblock_t *)block->link.prev)->end;
       if (if_inst->opcode != BRW_OPCODE_IF)
          continue;
 
-      fs_inst *endif_inst = (fs_inst *)jump_inst->next;
+      fs_inst *endif_inst = (fs_inst *)((bblock_t *)block->link.next)->start;
       if (endif_inst->opcode != BRW_OPCODE_ENDIF)
          continue;
 

@@ -48,13 +48,8 @@ opt_saturate_propagation_local(fs_visitor *v, bblock_t *block)
       int src_var = v->live_intervals->var_from_reg(&inst->src[0]);
       int src_end_ip = v->live_intervals->end[src_var];
 
-      int scan_ip = ip;
       bool interfered = false;
-      for (fs_inst *scan_inst = (fs_inst *) inst->prev;
-           scan_inst != block->start->prev;
-           scan_inst = (fs_inst *) scan_inst->prev) {
-         scan_ip--;
-
+      foreach_inst_in_block_reverse_starting_from(fs_inst, scan_inst, inst, block) {
          if (scan_inst->dst.file == GRF &&
              scan_inst->dst.reg == inst->src[0].reg &&
              scan_inst->dst.reg_offset == inst->src[0].reg_offset &&

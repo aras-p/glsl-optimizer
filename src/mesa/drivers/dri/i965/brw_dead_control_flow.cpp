@@ -52,13 +52,14 @@ dead_control_flow_eliminate(backend_visitor *v)
          continue;
 
       backend_instruction *if_inst = NULL, *else_inst = NULL;
-      backend_instruction *prev_inst = (backend_instruction *) endif_inst->prev;
+      backend_instruction *prev_inst = ((bblock_t *)endif_block->link.prev)->end;
       if (prev_inst->opcode == BRW_OPCODE_ELSE) {
          else_inst = prev_inst;
          else_block = (bblock_t *)endif_block->link.prev;
          found = true;
 
-         prev_inst = (backend_instruction *) prev_inst->prev;
+         if (else_block->start_ip == else_block->end_ip)
+            prev_inst = ((bblock_t *)else_block->link.prev)->end;
       }
 
       if (prev_inst->opcode == BRW_OPCODE_IF) {

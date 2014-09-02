@@ -41,9 +41,9 @@
  * Scans forwards from an IF counting consecutive MOV instructions in the
  * "then" and "else" blocks of the if statement.
  *
- * A pointer to the fs_inst* for IF is passed as the <if_inst> argument. The
- * function stores pointers to the MOV instructions in the <then_mov> and
- * <else_mov> arrays.
+ * A pointer to the bblock_t following the IF is passed as the <then_block>
+ * argument. The function stores pointers to the MOV instructions in the
+ * <then_mov> and <else_mov> arrays.
  *
  * \return the minimum number of MOVs found in the two branches or zero if
  *         an error occurred.
@@ -62,26 +62,23 @@
  */
 static int
 count_movs_from_if(fs_inst *then_mov[MAX_MOVS], fs_inst *else_mov[MAX_MOVS],
-                   fs_inst *if_inst, fs_inst *else_inst)
+                   bblock_t *then_block, bblock_t *else_block)
 {
-   fs_inst *m = if_inst;
-
-   assert(m->opcode == BRW_OPCODE_IF);
-   m = (fs_inst *) m->next;
-
    int then_movs = 0;
-   while (then_movs < MAX_MOVS && m->opcode == BRW_OPCODE_MOV) {
-      then_mov[then_movs] = m;
-      m = (fs_inst *) m->next;
+   foreach_inst_in_block(fs_inst, inst, then_block) {
+      if (then_movs == MAX_MOVS || inst->opcode != BRW_OPCODE_MOV)
+         break;
+
+      then_mov[then_movs] = inst;
       then_movs++;
    }
 
-   m = (fs_inst *) else_inst->next;
-
    int else_movs = 0;
-   while (else_movs < MAX_MOVS && m->opcode == BRW_OPCODE_MOV) {
-      else_mov[else_movs] = m;
-      m = (fs_inst *) m->next;
+   foreach_inst_in_block(fs_inst, inst, else_block) {
+      if (else_movs == MAX_MOVS || inst->opcode != BRW_OPCODE_MOV)
+         break;
+
+      else_mov[else_movs] = inst;
       else_movs++;
    }
 
@@ -138,13 +135,15 @@ fs_visitor::opt_peephole_sel()
       if (!block->else_block)
          continue;
 
-      fs_inst *else_inst = (fs_inst *) block->else_block->end;
-      assert(else_inst->opcode == BRW_OPCODE_ELSE);
+      assert(block->else_block->end->opcode == BRW_OPCODE_ELSE);
 
       fs_inst *else_mov[MAX_MOVS] = { NULL };
       fs_inst *then_mov[MAX_MOVS] = { NULL };
 
-      int movs = count_movs_from_if(then_mov, else_mov, if_inst, else_inst);
+      bblock_t *then_block = (bblock_t *)block->link.next;
+      bblock_t *else_block = (bblock_t *)block->else_block->link.next;
+
+      int movs = count_movs_from_if(then_mov, else_mov, then_block, else_block);
 
       if (movs == 0)
          continue;
@@ -212,9 +211,6 @@ fs_visitor::opt_peephole_sel()
                                  if_inst->conditional_mod);
          if_inst->insert_before(block, cmp_inst);
       }
-
-      bblock_t *then_block = (bblock_t *)block->link.next;
-      bblock_t *else_block = (bblock_t *)block->else_block->link.next;
 
       for (int i = 0; i < movs; i++) {
          if (mov_imm_inst[i])
