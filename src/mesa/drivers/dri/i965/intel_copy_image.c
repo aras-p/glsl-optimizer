@@ -40,6 +40,7 @@ copy_image_with_blitter(struct brw_context *brw,
                         int src_width, int src_height)
 {
    GLuint bw, bh;
+   uint32_t src_image_x, src_image_y, dst_image_x, dst_image_y;
    int cpp;
 
    /* The blitter doesn't understand multisampling at all. */
@@ -70,6 +71,9 @@ copy_image_with_blitter(struct brw_context *brw,
       return false;
    }
 
+   intel_miptree_get_image_offset(src_mt, src_level, src_z,
+                                  &src_image_x, &src_image_y);
+
    if (_mesa_is_format_compressed(src_mt->format)) {
       _mesa_get_format_block_size(src_mt->format, &bw, &bh);
 
@@ -83,10 +87,21 @@ copy_image_with_blitter(struct brw_context *brw,
       src_width /= (int)bw;
       src_height /= (int)bh;
 
+      /* Inside of the miptree, the x offsets are stored in pixels while
+       * the y offsets are stored in blocks.  We need to scale just the x
+       * offset.
+       */
+      src_image_x /= bw;
+
       cpp = _mesa_get_format_bytes(src_mt->format);
    } else {
       cpp = src_mt->cpp;
    }
+   src_x += src_image_x;
+   src_y += src_image_y;
+
+   intel_miptree_get_image_offset(dst_mt, dst_level, dst_z,
+                                  &dst_image_x, &dst_image_y);
 
    if (_mesa_is_format_compressed(dst_mt->format)) {
       _mesa_get_format_block_size(dst_mt->format, &bw, &bh);
@@ -96,17 +111,13 @@ copy_image_with_blitter(struct brw_context *brw,
 
       dst_x /= (int)bw;
       dst_y /= (int)bh;
+
+      /* Inside of the miptree, the x offsets are stored in pixels while
+       * the y offsets are stored in blocks.  We need to scale just the x
+       * offset.
+       */
+      dst_image_x /= bw;
    }
-
-   uint32_t src_image_x, src_image_y;
-   intel_miptree_get_image_offset(src_mt, src_level, src_z,
-                                  &src_image_x, &src_image_y);
-   src_x += src_image_x;
-   src_y += src_image_y;
-
-   uint32_t dst_image_x, dst_image_y;
-   intel_miptree_get_image_offset(dst_mt, dst_level, dst_z,
-                                  &dst_image_x, &dst_image_y);
    dst_x += dst_image_x;
    dst_y += dst_image_y;
 
