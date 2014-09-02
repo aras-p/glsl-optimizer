@@ -2579,7 +2579,7 @@ vec4_visitor::visit(ir_texture *ir)
       } else if (ir->op == ir_txf_ms) {
          emit(MOV(dst_reg(MRF, param_base + 1, sample_index_type, WRITEMASK_X),
                   sample_index));
-         if (brw->gen >= 7)
+         if (brw->gen >= 7) {
             /* MCS data is in the first channel of `mcs`, but we need to get it into
              * the .y channel of the second vec4 of params, so replicate .x across
              * the whole vec4 and then mask off everything except .y
@@ -2587,6 +2587,7 @@ vec4_visitor::visit(ir_texture *ir)
             mcs.swizzle = BRW_SWIZZLE_XXXX;
             emit(MOV(dst_reg(MRF, param_base + 1, glsl_type::uint_type, WRITEMASK_Y),
                      mcs));
+         }
          inst->mlen++;
       } else if (ir->op == ir_txd) {
 	 const glsl_type *type = lod_type;
