@@ -74,14 +74,14 @@ copy_image_with_blitter(struct brw_context *brw,
       _mesa_get_format_block_size(src_mt->format, &bw, &bh);
 
       assert(src_x % bw == 0);
-      assert(src_y % bw == 0);
+      assert(src_y % bh == 0);
       assert(src_width % bw == 0);
-      assert(src_height % bw == 0);
+      assert(src_height % bh == 0);
 
       src_x /= (int)bw;
-      src_y /= (int)bw;
+      src_y /= (int)bh;
       src_width /= (int)bw;
-      src_height /= (int)bw;
+      src_height /= (int)bh;
 
       cpp = _mesa_get_format_bytes(src_mt->format);
    } else {
@@ -92,10 +92,10 @@ copy_image_with_blitter(struct brw_context *brw,
       _mesa_get_format_block_size(dst_mt->format, &bw, &bh);
 
       assert(dst_x % bw == 0);
-      assert(dst_y % bw == 0);
+      assert(dst_y % bh == 0);
 
       dst_x /= (int)bw;
-      dst_y /= (int)bw;
+      dst_y /= (int)bh;
    }
 
    uint32_t src_image_x, src_image_y;
