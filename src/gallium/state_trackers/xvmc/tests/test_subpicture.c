@@ -36,7 +36,7 @@ static void PrintGUID(const char *guid)
 	int i;
 	printf("\tguid: ");
 	for (i = 0; i < 4; ++i)
-		printf("%C,", guid[i] == 0 ? '0' : guid[i]);
+		printf("%c,", guid[i] == 0 ? '0' : guid[i]);
 	for (; i < 15; ++i)
 		printf("%x,", (unsigned char)guid[i]);
 	printf("%x\n", (unsigned int)guid[15]);
@@ -47,7 +47,7 @@ static void PrintComponentOrder(const char *co)
 	int i;
 	printf("\tcomponent_order:\n\t   ");
 	for (i = 0; i < 4; ++i)
-		printf("%C,", co[i] == 0 ? '0' : co[i]);
+		printf("%c,", co[i] == 0 ? '0' : co[i]);
 	for (; i < 31; ++i)
 		printf("%x,", (unsigned int)co[i]);
 	printf("%x\n", (unsigned int)co[31]);
