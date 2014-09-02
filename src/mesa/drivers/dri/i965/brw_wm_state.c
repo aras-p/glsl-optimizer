@@ -124,11 +124,11 @@ brw_upload_wm_unit(struct brw_context *brw)
    wm->thread1.binding_table_entry_count =
       brw->wm.prog_data->base.binding_table.size_bytes / 4;
 
-   if (brw->wm.prog_data->total_scratch != 0) {
+   if (brw->wm.prog_data->base.total_scratch != 0) {
       wm->thread2.scratch_space_base_pointer =
 	 brw->wm.base.scratch_bo->offset64 >> 10; /* reloc */
       wm->thread2.per_thread_scratch_space =
-	 ffs(brw->wm.prog_data->total_scratch) - 11;
+	 ffs(brw->wm.prog_data->base.total_scratch) - 11;
    } else {
       wm->thread2.scratch_space_base_pointer = 0;
       wm->thread2.per_thread_scratch_space = 0;
@@ -140,7 +140,7 @@ brw_upload_wm_unit(struct brw_context *brw)
       brw->wm.prog_data->num_varying_inputs * 2;
    wm->thread3.urb_entry_read_offset = 0;
    wm->thread3.const_urb_entry_read_length =
-      brw->wm.prog_data->curb_read_length;
+      brw->wm.prog_data->base.curb_read_length;
    /* BRW_NEW_CURBE_OFFSETS */
    wm->thread3.const_urb_entry_read_offset = brw->curbe.wm_start * 2;
 
@@ -219,7 +219,7 @@ brw_upload_wm_unit(struct brw_context *brw)
       wm->wm4.stats_enable = 1;
 
    /* Emit scratch space relocation */
-   if (brw->wm.prog_data->total_scratch != 0) {
+   if (brw->wm.prog_data->base.total_scratch != 0) {
       drm_intel_bo_emit_reloc(brw->batch.bo,
 			      brw->wm.base.state_offset +
 			      offsetof(struct brw_wm_unit_state, thread2),

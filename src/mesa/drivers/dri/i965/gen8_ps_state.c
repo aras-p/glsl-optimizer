@@ -225,10 +225,10 @@ upload_ps_state(struct brw_context *brw)
    OUT_BATCH(ksp0);
    OUT_BATCH(0);
    OUT_BATCH(dw3);
-   if (brw->wm.prog_data->total_scratch) {
+   if (brw->wm.prog_data->base.total_scratch) {
       OUT_RELOC64(brw->wm.base.scratch_bo,
                   I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
-                  ffs(brw->wm.prog_data->total_scratch) - 11);
+                  ffs(brw->wm.prog_data->base.total_scratch) - 11);
    } else {
       OUT_BATCH(0);
       OUT_BATCH(0);

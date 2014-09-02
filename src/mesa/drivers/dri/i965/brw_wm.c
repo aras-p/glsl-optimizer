@@ -187,9 +187,9 @@ bool do_wm_prog(struct brw_context *brw,
       return false;
    }
 
-   if (prog_data.total_scratch) {
+   if (prog_data.base.total_scratch) {
       brw_get_scratch_bo(brw, &brw->wm.base.scratch_bo,
-			 prog_data.total_scratch * brw->max_wm_threads);
+			 prog_data.base.total_scratch * brw->max_wm_threads);
    }
 
    if (unlikely(INTEL_DEBUG & DEBUG_WM))

@@ -1606,7 +1606,8 @@ vec4_visitor::setup_uniforms(int reg)
 
    stage_prog_data->nr_params = this->uniforms * 4;
 
-   prog_data->curb_read_length = reg - prog_data->base.dispatch_grf_start_reg;
+   prog_data->base.curb_read_length =
+      reg - prog_data->base.dispatch_grf_start_reg;
 
    return reg;
 }

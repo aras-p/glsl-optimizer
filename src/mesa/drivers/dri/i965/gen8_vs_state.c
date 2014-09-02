@@ -55,10 +55,10 @@ upload_vs_state(struct brw_context *brw)
              ((prog_data->base.binding_table.size_bytes / 4) <<
                GEN6_VS_BINDING_TABLE_ENTRY_COUNT_SHIFT));
 
-   if (prog_data->total_scratch) {
+   if (prog_data->base.total_scratch) {
       OUT_RELOC64(stage_state->scratch_bo,
                   I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
-                  ffs(prog_data->total_scratch) - 11);
+                  ffs(prog_data->base.total_scratch) - 11);
    } else {
       OUT_BATCH(0);
       OUT_BATCH(0);

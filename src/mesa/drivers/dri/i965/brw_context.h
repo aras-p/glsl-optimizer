@@ -359,6 +359,9 @@ struct brw_stage_prog_data {
    GLuint nr_params;       /**< number of float params/constants */
    GLuint nr_pull_params;
 
+   unsigned curb_read_length;
+   unsigned total_scratch;
+
    /**
     * Register where the thread expects to find input data from the URB
     * (typically uniforms, followed by vertex or fragment attributes).
@@ -386,13 +389,11 @@ struct brw_stage_prog_data {
 struct brw_wm_prog_data {
    struct brw_stage_prog_data base;
 
-   GLuint curb_read_length;
    GLuint num_varying_inputs;
 
    GLuint dispatch_grf_start_reg_16;
    GLuint reg_blocks;
    GLuint reg_blocks_16;
-   GLuint total_scratch;
 
    struct {
       /** @{
@@ -592,10 +593,8 @@ struct brw_vec4_prog_data {
    struct brw_stage_prog_data base;
    struct brw_vue_map vue_map;
 
-   GLuint curb_read_length;
    GLuint urb_read_length;
    GLuint total_grf;
-   GLuint total_scratch;
 
    /* Used for calculating urb partitions.  In the VS, this is the size of the
     * URB entry used for both input and output to the thread.  In the GS, this

@@ -1463,7 +1463,7 @@ fs_visitor::assign_curb_setup()
       prog_data->dispatch_grf_start_reg_16 = payload.num_regs;
    }
 
-   prog_data->curb_read_length = ALIGN(stage_prog_data->nr_params, 8) / 8;
+   prog_data->base.curb_read_length = ALIGN(stage_prog_data->nr_params, 8) / 8;
 
    /* Map the offsets in the UNIFORM file to fixed HW regs. */
    foreach_in_list(fs_inst, inst, &instructions) {
@@ -1583,7 +1583,7 @@ fs_visitor::calculate_urb_setup()
 void
 fs_visitor::assign_urb_setup()
 {
-   int urb_start = payload.num_regs + prog_data->curb_read_length;
+   int urb_start = payload.num_regs + prog_data->base.curb_read_length;
 
    /* Offset all the urb_setup[] index by the actual position of the
     * setup regs, now that the location of the constants has been chosen.
@@ -3345,7 +3345,7 @@ fs_visitor::run()
       schedule_instructions(SCHEDULE_POST);
 
    if (last_scratch > 0) {
-      prog_data->total_scratch = brw_get_scratch_size(last_scratch);
+      prog_data->base.total_scratch = brw_get_scratch_size(last_scratch);
    }
 
    if (brw->use_rep_send)

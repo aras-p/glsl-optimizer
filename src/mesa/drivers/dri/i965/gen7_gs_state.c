@@ -94,10 +94,10 @@ upload_gs_state(struct brw_context *brw)
                 ((brw->gs.prog_data->base.base.binding_table.size_bytes / 4) <<
                  GEN6_GS_BINDING_TABLE_ENTRY_COUNT_SHIFT));
 
-      if (brw->gs.prog_data->base.total_scratch) {
+      if (brw->gs.prog_data->base.base.total_scratch) {
          OUT_RELOC(stage_state->scratch_bo,
                    I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
-                   ffs(brw->gs.prog_data->base.total_scratch) - 11);
+                   ffs(brw->gs.prog_data->base.base.total_scratch) - 11);
       } else {
          OUT_BATCH(0);
       }
