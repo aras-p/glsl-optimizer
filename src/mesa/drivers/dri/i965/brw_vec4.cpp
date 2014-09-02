@@ -516,12 +516,9 @@ vec4_visitor::dead_code_eliminate()
          }
       }
 
-      for (exec_node *node = inst->prev, *prev = node->prev;
-           prev != NULL && dead_channels != 0;
-           node = prev, prev = prev->prev) {
-         vec4_instruction *scan_inst = (vec4_instruction  *)node;
-
-         if (scan_inst->is_control_flow())
+      foreach_inst_in_block_reverse_starting_from(vec4_instruction, scan_inst,
+                                                  inst, block) {
+         if (dead_channels == 0)
             break;
 
          if (inst_writes_flag) {
@@ -1062,10 +1059,11 @@ vec4_visitor::opt_register_coalesce()
        * everything writing to the temporary to write into the destination
        * instead.
        */
-      vec4_instruction *scan_inst;
-      for (scan_inst = (vec4_instruction *)inst->prev;
-	   scan_inst->prev != NULL;
-	   scan_inst = (vec4_instruction *)scan_inst->prev) {
+      vec4_instruction *_scan_inst = (vec4_instruction *)inst->prev;
+      foreach_inst_in_block_reverse_starting_from(vec4_instruction, scan_inst,
+                                                  inst, block) {
+         _scan_inst = scan_inst;
+
 	 if (scan_inst->dst.file == GRF &&
 	     scan_inst->dst.reg == inst->src[0].reg &&
 	     scan_inst->dst.reg_offset == inst->src[0].reg_offset) {
@@ -1105,16 +1103,6 @@ vec4_visitor::opt_register_coalesce()
 
 	    if (chans_remaining == 0)
 	       break;
-	 }
-
-	 /* We don't handle flow control here.  Most computation of values
-	  * that could be coalesced happens just before their use.
-	  */
-	 if (scan_inst->opcode == BRW_OPCODE_DO ||
-	     scan_inst->opcode == BRW_OPCODE_WHILE ||
-	     scan_inst->opcode == BRW_OPCODE_ELSE ||
-	     scan_inst->opcode == BRW_OPCODE_ENDIF) {
-	    break;
 	 }
 
          /* You can't read from an MRF, so if someone else reads our MRF's
@@ -1169,7 +1157,7 @@ vec4_visitor::opt_register_coalesce()
 	  * computing the value.  Now go rewrite the instruction stream
 	  * between the two.
 	  */
-
+         vec4_instruction *scan_inst = _scan_inst;
 	 while (scan_inst != inst) {
 	    if (scan_inst->dst.file == GRF &&
 		scan_inst->dst.reg == inst->src[0].reg &&
