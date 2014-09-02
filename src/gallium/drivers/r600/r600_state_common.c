@@ -1245,12 +1245,6 @@ static bool r600_update_derived_state(struct r600_context *rctx)
 			}
 		}
 
-		if (rctx->b.chip_class >= EVERGREEN) {
-			evergreen_update_db_shader_control(rctx);
-		} else {
-			r600_update_db_shader_control(rctx);
-		}
-
 		if (unlikely(!ps_dirty && rctx->ps_shader && rctx->rasterizer &&
 				((rctx->rasterizer->sprite_coord_enable != rctx->ps_shader->current->sprite_coord_enable) ||
 						(rctx->rasterizer->flatshade != rctx->ps_shader->current->flatshade)))) {
@@ -1262,6 +1256,12 @@ static bool r600_update_derived_state(struct r600_context *rctx)
 		}
 
 		update_shader_atom(ctx, &rctx->pixel_shader, rctx->ps_shader->current);
+	}
+
+	if (rctx->b.chip_class >= EVERGREEN) {
+		evergreen_update_db_shader_control(rctx);
+	} else {
+		r600_update_db_shader_control(rctx);
 	}
 
 	/* on R600 we stuff masks + txq info into one constant buffer */
