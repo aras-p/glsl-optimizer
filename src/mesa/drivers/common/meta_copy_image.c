@@ -74,7 +74,7 @@ make_view(struct gl_context *ctx, struct gl_texture_image *tex_image,
                               tex_image->Depth,
                               0, internal_format, tex_format);
 
-   view_tex_obj->MinLevel = 0;
+   view_tex_obj->MinLevel = tex_image->Level;
    view_tex_obj->NumLevels = 1;
    view_tex_obj->MinLayer = tex_obj->MinLayer;
    view_tex_obj->NumLayers = tex_obj->NumLayers;
