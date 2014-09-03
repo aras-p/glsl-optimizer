@@ -110,10 +110,16 @@ struct cfg_t {
    int num_blocks;
 };
 
+/* Note that this is implemented with a double for loop -- break will
+ * break from the inner loop only!
+ */
 #define foreach_block_and_inst(__block, __type, __inst, __cfg) \
    foreach_block (__block, __cfg)                              \
       foreach_inst_in_block (__type, __inst, __block)
 
+/* Note that this is implemented with a double for loop -- break will
+ * break from the inner loop only!
+ */
 #define foreach_block_and_inst_safe(__block, __type, __inst, __cfg) \
    foreach_block_safe (__block, __cfg)                              \
       foreach_inst_in_block_safe (__type, __inst, __block)
