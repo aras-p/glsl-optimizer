@@ -456,7 +456,9 @@ lp_build_create_jit_compiler_for_module(LLVMExecutionEngineRef *OutJIT,
           .setOptLevel((CodeGenOpt::Level)OptLevel);
 
    if (useMCJIT) {
+#if HAVE_LLVM < 0x0306
        builder.setUseMCJIT(true);
+#endif
 #ifdef _WIN32
        /*
         * MCJIT works on Windows, but currently only through ELF object format.

@@ -43,6 +43,14 @@
 #include <llvm-c/BitWriter.h>
 
 
+/* Only MCJIT is available as of LLVM SVN r216982 */
+#if HAVE_LLVM >= 0x0306
+
+#define USE_MCJIT 1
+#define HAVE_AVX 1
+
+#else
+
 /**
  * AVX is supported in:
  * - standard JIT from LLVM 3.2 onwards
@@ -64,6 +72,7 @@
 #  define HAVE_AVX 0
 #endif
 
+#endif /* HAVE_LLVM >= 0x0306 */
 
 #if USE_MCJIT
 void LLVMLinkInMCJIT();
