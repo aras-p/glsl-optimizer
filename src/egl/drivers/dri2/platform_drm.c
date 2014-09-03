@@ -681,6 +681,7 @@ dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp)
                       i + 1, EGL_WINDOW_BIT, attr_list, NULL);
    }
 
+   disp->Extensions.KHR_image_pixmap = EGL_TRUE;
    if (dri2_dpy->dri2)
       disp->Extensions.EXT_buffer_age = EGL_TRUE;
 
