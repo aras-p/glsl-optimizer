@@ -115,7 +115,7 @@ rehash(struct brw_cache *cache)
    GLuint size, i;
 
    size = cache->size * 3;
-   items = calloc(1, size * sizeof(*items));
+   items = calloc(size, sizeof(*items));
 
    for (i = 0; i < cache->size; i++)
       for (c = cache->items[i]; c; c = next) {
@@ -334,7 +334,7 @@ brw_init_caches(struct brw_context *brw)
    cache->size = 7;
    cache->n_items = 0;
    cache->items =
-      calloc(1, cache->size * sizeof(struct brw_cache_item *));
+      calloc(cache->size, sizeof(struct brw_cache_item *));
 
    cache->bo = drm_intel_bo_alloc(brw->bufmgr,
 				  "program cache",

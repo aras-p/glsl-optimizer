@@ -554,7 +554,7 @@ void * ir3_assemble(struct ir3 *shader, struct ir3_info *info)
 	 */
 	info->sizedwords = 2 * align(shader->instrs_count, 4);
 
-	ptr = dwords = calloc(1, 4 * info->sizedwords);
+	ptr = dwords = calloc(4, info->sizedwords);
 
 	for (i = 0; i < shader->instrs_count; i++) {
 		struct ir3_instruction *instr = shader->instrs[i];

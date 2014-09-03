@@ -238,7 +238,7 @@ driCreateConfigs(mesa_format format,
    is_srgb = _mesa_get_format_color_encoding(format) == GL_SRGB;
 
    num_modes = num_depth_stencil_bits * num_db_modes * num_accum_bits * num_msaa_modes;
-   configs = calloc(1, (num_modes + 1) * sizeof *configs);
+   configs = calloc(num_modes + 1, sizeof *configs);
    if (configs == NULL)
        return NULL;
 

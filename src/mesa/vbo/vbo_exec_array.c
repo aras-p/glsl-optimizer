@@ -1313,7 +1313,7 @@ vbo_validated_multidrawelements(struct gl_context *ctx, GLenum mode,
    if (primcount == 0)
       return;
 
-   prim = calloc(1, primcount * sizeof(*prim));
+   prim = calloc(primcount, sizeof(*prim));
    if (prim == NULL) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glMultiDrawElements");
       return;

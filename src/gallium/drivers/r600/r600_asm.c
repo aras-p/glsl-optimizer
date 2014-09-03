@@ -1590,7 +1590,7 @@ int r600_bytecode_build(struct r600_bytecode *bc)
 		bc->ndw = cf->addr + cf->ndw;
 	}
 	free(bc->bytecode);
-	bc->bytecode = calloc(1, bc->ndw * 4);
+	bc->bytecode = calloc(4, bc->ndw);
 	if (bc->bytecode == NULL)
 		return -ENOMEM;
 	LIST_FOR_EACH_ENTRY(cf, &bc->cf, list) {

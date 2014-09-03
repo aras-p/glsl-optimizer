@@ -146,7 +146,7 @@ void * ir2_shader_assemble(struct ir2_shader *shader, struct ir2_shader_info *in
 		goto fail;
 	}
 
-	ptr = dwords = calloc(1, 4 * info->sizedwords);
+	ptr = dwords = calloc(4, info->sizedwords);
 
 	/* second pass, emit CF program in pairs: */
 	for (i = 0; i < shader->cfs_count; i += 2) {

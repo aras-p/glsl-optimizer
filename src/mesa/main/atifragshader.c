@@ -325,11 +325,11 @@ _mesa_BeginFragmentShaderATI(void)
       a start */
    for (i = 0; i < MAX_NUM_PASSES_ATI; i++) {
       ctx->ATIFragmentShader.Current->Instructions[i] =
-	 calloc(1, sizeof(struct atifs_instruction) *
-		   (MAX_NUM_INSTRUCTIONS_PER_PASS_ATI));
+	 calloc(sizeof(struct atifs_instruction),
+                MAX_NUM_INSTRUCTIONS_PER_PASS_ATI);
       ctx->ATIFragmentShader.Current->SetupInst[i] =
-	 calloc(1, sizeof(struct atifs_setupinst) *
-		   (MAX_NUM_FRAGMENT_REGISTERS_ATI));
+	 calloc(sizeof(struct atifs_setupinst),
+                MAX_NUM_FRAGMENT_REGISTERS_ATI);
    }
 
 /* can't rely on calloc for initialization as it's possible to redefine a shader (?) */
