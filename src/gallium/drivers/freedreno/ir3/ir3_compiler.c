@@ -1172,7 +1172,7 @@ get_tex_info(struct ir3_compile_context *ctx,
 	return NULL;
 }
 
-static bool check_swiz(struct tgsi_src_register *src, int8_t order[4])
+static bool check_swiz(struct tgsi_src_register *src, const int8_t order[4])
 {
 	unsigned i;
 	for (i = 1; (i < 4) && order[i] >= 0; i++)
@@ -2560,6 +2560,7 @@ ir3_compile_shader(struct ir3_shader_variant *so,
 	assert(so->ir);
 
 	if (compile_init(&ctx, so, tokens) != TGSI_PARSE_OK) {
+		DBG("INIT failed!");
 		ret = -1;
 		goto out;
 	}
@@ -2611,10 +2612,17 @@ ir3_compile_shader(struct ir3_shader_variant *so,
 		compile_dump(&ctx);
 
 	ret = ir3_block_flatten(block);
-	if (ret < 0)
+	if (ret < 0) {
+		DBG("FLATTEN failed!");
 		goto out;
+	}
 	if ((ret > 0) && (fd_mesa_debug & FD_DBG_OPTDUMP))
 		compile_dump(&ctx);
+
+	if (fd_mesa_debug & FD_DBG_OPTMSGS) {
+		printf("BEFORE CP:\n");
+		ir3_dump_instr_list(block->head);
+	}
 
 	ir3_block_cp(block);
 
@@ -2629,8 +2637,10 @@ ir3_compile_shader(struct ir3_shader_variant *so,
 	}
 
 	ret = ir3_block_sched(block);
-	if (ret)
+	if (ret) {
+		DBG("SCHED failed!");
 		goto out;
+	}
 
 	if (fd_mesa_debug & FD_DBG_OPTMSGS) {
 		printf("AFTER SCHED:\n");
@@ -2639,8 +2649,10 @@ ir3_compile_shader(struct ir3_shader_variant *so,
 
 	ret = ir3_block_ra(block, so->type, key.half_precision,
 			so->frag_coord, so->frag_face, &so->has_samp);
-	if (ret)
+	if (ret) {
+		DBG("RA failed!");
 		goto out;
+	}
 
 	if (fd_mesa_debug & FD_DBG_OPTMSGS) {
 		printf("AFTER RA:\n");
