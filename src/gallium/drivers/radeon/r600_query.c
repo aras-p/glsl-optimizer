@@ -807,11 +807,39 @@ void r600_suspend_nontimer_queries(struct r600_common_context *ctx)
 	assert(ctx->num_cs_dw_nontimer_queries_suspend == 0);
 }
 
+static unsigned r600_queries_num_cs_dw_for_resuming(struct r600_common_context *ctx)
+{
+	struct r600_query *query;
+	unsigned num_dw = 0;
+
+	LIST_FOR_EACH_ENTRY(query, &ctx->active_nontimer_queries, list) {
+		/* begin + end */
+		num_dw += query->num_cs_dw * 2;
+
+		/* Workaround for the fact that
+		 * num_cs_dw_nontimer_queries_suspend is incremented for every
+		 * resumed query, which raises the bar in need_cs_space for
+		 * queries about to be resumed.
+		 */
+		num_dw += query->num_cs_dw;
+	}
+	/* primitives generated query */
+	num_dw += ctx->streamout.enable_atom.num_dw;
+	/* guess for ZPASS enable or PERFECT_ZPASS_COUNT enable updates */
+	num_dw += 13;
+
+	return num_dw;
+}
+
 void r600_resume_nontimer_queries(struct r600_common_context *ctx)
 {
 	struct r600_query *query;
 
 	assert(ctx->num_cs_dw_nontimer_queries_suspend == 0);
+
+	/* Check CS space here. Resuming must not be interrupted by flushes. */
+	ctx->need_gfx_cs_space(&ctx->b,
+			       r600_queries_num_cs_dw_for_resuming(ctx), TRUE);
 
 	LIST_FOR_EACH_ENTRY(query, &ctx->active_nontimer_queries, list) {
 		r600_emit_query_begin(ctx, query);
