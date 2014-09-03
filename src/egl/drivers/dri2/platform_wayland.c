@@ -468,7 +468,7 @@ dri2_wl_get_buffers(__DRIdrawable * driDrawable,
    const unsigned int format = 32;
    int i;
 
-   attachments_with_format = calloc(count * 2, sizeof(unsigned int));
+   attachments_with_format = calloc(count, 2 * sizeof(unsigned int));
    if (!attachments_with_format) {
       *out_count = 0;
       return NULL;
