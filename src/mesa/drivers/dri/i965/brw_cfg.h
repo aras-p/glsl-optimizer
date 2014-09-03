@@ -66,6 +66,11 @@ struct bblock_t {
    const backend_instruction *start() const;
    backend_instruction *end();
    const backend_instruction *end() const;
+
+   bblock_t *next();
+   const bblock_t *next() const;
+   bblock_t *prev();
+   const bblock_t *prev() const;
 #endif
 
    struct exec_node link;
@@ -112,6 +117,30 @@ bblock_end_const(const struct bblock_t *block)
    return (const struct backend_instruction *)exec_list_get_tail_const(&block->instructions);
 }
 
+static inline struct bblock_t *
+bblock_next(struct bblock_t *block)
+{
+   return (struct bblock_t *)block->link.next;
+}
+
+static inline const struct bblock_t *
+bblock_next_const(const struct bblock_t *block)
+{
+   return (const struct bblock_t *)block->link.next;
+}
+
+static inline struct bblock_t *
+bblock_prev(struct bblock_t *block)
+{
+   return (struct bblock_t *)block->link.prev;
+}
+
+static inline const struct bblock_t *
+bblock_prev_const(const struct bblock_t *block)
+{
+   return (const struct bblock_t *)block->link.prev;
+}
+
 #ifdef __cplusplus
 inline backend_instruction *
 bblock_t::start()
@@ -135,6 +164,30 @@ inline const backend_instruction *
 bblock_t::end() const
 {
    return bblock_end_const(this);
+}
+
+inline bblock_t *
+bblock_t::next()
+{
+   return bblock_next(this);
+}
+
+inline const bblock_t *
+bblock_t::next() const
+{
+   return bblock_next_const(this);
+}
+
+inline bblock_t *
+bblock_t::prev()
+{
+   return bblock_prev(this);
+}
+
+inline const bblock_t *
+bblock_t::prev() const
+{
+   return bblock_prev_const(this);
 }
 #endif
 

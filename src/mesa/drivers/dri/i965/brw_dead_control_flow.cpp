@@ -52,20 +52,20 @@ dead_control_flow_eliminate(backend_visitor *v)
          continue;
 
       backend_instruction *if_inst = NULL, *else_inst = NULL;
-      backend_instruction *prev_inst = ((bblock_t *)endif_block->link.prev)->end();
+      backend_instruction *prev_inst = endif_block->prev()->end();
       if (prev_inst->opcode == BRW_OPCODE_ELSE) {
          else_inst = prev_inst;
-         else_block = (bblock_t *)endif_block->link.prev;
+         else_block = endif_block->prev();
          found = true;
 
          if (else_block->start_ip == else_block->end_ip)
-            prev_inst = ((bblock_t *)else_block->link.prev)->end();
+            prev_inst = else_block->prev()->end();
       }
 
       if (prev_inst->opcode == BRW_OPCODE_IF) {
          if_inst = prev_inst;
-         if_block = else_block != NULL ? (bblock_t *)else_block->link.prev
-                                       : (bblock_t *)endif_block->link.prev;
+         if_block = else_block != NULL ? else_block->prev()
+                                       : endif_block->prev();
          found = true;
       } else {
          /* Don't remove the ENDIF if we didn't find a dead IF. */
@@ -77,7 +77,7 @@ dead_control_flow_eliminate(backend_visitor *v)
 
          if (if_inst) {
             if (if_block->start_ip == if_block->end_ip) {
-               earlier_block = (bblock_t *)if_block->link.prev;
+               earlier_block = if_block->prev();
             } else {
                earlier_block = if_block;
             }
@@ -91,7 +91,7 @@ dead_control_flow_eliminate(backend_visitor *v)
 
          if (endif_inst) {
             if (endif_block->start_ip == endif_block->end_ip) {
-               later_block = (bblock_t *)endif_block->link.next;
+               later_block = endif_block->next();
             } else {
                later_block = endif_block;
             }
@@ -114,7 +114,7 @@ dead_control_flow_eliminate(backend_visitor *v)
              * __next block pointer was pointing to.
              */
             if (endif_block != later_block) {
-               __next = (bblock_t *)earlier_block->link.next;
+               __next = earlier_block->next();
             }
          }
 

@@ -57,17 +57,17 @@ fs_visitor::opt_peephole_predicated_break()
           jump_inst->opcode != BRW_OPCODE_CONTINUE)
          continue;
 
-      fs_inst *if_inst = (fs_inst *)((bblock_t *)block->link.prev)->end();
+      fs_inst *if_inst = (fs_inst *)block->prev()->end();
       if (if_inst->opcode != BRW_OPCODE_IF)
          continue;
 
-      fs_inst *endif_inst = (fs_inst *)((bblock_t *)block->link.next)->start();
+      fs_inst *endif_inst = (fs_inst *)block->next()->start();
       if (endif_inst->opcode != BRW_OPCODE_ENDIF)
          continue;
 
       bblock_t *jump_block = block;
-      bblock_t *if_block = (bblock_t *)jump_block->link.prev;
-      bblock_t *endif_block = (bblock_t *)jump_block->link.next;
+      bblock_t *if_block = jump_block->prev();
+      bblock_t *endif_block = jump_block->next();
 
       /* For Sandybridge with IF with embedded comparison we need to emit an
        * instruction to set the flag register.
@@ -84,14 +84,14 @@ fs_visitor::opt_peephole_predicated_break()
 
       bblock_t *earlier_block = if_block;
       if (if_block->start_ip == if_block->end_ip) {
-         earlier_block = (bblock_t *)if_block->link.prev;
+         earlier_block = if_block->prev();
       }
 
       if_inst->remove(if_block);
 
       bblock_t *later_block = endif_block;
       if (endif_block->start_ip == endif_block->end_ip) {
-         later_block = (bblock_t *)endif_block->link.next;
+         later_block = endif_block->next();
       }
       endif_inst->remove(endif_block);
 

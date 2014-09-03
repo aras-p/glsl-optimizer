@@ -761,9 +761,9 @@ inst_is_in_block(const bblock_t *block, const backend_instruction *inst)
 static void
 adjust_later_block_ips(bblock_t *start_block, int ip_adjustment)
 {
-   for (bblock_t *block_iter = (bblock_t *)start_block->link.next;
+   for (bblock_t *block_iter = start_block->next();
         !block_iter->link.is_tail_sentinel();
-        block_iter = (bblock_t *)block_iter->link.next) {
+        block_iter = block_iter->next()) {
       block_iter->start_ip += ip_adjustment;
       block_iter->end_ip += ip_adjustment;
    }

@@ -140,8 +140,8 @@ fs_visitor::opt_peephole_sel()
       fs_inst *else_mov[MAX_MOVS] = { NULL };
       fs_inst *then_mov[MAX_MOVS] = { NULL };
 
-      bblock_t *then_block = (bblock_t *)block->link.next;
-      bblock_t *else_block = (bblock_t *)block->else_block->link.next;
+      bblock_t *then_block = block->next();
+      bblock_t *else_block = block->else_block->next();
 
       int movs = count_movs_from_if(then_mov, else_mov, then_block, else_block);
 

@@ -200,9 +200,9 @@ count_to_loop_end(const bblock_t *block)
    /* Skip the first block, since we don't want to count the do the calling
     * function found.
     */
-   for (block = (bblock_t *)block->link.next;
+   for (block = block->next();
         depth > 0;
-        block = (bblock_t *)block->link.next) {
+        block = block->next()) {
       if (block->start()->opcode == BRW_OPCODE_DO)
          depth++;
       if (block->end()->opcode == BRW_OPCODE_WHILE) {
