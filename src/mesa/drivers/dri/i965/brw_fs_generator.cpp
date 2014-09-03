@@ -40,13 +40,13 @@ fs_generator::fs_generator(struct brw_context *brw,
                            void *mem_ctx,
                            const struct brw_wm_prog_key *key,
                            struct brw_wm_prog_data *prog_data,
-                           struct gl_shader_program *prog,
+                           struct gl_shader_program *shader_prog,
                            struct gl_fragment_program *fp,
                            bool runtime_check_aads_emit,
                            bool debug_flag)
 
    : brw(brw), stage(MESA_SHADER_FRAGMENT), key(key),
-     prog_data(prog_data), prog(prog), fp(fp),
+     prog_data(prog_data), shader_prog(shader_prog), fp(fp),
      runtime_check_aads_emit(runtime_check_aads_emit),
      debug_flag(debug_flag), mem_ctx(mem_ctx)
 {
@@ -1956,11 +1956,11 @@ fs_generator::generate_code(const cfg_t *cfg)
    int after_size = p->next_insn_offset - start_offset;
 
    if (unlikely(debug_flag)) {
-      if (prog) {
+      if (shader_prog) {
          fprintf(stderr,
                  "Native code for %s fragment shader %d (SIMD%d dispatch):\n",
-                 prog->Label ? prog->Label : "unnamed",
-                 prog->Name, dispatch_width);
+                 shader_prog->Label ? shader_prog->Label : "unnamed",
+                 shader_prog->Name, dispatch_width);
       } else if (fp) {
          fprintf(stderr,
                  "Native code for fragment program %d (SIMD%d dispatch):\n",

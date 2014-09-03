@@ -575,7 +575,7 @@ public:
                 void *mem_ctx,
                 const struct brw_wm_prog_key *key,
                 struct brw_wm_prog_data *prog_data,
-                struct gl_shader_program *prog,
+                struct gl_shader_program *shader_prog,
                 struct gl_fragment_program *fp,
                 bool runtime_check_aads_emit,
                 bool debug_flag);
@@ -683,7 +683,7 @@ private:
    const struct brw_wm_prog_key *const key;
    struct brw_wm_prog_data *prog_data;
 
-   struct gl_shader_program *prog;
+   struct gl_shader_program * const shader_prog;
    const struct gl_fragment_program *fp;
 
    unsigned dispatch_width; /**< 8 or 16 */
