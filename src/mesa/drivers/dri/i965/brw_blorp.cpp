@@ -78,7 +78,7 @@ void
 brw_blorp_surface_info::set(struct brw_context *brw,
                             struct intel_mipmap_tree *mt,
                             unsigned int level, unsigned int layer,
-                            bool is_render_target)
+                            mesa_format format, bool is_render_target)
 {
    brw_blorp_mip_info::set(mt, level, layer);
    this->num_samples = mt->num_samples;
@@ -86,7 +86,10 @@ brw_blorp_surface_info::set(struct brw_context *brw,
    this->map_stencil_as_y_tiled = false;
    this->msaa_layout = mt->msaa_layout;
 
-   switch (mt->format) {
+   if (format == MESA_FORMAT_NONE)
+      format = mt->format;
+
+   switch (format) {
    case MESA_FORMAT_S_UINT8:
       /* The miptree is a W-tiled stencil buffer.  Surface states can't be set
        * up for W tiling, so we'll need to use Y tiling and have the WM
@@ -115,7 +118,7 @@ brw_blorp_surface_info::set(struct brw_context *brw,
       this->brw_surfaceformat = BRW_SURFACEFORMAT_R16_UNORM;
       break;
    default: {
-      mesa_format linear_format = _mesa_get_srgb_format_linear(mt->format);
+      mesa_format linear_format = _mesa_get_srgb_format_linear(format);
       if (is_render_target) {
          assert(brw->format_supported_as_render_target[linear_format]);
          this->brw_surfaceformat = brw->render_target_format[linear_format];

@@ -56,8 +56,10 @@ void
 brw_blorp_blit_miptrees(struct brw_context *brw,
                         struct intel_mipmap_tree *src_mt,
                         unsigned src_level, unsigned src_layer,
+                        mesa_format src_format,
                         struct intel_mipmap_tree *dst_mt,
                         unsigned dst_level, unsigned dst_layer,
+                        mesa_format dst_format,
                         float src_x0, float src_y0,
                         float src_x1, float src_y1,
                         float dst_x0, float dst_y0,
@@ -84,8 +86,8 @@ brw_blorp_blit_miptrees(struct brw_context *brw,
        mirror_x, mirror_y);
 
    brw_blorp_blit_params params(brw,
-                                src_mt, src_level, src_layer,
-                                dst_mt, dst_level, dst_layer,
+                                src_mt, src_level, src_layer, src_format,
+                                dst_mt, dst_level, dst_layer, dst_format,
                                 src_x0, src_y0,
                                 src_x1, src_y1,
                                 dst_x0, dst_y0,
@@ -98,8 +100,8 @@ brw_blorp_blit_miptrees(struct brw_context *brw,
 
 static void
 do_blorp_blit(struct brw_context *brw, GLbitfield buffer_bit,
-              struct intel_renderbuffer *src_irb,
-              struct intel_renderbuffer *dst_irb,
+              struct intel_renderbuffer *src_irb, mesa_format src_format,
+              struct intel_renderbuffer *dst_irb, mesa_format dst_format,
               GLfloat srcX0, GLfloat srcY0, GLfloat srcX1, GLfloat srcY1,
               GLfloat dstX0, GLfloat dstY0, GLfloat dstX1, GLfloat dstY1,
               GLenum filter, bool mirror_x, bool mirror_y)
@@ -111,7 +113,9 @@ do_blorp_blit(struct brw_context *brw, GLbitfield buffer_bit,
    /* Do the blit */
    brw_blorp_blit_miptrees(brw,
                            src_mt, src_irb->mt_level, src_irb->mt_layer,
+                           src_format,
                            dst_mt, dst_irb->mt_level, dst_irb->mt_layer,
+                           dst_format,
                            srcX0, srcY0, srcX1, srcY1,
                            dstX0, dstY0, dstX1, dstY1,
                            filter, mirror_x, mirror_y);
@@ -153,8 +157,11 @@ try_blorp_blit(struct brw_context *brw,
       for (unsigned i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; ++i) {
          dst_irb = intel_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[i]);
 	 if (dst_irb)
-            do_blorp_blit(brw, buffer_bit, src_irb, dst_irb, srcX0, srcY0,
-                          srcX1, srcY1, dstX0, dstY0, dstX1, dstY1,
+            do_blorp_blit(brw, buffer_bit,
+                          src_irb, src_irb->Base.Base.Format,
+                          dst_irb, dst_irb->Base.Base.Format,
+                          srcX0, srcY0, srcX1, srcY1,
+                          dstX0, dstY0, dstX1, dstY1,
                           filter, mirror_x, mirror_y);
       }
       break;
@@ -174,7 +181,8 @@ try_blorp_blit(struct brw_context *brw,
           (dst_mt->format == MESA_FORMAT_Z24_UNORM_X8_UINT))
          return false;
 
-      do_blorp_blit(brw, buffer_bit, src_irb, dst_irb, srcX0, srcY0,
+      do_blorp_blit(brw, buffer_bit, src_irb, MESA_FORMAT_NONE,
+                    dst_irb, MESA_FORMAT_NONE, srcX0, srcY0,
                     srcX1, srcY1, dstX0, dstY0, dstX1, dstY1,
                     filter, mirror_x, mirror_y);
       break;
@@ -183,7 +191,8 @@ try_blorp_blit(struct brw_context *brw,
          intel_renderbuffer(read_fb->Attachment[BUFFER_STENCIL].Renderbuffer);
       dst_irb =
          intel_renderbuffer(draw_fb->Attachment[BUFFER_STENCIL].Renderbuffer);
-      do_blorp_blit(brw, buffer_bit, src_irb, dst_irb, srcX0, srcY0,
+      do_blorp_blit(brw, buffer_bit, src_irb, MESA_FORMAT_NONE,
+                    dst_irb, MESA_FORMAT_NONE, srcX0, srcY0,
                     srcX1, srcY1, dstX0, dstY0, dstX1, dstY1,
                     filter, mirror_x, mirror_y);
       break;
@@ -219,8 +228,8 @@ brw_blorp_copytexsubimage(struct brw_context *brw,
    if (brw->gen < 6 || brw->gen >= 8)
       return false;
 
-   if (_mesa_get_format_base_format(src_mt->format) !=
-       _mesa_get_format_base_format(dst_mt->format)) {
+   if (_mesa_get_format_base_format(src_rb->Format) !=
+       _mesa_get_format_base_format(dst_image->TexFormat)) {
       return false;
    }
 
@@ -233,7 +242,7 @@ brw_blorp_copytexsubimage(struct brw_context *brw,
       return false;
    }
 
-   if (!brw->format_supported_as_render_target[dst_mt->format])
+   if (!brw->format_supported_as_render_target[dst_image->TexFormat])
       return false;
 
    /* Source clipping shouldn't be necessary, since copytexsubimage (in
@@ -268,7 +277,9 @@ brw_blorp_copytexsubimage(struct brw_context *brw,
 
    brw_blorp_blit_miptrees(brw,
                            src_mt, src_irb->mt_level, src_irb->mt_layer,
+                           src_rb->Format,
                            dst_mt, dst_level, dst_slice,
+                           dst_image->TexFormat,
                            srcX0, srcY0, srcX1, srcY1,
                            dstX0, dstY0, dstX1, dstY1,
                            GL_NEAREST, false, mirror_y);
@@ -291,7 +302,9 @@ brw_blorp_copytexsubimage(struct brw_context *brw,
       if (src_mt != dst_mt) {
          brw_blorp_blit_miptrees(brw,
                                  src_mt, src_irb->mt_level, src_irb->mt_layer,
+                                 src_mt->format,
                                  dst_mt, dst_level, dst_slice,
+                                 dst_mt->format,
                                  srcX0, srcY0, srcX1, srcY1,
                                  dstX0, dstY0, dstX1, dstY1,
                                  GL_NEAREST, false, mirror_y);
@@ -1822,8 +1835,10 @@ compute_msaa_layout_for_pipeline(struct brw_context *brw, unsigned num_samples,
 brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
                                              struct intel_mipmap_tree *src_mt,
                                              unsigned src_level, unsigned src_layer,
+                                             mesa_format src_format,
                                              struct intel_mipmap_tree *dst_mt,
                                              unsigned dst_level, unsigned dst_layer,
+                                             mesa_format dst_format,
                                              GLfloat src_x0, GLfloat src_y0,
                                              GLfloat src_x1, GLfloat src_y1,
                                              GLfloat dst_x0, GLfloat dst_y0,
@@ -1831,8 +1846,8 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
                                              GLenum filter,
                                              bool mirror_x, bool mirror_y)
 {
-   src.set(brw, src_mt, src_level, src_layer, false);
-   dst.set(brw, dst_mt, dst_level, dst_layer, true);
+   src.set(brw, src_mt, src_level, src_layer, src_format, false);
+   dst.set(brw, dst_mt, dst_level, dst_layer, dst_format, true);
 
    /* Even though we do multisample resolves at the time of the blit, OpenGL
     * specification defines them as if they happen at the time of rendering,

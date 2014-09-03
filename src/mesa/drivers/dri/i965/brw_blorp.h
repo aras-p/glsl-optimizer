@@ -39,8 +39,10 @@ void
 brw_blorp_blit_miptrees(struct brw_context *brw,
                         struct intel_mipmap_tree *src_mt,
                         unsigned src_level, unsigned src_layer,
+                        mesa_format src_format,
                         struct intel_mipmap_tree *dst_mt,
                         unsigned dst_level, unsigned dst_layer,
+                        mesa_format dst_format,
                         float src_x0, float src_y0,
                         float src_x1, float src_y1,
                         float dst_x0, float dst_y0,
@@ -121,7 +123,7 @@ public:
    void set(struct brw_context *brw,
             struct intel_mipmap_tree *mt,
             unsigned int level, unsigned int layer,
-            bool is_render_target);
+            mesa_format format, bool is_render_target);
 
    uint32_t compute_tile_offsets(uint32_t *tile_x, uint32_t *tile_y) const;
 
@@ -346,8 +348,10 @@ public:
    brw_blorp_blit_params(struct brw_context *brw,
                          struct intel_mipmap_tree *src_mt,
                          unsigned src_level, unsigned src_layer,
+                         mesa_format src_format,
                          struct intel_mipmap_tree *dst_mt,
                          unsigned dst_level, unsigned dst_layer,
+                         mesa_format dst_format,
                          GLfloat src_x0, GLfloat src_y0,
                          GLfloat src_x1, GLfloat src_y1,
                          GLfloat dst_x0, GLfloat dst_y0,
