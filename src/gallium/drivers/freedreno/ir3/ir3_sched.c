@@ -310,7 +310,7 @@ static int block_sched_undelayed(struct ir3_sched_ctx *ctx,
 	bool addr_in_use = false;
 	bool pred_in_use = false;
 	bool all_delayed = true;
-	unsigned cnt = ~0;
+	unsigned cnt = ~0, attempted = 0;
 
 	while (instr) {
 		struct ir3_instruction *next = instr->next;
@@ -331,6 +331,8 @@ static int block_sched_undelayed(struct ir3_sched_ctx *ctx,
 				addr_in_use = true;
 			if (pred)
 				pred_in_use = true;
+
+			attempted++;
 		}
 
 		instr = next;
@@ -345,7 +347,7 @@ static int block_sched_undelayed(struct ir3_sched_ctx *ctx,
 	/* detect if we've gotten ourselves into an impossible situation
 	 * and bail if needed
 	 */
-	if (all_delayed)
+	if (all_delayed && (attempted > 0))
 		ctx->error = true;
 
 	return cnt;
