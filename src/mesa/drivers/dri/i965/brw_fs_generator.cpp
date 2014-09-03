@@ -45,9 +45,10 @@ fs_generator::fs_generator(struct brw_context *brw,
                            bool runtime_check_aads_emit,
                            bool debug_flag)
 
-   : brw(brw), key(key), prog_data(prog_data), prog(prog), fp(fp),
-     runtime_check_aads_emit(runtime_check_aads_emit), debug_flag(debug_flag),
-     mem_ctx(mem_ctx)
+   : brw(brw), stage(MESA_SHADER_FRAGMENT), key(key),
+     prog_data(prog_data), prog(prog), fp(fp),
+     runtime_check_aads_emit(runtime_check_aads_emit),
+     debug_flag(debug_flag), mem_ctx(mem_ctx)
 {
    ctx = &brw->ctx;
 

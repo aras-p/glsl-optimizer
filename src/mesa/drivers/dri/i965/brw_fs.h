@@ -679,6 +679,7 @@ private:
    struct gl_context *ctx;
 
    struct brw_compile *p;
+   gl_shader_stage stage;
    const struct brw_wm_prog_key *const key;
    struct brw_wm_prog_data *prog_data;
 
