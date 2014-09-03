@@ -3091,8 +3091,18 @@ glsl_to_tgsi_visitor::visit(ir_discard *ir)
 {
    if (ir->condition) {
       ir->condition->accept(this);
-      this->result.negate = ~this->result.negate;
-      emit(ir, TGSI_OPCODE_KILL_IF, undef_dst, this->result);
+      st_src_reg condition = this->result;
+
+      /* Convert the bool condition to a float so we can negate. */
+      if (native_integers) {
+         st_src_reg temp = get_temp(ir->condition->type);
+         emit(ir, TGSI_OPCODE_AND, st_dst_reg(temp),
+              condition, st_src_reg_for_float(1.0));
+         condition = temp;
+      }
+
+      condition.negate = ~condition.negate;
+      emit(ir, TGSI_OPCODE_KILL_IF, undef_dst, condition);
    } else {
       /* unconditional kil */
       emit(ir, TGSI_OPCODE_KILL);
