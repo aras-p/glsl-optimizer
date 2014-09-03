@@ -103,6 +103,13 @@ dead_control_flow_eliminate(backend_visitor *v)
          if (earlier_block && earlier_block->can_combine_with(later_block)) {
             earlier_block->combine_with(later_block);
 
+            foreach_block (block, v->cfg) {
+               if (block->if_block == later_block)
+                  block->if_block = earlier_block;
+               if (block->else_block == later_block)
+                  block->else_block = earlier_block;
+            }
+
             /* If ENDIF was in its own block, then we've now deleted it and
              * merged the two surrounding blocks, the latter of which the
              * __next block pointer was pointing to.
