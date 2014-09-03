@@ -872,11 +872,11 @@ static void brw_upload_indices(struct brw_context *brw)
    brw->ib.start_vertex_offset = offset / ib_type_size;
 
    if (brw->ib.bo != old_bo)
-      SET_DIRTY_BIT(brw, BRW_NEW_INDEX_BUFFER);
+      brw->state.dirty.brw |= BRW_NEW_INDEX_BUFFER;
 
    if (index_buffer->type != brw->ib.type) {
       brw->ib.type = index_buffer->type;
-      SET_DIRTY_BIT(brw, BRW_NEW_INDEX_BUFFER);
+      brw->state.dirty.brw |= BRW_NEW_INDEX_BUFFER;
    }
 }
 

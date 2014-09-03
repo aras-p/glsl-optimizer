@@ -273,9 +273,9 @@ brw_upload_gs_prog(struct brw_context *brw)
 
    if (gp == NULL) {
       /* No geometry shader.  Vertex data just passes straight through. */
-      if (CHECK_DIRTY_BIT(brw, BRW_NEW_VUE_MAP_VS)) {
+      if (brw->state.dirty.brw & BRW_NEW_VUE_MAP_VS) {
          brw->vue_map_geom_out = brw->vue_map_vs;
-         SET_DIRTY_BIT(brw, BRW_NEW_VUE_MAP_GEOM_OUT);
+         brw->state.dirty.brw |= BRW_NEW_VUE_MAP_GEOM_OUT;
       }
 
       /* Other state atoms had better not try to access prog_data, since
@@ -319,7 +319,7 @@ brw_upload_gs_prog(struct brw_context *brw)
    if (memcmp(&brw->vs.prog_data->base.vue_map, &brw->vue_map_geom_out,
               sizeof(brw->vue_map_geom_out)) != 0) {
       brw->vue_map_geom_out = brw->gs.prog_data->base.vue_map;
-      SET_DIRTY_BIT(brw, BRW_NEW_VUE_MAP_GEOM_OUT);
+      brw->state.dirty.brw |= BRW_NEW_VUE_MAP_GEOM_OUT;
    }
 }
 

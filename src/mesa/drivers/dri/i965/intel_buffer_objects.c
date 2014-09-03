@@ -110,7 +110,7 @@ intel_bufferobj_alloc_buffer(struct brw_context *brw,
 
    /* the buffer might be bound as a uniform buffer, need to update it
     */
-   SET_DIRTY_BIT(brw, BRW_NEW_UNIFORM_BUFFER);
+   brw->state.dirty.brw |= BRW_NEW_UNIFORM_BUFFER;
 
    intel_bufferobj_mark_inactive(intel_obj);
 }

@@ -181,7 +181,7 @@ brw_upload_vs_unit(struct brw_context *brw)
 			      I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER);
    }
 
-   SET_DIRTY_BIT(cache, CACHE_NEW_VS_UNIT);
+   brw->state.dirty.cache |= CACHE_NEW_VS_UNIT;
 }
 
 const struct brw_tracked_state brw_vs_unit = {

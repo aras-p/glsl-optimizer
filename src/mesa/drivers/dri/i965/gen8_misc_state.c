@@ -61,7 +61,7 @@ static void upload_state_base_address(struct brw_context *brw)
    OUT_BATCH(ALIGN(brw->cache.bo->size, 4096) | 1);
    ADVANCE_BATCH();
 
-   SET_DIRTY_BIT(brw, BRW_NEW_STATE_BASE_ADDRESS);
+   brw->state.dirty.brw |= BRW_NEW_STATE_BASE_ADDRESS;
 }
 
 const struct brw_tracked_state gen8_state_base_address = {

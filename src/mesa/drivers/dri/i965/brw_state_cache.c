@@ -158,7 +158,7 @@ brw_search_cache(struct brw_cache *cache,
    *(void **)out_aux = ((char *)item->key + item->key_size);
 
    if (item->offset != *inout_offset) {
-      SET_DIRTY_BIT(cache, 1 << cache_id);
+      brw->state.dirty.cache |= (1 << cache_id);
       *inout_offset = item->offset;
    }
 
@@ -187,7 +187,7 @@ brw_cache_new_bo(struct brw_cache *cache, uint32_t new_size)
    /* Since we have a new BO in place, we need to signal the units
     * that depend on it (state base address on gen5+, or unit state before).
     */
-   SET_DIRTY_BIT(brw, BRW_NEW_PROGRAM_CACHE);
+   brw->state.dirty.brw |= BRW_NEW_PROGRAM_CACHE;
 }
 
 /**
@@ -276,7 +276,6 @@ brw_upload_cache(struct brw_cache *cache,
 		 uint32_t *out_offset,
 		 void *out_aux)
 {
-   struct brw_context *brw = cache->brw;
    struct brw_cache_item *item = CALLOC_STRUCT(brw_cache_item);
    GLuint hash;
    void *tmp;
@@ -321,7 +320,7 @@ brw_upload_cache(struct brw_cache *cache,
 
    *out_offset = item->offset;
    *(void **)out_aux = (void *)((char *)item->key + item->key_size);
-   SET_DIRTY_BIT(cache, 1 << cache_id);
+   cache->brw->state.dirty.cache |= 1 << cache_id;
 }
 
 void
@@ -379,9 +378,9 @@ brw_clear_cache(struct brw_context *brw, struct brw_cache *cache)
    /* We need to make sure that the programs get regenerated, since
     * any offsets leftover in brw_context will no longer be valid.
     */
-   SET_DIRTY_ALL(mesa);
-   SET_DIRTY64_ALL(brw);
-   SET_DIRTY_ALL(cache);
+   brw->state.dirty.mesa |= ~0;
+   brw->state.dirty.brw |= ~0;
+   brw->state.dirty.cache |= ~0;
    intel_batchbuffer_flush(brw);
 }
 

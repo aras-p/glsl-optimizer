@@ -324,5 +324,5 @@ gen8_hiz_exec(struct brw_context *brw, struct intel_mipmap_tree *mt,
     *
     * Setting _NEW_DEPTH and _NEW_BUFFERS covers it, but is rather overkill.
     */
-   SET_DIRTY_BIT(mesa, _NEW_DEPTH | _NEW_BUFFERS);
+   brw->state.dirty.mesa |= _NEW_DEPTH | _NEW_BUFFERS;
 }

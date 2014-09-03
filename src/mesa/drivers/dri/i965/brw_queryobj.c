@@ -255,7 +255,7 @@ brw_begin_query(struct gl_context *ctx, struct gl_query_object *q)
        * so turn them on now.
        */
       brw->stats_wm++;
-      SET_DIRTY_BIT(brw, BRW_NEW_STATS_WM);
+      brw->state.dirty.brw |= BRW_NEW_STATS_WM;
       break;
 
    default:
@@ -312,7 +312,7 @@ brw_end_query(struct gl_context *ctx, struct gl_query_object *q)
       brw->query.obj = NULL;
 
       brw->stats_wm--;
-      SET_DIRTY_BIT(brw, BRW_NEW_STATS_WM);
+      brw->state.dirty.brw |= BRW_NEW_STATS_WM;
       break;
 
    default:

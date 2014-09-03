@@ -273,8 +273,8 @@ retry:
    /* We've smashed all state compared to what the normal 3D pipeline
     * rendering tracks for GL.
     */
-   SET_DIRTY64_ALL(brw);
-   SET_DIRTY_ALL(cache);
+   brw->state.dirty.brw = ~0;
+   brw->state.dirty.cache = ~0;
    brw->no_depth_or_stencil = false;
    brw->ib.type = -1;
 

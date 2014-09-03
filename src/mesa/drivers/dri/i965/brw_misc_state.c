@@ -103,7 +103,7 @@ static void upload_pipelined_state_pointers(struct brw_context *brw )
 	     brw->cc.state_offset);
    ADVANCE_BATCH();
 
-   SET_DIRTY_BIT(brw, BRW_NEW_PSP);
+   brw->state.dirty.brw |= BRW_NEW_PSP;
 }
 
 static void upload_psp_urb_cbs(struct brw_context *brw )
@@ -1054,7 +1054,7 @@ static void upload_state_base_address( struct brw_context *brw )
     * obvious.
     */
 
-   SET_DIRTY_BIT(brw, BRW_NEW_STATE_BASE_ADDRESS);
+   brw->state.dirty.brw |= BRW_NEW_STATE_BASE_ADDRESS;
 }
 
 const struct brw_tracked_state brw_state_base_address = {

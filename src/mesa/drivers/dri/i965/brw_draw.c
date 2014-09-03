@@ -126,11 +126,11 @@ static void brw_set_prim(struct brw_context *brw,
 
    if (hw_prim != brw->primitive) {
       brw->primitive = hw_prim;
-      SET_DIRTY_BIT(brw, BRW_NEW_PRIMITIVE);
+      brw->state.dirty.brw |= BRW_NEW_PRIMITIVE;
 
       if (reduced_prim[prim->mode] != brw->reduced_primitive) {
 	 brw->reduced_primitive = reduced_prim[prim->mode];
-	 SET_DIRTY_BIT(brw, BRW_NEW_REDUCED_PRIMITIVE);
+	 brw->state.dirty.brw |= BRW_NEW_REDUCED_PRIMITIVE;
       }
    }
 }
@@ -146,7 +146,7 @@ static void gen6_set_prim(struct brw_context *brw,
 
    if (hw_prim != brw->primitive) {
       brw->primitive = hw_prim;
-      SET_DIRTY_BIT(brw, BRW_NEW_PRIMITIVE);
+      brw->state.dirty.brw |= BRW_NEW_PRIMITIVE;
    }
 }
 
@@ -403,11 +403,11 @@ static bool brw_try_draw_prims( struct gl_context *ctx,
    brw_merge_inputs( brw, arrays );
 
    brw->ib.ib = ib;
-   SET_DIRTY_BIT(brw, BRW_NEW_INDICES);
+   brw->state.dirty.brw |= BRW_NEW_INDICES;
 
    brw->vb.min_index = min_index;
    brw->vb.max_index = max_index;
-   SET_DIRTY_BIT(brw, BRW_NEW_VERTICES);
+   brw->state.dirty.brw |= BRW_NEW_VERTICES;
 
    for (i = 0; i < nr_prims; i++) {
       int estimated_max_prim_size;
@@ -432,7 +432,7 @@ static bool brw_try_draw_prims( struct gl_context *ctx,
          brw->num_instances = prims[i].num_instances;
          brw->basevertex = prims[i].basevertex;
          if (i > 0) { /* For i == 0 we just did this before the loop */
-            SET_DIRTY_BIT(brw, BRW_NEW_VERTICES);
+            brw->state.dirty.brw |= BRW_NEW_VERTICES;
             brw_merge_inputs(brw, arrays);
          }
       }
@@ -447,9 +447,9 @@ retry:
        * *_set_prim or intel_batchbuffer_flush(), which only impacts
        * brw->state.dirty.brw.
        */
-      if (brw->state.pipeline_dirty[BRW_PIPELINE_3D].brw) {
+      if (brw->state.dirty.brw) {
 	 brw->no_batch_wrap = true;
-	 brw_upload_state(brw, BRW_PIPELINE_3D);
+	 brw_upload_state(brw);
       }
 
       brw_emit_prim(brw, &prims[i], brw->primitive);
@@ -480,8 +480,8 @@ retry:
       /* Now that we know we haven't run out of aperture space, we can safely
        * reset the dirty bits.
        */
-      if (brw->state.pipeline_dirty[BRW_PIPELINE_3D].brw)
-         brw_clear_dirty_bits(brw, BRW_PIPELINE_3D);
+      if (brw->state.dirty.brw)
+         brw_clear_dirty_bits(brw);
    }
 
    if (brw->always_flush_batch)

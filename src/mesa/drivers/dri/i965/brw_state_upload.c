@@ -331,11 +331,6 @@ static const struct brw_tracked_state *gen8_atoms[] =
    &haswell_cut_index,
 };
 
-static const struct brw_tracked_state *gen7_compute_atoms[] =
-{
-};
-
-
 static void
 brw_upload_initial_gpu_state(struct brw_context *brw)
 {
@@ -356,48 +351,45 @@ brw_upload_initial_gpu_state(struct brw_context *brw)
 void brw_init_state( struct brw_context *brw )
 {
    struct gl_context *ctx = &brw->ctx;
-   int i, j;
+   const struct brw_tracked_state **atoms;
+   int num_atoms;
 
    brw_init_caches(brw);
 
-   memset(brw->atoms, 0, sizeof(brw->atoms));
-   memset(brw->num_atoms, 0, sizeof(brw->num_atoms));
-
    if (brw->gen >= 8) {
-      brw->atoms[BRW_PIPELINE_3D] = gen8_atoms;
-      brw->num_atoms[BRW_PIPELINE_3D] = ARRAY_SIZE(gen8_atoms);
+      atoms = gen8_atoms;
+      num_atoms = ARRAY_SIZE(gen8_atoms);
    } else if (brw->gen == 7) {
-      brw->atoms[BRW_PIPELINE_3D] = gen7_atoms;
-      brw->num_atoms[BRW_PIPELINE_3D] = ARRAY_SIZE(gen7_atoms);
-      brw->atoms[BRW_PIPELINE_COMPUTE] = gen7_compute_atoms;
-      brw->num_atoms[BRW_PIPELINE_COMPUTE] = ARRAY_SIZE(gen7_compute_atoms);
+      atoms = gen7_atoms;
+      num_atoms = ARRAY_SIZE(gen7_atoms);
    } else if (brw->gen == 6) {
-      brw->atoms[BRW_PIPELINE_3D] = gen6_atoms;
-      brw->num_atoms[BRW_PIPELINE_3D] = ARRAY_SIZE(gen6_atoms);
+      atoms = gen6_atoms;
+      num_atoms = ARRAY_SIZE(gen6_atoms);
    } else {
-      brw->atoms[BRW_PIPELINE_3D] = gen4_atoms;
-      brw->num_atoms[BRW_PIPELINE_3D] = ARRAY_SIZE(gen4_atoms);
+      atoms = gen4_atoms;
+      num_atoms = ARRAY_SIZE(gen4_atoms);
    }
 
-   for (i = 0; i < BRW_NUM_PIPELINES; i++) {
-      for (j = 0; j < brw->num_atoms[i]; j++) {
-         assert(brw->atoms[i][j]->dirty.mesa |
-                brw->atoms[i][j]->dirty.brw |
-                brw->atoms[i][j]->dirty.cache);
-         assert(brw->atoms[i][j]->emit);
-      }
+   brw->atoms = atoms;
+   brw->num_atoms = num_atoms;
+
+   while (num_atoms--) {
+      assert((*atoms)->dirty.mesa |
+	     (*atoms)->dirty.brw |
+	     (*atoms)->dirty.cache);
+      assert((*atoms)->emit);
+      atoms++;
    }
 
    brw_upload_initial_gpu_state(brw);
 
-   SET_DIRTY_ALL(mesa);
-   SET_DIRTY64_ALL(brw);
+   brw->state.dirty.mesa = ~0;
+   brw->state.dirty.brw = ~0;
 
    /* Make sure that brw->state.dirty.brw has enough bits to hold all possible
     * dirty flags.
     */
-   STATIC_ASSERT(BRW_NUM_STATE_BITS <=
-                 8 * sizeof(brw->state.pipeline_dirty[0].brw));
+   STATIC_ASSERT(BRW_NUM_STATE_BITS <= 8 * sizeof(brw->state.dirty.brw));
 
    ctx->DriverFlags.NewTransformFeedback = BRW_NEW_TRANSFORM_FEEDBACK;
    ctx->DriverFlags.NewTransformFeedbackProg = BRW_NEW_TRANSFORM_FEEDBACK;
@@ -573,20 +565,17 @@ brw_print_dirty_count(struct dirty_bit_map *bit_map)
 /***********************************************************************
  * Emit all state:
  */
-void brw_upload_state(struct brw_context *brw, brw_pipeline pipeline)
+void brw_upload_state(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->ctx;
-   struct brw_state_flags *state = &brw->state.pipeline_dirty[pipeline];
+   struct brw_state_flags *state = &brw->state.dirty;
    int i;
    static int dirty_count = 0;
 
-   assert(0 <= pipeline && pipeline < BRW_NUM_PIPELINES);
-   brw->state.current_pipeline = pipeline;
-
-   SET_DIRTY_BIT(mesa, brw->NewGLState);
+   state->mesa |= brw->NewGLState;
    brw->NewGLState = 0;
 
-   SET_DIRTY_BIT(brw, ctx->NewDriverState);
+   state->brw |= ctx->NewDriverState;
    ctx->NewDriverState = 0;
 
    if (0) {
@@ -598,27 +587,27 @@ void brw_upload_state(struct brw_context *brw, brw_pipeline pipeline)
 
    if (brw->fragment_program != ctx->FragmentProgram._Current) {
       brw->fragment_program = ctx->FragmentProgram._Current;
-      SET_DIRTY_BIT(brw, BRW_NEW_FRAGMENT_PROGRAM);
+      brw->state.dirty.brw |= BRW_NEW_FRAGMENT_PROGRAM;
    }
 
    if (brw->geometry_program != ctx->GeometryProgram._Current) {
       brw->geometry_program = ctx->GeometryProgram._Current;
-      SET_DIRTY_BIT(brw, BRW_NEW_GEOMETRY_PROGRAM);
+      brw->state.dirty.brw |= BRW_NEW_GEOMETRY_PROGRAM;
    }
 
    if (brw->vertex_program != ctx->VertexProgram._Current) {
       brw->vertex_program = ctx->VertexProgram._Current;
-      SET_DIRTY_BIT(brw, BRW_NEW_VERTEX_PROGRAM);
+      brw->state.dirty.brw |= BRW_NEW_VERTEX_PROGRAM;
    }
 
    if (brw->meta_in_progress != _mesa_meta_in_progress(ctx)) {
       brw->meta_in_progress = _mesa_meta_in_progress(ctx);
-      SET_DIRTY_BIT(brw, BRW_NEW_META_IN_PROGRESS);
+      brw->state.dirty.brw |= BRW_NEW_META_IN_PROGRESS;
    }
 
    if (brw->num_samples != ctx->DrawBuffer->Visual.samples) {
       brw->num_samples = ctx->DrawBuffer->Visual.samples;
-      SET_DIRTY_BIT(brw, BRW_NEW_NUM_SAMPLES);
+      brw->state.dirty.brw |= BRW_NEW_NUM_SAMPLES;
    }
 
    if ((state->mesa | state->cache | state->brw) == 0)
@@ -633,8 +622,8 @@ void brw_upload_state(struct brw_context *brw, brw_pipeline pipeline)
       memset(&examined, 0, sizeof(examined));
       prev = *state;
 
-      for (i = 0; i < brw->num_atoms[pipeline]; i++) {
-	 const struct brw_tracked_state *atom = brw->atoms[pipeline][i];
+      for (i = 0; i < brw->num_atoms; i++) {
+	 const struct brw_tracked_state *atom = brw->atoms[i];
 	 struct brw_state_flags generated;
 
 	 if (check_state(state, &atom->dirty)) {
@@ -653,8 +642,8 @@ void brw_upload_state(struct brw_context *brw, brw_pipeline pipeline)
       }
    }
    else {
-      for (i = 0; i < brw->num_atoms[pipeline]; i++) {
-	 const struct brw_tracked_state *atom = brw->atoms[pipeline][i];
+      for (i = 0; i < brw->num_atoms; i++) {
+	 const struct brw_tracked_state *atom = brw->atoms[i];
 
 	 if (check_state(state, &atom->dirty)) {
 	    atom->emit(brw);
@@ -688,8 +677,8 @@ void brw_upload_state(struct brw_context *brw, brw_pipeline pipeline)
  * brw_upload_state() call.
  */
 void
-brw_clear_dirty_bits(struct brw_context *brw, brw_pipeline pipeline)
+brw_clear_dirty_bits(struct brw_context *brw)
 {
-   struct brw_state_flags *state = &brw->state.pipeline_dirty[pipeline];
+   struct brw_state_flags *state = &brw->state.dirty;
    memset(state, 0, sizeof(*state));
 }

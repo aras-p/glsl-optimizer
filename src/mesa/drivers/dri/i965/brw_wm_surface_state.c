@@ -729,7 +729,7 @@ brw_update_renderbuffer_surfaces(struct brw_context *brw)
    } else {
       brw->vtbl.update_null_renderbuffer_surface(brw, 0);
    }
-   SET_DIRTY_BIT(brw, BRW_NEW_SURFACES);
+   brw->state.dirty.brw |= BRW_NEW_SURFACES;
 }
 
 const struct brw_tracked_state brw_renderbuffer_surfaces = {
@@ -817,7 +817,7 @@ brw_update_texture_surfaces(struct brw_context *brw)
          update_stage_texture_surfaces(brw, fs, &brw->wm.base, true);
    }
 
-   SET_DIRTY_BIT(brw, BRW_NEW_SURFACES);
+   brw->state.dirty.brw |= BRW_NEW_SURFACES;
 }
 
 const struct brw_tracked_state brw_texture_surfaces = {
@@ -869,7 +869,7 @@ brw_upload_ubo_surfaces(struct brw_context *brw,
    }
 
    if (shader->NumUniformBlocks)
-      SET_DIRTY_BIT(brw, BRW_NEW_SURFACES);
+      brw->state.dirty.brw |= BRW_NEW_SURFACES;
 }
 
 static void
@@ -920,7 +920,7 @@ brw_upload_abo_surfaces(struct brw_context *brw,
    }
 
    if (prog->NumUniformBlocks)
-      SET_DIRTY_BIT(brw, BRW_NEW_SURFACES);
+      brw->state.dirty.brw |= BRW_NEW_SURFACES;
 }
 
 static void

@@ -494,7 +494,7 @@ brw_upload_sampler_state_table(struct brw_context *brw,
       /* Flag that the sampler state table pointer has changed; later atoms
        * will handle it.
        */
-      SET_DIRTY_BIT(cache, CACHE_NEW_SAMPLER);
+      brw->state.dirty.cache |= CACHE_NEW_SAMPLER;
    }
 }
 
