@@ -2524,8 +2524,8 @@ fs_visitor::try_replace_with_sel()
 
       /* Remove the matched instructions; we'll emit a SEL to replace them. */
       while (!if_inst->next->is_tail_sentinel())
-         if_inst->next->remove();
-      if_inst->remove();
+         if_inst->next->exec_node::remove();
+      if_inst->exec_node::remove();
 
       /* Only the last source register can be a constant, so if the MOV in
        * the "then" clause uses a constant, we need to put it in a temporary.
@@ -2828,7 +2828,7 @@ void
 fs_visitor::emit(exec_list list)
 {
    foreach_in_list_safe(fs_inst, inst, &list) {
-      inst->remove();
+      inst->exec_node::remove();
       emit(inst);
    }
 }

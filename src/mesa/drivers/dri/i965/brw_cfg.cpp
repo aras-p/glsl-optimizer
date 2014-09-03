@@ -180,7 +180,7 @@ cfg_t::cfg_t(exec_list *instructions)
 
       switch (inst->opcode) {
       case BRW_OPCODE_IF:
-         inst->remove();
+         inst->exec_node::remove();
          cur->instructions.push_tail(inst);
 
 	 /* Push our information onto a stack so we can recover from
@@ -203,7 +203,7 @@ cfg_t::cfg_t(exec_list *instructions)
 	 break;
 
       case BRW_OPCODE_ELSE:
-         inst->remove();
+         inst->exec_node::remove();
          cur->instructions.push_tail(inst);
 
          cur_else = cur;
@@ -226,7 +226,7 @@ cfg_t::cfg_t(exec_list *instructions)
             set_next_block(&cur, cur_endif, ip - 1);
          }
 
-         inst->remove();
+         inst->exec_node::remove();
          cur->instructions.push_tail(inst);
 
          if (cur_else) {
@@ -277,12 +277,12 @@ cfg_t::cfg_t(exec_list *instructions)
             set_next_block(&cur, cur_do, ip - 1);
          }
 
-         inst->remove();
+         inst->exec_node::remove();
          cur->instructions.push_tail(inst);
 	 break;
 
       case BRW_OPCODE_CONTINUE:
-         inst->remove();
+         inst->exec_node::remove();
          cur->instructions.push_tail(inst);
 
 	 cur->add_successor(mem_ctx, cur_do);
@@ -295,7 +295,7 @@ cfg_t::cfg_t(exec_list *instructions)
 	 break;
 
       case BRW_OPCODE_BREAK:
-         inst->remove();
+         inst->exec_node::remove();
          cur->instructions.push_tail(inst);
 
 	 cur->add_successor(mem_ctx, cur_while);
@@ -308,7 +308,7 @@ cfg_t::cfg_t(exec_list *instructions)
 	 break;
 
       case BRW_OPCODE_WHILE:
-         inst->remove();
+         inst->exec_node::remove();
          cur->instructions.push_tail(inst);
 
 	 cur->add_successor(mem_ctx, cur_do);
@@ -320,7 +320,7 @@ cfg_t::cfg_t(exec_list *instructions)
 	 break;
 
       default:
-         inst->remove();
+         inst->exec_node::remove();
          cur->instructions.push_tail(inst);
 	 break;
       }

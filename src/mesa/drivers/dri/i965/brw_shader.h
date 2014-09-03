@@ -90,11 +90,8 @@ struct backend_instruction : public exec_node {
    bool reads_accumulator_implicitly() const;
    bool writes_accumulator_implicitly(struct brw_context *brw) const;
 
-   using exec_node::remove;
    void remove(bblock_t *block);
-   using exec_node::insert_after;
    void insert_after(bblock_t *block, backend_instruction *inst);
-   using exec_node::insert_before;
    void insert_before(bblock_t *block, backend_instruction *inst);
    void insert_before(bblock_t *block, exec_list *list);
 
