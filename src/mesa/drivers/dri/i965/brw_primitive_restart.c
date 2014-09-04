@@ -138,14 +138,6 @@ brw_handle_primitive_restart(struct gl_context *ctx,
       return GL_FALSE;
    }
 
-   /* If the driver has requested software handling of primitive restarts,
-    * then the VBO module has already taken care of things, and we can
-    * just draw as normal.
-    */
-   if (ctx->Const.PrimitiveRestartInSoftware) {
-      return GL_FALSE;
-   }
-
    /* If we have set the in_progress flag, then we are in the middle
     * of handling the primitive restart draw.
     */

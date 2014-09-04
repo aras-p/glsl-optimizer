@@ -3552,11 +3552,6 @@ struct gl_constants
    GLboolean GLSLSkipStrictMaxUniformLimitCheck;
 
    /**
-    * Force software support for primitive restart in the VBO module.
-    */
-   GLboolean PrimitiveRestartInSoftware;
-
-   /**
     * Always use the GetTransformFeedbackVertexCount() driver hook, rather
     * than passing the transform feedback object to the drawing function.
     */

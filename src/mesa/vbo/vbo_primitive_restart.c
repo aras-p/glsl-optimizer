@@ -41,8 +41,8 @@
 
 /*
  * Notes on primitive restart:
- * The code below is used when the driver does not support primitive
- * restart itself. (ctx->Const.PrimitiveRestartInSoftware == GL_TRUE)
+ * The code below is used when the driver does not fully support primitive
+ * restart (for example, if it only does restart index of ~0).
  *
  * We map the index buffer, find the restart indexes, unmap
  * the index buffer then draw the sub-primitives delineated by the restarts.
