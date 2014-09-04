@@ -714,9 +714,8 @@ void st_init_extensions(struct pipe_screen *screen,
 #endif
    }
 
-   extensions->NV_primitive_restart = GL_TRUE;
-   if (!screen->get_param(screen, PIPE_CAP_PRIMITIVE_RESTART)) {
-      consts->PrimitiveRestartInSoftware = GL_TRUE;
+   if (screen->get_param(screen, PIPE_CAP_PRIMITIVE_RESTART)) {
+      extensions->NV_primitive_restart = GL_TRUE;
    }
 
    /* ARB_color_buffer_float. */
