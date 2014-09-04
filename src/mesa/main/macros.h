@@ -184,6 +184,13 @@ static inline GLfloat UINT_AS_FLT(GLuint u)
    return tmp.f;
 }
 
+static inline unsigned FLT_AS_UINT(float f)
+{
+   fi_type tmp;
+   tmp.f = f;
+   return tmp.u;
+}
+
 /**
  * Convert a floating point value to an unsigned fixed point value.
  *

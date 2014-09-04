@@ -653,6 +653,9 @@ _mesa_init_constants(struct gl_constants *consts, gl_api api)
    /* GL_ARB_framebuffer_object */
    consts->MaxSamples = 0;
 
+   /* GLSL default if NativeIntegers == FALSE */
+   consts->UniformBooleanTrue = FLT_AS_UINT(1.0f);
+
    /* GL_ARB_sync */
    consts->MaxServerWaitTimeout = 0x1fff7fffffffULL;
 
