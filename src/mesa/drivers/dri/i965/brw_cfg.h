@@ -62,7 +62,7 @@ struct bblock_t {
    bool is_successor_of(const bblock_t *block) const;
    bool can_combine_with(const bblock_t *that) const;
    void combine_with(bblock_t *that);
-   void dump(backend_visitor *v);
+   void dump(backend_visitor *v) const;
 #endif
 
    struct exec_node link;
@@ -100,7 +100,7 @@ struct cfg_t {
    void set_next_block(bblock_t **cur, bblock_t *block, int ip);
    void make_block_array();
 
-   void dump(backend_visitor *v);
+   void dump(backend_visitor *v) const;
 #endif
    void *mem_ctx;
 

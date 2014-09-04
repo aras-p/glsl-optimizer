@@ -145,7 +145,7 @@ bblock_t::combine_with(bblock_t *that)
 }
 
 void
-bblock_t::dump(backend_visitor *v)
+bblock_t::dump(backend_visitor *v) const
 {
    int ip = this->start_ip;
    for (backend_instruction *inst = (backend_instruction *)this->start;
@@ -420,7 +420,7 @@ cfg_t::make_block_array()
 }
 
 void
-cfg_t::dump(backend_visitor *v)
+cfg_t::dump(backend_visitor *v) const
 {
    foreach_block (block, this) {
       fprintf(stderr, "START B%d", block->num);
