@@ -151,7 +151,7 @@ extern "C" {
 #include <CoreFoundation/CFByteOrder.h>
 #define CPU_TO_LE32( x )	CFSwapInt32HostToLittle( x )
 #elif (defined(_AIX) || defined(__blrts))
-static INLINE GLuint CPU_TO_LE32(GLuint x)
+static inline GLuint CPU_TO_LE32(GLuint x)
 {
    return (((x & 0x000000ff) << 24) |
            ((x & 0x0000ff00) <<  8) |

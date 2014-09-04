@@ -75,7 +75,7 @@ typedef struct {
 
 
 /** Cast wrapper */
-static INLINE AEcontext *
+static inline AEcontext *
 AE_CONTEXT(struct gl_context *ctx)
 {
    return (AEcontext *) ctx->aelt_context;
@@ -87,7 +87,7 @@ AE_CONTEXT(struct gl_context *ctx)
  * in the range [0, 7].  Luckily these type tokens are sequentially
  * numbered in gl.h, except for GL_DOUBLE.
  */
-static INLINE int
+static inline int
 TYPE_IDX(GLenum t)
 {
    return t == GL_DOUBLE ? 7 : t & 7;
