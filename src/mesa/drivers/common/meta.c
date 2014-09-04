@@ -1220,7 +1220,7 @@ _mesa_meta_in_progress(struct gl_context *ctx)
  * Used by the meta-Clear, Draw/CopyPixels and Bitmap functions where the Z
  * value comes from the clear value or raster position.
  */
-static INLINE GLfloat
+static inline GLfloat
 invert_z(GLfloat normZ)
 {
    GLfloat objZ = 1.0f - 2.0f * normZ;
