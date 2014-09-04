@@ -2378,14 +2378,24 @@ fs_visitor::emit_if_gen6(ir_if *ir)
 
       switch (expr->operation) {
       case ir_unop_logic_not:
+         emit(IF(op[0], fs_reg(0), BRW_CONDITIONAL_Z));
+         return;
+
       case ir_binop_logic_xor:
+         emit(IF(op[0], op[1], BRW_CONDITIONAL_NZ));
+         return;
+
       case ir_binop_logic_or:
+         temp = fs_reg(this, glsl_type::bool_type);
+         emit(OR(temp, op[0], op[1]));
+         emit(IF(temp, fs_reg(0), BRW_CONDITIONAL_NZ));
+         return;
+
       case ir_binop_logic_and:
-         /* For operations on bool arguments, only the low bit of the bool is
-          * valid, and the others are undefined.  Fall back to the condition
-          * code path.
-          */
-         break;
+         temp = fs_reg(this, glsl_type::bool_type);
+         emit(AND(temp, op[0], op[1]));
+         emit(IF(temp, fs_reg(0), BRW_CONDITIONAL_NZ));
+         return;
 
       case ir_unop_f2b:
 	 inst = emit(BRW_OPCODE_IF, reg_null_f, op[0], fs_reg(0));
@@ -2432,9 +2442,8 @@ fs_visitor::emit_if_gen6(ir_if *ir)
       }
    }
 
-   emit_bool_to_cond_code(ir->condition);
-   fs_inst *inst = emit(BRW_OPCODE_IF);
-   inst->predicate = BRW_PREDICATE_NORMAL;
+   ir->condition->accept(this);
+   emit(IF(this->result, fs_reg(0), BRW_CONDITIONAL_NZ));
 }
 
 /**
