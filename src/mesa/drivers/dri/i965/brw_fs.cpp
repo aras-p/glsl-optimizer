@@ -2151,7 +2151,7 @@ fs_visitor::compute_to_mrf()
 
    calculate_live_intervals();
 
-   foreach_in_list_safe(fs_inst, inst, &instructions) {
+   foreach_block_and_inst_safe(block, fs_inst, inst, cfg) {
       int ip = next_ip;
       next_ip++;
 
@@ -2229,7 +2229,7 @@ fs_visitor::compute_to_mrf()
 	       scan_inst->dst.file = MRF;
 	       scan_inst->dst.reg = inst->dst.reg;
 	       scan_inst->saturate |= inst->saturate;
-	       inst->remove();
+	       inst->remove(block);
 	       progress = true;
 	    }
 	    break;
@@ -2342,7 +2342,7 @@ fs_visitor::try_rep_send()
     * destination registers in our block of MOVs.
     */
    count = 0;
-   foreach_in_list_safe(fs_inst, inst, &this->instructions) {
+   foreach_block_and_inst_safe(block, fs_inst, inst, cfg) {
       if (count == 0)
          start = inst;
       if (inst->opcode == BRW_OPCODE_MOV &&
@@ -2381,9 +2381,9 @@ fs_visitor::try_rep_send()
          mov->dst.type = BRW_REGISTER_TYPE_F;
 
          /* Replace the four MOVs with the new vec4 MOV. */
-         start->insert_before(mov);
+         start->insert_before(block, mov);
          for (i = 0; i < 4; i++)
-            mov->next->remove();
+            ((fs_inst *) mov->next)->remove(block);
 
          /* Finally, adjust the message length and set the opcode to
           * REP_FB_WRITE for the send, so that the generator will use the
@@ -3147,14 +3147,14 @@ fs_visitor::opt_drop_redundant_mov_to_flags()
 {
    bool flag_mov_found[2] = {false};
 
-   foreach_in_list_safe(fs_inst, inst, &instructions) {
+   foreach_block_and_inst_safe(block, fs_inst, inst, cfg) {
       if (inst->is_control_flow()) {
          memset(flag_mov_found, 0, sizeof(flag_mov_found));
       } else if (inst->opcode == FS_OPCODE_MOV_DISPATCH_TO_FLAGS) {
          if (!flag_mov_found[inst->flag_subreg])
             flag_mov_found[inst->flag_subreg] = true;
          else
-            inst->remove();
+            inst->remove(block);
       } else if (inst->writes_flag()) {
          flag_mov_found[inst->flag_subreg] = false;
       }
