@@ -1158,7 +1158,7 @@ gen7_emit_SF_CLIP_VIEWPORT(const struct ilo_dev_info *dev,
     */
    assert(num_viewports && num_viewports <= 16);
 
-   dw = ilo_cp_steal_ptr(cp, "SF_CLIP_VIEWPORT",
+   dw = ilo_cp_steal_ptr(cp, ILO_BUILDER_ITEM_SF_VIEWPORT,
          state_len, state_align, &state_offset);
 
    for (i = 0; i < num_viewports; i++) {

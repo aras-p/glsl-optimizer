@@ -321,7 +321,7 @@ ilo_blitter_blt_begin(struct ilo_blitter *blitter, int max_cmd_size,
                       struct intel_bo *src, enum intel_tiling_mode src_tiling)
 {
    struct ilo_context *ilo = blitter->ilo;
-   struct intel_bo *aper_check[3];
+   struct intel_bo *aper_check[2];
    int count;
    uint32_t swctrl;
 
@@ -330,16 +330,15 @@ ilo_blitter_blt_begin(struct ilo_blitter *blitter, int max_cmd_size,
    ilo_cp_set_owner(ilo->cp, NULL, 0);
 
    /* check aperture space */
-   aper_check[0] = ilo->cp->bo;
-   aper_check[1] = dst;
-   count = 2;
+   aper_check[0] = dst;
+   count = 1;
 
    if (src) {
-      aper_check[2] = src;
+      aper_check[1] = src;
       count++;
    }
 
-   if (!intel_winsys_can_submit_bo(ilo->winsys, aper_check, count))
+   if (!ilo_builder_validate(&ilo->cp->builder, count, aper_check))
       ilo_cp_flush(ilo->cp, "out of aperture");
 
    /* set BCS_SWCTRL */

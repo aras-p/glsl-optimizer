@@ -53,7 +53,6 @@ struct ilo_context {
    struct util_slab_mempool transfer_mempool;
 
    struct ilo_cp *cp;
-   struct intel_bo *last_cp_bo;
 
    struct ilo_shader_cache *shader_cache;
    struct ilo_3d *hw3d;

@@ -802,8 +802,8 @@ gen7_rectlist_commands(struct ilo_3d_pipeline *p,
 
    gen6_emit_STATE_BASE_ADDRESS(p->dev,
          NULL,                /* General State Base */
-         p->cp->bo,           /* Surface State Base */
-         p->cp->bo,           /* Dynamic State Base */
+         p->cp->builder.writers[0].bo,           /* Surface State Base */
+         p->cp->builder.writers[0].bo,           /* Dynamic State Base */
          NULL,                /* Indirect Object Base */
          NULL,                /* Instruction Base */
          0, 0, 0, 0, p->cp);

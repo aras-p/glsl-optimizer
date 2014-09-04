@@ -1045,7 +1045,7 @@ copy_staging_resource(struct ilo_context *ilo,
 static bool
 is_bo_busy(struct ilo_context *ilo, struct intel_bo *bo, bool *need_flush)
 {
-   const bool referenced = intel_bo_has_reloc(ilo->cp->bo, bo);
+   const bool referenced = ilo_builder_has_reloc(&ilo->cp->builder, bo);
 
    if (need_flush)
       *need_flush = referenced;

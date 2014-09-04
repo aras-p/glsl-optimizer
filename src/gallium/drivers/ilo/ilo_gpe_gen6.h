@@ -1946,7 +1946,7 @@ gen6_emit_INTERFACE_DESCRIPTOR_DATA(const struct ilo_dev_info *dev,
 
    ILO_GPE_VALID_GEN(dev, 6, 6);
 
-   dw = ilo_cp_steal_ptr(cp, "INTERFACE_DESCRIPTOR_DATA",
+   dw = ilo_cp_steal_ptr(cp, ILO_BUILDER_ITEM_BLOB,
          state_len, state_align, &state_offset);
 
    for (i = 0; i < num_ids; i++) {
@@ -1989,7 +1989,7 @@ gen6_emit_SF_VIEWPORT(const struct ilo_dev_info *dev,
     */
    assert(num_viewports && num_viewports <= 16);
 
-   dw = ilo_cp_steal_ptr(cp, "SF_VIEWPORT",
+   dw = ilo_cp_steal_ptr(cp, ILO_BUILDER_ITEM_SF_VIEWPORT,
          state_len, state_align, &state_offset);
 
    for (i = 0; i < num_viewports; i++) {
@@ -2031,7 +2031,7 @@ gen6_emit_CLIP_VIEWPORT(const struct ilo_dev_info *dev,
     */
    assert(num_viewports && num_viewports <= 16);
 
-   dw = ilo_cp_steal_ptr(cp, "CLIP_VIEWPORT",
+   dw = ilo_cp_steal_ptr(cp, ILO_BUILDER_ITEM_CLIP_VIEWPORT,
          state_len, state_align, &state_offset);
 
    for (i = 0; i < num_viewports; i++) {
@@ -2068,7 +2068,7 @@ gen6_emit_CC_VIEWPORT(const struct ilo_dev_info *dev,
     */
    assert(num_viewports && num_viewports <= 16);
 
-   dw = ilo_cp_steal_ptr(cp, "CC_VIEWPORT",
+   dw = ilo_cp_steal_ptr(cp, ILO_BUILDER_ITEM_CC_VIEWPORT,
          state_len, state_align, &state_offset);
 
    for (i = 0; i < num_viewports; i++) {
@@ -2096,7 +2096,7 @@ gen6_emit_COLOR_CALC_STATE(const struct ilo_dev_info *dev,
 
    ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
-   dw = ilo_cp_steal_ptr(cp, "COLOR_CALC_STATE",
+   dw = ilo_cp_steal_ptr(cp, ILO_BUILDER_ITEM_COLOR_CALC,
          state_len, state_align, &state_offset);
 
    dw[0] = stencil_ref->ref_value[0] << 24 |
@@ -2142,7 +2142,7 @@ gen6_emit_BLEND_STATE(const struct ilo_dev_info *dev,
 
    state_len = 2 * num_targets;
 
-   dw = ilo_cp_steal_ptr(cp, "BLEND_STATE",
+   dw = ilo_cp_steal_ptr(cp, ILO_BUILDER_ITEM_BLEND,
          state_len, state_align, &state_offset);
 
    for (i = 0; i < num_targets; i++) {
@@ -2249,7 +2249,7 @@ gen6_emit_DEPTH_STENCIL_STATE(const struct ilo_dev_info *dev,
 
    ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
-   dw = ilo_cp_steal_ptr(cp, "DEPTH_STENCIL_STATE",
+   dw = ilo_cp_steal_ptr(cp, ILO_BUILDER_ITEM_DEPTH_STENCIL,
          state_len, state_align, &state_offset);
 
    dw[0] = dsa->payload[0];
@@ -2279,7 +2279,7 @@ gen6_emit_SCISSOR_RECT(const struct ilo_dev_info *dev,
     */
    assert(num_viewports && num_viewports <= 16);
 
-   dw = ilo_cp_steal_ptr(cp, "SCISSOR_RECT",
+   dw = ilo_cp_steal_ptr(cp, ILO_BUILDER_ITEM_SCISSOR_RECT,
          state_len, state_align, &state_offset);
 
    memcpy(dw, scissor->payload, state_len * 4);
@@ -2309,7 +2309,7 @@ gen6_emit_BINDING_TABLE_STATE(const struct ilo_dev_info *dev,
    if (!num_surface_states)
       return 0;
 
-   dw = ilo_cp_steal_ptr(cp, "BINDING_TABLE_STATE",
+   dw = ilo_cp_steal_ptr(cp, ILO_BUILDER_ITEM_BINDING_TABLE,
          state_len, state_align, &state_offset);
    memcpy(dw, surface_states,
          num_surface_states * sizeof(surface_states[0]));
@@ -2329,7 +2329,8 @@ gen6_emit_SURFACE_STATE(const struct ilo_dev_info *dev,
 
    ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
-   ilo_cp_steal(cp, "SURFACE_STATE", state_len, state_align, &state_offset);
+   ilo_cp_steal(cp, ILO_BUILDER_ITEM_SURFACE,
+         state_len, state_align, &state_offset);
 
    STATIC_ASSERT(Elements(surf->payload) >= 8);
 
@@ -2418,7 +2419,7 @@ gen6_emit_SAMPLER_STATE(const struct ilo_dev_info *dev,
    if (!num_samplers)
       return 0;
 
-   dw = ilo_cp_steal_ptr(cp, "SAMPLER_STATE",
+   dw = ilo_cp_steal_ptr(cp, ILO_BUILDER_ITEM_SAMPLER,
          state_len, state_align, &state_offset);
 
    for (i = 0; i < num_samplers; i++) {
@@ -2514,7 +2515,7 @@ gen6_emit_SAMPLER_BORDER_COLOR_STATE(const struct ilo_dev_info *dev,
 
    ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
-   dw = ilo_cp_steal_ptr(cp, "SAMPLER_BORDER_COLOR_STATE",
+   dw = ilo_cp_steal_ptr(cp, ILO_BUILDER_ITEM_BLOB,
          state_len, state_align, &state_offset);
 
    /* see ilo_gpe_init_sampler_cso() */
@@ -2539,7 +2540,7 @@ gen6_emit_push_constant_buffer(const struct ilo_dev_info *dev,
 
    ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
-   buf = ilo_cp_steal_ptr(cp, "PUSH_CONSTANT_BUFFER",
+   buf = ilo_cp_steal_ptr(cp, ILO_BUILDER_ITEM_BLOB,
          state_len, state_align, &state_offset);
 
    /* zero out the unused range */

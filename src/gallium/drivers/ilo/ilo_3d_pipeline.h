@@ -194,7 +194,4 @@ ilo_3d_pipeline_get_sample_position(struct ilo_3d_pipeline *p,
                                     unsigned sample_index,
                                     float *x, float *y);
 
-void
-ilo_3d_pipeline_dump(struct ilo_3d_pipeline *p);
-
 #endif /* ILO_3D_PIPELINE_H */

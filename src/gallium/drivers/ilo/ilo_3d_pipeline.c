@@ -172,10 +172,10 @@ ilo_3d_pipeline_emit_draw(struct ilo_3d_pipeline *p,
 
 
    while (true) {
-      struct ilo_cp_jmp_buf jmp;
+      struct ilo_builder_snapshot snapshot;
 
       /* we will rewind if aperture check below fails */
-      ilo_cp_setjmp(p->cp, &jmp);
+      ilo_builder_batch_snapshot(&p->cp->builder, &snapshot);
 
       handle_invalid_batch_bo(p, false);
 
@@ -184,13 +184,13 @@ ilo_3d_pipeline_emit_draw(struct ilo_3d_pipeline *p,
       p->emit_draw(p, ilo);
       ilo_cp_assert_no_implicit_flush(p->cp, false);
 
-      if (intel_winsys_can_submit_bo(ilo->winsys, &p->cp->bo, 1)) {
+      if (ilo_builder_validate(&ilo->cp->builder, 0, NULL)) {
          success = true;
          break;
       }
 
       /* rewind */
-      ilo_cp_longjmp(p->cp, &jmp);
+      ilo_builder_batch_restore(&p->cp->builder, &snapshot);
 
       if (ilo_cp_empty(p->cp)) {
          success = false;
@@ -279,10 +279,10 @@ ilo_3d_pipeline_emit_rectlist(struct ilo_3d_pipeline *p,
       ilo_cp_flush(p->cp, "out of space");
 
    while (true) {
-      struct ilo_cp_jmp_buf jmp;
+      struct ilo_builder_snapshot snapshot;
 
       /* we will rewind if aperture check below fails */
-      ilo_cp_setjmp(p->cp, &jmp);
+      ilo_builder_batch_snapshot(&p->cp->builder, &snapshot);
 
       handle_invalid_batch_bo(p, false);
 
@@ -290,9 +290,9 @@ ilo_3d_pipeline_emit_rectlist(struct ilo_3d_pipeline *p,
       p->emit_rectlist(p, blitter);
       ilo_cp_assert_no_implicit_flush(p->cp, false);
 
-      if (!intel_winsys_can_submit_bo(blitter->ilo->winsys, &p->cp->bo, 1)) {
+      if (!ilo_builder_validate(&p->cp->builder, 0, NULL)) {
          /* rewind */
-         ilo_cp_longjmp(p->cp, &jmp);
+         ilo_builder_batch_restore(&p->cp->builder, &snapshot);
 
          /* flush and try again */
          if (!ilo_cp_empty(p->cp)) {

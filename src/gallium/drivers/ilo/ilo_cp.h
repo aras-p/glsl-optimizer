@@ -30,6 +30,7 @@
 
 #include "intel_winsys.h"
 
+#include "ilo_builder.h"
 #include "ilo_common.h"
 
 struct ilo_cp;
@@ -58,27 +59,16 @@ struct ilo_cp {
    bool no_implicit_flush;
    unsigned one_off_flags;
 
-   int bo_size;
-   struct intel_bo *bo;
-   uint32_t *sys;
+   struct ilo_builder builder;
+   struct intel_bo *last_submitted_bo;
 
+   unsigned pos;
    uint32_t *ptr;
-   int size, used, stolen;
-
    int cmd_cur, cmd_end;
 };
 
-/**
- * Jump buffer to save command parser state for rewind.
- */
-struct ilo_cp_jmp_buf {
-   intptr_t id;
-   int size, used, stolen;
-   int reloc_count;
-};
-
 struct ilo_cp *
-ilo_cp_create(struct intel_winsys *winsys, int size, bool direct_map);
+ilo_cp_create(const struct ilo_dev_info *dev, struct intel_winsys *winsys);
 
 void
 ilo_cp_destroy(struct ilo_cp *cp);
@@ -90,24 +80,13 @@ static inline void
 ilo_cp_flush(struct ilo_cp *cp, const char *reason)
 {
    if (ilo_debug & ILO_DEBUG_FLUSH) {
-      ilo_printf("cp flushed for %s with %d+%d DWords (%.1f%%) because of %s\n",
-            (cp->ring == INTEL_RING_RENDER) ? "render" : "other",
-             cp->used, cp->stolen,
-             (float) (100 * (cp->used + cp->stolen)) / cp->bo_size,
-             reason);
+      ilo_printf("cp flushed for %s because of %s: ",
+            (cp->ring == INTEL_RING_RENDER) ? "render" : "other", reason);
+      ilo_builder_batch_print_stats(&cp->builder);
    }
 
    ilo_cp_flush_internal(cp);
 }
-
-void
-ilo_cp_dump(struct ilo_cp *cp);
-
-void
-ilo_cp_setjmp(struct ilo_cp *cp, struct ilo_cp_jmp_buf *jmp);
-
-void
-ilo_cp_longjmp(struct ilo_cp *cp, const struct ilo_cp_jmp_buf *jmp);
 
 /**
  * Return true if the parser buffer is empty.
@@ -115,7 +94,7 @@ ilo_cp_longjmp(struct ilo_cp *cp, const struct ilo_cp_jmp_buf *jmp);
 static inline bool
 ilo_cp_empty(struct ilo_cp *cp)
 {
-   return !cp->used;
+   return !ilo_builder_batch_used(&cp->builder);
 }
 
 /**
@@ -124,7 +103,12 @@ ilo_cp_empty(struct ilo_cp *cp)
 static inline int
 ilo_cp_space(struct ilo_cp *cp)
 {
-   return cp->size - cp->used;
+   const int space = ilo_builder_batch_space(&cp->builder);
+   const int mi_batch_buffer_end_space = 2;
+
+   assert(space >= cp->owner_reserve + mi_batch_buffer_end_space);
+
+   return space - cp->owner_reserve - mi_batch_buffer_end_space;
 }
 
 /**
@@ -135,8 +119,7 @@ ilo_cp_implicit_flush(struct ilo_cp *cp)
 {
    if (cp->no_implicit_flush) {
       assert(!"unexpected command parser flush");
-      /* discard the commands */
-      cp->used = 0;
+      ilo_builder_batch_discard(&cp->builder);
    }
 
    ilo_cp_flush(cp, "out of space (implicit)");
@@ -201,7 +184,6 @@ ilo_cp_set_owner(struct ilo_cp *cp, const struct ilo_cp_owner *owner,
       const bool no_implicit_flush = cp->no_implicit_flush;
 
       /* reclaim the reserved space */
-      cp->size += cp->owner_reserve;
       cp->owner_reserve = 0;
 
       /* invoke the release callback */
@@ -215,15 +197,13 @@ ilo_cp_set_owner(struct ilo_cp *cp, const struct ilo_cp_owner *owner,
    if (cp->owner_reserve != reserve) {
       const int extra = reserve - cp->owner_reserve;
 
-      if (cp->used > cp->size - extra) {
+      if (ilo_cp_space(cp) < extra) {
          ilo_cp_implicit_flush(cp);
-         assert(cp->used <= cp->size - reserve);
 
-         cp->size -= reserve;
+         assert(ilo_cp_space(cp) >= reserve);
          cp->owner_reserve = reserve;
       }
       else {
-         cp->size -= extra;
          cp->owner_reserve += extra;
       }
    }
@@ -240,57 +220,47 @@ ilo_cp_set_owner(struct ilo_cp *cp, const struct ilo_cp_owner *owner,
 static inline void
 ilo_cp_begin(struct ilo_cp *cp, int cmd_size)
 {
-   if (cp->used + cmd_size > cp->size) {
+   if (ilo_cp_space(cp) < cmd_size) {
       ilo_cp_implicit_flush(cp);
-      assert(cp->used + cmd_size <= cp->size);
+      assert(ilo_cp_space(cp) >= cmd_size);
    }
 
-   assert(cp->cmd_cur == cp->cmd_end);
-   cp->cmd_cur = cp->used;
-   cp->cmd_end = cp->cmd_cur + cmd_size;
-   cp->used = cp->cmd_end;
+   cp->pos = ilo_builder_batch_pointer(&cp->builder, cmd_size, &cp->ptr);
+
+   cp->cmd_cur = 0;
+   cp->cmd_end = cmd_size;
 }
 
 /**
  * Begin writing data to a space stolen from the top of the parser buffer.
  *
- * \param desc informative description of the data to be written
+ * \param item builder item type
  * \param data_size in dwords
  * \param align in dwords
  * \param bo_offset in bytes to the stolen space
  */
 static inline void
-ilo_cp_steal(struct ilo_cp *cp, const char *desc,
+ilo_cp_steal(struct ilo_cp *cp, enum ilo_builder_item_type item,
              int data_size, int align, uint32_t *bo_offset)
 {
-   int pad, steal;
-
    if (!align)
       align = 1;
 
-   pad = (cp->bo_size - cp->stolen - data_size) % align;
-   steal = data_size + pad;
-
    /* flush if there is not enough space after stealing */
-   if (cp->used > cp->size - steal) {
+   if (ilo_cp_space(cp) < data_size + align - 1) {
       ilo_cp_implicit_flush(cp);
-
-      pad = (cp->bo_size - cp->stolen - data_size) % align;
-      steal = data_size + steal;
-
-      assert(cp->used <= cp->size - steal);
+      assert(ilo_cp_space(cp) >= data_size + align - 1);
    }
 
-   cp->size -= steal;
-   cp->stolen += steal;
+   cp->pos = ilo_builder_state_pointer(&cp->builder,
+         item, align << 2, data_size, &cp->ptr) >> 2;
 
-   assert(cp->cmd_cur == cp->cmd_end);
-   cp->cmd_cur = cp->bo_size - cp->stolen;
-   cp->cmd_end = cp->cmd_cur + data_size;
+   cp->cmd_cur = 0;
+   cp->cmd_end = data_size;
 
    /* offset in cp->bo */
    if (bo_offset)
-      *bo_offset = cp->cmd_cur * 4;
+      *bo_offset = cp->pos << 2;
 }
 
 /**
@@ -323,20 +293,14 @@ static inline void
 ilo_cp_write_bo(struct ilo_cp *cp, uint32_t val,
                 struct intel_bo *bo, uint32_t flags)
 {
-   uint64_t presumed_offset;
-
    if (bo) {
-      intel_bo_add_reloc(cp->bo, cp->cmd_cur * 4, bo, val, flags,
-            &presumed_offset);
+      ilo_builder_batch_reloc(&cp->builder, cp->pos + cp->cmd_cur,
+            bo, val, flags);
+      cp->cmd_cur++;
    }
    else {
-      presumed_offset = 0;
+      ilo_cp_write(cp, 0);
    }
-
-   /* 32-bit addressing */
-   assert(presumed_offset == (uint64_t) ((uint32_t) presumed_offset));
-
-   ilo_cp_write(cp, (uint32_t) presumed_offset);
 }
 
 /**
@@ -357,12 +321,12 @@ ilo_cp_end(struct ilo_cp *cp)
  *             change is made to the parser.
  */
 static inline void *
-ilo_cp_steal_ptr(struct ilo_cp *cp, const char *desc,
+ilo_cp_steal_ptr(struct ilo_cp *cp, enum ilo_builder_item_type item,
                  int data_size, int align, uint32_t *bo_offset)
 {
    void *ptr;
 
-   ilo_cp_steal(cp, desc, data_size, align, bo_offset);
+   ilo_cp_steal(cp, item, data_size, align, bo_offset);
 
    ptr = &cp->ptr[cp->cmd_cur];
    cp->cmd_cur = cp->cmd_end;

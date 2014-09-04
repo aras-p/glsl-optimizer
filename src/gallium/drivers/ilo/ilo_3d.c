@@ -396,7 +396,7 @@ void
 ilo_3d_cp_flushed(struct ilo_3d *hw3d)
 {
    if (ilo_debug & ILO_DEBUG_3D)
-      ilo_3d_pipeline_dump(hw3d->pipeline);
+      ilo_builder_decode(&hw3d->cp->builder);
 
    /* invalidate the pipeline */
    ilo_3d_pipeline_invalidate(hw3d->pipeline,

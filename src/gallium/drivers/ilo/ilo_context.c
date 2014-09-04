@@ -46,13 +46,6 @@ ilo_context_cp_flushed(struct ilo_cp *cp, void *data)
 {
    struct ilo_context *ilo = ilo_context(data);
 
-   if (ilo->last_cp_bo)
-      intel_bo_unreference(ilo->last_cp_bo);
-
-   /* remember the just flushed bo, on which fences could wait */
-   ilo->last_cp_bo = cp->bo;
-   intel_bo_reference(ilo->last_cp_bo);
-
    ilo_3d_cp_flushed(ilo->hw3d);
 }
 
@@ -68,7 +61,7 @@ ilo_flush(struct pipe_context *pipe,
 
    if (f) {
       *f = (struct pipe_fence_handle *)
-         ilo_fence_create(pipe->screen, ilo->last_cp_bo);
+         ilo_fence_create(pipe->screen, ilo->cp->last_submitted_bo);
    }
 }
 
@@ -78,9 +71,6 @@ ilo_context_destroy(struct pipe_context *pipe)
    struct ilo_context *ilo = ilo_context(pipe);
 
    ilo_cleanup_states(ilo);
-
-   if (ilo->last_cp_bo)
-      intel_bo_unreference(ilo->last_cp_bo);
 
    if (ilo->uploader)
       u_upload_destroy(ilo->uploader);
@@ -119,8 +109,7 @@ ilo_context_create(struct pipe_screen *screen, void *priv)
    util_slab_create(&ilo->transfer_mempool,
          sizeof(struct ilo_transfer), 64, UTIL_SLAB_SINGLETHREADED);
 
-   /* 8192 DWords */
-   ilo->cp = ilo_cp_create(ilo->winsys, 8192, is->dev.has_llc);
+   ilo->cp = ilo_cp_create(ilo->dev, ilo->winsys);
    ilo->shader_cache = ilo_shader_cache_create();
    if (ilo->cp)
       ilo->hw3d = ilo_3d_create(ilo->cp, ilo->dev);

@@ -215,11 +215,14 @@ gen6_pipeline_common_base_address(struct ilo_3d_pipeline *p,
    /* STATE_BASE_ADDRESS */
    if (session->state_bo_changed || session->kernel_bo_changed ||
        session->batch_bo_changed) {
+      const struct ilo_builder_writer *bat =
+         &p->cp->builder.writers[ILO_BUILDER_WRITER_BATCH];
+
       if (p->dev->gen == ILO_GEN(6))
          gen6_wa_pipe_control_post_sync(p, false);
 
       gen6_emit_STATE_BASE_ADDRESS(p->dev,
-            NULL, p->cp->bo, p->cp->bo, NULL, ilo->hw3d->kernel.bo,
+            NULL, bat->bo, bat->bo, NULL, ilo->hw3d->kernel.bo,
             0, 0, 0, 0, p->cp);
 
       /*
@@ -1633,8 +1636,8 @@ gen6_rectlist_commands(struct ilo_3d_pipeline *p,
 
    gen6_emit_STATE_BASE_ADDRESS(p->dev,
          NULL,                /* General State Base */
-         p->cp->bo,           /* Surface State Base */
-         p->cp->bo,           /* Dynamic State Base */
+         p->cp->builder.writers[0].bo,           /* Surface State Base */
+         p->cp->builder.writers[0].bo,           /* Dynamic State Base */
          NULL,                /* Indirect Object Base */
          NULL,                /* Instruction Base */
          0, 0, 0, 0, p->cp);
