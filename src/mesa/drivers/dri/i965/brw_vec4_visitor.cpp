@@ -898,10 +898,10 @@ vec4_visitor::emit_if_gen6(ir_if *ir)
    ir_expression *expr = ir->condition->as_expression();
 
    if (expr) {
-      src_reg op[2];
+      src_reg op[3];
       dst_reg temp;
 
-      assert(expr->get_num_operands() <= 2);
+      assert(expr->get_num_operands() <= 3);
       for (unsigned int i = 0; i < expr->get_num_operands(); i++) {
 	 expr->operands[i]->accept(this);
 	 op[i] = this->result;
@@ -960,6 +960,20 @@ vec4_visitor::emit_if_gen6(ir_if *ir)
 	 emit(CMP(dst_null_d(), op[0], src_reg(0), BRW_CONDITIONAL_NZ));
 	 emit(IF(BRW_PREDICATE_ALIGN16_ANY4H));
 	 return;
+
+      case ir_triop_csel: {
+         /* Expand the boolean condition into the flag register. */
+         vec4_instruction *inst = emit(MOV(dst_null_d(), op[0]));
+         inst->conditional_mod = BRW_CONDITIONAL_NZ;
+
+         /* Select which boolean to return. */
+         dst_reg temp(this, expr->operands[1]->type);
+         inst = emit(BRW_OPCODE_SEL, temp, op[1], op[2]);
+         inst->predicate = BRW_PREDICATE_NORMAL;
+
+         emit(IF(src_reg(temp), src_reg(0), BRW_CONDITIONAL_NZ));
+         return;
+      }
 
       default:
 	 unreachable("not reached");
