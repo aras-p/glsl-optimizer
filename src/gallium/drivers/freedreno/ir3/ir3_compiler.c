@@ -175,6 +175,13 @@ compile_init(struct ir3_compile_context *ctx, struct ir3_shader_variant *so,
 	if (info->indirect_files & (FM(TEMPORARY) | FM(INPUT) | FM(OUTPUT)))
 		return TGSI_PARSE_ERROR;
 
+	/* NOTE: if relative addressing is used, we set constlen in
+	 * the compiler (to worst-case value) since we don't know in
+	 * the assembler what the max addr reg value can be:
+	 */
+	if (info->indirect_files & FM(CONSTANT))
+		so->constlen = 4 * (ctx->info.file_max[TGSI_FILE_CONSTANT] + 1);
+
 	/* Immediates go after constants: */
 	so->first_immediate = info->file_max[TGSI_FILE_CONSTANT] + 1;
 	ctx->immediate_idx = 4 * (ctx->info.file_max[TGSI_FILE_IMMEDIATE] + 1);

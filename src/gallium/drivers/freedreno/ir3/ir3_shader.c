@@ -69,7 +69,12 @@ assemble_variant(struct ir3_shader_variant *v)
 	free(bin);
 
 	v->instrlen = v->info.sizedwords / 8;
-	v->constlen = v->info.max_const + 1;
+
+	/* NOTE: if relative addressing is used, we set constlen in
+	 * the compiler (to worst-case value) since we don't know in
+	 * the assembler what the max addr reg value can be:
+	 */
+	v->constlen = MAX2(v->constlen, v->info.max_const + 1);
 
 	/* no need to keep the ir around beyond this point: */
 	ir3_destroy(v->ir);
