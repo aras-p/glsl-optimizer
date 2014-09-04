@@ -375,7 +375,7 @@ xmesa_destroy_buffers_on_display(XMesaDisplay *dpy);
 /**
  * Using a function instead of an ordinary cast is safer.
  */
-static INLINE struct xmesa_renderbuffer *
+static inline struct xmesa_renderbuffer *
 xmesa_renderbuffer(struct gl_renderbuffer *rb)
 {
    return (struct xmesa_renderbuffer *) rb;
@@ -386,7 +386,7 @@ xmesa_renderbuffer(struct gl_renderbuffer *rb)
  * Return pointer to XMesaContext corresponding to a Mesa struct gl_context.
  * Since we're using structure containment, it's just a cast!.
  */
-static INLINE XMesaContext
+static inline XMesaContext
 XMESA_CONTEXT(struct gl_context *ctx)
 {
    return (XMesaContext) ctx;
@@ -397,7 +397,7 @@ XMESA_CONTEXT(struct gl_context *ctx)
  * Return pointer to XMesaBuffer corresponding to a Mesa struct gl_framebuffer.
  * Since we're using structure containment, it's just a cast!.
  */
-static INLINE XMesaBuffer
+static inline XMesaBuffer
 XMESA_BUFFER(struct gl_framebuffer *b)
 {
    return (XMesaBuffer) b;
