@@ -559,9 +559,7 @@ static void r600_texture_allocate_htile(struct r600_common_screen *rscreen,
 		 * without htile buffer */
 		R600_ERR("Failed to create buffer object for htile buffer.\n");
 	} else {
-		/* Clear to fully-expanded state. */
-		r600_screen_clear_buffer(rscreen, &rtex->htile_buffer->b.b, 0,
-					 htile_size, 0xffffffff);
+		r600_screen_clear_buffer(rscreen, &rtex->htile_buffer->b.b, 0, htile_size, 0);
 	}
 }
 
