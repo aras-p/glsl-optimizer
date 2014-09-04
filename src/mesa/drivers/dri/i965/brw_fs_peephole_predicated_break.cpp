@@ -38,6 +38,18 @@
  *
  * This peephole pass removes the IF and ENDIF instructions and predicates the
  * BREAK, dropping two instructions from the loop body.
+ *
+ * If the loop was a DO { ... } WHILE loop, it looks like
+ *
+ * loop:
+ *    ...
+ *    CMP.f0
+ *    (+f0) IF
+ *    BREAK
+ *    ENDIF
+ *    WHILE loop
+ *
+ * and we can remove the BREAK instruction and predicate the WHILE.
  */
 
 bool
@@ -105,6 +117,30 @@ fs_visitor::opt_peephole_predicated_break()
          earlier_block->combine_with(jump_block);
 
          block = earlier_block;
+      }
+
+      /* Now look at the first instruction of the block following the BREAK. If
+       * it's a WHILE, we can delete the break, predicate the WHILE, and join
+       * the two basic blocks.
+       */
+      bblock_t *while_block = earlier_block->next();
+      fs_inst *while_inst = (fs_inst *)while_block->start();
+
+      if (jump_inst->opcode == BRW_OPCODE_BREAK &&
+          while_inst->opcode == BRW_OPCODE_WHILE &&
+          while_inst->predicate == BRW_PREDICATE_NONE) {
+         jump_inst->remove(earlier_block);
+         while_inst->predicate = jump_inst->predicate;
+         while_inst->predicate_inverse = !jump_inst->predicate_inverse;
+
+         earlier_block->children.make_empty();
+         earlier_block->add_successor(cfg->mem_ctx, while_block);
+
+         assert(earlier_block->can_combine_with(while_block));
+         earlier_block->combine_with(while_block);
+
+         earlier_block->next()->parents.make_empty();
+         earlier_block->add_successor(cfg->mem_ctx, earlier_block->next());
       }
 
       progress = true;
