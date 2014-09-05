@@ -943,7 +943,7 @@ vec4_instruction::can_reswizzle(int dst_writemask,
    if (dst.writemask & ~swizzle_mask)
       return false;
 
-   if (inst->mlen > 0)
+   if (mlen > 0)
       return false;
 
    return true;
