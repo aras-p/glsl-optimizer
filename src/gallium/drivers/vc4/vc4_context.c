@@ -75,8 +75,13 @@ vc4_setup_rcl(struct vc4_context *vc4)
          * stored.  If the clear values changed between frames, then the tile
          * buffer has stale clear values in it, so we have to do a store in
          * None mode (no writes) so that we trigger the tile buffer clear.
+         *
+         * Excess clearing is only a performance cost, since per-tile contents
+         * will be loaded/stored in the loop below.
          */
-        if (vc4->cleared & PIPE_CLEAR_COLOR0) {
+        if (vc4->cleared & (PIPE_CLEAR_COLOR0 |
+                            PIPE_CLEAR_DEPTH |
+                            PIPE_CLEAR_STENCIL)) {
                 cl_u8(&vc4->rcl, VC4_PACKET_TILE_COORDINATES);
                 cl_u8(&vc4->rcl, 0);
                 cl_u8(&vc4->rcl, 0);
