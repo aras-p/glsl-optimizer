@@ -254,7 +254,9 @@ bool BitSet::resize(unsigned int nBits)
       return false;
    }
    if (n > p)
-      memset(&data[4 * p + 4], 0, (n - p) * 4);
+      memset(&data[p], 0, (n - p) * 4);
+   if (nBits < size && (nBits % 32))
+      data[(nBits + 31) / 32 - 1] &= (1 << (nBits % 32)) - 1;
 
    size = nBits;
    return true;
@@ -274,8 +276,8 @@ bool BitSet::allocate(unsigned int nBits, bool zero)
    if (zero)
       memset(data, 0, (size + 7) / 8);
    else
-   if (nBits)
-      data[(size + 31) / 32 - 1] = 0; // clear unused bits (e.g. for popCount)
+   if (size % 32) // clear unused bits (e.g. for popCount)
+      data[(size + 31) / 32 - 1] &= (1 << (size % 32)) - 1;
 
    return data;
 }

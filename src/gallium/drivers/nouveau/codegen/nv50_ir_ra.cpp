@@ -1657,6 +1657,10 @@ RegAlloc::execFunc()
            ret && i <= func->loopNestingBound;
            sequence = func->cfg.nextSequence(), ++i)
          ret = buildLiveSets(BasicBlock::get(func->cfg.getRoot()));
+      // reset marker
+      for (ArrayList::Iterator bi = func->allBBlocks.iterator();
+           !bi.end(); bi.next())
+         BasicBlock::get(bi)->liveSet.marker = false;
       if (!ret)
          break;
       func->orderInstructions(this->insns);
