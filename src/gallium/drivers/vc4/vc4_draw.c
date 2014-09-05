@@ -193,6 +193,9 @@ vc4_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
         vc4->resolve |= PIPE_CLEAR_COLOR0;
 
         vc4->shader_rec_count++;
+
+        if (vc4_debug & VC4_DEBUG_ALWAYS_FLUSH)
+                vc4_flush(pctx);
 }
 
 static uint32_t

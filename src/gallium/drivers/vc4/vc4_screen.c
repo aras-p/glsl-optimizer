@@ -50,6 +50,8 @@ static const struct debug_named_value debug_options[] = {
           "Print during performance-related events" },
         { "norast",   VC4_DEBUG_NORAST,
           "Skip actual hardware execution of commands" },
+        { "always_flush", VC4_DEBUG_ALWAYS_FLUSH,
+          "Flush after each draw call" },
         { NULL }
 };
 
