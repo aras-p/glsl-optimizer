@@ -146,6 +146,7 @@ struct vc4_context {
         uint32_t resolve;
         uint32_t clear_color[2];
         uint32_t clear_depth; /**< 24-bit unorm depth */
+        uint8_t clear_stencil;
 
         /**
          * Set if some drawing (triangles, blits, or just a glClear()) has

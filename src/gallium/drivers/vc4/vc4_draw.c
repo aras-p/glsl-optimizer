@@ -231,6 +231,9 @@ vc4_clear(struct pipe_context *pctx, unsigned buffers,
                 vc4->clear_depth = util_pack_z(PIPE_FORMAT_Z24X8_UNORM, depth);
         }
 
+        if (buffers & PIPE_CLEAR_STENCIL)
+                vc4->clear_stencil = stencil;
+
         vc4->cleared |= buffers;
         vc4->resolve |= buffers;
 

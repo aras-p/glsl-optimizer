@@ -59,7 +59,7 @@ vc4_setup_rcl(struct vc4_context *vc4)
         cl_u32(&vc4->rcl, vc4->clear_color[0]);
         cl_u32(&vc4->rcl, vc4->clear_color[1]);
         cl_u32(&vc4->rcl, vc4->clear_depth);
-        cl_u8(&vc4->rcl, 0);
+        cl_u8(&vc4->rcl, vc4->clear_stencil);
 
         cl_start_reloc(&vc4->rcl, 1);
         cl_u8(&vc4->rcl, VC4_PACKET_TILE_RENDERING_MODE_CONFIG);
