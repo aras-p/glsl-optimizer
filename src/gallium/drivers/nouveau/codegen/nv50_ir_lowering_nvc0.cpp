@@ -185,15 +185,13 @@ NVC0LegalizePostRA::findFirstUses(
       for (Value::UseIterator u = v->uses.begin(); u != v->uses.end(); ++u) {
          Instruction *usei = (*u)->getInsn();
 
-         /* XXX HACK ALERT XXX
-          *
-          * This shouldn't have to be here, we should always be making forward
-          * progress by looking at the uses. However this somehow does not
-          * appear to be the case. Probably because this is being done right
-          * after RA, when the defs/uses lists have been messed with by node
-          * merging. This should probably be moved to being done right before
-          * RA. But this will do for now.
-          */
+         // NOTE: In case of a loop that overwrites a value but never uses
+         // it, it can happen that we have a cycle of uses that consists only
+         // of phis and no-op moves and will thus cause an infinite loop here
+         // since these are not considered actual uses.
+         // The most obvious (and perhaps the only) way to prevent this is to
+         // remember which instructions we've already visited.
+
          if (visited.find(usei) != visited.end())
             continue;
 
