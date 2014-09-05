@@ -1025,3 +1025,24 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	pipe_resource_reference(&ib.buffer, NULL);
 	sctx->b.num_draw_calls++;
 }
+
+#if SI_TRACE_CS
+void si_trace_emit(struct si_context *sctx)
+{
+	struct si_screen *sscreen = sctx->screen;
+	struct radeon_winsys_cs *cs = sctx->b.rings.gfx.cs;
+	uint64_t va;
+
+	va = sscreen->b.trace_bo->gpu_address;
+	r600_context_bo_reloc(&sctx->b, &sctx->b.rings.gfx, sscreen->b.trace_bo,
+			      RADEON_USAGE_READWRITE, RADEON_PRIO_MIN);
+	radeon_emit(cs, PKT3(PKT3_WRITE_DATA, 4, 0));
+	radeon_emit(cs, PKT3_WRITE_DATA_DST_SEL(PKT3_WRITE_DATA_DST_SEL_MEM_SYNC) |
+				PKT3_WRITE_DATA_WR_CONFIRM |
+				PKT3_WRITE_DATA_ENGINE_SEL(PKT3_WRITE_DATA_ENGINE_SEL_ME));
+	radeon_emit(cs, va & 0xFFFFFFFFUL);
+	radeon_emit(cs, (va >> 32UL) & 0xFFFFFFFFUL);
+	radeon_emit(cs, cs->cdw);
+	radeon_emit(cs, sscreen->b.cs_count);
+}
+#endif

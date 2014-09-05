@@ -94,7 +94,8 @@ static struct pipe_context *si_create_context(struct pipe_screen *screen, void *
 	}
 
 	sctx->b.rings.gfx.cs = ws->cs_create(ws, RING_GFX, si_context_gfx_flush,
-					     sctx, NULL);
+					     sctx, sscreen->b.trace_bo ?
+						sscreen->b.trace_bo->cs_buf : NULL);
 	sctx->b.rings.gfx.flush = si_context_gfx_flush;
 
 	si_init_all_descriptors(sctx);

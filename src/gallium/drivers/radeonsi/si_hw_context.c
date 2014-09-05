@@ -102,20 +102,8 @@ void si_context_gfx_flush(void *context, unsigned flags,
 	/* force to keep tiling flags */
 	flags |= RADEON_FLUSH_KEEP_TILING_FLAGS;
 
-#if SI_TRACE_CS
-	if (ctx->screen->b.trace_bo) {
-		struct si_screen *sscreen = ctx->screen;
-		unsigned i;
-
-		for (i = 0; i < cs->cdw; i++) {
-			fprintf(stderr, "[%4d] [%5d] 0x%08x\n", sscreen->b.cs_count, i, cs->buf[i]);
-		}
-		sscreen->b.cs_count++;
-	}
-#endif
-
 	/* Flush the CS. */
-	ctx->b.ws->cs_flush(cs, flags, fence, 0);
+	ctx->b.ws->cs_flush(cs, flags, fence, ctx->screen->b.cs_count++);
 	ctx->b.rings.gfx.flushing = false;
 
 #if SI_TRACE_CS
@@ -125,7 +113,7 @@ void si_context_gfx_flush(void *context, unsigned flags,
 
 		for (i = 0; i < 10; i++) {
 			usleep(5);
-			if (!ctx->ws->buffer_is_busy(sscreen->b.trace_bo->buf, RADEON_USAGE_READWRITE)) {
+			if (!ctx->b.ws->buffer_is_busy(sscreen->b.trace_bo->buf, RADEON_USAGE_READWRITE)) {
 				break;
 			}
 		}
@@ -169,23 +157,3 @@ void si_begin_new_cs(struct si_context *ctx)
 
 	ctx->b.initial_gfx_cs_size = ctx->b.rings.gfx.cs->cdw;
 }
-
-#if SI_TRACE_CS
-void si_trace_emit(struct si_context *sctx)
-{
-	struct si_screen *sscreen = sctx->screen;
-	struct radeon_winsys_cs *cs = sctx->cs;
-	uint64_t va;
-
-	va = sscreen->b.trace_bo->gpu_address;
-	r600_context_bo_reloc(sctx, sscreen->b.trace_bo, RADEON_USAGE_READWRITE);
-	cs->buf[cs->cdw++] = PKT3(PKT3_WRITE_DATA, 4, 0);
-	cs->buf[cs->cdw++] = PKT3_WRITE_DATA_DST_SEL(PKT3_WRITE_DATA_DST_SEL_MEM_SYNC) |
-				PKT3_WRITE_DATA_WR_CONFIRM |
-				PKT3_WRITE_DATA_ENGINE_SEL(PKT3_WRITE_DATA_ENGINE_SEL_ME);
-	cs->buf[cs->cdw++] = va & 0xFFFFFFFFUL;
-	cs->buf[cs->cdw++] = (va >> 32UL) & 0xFFFFFFFFUL;
-	cs->buf[cs->cdw++] = cs->cdw;
-	cs->buf[cs->cdw++] = sscreen->b.cs_count;
-}
-#endif
