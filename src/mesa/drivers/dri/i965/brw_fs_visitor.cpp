@@ -2685,6 +2685,7 @@ fs_visitor::emit_untyped_atomic(unsigned atomic_op, unsigned surf_index,
 {
    const unsigned operand_len = dispatch_width / 8;
    unsigned mlen = 0;
+   fs_inst *inst;
 
    /* Initialize the sample mask in the message header. */
    emit(MOV(brw_uvec_mrf(8, mlen, 0), fs_reg(0u)))
@@ -2717,12 +2718,10 @@ fs_visitor::emit_untyped_atomic(unsigned atomic_op, unsigned surf_index,
    }
 
    /* Emit the instruction. */
-   fs_inst *inst = new(mem_ctx) fs_inst(SHADER_OPCODE_UNTYPED_ATOMIC, dst,
-                                        atomic_op, surf_index);
+   inst = emit(SHADER_OPCODE_UNTYPED_ATOMIC, dst, atomic_op, surf_index);
    inst->base_mrf = 0;
    inst->mlen = mlen;
    inst->header_present = true;
-   emit(inst);
 }
 
 void
@@ -2731,6 +2730,7 @@ fs_visitor::emit_untyped_surface_read(unsigned surf_index, fs_reg dst,
 {
    const unsigned operand_len = dispatch_width / 8;
    unsigned mlen = 0;
+   fs_inst *inst;
 
    /* Initialize the sample mask in the message header. */
    emit(MOV(brw_uvec_mrf(8, mlen, 0), fs_reg(0u)))
@@ -2752,12 +2752,10 @@ fs_visitor::emit_untyped_surface_read(unsigned surf_index, fs_reg dst,
    mlen += operand_len;
 
    /* Emit the instruction. */
-   fs_inst *inst = new(mem_ctx)
-      fs_inst(SHADER_OPCODE_UNTYPED_SURFACE_READ, dst, surf_index);
+   inst = emit(SHADER_OPCODE_UNTYPED_SURFACE_READ, dst, surf_index);
    inst->base_mrf = 0;
    inst->mlen = mlen;
    inst->header_present = true;
-   emit(inst);
 }
 
 fs_inst *
