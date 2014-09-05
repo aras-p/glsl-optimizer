@@ -55,6 +55,179 @@
 #define OFFSET(FIELD) ((void *) offsetof(struct vertex, FIELD))
 
 static void
+setup_glsl_msaa_blit_scaled_shader(struct gl_context *ctx,
+                                   struct blit_state *blit,
+                                   struct gl_renderbuffer *src_rb,
+                                   GLenum target, GLenum filter)
+{
+   GLint loc_src_width, loc_src_height;
+   int i, samples;
+   int shader_offset = 0;
+   void *mem_ctx = ralloc_context(NULL);
+   char *fs_source;
+   char *name, *sample_number;
+   const uint8_t *sample_map;
+   char *sample_map_str = rzalloc_size(mem_ctx, 1);
+   char *sample_map_expr = rzalloc_size(mem_ctx, 1);
+   char *texel_fetch_macro = rzalloc_size(mem_ctx, 1);;
+   const char *vs_source;
+   const char *sampler_array_suffix = "";
+   const char *texcoord_type = "vec2";
+   float y_scale;
+   enum blit_msaa_shader shader_index;
+
+   assert(src_rb);
+   samples = MAX2(src_rb->NumSamples, 1);
+   y_scale = samples * 0.5;
+
+   /* We expect only power of 2 samples in source multisample buffer. */
+   assert((samples & (samples - 1)) == 0);
+   while (samples >> (shader_offset + 1)) {
+      shader_offset++;
+   }
+   /* Update the assert if we plan to support more than 8X MSAA. */
+   assert(shader_offset > 0 && shader_offset < 4);
+
+   assert(target == GL_TEXTURE_2D_MULTISAMPLE ||
+          target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY);
+
+   shader_index = BLIT_2X_MSAA_SHADER_2D_MULTISAMPLE_SCALED_RESOLVE +
+                  shader_offset - 1;
+
+   if (target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY) {
+      shader_index += BLIT_2X_MSAA_SHADER_2D_MULTISAMPLE_ARRAY_SCALED_RESOLVE -
+                      BLIT_2X_MSAA_SHADER_2D_MULTISAMPLE_SCALED_RESOLVE;
+      sampler_array_suffix = "Array";
+      texcoord_type = "vec3";
+   }
+
+   if (blit->msaa_shaders[shader_index]) {
+      _mesa_UseProgram(blit->msaa_shaders[shader_index]);
+      /* Update the uniform values. */
+      loc_src_width =
+         glGetUniformLocation(blit->msaa_shaders[shader_index], "src_width");
+      loc_src_height =
+         glGetUniformLocation(blit->msaa_shaders[shader_index], "src_height");
+      glUniform1f(loc_src_width, src_rb->Width);
+      glUniform1f(loc_src_height, src_rb->Height);
+      return;
+   }
+
+   name = ralloc_asprintf(mem_ctx, "vec4 MSAA scaled resolve");
+
+   /* Below switch is used to setup the shader expression, which computes
+    * sample index and map it to to a sample number on hardware.
+    */
+   switch(samples) {
+   case 2:
+      sample_number =  "sample_map[int(2 * fract(coord.x))]";
+      sample_map = ctx->Const.SampleMap2x;
+      break;
+   case 4:
+      sample_number =  "sample_map[int(2 * fract(coord.x) + 4 * fract(coord.y))]";
+      sample_map = ctx->Const.SampleMap4x;
+      break;
+   case 8:
+      sample_number =  "sample_map[int(2 * fract(coord.x) + 8 * fract(coord.y))]";
+      sample_map = ctx->Const.SampleMap8x;
+      break;
+   default:
+      _mesa_problem(ctx, "Unsupported sample count %d\n", samples);
+   }
+
+   /* Create sample map string. */
+   for (i = 0 ; i < samples - 1; i++) {
+      ralloc_asprintf_append(&sample_map_str, "%d, ", sample_map[i]);
+   }
+   ralloc_asprintf_append(&sample_map_str, "%d", sample_map[samples - 1]);
+
+   /* Create sample map expression using above string. */
+   ralloc_asprintf_append(&sample_map_expr,
+                          "   const int sample_map[%d] = int[%d](%s);\n",
+                          samples, samples, sample_map_str);
+
+   ralloc_asprintf_append(&texel_fetch_macro,
+                          "#define TEXEL_FETCH(coord) texelFetch(texSampler, i%s(coord), %s);\n",
+                          texcoord_type, sample_number);
+
+   vs_source = ralloc_asprintf(mem_ctx,
+                               "#version 130\n"
+                               "in vec2 position;\n"
+                               "in %s textureCoords;\n"
+                               "out %s texCoords;\n"
+                               "void main()\n"
+                               "{\n"
+                               "   texCoords = textureCoords;\n"
+                               "   gl_Position = vec4(position, 0.0, 1.0);\n"
+                               "}\n",
+                               texcoord_type,
+                               texcoord_type);
+   fs_source = ralloc_asprintf(mem_ctx,
+                               "#version 130\n"
+                               "#extension GL_ARB_texture_multisample : enable\n"
+                               "uniform sampler2DMS%s texSampler;\n"
+                               "uniform float src_width, src_height;\n"
+                               "in %s texCoords;\n"
+                               "out vec4 out_color;\n"
+                               "\n"
+                               "void main()\n"
+                               "{\n"
+                               "%s"
+                               "   vec2 interp;\n"
+                               "   const vec2 scale = vec2(2.0f, %ff);\n"
+                               "   const vec2 scale_inv = vec2(0.5f, %ff);\n"
+                               "   const vec2 s_0_offset = vec2(0.25f, %ff);\n"
+                               "   vec2 s_0_coord, s_1_coord, s_2_coord, s_3_coord;\n"
+                               "   vec4 s_0_color, s_1_color, s_2_color, s_3_color;\n"
+                               "   vec4 x_0_color, x_1_color;\n"
+                               "   vec2 tex_coord = texCoords - s_0_offset;\n"
+                               "\n"
+                               "   tex_coord *= scale;\n"
+                               "   clamp(tex_coord.x, 0.0f, scale.x * src_width - 1.0f);\n"
+                               "   clamp(tex_coord.y, 0.0f, scale.y * src_height - 1.0f);\n"
+                               "   interp = fract(tex_coord);\n"
+                               "   tex_coord = ivec2(tex_coord) * scale_inv;\n"
+                               "\n"
+                               "   /* Compute the sample coordinates used for filtering. */\n"
+                               "   s_0_coord = tex_coord;\n"
+                               "   s_1_coord = tex_coord + vec2(scale_inv.x, 0.0f);\n"
+                               "   s_2_coord = tex_coord + vec2(0.0f, scale_inv.y);\n"
+                               "   s_3_coord = tex_coord + vec2(scale_inv.x, scale_inv.y);\n"
+                               "\n"
+                               "   /* Fetch sample color values. */\n"
+                               "%s"
+                               "   s_0_color = TEXEL_FETCH(s_0_coord)\n"
+                               "   s_1_color = TEXEL_FETCH(s_1_coord)\n"
+                               "   s_2_color = TEXEL_FETCH(s_2_coord)\n"
+                               "   s_3_color = TEXEL_FETCH(s_3_coord)\n"
+                               "#undef TEXEL_FETCH\n"
+                               "\n"
+                               "   /* Do bilinear filtering on sample colors. */\n"
+                               "   x_0_color =  mix(s_0_color, s_1_color, interp.x);\n"
+                               "   x_1_color =  mix(s_2_color, s_3_color, interp.x);\n"
+                               "   out_color = mix(x_0_color, x_1_color, interp.y);\n"
+                               "}\n",
+                               sampler_array_suffix,
+                               texcoord_type,
+                               sample_map_expr,
+                               y_scale,
+                               1.0f / y_scale,
+                               1.0f / samples,
+                               texel_fetch_macro);
+
+   _mesa_meta_compile_and_link_program(ctx, vs_source, fs_source, name,
+                                       &blit->msaa_shaders[shader_index]);
+   loc_src_width =
+      glGetUniformLocation(blit->msaa_shaders[shader_index], "src_width");
+   loc_src_height =
+      glGetUniformLocation(blit->msaa_shaders[shader_index], "src_height");
+   glUniform1f(loc_src_width, src_rb->Width);
+   glUniform1f(loc_src_height, src_rb->Height);
+
+   ralloc_free(mem_ctx);
+}
+
+static void
 setup_glsl_msaa_blit_shader(struct gl_context *ctx,
                             struct blit_state *blit,
                             struct gl_renderbuffer *src_rb,
@@ -334,9 +507,14 @@ static void
 setup_glsl_blit_framebuffer(struct gl_context *ctx,
                             struct blit_state *blit,
                             struct gl_renderbuffer *src_rb,
-                            GLenum target)
+                            GLenum target, GLenum filter,
+                            bool is_scaled_blit)
 {
    unsigned texcoord_size;
+   bool is_target_multisample = target == GL_TEXTURE_2D_MULTISAMPLE ||
+                                target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY;
+   bool is_filter_scaled_resolve = filter == GL_SCALED_RESOLVE_FASTEST_EXT ||
+                                   filter == GL_SCALED_RESOLVE_NICEST_EXT;
 
    /* target = GL_TEXTURE_RECTANGLE is not supported in GLES 3.0 */
    assert(_mesa_is_desktop_gl(ctx) || target == GL_TEXTURE_2D);
@@ -346,8 +524,9 @@ setup_glsl_blit_framebuffer(struct gl_context *ctx,
    _mesa_meta_setup_vertex_objects(&blit->VAO, &blit->VBO, true,
                                    2, texcoord_size, 0);
 
-   if (target == GL_TEXTURE_2D_MULTISAMPLE ||
-       target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY) {
+   if (is_target_multisample && is_filter_scaled_resolve && is_scaled_blit) {
+      setup_glsl_msaa_blit_scaled_shader(ctx, blit, src_rb, target, filter);
+   } else if (is_target_multisample) {
       setup_glsl_msaa_blit_shader(ctx, blit, src_rb, target);
    } else {
       _mesa_meta_setup_blit_shader(ctx, target, &blit->shaders);
@@ -377,6 +556,9 @@ blitframebuffer_texture(struct gl_context *ctx,
    const GLint dstY = MIN2(dstY0, dstY1);
    const GLint dstW = abs(dstX1 - dstX0);
    const GLint dstH = abs(dstY1 - dstY0);
+   const int srcW = abs(srcX1 - srcX0);
+   const int srcH = abs(srcY1 - srcY0);
+   bool scaled_blit = false;
    struct gl_texture_object *texObj;
    GLuint srcLevel;
    GLenum target;
@@ -385,11 +567,6 @@ blitframebuffer_texture(struct gl_context *ctx,
 
    if (rb->NumSamples && !ctx->Extensions.ARB_texture_multisample)
       return false;
-
-   if (filter == GL_SCALED_RESOLVE_FASTEST_EXT ||
-       filter == GL_SCALED_RESOLVE_NICEST_EXT) {
-      filter = GL_LINEAR;
-   }
 
    _mesa_meta_fb_tex_blit_begin(ctx, &fb_tex_blit);
 
@@ -418,8 +595,6 @@ blitframebuffer_texture(struct gl_context *ctx,
       }
    } else {
       GLenum tex_base_format;
-      int srcW = abs(srcX1 - srcX0);
-      int srcH = abs(srcY1 - srcY0);
       /* Fall back to doing a CopyTexSubImage to get the destination
        * renderbuffer into a texture.
        */
@@ -462,8 +637,10 @@ blitframebuffer_texture(struct gl_context *ctx,
    fb_tex_blit.maxLevelSave = texObj->MaxLevel;
    fb_tex_blit.stencilSamplingSave = texObj->StencilSampling;
 
+   scaled_blit = dstW != srcW || dstH != srcH;
+
    if (glsl_version) {
-      setup_glsl_blit_framebuffer(ctx, blit, rb, target);
+      setup_glsl_blit_framebuffer(ctx, blit, rb, target, filter, scaled_blit);
    }
    else {
       _mesa_meta_setup_ff_tnl_for_blit(&ctx->Meta->Blit.VAO,
@@ -663,14 +840,17 @@ _mesa_meta_setup_sampler(struct gl_context *ctx,
                          GLenum target, GLenum filter, GLuint srcLevel)
 {
    GLuint sampler;
+   GLenum tex_filter = (filter == GL_SCALED_RESOLVE_FASTEST_EXT ||
+                        filter == GL_SCALED_RESOLVE_NICEST_EXT) ?
+                       GL_NEAREST : filter;
 
    _mesa_GenSamplers(1, &sampler);
    _mesa_BindSampler(ctx->Texture.CurrentUnit, sampler);
 
    /* Prepare src texture state */
    _mesa_BindTexture(target, texObj->Name);
-   _mesa_SamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, filter);
-   _mesa_SamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, filter);
+   _mesa_SamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, tex_filter);
+   _mesa_SamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, tex_filter);
    if (target != GL_TEXTURE_RECTANGLE_ARB) {
       _mesa_TexParameteri(target, GL_TEXTURE_BASE_LEVEL, srcLevel);
       _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, srcLevel);
