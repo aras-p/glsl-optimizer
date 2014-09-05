@@ -902,7 +902,7 @@ gs_compile(struct gs_compile_context *gcc)
 
    if (ilo_debug & ILO_DEBUG_GS) {
       ilo_printf("disassembly:\n");
-      toy_compiler_disassemble(tc, sh->kernel, sh->kernel_size);
+      toy_compiler_disassemble(tc->dev, sh->kernel, sh->kernel_size, false);
       ilo_printf("\n");
    }
 
@@ -986,7 +986,7 @@ gs_compile_passthrough(struct gs_compile_context *gcc)
 
    if (ilo_debug & ILO_DEBUG_GS) {
       ilo_printf("disassembly:\n");
-      toy_compiler_disassemble(tc, sh->kernel, sh->kernel_size);
+      toy_compiler_disassemble(tc->dev, sh->kernel, sh->kernel_size, false);
       ilo_printf("\n");
    }
 

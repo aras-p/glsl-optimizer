@@ -470,6 +470,8 @@ void *
 toy_compiler_assemble(struct toy_compiler *tc, int *size);
 
 void
-toy_compiler_disassemble(struct toy_compiler *tc, const void *kernel, int size);
+toy_compiler_disassemble(const struct ilo_dev_info *dev,
+                         const void *kernel, int size,
+                         bool dump_hex);
 
 #endif /* TOY_COMPILER_H */

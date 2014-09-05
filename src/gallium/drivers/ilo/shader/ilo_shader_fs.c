@@ -1425,7 +1425,7 @@ fs_compile(struct fs_compile_context *fcc)
 
    if (ilo_debug & ILO_DEBUG_FS) {
       ilo_printf("disassembly:\n");
-      toy_compiler_disassemble(tc, sh->kernel, sh->kernel_size);
+      toy_compiler_disassemble(tc->dev, sh->kernel, sh->kernel_size, false);
       ilo_printf("\n");
    }
 

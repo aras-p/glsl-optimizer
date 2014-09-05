@@ -40,10 +40,10 @@ static int brw_disasm (FILE *file, struct brw_instruction *inst, int gen);
 #include "toy_compiler.h"
 
 void
-toy_compiler_disassemble(struct toy_compiler *tc, const void *kernel, int size)
+toy_compiler_disassemble(const struct ilo_dev_info *dev,
+                         const void *kernel, int size,
+                         bool dump_hex)
 {
-   /* set this to true to dump the hex */
-   const bool dump_hex = false;
    const struct brw_instruction *instructions = kernel;
    int i;
 
@@ -55,7 +55,7 @@ toy_compiler_disassemble(struct toy_compiler *tc, const void *kernel, int size)
       }
 
       brw_disasm(stderr, (struct brw_instruction *) &instructions[i],
-            ILO_GEN_GET_MAJOR(tc->dev->gen));
+            ILO_GEN_GET_MAJOR(dev->gen));
    }
 }
 

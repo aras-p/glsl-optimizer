@@ -789,7 +789,7 @@ vs_compile(struct vs_compile_context *vcc)
 
    if (ilo_debug & ILO_DEBUG_VS) {
       ilo_printf("disassembly:\n");
-      toy_compiler_disassemble(tc, sh->kernel, sh->kernel_size);
+      toy_compiler_disassemble(tc->dev, sh->kernel, sh->kernel_size, false);
       ilo_printf("\n");
    }
 
