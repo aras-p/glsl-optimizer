@@ -1983,6 +1983,7 @@ if test -n "$with_gallium_drivers"; then
             fi
 
             if test "x$have_libdrm" = xyes; then
+                GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/kms-dri"
                 GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS dri/kms-swrast"
             fi
             ;;
