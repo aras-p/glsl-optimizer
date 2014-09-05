@@ -92,9 +92,7 @@ protected:
 
    inline void emit_mov_8(const struct brw_reg& dst, const struct brw_reg& src)
    {
-      fs_inst *mv = new (mem_ctx) fs_inst(BRW_OPCODE_MOV, 8, dst, src);
-      mv->force_uncompressed = true;
-      insts.push_tail(mv);
+      insts.push_tail(new (mem_ctx) fs_inst(BRW_OPCODE_MOV, 8, dst, src));
    }
 
    inline void emit_and(const struct brw_reg& dst,
@@ -115,9 +113,7 @@ protected:
                           const struct brw_reg& src1,
                           const struct brw_reg& src2)
    {
-      fs_inst *add = new (mem_ctx) fs_inst(BRW_OPCODE_ADD, 8, dst, src1, src2);
-      add->force_uncompressed = true;
-      insts.push_tail(add);
+      insts.push_tail(new (mem_ctx) fs_inst(BRW_OPCODE_ADD, 8, dst, src1, src2));
    }
 
    inline void emit_mul(const struct brw_reg& dst,

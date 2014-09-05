@@ -463,7 +463,6 @@ fs_visitor::DEP_RESOLVE_MOV(int grf)
     * dependencies, and to avoid having to deal with aligning its regs to 2.
     */
    inst->exec_size = 8;
-   inst->force_uncompressed = true;
 
    return inst;
 }
@@ -688,7 +687,6 @@ fs_visitor::get_timestamp()
     * even if it's not enabled in the dispatch.
     */
    mov->force_writemask_all = true;
-   mov->force_uncompressed = true;
    mov->exec_size = 8;
 
    /* The caller wants the low 32 bits of the timestamp.  Since it's running
@@ -1450,7 +1448,6 @@ fs_visitor::compute_sample_position(fs_reg dst, fs_reg int_sample_pos)
 fs_reg *
 fs_visitor::emit_samplepos_setup()
 {
-   fs_inst *inst;
    assert(brw->gen >= 6);
 
    this->current_annotation = "compute sample position";
@@ -1477,11 +1474,9 @@ fs_visitor::emit_samplepos_setup()
    if (dispatch_width == 8) {
       emit(MOV(int_sample_x, fs_reg(sample_pos_reg)));
    } else {
-      inst = emit(MOV(half(int_sample_x, 0), fs_reg(sample_pos_reg)));
-      inst->force_uncompressed = true;
-      inst = emit(MOV(half(int_sample_x, 1),
-                      fs_reg(suboffset(sample_pos_reg, 16))));
-      inst->force_sechalf = true;
+      emit(MOV(half(int_sample_x, 0), fs_reg(sample_pos_reg)));
+      emit(MOV(half(int_sample_x, 1), fs_reg(suboffset(sample_pos_reg, 16))))
+         ->force_sechalf = true;
    }
    /* Compute gl_SamplePosition.x */
    compute_sample_position(pos, int_sample_x);
@@ -1489,12 +1484,10 @@ fs_visitor::emit_samplepos_setup()
    if (dispatch_width == 8) {
       emit(MOV(int_sample_y, fs_reg(suboffset(sample_pos_reg, 1))));
    } else {
-      inst = emit(MOV(half(int_sample_y, 0),
-                      fs_reg(suboffset(sample_pos_reg, 1))));
-      inst->force_uncompressed = true;
-      inst = emit(MOV(half(int_sample_y, 1),
-                      fs_reg(suboffset(sample_pos_reg, 17))));
-      inst->force_sechalf = true;
+      emit(MOV(half(int_sample_y, 0),
+               fs_reg(suboffset(sample_pos_reg, 1))));
+      emit(MOV(half(int_sample_y, 1), fs_reg(suboffset(sample_pos_reg, 17))))
+         ->force_sechalf = true;
    }
    /* Compute gl_SamplePosition.y */
    compute_sample_position(pos, int_sample_y);
@@ -2578,7 +2571,6 @@ fs_visitor::emit_repclear_shader()
    fs_inst *mov = emit(MOV(vec4(brw_message_reg(color_mrf)),
                            fs_reg(UNIFORM, 0, BRW_REGISTER_TYPE_F)));
    mov->force_writemask_all = true;
-   mov->force_uncompressed = true;
 
    fs_inst *write;
    if (key->nr_color_regions == 1) {
