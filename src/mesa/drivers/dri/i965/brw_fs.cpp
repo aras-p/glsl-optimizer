@@ -2314,6 +2314,7 @@ fs_visitor::try_rep_send()
 {
    int i, count;
    fs_inst *start = NULL;
+   bblock_t *mov_block;
 
    /* From the Ivybridge PRM, Volume 4 Part 1, section 3.9.11.2
     * ("Message Descriptor - Render Target Write"):
@@ -2343,15 +2344,19 @@ fs_visitor::try_rep_send()
     */
    count = 0;
    foreach_block_and_inst_safe(block, fs_inst, inst, cfg) {
-      if (count == 0)
+      if (count == 0) {
          start = inst;
+         mov_block = block;
+      }
       if (inst->opcode == BRW_OPCODE_MOV &&
 	  inst->dst.file == MRF &&
           inst->dst.reg == start->dst.reg + 2 * count &&
           inst->src[0].file == HW_REG &&
           inst->src[0].reg_offset == start->src[0].reg_offset + count) {
-         if (count == 0)
+         if (count == 0) {
             start = inst;
+            mov_block = block;
+         }
          count++;
       }
 
@@ -2381,9 +2386,9 @@ fs_visitor::try_rep_send()
          mov->dst.type = BRW_REGISTER_TYPE_F;
 
          /* Replace the four MOVs with the new vec4 MOV. */
-         start->insert_before(block, mov);
+         start->insert_before(mov_block, mov);
          for (i = 0; i < 4; i++)
-            ((fs_inst *) mov->next)->remove(block);
+            ((fs_inst *) mov->next)->remove(mov_block);
 
          /* Finally, adjust the message length and set the opcode to
           * REP_FB_WRITE for the send, so that the generator will use the
