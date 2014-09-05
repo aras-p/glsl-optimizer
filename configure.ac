@@ -1912,6 +1912,9 @@ if test -n "$with_gallium_drivers"; then
         case "x$driver" in
         xsvga)
             HAVE_GALLIUM_SVGA=yes
+            if test "x$have_libdrm" != xyes; then
+                AC_MSG_ERROR([Building svga requires libdrm >= $LIBDRM_REQUIRED])
+            fi
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS svga softpipe"
             gallium_require_drm_loader
             gallium_check_st "svga/drm" "dri/vmwgfx" "xa/vmwgfx"
