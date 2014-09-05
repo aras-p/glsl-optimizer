@@ -1820,26 +1820,25 @@ dnl
 dnl Gallium helper functions
 dnl
 gallium_check_st() {
-    if test "x$NEED_NONNULL_WINSYS" = xyes; then
-         if test "x$have_libdrm" != xyes; then
-            AC_MSG_ERROR([DRI or Xorg DDX requires libdrm >= $LIBDRM_REQUIRED])
-         fi
-         GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS $1"
+    if test "x$have_libdrm" != xyes; then
+       AC_MSG_ERROR([$1 requires libdrm >= $LIBDRM_REQUIRED])
     fi
-    if test "x$enable_dri" = xyes && test -n "$2"; then
-         GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $2"
-    fi
-    if test "x$enable_xa" = xyes && test -n "$3"; then
+    GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS $2"
+
+    if test "x$enable_dri" = xyes && test -n "$3"; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $3"
     fi
-    if test "x$enable_xvmc" = xyes && test -n "$4"; then
+    if test "x$enable_xa" = xyes && test -n "$4"; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $4"
     fi
-    if test "x$enable_vdpau" = xyes && test -n "$5"; then
+    if test "x$enable_xvmc" = xyes && test -n "$5"; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $5"
     fi
-    if test "x$enable_omx" = xyes && test "x$6" != x; then
+    if test "x$enable_vdpau" = xyes && test -n "$6"; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $6"
+    fi
+    if test "x$enable_omx" = xyes && test "x$7" != x; then
+         GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $7"
     fi
 }
 
@@ -1898,13 +1897,6 @@ radeon_llvm_check() {
                                  [AC_MSG_ERROR([$1 requires libelf when using LLVM])])
 }
 
-dnl Gallium drivers
-if test "x$enable_dri" = xyes -o "x$enable_xa" = xyes -o \
-        "x$enable_xvmc" = xyes -o "x$enable_vdpau" = xyes; then
-    NEED_NONNULL_WINSYS=yes
-fi
-AM_CONDITIONAL(NEED_NONNULL_WINSYS, test "x$NEED_NONNULL_WINSYS" = xyes)
-
 dnl Duplicates in GALLIUM_DRIVERS_DIRS are removed by sorting it after this block
 if test -n "$with_gallium_drivers"; then
     gallium_drivers=`IFS=', '; echo $with_gallium_drivers`
@@ -1912,26 +1904,23 @@ if test -n "$with_gallium_drivers"; then
         case "x$driver" in
         xsvga)
             HAVE_GALLIUM_SVGA=yes
-            if test "x$have_libdrm" != xyes; then
-                AC_MSG_ERROR([Building svga requires libdrm >= $LIBDRM_REQUIRED])
-            fi
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS svga softpipe"
             gallium_require_drm_loader
-            gallium_check_st "svga/drm" "dri/vmwgfx" "xa/vmwgfx"
+            gallium_check_st "svga" "svga/drm" "dri/vmwgfx" "xa/vmwgfx"
             ;;
         xi915)
             HAVE_GALLIUM_I915=yes
             PKG_CHECK_MODULES([INTEL], [libdrm_intel >= $LIBDRM_INTEL_REQUIRED])
             gallium_require_drm_loader
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i915"
-            gallium_check_st "i915/drm" "dri/i915" "xa/i915"
+            gallium_check_st "Gallium i915" "i915/drm" "dri/i915" "xa/i915"
             ;;
         xilo)
             HAVE_GALLIUM_ILO=yes
             PKG_CHECK_MODULES([INTEL], [libdrm_intel >= $LIBDRM_INTEL_REQUIRED])
             gallium_require_drm_loader
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS ilo"
-            gallium_check_st "intel/drm" "dri/ilo" "xa/ilo"
+            gallium_check_st "Gallium i965/ilo" "intel/drm" "dri/ilo" "xa/ilo"
             ;;
         xr300)
             HAVE_GALLIUM_R300=yes
@@ -1939,7 +1928,7 @@ if test -n "$with_gallium_drivers"; then
             gallium_require_drm_loader
             gallium_require_llvm "Gallium R300"
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
-            gallium_check_st "radeon/drm" "dri/r300"
+            gallium_check_st "Gallium R300" "radeon/drm" "dri/r300"
             ;;
         xr600)
             HAVE_GALLIUM_R600=yes
@@ -1956,7 +1945,7 @@ if test -n "$with_gallium_drivers"; then
             if test "x$enable_opencl" = xyes; then
                 LLVM_COMPONENTS="${LLVM_COMPONENTS} bitreader asmparser"
             fi
-            gallium_check_st "radeon/drm" "dri/r600" "" "xvmc/r600" "vdpau/r600" "omx/r600"
+            gallium_check_st "Gallium R600" "radeon/drm" "dri/r600" "" "xvmc/r600" "vdpau/r600" "omx/r600"
             ;;
         xradeonsi)
             HAVE_GALLIUM_RADEONSI=yes
@@ -1965,21 +1954,21 @@ if test -n "$with_gallium_drivers"; then
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS radeonsi"
             radeon_llvm_check "radeonsi"
             require_egl_drm "radeonsi"
-            gallium_check_st "radeon/drm" "dri/radeonsi" "" "" "vdpau/radeonsi" "omx/radeonsi"
+            gallium_check_st "radeonsi" "radeon/drm" "dri/radeonsi" "" "" "vdpau/radeonsi" "omx/radeonsi"
             ;;
         xnouveau)
             HAVE_GALLIUM_NOUVEAU=yes
             PKG_CHECK_MODULES([NOUVEAU], [libdrm_nouveau >= $LIBDRM_NOUVEAU_REQUIRED])
             gallium_require_drm_loader
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS nouveau"
-            gallium_check_st "nouveau/drm" "dri/nouveau" "xa/nouveau" "xvmc/nouveau" "vdpau/nouveau" "omx/nouveau"
+            gallium_check_st "nouveau" "nouveau/drm" "dri/nouveau" "xa/nouveau" "xvmc/nouveau" "vdpau/nouveau" "omx/nouveau"
             ;;
         xfreedreno)
             HAVE_GALLIUM_FREEDRENO=yes
             PKG_CHECK_MODULES([FREEDRENO], [libdrm_freedreno >= $LIBDRM_FREEDRENO_REQUIRED])
             gallium_require_drm_loader
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS freedreno"
-            gallium_check_st "freedreno/drm" "dri/freedreno" "xa/freedreno" "" ""
+            gallium_check_st "freedreno" "freedreno/drm" "dri/freedreno" "xa/freedreno" "" ""
             ;;
         xswrast)
             HAVE_GALLIUM_SOFTPIPE=yes
@@ -2001,7 +1990,7 @@ if test -n "$with_gallium_drivers"; then
             HAVE_GALLIUM_VC4=yes
             gallium_require_drm_loader
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS vc4"
-            gallium_check_st "vc4/drm" "dri-vc4" "" "" ""
+            gallium_check_st "vc4" "vc4/drm" "dri-vc4" "" "" ""
 
             case "$host_cpu" in
                 i?86 | x86_64 | amd64)
@@ -2123,8 +2112,7 @@ AM_CONDITIONAL(HAVE_R200_DRI, test x$HAVE_R200_DRI = xyes)
 AM_CONDITIONAL(HAVE_RADEON_DRI, test x$HAVE_RADEON_DRI = xyes)
 AM_CONDITIONAL(HAVE_SWRAST_DRI, test x$HAVE_SWRAST_DRI = xyes)
 
-AM_CONDITIONAL(NEED_RADEON_DRM_WINSYS, test "x$NEED_NONNULL_WINSYS" = xyes -a \
-                                            "x$HAVE_GALLIUM_R300" = xyes -o \
+AM_CONDITIONAL(NEED_RADEON_DRM_WINSYS, test "x$HAVE_GALLIUM_R300" = xyes -o \
                                             "x$HAVE_GALLIUM_R600" = xyes -o \
                                             "x$HAVE_GALLIUM_RADEONSI" = xyes)
 AM_CONDITIONAL(NEED_WINSYS_WRAPPER, test "x$HAVE_GALLIUM_I915" = xyes -o \
