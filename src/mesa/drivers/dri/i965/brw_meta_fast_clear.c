@@ -641,13 +641,19 @@ get_resolve_rect(struct brw_context *brw,
     *     with respect to render target being resolved.
     *
     * The scaledown factors in the table that follows are related to the
-    * alignment size returned by intel_get_non_msrt_mcs_alignment(), but with
-    * X and Y alignment each divided by 2.
+    * alignment size returned by intel_get_non_msrt_mcs_alignment() by a
+    * multiplier.  For IVB and HSW, we divide by two, for BDW we multiply
+    * by 8 and 16.
     */
 
    intel_get_non_msrt_mcs_alignment(brw, mt, &x_align, &y_align);
-   x_scaledown = x_align / 2;
-   y_scaledown = y_align / 2;
+   if (brw->gen >= 8) {
+      x_scaledown = x_align * 8;
+      y_scaledown = y_align * 16;
+   } else {
+      x_scaledown = x_align / 2;
+      y_scaledown = y_align / 2;
+   }
    rect->x0 = rect->y0 = 0;
    rect->x1 = ALIGN(mt->logical_width0, x_scaledown) / x_scaledown;
    rect->y1 = ALIGN(mt->logical_height0, y_scaledown) / y_scaledown;
