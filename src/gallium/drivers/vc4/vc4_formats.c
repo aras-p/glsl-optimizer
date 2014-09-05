@@ -86,8 +86,8 @@ static const struct vc4_format vc4_format_table[] = {
         /* Depth sampling will be handled by doing nearest filtering and not
          * unpacking the RGBA value.
          */
-        FORMAT(Z24_UNORM_S8_UINT, NO, RGBA8888, SWIZ(X, Y, Z, W)),
-        FORMAT(Z24X8_UNORM,       NO, RGBA8888, SWIZ(X, Y, Z, W)),
+        FORMAT(S8_UINT_Z24_UNORM, NO, RGBA8888, SWIZ(X, Y, Z, W)),
+        FORMAT(X8Z24_UNORM,       NO, RGBA8888, SWIZ(X, Y, Z, W)),
 
         FORMAT(B4G4R4A4_UNORM, NO, RGBA4444, SWIZ(Y, Z, W, X)),
         FORMAT(B4G4R4X4_UNORM, NO, RGBA4444, SWIZ(Y, Z, W, 1)),

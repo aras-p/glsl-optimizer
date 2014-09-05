@@ -224,8 +224,12 @@ vc4_clear(struct pipe_context *pctx, unsigned buffers,
                                   color->f);
         }
 
-        if (buffers & PIPE_CLEAR_DEPTH)
+        if (buffers & PIPE_CLEAR_DEPTH) {
+                /* Though the depth buffer is stored with Z in the high 24,
+                 * for this field we just need to store it in the low 24.
+                 */
                 vc4->clear_depth = util_pack_z(PIPE_FORMAT_Z24X8_UNORM, depth);
+        }
 
         vc4->cleared |= buffers;
         vc4->resolve |= buffers;

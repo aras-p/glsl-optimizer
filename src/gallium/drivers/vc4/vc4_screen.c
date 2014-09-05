@@ -343,8 +343,8 @@ vc4_screen_is_format_supported(struct pipe_screen *pscreen,
         }
 
         if ((usage & PIPE_BIND_DEPTH_STENCIL) &&
-            (format == PIPE_FORMAT_Z24_UNORM_S8_UINT ||
-             format == PIPE_FORMAT_Z24X8_UNORM)) {
+            (format == PIPE_FORMAT_S8_UINT_Z24_UNORM ||
+             format == PIPE_FORMAT_X8Z24_UNORM)) {
                 retval |= PIPE_BIND_DEPTH_STENCIL;
         }
 
