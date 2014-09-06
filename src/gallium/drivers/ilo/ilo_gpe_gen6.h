@@ -2288,16 +2288,14 @@ gen6_emit_SCISSOR_RECT(const struct ilo_dev_info *dev,
 }
 
 static inline uint32_t
-gen6_emit_BINDING_TABLE_STATE(const struct ilo_dev_info *dev,
-                              uint32_t *surface_states,
-                              int num_surface_states,
-                              struct ilo_cp *cp)
+gen6_BINDING_TABLE_STATE(struct ilo_builder *builder,
+                         uint32_t *surface_states,
+                         int num_surface_states)
 {
-   const int state_align = 32 / 4;
+   const int state_align = 32;
    const int state_len = num_surface_states;
-   uint32_t state_offset, *dw;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7.5);
+   ILO_GPE_VALID_GEN(builder->dev, 6, 7.5);
 
    /*
     * From the Sandy Bridge PRM, volume 4 part 1, page 69:
@@ -2309,62 +2307,44 @@ gen6_emit_BINDING_TABLE_STATE(const struct ilo_dev_info *dev,
    if (!num_surface_states)
       return 0;
 
-   dw = ilo_cp_steal_ptr(cp, ILO_BUILDER_ITEM_BINDING_TABLE,
-         state_len, state_align, &state_offset);
-   memcpy(dw, surface_states,
-         num_surface_states * sizeof(surface_states[0]));
-
-   return state_offset;
+   return ilo_builder_surface_write(builder, ILO_BUILDER_ITEM_BINDING_TABLE,
+         state_align, state_len, surface_states);
 }
 
 static inline uint32_t
-gen6_emit_SURFACE_STATE(const struct ilo_dev_info *dev,
-                        const struct ilo_view_surface *surf,
-                        bool for_render,
-                        struct ilo_cp *cp)
+gen6_SURFACE_STATE(struct ilo_builder *builder,
+                   const struct ilo_view_surface *surf,
+                   bool for_render)
 {
-   const int state_align = 32 / 4;
-   const int state_len = (dev->gen >= ILO_GEN(7)) ? 8 : 6;
+   const int state_align = 32;
+   const int state_len = (builder->dev->gen >= ILO_GEN(7)) ? 8 : 6;
    uint32_t state_offset;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7.5);
+   ILO_GPE_VALID_GEN(builder->dev, 6, 7.5);
 
-   ilo_cp_steal(cp, ILO_BUILDER_ITEM_SURFACE,
-         state_len, state_align, &state_offset);
+   state_offset = ilo_builder_surface_write(builder, ILO_BUILDER_ITEM_SURFACE,
+         state_align, state_len, surf->payload);
 
-   STATIC_ASSERT(Elements(surf->payload) >= 8);
-
-   ilo_cp_write(cp, surf->payload[0]);
-   ilo_cp_write_bo(cp, surf->payload[1], surf->bo,
-         (for_render) ? INTEL_RELOC_WRITE : 0);
-   ilo_cp_write(cp, surf->payload[2]);
-   ilo_cp_write(cp, surf->payload[3]);
-   ilo_cp_write(cp, surf->payload[4]);
-   ilo_cp_write(cp, surf->payload[5]);
-
-   if (dev->gen >= ILO_GEN(7)) {
-      ilo_cp_write(cp, surf->payload[6]);
-      ilo_cp_write(cp, surf->payload[7]);
+   if (surf->bo) {
+      ilo_builder_surface_reloc(builder, state_offset, 1, surf->bo,
+            surf->payload[1], (for_render) ? INTEL_RELOC_WRITE : 0);
    }
-
-   ilo_cp_end(cp);
 
    return state_offset;
 }
 
 static inline uint32_t
-gen6_emit_so_SURFACE_STATE(const struct ilo_dev_info *dev,
-                           const struct pipe_stream_output_target *so,
-                           const struct pipe_stream_output_info *so_info,
-                           int so_index,
-                           struct ilo_cp *cp)
+gen6_so_SURFACE_STATE(struct ilo_builder *builder,
+                      const struct pipe_stream_output_target *so,
+                      const struct pipe_stream_output_info *so_info,
+                      int so_index)
 {
    struct ilo_buffer *buf = ilo_buffer(so->buffer);
    unsigned bo_offset, struct_size;
    enum pipe_format elem_format;
    struct ilo_view_surface surf;
 
-   ILO_GPE_VALID_GEN(dev, 6, 6);
+   ILO_GPE_VALID_GEN(builder->dev, 6, 6);
 
    bo_offset = so->buffer_offset + so_info->output[so_index].dst_offset * 4;
    struct_size = so_info->stride[so_info->output[so_index].output_buffer] * 4;
@@ -2388,10 +2368,10 @@ gen6_emit_so_SURFACE_STATE(const struct ilo_dev_info *dev,
       break;
    }
 
-   ilo_gpe_init_view_surface_for_buffer_gen6(dev, buf, bo_offset, so->buffer_size,
-         struct_size, elem_format, false, true, &surf);
+   ilo_gpe_init_view_surface_for_buffer_gen6(builder->dev, buf, bo_offset,
+         so->buffer_size, struct_size, elem_format, false, true, &surf);
 
-   return gen6_emit_SURFACE_STATE(dev, &surf, false, cp);
+   return gen6_SURFACE_STATE(builder, &surf, false);
 }
 
 static inline uint32_t

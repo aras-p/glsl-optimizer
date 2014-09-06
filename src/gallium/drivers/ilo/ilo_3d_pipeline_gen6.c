@@ -884,12 +884,12 @@ gen6_pipeline_state_surfaces_rt(struct ilo_3d_pipeline *p,
 
          if (!surface) {
             surface_state[i] =
-               gen6_emit_SURFACE_STATE(p->dev, &fb->null_rt, true, p->cp);
+               gen6_SURFACE_STATE(&p->cp->builder, &fb->null_rt, true);
          }
          else {
             assert(surface && surface->is_rt);
             surface_state[i] =
-               gen6_emit_SURFACE_STATE(p->dev, &surface->u.rt, true, p->cp);
+               gen6_SURFACE_STATE(&p->cp->builder, &surface->u.rt, true);
          }
       }
 
@@ -899,7 +899,7 @@ gen6_pipeline_state_surfaces_rt(struct ilo_3d_pipeline *p,
        */
       if (i == 0) {
          surface_state[i] =
-            gen6_emit_SURFACE_STATE(p->dev, &fb->null_rt, true, p->cp);
+            gen6_SURFACE_STATE(&p->cp->builder, &fb->null_rt, true);
 
          i++;
       }
@@ -938,8 +938,8 @@ gen6_pipeline_state_surfaces_so(struct ilo_3d_pipeline *p,
             (target < so->count) ? so->states[target] : NULL;
 
          if (so_target) {
-            surface_state[i] = gen6_emit_so_SURFACE_STATE(p->dev,
-                  so_target, so_info, i, p->cp);
+            surface_state[i] = gen6_so_SURFACE_STATE(&p->cp->builder,
+                  so_target, so_info, i);
          }
          else {
             surface_state[i] = 0;
@@ -1004,7 +1004,7 @@ gen6_pipeline_state_surfaces_view(struct ilo_3d_pipeline *p,
             (const struct ilo_view_cso *) view->states[i];
 
          surface_state[i] =
-            gen6_emit_SURFACE_STATE(p->dev, &cso->surface, false, p->cp);
+            gen6_SURFACE_STATE(&p->cp->builder, &cso->surface, false);
       }
       else {
          surface_state[i] = 0;
@@ -1057,8 +1057,8 @@ gen6_pipeline_state_surfaces_const(struct ilo_3d_pipeline *p,
    count = util_last_bit(cbuf->enabled_mask);
    for (i = 0; i < count; i++) {
       if (cbuf->cso[i].resource) {
-         surface_state[i] = gen6_emit_SURFACE_STATE(p->dev,
-               &cbuf->cso[i].surface, false, p->cp);
+         surface_state[i] = gen6_SURFACE_STATE(&p->cp->builder,
+               &cbuf->cso[i].surface, false);
       }
       else {
          surface_state[i] = 0;
@@ -1127,8 +1127,8 @@ gen6_pipeline_state_binding_tables(struct ilo_3d_pipeline *p,
    if (size < session->num_surfaces[shader_type])
       size = session->num_surfaces[shader_type];
 
-   *binding_table_state = gen6_emit_BINDING_TABLE_STATE(p->dev,
-         surface_state, size, p->cp);
+   *binding_table_state = gen6_BINDING_TABLE_STATE(&p->cp->builder,
+         surface_state, size);
    *binding_table_state_size = size;
 }
 
