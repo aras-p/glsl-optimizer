@@ -195,8 +195,8 @@ struct r600_gs_rings_state {
 
 /* This must start from 16. */
 /* features */
-#define DBG_LLVM		(1 << 17)
-#define DBG_NO_CP_DMA		(1 << 18)
+#define DBG_LLVM		(1 << 29)
+#define DBG_NO_CP_DMA		(1 << 30)
 /* shader backend */
 #define DBG_NO_SB		(1 << 21)
 #define DBG_SB_CS		(1 << 22)
@@ -551,6 +551,13 @@ void r600_decompress_depth_textures(struct r600_context *rctx,
 				    struct r600_samplerview_state *textures);
 void r600_decompress_color_textures(struct r600_context *rctx,
 				    struct r600_samplerview_state *textures);
+void r600_resource_copy_region(struct pipe_context *ctx,
+			       struct pipe_resource *dst,
+			       unsigned dst_level,
+			       unsigned dstx, unsigned dsty, unsigned dstz,
+			       struct pipe_resource *src,
+			       unsigned src_level,
+			       const struct pipe_box *src_box);
 
 /* r600_shader.c */
 int r600_pipe_shader_create(struct pipe_context *ctx,

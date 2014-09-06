@@ -565,13 +565,13 @@ static void r600_clear_buffer(struct pipe_context *ctx, struct pipe_resource *ds
 	}
 }
 
-static void r600_resource_copy_region(struct pipe_context *ctx,
-				      struct pipe_resource *dst,
-				      unsigned dst_level,
-				      unsigned dstx, unsigned dsty, unsigned dstz,
-				      struct pipe_resource *src,
-				      unsigned src_level,
-				      const struct pipe_box *src_box)
+void r600_resource_copy_region(struct pipe_context *ctx,
+			       struct pipe_resource *dst,
+			       unsigned dst_level,
+			       unsigned dstx, unsigned dsty, unsigned dstz,
+			       struct pipe_resource *src,
+			       unsigned src_level,
+			       const struct pipe_box *src_box)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct pipe_surface *dst_view, dst_templ;
@@ -814,6 +814,10 @@ static void r600_blit(struct pipe_context *ctx,
 					 info->src.box.z + info->src.box.depth - 1)) {
 		return; /* error */
 	}
+
+	if (rctx->screen->b.debug_flags & DBG_FORCE_DMA &&
+	    util_try_blit_via_copy_region(ctx, info))
+		return;
 
 	r600_blitter_begin(ctx, R600_BLIT |
 			   (info->render_condition_enable ? 0 : R600_DISABLE_RENDER_COND));

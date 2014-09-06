@@ -118,6 +118,9 @@ static struct pipe_context *si_create_context(struct pipe_screen *screen, void *
 		goto fail;
 	}
 
+	if (sscreen->b.debug_flags & DBG_FORCE_DMA)
+		sctx->b.b.resource_copy_region = sctx->b.dma_copy;
+
 	sctx->blitter = util_blitter_create(&sctx->b.b);
 	if (sctx->blitter == NULL)
 		goto fail;

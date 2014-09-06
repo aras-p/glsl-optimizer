@@ -98,7 +98,8 @@
 #define DBG_NO_2D_TILING	(1 << 13)
 #define DBG_NO_TILING		(1 << 14)
 #define DBG_SWITCH_ON_EOP	(1 << 15)
-/* The maximum allowed bit is 15. */
+#define DBG_FORCE_DMA		(1 << 16)
+/* The maximum allowed bit is 20. */
 
 #define R600_MAP_BUFFER_ALIGNMENT 64
 

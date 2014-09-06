@@ -191,6 +191,9 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	if (!rctx->isa || r600_isa_init(rctx, rctx->isa))
 		goto fail;
 
+	if (rscreen->b.debug_flags & DBG_FORCE_DMA)
+		rctx->b.b.resource_copy_region = rctx->b.dma_copy;
+
 	rctx->blitter = util_blitter_create(&rctx->b.b);
 	if (rctx->blitter == NULL)
 		goto fail;

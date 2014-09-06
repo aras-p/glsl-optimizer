@@ -320,6 +320,7 @@ static const struct debug_named_value common_debug_options[] = {
 	{ "no2d", DBG_NO_2D_TILING, "Disable 2D tiling" },
 	{ "notiling", DBG_NO_TILING, "Disable tiling" },
 	{ "switch_on_eop", DBG_SWITCH_ON_EOP, "Program WD/IA to switch on end-of-packet." },
+	{ "forcedma", DBG_FORCE_DMA, "Use asynchronous DMA for all operations when possible." },
 
 	DEBUG_NAMED_VALUE_END /* must be last */
 };

@@ -2966,7 +2966,7 @@ static void r600_dma_copy(struct pipe_context *ctx,
 	return;
 
 fallback:
-	ctx->resource_copy_region(ctx, dst, dst_level, dstx, dsty, dstz,
+	r600_resource_copy_region(ctx, dst, dst_level, dstx, dsty, dstz,
 				  src, src_level, src_box);
 }
 

@@ -23,6 +23,7 @@
 
 #include "si_pipe.h"
 #include "util/u_format.h"
+#include "util/u_surface.h"
 
 enum si_blitter_op /* bitmask */
 {
@@ -531,13 +532,13 @@ static void si_reset_blittable_to_orig(struct pipe_resource *tex,
 	rtex->mipmap_shift = 0;
 }
 
-static void si_resource_copy_region(struct pipe_context *ctx,
-				    struct pipe_resource *dst,
-				    unsigned dst_level,
-				    unsigned dstx, unsigned dsty, unsigned dstz,
-				    struct pipe_resource *src,
-				    unsigned src_level,
-				    const struct pipe_box *src_box)
+void si_resource_copy_region(struct pipe_context *ctx,
+			     struct pipe_resource *dst,
+			     unsigned dst_level,
+			     unsigned dstx, unsigned dsty, unsigned dstz,
+			     struct pipe_resource *src,
+			     unsigned src_level,
+			     const struct pipe_box *src_box)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
 	struct r600_texture *rdst = (struct r600_texture*)dst;
@@ -769,6 +770,10 @@ static void si_blit(struct pipe_context *ctx,
 	si_decompress_subresource(ctx, info->src.resource, info->src.level,
 				  info->src.box.z,
 				  info->src.box.z + info->src.box.depth - 1);
+
+	if (sctx->screen->b.debug_flags & DBG_FORCE_DMA &&
+	    util_try_blit_via_copy_region(ctx, info))
+		return;
 
 	si_blitter_begin(ctx, SI_BLIT |
 			 (info->render_condition_enable ? 0 : SI_DISABLE_RENDER_COND));
