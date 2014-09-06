@@ -150,7 +150,7 @@ NVC0LegalizePostRA::findOverwritingDefs(const Instruction *texi,
    while (insn->op == OP_MOV && insn->getDef(0)->equals(insn->getSrc(0)))
       insn = insn->getSrc(0)->getUniqueInsn();
 
-   if (!insn || !insn->bb->reachableBy(texi->bb, term))
+   if (!insn->bb->reachableBy(texi->bb, term))
       return;
 
    switch (insn->op) {
