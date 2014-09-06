@@ -23,10 +23,6 @@
 #include "pipe/p_defines.h"
 #include "util/u_framebuffer.h"
 
-#ifdef NV50_WITH_DRAW_MODULE
-#include "draw/draw_context.h"
-#endif
-
 #include "nv50/nv50_context.h"
 #include "nv50/nv50_screen.h"
 #include "nv50/nv50_resource.h"
@@ -148,10 +144,6 @@ nv50_destroy(struct pipe_context *pipe)
    nouveau_pushbuf_kick(nv50->base.pushbuf, nv50->base.pushbuf->channel);
 
    nv50_context_unreference_resources(nv50);
-
-#ifdef NV50_WITH_DRAW_MODULE
-   draw_destroy(nv50->draw);
-#endif
 
    FREE(nv50->blit);
 
@@ -308,13 +300,6 @@ nv50_create(struct pipe_screen *pscreen, void *priv)
    nv50_init_resource_functions(pipe);
 
    nv50->base.invalidate_resource_storage = nv50_invalidate_resource_storage;
-
-#ifdef NV50_WITH_DRAW_MODULE
-   /* no software fallbacks implemented */
-   nv50->draw = draw_create(pipe);
-   assert(nv50->draw);
-   draw_set_rasterize_stage(nv50->draw, nv50_draw_render_stage(nv50));
-#endif
 
    if (screen->base.device->chipset < 0x84 ||
        debug_get_bool_option("NOUVEAU_PMPEG", FALSE)) {

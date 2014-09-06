@@ -10,10 +10,6 @@
 #include "util/u_inlines.h"
 #include "util/u_dynarray.h"
 
-#ifdef NVC0_WITH_DRAW_MODULE
-#include "draw/draw_vertex.h"
-#endif
-
 #include "nvc0/nvc0_winsys.h"
 #include "nvc0/nvc0_stateobj.h"
 #include "nvc0/nvc0_screen.h"
@@ -207,10 +203,6 @@ struct nvc0_context {
    uint16_t surfaces_valid[2];
 
    struct util_dynarray global_residents;
-
-#ifdef NVC0_WITH_DRAW_MODULE
-   struct draw_context *draw;
-#endif
 };
 
 static INLINE struct nvc0_context *

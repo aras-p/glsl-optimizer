@@ -23,10 +23,6 @@
 #include "pipe/p_defines.h"
 #include "util/u_framebuffer.h"
 
-#ifdef NVC0_WITH_DRAW_MODULE
-#include "draw/draw_context.h"
-#endif
-
 #include "nvc0/nvc0_context.h"
 #include "nvc0/nvc0_screen.h"
 #include "nvc0/nvc0_resource.h"
@@ -153,10 +149,6 @@ nvc0_destroy(struct pipe_context *pipe)
 
    nvc0_context_unreference_resources(nvc0);
    nvc0_blitctx_destroy(nvc0);
-
-#ifdef NVC0_WITH_DRAW_MODULE
-   draw_destroy(nvc0->draw);
-#endif
 
    nouveau_context_destroy(&nvc0->base);
 }
@@ -321,13 +313,6 @@ nvc0_create(struct pipe_screen *pscreen, void *priv)
    nvc0_init_resource_functions(pipe);
 
    nvc0->base.invalidate_resource_storage = nvc0_invalidate_resource_storage;
-
-#ifdef NVC0_WITH_DRAW_MODULE
-   /* no software fallbacks implemented */
-   nvc0->draw = draw_create(pipe);
-   assert(nvc0->draw);
-   draw_set_rasterize_stage(nvc0->draw, nvc0_draw_render_stage(nvc0));
-#endif
 
    pipe->create_video_codec = nvc0_create_decoder;
    pipe->create_video_buffer = nvc0_video_buffer_create;

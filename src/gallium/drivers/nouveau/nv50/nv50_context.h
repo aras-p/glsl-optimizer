@@ -10,10 +10,6 @@
 #include "util/u_inlines.h"
 #include "util/u_dynarray.h"
 
-#ifdef NV50_WITH_DRAW_MODULE
-#include "draw/draw_vertex.h"
-#endif
-
 #include "nv50/nv50_winsys.h"
 #include "nv50/nv50_stateobj.h"
 #include "nv50/nv50_screen.h"
@@ -186,10 +182,6 @@ struct nv50_context {
    uint cond_mode;
 
    struct nv50_blitctx *blit;
-
-#ifdef NV50_WITH_DRAW_MODULE
-   struct draw_context *draw;
-#endif
 };
 
 static INLINE struct nv50_context *

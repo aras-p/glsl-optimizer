@@ -67,7 +67,6 @@ NV50_C_SOURCES := \
 	nv50/nv50_context.c \
 	nv50/nv50_context.h \
 	nv50/nv50_defs.xml.h \
-	nv50/nv50_draw.c \
 	nv50/nv50_formats.c \
 	nv50/nv50_miptree.c \
 	nv50/nv50_program.c \
@@ -146,7 +145,6 @@ NVC0_C_SOURCES := \
 	nvc0/nvc0_compute.xml.h \
 	nvc0/nvc0_context.c \
 	nvc0/nvc0_context.h \
-	nvc0/nvc0_draw.c \
 	nvc0/nvc0_formats.c \
 	nvc0/nvc0_m2mf.xml.h \
 	nvc0/nvc0_miptree.c \
