@@ -309,7 +309,6 @@ NVC0LegalizePostRA::insertTextureBarriers(Function *fn)
       }
    }
    delete[] uses;
-   uses = NULL;
 
    // insert the barriers
    for (size_t i = 0; i < useVec.size(); ++i) {
@@ -330,11 +329,8 @@ NVC0LegalizePostRA::insertTextureBarriers(Function *fn)
       }
    }
 
-   if (fn->getProgram()->optLevel < 3) {
-      if (uses)
-         delete[] uses;
+   if (fn->getProgram()->optLevel < 3)
       return true;
-   }
 
    std::vector<Limits> limitT, limitB, limitS; // entry, exit, single
 
@@ -419,8 +415,6 @@ NVC0LegalizePostRA::insertTextureBarriers(Function *fn)
             prev = i;
       }
    }
-   if (uses)
-      delete[] uses;
    return true;
 }
 
