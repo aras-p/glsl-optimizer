@@ -46,11 +46,6 @@ struct ilo_3d {
    bool new_batch;
 
    struct {
-      struct intel_bo *bo;
-      unsigned used, size;
-   } kernel;
-
-   struct {
       struct pipe_query *query;
       unsigned mode;
       bool cond;

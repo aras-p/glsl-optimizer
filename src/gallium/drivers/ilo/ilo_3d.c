@@ -401,7 +401,8 @@ ilo_3d_cp_flushed(struct ilo_3d *hw3d)
    /* invalidate the pipeline */
    ilo_3d_pipeline_invalidate(hw3d->pipeline,
          ILO_3D_PIPELINE_INVALIDATE_BATCH_BO |
-         ILO_3D_PIPELINE_INVALIDATE_STATE_BO);
+         ILO_3D_PIPELINE_INVALIDATE_STATE_BO |
+         ILO_3D_PIPELINE_INVALIDATE_KERNEL_BO);
 
    hw3d->new_batch = true;
 }
@@ -446,10 +447,6 @@ void
 ilo_3d_destroy(struct ilo_3d *hw3d)
 {
    ilo_3d_pipeline_destroy(hw3d->pipeline);
-
-   if (hw3d->kernel.bo)
-      intel_bo_unreference(hw3d->kernel.bo);
-
    FREE(hw3d);
 }
 
@@ -717,66 +714,6 @@ ilo_draw_vbo_with_sw_restart(struct pipe_context *pipe,
    FREE(restart_info);
 }
 
-static bool
-upload_shaders(struct ilo_3d *hw3d, struct ilo_shader_cache *shc)
-{
-   bool incremental = true;
-   int upload;
-
-   upload = ilo_shader_cache_upload(shc,
-         NULL, hw3d->kernel.used, incremental);
-   if (!upload)
-      return true;
-
-   /*
-    * Allocate a new bo.  When this is a new batch, assume the bo is still in
-    * use by the previous batch and force allocation.
-    *
-    * Does it help to make shader cache upload with unsynchronized mapping,
-    * and remove the check for new batch here?
-    */
-   if (hw3d->kernel.used + upload > hw3d->kernel.size || hw3d->new_batch) {
-      unsigned new_size = (hw3d->kernel.size) ?
-         hw3d->kernel.size : (8 * 1024);
-
-      while (hw3d->kernel.used + upload > new_size)
-         new_size *= 2;
-
-      if (hw3d->kernel.bo)
-         intel_bo_unreference(hw3d->kernel.bo);
-
-      hw3d->kernel.bo = intel_winsys_alloc_buffer(hw3d->cp->winsys,
-            "kernel bo", new_size, true);
-      if (!hw3d->kernel.bo) {
-         ilo_err("failed to allocate kernel bo\n");
-         return false;
-      }
-
-      hw3d->kernel.used = 0;
-      hw3d->kernel.size = new_size;
-      incremental = false;
-
-      assert(new_size >= ilo_shader_cache_upload(shc,
-            NULL, hw3d->kernel.used, incremental));
-
-      ilo_3d_pipeline_invalidate(hw3d->pipeline,
-            ILO_3D_PIPELINE_INVALIDATE_KERNEL_BO);
-   }
-
-   upload = ilo_shader_cache_upload(shc,
-         hw3d->kernel.bo, hw3d->kernel.used, incremental);
-   if (upload < 0) {
-      ilo_err("failed to upload shaders\n");
-      return false;
-   }
-
-   hw3d->kernel.used += upload;
-
-   assert(hw3d->kernel.used <= hw3d->kernel.size);
-
-   return true;
-}
-
 static void
 ilo_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 {
@@ -816,8 +753,7 @@ ilo_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 
    ilo_finalize_3d_states(ilo, info);
 
-   if (!upload_shaders(hw3d, ilo->shader_cache))
-      return;
+   ilo_shader_cache_upload(ilo->shader_cache, &hw3d->cp->builder);
 
    ilo_blit_resolve_framebuffer(ilo);
 

@@ -34,6 +34,7 @@
 #include "ilo_common.h"
 
 struct ilo_cp;
+struct ilo_shader_cache;
 
 typedef void (*ilo_cp_callback)(struct ilo_cp *cp, void *data);
 
@@ -47,6 +48,7 @@ struct ilo_cp_owner {
  */
 struct ilo_cp {
    struct intel_winsys *winsys;
+   struct ilo_shader_cache *shader_cache;
    struct intel_context *render_ctx;
 
    ilo_cp_callback flush_callback;
@@ -68,7 +70,9 @@ struct ilo_cp {
 };
 
 struct ilo_cp *
-ilo_cp_create(const struct ilo_dev_info *dev, struct intel_winsys *winsys);
+ilo_cp_create(const struct ilo_dev_info *dev,
+              struct intel_winsys *winsys,
+              struct ilo_shader_cache *shc);
 
 void
 ilo_cp_destroy(struct ilo_cp *cp);

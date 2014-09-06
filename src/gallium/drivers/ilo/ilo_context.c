@@ -109,8 +109,8 @@ ilo_context_create(struct pipe_screen *screen, void *priv)
    util_slab_create(&ilo->transfer_mempool,
          sizeof(struct ilo_transfer), 64, UTIL_SLAB_SINGLETHREADED);
 
-   ilo->cp = ilo_cp_create(ilo->dev, ilo->winsys);
    ilo->shader_cache = ilo_shader_cache_create();
+   ilo->cp = ilo_cp_create(ilo->dev, ilo->winsys, ilo->shader_cache);
    if (ilo->cp)
       ilo->hw3d = ilo_3d_create(ilo->cp, ilo->dev);
 

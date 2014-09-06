@@ -70,6 +70,7 @@ struct ilo_kernel_routing {
 };
 
 struct intel_bo;
+struct ilo_builder;
 struct ilo_context;
 struct ilo_rasterizer_state;
 struct ilo_shader_cache;
@@ -90,10 +91,12 @@ void
 ilo_shader_cache_remove(struct ilo_shader_cache *shc,
                         struct ilo_shader_state *shader);
 
-int
+void
 ilo_shader_cache_upload(struct ilo_shader_cache *shc,
-                        struct intel_bo *bo, unsigned offset,
-                        bool incremental);
+                        struct ilo_builder *builder);
+
+void
+ilo_shader_cache_invalidate(struct ilo_shader_cache *shc);
 
 struct ilo_shader_state *
 ilo_shader_create_vs(const struct ilo_dev_info *dev,

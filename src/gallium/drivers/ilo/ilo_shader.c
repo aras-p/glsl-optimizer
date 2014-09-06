@@ -30,6 +30,7 @@
 #include "intel_winsys.h"
 
 #include "shader/ilo_shader_internal.h"
+#include "ilo_builder.h"
 #include "ilo_state.h"
 #include "ilo_shader.h"
 
@@ -107,128 +108,53 @@ ilo_shader_cache_notify_change(struct ilo_shader_cache *shc,
 }
 
 /**
- * Upload a managed shader to the bo.
+ * Upload managed shaders to the bo.  Only shaders that are changed or added
+ * after the last upload are uploaded.
  */
-static int
-ilo_shader_cache_upload_shader(struct ilo_shader_cache *shc,
-                               struct ilo_shader_state *shader,
-                               struct intel_bo *bo, unsigned offset,
-                               bool incremental)
+void
+ilo_shader_cache_upload(struct ilo_shader_cache *shc,
+                        struct ilo_builder *builder)
 {
-   const unsigned base = offset;
-   struct ilo_shader *sh;
+   struct ilo_shader_state *shader, *next;
 
-   LIST_FOR_EACH_ENTRY(sh, &shader->variants, list) {
-      int err;
+   LIST_FOR_EACH_ENTRY_SAFE(shader, next, &shc->changed, list) {
+      struct ilo_shader *sh;
 
-      if (incremental && sh->uploaded)
-         continue;
+      LIST_FOR_EACH_ENTRY(sh, &shader->variants, list) {
+         if (sh->uploaded)
+            continue;
 
-      /* kernels must be aligned to 64-byte */
-      offset = align(offset, 64);
+         sh->cache_offset = ilo_builder_instruction_write(builder,
+               sh->kernel_size, sh->kernel);
 
-      err = intel_bo_pwrite(bo, offset, sh->kernel_size, sh->kernel);
-      if (unlikely(err))
-         return -1;
+         sh->uploaded = true;
+      }
 
-      sh->uploaded = true;
-      sh->cache_offset = offset;
-
-      offset += sh->kernel_size;
+      list_del(&shader->list);
+      list_add(&shader->list, &shc->shaders);
    }
-
-   return (int) (offset - base);
 }
 
 /**
- * Similar to ilo_shader_cache_upload(), except no upload happens.
+ * Invalidate all shaders so that they get uploaded in next
+ * ilo_shader_cache_upload().
  */
-static int
-ilo_shader_cache_get_upload_size(struct ilo_shader_cache *shc,
-                                 unsigned offset,
-                                 bool incremental)
+void
+ilo_shader_cache_invalidate(struct ilo_shader_cache *shc)
 {
-   const unsigned base = offset;
-   struct ilo_shader_state *shader;
+   struct ilo_shader_state *shader, *next;
 
-   if (!incremental) {
-      LIST_FOR_EACH_ENTRY(shader, &shc->shaders, list) {
-         struct ilo_shader *sh;
-
-         /* see ilo_shader_cache_upload_shader() */
-         LIST_FOR_EACH_ENTRY(sh, &shader->variants, list) {
-            if (!incremental || !sh->uploaded)
-               offset = align(offset, 64) + sh->kernel_size;
-         }
-      }
+   LIST_FOR_EACH_ENTRY_SAFE(shader, next, &shc->shaders, list) {
+      list_del(&shader->list);
+      list_add(&shader->list, &shc->changed);
    }
 
    LIST_FOR_EACH_ENTRY(shader, &shc->changed, list) {
       struct ilo_shader *sh;
 
-      /* see ilo_shader_cache_upload_shader() */
-      LIST_FOR_EACH_ENTRY(sh, &shader->variants, list) {
-         if (!incremental || !sh->uploaded)
-            offset = align(offset, 64) + sh->kernel_size;
-      }
+      LIST_FOR_EACH_ENTRY(sh, &shader->variants, list)
+         sh->uploaded = false;
    }
-
-   /*
-    * From the Sandy Bridge PRM, volume 4 part 2, page 112:
-    *
-    *     "Due to prefetch of the instruction stream, the EUs may attempt to
-    *      access up to 8 instructions (128 bytes) beyond the end of the
-    *      kernel program - possibly into the next memory page.  Although
-    *      these instructions will not be executed, software must account for
-    *      the prefetch in order to avoid invalid page access faults."
-    */
-   if (offset > base)
-      offset += 128;
-
-   return (int) (offset - base);
-}
-
-/**
- * Upload managed shaders to the bo.  When incremental is true, only shaders
- * that are changed or added after the last upload are uploaded.
- */
-int
-ilo_shader_cache_upload(struct ilo_shader_cache *shc,
-                        struct intel_bo *bo, unsigned offset,
-                        bool incremental)
-{
-   struct ilo_shader_state *shader, *next;
-   int size = 0, s;
-
-   if (!bo)
-      return ilo_shader_cache_get_upload_size(shc, offset, incremental);
-
-   if (!incremental) {
-      LIST_FOR_EACH_ENTRY(shader, &shc->shaders, list) {
-         s = ilo_shader_cache_upload_shader(shc, shader,
-               bo, offset, incremental);
-         if (unlikely(s < 0))
-            return s;
-
-         size += s;
-         offset += s;
-      }
-   }
-
-   LIST_FOR_EACH_ENTRY_SAFE(shader, next, &shc->changed, list) {
-      s = ilo_shader_cache_upload_shader(shc, shader,
-            bo, offset, incremental);
-      if (unlikely(s < 0))
-         return s;
-
-      size += s;
-      offset += s;
-
-      list_del(&shader->list);
-      list_add(&shader->list, &shc->shaders);
-   }
-
-   return size;
 }
 
 /**

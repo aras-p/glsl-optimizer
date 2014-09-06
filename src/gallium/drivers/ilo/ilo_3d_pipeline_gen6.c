@@ -215,15 +215,11 @@ gen6_pipeline_common_base_address(struct ilo_3d_pipeline *p,
    /* STATE_BASE_ADDRESS */
    if (session->state_bo_changed || session->kernel_bo_changed ||
        session->batch_bo_changed) {
-      const struct ilo_builder_writer *bat =
-         &p->cp->builder.writers[ILO_BUILDER_WRITER_BATCH];
-
       if (p->dev->gen == ILO_GEN(6))
          gen6_wa_pipe_control_post_sync(p, false);
 
-      gen6_emit_STATE_BASE_ADDRESS(p->dev,
-            NULL, bat->bo, bat->bo, NULL, ilo->hw3d->kernel.bo,
-            0, 0, 0, 0, p->cp);
+      ilo_builder_batch_state_base_address(&p->cp->builder,
+            session->hw_ctx_changed);
 
       /*
        * From the Sandy Bridge PRM, volume 1 part 1, page 28:
@@ -1634,13 +1630,7 @@ gen6_rectlist_commands(struct ilo_3d_pipeline *p,
 
    gen6_rectlist_wm_multisample(p, blitter, session);
 
-   gen6_emit_STATE_BASE_ADDRESS(p->dev,
-         NULL,                /* General State Base */
-         p->cp->builder.writers[0].bo,           /* Surface State Base */
-         p->cp->builder.writers[0].bo,           /* Dynamic State Base */
-         NULL,                /* Indirect Object Base */
-         NULL,                /* Instruction Base */
-         0, 0, 0, 0, p->cp);
+   ilo_builder_batch_state_base_address(&p->cp->builder, true);
 
    gen6_emit_3DSTATE_VERTEX_BUFFERS(p->dev,
          &blitter->ve, &blitter->vb, p->cp);

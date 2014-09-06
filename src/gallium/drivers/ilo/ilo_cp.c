@@ -27,11 +27,14 @@
 
 #include "intel_winsys.h"
 
+#include "ilo_shader.h"
 #include "ilo_cp.h"
 
 static struct intel_bo *
 ilo_cp_end_batch(struct ilo_cp *cp, unsigned *used)
 {
+   struct intel_bo *bo;
+
    ilo_cp_set_owner(cp, NULL, 0);
 
    if (!ilo_builder_batch_used(&cp->builder)) {
@@ -43,7 +46,13 @@ ilo_cp_end_batch(struct ilo_cp *cp, unsigned *used)
    assert(ilo_builder_batch_space(&cp->builder) >= 2);
    ilo_builder_batch_mi_batch_buffer_end(&cp->builder);
 
-   return ilo_builder_end(&cp->builder, used);
+   bo = ilo_builder_end(&cp->builder, used);
+
+   /* we have to assume that kernel uploads also failed */
+   if (!bo)
+      ilo_shader_cache_invalidate(cp->shader_cache);
+
+   return bo;
 }
 
 /**
@@ -101,7 +110,9 @@ ilo_cp_destroy(struct ilo_cp *cp)
  * Create a command parser.
  */
 struct ilo_cp *
-ilo_cp_create(const struct ilo_dev_info *dev, struct intel_winsys *winsys)
+ilo_cp_create(const struct ilo_dev_info *dev,
+              struct intel_winsys *winsys,
+              struct ilo_shader_cache *shc)
 {
    struct ilo_cp *cp;
 
@@ -110,6 +121,7 @@ ilo_cp_create(const struct ilo_dev_info *dev, struct intel_winsys *winsys)
       return NULL;
 
    cp->winsys = winsys;
+   cp->shader_cache = shc;
    cp->render_ctx = intel_winsys_create_context(winsys);
    if (!cp->render_ctx) {
       FREE(cp);
