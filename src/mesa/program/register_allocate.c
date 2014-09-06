@@ -434,6 +434,7 @@ decrement_q(struct ra_graph *g, unsigned int n)
       unsigned int n2_class = g->nodes[n2].class;
 
       if (n != n2 && !g->nodes[n2].in_stack) {
+         assert(g->nodes[n2].q_total >= g->regs->classes[n2_class]->q[n_class]);
 	 g->nodes[n2].q_total -= g->regs->classes[n2_class]->q[n_class];
       }
    }
