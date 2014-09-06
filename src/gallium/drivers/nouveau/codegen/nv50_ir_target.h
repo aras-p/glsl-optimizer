@@ -151,8 +151,8 @@ public:
       uint8_t srcNr;
       uint8_t srcMods[3];
       uint8_t dstMods;
-      uint8_t srcFiles[3];
-      uint8_t dstFiles;
+      uint16_t srcFiles[3];
+      uint16_t dstFiles;
       unsigned int minEncSize  : 4;
       unsigned int vector      : 1;
       unsigned int predicate   : 1;
