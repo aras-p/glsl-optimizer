@@ -101,6 +101,17 @@ fixup_vp_regfootprint(struct ir3_shader_variant *v)
 	}
 }
 
+/* reset before attempting to compile again.. */
+static void reset_variant(struct ir3_shader_variant *v, const char *msg)
+{
+	debug_error(msg);
+	v->inputs_count = 0;
+	v->outputs_count = 0;
+	v->total_in = 0;
+	v->has_samp = false;
+	v->immediates_count = 0;
+}
+
 static struct ir3_shader_variant *
 create_variant(struct ir3_shader *shader, struct ir3_shader_key key)
 {
@@ -122,15 +133,12 @@ create_variant(struct ir3_shader *shader, struct ir3_shader_key key)
 	}
 
 	if (!(fd_mesa_debug & FD_DBG_NOOPT)) {
-		ret = ir3_compile_shader(v, tokens, key);
+		ret = ir3_compile_shader(v, tokens, key, true);
 		if (ret) {
-			debug_error("new compiler failed, trying fallback!");
-
-			v->inputs_count = 0;
-			v->outputs_count = 0;
-			v->total_in = 0;
-			v->has_samp = false;
-			v->immediates_count = 0;
+			reset_variant(v, "new compiler failed, trying without copy propagation!");
+			ret = ir3_compile_shader(v, tokens, key, false);
+			if (ret)
+				reset_variant(v, "new compiler failed, trying fallback!");
 		}
 	} else {
 		ret = -1;  /* force fallback to old compiler */

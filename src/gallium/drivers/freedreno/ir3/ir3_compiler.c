@@ -2552,7 +2552,8 @@ compile_dump(struct ir3_compile_context *ctx)
 
 int
 ir3_compile_shader(struct ir3_shader_variant *so,
-		const struct tgsi_token *tokens, struct ir3_shader_key key)
+		const struct tgsi_token *tokens, struct ir3_shader_key key,
+		bool cp)
 {
 	struct ir3_compile_context ctx;
 	struct ir3_block *block;
@@ -2631,7 +2632,8 @@ ir3_compile_shader(struct ir3_shader_variant *so,
 		ir3_dump_instr_list(block->head);
 	}
 
-	ir3_block_cp(block);
+	if (cp)
+		ir3_block_cp(block);
 
 	if (fd_mesa_debug & FD_DBG_OPTDUMP)
 		compile_dump(&ctx);
