@@ -33,6 +33,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <xf86drm.h>
+#include <unistd.h>
 
 #ifdef HAVE_PIPE_LOADER_XCB
 
