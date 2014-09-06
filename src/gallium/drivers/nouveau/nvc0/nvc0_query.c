@@ -1338,14 +1338,14 @@ nvc0_mp_pm_query_result(struct nvc0_context *nvc0, struct nvc0_query *q,
       for (c = 0; c < cfg->num_counters; ++c)
          for (p = 0; p < mp_count; ++p)
             v |= count[p][c];
-      value = (v * cfg->norm[0]) / cfg->norm[1];
+      value = ((uint64_t)v * cfg->norm[0]) / cfg->norm[1];
    } else
    if (cfg->op == NVC0_COUNTER_OPn_AND) {
       uint32_t v = ~0;
       for (c = 0; c < cfg->num_counters; ++c)
          for (p = 0; p < mp_count; ++p)
             v &= count[p][c];
-      value = (v * cfg->norm[0]) / cfg->norm[1];
+      value = ((uint64_t)v * cfg->norm[0]) / cfg->norm[1];
    } else
    if (cfg->op == NVC0_COUNTER_OP2_REL_SUM_MM) {
       uint64_t v[2] = { 0, 0 };
@@ -1370,7 +1370,7 @@ nvc0_mp_pm_query_result(struct nvc0_context *nvc0, struct nvc0_query *q,
          if (count[p][1])
             value += (count[p][0] * cfg->norm[0]) / count[p][1];
       if (mp_used)
-         value /= mp_used * cfg->norm[1];
+         value /= (uint64_t)mp_used * cfg->norm[1];
    } else
    if (cfg->op == NVC0_COUNTER_OP2_AVG_DIV_M0) {
       unsigned mp_used = 0;
@@ -1378,7 +1378,7 @@ nvc0_mp_pm_query_result(struct nvc0_context *nvc0, struct nvc0_query *q,
          value += count[p][0];
       if (count[0][1] && mp_used) {
          value *= cfg->norm[0];
-         value /= count[0][1] * mp_used * cfg->norm[1];
+         value /= (uint64_t)count[0][1] * mp_used * cfg->norm[1];
       } else {
          value = 0;
       }
