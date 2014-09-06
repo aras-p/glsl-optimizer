@@ -1664,6 +1664,10 @@ fs_visitor::rescale_texcoord(ir_texture *ir, fs_reg coordinate,
    fs_inst *inst = NULL;
    bool needs_gl_clamp = true;
    fs_reg scale_x, scale_y;
+   const struct brw_sampler_prog_key_data *tex =
+      (stage == MESA_SHADER_FRAGMENT) ?
+      &this->key->tex : NULL;
+   assert(tex);
 
    /* The 965 requires the EU to do the normalization of GL rectangle
     * texture coordinates.  We use the program parameter state
@@ -1671,8 +1675,8 @@ fs_visitor::rescale_texcoord(ir_texture *ir, fs_reg coordinate,
     */
    if (is_rect &&
        (brw->gen < 6 ||
-        (brw->gen >= 6 && (key->tex.gl_clamp_mask[0] & (1 << sampler) ||
-                           key->tex.gl_clamp_mask[1] & (1 << sampler))))) {
+        (brw->gen >= 6 && (tex->gl_clamp_mask[0] & (1 << sampler) ||
+                           tex->gl_clamp_mask[1] & (1 << sampler))))) {
       struct gl_program_parameter_list *params = prog->Parameters;
       int tokens[STATE_LENGTH] = {
 	 STATE_INTERNAL,
@@ -1733,7 +1737,7 @@ fs_visitor::rescale_texcoord(ir_texture *ir, fs_reg coordinate,
       needs_gl_clamp = false;
 
       for (int i = 0; i < 2; i++) {
-	 if (key->tex.gl_clamp_mask[i] & (1 << sampler)) {
+	 if (tex->gl_clamp_mask[i] & (1 << sampler)) {
 	    fs_reg chan = coordinate;
 	    chan.reg_offset += i;
 
@@ -1759,7 +1763,7 @@ fs_visitor::rescale_texcoord(ir_texture *ir, fs_reg coordinate,
    if (ir->coordinate && needs_gl_clamp) {
       for (unsigned int i = 0;
 	   i < MIN2(ir->coordinate->type->vector_elements, 3); i++) {
-	 if (key->tex.gl_clamp_mask[i] & (1 << sampler)) {
+	 if (tex->gl_clamp_mask[i] & (1 << sampler)) {
 	    fs_reg chan = coordinate;
 	    chan.reg_offset += i;
 
@@ -1805,6 +1809,10 @@ fs_visitor::emit_mcs_fetch(ir_texture *ir, fs_reg coordinate, fs_reg sampler)
 void
 fs_visitor::visit(ir_texture *ir)
 {
+   const struct brw_sampler_prog_key_data *tex =
+      (stage == MESA_SHADER_FRAGMENT) ?
+      &this->key->tex : NULL;
+   assert(tex);
    fs_inst *inst = NULL;
 
    uint32_t sampler =
@@ -1856,7 +1864,7 @@ fs_visitor::visit(ir_texture *ir)
        * emitting anything other than setting up the constant result.
        */
       ir_constant *chan = ir->lod_info.component->as_constant();
-      int swiz = GET_SWZ(key->tex.swizzles[sampler], chan->value.i[0]);
+      int swiz = GET_SWZ(tex->swizzles[sampler], chan->value.i[0]);
       if (swiz == SWIZZLE_ZERO || swiz == SWIZZLE_ONE) {
 
          fs_reg res = fs_reg(this, glsl_type::vec4_type);
@@ -1924,7 +1932,7 @@ fs_visitor::visit(ir_texture *ir)
       ir->lod_info.sample_index->accept(this);
       sample_index = this->result;
 
-      if (brw->gen >= 7 && key->tex.compressed_multisample_layout_mask & (1<<sampler))
+      if (brw->gen >= 7 && tex->compressed_multisample_layout_mask & (1<<sampler))
          mcs = emit_mcs_fetch(ir, coordinate, sampler_reg);
       else
          mcs = fs_reg(0u);
@@ -1983,7 +1991,7 @@ fs_visitor::visit(ir_texture *ir)
    }
 
    if (brw->gen == 6 && ir->op == ir_tg4) {
-      emit_gen6_gather_wa(key->tex.gen6_gather_wa[sampler], dst);
+      emit_gen6_gather_wa(tex->gen6_gather_wa[sampler], dst);
    }
 
    swizzle_result(ir, dst, sampler);
@@ -2025,15 +2033,19 @@ fs_visitor::emit_gen6_gather_wa(uint8_t wa, fs_reg dst)
 uint32_t
 fs_visitor::gather_channel(ir_texture *ir, uint32_t sampler)
 {
+   const struct brw_sampler_prog_key_data *tex =
+      (stage == MESA_SHADER_FRAGMENT) ?
+      &this->key->tex : NULL;
+   assert(tex);
    ir_constant *chan = ir->lod_info.component->as_constant();
-   int swiz = GET_SWZ(key->tex.swizzles[sampler], chan->value.i[0]);
+   int swiz = GET_SWZ(tex->swizzles[sampler], chan->value.i[0]);
    switch (swiz) {
       case SWIZZLE_X: return 0;
       case SWIZZLE_Y:
          /* gather4 sampler is broken for green channel on RG32F --
           * we must ask for blue instead.
           */
-         if (key->tex.gather_channel_quirk_mask & (1<<sampler))
+         if (tex->gather_channel_quirk_mask & (1<<sampler))
             return 2;
          return 1;
       case SWIZZLE_Z: return 2;
@@ -2065,14 +2077,19 @@ fs_visitor::swizzle_result(ir_texture *ir, fs_reg orig_val, uint32_t sampler)
    if (ir->op == ir_txs || ir->op == ir_lod || ir->op == ir_tg4)
       return;
 
+   const struct brw_sampler_prog_key_data *tex =
+      (stage == MESA_SHADER_FRAGMENT) ?
+      &this->key->tex : NULL;
+   assert(tex);
+
    if (ir->type == glsl_type::float_type) {
       /* Ignore DEPTH_TEXTURE_MODE swizzling. */
       assert(ir->sampler->type->sampler_shadow);
-   } else if (key->tex.swizzles[sampler] != SWIZZLE_NOOP) {
+   } else if (tex->swizzles[sampler] != SWIZZLE_NOOP) {
       fs_reg swizzled_result = fs_reg(this, glsl_type::vec4_type);
 
       for (int i = 0; i < 4; i++) {
-	 int swiz = GET_SWZ(key->tex.swizzles[sampler], i);
+	 int swiz = GET_SWZ(tex->swizzles[sampler], i);
 	 fs_reg l = swizzled_result;
 	 l.reg_offset += i;
 
@@ -2082,7 +2099,7 @@ fs_visitor::swizzle_result(ir_texture *ir, fs_reg orig_val, uint32_t sampler)
 	    emit(MOV(l, fs_reg(1.0f)));
 	 } else {
 	    fs_reg r = orig_val;
-	    r.reg_offset += GET_SWZ(key->tex.swizzles[sampler], i);
+	    r.reg_offset += GET_SWZ(tex->swizzles[sampler], i);
 	    emit(MOV(l, r));
 	 }
       }
