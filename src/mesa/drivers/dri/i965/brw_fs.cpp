@@ -2920,8 +2920,7 @@ fs_visitor::dump_instruction(backend_instruction *be_inst, FILE *file)
          fprintf(file, "u%d", inst->src[i].reg + inst->src[i].reg_offset);
          if (inst->src[i].reladdr) {
             fprintf(file, "+reladdr");
-         } else if (virtual_grf_sizes[inst->src[i].reg] != 1 ||
-             inst->src[i].subreg_offset) {
+         } else if (inst->src[i].subreg_offset) {
             fprintf(file, "+%d.%d", inst->src[i].reg_offset,
                     inst->src[i].subreg_offset);
          }
