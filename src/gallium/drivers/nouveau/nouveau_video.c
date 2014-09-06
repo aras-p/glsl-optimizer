@@ -381,8 +381,6 @@ nouveau_decoder_surface_index(struct nouveau_decoder *dec,
 
    unsigned i;
 
-   if (!buf)
-      return 8;
    for (i = 0; i < dec->num_surfaces; ++i) {
       if (dec->surfaces[i] == buf)
          return i;
