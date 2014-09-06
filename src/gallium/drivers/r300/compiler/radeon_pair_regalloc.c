@@ -572,13 +572,15 @@ static void do_advanced_regalloc(struct regalloc_state * s)
 	graph = ra_alloc_interference_graph(ra_state->regs,
 						node_count + s->NumInputs);
 
+	for (node_index = 0; node_index < node_count; node_index++) {
+		ra_set_node_class(graph, node_index, node_classes[node_index]);
+	}
+
 	/* Build the interference graph */
 	for (var_ptr = variables, node_index = 0; var_ptr;
 					var_ptr = var_ptr->Next,node_index++) {
 		struct rc_list * a, * b;
 		unsigned int b_index;
-
-		ra_set_node_class(graph, node_index, node_classes[node_index]);
 
 		for (a = var_ptr, b = var_ptr->Next, b_index = node_index + 1;
 						b; b = b->Next, b_index++) {
