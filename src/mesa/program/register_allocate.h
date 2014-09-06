@@ -56,7 +56,10 @@ void ra_set_finalize(struct ra_regs *regs, unsigned int **conflicts);
  * Each interference graph node is a virtual variable in the IL.  It
  * is up to the user to ra_set_node_class() for the virtual variable,
  * and compute live ranges and ra_node_interfere() between conflicting
- * live ranges.
+ * live ranges. Note that an interference *must not* be added between
+ * two nodes if their classes haven't been assigned yet. The user
+ * should set the class of each node before building the interference
+ * graph.
  */
 struct ra_graph *ra_alloc_interference_graph(struct ra_regs *regs,
 					     unsigned int count);
