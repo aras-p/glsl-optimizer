@@ -506,7 +506,7 @@ gen6_emit_MEDIA_CURBE_LOAD(const struct ilo_dev_info *dev,
    ILO_GPE_VALID_GEN(dev, 6, 6);
 
    assert(buf % 32 == 0);
-   /* gen6_emit_push_constant_buffer() allocates buffers in 256-bit units */
+   /* gen6_push_constant_buffer() allocates buffers in 256-bit units */
    size = align(size, 32);
 
    ilo_cp_begin(cp, cmd_len);
@@ -1917,14 +1917,13 @@ gen6_emit_3DPRIMITIVE(const struct ilo_dev_info *dev,
 }
 
 static inline uint32_t
-gen6_emit_INTERFACE_DESCRIPTOR_DATA(const struct ilo_dev_info *dev,
-                                    const struct ilo_shader_state **cs,
-                                    uint32_t *sampler_state,
-                                    int *num_samplers,
-                                    uint32_t *binding_table_state,
-                                    int *num_surfaces,
-                                    int num_ids,
-                                    struct ilo_cp *cp)
+gen6_INTERFACE_DESCRIPTOR_DATA(struct ilo_builder *builder,
+                               const struct ilo_shader_state **cs,
+                               uint32_t *sampler_state,
+                               int *num_samplers,
+                               uint32_t *binding_table_state,
+                               int *num_surfaces,
+                               int num_ids)
 {
    /*
     * From the Sandy Bridge PRM, volume 2 part 2, page 34:
@@ -1939,15 +1938,15 @@ gen6_emit_INTERFACE_DESCRIPTOR_DATA(const struct ilo_dev_info *dev,
     *     "(Interface Descriptor Data Start Address) Specifies the 32-byte
     *      aligned address of the Interface Descriptor data."
     */
-   const int state_align = 32 / 4;
+   const int state_align = 32;
    const int state_len = (32 / 4) * num_ids;
    uint32_t state_offset, *dw;
    int i;
 
-   ILO_GPE_VALID_GEN(dev, 6, 6);
+   ILO_GPE_VALID_GEN(builder->dev, 6, 6);
 
-   dw = ilo_cp_steal_ptr(cp, ILO_BUILDER_ITEM_BLOB,
-         state_len, state_align, &state_offset);
+   state_offset = ilo_builder_state_pointer(builder,
+         ILO_BUILDER_ITEM_BLOB, state_align, state_len, &dw);
 
    for (i = 0; i < num_ids; i++) {
       dw[0] = ilo_shader_get_kernel_offset(cs[i]);
@@ -1969,17 +1968,16 @@ gen6_emit_INTERFACE_DESCRIPTOR_DATA(const struct ilo_dev_info *dev,
 }
 
 static inline uint32_t
-gen6_emit_SF_VIEWPORT(const struct ilo_dev_info *dev,
-                      const struct ilo_viewport_cso *viewports,
-                      unsigned num_viewports,
-                      struct ilo_cp *cp)
+gen6_SF_VIEWPORT(struct ilo_builder *builder,
+                 const struct ilo_viewport_cso *viewports,
+                 unsigned num_viewports)
 {
-   const int state_align = 32 / 4;
+   const int state_align = 32;
    const int state_len = 8 * num_viewports;
    uint32_t state_offset, *dw;
    unsigned i;
 
-   ILO_GPE_VALID_GEN(dev, 6, 6);
+   ILO_GPE_VALID_GEN(builder->dev, 6, 6);
 
    /*
     * From the Sandy Bridge PRM, volume 2 part 1, page 262:
@@ -1989,8 +1987,8 @@ gen6_emit_SF_VIEWPORT(const struct ilo_dev_info *dev,
     */
    assert(num_viewports && num_viewports <= 16);
 
-   dw = ilo_cp_steal_ptr(cp, ILO_BUILDER_ITEM_SF_VIEWPORT,
-         state_len, state_align, &state_offset);
+   state_offset = ilo_builder_state_pointer(builder,
+         ILO_BUILDER_ITEM_SF_VIEWPORT, state_align, state_len, &dw);
 
    for (i = 0; i < num_viewports; i++) {
       const struct ilo_viewport_cso *vp = &viewports[i];
@@ -2011,17 +2009,16 @@ gen6_emit_SF_VIEWPORT(const struct ilo_dev_info *dev,
 }
 
 static inline uint32_t
-gen6_emit_CLIP_VIEWPORT(const struct ilo_dev_info *dev,
-                        const struct ilo_viewport_cso *viewports,
-                        unsigned num_viewports,
-                        struct ilo_cp *cp)
+gen6_CLIP_VIEWPORT(struct ilo_builder *builder,
+                   const struct ilo_viewport_cso *viewports,
+                   unsigned num_viewports)
 {
-   const int state_align = 32 / 4;
+   const int state_align = 32;
    const int state_len = 4 * num_viewports;
    uint32_t state_offset, *dw;
    unsigned i;
 
-   ILO_GPE_VALID_GEN(dev, 6, 6);
+   ILO_GPE_VALID_GEN(builder->dev, 6, 6);
 
    /*
     * From the Sandy Bridge PRM, volume 2 part 1, page 193:
@@ -2031,8 +2028,8 @@ gen6_emit_CLIP_VIEWPORT(const struct ilo_dev_info *dev,
     */
    assert(num_viewports && num_viewports <= 16);
 
-   dw = ilo_cp_steal_ptr(cp, ILO_BUILDER_ITEM_CLIP_VIEWPORT,
-         state_len, state_align, &state_offset);
+   state_offset = ilo_builder_state_pointer(builder,
+         ILO_BUILDER_ITEM_CLIP_VIEWPORT, state_align, state_len, &dw);
 
    for (i = 0; i < num_viewports; i++) {
       const struct ilo_viewport_cso *vp = &viewports[i];
@@ -2049,17 +2046,16 @@ gen6_emit_CLIP_VIEWPORT(const struct ilo_dev_info *dev,
 }
 
 static inline uint32_t
-gen6_emit_CC_VIEWPORT(const struct ilo_dev_info *dev,
-                      const struct ilo_viewport_cso *viewports,
-                      unsigned num_viewports,
-                      struct ilo_cp *cp)
+gen6_CC_VIEWPORT(struct ilo_builder *builder,
+                 const struct ilo_viewport_cso *viewports,
+                 unsigned num_viewports)
 {
-   const int state_align = 32 / 4;
+   const int state_align = 32;
    const int state_len = 2 * num_viewports;
    uint32_t state_offset, *dw;
    unsigned i;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7.5);
+   ILO_GPE_VALID_GEN(builder->dev, 6, 7.5);
 
    /*
     * From the Sandy Bridge PRM, volume 2 part 1, page 385:
@@ -2068,8 +2064,8 @@ gen6_emit_CC_VIEWPORT(const struct ilo_dev_info *dev,
     */
    assert(num_viewports && num_viewports <= 16);
 
-   dw = ilo_cp_steal_ptr(cp, ILO_BUILDER_ITEM_CC_VIEWPORT,
-         state_len, state_align, &state_offset);
+   state_offset = ilo_builder_state_pointer(builder,
+         ILO_BUILDER_ITEM_CC_VIEWPORT, state_align, state_len, &dw);
 
    for (i = 0; i < num_viewports; i++) {
       const struct ilo_viewport_cso *vp = &viewports[i];
@@ -2084,20 +2080,19 @@ gen6_emit_CC_VIEWPORT(const struct ilo_dev_info *dev,
 }
 
 static inline uint32_t
-gen6_emit_COLOR_CALC_STATE(const struct ilo_dev_info *dev,
-                           const struct pipe_stencil_ref *stencil_ref,
-                           ubyte alpha_ref,
-                           const struct pipe_blend_color *blend_color,
-                           struct ilo_cp *cp)
+gen6_COLOR_CALC_STATE(struct ilo_builder *builder,
+                      const struct pipe_stencil_ref *stencil_ref,
+                      ubyte alpha_ref,
+                      const struct pipe_blend_color *blend_color)
 {
-   const int state_align = 64 / 4;
+   const int state_align = 64;
    const int state_len = 6;
    uint32_t state_offset, *dw;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7.5);
+   ILO_GPE_VALID_GEN(builder->dev, 6, 7.5);
 
-   dw = ilo_cp_steal_ptr(cp, ILO_BUILDER_ITEM_COLOR_CALC,
-         state_len, state_align, &state_offset);
+   state_offset = ilo_builder_state_pointer(builder,
+         ILO_BUILDER_ITEM_COLOR_CALC, state_align, state_len, &dw);
 
    dw[0] = stencil_ref->ref_value[0] << 24 |
            stencil_ref->ref_value[1] << 16 |
@@ -2112,18 +2107,17 @@ gen6_emit_COLOR_CALC_STATE(const struct ilo_dev_info *dev,
 }
 
 static inline uint32_t
-gen6_emit_BLEND_STATE(const struct ilo_dev_info *dev,
-                      const struct ilo_blend_state *blend,
-                      const struct ilo_fb_state *fb,
-                      const struct ilo_dsa_state *dsa,
-                      struct ilo_cp *cp)
+gen6_BLEND_STATE(struct ilo_builder *builder,
+                 const struct ilo_blend_state *blend,
+                 const struct ilo_fb_state *fb,
+                 const struct ilo_dsa_state *dsa)
 {
-   const int state_align = 64 / 4;
+   const int state_align = 64;
    int state_len;
    uint32_t state_offset, *dw;
    unsigned num_targets, i;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7.5);
+   ILO_GPE_VALID_GEN(builder->dev, 6, 7.5);
 
    /*
     * From the Sandy Bridge PRM, volume 2 part 1, page 376:
@@ -2142,8 +2136,8 @@ gen6_emit_BLEND_STATE(const struct ilo_dev_info *dev,
 
    state_len = 2 * num_targets;
 
-   dw = ilo_cp_steal_ptr(cp, ILO_BUILDER_ITEM_BLEND,
-         state_len, state_align, &state_offset);
+   state_offset = ilo_builder_state_pointer(builder,
+         ILO_BUILDER_ITEM_BLEND, state_align, state_len, &dw);
 
    for (i = 0; i < num_targets; i++) {
       const unsigned idx = (blend->independent_blend_enable) ? i : 0;
@@ -2164,8 +2158,9 @@ gen6_emit_BLEND_STATE(const struct ilo_dev_info *dev,
          switch (format_desc->format) {
          case PIPE_FORMAT_B8G8R8X8_UNORM:
             /* force alpha to one when the HW format has alpha */
-            assert(ilo_translate_render_format(dev, PIPE_FORMAT_B8G8R8X8_UNORM)
-                  == GEN6_FORMAT_B8G8R8A8_UNORM);
+            assert(ilo_translate_render_format(builder->dev,
+                     PIPE_FORMAT_B8G8R8X8_UNORM) ==
+                  GEN6_FORMAT_B8G8R8A8_UNORM);
             rt_dst_alpha_forced_one = true;
             break;
          default:
@@ -2238,38 +2233,29 @@ gen6_emit_BLEND_STATE(const struct ilo_dev_info *dev,
 }
 
 static inline uint32_t
-gen6_emit_DEPTH_STENCIL_STATE(const struct ilo_dev_info *dev,
-                              const struct ilo_dsa_state *dsa,
-                              struct ilo_cp *cp)
+gen6_DEPTH_STENCIL_STATE(struct ilo_builder *builder,
+                         const struct ilo_dsa_state *dsa)
 {
-   const int state_align = 64 / 4;
+   const int state_align = 64;
    const int state_len = 3;
-   uint32_t state_offset, *dw;
 
+   ILO_GPE_VALID_GEN(builder->dev, 6, 7.5);
 
-   ILO_GPE_VALID_GEN(dev, 6, 7.5);
+   STATIC_ASSERT(Elements(dsa->payload) >= state_len);
 
-   dw = ilo_cp_steal_ptr(cp, ILO_BUILDER_ITEM_DEPTH_STENCIL,
-         state_len, state_align, &state_offset);
-
-   dw[0] = dsa->payload[0];
-   dw[1] = dsa->payload[1];
-   dw[2] = dsa->payload[2];
-
-   return state_offset;
+   return ilo_builder_state_write(builder, ILO_BUILDER_ITEM_DEPTH_STENCIL,
+         state_align, state_len, dsa->payload);
 }
 
 static inline uint32_t
-gen6_emit_SCISSOR_RECT(const struct ilo_dev_info *dev,
-                       const struct ilo_scissor_state *scissor,
-                       unsigned num_viewports,
-                       struct ilo_cp *cp)
+gen6_SCISSOR_RECT(struct ilo_builder *builder,
+                  const struct ilo_scissor_state *scissor,
+                  unsigned num_viewports)
 {
-   const int state_align = 32 / 4;
+   const int state_align = 32;
    const int state_len = 2 * num_viewports;
-   uint32_t state_offset, *dw;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7.5);
+   ILO_GPE_VALID_GEN(builder->dev, 6, 7.5);
 
    /*
     * From the Sandy Bridge PRM, volume 2 part 1, page 263:
@@ -2278,13 +2264,10 @@ gen6_emit_SCISSOR_RECT(const struct ilo_dev_info *dev,
     *      stored as an array of up to 16 elements..."
     */
    assert(num_viewports && num_viewports <= 16);
+   assert(Elements(scissor->payload) >= state_len);
 
-   dw = ilo_cp_steal_ptr(cp, ILO_BUILDER_ITEM_SCISSOR_RECT,
-         state_len, state_align, &state_offset);
-
-   memcpy(dw, scissor->payload, state_len * 4);
-
-   return state_offset;
+   return ilo_builder_state_write(builder, ILO_BUILDER_ITEM_SCISSOR_RECT,
+         state_align, state_len, scissor->payload);
 }
 
 static inline uint32_t
@@ -2375,19 +2358,18 @@ gen6_so_SURFACE_STATE(struct ilo_builder *builder,
 }
 
 static inline uint32_t
-gen6_emit_SAMPLER_STATE(const struct ilo_dev_info *dev,
-                        const struct ilo_sampler_cso * const *samplers,
-                        const struct pipe_sampler_view * const *views,
-                        const uint32_t *sampler_border_colors,
-                        int num_samplers,
-                        struct ilo_cp *cp)
+gen6_SAMPLER_STATE(struct ilo_builder *builder,
+                   const struct ilo_sampler_cso * const *samplers,
+                   const struct pipe_sampler_view * const *views,
+                   const uint32_t *sampler_border_colors,
+                   int num_samplers)
 {
-   const int state_align = 32 / 4;
+   const int state_align = 32;
    const int state_len = 4 * num_samplers;
    uint32_t state_offset, *dw;
    int i;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7.5);
+   ILO_GPE_VALID_GEN(builder->dev, 6, 7.5);
 
    /*
     * From the Sandy Bridge PRM, volume 4 part 1, page 101:
@@ -2399,8 +2381,8 @@ gen6_emit_SAMPLER_STATE(const struct ilo_dev_info *dev,
    if (!num_samplers)
       return 0;
 
-   dw = ilo_cp_steal_ptr(cp, ILO_BUILDER_ITEM_SAMPLER,
-         state_len, state_align, &state_offset);
+   state_offset = ilo_builder_state_pointer(builder,
+         ILO_BUILDER_ITEM_SAMPLER, state_align, state_len, &dw);
 
    for (i = 0; i < num_samplers; i++) {
       const struct ilo_sampler_cso *sampler = samplers[i];
@@ -2457,7 +2439,7 @@ gen6_emit_SAMPLER_STATE(const struct ilo_dev_info *dev,
 
       dw[0] |= dw_filter;
 
-      if (dev->gen >= ILO_GEN(7)) {
+      if (builder->dev->gen >= ILO_GEN(7)) {
          dw[3] |= dw_wrap;
       }
       else {
@@ -2485,43 +2467,38 @@ gen6_emit_SAMPLER_STATE(const struct ilo_dev_info *dev,
 }
 
 static inline uint32_t
-gen6_emit_SAMPLER_BORDER_COLOR_STATE(const struct ilo_dev_info *dev,
-                                     const struct ilo_sampler_cso *sampler,
-                                     struct ilo_cp *cp)
+gen6_SAMPLER_BORDER_COLOR_STATE(struct ilo_builder *builder,
+                                const struct ilo_sampler_cso *sampler)
 {
-   const int state_align = 32 / 4;
-   const int state_len = (dev->gen >= ILO_GEN(7)) ? 4 : 12;
-   uint32_t state_offset, *dw;
+   const int state_align = 32;
+   const int state_len = (builder->dev->gen >= ILO_GEN(7)) ? 4 : 12;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7.5);
+   ILO_GPE_VALID_GEN(builder->dev, 6, 7.5);
 
-   dw = ilo_cp_steal_ptr(cp, ILO_BUILDER_ITEM_BLOB,
-         state_len, state_align, &state_offset);
+   assert(Elements(sampler->payload) >= 3 + state_len);
 
    /* see ilo_gpe_init_sampler_cso() */
-   memcpy(dw, &sampler->payload[3], state_len * 4);
-
-   return state_offset;
+   return ilo_builder_state_write(builder, ILO_BUILDER_ITEM_BLOB,
+         state_align, state_len, &sampler->payload[3]);
 }
 
 static inline uint32_t
-gen6_emit_push_constant_buffer(const struct ilo_dev_info *dev,
-                               int size, void **pcb,
-                               struct ilo_cp *cp)
+gen6_push_constant_buffer(struct ilo_builder *builder,
+                          int size, void **pcb)
 {
    /*
     * For all VS, GS, FS, and CS push constant buffers, they must be aligned
     * to 32 bytes, and their sizes are specified in 256-bit units.
     */
-   const int state_align = 32 / 4;
+   const int state_align = 32;
    const int state_len = align(size, 32) / 4;
    uint32_t state_offset;
    char *buf;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7.5);
+   ILO_GPE_VALID_GEN(builder->dev, 6, 7.5);
 
-   buf = ilo_cp_steal_ptr(cp, ILO_BUILDER_ITEM_BLOB,
-         state_len, state_align, &state_offset);
+   state_offset = ilo_builder_state_pointer(builder,
+         ILO_BUILDER_ITEM_BLOB, state_align, state_len, (uint32_t **) &buf);
 
    /* zero out the unused range */
    if (size < state_len * 4)

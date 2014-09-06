@@ -1134,17 +1134,16 @@ gen7_emit_3DPRIMITIVE(const struct ilo_dev_info *dev,
 }
 
 static inline uint32_t
-gen7_emit_SF_CLIP_VIEWPORT(const struct ilo_dev_info *dev,
-                           const struct ilo_viewport_cso *viewports,
-                           unsigned num_viewports,
-                           struct ilo_cp *cp)
+gen7_SF_CLIP_VIEWPORT(struct ilo_builder *builder,
+                      const struct ilo_viewport_cso *viewports,
+                      unsigned num_viewports)
 {
-   const int state_align = 64 / 4;
+   const int state_align = 64;
    const int state_len = 16 * num_viewports;
    uint32_t state_offset, *dw;
    unsigned i;
 
-   ILO_GPE_VALID_GEN(dev, 7, 7.5);
+   ILO_GPE_VALID_GEN(builder->dev, 7, 7.5);
 
    /*
     * From the Ivy Bridge PRM, volume 2 part 1, page 270:
@@ -1158,8 +1157,8 @@ gen7_emit_SF_CLIP_VIEWPORT(const struct ilo_dev_info *dev,
     */
    assert(num_viewports && num_viewports <= 16);
 
-   dw = ilo_cp_steal_ptr(cp, ILO_BUILDER_ITEM_SF_VIEWPORT,
-         state_len, state_align, &state_offset);
+   state_offset = ilo_builder_state_pointer(builder,
+         ILO_BUILDER_ITEM_SF_VIEWPORT, state_align, state_len, &dw);
 
    for (i = 0; i < num_viewports; i++) {
       const struct ilo_viewport_cso *vp = &viewports[i];

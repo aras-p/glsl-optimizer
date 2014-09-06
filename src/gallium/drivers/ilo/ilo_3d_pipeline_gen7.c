@@ -848,18 +848,18 @@ gen7_rectlist_states(struct ilo_3d_pipeline *p,
 {
    if (blitter->uses & ILO_BLITTER_USE_DSA) {
       session->DEPTH_STENCIL_STATE =
-         gen6_emit_DEPTH_STENCIL_STATE(p->dev, &blitter->dsa, p->cp);
+         gen6_DEPTH_STENCIL_STATE(&p->cp->builder, &blitter->dsa);
    }
 
    if (blitter->uses & ILO_BLITTER_USE_CC) {
       session->COLOR_CALC_STATE =
-         gen6_emit_COLOR_CALC_STATE(p->dev, &blitter->cc.stencil_ref,
-               blitter->cc.alpha_ref, &blitter->cc.blend_color, p->cp);
+         gen6_COLOR_CALC_STATE(&p->cp->builder, &blitter->cc.stencil_ref,
+               blitter->cc.alpha_ref, &blitter->cc.blend_color);
    }
 
    if (blitter->uses & ILO_BLITTER_USE_VIEWPORT) {
       session->CC_VIEWPORT =
-         gen6_emit_CC_VIEWPORT(p->dev, &blitter->viewport, 1, p->cp);
+         gen6_CC_VIEWPORT(&p->cp->builder, &blitter->viewport, 1);
    }
 }
 

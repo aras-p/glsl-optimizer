@@ -797,24 +797,24 @@ gen6_pipeline_state_viewports(struct ilo_3d_pipeline *p,
 {
    /* SF_CLIP_VIEWPORT and CC_VIEWPORT */
    if (p->dev->gen >= ILO_GEN(7) && DIRTY(VIEWPORT)) {
-      p->state.SF_CLIP_VIEWPORT = gen7_emit_SF_CLIP_VIEWPORT(p->dev,
-            ilo->viewport.cso, ilo->viewport.count, p->cp);
+      p->state.SF_CLIP_VIEWPORT = gen7_SF_CLIP_VIEWPORT(&p->cp->builder,
+            ilo->viewport.cso, ilo->viewport.count);
 
-      p->state.CC_VIEWPORT = gen6_emit_CC_VIEWPORT(p->dev,
-            ilo->viewport.cso, ilo->viewport.count, p->cp);
+      p->state.CC_VIEWPORT = gen6_CC_VIEWPORT(&p->cp->builder,
+            ilo->viewport.cso, ilo->viewport.count);
 
       session->viewport_state_changed = true;
    }
    /* SF_VIEWPORT, CLIP_VIEWPORT, and CC_VIEWPORT */
    else if (DIRTY(VIEWPORT)) {
-      p->state.CLIP_VIEWPORT = gen6_emit_CLIP_VIEWPORT(p->dev,
-            ilo->viewport.cso, ilo->viewport.count, p->cp);
+      p->state.CLIP_VIEWPORT = gen6_CLIP_VIEWPORT(&p->cp->builder,
+            ilo->viewport.cso, ilo->viewport.count);
 
-      p->state.SF_VIEWPORT = gen6_emit_SF_VIEWPORT(p->dev,
-            ilo->viewport.cso, ilo->viewport.count, p->cp);
+      p->state.SF_VIEWPORT = gen6_SF_VIEWPORT(&p->cp->builder,
+            ilo->viewport.cso, ilo->viewport.count);
 
-      p->state.CC_VIEWPORT = gen6_emit_CC_VIEWPORT(p->dev,
-            ilo->viewport.cso, ilo->viewport.count, p->cp);
+      p->state.CC_VIEWPORT = gen6_CC_VIEWPORT(&p->cp->builder,
+            ilo->viewport.cso, ilo->viewport.count);
 
       session->viewport_state_changed = true;
    }
@@ -827,8 +827,8 @@ gen6_pipeline_state_cc(struct ilo_3d_pipeline *p,
 {
    /* BLEND_STATE */
    if (DIRTY(BLEND) || DIRTY(FB) || DIRTY(DSA)) {
-      p->state.BLEND_STATE = gen6_emit_BLEND_STATE(p->dev,
-            ilo->blend, &ilo->fb, ilo->dsa, p->cp);
+      p->state.BLEND_STATE = gen6_BLEND_STATE(&p->cp->builder,
+            ilo->blend, &ilo->fb, ilo->dsa);
 
       session->cc_state_blend_changed = true;
    }
@@ -836,8 +836,8 @@ gen6_pipeline_state_cc(struct ilo_3d_pipeline *p,
    /* COLOR_CALC_STATE */
    if (DIRTY(DSA) || DIRTY(STENCIL_REF) || DIRTY(BLEND_COLOR)) {
       p->state.COLOR_CALC_STATE =
-         gen6_emit_COLOR_CALC_STATE(p->dev, &ilo->stencil_ref,
-               ilo->dsa->alpha_ref, &ilo->blend_color, p->cp);
+         gen6_COLOR_CALC_STATE(&p->cp->builder, &ilo->stencil_ref,
+               ilo->dsa->alpha_ref, &ilo->blend_color);
 
       session->cc_state_cc_changed = true;
    }
@@ -845,7 +845,7 @@ gen6_pipeline_state_cc(struct ilo_3d_pipeline *p,
    /* DEPTH_STENCIL_STATE */
    if (DIRTY(DSA)) {
       p->state.DEPTH_STENCIL_STATE =
-         gen6_emit_DEPTH_STENCIL_STATE(p->dev, ilo->dsa, p->cp);
+         gen6_DEPTH_STENCIL_STATE(&p->cp->builder, ilo->dsa);
 
       session->cc_state_dsa_changed = true;
    }
@@ -859,8 +859,8 @@ gen6_pipeline_state_scissors(struct ilo_3d_pipeline *p,
    /* SCISSOR_RECT */
    if (DIRTY(SCISSOR) || DIRTY(VIEWPORT)) {
       /* there should be as many scissors as there are viewports */
-      p->state.SCISSOR_RECT = gen6_emit_SCISSOR_RECT(p->dev,
-            &ilo->scissor, ilo->viewport.count, p->cp);
+      p->state.SCISSOR_RECT = gen6_SCISSOR_RECT(&p->cp->builder,
+            &ilo->scissor, ilo->viewport.count);
 
       session->scissor_state_changed = true;
    }
@@ -1191,16 +1191,15 @@ gen6_pipeline_state_samplers(struct ilo_3d_pipeline *p,
 
       for (i = 0; i < num_samplers; i++) {
          border_color_state[i] = (samplers[i]) ?
-            gen6_emit_SAMPLER_BORDER_COLOR_STATE(p->dev,
-                  samplers[i], p->cp) : 0;
+            gen6_SAMPLER_BORDER_COLOR_STATE(&p->cp->builder, samplers[i]) : 0;
       }
    }
 
    /* should we take the minimum of num_samplers and num_views? */
-   *sampler_state = gen6_emit_SAMPLER_STATE(p->dev,
+   *sampler_state = gen6_SAMPLER_STATE(&p->cp->builder,
          samplers, views,
          border_color_state,
-         MIN2(num_samplers, num_views), p->cp);
+         MIN2(num_samplers, num_views));
 }
 
 static void
@@ -1222,7 +1221,7 @@ gen6_pipeline_state_pcb(struct ilo_3d_pipeline *p,
          void *pcb;
 
          p->state.vs.PUSH_CONSTANT_BUFFER =
-            gen6_emit_push_constant_buffer(p->dev, total_size, &pcb, p->cp);
+            gen6_push_constant_buffer(&p->cp->builder, total_size, &pcb);
          p->state.vs.PUSH_CONSTANT_BUFFER_size = total_size;
 
          if (cbuf0_size) {
@@ -1265,7 +1264,7 @@ gen6_pipeline_state_pcb(struct ilo_3d_pipeline *p,
          void *pcb;
 
          p->state.wm.PUSH_CONSTANT_BUFFER =
-            gen6_emit_push_constant_buffer(p->dev, cbuf0_size, &pcb, p->cp);
+            gen6_push_constant_buffer(&p->cp->builder, cbuf0_size, &pcb);
          p->state.wm.PUSH_CONSTANT_BUFFER_size = cbuf0_size;
 
          if (cbuf0_size <= cbuf->cso[0].user_buffer_size) {
@@ -1675,18 +1674,18 @@ gen6_rectlist_states(struct ilo_3d_pipeline *p,
 {
    if (blitter->uses & ILO_BLITTER_USE_DSA) {
       session->DEPTH_STENCIL_STATE =
-         gen6_emit_DEPTH_STENCIL_STATE(p->dev, &blitter->dsa, p->cp);
+         gen6_DEPTH_STENCIL_STATE(&p->cp->builder, &blitter->dsa);
    }
 
    if (blitter->uses & ILO_BLITTER_USE_CC) {
       session->COLOR_CALC_STATE =
-         gen6_emit_COLOR_CALC_STATE(p->dev, &blitter->cc.stencil_ref,
-               blitter->cc.alpha_ref, &blitter->cc.blend_color, p->cp);
+         gen6_COLOR_CALC_STATE(&p->cp->builder, &blitter->cc.stencil_ref,
+               blitter->cc.alpha_ref, &blitter->cc.blend_color);
    }
 
    if (blitter->uses & ILO_BLITTER_USE_VIEWPORT) {
       session->CC_VIEWPORT =
-         gen6_emit_CC_VIEWPORT(p->dev, &blitter->viewport, 1, p->cp);
+         gen6_CC_VIEWPORT(&p->cp->builder, &blitter->viewport, 1);
    }
 }
 
