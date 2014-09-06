@@ -310,8 +310,8 @@ fs_visitor::VARYING_PULL_CONSTANT_LOAD(const fs_reg &dst,
          inst->mlen = 1 + dispatch_width / 8;
    }
 
-   vec4_result.reg_offset += (const_offset & 3) * scale;
-   instructions.push_tail(MOV(dst, vec4_result));
+   fs_reg result = offset(vec4_result, (const_offset & 3) * scale);
+   instructions.push_tail(MOV(dst, result));
 
    return instructions;
 }
@@ -1021,7 +1021,7 @@ fs_visitor::emit_fragcoord_interpolation(ir_variable *ir)
    } else {
       emit(ADD(wpos, this->pixel_x, fs_reg(0.5f)));
    }
-   wpos.reg_offset++;
+   wpos = offset(wpos, 1);
 
    /* gl_FragCoord.y */
    if (!flip && ir->data.pixel_center_integer) {
@@ -1037,7 +1037,7 @@ fs_visitor::emit_fragcoord_interpolation(ir_variable *ir)
 
       emit(ADD(wpos, pixel_y, fs_reg(offset)));
    }
-   wpos.reg_offset++;
+   wpos = offset(wpos, 1);
 
    /* gl_FragCoord.z */
    if (brw->gen >= 6) {
@@ -1048,7 +1048,7 @@ fs_visitor::emit_fragcoord_interpolation(ir_variable *ir)
            this->delta_y[BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC],
            interp_reg(VARYING_SLOT_POS, 2));
    }
-   wpos.reg_offset++;
+   wpos = offset(wpos, 1);
 
    /* gl_FragCoord.w: Already set up in emit_interpolation */
    emit(BRW_OPCODE_MOV, wpos, this->wpos_w);
@@ -1126,7 +1126,7 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
 	    /* If there's no incoming setup data for this slot, don't
 	     * emit interpolation for it.
 	     */
-	    attr.reg_offset += type->vector_elements;
+	    attr = offset(attr, type->vector_elements);
 	    location++;
 	    continue;
 	 }
@@ -1141,7 +1141,7 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
 	       interp = suboffset(interp, 3);
                interp.type = reg->type;
 	       emit(FS_OPCODE_CINTERP, attr, fs_reg(interp));
-	       attr.reg_offset++;
+	       attr = offset(attr, 1);
 	    }
 	 } else {
 	    /* Smooth/noperspective interpolation case. */
@@ -1179,7 +1179,7 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
                if (brw->gen < 6 && interpolation_mode == INTERP_QUALIFIER_SMOOTH) {
                   emit(BRW_OPCODE_MUL, attr, attr, this->pixel_w);
                }
-	       attr.reg_offset++;
+	       attr = offset(attr, 1);
 	    }
 
 	 }
@@ -1292,7 +1292,7 @@ fs_visitor::emit_samplepos_setup()
    }
    /* Compute gl_SamplePosition.x */
    compute_sample_position(pos, int_sample_x);
-   pos.reg_offset++;
+   pos = offset(pos, 1);
    inst = emit(MOV(int_sample_y, fs_reg(suboffset(sample_pos_reg, 1))));
    if (dispatch_width == 16) {
       inst->force_uncompressed = true;

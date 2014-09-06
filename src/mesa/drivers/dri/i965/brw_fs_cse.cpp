@@ -212,10 +212,8 @@ fs_visitor::opt_cse_local(bblock_t *block)
                fs_inst *copy;
                if (written > 1) {
                   fs_reg *sources = ralloc_array(mem_ctx, fs_reg, written);
-                  for (int i = 0; i < written; i++) {
-                     sources[i] = tmp;
-                     sources[i].reg_offset = i;
-                  }
+                  for (int i = 0; i < written; i++)
+                     sources[i] = offset(tmp, i);
                   copy = LOAD_PAYLOAD(orig_dst, sources, written);
                } else {
                   copy = MOV(orig_dst, tmp);
@@ -235,10 +233,8 @@ fs_visitor::opt_cse_local(bblock_t *block)
                fs_inst *copy;
                if (written > 1) {
                   fs_reg *sources = ralloc_array(mem_ctx, fs_reg, written);
-                  for (int i = 0; i < written; i++) {
-                     sources[i] = tmp;
-                     sources[i].reg_offset = i;
-                  }
+                  for (int i = 0; i < written; i++)
+                     sources[i] = offset(tmp, i);
                   copy = LOAD_PAYLOAD(dst, sources, written);
                } else {
                   copy = MOV(dst, tmp);

@@ -558,7 +558,7 @@ fs_visitor::emit_unspill(bblock_t *block, fs_inst *inst, fs_reg dst,
       }
       inst->insert_before(block, unspill_inst);
 
-      dst.reg_offset++;
+      dst = offset(dst, 1);
       spill_offset += dispatch_width * sizeof(float);
    }
 }
@@ -716,7 +716,7 @@ fs_visitor::spill_reg(int spill_reg)
 	    fs_inst *spill_inst =
                new(mem_ctx) fs_inst(SHADER_OPCODE_GEN4_SCRATCH_WRITE,
                                     reg_null_f, spill_src);
-	    spill_src.reg_offset++;
+	    spill_src = offset(spill_src, 1);
 	    spill_inst->offset = subset_spill_offset + chan * reg_size;
 	    spill_inst->ir = inst->ir;
 	    spill_inst->annotation = inst->annotation;

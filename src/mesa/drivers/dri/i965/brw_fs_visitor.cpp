@@ -99,8 +99,7 @@ fs_visitor::visit(ir_variable *ir)
 	 /* General color output. */
 	 for (unsigned int i = 0; i < MAX2(1, ir->type->length); i++) {
 	    int output = ir->data.location - FRAG_RESULT_DATA0 + i;
-	    this->outputs[output] = *reg;
-	    this->outputs[output].reg_offset += vector_elements * i;
+	    this->outputs[output] = offset(*reg, vector_elements * i);
 	    this->output_components[output] = vector_elements;
 	 }
       }
@@ -173,13 +172,13 @@ fs_visitor::visit(ir_dereference_record *ir)
 
    ir->record->accept(this);
 
-   unsigned int offset = 0;
+   unsigned int off = 0;
    for (unsigned int i = 0; i < struct_type->length; i++) {
       if (strcmp(struct_type->fields.structure[i].name, ir->field) == 0)
 	 break;
-      offset += type_size(struct_type->fields.structure[i].type);
+      off += type_size(struct_type->fields.structure[i].type);
    }
-   this->result.reg_offset += offset;
+   this->result = offset(this->result, off);
    this->result.type = brw_type_for_base_type(ir->type);
 }
 
@@ -198,7 +197,7 @@ fs_visitor::visit(ir_dereference_array *ir)
 
    if (constant_index) {
       assert(src.file == UNIFORM || src.file == GRF || src.file == HW_REG);
-      src.reg_offset += constant_index->value.i[0] * element_size;
+      src = offset(src, constant_index->value.i[0] * element_size);
    } else {
       /* Variable index array dereference.  We attach the variable index
        * component to the reg as a pointer to a register containing the
@@ -377,8 +376,7 @@ fs_visitor::emit_interpolate_expression(ir_expression *ir)
    /* 1. collect interpolation factors */
 
    fs_reg dst_x = fs_reg(this, glsl_type::get_instance(ir->type->base_type, 2, 1));
-   fs_reg dst_y = dst_x;
-   dst_y.reg_offset++;
+   fs_reg dst_y = offset(dst_x, 1);
 
    /* for most messages, we need one reg of ignored data; the hardware requires mlen==1
     * even when there is no payload. in the per-slot offset case, we'll replace this with
@@ -435,8 +433,8 @@ fs_visitor::emit_interpolate_expression(ir_expression *ir)
             fs_inst *inst = emit(BRW_OPCODE_SEL, src2, src2, fs_reg(7));
             inst->conditional_mod = BRW_CONDITIONAL_L; /* min(src2, 7) */
 
-            src2.reg_offset++;
-            this->result.reg_offset++;
+            src2 = offset(src2, 1);
+            this->result = offset(this->result, 1);
          }
 
          mlen = 2 * reg_width;
@@ -465,7 +463,7 @@ fs_visitor::emit_interpolate_expression(ir_expression *ir)
       emit(FS_OPCODE_LINTERP, res,
            dst_x, dst_y,
            fs_reg(interp_reg(var->data.location, ch)));
-      res.reg_offset++;
+      res = offset(res, 1);
    }
 }
 
@@ -965,7 +963,7 @@ fs_visitor::visit(ir_expression *ir)
                emit(MOV(result, packed_consts));
             }
 
-            result.reg_offset++;
+            result = offset(result, 1);
          }
       } else {
          /* Turn the byte offset into a dword offset. */
@@ -979,7 +977,7 @@ fs_visitor::visit(ir_expression *ir)
             if (ir->type->base_type == GLSL_TYPE_BOOL)
                emit(CMP(result, result, fs_reg(0), BRW_CONDITIONAL_NZ));
 
-            result.reg_offset++;
+            result = offset(result, 1);
          }
       }
 
@@ -1030,8 +1028,8 @@ fs_visitor::emit_assignment_writes(fs_reg &l, fs_reg &r,
 	    inst->predicate = predicated ? BRW_PREDICATE_NORMAL : BRW_PREDICATE_NONE;
 	 }
 
-	 l.reg_offset++;
-	 r.reg_offset++;
+	 l = offset(l, 1);
+	 r = offset(r, 1);
       }
       break;
    case GLSL_TYPE_ARRAY:
@@ -1132,9 +1130,9 @@ fs_visitor::visit(ir_assignment *ir)
 	    inst = emit(MOV(l, r));
 	    if (ir->condition)
 	       inst->predicate = BRW_PREDICATE_NORMAL;
-	    r.reg_offset++;
+	    r = offset(r, 1);
 	 }
-	 l.reg_offset++;
+	 l = offset(l, 1);
       }
    } else {
       emit_assignment_writes(l, r, ir->lhs->type, ir->condition != NULL);
@@ -1157,7 +1155,7 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    if (shadow_c.file != BAD_FILE) {
       for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
 	 emit(MOV(fs_reg(MRF, base_mrf + mlen + i), coordinate));
-	 coordinate.reg_offset++;
+	 coordinate = offset(coordinate, 1);
       }
 
       /* gen4's SIMD8 sampler always has the slots for u,v,r present.
@@ -1186,7 +1184,7 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    } else if (ir->op == ir_tex) {
       for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
 	 emit(MOV(fs_reg(MRF, base_mrf + mlen + i), coordinate));
-	 coordinate.reg_offset++;
+	 coordinate = offset(coordinate, 1);
       }
       /* zero the others. */
       for (int i = ir->coordinate->type->vector_elements; i<3; i++) {
@@ -1199,7 +1197,7 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
 
       for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
 	 emit(MOV(fs_reg(MRF, base_mrf + mlen + i), coordinate));
-	 coordinate.reg_offset++;
+	 coordinate = offset(coordinate, 1);
       }
       /* the slots for u and v are always present, but r is optional */
       mlen += MAX2(ir->coordinate->type->vector_elements, 2);
@@ -1220,13 +1218,13 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
        */
       for (int i = 0; i < ir->lod_info.grad.dPdx->type->vector_elements; i++) {
 	 emit(MOV(fs_reg(MRF, base_mrf + mlen), dPdx));
-	 dPdx.reg_offset++;
+	 dPdx = offset(dPdx, 1);
       }
       mlen += MAX2(ir->lod_info.grad.dPdx->type->vector_elements, 2);
 
       for (int i = 0; i < ir->lod_info.grad.dPdy->type->vector_elements; i++) {
 	 emit(MOV(fs_reg(MRF, base_mrf + mlen), dPdy));
-	 dPdy.reg_offset++;
+	 dPdy = offset(dPdy, 1);
       }
       mlen += MAX2(ir->lod_info.grad.dPdy->type->vector_elements, 2);
    } else if (ir->op == ir_txs) {
@@ -1244,7 +1242,7 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
 	 emit(MOV(fs_reg(MRF, base_mrf + mlen + i * 2, coordinate.type),
                   coordinate));
-	 coordinate.reg_offset++;
+	 coordinate = offset(coordinate, 1);
       }
 
       /* Initialize the rest of u/v/r with 0.0.  Empirically, this seems to
@@ -1298,8 +1296,8 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    if (simd16) {
       for (int i = 0; i < 4; i++) {
 	 emit(MOV(orig_dst, dst));
-	 orig_dst.reg_offset++;
-	 dst.reg_offset += 2;
+	 orig_dst = offset(orig_dst, 1);
+	 dst = offset(dst, 2);
       }
    }
 
@@ -1338,7 +1336,7 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    for (int i = 0; i < vector_elements; i++) {
       emit(MOV(fs_reg(MRF, base_mrf + mlen + i * reg_width, coordinate.type),
                coordinate));
-      coordinate.reg_offset++;
+      coordinate = offset(coordinate, 1);
    }
    mlen += vector_elements * reg_width;
 
@@ -1382,11 +1380,11 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
        */
       for (int i = 0; i < ir->lod_info.grad.dPdx->type->vector_elements; i++) {
 	 emit(MOV(fs_reg(MRF, base_mrf + mlen), lod));
-	 lod.reg_offset++;
+	 lod = offset(lod, 1);
 	 mlen += reg_width;
 
 	 emit(MOV(fs_reg(MRF, base_mrf + mlen), lod2));
-	 lod2.reg_offset++;
+	 lod2 = offset(lod2, 1);
 	 mlen += reg_width;
       }
 
@@ -1515,7 +1513,7 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
        */
       for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
 	 emit(MOV(sources[length], coordinate));
-	 coordinate.reg_offset++;
+	 coordinate = offset(coordinate, 1);
 	 length++;
 
          /* For cube map array, the coordinate is (u,v,r,ai) but there are
@@ -1523,11 +1521,11 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
           */
          if (i < ir->lod_info.grad.dPdx->type->vector_elements) {
             emit(MOV(sources[length], lod));
-            lod.reg_offset++;
+            lod = offset(lod, 1);
             length++;
 
             emit(MOV(sources[length], lod2));
-            lod2.reg_offset++;
+            lod2 = offset(lod2, 1);
             length++;
          }
       }
@@ -1546,7 +1544,7 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    case ir_txf:
       /* Unfortunately, the parameters for LD are intermixed: u, lod, v, r. */
       emit(MOV(retype(sources[length], BRW_REGISTER_TYPE_D), coordinate));
-      coordinate.reg_offset++;
+      coordinate = offset(coordinate, 1);
       length++;
 
       emit(MOV(retype(sources[length], BRW_REGISTER_TYPE_D), lod));
@@ -1554,7 +1552,7 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
 
       for (int i = 1; i < ir->coordinate->type->vector_elements; i++) {
 	 emit(MOV(retype(sources[length], BRW_REGISTER_TYPE_D), coordinate));
-	 coordinate.reg_offset++;
+	 coordinate = offset(coordinate, 1);
 	 length++;
       }
 
@@ -1573,7 +1571,7 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
        */
       for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
          emit(MOV(retype(sources[length], BRW_REGISTER_TYPE_D), coordinate));
-         coordinate.reg_offset++;
+         coordinate = offset(coordinate, 1);
          length++;
       }
 
@@ -1590,19 +1588,19 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
 
          for (int i = 0; i < 2; i++) { /* u, v */
             emit(MOV(sources[length], coordinate));
-            coordinate.reg_offset++;
+            coordinate = offset(coordinate, 1);
             length++;
          }
 
          for (int i = 0; i < 2; i++) { /* offu, offv */
             emit(MOV(retype(sources[length], BRW_REGISTER_TYPE_D), offset_value));
-            offset_value.reg_offset++;
+            offset_value = offset(offset_value, 1);
             length++;
          }
 
          if (ir->coordinate->type->vector_elements == 3) { /* r if present */
             emit(MOV(sources[length], coordinate));
-            coordinate.reg_offset++;
+            coordinate = offset(coordinate, 1);
             length++;
          }
 
@@ -1615,7 +1613,7 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    if (ir->coordinate && !coordinate_done) {
       for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
          emit(MOV(sources[length], coordinate));
-         coordinate.reg_offset++;
+         coordinate = offset(coordinate, 1);
          length++;
       }
    }
@@ -1730,8 +1728,8 @@ fs_visitor::rescale_texcoord(ir_texture *ir, fs_reg coordinate,
       coordinate = dst;
 
       emit(MUL(dst, src, scale_x));
-      dst.reg_offset++;
-      src.reg_offset++;
+      dst = offset(dst, 1);
+      src = offset(src, 1);
       emit(MUL(dst, src, scale_y));
    } else if (is_rect) {
       /* On gen6+, the sampler handles the rectangle coordinates
@@ -1744,7 +1742,7 @@ fs_visitor::rescale_texcoord(ir_texture *ir, fs_reg coordinate,
       for (int i = 0; i < 2; i++) {
 	 if (tex->gl_clamp_mask[i] & (1 << sampler)) {
 	    fs_reg chan = coordinate;
-	    chan.reg_offset += i;
+	    chan = offset(chan, i);
 
 	    inst = emit(BRW_OPCODE_SEL, chan, chan, fs_reg(0.0f));
 	    inst->conditional_mod = BRW_CONDITIONAL_G;
@@ -1770,7 +1768,7 @@ fs_visitor::rescale_texcoord(ir_texture *ir, fs_reg coordinate,
 	   i < MIN2(ir->coordinate->type->vector_elements, 3); i++) {
 	 if (tex->gl_clamp_mask[i] & (1 << sampler)) {
 	    fs_reg chan = coordinate;
-	    chan.reg_offset += i;
+	    chan = offset(chan, i);
 
 	    fs_inst *inst = emit(MOV(chan, chan));
 	    inst->saturate = true;
@@ -1795,7 +1793,7 @@ fs_visitor::emit_mcs_fetch(ir_texture *ir, fs_reg coordinate, fs_reg sampler)
    for (int i = 0; i < length; i++) {
       sources[i] = fs_reg(this, glsl_type::float_type);
       emit(MOV(retype(sources[i], BRW_REGISTER_TYPE_D), coordinate));
-      coordinate.reg_offset++;
+      coordinate = offset(coordinate, 1);
    }
 
    emit(LOAD_PAYLOAD(payload, sources, length));
@@ -1877,7 +1875,7 @@ fs_visitor::visit(ir_texture *ir)
 
          for (int i=0; i<4; i++) {
             emit(MOV(res, fs_reg(swiz == SWIZZLE_ZERO ? 0.0f : 1.0f)));
-            res.reg_offset++;
+            res = offset(res, 1);
          }
          return;
       }
@@ -1976,19 +1974,16 @@ fs_visitor::visit(ir_texture *ir)
       glsl_type const *type = ir->sampler->type;
       if (type->sampler_dimensionality == GLSL_SAMPLER_DIM_CUBE &&
           type->sampler_array) {
-         fs_reg depth = dst;
-         depth.reg_offset = 2;
+         fs_reg depth = offset(dst, 2);
          fs_reg fixed_depth = fs_reg(this, glsl_type::int_type);
          emit_math(SHADER_OPCODE_INT_QUOTIENT, fixed_depth, depth, fs_reg(6));
 
          fs_reg *fixed_payload = ralloc_array(mem_ctx, fs_reg, inst->regs_written);
-         fs_reg d = dst;
          for (int i = 0; i < inst->regs_written; i++) {
             if (i == 2) {
                fixed_payload[i] = fixed_depth;
             } else {
-               d.reg_offset = i;
-               fixed_payload[i] = d;
+               fixed_payload[i] = offset(dst, i);
             }
          }
          emit(LOAD_PAYLOAD(dst, fixed_payload, inst->regs_written));
@@ -2028,7 +2023,7 @@ fs_visitor::emit_gen6_gather_wa(uint8_t wa, fs_reg dst)
          emit(ASR(dst, dst, fs_reg(32 - width)));
       }
 
-      dst.reg_offset++;
+      dst = offset(dst, 1);
    }
 }
 
@@ -2069,8 +2064,7 @@ fs_visitor::swizzle_result(ir_texture *ir, fs_reg orig_val, uint32_t sampler)
 {
    if (ir->op == ir_query_levels) {
       /* # levels is in .w */
-      orig_val.reg_offset += 3;
-      this->result = orig_val;
+      this->result = offset(orig_val, 3);
       return;
    }
 
@@ -2096,16 +2090,15 @@ fs_visitor::swizzle_result(ir_texture *ir, fs_reg orig_val, uint32_t sampler)
       for (int i = 0; i < 4; i++) {
 	 int swiz = GET_SWZ(tex->swizzles[sampler], i);
 	 fs_reg l = swizzled_result;
-	 l.reg_offset += i;
+	 l = offset(l, i);
 
 	 if (swiz == SWIZZLE_ZERO) {
 	    emit(MOV(l, fs_reg(0.0f)));
 	 } else if (swiz == SWIZZLE_ONE) {
 	    emit(MOV(l, fs_reg(1.0f)));
 	 } else {
-	    fs_reg r = orig_val;
-	    r.reg_offset += GET_SWZ(tex->swizzles[sampler], i);
-	    emit(MOV(l, r));
+            emit(MOV(l, offset(orig_val,
+                               GET_SWZ(tex->swizzles[sampler], i))));
 	 }
       }
       this->result = swizzled_result;
@@ -2119,7 +2112,7 @@ fs_visitor::visit(ir_swizzle *ir)
    fs_reg val = this->result;
 
    if (ir->type->vector_elements == 1) {
-      this->result.reg_offset += ir->mask.x;
+      this->result = offset(this->result, ir->mask.x);
       return;
    }
 
@@ -2145,9 +2138,8 @@ fs_visitor::visit(ir_swizzle *ir)
 	 break;
       }
 
-      channel.reg_offset += swiz;
-      emit(MOV(result, channel));
-      result.reg_offset++;
+      emit(MOV(result, offset(channel, swiz)));
+      result = offset(result, 1);
    }
 }
 
@@ -2205,8 +2197,8 @@ fs_visitor::visit(ir_constant *ir)
 	 dst_reg.type = src_reg.type;
 	 for (unsigned j = 0; j < size; j++) {
 	    emit(MOV(dst_reg, src_reg));
-	    src_reg.reg_offset++;
-	    dst_reg.reg_offset++;
+	    src_reg = offset(src_reg, 1);
+	    dst_reg = offset(dst_reg, 1);
 	 }
       }
    } else if (ir->type->is_record()) {
@@ -2219,8 +2211,8 @@ fs_visitor::visit(ir_constant *ir)
 	 dst_reg.type = src_reg.type;
 	 for (unsigned j = 0; j < size; j++) {
 	    emit(MOV(dst_reg, src_reg));
-	    src_reg.reg_offset++;
-	    dst_reg.reg_offset++;
+	    src_reg = offset(src_reg, 1);
+	    dst_reg = offset(dst_reg, 1);
 	 }
       }
    } else {
@@ -2245,7 +2237,7 @@ fs_visitor::visit(ir_constant *ir)
 	 default:
 	    unreachable("Non-float/uint/int/bool constant");
 	 }
-	 dst_reg.reg_offset++;
+	 dst_reg = offset(dst_reg, 1);
       }
    }
 
@@ -2887,8 +2879,7 @@ fs_visitor::emit_interpolation_setup_gen4()
       this->delta_x[BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC] =
          fs_reg(this, glsl_type::vec2_type);
       this->delta_y[BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC] =
-         this->delta_x[BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC];
-      this->delta_y[BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC].reg_offset++;
+         offset(this->delta_x[BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC], 1);
    } else {
       this->delta_x[BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC] =
          fs_reg(this, glsl_type::float_type);
@@ -2971,7 +2962,7 @@ fs_visitor::emit_color_write(int target, int index, int first_color_mrf)
    if (color.file == BAD_FILE)
       return;
 
-   color.reg_offset += index;
+   color = offset(color, index);
 
    if (dispatch_width == 8 || brw->gen >= 6) {
       /* SIMD8 write looks like:
@@ -3074,8 +3065,7 @@ fs_visitor::emit_alpha_test()
                      BRW_CONDITIONAL_NEQ));
    } else {
       /* RT0 alpha */
-      fs_reg color = outputs[0];
-      color.reg_offset += 3;
+      fs_reg color = offset(outputs[0], 3);
 
       /* f0.1 &= func(color, ref) */
       cmp = emit(CMP(reg_null_f, color, fs_reg(key->alpha_test_ref),
@@ -3191,7 +3181,7 @@ fs_visitor::emit_fb_writes()
 						 "FB write src0");
       for (int i = 0; i < 4; i++) {
 	 fs_inst *inst = emit(MOV(fs_reg(MRF, color_mrf + i, src0.type), src0));
-	 src0.reg_offset++;
+	 src0 = offset(src0, 1);
 	 inst->saturate = key->clamp_fragment_color;
       }
 
@@ -3200,7 +3190,7 @@ fs_visitor::emit_fb_writes()
       for (int i = 0; i < 4; i++) {
 	 fs_inst *inst = emit(MOV(fs_reg(MRF, color_mrf + 4 + i, src1.type),
                                   src1));
-	 src1.reg_offset++;
+	 src1 = offset(src1, 1);
 	 inst->saturate = key->clamp_fragment_color;
       }
 
@@ -3233,8 +3223,7 @@ fs_visitor::emit_fb_writes()
       int write_color_mrf = color_mrf;
       if (src0_alpha_to_render_target && target != 0) {
          fs_inst *inst;
-         fs_reg color = outputs[0];
-         color.reg_offset += 3;
+         fs_reg color = offset(outputs[0], 3);
 
          inst = emit(MOV(fs_reg(MRF, write_color_mrf, color.type),
                          color));
