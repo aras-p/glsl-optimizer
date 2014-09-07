@@ -88,7 +88,7 @@ gen7_wa_pipe_control_cs_stall(struct ilo_3d_pipeline *p,
       bo = p->workaround_bo;
    }
 
-   gen6_emit_PIPE_CONTROL(p->dev, dw1, bo, 0, false, p->cp);
+   gen6_PIPE_CONTROL(&p->cp->builder, dw1, bo, 0, false);
 }
 
 static void
@@ -105,10 +105,10 @@ gen7_wa_pipe_control_vs_depth_stall(struct ilo_3d_pipeline *p)
     *      3DSTATE_SAMPLER_STATE_POINTER_VS command.  Only one PIPE_CONTROL
     *      needs to be sent before any combination of VS associated 3DSTATE."
     */
-   gen6_emit_PIPE_CONTROL(p->dev,
+   gen6_PIPE_CONTROL(&p->cp->builder,
          GEN6_PIPE_CONTROL_DEPTH_STALL |
          GEN6_PIPE_CONTROL_WRITE_IMM,
-         p->workaround_bo, 0, false, p->cp);
+         p->workaround_bo, 0, false);
 }
 
 static void
@@ -144,20 +144,20 @@ gen7_wa_pipe_control_wm_depth_stall(struct ilo_3d_pipeline *p,
     *      guarantee that the pipeline from WM onwards is already flushed
     *      (e.g., via a preceding MI_FLUSH)."
     */
-   gen6_emit_PIPE_CONTROL(p->dev,
+   gen6_PIPE_CONTROL(&p->cp->builder,
          GEN6_PIPE_CONTROL_DEPTH_STALL,
-         NULL, 0, false, p->cp);
+         NULL, 0, false);
 
    if (!change_depth_buffer)
       return;
 
-   gen6_emit_PIPE_CONTROL(p->dev,
+   gen6_PIPE_CONTROL(&p->cp->builder,
          GEN6_PIPE_CONTROL_DEPTH_CACHE_FLUSH,
-         NULL, 0, false, p->cp);
+         NULL, 0, false);
 
-   gen6_emit_PIPE_CONTROL(p->dev,
+   gen6_PIPE_CONTROL(&p->cp->builder,
          GEN6_PIPE_CONTROL_DEPTH_STALL,
-         NULL, 0, false, p->cp);
+         NULL, 0, false);
 }
 
 static void
@@ -172,9 +172,9 @@ gen7_wa_pipe_control_ps_max_threads_stall(struct ilo_3d_pipeline *p)
     *      between 3DPRIMITIVE commands, a PIPE_CONTROL command with Stall at
     *      Pixel Scoreboard set is required to be issued."
     */
-   gen6_emit_PIPE_CONTROL(p->dev,
+   gen6_PIPE_CONTROL(&p->cp->builder,
          GEN6_PIPE_CONTROL_PIXEL_SCOREBOARD_STALL,
-         NULL, 0, false, p->cp);
+         NULL, 0, false);
 
 }
 
@@ -326,7 +326,7 @@ gen7_pipeline_vs(struct ilo_3d_pipeline *p,
    if (emit_3dstate_vs) {
       const int num_samplers = ilo->sampler[PIPE_SHADER_VERTEX].count;
 
-      gen6_emit_3DSTATE_VS(p->dev, ilo->vs, num_samplers, p->cp);
+      gen6_3DSTATE_VS(&p->cp->builder, ilo->vs, num_samplers);
    }
 }
 
@@ -513,8 +513,8 @@ gen7_pipeline_wm(struct ilo_3d_pipeline *p,
 
    /* 3DSTATE_SCISSOR_STATE_POINTERS */
    if (session->scissor_state_changed) {
-      gen6_emit_3DSTATE_SCISSOR_STATE_POINTERS(p->dev,
-            p->state.SCISSOR_RECT, p->cp);
+      gen6_3DSTATE_SCISSOR_STATE_POINTERS(&p->cp->builder,
+            p->state.SCISSOR_RECT);
    }
 
    /* XXX what is the best way to know if this workaround is needed? */
@@ -557,9 +557,9 @@ gen7_pipeline_wm(struct ilo_3d_pipeline *p,
          clear_params = 0;
       }
 
-      gen6_emit_3DSTATE_DEPTH_BUFFER(p->dev, zs, p->cp);
-      gen6_emit_3DSTATE_HIER_DEPTH_BUFFER(p->dev, zs, p->cp);
-      gen6_emit_3DSTATE_STENCIL_BUFFER(p->dev, zs, p->cp);
+      gen6_3DSTATE_DEPTH_BUFFER(&p->cp->builder, zs);
+      gen6_3DSTATE_HIER_DEPTH_BUFFER(&p->cp->builder, zs);
+      gen6_3DSTATE_STENCIL_BUFFER(&p->cp->builder, zs);
       gen7_3DSTATE_CLEAR_PARAMS(&p->cp->builder, clear_params);
    }
 }
@@ -580,9 +580,9 @@ gen7_pipeline_wm_multisample(struct ilo_3d_pipeline *p,
          (ilo->fb.num_samples > 1) ? &p->packed_sample_position_4x :
          &p->packed_sample_position_1x;
 
-      gen6_emit_3DSTATE_MULTISAMPLE(p->dev,
+      gen6_3DSTATE_MULTISAMPLE(&p->cp->builder,
             ilo->fb.num_samples, packed_sample_pos,
-            ilo->rasterizer->state.half_pixel_center, p->cp);
+            ilo->rasterizer->state.half_pixel_center);
 
       gen7_3DSTATE_SAMPLE_MASK(&p->cp->builder,
             (ilo->fb.num_samples > 1) ? ilo->sample_mask : 0x1,
@@ -694,7 +694,7 @@ gen7_rectlist_vs_to_sf(struct ilo_3d_pipeline *p,
                        struct gen6_rectlist_session *session)
 {
    gen7_3DSTATE_CONSTANT_VS(&p->cp->builder, NULL, NULL, 0);
-   gen6_emit_3DSTATE_VS(p->dev, NULL, 0, p->cp);
+   gen6_3DSTATE_VS(&p->cp->builder, NULL, 0);
 
    gen7_3DSTATE_CONSTANT_HS(&p->cp->builder, NULL, NULL, 0);
    gen7_3DSTATE_HS(&p->cp->builder, NULL, 0);
@@ -709,7 +709,7 @@ gen7_rectlist_vs_to_sf(struct ilo_3d_pipeline *p,
 
    gen7_3DSTATE_STREAMOUT(&p->cp->builder, 0x0, 0, false);
 
-   gen6_emit_3DSTATE_CLIP(p->dev, NULL, NULL, false, 0, p->cp);
+   gen6_3DSTATE_CLIP(&p->cp->builder, NULL, NULL, false, 0);
 
    gen7_wa_pipe_control_cs_stall(p, true, true);
 
@@ -756,18 +756,18 @@ gen7_rectlist_wm_depth(struct ilo_3d_pipeline *p,
 
    if (blitter->uses & (ILO_BLITTER_USE_FB_DEPTH |
                         ILO_BLITTER_USE_FB_STENCIL)) {
-      gen6_emit_3DSTATE_DEPTH_BUFFER(p->dev,
-            &blitter->fb.dst.u.zs, p->cp);
+      gen6_3DSTATE_DEPTH_BUFFER(&p->cp->builder,
+            &blitter->fb.dst.u.zs);
    }
 
    if (blitter->uses & ILO_BLITTER_USE_FB_DEPTH) {
-      gen6_emit_3DSTATE_HIER_DEPTH_BUFFER(p->dev,
-            &blitter->fb.dst.u.zs, p->cp);
+      gen6_3DSTATE_HIER_DEPTH_BUFFER(&p->cp->builder,
+            &blitter->fb.dst.u.zs);
    }
 
    if (blitter->uses & ILO_BLITTER_USE_FB_STENCIL) {
-      gen6_emit_3DSTATE_STENCIL_BUFFER(p->dev,
-            &blitter->fb.dst.u.zs, p->cp);
+      gen6_3DSTATE_STENCIL_BUFFER(&p->cp->builder,
+            &blitter->fb.dst.u.zs);
    }
 
    gen7_3DSTATE_CLEAR_PARAMS(&p->cp->builder,
@@ -786,8 +786,8 @@ gen7_rectlist_wm_multisample(struct ilo_3d_pipeline *p,
 
    gen7_wa_pipe_control_cs_stall(p, true, true);
 
-   gen6_emit_3DSTATE_MULTISAMPLE(p->dev, blitter->fb.num_samples,
-         packed_sample_pos, true, p->cp);
+   gen6_3DSTATE_MULTISAMPLE(&p->cp->builder, blitter->fb.num_samples,
+         packed_sample_pos, true);
 
    gen7_3DSTATE_SAMPLE_MASK(&p->cp->builder,
          (1 << blitter->fb.num_samples) - 1, blitter->fb.num_samples);
@@ -802,11 +802,11 @@ gen7_rectlist_commands(struct ilo_3d_pipeline *p,
 
    ilo_builder_batch_state_base_address(&p->cp->builder, true);
 
-   gen6_emit_3DSTATE_VERTEX_BUFFERS(p->dev,
-         &blitter->ve, &blitter->vb, p->cp);
+   gen6_3DSTATE_VERTEX_BUFFERS(&p->cp->builder,
+         &blitter->ve, &blitter->vb);
 
-   gen6_emit_3DSTATE_VERTEX_ELEMENTS(p->dev,
-         &blitter->ve, false, false, p->cp);
+   gen6_3DSTATE_VERTEX_ELEMENTS(&p->cp->builder,
+         &blitter->ve, false, false);
 
    gen7_rectlist_pcb_alloc(p, blitter, session);
 
@@ -835,8 +835,8 @@ gen7_rectlist_commands(struct ilo_3d_pipeline *p,
 
    gen7_rectlist_wm_depth(p, blitter, session);
 
-   gen6_emit_3DSTATE_DRAWING_RECTANGLE(p->dev, 0, 0,
-         blitter->fb.width, blitter->fb.height, p->cp);
+   gen6_3DSTATE_DRAWING_RECTANGLE(&p->cp->builder, 0, 0,
+         blitter->fb.width, blitter->fb.height);
 
    gen7_3DPRIMITIVE(&p->cp->builder, &blitter->draw, NULL, true);
 }

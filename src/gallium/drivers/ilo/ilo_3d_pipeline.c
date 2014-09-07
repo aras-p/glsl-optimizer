@@ -180,9 +180,7 @@ ilo_3d_pipeline_emit_draw(struct ilo_3d_pipeline *p,
       handle_invalid_batch_bo(p, false);
 
       /* draw! */
-      ilo_cp_assert_no_implicit_flush(p->cp, true);
       p->emit_draw(p, ilo);
-      ilo_cp_assert_no_implicit_flush(p->cp, false);
 
       if (ilo_builder_validate(&ilo->cp->builder, 0, NULL)) {
          success = true;
@@ -286,9 +284,7 @@ ilo_3d_pipeline_emit_rectlist(struct ilo_3d_pipeline *p,
 
       handle_invalid_batch_bo(p, false);
 
-      ilo_cp_assert_no_implicit_flush(p->cp, true);
       p->emit_rectlist(p, blitter);
-      ilo_cp_assert_no_implicit_flush(p->cp, false);
 
       if (!ilo_builder_validate(&p->cp->builder, 0, NULL)) {
          /* rewind */
