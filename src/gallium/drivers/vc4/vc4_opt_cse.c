@@ -173,7 +173,7 @@ qir_opt_cse(struct vc4_compile *c)
                         }
                 }
 
-                if (qir_reads_r4(inst))
+                if (qir_writes_r4(inst))
                         r4_count++;
         }
 
