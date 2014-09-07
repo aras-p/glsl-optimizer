@@ -210,7 +210,7 @@ serialize_insts(struct vc4_compile *c)
 void
 vc4_generate_code(struct vc4_compile *c)
 {
-        struct qpu_reg allocate_to_qpu_reg[3 + 32 + 32];
+        struct qpu_reg allocate_to_qpu_reg[4 + 32 + 32];
         bool reg_in_use[ARRAY_SIZE(allocate_to_qpu_reg)];
         int *reg_allocated = calloc(c->num_temps, sizeof(*reg_allocated));
         int *reg_uses_remaining =
@@ -221,12 +221,15 @@ vc4_generate_code(struct vc4_compile *c)
                 reg_in_use[i] = false;
         for (int i = 0; i < c->num_temps; i++)
                 reg_allocated[i] = -1;
-        for (int i = 0; i < 3; i++)
-                allocate_to_qpu_reg[i] = qpu_rn(i);
+
+        uint32_t next_reg = 0;
+        for (int i = 0; i < 4; i++)
+                allocate_to_qpu_reg[next_reg++] = qpu_rn(i == 3 ? 4 : i);
         for (int i = 0; i < 32; i++)
-                allocate_to_qpu_reg[i + 3] = qpu_ra(i);
+                allocate_to_qpu_reg[next_reg++] = qpu_ra(i);
         for (int i = 0; i < 32; i++)
-                allocate_to_qpu_reg[i + 3 + 32] = qpu_rb(i);
+                allocate_to_qpu_reg[next_reg++] = qpu_rb(i);
+        assert(next_reg == ARRAY_SIZE(allocate_to_qpu_reg));
 
         make_empty_list(&c->qpu_inst_list);
 
@@ -338,10 +341,31 @@ vc4_generate_code(struct vc4_compile *c)
                                 for (alloc = 0;
                                      alloc < ARRAY_SIZE(reg_in_use);
                                      alloc++) {
-                                        /* The pack flags require an A-file register. */
-                                        if (qinst->op == QOP_PACK_SCALED &&
-                                            allocate_to_qpu_reg[alloc].mux != QPU_MUX_A) {
-                                                continue;
+                                        struct qpu_reg reg = allocate_to_qpu_reg[alloc];
+
+                                        switch (qinst->op) {
+                                        case QOP_PACK_SCALED:
+                                                /* The pack flags require an
+                                                 * A-file register.
+                                                 */
+                                                if (reg.mux != QPU_MUX_A)
+                                                        continue;
+                                                break;
+                                        case QOP_TEX_RESULT:
+                                        case QOP_TLB_COLOR_READ:
+                                                /* Only R4-generating
+                                                 * instructions get to store
+                                                 * values in R4 for now, until
+                                                 * we figure out how to do
+                                                 * interference.
+                                                 */
+                                                if (reg.mux != QPU_MUX_R4)
+                                                        continue;
+                                                break;
+                                        default:
+                                                if (reg.mux == QPU_MUX_R4)
+                                                        continue;
+                                                break;
                                         }
 
                                         if (!reg_in_use[alloc])
@@ -549,7 +573,8 @@ vc4_generate_code(struct vc4_compile *c)
                 case QOP_R4_UNPACK_B:
                 case QOP_R4_UNPACK_C:
                 case QOP_R4_UNPACK_D:
-                        queue(c, qpu_a_MOV(dst, qpu_r4()));
+                        assert(src[0].mux == QPU_MUX_R4);
+                        queue(c, qpu_a_MOV(dst, src[0]));
                         *last_inst(c) |= QPU_PM;
                         *last_inst(c) |= QPU_SET_FIELD(QPU_UNPACK_R4_8A +
                                                        (qinst->op -

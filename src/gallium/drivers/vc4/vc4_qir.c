@@ -78,7 +78,7 @@ static const struct qir_op_info qir_op_info[] = {
         [QOP_TLB_DISCARD_SETUP] = { "discard", 0, 1, true },
         [QOP_TLB_PASSTHROUGH_Z_WRITE] = { "tlb_passthrough_z", 0, 0, true },
         [QOP_TLB_COLOR_WRITE] = { "tlb_color", 0, 1, true },
-        [QOP_TLB_COLOR_READ] = { "tlb_color_read", 0, 0, true },
+        [QOP_TLB_COLOR_READ] = { "tlb_color_read", 1, 0, true },
         [QOP_VARY_ADD_C] = { "vary_add_c", 1, 1 },
 
         [QOP_FRAG_X] = { "frag_x", 1, 0 },
@@ -90,11 +90,11 @@ static const struct qir_op_info qir_op_info[] = {
         [QOP_TEX_T] = { "tex_t", 0, 2 },
         [QOP_TEX_R] = { "tex_r", 0, 2 },
         [QOP_TEX_B] = { "tex_b", 0, 2 },
-        [QOP_TEX_RESULT] = { "tex_result", 0, 0 },
-        [QOP_R4_UNPACK_A] = { "r4_unpack_a", 1, 0 },
-        [QOP_R4_UNPACK_B] = { "r4_unpack_b", 1, 0 },
-        [QOP_R4_UNPACK_C] = { "r4_unpack_c", 1, 0 },
-        [QOP_R4_UNPACK_D] = { "r4_unpack_d", 1, 0 },
+        [QOP_TEX_RESULT] = { "tex_result", 1, 0, true },
+        [QOP_R4_UNPACK_A] = { "r4_unpack_a", 1, 1 },
+        [QOP_R4_UNPACK_B] = { "r4_unpack_b", 1, 1 },
+        [QOP_R4_UNPACK_C] = { "r4_unpack_c", 1, 1 },
+        [QOP_R4_UNPACK_D] = { "r4_unpack_d", 1, 1 },
 };
 
 static const char *

@@ -497,11 +497,11 @@ tgsi_to_qir_tex(struct vc4_compile *c,
         }
 
         c->num_texture_samples++;
-        qir_emit(c, qir_inst(QOP_TEX_RESULT, c->undef, c->undef, c->undef));
+        struct qreg r4 = qir_TEX_RESULT(c);
 
         struct qreg unpacked[4];
         for (int i = 0; i < 4; i++)
-                unpacked[i] = qir_R4_UNPACK(c, i);
+                unpacked[i] = qir_R4_UNPACK(c, r4, i);
 
         enum pipe_format format = c->key->tex_format[unit];
         const uint8_t *swiz = vc4_get_format_swizzle(format);
@@ -1096,10 +1096,9 @@ emit_frag_end(struct vc4_compile *c)
         struct qreg dst_color[4] = { c->undef, c->undef, c->undef, c->undef };
         if (c->fs_key->blend.blend_enable ||
             c->fs_key->blend.colormask != 0xf) {
-                qir_emit(c, qir_inst(QOP_TLB_COLOR_READ, c->undef,
-                                     c->undef, c->undef));
+                struct qreg r4 = qir_TLB_COLOR_READ(c);
                 for (int i = 0; i < 4; i++)
-                        tlb_read_color[i] = qir_R4_UNPACK(c, i);
+                        tlb_read_color[i] = qir_R4_UNPACK(c, r4, i);
                 for (int i = 0; i < 4; i++)
                         dst_color[i] = get_swizzled_channel(c,
                                                             tlb_read_color,

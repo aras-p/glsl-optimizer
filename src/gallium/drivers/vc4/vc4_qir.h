@@ -353,13 +353,15 @@ QIR_ALU0(FRAG_X)
 QIR_ALU0(FRAG_Y)
 QIR_ALU0(FRAG_Z)
 QIR_ALU0(FRAG_RCP_W)
+QIR_ALU0(TEX_RESULT)
+QIR_ALU0(TLB_COLOR_READ)
 QIR_NODST_1(TLB_DISCARD_SETUP)
 
 static inline struct qreg
-qir_R4_UNPACK(struct vc4_compile *c, int i)
+qir_R4_UNPACK(struct vc4_compile *c, struct qreg r4, int i)
 {
         struct qreg t = qir_get_temp(c);
-        qir_emit(c, qir_inst(QOP_R4_UNPACK_A + i, t, c->undef, c->undef));
+        qir_emit(c, qir_inst(QOP_R4_UNPACK_A + i, t, r4, c->undef));
         return t;
 }
 
