@@ -357,6 +357,20 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
       if (op_expr[0]->operation == ir_unop_log2) {
          return op_expr[0]->operands[0];
       }
+
+      if (!options->EmitNoPow && op_expr[0]->operation == ir_binop_mul) {
+         for (int log2_pos = 0; log2_pos < 2; log2_pos++) {
+            ir_expression *log2_expr =
+               op_expr[0]->operands[log2_pos]->as_expression();
+
+            if (log2_expr && log2_expr->operation == ir_unop_log2) {
+               return new(mem_ctx) ir_expression(ir_binop_pow,
+                                                 ir->type,
+                                                 log2_expr->operands[0],
+                                                 op_expr[0]->operands[1 - log2_pos]);
+            }
+         }
+      }
       break;
 
    case ir_unop_log2:
