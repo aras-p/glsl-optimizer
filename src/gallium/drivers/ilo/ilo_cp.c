@@ -129,7 +129,6 @@ ilo_cp_create(const struct ilo_dev_info *dev,
    }
 
    cp->ring = INTEL_RING_RENDER;
-   cp->no_implicit_flush = false;
 
    ilo_builder_init(&cp->builder, dev, winsys);
 

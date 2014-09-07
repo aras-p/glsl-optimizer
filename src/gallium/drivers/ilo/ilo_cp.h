@@ -58,15 +58,10 @@ struct ilo_cp {
    int owner_reserve;
 
    enum intel_ring_type ring;
-   bool no_implicit_flush;
    unsigned one_off_flags;
 
    struct ilo_builder builder;
    struct intel_bo *last_submitted_bo;
-
-   unsigned pos;
-   uint32_t *ptr;
-   int cmd_cur, cmd_end;
 };
 
 struct ilo_cp *
@@ -121,11 +116,6 @@ ilo_cp_space(struct ilo_cp *cp)
 static inline void
 ilo_cp_implicit_flush(struct ilo_cp *cp)
 {
-   if (cp->no_implicit_flush) {
-      assert(!"unexpected command parser flush");
-      ilo_builder_batch_discard(&cp->builder);
-   }
-
    ilo_cp_flush(cp, "out of space (implicit)");
 }
 
@@ -139,15 +129,6 @@ ilo_cp_set_ring(struct ilo_cp *cp, enum intel_ring_type ring)
       ilo_cp_implicit_flush(cp);
       cp->ring = ring;
    }
-}
-
-/**
- * Assert that no function should flush implicitly.
- */
-static inline void
-ilo_cp_assert_no_implicit_flush(struct ilo_cp *cp, bool enable)
-{
-   cp->no_implicit_flush = enable;
 }
 
 /**
@@ -185,15 +166,11 @@ ilo_cp_set_owner(struct ilo_cp *cp, const struct ilo_cp_owner *owner,
 
    /* release current owner */
    if (new_owner && cp->owner) {
-      const bool no_implicit_flush = cp->no_implicit_flush;
-
       /* reclaim the reserved space */
       cp->owner_reserve = 0;
 
       /* invoke the release callback */
-      cp->no_implicit_flush = true;
       cp->owner->release_callback(cp, cp->owner->release_data);
-      cp->no_implicit_flush = no_implicit_flush;
 
       cp->owner = NULL;
    }
@@ -216,128 +193,6 @@ ilo_cp_set_owner(struct ilo_cp *cp, const struct ilo_cp_owner *owner,
    cp->owner = owner;
 
    return new_owner;
-}
-
-/**
- * Begin writing a command.
- */
-static inline void
-ilo_cp_begin(struct ilo_cp *cp, int cmd_size)
-{
-   if (ilo_cp_space(cp) < cmd_size) {
-      ilo_cp_implicit_flush(cp);
-      assert(ilo_cp_space(cp) >= cmd_size);
-   }
-
-   cp->pos = ilo_builder_batch_pointer(&cp->builder, cmd_size, &cp->ptr);
-
-   cp->cmd_cur = 0;
-   cp->cmd_end = cmd_size;
-}
-
-/**
- * Begin writing data to a space stolen from the top of the parser buffer.
- *
- * \param item builder item type
- * \param data_size in dwords
- * \param align in dwords
- * \param bo_offset in bytes to the stolen space
- */
-static inline void
-ilo_cp_steal(struct ilo_cp *cp, enum ilo_builder_item_type item,
-             int data_size, int align, uint32_t *bo_offset)
-{
-   if (!align)
-      align = 1;
-
-   /* flush if there is not enough space after stealing */
-   if (ilo_cp_space(cp) < data_size + align - 1) {
-      ilo_cp_implicit_flush(cp);
-      assert(ilo_cp_space(cp) >= data_size + align - 1);
-   }
-
-   cp->pos = ilo_builder_state_pointer(&cp->builder,
-         item, align << 2, data_size, &cp->ptr) >> 2;
-
-   cp->cmd_cur = 0;
-   cp->cmd_end = data_size;
-
-   /* offset in cp->bo */
-   if (bo_offset)
-      *bo_offset = cp->pos << 2;
-}
-
-/**
- * Write a dword to the parser buffer.  This function must be enclosed by
- * ilo_cp_begin()/ilo_cp_steal() and ilo_cp_end().
- */
-static inline void
-ilo_cp_write(struct ilo_cp *cp, uint32_t val)
-{
-   assert(cp->cmd_cur < cp->cmd_end);
-   cp->ptr[cp->cmd_cur++] = val;
-}
-
-/**
- * Write multiple dwords to the parser buffer.
- */
-static inline void
-ilo_cp_write_multi(struct ilo_cp *cp, const void *vals, int num_vals)
-{
-   assert(cp->cmd_cur + num_vals <= cp->cmd_end);
-   memcpy(cp->ptr + cp->cmd_cur, vals, num_vals * 4);
-   cp->cmd_cur += num_vals;
-}
-
-/**
- * Write a bo to the parser buffer.  In addition to writing the offset of the
- * bo to the buffer, it also emits a relocation.
- */
-static inline void
-ilo_cp_write_bo(struct ilo_cp *cp, uint32_t val,
-                struct intel_bo *bo, uint32_t flags)
-{
-   if (bo) {
-      ilo_builder_batch_reloc(&cp->builder, cp->pos + cp->cmd_cur,
-            bo, val, flags);
-      cp->cmd_cur++;
-   }
-   else {
-      ilo_cp_write(cp, 0);
-   }
-}
-
-/**
- * End a command.  Every ilo_cp_begin() or ilo_cp_steal() must have a
- * matching ilo_cp_end().
- */
-static inline void
-ilo_cp_end(struct ilo_cp *cp)
-{
-   assert(cp->cmd_cur == cp->cmd_end);
-}
-
-/**
- * A variant of ilo_cp_steal() where the data are written via the returned
- * pointer.
- *
- * \return ptr pointer where the data are written to.  It is valid until any
- *             change is made to the parser.
- */
-static inline void *
-ilo_cp_steal_ptr(struct ilo_cp *cp, enum ilo_builder_item_type item,
-                 int data_size, int align, uint32_t *bo_offset)
-{
-   void *ptr;
-
-   ilo_cp_steal(cp, item, data_size, align, bo_offset);
-
-   ptr = &cp->ptr[cp->cmd_cur];
-   cp->cmd_cur = cp->cmd_end;
-
-   ilo_cp_end(cp);
-
-   return ptr;
 }
 
 #endif /* ILO_CP_H */
