@@ -499,11 +499,21 @@ tgsi_to_qir_tex(struct vc4_compile *c,
         c->num_texture_samples++;
         struct qreg r4 = qir_TEX_RESULT(c);
 
-        struct qreg unpacked[4];
-        for (int i = 0; i < 4; i++)
-                unpacked[i] = qir_R4_UNPACK(c, r4, i);
-
         enum pipe_format format = c->key->tex_format[unit];
+
+        struct qreg unpacked[4];
+        if (util_format_is_depth_or_stencil(format)) {
+                struct qreg depthf = qir_ITOF(c, qir_SHR(c, r4,
+                                                         qir_uniform_ui(c, 8)));
+                struct qreg normalized = qir_FMUL(c, depthf,
+                                                  qir_uniform_f(c, 1.0f/0xffffff));
+                for (int i = 0; i < 4; i++)
+                        unpacked[i] = normalized;
+        } else {
+                for (int i = 0; i < 4; i++)
+                        unpacked[i] = qir_R4_UNPACK(c, r4, i);
+        }
+
         const uint8_t *swiz = vc4_get_format_swizzle(format);
         for (int i = 0; i < 4; i++) {
                 if (!(tgsi_inst->Dst[0].Register.WriteMask & (1 << i)))
