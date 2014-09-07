@@ -211,12 +211,12 @@ gen7_pipeline_common_urb(struct ilo_3d_pipeline *p,
 
       gen7_wa_pipe_control_vs_depth_stall(p);
 
-      gen7_emit_3DSTATE_URB_VS(p->dev,
-            offset, vs_total_size, vs_entry_size, p->cp);
+      gen7_3DSTATE_URB_VS(&p->cp->builder,
+            offset, vs_total_size, vs_entry_size);
 
-      gen7_emit_3DSTATE_URB_GS(p->dev, offset, 0, 0, p->cp);
-      gen7_emit_3DSTATE_URB_HS(p->dev, offset, 0, 0, p->cp);
-      gen7_emit_3DSTATE_URB_DS(p->dev, offset, 0, 0, p->cp);
+      gen7_3DSTATE_URB_GS(&p->cp->builder, offset, 0, 0);
+      gen7_3DSTATE_URB_HS(&p->cp->builder, offset, 0, 0);
+      gen7_3DSTATE_URB_DS(&p->cp->builder, offset, 0, 0);
    }
 }
 
@@ -236,10 +236,10 @@ gen7_pipeline_common_pcb_alloc(struct ilo_3d_pipeline *p,
       const int size = max_size / 2;
       int offset = 0;
 
-      gen7_emit_3DSTATE_PUSH_CONSTANT_ALLOC_VS(p->dev, offset, size, p->cp);
+      gen7_3DSTATE_PUSH_CONSTANT_ALLOC_VS(&p->cp->builder, offset, size);
       offset += size;
 
-      gen7_emit_3DSTATE_PUSH_CONSTANT_ALLOC_PS(p->dev, offset, size, p->cp);
+      gen7_3DSTATE_PUSH_CONSTANT_ALLOC_PS(&p->cp->builder, offset, size);
 
       if (p->dev->gen == ILO_GEN(7))
          gen7_wa_pipe_control_cs_stall(p, true, true);
@@ -253,11 +253,11 @@ gen7_pipeline_common_pointers_1(struct ilo_3d_pipeline *p,
 {
    /* 3DSTATE_VIEWPORT_STATE_POINTERS_{CC,SF_CLIP} */
    if (session->viewport_state_changed) {
-      gen7_emit_3DSTATE_VIEWPORT_STATE_POINTERS_CC(p->dev,
-            p->state.CC_VIEWPORT, p->cp);
+      gen7_3DSTATE_VIEWPORT_STATE_POINTERS_CC(&p->cp->builder,
+            p->state.CC_VIEWPORT);
 
-      gen7_emit_3DSTATE_VIEWPORT_STATE_POINTERS_SF_CLIP(p->dev,
-            p->state.SF_CLIP_VIEWPORT, p->cp);
+      gen7_3DSTATE_VIEWPORT_STATE_POINTERS_SF_CLIP(&p->cp->builder,
+            p->state.SF_CLIP_VIEWPORT);
    }
 }
 
@@ -268,20 +268,20 @@ gen7_pipeline_common_pointers_2(struct ilo_3d_pipeline *p,
 {
    /* 3DSTATE_BLEND_STATE_POINTERS */
    if (session->cc_state_blend_changed) {
-      gen7_emit_3DSTATE_BLEND_STATE_POINTERS(p->dev,
-            p->state.BLEND_STATE, p->cp);
+      gen7_3DSTATE_BLEND_STATE_POINTERS(&p->cp->builder,
+            p->state.BLEND_STATE);
    }
 
    /* 3DSTATE_CC_STATE_POINTERS */
    if (session->cc_state_cc_changed) {
-      gen7_emit_3DSTATE_CC_STATE_POINTERS(p->dev,
-            p->state.COLOR_CALC_STATE, p->cp);
+      gen7_3DSTATE_CC_STATE_POINTERS(&p->cp->builder,
+            p->state.COLOR_CALC_STATE);
    }
 
    /* 3DSTATE_DEPTH_STENCIL_STATE_POINTERS */
    if (session->cc_state_dsa_changed) {
-      gen7_emit_3DSTATE_DEPTH_STENCIL_STATE_POINTERS(p->dev,
-            p->state.DEPTH_STENCIL_STATE, p->cp);
+      gen7_3DSTATE_DEPTH_STENCIL_STATE_POINTERS(&p->cp->builder,
+            p->state.DEPTH_STENCIL_STATE);
    }
 }
 
@@ -304,22 +304,22 @@ gen7_pipeline_vs(struct ilo_3d_pipeline *p,
 
    /* 3DSTATE_BINDING_TABLE_POINTERS_VS */
    if (emit_3dstate_binding_table) {
-      gen7_emit_3DSTATE_BINDING_TABLE_POINTERS_VS(p->dev,
-              p->state.vs.BINDING_TABLE_STATE, p->cp);
+      gen7_3DSTATE_BINDING_TABLE_POINTERS_VS(&p->cp->builder,
+              p->state.vs.BINDING_TABLE_STATE);
    }
 
    /* 3DSTATE_SAMPLER_STATE_POINTERS_VS */
    if (emit_3dstate_sampler_state) {
-      gen7_emit_3DSTATE_SAMPLER_STATE_POINTERS_VS(p->dev,
-              p->state.vs.SAMPLER_STATE, p->cp);
+      gen7_3DSTATE_SAMPLER_STATE_POINTERS_VS(&p->cp->builder,
+              p->state.vs.SAMPLER_STATE);
    }
 
    /* 3DSTATE_CONSTANT_VS */
    if (emit_3dstate_constant_vs) {
-      gen7_emit_3DSTATE_CONSTANT_VS(p->dev,
+      gen7_3DSTATE_CONSTANT_VS(&p->cp->builder,
               &p->state.vs.PUSH_CONSTANT_BUFFER,
               &p->state.vs.PUSH_CONSTANT_BUFFER_size,
-              1, p->cp);
+              1);
    }
 
    /* 3DSTATE_VS */
@@ -337,13 +337,13 @@ gen7_pipeline_hs(struct ilo_3d_pipeline *p,
 {
    /* 3DSTATE_CONSTANT_HS and 3DSTATE_HS */
    if (session->hw_ctx_changed) {
-      gen7_emit_3DSTATE_CONSTANT_HS(p->dev, 0, 0, 0, p->cp);
-      gen7_emit_3DSTATE_HS(p->dev, NULL, 0, p->cp);
+      gen7_3DSTATE_CONSTANT_HS(&p->cp->builder, 0, 0, 0);
+      gen7_3DSTATE_HS(&p->cp->builder, NULL, 0);
    }
 
    /* 3DSTATE_BINDING_TABLE_POINTERS_HS */
    if (session->hw_ctx_changed)
-      gen7_emit_3DSTATE_BINDING_TABLE_POINTERS_HS(p->dev, 0, p->cp);
+      gen7_3DSTATE_BINDING_TABLE_POINTERS_HS(&p->cp->builder, 0);
 }
 
 static void
@@ -353,7 +353,7 @@ gen7_pipeline_te(struct ilo_3d_pipeline *p,
 {
    /* 3DSTATE_TE */
    if (session->hw_ctx_changed)
-      gen7_emit_3DSTATE_TE(p->dev, p->cp);
+      gen7_3DSTATE_TE(&p->cp->builder);
 }
 
 static void
@@ -363,13 +363,13 @@ gen7_pipeline_ds(struct ilo_3d_pipeline *p,
 {
    /* 3DSTATE_CONSTANT_DS and 3DSTATE_DS */
    if (session->hw_ctx_changed) {
-      gen7_emit_3DSTATE_CONSTANT_DS(p->dev, 0, 0, 0, p->cp);
-      gen7_emit_3DSTATE_DS(p->dev, NULL, 0, p->cp);
+      gen7_3DSTATE_CONSTANT_DS(&p->cp->builder, 0, 0, 0);
+      gen7_3DSTATE_DS(&p->cp->builder, NULL, 0);
    }
 
    /* 3DSTATE_BINDING_TABLE_POINTERS_DS */
    if (session->hw_ctx_changed)
-      gen7_emit_3DSTATE_BINDING_TABLE_POINTERS_DS(p->dev, 0, p->cp);
+      gen7_3DSTATE_BINDING_TABLE_POINTERS_DS(&p->cp->builder, 0);
 
 }
 
@@ -380,14 +380,14 @@ gen7_pipeline_gs(struct ilo_3d_pipeline *p,
 {
    /* 3DSTATE_CONSTANT_GS and 3DSTATE_GS */
    if (session->hw_ctx_changed) {
-      gen7_emit_3DSTATE_CONSTANT_GS(p->dev, 0, 0, 0, p->cp);
-      gen7_emit_3DSTATE_GS(p->dev, NULL, 0, p->cp);
+      gen7_3DSTATE_CONSTANT_GS(&p->cp->builder, 0, 0, 0);
+      gen7_3DSTATE_GS(&p->cp->builder, NULL, 0);
    }
 
    /* 3DSTATE_BINDING_TABLE_POINTERS_GS */
    if (session->binding_table_gs_changed) {
-      gen7_emit_3DSTATE_BINDING_TABLE_POINTERS_GS(p->dev,
-            p->state.gs.BINDING_TABLE_STATE, p->cp);
+      gen7_3DSTATE_BINDING_TABLE_POINTERS_GS(&p->cp->builder,
+            p->state.gs.BINDING_TABLE_STATE);
    }
 }
 
@@ -422,17 +422,17 @@ gen7_pipeline_sol(struct ilo_3d_pipeline *p,
          const int stride = so_info->stride[i] * 4; /* in bytes */
          int base = 0;
 
-         gen7_emit_3DSTATE_SO_BUFFER(p->dev, i, base, stride,
-               ilo->so.states[i], p->cp);
+         gen7_3DSTATE_SO_BUFFER(&p->cp->builder, i, base, stride,
+               ilo->so.states[i]);
       }
 
       for (; i < 4; i++)
-         gen7_emit_3DSTATE_SO_BUFFER(p->dev, i, 0, 0, NULL, p->cp);
+         gen7_3DSTATE_SO_BUFFER(&p->cp->builder, i, 0, 0, NULL);
    }
 
    /* 3DSTATE_SO_DECL_LIST */
    if (dirty_sh && ilo->so.enabled)
-      gen7_emit_3DSTATE_SO_DECL_LIST(p->dev, so_info, p->cp);
+      gen7_3DSTATE_SO_DECL_LIST(&p->cp->builder, so_info);
 
    /* 3DSTATE_STREAMOUT */
    if (DIRTY(SO) || DIRTY(RASTERIZER) || dirty_sh) {
@@ -440,8 +440,8 @@ gen7_pipeline_sol(struct ilo_3d_pipeline *p,
       const int output_count = ilo_shader_get_kernel_param(shader,
             ILO_KERNEL_OUTPUT_COUNT);
 
-      gen7_emit_3DSTATE_STREAMOUT(p->dev, buffer_mask, output_count,
-            ilo->rasterizer->state.rasterizer_discard, p->cp);
+      gen7_3DSTATE_STREAMOUT(&p->cp->builder, buffer_mask, output_count,
+            ilo->rasterizer->state.rasterizer_discard);
    }
 }
 
@@ -452,15 +452,15 @@ gen7_pipeline_sf(struct ilo_3d_pipeline *p,
 {
    /* 3DSTATE_SBE */
    if (DIRTY(RASTERIZER) || DIRTY(FS))
-      gen7_emit_3DSTATE_SBE(p->dev, ilo->rasterizer, ilo->fs, ilo->cp);
+      gen7_3DSTATE_SBE(&p->cp->builder, ilo->rasterizer, ilo->fs);
 
    /* 3DSTATE_SF */
    if (DIRTY(RASTERIZER) || DIRTY(FB)) {
       struct pipe_surface *zs = ilo->fb.state.zsbuf;
 
       gen7_wa_pipe_control_cs_stall(p, true, true);
-      gen7_emit_3DSTATE_SF(p->dev, ilo->rasterizer,
-            (zs) ? zs->format : PIPE_FORMAT_NONE, p->cp);
+      gen7_3DSTATE_SF(&p->cp->builder, ilo->rasterizer,
+            (zs) ? zs->format : PIPE_FORMAT_NONE);
    }
 }
 
@@ -474,28 +474,28 @@ gen7_pipeline_wm(struct ilo_3d_pipeline *p,
       const bool cc_may_kill = (ilo->dsa->dw_alpha ||
                                 ilo->blend->alpha_to_coverage);
 
-      gen7_emit_3DSTATE_WM(p->dev, ilo->fs,
-            ilo->rasterizer, cc_may_kill, 0, p->cp);
+      gen7_3DSTATE_WM(&p->cp->builder, ilo->fs,
+            ilo->rasterizer, cc_may_kill, 0);
    }
 
    /* 3DSTATE_BINDING_TABLE_POINTERS_PS */
    if (session->binding_table_fs_changed) {
-      gen7_emit_3DSTATE_BINDING_TABLE_POINTERS_PS(p->dev,
-            p->state.wm.BINDING_TABLE_STATE, p->cp);
+      gen7_3DSTATE_BINDING_TABLE_POINTERS_PS(&p->cp->builder,
+            p->state.wm.BINDING_TABLE_STATE);
    }
 
    /* 3DSTATE_SAMPLER_STATE_POINTERS_PS */
    if (session->sampler_state_fs_changed) {
-      gen7_emit_3DSTATE_SAMPLER_STATE_POINTERS_PS(p->dev,
-            p->state.wm.SAMPLER_STATE, p->cp);
+      gen7_3DSTATE_SAMPLER_STATE_POINTERS_PS(&p->cp->builder,
+            p->state.wm.SAMPLER_STATE);
    }
 
    /* 3DSTATE_CONSTANT_PS */
    if (session->pcb_state_fs_changed) {
-      gen7_emit_3DSTATE_CONSTANT_PS(p->dev,
+      gen7_3DSTATE_CONSTANT_PS(&p->cp->builder,
             &p->state.wm.PUSH_CONSTANT_BUFFER,
             &p->state.wm.PUSH_CONSTANT_BUFFER_size,
-            1, p->cp);
+            1);
    }
 
    /* 3DSTATE_PS */
@@ -508,7 +508,7 @@ gen7_pipeline_wm(struct ilo_3d_pipeline *p,
           session->hw_ctx_changed)
          gen7_wa_pipe_control_ps_max_threads_stall(p);
 
-      gen7_emit_3DSTATE_PS(p->dev, ilo->fs, num_samplers, dual_blend, p->cp);
+      gen7_3DSTATE_PS(&p->cp->builder, ilo->fs, num_samplers, dual_blend);
    }
 
    /* 3DSTATE_SCISSOR_STATE_POINTERS */
@@ -560,7 +560,7 @@ gen7_pipeline_wm(struct ilo_3d_pipeline *p,
       gen6_emit_3DSTATE_DEPTH_BUFFER(p->dev, zs, p->cp);
       gen6_emit_3DSTATE_HIER_DEPTH_BUFFER(p->dev, zs, p->cp);
       gen6_emit_3DSTATE_STENCIL_BUFFER(p->dev, zs, p->cp);
-      gen7_emit_3DSTATE_CLEAR_PARAMS(p->dev, clear_params, p->cp);
+      gen7_3DSTATE_CLEAR_PARAMS(&p->cp->builder, clear_params);
    }
 }
 
@@ -584,9 +584,9 @@ gen7_pipeline_wm_multisample(struct ilo_3d_pipeline *p,
             ilo->fb.num_samples, packed_sample_pos,
             ilo->rasterizer->state.half_pixel_center, p->cp);
 
-      gen7_emit_3DSTATE_SAMPLE_MASK(p->dev,
+      gen7_3DSTATE_SAMPLE_MASK(&p->cp->builder,
             (ilo->fb.num_samples > 1) ? ilo->sample_mask : 0x1,
-            ilo->fb.num_samples, p->cp);
+            ilo->fb.num_samples);
    }
 }
 
@@ -596,7 +596,7 @@ gen7_pipeline_vf_draw(struct ilo_3d_pipeline *p,
                       struct gen6_pipeline_session *session)
 {
    /* 3DPRIMITIVE */
-   gen7_emit_3DPRIMITIVE(p->dev, ilo->draw, &ilo->ib, false, p->cp);
+   gen7_3DPRIMITIVE(&p->cp->builder, ilo->draw, &ilo->ib, false);
    p->state.has_gen6_wa_pipe_control = false;
 }
 
@@ -663,10 +663,10 @@ gen7_rectlist_pcb_alloc(struct ilo_3d_pipeline *p,
    const int size = max_size / 2;
    int offset = 0;
 
-   gen7_emit_3DSTATE_PUSH_CONSTANT_ALLOC_VS(p->dev, offset, size, p->cp);
+   gen7_3DSTATE_PUSH_CONSTANT_ALLOC_VS(&p->cp->builder, offset, size);
    offset += size;
 
-   gen7_emit_3DSTATE_PUSH_CONSTANT_ALLOC_PS(p->dev, offset, size, p->cp);
+   gen7_3DSTATE_PUSH_CONSTANT_ALLOC_PS(&p->cp->builder, offset, size);
 
    gen7_wa_pipe_control_cs_stall(p, true, true);
 }
@@ -680,12 +680,12 @@ gen7_rectlist_urb(struct ilo_3d_pipeline *p,
    const int offset =
       (p->dev->gen == ILO_GEN(7.5) && p->dev->gt == 3) ? 32768 : 16384;
 
-   gen7_emit_3DSTATE_URB_VS(p->dev, offset, p->dev->urb_size - offset,
-         blitter->ve.count * 4 * sizeof(float), p->cp);
+   gen7_3DSTATE_URB_VS(&p->cp->builder, offset, p->dev->urb_size - offset,
+         blitter->ve.count * 4 * sizeof(float));
 
-   gen7_emit_3DSTATE_URB_GS(p->dev, offset, 0, 0, p->cp);
-   gen7_emit_3DSTATE_URB_HS(p->dev, offset, 0, 0, p->cp);
-   gen7_emit_3DSTATE_URB_DS(p->dev, offset, 0, 0, p->cp);
+   gen7_3DSTATE_URB_GS(&p->cp->builder, offset, 0, 0);
+   gen7_3DSTATE_URB_HS(&p->cp->builder, offset, 0, 0);
+   gen7_3DSTATE_URB_DS(&p->cp->builder, offset, 0, 0);
 }
 
 static void
@@ -693,28 +693,28 @@ gen7_rectlist_vs_to_sf(struct ilo_3d_pipeline *p,
                        const struct ilo_blitter *blitter,
                        struct gen6_rectlist_session *session)
 {
-   gen7_emit_3DSTATE_CONSTANT_VS(p->dev, NULL, NULL, 0, p->cp);
+   gen7_3DSTATE_CONSTANT_VS(&p->cp->builder, NULL, NULL, 0);
    gen6_emit_3DSTATE_VS(p->dev, NULL, 0, p->cp);
 
-   gen7_emit_3DSTATE_CONSTANT_HS(p->dev, NULL, NULL, 0, p->cp);
-   gen7_emit_3DSTATE_HS(p->dev, NULL, 0, p->cp);
+   gen7_3DSTATE_CONSTANT_HS(&p->cp->builder, NULL, NULL, 0);
+   gen7_3DSTATE_HS(&p->cp->builder, NULL, 0);
 
-   gen7_emit_3DSTATE_TE(p->dev, p->cp);
+   gen7_3DSTATE_TE(&p->cp->builder);
 
-   gen7_emit_3DSTATE_CONSTANT_DS(p->dev, NULL, NULL, 0, p->cp);
-   gen7_emit_3DSTATE_DS(p->dev, NULL, 0, p->cp);
+   gen7_3DSTATE_CONSTANT_DS(&p->cp->builder, NULL, NULL, 0);
+   gen7_3DSTATE_DS(&p->cp->builder, NULL, 0);
 
-   gen7_emit_3DSTATE_CONSTANT_GS(p->dev, NULL, NULL, 0, p->cp);
-   gen7_emit_3DSTATE_GS(p->dev, NULL, 0, p->cp);
+   gen7_3DSTATE_CONSTANT_GS(&p->cp->builder, NULL, NULL, 0);
+   gen7_3DSTATE_GS(&p->cp->builder, NULL, 0);
 
-   gen7_emit_3DSTATE_STREAMOUT(p->dev, 0x0, 0, false, p->cp);
+   gen7_3DSTATE_STREAMOUT(&p->cp->builder, 0x0, 0, false);
 
    gen6_emit_3DSTATE_CLIP(p->dev, NULL, NULL, false, 0, p->cp);
 
    gen7_wa_pipe_control_cs_stall(p, true, true);
 
-   gen7_emit_3DSTATE_SF(p->dev, NULL, blitter->fb.dst.base.format, p->cp);
-   gen7_emit_3DSTATE_SBE(p->dev, NULL, NULL, p->cp);
+   gen7_3DSTATE_SF(&p->cp->builder, NULL, blitter->fb.dst.base.format);
+   gen7_3DSTATE_SBE(&p->cp->builder, NULL, NULL);
 }
 
 static void
@@ -739,12 +739,12 @@ gen7_rectlist_wm(struct ilo_3d_pipeline *p,
       break;
    }
 
-   gen7_emit_3DSTATE_WM(p->dev, NULL, NULL, false, hiz_op, p->cp);
+   gen7_3DSTATE_WM(&p->cp->builder, NULL, NULL, false, hiz_op);
 
-   gen7_emit_3DSTATE_CONSTANT_PS(p->dev, NULL, NULL, 0, p->cp);
+   gen7_3DSTATE_CONSTANT_PS(&p->cp->builder, NULL, NULL, 0);
 
    gen7_wa_pipe_control_ps_max_threads_stall(p);
-   gen7_emit_3DSTATE_PS(p->dev, NULL, 0, false, p->cp);
+   gen7_3DSTATE_PS(&p->cp->builder, NULL, 0, false);
 }
 
 static void
@@ -770,8 +770,8 @@ gen7_rectlist_wm_depth(struct ilo_3d_pipeline *p,
             &blitter->fb.dst.u.zs, p->cp);
    }
 
-   gen7_emit_3DSTATE_CLEAR_PARAMS(p->dev,
-         blitter->depth_clear_value, p->cp);
+   gen7_3DSTATE_CLEAR_PARAMS(&p->cp->builder,
+         blitter->depth_clear_value);
 }
 
 static void
@@ -789,8 +789,8 @@ gen7_rectlist_wm_multisample(struct ilo_3d_pipeline *p,
    gen6_emit_3DSTATE_MULTISAMPLE(p->dev, blitter->fb.num_samples,
          packed_sample_pos, true, p->cp);
 
-   gen7_emit_3DSTATE_SAMPLE_MASK(p->dev,
-         (1 << blitter->fb.num_samples) - 1, blitter->fb.num_samples, p->cp);
+   gen7_3DSTATE_SAMPLE_MASK(&p->cp->builder,
+         (1 << blitter->fb.num_samples) - 1, blitter->fb.num_samples);
 }
 
 static void
@@ -816,21 +816,21 @@ gen7_rectlist_commands(struct ilo_3d_pipeline *p,
    gen7_rectlist_urb(p, blitter, session);
 
    if (blitter->uses & ILO_BLITTER_USE_DSA) {
-      gen7_emit_3DSTATE_DEPTH_STENCIL_STATE_POINTERS(p->dev,
-            session->DEPTH_STENCIL_STATE, p->cp);
+      gen7_3DSTATE_DEPTH_STENCIL_STATE_POINTERS(&p->cp->builder,
+            session->DEPTH_STENCIL_STATE);
    }
 
    if (blitter->uses & ILO_BLITTER_USE_CC) {
-      gen7_emit_3DSTATE_CC_STATE_POINTERS(p->dev,
-            session->COLOR_CALC_STATE, p->cp);
+      gen7_3DSTATE_CC_STATE_POINTERS(&p->cp->builder,
+            session->COLOR_CALC_STATE);
    }
 
    gen7_rectlist_vs_to_sf(p, blitter, session);
    gen7_rectlist_wm(p, blitter, session);
 
    if (blitter->uses & ILO_BLITTER_USE_VIEWPORT) {
-      gen7_emit_3DSTATE_VIEWPORT_STATE_POINTERS_CC(p->dev,
-            session->CC_VIEWPORT, p->cp);
+      gen7_3DSTATE_VIEWPORT_STATE_POINTERS_CC(&p->cp->builder,
+            session->CC_VIEWPORT);
    }
 
    gen7_rectlist_wm_depth(p, blitter, session);
@@ -838,7 +838,7 @@ gen7_rectlist_commands(struct ilo_3d_pipeline *p,
    gen6_emit_3DSTATE_DRAWING_RECTANGLE(p->dev, 0, 0,
          blitter->fb.width, blitter->fb.height, p->cp);
 
-   gen7_emit_3DPRIMITIVE(p->dev, &blitter->draw, NULL, true, p->cp);
+   gen7_3DPRIMITIVE(&p->cp->builder, &blitter->draw, NULL, true);
 }
 
 static void

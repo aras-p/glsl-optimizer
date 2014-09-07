@@ -239,6 +239,11 @@ ilo_3d_begin_query(struct ilo_context *ilo, struct ilo_query *q)
 
       if (ilo_query_alloc_bo(q, 2, -1, hw3d->cp->winsys)) {
          /* XXX we should check the aperture size */
+         if (q->reg_cmd_size > ilo_cp_space(hw3d->cp)) {
+            ilo_cp_flush(hw3d->cp, "out of space");
+            assert(q->reg_cmd_size <= ilo_cp_space(hw3d->cp));
+         }
+
          ilo_3d_pipeline_emit_write_depth_count(hw3d->pipeline,
                q->bo, q->reg_read++);
 
@@ -259,6 +264,11 @@ ilo_3d_begin_query(struct ilo_context *ilo, struct ilo_query *q)
 
       if (ilo_query_alloc_bo(q, 2, -1, hw3d->cp->winsys)) {
          /* XXX we should check the aperture size */
+         if (q->reg_cmd_size > ilo_cp_space(hw3d->cp)) {
+            ilo_cp_flush(hw3d->cp, "out of space");
+            assert(q->reg_cmd_size <= ilo_cp_space(hw3d->cp));
+         }
+
          ilo_3d_pipeline_emit_write_timestamp(hw3d->pipeline,
                q->bo, q->reg_read++);
 
@@ -285,6 +295,11 @@ ilo_3d_begin_query(struct ilo_context *ilo, struct ilo_query *q)
 
       if (ilo_query_alloc_bo(q, 11 * 2, -1, hw3d->cp->winsys)) {
          /* XXX we should check the aperture size */
+         if (q->reg_cmd_size > ilo_cp_space(hw3d->cp)) {
+            ilo_cp_flush(hw3d->cp, "out of space");
+            assert(q->reg_cmd_size <= ilo_cp_space(hw3d->cp));
+         }
+
          ilo_3d_pipeline_emit_write_statistics(hw3d->pipeline,
                q->bo, q->reg_read);
          q->reg_read += 11;

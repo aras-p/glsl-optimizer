@@ -408,8 +408,8 @@ gen6_pipeline_vf(struct ilo_3d_pipeline *p,
 
       /* 3DSTATE_VF */
       if (session->primitive_restart_changed) {
-         gen7_emit_3DSTATE_VF(p->dev, ilo->draw->primitive_restart,
-               ilo->draw->restart_index, p->cp);
+         gen7_3DSTATE_VF(&p->cp->builder, ilo->draw->primitive_restart,
+               ilo->draw->restart_index);
       }
    }
    else {
