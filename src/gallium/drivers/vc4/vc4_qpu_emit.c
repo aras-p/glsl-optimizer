@@ -377,7 +377,6 @@ vc4_generate_code(struct vc4_compile *c)
                         break;
 
                 case QOP_SF:
-                        fixup_raddr_conflict(c, src[0], &src[1]);
                         queue(c, qpu_a_MOV(qpu_ra(QPU_W_NOP), src[0]));
                         *last_inst(c) |= QPU_SF;
                         break;
