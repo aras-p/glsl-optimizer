@@ -227,9 +227,9 @@ int
 vc4_simulator_flush(struct vc4_context *vc4, struct drm_vc4_submit_cl *args)
 {
         struct vc4_surface *csurf = vc4_surface(vc4->framebuffer.cbufs[0]);
-        struct vc4_resource *ctex = vc4_resource(csurf->base.texture);
-        uint32_t winsys_stride = ctex->bo->simulator_winsys_stride;
-        uint32_t sim_stride = ctex->slices[0].stride;
+        struct vc4_resource *ctex = csurf ? vc4_resource(csurf->base.texture) : NULL;
+        uint32_t winsys_stride = ctex ? ctex->bo->simulator_winsys_stride : 0;
+        uint32_t sim_stride = ctex ? ctex->slices[0].stride : 0;
         uint32_t row_len = MIN2(sim_stride, winsys_stride);
         struct exec_info exec;
         struct drm_device local_dev = {
@@ -241,7 +241,7 @@ vc4_simulator_flush(struct vc4_context *vc4, struct drm_vc4_submit_cl *args)
 
         memset(&exec, 0, sizeof(exec));
 
-        if (ctex->bo->simulator_winsys_map) {
+        if (ctex && ctex->bo->simulator_winsys_map) {
 #if 0
                 fprintf(stderr, "%dx%d %d %d %d\n",
                         ctex->base.b.width0, ctex->base.b.height0,
@@ -276,7 +276,7 @@ vc4_simulator_flush(struct vc4_context *vc4, struct drm_vc4_submit_cl *args)
 
         free(exec.exec_bo);
 
-        if (ctex->bo->simulator_winsys_map) {
+        if (ctex && ctex->bo->simulator_winsys_map) {
                 for (int y = 0; y < ctex->base.b.height0; y++) {
                         memcpy(ctex->bo->simulator_winsys_map + y * winsys_stride,
                                ctex->bo->map + y * sim_stride,

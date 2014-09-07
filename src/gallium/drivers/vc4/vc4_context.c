@@ -61,14 +61,24 @@ vc4_setup_rcl(struct vc4_context *vc4)
         cl_u32(&vc4->rcl, vc4->clear_depth);
         cl_u8(&vc4->rcl, vc4->clear_stencil);
 
+        /* The rendering mode config determines the pointer that's used for
+         * VC4_PACKET_STORE_MS_TILE_BUFFER address computations.  The kernel
+         * could handle a no-relocation rendering mode config and deny those
+         * packets, but instead we just tell the kernel we're doing our color
+         * rendering to the Z buffer, and just don't emit any of those
+         * packets.
+         */
+        struct vc4_surface *render_surf = csurf ? csurf : zsurf;
+        struct vc4_resource *render_tex = vc4_resource(render_surf->base.texture);
+
         cl_start_reloc(&vc4->rcl, 1);
         cl_u8(&vc4->rcl, VC4_PACKET_TILE_RENDERING_MODE_CONFIG);
-        cl_reloc(vc4, &vc4->rcl, ctex->bo, csurf->offset);
+        cl_reloc(vc4, &vc4->rcl, render_tex->bo, render_surf->offset);
         cl_u16(&vc4->rcl, width);
         cl_u16(&vc4->rcl, height);
-        cl_u16(&vc4->rcl, ((csurf->tiling <<
+        cl_u16(&vc4->rcl, ((render_surf->tiling <<
                             VC4_RENDER_CONFIG_MEMORY_FORMAT_SHIFT) |
-                           (vc4_rt_format_is_565(csurf->base.format) ?
+                           (vc4_rt_format_is_565(render_surf->base.format) ?
                             VC4_RENDER_CONFIG_FORMAT_BGR565 :
                             VC4_RENDER_CONFIG_FORMAT_RGBA8888) |
                            VC4_RENDER_CONFIG_EARLY_Z_COVERAGE_DISABLE));
