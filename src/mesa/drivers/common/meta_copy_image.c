@@ -63,12 +63,21 @@ make_view(struct gl_context *ctx, struct gl_texture_image *tex_image,
    if (!ctx->Driver.TestProxyTexImage(ctx, tex_obj->Target, 0, tex_format,
                                       tex_image->Width, tex_image->Height,
                                       tex_image->Depth, 0)) {
+      _mesa_DeleteTextures(1, view_tex_name);
+      *view_tex_name = 0;
       return false;
    }
 
    view_tex_obj->Target = tex_obj->Target;
 
    *view_tex_image = _mesa_get_tex_image(ctx, view_tex_obj, tex_obj->Target, 0);
+
+   if (!*view_tex_image) {
+      _mesa_DeleteTextures(1, view_tex_name);
+      *view_tex_name = 0;
+      return false;
+   }
+
    _mesa_init_teximage_fields(ctx, *view_tex_image,
                               tex_image->Width, tex_image->Height,
                               tex_image->Depth,
