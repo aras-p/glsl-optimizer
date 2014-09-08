@@ -21,6 +21,8 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #include "r600_pipe.h"
+#include "compute_memory_pool.h"
+#include "evergreen_compute.h"
 #include "util/u_surface.h"
 #include "util/u_format.h"
 #include "evergreend.h"
@@ -514,29 +516,52 @@ static void r600_copy_buffer(struct pipe_context *ctx, struct pipe_resource *dst
  * into a single global resource (r600_screen::global_pool).  The means
  * they don't have their own cs_buf handle, so they cannot be passed
  * to r600_copy_buffer() and must be handled separately.
- *
- * XXX: It should be possible to implement this function using
- * r600_copy_buffer() by passing the memory_pool resource as both src
- * and dst and updating dstx and src_box to point to the correct offsets.
- * This would likely perform better than the current implementation.
  */
 static void r600_copy_global_buffer(struct pipe_context *ctx,
 				    struct pipe_resource *dst, unsigned
 				    dstx, struct pipe_resource *src,
 				    const struct pipe_box *src_box)
 {
-	struct pipe_box dst_box; struct pipe_transfer *src_pxfer,
-	*dst_pxfer;
+	struct r600_context *rctx = (struct r600_context*)ctx;
+	struct compute_memory_pool *pool = rctx->screen->global_pool;
+	struct pipe_box new_src_box = *src_box;
 
-	u_box_1d(dstx, src_box->width, &dst_box);
-	void *src_ptr = ctx->transfer_map(ctx, src, 0, PIPE_TRANSFER_READ,
-					  src_box, &src_pxfer);
-	void *dst_ptr = ctx->transfer_map(ctx, dst, 0, PIPE_TRANSFER_WRITE,
-					  &dst_box, &dst_pxfer);
-	memcpy(dst_ptr, src_ptr, src_box->width);
+	if (src->bind & PIPE_BIND_GLOBAL) {
+		struct r600_resource_global *rsrc =
+			(struct r600_resource_global *)src;
+		struct compute_memory_item *item = rsrc->chunk;
 
-	ctx->transfer_unmap(ctx, src_pxfer);
-	ctx->transfer_unmap(ctx, dst_pxfer);
+		if (is_item_in_pool(item)) {
+			new_src_box.x += 4 * item->start_in_dw;
+			src = (struct pipe_resource *)pool->bo;
+		} else {
+			if (item->real_buffer == NULL) {
+				item->real_buffer = (struct r600_resource*)
+					r600_compute_buffer_alloc_vram(pool->screen,
+								       item->size_in_dw * 4);
+			}
+			src = (struct pipe_resource*)item->real_buffer;
+		}
+	}
+	if (dst->bind & PIPE_BIND_GLOBAL) {
+		struct r600_resource_global *rdst =
+			(struct r600_resource_global *)dst;
+		struct compute_memory_item *item = rdst->chunk;
+
+		if (is_item_in_pool(item)) {
+			dstx += 4 * item->start_in_dw;
+			dst = (struct pipe_resource *)pool->bo;
+		} else {
+			if (item->real_buffer == NULL) {
+				item->real_buffer = (struct r600_resource*)
+					r600_compute_buffer_alloc_vram(pool->screen,
+								       item->size_in_dw * 4);
+			}
+			dst = (struct pipe_resource*)item->real_buffer;
+		}
+	}
+
+	r600_copy_buffer(ctx, dst, dstx, src, &new_src_box);
 }
 
 static void r600_clear_buffer(struct pipe_context *ctx, struct pipe_resource *dst,
