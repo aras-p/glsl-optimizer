@@ -95,8 +95,7 @@ fs_visitor::opt_saturate_propagation()
       progress = opt_saturate_propagation_local(this, block) || progress;
    }
 
-   if (progress)
-      invalidate_live_intervals();
+   /* Live intervals are still valid. */
 
    return progress;
 }
