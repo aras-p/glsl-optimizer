@@ -327,6 +327,15 @@ lower_ubo_reference_visitor::handle_rvalue(ir_rvalue **rvalue)
 	 const glsl_type *struct_type = deref_record->record->type;
 	 unsigned intra_struct_offset = 0;
 
+         /* glsl_type::std140_base_alignment doesn't grok interfaces.  Use
+          * 16-bytes for the alignment because that is the general minimum of
+          * std140.
+          */
+         const unsigned struct_alignment = struct_type->is_interface()
+            ? 16
+            : struct_type->std140_base_alignment(row_major);
+
+
 	 for (unsigned int i = 0; i < struct_type->length; i++) {
 	    const glsl_type *type = struct_type->fields.structure[i].type;
 
@@ -346,6 +355,19 @@ lower_ubo_reference_visitor::handle_rvalue(ir_rvalue **rvalue)
 		       deref_record->field) == 0)
 	       break;
             intra_struct_offset += type->std140_size(field_row_major);
+
+            /* If the field just examined was itself a structure, apply rule
+             * #9:
+             *
+             *     "The structure may have padding at the end; the base offset
+             *     of the member following the sub-structure is rounded up to
+             *     the next multiple of the base alignment of the structure."
+             */
+            if (type->without_array()->is_record()) {
+               intra_struct_offset = glsl_align(intra_struct_offset,
+                                                struct_alignment);
+
+            }
 	 }
 
 	 const_offset += intra_struct_offset;
