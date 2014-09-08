@@ -70,8 +70,19 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
    const char *sampler_array_suffix = "";
    char *name;
    const char *texcoord_type = "vec2";
-   const int samples = MAX2(src_rb->NumSamples, 1);
+   int samples;
    int shader_offset = 0;
+
+   if (src_rb) {
+      samples = MAX2(src_rb->NumSamples, 1);
+      src_datatype = _mesa_get_format_datatype(src_rb->Format);
+   } else {
+      /* depth-or-color glCopyTexImage fallback path that passes a NULL rb and
+       * doesn't handle integer.
+       */
+      samples = 1;
+      src_datatype = GL_UNSIGNED_NORMALIZED;
+   }
 
    /* We expect only power of 2 samples in source multisample buffer. */
    assert((samples & (samples - 1)) == 0);
@@ -80,15 +91,6 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
    }
    /* Update the assert if we plan to support more than 16X MSAA. */
    assert(shader_offset >= 0 && shader_offset <= 4);
-
-   if (src_rb) {
-      src_datatype = _mesa_get_format_datatype(src_rb->Format);
-   } else {
-      /* depth-or-color glCopyTexImage fallback path that passes a NULL rb and
-       * doesn't handle integer.
-       */
-      src_datatype = GL_UNSIGNED_NORMALIZED;
-   }
 
    if (ctx->DrawBuffer->Visual.samples > 1) {
       /* If you're calling meta_BlitFramebuffer with the destination
@@ -108,8 +110,8 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
    switch (target) {
    case GL_TEXTURE_2D_MULTISAMPLE:
    case GL_TEXTURE_2D_MULTISAMPLE_ARRAY:
-      if (src_rb->_BaseFormat == GL_DEPTH_COMPONENT ||
-          src_rb->_BaseFormat == GL_DEPTH_STENCIL) {
+      if (src_rb && (src_rb->_BaseFormat == GL_DEPTH_COMPONENT ||
+          src_rb->_BaseFormat == GL_DEPTH_STENCIL)) {
          if (dst_is_msaa)
             shader_index = BLIT_MSAA_SHADER_2D_MULTISAMPLE_DEPTH_COPY;
          else
