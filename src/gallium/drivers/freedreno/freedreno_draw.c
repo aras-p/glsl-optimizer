@@ -157,8 +157,23 @@ fd_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
 	/* and any buffers used, need to be resolved: */
 	ctx->resolve |= buffers;
 
+	DBG("%x num_draws=%u (%s/%s)", buffers, ctx->num_draws,
+		util_format_short_name(pipe_surface_format(pfb->cbufs[0])),
+		util_format_short_name(pipe_surface_format(pfb->zsbuf)));
+
 	fd_hw_query_set_stage(ctx, ctx->ring, FD_STAGE_DRAW);
 	ctx->draw(ctx, info);
+
+	/* if an app (or, well, piglit test) does many thousands of draws
+	 * without flush (or anything which implicitly flushes, like
+	 * changing render targets), we can exceed the ringbuffer size.
+	 * Since we don't currently have a sane way to wrapparound, and
+	 * we use the same buffer for both draw and tiling commands, for
+	 * now we need to do this hack and trigger flush if we are running
+	 * low on remaining space for cmds:
+	 */
+	if ((ctx->ring->cur - ctx->ring->start) > ctx->ring->size/8)
+		fd_context_render(pctx);
 }
 
 /* TODO figure out how to make better use of existing state mechanism
