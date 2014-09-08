@@ -2505,12 +2505,7 @@ _mesa_associate_uniform_storage(struct gl_context *ctx,
 	    columns = storage->type->matrix_columns;
 	    break;
 	 case GLSL_TYPE_BOOL:
-	    if (ctx->Const.NativeIntegers) {
-	       format = (ctx->Const.UniformBooleanTrue == 1)
-		  ? uniform_bool_int_0_1 : uniform_bool_int_0_not0;
-	    } else {
-	       format = uniform_bool_float;
-	    }
+	    format = uniform_native;
 	    columns = 1;
 	    break;
 	 case GLSL_TYPE_SAMPLER:
