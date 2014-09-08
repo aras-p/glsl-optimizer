@@ -1073,7 +1073,7 @@ lp_build_div(struct lp_build_context *bld,
 
    if(a == bld->zero)
       return bld->zero;
-   if(a == bld->one)
+   if(a == bld->one && type.floating)
       return lp_build_rcp(bld, b);
    if(b == bld->zero)
       return bld->undef;
