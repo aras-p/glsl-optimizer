@@ -253,7 +253,9 @@ static int alloc_block(struct ir3_ra_ctx *ctx,
 				(instr->regs_count == 1)) {
 			unsigned i, base = instr->regs[0]->num & ~0x3;
 			for (i = 0; i < 4; i++) {
-				struct ir3_instruction *in = ctx->block->inputs[base + i];
+				struct ir3_instruction *in = NULL;
+				if ((base + i) < ctx->block->ninputs)
+					in = ctx->block->inputs[base + i];
 				if (in)
 					compute_clobbers(ctx, in->next, in, &liveregs);
 			}
@@ -471,7 +473,9 @@ static void ra_assign_dst_shader_input(struct ir3_visitor *v,
 
 	/* trigger assignment of all our companion input components: */
 	for (i = 0; i < 4; i++) {
-		struct ir3_instruction *in = instr->block->inputs[i+base];
+		struct ir3_instruction *in = NULL;
+		if ((base + i) < instr->block->ninputs)
+			in = instr->block->inputs[base + i];
 		if (in && is_meta(in) && (in->opc == OPC_META_INPUT))
 			ra_assign(a->ctx, in, a->num + off + i);
 	}
