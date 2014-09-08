@@ -32,10 +32,10 @@ static bool
 opt_saturate_propagation_local(fs_visitor *v, bblock_t *block)
 {
    bool progress = false;
-   int ip = block->start_ip - 1;
+   int ip = block->end_ip + 1;
 
-   foreach_inst_in_block(fs_inst, inst, block) {
-      ip++;
+   foreach_inst_in_block_reverse(fs_inst, inst, block) {
+      ip--;
 
       if (inst->opcode != BRW_OPCODE_MOV ||
           inst->dst.file != GRF ||
