@@ -559,10 +559,10 @@ validate_vertex_shader_executable(struct gl_shader_program *prog,
     *      vertex processing has occurred. Its value is undefined if
     *      the vertex shader executable does not write gl_Position."
     *
-    * GLSL ES 3.00 is similar to GLSL 1.40--failing to write to gl_Position is
-    * not an error.
+    * All GLSL ES Versions are similar to GLSL 1.40--failing to write to
+    * gl_Position is not an error.
     */
-   if (prog->Version < (prog->IsES ? 300 : 140)) {
+   if (!prog->IsES && prog->Version < 140) {
       find_assignment_visitor find("gl_Position");
       find.run(shader->ir);
       if (!find.variable_found()) {
