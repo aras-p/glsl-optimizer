@@ -67,7 +67,8 @@ opt_saturate_propagation_local(fs_visitor *v, bblock_t *block)
             break;
          }
          for (int i = 0; i < scan_inst->sources; i++) {
-            if (scan_inst->src[i].file == GRF &&
+            if ((scan_inst->opcode != BRW_OPCODE_MOV || !scan_inst->saturate) &&
+                scan_inst->src[i].file == GRF &&
                 scan_inst->src[i].reg == inst->src[0].reg &&
                 scan_inst->src[i].reg_offset == inst->src[0].reg_offset) {
                interfered = true;
