@@ -8,10 +8,7 @@ AM_CPPFLAGS = $(DEFINES) \
 	-I$(top_srcdir)/src/gallium/auxiliary \
 	-I$(top_srcdir)/src/gallium/winsys
 
-noinst_LTLIBRARIES =
-
-if HAVE_LOADER_GALLIUM
-noinst_LTLIBRARIES += libpipe_loader.la
+noinst_LTLIBRARIES = libpipe_loader.la
 noinst_LTLIBRARIES += libpipe_loader_client.la
 
 COMMON_SOURCES = \
@@ -43,5 +40,3 @@ libpipe_loader_client_la_CFLAGS  = \
 libpipe_loader_client_la_SOURCES = $(COMMON_SOURCES)
 libpipe_loader_client_la_LIBADD  = $(COMMON_LIBADD) \
 	$(GALLIUM_PIPE_LOADER_CLIENT_LIBS)
-
-endif

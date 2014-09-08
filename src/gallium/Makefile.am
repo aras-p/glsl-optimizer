@@ -121,7 +121,7 @@ EXTRA_DIST = \
 ## Gallium state trackers and their users (targets)
 ##
 
-if NEED_GALLIUM_LOADER
+if HAVE_LOADER_GALLIUM
 SUBDIRS += targets/pipe-loader
 endif
 

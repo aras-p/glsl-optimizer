@@ -1794,7 +1794,6 @@ AM_CONDITIONAL(HAVE_GALLIUM_TESTS, test "x$enable_gallium_tests" = xyes)
 if test "x$enable_gallium_loader" = xyes; then
     GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS pipe-loader"
 fi
-AM_CONDITIONAL(NEED_GALLIUM_LOADER, test "x$enable_gallium_loader" = xyes)
 
 dnl Directory for VDPAU libs
 AC_ARG_WITH([vdpau-libdir],
