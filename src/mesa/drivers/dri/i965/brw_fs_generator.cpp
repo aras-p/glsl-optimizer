@@ -1079,7 +1079,7 @@ fs_generator::generate_varying_pull_constant_load_gen7(fs_inst *inst,
       uint32_t surf_index = index.dw1.ud;
 
       brw_inst *send = brw_next_insn(p, BRW_OPCODE_SEND);
-      brw_set_dest(p, send, dst);
+      brw_set_dest(p, send, retype(dst, BRW_REGISTER_TYPE_UW));
       brw_set_src0(p, send, offset);
       brw_set_sampler_message(p, send,
                               surf_index,
@@ -1128,7 +1128,7 @@ fs_generator::generate_varying_pull_constant_load_gen7(fs_inst *inst,
 
       /* dst = send(offset, a0.0) */
       brw_inst *insn_send = brw_next_insn(p, BRW_OPCODE_SEND);
-      brw_set_dest(p, insn_send, dst);
+      brw_set_dest(p, insn_send, retype(dst, BRW_REGISTER_TYPE_UW));
       brw_set_src0(p, insn_send, offset);
       brw_set_indirect_send_descriptor(p, insn_send, BRW_SFID_SAMPLER, addr);
 
