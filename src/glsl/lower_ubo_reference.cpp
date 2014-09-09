@@ -301,7 +301,14 @@ lower_ubo_reference_visitor::handle_rvalue(ir_rvalue **rvalue)
             deref = deref_array->array->as_dereference();
             break;
 	 } else {
-	    array_stride = deref_array->type->std140_size(row_major);
+            /* Whether or not the field is row-major (because it might be a
+             * bvec2 or something) does not affect the array itself.  We need
+             * to know whether an array element in its entirety is row-major.
+             */
+            const bool array_row_major =
+               is_dereferenced_thing_row_major(deref_array);
+
+	    array_stride = deref_array->type->std140_size(array_row_major);
 	    array_stride = glsl_align(array_stride, 16);
 	 }
 
