@@ -50,6 +50,7 @@ static const struct debug_named_value debug_options[] = {
           "Print during performance-related events" },
         { "norast",   VC4_DEBUG_NORAST,
           "Skip actual hardware execution of commands" },
+        { NULL }
 };
 
 DEBUG_GET_ONCE_FLAGS_OPTION(vc4_debug, "VC4_DEBUG", debug_options, 0)
