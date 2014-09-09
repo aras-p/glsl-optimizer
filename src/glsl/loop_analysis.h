@@ -205,21 +205,16 @@ public:
    inline bool is_loop_constant() const
    {
       const bool is_const = (this->num_assignments == 0)
-	 || ((this->num_assignments == 1)
+         || (((this->num_assignments == 1)
 	     && !this->conditional_or_nested_assignment
 	     && !this->read_before_write
-	     && this->rhs_clean);
+             && this->rhs_clean) || this->var->data.read_only);
 
       /* If the RHS of *the* assignment is clean, then there must be exactly
        * one assignment of the variable.
        */
       assert((this->rhs_clean && (this->num_assignments == 1))
 	     || !this->rhs_clean);
-
-      /* Variables that are marked read-only *MUST* be loop constant.
-       */
-      assert(!this->var->data.read_only
-            || (this->var->data.read_only && is_const));
 
       return is_const;
    }
