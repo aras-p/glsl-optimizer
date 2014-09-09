@@ -42,6 +42,7 @@ struct vc4_key {
         struct pipe_shader_state *shader_state;
         struct {
                 enum pipe_format format;
+                uint8_t swizzle[4];
         } tex[VC4_MAX_TEXTURE_SAMPLERS];
 };
 
@@ -516,7 +517,9 @@ tgsi_to_qir_tex(struct vc4_compile *c,
                         unpacked[i] = qir_R4_UNPACK(c, r4, i);
         }
 
-        const uint8_t *swiz = vc4_get_format_swizzle(format);
+        const uint8_t *format_swiz = vc4_get_format_swizzle(format);
+        uint8_t swiz[4];
+        util_format_compose_swizzles(format_swiz, c->key->tex[unit].swizzle, swiz);
         for (int i = 0; i < 4; i++) {
                 if (!(tgsi_inst->Dst[0].Register.WriteMask & (1 << i)))
                         continue;
@@ -1434,6 +1437,10 @@ vc4_setup_shared_key(struct vc4_key *key, struct vc4_texture_stateobj *texstate)
                 if (sampler) {
                         struct pipe_resource *prsc = sampler->texture;
                         key->tex[i].format = prsc->format;
+                        key->tex[i].swizzle[0] = sampler->swizzle_r;
+                        key->tex[i].swizzle[1] = sampler->swizzle_g;
+                        key->tex[i].swizzle[2] = sampler->swizzle_b;
+                        key->tex[i].swizzle[3] = sampler->swizzle_a;
                 }
         }
 }
