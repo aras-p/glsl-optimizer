@@ -5462,7 +5462,7 @@ ast_interface_block::hir(exec_list *instructions,
          }
          if (this->instance_name != NULL) {
             _mesa_glsl_error(&loc, state,
-                             "gl_PerVertex input may not be redeclared with "
+                             "gl_PerVertex output may not be redeclared with "
                              "an instance name");
          }
          break;
