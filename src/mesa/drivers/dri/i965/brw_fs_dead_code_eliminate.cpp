@@ -78,19 +78,19 @@ fs_visitor::dead_code_eliminate()
 
          if (inst->dst.file == GRF) {
             if (!inst->is_partial_write()) {
-               int var = live_intervals->var_from_vgrf[inst->dst.reg];
+               int var = live_intervals->var_from_reg(&inst->dst);
                for (int i = 0; i < inst->regs_written; i++) {
-                  BITSET_CLEAR(live, var + inst->dst.reg_offset + i);
+                  BITSET_CLEAR(live, var + i);
                }
             }
          }
 
          for (int i = 0; i < inst->sources; i++) {
             if (inst->src[i].file == GRF) {
-               int var = live_intervals->var_from_vgrf[inst->src[i].reg];
+               int var = live_intervals->var_from_reg(&inst->src[i]);
 
                for (int j = 0; j < inst->regs_read(this, i); j++) {
-                  BITSET_SET(live, var + inst->src[i].reg_offset + j);
+                  BITSET_SET(live, var + j);
                }
             }
          }
