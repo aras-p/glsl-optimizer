@@ -40,7 +40,9 @@
 
 struct vc4_key {
         struct pipe_shader_state *shader_state;
-        enum pipe_format tex_format[VC4_MAX_TEXTURE_SAMPLERS];
+        struct {
+                enum pipe_format format;
+        } tex[VC4_MAX_TEXTURE_SAMPLERS];
 };
 
 struct vc4_fs_key {
@@ -499,7 +501,7 @@ tgsi_to_qir_tex(struct vc4_compile *c,
         c->num_texture_samples++;
         struct qreg r4 = qir_TEX_RESULT(c);
 
-        enum pipe_format format = c->key->tex_format[unit];
+        enum pipe_format format = c->key->tex[unit].format;
 
         struct qreg unpacked[4];
         if (util_format_is_depth_or_stencil(format)) {
@@ -1431,7 +1433,7 @@ vc4_setup_shared_key(struct vc4_key *key, struct vc4_texture_stateobj *texstate)
                 struct pipe_sampler_view *sampler = texstate->textures[i];
                 if (sampler) {
                         struct pipe_resource *prsc = sampler->texture;
-                        key->tex_format[i] = prsc->format;
+                        key->tex[i].format = prsc->format;
                 }
         }
 }
