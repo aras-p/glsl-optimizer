@@ -32,7 +32,6 @@
 
 #include "glheader.h"
 #include "buffers.h"
-#include "colormac.h"
 #include "context.h"
 #include "enums.h"
 #include "fbobject.h"

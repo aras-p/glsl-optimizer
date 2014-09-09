@@ -39,7 +39,6 @@
 
 #include "glheader.h"
 #include "imports.h"
-#include "colormac.h"
 #include "context.h"
 #include "eval.h"
 #include "macros.h"

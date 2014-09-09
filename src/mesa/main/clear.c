@@ -33,7 +33,6 @@
 #include "glheader.h"
 #include "clear.h"
 #include "context.h"
-#include "colormac.h"
 #include "enums.h"
 #include "macros.h"
 #include "mtypes.h"
