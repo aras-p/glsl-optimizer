@@ -72,7 +72,7 @@ static void
 draw_impl(struct fd_context *ctx, const struct pipe_draw_info *info,
 		struct fd_ringbuffer *ring, unsigned dirty, struct ir3_shader_key key)
 {
-	fd3_emit_state(ctx, ring, &ctx->prog, dirty, key);
+	fd3_emit_state(ctx, ring, info, &ctx->prog, key, dirty);
 
 	if (dirty & FD_DIRTY_VTXBUF)
 		emit_vertexbufs(ctx, ring, key);
@@ -132,7 +132,7 @@ fd3_clear_binning(struct fd_context *ctx, unsigned dirty)
 			.half_precision = true,
 	};
 
-	fd3_emit_state(ctx, ring, &ctx->solid_prog, dirty, key);
+	fd3_emit_state(ctx, ring, NULL, &ctx->solid_prog, key, dirty);
 
 	fd3_emit_vertex_bufs(ring, fd3_shader_variant(ctx->solid_prog.vp, key),
 			(struct fd3_vertex_buf[]) {{
@@ -178,7 +178,7 @@ fd3_clear(struct fd_context *ctx, unsigned buffers,
 	fd3_clear_binning(ctx, dirty);
 
 	/* emit generic state now: */
-	fd3_emit_state(ctx, ring, &ctx->solid_prog, dirty, key);
+	fd3_emit_state(ctx, ring, NULL, &ctx->solid_prog, key, dirty);
 
 	OUT_PKT0(ring, REG_A3XX_RB_BLEND_ALPHA, 1);
 	OUT_RING(ring, A3XX_RB_BLEND_ALPHA_UINT(0xff) |

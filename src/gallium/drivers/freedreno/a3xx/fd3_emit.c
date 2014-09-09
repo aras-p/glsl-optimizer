@@ -354,8 +354,8 @@ fd3_emit_vertex_bufs(struct fd_ringbuffer *ring,
 
 void
 fd3_emit_state(struct fd_context *ctx, struct fd_ringbuffer *ring,
-		struct fd_program_stateobj *prog, uint32_t dirty,
-		struct ir3_shader_key key)
+		const struct pipe_draw_info *info,  struct fd_program_stateobj *prog,
+		struct ir3_shader_key key, uint32_t dirty)
 {
 	struct ir3_shader_variant *vp;
 	struct ir3_shader_variant *fp;
@@ -444,7 +444,12 @@ fd3_emit_state(struct fd_context *ctx, struct fd_ringbuffer *ring,
 		OUT_RING(ring, val);
 	}
 
-	if (dirty & (FD_DIRTY_RASTERIZER | FD_DIRTY_PROG)) {
+	/* NOTE: since primitive_restart is not actually part of any
+	 * state object, we need to make sure that we always emit
+	 * PRIM_VTX_CNTL.. either that or be more clever and detect
+	 * when it changes.
+	 */
+	if (info) {
 		uint32_t val = fd3_rasterizer_stateobj(ctx->rasterizer)
 				->pc_prim_vtx_cntl;
 
@@ -453,6 +458,10 @@ fd3_emit_state(struct fd_context *ctx, struct fd_ringbuffer *ring,
 			if (stride_in_vpc > 0)
 				stride_in_vpc = MAX2(stride_in_vpc, 2);
 			val |= A3XX_PC_PRIM_VTX_CNTL_STRIDE_IN_VPC(stride_in_vpc);
+		}
+
+		if (info && info->indexed && info->primitive_restart) {
+			val |= A3XX_PC_PRIM_VTX_CNTL_PRIMITIVE_RESTART;
 		}
 
 		val |= COND(vp->writes_psize, A3XX_PC_PRIM_VTX_CNTL_PSIZE);

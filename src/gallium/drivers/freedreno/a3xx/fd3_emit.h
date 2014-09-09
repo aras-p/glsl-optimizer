@@ -59,8 +59,8 @@ void fd3_emit_vertex_bufs(struct fd_ringbuffer *ring,
 		struct ir3_shader_variant *vp,
 		struct fd3_vertex_buf *vbufs, uint32_t n);
 void fd3_emit_state(struct fd_context *ctx, struct fd_ringbuffer *ring,
-		struct fd_program_stateobj *prog, uint32_t dirty,
-		struct ir3_shader_key key);
+		const struct pipe_draw_info *info,  struct fd_program_stateobj *prog,
+		struct ir3_shader_key key, uint32_t dirty);
 void fd3_emit_restore(struct fd_context *ctx);
 
 #endif /* FD3_EMIT_H */

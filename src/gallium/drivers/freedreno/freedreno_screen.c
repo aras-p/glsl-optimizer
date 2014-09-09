@@ -181,11 +181,13 @@ fd_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_TGSI_TEXCOORD:
 	case PIPE_CAP_PREFER_BLIT_BASED_TEXTURE_TRANSFER:
 	case PIPE_CAP_CONDITIONAL_RENDER:
-	case PIPE_CAP_PRIMITIVE_RESTART:
 	case PIPE_CAP_TEXTURE_MULTISAMPLE:
 	case PIPE_CAP_TEXTURE_BARRIER:
 	case PIPE_CAP_SM3:
 		return 0;
+
+	case PIPE_CAP_PRIMITIVE_RESTART:
+		return (screen->gpu_id >= 300) ? 1 : 0;
 
 	case PIPE_CAP_CONSTANT_BUFFER_OFFSET_ALIGNMENT:
 		return 256;
