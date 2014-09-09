@@ -1507,7 +1507,10 @@ handle_first_current(struct gl_context *ctx)
    GLenum buffer;
    GLint bufferIndex;
 
-   assert(ctx->Version > 0);
+   if (ctx->Version == 0) {
+      /* probably in the process of tearing down the context */
+      return;
+   }
 
    ctx->Extensions.String = _mesa_make_extension_string(ctx);
 

@@ -104,6 +104,42 @@ void st_invalidate_state(struct gl_context * ctx, GLuint new_state)
    _vbo_InvalidateState(ctx, new_state);
 }
 
+
+static void
+st_destroy_context_priv(struct st_context *st)
+{
+   uint shader, i;
+
+   st_destroy_atoms( st );
+   st_destroy_draw( st );
+   st_destroy_clear(st);
+   st_destroy_bitmap(st);
+   st_destroy_drawpix(st);
+   st_destroy_drawtex(st);
+
+   for (shader = 0; shader < Elements(st->state.sampler_views); shader++) {
+      for (i = 0; i < Elements(st->state.sampler_views[0]); i++) {
+         pipe_sampler_view_release(st->pipe,
+                                   &st->state.sampler_views[shader][i]);
+      }
+   }
+
+   if (st->default_texture) {
+      st->ctx->Driver.DeleteTexture(st->ctx, st->default_texture);
+      st->default_texture = NULL;
+   }
+
+   u_upload_destroy(st->uploader);
+   if (st->indexbuf_uploader) {
+      u_upload_destroy(st->indexbuf_uploader);
+   }
+   if (st->constbuf_uploader) {
+      u_upload_destroy(st->constbuf_uploader);
+   }
+   free( st );
+}
+
+
 static struct st_context *
 st_create_context_priv( struct gl_context *ctx, struct pipe_context *pipe,
 		const struct st_config_options *options)
@@ -238,6 +274,14 @@ st_create_context_priv( struct gl_context *ctx, struct pipe_context *pipe,
 
    _mesa_compute_version(ctx);
 
+   if (ctx->Version == 0) {
+      /* This can happen when a core profile was requested, but the driver
+       * does not support some features of GL 3.1 or later.
+       */
+      st_destroy_context_priv(st);
+      return NULL;
+   }
+
    _mesa_initialize_dispatch_tables(ctx);
    _mesa_initialize_vbo_vtxfmt(ctx);
 
@@ -259,6 +303,7 @@ struct st_context *st_create_context(gl_api api, struct pipe_context *pipe,
    struct gl_context *ctx;
    struct gl_context *shareCtx = share ? share->ctx : NULL;
    struct dd_function_table funcs;
+   struct st_context *st;
 
    memset(&funcs, 0, sizeof(funcs));
    st_init_driver_functions(&funcs);
@@ -276,41 +321,12 @@ struct st_context *st_create_context(gl_api api, struct pipe_context *pipe,
    if (debug_get_option_mesa_mvp_dp4())
       ctx->Const.ShaderCompilerOptions[MESA_SHADER_VERTEX].OptimizeForAOS = GL_TRUE;
 
-   return st_create_context_priv(ctx, pipe, options);
-}
-
-
-static void st_destroy_context_priv( struct st_context *st )
-{
-   uint shader, i;
-
-   st_destroy_atoms( st );
-   st_destroy_draw( st );
-   st_destroy_clear(st);
-   st_destroy_bitmap(st);
-   st_destroy_drawpix(st);
-   st_destroy_drawtex(st);
-
-   for (shader = 0; shader < Elements(st->state.sampler_views); shader++) {
-      for (i = 0; i < Elements(st->state.sampler_views[0]); i++) {
-         pipe_sampler_view_release(st->pipe,
-                                   &st->state.sampler_views[shader][i]);
-      }
+   st = st_create_context_priv(ctx, pipe, options);
+   if (!st) {
+      _mesa_destroy_context(ctx);
    }
 
-   if (st->default_texture) {
-      st->ctx->Driver.DeleteTexture(st->ctx, st->default_texture);
-      st->default_texture = NULL;
-   }
-
-   u_upload_destroy(st->uploader);
-   if (st->indexbuf_uploader) {
-      u_upload_destroy(st->indexbuf_uploader);
-   }
-   if (st->constbuf_uploader) {
-      u_upload_destroy(st->constbuf_uploader);
-   }
-   free( st );
+   return st;
 }
 
 
