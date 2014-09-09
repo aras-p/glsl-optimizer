@@ -15,6 +15,7 @@ C_SOURCES := \
 	ilo_blitter_pipe.c \
 	ilo_blitter_rectlist.c \
 	ilo_builder.c \
+	ilo_builder.h \
 	ilo_builder_decode.c \
 	ilo_common.h \
 	ilo_context.c \
