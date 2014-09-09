@@ -12,9 +12,9 @@ The rules-ng-ng source files this header was generated from are:
 - /home/robclark/src/freedreno/envytools/rnndb/freedreno_copyright.xml  (   1453 bytes, from 2013-03-31 16:51:27)
 - /home/robclark/src/freedreno/envytools/rnndb/adreno/a2xx.xml          (  32901 bytes, from 2014-06-02 15:21:30)
 - /home/robclark/src/freedreno/envytools/rnndb/adreno/adreno_common.xml (   9859 bytes, from 2014-06-02 15:21:30)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno/adreno_pm4.xml    (  14477 bytes, from 2014-07-19 17:20:53)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno/a3xx.xml          (  58020 bytes, from 2014-07-19 17:21:17)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno/a4xx.xml          (  36670 bytes, from 2014-07-19 17:18:34)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno/adreno_pm4.xml    (  14960 bytes, from 2014-07-27 17:22:13)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno/a3xx.xml          (  58083 bytes, from 2014-09-08 23:10:23)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno/a4xx.xml          (  41068 bytes, from 2014-08-01 12:22:48)
 
 Copyright (C) 2013-2014 by the following authors:
 - Rob Clark <robdclark@gmail.com> (robclark)
@@ -1265,6 +1265,7 @@ static inline uint32_t A3XX_PC_PRIM_VTX_CNTL_POLYMODE_BACK_PTYPE(enum adreno_pa_
 {
 	return ((val) << A3XX_PC_PRIM_VTX_CNTL_POLYMODE_BACK_PTYPE__SHIFT) & A3XX_PC_PRIM_VTX_CNTL_POLYMODE_BACK_PTYPE__MASK;
 }
+#define A3XX_PC_PRIM_VTX_CNTL_PRIMITIVE_RESTART			0x00100000
 #define A3XX_PC_PRIM_VTX_CNTL_PROVOKING_VTX_LAST		0x02000000
 #define A3XX_PC_PRIM_VTX_CNTL_PSIZE				0x04000000
 
@@ -1696,7 +1697,7 @@ static inline uint32_t A3XX_SP_VS_CTRL_REG1_CONSTFOOTPRINT(uint32_t val)
 {
 	return ((val) << A3XX_SP_VS_CTRL_REG1_CONSTFOOTPRINT__SHIFT) & A3XX_SP_VS_CTRL_REG1_CONSTFOOTPRINT__MASK;
 }
-#define A3XX_SP_VS_CTRL_REG1_INITIALOUTSTANDING__MASK		0x3f000000
+#define A3XX_SP_VS_CTRL_REG1_INITIALOUTSTANDING__MASK		0x7f000000
 #define A3XX_SP_VS_CTRL_REG1_INITIALOUTSTANDING__SHIFT		24
 static inline uint32_t A3XX_SP_VS_CTRL_REG1_INITIALOUTSTANDING(uint32_t val)
 {
