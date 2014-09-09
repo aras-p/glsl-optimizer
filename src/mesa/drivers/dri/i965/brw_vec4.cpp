@@ -1337,7 +1337,10 @@ vec4_visitor::dump_instruction(backend_instruction *be_inst, FILE *file)
       if (inst->dst.writemask & 8)
          fprintf(file, "w");
    }
-   fprintf(file, ":%s, ", brw_reg_type_letters(inst->dst.type));
+   fprintf(file, ":%s", brw_reg_type_letters(inst->dst.type));
+
+   if (inst->src[0].file != BAD_FILE)
+      fprintf(file, ", ");
 
    for (int i = 0; i < 3 && inst->src[i].file != BAD_FILE; i++) {
       if (inst->src[i].negate)
