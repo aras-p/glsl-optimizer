@@ -111,7 +111,7 @@ is_dereferenced_thing_row_major(const ir_dereference *deref)
          case GLSL_MATRIX_LAYOUT_COLUMN_MAJOR:
             return false;
          case GLSL_MATRIX_LAYOUT_ROW_MAJOR:
-            return matrix || deref->type->is_record();
+            return matrix || deref->type->without_array()->is_record();
          }
 
          unreachable("invalid matrix layout");
