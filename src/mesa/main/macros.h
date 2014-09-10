@@ -144,10 +144,10 @@ extern GLfloat _mesa_ubyte_to_float_color_tab[256];
 /* This function/macro is sensitive to precision.  Test very carefully
  * if you change it!
  */
-#define UNCLAMPED_FLOAT_TO_UBYTE(UB, F)					\
+#define UNCLAMPED_FLOAT_TO_UBYTE(UB, FLT)				\
         do {								\
            fi_type __tmp;						\
-           __tmp.f = (F);						\
+           __tmp.f = (FLT);						\
            if (__tmp.i < 0)						\
               UB = (GLubyte) 0;						\
            else if (__tmp.i >= IEEE_ONE)				\
@@ -157,10 +157,10 @@ extern GLfloat _mesa_ubyte_to_float_color_tab[256];
               UB = (GLubyte) __tmp.i;					\
            }								\
         } while (0)
-#define CLAMPED_FLOAT_TO_UBYTE(UB, F)					\
+#define CLAMPED_FLOAT_TO_UBYTE(UB, FLT)					\
         do {								\
            fi_type __tmp;						\
-           __tmp.f = (F) * (255.0F/256.0F) + 32768.0F;			\
+           __tmp.f = (FLT) * (255.0F/256.0F) + 32768.0F;		\
            UB = (GLubyte) __tmp.i;					\
         } while (0)
 #else
