@@ -1929,8 +1929,10 @@ instr_cat2(const struct instr_translater *t,
 	case TGSI_OPCODE_IABS:
 		src0_flags = IR3_REG_ABS;
 		break;
-	case TGSI_OPCODE_SUB:
 	case TGSI_OPCODE_INEG:
+		src0_flags = IR3_REG_NEGATE;
+		break;
+	case TGSI_OPCODE_SUB:
 		src1_flags = IR3_REG_NEGATE;
 		break;
 	}
