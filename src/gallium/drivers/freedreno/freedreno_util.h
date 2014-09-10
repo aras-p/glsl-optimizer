@@ -238,4 +238,16 @@ emit_marker(struct fd_ringbuffer *ring, int scratch_idx)
 	OUT_RING(ring, ++marker_cnt);
 }
 
+/* helper to get numeric value from environment variable..  mostly
+ * just leaving this here because it is helpful to brute-force figure
+ * out unknown formats, etc, which blob driver does not support:
+ */
+static inline uint32_t env2u(const char *envvar)
+{
+	char *str = getenv(envvar);
+	if (str)
+		return strtol(str, NULL, 0);
+	return 0;
+}
+
 #endif /* FREEDRENO_UTIL_H_ */

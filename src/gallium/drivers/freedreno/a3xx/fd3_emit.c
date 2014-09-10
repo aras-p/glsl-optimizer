@@ -242,6 +242,9 @@ emit_textures(struct fd_ringbuffer *ring,
 /* emit texture state for mem->gmem restore operation.. eventually it would
  * be good to get rid of this and use normal CSO/etc state for more of these
  * special cases, but for now the compiler is not sufficient..
+ *
+ * Also, for using normal state, not quite sure how to handle the special
+ * case format (fd3_gmem_restore_format()) stuff for restoring depth/stencil.
  */
 void
 fd3_emit_gmem_restore_tex(struct fd_ringbuffer *ring, struct pipe_surface *psurf)
@@ -272,7 +275,7 @@ fd3_emit_gmem_restore_tex(struct fd_ringbuffer *ring, struct pipe_surface *psurf
 			CP_LOAD_STATE_0_NUM_UNIT(1));
 	OUT_RING(ring, CP_LOAD_STATE_1_STATE_TYPE(ST_CONSTANTS) |
 			CP_LOAD_STATE_1_EXT_SRC_ADDR(0));
-	OUT_RING(ring, A3XX_TEX_CONST_0_FMT(fd3_pipe2tex(psurf->format)) |
+	OUT_RING(ring, A3XX_TEX_CONST_0_FMT(fd3_pipe2tex(format)) |
 			A3XX_TEX_CONST_0_TYPE(A3XX_TEX_2D) |
 			fd3_tex_swiz(format,  PIPE_SWIZZLE_RED, PIPE_SWIZZLE_GREEN,
 					PIPE_SWIZZLE_BLUE, PIPE_SWIZZLE_ALPHA));
