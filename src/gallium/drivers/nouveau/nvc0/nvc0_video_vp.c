@@ -59,7 +59,6 @@ static void dump_comm_vp(struct nouveau_vp3_decoder *dec, struct comm *comm, u32
 static void
 nvc0_decoder_kick_ref(struct nouveau_vp3_decoder *dec, struct nouveau_vp3_video_buffer *target)
 {
-   dec->refs[target->valid_ref].vidbuf = NULL;
    dec->refs[target->valid_ref].last_used = 0;
 //   debug_printf("Unreffed %p\n", target);
 }
