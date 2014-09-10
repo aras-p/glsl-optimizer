@@ -489,7 +489,7 @@ fs_visitor::emit_fragment_program_code()
 
          fs_inst *inst;
          if (brw->gen >= 7) {
-            inst = emit_texture_gen7(ir, dst, coordinate, shadow_c, lod, dpdy, sample_index, fs_reg(0u), fpi->TexSrcUnit);
+            inst = emit_texture_gen7(ir, dst, coordinate, shadow_c, lod, dpdy, sample_index, fs_reg(0u), fs_reg(fpi->TexSrcUnit));
          } else if (brw->gen >= 5) {
             inst = emit_texture_gen5(ir, dst, coordinate, shadow_c, lod, dpdy, sample_index, fpi->TexSrcUnit);
          } else {

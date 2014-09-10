@@ -2633,10 +2633,10 @@ fs_visitor::visit_atomic_counter_intrinsic(ir_call *ir)
       deref_array->array_index->accept(this);
 
       fs_reg tmp(this, glsl_type::uint_type);
-      emit(MUL(tmp, this->result, ATOMIC_COUNTER_SIZE));
-      emit(ADD(offset, tmp, location->data.atomic.offset));
+      emit(MUL(tmp, this->result, fs_reg(ATOMIC_COUNTER_SIZE)));
+      emit(ADD(offset, tmp, fs_reg(location->data.atomic.offset)));
    } else {
-      offset = location->data.atomic.offset;
+      offset = fs_reg(location->data.atomic.offset);
    }
 
    /* Emit the appropriate machine instruction */
@@ -2759,7 +2759,8 @@ fs_visitor::emit_untyped_atomic(unsigned atomic_op, unsigned surf_index,
    }
 
    /* Emit the instruction. */
-   inst = emit(SHADER_OPCODE_UNTYPED_ATOMIC, dst, atomic_op, surf_index);
+   inst = emit(SHADER_OPCODE_UNTYPED_ATOMIC, dst,
+               fs_reg(atomic_op), fs_reg(surf_index));
    inst->base_mrf = 0;
    inst->mlen = mlen;
    inst->header_present = true;
@@ -2796,7 +2797,7 @@ fs_visitor::emit_untyped_surface_read(unsigned surf_index, fs_reg dst,
    mlen += operand_len;
 
    /* Emit the instruction. */
-   inst = emit(SHADER_OPCODE_UNTYPED_SURFACE_READ, dst, surf_index);
+   inst = emit(SHADER_OPCODE_UNTYPED_SURFACE_READ, dst, fs_reg(surf_index));
    inst->base_mrf = 0;
    inst->mlen = mlen;
    inst->header_present = true;

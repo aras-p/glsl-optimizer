@@ -279,7 +279,7 @@ fs_visitor::VARYING_PULL_CONSTANT_LOAD(const fs_reg &dst,
     */
    fs_reg vec4_offset = fs_reg(this, glsl_type::int_type);
    instructions.push_tail(ADD(vec4_offset,
-                              varying_offset, const_offset & ~3));
+                              varying_offset, fs_reg(const_offset & ~3)));
 
    int scale = 1;
    if (brw->gen == 4 && dispatch_width == 8) {

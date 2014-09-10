@@ -69,9 +69,9 @@ public:
    void init();
 
    fs_reg();
-   fs_reg(float f);
-   fs_reg(int32_t i);
-   fs_reg(uint32_t u);
+   explicit fs_reg(float f);
+   explicit fs_reg(int32_t i);
+   explicit fs_reg(uint32_t u);
    fs_reg(struct brw_reg fixed_hw_reg);
    fs_reg(enum register_file file, int reg);
    fs_reg(enum register_file file, int reg, enum brw_reg_type type);
