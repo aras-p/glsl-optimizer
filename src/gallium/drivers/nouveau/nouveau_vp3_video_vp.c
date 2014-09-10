@@ -78,10 +78,10 @@ struct mpeg4_picparm_vp {
 	uint8_t top_field_first; // bool, written to vuc
 
 	uint8_t pad4[3]; // 59, 5a, 5b, contains garbage on blob
-	uint32_t pad5[0x10]; // 5c...9c non-inclusive, but WHY?
 
-	uint32_t intra[0x10]; // 9c
-	uint32_t non_intra[0x10]; // bc
+	uint32_t intra[0x10]; // 5c
+	uint32_t non_intra[0x10]; // 9c
+	uint32_t pad5[0x10]; // bc what does this do?
 	// udc..uff pad?
 };
 
