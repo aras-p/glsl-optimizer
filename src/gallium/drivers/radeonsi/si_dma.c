@@ -162,6 +162,8 @@ static void si_dma_copy_tile(struct si_context *ctx,
 	tiled_y = detile ? src_y : dst_y;
 	tiled_z = detile ? src_z : dst_z;
 
+	assert(!util_format_is_depth_and_stencil(rtiled->resource.b.b.format));
+
 	array_mode = si_array_mode(rtiled->surface.level[tiled_lvl].mode);
 	slice_tile_max = (rtiled->surface.level[tiled_lvl].nblk_x *
 			  rtiled->surface.level[tiled_lvl].nblk_y) / (8*8) - 1;
@@ -179,8 +181,7 @@ static void si_dma_copy_tile(struct si_context *ctx,
 	bank_w = cik_bank_wh(rtiled->surface.bankw);
 	mt_aspect = cik_macro_tile_aspect(rtiled->surface.mtilea);
 	tile_split = cik_tile_split(rtiled->surface.tile_split);
-	tile_mode_index = si_tile_mode_index(rtiled, tiled_lvl,
-					     util_format_has_stencil(util_format_description(rtiled->resource.b.b.format)));
+	tile_mode_index = si_tile_mode_index(rtiled, tiled_lvl, false);
 	nbanks = si_num_banks(sscreen, rtiled);
 	base += rtiled->resource.gpu_address;
 	addr += rlinear->resource.gpu_address;
