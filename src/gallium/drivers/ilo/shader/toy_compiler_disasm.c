@@ -1,1385 +1,1472 @@
 /*
- * Copyright © 2008 Keith Packard
+ * Mesa 3-D graphics library
  *
- * Permission to use, copy, modify, distribute, and sell this software and its
- * documentation for any purpose is hereby granted without fee, provided that
- * the above copyright notice appear in all copies and that both that copyright
- * notice and this permission notice appear in supporting documentation, and
- * that the name of the copyright holders not be used in advertising or
- * publicity pertaining to distribution of the software without specific,
- * written prior permission.  The copyright holders make no representations
- * about the suitability of this software for any purpose.  It is provided "as
- * is" without express or implied warranty.
+ * Copyright (C) 2014 LunarG, Inc.
  *
- * THE COPYRIGHT HOLDERS DISCLAIM ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
- * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO
- * EVENT SHALL THE COPYRIGHT HOLDERS BE LIABLE FOR ANY SPECIAL, INDIRECT OR
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
- * DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
- * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
- * OF THIS SOFTWARE.
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ *
+ * Authors:
+ *    Chia-I Wu <olv@lunarg.com>
  */
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <getopt.h>
-#include <unistd.h>
-#include <stdarg.h>
-
-typedef short GLshort;
-typedef int GLint;
-typedef unsigned char GLubyte;
-typedef unsigned int GLuint;
-typedef float GLfloat;
-#include <stdint.h>
-#include "brw_defines.h"
-#include "brw_structs.h"
-static int brw_disasm (FILE *file, struct brw_instruction *inst, int gen);
-
+#include "genhw/genhw.h"
 #include "toy_compiler.h"
+
+#define DISASM_PRINTER_BUFFER_SIZE 256
+#define DISASM_PRINTER_COLUMN_WIDTH 16
+
+#define READ(dw, field) (((dw) & field ## __MASK) >> field ## __SHIFT)
+
+struct disasm_printer {
+   char buf[DISASM_PRINTER_BUFFER_SIZE];
+   int len;
+};
+
+struct disasm_operand {
+   unsigned file:2;
+   unsigned type:3;
+
+   unsigned addr_mode:1;
+   unsigned reg:8;
+   unsigned subreg:5;
+   unsigned addr_subreg:3;
+   unsigned addr_imm:10;
+};
+
+struct disasm_dst_operand {
+   struct disasm_operand base;
+
+   unsigned horz_stride:2;
+   unsigned writemask:4;
+};
+
+struct disasm_src_operand {
+   struct disasm_operand base;
+
+   unsigned vert_stride:4;
+   unsigned width:3;
+   unsigned horz_stride:2;
+   unsigned swizzle_x:2;
+   unsigned swizzle_y:2;
+   unsigned swizzle_z:2;
+   unsigned swizzle_w:2;
+   unsigned negate:1;
+   unsigned absolute:1;
+};
+
+struct disasm_inst {
+   const struct ilo_dev_info *dev;
+
+   unsigned has_jip:1;
+   unsigned has_uip:1;
+
+   unsigned opcode:7;
+   unsigned access_mode:1;
+   unsigned mask_ctrl:1;
+   unsigned dep_ctrl:2;
+   unsigned qtr_ctrl:2;
+   unsigned thread_ctrl:2;
+   unsigned pred_ctrl:4;
+   unsigned pred_inv:1;
+   unsigned exec_size:3;
+
+   unsigned cond_modifier:4;
+   unsigned sfid:4;
+   unsigned fc:4;
+
+   unsigned acc_wr_ctrl:1;
+   unsigned cmpt_ctrl:1;
+   unsigned debug_ctrl:1;
+   unsigned saturate:1;
+
+   unsigned nib_ctrl:1;
+
+   unsigned flag_reg:1;
+   unsigned flag_subreg:1;
+
+   struct disasm_dst_operand dst;
+   struct disasm_src_operand src0;
+   struct disasm_src_operand src1;
+   union {
+      struct disasm_src_operand src2;
+      uint32_t imm32;
+   } u;
+};
+
+static const struct {
+   const char *name;
+   int src_count;
+} disasm_opcode_table[128] = {
+   [GEN6_OPCODE_ILLEGAL]     = { "illegal",  0 },
+   [GEN6_OPCODE_MOV]         = { "mov",      1 },
+   [GEN6_OPCODE_SEL]         = { "sel",      2 },
+   [GEN6_OPCODE_MOVI]        = { "movi",     1 },
+   [GEN6_OPCODE_NOT]         = { "not",      1 },
+   [GEN6_OPCODE_AND]         = { "and",      2 },
+   [GEN6_OPCODE_OR]          = { "or",       2 },
+   [GEN6_OPCODE_XOR]         = { "xor",      2 },
+   [GEN6_OPCODE_SHR]         = { "shr",      2 },
+   [GEN6_OPCODE_SHL]         = { "shl",      2 },
+   [GEN6_OPCODE_DIM]         = { "dim",      1 },
+   [GEN6_OPCODE_ASR]         = { "asr",      2 },
+   [GEN6_OPCODE_CMP]         = { "cmp",      2 },
+   [GEN6_OPCODE_CMPN]        = { "cmpn",     2 },
+   [GEN7_OPCODE_CSEL]        = { "csel",     3 },
+   [GEN7_OPCODE_F32TO16]     = { "f32to16",  1 },
+   [GEN7_OPCODE_F16TO32]     = { "f16to32",  1 },
+   [GEN7_OPCODE_BFREV]       = { "bfrev",    1 },
+   [GEN7_OPCODE_BFE]         = { "bfe",      3 },
+   [GEN7_OPCODE_BFI1]        = { "bfi1",     2 },
+   [GEN7_OPCODE_BFI2]        = { "bfi2",     3 },
+   [GEN6_OPCODE_JMPI]        = { "jmpi",     1 },
+   [GEN7_OPCODE_BRD]         = { "brd",      1 },
+   [GEN6_OPCODE_IF]          = { "if",       2 },
+   [GEN7_OPCODE_BRC]         = { "brc",      1 },
+   [GEN6_OPCODE_ELSE]        = { "else",     1 },
+   [GEN6_OPCODE_ENDIF]       = { "endif",    0 },
+   [GEN6_OPCODE_CASE]        = { "case",     2 },
+   [GEN6_OPCODE_WHILE]       = { "while",    1 },
+   [GEN6_OPCODE_BREAK]       = { "break",    1 },
+   [GEN6_OPCODE_CONT]        = { "cont",     1 },
+   [GEN6_OPCODE_HALT]        = { "halt",     1 },
+   [GEN75_OPCODE_CALLA]      = { "calla",    1 },
+   [GEN6_OPCODE_CALL]        = { "call",     1 },
+   [GEN6_OPCODE_RETURN]      = { "return",   1 },
+   [GEN6_OPCODE_WAIT]        = { "wait",     1 },
+   [GEN6_OPCODE_SEND]        = { "send",     1 },
+   [GEN6_OPCODE_SENDC]       = { "sendc",    1 },
+   [GEN6_OPCODE_MATH]        = { "math",     2 },
+   [GEN6_OPCODE_ADD]         = { "add",      2 },
+   [GEN6_OPCODE_MUL]         = { "mul",      2 },
+   [GEN6_OPCODE_AVG]         = { "avg",      2 },
+   [GEN6_OPCODE_FRC]         = { "frc",      1 },
+   [GEN6_OPCODE_RNDU]        = { "rndu",     1 },
+   [GEN6_OPCODE_RNDD]        = { "rndd",     1 },
+   [GEN6_OPCODE_RNDE]        = { "rnde",     1 },
+   [GEN6_OPCODE_RNDZ]        = { "rndz",     1 },
+   [GEN6_OPCODE_MAC]         = { "mac",      2 },
+   [GEN6_OPCODE_MACH]        = { "mach",     2 },
+   [GEN6_OPCODE_LZD]         = { "lzd",      1 },
+   [GEN7_OPCODE_FBH]         = { "fbh",      1 },
+   [GEN7_OPCODE_FBL]         = { "fbl",      1 },
+   [GEN7_OPCODE_CBIT]        = { "cbit",     1 },
+   [GEN7_OPCODE_ADDC]        = { "addc",     2 },
+   [GEN7_OPCODE_SUBB]        = { "subb",     2 },
+   [GEN6_OPCODE_SAD2]        = { "sad2",     2 },
+   [GEN6_OPCODE_SADA2]       = { "sada2",    2 },
+   [GEN6_OPCODE_DP4]         = { "dp4",      2 },
+   [GEN6_OPCODE_DPH]         = { "dph",      2 },
+   [GEN6_OPCODE_DP3]         = { "dp3",      2 },
+   [GEN6_OPCODE_DP2]         = { "dp2",      2 },
+   [GEN6_OPCODE_LINE]        = { "line",     2 },
+   [GEN6_OPCODE_PLN]         = { "pln",      2 },
+   [GEN6_OPCODE_MAD]         = { "mad",      3 },
+   [GEN6_OPCODE_LRP]         = { "lrp",      3 },
+   [GEN6_OPCODE_NOP]         = { "nop",      0 },
+};
+
+static void
+disasm_inst_decode_dw0_gen6(struct disasm_inst *inst, uint32_t dw0)
+{
+   inst->opcode = READ(dw0, GEN6_INST_OPCODE);
+
+   switch (inst->opcode) {
+   case GEN6_OPCODE_IF:
+      inst->has_jip = true;
+      inst->has_uip = (inst->dev->gen >= ILO_GEN(7));
+      break;
+   case GEN6_OPCODE_BREAK:
+   case GEN6_OPCODE_CONT:
+   case GEN6_OPCODE_HALT:
+      inst->has_uip = true;
+      /* fall through */
+   case GEN6_OPCODE_JMPI:
+   case GEN7_OPCODE_BRD:
+   case GEN7_OPCODE_BRC:
+   case GEN6_OPCODE_ELSE:
+   case GEN6_OPCODE_ENDIF:
+   case GEN6_OPCODE_CASE:
+   case GEN6_OPCODE_WHILE:
+   case GEN75_OPCODE_CALLA:
+   case GEN6_OPCODE_CALL:
+   case GEN6_OPCODE_RETURN:
+      inst->has_jip = true;
+      break;
+   default:
+      break;
+   }
+
+   inst->access_mode = READ(dw0, GEN6_INST_ACCESSMODE);
+   inst->mask_ctrl = READ(dw0, GEN6_INST_MASKCTRL);
+   inst->dep_ctrl = READ(dw0, GEN6_INST_DEPCTRL);
+   inst->qtr_ctrl = READ(dw0, GEN6_INST_QTRCTRL);
+   inst->thread_ctrl = READ(dw0, GEN6_INST_THREADCTRL);
+   inst->pred_ctrl = READ(dw0, GEN6_INST_PREDCTRL);
+
+   inst->pred_inv = (bool) (dw0 & GEN6_INST_PREDINV);
+
+   inst->exec_size = READ(dw0, GEN6_INST_EXECSIZE);
+
+   switch (inst->opcode) {
+   case GEN6_OPCODE_SEND:
+   case GEN6_OPCODE_SENDC:
+      inst->sfid = READ(dw0, GEN6_INST_SFID);
+      break;
+   case GEN6_OPCODE_MATH:
+      inst->fc = READ(dw0, GEN6_INST_FC);
+      break;
+   default:
+      inst->cond_modifier = READ(dw0, GEN6_INST_CONDMODIFIER);
+      break;
+   }
+
+   inst->acc_wr_ctrl = (bool) (dw0 & GEN6_INST_ACCWRCTRL);
+   inst->cmpt_ctrl = (bool) (dw0 & GEN6_INST_CMPTCTRL);
+   inst->debug_ctrl = (bool) (dw0 & GEN6_INST_DEBUGCTRL);
+   inst->saturate = (bool) (dw0 & GEN6_INST_SATURATE);
+}
+
+static bool
+disasm_inst_jip_in_dw1_high_gen6(const struct disasm_inst *inst)
+{
+   return (inst->dev->gen == ILO_GEN(6) && inst->has_jip && !inst->has_uip);
+}
+
+static void
+disasm_inst_decode_dw1_gen6(struct disasm_inst *inst, uint32_t dw1)
+{
+   inst->dst.base.file = READ(dw1, GEN6_INST_DST_FILE);
+   inst->dst.base.type = READ(dw1, GEN6_INST_DST_TYPE);
+   inst->src0.base.file = READ(dw1, GEN6_INST_SRC0_FILE);
+   inst->src0.base.type = READ(dw1, GEN6_INST_SRC0_TYPE);
+   inst->src1.base.file = READ(dw1, GEN6_INST_SRC1_FILE);
+   inst->src1.base.type = READ(dw1, GEN6_INST_SRC1_TYPE);
+
+   if (inst->dev->gen >= ILO_GEN(7))
+      inst->nib_ctrl = (bool) (dw1 & GEN7_INST_NIBCTRL);
+
+   if (disasm_inst_jip_in_dw1_high_gen6(inst)) {
+      inst->u.imm32 = dw1 >> 16;
+      return;
+   }
+
+   inst->dst.base.addr_mode = READ(dw1, GEN6_INST_DST_ADDRMODE);
+
+   if (inst->dst.base.addr_mode == GEN6_ADDRMODE_DIRECT) {
+      inst->dst.base.reg = READ(dw1, GEN6_INST_DST_REG);
+
+      if (inst->access_mode == GEN6_ALIGN_1) {
+         inst->dst.base.subreg = READ(dw1, GEN6_INST_DST_SUBREG);
+      } else {
+         inst->dst.base.subreg = READ(dw1, GEN6_INST_DST_SUBREG_ALIGN16) <<
+            GEN6_INST_DST_SUBREG_ALIGN16__SHR;
+      }
+   } else {
+      inst->dst.base.addr_subreg = READ(dw1, GEN6_INST_DST_ADDR_SUBREG);
+
+      if (inst->access_mode == GEN6_ALIGN_1) {
+         inst->dst.base.addr_imm = READ(dw1, GEN6_INST_DST_ADDR_IMM);
+      } else {
+         inst->dst.base.addr_imm = READ(dw1, GEN6_INST_DST_ADDR_IMM_ALIGN16) <<
+            GEN6_INST_DST_ADDR_IMM_ALIGN16__SHR;
+      }
+   }
+
+   inst->dst.horz_stride = READ(dw1, GEN6_INST_DST_HORZSTRIDE);
+
+   if (inst->access_mode == GEN6_ALIGN_1)
+      inst->dst.writemask = 0xf;
+   else
+      inst->dst.writemask = READ(dw1, GEN6_INST_DST_WRITEMASK);
+}
+
+static void
+disasm_inst_decode_dw2_dw3_gen6(struct disasm_inst *inst,
+                                uint32_t dw2, uint32_t dw3)
+{
+   int count, i;
+
+   if (inst->dev->gen >= ILO_GEN(7))
+      inst->flag_reg = READ(dw2, GEN7_INST_FLAG_REG);
+
+   inst->flag_subreg = READ(dw2, GEN6_INST_FLAG_SUBREG);
+
+   if (inst->src0.base.file == GEN6_FILE_IMM ||
+       inst->src1.base.file == GEN6_FILE_IMM) {
+      count = 1;
+      if (!disasm_inst_jip_in_dw1_high_gen6(inst))
+         inst->u.imm32 = dw3;
+   } else {
+      count = 2;
+   }
+
+   for (i = 0; i < count; i++) {
+      struct disasm_src_operand *src = (i == 0) ? &inst->src0 : &inst->src1;
+      const uint32_t dw = (i == 0) ? dw2 : dw3;
+
+      src->base.addr_mode = READ(dw, GEN6_INST_SRC_ADDRMODE);
+
+      if (src->base.addr_mode == GEN6_ADDRMODE_DIRECT) {
+         src->base.reg = READ(dw, GEN6_INST_SRC_REG);
+
+         if (inst->access_mode == GEN6_ALIGN_1) {
+            src->base.subreg = READ(dw, GEN6_INST_SRC_SUBREG);
+         } else {
+            src->base.subreg = READ(dw, GEN6_INST_SRC_SUBREG_ALIGN16) <<
+               GEN6_INST_SRC_SUBREG_ALIGN16__SHR;
+         }
+      } else {
+         src->base.addr_subreg = READ(dw, GEN6_INST_SRC_ADDR_SUBREG);
+
+         if (inst->access_mode == GEN6_ALIGN_1) {
+            src->base.addr_imm = READ(dw, GEN6_INST_SRC_ADDR_IMM);
+         } else {
+            src->base.addr_imm = READ(dw, GEN6_INST_SRC_ADDR_IMM_ALIGN16) <<
+               GEN6_INST_SRC_ADDR_IMM_ALIGN16__SHR;
+         }
+      }
+
+      src->vert_stride = READ(dw, GEN6_INST_SRC_VERTSTRIDE);
+
+      if (inst->access_mode == GEN6_ALIGN_1) {
+         src->width = READ(dw, GEN6_INST_SRC_WIDTH);
+         src->horz_stride = READ(dw, GEN6_INST_SRC_HORZSTRIDE);
+
+         src->swizzle_x = GEN6_SWIZZLE_X;
+         src->swizzle_y = GEN6_SWIZZLE_Y;
+         src->swizzle_z = GEN6_SWIZZLE_Z;
+         src->swizzle_w = GEN6_SWIZZLE_W;
+      } else {
+         src->width = GEN6_WIDTH_4;
+         src->horz_stride = GEN6_HORZSTRIDE_1;
+
+         src->swizzle_x = READ(dw, GEN6_INST_SRC_SWIZZLE_X);
+         src->swizzle_y = READ(dw, GEN6_INST_SRC_SWIZZLE_Y);
+         src->swizzle_z = READ(dw, GEN6_INST_SRC_SWIZZLE_Z);
+         src->swizzle_w = READ(dw, GEN6_INST_SRC_SWIZZLE_W);
+      }
+
+      src->negate = (bool) (dw & GEN6_INST_SRC_NEGATE);
+      src->absolute = (bool) (dw & GEN6_INST_SRC_ABSOLUTE);
+   }
+}
+
+static void
+disasm_inst_decode_3src_dw1_gen6(struct disasm_inst *inst, uint32_t dw1)
+{
+   static unsigned type_mapping[4] = {
+      [GEN7_TYPE_F_3SRC]   = GEN6_TYPE_F,
+      [GEN7_TYPE_D_3SRC]   = GEN6_TYPE_D,
+      [GEN7_TYPE_UD_3SRC]  = GEN6_TYPE_UD,
+      [GEN7_TYPE_DF_3SRC]  = GEN7_TYPE_DF,
+   };
+
+   inst->flag_subreg = READ(dw1, GEN6_3SRC_FLAG_SUBREG);
+
+   if (inst->dev->gen >= ILO_GEN(7)) {
+      inst->nib_ctrl = (bool) (dw1 & GEN7_3SRC_NIBCTRL);
+      inst->flag_reg = READ(dw1, GEN7_3SRC_FLAG_REG);
+
+      inst->dst.base.file = GEN6_FILE_GRF;
+      inst->dst.base.type = READ(dw1, GEN7_3SRC_DST_TYPE);
+      inst->dst.base.type = type_mapping[inst->dst.base.type];
+
+      inst->src0.base.type = READ(dw1, GEN7_3SRC_SRC_TYPE);
+      inst->src0.base.type = type_mapping[inst->src0.base.type];
+
+      inst->src1.base.type = inst->src0.base.type;
+      inst->u.src2.base.type = inst->src0.base.type;
+   } else {
+      inst->dst.base.file = (dw1 & GEN6_3SRC_DST_FILE_MRF) ?
+         GEN6_FILE_MRF: GEN6_FILE_GRF;
+      inst->dst.base.type = GEN6_TYPE_F;
+
+      inst->src0.base.type = GEN6_TYPE_F;
+      inst->src1.base.type = GEN6_TYPE_F;
+      inst->u.src2.base.type = GEN6_TYPE_F;
+   }
+
+   inst->dst.base.addr_mode = GEN6_ADDRMODE_DIRECT;
+   inst->dst.base.reg = READ(dw1, GEN6_3SRC_DST_REG);
+   inst->dst.base.subreg = READ(dw1, GEN6_3SRC_DST_SUBREG) <<
+      GEN6_3SRC_DST_SUBREG__SHR;
+
+   inst->dst.horz_stride = GEN6_HORZSTRIDE_1;
+   inst->dst.writemask = READ(dw1, GEN6_3SRC_DST_WRITEMASK);
+
+   inst->src0.base.file = GEN6_FILE_GRF;
+   inst->src0.negate = (bool) (dw1 & GEN6_3SRC_SRC0_NEGATE);
+   inst->src0.absolute = (bool) (dw1 & GEN6_3SRC_SRC0_ABSOLUTE);
+   inst->src1.base.file = GEN6_FILE_GRF;
+   inst->src1.negate = (bool) (dw1 & GEN6_3SRC_SRC1_NEGATE);
+   inst->src1.absolute = (bool) (dw1 & GEN6_3SRC_SRC1_ABSOLUTE);
+   inst->u.src2.base.file = GEN6_FILE_GRF;
+   inst->u.src2.negate = (bool) (dw1 & GEN6_3SRC_SRC2_NEGATE);
+   inst->u.src2.absolute = (bool) (dw1 & GEN6_3SRC_SRC2_ABSOLUTE);
+}
+
+static void
+disasm_inst_decode_3src_dw2_dw3_gen6(struct disasm_inst *inst,
+                                     uint32_t dw2, uint32_t dw3)
+{
+   const uint64_t qw = (uint64_t) dw3 << 32 | dw2;
+   int i;
+
+   for (i = 0; i < 3; i++) {
+      struct disasm_src_operand *src = (i == 0) ? &inst->src0 :
+                                       (i == 1) ? &inst->src1 :
+                                       &inst->u.src2;
+      const uint32_t dw = (i == 0) ? READ(qw, GEN6_3SRC_SRC_0) :
+                          (i == 1) ? READ(qw, GEN6_3SRC_SRC_1) :
+                          READ(qw, GEN6_3SRC_SRC_2);
+
+      src->base.addr_mode = GEN6_ADDRMODE_DIRECT;
+      src->base.reg = READ(dw, GEN6_3SRC_SRC_REG);
+      src->base.subreg = READ(dw, GEN6_3SRC_SRC_SUBREG) <<
+         GEN6_3SRC_SRC_SUBREG__SHR;
+
+      if (dw & GEN6_3SRC_SRC_REPCTRL) {
+         src->vert_stride = GEN6_VERTSTRIDE_0;
+         src->width = GEN6_WIDTH_1;
+         src->horz_stride = GEN6_HORZSTRIDE_0;
+      } else {
+         src->vert_stride = GEN6_VERTSTRIDE_4;
+         src->width = GEN6_WIDTH_4;
+         src->horz_stride = GEN6_HORZSTRIDE_1;
+      }
+
+      src->swizzle_x = READ(dw, GEN6_3SRC_SRC_SWIZZLE_X);
+      src->swizzle_y = READ(dw, GEN6_3SRC_SRC_SWIZZLE_Y);
+      src->swizzle_z = READ(dw, GEN6_3SRC_SRC_SWIZZLE_Z);
+      src->swizzle_w = READ(dw, GEN6_3SRC_SRC_SWIZZLE_W);
+   }
+}
+
+/*
+ * When GEN6_INST_CMPTCTRL of DW0 is set, the instruction has 64 bits and is
+ * in EU_INSTRUCTION_COMPACT_TWO_SRC form.  We should have expanded it to its
+ * original form.
+ *
+ * Depending on the opcode, the 128-bits instruction is in one of the
+ * following forms
+ *
+ *  - EU_INSTRUCTION_BASIC_ONE_SRC
+ *  - EU_INSTRUCTION_BASIC_TWO_SRC
+ *  - EU_INSTRUCTION_BASIC_THREE_SRC
+ *  - EU_INSTRUCTION_BRANCH_CONDITIONAL
+ *  - EU_INSTRUCTION_BRANCH_ONE_SRC
+ *  - EU_INSTRUCTION_BRANCH_TWO_SRC
+ *  - EU_INSTRUCTION_ILLEGAL
+ *  - EU_INSTRUCTION_MATH
+ *  - EU_INSTRUCTION_NOP
+ *  - EU_INSTRUCTION_SEND
+ *
+ * In EU_INSTRUCTION_BASIC_ONE_SRC form,
+ *
+ *  - DW0 is EU_INSTRUCTION_HEADER
+ *  - DW1 is EU_INSTRUCTION_OPERAND_CONTROLS
+ *  - DW2 is Source 0 and EU_INSTRUCTION_FLAGS
+ *  - DW3 is reserved unless Source 0 is an immediate
+ *
+ * All other forms except EU_INSTRUCTION_BASIC_THREE_SRC are quite compatible
+ * with EU_INSTRUCTION_BASIC_ONE_SRC.
+ */
+static void
+disasm_inst_decode(struct disasm_inst *inst,
+                   const uint32_t *dw)
+{
+   assert(!(dw[0] & GEN6_INST_CMPTCTRL));
+
+   disasm_inst_decode_dw0_gen6(inst, dw[0]);
+
+   switch (inst->opcode) {
+   case GEN7_OPCODE_CSEL:
+   case GEN7_OPCODE_BFE:
+   case GEN7_OPCODE_BFI2:
+   case GEN6_OPCODE_MAD:
+   case GEN6_OPCODE_LRP:
+      disasm_inst_decode_3src_dw1_gen6(inst, dw[1]);
+      disasm_inst_decode_3src_dw2_dw3_gen6(inst, dw[2], dw[3]);
+      break;
+   default:
+      disasm_inst_decode_dw1_gen6(inst, dw[1]);
+      disasm_inst_decode_dw2_dw3_gen6(inst, dw[2], dw[3]);
+      break;
+   }
+}
+
+static const char *
+disasm_inst_opcode(const struct disasm_inst *inst)
+{
+   return (disasm_opcode_table[inst->opcode].name) ?
+      disasm_opcode_table[inst->opcode].name : "BAD";
+}
+
+static const char *
+disasm_inst_pred_ctrl(const struct disasm_inst *inst)
+{
+   if (inst->access_mode == GEN6_ALIGN_1) {
+      switch (inst->pred_ctrl) {
+      case GEN6_PREDCTRL_NORMAL: return "";
+      case GEN6_PREDCTRL_ANYV:   return ".anyv";
+      case GEN6_PREDCTRL_ALLV:   return ".allv";
+      case GEN6_PREDCTRL_ANY2H:  return ".any2h";
+      case GEN6_PREDCTRL_ALL2H:  return ".all2h";
+      case GEN6_PREDCTRL_ANY4H:  return ".any4h";
+      case GEN6_PREDCTRL_ALL4H:  return ".all4h";
+      case GEN6_PREDCTRL_ANY8H:  return ".any8h";
+      case GEN6_PREDCTRL_ALL8H:  return ".all8h";
+      case GEN6_PREDCTRL_ANY16H: return ".any16h";
+      case GEN6_PREDCTRL_ALL16H: return ".all16h";
+      case GEN7_PREDCTRL_ANY32H: return ".any32h";
+      case GEN7_PREDCTRL_ALL32H: return ".all32h";
+      default:                   return ".BAD";
+      }
+   } else {
+      switch (inst->pred_ctrl) {
+      case GEN6_PREDCTRL_NORMAL: return "";
+      case GEN6_PREDCTRL_X:      return ".x";
+      case GEN6_PREDCTRL_Y:      return ".y";
+      case GEN6_PREDCTRL_Z:      return ".z";
+      case GEN6_PREDCTRL_W:      return ".w";
+      default:                   return ".BAD";
+      }
+   }
+}
+
+static char
+disasm_inst_pred_inv(const struct disasm_inst *inst)
+{
+   return (inst->pred_inv) ? '-' : '+';
+}
+
+static const char *
+disasm_inst_exec_size(const struct disasm_inst *inst)
+{
+   switch (inst->exec_size) {
+   case GEN6_EXECSIZE_1:   return "1";
+   case GEN6_EXECSIZE_2:   return "2";
+   case GEN6_EXECSIZE_4:   return "4";
+   case GEN6_EXECSIZE_8:   return "8";
+   case GEN6_EXECSIZE_16:  return "16";
+   case GEN6_EXECSIZE_32:  return "32";
+   default:                return "BAD";
+   }
+}
+
+static const char *
+disasm_inst_fc(const struct disasm_inst *inst)
+{
+   assert(inst->opcode == GEN6_OPCODE_MATH);
+
+   switch (inst->fc) {
+   case GEN6_MATH_INV:                 return "inv";
+   case GEN6_MATH_LOG:                 return "log";
+   case GEN6_MATH_EXP:                 return "exp";
+   case GEN6_MATH_SQRT:                return "sqrt";
+   case GEN6_MATH_RSQ:                 return "rsq";
+   case GEN6_MATH_SIN:                 return "sin";
+   case GEN6_MATH_COS:                 return "cos";
+   case GEN6_MATH_FDIV:                return "fdiv";
+   case GEN6_MATH_POW:                 return "pow";
+   case GEN6_MATH_INT_DIV:             return "int_div";
+   case GEN6_MATH_INT_DIV_QUOTIENT:    return "int_div_quotient";
+   case GEN6_MATH_INT_DIV_REMAINDER:   return "int_div_remainder";
+   default:                            return "BAD";
+   }
+}
+
+static const char *
+disasm_inst_sfid(const struct disasm_inst *inst)
+{
+   assert(inst->opcode == GEN6_OPCODE_SEND ||
+          inst->opcode == GEN6_OPCODE_SENDC);
+
+   switch (inst->sfid) {
+   case GEN6_SFID_NULL:          return "null";
+   case GEN6_SFID_SAMPLER:       return "sampler";
+   case GEN6_SFID_GATEWAY:       return "gateway";
+   case GEN6_SFID_DP_SAMPLER:    return "dp sampler";
+   case GEN6_SFID_DP_RC:         return "dp render";
+   case GEN6_SFID_URB:           return "urb";
+   case GEN6_SFID_SPAWNER:       return "spawner";
+   case GEN6_SFID_VME:           return "vme";
+   case GEN6_SFID_DP_CC:         return "dp const";
+   case GEN7_SFID_DP_DC0:        return "dp data 0";
+   case GEN7_SFID_PI:            return "pixel interp";
+   case GEN75_SFID_DP_DC1:       return "dp data 1";
+   default:                      return "BAD";
+   }
+}
+
+static const char *
+disasm_inst_cond_modifier(const struct disasm_inst *inst)
+{
+   switch (inst->cond_modifier) {
+   case GEN6_COND_NONE:    return "";
+   case GEN6_COND_Z:       return ".z";
+   case GEN6_COND_NZ:      return ".nz";
+   case GEN6_COND_G:       return ".g";
+   case GEN6_COND_GE:      return ".ge";
+   case GEN6_COND_L:       return ".l";
+   case GEN6_COND_LE:      return ".le";
+   case GEN6_COND_O:       return ".o";
+   case GEN6_COND_U:       return ".u";
+   default:                return ".BAD";
+   }
+}
+
+static const char *
+disasm_inst_debug_ctrl(const struct disasm_inst *inst)
+{
+   return (inst->debug_ctrl) ? ".breakpoint" : "";
+}
+
+static const char *
+disasm_inst_saturate(const struct disasm_inst *inst)
+{
+   return (inst->saturate) ? ".sat" : "";
+}
+
+static const char *
+disasm_inst_flag_reg(const struct disasm_inst *inst)
+{
+   static const char *flag_names[2][2] = {
+      { "f0",   "f0.1" },
+      { "f1.0", "f1.1" },
+   };
+
+   return (inst->flag_reg <= 1 && inst->flag_subreg <= 1) ?
+      flag_names[inst->flag_reg][inst->flag_subreg] : "fBAD";
+}
+
+static const char *
+disasm_inst_access_mode(const struct disasm_inst *inst)
+{
+   switch (inst->access_mode) {
+   case GEN6_ALIGN_1:   return " align1";
+   case GEN6_ALIGN_16:  return " align16";
+   default:             return " alignBAD";
+   }
+}
+
+static const char *
+disasm_inst_mask_ctrl(const struct disasm_inst *inst)
+{
+   switch (inst->mask_ctrl) {
+   case GEN6_MASKCTRL_NORMAL: return "";
+   case GEN6_MASKCTRL_NOMASK: return " WE_all";
+   default:                   return " WE_BAD";
+   }
+}
+
+static const char *
+disasm_inst_dep_ctrl(const struct disasm_inst *inst)
+{
+   switch (inst->dep_ctrl) {
+   case GEN6_DEPCTRL_NORMAL:  return "";
+   case GEN6_DEPCTRL_NODDCLR: return " NoDDClr";
+   case GEN6_DEPCTRL_NODDCHK: return " NoDDChk";
+   case GEN6_DEPCTRL_NEITHER: return " NoDDClr,NoDDChk";
+   default:                   return " NoDDBAD";
+   }
+}
+
+static const char *
+disasm_inst_qtr_ctrl(const struct disasm_inst *inst)
+{
+   switch (inst->exec_size) {
+   case GEN6_EXECSIZE_8:
+      switch (inst->qtr_ctrl) {
+      case GEN6_QTRCTRL_1Q:   return " 1Q";
+      case GEN6_QTRCTRL_2Q:   return " 2Q";
+      case GEN6_QTRCTRL_3Q:   return " 3Q";
+      case GEN6_QTRCTRL_4Q:   return " 4Q";
+      default:                return " BADQ";
+      }
+      break;
+   case GEN6_EXECSIZE_16:
+      switch (inst->qtr_ctrl) {
+      case GEN6_QTRCTRL_1H:   return " 1H";
+      case GEN6_QTRCTRL_2H:   return " 2H";
+      default:                return " BADH";
+      }
+      break;
+   default:
+      return                  "";
+   }
+
+}
+
+static const char *
+disasm_inst_thread_ctrl(const struct disasm_inst *inst)
+{
+   switch (inst->thread_ctrl) {
+   case GEN6_THREADCTRL_NORMAL:  return "";
+   case GEN6_THREADCTRL_ATOMIC:  return " atomic";
+   case GEN6_THREADCTRL_SWITCH:  return " switch";
+   default:                      return " BAD";
+   }
+}
+
+static const char *
+disasm_inst_acc_wr_ctrl(const struct disasm_inst *inst)
+{
+   return (inst->acc_wr_ctrl) ? " AccWrEnable" : "";
+}
+
+static const char *
+disasm_inst_cmpt_ctrl(const struct disasm_inst *inst)
+{
+   return (inst->cmpt_ctrl) ? " compacted" : "";
+}
+
+static const char *
+disasm_inst_eot(const struct disasm_inst *inst)
+{
+   if (inst->opcode == GEN6_OPCODE_SEND ||
+       inst->opcode == GEN6_OPCODE_SENDC)
+      return (inst->u.imm32 & GEN6_MSG_EOT) ? " EOT" : "";
+   else
+      return "";
+}
+
+static const char *
+disasm_inst_file(const struct disasm_inst *inst,
+                 const struct disasm_operand *operand,
+                 bool *multi_regs)
+{
+   switch (operand->file) {
+   case GEN6_FILE_ARF:
+      switch (operand->reg & 0xf0) {
+      case GEN6_ARF_NULL:  *multi_regs = false; return "null";
+      case GEN6_ARF_A0:    *multi_regs = true;  return "a";
+      case GEN6_ARF_ACC0:  *multi_regs = true;  return "acc";
+      case GEN6_ARF_F0:    *multi_regs = true;  return "f";
+      case GEN6_ARF_SR0:   *multi_regs = true;  return "sr";
+      case GEN6_ARF_CR0:   *multi_regs = true;  return "cr";
+      case GEN6_ARF_N0:    *multi_regs = true;  return "n";
+      case GEN6_ARF_IP:    *multi_regs = false; return "ip";
+      case GEN6_ARF_TDR:   *multi_regs = false; return "tdr";
+      case GEN7_ARF_TM0:   *multi_regs = true;  return "tm";
+      default:             *multi_regs = false; return "BAD";
+      }
+      break;
+   case GEN6_FILE_GRF:     *multi_regs = true;  return "g";
+   case GEN6_FILE_MRF:     *multi_regs = true;  return "m";
+   case GEN6_FILE_IMM:     *multi_regs = true;  return "";
+   default:                *multi_regs = false; return "BAD";
+   }
+}
+
+static const char *
+disasm_inst_type(const struct disasm_inst *inst,
+                 const struct disasm_operand *operand)
+{
+   if (operand->file == GEN6_FILE_IMM) {
+      switch (operand->type) {
+      case GEN6_TYPE_UD:      return "UD";
+      case GEN6_TYPE_D:       return "D";
+      case GEN6_TYPE_UW:      return "UW";
+      case GEN6_TYPE_W:       return "W";
+      case GEN6_TYPE_UV_IMM:  return "UV";
+      case GEN6_TYPE_VF_IMM:  return "VF";
+      case GEN6_TYPE_V_IMM:   return "V";
+      case GEN6_TYPE_F:       return "F";
+      default:                return "BAD";
+      }
+   } else {
+      switch (operand->type) {
+      case GEN6_TYPE_UD:      return "UD";
+      case GEN6_TYPE_D:       return "D";
+      case GEN6_TYPE_UW:      return "UW";
+      case GEN6_TYPE_W:       return "W";
+      case GEN6_TYPE_UB:      return "UB";
+      case GEN6_TYPE_B:       return "B";
+      case GEN7_TYPE_DF:      return "DF";
+      case GEN6_TYPE_F:       return "F";
+      default:                return "BAD";
+      }
+   }
+}
+
+static const char *
+disasm_inst_vert_stride(const struct disasm_inst *inst, unsigned vert_stride)
+{
+   switch (vert_stride) {
+   case GEN6_VERTSTRIDE_0:    return "0";
+   case GEN6_VERTSTRIDE_1:    return "1";
+   case GEN6_VERTSTRIDE_2:    return "2";
+   case GEN6_VERTSTRIDE_4:    return "4";
+   case GEN6_VERTSTRIDE_8:    return "8";
+   case GEN6_VERTSTRIDE_16:   return "16";
+   case GEN6_VERTSTRIDE_32:   return "32";
+   case GEN6_VERTSTRIDE_VXH:  return "VxH";
+   default:                   return "BAD";
+   }
+}
+
+static const char *
+disasm_inst_width(const struct disasm_inst *inst, unsigned width)
+{
+   switch (width) {
+   case GEN6_WIDTH_1:   return "1";
+   case GEN6_WIDTH_2:   return "2";
+   case GEN6_WIDTH_4:   return "4";
+   case GEN6_WIDTH_8:   return "8";
+   case GEN6_WIDTH_16:  return "16";
+   default:             return "BAD";
+   }
+}
+
+static const char *
+disasm_inst_horz_stride(const struct disasm_inst *inst, unsigned horz_stride)
+{
+   switch (horz_stride) {
+   case GEN6_HORZSTRIDE_0: return "0";
+   case GEN6_HORZSTRIDE_1: return "1";
+   case GEN6_HORZSTRIDE_2: return "2";
+   case GEN6_HORZSTRIDE_4: return "4";
+   default:                return "BAD";
+   }
+}
+
+static const char *
+disasm_inst_writemask(const struct disasm_inst *inst, unsigned writemask)
+{
+   switch (writemask) {
+   case 0x0:   return ".";
+   case 0x1:   return ".x";
+   case 0x2:   return ".y";
+   case 0x3:   return ".xy";
+   case 0x4:   return ".z";
+   case 0x5:   return ".xz";
+   case 0x6:   return ".yz";
+   case 0x7:   return ".xyz";
+   case 0x8:   return ".w";
+   case 0x9:   return ".xw";
+   case 0xa:   return ".yw";
+   case 0xb:   return ".xyw";
+   case 0xc:   return ".zw";
+   case 0xd:   return ".xzw";
+   case 0xe:   return ".yzw";
+   case 0xf:   return "";
+   default:    return ".BAD";
+   }
+}
+
+static const char *
+disasm_inst_negate(const struct disasm_inst *inst, bool negate)
+{
+   return (negate) ? "-" : "";
+}
+
+static const char *
+disasm_inst_absolute(const struct disasm_inst *inst, bool absolute)
+{
+   return (absolute) ? "(abs)" : "";
+}
+
+static bool
+disasm_inst_is_null(const struct disasm_inst *inst,
+                    const struct disasm_operand *operand)
+{
+   return (operand->file == GEN6_FILE_ARF && operand->reg == GEN6_ARF_NULL);
+}
+
+static int
+disasm_inst_type_size(const struct disasm_inst *inst,
+                      const struct disasm_operand *operand)
+{
+   assert(operand->file != GEN6_FILE_IMM);
+
+   switch (operand->type) {
+   case GEN6_TYPE_UD:      return 4;
+   case GEN6_TYPE_D:       return 4;
+   case GEN6_TYPE_UW:      return 2;
+   case GEN6_TYPE_W:       return 2;
+   case GEN6_TYPE_UB:      return 1;
+   case GEN6_TYPE_B:       return 1;
+   case GEN7_TYPE_DF:      return 8;
+   case GEN6_TYPE_F:       return 4;
+   default:                return 1;
+   }
+}
+
+static void
+disasm_printer_reset(struct disasm_printer *printer)
+{
+   printer->buf[0] = '\0';
+   printer->len = 0;
+}
+
+static const char *
+disasm_printer_get_string(struct disasm_printer *printer)
+{
+   return printer->buf;
+}
+
+static void _util_printf_format(2, 3)
+disasm_printer_add(struct disasm_printer *printer, const char *format, ...)
+{
+   const size_t avail = sizeof(printer->buf) - printer->len;
+   va_list ap;
+   int written;
+
+   va_start(ap, format);
+   written = vsnprintf(printer->buf + printer->len, avail, format, ap);
+   va_end(ap);
+
+   /* truncated */
+   if (written < 0 || written >= avail) {
+      memcpy(printer->buf + sizeof(printer->buf) - 4, "...", 4);
+      printer->len = sizeof(printer->buf) - 1;
+   } else {
+      printer->len += written;
+   }
+}
+
+/**
+ * Pad to the specified column.
+ */
+static void
+disasm_printer_column(struct disasm_printer *printer, int col)
+{
+   int len = DISASM_PRINTER_COLUMN_WIDTH * col;
+
+   if (len <= printer->len) {
+      if (!printer->len)
+         return;
+
+      /* at least one space */
+      len = printer->len + 1;
+   }
+
+   if (len >= sizeof(printer->buf)) {
+      len = sizeof(printer->buf) - 1;
+
+      if (len <= printer->len)
+         return;
+   }
+
+   memset(printer->buf + printer->len, ' ', len - printer->len);
+   printer->len = len;
+   printer->buf[printer->len] = '\0';
+}
+
+static void
+disasm_printer_add_op(struct disasm_printer *printer,
+                      const struct disasm_inst *inst)
+{
+   if (inst->pred_ctrl != GEN6_PREDCTRL_NONE) {
+      disasm_printer_add(printer, "(%c%s%s) ",
+            disasm_inst_pred_inv(inst),
+            disasm_inst_flag_reg(inst),
+            disasm_inst_pred_ctrl(inst));
+   }
+
+   disasm_printer_add(printer, "%s%s%s%s",
+         disasm_inst_opcode(inst),
+         disasm_inst_saturate(inst),
+         disasm_inst_debug_ctrl(inst),
+         disasm_inst_cond_modifier(inst));
+
+   if (inst->cond_modifier != GEN6_COND_NONE) {
+      switch (inst->opcode) {
+      case GEN6_OPCODE_SEL:
+      case GEN6_OPCODE_IF:
+      case GEN6_OPCODE_WHILE:
+         /* these do not update flag registers */
+         break;
+      default:
+         disasm_printer_add(printer, ".%s", disasm_inst_flag_reg(inst));
+         break;
+      }
+   }
+
+   if (inst->opcode == GEN6_OPCODE_MATH)
+      disasm_printer_add(printer, " %s", disasm_inst_fc(inst));
+   if (inst->opcode != GEN6_OPCODE_NOP)
+      disasm_printer_add(printer, "(%s)", disasm_inst_exec_size(inst));
+}
+
+static void
+disasm_printer_add_operand(struct disasm_printer *printer,
+                           const struct disasm_inst *inst,
+                           const struct disasm_operand *operand)
+{
+   const char *name;
+   bool multi_regs;
+
+   name = disasm_inst_file(inst, operand, &multi_regs);
+   if (!multi_regs) {
+      disasm_printer_add(printer, name);
+      return;
+   }
+
+   if (operand->file == GEN6_FILE_IMM) {
+      switch (operand->type) {
+      case GEN6_TYPE_UD:
+         disasm_printer_add(printer, "0x%08xUD", inst->u.imm32);
+         break;
+      case GEN6_TYPE_D:
+         disasm_printer_add(printer, "%dD", inst->u.imm32);
+         break;
+      case GEN6_TYPE_UW:
+         disasm_printer_add(printer, "0x%04xUW", (uint16_t) inst->u.imm32);
+         break;
+      case GEN6_TYPE_W:
+         disasm_printer_add(printer, "%dW", (int16_t) inst->u.imm32);
+         break;
+      case GEN6_TYPE_UV_IMM:
+         disasm_printer_add(printer, "0x%08xUV", inst->u.imm32);
+         break;
+      case GEN6_TYPE_VF_IMM:
+         disasm_printer_add(printer, "Vector Float");
+         break;
+      case GEN6_TYPE_V_IMM:
+         disasm_printer_add(printer, "0x%08xV", inst->u.imm32);
+         break;
+      case GEN6_TYPE_F:
+         disasm_printer_add(printer, "%-gF", uif(inst->u.imm32));
+         break;
+      default:
+         disasm_printer_add(printer, "BAD");
+         break;
+      }
+
+      return;
+   }
+
+   if (operand->addr_mode == GEN6_ADDRMODE_DIRECT) {
+      unsigned reg, subreg;
+
+      reg = operand->reg;
+      if (operand->file == GEN6_FILE_ARF)
+         reg &= 0xf;
+
+      subreg = operand->subreg / disasm_inst_type_size(inst, operand);
+
+      if (subreg)
+         disasm_printer_add(printer, "%s%d.%d", name, reg, subreg);
+      else
+         disasm_printer_add(printer, "%s%d", name, reg);
+   } else {
+      disasm_printer_add(printer, "%s[a0.%d %d]",
+            name, operand->addr_subreg, operand->addr_imm);
+   }
+}
+
+static void
+disasm_printer_add_dst(struct disasm_printer *printer,
+                       const struct disasm_inst *inst,
+                       const struct disasm_dst_operand *dst)
+{
+   disasm_printer_add_operand(printer, inst, &dst->base);
+
+   /* dst is an immediate when in EU_INSTRUCTION_BRANCH_CONDITIONAL form */
+   if (disasm_inst_is_null(inst, &dst->base) ||
+       dst->base.file == GEN6_FILE_IMM)
+      return;
+
+   disasm_printer_add(printer, "<%s>%s%s",
+         disasm_inst_horz_stride(inst, dst->horz_stride),
+         disasm_inst_writemask(inst, dst->writemask),
+         disasm_inst_type(inst, &dst->base));
+}
+
+static void
+disasm_printer_add_src(struct disasm_printer *printer,
+                       const struct disasm_inst *inst,
+                       const struct disasm_src_operand *src)
+{
+   static const char swizzle_chars[4] = { 'x', 'y', 'z', 'w' };
+   char swizzle[5];
+
+   disasm_printer_add(printer, "%s%s",
+         disasm_inst_negate(inst, src->negate),
+         disasm_inst_absolute(inst, src->absolute));
+
+   disasm_printer_add_operand(printer, inst, &src->base);
+
+   if (disasm_inst_is_null(inst, &src->base) ||
+       src->base.file == GEN6_FILE_IMM)
+      return;
+
+   if (src->swizzle_x == 0 && src->swizzle_y == 1 &&
+       src->swizzle_z == 2 && src->swizzle_w == 3) {
+      swizzle[0] = '\0';
+   } else if (src->swizzle_x == src->swizzle_y &&
+              src->swizzle_x == src->swizzle_z &&
+              src->swizzle_x == src->swizzle_w) {
+      swizzle[0] = swizzle_chars[src->swizzle_x];
+      swizzle[1] = '\0';
+   } else {
+      swizzle[0] = swizzle_chars[src->swizzle_x];
+      swizzle[1] = swizzle_chars[src->swizzle_y];
+      swizzle[2] = swizzle_chars[src->swizzle_z];
+      swizzle[3] = swizzle_chars[src->swizzle_w];
+      swizzle[4] = '\0';
+   }
+
+   disasm_printer_add(printer, "<%s,%s,%s>%s%s",
+         disasm_inst_vert_stride(inst, src->vert_stride),
+         disasm_inst_width(inst, src->width),
+         disasm_inst_horz_stride(inst, src->horz_stride),
+         swizzle,
+         disasm_inst_type(inst, &src->base));
+}
+
+static void
+disasm_printer_add_ctrl(struct disasm_printer *printer,
+                        const struct disasm_inst *inst)
+{
+   if (inst->opcode == GEN6_OPCODE_NOP) {
+      disasm_printer_add(printer, ";");
+      return;
+   }
+
+   disasm_printer_add(printer, "{%s%s%s%s%s%s%s%s };",
+         disasm_inst_access_mode(inst),
+         disasm_inst_mask_ctrl(inst),
+         disasm_inst_dep_ctrl(inst),
+         disasm_inst_qtr_ctrl(inst),
+         disasm_inst_cmpt_ctrl(inst),
+         disasm_inst_thread_ctrl(inst),
+         disasm_inst_acc_wr_ctrl(inst),
+         disasm_inst_eot(inst));
+}
+
+static void
+disasm_printer_add_mdesc_sampler(struct disasm_printer *printer,
+                                 const struct disasm_inst *inst,
+                                 uint32_t mdesc)
+{
+   int op, simd;
+
+   if (inst->dev->gen >= ILO_GEN(7)) {
+      op = READ(mdesc, GEN7_MSG_SAMPLER_OP);
+      simd = READ(mdesc, GEN7_MSG_SAMPLER_SIMD);
+   } {
+      op = READ(mdesc, GEN6_MSG_SAMPLER_OP);
+      simd = READ(mdesc, GEN6_MSG_SAMPLER_SIMD);
+   }
+
+   disasm_printer_add(printer, " (%d, %d, %d, %d)",
+         READ(mdesc, GEN6_MSG_SAMPLER_SURFACE),
+         READ(mdesc, GEN6_MSG_SAMPLER_INDEX),
+         op, simd);
+}
+
+static void
+disasm_printer_add_mdesc_urb(struct disasm_printer *printer,
+                             const struct disasm_inst *inst,
+                             uint32_t mdesc)
+{
+   const char *op;
+   int offset;
+   bool interleaved, complete, allocate, used;
+
+   if (inst->dev->gen >= ILO_GEN(7)) {
+      switch (READ(mdesc, GEN7_MSG_URB_OP)) {
+      case GEN7_MSG_URB_WRITE_HWORD:   op = "write HWord";  break;
+      case GEN7_MSG_URB_WRITE_OWORD:   op = "write OWord";  break;
+      case GEN7_MSG_URB_READ_HWORD:    op = "read HWord";   break;
+      case GEN7_MSG_URB_READ_OWORD:    op = "read OWord";   break;
+      case GEN7_MSG_URB_ATOMIC_MOV:    op = "atomic mov";   break;
+      case GEN7_MSG_URB_ATOMIC_INC:    op = "atomic inc";   break;
+      default:                         op = "BAD";          break;
+      }
+
+      offset = READ(mdesc, GEN7_MSG_URB_GLOBAL_OFFSET);
+      interleaved = mdesc & GEN7_MSG_URB_INTERLEAVED;
+      complete = mdesc & GEN7_MSG_URB_COMPLETE;
+
+      allocate = false;
+      used = false;
+   } else {
+      switch (READ(mdesc, GEN6_MSG_URB_OP)) {
+      case GEN6_MSG_URB_WRITE:         op = "urb_write";    break;
+      case GEN6_MSG_URB_FF_SYNC:       op = "ff_sync";      break;
+      default:                         op = "BAD";          break;
+      }
+
+      offset = READ(mdesc, GEN6_MSG_URB_OFFSET);
+      interleaved = mdesc & GEN6_MSG_URB_INTERLEAVED;
+      complete = mdesc & GEN6_MSG_URB_COMPLETE;
+
+      allocate = mdesc & GEN6_MSG_URB_ALLOCATE;
+      used = mdesc & GEN6_MSG_URB_USED;
+   }
+
+   disasm_printer_add(printer, " %d %s%s%s%s%s", offset, op,
+         (interleaved) ? " interleave" : "",
+         (allocate) ? " allocate" : "",
+         (used) ? " used" : "",
+         (complete) ? " complete" : "");
+}
+
+static void
+disasm_printer_add_mdesc_dp_sampler(struct disasm_printer *printer,
+                                    const struct disasm_inst *inst,
+                                    uint32_t mdesc)
+{
+   const int op = (inst->dev->gen >= ILO_GEN(7)) ?
+      READ(mdesc, GEN7_MSG_DP_OP) : READ(mdesc, GEN6_MSG_DP_OP);
+   const bool write_commit = (inst->dev->gen == ILO_GEN(6)) ?
+         (mdesc & GEN6_MSG_DP_SEND_WRITE_COMMIT) : 0;
+
+   disasm_printer_add(printer, " (%d, %d, %d, %d)",
+         READ(mdesc, GEN6_MSG_DP_SURFACE),
+         READ(mdesc, GEN6_MSG_DP_OWORD_BLOCK_SIZE),
+         op, write_commit);
+}
+
+static void
+disasm_printer_add_mdesc_dp_rc(struct disasm_printer *printer,
+                               const struct disasm_inst *inst,
+                               uint32_t mdesc)
+{
+   const int op = (inst->dev->gen >= ILO_GEN(7)) ?
+      READ(mdesc, GEN7_MSG_DP_OP) : READ(mdesc, GEN6_MSG_DP_OP);
+   const char *str;
+   bool is_rt_write;
+
+   if (inst->dev->gen >= ILO_GEN(7.5)) {
+      switch (op) {
+      case GEN75_MSG_DP_RC_MEDIA_BLOCK_READ:       str = "media block read";           break;
+      case GEN75_MSG_DP_RC_MEMORY_FENCE:           str = "memory fence";               break;
+      case GEN75_MSG_DP_RC_MEDIA_BLOCK_WRITE:      str = "media block write";          break;
+      case GEN75_MSG_DP_RC_RT_WRITE:               str = "RT write";                   break;
+      default:                                     str = "BAD";                        break;
+      }
+
+      is_rt_write = (op == GEN75_MSG_DP_RC_RT_WRITE);
+   } else if (inst->dev->gen >= ILO_GEN(7)) {
+      switch (op) {
+      case GEN7_MSG_DP_RC_MEDIA_BLOCK_READ:        str = "media block read";           break;
+      case GEN7_MSG_DP_RC_TYPED_SURFACE_READ:      str = "typed surface read";         break;
+      case GEN7_MSG_DP_RC_TYPED_ATOMIC_OP:         str = "typed atomic op";            break;
+      case GEN7_MSG_DP_RC_MEMORY_FENCE:            str = "memory fence";               break;
+      case GEN7_MSG_DP_RC_MEDIA_BLOCK_WRITE:       str = "media block write";          break;
+      case GEN7_MSG_DP_RC_RT_WRITE:                str = "RT write";                   break;
+      case GEN7_MSG_DP_RC_TYPED_SURFACE_WRITE:     str = "typed surface write";        break;
+      default:                                     str = "BAD";                        break;
+      }
+
+      is_rt_write = (op == GEN7_MSG_DP_RC_RT_WRITE);
+   } else {
+      switch (op) {
+      case GEN6_MSG_DP_OWORD_BLOCK_READ:           str = "OWORD block read";           break;
+      case GEN6_MSG_DP_RT_UNORM_READ:              str = "RT UNORM read";              break;
+      case GEN6_MSG_DP_OWORD_DUAL_BLOCK_READ:      str = "OWORD dual block read";      break;
+      case GEN6_MSG_DP_MEDIA_BLOCK_READ:           str = "media block read";           break;
+      case GEN6_MSG_DP_UNALIGNED_OWORD_BLOCK_READ: str = "unaligned OWORD block read"; break;
+      case GEN6_MSG_DP_DWORD_SCATTERED_READ:       str = "DWORD scattered read";       break;
+      case GEN6_MSG_DP_DWORD_ATOMIC_WRITE:         str = "DWORD atomic write";         break;
+      case GEN6_MSG_DP_OWORD_BLOCK_WRITE:          str = "OWORD block write";          break;
+      case GEN6_MSG_DP_OWORD_DUAL_BLOCK_WRITE:     str = "OWORD dual block_write";     break;
+      case GEN6_MSG_DP_MEDIA_BLOCK_WRITE:          str = "media block write";          break;
+      case GEN6_MSG_DP_DWORD_SCATTERED_WRITE:      str = "DWORD scattered write";      break;
+      case GEN6_MSG_DP_RT_WRITE:                   str = "RT write";                   break;
+      case GEN6_MSG_DP_SVB_WRITE:                  str = "SVB write";                  break;
+      case GEN6_MSG_DP_RT_UNORM_WRITE:             str = "RT UNORM write";             break;
+      default:                                     str = "BAD";                        break;
+      }
+
+      is_rt_write = (op == GEN6_MSG_DP_RT_WRITE);
+   }
+
+   disasm_printer_add(printer, " %s", str);
+
+   if (is_rt_write) {
+      switch (mdesc & GEN6_MSG_DP_RT_MODE__MASK) {
+      case GEN6_MSG_DP_RT_MODE_SIMD16:             str = "SIMD16";            break;
+      case GEN6_MSG_DP_RT_MODE_SIMD16_REPDATA:     str = "SIMD16/RepData";    break;
+      case GEN6_MSG_DP_RT_MODE_SIMD8_DUALSRC_LO:   str = "SIMD8/DualSrcLow";  break;
+      case GEN6_MSG_DP_RT_MODE_SIMD8_DUALSRC_HI:   str = "SIMD8/DualSrcHigh"; break;
+      case GEN6_MSG_DP_RT_MODE_SIMD8_LO:           str = "SIMD8";             break;
+      case GEN6_MSG_DP_RT_MODE_SIMD8_IMAGE_WR:     str = "SIMD8/ImageWrite";  break;
+      default:                                     str = "BAD";               break;
+      }
+
+      disasm_printer_add(printer, " %s%s%s%s", str,
+            (mdesc & GEN6_MSG_DP_SLOTGRP_HI) ? " Hi" : "",
+            (mdesc & GEN6_MSG_DP_RT_LAST) ? " LastRT" : "",
+            (inst->dev->gen == ILO_GEN(6) &&
+             (mdesc & GEN6_MSG_DP_SEND_WRITE_COMMIT)) ? " WriteCommit" : "");
+   }
+
+   disasm_printer_add(printer, " Surface = %d",
+         READ(mdesc, GEN6_MSG_DP_SURFACE));
+}
+
+static void
+disasm_printer_add_mdesc(struct disasm_printer *printer,
+                         const struct disasm_inst *inst)
+{
+   const uint32_t mdesc = inst->u.imm32;
+
+   assert(inst->opcode == GEN6_OPCODE_SEND ||
+          inst->opcode == GEN6_OPCODE_SENDC);
+   assert(inst->src1.base.file == GEN6_FILE_IMM);
+
+   disasm_printer_add(printer, "            %s", disasm_inst_sfid(inst));
+
+   switch (inst->sfid) {
+   case GEN6_SFID_SAMPLER:
+      disasm_printer_add_mdesc_sampler(printer, inst, mdesc);
+      break;
+   case GEN6_SFID_DP_SAMPLER:
+      disasm_printer_add_mdesc_dp_sampler(printer, inst, mdesc);
+      break;
+   case GEN6_SFID_DP_RC:
+      disasm_printer_add_mdesc_dp_rc(printer, inst, mdesc);
+      break;
+   case GEN6_SFID_URB:
+      disasm_printer_add_mdesc_urb(printer, inst, mdesc);
+      break;
+   case GEN6_SFID_DP_CC:
+   case GEN7_SFID_DP_DC0:
+   case GEN7_SFID_PI:
+   case GEN75_SFID_DP_DC1:
+   default:
+      break;
+   }
+
+   disasm_printer_add(printer, " mlen %d rlen %d",
+         READ(mdesc, GEN6_MSG_MLEN),
+         READ(mdesc, GEN6_MSG_RLEN));
+}
+
+static void
+disasm_printer_print_inst(struct disasm_printer *printer,
+                          const struct disasm_inst *inst)
+{
+   int col = 0;
+
+   disasm_printer_reset(printer);
+
+   disasm_printer_column(printer, col++);
+   disasm_printer_add_op(printer, inst);
+
+   if (inst->has_jip || inst->has_uip) {
+      if (inst->has_jip) {
+         disasm_printer_column(printer, col++);
+         disasm_printer_add(printer, "JIP: %d", (int16_t) inst->u.imm32);
+      }
+
+      if (inst->has_uip) {
+         disasm_printer_column(printer, col++);
+         disasm_printer_add(printer, "UIP: %d",
+               (int16_t) (inst->u.imm32 >> 16));
+      }
+   } else {
+      const int src_count = disasm_opcode_table[inst->opcode].src_count;
+      const struct disasm_src_operand *src[3];
+      int i;
+
+      /* get src operands */
+      switch (src_count) {
+      case 3:
+         src[2] = &inst->u.src2;
+      case 2:
+         src[1] = &inst->src1;
+      case 1:
+         src[0] = &inst->src0;
+      case 0:
+      default:
+         break;
+      }
+
+      if (src_count) {
+         disasm_printer_column(printer, col++);
+         disasm_printer_add_dst(printer, inst, &inst->dst);
+
+         for (i = 0; i < src_count; i++) {
+            disasm_printer_column(printer, col++);
+            disasm_printer_add_src(printer, inst, src[i]);
+         }
+      }
+   }
+
+   if (inst->opcode == GEN6_OPCODE_SEND ||
+       inst->opcode == GEN6_OPCODE_SENDC) {
+      /* start a new line */
+      ilo_printf("%s\n", disasm_printer_get_string(printer));
+      disasm_printer_reset(printer);
+      col = 0;
+
+      disasm_printer_column(printer, col++);
+
+      disasm_printer_column(printer, col++);
+      disasm_printer_add_mdesc(printer, inst);
+   }
+
+   if (col < 4)
+      col = 4;
+
+   disasm_printer_column(printer, col++);
+   disasm_printer_add_ctrl(printer, inst);
+
+   ilo_printf("%s\n", disasm_printer_get_string(printer));
+}
 
 void
 toy_compiler_disassemble(const struct ilo_dev_info *dev,
                          const void *kernel, int size,
                          bool dump_hex)
 {
-   const struct brw_instruction *instructions = kernel;
-   int i;
+   const uint32_t *cur = (const uint32_t *) kernel;
+   const uint32_t *end = cur + size / sizeof(*cur);
+   struct disasm_printer printer;
 
-   for (i = 0; i < size / sizeof(*instructions); i++) {
-      if (dump_hex) {
-         const uint32_t *dwords = (const uint32_t *) &instructions[i];
-         ilo_printf("0x%08x 0x%08x 0x%08x 0x%08x ",
-               dwords[3], dwords[2], dwords[1], dwords[0]);
+   disasm_printer_reset(&printer);
+
+   while (cur < end) {
+      struct disasm_inst inst;
+      const bool compacted = (cur[0] & GEN6_INST_CMPTCTRL);
+      const uint32_t *dw = cur;
+      uint32_t temp[4];
+
+      cur += (compacted) ? 2 : 4;
+      /* incomplete instruction */
+      if (cur > end)
+         break;
+
+      if (compacted) {
+         /* no compaction support yet */
+         memset(temp, 0, sizeof(temp));
+         dw = temp;
       }
 
-      brw_disasm(stderr, (struct brw_instruction *) &instructions[i],
-            ILO_GEN_GET_MAJOR(dev->gen));
+      if (dump_hex) {
+         ilo_printf("0x%08x 0x%08x 0x%08x 0x%08x ",
+               dw[0], dw[1], dw[2], dw[3]);
+      }
+
+      memset(&inst, 0, sizeof(inst));
+      inst.dev = dev;
+      disasm_inst_decode(&inst, dw);
+      inst.cmpt_ctrl = compacted;
+
+      disasm_printer_print_inst(&printer, &inst);
    }
-}
-
-static const struct opcode_desc {
-   char    *name;
-   int     nsrc;
-   int     ndst;
-} opcode_descs[128] = {
-    [BRW_OPCODE_MOV] = { .name = "mov", .nsrc = 1, .ndst = 1 },
-    [BRW_OPCODE_FRC] = { .name = "frc", .nsrc = 1, .ndst = 1 },
-    [BRW_OPCODE_RNDU] = { .name = "rndu", .nsrc = 1, .ndst = 1 },
-    [BRW_OPCODE_RNDD] = { .name = "rndd", .nsrc = 1, .ndst = 1 },
-    [BRW_OPCODE_RNDE] = { .name = "rnde", .nsrc = 1, .ndst = 1 },
-    [BRW_OPCODE_RNDZ] = { .name = "rndz", .nsrc = 1, .ndst = 1 },
-    [BRW_OPCODE_NOT] = { .name = "not", .nsrc = 1, .ndst = 1 },
-    [BRW_OPCODE_LZD] = { .name = "lzd", .nsrc = 1, .ndst = 1 },
-    [BRW_OPCODE_F32TO16] = { .name = "f32to16", .nsrc = 1, .ndst = 1 },
-    [BRW_OPCODE_F16TO32] = { .name = "f16to32", .nsrc = 1, .ndst = 1 },
-
-    [BRW_OPCODE_MUL] = { .name = "mul", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_MAC] = { .name = "mac", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_MACH] = { .name = "mach", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_LINE] = { .name = "line", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_PLN] = { .name = "pln", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_MAD] = { .name = "mad", .nsrc = 3, .ndst = 1 },
-    [BRW_OPCODE_LRP] = { .name = "lrp", .nsrc = 3, .ndst = 1 },
-    [BRW_OPCODE_SAD2] = { .name = "sad2", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_SADA2] = { .name = "sada2", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_DP4] = { .name = "dp4", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_DPH] = { .name = "dph", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_DP3] = { .name = "dp3", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_DP2] = { .name = "dp2", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_MATH] = { .name = "math", .nsrc = 2, .ndst = 1 },
-
-    [BRW_OPCODE_AVG] = { .name = "avg", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_ADD] = { .name = "add", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_SEL] = { .name = "sel", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_AND] = { .name = "and", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_OR] = { .name = "or", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_XOR] = { .name = "xor", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_SHR] = { .name = "shr", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_SHL] = { .name = "shl", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_ASR] = { .name = "asr", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_CMP] = { .name = "cmp", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_CMPN] = { .name = "cmpn", .nsrc = 2, .ndst = 1 },
-
-    [BRW_OPCODE_SEND] = { .name = "send", .nsrc = 1, .ndst = 1 },
-    [BRW_OPCODE_SENDC] = { .name = "sendc", .nsrc = 1, .ndst = 1 },
-    [BRW_OPCODE_NOP] = { .name = "nop", .nsrc = 0, .ndst = 0 },
-    [BRW_OPCODE_JMPI] = { .name = "jmpi", .nsrc = 0, .ndst = 0 },
-    [BRW_OPCODE_IF] = { .name = "if", .nsrc = 2, .ndst = 0 },
-    [BRW_OPCODE_IFF] = { .name = "iff", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_WHILE] = { .name = "while", .nsrc = 2, .ndst = 0 },
-    [BRW_OPCODE_ELSE] = { .name = "else", .nsrc = 2, .ndst = 0 },
-    [BRW_OPCODE_BREAK] = { .name = "break", .nsrc = 2, .ndst = 0 },
-    [BRW_OPCODE_CONTINUE] = { .name = "cont", .nsrc = 1, .ndst = 0 },
-    [BRW_OPCODE_HALT] = { .name = "halt", .nsrc = 1, .ndst = 0 },
-    [BRW_OPCODE_MSAVE] = { .name = "msave", .nsrc = 1, .ndst = 1 },
-    [BRW_OPCODE_PUSH] = { .name = "push", .nsrc = 1, .ndst = 1 },
-    [BRW_OPCODE_MRESTORE] = { .name = "mrest", .nsrc = 1, .ndst = 1 },
-    [BRW_OPCODE_POP] = { .name = "pop", .nsrc = 2, .ndst = 0 },
-    [BRW_OPCODE_WAIT] = { .name = "wait", .nsrc = 1, .ndst = 0 },
-    [BRW_OPCODE_DO] = { .name = "do", .nsrc = 0, .ndst = 0 },
-    [BRW_OPCODE_ENDIF] = { .name = "endif", .nsrc = 2, .ndst = 0 },
-};
-static const struct opcode_desc *opcode = opcode_descs;
-
-static const char * const conditional_modifier[16] = {
-    [BRW_CONDITIONAL_NONE] = "",
-    [BRW_CONDITIONAL_Z] = ".e",
-    [BRW_CONDITIONAL_NZ] = ".ne",
-    [BRW_CONDITIONAL_G] = ".g",
-    [BRW_CONDITIONAL_GE] = ".ge",
-    [BRW_CONDITIONAL_L] = ".l",
-    [BRW_CONDITIONAL_LE] = ".le",
-    [BRW_CONDITIONAL_R] = ".r",
-    [BRW_CONDITIONAL_O] = ".o",
-    [BRW_CONDITIONAL_U] = ".u",
-};
-
-static const char * const negate[2] = {
-    [0] = "",
-    [1] = "-",
-};
-
-static const char * const _abs[2] = {
-    [0] = "",
-    [1] = "(abs)",
-};
-
-static const char * const vert_stride[16] = {
-    [0] = "0",
-    [1] = "1",
-    [2] = "2",
-    [3] = "4",
-    [4] = "8",
-    [5] = "16",
-    [6] = "32",
-    [15] = "VxH",
-};
-
-static const char * const width[8] = {
-    [0] = "1",
-    [1] = "2",
-    [2] = "4",
-    [3] = "8",
-    [4] = "16",
-};
-
-static const char * const horiz_stride[4] = {
-    [0] = "0",
-    [1] = "1",
-    [2] = "2",
-    [3] = "4"
-};
-
-static const char * const chan_sel[4] = {
-    [0] = "x",
-    [1] = "y",
-    [2] = "z",
-    [3] = "w",
-};
-
-static const char * const debug_ctrl[2] = {
-    [0] = "",
-    [1] = ".breakpoint"
-};
-
-static const char * const saturate[2] = {
-    [0] = "",
-    [1] = ".sat"
-};
-
-static const char * const accwr[2] = {
-    [0] = "",
-    [1] = "AccWrEnable"
-};
-
-static const char * const wectrl[2] = {
-    [0] = "WE_normal",
-    [1] = "WE_all"
-};
-
-static const char * const exec_size[8] = {
-    [0] = "1",
-    [1] = "2",
-    [2] = "4",
-    [3] = "8",
-    [4] = "16",
-    [5] = "32"
-};
-
-static const char * const pred_inv[2] = {
-    [0] = "+",
-    [1] = "-"
-};
-
-static const char * const pred_ctrl_align16[16] = {
-    [1] = "",
-    [2] = ".x",
-    [3] = ".y",
-    [4] = ".z",
-    [5] = ".w",
-    [6] = ".any4h",
-    [7] = ".all4h",
-};
-
-static const char * const pred_ctrl_align1[16] = {
-    [1] = "",
-    [2] = ".anyv",
-    [3] = ".allv",
-    [4] = ".any2h",
-    [5] = ".all2h",
-    [6] = ".any4h",
-    [7] = ".all4h",
-    [8] = ".any8h",
-    [9] = ".all8h",
-    [10] = ".any16h",
-    [11] = ".all16h",
-};
-
-static const char * const thread_ctrl[4] = {
-    [0] = "",
-    [2] = "switch"
-};
-
-static const char * const compr_ctrl[4] = {
-    [0] = "",
-    [1] = "sechalf",
-    [2] = "compr",
-    [3] = "compr4",
-};
-
-static const char * const dep_ctrl[4] = {
-    [0] = "",
-    [1] = "NoDDClr",
-    [2] = "NoDDChk",
-    [3] = "NoDDClr,NoDDChk",
-};
-
-static const char * const mask_ctrl[4] = {
-    [0] = "",
-    [1] = "nomask",
-};
-
-static const char * const access_mode[2] = {
-    [0] = "align1",
-    [1] = "align16",
-};
-
-static const char * const reg_encoding[8] = {
-    [0] = "UD",
-    [1] = "D",
-    [2] = "UW",
-    [3] = "W",
-    [4] = "UB",
-    [5] = "B",
-    [7] = "F"
-};
-
-const int reg_type_size[8] = {
-    [0] = 4,
-    [1] = 4,
-    [2] = 2,
-    [3] = 2,
-    [4] = 1,
-    [5] = 1,
-    [7] = 4
-};
-
-static const char * const reg_file[4] = {
-    [0] = "A",
-    [1] = "g",
-    [2] = "m",
-    [3] = "imm",
-};
-
-static const char * const writemask[16] = {
-    [0x0] = ".",
-    [0x1] = ".x",
-    [0x2] = ".y",
-    [0x3] = ".xy",
-    [0x4] = ".z",
-    [0x5] = ".xz",
-    [0x6] = ".yz",
-    [0x7] = ".xyz",
-    [0x8] = ".w",
-    [0x9] = ".xw",
-    [0xa] = ".yw",
-    [0xb] = ".xyw",
-    [0xc] = ".zw",
-    [0xd] = ".xzw",
-    [0xe] = ".yzw",
-    [0xf] = "",
-};
-
-static const char * const end_of_thread[2] = {
-    [0] = "",
-    [1] = "EOT"
-};
-
-static const char * const target_function[16] = {
-    [BRW_SFID_NULL] = "null",
-    [BRW_SFID_MATH] = "math",
-    [BRW_SFID_SAMPLER] = "sampler",
-    [BRW_SFID_MESSAGE_GATEWAY] = "gateway",
-    [BRW_SFID_DATAPORT_READ] = "read",
-    [BRW_SFID_DATAPORT_WRITE] = "write",
-    [BRW_SFID_URB] = "urb",
-    [BRW_SFID_THREAD_SPAWNER] = "thread_spawner"
-};
-
-static const char * const target_function_gen6[16] = {
-    [BRW_SFID_NULL] = "null",
-    [BRW_SFID_MATH] = "math",
-    [BRW_SFID_SAMPLER] = "sampler",
-    [BRW_SFID_MESSAGE_GATEWAY] = "gateway",
-    [BRW_SFID_URB] = "urb",
-    [BRW_SFID_THREAD_SPAWNER] = "thread_spawner",
-    [GEN6_SFID_DATAPORT_SAMPLER_CACHE] = "sampler",
-    [GEN6_SFID_DATAPORT_RENDER_CACHE] = "render",
-    [GEN6_SFID_DATAPORT_CONSTANT_CACHE] = "const",
-    [GEN7_SFID_DATAPORT_DATA_CACHE] = "data"
-};
-
-static const char * const dp_rc_msg_type_gen6[16] = {
-    [BRW_DATAPORT_READ_MESSAGE_OWORD_BLOCK_READ] = "OWORD block read",
-    [GEN6_DATAPORT_READ_MESSAGE_RENDER_UNORM_READ] = "RT UNORM read",
-    [GEN6_DATAPORT_READ_MESSAGE_OWORD_DUAL_BLOCK_READ] = "OWORD dual block read",
-    [GEN6_DATAPORT_READ_MESSAGE_MEDIA_BLOCK_READ] = "media block read",
-    [GEN6_DATAPORT_READ_MESSAGE_OWORD_UNALIGN_BLOCK_READ] = "OWORD unaligned block read",
-    [GEN6_DATAPORT_READ_MESSAGE_DWORD_SCATTERED_READ] = "DWORD scattered read",
-    [GEN6_DATAPORT_WRITE_MESSAGE_DWORD_ATOMIC_WRITE] = "DWORD atomic write",
-    [GEN6_DATAPORT_WRITE_MESSAGE_OWORD_BLOCK_WRITE] = "OWORD block write",
-    [GEN6_DATAPORT_WRITE_MESSAGE_OWORD_DUAL_BLOCK_WRITE] = "OWORD dual block write",
-    [GEN6_DATAPORT_WRITE_MESSAGE_MEDIA_BLOCK_WRITE] = "media block write",
-    [GEN6_DATAPORT_WRITE_MESSAGE_DWORD_SCATTERED_WRITE] = "DWORD scattered write",
-    [GEN6_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_WRITE] = "RT write",
-    [GEN6_DATAPORT_WRITE_MESSAGE_STREAMED_VB_WRITE] = "streamed VB write",
-    [GEN6_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_UNORM_WRITE] = "RT UNORMc write",
-};
-
-static const char * const math_function[16] = {
-    [BRW_MATH_FUNCTION_INV] = "inv",
-    [BRW_MATH_FUNCTION_LOG] = "log",
-    [BRW_MATH_FUNCTION_EXP] = "exp",
-    [BRW_MATH_FUNCTION_SQRT] = "sqrt",
-    [BRW_MATH_FUNCTION_RSQ] = "rsq",
-    [BRW_MATH_FUNCTION_SIN] = "sin",
-    [BRW_MATH_FUNCTION_COS] = "cos",
-    [BRW_MATH_FUNCTION_SINCOS] = "sincos",
-    [BRW_MATH_FUNCTION_FDIV] = "fdiv",
-    [BRW_MATH_FUNCTION_POW] = "pow",
-    [BRW_MATH_FUNCTION_INT_DIV_QUOTIENT_AND_REMAINDER] = "intdivmod",
-    [BRW_MATH_FUNCTION_INT_DIV_QUOTIENT] = "intdiv",
-    [BRW_MATH_FUNCTION_INT_DIV_REMAINDER] = "intmod",
-};
-
-static const char * const math_saturate[2] = {
-    [0] = "",
-    [1] = "sat"
-};
-
-static const char * const math_signed[2] = {
-    [0] = "",
-    [1] = "signed"
-};
-
-static const char * const math_scalar[2] = {
-    [0] = "",
-    [1] = "scalar"
-};
-
-static const char * const math_precision[2] = {
-    [0] = "",
-    [1] = "partial_precision"
-};
-
-static const char * const urb_opcode[2] = {
-    [0] = "urb_write",
-    [1] = "ff_sync",
-};
-
-static const char * const urb_swizzle[4] = {
-    [BRW_URB_SWIZZLE_NONE] = "",
-    [BRW_URB_SWIZZLE_INTERLEAVE] = "interleave",
-    [BRW_URB_SWIZZLE_TRANSPOSE] = "transpose",
-};
-
-static const char * const urb_allocate[2] = {
-    [0] = "",
-    [1] = "allocate"
-};
-
-static const char * const urb_used[2] = {
-    [0] = "",
-    [1] = "used"
-};
-
-static const char * const urb_complete[2] = {
-    [0] = "",
-    [1] = "complete"
-};
-
-static const char * const sampler_target_format[4] = {
-    [0] = "F",
-    [2] = "UD",
-    [3] = "D"
-};
-
-
-static int column;
-
-static int string (FILE *file, const char *string)
-{
-    fputs (string, file);
-    column += strlen (string);
-    return 0;
-}
-
-static int format (FILE *f, const char *format, ...)
-{
-    char    buf[1024];
-    va_list	args;
-    va_start (args, format);
-
-    vsnprintf (buf, sizeof (buf) - 1, format, args);
-    va_end (args);
-    string (f, buf);
-    return 0;
-}
-
-static int newline (FILE *f)
-{
-    putc ('\n', f);
-    column = 0;
-    return 0;
-}
-
-static int pad (FILE *f, int c)
-{
-    do
-	string (f, " ");
-    while (column < c);
-    return 0;
-}
-
-static int control (FILE *file, const char *name, const char * const ctrl[],
-                    GLuint id, int *space)
-{
-    if (!ctrl[id]) {
-	fprintf (file, "*** invalid %s value %d ",
-		 name, id);
-	return 1;
-    }
-    if (ctrl[id][0])
-    {
-	if (space && *space)
-	    string (file, " ");
-	string (file, ctrl[id]);
-	if (space)
-	    *space = 1;
-    }
-    return 0;
-}
-
-static int print_opcode (FILE *file, int id)
-{
-    if (!opcode[id].name) {
-	format (file, "*** invalid opcode value %d ", id);
-	return 1;
-    }
-    string (file, opcode[id].name);
-    return 0;
-}
-
-static int reg (FILE *file, GLuint _reg_file, GLuint _reg_nr)
-{
-    int	err = 0;
-
-    /* Clear the Compr4 instruction compression bit. */
-    if (_reg_file == BRW_MESSAGE_REGISTER_FILE)
-       _reg_nr &= ~(1 << 7);
-
-    if (_reg_file == BRW_ARCHITECTURE_REGISTER_FILE) {
-	switch (_reg_nr & 0xf0) {
-	case BRW_ARF_NULL:
-	    string (file, "null");
-	    return -1;
-	case BRW_ARF_ADDRESS:
-	    format (file, "a%d", _reg_nr & 0x0f);
-	    break;
-	case BRW_ARF_ACCUMULATOR:
-	    format (file, "acc%d", _reg_nr & 0x0f);
-	    break;
-	case BRW_ARF_FLAG:
-	    format (file, "f%d", _reg_nr & 0x0f);
-	    break;
-	case BRW_ARF_MASK:
-	    format (file, "mask%d", _reg_nr & 0x0f);
-	    break;
-	case BRW_ARF_MASK_STACK:
-	    format (file, "msd%d", _reg_nr & 0x0f);
-	    break;
-	case BRW_ARF_STATE:
-	    format (file, "sr%d", _reg_nr & 0x0f);
-	    break;
-	case BRW_ARF_CONTROL:
-	    format (file, "cr%d", _reg_nr & 0x0f);
-	    break;
-	case BRW_ARF_NOTIFICATION_COUNT:
-	    format (file, "n%d", _reg_nr & 0x0f);
-	    break;
-	case BRW_ARF_IP:
-	    string (file, "ip");
-	    return -1;
-	    break;
-	default:
-	    format (file, "ARF%d", _reg_nr);
-	    break;
-	}
-    } else {
-	err  |= control (file, "src reg file", reg_file, _reg_file, NULL);
-	format (file, "%d", _reg_nr);
-    }
-    return err;
-}
-
-static int dest (FILE *file, struct brw_instruction *inst)
-{
-    int	err = 0;
-
-    if (inst->header.access_mode == BRW_ALIGN_1)
-    {
-	if (inst->bits1.da1.dest_address_mode == BRW_ADDRESS_DIRECT)
-	{
-	    err |= reg (file, inst->bits1.da1.dest_reg_file, inst->bits1.da1.dest_reg_nr);
-	    if (err == -1)
-		return 0;
-	    if (inst->bits1.da1.dest_subreg_nr)
-		format (file, ".%d", inst->bits1.da1.dest_subreg_nr /
-				     reg_type_size[inst->bits1.da1.dest_reg_type]);
-	    string (file, "<");
-	    err |= control (file, "horiz stride", horiz_stride, inst->bits1.da1.dest_horiz_stride, NULL);
-	    string (file, ">");
-	    err |= control (file, "dest reg encoding", reg_encoding, inst->bits1.da1.dest_reg_type, NULL);
-	}
-	else
-	{
-	    string (file, "g[a0");
-	    if (inst->bits1.ia1.dest_subreg_nr)
-		format (file, ".%d", inst->bits1.ia1.dest_subreg_nr /
-					reg_type_size[inst->bits1.ia1.dest_reg_type]);
-	    if (inst->bits1.ia1.dest_indirect_offset)
-		format (file, " %d", inst->bits1.ia1.dest_indirect_offset);
-	    string (file, "]<");
-	    err |= control (file, "horiz stride", horiz_stride, inst->bits1.ia1.dest_horiz_stride, NULL);
-	    string (file, ">");
-	    err |= control (file, "dest reg encoding", reg_encoding, inst->bits1.ia1.dest_reg_type, NULL);
-	}
-    }
-    else
-    {
-	if (inst->bits1.da16.dest_address_mode == BRW_ADDRESS_DIRECT)
-	{
-	    err |= reg (file, inst->bits1.da16.dest_reg_file, inst->bits1.da16.dest_reg_nr);
-	    if (err == -1)
-		return 0;
-	    if (inst->bits1.da16.dest_subreg_nr)
-		format (file, ".%d", inst->bits1.da16.dest_subreg_nr /
-				     reg_type_size[inst->bits1.da16.dest_reg_type]);
-	    string (file, "<1>");
-	    err |= control (file, "writemask", writemask, inst->bits1.da16.dest_writemask, NULL);
-	    err |= control (file, "dest reg encoding", reg_encoding, inst->bits1.da16.dest_reg_type, NULL);
-	}
-	else
-	{
-	    err = 1;
-	    string (file, "Indirect align16 address mode not supported");
-	}
-    }
-
-    return 0;
-}
-
-static int dest_3src (FILE *file, struct brw_instruction *inst)
-{
-    int	err = 0;
-    uint32_t reg_file;
-
-    if (inst->bits1.da3src.dest_reg_file)
-       reg_file = BRW_MESSAGE_REGISTER_FILE;
-    else
-       reg_file = BRW_GENERAL_REGISTER_FILE;
-
-    err |= reg (file, reg_file, inst->bits1.da3src.dest_reg_nr);
-    if (err == -1)
-       return 0;
-    if (inst->bits1.da3src.dest_subreg_nr)
-       format (file, ".%d", inst->bits1.da3src.dest_subreg_nr);
-    string (file, "<1>");
-    err |= control (file, "writemask", writemask, inst->bits1.da3src.dest_writemask, NULL);
-    err |= control (file, "dest reg encoding", reg_encoding, BRW_REGISTER_TYPE_F, NULL);
-
-    return 0;
-}
-
-static int src_align1_region (FILE *file,
-			      GLuint _vert_stride, GLuint _width, GLuint _horiz_stride)
-{
-    int err = 0;
-    string (file, "<");
-    err |= control (file, "vert stride", vert_stride, _vert_stride, NULL);
-    string (file, ",");
-    err |= control (file, "width", width, _width, NULL);
-    string (file, ",");
-    err |= control (file, "horiz_stride", horiz_stride, _horiz_stride, NULL);
-    string (file, ">");
-    return err;
-}
-
-static int src_da1 (FILE *file, GLuint type, GLuint _reg_file,
-		    GLuint _vert_stride, GLuint _width, GLuint _horiz_stride,
-		    GLuint reg_num, GLuint sub_reg_num, GLuint __abs, GLuint _negate)
-{
-    int err = 0;
-    err |= control (file, "negate", negate, _negate, NULL);
-    err |= control (file, "abs", _abs, __abs, NULL);
-
-    err |= reg (file, _reg_file, reg_num);
-    if (err == -1)
-	return 0;
-    if (sub_reg_num)
-	format (file, ".%d", sub_reg_num / reg_type_size[type]); /* use formal style like spec */
-    src_align1_region (file, _vert_stride, _width, _horiz_stride);
-    err |= control (file, "src reg encoding", reg_encoding, type, NULL);
-    return err;
-}
-
-static int src_ia1 (FILE *file,
-		    GLuint type,
-		    GLuint _reg_file,
-		    GLint _addr_imm,
-		    GLuint _addr_subreg_nr,
-		    GLuint _negate,
-		    GLuint __abs,
-		    GLuint _addr_mode,
-		    GLuint _horiz_stride,
-		    GLuint _width,
-		    GLuint _vert_stride)
-{
-    int err = 0;
-    err |= control (file, "negate", negate, _negate, NULL);
-    err |= control (file, "abs", _abs, __abs, NULL);
-
-    string (file, "g[a0");
-    if (_addr_subreg_nr)
-	format (file, ".%d", _addr_subreg_nr);
-    if (_addr_imm)
-	format (file, " %d", _addr_imm);
-    string (file, "]");
-    src_align1_region (file, _vert_stride, _width, _horiz_stride);
-    err |= control (file, "src reg encoding", reg_encoding, type, NULL);
-    return err;
-}
-
-static int src_da16 (FILE *file,
-		     GLuint _reg_type,
-		     GLuint _reg_file,
-		     GLuint _vert_stride,
-		     GLuint _reg_nr,
-		     GLuint _subreg_nr,
-		     GLuint __abs,
-		     GLuint _negate,
-		     GLuint swz_x,
-		     GLuint swz_y,
-		     GLuint swz_z,
-		     GLuint swz_w)
-{
-    int err = 0;
-    err |= control (file, "negate", negate, _negate, NULL);
-    err |= control (file, "abs", _abs, __abs, NULL);
-
-    err |= reg (file, _reg_file, _reg_nr);
-    if (err == -1)
-	return 0;
-    if (_subreg_nr)
-	/* bit4 for subreg number byte addressing. Make this same meaning as
-	   in da1 case, so output looks consistent. */
-	format (file, ".%d", 16 / reg_type_size[_reg_type]);
-    string (file, "<");
-    err |= control (file, "vert stride", vert_stride, _vert_stride, NULL);
-    string (file, ",4,1>");
-    /*
-     * Three kinds of swizzle display:
-     *  identity - nothing printed
-     *  1->all	 - print the single channel
-     *  1->1     - print the mapping
-     */
-    if (swz_x == BRW_CHANNEL_X &&
-	swz_y == BRW_CHANNEL_Y &&
-	swz_z == BRW_CHANNEL_Z &&
-	swz_w == BRW_CHANNEL_W)
-    {
-	;
-    }
-    else if (swz_x == swz_y && swz_x == swz_z && swz_x == swz_w)
-    {
-	string (file, ".");
-	err |= control (file, "channel select", chan_sel, swz_x, NULL);
-    }
-    else
-    {
-	string (file, ".");
-	err |= control (file, "channel select", chan_sel, swz_x, NULL);
-	err |= control (file, "channel select", chan_sel, swz_y, NULL);
-	err |= control (file, "channel select", chan_sel, swz_z, NULL);
-	err |= control (file, "channel select", chan_sel, swz_w, NULL);
-    }
-    err |= control (file, "src da16 reg type", reg_encoding, _reg_type, NULL);
-    return err;
-}
-
-static int src0_3src (FILE *file, struct brw_instruction *inst)
-{
-    int err = 0;
-    GLuint swz_x = (inst->bits2.da3src.src0_swizzle >> 0) & 0x3;
-    GLuint swz_y = (inst->bits2.da3src.src0_swizzle >> 2) & 0x3;
-    GLuint swz_z = (inst->bits2.da3src.src0_swizzle >> 4) & 0x3;
-    GLuint swz_w = (inst->bits2.da3src.src0_swizzle >> 6) & 0x3;
-
-    err |= control (file, "negate", negate, inst->bits1.da3src.src0_negate, NULL);
-    err |= control (file, "abs", _abs, inst->bits1.da3src.src0_abs, NULL);
-
-    err |= reg (file, BRW_GENERAL_REGISTER_FILE, inst->bits2.da3src.src0_reg_nr);
-    if (err == -1)
-	return 0;
-    if (inst->bits2.da3src.src0_subreg_nr)
-	format (file, ".%d", inst->bits2.da3src.src0_subreg_nr);
-    string (file, "<4,1,1>");
-    err |= control (file, "src da16 reg type", reg_encoding,
-		    BRW_REGISTER_TYPE_F, NULL);
-    /*
-     * Three kinds of swizzle display:
-     *  identity - nothing printed
-     *  1->all	 - print the single channel
-     *  1->1     - print the mapping
-     */
-    if (swz_x == BRW_CHANNEL_X &&
-	swz_y == BRW_CHANNEL_Y &&
-	swz_z == BRW_CHANNEL_Z &&
-	swz_w == BRW_CHANNEL_W)
-    {
-	;
-    }
-    else if (swz_x == swz_y && swz_x == swz_z && swz_x == swz_w)
-    {
-	string (file, ".");
-	err |= control (file, "channel select", chan_sel, swz_x, NULL);
-    }
-    else
-    {
-	string (file, ".");
-	err |= control (file, "channel select", chan_sel, swz_x, NULL);
-	err |= control (file, "channel select", chan_sel, swz_y, NULL);
-	err |= control (file, "channel select", chan_sel, swz_z, NULL);
-	err |= control (file, "channel select", chan_sel, swz_w, NULL);
-    }
-    return err;
-}
-
-static int src1_3src (FILE *file, struct brw_instruction *inst)
-{
-    int err = 0;
-    GLuint swz_x = (inst->bits2.da3src.src1_swizzle >> 0) & 0x3;
-    GLuint swz_y = (inst->bits2.da3src.src1_swizzle >> 2) & 0x3;
-    GLuint swz_z = (inst->bits2.da3src.src1_swizzle >> 4) & 0x3;
-    GLuint swz_w = (inst->bits2.da3src.src1_swizzle >> 6) & 0x3;
-    GLuint src1_subreg_nr = (inst->bits2.da3src.src1_subreg_nr_low |
-			     (inst->bits3.da3src.src1_subreg_nr_high << 2));
-
-    err |= control (file, "negate", negate, inst->bits1.da3src.src1_negate,
-		    NULL);
-    err |= control (file, "abs", _abs, inst->bits1.da3src.src1_abs, NULL);
-
-    err |= reg (file, BRW_GENERAL_REGISTER_FILE,
-		inst->bits3.da3src.src1_reg_nr);
-    if (err == -1)
-	return 0;
-    if (src1_subreg_nr)
-	format (file, ".%d", src1_subreg_nr);
-    string (file, "<4,1,1>");
-    err |= control (file, "src da16 reg type", reg_encoding,
-		    BRW_REGISTER_TYPE_F, NULL);
-    /*
-     * Three kinds of swizzle display:
-     *  identity - nothing printed
-     *  1->all	 - print the single channel
-     *  1->1     - print the mapping
-     */
-    if (swz_x == BRW_CHANNEL_X &&
-	swz_y == BRW_CHANNEL_Y &&
-	swz_z == BRW_CHANNEL_Z &&
-	swz_w == BRW_CHANNEL_W)
-    {
-	;
-    }
-    else if (swz_x == swz_y && swz_x == swz_z && swz_x == swz_w)
-    {
-	string (file, ".");
-	err |= control (file, "channel select", chan_sel, swz_x, NULL);
-    }
-    else
-    {
-	string (file, ".");
-	err |= control (file, "channel select", chan_sel, swz_x, NULL);
-	err |= control (file, "channel select", chan_sel, swz_y, NULL);
-	err |= control (file, "channel select", chan_sel, swz_z, NULL);
-	err |= control (file, "channel select", chan_sel, swz_w, NULL);
-    }
-    return err;
-}
-
-
-static int src2_3src (FILE *file, struct brw_instruction *inst)
-{
-    int err = 0;
-    GLuint swz_x = (inst->bits3.da3src.src2_swizzle >> 0) & 0x3;
-    GLuint swz_y = (inst->bits3.da3src.src2_swizzle >> 2) & 0x3;
-    GLuint swz_z = (inst->bits3.da3src.src2_swizzle >> 4) & 0x3;
-    GLuint swz_w = (inst->bits3.da3src.src2_swizzle >> 6) & 0x3;
-
-    err |= control (file, "negate", negate, inst->bits1.da3src.src2_negate,
-		    NULL);
-    err |= control (file, "abs", _abs, inst->bits1.da3src.src2_abs, NULL);
-
-    err |= reg (file, BRW_GENERAL_REGISTER_FILE,
-		inst->bits3.da3src.src2_reg_nr);
-    if (err == -1)
-	return 0;
-    if (inst->bits3.da3src.src2_subreg_nr)
-	format (file, ".%d", inst->bits3.da3src.src2_subreg_nr);
-    string (file, "<4,1,1>");
-    err |= control (file, "src da16 reg type", reg_encoding,
-		    BRW_REGISTER_TYPE_F, NULL);
-    /*
-     * Three kinds of swizzle display:
-     *  identity - nothing printed
-     *  1->all	 - print the single channel
-     *  1->1     - print the mapping
-     */
-    if (swz_x == BRW_CHANNEL_X &&
-	swz_y == BRW_CHANNEL_Y &&
-	swz_z == BRW_CHANNEL_Z &&
-	swz_w == BRW_CHANNEL_W)
-    {
-	;
-    }
-    else if (swz_x == swz_y && swz_x == swz_z && swz_x == swz_w)
-    {
-	string (file, ".");
-	err |= control (file, "channel select", chan_sel, swz_x, NULL);
-    }
-    else
-    {
-	string (file, ".");
-	err |= control (file, "channel select", chan_sel, swz_x, NULL);
-	err |= control (file, "channel select", chan_sel, swz_y, NULL);
-	err |= control (file, "channel select", chan_sel, swz_z, NULL);
-	err |= control (file, "channel select", chan_sel, swz_w, NULL);
-    }
-    return err;
-}
-
-static int imm (FILE *file, GLuint type, struct brw_instruction *inst) {
-    switch (type) {
-    case BRW_REGISTER_TYPE_UD:
-	format (file, "0x%08xUD", inst->bits3.ud);
-	break;
-    case BRW_REGISTER_TYPE_D:
-	format (file, "%dD", inst->bits3.d);
-	break;
-    case BRW_REGISTER_TYPE_UW:
-	format (file, "0x%04xUW", (uint16_t) inst->bits3.ud);
-	break;
-    case BRW_REGISTER_TYPE_W:
-	format (file, "%dW", (int16_t) inst->bits3.d);
-	break;
-    case BRW_REGISTER_TYPE_UB:
-	format (file, "0x%02xUB", (int8_t) inst->bits3.ud);
-	break;
-    case BRW_REGISTER_TYPE_VF:
-	format (file, "Vector Float");
-	break;
-    case BRW_REGISTER_TYPE_V:
-	format (file, "0x%08xV", inst->bits3.ud);
-	break;
-    case BRW_REGISTER_TYPE_F:
-	format (file, "%-gF", inst->bits3.f);
-    }
-    return 0;
-}
-
-static int src0 (FILE *file, struct brw_instruction *inst)
-{
-    if (inst->bits1.da1.src0_reg_file == BRW_IMMEDIATE_VALUE)
-	return imm (file, inst->bits1.da1.src0_reg_type,
-		    inst);
-    else if (inst->header.access_mode == BRW_ALIGN_1)
-    {
-	if (inst->bits2.da1.src0_address_mode == BRW_ADDRESS_DIRECT)
-	{
-	    return src_da1 (file,
-			    inst->bits1.da1.src0_reg_type,
-			    inst->bits1.da1.src0_reg_file,
-			    inst->bits2.da1.src0_vert_stride,
-			    inst->bits2.da1.src0_width,
-			    inst->bits2.da1.src0_horiz_stride,
-			    inst->bits2.da1.src0_reg_nr,
-			    inst->bits2.da1.src0_subreg_nr,
-			    inst->bits2.da1.src0_abs,
-			    inst->bits2.da1.src0_negate);
-	}
-	else
-	{
-	    return src_ia1 (file,
-			    inst->bits1.ia1.src0_reg_type,
-			    inst->bits1.ia1.src0_reg_file,
-			    inst->bits2.ia1.src0_indirect_offset,
-			    inst->bits2.ia1.src0_subreg_nr,
-			    inst->bits2.ia1.src0_negate,
-			    inst->bits2.ia1.src0_abs,
-			    inst->bits2.ia1.src0_address_mode,
-			    inst->bits2.ia1.src0_horiz_stride,
-			    inst->bits2.ia1.src0_width,
-			    inst->bits2.ia1.src0_vert_stride);
-	}
-    }
-    else
-    {
-	if (inst->bits2.da16.src0_address_mode == BRW_ADDRESS_DIRECT)
-	{
-	    return src_da16 (file,
-			     inst->bits1.da16.src0_reg_type,
-			     inst->bits1.da16.src0_reg_file,
-			     inst->bits2.da16.src0_vert_stride,
-			     inst->bits2.da16.src0_reg_nr,
-			     inst->bits2.da16.src0_subreg_nr,
-			     inst->bits2.da16.src0_abs,
-			     inst->bits2.da16.src0_negate,
-			     inst->bits2.da16.src0_swz_x,
-			     inst->bits2.da16.src0_swz_y,
-			     inst->bits2.da16.src0_swz_z,
-			     inst->bits2.da16.src0_swz_w);
-	}
-	else
-	{
-	    string (file, "Indirect align16 address mode not supported");
-	    return 1;
-	}
-    }
-}
-
-static int src1 (FILE *file, struct brw_instruction *inst)
-{
-    if (inst->bits1.da1.src1_reg_file == BRW_IMMEDIATE_VALUE)
-	return imm (file, inst->bits1.da1.src1_reg_type,
-		    inst);
-    else if (inst->header.access_mode == BRW_ALIGN_1)
-    {
-	if (inst->bits3.da1.src1_address_mode == BRW_ADDRESS_DIRECT)
-	{
-	    return src_da1 (file,
-			    inst->bits1.da1.src1_reg_type,
-			    inst->bits1.da1.src1_reg_file,
-			    inst->bits3.da1.src1_vert_stride,
-			    inst->bits3.da1.src1_width,
-			    inst->bits3.da1.src1_horiz_stride,
-			    inst->bits3.da1.src1_reg_nr,
-			    inst->bits3.da1.src1_subreg_nr,
-			    inst->bits3.da1.src1_abs,
-			    inst->bits3.da1.src1_negate);
-	}
-	else
-	{
-	    return src_ia1 (file,
-			    inst->bits1.ia1.src1_reg_type,
-			    inst->bits1.ia1.src1_reg_file,
-			    inst->bits3.ia1.src1_indirect_offset,
-			    inst->bits3.ia1.src1_subreg_nr,
-			    inst->bits3.ia1.src1_negate,
-			    inst->bits3.ia1.src1_abs,
-			    inst->bits3.ia1.src1_address_mode,
-			    inst->bits3.ia1.src1_horiz_stride,
-			    inst->bits3.ia1.src1_width,
-			    inst->bits3.ia1.src1_vert_stride);
-	}
-    }
-    else
-    {
-	if (inst->bits3.da16.src1_address_mode == BRW_ADDRESS_DIRECT)
-	{
-	    return src_da16 (file,
-			     inst->bits1.da16.src1_reg_type,
-			     inst->bits1.da16.src1_reg_file,
-			     inst->bits3.da16.src1_vert_stride,
-			     inst->bits3.da16.src1_reg_nr,
-			     inst->bits3.da16.src1_subreg_nr,
-			     inst->bits3.da16.src1_abs,
-			     inst->bits3.da16.src1_negate,
-			     inst->bits3.da16.src1_swz_x,
-			     inst->bits3.da16.src1_swz_y,
-			     inst->bits3.da16.src1_swz_z,
-			     inst->bits3.da16.src1_swz_w);
-	}
-	else
-	{
-	    string (file, "Indirect align16 address mode not supported");
-	    return 1;
-	}
-    }
-}
-
-int esize[6] = {
-	[0] = 1,
-	[1] = 2,
-	[2] = 4,
-	[3] = 8,
-	[4] = 16,
-	[5] = 32,
-};
-
-static int qtr_ctrl(FILE *file, struct brw_instruction *inst)
-{
-    int qtr_ctl = inst->header.compression_control;
-    int exec_size = esize[inst->header.execution_size];
-
-    if (exec_size == 8) {
-	switch (qtr_ctl) {
-	case 0:
-	    string (file, " 1Q");
-	    break;
-	case 1:
-	    string (file, " 2Q");
-	    break;
-	case 2:
-	    string (file, " 3Q");
-	    break;
-	case 3:
-	    string (file, " 4Q");
-	    break;
-	}
-    } else if (exec_size == 16){
-	if (qtr_ctl < 2)
-	    string (file, " 1H");
-	else
-	    string (file, " 2H");
-    }
-    return 0;
-}
-
-int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
-{
-    int	err = 0;
-    int space = 0;
-
-    if (inst->header.predicate_control) {
-	string (file, "(");
-	err |= control (file, "predicate inverse", pred_inv, inst->header.predicate_inverse, NULL);
-	format (file, "f%d", gen >= 7 ? inst->bits2.da1.flag_reg_nr : 0);
-	if (inst->bits2.da1.flag_subreg_nr)
-	    format (file, ".%d", inst->bits2.da1.flag_subreg_nr);
-	if (inst->header.access_mode == BRW_ALIGN_1)
-	    err |= control (file, "predicate control align1", pred_ctrl_align1,
-			    inst->header.predicate_control, NULL);
-	else
-	    err |= control (file, "predicate control align16", pred_ctrl_align16,
-			    inst->header.predicate_control, NULL);
-	string (file, ") ");
-    }
-
-    err |= print_opcode (file, inst->header.opcode);
-    err |= control (file, "saturate", saturate, inst->header.saturate, NULL);
-    err |= control (file, "debug control", debug_ctrl, inst->header.debug_control, NULL);
-
-    if (inst->header.opcode == BRW_OPCODE_MATH) {
-	string (file, " ");
-	err |= control (file, "function", math_function,
-			inst->header.destreg__conditionalmod, NULL);
-    } else if (inst->header.opcode != BRW_OPCODE_SEND &&
-	       inst->header.opcode != BRW_OPCODE_SENDC) {
-	err |= control (file, "conditional modifier", conditional_modifier,
-			inst->header.destreg__conditionalmod, NULL);
-
-        /* If we're using the conditional modifier, print which flags reg is
-         * used for it.  Note that on gen6+, the embedded-condition SEL and
-         * control flow doesn't update flags.
-         */
-	if (inst->header.destreg__conditionalmod &&
-            (gen < 6 || (inst->header.opcode != BRW_OPCODE_SEL &&
-                         inst->header.opcode != BRW_OPCODE_IF &&
-                         inst->header.opcode != BRW_OPCODE_WHILE))) {
-	    format (file, ".f%d", gen >= 7 ? inst->bits2.da1.flag_reg_nr : 0);
-	    if (inst->bits2.da1.flag_subreg_nr)
-		format (file, ".%d", inst->bits2.da1.flag_subreg_nr);
-        }
-    }
-
-    if (inst->header.opcode != BRW_OPCODE_NOP) {
-	string (file, "(");
-	err |= control (file, "execution size", exec_size, inst->header.execution_size, NULL);
-	string (file, ")");
-    }
-
-    if (inst->header.opcode == BRW_OPCODE_SEND && gen < 6)
-	format (file, " %d", inst->header.destreg__conditionalmod);
-
-    if (opcode[inst->header.opcode].nsrc == 3) {
-       pad (file, 16);
-       err |= dest_3src (file, inst);
-
-       pad (file, 32);
-       err |= src0_3src (file, inst);
-
-       pad (file, 48);
-       err |= src1_3src (file, inst);
-
-       pad (file, 64);
-       err |= src2_3src (file, inst);
-    } else {
-       if (opcode[inst->header.opcode].ndst > 0) {
-	  pad (file, 16);
-	  err |= dest (file, inst);
-       } else if (gen == 7 && (inst->header.opcode == BRW_OPCODE_ELSE ||
-			       inst->header.opcode == BRW_OPCODE_ENDIF ||
-			       inst->header.opcode == BRW_OPCODE_WHILE)) {
-	  format (file, " %d", inst->bits3.break_cont.jip);
-       } else if (gen == 6 && (inst->header.opcode == BRW_OPCODE_IF ||
-			       inst->header.opcode == BRW_OPCODE_ELSE ||
-			       inst->header.opcode == BRW_OPCODE_ENDIF ||
-			       inst->header.opcode == BRW_OPCODE_WHILE)) {
-	  format (file, " %d", inst->bits1.branch_gen6.jump_count);
-       } else if ((gen >= 6 && (inst->header.opcode == BRW_OPCODE_BREAK ||
-                                inst->header.opcode == BRW_OPCODE_CONTINUE ||
-                                inst->header.opcode == BRW_OPCODE_HALT)) ||
-                  (gen == 7 && inst->header.opcode == BRW_OPCODE_IF)) {
-	  format (file, " %d %d", inst->bits3.break_cont.uip, inst->bits3.break_cont.jip);
-       } else if (inst->header.opcode == BRW_OPCODE_JMPI) {
-	  format (file, " %d", inst->bits3.d);
-       }
-
-       if (opcode[inst->header.opcode].nsrc > 0) {
-	  pad (file, 32);
-	  err |= src0 (file, inst);
-       }
-       if (opcode[inst->header.opcode].nsrc > 1) {
-	  pad (file, 48);
-	  err |= src1 (file, inst);
-       }
-    }
-
-    if (inst->header.opcode == BRW_OPCODE_SEND ||
-	inst->header.opcode == BRW_OPCODE_SENDC) {
-	enum brw_message_target target;
-
-	if (gen >= 6)
-	    target = inst->header.destreg__conditionalmod;
-	else if (gen == 5)
-	    target = inst->bits2.send_gen5.sfid;
-	else
-	    target = inst->bits3.generic.msg_target;
-
-	newline (file);
-	pad (file, 16);
-	space = 0;
-
-	if (gen >= 6) {
-	   err |= control (file, "target function", target_function_gen6,
-			   target, &space);
-	} else {
-	   err |= control (file, "target function", target_function,
-			   target, &space);
-	}
-
-	switch (target) {
-	case BRW_SFID_MATH:
-	    err |= control (file, "math function", math_function,
-			    inst->bits3.math.function, &space);
-	    err |= control (file, "math saturate", math_saturate,
-			    inst->bits3.math.saturate, &space);
-	    err |= control (file, "math signed", math_signed,
-			    inst->bits3.math.int_type, &space);
-	    err |= control (file, "math scalar", math_scalar,
-			    inst->bits3.math.data_type, &space);
-	    err |= control (file, "math precision", math_precision,
-			    inst->bits3.math.precision, &space);
-	    break;
-	case BRW_SFID_SAMPLER:
-	    if (gen >= 7) {
-		format (file, " (%d, %d, %d, %d)",
-			inst->bits3.sampler_gen7.binding_table_index,
-			inst->bits3.sampler_gen7.sampler,
-			inst->bits3.sampler_gen7.msg_type,
-			inst->bits3.sampler_gen7.simd_mode);
-	    } else if (gen >= 5) {
-		format (file, " (%d, %d, %d, %d)",
-			inst->bits3.sampler_gen5.binding_table_index,
-			inst->bits3.sampler_gen5.sampler,
-			inst->bits3.sampler_gen5.msg_type,
-			inst->bits3.sampler_gen5.simd_mode);
-	    } else if (0 /* FINISHME: is_g4x */) {
-		format (file, " (%d, %d)",
-			inst->bits3.sampler_g4x.binding_table_index,
-			inst->bits3.sampler_g4x.sampler);
-	    } else {
-		format (file, " (%d, %d, ",
-			inst->bits3.sampler.binding_table_index,
-			inst->bits3.sampler.sampler);
-		err |= control (file, "sampler target format",
-				sampler_target_format,
-				inst->bits3.sampler.return_format, NULL);
-		string (file, ")");
-	    }
-	    break;
-	case BRW_SFID_DATAPORT_READ:
-	    if (gen >= 6) {
-		format (file, " (%d, %d, %d, %d)",
-			inst->bits3.gen6_dp.binding_table_index,
-			inst->bits3.gen6_dp.msg_control,
-			inst->bits3.gen6_dp.msg_type,
-			inst->bits3.gen6_dp.send_commit_msg);
-	    } else if (gen >= 5 /* FINISHME: || is_g4x */) {
-		format (file, " (%d, %d, %d)",
-			inst->bits3.dp_read_gen5.binding_table_index,
-			inst->bits3.dp_read_gen5.msg_control,
-			inst->bits3.dp_read_gen5.msg_type);
-	    } else {
-		format (file, " (%d, %d, %d)",
-			inst->bits3.dp_read.binding_table_index,
-			inst->bits3.dp_read.msg_control,
-			inst->bits3.dp_read.msg_type);
-	    }
-	    break;
-
-	case BRW_SFID_DATAPORT_WRITE:
-	    if (gen >= 7) {
-		format (file, " (");
-
-		err |= control (file, "DP rc message type",
-				dp_rc_msg_type_gen6,
-				inst->bits3.gen7_dp.msg_type, &space);
-
-		format (file, ", %d, %d, %d)",
-			inst->bits3.gen7_dp.binding_table_index,
-			inst->bits3.gen7_dp.msg_control,
-			inst->bits3.gen7_dp.msg_type);
-	    } else if (gen == 6) {
-		format (file, " (");
-
-		err |= control (file, "DP rc message type",
-				dp_rc_msg_type_gen6,
-				inst->bits3.gen6_dp.msg_type, &space);
-
-		format (file, ", %d, %d, %d, %d)",
-			inst->bits3.gen6_dp.binding_table_index,
-			inst->bits3.gen6_dp.msg_control,
-			inst->bits3.gen6_dp.msg_type,
-			inst->bits3.gen6_dp.send_commit_msg);
-	    } else {
-		format (file, " (%d, %d, %d, %d)",
-			inst->bits3.dp_write.binding_table_index,
-			(inst->bits3.dp_write.last_render_target << 3) |
-			inst->bits3.dp_write.msg_control,
-			inst->bits3.dp_write.msg_type,
-			inst->bits3.dp_write.send_commit_msg);
-	    }
-	    break;
-
-	case BRW_SFID_URB:
-	    if (gen >= 5) {
-		format (file, " %d", inst->bits3.urb_gen5.offset);
-	    } else {
-		format (file, " %d", inst->bits3.urb.offset);
-	    }
-
-	    space = 1;
-	    if (gen >= 5) {
-		err |= control (file, "urb opcode", urb_opcode,
-				inst->bits3.urb_gen5.opcode, &space);
-	    }
-	    err |= control (file, "urb swizzle", urb_swizzle,
-			    inst->bits3.urb.swizzle_control, &space);
-	    err |= control (file, "urb allocate", urb_allocate,
-			    inst->bits3.urb.allocate, &space);
-	    err |= control (file, "urb used", urb_used,
-			    inst->bits3.urb.used, &space);
-	    err |= control (file, "urb complete", urb_complete,
-			    inst->bits3.urb.complete, &space);
-	    break;
-	case BRW_SFID_THREAD_SPAWNER:
-	    break;
-	case GEN7_SFID_DATAPORT_DATA_CACHE:
-	    format (file, " (%d, %d, %d)",
-		    inst->bits3.gen7_dp.binding_table_index,
-		    inst->bits3.gen7_dp.msg_control,
-		    inst->bits3.gen7_dp.msg_type);
-	    break;
-
-
-	default:
-	    format (file, "unsupported target %d", target);
-	    break;
-	}
-	if (space)
-	    string (file, " ");
-	if (gen >= 5) {
-	   format (file, "mlen %d",
-		   inst->bits3.generic_gen5.msg_length);
-	   format (file, " rlen %d",
-		   inst->bits3.generic_gen5.response_length);
-	} else {
-	   format (file, "mlen %d",
-		   inst->bits3.generic.msg_length);
-	   format (file, " rlen %d",
-		   inst->bits3.generic.response_length);
-	}
-    }
-    pad (file, 64);
-    if (inst->header.opcode != BRW_OPCODE_NOP) {
-	string (file, "{");
-	space = 1;
-	err |= control(file, "access mode", access_mode, inst->header.access_mode, &space);
-	if (gen >= 6)
-	    err |= control (file, "write enable control", wectrl, inst->header.mask_control, &space);
-	else
-	    err |= control (file, "mask control", mask_ctrl, inst->header.mask_control, &space);
-	err |= control (file, "dependency control", dep_ctrl, inst->header.dependency_control, &space);
-
-	if (gen >= 6)
-	    err |= qtr_ctrl (file, inst);
-	else {
-	    if (inst->header.compression_control == BRW_COMPRESSION_COMPRESSED &&
-		opcode[inst->header.opcode].ndst > 0 &&
-		inst->bits1.da1.dest_reg_file == BRW_MESSAGE_REGISTER_FILE &&
-		inst->bits1.da1.dest_reg_nr & (1 << 7)) {
-		format (file, " compr4");
-	    } else {
-		err |= control (file, "compression control", compr_ctrl,
-				inst->header.compression_control, &space);
-	    }
-	}
-
-	err |= control (file, "thread control", thread_ctrl, inst->header.thread_control, &space);
-	if (gen >= 6)
-	    err |= control (file, "acc write control", accwr, inst->header.acc_wr_control, &space);
-	if (inst->header.opcode == BRW_OPCODE_SEND ||
-	    inst->header.opcode == BRW_OPCODE_SENDC)
-	    err |= control (file, "end of thread", end_of_thread,
-			    inst->bits3.generic.end_of_thread, &space);
-	if (space)
-	    string (file, " ");
-	string (file, "}");
-    }
-    string (file, ";");
-    newline (file);
-    return err;
 }
