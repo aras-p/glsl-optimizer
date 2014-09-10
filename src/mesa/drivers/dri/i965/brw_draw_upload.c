@@ -671,14 +671,16 @@ emit_vertex_buffer_state(struct brw_context *brw,
 
 static void brw_emit_vertices(struct brw_context *brw)
 {
-   GLuint i, nr_elements;
+   GLuint i;
 
    brw_prepare_vertices(brw);
    brw_prepare_shader_draw_parameters(brw);
 
    brw_emit_query_begin(brw);
 
-   nr_elements = brw->vb.nr_enabled + brw->vs.prog_data->uses_vertexid;
+   unsigned nr_elements = brw->vb.nr_enabled;
+   if (brw->vs.prog_data->uses_vertexid || brw->vs.prog_data->uses_instanceid)
+      ++nr_elements;
 
    /* If the VS doesn't read any inputs (calculating vertex position from
     * a state variable for some reason, for example), emit a single pad
@@ -824,13 +826,26 @@ static void brw_emit_vertices(struct brw_context *brw)
                 (BRW_VE1_COMPONENT_STORE_0 << BRW_VE1_COMPONENT_3_SHIFT));
    }
 
-   if (brw->vs.prog_data->uses_vertexid) {
+   if (brw->vs.prog_data->uses_vertexid || brw->vs.prog_data->uses_instanceid) {
       uint32_t dw0 = 0, dw1 = 0;
+      uint32_t comp0 = BRW_VE1_COMPONENT_STORE_0;
+      uint32_t comp1 = BRW_VE1_COMPONENT_STORE_0;
+      uint32_t comp2 = BRW_VE1_COMPONENT_STORE_0;
+      uint32_t comp3 = BRW_VE1_COMPONENT_STORE_0;
 
-      dw1 = (BRW_VE1_COMPONENT_STORE_SRC << BRW_VE1_COMPONENT_0_SHIFT) |
-            (BRW_VE1_COMPONENT_STORE_0   << BRW_VE1_COMPONENT_1_SHIFT) |
-            (BRW_VE1_COMPONENT_STORE_VID << BRW_VE1_COMPONENT_2_SHIFT) |
-            (BRW_VE1_COMPONENT_STORE_IID << BRW_VE1_COMPONENT_3_SHIFT);
+      if (brw->vs.prog_data->uses_vertexid) {
+         comp0 = BRW_VE1_COMPONENT_STORE_SRC;
+         comp2 = BRW_VE1_COMPONENT_STORE_VID;
+      }
+
+      if (brw->vs.prog_data->uses_instanceid) {
+         comp3 = BRW_VE1_COMPONENT_STORE_IID;
+      }
+
+      dw1 = (comp0 << BRW_VE1_COMPONENT_0_SHIFT) |
+            (comp1 << BRW_VE1_COMPONENT_1_SHIFT) |
+            (comp2 << BRW_VE1_COMPONENT_2_SHIFT) |
+            (comp3 << BRW_VE1_COMPONENT_3_SHIFT);
 
       if (brw->gen >= 6) {
          dw0 |= GEN6_VE0_VALID |

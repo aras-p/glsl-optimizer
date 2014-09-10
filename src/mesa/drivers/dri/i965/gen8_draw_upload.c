@@ -43,7 +43,7 @@ gen8_emit_vertices(struct brw_context *brw)
    brw_prepare_vertices(brw);
    brw_prepare_shader_draw_parameters(brw);
 
-   if (brw->vs.prog_data->uses_vertexid) {
+   if (brw->vs.prog_data->uses_vertexid || brw->vs.prog_data->uses_instanceid) {
       unsigned vue = brw->vb.nr_enabled;
 
       WARN_ONCE(brw->vs.prog_data->inputs_read & VERT_BIT_EDGEFLAG,
@@ -53,14 +53,22 @@ gen8_emit_vertices(struct brw_context *brw)
                 "Trying to insert VID/IID past 33rd vertex element, "
                 "need to reorder the vertex attrbutes.");
 
+      unsigned dw1 = 0;
+      if (brw->vs.prog_data->uses_vertexid) {
+         dw1 |= GEN8_SGVS_ENABLE_VERTEX_ID |
+                (2 << GEN8_SGVS_VERTEX_ID_COMPONENT_SHIFT) |  /* .z channel */
+                (vue << GEN8_SGVS_VERTEX_ID_ELEMENT_OFFSET_SHIFT);
+      }
+
+      if (brw->vs.prog_data->uses_instanceid) {
+         dw1 |= GEN8_SGVS_ENABLE_INSTANCE_ID |
+                (3 << GEN8_SGVS_INSTANCE_ID_COMPONENT_SHIFT) | /* .w channel */
+                (vue << GEN8_SGVS_INSTANCE_ID_ELEMENT_OFFSET_SHIFT);
+      }
+
       BEGIN_BATCH(2);
       OUT_BATCH(_3DSTATE_VF_SGVS << 16 | (2 - 2));
-      OUT_BATCH(GEN8_SGVS_ENABLE_VERTEX_ID |
-                (2 << GEN8_SGVS_VERTEX_ID_COMPONENT_SHIFT) |   /* .z channel */
-                (vue << GEN8_SGVS_VERTEX_ID_ELEMENT_OFFSET_SHIFT) |
-                GEN8_SGVS_ENABLE_INSTANCE_ID |
-                (3 << GEN8_SGVS_INSTANCE_ID_COMPONENT_SHIFT) | /* .w channel */
-                (vue << GEN8_SGVS_INSTANCE_ID_ELEMENT_OFFSET_SHIFT));
+      OUT_BATCH(dw1);
       ADVANCE_BATCH();
 
       BEGIN_BATCH(3);

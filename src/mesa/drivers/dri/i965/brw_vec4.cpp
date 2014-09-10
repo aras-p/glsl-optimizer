@@ -1528,7 +1528,7 @@ vec4_vs_visitor::setup_attributes(int payload_reg)
     * don't represent it with a flag in inputs_read, so we call it
     * VERT_ATTRIB_MAX.
     */
-   if (vs_prog_data->uses_vertexid) {
+   if (vs_prog_data->uses_vertexid || vs_prog_data->uses_instanceid) {
       attribute_map[VERT_ATTRIB_MAX] = payload_reg + nr_attributes;
       nr_attributes++;
    }

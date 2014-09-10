@@ -151,18 +151,20 @@ vec4_vs_visitor::make_reg_for_system_value(ir_variable *ir)
     * it VERT_ATTRIB_MAX, which setup_attributes() picks up on.
     */
    dst_reg *reg = new(mem_ctx) dst_reg(ATTR, VERT_ATTRIB_MAX);
-   vs_prog_data->uses_vertexid = true;
 
    switch (ir->data.location) {
    case SYSTEM_VALUE_BASE_VERTEX:
       reg->writemask = WRITEMASK_X;
+      vs_prog_data->uses_vertexid = true;
       break;
    case SYSTEM_VALUE_VERTEX_ID:
    case SYSTEM_VALUE_VERTEX_ID_ZERO_BASE:
       reg->writemask = WRITEMASK_Z;
+      vs_prog_data->uses_vertexid = true;
       break;
    case SYSTEM_VALUE_INSTANCE_ID:
       reg->writemask = WRITEMASK_W;
+      vs_prog_data->uses_instanceid = true;
       break;
    default:
       unreachable("not reached");
