@@ -1036,9 +1036,10 @@ trans_arl(const struct instr_translater *t,
 	 */
 	tmp_src = get_internal_temp(ctx, &tmp_dst);
 
-	/* cov.f{32,16}s16 Rtmp, Rsrc */
+	/* cov.{u,f}{32,16}s16 Rtmp, Rsrc */
 	instr = instr_create(ctx, 1, 0);
-	instr->cat1.src_type = get_ftype(ctx);
+	instr->cat1.src_type = (t->tgsi_opc == TGSI_OPCODE_ARL) ?
+			get_ftype(ctx) : get_utype(ctx);
 	instr->cat1.dst_type = TYPE_S16;
 	add_dst_reg(ctx, instr, &tmp_dst, chan)->flags |= IR3_REG_HALF;
 	add_src_reg(ctx, instr, src, chan);
@@ -2062,6 +2063,7 @@ static const struct instr_translater translaters[TGSI_OPCODE_LAST] = {
 	INSTR(SSG,          instr_cat2, .opc = OPC_SIGN_F),
 	INSTR(CEIL,         instr_cat2, .opc = OPC_CEIL_F),
 	INSTR(ARL,          trans_arl),
+	INSTR(UARL,         trans_arl),
 	INSTR(EX2,          instr_cat4, .opc = OPC_EXP2),
 	INSTR(LG2,          instr_cat4, .opc = OPC_LOG2),
 	INSTR(ABS,          instr_cat2, .opc = OPC_ABSNEG_F),
