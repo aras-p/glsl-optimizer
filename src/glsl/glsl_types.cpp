@@ -979,7 +979,7 @@ glsl_type::std140_size(bool row_major) const
          if (field_type->is_record() && (i + 1 < this->length))
             size = glsl_align(size, 16);
       }
-      size = glsl_align(size, max_align);
+      size = glsl_align(size, MAX2(max_align, 16));
       return size;
    }
 
