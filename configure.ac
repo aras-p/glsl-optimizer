@@ -1695,7 +1695,7 @@ if test "x$enable_gallium_llvm" = xyes; then
     fi
 
     if test "x$LLVM_CONFIG" != xno; then
-        LLVM_VERSION=`$LLVM_CONFIG --version | grep -o '^[[0-9.]]\+'`
+        LLVM_VERSION=`$LLVM_CONFIG --version | egrep -o '^[[0-9.]]+'`
         LLVM_LDFLAGS=`$LLVM_CONFIG --ldflags`
         LLVM_BINDIR=`$LLVM_CONFIG --bindir`
         LLVM_CPPFLAGS=`strip_unwanted_llvm_flags "$LLVM_CONFIG --cppflags"`
