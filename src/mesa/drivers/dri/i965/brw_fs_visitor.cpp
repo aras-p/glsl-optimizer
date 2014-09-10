@@ -3315,6 +3315,9 @@ fs_visitor::fs_visitor(struct brw_context *brw,
                        unsigned dispatch_width)
    : backend_visitor(brw, shader_prog, &fp->Base, &prog_data->base,
                      MESA_SHADER_FRAGMENT),
+     reg_null_f(retype(brw_null_vec(dispatch_width), BRW_REGISTER_TYPE_F)),
+     reg_null_d(retype(brw_null_vec(dispatch_width), BRW_REGISTER_TYPE_D)),
+     reg_null_ud(retype(brw_null_vec(dispatch_width), BRW_REGISTER_TYPE_UD)),
      key(key), prog_data(&prog_data->base),
      dispatch_width(dispatch_width)
 {

@@ -603,6 +603,12 @@ brw_null_reg(void)
 }
 
 static inline struct brw_reg
+brw_null_vec(unsigned width)
+{
+   return brw_vecn_reg(width, BRW_ARCHITECTURE_REGISTER_FILE, BRW_ARF_NULL, 0);
+}
+
+static inline struct brw_reg
 brw_address_reg(unsigned subnr)
 {
    return brw_uw1_reg(BRW_ARCHITECTURE_REGISTER_FILE, BRW_ARF_ADDRESS, subnr);

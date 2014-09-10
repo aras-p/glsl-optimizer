@@ -134,9 +134,6 @@ half(const fs_reg &reg, unsigned idx)
 }
 
 static const fs_reg reg_undef;
-static const fs_reg reg_null_f(retype(brw_null_reg(), BRW_REGISTER_TYPE_F));
-static const fs_reg reg_null_d(retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
-static const fs_reg reg_null_ud(retype(brw_null_reg(), BRW_REGISTER_TYPE_UD));
 
 class ip_record : public exec_node {
 public:
@@ -206,6 +203,9 @@ public:
 class fs_visitor : public backend_visitor
 {
 public:
+   const fs_reg reg_null_f;
+   const fs_reg reg_null_d;
+   const fs_reg reg_null_ud;
 
    fs_visitor(struct brw_context *brw,
               void *mem_ctx,
