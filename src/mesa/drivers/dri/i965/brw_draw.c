@@ -434,10 +434,13 @@ static bool brw_try_draw_prims( struct gl_context *ctx,
       brw->draw.start_vertex_location = prims[i].start;
       brw->draw.base_vertex_location = prims[i].basevertex;
 
+      drm_intel_bo_unreference(brw->draw.draw_params_bo);
+
       if (prims[i].is_indirect) {
          /* Point draw_params_bo at the indirect buffer. */
          brw->draw.draw_params_bo =
             intel_buffer_object(ctx->DrawIndirectBuffer)->buffer;
+         drm_intel_bo_reference(brw->draw.draw_params_bo);
          brw->draw.draw_params_offset =
             prims[i].indirect_offset + (prims[i].indexed ? 12 : 8);
       } else {
