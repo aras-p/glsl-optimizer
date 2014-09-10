@@ -271,7 +271,6 @@ nouveau_vp3_fill_picparm_mpeg4_vp(struct nouveau_vp3_decoder *dec,
 {
    struct mpeg4_picparm_vp pic_vp_stub = {}, *pic_vp = &pic_vp_stub;
    uint32_t ring, ret = 0x01014; // !async_shutdown << 16 | watchdog << 12 | irq_record << 4 | unk;
-   assert(!(dec->base.width & 0xf));
    *is_ref = desc->vop_coding_type <= 1;
 
    pic_vp->width = dec->base.width;
