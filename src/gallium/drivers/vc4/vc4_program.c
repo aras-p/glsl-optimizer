@@ -42,6 +42,8 @@ struct vc4_key {
         struct pipe_shader_state *shader_state;
         struct {
                 enum pipe_format format;
+                unsigned compare_mode:1;
+                unsigned compare_func:3;
                 uint8_t swizzle[4];
         } tex[VC4_MAX_TEXTURE_SAMPLERS];
 };
@@ -467,8 +469,9 @@ tgsi_to_qir_tex(struct vc4_compile *c,
         struct qreg t = src[0 * 4 + 1];
         uint32_t unit = tgsi_inst->Src[1].Register.Index;
 
+        struct qreg proj = c->undef;
         if (tgsi_inst->Instruction.Opcode == TGSI_OPCODE_TXP) {
-                struct qreg proj = qir_RCP(c, src[0 * 4 + 3]);
+                proj = qir_RCP(c, src[0 * 4 + 3]);
                 s = qir_FMUL(c, s, proj);
                 t = qir_FMUL(c, t, proj);
         }
@@ -477,7 +480,8 @@ tgsi_to_qir_tex(struct vc4_compile *c,
          * we have to rescale from ([0, width], [0, height]) to ([0, 1], [0,
          * 1]).
          */
-        if (tgsi_inst->Texture.Texture == TGSI_TEXTURE_RECT) {
+        if (tgsi_inst->Texture.Texture == TGSI_TEXTURE_RECT ||
+            tgsi_inst->Texture.Texture == TGSI_TEXTURE_SHADOWRECT) {
                 s = qir_FMUL(c, s,
                              get_temp_for_uniform(c,
                                                   QUNIFORM_TEXRECT_SCALE_X,
@@ -510,8 +514,54 @@ tgsi_to_qir_tex(struct vc4_compile *c,
                                                          qir_uniform_ui(c, 8)));
                 struct qreg normalized = qir_FMUL(c, depthf,
                                                   qir_uniform_f(c, 1.0f/0xffffff));
+
+                struct qreg depth_output;
+
+                struct qreg compare = src[0 * 4 + 2];
+
+                if (tgsi_inst->Instruction.Opcode == TGSI_OPCODE_TXP)
+                        compare = qir_FMUL(c, compare, proj);
+
+                struct qreg one = qir_uniform_f(c, 1.0f);
+                if (c->key->tex[unit].compare_mode) {
+                        switch (c->key->tex[unit].compare_func) {
+                        case PIPE_FUNC_NEVER:
+                                depth_output = qir_uniform_f(c, 0.0f);
+                                break;
+                        case PIPE_FUNC_ALWAYS:
+                                depth_output = one;
+                                break;
+                        case PIPE_FUNC_EQUAL:
+                                qir_SF(c, qir_FSUB(c, compare, normalized));
+                                depth_output = qir_SEL_X_0_ZS(c, one);
+                                break;
+                        case PIPE_FUNC_NOTEQUAL:
+                                qir_SF(c, qir_FSUB(c, compare, normalized));
+                                depth_output = qir_SEL_X_0_ZC(c, one);
+                                break;
+                        case PIPE_FUNC_GREATER:
+                                qir_SF(c, qir_FSUB(c, compare, normalized));
+                                depth_output = qir_SEL_X_0_NC(c, one);
+                                break;
+                        case PIPE_FUNC_GEQUAL:
+                                qir_SF(c, qir_FSUB(c, normalized, compare));
+                                depth_output = qir_SEL_X_0_NS(c, one);
+                                break;
+                        case PIPE_FUNC_LESS:
+                                qir_SF(c, qir_FSUB(c, compare, normalized));
+                                depth_output = qir_SEL_X_0_NS(c, one);
+                                break;
+                        case PIPE_FUNC_LEQUAL:
+                                qir_SF(c, qir_FSUB(c, normalized, compare));
+                                depth_output = qir_SEL_X_0_NC(c, one);
+                                break;
+                        }
+                } else {
+                        depth_output = normalized;
+                }
+
                 for (int i = 0; i < 4; i++)
-                        unpacked[i] = normalized;
+                        unpacked[i] = depth_output;
         } else {
                 for (int i = 0; i < 4; i++)
                         unpacked[i] = qir_R4_UNPACK(c, r4, i);
@@ -1434,6 +1484,9 @@ vc4_setup_shared_key(struct vc4_key *key, struct vc4_texture_stateobj *texstate)
 {
         for (int i = 0; i < texstate->num_textures; i++) {
                 struct pipe_sampler_view *sampler = texstate->textures[i];
+                struct pipe_sampler_state *sampler_state =
+texstate->samplers[i];
+
                 if (sampler) {
                         struct pipe_resource *prsc = sampler->texture;
                         key->tex[i].format = prsc->format;
@@ -1441,6 +1494,8 @@ vc4_setup_shared_key(struct vc4_key *key, struct vc4_texture_stateobj *texstate)
                         key->tex[i].swizzle[1] = sampler->swizzle_g;
                         key->tex[i].swizzle[2] = sampler->swizzle_b;
                         key->tex[i].swizzle[3] = sampler->swizzle_a;
+                        key->tex[i].compare_mode = sampler_state->compare_mode;
+                        key->tex[i].compare_func = sampler_state->compare_func;
                 }
         }
 }
