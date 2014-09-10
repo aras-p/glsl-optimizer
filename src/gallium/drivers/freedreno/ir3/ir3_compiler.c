@@ -1445,22 +1445,22 @@ trans_cmp(const struct instr_translater *t,
 }
 
 /*
- * USNE(a,b) = (a != b) ? 1 : 0
+ * USNE(a,b) = (a != b) ? ~0 : 0
  *   cmps.u32.ne dst, a, b
  *
- * USEQ(a,b) = (a == b) ? 1 : 0
+ * USEQ(a,b) = (a == b) ? ~0 : 0
  *   cmps.u32.eq dst, a, b
  *
- * ISGE(a,b) = (a > b) ? 1 : 0
+ * ISGE(a,b) = (a > b) ? ~0 : 0
  *   cmps.s32.ge dst, a, b
  *
- * USGE(a,b) = (a > b) ? 1 : 0
+ * USGE(a,b) = (a > b) ? ~0 : 0
  *   cmps.u32.ge dst, a, b
  *
- * ISLT(a,b) = (a < b) ? 1 : 0
+ * ISLT(a,b) = (a < b) ? ~0 : 0
  *   cmps.s32.lt dst, a, b
  *
- * USLT(a,b) = (a < b) ? 1 : 0
+ * USLT(a,b) = (a < b) ? ~0 : 0
  *   cmps.u32.lt dst, a, b
  *
  * UCMP(a,b,c) = (a < 0) ? b : c
@@ -1526,10 +1526,17 @@ trans_icmp(const struct instr_translater *t,
 		instr = instr_create(ctx, 3, OPC_SEL_B32);
 		vectorize(ctx, instr, dst, 3, a1, 0, tmp_src, 0, a2, 0);
 	} else {
-		/* cmps.{u32,s32}.<cond> dst, a0, a1 */
+		struct tgsi_dst_register tmp_dst;
+		struct tgsi_src_register *tmp_src;
+		tmp_src = get_internal_temp(ctx, &tmp_dst);
+		/* cmps.{u32,s32}.<cond> tmp, a0, a1 */
 		instr = instr_create(ctx, 2, t->opc);
 		instr->cat2.condition = condition;
-		vectorize(ctx, instr, dst, 2, a0, 0, a1, 0);
+		vectorize(ctx, instr, &tmp_dst, 2, a0, 0, a1, 0);
+
+		/* absneg.s dst, (neg)tmp */
+		instr = instr_create(ctx, 2, OPC_ABSNEG_S);
+		vectorize(ctx, instr, dst, 1, tmp_src, IR3_REG_NEGATE);
 	}
 	put_dst(ctx, inst, dst);
 }
