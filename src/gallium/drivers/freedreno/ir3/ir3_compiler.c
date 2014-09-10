@@ -1582,8 +1582,8 @@ trans_if(const struct instr_translater *t,
 	if (is_const(src))
 		src = get_unconst(ctx, src);
 
-	/* cmps.f.ne tmp0, b, {0.0} */
-	instr = instr_create(ctx, 2, OPC_CMPS_F);
+	/* cmps.{f,u}.ne tmp0, b, {0.0} */
+	instr = instr_create(ctx, 2, t->opc);
 	add_dst_reg(ctx, instr, &tmp_dst, 0);
 	add_src_reg(ctx, instr, src, src->SwizzleX);
 	add_src_reg(ctx, instr, &constval, constval.SwizzleX);
@@ -2099,8 +2099,8 @@ static const struct instr_translater translaters[TGSI_OPCODE_LAST] = {
 	INSTR(ISLT,         trans_icmp, .opc = OPC_CMPS_S),
 	INSTR(USLT,         trans_icmp, .opc = OPC_CMPS_U),
 	INSTR(UCMP,         trans_icmp, .opc = OPC_CMPS_U),
-	INSTR(IF,           trans_if),
-	INSTR(UIF,          trans_if),
+	INSTR(IF,           trans_if,   .opc = OPC_CMPS_F),
+	INSTR(UIF,          trans_if,   .opc = OPC_CMPS_U),
 	INSTR(ELSE,         trans_else),
 	INSTR(ENDIF,        trans_endif),
 	INSTR(END,          instr_cat0, .opc = OPC_END),
