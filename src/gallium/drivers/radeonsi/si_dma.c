@@ -172,7 +172,7 @@ static void si_dma_copy_tile(struct si_context *ctx,
 	 * dma packet will be using the copy_height which is always smaller or equal
 	 * to the linear height
 	 */
-	height = rtiled->surface.level[tiled_lvl].npix_y;
+	height = rtiled->surface.level[tiled_lvl].nblk_y;
 	base = rtiled->surface.level[tiled_lvl].offset;
 	addr = rlinear->surface.level[linear_lvl].offset;
 	addr += rlinear->surface.level[linear_lvl].slice_size * linear_z;
@@ -302,7 +302,7 @@ void si_dma_copy(struct pipe_context *ctx,
 		dst_offset += rdst->surface.level[dst_level].slice_size * dst_z;
 		dst_offset += dst_y * dst_pitch + dst_x * bpp;
 		si_dma_copy_buffer(sctx, dst, src, dst_offset, src_offset,
-			    src_box->height * src_pitch);
+				   copy_height * src_pitch);
 	} else {
 		si_dma_copy_tile(sctx, dst, dst_level, dst_x, dst_y, dst_z,
 				 src, src_level, src_x, src_y, src_box->z,
