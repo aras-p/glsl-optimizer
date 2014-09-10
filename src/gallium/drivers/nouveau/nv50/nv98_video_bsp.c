@@ -42,8 +42,8 @@ nv98_decoder_bsp(struct nouveau_vp3_decoder *dec, union pipe_desc desc,
    struct nouveau_pushbuf *push = dec->pushbuf[0];
    enum pipe_video_format codec = u_reduce_video_profile(dec->base.profile);
    uint32_t bsp_addr, comm_addr, inter_addr;
-   uint32_t slice_size, bucket_size, ring_size;
-   uint32_t caps;
+   uint32_t slice_size, bucket_size, ring_size, bsp_size;
+   uint32_t caps, i;
    int ret;
    struct nouveau_bo *bsp_bo = dec->bsp_bo[comm_seq % NOUVEAU_VP3_VIDEO_QDEPTH];
    struct nouveau_bo *inter_bo = dec->inter_bo[comm_seq & 1];
@@ -64,6 +64,41 @@ nv98_decoder_bsp(struct nouveau_vp3_decoder *dec, union pipe_desc desc,
 #if NOUVEAU_VP3_DEBUG_FENCE
    fence_extra = 4;
 #endif
+
+   bsp_size = NOUVEAU_VP3_BSP_RESERVED_SIZE;
+   for (i = 0; i < num_buffers; i++)
+      bsp_size += num_bytes[i];
+   bsp_size += 256; /* the 4 end markers */
+
+   if (!bsp_bo || bsp_size > bsp_bo->size) {
+      struct nouveau_bo *tmp_bo = NULL;
+
+      /* round up to the nearest mb */
+      bsp_size += (1 << 20) - 1;
+      bsp_size &= ~((1 << 20) - 1);
+
+      ret = nouveau_bo_new(dec->bitplane_bo->device, NOUVEAU_BO_VRAM, 0, bsp_size, NULL, &tmp_bo);
+      if (ret) {
+         debug_printf("reallocating bsp %u -> %u failed with %i\n",
+                      bsp_bo ? (unsigned)bsp_bo->size : 0, bsp_size, ret);
+         return -1;
+      }
+      nouveau_bo_ref(NULL, &bsp_bo);
+      bo_refs[0].bo = dec->bsp_bo[comm_seq % NOUVEAU_VP3_VIDEO_QDEPTH] = bsp_bo = tmp_bo;
+   }
+
+   if (!inter_bo || bsp_bo->size * 4 > inter_bo->size) {
+      struct nouveau_bo *tmp_bo = NULL;
+
+      ret = nouveau_bo_new(dec->bitplane_bo->device, NOUVEAU_BO_VRAM, 0, bsp_bo->size * 4, NULL, &tmp_bo);
+      if (ret) {
+         debug_printf("reallocating inter %u -> %u failed with %i\n",
+                      inter_bo ? (unsigned)inter_bo->size : 0, (unsigned)bsp_bo->size * 4, ret);
+         return -1;
+      }
+      nouveau_bo_ref(NULL, &inter_bo);
+      bo_refs[1].bo = dec->inter_bo[comm_seq & 1] = inter_bo = tmp_bo;
+   }
 
    ret = nouveau_bo_map(bsp_bo, NOUVEAU_BO_WR, dec->client);
    if (ret) {

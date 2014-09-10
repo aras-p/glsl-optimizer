@@ -173,16 +173,12 @@ nvc0_create_decoder(struct pipe_context *context,
       ret = nouveau_bo_new(screen->device, NOUVEAU_BO_VRAM,
                            0x100, 4 << 20, &cfg, &dec->inter_bo[0]);
    if (!ret) {
-      if (!kepler)
-         nouveau_bo_ref(dec->inter_bo[0], &dec->inter_bo[1]);
-      else
-         ret = nouveau_bo_new(screen->device, NOUVEAU_BO_VRAM,
-                              0x100, dec->inter_bo[0]->size, &cfg,
-                              &dec->inter_bo[1]);
+      ret = nouveau_bo_new(screen->device, NOUVEAU_BO_VRAM,
+                           0x100, dec->inter_bo[0]->size, &cfg,
+                           &dec->inter_bo[1]);
    }
    if (ret)
       goto fail;
-
    switch (u_reduce_video_profile(templ->profile)) {
    case PIPE_VIDEO_FORMAT_MPEG12: {
       codec = 1;

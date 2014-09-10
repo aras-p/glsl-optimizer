@@ -39,6 +39,8 @@ struct nouveau_vp3_video_buffer {
 #define VP_OFFSET 0x200
 #define COMM_OFFSET 0x500
 
+#define NOUVEAU_VP3_BSP_RESERVED_SIZE 0x700
+
 #define NOUVEAU_VP3_DEBUG_FENCE 0
 
 #if NOUVEAU_VP3_DEBUG_FENCE
