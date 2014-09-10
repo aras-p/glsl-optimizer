@@ -1505,8 +1505,8 @@ ilo_3d_pipeline_emit_write_statistics_gen6(struct ilo_3d_pipeline *p,
       GEN6_REG_CL_INVOCATION_COUNT,
       GEN6_REG_CL_PRIMITIVES_COUNT,
       GEN6_REG_PS_INVOCATION_COUNT,
-      p->dev->gen >= ILO_GEN(7) ? GEN6_REG_HS_INVOCATION_COUNT : 0,
-      p->dev->gen >= ILO_GEN(7) ? GEN6_REG_DS_INVOCATION_COUNT : 0,
+      p->dev->gen >= ILO_GEN(7) ? GEN7_REG_HS_INVOCATION_COUNT : 0,
+      p->dev->gen >= ILO_GEN(7) ? GEN7_REG_DS_INVOCATION_COUNT : 0,
       0,
    };
    int i;

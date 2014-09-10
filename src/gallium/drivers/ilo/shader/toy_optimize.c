@@ -55,7 +55,7 @@ eliminate_dead_code(struct toy_compiler *tc)
          if (tdst_is_null(inst->dst) || !inst->dst.writemask) {
             /* math is always GEN6_COND_NORMAL */
             if ((inst->opcode == GEN6_OPCODE_MATH ||
-                 inst->cond_modifier == GEN6_COND_NORMAL) &&
+                 inst->cond_modifier == GEN6_COND_NONE) &&
                 !inst->acc_wr_ctrl)
                tc_discard_inst(tc, inst);
          }

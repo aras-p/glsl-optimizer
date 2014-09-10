@@ -45,7 +45,7 @@ toy_compiler_lower_to_send(struct toy_compiler *tc, struct toy_inst *inst,
    /* thread control is reserved */
    assert(inst->thread_ctrl == 0);
 
-   assert(inst->cond_modifier == GEN6_COND_NORMAL);
+   assert(inst->cond_modifier == GEN6_COND_NONE);
    inst->cond_modifier = sfid;
 }
 
@@ -98,7 +98,7 @@ toy_compiler_lower_math(struct toy_compiler *tc, struct toy_inst *inst)
    }
 
    /* FC[0:3] */
-   assert(inst->cond_modifier == GEN6_COND_NORMAL);
+   assert(inst->cond_modifier == GEN6_COND_NONE);
    inst->cond_modifier = math_op_to_func(inst->opcode);
    /* FC[4:5] */
    assert(inst->thread_ctrl == 0);
@@ -567,7 +567,7 @@ toy_compiler_legalize_for_asm(struct toy_compiler *tc)
          break;
       case GEN6_OPCODE_IF:
          if (tc->dev->gen >= ILO_GEN(7) &&
-             inst->cond_modifier != GEN6_COND_NORMAL) {
+             inst->cond_modifier != GEN6_COND_NONE) {
             struct toy_inst *inst2;
 
             inst2 = tc_duplicate_inst(tc, inst);
@@ -579,7 +579,7 @@ toy_compiler_legalize_for_asm(struct toy_compiler *tc)
             inst2->dst = tdst_null();
             inst2->src[0] = tsrc_null();
             inst2->src[1] = tsrc_null();
-            inst2->cond_modifier = GEN6_COND_NORMAL;
+            inst2->cond_modifier = GEN6_COND_NONE;
             inst2->pred_ctrl = GEN6_PREDCTRL_NORMAL;
 
             pc++;

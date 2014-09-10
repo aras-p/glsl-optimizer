@@ -111,7 +111,7 @@ aos_simple(struct toy_compiler *tc,
 {
    struct toy_inst *inst;
    int opcode;
-   int cond_modifier = GEN6_COND_NORMAL;
+   int cond_modifier = GEN6_COND_NONE;
    int num_dst = tgsi_inst->Instruction.NumDstRegs;
    int num_src = tgsi_inst->Instruction.NumSrcRegs;
    int i;
@@ -284,7 +284,7 @@ aos_compare(struct toy_compiler *tc,
    }
 
    tc_CMP(tc, tdst_null(), src[0], zero, GEN6_COND_L);
-   inst = tc_SEL(tc, dst[0], src[1], src[2], GEN6_COND_NORMAL);
+   inst = tc_SEL(tc, dst[0], src[1], src[2], GEN6_COND_NONE);
    inst->pred_ctrl = GEN6_PREDCTRL_NORMAL;
 }
 
@@ -579,7 +579,7 @@ aos_CND(struct toy_compiler *tc,
    assert(!"CND untested");
 
    tc_CMP(tc, tdst_null(), src[2], tsrc_imm_f(0.5f), GEN6_COND_G);
-   inst = tc_SEL(tc, dst[0], src[0], src[1], GEN6_COND_NORMAL);
+   inst = tc_SEL(tc, dst[0], src[0], src[1], GEN6_COND_NONE);
    inst->pred_ctrl = GEN6_PREDCTRL_NORMAL;
 }
 

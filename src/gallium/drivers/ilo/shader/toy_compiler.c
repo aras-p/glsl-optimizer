@@ -407,7 +407,7 @@ get_cond_modifier_name(unsigned opcode, unsigned cond_modifier)
       break;
    default:
       switch (cond_modifier) {
-      case GEN6_COND_NORMAL:                return NULL;
+      case GEN6_COND_NONE:                return NULL;
       case GEN6_COND_Z:                   return "z";
       case GEN6_COND_NZ:                  return "nz";
       case GEN6_COND_G:                   return "g";
@@ -515,7 +515,7 @@ tc_init_inst_templ(struct toy_compiler *tc)
    templ->pred_ctrl = GEN6_PREDCTRL_NONE;
    templ->pred_inv = false;
    templ->exec_size = GEN6_EXECSIZE_1;
-   templ->cond_modifier = GEN6_COND_NORMAL;
+   templ->cond_modifier = GEN6_COND_NONE;
    templ->acc_wr_ctrl = false;
    templ->saturate = false;
 
