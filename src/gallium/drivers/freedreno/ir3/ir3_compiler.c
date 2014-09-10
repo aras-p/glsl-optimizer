@@ -1411,20 +1411,24 @@ trans_cmp(const struct instr_translater *t,
 
 	switch (t->tgsi_opc) {
 	case TGSI_OPCODE_SEQ:
-	case TGSI_OPCODE_FSEQ:
 	case TGSI_OPCODE_SGE:
-	case TGSI_OPCODE_FSGE:
 	case TGSI_OPCODE_SLE:
 	case TGSI_OPCODE_SNE:
-	case TGSI_OPCODE_FSNE:
 	case TGSI_OPCODE_SGT:
 	case TGSI_OPCODE_SLT:
-	case TGSI_OPCODE_FSLT:
 		/* cov.u16f16 dst, tmp0 */
 		instr = instr_create(ctx, 1, 0);
 		instr->cat1.src_type = get_utype(ctx);
 		instr->cat1.dst_type = get_ftype(ctx);
 		vectorize(ctx, instr, dst, 1, tmp_src, 0);
+		break;
+	case TGSI_OPCODE_FSEQ:
+	case TGSI_OPCODE_FSGE:
+	case TGSI_OPCODE_FSNE:
+	case TGSI_OPCODE_FSLT:
+		/* absneg.s dst, (neg)tmp0 */
+		instr = instr_create(ctx, 2, OPC_ABSNEG_S);
+		vectorize(ctx, instr, dst, 1, tmp_src, IR3_REG_NEGATE);
 		break;
 	case TGSI_OPCODE_CMP:
 		a1 = &inst->Src[1].Register;
