@@ -529,6 +529,10 @@ def generate(env):
         else:
             env['_LIBFLAGS'] = '-Wl,--start-group ' + env['_LIBFLAGS'] + ' -Wl,--end-group'
         if env['platform'] == 'windows':
+            linkflags += [
+                '-Wl,--nxcompat', # DEP
+                '-Wl,--dynamicbase', # ASLR
+            ]
             # Avoid depending on gcc runtime DLLs
             linkflags += ['-static-libgcc']
             if 'w64' in env['CC'].split('-'):
@@ -547,8 +551,8 @@ def generate(env):
         linkflags += [
             '/fixed:no',
             '/incremental:no',
-            '/dynamicbase',
-            '/nxcompat',
+            '/dynamicbase', # ASLR
+            '/nxcompat', # DEP
         ]
     env.Append(LINKFLAGS = linkflags)
     env.Append(SHLINKFLAGS = shlinkflags)
