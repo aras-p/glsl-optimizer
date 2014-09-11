@@ -1477,9 +1477,6 @@ trans_cmp(const struct instr_translater *t,
  * USLT(a,b) = (a < b) ? ~0 : 0
  *   cmps.u32.lt dst, a, b
  *
- * UCMP(a,b,c) = (a < 0) ? b : c
- *   cmps.u32.lt tmp0, a, {0}
- *   sel.b16 dst, b, tmp0, c
  */
 static void
 trans_icmp(const struct instr_translater *t,
@@ -1488,8 +1485,9 @@ trans_icmp(const struct instr_translater *t,
 {
 	struct ir3_instruction *instr;
 	struct tgsi_dst_register *dst = get_dst(ctx, inst);
-	struct tgsi_src_register constval0;
-	struct tgsi_src_register *a0, *a1, *a2;
+	struct tgsi_dst_register tmp_dst;
+	struct tgsi_src_register *tmp_src;
+	struct tgsi_src_register *a0, *a1;
 	unsigned condition;
 
 	a0 = &inst->Src[0].Register;  /* a */
@@ -1510,12 +1508,6 @@ trans_icmp(const struct instr_translater *t,
 	case TGSI_OPCODE_USLT:
 		condition = IR3_COND_LT;
 		break;
-	case TGSI_OPCODE_UCMP:
-		get_immediate(ctx, &constval0, 0);
-		a0 = &inst->Src[0].Register;  /* a */
-		a1 = &constval0;              /* {0} */
-		condition = IR3_COND_LT;
-		break;
 
 	default:
 		compile_assert(ctx, 0);
@@ -1525,35 +1517,45 @@ trans_icmp(const struct instr_translater *t,
 	if (is_const(a0) && is_const(a1))
 		a0 = get_unconst(ctx, a0);
 
-	if (t->tgsi_opc == TGSI_OPCODE_UCMP) {
-		struct tgsi_dst_register tmp_dst;
-		struct tgsi_src_register *tmp_src;
-		tmp_src = get_internal_temp(ctx, &tmp_dst);
-		/* cmps.u32.lt tmp, a0, a1 */
-		instr = instr_create(ctx, 2, t->opc);
-		instr->cat2.condition = condition;
-		vectorize(ctx, instr, &tmp_dst, 2, a0, 0, a1, 0);
+	tmp_src = get_internal_temp(ctx, &tmp_dst);
+	/* cmps.{u32,s32}.<cond> tmp, a0, a1 */
+	instr = instr_create(ctx, 2, t->opc);
+	instr->cat2.condition = condition;
+	vectorize(ctx, instr, &tmp_dst, 2, a0, 0, a1, 0);
 
-		a1 = &inst->Src[1].Register;
-		a2 = &inst->Src[2].Register;
-		/* sel.{b32,b16} dst, src2, tmp, src1 */
-		instr = instr_create(ctx, 3, OPC_SEL_B32);
-		vectorize(ctx, instr, dst, 3, a1, 0, tmp_src, 0, a2, 0);
-	} else {
-		struct tgsi_dst_register tmp_dst;
-		struct tgsi_src_register *tmp_src;
-		tmp_src = get_internal_temp(ctx, &tmp_dst);
-		/* cmps.{u32,s32}.<cond> tmp, a0, a1 */
-		instr = instr_create(ctx, 2, t->opc);
-		instr->cat2.condition = condition;
-		vectorize(ctx, instr, &tmp_dst, 2, a0, 0, a1, 0);
+	/* absneg.s dst, (neg)tmp */
+	instr = instr_create(ctx, 2, OPC_ABSNEG_S);
+	vectorize(ctx, instr, dst, 1, tmp_src, IR3_REG_NEGATE);
 
-		/* absneg.s dst, (neg)tmp */
-		instr = instr_create(ctx, 2, OPC_ABSNEG_S);
-		vectorize(ctx, instr, dst, 1, tmp_src, IR3_REG_NEGATE);
-	}
 	put_dst(ctx, inst, dst);
 }
+
+/*
+ * UCMP(a,b,c) = a ? b : c
+ *   sel.b16 dst, b, a, c
+ */
+static void
+trans_ucmp(const struct instr_translater *t,
+		struct ir3_compile_context *ctx,
+		struct tgsi_full_instruction *inst)
+{
+	struct ir3_instruction *instr;
+	struct tgsi_dst_register *dst = get_dst(ctx, inst);
+	struct tgsi_src_register *a0, *a1, *a2;
+
+	a0 = &inst->Src[0].Register;  /* a */
+	a1 = &inst->Src[1].Register;  /* b */
+	a2 = &inst->Src[2].Register;  /* c */
+
+	if (is_rel_or_const(a0))
+		a0 = get_unconst(ctx, a0);
+
+	/* sel.{b32,b16} dst, b, a, c */
+	instr = instr_create(ctx, 3, OPC_SEL_B32);
+	vectorize(ctx, instr, dst, 3, a1, 0, a0, 0, a2, 0);
+	put_dst(ctx, inst, dst);
+}
+
 
 /*
  * Conditional / Flow control
@@ -2114,7 +2116,7 @@ static const struct instr_translater translaters[TGSI_OPCODE_LAST] = {
 	INSTR(USGE,         trans_icmp, .opc = OPC_CMPS_U),
 	INSTR(ISLT,         trans_icmp, .opc = OPC_CMPS_S),
 	INSTR(USLT,         trans_icmp, .opc = OPC_CMPS_U),
-	INSTR(UCMP,         trans_icmp, .opc = OPC_CMPS_U),
+	INSTR(UCMP,         trans_ucmp),
 	INSTR(IF,           trans_if,   .opc = OPC_CMPS_F),
 	INSTR(UIF,          trans_if,   .opc = OPC_CMPS_U),
 	INSTR(ELSE,         trans_else),
