@@ -162,6 +162,16 @@ offset(fs_reg reg, unsigned delta)
    return reg;
 }
 
+static inline fs_reg
+component(fs_reg reg, unsigned idx)
+{
+   assert(reg.subreg_offset == 0);
+   assert(idx < reg.width);
+   reg.subreg_offset = idx * type_sz(reg.type);
+   reg.width = 1;
+   return reg;
+}
+
 /**
  * Get either of the 8-component halves of a 16-component register.
  *
