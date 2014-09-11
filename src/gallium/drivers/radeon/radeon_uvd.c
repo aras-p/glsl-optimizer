@@ -819,7 +819,7 @@ struct pipe_video_codec *ruvd_create_decoder(struct pipe_context *context,
 		unsigned msg_fb_size = FB_BUFFER_OFFSET + FB_BUFFER_SIZE;
 		STATIC_ASSERT(sizeof(struct ruvd_msg) <= FB_BUFFER_OFFSET);
 		if (!rvid_create_buffer(dec->screen, &dec->msg_fb_buffers[i],
-					msg_fb_size, PIPE_USAGE_DEFAULT)) {
+					msg_fb_size, PIPE_USAGE_STAGING)) {
 			RVID_ERR("Can't allocated message buffers.\n");
 			goto error;
 		}
