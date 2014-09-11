@@ -2714,7 +2714,7 @@ brw_set_dp_untyped_atomic_message(struct brw_compile *p,
 void
 brw_untyped_atomic(struct brw_compile *p,
                    struct brw_reg dest,
-                   struct brw_reg mrf,
+                   struct brw_reg payload,
                    unsigned atomic_op,
                    unsigned bind_table_index,
                    unsigned msg_length,
@@ -2723,7 +2723,7 @@ brw_untyped_atomic(struct brw_compile *p,
    brw_inst *insn = brw_next_insn(p, BRW_OPCODE_SEND);
 
    brw_set_dest(p, insn, retype(dest, BRW_REGISTER_TYPE_UD));
-   brw_set_src0(p, insn, retype(mrf, BRW_REGISTER_TYPE_UD));
+   brw_set_src0(p, insn, retype(payload, BRW_REGISTER_TYPE_UD));
    brw_set_src1(p, insn, brw_imm_d(0));
    brw_set_dp_untyped_atomic_message(
       p, insn, atomic_op, bind_table_index, msg_length, response_length,

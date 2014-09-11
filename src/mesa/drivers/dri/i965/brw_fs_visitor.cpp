@@ -2729,46 +2729,53 @@ fs_visitor::emit_untyped_atomic(unsigned atomic_op, unsigned surf_index,
    bool uses_kill =
       (stage == MESA_SHADER_FRAGMENT) &&
       ((brw_wm_prog_data*) this->prog_data)->uses_kill;
-   const unsigned operand_len = dispatch_width / 8;
-   unsigned mlen = 0;
-   fs_inst *inst;
+   int reg_width = dispatch_width / 8;
+   int length = 0;
 
+   fs_reg *sources = ralloc_array(mem_ctx, fs_reg, 4);
+
+   sources[0] = fs_reg(GRF, virtual_grf_alloc(1), BRW_REGISTER_TYPE_UD);
    /* Initialize the sample mask in the message header. */
-   emit(MOV(brw_uvec_mrf(8, mlen, 0), fs_reg(0u)))
+   emit(MOV(sources[0], fs_reg(0u)))
       ->force_writemask_all = true;
 
    if (uses_kill) {
-      emit(MOV(brw_uvec_mrf(1, mlen, 7), brw_flag_reg(0, 1)))
+      emit(MOV(component(sources[0], 7), brw_flag_reg(0, 1)))
          ->force_writemask_all = true;
    } else {
-      emit(MOV(brw_uvec_mrf(1, mlen, 7),
+      emit(MOV(component(sources[0], 7),
                retype(brw_vec1_grf(1, 7), BRW_REGISTER_TYPE_UD)))
          ->force_writemask_all = true;
    }
-
-   mlen++;
+   length++;
 
    /* Set the atomic operation offset. */
-   emit(MOV(brw_uvec_mrf(dispatch_width, mlen, 0), offset));
-   mlen += operand_len;
+   sources[1] = fs_reg(this, glsl_type::uint_type);
+   emit(MOV(sources[1], offset));
+   length++;
 
    /* Set the atomic operation arguments. */
    if (src0.file != BAD_FILE) {
-      emit(MOV(brw_uvec_mrf(dispatch_width, mlen, 0), src0));
-      mlen += operand_len;
+      sources[length] = fs_reg(this, glsl_type::uint_type);
+      emit(MOV(sources[length], src0));
+      length++;
    }
 
    if (src1.file != BAD_FILE) {
-      emit(MOV(brw_uvec_mrf(dispatch_width, mlen, 0), src1));
-      mlen += operand_len;
+      sources[length] = fs_reg(this, glsl_type::uint_type);
+      emit(MOV(sources[length], src1));
+      length++;
    }
 
+   int mlen = 1 + (length - 1) * reg_width;
+   fs_reg src_payload = fs_reg(GRF, virtual_grf_alloc(mlen),
+                               BRW_REGISTER_TYPE_UD);
+   emit(LOAD_PAYLOAD(src_payload, sources, length));
+
    /* Emit the instruction. */
-   inst = emit(SHADER_OPCODE_UNTYPED_ATOMIC, dst,
-               fs_reg(atomic_op), fs_reg(surf_index));
-   inst->base_mrf = 0;
+   fs_inst *inst = emit(SHADER_OPCODE_UNTYPED_ATOMIC, dst, src_payload,
+                        fs_reg(atomic_op), fs_reg(surf_index));
    inst->mlen = mlen;
-   inst->header_present = true;
 }
 
 void

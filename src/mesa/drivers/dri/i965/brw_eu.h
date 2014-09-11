@@ -390,7 +390,7 @@ void brw_CMP(struct brw_compile *p,
 void
 brw_untyped_atomic(struct brw_compile *p,
                    struct brw_reg dest,
-                   struct brw_reg mrf,
+                   struct brw_reg payload,
                    unsigned atomic_op,
                    unsigned bind_table_index,
                    unsigned msg_length,

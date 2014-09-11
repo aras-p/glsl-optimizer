@@ -1472,6 +1472,7 @@ fs_generator::generate_shader_time_add(fs_inst *inst,
 
 void
 fs_generator::generate_untyped_atomic(fs_inst *inst, struct brw_reg dst,
+                                      struct brw_reg payload,
                                       struct brw_reg atomic_op,
                                       struct brw_reg surf_index)
 {
@@ -1480,9 +1481,8 @@ fs_generator::generate_untyped_atomic(fs_inst *inst, struct brw_reg dst,
           surf_index.file == BRW_IMMEDIATE_VALUE &&
 	  surf_index.type == BRW_REGISTER_TYPE_UD);
 
-   brw_untyped_atomic(p, dst, brw_message_reg(inst->base_mrf),
-                      atomic_op.dw1.ud, surf_index.dw1.ud,
-                      inst->mlen, dispatch_width / 8);
+   brw_untyped_atomic(p, dst, payload, atomic_op.dw1.ud, surf_index.dw1.ud,
+                      inst->mlen, inst->exec_size / 8);
 
    brw_mark_surface_used(prog_data, surf_index.dw1.ud);
 }
@@ -1898,7 +1898,7 @@ fs_generator::generate_code(const cfg_t *cfg)
          break;
 
       case SHADER_OPCODE_UNTYPED_ATOMIC:
-         generate_untyped_atomic(inst, dst, src[0], src[1]);
+         generate_untyped_atomic(inst, dst, src[0], src[1], src[2]);
          break;
 
       case SHADER_OPCODE_UNTYPED_SURFACE_READ:

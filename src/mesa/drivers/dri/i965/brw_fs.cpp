@@ -507,6 +507,7 @@ fs_inst::is_send_from_grf() const
    case FS_OPCODE_INTERPOLATE_AT_SAMPLE:
    case FS_OPCODE_INTERPOLATE_AT_SHARED_OFFSET:
    case FS_OPCODE_INTERPOLATE_AT_PER_SLOT_OFFSET:
+   case SHADER_OPCODE_UNTYPED_ATOMIC:
       return true;
    case FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD:
       return src[1].file == GRF;
@@ -912,6 +913,8 @@ int
 fs_inst::regs_read(fs_visitor *v, int arg) const
 {
    if (is_tex() && arg == 0 && src[0].file == GRF) {
+      return mlen;
+   } else if (opcode == SHADER_OPCODE_UNTYPED_ATOMIC && arg == 0) {
       return mlen;
    }
 
