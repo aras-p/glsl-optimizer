@@ -830,8 +830,8 @@ struct pipe_video_codec *ruvd_create_decoder(struct pipe_context *context,
 			goto error;
 		}
 
-		rvid_clear_buffer(dec->ws, dec->cs, &dec->msg_fb_buffers[i]);
-		rvid_clear_buffer(dec->ws, dec->cs, &dec->bs_buffers[i]);
+		rvid_clear_buffer(context, &dec->msg_fb_buffers[i]);
+		rvid_clear_buffer(context, &dec->bs_buffers[i]);
 	}
 
 	if (!rvid_create_buffer(dec->screen, &dec->dpb, dpb_size, PIPE_USAGE_DEFAULT)) {
@@ -839,7 +839,7 @@ struct pipe_video_codec *ruvd_create_decoder(struct pipe_context *context,
 		goto error;
 	}
 
-	rvid_clear_buffer(dec->ws, dec->cs, &dec->dpb);
+	rvid_clear_buffer(context, &dec->dpb);
 
 	map_msg_fb_buf(dec);
 	dec->msg->size = sizeof(*dec->msg);

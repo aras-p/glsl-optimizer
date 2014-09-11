@@ -118,14 +118,12 @@ error:
 }
 
 /* clear the buffer with zeros */
-void rvid_clear_buffer(struct radeon_winsys *ws, struct radeon_winsys_cs *cs, struct rvid_buffer* buffer)
+void rvid_clear_buffer(struct pipe_context *context, struct rvid_buffer* buffer)
 {
-	void *ptr = ws->buffer_map(buffer->res->cs_buf, cs, PIPE_TRANSFER_WRITE);
-	if (!ptr)
-		return;
+	struct r600_common_context *rctx = (struct r600_common_context*)context;
 
-	memset(ptr, 0, buffer->res->buf->size);
-	ws->buffer_unmap(buffer->res->cs_buf);
+	rctx->clear_buffer(context, &buffer->res->b.b, 0, buffer->res->buf->size, 0);
+	context->flush(context, NULL, 0);
 }
 
 /**

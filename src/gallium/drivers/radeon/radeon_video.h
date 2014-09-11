@@ -62,7 +62,7 @@ bool rvid_resize_buffer(struct pipe_screen *screen, struct radeon_winsys_cs *cs,
 			struct rvid_buffer *new_buf, unsigned new_size);
 
 /* clear the buffer with zeros */
-void rvid_clear_buffer(struct radeon_winsys *ws, struct radeon_winsys_cs *cs, struct rvid_buffer* buffer);
+void rvid_clear_buffer(struct pipe_context *context, struct rvid_buffer* buffer);
 
 /* join surfaces into the same buffer with identical tiling params
    sumup their sizes and replace the backend buffers with a single bo */
