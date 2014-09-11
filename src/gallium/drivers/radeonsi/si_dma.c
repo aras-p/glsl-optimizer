@@ -251,7 +251,9 @@ void si_dma_copy(struct pipe_context *ctx,
 	}
 
 	if (src->format != dst->format || src_box->depth > 1 ||
-	    rdst->dirty_level_mask != 0) {
+	    rdst->dirty_level_mask != 0 ||
+	    rdst->cmask.size || rdst->fmask.size ||
+	    rsrc->cmask.size || rsrc->fmask.size) {
 		goto fallback;
 	}
 
@@ -277,14 +279,20 @@ void si_dma_copy(struct pipe_context *ctx,
 	src_mode = src_mode == RADEON_SURF_MODE_LINEAR_ALIGNED ? RADEON_SURF_MODE_LINEAR : src_mode;
 	dst_mode = dst_mode == RADEON_SURF_MODE_LINEAR_ALIGNED ? RADEON_SURF_MODE_LINEAR : dst_mode;
 
-	if (src_pitch != dst_pitch || src_box->x || dst_x || src_w != dst_w) {
+	if (src_pitch != dst_pitch || src_box->x || dst_x || src_w != dst_w ||
+	    src_box->width != src_w ||
+	    src_box->height != rsrc->surface.level[src_level].npix_y ||
+	    src_box->height != rdst->surface.level[dst_level].npix_y ||
+	    rsrc->surface.level[src_level].nblk_y !=
+	    rdst->surface.level[dst_level].nblk_y) {
 		/* FIXME si can do partial blit */
 		goto fallback;
 	}
 	/* the x test here are currently useless (because we don't support partial blit)
 	 * but keep them around so we don't forget about those
 	 */
-	if ((src_pitch % 8) || (src_box->x % 8) || (dst_x % 8) || (src_box->y % 8) || (dst_y % 8)) {
+	if ((src_pitch % 8) || (src_box->x % 8) || (dst_x % 8) ||
+	    (src_box->y % 8) || (dst_y % 8) || (src_box->height % 8)) {
 		goto fallback;
 	}
 
