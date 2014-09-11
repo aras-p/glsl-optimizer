@@ -562,11 +562,18 @@ validate_vertex_shader_executable(struct gl_shader_program *prog,
     * All GLSL ES Versions are similar to GLSL 1.40--failing to write to
     * gl_Position is not an error.
     */
-   if (!prog->IsES && prog->Version < 140) {
+   if (prog->Version < (prog->IsES ? 300 : 140)) {
       find_assignment_visitor find("gl_Position");
       find.run(shader->ir);
       if (!find.variable_found()) {
-	 linker_error(prog, "vertex shader does not write to `gl_Position'\n");
+        if (prog->IsES) {
+          linker_warning(prog,
+                         "vertex shader does not write to `gl_Position'."
+                         "It's value is undefined. \n");
+        } else {
+          linker_error(prog,
+                       "vertex shader does not write to `gl_Position'. \n");
+        }
 	 return;
       }
    }
