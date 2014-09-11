@@ -115,6 +115,10 @@ struct ir3_compile_context {
 	 */
 	struct tgsi_dst_register tmp_dst;
 	struct tgsi_src_register *tmp_src;
+
+	/* just for catching incorrect use of get_dst()/put_dst():
+	 */
+	bool using_tmp_dst;
 };
 
 
@@ -167,6 +171,8 @@ compile_init(struct ir3_compile_context *ctx, struct ir3_shader_variant *so,
 	ctx->atomic = false;
 	ctx->frag_pos = NULL;
 	ctx->frag_face = NULL;
+	ctx->tmp_src = NULL;
+	ctx->using_tmp_dst = false;
 
 	memset(ctx->frag_coord, 0, sizeof(ctx->frag_coord));
 
@@ -897,6 +903,10 @@ get_dst(struct ir3_compile_context *ctx, struct tgsi_full_instruction *inst)
 {
 	struct tgsi_dst_register *dst = &inst->Dst[0].Register;
 	unsigned i;
+
+	compile_assert(ctx, !ctx->using_tmp_dst);
+	ctx->using_tmp_dst = true;
+
 	for (i = 0; i < inst->Instruction.NumSrcRegs; i++) {
 		struct tgsi_src_register *src = &inst->Src[i].Register;
 		if ((src->File == dst->File) && (src->Index == dst->Index)) {
@@ -919,6 +929,9 @@ static void
 put_dst(struct ir3_compile_context *ctx, struct tgsi_full_instruction *inst,
 		struct tgsi_dst_register *dst)
 {
+	compile_assert(ctx, ctx->using_tmp_dst);
+	ctx->using_tmp_dst = false;
+
 	/* if necessary, add mov back into original dst: */
 	if (dst != &inst->Dst[0].Register) {
 		create_mov(ctx, &inst->Dst[0].Register, ctx->tmp_src);
@@ -2523,6 +2536,8 @@ compile_instructions(struct ir3_compile_context *ctx)
 			if (t->fxn) {
 				t->fxn(t, ctx, inst);
 				ctx->num_internal_temps = 0;
+
+				compile_assert(ctx, !ctx->using_tmp_dst);
 			} else {
 				compile_error(ctx, "unknown TGSI opc: %s\n",
 						tgsi_get_opcode_name(opc));
