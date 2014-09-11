@@ -2785,34 +2785,37 @@ fs_visitor::emit_untyped_surface_read(unsigned surf_index, fs_reg dst,
    bool uses_kill =
       (stage == MESA_SHADER_FRAGMENT) &&
       ((brw_wm_prog_data*) this->prog_data)->uses_kill;
-   const unsigned operand_len = dispatch_width / 8;
-   unsigned mlen = 0;
-   fs_inst *inst;
+   int reg_width = dispatch_width / 8;
 
+   fs_reg *sources = ralloc_array(mem_ctx, fs_reg, 2);
+
+   sources[0] = fs_reg(GRF, virtual_grf_alloc(1), BRW_REGISTER_TYPE_UD);
    /* Initialize the sample mask in the message header. */
-   emit(MOV(brw_uvec_mrf(8, mlen, 0), fs_reg(0u)))
+   emit(MOV(sources[0], fs_reg(0u)))
       ->force_writemask_all = true;
 
    if (uses_kill) {
-      emit(MOV(brw_uvec_mrf(1, mlen, 7), brw_flag_reg(0, 1)))
+      emit(MOV(component(sources[0], 7), brw_flag_reg(0, 1)))
          ->force_writemask_all = true;
    } else {
-      emit(MOV(brw_uvec_mrf(1, mlen, 7),
+      emit(MOV(component(sources[0], 7),
                retype(brw_vec1_grf(1, 7), BRW_REGISTER_TYPE_UD)))
          ->force_writemask_all = true;
    }
 
-   mlen++;
-
    /* Set the surface read offset. */
-   emit(MOV(brw_uvec_mrf(dispatch_width, mlen, 0), offset));
-   mlen += operand_len;
+   sources[1] = fs_reg(this, glsl_type::uint_type);
+   emit(MOV(sources[1], offset));
+
+   int mlen = 1 + reg_width;
+   fs_reg src_payload = fs_reg(GRF, virtual_grf_alloc(mlen),
+                               BRW_REGISTER_TYPE_UD);
+   fs_inst *inst = emit(LOAD_PAYLOAD(src_payload, sources, 2));
 
    /* Emit the instruction. */
-   inst = emit(SHADER_OPCODE_UNTYPED_SURFACE_READ, dst, fs_reg(surf_index));
-   inst->base_mrf = 0;
+   inst = emit(SHADER_OPCODE_UNTYPED_SURFACE_READ, dst, src_payload,
+               fs_reg(surf_index));
    inst->mlen = mlen;
-   inst->header_present = true;
 }
 
 fs_inst *

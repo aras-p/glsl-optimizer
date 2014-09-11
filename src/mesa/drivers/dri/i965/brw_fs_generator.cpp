@@ -1489,14 +1489,15 @@ fs_generator::generate_untyped_atomic(fs_inst *inst, struct brw_reg dst,
 
 void
 fs_generator::generate_untyped_surface_read(fs_inst *inst, struct brw_reg dst,
+                                            struct brw_reg payload,
                                             struct brw_reg surf_index)
 {
    assert(surf_index.file == BRW_IMMEDIATE_VALUE &&
 	  surf_index.type == BRW_REGISTER_TYPE_UD);
 
-   brw_untyped_surface_read(p, dst, brw_message_reg(inst->base_mrf),
+   brw_untyped_surface_read(p, dst, payload,
                             surf_index.dw1.ud,
-                            inst->mlen, dispatch_width / 8);
+                            inst->mlen, inst->exec_size / 8);
 
    brw_mark_surface_used(prog_data, surf_index.dw1.ud);
 }
@@ -1902,7 +1903,7 @@ fs_generator::generate_code(const cfg_t *cfg)
          break;
 
       case SHADER_OPCODE_UNTYPED_SURFACE_READ:
-         generate_untyped_surface_read(inst, dst, src[0]);
+         generate_untyped_surface_read(inst, dst, src[0], src[1]);
          break;
 
       case FS_OPCODE_SET_SIMD4X2_OFFSET:
