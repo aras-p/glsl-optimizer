@@ -1915,6 +1915,53 @@ trans_cov(const struct instr_translater *t,
 }
 
 /*
+ * UMUL
+ *
+ * There is no 32-bit multiply instruction, so splitting a and b into high and
+ * low components, we get that
+ *
+ * dst = al * bl + ah * bl << 16 + al * bh << 16
+ *
+ *  mull.u tmp0, a, b (mul low, i.e. al * bl)
+ *  madsh.m16 tmp1, a, b, tmp0 (mul-add shift high mix, i.e. ah * bl << 16)
+ *  madsh.m16 dst, b, a, tmp1 (i.e. al * bh << 16)
+ */
+static void
+trans_umul(const struct instr_translater *t,
+		struct ir3_compile_context *ctx,
+		struct tgsi_full_instruction *inst)
+{
+	struct ir3_instruction *instr;
+	struct tgsi_dst_register *dst = get_dst(ctx, inst);
+	struct tgsi_src_register *a = &inst->Src[0].Register;
+	struct tgsi_src_register *b = &inst->Src[1].Register;
+
+	struct tgsi_dst_register tmp0_dst, tmp1_dst;
+	struct tgsi_src_register *tmp0_src, *tmp1_src;
+
+	tmp0_src = get_internal_temp(ctx, &tmp0_dst);
+	tmp1_src = get_internal_temp(ctx, &tmp1_dst);
+
+	if (is_rel_or_const(a))
+		a = get_unconst(ctx, a);
+	if (is_rel_or_const(b))
+		b = get_unconst(ctx, b);
+
+	/* mull.u tmp0, a, b */
+	instr = instr_create(ctx, 2, OPC_MULL_U);
+	vectorize(ctx, instr, &tmp0_dst, 2, a, 0, b, 0);
+
+	/* madsh.m16 tmp1, a, b, tmp0 */
+	instr = instr_create(ctx, 3, OPC_MADSH_M16);
+	vectorize(ctx, instr, &tmp1_dst, 3, a, 0, b, 0, tmp0_src, 0);
+
+	/* madsh.m16 dst, b, a, tmp1 */
+	instr = instr_create(ctx, 3, OPC_MADSH_M16);
+	vectorize(ctx, instr, dst, 3, b, 0, a, 0, tmp1_src, 0);
+	put_dst(ctx, inst, dst);
+}
+
+/*
  * Handlers for TGSI instructions which do have 1:1 mapping to native
  * instructions:
  */
@@ -2072,7 +2119,7 @@ static const struct instr_translater translaters[TGSI_OPCODE_LAST] = {
 	INSTR(OR,           instr_cat2, .opc = OPC_OR_B),
 	INSTR(NOT,          instr_cat2, .opc = OPC_NOT_B),
 	INSTR(XOR,          instr_cat2, .opc = OPC_XOR_B),
-	INSTR(UMUL,         instr_cat2, .opc = OPC_MUL_U),
+	INSTR(UMUL,         trans_umul),
 	INSTR(SHL,          instr_cat2, .opc = OPC_SHL_B),
 	INSTR(USHR,         instr_cat2, .opc = OPC_SHR_B),
 	INSTR(ISHR,         instr_cat2, .opc = OPC_ASHR_B),
