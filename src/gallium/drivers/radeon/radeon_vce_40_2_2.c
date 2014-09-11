@@ -41,6 +41,7 @@
 #include "vl/vl_video_buffer.h"
 
 #include "radeon/drm/radeon_winsys.h"
+#include "r600_pipe_common.h"
 #include "radeon_video.h"
 #include "radeon_vce.h"
 
@@ -94,7 +95,7 @@ static void task_info(struct rvce_encoder *enc, uint32_t taskOperation)
 static void feedback(struct rvce_encoder *enc)
 {
 	RVCE_BEGIN(0x05000005); // feedback buffer
-	RVCE_WRITE(enc->fb->cs_handle, enc->fb->domain); // feedbackRingAddressHi
+	RVCE_WRITE(enc->fb->res->cs_buf, enc->fb->res->domains); // feedbackRingAddressHi
 	RVCE_CS(0x00000000); // feedbackRingAddressLo
 	RVCE_CS(0x00000001); // feedbackRingSize
 	RVCE_END();
@@ -255,7 +256,7 @@ static void encode(struct rvce_encoder *enc)
 	task_info(enc, 0x00000003);
 
 	RVCE_BEGIN(0x05000001); // context buffer
-	RVCE_READWRITE(enc->cpb.cs_handle, enc->cpb.domain); // encodeContextAddressHi
+	RVCE_READWRITE(enc->cpb.res->cs_buf, enc->cpb.res->domains); // encodeContextAddressHi
 	RVCE_CS(0x00000000); // encodeContextAddressLo
 	RVCE_END();
 

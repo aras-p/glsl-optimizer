@@ -43,25 +43,22 @@
 /* video buffer representation */
 struct rvid_buffer
 {
-	enum radeon_bo_domain		domain;
-	enum radeon_bo_flag		flags;
-	struct pb_buffer*		buf;
-	struct radeon_winsys_cs_handle*	cs_handle;
+	unsigned		usage;
+	struct r600_resource	*res;
 };
 
 /* generate an stream handle */
 unsigned rvid_alloc_stream_handle(void);
 
 /* create a buffer in the winsys */
-bool rvid_create_buffer(struct radeon_winsys *ws, struct rvid_buffer *buffer,
-			unsigned size, enum radeon_bo_domain domain,
-			enum radeon_bo_flag flags);
+bool rvid_create_buffer(struct pipe_screen *screen, struct rvid_buffer *buffer,
+			unsigned size, unsigned usage);
 
 /* destroy a buffer */
 void rvid_destroy_buffer(struct rvid_buffer *buffer);
 
 /* reallocate a buffer, preserving its content */
-bool rvid_resize_buffer(struct radeon_winsys *ws, struct radeon_winsys_cs *cs,
+bool rvid_resize_buffer(struct pipe_screen *screen, struct radeon_winsys_cs *cs,
 			struct rvid_buffer *new_buf, unsigned new_size);
 
 /* clear the buffer with zeros */

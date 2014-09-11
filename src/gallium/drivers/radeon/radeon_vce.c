@@ -56,7 +56,7 @@ static void flush(struct rvce_encoder *enc)
 #if 0
 static void dump_feedback(struct rvce_encoder *enc, struct rvid_buffer *fb)
 {
-	uint32_t *ptr = enc->ws->buffer_map(fb->cs_handle, enc->cs, PIPE_TRANSFER_READ_WRITE);
+	uint32_t *ptr = enc->ws->buffer_map(fb->res->cs_buf, enc->cs, PIPE_TRANSFER_READ_WRITE);
 	unsigned i = 0;
 	fprintf(stderr, "\n");
 	fprintf(stderr, "encStatus:\t\t\t%08x\n", ptr[i++]);
@@ -75,7 +75,7 @@ static void dump_feedback(struct rvce_encoder *enc, struct rvid_buffer *fb)
 	fprintf(stderr, "seiPrivatePackageOffset:\t%08x\n", ptr[i++]);
 	fprintf(stderr, "seiPrivatePackageSize:\t\t%08x\n", ptr[i++]);
 	fprintf(stderr, "\n");
-	enc->ws->buffer_unmap(fb->cs_handle);
+	enc->ws->buffer_unmap(fb->res->cs_buf);
 }
 #endif
 
@@ -191,7 +191,7 @@ static void rvce_destroy(struct pipe_video_codec *encoder)
 	struct rvce_encoder *enc = (struct rvce_encoder*)encoder;
 	if (enc->stream_handle) {
 		struct rvid_buffer fb;
-		rvid_create_buffer(enc->ws, &fb, 512, RADEON_DOMAIN_GTT, 0);
+		rvid_create_buffer(enc->screen, &fb, 512, PIPE_USAGE_STAGING);
 		enc->fb = &fb;
 		enc->session(enc);
 		enc->feedback(enc);
@@ -233,7 +233,7 @@ static void rvce_begin_frame(struct pipe_video_codec *encoder,
 	if (!enc->stream_handle) {
 		struct rvid_buffer fb;
 		enc->stream_handle = rvid_alloc_stream_handle();
-		rvid_create_buffer(enc->ws, &fb, 512, RADEON_DOMAIN_GTT, 0);
+		rvid_create_buffer(enc->screen, &fb, 512, PIPE_USAGE_STAGING);
 		enc->fb = &fb;
 		enc->session(enc);
 		enc->create(enc);
@@ -265,7 +265,7 @@ static void rvce_encode_bitstream(struct pipe_video_codec *encoder,
 	enc->bs_size = destination->width0;
 
 	*fb = enc->fb = CALLOC_STRUCT(rvid_buffer);
-	if (!rvid_create_buffer(enc->ws, enc->fb, 512, RADEON_DOMAIN_GTT, 0)) {
+	if (!rvid_create_buffer(enc->screen, enc->fb, 512, PIPE_USAGE_STAGING)) {
 		RVID_ERR("Can't create feedback buffer.\n");
 		return;
 	}
@@ -300,7 +300,7 @@ static void rvce_get_feedback(struct pipe_video_codec *encoder,
 	struct rvid_buffer *fb = feedback;
 
 	if (size) {
-		uint32_t *ptr = enc->ws->buffer_map(fb->cs_handle, enc->cs, PIPE_TRANSFER_READ_WRITE);
+		uint32_t *ptr = enc->ws->buffer_map(fb->res->cs_buf, enc->cs, PIPE_TRANSFER_READ_WRITE);
 
 		if (ptr[1]) {
 			*size = ptr[4] - ptr[9];
@@ -308,7 +308,7 @@ static void rvce_get_feedback(struct pipe_video_codec *encoder,
 			*size = 0;
 		}
 
-		enc->ws->buffer_unmap(fb->cs_handle);
+		enc->ws->buffer_unmap(fb->res->cs_buf);
 	}
 	//dump_feedback(enc, fb);
 	rvid_destroy_buffer(fb);
@@ -363,6 +363,7 @@ struct pipe_video_codec *rvce_create_encoder(struct pipe_context *context,
 	enc->base.get_feedback = rvce_get_feedback;
 	enc->get_buffer = get_buffer;
 
+	enc->screen = context->screen;
 	enc->ws = ws;
 	enc->cs = ws->cs_create(ws, RING_VCE, rvce_cs_flush, enc, NULL);
 	if (!enc->cs) {
@@ -390,7 +391,7 @@ struct pipe_video_codec *rvce_create_encoder(struct pipe_context *context,
 	cpb_size = cpb_size * 3 / 2;
 	cpb_size = cpb_size * enc->cpb_num;
 	tmp_buf->destroy(tmp_buf);
-	if (!rvid_create_buffer(enc->ws, &enc->cpb, cpb_size, RADEON_DOMAIN_VRAM, 0)) {
+	if (!rvid_create_buffer(enc->screen, &enc->cpb, cpb_size, PIPE_USAGE_DEFAULT)) {
 		RVID_ERR("Can't create CPB buffer.\n");
 		goto error;
 	}

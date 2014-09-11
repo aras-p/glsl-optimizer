@@ -80,6 +80,7 @@ struct rvce_encoder {
 
 	unsigned			stream_handle;
 
+	struct pipe_screen		*screen;
 	struct radeon_winsys*		ws;
 	struct radeon_winsys_cs*	cs;
 
