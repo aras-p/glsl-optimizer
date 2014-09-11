@@ -224,14 +224,18 @@ vec4_visitor::opt_cse_local(bblock_t *block)
             /* Kill any AEB entries using registers that don't get reused any
              * more -- a sure sign they'll fail operands_match().
              */
-            int last_reg_use = MAX2(MAX2(virtual_grf_end[src->reg * 4 + 0],
-                                         virtual_grf_end[src->reg * 4 + 1]),
-                                    MAX2(virtual_grf_end[src->reg * 4 + 2],
-                                         virtual_grf_end[src->reg * 4 + 3]));
-            if (src->file == GRF && last_reg_use < ip) {
-               entry->remove();
-               ralloc_free(entry);
-               break;
+            if (src->file == GRF) {
+               assert((src->reg * 4 + 3) < (virtual_grf_count * 4));
+
+               int last_reg_use = MAX2(MAX2(virtual_grf_end[src->reg * 4 + 0],
+                                            virtual_grf_end[src->reg * 4 + 1]),
+                                       MAX2(virtual_grf_end[src->reg * 4 + 2],
+                                            virtual_grf_end[src->reg * 4 + 3]));
+               if (last_reg_use < ip) {
+                  entry->remove();
+                  ralloc_free(entry);
+                  break;
+               }
             }
          }
       }
