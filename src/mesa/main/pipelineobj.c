@@ -120,12 +120,12 @@ delete_pipelineobj_cb(GLuint id, void *data, void *userData)
 void
 _mesa_free_pipeline_data(struct gl_context *ctx)
 {
+   _mesa_reference_pipeline_object(ctx, &ctx->_Shader, NULL);
+
    _mesa_HashDeleteAll(ctx->Pipeline.Objects, delete_pipelineobj_cb, ctx);
    _mesa_DeleteHashTable(ctx->Pipeline.Objects);
 
-   _mesa_reference_pipeline_object(ctx, &ctx->_Shader, NULL);
    _mesa_delete_pipeline_object(ctx, ctx->Pipeline.Default);
-
 }
 
 /**
