@@ -642,16 +642,8 @@ _mesa_init_constants(struct gl_constants *consts, gl_api api)
    consts->MaxGeometryTotalOutputComponents = MAX_GEOMETRY_TOTAL_OUTPUT_COMPONENTS;
 
    /* Shading language version */
-   if (api == API_OPENGL_COMPAT || api == API_OPENGL_CORE) {
-      consts->GLSLVersion = 120;
-      _mesa_override_glsl_version(consts);
-   }
-   else if (api == API_OPENGLES2) {
-      consts->GLSLVersion = 100;
-   }
-   else if (api == API_OPENGLES) {
-      consts->GLSLVersion = 0; /* GLSL not supported */
-   }
+   consts->GLSLVersion = 120;
+   _mesa_override_glsl_version(consts);
 
    /* GL_ARB_framebuffer_object */
    consts->MaxSamples = 0;
