@@ -588,10 +588,10 @@ type_size(const struct glsl_type *type)
       }
       return size;
    case GLSL_TYPE_SAMPLER:
-      /* Samplers take up one slot in UNIFORMS[], but they're baked in
-       * at link time.
+      /* Samplers take up no register space, since they're baked in at
+       * link time.
        */
-      return 1;
+      return 0;
    case GLSL_TYPE_ATOMIC_UINT:
       return 0;
    case GLSL_TYPE_IMAGE:
