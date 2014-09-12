@@ -381,28 +381,5 @@ fd_gmem_render_tiles(struct pipe_context *pctx)
 	ctx->max_scissor.minx = ctx->max_scissor.miny = ~0;
 	ctx->max_scissor.maxx = ctx->max_scissor.maxy = 0;
 
-	/* Note that because the per-tile setup and mem2gmem/gmem2mem are emitted
-	 * after the draw/clear calls, but executed before, we need to preemptively
-	 * flag some state as dirty before the first draw/clear call.
-	 *
-	 * TODO maybe we need to mark all state as dirty to not worry about state
-	 * being clobbered by other contexts?
-	 */
-	ctx->dirty |= FD_DIRTY_ZSA |
-			FD_DIRTY_RASTERIZER |
-			FD_DIRTY_FRAMEBUFFER |
-			FD_DIRTY_SAMPLE_MASK |
-			FD_DIRTY_VIEWPORT |
-			FD_DIRTY_CONSTBUF |
-			FD_DIRTY_PROG |
-			FD_DIRTY_SCISSOR |
-			/* probably only needed if we need to mem2gmem on the next
-			 * draw..  but not sure if there is a good way to know?
-			 */
-			FD_DIRTY_VERTTEX |
-			FD_DIRTY_FRAGTEX |
-			FD_DIRTY_BLEND;
-
-	if (fd_mesa_debug & FD_DBG_DGMEM)
-		ctx->dirty = 0xffffffff;
+	ctx->dirty = ~0;
 }

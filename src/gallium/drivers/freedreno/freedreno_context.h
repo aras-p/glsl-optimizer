@@ -222,6 +222,14 @@ struct fd_context {
 	struct fd_ringbuffer *rings[8];
 	unsigned rings_idx;
 
+	/* NOTE: currently using a single ringbuffer for both draw and
+	 * tiling commands, we need to make sure we need to leave enough
+	 * room at the end to append the tiling commands when we flush.
+	 * 0x7000 dwords should be a couple times more than we ever need
+	 * so should be a nice concervative threshold.
+	 */
+#define FD_TILING_COMMANDS_DWORDS 0x7000
+
 	/* normal draw/clear cmds: */
 	struct fd_ringbuffer *ring;
 	struct fd_ringmarker *draw_start, *draw_end;

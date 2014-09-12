@@ -55,7 +55,7 @@ enum adreno_stencil_op fd_stencil_op(unsigned op);
 #define FD_DBG_MSGS     0x0001
 #define FD_DBG_DISASM   0x0002
 #define FD_DBG_DCLEAR   0x0004
-#define FD_DBG_DGMEM    0x0008
+#define FD_DBG_FLUSH    0x0008
 #define FD_DBG_DSCIS    0x0010
 #define FD_DBG_DIRECT   0x0020
 #define FD_DBG_DBYPASS  0x0040

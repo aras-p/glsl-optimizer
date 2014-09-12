@@ -172,7 +172,9 @@ fd_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
 	 * now we need to do this hack and trigger flush if we are running
 	 * low on remaining space for cmds:
 	 */
-	if ((ctx->ring->cur - ctx->ring->start) > ctx->ring->size/8)
+	if (((ctx->ring->cur - ctx->ring->start) >
+				(ctx->ring->size/4 - FD_TILING_COMMANDS_DWORDS)) ||
+			(fd_mesa_debug & FD_DBG_FLUSH))
 		fd_context_render(pctx);
 }
 

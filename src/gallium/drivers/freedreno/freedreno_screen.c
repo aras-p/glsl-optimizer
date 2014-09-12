@@ -60,7 +60,7 @@ static const struct debug_named_value debug_options[] = {
 		{"msgs",      FD_DBG_MSGS,   "Print debug messages"},
 		{"disasm",    FD_DBG_DISASM, "Dump TGSI and adreno shader disassembly"},
 		{"dclear",    FD_DBG_DCLEAR, "Mark all state dirty after clear"},
-		{"dgmem",     FD_DBG_DGMEM,  "Mark all state dirty after GMEM tile pass"},
+		{"flush",     FD_DBG_FLUSH,  "Force flush after every draw"},
 		{"dscis",     FD_DBG_DSCIS,  "Disable scissor optimization"},
 		{"direct",    FD_DBG_DIRECT, "Force inline (SS_DIRECT) state loads"},
 		{"dbypass",   FD_DBG_DBYPASS,"Disable GMEM bypass"},
