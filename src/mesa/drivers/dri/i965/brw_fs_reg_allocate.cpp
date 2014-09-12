@@ -113,6 +113,10 @@ brw_alloc_reg_set(struct intel_screen *screen, int reg_width)
       class_sizes[class_count++] = 8;
    }
 
+   memset(screen->wm_reg_sets[index].class_to_ra_reg_range, 0,
+          sizeof(screen->wm_reg_sets[index].class_to_ra_reg_range));
+   int *class_to_ra_reg_range = screen->wm_reg_sets[index].class_to_ra_reg_range;
+
    /* Compute the total number of registers across all classes. */
    int ra_reg_count = 0;
    for (int i = 0; i < class_count; i++) {
@@ -131,6 +135,14 @@ brw_alloc_reg_set(struct intel_screen *screen, int reg_width)
       } else {
          ra_reg_count += base_reg_count - (class_sizes[i] - 1);
       }
+      /* Mark the last register. We'll fill in the beginnings later. */
+      class_to_ra_reg_range[class_sizes[i]] = ra_reg_count;
+   }
+
+   /* Fill out the rest of the range markers */
+   for (int i = 1; i < 17; ++i) {
+      if (class_to_ra_reg_range[i] == 0)
+         class_to_ra_reg_range[i] = class_to_ra_reg_range[i-1];
    }
 
    uint8_t *ra_reg_to_grf = ralloc_array(screen, uint8_t, ra_reg_count);
@@ -505,8 +517,28 @@ fs_visitor::assign_regs(bool allow_spilling)
    }
 
    setup_payload_interference(g, payload_node_count, first_payload_node);
-   if (brw->gen >= 7)
+   if (brw->gen >= 7) {
       setup_mrf_hack_interference(g, first_mrf_hack_node);
+
+      foreach_block_and_inst(block, fs_inst, inst, cfg) {
+         /* When we do send-from-GRF for FB writes, we need to ensure that
+          * the last write instruction sends from a high register.  This is
+          * because the vertex fetcher wants to start filling the low
+          * payload registers while the pixel data port is still working on
+          * writing out the memory.  If we don't do this, we get rendering
+          * artifacts.
+          *
+          * We could just do "something high".  Instead, we just pick the
+          * highest register that works.
+          */
+         if (inst->opcode == FS_OPCODE_FB_WRITE && inst->eot) {
+            int size = virtual_grf_sizes[inst->src[0].reg];
+            int reg = screen->wm_reg_sets[rsi].class_to_ra_reg_range[size] - 1;
+            ra_set_node_reg(g, inst->src[0].reg, reg);
+            break;
+         }
+      }
+   }
 
    if (dispatch_width > 8) {
       /* In 16-wide dispatch we have an issue where a compressed

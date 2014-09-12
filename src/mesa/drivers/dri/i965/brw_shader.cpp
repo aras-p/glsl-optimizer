@@ -738,6 +738,7 @@ backend_instruction::has_side_effects() const
 {
    switch (opcode) {
    case SHADER_OPCODE_UNTYPED_ATOMIC:
+   case FS_OPCODE_FB_WRITE:
       return true;
    default:
       return false;

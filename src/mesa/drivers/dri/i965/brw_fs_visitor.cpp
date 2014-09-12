@@ -2967,20 +2967,24 @@ fs_visitor::emit_interpolation_setup_gen6()
    this->current_annotation = NULL;
 }
 
-void
-fs_visitor::emit_color_write(fs_reg color, int index, int first_color_mrf)
+int
+fs_visitor::setup_color_payload(fs_reg *dst, fs_reg color, unsigned components)
 {
-   assert(stage == MESA_SHADER_FRAGMENT);
    brw_wm_prog_key *key = (brw_wm_prog_key*) this->key;
-   int reg_width = dispatch_width / 8;
    fs_inst *inst;
-   fs_reg mrf;
 
-   /* If there's no color data to be written, skip it. */
-   if (color.file == BAD_FILE)
-      return;
+   if (color.file == BAD_FILE) {
+      return 4 * (dispatch_width / 8);
+   }
 
-   color = offset(color, index);
+   uint8_t colors_enabled;
+   if (components == 0) {
+      /* We want to write one component to the alpha channel */
+      colors_enabled = 0x8;
+   } else {
+      /* Enable the first components-many channels */
+      colors_enabled = (1 << components) - 1;
+   }
 
    if (dispatch_width == 8 || brw->gen >= 6) {
       /* SIMD8 write looks like:
@@ -2999,10 +3003,20 @@ fs_visitor::emit_color_write(fs_reg color, int index, int first_color_mrf)
        * m + 6: a0
        * m + 7: a1
        */
-      inst = emit(MOV(fs_reg(MRF, first_color_mrf + index * reg_width,
-                             color.type),
-                      color));
-      inst->saturate = key->clamp_fragment_color;
+      int len = 0;
+      for (unsigned i = 0; i < 4; ++i) {
+         if (colors_enabled & (1 << i)) {
+            dst[len] = fs_reg(GRF, virtual_grf_alloc(color.width / 8),
+                              color.type, color.width);
+            inst = emit(MOV(dst[len], offset(color, i)));
+            inst->saturate = key->clamp_fragment_color;
+         } else if (color.width == 16) {
+            /* We need two BAD_FILE slots for a 16-wide color */
+            len++;
+         }
+         len++;
+      }
+      return len;
    } else {
       /* pre-gen6 SIMD16 single source DP write looks like:
        * m + 0: r0
@@ -3014,26 +3028,19 @@ fs_visitor::emit_color_write(fs_reg color, int index, int first_color_mrf)
        * m + 6: b1
        * m + 7: a1
        */
-      if (brw->has_compr4) {
-	 /* By setting the high bit of the MRF register number, we
-	  * indicate that we want COMPR4 mode - instead of doing the
-	  * usual destination + 1 for the second half we get
-	  * destination + 4.
-	  */
-	 inst = emit(MOV(fs_reg(MRF, BRW_MRF_COMPR4 + first_color_mrf + index,
-                                color.type),
-                         color));
-	 inst->saturate = key->clamp_fragment_color;
-      } else {
-	 inst = emit(MOV(fs_reg(MRF, first_color_mrf + index, color.type),
-                         color));
-	 inst->saturate = key->clamp_fragment_color;
+      for (unsigned i = 0; i < 4; ++i) {
+         if (colors_enabled & (1 << i)) {
+            dst[i] = fs_reg(GRF, virtual_grf_alloc(1), color.type);
+            inst = emit(MOV(dst[i], half(offset(color, i), 0)));
+            inst->saturate = key->clamp_fragment_color;
 
-	 inst = emit(MOV(fs_reg(MRF, first_color_mrf + index + 4, color.type),
-                         half(color, 1)));
-	 inst->force_sechalf = true;
-	 inst->saturate = key->clamp_fragment_color;
+            dst[i + 4] = fs_reg(GRF, virtual_grf_alloc(1), color.type);
+            inst = emit(MOV(dst[i + 4], half(offset(color, i), 1)));
+            inst->saturate = key->clamp_fragment_color;
+            inst->force_sechalf = true;
+         }
       }
+      return 8;
    }
 }
 
@@ -3101,12 +3108,13 @@ fs_visitor::emit_single_fb_write(fs_reg color0, fs_reg color1,
 
    this->current_annotation = "FB write header";
    bool header_present = true;
+   int reg_size = dispatch_width / 8;
+
    /* We can potentially have a message length of up to 15, so we have to set
     * base_mrf to either 0 or 1 in order to fit in m0..m15.
     */
-   int base_mrf = 1;
-   int nr = base_mrf;
-   int reg_width = dispatch_width / 8;
+   fs_reg *sources = ralloc_array(mem_ctx, fs_reg, 15);
+   int length = 0;
 
    /* From the Sandy Bridge PRM, volume 4, page 198:
     *
@@ -3123,12 +3131,14 @@ fs_visitor::emit_single_fb_write(fs_reg color0, fs_reg color1,
    }
 
    if (header_present)
-      /* m2, m3 header */
-      nr += 2;
+      /* Allocate 2 registers for a header */
+      length += 2;
 
    if (payload.aa_dest_stencil_reg) {
-      emit(MOV(fs_reg(MRF, nr++),
+      sources[length] = fs_reg(GRF, virtual_grf_alloc(1));
+      emit(MOV(sources[length],
                fs_reg(brw_vec8_grf(payload.aa_dest_stencil_reg, 0))));
+      length++;
    }
 
    prog_data->uses_omask =
@@ -3136,9 +3146,13 @@ fs_visitor::emit_single_fb_write(fs_reg color0, fs_reg color1,
    if (prog_data->uses_omask) {
       this->current_annotation = "FB write oMask";
       assert(this->sample_mask.file != BAD_FILE);
-      /* Hand over gl_SampleMask. Only lower 16 bits are relevant. */
-      emit(FS_OPCODE_SET_OMASK, fs_reg(MRF, nr, BRW_REGISTER_TYPE_UW), this->sample_mask);
-      nr += 1;
+      /* Hand over gl_SampleMask. Only lower 16 bits are relevant.  Since
+       * it's unsinged single words, one vgrf is always 16-wide.
+       */
+      sources[length] = fs_reg(GRF, virtual_grf_alloc(1),
+                               BRW_REGISTER_TYPE_UW, 16);
+      emit(FS_OPCODE_SET_OMASK, sources[length], this->sample_mask);
+      length++;
    }
 
    if (color0.file == BAD_FILE) {
@@ -3146,28 +3160,20 @@ fs_visitor::emit_single_fb_write(fs_reg color0, fs_reg color1,
        * alpha out the pipeline to our null renderbuffer to support
        * alpha-testing, alpha-to-coverage, and so on.
        */
-      emit_color_write(this->outputs[0], 3, nr);
-      nr += 4 * reg_width;
+      length += setup_color_payload(sources + length, this->outputs[0], 0);
    } else if (color1.file == BAD_FILE) {
       if (src0_alpha.file != BAD_FILE) {
-         fs_inst *inst;
-         inst = emit(MOV(fs_reg(MRF, nr, src0_alpha.type), src0_alpha));
+         sources[length] = fs_reg(GRF, virtual_grf_alloc(reg_size),
+                                  src0_alpha.type, src0_alpha.width);
+         fs_inst *inst = emit(MOV(sources[length], src0_alpha));
          inst->saturate = key->clamp_fragment_color;
-         nr += reg_width;
+         length++;
       }
 
-      for (unsigned i = 0; i < components; i++)
-         emit_color_write(color0, i, nr);
-
-      nr += 4 * reg_width;
+      length += setup_color_payload(sources + length, color0, components);
    } else {
-      for (unsigned i = 0; i < components; i++)
-         emit_color_write(color0, i, nr);
-      nr += 4 * reg_width;
-
-      for (unsigned i = 0; i < components; i++)
-         emit_color_write(color1, i, nr);
-      nr += 4 * reg_width;
+      length += setup_color_payload(sources + length, color0, components);
+      length += setup_color_payload(sources + length, color1, components);
    }
 
    if (source_depth_to_render_target) {
@@ -3180,33 +3186,51 @@ fs_visitor::emit_single_fb_write(fs_reg color0, fs_reg color1,
 	 no16("Missing support for simd16 depth writes on gen6\n");
       }
 
+      sources[length] = fs_reg(this, glsl_type::float_type);
       if (prog->OutputsWritten & BITFIELD64_BIT(FRAG_RESULT_DEPTH)) {
 	 /* Hand over gl_FragDepth. */
 	 assert(this->frag_depth.file != BAD_FILE);
-	 emit(MOV(fs_reg(MRF, nr), this->frag_depth));
+	 emit(MOV(sources[length], this->frag_depth));
       } else {
 	 /* Pass through the payload depth. */
-	 emit(MOV(fs_reg(MRF, nr),
+	 emit(MOV(sources[length],
                   fs_reg(brw_vec8_grf(payload.source_depth_reg, 0))));
       }
-      nr += reg_width;
+      length++;
    }
 
    if (payload.dest_depth_reg) {
-      emit(MOV(fs_reg(MRF, nr),
+      sources[length] = fs_reg(this, glsl_type::float_type);
+      emit(MOV(sources[length],
                fs_reg(brw_vec8_grf(payload.dest_depth_reg, 0))));
-      nr += reg_width;
+      length++;
    }
 
-   fs_inst *inst = emit(FS_OPCODE_FB_WRITE);
-   inst->base_mrf = base_mrf;
-   inst->mlen = nr - base_mrf;
-   inst->header_present = header_present;
-   if ((brw->gen >= 8 || brw->is_haswell) && prog_data->uses_kill) {
-      inst->predicate = BRW_PREDICATE_NORMAL;
-      inst->flag_subreg = 1;
+   fs_inst *load;
+   fs_inst *write;
+   if (brw->gen >= 7) {
+      /* Send from the GRF */
+      fs_reg payload = fs_reg(GRF, -1, BRW_REGISTER_TYPE_F);
+      load = emit(LOAD_PAYLOAD(payload, sources, length));
+      payload.reg = virtual_grf_alloc(load->regs_written);
+      load->dst = payload;
+      write = emit(FS_OPCODE_FB_WRITE, reg_undef, payload);
+      write->base_mrf = -1;
+   } else {
+      /* Send from the MRF */
+      load = emit(LOAD_PAYLOAD(fs_reg(MRF, 1, BRW_REGISTER_TYPE_F),
+                               sources, length));
+      write = emit(FS_OPCODE_FB_WRITE);
+      write->base_mrf = 1;
    }
-   return inst;
+
+   write->mlen = load->regs_written;
+   write->header_present = header_present;
+   if ((brw->gen >= 8 || brw->is_haswell) && prog_data->uses_kill) {
+      write->predicate = BRW_PREDICATE_NORMAL;
+      write->flag_subreg = 1;
+   }
+   return write;
 }
 
 void

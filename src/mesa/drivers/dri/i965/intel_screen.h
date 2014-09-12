@@ -89,6 +89,16 @@ struct intel_screen
       int classes[16];
 
       /**
+       * Mapping from classes to ra_reg ranges.  Each of the per-size
+       * classes corresponds to a range of ra_reg nodes.  This array stores
+       * those ranges in the form of first ra_reg in each class and the
+       * total number of ra_reg elements in the last array element.  This
+       * way the range of the i'th class is given by:
+       * [ class_to_ra_reg_range[i], class_to_ra_reg_range[i+1] )
+       */
+      int class_to_ra_reg_range[17];
+
+      /**
        * Mapping for register-allocated objects in *regs to the first
        * GRF for that object.
        */
