@@ -261,7 +261,7 @@ ve_init_cso(const struct ilo_dev_info *dev,
    };
    int format;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7.5);
+   ILO_DEV_ASSERT(dev, 6, 7.5);
 
    switch (util_format_get_nr_components(state->src_format)) {
    case 1: comp[1] = GEN6_VFCOMP_STORE_0;
@@ -295,7 +295,7 @@ ilo_gpe_init_ve(const struct ilo_dev_info *dev,
 {
    unsigned i;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7.5);
+   ILO_DEV_ASSERT(dev, 6, 7.5);
 
    ve->count = num_states;
    ve->vb_count = 0;
@@ -335,7 +335,7 @@ ilo_gpe_init_vs_cso(const struct ilo_dev_info *dev,
    int start_grf, vue_read_len, max_threads;
    uint32_t dw2, dw4, dw5;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7.5);
+   ILO_DEV_ASSERT(dev, 6, 7.5);
 
    start_grf = ilo_shader_get_kernel_param(vs, ILO_KERNEL_URB_DATA_START_REG);
    vue_read_len = ilo_shader_get_kernel_param(vs, ILO_KERNEL_INPUT_COUNT);
@@ -412,7 +412,7 @@ ilo_gpe_init_gs_cso_gen6(const struct ilo_dev_info *dev,
    int start_grf, vue_read_len, max_threads;
    uint32_t dw2, dw4, dw5, dw6;
 
-   ILO_GPE_VALID_GEN(dev, 6, 6);
+   ILO_DEV_ASSERT(dev, 6, 6);
 
    if (ilo_shader_get_type(gs) == PIPE_SHADER_GEOMETRY) {
       start_grf = ilo_shader_get_kernel_param(gs,
@@ -513,7 +513,7 @@ ilo_gpe_init_rasterizer_clip(const struct ilo_dev_info *dev,
 {
    uint32_t dw1, dw2, dw3;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7.5);
+   ILO_DEV_ASSERT(dev, 6, 7.5);
 
    dw1 = GEN6_CLIP_DW1_STATISTICS;
 
@@ -603,7 +603,7 @@ ilo_gpe_init_rasterizer_sf(const struct ilo_dev_info *dev,
    int line_width, point_width;
    uint32_t dw1, dw2, dw3;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7.5);
+   ILO_DEV_ASSERT(dev, 6, 7.5);
 
    /*
     * Scale the constant term.  The minimum representable value used by the HW
@@ -808,7 +808,7 @@ ilo_gpe_init_rasterizer_wm_gen6(const struct ilo_dev_info *dev,
 {
    uint32_t dw5, dw6;
 
-   ILO_GPE_VALID_GEN(dev, 6, 6);
+   ILO_DEV_ASSERT(dev, 6, 6);
 
    /* only the FF unit states are set, as in GEN7 */
 
@@ -857,7 +857,7 @@ ilo_gpe_init_fs_cso_gen6(const struct ilo_dev_info *dev,
    int start_grf, input_count, interps, max_threads;
    uint32_t dw2, dw4, dw5, dw6;
 
-   ILO_GPE_VALID_GEN(dev, 6, 6);
+   ILO_DEV_ASSERT(dev, 6, 6);
 
    start_grf = ilo_shader_get_kernel_param(fs, ILO_KERNEL_URB_DATA_START_REG);
    input_count = ilo_shader_get_kernel_param(fs, ILO_KERNEL_INPUT_COUNT);
@@ -963,7 +963,7 @@ static void
 zs_init_info_null(const struct ilo_dev_info *dev,
                   struct ilo_zs_surface_info *info)
 {
-   ILO_GPE_VALID_GEN(dev, 6, 7.5);
+   ILO_DEV_ASSERT(dev, 6, 7.5);
 
    memset(info, 0, sizeof(*info));
 
@@ -984,7 +984,7 @@ zs_init_info(const struct ilo_dev_info *dev,
 {
    bool separate_stencil;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7.5);
+   ILO_DEV_ASSERT(dev, 6, 7.5);
 
    memset(info, 0, sizeof(*info));
 
@@ -1141,7 +1141,7 @@ ilo_gpe_init_zs_surface(const struct ilo_dev_info *dev,
    struct ilo_zs_surface_info info;
    uint32_t dw1, dw2, dw3, dw4, dw5, dw6;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7.5);
+   ILO_DEV_ASSERT(dev, 6, 7.5);
 
    if (tex)
       zs_init_info(dev, tex, format, level, first_layer, num_layers, &info);
@@ -1356,7 +1356,7 @@ ilo_gpe_set_viewport_cso(const struct ilo_dev_info *dev,
    const float scale_z = fabs(state->scale[2]);
    int min_gbx, max_gbx, min_gby, max_gby;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7.5);
+   ILO_DEV_ASSERT(dev, 6, 7.5);
 
    viewport_get_guardband(dev,
          (int) state->translate[0],
@@ -1445,7 +1445,7 @@ ilo_gpe_init_blend(const struct ilo_dev_info *dev,
 {
    unsigned num_cso, i;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7.5);
+   ILO_DEV_ASSERT(dev, 6, 7.5);
 
    if (state->independent_blend_enable) {
       num_cso = Elements(blend->cso);
@@ -1543,7 +1543,7 @@ ilo_gpe_init_dsa(const struct ilo_dev_info *dev,
    const struct pipe_alpha_state *alpha = &state->alpha;
    uint32_t *dw;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7.5);
+   ILO_DEV_ASSERT(dev, 6, 7.5);
 
    STATIC_ASSERT(Elements(dsa->payload) >= 3);
    dw = dsa->payload;
@@ -1633,7 +1633,7 @@ ilo_gpe_set_scissor(const struct ilo_dev_info *dev,
 {
    unsigned i;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7.5);
+   ILO_DEV_ASSERT(dev, 6, 7.5);
 
    for (i = 0; i < num_states; i++) {
       uint16_t min_x, min_y, max_x, max_y;
@@ -1682,7 +1682,7 @@ ilo_gpe_init_view_surface_null_gen6(const struct ilo_dev_info *dev,
 {
    uint32_t *dw;
 
-   ILO_GPE_VALID_GEN(dev, 6, 6);
+   ILO_DEV_ASSERT(dev, 6, 6);
 
    assert(width >= 1 && height >= 1 && depth >= 1);
 
@@ -1744,7 +1744,7 @@ ilo_gpe_init_view_surface_for_buffer_gen6(const struct ilo_dev_info *dev,
    int surface_format, num_entries;
    uint32_t *dw;
 
-   ILO_GPE_VALID_GEN(dev, 6, 6);
+   ILO_DEV_ASSERT(dev, 6, 6);
 
    /*
     * For SURFTYPE_BUFFER, a SURFACE_STATE specifies an element of a
@@ -1839,7 +1839,7 @@ ilo_gpe_init_view_surface_for_texture_gen6(const struct ilo_dev_info *dev,
    int width, height, depth, pitch, lod;
    uint32_t *dw;
 
-   ILO_GPE_VALID_GEN(dev, 6, 6);
+   ILO_DEV_ASSERT(dev, 6, 6);
 
    surface_type = ilo_gpe_gen6_translate_texture(tex->base.target);
    assert(surface_type != GEN6_SURFTYPE_BUFFER);
@@ -1999,7 +1999,7 @@ sampler_init_border_color_gen6(const struct ilo_dev_info *dev,
       color->f[0], color->f[1], color->f[2], color->f[3],
    };
 
-   ILO_GPE_VALID_GEN(dev, 6, 6);
+   ILO_DEV_ASSERT(dev, 6, 6);
 
    assert(num_dwords >= 12);
 
@@ -2068,7 +2068,7 @@ ilo_gpe_init_sampler_cso(const struct ilo_dev_info *dev,
    bool clamp_is_to_edge;
    uint32_t dw0, dw1, dw3;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7.5);
+   ILO_DEV_ASSERT(dev, 6, 7.5);
 
    memset(sampler, 0, sizeof(*sampler));
 
@@ -2356,7 +2356,7 @@ ilo_gpe_set_fb(const struct ilo_dev_info *dev,
    const struct pipe_surface *first;
    unsigned first_idx;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7.5);
+   ILO_DEV_ASSERT(dev, 6, 7.5);
 
    util_copy_framebuffer_state(&fb->state, state);
 

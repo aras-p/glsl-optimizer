@@ -49,6 +49,9 @@
 #define ILO_DEBUG_HOT 0
 #endif
 
+#define ILO_DEV_ASSERT(dev, min_gen, max_gen) \
+   ilo_dev_assert(dev, ILO_GEN(min_gen), ILO_GEN(max_gen))
+
 enum ilo_debug {
    ILO_DEBUG_3D        = 1 << 0,
    ILO_DEBUG_VS        = 1 << 1,
@@ -89,6 +92,12 @@ static inline int
 ilo_dev_gen(const struct ilo_dev_info *dev)
 {
    return dev->gen_opaque;
+}
+
+static inline void
+ilo_dev_assert(const struct ilo_dev_info *dev, int min_opqaue, int max_opqaue)
+{
+   assert(dev->gen_opaque >= min_opqaue && dev->gen_opaque <= max_opqaue);
 }
 
 /**

@@ -41,7 +41,7 @@ ilo_gpe_init_gs_cso_gen7(const struct ilo_dev_info *dev,
    int start_grf, vue_read_len, max_threads;
    uint32_t dw2, dw4, dw5;
 
-   ILO_GPE_VALID_GEN(dev, 7, 7.5);
+   ILO_DEV_ASSERT(dev, 7, 7.5);
 
    start_grf = ilo_shader_get_kernel_param(gs, ILO_KERNEL_URB_DATA_START_REG);
    vue_read_len = ilo_shader_get_kernel_param(gs, ILO_KERNEL_INPUT_COUNT);
@@ -85,7 +85,7 @@ ilo_gpe_init_rasterizer_wm_gen7(const struct ilo_dev_info *dev,
 {
    uint32_t dw1, dw2;
 
-   ILO_GPE_VALID_GEN(dev, 7, 7.5);
+   ILO_DEV_ASSERT(dev, 7, 7.5);
 
    dw1 = GEN7_WM_DW1_ZW_INTERP_PIXEL |
          GEN7_WM_DW1_AA_LINE_WIDTH_2_0 |
@@ -134,7 +134,7 @@ ilo_gpe_init_fs_cso_gen7(const struct ilo_dev_info *dev,
    uint32_t dw2, dw4, dw5;
    uint32_t wm_interps, wm_dw1;
 
-   ILO_GPE_VALID_GEN(dev, 7, 7.5);
+   ILO_DEV_ASSERT(dev, 7, 7.5);
 
    start_grf = ilo_shader_get_kernel_param(fs, ILO_KERNEL_URB_DATA_START_REG);
 
@@ -239,7 +239,7 @@ ilo_gpe_init_view_surface_null_gen7(const struct ilo_dev_info *dev,
 {
    uint32_t *dw;
 
-   ILO_GPE_VALID_GEN(dev, 7, 7.5);
+   ILO_DEV_ASSERT(dev, 7, 7.5);
 
    assert(width >= 1 && height >= 1 && depth >= 1);
 
@@ -314,7 +314,7 @@ ilo_gpe_init_view_surface_for_buffer_gen7(const struct ilo_dev_info *dev,
    int surface_type, surface_format, num_entries;
    uint32_t *dw;
 
-   ILO_GPE_VALID_GEN(dev, 7, 7.5);
+   ILO_DEV_ASSERT(dev, 7, 7.5);
 
    surface_type = (structured) ? GEN7_SURFTYPE_STRBUF : GEN6_SURFTYPE_BUFFER;
 
@@ -437,7 +437,7 @@ ilo_gpe_init_view_surface_for_texture_gen7(const struct ilo_dev_info *dev,
    int width, height, depth, pitch, lod;
    uint32_t *dw;
 
-   ILO_GPE_VALID_GEN(dev, 7, 7.5);
+   ILO_DEV_ASSERT(dev, 7, 7.5);
 
    surface_type = ilo_gpe_gen6_translate_texture(tex->base.target);
    assert(surface_type != GEN6_SURFTYPE_BUFFER);
