@@ -41,7 +41,6 @@
 #include "util/u_pointer.h"
 
 #define ILO_GEN(gen) ((int) (gen * 100))
-#define ILO_GEN_GET_MAJOR(gen) (gen / 100)
 
 /* enable debug flags affecting hot pathes only with debug builds */
 #ifdef DEBUG
