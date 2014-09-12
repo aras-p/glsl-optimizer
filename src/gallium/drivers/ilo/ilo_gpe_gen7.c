@@ -31,7 +31,8 @@
 #include "ilo_format.h"
 #include "ilo_resource.h"
 #include "ilo_shader.h"
-#include "ilo_gpe_gen7.h"
+#include "ilo_gpe_gen6.h"
+#include "ilo_gpe.h"
 
 void
 ilo_gpe_init_gs_cso_gen7(const struct ilo_dev_info *dev,

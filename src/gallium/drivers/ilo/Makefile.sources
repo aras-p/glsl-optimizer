@@ -16,6 +16,9 @@ C_SOURCES := \
 	ilo_blitter_rectlist.c \
 	ilo_builder.c \
 	ilo_builder.h \
+	ilo_blitter_3d.h \
+	ilo_blitter_3d_bottom.h \
+	ilo_blitter_3d_top.h \
 	ilo_blitter_blt.h \
 	ilo_builder_decode.c \
 	ilo_builder_media.h \
@@ -31,7 +34,6 @@ C_SOURCES := \
 	ilo_gpe_gen6.c \
 	ilo_gpe_gen6.h \
 	ilo_gpe_gen7.c \
-	ilo_gpe_gen7.h \
 	ilo_gpe.h \
 	ilo_gpgpu.c \
 	ilo_gpgpu.h \

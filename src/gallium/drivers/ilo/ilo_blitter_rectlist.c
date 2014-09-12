@@ -28,13 +28,13 @@
 #include "util/u_draw.h"
 #include "util/u_pack_color.h"
 
-#include "ilo_blitter.h"
 #include "ilo_3d.h"
 #include "ilo_3d_pipeline.h"
+#include "ilo_builder_3d_top.h" /* for ve_init_cso_with_components() */
+#include "ilo_gpe_gen6.h" /* for zs_align_surface() */
 #include "ilo_blit.h"
 #include "ilo_gpe.h"
-#include "ilo_gpe_gen6.h" /* for ve_init_cso_with_components and
-                             zs_align_surface */
+#include "ilo_blitter.h"
 
 /**
  * Set the states that are invariant between all ops.
