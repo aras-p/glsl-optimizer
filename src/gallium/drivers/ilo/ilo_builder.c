@@ -25,8 +25,8 @@
  *    Chia-I Wu <olv@lunarg.com>
  */
 
-#include "genhw/genhw.h"
 #include "ilo_builder.h"
+#include "ilo_builder_render.h" /* for ilo_builder_batch_patch_sba() */
 
 enum ilo_builder_writer_flags {
    /*
@@ -386,19 +386,6 @@ ilo_builder_begin(struct ilo_builder *builder)
    return true;
 }
 
-static void
-ilo_builder_batch_patch_sba(struct ilo_builder *builder)
-{
-   const struct ilo_builder_writer *inst =
-      &builder->writers[ILO_BUILDER_WRITER_INSTRUCTION];
-
-   if (!builder->sba_instruction_pos)
-      return;
-
-   ilo_builder_batch_reloc(builder, builder->sba_instruction_pos,
-         inst->bo, 1, 0);
-}
-
 /**
  * Unmap BOs and make sure the written data landed the BOs.  The batch buffer
  * ready for submission is returned.
@@ -494,47 +481,4 @@ ilo_builder_batch_restore(struct ilo_builder *builder,
    writer->used = snapshot->used;
    writer->stolen = snapshot->stolen;
    writer->item_used = snapshot->item_used;
-}
-
-/**
- * Add a STATE_BASE_ADDRESS to the batch buffer.
- */
-void
-ilo_builder_batch_state_base_address(struct ilo_builder *builder,
-                                     bool init_all)
-{
-   const uint8_t cmd_len = 10;
-   const struct ilo_builder_writer *bat =
-      &builder->writers[ILO_BUILDER_WRITER_BATCH];
-   unsigned pos;
-   uint32_t *dw;
-
-   pos = ilo_builder_batch_pointer(builder, cmd_len, &dw);
-
-   dw[0] = GEN6_RENDER_CMD(COMMON, STATE_BASE_ADDRESS) | (cmd_len - 2);
-   dw[1] = init_all;
-
-   ilo_builder_batch_reloc(builder, pos + 2, bat->bo, 1, 0);
-   ilo_builder_batch_reloc(builder, pos + 3, bat->bo, 1, 0);
-
-   dw[4] = init_all;
-
-   /*
-    * Since the instruction writer has WRITER_FLAG_APPEND set, it is tempting
-    * not to set Instruction Base Address.  The problem is that we do not know
-    * if the bo has been or will be moved by the kernel.  We need a relocation
-    * entry because of that.
-    *
-    * And since we also set WRITER_FLAG_GROW, we have to wait until
-    * ilo_builder_end(), when the final bo is known, to add the relocation
-    * entry.
-    */
-   ilo_builder_batch_patch_sba(builder);
-   builder->sba_instruction_pos = pos + 5;
-
-   /* skip range checks */
-   dw[6] = init_all;
-   dw[7] = 0xfffff000 + init_all;
-   dw[8] = 0xfffff000 + init_all;
-   dw[9] = init_all;
 }

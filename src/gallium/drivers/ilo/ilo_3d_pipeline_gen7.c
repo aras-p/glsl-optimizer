@@ -29,6 +29,7 @@
 #include "util/u_dual_blend.h"
 
 #include "ilo_blitter.h"
+#include "ilo_builder_render.h"
 #include "ilo_context.h"
 #include "ilo_cp.h"
 #include "ilo_gpe_gen7.h"

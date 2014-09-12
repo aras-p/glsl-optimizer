@@ -482,8 +482,4 @@ void
 ilo_builder_batch_restore(struct ilo_builder *builder,
                           const struct ilo_builder_snapshot *snapshot);
 
-void
-ilo_builder_batch_state_base_address(struct ilo_builder *builder,
-                                     bool init_all);
-
 #endif /* ILO_BUILDER_H */
