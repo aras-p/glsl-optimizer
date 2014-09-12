@@ -1017,7 +1017,7 @@ disasm_printer_add_operand(struct disasm_printer *printer,
 
    name = disasm_inst_file(inst, operand, &multi_regs);
    if (!multi_regs) {
-      disasm_printer_add(printer, name);
+      disasm_printer_add(printer, "%s", name);
       return;
    }
 
