@@ -226,6 +226,13 @@ validate_uniform_parameters(struct gl_context *ctx,
       return NULL;
    }
 
+   /* Check that the given location is in bounds of uniform remap table. */
+   if (location >= (GLint) shProg->NumUniformRemapTable) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "%s(location=%d)",
+                  caller, location);
+      return NULL;
+   }
+
    /* Page 82 (page 96 of the PDF) of the OpenGL 2.1 spec says:
     *
     *     "If any of the following conditions occur, an INVALID_OPERATION
@@ -239,16 +246,9 @@ validate_uniform_parameters(struct gl_context *ctx,
     *         - if count is greater than one, and the uniform declared in the
     *           shader is not an array variable,
     */
-   if (location < -1) {
+   if (location < -1 || !shProg->UniformRemapTable[location]) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "%s(location=%d)",
                   caller, location);
-      return NULL;
-   }
-
-   /* Check that the given location is in bounds of uniform remap table. */
-   if (location >= (GLint) shProg->NumUniformRemapTable) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "%s(location=%d)",
-		  caller, location);
       return NULL;
    }
 
