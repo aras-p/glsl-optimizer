@@ -661,6 +661,8 @@ util_format_has_alpha(enum pipe_format format);
 boolean
 util_format_is_luminance(enum pipe_format format);
 
+boolean
+util_format_is_alpha(enum pipe_format format);
 
 boolean
 util_format_is_luminance_alpha(enum pipe_format format);
