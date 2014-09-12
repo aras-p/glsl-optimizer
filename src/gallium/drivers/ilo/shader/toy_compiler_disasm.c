@@ -32,8 +32,6 @@
 #define DISASM_PRINTER_BUFFER_SIZE 256
 #define DISASM_PRINTER_COLUMN_WIDTH 16
 
-#define READ(dw, field) (((dw) & field ## __MASK) >> field ## __SHIFT)
-
 struct disasm_printer {
    char buf[DISASM_PRINTER_BUFFER_SIZE];
    int len;
@@ -185,7 +183,7 @@ static const struct {
 static void
 disasm_inst_decode_dw0_gen6(struct disasm_inst *inst, uint32_t dw0)
 {
-   inst->opcode = READ(dw0, GEN6_INST_OPCODE);
+   inst->opcode = GEN_EXTRACT(dw0, GEN6_INST_OPCODE);
 
    switch (inst->opcode) {
    case GEN6_OPCODE_IF:
@@ -213,27 +211,27 @@ disasm_inst_decode_dw0_gen6(struct disasm_inst *inst, uint32_t dw0)
       break;
    }
 
-   inst->access_mode = READ(dw0, GEN6_INST_ACCESSMODE);
-   inst->mask_ctrl = READ(dw0, GEN6_INST_MASKCTRL);
-   inst->dep_ctrl = READ(dw0, GEN6_INST_DEPCTRL);
-   inst->qtr_ctrl = READ(dw0, GEN6_INST_QTRCTRL);
-   inst->thread_ctrl = READ(dw0, GEN6_INST_THREADCTRL);
-   inst->pred_ctrl = READ(dw0, GEN6_INST_PREDCTRL);
+   inst->access_mode = GEN_EXTRACT(dw0, GEN6_INST_ACCESSMODE);
+   inst->mask_ctrl = GEN_EXTRACT(dw0, GEN6_INST_MASKCTRL);
+   inst->dep_ctrl = GEN_EXTRACT(dw0, GEN6_INST_DEPCTRL);
+   inst->qtr_ctrl = GEN_EXTRACT(dw0, GEN6_INST_QTRCTRL);
+   inst->thread_ctrl = GEN_EXTRACT(dw0, GEN6_INST_THREADCTRL);
+   inst->pred_ctrl = GEN_EXTRACT(dw0, GEN6_INST_PREDCTRL);
 
    inst->pred_inv = (bool) (dw0 & GEN6_INST_PREDINV);
 
-   inst->exec_size = READ(dw0, GEN6_INST_EXECSIZE);
+   inst->exec_size = GEN_EXTRACT(dw0, GEN6_INST_EXECSIZE);
 
    switch (inst->opcode) {
    case GEN6_OPCODE_SEND:
    case GEN6_OPCODE_SENDC:
-      inst->sfid = READ(dw0, GEN6_INST_SFID);
+      inst->sfid = GEN_EXTRACT(dw0, GEN6_INST_SFID);
       break;
    case GEN6_OPCODE_MATH:
-      inst->fc = READ(dw0, GEN6_INST_FC);
+      inst->fc = GEN_EXTRACT(dw0, GEN6_INST_FC);
       break;
    default:
-      inst->cond_modifier = READ(dw0, GEN6_INST_CONDMODIFIER);
+      inst->cond_modifier = GEN_EXTRACT(dw0, GEN6_INST_CONDMODIFIER);
       break;
    }
 
@@ -252,12 +250,12 @@ disasm_inst_jip_in_dw1_high_gen6(const struct disasm_inst *inst)
 static void
 disasm_inst_decode_dw1_gen6(struct disasm_inst *inst, uint32_t dw1)
 {
-   inst->dst.base.file = READ(dw1, GEN6_INST_DST_FILE);
-   inst->dst.base.type = READ(dw1, GEN6_INST_DST_TYPE);
-   inst->src0.base.file = READ(dw1, GEN6_INST_SRC0_FILE);
-   inst->src0.base.type = READ(dw1, GEN6_INST_SRC0_TYPE);
-   inst->src1.base.file = READ(dw1, GEN6_INST_SRC1_FILE);
-   inst->src1.base.type = READ(dw1, GEN6_INST_SRC1_TYPE);
+   inst->dst.base.file = GEN_EXTRACT(dw1, GEN6_INST_DST_FILE);
+   inst->dst.base.type = GEN_EXTRACT(dw1, GEN6_INST_DST_TYPE);
+   inst->src0.base.file = GEN_EXTRACT(dw1, GEN6_INST_SRC0_FILE);
+   inst->src0.base.type = GEN_EXTRACT(dw1, GEN6_INST_SRC0_TYPE);
+   inst->src1.base.file = GEN_EXTRACT(dw1, GEN6_INST_SRC1_FILE);
+   inst->src1.base.type = GEN_EXTRACT(dw1, GEN6_INST_SRC1_TYPE);
 
    if (inst->dev->gen >= ILO_GEN(7))
       inst->nib_ctrl = (bool) (dw1 & GEN7_INST_NIBCTRL);
@@ -267,34 +265,36 @@ disasm_inst_decode_dw1_gen6(struct disasm_inst *inst, uint32_t dw1)
       return;
    }
 
-   inst->dst.base.addr_mode = READ(dw1, GEN6_INST_DST_ADDRMODE);
+   inst->dst.base.addr_mode = GEN_EXTRACT(dw1, GEN6_INST_DST_ADDRMODE);
 
    if (inst->dst.base.addr_mode == GEN6_ADDRMODE_DIRECT) {
-      inst->dst.base.reg = READ(dw1, GEN6_INST_DST_REG);
+      inst->dst.base.reg = GEN_EXTRACT(dw1, GEN6_INST_DST_REG);
 
       if (inst->access_mode == GEN6_ALIGN_1) {
-         inst->dst.base.subreg = READ(dw1, GEN6_INST_DST_SUBREG);
+         inst->dst.base.subreg = GEN_EXTRACT(dw1, GEN6_INST_DST_SUBREG);
       } else {
-         inst->dst.base.subreg = READ(dw1, GEN6_INST_DST_SUBREG_ALIGN16) <<
+         inst->dst.base.subreg =
+            GEN_EXTRACT(dw1, GEN6_INST_DST_SUBREG_ALIGN16) <<
             GEN6_INST_DST_SUBREG_ALIGN16__SHR;
       }
    } else {
-      inst->dst.base.addr_subreg = READ(dw1, GEN6_INST_DST_ADDR_SUBREG);
+      inst->dst.base.addr_subreg = GEN_EXTRACT(dw1, GEN6_INST_DST_ADDR_SUBREG);
 
       if (inst->access_mode == GEN6_ALIGN_1) {
-         inst->dst.base.addr_imm = READ(dw1, GEN6_INST_DST_ADDR_IMM);
+         inst->dst.base.addr_imm = GEN_EXTRACT(dw1, GEN6_INST_DST_ADDR_IMM);
       } else {
-         inst->dst.base.addr_imm = READ(dw1, GEN6_INST_DST_ADDR_IMM_ALIGN16) <<
+         inst->dst.base.addr_imm = GEN_EXTRACT(dw1,
+               GEN6_INST_DST_ADDR_IMM_ALIGN16) <<
             GEN6_INST_DST_ADDR_IMM_ALIGN16__SHR;
       }
    }
 
-   inst->dst.horz_stride = READ(dw1, GEN6_INST_DST_HORZSTRIDE);
+   inst->dst.horz_stride = GEN_EXTRACT(dw1, GEN6_INST_DST_HORZSTRIDE);
 
    if (inst->access_mode == GEN6_ALIGN_1)
       inst->dst.writemask = 0xf;
    else
-      inst->dst.writemask = READ(dw1, GEN6_INST_DST_WRITEMASK);
+      inst->dst.writemask = GEN_EXTRACT(dw1, GEN6_INST_DST_WRITEMASK);
 }
 
 static void
@@ -304,9 +304,9 @@ disasm_inst_decode_dw2_dw3_gen6(struct disasm_inst *inst,
    int count, i;
 
    if (inst->dev->gen >= ILO_GEN(7))
-      inst->flag_reg = READ(dw2, GEN7_INST_FLAG_REG);
+      inst->flag_reg = GEN_EXTRACT(dw2, GEN7_INST_FLAG_REG);
 
-   inst->flag_subreg = READ(dw2, GEN6_INST_FLAG_SUBREG);
+   inst->flag_subreg = GEN_EXTRACT(dw2, GEN6_INST_FLAG_SUBREG);
 
    if (inst->src0.base.file == GEN6_FILE_IMM ||
        inst->src1.base.file == GEN6_FILE_IMM) {
@@ -321,33 +321,34 @@ disasm_inst_decode_dw2_dw3_gen6(struct disasm_inst *inst,
       struct disasm_src_operand *src = (i == 0) ? &inst->src0 : &inst->src1;
       const uint32_t dw = (i == 0) ? dw2 : dw3;
 
-      src->base.addr_mode = READ(dw, GEN6_INST_SRC_ADDRMODE);
+      src->base.addr_mode = GEN_EXTRACT(dw, GEN6_INST_SRC_ADDRMODE);
 
       if (src->base.addr_mode == GEN6_ADDRMODE_DIRECT) {
-         src->base.reg = READ(dw, GEN6_INST_SRC_REG);
+         src->base.reg = GEN_EXTRACT(dw, GEN6_INST_SRC_REG);
 
          if (inst->access_mode == GEN6_ALIGN_1) {
-            src->base.subreg = READ(dw, GEN6_INST_SRC_SUBREG);
+            src->base.subreg = GEN_EXTRACT(dw, GEN6_INST_SRC_SUBREG);
          } else {
-            src->base.subreg = READ(dw, GEN6_INST_SRC_SUBREG_ALIGN16) <<
+            src->base.subreg = GEN_EXTRACT(dw, GEN6_INST_SRC_SUBREG_ALIGN16) <<
                GEN6_INST_SRC_SUBREG_ALIGN16__SHR;
          }
       } else {
-         src->base.addr_subreg = READ(dw, GEN6_INST_SRC_ADDR_SUBREG);
+         src->base.addr_subreg = GEN_EXTRACT(dw, GEN6_INST_SRC_ADDR_SUBREG);
 
          if (inst->access_mode == GEN6_ALIGN_1) {
-            src->base.addr_imm = READ(dw, GEN6_INST_SRC_ADDR_IMM);
+            src->base.addr_imm = GEN_EXTRACT(dw, GEN6_INST_SRC_ADDR_IMM);
          } else {
-            src->base.addr_imm = READ(dw, GEN6_INST_SRC_ADDR_IMM_ALIGN16) <<
+            src->base.addr_imm =
+               GEN_EXTRACT(dw, GEN6_INST_SRC_ADDR_IMM_ALIGN16) <<
                GEN6_INST_SRC_ADDR_IMM_ALIGN16__SHR;
          }
       }
 
-      src->vert_stride = READ(dw, GEN6_INST_SRC_VERTSTRIDE);
+      src->vert_stride = GEN_EXTRACT(dw, GEN6_INST_SRC_VERTSTRIDE);
 
       if (inst->access_mode == GEN6_ALIGN_1) {
-         src->width = READ(dw, GEN6_INST_SRC_WIDTH);
-         src->horz_stride = READ(dw, GEN6_INST_SRC_HORZSTRIDE);
+         src->width = GEN_EXTRACT(dw, GEN6_INST_SRC_WIDTH);
+         src->horz_stride = GEN_EXTRACT(dw, GEN6_INST_SRC_HORZSTRIDE);
 
          src->swizzle_x = GEN6_SWIZZLE_X;
          src->swizzle_y = GEN6_SWIZZLE_Y;
@@ -357,10 +358,10 @@ disasm_inst_decode_dw2_dw3_gen6(struct disasm_inst *inst,
          src->width = GEN6_WIDTH_4;
          src->horz_stride = GEN6_HORZSTRIDE_1;
 
-         src->swizzle_x = READ(dw, GEN6_INST_SRC_SWIZZLE_X);
-         src->swizzle_y = READ(dw, GEN6_INST_SRC_SWIZZLE_Y);
-         src->swizzle_z = READ(dw, GEN6_INST_SRC_SWIZZLE_Z);
-         src->swizzle_w = READ(dw, GEN6_INST_SRC_SWIZZLE_W);
+         src->swizzle_x = GEN_EXTRACT(dw, GEN6_INST_SRC_SWIZZLE_X);
+         src->swizzle_y = GEN_EXTRACT(dw, GEN6_INST_SRC_SWIZZLE_Y);
+         src->swizzle_z = GEN_EXTRACT(dw, GEN6_INST_SRC_SWIZZLE_Z);
+         src->swizzle_w = GEN_EXTRACT(dw, GEN6_INST_SRC_SWIZZLE_W);
       }
 
       src->negate = (bool) (dw & GEN6_INST_SRC_NEGATE);
@@ -378,17 +379,17 @@ disasm_inst_decode_3src_dw1_gen6(struct disasm_inst *inst, uint32_t dw1)
       [GEN7_TYPE_DF_3SRC]  = GEN7_TYPE_DF,
    };
 
-   inst->flag_subreg = READ(dw1, GEN6_3SRC_FLAG_SUBREG);
+   inst->flag_subreg = GEN_EXTRACT(dw1, GEN6_3SRC_FLAG_SUBREG);
 
    if (inst->dev->gen >= ILO_GEN(7)) {
       inst->nib_ctrl = (bool) (dw1 & GEN7_3SRC_NIBCTRL);
-      inst->flag_reg = READ(dw1, GEN7_3SRC_FLAG_REG);
+      inst->flag_reg = GEN_EXTRACT(dw1, GEN7_3SRC_FLAG_REG);
 
       inst->dst.base.file = GEN6_FILE_GRF;
-      inst->dst.base.type = READ(dw1, GEN7_3SRC_DST_TYPE);
+      inst->dst.base.type = GEN_EXTRACT(dw1, GEN7_3SRC_DST_TYPE);
       inst->dst.base.type = type_mapping[inst->dst.base.type];
 
-      inst->src0.base.type = READ(dw1, GEN7_3SRC_SRC_TYPE);
+      inst->src0.base.type = GEN_EXTRACT(dw1, GEN7_3SRC_SRC_TYPE);
       inst->src0.base.type = type_mapping[inst->src0.base.type];
 
       inst->src1.base.type = inst->src0.base.type;
@@ -404,12 +405,12 @@ disasm_inst_decode_3src_dw1_gen6(struct disasm_inst *inst, uint32_t dw1)
    }
 
    inst->dst.base.addr_mode = GEN6_ADDRMODE_DIRECT;
-   inst->dst.base.reg = READ(dw1, GEN6_3SRC_DST_REG);
-   inst->dst.base.subreg = READ(dw1, GEN6_3SRC_DST_SUBREG) <<
+   inst->dst.base.reg = GEN_EXTRACT(dw1, GEN6_3SRC_DST_REG);
+   inst->dst.base.subreg = GEN_EXTRACT(dw1, GEN6_3SRC_DST_SUBREG) <<
       GEN6_3SRC_DST_SUBREG__SHR;
 
    inst->dst.horz_stride = GEN6_HORZSTRIDE_1;
-   inst->dst.writemask = READ(dw1, GEN6_3SRC_DST_WRITEMASK);
+   inst->dst.writemask = GEN_EXTRACT(dw1, GEN6_3SRC_DST_WRITEMASK);
 
    inst->src0.base.file = GEN6_FILE_GRF;
    inst->src0.negate = (bool) (dw1 & GEN6_3SRC_SRC0_NEGATE);
@@ -433,13 +434,13 @@ disasm_inst_decode_3src_dw2_dw3_gen6(struct disasm_inst *inst,
       struct disasm_src_operand *src = (i == 0) ? &inst->src0 :
                                        (i == 1) ? &inst->src1 :
                                        &inst->u.src2;
-      const uint32_t dw = (i == 0) ? READ(qw, GEN6_3SRC_SRC_0) :
-                          (i == 1) ? READ(qw, GEN6_3SRC_SRC_1) :
-                          READ(qw, GEN6_3SRC_SRC_2);
+      const uint32_t dw = (i == 0) ? GEN_EXTRACT(qw, GEN6_3SRC_SRC_0) :
+                          (i == 1) ? GEN_EXTRACT(qw, GEN6_3SRC_SRC_1) :
+                          GEN_EXTRACT(qw, GEN6_3SRC_SRC_2);
 
       src->base.addr_mode = GEN6_ADDRMODE_DIRECT;
-      src->base.reg = READ(dw, GEN6_3SRC_SRC_REG);
-      src->base.subreg = READ(dw, GEN6_3SRC_SRC_SUBREG) <<
+      src->base.reg = GEN_EXTRACT(dw, GEN6_3SRC_SRC_REG);
+      src->base.subreg = GEN_EXTRACT(dw, GEN6_3SRC_SRC_SUBREG) <<
          GEN6_3SRC_SRC_SUBREG__SHR;
 
       if (dw & GEN6_3SRC_SRC_REPCTRL) {
@@ -452,10 +453,10 @@ disasm_inst_decode_3src_dw2_dw3_gen6(struct disasm_inst *inst,
          src->horz_stride = GEN6_HORZSTRIDE_1;
       }
 
-      src->swizzle_x = READ(dw, GEN6_3SRC_SRC_SWIZZLE_X);
-      src->swizzle_y = READ(dw, GEN6_3SRC_SRC_SWIZZLE_Y);
-      src->swizzle_z = READ(dw, GEN6_3SRC_SRC_SWIZZLE_Z);
-      src->swizzle_w = READ(dw, GEN6_3SRC_SRC_SWIZZLE_W);
+      src->swizzle_x = GEN_EXTRACT(dw, GEN6_3SRC_SRC_SWIZZLE_X);
+      src->swizzle_y = GEN_EXTRACT(dw, GEN6_3SRC_SRC_SWIZZLE_Y);
+      src->swizzle_z = GEN_EXTRACT(dw, GEN6_3SRC_SRC_SWIZZLE_Z);
+      src->swizzle_w = GEN_EXTRACT(dw, GEN6_3SRC_SRC_SWIZZLE_W);
    }
 }
 
@@ -1162,16 +1163,16 @@ disasm_printer_add_mdesc_sampler(struct disasm_printer *printer,
    int op, simd;
 
    if (inst->dev->gen >= ILO_GEN(7)) {
-      op = READ(mdesc, GEN7_MSG_SAMPLER_OP);
-      simd = READ(mdesc, GEN7_MSG_SAMPLER_SIMD);
+      op = GEN_EXTRACT(mdesc, GEN7_MSG_SAMPLER_OP);
+      simd = GEN_EXTRACT(mdesc, GEN7_MSG_SAMPLER_SIMD);
    } {
-      op = READ(mdesc, GEN6_MSG_SAMPLER_OP);
-      simd = READ(mdesc, GEN6_MSG_SAMPLER_SIMD);
+      op = GEN_EXTRACT(mdesc, GEN6_MSG_SAMPLER_OP);
+      simd = GEN_EXTRACT(mdesc, GEN6_MSG_SAMPLER_SIMD);
    }
 
    disasm_printer_add(printer, " (%d, %d, %d, %d)",
-         READ(mdesc, GEN6_MSG_SAMPLER_SURFACE),
-         READ(mdesc, GEN6_MSG_SAMPLER_INDEX),
+         GEN_EXTRACT(mdesc, GEN6_MSG_SAMPLER_SURFACE),
+         GEN_EXTRACT(mdesc, GEN6_MSG_SAMPLER_INDEX),
          op, simd);
 }
 
@@ -1185,7 +1186,7 @@ disasm_printer_add_mdesc_urb(struct disasm_printer *printer,
    bool interleaved, complete, allocate, used;
 
    if (inst->dev->gen >= ILO_GEN(7)) {
-      switch (READ(mdesc, GEN7_MSG_URB_OP)) {
+      switch (GEN_EXTRACT(mdesc, GEN7_MSG_URB_OP)) {
       case GEN7_MSG_URB_WRITE_HWORD:   op = "write HWord";  break;
       case GEN7_MSG_URB_WRITE_OWORD:   op = "write OWord";  break;
       case GEN7_MSG_URB_READ_HWORD:    op = "read HWord";   break;
@@ -1195,20 +1196,20 @@ disasm_printer_add_mdesc_urb(struct disasm_printer *printer,
       default:                         op = "BAD";          break;
       }
 
-      offset = READ(mdesc, GEN7_MSG_URB_GLOBAL_OFFSET);
+      offset = GEN_EXTRACT(mdesc, GEN7_MSG_URB_GLOBAL_OFFSET);
       interleaved = mdesc & GEN7_MSG_URB_INTERLEAVED;
       complete = mdesc & GEN7_MSG_URB_COMPLETE;
 
       allocate = false;
       used = false;
    } else {
-      switch (READ(mdesc, GEN6_MSG_URB_OP)) {
+      switch (GEN_EXTRACT(mdesc, GEN6_MSG_URB_OP)) {
       case GEN6_MSG_URB_WRITE:         op = "urb_write";    break;
       case GEN6_MSG_URB_FF_SYNC:       op = "ff_sync";      break;
       default:                         op = "BAD";          break;
       }
 
-      offset = READ(mdesc, GEN6_MSG_URB_OFFSET);
+      offset = GEN_EXTRACT(mdesc, GEN6_MSG_URB_OFFSET);
       interleaved = mdesc & GEN6_MSG_URB_INTERLEAVED;
       complete = mdesc & GEN6_MSG_URB_COMPLETE;
 
@@ -1229,13 +1230,13 @@ disasm_printer_add_mdesc_dp_sampler(struct disasm_printer *printer,
                                     uint32_t mdesc)
 {
    const int op = (inst->dev->gen >= ILO_GEN(7)) ?
-      READ(mdesc, GEN7_MSG_DP_OP) : READ(mdesc, GEN6_MSG_DP_OP);
+      GEN_EXTRACT(mdesc, GEN7_MSG_DP_OP) : GEN_EXTRACT(mdesc, GEN6_MSG_DP_OP);
    const bool write_commit = (inst->dev->gen == ILO_GEN(6)) ?
          (mdesc & GEN6_MSG_DP_SEND_WRITE_COMMIT) : 0;
 
    disasm_printer_add(printer, " (%d, %d, %d, %d)",
-         READ(mdesc, GEN6_MSG_DP_SURFACE),
-         READ(mdesc, GEN6_MSG_DP_OWORD_BLOCK_SIZE),
+         GEN_EXTRACT(mdesc, GEN6_MSG_DP_SURFACE),
+         GEN_EXTRACT(mdesc, GEN6_MSG_DP_OWORD_BLOCK_SIZE),
          op, write_commit);
 }
 
@@ -1245,7 +1246,7 @@ disasm_printer_add_mdesc_dp_rc(struct disasm_printer *printer,
                                uint32_t mdesc)
 {
    const int op = (inst->dev->gen >= ILO_GEN(7)) ?
-      READ(mdesc, GEN7_MSG_DP_OP) : READ(mdesc, GEN6_MSG_DP_OP);
+      GEN_EXTRACT(mdesc, GEN7_MSG_DP_OP) : GEN_EXTRACT(mdesc, GEN6_MSG_DP_OP);
    const char *str;
    bool is_rt_write;
 
@@ -1315,7 +1316,7 @@ disasm_printer_add_mdesc_dp_rc(struct disasm_printer *printer,
    }
 
    disasm_printer_add(printer, " Surface = %d",
-         READ(mdesc, GEN6_MSG_DP_SURFACE));
+         GEN_EXTRACT(mdesc, GEN6_MSG_DP_SURFACE));
 }
 
 static void
@@ -1352,8 +1353,8 @@ disasm_printer_add_mdesc(struct disasm_printer *printer,
    }
 
    disasm_printer_add(printer, " mlen %d rlen %d",
-         READ(mdesc, GEN6_MSG_MLEN),
-         READ(mdesc, GEN6_MSG_RLEN));
+         GEN_EXTRACT(mdesc, GEN6_MSG_MLEN),
+         GEN_EXTRACT(mdesc, GEN6_MSG_RLEN));
 }
 
 static void

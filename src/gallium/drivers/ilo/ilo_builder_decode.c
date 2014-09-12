@@ -32,8 +32,6 @@
 #include "intel_winsys.h"
 #include "ilo_builder.h"
 
-#define READ(dw, field) (((dw) & field ## __MASK) >> field ## __SHIFT)
-
 static const uint32_t *
 writer_pointer(const struct ilo_builder *builder,
                enum ilo_builder_writer_type which,
@@ -236,13 +234,13 @@ writer_decode_scissor_rect(const struct ilo_builder *builder,
 
       dw = writer_dw(builder, which, offset, 0, "SCISSOR%d", i);
       ilo_printf("xmin %d, ymin %d\n",
-            READ(dw, GEN6_SCISSOR_DW0_MIN_X),
-            READ(dw, GEN6_SCISSOR_DW0_MIN_Y));
+            GEN_EXTRACT(dw, GEN6_SCISSOR_DW0_MIN_X),
+            GEN_EXTRACT(dw, GEN6_SCISSOR_DW0_MIN_Y));
 
       dw = writer_dw(builder, which, offset, 1, "SCISSOR%d", i);
       ilo_printf("xmax %d, ymax %d\n",
-            READ(dw, GEN6_SCISSOR_DW1_MAX_X),
-            READ(dw, GEN6_SCISSOR_DW1_MAX_Y));
+            GEN_EXTRACT(dw, GEN6_SCISSOR_DW1_MAX_X),
+            GEN_EXTRACT(dw, GEN6_SCISSOR_DW1_MAX_Y));
 
       offset += state_size;
    }
@@ -281,10 +279,10 @@ writer_decode_color_calc(const struct ilo_builder *builder,
    dw = writer_dw(builder, which, item->offset, 0, "CC");
    ilo_printf("alpha test format %s, round disable %d, "
               "stencil ref %d, bf stencil ref %d\n",
-	      READ(dw, GEN6_CC_DW0_ALPHATEST) ? "FLOAT32" : "UNORM8",
+	      GEN_EXTRACT(dw, GEN6_CC_DW0_ALPHATEST) ? "FLOAT32" : "UNORM8",
 	      (bool) (dw & GEN6_CC_DW0_ROUND_DISABLE_DISABLE),
-	      READ(dw, GEN6_CC_DW0_STENCIL0_REF),
-	      READ(dw, GEN6_CC_DW0_STENCIL1_REF));
+	      GEN_EXTRACT(dw, GEN6_CC_DW0_STENCIL0_REF),
+	      GEN_EXTRACT(dw, GEN6_CC_DW0_STENCIL1_REF));
 
    writer_dw(builder, which, item->offset, 1, "CC\n");
 
@@ -311,18 +309,18 @@ writer_decode_depth_stencil(const struct ilo_builder *builder,
    dw = writer_dw(builder, which, item->offset, 0, "D_S");
    ilo_printf("stencil %sable, func %d, write %sable\n",
          (dw & GEN6_ZS_DW0_STENCIL_TEST_ENABLE) ? "en" : "dis",
-         READ(dw, GEN6_ZS_DW0_STENCIL0_FUNC),
+         GEN_EXTRACT(dw, GEN6_ZS_DW0_STENCIL0_FUNC),
          (dw & GEN6_ZS_DW0_STENCIL_WRITE_ENABLE) ? "en" : "dis");
 
    dw = writer_dw(builder, which, item->offset, 1, "D_S");
    ilo_printf("stencil test mask 0x%x, write mask 0x%x\n",
-         READ(dw, GEN6_ZS_DW1_STENCIL0_VALUEMASK),
-         READ(dw, GEN6_ZS_DW1_STENCIL0_WRITEMASK));
+         GEN_EXTRACT(dw, GEN6_ZS_DW1_STENCIL0_VALUEMASK),
+         GEN_EXTRACT(dw, GEN6_ZS_DW1_STENCIL0_WRITEMASK));
 
    dw = writer_dw(builder, which, item->offset, 2, "D_S");
    ilo_printf("depth test %sable, func %d, write %sable\n",
          (dw & GEN6_ZS_DW2_DEPTH_TEST_ENABLE) ? "en" : "dis",
-         READ(dw, GEN6_ZS_DW2_DEPTH_FUNC),
+         GEN_EXTRACT(dw, GEN6_ZS_DW2_DEPTH_FUNC),
          (dw & GEN6_ZS_DW2_DEPTH_WRITE_ENABLE) ? "en" : "dis");
 }
 
@@ -380,9 +378,9 @@ writer_decode_surface_gen7(const struct ilo_builder *builder,
 
    dw = writer_dw(builder, which, item->offset, 0, "SURF");
    ilo_printf("type 0x%x, format 0x%x, tiling %d, %s array\n",
-         READ(dw, GEN7_SURFACE_DW0_TYPE),
-         READ(dw, GEN7_SURFACE_DW0_FORMAT),
-         READ(dw, GEN7_SURFACE_DW0_TILING),
+         GEN_EXTRACT(dw, GEN7_SURFACE_DW0_TYPE),
+         GEN_EXTRACT(dw, GEN7_SURFACE_DW0_FORMAT),
+         GEN_EXTRACT(dw, GEN7_SURFACE_DW0_TILING),
          (dw & GEN7_SURFACE_DW0_IS_ARRAY) ? "is" : "not");
 
    writer_dw(builder, which, item->offset, 1, "SURF");
@@ -390,25 +388,25 @@ writer_decode_surface_gen7(const struct ilo_builder *builder,
 
    dw = writer_dw(builder, which, item->offset, 2, "SURF");
    ilo_printf("%dx%d size\n",
-         READ(dw, GEN7_SURFACE_DW2_WIDTH),
-         READ(dw, GEN7_SURFACE_DW2_HEIGHT));
+         GEN_EXTRACT(dw, GEN7_SURFACE_DW2_WIDTH),
+         GEN_EXTRACT(dw, GEN7_SURFACE_DW2_HEIGHT));
 
    dw = writer_dw(builder, which, item->offset, 3, "SURF");
    ilo_printf("depth %d, pitch %d\n",
-         READ(dw, GEN7_SURFACE_DW3_DEPTH),
-         READ(dw, GEN7_SURFACE_DW3_PITCH));
+         GEN_EXTRACT(dw, GEN7_SURFACE_DW3_DEPTH),
+         GEN_EXTRACT(dw, GEN7_SURFACE_DW3_PITCH));
 
    dw = writer_dw(builder, which, item->offset, 4, "SURF");
    ilo_printf("min array element %d, array extent %d\n",
-         READ(dw, GEN7_SURFACE_DW4_MIN_ARRAY_ELEMENT),
-         READ(dw, GEN7_SURFACE_DW4_RT_VIEW_EXTENT));
+         GEN_EXTRACT(dw, GEN7_SURFACE_DW4_MIN_ARRAY_ELEMENT),
+         GEN_EXTRACT(dw, GEN7_SURFACE_DW4_RT_VIEW_EXTENT));
 
    dw = writer_dw(builder, which, item->offset, 5, "SURF");
    ilo_printf("mip base %d, mips %d, x,y offset: %d,%d\n",
-         READ(dw, GEN7_SURFACE_DW5_MIN_LOD),
-         READ(dw, GEN7_SURFACE_DW5_MIP_COUNT_LOD),
-         READ(dw, GEN7_SURFACE_DW5_X_OFFSET),
-         READ(dw, GEN7_SURFACE_DW5_Y_OFFSET));
+         GEN_EXTRACT(dw, GEN7_SURFACE_DW5_MIN_LOD),
+         GEN_EXTRACT(dw, GEN7_SURFACE_DW5_MIP_COUNT_LOD),
+         GEN_EXTRACT(dw, GEN7_SURFACE_DW5_X_OFFSET),
+         GEN_EXTRACT(dw, GEN7_SURFACE_DW5_Y_OFFSET));
 
    writer_dw(builder, which, item->offset, 6, "SURF\n");
    writer_dw(builder, which, item->offset, 7, "SURF\n");
@@ -423,31 +421,31 @@ writer_decode_surface_gen6(const struct ilo_builder *builder,
 
    dw = writer_dw(builder, which, item->offset, 0, "SURF");
    ilo_printf("type 0x%x, format 0x%x\n",
-         READ(dw, GEN6_SURFACE_DW0_TYPE),
-         READ(dw, GEN6_SURFACE_DW0_FORMAT));
+         GEN_EXTRACT(dw, GEN6_SURFACE_DW0_TYPE),
+         GEN_EXTRACT(dw, GEN6_SURFACE_DW0_FORMAT));
 
    writer_dw(builder, which, item->offset, 1, "SURF");
    ilo_printf("offset\n");
 
    dw = writer_dw(builder, which, item->offset, 2, "SURF");
    ilo_printf("%dx%d size, %d mips\n",
-         READ(dw, GEN6_SURFACE_DW2_WIDTH),
-         READ(dw, GEN6_SURFACE_DW2_HEIGHT),
-         READ(dw, GEN6_SURFACE_DW2_MIP_COUNT_LOD));
+         GEN_EXTRACT(dw, GEN6_SURFACE_DW2_WIDTH),
+         GEN_EXTRACT(dw, GEN6_SURFACE_DW2_HEIGHT),
+         GEN_EXTRACT(dw, GEN6_SURFACE_DW2_MIP_COUNT_LOD));
 
    dw = writer_dw(builder, which, item->offset, 3, "SURF");
    ilo_printf("pitch %d, tiling %d\n",
-         READ(dw, GEN6_SURFACE_DW3_PITCH),
-         READ(dw, GEN6_SURFACE_DW3_TILING));
+         GEN_EXTRACT(dw, GEN6_SURFACE_DW3_PITCH),
+         GEN_EXTRACT(dw, GEN6_SURFACE_DW3_TILING));
 
    dw = writer_dw(builder, which, item->offset, 4, "SURF");
    ilo_printf("mip base %d\n",
-         READ(dw, GEN6_SURFACE_DW4_MIN_LOD));
+         GEN_EXTRACT(dw, GEN6_SURFACE_DW4_MIN_LOD));
 
    dw = writer_dw(builder, which, item->offset, 5, "SURF");
    ilo_printf("x,y offset: %d,%d\n",
-         READ(dw, GEN6_SURFACE_DW5_X_OFFSET),
-         READ(dw, GEN6_SURFACE_DW5_Y_OFFSET));
+         GEN_EXTRACT(dw, GEN6_SURFACE_DW5_X_OFFSET),
+         GEN_EXTRACT(dw, GEN6_SURFACE_DW5_Y_OFFSET));
 }
 
 static void

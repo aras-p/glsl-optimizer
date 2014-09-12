@@ -53,6 +53,18 @@
 #define GEN7_RENDER_CMD(subtype, op) GEN_RENDER_CMD(subtype, GEN7, op)
 #define GEN75_RENDER_CMD(subtype, op) GEN_RENDER_CMD(subtype, GEN75, op)
 
+#define GEN_EXTRACT(bits, field) (((bits) & field ## __MASK) >> field ## __SHIFT)
+#define GEN_SHIFT32(bits, field) gen_shift32(bits, field ## __MASK, field ## __SHIFT)
+
+static inline uint32_t
+gen_shift32(uint32_t bits, uint32_t mask, int shift)
+{
+   bits <<= shift;
+
+   assert((bits & mask) == bits);
+   return bits & mask;
+}
+
 static inline bool
 gen_is_snb(int devid)
 {
