@@ -407,7 +407,6 @@ get_max_samples_for_formats(struct pipe_screen *screen,
  * Some fine tuning may still be needed.
  */
 void st_init_extensions(struct pipe_screen *screen,
-                        gl_api api,
                         struct gl_constants *consts,
                         struct gl_extensions *extensions,
                         struct st_config_options *options,
@@ -844,17 +843,16 @@ void st_init_extensions(struct pipe_screen *screen,
          consts->DisableVaryingPacking = GL_TRUE;
    }
 
-   if (api == API_OPENGL_CORE) {
-      consts->MaxViewports = screen->get_param(screen, PIPE_CAP_MAX_VIEWPORTS);
-      if (consts->MaxViewports >= 16) {
-         consts->ViewportBounds.Min = -16384.0;
-         consts->ViewportBounds.Max = 16384.0;
-         extensions->ARB_viewport_array = GL_TRUE;
-         extensions->ARB_fragment_layer_viewport = GL_TRUE;
-         if (extensions->AMD_vertex_shader_layer)
-            extensions->AMD_vertex_shader_viewport_index = GL_TRUE;
-      }
+   consts->MaxViewports = screen->get_param(screen, PIPE_CAP_MAX_VIEWPORTS);
+   if (consts->MaxViewports >= 16) {
+      consts->ViewportBounds.Min = -16384.0;
+      consts->ViewportBounds.Max = 16384.0;
+      extensions->ARB_viewport_array = GL_TRUE;
+      extensions->ARB_fragment_layer_viewport = GL_TRUE;
+      if (extensions->AMD_vertex_shader_layer)
+         extensions->AMD_vertex_shader_viewport_index = GL_TRUE;
    }
+
    if (consts->MaxProgramTextureGatherComponents > 0)
       extensions->ARB_texture_gather = GL_TRUE;
 

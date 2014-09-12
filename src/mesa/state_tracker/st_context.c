@@ -242,7 +242,7 @@ st_create_context_priv( struct gl_context *ctx, struct pipe_context *pipe,
 
    /* GL limits and extensions */
    st_init_limits(st->pipe->screen, &ctx->Const, &ctx->Extensions);
-   st_init_extensions(st->pipe->screen, ctx->API, &ctx->Const,
+   st_init_extensions(st->pipe->screen, &ctx->Const,
                       &ctx->Extensions, &st->options, ctx->Mesa_DXTn);
 
    /* Enable shader-based fallbacks for ARB_color_buffer_float if needed. */
