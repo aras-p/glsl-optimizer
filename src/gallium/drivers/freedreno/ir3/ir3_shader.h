@@ -54,12 +54,24 @@ static inline uint16_t sem2idx(ir3_semantic sem)
  * in hw (two sided color), binning-pass vertex shader, etc.
  */
 struct ir3_shader_key {
-	/* vertex shader variant parameters: */
+	/*
+	 * Vertex shader variant parameters:
+	 */
 	unsigned binning_pass : 1;
 
-	/* fragment shader variant parameters: */
+	/*
+	 * Fragment shader variant parameters:
+	 */
 	unsigned color_two_side : 1;
 	unsigned half_precision : 1;
+	/* For rendering to alpha, we need a bit of special handling
+	 * since the hw always takes gl_FragColor starting from x
+	 * component, rather than figuring out to take the w component.
+	 * We could be more clever and generate variants for other
+	 * render target formats (ie. luminance formats are xxx1), but
+	 * let's start with this and see how it goes:
+	 */
+	unsigned alpha : 1;
 };
 
 struct ir3_shader_variant {

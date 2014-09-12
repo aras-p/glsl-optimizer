@@ -189,6 +189,7 @@ ir3_shader_variant(struct ir3_shader *shader, struct ir3_shader_key key)
 	if (shader->type == SHADER_VERTEX) {
 		key.color_two_side = false;
 		key.half_precision = false;
+		key.alpha = false;
 	}
 
 	for (v = shader->variants; v; v = v->next)

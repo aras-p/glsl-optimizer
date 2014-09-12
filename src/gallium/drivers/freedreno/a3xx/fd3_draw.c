@@ -30,6 +30,7 @@
 #include "util/u_string.h"
 #include "util/u_memory.h"
 #include "util/u_prim.h"
+#include "util/u_format.h"
 
 #include "freedreno_state.h"
 #include "freedreno_resource.h"
@@ -103,6 +104,7 @@ fd3_draw(struct fd_context *ctx, const struct pipe_draw_info *info)
 			/* do binning pass first: */
 			.binning_pass = true,
 			.color_two_side = ctx->rasterizer ? ctx->rasterizer->light_twoside : false,
+			.alpha = util_format_is_alpha(pipe_surface_format(ctx->framebuffer.cbufs[0])),
 			// TODO set .half_precision based on render target format,
 			// ie. float16 and smaller use half, float32 use full..
 			.half_precision = !!(fd_mesa_debug & FD_DBG_FRAGHALF),
