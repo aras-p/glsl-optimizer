@@ -121,46 +121,48 @@ ilo_blitter_blt_end(struct ilo_blitter *blitter, uint32_t swctrl)
 
 static bool
 buf_clear_region(struct ilo_blitter *blitter,
-                 struct ilo_buffer *dst,
-                 unsigned dst_offset, unsigned dst_size,
-                 uint32_t val,
+                 struct ilo_buffer *buf, unsigned offset,
+                 uint32_t val, unsigned size,
                  enum gen6_blt_mask value_mask,
                  enum gen6_blt_mask write_mask)
 {
    const uint8_t rop = 0xf0; /* PATCOPY */
    const int cpp = gen6_blt_translate_value_cpp(value_mask);
    struct ilo_context *ilo = blitter->ilo;
-   unsigned offset = 0;
+   struct gen6_blt_bo dst;
 
-   if (dst_offset % cpp || dst_size % cpp)
+   if (offset % cpp || size % cpp)
       return false;
 
+   dst.bo = buf->bo;
+   dst.offset = offset;
+
    ilo_blitter_blt_begin(blitter, 0,
-         dst->bo, INTEL_TILING_NONE, NULL, INTEL_TILING_NONE);
+         dst.bo, INTEL_TILING_NONE, NULL, INTEL_TILING_NONE);
 
-   while (dst_size) {
+   while (size) {
       unsigned width, height;
-      int16_t pitch;
 
-      width = dst_size;
+      width = size;
       height = 1;
-      pitch = 0;
 
       if (width > gen6_blt_max_bytes_per_scanline) {
          /* less than INT16_MAX and dword-aligned */
-         pitch = 32764;
-
-         width = pitch;
-         height = dst_size / width;
+         width = 32764;
+         height = size / width;
          if (height > gen6_blt_max_scanlines)
             height = gen6_blt_max_scanlines;
+
+         dst.pitch = width;
+      } else {
+         dst.pitch = 0;
       }
 
-      gen6_COLOR_BLT(&ilo->cp->builder, dst->bo, pitch, dst_offset + offset,
-            width, height, val, rop, value_mask, write_mask);
+      gen6_COLOR_BLT(&ilo->cp->builder, &dst, val,
+            width, height, rop, value_mask, write_mask);
 
-      offset += pitch * height;
-      dst_size -= width * height;
+      dst.offset += dst.pitch * height;
+      size -= width * height;
    }
 
    ilo_blitter_blt_end(blitter, 0);
@@ -170,42 +172,50 @@ buf_clear_region(struct ilo_blitter *blitter,
 
 static bool
 buf_copy_region(struct ilo_blitter *blitter,
-                struct ilo_buffer *dst, unsigned dst_offset,
-                struct ilo_buffer *src, unsigned src_offset,
+                struct ilo_buffer *dst_buf, unsigned dst_offset,
+                struct ilo_buffer *src_buf, unsigned src_offset,
                 unsigned size)
 {
    const uint8_t rop = 0xcc; /* SRCCOPY */
    struct ilo_context *ilo = blitter->ilo;
-   unsigned offset = 0;
+   struct gen6_blt_bo dst, src;
+
+   dst.bo = dst_buf->bo;
+   dst.offset = dst_offset;
+   dst.pitch = 0;
+
+   src.bo = src_buf->bo;
+   src.offset = src_offset;
+   src.pitch = 0;
 
    ilo_blitter_blt_begin(blitter, 0,
-         dst->bo, INTEL_TILING_NONE, src->bo, INTEL_TILING_NONE);
+         dst_buf->bo, INTEL_TILING_NONE, src_buf->bo, INTEL_TILING_NONE);
 
    while (size) {
       unsigned width, height;
-      int16_t pitch;
 
       width = size;
       height = 1;
-      pitch = 0;
 
       if (width > gen6_blt_max_bytes_per_scanline) {
          /* less than INT16_MAX and dword-aligned */
-         pitch = 32764;
-
-         width = pitch;
+         width = 32764;
          height = size / width;
          if (height > gen6_blt_max_scanlines)
             height = gen6_blt_max_scanlines;
+
+         dst.pitch = width;
+         src.pitch = width;
+      } else {
+         dst.pitch = 0;
+         src.pitch = 0;
       }
 
-      gen6_SRC_COPY_BLT(&ilo->cp->builder,
-            dst->bo, pitch, dst_offset + offset,
-            width, height,
-            src->bo, pitch, src_offset + offset,
-            false, rop, GEN6_BLT_MASK_8, GEN6_BLT_MASK_8);
+      gen6_SRC_COPY_BLT(&ilo->cp->builder, &dst, &src,
+            width, height, rop, GEN6_BLT_MASK_8, GEN6_BLT_MASK_8);
 
-      offset += pitch * height;
+      dst.offset += dst.pitch * height;
+      src.offset += src.pitch * height;
       size -= width * height;
    }
 
@@ -216,7 +226,7 @@ buf_copy_region(struct ilo_blitter *blitter,
 
 static bool
 tex_clear_region(struct ilo_blitter *blitter,
-                 struct ilo_texture *dst, unsigned dst_level,
+                 struct ilo_texture *dst_tex, unsigned dst_level,
                  const struct pipe_box *dst_box,
                  uint32_t val,
                  enum gen6_blt_mask value_mask,
@@ -226,37 +236,43 @@ tex_clear_region(struct ilo_blitter *blitter,
    const unsigned max_extent = 32767; /* INT16_MAX */
    const uint8_t rop = 0xf0; /* PATCOPY */
    struct ilo_context *ilo = blitter->ilo;
+   struct gen6_blt_xy_bo dst;
    uint32_t swctrl;
    int slice;
 
    /* no W-tiling support */
-   if (dst->separate_s8)
+   if (dst_tex->separate_s8)
       return false;
 
-   if (dst->layout.bo_stride > max_extent)
+   if (dst_tex->layout.bo_stride > max_extent)
       return false;
+
+   if (dst_box->width * cpp > gen6_blt_max_bytes_per_scanline)
+      return false;
+
+   dst.bo = dst_tex->bo;
+   dst.offset = 0;
+   dst.pitch = dst_tex->layout.bo_stride;
+   dst.tiling = dst_tex->layout.tiling;
 
    swctrl = ilo_blitter_blt_begin(blitter, dst_box->depth * 6,
-         dst->bo, dst->layout.tiling, NULL, INTEL_TILING_NONE);
+         dst_tex->bo, dst_tex->layout.tiling, NULL, INTEL_TILING_NONE);
 
    for (slice = 0; slice < dst_box->depth; slice++) {
-      unsigned x1, y1, x2, y2;
+      unsigned x, y;
 
-      ilo_layout_get_slice_pos(&dst->layout,
-            dst_level, dst_box->z + slice, &x1, &y1);
+      ilo_layout_get_slice_pos(&dst_tex->layout,
+            dst_level, dst_box->z + slice, &x, &y);
 
-      x1 += dst_box->x;
-      y1 += dst_box->y;
-      x2 = x1 + dst_box->width;
-      y2 = y1 + dst_box->height;
+      dst.x = x + dst_box->x;
+      dst.y = y + dst_box->y;
 
-      if (x2 > max_extent || y2 > max_extent ||
-          (x2 - x1) * cpp > gen6_blt_max_bytes_per_scanline)
+      if (dst.x + dst_box->width > max_extent ||
+          dst.y + dst_box->height > max_extent)
          break;
 
-      gen6_XY_COLOR_BLT(&ilo->cp->builder,
-            dst->bo, dst->layout.tiling, dst->layout.bo_stride, 0,
-            x1, y1, x2, y2, val, rop, value_mask, write_mask);
+      gen6_XY_COLOR_BLT(&ilo->cp->builder, &dst, val,
+            dst_box->width, dst_box->height, rop, value_mask, write_mask);
    }
 
    ilo_blitter_blt_end(blitter, swctrl);
@@ -266,28 +282,29 @@ tex_clear_region(struct ilo_blitter *blitter,
 
 static bool
 tex_copy_region(struct ilo_blitter *blitter,
-                struct ilo_texture *dst,
+                struct ilo_texture *dst_tex,
                 unsigned dst_level,
                 unsigned dst_x, unsigned dst_y, unsigned dst_z,
-                struct ilo_texture *src,
+                struct ilo_texture *src_tex,
                 unsigned src_level,
                 const struct pipe_box *src_box)
 {
    const struct util_format_description *desc =
-      util_format_description(dst->layout.format);
+      util_format_description(dst_tex->layout.format);
    const unsigned max_extent = 32767; /* INT16_MAX */
    const uint8_t rop = 0xcc; /* SRCCOPY */
    struct ilo_context *ilo = blitter->ilo;
    enum gen6_blt_mask mask;
+   struct gen6_blt_xy_bo dst, src;
    uint32_t swctrl;
    int cpp, xscale, slice;
 
    /* no W-tiling support */
-   if (dst->separate_s8 || src->separate_s8)
+   if (dst_tex->separate_s8 || src_tex->separate_s8)
       return false;
 
-   if (dst->layout.bo_stride > max_extent ||
-       src->layout.bo_stride > max_extent)
+   if (dst_tex->layout.bo_stride > max_extent ||
+       src_tex->layout.bo_stride > max_extent)
       return false;
 
    cpp = desc->block.bits / 8;
@@ -301,6 +318,9 @@ tex_copy_region(struct ilo_blitter *blitter,
       cpp = (cpp % 4 == 0) ? 4 : 2;
       xscale = (desc->block.bits / 8) / cpp;
    }
+
+   if (src_box->width * cpp * xscale > gen6_blt_max_bytes_per_scanline)
+      return false;
 
    switch (cpp) {
    case 1:
@@ -317,43 +337,48 @@ tex_copy_region(struct ilo_blitter *blitter,
       break;
    }
 
+   dst.bo = dst_tex->bo;
+   dst.offset = 0;
+   dst.pitch = dst_tex->layout.bo_stride;
+   dst.tiling = dst_tex->layout.tiling;
+
+   src.bo = src_tex->bo;
+   src.offset = 0;
+   src.pitch = src_tex->layout.bo_stride;
+   src.tiling = src_tex->layout.tiling;
+
    swctrl = ilo_blitter_blt_begin(blitter, src_box->depth * 8,
-         dst->bo, dst->layout.tiling, src->bo, src->layout.tiling);
+         dst.bo, dst.tiling, src.bo, src.tiling);
 
    for (slice = 0; slice < src_box->depth; slice++) {
-      unsigned x1, y1, x2, y2, src_x, src_y;
+      unsigned dx, dy, sx, sy, width, height;
 
-      ilo_layout_get_slice_pos(&dst->layout,
-            dst_level, dst_z + slice, &x1, &y1);
-      x1 = (x1 + dst_x) * xscale;
-      y1 = y1 + dst_y;
-      x2 = (x1 + src_box->width) * xscale;
-      y2 = y1 + src_box->height;
+      ilo_layout_get_slice_pos(&dst_tex->layout,
+            dst_level, dst_z + slice, &dx, &dy);
+      ilo_layout_get_slice_pos(&src_tex->layout,
+            src_level, src_box->z + slice, &sx, &sy);
 
-      ilo_layout_get_slice_pos(&src->layout,
-            src_level, src_box->z + slice, &src_x, &src_y);
-
-      src_x = (src_x + src_box->x) * xscale;
-      src_y += src_box->y;
+      dst.x = (dx + dst_x) * xscale;
+      dst.y = dy + dst_y;
+      src.x = (sx + src_box->x) * xscale;
+      src.y = sy + src_box->y;
+      width = src_box->width * xscale;
+      height = src_box->height;
 
       /* in blocks */
-      x1 /= desc->block.width;
-      y1 /= desc->block.height;
-      x2 = (x2 + desc->block.width - 1) / desc->block.width;
-      y2 = (y2 + desc->block.height - 1) / desc->block.height;
-      src_x /= desc->block.width;
-      src_y /= desc->block.height;
+      dst.x /= desc->block.width;
+      dst.y /= desc->block.height;
+      src.x /= desc->block.width;
+      src.y /= desc->block.height;
+      width /= desc->block.width;
+      height /= desc->block.height;
 
-      if (x2 > max_extent || y2 > max_extent ||
-          src_x > max_extent || src_y > max_extent ||
-          (x2 - x1) * cpp > gen6_blt_max_bytes_per_scanline)
+      if (src.x + width > max_extent || src.y + height > max_extent ||
+          dst.x + width > max_extent || dst.y + height > max_extent)
          break;
 
-      gen6_XY_SRC_COPY_BLT(&ilo->cp->builder,
-            dst->bo, dst->layout.tiling, dst->layout.bo_stride, 0,
-            x1, y1, x2, y2,
-            src->bo, src->layout.tiling, src->layout.bo_stride, 0,
-            src_x, src_y, rop, mask, mask);
+      gen6_XY_SRC_COPY_BLT(&ilo->cp->builder, &dst, &src,
+            width, height, rop, mask, mask);
    }
 
    ilo_blitter_blt_end(blitter, swctrl);
@@ -453,7 +478,7 @@ ilo_blitter_blt_clear_rt(struct ilo_blitter *blitter,
          size = end - offset;
 
       success = buf_clear_region(blitter, ilo_buffer(rt->texture),
-            offset, size, packed.ui[0], mask, mask);
+            offset, packed.ui[0], size, mask, mask);
    }
    else {
       struct pipe_box box;
