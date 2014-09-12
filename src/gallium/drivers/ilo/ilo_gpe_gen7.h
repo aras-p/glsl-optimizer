@@ -37,12 +37,6 @@
 #include "ilo_gpe_gen6.h"
 
 static inline void
-gen7_GPGPU_WALKER(struct ilo_builder *builder)
-{
-   assert(!"GPGPU_WALKER unsupported");
-}
-
-static inline void
 gen7_3DSTATE_CLEAR_PARAMS(struct ilo_builder *builder,
                           uint32_t clear_val)
 {

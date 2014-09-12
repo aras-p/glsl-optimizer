@@ -18,6 +18,7 @@ C_SOURCES := \
 	ilo_builder.h \
 	ilo_blitter_blt.h \
 	ilo_builder_decode.c \
+	ilo_builder_media.h \
 	ilo_builder_mi.h \
 	ilo_builder_render.h \
 	ilo_common.h \
