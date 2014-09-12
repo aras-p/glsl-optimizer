@@ -827,6 +827,7 @@ nv50_blit_select_mode(const struct pipe_blit_info *info)
    switch (info->dst.resource->format) {
    case PIPE_FORMAT_Z24_UNORM_S8_UINT:
    case PIPE_FORMAT_Z24X8_UNORM:
+   case PIPE_FORMAT_X24S8_UINT:
       switch (mask & PIPE_MASK_ZS) {
       case PIPE_MASK_ZS: return NV50_BLIT_MODE_Z24S8;
       case PIPE_MASK_Z:  return NV50_BLIT_MODE_Z24X8;
@@ -834,6 +835,8 @@ nv50_blit_select_mode(const struct pipe_blit_info *info)
          return NV50_BLIT_MODE_X24S8;
       }
    case PIPE_FORMAT_S8_UINT_Z24_UNORM:
+   case PIPE_FORMAT_X8Z24_UNORM:
+   case PIPE_FORMAT_S8X24_UINT:
       switch (mask & PIPE_MASK_ZS) {
       case PIPE_MASK_ZS: return NV50_BLIT_MODE_S8Z24;
       case PIPE_MASK_Z:  return NV50_BLIT_MODE_X8Z24;
@@ -842,6 +845,7 @@ nv50_blit_select_mode(const struct pipe_blit_info *info)
       }
    case PIPE_FORMAT_Z32_FLOAT:
    case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
+   case PIPE_FORMAT_X32_S8X24_UINT:
       switch (mask & PIPE_MASK_ZS) {
       case PIPE_MASK_ZS: return NV50_BLIT_MODE_ZS;
       case PIPE_MASK_Z:  return NV50_BLIT_MODE_PASS;
