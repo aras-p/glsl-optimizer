@@ -45,7 +45,7 @@ ilo_cp_end_batch(struct ilo_cp *cp, unsigned *used)
 
    /* see ilo_cp_space() */
    assert(ilo_builder_batch_space(&cp->builder) >= 2);
-   ilo_builder_batch_mi_batch_buffer_end(&cp->builder);
+   gen6_mi_batch_buffer_end(&cp->builder);
 
    bo = ilo_builder_end(&cp->builder, used);
 

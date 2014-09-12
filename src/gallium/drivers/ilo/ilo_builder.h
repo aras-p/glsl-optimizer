@@ -265,7 +265,8 @@ ilo_builder_writer_reloc(struct ilo_builder *builder,
 
 /**
  * Reserve a region from the state buffer.  Both the offset, in bytes, and the
- * pointer to the reserved region are returned.
+ * pointer to the reserved region are returned.  The pointer is only valid
+ * until the next reserve call.
  *
  * Note that \p alignment is in bytes and \p len is in DWords.
  */
@@ -380,7 +381,8 @@ ilo_builder_instruction_write(struct ilo_builder *builder,
 
 /**
  * Reserve a region from the batch buffer.  Both the offset, in DWords, and
- * the pointer to the reserved region are returned.
+ * the pointer to the reserved region are returned.  The pointer is only valid
+ * until the next reserve call.
  *
  * Note that \p len is in DWords.
  */
