@@ -17,6 +17,7 @@ C_SOURCES := \
 	ilo_builder.c \
 	ilo_builder.h \
 	ilo_builder_decode.c \
+	ilo_builder_mi.h \
 	ilo_common.h \
 	ilo_context.c \
 	ilo_context.h \

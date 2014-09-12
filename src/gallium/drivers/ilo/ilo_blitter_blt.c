@@ -29,6 +29,7 @@
 #include "util/u_pack_color.h"
 
 #include "ilo_3d.h"
+#include "ilo_builder_mi.h"
 #include "ilo_context.h"
 #include "ilo_cp.h"
 #include "ilo_blit.h"
@@ -55,34 +56,6 @@ enum gen6_blt_mask {
  */
 static const int gen6_max_bytes_per_scanline = 32768;
 static const int gen6_max_scanlines = 65536;
-
-static void
-gen6_MI_FLUSH_DW(struct ilo_builder *builder)
-{
-   const uint8_t cmd_len = 4;
-   const uint32_t dw0 = GEN6_MI_CMD(MI_FLUSH_DW) | (cmd_len - 2);
-   uint32_t *dw;
-
-   ilo_builder_batch_pointer(builder, cmd_len, &dw);
-   dw[0] = dw0;
-   dw[1] = 0;
-   dw[2] = 0;
-   dw[3] = 0;
-}
-
-static void
-gen6_MI_LOAD_REGISTER_IMM(struct ilo_builder *builder,
-                          uint32_t reg, uint32_t val)
-{
-   const uint8_t cmd_len = 3;
-   const uint32_t dw0 = GEN6_MI_CMD(MI_LOAD_REGISTER_IMM) | (cmd_len - 2);
-   uint32_t *dw;
-
-   ilo_builder_batch_pointer(builder, cmd_len, &dw);
-   dw[0] = dw0;
-   dw[1] = reg;
-   dw[2] = val;
-}
 
 static uint32_t
 gen6_translate_blt_value_mask(enum gen6_blt_mask value_mask)

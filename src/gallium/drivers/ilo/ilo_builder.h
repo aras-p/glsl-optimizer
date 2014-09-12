@@ -484,7 +484,4 @@ void
 ilo_builder_batch_state_base_address(struct ilo_builder *builder,
                                      bool init_all);
 
-void
-ilo_builder_batch_mi_batch_buffer_end(struct ilo_builder *builder);
-
 #endif /* ILO_BUILDER_H */

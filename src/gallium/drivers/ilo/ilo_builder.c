@@ -538,29 +538,3 @@ ilo_builder_batch_state_base_address(struct ilo_builder *builder,
    dw[8] = 0xfffff000 + init_all;
    dw[9] = init_all;
 }
-
-/**
- * Add a MI_BATCH_BUFFER_END to the batch buffer.  Pad if necessary.
- */
-void
-ilo_builder_batch_mi_batch_buffer_end(struct ilo_builder *builder)
-{
-   const struct ilo_builder_writer *bat =
-      &builder->writers[ILO_BUILDER_WRITER_BATCH];
-   uint32_t *dw;
-
-   /*
-    * From the Sandy Bridge PRM, volume 1 part 1, page 107:
-    *
-    *     "The batch buffer must be QWord aligned and a multiple of QWords in
-    *      length."
-    */
-   if (bat->used & 0x7) {
-      ilo_builder_batch_pointer(builder, 1, &dw);
-      dw[0] = GEN6_MI_CMD(MI_BATCH_BUFFER_END);
-   } else {
-      ilo_builder_batch_pointer(builder, 2, &dw);
-      dw[0] = GEN6_MI_CMD(MI_BATCH_BUFFER_END);
-      dw[1] = GEN6_MI_CMD(MI_NOOP);
-   }
-}
