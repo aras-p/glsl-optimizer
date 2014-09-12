@@ -109,10 +109,10 @@ fs_visitor::visit(ir_variable *ir)
        * ir_binop_ubo_load expressions and not ir_dereference_variable for UBO
        * variables, so no need for them to be in variable_ht.
        *
-       * Atomic counters take no uniform storage, no need to do
-       * anything here.
+       * Some uniforms, such as samplers and atomic counters, have no actual
+       * storage, so we should ignore them.
        */
-      if (ir->is_in_uniform_block() || ir->type->contains_atomic())
+      if (ir->is_in_uniform_block() || type_size(ir->type) == 0)
          return;
 
       if (dispatch_width == 16) {
