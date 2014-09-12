@@ -705,8 +705,12 @@ ilo_format_supports_rt(const struct ilo_dev_info *dev,
 
    assert(!cap->rt_write_blending || cap->rt_write_blending >= cap->rt_write);
 
-   return util_format_is_pure_integer(format) ? (dev->gen >= cap->rt_write) :
-      (cap->rt_write_blending) ? (dev->gen >= cap->rt_write_blending) : false;
+   if (util_format_is_pure_integer(format))
+      return (ilo_dev_gen(dev) >= cap->rt_write);
+   else if (cap->rt_write_blending)
+      return (ilo_dev_gen(dev) >= cap->rt_write_blending);
+   else
+      return false;
 }
 
 static bool
@@ -722,8 +726,12 @@ ilo_format_supports_sampler(const struct ilo_dev_info *dev,
 
    assert(!cap->filtering || cap->filtering >= cap->sampling);
 
-   return util_format_is_pure_integer(format) ? (dev->gen >= cap->sampling) :
-      (cap->filtering) ? (dev->gen >= cap->filtering) : false;
+   if (util_format_is_pure_integer(format))
+      return (ilo_dev_gen(dev) >= cap->sampling);
+   else if (cap->filtering)
+      return (ilo_dev_gen(dev) >= cap->filtering);
+   else
+      return false;
 }
 
 static bool
@@ -734,7 +742,8 @@ ilo_format_supports_vb(const struct ilo_dev_info *dev,
    const struct ilo_vf_cap *cap = (idx >= 0 && idx < Elements(ilo_vf_caps)) ?
       &ilo_vf_caps[idx] : NULL;
 
-   return (cap && cap->vertex_element && dev->gen >= cap->vertex_element);
+   return (cap && cap->vertex_element &&
+         ilo_dev_gen(dev) >= cap->vertex_element);
 }
 
 static boolean

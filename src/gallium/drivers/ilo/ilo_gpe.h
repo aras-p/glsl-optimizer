@@ -338,7 +338,7 @@ ilo_gpe_init_rasterizer(const struct ilo_dev_info *dev,
    ilo_gpe_init_rasterizer_clip(dev, state, &rasterizer->clip);
    ilo_gpe_init_rasterizer_sf(dev, state, &rasterizer->sf);
 
-   if (dev->gen >= ILO_GEN(7))
+   if (ilo_dev_gen(dev) >= ILO_GEN(7))
       ilo_gpe_init_rasterizer_wm_gen7(dev, state, &rasterizer->wm);
    else
       ilo_gpe_init_rasterizer_wm_gen6(dev, state, &rasterizer->wm);
@@ -417,7 +417,7 @@ ilo_gpe_init_view_surface_null(const struct ilo_dev_info *dev,
                                unsigned depth, unsigned level,
                                struct ilo_view_surface *surf)
 {
-   if (dev->gen >= ILO_GEN(7)) {
+   if (ilo_dev_gen(dev) >= ILO_GEN(7)) {
       ilo_gpe_init_view_surface_null_gen7(dev,
             width, height, depth, level, surf);
    }
@@ -436,7 +436,7 @@ ilo_gpe_init_view_surface_for_buffer(const struct ilo_dev_info *dev,
                                      bool is_rt, bool render_cache_rw,
                                      struct ilo_view_surface *surf)
 {
-   if (dev->gen >= ILO_GEN(7)) {
+   if (ilo_dev_gen(dev) >= ILO_GEN(7)) {
       ilo_gpe_init_view_surface_for_buffer_gen7(dev, buf, offset, size,
             struct_size, elem_format, is_rt, render_cache_rw, surf);
    }
@@ -457,7 +457,7 @@ ilo_gpe_init_view_surface_for_texture(const struct ilo_dev_info *dev,
                                       bool is_rt,
                                       struct ilo_view_surface *surf)
 {
-   if (dev->gen >= ILO_GEN(7)) {
+   if (ilo_dev_gen(dev) >= ILO_GEN(7)) {
       ilo_gpe_init_view_surface_for_texture_gen7(dev, tex, format,
             first_level, num_levels, first_layer, num_layers,
             is_rt, surf);
@@ -496,7 +496,7 @@ ilo_gpe_init_gs_cso(const struct ilo_dev_info *dev,
                     const struct ilo_shader_state *gs,
                     struct ilo_shader_cso *cso)
 {
-   if (dev->gen >= ILO_GEN(7)) {
+   if (ilo_dev_gen(dev) >= ILO_GEN(7)) {
       ilo_gpe_init_gs_cso_gen7(dev, gs, cso);
    }
    else {
@@ -519,7 +519,7 @@ ilo_gpe_init_fs_cso(const struct ilo_dev_info *dev,
                     const struct ilo_shader_state *fs,
                     struct ilo_shader_cso *cso)
 {
-   if (dev->gen >= ILO_GEN(7)) {
+   if (ilo_dev_gen(dev) >= ILO_GEN(7)) {
       ilo_gpe_init_fs_cso_gen7(dev, fs, cso);
    }
    else {

@@ -77,7 +77,7 @@ ilo_3d_pipeline_create(struct ilo_cp *cp, const struct ilo_dev_info *dev)
    p->cp = cp;
    p->dev = dev;
 
-   switch (p->dev->gen) {
+   switch (ilo_dev_gen(p->dev)) {
    case ILO_GEN(6):
       ilo_3d_pipeline_init_gen6(p);
       break;
@@ -137,7 +137,7 @@ static void
 handle_invalid_batch_bo(struct ilo_3d_pipeline *p, bool unset)
 {
    if (p->invalidate_flags & ILO_3D_PIPELINE_INVALIDATE_BATCH_BO) {
-      if (p->dev->gen == ILO_GEN(6))
+      if (ilo_dev_gen(p->dev) == ILO_GEN(6))
          p->state.has_gen6_wa_pipe_control = false;
 
       if (unset)
@@ -166,7 +166,7 @@ ilo_3d_pipeline_emit_draw(struct ilo_3d_pipeline *p,
       p->state.so_num_vertices = 0;
 
       /* on GEN7+, we need SOL_RESET to reset the SO write offsets */
-      if (p->dev->gen >= ILO_GEN(7))
+      if (ilo_dev_gen(p->dev) >= ILO_GEN(7))
          ilo_cp_set_one_off_flags(p->cp, INTEL_EXEC_GEN7_SOL_RESET);
    }
 

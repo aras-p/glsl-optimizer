@@ -354,7 +354,7 @@ ilo_gpe_init_vs_cso(const struct ilo_dev_info *dev,
    if (!vue_read_len)
       vue_read_len = 1;
 
-   switch (dev->gen) {
+   switch (ilo_dev_gen(dev)) {
    case ILO_GEN(6):
       /*
        * From the Sandy Bridge PRM, volume 1 part 1, page 22:
@@ -393,7 +393,7 @@ ilo_gpe_init_vs_cso(const struct ilo_dev_info *dev,
    dw5 = GEN6_VS_DW5_STATISTICS |
          GEN6_VS_DW5_VS_ENABLE;
 
-   if (dev->gen >= ILO_GEN(7.5))
+   if (ilo_dev_gen(dev) >= ILO_GEN(7.5))
       dw5 |= (max_threads - 1) << GEN75_VS_DW5_MAX_THREADS__SHIFT;
    else
       dw5 |= (max_threads - 1) << GEN6_VS_DW5_MAX_THREADS__SHIFT;
@@ -517,7 +517,7 @@ ilo_gpe_init_rasterizer_clip(const struct ilo_dev_info *dev,
 
    dw1 = GEN6_CLIP_DW1_STATISTICS;
 
-   if (dev->gen >= ILO_GEN(7)) {
+   if (ilo_dev_gen(dev) >= ILO_GEN(7)) {
       /*
        * From the Ivy Bridge PRM, volume 2 part 1, page 219:
        *
@@ -626,7 +626,7 @@ ilo_gpe_init_rasterizer_sf(const struct ilo_dev_info *dev,
          GEN7_SF_DW1_VIEWPORT_ENABLE;
 
    /* XXX GEN6 path seems to work fine for GEN7 */
-   if (false && dev->gen >= ILO_GEN(7)) {
+   if (false && ilo_dev_gen(dev) >= ILO_GEN(7)) {
       /*
        * From the Ivy Bridge PRM, volume 2 part 1, page 258:
        *
@@ -740,7 +740,7 @@ ilo_gpe_init_rasterizer_sf(const struct ilo_dev_info *dev,
 
    dw2 |= line_width << GEN7_SF_DW2_LINE_WIDTH__SHIFT;
 
-   if (dev->gen >= ILO_GEN(7.5) && state->line_stipple_enable)
+   if (ilo_dev_gen(dev) >= ILO_GEN(7.5) && state->line_stipple_enable)
       dw2 |= GEN75_SF_DW2_LINE_STIPPLE_ENABLE;
 
    if (state->scissor)
@@ -1006,7 +1006,7 @@ zs_init_info(const struct ilo_dev_info *dev,
       info->surface_type = GEN6_SURFTYPE_2D;
    }
 
-   if (dev->gen >= ILO_GEN(7)) {
+   if (ilo_dev_gen(dev) >= ILO_GEN(7)) {
       separate_stencil = true;
    }
    else {
@@ -1097,7 +1097,7 @@ zs_init_info(const struct ilo_dev_info *dev,
 
       info->stencil.tiling = s8_tex->layout.tiling;
 
-      if (dev->gen == ILO_GEN(6)) {
+      if (ilo_dev_gen(dev) == ILO_GEN(6)) {
          unsigned x, y;
 
          assert(s8_tex->layout.walk == ILO_LAYOUT_WALK_LOD);
@@ -1115,7 +1115,7 @@ zs_init_info(const struct ilo_dev_info *dev,
       info->hiz.tiling = INTEL_TILING_Y;
 
       /* offset to the level */
-      if (dev->gen == ILO_GEN(6))
+      if (ilo_dev_gen(dev) == ILO_GEN(6))
          info->hiz.offset = tex->layout.aux_offsets[level];
    }
 
@@ -1136,8 +1136,8 @@ ilo_gpe_init_zs_surface(const struct ilo_dev_info *dev,
                         unsigned first_layer, unsigned num_layers,
                         struct ilo_zs_surface *zs)
 {
-   const int max_2d_size = (dev->gen >= ILO_GEN(7)) ? 16384 : 8192;
-   const int max_array_size = (dev->gen >= ILO_GEN(7)) ? 2048 : 512;
+   const int max_2d_size = (ilo_dev_gen(dev) >= ILO_GEN(7)) ? 16384 : 8192;
+   const int max_array_size = (ilo_dev_gen(dev) >= ILO_GEN(7)) ? 2048 : 512;
    struct ilo_zs_surface_info info;
    uint32_t dw1, dw2, dw3, dw4, dw5, dw6;
 
@@ -1195,7 +1195,7 @@ ilo_gpe_init_zs_surface(const struct ilo_dev_info *dev,
       dw2 = 0;
    }
 
-   if (dev->gen >= ILO_GEN(7)) {
+   if (ilo_dev_gen(dev) >= ILO_GEN(7)) {
       if (info.zs.bo)
          dw1 |= 1 << 28;
 
@@ -1260,7 +1260,7 @@ ilo_gpe_init_zs_surface(const struct ilo_dev_info *dev,
       zs->payload[6] = info.stencil.stride - 1;
       zs->payload[7] = info.stencil.offset;
 
-      if (dev->gen >= ILO_GEN(7.5))
+      if (ilo_dev_gen(dev) >= ILO_GEN(7.5))
          zs->payload[6] |= GEN75_STENCIL_DW1_STENCIL_BUFFER_ENABLE;
 
       /* do not increment reference count */
@@ -1326,7 +1326,7 @@ viewport_get_guardband(const struct ilo_dev_info *dev,
     * valid to the renderer, and those failing the XY clipping have a
     * better chance of passing the GB test.
     */
-   const int max_extent = (dev->gen >= ILO_GEN(7)) ? 32768 : 16384;
+   const int max_extent = (ilo_dev_gen(dev) >= ILO_GEN(7)) ? 32768 : 16384;
    const int half_len = 8192 / 2;
 
    /* make sure the guardband is within the valid range */
@@ -1514,7 +1514,7 @@ ilo_gpe_init_blend(const struct ilo_dev_info *dev,
       if (state->alpha_to_coverage) {
          cso->dw_alpha_mod |= 1 << 31;
 
-         if (dev->gen >= ILO_GEN(7))
+         if (ilo_dev_gen(dev) >= ILO_GEN(7))
             cso->dw_alpha_mod |= 1 << 29;
       }
 
@@ -2105,7 +2105,7 @@ ilo_gpe_init_sampler_cso(const struct ilo_dev_info *dev,
     * With Gallium interface, Base is always zero and
     * pipe_sampler_view::u.tex.first_level specifies SurfMinLod.
     */
-   if (dev->gen >= ILO_GEN(7)) {
+   if (ilo_dev_gen(dev) >= ILO_GEN(7)) {
       const float scale = 256.0f;
 
       /* [-16.0, 16.0) in S4.8 */
@@ -2229,7 +2229,7 @@ ilo_gpe_init_sampler_cso(const struct ilo_dev_info *dev,
       assert(mip_filter == GEN6_MIPFILTER_NONE);
    }
 
-   if (dev->gen >= ILO_GEN(7)) {
+   if (ilo_dev_gen(dev) >= ILO_GEN(7)) {
       dw0 = 1 << 28 |
             mip_filter << 20 |
             lod_bias << 1;

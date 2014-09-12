@@ -335,7 +335,7 @@ patch_while_jip(struct toy_compiler *tc, struct toy_inst *inst)
       dist--;
    }
 
-   if (tc->dev->gen >= ILO_GEN(7))
+   if (ilo_dev_gen(tc->dev) >= ILO_GEN(7))
       inst->src[1] = tsrc_imm_w(dist * 2);
    else
       inst->dst = tdst_imm_w(dist * 2);
@@ -375,7 +375,7 @@ patch_if_else_jip(struct toy_compiler *tc, struct toy_inst *inst)
             /* the following instruction */
             jip = (dist + 1) * 2;
 
-            if (tc->dev->gen == ILO_GEN(6)) {
+            if (ilo_dev_gen(tc->dev) == ILO_GEN(6)) {
                uip = jip;
                break;
             }
@@ -388,7 +388,7 @@ patch_if_else_jip(struct toy_compiler *tc, struct toy_inst *inst)
       dist++;
    }
 
-   if (tc->dev->gen >= ILO_GEN(7)) {
+   if (ilo_dev_gen(tc->dev) >= ILO_GEN(7)) {
       /* what should the type be? */
       inst->dst.type = TOY_TYPE_D;
       inst->src[0].type = TOY_TYPE_D;
@@ -433,7 +433,7 @@ patch_endif_jip(struct toy_compiler *tc, struct toy_inst *inst)
    if (!found)
       dist = 1;
 
-   if (tc->dev->gen >= ILO_GEN(7))
+   if (ilo_dev_gen(tc->dev) >= ILO_GEN(7))
       inst->src[1] = tsrc_imm_w(dist * 2);
    else
       inst->dst = tdst_imm_w(dist * 2);
@@ -485,7 +485,8 @@ patch_break_continue_jip(struct toy_compiler *tc, struct toy_inst *inst)
          }
          else {
             /* the following instruction */
-            if (tc->dev->gen == ILO_GEN(6) && inst->opcode == GEN6_OPCODE_BREAK)
+            if (ilo_dev_gen(tc->dev) == ILO_GEN(6) &&
+                inst->opcode == GEN6_OPCODE_BREAK)
                dist++;
 
             uip = dist * 2;
@@ -546,7 +547,7 @@ toy_compiler_legalize_for_asm(struct toy_compiler *tc)
              *
              *     "INT DIV function does not support SIMD16."
              */
-            if (tc->dev->gen < ILO_GEN(7) ||
+            if (ilo_dev_gen(tc->dev) < ILO_GEN(7) ||
                 inst->cond_modifier == GEN6_MATH_INT_DIV_QUOTIENT ||
                 inst->cond_modifier == GEN6_MATH_INT_DIV_REMAINDER) {
                struct toy_inst *inst2;
@@ -566,7 +567,7 @@ toy_compiler_legalize_for_asm(struct toy_compiler *tc)
          }
          break;
       case GEN6_OPCODE_IF:
-         if (tc->dev->gen >= ILO_GEN(7) &&
+         if (ilo_dev_gen(tc->dev) >= ILO_GEN(7) &&
              inst->cond_modifier != GEN6_COND_NONE) {
             struct toy_inst *inst2;
 
@@ -590,7 +591,7 @@ toy_compiler_legalize_for_asm(struct toy_compiler *tc)
       }
 
       /* MRF to GRF */
-      if (tc->dev->gen >= ILO_GEN(7)) {
+      if (ilo_dev_gen(tc->dev) >= ILO_GEN(7)) {
          for (i = 0; i < Elements(inst->src); i++) {
             if (inst->src[i].file != TOY_FILE_MRF)
                continue;

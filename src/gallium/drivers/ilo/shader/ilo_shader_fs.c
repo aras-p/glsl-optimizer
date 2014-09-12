@@ -494,7 +494,7 @@ fs_lower_opcode_tgsi_direct(struct fs_compile_context *fcc,
       fs_lower_opcode_tgsi_in(fcc, inst->dst, dim, idx);
       break;
    case TOY_OPCODE_TGSI_CONST:
-      if (tc->dev->gen >= ILO_GEN(7))
+      if (ilo_dev_gen(tc->dev) >= ILO_GEN(7))
          fs_lower_opcode_tgsi_const_gen7(fcc, inst->dst, dim, inst->src[1]);
       else
          fs_lower_opcode_tgsi_const_gen6(fcc, inst->dst, dim, inst->src[1]);
@@ -801,7 +801,7 @@ fs_prepare_tgsi_sampling(struct toy_compiler *tc, const struct toy_inst *inst,
          msg_type = GEN7_MSG_SAMPLER_SAMPLE_D_C;
          ref_or_si = coords[ref_pos];
 
-         if (tc->dev->gen < ILO_GEN(7.5))
+         if (ilo_dev_gen(tc->dev) < ILO_GEN(7.5))
             tc_fail(tc, "TXD with shadow sampler not supported");
       }
       else {
@@ -1064,7 +1064,7 @@ fs_prepare_tgsi_sampling(struct toy_compiler *tc, const struct toy_inst *inst,
    }
 
    /* set up sampler parameters */
-   if (tc->dev->gen >= ILO_GEN(7)) {
+   if (ilo_dev_gen(tc->dev) >= ILO_GEN(7)) {
       msg_len = fs_add_sampler_params_gen7(tc, msg_type, base_mrf, param_size,
             coords, num_coords, bias_or_lod, ref_or_si, ddx, ddy, num_derivs);
    }
@@ -1849,7 +1849,7 @@ fs_setup(struct fs_compile_context *fcc,
    fcc->num_grf_per_vrf =
       (fcc->dispatch_mode == GEN6_WM_DW5_16_PIXEL_DISPATCH) ? 2 : 1;
 
-   if (fcc->tc.dev->gen >= ILO_GEN(7)) {
+   if (ilo_dev_gen(fcc->tc.dev) >= ILO_GEN(7)) {
       fcc->last_free_grf -= 15;
       fcc->first_free_mrf = fcc->last_free_grf + 1;
       fcc->last_free_mrf = fcc->first_free_mrf + 14;

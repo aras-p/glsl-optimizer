@@ -214,9 +214,9 @@ layout_init_layer_height(struct ilo_layout *layout,
     * QPitch by 4.
     */
    layout->layer_height = params->h0 + params->h1 +
-      ((params->dev->gen >= ILO_GEN(7)) ? 12 : 11) * layout->align_j;
+      ((ilo_dev_gen(params->dev) >= ILO_GEN(7)) ? 12 : 11) * layout->align_j;
 
-   if (params->dev->gen == ILO_GEN(6) && templ->nr_samples > 1 &&
+   if (ilo_dev_gen(params->dev) == ILO_GEN(6) && templ->nr_samples > 1 &&
        layout->height0 % 4 == 1)
       layout->layer_height += 4;
 
@@ -395,7 +395,7 @@ layout_init_alignments(struct ilo_layout *layout,
       layout->align_i = layout->block_width;
       layout->align_j = layout->block_height;
    } else if (templ->bind & PIPE_BIND_DEPTH_STENCIL) {
-      if (params->dev->gen >= ILO_GEN(7)) {
+      if (ilo_dev_gen(params->dev) >= ILO_GEN(7)) {
          switch (layout->format) {
          case PIPE_FORMAT_Z16_UNORM:
             layout->align_i = 8;
@@ -424,7 +424,7 @@ layout_init_alignments(struct ilo_layout *layout,
       }
    } else {
       const bool valign_4 = (templ->nr_samples > 1) ||
-         (params->dev->gen >= ILO_GEN(7) &&
+         (ilo_dev_gen(params->dev) >= ILO_GEN(7) &&
           layout->tiling == INTEL_TILING_Y &&
           (templ->bind & PIPE_BIND_RENDER_TARGET));
 
@@ -518,7 +518,7 @@ layout_get_valid_tilings(const struct ilo_layout *layout,
        *
        *     "VALIGN_4 is not supported for surface format R32G32B32_FLOAT."
        */
-      if (params->dev->gen >= ILO_GEN(7) && layout->block_size == 12)
+      if (ilo_dev_gen(params->dev) >= ILO_GEN(7) && layout->block_size == 12)
          valid_tilings &= ~LAYOUT_TILING_Y;
    }
 
@@ -642,7 +642,7 @@ static void
 layout_init_walk(struct ilo_layout *layout,
                  struct ilo_layout_params *params)
 {
-   if (params->dev->gen >= ILO_GEN(7))
+   if (ilo_dev_gen(params->dev) >= ILO_GEN(7))
       layout_init_walk_gen7(layout, params);
    else
       layout_init_walk_gen6(layout, params);
@@ -668,7 +668,7 @@ layout_init_size_and_format(struct ilo_layout *layout,
     * GEN7+ requires separate stencil buffers.
     */
    if (templ->bind & PIPE_BIND_DEPTH_STENCIL) {
-      if (params->dev->gen >= ILO_GEN(7))
+      if (ilo_dev_gen(params->dev) >= ILO_GEN(7))
          require_separate_stencil = true;
       else
          require_separate_stencil = (layout->aux == ILO_LAYOUT_AUX_HIZ);
@@ -710,7 +710,7 @@ layout_want_mcs(struct ilo_layout *layout,
    bool want_mcs = false;
 
    /* MCS is for RT on GEN7+ */
-   if (params->dev->gen < ILO_GEN(7))
+   if (ilo_dev_gen(params->dev) < ILO_GEN(7))
       return false;
 
    if (templ->target != PIPE_TEXTURE_2D ||
@@ -790,7 +790,7 @@ layout_want_hiz(const struct ilo_layout *layout,
     * format is PIPE_FORMAT_Z32_FLOAT_S8X24_UINT, enabling and disabling HiZ
     * can result in incompatible formats.
     */
-   if (params->dev->gen == ILO_GEN(6) &&
+   if (ilo_dev_gen(params->dev) == ILO_GEN(6) &&
        templ->format == PIPE_FORMAT_Z32_FLOAT_S8X24_UINT &&
        templ->last_level)
       return false;
@@ -897,7 +897,7 @@ layout_calculate_bo_size(struct ilo_layout *layout,
        *      at the bottom of the surface. This is in addition to the padding
        *      required above."
        */
-      if (params->dev->gen >= ILO_GEN(7.5) &&
+      if (ilo_dev_gen(params->dev) >= ILO_GEN(7.5) &&
           (params->templ->bind & PIPE_BIND_SAMPLER_VIEW) &&
           layout->tiling == INTEL_TILING_NONE) {
          layout->bo_height +=
@@ -1014,7 +1014,7 @@ layout_calculate_hiz_size(struct ilo_layout *layout,
     *
     * We will put all LODs in a single bo with ILO_LAYOUT_WALK_LOD.
     */
-   if (params->dev->gen >= ILO_GEN(7))
+   if (ilo_dev_gen(params->dev) >= ILO_GEN(7))
       hz_walk = layout->walk;
    else
       hz_walk = ILO_LAYOUT_WALK_LOD;
@@ -1076,13 +1076,13 @@ layout_calculate_hiz_size(struct ilo_layout *layout,
          const unsigned h0 = align(params->h0, hz_align_j);
          const unsigned h1 = align(params->h1, hz_align_j);
          const unsigned htail =
-            ((params->dev->gen >= ILO_GEN(7)) ? 12 : 11) * hz_align_j;
+            ((ilo_dev_gen(params->dev) >= ILO_GEN(7)) ? 12 : 11) * hz_align_j;
          const unsigned hz_qpitch = h0 + h1 + htail;
 
          hz_width = align(layout->lods[0].slice_width, 16);
 
          hz_height = hz_qpitch * templ->array_size / 2;
-         if (params->dev->gen >= ILO_GEN(7))
+         if (ilo_dev_gen(params->dev) >= ILO_GEN(7))
             hz_height = align(hz_height, 8);
       }
       break;

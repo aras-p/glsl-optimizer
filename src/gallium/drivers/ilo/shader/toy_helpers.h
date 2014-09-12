@@ -168,7 +168,7 @@ tsrc_imm_mdesc_sampler(const struct toy_compiler *tc,
    assert(sampler_index < 16);
    assert(binding_table_index < 256);
 
-   if (tc->dev->gen >= ILO_GEN(7)) {
+   if (ilo_dev_gen(tc->dev) >= ILO_GEN(7)) {
       ctrl = simd_mode << 17 |
              message_type << 12 |
              sampler_index << 8 |
@@ -198,7 +198,7 @@ tsrc_imm_mdesc_data_port(const struct toy_compiler *tc,
 {
    uint32_t ctrl;
 
-   if (tc->dev->gen >= ILO_GEN(7)) {
+   if (ilo_dev_gen(tc->dev) >= ILO_GEN(7)) {
       assert(!send_write_commit_message);
       assert((message_specific_control & 0x3f00) == message_specific_control);
 
@@ -235,7 +235,7 @@ tsrc_imm_mdesc_data_port_scratch(const struct toy_compiler *tc,
    const bool header_present = true;
    uint32_t ctrl;
 
-   assert(tc->dev->gen >= ILO_GEN(7));
+   assert(ilo_dev_gen(tc->dev) >= ILO_GEN(7));
    assert(num_registers == 1 || num_registers == 2 || num_registers == 4);
 
    ctrl = 1 << 18 |
@@ -264,7 +264,7 @@ tsrc_imm_mdesc_urb(const struct toy_compiler *tc,
    const bool header_present = true;
    uint32_t ctrl;
 
-   if (tc->dev->gen >= ILO_GEN(7)) {
+   if (ilo_dev_gen(tc->dev) >= ILO_GEN(7)) {
       const bool per_slot_offset = false;
 
       ctrl = per_slot_offset << 16 |

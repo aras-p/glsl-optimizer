@@ -38,8 +38,9 @@
 #include "ilo_shader.h"
 #include "ilo_gpe.h"
 
-#define ILO_GPE_VALID_GEN(dev, min_gen, max_gen) \
-   assert((dev)->gen >= ILO_GEN(min_gen) && (dev)->gen <= ILO_GEN(max_gen))
+#define ILO_GPE_VALID_GEN(dev, min_gen, max_gen)  \
+   assert(ilo_dev_gen(dev) >= ILO_GEN(min_gen) && \
+          ilo_dev_gen(dev) <= ILO_GEN(max_gen))
 
 /**
  * Translate winsys tiling to hardware tiling.
@@ -143,7 +144,7 @@ ilo_gpe_gen6_fill_3dstate_sf_raster(const struct ilo_dev_info *dev,
       payload[5] = 0;
    }
 
-   if (dev->gen >= ILO_GEN(7)) {
+   if (ilo_dev_gen(dev) >= ILO_GEN(7)) {
       int format;
 
       /* separate stencil */
@@ -254,7 +255,7 @@ gen6_MI_STORE_DATA_IMM(struct ilo_builder *builder,
    assert(bo_offset % ((store_qword) ? 8 : 4) == 0);
 
    /* must use GGTT on GEN6 as in PIPE_CONTROL */
-   if (builder->dev->gen == ILO_GEN(6)) {
+   if (ilo_dev_gen(builder->dev) == ILO_GEN(6)) {
       dw0 |= GEN6_MI_STORE_DATA_IMM_DW0_USE_GGTT;
       reloc_flags |= INTEL_RELOC_GGTT;
    }
@@ -306,7 +307,7 @@ gen6_MI_STORE_REGISTER_MEM(struct ilo_builder *builder,
    assert(reg % 4 == 0 && bo_offset % 4 == 0);
 
    /* must use GGTT on GEN6 as in PIPE_CONTROL */
-   if (builder->dev->gen == ILO_GEN(6)) {
+   if (ilo_dev_gen(builder->dev) == ILO_GEN(6)) {
       dw0 |= GEN6_MI_STORE_REGISTER_MEM_DW0_USE_GGTT;
       reloc_flags |= INTEL_RELOC_GGTT;
    }
@@ -335,7 +336,7 @@ gen6_MI_REPORT_PERF_COUNT(struct ilo_builder *builder,
    assert(bo_offset % 64 == 0);
 
    /* must use GGTT on GEN6 as in PIPE_CONTROL */
-   if (builder->dev->gen == ILO_GEN(6)) {
+   if (ilo_dev_gen(builder->dev) == ILO_GEN(6)) {
       bo_offset |= GEN6_MI_REPORT_PERF_COUNT_DW1_USE_GGTT;
       reloc_flags |= INTEL_RELOC_GGTT;
    }
@@ -719,7 +720,7 @@ gen6_3DSTATE_VERTEX_BUFFERS(struct ilo_builder *builder,
       else
          dw[0] |= GEN6_VB_STATE_DW0_ACCESS_VERTEXDATA;
 
-      if (builder->dev->gen >= ILO_GEN(7))
+      if (ilo_dev_gen(builder->dev) >= ILO_GEN(7))
          dw[0] |= GEN7_VB_STATE_DW0_ADDR_MODIFIED;
 
       /* use null vb if there is no buffer or the stride is out of range */
@@ -909,7 +910,7 @@ gen6_3DSTATE_INDEX_BUFFER(struct ilo_builder *builder,
       return;
 
    /* this is moved to the new 3DSTATE_VF */
-   if (builder->dev->gen >= ILO_GEN(7.5))
+   if (ilo_dev_gen(builder->dev) >= ILO_GEN(7.5))
       assert(!enable_cut_index);
 
    switch (ib->hw_index_size) {
@@ -1426,7 +1427,7 @@ gen6_3DSTATE_DRAWING_RECTANGLE(struct ilo_builder *builder,
 
    ILO_GPE_VALID_GEN(builder->dev, 6, 7.5);
 
-   if (builder->dev->gen >= ILO_GEN(7)) {
+   if (ilo_dev_gen(builder->dev) >= ILO_GEN(7)) {
       rect_limit = 16383;
    }
    else {
@@ -1470,7 +1471,7 @@ zs_align_surface(const struct ilo_dev_info *dev,
 
    ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
-   if (dev->gen >= ILO_GEN(7)) {
+   if (ilo_dev_gen(dev) >= ILO_GEN(7)) {
       shift_w = 4;
       shift_h = 18;
       mask = 0x3fff;
@@ -1504,7 +1505,7 @@ gen6_3DSTATE_DEPTH_BUFFER(struct ilo_builder *builder,
 
    ILO_GPE_VALID_GEN(builder->dev, 6, 7.5);
 
-   dw0 = (builder->dev->gen >= ILO_GEN(7)) ?
+   dw0 = (ilo_dev_gen(builder->dev) >= ILO_GEN(7)) ?
       GEN7_RENDER_CMD(3D, 3DSTATE_DEPTH_BUFFER) :
       GEN6_RENDER_CMD(3D, 3DSTATE_DEPTH_BUFFER);
    dw0 |= (cmd_len - 2);
@@ -1583,7 +1584,7 @@ gen6_3DSTATE_LINE_STIPPLE(struct ilo_builder *builder,
    dw[0] = dw0;
    dw[1] = pattern;
 
-   if (builder->dev->gen >= ILO_GEN(7)) {
+   if (ilo_dev_gen(builder->dev) >= ILO_GEN(7)) {
       /* in U1.16 */
       inverse = (unsigned) (65536.0f / factor);
       dw[2] = inverse << 15 | factor;
@@ -1642,7 +1643,7 @@ gen6_3DSTATE_MULTISAMPLE(struct ilo_builder *builder,
                          const uint32_t *packed_sample_pos,
                          bool pixel_location_center)
 {
-   const uint8_t cmd_len = (builder->dev->gen >= ILO_GEN(7)) ? 4 : 3;
+   const uint8_t cmd_len = (ilo_dev_gen(builder->dev) >= ILO_GEN(7)) ? 4 : 3;
    const uint32_t dw0 = GEN6_RENDER_CMD(3D, 3DSTATE_MULTISAMPLE) |
                         (cmd_len - 2);
    uint32_t dw1, dw2, dw3, *dw;
@@ -1665,7 +1666,7 @@ gen6_3DSTATE_MULTISAMPLE(struct ilo_builder *builder,
       dw3 = 0;
       break;
    case 8:
-      assert(builder->dev->gen >= ILO_GEN(7));
+      assert(ilo_dev_gen(builder->dev) >= ILO_GEN(7));
       dw1 |= GEN7_MULTISAMPLE_DW1_NUMSAMPLES_8;
       dw2 = packed_sample_pos[0];
       dw3 = packed_sample_pos[1];
@@ -1682,7 +1683,7 @@ gen6_3DSTATE_MULTISAMPLE(struct ilo_builder *builder,
    dw[0] = dw0;
    dw[1] = dw1;
    dw[2] = dw2;
-   if (builder->dev->gen >= ILO_GEN(7))
+   if (ilo_dev_gen(builder->dev) >= ILO_GEN(7))
       dw[2] = dw3;
 }
 
@@ -1696,7 +1697,7 @@ gen6_3DSTATE_STENCIL_BUFFER(struct ilo_builder *builder,
 
    ILO_GPE_VALID_GEN(builder->dev, 6, 7.5);
 
-   dw0 = (builder->dev->gen >= ILO_GEN(7)) ?
+   dw0 = (ilo_dev_gen(builder->dev) >= ILO_GEN(7)) ?
       GEN7_RENDER_CMD(3D, 3DSTATE_STENCIL_BUFFER) :
       GEN6_RENDER_CMD(3D, 3DSTATE_STENCIL_BUFFER);
    dw0 |= (cmd_len - 2);
@@ -1724,7 +1725,7 @@ gen6_3DSTATE_HIER_DEPTH_BUFFER(struct ilo_builder *builder,
 
    ILO_GPE_VALID_GEN(builder->dev, 6, 7.5);
 
-   dw0 = (builder->dev->gen >= ILO_GEN(7)) ?
+   dw0 = (ilo_dev_gen(builder->dev) >= ILO_GEN(7)) ?
       GEN7_RENDER_CMD(3D, 3DSTATE_HIER_DEPTH_BUFFER) :
       GEN6_RENDER_CMD(3D, 3DSTATE_HIER_DEPTH_BUFFER);
    dw0 |= (cmd_len - 2);
@@ -1808,7 +1809,7 @@ gen6_PIPE_CONTROL(struct ilo_builder *builder,
                   GEN6_PIPE_CONTROL_WRITE_PS_DEPTH_COUNT |
                   GEN6_PIPE_CONTROL_WRITE_TIMESTAMP;
 
-      if (builder->dev->gen == ILO_GEN(6))
+      if (ilo_dev_gen(builder->dev) == ILO_GEN(6))
          bit_test |= GEN6_PIPE_CONTROL_NOTIFY_ENABLE;
 
       assert(dw1 & bit_test);
@@ -1836,7 +1837,7 @@ gen6_PIPE_CONTROL(struct ilo_builder *builder,
     * The kernel will add the mapping automatically (when write domain is
     * INTEL_DOMAIN_INSTRUCTION).
     */
-   if (builder->dev->gen == ILO_GEN(6) && bo) {
+   if (ilo_dev_gen(builder->dev) == ILO_GEN(6) && bo) {
       bo_offset |= GEN6_PIPE_CONTROL_DW2_USE_GGTT;
       reloc_flags |= INTEL_RELOC_GGTT;
    }
@@ -2270,7 +2271,7 @@ gen6_SURFACE_STATE(struct ilo_builder *builder,
                    bool for_render)
 {
    const int state_align = 32;
-   const int state_len = (builder->dev->gen >= ILO_GEN(7)) ? 8 : 6;
+   const int state_len = (ilo_dev_gen(builder->dev) >= ILO_GEN(7)) ? 8 : 6;
    uint32_t state_offset;
 
    ILO_GPE_VALID_GEN(builder->dev, 6, 7.5);
@@ -2409,7 +2410,7 @@ gen6_SAMPLER_STATE(struct ilo_builder *builder,
 
       dw[0] |= dw_filter;
 
-      if (builder->dev->gen >= ILO_GEN(7)) {
+      if (ilo_dev_gen(builder->dev) >= ILO_GEN(7)) {
          dw[3] |= dw_wrap;
       }
       else {
@@ -2441,7 +2442,7 @@ gen6_SAMPLER_BORDER_COLOR_STATE(struct ilo_builder *builder,
                                 const struct ilo_sampler_cso *sampler)
 {
    const int state_align = 32;
-   const int state_len = (builder->dev->gen >= ILO_GEN(7)) ? 4 : 12;
+   const int state_len = (ilo_dev_gen(builder->dev) >= ILO_GEN(7)) ? 4 : 12;
 
    ILO_GPE_VALID_GEN(builder->dev, 6, 7.5);
 

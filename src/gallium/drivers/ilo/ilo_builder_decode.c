@@ -213,7 +213,7 @@ writer_decode_sf_viewport(const struct ilo_builder *builder,
                           enum ilo_builder_writer_type which,
                           const struct ilo_builder_item *item)
 {
-   if (builder->dev->gen >= ILO_GEN(7))
+   if (ilo_dev_gen(builder->dev) >= ILO_GEN(7))
       writer_decode_sf_clip_viewport_gen7(builder, which, item);
    else
       writer_decode_sf_viewport_gen6(builder, which, item);
@@ -453,7 +453,7 @@ writer_decode_surface(const struct ilo_builder *builder,
                       enum ilo_builder_writer_type which,
                       const struct ilo_builder_item *item)
 {
-   if (builder->dev->gen >= ILO_GEN(7))
+   if (ilo_dev_gen(builder->dev) >= ILO_GEN(7))
       writer_decode_surface_gen7(builder, which, item);
    else
       writer_decode_surface_gen6(builder, which, item);

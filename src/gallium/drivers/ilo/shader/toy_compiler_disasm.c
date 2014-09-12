@@ -188,7 +188,7 @@ disasm_inst_decode_dw0_gen6(struct disasm_inst *inst, uint32_t dw0)
    switch (inst->opcode) {
    case GEN6_OPCODE_IF:
       inst->has_jip = true;
-      inst->has_uip = (inst->dev->gen >= ILO_GEN(7));
+      inst->has_uip = (ilo_dev_gen(inst->dev) >= ILO_GEN(7));
       break;
    case GEN6_OPCODE_BREAK:
    case GEN6_OPCODE_CONT:
@@ -244,7 +244,8 @@ disasm_inst_decode_dw0_gen6(struct disasm_inst *inst, uint32_t dw0)
 static bool
 disasm_inst_jip_in_dw1_high_gen6(const struct disasm_inst *inst)
 {
-   return (inst->dev->gen == ILO_GEN(6) && inst->has_jip && !inst->has_uip);
+   return (ilo_dev_gen(inst->dev) == ILO_GEN(6) &&
+           inst->has_jip && !inst->has_uip);
 }
 
 static void
@@ -257,7 +258,7 @@ disasm_inst_decode_dw1_gen6(struct disasm_inst *inst, uint32_t dw1)
    inst->src1.base.file = GEN_EXTRACT(dw1, GEN6_INST_SRC1_FILE);
    inst->src1.base.type = GEN_EXTRACT(dw1, GEN6_INST_SRC1_TYPE);
 
-   if (inst->dev->gen >= ILO_GEN(7))
+   if (ilo_dev_gen(inst->dev) >= ILO_GEN(7))
       inst->nib_ctrl = (bool) (dw1 & GEN7_INST_NIBCTRL);
 
    if (disasm_inst_jip_in_dw1_high_gen6(inst)) {
@@ -303,7 +304,7 @@ disasm_inst_decode_dw2_dw3_gen6(struct disasm_inst *inst,
 {
    int count, i;
 
-   if (inst->dev->gen >= ILO_GEN(7))
+   if (ilo_dev_gen(inst->dev) >= ILO_GEN(7))
       inst->flag_reg = GEN_EXTRACT(dw2, GEN7_INST_FLAG_REG);
 
    inst->flag_subreg = GEN_EXTRACT(dw2, GEN6_INST_FLAG_SUBREG);
@@ -381,7 +382,7 @@ disasm_inst_decode_3src_dw1_gen6(struct disasm_inst *inst, uint32_t dw1)
 
    inst->flag_subreg = GEN_EXTRACT(dw1, GEN6_3SRC_FLAG_SUBREG);
 
-   if (inst->dev->gen >= ILO_GEN(7)) {
+   if (ilo_dev_gen(inst->dev) >= ILO_GEN(7)) {
       inst->nib_ctrl = (bool) (dw1 & GEN7_3SRC_NIBCTRL);
       inst->flag_reg = GEN_EXTRACT(dw1, GEN7_3SRC_FLAG_REG);
 
@@ -1162,7 +1163,7 @@ disasm_printer_add_mdesc_sampler(struct disasm_printer *printer,
 {
    int op, simd;
 
-   if (inst->dev->gen >= ILO_GEN(7)) {
+   if (ilo_dev_gen(inst->dev) >= ILO_GEN(7)) {
       op = GEN_EXTRACT(mdesc, GEN7_MSG_SAMPLER_OP);
       simd = GEN_EXTRACT(mdesc, GEN7_MSG_SAMPLER_SIMD);
    } {
@@ -1185,7 +1186,7 @@ disasm_printer_add_mdesc_urb(struct disasm_printer *printer,
    int offset;
    bool interleaved, complete, allocate, used;
 
-   if (inst->dev->gen >= ILO_GEN(7)) {
+   if (ilo_dev_gen(inst->dev) >= ILO_GEN(7)) {
       switch (GEN_EXTRACT(mdesc, GEN7_MSG_URB_OP)) {
       case GEN7_MSG_URB_WRITE_HWORD:   op = "write HWord";  break;
       case GEN7_MSG_URB_WRITE_OWORD:   op = "write OWord";  break;
@@ -1229,9 +1230,9 @@ disasm_printer_add_mdesc_dp_sampler(struct disasm_printer *printer,
                                     const struct disasm_inst *inst,
                                     uint32_t mdesc)
 {
-   const int op = (inst->dev->gen >= ILO_GEN(7)) ?
+   const int op = (ilo_dev_gen(inst->dev) >= ILO_GEN(7)) ?
       GEN_EXTRACT(mdesc, GEN7_MSG_DP_OP) : GEN_EXTRACT(mdesc, GEN6_MSG_DP_OP);
-   const bool write_commit = (inst->dev->gen == ILO_GEN(6)) ?
+   const bool write_commit = (ilo_dev_gen(inst->dev) == ILO_GEN(6)) ?
          (mdesc & GEN6_MSG_DP_SEND_WRITE_COMMIT) : 0;
 
    disasm_printer_add(printer, " (%d, %d, %d, %d)",
@@ -1245,12 +1246,12 @@ disasm_printer_add_mdesc_dp_rc(struct disasm_printer *printer,
                                const struct disasm_inst *inst,
                                uint32_t mdesc)
 {
-   const int op = (inst->dev->gen >= ILO_GEN(7)) ?
+   const int op = (ilo_dev_gen(inst->dev) >= ILO_GEN(7)) ?
       GEN_EXTRACT(mdesc, GEN7_MSG_DP_OP) : GEN_EXTRACT(mdesc, GEN6_MSG_DP_OP);
    const char *str;
    bool is_rt_write;
 
-   if (inst->dev->gen >= ILO_GEN(7.5)) {
+   if (ilo_dev_gen(inst->dev) >= ILO_GEN(7.5)) {
       switch (op) {
       case GEN75_MSG_DP_RC_MEDIA_BLOCK_READ:       str = "media block read";           break;
       case GEN75_MSG_DP_RC_MEMORY_FENCE:           str = "memory fence";               break;
@@ -1260,7 +1261,7 @@ disasm_printer_add_mdesc_dp_rc(struct disasm_printer *printer,
       }
 
       is_rt_write = (op == GEN75_MSG_DP_RC_RT_WRITE);
-   } else if (inst->dev->gen >= ILO_GEN(7)) {
+   } else if (ilo_dev_gen(inst->dev) >= ILO_GEN(7)) {
       switch (op) {
       case GEN7_MSG_DP_RC_MEDIA_BLOCK_READ:        str = "media block read";           break;
       case GEN7_MSG_DP_RC_TYPED_SURFACE_READ:      str = "typed surface read";         break;
@@ -1311,7 +1312,7 @@ disasm_printer_add_mdesc_dp_rc(struct disasm_printer *printer,
       disasm_printer_add(printer, " %s%s%s%s", str,
             (mdesc & GEN6_MSG_DP_SLOTGRP_HI) ? " Hi" : "",
             (mdesc & GEN6_MSG_DP_RT_LAST) ? " LastRT" : "",
-            (inst->dev->gen == ILO_GEN(6) &&
+            (ilo_dev_gen(inst->dev) == ILO_GEN(6) &&
              (mdesc & GEN6_MSG_DP_SEND_WRITE_COMMIT)) ? " WriteCommit" : "");
    }
 

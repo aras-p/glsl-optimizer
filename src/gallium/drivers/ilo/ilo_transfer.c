@@ -96,7 +96,7 @@ resource_get_transfer_method(struct pipe_resource *res,
       /* we may need to convert on the fly */
       if (tex->separate_s8 || tex->layout.format == PIPE_FORMAT_S8_UINT) {
          /* on GEN6, separate stencil is enabled only when HiZ is */
-         if (is->dev.gen >= ILO_GEN(7) ||
+         if (ilo_dev_gen(&is->dev) >= ILO_GEN(7) ||
              ilo_texture_can_enable_hiz(tex, transfer->level,
                 transfer->box.z, transfer->box.depth)) {
             m = ILO_TRANSFER_MAP_SW_ZS;

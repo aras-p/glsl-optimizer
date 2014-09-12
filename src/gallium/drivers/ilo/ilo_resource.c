@@ -267,7 +267,8 @@ tex_alloc_bos(struct ilo_texture *tex,
    case ILO_LAYOUT_AUX_HIZ:
       if (!tex_create_hiz(tex)) {
          /* Separate Stencil Buffer requires HiZ to be enabled */
-         if (is->dev.gen == ILO_GEN(6) && tex->layout.separate_stencil)
+         if (ilo_dev_gen(&is->dev) == ILO_GEN(6) &&
+             tex->layout.separate_stencil)
             return false;
       }
       break;
@@ -398,7 +399,7 @@ buf_create(struct pipe_screen *screen, const struct pipe_resource *templ)
       buf->bo_size = align(buf->bo_size, 256) + 16;
 
    if ((templ->bind & PIPE_BIND_VERTEX_BUFFER) &&
-        is->dev.gen < ILO_GEN(7.5)) {
+        ilo_dev_gen(&is->dev) < ILO_GEN(7.5)) {
       /*
        * As noted in ilo_translate_format(), we treat some 3-component formats
        * as 4-component formats to work around hardware limitations.  Imagine

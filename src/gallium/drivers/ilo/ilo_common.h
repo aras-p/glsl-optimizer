@@ -76,12 +76,20 @@ struct ilo_dev_info {
    bool has_timestamp;
    bool has_gen7_sol_reset;
 
-   int gen;
+   /* use ilo_dev_gen() */
+   int gen_opaque;
+
    int gt;
    int urb_size;
 };
 
 extern int ilo_debug;
+
+static inline int
+ilo_dev_gen(const struct ilo_dev_info *dev)
+{
+   return dev->gen_opaque;
+}
 
 /**
  * Print a message, for dumping or debugging.

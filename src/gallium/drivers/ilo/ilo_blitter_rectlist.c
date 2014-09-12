@@ -379,7 +379,8 @@ hiz_can_clear_zs(const struct ilo_blitter *blitter,
     */
    switch (tex->layout.format) {
    case PIPE_FORMAT_Z16_UNORM:
-      if (blitter->ilo->dev->gen == ILO_GEN(6) && tex->base.width0 % 16)
+      if (ilo_dev_gen(blitter->ilo->dev) == ILO_GEN(6) &&
+          tex->base.width0 % 16)
          return false;
       break;
    case PIPE_FORMAT_Z24_UNORM_S8_UINT:

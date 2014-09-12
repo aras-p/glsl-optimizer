@@ -49,7 +49,7 @@ ilo_gpe_init_gs_cso_gen7(const struct ilo_dev_info *dev,
    /* in pairs */
    vue_read_len = (vue_read_len + 1) / 2;
 
-   switch (dev->gen) {
+   switch (ilo_dev_gen(dev)) {
    case ILO_GEN(7.5):
       max_threads = (dev->gt >= 2) ? 256 : 70;
       break;
@@ -143,7 +143,7 @@ ilo_gpe_init_fs_cso_gen7(const struct ilo_dev_info *dev,
    dw4 = GEN7_PS_DW4_POSOFFSET_NONE;
 
    /* see brwCreateContext() */
-   switch (dev->gen) {
+   switch (ilo_dev_gen(dev)) {
    case ILO_GEN(7.5):
       max_threads = (dev->gt == 3) ? 408 : (dev->gt == 2) ? 204 : 102;
       dw4 |= (max_threads - 1) << GEN75_PS_DW4_MAX_THREADS__SHIFT;
@@ -411,7 +411,7 @@ ilo_gpe_init_view_surface_for_buffer_gen7(const struct ilo_dev_info *dev,
    dw[6] = 0;
    dw[7] = 0;
 
-   if (dev->gen >= ILO_GEN(7.5)) {
+   if (ilo_dev_gen(dev) >= ILO_GEN(7.5)) {
       dw[7] |= GEN_SHIFT32(GEN75_SCS_RED,   GEN75_SURFACE_DW7_SCS_R) |
                GEN_SHIFT32(GEN75_SCS_GREEN, GEN75_SURFACE_DW7_SCS_G) |
                GEN_SHIFT32(GEN75_SCS_BLUE,  GEN75_SURFACE_DW7_SCS_B) |
@@ -624,7 +624,7 @@ ilo_gpe_init_view_surface_for_texture_gen7(const struct ilo_dev_info *dev,
    dw[6] = 0;
    dw[7] = 0;
 
-   if (dev->gen >= ILO_GEN(7.5)) {
+   if (ilo_dev_gen(dev) >= ILO_GEN(7.5)) {
       dw[7] |= GEN_SHIFT32(GEN75_SCS_RED,   GEN75_SURFACE_DW7_SCS_R) |
                GEN_SHIFT32(GEN75_SCS_GREEN, GEN75_SURFACE_DW7_SCS_G) |
                GEN_SHIFT32(GEN75_SCS_BLUE,  GEN75_SURFACE_DW7_SCS_B) |

@@ -514,7 +514,7 @@ gen7_3DSTATE_PS(struct ilo_builder *builder,
       dw4 = GEN7_PS_DW4_8_PIXEL_DISPATCH;
 
       /* see brwCreateContext() */
-      switch (builder->dev->gen) {
+      switch (ilo_dev_gen(builder->dev)) {
       case ILO_GEN(7.5):
          max_threads = (builder->dev->gt == 3) ? 408 :
                        (builder->dev->gt == 2) ? 204 : 102;
@@ -730,7 +730,7 @@ gen7_3dstate_urb(struct ilo_builder *builder,
 
    switch (subop) {
    case GEN7_RENDER_OPCODE_3DSTATE_URB_VS:
-      switch (builder->dev->gen) {
+      switch (ilo_dev_gen(builder->dev)) {
       case ILO_GEN(7.5):
          max_entries = (builder->dev->gt >= 2) ? 1664 : 640;
          min_entries = (builder->dev->gt >= 2) ? 64 : 32;
@@ -756,7 +756,7 @@ gen7_3dstate_urb(struct ilo_builder *builder,
          assert(num_entries >= 138);
       break;
    case GEN7_RENDER_OPCODE_3DSTATE_URB_GS:
-      switch (builder->dev->gen) {
+      switch (ilo_dev_gen(builder->dev)) {
       case ILO_GEN(7.5):
          max_entries = (builder->dev->gt >= 2) ? 640 : 256;
          break;

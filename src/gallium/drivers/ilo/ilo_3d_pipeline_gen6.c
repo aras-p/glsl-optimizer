@@ -50,7 +50,7 @@ static void
 gen6_wa_pipe_control_post_sync(struct ilo_3d_pipeline *p,
                                bool caller_post_sync)
 {
-   assert(p->dev->gen == ILO_GEN(6));
+   assert(ilo_dev_gen(p->dev) == ILO_GEN(6));
 
    /* emit once */
    if (p->state.has_gen6_wa_pipe_control)
@@ -93,7 +93,7 @@ gen6_wa_pipe_control_post_sync(struct ilo_3d_pipeline *p,
 static void
 gen6_wa_pipe_control_wm_multisample_flush(struct ilo_3d_pipeline *p)
 {
-   assert(p->dev->gen == ILO_GEN(6));
+   assert(ilo_dev_gen(p->dev) == ILO_GEN(6));
 
    gen6_wa_pipe_control_post_sync(p, false);
 
@@ -114,7 +114,7 @@ gen6_wa_pipe_control_wm_multisample_flush(struct ilo_3d_pipeline *p)
 static void
 gen6_wa_pipe_control_wm_depth_flush(struct ilo_3d_pipeline *p)
 {
-   assert(p->dev->gen == ILO_GEN(6));
+   assert(ilo_dev_gen(p->dev) == ILO_GEN(6));
 
    gen6_wa_pipe_control_post_sync(p, false);
 
@@ -139,7 +139,7 @@ gen6_wa_pipe_control_wm_depth_flush(struct ilo_3d_pipeline *p)
 static void
 gen6_wa_pipe_control_wm_max_threads_stall(struct ilo_3d_pipeline *p)
 {
-   assert(p->dev->gen == ILO_GEN(6));
+   assert(ilo_dev_gen(p->dev) == ILO_GEN(6));
 
    /* the post-sync workaround should cover this already */
    if (p->state.has_gen6_wa_pipe_control)
@@ -161,7 +161,7 @@ gen6_wa_pipe_control_wm_max_threads_stall(struct ilo_3d_pipeline *p)
 static void
 gen6_wa_pipe_control_vs_const_flush(struct ilo_3d_pipeline *p)
 {
-   assert(p->dev->gen == ILO_GEN(6));
+   assert(ilo_dev_gen(p->dev) == ILO_GEN(6));
 
    gen6_wa_pipe_control_post_sync(p, false);
 
@@ -186,7 +186,7 @@ gen6_pipeline_common_select(struct ilo_3d_pipeline *p,
 {
    /* PIPELINE_SELECT */
    if (session->hw_ctx_changed) {
-      if (p->dev->gen == ILO_GEN(6))
+      if (ilo_dev_gen(p->dev) == ILO_GEN(6))
          gen6_wa_pipe_control_post_sync(p, false);
 
       gen6_PIPELINE_SELECT(&p->cp->builder, 0x0);
@@ -200,7 +200,7 @@ gen6_pipeline_common_sip(struct ilo_3d_pipeline *p,
 {
    /* STATE_SIP */
    if (session->hw_ctx_changed) {
-      if (p->dev->gen == ILO_GEN(6))
+      if (ilo_dev_gen(p->dev) == ILO_GEN(6))
          gen6_wa_pipe_control_post_sync(p, false);
 
       gen6_STATE_SIP(&p->cp->builder, 0);
@@ -215,7 +215,7 @@ gen6_pipeline_common_base_address(struct ilo_3d_pipeline *p,
    /* STATE_BASE_ADDRESS */
    if (session->state_bo_changed || session->kernel_bo_changed ||
        session->batch_bo_changed) {
-      if (p->dev->gen == ILO_GEN(6))
+      if (ilo_dev_gen(p->dev) == ILO_GEN(6))
          gen6_wa_pipe_control_post_sync(p, false);
 
       ilo_builder_batch_state_base_address(&p->cp->builder,
@@ -399,7 +399,7 @@ gen6_pipeline_vf(struct ilo_3d_pipeline *p,
                  const struct ilo_context *ilo,
                  struct gen6_pipeline_session *session)
 {
-   if (p->dev->gen >= ILO_GEN(7.5)) {
+   if (ilo_dev_gen(p->dev) >= ILO_GEN(7.5)) {
       /* 3DSTATE_INDEX_BUFFER */
       if (DIRTY(IB) || session->batch_bo_changed) {
          gen6_3DSTATE_INDEX_BUFFER(&p->cp->builder,
@@ -486,7 +486,7 @@ gen6_pipeline_vs(struct ilo_3d_pipeline *p,
     * the classic i965 does this in upload_vs_state(), citing a spec that I
     * cannot find
     */
-   if (emit_3dstate_vs && p->dev->gen == ILO_GEN(6))
+   if (emit_3dstate_vs && ilo_dev_gen(p->dev) == ILO_GEN(6))
       gen6_wa_pipe_control_post_sync(p, false);
 
    /* 3DSTATE_CONSTANT_VS */
@@ -504,7 +504,7 @@ gen6_pipeline_vs(struct ilo_3d_pipeline *p,
       gen6_3DSTATE_VS(&p->cp->builder, ilo->vs, num_samplers);
    }
 
-   if (emit_3dstate_constant_vs && p->dev->gen == ILO_GEN(6))
+   if (emit_3dstate_constant_vs && ilo_dev_gen(p->dev) == ILO_GEN(6))
       gen6_wa_pipe_control_vs_const_flush(p);
 }
 
@@ -579,7 +579,7 @@ gen6_pipeline_gs_svbi(struct ilo_3d_pipeline *p,
 
    /* 3DSTATE_GS_SVB_INDEX */
    if (emit) {
-      if (p->dev->gen == ILO_GEN(6))
+      if (ilo_dev_gen(p->dev) == ILO_GEN(6))
          gen6_wa_pipe_control_post_sync(p, false);
 
       gen6_3DSTATE_GS_SVB_INDEX(&p->cp->builder,
@@ -652,7 +652,7 @@ gen6_pipeline_sf_rect(struct ilo_3d_pipeline *p,
 {
    /* 3DSTATE_DRAWING_RECTANGLE */
    if (DIRTY(FB)) {
-      if (p->dev->gen == ILO_GEN(6))
+      if (ilo_dev_gen(p->dev) == ILO_GEN(6))
          gen6_wa_pipe_control_post_sync(p, false);
 
       gen6_3DSTATE_DRAWING_RECTANGLE(&p->cp->builder, 0, 0,
@@ -681,7 +681,7 @@ gen6_pipeline_wm(struct ilo_3d_pipeline *p,
       const bool cc_may_kill = (ilo->dsa->dw_alpha ||
                                 ilo->blend->alpha_to_coverage);
 
-      if (p->dev->gen == ILO_GEN(6) && session->hw_ctx_changed)
+      if (ilo_dev_gen(p->dev) == ILO_GEN(6) && session->hw_ctx_changed)
          gen6_wa_pipe_control_wm_max_threads_stall(p);
 
       gen6_3DSTATE_WM(&p->cp->builder, ilo->fs, num_samplers,
@@ -701,7 +701,7 @@ gen6_pipeline_wm_multisample(struct ilo_3d_pipeline *p,
       packed_sample_pos = (ilo->fb.num_samples > 1) ?
          &p->packed_sample_position_4x : &p->packed_sample_position_1x;
 
-      if (p->dev->gen == ILO_GEN(6)) {
+      if (ilo_dev_gen(p->dev) == ILO_GEN(6)) {
          gen6_wa_pipe_control_post_sync(p, false);
          gen6_wa_pipe_control_wm_multisample_flush(p);
       }
@@ -742,7 +742,7 @@ gen6_pipeline_wm_depth(struct ilo_3d_pipeline *p,
          clear_params = 0;
       }
 
-      if (p->dev->gen == ILO_GEN(6)) {
+      if (ilo_dev_gen(p->dev) == ILO_GEN(6)) {
          gen6_wa_pipe_control_post_sync(p, false);
          gen6_wa_pipe_control_wm_depth_flush(p);
       }
@@ -762,7 +762,7 @@ gen6_pipeline_wm_raster(struct ilo_3d_pipeline *p,
    /* 3DSTATE_POLY_STIPPLE_PATTERN and 3DSTATE_POLY_STIPPLE_OFFSET */
    if ((DIRTY(RASTERIZER) || DIRTY(POLY_STIPPLE)) &&
        ilo->rasterizer->state.poly_stipple_enable) {
-      if (p->dev->gen == ILO_GEN(6))
+      if (ilo_dev_gen(p->dev) == ILO_GEN(6))
          gen6_wa_pipe_control_post_sync(p, false);
 
       gen6_3DSTATE_POLY_STIPPLE_PATTERN(&p->cp->builder,
@@ -773,7 +773,7 @@ gen6_pipeline_wm_raster(struct ilo_3d_pipeline *p,
 
    /* 3DSTATE_LINE_STIPPLE */
    if (DIRTY(RASTERIZER) && ilo->rasterizer->state.line_stipple_enable) {
-      if (p->dev->gen == ILO_GEN(6))
+      if (ilo_dev_gen(p->dev) == ILO_GEN(6))
          gen6_wa_pipe_control_post_sync(p, false);
 
       gen6_3DSTATE_LINE_STIPPLE(&p->cp->builder,
@@ -783,7 +783,7 @@ gen6_pipeline_wm_raster(struct ilo_3d_pipeline *p,
 
    /* 3DSTATE_AA_LINE_PARAMETERS */
    if (DIRTY(RASTERIZER) && ilo->rasterizer->state.line_smooth) {
-      if (p->dev->gen == ILO_GEN(6))
+      if (ilo_dev_gen(p->dev) == ILO_GEN(6))
          gen6_wa_pipe_control_post_sync(p, false);
 
       gen6_3DSTATE_AA_LINE_PARAMETERS(&p->cp->builder);
@@ -796,7 +796,7 @@ gen6_pipeline_state_viewports(struct ilo_3d_pipeline *p,
                               struct gen6_pipeline_session *session)
 {
    /* SF_CLIP_VIEWPORT and CC_VIEWPORT */
-   if (p->dev->gen >= ILO_GEN(7) && DIRTY(VIEWPORT)) {
+   if (ilo_dev_gen(p->dev) >= ILO_GEN(7) && DIRTY(VIEWPORT)) {
       p->state.SF_CLIP_VIEWPORT = gen7_SF_CLIP_VIEWPORT(&p->cp->builder,
             ilo->viewport.cso, ilo->viewport.count);
 
@@ -920,7 +920,7 @@ gen6_pipeline_state_surfaces_so(struct ilo_3d_pipeline *p,
 {
    const struct ilo_so_state *so = &ilo->so;
 
-   if (p->dev->gen != ILO_GEN(6))
+   if (ilo_dev_gen(p->dev) != ILO_GEN(6))
       return;
 
    /* SURFACE_STATEs for stream output targets */
@@ -1451,7 +1451,7 @@ ilo_3d_pipeline_emit_draw_gen6(struct ilo_3d_pipeline *p,
 void
 ilo_3d_pipeline_emit_flush_gen6(struct ilo_3d_pipeline *p)
 {
-   if (p->dev->gen == ILO_GEN(6))
+   if (ilo_dev_gen(p->dev) == ILO_GEN(6))
       gen6_wa_pipe_control_post_sync(p, false);
 
    gen6_PIPE_CONTROL(&p->cp->builder,
@@ -1469,7 +1469,7 @@ void
 ilo_3d_pipeline_emit_write_timestamp_gen6(struct ilo_3d_pipeline *p,
                                           struct intel_bo *bo, int index)
 {
-   if (p->dev->gen == ILO_GEN(6))
+   if (ilo_dev_gen(p->dev) == ILO_GEN(6))
       gen6_wa_pipe_control_post_sync(p, true);
 
    gen6_PIPE_CONTROL(&p->cp->builder,
@@ -1482,7 +1482,7 @@ void
 ilo_3d_pipeline_emit_write_depth_count_gen6(struct ilo_3d_pipeline *p,
                                             struct intel_bo *bo, int index)
 {
-   if (p->dev->gen == ILO_GEN(6))
+   if (ilo_dev_gen(p->dev) == ILO_GEN(6))
       gen6_wa_pipe_control_post_sync(p, false);
 
    gen6_PIPE_CONTROL(&p->cp->builder,
@@ -1505,8 +1505,8 @@ ilo_3d_pipeline_emit_write_statistics_gen6(struct ilo_3d_pipeline *p,
       GEN6_REG_CL_INVOCATION_COUNT,
       GEN6_REG_CL_PRIMITIVES_COUNT,
       GEN6_REG_PS_INVOCATION_COUNT,
-      p->dev->gen >= ILO_GEN(7) ? GEN7_REG_HS_INVOCATION_COUNT : 0,
-      p->dev->gen >= ILO_GEN(7) ? GEN7_REG_DS_INVOCATION_COUNT : 0,
+      ilo_dev_gen(p->dev) >= ILO_GEN(7) ? GEN7_REG_HS_INVOCATION_COUNT : 0,
+      ilo_dev_gen(p->dev) >= ILO_GEN(7) ? GEN7_REG_DS_INVOCATION_COUNT : 0,
       0,
    };
    int i;
@@ -1766,7 +1766,7 @@ gen6_pipeline_estimate_state_size(const struct ilo_3d_pipeline *p,
       size += align(GEN6_COLOR_CALC_STATE__SIZE, alignment);
 
       /* viewport arrays */
-      if (p->dev->gen >= ILO_GEN(7)) {
+      if (ilo_dev_gen(p->dev) >= ILO_GEN(7)) {
          size +=
             align(GEN7_SF_CLIP_VIEWPORT__SIZE * ILO_MAX_VIEWPORTS, 16) +
             align(GEN6_CC_VIEWPORT__SIZE * ILO_MAX_VIEWPORTS, 8) +
@@ -1801,7 +1801,7 @@ gen6_pipeline_estimate_state_size(const struct ilo_3d_pipeline *p,
       switch (sh_type) {
       case PIPE_SHADER_VERTEX:
          if (ilo->vs) {
-            if (p->dev->gen == ILO_GEN(6)) {
+            if (ilo_dev_gen(p->dev) == ILO_GEN(6)) {
                const struct pipe_stream_output_info *so_info =
                   ilo_shader_get_kernel_so_info(ilo->vs);
 
@@ -1816,7 +1816,7 @@ gen6_pipeline_estimate_state_size(const struct ilo_3d_pipeline *p,
          }
          break;
       case PIPE_SHADER_GEOMETRY:
-         if (ilo->gs && p->dev->gen == ILO_GEN(6)) {
+         if (ilo->gs && ilo_dev_gen(p->dev) == ILO_GEN(6)) {
             const struct pipe_stream_output_info *so_info =
                ilo_shader_get_kernel_so_info(ilo->gs);
 

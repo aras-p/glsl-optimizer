@@ -627,7 +627,7 @@ ilo_check_restart_index(const struct ilo_context *ilo, unsigned restart_index)
     * Haswell (GEN(7.5)) supports an arbitrary cut index, check everything
     * older.
     */
-   if (ilo->dev->gen >= ILO_GEN(7.5))
+   if (ilo_dev_gen(ilo->dev) >= ILO_GEN(7.5))
       return true;
 
    /* Note: indices must be unsigned byte, unsigned short or unsigned int */
@@ -663,7 +663,7 @@ ilo_check_restart_prim_type(const struct ilo_context *ilo, unsigned prim)
    case PIPE_PRIM_QUAD_STRIP:
    case PIPE_PRIM_QUADS:
    case PIPE_PRIM_TRIANGLE_FAN:
-      if (ilo->dev->gen >= ILO_GEN(7.5)) {
+      if (ilo_dev_gen(ilo->dev) >= ILO_GEN(7.5)) {
          /* Haswell and newer parts can handle these prim types. */
          return true;
       }
@@ -816,7 +816,7 @@ ilo_texture_barrier(struct pipe_context *pipe)
    ilo_3d_pipeline_emit_flush(hw3d->pipeline);
 
    /* don't know why */
-   if (ilo->dev->gen >= ILO_GEN(7))
+   if (ilo_dev_gen(ilo->dev) >= ILO_GEN(7))
       ilo_cp_flush(hw3d->cp, "texture barrier");
 }
 
