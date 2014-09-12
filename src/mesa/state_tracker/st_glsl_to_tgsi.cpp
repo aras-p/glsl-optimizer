@@ -2617,10 +2617,7 @@ glsl_to_tgsi_visitor::visit(ir_constant *ir)
    case GLSL_TYPE_BOOL:
       gl_type = native_integers ? GL_BOOL : GL_FLOAT;
       for (i = 0; i < ir->type->vector_elements; i++) {
-         if (native_integers)
-            values[i].u = ir->value.b[i] ? ~0 : 0;
-         else
-            values[i].f = ir->value.b[i];
+         values[i].u = ir->value.b[i] ? ctx->Const.UniformBooleanTrue : 0;
       }
       break;
    default:
