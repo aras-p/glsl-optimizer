@@ -1684,6 +1684,8 @@ ilo_gpe_init_view_surface_null_gen6(const struct ilo_dev_info *dev,
 
    ILO_GPE_VALID_GEN(dev, 6, 6);
 
+   assert(width >= 1 && height >= 1 && depth >= 1);
+
    /*
     * From the Sandy Bridge PRM, volume 4 part 1, page 71:
     *
@@ -2359,7 +2361,8 @@ ilo_gpe_set_fb(const struct ilo_dev_info *dev,
    util_copy_framebuffer_state(&fb->state, state);
 
    ilo_gpe_init_view_surface_null(dev,
-         state->width, state->height,
+         (state->width) ? state->width : 1,
+         (state->height) ? state->height : 1,
          1, 0, &fb->null_rt);
 
    first = NULL;

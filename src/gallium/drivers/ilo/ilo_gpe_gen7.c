@@ -243,6 +243,8 @@ ilo_gpe_init_view_surface_null_gen7(const struct ilo_dev_info *dev,
 
    ILO_GPE_VALID_GEN(dev, 7, 7.5);
 
+   assert(width >= 1 && height >= 1 && depth >= 1);
+
    /*
     * From the Ivy Bridge PRM, volume 4 part 1, page 62:
     *
