@@ -312,25 +312,28 @@ swizzle_convert_try_memcpy(void *dst, GLenum dst_type, int num_dst_channels,
  *                      format
  */
 #define SWIZZLE_CONVERT_LOOP(DST_TYPE, DST_CHANS, SRC_TYPE, SRC_CHANS, CONV) \
-   for (s = 0; s < count; ++s) {                                  \
-      for (j = 0; j < SRC_CHANS; ++j) {                           \
-         SRC_TYPE src = typed_src[j];                             \
-         tmp[j] = CONV;                                           \
-      }                                                           \
-                                                                  \
-      typed_dst[0] = tmp[swizzle_x];                              \
-      if (DST_CHANS > 1) {                                        \
-         typed_dst[1] = tmp[swizzle_y];                           \
-         if (DST_CHANS > 2) {                                     \
-            typed_dst[2] = tmp[swizzle_z];                        \
-            if (DST_CHANS > 3) {                                  \
-               typed_dst[3] = tmp[swizzle_w];                     \
-            }                                                     \
-         }                                                        \
-      }                                                           \
-      typed_src += SRC_CHANS;                                     \
-      typed_dst += DST_CHANS;                                     \
-   }                                                              \
+   do {                                           \
+      int s, j;                                   \
+      for (s = 0; s < count; ++s) {               \
+         for (j = 0; j < SRC_CHANS; ++j) {        \
+            SRC_TYPE src = typed_src[j];          \
+            tmp[j] = CONV;                        \
+         }                                        \
+                                                  \
+         typed_dst[0] = tmp[swizzle_x];           \
+         if (DST_CHANS > 1) {                     \
+            typed_dst[1] = tmp[swizzle_y];        \
+            if (DST_CHANS > 2) {                  \
+               typed_dst[2] = tmp[swizzle_z];     \
+               if (DST_CHANS > 3) {               \
+                  typed_dst[3] = tmp[swizzle_w];  \
+               }                                  \
+            }                                     \
+         }                                        \
+         typed_src += SRC_CHANS;                  \
+         typed_dst += DST_CHANS;                  \
+      }                                           \
+   } while (0)
 
 /**
  * Represents a single swizzle-and-convert operation
@@ -359,71 +362,70 @@ swizzle_convert_try_memcpy(void *dst, GLenum dst_type, int num_dst_channels,
       const SRC_TYPE *typed_src = void_src;                       \
       DST_TYPE *typed_dst = void_dst;                             \
       DST_TYPE tmp[7];                                            \
-      int s, j;                                                   \
       tmp[4] = 0;                                                 \
       tmp[5] = one;                                               \
       switch (num_dst_channels) {                                 \
       case 1:                                                     \
          switch (num_src_channels) {                              \
          case 1:                                                  \
-            SWIZZLE_CONVERT_LOOP(DST_TYPE, 1, SRC_TYPE, 1, CONV)  \
+            SWIZZLE_CONVERT_LOOP(DST_TYPE, 1, SRC_TYPE, 1, CONV); \
             break;                                                \
          case 2:                                                  \
-            SWIZZLE_CONVERT_LOOP(DST_TYPE, 1, SRC_TYPE, 2, CONV)  \
+            SWIZZLE_CONVERT_LOOP(DST_TYPE, 1, SRC_TYPE, 2, CONV); \
             break;                                                \
          case 3:                                                  \
-            SWIZZLE_CONVERT_LOOP(DST_TYPE, 1, SRC_TYPE, 3, CONV)  \
+            SWIZZLE_CONVERT_LOOP(DST_TYPE, 1, SRC_TYPE, 3, CONV); \
             break;                                                \
          case 4:                                                  \
-            SWIZZLE_CONVERT_LOOP(DST_TYPE, 1, SRC_TYPE, 4, CONV)  \
+            SWIZZLE_CONVERT_LOOP(DST_TYPE, 1, SRC_TYPE, 4, CONV); \
             break;                                                \
          }                                                        \
          break;                                                   \
       case 2:                                                     \
          switch (num_src_channels) {                              \
          case 1:                                                  \
-            SWIZZLE_CONVERT_LOOP(DST_TYPE, 2, SRC_TYPE, 1, CONV)  \
+            SWIZZLE_CONVERT_LOOP(DST_TYPE, 2, SRC_TYPE, 1, CONV); \
             break;                                                \
          case 2:                                                  \
-            SWIZZLE_CONVERT_LOOP(DST_TYPE, 2, SRC_TYPE, 2, CONV)  \
+            SWIZZLE_CONVERT_LOOP(DST_TYPE, 2, SRC_TYPE, 2, CONV); \
             break;                                                \
          case 3:                                                  \
-            SWIZZLE_CONVERT_LOOP(DST_TYPE, 2, SRC_TYPE, 3, CONV)  \
+            SWIZZLE_CONVERT_LOOP(DST_TYPE, 2, SRC_TYPE, 3, CONV); \
             break;                                                \
          case 4:                                                  \
-            SWIZZLE_CONVERT_LOOP(DST_TYPE, 2, SRC_TYPE, 4, CONV)  \
+            SWIZZLE_CONVERT_LOOP(DST_TYPE, 2, SRC_TYPE, 4, CONV); \
             break;                                                \
          }                                                        \
          break;                                                   \
       case 3:                                                     \
          switch (num_src_channels) {                              \
          case 1:                                                  \
-            SWIZZLE_CONVERT_LOOP(DST_TYPE, 3, SRC_TYPE, 1, CONV)  \
+            SWIZZLE_CONVERT_LOOP(DST_TYPE, 3, SRC_TYPE, 1, CONV); \
             break;                                                \
          case 2:                                                  \
-            SWIZZLE_CONVERT_LOOP(DST_TYPE, 3, SRC_TYPE, 2, CONV)  \
+            SWIZZLE_CONVERT_LOOP(DST_TYPE, 3, SRC_TYPE, 2, CONV); \
             break;                                                \
          case 3:                                                  \
-            SWIZZLE_CONVERT_LOOP(DST_TYPE, 3, SRC_TYPE, 3, CONV)  \
+            SWIZZLE_CONVERT_LOOP(DST_TYPE, 3, SRC_TYPE, 3, CONV); \
             break;                                                \
          case 4:                                                  \
-            SWIZZLE_CONVERT_LOOP(DST_TYPE, 3, SRC_TYPE, 4, CONV)  \
+            SWIZZLE_CONVERT_LOOP(DST_TYPE, 3, SRC_TYPE, 4, CONV); \
             break;                                                \
          }                                                        \
          break;                                                   \
       case 4:                                                     \
          switch (num_src_channels) {                              \
          case 1:                                                  \
-            SWIZZLE_CONVERT_LOOP(DST_TYPE, 4, SRC_TYPE, 1, CONV)  \
+            SWIZZLE_CONVERT_LOOP(DST_TYPE, 4, SRC_TYPE, 1, CONV); \
             break;                                                \
          case 2:                                                  \
-            SWIZZLE_CONVERT_LOOP(DST_TYPE, 4, SRC_TYPE, 2, CONV)  \
+            SWIZZLE_CONVERT_LOOP(DST_TYPE, 4, SRC_TYPE, 2, CONV); \
             break;                                                \
          case 3:                                                  \
-            SWIZZLE_CONVERT_LOOP(DST_TYPE, 4, SRC_TYPE, 3, CONV)  \
+            SWIZZLE_CONVERT_LOOP(DST_TYPE, 4, SRC_TYPE, 3, CONV); \
             break;                                                \
          case 4:                                                  \
-            SWIZZLE_CONVERT_LOOP(DST_TYPE, 4, SRC_TYPE, 4, CONV)  \
+            SWIZZLE_CONVERT_LOOP(DST_TYPE, 4, SRC_TYPE, 4, CONV); \
             break;                                                \
          }                                                        \
          break;                                                   \
