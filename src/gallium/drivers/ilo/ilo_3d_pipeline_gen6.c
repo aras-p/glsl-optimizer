@@ -219,8 +219,7 @@ gen6_pipeline_common_base_address(struct ilo_3d_pipeline *p,
       if (ilo_dev_gen(p->dev) == ILO_GEN(6))
          gen6_wa_pipe_control_post_sync(p, false);
 
-      ilo_builder_batch_state_base_address(&p->cp->builder,
-            session->hw_ctx_changed);
+      gen6_state_base_address(&p->cp->builder, session->hw_ctx_changed);
 
       /*
        * From the Sandy Bridge PRM, volume 1 part 1, page 28:
@@ -1630,7 +1629,7 @@ gen6_rectlist_commands(struct ilo_3d_pipeline *p,
 
    gen6_rectlist_wm_multisample(p, blitter, session);
 
-   ilo_builder_batch_state_base_address(&p->cp->builder, true);
+   gen6_state_base_address(&p->cp->builder, true);
 
    gen6_3DSTATE_VERTEX_BUFFERS(&p->cp->builder,
          &blitter->ve, &blitter->vb);

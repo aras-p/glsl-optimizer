@@ -35,102 +35,21 @@
 #include "ilo_builder.h"
 
 static inline void
-gen6_STATE_BASE_ADDRESS(struct ilo_builder *builder,
-                        struct intel_bo *general_state_bo,
-                        struct intel_bo *surface_state_bo,
-                        struct intel_bo *dynamic_state_bo,
-                        struct intel_bo *indirect_object_bo,
-                        struct intel_bo *instruction_bo,
-                        uint32_t general_state_size,
-                        uint32_t dynamic_state_size,
-                        uint32_t indirect_object_size,
-                        uint32_t instruction_size)
-{
-   const uint8_t cmd_len = 10;
-   const uint32_t dw0 = GEN6_RENDER_CMD(COMMON, STATE_BASE_ADDRESS) |
-                        (cmd_len - 2);
-   unsigned pos;
-   uint32_t *dw;
-
-   ILO_DEV_ASSERT(builder->dev, 6, 7.5);
-
-   /* 4K-page aligned */
-   assert(((general_state_size | dynamic_state_size |
-            indirect_object_size | instruction_size) & 0xfff) == 0);
-
-   pos = ilo_builder_batch_pointer(builder, cmd_len, &dw);
-   dw[0] = dw0;
-
-   dw[1] = 1;
-   dw[2] = 1;
-   dw[3] = 1;
-   dw[4] = 1;
-   dw[5] = 1;
-
-   /* skip range checks */
-   dw[6] = 1;
-   dw[7] = 0xfffff000 + 1;
-   dw[8] = 0xfffff000 + 1;
-   dw[9] = 1;
-
-   if (general_state_bo) {
-      ilo_builder_batch_reloc(builder, pos + 1, general_state_bo, 1, 0);
-
-      if (general_state_size) {
-         ilo_builder_batch_reloc(builder, pos + 6, general_state_bo,
-               general_state_size | 1, 0);
-      }
-   }
-
-   if (surface_state_bo)
-      ilo_builder_batch_reloc(builder, pos + 2, surface_state_bo, 1, 0);
-
-   if (dynamic_state_bo) {
-      ilo_builder_batch_reloc(builder, pos + 3, dynamic_state_bo, 1, 0);
-
-      if (dynamic_state_size) {
-         ilo_builder_batch_reloc(builder, pos + 7, dynamic_state_bo,
-               dynamic_state_size | 1, 0);
-      }
-   }
-
-   if (indirect_object_bo) {
-      ilo_builder_batch_reloc(builder, pos + 4, indirect_object_bo, 1, 0);
-
-      if (indirect_object_size) {
-         ilo_builder_batch_reloc(builder, pos + 8, indirect_object_bo,
-               indirect_object_size | 1, 0);
-      }
-   }
-
-   if (instruction_bo) {
-      ilo_builder_batch_reloc(builder, pos + 5, instruction_bo, 1, 0);
-
-      if (instruction_size) {
-         ilo_builder_batch_reloc(builder, pos + 9, instruction_bo,
-               instruction_size | 1, 0);
-      }
-   }
-}
-
-static inline void
-gen6_STATE_SIP(struct ilo_builder *builder,
-               uint32_t sip)
+gen6_STATE_SIP(struct ilo_builder *builder, uint32_t sip)
 {
    const uint8_t cmd_len = 2;
-   const uint32_t dw0 = GEN6_RENDER_CMD(COMMON, STATE_SIP) | (cmd_len - 2);
    uint32_t *dw;
 
    ILO_DEV_ASSERT(builder->dev, 6, 7.5);
 
    ilo_builder_batch_pointer(builder, cmd_len, &dw);
-   dw[0] = dw0;
+
+   dw[0] = GEN6_RENDER_CMD(COMMON, STATE_SIP) | (cmd_len - 2);
    dw[1] = sip;
 }
 
 static inline void
-gen6_PIPELINE_SELECT(struct ilo_builder *builder,
-                     int pipeline)
+gen6_PIPELINE_SELECT(struct ilo_builder *builder, int pipeline)
 {
    const uint8_t cmd_len = 1;
    const uint32_t dw0 = GEN6_RENDER_CMD(SINGLE_DW, PIPELINE_SELECT) |
@@ -145,20 +64,17 @@ gen6_PIPELINE_SELECT(struct ilo_builder *builder,
 }
 
 static inline void
-gen6_PIPE_CONTROL(struct ilo_builder *builder,
-                  uint32_t dw1,
+gen6_PIPE_CONTROL(struct ilo_builder *builder, uint32_t dw1,
                   struct intel_bo *bo, uint32_t bo_offset,
                   bool write_qword)
 {
    const uint8_t cmd_len = (write_qword) ? 5 : 4;
-   const uint32_t dw0 = GEN6_RENDER_CMD(3D, PIPE_CONTROL) | (cmd_len - 2);
+   const uint64_t imm = 0;
    uint32_t reloc_flags = INTEL_RELOC_WRITE;
-   unsigned pos;
    uint32_t *dw;
+   unsigned pos;
 
    ILO_DEV_ASSERT(builder->dev, 6, 7.5);
-
-   assert(bo_offset % ((write_qword) ? 8 : 4) == 0);
 
    if (dw1 & GEN6_PIPE_CONTROL_CS_STALL) {
       /*
@@ -212,32 +128,36 @@ gen6_PIPE_CONTROL(struct ilo_builder *builder,
                       GEN6_PIPE_CONTROL_DEPTH_CACHE_FLUSH)));
    }
 
-   /*
-    * From the Sandy Bridge PRM, volume 1 part 3, page 19:
-    *
-    *     "[DevSNB] PPGTT memory writes by MI_* (such as MI_STORE_DATA_IMM)
-    *      and PIPE_CONTROL are not supported."
-    *
-    * The kernel will add the mapping automatically (when write domain is
-    * INTEL_DOMAIN_INSTRUCTION).
-    */
-   if (ilo_dev_gen(builder->dev) == ILO_GEN(6) && bo) {
-      bo_offset |= GEN6_PIPE_CONTROL_DW2_USE_GGTT;
-      reloc_flags |= INTEL_RELOC_GGTT;
+   pos = ilo_builder_batch_pointer(builder, cmd_len, &dw);
+
+   dw[0] = GEN6_RENDER_CMD(3D, PIPE_CONTROL) | (cmd_len - 2);
+   dw[1] = dw1;
+   dw[3] = (uint32_t) imm;
+
+   if (write_qword) {
+      assert(bo_offset % 8 == 0);
+      dw[4] = (uint32_t) (imm >> 32);
+   } else {
+      assert(bo_offset % 4 == 0);
+      assert(imm == (uint64_t) ((uint32_t) imm));
    }
 
-   pos = ilo_builder_batch_pointer(builder, cmd_len, &dw);
-   dw[0] = dw0;
-   dw[1] = dw1;
+   if (bo) {
+      /*
+       * From the Sandy Bridge PRM, volume 1 part 3, page 19:
+       *
+       *     "[DevSNB] PPGTT memory writes by MI_* (such as MI_STORE_DATA_IMM)
+       *      and PIPE_CONTROL are not supported."
+       */
+      if (ilo_dev_gen(builder->dev) == ILO_GEN(6)) {
+         bo_offset |= GEN6_PIPE_CONTROL_DW2_USE_GGTT;
+         reloc_flags |= INTEL_RELOC_GGTT;
+      }
 
-   if (bo)
       ilo_builder_batch_reloc(builder, pos + 2, bo, bo_offset, reloc_flags);
-   else
+   } else {
       dw[2] = 0;
-
-   dw[3] = 0;
-   if (write_qword)
-      dw[4] = 0;
+   }
 }
 
 static inline void
@@ -254,17 +174,20 @@ ilo_builder_batch_patch_sba(struct ilo_builder *builder)
 }
 
 /**
- * Add a STATE_BASE_ADDRESS to the batch buffer.
+ * Add a STATE_BASE_ADDRESS to the batch buffer.  The relocation entry for the
+ * instruction buffer is not added until ilo_builder_end() or next
+ * gen6_state_base_address().
  */
 static inline void
-ilo_builder_batch_state_base_address(struct ilo_builder *builder,
-                                     bool init_all)
+gen6_state_base_address(struct ilo_builder *builder, bool init_all)
 {
    const uint8_t cmd_len = 10;
    const struct ilo_builder_writer *bat =
       &builder->writers[ILO_BUILDER_WRITER_BATCH];
-   unsigned pos;
    uint32_t *dw;
+   unsigned pos;
+
+   ILO_DEV_ASSERT(builder->dev, 6, 7.5);
 
    pos = ilo_builder_batch_pointer(builder, cmd_len, &dw);
 

@@ -806,7 +806,7 @@ gen7_rectlist_commands(struct ilo_3d_pipeline *p,
 {
    gen7_rectlist_wm_multisample(p, blitter, session);
 
-   ilo_builder_batch_state_base_address(&p->cp->builder, true);
+   gen6_state_base_address(&p->cp->builder, true);
 
    gen6_3DSTATE_VERTEX_BUFFERS(&p->cp->builder,
          &blitter->ve, &blitter->vb);
