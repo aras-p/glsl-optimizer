@@ -337,8 +337,15 @@ fs_visitor::CMP(fs_reg dst, fs_reg src0, fs_reg src1,
 fs_inst *
 fs_visitor::LOAD_PAYLOAD(const fs_reg &dst, fs_reg *src, int sources)
 {
-   fs_inst *inst = new(mem_ctx) fs_inst(SHADER_OPCODE_LOAD_PAYLOAD, dst, src,
-                                        sources);
+   uint8_t exec_size = dst.width;
+   for (int i = 0; i < sources; ++i) {
+      assert(src[i].width % dst.width == 0);
+      if (src[i].width > exec_size)
+         exec_size = src[i].width;
+   }
+
+   fs_inst *inst = new(mem_ctx) fs_inst(SHADER_OPCODE_LOAD_PAYLOAD, exec_size,
+                                        dst, src, sources);
    inst->regs_written = 0;
    for (int i = 0; i < sources; ++i) {
       /* The LOAD_PAYLOAD instruction only really makes sense if we are
