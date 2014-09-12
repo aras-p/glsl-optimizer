@@ -91,7 +91,7 @@ struct ir3_compile_context {
 	unsigned next_inloc;
 
 	unsigned num_internal_temps;
-	struct tgsi_src_register internal_temps[6];
+	struct tgsi_src_register internal_temps[8];
 
 	/* idx/slot for last compiler generated immediate */
 	unsigned immediate_idx;
@@ -305,10 +305,10 @@ push_block(struct ir3_compile_context *ctx)
 
 #define SCALAR_REGS(file) (4 * (ctx->info.file_max[TGSI_FILE_ ## file] + 1))
 
-	/* hmm, give ourselves room to create 4 extra temporaries (vec4):
+	/* hmm, give ourselves room to create 8 extra temporaries (vec4):
 	 */
 	ntmp = SCALAR_REGS(TEMPORARY);
-	ntmp += 4 * 4;
+	ntmp += 8 * 4;
 
 	nout = SCALAR_REGS(OUTPUT);
 	nin  = SCALAR_REGS(INPUT);
@@ -773,6 +773,12 @@ static type_t
 get_utype(struct ir3_compile_context *ctx)
 {
 	return TYPE_U32;
+}
+
+static type_t
+get_stype(struct ir3_compile_context *ctx)
+{
+	return TYPE_S32;
 }
 
 static unsigned
@@ -1989,6 +1995,192 @@ trans_umul(const struct instr_translater *t,
 }
 
 /*
+ * IDIV / UDIV
+ *
+ * See NV50LegalizeSSA::handleDIV for the origin of this implementation.
+ */
+static void
+trans_idiv(const struct instr_translater *t,
+		struct ir3_compile_context *ctx,
+		struct tgsi_full_instruction *inst)
+{
+	struct ir3_instruction *instr;
+	struct tgsi_dst_register *dst = get_dst(ctx, inst);
+	struct tgsi_src_register *a = &inst->Src[0].Register;
+	struct tgsi_src_register *b = &inst->Src[1].Register;
+
+	struct tgsi_dst_register af_dst, bf_dst, q_dst, r_dst, a_dst, b_dst;
+	struct tgsi_src_register *af_src, *bf_src, *q_src, *r_src, *a_src, *b_src;
+
+	struct tgsi_src_register negative_2, thirty_one;
+
+	type_t src_type = t->tgsi_opc == TGSI_OPCODE_IDIV ?
+		get_stype(ctx) : get_utype(ctx);
+
+	af_src = get_internal_temp(ctx, &af_dst);
+	bf_src = get_internal_temp(ctx, &bf_dst);
+	q_src = get_internal_temp(ctx, &q_dst);
+	r_src = get_internal_temp(ctx, &r_dst);
+	a_src = get_internal_temp(ctx, &a_dst);
+	b_src = get_internal_temp(ctx, &b_dst);
+
+	get_immediate(ctx, &negative_2, -2);
+	get_immediate(ctx, &thirty_one, 31);
+
+	/* cov.[us]32f32 af, numerator */
+	instr = instr_create(ctx, 1, 0);
+	instr->cat1.src_type = src_type;
+	instr->cat1.dst_type = get_ftype(ctx);
+	vectorize(ctx, instr, &af_dst, 1, a, 0);
+
+	/* cov.[us]32f32 bf, denominator */
+	instr = instr_create(ctx, 1, 0);
+	instr->cat1.src_type = src_type;
+	instr->cat1.dst_type = get_ftype(ctx);
+	vectorize(ctx, instr, &bf_dst, 1, b, 0);
+
+	/* Get the absolute values for IDIV */
+	if (t->tgsi_opc == TGSI_OPCODE_IDIV) {
+		/* absneg.f af, (abs)af */
+		instr = instr_create(ctx, 2, OPC_ABSNEG_F);
+		vectorize(ctx, instr, &af_dst, 1, af_src, IR3_REG_ABS);
+
+		/* absneg.f bf, (abs)bf */
+		instr = instr_create(ctx, 2, OPC_ABSNEG_F);
+		vectorize(ctx, instr, &bf_dst, 1, bf_src, IR3_REG_ABS);
+
+		/* absneg.s a, (abs)numerator */
+		instr = instr_create(ctx, 2, OPC_ABSNEG_S);
+		vectorize(ctx, instr, &a_dst, 1, a, IR3_REG_ABS);
+
+		/* absneg.s b, (abs)denominator */
+		instr = instr_create(ctx, 2, OPC_ABSNEG_S);
+		vectorize(ctx, instr, &b_dst, 1, b, IR3_REG_ABS);
+	} else {
+		/* mov.u32u32 a, numerator */
+		instr = instr_create(ctx, 1, 0);
+		instr->cat1.src_type = src_type;
+		instr->cat1.dst_type = src_type;
+		vectorize(ctx, instr, &a_dst, 1, a, 0);
+
+		/* mov.u32u32 b, denominator */
+		instr = instr_create(ctx, 1, 0);
+		instr->cat1.src_type = src_type;
+		instr->cat1.dst_type = src_type;
+		vectorize(ctx, instr, &b_dst, 1, b, 0);
+	}
+
+	/* rcp.f bf, bf */
+	instr = instr_create(ctx, 4, OPC_RCP);
+	vectorize(ctx, instr, &bf_dst, 1, bf_src, 0);
+
+	/* That's right, subtract 2 as an integer from the float */
+	/* add.u bf, bf, -2 */
+	instr = instr_create(ctx, 2, OPC_ADD_U);
+	vectorize(ctx, instr, &bf_dst, 2, bf_src, 0, &negative_2, 0);
+
+	/* mul.f q, af, bf */
+	instr = instr_create(ctx, 2, OPC_MUL_F);
+	vectorize(ctx, instr, &q_dst, 2, af_src, 0, bf_src, 0);
+
+	/* cov.f32[us]32 q, q */
+	instr = instr_create(ctx, 1, 0);
+	instr->cat1.src_type = get_ftype(ctx);
+	instr->cat1.dst_type = src_type;
+	vectorize(ctx, instr, &q_dst, 1, q_src, 0);
+
+	/* integer multiply q by b */
+	/* mull.u r, q, b */
+	instr = instr_create(ctx, 2, OPC_MULL_U);
+	vectorize(ctx, instr, &r_dst, 2, q_src, 0, b_src, 0);
+
+	/* madsh.m16 r, q, b, r */
+	instr = instr_create(ctx, 3, OPC_MADSH_M16);
+	vectorize(ctx, instr, &r_dst, 3, q_src, 0, b_src, 0, r_src, 0);
+
+	/* madsh.m16, r, b, q, r */
+	instr = instr_create(ctx, 3, OPC_MADSH_M16);
+	vectorize(ctx, instr, &r_dst, 3, b_src, 0, q_src, 0, r_src, 0);
+
+	/* sub.u r, a, r */
+	instr = instr_create(ctx, 2, OPC_SUB_U);
+	vectorize(ctx, instr, &r_dst, 2, a_src, 0, r_src, 0);
+
+	/* cov.u32f32, r, r */
+	instr = instr_create(ctx, 1, 0);
+	instr->cat1.src_type = get_utype(ctx);
+	instr->cat1.dst_type = get_ftype(ctx);
+	vectorize(ctx, instr, &r_dst, 1, r_src, 0);
+
+	/* mul.f r, r, bf */
+	instr = instr_create(ctx, 2, OPC_MUL_F);
+	vectorize(ctx, instr, &r_dst, 2, r_src, 0, bf_src, 0);
+
+	/* cov.f32u32 r, r */
+	instr = instr_create(ctx, 1, 0);
+	instr->cat1.src_type = get_ftype(ctx);
+	instr->cat1.dst_type = get_utype(ctx);
+	vectorize(ctx, instr, &r_dst, 1, r_src, 0);
+
+	/* add.u q, q, r */
+	instr = instr_create(ctx, 2, OPC_ADD_U);
+	vectorize(ctx, instr, &q_dst, 2, q_src, 0, r_src, 0);
+
+	/* mull.u r, q, b */
+	instr = instr_create(ctx, 2, OPC_MULL_U);
+	vectorize(ctx, instr, &r_dst, 2, q_src, 0, b_src, 0);
+
+	/* madsh.m16 r, q, b, r */
+	instr = instr_create(ctx, 3, OPC_MADSH_M16);
+	vectorize(ctx, instr, &r_dst, 3, q_src, 0, b_src, 0, r_src, 0);
+
+	/* madsh.m16 r, b, q, r */
+	instr = instr_create(ctx, 3, OPC_MADSH_M16);
+	vectorize(ctx, instr, &r_dst, 3, b_src, 0, q_src, 0, r_src, 0);
+
+	/* sub.u r, a, r */
+	instr = instr_create(ctx, 2, OPC_SUB_U);
+	vectorize(ctx, instr, &r_dst, 2, a_src, 0, r_src, 0);
+
+	/* cmps.u.ge r, r, b */
+	instr = instr_create(ctx, 2, OPC_CMPS_U);
+	instr->cat2.condition = IR3_COND_GE;
+	vectorize(ctx, instr, &r_dst, 2, r_src, 0, b_src, 0);
+
+	if (t->tgsi_opc == TGSI_OPCODE_UDIV) {
+		/* add.u dst, q, r */
+		instr = instr_create(ctx, 2, OPC_ADD_U);
+		vectorize(ctx, instr, dst, 2, q_src, 0, r_src, 0);
+	} else {
+		/* add.u q, q, r */
+		instr = instr_create(ctx, 2, OPC_ADD_U);
+		vectorize(ctx, instr, &q_dst, 2, q_src, 0, r_src, 0);
+
+		/* negate result based on the original arguments */
+		if (is_const(a) && is_const(b))
+			a = get_unconst(ctx, a);
+
+		/* xor.b r, numerator, denominator */
+		instr = instr_create(ctx, 2, OPC_XOR_B);
+		vectorize(ctx, instr, &r_dst, 2, a, 0, b, 0);
+
+		/* shr.b r, r, 31 */
+		instr = instr_create(ctx, 2, OPC_SHR_B);
+		vectorize(ctx, instr, &r_dst, 2, r_src, 0, &thirty_one, 0);
+
+		/* absneg.s b, (neg)q */
+		instr = instr_create(ctx, 2, OPC_ABSNEG_S);
+		vectorize(ctx, instr, &b_dst, 1, q_src, IR3_REG_NEGATE);
+
+		/* sel.b dst, b, r, q */
+		instr = instr_create(ctx, 3, OPC_SEL_B32);
+		vectorize(ctx, instr, dst, 3, b_src, 0, r_src, 0, q_src, 0);
+	}
+
+	put_dst(ctx, inst, dst);
+}
+
+/*
  * Handlers for TGSI instructions which do have 1:1 mapping to native
  * instructions:
  */
@@ -2147,6 +2339,8 @@ static const struct instr_translater translaters[TGSI_OPCODE_LAST] = {
 	INSTR(NOT,          instr_cat2, .opc = OPC_NOT_B),
 	INSTR(XOR,          instr_cat2, .opc = OPC_XOR_B),
 	INSTR(UMUL,         trans_umul),
+	INSTR(UDIV,         trans_idiv),
+	INSTR(IDIV,         trans_idiv),
 	INSTR(SHL,          instr_cat2, .opc = OPC_SHL_B),
 	INSTR(USHR,         instr_cat2, .opc = OPC_SHR_B),
 	INSTR(ISHR,         instr_cat2, .opc = OPC_ASHR_B),
