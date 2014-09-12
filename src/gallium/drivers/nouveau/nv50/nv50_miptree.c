@@ -78,9 +78,12 @@ nv50_mt_choose_storage_type(struct nv50_miptree *mt, boolean compressed)
    case PIPE_FORMAT_Z16_UNORM:
       tile_flags = 0x6c + ms;
       break;
+   case PIPE_FORMAT_X8Z24_UNORM:
+   case PIPE_FORMAT_S8X24_UINT:
    case PIPE_FORMAT_S8_UINT_Z24_UNORM:
       tile_flags = 0x18 + ms;
       break;
+   case PIPE_FORMAT_X24S8_UINT:
    case PIPE_FORMAT_Z24X8_UNORM:
    case PIPE_FORMAT_Z24_UNORM_S8_UINT:
       tile_flags = 0x128 + ms;
@@ -88,6 +91,7 @@ nv50_mt_choose_storage_type(struct nv50_miptree *mt, boolean compressed)
    case PIPE_FORMAT_Z32_FLOAT:
       tile_flags = 0x40 + ms;
       break;
+   case PIPE_FORMAT_X32_S8X24_UINT:
    case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
       tile_flags = 0x60 + ms;
       break;

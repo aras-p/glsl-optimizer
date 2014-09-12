@@ -53,12 +53,15 @@ nvc0_mt_choose_storage_type(struct nv50_miptree *mt, boolean compressed)
       else
          tile_flags = 0x01;
       break;
+   case PIPE_FORMAT_X8Z24_UNORM:
+   case PIPE_FORMAT_S8X24_UINT:
    case PIPE_FORMAT_S8_UINT_Z24_UNORM:
       if (compressed)
          tile_flags = 0x51 + ms;
       else
          tile_flags = 0x46;
       break;
+   case PIPE_FORMAT_X24S8_UINT:
    case PIPE_FORMAT_Z24X8_UNORM:
    case PIPE_FORMAT_Z24_UNORM_S8_UINT:
       if (compressed)
@@ -72,6 +75,7 @@ nvc0_mt_choose_storage_type(struct nv50_miptree *mt, boolean compressed)
       else
          tile_flags = 0x7b;
       break;
+   case PIPE_FORMAT_X32_S8X24_UINT:
    case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
       if (compressed)
          tile_flags = 0xce + ms;
