@@ -52,11 +52,11 @@ enum gen6_blt_mask {
  *      destination. The maximum number of pixels that may be represented per
  *      scan line's worth of graphics data depends on the color depth."
  */
-static const int gen6_max_bytes_per_scanline = 32768;
-static const int gen6_max_scanlines = 65536;
+static const int gen6_blt_max_bytes_per_scanline = 32768;
+static const int gen6_blt_max_scanlines = 65536;
 
 static inline uint32_t
-gen6_translate_blt_value_mask(enum gen6_blt_mask value_mask)
+gen6_blt_translate_value_mask(enum gen6_blt_mask value_mask)
 {
    switch (value_mask) {
    case GEN6_BLT_MASK_8:  return GEN6_BLITTER_BR13_FORMAT_8;
@@ -66,7 +66,17 @@ gen6_translate_blt_value_mask(enum gen6_blt_mask value_mask)
 }
 
 static inline uint32_t
-gen6_translate_blt_write_mask(enum gen6_blt_mask write_mask)
+gen6_blt_translate_value_cpp(enum gen6_blt_mask value_mask)
+{
+   switch (value_mask) {
+   case GEN6_BLT_MASK_8:  return 1;
+   case GEN6_BLT_MASK_16: return 2;
+   default:               return 4;
+   }
+}
+
+static inline uint32_t
+gen6_blt_translate_write_mask(enum gen6_blt_mask write_mask)
 {
    switch (write_mask) {
    case GEN6_BLT_MASK_32:    return GEN6_BLITTER_BR00_WRITE_RGB |
@@ -74,16 +84,6 @@ gen6_translate_blt_write_mask(enum gen6_blt_mask write_mask)
    case GEN6_BLT_MASK_32_LO: return GEN6_BLITTER_BR00_WRITE_RGB;
    case GEN6_BLT_MASK_32_HI: return GEN6_BLITTER_BR00_WRITE_A;
    default:                  return 0;
-   }
-}
-
-static inline uint32_t
-gen6_translate_blt_cpp(enum gen6_blt_mask mask)
-{
-   switch (mask) {
-   case GEN6_BLT_MASK_8:  return 1;
-   case GEN6_BLT_MASK_16: return 2;
-   default:               return 4;
    }
 }
 
@@ -97,26 +97,25 @@ gen6_COLOR_BLT(struct ilo_builder *builder,
                enum gen6_blt_mask write_mask)
 {
    const uint8_t cmd_len = 5;
-   const int cpp = gen6_translate_blt_cpp(value_mask);
-   uint32_t dw0, dw1, *dw;
+   const int cpp = gen6_blt_translate_value_cpp(value_mask);
+   uint32_t *dw;
    unsigned pos;
 
-   dw0 = GEN6_BLITTER_CMD(COLOR_BLT) |
-         gen6_translate_blt_write_mask(write_mask) |
-         (cmd_len - 2);
+   ILO_DEV_ASSERT(builder->dev, 6, 7.5);
 
-   assert(width < gen6_max_bytes_per_scanline);
-   assert(height < gen6_max_scanlines);
+   assert(width < gen6_blt_max_bytes_per_scanline);
+   assert(height < gen6_blt_max_scanlines);
    /* offsets are naturally aligned and pitches are dword-aligned */
    assert(dst_offset % cpp == 0 && dst_pitch % 4 == 0);
 
-   dw1 = rop << GEN6_BLITTER_BR13_ROP__SHIFT |
-         gen6_translate_blt_value_mask(value_mask) |
-         dst_pitch;
-
    pos = ilo_builder_batch_pointer(builder, cmd_len, &dw);
-   dw[0] = dw0;
-   dw[1] = dw1;
+
+   dw[0] = GEN6_BLITTER_CMD(COLOR_BLT) |
+           gen6_blt_translate_write_mask(write_mask) |
+           (cmd_len - 2);
+   dw[1] = rop << GEN6_BLITTER_BR13_ROP__SHIFT |
+           gen6_blt_translate_value_mask(value_mask) |
+           dst_pitch;
    dw[2] = height << 16 | width;
    dw[4] = pattern;
 
@@ -135,38 +134,35 @@ gen6_XY_COLOR_BLT(struct ilo_builder *builder,
                   enum gen6_blt_mask write_mask)
 {
    const uint8_t cmd_len = 6;
-   const int cpp = gen6_translate_blt_cpp(value_mask);
-   int dst_align, dst_pitch_shift;
-   uint32_t dw0, dw1, *dw;
+   const int cpp = gen6_blt_translate_value_cpp(value_mask);
+   int dst_align = 4, dst_pitch_shift = 0;
+   uint32_t *dw;
    unsigned pos;
 
-   dw0 = GEN6_BLITTER_CMD(XY_COLOR_BLT) |
-         gen6_translate_blt_write_mask(write_mask) |
-         (cmd_len - 2);
+   ILO_DEV_ASSERT(builder->dev, 6, 7.5);
 
-   if (dst_tiling == INTEL_TILING_NONE) {
-      dst_align = 4;
-      dst_pitch_shift = 0;
-   }
-   else {
-      dw0 |= GEN6_BLITTER_BR00_DST_TILED;
+   assert((x2 - x1) * cpp < gen6_blt_max_bytes_per_scanline);
+   assert(y2 - y1 < gen6_blt_max_scanlines);
+
+   pos = ilo_builder_batch_pointer(builder, cmd_len, &dw);
+
+   dw[0] = GEN6_BLITTER_CMD(XY_COLOR_BLT) |
+           gen6_blt_translate_write_mask(write_mask) |
+           (cmd_len - 2);
+
+   if (dst_tiling != INTEL_TILING_NONE) {
+      dw[0] |= GEN6_BLITTER_BR00_DST_TILED;
 
       dst_align = (dst_tiling == INTEL_TILING_Y) ? 128 : 512;
       /* in dwords when tiled */
       dst_pitch_shift = 2;
    }
 
-   assert((x2 - x1) * cpp < gen6_max_bytes_per_scanline);
-   assert(y2 - y1 < gen6_max_scanlines);
    assert(dst_offset % dst_align == 0 && dst_pitch % dst_align == 0);
 
-   dw1 = rop << GEN6_BLITTER_BR13_ROP__SHIFT |
-         gen6_translate_blt_value_mask(value_mask) |
-         dst_pitch >> dst_pitch_shift;
-
-   pos = ilo_builder_batch_pointer(builder, cmd_len, &dw);
-   dw[0] = dw0;
-   dw[1] = dw1;
+   dw[1] = rop << GEN6_BLITTER_BR13_ROP__SHIFT |
+           gen6_blt_translate_value_mask(value_mask) |
+           dst_pitch >> dst_pitch_shift;
    dw[2] = y1 << 16 | x1;
    dw[3] = y2 << 16 | x2;
    dw[5] = pattern;
@@ -187,37 +183,36 @@ gen6_SRC_COPY_BLT(struct ilo_builder *builder,
                   enum gen6_blt_mask write_mask)
 {
    const uint8_t cmd_len = 6;
-   const int cpp = gen6_translate_blt_cpp(value_mask);
-   uint32_t dw0, dw1, *dw;
+   const int cpp = gen6_blt_translate_value_cpp(value_mask);
+   uint32_t *dw;
    unsigned pos;
 
-   dw0 = GEN6_BLITTER_CMD(SRC_COPY_BLT) |
-         gen6_translate_blt_write_mask(write_mask) |
-         (cmd_len - 2);
+   ILO_DEV_ASSERT(builder->dev, 6, 7.5);
 
-   assert(width < gen6_max_bytes_per_scanline);
-   assert(height < gen6_max_scanlines);
+   assert(width < gen6_blt_max_bytes_per_scanline);
+   assert(height < gen6_blt_max_scanlines);
    /* offsets are naturally aligned and pitches are dword-aligned */
    assert(dst_offset % cpp == 0 && dst_pitch % 4 == 0);
    assert(src_offset % cpp == 0 && src_pitch % 4 == 0);
 
-   dw1 = rop << GEN6_BLITTER_BR13_ROP__SHIFT |
-         gen6_translate_blt_value_mask(value_mask) |
-         dst_pitch;
-
-   if (dir_rtl)
-      dw1 |= GEN6_BLITTER_BR13_DIR_RTL;
-
    pos = ilo_builder_batch_pointer(builder, cmd_len, &dw);
-   dw[0] = dw0;
-   dw[1] = dw1;
+
+   dw[0] = GEN6_BLITTER_CMD(SRC_COPY_BLT) |
+           gen6_blt_translate_write_mask(write_mask) |
+           (cmd_len - 2);
+
+   dw[1] = rop << GEN6_BLITTER_BR13_ROP__SHIFT |
+           gen6_blt_translate_value_mask(value_mask) |
+           dst_pitch;
+   if (dir_rtl)
+      dw[1] |= GEN6_BLITTER_BR13_DIR_RTL;
+
    dw[2] = height << 16 | width;
    dw[4] = src_pitch;
 
    ilo_builder_batch_reloc(builder, pos + 3,
          dst_bo, dst_offset, INTEL_RELOC_WRITE);
-   ilo_builder_batch_reloc(builder, pos + 5,
-         src_bo, src_offset, 0);
+   ilo_builder_batch_reloc(builder, pos + 5, src_bo, src_offset, 0);
 }
 
 static inline void
@@ -234,52 +229,45 @@ gen6_XY_SRC_COPY_BLT(struct ilo_builder *builder,
                      enum gen6_blt_mask write_mask)
 {
    const uint8_t cmd_len = 8;
-   const int cpp = gen6_translate_blt_cpp(value_mask);
-   int dst_align, dst_pitch_shift;
-   int src_align, src_pitch_shift;
-   uint32_t dw0, dw1, *dw;
+   const int cpp = gen6_blt_translate_value_cpp(value_mask);
+   int dst_align = 4, dst_pitch_shift = 0;
+   int src_align = 4, src_pitch_shift = 0;
+   uint32_t *dw;
    unsigned pos;
 
-   dw0 = GEN6_BLITTER_CMD(XY_SRC_COPY_BLT) |
-         gen6_translate_blt_write_mask(write_mask) |
-         (cmd_len - 2);
+   ILO_DEV_ASSERT(builder->dev, 6, 7.5);
 
-   if (dst_tiling == INTEL_TILING_NONE) {
-      dst_align = 4;
-      dst_pitch_shift = 0;
-   }
-   else {
-      dw0 |= GEN6_BLITTER_BR00_DST_TILED;
+   assert((x2 - x1) * cpp < gen6_blt_max_bytes_per_scanline);
+   assert(y2 - y1 < gen6_blt_max_scanlines);
+
+   pos = ilo_builder_batch_pointer(builder, cmd_len, &dw);
+
+   dw[0] = GEN6_BLITTER_CMD(XY_SRC_COPY_BLT) |
+           gen6_blt_translate_write_mask(write_mask) |
+           (cmd_len - 2);
+
+   if (dst_tiling != INTEL_TILING_NONE) {
+      dw[0] |= GEN6_BLITTER_BR00_DST_TILED;
 
       dst_align = (dst_tiling == INTEL_TILING_Y) ? 128 : 512;
       /* in dwords when tiled */
       dst_pitch_shift = 2;
    }
 
-   if (src_tiling == INTEL_TILING_NONE) {
-      src_align = 4;
-      src_pitch_shift = 0;
-   }
-   else {
-      dw0 |= GEN6_BLITTER_BR00_SRC_TILED;
+   if (src_tiling != INTEL_TILING_NONE) {
+      dw[0] |= GEN6_BLITTER_BR00_SRC_TILED;
 
       src_align = (src_tiling == INTEL_TILING_Y) ? 128 : 512;
       /* in dwords when tiled */
       src_pitch_shift = 2;
    }
 
-   assert((x2 - x1) * cpp < gen6_max_bytes_per_scanline);
-   assert(y2 - y1 < gen6_max_scanlines);
    assert(dst_offset % dst_align == 0 && dst_pitch % dst_align == 0);
    assert(src_offset % src_align == 0 && src_pitch % src_align == 0);
 
-   dw1 = rop << GEN6_BLITTER_BR13_ROP__SHIFT |
-         gen6_translate_blt_value_mask(value_mask) |
-         dst_pitch >> dst_pitch_shift;
-
-   pos = ilo_builder_batch_pointer(builder, cmd_len, &dw);
-   dw[0] = dw0;
-   dw[1] = dw1;
+   dw[1] = rop << GEN6_BLITTER_BR13_ROP__SHIFT |
+           gen6_blt_translate_value_mask(value_mask) |
+           dst_pitch >> dst_pitch_shift;
    dw[2] = y1 << 16 | x1;
    dw[3] = y2 << 16 | x2;
    dw[5] = src_y << 16 | src_x;
@@ -287,8 +275,7 @@ gen6_XY_SRC_COPY_BLT(struct ilo_builder *builder,
 
    ilo_builder_batch_reloc(builder, pos + 4,
          dst_bo, dst_offset, INTEL_RELOC_WRITE);
-   ilo_builder_batch_reloc(builder, pos + 7,
-         src_bo, src_offset, 0);
+   ilo_builder_batch_reloc(builder, pos + 7, src_bo, src_offset, 0);
 }
 
 #endif /* ILO_BUILDER_BLT_H */

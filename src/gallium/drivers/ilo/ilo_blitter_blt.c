@@ -128,7 +128,7 @@ buf_clear_region(struct ilo_blitter *blitter,
                  enum gen6_blt_mask write_mask)
 {
    const uint8_t rop = 0xf0; /* PATCOPY */
-   const int cpp = gen6_translate_blt_cpp(value_mask);
+   const int cpp = gen6_blt_translate_value_cpp(value_mask);
    struct ilo_context *ilo = blitter->ilo;
    unsigned offset = 0;
 
@@ -146,14 +146,14 @@ buf_clear_region(struct ilo_blitter *blitter,
       height = 1;
       pitch = 0;
 
-      if (width > gen6_max_bytes_per_scanline) {
+      if (width > gen6_blt_max_bytes_per_scanline) {
          /* less than INT16_MAX and dword-aligned */
          pitch = 32764;
 
          width = pitch;
          height = dst_size / width;
-         if (height > gen6_max_scanlines)
-            height = gen6_max_scanlines;
+         if (height > gen6_blt_max_scanlines)
+            height = gen6_blt_max_scanlines;
       }
 
       gen6_COLOR_BLT(&ilo->cp->builder, dst->bo, pitch, dst_offset + offset,
@@ -189,14 +189,14 @@ buf_copy_region(struct ilo_blitter *blitter,
       height = 1;
       pitch = 0;
 
-      if (width > gen6_max_bytes_per_scanline) {
+      if (width > gen6_blt_max_bytes_per_scanline) {
          /* less than INT16_MAX and dword-aligned */
          pitch = 32764;
 
          width = pitch;
          height = size / width;
-         if (height > gen6_max_scanlines)
-            height = gen6_max_scanlines;
+         if (height > gen6_blt_max_scanlines)
+            height = gen6_blt_max_scanlines;
       }
 
       gen6_SRC_COPY_BLT(&ilo->cp->builder,
@@ -222,7 +222,7 @@ tex_clear_region(struct ilo_blitter *blitter,
                  enum gen6_blt_mask value_mask,
                  enum gen6_blt_mask write_mask)
 {
-   const int cpp = gen6_translate_blt_cpp(value_mask);
+   const int cpp = gen6_blt_translate_value_cpp(value_mask);
    const unsigned max_extent = 32767; /* INT16_MAX */
    const uint8_t rop = 0xf0; /* PATCOPY */
    struct ilo_context *ilo = blitter->ilo;
@@ -251,7 +251,7 @@ tex_clear_region(struct ilo_blitter *blitter,
       y2 = y1 + dst_box->height;
 
       if (x2 > max_extent || y2 > max_extent ||
-          (x2 - x1) * cpp > gen6_max_bytes_per_scanline)
+          (x2 - x1) * cpp > gen6_blt_max_bytes_per_scanline)
          break;
 
       gen6_XY_COLOR_BLT(&ilo->cp->builder,
@@ -346,7 +346,7 @@ tex_copy_region(struct ilo_blitter *blitter,
 
       if (x2 > max_extent || y2 > max_extent ||
           src_x > max_extent || src_y > max_extent ||
-          (x2 - x1) * cpp > gen6_max_bytes_per_scanline)
+          (x2 - x1) * cpp > gen6_blt_max_bytes_per_scanline)
          break;
 
       gen6_XY_SRC_COPY_BLT(&ilo->cp->builder,
