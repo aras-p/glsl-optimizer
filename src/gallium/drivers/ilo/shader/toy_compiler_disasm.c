@@ -498,19 +498,12 @@ disasm_inst_decode(struct disasm_inst *inst,
 
    disasm_inst_decode_dw0_gen6(inst, dw[0]);
 
-   switch (inst->opcode) {
-   case GEN7_OPCODE_CSEL:
-   case GEN7_OPCODE_BFE:
-   case GEN7_OPCODE_BFI2:
-   case GEN6_OPCODE_MAD:
-   case GEN6_OPCODE_LRP:
+   if (disasm_opcode_table[inst->opcode].src_count == 3) {
       disasm_inst_decode_3src_dw1_gen6(inst, dw[1]);
       disasm_inst_decode_3src_dw2_dw3_gen6(inst, dw[2], dw[3]);
-      break;
-   default:
+   } else {
       disasm_inst_decode_dw1_gen6(inst, dw[1]);
       disasm_inst_decode_dw2_dw3_gen6(inst, dw[2], dw[3]);
-      break;
    }
 }
 
