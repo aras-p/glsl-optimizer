@@ -56,21 +56,21 @@
  */
 #define EMIT_VBO(out, ctx, start, delta, n) do {			\
 		struct nouveau_render_state *render = to_render_state(ctx); \
-		int npush = n;						\
+		int _npush = n;						\
 									\
-		while (npush) {						\
-			int npack = MIN2(npush, MAX_PACKET * MAX_OUT_##out); \
-			npush -= npack;					\
+		while (_npush) {						\
+			int _npack = MIN2(_npush, MAX_PACKET * MAX_OUT_##out); \
+			_npush -= _npack;					\
 									\
-			BATCH_PACKET_##out((npack + MAX_OUT_##out - 1)	\
+			BATCH_PACKET_##out((_npack + MAX_OUT_##out - 1)	\
 					   / MAX_OUT_##out);		\
-			while (npack) {					\
-				int nout = MIN2(npack, MAX_OUT_##out);	\
-				npack -= nout;				\
+			while (_npack) {				\
+				int _nout = MIN2(_npack, MAX_OUT_##out);\
+				_npack -= _nout;			\
 									\
 				OUT_INDICES_##out(render, start, delta, \
-						  nout);		\
-				start += nout;				\
+						  _nout);		\
+				start += _nout;				\
 			}						\
 		}							\
 	} while (0)
