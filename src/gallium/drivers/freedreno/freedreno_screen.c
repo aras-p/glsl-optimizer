@@ -241,11 +241,13 @@ fd_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 
 	/* Texturing. */
 	case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
-	case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
 	case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
 		return MAX_MIP_LEVELS;
+	case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
+		return 11;
+
 	case PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS:
-		return 0;  /* TODO: a3xx+ should support (required in gles3) */
+		return (screen->gpu_id >= 300) ? 256 : 0;
 
 	/* Render targets. */
 	case PIPE_CAP_MAX_RENDER_TARGETS:

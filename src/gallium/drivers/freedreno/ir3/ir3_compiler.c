@@ -1095,9 +1095,14 @@ get_tex_info(struct ir3_compile_context *ctx,
 		.flags = IR3_INSTR_S,
 	};
 	static const struct tex_info tex1da = {
-		.order = { 0, -1,  2, -1 },  /* coord.xz */
+		.order = { 0, -1,  1, -1 },  /* coord.xy */
 		.src_wrmask = TGSI_WRITEMASK_XYZ,
 		.flags = IR3_INSTR_A,
+	};
+	static const struct tex_info tex1dsa = {
+		.order = { 0, -1,  1,  2 },  /* coord.xyz */
+		.src_wrmask = TGSI_WRITEMASK_XYZW,
+		.flags = IR3_INSTR_S | IR3_INSTR_A,
 	};
 	static const struct tex_info tex2d = {
 		.order = { 0,  1, -1, -1 },  /* coord.xy */
@@ -1113,6 +1118,11 @@ get_tex_info(struct ir3_compile_context *ctx,
 		.order = { 0,  1,  2, -1 },  /* coord.xyz */
 		.src_wrmask = TGSI_WRITEMASK_XYZ,
 		.flags = IR3_INSTR_A,
+	};
+	static const struct tex_info tex2dsa = {
+		.order = { 0,  1,  2,  3 },  /* coord.xyzw */
+		.src_wrmask = TGSI_WRITEMASK_XYZW,
+		.flags = IR3_INSTR_S | IR3_INSTR_A,
 	};
 	static const struct tex_info tex3d = {
 		.order = { 0,  1,  2, -1 },  /* coord.xyz */
@@ -1130,14 +1140,9 @@ get_tex_info(struct ir3_compile_context *ctx,
 		.flags = IR3_INSTR_P,
 	};
 	static const struct tex_info txp1ds = {
-		.order = { 0, -1,  2,  3 },  /* coord.xzw */
+		.order = { 0, -1,  2,  3 },  /* coord.xyz */
 		.src_wrmask = TGSI_WRITEMASK_XYZW,
 		.flags = IR3_INSTR_P | IR3_INSTR_S,
-	};
-	static const struct tex_info txp1da = {
-		.order = { 0, -1,  2,  3 },  /* coord.xzw */
-		.src_wrmask = TGSI_WRITEMASK_XYZW,
-		.flags = IR3_INSTR_P | IR3_INSTR_A,
 	};
 	static const struct tex_info txp2d = {
 		.order = { 0,  1,  3, -1 },  /* coord.xyw */
@@ -1148,11 +1153,6 @@ get_tex_info(struct ir3_compile_context *ctx,
 		.order = { 0,  1,  2,  3 },  /* coord.xyzw */
 		.src_wrmask = TGSI_WRITEMASK_XYZW,
 		.flags = IR3_INSTR_P | IR3_INSTR_S,
-	};
-	static const struct tex_info txp2da = {
-		.order = { 0,  1,  2,  3 },  /* coord.xyzw */
-		.src_wrmask = TGSI_WRITEMASK_XYZW,
-		.flags = IR3_INSTR_P | IR3_INSTR_A,
 	};
 	static const struct tex_info txp3d = {
 		.order = { 0,  1,  2,  3 },  /* coord.xyzw */
@@ -1173,6 +1173,8 @@ get_tex_info(struct ir3_compile_context *ctx,
 			return &tex1ds;
 		case TGSI_TEXTURE_1D_ARRAY:
 			return &tex1da;
+		case TGSI_TEXTURE_SHADOW1D_ARRAY:
+			return &tex1dsa;
 		case TGSI_TEXTURE_2D:
 		case TGSI_TEXTURE_RECT:
 			return &tex2d;
@@ -1181,6 +1183,8 @@ get_tex_info(struct ir3_compile_context *ctx,
 			return &tex2ds;
 		case TGSI_TEXTURE_2D_ARRAY:
 			return &tex2da;
+		case TGSI_TEXTURE_SHADOW2D_ARRAY:
+			return &tex2dsa;
 		case TGSI_TEXTURE_3D:
 		case TGSI_TEXTURE_CUBE:
 			return &tex3d;
@@ -1198,16 +1202,12 @@ get_tex_info(struct ir3_compile_context *ctx,
 			return &txp1d;
 		case TGSI_TEXTURE_SHADOW1D:
 			return &txp1ds;
-		case TGSI_TEXTURE_1D_ARRAY:
-			return &txp1da;
 		case TGSI_TEXTURE_2D:
 		case TGSI_TEXTURE_RECT:
 			return &txp2d;
 		case TGSI_TEXTURE_SHADOW2D:
 		case TGSI_TEXTURE_SHADOWRECT:
 			return &txp2ds;
-		case TGSI_TEXTURE_2D_ARRAY:
-			return &txp2da;
 		case TGSI_TEXTURE_3D:
 		case TGSI_TEXTURE_CUBE:
 			return &txp3d;
@@ -1237,6 +1237,7 @@ static bool is_1d(unsigned tex)
 	case TGSI_TEXTURE_1D:
 	case TGSI_TEXTURE_SHADOW1D:
 	case TGSI_TEXTURE_1D_ARRAY:
+	case TGSI_TEXTURE_SHADOW1D_ARRAY:
 		return true;
 	default:
 		return false;
