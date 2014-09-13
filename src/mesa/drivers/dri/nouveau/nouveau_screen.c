@@ -95,6 +95,8 @@ nouveau_init_screen2(__DRIscreen *dri_screen)
 	if (!screen)
 		return NULL;
 
+	dri_screen->driverPrivate = screen;
+
 	/* Open the DRM device. */
 	ret = nouveau_device_wrap(dri_screen->fd, 0, &screen->device);
 	if (ret) {
@@ -119,10 +121,11 @@ nouveau_init_screen2(__DRIscreen *dri_screen)
 		dri_screen->max_gl_es1_version = 10;
 		break;
 	default:
-		assert(0);
+		nouveau_error("Unknown chipset: %02X\n",
+			      screen->device->chipset);
+		goto fail;
 	}
 
-	dri_screen->driverPrivate = screen;
 	dri_screen->extensions = nouveau_screen_extensions;
 	screen->dri_screen = dri_screen;
 
