@@ -469,7 +469,7 @@ gen6_pipeline_vf_draw(struct ilo_3d_pipeline *p,
                       struct gen6_pipeline_session *session)
 {
    /* 3DPRIMITIVE */
-   gen6_3DPRIMITIVE(&p->cp->builder, ilo->draw, &ilo->ib, false);
+   gen6_3DPRIMITIVE(&p->cp->builder, ilo->draw, &ilo->ib);
    p->state.has_gen6_wa_pipe_control = false;
 }
 
@@ -1664,7 +1664,7 @@ gen6_rectlist_commands(struct ilo_3d_pipeline *p,
    gen6_3DSTATE_DRAWING_RECTANGLE(&p->cp->builder, 0, 0,
          blitter->fb.width, blitter->fb.height);
 
-   gen6_3DPRIMITIVE(&p->cp->builder, &blitter->draw, NULL, true);
+   gen6_3DPRIMITIVE(&p->cp->builder, &blitter->draw, NULL);
 }
 
 static void

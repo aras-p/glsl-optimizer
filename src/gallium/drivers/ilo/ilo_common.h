@@ -52,6 +52,9 @@
 #define ILO_DEV_ASSERT(dev, min_gen, max_gen) \
    ilo_dev_assert(dev, ILO_GEN(min_gen), ILO_GEN(max_gen))
 
+#define ILO_PRIM_RECTANGLES PIPE_PRIM_MAX
+#define ILO_PRIM_MAX (PIPE_PRIM_MAX + 1)
+
 enum ilo_debug {
    ILO_DEBUG_3D        = 1 << 0,
    ILO_DEBUG_VS        = 1 << 1,

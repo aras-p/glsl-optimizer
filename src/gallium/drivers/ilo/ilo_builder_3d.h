@@ -38,9 +38,9 @@
  * Translate a pipe primitive type to the matching hardware primitive type.
  */
 static inline int
-ilo_gpe_gen6_translate_pipe_prim(unsigned prim)
+gen6_3d_translate_pipe_prim(unsigned prim)
 {
-   static const int prim_mapping[PIPE_PRIM_MAX] = {
+   static const int prim_mapping[ILO_PRIM_MAX] = {
       [PIPE_PRIM_POINTS]                     = GEN6_3DPRIM_POINTLIST,
       [PIPE_PRIM_LINES]                      = GEN6_3DPRIM_LINELIST,
       [PIPE_PRIM_LINE_LOOP]                  = GEN6_3DPRIM_LINELOOP,
@@ -55,6 +55,7 @@ ilo_gpe_gen6_translate_pipe_prim(unsigned prim)
       [PIPE_PRIM_LINE_STRIP_ADJACENCY]       = GEN6_3DPRIM_LINESTRIP_ADJ,
       [PIPE_PRIM_TRIANGLES_ADJACENCY]        = GEN6_3DPRIM_TRILIST_ADJ,
       [PIPE_PRIM_TRIANGLE_STRIP_ADJACENCY]   = GEN6_3DPRIM_TRISTRIP_ADJ,
+      [ILO_PRIM_RECTANGLES]                  = GEN6_3DPRIM_RECTLIST,
    };
 
    assert(prim_mapping[prim]);
@@ -65,27 +66,24 @@ ilo_gpe_gen6_translate_pipe_prim(unsigned prim)
 static inline void
 gen6_3DPRIMITIVE(struct ilo_builder *builder,
                  const struct pipe_draw_info *info,
-                 const struct ilo_ib_state *ib,
-                 bool rectlist)
+                 const struct ilo_ib_state *ib)
 {
    const uint8_t cmd_len = 6;
-   const int prim = (rectlist) ?
-      GEN6_3DPRIM_RECTLIST : ilo_gpe_gen6_translate_pipe_prim(info->mode);
+   const int prim = gen6_3d_translate_pipe_prim(info->mode);
    const int vb_access = (info->indexed) ?
       GEN6_3DPRIM_DW0_ACCESS_RANDOM : GEN6_3DPRIM_DW0_ACCESS_SEQUENTIAL;
    const uint32_t vb_start = info->start +
       ((info->indexed) ? ib->draw_start_offset : 0);
-   uint32_t dw0, *dw;
+   uint32_t *dw;
 
    ILO_DEV_ASSERT(builder->dev, 6, 6);
 
-   dw0 = GEN6_RENDER_CMD(3D, 3DPRIMITIVE) |
-         vb_access |
-         prim << GEN6_3DPRIM_DW0_TYPE__SHIFT |
-         (cmd_len - 2);
-
    ilo_builder_batch_pointer(builder, cmd_len, &dw);
-   dw[0] = dw0;
+
+   dw[0] = GEN6_RENDER_CMD(3D, 3DPRIMITIVE) |
+           vb_access |
+           prim << GEN6_3DPRIM_DW0_TYPE__SHIFT |
+           (cmd_len - 2);
    dw[1] = info->count;
    dw[2] = vb_start;
    dw[3] = info->instance_count;
@@ -96,16 +94,12 @@ gen6_3DPRIMITIVE(struct ilo_builder *builder,
 static inline void
 gen7_3DPRIMITIVE(struct ilo_builder *builder,
                  const struct pipe_draw_info *info,
-                 const struct ilo_ib_state *ib,
-                 bool rectlist)
+                 const struct ilo_ib_state *ib)
 {
    const uint8_t cmd_len = 7;
-   const uint32_t dw0 = GEN6_RENDER_CMD(3D, 3DPRIMITIVE) | (cmd_len - 2);
-   const int prim = (rectlist) ?
-      GEN6_3DPRIM_RECTLIST : ilo_gpe_gen6_translate_pipe_prim(info->mode);
+   const int prim = gen6_3d_translate_pipe_prim(info->mode);
    const int vb_access = (info->indexed) ?
-      GEN7_3DPRIM_DW1_ACCESS_RANDOM :
-      GEN7_3DPRIM_DW1_ACCESS_SEQUENTIAL;
+      GEN7_3DPRIM_DW1_ACCESS_RANDOM : GEN7_3DPRIM_DW1_ACCESS_SEQUENTIAL;
    const uint32_t vb_start = info->start +
       ((info->indexed) ? ib->draw_start_offset : 0);
    uint32_t *dw;
@@ -113,7 +107,8 @@ gen7_3DPRIMITIVE(struct ilo_builder *builder,
    ILO_DEV_ASSERT(builder->dev, 7, 7.5);
 
    ilo_builder_batch_pointer(builder, cmd_len, &dw);
-   dw[0] = dw0;
+
+   dw[0] = GEN6_RENDER_CMD(3D, 3DPRIMITIVE) | (cmd_len - 2);
    dw[1] = vb_access | prim;
    dw[2] = info->count;
    dw[3] = vb_start;

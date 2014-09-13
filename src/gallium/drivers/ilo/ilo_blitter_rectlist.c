@@ -82,6 +82,7 @@ ilo_blitter_set_invariants(struct ilo_blitter *blitter)
 
    /* a rectangle has 3 vertices in a RECTLIST */
    util_draw_init_info(&blitter->draw);
+   blitter->draw.mode = ILO_PRIM_RECTANGLES;
    blitter->draw.count = 3;
 
    /**
