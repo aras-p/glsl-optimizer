@@ -2950,13 +2950,12 @@ fs_visitor::emit_interpolation_setup_gen6()
 }
 
 void
-fs_visitor::emit_color_write(int target, int index, int first_color_mrf)
+fs_visitor::emit_color_write(fs_reg color, int index, int first_color_mrf)
 {
    assert(stage == MESA_SHADER_FRAGMENT);
    brw_wm_prog_key *key = (brw_wm_prog_key*) this->key;
    int reg_width = dispatch_width / 8;
    fs_inst *inst;
-   fs_reg color = outputs[target];
    fs_reg mrf;
 
    /* If there's no color data to be written, skip it. */
@@ -3076,8 +3075,9 @@ fs_visitor::emit_alpha_test()
    cmp->flag_subreg = 1;
 }
 
-void
-fs_visitor::emit_fb_writes()
+fs_inst *
+fs_visitor::emit_single_fb_write(fs_reg color0, fs_reg color1,
+                                 fs_reg src0_alpha, unsigned components)
 {
    assert(stage == MESA_SHADER_FRAGMENT);
    brw_wm_prog_data *prog_data = (brw_wm_prog_data*) this->prog_data;
@@ -3091,13 +3091,6 @@ fs_visitor::emit_fb_writes()
    int base_mrf = 1;
    int nr = base_mrf;
    int reg_width = dispatch_width / 8;
-   bool src0_alpha_to_render_target = false;
-
-   if (do_dual_src) {
-      no16("GL_ARB_blend_func_extended not yet supported in SIMD16.");
-      if (dispatch_width == 16)
-         do_dual_src = false;
-   }
 
    /* From the Sandy Bridge PRM, volume 4, page 198:
     *
@@ -3108,18 +3101,14 @@ fs_visitor::emit_fb_writes()
     */
    if (brw->gen >= 6 &&
        (brw->is_haswell || brw->gen >= 8 || !prog_data->uses_kill) &&
-       !do_dual_src &&
+       color1.file == BAD_FILE &&
        key->nr_color_regions == 1) {
       header_present = false;
    }
 
-   if (header_present) {
-      src0_alpha_to_render_target = brw->gen >= 6 &&
-				    !do_dual_src &&
-                                    key->replicate_alpha;
+   if (header_present)
       /* m2, m3 header */
       nr += 2;
-   }
 
    if (payload.aa_dest_stencil_reg) {
       push_force_uncompressed();
@@ -3138,13 +3127,34 @@ fs_visitor::emit_fb_writes()
       nr += 1;
    }
 
-   /* Reserve space for color. It'll be filled in per MRT below. */
-   int color_mrf = nr;
-   nr += 4 * reg_width;
-   if (do_dual_src)
-      nr += 4;
-   if (src0_alpha_to_render_target)
-      nr += reg_width;
+   if (color0.file == BAD_FILE) {
+      /* Even if there's no color buffers enabled, we still need to send
+       * alpha out the pipeline to our null renderbuffer to support
+       * alpha-testing, alpha-to-coverage, and so on.
+       */
+      emit_color_write(this->outputs[0], 3, nr);
+      nr += 4 * reg_width;
+   } else if (color1.file == BAD_FILE) {
+      if (src0_alpha.file != BAD_FILE) {
+         fs_inst *inst;
+         inst = emit(MOV(fs_reg(MRF, nr, src0_alpha.type), src0_alpha));
+         inst->saturate = key->clamp_fragment_color;
+         nr += reg_width;
+      }
+
+      for (unsigned i = 0; i < components; i++)
+         emit_color_write(color0, i, nr);
+
+      nr += 4 * reg_width;
+   } else {
+      for (unsigned i = 0; i < components; i++)
+         emit_color_write(color0, i, nr);
+      nr += 4 * reg_width;
+
+      for (unsigned i = 0; i < components; i++)
+         emit_color_write(color1, i, nr);
+      nr += 4 * reg_width;
+   }
 
    if (source_depth_to_render_target) {
       if (brw->gen == 6) {
@@ -3174,111 +3184,72 @@ fs_visitor::emit_fb_writes()
       nr += reg_width;
    }
 
+   fs_inst *inst = emit(FS_OPCODE_FB_WRITE);
+   inst->base_mrf = base_mrf;
+   inst->mlen = nr - base_mrf;
+   inst->header_present = header_present;
+   if ((brw->gen >= 8 || brw->is_haswell) && prog_data->uses_kill) {
+      inst->predicate = BRW_PREDICATE_NORMAL;
+      inst->flag_subreg = 1;
+   }
+   return inst;
+}
+
+void
+fs_visitor::emit_fb_writes()
+{
+   assert(stage == MESA_SHADER_FRAGMENT);
+   brw_wm_prog_data *prog_data = (brw_wm_prog_data*) this->prog_data;
+   brw_wm_prog_key *key = (brw_wm_prog_key*) this->key;
+
    if (do_dual_src) {
-      fs_reg src0 = this->outputs[0];
-      fs_reg src1 = this->dual_src_output;
+      no16("GL_ARB_blend_func_extended not yet supported in SIMD16.");
+      if (dispatch_width == 16)
+         do_dual_src = false;
+   }
 
-      this->current_annotation = ralloc_asprintf(this->mem_ctx,
-						 "FB write src0");
-      for (int i = 0; i < 4; i++) {
-	 fs_inst *inst = emit(MOV(fs_reg(MRF, color_mrf + i, src0.type), src0));
-	 src0 = offset(src0, 1);
-	 inst->saturate = key->clamp_fragment_color;
-      }
-
-      this->current_annotation = ralloc_asprintf(this->mem_ctx,
-						 "FB write src1");
-      for (int i = 0; i < 4; i++) {
-	 fs_inst *inst = emit(MOV(fs_reg(MRF, color_mrf + 4 + i, src1.type),
-                                  src1));
-	 src1 = offset(src1, 1);
-	 inst->saturate = key->clamp_fragment_color;
-      }
-
+   fs_inst *inst;
+   if (do_dual_src) {
       if (INTEL_DEBUG & DEBUG_SHADER_TIME)
          emit_shader_time_end();
 
-      fs_inst *inst = emit(FS_OPCODE_FB_WRITE);
-      inst->target = 0;
-      inst->base_mrf = base_mrf;
-      inst->mlen = nr - base_mrf;
-      inst->eot = true;
-      inst->header_present = header_present;
-      if ((brw->gen >= 8 || brw->is_haswell) && prog_data->uses_kill) {
-         inst->predicate = BRW_PREDICATE_NORMAL;
-         inst->flag_subreg = 1;
-      }
-
-      prog_data->dual_src_blend = true;
-      this->current_annotation = NULL;
-      return;
-   }
-
-   for (int target = 0; target < key->nr_color_regions; target++) {
       this->current_annotation = ralloc_asprintf(this->mem_ctx,
-						 "FB write target %d",
-						 target);
-      /* If src0_alpha_to_render_target is true, include source zero alpha
-       * data in RenderTargetWrite message for targets > 0.
-       */
-      int write_color_mrf = color_mrf;
-      if (src0_alpha_to_render_target && target != 0) {
-         fs_inst *inst;
-         fs_reg color = offset(outputs[0], 3);
+						 "FB dual-source write");
+      inst = emit_single_fb_write(this->outputs[0], this->dual_src_output,
+                                  reg_undef, 4);
+      inst->target = 0;
+      prog_data->dual_src_blend = true;
+   } else if (key->nr_color_regions > 0) {
+      for (int target = 0; target < key->nr_color_regions; target++) {
+         this->current_annotation = ralloc_asprintf(this->mem_ctx,
+                                                    "FB write target %d",
+                                                    target);
+         fs_reg src0_alpha;
+         if (brw->gen >= 6 && key->replicate_alpha && target != 0)
+            src0_alpha = offset(outputs[0], 3);
 
-         inst = emit(MOV(fs_reg(MRF, write_color_mrf, color.type),
-                         color));
-         inst->saturate = key->clamp_fragment_color;
-         write_color_mrf = color_mrf + reg_width;
-      }
-
-      for (unsigned i = 0; i < this->output_components[target]; i++)
-         emit_color_write(target, i, write_color_mrf);
-
-      bool eot = false;
-      if (target == key->nr_color_regions - 1) {
-         eot = true;
-
-         if (INTEL_DEBUG & DEBUG_SHADER_TIME)
+         if (target == key->nr_color_regions - 1 &&
+             (INTEL_DEBUG & DEBUG_SHADER_TIME))
             emit_shader_time_end();
-      }
 
-      fs_inst *inst = emit(FS_OPCODE_FB_WRITE);
-      inst->target = target;
-      inst->base_mrf = base_mrf;
-      if (src0_alpha_to_render_target && target == 0)
-         inst->mlen = nr - base_mrf - reg_width;
-      else
-         inst->mlen = nr - base_mrf;
-      inst->eot = eot;
-      inst->header_present = header_present;
-      if ((brw->gen >= 8 || brw->is_haswell) && prog_data->uses_kill) {
-         inst->predicate = BRW_PREDICATE_NORMAL;
-         inst->flag_subreg = 1;
+         inst = emit_single_fb_write(this->outputs[target], reg_undef,
+                                     src0_alpha,
+                                     this->output_components[target]);
+         inst->target = target;
       }
-   }
+   } else {
+      if (INTEL_DEBUG & DEBUG_SHADER_TIME)
+         emit_shader_time_end();
 
-   if (key->nr_color_regions == 0) {
       /* Even if there's no color buffers enabled, we still need to send
        * alpha out the pipeline to our null renderbuffer to support
        * alpha-testing, alpha-to-coverage, and so on.
        */
-      emit_color_write(0, 3, color_mrf);
-
-      if (INTEL_DEBUG & DEBUG_SHADER_TIME)
-         emit_shader_time_end();
-
-      fs_inst *inst = emit(FS_OPCODE_FB_WRITE);
-      inst->base_mrf = base_mrf;
-      inst->mlen = nr - base_mrf;
-      inst->eot = true;
-      inst->header_present = header_present;
-      if ((brw->gen >= 8 || brw->is_haswell) && prog_data->uses_kill) {
-         inst->predicate = BRW_PREDICATE_NORMAL;
-         inst->flag_subreg = 1;
-      }
+      inst = emit_single_fb_write(reg_undef, reg_undef, reg_undef, 0);
+      inst->target = 0;
    }
 
+   inst->eot = true;
    this->current_annotation = NULL;
 }
 

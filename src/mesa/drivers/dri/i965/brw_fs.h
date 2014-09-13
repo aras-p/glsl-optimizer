@@ -428,8 +428,10 @@ public:
                     const struct prog_instruction *fpi,
                     fs_reg dst, fs_reg src0, fs_reg src1, fs_reg one);
 
-   void emit_color_write(int target, int index, int first_color_mrf);
+   void emit_color_write(fs_reg color, int index, int first_color_mrf);
    void emit_alpha_test();
+   fs_inst *emit_single_fb_write(fs_reg color1, fs_reg color2,
+                                 fs_reg src0_alpha, unsigned components);
    void emit_fb_writes();
 
    void emit_shader_time_begin();
