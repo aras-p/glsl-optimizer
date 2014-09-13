@@ -368,15 +368,22 @@ fs_inst::overwrites_reg(const fs_reg &reg) const
 bool
 fs_inst::is_send_from_grf() const
 {
-   return (opcode == FS_OPCODE_VARYING_PULL_CONSTANT_LOAD_GEN7 ||
-           opcode == SHADER_OPCODE_SHADER_TIME_ADD ||
-           opcode == FS_OPCODE_INTERPOLATE_AT_CENTROID ||
-           opcode == FS_OPCODE_INTERPOLATE_AT_SAMPLE ||
-           opcode == FS_OPCODE_INTERPOLATE_AT_SHARED_OFFSET ||
-           opcode == FS_OPCODE_INTERPOLATE_AT_PER_SLOT_OFFSET ||
-           (opcode == FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD &&
-            src[1].file == GRF) ||
-           (is_tex() && src[0].file == GRF));
+   switch (opcode) {
+   case FS_OPCODE_VARYING_PULL_CONSTANT_LOAD_GEN7:
+   case SHADER_OPCODE_SHADER_TIME_ADD:
+   case FS_OPCODE_INTERPOLATE_AT_CENTROID:
+   case FS_OPCODE_INTERPOLATE_AT_SAMPLE:
+   case FS_OPCODE_INTERPOLATE_AT_SHARED_OFFSET:
+   case FS_OPCODE_INTERPOLATE_AT_PER_SLOT_OFFSET:
+      return true;
+   case FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD:
+      return src[1].file == GRF;
+   default:
+      if (is_tex())
+         return src[0].file == GRF;
+
+      return false;
+   }
 }
 
 bool
