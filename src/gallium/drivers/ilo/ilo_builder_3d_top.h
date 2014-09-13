@@ -537,7 +537,7 @@ gen6_3DSTATE_VERTEX_ELEMENTS(struct ilo_builder *builder,
       dw += 2;
    }
 
-   if (last_velement_edgeflag) {
+   if (last_velement_edgeflag && ve->count) {
       struct ilo_ve_cso edgeflag;
 
       for (i = 0; i < ve->count - 1; i++)
@@ -546,8 +546,7 @@ gen6_3DSTATE_VERTEX_ELEMENTS(struct ilo_builder *builder,
       edgeflag = ve->cso[i];
       ve_set_cso_edgeflag(builder->dev, &edgeflag);
       memcpy(&dw[2 * i], edgeflag.payload, sizeof(edgeflag.payload));
-   }
-   else {
+   } else {
       for (i = 0; i < ve->count; i++)
          memcpy(&dw[2 * i], ve->cso[i].payload, sizeof(ve->cso[i].payload));
    }
