@@ -1375,23 +1375,13 @@ disasm_printer_print_inst(struct disasm_printer *printer,
       }
    } else {
       const int src_count = disasm_opcode_table[inst->opcode].src_count;
-      const struct disasm_src_operand *src[3];
-      int i;
-
-      /* get src operands */
-      switch (src_count) {
-      case 3:
-         src[2] = &inst->u.src2;
-      case 2:
-         src[1] = &inst->src1;
-      case 1:
-         src[0] = &inst->src0;
-      case 0:
-      default:
-         break;
-      }
 
       if (src_count) {
+         const struct disasm_src_operand *src[3] = {
+            &inst->src0, &inst->src1, &inst->u.src2
+         };
+         int i;
+
          disasm_printer_column(printer, col++);
          disasm_printer_add_dst(printer, inst, &inst->dst);
 
