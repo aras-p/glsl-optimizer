@@ -126,8 +126,8 @@ nouveau_context_init(struct gl_context *ctx, gl_api api,
 	nouveau_fbo_functions_init(&functions);
 
 	/* Initialize the mesa context. */
-	_mesa_initialize_context(ctx, api, visual,
-                                 share_ctx, &functions);
+	if (!_mesa_initialize_context(ctx, api, visual, share_ctx, &functions))
+		return GL_FALSE;
 
 	nouveau_state_init(ctx);
 	nouveau_scratch_init(ctx);
