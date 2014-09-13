@@ -459,6 +459,7 @@ fs_visitor::assign_regs(bool allow_spilling)
        * that register and set it to the appropriate class.
        */
       if (screen->wm_reg_sets[rsi].aligned_pairs_class >= 0 &&
+          this->delta_x[BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC].file == GRF &&
           this->delta_x[BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC].reg == i) {
          c = screen->wm_reg_sets[rsi].aligned_pairs_class;
       }

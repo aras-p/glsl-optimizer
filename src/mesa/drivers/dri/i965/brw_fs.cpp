@@ -1759,16 +1759,25 @@ fs_visitor::compact_virtual_grfs()
    }
 
    /* Patch all the references to delta_x/delta_y, since they're used in
-    * register allocation.
+    * register allocation.  If they're unused, switch them to BAD_FILE so
+    * we don't think some random VGRF is delta_x/delta_y.
     */
    for (unsigned i = 0; i < ARRAY_SIZE(delta_x); i++) {
-      if (delta_x[i].file == GRF && remap_table[delta_x[i].reg] != -1) {
-         delta_x[i].reg = remap_table[delta_x[i].reg];
+      if (delta_x[i].file == GRF) {
+         if (remap_table[delta_x[i].reg] != -1) {
+            delta_x[i].reg = remap_table[delta_x[i].reg];
+         } else {
+            delta_x[i].file = BAD_FILE;
+         }
       }
    }
    for (unsigned i = 0; i < ARRAY_SIZE(delta_y); i++) {
-      if (delta_y[i].file == GRF && remap_table[delta_y[i].reg] != -1) {
-         delta_y[i].reg = remap_table[delta_y[i].reg];
+      if (delta_y[i].file == GRF) {
+         if (remap_table[delta_y[i].reg] != -1) {
+            delta_y[i].reg = remap_table[delta_y[i].reg];
+         } else {
+            delta_y[i].file = BAD_FILE;
+         }
       }
    }
 }
