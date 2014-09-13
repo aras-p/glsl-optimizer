@@ -175,7 +175,24 @@ fd3_sampler_view_create(struct pipe_context *pctx, struct pipe_resource *prsc,
 	/* when emitted, A3XX_TEX_CONST_2_INDX() must be OR'd in: */
 	so->texconst2 =
 			A3XX_TEX_CONST_2_PITCH(rsc->slices[lvl].pitch * rsc->cpp);
-	so->texconst3 = 0x00000000;  /* ??? */
+	switch (prsc->target) {
+	case PIPE_TEXTURE_1D_ARRAY:
+	case PIPE_TEXTURE_2D_ARRAY:
+		so->texconst3 =
+				A3XX_TEX_CONST_3_DEPTH(u_minify(prsc->array_size, lvl)) |
+				A3XX_TEX_CONST_3_LAYERSZ1(rsc->slices[0].size0) |
+				A3XX_TEX_CONST_3_LAYERSZ2(rsc->slices[0].size0);
+		break;
+	case PIPE_TEXTURE_3D:
+		so->texconst3 =
+				A3XX_TEX_CONST_3_DEPTH(u_minify(prsc->depth0, lvl)) |
+				A3XX_TEX_CONST_3_LAYERSZ1(rsc->slices[0].size0) |
+				A3XX_TEX_CONST_3_LAYERSZ2(rsc->slices[0].size0);
+		break;
+	default:
+		so->texconst3 = 0x00000000;
+		break;
+	}
 
 	return &so->base;
 }

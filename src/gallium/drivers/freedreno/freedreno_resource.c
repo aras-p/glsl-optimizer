@@ -215,6 +215,36 @@ setup_slices(struct fd_resource *rsc)
 	return size;
 }
 
+/* 2d array and 3d textures seem to want their layers aligned to
+ * page boundaries
+ */
+static uint32_t
+setup_slices_array(struct fd_resource *rsc)
+{
+	struct pipe_resource *prsc = &rsc->base.b;
+	uint32_t level, size = 0;
+	uint32_t width = prsc->width0;
+	uint32_t height = prsc->height0;
+	uint32_t depth = prsc->depth0;
+
+	for (level = 0; level <= prsc->last_level; level++) {
+		struct fd_resource_slice *slice = fd_resource_slice(rsc, level);
+		uint32_t aligned_width = align(width, 32);
+
+		slice->pitch = aligned_width;
+		slice->offset = size;
+		slice->size0 = align(slice->pitch * height * rsc->cpp, 4096);
+
+		size += slice->size0 * depth * prsc->array_size;
+
+		width = u_minify(width, 1);
+		height = u_minify(height, 1);
+		depth = u_minify(depth, 1);
+	}
+
+	return size;
+}
+
 /**
  * Create a new texture object, using the given template info.
  */
@@ -246,7 +276,16 @@ fd_resource_create(struct pipe_screen *pscreen,
 
 	assert(rsc->cpp);
 
-	size = setup_slices(rsc);
+	switch (tmpl->target) {
+	case PIPE_TEXTURE_3D:
+	case PIPE_TEXTURE_1D_ARRAY:
+	case PIPE_TEXTURE_2D_ARRAY:
+		size = setup_slices_array(rsc);
+		break;
+	default:
+		size = setup_slices(rsc);
+		break;
+	}
 
 	realloc_bo(rsc, size);
 	if (!rsc->bo)
