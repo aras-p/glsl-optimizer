@@ -57,13 +57,15 @@ check_for_ending(const char *string, const char *ending)
  * fwd_context is only valid if version > 0
  */
 static void
-get_gl_override(int *version, GLboolean *fwd_context)
+get_gl_override(int *version, GLboolean *fwd_context,
+                GLboolean *compat_context)
 {
    const char *env_var = "MESA_GL_VERSION_OVERRIDE";
    const char *version_str;
    int major, minor, n;
    static int override_version = -1;
    static GLboolean fc_suffix = GL_FALSE;
+   static GLboolean compat_suffix = GL_FALSE;
 
    if (override_version < 0) {
       override_version = 0;
@@ -71,6 +73,7 @@ get_gl_override(int *version, GLboolean *fwd_context)
       version_str = getenv(env_var);
       if (version_str) {
          fc_suffix = check_for_ending(version_str, "FC");
+         compat_suffix = check_for_ending(version_str, "COMPAT");
 
          n = sscanf(version_str, "%u.%u", &major, &minor);
          if (n != 2) {
@@ -87,6 +90,7 @@ get_gl_override(int *version, GLboolean *fwd_context)
 
    *version = override_version;
    *fwd_context = fc_suffix;
+   *compat_context = compat_suffix;
 }
 
 /**
@@ -129,16 +133,16 @@ _mesa_override_gl_version_contextless(struct gl_constants *consts,
                                       gl_api *apiOut, GLuint *versionOut)
 {
    int version;
-   GLboolean fwd_context;
+   GLboolean fwd_context, compat_context;
 
-   get_gl_override(&version, &fwd_context);
+   get_gl_override(&version, &fwd_context, &compat_context);
 
    if (version > 0) {
       *versionOut = version;
       if (version >= 30 && fwd_context) {
          *apiOut = API_OPENGL_CORE;
          consts->ContextFlags |= GL_CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT;
-      } else if (version >= 31) {
+      } else if (version >= 31 && !compat_context) {
          *apiOut = API_OPENGL_CORE;
       } else {
          *apiOut = API_OPENGL_COMPAT;
@@ -166,9 +170,9 @@ int
 _mesa_get_gl_version_override(void)
 {
    int version;
-   GLboolean fwd_context;
+   GLboolean fwd_context, compat_context;
 
-   get_gl_override(&version, &fwd_context);
+   get_gl_override(&version, &fwd_context, &compat_context);
 
    return version;
 }
