@@ -336,7 +336,7 @@ formats_compatible(enum pipe_format src_format,
  * Copy pixel block from src surface to dst surface.
  * Overlapping regions are acceptable.
  * Flipping and stretching are supported.
- * \param filter  one of PIPE_TEX_MIPFILTER_NEAREST/LINEAR
+ * \param filter  one of PIPE_TEX_FILTER_NEAREST/LINEAR
  * \param writemask  controls which channels in the dest surface are sourced
  *                   from the src surface.  Disabled channels are sourced
  *                   from (0,0,0,1).
@@ -364,8 +364,8 @@ util_blit_pixels(struct blit_state *ctx,
          util_format_description(src_tex->format);
    struct pipe_blit_info info;
 
-   assert(filter == PIPE_TEX_MIPFILTER_NEAREST ||
-          filter == PIPE_TEX_MIPFILTER_LINEAR);
+   assert(filter == PIPE_TEX_FILTER_NEAREST ||
+          filter == PIPE_TEX_FILTER_LINEAR);
 
    assert(src_level <= src_tex->last_level);
 
@@ -486,8 +486,8 @@ util_blit_pixels_tex(struct blit_state *ctx,
    unsigned offset;
    struct pipe_resource *tex = src_sampler_view->texture;
 
-   assert(filter == PIPE_TEX_MIPFILTER_NEAREST ||
-          filter == PIPE_TEX_MIPFILTER_LINEAR);
+   assert(filter == PIPE_TEX_FILTER_NEAREST ||
+          filter == PIPE_TEX_FILTER_LINEAR);
 
    assert(tex);
    assert(tex->width0 != 0);
