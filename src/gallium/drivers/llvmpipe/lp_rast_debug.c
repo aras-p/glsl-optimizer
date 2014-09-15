@@ -43,6 +43,17 @@ static const char *cmd_names[LP_RAST_OP_MAX] =
    "begin_query",
    "end_query",
    "set_state",
+   "triangle_32_1",
+   "triangle_32_2",
+   "triangle_32_3",
+   "triangle_32_4",
+   "triangle_32_5",
+   "triangle_32_6",
+   "triangle_32_7",
+   "triangle_32_8",
+   "triangle_32_3_4",
+   "triangle_32_3_16",
+   "triangle_32_4_16",
 };
 
 static const char *cmd_name(unsigned cmd)
