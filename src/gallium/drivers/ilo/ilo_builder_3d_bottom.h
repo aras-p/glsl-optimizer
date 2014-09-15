@@ -566,7 +566,7 @@ gen6_3DSTATE_MULTISAMPLE(struct ilo_builder *builder,
    dw[1] = dw1;
    dw[2] = dw2;
    if (ilo_dev_gen(builder->dev) >= ILO_GEN(7))
-      dw[2] = dw3;
+      dw[3] = dw3;
 }
 
 static inline void
