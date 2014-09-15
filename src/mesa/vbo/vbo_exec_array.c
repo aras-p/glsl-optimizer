@@ -1032,7 +1032,12 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
 {
    static GLuint warnCount = 0;
    GLboolean index_bounds_valid = GL_TRUE;
-   GLuint max_element;
+
+   /* This is only useful to catch invalid values in the "end" parameter
+    * like ~0.
+    */
+   GLuint max_element = 2 * 1000 * 1000 * 1000; /* just a big number */
+
    GET_CURRENT_CONTEXT(ctx);
 
    if (MESA_VERBOSE & VERBOSE_DRAW)
@@ -1044,25 +1049,6 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
    if (!_mesa_validate_DrawRangeElements( ctx, mode, start, end, count,
                                           type, indices, basevertex ))
       return;
-
-   if (ctx->Const.CheckArrayBounds) {
-      /* _MaxElement was computed, so we can use it.
-       * This path is used for drivers which need strict bounds checking.
-       */
-      max_element = ctx->Array.VAO->_MaxElement;
-   }
-   else {
-      /* Generally, hardware drivers don't need to know the buffer bounds
-       * if all vertex attributes are in VBOs.
-       * However, if none of vertex attributes are in VBOs, _MaxElement
-       * is always set to some random big number anyway, so bounds checking
-       * is mostly useless.
-       *
-       * This is only useful to catch invalid values in the "end" parameter
-       * like ~0.
-       */
-      max_element = 2 * 1000 * 1000 * 1000; /* just a big number */
-   }
 
    if ((int) end + basevertex < 0 ||
        start + basevertex >= max_element) {

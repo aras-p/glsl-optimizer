@@ -628,9 +628,6 @@ _mesa_init_constants(struct gl_constants *consts, gl_api api)
     */
    consts->VertexID_is_zero_based = false;
 
-   /* CheckArrayBounds is overriden by drivers/x11 for X server */
-   consts->CheckArrayBounds = GL_FALSE;
-
    /* GL_ARB_draw_buffers */
    consts->MaxDrawBuffers = MAX_DRAW_BUFFERS;
 

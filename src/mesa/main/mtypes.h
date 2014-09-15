@@ -1526,7 +1526,6 @@ struct gl_client_array
    GLuint _ElementSize;         /**< size of each element in bytes */
 
    struct gl_buffer_object *BufferObj;/**< GL_ARB_vertex_buffer_object */
-   GLuint _MaxElement;          /**< max element index into array buffer + 1 */
 };
 
 
@@ -1628,12 +1627,6 @@ struct gl_vertex_array_object
 
    /** Mask of VERT_BIT_* values indicating changed/dirty arrays */
    GLbitfield64 NewArrays;
-
-   /**
-    * Min of all enabled arrays' _MaxElement.  When arrays reside inside VBOs
-    * we can determine the max legal (in bounds) glDrawElements array index.
-    */
-   GLuint _MaxElement;
 
    /** The index buffer (also known as the element array buffer in OpenGL). */
    struct gl_buffer_object *IndexBufferObj;
@@ -3431,9 +3424,6 @@ struct gl_constants
       GLuint PrimitivesGenerated;
       GLuint PrimitivesWritten;
    } QueryCounterBits;
-
-   /** vertex array / buffer object bounds checking */
-   GLboolean CheckArrayBounds;
 
    GLuint MaxDrawBuffers;    /**< GL_ARB_draw_buffers */
 

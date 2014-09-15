@@ -159,7 +159,6 @@ vbo_exec_bind_arrays( struct gl_context *ctx )
    struct vbo_context *vbo = vbo_context(ctx);
    struct vbo_exec_context *exec = &vbo->exec;
    struct gl_client_array *arrays = exec->vtx.arrays;
-   const GLuint count = exec->vtx.vert_count;
    const GLuint *map;
    GLuint attr;
    GLbitfield64 varying_inputs = 0x0;
@@ -241,7 +240,6 @@ vbo_exec_bind_arrays( struct gl_context *ctx )
          _mesa_reference_buffer_object(ctx,
                                        &arrays[attr].BufferObj,
                                        exec->vtx.bufferobj);
-	 arrays[attr]._MaxElement = count; /* ??? */
 
          varying_inputs |= VERT_BIT(attr);
       }

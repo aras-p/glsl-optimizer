@@ -203,7 +203,6 @@ static void vbo_bind_vertex_list(struct gl_context *ctx,
          _mesa_reference_buffer_object(ctx,
                                        &arrays[attr].BufferObj,
                                        node->vertex_store->bufferobj);
-	 arrays[attr]._MaxElement = node->count; /* ??? */
 	 
 	 assert(arrays[attr].BufferObj->Name);
 

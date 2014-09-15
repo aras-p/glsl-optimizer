@@ -1867,7 +1867,6 @@ _mesa_copy_client_array(struct gl_context *ctx,
    dst->InstanceDivisor = src->InstanceDivisor;
    dst->_ElementSize = src->_ElementSize;
    _mesa_reference_buffer_object(ctx, &dst->BufferObj, src->BufferObj);
-   dst->_MaxElement = src->_MaxElement;
 }
 
 void
@@ -1911,11 +1910,10 @@ print_array(const char *name, GLint index, const struct gl_client_array *array)
       printf("  %s[%d]: ", name, index);
    else
       printf("  %s: ", name);
-   printf("Ptr=%p, Type=0x%x, Size=%d, ElemSize=%u, Stride=%d, Buffer=%u(Size %lu), MaxElem=%u\n",
+   printf("Ptr=%p, Type=0x%x, Size=%d, ElemSize=%u, Stride=%d, Buffer=%u(Size %lu)\n",
 	  array->Ptr, array->Type, array->Size,
 	  array->_ElementSize, array->StrideB,
-	  array->BufferObj->Name, (unsigned long) array->BufferObj->Size,
-	  array->_MaxElement);
+	  array->BufferObj->Name, (unsigned long) array->BufferObj->Size);
 }
 
 
@@ -1927,8 +1925,6 @@ _mesa_print_arrays(struct gl_context *ctx)
 {
    struct gl_vertex_array_object *vao = ctx->Array.VAO;
    GLuint i;
-
-   _mesa_update_vao_max_element(ctx, vao);
 
    printf("Array Object %u\n", vao->Name);
    if (vao->_VertexAttrib[VERT_ATTRIB_POS].Enabled)
@@ -1943,7 +1939,6 @@ _mesa_print_arrays(struct gl_context *ctx)
    for (i = 0; i < VERT_ATTRIB_GENERIC_MAX; i++)
       if (vao->_VertexAttrib[VERT_ATTRIB_GENERIC(i)].Enabled)
          print_array("Attrib", i, &vao->_VertexAttrib[VERT_ATTRIB_GENERIC(i)]);
-   printf("  _MaxElement = %u\n", vao->_MaxElement);
 }
 
 

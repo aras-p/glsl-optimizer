@@ -34,39 +34,6 @@
 struct gl_client_array;
 struct gl_context;
 
-
-/**
- * Compute the index of the last array element that can be safely accessed in
- * a vertex array.  We can really only do this when the array lives in a VBO.
- * The array->_MaxElement field will be updated.
- * Later in glDrawArrays/Elements/etc we can do some bounds checking.
- */
-static inline void
-_mesa_update_array_max_element(struct gl_client_array *array)
-{
-   assert(array->Enabled);
-
-   if (array->BufferObj->Name) {
-      GLsizeiptrARB offset = (GLsizeiptrARB) array->Ptr;
-      GLsizeiptrARB bufSize = (GLsizeiptrARB) array->BufferObj->Size;
-
-      if (offset < bufSize) {
-         const GLuint stride = array->StrideB ?
-                                 array->StrideB : array->_ElementSize;
-         array->_MaxElement = (bufSize - offset + stride
-                                  - array->_ElementSize) / stride;
-      }
-      else {
-	 array->_MaxElement = 0;
-      }
-   }
-   else {
-      /* user-space array, no idea how big it is */
-      array->_MaxElement = 2 * 1000 * 1000 * 1000; /* just a big number */
-   }
-}
-
-
 /**
  * Returns a pointer to the vertex attribute data in a client array,
  * or the offset into the vertex buffer for an array that resides in

@@ -419,11 +419,6 @@ _mesa_update_state_locked( struct gl_context *ctx )
    if (new_state & _NEW_ARRAY)
       _mesa_update_vao_client_arrays(ctx, ctx->Array.VAO);
 
-   if (ctx->Const.CheckArrayBounds &&
-       new_state & (_NEW_ARRAY | _NEW_PROGRAM | _NEW_BUFFER_OBJECT)) {
-      _mesa_update_vao_max_element(ctx, ctx->Array.VAO);
-   }
-
  out:
    new_prog_state |= update_program_constants(ctx);
 

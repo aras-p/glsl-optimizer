@@ -533,7 +533,6 @@ replay_init( struct copy_context *copy )
       dst->Integer = src->Integer;
       dst->BufferObj = ctx->Shared->NullBufferObj;
       dst->_ElementSize = src->_ElementSize;
-      dst->_MaxElement = copy->dstbuf_size; /* may be less! */
 
       offset += copy->varying[i].size;
    }

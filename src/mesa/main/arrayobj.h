@@ -75,10 +75,6 @@ _mesa_initialize_vao(struct gl_context *ctx,
 
 
 extern void
-_mesa_update_vao_max_element(struct gl_context *ctx,
-                             struct gl_vertex_array_object *vao);
-
-extern void
 _mesa_update_vao_client_arrays(struct gl_context *ctx,
                                struct gl_vertex_array_object *vao);
 
