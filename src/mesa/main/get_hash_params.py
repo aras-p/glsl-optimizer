@@ -203,10 +203,10 @@ descriptor=[
   [ "COLOR_ARRAY_SIZE", "LOC_CUSTOM, TYPE_INT, 0, NO_EXTRA" ],
   [ "COLOR_ARRAY_TYPE", "ARRAY_ENUM(VertexAttrib[VERT_ATTRIB_COLOR0].Type), NO_EXTRA" ],
   [ "COLOR_ARRAY_STRIDE", "ARRAY_INT(VertexAttrib[VERT_ATTRIB_COLOR0].Stride), NO_EXTRA" ],
-  [ "TEXTURE_COORD_ARRAY", "LOC_CUSTOM, TYPE_BOOLEAN, offsetof(struct gl_client_array, Enabled), NO_EXTRA" ],
-  [ "TEXTURE_COORD_ARRAY_SIZE", "LOC_CUSTOM, TYPE_INT, offsetof(struct gl_client_array, Size), NO_EXTRA" ],
-  [ "TEXTURE_COORD_ARRAY_TYPE", "LOC_CUSTOM, TYPE_ENUM, offsetof(struct gl_client_array, Type), NO_EXTRA" ],
-  [ "TEXTURE_COORD_ARRAY_STRIDE", "LOC_CUSTOM, TYPE_INT, offsetof(struct gl_client_array, Stride), NO_EXTRA" ],
+  [ "TEXTURE_COORD_ARRAY", "LOC_CUSTOM, TYPE_BOOLEAN, offsetof(struct gl_vertex_attrib_array, Enabled), NO_EXTRA" ],
+  [ "TEXTURE_COORD_ARRAY_SIZE", "LOC_CUSTOM, TYPE_INT, offsetof(struct gl_vertex_attrib_array, Size), NO_EXTRA" ],
+  [ "TEXTURE_COORD_ARRAY_TYPE", "LOC_CUSTOM, TYPE_ENUM, offsetof(struct gl_vertex_attrib_array, Type), NO_EXTRA" ],
+  [ "TEXTURE_COORD_ARRAY_STRIDE", "LOC_CUSTOM, TYPE_INT, offsetof(struct gl_vertex_attrib_array, Stride), NO_EXTRA" ],
 
 # GL_ARB_multitexture
   [ "MAX_TEXTURE_UNITS", "CONTEXT_INT(Const.MaxTextureUnits), NO_EXTRA" ],
