@@ -23,6 +23,17 @@
  * Authors:
  *      Marek Olšák <marek.olsak@amd.com>
  */
+
+/* Resource binding slots and sampler states (each described with 8 or 4 dwords)
+ * live in memory on SI.
+ *
+ * This file is responsible for managing lists of resources and sampler states
+ * in memory and binding them, which means updating those structures in memory.
+ *
+ * There is also code for updating shader pointers to resources and sampler
+ * states. CP DMA functions are here too.
+ */
+
 #include "radeon/r600_cs.h"
 #include "si_pipe.h"
 #include "si_shader.h"
