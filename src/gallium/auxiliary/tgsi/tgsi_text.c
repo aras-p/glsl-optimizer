@@ -993,8 +993,7 @@ parse_instruction(
       /*
        * These are not considered tex opcodes here (no additional
        * target argument) however we're required to set the Texture
-       * bit so we can set the number of tex offsets (offsets aren't
-       * actually handled here yet in any case).
+       * bit so we can set the number of tex offsets.
        */
       inst.Instruction.Texture = 1;
       inst.Texture.Texture = TGSI_TEXTURE_UNKNOWN;
@@ -1040,7 +1039,7 @@ parse_instruction(
 
    cur = ctx->cur;
    eat_opt_white( &cur );
-   for (i = 0; info->is_tex && *cur == ','; i++) {
+   for (i = 0; inst.Instruction.Texture && *cur == ','; i++) {
          cur++;
          eat_opt_white( &cur );
          ctx->cur = cur;
