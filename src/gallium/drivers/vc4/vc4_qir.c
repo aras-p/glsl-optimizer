@@ -23,6 +23,7 @@
 
 #include "util/u_memory.h"
 #include "util/u_simple_list.h"
+#include "util/ralloc.h"
 
 #include "vc4_qir.h"
 #include "vc4_qpu.h"
@@ -274,7 +275,7 @@ qir_reg_equals(struct qreg a, struct qreg b)
 struct vc4_compile *
 qir_compile_init(void)
 {
-        struct vc4_compile *c = CALLOC_STRUCT(vc4_compile);
+        struct vc4_compile *c = rzalloc(NULL, struct vc4_compile);
 
         make_empty_list(&c->instructions);
 
@@ -284,7 +285,7 @@ qir_compile_init(void)
 void
 qir_compile_destroy(struct vc4_compile *c)
 {
-        free(c);
+        ralloc_free(c);
 }
 
 const char *

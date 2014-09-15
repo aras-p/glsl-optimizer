@@ -28,6 +28,7 @@
 #include "util/u_hash_table.h"
 #include "util/u_hash.h"
 #include "util/u_memory.h"
+#include "util/ralloc.h"
 #include "tgsi/tgsi_dump.h"
 #include "tgsi/tgsi_info.h"
 
@@ -1312,14 +1313,14 @@ vc4_shader_tgsi_to_qir(struct vc4_compiled_shader *shader, enum qstage stage,
         c->stage = stage;
 
         /* XXX sizing */
-        c->temps = calloc(sizeof(struct qreg), 1024);
-        c->inputs = calloc(sizeof(struct qreg), 8 * 4);
-        c->outputs = calloc(sizeof(struct qreg), 1024);
-        c->uniforms = calloc(sizeof(struct qreg), 1024);
-        c->consts = calloc(sizeof(struct qreg), 1024);
+        c->temps = ralloc_array(c, struct qreg, 1024);
+        c->inputs = ralloc_array(c, struct qreg, 8 * 4);
+        c->outputs = ralloc_array(c, struct qreg, 1024);
+        c->uniforms = ralloc_array(c, struct qreg, 1024);
+        c->consts = ralloc_array(c, struct qreg, 1024);
 
-        c->uniform_data = calloc(sizeof(uint32_t), 1024);
-        c->uniform_contents = calloc(sizeof(enum quniform_contents), 1024);
+        c->uniform_data = ralloc_array(c, uint32_t, 1024);
+        c->uniform_contents = ralloc_array(c, enum quniform_contents, 1024);
 
         c->shader_state = key->shader_state;
         ret = tgsi_parse_init(&c->parser, c->shader_state->tokens);
@@ -1383,7 +1384,6 @@ vc4_shader_tgsi_to_qir(struct vc4_compiled_shader *shader, enum qstage stage,
         }
 
         tgsi_parse_free(&c->parser);
-        free(c->temps);
 
         qir_optimize(c);
 
