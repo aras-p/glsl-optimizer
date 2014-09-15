@@ -1067,7 +1067,7 @@ void vbo_exec_vtx_init( struct vbo_exec_context *exec )
          struct gl_client_array *array;
          array = &arrays[VERT_ATTRIB_FF(i)];
          array->BufferObj = NULL;
-         _mesa_reference_buffer_object(ctx, &arrays->BufferObj,
+         _mesa_reference_buffer_object(ctx, &array->BufferObj,
                                  vbo->currval[VBO_ATTRIB_POS+i].BufferObj);
       }
 
