@@ -538,6 +538,8 @@ struct lp_build_tgsi_aos_context
 
    struct lp_build_sampler_aos *sampler;
 
+   struct tgsi_declaration_sampler_view sv[PIPE_MAX_SHADER_SAMPLER_VIEWS];
+
    LLVMValueRef immediates[LP_MAX_INLINED_IMMEDIATES];
    LLVMValueRef temps[LP_MAX_INLINED_TEMPS];
    LLVMValueRef addr[LP_MAX_TGSI_ADDRS];

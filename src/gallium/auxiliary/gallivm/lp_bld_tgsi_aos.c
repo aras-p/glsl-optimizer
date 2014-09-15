@@ -391,6 +391,37 @@ emit_tex(struct lp_build_tgsi_aos_context *bld,
 }
 
 
+static LLVMValueRef
+emit_sample(struct lp_build_tgsi_aos_context *bld,
+            const struct tgsi_full_instruction *inst,
+            enum lp_build_tex_modifier modifier)
+{
+   unsigned target;
+   unsigned unit;
+   LLVMValueRef coords;
+   struct lp_derivatives derivs = { {NULL}, {NULL} };
+
+   if (!bld->sampler) {
+      _debug_printf("warning: found texture instruction but no sampler generator supplied\n");
+      return bld->bld_base.base.undef;
+   }
+
+   coords = lp_build_emit_fetch( &bld->bld_base, inst, 0 , LP_CHAN_ALL);
+
+   /* ignore modifiers, can't handle different sampler / sampler view, etc... */
+   unit = inst->Src[1].Register.Index;
+   assert(inst->Src[2].Register.Index == unit);
+
+   target = bld->sv[unit].Resource;
+
+   return bld->sampler->emit_fetch_texel(bld->sampler,
+                                         &bld->bld_base.base,
+                                         target, unit,
+                                         coords, derivs,
+                                         modifier);
+}
+
+
 void
 lp_emit_declaration_aos(
    struct lp_build_tgsi_aos_context *bld,
@@ -428,6 +459,17 @@ lp_emit_declaration_aos(
       case TGSI_FILE_PREDICATE:
          assert(idx < LP_MAX_TGSI_PREDS);
          bld->preds[idx] = lp_build_alloca(gallivm, vec_type, "");
+         break;
+
+      case TGSI_FILE_SAMPLER_VIEW:
+         /*
+          * The target stored here MUST match whatever there actually
+          * is in the set sampler views (what about return type?).
+          */
+         assert(last < PIPE_MAX_SHADER_SAMPLER_VIEWS);
+         for (idx = first; idx <= last; ++idx) {
+            bld->sv[idx] = decl->SamplerView;
+         }
          break;
 
       default:
@@ -782,7 +824,8 @@ lp_emit_instruction_aos(
       return FALSE;
 
    case TGSI_OPCODE_RET:
-      return FALSE;
+      /* safe to ignore at end */
+      break;
 
    case TGSI_OPCODE_END:
       *pc = -1;
@@ -815,7 +858,6 @@ lp_emit_instruction_aos(
       return FALSE;
 
    case TGSI_OPCODE_DIV:
-      /* deprecated */
       assert(0);
       return FALSE;
       break;
@@ -874,13 +916,11 @@ lp_emit_instruction_aos(
       break;
 
    case TGSI_OPCODE_I2F:
-      /* deprecated? */
       assert(0);
       return FALSE;
       break;
 
    case TGSI_OPCODE_NOT:
-      /* deprecated? */
       assert(0);
       return FALSE;
       break;
@@ -891,55 +931,46 @@ lp_emit_instruction_aos(
       break;
 
    case TGSI_OPCODE_SHL:
-      /* deprecated? */
       assert(0);
       return FALSE;
       break;
 
    case TGSI_OPCODE_ISHR:
-      /* deprecated? */
       assert(0);
       return FALSE;
       break;
 
    case TGSI_OPCODE_AND:
-      /* deprecated? */
       assert(0);
       return FALSE;
       break;
 
    case TGSI_OPCODE_OR:
-      /* deprecated? */
       assert(0);
       return FALSE;
       break;
 
    case TGSI_OPCODE_MOD:
-      /* deprecated? */
       assert(0);
       return FALSE;
       break;
 
    case TGSI_OPCODE_XOR:
-      /* deprecated? */
       assert(0);
       return FALSE;
       break;
 
    case TGSI_OPCODE_SAD:
-      /* deprecated? */
       assert(0);
       return FALSE;
       break;
 
    case TGSI_OPCODE_TXF:
-      /* deprecated? */
       assert(0);
       return FALSE;
       break;
 
    case TGSI_OPCODE_TXQ:
-      /* deprecated? */
       assert(0);
       return FALSE;
       break;
@@ -956,6 +987,10 @@ lp_emit_instruction_aos(
       break;
 
    case TGSI_OPCODE_NOP:
+      break;
+
+   case TGSI_OPCODE_SAMPLE:
+      dst0 = emit_sample(bld, inst, LP_BLD_TEX_MODIFIER_NONE);
       break;
 
    default:
