@@ -23,6 +23,7 @@ C_SOURCES := \
 	vc4_qpu_emit.c \
 	vc4_qpu.h \
 	vc4_qpu_validate.c \
+	vc4_register_allocate.c \
 	vc4_resource.c \
 	vc4_resource.h \
 	vc4_screen.c \

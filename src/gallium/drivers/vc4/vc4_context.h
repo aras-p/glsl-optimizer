@@ -230,6 +230,7 @@ void vc4_flush(struct pipe_context *pctx);
 void vc4_flush_for_bo(struct pipe_context *pctx, struct vc4_bo *bo);
 void vc4_emit_state(struct pipe_context *pctx);
 void vc4_generate_code(struct vc4_compile *c);
+struct qpu_reg *vc4_register_allocate(struct vc4_compile *c);
 void vc4_update_compiled_shaders(struct vc4_context *vc4, uint8_t prim_mode);
 
 bool vc4_rt_format_supported(enum pipe_format f);

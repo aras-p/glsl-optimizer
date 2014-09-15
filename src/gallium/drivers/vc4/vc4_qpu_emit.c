@@ -210,42 +210,10 @@ serialize_insts(struct vc4_compile *c)
 void
 vc4_generate_code(struct vc4_compile *c)
 {
-        struct qpu_reg allocate_to_qpu_reg[4 + 32 + 32];
-        bool reg_in_use[ARRAY_SIZE(allocate_to_qpu_reg)];
-        int *reg_allocated = calloc(c->num_temps, sizeof(*reg_allocated));
-        int *reg_uses_remaining =
-                calloc(c->num_temps, sizeof(*reg_uses_remaining));
+        struct qpu_reg *temp_registers = vc4_register_allocate(c);
         bool discard = false;
 
-        for (int i = 0; i < ARRAY_SIZE(reg_in_use); i++)
-                reg_in_use[i] = false;
-        for (int i = 0; i < c->num_temps; i++)
-                reg_allocated[i] = -1;
-
-        uint32_t next_reg = 0;
-        for (int i = 0; i < 4; i++)
-                allocate_to_qpu_reg[next_reg++] = qpu_rn(i == 3 ? 4 : i);
-        for (int i = 0; i < 32; i++)
-                allocate_to_qpu_reg[next_reg++] = qpu_ra(i);
-        for (int i = 0; i < 32; i++)
-                allocate_to_qpu_reg[next_reg++] = qpu_rb(i);
-        assert(next_reg == ARRAY_SIZE(allocate_to_qpu_reg));
-
         make_empty_list(&c->qpu_inst_list);
-
-        struct simple_node *node;
-        foreach(node, &c->instructions) {
-                struct qinst *qinst = (struct qinst *)node;
-
-                if (qinst->dst.file == QFILE_TEMP)
-                        reg_uses_remaining[qinst->dst.index]++;
-                for (int i = 0; i < qir_get_op_nsrc(qinst->op); i++) {
-                        if (qinst->src[i].file == QFILE_TEMP)
-                                reg_uses_remaining[qinst->src[i].index]++;
-                }
-                if (qinst->op == QOP_FRAG_Z)
-                        reg_in_use[3 + 32 + QPU_R_FRAG_PAYLOAD_ZW] = true;
-        }
 
         switch (c->stage) {
         case QSTAGE_VERT:
@@ -259,6 +227,7 @@ vc4_generate_code(struct vc4_compile *c)
                 break;
         }
 
+        struct simple_node *node;
         foreach(node, &c->instructions) {
                 struct qinst *qinst = (struct qinst *)node;
 
@@ -306,18 +275,7 @@ vc4_generate_code(struct vc4_compile *c)
                                 src[i] = qpu_rn(0);
                                 break;
                         case QFILE_TEMP:
-                                if (reg_allocated[index] == -1) {
-                                        fprintf(stderr, "undefined reg use: ");
-                                        qir_dump_inst(qinst);
-                                        fprintf(stderr, "\n");
-
-                                        src[i] = qpu_rn(0);
-                                } else {
-                                        src[i] = allocate_to_qpu_reg[reg_allocated[index]];
-                                        reg_uses_remaining[index]--;
-                                        if (reg_uses_remaining[index] == 0)
-                                                reg_in_use[reg_allocated[index]] = false;
-                                }
+                                src[i] = temp_registers[index];
                                 break;
                         case QFILE_UNIF:
                                 src[i] = qpu_unif();
@@ -333,63 +291,9 @@ vc4_generate_code(struct vc4_compile *c)
                 case QFILE_NULL:
                         dst = qpu_ra(QPU_W_NOP);
                         break;
-
                 case QFILE_TEMP:
-                        if (reg_allocated[qinst->dst.index] == -1) {
-                                int alloc;
-                                for (alloc = 0;
-                                     alloc < ARRAY_SIZE(reg_in_use);
-                                     alloc++) {
-                                        struct qpu_reg reg = allocate_to_qpu_reg[alloc];
-
-                                        switch (qinst->op) {
-                                        case QOP_PACK_SCALED:
-                                                /* The pack flags require an
-                                                 * A-file register.
-                                                 */
-                                                if (reg.mux != QPU_MUX_A)
-                                                        continue;
-                                                break;
-                                        case QOP_TEX_RESULT:
-                                        case QOP_TLB_COLOR_READ:
-                                                /* Only R4-generating
-                                                 * instructions get to store
-                                                 * values in R4 for now, until
-                                                 * we figure out how to do
-                                                 * interference.
-                                                 */
-                                                if (reg.mux != QPU_MUX_R4)
-                                                        continue;
-                                                break;
-                                        case QOP_FRAG_Z:
-                                                if (reg.mux != QPU_MUX_B ||
-                                                    reg.addr != QPU_R_FRAG_PAYLOAD_ZW) {
-                                                        continue;
-                                                }
-                                                break;
-                                        default:
-                                                if (reg.mux == QPU_MUX_R4)
-                                                        continue;
-                                                break;
-                                        }
-
-                                        if (!reg_in_use[alloc])
-                                                break;
-                                }
-                                assert(alloc != ARRAY_SIZE(reg_in_use) && "need better reg alloc");
-                                reg_in_use[alloc] = true;
-                                reg_allocated[qinst->dst.index] = alloc;
-                        }
-
-                        dst = allocate_to_qpu_reg[reg_allocated[qinst->dst.index]];
-
-                        reg_uses_remaining[qinst->dst.index]--;
-                        if (reg_uses_remaining[qinst->dst.index] == 0) {
-                                reg_in_use[reg_allocated[qinst->dst.index]] =
-                                        false;
-                        }
+                        dst = temp_registers[qinst->dst.index];
                         break;
-
                 case QFILE_VARY:
                 case QFILE_UNIF:
                         assert(!"not reached");
@@ -645,4 +549,6 @@ vc4_generate_code(struct vc4_compile *c)
                 vc4_dump_program(c);
 
         vc4_qpu_validate(c->qpu_insts, c->qpu_inst_count);
+
+        free(temp_registers);
 }
