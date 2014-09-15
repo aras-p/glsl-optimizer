@@ -78,32 +78,6 @@ extern void
 _mesa_update_vao_client_arrays(struct gl_context *ctx,
                                struct gl_vertex_array_object *vao);
 
-
-/** Returns the bitmask of all enabled arrays in fixed function mode.
- *
- *  In fixed function mode only the traditional fixed function arrays
- *  are available.
- */
-static inline GLbitfield64
-_mesa_array_object_get_enabled_ff(const struct gl_vertex_array_object *vao)
-{
-   return vao->_Enabled & VERT_BIT_FF_ALL;
-}
-
-/** Returns the bitmask of all enabled arrays in arb/glsl shader mode.
- *
- *  In arb/glsl shader mode all the fixed function and the arb/glsl generic
- *  arrays are available. Only the first generic array takes
- *  precedence over the legacy position array.
- */
-static inline GLbitfield64
-_mesa_array_object_get_enabled_arb(const struct gl_vertex_array_object *vao)
-{
-   GLbitfield64 enabled = vao->_Enabled;
-   return enabled & ~(VERT_BIT_POS & (enabled >> VERT_ATTRIB_GENERIC0));
-}
-
-
 /*
  * API functions
  */
