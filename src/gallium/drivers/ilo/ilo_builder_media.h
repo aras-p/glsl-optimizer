@@ -40,8 +40,6 @@ gen6_MEDIA_VFE_STATE(struct ilo_builder *builder,
                      int urb_entry_size)
 {
    const uint8_t cmd_len = 8;
-   const uint32_t dw0 = GEN6_RENDER_CMD(MEDIA, MEDIA_VFE_STATE) |
-                        (cmd_len - 2);
    uint32_t dw2, dw4, *dw;
 
    ILO_DEV_ASSERT(builder->dev, 6, 6);
@@ -55,7 +53,8 @@ gen6_MEDIA_VFE_STATE(struct ilo_builder *builder,
          480;                    /* CURBE Allocation Size */
 
    ilo_builder_batch_pointer(builder, cmd_len, &dw);
-   dw[0] = dw0;
+
+   dw[0] = GEN6_RENDER_CMD(MEDIA, MEDIA_VFE_STATE) | (cmd_len - 2);
    dw[1] = 0; /* scratch */
    dw[2] = dw2;
    dw[3] = 0; /* MBZ */
@@ -70,8 +69,6 @@ gen6_MEDIA_CURBE_LOAD(struct ilo_builder *builder,
                      uint32_t buf, int size)
 {
    const uint8_t cmd_len = 4;
-   const uint32_t dw0 = GEN6_RENDER_CMD(MEDIA, MEDIA_CURBE_LOAD) |
-                        (cmd_len - 2);
    uint32_t *dw;
 
    ILO_DEV_ASSERT(builder->dev, 6, 6);
@@ -81,7 +78,8 @@ gen6_MEDIA_CURBE_LOAD(struct ilo_builder *builder,
    size = align(size, 32);
 
    ilo_builder_batch_pointer(builder, cmd_len, &dw);
-   dw[0] = dw0;
+
+   dw[0] = GEN6_RENDER_CMD(MEDIA, MEDIA_CURBE_LOAD) | (cmd_len - 2);
    dw[1] = 0; /* MBZ */
    dw[2] = size;
    dw[3] = buf;
@@ -92,8 +90,6 @@ gen6_MEDIA_INTERFACE_DESCRIPTOR_LOAD(struct ilo_builder *builder,
                                      uint32_t offset, int num_ids)
 {
    const uint8_t cmd_len = 4;
-   const uint32_t dw0 =
-      GEN6_RENDER_CMD(MEDIA, MEDIA_INTERFACE_DESCRIPTOR_LOAD) | (cmd_len - 2);
    uint32_t *dw;
 
    ILO_DEV_ASSERT(builder->dev, 6, 6);
@@ -101,7 +97,9 @@ gen6_MEDIA_INTERFACE_DESCRIPTOR_LOAD(struct ilo_builder *builder,
    assert(offset % 32 == 0);
 
    ilo_builder_batch_pointer(builder, cmd_len, &dw);
-   dw[0] = dw0;
+
+   dw[0] = GEN6_RENDER_CMD(MEDIA, MEDIA_INTERFACE_DESCRIPTOR_LOAD) |
+           (cmd_len - 2);
    dw[1] = 0; /* MBZ */
    /* every ID has 8 DWords */
    dw[2] = num_ids * 8 * 4;
@@ -113,14 +111,13 @@ gen6_MEDIA_GATEWAY_STATE(struct ilo_builder *builder,
                          int id, int byte, int thread_count)
 {
    const uint8_t cmd_len = 2;
-   const uint32_t dw0 = GEN6_RENDER_CMD(MEDIA, MEDIA_GATEWAY_STATE) |
-                        (cmd_len - 2);
    uint32_t *dw;
 
    ILO_DEV_ASSERT(builder->dev, 6, 6);
 
    ilo_builder_batch_pointer(builder, cmd_len, &dw);
-   dw[0] = dw0;
+
+   dw[0] = GEN6_RENDER_CMD(MEDIA, MEDIA_GATEWAY_STATE) | (cmd_len - 2);
    dw[1] = id << 16 |
            byte << 8 |
            thread_count;
@@ -132,14 +129,13 @@ gen6_MEDIA_STATE_FLUSH(struct ilo_builder *builder,
                        int barrier_mask)
 {
    const uint8_t cmd_len = 2;
-   const uint32_t dw0 = GEN6_RENDER_CMD(MEDIA, MEDIA_STATE_FLUSH) |
-                        (cmd_len - 2);
    uint32_t *dw;
 
    ILO_DEV_ASSERT(builder->dev, 6, 6);
 
    ilo_builder_batch_pointer(builder, cmd_len, &dw);
-   dw[0] = dw0;
+
+   dw[0] = GEN6_RENDER_CMD(MEDIA, MEDIA_STATE_FLUSH) | (cmd_len - 2);
    dw[1] = thread_count_water_mark << 16 |
            barrier_mask;
 }

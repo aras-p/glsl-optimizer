@@ -45,7 +45,6 @@ gen6_3DSTATE_CLIP(struct ilo_builder *builder,
                   int num_viewports)
 {
    const uint8_t cmd_len = 4;
-   const uint32_t dw0 = GEN6_RENDER_CMD(3D, 3DSTATE_CLIP) | (cmd_len - 2);
    uint32_t dw1, dw2, dw3, *dw;
 
    ILO_DEV_ASSERT(builder->dev, 6, 7.5);
@@ -78,7 +77,8 @@ gen6_3DSTATE_CLIP(struct ilo_builder *builder,
    }
 
    ilo_builder_batch_pointer(builder, cmd_len, &dw);
-   dw[0] = dw0;
+
+   dw[0] = GEN6_RENDER_CMD(3D, 3DSTATE_CLIP) | (cmd_len - 2);
    dw[1] = dw1;
    dw[2] = dw2;
    dw[3] = dw3;
@@ -213,7 +213,6 @@ gen6_3DSTATE_SF(struct ilo_builder *builder,
                 const struct ilo_shader_state *fs)
 {
    const uint8_t cmd_len = 20;
-   const uint32_t dw0 = GEN6_RENDER_CMD(3D, 3DSTATE_SF) | (cmd_len - 2);
    uint32_t payload_raster[6], payload_sbe[13], *dw;
 
    ILO_DEV_ASSERT(builder->dev, 6, 6);
@@ -224,7 +223,8 @@ gen6_3DSTATE_SF(struct ilo_builder *builder,
          fs, payload_sbe, Elements(payload_sbe));
 
    ilo_builder_batch_pointer(builder, cmd_len, &dw);
-   dw[0] = dw0;
+
+   dw[0] = GEN6_RENDER_CMD(3D, 3DSTATE_SF) | (cmd_len - 2);
    dw[1] = payload_sbe[0];
    memcpy(&dw[2], payload_raster, sizeof(payload_raster));
    memcpy(&dw[8], &payload_sbe[1], sizeof(payload_sbe) - 4);
@@ -236,7 +236,6 @@ gen7_3DSTATE_SF(struct ilo_builder *builder,
                 enum pipe_format zs_format)
 {
    const uint8_t cmd_len = 7;
-   const uint32_t dw0 = GEN6_RENDER_CMD(3D, 3DSTATE_SF) | (cmd_len - 2);
    const int num_samples = 1;
    uint32_t payload[6], *dw;
 
@@ -247,7 +246,8 @@ gen7_3DSTATE_SF(struct ilo_builder *builder,
          payload, Elements(payload));
 
    ilo_builder_batch_pointer(builder, cmd_len, &dw);
-   dw[0] = dw0;
+
+   dw[0] = GEN6_RENDER_CMD(3D, 3DSTATE_SF) | (cmd_len - 2);
    memcpy(&dw[1], payload, sizeof(payload));
 }
 
@@ -257,7 +257,6 @@ gen7_3DSTATE_SBE(struct ilo_builder *builder,
                  const struct ilo_shader_state *fs)
 {
    const uint8_t cmd_len = 14;
-   const uint32_t dw0 = GEN7_RENDER_CMD(3D, 3DSTATE_SBE) | (cmd_len - 2);
    uint32_t payload[13], *dw;
 
    ILO_DEV_ASSERT(builder->dev, 7, 7.5);
@@ -266,7 +265,8 @@ gen7_3DSTATE_SBE(struct ilo_builder *builder,
          rasterizer, fs, payload, Elements(payload));
 
    ilo_builder_batch_pointer(builder, cmd_len, &dw);
-   dw[0] = dw0;
+
+   dw[0] = GEN7_RENDER_CMD(3D, 3DSTATE_SBE) | (cmd_len - 2);
    memcpy(&dw[1], payload, sizeof(payload));
 }
 
@@ -469,7 +469,7 @@ gen6_3DSTATE_CONSTANT_PS(struct ilo_builder *builder,
 {
    const uint8_t cmd_len = 5;
    uint32_t buf_dw[4], buf_enabled;
-   uint32_t dw0, *dw;
+   uint32_t *dw;
 
    ILO_DEV_ASSERT(builder->dev, 6, 6);
    assert(num_bufs <= 4);
@@ -483,12 +483,11 @@ gen6_3DSTATE_CONSTANT_PS(struct ilo_builder *builder,
    buf_enabled = gen6_fill_3dstate_constant(builder->dev,
          bufs, sizes, num_bufs, 64, buf_dw, Elements(buf_dw));
 
-   dw0 = GEN6_RENDER_CMD(3D, 3DSTATE_CONSTANT_PS) |
-         buf_enabled << 12 |
-         (cmd_len - 2);
-
    ilo_builder_batch_pointer(builder, cmd_len, &dw);
-   dw[0] = dw0;
+
+   dw[0] = GEN6_RENDER_CMD(3D, 3DSTATE_CONSTANT_PS) |
+           buf_enabled << 12 |
+           (cmd_len - 2);
    memcpy(&dw[1], buf_dw, sizeof(buf_dw));
 }
 
@@ -526,14 +525,12 @@ gen6_3DSTATE_MULTISAMPLE(struct ilo_builder *builder,
                          bool pixel_location_center)
 {
    const uint8_t cmd_len = (ilo_dev_gen(builder->dev) >= ILO_GEN(7)) ? 4 : 3;
-   const uint32_t dw0 = GEN6_RENDER_CMD(3D, 3DSTATE_MULTISAMPLE) |
-                        (cmd_len - 2);
    uint32_t dw1, dw2, dw3, *dw;
 
    ILO_DEV_ASSERT(builder->dev, 6, 7.5);
 
-   dw1 = (pixel_location_center) ?
-      GEN6_MULTISAMPLE_DW1_PIXLOC_CENTER : GEN6_MULTISAMPLE_DW1_PIXLOC_UL_CORNER;
+   dw1 = (pixel_location_center) ? GEN6_MULTISAMPLE_DW1_PIXLOC_CENTER :
+      GEN6_MULTISAMPLE_DW1_PIXLOC_UL_CORNER;
 
    switch (num_samples) {
    case 0:
@@ -562,7 +559,8 @@ gen6_3DSTATE_MULTISAMPLE(struct ilo_builder *builder,
    }
 
    ilo_builder_batch_pointer(builder, cmd_len, &dw);
-   dw[0] = dw0;
+
+   dw[0] = GEN6_RENDER_CMD(3D, 3DSTATE_MULTISAMPLE) | (cmd_len - 2);
    dw[1] = dw1;
    dw[2] = dw2;
    if (ilo_dev_gen(builder->dev) >= ILO_GEN(7))
@@ -574,8 +572,6 @@ gen6_3DSTATE_SAMPLE_MASK(struct ilo_builder *builder,
                          unsigned sample_mask)
 {
    const uint8_t cmd_len = 2;
-   const uint32_t dw0 = GEN6_RENDER_CMD(3D, 3DSTATE_SAMPLE_MASK) |
-                        (cmd_len - 2);
    const unsigned valid_mask = 0xf;
    uint32_t *dw;
 
@@ -584,7 +580,8 @@ gen6_3DSTATE_SAMPLE_MASK(struct ilo_builder *builder,
    sample_mask &= valid_mask;
 
    ilo_builder_batch_pointer(builder, cmd_len, &dw);
-   dw[0] = dw0;
+
+   dw[0] = GEN6_RENDER_CMD(3D, 3DSTATE_SAMPLE_MASK) | (cmd_len - 2);
    dw[1] = sample_mask;
 }
 
@@ -595,8 +592,6 @@ gen7_3DSTATE_SAMPLE_MASK(struct ilo_builder *builder,
 {
    const uint8_t cmd_len = 2;
    const unsigned valid_mask = ((1 << num_samples) - 1) | 0x1;
-   const uint32_t dw0 = GEN6_RENDER_CMD(3D, 3DSTATE_SAMPLE_MASK) |
-                        (cmd_len - 2);
    uint32_t *dw;
 
    ILO_DEV_ASSERT(builder->dev, 7, 7.5);
@@ -613,7 +608,8 @@ gen7_3DSTATE_SAMPLE_MASK(struct ilo_builder *builder,
    sample_mask &= valid_mask;
 
    ilo_builder_batch_pointer(builder, cmd_len, &dw);
-   dw[0] = dw0;
+
+   dw[0] = GEN6_RENDER_CMD(3D, 3DSTATE_SAMPLE_MASK) | (cmd_len - 2);
    dw[1] = sample_mask;
 }
 
@@ -623,11 +619,9 @@ gen6_3DSTATE_DRAWING_RECTANGLE(struct ilo_builder *builder,
                                unsigned width, unsigned height)
 {
    const uint8_t cmd_len = 4;
-   const uint32_t dw0 = GEN6_RENDER_CMD(3D, 3DSTATE_DRAWING_RECTANGLE) |
-                        (cmd_len - 2);
    unsigned xmax = x + width - 1;
    unsigned ymax = y + height - 1;
-   int rect_limit;
+   unsigned rect_limit;
    uint32_t *dw;
 
    ILO_DEV_ASSERT(builder->dev, 6, 7.5);
@@ -654,10 +648,9 @@ gen6_3DSTATE_DRAWING_RECTANGLE(struct ilo_builder *builder,
 
    ilo_builder_batch_pointer(builder, cmd_len, &dw);
 
-   dw[0] = dw0;
+   dw[0] = GEN6_RENDER_CMD(3D, 3DSTATE_DRAWING_RECTANGLE) | (cmd_len - 2);
    dw[1] = y << 16 | x;
    dw[2] = ymax << 16 | xmax;
-
    /*
     * There is no need to set the origin.  It is intended to support front
     * buffer rendering.
@@ -670,16 +663,16 @@ gen6_3DSTATE_POLY_STIPPLE_OFFSET(struct ilo_builder *builder,
                                  int x_offset, int y_offset)
 {
    const uint8_t cmd_len = 2;
-   const uint32_t dw0 = GEN6_RENDER_CMD(3D, 3DSTATE_POLY_STIPPLE_OFFSET) |
-                        (cmd_len - 2);
    uint32_t *dw;
 
    ILO_DEV_ASSERT(builder->dev, 6, 7.5);
+
    assert(x_offset >= 0 && x_offset <= 31);
    assert(y_offset >= 0 && y_offset <= 31);
 
    ilo_builder_batch_pointer(builder, cmd_len, &dw);
-   dw[0] = dw0;
+
+   dw[0] = GEN6_RENDER_CMD(3D, 3DSTATE_POLY_STIPPLE_OFFSET) | (cmd_len - 2);
    dw[1] = x_offset << 8 | y_offset;
 }
 
@@ -688,18 +681,17 @@ gen6_3DSTATE_POLY_STIPPLE_PATTERN(struct ilo_builder *builder,
                                   const struct pipe_poly_stipple *pattern)
 {
    const uint8_t cmd_len = 33;
-   const uint32_t dw0 = GEN6_RENDER_CMD(3D, 3DSTATE_POLY_STIPPLE_PATTERN) |
-                        (cmd_len - 2);
    uint32_t *dw;
    int i;
 
    ILO_DEV_ASSERT(builder->dev, 6, 7.5);
-   STATIC_ASSERT(Elements(pattern->stipple) == 32);
 
    ilo_builder_batch_pointer(builder, cmd_len, &dw);
-   dw[0] = dw0;
+
+   dw[0] = GEN6_RENDER_CMD(3D, 3DSTATE_POLY_STIPPLE_PATTERN) | (cmd_len - 2);
    dw++;
 
+   STATIC_ASSERT(Elements(pattern->stipple) == 32);
    for (i = 0; i < 32; i++)
       dw[i] = pattern->stipple[i];
 }
@@ -709,28 +701,32 @@ gen6_3DSTATE_LINE_STIPPLE(struct ilo_builder *builder,
                           unsigned pattern, unsigned factor)
 {
    const uint8_t cmd_len = 3;
-   const uint32_t dw0 = GEN6_RENDER_CMD(3D, 3DSTATE_LINE_STIPPLE) |
-                        (cmd_len - 2);
-   uint32_t *dw;
    unsigned inverse;
+   uint32_t *dw;
 
    ILO_DEV_ASSERT(builder->dev, 6, 7.5);
+
    assert((pattern & 0xffff) == pattern);
    assert(factor >= 1 && factor <= 256);
 
    ilo_builder_batch_pointer(builder, cmd_len, &dw);
-   dw[0] = dw0;
+
+   dw[0] = GEN6_RENDER_CMD(3D, 3DSTATE_LINE_STIPPLE) | (cmd_len - 2);
    dw[1] = pattern;
 
    if (ilo_dev_gen(builder->dev) >= ILO_GEN(7)) {
       /* in U1.16 */
-      inverse = (unsigned) (65536.0f / factor);
-      dw[2] = inverse << 15 | factor;
+      inverse = 65536 / factor;
+
+      dw[2] = inverse << GEN7_LINE_STIPPLE_DW2_INVERSE_REPEAT_COUNT__SHIFT |
+              factor;
    }
    else {
       /* in U1.13 */
-      inverse = (unsigned) (8192.0f / factor);
-      dw[2] = inverse << 16 | factor;
+      inverse = 8192 / factor;
+
+      dw[2] = inverse << GEN6_LINE_STIPPLE_DW2_INVERSE_REPEAT_COUNT__SHIFT |
+              factor;
    }
 }
 
@@ -738,36 +734,38 @@ static inline void
 gen6_3DSTATE_AA_LINE_PARAMETERS(struct ilo_builder *builder)
 {
    const uint8_t cmd_len = 3;
-   const uint32_t dw0 = GEN6_RENDER_CMD(3D, 3DSTATE_AA_LINE_PARAMETERS) |
-                        (cmd_len - 2);
-   uint32_t *dw;
+   const uint32_t dw[3] = {
+      GEN6_RENDER_CMD(3D, 3DSTATE_AA_LINE_PARAMETERS) | (cmd_len - 2),
+      0 << GEN6_AA_LINE_DW1_BIAS__SHIFT | 0,
+      0 << GEN6_AA_LINE_DW2_CAP_BIAS__SHIFT | 0,
+   };
 
    ILO_DEV_ASSERT(builder->dev, 6, 7.5);
 
-   ilo_builder_batch_pointer(builder, cmd_len, &dw);
-   dw[0] = dw0;
-   dw[1] = 0 << 16 | 0;
-   dw[2] = 0 << 16 | 0;
+   ilo_builder_batch_write(builder, cmd_len, dw);
 }
 
 static inline void
 gen6_3DSTATE_DEPTH_BUFFER(struct ilo_builder *builder,
                           const struct ilo_zs_surface *zs)
 {
+   const uint32_t cmd = (ilo_dev_gen(builder->dev) >= ILO_GEN(7)) ?
+      GEN7_RENDER_CMD(3D, 3DSTATE_DEPTH_BUFFER) :
+      GEN6_RENDER_CMD(3D, 3DSTATE_DEPTH_BUFFER);
    const uint8_t cmd_len = 7;
+   uint32_t *dw;
    unsigned pos;
-   uint32_t dw0, *dw;
 
    ILO_DEV_ASSERT(builder->dev, 6, 7.5);
 
-   dw0 = (ilo_dev_gen(builder->dev) >= ILO_GEN(7)) ?
-      GEN7_RENDER_CMD(3D, 3DSTATE_DEPTH_BUFFER) :
-      GEN6_RENDER_CMD(3D, 3DSTATE_DEPTH_BUFFER);
-   dw0 |= (cmd_len - 2);
-
    pos = ilo_builder_batch_pointer(builder, cmd_len, &dw);
-   dw[0] = dw0;
+
+   dw[0] = cmd | (cmd_len - 2);
    dw[1] = zs->payload[0];
+   dw[3] = zs->payload[2];
+   dw[4] = zs->payload[3];
+   dw[5] = zs->payload[4];
+   dw[6] = zs->payload[5];
 
    if (zs->bo) {
       ilo_builder_batch_reloc(builder, pos + 2,
@@ -775,30 +773,24 @@ gen6_3DSTATE_DEPTH_BUFFER(struct ilo_builder *builder,
    } else {
       dw[2] = 0;
    }
-
-   dw[3] = zs->payload[2];
-   dw[4] = zs->payload[3];
-   dw[5] = zs->payload[4];
-   dw[6] = zs->payload[5];
 }
 
 static inline void
 gen6_3DSTATE_STENCIL_BUFFER(struct ilo_builder *builder,
                             const struct ilo_zs_surface *zs)
 {
+   const uint32_t cmd = (ilo_dev_gen(builder->dev) >= ILO_GEN(7)) ?
+      GEN7_RENDER_CMD(3D, 3DSTATE_STENCIL_BUFFER) :
+      GEN6_RENDER_CMD(3D, 3DSTATE_STENCIL_BUFFER);
    const uint8_t cmd_len = 3;
-   uint32_t dw0, *dw;
+   uint32_t *dw;
    unsigned pos;
 
    ILO_DEV_ASSERT(builder->dev, 6, 7.5);
 
-   dw0 = (ilo_dev_gen(builder->dev) >= ILO_GEN(7)) ?
-      GEN7_RENDER_CMD(3D, 3DSTATE_STENCIL_BUFFER) :
-      GEN6_RENDER_CMD(3D, 3DSTATE_STENCIL_BUFFER);
-   dw0 |= (cmd_len - 2);
-
    pos = ilo_builder_batch_pointer(builder, cmd_len, &dw);
-   dw[0] = dw0;
+
+   dw[0] = cmd | (cmd_len - 2);
    /* see ilo_gpe_init_zs_surface() */
    dw[1] = zs->payload[6];
 
@@ -814,19 +806,18 @@ static inline void
 gen6_3DSTATE_HIER_DEPTH_BUFFER(struct ilo_builder *builder,
                                const struct ilo_zs_surface *zs)
 {
+   const uint32_t cmd = (ilo_dev_gen(builder->dev) >= ILO_GEN(7)) ?
+      GEN7_RENDER_CMD(3D, 3DSTATE_HIER_DEPTH_BUFFER) :
+      GEN6_RENDER_CMD(3D, 3DSTATE_HIER_DEPTH_BUFFER);
    const uint8_t cmd_len = 3;
-   uint32_t dw0, *dw;
+   uint32_t *dw;
    unsigned pos;
 
    ILO_DEV_ASSERT(builder->dev, 6, 7.5);
 
-   dw0 = (ilo_dev_gen(builder->dev) >= ILO_GEN(7)) ?
-      GEN7_RENDER_CMD(3D, 3DSTATE_HIER_DEPTH_BUFFER) :
-      GEN6_RENDER_CMD(3D, 3DSTATE_HIER_DEPTH_BUFFER);
-   dw0 |= (cmd_len - 2);
-
    pos = ilo_builder_batch_pointer(builder, cmd_len, &dw);
-   dw[0] = dw0;
+
+   dw[0] = cmd | (cmd_len - 2);
    /* see ilo_gpe_init_zs_surface() */
    dw[1] = zs->payload[8];
 
@@ -843,15 +834,15 @@ gen6_3DSTATE_CLEAR_PARAMS(struct ilo_builder *builder,
                           uint32_t clear_val)
 {
    const uint8_t cmd_len = 2;
-   const uint32_t dw0 = GEN6_RENDER_CMD(3D, 3DSTATE_CLEAR_PARAMS) |
-                        GEN6_CLEAR_PARAMS_DW0_VALID |
-                        (cmd_len - 2);
    uint32_t *dw;
 
    ILO_DEV_ASSERT(builder->dev, 6, 6);
 
    ilo_builder_batch_pointer(builder, cmd_len, &dw);
-   dw[0] = dw0;
+
+   dw[0] = GEN6_RENDER_CMD(3D, 3DSTATE_CLEAR_PARAMS) |
+           GEN6_CLEAR_PARAMS_DW0_VALID |
+           (cmd_len - 2);
    dw[1] = clear_val;
 }
 
@@ -860,16 +851,15 @@ gen7_3DSTATE_CLEAR_PARAMS(struct ilo_builder *builder,
                           uint32_t clear_val)
 {
    const uint8_t cmd_len = 3;
-   const uint32_t dw0 = GEN7_RENDER_CMD(3D, 3DSTATE_CLEAR_PARAMS) |
-                        (cmd_len - 2);
    uint32_t *dw;
 
    ILO_DEV_ASSERT(builder->dev, 7, 7.5);
 
    ilo_builder_batch_pointer(builder, cmd_len, &dw);
-   dw[0] = dw0;
+
+   dw[0] = GEN7_RENDER_CMD(3D, 3DSTATE_CLEAR_PARAMS) | (cmd_len - 2);
    dw[1] = clear_val;
-   dw[2] = 1;
+   dw[2] = GEN7_CLEAR_PARAMS_DW2_VALID;
 }
 
 static inline void
@@ -879,17 +869,17 @@ gen6_3DSTATE_VIEWPORT_STATE_POINTERS(struct ilo_builder *builder,
                                      uint32_t cc_viewport)
 {
    const uint8_t cmd_len = 4;
-   const uint32_t dw0 = GEN6_RENDER_CMD(3D, 3DSTATE_VIEWPORT_STATE_POINTERS) |
-                        GEN6_PTR_VP_DW0_CLIP_CHANGED |
-                        GEN6_PTR_VP_DW0_SF_CHANGED |
-                        GEN6_PTR_VP_DW0_CC_CHANGED |
-                        (cmd_len - 2);
    uint32_t *dw;
 
    ILO_DEV_ASSERT(builder->dev, 6, 6);
 
    ilo_builder_batch_pointer(builder, cmd_len, &dw);
-   dw[0] = dw0;
+
+   dw[0] = GEN6_RENDER_CMD(3D, 3DSTATE_VIEWPORT_STATE_POINTERS) |
+           GEN6_PTR_VP_DW0_CLIP_CHANGED |
+           GEN6_PTR_VP_DW0_SF_CHANGED |
+           GEN6_PTR_VP_DW0_CC_CHANGED |
+           (cmd_len - 2);
    dw[1] = clip_viewport;
    dw[2] = sf_viewport;
    dw[3] = cc_viewport;
@@ -900,14 +890,14 @@ gen6_3DSTATE_SCISSOR_STATE_POINTERS(struct ilo_builder *builder,
                                     uint32_t scissor_rect)
 {
    const uint8_t cmd_len = 2;
-   const uint32_t dw0 = GEN6_RENDER_CMD(3D, 3DSTATE_SCISSOR_STATE_POINTERS) |
-                        (cmd_len - 2);
    uint32_t *dw;
 
    ILO_DEV_ASSERT(builder->dev, 6, 7.5);
 
    ilo_builder_batch_pointer(builder, cmd_len, &dw);
-   dw[0] = dw0;
+
+   dw[0] = GEN6_RENDER_CMD(3D, 3DSTATE_SCISSOR_STATE_POINTERS) |
+           (cmd_len - 2);
    dw[1] = scissor_rect;
 }
 
@@ -918,17 +908,16 @@ gen6_3DSTATE_CC_STATE_POINTERS(struct ilo_builder *builder,
                                uint32_t color_calc_state)
 {
    const uint8_t cmd_len = 4;
-   const uint32_t dw0 = GEN6_RENDER_CMD(3D, 3DSTATE_CC_STATE_POINTERS) |
-                        (cmd_len - 2);
    uint32_t *dw;
 
    ILO_DEV_ASSERT(builder->dev, 6, 6);
 
    ilo_builder_batch_pointer(builder, cmd_len, &dw);
-   dw[0] = dw0;
-   dw[1] = blend_state | 1;
-   dw[2] = depth_stencil_state | 1;
-   dw[3] = color_calc_state | 1;
+
+   dw[0] = GEN6_RENDER_CMD(3D, 3DSTATE_CC_STATE_POINTERS) | (cmd_len - 2);
+   dw[1] = blend_state | GEN6_PTR_CC_DW1_BLEND_CHANGED;
+   dw[2] = depth_stencil_state | GEN6_PTR_CC_DW2_ZS_CHANGED;
+   dw[3] = color_calc_state | GEN6_PTR_CC_DW3_CC_CHANGED;
 }
 
 static inline void
