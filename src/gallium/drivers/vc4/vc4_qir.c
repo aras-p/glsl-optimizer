@@ -283,8 +283,22 @@ qir_compile_init(void)
 }
 
 void
+qir_remove_instruction(struct qinst *qinst)
+{
+        remove_from_list(&qinst->link);
+        free(qinst->src);
+        free(qinst);
+}
+
+void
 qir_compile_destroy(struct vc4_compile *c)
 {
+        while (!is_empty_list(&c->instructions)) {
+                struct qinst *qinst =
+                        (struct qinst *)first_elem(&c->instructions);
+                qir_remove_instruction(qinst);
+        }
+
         ralloc_free(c);
 }
 

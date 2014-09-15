@@ -147,7 +147,7 @@ qir_opt_cse(struct vc4_compile *c)
                                         qir_dump_inst(inst);
                                         fprintf(stderr, "\n");
                                 }
-                                remove_from_list(&inst->link);
+                                qir_remove_instruction(inst);
                                 progress = true;
                                 continue;
                         } else {

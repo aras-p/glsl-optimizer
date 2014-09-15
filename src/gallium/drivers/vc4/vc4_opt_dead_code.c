@@ -54,8 +54,7 @@ qir_opt_dead_code(struct vc4_compile *c)
                                 qir_dump_inst(inst);
                                 fprintf(stderr, "\n");
                         }
-                        remove_from_list(&inst->link);
-                        free(inst);
+                        qir_remove_instruction(inst);
                         progress = true;
                         continue;
                 }
