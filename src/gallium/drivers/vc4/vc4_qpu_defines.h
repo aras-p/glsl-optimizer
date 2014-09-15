@@ -25,8 +25,7 @@
 #define VC4_QPU_DEFINES_H
 
 #include <assert.h>
-
-#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
+#include <util/macros.h>
 
 enum qpu_op_add {
         QPU_A_NOP,
