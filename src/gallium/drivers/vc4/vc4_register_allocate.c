@@ -153,5 +153,8 @@ vc4_register_allocate(struct vc4_compile *c)
                 }
         }
 
+        free(reg_allocated);
+        free(reg_uses_remaining);
+
         return temp_registers;
 }
