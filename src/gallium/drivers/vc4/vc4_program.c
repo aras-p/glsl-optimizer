@@ -64,6 +64,23 @@ struct vc4_vs_key {
         enum pipe_format attr_formats[8];
 };
 
+static void
+resize_qreg_array(struct vc4_compile *c,
+                  struct qreg **regs,
+                  uint32_t *size,
+                  uint32_t decl_size)
+{
+        if (*size >= decl_size)
+                return;
+
+        *size = MAX2(*size * 2, decl_size);
+        *regs = reralloc(c, *regs, struct qreg, *size);
+        if (!*regs) {
+                fprintf(stderr, "Malloc failure\n");
+                abort();
+        }
+}
+
 static struct qreg
 add_uniform(struct vc4_compile *c,
             enum quniform_contents contents,
@@ -90,6 +107,9 @@ get_temp_for_uniform(struct vc4_compile *c, enum quniform_contents contents,
 
         struct qreg u = add_uniform(c, contents, data);
         struct qreg t = qir_MOV(c, u);
+
+        resize_qreg_array(c, &c->uniforms, &c->uniforms_array_size,
+                          u.index + 1);
 
         c->uniforms[u.index] = t;
         return t;
@@ -843,7 +863,15 @@ emit_tgsi_declaration(struct vc4_compile *c,
                       struct tgsi_full_declaration *decl)
 {
         switch (decl->Declaration.File) {
+        case TGSI_FILE_TEMPORARY:
+                resize_qreg_array(c, &c->temps, &c->temps_array_size,
+                                  (decl->Range.Last + 1) * 4);
+                break;
+
         case TGSI_FILE_INPUT:
+                resize_qreg_array(c, &c->inputs, &c->inputs_array_size,
+                                  (decl->Range.Last + 1) * 4);
+
                 for (int i = decl->Range.First;
                      i <= decl->Range.Last;
                      i++) {
@@ -858,6 +886,11 @@ emit_tgsi_declaration(struct vc4_compile *c,
                                 emit_vertex_input(c, i);
                         }
                 }
+                break;
+
+        case TGSI_FILE_OUTPUT:
+                resize_qreg_array(c, &c->outputs, &c->outputs_array_size,
+                                  (decl->Range.Last + 1) * 4);
                 break;
         }
 }
@@ -998,6 +1031,7 @@ parse_tgsi_immediate(struct vc4_compile *c, struct tgsi_full_immediate *imm)
 {
         for (int i = 0; i < 4; i++) {
                 unsigned n = c->num_consts++;
+                resize_qreg_array(c, &c->consts, &c->consts_array_size, n + 1);
                 c->consts[n] = qir_uniform_ui(c, imm->u[i].Uint);
         }
 }
@@ -1152,10 +1186,6 @@ vc4_blend(struct vc4_compile *c, struct qreg *result,
 static void
 emit_frag_end(struct vc4_compile *c)
 {
-        struct qreg src_color[4] = {
-                c->outputs[0], c->outputs[1], c->outputs[2], c->outputs[3],
-        };
-
         enum pipe_format color_format = c->fs_key->color_format;
         const uint8_t *format_swiz = vc4_get_format_swizzle(color_format);
         struct qreg tlb_read_color[4] = { c->undef, c->undef, c->undef, c->undef };
@@ -1172,7 +1202,11 @@ emit_frag_end(struct vc4_compile *c)
         }
 
         struct qreg blend_color[4];
-        vc4_blend(c, blend_color, dst_color, src_color);
+        struct qreg undef_array[4] = {
+                c->undef, c->undef, c->undef, c->undef
+        };
+        vc4_blend(c, blend_color, dst_color,
+                  c->outputs ? c->outputs : undef_array);
 
         /* If the bit isn't set in the color mask, then just return the
          * original dst color, instead.
@@ -1311,13 +1345,6 @@ vc4_shader_tgsi_to_qir(struct vc4_compiled_shader *shader, enum qstage stage,
         int ret;
 
         c->stage = stage;
-
-        /* XXX sizing */
-        c->temps = ralloc_array(c, struct qreg, 1024);
-        c->inputs = ralloc_array(c, struct qreg, 8 * 4);
-        c->outputs = ralloc_array(c, struct qreg, 1024);
-        c->uniforms = ralloc_array(c, struct qreg, 1024);
-        c->consts = ralloc_array(c, struct qreg, 1024);
 
         c->uniform_data = ralloc_array(c, uint32_t, 1024);
         c->uniform_contents = ralloc_array(c, enum quniform_contents, 1024);

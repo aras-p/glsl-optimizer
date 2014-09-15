@@ -208,6 +208,11 @@ struct vc4_compile {
         struct qreg *outputs;
         struct qreg *uniforms;
         struct qreg *consts;
+        uint32_t temps_array_size;
+        uint32_t inputs_array_size;
+        uint32_t outputs_array_size;
+        uint32_t uniforms_array_size;
+        uint32_t consts_array_size;
         uint32_t num_consts;
         struct qreg line_x, point_x, point_y;
         struct qreg discard;
