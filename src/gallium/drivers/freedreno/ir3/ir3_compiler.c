@@ -1248,6 +1248,7 @@ trans_samp(const struct instr_translater *t,
 {
 	struct ir3_instruction *instr;
 	struct tgsi_dst_register *dst = &inst->Dst[0].Register;
+	struct tgsi_src_register *orig = &inst->Src[0].Register;
 	struct tgsi_src_register *coord;
 	struct tgsi_src_register *samp  = &inst->Src[1].Register;
 	struct tex_info tinf;
@@ -1255,6 +1256,8 @@ trans_samp(const struct instr_translater *t,
 	memset(&tinf, 0, sizeof(tinf));
 	fill_tex_info(ctx, inst, &tinf);
 	coord = get_tex_coord(ctx, inst, &tinf);
+	if (tinf.args > 1 && is_rel_or_const(orig))
+		orig = get_unconst(ctx, orig);
 
 	instr = instr_create(ctx, 5, t->opc);
 	instr->cat5.type = get_ftype(ctx);
@@ -1266,7 +1269,7 @@ trans_samp(const struct instr_translater *t,
 	add_src_reg_wrmask(ctx, instr, coord, coord->SwizzleX, tinf.src_wrmask);
 
 	if (tinf.args > 1)
-		add_src_reg_wrmask(ctx, instr, coord, coord->SwizzleW, 0x1);
+		add_src_reg_wrmask(ctx, instr, orig, orig->SwizzleW, 0x1);
 }
 
 /* DDX/DDY */
