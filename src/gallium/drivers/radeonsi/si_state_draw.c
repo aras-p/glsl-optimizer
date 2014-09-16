@@ -321,7 +321,6 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 	si_pm4_set_reg(pm4, R_02880C_DB_SHADER_CONTROL, db_shader_control);
 
 	shader->cb0_is_integer = sctx->framebuffer.cb0_is_integer;
-	shader->sprite_coord_enable = sctx->sprite_coord_enable;
 	sctx->b.flags |= R600_CONTEXT_INV_SHADER_CACHE;
 }
 

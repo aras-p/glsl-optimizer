@@ -189,7 +189,6 @@ struct si_pipe_shader {
 	unsigned			db_shader_control;
 	unsigned			cb_shader_mask;
 	bool				cb0_is_integer;
-	unsigned			sprite_coord_enable;
 	union si_shader_key		key;
 };
 
