@@ -40,22 +40,9 @@
 #include "macros.h"
 #include "mipmap.h"
 #include "texcompress.h"
+#include "util/rgtc.h"
 #include "texcompress_rgtc.h"
 #include "texstore.h"
-
-
-#define RGTC_DEBUG 0
-
-static void unsigned_encode_rgtc_ubyte(GLubyte *blkaddr, GLubyte srccolors[4][4],
-					GLint numxpixels, GLint numypixels);
-static void signed_encode_rgtc_ubyte(GLbyte *blkaddr, GLbyte srccolors[4][4],
-			     GLint numxpixels, GLint numypixels);
-
-static void unsigned_fetch_texel_rgtc(unsigned srcRowStride, const GLubyte *pixdata,
-				      unsigned i, unsigned j, GLubyte *value, unsigned comps);
-
-static void signed_fetch_texel_rgtc(unsigned srcRowStride, const GLbyte *pixdata,
-				      unsigned i, unsigned j, GLbyte *value, unsigned comps);
 
 static void extractsrc_u( GLubyte srcpixels[4][4], const GLubyte *srcaddr,
 			  GLint srcRowStride, GLint numxpixels, GLint numypixels, GLint comps)
@@ -121,7 +108,7 @@ _mesa_texstore_red_rgtc1(TEXSTORE_PARAMS)
 	 if (srcWidth > i + 3) numxpixels = 4;
 	 else numxpixels = srcWidth - i;
 	 extractsrc_u(srcpixels, srcaddr, srcWidth, numxpixels, numypixels, 1);
-	 unsigned_encode_rgtc_ubyte(blkaddr, srcpixels, numxpixels, numypixels);
+	 util_format_unsigned_encode_rgtc_ubyte(blkaddr, srcpixels, numxpixels, numypixels);
 	 srcaddr += numxpixels;
 	 blkaddr += 8;
       }
@@ -168,7 +155,7 @@ _mesa_texstore_signed_red_rgtc1(TEXSTORE_PARAMS)
 	 if (srcWidth > i + 3) numxpixels = 4;
 	 else numxpixels = srcWidth - i;
 	 extractsrc_s(srcpixels, srcaddr, srcWidth, numxpixels, numypixels, 1);
-	 signed_encode_rgtc_ubyte(blkaddr, srcpixels, numxpixels, numypixels);
+	 util_format_signed_encode_rgtc_ubyte(blkaddr, srcpixels, numxpixels, numypixels);
 	 srcaddr += numxpixels;
 	 blkaddr += 8;
       }
@@ -216,11 +203,11 @@ _mesa_texstore_rg_rgtc2(TEXSTORE_PARAMS)
 	 if (srcWidth > i + 3) numxpixels = 4;
 	 else numxpixels = srcWidth - i;
 	 extractsrc_u(srcpixels, srcaddr, srcWidth, numxpixels, numypixels, 2);
-	 unsigned_encode_rgtc_ubyte(blkaddr, srcpixels, numxpixels, numypixels);
+	 util_format_unsigned_encode_rgtc_ubyte(blkaddr, srcpixels, numxpixels, numypixels);
 
 	 blkaddr += 8;
 	 extractsrc_u(srcpixels, (GLubyte *)srcaddr + 1, srcWidth, numxpixels, numypixels, 2);
-	 unsigned_encode_rgtc_ubyte(blkaddr, srcpixels, numxpixels, numypixels);
+	 util_format_unsigned_encode_rgtc_ubyte(blkaddr, srcpixels, numxpixels, numypixels);
 
 	 blkaddr += 8;
 
@@ -271,11 +258,11 @@ _mesa_texstore_signed_rg_rgtc2(TEXSTORE_PARAMS)
 	 else numxpixels = srcWidth - i;
 
 	 extractsrc_s(srcpixels, srcaddr, srcWidth, numxpixels, numypixels, 2);
-	 signed_encode_rgtc_ubyte(blkaddr, srcpixels, numxpixels, numypixels);
+	 util_format_signed_encode_rgtc_ubyte(blkaddr, srcpixels, numxpixels, numypixels);
 	 blkaddr += 8;
 
 	 extractsrc_s(srcpixels, srcaddr + 1, srcWidth, numxpixels, numypixels, 2);
-	 signed_encode_rgtc_ubyte(blkaddr, srcpixels, numxpixels, numypixels);
+	 util_format_signed_encode_rgtc_ubyte(blkaddr, srcpixels, numxpixels, numypixels);
 	 blkaddr += 8;
 
 	 srcaddr += numxpixels * 2;
@@ -289,40 +276,12 @@ _mesa_texstore_signed_rg_rgtc2(TEXSTORE_PARAMS)
    return GL_TRUE;
 }
 
-
-#define TAG(x) unsigned_##x
-
-#define TYPE GLubyte
-#define T_MIN 0
-#define T_MAX 0xff
-
-#include "texcompress_rgtc_tmp.h"
-
-#undef TAG
-#undef TYPE
-#undef T_MIN
-#undef T_MAX
-
-#define TAG(x) signed_##x
-#define TYPE GLbyte
-#define T_MIN (GLbyte)-128
-#define T_MAX (GLbyte)127
-
-#include "texcompress_rgtc_tmp.h"
-
-#undef TAG
-#undef TYPE
-#undef T_MIN
-#undef T_MAX
-
-
-
 static void
 fetch_red_rgtc1(const GLubyte *map,
                 GLint rowStride, GLint i, GLint j, GLfloat *texel)
 {
    GLubyte red;
-   unsigned_fetch_texel_rgtc(rowStride, map, i, j, &red, 1);
+   util_format_unsigned_fetch_texel_rgtc(rowStride, map, i, j, &red, 1);
    texel[RCOMP] = UBYTE_TO_FLOAT(red);
    texel[GCOMP] = 0.0;
    texel[BCOMP] = 0.0;
@@ -334,7 +293,7 @@ fetch_l_latc1(const GLubyte *map,
               GLint rowStride, GLint i, GLint j, GLfloat *texel)
 {
    GLubyte red;
-   unsigned_fetch_texel_rgtc(rowStride, map, i, j, &red, 1);
+   util_format_unsigned_fetch_texel_rgtc(rowStride, map, i, j, &red, 1);
    texel[RCOMP] =
    texel[GCOMP] =
    texel[BCOMP] = UBYTE_TO_FLOAT(red);
@@ -346,7 +305,7 @@ fetch_signed_red_rgtc1(const GLubyte *map,
                        GLint rowStride, GLint i, GLint j, GLfloat *texel)
 {
    GLbyte red;
-   signed_fetch_texel_rgtc(rowStride, (const GLbyte *) map,
+   util_format_signed_fetch_texel_rgtc(rowStride, (const GLbyte *) map,
                            i, j, &red, 1);
    texel[RCOMP] = BYTE_TO_FLOAT_TEX(red);
    texel[GCOMP] = 0.0;
@@ -359,7 +318,7 @@ fetch_signed_l_latc1(const GLubyte *map,
                      GLint rowStride, GLint i, GLint j, GLfloat *texel)
 {
    GLbyte red;
-   signed_fetch_texel_rgtc(rowStride, (GLbyte *) map,
+   util_format_signed_fetch_texel_rgtc(rowStride, (GLbyte *) map,
                            i, j, &red, 1);
    texel[RCOMP] =
    texel[GCOMP] =
@@ -372,10 +331,10 @@ fetch_rg_rgtc2(const GLubyte *map,
                GLint rowStride, GLint i, GLint j, GLfloat *texel)
 {
    GLubyte red, green;
-   unsigned_fetch_texel_rgtc(rowStride,
+   util_format_unsigned_fetch_texel_rgtc(rowStride,
                              map,
                              i, j, &red, 2);
-   unsigned_fetch_texel_rgtc(rowStride,
+   util_format_unsigned_fetch_texel_rgtc(rowStride,
                              map + 8,
                              i, j, &green, 2);
    texel[RCOMP] = UBYTE_TO_FLOAT(red);
@@ -389,10 +348,10 @@ fetch_la_latc2(const GLubyte *map,
                GLint rowStride, GLint i, GLint j, GLfloat *texel)
 {
    GLubyte red, green;
-   unsigned_fetch_texel_rgtc(rowStride,
+   util_format_unsigned_fetch_texel_rgtc(rowStride,
                              map,
                              i, j, &red, 2);
-   unsigned_fetch_texel_rgtc(rowStride,
+   util_format_unsigned_fetch_texel_rgtc(rowStride,
                              map + 8,
                              i, j, &green, 2);
    texel[RCOMP] =
@@ -407,10 +366,10 @@ fetch_signed_rg_rgtc2(const GLubyte *map,
                       GLint rowStride, GLint i, GLint j, GLfloat *texel)
 {
    GLbyte red, green;
-   signed_fetch_texel_rgtc(rowStride,
+   util_format_signed_fetch_texel_rgtc(rowStride,
                            (GLbyte *) map,
                            i, j, &red, 2);
-   signed_fetch_texel_rgtc(rowStride,
+   util_format_signed_fetch_texel_rgtc(rowStride,
                            (GLbyte *) map + 8,
                            i, j, &green, 2);
    texel[RCOMP] = BYTE_TO_FLOAT_TEX(red);
@@ -425,10 +384,10 @@ fetch_signed_la_latc2(const GLubyte *map,
                       GLint rowStride, GLint i, GLint j, GLfloat *texel)
 {
    GLbyte red, green;
-   signed_fetch_texel_rgtc(rowStride,
+   util_format_signed_fetch_texel_rgtc(rowStride,
                            (GLbyte *) map,
                            i, j, &red, 2);
-   signed_fetch_texel_rgtc(rowStride,
+   util_format_signed_fetch_texel_rgtc(rowStride,
                            (GLbyte *) map + 8,
                            i, j, &green, 2);
    texel[RCOMP] =

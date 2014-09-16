@@ -29,8 +29,8 @@
 
 /* included by texcompress_rgtc to define byte/ubyte compressors */
 
-static void TAG(fetch_texel_rgtc)(unsigned srcRowStride, const TYPE *pixdata,
-				  unsigned i, unsigned j, TYPE *value, unsigned comps)
+void TAG(fetch_texel_rgtc)(unsigned srcRowStride, const TYPE *pixdata,
+	                   unsigned i, unsigned j, TYPE *value, unsigned comps)
 {
    TYPE decode;
    const TYPE *blksrc = (pixdata + ((srcRowStride + 3) / 4 * (j / 4) + (i / 4)) * 8 * comps);
@@ -59,9 +59,9 @@ static void TAG(fetch_texel_rgtc)(unsigned srcRowStride, const TYPE *pixdata,
 }
 
 static void TAG(write_rgtc_encoded_channel)(TYPE *blkaddr,
-					    TYPE alphabase1,
-					    TYPE alphabase2,
-					    TYPE alphaenc[16])
+                                            TYPE alphabase1,
+                                            TYPE alphabase2,
+                                            TYPE alphaenc[16])
 {
    *blkaddr++ = alphabase1;
    *blkaddr++ = alphabase2;
@@ -73,8 +73,8 @@ static void TAG(write_rgtc_encoded_channel)(TYPE *blkaddr,
    *blkaddr++ = (alphaenc[13] >> 1) | (alphaenc[14] << 2) | (alphaenc[15] << 5);
 }
 
-static void TAG(encode_rgtc_ubyte)(TYPE *blkaddr, TYPE srccolors[4][4],
-			     int numxpixels, int numypixels)
+void TAG(encode_rgtc_ubyte)(TYPE *blkaddr, TYPE srccolors[4][4],
+                            int numxpixels, int numypixels)
 {
    TYPE alphabase[2], alphause[2];
    short alphatest[2] = { 0 };
