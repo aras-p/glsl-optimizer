@@ -2251,8 +2251,8 @@ void brw_oword_block_read(struct brw_compile *p,
 
 void brw_fb_WRITE(struct brw_compile *p,
 		  int dispatch_width,
-                  unsigned msg_reg_nr,
-                  struct brw_reg src0,
+                  struct brw_reg payload,
+                  struct brw_reg implied_header,
                   unsigned msg_control,
                   unsigned binding_table_index,
                   unsigned msg_length,
@@ -2263,7 +2263,7 @@ void brw_fb_WRITE(struct brw_compile *p,
    struct brw_context *brw = p->brw;
    brw_inst *insn;
    unsigned msg_type;
-   struct brw_reg dest;
+   struct brw_reg dest, src0;
 
    if (dispatch_width == 16)
       dest = retype(vec16(brw_null_reg()), BRW_REGISTER_TYPE_UW);
@@ -2279,11 +2279,13 @@ void brw_fb_WRITE(struct brw_compile *p,
 
    if (brw->gen >= 6) {
       /* headerless version, just submit color payload */
-      src0 = brw_message_reg(msg_reg_nr);
+      src0 = payload;
 
       msg_type = GEN6_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_WRITE;
    } else {
-      brw_inst_set_base_mrf(brw, insn, msg_reg_nr);
+      assert(payload.file == BRW_MESSAGE_REGISTER_FILE);
+      brw_inst_set_base_mrf(brw, insn, payload.nr);
+      src0 = implied_header;
 
       msg_type = BRW_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_WRITE;
    }

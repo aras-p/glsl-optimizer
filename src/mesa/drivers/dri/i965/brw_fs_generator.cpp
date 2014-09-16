@@ -99,7 +99,7 @@ fs_generator::patch_discard_jumps_to_fb_writes()
 
 void
 fs_generator::fire_fb_write(fs_inst *inst,
-                            GLuint base_reg,
+                            struct brw_reg payload,
                             struct brw_reg implied_header,
                             GLuint nr)
 {
@@ -113,9 +113,7 @@ fs_generator::fire_fb_write(fs_inst *inst,
       brw_set_default_mask_control(p, BRW_MASK_DISABLE);
       brw_set_default_predicate_control(p, BRW_PREDICATE_NONE);
       brw_set_default_compression_control(p, BRW_COMPRESSION_NONE);
-      brw_MOV(p,
-              brw_message_reg(base_reg + 1),
-              brw_vec8_grf(1, 0));
+      brw_MOV(p, offset(payload, 1), brw_vec8_grf(1, 0));
       brw_pop_insn_state(p);
    }
 
@@ -133,7 +131,7 @@ fs_generator::fire_fb_write(fs_inst *inst,
 
    brw_fb_WRITE(p,
                 dispatch_width,
-                base_reg,
+                payload,
                 implied_header,
                 msg_control,
                 surf_index,
@@ -146,15 +144,15 @@ fs_generator::fire_fb_write(fs_inst *inst,
 }
 
 void
-fs_generator::generate_fb_write(fs_inst *inst)
+fs_generator::generate_fb_write(fs_inst *inst, struct brw_reg payload)
 {
-   assert(stage == MESA_SHADER_FRAGMENT);
-   gl_fragment_program *fp = (gl_fragment_program *) prog;
-   struct brw_reg implied_header;
-
    assert(stage == MESA_SHADER_FRAGMENT);
    brw_wm_prog_data *prog_data = (brw_wm_prog_data*) this->prog_data;
    const brw_wm_prog_key * const key = (brw_wm_prog_key * const) this->key;
+   struct brw_reg implied_header;
+
+   if (inst->base_mrf >= 0)
+      payload = brw_message_reg(inst->base_mrf);
 
    /* Header is 2 regs, g0 and g1 are the contents. g0 will be implied
     * move, here's g1.
@@ -183,7 +181,7 @@ fs_generator::generate_fb_write(fs_inst *inst)
       if (brw->gen >= 6) {
 	 brw_set_default_compression_control(p, BRW_COMPRESSION_COMPRESSED);
 	 brw_MOV(p,
-		 retype(brw_message_reg(inst->base_mrf), BRW_REGISTER_TYPE_UD),
+		 retype(payload, BRW_REGISTER_TYPE_UD),
 		 retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UD));
 	 brw_set_default_compression_control(p, BRW_COMPRESSION_NONE);
 
@@ -192,16 +190,15 @@ fs_generator::generate_fb_write(fs_inst *inst)
              * header.
              */
             brw_OR(p,
-		   vec1(retype(brw_message_reg(inst->base_mrf), BRW_REGISTER_TYPE_UD)),
+		   vec1(retype(payload, BRW_REGISTER_TYPE_UD)),
 		   vec1(retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UD)),
 		   brw_imm_ud(0x1 << 11));
          }
 
 	 if (inst->target > 0) {
 	    /* Set the render target index for choosing BLEND_STATE. */
-	    brw_MOV(p, retype(brw_vec1_reg(BRW_MESSAGE_REGISTER_FILE,
-					   inst->base_mrf, 2),
-			      BRW_REGISTER_TYPE_UD),
+	    brw_MOV(p, retype(vec1(suboffset(payload, 2)),
+                              BRW_REGISTER_TYPE_UD),
 		    brw_imm_ud(inst->target));
 	 }
 
@@ -216,7 +213,7 @@ fs_generator::generate_fb_write(fs_inst *inst)
    }
 
    if (!runtime_check_aads_emit) {
-      fire_fb_write(inst, inst->base_mrf, implied_header, inst->mlen);
+      fire_fb_write(inst, payload, implied_header, inst->mlen);
    } else {
       /* This can only happen in gen < 6 */
       assert(brw->gen < 6);
@@ -235,10 +232,10 @@ fs_generator::generate_fb_write(fs_inst *inst)
       brw_inst_set_exec_size(brw, brw_last_inst, BRW_EXECUTE_1);
       {
          /* Don't send AA data */
-         fire_fb_write(inst, inst->base_mrf+1, implied_header, inst->mlen-1);
+         fire_fb_write(inst, offset(payload, 1), implied_header, inst->mlen-1);
       }
       brw_land_fwd_jump(p, jmp);
-      fire_fb_write(inst, inst->base_mrf, implied_header, inst->mlen);
+      fire_fb_write(inst, payload, implied_header, inst->mlen);
    }
 }
 
@@ -247,7 +244,7 @@ fs_generator::generate_blorp_fb_write(fs_inst *inst)
 {
    brw_fb_WRITE(p,
                 16 /* dispatch_width */,
-                inst->base_mrf,
+                brw_message_reg(inst->base_mrf),
                 brw_reg_from_fs_reg(&inst->src[0]),
                 BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD16_SINGLE_SOURCE,
                 inst->target,
@@ -1879,7 +1876,7 @@ fs_generator::generate_code(const cfg_t *cfg)
 
       case FS_OPCODE_REP_FB_WRITE:
       case FS_OPCODE_FB_WRITE:
-	 generate_fb_write(inst);
+	 generate_fb_write(inst, src[0]);
 	 break;
 
       case FS_OPCODE_BLORP_FB_WRITE:

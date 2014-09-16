@@ -665,10 +665,10 @@ public:
 private:
    void generate_code(const cfg_t *cfg);
    void fire_fb_write(fs_inst *inst,
-                      GLuint base_reg,
+                      struct brw_reg payload,
                       struct brw_reg implied_header,
                       GLuint nr);
-   void generate_fb_write(fs_inst *inst);
+   void generate_fb_write(fs_inst *inst, struct brw_reg payload);
    void generate_blorp_fb_write(fs_inst *inst);
    void generate_rep_fb_write(fs_inst *inst);
    void generate_pixel_xy(struct brw_reg dst, bool is_x);
