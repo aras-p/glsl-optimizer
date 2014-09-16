@@ -2988,6 +2988,21 @@ fs_visitor::lower_load_payload()
 
             if (inst->src[i].file == BAD_FILE) {
                /* Do nothing but otherwise increment as normal */
+            } else if (dst.file == MRF &&
+                       dst.width == 8 &&
+                       brw->has_compr4 &&
+                       i + 4 < inst->sources &&
+                       inst->src[i + 4].equals(horiz_offset(inst->src[i], 8))) {
+               fs_reg compr4_dst = dst;
+               compr4_dst.reg += BRW_MRF_COMPR4;
+               compr4_dst.width = 16;
+               fs_reg compr4_src = inst->src[i];
+               compr4_src.width = 16;
+               fs_inst *mov = MOV(compr4_dst, compr4_src);
+               mov->force_writemask_all = true;
+               inst->insert_before(block, mov);
+               /* Mark i+4 as BAD_FILE so we don't emit a MOV for it */
+               inst->src[i + 4].file = BAD_FILE;
             } else {
                fs_inst *mov = MOV(dst, inst->src[i]);
                if (inst->src[i].file == GRF) {

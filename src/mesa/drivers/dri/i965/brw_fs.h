@@ -144,6 +144,26 @@ byte_offset(fs_reg reg, unsigned delta)
 }
 
 static inline fs_reg
+horiz_offset(fs_reg reg, unsigned delta)
+{
+   switch (reg.file) {
+   case BAD_FILE:
+   case UNIFORM:
+   case IMM:
+      /* These only have a single component that is implicitly splatted.  A
+       * horizontal offset should be a harmless no-op.
+       */
+      break;
+   case GRF:
+   case MRF:
+      return byte_offset(reg, delta * reg.stride * type_sz(reg.type));
+   default:
+      assert(delta == 0);
+   }
+   return reg;
+}
+
+static inline fs_reg
 offset(fs_reg reg, unsigned delta)
 {
    assert(reg.stride > 0);
@@ -184,7 +204,7 @@ half(fs_reg reg, unsigned idx)
    assert(idx == 0 || (reg.file != HW_REG && reg.file != IMM));
    assert(reg.width == 16);
    reg.width = 8;
-   return byte_offset(reg, 8 * idx * reg.stride * type_sz(reg.type));
+   return horiz_offset(reg, 8 * idx);
 }
 
 static const fs_reg reg_undef;
