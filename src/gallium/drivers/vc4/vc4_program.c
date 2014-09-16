@@ -891,6 +891,16 @@ emit_tgsi_declaration(struct vc4_compile *c,
         case TGSI_FILE_OUTPUT:
                 resize_qreg_array(c, &c->outputs, &c->outputs_array_size,
                                   (decl->Range.Last + 1) * 4);
+
+                switch (decl->Semantic.Name) {
+                case TGSI_SEMANTIC_POSITION:
+                        c->output_position_index = decl->Range.First * 4;
+                        break;
+                case TGSI_SEMANTIC_COLOR:
+                        c->output_color_index = decl->Range.First * 4;
+                        break;
+                }
+
                 break;
         }
 }
@@ -1206,7 +1216,9 @@ emit_frag_end(struct vc4_compile *c)
                 c->undef, c->undef, c->undef, c->undef
         };
         vc4_blend(c, blend_color, dst_color,
-                  c->outputs ? c->outputs : undef_array);
+                  (c->output_color_index != -1 ?
+                   c->outputs + c->output_color_index :
+                   undef_array));
 
         /* If the bit isn't set in the color mask, then just return the
          * original dst color, instead.
@@ -1238,7 +1250,14 @@ emit_frag_end(struct vc4_compile *c)
                 qir_TLB_DISCARD_SETUP(c, c->discard);
 
         if (c->fs_key->depth_enabled) {
-                qir_TLB_Z_WRITE(c, qir_FRAG_Z(c));
+                struct qreg z;
+                if (c->output_position_index != -1) {
+                        z = qir_FTOI(c, qir_FMUL(c, c->outputs[c->output_position_index + 2],
+                                                 qir_uniform_f(c, 0xffffff)));
+                } else {
+                        z = qir_FRAG_Z(c);
+                }
+                qir_TLB_Z_WRITE(c, z);
         }
 
         bool color_written = false;
