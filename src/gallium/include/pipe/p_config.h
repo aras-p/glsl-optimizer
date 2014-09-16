@@ -218,6 +218,12 @@
 #define PIPE_OS_UNIX
 #endif
 
+#if defined(__DragonFly__)
+#define PIPE_OS_DRAGONFLY
+#define PIPE_OS_BSD
+#define PIPE_OS_UNIX
+#endif
+
 #if defined(__GNU__)
 #define PIPE_OS_HURD
 #define PIPE_OS_UNIX
