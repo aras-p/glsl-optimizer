@@ -243,8 +243,7 @@ vc4_generate_code(struct vc4_compile *c)
                         if (qinst->src[i].file == QFILE_TEMP)
                                 reg_uses_remaining[qinst->src[i].index]++;
                 }
-                if (qinst->op == QOP_TLB_PASSTHROUGH_Z_WRITE ||
-                    qinst->op == QOP_FRAG_Z)
+                if (qinst->op == QOP_FRAG_Z)
                         reg_in_use[3 + 32 + QPU_R_FRAG_PAYLOAD_ZW] = true;
         }
 
@@ -361,6 +360,12 @@ vc4_generate_code(struct vc4_compile *c)
                                                  */
                                                 if (reg.mux != QPU_MUX_R4)
                                                         continue;
+                                                break;
+                                        case QOP_FRAG_Z:
+                                                if (reg.mux != QPU_MUX_B ||
+                                                    reg.addr != QPU_R_FRAG_PAYLOAD_ZW) {
+                                                        continue;
+                                                }
                                                 break;
                                         default:
                                                 if (reg.mux == QPU_MUX_R4)
@@ -492,8 +497,9 @@ vc4_generate_code(struct vc4_compile *c)
                         break;
 
                 case QOP_FRAG_Z:
-                        queue(c, qpu_a_ITOF(dst,
-                                            qpu_rb(QPU_R_FRAG_PAYLOAD_ZW)));
+                        /* QOP_FRAG_Z doesn't emit instructions, just
+                         * allocates the register to the Z payload.
+                         */
                         break;
 
                 case QOP_FRAG_RCP_W:
@@ -509,9 +515,8 @@ vc4_generate_code(struct vc4_compile *c)
                         *last_inst(c) |= QPU_SF;
                         break;
 
-                case QOP_TLB_PASSTHROUGH_Z_WRITE:
-                        queue(c, qpu_a_MOV(qpu_ra(QPU_W_TLB_Z),
-                                           qpu_rb(QPU_R_FRAG_PAYLOAD_ZW)));
+                case QOP_TLB_Z_WRITE:
+                        queue(c, qpu_a_MOV(qpu_ra(QPU_W_TLB_Z), src[0]));
                         if (discard) {
                                 set_last_cond_add(c, QPU_COND_ZS);
                         }

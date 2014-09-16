@@ -831,7 +831,7 @@ emit_fragcoord_input(struct vc4_compile *c, int attr)
         c->inputs[attr * 4 + 1] = qir_FRAG_Y(c);
         c->inputs[attr * 4 + 2] =
                 qir_FMUL(c,
-                         qir_FRAG_Z(c),
+                         qir_ITOF(c, qir_FRAG_Z(c)),
                          qir_uniform_f(c, 1.0 / 0xffffff));
         c->inputs[attr * 4 + 3] = qir_FRAG_RCP_W(c);
 }
@@ -1238,8 +1238,7 @@ emit_frag_end(struct vc4_compile *c)
                 qir_TLB_DISCARD_SETUP(c, c->discard);
 
         if (c->fs_key->depth_enabled) {
-                qir_emit(c, qir_inst(QOP_TLB_PASSTHROUGH_Z_WRITE, c->undef,
-                                     c->undef, c->undef));
+                qir_TLB_Z_WRITE(c, qir_FRAG_Z(c));
         }
 
         bool color_written = false;
