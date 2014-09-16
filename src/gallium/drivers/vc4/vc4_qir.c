@@ -120,8 +120,7 @@ bool
 qir_has_side_effects(struct qinst *inst)
 {
         for (int i = 0; i < qir_get_op_nsrc(inst->op); i++) {
-                if (inst->src[i].file == QFILE_VARY ||
-                    inst->src[i].file == QFILE_UNIF)
+                if (inst->src[i].file == QFILE_VARY)
                         return true;
         }
 
