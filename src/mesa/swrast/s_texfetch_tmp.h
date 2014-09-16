@@ -808,11 +808,11 @@ static void
 FETCH(L8A8_SRGB)(const struct swrast_texture_image *texImage,
                  GLint i, GLint j, GLint k, GLfloat *texel)
 {
-   const GLubyte *src = TEXEL_ADDR(GLubyte, texImage, i, j, k, 2);
+   const GLushort s = *TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
    texel[RCOMP] =
    texel[GCOMP] =
-   texel[BCOMP] = util_format_srgb_8unorm_to_linear_float(src[0]);
-   texel[ACOMP] = UBYTE_TO_FLOAT(src[1]); /* linear */
+   texel[BCOMP] = util_format_srgb_8unorm_to_linear_float(s & 0xff);
+   texel[ACOMP] = UBYTE_TO_FLOAT(s >> 8); /* linear */
 }
 
 
