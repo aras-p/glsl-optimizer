@@ -2188,7 +2188,7 @@ static void si_set_min_samples(struct pipe_context *ctx, unsigned min_samples)
 
 /* Compute the key for the hw shader variant */
 static INLINE void si_shader_selector_key(struct pipe_context *ctx,
-					  struct si_pipe_shader_selector *sel,
+					  struct si_shader_selector *sel,
 					  union si_shader_key *key)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
@@ -2242,7 +2242,7 @@ static INLINE void si_shader_selector_key(struct pipe_context *ctx,
 
 /* Select the hw shader variant depending on the current state. */
 int si_shader_select(struct pipe_context *ctx,
-		     struct si_pipe_shader_selector *sel)
+		     struct si_shader_selector *sel)
 {
 	union si_shader_key key;
 	struct si_shader * shader = NULL;
@@ -2283,7 +2283,7 @@ int si_shader_select(struct pipe_context *ctx,
 
 		shader->next_variant = sel->current;
 		sel->current = shader;
-		r = si_pipe_shader_create(ctx, shader);
+		r = si_shader_create(ctx, shader);
 		if (unlikely(r)) {
 			R600_ERR("Failed to build shader variant (type=%u) %d\n",
 				 sel->type, r);
@@ -2301,7 +2301,7 @@ static void *si_create_shader_state(struct pipe_context *ctx,
 				    const struct pipe_shader_state *state,
 				    unsigned pipe_shader_type)
 {
-	struct si_pipe_shader_selector *sel = CALLOC_STRUCT(si_pipe_shader_selector);
+	struct si_shader_selector *sel = CALLOC_STRUCT(si_shader_selector);
 	int r;
 
 	sel->type = pipe_shader_type;
@@ -2345,7 +2345,7 @@ static void *si_create_vs_state(struct pipe_context *ctx,
 static void si_bind_vs_shader(struct pipe_context *ctx, void *state)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
-	struct si_pipe_shader_selector *sel = state;
+	struct si_shader_selector *sel = state;
 
 	if (sctx->vs_shader == sel)
 		return;
@@ -2359,7 +2359,7 @@ static void si_bind_vs_shader(struct pipe_context *ctx, void *state)
 static void si_bind_gs_shader(struct pipe_context *ctx, void *state)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
-	struct si_pipe_shader_selector *sel = state;
+	struct si_shader_selector *sel = state;
 
 	if (sctx->gs_shader == sel)
 		return;
@@ -2370,7 +2370,7 @@ static void si_bind_gs_shader(struct pipe_context *ctx, void *state)
 static void si_bind_ps_shader(struct pipe_context *ctx, void *state)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
-	struct si_pipe_shader_selector *sel = state;
+	struct si_shader_selector *sel = state;
 
 	/* skip if supplied shader is one already in use */
 	if (sctx->ps_shader == sel)
@@ -2392,7 +2392,7 @@ static void si_bind_ps_shader(struct pipe_context *ctx, void *state)
 }
 
 static void si_delete_shader_selector(struct pipe_context *ctx,
-				      struct si_pipe_shader_selector *sel)
+				      struct si_shader_selector *sel)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
 	struct si_shader *p = sel->current, *c;
@@ -2407,7 +2407,7 @@ static void si_delete_shader_selector(struct pipe_context *ctx,
 			si_pm4_delete_state(sctx, es, p->pm4);
 		else
 			si_pm4_delete_state(sctx, vs, p->pm4);
-		si_pipe_shader_destroy(ctx, p);
+		si_shader_destroy(ctx, p);
 		free(p);
 		p = c;
 	}
@@ -2419,7 +2419,7 @@ static void si_delete_shader_selector(struct pipe_context *ctx,
 static void si_delete_vs_shader(struct pipe_context *ctx, void *state)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
-	struct si_pipe_shader_selector *sel = (struct si_pipe_shader_selector *)state;
+	struct si_shader_selector *sel = (struct si_shader_selector *)state;
 
 	if (sctx->vs_shader == sel) {
 		sctx->vs_shader = NULL;
@@ -2431,7 +2431,7 @@ static void si_delete_vs_shader(struct pipe_context *ctx, void *state)
 static void si_delete_gs_shader(struct pipe_context *ctx, void *state)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
-	struct si_pipe_shader_selector *sel = (struct si_pipe_shader_selector *)state;
+	struct si_shader_selector *sel = (struct si_shader_selector *)state;
 
 	if (sctx->gs_shader == sel) {
 		sctx->gs_shader = NULL;
@@ -2443,7 +2443,7 @@ static void si_delete_gs_shader(struct pipe_context *ctx, void *state)
 static void si_delete_ps_shader(struct pipe_context *ctx, void *state)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
-	struct si_pipe_shader_selector *sel = (struct si_pipe_shader_selector *)state;
+	struct si_shader_selector *sel = (struct si_shader_selector *)state;
 
 	if (sctx->ps_shader == sel) {
 		sctx->ps_shader = NULL;
@@ -2461,7 +2461,7 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 							const struct pipe_sampler_view *state)
 {
 	struct si_context *sctx = (struct si_context*)ctx;
-	struct si_pipe_sampler_view *view = CALLOC_STRUCT(si_pipe_sampler_view);
+	struct si_sampler_view *view = CALLOC_STRUCT(si_sampler_view);
 	struct r600_texture *tmp = (struct r600_texture*)texture;
 	const struct util_format_description *desc;
 	unsigned format, num_format;
@@ -2715,7 +2715,7 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 static void si_sampler_view_destroy(struct pipe_context *ctx,
 				    struct pipe_sampler_view *state)
 {
-	struct si_pipe_sampler_view *view = (struct si_pipe_sampler_view *)state;
+	struct si_sampler_view *view = (struct si_sampler_view *)state;
 
 	if (view->resource->b.b.target == PIPE_BUFFER)
 		LIST_DELINIT(&view->list);
@@ -2748,7 +2748,7 @@ static bool sampler_state_needs_border_color(const struct pipe_sampler_state *st
 static void *si_create_sampler_state(struct pipe_context *ctx,
 				     const struct pipe_sampler_state *state)
 {
-	struct si_pipe_sampler_state *rstate = CALLOC_STRUCT(si_pipe_sampler_state);
+	struct si_sampler_state *rstate = CALLOC_STRUCT(si_sampler_state);
 	unsigned aniso_flag_offset = state->max_anisotropy > 1 ? 2 : 0;
 	unsigned border_color_type;
 
@@ -2792,7 +2792,7 @@ static void *si_create_sampler_state(struct pipe_context *ctx,
 static void si_set_border_colors(struct si_context *sctx, unsigned count,
 				 void **states)
 {
-	struct si_pipe_sampler_state **rstates = (struct si_pipe_sampler_state **)states;
+	struct si_sampler_state **rstates = (struct si_sampler_state **)states;
 	uint32_t *border_color_table = NULL;
 	int i, j;
 

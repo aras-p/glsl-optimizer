@@ -39,13 +39,13 @@
 
 #define SI_MAX_DRAW_CS_DWORDS 18
 
-struct si_pipe_compute;
+struct si_compute;
 
 struct si_screen {
 	struct r600_common_screen	b;
 };
 
-struct si_pipe_sampler_view {
+struct si_sampler_view {
 	struct pipe_sampler_view	base;
 	struct list_head		list;
 	struct r600_resource		*resource;
@@ -53,13 +53,13 @@ struct si_pipe_sampler_view {
 	uint32_t			fmask_state[8];
 };
 
-struct si_pipe_sampler_state {
+struct si_sampler_state {
 	uint32_t			val[4];
 	uint32_t			border_color[4];
 };
 
 struct si_cs_shader_state {
-	struct si_pipe_compute		*program;
+	struct si_compute		*program;
 };
 
 struct si_textures_info {
@@ -118,9 +118,10 @@ struct si_context {
 	unsigned			pa_su_sc_mode_cntl;
 	/* for saving when using blitter */
 	struct pipe_stencil_ref		stencil_ref;
-	struct si_pipe_shader_selector	*ps_shader;
-	struct si_pipe_shader_selector	*gs_shader;
-	struct si_pipe_shader_selector	*vs_shader;
+	/* shaders */
+	struct si_shader_selector	*ps_shader;
+	struct si_shader_selector	*gs_shader;
+	struct si_shader_selector	*vs_shader;
 	struct si_cs_shader_state	cs_shader_state;
 	/* shader information */
 	unsigned			sprite_coord_enable;

@@ -112,7 +112,7 @@ struct si_shader_output {
 
 struct si_shader;
 
-struct si_pipe_shader_selector {
+struct si_shader_selector {
 	struct si_shader *current;
 
 	struct tgsi_token       *tokens;
@@ -147,7 +147,7 @@ union si_shader_key {
 };
 
 struct si_shader {
-	struct si_pipe_shader_selector	*selector;
+	struct si_shader_selector	*selector;
 	struct si_shader		*next_variant;
 
 	struct si_shader		*gs_copy_shader;
@@ -196,10 +196,10 @@ static inline struct si_shader* si_get_vs_state(struct si_context *sctx)
 }
 
 /* radeonsi_shader.c */
-int si_pipe_shader_create(struct pipe_context *ctx, struct si_shader *shader);
-int si_pipe_shader_create(struct pipe_context *ctx, struct si_shader *shader);
+int si_shader_create(struct pipe_context *ctx, struct si_shader *shader);
+int si_shader_create(struct pipe_context *ctx, struct si_shader *shader);
 int si_compile_llvm(struct si_context *sctx, struct si_shader *shader,
 							LLVMModuleRef mod);
-void si_pipe_shader_destroy(struct pipe_context *ctx, struct si_shader *shader);
+void si_shader_destroy(struct pipe_context *ctx, struct si_shader *shader);
 
 #endif

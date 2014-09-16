@@ -39,7 +39,7 @@
  * Shaders
  */
 
-static void si_pipe_shader_es(struct pipe_context *ctx, struct si_shader *shader)
+static void si_shader_es(struct pipe_context *ctx, struct si_shader *shader)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
 	struct si_pm4_state *pm4;
@@ -79,7 +79,7 @@ static void si_pipe_shader_es(struct pipe_context *ctx, struct si_shader *shader
 	sctx->b.flags |= R600_CONTEXT_INV_SHADER_CACHE;
 }
 
-static void si_pipe_shader_gs(struct pipe_context *ctx, struct si_shader *shader)
+static void si_shader_gs(struct pipe_context *ctx, struct si_shader *shader)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
 	unsigned gs_vert_itemsize = shader->noutput * (16 >> 2);
@@ -151,7 +151,7 @@ static void si_pipe_shader_gs(struct pipe_context *ctx, struct si_shader *shader
 	sctx->b.flags |= R600_CONTEXT_INV_SHADER_CACHE;
 }
 
-static void si_pipe_shader_vs(struct pipe_context *ctx, struct si_shader *shader)
+static void si_shader_vs(struct pipe_context *ctx, struct si_shader *shader)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
 	struct si_pm4_state *pm4;
@@ -227,7 +227,7 @@ static void si_pipe_shader_vs(struct pipe_context *ctx, struct si_shader *shader
 	sctx->b.flags |= R600_CONTEXT_INV_SHADER_CACHE;
 }
 
-static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_shader *shader)
+static void si_shader_ps(struct pipe_context *ctx, struct si_shader *shader)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
 	struct si_pm4_state *pm4;
@@ -609,9 +609,8 @@ static void si_update_derived_state(struct si_context *sctx)
 		si_shader_select(ctx, sctx->gs_shader);
 
 		if (!sctx->gs_shader->current->pm4) {
-			si_pipe_shader_gs(ctx, sctx->gs_shader->current);
-			si_pipe_shader_vs(ctx,
-					  sctx->gs_shader->current->gs_copy_shader);
+			si_shader_gs(ctx, sctx->gs_shader->current);
+			si_shader_vs(ctx, sctx->gs_shader->current->gs_copy_shader);
 		}
 
 		si_pm4_bind_state(sctx, gs, sctx->gs_shader->current->pm4);
@@ -622,7 +621,7 @@ static void si_update_derived_state(struct si_context *sctx)
 		si_shader_select(ctx, sctx->vs_shader);
 
 		if (!sctx->vs_shader->current->pm4)
-			si_pipe_shader_es(ctx, sctx->vs_shader->current);
+			si_shader_es(ctx, sctx->vs_shader->current);
 
 		si_pm4_bind_state(sctx, es, sctx->vs_shader->current->pm4);
 
@@ -651,7 +650,7 @@ static void si_update_derived_state(struct si_context *sctx)
 		si_shader_select(ctx, sctx->vs_shader);
 
 		if (!sctx->vs_shader->current->pm4)
-			si_pipe_shader_vs(ctx, sctx->vs_shader->current);
+			si_shader_vs(ctx, sctx->vs_shader->current);
 
 		si_pm4_bind_state(sctx, vs, sctx->vs_shader->current->pm4);
 
@@ -672,7 +671,7 @@ static void si_update_derived_state(struct si_context *sctx)
 	si_shader_select(ctx, sctx->ps_shader);
 
 	if (!sctx->ps_shader->current->pm4)
-		si_pipe_shader_ps(ctx, sctx->ps_shader->current);
+		si_shader_ps(ctx, sctx->ps_shader->current);
 
 	si_pm4_bind_state(sctx, ps, sctx->ps_shader->current->pm4);
 

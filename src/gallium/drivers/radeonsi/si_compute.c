@@ -38,7 +38,7 @@
 #define NUM_USER_SGPRS 4
 #endif
 
-struct si_pipe_compute {
+struct si_compute {
 	struct si_context *ctx;
 
 	unsigned local_size;
@@ -59,8 +59,7 @@ static void *si_create_compute_state(
 	const struct pipe_compute_state *cso)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
-	struct si_pipe_compute *program =
-					CALLOC_STRUCT(si_pipe_compute);
+	struct si_compute *program = CALLOC_STRUCT(si_compute);
 	const struct pipe_llvm_program_header *header;
 	const unsigned char *code;
 	unsigned i;
@@ -95,7 +94,7 @@ static void *si_create_compute_state(
 static void si_bind_compute_state(struct pipe_context *ctx, void *state)
 {
 	struct si_context *sctx = (struct si_context*)ctx;
-	sctx->cs_shader_state.program = (struct si_pipe_compute*)state;
+	sctx->cs_shader_state.program = (struct si_compute*)state;
 }
 
 static void si_set_global_binding(
@@ -105,7 +104,7 @@ static void si_set_global_binding(
 {
 	unsigned i;
 	struct si_context *sctx = (struct si_context*)ctx;
-	struct si_pipe_compute *program = sctx->cs_shader_state.program;
+	struct si_compute *program = sctx->cs_shader_state.program;
 
 	if (!resources) {
 		for (i = first; i < first + n; i++) {
@@ -169,7 +168,7 @@ static void si_launch_grid(
 		uint32_t pc, const void *input)
 {
 	struct si_context *sctx = (struct si_context*)ctx;
-	struct si_pipe_compute *program = sctx->cs_shader_state.program;
+	struct si_compute *program = sctx->cs_shader_state.program;
 	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
 	struct r600_resource *input_buffer = program->input_buffer;
 	unsigned kernel_args_size;
@@ -383,7 +382,7 @@ static void si_launch_grid(
 
 
 static void si_delete_compute_state(struct pipe_context *ctx, void* state){
-	struct si_pipe_compute *program = (struct si_pipe_compute *)state;
+	struct si_compute *program = (struct si_compute *)state;
 
 	if (!state) {
 		return;
@@ -392,7 +391,7 @@ static void si_delete_compute_state(struct pipe_context *ctx, void* state){
 	if (program->kernels) {
 		for (int i = 0; i < program->num_kernels; i++){
 			if (program->kernels[i].bo){
-				si_pipe_shader_destroy(ctx, &program->kernels[i]);
+				si_shader_destroy(ctx, &program->kernels[i]);
 			}
 		}
 		FREE(program->kernels);

@@ -2723,12 +2723,12 @@ static int si_generate_gs_copy_shader(struct si_context *sctx,
 	return r;
 }
 
-int si_pipe_shader_create(
+int si_shader_create(
 	struct pipe_context *ctx,
 	struct si_shader *shader)
 {
 	struct si_context *sctx = (struct si_context*)ctx;
-	struct si_pipe_shader_selector *sel = shader->selector;
+	struct si_shader_selector *sel = shader->selector;
 	struct si_shader_context si_shader_ctx;
 	struct tgsi_shader_info shader_info;
 	struct lp_build_tgsi_context * bld_base;
@@ -2897,7 +2897,7 @@ out:
 	return r;
 }
 
-void si_pipe_shader_destroy(struct pipe_context *ctx, struct si_shader *shader)
+void si_shader_destroy(struct pipe_context *ctx, struct si_shader *shader)
 {
 	r600_resource_reference(&shader->bo, NULL);
 }

@@ -330,8 +330,8 @@ static void si_sampler_views_begin_new_cs(struct si_context *sctx,
 	/* Add relocations to the CS. */
 	while (mask) {
 		int i = u_bit_scan(&mask);
-		struct si_pipe_sampler_view *rview =
-			(struct si_pipe_sampler_view*)views->views[i];
+		struct si_sampler_view *rview =
+			(struct si_sampler_view*)views->views[i];
 
 		r600_context_bo_reloc(&sctx->b, &sctx->b.rings.gfx,
 				      rview->resource, RADEON_USAGE_READ,
@@ -354,8 +354,8 @@ static void si_set_sampler_view(struct si_context *sctx, unsigned shader,
 		return;
 
 	if (view) {
-		struct si_pipe_sampler_view *rview =
-			(struct si_pipe_sampler_view*)view;
+		struct si_sampler_view *rview =
+			(struct si_sampler_view*)view;
 
 		r600_context_bo_reloc(&sctx->b, &sctx->b.rings.gfx,
 				      rview->resource, RADEON_USAGE_READ,
@@ -380,7 +380,7 @@ static void si_set_sampler_views(struct pipe_context *ctx,
 {
 	struct si_context *sctx = (struct si_context *)ctx;
 	struct si_textures_info *samplers = &sctx->samplers[shader];
-	struct si_pipe_sampler_view **rviews = (struct si_pipe_sampler_view **)views;
+	struct si_sampler_view **rviews = (struct si_sampler_view **)views;
 	int i;
 
 	if (!count || shader >= SI_NUM_SHADERS)
@@ -450,7 +450,7 @@ void si_set_sampler_descriptors(struct si_context *sctx, unsigned shader,
 				unsigned start, unsigned count, void **states)
 {
 	struct si_sampler_states *samplers = &sctx->samplers[shader].states;
-	struct si_pipe_sampler_state **sstates = (struct si_pipe_sampler_state**)states;
+	struct si_sampler_state **sstates = (struct si_sampler_state**)states;
 	int i;
 
 	if (start == 0)
@@ -925,7 +925,7 @@ static void si_invalidate_buffer(struct pipe_context *ctx, struct pipe_resource 
 	uint64_t old_va = rbuffer->gpu_address;
 	unsigned num_elems = sctx->vertex_elements ?
 				       sctx->vertex_elements->count : 0;
-	struct si_pipe_sampler_view *view;
+	struct si_sampler_view *view;
 
 	/* Reallocate the buffer in the same pipe_resource. */
 	r600_init_resource(&sctx->screen->b, rbuffer, rbuffer->b.b.width0,

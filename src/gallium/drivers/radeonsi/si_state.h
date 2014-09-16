@@ -248,7 +248,7 @@ void si_upload_const_buffer(struct si_context *sctx, struct r600_resource **rbuf
 			    const uint8_t *ptr, unsigned size, uint32_t *const_offset);
 
 /* si_state.c */
-struct si_pipe_shader_selector;
+struct si_shader_selector;
 
 boolean si_is_format_supported(struct pipe_screen *screen,
                                enum pipe_format format,
@@ -256,7 +256,7 @@ boolean si_is_format_supported(struct pipe_screen *screen,
                                unsigned sample_count,
                                unsigned usage);
 int si_shader_select(struct pipe_context *ctx,
-		     struct si_pipe_shader_selector *sel);
+		     struct si_shader_selector *sel);
 void si_init_state_functions(struct si_context *sctx);
 void si_init_config(struct si_context *sctx);
 unsigned cik_bank_wh(unsigned bankwh);
