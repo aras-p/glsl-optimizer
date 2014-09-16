@@ -2100,7 +2100,7 @@ unpack_R8G8B8X8_SRGB(const void *src, GLfloat dst[][4], GLuint n)
       dst[i][RCOMP] = util_format_srgb_8unorm_to_linear_float( (s[i]      ) & 0xff );
       dst[i][GCOMP] = util_format_srgb_8unorm_to_linear_float( (s[i] >>  8) & 0xff );
       dst[i][BCOMP] = util_format_srgb_8unorm_to_linear_float( (s[i] >> 16) & 0xff );
-      dst[i][ACOMP] = UBYTE_TO_FLOAT( s[i] >> 24 ); /* linear! */
+      dst[i][ACOMP] = 1.0f;
    }
 }
 
