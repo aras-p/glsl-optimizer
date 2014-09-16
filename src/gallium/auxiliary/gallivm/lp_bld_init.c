@@ -139,6 +139,7 @@ enum LLVM_CodeGenOpt_Level {
 static boolean
 create_pass_manager(struct gallivm_state *gallivm)
 {
+   char *td_str;
    assert(!gallivm->passmgr);
    assert(gallivm->target);
 
@@ -146,7 +147,13 @@ create_pass_manager(struct gallivm_state *gallivm)
    if (!gallivm->passmgr)
       return FALSE;
 
+   // Old versions of LLVM get the DataLayout from the pass manager.
    LLVMAddTargetData(gallivm->target, gallivm->passmgr);
+
+   // New ones from the Module.
+   td_str = LLVMCopyStringRepOfTargetData(gallivm->target);
+   LLVMSetDataLayout(gallivm->module, td_str);
+   free(td_str);
 
    if ((gallivm_debug & GALLIVM_DEBUG_NO_OPT) == 0) {
       /* These are the passes currently listed in llvm-c/Transforms/Scalar.h,
