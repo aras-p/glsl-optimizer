@@ -1272,6 +1272,32 @@ trans_samp(const struct instr_translater *t,
 		add_src_reg_wrmask(ctx, instr, orig, orig->SwizzleW, 0x1);
 }
 
+static void
+trans_txq(const struct instr_translater *t,
+		struct ir3_compile_context *ctx,
+		struct tgsi_full_instruction *inst)
+{
+	struct ir3_instruction *instr;
+	struct tgsi_dst_register *dst = &inst->Dst[0].Register;
+	struct tgsi_src_register *level = &inst->Src[0].Register;
+	struct tgsi_src_register *samp = &inst->Src[1].Register;
+	struct tex_info tinf;
+
+	memset(&tinf, 0, sizeof(tinf));
+	fill_tex_info(ctx, inst, &tinf);
+	if (is_rel_or_const(level))
+		level = get_unconst(ctx, level);
+
+	instr = instr_create(ctx, 5, OPC_GETSIZE);
+	instr->cat5.type = get_ftype(ctx);
+	instr->cat5.samp = samp->Index;
+	instr->cat5.tex  = samp->Index;
+	instr->flags |= tinf.flags;
+
+	add_dst_reg_wrmask(ctx, instr, dst, 0, dst->WriteMask);
+	add_src_reg_wrmask(ctx, instr, level, level->SwizzleX, 0x1);
+}
+
 /* DDX/DDY */
 static void
 trans_deriv(const struct instr_translater *t,
@@ -2122,6 +2148,7 @@ static const struct instr_translater translaters[TGSI_OPCODE_LAST] = {
 	INSTR(TXP,          trans_samp, .opc = OPC_SAM, .arg = TGSI_OPCODE_TXP),
 	INSTR(TXB,          trans_samp, .opc = OPC_SAMB, .arg = TGSI_OPCODE_TXB),
 	INSTR(TXL,          trans_samp, .opc = OPC_SAML, .arg = TGSI_OPCODE_TXL),
+	INSTR(TXQ,          trans_txq),
 	INSTR(DDX,          trans_deriv, .opc = OPC_DSX),
 	INSTR(DDY,          trans_deriv, .opc = OPC_DSY),
 	INSTR(SGT,          trans_cmp),
