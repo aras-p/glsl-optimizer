@@ -114,7 +114,6 @@ get_src_arg_mask(const struct prog_instruction *inst,
    read_mask = 0x0;
    for (comp = 0; comp < 4; ++comp) {
       const GLuint coord = GET_SWZ(inst->SrcReg[arg].Swizzle, comp);
-      ASSERT(coord < 4);
       if (channel_mask & (1 << comp) && coord <= SWIZZLE_W)
          read_mask |= 1 << coord;
    }
@@ -284,11 +283,11 @@ _mesa_remove_dead_code_global(struct gl_program *prog)
 
 	    for (comp = 0; comp < 4; comp++) {
 	       const GLuint swz = GET_SWZ(inst->SrcReg[j].Swizzle, comp);
-	       ASSERT(swz < 4);
-               if ((read_mask & (1 << swz)) == 0)
-		  continue;
-               if (swz <= SWIZZLE_W)
+               if (swz <= SWIZZLE_W) {
+                  if ((read_mask & (1 << swz)) == 0)
+                     continue;
                   tempRead[index][swz] = GL_TRUE;
+               }
 	    }
          }
       }
