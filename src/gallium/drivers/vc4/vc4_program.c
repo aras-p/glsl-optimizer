@@ -1440,6 +1440,7 @@ vc4_shader_tgsi_to_qir(struct vc4_compiled_shader *shader, enum qstage stage,
                 fprintf(stderr, "QIR:\n");
                 qir_dump(c);
         }
+        qir_reorder_uniforms(c);
         vc4_generate_code(c);
 
         if (vc4_debug & VC4_DEBUG_SHADERDB) {

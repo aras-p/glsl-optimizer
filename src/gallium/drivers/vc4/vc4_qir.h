@@ -253,6 +253,7 @@ struct qinst *qir_inst4(enum qop op, struct qreg dst,
                         struct qreg c,
                         struct qreg d);
 void qir_remove_instruction(struct qinst *qinst);
+void qir_reorder_uniforms(struct vc4_compile *c);
 void qir_emit(struct vc4_compile *c, struct qinst *inst);
 struct qreg qir_get_temp(struct vc4_compile *c);
 int qir_get_op_nsrc(enum qop qop);
