@@ -2079,7 +2079,7 @@ unpack_XRGB1555_UNORM(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_XBGR8888_SNORM(const void *src, GLfloat dst[][4], GLuint n)
+unpack_R8G8B8X8_SNORM(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLuint *s = ((const GLuint *) src);
    GLuint i;
@@ -2497,7 +2497,7 @@ get_unpack_rgba_function(mesa_format format)
 
       table[MESA_FORMAT_B4G4R4X4_UNORM] = unpack_XRGB4444_UNORM;
       table[MESA_FORMAT_B5G5R5X1_UNORM] = unpack_XRGB1555_UNORM;
-      table[MESA_FORMAT_R8G8B8X8_SNORM] = unpack_XBGR8888_SNORM;
+      table[MESA_FORMAT_R8G8B8X8_SNORM] = unpack_R8G8B8X8_SNORM;
       table[MESA_FORMAT_R8G8B8X8_SRGB] = unpack_R8G8B8X8_SRGB;
       table[MESA_FORMAT_RGBX_UINT8] = unpack_XBGR8888_UINT;
       table[MESA_FORMAT_RGBX_SINT8] = unpack_XBGR8888_SINT;
