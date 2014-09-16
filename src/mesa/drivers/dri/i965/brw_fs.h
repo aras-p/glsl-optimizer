@@ -325,7 +325,7 @@ public:
    int choose_spill_reg(struct ra_graph *g);
    void spill_reg(int spill_reg);
    void split_virtual_grfs();
-   void compact_virtual_grfs();
+   bool compact_virtual_grfs();
    void move_uniform_array_access_to_pull_constants();
    void assign_constant_locations();
    void demote_pull_constants();

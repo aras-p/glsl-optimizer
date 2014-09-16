@@ -1770,12 +1770,10 @@ fs_visitor::split_virtual_grfs()
  * to loop over all the virtual GRFs.  Compacting them can save a lot of
  * overhead.
  */
-void
+bool
 fs_visitor::compact_virtual_grfs()
 {
-   if (unlikely(INTEL_DEBUG & DEBUG_OPTIMIZER))
-      return;
-
+   bool progress = false;
    int remap_table[this->virtual_grf_count];
    memset(remap_table, -1, sizeof(remap_table));
 
@@ -1793,7 +1791,12 @@ fs_visitor::compact_virtual_grfs()
    /* Compact the GRF arrays. */
    int new_index = 0;
    for (int i = 0; i < this->virtual_grf_count; i++) {
-      if (remap_table[i] != -1) {
+      if (remap_table[i] == -1) {
+         /* We just found an unused register.  This means that we are
+          * actually going to compact something.
+          */
+         progress = true;
+      } else {
          remap_table[i] = new_index;
          virtual_grf_sizes[new_index] = virtual_grf_sizes[i];
          invalidate_live_intervals();
@@ -1836,6 +1839,8 @@ fs_visitor::compact_virtual_grfs()
          }
       }
    }
+
+   return progress;
 }
 
 /*
@@ -3276,8 +3281,6 @@ fs_visitor::run()
          iteration++;
          int pass_num = 0;
 
-         compact_virtual_grfs();
-
          OPT(remove_duplicate_mrf_writes);
 
          OPT(opt_algebraic);
@@ -3291,6 +3294,8 @@ fs_visitor::run()
          OPT(opt_saturate_propagation);
          OPT(register_coalesce);
          OPT(compute_to_mrf);
+
+         OPT(compact_virtual_grfs);
       } while (progress);
 
       if (lower_load_payload()) {
