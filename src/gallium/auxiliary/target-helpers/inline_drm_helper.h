@@ -465,7 +465,7 @@ dd_configuration(enum drm_conf conf)
 #endif
 #if defined(GALLIUM_FREEDRENO)
    if ((strcmp(driver_name, "kgsl") == 0) || (strcmp(driver_name, "msm") == 0))
-      return NULL;
+      return configuration_query(conf);
    else
 #endif
       return NULL;

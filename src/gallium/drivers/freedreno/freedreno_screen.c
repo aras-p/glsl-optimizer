@@ -394,6 +394,8 @@ fd_screen_bo_get_handle(struct pipe_screen *pscreen,
 	} else if (whandle->type == DRM_API_HANDLE_TYPE_KMS) {
 		whandle->handle = fd_bo_handle(bo);
 		return TRUE;
+	} else if (whandle->type == DRM_API_HANDLE_TYPE_FD) {
+		whandle->handle = fd_bo_dmabuf(bo);
 	} else {
 		return FALSE;
 	}
@@ -407,12 +409,17 @@ fd_screen_bo_from_handle(struct pipe_screen *pscreen,
 	struct fd_screen *screen = fd_screen(pscreen);
 	struct fd_bo *bo;
 
-	if (whandle->type != DRM_API_HANDLE_TYPE_SHARED) {
+	if (whandle->type == DRM_API_HANDLE_TYPE_SHARED) {
+		bo = fd_bo_from_name(screen->dev, whandle->handle);
+	} else if (whandle->type == DRM_API_HANDLE_TYPE_KMS) {
+		bo = fd_bo_from_handle(screen->dev, whandle->handle, 0);
+	} else if (whandle->type == DRM_API_HANDLE_TYPE_FD) {
+		bo = fd_bo_from_dmabuf(screen->dev, whandle->handle);
+	} else {
 		DBG("Attempt to import unsupported handle type %d", whandle->type);
 		return NULL;
 	}
 
-	bo = fd_bo_from_name(screen->dev, whandle->handle);
 	if (!bo) {
 		DBG("ref name 0x%08x failed", whandle->handle);
 		return NULL;
