@@ -45,7 +45,7 @@ struct si_pipe_compute {
 	unsigned private_size;
 	unsigned input_size;
 	unsigned num_kernels;
-	struct si_pipe_shader *kernels;
+	struct si_shader *kernels;
 	unsigned num_user_sgprs;
 
 	struct r600_resource *input_buffer;
@@ -77,7 +77,7 @@ static void *si_create_compute_state(
 
 	program->num_kernels = radeon_llvm_get_num_kernels(program->llvm_ctx, code,
 							header->num_bytes);
-	program->kernels = CALLOC(sizeof(struct si_pipe_shader),
+	program->kernels = CALLOC(sizeof(struct si_shader),
 							program->num_kernels);
 	for (i = 0; i < program->num_kernels; i++) {
 		LLVMModuleRef mod = radeon_llvm_get_kernel_module(program->llvm_ctx, i,
@@ -181,7 +181,7 @@ static void si_launch_grid(
 	uint64_t shader_va;
 	unsigned arg_user_sgpr_count = NUM_USER_SGPRS;
 	unsigned i;
-	struct si_pipe_shader *shader = &program->kernels[pc];
+	struct si_shader *shader = &program->kernels[pc];
 	unsigned lds_blocks;
 	unsigned num_waves_for_scratch;
 

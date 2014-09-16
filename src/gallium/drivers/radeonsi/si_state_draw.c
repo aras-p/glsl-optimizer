@@ -39,7 +39,7 @@
  * Shaders
  */
 
-static void si_pipe_shader_es(struct pipe_context *ctx, struct si_pipe_shader *shader)
+static void si_pipe_shader_es(struct pipe_context *ctx, struct si_shader *shader)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
 	struct si_pm4_state *pm4;
@@ -56,7 +56,7 @@ static void si_pipe_shader_es(struct pipe_context *ctx, struct si_pipe_shader *s
 	va = shader->bo->gpu_address;
 	si_pm4_add_bo(pm4, shader->bo, RADEON_USAGE_READ, RADEON_PRIO_SHADER_DATA);
 
-	vgpr_comp_cnt = shader->shader.uses_instanceid ? 3 : 0;
+	vgpr_comp_cnt = shader->uses_instanceid ? 3 : 0;
 
 	num_user_sgprs = SI_VS_NUM_USER_SGPR;
 	num_sgprs = shader->num_sgprs;
@@ -79,11 +79,11 @@ static void si_pipe_shader_es(struct pipe_context *ctx, struct si_pipe_shader *s
 	sctx->b.flags |= R600_CONTEXT_INV_SHADER_CACHE;
 }
 
-static void si_pipe_shader_gs(struct pipe_context *ctx, struct si_pipe_shader *shader)
+static void si_pipe_shader_gs(struct pipe_context *ctx, struct si_shader *shader)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
-	unsigned gs_vert_itemsize = shader->shader.noutput * (16 >> 2);
-	unsigned gs_max_vert_out = shader->shader.gs_max_out_vertices;
+	unsigned gs_vert_itemsize = shader->noutput * (16 >> 2);
+	unsigned gs_max_vert_out = shader->gs_max_out_vertices;
 	unsigned gsvs_itemsize = gs_vert_itemsize * gs_max_vert_out;
 	unsigned cut_mode;
 	struct si_pm4_state *pm4;
@@ -121,7 +121,7 @@ static void si_pipe_shader_gs(struct pipe_context *ctx, struct si_pipe_shader *s
 	si_pm4_set_reg(pm4, R_028A68_VGT_GSVS_RING_OFFSET_3, gsvs_itemsize);
 
 	si_pm4_set_reg(pm4, R_028AAC_VGT_ESGS_RING_ITEMSIZE,
-		       shader->shader.nparam * (16 >> 2));
+		       shader->nparam * (16 >> 2));
 	si_pm4_set_reg(pm4, R_028AB0_VGT_GSVS_RING_ITEMSIZE, gsvs_itemsize);
 
 	si_pm4_set_reg(pm4, R_028B38_VGT_GS_MAX_VERT_OUT, gs_max_vert_out);
@@ -151,7 +151,7 @@ static void si_pipe_shader_gs(struct pipe_context *ctx, struct si_pipe_shader *s
 	sctx->b.flags |= R600_CONTEXT_INV_SHADER_CACHE;
 }
 
-static void si_pipe_shader_vs(struct pipe_context *ctx, struct si_pipe_shader *shader)
+static void si_pipe_shader_vs(struct pipe_context *ctx, struct si_shader *shader)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
 	struct si_pm4_state *pm4;
@@ -168,7 +168,7 @@ static void si_pipe_shader_vs(struct pipe_context *ctx, struct si_pipe_shader *s
 	va = shader->bo->gpu_address;
 	si_pm4_add_bo(pm4, shader->bo, RADEON_USAGE_READ, RADEON_PRIO_SHADER_DATA);
 
-	vgpr_comp_cnt = shader->shader.uses_instanceid ? 3 : 0;
+	vgpr_comp_cnt = shader->uses_instanceid ? 3 : 0;
 
 	num_user_sgprs = SI_VS_NUM_USER_SGPR;
 	num_sgprs = shader->num_sgprs;
@@ -182,8 +182,8 @@ static void si_pipe_shader_vs(struct pipe_context *ctx, struct si_pipe_shader *s
 	 * VS is required to export at least one param and r600_shader_from_tgsi()
 	 * takes care of adding a dummy export.
 	 */
-	for (nparams = 0, i = 0 ; i < shader->shader.noutput; i++) {
-		switch (shader->shader.output[i].name) {
+	for (nparams = 0, i = 0 ; i < shader->noutput; i++) {
+		switch (shader->output[i].name) {
 		case TGSI_SEMANTIC_CLIPVERTEX:
 		case TGSI_SEMANTIC_POSITION:
 		case TGSI_SEMANTIC_PSIZE:
@@ -200,13 +200,13 @@ static void si_pipe_shader_vs(struct pipe_context *ctx, struct si_pipe_shader *s
 
 	si_pm4_set_reg(pm4, R_02870C_SPI_SHADER_POS_FORMAT,
 		       S_02870C_POS0_EXPORT_FORMAT(V_02870C_SPI_SHADER_4COMP) |
-		       S_02870C_POS1_EXPORT_FORMAT(shader->shader.nr_pos_exports > 1 ?
+		       S_02870C_POS1_EXPORT_FORMAT(shader->nr_pos_exports > 1 ?
 						   V_02870C_SPI_SHADER_4COMP :
 						   V_02870C_SPI_SHADER_NONE) |
-		       S_02870C_POS2_EXPORT_FORMAT(shader->shader.nr_pos_exports > 2 ?
+		       S_02870C_POS2_EXPORT_FORMAT(shader->nr_pos_exports > 2 ?
 						   V_02870C_SPI_SHADER_4COMP :
 						   V_02870C_SPI_SHADER_NONE) |
-		       S_02870C_POS3_EXPORT_FORMAT(shader->shader.nr_pos_exports > 3 ?
+		       S_02870C_POS3_EXPORT_FORMAT(shader->nr_pos_exports > 3 ?
 						   V_02870C_SPI_SHADER_4COMP :
 						   V_02870C_SPI_SHADER_NONE));
 
@@ -227,7 +227,7 @@ static void si_pipe_shader_vs(struct pipe_context *ctx, struct si_pipe_shader *s
 	sctx->b.flags |= R600_CONTEXT_INV_SHADER_CACHE;
 }
 
-static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *shader)
+static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_shader *shader)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
 	struct si_pm4_state *pm4;
@@ -242,10 +242,10 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 	if (pm4 == NULL)
 		return;
 
-	for (i = 0; i < shader->shader.ninput; i++) {
-		switch (shader->shader.input[i].name) {
+	for (i = 0; i < shader->ninput; i++) {
+		switch (shader->input[i].name) {
 		case TGSI_SEMANTIC_POSITION:
-			if (shader->shader.input[i].centroid) {
+			if (shader->input[i].centroid) {
 				/* SPI_BARYC_CNTL.POS_FLOAT_LOCATION
 				 * Possible vaules:
 				 * 0 -> Position = pixel center (default)
@@ -261,7 +261,7 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 		}
 	}
 
-	spi_ps_in_control = S_0286D8_NUM_INTERP(shader->shader.nparam) |
+	spi_ps_in_control = S_0286D8_NUM_INTERP(shader->nparam) |
 		S_0286D8_BC_OPTIMIZE_DISABLE(1);
 
 	si_pm4_set_reg(pm4, R_0286E0_SPI_BARYC_CNTL, spi_baryc_cntl);
@@ -427,7 +427,7 @@ static bool si_update_draw_info_state(struct si_context *sctx,
 	unsigned prim = si_conv_pipe_prim(info->mode);
 	unsigned gs_out_prim =
 		si_conv_prim_to_gs_out(sctx->gs_shader ?
-				       sctx->gs_shader->current->shader.gs_output_prim :
+				       sctx->gs_shader->current->gs_output_prim :
 				       info->mode);
 	unsigned ls_mask = 0;
 	unsigned ia_multi_vgt_param = si_get_ia_multi_vgt_param(sctx, info);
@@ -492,7 +492,7 @@ static bool si_update_draw_info_state(struct si_context *sctx,
 
 static void si_update_spi_map(struct si_context *sctx)
 {
-	struct si_shader *ps = &sctx->ps_shader->current->shader;
+	struct si_shader *ps = sctx->ps_shader->current;
 	struct si_shader *vs = si_get_vs_state(sctx);
 	struct si_pm4_state *pm4 = si_pm4_alloc_state(sctx);
 	unsigned i, j, tmp;
@@ -634,8 +634,8 @@ static void si_update_derived_state(struct si_context *sctx)
 
 		si_set_ring_buffer(ctx, PIPE_SHADER_GEOMETRY, SI_RING_GSVS,
 				   &sctx->gsvs_ring,
-				   sctx->gs_shader->current->shader.gs_max_out_vertices *
-				   sctx->gs_shader->current->shader.noutput * 16,
+				   sctx->gs_shader->current->gs_max_out_vertices *
+				   sctx->gs_shader->current->noutput * 16,
 				   64, true, true, 4, 16);
 
 		if (!sctx->gs_on) {

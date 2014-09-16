@@ -110,10 +110,10 @@ struct si_shader_output {
 	unsigned		usage;
 };
 
-struct si_pipe_shader;
+struct si_shader;
 
 struct si_pipe_shader_selector {
-	struct si_pipe_shader *current;
+	struct si_shader *current;
 
 	struct tgsi_token       *tokens;
 	struct pipe_stream_output_info  so;
@@ -129,7 +129,42 @@ struct si_pipe_shader_selector {
 	unsigned	fs_write_all;
 };
 
+union si_shader_key {
+	struct {
+		unsigned	export_16bpc:8;
+		unsigned	nr_cbufs:4;
+		unsigned	color_two_side:1;
+		unsigned	alpha_func:3;
+		unsigned	flatshade:1;
+		unsigned	interp_at_sample:1;
+		unsigned	alpha_to_one:1;
+	} ps;
+	struct {
+		unsigned	instance_divisors[PIPE_MAX_ATTRIBS];
+		unsigned	ucps_enabled:2;
+		unsigned	as_es:1;
+	} vs;
+};
+
 struct si_shader {
+	struct si_pipe_shader_selector	*selector;
+	struct si_shader		*next_variant;
+
+	struct si_shader		*gs_copy_shader;
+	struct si_pm4_state		*pm4;
+	struct r600_resource		*bo;
+	struct r600_resource		*scratch_bo;
+	unsigned			num_sgprs;
+	unsigned			num_vgprs;
+	unsigned			lds_size;
+	unsigned			spi_ps_input_ena;
+	unsigned			scratch_bytes_per_wave;
+	unsigned			spi_shader_col_format;
+	unsigned			spi_shader_z_format;
+	unsigned			db_shader_control;
+	unsigned			cb_shader_mask;
+	union si_shader_key		key;
+
 	unsigned		ninput;
 	struct si_shader_input	input[40];
 
@@ -152,56 +187,19 @@ struct si_shader {
 	unsigned		clip_dist_write;
 };
 
-union si_shader_key {
-	struct {
-		unsigned	export_16bpc:8;
-		unsigned	nr_cbufs:4;
-		unsigned	color_two_side:1;
-		unsigned	alpha_func:3;
-		unsigned	flatshade:1;
-		unsigned	interp_at_sample:1;
-		unsigned	alpha_to_one:1;
-	} ps;
-	struct {
-		unsigned	instance_divisors[PIPE_MAX_ATTRIBS];
-		unsigned	ucps_enabled:2;
-		unsigned	as_es:1;
-	} vs;
-};
-
-struct si_pipe_shader {
-	struct si_pipe_shader_selector	*selector;
-	struct si_pipe_shader		*next_variant;
-	struct si_pipe_shader		*gs_copy_shader;
-	struct si_shader		shader;
-	struct si_pm4_state		*pm4;
-	struct r600_resource		*bo;
-	struct r600_resource		*scratch_bo;
-	unsigned			num_sgprs;
-	unsigned			num_vgprs;
-	unsigned			lds_size;
-	unsigned			spi_ps_input_ena;
-	unsigned			scratch_bytes_per_wave;
-	unsigned			spi_shader_col_format;
-	unsigned			spi_shader_z_format;
-	unsigned			db_shader_control;
-	unsigned			cb_shader_mask;
-	union si_shader_key		key;
-};
-
 static inline struct si_shader* si_get_vs_state(struct si_context *sctx)
 {
 	if (sctx->gs_shader)
-		return &sctx->gs_shader->current->gs_copy_shader->shader;
+		return sctx->gs_shader->current->gs_copy_shader;
 	else
-		return &sctx->vs_shader->current->shader;
+		return sctx->vs_shader->current;
 }
 
 /* radeonsi_shader.c */
-int si_pipe_shader_create(struct pipe_context *ctx, struct si_pipe_shader *shader);
-int si_pipe_shader_create(struct pipe_context *ctx, struct si_pipe_shader *shader);
-int si_compile_llvm(struct si_context *sctx, struct si_pipe_shader *shader,
+int si_pipe_shader_create(struct pipe_context *ctx, struct si_shader *shader);
+int si_pipe_shader_create(struct pipe_context *ctx, struct si_shader *shader);
+int si_compile_llvm(struct si_context *sctx, struct si_shader *shader,
 							LLVMModuleRef mod);
-void si_pipe_shader_destroy(struct pipe_context *ctx, struct si_pipe_shader *shader);
+void si_pipe_shader_destroy(struct pipe_context *ctx, struct si_shader *shader);
 
 #endif

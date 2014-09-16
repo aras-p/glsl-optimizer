@@ -2245,7 +2245,7 @@ int si_shader_select(struct pipe_context *ctx,
 		     struct si_pipe_shader_selector *sel)
 {
 	union si_shader_key key;
-	struct si_pipe_shader * shader = NULL;
+	struct si_shader * shader = NULL;
 	int r;
 
 	si_shader_selector_key(ctx, sel, &key);
@@ -2260,7 +2260,7 @@ int si_shader_select(struct pipe_context *ctx,
 
 	/* lookup if we have other variants in the list */
 	if (sel->num_shaders > 1) {
-		struct si_pipe_shader *p = sel->current, *c = p->next_variant;
+		struct si_shader *p = sel->current, *c = p->next_variant;
 
 		while (c && memcmp(&c->key, &key, sizeof(key)) != 0) {
 			p = c;
@@ -2277,7 +2277,7 @@ int si_shader_select(struct pipe_context *ctx,
 		shader->next_variant = sel->current;
 		sel->current = shader;
 	} else {
-		shader = CALLOC(1, sizeof(struct si_pipe_shader));
+		shader = CALLOC(1, sizeof(struct si_shader));
 		shader->selector = sel;
 		shader->key = key;
 
@@ -2395,7 +2395,7 @@ static void si_delete_shader_selector(struct pipe_context *ctx,
 				      struct si_pipe_shader_selector *sel)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
-	struct si_pipe_shader *p = sel->current, *c;
+	struct si_shader *p = sel->current, *c;
 
 	while (p) {
 		c = p->next_variant;
