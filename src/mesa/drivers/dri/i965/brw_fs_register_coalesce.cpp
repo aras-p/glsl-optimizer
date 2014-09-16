@@ -200,6 +200,16 @@ fs_visitor::register_coalesce()
          channels_remaining -= inst->regs_written;
       } else {
          const int offset = inst->src[0].reg_offset;
+         if (mov[offset]) {
+            /* This is the second time that this offset in the register has
+             * been set.  This means, in particular, that inst->dst was
+             * live before this instruction and that the live ranges of
+             * inst->dst and inst->src[0] overlap and we can't coalesce the
+             * two variables.  Let's ensure that doesn't happen.
+             */
+            channels_remaining = -1;
+            continue;
+         }
          reg_to_offset[offset] = inst->dst.reg_offset;
          if (inst->src[0].width == 16)
             reg_to_offset[offset + 1] = inst->dst.reg_offset + 1;
@@ -212,6 +222,13 @@ fs_visitor::register_coalesce()
 
       bool can_coalesce = true;
       for (int i = 0; i < src_size; i++) {
+         if (reg_to_offset[i] != reg_to_offset[0] + i) {
+            /* Registers are out-of-order. */
+            can_coalesce = false;
+            reg_from = -1;
+            break;
+         }
+
          var_to[i] = live_intervals->var_from_vgrf[reg_to] + reg_to_offset[i];
          var_from[i] = live_intervals->var_from_vgrf[reg_from] + i;
 
