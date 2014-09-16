@@ -1124,6 +1124,7 @@ fill_tex_info(struct ir3_compile_context *ctx,
 
 	switch (inst->Instruction.Opcode) {
 	case TGSI_OPCODE_TXB:
+	case TGSI_OPCODE_TXB2:
 	case TGSI_OPCODE_TXL:
 		info->args = 2;
 		break;
@@ -1248,14 +1249,20 @@ trans_samp(const struct instr_translater *t,
 {
 	struct ir3_instruction *instr;
 	struct tgsi_dst_register *dst = &inst->Dst[0].Register;
-	struct tgsi_src_register *orig = &inst->Src[0].Register;
-	struct tgsi_src_register *coord;
-	struct tgsi_src_register *samp  = &inst->Src[1].Register;
+	struct tgsi_src_register *orig, *coord, *samp;
 	struct tex_info tinf;
 
 	memset(&tinf, 0, sizeof(tinf));
 	fill_tex_info(ctx, inst, &tinf);
 	coord = get_tex_coord(ctx, inst, &tinf);
+
+	if (inst->Instruction.Opcode == TGSI_OPCODE_TXB2) {
+		orig = &inst->Src[1].Register;
+		samp = &inst->Src[2].Register;
+	} else {
+		orig = &inst->Src[0].Register;
+		samp = &inst->Src[1].Register;
+	}
 	if (tinf.args > 1 && is_rel_or_const(orig))
 		orig = get_unconst(ctx, orig);
 
@@ -1268,7 +1275,9 @@ trans_samp(const struct instr_translater *t,
 	add_dst_reg_wrmask(ctx, instr, dst, 0, dst->WriteMask);
 	add_src_reg_wrmask(ctx, instr, coord, coord->SwizzleX, tinf.src_wrmask);
 
-	if (tinf.args > 1)
+	if (inst->Instruction.Opcode == TGSI_OPCODE_TXB2)
+		add_src_reg_wrmask(ctx, instr, orig, orig->SwizzleX, 0x1);
+	else if (tinf.args > 1)
 		add_src_reg_wrmask(ctx, instr, orig, orig->SwizzleW, 0x1);
 }
 
@@ -2147,6 +2156,7 @@ static const struct instr_translater translaters[TGSI_OPCODE_LAST] = {
 	INSTR(TEX,          trans_samp, .opc = OPC_SAM, .arg = TGSI_OPCODE_TEX),
 	INSTR(TXP,          trans_samp, .opc = OPC_SAM, .arg = TGSI_OPCODE_TXP),
 	INSTR(TXB,          trans_samp, .opc = OPC_SAMB, .arg = TGSI_OPCODE_TXB),
+	INSTR(TXB2,         trans_samp, .opc = OPC_SAMB, .arg = TGSI_OPCODE_TXB2),
 	INSTR(TXL,          trans_samp, .opc = OPC_SAML, .arg = TGSI_OPCODE_TXL),
 	INSTR(TXQ,          trans_txq),
 	INSTR(DDX,          trans_deriv, .opc = OPC_DSX),
