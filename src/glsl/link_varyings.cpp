@@ -1456,7 +1456,22 @@ assign_varying_locations(struct gl_context *ctx,
 
          if (var && var->data.mode == ir_var_shader_in &&
              var->data.is_unmatched_generic_inout) {
-            if (prog->Version <= 120) {
+            if (prog->IsES) {
+               /*
+                * On Page 91 (Page 97 of the PDF) of the GLSL ES 1.0 spec:
+                *
+                *     If the vertex shader declares but doesn't write to a
+                *     varying and the fragment shader declares and reads it,
+                *     is this an error?
+                *
+                *     RESOLUTION: No.
+                */
+               linker_warning(prog, "%s shader varying %s not written "
+                              "by %s shader\n.",
+                              _mesa_shader_stage_to_string(consumer->Stage),
+                              var->name,
+                              _mesa_shader_stage_to_string(producer->Stage));
+            } else if (prog->Version <= 120) {
                /* On page 25 (page 31 of the PDF) of the GLSL 1.20 spec:
                 *
                 *     Only those varying variables used (i.e. read) in
@@ -1469,7 +1484,6 @@ assign_varying_locations(struct gl_context *ctx,
                 * write the variable for the FS to read it.  See
                 * "glsl1-varying read but not written" in piglit.
                 */
-
                linker_error(prog, "%s shader varying %s not written "
                             "by %s shader\n.",
                             _mesa_shader_stage_to_string(consumer->Stage),
