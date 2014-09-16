@@ -833,6 +833,71 @@ static void *si_create_db_flush_dsa(struct si_context *sctx)
 	return sctx->b.b.create_depth_stencil_alpha_state(&sctx->b.b, &dsa);
 }
 
+/* DB RENDER STATE */
+
+static void si_set_occlusion_query_state(struct pipe_context *ctx, bool enable)
+{
+	struct si_context *sctx = (struct si_context*)ctx;
+
+	sctx->db_render_state.dirty = true;
+}
+
+static void si_emit_db_render_state(struct si_context *sctx, struct r600_atom *state)
+{
+	struct radeon_winsys_cs *cs = sctx->b.rings.gfx.cs;
+
+	r600_write_context_reg_seq(cs, R_028000_DB_RENDER_CONTROL, 2);
+
+	/* DB_RENDER_CONTROL */
+	if (sctx->dbcb_depth_copy_enabled ||
+	    sctx->dbcb_stencil_copy_enabled) {
+		radeon_emit(cs,
+			    S_028000_DEPTH_COPY(sctx->dbcb_depth_copy_enabled) |
+			    S_028000_STENCIL_COPY(sctx->dbcb_stencil_copy_enabled) |
+			    S_028000_COPY_CENTROID(1) |
+			    S_028000_COPY_SAMPLE(sctx->dbcb_copy_sample));
+	} else if (sctx->db_inplace_flush_enabled) {
+		radeon_emit(cs,
+			    S_028000_DEPTH_COMPRESS_DISABLE(1) |
+			    S_028000_STENCIL_COMPRESS_DISABLE(1));
+	} else if (sctx->db_depth_clear) {
+		radeon_emit(cs, S_028000_DEPTH_CLEAR_ENABLE(1));
+	} else {
+		radeon_emit(cs, 0);
+	}
+
+	/* DB_COUNT_CONTROL (occlusion queries) */
+	if (sctx->b.num_occlusion_queries > 0) {
+		if (sctx->b.chip_class >= CIK) {
+			radeon_emit(cs,
+				    S_028004_PERFECT_ZPASS_COUNTS(1) |
+				    S_028004_SAMPLE_RATE(sctx->framebuffer.log_samples) |
+				    S_028004_ZPASS_ENABLE(1) |
+				    S_028004_SLICE_EVEN_ENABLE(1) |
+				    S_028004_SLICE_ODD_ENABLE(1));
+		} else {
+			radeon_emit(cs,
+				    S_028004_PERFECT_ZPASS_COUNTS(1) |
+				    S_028004_SAMPLE_RATE(sctx->framebuffer.log_samples));
+		}
+	} else {
+		/* Disable occlusion queries. */
+		if (sctx->b.chip_class >= CIK) {
+			radeon_emit(cs, 0);
+		} else {
+			radeon_emit(cs, S_028004_ZPASS_INCREMENT_DISABLE(1));
+		}
+	}
+
+	/* DB_RENDER_OVERRIDE2 */
+	if (sctx->db_depth_disable_expclear) {
+		r600_write_context_reg(cs, R_028010_DB_RENDER_OVERRIDE2,
+			S_028010_DISABLE_ZMASK_EXPCLEAR_OPTIMIZATION(1));
+	} else {
+		r600_write_context_reg(cs, R_028010_DB_RENDER_OVERRIDE2, 0);
+	}
+}
+
 /*
  * format translation
  */
@@ -2909,13 +2974,6 @@ static void *si_create_blend_custom(struct si_context *sctx, unsigned mode)
 	return si_create_blend_state_mode(&sctx->b.b, &blend, mode);
 }
 
-static void si_set_occlusion_query_state(struct pipe_context *ctx, bool enable)
-{
-	/* XXX Turn this into a proper state. Right now the queries are
-	 * enabled in draw_vbo, which snoops r600_common_context to see
-	 * if any occlusion queries are active. */
-}
-
 static void si_need_gfx_cs_space(struct pipe_context *ctx, unsigned num_dw,
 				 bool include_draw_vbo)
 {
@@ -2925,6 +2983,7 @@ static void si_need_gfx_cs_space(struct pipe_context *ctx, unsigned num_dw,
 void si_init_state_functions(struct si_context *sctx)
 {
 	si_init_atom(&sctx->framebuffer.atom, &sctx->atoms.s.framebuffer, si_emit_framebuffer_state, 0);
+	si_init_atom(&sctx->db_render_state, &sctx->atoms.s.db_render_state, si_emit_db_render_state, 7);
 
 	sctx->b.b.create_blend_state = si_create_blend_state;
 	sctx->b.b.bind_blend_state = si_bind_blend_state;

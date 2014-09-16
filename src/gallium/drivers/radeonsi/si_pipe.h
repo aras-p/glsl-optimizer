@@ -106,6 +106,7 @@ struct si_context {
 			struct r600_atom *streamout_begin;
 			struct r600_atom *streamout_enable; /* must be after streamout_begin */
 			struct r600_atom *framebuffer;
+			struct r600_atom *db_render_state;
 			struct r600_atom *msaa_config;
 		} s;
 		struct r600_atom *array[0];
@@ -159,13 +160,14 @@ struct si_context {
 	union si_state	queued;
 	union si_state	emitted;
 
-	/* Additional DB state. */
-	bool dbcb_depth_copy_enabled;
-	bool dbcb_stencil_copy_enabled;
-	unsigned dbcb_copy_sample;
-	bool db_inplace_flush_enabled;
-	bool db_depth_clear;
-	bool db_depth_disable_expclear;
+	/* DB render state. */
+	struct r600_atom	db_render_state;
+	bool			dbcb_depth_copy_enabled;
+	bool			dbcb_stencil_copy_enabled;
+	unsigned		dbcb_copy_sample;
+	bool			db_inplace_flush_enabled;
+	bool			db_depth_clear;
+	bool			db_depth_disable_expclear;
 };
 
 /* si_blit.c */

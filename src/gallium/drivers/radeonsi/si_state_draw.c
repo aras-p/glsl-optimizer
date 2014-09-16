@@ -713,58 +713,6 @@ static void si_state_draw(struct si_context *sctx,
 	if (pm4 == NULL)
 		return;
 
-	/* queries need some special values
-	 * (this is non-zero if any query is active) */
-	if (sctx->b.num_occlusion_queries > 0) {
-		if (sctx->b.chip_class >= CIK) {
-			si_pm4_set_reg(pm4, R_028004_DB_COUNT_CONTROL,
-				       S_028004_PERFECT_ZPASS_COUNTS(1) |
-				       S_028004_SAMPLE_RATE(sctx->framebuffer.log_samples) |
-				       S_028004_ZPASS_ENABLE(1) |
-				       S_028004_SLICE_EVEN_ENABLE(1) |
-				       S_028004_SLICE_ODD_ENABLE(1));
-		} else {
-			si_pm4_set_reg(pm4, R_028004_DB_COUNT_CONTROL,
-				       S_028004_PERFECT_ZPASS_COUNTS(1) |
-				       S_028004_SAMPLE_RATE(sctx->framebuffer.log_samples));
-		}
-	} else {
-		/* Disable occlusion queries. */
-		if (sctx->b.chip_class >= CIK) {
-			si_pm4_set_reg(pm4, R_028004_DB_COUNT_CONTROL, 0);
-		} else {
-			si_pm4_set_reg(pm4, R_028004_DB_COUNT_CONTROL,
-				       S_028004_ZPASS_INCREMENT_DISABLE(1));
-		}
-	}
-
-	/* DB_RENDER_CONTROL */
-	if (sctx->dbcb_depth_copy_enabled ||
-	    sctx->dbcb_stencil_copy_enabled) {
-		si_pm4_set_reg(pm4, R_028000_DB_RENDER_CONTROL,
-			       S_028000_DEPTH_COPY(sctx->dbcb_depth_copy_enabled) |
-			       S_028000_STENCIL_COPY(sctx->dbcb_stencil_copy_enabled) |
-			       S_028000_COPY_CENTROID(1) |
-			       S_028000_COPY_SAMPLE(sctx->dbcb_copy_sample));
-	} else if (sctx->db_inplace_flush_enabled) {
-		si_pm4_set_reg(pm4, R_028000_DB_RENDER_CONTROL,
-			       S_028000_DEPTH_COMPRESS_DISABLE(1) |
-			       S_028000_STENCIL_COMPRESS_DISABLE(1));
-	} else if (sctx->db_depth_clear) {
-		si_pm4_set_reg(pm4, R_028000_DB_RENDER_CONTROL,
-			       S_028000_DEPTH_CLEAR_ENABLE(1));
-	} else {
-		si_pm4_set_reg(pm4, R_028000_DB_RENDER_CONTROL, 0);
-	}
-
-	/* DB_RENDER_OVERRIDE2 */
-	if (sctx->db_depth_disable_expclear) {
-		si_pm4_set_reg(pm4, R_028010_DB_RENDER_OVERRIDE2,
-			       S_028010_DISABLE_ZMASK_EXPCLEAR_OPTIMIZATION(1));
-	} else {
-		si_pm4_set_reg(pm4, R_028010_DB_RENDER_OVERRIDE2, 0);
-	}
-
 	if (info->count_from_stream_output) {
 		struct r600_so_target *t =
 			(struct r600_so_target*)info->count_from_stream_output;

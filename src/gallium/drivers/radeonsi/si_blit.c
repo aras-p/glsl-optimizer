@@ -146,6 +146,7 @@ static void si_blit_decompress_depth(struct pipe_context *ctx,
 				struct pipe_surface *zsurf, *cbsurf, surf_tmpl;
 
 				sctx->dbcb_copy_sample = sample;
+				sctx->db_render_state.dirty = true;
 
 				surf_tmpl.format = texture->resource.b.b.format;
 				surf_tmpl.u.tex.level = level;
@@ -179,6 +180,7 @@ static void si_blit_decompress_depth(struct pipe_context *ctx,
 
 	sctx->dbcb_depth_copy_enabled = false;
 	sctx->dbcb_stencil_copy_enabled = false;
+	sctx->db_render_state.dirty = true;
 }
 
 static void si_blit_decompress_depth_in_place(struct si_context *sctx,
@@ -190,6 +192,7 @@ static void si_blit_decompress_depth_in_place(struct si_context *sctx,
 	unsigned layer, max_layer, checked_last_layer, level;
 
 	sctx->db_inplace_flush_enabled = true;
+	sctx->db_render_state.dirty = true;
 
 	surf_tmpl.format = texture->resource.b.b.format;
 
@@ -227,6 +230,7 @@ static void si_blit_decompress_depth_in_place(struct si_context *sctx,
 	}
 
 	sctx->db_inplace_flush_enabled = false;
+	sctx->db_render_state.dirty = true;
 }
 
 void si_flush_depth_textures(struct si_context *sctx,
@@ -372,6 +376,7 @@ static void si_clear(struct pipe_context *ctx, unsigned buffers,
 		zstex->depth_clear_value = depth;
 		sctx->framebuffer.atom.dirty = true; /* updates DB_DEPTH_CLEAR */
 		sctx->db_depth_clear = true;
+		sctx->db_render_state.dirty = true;
 	}
 
 	si_blitter_begin(ctx, SI_CLEAR);
@@ -384,6 +389,7 @@ static void si_clear(struct pipe_context *ctx, unsigned buffers,
 		sctx->db_depth_clear = false;
 		sctx->db_depth_disable_expclear = false;
 		zstex->depth_cleared = true;
+		sctx->db_render_state.dirty = true;
 	}
 }
 

@@ -161,6 +161,7 @@ void si_begin_new_cs(struct si_context *ctx)
 
 	ctx->framebuffer.atom.dirty = true;
 	ctx->msaa_config.dirty = true;
+	ctx->db_render_state.dirty = true;
 	ctx->b.streamout.enable_atom.dirty = true;
 	si_all_descriptors_begin_new_cs(ctx);
 
