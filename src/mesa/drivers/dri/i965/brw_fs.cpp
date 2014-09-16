@@ -2900,7 +2900,7 @@ fs_visitor::dump_instruction(backend_instruction *be_inst, FILE *file)
    }
    fprintf(file, ":%s, ", brw_reg_type_letters(inst->dst.type));
 
-   for (int i = 0; i < inst->sources && inst->src[i].file != BAD_FILE; i++) {
+   for (int i = 0; i < inst->sources; i++) {
       if (inst->src[i].negate)
          fprintf(file, "-");
       if (inst->src[i].abs)
