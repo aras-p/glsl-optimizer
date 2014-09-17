@@ -528,6 +528,14 @@ vc4_generate_code(struct vc4_compile *c)
                 serialize_one_inst(c, qpu_NOP());
         }
 
+        /* thread end can't have uniform read */
+        if (QPU_GET_FIELD(c->qpu_insts[c->qpu_inst_count - 1],
+                          QPU_RADDR_A) == QPU_R_UNIF ||
+            QPU_GET_FIELD(c->qpu_insts[c->qpu_inst_count - 1],
+                          QPU_RADDR_B) == QPU_R_UNIF) {
+                serialize_one_inst(c, qpu_NOP());
+        }
+
         c->qpu_insts[c->qpu_inst_count - 1] =
                 qpu_set_sig(c->qpu_insts[c->qpu_inst_count - 1],
                             QPU_SIG_PROG_END);
