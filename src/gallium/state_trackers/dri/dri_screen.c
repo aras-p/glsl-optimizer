@@ -227,37 +227,6 @@ dri_fill_in_modes(struct dri_screen *screen)
    return (const __DRIconfig **)configs;
 }
 
-/* The Gallium way to force MSAA. */
-DEBUG_GET_ONCE_NUM_OPTION(msaa, "GALLIUM_MSAA", 0);
-
-/* The NVIDIA way to force MSAA. The same variable is used by the NVIDIA
- * driver. */
-DEBUG_GET_ONCE_NUM_OPTION(msaa_nv, "__GL_FSAA_MODE", 0);
-
-static void
-dri_force_msaa_visual(struct st_visual *stvis,
-                      struct pipe_screen *screen)
-{
-   int i;
-   int samples = debug_get_option_msaa();
-
-   if (!samples)
-      samples = debug_get_option_msaa_nv();
-
-   if (samples <= 1)
-      return; /* nothing to do */
-
-   /* Choose a supported sample count greater than or equal to samples. */
-   for (i = samples; i <= MSAA_VISUAL_MAX_SAMPLES; i++) {
-      if (screen->is_format_supported(screen, stvis->color_format,
-                                      PIPE_TEXTURE_2D, i,
-                                      PIPE_BIND_RENDER_TARGET)) {
-         stvis->samples = i;
-         break;
-      }
-   }
-}
-
 /**
  * Roughly the converse of dri_fill_in_modes.
  */
@@ -281,10 +250,6 @@ dri_fill_st_visual(struct st_visual *stvis, struct dri_screen *screen,
 
    if (mode->sampleBuffers) {
       stvis->samples = mode->samples;
-   }
-   else {
-      /* This must be done after stvis->color_format is set. */
-      dri_force_msaa_visual(stvis, screen->base.screen);
    }
 
    switch (mode->depthBits) {
