@@ -124,7 +124,6 @@ qir_opt_cse(struct vc4_compile *c)
         struct qinst *last_sf = NULL;
         uint32_t sf_count = 0, r4_count = 0;
 
-        return false;
         struct hash_table *ht = _mesa_hash_table_create(NULL, inst_key_equals);
         if (!ht)
                 return false;
