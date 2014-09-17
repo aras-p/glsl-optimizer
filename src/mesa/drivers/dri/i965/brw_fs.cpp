@@ -3082,7 +3082,7 @@ fs_visitor::dump_instruction(backend_instruction *be_inst, FILE *file)
          fprintf(file, ".f0.%d", inst->flag_subreg);
       }
    }
-   fprintf(file, " ");
+   fprintf(file, "(%d) ", inst->exec_size);
 
 
    switch (inst->dst.file) {
@@ -3233,11 +3233,12 @@ fs_visitor::dump_instruction(backend_instruction *be_inst, FILE *file)
 
    fprintf(file, " ");
 
-   if (inst->force_uncompressed)
-      fprintf(file, "1sthalf ");
-
-   if (inst->force_sechalf)
-      fprintf(file, "2ndhalf ");
+   if (dispatch_width == 16 && inst->exec_size == 8) {
+      if (inst->force_sechalf)
+         fprintf(file, "2ndhalf ");
+      else
+         fprintf(file, "1sthalf ");
+   }
 
    fprintf(file, "\n");
 }
