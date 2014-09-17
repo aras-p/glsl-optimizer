@@ -679,7 +679,9 @@ static boolean r300_is_simple_msaa_resolve(const struct pipe_blit_info *info)
     unsigned dst_width = u_minify(info->dst.resource->width0, info->dst.level);
     unsigned dst_height = u_minify(info->dst.resource->height0, info->dst.level);
 
-    return info->dst.resource->format == info->src.resource->format &&
+    return info->src.resource->nr_samples > 1 &&
+           info->dst.resource->nr_samples <= 1 &&
+           info->dst.resource->format == info->src.resource->format &&
            info->dst.resource->format == info->dst.format &&
            info->src.resource->format == info->src.format &&
            !info->scissor_enable &&
@@ -803,7 +805,6 @@ static void r300_blit(struct pipe_context *pipe,
 
     /* MSAA resolve. */
     if (info.src.resource->nr_samples > 1 &&
-        info.dst.resource->nr_samples <= 1 &&
         !util_format_is_depth_or_stencil(info.src.resource->format)) {
         r300_msaa_resolve(pipe, &info);
         return;
