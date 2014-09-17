@@ -73,12 +73,16 @@ resize_qreg_array(struct vc4_compile *c,
         if (*size >= decl_size)
                 return;
 
+        uint32_t old_size = *size;
         *size = MAX2(*size * 2, decl_size);
         *regs = reralloc(c, *regs, struct qreg, *size);
         if (!*regs) {
                 fprintf(stderr, "Malloc failure\n");
                 abort();
         }
+
+        for (uint32_t i = old_size; i < *size; i++)
+                (*regs)[i] = c->undef;
 }
 
 static struct qreg
