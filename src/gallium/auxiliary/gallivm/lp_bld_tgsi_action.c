@@ -1248,8 +1248,26 @@ idiv_emit_cpu(
    struct lp_build_tgsi_context * bld_base,
    struct lp_build_emit_data * emit_data)
 {
-   emit_data->output[emit_data->chan] = lp_build_div(&bld_base->int_bld,
-                                   emit_data->args[0], emit_data->args[1]);
+   LLVMBuilderRef builder = bld_base->base.gallivm->builder;
+   LLVMValueRef div_mask = lp_build_cmp(&bld_base->uint_bld,
+                                        PIPE_FUNC_EQUAL, emit_data->args[1],
+                                        bld_base->uint_bld.zero);
+   /* We want to make sure that we never divide/mod by zero to not 
+    * generate sigfpe. We don't want to crash just because the 
+    * shader is doing something weird. */
+   LLVMValueRef divisor = LLVMBuildOr(builder,
+                                      div_mask,
+                                      emit_data->args[1], "");
+   LLVMValueRef result = lp_build_div(&bld_base->uint_bld,
+                                      emit_data->args[0], divisor);
+                                      
+   LLVMValueRef not_div_mask = LLVMBuildNot(builder,
+                                            div_mask,"");
+                                          
+   /* idiv by zero doesn't have a guaranteed return value chose 0 for now. */
+   emit_data->output[emit_data->chan] = LLVMBuildAnd(builder,
+                                                     not_div_mask,
+                                                     result, "");
 }
 
 /* TGSI_OPCODE_INEG (CPU Only) */
@@ -1683,7 +1701,7 @@ udiv_emit_cpu(
                                       emit_data->args[1], "");
    LLVMValueRef result = lp_build_div(&bld_base->uint_bld,
                                       emit_data->args[0], divisor);
-   /* udiv by zero is guaranteed to return 0xffffffff */
+   /* udiv by zero is guaranteed to return 0xffffffff at least with d3d10 */
    emit_data->output[emit_data->chan] = LLVMBuildOr(builder,
                                                     div_mask,
                                                     result, "");

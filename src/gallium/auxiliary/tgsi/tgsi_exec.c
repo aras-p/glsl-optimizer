@@ -3343,10 +3343,10 @@ micro_idiv(union tgsi_exec_channel *dst,
            const union tgsi_exec_channel *src0,
            const union tgsi_exec_channel *src1)
 {
-   dst->i[0] = src0->i[0] / src1->i[0];
-   dst->i[1] = src0->i[1] / src1->i[1];
-   dst->i[2] = src0->i[2] / src1->i[2];
-   dst->i[3] = src0->i[3] / src1->i[3];
+   dst->i[0] = src1->i[0] ? src0->i[0] / src1->i[0] : 0;
+   dst->i[1] = src1->i[1] ? src0->i[1] / src1->i[1] : 0;
+   dst->i[2] = src1->i[2] ? src0->i[2] / src1->i[2] : 0;
+   dst->i[3] = src1->i[3] ? src0->i[3] / src1->i[3] : 0;
 }
 
 static void
