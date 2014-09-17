@@ -60,7 +60,6 @@ struct si_shader_context
 	struct tgsi_parse_context parse;
 	struct tgsi_token * tokens;
 	struct si_shader *shader;
-	struct si_shader *gs_for_vs;
 	unsigned type; /* TGSI_PROCESSOR_* specifies the type of shader. */
 	int param_streamout_config;
 	int param_streamout_write_index;
@@ -105,6 +104,84 @@ static struct si_shader_context * si_shader_context(
 #define SENDMSG_GS_OP_EMIT     (2 << 4)
 #define SENDMSG_GS_OP_EMIT_CUT (3 << 4)
 
+/**
+ * Returns a unique index for a semantic name and index. The index must be
+ * less than 64, so that a 64-bit bitmask of used inputs or outputs can be
+ * calculated.
+ */
+static unsigned get_unique_index(unsigned semantic_name, unsigned index)
+{
+	switch (semantic_name) {
+	case TGSI_SEMANTIC_POSITION:
+		return 0;
+	case TGSI_SEMANTIC_PSIZE:
+		return 1;
+	case TGSI_SEMANTIC_CLIPDIST:
+		assert(index <= 1);
+		return 2 + index;
+	case TGSI_SEMANTIC_CLIPVERTEX:
+		return 4;
+	case TGSI_SEMANTIC_COLOR:
+		assert(index <= 1);
+		return 5 + index;
+	case TGSI_SEMANTIC_BCOLOR:
+		assert(index <= 1);
+		return 7 + index;
+	case TGSI_SEMANTIC_FOG:
+		return 9;
+	case TGSI_SEMANTIC_EDGEFLAG:
+		return 10;
+	case TGSI_SEMANTIC_GENERIC:
+		assert(index <= 63-11);
+		return 11 + index;
+	default:
+		assert(0);
+		return 63;
+	}
+}
+
+/**
+ * Given a semantic name and index of a parameter and a mask of used parameters
+ * (inputs or outputs), return the index of the parameter in the list of all
+ * used parameters.
+ *
+ * For example, assume this list of parameters:
+ *   POSITION, PSIZE, GENERIC0, GENERIC2
+ * which has the mask:
+ *   11000000000101
+ * Then:
+ *   querying POSITION returns 0,
+ *   querying PSIZE returns 1,
+ *   querying GENERIC0 returns 2,
+ *   querying GENERIC2 returns 3.
+ *
+ * Which can be used as an offset to a parameter buffer in units of vec4s.
+ */
+static int get_param_index(unsigned semantic_name, unsigned index,
+			   uint64_t mask)
+{
+	unsigned unique_index = get_unique_index(semantic_name, index);
+	int i, param_index = 0;
+
+	/* If not present... */
+	if (!((1llu << unique_index) & mask))
+		return -1;
+
+	for (i = 0; mask; i++) {
+		uint64_t bit = 1llu << i;
+
+		if (bit & mask) {
+			if (i == unique_index)
+				return param_index;
+
+			mask &= ~bit;
+			param_index++;
+		}
+	}
+
+	assert(!"unreachable");
+	return -1;
+}
 
 /**
  * Build an LLVM bytecode indexed load using LLVMBuildGEP + LLVMBuildLoad
@@ -261,8 +338,12 @@ static void declare_input_gs(
 
 	si_store_shader_io_attribs(shader, decl);
 
-	if (decl->Semantic.Name != TGSI_SEMANTIC_PRIMID)
-		shader->input[input_index].param_offset = shader->nparam++;
+	if (decl->Semantic.Name != TGSI_SEMANTIC_PRIMID) {
+		shader->gs_used_inputs |=
+			1llu << get_unique_index(decl->Semantic.Name,
+						 decl->Semantic.Index);
+		shader->nparam++;
+	}
 }
 
 static LLVMValueRef fetch_input_gs(
@@ -282,6 +363,7 @@ static LLVMValueRef fetch_input_gs(
 	LLVMValueRef t_list;
 	LLVMValueRef args[9];
 	unsigned vtx_offset_param;
+	struct si_shader_input *input = &shader->input[reg->Register.Index];
 
 	if (swizzle != ~0 &&
 	    shader->input[reg->Register.Index].name == TGSI_SEMANTIC_PRIMID) {
@@ -327,7 +409,8 @@ static LLVMValueRef fetch_input_gs(
 	args[0] = t_list;
 	args[1] = vtx_offset;
 	args[2] = lp_build_const_int32(gallivm,
-				       ((shader->input[reg->Register.Index].param_offset * 4) +
+				       (get_param_index(input->name, input->sid,
+							shader->gs_used_inputs) * 4 +
 					swizzle) * 256);
 	args[3] = uint->zero;
 	args[4] = uint->one;  /* OFFEN */
@@ -1224,7 +1307,6 @@ static void si_llvm_emit_es_epilogue(struct lp_build_tgsi_context * bld_base)
 	struct si_shader_context *si_shader_ctx = si_shader_context(bld_base);
 	struct gallivm_state *gallivm = bld_base->base.gallivm;
 	struct si_shader *es = si_shader_ctx->shader;
-	struct si_shader *gs = si_shader_ctx->gs_for_vs;
 	struct tgsi_parse_context *parse = &si_shader_ctx->parse;
 	LLVMTypeRef i32 = LLVMInt32TypeInContext(gallivm->context);
 	LLVMValueRef soffset = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn,
@@ -1255,14 +1337,11 @@ static void si_llvm_emit_es_epilogue(struct lp_build_tgsi_context * bld_base)
 	for (i = 0; i < es->noutput; i++) {
 		LLVMValueRef *out_ptr =
 			si_shader_ctx->radeon_bld.soa.outputs[es->output[i].index];
-		int j;
+		int param_index = get_param_index(es->output[i].name,
+						  es->output[i].sid,
+						  es->key.vs.gs_used_inputs);
 
-		for (j = 0; j < gs->ninput; j++) {
-			if (gs->input[j].name == es->output[i].name &&
-			    gs->input[j].sid == es->output[i].sid)
-				break;
-		}
-		if (j == gs->ninput)
+		if (param_index < 0)
 			continue;
 
 		for (chan = 0; chan < 4; chan++) {
@@ -1271,7 +1350,7 @@ static void si_llvm_emit_es_epilogue(struct lp_build_tgsi_context * bld_base)
 
 			build_tbuffer_store(si_shader_ctx, t_list, out_val, 1,
 					    LLVMGetUndef(i32), soffset,
-					    (4 * gs->input[j].param_offset + chan) * 4,
+					    (4 * param_index + chan) * 4,
 					    V_008F0C_BUF_DATA_FORMAT_32,
 					    V_008F0C_BUF_NUM_FORMAT_UINT,
 					    0, 0, 1, 1, 0);
@@ -2652,7 +2731,6 @@ static int si_generate_gs_copy_shader(struct si_context *sctx,
 	outputs = MALLOC(gs->noutput * sizeof(outputs[0]));
 
 	si_shader_ctx->type = TGSI_PROCESSOR_VERTEX;
-	si_shader_ctx->gs_for_vs = gs;
 
 	radeon_llvm_context_init(&si_shader_ctx->radeon_bld);
 
@@ -2789,7 +2867,6 @@ int si_shader_create(
 	case TGSI_PROCESSOR_VERTEX:
 		si_shader_ctx.radeon_bld.load_input = declare_input_vs;
 		if (shader->key.vs.as_es) {
-			si_shader_ctx.gs_for_vs = sctx->gs_shader->current;
 			bld_base->emit_epilogue = si_llvm_emit_es_epilogue;
 		} else {
 			bld_base->emit_epilogue = si_llvm_emit_vs_epilogue;

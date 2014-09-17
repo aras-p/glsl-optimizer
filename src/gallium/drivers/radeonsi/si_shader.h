@@ -141,6 +141,9 @@ union si_shader_key {
 	} ps;
 	struct {
 		unsigned	instance_divisors[PIPE_MAX_ATTRIBS];
+		/* The mask of "get_unique_index" bits, needed for ES,
+		 * it describes how the ES->GS ring buffer is laid out. */
+		uint64_t	gs_used_inputs;
 		unsigned	ucps_enabled:2;
 		unsigned	as_es:1;
 	} vs;
@@ -175,6 +178,7 @@ struct si_shader {
 	unsigned		gs_input_prim;
 	unsigned		gs_output_prim;
 	unsigned		gs_max_out_vertices;
+	uint64_t		gs_used_inputs; /* mask of "get_unique_index" bits */
 
 	unsigned		nparam;
 	bool			uses_instanceid;

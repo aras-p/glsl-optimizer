@@ -2210,7 +2210,11 @@ static INLINE void si_shader_selector_key(struct pipe_context *ctx,
 		for (i = 0; i < sctx->vertex_elements->count; ++i)
 			key->vs.instance_divisors[i] = sctx->vertex_elements->elements[i].instance_divisor;
 
-		key->vs.as_es = sctx->gs_shader != NULL;
+		if (sctx->gs_shader) {
+			/* At this point, the GS should be selected and compiled. */
+			key->vs.as_es = 1;
+			key->vs.gs_used_inputs = sctx->gs_shader->current->gs_used_inputs;
+		}
 	} else if (sel->type == PIPE_SHADER_FRAGMENT) {
 		if (sel->fs_write_all)
 			key->ps.nr_cbufs = sctx->framebuffer.state.nr_cbufs;
