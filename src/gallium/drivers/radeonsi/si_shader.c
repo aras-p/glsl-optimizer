@@ -2625,16 +2625,16 @@ static void preload_streamout_buffers(struct si_shader_context *si_shader_ctx)
 	}
 }
 
-int si_compile_llvm(struct si_context *sctx, struct si_shader *shader,
-							LLVMModuleRef mod)
+int si_compile_llvm(struct si_screen *sscreen, struct si_shader *shader,
+		    LLVMModuleRef mod)
 {
 	unsigned r; /* llvm_compile result */
 	unsigned i;
 	unsigned char *ptr;
 	struct radeon_shader_binary binary;
-	bool dump = r600_can_dump_shader(&sctx->screen->b,
+	bool dump = r600_can_dump_shader(&sscreen->b,
 			shader->selector ? shader->selector->tokens : NULL);
-	const char * gpu_family = r600_get_llvm_processor_name(sctx->screen->b.family);
+	const char * gpu_family = r600_get_llvm_processor_name(sscreen->b.family);
 	unsigned code_size;
 
 	/* Use LLVM to compile shader */
@@ -2690,20 +2690,20 @@ int si_compile_llvm(struct si_context *sctx, struct si_shader *shader,
 	/* copy new shader */
 	code_size = binary.code_size + binary.rodata_size;
 	r600_resource_reference(&shader->bo, NULL);
-	shader->bo = si_resource_create_custom(sctx->b.b.screen, PIPE_USAGE_IMMUTABLE,
+	shader->bo = si_resource_create_custom(&sscreen->b.b, PIPE_USAGE_IMMUTABLE,
 					       code_size);
 	if (shader->bo == NULL) {
 		return -ENOMEM;
 	}
 
-	ptr = sctx->b.ws->buffer_map(shader->bo->cs_buf, sctx->b.rings.gfx.cs, PIPE_TRANSFER_WRITE);
+	ptr = sscreen->b.ws->buffer_map(shader->bo->cs_buf, NULL, PIPE_TRANSFER_WRITE);
 	util_memcpy_cpu_to_le32(ptr, binary.code, binary.code_size);
 	if (binary.rodata_size > 0) {
 		ptr += binary.code_size;
 		util_memcpy_cpu_to_le32(ptr, binary.rodata, binary.rodata_size);
 	}
 
-	sctx->b.ws->buffer_unmap(shader->bo->cs_buf);
+	sscreen->b.ws->buffer_unmap(shader->bo->cs_buf);
 
 	free(binary.code);
 	free(binary.config);
@@ -2713,7 +2713,7 @@ int si_compile_llvm(struct si_context *sctx, struct si_shader *shader,
 }
 
 /* Generate code for the hardware VS shader stage to go with a geometry shader */
-static int si_generate_gs_copy_shader(struct si_context *sctx,
+static int si_generate_gs_copy_shader(struct si_screen *sscreen,
 				      struct si_shader_context *si_shader_ctx,
 				      bool dump)
 {
@@ -2792,7 +2792,7 @@ static int si_generate_gs_copy_shader(struct si_context *sctx,
 	if (dump)
 		fprintf(stderr, "Copy Vertex Shader for Geometry Shader:\n\n");
 
-	r = si_compile_llvm(sctx, si_shader_ctx->shader,
+	r = si_compile_llvm(sscreen, si_shader_ctx->shader,
 			    bld_base->base.gallivm->module);
 
 	radeon_llvm_dispose(&si_shader_ctx->radeon_bld);
@@ -2801,18 +2801,15 @@ static int si_generate_gs_copy_shader(struct si_context *sctx,
 	return r;
 }
 
-int si_shader_create(
-	struct pipe_context *ctx,
-	struct si_shader *shader)
+int si_shader_create(struct si_screen *sscreen, struct si_shader *shader)
 {
-	struct si_context *sctx = (struct si_context*)ctx;
 	struct si_shader_selector *sel = shader->selector;
 	struct si_shader_context si_shader_ctx;
 	struct tgsi_shader_info shader_info;
 	struct lp_build_tgsi_context * bld_base;
 	LLVMModuleRef mod;
 	int r = 0;
-	bool dump = r600_can_dump_shader(&sctx->screen->b, sel->tokens);
+	bool dump = r600_can_dump_shader(&sscreen->b, sel->tokens);
 
 	/* Dump TGSI code before doing TGSI->LLVM conversion in case the
 	 * conversion fails. */
@@ -2943,7 +2940,7 @@ int si_shader_create(
 	radeon_llvm_finalize_module(&si_shader_ctx.radeon_bld);
 
 	mod = bld_base->base.gallivm->module;
-	r = si_compile_llvm(sctx, shader, mod);
+	r = si_compile_llvm(sscreen, shader, mod);
 	if (r) {
 		fprintf(stderr, "LLVM failed to compile shader\n");
 		goto out;
@@ -2956,7 +2953,7 @@ int si_shader_create(
 		shader->gs_copy_shader->selector = shader->selector;
 		shader->gs_copy_shader->key = shader->key;
 		si_shader_ctx.shader = shader->gs_copy_shader;
-		if ((r = si_generate_gs_copy_shader(sctx, &si_shader_ctx, dump))) {
+		if ((r = si_generate_gs_copy_shader(sscreen, &si_shader_ctx, dump))) {
 			free(shader->gs_copy_shader);
 			shader->gs_copy_shader = NULL;
 			goto out;

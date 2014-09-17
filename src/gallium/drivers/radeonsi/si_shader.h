@@ -200,10 +200,9 @@ static inline struct si_shader* si_get_vs_state(struct si_context *sctx)
 }
 
 /* radeonsi_shader.c */
-int si_shader_create(struct pipe_context *ctx, struct si_shader *shader);
-int si_shader_create(struct pipe_context *ctx, struct si_shader *shader);
-int si_compile_llvm(struct si_context *sctx, struct si_shader *shader,
-							LLVMModuleRef mod);
+int si_shader_create(struct si_screen *sscreen, struct si_shader *shader);
+int si_compile_llvm(struct si_screen *sscreen, struct si_shader *shader,
+		    LLVMModuleRef mod);
 void si_shader_destroy(struct pipe_context *ctx, struct si_shader *shader);
 
 #endif
