@@ -1713,7 +1713,7 @@ pack_float_R8G8B8X8_SRGB(const GLfloat src[4], void *dst)
    GLubyte r = util_format_linear_float_to_srgb_8unorm(src[RCOMP]);
    GLubyte g = util_format_linear_float_to_srgb_8unorm(src[GCOMP]);
    GLubyte b = util_format_linear_float_to_srgb_8unorm(src[BCOMP]);
-   *d = PACK_COLOR_8888(127, b, g, r);
+   *d = PACK_COLOR_8888(255, b, g, r);
 }
 
 
