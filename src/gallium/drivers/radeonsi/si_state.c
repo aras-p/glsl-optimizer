@@ -2403,9 +2403,10 @@ static void si_delete_shader_selector(struct pipe_context *ctx,
 
 	while (p) {
 		c = p->next_variant;
-		if (sel->type == PIPE_SHADER_GEOMETRY)
+		if (sel->type == PIPE_SHADER_GEOMETRY) {
 			si_pm4_delete_state(sctx, gs, p->pm4);
-		else if (sel->type == PIPE_SHADER_FRAGMENT)
+			si_pm4_delete_state(sctx, vs, p->gs_copy_shader->pm4);
+		} else if (sel->type == PIPE_SHADER_FRAGMENT)
 			si_pm4_delete_state(sctx, ps, p->pm4);
 		else if (p->key.vs.as_es)
 			si_pm4_delete_state(sctx, es, p->pm4);
@@ -2418,7 +2419,7 @@ static void si_delete_shader_selector(struct pipe_context *ctx,
 
 	free(sel->tokens);
 	free(sel);
- }
+}
 
 static void si_delete_vs_shader(struct pipe_context *ctx, void *state)
 {
