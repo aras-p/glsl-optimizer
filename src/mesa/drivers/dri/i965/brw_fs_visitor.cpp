@@ -1318,34 +1318,34 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
                               fs_reg shadow_c, fs_reg lod, fs_reg lod2,
                               fs_reg sample_index, uint32_t sampler)
 {
-   int mlen = 0;
-   int base_mrf = 2;
    int reg_width = dispatch_width / 8;
    bool header_present = false;
    const int vector_elements =
       ir->coordinate ? ir->coordinate->type->vector_elements : 0;
+
+   fs_reg message(MRF, 2, BRW_REGISTER_TYPE_F, dispatch_width);
+   fs_reg msg_coords = message;
 
    if (ir->offset) {
       /* The offsets set up by the ir_texture visitor are in the
        * m1 header, so we can't go headerless.
        */
       header_present = true;
-      mlen++;
-      base_mrf--;
+      message.reg--;
    }
 
    for (int i = 0; i < vector_elements; i++) {
-      emit(MOV(fs_reg(MRF, base_mrf + mlen + i * reg_width, coordinate.type),
-               coordinate));
+      emit(MOV(retype(offset(msg_coords, i), coordinate.type), coordinate));
       coordinate = offset(coordinate, 1);
    }
-   mlen += vector_elements * reg_width;
+   fs_reg msg_end = offset(msg_coords, vector_elements);
+   fs_reg msg_lod = offset(msg_coords, 4);
 
    if (shadow_c.file != BAD_FILE) {
-      mlen = MAX2(mlen, header_present + 4 * reg_width);
-
-      emit(MOV(fs_reg(MRF, base_mrf + mlen), shadow_c));
-      mlen += reg_width;
+      fs_reg msg_shadow = msg_lod;
+      emit(MOV(msg_shadow, shadow_c));
+      msg_lod = offset(msg_shadow, 1);
+      msg_end = msg_lod;
    }
 
    enum opcode opcode;
@@ -1354,22 +1354,18 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       opcode = SHADER_OPCODE_TEX;
       break;
    case ir_txb:
-      mlen = MAX2(mlen, header_present + 4 * reg_width);
-      emit(MOV(fs_reg(MRF, base_mrf + mlen), lod));
-      mlen += reg_width;
+      emit(MOV(msg_lod, lod));
+      msg_end = offset(msg_lod, 1);
 
       opcode = FS_OPCODE_TXB;
       break;
    case ir_txl:
-      mlen = MAX2(mlen, header_present + 4 * reg_width);
-      emit(MOV(fs_reg(MRF, base_mrf + mlen), lod));
-      mlen += reg_width;
+      emit(MOV(msg_lod, lod));
+      msg_end = offset(msg_lod, 1);
 
       opcode = SHADER_OPCODE_TXL;
       break;
    case ir_txd: {
-      mlen = MAX2(mlen, header_present + 4 * reg_width); /* skip over 'ai' */
-
       /**
        *  P   =  u,    v,    r
        * dPdx = dudx, dvdx, drdx
@@ -1379,45 +1375,48 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
        * - dudx   dudy   dvdx   dvdy   drdx   drdy
        * - dPdx.x dPdy.x dPdx.y dPdy.y dPdx.z dPdy.z
        */
+      msg_end = msg_lod;
       for (int i = 0; i < ir->lod_info.grad.dPdx->type->vector_elements; i++) {
-	 emit(MOV(fs_reg(MRF, base_mrf + mlen), lod));
-	 lod = offset(lod, 1);
-	 mlen += reg_width;
+         emit(MOV(msg_end, lod));
+         lod = offset(lod, 1);
+         msg_end = offset(msg_end, 1);
 
-	 emit(MOV(fs_reg(MRF, base_mrf + mlen), lod2));
-	 lod2 = offset(lod2, 1);
-	 mlen += reg_width;
+         emit(MOV(msg_end, lod2));
+         lod2 = offset(lod2, 1);
+         msg_end = offset(msg_end, 1);
       }
 
       opcode = SHADER_OPCODE_TXD;
       break;
    }
    case ir_txs:
-      emit(MOV(fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_UD), lod));
-      mlen += reg_width;
+      msg_lod = retype(msg_end, BRW_REGISTER_TYPE_UD);
+      emit(MOV(msg_lod, lod));
+      msg_end = offset(msg_lod, 1);
 
       opcode = SHADER_OPCODE_TXS;
       break;
    case ir_query_levels:
-      emit(MOV(fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_UD), fs_reg(0u)));
-      mlen += reg_width;
+      msg_lod = msg_end;
+      emit(MOV(retype(msg_lod, BRW_REGISTER_TYPE_UD), fs_reg(0u)));
+      msg_end = offset(msg_lod, 1);
 
       opcode = SHADER_OPCODE_TXS;
       break;
    case ir_txf:
-      mlen = header_present + 4 * reg_width;
-      emit(MOV(fs_reg(MRF, base_mrf + mlen - reg_width, BRW_REGISTER_TYPE_UD), lod));
+      msg_lod = offset(msg_coords, 3);
+      emit(MOV(retype(msg_lod, BRW_REGISTER_TYPE_UD), lod));
+      msg_end = offset(msg_lod, 1);
 
       opcode = SHADER_OPCODE_TXF;
       break;
    case ir_txf_ms:
-      mlen = header_present + 4 * reg_width;
-
+      msg_lod = offset(msg_coords, 3);
       /* lod */
-      emit(MOV(fs_reg(MRF, base_mrf + mlen - reg_width, BRW_REGISTER_TYPE_UD), fs_reg(0)));
+      emit(MOV(retype(msg_lod, BRW_REGISTER_TYPE_UD), fs_reg(0u)));
       /* sample index */
-      emit(MOV(fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_UD), sample_index));
-      mlen += reg_width;
+      emit(MOV(retype(offset(msg_lod, 1), BRW_REGISTER_TYPE_UD), sample_index));
+      msg_end = offset(msg_lod, 2);
 
       opcode = SHADER_OPCODE_TXF_CMS;
       break;
@@ -1432,12 +1431,12 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    }
 
    fs_inst *inst = emit(opcode, dst, reg_undef, fs_reg(sampler));
-   inst->base_mrf = base_mrf;
-   inst->mlen = mlen;
+   inst->base_mrf = message.reg;
+   inst->mlen = msg_end.reg - message.reg;
    inst->header_present = header_present;
    inst->regs_written = 4 * reg_width;
 
-   if (mlen > MAX_SAMPLER_MESSAGE_SIZE) {
+   if (inst->mlen > MAX_SAMPLER_MESSAGE_SIZE) {
       fail("Message length >" STRINGIFY(MAX_SAMPLER_MESSAGE_SIZE)
            " disallowed by hardware\n");
    }
