@@ -116,6 +116,50 @@ vc4_create_blend_state(struct pipe_context *pctx,
         return vc4_generic_cso_state_create(cso, sizeof(*cso));
 }
 
+/**
+ * The TLB_STENCIL_SETUP data has a little bitfield for common writemask
+ * values, so you don't have to do a separate writemask setup.
+ */
+static uint8_t
+tlb_stencil_setup_writemask(uint8_t mask)
+{
+        switch (mask) {
+        case 0x1: return 0;
+        case 0x3: return 1;
+        case 0xf: return 2;
+        case 0xff: return 3;
+        default: return 0xff;
+        }
+}
+
+static uint32_t
+tlb_stencil_setup_bits(const struct pipe_stencil_state *state,
+                       uint8_t writemask_bits)
+{
+        static const uint8_t op_map[] = {
+                [PIPE_STENCIL_OP_ZERO] = 0,
+                [PIPE_STENCIL_OP_KEEP] = 1,
+                [PIPE_STENCIL_OP_REPLACE] = 2,
+                [PIPE_STENCIL_OP_INCR] = 3,
+                [PIPE_STENCIL_OP_DECR] = 4,
+                [PIPE_STENCIL_OP_INVERT] = 5,
+                [PIPE_STENCIL_OP_INCR_WRAP] = 6,
+                [PIPE_STENCIL_OP_DECR_WRAP] = 7,
+        };
+        uint32_t bits = 0;
+
+        if (writemask_bits != 0xff)
+                bits |= writemask_bits << 28;
+        bits |= op_map[state->zfail_op] << 25;
+        bits |= op_map[state->zpass_op] << 22;
+        bits |= op_map[state->fail_op] << 19;
+        bits |= state->func << 16;
+        /* Ref is filled in at uniform upload time */
+        bits |= state->valuemask << 0;
+
+        return bits;
+}
+
 static void *
 vc4_create_depth_stencil_alpha_state(struct pipe_context *pctx,
                                      const struct pipe_depth_stencil_alpha_state *cso)
@@ -137,6 +181,33 @@ vc4_create_depth_stencil_alpha_state(struct pipe_context *pctx,
         } else {
                 so->config_bits[1] |= (PIPE_FUNC_ALWAYS <<
                                        VC4_CONFIG_BITS_DEPTH_FUNC_SHIFT);
+        }
+
+        if (cso->stencil[0].enabled) {
+                const struct pipe_stencil_state *front = &cso->stencil[0];
+                const struct pipe_stencil_state *back = &cso->stencil[1];
+
+                uint8_t front_writemask_bits =
+                        tlb_stencil_setup_writemask(front->writemask);
+                uint8_t back_writemask_bits =
+                        tlb_stencil_setup_writemask(back->writemask);
+
+                so->stencil_uniforms[0] =
+                        tlb_stencil_setup_bits(front, front_writemask_bits);
+                if (back->enabled) {
+                        so->stencil_uniforms[0] |= (1 << 30);
+                        so->stencil_uniforms[1] =
+                                tlb_stencil_setup_bits(back, back_writemask_bits);
+                        so->stencil_uniforms[1] |= (2 << 30);
+                } else {
+                        so->stencil_uniforms[0] |= (3 << 30);
+                }
+
+                if (front_writemask_bits == 0xff ||
+                    back_writemask_bits == 0xff) {
+                        so->stencil_uniforms[2] = (front_writemask_bits |
+                                                   (back_writemask_bits << 8));
+                }
         }
 
         return so;

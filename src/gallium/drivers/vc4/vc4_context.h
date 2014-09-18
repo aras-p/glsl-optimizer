@@ -203,6 +203,14 @@ struct vc4_depth_stencil_alpha_state {
 
         /* VC4_CONFIGURATION_BITS */
         uint8_t config_bits[3];
+
+        /** Uniforms for stencil state.
+         *
+         * Index 0 is either the front config, or the front-and-back config.
+         * Index 1 is the back config if doing separate back stencil.
+         * Index 2 is the writemask config if it's not a common mask value.
+         */
+        uint32_t stencil_uniforms[3];
 };
 
 static inline struct vc4_context *

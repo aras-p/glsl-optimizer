@@ -190,6 +190,8 @@ vc4_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
         if (vc4->zsa && vc4->zsa->base.depth.enabled) {
                 vc4->resolve |= PIPE_CLEAR_DEPTH;
         }
+        if (vc4->zsa && vc4->zsa->base.stencil[0].enabled)
+                vc4->resolve |= PIPE_CLEAR_STENCIL;
         vc4->resolve |= PIPE_CLEAR_COLOR0;
 
         vc4->shader_rec_count++;

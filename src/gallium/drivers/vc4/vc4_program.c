@@ -53,6 +53,9 @@ struct vc4_fs_key {
         struct vc4_key base;
         enum pipe_format color_format;
         bool depth_enabled;
+        bool stencil_enabled;
+        bool stencil_twoside;
+        bool stencil_full_writemasks;
         bool is_points;
         bool is_lines;
 
@@ -1253,6 +1256,16 @@ emit_frag_end(struct vc4_compile *c)
         if (c->discard.file != QFILE_NULL)
                 qir_TLB_DISCARD_SETUP(c, c->discard);
 
+        if (c->fs_key->stencil_enabled) {
+                qir_TLB_STENCIL_SETUP(c, add_uniform(c, QUNIFORM_STENCIL, 0));
+                if (c->fs_key->stencil_twoside) {
+                        qir_TLB_STENCIL_SETUP(c, add_uniform(c, QUNIFORM_STENCIL, 1));
+                }
+                if (c->fs_key->stencil_full_writemasks) {
+                        qir_TLB_STENCIL_SETUP(c, add_uniform(c, QUNIFORM_STENCIL, 2));
+                }
+        }
+
         if (c->fs_key->depth_enabled) {
                 struct qreg z;
                 if (c->output_position_index != -1) {
@@ -1567,7 +1580,11 @@ vc4_update_compiled_fs(struct vc4_context *vc4, uint8_t prim_mode)
         if (vc4->framebuffer.cbufs[0])
                 key->color_format = vc4->framebuffer.cbufs[0]->format;
 
-        key->depth_enabled = vc4->zsa->base.depth.enabled;
+        key->stencil_enabled = vc4->zsa->stencil_uniforms[0] != 0;
+        key->stencil_twoside = vc4->zsa->stencil_uniforms[1] != 0;
+        key->stencil_full_writemasks = vc4->zsa->stencil_uniforms[2] != 0;
+        key->depth_enabled = (vc4->zsa->base.depth.enabled ||
+                              key->stencil_enabled);
 
         vc4->prog.fs = util_hash_table_get(vc4->fs_cache, key);
         if (vc4->prog.fs)
@@ -1825,6 +1842,14 @@ vc4_write_uniforms(struct vc4_context *vc4, struct vc4_compiled_shader *shader,
                 case QUNIFORM_BLEND_CONST_COLOR:
                         cl_f(&vc4->uniforms,
                              vc4->blend_color.color[uinfo->data[i]]);
+                        break;
+
+                case QUNIFORM_STENCIL:
+                        cl_u32(&vc4->uniforms,
+                               vc4->zsa->stencil_uniforms[uinfo->data[i]] |
+                               (uinfo->data[i] <= 1 ?
+                                (vc4->stencil_ref.ref_value[uinfo->data[i]] << 8) :
+                                0));
                         break;
                 }
 #if 0

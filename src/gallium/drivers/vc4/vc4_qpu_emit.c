@@ -419,6 +419,10 @@ vc4_generate_code(struct vc4_compile *c)
                         *last_inst(c) |= QPU_SF;
                         break;
 
+                case QOP_TLB_STENCIL_SETUP:
+                        queue(c, qpu_a_MOV(qpu_ra(QPU_W_TLB_STENCIL_SETUP), src[0]));
+                        break;
+
                 case QOP_TLB_Z_WRITE:
                         queue(c, qpu_a_MOV(qpu_ra(QPU_W_TLB_Z), src[0]));
                         if (discard) {

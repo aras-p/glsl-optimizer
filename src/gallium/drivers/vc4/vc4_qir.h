@@ -97,6 +97,7 @@ enum qop {
         QOP_VPM_WRITE,
         QOP_VPM_READ,
         QOP_TLB_DISCARD_SETUP,
+        QOP_TLB_STENCIL_SETUP,
         QOP_TLB_Z_WRITE,
         QOP_TLB_COLOR_WRITE,
         QOP_TLB_COLOR_READ,
@@ -199,6 +200,7 @@ enum quniform_contents {
         QUNIFORM_TEXRECT_SCALE_Y,
 
         QUNIFORM_BLEND_CONST_COLOR,
+        QUNIFORM_STENCIL,
 };
 
 struct vc4_compile {
@@ -366,6 +368,7 @@ QIR_ALU0(TEX_RESULT)
 QIR_ALU0(TLB_COLOR_READ)
 QIR_NODST_1(TLB_Z_WRITE)
 QIR_NODST_1(TLB_DISCARD_SETUP)
+QIR_NODST_1(TLB_STENCIL_SETUP)
 
 static inline struct qreg
 qir_R4_UNPACK(struct vc4_compile *c, struct qreg r4, int i)
