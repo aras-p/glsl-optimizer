@@ -216,6 +216,13 @@ vc4_flush(struct pipe_context *pctx)
 
         vc4_setup_rcl(vc4);
 
+        if (vc4_debug & VC4_DEBUG_CL) {
+                fprintf(stderr, "BCL:\n");
+                vc4_dump_cl(&vc4->bcl, false);
+                fprintf(stderr, "RCL:\n");
+                vc4_dump_cl(&vc4->rcl, true);
+        }
+
         struct drm_vc4_submit_cl submit;
         memset(&submit, 0, sizeof(submit));
 

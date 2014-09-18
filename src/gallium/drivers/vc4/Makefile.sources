@@ -2,6 +2,7 @@ C_SOURCES := \
 	vc4_bufmgr.c \
 	vc4_bufmgr.h \
 	vc4_cl.c \
+	vc4_cl_dump.c \
 	vc4_cl.h \
 	vc4_context.c \
 	vc4_context.h \

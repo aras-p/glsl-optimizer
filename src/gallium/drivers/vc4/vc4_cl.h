@@ -43,6 +43,7 @@ struct vc4_cl {
 void vc4_init_cl(struct vc4_context *vc4, struct vc4_cl *cl);
 void vc4_grow_cl(struct vc4_cl *cl);
 void vc4_reset_cl(struct vc4_cl *cl);
+void vc4_dump_cl(struct vc4_cl *cl, bool is_render);
 uint32_t vc4_gem_hindex(struct vc4_context *vc4, struct vc4_bo *bo);
 
 static inline void
