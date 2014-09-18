@@ -408,7 +408,7 @@ static const struct drm_conf_ret share_fd_ret = {
    {true},
 };
 
-static const struct drm_conf_ret *
+static inline const struct drm_conf_ret *
 configuration_query(enum drm_conf conf)
 {
    switch (conf) {
