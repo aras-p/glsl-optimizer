@@ -234,7 +234,7 @@ void si_set_sampler_descriptors(struct si_context *sctx, unsigned shader,
 				unsigned start, unsigned count, void **states);
 void si_update_vertex_buffers(struct si_context *sctx);
 void si_set_ring_buffer(struct pipe_context *ctx, uint shader, uint slot,
-			struct pipe_constant_buffer *input,
+			struct pipe_resource *buffer,
 			unsigned stride, unsigned num_records,
 			bool add_tid, bool swizzle,
 			unsigned element_size, unsigned index_stride);

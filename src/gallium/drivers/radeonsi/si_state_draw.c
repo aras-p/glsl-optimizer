@@ -550,42 +550,38 @@ bcolor:
 /* Initialize state related to ESGS / GSVS ring buffers */
 static void si_init_gs_rings(struct si_context *sctx)
 {
-	unsigned size = 128 * 1024;
+	unsigned esgs_ring_size = 128 * 1024;
+	unsigned gsvs_ring_size = 64 * 1024 * 1024;
 
 	assert(!sctx->gs_rings);
 	sctx->gs_rings = si_pm4_alloc_state(sctx);
 
-	sctx->esgs_ring.buffer =
-		pipe_buffer_create(sctx->b.b.screen, PIPE_BIND_CUSTOM,
-				   PIPE_USAGE_DEFAULT, size);
-	sctx->esgs_ring.buffer_size = size;
+	sctx->esgs_ring = pipe_buffer_create(sctx->b.b.screen, PIPE_BIND_CUSTOM,
+				       PIPE_USAGE_DEFAULT, esgs_ring_size);
 
-	size = 64 * 1024 * 1024;
-	sctx->gsvs_ring.buffer =
-		pipe_buffer_create(sctx->b.b.screen, PIPE_BIND_CUSTOM,
-				   PIPE_USAGE_DEFAULT, size);
-	sctx->gsvs_ring.buffer_size = size;
+	sctx->gsvs_ring = pipe_buffer_create(sctx->b.b.screen, PIPE_BIND_CUSTOM,
+					     PIPE_USAGE_DEFAULT, gsvs_ring_size);
 
 	if (sctx->b.chip_class >= CIK) {
 		si_pm4_set_reg(sctx->gs_rings, R_030900_VGT_ESGS_RING_SIZE,
-			       sctx->esgs_ring.buffer_size / 256);
+			       esgs_ring_size / 256);
 		si_pm4_set_reg(sctx->gs_rings, R_030904_VGT_GSVS_RING_SIZE,
-			       sctx->gsvs_ring.buffer_size / 256);
+			       gsvs_ring_size / 256);
 	} else {
 		si_pm4_set_reg(sctx->gs_rings, R_0088C8_VGT_ESGS_RING_SIZE,
-			       sctx->esgs_ring.buffer_size / 256);
+			       esgs_ring_size / 256);
 		si_pm4_set_reg(sctx->gs_rings, R_0088CC_VGT_GSVS_RING_SIZE,
-			       sctx->gsvs_ring.buffer_size / 256);
+			       gsvs_ring_size / 256);
 	}
 
 	si_set_ring_buffer(&sctx->b.b, PIPE_SHADER_VERTEX, SI_RING_ESGS,
-			   &sctx->esgs_ring, 0, sctx->esgs_ring.buffer_size,
+			   sctx->esgs_ring, 0, esgs_ring_size,
 			   true, true, 4, 64);
 	si_set_ring_buffer(&sctx->b.b, PIPE_SHADER_GEOMETRY, SI_RING_ESGS,
-			   &sctx->esgs_ring, 0, sctx->esgs_ring.buffer_size,
+			   sctx->esgs_ring, 0, esgs_ring_size,
 			   false, false, 0, 0);
 	si_set_ring_buffer(&sctx->b.b, PIPE_SHADER_VERTEX, SI_RING_GSVS,
-			   &sctx->gsvs_ring, 0, sctx->gsvs_ring.buffer_size,
+			   sctx->gsvs_ring, 0, gsvs_ring_size,
 			   false, false, 0, 0);
 }
 
@@ -632,7 +628,7 @@ static void si_update_derived_state(struct si_context *sctx)
 		si_pm4_bind_state(sctx, gs_rings, sctx->gs_rings);
 
 		si_set_ring_buffer(ctx, PIPE_SHADER_GEOMETRY, SI_RING_GSVS,
-				   &sctx->gsvs_ring,
+				   sctx->gsvs_ring,
 				   sctx->gs_shader->current->gs_max_out_vertices *
 				   sctx->gs_shader->current->noutput * 16,
 				   64, true, true, 4, 16);

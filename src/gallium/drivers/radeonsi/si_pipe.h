@@ -154,8 +154,8 @@ struct si_context {
 	struct si_pm4_state	*gs_rings;
 	struct r600_atom	cache_flush;
 	struct pipe_constant_buffer null_const_buf; /* used for set_constant_buffer(NULL) on CIK */
-	struct pipe_constant_buffer esgs_ring;
-	struct pipe_constant_buffer gsvs_ring;
+	struct pipe_resource	*esgs_ring;
+	struct pipe_resource	*gsvs_ring;
 
 	/* SI state handling */
 	union si_state	queued;

@@ -732,7 +732,7 @@ static void si_set_constant_buffer(struct pipe_context *ctx, uint shader, uint s
 /* RING BUFFERS */
 
 void si_set_ring_buffer(struct pipe_context *ctx, uint shader, uint slot,
-			struct pipe_constant_buffer *input,
+			struct pipe_resource *buffer,
 			unsigned stride, unsigned num_records,
 			bool add_tid, bool swizzle,
 			unsigned element_size, unsigned index_stride)
@@ -749,10 +749,10 @@ void si_set_ring_buffer(struct pipe_context *ctx, uint shader, uint slot,
 	assert(slot < buffers->num_buffers);
 	pipe_resource_reference(&buffers->buffers[slot], NULL);
 
-	if (input && input->buffer) {
+	if (buffer) {
 		uint64_t va;
 
-		va = r600_resource(input->buffer)->gpu_address;
+		va = r600_resource(buffer)->gpu_address;
 
 		switch (element_size) {
 		default:
@@ -807,9 +807,9 @@ void si_set_ring_buffer(struct pipe_context *ctx, uint shader, uint slot,
 			  S_008F0C_INDEX_STRIDE(index_stride) |
 			  S_008F0C_ADD_TID_ENABLE(add_tid);
 
-		pipe_resource_reference(&buffers->buffers[slot], input->buffer);
+		pipe_resource_reference(&buffers->buffers[slot], buffer);
 		r600_context_bo_reloc(&sctx->b, &sctx->b.rings.gfx,
-				      (struct r600_resource*)input->buffer,
+				      (struct r600_resource*)buffer,
 				      buffers->shader_usage, buffers->priority);
 		buffers->desc.enabled_mask |= 1 << slot;
 	} else {
