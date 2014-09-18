@@ -121,7 +121,7 @@ VA_DRIVER_INIT_FUNC(VADriverContextP ctx)
    ctx->max_profiles = PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH - PIPE_VIDEO_PROFILE_UNKNOWN;
    ctx->max_entrypoints = 1;
    ctx->max_attributes = 1;
-   ctx->max_image_formats = 1;
+   ctx->max_image_formats = VL_VA_MAX_IMAGE_FORMATS;
    ctx->max_subpic_formats = 1;
    ctx->max_display_attributes = 1;
    ctx->str_vendor = "mesa gallium vaapi";
