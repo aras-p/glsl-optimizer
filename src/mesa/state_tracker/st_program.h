@@ -270,6 +270,31 @@ st_reference_fragprog(struct st_context *st,
                            (struct gl_program *) prog);
 }
 
+/**
+ * This defines mapping from Mesa VARYING_SLOTs to TGSI GENERIC slots.
+ */
+static INLINE unsigned
+st_get_generic_varying_index(struct st_context *st, GLuint attr)
+{
+   if (attr >= VARYING_SLOT_VAR0) {
+      if (st->needs_texcoord_semantic)
+         return attr - VARYING_SLOT_VAR0;
+      else
+         return 9 + (attr - VARYING_SLOT_VAR0);
+   }
+   if (attr == VARYING_SLOT_PNTC) {
+      assert(!st->needs_texcoord_semantic);
+      return 8;
+   }
+   if (attr >= VARYING_SLOT_TEX0 && attr <= VARYING_SLOT_TEX7) {
+      assert(!st->needs_texcoord_semantic);
+      return attr - VARYING_SLOT_TEX0;
+   }
+
+   assert(0);
+   return 0;
+}
+
 
 extern struct st_vp_variant *
 st_get_vp_variant(struct st_context *st,
