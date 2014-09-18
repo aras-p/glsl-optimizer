@@ -27,6 +27,7 @@
  **************************************************************************/
 
 #include "pipe/p_screen.h"
+#include "pipe/p_video_codec.h"
 
 #include "util/u_memory.h"
 #include "util/u_handle_table.h"
@@ -79,6 +80,7 @@ vlVaCreateSurfaces(VADriverContextP ctx, int width, int height, int format,
          goto no_res;
 
       surf->templat = templat;
+      surf->buffer = drv->pipe->create_video_buffer(drv->pipe, &templat);
       surfaces[i] = handle_table_add(drv->htab, surf);
    }
 

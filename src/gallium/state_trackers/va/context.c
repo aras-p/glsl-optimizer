@@ -31,6 +31,7 @@
 
 #include "util/u_memory.h"
 #include "util/u_handle_table.h"
+#include "util/u_video.h"
 #include "vl/vl_winsys.h"
 
 #include "va_private.h"
@@ -172,6 +173,21 @@ vlVaCreateContext(VADriverContextP ctx, VAConfigID config_id, int picture_width,
       return VA_STATUS_ERROR_ALLOCATION_FAILED;
    }
 
+   if (u_reduce_video_profile(context->decoder->profile) ==
+         PIPE_VIDEO_FORMAT_MPEG4_AVC) {
+      context->desc.h264.pps = CALLOC_STRUCT(pipe_h264_pps);
+      if (!context->desc.h264.pps) {
+         FREE(context);
+         return VA_STATUS_ERROR_ALLOCATION_FAILED;
+      }
+      context->desc.h264.pps->sps = CALLOC_STRUCT(pipe_h264_sps);
+      if (!context->desc.h264.pps->sps) {
+         FREE(context->desc.h264.pps);
+         FREE(context);
+         return VA_STATUS_ERROR_ALLOCATION_FAILED;
+      }
+   }
+
    context->desc.base.profile = config_id;
    *context_id = handle_table_add(drv->htab, context);
 
@@ -189,6 +205,11 @@ vlVaDestroyContext(VADriverContextP ctx, VAContextID context_id)
 
    drv = VL_VA_DRIVER(ctx);
    context = handle_table_get(drv->htab, context_id);
+   if (u_reduce_video_profile(context->decoder->profile) ==
+         PIPE_VIDEO_FORMAT_MPEG4_AVC) {
+      FREE(context->desc.h264.pps->sps);
+      FREE(context->desc.h264.pps);
+   }
    context->decoder->destroy(context->decoder);
    FREE(context);
 

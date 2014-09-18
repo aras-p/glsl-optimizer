@@ -36,6 +36,7 @@
 
 #include "pipe/p_video_enums.h"
 #include "pipe/p_video_codec.h"
+#include "pipe/p_video_state.h"
 
 #include "vl/vl_compositor.h"
 #include "vl/vl_csc.h"
@@ -131,6 +132,7 @@ typedef struct {
 
 typedef struct {
    struct pipe_video_codec *decoder;
+   struct pipe_video_buffer *target;
    union {
       struct pipe_picture_desc base;
       struct pipe_mpeg12_picture_desc mpeg12;
