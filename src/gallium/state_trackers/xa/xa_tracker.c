@@ -148,6 +148,7 @@ xa_tracker_create(int drm_fd)
 
 #if GALLIUM_STATIC_TARGETS
     xa->screen = dd_create_screen(drm_fd);
+    (void) loader_fd; /* silence unused var warning */
 #else
     loader_fd = dup(drm_fd);
     if (loader_fd == -1)
