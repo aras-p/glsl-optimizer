@@ -243,6 +243,10 @@ analyse_sample(struct analysis_context *ctx,
       tex_info->texture_unit = inst->Src[1].Register.Index;
       tex_info->sampler_unit = inst->Src[2].Register.Index;
 
+      if (tex_info->texture_unit != tex_info->sampler_unit) {
+         info->sampler_texture_units_different = TRUE;
+      }
+
       if (modifier == LP_BLD_TEX_MODIFIER_EXPLICIT_DERIV ||
           modifier == LP_BLD_TEX_MODIFIER_EXPLICIT_LOD ||
           modifier == LP_BLD_TEX_MODIFIER_LOD_BIAS || shadow) {
