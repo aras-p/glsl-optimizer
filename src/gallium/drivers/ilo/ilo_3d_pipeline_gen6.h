@@ -31,7 +31,7 @@
 #include "ilo_common.h"
 
 struct ilo_3d_pipeline;
-struct ilo_context;
+struct ilo_state_vector;
 
 struct gen6_pipeline_session {
    uint32_t pipe_dirty;
@@ -47,11 +47,11 @@ struct gen6_pipeline_session {
    bool primitive_restart_changed;
 
    void (*emit_draw_states)(struct ilo_3d_pipeline *p,
-                            const struct ilo_context *ilo,
+                            const struct ilo_state_vector *ilo,
                             struct gen6_pipeline_session *session);
 
    void (*emit_draw_commands)(struct ilo_3d_pipeline *p,
-                              const struct ilo_context *ilo,
+                              const struct ilo_state_vector *ilo,
                               struct gen6_pipeline_session *session);
 
    /* indirect states */
@@ -81,77 +81,77 @@ struct gen6_rectlist_session {
 
 void
 gen6_pipeline_prepare(const struct ilo_3d_pipeline *p,
-                      const struct ilo_context *ilo,
+                      const struct ilo_state_vector *ilo,
                       struct gen6_pipeline_session *session);
 
 void
 gen6_pipeline_draw(struct ilo_3d_pipeline *p,
-                   const struct ilo_context *ilo,
+                   const struct ilo_state_vector *ilo,
                    struct gen6_pipeline_session *session);
 
 void
 gen6_pipeline_end(struct ilo_3d_pipeline *p,
-                  const struct ilo_context *ilo,
+                  const struct ilo_state_vector *ilo,
                   struct gen6_pipeline_session *session);
 
 void
 gen6_pipeline_common_select(struct ilo_3d_pipeline *p,
-                            const struct ilo_context *ilo,
+                            const struct ilo_state_vector *ilo,
                             struct gen6_pipeline_session *session);
 
 void
 gen6_pipeline_common_sip(struct ilo_3d_pipeline *p,
-                         const struct ilo_context *ilo,
+                         const struct ilo_state_vector *ilo,
                          struct gen6_pipeline_session *session);
 
 void
 gen6_pipeline_common_base_address(struct ilo_3d_pipeline *p,
-                                  const struct ilo_context *ilo,
+                                  const struct ilo_state_vector *ilo,
                                   struct gen6_pipeline_session *session);
 
 void
 gen6_pipeline_vf(struct ilo_3d_pipeline *p,
-                 const struct ilo_context *ilo,
+                 const struct ilo_state_vector *ilo,
                  struct gen6_pipeline_session *session);
 
 void
 gen6_pipeline_vf_statistics(struct ilo_3d_pipeline *p,
-                            const struct ilo_context *ilo,
+                            const struct ilo_state_vector *ilo,
                             struct gen6_pipeline_session *session);
 
 void
 gen6_pipeline_vs(struct ilo_3d_pipeline *p,
-                 const struct ilo_context *ilo,
+                 const struct ilo_state_vector *ilo,
                  struct gen6_pipeline_session *session);
 
 void
 gen6_pipeline_clip(struct ilo_3d_pipeline *p,
-                   const struct ilo_context *ilo,
+                   const struct ilo_state_vector *ilo,
                    struct gen6_pipeline_session *session);
 
 void
 gen6_pipeline_sf_rect(struct ilo_3d_pipeline *p,
-                      const struct ilo_context *ilo,
+                      const struct ilo_state_vector *ilo,
                       struct gen6_pipeline_session *session);
 
 void
 gen6_pipeline_wm_raster(struct ilo_3d_pipeline *p,
-                        const struct ilo_context *ilo,
+                        const struct ilo_state_vector *ilo,
                         struct gen6_pipeline_session *session);
 
 void
 gen6_pipeline_states(struct ilo_3d_pipeline *p,
-                     const struct ilo_context *ilo,
+                     const struct ilo_state_vector *ilo,
                      struct gen6_pipeline_session *session);
 
 bool
 gen6_pipeline_update_max_svbi(struct ilo_3d_pipeline *p,
-                              const struct ilo_context *ilo,
+                              const struct ilo_state_vector *ilo,
                               struct gen6_pipeline_session *session);
 
 int
 gen6_pipeline_estimate_state_size(const struct ilo_3d_pipeline *p,
-                                  const struct ilo_context *ilo);
+                                  const struct ilo_state_vector *ilo);
 
 void
 ilo_3d_pipeline_emit_flush_gen6(struct ilo_3d_pipeline *p);

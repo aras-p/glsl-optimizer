@@ -28,6 +28,8 @@
 #ifndef ILO_STATE_H
 #define ILO_STATE_H
 
+#include "pipe/p_state.h"
+
 #include "ilo_common.h"
 
 /**
@@ -138,9 +140,7 @@ enum ilo_dirty_flags {
    ILO_DIRTY_ALL              = 0xffffffff,
 };
 
-struct pipe_draw_info;
-struct pipe_resource;
-
+struct intel_bo;
 struct ilo_buffer;
 struct ilo_context;
 struct ilo_shader_state;
@@ -377,24 +377,67 @@ struct ilo_shader_cso {
    uint32_t payload[5];
 };
 
+struct ilo_state_vector {
+   const struct pipe_draw_info *draw;
+
+   uint32_t dirty;
+
+   struct ilo_vb_state vb;
+   const struct ilo_ve_state *ve;
+   struct ilo_ib_state ib;
+
+   struct ilo_shader_state *vs;
+   struct ilo_shader_state *gs;
+
+   struct ilo_so_state so;
+
+   struct pipe_clip_state clip;
+   struct ilo_viewport_state viewport;
+   struct ilo_scissor_state scissor;
+
+   const struct ilo_rasterizer_state *rasterizer;
+   struct pipe_poly_stipple poly_stipple;
+   unsigned sample_mask;
+
+   struct ilo_shader_state *fs;
+
+   const struct ilo_dsa_state *dsa;
+   struct pipe_stencil_ref stencil_ref;
+   const struct ilo_blend_state *blend;
+   struct pipe_blend_color blend_color;
+   struct ilo_fb_state fb;
+
+   /* shader resources */
+   struct ilo_sampler_state sampler[PIPE_SHADER_TYPES];
+   struct ilo_view_state view[PIPE_SHADER_TYPES];
+   struct ilo_cbuf_state cbuf[PIPE_SHADER_TYPES];
+   struct ilo_resource_state resource;
+
+   /* GPGPU */
+   struct ilo_shader_state *cs;
+   struct ilo_resource_state cs_resource;
+   struct ilo_global_binding global_binding;
+};
+
 void
 ilo_init_state_functions(struct ilo_context *ilo);
-
-void
-ilo_init_states(struct ilo_context *ilo);
-
-void
-ilo_cleanup_states(struct ilo_context *ilo);
 
 void
 ilo_finalize_3d_states(struct ilo_context *ilo,
                        const struct pipe_draw_info *draw);
 
 void
-ilo_mark_states_with_resource_renamed(struct ilo_context *ilo,
-                                      struct pipe_resource *res);
+ilo_state_vector_init(const struct ilo_dev_info *dev,
+                      struct ilo_state_vector *vec);
 
 void
-ilo_dump_dirty_flags(uint32_t dirty);
+ilo_state_vector_cleanup(struct ilo_state_vector *vec);
+
+void
+ilo_state_vector_resource_renamed(struct ilo_state_vector *vec,
+                                  struct pipe_resource *res);
+
+void
+ilo_state_vector_dump_dirty(const struct ilo_state_vector *vec);
 
 #endif /* ILO_STATE_H */

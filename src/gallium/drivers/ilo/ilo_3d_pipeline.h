@@ -34,7 +34,7 @@
 struct intel_bo;
 struct ilo_blitter;
 struct ilo_cp;
-struct ilo_context;
+struct ilo_state_vector;
 
 enum ilo_3d_pipeline_invalidate_flags {
    ILO_3D_PIPELINE_INVALIDATE_HW         = 1 << 0,
@@ -74,7 +74,7 @@ struct ilo_3d_pipeline {
                         const void *arg);
 
    void (*emit_draw)(struct ilo_3d_pipeline *pipeline,
-                     const struct ilo_context *ilo);
+                     const struct ilo_state_vector *vec);
 
    void (*emit_flush)(struct ilo_3d_pipeline *pipeline);
 
@@ -166,7 +166,7 @@ ilo_3d_pipeline_estimate_size(struct ilo_3d_pipeline *pipeline,
 
 bool
 ilo_3d_pipeline_emit_draw(struct ilo_3d_pipeline *p,
-                          const struct ilo_context *ilo,
+                          const struct ilo_state_vector *vec,
                           int *prim_generated, int *prim_emitted);
 
 void

@@ -29,7 +29,6 @@
 #define ILO_BLITTER_H
 
 #include "ilo_common.h"
-#include "ilo_context.h"
 #include "ilo_state.h"
 
 enum ilo_blitter_uses {
@@ -49,6 +48,7 @@ enum ilo_blitter_rectlist_op {
 struct blitter_context;
 struct pipe_resource;
 struct pipe_surface;
+struct ilo_context;
 
 struct ilo_blitter {
    struct ilo_context *ilo;

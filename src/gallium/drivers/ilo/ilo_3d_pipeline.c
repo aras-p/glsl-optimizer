@@ -29,7 +29,6 @@
 #include "intel_winsys.h"
 
 #include "ilo_blitter.h"
-#include "ilo_context.h"
 #include "ilo_cp.h"
 #include "ilo_state.h"
 #include "ilo_3d_pipeline_gen6.h"
@@ -150,13 +149,13 @@ handle_invalid_batch_bo(struct ilo_3d_pipeline *p, bool unset)
  */
 bool
 ilo_3d_pipeline_emit_draw(struct ilo_3d_pipeline *p,
-                          const struct ilo_context *ilo,
+                          const struct ilo_state_vector *vec,
                           int *prim_generated, int *prim_emitted)
 {
    bool success;
 
-   if (ilo->dirty & ILO_DIRTY_SO &&
-       ilo->so.enabled && !ilo->so.append_bitmask) {
+   if (vec->dirty & ILO_DIRTY_SO &&
+       vec->so.enabled && !vec->so.append_bitmask) {
       /*
        * We keep track of the SVBI in the driver, so that we can restore it
        * when the HW context is invalidated (by another process).  The value
@@ -179,9 +178,9 @@ ilo_3d_pipeline_emit_draw(struct ilo_3d_pipeline *p,
       handle_invalid_batch_bo(p, false);
 
       /* draw! */
-      p->emit_draw(p, ilo);
+      p->emit_draw(p, vec);
 
-      if (ilo_builder_validate(&ilo->cp->builder, 0, NULL)) {
+      if (ilo_builder_validate(&p->cp->builder, 0, NULL)) {
          success = true;
       } else {
          /* rewind */
@@ -201,11 +200,11 @@ ilo_3d_pipeline_emit_draw(struct ilo_3d_pipeline *p,
 
    if (success) {
       const int num_verts =
-         u_vertices_per_prim(u_reduced_prim(ilo->draw->mode));
+         u_vertices_per_prim(u_reduced_prim(vec->draw->mode));
       const int max_emit =
          (p->state.so_max_vertices - p->state.so_num_vertices) / num_verts;
       const int generated =
-         u_reduced_prims_for_vertices(ilo->draw->mode, ilo->draw->count);
+         u_reduced_prims_for_vertices(vec->draw->mode, vec->draw->count);
       const int emitted = MIN2(generated, max_emit);
 
       p->state.so_num_vertices += emitted * num_verts;

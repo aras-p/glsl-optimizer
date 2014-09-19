@@ -33,8 +33,6 @@
 #include "ilo_state.h"
 #include "ilo_resource.h"
 
-struct ilo_context;
-
 void
 ilo_blit_resolve_slices_for_hiz(struct ilo_context *ilo,
                                 struct pipe_resource *res, unsigned level,
@@ -157,14 +155,15 @@ ilo_blit_resolve_view(struct ilo_context *ilo,
 static inline void
 ilo_blit_resolve_framebuffer(struct ilo_context *ilo)
 {
-   const struct pipe_framebuffer_state *fb = &ilo->fb.state;
+   struct ilo_state_vector *vec = &ilo->state_vector;
+   const struct pipe_framebuffer_state *fb = &vec->fb.state;
    unsigned sh, i;
 
    /* Not all bound views are sampled by the shaders.  How do we tell? */
-   for (sh = 0; sh < Elements(ilo->view); sh++) {
-      for (i = 0; i < ilo->view[sh].count; i++) {
-         if (ilo->view[sh].states[i])
-            ilo_blit_resolve_view(ilo, ilo->view[sh].states[i]);
+   for (sh = 0; sh < Elements(vec->view); sh++) {
+      for (i = 0; i < vec->view[sh].count; i++) {
+         if (vec->view[sh].states[i])
+            ilo_blit_resolve_view(ilo, vec->view[sh].states[i]);
       }
    }
 

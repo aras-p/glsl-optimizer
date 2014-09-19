@@ -456,7 +456,7 @@ ilo_3d_destroy(struct ilo_3d *hw3d)
 }
 
 static bool
-draw_vbo(struct ilo_3d *hw3d, const struct ilo_context *ilo,
+draw_vbo(struct ilo_3d *hw3d, const struct ilo_state_vector *vec,
          int *prim_generated, int *prim_emitted)
 {
    bool need_flush = false;
@@ -471,15 +471,15 @@ draw_vbo(struct ilo_3d *hw3d, const struct ilo_context *ilo,
        * happens in the middle of a batch buffer, we need to insert manual
        * flushes.
        */
-      need_flush = (ilo->dirty & ILO_DIRTY_FB);
+      need_flush = (vec->dirty & ILO_DIRTY_FB);
 
       /* same to SO target changes */
-      need_flush |= (ilo->dirty & ILO_DIRTY_SO);
+      need_flush |= (vec->dirty & ILO_DIRTY_SO);
    }
 
    /* make sure there is enough room first */
    max_len = ilo_3d_pipeline_estimate_size(hw3d->pipeline,
-         ILO_3D_PIPELINE_DRAW, ilo);
+         ILO_3D_PIPELINE_DRAW, vec);
    if (need_flush) {
       max_len += ilo_3d_pipeline_estimate_size(hw3d->pipeline,
             ILO_3D_PIPELINE_FLUSH, NULL);
@@ -494,7 +494,7 @@ draw_vbo(struct ilo_3d *hw3d, const struct ilo_context *ilo,
    if (need_flush)
       ilo_3d_pipeline_emit_flush(hw3d->pipeline);
 
-   return ilo_3d_pipeline_emit_draw(hw3d->pipeline, ilo,
+   return ilo_3d_pipeline_emit_draw(hw3d->pipeline, vec,
          prim_generated, prim_emitted);
 }
 
@@ -621,7 +621,7 @@ ilo_check_restart_index(const struct ilo_context *ilo, unsigned restart_index)
       return true;
 
    /* Note: indices must be unsigned byte, unsigned short or unsigned int */
-   switch (ilo->ib.index_size) {
+   switch (ilo->state_vector.ib.index_size) {
    case 1:
       return ((restart_index & 0xff) == 0xff);
       break;
@@ -674,7 +674,7 @@ static void
 ilo_draw_vbo_with_sw_restart(struct pipe_context *pipe,
                              const struct pipe_draw_info *info)
 {
-   struct ilo_context *ilo = ilo_context(pipe);
+   struct ilo_state_vector *vec = &ilo_context(pipe)->state_vector;
    struct pipe_draw_info *restart_info = NULL;
    int sub_prim_count = 1;
 
@@ -690,21 +690,22 @@ ilo_draw_vbo_with_sw_restart(struct pipe_context *pipe,
       return;
    }
 
-   if (ilo->ib.buffer) {
+   if (vec->ib.buffer) {
       struct pipe_transfer *transfer;
       const void *map;
 
-      map = pipe_buffer_map(pipe, ilo->ib.buffer,
+      map = pipe_buffer_map(pipe, vec->ib.buffer,
             PIPE_TRANSFER_READ, &transfer);
 
-      sub_prim_count = ilo_find_sub_primitives(map + ilo->ib.offset,
-            ilo->ib.index_size, info, restart_info);
+      sub_prim_count = ilo_find_sub_primitives(map + vec->ib.offset,
+            vec->ib.index_size, info, restart_info);
 
       pipe_buffer_unmap(pipe, transfer);
    }
    else {
-      sub_prim_count = ilo_find_sub_primitives(ilo->ib.user_buffer,
-               ilo->ib.index_size, info, restart_info);
+      sub_prim_count =
+         ilo_find_sub_primitives(vec->ib.user_buffer,
+               vec->ib.index_size, info, restart_info);
    }
 
    info = restart_info;
@@ -738,7 +739,7 @@ ilo_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
                u_prim_name(info->mode), info->start, info->count);
       }
 
-      ilo_dump_dirty_flags(ilo->dirty);
+      ilo_state_vector_dump_dirty(&ilo->state_vector);
    }
 
    if (!ilo_3d_pass_render_condition(ilo))
@@ -763,15 +764,15 @@ ilo_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    ilo_blit_resolve_framebuffer(ilo);
 
    /* If draw_vbo ever fails, return immediately. */
-   if (!draw_vbo(hw3d, ilo, &prim_generated, &prim_emitted))
+   if (!draw_vbo(hw3d, &ilo->state_vector, &prim_generated, &prim_emitted))
       return;
 
    /* clear dirty status */
-   ilo->dirty = 0x0;
+   ilo->state_vector.dirty = 0x0;
    hw3d->new_batch = false;
 
    /* avoid dangling pointer reference */
-   ilo->draw = NULL;
+   ilo->state_vector.draw = NULL;
 
    update_prim_count(hw3d, prim_generated, prim_emitted);
 

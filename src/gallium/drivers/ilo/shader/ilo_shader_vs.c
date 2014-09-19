@@ -32,7 +32,6 @@
 #include "toy_legalize.h"
 #include "toy_optimize.h"
 #include "toy_helpers.h"
-#include "ilo_context.h"
 #include "ilo_shader_internal.h"
 
 struct vs_compile_context {

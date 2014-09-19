@@ -29,7 +29,7 @@
 #define ILO_SHADER_INTERNAL_H
 
 #include "ilo_common.h"
-#include "ilo_context.h"
+#include "ilo_state.h"
 #include "ilo_shader.h"
 
 /* XXX The interface needs to be reworked */
@@ -189,7 +189,7 @@ struct ilo_shader_state {
 void
 ilo_shader_variant_init(struct ilo_shader_variant *variant,
                         const struct ilo_shader_info *info,
-                        const struct ilo_context *ilo);
+                        const struct ilo_state_vector *vec);
 
 bool
 ilo_shader_state_use_variant(struct ilo_shader_state *state,

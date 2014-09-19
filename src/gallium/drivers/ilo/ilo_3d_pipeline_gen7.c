@@ -31,7 +31,6 @@
 #include "ilo_blitter.h"
 #include "ilo_builder_3d.h"
 #include "ilo_builder_render.h"
-#include "ilo_context.h"
 #include "ilo_cp.h"
 #include "ilo_shader.h"
 #include "ilo_state.h"
@@ -187,7 +186,7 @@ gen7_wa_pipe_control_ps_max_threads_stall(struct ilo_3d_pipeline *p)
 
 static void
 gen7_pipeline_common_urb(struct ilo_3d_pipeline *p,
-                         const struct ilo_context *ilo,
+                         const struct ilo_state_vector *vec,
                          struct gen6_pipeline_session *session)
 {
    /* 3DSTATE_URB_{VS,GS,HS,DS} */
@@ -197,8 +196,8 @@ gen7_pipeline_common_urb(struct ilo_3d_pipeline *p,
             p->dev->gt == 3) ? 32768 : 16384;
       int vs_entry_size, vs_total_size;
 
-      vs_entry_size = (ilo->vs) ?
-         ilo_shader_get_kernel_param(ilo->vs, ILO_KERNEL_OUTPUT_COUNT) : 0;
+      vs_entry_size = (vec->vs) ?
+         ilo_shader_get_kernel_param(vec->vs, ILO_KERNEL_OUTPUT_COUNT) : 0;
 
       /*
        * From the Ivy Bridge PRM, volume 2 part 1, page 35:
@@ -208,11 +207,11 @@ gen7_pipeline_common_urb(struct ilo_3d_pipeline *p,
        *      Allocation Size must be sized to the maximum of the vertex input
        *      and output structures."
        */
-      if (vs_entry_size < ilo->ve->count)
-         vs_entry_size = ilo->ve->count;
+      if (vs_entry_size < vec->ve->count)
+         vs_entry_size = vec->ve->count;
 
       vs_entry_size *= sizeof(float) * 4;
-      vs_total_size = ilo->dev->urb_size - offset;
+      vs_total_size = p->dev->urb_size - offset;
 
       gen7_wa_pipe_control_vs_depth_stall(p);
 
@@ -227,7 +226,7 @@ gen7_pipeline_common_urb(struct ilo_3d_pipeline *p,
 
 static void
 gen7_pipeline_common_pcb_alloc(struct ilo_3d_pipeline *p,
-                               const struct ilo_context *ilo,
+                               const struct ilo_state_vector *vec,
                                struct gen6_pipeline_session *session)
 {
    /* 3DSTATE_PUSH_CONSTANT_ALLOC_{VS,PS} */
@@ -253,7 +252,7 @@ gen7_pipeline_common_pcb_alloc(struct ilo_3d_pipeline *p,
 
 static void
 gen7_pipeline_common_pointers_1(struct ilo_3d_pipeline *p,
-                                const struct ilo_context *ilo,
+                                const struct ilo_state_vector *vec,
                                 struct gen6_pipeline_session *session)
 {
    /* 3DSTATE_VIEWPORT_STATE_POINTERS_{CC,SF_CLIP} */
@@ -268,7 +267,7 @@ gen7_pipeline_common_pointers_1(struct ilo_3d_pipeline *p,
 
 static void
 gen7_pipeline_common_pointers_2(struct ilo_3d_pipeline *p,
-                                const struct ilo_context *ilo,
+                                const struct ilo_state_vector *vec,
                                 struct gen6_pipeline_session *session)
 {
    /* 3DSTATE_BLEND_STATE_POINTERS */
@@ -292,7 +291,7 @@ gen7_pipeline_common_pointers_2(struct ilo_3d_pipeline *p,
 
 static void
 gen7_pipeline_vs(struct ilo_3d_pipeline *p,
-                 const struct ilo_context *ilo,
+                 const struct ilo_state_vector *vec,
                  struct gen6_pipeline_session *session)
 {
    const bool emit_3dstate_binding_table = session->binding_table_vs_changed;
@@ -329,15 +328,15 @@ gen7_pipeline_vs(struct ilo_3d_pipeline *p,
 
    /* 3DSTATE_VS */
    if (emit_3dstate_vs) {
-      const int num_samplers = ilo->sampler[PIPE_SHADER_VERTEX].count;
+      const int num_samplers = vec->sampler[PIPE_SHADER_VERTEX].count;
 
-      gen6_3DSTATE_VS(&p->cp->builder, ilo->vs, num_samplers);
+      gen6_3DSTATE_VS(&p->cp->builder, vec->vs, num_samplers);
    }
 }
 
 static void
 gen7_pipeline_hs(struct ilo_3d_pipeline *p,
-                 const struct ilo_context *ilo,
+                 const struct ilo_state_vector *vec,
                  struct gen6_pipeline_session *session)
 {
    /* 3DSTATE_CONSTANT_HS and 3DSTATE_HS */
@@ -353,7 +352,7 @@ gen7_pipeline_hs(struct ilo_3d_pipeline *p,
 
 static void
 gen7_pipeline_te(struct ilo_3d_pipeline *p,
-                 const struct ilo_context *ilo,
+                 const struct ilo_state_vector *vec,
                  struct gen6_pipeline_session *session)
 {
    /* 3DSTATE_TE */
@@ -363,7 +362,7 @@ gen7_pipeline_te(struct ilo_3d_pipeline *p,
 
 static void
 gen7_pipeline_ds(struct ilo_3d_pipeline *p,
-                 const struct ilo_context *ilo,
+                 const struct ilo_state_vector *vec,
                  struct gen6_pipeline_session *session)
 {
    /* 3DSTATE_CONSTANT_DS and 3DSTATE_DS */
@@ -380,7 +379,7 @@ gen7_pipeline_ds(struct ilo_3d_pipeline *p,
 
 static void
 gen7_pipeline_gs(struct ilo_3d_pipeline *p,
-                 const struct ilo_context *ilo,
+                 const struct ilo_state_vector *vec,
                  struct gen6_pipeline_session *session)
 {
    /* 3DSTATE_CONSTANT_GS and 3DSTATE_GS */
@@ -398,37 +397,37 @@ gen7_pipeline_gs(struct ilo_3d_pipeline *p,
 
 static void
 gen7_pipeline_sol(struct ilo_3d_pipeline *p,
-                  const struct ilo_context *ilo,
+                  const struct ilo_state_vector *vec,
                   struct gen6_pipeline_session *session)
 {
    const struct pipe_stream_output_info *so_info;
    const struct ilo_shader_state *shader;
    bool dirty_sh = false;
 
-   if (ilo->gs) {
-      shader = ilo->gs;
+   if (vec->gs) {
+      shader = vec->gs;
       dirty_sh = DIRTY(GS);
    }
    else {
-      shader = ilo->vs;
+      shader = vec->vs;
       dirty_sh = DIRTY(VS);
    }
 
    so_info = ilo_shader_get_kernel_so_info(shader);
 
-   gen6_pipeline_update_max_svbi(p, ilo, session);
+   gen6_pipeline_update_max_svbi(p, vec, session);
 
    /* 3DSTATE_SO_BUFFER */
    if ((DIRTY(SO) || dirty_sh || session->batch_bo_changed) &&
-       ilo->so.enabled) {
+       vec->so.enabled) {
       int i;
 
-      for (i = 0; i < ilo->so.count; i++) {
+      for (i = 0; i < vec->so.count; i++) {
          const int stride = so_info->stride[i] * 4; /* in bytes */
          int base = 0;
 
          gen7_3DSTATE_SO_BUFFER(&p->cp->builder, i, base, stride,
-               ilo->so.states[i]);
+               vec->so.states[i]);
       }
 
       for (; i < 4; i++)
@@ -436,51 +435,51 @@ gen7_pipeline_sol(struct ilo_3d_pipeline *p,
    }
 
    /* 3DSTATE_SO_DECL_LIST */
-   if (dirty_sh && ilo->so.enabled)
+   if (dirty_sh && vec->so.enabled)
       gen7_3DSTATE_SO_DECL_LIST(&p->cp->builder, so_info);
 
    /* 3DSTATE_STREAMOUT */
    if (DIRTY(SO) || DIRTY(RASTERIZER) || dirty_sh) {
-      const unsigned buffer_mask = (1 << ilo->so.count) - 1;
+      const unsigned buffer_mask = (1 << vec->so.count) - 1;
       const int output_count = ilo_shader_get_kernel_param(shader,
             ILO_KERNEL_OUTPUT_COUNT);
 
       gen7_3DSTATE_STREAMOUT(&p->cp->builder, buffer_mask, output_count,
-            ilo->rasterizer->state.rasterizer_discard);
+            vec->rasterizer->state.rasterizer_discard);
    }
 }
 
 static void
 gen7_pipeline_sf(struct ilo_3d_pipeline *p,
-                 const struct ilo_context *ilo,
+                 const struct ilo_state_vector *vec,
                  struct gen6_pipeline_session *session)
 {
    /* 3DSTATE_SBE */
    if (DIRTY(RASTERIZER) || DIRTY(FS))
-      gen7_3DSTATE_SBE(&p->cp->builder, ilo->rasterizer, ilo->fs);
+      gen7_3DSTATE_SBE(&p->cp->builder, vec->rasterizer, vec->fs);
 
    /* 3DSTATE_SF */
    if (DIRTY(RASTERIZER) || DIRTY(FB)) {
-      struct pipe_surface *zs = ilo->fb.state.zsbuf;
+      struct pipe_surface *zs = vec->fb.state.zsbuf;
 
       gen7_wa_pipe_control_cs_stall(p, true, true);
-      gen7_3DSTATE_SF(&p->cp->builder, ilo->rasterizer,
+      gen7_3DSTATE_SF(&p->cp->builder, vec->rasterizer,
             (zs) ? zs->format : PIPE_FORMAT_NONE);
    }
 }
 
 static void
 gen7_pipeline_wm(struct ilo_3d_pipeline *p,
-                 const struct ilo_context *ilo,
+                 const struct ilo_state_vector *vec,
                  struct gen6_pipeline_session *session)
 {
    /* 3DSTATE_WM */
    if (DIRTY(FS) || DIRTY(BLEND) || DIRTY(DSA) || DIRTY(RASTERIZER)) {
-      const bool cc_may_kill = (ilo->dsa->dw_alpha ||
-                                ilo->blend->alpha_to_coverage);
+      const bool cc_may_kill = (vec->dsa->dw_alpha ||
+                                vec->blend->alpha_to_coverage);
 
-      gen7_3DSTATE_WM(&p->cp->builder, ilo->fs,
-            ilo->rasterizer, cc_may_kill, 0);
+      gen7_3DSTATE_WM(&p->cp->builder, vec->fs,
+            vec->rasterizer, cc_may_kill, 0);
    }
 
    /* 3DSTATE_BINDING_TABLE_POINTERS_PS */
@@ -506,15 +505,15 @@ gen7_pipeline_wm(struct ilo_3d_pipeline *p,
    /* 3DSTATE_PS */
    if (DIRTY(FS) || DIRTY(SAMPLER_FS) || DIRTY(BLEND) ||
        session->kernel_bo_changed) {
-      const int num_samplers = ilo->sampler[PIPE_SHADER_FRAGMENT].count;
-      const bool dual_blend = ilo->blend->dual_blend;
+      const int num_samplers = vec->sampler[PIPE_SHADER_FRAGMENT].count;
+      const bool dual_blend = vec->blend->dual_blend;
 
       if ((ilo_dev_gen(p->dev) == ILO_GEN(7) ||
            ilo_dev_gen(p->dev) == ILO_GEN(7.5)) &&
           session->hw_ctx_changed)
          gen7_wa_pipe_control_ps_max_threads_stall(p);
 
-      gen7_3DSTATE_PS(&p->cp->builder, ilo->fs, num_samplers, dual_blend);
+      gen7_3DSTATE_PS(&p->cp->builder, vec->fs, num_samplers, dual_blend);
    }
 
    /* 3DSTATE_SCISSOR_STATE_POINTERS */
@@ -547,9 +546,9 @@ gen7_pipeline_wm(struct ilo_3d_pipeline *p,
       const struct ilo_zs_surface *zs;
       uint32_t clear_params;
 
-      if (ilo->fb.state.zsbuf) {
+      if (vec->fb.state.zsbuf) {
          const struct ilo_surface_cso *surface =
-            (const struct ilo_surface_cso *) ilo->fb.state.zsbuf;
+            (const struct ilo_surface_cso *) vec->fb.state.zsbuf;
          const struct ilo_texture_slice *slice =
             ilo_texture_get_slice(ilo_texture(surface->base.texture),
                   surface->base.u.tex.level, surface->base.u.tex.first_layer);
@@ -559,7 +558,7 @@ gen7_pipeline_wm(struct ilo_3d_pipeline *p,
          clear_params = slice->clear_value;
       }
       else {
-         zs = &ilo->fb.null_zs;
+         zs = &vec->fb.null_zs;
          clear_params = 0;
       }
 
@@ -572,7 +571,7 @@ gen7_pipeline_wm(struct ilo_3d_pipeline *p,
 
 static void
 gen7_pipeline_wm_multisample(struct ilo_3d_pipeline *p,
-                             const struct ilo_context *ilo,
+                             const struct ilo_state_vector *vec,
                              struct gen6_pipeline_session *session)
 {
    /* 3DSTATE_MULTISAMPLE and 3DSTATE_SAMPLE_MASK */
@@ -582,33 +581,33 @@ gen7_pipeline_wm_multisample(struct ilo_3d_pipeline *p,
       gen7_wa_pipe_control_cs_stall(p, true, true);
 
       packed_sample_pos =
-         (ilo->fb.num_samples > 4) ? p->packed_sample_position_8x :
-         (ilo->fb.num_samples > 1) ? &p->packed_sample_position_4x :
+         (vec->fb.num_samples > 4) ? p->packed_sample_position_8x :
+         (vec->fb.num_samples > 1) ? &p->packed_sample_position_4x :
          &p->packed_sample_position_1x;
 
       gen6_3DSTATE_MULTISAMPLE(&p->cp->builder,
-            ilo->fb.num_samples, packed_sample_pos,
-            ilo->rasterizer->state.half_pixel_center);
+            vec->fb.num_samples, packed_sample_pos,
+            vec->rasterizer->state.half_pixel_center);
 
       gen7_3DSTATE_SAMPLE_MASK(&p->cp->builder,
-            (ilo->fb.num_samples > 1) ? ilo->sample_mask : 0x1,
-            ilo->fb.num_samples);
+            (vec->fb.num_samples > 1) ? vec->sample_mask : 0x1,
+            vec->fb.num_samples);
    }
 }
 
 static void
 gen7_pipeline_vf_draw(struct ilo_3d_pipeline *p,
-                      const struct ilo_context *ilo,
+                      const struct ilo_state_vector *vec,
                       struct gen6_pipeline_session *session)
 {
    /* 3DPRIMITIVE */
-   gen7_3DPRIMITIVE(&p->cp->builder, ilo->draw, &ilo->ib);
+   gen7_3DPRIMITIVE(&p->cp->builder, vec->draw, &vec->ib);
    p->state.has_gen6_wa_pipe_control = false;
 }
 
 static void
 gen7_pipeline_commands(struct ilo_3d_pipeline *p,
-                       const struct ilo_context *ilo,
+                       const struct ilo_state_vector *vec,
                        struct gen6_pipeline_session *session)
 {
    /*
@@ -616,43 +615,43 @@ gen7_pipeline_commands(struct ilo_3d_pipeline *p,
     * that of the classic i965 driver.  It allows us to compare the command
     * streams easily.
     */
-   gen6_pipeline_common_select(p, ilo, session);
-   gen6_pipeline_common_sip(p, ilo, session);
-   gen6_pipeline_vf_statistics(p, ilo, session);
-   gen7_pipeline_common_pcb_alloc(p, ilo, session);
-   gen6_pipeline_common_base_address(p, ilo, session);
-   gen7_pipeline_common_pointers_1(p, ilo, session);
-   gen7_pipeline_common_urb(p, ilo, session);
-   gen7_pipeline_common_pointers_2(p, ilo, session);
-   gen7_pipeline_wm_multisample(p, ilo, session);
-   gen7_pipeline_gs(p, ilo, session);
-   gen7_pipeline_hs(p, ilo, session);
-   gen7_pipeline_te(p, ilo, session);
-   gen7_pipeline_ds(p, ilo, session);
-   gen7_pipeline_vs(p, ilo, session);
-   gen7_pipeline_sol(p, ilo, session);
-   gen6_pipeline_clip(p, ilo, session);
-   gen7_pipeline_sf(p, ilo, session);
-   gen7_pipeline_wm(p, ilo, session);
-   gen6_pipeline_wm_raster(p, ilo, session);
-   gen6_pipeline_sf_rect(p, ilo, session);
-   gen6_pipeline_vf(p, ilo, session);
-   gen7_pipeline_vf_draw(p, ilo, session);
+   gen6_pipeline_common_select(p, vec, session);
+   gen6_pipeline_common_sip(p, vec, session);
+   gen6_pipeline_vf_statistics(p, vec, session);
+   gen7_pipeline_common_pcb_alloc(p, vec, session);
+   gen6_pipeline_common_base_address(p, vec, session);
+   gen7_pipeline_common_pointers_1(p, vec, session);
+   gen7_pipeline_common_urb(p, vec, session);
+   gen7_pipeline_common_pointers_2(p, vec, session);
+   gen7_pipeline_wm_multisample(p, vec, session);
+   gen7_pipeline_gs(p, vec, session);
+   gen7_pipeline_hs(p, vec, session);
+   gen7_pipeline_te(p, vec, session);
+   gen7_pipeline_ds(p, vec, session);
+   gen7_pipeline_vs(p, vec, session);
+   gen7_pipeline_sol(p, vec, session);
+   gen6_pipeline_clip(p, vec, session);
+   gen7_pipeline_sf(p, vec, session);
+   gen7_pipeline_wm(p, vec, session);
+   gen6_pipeline_wm_raster(p, vec, session);
+   gen6_pipeline_sf_rect(p, vec, session);
+   gen6_pipeline_vf(p, vec, session);
+   gen7_pipeline_vf_draw(p, vec, session);
 }
 
 static void
 ilo_3d_pipeline_emit_draw_gen7(struct ilo_3d_pipeline *p,
-                               const struct ilo_context *ilo)
+                               const struct ilo_state_vector *vec)
 {
    struct gen6_pipeline_session session;
 
-   gen6_pipeline_prepare(p, ilo, &session);
+   gen6_pipeline_prepare(p, vec, &session);
 
    session.emit_draw_states = gen6_pipeline_states;
    session.emit_draw_commands = gen7_pipeline_commands;
 
-   gen6_pipeline_draw(p, ilo, &session);
-   gen6_pipeline_end(p, ilo, &session);
+   gen6_pipeline_draw(p, vec, &session);
+   gen6_pipeline_end(p, vec, &session);
 }
 
 static void
@@ -941,7 +940,7 @@ ilo_3d_pipeline_estimate_size_gen7(struct ilo_3d_pipeline *p,
    switch (action) {
    case ILO_3D_PIPELINE_DRAW:
       {
-         const struct ilo_context *ilo = arg;
+         const struct ilo_state_vector *ilo = arg;
 
          size = gen7_pipeline_max_command_size(p) +
             gen6_pipeline_estimate_state_size(p, ilo);

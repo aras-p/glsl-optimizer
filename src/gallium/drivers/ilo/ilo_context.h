@@ -34,15 +34,14 @@
 #include "ilo_common.h"
 #include "ilo_state.h"
 
-struct pipe_draw_info;
 struct u_upload_mgr;
+
 struct intel_winsys;
-struct intel_bo;
 struct ilo_3d;
 struct ilo_blitter;
 struct ilo_cp;
 struct ilo_screen;
-struct ilo_shader_state;
+struct ilo_shader_cache;
 
 struct ilo_context {
    struct pipe_context base;
@@ -60,44 +59,7 @@ struct ilo_context {
 
    struct u_upload_mgr *uploader;
 
-   const struct pipe_draw_info *draw;
-   uint32_t dirty;
-
-   struct ilo_vb_state vb;
-   const struct ilo_ve_state *ve;
-   struct ilo_ib_state ib;
-
-   struct ilo_shader_state *vs;
-   struct ilo_shader_state *gs;
-
-   struct ilo_so_state so;
-
-   struct pipe_clip_state clip;
-   struct ilo_viewport_state viewport;
-   struct ilo_scissor_state scissor;
-
-   const struct ilo_rasterizer_state *rasterizer;
-   struct pipe_poly_stipple poly_stipple;
-   unsigned sample_mask;
-
-   struct ilo_shader_state *fs;
-
-   const struct ilo_dsa_state *dsa;
-   struct pipe_stencil_ref stencil_ref;
-   const struct ilo_blend_state *blend;
-   struct pipe_blend_color blend_color;
-   struct ilo_fb_state fb;
-
-   /* shader resources */
-   struct ilo_sampler_state sampler[PIPE_SHADER_TYPES];
-   struct ilo_view_state view[PIPE_SHADER_TYPES];
-   struct ilo_cbuf_state cbuf[PIPE_SHADER_TYPES];
-   struct ilo_resource_state resource;
-
-   /* GPGPU */
-   struct ilo_shader_state *cs;
-   struct ilo_resource_state cs_resource;
-   struct ilo_global_binding global_binding;
+   struct ilo_state_vector state_vector;
 };
 
 static inline struct ilo_context *

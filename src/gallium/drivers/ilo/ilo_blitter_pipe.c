@@ -45,26 +45,27 @@ ilo_blitter_pipe_begin(struct ilo_blitter *blitter,
                        bool scissor_enable)
 {
    struct blitter_context *b = blitter->pipe_blitter;
-   struct ilo_context *ilo = blitter->ilo;
+   struct ilo_state_vector *vec = &blitter->ilo->state_vector;
+   struct ilo_3d *hw3d = blitter->ilo->hw3d;
 
    /* vertex states */
-   util_blitter_save_vertex_buffer_slot(b, ilo->vb.states);
-   util_blitter_save_vertex_elements(b, (void *) ilo->ve);
-   util_blitter_save_vertex_shader(b, ilo->vs);
-   util_blitter_save_geometry_shader(b, ilo->gs);
-   util_blitter_save_so_targets(b, ilo->so.count, ilo->so.states);
-   util_blitter_save_rasterizer(b, (void *) ilo->rasterizer);
+   util_blitter_save_vertex_buffer_slot(b, vec->vb.states);
+   util_blitter_save_vertex_elements(b, (void *) vec->ve);
+   util_blitter_save_vertex_shader(b, vec->vs);
+   util_blitter_save_geometry_shader(b, vec->gs);
+   util_blitter_save_so_targets(b, vec->so.count, vec->so.states);
+   util_blitter_save_rasterizer(b, (void *) vec->rasterizer);
 
    /* fragment states */
-   util_blitter_save_fragment_shader(b, ilo->fs);
-   util_blitter_save_depth_stencil_alpha(b, (void *) ilo->dsa);
-   util_blitter_save_blend(b, (void *) ilo->blend);
-   util_blitter_save_sample_mask(b, ilo->sample_mask);
-   util_blitter_save_stencil_ref(b, &ilo->stencil_ref);
-   util_blitter_save_viewport(b, &ilo->viewport.viewport0);
+   util_blitter_save_fragment_shader(b, vec->fs);
+   util_blitter_save_depth_stencil_alpha(b, (void *) vec->dsa);
+   util_blitter_save_blend(b, (void *) vec->blend);
+   util_blitter_save_sample_mask(b, vec->sample_mask);
+   util_blitter_save_stencil_ref(b, &vec->stencil_ref);
+   util_blitter_save_viewport(b, &vec->viewport.viewport0);
 
    if (scissor_enable)
-      util_blitter_save_scissor(b, &ilo->scissor.scissor0);
+      util_blitter_save_scissor(b, &vec->scissor.scissor0);
 
    switch (op) {
    case ILO_BLITTER_PIPE_BLIT:
@@ -74,27 +75,27 @@ ilo_blitter_pipe_begin(struct ilo_blitter *blitter,
        * util_blitter_copy_texture()
        */
       util_blitter_save_fragment_sampler_states(b,
-            ilo->sampler[PIPE_SHADER_FRAGMENT].count,
-            (void **) ilo->sampler[PIPE_SHADER_FRAGMENT].cso);
+            vec->sampler[PIPE_SHADER_FRAGMENT].count,
+            (void **) vec->sampler[PIPE_SHADER_FRAGMENT].cso);
 
       util_blitter_save_fragment_sampler_views(b,
-            ilo->view[PIPE_SHADER_FRAGMENT].count,
-            ilo->view[PIPE_SHADER_FRAGMENT].states);
+            vec->view[PIPE_SHADER_FRAGMENT].count,
+            vec->view[PIPE_SHADER_FRAGMENT].states);
 
-      util_blitter_save_framebuffer(b, &ilo->fb.state);
+      util_blitter_save_framebuffer(b, &vec->fb.state);
 
       /* resource_copy_region() or blit() does not honor render condition */
       util_blitter_save_render_condition(b,
-            ilo->hw3d->render_condition.query,
-            ilo->hw3d->render_condition.cond,
-            ilo->hw3d->render_condition.mode);
+            hw3d->render_condition.query,
+            hw3d->render_condition.cond,
+            hw3d->render_condition.mode);
       break;
    case ILO_BLITTER_PIPE_CLEAR:
       /*
        * we are about to call util_blitter_clear_render_target() or
        * util_blitter_clear_depth_stencil()
        */
-      util_blitter_save_framebuffer(b, &ilo->fb.state);
+      util_blitter_save_framebuffer(b, &vec->fb.state);
       break;
    case ILO_BLITTER_PIPE_CLEAR_FB:
       /* we are about to call util_blitter_clear() */
@@ -212,11 +213,13 @@ ilo_blitter_pipe_clear_fb(struct ilo_blitter *blitter,
                           const union pipe_color_union *color,
                           double depth, unsigned stencil)
 {
+   struct ilo_state_vector *vec = &blitter->ilo->state_vector;
+
    /* TODO we should pause/resume some queries */
    ilo_blitter_pipe_begin(blitter, ILO_BLITTER_PIPE_CLEAR_FB, false);
 
    util_blitter_clear(blitter->pipe_blitter,
-         blitter->ilo->fb.state.width, blitter->ilo->fb.state.height, 1,
+         vec->fb.state.width, vec->fb.state.height, 1,
          buffers, color, depth, stencil);
 
    ilo_blitter_pipe_end(blitter);

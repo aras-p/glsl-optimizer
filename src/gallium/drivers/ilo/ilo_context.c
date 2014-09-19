@@ -70,7 +70,7 @@ ilo_context_destroy(struct pipe_context *pipe)
 {
    struct ilo_context *ilo = ilo_context(pipe);
 
-   ilo_cleanup_states(ilo);
+   ilo_state_vector_cleanup(&ilo->state_vector);
 
    if (ilo->uploader)
       u_upload_destroy(ilo->uploader);
@@ -136,7 +136,7 @@ ilo_context_create(struct pipe_screen *screen, void *priv)
    ilo_init_video_functions(ilo);
    ilo_init_gpgpu_functions(ilo);
 
-   ilo_init_states(ilo);
+   ilo_state_vector_init(ilo->dev, &ilo->state_vector);
 
    /*
     * These must be called last as u_upload/u_blitter are clients of the pipe

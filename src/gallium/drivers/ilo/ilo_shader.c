@@ -164,7 +164,7 @@ ilo_shader_cache_invalidate(struct ilo_shader_cache *shc)
 void
 ilo_shader_variant_init(struct ilo_shader_variant *variant,
                         const struct ilo_shader_info *info,
-                        const struct ilo_context *ilo)
+                        const struct ilo_state_vector *vec)
 {
    int num_views, i;
 
@@ -173,27 +173,27 @@ ilo_shader_variant_init(struct ilo_shader_variant *variant,
    switch (info->type) {
    case PIPE_SHADER_VERTEX:
       variant->u.vs.rasterizer_discard =
-         ilo->rasterizer->state.rasterizer_discard;
+         vec->rasterizer->state.rasterizer_discard;
       variant->u.vs.num_ucps =
-         util_last_bit(ilo->rasterizer->state.clip_plane_enable);
+         util_last_bit(vec->rasterizer->state.clip_plane_enable);
       break;
    case PIPE_SHADER_GEOMETRY:
       variant->u.gs.rasterizer_discard =
-         ilo->rasterizer->state.rasterizer_discard;
-      variant->u.gs.num_inputs = ilo->vs->shader->out.count;
-      for (i = 0; i < ilo->vs->shader->out.count; i++) {
+         vec->rasterizer->state.rasterizer_discard;
+      variant->u.gs.num_inputs = vec->vs->shader->out.count;
+      for (i = 0; i < vec->vs->shader->out.count; i++) {
          variant->u.gs.semantic_names[i] =
-            ilo->vs->shader->out.semantic_names[i];
+            vec->vs->shader->out.semantic_names[i];
          variant->u.gs.semantic_indices[i] =
-            ilo->vs->shader->out.semantic_indices[i];
+            vec->vs->shader->out.semantic_indices[i];
       }
       break;
    case PIPE_SHADER_FRAGMENT:
       variant->u.fs.flatshade =
-         (info->has_color_interp && ilo->rasterizer->state.flatshade);
+         (info->has_color_interp && vec->rasterizer->state.flatshade);
       variant->u.fs.fb_height = (info->has_pos) ?
-         ilo->fb.state.height : 1;
-      variant->u.fs.num_cbufs = ilo->fb.state.nr_cbufs;
+         vec->fb.state.height : 1;
+      variant->u.fs.num_cbufs = vec->fb.state.nr_cbufs;
       break;
    default:
       assert(!"unknown shader type");
@@ -201,19 +201,19 @@ ilo_shader_variant_init(struct ilo_shader_variant *variant,
    }
 
    /* use PCB unless constant buffer 0 is not in user buffer  */
-   if ((ilo->cbuf[info->type].enabled_mask & 0x1) &&
-       !ilo->cbuf[info->type].cso[0].user_buffer)
+   if ((vec->cbuf[info->type].enabled_mask & 0x1) &&
+       !vec->cbuf[info->type].cso[0].user_buffer)
       variant->use_pcb = false;
    else
       variant->use_pcb = true;
 
-   num_views = ilo->view[info->type].count;
+   num_views = vec->view[info->type].count;
    assert(info->num_samplers <= num_views);
 
    variant->num_sampler_views = info->num_samplers;
    for (i = 0; i < info->num_samplers; i++) {
-      const struct pipe_sampler_view *view = ilo->view[info->type].states[i];
-      const struct ilo_sampler_cso *sampler = ilo->sampler[info->type].cso[i];
+      const struct pipe_sampler_view *view = vec->view[info->type].states[i];
+      const struct ilo_sampler_cso *sampler = vec->sampler[info->type].cso[i];
 
       if (view) {
          variant->sampler_view_swizzles[i].r = view->swizzle_r;
@@ -253,7 +253,7 @@ ilo_shader_variant_init(struct ilo_shader_variant *variant,
 static void
 ilo_shader_variant_guess(struct ilo_shader_variant *variant,
                          const struct ilo_shader_info *info,
-                         const struct ilo_context *ilo)
+                         const struct ilo_state_vector *vec)
 {
    int i;
 
@@ -267,7 +267,7 @@ ilo_shader_variant_guess(struct ilo_shader_variant *variant,
    case PIPE_SHADER_FRAGMENT:
       variant->u.fs.flatshade = false;
       variant->u.fs.fb_height = (info->has_pos) ?
-         ilo->fb.state.height : 1;
+         vec->fb.state.height : 1;
       variant->u.fs.num_cbufs = 1;
       break;
    default:
@@ -434,7 +434,8 @@ ilo_shader_info_parse_tokens(struct ilo_shader_info *info)
  * Create a shader state.
  */
 static struct ilo_shader_state *
-ilo_shader_state_create(const struct ilo_context *ilo,
+ilo_shader_state_create(const struct ilo_dev_info *dev,
+                        const struct ilo_state_vector *vec,
                         int type, const void *templ)
 {
    struct ilo_shader_state *state;
@@ -444,7 +445,7 @@ ilo_shader_state_create(const struct ilo_context *ilo,
    if (!state)
       return NULL;
 
-   state->info.dev = ilo->dev;
+   state->info.dev = dev;
    state->info.type = type;
 
    if (type == PIPE_SHADER_COMPUTE) {
@@ -469,7 +470,7 @@ ilo_shader_state_create(const struct ilo_context *ilo,
    ilo_shader_info_parse_tokens(&state->info);
 
    /* guess and compile now */
-   ilo_shader_variant_guess(&variant, &state->info, ilo);
+   ilo_shader_variant_guess(&variant, &state->info, vec);
    if (!ilo_shader_state_use_variant(state, &variant)) {
       ilo_shader_destroy(state);
       return NULL;
@@ -675,11 +676,12 @@ ilo_shader_state_use_variant(struct ilo_shader_state *state,
 struct ilo_shader_state *
 ilo_shader_create_vs(const struct ilo_dev_info *dev,
                      const struct pipe_shader_state *state,
-                     const struct ilo_context *precompile)
+                     const struct ilo_state_vector *precompile)
 {
    struct ilo_shader_state *shader;
 
-   shader = ilo_shader_state_create(precompile, PIPE_SHADER_VERTEX, state);
+   shader = ilo_shader_state_create(dev, precompile,
+         PIPE_SHADER_VERTEX, state);
 
    /* states used in ilo_shader_variant_init() */
    shader->info.non_orthogonal_states = ILO_DIRTY_VIEW_VS |
@@ -692,11 +694,12 @@ ilo_shader_create_vs(const struct ilo_dev_info *dev,
 struct ilo_shader_state *
 ilo_shader_create_gs(const struct ilo_dev_info *dev,
                      const struct pipe_shader_state *state,
-                     const struct ilo_context *precompile)
+                     const struct ilo_state_vector *precompile)
 {
    struct ilo_shader_state *shader;
 
-   shader = ilo_shader_state_create(precompile, PIPE_SHADER_GEOMETRY, state);
+   shader = ilo_shader_state_create(dev, precompile,
+         PIPE_SHADER_GEOMETRY, state);
 
    /* states used in ilo_shader_variant_init() */
    shader->info.non_orthogonal_states = ILO_DIRTY_VIEW_GS |
@@ -710,11 +713,12 @@ ilo_shader_create_gs(const struct ilo_dev_info *dev,
 struct ilo_shader_state *
 ilo_shader_create_fs(const struct ilo_dev_info *dev,
                      const struct pipe_shader_state *state,
-                     const struct ilo_context *precompile)
+                     const struct ilo_state_vector *precompile)
 {
    struct ilo_shader_state *shader;
 
-   shader = ilo_shader_state_create(precompile, PIPE_SHADER_FRAGMENT, state);
+   shader = ilo_shader_state_create(dev, precompile,
+         PIPE_SHADER_FRAGMENT, state);
 
    /* states used in ilo_shader_variant_init() */
    shader->info.non_orthogonal_states = ILO_DIRTY_VIEW_FS |
@@ -728,11 +732,12 @@ ilo_shader_create_fs(const struct ilo_dev_info *dev,
 struct ilo_shader_state *
 ilo_shader_create_cs(const struct ilo_dev_info *dev,
                      const struct pipe_compute_state *state,
-                     const struct ilo_context *precompile)
+                     const struct ilo_state_vector *precompile)
 {
    struct ilo_shader_state *shader;
 
-   shader = ilo_shader_state_create(precompile, PIPE_SHADER_COMPUTE, state);
+   shader = ilo_shader_state_create(dev, precompile,
+         PIPE_SHADER_COMPUTE, state);
 
    shader->info.non_orthogonal_states = 0;
 
@@ -773,7 +778,7 @@ ilo_shader_get_type(const struct ilo_shader_state *shader)
  */
 bool
 ilo_shader_select_kernel(struct ilo_shader_state *shader,
-                         const struct ilo_context *ilo,
+                         const struct ilo_state_vector *vec,
                          uint32_t dirty)
 {
    const struct ilo_shader * const cur = shader->shader;
@@ -782,7 +787,7 @@ ilo_shader_select_kernel(struct ilo_shader_state *shader,
    if (!(shader->info.non_orthogonal_states & dirty))
       return false;
 
-   ilo_shader_variant_init(&variant, &shader->info, ilo);
+   ilo_shader_variant_init(&variant, &shader->info, vec);
    ilo_shader_state_use_variant(shader, &variant);
 
    return (shader->shader != cur);
