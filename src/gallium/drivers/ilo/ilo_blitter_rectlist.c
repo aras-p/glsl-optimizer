@@ -334,7 +334,7 @@ hiz_emit_rectlist(struct ilo_blitter *blitter)
     *  - we may sample from a texture that was rendered to
     *  - we may sample from the fb shortly after
     */
-   if (!ilo_cp_empty(p->cp))
+   if (ilo_builder_batch_used(&p->cp->builder))
       ilo_3d_pipeline_emit_flush(p);
 
    ilo_3d_pipeline_emit_rectlist(p, blitter);

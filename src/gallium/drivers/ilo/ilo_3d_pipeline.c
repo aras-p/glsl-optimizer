@@ -170,7 +170,6 @@ ilo_3d_pipeline_emit_draw(struct ilo_3d_pipeline *p,
          ilo_cp_set_one_off_flags(p->cp, INTEL_EXEC_GEN7_SOL_RESET);
    }
 
-
    while (true) {
       struct ilo_builder_snapshot snapshot;
 
@@ -184,20 +183,20 @@ ilo_3d_pipeline_emit_draw(struct ilo_3d_pipeline *p,
 
       if (ilo_builder_validate(&ilo->cp->builder, 0, NULL)) {
          success = true;
-         break;
-      }
+      } else {
+         /* rewind */
+         ilo_builder_batch_restore(&p->cp->builder, &snapshot);
 
-      /* rewind */
-      ilo_builder_batch_restore(&p->cp->builder, &snapshot);
-
-      if (ilo_cp_empty(p->cp)) {
-         success = false;
-         break;
-      }
-      else {
          /* flush and try again */
-         ilo_cp_flush(p->cp, "out of aperture");
+         if (ilo_builder_batch_used(&p->cp->builder)) {
+            ilo_cp_flush(p->cp, "out of aperture");
+            continue;
+         }
+
+         success = false;
       }
+
+      break;
    }
 
    if (success) {
@@ -291,7 +290,7 @@ ilo_3d_pipeline_emit_rectlist(struct ilo_3d_pipeline *p,
          ilo_builder_batch_restore(&p->cp->builder, &snapshot);
 
          /* flush and try again */
-         if (!ilo_cp_empty(p->cp)) {
+         if (ilo_builder_batch_used(&p->cp->builder)) {
             ilo_cp_flush(p->cp, "out of aperture");
             continue;
          }

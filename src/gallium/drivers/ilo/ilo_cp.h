@@ -102,15 +102,6 @@ ilo_cp_set_owner(struct ilo_cp *cp, enum intel_ring_type ring,
                  const struct ilo_cp_owner *owner);
 
 /**
- * Return true if the parser buffer is empty.
- */
-static inline bool
-ilo_cp_empty(struct ilo_cp *cp)
-{
-   return !ilo_builder_batch_used(&cp->builder);
-}
-
-/**
  * Return the remaining space (in dwords) in the parser buffer.
  */
 static inline int
