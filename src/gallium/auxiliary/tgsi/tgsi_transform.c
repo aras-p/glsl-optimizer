@@ -171,10 +171,22 @@ tgsi_transform_shader(const struct tgsi_token *tokens_in,
                ctx->prolog(ctx);
             }
 
-            if (ctx->transform_instruction)
-               ctx->transform_instruction(ctx, fullinst);
-            else
+            /* XXX Note: we may also want to look for a main/top-level
+             * TGSI_OPCODE_RET instruction in the future.
+             */
+            if (fullinst->Instruction.Opcode == TGSI_OPCODE_END
+                && ctx->epilog) {
+               /* Emit caller's epilog */
+               ctx->epilog(ctx);
+               /* Emit END */
                ctx->emit_instruction(ctx, fullinst);
+            }
+            else {
+               if (ctx->transform_instruction)
+                  ctx->transform_instruction(ctx, fullinst);
+               else
+                  ctx->emit_instruction(ctx, fullinst);
+            }
 
             first_instruction = FALSE;
          }
@@ -218,10 +230,6 @@ tgsi_transform_shader(const struct tgsi_token *tokens_in,
       default:
          assert( 0 );
       }
-   }
-
-   if (ctx->epilog) {
-      ctx->epilog(ctx);
    }
 
    tgsi_parse_free (&parse);
