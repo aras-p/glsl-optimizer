@@ -1943,6 +1943,7 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 	struct r600_surface *surf = NULL;
 	struct r600_texture *rtex;
 	bool old_cb0_is_integer = sctx->framebuffer.cb0_is_integer;
+	unsigned old_nr_samples = sctx->framebuffer.nr_samples;
 	int i;
 
 	if (sctx->framebuffer.state.nr_cbufs) {
@@ -2008,31 +2009,34 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 	sctx->framebuffer.atom.num_dw += 3; /* WINDOW_SCISSOR_BR */
 	sctx->framebuffer.atom.num_dw += 18; /* MSAA sample locations */
 	sctx->framebuffer.atom.dirty = true;
-	sctx->msaa_config.dirty = true;
 
-	/* Set sample locations as fragment shader constants. */
-	switch (sctx->framebuffer.nr_samples) {
-	case 1:
-		constbuf.user_buffer = sctx->b.sample_locations_1x;
-		break;
-	case 2:
-		constbuf.user_buffer = sctx->b.sample_locations_2x;
-		break;
-	case 4:
-		constbuf.user_buffer = sctx->b.sample_locations_4x;
-		break;
-	case 8:
-		constbuf.user_buffer = sctx->b.sample_locations_8x;
-		break;
-	case 16:
-		constbuf.user_buffer = sctx->b.sample_locations_16x;
-		break;
-	default:
-		assert(0);
+	if (sctx->framebuffer.nr_samples != old_nr_samples) {
+		sctx->msaa_config.dirty = true;
+
+		/* Set sample locations as fragment shader constants. */
+		switch (sctx->framebuffer.nr_samples) {
+		case 1:
+			constbuf.user_buffer = sctx->b.sample_locations_1x;
+			break;
+		case 2:
+			constbuf.user_buffer = sctx->b.sample_locations_2x;
+			break;
+		case 4:
+			constbuf.user_buffer = sctx->b.sample_locations_4x;
+			break;
+		case 8:
+			constbuf.user_buffer = sctx->b.sample_locations_8x;
+			break;
+		case 16:
+			constbuf.user_buffer = sctx->b.sample_locations_16x;
+			break;
+		default:
+			assert(0);
+		}
+		constbuf.buffer_size = sctx->framebuffer.nr_samples * 2 * 4;
+		ctx->set_constant_buffer(ctx, PIPE_SHADER_FRAGMENT,
+					 SI_DRIVER_STATE_CONST_BUF, &constbuf);
 	}
-	constbuf.buffer_size = sctx->framebuffer.nr_samples * 2 * 4;
-	ctx->set_constant_buffer(ctx, PIPE_SHADER_FRAGMENT,
-				 SI_DRIVER_STATE_CONST_BUF, &constbuf);
 }
 
 static void si_emit_framebuffer_state(struct si_context *sctx, struct r600_atom *atom)
