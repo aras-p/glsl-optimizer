@@ -31,7 +31,7 @@
 #include "ilo_format.h"
 #include "ilo_resource.h"
 #include "ilo_shader.h"
-#include "ilo_gpe_gen6.h"
+#include "ilo_state_gen.h"
 #include "ilo_gpe.h"
 
 void

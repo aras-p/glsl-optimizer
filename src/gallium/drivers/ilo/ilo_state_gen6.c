@@ -35,7 +35,7 @@
 #include "ilo_resource.h"
 #include "ilo_shader.h"
 #include "ilo_state.h"
-#include "ilo_gpe_gen6.h"
+#include "ilo_state_gen.h"
 
 /**
  * Translate a pipe logicop to the matching hardware logicop.

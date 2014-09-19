@@ -25,8 +25,8 @@
  *    Chia-I Wu <olv@lunarg.com>
  */
 
-#ifndef ILO_GPE_GEN6_H
-#define ILO_GPE_GEN6_H
+#ifndef ILO_STATE_GEN_H
+#define ILO_STATE_GEN_H
 
 #include "genhw/genhw.h"
 #include "intel_winsys.h"
@@ -115,4 +115,4 @@ zs_align_surface(const struct ilo_dev_info *dev,
    zs->payload[2] = dw3;
 }
 
-#endif /* ILO_GPE_GEN6_H */
+#endif /* ILO_STATE_GEN_H */

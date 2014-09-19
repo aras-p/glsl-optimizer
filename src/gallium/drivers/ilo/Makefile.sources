@@ -31,9 +31,6 @@ C_SOURCES := \
 	ilo_cp.h \
 	ilo_format.c \
 	ilo_format.h \
-	ilo_gpe_gen6.c \
-	ilo_gpe_gen6.h \
-	ilo_gpe_gen7.c \
 	ilo_gpe.h \
 	ilo_gpgpu.c \
 	ilo_gpgpu.h \
@@ -50,6 +47,9 @@ C_SOURCES := \
 	ilo_shader.h \
 	ilo_state.c \
 	ilo_state.h \
+	ilo_state_gen.h \
+	ilo_state_gen6.c \
+	ilo_state_gen7.c \
 	ilo_transfer.c \
 	ilo_transfer.h \
 	ilo_video.c \
