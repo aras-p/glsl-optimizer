@@ -1269,13 +1269,8 @@ set_max_gl_versions(struct intel_screen *screen)
    switch (screen->devinfo->gen) {
    case 8:
    case 7:
-      psp->max_gl_core_version = 33;
-      psp->max_gl_compat_version = 30;
-      psp->max_gl_es1_version = 11;
-      psp->max_gl_es2_version = 30;
-      break;
    case 6:
-      psp->max_gl_core_version = 32;
+      psp->max_gl_core_version = 33;
       psp->max_gl_compat_version = 30;
       psp->max_gl_es1_version = 11;
       psp->max_gl_es2_version = 30;

@@ -243,10 +243,8 @@ intelInitExtensions(struct gl_context *ctx)
    ctx->Extensions.OES_standard_derivatives = true;
    ctx->Extensions.OES_EGL_image_external = true;
 
-   if (brw->gen >= 7)
+   if (brw->gen >= 6)
       ctx->Const.GLSLVersion = 330;
-   else if (brw->gen >= 6)
-      ctx->Const.GLSLVersion = 150;
    else
       ctx->Const.GLSLVersion = 120;
    _mesa_override_glsl_version(&ctx->Const);
