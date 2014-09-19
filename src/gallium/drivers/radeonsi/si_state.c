@@ -666,6 +666,8 @@ static void *si_create_rs_state(struct pipe_context *ctx,
 static void si_bind_rs_state(struct pipe_context *ctx, void *state)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
+	struct si_state_rasterizer *old_rs =
+		(struct si_state_rasterizer*)sctx->queued.named.rasterizer;
 	struct si_state_rasterizer *rs = (struct si_state_rasterizer *)state;
 
 	if (state == NULL)
@@ -675,6 +677,10 @@ static void si_bind_rs_state(struct pipe_context *ctx, void *state)
 	sctx->sprite_coord_enable = rs->sprite_coord_enable;
 	sctx->pa_sc_line_stipple = rs->pa_sc_line_stipple;
 	sctx->pa_su_sc_mode_cntl = rs->pa_su_sc_mode_cntl;
+
+	if (sctx->framebuffer.nr_samples > 1 &&
+	    (!old_rs || old_rs->multisample_enable != rs->multisample_enable))
+		sctx->db_render_state.dirty = true;
 
 	si_pm4_bind_state(sctx, rasterizer, rs);
 	si_update_fb_rs_state(sctx);
@@ -845,6 +851,8 @@ static void si_set_occlusion_query_state(struct pipe_context *ctx, bool enable)
 static void si_emit_db_render_state(struct si_context *sctx, struct r600_atom *state)
 {
 	struct radeon_winsys_cs *cs = sctx->b.rings.gfx.cs;
+	struct si_state_rasterizer *rs = sctx->queued.named.rasterizer;
+	unsigned db_shader_control;
 
 	r600_write_context_reg_seq(cs, R_028000_DB_RENDER_CONTROL, 2);
 
@@ -897,10 +905,16 @@ static void si_emit_db_render_state(struct si_context *sctx, struct r600_atom *s
 		r600_write_context_reg(cs, R_028010_DB_RENDER_OVERRIDE2, 0);
 	}
 
+	db_shader_control = S_02880C_Z_ORDER(V_02880C_EARLY_Z_THEN_LATE_Z) |
+			    S_02880C_ALPHA_TO_MASK_DISABLE(sctx->framebuffer.cb0_is_integer) |
+		            sctx->ps_db_shader_control;
+
+	/* Disable the gl_SampleMask fragment shader output if MSAA is disabled. */
+	if (sctx->framebuffer.nr_samples <= 1 || (rs && !rs->multisample_enable))
+		db_shader_control &= C_02880C_MASK_EXPORT_ENABLE;
+
 	r600_write_context_reg(cs, R_02880C_DB_SHADER_CONTROL,
-			       S_02880C_Z_ORDER(V_02880C_EARLY_Z_THEN_LATE_Z) |
-			       S_02880C_ALPHA_TO_MASK_DISABLE(sctx->framebuffer.cb0_is_integer) |
-			       sctx->ps_db_shader_control);
+			       db_shader_control);
 }
 
 /*
@@ -2012,6 +2026,7 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 
 	if (sctx->framebuffer.nr_samples != old_nr_samples) {
 		sctx->msaa_config.dirty = true;
+		sctx->db_render_state.dirty = true;
 
 		/* Set sample locations as fragment shader constants. */
 		switch (sctx->framebuffer.nr_samples) {
