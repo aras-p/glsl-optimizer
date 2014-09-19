@@ -369,7 +369,7 @@ util_cpu_detect(void)
          util_cpu_caps.has_avx    = ((regs2[2] >> 28) & 1) && // AVX
                                     ((regs2[2] >> 27) & 1) && // OSXSAVE
                                     ((xgetbv() & 6) == 6);    // XMM & YMM
-         util_cpu_caps.has_f16c   = (regs2[2] >> 29) & 1;
+         util_cpu_caps.has_f16c   = ((regs2[2] >> 29) & 1) && util_cpu_caps.has_avx;
          util_cpu_caps.has_mmx2   = util_cpu_caps.has_sse; /* SSE cpus supports mmxext too */
 #if defined(PIPE_ARCH_X86_64)
          util_cpu_caps.has_daz = 1;
