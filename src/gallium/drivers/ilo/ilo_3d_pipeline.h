@@ -29,7 +29,7 @@
 #define ILO_3D_PIPELINE_H
 
 #include "ilo_common.h"
-#include "ilo_gpe.h"
+#include "ilo_state.h"
 
 struct intel_bo;
 struct ilo_blitter;

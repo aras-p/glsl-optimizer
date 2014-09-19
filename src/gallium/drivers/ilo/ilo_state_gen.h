@@ -32,7 +32,7 @@
 #include "intel_winsys.h"
 
 #include "ilo_common.h"
-#include "ilo_gpe.h"
+#include "ilo_state.h"
 
 /**
  * Translate winsys tiling to hardware tiling.
@@ -114,5 +114,249 @@ zs_align_surface(const struct ilo_dev_info *dev,
 
    zs->payload[2] = dw3;
 }
+
+void
+ilo_gpe_init_ve(const struct ilo_dev_info *dev,
+                unsigned num_states,
+                const struct pipe_vertex_element *states,
+                struct ilo_ve_state *ve);
+
+void
+ilo_gpe_set_viewport_cso(const struct ilo_dev_info *dev,
+                         const struct pipe_viewport_state *state,
+                         struct ilo_viewport_cso *vp);
+
+void
+ilo_gpe_set_scissor(const struct ilo_dev_info *dev,
+                    unsigned start_slot,
+                    unsigned num_states,
+                    const struct pipe_scissor_state *states,
+                    struct ilo_scissor_state *scissor);
+
+void
+ilo_gpe_set_scissor_null(const struct ilo_dev_info *dev,
+                         struct ilo_scissor_state *scissor);
+
+void
+ilo_gpe_init_rasterizer_clip(const struct ilo_dev_info *dev,
+                             const struct pipe_rasterizer_state *state,
+                             struct ilo_rasterizer_clip *clip);
+
+void
+ilo_gpe_init_rasterizer_sf(const struct ilo_dev_info *dev,
+                           const struct pipe_rasterizer_state *state,
+                           struct ilo_rasterizer_sf *sf);
+
+void
+ilo_gpe_init_rasterizer_wm_gen6(const struct ilo_dev_info *dev,
+                                const struct pipe_rasterizer_state *state,
+                                struct ilo_rasterizer_wm *wm);
+
+void
+ilo_gpe_init_rasterizer_wm_gen7(const struct ilo_dev_info *dev,
+                                const struct pipe_rasterizer_state *state,
+                                struct ilo_rasterizer_wm *wm);
+
+static inline void
+ilo_gpe_init_rasterizer(const struct ilo_dev_info *dev,
+                        const struct pipe_rasterizer_state *state,
+                        struct ilo_rasterizer_state *rasterizer)
+{
+   ilo_gpe_init_rasterizer_clip(dev, state, &rasterizer->clip);
+   ilo_gpe_init_rasterizer_sf(dev, state, &rasterizer->sf);
+
+   if (ilo_dev_gen(dev) >= ILO_GEN(7))
+      ilo_gpe_init_rasterizer_wm_gen7(dev, state, &rasterizer->wm);
+   else
+      ilo_gpe_init_rasterizer_wm_gen6(dev, state, &rasterizer->wm);
+}
+
+void
+ilo_gpe_init_dsa(const struct ilo_dev_info *dev,
+                 const struct pipe_depth_stencil_alpha_state *state,
+                 struct ilo_dsa_state *dsa);
+
+void
+ilo_gpe_init_blend(const struct ilo_dev_info *dev,
+                   const struct pipe_blend_state *state,
+                   struct ilo_blend_state *blend);
+
+void
+ilo_gpe_init_sampler_cso(const struct ilo_dev_info *dev,
+                         const struct pipe_sampler_state *state,
+                         struct ilo_sampler_cso *sampler);
+
+void
+ilo_gpe_init_view_surface_null_gen6(const struct ilo_dev_info *dev,
+                                    unsigned width, unsigned height,
+                                    unsigned depth, unsigned level,
+                                    struct ilo_view_surface *surf);
+
+void
+ilo_gpe_init_view_surface_for_buffer_gen6(const struct ilo_dev_info *dev,
+                                          const struct ilo_buffer *buf,
+                                          unsigned offset, unsigned size,
+                                          unsigned struct_size,
+                                          enum pipe_format elem_format,
+                                          bool is_rt, bool render_cache_rw,
+                                          struct ilo_view_surface *surf);
+
+void
+ilo_gpe_init_view_surface_for_texture_gen6(const struct ilo_dev_info *dev,
+                                           const struct ilo_texture *tex,
+                                           enum pipe_format format,
+                                           unsigned first_level,
+                                           unsigned num_levels,
+                                           unsigned first_layer,
+                                           unsigned num_layers,
+                                           bool is_rt,
+                                           struct ilo_view_surface *surf);
+
+void
+ilo_gpe_init_view_surface_null_gen7(const struct ilo_dev_info *dev,
+                                    unsigned width, unsigned height,
+                                    unsigned depth, unsigned level,
+                                    struct ilo_view_surface *surf);
+
+void
+ilo_gpe_init_view_surface_for_buffer_gen7(const struct ilo_dev_info *dev,
+                                          const struct ilo_buffer *buf,
+                                          unsigned offset, unsigned size,
+                                          unsigned struct_size,
+                                          enum pipe_format elem_format,
+                                          bool is_rt, bool render_cache_rw,
+                                          struct ilo_view_surface *surf);
+
+void
+ilo_gpe_init_view_surface_for_texture_gen7(const struct ilo_dev_info *dev,
+                                           const struct ilo_texture *tex,
+                                           enum pipe_format format,
+                                           unsigned first_level,
+                                           unsigned num_levels,
+                                           unsigned first_layer,
+                                           unsigned num_layers,
+                                           bool is_rt,
+                                           struct ilo_view_surface *surf);
+
+static inline void
+ilo_gpe_init_view_surface_null(const struct ilo_dev_info *dev,
+                               unsigned width, unsigned height,
+                               unsigned depth, unsigned level,
+                               struct ilo_view_surface *surf)
+{
+   if (ilo_dev_gen(dev) >= ILO_GEN(7)) {
+      ilo_gpe_init_view_surface_null_gen7(dev,
+            width, height, depth, level, surf);
+   }
+   else {
+      ilo_gpe_init_view_surface_null_gen6(dev,
+            width, height, depth, level, surf);
+   }
+}
+
+static inline void
+ilo_gpe_init_view_surface_for_buffer(const struct ilo_dev_info *dev,
+                                     const struct ilo_buffer *buf,
+                                     unsigned offset, unsigned size,
+                                     unsigned struct_size,
+                                     enum pipe_format elem_format,
+                                     bool is_rt, bool render_cache_rw,
+                                     struct ilo_view_surface *surf)
+{
+   if (ilo_dev_gen(dev) >= ILO_GEN(7)) {
+      ilo_gpe_init_view_surface_for_buffer_gen7(dev, buf, offset, size,
+            struct_size, elem_format, is_rt, render_cache_rw, surf);
+   }
+   else {
+      ilo_gpe_init_view_surface_for_buffer_gen6(dev, buf, offset, size,
+            struct_size, elem_format, is_rt, render_cache_rw, surf);
+   }
+}
+
+static inline void
+ilo_gpe_init_view_surface_for_texture(const struct ilo_dev_info *dev,
+                                      const struct ilo_texture *tex,
+                                      enum pipe_format format,
+                                      unsigned first_level,
+                                      unsigned num_levels,
+                                      unsigned first_layer,
+                                      unsigned num_layers,
+                                      bool is_rt,
+                                      struct ilo_view_surface *surf)
+{
+   if (ilo_dev_gen(dev) >= ILO_GEN(7)) {
+      ilo_gpe_init_view_surface_for_texture_gen7(dev, tex, format,
+            first_level, num_levels, first_layer, num_layers,
+            is_rt, surf);
+   }
+   else {
+      ilo_gpe_init_view_surface_for_texture_gen6(dev, tex, format,
+            first_level, num_levels, first_layer, num_layers,
+            is_rt, surf);
+   }
+}
+
+void
+ilo_gpe_init_zs_surface(const struct ilo_dev_info *dev,
+                        const struct ilo_texture *tex,
+                        enum pipe_format format, unsigned level,
+                        unsigned first_layer, unsigned num_layers,
+                        struct ilo_zs_surface *zs);
+
+void
+ilo_gpe_init_vs_cso(const struct ilo_dev_info *dev,
+                    const struct ilo_shader_state *vs,
+                    struct ilo_shader_cso *cso);
+
+void
+ilo_gpe_init_gs_cso_gen6(const struct ilo_dev_info *dev,
+                         const struct ilo_shader_state *gs,
+                         struct ilo_shader_cso *cso);
+
+void
+ilo_gpe_init_gs_cso_gen7(const struct ilo_dev_info *dev,
+                         const struct ilo_shader_state *gs,
+                         struct ilo_shader_cso *cso);
+
+static inline void
+ilo_gpe_init_gs_cso(const struct ilo_dev_info *dev,
+                    const struct ilo_shader_state *gs,
+                    struct ilo_shader_cso *cso)
+{
+   if (ilo_dev_gen(dev) >= ILO_GEN(7)) {
+      ilo_gpe_init_gs_cso_gen7(dev, gs, cso);
+   }
+   else {
+      ilo_gpe_init_gs_cso_gen6(dev, gs, cso);
+   }
+}
+
+void
+ilo_gpe_init_fs_cso_gen6(const struct ilo_dev_info *dev,
+                         const struct ilo_shader_state *fs,
+                         struct ilo_shader_cso *cso);
+
+void
+ilo_gpe_init_fs_cso_gen7(const struct ilo_dev_info *dev,
+                         const struct ilo_shader_state *fs,
+                         struct ilo_shader_cso *cso);
+
+static inline void
+ilo_gpe_init_fs_cso(const struct ilo_dev_info *dev,
+                    const struct ilo_shader_state *fs,
+                    struct ilo_shader_cso *cso)
+{
+   if (ilo_dev_gen(dev) >= ILO_GEN(7)) {
+      ilo_gpe_init_fs_cso_gen7(dev, fs, cso);
+   }
+   else {
+      ilo_gpe_init_fs_cso_gen6(dev, fs, cso);
+   }
+}
+
+void
+ilo_gpe_set_fb(const struct ilo_dev_info *dev,
+               const struct pipe_framebuffer_state *state,
+               struct ilo_fb_state *fb);
 
 #endif /* ILO_STATE_GEN_H */

@@ -31,8 +31,8 @@
 #include "pipe/p_context.h"
 #include "util/u_slab.h"
 
-#include "ilo_gpe.h"
 #include "ilo_common.h"
+#include "ilo_state.h"
 
 struct pipe_draw_info;
 struct u_upload_mgr;

@@ -32,9 +32,10 @@
 #include "intel_winsys.h"
 
 #include "ilo_common.h"
-#include "ilo_gpe.h"
 #include "ilo_resource.h"
 #include "ilo_shader.h"
+#include "ilo_state.h"
+#include "ilo_state_gen.h"
 #include "ilo_builder.h"
 
 static inline void

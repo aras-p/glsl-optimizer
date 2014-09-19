@@ -31,7 +31,6 @@ C_SOURCES := \
 	ilo_cp.h \
 	ilo_format.c \
 	ilo_format.h \
-	ilo_gpe.h \
 	ilo_gpgpu.c \
 	ilo_gpgpu.h \
 	ilo_layout.c \

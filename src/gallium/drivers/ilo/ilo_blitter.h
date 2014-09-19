@@ -30,7 +30,7 @@
 
 #include "ilo_common.h"
 #include "ilo_context.h"
-#include "ilo_gpe.h"
+#include "ilo_state.h"
 
 enum ilo_blitter_uses {
    ILO_BLITTER_USE_DSA           = 1 << 0,

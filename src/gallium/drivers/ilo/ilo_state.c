@@ -32,6 +32,7 @@
 #include "ilo_resource.h"
 #include "ilo_shader.h"
 #include "ilo_state.h"
+#include "ilo_state_gen.h"
 
 static void
 finalize_shader_states(struct ilo_context *ilo)

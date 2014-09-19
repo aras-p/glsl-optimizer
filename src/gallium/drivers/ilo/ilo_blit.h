@@ -30,7 +30,7 @@
 
 #include "ilo_common.h"
 #include "ilo_context.h"
-#include "ilo_gpe.h"
+#include "ilo_state.h"
 #include "ilo_resource.h"
 
 struct ilo_context;
