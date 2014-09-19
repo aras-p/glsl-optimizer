@@ -1,0 +1,128 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>Mesa Release Notes</title>
+  <link rel="stylesheet" type="text/css" href="../mesa.css">
+</head>
+<body>
+
+<div class="header">
+  <h1>The Mesa 3D Graphics Library</h1>
+</div>
+
+<iframe src="../contents.html"></iframe>
+<div class="content">
+
+<h1>Mesa 10.2.8 Release Notes / September 19, 2014</h1>
+
+<p>
+Mesa 10.2.8 is a bug fix release which fixes bugs found since the 10.2.7 release.
+</p>
+<p>
+Mesa 10.2.8 implements the OpenGL 3.3 API, but the version reported by
+glGetString(GL_VERSION) or glGetIntegerv(GL_MAJOR_VERSION) /
+glGetIntegerv(GL_MINOR_VERSION) depends on the particular driver being used.
+Some drivers don't support all the features required in OpenGL 3.3.  OpenGL
+3.3 is <strong>only</strong> available if requested at context creation
+because compatibility contexts are not supported.
+</p>
+
+<h2>SHA256 checksums</h2>
+<pre>
+TBD
+</pre>
+
+<h2>New features</h2>
+<p>None</p>
+
+<h2>Bug fixes</h2>
+
+<p>This list is likely incomplete.</p>
+
+<ul>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=77493">Bug 77493</a> - lp_test_arit fails with llvm &gt;= llvm-3.5svn r206094</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=82539">Bug 82539</a> - vmw_screen_dri.lo In file included from vmw_screen_dri.c:41: vmwgfx_drm.h:32:17: error: drm.h: No such file or directory</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=82882">Bug 82882</a> - [swrast] piglit glsl-fs-uniform-bool-1 regression</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=83432">Bug 83432</a> - r600_query.c:269:r600_emit_query_end: Assertion `ctx-&gt;num_pipelinestat_queries &gt; 0' failed [Gallium HUD]</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=83567">Bug 83567</a> - Mesa 10.2.6 does not compile with llvm 3.5</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=83735">Bug 83735</a> - [mesa-10.2.x] broken with llvm-3.5 and old CPUs</li>
+
+</ul>
+
+<h2>Changes</h2>
+<p>Aaron Watry (1):</p>
+<ul>
+  <li>gallivm: Fix build after LLVM commit 211259</li>
+</ul>
+
+<p>Christoph Bumiller (2):</p>
+<ul>
+  <li>nv50/ir/util: fix BitSet issues</li>
+  <li>nvc0/ir: clarify recursion fix to finding first tex uses</li>
+</ul>
+
+<p>Emil Velikov (3):</p>
+<ul>
+  <li>docs: Add sha256 sums for the 10.2.7 release</li>
+  <li>configure: bail out if building svga without libdrm</li>
+  <li>Update VERSION to 10.2.8</li>
+</ul>
+
+<p>Ilia Mirkin (4):</p>
+<ul>
+  <li>nv50/ir: avoid array overrun when checking for supported mods</li>
+  <li>nouveau: only enable the depth test if there actually is a depth buffer</li>
+  <li>nouveau: only enable stencil func if the visual has stencil bits</li>
+  <li>nouveau: change internal variables to avoid conflicts with macro args</li>
+</ul>
+
+<p>Jonathan Gray (1):</p>
+<ul>
+  <li>configure.ac: strip _GNU_SOURCE from llvm-config output</li>
+</ul>
+
+<p>José Fonseca (1):</p>
+<ul>
+  <li>gallivm: Disable workaround for PR12833 on LLVM 3.2+.</li>
+</ul>
+
+<p>Maarten Lankhorst (4):</p>
+<ul>
+  <li>nouveau: re-allocate bo's on overflow</li>
+  <li>nouveau: fix MPEG4 hw decoding</li>
+  <li>nouveau: rework reference frame handling</li>
+  <li>nouveau: remove unneeded assert</li>
+</ul>
+
+<p>Marek Olšák (3):</p>
+<ul>
+  <li>r600g,radeonsi: make sure there's enough CS space before resuming queries</li>
+  <li>mesa: set UniformBooleanTrue = 1.0f by default</li>
+  <li>st/mesa: use 1.0f as boolean true on drivers without integer support</li>
+</ul>
+
+<p>Richard Sandiford (1):</p>
+<ul>
+  <li>gallivm: Fix uses of 2^24</li>
+</ul>
+
+<p>Roland Scheidegger (1):</p>
+<ul>
+  <li>gallivm: set mcpu when initializing llvm execution engine</li>
+</ul>
+
+<p>Thomas Hellstrom (1):</p>
+<ul>
+  <li>winsys/svga: Fix incorrect type usage in IOCTL v2</li>
+</ul>
+
+</div>
+</body>
+</html>
