@@ -896,6 +896,11 @@ static void si_emit_db_render_state(struct si_context *sctx, struct r600_atom *s
 	} else {
 		r600_write_context_reg(cs, R_028010_DB_RENDER_OVERRIDE2, 0);
 	}
+
+	r600_write_context_reg(cs, R_02880C_DB_SHADER_CONTROL,
+			       S_02880C_Z_ORDER(V_02880C_EARLY_Z_THEN_LATE_Z) |
+			       S_02880C_ALPHA_TO_MASK_DISABLE(sctx->framebuffer.cb0_is_integer) |
+			       sctx->ps_db_shader_control);
 }
 
 /*
@@ -1937,6 +1942,7 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 	struct pipe_constant_buffer constbuf = {0};
 	struct r600_surface *surf = NULL;
 	struct r600_texture *rtex;
+	bool old_cb0_is_integer = sctx->framebuffer.cb0_is_integer;
 	int i;
 
 	if (sctx->framebuffer.state.nr_cbufs) {
@@ -1956,6 +1962,9 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 	sctx->framebuffer.log_samples = util_logbase2(sctx->framebuffer.nr_samples);
 	sctx->framebuffer.cb0_is_integer = state->nr_cbufs && state->cbufs[0] &&
 				  util_format_is_pure_integer(state->cbufs[0]->format);
+
+	if (sctx->framebuffer.cb0_is_integer != old_cb0_is_integer)
+		sctx->db_render_state.dirty = true;
 
 	for (i = 0; i < state->nr_cbufs; i++) {
 		if (!state->cbufs[i])
@@ -2983,7 +2992,7 @@ static void si_need_gfx_cs_space(struct pipe_context *ctx, unsigned num_dw,
 void si_init_state_functions(struct si_context *sctx)
 {
 	si_init_atom(&sctx->framebuffer.atom, &sctx->atoms.s.framebuffer, si_emit_framebuffer_state, 0);
-	si_init_atom(&sctx->db_render_state, &sctx->atoms.s.db_render_state, si_emit_db_render_state, 7);
+	si_init_atom(&sctx->db_render_state, &sctx->atoms.s.db_render_state, si_emit_db_render_state, 10);
 
 	sctx->b.b.create_blend_state = si_create_blend_state;
 	sctx->b.b.bind_blend_state = si_bind_blend_state;

@@ -231,7 +231,7 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 {
 	struct si_context *sctx = (struct si_context *)ctx;
 	struct si_pm4_state *pm4;
-	unsigned i, spi_ps_in_control, db_shader_control;
+	unsigned i, spi_ps_in_control;
 	unsigned num_sgprs, num_user_sgprs;
 	unsigned spi_baryc_cntl = 0, spi_ps_input_ena;
 	uint64_t va;
@@ -241,9 +241,6 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 
 	if (pm4 == NULL)
 		return;
-
-	db_shader_control = S_02880C_Z_ORDER(V_02880C_EARLY_Z_THEN_LATE_Z) |
-			    S_02880C_ALPHA_TO_MASK_DISABLE(sctx->framebuffer.cb0_is_integer);
 
 	for (i = 0; i < shader->shader.ninput; i++) {
 		switch (shader->shader.input[i].name) {
@@ -263,8 +260,6 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 			continue;
 		}
 	}
-
-	db_shader_control |= shader->db_shader_control;
 
 	spi_ps_in_control = S_0286D8_NUM_INTERP(shader->shader.nparam) |
 		S_0286D8_BC_OPTIMIZE_DISABLE(1);
@@ -311,9 +306,6 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 		       S_00B02C_EXTRA_LDS_SIZE(shader->lds_size) |
 		       S_00B02C_USER_SGPR(num_user_sgprs));
 
-	si_pm4_set_reg(pm4, R_02880C_DB_SHADER_CONTROL, db_shader_control);
-
-	shader->cb0_is_integer = sctx->framebuffer.cb0_is_integer;
 	sctx->b.flags |= R600_CONTEXT_INV_SHADER_CACHE;
 }
 
@@ -679,8 +671,7 @@ static void si_update_derived_state(struct si_context *sctx)
 
 	si_shader_select(ctx, sctx->ps_shader);
 
-	if (!sctx->ps_shader->current->pm4 ||
-	    sctx->ps_shader->current->cb0_is_integer != sctx->framebuffer.cb0_is_integer)
+	if (!sctx->ps_shader->current->pm4)
 		si_pipe_shader_ps(ctx, sctx->ps_shader->current);
 
 	si_pm4_bind_state(sctx, ps, sctx->ps_shader->current->pm4);
@@ -692,6 +683,11 @@ static void si_update_derived_state(struct si_context *sctx)
 		 */
 		sctx->emitted.named.ps = NULL;
 		si_update_spi_map(sctx);
+	}
+
+	if (sctx->ps_db_shader_control != sctx->ps_shader->current->db_shader_control) {
+		sctx->ps_db_shader_control = sctx->ps_shader->current->db_shader_control;
+		sctx->db_render_state.dirty = true;
 	}
 }
 

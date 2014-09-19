@@ -186,7 +186,6 @@ struct si_pipe_shader {
 	unsigned			spi_shader_z_format;
 	unsigned			db_shader_control;
 	unsigned			cb_shader_mask;
-	bool				cb0_is_integer;
 	union si_shader_key		key;
 };
 

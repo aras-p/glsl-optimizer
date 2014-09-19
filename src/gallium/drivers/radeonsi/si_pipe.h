@@ -168,6 +168,7 @@ struct si_context {
 	bool			db_inplace_flush_enabled;
 	bool			db_depth_clear;
 	bool			db_depth_disable_expclear;
+	unsigned		ps_db_shader_control;
 };
 
 /* si_blit.c */
