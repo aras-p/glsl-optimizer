@@ -171,7 +171,8 @@ static void update_raster_state( struct st_context *st )
             raster->sprite_coord_enable |= 1 << i;
          }
       }
-      if (fragProg->Base.InputsRead & VARYING_BIT_PNTC) {
+      if (!st->needs_texcoord_semantic &&
+          fragProg->Base.InputsRead & VARYING_BIT_PNTC) {
          raster->sprite_coord_enable |=
             1 << (VARYING_SLOT_PNTC - VARYING_SLOT_TEX0);
       }
