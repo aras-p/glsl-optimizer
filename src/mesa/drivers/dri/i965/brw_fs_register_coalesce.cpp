@@ -64,9 +64,9 @@ is_nop_mov(const fs_inst *inst)
 }
 
 static bool
-is_copy_payload(const fs_inst *inst, int src_size)
+is_copy_payload(const fs_visitor *v, const fs_inst *inst)
 {
-   if (src_size != inst->sources)
+   if (v->virtual_grf_sizes[inst->src[0].reg] != inst->regs_written)
       return false;
 
    const int reg = inst->src[0].reg;
@@ -83,7 +83,7 @@ is_copy_payload(const fs_inst *inst, int src_size)
 }
 
 static bool
-is_coalesce_candidate(const fs_inst *inst, const int *virtual_grf_sizes)
+is_coalesce_candidate(const fs_visitor *v, const fs_inst *inst)
 {
    if ((inst->opcode != BRW_OPCODE_MOV &&
         inst->opcode != SHADER_OPCODE_LOAD_PAYLOAD) ||
@@ -98,12 +98,12 @@ is_coalesce_candidate(const fs_inst *inst, const int *virtual_grf_sizes)
       return false;
    }
 
-   if (virtual_grf_sizes[inst->src[0].reg] >
-       virtual_grf_sizes[inst->dst.reg])
+   if (v->virtual_grf_sizes[inst->src[0].reg] >
+       v->virtual_grf_sizes[inst->dst.reg])
       return false;
 
    if (inst->opcode == SHADER_OPCODE_LOAD_PAYLOAD) {
-      if (!is_copy_payload(inst, virtual_grf_sizes[inst->src[0].reg])) {
+      if (!is_copy_payload(v, inst)) {
          return false;
       }
    }
@@ -171,7 +171,7 @@ fs_visitor::register_coalesce()
    int var_from[MAX_SAMPLER_MESSAGE_SIZE];
 
    foreach_block_and_inst(block, fs_inst, inst, cfg) {
-      if (!is_coalesce_candidate(inst, virtual_grf_sizes))
+      if (!is_coalesce_candidate(this, inst))
          continue;
 
       if (is_nop_mov(inst)) {
