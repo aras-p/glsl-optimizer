@@ -56,7 +56,7 @@
 #define ILO_PRIM_MAX (PIPE_PRIM_MAX + 1)
 
 enum ilo_debug {
-   ILO_DEBUG_3D        = 1 << 0,
+   ILO_DEBUG_BATCH     = 1 << 0,
    ILO_DEBUG_VS        = 1 << 1,
    ILO_DEBUG_GS        = 1 << 2,
    ILO_DEBUG_FS        = 1 << 3,

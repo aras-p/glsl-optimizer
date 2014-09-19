@@ -385,9 +385,6 @@ ilo_3d_process_query(struct ilo_context *ilo, struct ilo_query *q)
 void
 ilo_3d_cp_submitted(struct ilo_3d *hw3d)
 {
-   if (ilo_debug & ILO_DEBUG_3D)
-      ilo_builder_decode(&hw3d->cp->builder);
-
    /* invalidate the pipeline */
    ilo_3d_pipeline_invalidate(hw3d->pipeline,
          ILO_3D_PIPELINE_INVALIDATE_BATCH_BO |

@@ -42,7 +42,7 @@
 int ilo_debug;
 
 static const struct debug_named_value ilo_debug_flags[] = {
-   { "3d",        ILO_DEBUG_3D,       "Dump 3D commands and states" },
+   { "batch",     ILO_DEBUG_BATCH,    "Dump batch/state/surface/instruction buffers" },
    { "vs",        ILO_DEBUG_VS,       "Dump vertex shaders" },
    { "gs",        ILO_DEBUG_GS,       "Dump geometry shaders" },
    { "fs",        ILO_DEBUG_FS,       "Dump fragment shaders" },

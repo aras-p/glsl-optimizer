@@ -138,6 +138,9 @@ ilo_cp_submit_internal(struct ilo_cp *cp)
       cp->last_submitted_bo = bo;
       intel_bo_reference(cp->last_submitted_bo);
 
+      if (ilo_debug & ILO_DEBUG_BATCH)
+         ilo_builder_decode(&cp->builder);
+
       if (cp->submit_callback)
          cp->submit_callback(cp, cp->submit_callback_data);
    }
