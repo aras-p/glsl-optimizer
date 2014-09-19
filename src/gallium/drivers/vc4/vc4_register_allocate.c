@@ -75,6 +75,8 @@ vc4_register_allocate(struct vc4_compile *c)
                 }
                 if (qinst->op == QOP_FRAG_Z)
                         reg_in_use[3 + 32 + QPU_R_FRAG_PAYLOAD_ZW] = true;
+                if (qinst->op == QOP_FRAG_W)
+                        reg_in_use[3 + QPU_R_FRAG_PAYLOAD_ZW] = true;
         }
 
         foreach(node, &c->instructions) {
@@ -126,6 +128,12 @@ vc4_register_allocate(struct vc4_compile *c)
                                                 break;
                                         case QOP_FRAG_Z:
                                                 if (reg.mux != QPU_MUX_B ||
+                                                    reg.addr != QPU_R_FRAG_PAYLOAD_ZW) {
+                                                        continue;
+                                                }
+                                                break;
+                                        case QOP_FRAG_W:
+                                                if (reg.mux != QPU_MUX_A ||
                                                     reg.addr != QPU_R_FRAG_PAYLOAD_ZW) {
                                                         continue;
                                                 }

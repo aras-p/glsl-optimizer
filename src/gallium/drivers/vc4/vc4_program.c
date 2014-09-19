@@ -840,7 +840,7 @@ emit_fragcoord_input(struct vc4_compile *c, int attr)
                 qir_FMUL(c,
                          qir_ITOF(c, qir_FRAG_Z(c)),
                          qir_uniform_f(c, 1.0 / 0xffffff));
-        c->inputs[attr * 4 + 3] = qir_FRAG_RCP_W(c);
+        c->inputs[attr * 4 + 3] = qir_RCP(c, qir_FRAG_W(c));
 }
 
 static struct qreg

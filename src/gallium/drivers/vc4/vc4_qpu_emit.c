@@ -401,16 +401,10 @@ vc4_generate_code(struct vc4_compile *c)
                         break;
 
                 case QOP_FRAG_Z:
-                        /* QOP_FRAG_Z doesn't emit instructions, just
-                         * allocates the register to the Z payload.
+                case QOP_FRAG_W:
+                        /* QOP_FRAG_Z/W don't emit instructions, just allocate
+                         * the register to the Z/W payload.
                          */
-                        break;
-
-                case QOP_FRAG_RCP_W:
-                        queue(c, qpu_a_MOV(qpu_rb(QPU_W_SFU_RECIP),
-                                           qpu_ra(QPU_R_FRAG_PAYLOAD_ZW)));
-
-                        queue(c, qpu_a_MOV(dst, qpu_r4()));
                         break;
 
                 case QOP_TLB_DISCARD_SETUP:
