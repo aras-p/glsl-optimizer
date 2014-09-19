@@ -266,9 +266,6 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 
 	db_shader_control |= shader->db_shader_control;
 
-	if (shader->shader.uses_kill || shader->key.ps.alpha_func != PIPE_FUNC_ALWAYS)
-		db_shader_control |= S_02880C_KILL_ENABLE(1);
-
 	spi_ps_in_control = S_0286D8_NUM_INTERP(shader->shader.nparam) |
 		S_0286D8_BC_OPTIMIZE_DISABLE(1);
 

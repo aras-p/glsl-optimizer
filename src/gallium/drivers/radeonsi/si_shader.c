@@ -774,6 +774,8 @@ static void si_alpha_test(struct lp_build_tgsi_context *bld_base,
 				LLVMVoidTypeInContext(gallivm->context),
 				NULL, 0, 0);
 	}
+
+	si_shader_ctx->shader->db_shader_control |= S_02880C_KILL_ENABLE(1);
 }
 
 static void si_llvm_emit_clipvertex(struct lp_build_tgsi_context * bld_base,
@@ -2751,7 +2753,9 @@ int si_pipe_shader_create(
 
 	tgsi_scan_shader(sel->tokens, &shader_info);
 
-	shader->shader.uses_kill = shader_info.uses_kill;
+	if (shader_info.uses_kill)
+		shader->db_shader_control |= S_02880C_KILL_ENABLE(1);
+
 	shader->shader.uses_instanceid = shader_info.uses_instanceid;
 	bld_base->info = &shader_info;
 	bld_base->emit_fetch_funcs[TGSI_FILE_CONSTANT] = fetch_constant;
