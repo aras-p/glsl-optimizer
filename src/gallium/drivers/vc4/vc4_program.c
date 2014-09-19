@@ -852,7 +852,7 @@ emit_fragment_varying(struct vc4_compile *c, int index)
         };
 
         /* XXX: multiply by W */
-        return qir_VARY_ADD_C(c, qir_MOV(c, vary));
+        return qir_VARY_ADD_C(c, qir_FMUL(c, vary, qir_FRAG_W(c)));
 }
 
 static void
