@@ -336,6 +336,16 @@ IteratorRef Graph::safeIteratorCFG()
    return this->iteratorCFG();
 }
 
+/**
+ * Edge classification:
+ *
+ * We have a graph and want to classify the edges into one of four types:
+ * - TREE:    edges that belong to a spanning tree of the graph
+ * - FORWARD: edges from a node to a descendent in the spanning tree
+ * - BACK:    edges from a node to a parent (or itself) in the spanning tree
+ * - CROSS:   all other edges (because they cross between branches in the
+ *            spanning tree)
+ */
 void Graph::classifyEdges()
 {
    int seq;
