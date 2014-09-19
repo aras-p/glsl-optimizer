@@ -25,6 +25,7 @@
  *    Chia-I Wu <olv@lunarg.com>
  */
 
+#include "pipe/p_state.h"
 #include "os/os_misc.h"
 #include "util/u_format_s3tc.h"
 #include "vl/vl_decoder.h"
@@ -38,6 +39,11 @@
 #include "ilo_transfer.h" /* for ILO_TRANSFER_MAP_BUFFER_ALIGNMENT */
 #include "ilo_public.h"
 #include "ilo_screen.h"
+
+struct ilo_fence {
+   struct pipe_reference reference;
+   struct intel_bo *bo;
+};
 
 int ilo_debug;
 

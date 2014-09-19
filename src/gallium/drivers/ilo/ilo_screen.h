@@ -29,17 +29,13 @@
 #define ILO_SCREEN_H
 
 #include "pipe/p_screen.h"
-#include "pipe/p_state.h"
 
 #include "ilo_common.h"
 
 struct intel_winsys;
 struct intel_bo;
 
-struct ilo_fence {
-   struct pipe_reference reference;
-   struct intel_bo *bo;
-};
+struct ilo_fence;
 
 struct ilo_screen {
    struct pipe_screen base;
