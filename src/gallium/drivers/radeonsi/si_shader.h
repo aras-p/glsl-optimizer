@@ -140,7 +140,6 @@ struct si_shader {
 	unsigned		gs_input_prim;
 	unsigned		gs_output_prim;
 	unsigned		gs_max_out_vertices;
-	unsigned		ps_conservative_z;
 
 	unsigned		nparam;
 	bool			uses_kill;
