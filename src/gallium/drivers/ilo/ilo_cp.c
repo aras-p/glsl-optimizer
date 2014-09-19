@@ -31,12 +31,62 @@
 #include "ilo_shader.h"
 #include "ilo_cp.h"
 
+static const struct ilo_cp_owner ilo_cp_default_owner;
+
+static void
+ilo_cp_release_owner(struct ilo_cp *cp)
+{
+   if (cp->owner != &ilo_cp_default_owner) {
+      const struct ilo_cp_owner *owner = cp->owner;
+
+      cp->owner = &ilo_cp_default_owner;
+
+      assert(ilo_cp_space(cp) >= owner->reserve);
+      owner->release(cp, owner->data);
+   }
+}
+
+/**
+ * Set the parser owner.  If this is a new owner or a new ring, the old owner
+ * is released and the new owner's own() is called.
+ *
+ * The parser may be implicitly flushed if there is a ring change or there is
+ * not enough space for the new owner.
+ */
+void
+ilo_cp_set_owner(struct ilo_cp *cp, enum intel_ring_type ring,
+                 const struct ilo_cp_owner *owner)
+{
+   if (!owner)
+      owner = &ilo_cp_default_owner;
+
+   if (cp->ring != ring) {
+      ilo_cp_flush(cp, "ring change");
+      cp->ring = ring;
+   }
+
+   if (cp->owner != owner) {
+      ilo_cp_release_owner(cp);
+
+      /* multiply by 2 because there are own() and release() */
+      if (ilo_cp_space(cp) < owner->reserve * 2) {
+         ilo_cp_flush(cp, "new owner");
+         assert(ilo_cp_space(cp) >= owner->reserve * 2);
+      }
+
+      cp->owner = owner;
+
+      assert(ilo_cp_space(cp) >= owner->reserve);
+      cp->owner->own(cp, cp->owner->data);
+   }
+}
+
 static struct intel_bo *
 ilo_cp_end_batch(struct ilo_cp *cp, unsigned *used)
 {
    struct intel_bo *bo;
 
-   ilo_cp_set_owner(cp, NULL, 0);
+   ilo_cp_release_owner(cp);
 
    if (!ilo_builder_batch_used(&cp->builder)) {
       ilo_builder_batch_discard(&cp->builder);
@@ -130,6 +180,7 @@ ilo_cp_create(const struct ilo_dev_info *dev,
    }
 
    cp->ring = INTEL_RING_RENDER;
+   cp->owner = &ilo_cp_default_owner;
 
    ilo_builder_init(&cp->builder, dev, winsys);
 

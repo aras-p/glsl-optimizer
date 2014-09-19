@@ -38,9 +38,20 @@ struct ilo_shader_cache;
 
 typedef void (*ilo_cp_callback)(struct ilo_cp *cp, void *data);
 
+/**
+ * Parser owners are notified when they gain or lose the ownership of the
+ * parser.  This gives owners a chance to emit prolog or epilog.
+ */
 struct ilo_cp_owner {
-   ilo_cp_callback release_callback;
-   void *release_data;
+   ilo_cp_callback own;
+   ilo_cp_callback release;
+   void *data;
+
+   /*
+    * Space reserved for own() and release().  This can be modified at any
+    * time, as long as it is never increased by more than ilo_cp_space().
+    */
+   int reserve;
 };
 
 /**
@@ -54,10 +65,9 @@ struct ilo_cp {
    ilo_cp_callback flush_callback;
    void *flush_callback_data;
 
-   const struct ilo_cp_owner *owner;
-   int owner_reserve;
-
    enum intel_ring_type ring;
+   const struct ilo_cp_owner *owner;
+
    unsigned one_off_flags;
 
    struct ilo_builder builder;
@@ -87,6 +97,10 @@ ilo_cp_flush(struct ilo_cp *cp, const char *reason)
    ilo_cp_flush_internal(cp);
 }
 
+void
+ilo_cp_set_owner(struct ilo_cp *cp, enum intel_ring_type ring,
+                 const struct ilo_cp_owner *owner);
+
 /**
  * Return true if the parser buffer is empty.
  */
@@ -105,30 +119,9 @@ ilo_cp_space(struct ilo_cp *cp)
    const int space = ilo_builder_batch_space(&cp->builder);
    const int mi_batch_buffer_end_space = 2;
 
-   assert(space >= cp->owner_reserve + mi_batch_buffer_end_space);
+   assert(space >= cp->owner->reserve + mi_batch_buffer_end_space);
 
-   return space - cp->owner_reserve - mi_batch_buffer_end_space;
-}
-
-/**
- * Internal function called by functions that flush implicitly.
- */
-static inline void
-ilo_cp_implicit_flush(struct ilo_cp *cp)
-{
-   ilo_cp_flush(cp, "out of space (implicit)");
-}
-
-/**
- * Set the ring buffer.
- */
-static inline void
-ilo_cp_set_ring(struct ilo_cp *cp, enum intel_ring_type ring)
-{
-   if (cp->ring != ring) {
-      ilo_cp_implicit_flush(cp);
-      cp->ring = ring;
-   }
+   return space - cp->owner->reserve - mi_batch_buffer_end_space;
 }
 
 /**
@@ -150,49 +143,6 @@ ilo_cp_set_flush_callback(struct ilo_cp *cp, ilo_cp_callback callback,
 {
    cp->flush_callback = callback;
    cp->flush_callback_data = data;
-}
-
-/**
- * Set the parser owner.  If this is a new owner, the previous owner is
- * notified and the space it reserved is reclaimed.
- *
- * \return true if this is a new owner
- */
-static inline bool
-ilo_cp_set_owner(struct ilo_cp *cp, const struct ilo_cp_owner *owner,
-                 int reserve)
-{
-   const bool new_owner = (cp->owner != owner);
-
-   /* release current owner */
-   if (new_owner && cp->owner) {
-      /* reclaim the reserved space */
-      cp->owner_reserve = 0;
-
-      /* invoke the release callback */
-      cp->owner->release_callback(cp, cp->owner->release_data);
-
-      cp->owner = NULL;
-   }
-
-   if (cp->owner_reserve != reserve) {
-      const int extra = reserve - cp->owner_reserve;
-
-      if (ilo_cp_space(cp) < extra) {
-         ilo_cp_implicit_flush(cp);
-
-         assert(ilo_cp_space(cp) >= reserve);
-         cp->owner_reserve = reserve;
-      }
-      else {
-         cp->owner_reserve += extra;
-      }
-   }
-
-   /* set owner last because of the possible flush above */
-   cp->owner = owner;
-
-   return new_owner;
 }
 
 #endif /* ILO_CP_H */

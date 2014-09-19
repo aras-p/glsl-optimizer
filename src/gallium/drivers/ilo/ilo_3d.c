@@ -200,21 +200,26 @@ ilo_3d_pause_queries(struct ilo_3d *hw3d)
    }
 }
 
-static void
-ilo_3d_release_render_ring(struct ilo_cp *cp, void *data)
-{
-   struct ilo_3d *hw3d = data;
-
-   ilo_3d_pause_queries(hw3d);
-}
-
 void
 ilo_3d_own_render_ring(struct ilo_3d *hw3d)
 {
-   ilo_cp_set_ring(hw3d->cp, INTEL_RING_RENDER);
+   ilo_cp_set_owner(hw3d->cp, INTEL_RING_RENDER, &hw3d->owner);
+}
 
-   if (ilo_cp_set_owner(hw3d->cp, &hw3d->owner, hw3d->owner_reserve))
-      ilo_3d_resume_queries(hw3d);
+static void
+ilo_3d_reserve_for_query(struct ilo_3d *hw3d, struct ilo_query *q,
+                         enum ilo_3d_pipeline_action act)
+{
+   q->reg_cmd_size = ilo_3d_pipeline_estimate_size(hw3d->pipeline, act, NULL);
+
+   /* XXX we should check the aperture size */
+   if (ilo_cp_space(hw3d->cp) < q->reg_cmd_size * 2) {
+      ilo_cp_flush(hw3d->cp, "out of space");
+      assert(ilo_cp_space(hw3d->cp) >= q->reg_cmd_size * 2);
+   }
+
+   /* reserve space for pausing the query */
+   hw3d->owner.reserve += q->reg_cmd_size;
 }
 
 /**
@@ -229,21 +234,10 @@ ilo_3d_begin_query(struct ilo_context *ilo, struct ilo_query *q)
 
    switch (q->type) {
    case PIPE_QUERY_OCCLUSION_COUNTER:
-      /* reserve some space for pausing the query */
-      q->reg_cmd_size = ilo_3d_pipeline_estimate_size(hw3d->pipeline,
-            ILO_3D_PIPELINE_WRITE_DEPTH_COUNT, NULL);
-      hw3d->owner_reserve += q->reg_cmd_size;
-      ilo_cp_set_owner(hw3d->cp, &hw3d->owner, hw3d->owner_reserve);
-
+      ilo_3d_reserve_for_query(hw3d, q, ILO_3D_PIPELINE_WRITE_DEPTH_COUNT);
       q->data.u64 = 0;
 
       if (ilo_query_alloc_bo(q, 2, -1, hw3d->cp->winsys)) {
-         /* XXX we should check the aperture size */
-         if (q->reg_cmd_size > ilo_cp_space(hw3d->cp)) {
-            ilo_cp_flush(hw3d->cp, "out of space");
-            assert(q->reg_cmd_size <= ilo_cp_space(hw3d->cp));
-         }
-
          ilo_3d_pipeline_emit_write_depth_count(hw3d->pipeline,
                q->bo, q->reg_read++);
 
@@ -254,21 +248,10 @@ ilo_3d_begin_query(struct ilo_context *ilo, struct ilo_query *q)
       /* nop */
       break;
    case PIPE_QUERY_TIME_ELAPSED:
-      /* reserve some space for pausing the query */
-      q->reg_cmd_size = ilo_3d_pipeline_estimate_size(hw3d->pipeline,
-            ILO_3D_PIPELINE_WRITE_TIMESTAMP, NULL);
-      hw3d->owner_reserve += q->reg_cmd_size;
-      ilo_cp_set_owner(hw3d->cp, &hw3d->owner, hw3d->owner_reserve);
-
+      ilo_3d_reserve_for_query(hw3d, q, ILO_3D_PIPELINE_WRITE_TIMESTAMP);
       q->data.u64 = 0;
 
       if (ilo_query_alloc_bo(q, 2, -1, hw3d->cp->winsys)) {
-         /* XXX we should check the aperture size */
-         if (q->reg_cmd_size > ilo_cp_space(hw3d->cp)) {
-            ilo_cp_flush(hw3d->cp, "out of space");
-            assert(q->reg_cmd_size <= ilo_cp_space(hw3d->cp));
-         }
-
          ilo_3d_pipeline_emit_write_timestamp(hw3d->pipeline,
                q->bo, q->reg_read++);
 
@@ -284,22 +267,11 @@ ilo_3d_begin_query(struct ilo_context *ilo, struct ilo_query *q)
       list_add(&q->list, &hw3d->prim_emitted_queries);
       break;
    case PIPE_QUERY_PIPELINE_STATISTICS:
-      /* reserve some space for pausing the query */
-      q->reg_cmd_size = ilo_3d_pipeline_estimate_size(hw3d->pipeline,
-            ILO_3D_PIPELINE_WRITE_STATISTICS, NULL);
-      hw3d->owner_reserve += q->reg_cmd_size;
-      ilo_cp_set_owner(hw3d->cp, &hw3d->owner, hw3d->owner_reserve);
-
+      ilo_3d_reserve_for_query(hw3d, q, ILO_3D_PIPELINE_WRITE_STATISTICS);
       memset(&q->data.pipeline_statistics, 0,
             sizeof(q->data.pipeline_statistics));
 
       if (ilo_query_alloc_bo(q, 11 * 2, -1, hw3d->cp->winsys)) {
-         /* XXX we should check the aperture size */
-         if (q->reg_cmd_size > ilo_cp_space(hw3d->cp)) {
-            ilo_cp_flush(hw3d->cp, "out of space");
-            assert(q->reg_cmd_size <= ilo_cp_space(hw3d->cp));
-         }
-
          ilo_3d_pipeline_emit_write_statistics(hw3d->pipeline,
                q->bo, q->reg_read);
          q->reg_read += 11;
@@ -328,8 +300,9 @@ ilo_3d_end_query(struct ilo_context *ilo, struct ilo_query *q)
       list_del(&q->list);
 
       assert(q->reg_read < q->reg_total);
-      hw3d->owner_reserve -= q->reg_cmd_size;
-      ilo_cp_set_owner(hw3d->cp, &hw3d->owner, hw3d->owner_reserve);
+      assert(hw3d->owner.reserve >= q->reg_cmd_size);
+      hw3d->owner.reserve -= q->reg_cmd_size;
+
       ilo_3d_pipeline_emit_write_depth_count(hw3d->pipeline,
             q->bo, q->reg_read++);
       break;
@@ -345,8 +318,9 @@ ilo_3d_end_query(struct ilo_context *ilo, struct ilo_query *q)
       list_del(&q->list);
 
       assert(q->reg_read < q->reg_total);
-      hw3d->owner_reserve -= q->reg_cmd_size;
-      ilo_cp_set_owner(hw3d->cp, &hw3d->owner, hw3d->owner_reserve);
+      assert(hw3d->owner.reserve >= q->reg_cmd_size);
+      hw3d->owner.reserve -= q->reg_cmd_size;
+
       ilo_3d_pipeline_emit_write_timestamp(hw3d->pipeline,
             q->bo, q->reg_read++);
       break;
@@ -358,8 +332,9 @@ ilo_3d_end_query(struct ilo_context *ilo, struct ilo_query *q)
       list_del(&q->list);
 
       assert(q->reg_read + 11 <= q->reg_total);
-      hw3d->owner_reserve -= q->reg_cmd_size;
-      ilo_cp_set_owner(hw3d->cp, &hw3d->owner, hw3d->owner_reserve);
+      assert(hw3d->owner.reserve >= q->reg_cmd_size);
+      hw3d->owner.reserve -= q->reg_cmd_size;
+
       ilo_3d_pipeline_emit_write_statistics(hw3d->pipeline,
             q->bo, q->reg_read);
       q->reg_read += 11;
@@ -422,6 +397,22 @@ ilo_3d_cp_flushed(struct ilo_3d *hw3d)
    hw3d->new_batch = true;
 }
 
+static void
+ilo_3d_own_cp(struct ilo_cp *cp, void *data)
+{
+   struct ilo_3d *hw3d = data;
+
+   ilo_3d_resume_queries(hw3d);
+}
+
+static void
+ilo_3d_release_cp(struct ilo_cp *cp, void *data)
+{
+   struct ilo_3d *hw3d = data;
+
+   ilo_3d_pause_queries(hw3d);
+}
+
 /**
  * Create a 3D context.
  */
@@ -435,8 +426,10 @@ ilo_3d_create(struct ilo_cp *cp, const struct ilo_dev_info *dev)
       return NULL;
 
    hw3d->cp = cp;
-   hw3d->owner.release_callback = ilo_3d_release_render_ring;
-   hw3d->owner.release_data = hw3d;
+   hw3d->owner.own = ilo_3d_own_cp;
+   hw3d->owner.release = ilo_3d_release_cp;
+   hw3d->owner.data = hw3d;
+   hw3d->owner.reserve = 0;
 
    hw3d->new_batch = true;
 

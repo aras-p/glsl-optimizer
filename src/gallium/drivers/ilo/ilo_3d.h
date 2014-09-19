@@ -41,7 +41,6 @@ struct ilo_query;
 struct ilo_3d {
    struct ilo_cp *cp;
    struct ilo_cp_owner owner;
-   int owner_reserve;
 
    bool new_batch;
 
