@@ -62,8 +62,8 @@ struct ilo_cp {
    struct ilo_shader_cache *shader_cache;
    struct intel_context *render_ctx;
 
-   ilo_cp_callback flush_callback;
-   void *flush_callback_data;
+   ilo_cp_callback submit_callback;
+   void *submit_callback_data;
 
    enum intel_ring_type ring;
    const struct ilo_cp_owner *owner;
@@ -83,18 +83,18 @@ void
 ilo_cp_destroy(struct ilo_cp *cp);
 
 void
-ilo_cp_flush_internal(struct ilo_cp *cp);
+ilo_cp_submit_internal(struct ilo_cp *cp);
 
 static inline void
-ilo_cp_flush(struct ilo_cp *cp, const char *reason)
+ilo_cp_submit(struct ilo_cp *cp, const char *reason)
 {
-   if (ilo_debug & ILO_DEBUG_FLUSH) {
-      ilo_printf("cp flushed for %s because of %s: ",
-            (cp->ring == INTEL_RING_RENDER) ? "render" : "other", reason);
+   if (ilo_debug & ILO_DEBUG_SUBMIT) {
+      ilo_printf("submit batch buffer to %s ring because of %s: ",
+            (cp->ring == INTEL_RING_RENDER) ? "render" : "unknown", reason);
       ilo_builder_batch_print_stats(&cp->builder);
    }
 
-   ilo_cp_flush_internal(cp);
+   ilo_cp_submit_internal(cp);
 }
 
 void
@@ -116,7 +116,7 @@ ilo_cp_space(struct ilo_cp *cp)
 }
 
 /**
- * Set one-off flags.  They will be cleared after flushing.
+ * Set one-off flags.  They will be cleared after submission.
  */
 static inline void
 ilo_cp_set_one_off_flags(struct ilo_cp *cp, unsigned flags)
@@ -125,15 +125,15 @@ ilo_cp_set_one_off_flags(struct ilo_cp *cp, unsigned flags)
 }
 
 /**
- * Set flush callback.  The callback is invoked after the bo has been
- * successfully executed, and before the bo is reallocated.
+ * Set submit callback.  The callback is invoked after the bo has been
+ * successfully submitted, and before the bo is reallocated.
  */
 static inline void
-ilo_cp_set_flush_callback(struct ilo_cp *cp, ilo_cp_callback callback,
+ilo_cp_set_submit_callback(struct ilo_cp *cp, ilo_cp_callback callback,
                           void *data)
 {
-   cp->flush_callback = callback;
-   cp->flush_callback_data = data;
+   cp->submit_callback = callback;
+   cp->submit_callback_data = data;
 }
 
 #endif /* ILO_CP_H */

@@ -214,7 +214,7 @@ ilo_3d_reserve_for_query(struct ilo_3d *hw3d, struct ilo_query *q,
 
    /* XXX we should check the aperture size */
    if (ilo_cp_space(hw3d->cp) < q->reg_cmd_size * 2) {
-      ilo_cp_flush(hw3d->cp, "out of space");
+      ilo_cp_submit(hw3d->cp, "out of space");
       assert(ilo_cp_space(hw3d->cp) >= q->reg_cmd_size * 2);
    }
 
@@ -383,7 +383,7 @@ ilo_3d_process_query(struct ilo_context *ilo, struct ilo_query *q)
  * Hook for CP new-batch.
  */
 void
-ilo_3d_cp_flushed(struct ilo_3d *hw3d)
+ilo_3d_cp_submitted(struct ilo_3d *hw3d)
 {
    if (ilo_debug & ILO_DEBUG_3D)
       ilo_builder_decode(&hw3d->cp->builder);
@@ -489,7 +489,7 @@ draw_vbo(struct ilo_3d *hw3d, const struct ilo_context *ilo,
    }
 
    if (max_len > ilo_cp_space(hw3d->cp)) {
-      ilo_cp_flush(hw3d->cp, "out of space");
+      ilo_cp_submit(hw3d->cp, "out of space");
       need_flush = false;
       assert(max_len <= ilo_cp_space(hw3d->cp));
    }
@@ -810,7 +810,7 @@ ilo_texture_barrier(struct pipe_context *pipe)
 
    /* don't know why */
    if (ilo_dev_gen(ilo->dev) >= ILO_GEN(7))
-      ilo_cp_flush(hw3d->cp, "texture barrier");
+      ilo_cp_submit(hw3d->cp, "texture barrier");
 }
 
 static void

@@ -62,7 +62,7 @@ enum ilo_debug {
    ILO_DEBUG_FS        = 1 << 3,
    ILO_DEBUG_CS        = 1 << 4,
    ILO_DEBUG_DRAW      = ILO_DEBUG_HOT << 5,
-   ILO_DEBUG_FLUSH     = 1 << 6,
+   ILO_DEBUG_SUBMIT    = 1 << 6,
 
    /* flags that affect the behaviors of the driver */
    ILO_DEBUG_NOHW      = 1 << 20,

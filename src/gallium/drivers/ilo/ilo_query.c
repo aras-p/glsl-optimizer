@@ -186,7 +186,7 @@ ilo_get_query_result(struct pipe_context *pipe, struct pipe_query *query,
 
    if (q->bo) {
       if (ilo_builder_has_reloc(&ilo->cp->builder, q->bo))
-         ilo_cp_flush(ilo->cp, "syncing for queries");
+         ilo_cp_submit(ilo->cp, "syncing for queries");
 
       if (!wait && intel_bo_is_busy(q->bo))
          return false;

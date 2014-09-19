@@ -189,7 +189,7 @@ ilo_3d_pipeline_emit_draw(struct ilo_3d_pipeline *p,
 
          /* flush and try again */
          if (ilo_builder_batch_used(&p->cp->builder)) {
-            ilo_cp_flush(p->cp, "out of aperture");
+            ilo_cp_submit(p->cp, "out of aperture");
             continue;
          }
 
@@ -273,7 +273,7 @@ ilo_3d_pipeline_emit_rectlist(struct ilo_3d_pipeline *p,
          ILO_3D_PIPELINE_RECTLIST, blitter);
 
    if (max_len > ilo_cp_space(p->cp))
-      ilo_cp_flush(p->cp, "out of space");
+      ilo_cp_submit(p->cp, "out of space");
 
    while (true) {
       struct ilo_builder_snapshot snapshot;
@@ -291,7 +291,7 @@ ilo_3d_pipeline_emit_rectlist(struct ilo_3d_pipeline *p,
 
          /* flush and try again */
          if (ilo_builder_batch_used(&p->cp->builder)) {
-            ilo_cp_flush(p->cp, "out of aperture");
+            ilo_cp_submit(p->cp, "out of aperture");
             continue;
          }
       }

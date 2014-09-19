@@ -66,7 +66,7 @@ void
 ilo_3d_destroy(struct ilo_3d *hw3d);
 
 void
-ilo_3d_cp_flushed(struct ilo_3d *hw3d);
+ilo_3d_cp_submitted(struct ilo_3d *hw3d);
 
 void
 ilo_3d_own_render_ring(struct ilo_3d *hw3d);

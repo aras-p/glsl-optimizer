@@ -50,8 +50,8 @@ ilo_cp_release_owner(struct ilo_cp *cp)
  * Set the parser owner.  If this is a new owner or a new ring, the old owner
  * is released and the new owner's own() is called.
  *
- * The parser may be implicitly flushed if there is a ring change or there is
- * not enough space for the new owner.
+ * The parser may implicitly submit if there is a ring change or there is not
+ * enough space for the new owner.
  */
 void
 ilo_cp_set_owner(struct ilo_cp *cp, enum intel_ring_type ring,
@@ -61,7 +61,7 @@ ilo_cp_set_owner(struct ilo_cp *cp, enum intel_ring_type ring,
       owner = &ilo_cp_default_owner;
 
    if (cp->ring != ring) {
-      ilo_cp_flush(cp, "ring change");
+      ilo_cp_submit(cp, "ring change");
       cp->ring = ring;
    }
 
@@ -70,7 +70,7 @@ ilo_cp_set_owner(struct ilo_cp *cp, enum intel_ring_type ring,
 
       /* multiply by 2 because there are own() and release() */
       if (ilo_cp_space(cp) < owner->reserve * 2) {
-         ilo_cp_flush(cp, "new owner");
+         ilo_cp_submit(cp, "new owner");
          assert(ilo_cp_space(cp) >= owner->reserve * 2);
       }
 
@@ -111,7 +111,7 @@ ilo_cp_end_batch(struct ilo_cp *cp, unsigned *used)
  * is empty, the callback is not invoked.
  */
 void
-ilo_cp_flush_internal(struct ilo_cp *cp)
+ilo_cp_submit_internal(struct ilo_cp *cp)
 {
    const bool do_exec = !(ilo_debug & ILO_DEBUG_NOHW);
    struct intel_bo *bo;
@@ -138,8 +138,8 @@ ilo_cp_flush_internal(struct ilo_cp *cp)
       cp->last_submitted_bo = bo;
       intel_bo_reference(cp->last_submitted_bo);
 
-      if (cp->flush_callback)
-         cp->flush_callback(cp, cp->flush_callback_data);
+      if (cp->submit_callback)
+         cp->submit_callback(cp, cp->submit_callback_data);
    }
 
    ilo_builder_begin(&cp->builder);

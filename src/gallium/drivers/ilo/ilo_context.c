@@ -42,11 +42,11 @@
 #include "ilo_context.h"
 
 static void
-ilo_context_cp_flushed(struct ilo_cp *cp, void *data)
+ilo_context_cp_submitted(struct ilo_cp *cp, void *data)
 {
    struct ilo_context *ilo = ilo_context(data);
 
-   ilo_3d_cp_flushed(ilo->hw3d);
+   ilo_3d_cp_submitted(ilo->hw3d);
 }
 
 static void
@@ -56,7 +56,7 @@ ilo_flush(struct pipe_context *pipe,
 {
    struct ilo_context *ilo = ilo_context(pipe);
 
-   ilo_cp_flush(ilo->cp,
+   ilo_cp_submit(ilo->cp,
          (flags & PIPE_FLUSH_END_OF_FRAME) ? "frame end" : "user request");
 
    if (f) {
@@ -119,8 +119,8 @@ ilo_context_create(struct pipe_screen *screen, void *priv)
       return NULL;
    }
 
-   ilo_cp_set_flush_callback(ilo->cp,
-         ilo_context_cp_flushed, (void *) ilo);
+   ilo_cp_set_submit_callback(ilo->cp,
+         ilo_context_cp_submitted, (void *) ilo);
 
    ilo->base.screen = screen;
    ilo->base.priv = priv;

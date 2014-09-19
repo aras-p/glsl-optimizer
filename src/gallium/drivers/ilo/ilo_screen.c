@@ -48,7 +48,7 @@ static const struct debug_named_value ilo_debug_flags[] = {
    { "fs",        ILO_DEBUG_FS,       "Dump fragment shaders" },
    { "cs",        ILO_DEBUG_CS,       "Dump compute shaders" },
    { "draw",      ILO_DEBUG_DRAW,     "Show draw information" },
-   { "flush",     ILO_DEBUG_FLUSH,    "Show batch buffer flushes" },
+   { "submit",    ILO_DEBUG_SUBMIT,   "Show batch buffer submissions" },
    { "nohw",      ILO_DEBUG_NOHW,     "Do not send commands to HW" },
    { "nocache",   ILO_DEBUG_NOCACHE,  "Always invalidate HW caches" },
    { "nohiz",     ILO_DEBUG_NOHIZ,    "Disable HiZ" },
