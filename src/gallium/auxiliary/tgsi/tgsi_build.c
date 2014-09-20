@@ -297,10 +297,10 @@ tgsi_default_declaration_sampler_view(void)
    struct tgsi_declaration_sampler_view dsv;
 
    dsv.Resource = TGSI_TEXTURE_BUFFER;
-   dsv.ReturnTypeX = PIPE_TYPE_UNORM;
-   dsv.ReturnTypeY = PIPE_TYPE_UNORM;
-   dsv.ReturnTypeZ = PIPE_TYPE_UNORM;
-   dsv.ReturnTypeW = PIPE_TYPE_UNORM;
+   dsv.ReturnTypeX = TGSI_RETURN_TYPE_UNORM;
+   dsv.ReturnTypeY = TGSI_RETURN_TYPE_UNORM;
+   dsv.ReturnTypeZ = TGSI_RETURN_TYPE_UNORM;
+   dsv.ReturnTypeW = TGSI_RETURN_TYPE_UNORM;
 
    return dsv;
 }

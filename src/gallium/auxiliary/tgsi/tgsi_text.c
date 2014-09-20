@@ -1258,8 +1258,8 @@ static boolean parse_declaration( struct translate_ctx *ctx )
          ++cur;
          eat_opt_white( &cur );
          for (j = 0; j < 4; ++j) {
-            for (i = 0; i < PIPE_TYPE_COUNT; ++i) {
-               if (str_match_nocase_whole(&cur, tgsi_type_names[i])) {
+            for (i = 0; i < TGSI_RETURN_TYPE_COUNT; ++i) {
+               if (str_match_nocase_whole(&cur, tgsi_return_type_names[i])) {
                   switch (j) {
                   case 0:
                      decl.SamplerView.ReturnTypeX = i;
@@ -1279,7 +1279,7 @@ static boolean parse_declaration( struct translate_ctx *ctx )
                   break;
                }
             }
-            if (i == PIPE_TYPE_COUNT) {
+            if (i == TGSI_RETURN_TYPE_COUNT) {
                if (j == 0 || j >  2) {
                   report_error(ctx, "Expected type name");
                   return FALSE;

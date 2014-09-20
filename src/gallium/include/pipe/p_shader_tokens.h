@@ -192,12 +192,21 @@ struct tgsi_declaration_resource {
    unsigned Padding     : 22;
 };
 
+enum tgsi_return_type {
+   TGSI_RETURN_TYPE_UNORM = 0,
+   TGSI_RETURN_TYPE_SNORM,
+   TGSI_RETURN_TYPE_SINT,
+   TGSI_RETURN_TYPE_UINT,
+   TGSI_RETURN_TYPE_FLOAT,
+   TGSI_RETURN_TYPE_COUNT
+};
+
 struct tgsi_declaration_sampler_view {
    unsigned Resource    : 8; /**< one of TGSI_TEXTURE_ */
-   unsigned ReturnTypeX : 6; /**< one of enum pipe_type */
-   unsigned ReturnTypeY : 6; /**< one of enum pipe_type */
-   unsigned ReturnTypeZ : 6; /**< one of enum pipe_type */
-   unsigned ReturnTypeW : 6; /**< one of enum pipe_type */
+   unsigned ReturnTypeX : 6; /**< one of enum tgsi_return_type */
+   unsigned ReturnTypeY : 6; /**< one of enum tgsi_return_type */
+   unsigned ReturnTypeZ : 6; /**< one of enum tgsi_return_type */
+   unsigned ReturnTypeW : 6; /**< one of enum tgsi_return_type */
 };
 
 struct tgsi_declaration_array {
