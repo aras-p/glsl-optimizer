@@ -90,6 +90,30 @@ fs_inst::init(enum opcode opcode, uint8_t exec_size, const fs_reg &dst,
    }
    assert(this->exec_size != 0);
 
+   for (int i = 0; i < sources; ++i) {
+      switch (this->src[i].file) {
+      case BAD_FILE:
+         this->src[i].effective_width = 8;
+         break;
+      case GRF:
+      case HW_REG:
+         assert(this->src[i].width > 0);
+         if (this->src[i].width == 1) {
+            this->src[i].effective_width = this->exec_size;
+         } else {
+            this->src[i].effective_width = this->src[i].width;
+         }
+         break;
+      case IMM:
+      case UNIFORM:
+         this->src[i].effective_width = this->exec_size;
+         break;
+      default:
+         unreachable("Invalid source register file");
+      }
+   }
+   this->dst.effective_width = this->exec_size;
+
    this->conditional_mod = BRW_CONDITIONAL_NONE;
 
    /* This will be the case for almost all instructions. */
@@ -352,7 +376,7 @@ fs_visitor::LOAD_PAYLOAD(const fs_reg &dst, fs_reg *src, int sources)
        * dealing with whole registers.  If this ever changes, we can deal
        * with it later.
        */
-      int size = src[i].effective_width(this) * type_sz(src[i].type);
+      int size = src[i].effective_width * type_sz(src[i].type);
       assert(size % 32 == 0);
       inst->regs_written += (size + 31) / 32;
    }
@@ -578,28 +602,6 @@ fs_reg::equals(const fs_reg &r) const
            memcmp(&fixed_hw_reg, &r.fixed_hw_reg, sizeof(fixed_hw_reg)) == 0 &&
            width == r.width &&
            stride == r.stride);
-}
-
-uint8_t
-fs_reg::effective_width(const fs_visitor *v) const
-{
-   switch (this->file) {
-   case BAD_FILE:
-      return 8;
-   case UNIFORM:
-   case IMM:
-      assert(this->width == 1);
-      return v->dispatch_width;
-   case GRF:
-   case HW_REG:
-      assert(this->width > 1 && this->width <= v->dispatch_width);
-      assert(this->width % 8 == 0);
-      return this->width;
-   case MRF:
-      unreachable("MRF registers cannot be used as sources");
-   default:
-      unreachable("Invalid register file");
-   }
 }
 
 fs_reg &
@@ -2994,7 +2996,7 @@ fs_visitor::lower_load_payload()
          fs_reg dst = inst->dst;
 
          for (int i = 0; i < inst->sources; i++) {
-            dst.width = inst->src[i].effective_width(this);
+            dst.width = inst->src[i].effective_width;
             dst.type = inst->src[i].type;
 
             if (inst->src[i].file == BAD_FILE) {
