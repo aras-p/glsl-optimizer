@@ -32,6 +32,7 @@
 #include "ilo_cp.h"
 
 struct ilo_3d_pipeline;
+struct ilo_blitter;
 struct ilo_context;
 struct ilo_query;
 
@@ -69,7 +70,7 @@ void
 ilo_3d_cp_submitted(struct ilo_3d *hw3d);
 
 void
-ilo_3d_own_render_ring(struct ilo_3d *hw3d);
+ilo_3d_draw_rectlist(struct ilo_3d *hw3d, const struct ilo_blitter *blitter);
 
 void
 ilo_3d_begin_query(struct ilo_context *ilo, struct ilo_query *q);

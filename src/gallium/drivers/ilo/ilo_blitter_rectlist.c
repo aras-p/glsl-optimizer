@@ -304,42 +304,12 @@ hiz_align_fb(struct ilo_blitter *blitter)
 static void
 hiz_emit_rectlist(struct ilo_blitter *blitter)
 {
-   struct ilo_3d *hw3d = blitter->ilo->hw3d;
-   struct ilo_3d_pipeline *p = hw3d->pipeline;
-
    hiz_align_fb(blitter);
 
    ilo_blitter_set_rectlist(blitter, 0, 0,
          blitter->fb.width, blitter->fb.height);
 
-   ilo_3d_own_render_ring(hw3d);
-
-   /*
-    * From the Sandy Bridge PRM, volume 2 part 1, page 313:
-    *
-    *     "If other rendering operations have preceded this clear, a
-    *      PIPE_CONTROL with write cache flush enabled and Z-inhibit
-    *      disabled must be issued before the rectangle primitive used for
-    *      the depth buffer clear operation."
-    *
-    * From the Sandy Bridge PRM, volume 2 part 1, page 314:
-    *
-    *     "Depth buffer clear pass must be followed by a PIPE_CONTROL
-    *      command with DEPTH_STALL bit set and Then followed by Depth
-    *      FLUSH"
-    *
-    * But the pipeline has to be flushed both before and after not only
-    * because of these workarounds.  We need them for reasons such as
-    *
-    *  - we may sample from a texture that was rendered to
-    *  - we may sample from the fb shortly after
-    */
-   if (ilo_builder_batch_used(&p->cp->builder))
-      ilo_3d_pipeline_emit_flush(p);
-
-   ilo_3d_pipeline_emit_rectlist(p, blitter);
-
-   ilo_3d_pipeline_emit_flush(p);
+   ilo_3d_draw_rectlist(blitter->ilo->hw3d, blitter);
 }
 
 static bool

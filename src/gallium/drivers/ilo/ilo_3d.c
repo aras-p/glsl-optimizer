@@ -200,7 +200,7 @@ ilo_3d_pause_queries(struct ilo_3d *hw3d)
    }
 }
 
-void
+static void
 ilo_3d_own_render_ring(struct ilo_3d *hw3d)
 {
    ilo_cp_set_owner(hw3d->cp, INTEL_RING_RENDER, &hw3d->owner);
@@ -537,6 +537,45 @@ ilo_3d_pass_render_condition(struct ilo_context *ilo)
       return (!result == hw3d->render_condition.cond);
    else
       return true;
+}
+
+void
+ilo_3d_draw_rectlist(struct ilo_3d *hw3d, const struct ilo_blitter *blitter)
+{
+   ilo_3d_own_render_ring(hw3d);
+
+   /*
+    * From the Sandy Bridge PRM, volume 2 part 1, page 313:
+    *
+    *     "If other rendering operations have preceded this clear, a
+    *      PIPE_CONTROL with write cache flush enabled and Z-inhibit
+    *      disabled must be issued before the rectangle primitive used for
+    *      the depth buffer clear operation."
+    *
+    * From the Sandy Bridge PRM, volume 2 part 1, page 314:
+    *
+    *     "Depth buffer clear pass must be followed by a PIPE_CONTROL
+    *      command with DEPTH_STALL bit set and Then followed by Depth
+    *      FLUSH"
+    *
+    * But the pipeline has to be flushed both before and after not only
+    * because of these workarounds.  We need them for reasons such as
+    *
+    *  - we may sample from a texture that was rendered to
+    *  - we may sample from the fb shortly after
+    *
+    * Skip checking blitter->op and do the flushes.
+    *
+    * XXX need space check
+    */
+   if (!hw3d->new_batch)
+      ilo_3d_pipeline_emit_flush(hw3d->pipeline);
+
+   ilo_3d_pipeline_emit_rectlist(hw3d->pipeline, blitter);
+
+   ilo_3d_pipeline_emit_flush(hw3d->pipeline);
+
+   hw3d->new_batch = false;
 }
 
 #define UPDATE_MIN2(a, b) (a) = MIN2((a), (b))
