@@ -286,6 +286,5 @@ void si_cmd_draw_index_indirect(struct si_pm4_state *pm4, uint64_t indirect_va,
 				uint64_t index_va, uint32_t index_max_size,
 				uint32_t indirect_offset, uint32_t base_vtx_loc,
 				uint32_t start_inst_loc, bool predicate);
-void si_cmd_surface_sync(struct si_pm4_state *pm4, uint32_t cp_coher_cntl);
 
 #endif

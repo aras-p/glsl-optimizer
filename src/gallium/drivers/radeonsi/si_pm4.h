@@ -39,15 +39,10 @@ enum chip_class;
 
 struct si_pm4_state
 {
-	/* family specific handling */
-	enum chip_class chip_class;
 	/* PKT3_SET_*_REG handling */
 	unsigned	last_opcode;
 	unsigned	last_reg;
 	unsigned	last_pm4;
-
-	/* flush flags for SURFACE_SYNC */
-	uint32_t	cp_coher_cntl;
 
 	/* commands for the DE */
 	unsigned	ndw;
@@ -76,15 +71,11 @@ void si_pm4_add_bo(struct si_pm4_state *state,
 		   enum radeon_bo_usage usage,
 		   enum radeon_bo_priority priority);
 
-void si_pm4_inval_shader_cache(struct si_pm4_state *state);
-void si_pm4_inval_texture_cache(struct si_pm4_state *state);
-
 void si_pm4_free_state(struct si_context *sctx,
 		       struct si_pm4_state *state,
 		       unsigned idx);
 struct si_pm4_state * si_pm4_alloc_state(struct si_context *sctx);
 
-uint32_t si_pm4_sync_flags(struct si_context *sctx);
 unsigned si_pm4_dirty_dw(struct si_context *sctx);
 void si_pm4_emit(struct si_context *sctx, struct si_pm4_state *state);
 void si_pm4_emit_dirty(struct si_context *sctx);

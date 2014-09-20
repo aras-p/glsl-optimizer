@@ -103,18 +103,6 @@ void si_pm4_add_bo(struct si_pm4_state *state,
 	state->bo_priority[idx] = priority;
 }
 
-void si_pm4_inval_shader_cache(struct si_pm4_state *state)
-{
-	state->cp_coher_cntl |= S_0085F0_SH_ICACHE_ACTION_ENA(1);
-	state->cp_coher_cntl |= S_0085F0_SH_KCACHE_ACTION_ENA(1);
-}
-
-void si_pm4_inval_texture_cache(struct si_pm4_state *state)
-{
-	state->cp_coher_cntl |= S_0085F0_TC_ACTION_ENA(1);
-	state->cp_coher_cntl |= S_0085F0_TCL1_ACTION_ENA(1);
-}
-
 void si_pm4_free_state(struct si_context *sctx,
 		       struct si_pm4_state *state,
 		       unsigned idx)
@@ -134,29 +122,7 @@ void si_pm4_free_state(struct si_context *sctx,
 
 struct si_pm4_state * si_pm4_alloc_state(struct si_context *sctx)
 {
-	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
-
-        if (pm4 == NULL)
-                return NULL;
-
-	pm4->chip_class = sctx->b.chip_class;
-
-	return pm4;
-}
-
-uint32_t si_pm4_sync_flags(struct si_context *sctx)
-{
-	uint32_t cp_coher_cntl = 0;
-
-	for (int i = 0; i < NUMBER_OF_STATES; ++i) {
-		struct si_pm4_state *state = sctx->queued.array[i];
-
-		if (!state || sctx->emitted.array[i] == state)
-			continue;
-
-		cp_coher_cntl |= state->cp_coher_cntl;
-	}
-	return cp_coher_cntl;
+	return CALLOC_STRUCT(si_pm4_state);
 }
 
 unsigned si_pm4_dirty_dw(struct si_context *sctx)
