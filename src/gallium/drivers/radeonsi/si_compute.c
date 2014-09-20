@@ -361,10 +361,6 @@ static void si_launch_grid(
 	si_pm4_cmd_add(pm4, 1); /* DISPATCH_INITIATOR */
         si_pm4_cmd_end(pm4, false);
 
-	si_pm4_cmd_begin(pm4, PKT3_EVENT_WRITE);
-	si_pm4_cmd_add(pm4, EVENT_TYPE(V_028A90_CS_PARTIAL_FLUSH | EVENT_INDEX(0x4)));
-	si_pm4_cmd_end(pm4, false);
-
 	si_pm4_emit(sctx, pm4);
 
 #if 0
@@ -376,7 +372,8 @@ static void si_launch_grid(
 
 	si_pm4_free_state(sctx, pm4, ~0);
 
-	sctx->b.flags |= R600_CONTEXT_INV_TEX_CACHE |
+	sctx->b.flags |= R600_CONTEXT_CS_PARTIAL_FLUSH |
+			 R600_CONTEXT_INV_TEX_CACHE |
 			 R600_CONTEXT_INV_SHADER_CACHE |
 			 R600_CONTEXT_INV_CONST_CACHE |
 			 R600_CONTEXT_FLAG_COMPUTE;

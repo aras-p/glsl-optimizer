@@ -863,6 +863,11 @@ void si_emit_cache_flush(struct r600_common_context *sctx, struct r600_atom *ato
 		radeon_emit(cs, EVENT_TYPE(V_028A90_VS_PARTIAL_FLUSH) | EVENT_INDEX(4));
 	}
 
+	if (sctx->flags & R600_CONTEXT_CS_PARTIAL_FLUSH) {
+		radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0) | compute);
+		radeon_emit(cs, EVENT_TYPE(V_028A90_CS_PARTIAL_FLUSH | EVENT_INDEX(4)));
+	}
+
 	if (sctx->flags & R600_CONTEXT_VGT_FLUSH) {
 		radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0) | compute);
 		radeon_emit(cs, EVENT_TYPE(V_028A90_VGT_FLUSH) | EVENT_INDEX(0));
@@ -875,7 +880,7 @@ void si_emit_cache_flush(struct r600_common_context *sctx, struct r600_atom *ato
 	sctx->flags = 0;
 }
 
-const struct r600_atom si_atom_cache_flush = { si_emit_cache_flush, 19 }; /* number of CS dwords */
+const struct r600_atom si_atom_cache_flush = { si_emit_cache_flush, 21 }; /* number of CS dwords */
 
 static void si_get_draw_start_count(struct si_context *sctx,
 				    const struct pipe_draw_info *info,

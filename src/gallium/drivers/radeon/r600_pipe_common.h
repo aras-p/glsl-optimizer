@@ -75,6 +75,7 @@
 #define R600_CONTEXT_WAIT_CP_DMA_IDLE		(1 << 18)
 #define R600_CONTEXT_VGT_FLUSH			(1 << 19)
 #define R600_CONTEXT_VGT_STREAMOUT_SYNC		(1 << 20)
+#define R600_CONTEXT_CS_PARTIAL_FLUSH		(1 << 21)
 /* other flags */
 #define R600_CONTEXT_FLAG_COMPUTE		(1u << 31)
 
