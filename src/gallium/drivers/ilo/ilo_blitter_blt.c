@@ -42,13 +42,13 @@ ilo_blitter_blt_begin(struct ilo_blitter *blitter, int max_cmd_size,
                       struct intel_bo *dst, enum intel_tiling_mode dst_tiling,
                       struct intel_bo *src, enum intel_tiling_mode src_tiling)
 {
-   struct ilo_context *ilo = blitter->ilo;
+   struct ilo_cp *cp = blitter->ilo->cp;
    struct intel_bo *aper_check[2];
    int count;
    uint32_t swctrl;
 
    /* change owner */
-   ilo_cp_set_owner(ilo->cp, INTEL_RING_BLT, NULL);
+   ilo_cp_set_owner(cp, INTEL_RING_BLT, NULL);
 
    /* check aperture space */
    aper_check[0] = dst;
@@ -59,8 +59,8 @@ ilo_blitter_blt_begin(struct ilo_blitter *blitter, int max_cmd_size,
       count++;
    }
 
-   if (!ilo_builder_validate(&ilo->cp->builder, count, aper_check))
-      ilo_cp_submit(ilo->cp, "out of aperture");
+   if (!ilo_builder_validate(&cp->builder, count, aper_check))
+      ilo_cp_submit(cp, "out of aperture");
 
    /* set BCS_SWCTRL */
    swctrl = 0x0;
@@ -83,9 +83,9 @@ ilo_blitter_blt_begin(struct ilo_blitter *blitter, int max_cmd_size,
    if (swctrl)
       max_cmd_size += (4 + 3) * 2;
 
-   if (ilo_cp_space(ilo->cp) < max_cmd_size) {
-      ilo_cp_submit(ilo->cp, "out of space");
-      assert(ilo_cp_space(ilo->cp) >= max_cmd_size);
+   if (ilo_cp_space(cp) < max_cmd_size) {
+      ilo_cp_submit(cp, "out of space");
+      assert(ilo_cp_space(cp) >= max_cmd_size);
    }
 
    if (swctrl) {
@@ -95,9 +95,8 @@ ilo_blitter_blt_begin(struct ilo_blitter *blitter, int max_cmd_size,
        *     "SW is required to flush the HW before changing the polarity of
        *      this bit (Tile Y Destination/Source)."
        */
-      gen6_MI_FLUSH_DW(&ilo->cp->builder);
-      gen6_MI_LOAD_REGISTER_IMM(&ilo->cp->builder,
-            GEN6_REG_BCS_SWCTRL, swctrl);
+      gen6_MI_FLUSH_DW(&cp->builder);
+      gen6_MI_LOAD_REGISTER_IMM(&cp->builder, GEN6_REG_BCS_SWCTRL, swctrl);
 
       swctrl &= ~(GEN6_REG_BCS_SWCTRL_DST_TILING_Y |
                   GEN6_REG_BCS_SWCTRL_SRC_TILING_Y);
@@ -109,12 +108,12 @@ ilo_blitter_blt_begin(struct ilo_blitter *blitter, int max_cmd_size,
 static void
 ilo_blitter_blt_end(struct ilo_blitter *blitter, uint32_t swctrl)
 {
-   struct ilo_context *ilo = blitter->ilo;
+   struct ilo_builder *builder = &blitter->ilo->cp->builder;
 
    /* set BCS_SWCTRL back */
    if (swctrl) {
-      gen6_MI_FLUSH_DW(&ilo->cp->builder);
-      gen6_MI_LOAD_REGISTER_IMM(&ilo->cp->builder, GEN6_REG_BCS_SWCTRL, swctrl);
+      gen6_MI_FLUSH_DW(builder);
+      gen6_MI_LOAD_REGISTER_IMM(builder, GEN6_REG_BCS_SWCTRL, swctrl);
    }
 }
 
@@ -127,7 +126,7 @@ buf_clear_region(struct ilo_blitter *blitter,
 {
    const uint8_t rop = 0xf0; /* PATCOPY */
    const int cpp = gen6_blt_translate_value_cpp(value_mask);
-   struct ilo_context *ilo = blitter->ilo;
+   struct ilo_builder *builder = &blitter->ilo->cp->builder;
    struct gen6_blt_bo dst;
 
    if (offset % cpp || size % cpp)
@@ -158,7 +157,7 @@ buf_clear_region(struct ilo_blitter *blitter,
          dst.pitch = 0;
       }
 
-      gen6_COLOR_BLT(&ilo->cp->builder, &dst, val,
+      gen6_COLOR_BLT(builder, &dst, val,
             width, height, rop, value_mask, write_mask);
 
       dst.offset += dst.pitch * height;
@@ -177,7 +176,7 @@ buf_copy_region(struct ilo_blitter *blitter,
                 unsigned size)
 {
    const uint8_t rop = 0xcc; /* SRCCOPY */
-   struct ilo_context *ilo = blitter->ilo;
+   struct ilo_builder *builder = &blitter->ilo->cp->builder;
    struct gen6_blt_bo dst, src;
 
    dst.bo = dst_buf->bo;
@@ -212,7 +211,7 @@ buf_copy_region(struct ilo_blitter *blitter,
          src.pitch = 0;
       }
 
-      gen6_SRC_COPY_BLT(&ilo->cp->builder, &dst, &src,
+      gen6_SRC_COPY_BLT(builder, &dst, &src,
             width, height, rop, GEN6_BLT_MASK_8, GEN6_BLT_MASK_8);
 
       dst.offset += dst.pitch * height;
@@ -236,7 +235,7 @@ tex_clear_region(struct ilo_blitter *blitter,
    const int cpp = gen6_blt_translate_value_cpp(value_mask);
    const unsigned max_extent = 32767; /* INT16_MAX */
    const uint8_t rop = 0xf0; /* PATCOPY */
-   struct ilo_context *ilo = blitter->ilo;
+   struct ilo_builder *builder = &blitter->ilo->cp->builder;
    struct gen6_blt_xy_bo dst;
    uint32_t swctrl;
    int slice;
@@ -273,7 +272,7 @@ tex_clear_region(struct ilo_blitter *blitter,
           dst.y + dst_box->height > max_extent)
          break;
 
-      gen6_XY_COLOR_BLT(&ilo->cp->builder, &dst, val,
+      gen6_XY_COLOR_BLT(builder, &dst, val,
             dst_box->width, dst_box->height, rop, value_mask, write_mask);
    }
 
@@ -295,7 +294,7 @@ tex_copy_region(struct ilo_blitter *blitter,
       util_format_description(dst_tex->layout.format);
    const unsigned max_extent = 32767; /* INT16_MAX */
    const uint8_t rop = 0xcc; /* SRCCOPY */
-   struct ilo_context *ilo = blitter->ilo;
+   struct ilo_builder *builder = &blitter->ilo->cp->builder;
    enum gen6_blt_mask mask;
    struct gen6_blt_xy_bo dst, src;
    uint32_t swctrl;
@@ -380,7 +379,7 @@ tex_copy_region(struct ilo_blitter *blitter,
           dst.x + width > max_extent || dst.y + height > max_extent)
          break;
 
-      gen6_XY_SRC_COPY_BLT(&ilo->cp->builder, &dst, &src,
+      gen6_XY_SRC_COPY_BLT(builder, &dst, &src,
             width, height, rop, mask, mask);
    }
 
