@@ -749,7 +749,7 @@ link_update_uniform_buffer_variables(struct gl_shader *shader)
                if (end == NULL)
                   continue;
 
-               if (l != (end - begin))
+               if ((ptrdiff_t) l != (end - begin))
                   continue;
 
                if (strncmp(var->name, begin, l) == 0) {
