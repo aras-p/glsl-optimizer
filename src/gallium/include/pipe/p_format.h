@@ -36,13 +36,8 @@ extern "C" {
 #include "p_config.h"
 
 /**
- * Texture/surface image formats (preliminary)
+ * Formats for textures, surfaces and vertex data
  */
-
-/* KW: Added lots of surface formats to support vertex element layout
- * definitions, and eventually render-to-vertex-buffer.
- */
-
 enum pipe_format {
    PIPE_FORMAT_NONE                    = 0,
    PIPE_FORMAT_B8G8R8A8_UNORM          = 1,
