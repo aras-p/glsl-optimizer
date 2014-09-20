@@ -58,8 +58,10 @@ enum ilo_3d_pipeline_action {
  * 3D pipeline.
  */
 struct ilo_3d_pipeline {
-   struct ilo_cp *cp;
    const struct ilo_dev_info *dev;
+
+   struct ilo_cp *cp;
+   struct ilo_builder *builder;
 
    uint32_t invalidate_flags;
 

@@ -73,8 +73,9 @@ ilo_3d_pipeline_create(struct ilo_cp *cp, const struct ilo_dev_info *dev)
    if (!p)
       return NULL;
 
-   p->cp = cp;
    p->dev = dev;
+   p->cp = cp;
+   p->builder = &cp->builder;
 
    switch (ilo_dev_gen(p->dev)) {
    case ILO_GEN(6):
