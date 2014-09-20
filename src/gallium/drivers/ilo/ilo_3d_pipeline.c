@@ -237,10 +237,10 @@ ilo_3d_pipeline_emit_flush(struct ilo_3d_pipeline *p)
  */
 void
 ilo_3d_pipeline_emit_write_timestamp(struct ilo_3d_pipeline *p,
-                                     struct intel_bo *bo, int index)
+                                     struct intel_bo *bo, uint32_t offset)
 {
    handle_invalid_batch_bo(p, true);
-   p->emit_write_timestamp(p, bo, index);
+   p->emit_write_timestamp(p, bo, offset);
 }
 
 /**
@@ -248,10 +248,10 @@ ilo_3d_pipeline_emit_write_timestamp(struct ilo_3d_pipeline *p,
  */
 void
 ilo_3d_pipeline_emit_write_depth_count(struct ilo_3d_pipeline *p,
-                                       struct intel_bo *bo, int index)
+                                       struct intel_bo *bo, uint32_t offset)
 {
    handle_invalid_batch_bo(p, true);
-   p->emit_write_depth_count(p, bo, index);
+   p->emit_write_depth_count(p, bo, offset);
 }
 
 /**
@@ -259,10 +259,10 @@ ilo_3d_pipeline_emit_write_depth_count(struct ilo_3d_pipeline *p,
  */
 void
 ilo_3d_pipeline_emit_write_statistics(struct ilo_3d_pipeline *p,
-                                      struct intel_bo *bo, int index)
+                                      struct intel_bo *bo, uint32_t offset)
 {
    handle_invalid_batch_bo(p, true);
-   p->emit_write_statistics(p, bo, index);
+   p->emit_write_statistics(p, bo, offset);
 }
 
 void

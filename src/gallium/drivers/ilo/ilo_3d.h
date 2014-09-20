@@ -72,14 +72,17 @@ ilo_3d_cp_submitted(struct ilo_3d *hw3d);
 void
 ilo_3d_draw_rectlist(struct ilo_3d *hw3d, const struct ilo_blitter *blitter);
 
-void
-ilo_3d_begin_query(struct ilo_context *ilo, struct ilo_query *q);
+bool
+ilo_3d_init_query(struct pipe_context *pipe, struct ilo_query *q);
 
 void
-ilo_3d_end_query(struct ilo_context *ilo, struct ilo_query *q);
+ilo_3d_begin_query(struct pipe_context *pipe, struct ilo_query *q);
 
 void
-ilo_3d_process_query(struct ilo_context *ilo, struct ilo_query *q);
+ilo_3d_end_query(struct pipe_context *pipe, struct ilo_query *q);
+
+void
+ilo_3d_process_query(struct pipe_context *pipe, struct ilo_query *q);
 
 bool
 ilo_3d_pass_render_condition(struct ilo_context *ilo);

@@ -1466,20 +1466,21 @@ ilo_3d_pipeline_emit_flush_gen6(struct ilo_3d_pipeline *p)
 
 void
 ilo_3d_pipeline_emit_write_timestamp_gen6(struct ilo_3d_pipeline *p,
-                                          struct intel_bo *bo, int index)
+                                          struct intel_bo *bo,
+                                          uint32_t offset)
 {
    if (ilo_dev_gen(p->dev) == ILO_GEN(6))
       gen6_wa_pipe_control_post_sync(p, true);
 
    gen6_PIPE_CONTROL(p->builder,
          GEN6_PIPE_CONTROL_WRITE_TIMESTAMP,
-         bo, index * sizeof(uint64_t),
-         true);
+         bo, offset, true);
 }
 
 void
 ilo_3d_pipeline_emit_write_depth_count_gen6(struct ilo_3d_pipeline *p,
-                                            struct intel_bo *bo, int index)
+                                            struct intel_bo *bo,
+                                            uint32_t offset)
 {
    if (ilo_dev_gen(p->dev) == ILO_GEN(6))
       gen6_wa_pipe_control_post_sync(p, false);
@@ -1487,15 +1488,15 @@ ilo_3d_pipeline_emit_write_depth_count_gen6(struct ilo_3d_pipeline *p,
    gen6_PIPE_CONTROL(p->builder,
          GEN6_PIPE_CONTROL_DEPTH_STALL |
          GEN6_PIPE_CONTROL_WRITE_PS_DEPTH_COUNT,
-         bo, index * sizeof(uint64_t),
-         true);
+         bo, offset, true);
 }
 
 void
 ilo_3d_pipeline_emit_write_statistics_gen6(struct ilo_3d_pipeline *p,
-                                           struct intel_bo *bo, int index)
+                                           struct intel_bo *bo,
+                                           uint32_t offset)
 {
-   uint32_t regs[] = {
+   const uint32_t regs[] = {
       GEN6_REG_IA_VERTICES_COUNT,
       GEN6_REG_IA_PRIMITIVES_COUNT,
       GEN6_REG_VS_INVOCATION_COUNT,
@@ -1513,20 +1514,17 @@ ilo_3d_pipeline_emit_write_statistics_gen6(struct ilo_3d_pipeline *p,
    p->emit_flush(p);
 
    for (i = 0; i < Elements(regs); i++) {
-      const uint32_t bo_offset = (index + i) * sizeof(uint64_t);
-
       if (regs[i]) {
          /* store lower 32 bits */
-         gen6_MI_STORE_REGISTER_MEM(p->builder,
-               bo, bo_offset, regs[i]);
+         gen6_MI_STORE_REGISTER_MEM(p->builder, bo, offset, regs[i]);
          /* store higher 32 bits */
-         gen6_MI_STORE_REGISTER_MEM(p->builder,
-               bo, bo_offset + 4, regs[i] + 4);
+         gen6_MI_STORE_REGISTER_MEM(p->builder, bo, offset + 4, regs[i] + 4);
       }
       else {
-         gen6_MI_STORE_DATA_IMM(p->builder,
-               bo, bo_offset, 0, true);
+         gen6_MI_STORE_DATA_IMM(p->builder, bo, offset, 0, true);
       }
+
+      offset += 8;
    }
 }
 
