@@ -168,6 +168,7 @@ static void si_launch_grid(
 		uint32_t pc, const void *input)
 {
 	struct si_context *sctx = (struct si_context*)ctx;
+	struct radeon_winsys_cs *cs = sctx->b.rings.gfx.cs;
 	struct si_compute *program = sctx->cs_shader_state.program;
 	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
 	struct r600_resource *input_buffer = program->input_buffer;
@@ -184,8 +185,11 @@ static void si_launch_grid(
 	unsigned lds_blocks;
 	unsigned num_waves_for_scratch;
 
+	radeon_emit(cs, PKT3(PKT3_CONTEXT_CONTROL, 1, 0) | PKT3_SHADER_TYPE_S(1));
+	radeon_emit(cs, 0x80000000);
+	radeon_emit(cs, 0x80000000);
+
 	pm4->compute_pkt = true;
-	si_cmd_context_control(pm4);
 
 	si_pm4_cmd_begin(pm4, PKT3_EVENT_WRITE);
 	si_pm4_cmd_add(pm4, EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH) |
