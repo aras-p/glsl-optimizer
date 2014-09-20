@@ -16,10 +16,10 @@ C_SOURCES := \
 	ilo_blitter_rectlist.c \
 	ilo_builder.c \
 	ilo_builder.h \
-	ilo_blitter_3d.h \
-	ilo_blitter_3d_bottom.h \
-	ilo_blitter_3d_top.h \
-	ilo_blitter_blt.h \
+	ilo_builder_3d.h \
+	ilo_builder_3d_bottom.h \
+	ilo_builder_3d_top.h \
+	ilo_builder_blt.h \
 	ilo_builder_decode.c \
 	ilo_builder_media.h \
 	ilo_builder_mi.h \
@@ -53,7 +53,6 @@ C_SOURCES := \
 	ilo_transfer.h \
 	ilo_video.c \
 	ilo_video.h \
-	include \
 	intel_winsys.h \
 	\
 	shader/ilo_shader_cs.c \
