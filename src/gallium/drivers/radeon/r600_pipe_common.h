@@ -68,12 +68,15 @@
 #define R600_CONTEXT_FLUSH_AND_INV_DB_META	(1 << 11)
 #define R600_CONTEXT_FLUSH_AND_INV_DB		(1 << 12)
 #define R600_CONTEXT_FLUSH_AND_INV_CB		(1 << 13)
+#define R600_CONTEXT_FLUSH_WITH_INV_L2		(1 << 14)
 /* engine synchronization */
 #define R600_CONTEXT_PS_PARTIAL_FLUSH		(1 << 16)
 #define R600_CONTEXT_WAIT_3D_IDLE		(1 << 17)
 #define R600_CONTEXT_WAIT_CP_DMA_IDLE		(1 << 18)
 #define R600_CONTEXT_VGT_FLUSH			(1 << 19)
 #define R600_CONTEXT_VGT_STREAMOUT_SYNC		(1 << 20)
+/* other flags */
+#define R600_CONTEXT_FLAG_COMPUTE		(1u << 31)
 
 /* special primitive types */
 #define R600_PRIM_RECTANGLE_LIST	PIPE_PRIM_MAX

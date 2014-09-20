@@ -788,6 +788,8 @@ void si_emit_cache_flush(struct r600_common_context *sctx, struct r600_atom *ato
 {
 	struct radeon_winsys_cs *cs = sctx->rings.gfx.cs;
 	uint32_t cp_coher_cntl = 0;
+	uint32_t compute =
+		PKT3_SHADER_TYPE_S(!!(sctx->flags & R600_CONTEXT_FLAG_COMPUTE));
 
 	/* XXX SI flushes both ICACHE and KCACHE if either flag is set.
 	 * XXX CIK shouldn't have this issue. Test CIK before separating the flags
@@ -821,7 +823,7 @@ void si_emit_cache_flush(struct r600_common_context *sctx, struct r600_atom *ato
 
 	if (cp_coher_cntl) {
 		if (sctx->chip_class >= CIK) {
-			radeon_emit(cs, PKT3(PKT3_ACQUIRE_MEM, 5, 0));
+			radeon_emit(cs, PKT3(PKT3_ACQUIRE_MEM, 5, 0) | compute);
 			radeon_emit(cs, cp_coher_cntl);   /* CP_COHER_CNTL */
 			radeon_emit(cs, 0xffffffff);      /* CP_COHER_SIZE */
 			radeon_emit(cs, 0xff);            /* CP_COHER_SIZE_HI */
@@ -829,7 +831,7 @@ void si_emit_cache_flush(struct r600_common_context *sctx, struct r600_atom *ato
 			radeon_emit(cs, 0);               /* CP_COHER_BASE_HI */
 			radeon_emit(cs, 0x0000000A);      /* POLL_INTERVAL */
 		} else {
-			radeon_emit(cs, PKT3(PKT3_SURFACE_SYNC, 3, 0));
+			radeon_emit(cs, PKT3(PKT3_SURFACE_SYNC, 3, 0) | compute);
 			radeon_emit(cs, cp_coher_cntl);   /* CP_COHER_CNTL */
 			radeon_emit(cs, 0xffffffff);      /* CP_COHER_SIZE */
 			radeon_emit(cs, 0);               /* CP_COHER_BASE */
@@ -838,37 +840,42 @@ void si_emit_cache_flush(struct r600_common_context *sctx, struct r600_atom *ato
 	}
 
 	if (sctx->flags & R600_CONTEXT_FLUSH_AND_INV_CB_META) {
-		radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0));
+		radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0) | compute);
 		radeon_emit(cs, EVENT_TYPE(V_028A90_FLUSH_AND_INV_CB_META) | EVENT_INDEX(0));
 	}
 	if (sctx->flags & R600_CONTEXT_FLUSH_AND_INV_DB_META) {
-		radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0));
+		radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0) | compute);
 		radeon_emit(cs, EVENT_TYPE(V_028A90_FLUSH_AND_INV_DB_META) | EVENT_INDEX(0));
 	}
+	if (sctx->flags & R600_CONTEXT_FLUSH_WITH_INV_L2) {
+		radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0) | compute);
+		radeon_emit(cs, EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH) | EVENT_INDEX(7) |
+				EVENT_WRITE_INV_L2);
+        }
 
 	if (sctx->flags & (R600_CONTEXT_WAIT_3D_IDLE |
 			   R600_CONTEXT_PS_PARTIAL_FLUSH)) {
-		radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0));
+		radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0) | compute);
 		radeon_emit(cs, EVENT_TYPE(V_028A90_PS_PARTIAL_FLUSH) | EVENT_INDEX(4));
 	} else if (sctx->flags & R600_CONTEXT_STREAMOUT_FLUSH) {
 		/* Needed if streamout buffers are going to be used as a source. */
-		radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0));
+		radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0) | compute);
 		radeon_emit(cs, EVENT_TYPE(V_028A90_VS_PARTIAL_FLUSH) | EVENT_INDEX(4));
 	}
 
 	if (sctx->flags & R600_CONTEXT_VGT_FLUSH) {
-		radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0));
+		radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0) | compute);
 		radeon_emit(cs, EVENT_TYPE(V_028A90_VGT_FLUSH) | EVENT_INDEX(0));
 	}
 	if (sctx->flags & R600_CONTEXT_VGT_STREAMOUT_SYNC) {
-		radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0));
+		radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0) | compute);
 		radeon_emit(cs, EVENT_TYPE(V_028A90_VGT_STREAMOUT_SYNC) | EVENT_INDEX(0));
 	}
 
 	sctx->flags = 0;
 }
 
-const struct r600_atom si_atom_cache_flush = { si_emit_cache_flush, 17 }; /* number of CS dwords */
+const struct r600_atom si_atom_cache_flush = { si_emit_cache_flush, 19 }; /* number of CS dwords */
 
 static void si_get_draw_start_count(struct si_context *sctx,
 				    const struct pipe_draw_info *info,

@@ -189,17 +189,14 @@ static void si_launch_grid(
 	radeon_emit(cs, 0x80000000);
 	radeon_emit(cs, 0x80000000);
 
+	sctx->b.flags |= R600_CONTEXT_INV_TEX_CACHE |
+			 R600_CONTEXT_INV_SHADER_CACHE |
+			 R600_CONTEXT_INV_CONST_CACHE |
+			 R600_CONTEXT_FLUSH_WITH_INV_L2 |
+			 R600_CONTEXT_FLAG_COMPUTE;
+	si_emit_cache_flush(&sctx->b, NULL);
+
 	pm4->compute_pkt = true;
-
-	si_pm4_cmd_begin(pm4, PKT3_EVENT_WRITE);
-	si_pm4_cmd_add(pm4, EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH) |
-	                    EVENT_INDEX(0x7) |
-			    EVENT_WRITE_INV_L2);
-	si_pm4_cmd_end(pm4, false);
-
-	si_pm4_inval_texture_cache(pm4);
-	si_pm4_inval_shader_cache(pm4);
-	si_cmd_surface_sync(pm4, pm4->cp_coher_cntl);
 
 	/* Upload the kernel arguments */
 
@@ -368,10 +365,6 @@ static void si_launch_grid(
 	si_pm4_cmd_add(pm4, EVENT_TYPE(V_028A90_CS_PARTIAL_FLUSH | EVENT_INDEX(0x4)));
 	si_pm4_cmd_end(pm4, false);
 
-	si_pm4_inval_texture_cache(pm4);
-	si_pm4_inval_shader_cache(pm4);
-	si_cmd_surface_sync(pm4, pm4->cp_coher_cntl);
-
 	si_pm4_emit(sctx, pm4);
 
 #if 0
@@ -382,6 +375,12 @@ static void si_launch_grid(
 #endif
 
 	si_pm4_free_state(sctx, pm4, ~0);
+
+	sctx->b.flags |= R600_CONTEXT_INV_TEX_CACHE |
+			 R600_CONTEXT_INV_SHADER_CACHE |
+			 R600_CONTEXT_INV_CONST_CACHE |
+			 R600_CONTEXT_FLAG_COMPUTE;
+	si_emit_cache_flush(&sctx->b, NULL);
 }
 
 
