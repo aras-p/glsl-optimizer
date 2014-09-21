@@ -480,7 +480,7 @@ get_vertex_header_ptr_type(struct draw_llvm_variant *variant)
  * Create per-context LLVM info.
  */
 struct draw_llvm *
-draw_llvm_create(struct draw_context *draw)
+draw_llvm_create(struct draw_context *draw, LLVMContextRef context)
 {
    struct draw_llvm *llvm;
 
@@ -493,7 +493,11 @@ draw_llvm_create(struct draw_context *draw)
 
    llvm->draw = draw;
 
-   llvm->context = LLVMContextCreate();
+   llvm->context = context;
+   if (!llvm->context) {
+      llvm->context = LLVMContextCreate();
+      llvm->context_owned = true;
+   }
    if (!llvm->context)
       goto fail;
 
@@ -517,7 +521,8 @@ fail:
 void
 draw_llvm_destroy(struct draw_llvm *llvm)
 {
-   LLVMContextDispose(llvm->context);
+   if (llvm->context_owned)
+      LLVMContextDispose(llvm->context);
    llvm->context = NULL;
 
    /* XXX free other draw_llvm data? */

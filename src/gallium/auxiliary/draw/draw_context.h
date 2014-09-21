@@ -64,6 +64,11 @@ struct draw_so_target {
 
 struct draw_context *draw_create( struct pipe_context *pipe );
 
+#if HAVE_LLVM
+struct draw_context *draw_create_with_llvm_context(struct pipe_context *pipe,
+                                                   void *context);
+#endif
+
 struct draw_context *draw_create_no_llvm(struct pipe_context *pipe);
 
 void draw_destroy( struct draw_context *draw );
