@@ -209,20 +209,6 @@ _mesa_align_realloc(void *oldBuffer, size_t oldSize, size_t newSize,
 #endif
 }
 
-
-
-/** Reallocate memory */
-void *
-_mesa_realloc(void *oldBuffer, size_t oldSize, size_t newSize)
-{
-   const size_t copySize = (oldSize < newSize) ? oldSize : newSize;
-   void *newBuffer = malloc(newSize);
-   if (newBuffer && oldBuffer && copySize > 0)
-      memcpy(newBuffer, oldBuffer, copySize);
-   free(oldBuffer);
-   return newBuffer;
-}
-
 /*@}*/
 
 

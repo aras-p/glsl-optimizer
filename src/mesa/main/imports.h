@@ -473,9 +473,6 @@ _mesa_exec_malloc( GLuint size );
 extern void 
 _mesa_exec_free( void *addr );
 
-extern void *
-_mesa_realloc( void *oldBuffer, size_t oldSize, size_t newSize );
-
 
 #ifndef FFS_DEFINED
 #define FFS_DEFINED 1
