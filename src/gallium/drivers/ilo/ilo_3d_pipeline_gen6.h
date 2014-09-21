@@ -31,6 +31,7 @@
 #include "ilo_common.h"
 
 struct ilo_3d_pipeline;
+struct ilo_query;
 struct ilo_state_vector;
 
 struct gen6_pipeline_session {
@@ -153,23 +154,16 @@ int
 gen6_pipeline_estimate_state_size(const struct ilo_3d_pipeline *p,
                                   const struct ilo_state_vector *ilo);
 
+int
+gen6_pipeline_estimate_query_size(const struct ilo_3d_pipeline *p,
+                                  const struct ilo_query *q);
+
 void
 ilo_3d_pipeline_emit_flush_gen6(struct ilo_3d_pipeline *p);
 
 void
-ilo_3d_pipeline_emit_write_timestamp_gen6(struct ilo_3d_pipeline *p,
-                                          struct intel_bo *bo,
-                                          uint32_t offset);
-
-void
-ilo_3d_pipeline_emit_write_depth_count_gen6(struct ilo_3d_pipeline *p,
-                                            struct intel_bo *bo,
-                                            uint32_t offset);
-
-void
-ilo_3d_pipeline_emit_write_statistics_gen6(struct ilo_3d_pipeline *p,
-                                           struct intel_bo *bo,
-                                           uint32_t offset);
+ilo_3d_pipeline_emit_query_gen6(struct ilo_3d_pipeline *p,
+                                struct ilo_query *q, uint32_t offset);
 
 void
 ilo_3d_pipeline_init_gen6(struct ilo_3d_pipeline *p);

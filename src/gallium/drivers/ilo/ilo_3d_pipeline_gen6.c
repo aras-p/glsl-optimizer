@@ -35,6 +35,7 @@
 #include "ilo_builder_mi.h"
 #include "ilo_builder_render.h"
 #include "ilo_cp.h"
+#include "ilo_query.h"
 #include "ilo_shader.h"
 #include "ilo_state.h"
 #include "ilo_3d_pipeline.h"
@@ -1465,38 +1466,10 @@ ilo_3d_pipeline_emit_flush_gen6(struct ilo_3d_pipeline *p)
 }
 
 void
-ilo_3d_pipeline_emit_write_timestamp_gen6(struct ilo_3d_pipeline *p,
-                                          struct intel_bo *bo,
-                                          uint32_t offset)
+ilo_3d_pipeline_emit_query_gen6(struct ilo_3d_pipeline *p,
+                                struct ilo_query *q, uint32_t offset)
 {
-   if (ilo_dev_gen(p->dev) == ILO_GEN(6))
-      gen6_wa_pipe_control_post_sync(p, true);
-
-   gen6_PIPE_CONTROL(p->builder,
-         GEN6_PIPE_CONTROL_WRITE_TIMESTAMP,
-         bo, offset, true);
-}
-
-void
-ilo_3d_pipeline_emit_write_depth_count_gen6(struct ilo_3d_pipeline *p,
-                                            struct intel_bo *bo,
-                                            uint32_t offset)
-{
-   if (ilo_dev_gen(p->dev) == ILO_GEN(6))
-      gen6_wa_pipe_control_post_sync(p, false);
-
-   gen6_PIPE_CONTROL(p->builder,
-         GEN6_PIPE_CONTROL_DEPTH_STALL |
-         GEN6_PIPE_CONTROL_WRITE_PS_DEPTH_COUNT,
-         bo, offset, true);
-}
-
-void
-ilo_3d_pipeline_emit_write_statistics_gen6(struct ilo_3d_pipeline *p,
-                                           struct intel_bo *bo,
-                                           uint32_t offset)
-{
-   const uint32_t regs[] = {
+   const uint32_t pipeline_statistics_regs[] = {
       GEN6_REG_IA_VERTICES_COUNT,
       GEN6_REG_IA_PRIMITIVES_COUNT,
       GEN6_REG_VS_INVOCATION_COUNT,
@@ -1505,23 +1478,56 @@ ilo_3d_pipeline_emit_write_statistics_gen6(struct ilo_3d_pipeline *p,
       GEN6_REG_CL_INVOCATION_COUNT,
       GEN6_REG_CL_PRIMITIVES_COUNT,
       GEN6_REG_PS_INVOCATION_COUNT,
-      ilo_dev_gen(p->dev) >= ILO_GEN(7) ? GEN7_REG_HS_INVOCATION_COUNT : 0,
-      ilo_dev_gen(p->dev) >= ILO_GEN(7) ? GEN7_REG_DS_INVOCATION_COUNT : 0,
+      (ilo_dev_gen(p->dev) >= ILO_GEN(7)) ? GEN7_REG_HS_INVOCATION_COUNT : 0,
+      (ilo_dev_gen(p->dev) >= ILO_GEN(7)) ? GEN7_REG_DS_INVOCATION_COUNT : 0,
       0,
    };
-   int i;
+   const uint32_t *regs;
+   int reg_count = 0, i;
+
+   ILO_DEV_ASSERT(p->dev, 6, 7.5);
+
+   switch (q->type) {
+   case PIPE_QUERY_OCCLUSION_COUNTER:
+      if (ilo_dev_gen(p->dev) == ILO_GEN(6))
+         gen6_wa_pipe_control_post_sync(p, false);
+
+      gen6_PIPE_CONTROL(p->builder,
+            GEN6_PIPE_CONTROL_DEPTH_STALL |
+            GEN6_PIPE_CONTROL_WRITE_PS_DEPTH_COUNT,
+            q->bo, offset, true);
+      break;
+   case PIPE_QUERY_TIMESTAMP:
+   case PIPE_QUERY_TIME_ELAPSED:
+      if (ilo_dev_gen(p->dev) == ILO_GEN(6))
+         gen6_wa_pipe_control_post_sync(p, true);
+
+      gen6_PIPE_CONTROL(p->builder,
+            GEN6_PIPE_CONTROL_WRITE_TIMESTAMP,
+            q->bo, offset, true);
+      break;
+   case PIPE_QUERY_PIPELINE_STATISTICS:
+      regs = pipeline_statistics_regs;
+      reg_count = Elements(pipeline_statistics_regs);
+      break;
+   default:
+      break;
+   }
+
+   if (!reg_count)
+      return;
 
    p->emit_flush(p);
 
-   for (i = 0; i < Elements(regs); i++) {
+   for (i = 0; i < reg_count; i++) {
       if (regs[i]) {
          /* store lower 32 bits */
-         gen6_MI_STORE_REGISTER_MEM(p->builder, bo, offset, regs[i]);
+         gen6_MI_STORE_REGISTER_MEM(p->builder, q->bo, offset, regs[i]);
          /* store higher 32 bits */
-         gen6_MI_STORE_REGISTER_MEM(p->builder, bo, offset + 4, regs[i] + 4);
-      }
-      else {
-         gen6_MI_STORE_DATA_IMM(p->builder, bo, offset, 0, true);
+         gen6_MI_STORE_REGISTER_MEM(p->builder, q->bo,
+               offset + 4, regs[i] + 4);
+      } else {
+         gen6_MI_STORE_DATA_IMM(p->builder, q->bo, offset, 0, true);
       }
 
       offset += 8;
@@ -1854,6 +1860,51 @@ gen6_pipeline_estimate_state_size(const struct ilo_3d_pipeline *p,
    return size;
 }
 
+int
+gen6_pipeline_estimate_query_size(const struct ilo_3d_pipeline *p,
+                                  const struct ilo_query *q)
+{
+   int size;
+
+   ILO_DEV_ASSERT(p->dev, 6, 7.5);
+
+   switch (q->type) {
+   case PIPE_QUERY_OCCLUSION_COUNTER:
+      size = GEN6_PIPE_CONTROL__SIZE;
+      if (ilo_dev_gen(p->dev) == ILO_GEN(6))
+         size *= 3;
+      break;
+   case PIPE_QUERY_TIMESTAMP:
+   case PIPE_QUERY_TIME_ELAPSED:
+      size = GEN6_PIPE_CONTROL__SIZE;
+      if (ilo_dev_gen(p->dev) == ILO_GEN(6))
+         size *= 2;
+      break;
+   case PIPE_QUERY_PIPELINE_STATISTICS:
+      if (ilo_dev_gen(p->dev) >= ILO_GEN(7)) {
+         const int num_regs = 10;
+         const int num_pads = 1;
+
+         size = GEN6_PIPE_CONTROL__SIZE +
+            GEN6_MI_STORE_REGISTER_MEM__SIZE * 2 * num_regs +
+            GEN6_MI_STORE_DATA_IMM__SIZE * num_pads;
+      } else {
+         const int num_regs = 8;
+         const int num_pads = 3;
+
+         size = GEN6_PIPE_CONTROL__SIZE * 3 +
+            GEN6_MI_STORE_REGISTER_MEM__SIZE * 2 * num_regs +
+            GEN6_MI_STORE_DATA_IMM__SIZE * num_pads;
+      }
+      break;
+   default:
+      size = 0;
+      break;
+   }
+
+   return size;
+}
+
 static int
 ilo_3d_pipeline_estimate_size_gen6(struct ilo_3d_pipeline *p,
                                    enum ilo_3d_pipeline_action action,
@@ -1873,21 +1924,9 @@ ilo_3d_pipeline_estimate_size_gen6(struct ilo_3d_pipeline *p,
    case ILO_3D_PIPELINE_FLUSH:
       size = GEN6_PIPE_CONTROL__SIZE * 3;
       break;
-   case ILO_3D_PIPELINE_WRITE_TIMESTAMP:
-      size = GEN6_PIPE_CONTROL__SIZE * 2;
-      break;
-   case ILO_3D_PIPELINE_WRITE_DEPTH_COUNT:
-      size = GEN6_PIPE_CONTROL__SIZE * 3;
-      break;
-   case ILO_3D_PIPELINE_WRITE_STATISTICS:
-      {
-         const int num_regs = 8;
-         const int num_pads = 3;
-
-         size = GEN6_PIPE_CONTROL__SIZE;
-         size += GEN6_MI_STORE_REGISTER_MEM__SIZE * 2 * num_regs;
-         size += GEN6_MI_STORE_DATA_IMM__SIZE * num_pads;
-      }
+   case ILO_3D_PIPELINE_QUERY:
+      size = gen6_pipeline_estimate_query_size(p,
+            (const struct ilo_query *) arg);
       break;
    case ILO_3D_PIPELINE_RECTLIST:
       size = 64 + 256; /* states + commands */
@@ -1907,8 +1946,6 @@ ilo_3d_pipeline_init_gen6(struct ilo_3d_pipeline *p)
    p->estimate_size = ilo_3d_pipeline_estimate_size_gen6;
    p->emit_draw = ilo_3d_pipeline_emit_draw_gen6;
    p->emit_flush = ilo_3d_pipeline_emit_flush_gen6;
-   p->emit_write_timestamp = ilo_3d_pipeline_emit_write_timestamp_gen6;
-   p->emit_write_depth_count = ilo_3d_pipeline_emit_write_depth_count_gen6;
-   p->emit_write_statistics = ilo_3d_pipeline_emit_write_statistics_gen6;
+   p->emit_query = ilo_3d_pipeline_emit_query_gen6;
    p->emit_rectlist = ilo_3d_pipeline_emit_rectlist_gen6;
 }

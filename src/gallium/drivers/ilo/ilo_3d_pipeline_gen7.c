@@ -947,19 +947,11 @@ ilo_3d_pipeline_estimate_size_gen7(struct ilo_3d_pipeline *p,
       }
       break;
    case ILO_3D_PIPELINE_FLUSH:
-   case ILO_3D_PIPELINE_WRITE_TIMESTAMP:
-   case ILO_3D_PIPELINE_WRITE_DEPTH_COUNT:
       size = GEN6_PIPE_CONTROL__SIZE;
       break;
-   case ILO_3D_PIPELINE_WRITE_STATISTICS:
-      {
-         const int num_regs = 10;
-         const int num_pads = 1;
-
-         size = GEN6_PIPE_CONTROL__SIZE;
-         size += GEN6_MI_STORE_REGISTER_MEM__SIZE * 2 * num_regs;
-         size += GEN6_MI_STORE_DATA_IMM__SIZE * num_pads;
-      }
+   case ILO_3D_PIPELINE_QUERY:
+      size = gen6_pipeline_estimate_query_size(p,
+            (const struct ilo_query *) arg);
       break;
    case ILO_3D_PIPELINE_RECTLIST:
       size = 64 + 256; /* states + commands */
@@ -979,8 +971,6 @@ ilo_3d_pipeline_init_gen7(struct ilo_3d_pipeline *p)
    p->estimate_size = ilo_3d_pipeline_estimate_size_gen7;
    p->emit_draw = ilo_3d_pipeline_emit_draw_gen7;
    p->emit_flush = ilo_3d_pipeline_emit_flush_gen6;
-   p->emit_write_timestamp = ilo_3d_pipeline_emit_write_timestamp_gen6;
-   p->emit_write_depth_count = ilo_3d_pipeline_emit_write_depth_count_gen6;
-   p->emit_write_statistics = ilo_3d_pipeline_emit_write_statistics_gen6;
+   p->emit_query = ilo_3d_pipeline_emit_query_gen6;
    p->emit_rectlist = ilo_3d_pipeline_emit_rectlist_gen7;
 }

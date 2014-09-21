@@ -122,32 +122,13 @@ query_process_bo(const struct ilo_3d *hw3d, struct ilo_query *q)
 static void
 query_begin_bo(struct ilo_3d *hw3d, struct ilo_query *q)
 {
-   uint32_t offset;
-
    /* bo is full */
    if (q->used >= q->count)
       query_process_bo(hw3d, q);
 
-   offset = q->stride * q->used;
-
    /* write the beginning value to the bo */
-   switch (q->type) {
-   case PIPE_QUERY_OCCLUSION_COUNTER:
-      ilo_3d_pipeline_emit_write_depth_count(hw3d->pipeline, q->bo, offset);
-      break;
-   case PIPE_QUERY_TIMESTAMP:
-      /* no-op */
-      break;
-   case PIPE_QUERY_TIME_ELAPSED:
-      ilo_3d_pipeline_emit_write_timestamp(hw3d->pipeline, q->bo, offset);
-      break;
-   case PIPE_QUERY_PIPELINE_STATISTICS:
-      ilo_3d_pipeline_emit_write_statistics(hw3d->pipeline, q->bo, offset);
-      break;
-   default:
-      assert(!"unknown query type");
-      break;
-   }
+   if (q->in_pairs)
+      ilo_3d_pipeline_emit_query(hw3d->pipeline, q, q->stride * q->used);
 }
 
 static void
@@ -164,21 +145,7 @@ query_end_bo(struct ilo_3d *hw3d, struct ilo_query *q)
    q->used++;
 
    /* write the ending value to the bo */
-   switch (q->type) {
-   case PIPE_QUERY_OCCLUSION_COUNTER:
-      ilo_3d_pipeline_emit_write_depth_count(hw3d->pipeline, q->bo, offset);
-      break;
-   case PIPE_QUERY_TIMESTAMP:
-   case PIPE_QUERY_TIME_ELAPSED:
-      ilo_3d_pipeline_emit_write_timestamp(hw3d->pipeline, q->bo, offset);
-      break;
-   case PIPE_QUERY_PIPELINE_STATISTICS:
-      ilo_3d_pipeline_emit_write_statistics(hw3d->pipeline, q->bo, offset);
-      break;
-   default:
-      assert(!"unknown query type");
-      break;
-   }
+   ilo_3d_pipeline_emit_query(hw3d->pipeline, q, offset);
 }
 
 bool
@@ -189,26 +156,15 @@ ilo_3d_init_query(struct pipe_context *pipe, struct ilo_query *q)
 
    switch (q->type) {
    case PIPE_QUERY_OCCLUSION_COUNTER:
-      q->cmd_len = ilo_3d_pipeline_estimate_size(ilo->hw3d->pipeline,
-            ILO_3D_PIPELINE_WRITE_DEPTH_COUNT, q);
+   case PIPE_QUERY_TIME_ELAPSED:
       q->stride = sizeof(uint64_t);
       q->in_pairs = true;
       break;
    case PIPE_QUERY_TIMESTAMP:
-      q->cmd_len = ilo_3d_pipeline_estimate_size(ilo->hw3d->pipeline,
-            ILO_3D_PIPELINE_WRITE_TIMESTAMP, q);
       q->stride = sizeof(uint64_t);
       q->in_pairs = false;
       break;
-   case PIPE_QUERY_TIME_ELAPSED:
-      q->cmd_len = ilo_3d_pipeline_estimate_size(ilo->hw3d->pipeline,
-            ILO_3D_PIPELINE_WRITE_TIMESTAMP, q);
-      q->stride = sizeof(uint64_t);
-      q->in_pairs = true;
-      break;
    case PIPE_QUERY_PIPELINE_STATISTICS:
-      q->cmd_len = ilo_3d_pipeline_estimate_size(ilo->hw3d->pipeline,
-            ILO_3D_PIPELINE_WRITE_STATISTICS, q);
       q->stride = sizeof(uint64_t) * 11;
       q->in_pairs = true;
       break;
@@ -220,6 +176,9 @@ ilo_3d_init_query(struct pipe_context *pipe, struct ilo_query *q)
       return false;
       break;
    }
+
+   q->cmd_len = ilo_3d_pipeline_estimate_size(ilo->hw3d->pipeline,
+         ILO_3D_PIPELINE_QUERY, q);
 
    /* double cmd_len and stride if in pairs */
    q->cmd_len <<= q->in_pairs;

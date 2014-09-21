@@ -233,36 +233,14 @@ ilo_3d_pipeline_emit_flush(struct ilo_3d_pipeline *p)
 }
 
 /**
- * Emit PIPE_CONTROL with GEN6_PIPE_CONTROL_WRITE_TIMESTAMP post-sync op.
+ * Emit PIPE_CONTROL or MI_STORE_REGISTER_MEM to save register values.
  */
 void
-ilo_3d_pipeline_emit_write_timestamp(struct ilo_3d_pipeline *p,
-                                     struct intel_bo *bo, uint32_t offset)
+ilo_3d_pipeline_emit_query(struct ilo_3d_pipeline *p,
+                           struct ilo_query *q, uint32_t offset)
 {
    handle_invalid_batch_bo(p, true);
-   p->emit_write_timestamp(p, bo, offset);
-}
-
-/**
- * Emit PIPE_CONTROL with GEN6_PIPE_CONTROL_WRITE_PS_DEPTH_COUNT post-sync op.
- */
-void
-ilo_3d_pipeline_emit_write_depth_count(struct ilo_3d_pipeline *p,
-                                       struct intel_bo *bo, uint32_t offset)
-{
-   handle_invalid_batch_bo(p, true);
-   p->emit_write_depth_count(p, bo, offset);
-}
-
-/**
- * Emit MI_STORE_REGISTER_MEM to store statistics registers.
- */
-void
-ilo_3d_pipeline_emit_write_statistics(struct ilo_3d_pipeline *p,
-                                      struct intel_bo *bo, uint32_t offset)
-{
-   handle_invalid_batch_bo(p, true);
-   p->emit_write_statistics(p, bo, offset);
+   p->emit_query(p, q, offset);
 }
 
 void
