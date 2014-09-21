@@ -116,14 +116,7 @@ STATIC_TARGET_LIB_DEPS += \
 	$(top_builddir)/src/gallium/drivers/svga/libsvga.la
 endif
 
-if HAVE_GALLIUM_FREEDRENO
-STATIC_TARGET_CPPFLAGS += -DGALLIUM_FREEDRENO
-STATIC_TARGET_LIB_DEPS += \
-	$(top_builddir)/src/gallium/winsys/freedreno/drm/libfreedrenodrm.la \
-	$(top_builddir)/src/gallium/drivers/freedreno/libfreedreno.la \
-	$(FREEDRENO_LIBS)
-
-endif
+include $(top_srcdir)/src/gallium/drivers/freedreno/Automake.inc
 
 gbm_gallium_drm_la_SOURCES += target.c
 gbm_gallium_drm_la_CPPFLAGS = $(STATIC_TARGET_CPPFLAGS) $(TARGET_CPPFLAGS)

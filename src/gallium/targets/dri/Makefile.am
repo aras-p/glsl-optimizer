@@ -130,15 +130,7 @@ STATIC_TARGET_LIB_DEPS += \
 	$(top_builddir)/src/gallium/drivers/svga/libsvga.la
 endif
 
-if HAVE_GALLIUM_FREEDRENO
-MEGADRIVERS += msm kgsl
-STATIC_TARGET_CPPFLAGS += -DGALLIUM_FREEDRENO
-STATIC_TARGET_LIB_DEPS += \
-	$(top_builddir)/src/gallium/winsys/freedreno/drm/libfreedrenodrm.la \
-	$(top_builddir)/src/gallium/drivers/freedreno/libfreedreno.la \
-	$(FREEDRENO_LIBS)
-
-endif
+include $(top_srcdir)/src/gallium/drivers/freedreno/Automake.inc
 
 if HAVE_GALLIUM_VC4
 MEGADRIVERS += vc4
