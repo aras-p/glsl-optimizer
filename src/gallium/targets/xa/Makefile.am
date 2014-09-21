@@ -61,13 +61,7 @@ TARGET_DRIVERS =
 TARGET_CPPFLAGS =
 TARGET_LIB_DEPS =
 
-if HAVE_GALLIUM_I915
-STATIC_TARGET_CPPFLAGS += -DGALLIUM_I915
-STATIC_TARGET_LIB_DEPS += \
-	$(top_builddir)/src/gallium/winsys/i915/drm/libi915drm.la \
-	$(top_builddir)/src/gallium/drivers/i915/libi915.la \
-	$(INTEL_LIBS)
-endif
+include $(top_srcdir)/src/gallium/drivers/i915/Automake.inc
 
 if HAVE_GALLIUM_ILO
 STATIC_TARGET_CPPFLAGS += -DGALLIUM_ILO
