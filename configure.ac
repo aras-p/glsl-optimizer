@@ -70,8 +70,6 @@ AX_PROG_FLEX([],
              AS_IF([test ! -f "$srcdir/src/glsl/glcpp/glcpp-lex.c"],
                    [AC_MSG_ERROR([flex not found - unable to compile glcpp-lex.l])]))
 
-AC_PATH_PROG([PERL], [perl])
-
 AC_CHECK_PROG(INDENT, indent, indent, cat)
 if test "x$INDENT" != "xcat"; then
     AC_SUBST(INDENT_FLAGS, '-i4 -nut -br -brs -npcs -ce -TGLubyte -TGLbyte -TBool')
