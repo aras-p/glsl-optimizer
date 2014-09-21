@@ -1807,7 +1807,7 @@ AC_SUBST([OPENCL_LIB_INSTALL_DIR])
 dnl
 dnl Gallium helper functions
 dnl
-gallium_check_st() {
+gallium_require_drm() {
     if test "x$have_libdrm" != xyes; then
        AC_MSG_ERROR([$1 requires libdrm >= $LIBDRM_REQUIRED])
     fi
@@ -1826,9 +1826,6 @@ gallium_require_drm_loader() {
     if test "x$enable_gallium_loader" = xyes; then
         if test "x$need_pci_id$have_pci_id" = xyesno; then
             AC_MSG_ERROR([Gallium drm loader requires libudev >= $LIBUDEV_REQUIRED or sysfs])
-        fi
-        if test "x$have_libdrm" != xyes; then
-            AC_MSG_ERROR([Gallium drm loader requires libdrm >= $LIBDRM_REQUIRED])
         fi
         enable_gallium_drm_loader=yes
     fi
@@ -1875,31 +1872,32 @@ if test -n "$with_gallium_drivers"; then
         case "x$driver" in
         xsvga)
             HAVE_GALLIUM_SVGA=yes
+            gallium_require_drm "svga"
             gallium_require_drm_loader
-            gallium_check_st "svga" "svga/drm" "dri/vmwgfx" "xa/vmwgfx"
             ;;
         xi915)
             HAVE_GALLIUM_I915=yes
             PKG_CHECK_MODULES([INTEL], [libdrm_intel >= $LIBDRM_INTEL_REQUIRED])
+            gallium_require_drm "Gallium i915"
             gallium_require_drm_loader
-            gallium_check_st "Gallium i915" "i915/drm" "dri/i915" "xa/i915"
             ;;
         xilo)
             HAVE_GALLIUM_ILO=yes
             PKG_CHECK_MODULES([INTEL], [libdrm_intel >= $LIBDRM_INTEL_REQUIRED])
+            gallium_require_drm "Gallium i965/ilo"
             gallium_require_drm_loader
-            gallium_check_st "Gallium i965/ilo" "intel/drm" "dri/ilo" "xa/ilo"
             ;;
         xr300)
             HAVE_GALLIUM_R300=yes
             PKG_CHECK_MODULES([RADEON], [libdrm_radeon >= $LIBDRM_RADEON_REQUIRED])
+            gallium_require_drm "Gallium R300"
             gallium_require_drm_loader
             gallium_require_llvm "Gallium R300"
-            gallium_check_st "Gallium R300" "radeon/drm" "dri/r300"
             ;;
         xr600)
             HAVE_GALLIUM_R600=yes
             PKG_CHECK_MODULES([RADEON], [libdrm_radeon >= $LIBDRM_RADEON_REQUIRED])
+            gallium_require_drm "Gallium R600"
             gallium_require_drm_loader
             if test "x$enable_r600_llvm" = xyes -o "x$enable_opencl" = xyes; then
                 radeon_llvm_check "r600g"
@@ -1911,27 +1909,26 @@ if test -n "$with_gallium_drivers"; then
             if test "x$enable_opencl" = xyes; then
                 LLVM_COMPONENTS="${LLVM_COMPONENTS} bitreader asmparser"
             fi
-            gallium_check_st "Gallium R600" "radeon/drm" "dri/r600" "" "xvmc/r600" "vdpau/r600" "omx/r600"
             ;;
         xradeonsi)
             HAVE_GALLIUM_RADEONSI=yes
             PKG_CHECK_MODULES([RADEON], [libdrm_radeon >= $LIBDRM_RADEON_REQUIRED])
+            gallium_require_drm "radeonsi"
             gallium_require_drm_loader
             radeon_llvm_check "radeonsi"
             require_egl_drm "radeonsi"
-            gallium_check_st "radeonsi" "radeon/drm" "dri/radeonsi" "" "" "vdpau/radeonsi" "omx/radeonsi"
             ;;
         xnouveau)
             HAVE_GALLIUM_NOUVEAU=yes
             PKG_CHECK_MODULES([NOUVEAU], [libdrm_nouveau >= $LIBDRM_NOUVEAU_REQUIRED])
+            gallium_require_drm "nouveau"
             gallium_require_drm_loader
-            gallium_check_st "nouveau" "nouveau/drm" "dri/nouveau" "xa/nouveau" "xvmc/nouveau" "vdpau/nouveau" "omx/nouveau"
             ;;
         xfreedreno)
             HAVE_GALLIUM_FREEDRENO=yes
             PKG_CHECK_MODULES([FREEDRENO], [libdrm_freedreno >= $LIBDRM_FREEDRENO_REQUIRED])
+            gallium_require_drm "freedreno"
             gallium_require_drm_loader
-            gallium_check_st "freedreno" "freedreno/drm" "dri/freedreno" "xa/freedreno" "" ""
             ;;
         xswrast)
             HAVE_GALLIUM_SOFTPIPE=yes
@@ -1941,8 +1938,8 @@ if test -n "$with_gallium_drivers"; then
             ;;
         xvc4)
             HAVE_GALLIUM_VC4=yes
+            gallium_require_drm "vc4"
             gallium_require_drm_loader
-            gallium_check_st "vc4" "vc4/drm" "dri-vc4" "" "" ""
 
             case "$host_cpu" in
                 i?86 | x86_64 | amd64)
