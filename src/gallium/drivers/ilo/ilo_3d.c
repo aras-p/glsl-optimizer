@@ -217,29 +217,8 @@ ilo_3d_begin_query(struct pipe_context *pipe, struct ilo_query *q)
 
    query_begin_bo(hw3d, q);
 
-   switch (q->type) {
-   case PIPE_QUERY_OCCLUSION_COUNTER:
-      list_add(&q->list, &hw3d->occlusion_queries);
-      break;
-   case PIPE_QUERY_TIMESTAMP:
-      /* no-op */
-      break;
-   case PIPE_QUERY_TIME_ELAPSED:
-      list_add(&q->list, &hw3d->time_elapsed_queries);
-      break;
-   case PIPE_QUERY_PRIMITIVES_GENERATED:
-      list_add(&q->list, &hw3d->prim_generated_queries);
-      break;
-   case PIPE_QUERY_PRIMITIVES_EMITTED:
-      list_add(&q->list, &hw3d->prim_emitted_queries);
-      break;
-   case PIPE_QUERY_PIPELINE_STATISTICS:
-      list_add(&q->list, &hw3d->pipeline_statistics_queries);
-      break;
-   default:
-      assert(!"unknown query type");
-      break;
-   }
+   if (q->in_pairs)
+      list_add(&q->list, &hw3d->queries);
 }
 
 void
@@ -286,24 +265,8 @@ ilo_3d_own_cp(struct ilo_cp *cp, void *data)
 
       ilo_builder_batch_snapshot(&hw3d->cp->builder, &snapshot);
 
-      /* resume occlusion queries */
-      LIST_FOR_EACH_ENTRY(q, &hw3d->occlusion_queries, list)
-         query_begin_bo(hw3d, q);
-
-      /* resume timer queries */
-      LIST_FOR_EACH_ENTRY(q, &hw3d->time_elapsed_queries, list)
-         query_begin_bo(hw3d, q);
-
-      /* resume prim generated queries */
-      LIST_FOR_EACH_ENTRY(q, &hw3d->prim_generated_queries, list)
-         query_begin_bo(hw3d, q);
-
-      /* resume prim emitted queries */
-      LIST_FOR_EACH_ENTRY(q, &hw3d->prim_emitted_queries, list)
-         query_begin_bo(hw3d, q);
-
-      /* resume pipeline statistics queries */
-      LIST_FOR_EACH_ENTRY(q, &hw3d->pipeline_statistics_queries, list)
+      /* resume queries */
+      LIST_FOR_EACH_ENTRY(q, &hw3d->queries, list)
          query_begin_bo(hw3d, q);
 
       if (!ilo_builder_validate(&hw3d->cp->builder, 0, NULL)) {
@@ -329,24 +292,8 @@ ilo_3d_release_cp(struct ilo_cp *cp, void *data)
 
    assert(ilo_cp_space(hw3d->cp) >= hw3d->owner.reserve);
 
-   /* pause occlusion queries */
-   LIST_FOR_EACH_ENTRY(q, &hw3d->occlusion_queries, list)
-      query_end_bo(hw3d, q);
-
-   /* pause timer queries */
-   LIST_FOR_EACH_ENTRY(q, &hw3d->time_elapsed_queries, list)
-      query_end_bo(hw3d, q);
-
-   /* pause prim generated queries */
-   LIST_FOR_EACH_ENTRY(q, &hw3d->prim_generated_queries, list)
-      query_end_bo(hw3d, q);
-
-   /* pause prim emitted queries */
-   LIST_FOR_EACH_ENTRY(q, &hw3d->prim_emitted_queries, list)
-      query_end_bo(hw3d, q);
-
-   /* pause pipeline statistics queries */
-   LIST_FOR_EACH_ENTRY(q, &hw3d->pipeline_statistics_queries, list)
+   /* pause queries */
+   LIST_FOR_EACH_ENTRY(q, &hw3d->queries, list)
       query_end_bo(hw3d, q);
 }
 
@@ -385,11 +332,7 @@ ilo_3d_create(struct ilo_cp *cp, const struct ilo_dev_info *dev)
 
    hw3d->new_batch = true;
 
-   list_inithead(&hw3d->occlusion_queries);
-   list_inithead(&hw3d->time_elapsed_queries);
-   list_inithead(&hw3d->prim_generated_queries);
-   list_inithead(&hw3d->prim_emitted_queries);
-   list_inithead(&hw3d->pipeline_statistics_queries);
+   list_inithead(&hw3d->queries);
 
    hw3d->pipeline = ilo_3d_pipeline_create(cp, dev);
    if (!hw3d->pipeline) {

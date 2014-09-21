@@ -51,11 +51,7 @@ struct ilo_3d {
       bool cond;
    } render_condition;
 
-   struct list_head occlusion_queries;
-   struct list_head time_elapsed_queries;
-   struct list_head prim_generated_queries;
-   struct list_head prim_emitted_queries;
-   struct list_head pipeline_statistics_queries;
+   struct list_head queries;
 
    struct ilo_3d_pipeline *pipeline;
 };
