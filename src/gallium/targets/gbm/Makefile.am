@@ -62,13 +62,7 @@ TARGET_LIB_DEPS =
 
 include $(top_srcdir)/src/gallium/drivers/i915/Automake.inc
 
-if HAVE_GALLIUM_ILO
-STATIC_TARGET_CPPFLAGS += -DGALLIUM_ILO
-STATIC_TARGET_LIB_DEPS += \
-	$(top_builddir)/src/gallium/winsys/intel/drm/libintelwinsys.la \
-	$(top_builddir)/src/gallium/drivers/ilo/libilo.la \
-	$(INTEL_LIBS)
-endif
+include $(top_srcdir)/src/gallium/drivers/ilo/Automake.inc
 
 include $(top_srcdir)/src/gallium/drivers/nouveau/Automake.inc
 
