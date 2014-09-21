@@ -157,6 +157,10 @@ endif
 egl_gallium_la_LDFLAGS = $(AM_LDFLAGS)
 egl_gallium_la_CPPFLAGS = $(AM_CPPFLAGS)
 
+TARGET_DRIVERS =
+TARGET_CPPFLAGS =
+TARGET_LIB_DEPS =
+
 if HAVE_GALLIUM_I915
 egl_gallium_la_CPPFLAGS += -DGALLIUM_I915
 egl_gallium_la_LIBADD += \
@@ -173,13 +177,7 @@ egl_gallium_la_LIBADD += \
 	$(INTEL_LIBS)
 endif
 
-if HAVE_GALLIUM_NOUVEAU
-egl_gallium_la_CPPFLAGS += -DGALLIUM_NOUVEAU
-egl_gallium_la_LIBADD += \
-	$(top_builddir)/src/gallium/winsys/nouveau/drm/libnouveaudrm.la \
-	$(top_builddir)/src/gallium/drivers/nouveau/libnouveau.la \
-	$(NOUVEAU_LIBS)
-endif
+include $(top_srcdir)/src/gallium/drivers/nouveau/Automake.inc
 
 if NEED_RADEON_DRM_WINSYS
 egl_gallium_la_LIBADD += \
@@ -239,6 +237,9 @@ egl_gallium_la_CPPFLAGS += -DGALLIUM_LLVMPIPE
 egl_gallium_la_LIBADD += \
 	$(top_builddir)/src/gallium/drivers/llvmpipe/libllvmpipe.la
 endif
+
+egl_gallium_la_CPPFLAGS += $(TARGET_CPPFLAGS)
+egl_gallium_la_LIBADD += $(TARGET_LIB_DEPS)
 
 #else # HAVE_GALLIUM_STATIC_TARGETS
 

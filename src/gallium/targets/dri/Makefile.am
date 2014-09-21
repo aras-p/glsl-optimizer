@@ -64,6 +64,10 @@ STATIC_TARGET_CPPFLAGS =
 STATIC_TARGET_LIB_DEPS = \
 	$(top_builddir)/src/loader/libloader.la
 
+TARGET_DRIVERS =
+TARGET_CPPFLAGS =
+TARGET_LIB_DEPS =
+
 if HAVE_GALLIUM_I915
 MEGADRIVERS += i915
 STATIC_TARGET_CPPFLAGS += -DGALLIUM_I915
@@ -82,14 +86,7 @@ STATIC_TARGET_LIB_DEPS += \
 	$(INTEL_LIBS)
 endif
 
-if HAVE_GALLIUM_NOUVEAU
-MEGADRIVERS += nouveau
-STATIC_TARGET_CPPFLAGS += -DGALLIUM_NOUVEAU
-STATIC_TARGET_LIB_DEPS += \
-	$(top_builddir)/src/gallium/winsys/nouveau/drm/libnouveaudrm.la \
-	$(top_builddir)/src/gallium/drivers/nouveau/libnouveau.la \
-	$(NOUVEAU_LIBS)
-endif
+include $(top_srcdir)/src/gallium/drivers/nouveau/Automake.inc
 
 if NEED_RADEON_DRM_WINSYS
 STATIC_TARGET_LIB_DEPS += \
@@ -178,8 +175,8 @@ endif
 if HAVE_GALLIUM_STATIC_TARGETS
 
 gallium_dri_la_SOURCES += target.c
-AM_CPPFLAGS += $(STATIC_TARGET_CPPFLAGS)
-gallium_dri_la_LIBADD += $(STATIC_TARGET_LIB_DEPS)
+AM_CPPFLAGS += $(STATIC_TARGET_CPPFLAGS) $(TARGET_CPPFLAGS)
+gallium_dri_la_LIBADD += $(STATIC_TARGET_LIB_DEPS) $(TARGET_LIB_DEPS)
 
 else # HAVE_GALLIUM_STATIC_TARGETS
 
@@ -200,7 +197,7 @@ if HAVE_COMPAT_SYMLINKS
 all-local: $(dri_LTLIBRARIES)
 	$(AM_V_GEN)link_dir=$(top_builddir)/$(LIB_DIR)/gallium;         \
 	$(MKDIR_P) $${link_dir};                                        \
-	for i in $(MEGADRIVERS); do                                     \
+	for i in $(MEGADRIVERS) $(TARGET_DRIVERS); do                   \
 		j=gallium_dri.so;                                       \
 		k=$${i}_dri.so;                                         \
 		ln -f .libs/$${j}                                       \
@@ -212,7 +209,7 @@ endif
 # gallium_dri.so in the set of final installed files.
 install-data-hook:
 	$(AM_V_GEN)dest_dir=$(DESTDIR)/$(dridir);                       \
-	for i in $(MEGADRIVERS); do                                     \
+	for i in $(MEGADRIVERS) $(TARGET_DRIVERS); do                   \
 		j=gallium_dri.so;                                       \
 		k=$${i}_dri.so;                                         \
 		ln -f $${dest_dir}/$${j}                                \

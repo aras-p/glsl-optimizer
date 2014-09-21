@@ -57,6 +57,10 @@ STATIC_TARGET_CPPFLAGS =
 STATIC_TARGET_LIB_DEPS = \
 	$(top_builddir)/src/loader/libloader.la
 
+TARGET_DRIVERS =
+TARGET_CPPFLAGS =
+TARGET_LIB_DEPS =
+
 if HAVE_GALLIUM_I915
 STATIC_TARGET_CPPFLAGS += -DGALLIUM_I915
 STATIC_TARGET_LIB_DEPS += \
@@ -73,13 +77,7 @@ STATIC_TARGET_LIB_DEPS += \
 	$(INTEL_LIBS)
 endif
 
-if HAVE_GALLIUM_NOUVEAU
-STATIC_TARGET_CPPFLAGS += -DGALLIUM_NOUVEAU
-STATIC_TARGET_LIB_DEPS += \
-	$(top_builddir)/src/gallium/winsys/nouveau/drm/libnouveaudrm.la \
-	$(top_builddir)/src/gallium/drivers/nouveau/libnouveau.la \
-	$(NOUVEAU_LIBS)
-endif
+include $(top_srcdir)/src/gallium/drivers/nouveau/Automake.inc
 
 if HAVE_GALLIUM_SVGA
 STATIC_TARGET_CPPFLAGS += -DGALLIUM_VMWGFX
@@ -98,8 +96,8 @@ STATIC_TARGET_LIB_DEPS += \
 endif
 
 libxatracker_la_SOURCES += target.c
-libxatracker_la_CPPFLAGS = $(STATIC_TARGET_CPPFLAGS)
-libxatracker_la_LIBADD += $(STATIC_TARGET_LIB_DEPS)
+libxatracker_la_CPPFLAGS = $(STATIC_TARGET_CPPFLAGS) $(TARGET_CPPFLAGS)
+libxatracker_la_LIBADD += $(STATIC_TARGET_LIB_DEPS) $(TARGET_LIB_DEPS)
 
 else # HAVE_GALLIUM_STATIC_TARGETS
 

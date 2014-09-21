@@ -42,14 +42,11 @@ STATIC_TARGET_CPPFLAGS = -DGALLIUM_STATIC_TARGETS=1
 STATIC_TARGET_LIB_DEPS = \
 	$(top_builddir)/src/loader/libloader.la
 
-if HAVE_GALLIUM_NOUVEAU
-MEGADRIVERS += nouveau
-STATIC_TARGET_CPPFLAGS += -DGALLIUM_NOUVEAU
-STATIC_TARGET_LIB_DEPS += \
-	$(top_builddir)/src/gallium/winsys/nouveau/drm/libnouveaudrm.la \
-	$(top_builddir)/src/gallium/drivers/nouveau/libnouveau.la \
-	$(NOUVEAU_LIBS)
-endif
+TARGET_DRIVERS =
+TARGET_CPPFLAGS =
+TARGET_LIB_DEPS =
+
+include $(top_srcdir)/src/gallium/drivers/nouveau/Automake.inc
 
 # Radeon winsys chaos
 if HAVE_GALLIUM_R600
@@ -86,8 +83,8 @@ endif
 if HAVE_GALLIUM_STATIC_TARGETS
 
 libvdpau_gallium_la_SOURCES += target.c
-libvdpau_gallium_la_CPPFLAGS = $(STATIC_TARGET_CPPFLAGS)
-libvdpau_gallium_la_LIBADD += $(STATIC_TARGET_LIB_DEPS)
+libvdpau_gallium_la_CPPFLAGS = $(STATIC_TARGET_CPPFLAGS) $(TARGET_CPPFLAGS)
+libvdpau_gallium_la_LIBADD += $(STATIC_TARGET_LIB_DEPS) $(TARGET_LIB_DEPS)
 
 else # HAVE_GALLIUM_STATIC_TARGETS
 
@@ -112,7 +109,7 @@ if HAVE_COMPAT_SYMLINKS
 all-local: $(vdpau_LTLIBRARIES)
 	$(AM_V_GEN)link_dir=$(top_builddir)/$(LIB_DIR)/gallium;		\
 	$(MKDIR_P) $${link_dir};					\
-	for i in $(MEGADRIVERS); do					\
+	for i in $(MEGADRIVERS) $(TARGET_DRIVERS); do			\
 		j=libvdpau_gallium.$(LIB_EXT);				\
 		k=libvdpau_$${i}.$(LIB_EXT);				\
 		l=$${k}.$(VDPAU_MAJOR).$(VDPAU_MINOR).0;		\
@@ -131,7 +128,7 @@ endif
 # libvdpau_gallium.so in the set of final installed files.
 install-data-hook:
 	$(AM_V_GEN)dest_dir=$(DESTDIR)/$(vdpaudir);			\
-	for i in $(MEGADRIVERS); do					\
+	for i in $(MEGADRIVERS) $(TARGET_DRIVERS); do			\
 		j=libvdpau_gallium.$(LIB_EXT);				\
 		k=libvdpau_$${i}.$(LIB_EXT);				\
 		l=$${k}.$(VDPAU_MAJOR).$(VDPAU_MINOR).0;		\
