@@ -93,7 +93,7 @@ struct ilo_3d_pipeline {
 
       bool primitive_restart;
       int reduced_prim;
-      int so_num_vertices, so_max_vertices;
+      int so_max_vertices;
 
       uint32_t SF_VIEWPORT;
       uint32_t CLIP_VIEWPORT;
@@ -161,8 +161,7 @@ ilo_3d_pipeline_estimate_size(struct ilo_3d_pipeline *pipeline,
 
 bool
 ilo_3d_pipeline_emit_draw(struct ilo_3d_pipeline *p,
-                          const struct ilo_state_vector *vec,
-                          int *prim_generated, int *prim_emitted);
+                          const struct ilo_state_vector *vec);
 
 void
 ilo_3d_pipeline_emit_flush(struct ilo_3d_pipeline *p);

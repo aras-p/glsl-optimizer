@@ -150,25 +150,14 @@ handle_invalid_batch_bo(struct ilo_3d_pipeline *p, bool unset)
  */
 bool
 ilo_3d_pipeline_emit_draw(struct ilo_3d_pipeline *p,
-                          const struct ilo_state_vector *vec,
-                          int *prim_generated, int *prim_emitted)
+                          const struct ilo_state_vector *vec)
 {
    bool success;
 
-   if (vec->dirty & ILO_DIRTY_SO &&
-       vec->so.enabled && !vec->so.append_bitmask) {
-      /*
-       * We keep track of the SVBI in the driver, so that we can restore it
-       * when the HW context is invalidated (by another process).  The value
-       * needs to be reset when stream output is enabled and the targets are
-       * changed.
-       */
-      p->state.so_num_vertices = 0;
-
-      /* on GEN7+, we need SOL_RESET to reset the SO write offsets */
-      if (ilo_dev_gen(p->dev) >= ILO_GEN(7))
-         ilo_cp_set_one_off_flags(p->cp, INTEL_EXEC_GEN7_SOL_RESET);
-   }
+   /* on GEN7+, we need SOL_RESET to reset the SO write offsets */
+   if (ilo_dev_gen(p->dev) >= ILO_GEN(7) && (vec->dirty & ILO_DIRTY_SO) &&
+       vec->so.enabled && !vec->so.append_bitmask)
+      ilo_cp_set_one_off_flags(p->cp, INTEL_EXEC_GEN7_SOL_RESET);
 
    while (true) {
       struct ilo_builder_snapshot snapshot;
@@ -197,24 +186,6 @@ ilo_3d_pipeline_emit_draw(struct ilo_3d_pipeline *p,
       }
 
       break;
-   }
-
-   if (success) {
-      const int num_verts =
-         u_vertices_per_prim(u_reduced_prim(vec->draw->mode));
-      const int max_emit =
-         (p->state.so_max_vertices - p->state.so_num_vertices) / num_verts;
-      const int generated =
-         u_reduced_prims_for_vertices(vec->draw->mode, vec->draw->count);
-      const int emitted = MIN2(generated, max_emit);
-
-      p->state.so_num_vertices += emitted * num_verts;
-
-      if (prim_generated)
-         *prim_generated = generated;
-
-      if (prim_emitted)
-         *prim_emitted = emitted;
    }
 
    p->invalidate_flags = 0x0;

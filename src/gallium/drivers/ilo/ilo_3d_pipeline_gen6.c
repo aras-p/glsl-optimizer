@@ -583,7 +583,7 @@ gen6_pipeline_gs_svbi(struct ilo_3d_pipeline *p,
          gen6_wa_pipe_control_post_sync(p, false);
 
       gen6_3DSTATE_GS_SVB_INDEX(p->builder,
-            0, p->state.so_num_vertices, p->state.so_max_vertices,
+            0, 0, p->state.so_max_vertices,
             false);
 
       if (session->hw_ctx_changed) {
