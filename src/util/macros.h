@@ -87,6 +87,12 @@ do {                        \
 #define PRINTFLIKE(f, a)
 #endif
 
+#ifdef HAVE_FUNC_ATTRIBUTE_MALLOC
+#define MALLOCLIKE __attribute__((__malloc__))
+#else
+#define MALLOCLIKE
+#endif
+
 /* Used to optionally mark structures with misaligned elements or size as
  * packed, to trade off performance for space.
  */

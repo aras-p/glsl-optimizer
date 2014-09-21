@@ -98,14 +98,14 @@ void *ralloc_context(const void *ctx);
  * simply allocates storage for \p size bytes and returns the pointer,
  * similar to \c malloc.
  */
-void *ralloc_size(const void *ctx, size_t size);
+void *ralloc_size(const void *ctx, size_t size) MALLOCLIKE;
 
 /**
  * Allocate zero-initialized memory chained off of the given context.
  *
  * This is similar to \c calloc with a size of 1.
  */
-void *rzalloc_size(const void *ctx, size_t size);
+void *rzalloc_size(const void *ctx, size_t size) MALLOCLIKE;
 
 /**
  * Resize a piece of ralloc-managed memory, preserving data.
@@ -185,7 +185,7 @@ void *reralloc_size(const void *ctx, void *ptr, size_t size);
  * More than a convenience function, this also checks for integer overflow when
  * multiplying \p size and \p count.  This is necessary for security.
  */
-void *ralloc_array_size(const void *ctx, size_t size, unsigned count);
+void *ralloc_array_size(const void *ctx, size_t size, unsigned count) MALLOCLIKE;
 
 /**
  * Allocate a zero-initialized array chained off the given context.
@@ -195,7 +195,7 @@ void *ralloc_array_size(const void *ctx, size_t size, unsigned count);
  * More than a convenience function, this also checks for integer overflow when
  * multiplying \p size and \p count.  This is necessary for security.
  */
-void *rzalloc_array_size(const void *ctx, size_t size, unsigned count);
+void *rzalloc_array_size(const void *ctx, size_t size, unsigned count) MALLOCLIKE;
 
 /**
  * Resize a ralloc-managed array, preserving data.
@@ -257,7 +257,7 @@ void ralloc_set_destructor(const void *ptr, void(*destructor)(void *));
 /**
  * Duplicate a string, allocating the memory from the given context.
  */
-char *ralloc_strdup(const void *ctx, const char *str);
+char *ralloc_strdup(const void *ctx, const char *str) MALLOCLIKE;
 
 /**
  * Duplicate a string, allocating the memory from the given context.
@@ -265,7 +265,7 @@ char *ralloc_strdup(const void *ctx, const char *str);
  * Like \c strndup, at most \p n characters are copied.  If \p str is longer
  * than \p n characters, \p n are copied, and a termining \c '\0' byte is added.
  */
-char *ralloc_strndup(const void *ctx, const char *str, size_t n);
+char *ralloc_strndup(const void *ctx, const char *str, size_t n) MALLOCLIKE;
 
 /**
  * Concatenate two strings, allocating the necessary space.
@@ -302,7 +302,7 @@ bool ralloc_strncat(char **dest, const char *str, size_t n);
  *
  * \return The newly allocated string.
  */
-char *ralloc_asprintf (const void *ctx, const char *fmt, ...) PRINTFLIKE(2, 3);
+char *ralloc_asprintf (const void *ctx, const char *fmt, ...) PRINTFLIKE(2, 3) MALLOCLIKE;
 
 /**
  * Print to a string, given a va_list.
@@ -312,7 +312,7 @@ char *ralloc_asprintf (const void *ctx, const char *fmt, ...) PRINTFLIKE(2, 3);
  *
  * \return The newly allocated string.
  */
-char *ralloc_vasprintf(const void *ctx, const char *fmt, va_list args);
+char *ralloc_vasprintf(const void *ctx, const char *fmt, va_list args) MALLOCLIKE;
 
 /**
  * Rewrite the tail of an existing string, starting at a given index.
