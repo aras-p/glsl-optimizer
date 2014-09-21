@@ -181,7 +181,7 @@ egl_gallium_la_LIBADD += \
 	$(top_builddir)/src/gallium/drivers/softpipe/libsoftpipe.la
 endif
 
-if NEED_GALLIUM_LLVMPIPE_DRIVER
+if HAVE_GALLIUM_LLVMPIPE
 egl_gallium_la_CPPFLAGS += -DGALLIUM_LLVMPIPE
 egl_gallium_la_LIBADD += \
 	$(top_builddir)/src/gallium/drivers/llvmpipe/libllvmpipe.la

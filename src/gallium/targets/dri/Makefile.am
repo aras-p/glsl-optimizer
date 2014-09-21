@@ -98,7 +98,7 @@ STATIC_TARGET_LIB_DEPS += \
 endif
 endif
 
-if NEED_GALLIUM_LLVMPIPE_DRIVER
+if HAVE_GALLIUM_LLVMPIPE
 STATIC_TARGET_CPPFLAGS += -DGALLIUM_LLVMPIPE
 STATIC_TARGET_LIB_DEPS += \
 	$(top_builddir)/src/gallium/drivers/llvmpipe/libllvmpipe.la

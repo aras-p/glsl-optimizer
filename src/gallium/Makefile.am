@@ -68,11 +68,11 @@ SUBDIRS += winsys/radeon/drm
 endif
 
 ## swrast/softpipe
-if NEED_GALLIUM_SOFTPIPE_DRIVER
+if HAVE_GALLIUM_SOFTPIPE
 SUBDIRS += drivers/softpipe
 
 ## swrast/llvmpipe
-if NEED_GALLIUM_LLVMPIPE_DRIVER
+if HAVE_GALLIUM_LLVMPIPE
 SUBDIRS += drivers/llvmpipe
 endif
 endif
