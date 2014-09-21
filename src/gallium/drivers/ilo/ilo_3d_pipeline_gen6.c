@@ -1482,6 +1482,14 @@ ilo_3d_pipeline_emit_query_gen6(struct ilo_3d_pipeline *p,
       (ilo_dev_gen(p->dev) >= ILO_GEN(7)) ? GEN7_REG_DS_INVOCATION_COUNT : 0,
       0,
    };
+   const uint32_t primitives_generated_reg =
+      (ilo_dev_gen(p->dev) >= ILO_GEN(7) && q->index > 0) ?
+      GEN7_REG_SO_PRIM_STORAGE_NEEDED(q->index) :
+      GEN6_REG_CL_INVOCATION_COUNT;
+   const uint32_t primitives_emitted_reg =
+      (ilo_dev_gen(p->dev) >= ILO_GEN(7)) ?
+      GEN7_REG_SO_NUM_PRIMS_WRITTEN(q->index) :
+      GEN6_REG_SO_NUM_PRIMS_WRITTEN;
    const uint32_t *regs;
    int reg_count = 0, i;
 
@@ -1505,6 +1513,14 @@ ilo_3d_pipeline_emit_query_gen6(struct ilo_3d_pipeline *p,
       gen6_PIPE_CONTROL(p->builder,
             GEN6_PIPE_CONTROL_WRITE_TIMESTAMP,
             q->bo, offset, true);
+      break;
+   case PIPE_QUERY_PRIMITIVES_GENERATED:
+      regs = &primitives_generated_reg;
+      reg_count = 1;
+      break;
+   case PIPE_QUERY_PRIMITIVES_EMITTED:
+      regs = &primitives_emitted_reg;
+      reg_count = 1;
       break;
    case PIPE_QUERY_PIPELINE_STATISTICS:
       regs = pipeline_statistics_regs;
@@ -1879,6 +1895,14 @@ gen6_pipeline_estimate_query_size(const struct ilo_3d_pipeline *p,
       size = GEN6_PIPE_CONTROL__SIZE;
       if (ilo_dev_gen(p->dev) == ILO_GEN(6))
          size *= 2;
+      break;
+   case PIPE_QUERY_PRIMITIVES_GENERATED:
+   case PIPE_QUERY_PRIMITIVES_EMITTED:
+      size = GEN6_PIPE_CONTROL__SIZE;
+      if (ilo_dev_gen(p->dev) == ILO_GEN(6))
+         size *= 3;
+
+      size += GEN6_MI_STORE_REGISTER_MEM__SIZE * 2;
       break;
    case PIPE_QUERY_PIPELINE_STATISTICS:
       if (ilo_dev_gen(p->dev) >= ILO_GEN(7)) {
