@@ -94,13 +94,6 @@ _mesa_free_shader_program_data(struct gl_context *ctx,
 extern void
 _mesa_init_shader_object_functions(struct dd_function_table *driver);
 
-extern void
-_mesa_init_shader_state(struct gl_context *ctx);
-
-extern void
-_mesa_free_shader_state(struct gl_context *ctx);
-
-
 static inline gl_shader_stage
 _mesa_shader_enum_to_shader_stage(GLenum v)
 {
