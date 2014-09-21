@@ -37,8 +37,6 @@ libvdpau_gallium_la_LIBADD = \
 	$(GALLIUM_COMMON_LIB_DEPS)
 
 
-if HAVE_GALLIUM_STATIC_TARGETS
-
 MEGADRIVERS =
 STATIC_TARGET_CPPFLAGS = -DGALLIUM_STATIC_TARGETS=1
 STATIC_TARGET_LIB_DEPS = \
@@ -84,6 +82,8 @@ STATIC_TARGET_LIB_DEPS += \
 	$(top_builddir)/src/gallium/drivers/radeonsi/libradeonsi.la \
 	$(RADEON_LIBS)
 endif
+
+if HAVE_GALLIUM_STATIC_TARGETS
 
 libvdpau_gallium_la_SOURCES += target.c
 libvdpau_gallium_la_CPPFLAGS = $(STATIC_TARGET_CPPFLAGS)

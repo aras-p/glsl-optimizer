@@ -53,8 +53,6 @@ gallium_dri_la_LIBADD = \
 	$(LIBDRM_LIBS) \
 	$(GALLIUM_COMMON_LIB_DEPS)
 
-if HAVE_GALLIUM_STATIC_TARGETS
-
 # XXX: Temporary allow duplicated symbols, as the loader pulls in xmlconfig.c
 # which already provides driParse* and driQuery* amongst others.
 # Remove this hack as we come up with a cleaner solution.
@@ -176,6 +174,8 @@ STATIC_TARGET_CPPFLAGS += -DGALLIUM_LLVMPIPE
 STATIC_TARGET_LIB_DEPS += \
 	$(top_builddir)/src/gallium/drivers/llvmpipe/libllvmpipe.la
 endif
+
+if HAVE_GALLIUM_STATIC_TARGETS
 
 gallium_dri_la_SOURCES += target.c
 AM_CPPFLAGS += $(STATIC_TARGET_CPPFLAGS)
