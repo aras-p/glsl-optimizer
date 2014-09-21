@@ -198,12 +198,7 @@ egl_gallium_la_LIBADD += \
 	$(RADEON_LIBS)
 endif
 
-if HAVE_GALLIUM_SVGA
-egl_gallium_la_CPPFLAGS += -DGALLIUM_VMWGFX
-egl_gallium_la_LIBADD += \
-	$(top_builddir)/src/gallium/winsys/svga/drm/libsvgadrm.la \
-	$(top_builddir)/src/gallium/drivers/svga/libsvga.la
-endif
+include $(top_srcdir)/src/gallium/drivers/svga/Automake.inc
 
 include $(top_srcdir)/src/gallium/drivers/freedreno/Automake.inc
 

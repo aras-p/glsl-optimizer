@@ -67,12 +67,7 @@ include $(top_srcdir)/src/gallium/drivers/ilo/Automake.inc
 
 include $(top_srcdir)/src/gallium/drivers/nouveau/Automake.inc
 
-if HAVE_GALLIUM_SVGA
-STATIC_TARGET_CPPFLAGS += -DGALLIUM_VMWGFX
-STATIC_TARGET_LIB_DEPS += \
-	$(top_builddir)/src/gallium/winsys/svga/drm/libsvgadrm.la \
-	$(top_builddir)/src/gallium/drivers/svga/libsvga.la
-endif
+include $(top_srcdir)/src/gallium/drivers/svga/Automake.inc
 
 include $(top_srcdir)/src/gallium/drivers/freedreno/Automake.inc
 
