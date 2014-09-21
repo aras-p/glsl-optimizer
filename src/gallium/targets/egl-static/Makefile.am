@@ -123,7 +123,6 @@ egl_LTLIBRARIES += st_GL.la
 nodist_EXTRA_st_GL_la_SOURCES = dummy.cpp
 st_GL_la_SOURCES = st_GL.c
 
-st_GL_la_LDFLAGS = $(AM_LDFLAGS)
 # st_GL, built only when shared glapi is not enabled
 st_GL_la_LIBADD = \
 	$(top_builddir)/src/mesa/libmesagallium.la \
@@ -175,7 +174,6 @@ include $(top_srcdir)/src/gallium/drivers/freedreno/Automake.inc
 include $(top_srcdir)/src/gallium/drivers/softpipe/Automake.inc
 include $(top_srcdir)/src/gallium/drivers/llvmpipe/Automake.inc
 
-egl_gallium_la_LDFLAGS = $(AM_LDFLAGS)
 egl_gallium_la_CPPFLAGS = $(AM_CPPFLAGS) $(TARGET_CPPFLAGS)
 egl_gallium_la_LIBADD += $(TARGET_LIB_DEPS) \
 	$(TARGET_RADEON_WINSYS) $(TARGET_RADEON_COMMON)
@@ -191,12 +189,12 @@ egl_gallium_la_LIBADD += $(TARGET_LIB_DEPS) \
 
 if HAVE_MESA_LLVM
 
-egl_gallium_la_LDFLAGS += $(LLVM_LDFLAGS)
+AM_LDFLAGS += $(LLVM_LDFLAGS)
+
 egl_gallium_la_LIBADD += $(LLVM_LIBS)
 
 if HAVE_OPENGL
 if !HAVE_SHARED_GLAPI
-st_GL_la_LDFLAGS += $(LLVM_LDFLAGS)
 st_GL_la_LIBADD += $(LLVM_LIBS)
 endif
 endif
