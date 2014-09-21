@@ -399,7 +399,15 @@ ilo_3d_own_cp(struct ilo_cp *cp, void *data)
 {
    struct ilo_3d *hw3d = data;
 
+   /* multiply by 2 for both resuming and pausing */
+   if (ilo_cp_space(hw3d->cp) < hw3d->owner.reserve * 2) {
+      ilo_cp_submit(hw3d->cp, "out of space");
+      assert(ilo_cp_space(hw3d->cp) >= hw3d->owner.reserve * 2);
+   }
+
    ilo_3d_resume_queries(hw3d);
+
+   assert(ilo_cp_space(hw3d->cp) >= hw3d->owner.reserve);
 }
 
 static void

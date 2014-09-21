@@ -48,10 +48,15 @@ ilo_cp_release_owner(struct ilo_cp *cp)
 
 /**
  * Set the parser owner.  If this is a new owner or a new ring, the old owner
- * is released and the new owner's own() is called.
+ * is released and the new owner's own() is called.  The parser may implicitly
+ * submit if there is a ring change.
  *
- * The parser may implicitly submit if there is a ring change or there is not
- * enough space for the new owner.
+ * own() is called before \p owner owns the parser.  It must make sure there
+ * is more space than \p owner->reserve when it returns.  Calling
+ * ilo_cp_submit() is allowed.
+ *
+ * release() will be called after \p owner loses the parser.  That may happen
+ * just before the parser submits and ilo_cp_submit() is not allowed.
  */
 void
 ilo_cp_set_owner(struct ilo_cp *cp, enum intel_ring_type ring,
@@ -68,16 +73,10 @@ ilo_cp_set_owner(struct ilo_cp *cp, enum intel_ring_type ring,
    if (cp->owner != owner) {
       ilo_cp_release_owner(cp);
 
-      /* multiply by 2 because there are own() and release() */
-      if (ilo_cp_space(cp) < owner->reserve * 2) {
-         ilo_cp_submit(cp, "new owner");
-         assert(ilo_cp_space(cp) >= owner->reserve * 2);
-      }
-
-      cp->owner = owner;
+      owner->own(cp, owner->data);
 
       assert(ilo_cp_space(cp) >= owner->reserve);
-      cp->owner->own(cp, cp->owner->data);
+      cp->owner = owner;
    }
 }
 

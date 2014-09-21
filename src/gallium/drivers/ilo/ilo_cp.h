@@ -48,8 +48,8 @@ struct ilo_cp_owner {
    void *data;
 
    /*
-    * Space reserved for own() and release().  This can be modified at any
-    * time, as long as it is never increased by more than ilo_cp_space().
+    * Space reserved for release().  This can be modified at any time, as long
+    * as it is never increased by more than ilo_cp_space().
     */
    int reserve;
 };
