@@ -82,17 +82,7 @@ include $(top_srcdir)/src/gallium/drivers/svga/Automake.inc
 
 include $(top_srcdir)/src/gallium/drivers/freedreno/Automake.inc
 
-if HAVE_GALLIUM_VC4
-MEGADRIVERS += vc4
-STATIC_TARGET_CPPFLAGS += -DGALLIUM_VC4
-STATIC_TARGET_LIB_DEPS += \
-	$(top_builddir)/src/gallium/winsys/vc4/drm/libvc4drm.la \
-	$(top_builddir)/src/gallium/drivers/vc4/libvc4.la
-
-if USE_VC4_SIMULATOR
-STATIC_TARGET_CPPFLAGS += -DUSE_VC4_SIMULATOR
-endif
-endif
+include $(top_srcdir)/src/gallium/drivers/vc4/Automake.inc
 
 if HAVE_GALLIUM_SOFTPIPE
 MEGADRIVERS += swrast
