@@ -175,17 +175,8 @@ include $(top_srcdir)/src/gallium/drivers/svga/Automake.inc
 
 include $(top_srcdir)/src/gallium/drivers/freedreno/Automake.inc
 
-if HAVE_GALLIUM_SOFTPIPE
-egl_gallium_la_CPPFLAGS += -DGALLIUM_SOFTPIPE
-egl_gallium_la_LIBADD += \
-	$(top_builddir)/src/gallium/drivers/softpipe/libsoftpipe.la
-endif
-
-if HAVE_GALLIUM_LLVMPIPE
-egl_gallium_la_CPPFLAGS += -DGALLIUM_LLVMPIPE
-egl_gallium_la_LIBADD += \
-	$(top_builddir)/src/gallium/drivers/llvmpipe/libllvmpipe.la
-endif
+include $(top_srcdir)/src/gallium/drivers/softpipe/Automake.inc
+include $(top_srcdir)/src/gallium/drivers/llvmpipe/Automake.inc
 
 egl_gallium_la_CPPFLAGS += $(TARGET_CPPFLAGS)
 egl_gallium_la_LIBADD += $(TARGET_LIB_DEPS) \

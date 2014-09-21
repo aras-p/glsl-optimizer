@@ -84,25 +84,8 @@ include $(top_srcdir)/src/gallium/drivers/freedreno/Automake.inc
 
 include $(top_srcdir)/src/gallium/drivers/vc4/Automake.inc
 
-if HAVE_GALLIUM_SOFTPIPE
-MEGADRIVERS += swrast
-STATIC_TARGET_CPPFLAGS += -DGALLIUM_SOFTPIPE
-STATIC_TARGET_LIB_DEPS += \
-	$(top_builddir)/src/gallium/winsys/sw/dri/libswdri.la \
-	$(top_builddir)/src/gallium/drivers/softpipe/libsoftpipe.la
-
-if HAVE_DRI2
-MEGADRIVERS += kms_swrast
-STATIC_TARGET_LIB_DEPS += \
-	$(top_builddir)/src/gallium/winsys/sw/kms-dri/libswkmsdri.la
-endif
-endif
-
-if HAVE_GALLIUM_LLVMPIPE
-STATIC_TARGET_CPPFLAGS += -DGALLIUM_LLVMPIPE
-STATIC_TARGET_LIB_DEPS += \
-	$(top_builddir)/src/gallium/drivers/llvmpipe/libllvmpipe.la
-endif
+include $(top_srcdir)/src/gallium/drivers/softpipe/Automake.inc
+include $(top_srcdir)/src/gallium/drivers/llvmpipe/Automake.inc
 
 if HAVE_GALLIUM_STATIC_TARGETS
 
