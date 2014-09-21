@@ -462,7 +462,7 @@ asm_arch=""
 AC_MSG_CHECKING([whether to enable assembly])
 test "x$enable_asm" = xno && AC_MSG_RESULT([no])
 # disable if cross compiling on x86/x86_64 since we must run gen_matypes
-if test "x$enable_asm" = xyes && test "x$cross_compiling" = xyes; then
+if test "x$enable_asm" = xyes -a "x$cross_compiling" = xyes; then
     case "$host_cpu" in
     i?86 | x86_64 | amd64)
         enable_asm=no
@@ -796,9 +796,9 @@ esac
 
 AM_CONDITIONAL(HAVE_DRICOMMON, test "x$enable_dri" = xyes )
 AM_CONDITIONAL(HAVE_DRISW, test "x$enable_dri" = xyes )
-AM_CONDITIONAL(HAVE_DRI2, test "x$enable_dri" = xyes && test "x$dri_platform" = xdrm )
-AM_CONDITIONAL(HAVE_DRI3, test "x$enable_dri3" = xyes && test "x$dri_platform" = xdrm )
-AM_CONDITIONAL(HAVE_APPLEDRI, test "x$enable_dri" = xyes && test "x$dri_platform" = xapple )
+AM_CONDITIONAL(HAVE_DRI2, test "x$enable_dri" = xyes -a "x$dri_platform" = xdrm )
+AM_CONDITIONAL(HAVE_DRI3, test "x$enable_dri3" = xyes -a "x$dri_platform" = xdrm )
+AM_CONDITIONAL(HAVE_APPLEDRI, test "x$enable_dri" = xyes -a "x$dri_platform" = xapple )
 
 AC_ARG_ENABLE([shared-glapi],
     [AS_HELP_STRING([--enable-shared-glapi],
@@ -1831,19 +1831,19 @@ gallium_check_st() {
     fi
     GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS $2"
 
-    if test "x$enable_dri" = xyes && test -n "$3"; then
+    if test "x$enable_dri" = xyes -a -n "$3"; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $3"
     fi
-    if test "x$enable_xa" = xyes && test -n "$4"; then
+    if test "x$enable_xa" = xyes -a -n "$4"; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $4"
     fi
-    if test "x$enable_xvmc" = xyes && test -n "$5"; then
+    if test "x$enable_xvmc" = xyes -a -n "$5"; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $5"
     fi
-    if test "x$enable_vdpau" = xyes && test -n "$6"; then
+    if test "x$enable_vdpau" = xyes -a -n "$6"; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $6"
     fi
-    if test "x$enable_omx" = xyes && test "x$7" != x; then
+    if test "x$enable_omx" = xyes -a "x$7" != x; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $7"
     fi
 }
