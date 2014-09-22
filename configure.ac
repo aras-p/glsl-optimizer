@@ -154,13 +154,13 @@ DEFINES="-DUSE_EXTERNAL_DXTN_LIB=1"
 AC_SUBST([DEFINES])
 case "$host_os" in
 linux*|*-gnu*|gnu*)
-    DEFINES="$DEFINES -D_GNU_SOURCE -DHAVE_PTHREAD"
+    DEFINES="$DEFINES -D_GNU_SOURCE"
     ;;
 solaris*)
-    DEFINES="$DEFINES -DHAVE_PTHREAD -DSVR4"
+    DEFINES="$DEFINES -DSVR4"
     ;;
 cygwin*)
-    DEFINES="$DEFINES -D_XOPEN_SOURCE=700 -DHAVE_PTHREAD"
+    DEFINES="$DEFINES -D_XOPEN_SOURCE=700"
     ;;
 esac
 
@@ -1030,7 +1030,7 @@ AC_ARG_ENABLE([glx-tls],
 AC_SUBST(GLX_TLS, ${GLX_USE_TLS})
 
 AS_IF([test "x$GLX_USE_TLS" = xyes -a "x$ax_pthread_ok" = xyes],
-      [DEFINES="${DEFINES} -DGLX_USE_TLS -DHAVE_PTHREAD"])
+      [DEFINES="${DEFINES} -DGLX_USE_TLS"])
 
 dnl
 dnl More DRI setup
@@ -1093,7 +1093,6 @@ if test "x$enable_dri" = xyes; then
         esac
         ;;
     *freebsd* | dragonfly* | *netbsd* | openbsd*)
-        DEFINES="$DEFINES -DHAVE_PTHREAD"
         DEFINES="$DEFINES -DHAVE_ALIAS"
         ;;
     gnu*)
