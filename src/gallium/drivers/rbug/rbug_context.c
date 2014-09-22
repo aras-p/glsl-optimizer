@@ -141,12 +141,14 @@ rbug_create_query(struct pipe_context *_pipe,
 {
    struct rbug_context *rb_pipe = rbug_context(_pipe);
    struct pipe_context *pipe = rb_pipe->pipe;
+   struct pipe_query *query;
 
    pipe_mutex_lock(rb_pipe->call_mutex);
-   return pipe->create_query(pipe,
-                             query_type,
-                             index);
+   query = pipe->create_query(pipe,
+                              query_type,
+                              index);
    pipe_mutex_unlock(rb_pipe->call_mutex);
+   return query;
 }
 
 static void
