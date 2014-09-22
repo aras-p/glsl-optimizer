@@ -475,23 +475,6 @@ _mesa_half_to_float(GLhalfARB val)
 
 
 /**********************************************************************/
-/** \name Sort & Search */
-/*@{*/
-
-/**
- * Wrapper for bsearch().
- */
-void *
-_mesa_bsearch( const void *key, const void *base, size_t nmemb, size_t size, 
-               int (*compar)(const void *, const void *) )
-{
-   return bsearch(key, base, nmemb, size, compar);
-}
-
-/*@}*/
-
-
-/**********************************************************************/
 /** \name Environment vars */
 /*@{*/
 

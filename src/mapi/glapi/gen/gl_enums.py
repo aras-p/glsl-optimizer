@@ -82,10 +82,10 @@ const char *_mesa_lookup_enum_by_nr( int nr )
 
    STATIC_ASSERT(sizeof(enum_string_table) < (1 << 16));
 
-   elt = _mesa_bsearch(& nr, enum_string_table_offsets,
-                       Elements(enum_string_table_offsets),
-                       sizeof(enum_string_table_offsets[0]),
-                       (cfunc) compar_nr);
+   elt = bsearch(& nr, enum_string_table_offsets,
+                 Elements(enum_string_table_offsets),
+                 sizeof(enum_string_table_offsets[0]),
+                 (cfunc) compar_nr);
 
    if (elt != NULL) {
       return &enum_string_table[elt->offset];

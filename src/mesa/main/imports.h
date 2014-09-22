@@ -534,10 +534,6 @@ _mesa_half_is_negative(GLhalfARB h)
    return h & 0x8000;
 }
 
-extern void *
-_mesa_bsearch( const void *key, const void *base, size_t nmemb, size_t size, 
-               int (*compar)(const void *, const void *) );
-
 extern char *
 _mesa_getenv( const char *var );
 
