@@ -334,15 +334,6 @@ static void *mymemcpy(void *, void *, size_t);
 #endif	/* HAVE_UINTPTR_T || defined(uintptr_t) */
 #endif	/* !defined(UINTPTR_T) */
 
-/* WinCE5.0 does not have uintptr_t defined */ 
-#if (_WIN32_WCE < 600) 
-#ifdef UINTPTR_T 
-#undef UINTPTR_T 
-#endif 
-#define UINTPTR_T unsigned long int 
-#endif 
-
-
 /* Support for ptrdiff_t. */
 #ifndef PTRDIFF_T
 #if HAVE_PTRDIFF_T || defined(ptrdiff_t)

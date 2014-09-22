@@ -31,9 +31,7 @@
  * Silicon Graphics, Inc.
  */
 
-#if !defined(_WIN32_WCE)
 #include <sys/types.h>
-#endif
 
 #define GL_CORE_SGI  1
 #define GL_CORE_MESA 2

@@ -63,7 +63,7 @@ _glapi_set_warning_func(_glapi_proc func)
 static int
 Warn(const char *func)
 {
-#if defined(DEBUG) && !defined(_WIN32_WCE)
+#if defined(DEBUG)
    if (getenv("MESA_DEBUG") || getenv("LIBGL_DEBUG")) {
       fprintf(stderr, "GL User Error: gl%s called without a rendering context\n",
               func);
@@ -103,11 +103,9 @@ NoOpUnused(void)
 static int
 NoOpGeneric(void)
 {
-#if !defined(_WIN32_WCE)
    if (getenv("MESA_DEBUG") || getenv("LIBGL_DEBUG")) {
       fprintf(stderr, "GL User Error: calling GL function without a rendering context\n");
    }
-#endif
    return 0;
 }
 

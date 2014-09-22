@@ -214,12 +214,10 @@ static inline GLuint CPU_TO_LE32(GLuint x)
 /**
  * ASSERT macro
  */
-#if !defined(_WIN32_WCE)
 #if defined(DEBUG)
 #  define ASSERT(X)   assert(X)
 #else
 #  define ASSERT(X)
-#endif
 #endif
 
 

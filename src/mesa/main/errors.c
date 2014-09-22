@@ -1194,7 +1194,7 @@ output_if_debug(const char *prefixString, const char *outputString,
          fprintf(fout, "\n");
       fflush(fout);
 
-#if defined(_WIN32) && !defined(_WIN32_WCE)
+#if defined(_WIN32)
       /* stderr from windows applications without console is not usually 
        * visible, so communicate with the debugger instead */ 
       {
