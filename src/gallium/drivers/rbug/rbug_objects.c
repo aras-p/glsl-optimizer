@@ -153,8 +153,7 @@ rbug_sampler_view_destroy(struct rbug_context *rb_context,
                           struct rbug_sampler_view *rb_view)
 {
    pipe_resource_reference(&rb_view->base.texture, NULL);
-   rb_context->pipe->sampler_view_destroy(rb_context->pipe,
-                                          rb_view->sampler_view);
+   pipe_sampler_view_reference(&rb_view->sampler_view, NULL);
    FREE(rb_view);
 }
 
