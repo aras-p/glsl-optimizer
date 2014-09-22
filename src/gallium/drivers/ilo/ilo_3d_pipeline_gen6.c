@@ -29,7 +29,6 @@
 #include "util/u_dual_blend.h"
 #include "util/u_prim.h"
 
-#include "ilo_3d.h"
 #include "ilo_blitter.h"
 #include "ilo_builder_3d.h"
 #include "ilo_builder_mi.h"

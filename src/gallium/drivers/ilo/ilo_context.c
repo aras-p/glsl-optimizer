@@ -66,6 +66,48 @@ ilo_flush(struct pipe_context *pipe,
 }
 
 static void
+ilo_render_condition(struct pipe_context *pipe,
+                     struct pipe_query *query,
+                     boolean condition,
+                     uint mode)
+{
+   struct ilo_context *ilo = ilo_context(pipe);
+
+   /* reference count? */
+   ilo->render_condition.query = query;
+   ilo->render_condition.condition = condition;
+   ilo->render_condition.mode = mode;
+}
+
+bool
+ilo_skip_rendering(struct ilo_context *ilo)
+{
+   uint64_t result;
+   bool wait;
+
+   if (!ilo->render_condition.query)
+      return false;
+
+   switch (ilo->render_condition.mode) {
+   case PIPE_RENDER_COND_WAIT:
+   case PIPE_RENDER_COND_BY_REGION_WAIT:
+      wait = true;
+      break;
+   case PIPE_RENDER_COND_NO_WAIT:
+   case PIPE_RENDER_COND_BY_REGION_NO_WAIT:
+   default:
+      wait = false;
+      break;
+   }
+
+   if (ilo->base.get_query_result(&ilo->base, ilo->render_condition.query,
+            wait, (union pipe_query_result *) &result))
+      return ((bool) result == ilo->render_condition.condition);
+   else
+      return false;
+}
+
+static void
 ilo_context_destroy(struct pipe_context *pipe)
 {
    struct ilo_context *ilo = ilo_context(pipe);
@@ -127,6 +169,7 @@ ilo_context_create(struct pipe_screen *screen, void *priv)
 
    ilo->base.destroy = ilo_context_destroy;
    ilo->base.flush = ilo_flush;
+   ilo->base.render_condition = ilo_render_condition;
 
    ilo_init_3d_functions(ilo);
    ilo_init_query_functions(ilo);

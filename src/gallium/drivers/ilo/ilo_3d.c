@@ -433,35 +433,6 @@ draw_vbo(struct ilo_3d *hw3d, const struct ilo_state_vector *vec)
    return success;
 }
 
-bool
-ilo_3d_pass_render_condition(struct ilo_context *ilo)
-{
-   struct ilo_3d *hw3d = ilo->hw3d;
-   uint64_t result;
-   bool wait;
-
-   if (!hw3d->render_condition.query)
-      return true;
-
-   switch (hw3d->render_condition.mode) {
-   case PIPE_RENDER_COND_WAIT:
-   case PIPE_RENDER_COND_BY_REGION_WAIT:
-      wait = true;
-      break;
-   case PIPE_RENDER_COND_NO_WAIT:
-   case PIPE_RENDER_COND_BY_REGION_NO_WAIT:
-   default:
-      wait = false;
-      break;
-   }
-
-   if (ilo->base.get_query_result(&ilo->base, hw3d->render_condition.query,
-            wait, (union pipe_query_result *) &result))
-      return (!result == hw3d->render_condition.cond);
-   else
-      return true;
-}
-
 void
 ilo_3d_draw_rectlist(struct ilo_3d *hw3d, const struct ilo_blitter *blitter)
 {
@@ -738,7 +709,7 @@ ilo_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
       ilo_state_vector_dump_dirty(&ilo->state_vector);
    }
 
-   if (!ilo_3d_pass_render_condition(ilo))
+   if (ilo_skip_rendering(ilo))
       return;
 
    if (info->primitive_restart && info->indexed) {
@@ -772,21 +743,6 @@ ilo_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 
    if (ilo_debug & ILO_DEBUG_NOCACHE)
       ilo_3d_pipeline_emit_flush(hw3d->pipeline);
-}
-
-static void
-ilo_render_condition(struct pipe_context *pipe,
-                     struct pipe_query *query,
-                     boolean condition,
-                     uint mode)
-{
-   struct ilo_context *ilo = ilo_context(pipe);
-   struct ilo_3d *hw3d = ilo->hw3d;
-
-   /* reference count? */
-   hw3d->render_condition.query = query;
-   hw3d->render_condition.mode = mode;
-   hw3d->render_condition.cond = condition;
 }
 
 static void
@@ -826,7 +782,6 @@ void
 ilo_init_3d_functions(struct ilo_context *ilo)
 {
    ilo->base.draw_vbo = ilo_draw_vbo;
-   ilo->base.render_condition = ilo_render_condition;
    ilo->base.texture_barrier = ilo_texture_barrier;
    ilo->base.get_sample_position = ilo_get_sample_position;
 }

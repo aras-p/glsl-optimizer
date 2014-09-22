@@ -28,7 +28,6 @@
 #include "util/u_blitter.h"
 #include "util/u_surface.h"
 
-#include "ilo_3d.h"
 #include "ilo_context.h"
 #include "ilo_blitter.h"
 
@@ -46,7 +45,6 @@ ilo_blitter_pipe_begin(struct ilo_blitter *blitter,
 {
    struct blitter_context *b = blitter->pipe_blitter;
    struct ilo_state_vector *vec = &blitter->ilo->state_vector;
-   struct ilo_3d *hw3d = blitter->ilo->hw3d;
 
    /* vertex states */
    util_blitter_save_vertex_buffer_slot(b, vec->vb.states);
@@ -86,9 +84,9 @@ ilo_blitter_pipe_begin(struct ilo_blitter *blitter,
 
       /* resource_copy_region() or blit() does not honor render condition */
       util_blitter_save_render_condition(b,
-            hw3d->render_condition.query,
-            hw3d->render_condition.cond,
-            hw3d->render_condition.mode);
+            blitter->ilo->render_condition.query,
+            blitter->ilo->render_condition.condition,
+            blitter->ilo->render_condition.mode);
       break;
    case ILO_BLITTER_PIPE_CLEAR:
       /*

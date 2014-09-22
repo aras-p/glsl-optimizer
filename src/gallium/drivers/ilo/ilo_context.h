@@ -60,6 +60,12 @@ struct ilo_context {
    struct u_upload_mgr *uploader;
 
    struct ilo_state_vector state_vector;
+
+   struct {
+      struct pipe_query *query;
+      bool condition;
+      unsigned mode;
+   } render_condition;
 };
 
 static inline struct ilo_context *
@@ -70,5 +76,8 @@ ilo_context(struct pipe_context *pipe)
 
 void
 ilo_init_context_functions(struct ilo_screen *is);
+
+bool
+ilo_skip_rendering(struct ilo_context *ilo);
 
 #endif /* ILO_CONTEXT_H */

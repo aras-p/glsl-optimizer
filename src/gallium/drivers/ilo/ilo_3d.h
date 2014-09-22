@@ -45,12 +45,6 @@ struct ilo_3d {
 
    bool new_batch;
 
-   struct {
-      struct pipe_query *query;
-      unsigned mode;
-      bool cond;
-   } render_condition;
-
    struct list_head queries;
 
    struct ilo_3d_pipeline *pipeline;
@@ -79,9 +73,6 @@ ilo_3d_end_query(struct pipe_context *pipe, struct ilo_query *q);
 
 void
 ilo_3d_process_query(struct pipe_context *pipe, struct ilo_query *q);
-
-bool
-ilo_3d_pass_render_condition(struct ilo_context *ilo);
 
 void
 ilo_init_3d_functions(struct ilo_context *ilo);

@@ -28,7 +28,6 @@
 #include "genhw/genhw.h"
 #include "util/u_pack_color.h"
 
-#include "ilo_3d.h"
 #include "ilo_builder_mi.h"
 #include "ilo_builder_blt.h"
 #include "ilo_context.h"
@@ -441,7 +440,7 @@ ilo_blitter_blt_clear_rt(struct ilo_blitter *blitter,
    union util_color packed;
    bool success;
 
-   if (!ilo_3d_pass_render_condition(blitter->ilo))
+   if (ilo_skip_rendering(blitter->ilo))
       return true;
 
    switch (cpp) {
@@ -507,7 +506,7 @@ ilo_blitter_blt_clear_zs(struct ilo_blitter *blitter,
    struct pipe_box box;
    uint32_t val;
 
-   if (!ilo_3d_pass_render_condition(blitter->ilo))
+   if (ilo_skip_rendering(blitter->ilo))
       return true;
 
    switch (zs->format) {
