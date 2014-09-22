@@ -334,7 +334,7 @@ ilo_3d_create(struct ilo_cp *cp, const struct ilo_dev_info *dev)
 
    list_inithead(&hw3d->queries);
 
-   hw3d->pipeline = ilo_3d_pipeline_create(cp, dev);
+   hw3d->pipeline = ilo_3d_pipeline_create(&cp->builder);
    if (!hw3d->pipeline) {
       FREE(hw3d);
       return NULL;

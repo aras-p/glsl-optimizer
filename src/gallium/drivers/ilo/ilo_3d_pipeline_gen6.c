@@ -34,7 +34,6 @@
 #include "ilo_builder_3d.h"
 #include "ilo_builder_mi.h"
 #include "ilo_builder_render.h"
-#include "ilo_cp.h"
 #include "ilo_query.h"
 #include "ilo_shader.h"
 #include "ilo_state.h"

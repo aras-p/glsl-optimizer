@@ -25,12 +25,9 @@
  *    Chia-I Wu <olv@lunarg.com>
  */
 
-#include "util/u_prim.h"
 #include "intel_winsys.h"
 
-#include "ilo_blitter.h"
-#include "ilo_cp.h"
-#include "ilo_state.h"
+#include "ilo_builder.h"
 #include "ilo_3d_pipeline_gen6.h"
 #include "ilo_3d_pipeline_gen7.h"
 #include "ilo_3d_pipeline.h"
@@ -64,7 +61,7 @@ static const struct sample_position sample_position_8x[8] = {
 };
 
 struct ilo_3d_pipeline *
-ilo_3d_pipeline_create(struct ilo_cp *cp, const struct ilo_dev_info *dev)
+ilo_3d_pipeline_create(struct ilo_builder *builder)
 {
    struct ilo_3d_pipeline *p;
    int i;
@@ -73,9 +70,8 @@ ilo_3d_pipeline_create(struct ilo_cp *cp, const struct ilo_dev_info *dev)
    if (!p)
       return NULL;
 
-   p->dev = dev;
-   p->cp = cp;
-   p->builder = &cp->builder;
+   p->dev = builder->dev;
+   p->builder = builder;
 
    switch (ilo_dev_gen(p->dev)) {
    case ILO_GEN(6):
@@ -94,7 +90,7 @@ ilo_3d_pipeline_create(struct ilo_cp *cp, const struct ilo_dev_info *dev)
 
    p->invalidate_flags = ILO_3D_PIPELINE_INVALIDATE_ALL;
 
-   p->workaround_bo = intel_winsys_alloc_buffer(p->cp->winsys,
+   p->workaround_bo = intel_winsys_alloc_buffer(builder->winsys,
          "PIPE_CONTROL workaround", 4096, false);
    if (!p->workaround_bo) {
       ilo_warn("failed to allocate PIPE_CONTROL workaround bo\n");
