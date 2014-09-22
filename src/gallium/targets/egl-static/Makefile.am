@@ -52,7 +52,7 @@ AM_LDFLAGS += \
 	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/egl-static/egl.sym
 endif
 
-egldir = $(EGL_DRIVER_INSTALL_DIR)
+egldir = $(libdir)/egl
 egl_LTLIBRARIES = egl_gallium.la
 
 nodist_EXTRA_egl_gallium_la_SOURCES = dummy.cpp

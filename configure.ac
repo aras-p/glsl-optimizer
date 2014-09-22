@@ -1594,13 +1594,6 @@ if ! echo "$egl_platforms" | grep -q 'x11'; then
     GL_PC_CFLAGS="$GL_PC_CFLAGS -DMESA_EGL_NO_X11_HEADERS"
 fi
 
-AC_ARG_WITH([egl-driver-dir],
-    [AS_HELP_STRING([--with-egl-driver-dir=DIR],
-                    [directory for EGL drivers @<:@default=${libdir}/egl@:>@])],
-    [EGL_DRIVER_INSTALL_DIR="$withval"],
-    [EGL_DRIVER_INSTALL_DIR='${libdir}/egl'])
-AC_SUBST([EGL_DRIVER_INSTALL_DIR])
-
 AC_ARG_WITH([max-width],
     [AS_HELP_STRING([--with-max-width=N],
                     [Maximum framebuffer width (4096)])],
