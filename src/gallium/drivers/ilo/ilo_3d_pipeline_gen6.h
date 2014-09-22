@@ -38,7 +38,6 @@ struct gen6_pipeline_session {
    uint32_t pipe_dirty;
 
    int reduced_prim;
-   int init_cp_space;
 
    bool hw_ctx_changed;
    bool batch_bo_changed;

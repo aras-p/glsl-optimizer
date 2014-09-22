@@ -1361,9 +1361,6 @@ gen6_pipeline_prepare(const struct ilo_3d_pipeline *p,
    session->pipe_dirty = vec->dirty;
    session->reduced_prim = u_reduced_prim(vec->draw->mode);
 
-   /* available space before the session */
-   session->init_cp_space = ilo_cp_space(p->cp);
-
    session->hw_ctx_changed =
       (p->invalidate_flags & ILO_3D_PIPELINE_INVALIDATE_HW);
 
@@ -1425,10 +1422,6 @@ gen6_pipeline_end(struct ilo_3d_pipeline *p,
                   const struct ilo_state_vector *vec,
                   struct gen6_pipeline_session *session)
 {
-   /* sanity check size estimation */
-   assert(session->init_cp_space - ilo_cp_space(p->cp) <=
-         ilo_3d_pipeline_estimate_size(p, ILO_3D_PIPELINE_DRAW, vec));
-
    p->state.reduced_prim = session->reduced_prim;
    p->state.primitive_restart = vec->draw->primitive_restart;
 }

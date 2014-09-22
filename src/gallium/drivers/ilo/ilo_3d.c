@@ -357,7 +357,8 @@ static bool
 draw_vbo(struct ilo_3d *hw3d, const struct ilo_state_vector *vec)
 {
    bool need_flush = false;
-   int max_len;
+   bool success;
+   int max_len, before_space;
 
    ilo_3d_own_render_ring(hw3d);
 
@@ -388,10 +389,17 @@ draw_vbo(struct ilo_3d *hw3d, const struct ilo_state_vector *vec)
       assert(max_len <= ilo_cp_space(hw3d->cp));
    }
 
+   /* space available before emission */
+   before_space = ilo_cp_space(hw3d->cp);
+
    if (need_flush)
       ilo_3d_pipeline_emit_flush(hw3d->pipeline);
+   success = ilo_3d_pipeline_emit_draw(hw3d->pipeline, vec);
 
-   return ilo_3d_pipeline_emit_draw(hw3d->pipeline, vec);
+   /* sanity check size estimation */
+   assert(before_space - ilo_cp_space(hw3d->cp) <= max_len);
+
+   return success;
 }
 
 bool
