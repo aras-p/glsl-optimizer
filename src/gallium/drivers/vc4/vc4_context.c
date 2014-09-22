@@ -25,6 +25,7 @@
 #include <err.h>
 
 #include "pipe/p_defines.h"
+#include "util/ralloc.h"
 #include "util/u_inlines.h"
 #include "util/u_memory.h"
 #include "util/u_blitter.h"
@@ -337,7 +338,7 @@ vc4_context_destroy(struct pipe_context *pctx)
 
         util_slab_destroy(&vc4->transfer_pool);
 
-        free(vc4);
+        ralloc_free(vc4);
 }
 
 struct pipe_context *
@@ -350,7 +351,7 @@ vc4_context_create(struct pipe_screen *pscreen, void *priv)
         uint32_t saved_shaderdb_flag = vc4_debug & VC4_DEBUG_SHADERDB;
         vc4_debug &= ~VC4_DEBUG_SHADERDB;
 
-        vc4 = CALLOC_STRUCT(vc4_context);
+        vc4 = rzalloc(NULL, struct vc4_context);
         if (vc4 == NULL)
                 return NULL;
         struct pipe_context *pctx = &vc4->base;
