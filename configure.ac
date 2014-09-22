@@ -588,22 +588,22 @@ AC_SUBST([SELINUX_LIBS])
 dnl Options for APIs
 AC_ARG_ENABLE([opengl],
     [AS_HELP_STRING([--disable-opengl],
-        [disable support for standard OpenGL API @<:@default=no@:>@])],
+        [disable support for standard OpenGL API @<:@default=enabled@:>@])],
     [enable_opengl="$enableval"],
     [enable_opengl=yes])
 AC_ARG_ENABLE([gles1],
     [AS_HELP_STRING([--enable-gles1],
-        [enable support for OpenGL ES 1.x API @<:@default=no@:>@])],
+        [enable support for OpenGL ES 1.x API @<:@default=disabled@:>@])],
     [enable_gles1="$enableval"],
     [enable_gles1=no])
 AC_ARG_ENABLE([gles2],
     [AS_HELP_STRING([--enable-gles2],
-        [enable support for OpenGL ES 2.x API @<:@default=no@:>@])],
+        [enable support for OpenGL ES 2.x API @<:@default=disabled@:>@])],
     [enable_gles2="$enableval"],
     [enable_gles2=no])
 AC_ARG_ENABLE([openvg],
     [AS_HELP_STRING([--enable-openvg],
-        [enable support for OpenVG API @<:@default=no@:>@])],
+        [enable support for OpenVG API @<:@default=disabled@:>@])],
     [enable_openvg="$enableval"],
     [enable_openvg=no])
 
@@ -649,7 +649,7 @@ AC_ARG_ENABLE([egl],
 
 AC_ARG_ENABLE([xa],
     [AS_HELP_STRING([--enable-xa],
-        [enable build of the XA X Acceleration API @<:@default=no@:>@])],
+        [enable build of the XA X Acceleration API @<:@default=disabled@:>@])],
     [enable_xa="$enableval"],
     [enable_xa=no])
 AC_ARG_ENABLE([gbm],
@@ -670,18 +670,18 @@ AC_ARG_ENABLE([vdpau],
    [enable_vdpau=auto])
 AC_ARG_ENABLE([omx],
    [AS_HELP_STRING([--enable-omx],
-         [enable OpenMAX library @<:@default=no@:>@])],
+         [enable OpenMAX library @<:@default=disabled@:>@])],
    [enable_omx="$enableval"],
    [enable_omx=no])
 AC_ARG_ENABLE([opencl],
    [AS_HELP_STRING([--enable-opencl],
-         [enable OpenCL library @<:@default=no@:>@])],
+         [enable OpenCL library @<:@default=disabled@:>@])],
    [enable_opencl="$enableval"],
    [enable_opencl=no])
 AC_ARG_ENABLE([opencl_icd],
    [AS_HELP_STRING([--enable-opencl-icd],
           [Build an OpenCL ICD library to be loaded by an ICD implementation
-           @<:@default=no@:>@])],
+           @<:@default=disabled@:>@])],
     [enable_opencl_icd="$enableval"],
     [enable_opencl_icd=no])
 AC_ARG_ENABLE([xlib-glx],
@@ -693,7 +693,7 @@ AC_ARG_ENABLE([gallium-egl],
     [AS_HELP_STRING([--enable-gallium-egl],
         [enable optional EGL state tracker (not required
          for EGL support in Gallium with OpenGL and OpenGL ES)
-         @<:@default=disable@:>@])],
+         @<:@default=disabled@:>@])],
     [enable_gallium_egl="$enableval"],
     [enable_gallium_egl=no])
 AC_ARG_ENABLE([gallium-gbm],
@@ -706,13 +706,13 @@ AC_ARG_ENABLE([gallium-gbm],
 
 AC_ARG_ENABLE([r600-llvm-compiler],
     [AS_HELP_STRING([--enable-r600-llvm-compiler],
-        [Enable experimental LLVM backend for graphics shaders @<:@default=disable@:>@])],
+        [Enable experimental LLVM backend for graphics shaders @<:@default=disabled@:>@])],
     [enable_r600_llvm="$enableval"],
     [enable_r600_llvm=no])
 
 AC_ARG_ENABLE([gallium-tests],
     [AS_HELP_STRING([--enable-gallium-tests],
-        [Enable optional Gallium tests) @<:@default=disable@:>@])],
+        [Enable optional Gallium tests) @<:@default=disabled@:>@])],
     [enable_gallium_tests="$enableval"],
     [enable_gallium_tests=no])
 
@@ -814,7 +814,7 @@ AM_CONDITIONAL(HAVE_APPLEDRI, test "x$enable_dri" = xyes -a "x$dri_platform" = x
 
 AC_ARG_ENABLE([shared-glapi],
     [AS_HELP_STRING([--enable-shared-glapi],
-        [Enable shared glapi for OpenGL @<:@default=yes@:>@])],
+        [Enable shared glapi for OpenGL @<:@default=enabled@:>@])],
     [enable_shared_glapi="$enableval"],
     [enable_shared_glapi=yes])
 
