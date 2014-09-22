@@ -159,7 +159,7 @@ ilo_3d_pipeline_estimate_size(struct ilo_3d_pipeline *pipeline,
    return pipeline->estimate_size(pipeline, action, arg);
 }
 
-bool
+void
 ilo_3d_pipeline_emit_draw(struct ilo_3d_pipeline *p,
                           const struct ilo_state_vector *vec);
 

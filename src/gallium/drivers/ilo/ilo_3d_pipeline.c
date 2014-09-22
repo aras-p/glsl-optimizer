@@ -148,44 +148,12 @@ handle_invalid_batch_bo(struct ilo_3d_pipeline *p, bool unset)
 /**
  * Emit context states and 3DPRIMITIVE.
  */
-bool
+void
 ilo_3d_pipeline_emit_draw(struct ilo_3d_pipeline *p,
                           const struct ilo_state_vector *vec)
 {
-   bool success;
-
-   while (true) {
-      struct ilo_builder_snapshot snapshot;
-
-      /* we will rewind if aperture check below fails */
-      ilo_builder_batch_snapshot(&p->cp->builder, &snapshot);
-
-      handle_invalid_batch_bo(p, false);
-
-      /* draw! */
-      p->emit_draw(p, vec);
-
-      if (ilo_builder_validate(&p->cp->builder, 0, NULL)) {
-         success = true;
-      } else {
-         /* rewind */
-         ilo_builder_batch_restore(&p->cp->builder, &snapshot);
-
-         /* flush and try again */
-         if (ilo_builder_batch_used(&p->cp->builder)) {
-            ilo_cp_submit(p->cp, "out of aperture");
-            continue;
-         }
-
-         success = false;
-      }
-
-      break;
-   }
-
-   p->invalidate_flags = 0x0;
-
-   return success;
+   handle_invalid_batch_bo(p, false);
+   p->emit_draw(p, vec);
 }
 
 /**
@@ -213,37 +181,8 @@ void
 ilo_3d_pipeline_emit_rectlist(struct ilo_3d_pipeline *p,
                               const struct ilo_blitter *blitter)
 {
-   const int max_len = ilo_3d_pipeline_estimate_size(p,
-         ILO_3D_PIPELINE_RECTLIST, blitter);
-
-   if (max_len > ilo_cp_space(p->cp))
-      ilo_cp_submit(p->cp, "out of space");
-
-   while (true) {
-      struct ilo_builder_snapshot snapshot;
-
-      /* we will rewind if aperture check below fails */
-      ilo_builder_batch_snapshot(&p->cp->builder, &snapshot);
-
-      handle_invalid_batch_bo(p, false);
-
-      p->emit_rectlist(p, blitter);
-
-      if (!ilo_builder_validate(&p->cp->builder, 0, NULL)) {
-         /* rewind */
-         ilo_builder_batch_restore(&p->cp->builder, &snapshot);
-
-         /* flush and try again */
-         if (ilo_builder_batch_used(&p->cp->builder)) {
-            ilo_cp_submit(p->cp, "out of aperture");
-            continue;
-         }
-      }
-
-      break;
-   }
-
-   ilo_3d_pipeline_invalidate(p, ILO_3D_PIPELINE_INVALIDATE_HW);
+   handle_invalid_batch_bo(p, false);
+   p->emit_rectlist(p, blitter);
 }
 
 void

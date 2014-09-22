@@ -357,7 +357,7 @@ static bool
 draw_vbo(struct ilo_3d *hw3d, const struct ilo_state_vector *vec)
 {
    bool need_flush = false;
-   bool success;
+   bool success = true;
    int max_len, before_space;
 
    /* on GEN7+, we need SOL_RESET to reset the SO write offsets */
@@ -402,7 +402,30 @@ draw_vbo(struct ilo_3d *hw3d, const struct ilo_state_vector *vec)
 
    if (need_flush)
       ilo_3d_pipeline_emit_flush(hw3d->pipeline);
-   success = ilo_3d_pipeline_emit_draw(hw3d->pipeline, vec);
+
+   while (true) {
+      struct ilo_builder_snapshot snapshot;
+
+      ilo_builder_batch_snapshot(&hw3d->cp->builder, &snapshot);
+
+      ilo_3d_pipeline_emit_draw(hw3d->pipeline, vec);
+
+      if (!ilo_builder_validate(&hw3d->cp->builder, 0, NULL)) {
+         ilo_builder_batch_restore(&hw3d->cp->builder, &snapshot);
+
+         /* flush and try again */
+         if (ilo_builder_batch_used(&hw3d->cp->builder)) {
+            ilo_cp_submit(hw3d->cp, "out of aperture");
+            continue;
+         }
+
+         success = false;
+      }
+
+      break;
+   }
+
+   hw3d->pipeline->invalidate_flags = 0x0;
 
    /* sanity check size estimation */
    assert(before_space - ilo_cp_space(hw3d->cp) <= max_len);
@@ -442,7 +465,21 @@ ilo_3d_pass_render_condition(struct ilo_context *ilo)
 void
 ilo_3d_draw_rectlist(struct ilo_3d *hw3d, const struct ilo_blitter *blitter)
 {
+   int max_len, before_space;
+
    ilo_3d_own_render_ring(hw3d);
+
+   max_len = ilo_3d_pipeline_estimate_size(hw3d->pipeline,
+         ILO_3D_PIPELINE_RECTLIST, blitter);
+   max_len += ilo_3d_pipeline_estimate_size(hw3d->pipeline,
+         ILO_3D_PIPELINE_FLUSH, NULL) * 2;
+
+   if (max_len > ilo_cp_space(hw3d->cp)) {
+      ilo_cp_submit(hw3d->cp, "out of space");
+      assert(max_len <= ilo_cp_space(hw3d->cp));
+   }
+
+   before_space = ilo_cp_space(hw3d->cp);
 
    /*
     * From the Sandy Bridge PRM, volume 2 part 1, page 313:
@@ -465,15 +502,36 @@ ilo_3d_draw_rectlist(struct ilo_3d *hw3d, const struct ilo_blitter *blitter)
     *  - we may sample from the fb shortly after
     *
     * Skip checking blitter->op and do the flushes.
-    *
-    * XXX need space check
     */
    if (!hw3d->new_batch)
       ilo_3d_pipeline_emit_flush(hw3d->pipeline);
 
-   ilo_3d_pipeline_emit_rectlist(hw3d->pipeline, blitter);
+   while (true) {
+      struct ilo_builder_snapshot snapshot;
+
+      ilo_builder_batch_snapshot(&hw3d->cp->builder, &snapshot);
+
+      ilo_3d_pipeline_emit_rectlist(hw3d->pipeline, blitter);
+
+      if (!ilo_builder_validate(&hw3d->cp->builder, 0, NULL)) {
+         ilo_builder_batch_restore(&hw3d->cp->builder, &snapshot);
+
+         /* flush and try again */
+         if (ilo_builder_batch_used(&hw3d->cp->builder)) {
+            ilo_cp_submit(hw3d->cp, "out of aperture");
+            continue;
+         }
+      }
+
+      break;
+   }
+
+   ilo_3d_pipeline_invalidate(hw3d->pipeline, ILO_3D_PIPELINE_INVALIDATE_HW);
 
    ilo_3d_pipeline_emit_flush(hw3d->pipeline);
+
+   /* sanity check size estimation */
+   assert(before_space - ilo_cp_space(hw3d->cp) <= max_len);
 
    hw3d->new_batch = false;
 }
