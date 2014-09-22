@@ -29,14 +29,16 @@ using namespace clover;
 memory_obj::memory_obj(clover::context &ctx, cl_mem_flags flags,
                        size_t size, void *host_ptr) :
    context(ctx), _flags(flags),
-   _size(size), _host_ptr(host_ptr),
-   _destroy_notify([]{}) {
+   _size(size), _host_ptr(host_ptr) {
    if (flags & (CL_MEM_COPY_HOST_PTR | CL_MEM_USE_HOST_PTR))
       data.append((char *)host_ptr, size);
 }
 
 memory_obj::~memory_obj() {
-   _destroy_notify();
+   while (_destroy_notify.size()) {
+      _destroy_notify.top()();
+      _destroy_notify.pop();
+   }
 }
 
 bool
@@ -46,7 +48,7 @@ memory_obj::operator==(const memory_obj &obj) const {
 
 void
 memory_obj::destroy_notify(std::function<void ()> f) {
-   _destroy_notify = f;
+   _destroy_notify.push(f);
 }
 
 cl_mem_flags
