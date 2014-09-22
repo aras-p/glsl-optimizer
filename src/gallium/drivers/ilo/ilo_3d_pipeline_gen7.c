@@ -414,8 +414,6 @@ gen7_pipeline_sol(struct ilo_3d_pipeline *p,
 
    so_info = ilo_shader_get_kernel_so_info(shader);
 
-   gen6_pipeline_update_max_svbi(p, vec, session);
-
    /* 3DSTATE_SO_BUFFER */
    if ((DIRTY(SO) || dirty_sh || session->batch_bo_changed) &&
        vec->so.enabled) {

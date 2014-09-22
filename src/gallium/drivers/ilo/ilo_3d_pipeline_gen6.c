@@ -524,7 +524,7 @@ gen6_pipeline_gs(struct ilo_3d_pipeline *p,
    }
 }
 
-bool
+static bool
 gen6_pipeline_update_max_svbi(struct ilo_3d_pipeline *p,
                               const struct ilo_state_vector *vec,
                               struct gen6_pipeline_session *session)
