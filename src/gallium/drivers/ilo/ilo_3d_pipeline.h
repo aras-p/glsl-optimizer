@@ -87,7 +87,19 @@ struct ilo_3d_pipeline {
     * HW states.
     */
    struct ilo_3d_pipeline_state {
-      bool has_gen6_wa_pipe_control;
+      /*
+       * When a WA is needed before some command, we always emit the WA right
+       * before the command.  Knowing what have already been done since last
+       * 3DPRIMITIVE allows us to skip some WAs.
+       */
+      uint32_t current_pipe_control_dw1;
+
+      /*
+       * When a WA is needed after some command, we may have the WA follow the
+       * command immediately or defer it.  If this is non-zero, a PIPE_CONTROL
+       * will be emitted before 3DPRIMITIVE.
+       */
+      uint32_t deferred_pipe_control_dw1;
 
       bool primitive_restart;
       int reduced_prim;
@@ -144,7 +156,9 @@ static inline void
 ilo_3d_pipeline_invalidate(struct ilo_3d_pipeline *p, uint32_t flags)
 {
    p->invalidate_flags |= flags;
-   p->state.has_gen6_wa_pipe_control = false;
+
+   /* Kernel flushes everything.  Shouldn't we set all bits here? */
+   p->state.current_pipe_control_dw1 = 0;
 }
 
 /**

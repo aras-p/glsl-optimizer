@@ -40,42 +40,37 @@
 #include "ilo_3d_pipeline_gen6.h"
 
 /**
- * This should be called before any depth stall flush (including those
- * produced by non-pipelined state commands) or cache flush on GEN6.
- *
- * \see intel_emit_post_sync_nonzero_flush()
+ * A wrapper for gen6_PIPE_CONTROL().
+ */
+static inline void
+gen6_pipe_control(struct ilo_3d_pipeline *p, uint32_t dw1)
+{
+   struct intel_bo *bo = (dw1 & GEN6_PIPE_CONTROL_WRITE__MASK) ?
+      p->workaround_bo : NULL;
+
+   ILO_DEV_ASSERT(p->dev, 6, 6);
+
+   gen6_PIPE_CONTROL(p->builder, dw1, bo, 0, false);
+
+   p->state.current_pipe_control_dw1 |= dw1;
+
+   assert(!p->state.deferred_pipe_control_dw1);
+}
+
+/**
+ * This should be called before PIPE_CONTROL.
  */
 static void
-gen6_wa_pipe_control_post_sync(struct ilo_3d_pipeline *p,
-                               bool caller_post_sync)
+gen6_wa_pre_pipe_control(struct ilo_3d_pipeline *p, uint32_t dw1)
 {
-   assert(ilo_dev_gen(p->dev) == ILO_GEN(6));
-
-   /* emit once */
-   if (p->state.has_gen6_wa_pipe_control)
-      return;
-
-   p->state.has_gen6_wa_pipe_control = true;
-
    /*
     * From the Sandy Bridge PRM, volume 2 part 1, page 60:
     *
     *     "Pipe-control with CS-stall bit set must be sent BEFORE the
     *      pipe-control with a post-sync op and no write-cache flushes."
     *
-    * The workaround below necessitates this workaround.
-    */
-   gen6_PIPE_CONTROL(p->builder,
-         GEN6_PIPE_CONTROL_CS_STALL |
-         GEN6_PIPE_CONTROL_PIXEL_SCOREBOARD_STALL,
-         NULL, 0, false);
-
-   /* the caller will emit the post-sync op */
-   if (caller_post_sync)
-      return;
-
-   /*
-    * From the Sandy Bridge PRM, volume 2 part 1, page 60:
+    * This WA may also be triggered indirectly by the other two WAs on the
+    * same page:
     *
     *     "Before any depth stall flush (including those produced by
     *      non-pipelined state commands), software needs to first send a
@@ -84,18 +79,98 @@ gen6_wa_pipe_control_post_sync(struct ilo_3d_pipeline *p,
     *     "Before a PIPE_CONTROL with Write Cache Flush Enable =1, a
     *      PIPE_CONTROL with any non-zero post-sync-op is required."
     */
-   gen6_PIPE_CONTROL(p->builder,
-         GEN6_PIPE_CONTROL_WRITE_IMM,
-         p->workaround_bo, 0, false);
+   const bool direct_wa_cond = (dw1 & GEN6_PIPE_CONTROL_WRITE__MASK) &&
+                               !(dw1 & GEN6_PIPE_CONTROL_RENDER_CACHE_FLUSH);
+   const bool indirect_wa_cond = (dw1 & GEN6_PIPE_CONTROL_DEPTH_STALL) |
+                                 (dw1 & GEN6_PIPE_CONTROL_RENDER_CACHE_FLUSH);
+
+   ILO_DEV_ASSERT(p->dev, 6, 6);
+
+   if (!direct_wa_cond && !indirect_wa_cond)
+      return;
+
+   if (!(p->state.current_pipe_control_dw1 & GEN6_PIPE_CONTROL_CS_STALL)) {
+      /*
+       * From the Sandy Bridge PRM, volume 2 part 1, page 73:
+       *
+       *     "1 of the following must also be set (when CS stall is set):
+       *
+       *       - Depth Cache Flush Enable ([0] of DW1)
+       *       - Stall at Pixel Scoreboard ([1] of DW1)
+       *       - Depth Stall ([13] of DW1)
+       *       - Post-Sync Operation ([13] of DW1)
+       *       - Render Target Cache Flush Enable ([12] of DW1)
+       *       - Notify Enable ([8] of DW1)"
+       *
+       * Because of the WAs above, we have to pick Stall at Pixel Scoreboard.
+       */
+      const uint32_t direct_wa = GEN6_PIPE_CONTROL_CS_STALL |
+                                 GEN6_PIPE_CONTROL_PIXEL_SCOREBOARD_STALL;
+
+      gen6_pipe_control(p, direct_wa);
+   }
+
+   if (indirect_wa_cond &&
+       !(p->state.current_pipe_control_dw1 & GEN6_PIPE_CONTROL_WRITE__MASK)) {
+      const uint32_t indirect_wa = GEN6_PIPE_CONTROL_WRITE_IMM;
+
+      gen6_pipe_control(p, indirect_wa);
+   }
+}
+
+/**
+ * This should be called before any non-pipelined state command.
+ */
+static void
+gen6_wa_pre_non_pipelined(struct ilo_3d_pipeline *p)
+{
+   ILO_DEV_ASSERT(p->dev, 6, 6);
+
+   /* non-pipelined state commands produce depth stall */
+   gen6_wa_pre_pipe_control(p, GEN6_PIPE_CONTROL_DEPTH_STALL);
 }
 
 static void
-gen6_wa_pipe_control_wm_multisample_flush(struct ilo_3d_pipeline *p)
+gen6_wa_post_3dstate_constant_vs(struct ilo_3d_pipeline *p)
 {
-   assert(ilo_dev_gen(p->dev) == ILO_GEN(6));
+   /*
+    * According to upload_vs_state() of the classic driver, we need to emit a
+    * PIPE_CONTROL after 3DSTATE_CONSTANT_VS, otherwise the command is kept
+    * being buffered by VS FF, to the point that the FF dies.
+    */
+   const uint32_t dw1 = GEN6_PIPE_CONTROL_DEPTH_STALL |
+                        GEN6_PIPE_CONTROL_INSTRUCTION_CACHE_INVALIDATE |
+                        GEN6_PIPE_CONTROL_STATE_CACHE_INVALIDATE;
 
-   gen6_wa_pipe_control_post_sync(p, false);
+   gen6_wa_pre_pipe_control(p, dw1);
 
+   if ((p->state.current_pipe_control_dw1 & dw1) != dw1)
+      gen6_pipe_control(p, dw1);
+}
+
+static void
+gen6_wa_pre_3dstate_wm_max_threads(struct ilo_3d_pipeline *p)
+{
+   /*
+    * From the Sandy Bridge PRM, volume 2 part 1, page 274:
+    *
+    *     "A PIPE_CONTROL command, with only the Stall At Pixel Scoreboard
+    *      field set (DW1 Bit 1), must be issued prior to any change to the
+    *      value in this field (Maximum Number of Threads in 3DSTATE_WM)"
+    */
+   const uint32_t dw1 = GEN6_PIPE_CONTROL_PIXEL_SCOREBOARD_STALL;
+
+   ILO_DEV_ASSERT(p->dev, 6, 6);
+
+   gen6_wa_pre_pipe_control(p, dw1);
+
+   if ((p->state.current_pipe_control_dw1 & dw1) != dw1)
+      gen6_pipe_control(p, dw1);
+}
+
+static void
+gen6_wa_pre_3dstate_multisample(struct ilo_3d_pipeline *p)
+{
    /*
     * From the Sandy Bridge PRM, volume 2 part 1, page 305:
     *
@@ -104,76 +179,43 @@ gen6_wa_pipe_control_wm_multisample_flush(struct ilo_3d_pipeline *p)
     *      requires driver to send a PIPE_CONTROL with a CS stall along with a
     *      Depth Flush prior to this command."
     */
-   gen6_PIPE_CONTROL(p->builder,
-         GEN6_PIPE_CONTROL_DEPTH_CACHE_FLUSH |
-         GEN6_PIPE_CONTROL_CS_STALL,
-         0, 0, false);
+   const uint32_t dw1 = GEN6_PIPE_CONTROL_DEPTH_CACHE_FLUSH |
+                        GEN6_PIPE_CONTROL_CS_STALL;
+
+   ILO_DEV_ASSERT(p->dev, 6, 6);
+
+   gen6_wa_pre_pipe_control(p, dw1);
+
+   if ((p->state.current_pipe_control_dw1 & dw1) != dw1)
+      gen6_pipe_control(p, dw1);
 }
 
 static void
-gen6_wa_pipe_control_wm_depth_flush(struct ilo_3d_pipeline *p)
+gen6_wa_pre_depth(struct ilo_3d_pipeline *p)
 {
-   assert(ilo_dev_gen(p->dev) == ILO_GEN(6));
-
-   gen6_wa_pipe_control_post_sync(p, false);
+   ILO_DEV_ASSERT(p->dev, 6, 6);
 
    /*
-    * According to intel_emit_depth_stall_flushes() of classic i965, we need
-    * to emit a sequence of PIPE_CONTROLs prior to emitting depth related
-    * commands.
-    */
-   gen6_PIPE_CONTROL(p->builder,
-         GEN6_PIPE_CONTROL_DEPTH_STALL,
-         NULL, 0, false);
-
-   gen6_PIPE_CONTROL(p->builder,
-         GEN6_PIPE_CONTROL_DEPTH_CACHE_FLUSH,
-         NULL, 0, false);
-
-   gen6_PIPE_CONTROL(p->builder,
-         GEN6_PIPE_CONTROL_DEPTH_STALL,
-         NULL, 0, false);
-}
-
-static void
-gen6_wa_pipe_control_wm_max_threads_stall(struct ilo_3d_pipeline *p)
-{
-   assert(ilo_dev_gen(p->dev) == ILO_GEN(6));
-
-   /* the post-sync workaround should cover this already */
-   if (p->state.has_gen6_wa_pipe_control)
-      return;
-
-   /*
-    * From the Sandy Bridge PRM, volume 2 part 1, page 274:
+    * From the Ivy Bridge PRM, volume 2 part 1, page 315:
     *
-    *     "A PIPE_CONTROL command, with only the Stall At Pixel Scoreboard
-    *      field set (DW1 Bit 1), must be issued prior to any change to the
-    *      value in this field (Maximum Number of Threads in 3DSTATE_WM)"
+    *     "Restriction: Prior to changing Depth/Stencil Buffer state (i.e.,
+    *      any combination of 3DSTATE_DEPTH_BUFFER, 3DSTATE_CLEAR_PARAMS,
+    *      3DSTATE_STENCIL_BUFFER, 3DSTATE_HIER_DEPTH_BUFFER) SW must first
+    *      issue a pipelined depth stall (PIPE_CONTROL with Depth Stall bit
+    *      set), followed by a pipelined depth cache flush (PIPE_CONTROL with
+    *      Depth Flush Bit set, followed by another pipelined depth stall
+    *      (PIPE_CONTROL with Depth Stall Bit set), unless SW can otherwise
+    *      guarantee that the pipeline from WM onwards is already flushed
+    *      (e.g., via a preceding MI_FLUSH)."
+    *
+    * According to the classic driver, it also applies for GEN6.
     */
-   gen6_PIPE_CONTROL(p->builder,
-         GEN6_PIPE_CONTROL_PIXEL_SCOREBOARD_STALL,
-         NULL, 0, false);
+   gen6_wa_pre_pipe_control(p, GEN6_PIPE_CONTROL_DEPTH_STALL |
+                               GEN6_PIPE_CONTROL_DEPTH_CACHE_FLUSH);
 
-}
-
-static void
-gen6_wa_pipe_control_vs_const_flush(struct ilo_3d_pipeline *p)
-{
-   assert(ilo_dev_gen(p->dev) == ILO_GEN(6));
-
-   gen6_wa_pipe_control_post_sync(p, false);
-
-   /*
-    * According to upload_vs_state() of classic i965, we need to emit
-    * PIPE_CONTROL after 3DSTATE_CONSTANT_VS so that the command is kept being
-    * buffered by VS FF, to the point that the FF dies.
-    */
-   gen6_PIPE_CONTROL(p->builder,
-         GEN6_PIPE_CONTROL_DEPTH_STALL |
-         GEN6_PIPE_CONTROL_INSTRUCTION_CACHE_INVALIDATE |
-         GEN6_PIPE_CONTROL_STATE_CACHE_INVALIDATE,
-         NULL, 0, false);
+   gen6_pipe_control(p, GEN6_PIPE_CONTROL_DEPTH_STALL);
+   gen6_pipe_control(p, GEN6_PIPE_CONTROL_DEPTH_CACHE_FLUSH);
+   gen6_pipe_control(p, GEN6_PIPE_CONTROL_DEPTH_STALL);
 }
 
 #define DIRTY(state) (session->pipe_dirty & ILO_DIRTY_ ## state)
@@ -186,7 +228,7 @@ gen6_pipeline_common_select(struct ilo_3d_pipeline *p,
    /* PIPELINE_SELECT */
    if (session->hw_ctx_changed) {
       if (ilo_dev_gen(p->dev) == ILO_GEN(6))
-         gen6_wa_pipe_control_post_sync(p, false);
+         gen6_wa_pre_non_pipelined(p);
 
       gen6_PIPELINE_SELECT(p->builder, 0x0);
    }
@@ -200,7 +242,7 @@ gen6_pipeline_common_sip(struct ilo_3d_pipeline *p,
    /* STATE_SIP */
    if (session->hw_ctx_changed) {
       if (ilo_dev_gen(p->dev) == ILO_GEN(6))
-         gen6_wa_pipe_control_post_sync(p, false);
+         gen6_wa_pre_non_pipelined(p);
 
       gen6_STATE_SIP(p->builder, 0);
    }
@@ -215,7 +257,7 @@ gen6_pipeline_common_base_address(struct ilo_3d_pipeline *p,
    if (session->state_bo_changed || session->kernel_bo_changed ||
        session->batch_bo_changed) {
       if (ilo_dev_gen(p->dev) == ILO_GEN(6))
-         gen6_wa_pipe_control_post_sync(p, false);
+         gen6_wa_pre_non_pipelined(p);
 
       gen6_state_base_address(p->builder, session->hw_ctx_changed);
 
@@ -468,7 +510,9 @@ gen6_pipeline_vf_draw(struct ilo_3d_pipeline *p,
 {
    /* 3DPRIMITIVE */
    gen6_3DPRIMITIVE(p->builder, vec->draw, &vec->ib);
-   p->state.has_gen6_wa_pipe_control = false;
+
+   p->state.current_pipe_control_dw1 = 0;
+   assert(!p->state.deferred_pipe_control_dw1);
 }
 
 void
@@ -485,7 +529,7 @@ gen6_pipeline_vs(struct ilo_3d_pipeline *p,
     * cannot find
     */
    if (emit_3dstate_vs && ilo_dev_gen(p->dev) == ILO_GEN(6))
-      gen6_wa_pipe_control_post_sync(p, false);
+      gen6_wa_pre_non_pipelined(p);
 
    /* 3DSTATE_CONSTANT_VS */
    if (emit_3dstate_constant_vs) {
@@ -503,7 +547,7 @@ gen6_pipeline_vs(struct ilo_3d_pipeline *p,
    }
 
    if (emit_3dstate_constant_vs && ilo_dev_gen(p->dev) == ILO_GEN(6))
-      gen6_wa_pipe_control_vs_const_flush(p);
+      gen6_wa_post_3dstate_constant_vs(p);
 }
 
 static void
@@ -578,7 +622,7 @@ gen6_pipeline_gs_svbi(struct ilo_3d_pipeline *p,
    /* 3DSTATE_GS_SVB_INDEX */
    if (emit) {
       if (ilo_dev_gen(p->dev) == ILO_GEN(6))
-         gen6_wa_pipe_control_post_sync(p, false);
+         gen6_wa_pre_non_pipelined(p);
 
       gen6_3DSTATE_GS_SVB_INDEX(p->builder,
             0, 0, p->state.so_max_vertices,
@@ -651,7 +695,7 @@ gen6_pipeline_sf_rect(struct ilo_3d_pipeline *p,
    /* 3DSTATE_DRAWING_RECTANGLE */
    if (DIRTY(FB)) {
       if (ilo_dev_gen(p->dev) == ILO_GEN(6))
-         gen6_wa_pipe_control_post_sync(p, false);
+         gen6_wa_pre_non_pipelined(p);
 
       gen6_3DSTATE_DRAWING_RECTANGLE(p->builder, 0, 0,
             vec->fb.state.width, vec->fb.state.height);
@@ -680,7 +724,7 @@ gen6_pipeline_wm(struct ilo_3d_pipeline *p,
                                 vec->blend->alpha_to_coverage);
 
       if (ilo_dev_gen(p->dev) == ILO_GEN(6) && session->hw_ctx_changed)
-         gen6_wa_pipe_control_wm_max_threads_stall(p);
+         gen6_wa_pre_3dstate_wm_max_threads(p);
 
       gen6_3DSTATE_WM(p->builder, vec->fs, num_samplers,
             vec->rasterizer, dual_blend, cc_may_kill, 0);
@@ -700,8 +744,8 @@ gen6_pipeline_wm_multisample(struct ilo_3d_pipeline *p,
          &p->packed_sample_position_4x : &p->packed_sample_position_1x;
 
       if (ilo_dev_gen(p->dev) == ILO_GEN(6)) {
-         gen6_wa_pipe_control_post_sync(p, false);
-         gen6_wa_pipe_control_wm_multisample_flush(p);
+         gen6_wa_pre_non_pipelined(p);
+         gen6_wa_pre_3dstate_multisample(p);
       }
 
       gen6_3DSTATE_MULTISAMPLE(p->builder,
@@ -741,8 +785,8 @@ gen6_pipeline_wm_depth(struct ilo_3d_pipeline *p,
       }
 
       if (ilo_dev_gen(p->dev) == ILO_GEN(6)) {
-         gen6_wa_pipe_control_post_sync(p, false);
-         gen6_wa_pipe_control_wm_depth_flush(p);
+         gen6_wa_pre_non_pipelined(p);
+         gen6_wa_pre_depth(p);
       }
 
       gen6_3DSTATE_DEPTH_BUFFER(p->builder, zs);
@@ -761,7 +805,7 @@ gen6_pipeline_wm_raster(struct ilo_3d_pipeline *p,
    if ((DIRTY(RASTERIZER) || DIRTY(POLY_STIPPLE)) &&
        vec->rasterizer->state.poly_stipple_enable) {
       if (ilo_dev_gen(p->dev) == ILO_GEN(6))
-         gen6_wa_pipe_control_post_sync(p, false);
+         gen6_wa_pre_non_pipelined(p);
 
       gen6_3DSTATE_POLY_STIPPLE_PATTERN(p->builder,
             &vec->poly_stipple);
@@ -772,7 +816,7 @@ gen6_pipeline_wm_raster(struct ilo_3d_pipeline *p,
    /* 3DSTATE_LINE_STIPPLE */
    if (DIRTY(RASTERIZER) && vec->rasterizer->state.line_stipple_enable) {
       if (ilo_dev_gen(p->dev) == ILO_GEN(6))
-         gen6_wa_pipe_control_post_sync(p, false);
+         gen6_wa_pre_non_pipelined(p);
 
       gen6_3DSTATE_LINE_STIPPLE(p->builder,
             vec->rasterizer->state.line_stipple_pattern,
@@ -782,7 +826,7 @@ gen6_pipeline_wm_raster(struct ilo_3d_pipeline *p,
    /* 3DSTATE_AA_LINE_PARAMETERS */
    if (DIRTY(RASTERIZER) && vec->rasterizer->state.line_smooth) {
       if (ilo_dev_gen(p->dev) == ILO_GEN(6))
-         gen6_wa_pipe_control_post_sync(p, false);
+         gen6_wa_pre_non_pipelined(p);
 
       gen6_3DSTATE_AA_LINE_PARAMETERS(p->builder);
    }
@@ -1437,18 +1481,22 @@ ilo_3d_pipeline_emit_draw_gen6(struct ilo_3d_pipeline *p,
 void
 ilo_3d_pipeline_emit_flush_gen6(struct ilo_3d_pipeline *p)
 {
-   if (ilo_dev_gen(p->dev) == ILO_GEN(6))
-      gen6_wa_pipe_control_post_sync(p, false);
+   const uint32_t dw1 = GEN6_PIPE_CONTROL_INSTRUCTION_CACHE_INVALIDATE |
+                        GEN6_PIPE_CONTROL_RENDER_CACHE_FLUSH |
+                        GEN6_PIPE_CONTROL_DEPTH_CACHE_FLUSH |
+                        GEN6_PIPE_CONTROL_VF_CACHE_INVALIDATE |
+                        GEN6_PIPE_CONTROL_TEXTURE_CACHE_INVALIDATE |
+                        GEN6_PIPE_CONTROL_CS_STALL;
 
-   gen6_PIPE_CONTROL(p->builder,
-         GEN6_PIPE_CONTROL_INSTRUCTION_CACHE_INVALIDATE |
-         GEN6_PIPE_CONTROL_RENDER_CACHE_FLUSH |
-         GEN6_PIPE_CONTROL_DEPTH_CACHE_FLUSH |
-         GEN6_PIPE_CONTROL_VF_CACHE_INVALIDATE |
-         GEN6_PIPE_CONTROL_TEXTURE_CACHE_INVALIDATE |
-         GEN6_PIPE_CONTROL_WRITE_NONE |
-         GEN6_PIPE_CONTROL_CS_STALL,
-         0, 0, false);
+   ILO_DEV_ASSERT(p->dev, 6, 7.5);
+
+   if (ilo_dev_gen(p->dev) == ILO_GEN(6))
+      gen6_wa_pre_pipe_control(p, dw1);
+
+   gen6_PIPE_CONTROL(p->builder, dw1, NULL, 0, false);
+
+   p->state.current_pipe_control_dw1 |= dw1;
+   p->state.deferred_pipe_control_dw1 &= ~dw1;
 }
 
 void
@@ -1478,27 +1526,18 @@ ilo_3d_pipeline_emit_query_gen6(struct ilo_3d_pipeline *p,
       GEN6_REG_SO_NUM_PRIMS_WRITTEN;
    const uint32_t *regs;
    int reg_count = 0, i;
+   uint32_t pipe_control_dw1 = 0;
 
    ILO_DEV_ASSERT(p->dev, 6, 7.5);
 
    switch (q->type) {
    case PIPE_QUERY_OCCLUSION_COUNTER:
-      if (ilo_dev_gen(p->dev) == ILO_GEN(6))
-         gen6_wa_pipe_control_post_sync(p, false);
-
-      gen6_PIPE_CONTROL(p->builder,
-            GEN6_PIPE_CONTROL_DEPTH_STALL |
-            GEN6_PIPE_CONTROL_WRITE_PS_DEPTH_COUNT,
-            q->bo, offset, true);
+      pipe_control_dw1 = GEN6_PIPE_CONTROL_DEPTH_STALL |
+                         GEN6_PIPE_CONTROL_WRITE_PS_DEPTH_COUNT;
       break;
    case PIPE_QUERY_TIMESTAMP:
    case PIPE_QUERY_TIME_ELAPSED:
-      if (ilo_dev_gen(p->dev) == ILO_GEN(6))
-         gen6_wa_pipe_control_post_sync(p, true);
-
-      gen6_PIPE_CONTROL(p->builder,
-            GEN6_PIPE_CONTROL_WRITE_TIMESTAMP,
-            q->bo, offset, true);
+      pipe_control_dw1 = GEN6_PIPE_CONTROL_WRITE_TIMESTAMP;
       break;
    case PIPE_QUERY_PRIMITIVES_GENERATED:
       regs = &primitives_generated_reg;
@@ -1514,6 +1553,16 @@ ilo_3d_pipeline_emit_query_gen6(struct ilo_3d_pipeline *p,
       break;
    default:
       break;
+   }
+
+   if (pipe_control_dw1) {
+      if (ilo_dev_gen(p->dev) == ILO_GEN(6))
+         gen6_wa_pre_pipe_control(p, pipe_control_dw1);
+
+      gen6_PIPE_CONTROL(p->builder, pipe_control_dw1, q->bo, offset, true);
+
+      p->state.current_pipe_control_dw1 |= pipe_control_dw1;
+      p->state.deferred_pipe_control_dw1 &= ~pipe_control_dw1;
    }
 
    if (!reg_count)
@@ -1544,7 +1593,7 @@ gen6_rectlist_vs_to_sf(struct ilo_3d_pipeline *p,
    gen6_3DSTATE_CONSTANT_VS(p->builder, NULL, NULL, 0);
    gen6_3DSTATE_VS(p->builder, NULL, 0);
 
-   gen6_wa_pipe_control_vs_const_flush(p);
+   gen6_wa_post_3dstate_constant_vs(p);
 
    gen6_3DSTATE_CONSTANT_GS(p->builder, NULL, NULL, 0);
    gen6_3DSTATE_GS(p->builder, NULL, NULL, 0);
@@ -1577,7 +1626,7 @@ gen6_rectlist_wm(struct ilo_3d_pipeline *p,
 
    gen6_3DSTATE_CONSTANT_PS(p->builder, NULL, NULL, 0);
 
-   gen6_wa_pipe_control_wm_max_threads_stall(p);
+   gen6_wa_pre_3dstate_wm_max_threads(p);
    gen6_3DSTATE_WM(p->builder, NULL, 0, NULL, false, false, hiz_op);
 }
 
@@ -1586,7 +1635,7 @@ gen6_rectlist_wm_depth(struct ilo_3d_pipeline *p,
                        const struct ilo_blitter *blitter,
                        struct gen6_rectlist_session *session)
 {
-   gen6_wa_pipe_control_wm_depth_flush(p);
+   gen6_wa_pre_depth(p);
 
    if (blitter->uses & (ILO_BLITTER_USE_FB_DEPTH |
                         ILO_BLITTER_USE_FB_STENCIL)) {
@@ -1616,7 +1665,7 @@ gen6_rectlist_wm_multisample(struct ilo_3d_pipeline *p,
    const uint32_t *packed_sample_pos = (blitter->fb.num_samples > 1) ?
       &p->packed_sample_position_4x : &p->packed_sample_position_1x;
 
-   gen6_wa_pipe_control_wm_multisample_flush(p);
+   gen6_wa_pre_3dstate_multisample(p);
 
    gen6_3DSTATE_MULTISAMPLE(p->builder, blitter->fb.num_samples,
          packed_sample_pos, true);
@@ -1630,7 +1679,7 @@ gen6_rectlist_commands(struct ilo_3d_pipeline *p,
                        const struct ilo_blitter *blitter,
                        struct gen6_rectlist_session *session)
 {
-   gen6_wa_pipe_control_post_sync(p, false);
+   gen6_wa_pre_non_pipelined(p);
 
    gen6_rectlist_wm_multisample(p, blitter, session);
 

@@ -37,66 +37,55 @@
 #include "ilo_3d_pipeline_gen6.h"
 #include "ilo_3d_pipeline_gen7.h"
 
-static void
-gen7_wa_pipe_control_cs_stall(struct ilo_3d_pipeline *p,
-                              bool change_multisample_state,
-                              bool change_depth_state)
+/**
+ * A wrapper for gen6_PIPE_CONTROL().
+ */
+static inline void
+gen7_pipe_control(struct ilo_3d_pipeline *p, uint32_t dw1)
 {
-   struct intel_bo *bo = NULL;
-   uint32_t dw1 = GEN6_PIPE_CONTROL_CS_STALL;
+   struct intel_bo *bo = (dw1 & GEN6_PIPE_CONTROL_WRITE__MASK) ?
+      p->workaround_bo : NULL;
 
-   assert(ilo_dev_gen(p->dev) == ILO_GEN(7) ||
-          ilo_dev_gen(p->dev) == ILO_GEN(7.5));
+   ILO_DEV_ASSERT(p->dev, 7, 7.5);
 
-   /* emit once */
-   if (p->state.has_gen6_wa_pipe_control)
-      return;
-   p->state.has_gen6_wa_pipe_control = true;
+   if (dw1 & GEN6_PIPE_CONTROL_CS_STALL) {
+      /* CS stall cannot be set alone */
+      const uint32_t mask = GEN6_PIPE_CONTROL_RENDER_CACHE_FLUSH |
+                            GEN6_PIPE_CONTROL_DEPTH_CACHE_FLUSH |
+                            GEN6_PIPE_CONTROL_PIXEL_SCOREBOARD_STALL |
+                            GEN6_PIPE_CONTROL_DEPTH_STALL |
+                            GEN6_PIPE_CONTROL_WRITE__MASK;
+      if (!(dw1 & mask))
+         dw1 |= GEN6_PIPE_CONTROL_PIXEL_SCOREBOARD_STALL;
+   }
 
+   gen6_PIPE_CONTROL(p->builder, dw1, bo, 0, false);
+
+
+   p->state.current_pipe_control_dw1 |= dw1;
+   p->state.deferred_pipe_control_dw1 &= ~dw1;
+}
+
+static void
+gen7_wa_post_3dstate_push_constant_alloc_ps(struct ilo_3d_pipeline *p)
+{
    /*
-    * From the Ivy Bridge PRM, volume 2 part 1, page 258:
-    *
-    *     "Due to an HW issue driver needs to send a pipe control with stall
-    *      when ever there is state change in depth bias related state"
-    *
     * From the Ivy Bridge PRM, volume 2 part 1, page 292:
     *
     *     "A PIPE_CONTOL command with the CS Stall bit set must be programmed
     *      in the ring after this instruction
     *      (3DSTATE_PUSH_CONSTANT_ALLOC_PS)."
-    *
-    * From the Ivy Bridge PRM, volume 2 part 1, page 304:
-    *
-    *     "Driver must ierarchi that all the caches in the depth pipe are
-    *      flushed before this command (3DSTATE_MULTISAMPLE) is parsed. This
-    *      requires driver to send a PIPE_CONTROL with a CS stall along with a
-    *      Depth Flush prior to this command.
-    *
-    * From the Ivy Bridge PRM, volume 2 part 1, page 315:
-    *
-    *     "Driver must send a least one PIPE_CONTROL command with CS Stall and
-    *      a post sync operation prior to the group of depth
-    *      commands(3DSTATE_DEPTH_BUFFER, 3DSTATE_CLEAR_PARAMS,
-    *      3DSTATE_STENCIL_BUFFER, and 3DSTATE_HIER_DEPTH_BUFFER)."
     */
+   const uint32_t dw1 = GEN6_PIPE_CONTROL_CS_STALL;
 
-   if (change_multisample_state)
-      dw1 |= GEN6_PIPE_CONTROL_DEPTH_CACHE_FLUSH;
+   ILO_DEV_ASSERT(p->dev, 7, 7.5);
 
-   if (change_depth_state) {
-      dw1 |= GEN6_PIPE_CONTROL_WRITE_IMM;
-      bo = p->workaround_bo;
-   }
-
-   gen6_PIPE_CONTROL(p->builder, dw1, bo, 0, false);
+   p->state.deferred_pipe_control_dw1 |= dw1;
 }
 
 static void
-gen7_wa_pipe_control_vs_depth_stall(struct ilo_3d_pipeline *p)
+gen7_wa_pre_vs(struct ilo_3d_pipeline *p)
 {
-   assert(ilo_dev_gen(p->dev) == ILO_GEN(7) ||
-          ilo_dev_gen(p->dev) == ILO_GEN(7.5));
-
    /*
     * From the Ivy Bridge PRM, volume 2 part 1, page 106:
     *
@@ -106,34 +95,73 @@ gen7_wa_pipe_control_vs_depth_stall(struct ilo_3d_pipeline *p)
     *      3DSTATE_SAMPLER_STATE_POINTER_VS command.  Only one PIPE_CONTROL
     *      needs to be sent before any combination of VS associated 3DSTATE."
     */
-   gen6_PIPE_CONTROL(p->builder,
-         GEN6_PIPE_CONTROL_DEPTH_STALL |
-         GEN6_PIPE_CONTROL_WRITE_IMM,
-         p->workaround_bo, 0, false);
+   const uint32_t dw1 = GEN6_PIPE_CONTROL_DEPTH_STALL |
+                        GEN6_PIPE_CONTROL_WRITE_IMM;
+
+   ILO_DEV_ASSERT(p->dev, 7, 7.5);
+
+   if ((p->state.current_pipe_control_dw1 & dw1) != dw1)
+      gen7_pipe_control(p, dw1);
 }
 
 static void
-gen7_wa_pipe_control_wm_depth_stall(struct ilo_3d_pipeline *p,
-                                    bool change_depth_buffer)
+gen7_wa_pre_3dstate_sf_depth_bias(struct ilo_3d_pipeline *p)
 {
-   assert(ilo_dev_gen(p->dev) == ILO_GEN(7) ||
-          ilo_dev_gen(p->dev) == ILO_GEN(7.5));
+   /*
+    * From the Ivy Bridge PRM, volume 2 part 1, page 258:
+    *
+    *     "Due to an HW issue driver needs to send a pipe control with stall
+    *      when ever there is state change in depth bias related state (in
+    *      3DSTATE_SF)"
+    */
+   const uint32_t dw1 = GEN6_PIPE_CONTROL_CS_STALL;
+
+   ILO_DEV_ASSERT(p->dev, 7, 7.5);
+
+   if ((p->state.current_pipe_control_dw1 & dw1) != dw1)
+      gen7_pipe_control(p, dw1);
+}
+
+static void
+gen7_wa_pre_3dstate_multisample(struct ilo_3d_pipeline *p)
+{
+   /*
+    * From the Ivy Bridge PRM, volume 2 part 1, page 304:
+    *
+    *     "Driver must ierarchi that all the caches in the depth pipe are
+    *      flushed before this command (3DSTATE_MULTISAMPLE) is parsed. This
+    *      requires driver to send a PIPE_CONTROL with a CS stall along with a
+    *      Depth Flush prior to this command.
+    */
+   const uint32_t dw1 = GEN6_PIPE_CONTROL_DEPTH_CACHE_FLUSH |
+                        GEN6_PIPE_CONTROL_CS_STALL;
+
+   ILO_DEV_ASSERT(p->dev, 7, 7.5);
+
+   if ((p->state.current_pipe_control_dw1 & dw1) != dw1)
+      gen7_pipe_control(p, dw1);
+}
+
+static void
+gen7_wa_pre_depth(struct ilo_3d_pipeline *p)
+{
+   /*
+    * From the Ivy Bridge PRM, volume 2 part 1, page 315:
+    *
+    *     "Driver must send a least one PIPE_CONTROL command with CS Stall and
+    *      a post sync operation prior to the group of depth
+    *      commands(3DSTATE_DEPTH_BUFFER, 3DSTATE_CLEAR_PARAMS,
+    *      3DSTATE_STENCIL_BUFFER, and 3DSTATE_HIER_DEPTH_BUFFER)."
+    */
+   const uint32_t dw1 = GEN6_PIPE_CONTROL_CS_STALL |
+                        GEN6_PIPE_CONTROL_WRITE_IMM;
+
+   ILO_DEV_ASSERT(p->dev, 7, 7.5);
+
+   if ((p->state.current_pipe_control_dw1 & dw1) != dw1)
+      gen7_pipe_control(p, dw1);
 
    /*
-    * From the Ivy Bridge PRM, volume 2 part 1, page 276:
-    *
-    *     "The driver must make sure a PIPE_CONTROL with the Depth Stall
-    *      Enable bit set after all the following states are programmed:
-    *
-    *       * 3DSTATE_PS
-    *       * 3DSTATE_VIEWPORT_STATE_POINTERS_CC
-    *       * 3DSTATE_CONSTANT_PS
-    *       * 3DSTATE_BINDING_TABLE_POINTERS_PS
-    *       * 3DSTATE_SAMPLER_STATE_POINTERS_PS
-    *       * 3DSTATE_CC_STATE_POINTERS
-    *       * 3DSTATE_BLEND_STATE_POINTERS
-    *       * 3DSTATE_DEPTH_STENCIL_STATE_POINTERS"
-    *
     * From the Ivy Bridge PRM, volume 2 part 1, page 315:
     *
     *     "Restriction: Prior to changing Depth/Stencil Buffer state (i.e.,
@@ -146,28 +174,14 @@ gen7_wa_pipe_control_wm_depth_stall(struct ilo_3d_pipeline *p,
     *      guarantee that the pipeline from WM onwards is already flushed
     *      (e.g., via a preceding MI_FLUSH)."
     */
-   gen6_PIPE_CONTROL(p->builder,
-         GEN6_PIPE_CONTROL_DEPTH_STALL,
-         NULL, 0, false);
-
-   if (!change_depth_buffer)
-      return;
-
-   gen6_PIPE_CONTROL(p->builder,
-         GEN6_PIPE_CONTROL_DEPTH_CACHE_FLUSH,
-         NULL, 0, false);
-
-   gen6_PIPE_CONTROL(p->builder,
-         GEN6_PIPE_CONTROL_DEPTH_STALL,
-         NULL, 0, false);
+   gen7_pipe_control(p, GEN6_PIPE_CONTROL_DEPTH_STALL);
+   gen7_pipe_control(p, GEN6_PIPE_CONTROL_DEPTH_CACHE_FLUSH);
+   gen7_pipe_control(p, GEN6_PIPE_CONTROL_DEPTH_STALL);
 }
 
 static void
-gen7_wa_pipe_control_ps_max_threads_stall(struct ilo_3d_pipeline *p)
+gen7_wa_pre_3dstate_ps_max_threads(struct ilo_3d_pipeline *p)
 {
-   assert(ilo_dev_gen(p->dev) == ILO_GEN(7) ||
-          ilo_dev_gen(p->dev) == ILO_GEN(7.5));
-
    /*
     * From the Ivy Bridge PRM, volume 2 part 1, page 286:
     *
@@ -175,10 +189,37 @@ gen7_wa_pipe_control_ps_max_threads_stall(struct ilo_3d_pipeline *p)
     *      between 3DPRIMITIVE commands, a PIPE_CONTROL command with Stall at
     *      Pixel Scoreboard set is required to be issued."
     */
-   gen6_PIPE_CONTROL(p->builder,
-         GEN6_PIPE_CONTROL_PIXEL_SCOREBOARD_STALL,
-         NULL, 0, false);
+   const uint32_t dw1 = GEN6_PIPE_CONTROL_PIXEL_SCOREBOARD_STALL;
 
+   ILO_DEV_ASSERT(p->dev, 7, 7.5);
+
+   if ((p->state.current_pipe_control_dw1 & dw1) != dw1)
+      gen7_pipe_control(p, dw1);
+}
+
+static void
+gen7_wa_post_ps_and_later(struct ilo_3d_pipeline *p)
+{
+   /*
+    * From the Ivy Bridge PRM, volume 2 part 1, page 276:
+    *
+    *     "The driver must make sure a PIPE_CONTROL with the Depth Stall
+    *      Enable bit set after all the following states are programmed:
+    *
+    *       - 3DSTATE_PS
+    *       - 3DSTATE_VIEWPORT_STATE_POINTERS_CC
+    *       - 3DSTATE_CONSTANT_PS
+    *       - 3DSTATE_BINDING_TABLE_POINTERS_PS
+    *       - 3DSTATE_SAMPLER_STATE_POINTERS_PS
+    *       - 3DSTATE_CC_STATE_POINTERS
+    *       - 3DSTATE_BLEND_STATE_POINTERS
+    *       - 3DSTATE_DEPTH_STENCIL_STATE_POINTERS"
+    */
+   const uint32_t dw1 = GEN6_PIPE_CONTROL_DEPTH_STALL;
+
+   ILO_DEV_ASSERT(p->dev, 7, 7.5);
+
+   p->state.deferred_pipe_control_dw1 |= dw1;
 }
 
 #define DIRTY(state) (session->pipe_dirty & ILO_DIRTY_ ## state)
@@ -212,7 +253,7 @@ gen7_pipeline_common_urb(struct ilo_3d_pipeline *p,
       vs_entry_size *= sizeof(float) * 4;
       vs_total_size = p->dev->urb_size - offset;
 
-      gen7_wa_pipe_control_vs_depth_stall(p);
+      gen7_wa_pre_vs(p);
 
       gen7_3DSTATE_URB_VS(p->builder,
             offset, vs_total_size, vs_entry_size);
@@ -245,7 +286,7 @@ gen7_pipeline_common_pcb_alloc(struct ilo_3d_pipeline *p,
       gen7_3DSTATE_PUSH_CONSTANT_ALLOC_PS(p->builder, offset, size);
 
       if (ilo_dev_gen(p->dev) == ILO_GEN(7))
-         gen7_wa_pipe_control_cs_stall(p, true, true);
+         gen7_wa_post_3dstate_push_constant_alloc_ps(p);
    }
 }
 
@@ -303,7 +344,7 @@ gen7_pipeline_vs(struct ilo_3d_pipeline *p,
    /* emit depth stall before any of the VS commands */
    if (emit_3dstate_binding_table || emit_3dstate_sampler_state ||
            emit_3dstate_constant_vs || emit_3dstate_vs)
-      gen7_wa_pipe_control_vs_depth_stall(p);
+      gen7_wa_pre_vs(p);
 
    /* 3DSTATE_BINDING_TABLE_POINTERS_VS */
    if (emit_3dstate_binding_table) {
@@ -459,7 +500,7 @@ gen7_pipeline_sf(struct ilo_3d_pipeline *p,
    if (DIRTY(RASTERIZER) || DIRTY(FB)) {
       struct pipe_surface *zs = vec->fb.state.zsbuf;
 
-      gen7_wa_pipe_control_cs_stall(p, true, true);
+      gen7_wa_pre_3dstate_sf_depth_bias(p);
       gen7_3DSTATE_SF(p->builder, vec->rasterizer,
             (zs) ? zs->format : PIPE_FORMAT_NONE);
    }
@@ -508,7 +549,7 @@ gen7_pipeline_wm(struct ilo_3d_pipeline *p,
       if ((ilo_dev_gen(p->dev) == ILO_GEN(7) ||
            ilo_dev_gen(p->dev) == ILO_GEN(7.5)) &&
           session->hw_ctx_changed)
-         gen7_wa_pipe_control_ps_max_threads_stall(p);
+         gen7_wa_pre_3dstate_ps_max_threads(p);
 
       gen7_3DSTATE_PS(p->builder, vec->fs, num_samplers, dual_blend);
    }
@@ -527,7 +568,6 @@ gen7_pipeline_wm(struct ilo_3d_pipeline *p,
          (DIRTY(FB) || DIRTY(DSA) || session->state_bo_changed);
 
       if (emit_3dstate_ps ||
-          emit_3dstate_depth_buffer ||
           session->pcb_state_fs_changed ||
           session->viewport_state_changed ||
           session->binding_table_fs_changed ||
@@ -535,7 +575,10 @@ gen7_pipeline_wm(struct ilo_3d_pipeline *p,
           session->cc_state_cc_changed ||
           session->cc_state_blend_changed ||
           session->cc_state_dsa_changed)
-         gen7_wa_pipe_control_wm_depth_stall(p, emit_3dstate_depth_buffer);
+         gen7_wa_post_ps_and_later(p);
+
+      if (emit_3dstate_depth_buffer)
+         gen7_wa_pre_depth(p);
    }
 
    /* 3DSTATE_DEPTH_BUFFER and 3DSTATE_CLEAR_PARAMS */
@@ -575,7 +618,7 @@ gen7_pipeline_wm_multisample(struct ilo_3d_pipeline *p,
    if (DIRTY(SAMPLE_MASK) || DIRTY(FB)) {
       const uint32_t *packed_sample_pos;
 
-      gen7_wa_pipe_control_cs_stall(p, true, true);
+      gen7_wa_pre_3dstate_multisample(p);
 
       packed_sample_pos =
          (vec->fb.num_samples > 4) ? p->packed_sample_position_8x :
@@ -597,9 +640,14 @@ gen7_pipeline_vf_draw(struct ilo_3d_pipeline *p,
                       const struct ilo_state_vector *vec,
                       struct gen6_pipeline_session *session)
 {
+   if (p->state.deferred_pipe_control_dw1)
+      gen7_pipe_control(p, p->state.deferred_pipe_control_dw1);
+
    /* 3DPRIMITIVE */
    gen7_3DPRIMITIVE(p->builder, vec->draw, &vec->ib);
-   p->state.has_gen6_wa_pipe_control = false;
+
+   p->state.current_pipe_control_dw1 = 0;
+   p->state.deferred_pipe_control_dw1 = 0;
 }
 
 static void
@@ -670,7 +718,7 @@ gen7_rectlist_pcb_alloc(struct ilo_3d_pipeline *p,
 
    gen7_3DSTATE_PUSH_CONSTANT_ALLOC_PS(p->builder, offset, size);
 
-   gen7_wa_pipe_control_cs_stall(p, true, true);
+   gen7_wa_post_3dstate_push_constant_alloc_ps(p);
 }
 
 static void
@@ -713,7 +761,7 @@ gen7_rectlist_vs_to_sf(struct ilo_3d_pipeline *p,
 
    gen6_3DSTATE_CLIP(p->builder, NULL, NULL, false, 0);
 
-   gen7_wa_pipe_control_cs_stall(p, true, true);
+   gen7_wa_pre_3dstate_sf_depth_bias(p);
 
    gen7_3DSTATE_SF(p->builder, NULL, blitter->fb.dst.base.format);
    gen7_3DSTATE_SBE(p->builder, NULL, NULL);
@@ -745,7 +793,7 @@ gen7_rectlist_wm(struct ilo_3d_pipeline *p,
 
    gen7_3DSTATE_CONSTANT_PS(p->builder, NULL, NULL, 0);
 
-   gen7_wa_pipe_control_ps_max_threads_stall(p);
+   gen7_wa_pre_3dstate_ps_max_threads(p);
    gen7_3DSTATE_PS(p->builder, NULL, 0, false);
 }
 
@@ -754,7 +802,7 @@ gen7_rectlist_wm_depth(struct ilo_3d_pipeline *p,
                        const struct ilo_blitter *blitter,
                        struct gen6_rectlist_session *session)
 {
-   gen7_wa_pipe_control_wm_depth_stall(p, true);
+   gen7_wa_pre_depth(p);
 
    if (blitter->uses & (ILO_BLITTER_USE_FB_DEPTH |
                         ILO_BLITTER_USE_FB_STENCIL)) {
@@ -786,7 +834,7 @@ gen7_rectlist_wm_multisample(struct ilo_3d_pipeline *p,
       (blitter->fb.num_samples > 1) ? &p->packed_sample_position_4x :
       &p->packed_sample_position_1x;
 
-   gen7_wa_pipe_control_cs_stall(p, true, true);
+   gen7_wa_pre_3dstate_multisample(p);
 
    gen6_3DSTATE_MULTISAMPLE(p->builder, blitter->fb.num_samples,
          packed_sample_pos, true);
@@ -813,7 +861,7 @@ gen7_rectlist_commands(struct ilo_3d_pipeline *p,
    gen7_rectlist_pcb_alloc(p, blitter, session);
 
    /* needed for any VS-related commands */
-   gen7_wa_pipe_control_vs_depth_stall(p);
+   gen7_wa_pre_vs(p);
 
    gen7_rectlist_urb(p, blitter, session);
 
