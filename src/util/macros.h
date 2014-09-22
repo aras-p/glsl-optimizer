@@ -33,12 +33,12 @@
 /**
  * __builtin_expect macros
  */
-#if !defined(__GNUC__)
+#if !defined(HAVE___BUILTIN_EXPECT)
 #  define __builtin_expect(x, y) (x)
 #endif
 
 #ifndef likely
-#  ifdef __GNUC__
+#  ifdef HAVE___BUILTIN_EXPECT
 #    define likely(x)   __builtin_expect(!!(x), 1)
 #    define unlikely(x) __builtin_expect(!!(x), 0)
 #  else
@@ -63,20 +63,12 @@
  * Unreachable macro. Useful for suppressing "control reaches end of non-void
  * function" warnings.
  */
-#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 5
+#ifdef HAVE___BUILTIN_UNREACHABLE
 #define unreachable(str)    \
 do {                        \
    assert(!str);            \
    __builtin_unreachable(); \
 } while (0)
-#elif (defined(__clang__) && defined(__has_builtin))
-# if __has_builtin(__builtin_unreachable)
-#  define unreachable(str)  \
-do {                        \
-   assert(!str);            \
-   __builtin_unreachable(); \
-} while (0)
-# endif
 #endif
 
 #ifndef unreachable

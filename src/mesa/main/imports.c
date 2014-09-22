@@ -217,7 +217,7 @@ _mesa_align_realloc(void *oldBuffer, size_t oldSize, size_t newSize,
 /*@{*/
 
 
-#ifndef __GNUC__
+#ifndef HAVE___BUILTIN_FFS
 /**
  * Find the first bit set in a word.
  */
@@ -246,8 +246,9 @@ ffs(int i)
    }
    return bit;
 }
+#endif
 
-
+#ifndef HAVE___BUILTIN_FFSLL
 /**
  * Find position of first bit set in given value.
  * XXX Warning: this function can only be used on 64-bit systems!
@@ -271,11 +272,10 @@ ffsll(long long int val)
 
    return 0;
 }
-#endif /* __GNUC__ */
+#endif
 
 
-#if !defined(__GNUC__) ||\
-   ((__GNUC__ * 100 + __GNUC_MINOR__) < 304) /* Not gcc 3.4 or later */
+#ifndef HAVE___BUILTIN_POPCOUNT
 /**
  * Return number of bits set in given GLuint.
  */
@@ -288,7 +288,9 @@ _mesa_bitcount(unsigned int n)
    }
    return bits;
 }
+#endif
 
+#ifndef HAVE___BUILTIN_POPCOUNTLL
 /**
  * Return number of bits set in given 64-bit uint.
  */

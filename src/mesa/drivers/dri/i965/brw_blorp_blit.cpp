@@ -1343,7 +1343,7 @@ brw_blorp_blit_program::single_to_blend()
  */
 inline int count_trailing_one_bits(unsigned value)
 {
-#if defined(__GNUC__) && ((__GNUC__ * 100 + __GNUC_MINOR__) >= 304) /* gcc 3.4 or later */
+#ifdef HAVE___BUILTIN_CTZ
    return __builtin_ctz(~value);
 #else
    return _mesa_bitcount(value & ~(value + 1));

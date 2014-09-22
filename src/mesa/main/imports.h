@@ -377,8 +377,7 @@ _mesa_is_pow_two(int x)
 static inline int32_t
 _mesa_next_pow_two_32(uint32_t x)
 {
-#if defined(__GNUC__) && \
-	((__GNUC__ * 100 + __GNUC_MINOR__) >= 304) /* gcc 3.4 or later */
+#ifdef HAVE___BUILTIN_CLZ
 	uint32_t y = (x != 1);
 	return (1 + y) << ((__builtin_clz(x - y) ^ 31) );
 #else
@@ -396,13 +395,10 @@ _mesa_next_pow_two_32(uint32_t x)
 static inline int64_t
 _mesa_next_pow_two_64(uint64_t x)
 {
-#if defined(__GNUC__) && \
-	((__GNUC__ * 100 + __GNUC_MINOR__) >= 304) /* gcc 3.4 or later */
+#ifdef HAVE___BUILTIN_CLZLL
 	uint64_t y = (x != 1);
-	if (sizeof(x) == sizeof(long))
-		return (1 + y) << ((__builtin_clzl(x - y) ^ 63));
-	else
-		return (1 + y) << ((__builtin_clzll(x - y) ^ 63));
+	STATIC_ASSERT(sizeof(x) == sizeof(long long));
+	return (1 + y) << ((__builtin_clzll(x - y) ^ 63));
 #else
 	x--;
 	x |= x >> 1;
@@ -423,8 +419,7 @@ _mesa_next_pow_two_64(uint64_t x)
 static inline GLuint
 _mesa_logbase2(GLuint n)
 {
-#if defined(__GNUC__) && \
-   ((__GNUC__ * 100 + __GNUC_MINOR__) >= 304) /* gcc 3.4 or later */
+#ifdef HAVE___BUILTIN_CLZ
    return (31 - __builtin_clz(n | 1));
 #else
    GLuint pos = 0;
@@ -476,22 +471,30 @@ _mesa_exec_free( void *addr );
 
 #ifndef FFS_DEFINED
 #define FFS_DEFINED 1
-#ifdef __GNUC__
+#ifdef HAVE___BUILTIN_FFS
 #define ffs __builtin_ffs
-#define ffsll __builtin_ffsll
 #else
 extern int ffs(int i);
+#endif
+
+#ifdef HAVE___BUILTIN_FFSLL
+#define ffsll __builtin_ffsll
+#else
 extern int ffsll(long long int i);
-#endif /*__ GNUC__ */
+#endif
 #endif /* FFS_DEFINED */
 
 
-#if defined(__GNUC__) && ((__GNUC__ * 100 + __GNUC_MINOR__) >= 304) /* gcc 3.4 or later */
+#ifdef HAVE___BUILTIN_POPCOUNT
 #define _mesa_bitcount(i) __builtin_popcount(i)
-#define _mesa_bitcount_64(i) __builtin_popcountll(i)
 #else
 extern unsigned int
 _mesa_bitcount(unsigned int n);
+#endif
+
+#ifdef HAVE___BUILTIN_POPCOUNTLL
+#define _mesa_bitcount_64(i) __builtin_popcountll(i)
+#else
 extern unsigned int
 _mesa_bitcount_64(uint64_t n);
 #endif
@@ -504,7 +507,7 @@ _mesa_bitcount_64(uint64_t n);
 static inline unsigned int
 _mesa_fls(unsigned int n)
 {
-#if defined(__GNUC__) && ((__GNUC__ * 100 + __GNUC_MINOR__) >= 304)
+#ifdef HAVE___BUILTIN_CLZ
    return n == 0 ? 0 : 32 - __builtin_clz(n);
 #else
    unsigned int v = 1;

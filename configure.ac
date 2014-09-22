@@ -130,6 +130,15 @@ fi
 dnl Check for compiler builtins
 AX_GCC_BUILTIN([__builtin_bswap32])
 AX_GCC_BUILTIN([__builtin_bswap64])
+AX_GCC_BUILTIN([__builtin_clz])
+AX_GCC_BUILTIN([__builtin_clzll])
+AX_GCC_BUILTIN([__builtin_ctz])
+AX_GCC_BUILTIN([__builtin_expect])
+AX_GCC_BUILTIN([__builtin_ffs])
+AX_GCC_BUILTIN([__builtin_ffsll])
+AX_GCC_BUILTIN([__builtin_popcount])
+AX_GCC_BUILTIN([__builtin_popcountll])
+AX_GCC_BUILTIN([__builtin_unreachable])
 
 AM_CONDITIONAL([GEN_ASM_OFFSETS], test "x$GEN_ASM_OFFSETS" = xyes)
 
