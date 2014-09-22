@@ -1373,7 +1373,8 @@ emit_coord_end(struct vc4_compile *c)
 }
 
 static struct vc4_compile *
-vc4_shader_tgsi_to_qir(struct vc4_compiled_shader *shader, enum qstage stage,
+vc4_shader_tgsi_to_qir(struct vc4_context *vc4,
+                       struct vc4_compiled_shader *shader, enum qstage stage,
                        struct vc4_key *key)
 {
         struct vc4_compile *c = qir_compile_init();
@@ -1454,7 +1455,7 @@ vc4_shader_tgsi_to_qir(struct vc4_compiled_shader *shader, enum qstage stage,
                 qir_dump(c);
         }
         qir_reorder_uniforms(c);
-        vc4_generate_code(c);
+        vc4_generate_code(vc4, c);
 
         if (vc4_debug & VC4_DEBUG_SHADERDB) {
                 fprintf(stderr, "SHADER-DB: %s: %d instructions\n",
@@ -1501,7 +1502,8 @@ static void
 vc4_fs_compile(struct vc4_context *vc4, struct vc4_compiled_shader *shader,
                struct vc4_fs_key *key)
 {
-        struct vc4_compile *c = vc4_shader_tgsi_to_qir(shader, QSTAGE_FRAG,
+        struct vc4_compile *c = vc4_shader_tgsi_to_qir(vc4, shader,
+                                                       QSTAGE_FRAG,
                                                        &key->base);
         shader->num_inputs = c->num_inputs;
         copy_uniform_state_to_shader(shader, 0, c);
@@ -1516,12 +1518,12 @@ static void
 vc4_vs_compile(struct vc4_context *vc4, struct vc4_compiled_shader *shader,
                struct vc4_vs_key *key)
 {
-        struct vc4_compile *vs_c = vc4_shader_tgsi_to_qir(shader,
+        struct vc4_compile *vs_c = vc4_shader_tgsi_to_qir(vc4, shader,
                                                           QSTAGE_VERT,
                                                           &key->base);
         copy_uniform_state_to_shader(shader, 0, vs_c);
 
-        struct vc4_compile *cs_c = vc4_shader_tgsi_to_qir(shader,
+        struct vc4_compile *cs_c = vc4_shader_tgsi_to_qir(vc4, shader,
                                                           QSTAGE_COORD,
                                                           &key->base);
         copy_uniform_state_to_shader(shader, 1, cs_c);

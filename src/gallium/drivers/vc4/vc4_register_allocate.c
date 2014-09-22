@@ -21,8 +21,8 @@
  * IN THE SOFTWARE.
  */
 
-#include <inttypes.h>
-
+#include "util/ralloc.h"
+#include "util/register_allocate.h"
 #include "vc4_context.h"
 #include "vc4_qir.h"
 #include "vc4_qpu.h"
@@ -104,135 +104,135 @@ static const struct qpu_reg vc4_regs[] = {
 #define A_INDEX       (ACC_INDEX + 5)
 #define B_INDEX       (A_INDEX + 32)
 
+static void
+vc4_alloc_reg_set(struct vc4_context *vc4)
+{
+        assert(vc4_regs[A_INDEX].addr == 0);
+        assert(vc4_regs[B_INDEX].addr == 0);
+        STATIC_ASSERT(ARRAY_SIZE(vc4_regs) == B_INDEX + 32);
+
+        if (vc4->regs)
+                return;
+
+        vc4->regs = ra_alloc_reg_set(vc4, ARRAY_SIZE(vc4_regs));
+
+        vc4->reg_class_any = ra_alloc_reg_class(vc4->regs);
+        for (uint32_t i = 0; i < ARRAY_SIZE(vc4_regs); i++) {
+                /* Reserve r3 for now, since we're using it for spilling-like
+                 * operations in vc4_qpu_emit.c
+                 */
+                if (vc4_regs[i].mux == QPU_MUX_R3)
+                        continue;
+
+                /* R4 can't be written as a general purpose register. (it's
+                 * TMU_NOSWAP as a write address).
+                 */
+                if (vc4_regs[i].mux == QPU_MUX_R4)
+                        continue;
+
+                ra_class_add_reg(vc4->regs, vc4->reg_class_any, i);
+        }
+
+        vc4->reg_class_a = ra_alloc_reg_class(vc4->regs);
+        for (uint32_t i = A_INDEX; i < A_INDEX + 32; i++)
+                ra_class_add_reg(vc4->regs, vc4->reg_class_a, i);
+
+        ra_set_finalize(vc4->regs, NULL);
+}
+
 /**
  * Returns a mapping from QFILE_TEMP indices to struct qpu_regs.
  *
  * The return value should be freed by the caller.
  */
 struct qpu_reg *
-vc4_register_allocate(struct vc4_compile *c)
+vc4_register_allocate(struct vc4_context *vc4, struct vc4_compile *c)
 {
         struct simple_node *node;
-        bool reg_in_use[ARRAY_SIZE(vc4_regs)];
-        int *reg_allocated = calloc(c->num_temps, sizeof(*reg_allocated));
-        int *reg_uses_remaining =
-                calloc(c->num_temps, sizeof(*reg_uses_remaining));
+        uint32_t def[c->num_temps];
+        uint32_t use[c->num_temps];
         struct qpu_reg *temp_registers = calloc(c->num_temps,
                                                 sizeof(*temp_registers));
-
-        for (int i = 0; i < ARRAY_SIZE(reg_in_use); i++)
-                reg_in_use[i] = false;
-        for (int i = 0; i < c->num_temps; i++)
-                reg_allocated[i] = -1;
+        memset(def, 0, sizeof(def));
+        memset(use, 0, sizeof(use));
 
         /* If things aren't ever written (undefined values), just read from
          * r0.
          */
-        for (int i = 0; i < c->num_temps; i++)
+        for (uint32_t i = 0; i < c->num_temps; i++)
                 temp_registers[i] = qpu_rn(0);
 
-        /* Reserve r3 for spilling-like operations in vc4_qpu_emit.c */
-        reg_in_use[ACC_INDEX + 3] = true;
+        vc4_alloc_reg_set(vc4);
 
+        struct ra_graph *g = ra_alloc_interference_graph(vc4->regs,
+                                                         c->num_temps);
+
+        for (uint32_t i = 0; i < c->num_temps; i++)
+                ra_set_node_class(g, i, vc4->reg_class_any);
+
+        /* Compute the live ranges so we can figure out interference, and
+         * figure out our register classes and preallocated registers.
+         */
+        uint32_t ip = 0;
         foreach(node, &c->instructions) {
-                struct qinst *qinst = (struct qinst *)node;
+                struct qinst *inst = (struct qinst *)node;
 
-                if (qinst->dst.file == QFILE_TEMP)
-                        reg_uses_remaining[qinst->dst.index]++;
-                for (int i = 0; i < qir_get_op_nsrc(qinst->op); i++) {
-                        if (qinst->src[i].file == QFILE_TEMP)
-                                reg_uses_remaining[qinst->src[i].index]++;
+                if (inst->dst.file == QFILE_TEMP) {
+                        def[inst->dst.index] = ip;
+                        use[inst->dst.index] = ip;
                 }
-                if (qinst->op == QOP_FRAG_Z)
-                        reg_in_use[3 + 32 + QPU_R_FRAG_PAYLOAD_ZW] = true;
-                if (qinst->op == QOP_FRAG_W)
-                        reg_in_use[3 + QPU_R_FRAG_PAYLOAD_ZW] = true;
+
+                for (int i = 0; i < qir_get_op_nsrc(inst->op); i++) {
+                        if (inst->src[i].file == QFILE_TEMP)
+                                use[inst->src[i].index] = ip;
+                }
+
+                switch (inst->op) {
+                case QOP_FRAG_Z:
+                        def[inst->dst.index] = 0;
+                        ra_set_node_reg(g, inst->dst.index,
+                                        B_INDEX + QPU_R_FRAG_PAYLOAD_ZW);
+                        break;
+
+                case QOP_FRAG_W:
+                        def[inst->dst.index] = 0;
+                        ra_set_node_reg(g, inst->dst.index,
+                                        A_INDEX + QPU_R_FRAG_PAYLOAD_ZW);
+                        break;
+
+                case QOP_TEX_RESULT:
+                case QOP_TLB_COLOR_READ:
+                        assert(vc4_regs[ACC_INDEX + 4].mux == QPU_MUX_R4);
+                        ra_set_node_reg(g, inst->dst.index,
+                                        ACC_INDEX + 4);
+                        break;
+
+                case QOP_PACK_SCALED:
+                        /* The pack flags require an A-file dst register. */
+                        ra_set_node_class(g, inst->dst.index, vc4->reg_class_a);
+                        break;
+
+                default:
+                        break;
+                }
+
+                ip++;
         }
 
-        foreach(node, &c->instructions) {
-                struct qinst *qinst = (struct qinst *)node;
-
-                for (int i = 0; i < qir_get_op_nsrc(qinst->op); i++) {
-                        int index = qinst->src[i].index;
-
-                        if (qinst->src[i].file != QFILE_TEMP)
-                                continue;
-
-                        if (reg_allocated[index] == -1) {
-                                fprintf(stderr, "undefined reg use: ");
-                                qir_dump_inst(qinst);
-                                fprintf(stderr, "\n");
-                        } else {
-                                reg_uses_remaining[index]--;
-                                if (reg_uses_remaining[index] == 0)
-                                        reg_in_use[reg_allocated[index]] = false;
-                        }
-                }
-
-                if (qinst->dst.file == QFILE_TEMP) {
-                        if (reg_allocated[qinst->dst.index] == -1) {
-                                int alloc;
-                                for (alloc = 0;
-                                     alloc < ARRAY_SIZE(reg_in_use);
-                                     alloc++) {
-                                        struct qpu_reg reg = vc4_regs[alloc];
-
-                                        switch (qinst->op) {
-                                        case QOP_PACK_SCALED:
-                                                /* The pack flags require an
-                                                 * A-file register.
-                                                 */
-                                                if (reg.mux != QPU_MUX_A)
-                                                        continue;
-                                                break;
-                                        case QOP_TEX_RESULT:
-                                        case QOP_TLB_COLOR_READ:
-                                                /* Only R4-generating
-                                                 * instructions get to store
-                                                 * values in R4 for now, until
-                                                 * we figure out how to do
-                                                 * interference.
-                                                 */
-                                                if (reg.mux != QPU_MUX_R4)
-                                                        continue;
-                                                break;
-                                        case QOP_FRAG_Z:
-                                                if (reg.mux != QPU_MUX_B ||
-                                                    reg.addr != QPU_R_FRAG_PAYLOAD_ZW) {
-                                                        continue;
-                                                }
-                                                break;
-                                        case QOP_FRAG_W:
-                                                if (reg.mux != QPU_MUX_A ||
-                                                    reg.addr != QPU_R_FRAG_PAYLOAD_ZW) {
-                                                        continue;
-                                                }
-                                                break;
-                                        default:
-                                                if (reg.mux == QPU_MUX_R4)
-                                                        continue;
-                                                break;
-                                        }
-
-                                        if (!reg_in_use[alloc])
-                                                break;
-                                }
-                                assert(alloc != ARRAY_SIZE(reg_in_use) && "need better reg alloc");
-                                reg_in_use[alloc] = true;
-                                reg_allocated[qinst->dst.index] = alloc;
-                                temp_registers[qinst->dst.index] = vc4_regs[alloc];
-                        }
-
-                        reg_uses_remaining[qinst->dst.index]--;
-                        if (reg_uses_remaining[qinst->dst.index] == 0) {
-                                reg_in_use[reg_allocated[qinst->dst.index]] =
-                                        false;
-                        }
+        for (uint32_t i = 0; i < c->num_temps; i++) {
+                for (uint32_t j = i + 1; j < c->num_temps; j++) {
+                        if (!(def[i] >= use[j] || def[j] >= use[i]))
+                                ra_add_node_interference(g, i, j);
                 }
         }
 
-        free(reg_allocated);
-        free(reg_uses_remaining);
+        bool ok = ra_allocate(g);
+        assert(ok);
+
+        for (uint32_t i = 0; i < c->num_temps; i++)
+                temp_registers[i] = vc4_regs[ra_get_node_reg(g, i)];
+
+        ralloc_free(g);
 
         return temp_registers;
 }

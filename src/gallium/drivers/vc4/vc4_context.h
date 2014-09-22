@@ -165,6 +165,10 @@ struct vc4_context {
 
         struct util_hash_table *fs_cache, *vs_cache;
 
+        struct ra_regs *regs;
+        unsigned int reg_class_any;
+        unsigned int reg_class_a;
+
         /** @{ Current pipeline state objects */
         struct pipe_scissor_state scissor;
         struct pipe_blend_state *blend;
@@ -237,8 +241,8 @@ void vc4_write_uniforms(struct vc4_context *vc4,
 void vc4_flush(struct pipe_context *pctx);
 void vc4_flush_for_bo(struct pipe_context *pctx, struct vc4_bo *bo);
 void vc4_emit_state(struct pipe_context *pctx);
-void vc4_generate_code(struct vc4_compile *c);
-struct qpu_reg *vc4_register_allocate(struct vc4_compile *c);
+void vc4_generate_code(struct vc4_context *vc4, struct vc4_compile *c);
+struct qpu_reg *vc4_register_allocate(struct vc4_context *vc4, struct vc4_compile *c);
 void vc4_update_compiled_shaders(struct vc4_context *vc4, uint8_t prim_mode);
 
 bool vc4_rt_format_supported(enum pipe_format f);

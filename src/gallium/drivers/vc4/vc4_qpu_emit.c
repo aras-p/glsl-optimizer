@@ -208,9 +208,9 @@ serialize_insts(struct vc4_compile *c)
 }
 
 void
-vc4_generate_code(struct vc4_compile *c)
+vc4_generate_code(struct vc4_context *vc4, struct vc4_compile *c)
 {
-        struct qpu_reg *temp_registers = vc4_register_allocate(c);
+        struct qpu_reg *temp_registers = vc4_register_allocate(vc4, c);
         bool discard = false;
 
         make_empty_list(&c->qpu_inst_list);
