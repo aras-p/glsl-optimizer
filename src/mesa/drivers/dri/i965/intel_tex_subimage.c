@@ -334,12 +334,6 @@ ytile_copy(
    }
 }
 
-#ifdef __GNUC__
-#define FLATTEN __attribute__((flatten))
-#else
-#define FLATTEN
-#endif
-
 /**
  * Copy texture data from linear to X tile layout, faster.
  *

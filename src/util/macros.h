@@ -75,23 +75,26 @@ do {                        \
 #define unreachable(str)
 #endif
 
+#ifdef HAVE_FUNC_ATTRIBUTE_FLATTEN
+#define FLATTEN __attribute__((__flatten__))
+#else
+#define FLATTEN
+#endif
 
-#if (__GNUC__ >= 3)
+#ifdef HAVE_FUNC_ATTRIBUTE_FORMAT
 #define PRINTFLIKE(f, a) __attribute__ ((format(__printf__, f, a)))
 #else
 #define PRINTFLIKE(f, a)
 #endif
 
-
 /* Used to optionally mark structures with misaligned elements or size as
  * packed, to trade off performance for space.
  */
-#if (__GNUC__ >= 3)
+#ifdef HAVE_FUNC_ATTRIBUTE_PACKED
 #define PACKED __attribute__((__packed__))
 #else
 #define PACKED
 #endif
-
 
 #ifdef __cplusplus
 /**

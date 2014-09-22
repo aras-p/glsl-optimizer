@@ -589,7 +589,13 @@ def generate(env):
             'HAVE___BUILTIN_EXPECT',
             'HAVE___BUILTIN_FFS',
             'HAVE___BUILTIN_FFSLL',
+            'HAVE_FUNC_ATTRIBUTE_FLATTEN',
         ]
+        if distutils.version.LooseVersion(ccversion) >= distutils.version.LooseVersion('3'):
+            cppdefines += [
+                'HAVE_FUNC_ATTRIBUTE_FORMAT',
+                'HAVE_FUNC_ATTRIBUTE_PACKED',
+            ]
         if distutils.version.LooseVersion(ccversion) >= distutils.version.LooseVersion('3.4'):
             cppdefines += [
                 'HAVE___BUILTIN_CTZ',
