@@ -94,7 +94,6 @@ if HAVE_GALLIUM_R300
 STATIC_TARGET_CPPFLAGS += -DGALLIUM_R300
 STATIC_TARGET_LIB_DEPS += \
 	$(top_builddir)/src/gallium/drivers/r300/libr300.la \
-	$(top_builddir)/src/gallium/drivers/r300/libr300-helper.la \
 	$(RADEON_LIBS)
 endif
 

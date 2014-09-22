@@ -39,7 +39,7 @@ extern "C" {
 #include "program/prog_parameter.h"
 #include "program/prog_print.h"
 #include "program/prog_optimize.h"
-#include "program/register_allocate.h"
+#include "util/register_allocate.h"
 #include "program/sampler.h"
 #include "program/hash_table.h"
 #include "brw_context.h"

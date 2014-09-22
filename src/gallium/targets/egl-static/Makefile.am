@@ -196,11 +196,6 @@ egl_gallium_la_CPPFLAGS += -DGALLIUM_R300
 egl_gallium_la_LIBADD += \
 	$(top_builddir)/src/gallium/drivers/r300/libr300.la \
 	$(RADEON_LIBS)
-
-if !HAVE_OPENGL
-egl_gallium_la_LIBADD += \
-	$(top_builddir)/src/gallium/drivers/r300/libr300-helper.la
-endif
 endif
 
 if HAVE_GALLIUM_R600

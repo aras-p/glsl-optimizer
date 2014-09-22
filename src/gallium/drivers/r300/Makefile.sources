@@ -108,6 +108,3 @@ COMPILER_TESTS_SOURCES := \
 	compiler/tests/rc_test_helpers.h \
 	compiler/tests/unit_test.c \
 	compiler/tests/unit_test.h
-
-HELPER_SOURCES := \
-	register_allocate.c

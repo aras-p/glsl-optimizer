@@ -280,7 +280,6 @@ PROGRAM_FILES = \
 	$(SRCDIR)program/prog_print.c \
 	$(SRCDIR)program/prog_statevars.c \
 	$(SRCDIR)program/programopt.c \
-	$(SRCDIR)program/register_allocate.c \
 	$(SRCDIR)program/sampler.cpp \
 	$(SRCDIR)program/string_to_uint_map.cpp \
 	$(SRCDIR)program/symbol_table.c \

@@ -23,7 +23,7 @@
 
 extern "C" {
 #include "main/macros.h"
-#include "program/register_allocate.h"
+#include "util/register_allocate.h"
 } /* extern "C" */
 
 #include "brw_vec4.h"

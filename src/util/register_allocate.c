@@ -72,7 +72,7 @@
 
 #include <stdbool.h>
 
-#include "util/ralloc.h"
+#include "ralloc.h"
 #include "main/imports.h"
 #include "main/macros.h"
 #include "main/mtypes.h"
