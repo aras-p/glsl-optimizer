@@ -27,6 +27,83 @@
 #include "vc4_qir.h"
 #include "vc4_qpu.h"
 
+#define QPU_R(file, index) { QPU_MUX_##file, index }
+
+static const struct qpu_reg vc4_regs[] = {
+        { QPU_MUX_R0, 0},
+        { QPU_MUX_R1, 0},
+        { QPU_MUX_R2, 0},
+        { QPU_MUX_R3, 0},
+        { QPU_MUX_R4, 0},
+        QPU_R(A, 0),
+        QPU_R(A, 1),
+        QPU_R(A, 2),
+        QPU_R(A, 3),
+        QPU_R(A, 4),
+        QPU_R(A, 5),
+        QPU_R(A, 6),
+        QPU_R(A, 7),
+        QPU_R(A, 8),
+        QPU_R(A, 9),
+        QPU_R(A, 10),
+        QPU_R(A, 11),
+        QPU_R(A, 12),
+        QPU_R(A, 13),
+        QPU_R(A, 14),
+        QPU_R(A, 15),
+        QPU_R(A, 16),
+        QPU_R(A, 17),
+        QPU_R(A, 18),
+        QPU_R(A, 19),
+        QPU_R(A, 20),
+        QPU_R(A, 21),
+        QPU_R(A, 22),
+        QPU_R(A, 23),
+        QPU_R(A, 24),
+        QPU_R(A, 25),
+        QPU_R(A, 26),
+        QPU_R(A, 27),
+        QPU_R(A, 28),
+        QPU_R(A, 29),
+        QPU_R(A, 30),
+        QPU_R(A, 31),
+        QPU_R(B, 0),
+        QPU_R(B, 1),
+        QPU_R(B, 2),
+        QPU_R(B, 3),
+        QPU_R(B, 4),
+        QPU_R(B, 5),
+        QPU_R(B, 6),
+        QPU_R(B, 7),
+        QPU_R(B, 8),
+        QPU_R(B, 9),
+        QPU_R(B, 10),
+        QPU_R(B, 11),
+        QPU_R(B, 12),
+        QPU_R(B, 13),
+        QPU_R(B, 14),
+        QPU_R(B, 15),
+        QPU_R(B, 16),
+        QPU_R(B, 17),
+        QPU_R(B, 18),
+        QPU_R(B, 19),
+        QPU_R(B, 20),
+        QPU_R(B, 21),
+        QPU_R(B, 22),
+        QPU_R(B, 23),
+        QPU_R(B, 24),
+        QPU_R(B, 25),
+        QPU_R(B, 26),
+        QPU_R(B, 27),
+        QPU_R(B, 28),
+        QPU_R(B, 29),
+        QPU_R(B, 30),
+        QPU_R(B, 31),
+};
+#define ACC_INDEX     0
+#define A_INDEX       (ACC_INDEX + 5)
+#define B_INDEX       (A_INDEX + 32)
+
 /**
  * Returns a mapping from QFILE_TEMP indices to struct qpu_regs.
  *
@@ -36,8 +113,7 @@ struct qpu_reg *
 vc4_register_allocate(struct vc4_compile *c)
 {
         struct simple_node *node;
-        struct qpu_reg allocate_to_qpu_reg[4 + 32 + 32];
-        bool reg_in_use[ARRAY_SIZE(allocate_to_qpu_reg)];
+        bool reg_in_use[ARRAY_SIZE(vc4_regs)];
         int *reg_allocated = calloc(c->num_temps, sizeof(*reg_allocated));
         int *reg_uses_remaining =
                 calloc(c->num_temps, sizeof(*reg_uses_remaining));
@@ -55,14 +131,8 @@ vc4_register_allocate(struct vc4_compile *c)
         for (int i = 0; i < c->num_temps; i++)
                 temp_registers[i] = qpu_rn(0);
 
-        uint32_t next_reg = 0;
-        for (int i = 0; i < 4; i++)
-                allocate_to_qpu_reg[next_reg++] = qpu_rn(i == 3 ? 4 : i);
-        for (int i = 0; i < 32; i++)
-                allocate_to_qpu_reg[next_reg++] = qpu_ra(i);
-        for (int i = 0; i < 32; i++)
-                allocate_to_qpu_reg[next_reg++] = qpu_rb(i);
-        assert(next_reg == ARRAY_SIZE(allocate_to_qpu_reg));
+        /* Reserve r3 for spilling-like operations in vc4_qpu_emit.c */
+        reg_in_use[ACC_INDEX + 3] = true;
 
         foreach(node, &c->instructions) {
                 struct qinst *qinst = (struct qinst *)node;
@@ -105,7 +175,7 @@ vc4_register_allocate(struct vc4_compile *c)
                                 for (alloc = 0;
                                      alloc < ARRAY_SIZE(reg_in_use);
                                      alloc++) {
-                                        struct qpu_reg reg = allocate_to_qpu_reg[alloc];
+                                        struct qpu_reg reg = vc4_regs[alloc];
 
                                         switch (qinst->op) {
                                         case QOP_PACK_SCALED:
@@ -150,7 +220,7 @@ vc4_register_allocate(struct vc4_compile *c)
                                 assert(alloc != ARRAY_SIZE(reg_in_use) && "need better reg alloc");
                                 reg_in_use[alloc] = true;
                                 reg_allocated[qinst->dst.index] = alloc;
-                                temp_registers[qinst->dst.index] = allocate_to_qpu_reg[alloc];
+                                temp_registers[qinst->dst.index] = vc4_regs[alloc];
                         }
 
                         reg_uses_remaining[qinst->dst.index]--;
