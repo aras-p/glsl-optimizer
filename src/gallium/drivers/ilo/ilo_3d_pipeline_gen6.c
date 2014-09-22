@@ -1369,19 +1369,14 @@ gen6_pipeline_prepare(const struct ilo_3d_pipeline *p,
       session->kernel_bo_changed = true;
       session->prim_changed = true;
       session->primitive_restart_changed = true;
-   }
-   else {
+   } else {
       /*
        * Any state that involves resources needs to be re-emitted when the
        * batch bo changed.  This is because we do not pin the resources and
        * their offsets (or existence) may change between batch buffers.
-       *
-       * Since we messed around with ILO_3D_PIPELINE_INVALIDATE_BATCH_BO in
-       * handle_invalid_batch_bo(), use ILO_3D_PIPELINE_INVALIDATE_STATE_BO as
-       * a temporary workaround.
        */
       session->batch_bo_changed =
-         (p->invalidate_flags & ILO_3D_PIPELINE_INVALIDATE_STATE_BO);
+         (p->invalidate_flags & ILO_3D_PIPELINE_INVALIDATE_BATCH_BO);
 
       session->state_bo_changed =
          (p->invalidate_flags & ILO_3D_PIPELINE_INVALIDATE_STATE_BO);

@@ -144,6 +144,7 @@ static inline void
 ilo_3d_pipeline_invalidate(struct ilo_3d_pipeline *p, uint32_t flags)
 {
    p->invalidate_flags |= flags;
+   p->state.has_gen6_wa_pipe_control = false;
 }
 
 /**
@@ -157,20 +158,41 @@ ilo_3d_pipeline_estimate_size(struct ilo_3d_pipeline *pipeline,
    return pipeline->estimate_size(pipeline, action, arg);
 }
 
-void
+/**
+ * Emit context states and 3DPRIMITIVE.
+ */
+static inline void
 ilo_3d_pipeline_emit_draw(struct ilo_3d_pipeline *p,
-                          const struct ilo_state_vector *vec);
+                          const struct ilo_state_vector *vec)
+{
+   p->emit_draw(p, vec);
+}
 
-void
-ilo_3d_pipeline_emit_flush(struct ilo_3d_pipeline *p);
+/**
+ * Emit PIPE_CONTROL to flush all caches.
+ */
+static inline void
+ilo_3d_pipeline_emit_flush(struct ilo_3d_pipeline *p)
+{
+   p->emit_flush(p);
+}
 
-void
+/**
+ * Emit PIPE_CONTROL or MI_STORE_REGISTER_MEM to save register values.
+ */
+static inline void
 ilo_3d_pipeline_emit_query(struct ilo_3d_pipeline *p,
-                           struct ilo_query *q, uint32_t offset);
+                           struct ilo_query *q, uint32_t offset)
+{
+   p->emit_query(p, q, offset);
+}
 
-void
+static inline void
 ilo_3d_pipeline_emit_rectlist(struct ilo_3d_pipeline *p,
-                              const struct ilo_blitter *blitter);
+                              const struct ilo_blitter *blitter)
+{
+   p->emit_rectlist(p, blitter);
+}
 
 void
 ilo_3d_pipeline_get_sample_position(struct ilo_3d_pipeline *p,

@@ -129,58 +129,6 @@ ilo_3d_pipeline_destroy(struct ilo_3d_pipeline *p)
    FREE(p);
 }
 
-static void
-handle_invalid_batch_bo(struct ilo_3d_pipeline *p, bool unset)
-{
-   if (p->invalidate_flags & ILO_3D_PIPELINE_INVALIDATE_BATCH_BO) {
-      if (ilo_dev_gen(p->dev) == ILO_GEN(6))
-         p->state.has_gen6_wa_pipe_control = false;
-
-      if (unset)
-         p->invalidate_flags &= ~ILO_3D_PIPELINE_INVALIDATE_BATCH_BO;
-   }
-}
-
-/**
- * Emit context states and 3DPRIMITIVE.
- */
-void
-ilo_3d_pipeline_emit_draw(struct ilo_3d_pipeline *p,
-                          const struct ilo_state_vector *vec)
-{
-   handle_invalid_batch_bo(p, false);
-   p->emit_draw(p, vec);
-}
-
-/**
- * Emit PIPE_CONTROL to flush all caches.
- */
-void
-ilo_3d_pipeline_emit_flush(struct ilo_3d_pipeline *p)
-{
-   handle_invalid_batch_bo(p, true);
-   p->emit_flush(p);
-}
-
-/**
- * Emit PIPE_CONTROL or MI_STORE_REGISTER_MEM to save register values.
- */
-void
-ilo_3d_pipeline_emit_query(struct ilo_3d_pipeline *p,
-                           struct ilo_query *q, uint32_t offset)
-{
-   handle_invalid_batch_bo(p, true);
-   p->emit_query(p, q, offset);
-}
-
-void
-ilo_3d_pipeline_emit_rectlist(struct ilo_3d_pipeline *p,
-                              const struct ilo_blitter *blitter)
-{
-   handle_invalid_batch_bo(p, false);
-   p->emit_rectlist(p, blitter);
-}
-
 void
 ilo_3d_pipeline_get_sample_position(struct ilo_3d_pipeline *p,
                                     unsigned sample_count,
