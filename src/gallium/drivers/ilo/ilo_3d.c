@@ -507,185 +507,105 @@ ilo_3d_draw_rectlist(struct ilo_3d *hw3d, const struct ilo_blitter *blitter)
    hw3d->new_batch = false;
 }
 
-#define UPDATE_MIN2(a, b) (a) = MIN2((a), (b))
-#define UPDATE_MAX2(a, b) (a) = MAX2((a), (b))
-
-/**
- * \see find_sub_primitives() from core mesa
- */
-static int
-ilo_find_sub_primitives(const void *elements, unsigned element_size,
-                    const struct pipe_draw_info *orig_info,
-                    struct pipe_draw_info *info)
+static void
+draw_vbo_with_sw_restart(struct ilo_context *ilo,
+                         const struct pipe_draw_info *info)
 {
-   const unsigned max_prims = orig_info->count - orig_info->start;
-   unsigned i, cur_start, cur_count;
-   int scan_index;
-   unsigned scan_num;
+   const struct ilo_ib_state *ib = &ilo->state_vector.ib;
+   union {
+      const void *ptr;
+      const uint8_t *u8;
+      const uint16_t *u16;
+      const uint32_t *u32;
+   } u;
 
-   cur_start = orig_info->start;
-   cur_count = 0;
-   scan_num = 0;
-
-#define IB_INDEX_READ(TYPE, INDEX) (((const TYPE *) elements)[INDEX])
-
-#define SCAN_ELEMENTS(TYPE) \
-   info[scan_num] = *orig_info; \
-   info[scan_num].primitive_restart = false; \
-   for (i = orig_info->start; i < orig_info->count; i++) { \
-      scan_index = IB_INDEX_READ(TYPE, i); \
-      if (scan_index == orig_info->restart_index) { \
-         if (cur_count > 0) { \
-            assert(scan_num < max_prims); \
-            info[scan_num].start = cur_start; \
-            info[scan_num].count = cur_count; \
-            scan_num++; \
-            info[scan_num] = *orig_info; \
-            info[scan_num].primitive_restart = false; \
-         } \
-         cur_start = i + 1; \
-         cur_count = 0; \
-      } \
-      else { \
-         UPDATE_MIN2(info[scan_num].min_index, scan_index); \
-         UPDATE_MAX2(info[scan_num].max_index, scan_index); \
-         cur_count++; \
-      } \
-   } \
-   if (cur_count > 0) { \
-      assert(scan_num < max_prims); \
-      info[scan_num].start = cur_start; \
-      info[scan_num].count = cur_count; \
-      scan_num++; \
+   /* we will draw with IB mapped */
+   if (ib->buffer) {
+      u.ptr = intel_bo_map(ilo_buffer(ib->buffer)->bo, false);
+      if (u.ptr)
+         u.u8 += ib->offset;
+   } else {
+      u.ptr = ib->user_buffer;
    }
 
-   switch (element_size) {
+   if (!u.ptr)
+      return;
+
+#define DRAW_VBO_WITH_SW_RESTART(pipe, info, ptr) do {   \
+   const unsigned end = (info)->start + (info)->count;   \
+   struct pipe_draw_info subinfo;                        \
+   unsigned i;                                           \
+                                                         \
+   subinfo = *(info);                                    \
+   subinfo.primitive_restart = false;                    \
+   for (i = (info)->start; i < end; i++) {               \
+      if ((ptr)[i] == (info)->restart_index) {           \
+         subinfo.count = i - subinfo.start;              \
+         if (subinfo.count)                              \
+            (pipe)->draw_vbo(pipe, &subinfo);            \
+         subinfo.start = i + 1;                          \
+      }                                                  \
+   }                                                     \
+   subinfo.count = i - subinfo.start;                    \
+   if (subinfo.count)                                    \
+      (pipe)->draw_vbo(pipe, &subinfo);                  \
+} while (0)
+
+   switch (ib->index_size) {
    case 1:
-      SCAN_ELEMENTS(uint8_t);
+      DRAW_VBO_WITH_SW_RESTART(&ilo->base, info, u.u8);
       break;
    case 2:
-      SCAN_ELEMENTS(uint16_t);
+      DRAW_VBO_WITH_SW_RESTART(&ilo->base, info, u.u16);
       break;
    case 4:
-      SCAN_ELEMENTS(uint32_t);
+      DRAW_VBO_WITH_SW_RESTART(&ilo->base, info, u.u32);
       break;
    default:
-      assert(0 && "bad index_size in find_sub_primitives()");
-   }
-
-#undef SCAN_ELEMENTS
-
-   return scan_num;
-}
-
-static inline bool
-ilo_check_restart_index(const struct ilo_context *ilo, unsigned restart_index)
-{
-   /*
-    * Haswell (GEN(7.5)) supports an arbitrary cut index, check everything
-    * older.
-    */
-   if (ilo_dev_gen(ilo->dev) >= ILO_GEN(7.5))
-      return true;
-
-   /* Note: indices must be unsigned byte, unsigned short or unsigned int */
-   switch (ilo->state_vector.ib.index_size) {
-   case 1:
-      return ((restart_index & 0xff) == 0xff);
-      break;
-   case 2:
-      return ((restart_index & 0xffff) == 0xffff);
-      break;
-   case 4:
-      return (restart_index == 0xffffffff);
+      assert(!"unsupported index size");
       break;
    }
-   return false;
+
+#undef DRAW_VBO_WITH_SW_RESTART
+
+   if (ib->buffer)
+      intel_bo_unmap(ilo_buffer(ib->buffer)->bo);
 }
 
-static inline bool
-ilo_check_restart_prim_type(const struct ilo_context *ilo, unsigned prim)
+static bool
+draw_vbo_need_sw_restart(const struct ilo_context *ilo,
+                         const struct pipe_draw_info *info)
 {
-   switch (prim) {
+   /* the restart index is fixed prior to GEN7.5 */
+   if (ilo_dev_gen(ilo->dev) < ILO_GEN(7.5)) {
+      const unsigned cut_index =
+         (ilo->state_vector.ib.index_size == 1) ? 0xff :
+         (ilo->state_vector.ib.index_size == 2) ? 0xffff :
+         (ilo->state_vector.ib.index_size == 4) ? 0xffffffff : 0;
+
+      if (info->restart_index < cut_index)
+         return true;
+   }
+
+   switch (info->mode) {
    case PIPE_PRIM_POINTS:
    case PIPE_PRIM_LINES:
    case PIPE_PRIM_LINE_STRIP:
    case PIPE_PRIM_TRIANGLES:
    case PIPE_PRIM_TRIANGLE_STRIP:
-      /* All 965 GEN graphics support a cut index for these primitive types */
-      return true;
-      break;
-
+      /* these never need software fallback */
+      return false;
    case PIPE_PRIM_LINE_LOOP:
    case PIPE_PRIM_POLYGON:
    case PIPE_PRIM_QUAD_STRIP:
    case PIPE_PRIM_QUADS:
    case PIPE_PRIM_TRIANGLE_FAN:
-      if (ilo_dev_gen(ilo->dev) >= ILO_GEN(7.5)) {
-         /* Haswell and newer parts can handle these prim types. */
-         return true;
-      }
-      break;
+      /* these need software fallback prior to GEN7.5 */
+      return (ilo_dev_gen(ilo->dev) < ILO_GEN(7.5));
+   default:
+      /* the rest always needs software fallback */
+      return true;
    }
-
-   return false;
-}
-
-/*
- * Handle VBOs using primitive restart.
- * Verify that restart index and primitive type can be handled by the HW.
- * Return true if this routine did the rendering
- * Return false if this routine did NOT render because restart can be handled
- * in HW.
- */
-static void
-ilo_draw_vbo_with_sw_restart(struct pipe_context *pipe,
-                             const struct pipe_draw_info *info)
-{
-   struct ilo_state_vector *vec = &ilo_context(pipe)->state_vector;
-   struct pipe_draw_info *restart_info = NULL;
-   int sub_prim_count = 1;
-
-   /*
-    * We have to break up the primitive into chunks manually
-    * Worst case, every other index could be a restart index so
-    * need to have space for that many primitives
-    */
-   restart_info = MALLOC(((info->count + 1) / 2) * sizeof(*info));
-   if (NULL == restart_info) {
-      /* If we can't get memory for this, bail out */
-      ilo_err("%s:%d - Out of memory", __FILE__, __LINE__);
-      return;
-   }
-
-   if (vec->ib.buffer) {
-      struct pipe_transfer *transfer;
-      const void *map;
-
-      map = pipe_buffer_map(pipe, vec->ib.buffer,
-            PIPE_TRANSFER_READ, &transfer);
-
-      sub_prim_count = ilo_find_sub_primitives(map + vec->ib.offset,
-            vec->ib.index_size, info, restart_info);
-
-      pipe_buffer_unmap(pipe, transfer);
-   }
-   else {
-      sub_prim_count =
-         ilo_find_sub_primitives(vec->ib.user_buffer,
-               vec->ib.index_size, info, restart_info);
-   }
-
-   info = restart_info;
-
-   while (sub_prim_count > 0) {
-      pipe->draw_vbo(pipe, info);
-
-      sub_prim_count--;
-      info++;
-   }
-
-   FREE(restart_info);
 }
 
 static void
@@ -712,16 +632,10 @@ ilo_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    if (ilo_skip_rendering(ilo))
       return;
 
-   if (info->primitive_restart && info->indexed) {
-      /*
-       * Want to draw an indexed primitive using primitive restart
-       * Check that HW can handle the request and fall to SW if not.
-       */
-      if (!ilo_check_restart_index(ilo, info->restart_index) ||
-          !ilo_check_restart_prim_type(ilo, info->mode)) {
-         ilo_draw_vbo_with_sw_restart(pipe, info);
-         return;
-      }
+   if (info->primitive_restart && info->indexed &&
+       draw_vbo_need_sw_restart(ilo, info)) {
+      draw_vbo_with_sw_restart(ilo, info);
+      return;
    }
 
    ilo_finalize_3d_states(ilo, info);
