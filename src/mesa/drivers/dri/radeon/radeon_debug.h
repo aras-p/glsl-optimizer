@@ -94,18 +94,11 @@ static inline int radeon_is_debug_enabled(const radeon_debug_type_t type,
        return RADEON_DEBUG_LEVEL >= level
 		&& (type & radeon_enabled_debug_types);
 }
-/*
- * define macro for gcc specific __attribute__ if using alternative compiler
- */
-#ifndef __GNUC__
-#define  __attribute__(x)  /*empty*/
-#endif
-
 
 extern void _radeon_print(const radeon_debug_type_t type,
 	   const radeon_debug_level_t level,
 	   const char* message,
-	   ...)  __attribute__((format(printf,3,4)));
+	   ...)  PRINTFLIKE(3, 4);
 /**
  * Print out debug message if channel specified by type is enabled
  * and compile time debugging level is at least as high as level parameter
