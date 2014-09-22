@@ -518,7 +518,7 @@ _mesa_bsearch( const void *key, const void *base, size_t nmemb, size_t size,
 char *
 _mesa_getenv( const char *var )
 {
-#if defined(_XBOX) || defined(_WIN32_WCE)
+#if defined(_WIN32_WCE)
    return NULL;
 #else
    return getenv(var);
