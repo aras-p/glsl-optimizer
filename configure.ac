@@ -1769,12 +1769,17 @@ if test "x$enable_gallium_tests" = xyes; then
 fi
 AM_CONDITIONAL(HAVE_GALLIUM_TESTS, test "x$enable_gallium_tests" = xyes)
 
+VDPAU_LIB_INSTALL_DIR_DEFAULT=''
+if test "x$enable_vdpau" = xyes; then
+    VDPAU_LIB_INSTALL_DIR_DEFAULT=`$PKG_CONFIG --variable=moduledir vdpau`
+fi
+
 dnl Directory for VDPAU libs
 AC_ARG_WITH([vdpau-libdir],
     [AS_HELP_STRING([--with-vdpau-libdir=DIR],
-        [directory for the VDPAU libraries @<:@default=${libdir}/vdpau@:>@])],
+        [directory for the VDPAU libraries @<:@default=`pkg-config --variable=moduledir vdpau`@:>@])],
     [VDPAU_LIB_INSTALL_DIR="$withval"],
-    [VDPAU_LIB_INSTALL_DIR='${libdir}/vdpau'])
+    [VDPAU_LIB_INSTALL_DIR="$VDPAU_LIB_INSTALL_DIR_DEFAULT"])
 AC_SUBST([VDPAU_LIB_INSTALL_DIR])
 
 OMX_LIB_INSTALL_DIR_DEFAULT=''
@@ -1784,7 +1789,7 @@ fi
 
 AC_ARG_WITH([omx-libdir],
     [AS_HELP_STRING([--with-omx-libdir=DIR],
-        [directory for the OMX libraries])],
+        [directory for the OMX libraries @<:@default=`pkg-config --variable=pluginsdir libomxil-bellagio`@:>@])],
     [OMX_LIB_INSTALL_DIR="$withval"],
     [OMX_LIB_INSTALL_DIR="$OMX_LIB_INSTALL_DIR_DEFAULT"])
 AC_SUBST([OMX_LIB_INSTALL_DIR])
