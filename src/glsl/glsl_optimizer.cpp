@@ -436,7 +436,7 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 	
 	struct gl_shader* linked_shader = NULL;
 
-	if (!state->error && !ir->is_empty())
+	if (!state->error && !ir->is_empty() && !(options & kGlslOptionNotFullShader))
 	{
 		linked_shader = link_intrastage_shaders(shader,
 												&ctx->mesa_ctx,
