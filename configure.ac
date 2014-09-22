@@ -1796,14 +1796,6 @@ AC_ARG_WITH([omx-libdir],
     [OMX_LIB_INSTALL_DIR="$OMX_LIB_INSTALL_DIR_DEFAULT"])
 AC_SUBST([OMX_LIB_INSTALL_DIR])
 
-dnl Directory for OpenCL libs
-AC_ARG_WITH([opencl-libdir],
-    [AS_HELP_STRING([--with-opencl-libdir=DIR],
-        [directory for auxiliary libraries used by the OpenCL implementation @<:@default=${libdir}/opencl@:>@])],
-    [OPENCL_LIB_INSTALL_DIR="$withval"],
-    [OPENCL_LIB_INSTALL_DIR='${libdir}/opencl'])
-AC_SUBST([OPENCL_LIB_INSTALL_DIR])
-
 dnl
 dnl Gallium helper functions
 dnl
