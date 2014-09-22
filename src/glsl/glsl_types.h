@@ -489,6 +489,14 @@ struct glsl_type {
    }
 
    /**
+    * Query if a type is unnamed/anonymous (named by the parser)
+    */
+   bool is_anonymous() const
+   {
+      return !strncmp(name, "#anon", 5);
+   }
+
+   /**
     * Get the type stripped of any arrays
     *
     * \return
