@@ -91,6 +91,339 @@ struct tgsi_transform_context
 };
 
 
+/**
+ * Helper for emitting temporary register declarations.
+ */
+static INLINE void
+tgsi_transform_temp_decl(struct tgsi_transform_context *ctx,
+                         unsigned index)
+{
+   struct tgsi_full_declaration decl;
+
+   decl = tgsi_default_full_declaration();
+   decl.Declaration.File = TGSI_FILE_TEMPORARY;
+   decl.Range.First =
+   decl.Range.Last = index;
+   ctx->emit_declaration(ctx, &decl);
+}
+
+
+static INLINE void
+tgsi_transform_input_decl(struct tgsi_transform_context *ctx,
+                          unsigned index,
+                          unsigned sem_name, unsigned sem_index,
+                          unsigned interp)
+{
+   struct tgsi_full_declaration decl;
+
+   decl = tgsi_default_full_declaration();
+   decl.Declaration.File = TGSI_FILE_INPUT;
+   decl.Declaration.Interpolate = 1;
+   decl.Declaration.Semantic = 1;
+   decl.Semantic.Name = TGSI_SEMANTIC_GENERIC;
+   decl.Semantic.Index = sem_index;
+   decl.Range.First =
+   decl.Range.Last = index;
+   decl.Interp.Interpolate = interp;
+
+   ctx->emit_declaration(ctx, &decl);
+}
+
+
+static INLINE void
+tgsi_transform_sampler_decl(struct tgsi_transform_context *ctx,
+                            unsigned index)
+{
+   struct tgsi_full_declaration decl;
+
+   decl = tgsi_default_full_declaration();
+   decl.Declaration.File = TGSI_FILE_SAMPLER;
+   decl.Range.First =
+   decl.Range.Last = index;
+   ctx->emit_declaration(ctx, &decl);
+}
+
+
+static INLINE void
+tgsi_transform_immediate_decl(struct tgsi_transform_context *ctx,
+                              float x, float y, float z, float w)
+{
+   struct tgsi_full_immediate immed;
+   unsigned size = 4;
+
+   immed = tgsi_default_full_immediate();
+   immed.Immediate.NrTokens = 1 + size; /* one for the token itself */
+   immed.u[0].Float = x;
+   immed.u[1].Float = y;
+   immed.u[2].Float = z;
+   immed.u[3].Float = w;
+
+   ctx->emit_immediate(ctx, &immed);
+}
+
+
+/**
+ * Helper for emitting 1-operand instructions.
+ */
+static INLINE void
+tgsi_transform_op1_inst(struct tgsi_transform_context *ctx,
+                        unsigned opcode,
+                        unsigned dst_file,
+                        unsigned dst_index,
+                        unsigned dst_writemask,
+                        unsigned src0_file,
+                        unsigned src0_index)
+{
+   struct tgsi_full_instruction inst;
+
+   inst = tgsi_default_full_instruction();
+   inst.Instruction.Opcode = opcode;
+   inst.Instruction.NumDstRegs = 1;
+   inst.Dst[0].Register.File = dst_file,
+   inst.Dst[0].Register.Index = dst_index;
+   inst.Dst[0].Register.WriteMask = dst_writemask;
+   inst.Instruction.NumSrcRegs = 1;
+   inst.Src[0].Register.File = src0_file;
+   inst.Src[0].Register.Index = src0_index;
+
+   ctx->emit_instruction(ctx, &inst);
+}
+
+
+static INLINE void
+tgsi_transform_op2_inst(struct tgsi_transform_context *ctx,
+                        unsigned opcode,
+                        unsigned dst_file,
+                        unsigned dst_index,
+                        unsigned dst_writemask,
+                        unsigned src0_file,
+                        unsigned src0_index,
+                        unsigned src1_file,
+                        unsigned src1_index)
+{
+   struct tgsi_full_instruction inst;
+
+   inst = tgsi_default_full_instruction();
+   inst.Instruction.Opcode = opcode;
+   inst.Instruction.NumDstRegs = 1;
+   inst.Dst[0].Register.File = dst_file,
+   inst.Dst[0].Register.Index = dst_index;
+   inst.Dst[0].Register.WriteMask = dst_writemask;
+   inst.Instruction.NumSrcRegs = 2;
+   inst.Src[0].Register.File = src0_file;
+   inst.Src[0].Register.Index = src0_index;
+   inst.Src[1].Register.File = src1_file;
+   inst.Src[1].Register.Index = src1_index;
+
+   ctx->emit_instruction(ctx, &inst);
+}
+
+
+static INLINE void
+tgsi_transform_op1_swz_inst(struct tgsi_transform_context *ctx,
+                            unsigned opcode,
+                            unsigned dst_file,
+                            unsigned dst_index,
+                            unsigned dst_writemask,
+                            unsigned src0_file,
+                            unsigned src0_index,
+                            unsigned src0_swizzle)
+{
+   struct tgsi_full_instruction inst;
+
+   inst = tgsi_default_full_instruction();
+   inst.Instruction.Opcode = opcode;
+   inst.Instruction.NumDstRegs = 1;
+   inst.Dst[0].Register.File = dst_file,
+   inst.Dst[0].Register.Index = dst_index;
+   inst.Dst[0].Register.WriteMask = dst_writemask;
+   inst.Instruction.NumSrcRegs = 1;
+   inst.Src[0].Register.File = src0_file;
+   inst.Src[0].Register.Index = src0_index;
+   switch (dst_writemask) {
+   case TGSI_WRITEMASK_X:
+      inst.Src[0].Register.SwizzleX = src0_swizzle;
+      break;
+   case TGSI_WRITEMASK_Y:
+      inst.Src[0].Register.SwizzleY = src0_swizzle;
+      break;
+   case TGSI_WRITEMASK_Z:
+      inst.Src[0].Register.SwizzleZ = src0_swizzle;
+      break;
+   case TGSI_WRITEMASK_W:
+      inst.Src[0].Register.SwizzleW = src0_swizzle;
+      break;
+   default:
+      ; /* nothing */
+   }
+
+   ctx->emit_instruction(ctx, &inst);
+}
+
+
+static INLINE void
+tgsi_transform_op2_swz_inst(struct tgsi_transform_context *ctx,
+                            unsigned opcode,
+                            unsigned dst_file,
+                            unsigned dst_index,
+                            unsigned dst_writemask,
+                            unsigned src0_file,
+                            unsigned src0_index,
+                            unsigned src0_swizzle,
+                            unsigned src1_file,
+                            unsigned src1_index,
+                            unsigned src1_swizzle)
+{
+   struct tgsi_full_instruction inst;
+
+   inst = tgsi_default_full_instruction();
+   inst.Instruction.Opcode = opcode;
+   inst.Instruction.NumDstRegs = 1;
+   inst.Dst[0].Register.File = dst_file,
+   inst.Dst[0].Register.Index = dst_index;
+   inst.Dst[0].Register.WriteMask = dst_writemask;
+   inst.Instruction.NumSrcRegs = 2;
+   inst.Src[0].Register.File = src0_file;
+   inst.Src[0].Register.Index = src0_index;
+   inst.Src[1].Register.File = src1_file;
+   inst.Src[1].Register.Index = src1_index;
+   switch (dst_writemask) {
+   case TGSI_WRITEMASK_X:
+      inst.Src[0].Register.SwizzleX = src0_swizzle;
+      inst.Src[1].Register.SwizzleX = src1_swizzle;
+      break;
+   case TGSI_WRITEMASK_Y:
+      inst.Src[0].Register.SwizzleY = src0_swizzle;
+      inst.Src[1].Register.SwizzleY = src1_swizzle;
+      break;
+   case TGSI_WRITEMASK_Z:
+      inst.Src[0].Register.SwizzleZ = src0_swizzle;
+      inst.Src[1].Register.SwizzleZ = src1_swizzle;
+      break;
+   case TGSI_WRITEMASK_W:
+      inst.Src[0].Register.SwizzleW = src0_swizzle;
+      inst.Src[1].Register.SwizzleW = src1_swizzle;
+      break;
+   default:
+      ; /* nothing */
+   }
+
+   ctx->emit_instruction(ctx, &inst);
+}
+
+
+static INLINE void
+tgsi_transform_op3_swz_inst(struct tgsi_transform_context *ctx,
+                            unsigned opcode,
+                            unsigned dst_file,
+                            unsigned dst_index,
+                            unsigned dst_writemask,
+                            unsigned src0_file,
+                            unsigned src0_index,
+                            unsigned src0_swizzle,
+                            unsigned src0_negate,
+                            unsigned src1_file,
+                            unsigned src1_index,
+                            unsigned src1_swizzle,
+                            unsigned src2_file,
+                            unsigned src2_index,
+                            unsigned src2_swizzle)
+{
+   struct tgsi_full_instruction inst;
+
+   inst = tgsi_default_full_instruction();
+   inst.Instruction.Opcode = opcode;
+   inst.Instruction.NumDstRegs = 1;
+   inst.Dst[0].Register.File = dst_file,
+   inst.Dst[0].Register.Index = dst_index;
+   inst.Dst[0].Register.WriteMask = dst_writemask;
+   inst.Instruction.NumSrcRegs = 3;
+   inst.Src[0].Register.File = src0_file;
+   inst.Src[0].Register.Index = src0_index;
+   inst.Src[0].Register.Negate = src0_negate;
+   inst.Src[1].Register.File = src1_file;
+   inst.Src[1].Register.Index = src1_index;
+   inst.Src[2].Register.File = src2_file;
+   inst.Src[2].Register.Index = src2_index;
+   switch (dst_writemask) {
+   case TGSI_WRITEMASK_X:
+      inst.Src[0].Register.SwizzleX = src0_swizzle;
+      inst.Src[1].Register.SwizzleX = src1_swizzle;
+      inst.Src[2].Register.SwizzleX = src2_swizzle;
+      break;
+   case TGSI_WRITEMASK_Y:
+      inst.Src[0].Register.SwizzleY = src0_swizzle;
+      inst.Src[1].Register.SwizzleY = src1_swizzle;
+      inst.Src[2].Register.SwizzleY = src2_swizzle;
+      break;
+   case TGSI_WRITEMASK_Z:
+      inst.Src[0].Register.SwizzleZ = src0_swizzle;
+      inst.Src[1].Register.SwizzleZ = src1_swizzle;
+      inst.Src[2].Register.SwizzleZ = src2_swizzle;
+      break;
+   case TGSI_WRITEMASK_W:
+      inst.Src[0].Register.SwizzleW = src0_swizzle;
+      inst.Src[1].Register.SwizzleW = src1_swizzle;
+      inst.Src[2].Register.SwizzleW = src2_swizzle;
+      break;
+   default:
+      ; /* nothing */
+   }
+
+   ctx->emit_instruction(ctx, &inst);
+}
+
+
+static INLINE void
+tgsi_transform_kill_inst(struct tgsi_transform_context *ctx,
+                         unsigned src_file,
+                         unsigned src_index,
+                         unsigned src_swizzle)
+{
+   struct tgsi_full_instruction inst;
+
+   inst = tgsi_default_full_instruction();
+   inst.Instruction.Opcode = TGSI_OPCODE_KILL_IF;
+   inst.Instruction.NumDstRegs = 0;
+   inst.Instruction.NumSrcRegs = 1;
+   inst.Src[0].Register.File = src_file;
+   inst.Src[0].Register.Index = src_index;
+   inst.Src[0].Register.SwizzleX =
+   inst.Src[0].Register.SwizzleY =
+   inst.Src[0].Register.SwizzleZ =
+   inst.Src[0].Register.SwizzleW = src_swizzle;
+   inst.Src[0].Register.Negate = 1;
+
+   ctx->emit_instruction(ctx, &inst);
+}
+
+
+static INLINE void
+tgsi_transform_tex_2d_inst(struct tgsi_transform_context *ctx,
+                           unsigned dst_file,
+                           unsigned dst_index,
+                           unsigned src_file,
+                           unsigned src_index,
+                           unsigned sampler_index)
+{
+   struct tgsi_full_instruction inst;
+
+   inst = tgsi_default_full_instruction();
+   inst.Instruction.Opcode = TGSI_OPCODE_TEX;
+   inst.Instruction.NumDstRegs = 1;
+   inst.Dst[0].Register.File = dst_file;
+   inst.Dst[0].Register.Index = dst_index;
+   inst.Instruction.NumSrcRegs = 2;
+   inst.Instruction.Texture = TRUE;
+   inst.Texture.Texture = TGSI_TEXTURE_2D;
+   inst.Src[0].Register.File = src_file;
+   inst.Src[0].Register.Index = src_index;
+   inst.Src[1].Register.File = TGSI_FILE_SAMPLER;
+   inst.Src[1].Register.Index = sampler_index;
+
+   ctx->emit_instruction(ctx, &inst);
+}
+
 
 extern int
 tgsi_transform_shader(const struct tgsi_token *tokens_in,
