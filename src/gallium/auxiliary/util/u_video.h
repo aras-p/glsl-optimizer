@@ -72,6 +72,80 @@ u_reduce_video_profile(enum pipe_video_profile profile)
    }
 }
 
+static INLINE void
+u_copy_nv12_to_yv12(void *const *destination_data,
+                    uint32_t const *destination_pitches,
+                    int src_plane, int src_field,
+                    int src_stride, int num_fields,
+                    uint8_t const *src,
+                    int width, int height)
+{
+   int x, y;
+   unsigned u_stride = destination_pitches[2] * num_fields;
+   unsigned v_stride = destination_pitches[1] * num_fields;
+   uint8_t *u_dst = (uint8_t *)destination_data[2] + destination_pitches[2] * src_field;
+   uint8_t *v_dst = (uint8_t *)destination_data[1] + destination_pitches[1] * src_field;
+
+   /* TODO: SIMD */
+   for (y = 0; y < height; y++) {
+      for (x = 0; x < width; x++) {
+         u_dst[x] = src[2*x];
+         v_dst[x] = src[2*x+1];
+      }
+      u_dst += u_stride;
+      v_dst += v_stride;
+      src += src_stride;
+   }
+}
+
+static INLINE void
+u_copy_yv12_to_nv12(void *const *destination_data,
+                    uint32_t const *destination_pitches,
+                    int src_plane, int src_field,
+                    int src_stride, int num_fields,
+                    uint8_t const *src,
+                    int width, int height)
+{
+   int x, y;
+   unsigned offset = 2 - src_plane;
+   unsigned stride = destination_pitches[1] * num_fields;
+   uint8_t *dst = (uint8_t *)destination_data[1] + destination_pitches[1] * src_field;
+
+   /* TODO: SIMD */
+   for (y = 0; y < height; y++) {
+      for (x = 0; x < 2 * width; x += 2) {
+         dst[x+offset] = src[x>>1];
+      }
+      dst += stride;
+      src += src_stride;
+   }
+}
+
+static INLINE void
+u_copy_swap422_packed(void *const *destination_data,
+                       uint32_t const *destination_pitches,
+                       int src_plane, int src_field,
+                       int src_stride, int num_fields,
+                       uint8_t const *src,
+                       int width, int height)
+{
+   int x, y;
+   unsigned stride = destination_pitches[0] * num_fields;
+   uint8_t *dst = (uint8_t *)destination_data[0] + destination_pitches[0] * src_field;
+
+   /* TODO: SIMD */
+   for (y = 0; y < height; y++) {
+      for (x = 0; x < 4 * width; x += 4) {
+         dst[x+0] = src[x+1];
+         dst[x+1] = src[x+0];
+         dst[x+2] = src[x+3];
+         dst[x+3] = src[x+2];
+      }
+      dst += stride;
+      src += src_stride;
+   }
+}
+
 #ifdef __cplusplus
 }
 #endif
