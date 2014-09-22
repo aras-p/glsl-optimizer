@@ -799,13 +799,6 @@ NORMALIZE_3FV(GLfloat v[3])
 }
 
 
-/** Is float value negative? */
-static inline GLboolean
-IS_NEGATIVE(float x)
-{
-   return signbit(x) != 0;
-}
-
 /** Test two floats have opposite signs */
 static inline GLboolean
 DIFFERENT_SIGNS(GLfloat x, GLfloat y)

@@ -109,7 +109,7 @@ static void brw_clip_line_alloc_regs( struct brw_clip_compile *c )
  *        GLfloat dp0 = DOTPROD( vtx0, plane[p] );
  *        GLfloat dp1 = DOTPROD( vtx1, plane[p] );
  *
- *        if (IS_NEGATIVE(dp1)) {
+ *        if (dp1 < 0.0f) {
  *           GLfloat t = dp1 / (dp1 - dp0);
  *           if (t > t1) t1 = t;
  *        } else {

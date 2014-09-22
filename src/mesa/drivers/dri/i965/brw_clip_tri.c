@@ -320,7 +320,7 @@ void brw_clip_tri( struct brw_clip_compile *c )
 	    brw_MOV(p, get_addr_reg(vtx), deref_1uw(inlist_ptr, 0));
 
             load_clip_distance(c, vtxPrev, c->reg.dpPrev, hpos_offset, BRW_CONDITIONAL_L);
-	    /* IS_NEGATIVE(prev) */
+	    /* (prev < 0.0f) */
 	    brw_IF(p, BRW_EXECUTE_1);
 	    {
                load_clip_distance(c, vtx, c->reg.dp, hpos_offset, BRW_CONDITIONAL_GE);
@@ -366,7 +366,7 @@ void brw_clip_tri( struct brw_clip_compile *c )
 	       brw_ADD(p, c->reg.nr_verts, c->reg.nr_verts, brw_imm_ud(1));
 
                load_clip_distance(c, vtx, c->reg.dp, hpos_offset, BRW_CONDITIONAL_L);
-	       /* IS_NEGATIVE(next)
+	       /* (next < 0.0f)
 		*/
 	       brw_IF(p, BRW_EXECUTE_1);
 	       {
