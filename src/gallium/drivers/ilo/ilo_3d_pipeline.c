@@ -154,11 +154,6 @@ ilo_3d_pipeline_emit_draw(struct ilo_3d_pipeline *p,
 {
    bool success;
 
-   /* on GEN7+, we need SOL_RESET to reset the SO write offsets */
-   if (ilo_dev_gen(p->dev) >= ILO_GEN(7) && (vec->dirty & ILO_DIRTY_SO) &&
-       vec->so.enabled && !vec->so.append_bitmask)
-      ilo_cp_set_one_off_flags(p->cp, INTEL_EXEC_GEN7_SOL_RESET);
-
    while (true) {
       struct ilo_builder_snapshot snapshot;
 

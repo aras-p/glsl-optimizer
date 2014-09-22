@@ -360,6 +360,14 @@ draw_vbo(struct ilo_3d *hw3d, const struct ilo_state_vector *vec)
    bool success;
    int max_len, before_space;
 
+   /* on GEN7+, we need SOL_RESET to reset the SO write offsets */
+   if (ilo_dev_gen(hw3d->pipeline->dev) >= ILO_GEN(7) &&
+       (vec->dirty & ILO_DIRTY_SO) && vec->so.enabled &&
+       !vec->so.append_bitmask) {
+      ilo_cp_submit(hw3d->cp, "SOL_RESET");
+      ilo_cp_set_one_off_flags(hw3d->cp, INTEL_EXEC_GEN7_SOL_RESET);
+   }
+
    ilo_3d_own_render_ring(hw3d);
 
    if (!hw3d->new_batch) {
