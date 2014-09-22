@@ -543,7 +543,7 @@ void _tnl_init_vertices( struct gl_context *ctx,
    vtx->codegen_emit = NULL;
 
 #ifdef USE_SSE_ASM
-   if (!_mesa_getenv("MESA_NO_CODEGEN"))
+   if (!getenv("MESA_NO_CODEGEN"))
       vtx->codegen_emit = _tnl_generate_sse_emit;
 #endif
 }

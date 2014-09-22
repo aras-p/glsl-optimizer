@@ -588,7 +588,7 @@ free_unknown_extensions_strings(void)
 void
 _mesa_one_time_init_extension_overrides(void)
 {
-   const char *env_const = _mesa_getenv("MESA_EXTENSION_OVERRIDE");
+   const char *env_const = getenv("MESA_EXTENSION_OVERRIDE");
    char *env;
    char *ext;
    int len;

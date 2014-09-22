@@ -582,7 +582,7 @@ initialize_visual_and_buffer(XMesaVisual v, XMesaBuffer b,
    }
    v->mesa_visual.indexBits = 0;
 
-   if (_mesa_getenv("MESA_NO_DITHER")) {
+   if (getenv("MESA_NO_DITHER")) {
       v->dithered_pf = v->undithered_pf;
    }
 
@@ -592,7 +592,7 @@ initialize_visual_and_buffer(XMesaVisual v, XMesaBuffer b,
     * which can help Brian figure out what's going on when a user
     * reports bugs.
     */
-   if (_mesa_getenv("MESA_INFO")) {
+   if (getenv("MESA_INFO")) {
       printf("X/Mesa visual = %p\n", (void *) v);
       printf("X/Mesa dithered pf = %u\n", v->dithered_pf);
       printf("X/Mesa undithered pf = %u\n", v->undithered_pf);
@@ -760,7 +760,7 @@ XMesaVisual XMesaCreateVisual( XMesaDisplay *display,
    GLint red_bits, green_bits, blue_bits, alpha_bits;
 
    /* For debugging only */
-   if (_mesa_getenv("MESA_XSYNC")) {
+   if (getenv("MESA_XSYNC")) {
       /* This makes debugging X easier.
        * In your debugger, set a breakpoint on _XError to stop when an
        * X protocol error is generated.
@@ -791,7 +791,7 @@ XMesaVisual XMesaCreateVisual( XMesaDisplay *display,
    memcpy(v->visinfo, visinfo, sizeof(*visinfo));
 
    /* check for MESA_GAMMA environment variable */
-   gamma = _mesa_getenv("MESA_GAMMA");
+   gamma = getenv("MESA_GAMMA");
    if (gamma) {
       v->RedGamma = v->GreenGamma = v->BlueGamma = 0.0;
       sscanf( gamma, "%f %f %f", &v->RedGamma, &v->GreenGamma, &v->BlueGamma );

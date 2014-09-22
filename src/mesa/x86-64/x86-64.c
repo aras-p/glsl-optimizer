@@ -64,7 +64,7 @@ extern void _mesa_x86_64_transform_points4_2d( XFORM_ARGS );
 #ifdef USE_X86_64_ASM
 static void message( const char *msg )
 {
-   if (_mesa_getenv("MESA_DEBUG")) {
+   if (getenv("MESA_DEBUG")) {
       _mesa_debug( NULL, "%s", msg );
    }
 }
@@ -76,7 +76,7 @@ void _mesa_init_all_x86_64_transform_asm(void)
 #ifdef USE_X86_64_ASM
    unsigned int regs[4];
 
-   if ( _mesa_getenv( "MESA_NO_ASM" ) ) {
+   if ( getenv( "MESA_NO_ASM" ) ) {
      return;
    }
 

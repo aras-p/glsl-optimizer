@@ -70,7 +70,7 @@ GLbitfield
 _mesa_get_shader_flags(void)
 {
    GLbitfield flags = 0x0;
-   const char *env = _mesa_getenv("MESA_GLSL");
+   const char *env = getenv("MESA_GLSL");
 
    if (env) {
       if (strstr(env, "dump_on_error"))

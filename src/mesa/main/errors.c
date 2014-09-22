@@ -1170,7 +1170,7 @@ output_if_debug(const char *prefixString, const char *outputString,
       /* If MESA_LOG_FILE env var is set, log Mesa errors, warnings,
        * etc to the named file.  Otherwise, output to stderr.
        */
-      const char *logFile = _mesa_getenv("MESA_LOG_FILE");
+      const char *logFile = getenv("MESA_LOG_FILE");
       if (logFile)
          fout = fopen(logFile, "w");
       if (!fout)
@@ -1183,7 +1183,7 @@ output_if_debug(const char *prefixString, const char *outputString,
          debug = 1;
 #else
       /* in release builds, be silent unless MESA_DEBUG is set */
-      debug = _mesa_getenv("MESA_DEBUG") != NULL;
+      debug = getenv("MESA_DEBUG") != NULL;
 #endif
    }
 
@@ -1288,7 +1288,7 @@ should_output(struct gl_context *ctx, GLenum error, const char *fmtString)
    /* Check debug environment variable only once:
     */
    if (debug == -1) {
-      const char *debugEnv = _mesa_getenv("MESA_DEBUG");
+      const char *debugEnv = getenv("MESA_DEBUG");
 
 #ifdef DEBUG
       if (debugEnv && strstr(debugEnv, "silent"))

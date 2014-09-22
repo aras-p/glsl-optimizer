@@ -475,22 +475,6 @@ _mesa_half_to_float(GLhalfARB val)
 
 
 /**********************************************************************/
-/** \name Environment vars */
-/*@{*/
-
-/**
- * Wrapper for getenv().
- */
-char *
-_mesa_getenv( const char *var )
-{
-   return getenv(var);
-}
-
-/*@}*/
-
-
-/**********************************************************************/
 /** \name String */
 /*@{*/
 

@@ -535,9 +535,6 @@ _mesa_half_is_negative(GLhalfARB h)
 }
 
 extern char *
-_mesa_getenv( const char *var );
-
-extern char *
 _mesa_strdup( const char *s );
 
 extern float

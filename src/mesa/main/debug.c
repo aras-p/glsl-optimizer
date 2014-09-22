@@ -215,8 +215,8 @@ set_debug_flags(const char *str)
 void 
 _mesa_init_debug( struct gl_context *ctx )
 {
-   set_debug_flags(_mesa_getenv("MESA_DEBUG"));
-   set_verbose_flags(_mesa_getenv("MESA_VERBOSE"));
+   set_debug_flags(getenv("MESA_DEBUG"));
+   set_verbose_flags(getenv("MESA_VERBOSE"));
 }
 
 
