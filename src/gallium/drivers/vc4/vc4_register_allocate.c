@@ -237,8 +237,15 @@ vc4_register_allocate(struct vc4_context *vc4, struct vc4_compile *c)
         bool ok = ra_allocate(g);
         assert(ok);
 
-        for (uint32_t i = 0; i < c->num_temps; i++)
+        for (uint32_t i = 0; i < c->num_temps; i++) {
                 temp_registers[i] = vc4_regs[ra_get_node_reg(g, i)];
+
+                /* If the value's never used, just write to the NOP register
+                 * for clarity in debug output.
+                 */
+                if (def[i] == use[i])
+                        temp_registers[i] = qpu_ra(QPU_W_NOP);
+        }
 
         ralloc_free(g);
 
