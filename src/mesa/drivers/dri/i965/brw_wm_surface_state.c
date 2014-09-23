@@ -389,7 +389,7 @@ brw_create_constant_surface(struct brw_context *brw,
  * Set up a binding table entry for use by stream output logic (transform
  * feedback).
  *
- * buffer_size_minus_1 must me less than BRW_MAX_NUM_BUFFER_ENTRIES.
+ * buffer_size_minus_1 must be less than BRW_MAX_NUM_BUFFER_ENTRIES.
  */
 void
 brw_update_sol_surface(struct brw_context *brw,
