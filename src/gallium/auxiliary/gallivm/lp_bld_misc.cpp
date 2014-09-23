@@ -143,6 +143,7 @@ lp_set_store_alignment(LLVMValueRef Inst,
    llvm::unwrap<llvm::StoreInst>(Inst)->setAlignment(Align);
 }
 
+#if HAVE_LLVM < 0x0306
 
 /*
  * Delegating is tedious but the default manager class is hidden in an
@@ -398,6 +399,7 @@ class ShaderMemoryManager : public DelegatingJITMemoryManager {
 llvm::JITMemoryManager *ShaderMemoryManager::TheMM = 0;
 unsigned ShaderMemoryManager::NumUsers = 0;
 
+#endif
 
 /**
  * Same as LLVMCreateJITCompilerForModule, but:
@@ -419,6 +421,11 @@ lp_build_create_jit_compiler_for_module(LLVMExecutionEngineRef *OutJIT,
                                         char **OutError)
 {
    using namespace llvm;
+
+#if HAVE_LLVM >= 0x0306
+   *OutError = strdup("MCJIT not supported");
+   return 1;
+#else
 
    std::string Error;
 #if HAVE_LLVM >= 0x0306
@@ -528,6 +535,7 @@ lp_build_create_jit_compiler_for_module(LLVMExecutionEngineRef *OutJIT,
    delete MM;
    *OutError = strdup(Error.c_str());
    return 1;
+#endif
 }
 
 
@@ -535,5 +543,7 @@ extern "C"
 void
 lp_free_generated_code(struct lp_generated_code *code)
 {
+#if HAVE_LLVM < 0x0306
    ShaderMemoryManager::freeGeneratedCode(code);
+#endif
 }
