@@ -67,6 +67,27 @@ set_last_cond_add(struct vc4_compile *c, uint32_t cond)
 }
 
 /**
+ * Some special registers can be read from either file, which lets us resolve
+ * raddr conflicts without extra MOVs.
+ */
+static bool
+swap_file(struct qpu_reg *src)
+{
+        switch (src->addr) {
+        case QPU_R_UNIF:
+        case QPU_R_VARY:
+                if (src->mux == QPU_MUX_A)
+                        src->mux = QPU_MUX_B;
+                else
+                        src->mux = QPU_MUX_A;
+                return true;
+
+        default:
+                return false;
+        }
+}
+
+/**
  * This is used to resolve the fact that we might register-allocate two
  * different operands of an instruction to the same physical register file
  * even though instructions have only one field for the register file source
@@ -77,13 +98,16 @@ set_last_cond_add(struct vc4_compile *c, uint32_t cond)
  */
 static void
 fixup_raddr_conflict(struct vc4_compile *c,
-               struct qpu_reg src0, struct qpu_reg *src1)
+                     struct qpu_reg *src0, struct qpu_reg *src1)
 {
-        if ((src0.mux != QPU_MUX_A && src0.mux != QPU_MUX_B) ||
-            src0.mux != src1->mux ||
-            src0.addr == src1->addr) {
+        if ((src0->mux != QPU_MUX_A && src0->mux != QPU_MUX_B) ||
+            src0->mux != src1->mux ||
+            src0->addr == src1->addr) {
                 return;
         }
+
+        if (swap_file(src0) || swap_file(src1))
+                return;
 
         queue(c, qpu_a_MOV(qpu_r3(), *src1));
         *src1 = qpu_r3();
@@ -528,7 +552,7 @@ vc4_generate_code(struct vc4_context *vc4, struct vc4_compile *c)
                         if (qir_get_op_nsrc(qinst->op) == 1)
                                 src[1] = src[0];
 
-                        fixup_raddr_conflict(c, src[0], &src[1]);
+                        fixup_raddr_conflict(c, &src[0], &src[1]);
 
                         if (translate[qinst->op].is_mul) {
                                 queue(c, qpu_m_alu2(translate[qinst->op].op,
