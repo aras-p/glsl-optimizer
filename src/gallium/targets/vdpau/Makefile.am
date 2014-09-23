@@ -48,43 +48,15 @@ TARGET_LIB_DEPS =
 
 include $(top_srcdir)/src/gallium/drivers/nouveau/Automake.inc
 
-# Radeon winsys chaos
-if HAVE_GALLIUM_R600
-STATIC_TARGET_LIB_DEPS += \
-	$(top_builddir)/src/gallium/winsys/radeon/drm/libradeonwinsys.la
-else
-if HAVE_GALLIUM_RADEONSI
-STATIC_TARGET_LIB_DEPS += \
-	$(top_builddir)/src/gallium/winsys/radeon/drm/libradeonwinsys.la
-endif
-endif
-
-if HAVE_GALLIUM_RADEON_COMMON
-STATIC_TARGET_LIB_DEPS += \
-	$(top_builddir)/src/gallium/drivers/radeon/libradeon.la
-endif
-
-if HAVE_GALLIUM_R600
-MEGADRIVERS += r600
-STATIC_TARGET_CPPFLAGS += -DGALLIUM_R600
-STATIC_TARGET_LIB_DEPS += \
-	$(top_builddir)/src/gallium/drivers/r600/libr600.la \
-	$(RADEON_LIBS)
-endif
-
-if HAVE_GALLIUM_RADEONSI
-MEGADRIVERS += radeonsi
-STATIC_TARGET_CPPFLAGS += -DGALLIUM_RADEONSI
-STATIC_TARGET_LIB_DEPS += \
-	$(top_builddir)/src/gallium/drivers/radeonsi/libradeonsi.la \
-	$(RADEON_LIBS)
-endif
+include $(top_srcdir)/src/gallium/drivers/r600/Automake.inc
+include $(top_srcdir)/src/gallium/drivers/radeonsi/Automake.inc
 
 if HAVE_GALLIUM_STATIC_TARGETS
 
 libvdpau_gallium_la_SOURCES += target.c
 libvdpau_gallium_la_CPPFLAGS = $(STATIC_TARGET_CPPFLAGS) $(TARGET_CPPFLAGS)
-libvdpau_gallium_la_LIBADD += $(STATIC_TARGET_LIB_DEPS) $(TARGET_LIB_DEPS)
+libvdpau_gallium_la_LIBADD += $(STATIC_TARGET_LIB_DEPS) $(TARGET_LIB_DEPS) \
+	$(TARGET_RADEON_WINSYS) $(TARGET_RADEON_COMMON)
 
 else # HAVE_GALLIUM_STATIC_TARGETS
 

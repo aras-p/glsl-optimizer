@@ -66,36 +66,9 @@ include $(top_srcdir)/src/gallium/drivers/ilo/Automake.inc
 
 include $(top_srcdir)/src/gallium/drivers/nouveau/Automake.inc
 
-if NEED_RADEON_DRM_WINSYS
-STATIC_TARGET_LIB_DEPS += \
-	$(top_builddir)/src/gallium/winsys/radeon/drm/libradeonwinsys.la
-endif
-
-if HAVE_GALLIUM_RADEON_COMMON
-STATIC_TARGET_LIB_DEPS += \
-	$(top_builddir)/src/gallium/drivers/radeon/libradeon.la
-endif
-
-if HAVE_GALLIUM_R300
-STATIC_TARGET_CPPFLAGS += -DGALLIUM_R300
-STATIC_TARGET_LIB_DEPS += \
-	$(top_builddir)/src/gallium/drivers/r300/libr300.la \
-	$(RADEON_LIBS)
-endif
-
-if HAVE_GALLIUM_R600
-STATIC_TARGET_CPPFLAGS += -DGALLIUM_R600
-STATIC_TARGET_LIB_DEPS += \
-	$(top_builddir)/src/gallium/drivers/r600/libr600.la \
-	$(RADEON_LIBS)
-endif
-
-if HAVE_GALLIUM_RADEONSI
-STATIC_TARGET_CPPFLAGS += -DGALLIUM_RADEONSI
-STATIC_TARGET_LIB_DEPS += \
-	$(top_builddir)/src/gallium/drivers/radeonsi/libradeonsi.la \
-	$(RADEON_LIBS)
-endif
+include $(top_srcdir)/src/gallium/drivers/r300/Automake.inc
+include $(top_srcdir)/src/gallium/drivers/r600/Automake.inc
+include $(top_srcdir)/src/gallium/drivers/radeonsi/Automake.inc
 
 include $(top_srcdir)/src/gallium/drivers/svga/Automake.inc
 
@@ -103,7 +76,8 @@ include $(top_srcdir)/src/gallium/drivers/freedreno/Automake.inc
 
 gbm_gallium_drm_la_SOURCES += target.c
 gbm_gallium_drm_la_CPPFLAGS = $(STATIC_TARGET_CPPFLAGS) $(TARGET_CPPFLAGS)
-gbm_gallium_drm_la_LIBADD += $(STATIC_TARGET_LIB_DEPS) $(TARGET_LIB_DEPS)
+gbm_gallium_drm_la_LIBADD += $(STATIC_TARGET_LIB_DEPS) $(TARGET_LIB_DEPS) \
+	$(TARGET_RADEON_WINSYS) $(TARGET_RADEON_COMMON)
 
 else # HAVE_GALLIUM_STATIC_TARGETS
 gbm_gallium_drm_la_LIBADD += \
