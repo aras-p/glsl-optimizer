@@ -8,6 +8,9 @@ env = env.Clone()
 
 env.Prepend(CPPPATH = [
     '#include',
+    '#src',
+    '#src/mapi',
+    '#src/mesa',
     '#src/util',
 ])
 
