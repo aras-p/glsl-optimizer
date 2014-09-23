@@ -57,6 +57,51 @@ gen6_get_sample_position(struct gl_context *ctx,
 }
 
 /**
+ * Sample index layout shows the numbering of slots in a rectangular
+ * grid of samples with in a pixel. Sample number layout shows the
+ * rectangular grid of samples roughly corresponding to the real sample
+ * locations with in a pixel. Sample number layout matches the sample
+ * index layout in case of 2X and 4x MSAA, but they are different in
+ * case of 8X MSAA.
+ *
+ * 2X MSAA sample index / number layout
+ *           ---------
+ *           | 0 | 1 |
+ *           ---------
+ *
+ * 4X MSAA sample index / number layout
+ *           ---------
+ *           | 0 | 1 |
+ *           ---------
+ *           | 2 | 3 |
+ *           ---------
+ *
+ * 8X MSAA sample index layout    8x MSAA sample number layout
+ *           ---------                      ---------
+ *           | 0 | 1 |                      | 5 | 2 |
+ *           ---------                      ---------
+ *           | 2 | 3 |                      | 4 | 6 |
+ *           ---------                      ---------
+ *           | 4 | 5 |                      | 0 | 3 |
+ *           ---------                      ---------
+ *           | 6 | 7 |                      | 7 | 1 |
+ *           ---------                      ---------
+ *
+ * A sample map is used to map sample indices to sample numbers.
+ */
+void
+gen6_set_sample_maps(struct gl_context *ctx)
+{
+   uint8_t map_2x[2] = {0, 1};
+   uint8_t map_4x[4] = {0, 1, 2, 3};
+   uint8_t map_8x[8] = {5, 2, 4, 6, 0, 3, 7, 1};
+
+   memcpy(ctx->Const.SampleMap2x, map_2x, sizeof(map_2x));
+   memcpy(ctx->Const.SampleMap4x, map_4x, sizeof(map_4x));
+   memcpy(ctx->Const.SampleMap8x, map_8x, sizeof(map_8x));
+}
+
+/**
  * 3DSTATE_MULTISAMPLE
  */
 void

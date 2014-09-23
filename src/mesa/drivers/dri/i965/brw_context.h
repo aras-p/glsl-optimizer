@@ -1693,6 +1693,8 @@ gen6_get_sample_position(struct gl_context *ctx,
                          struct gl_framebuffer *fb,
                          GLuint index,
                          GLfloat *result);
+void
+gen6_set_sample_maps(struct gl_context *ctx);
 
 /* gen8_multisample_state.c */
 void gen8_emit_3dstate_multisample(struct brw_context *brw, unsigned num_samp);

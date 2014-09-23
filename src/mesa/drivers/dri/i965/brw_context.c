@@ -406,6 +406,14 @@ brw_initialize_context_constants(struct brw_context *brw)
    ctx->Const.MaxDepthTextureSamples = max_samples;
    ctx->Const.MaxIntegerSamples = max_samples;
 
+   /* gen6_set_sample_maps() sets SampleMap{2,4,8}x variables which are used
+    * to map indices of rectangular grid to sample numbers within a pixel.
+    * These variables are used by GL_EXT_framebuffer_multisample_blit_scaled
+    * extension implementation. For more details see the comment above
+    * gen6_set_sample_maps() definition.
+    */
+   gen6_set_sample_maps(ctx);
+
    if (brw->gen >= 7)
       ctx->Const.MaxProgramTextureGatherComponents = 4;
    else if (brw->gen == 6)
