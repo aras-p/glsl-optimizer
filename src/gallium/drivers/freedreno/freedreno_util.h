@@ -38,6 +38,7 @@
 #include "util/u_math.h"
 #include "util/u_half.h"
 #include "util/u_dynarray.h"
+#include "util/u_pack_color.h"
 
 #include "adreno_common.xml.h"
 #include "adreno_pm4.xml.h"
@@ -248,6 +249,14 @@ static inline uint32_t env2u(const char *envvar)
 	if (str)
 		return strtol(str, NULL, 0);
 	return 0;
+}
+
+static inline uint32_t
+pack_rgba(enum pipe_format format, const float *rgba)
+{
+	union util_color uc;
+	util_pack_color(rgba, format, &uc);
+	return uc.ui[0];
 }
 
 #endif /* FREEDRENO_UTIL_H_ */

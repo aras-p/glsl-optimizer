@@ -29,6 +29,8 @@
 #ifndef FD3_CONTEXT_H_
 #define FD3_CONTEXT_H_
 
+#include "util/u_upload_mgr.h"
+
 #include "freedreno_drmif.h"
 
 #include "freedreno_context.h"
@@ -56,6 +58,24 @@ struct fd3_context {
 	/* vertex buf used for mem->gmem tex coords:
 	 */
 	struct pipe_resource *blit_texcoord_vbuf;
+
+	/*
+	 * Border color layout *appears* to be as arrays of 0x40 byte
+	 * elements, with frag shader elements starting at (16 x 0x40).
+	 * But at some point I should probably experiment more with
+	 * samplers in vertex shaders to be sure.  Unclear about why
+	 * there is this offset when there are separate VS and FS base
+	 * addr regs.
+	 *
+	 * The first 8 bytes of each entry are the requested border
+	 * color in fp16.  Unclear about the rest.. could be used for
+	 * other formats, or could simply be for aligning the pitch
+	 * to 32 pixels.
+	 */
+#define BORDERCOLOR_SIZE 0x40
+
+	struct u_upload_mgr *border_color_uploader;
+	struct pipe_resource *border_color_buf;
 };
 
 static INLINE struct fd3_context *

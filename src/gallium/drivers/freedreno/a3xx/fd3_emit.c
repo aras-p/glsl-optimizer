@@ -152,9 +152,8 @@ emit_constants(struct fd_ringbuffer *ring,
 #define BASETABLE_SZ    A3XX_MAX_MIP_LEVELS
 
 static void
-emit_textures(struct fd_ringbuffer *ring,
-		enum adreno_state_block sb,
-		struct fd_texture_stateobj *tex)
+emit_textures(struct fd_context *ctx, struct fd_ringbuffer *ring,
+		enum adreno_state_block sb, struct fd_texture_stateobj *tex)
 {
 	static const unsigned tex_off[] = {
 			[SB_VERT_TEX] = VERT_TEX_OFF,
@@ -164,7 +163,18 @@ emit_textures(struct fd_ringbuffer *ring,
 			[SB_VERT_TEX] = SB_VERT_MIPADDR,
 			[SB_FRAG_TEX] = SB_FRAG_MIPADDR,
 	};
-	unsigned i, j;
+	static const uint32_t bcolor_reg[] = {
+			[SB_VERT_TEX] = REG_A3XX_TPL1_TP_VS_BORDER_COLOR_BASE_ADDR,
+			[SB_FRAG_TEX] = REG_A3XX_TPL1_TP_FS_BORDER_COLOR_BASE_ADDR,
+	};
+	struct fd3_context *fd3_ctx = fd3_context(ctx);
+	unsigned i, j, off;
+	void *ptr;
+
+	u_upload_alloc(fd3_ctx->border_color_uploader,
+			0, 2 * PIPE_MAX_SAMPLERS * BORDERCOLOR_SIZE, &off,
+			&fd3_ctx->border_color_buf,
+			&ptr);
 
 	if (tex->num_samplers > 0) {
 		/* output sampler state: */
@@ -180,6 +190,16 @@ emit_textures(struct fd_ringbuffer *ring,
 			const struct fd3_sampler_stateobj *sampler = tex->samplers[i] ?
 					fd3_sampler_stateobj(tex->samplers[i]) :
 					&dummy_sampler;
+			uint16_t *bcolor = (uint16_t *)((uint8_t *)ptr +
+					(BORDERCOLOR_SIZE * tex_off[sb]) +
+					(BORDERCOLOR_SIZE * i));
+
+			/* TODO not quite sure if bcolor is pre or post swizzle: */
+			for (j = 0; j < 4; j++) {
+				bcolor[j] =
+					util_float_to_half(sampler->base.border_color.f[j]);
+			}
+
 			OUT_RING(ring, sampler->texsamp0);
 			OUT_RING(ring, sampler->texsamp1);
 		}
@@ -237,6 +257,11 @@ emit_textures(struct fd_ringbuffer *ring,
 			}
 		}
 	}
+
+	OUT_PKT0(ring, bcolor_reg[sb], 1);
+	OUT_RELOC(ring, fd_resource(fd3_ctx->border_color_buf)->bo, off, 0, 0);
+
+	u_upload_unmap(fd3_ctx->border_color_uploader);
 }
 
 /* emit texture state for mem->gmem restore operation.. eventually it would
@@ -553,14 +578,14 @@ fd3_emit_state(struct fd_context *ctx, struct fd_ringbuffer *ring,
 
 	if (dirty & FD_DIRTY_VERTTEX) {
 		if (vp->has_samp)
-			emit_textures(ring, SB_VERT_TEX, &ctx->verttex);
+			emit_textures(ctx, ring, SB_VERT_TEX, &ctx->verttex);
 		else
 			dirty &= ~FD_DIRTY_VERTTEX;
 	}
 
 	if (dirty & FD_DIRTY_FRAGTEX) {
 		if (fp->has_samp)
-			emit_textures(ring, SB_FRAG_TEX, &ctx->fragtex);
+			emit_textures(ctx, ring, SB_FRAG_TEX, &ctx->fragtex);
 		else
 			dirty &= ~FD_DIRTY_FRAGTEX;
 	}

@@ -54,7 +54,9 @@ tex_clamp(unsigned wrap)
 		return A3XX_TEX_CLAMP_TO_BORDER;
 	case PIPE_TEX_WRAP_MIRROR_CLAMP:
 	case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
+		/* these two we should emulate! */
 	case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
+		/* only works for PoT.. need to emulate otherwise! */
 		return A3XX_TEX_MIRROR_CLAMP;
 	case PIPE_TEX_WRAP_MIRROR_REPEAT:
 		return A3XX_TEX_MIRROR_REPEAT;

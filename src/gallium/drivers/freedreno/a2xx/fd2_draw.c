@@ -30,7 +30,6 @@
 #include "util/u_string.h"
 #include "util/u_memory.h"
 #include "util/u_prim.h"
-#include "util/u_pack_color.h"
 
 #include "freedreno_state.h"
 #include "freedreno_resource.h"
@@ -117,14 +116,6 @@ fd2_draw(struct fd_context *ctx, const struct pipe_draw_info *info)
 	emit_cacheflush(ring);
 }
 
-
-static uint32_t
-pack_rgba(enum pipe_format format, const float *rgba)
-{
-	union util_color uc;
-	util_pack_color(rgba, format, &uc);
-	return uc.ui[0];
-}
 
 static void
 fd2_clear(struct fd_context *ctx, unsigned buffers,
