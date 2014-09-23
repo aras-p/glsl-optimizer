@@ -248,6 +248,7 @@ struct vc4_compile {
         uint32_t qpu_inst_count;
         uint32_t qpu_inst_size;
         uint32_t num_inputs;
+        uint32_t color_inputs;
 };
 
 struct vc4_compile *qir_compile_init(void);

@@ -56,6 +56,7 @@
 #define VC4_DIRTY_VTXBUF        (1 << 15)
 #define VC4_DIRTY_INDEXBUF      (1 << 16)
 #define VC4_DIRTY_SCISSOR       (1 << 17)
+#define VC4_DIRTY_FLAT_SHADE_FLAGS (1 << 18)
 
 #define VC4_SHADER_DIRTY_VP     (1 << 0)
 #define VC4_SHADER_DIRTY_FP     (1 << 1)
@@ -81,6 +82,10 @@ struct vc4_compiled_shader {
         struct vc4_shader_uniform_info uniforms[2];
 
         uint32_t coord_shader_offset;
+
+        /** bitmask of which inputs are color inputs, for flat shade handling. */
+        uint32_t color_inputs;
+
         uint8_t num_inputs;
 };
 

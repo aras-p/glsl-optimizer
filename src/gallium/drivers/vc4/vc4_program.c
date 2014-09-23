@@ -877,12 +877,17 @@ emit_fragment_varying(struct vc4_compile *c, int index)
 }
 
 static void
-emit_fragment_input(struct vc4_compile *c, int attr)
+emit_fragment_input(struct vc4_compile *c, int attr,
+                    struct tgsi_full_declaration *decl)
 {
         for (int i = 0; i < 4; i++) {
                 c->inputs[attr * 4 + i] =
                         emit_fragment_varying(c, attr * 4 + i);
                 c->num_inputs++;
+
+                if (decl->Semantic.Name == TGSI_SEMANTIC_COLOR ||
+                    decl->Semantic.Name == TGSI_SEMANTIC_BCOLOR)
+                        c->color_inputs |= 1 << i;
         }
 }
 
@@ -908,7 +913,7 @@ emit_tgsi_declaration(struct vc4_compile *c,
                                     TGSI_SEMANTIC_POSITION) {
                                         emit_fragcoord_input(c, i);
                                 } else {
-                                        emit_fragment_input(c, i);
+                                        emit_fragment_input(c, i, decl);
                                 }
                         } else {
                                 emit_vertex_input(c, i);
@@ -1527,6 +1532,7 @@ vc4_fs_compile(struct vc4_context *vc4, struct vc4_compiled_shader *shader,
                                                        QSTAGE_FRAG,
                                                        &key->base);
         shader->num_inputs = c->num_inputs;
+        shader->color_inputs = c->color_inputs;
         copy_uniform_state_to_shader(shader, 0, c);
         shader->bo = vc4_bo_alloc_mem(vc4->screen, c->qpu_insts,
                                       c->qpu_inst_count * sizeof(uint64_t),
@@ -1619,6 +1625,12 @@ vc4_update_compiled_fs(struct vc4_context *vc4, uint8_t prim_mode)
         struct vc4_compiled_shader *shader = CALLOC_STRUCT(vc4_compiled_shader);
         vc4_fs_compile(vc4, shader, key);
         util_hash_table_set(vc4->fs_cache, key, shader);
+
+        if (vc4->rasterizer->base.flatshade &&
+            vc4->prog.fs &&
+            vc4->prog.fs->color_inputs != shader->color_inputs) {
+                vc4->dirty |= VC4_DIRTY_FLAT_SHADE_FLAGS;
+        }
 
         vc4->prog.fs = shader;
 }
