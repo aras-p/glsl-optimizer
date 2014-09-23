@@ -2303,8 +2303,8 @@ reuse_framebuffer_texture_attachment(struct gl_framebuffer *fb,
 
 
 /**
- * Common code called by glFramebufferTexture1D/2D/3DEXT() and
- * glFramebufferTextureLayerEXT().
+ * Common code called by glFramebufferTexture1D/2D/3D() and
+ * glFramebufferTextureLayer().
  *
  * \param textarget is the textarget that was passed to the
  * glFramebufferTexture...() function, or 0 if the corresponding function
@@ -2326,14 +2326,14 @@ framebuffer_texture(struct gl_context *ctx, const char *caller, GLenum target,
    fb = get_framebuffer_target(ctx, target);
    if (!fb) {
       _mesa_error(ctx, GL_INVALID_ENUM,
-                  "glFramebufferTexture%sEXT(target=0x%x)", caller, target);
+                  "glFramebufferTexture%s(target=0x%x)", caller, target);
       return;
    }
 
    /* check framebuffer binding */
    if (_mesa_is_winsys_fbo(fb)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glFramebufferTexture%sEXT", caller);
+                  "glFramebufferTexture%s", caller);
       return;
    }
 
@@ -2397,14 +2397,14 @@ framebuffer_texture(struct gl_context *ctx, const char *caller, GLenum target,
       else {
          /* can't render to a non-existant texture */
          _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glFramebufferTexture%sEXT(non existant texture)",
+                     "glFramebufferTexture%s(non existant texture)",
                      caller);
          return;
       }
 
       if (err) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glFramebufferTexture%sEXT(texture target mismatch)",
+                     "glFramebufferTexture%s(texture target mismatch)",
                      caller);
          return;
       }
@@ -2413,7 +2413,7 @@ framebuffer_texture(struct gl_context *ctx, const char *caller, GLenum target,
          const GLint maxSize = 1 << (ctx->Const.Max3DTextureLevels - 1);
          if (zoffset < 0 || zoffset >= maxSize) {
             _mesa_error(ctx, GL_INVALID_VALUE,
-                        "glFramebufferTexture%sEXT(zoffset)", caller);
+                        "glFramebufferTexture%s(zoffset)", caller);
             return;
          }
       }
@@ -2424,7 +2424,7 @@ framebuffer_texture(struct gl_context *ctx, const char *caller, GLenum target,
          if (zoffset < 0 ||
              zoffset >= (GLint) ctx->Const.MaxArrayTextureLayers) {
             _mesa_error(ctx, GL_INVALID_VALUE,
-                        "glFramebufferTexture%sEXT(layer)", caller);
+                        "glFramebufferTexture%s(layer)", caller);
             return;
          }
       }
@@ -2433,7 +2433,7 @@ framebuffer_texture(struct gl_context *ctx, const char *caller, GLenum target,
       if ((level < 0) ||
           (level >= _mesa_max_texture_levels(ctx, maxLevelsTarget))) {
          _mesa_error(ctx, GL_INVALID_VALUE,
-                     "glFramebufferTexture%sEXT(level)", caller);
+                     "glFramebufferTexture%s(level)", caller);
          return;
       }
    }
@@ -2441,7 +2441,7 @@ framebuffer_texture(struct gl_context *ctx, const char *caller, GLenum target,
    att = get_attachment(ctx, fb, attachment);
    if (att == NULL) {
       _mesa_error(ctx, GL_INVALID_ENUM,
-                  "glFramebufferTexture%sEXT(attachment)", caller);
+                  "glFramebufferTexture%s(attachment)", caller);
       return;
    }
 
@@ -2531,7 +2531,7 @@ _mesa_FramebufferTexture1D(GLenum target, GLenum attachment,
 
       if (error) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glFramebufferTexture1DEXT(textarget=%s)",
+                     "glFramebufferTexture1D(textarget=%s)",
                      _mesa_lookup_enum_by_nr(textarget));
          return;
       }
@@ -2582,7 +2582,7 @@ _mesa_FramebufferTexture2D(GLenum target, GLenum attachment,
 
       if (error) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glFramebufferTexture2DEXT(textarget=%s)",
+                     "glFramebufferTexture2D(textarget=%s)",
                      _mesa_lookup_enum_by_nr(textarget));
          return;
       }
@@ -2602,7 +2602,7 @@ _mesa_FramebufferTexture3D(GLenum target, GLenum attachment,
 
    if ((texture != 0) && (textarget != GL_TEXTURE_3D)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glFramebufferTexture3DEXT(textarget)");
+                  "glFramebufferTexture3D(textarget)");
       return;
    }
 
@@ -2629,7 +2629,7 @@ _mesa_FramebufferTexture(GLenum target, GLenum attachment,
    GET_CURRENT_CONTEXT(ctx);
 
    if (_mesa_has_geometry_shaders(ctx)) {
-      framebuffer_texture(ctx, "Layer", target, attachment, 0, texture,
+      framebuffer_texture(ctx, "", target, attachment, 0, texture,
                           level, 0, GL_TRUE);
    } else {
       _mesa_error(ctx, GL_INVALID_OPERATION,
@@ -2651,26 +2651,26 @@ _mesa_FramebufferRenderbuffer(GLenum target, GLenum attachment,
    fb = get_framebuffer_target(ctx, target);
    if (!fb) {
       _mesa_error(ctx, GL_INVALID_ENUM,
-                  "glFramebufferRenderbufferEXT(target)");
+                  "glFramebufferRenderbuffer(target)");
       return;
    }
 
    if (renderbufferTarget != GL_RENDERBUFFER_EXT) {
       _mesa_error(ctx, GL_INVALID_ENUM,
-                  "glFramebufferRenderbufferEXT(renderbufferTarget)");
+                  "glFramebufferRenderbuffer(renderbufferTarget)");
       return;
    }
 
    if (_mesa_is_winsys_fbo(fb)) {
       /* Can't attach new renderbuffers to a window system framebuffer */
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glFramebufferRenderbufferEXT");
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glFramebufferRenderbuffer");
       return;
    }
 
    att = get_attachment(ctx, fb, attachment);
    if (att == NULL) {
       _mesa_error(ctx, GL_INVALID_ENUM,
-                  "glFramebufferRenderbufferEXT(invalid attachment %s)",
+                  "glFramebufferRenderbuffer(invalid attachment %s)",
                   _mesa_lookup_enum_by_nr(attachment));
       return;
    }
@@ -2679,13 +2679,13 @@ _mesa_FramebufferRenderbuffer(GLenum target, GLenum attachment,
       rb = _mesa_lookup_renderbuffer(ctx, renderbuffer);
       if (!rb) {
 	 _mesa_error(ctx, GL_INVALID_OPERATION,
-		     "glFramebufferRenderbufferEXT(non-existant"
+		     "glFramebufferRenderbuffer(non-existant"
                      " renderbuffer %u)", renderbuffer);
 	 return;
       }
       else if (rb == &DummyRenderbuffer) {
 	 _mesa_error(ctx, GL_INVALID_OPERATION,
-		     "glFramebufferRenderbufferEXT(renderbuffer %u)",
+		     "glFramebufferRenderbuffer(renderbuffer %u)",
                      renderbuffer);
 	 return;
       }
@@ -2701,7 +2701,7 @@ _mesa_FramebufferRenderbuffer(GLenum target, GLenum attachment,
       const GLenum baseFormat = _mesa_get_format_base_format(rb->Format);
       if (baseFormat != GL_DEPTH_STENCIL) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glFramebufferRenderbufferEXT(renderbuffer"
+                     "glFramebufferRenderbuffer(renderbuffer"
                      " is not DEPTH_STENCIL format)");
          return;
       }
@@ -2734,7 +2734,7 @@ _mesa_GetFramebufferAttachmentParameteriv(GLenum target, GLenum attachment,
    buffer = get_framebuffer_target(ctx, target);
    if (!buffer) {
       _mesa_error(ctx, GL_INVALID_ENUM,
-                  "glGetFramebufferAttachmentParameterivEXT(target)");
+                  "glGetFramebufferAttachmentParameteriv(target)");
       return;
    }
 
@@ -2773,7 +2773,7 @@ _mesa_GetFramebufferAttachmentParameteriv(GLenum target, GLenum attachment,
 
    if (att == NULL) {
       _mesa_error(ctx, GL_INVALID_ENUM,
-                  "glGetFramebufferAttachmentParameterivEXT(attachment)");
+                  "glGetFramebufferAttachmentParameteriv(attachment)");
       return;
    }
 
@@ -2797,7 +2797,7 @@ _mesa_GetFramebufferAttachmentParameteriv(GLenum target, GLenum attachment,
       stencilAtt = get_attachment(ctx, buffer, GL_STENCIL_ATTACHMENT);
       if (depthAtt->Renderbuffer != stencilAtt->Renderbuffer) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glGetFramebufferAttachmentParameterivEXT(DEPTH/STENCIL"
+                     "glGetFramebufferAttachmentParameteriv(DEPTH/STENCIL"
                      " attachments differ)");
          return;
       }
@@ -2832,7 +2832,7 @@ _mesa_GetFramebufferAttachmentParameteriv(GLenum target, GLenum attachment,
       }
       else if (att->Type == GL_NONE) {
          _mesa_error(ctx, err,
-                     "glGetFramebufferAttachmentParameterivEXT(pname)");
+                     "glGetFramebufferAttachmentParameteriv(pname)");
       }
       else {
          goto invalid_pname_enum;
@@ -2849,7 +2849,7 @@ _mesa_GetFramebufferAttachmentParameteriv(GLenum target, GLenum attachment,
       }
       else if (att->Type == GL_NONE) {
          _mesa_error(ctx, err,
-                     "glGetFramebufferAttachmentParameterivEXT(pname)");
+                     "glGetFramebufferAttachmentParameteriv(pname)");
       }
       else {
          goto invalid_pname_enum;
@@ -2860,7 +2860,7 @@ _mesa_GetFramebufferAttachmentParameteriv(GLenum target, GLenum attachment,
          goto invalid_pname_enum;
       } else if (att->Type == GL_NONE) {
          _mesa_error(ctx, err,
-                     "glGetFramebufferAttachmentParameterivEXT(pname)");
+                     "glGetFramebufferAttachmentParameteriv(pname)");
       } else if (att->Type == GL_TEXTURE) {
          if (att->Texture && att->Texture->Target == GL_TEXTURE_3D) {
             *params = att->Zoffset;
@@ -2881,7 +2881,7 @@ _mesa_GetFramebufferAttachmentParameteriv(GLenum target, GLenum attachment,
       }
       else if (att->Type == GL_NONE) {
          _mesa_error(ctx, err,
-                     "glGetFramebufferAttachmentParameterivEXT(pname)");
+                     "glGetFramebufferAttachmentParameteriv(pname)");
       }
       else {
          if (ctx->Extensions.EXT_framebuffer_sRGB) {
@@ -2904,7 +2904,7 @@ _mesa_GetFramebufferAttachmentParameteriv(GLenum target, GLenum attachment,
       }
       else if (att->Type == GL_NONE) {
          _mesa_error(ctx, err,
-                     "glGetFramebufferAttachmentParameterivEXT(pname)");
+                     "glGetFramebufferAttachmentParameteriv(pname)");
       }
       else {
          mesa_format format = att->Renderbuffer->Format;
@@ -2956,7 +2956,7 @@ _mesa_GetFramebufferAttachmentParameteriv(GLenum target, GLenum attachment,
       }
       else if (att->Type == GL_NONE) {
          _mesa_error(ctx, err,
-                     "glGetFramebufferAttachmentParameterivEXT(pname)");
+                     "glGetFramebufferAttachmentParameteriv(pname)");
       }
       else if (att->Texture) {
          const struct gl_texture_image *texImage =
