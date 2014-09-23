@@ -75,8 +75,6 @@ static void si_shader_es(struct pipe_context *ctx, struct si_shader *shader)
 		       S_00B328_VGPR_COMP_CNT(vgpr_comp_cnt));
 	si_pm4_set_reg(pm4, R_00B32C_SPI_SHADER_PGM_RSRC2_ES,
 		       S_00B32C_USER_SGPR(num_user_sgprs));
-
-	sctx->b.flags |= R600_CONTEXT_INV_SHADER_CACHE;
 }
 
 static void si_shader_gs(struct pipe_context *ctx, struct si_shader *shader)
@@ -147,8 +145,6 @@ static void si_shader_gs(struct pipe_context *ctx, struct si_shader *shader)
 		       S_00B228_SGPRS((num_sgprs - 1) / 8));
 	si_pm4_set_reg(pm4, R_00B22C_SPI_SHADER_PGM_RSRC2_GS,
 		       S_00B22C_USER_SGPR(num_user_sgprs));
-
-	sctx->b.flags |= R600_CONTEXT_INV_SHADER_CACHE;
 }
 
 static void si_shader_vs(struct pipe_context *ctx, struct si_shader *shader)
@@ -223,8 +219,6 @@ static void si_shader_vs(struct pipe_context *ctx, struct si_shader *shader)
 		       S_00B12C_SO_BASE2_EN(!!shader->selector->so.stride[2]) |
 		       S_00B12C_SO_BASE3_EN(!!shader->selector->so.stride[3]) |
 		       S_00B12C_SO_EN(!!shader->selector->so.num_outputs));
-
-	sctx->b.flags |= R600_CONTEXT_INV_SHADER_CACHE;
 }
 
 static void si_shader_ps(struct pipe_context *ctx, struct si_shader *shader)
@@ -305,8 +299,6 @@ static void si_shader_ps(struct pipe_context *ctx, struct si_shader *shader)
 	si_pm4_set_reg(pm4, R_00B02C_SPI_SHADER_PGM_RSRC2_PS,
 		       S_00B02C_EXTRA_LDS_SIZE(shader->lds_size) |
 		       S_00B02C_USER_SGPR(num_user_sgprs));
-
-	sctx->b.flags |= R600_CONTEXT_INV_SHADER_CACHE;
 }
 
 /*
