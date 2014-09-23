@@ -33,36 +33,36 @@
 
 extern uint64_t INTEL_DEBUG;
 
-#define DEBUG_TEXTURE	  0x1
-#define DEBUG_STATE	  0x2
-#define DEBUG_BLIT	  0x8
-#define DEBUG_MIPTREE     0x10
-#define DEBUG_PERF	  0x20
-#define DEBUG_PERFMON     0x40
-#define DEBUG_BATCH       0x80
-#define DEBUG_PIXEL       0x100
-#define DEBUG_BUFMGR      0x200
-#define DEBUG_FBO         0x800
-#define DEBUG_GS          0x1000
-#define DEBUG_SYNC	  0x2000
-#define DEBUG_PRIMS	  0x4000
-#define DEBUG_VERTS	  0x8000
-#define DEBUG_DRI         0x10000
-#define DEBUG_SF          0x20000
-#define DEBUG_STATS       0x100000
-#define DEBUG_WM          0x400000
-#define DEBUG_URB         0x800000
-#define DEBUG_VS          0x1000000
-#define DEBUG_CLIP        0x2000000
-#define DEBUG_AUB         0x4000000
-#define DEBUG_SHADER_TIME 0x8000000
-#define DEBUG_BLORP       0x10000000
-#define DEBUG_NO16        0x20000000
-#define DEBUG_VUE         0x40000000
-#define DEBUG_NO_DUAL_OBJECT_GS 0x80000000
-#define DEBUG_OPTIMIZER   0x100000000
-#define DEBUG_NO_ANNOTATION 0x200000000
-#define DEBUG_NO8        0x40000000
+#define DEBUG_TEXTURE             (1 <<  0)
+#define DEBUG_STATE               (1 <<  1)
+#define DEBUG_BLIT                (1 <<  2)
+#define DEBUG_MIPTREE             (1 <<  3)
+#define DEBUG_PERF                (1 <<  4)
+#define DEBUG_PERFMON             (1 <<  5)
+#define DEBUG_BATCH               (1 <<  6)
+#define DEBUG_PIXEL               (1 <<  7)
+#define DEBUG_BUFMGR              (1 <<  8)
+#define DEBUG_FBO                 (1 <<  9)
+#define DEBUG_GS                  (1 << 10)
+#define DEBUG_SYNC                (1 << 11)
+#define DEBUG_PRIMS               (1 << 12)
+#define DEBUG_VERTS               (1 << 13)
+#define DEBUG_DRI                 (1 << 14)
+#define DEBUG_SF                  (1 << 15)
+#define DEBUG_STATS               (1 << 16)
+#define DEBUG_WM                  (1 << 17)
+#define DEBUG_URB                 (1 << 18)
+#define DEBUG_VS                  (1 << 19)
+#define DEBUG_CLIP                (1 << 20)
+#define DEBUG_AUB                 (1 << 21)
+#define DEBUG_SHADER_TIME         (1 << 22)
+#define DEBUG_BLORP               (1 << 23)
+#define DEBUG_NO16                (1 << 24)
+#define DEBUG_VUE                 (1 << 25)
+#define DEBUG_NO_DUAL_OBJECT_GS   (1 << 26)
+#define DEBUG_OPTIMIZER           (1 << 27)
+#define DEBUG_NO_ANNOTATION       (1 << 28)
+#define DEBUG_NO8                 (1 << 29)
 
 #ifdef HAVE_ANDROID_PLATFORM
 #define LOG_TAG "INTEL-MESA"
