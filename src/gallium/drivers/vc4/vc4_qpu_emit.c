@@ -79,12 +79,14 @@ static void
 fixup_raddr_conflict(struct vc4_compile *c,
                struct qpu_reg src0, struct qpu_reg *src1)
 {
-        if ((src0.mux == QPU_MUX_A || src0.mux == QPU_MUX_B) &&
-            (src1->mux == QPU_MUX_A || src1->mux == QPU_MUX_B) &&
-            src0.addr != src1->addr) {
-                queue(c, qpu_a_MOV(qpu_r3(), *src1));
-                *src1 = qpu_r3();
+        if ((src0.mux != QPU_MUX_A && src0.mux != QPU_MUX_B) ||
+            src0.mux != src1->mux ||
+            src0.addr == src1->addr) {
+                return;
         }
+
+        queue(c, qpu_a_MOV(qpu_r3(), *src1));
+        *src1 = qpu_r3();
 }
 
 static void
