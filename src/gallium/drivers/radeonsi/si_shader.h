@@ -33,10 +33,10 @@
 #include "tgsi/tgsi_scan.h"
 #include "si_state.h"
 
-#define SI_SGPR_CONST		0
-#define SI_SGPR_SAMPLER		2
-#define SI_SGPR_RESOURCE	4
-#define SI_SGPR_RW_BUFFERS	6  /* rings (& stream-out, VS only) */
+#define SI_SGPR_RW_BUFFERS	0  /* rings (& stream-out, VS only) */
+#define SI_SGPR_CONST		2
+#define SI_SGPR_SAMPLER		4
+#define SI_SGPR_RESOURCE	6
 #define SI_SGPR_VERTEX_BUFFER	8  /* VS only */
 #define SI_SGPR_BASE_VERTEX	10 /* VS only */
 #define SI_SGPR_START_INSTANCE	11 /* VS only */
@@ -44,13 +44,14 @@
 
 #define SI_VS_NUM_USER_SGPR	12
 #define SI_GS_NUM_USER_SGPR	8
+#define SI_GSCOPY_NUM_USER_SGPR	4
 #define SI_PS_NUM_USER_SGPR	9
 
 /* LLVM function parameter indices */
-#define SI_PARAM_CONST		0
-#define SI_PARAM_SAMPLER	1
-#define SI_PARAM_RESOURCE	2
-#define SI_PARAM_RW_BUFFERS	3
+#define SI_PARAM_RW_BUFFERS	0
+#define SI_PARAM_CONST		1
+#define SI_PARAM_SAMPLER	2
+#define SI_PARAM_RESOURCE	3
 
 /* VS only parameters */
 #define SI_PARAM_VERTEX_BUFFER	4
@@ -183,6 +184,7 @@ struct si_shader {
 	bool			vs_out_layer;
 	unsigned		nr_pos_exports;
 	unsigned		clip_dist_write;
+	bool			is_gs_copy_shader;
 };
 
 static inline struct si_shader* si_get_vs_state(struct si_context *sctx)

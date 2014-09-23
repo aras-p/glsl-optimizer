@@ -166,7 +166,11 @@ static void si_shader_vs(struct pipe_context *ctx, struct si_shader *shader)
 
 	vgpr_comp_cnt = shader->uses_instanceid ? 3 : 0;
 
-	num_user_sgprs = SI_VS_NUM_USER_SGPR;
+	if (shader->is_gs_copy_shader)
+		num_user_sgprs = SI_GSCOPY_NUM_USER_SGPR;
+	else
+		num_user_sgprs = SI_VS_NUM_USER_SGPR;
+
 	num_sgprs = shader->num_sgprs;
 	if (num_user_sgprs > num_sgprs) {
 		/* Last 2 reserved SGPRs are used for VCC */

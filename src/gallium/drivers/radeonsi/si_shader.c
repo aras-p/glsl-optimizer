@@ -2402,8 +2402,8 @@ static void create_function(struct si_shader_context *si_shader_ctx)
 	v8i32 = LLVMVectorType(i32, 8);
 	v16i8 = LLVMVectorType(i8, 16);
 
-	params[SI_PARAM_CONST] = const_array(v16i8, SI_NUM_CONST_BUFFERS);
 	params[SI_PARAM_RW_BUFFERS] = const_array(v16i8, SI_NUM_RW_BUFFERS);
+	params[SI_PARAM_CONST] = const_array(v16i8, SI_NUM_CONST_BUFFERS);
 	params[SI_PARAM_SAMPLER] = const_array(v4i32, SI_NUM_SAMPLER_STATES);
 	params[SI_PARAM_RESOURCE] = const_array(v8i32, SI_NUM_SAMPLER_VIEWS);
 	last_array_pointer = SI_PARAM_RESOURCE;
@@ -2415,10 +2415,16 @@ static void create_function(struct si_shader_context *si_shader_ctx)
 		params[SI_PARAM_BASE_VERTEX] = i32;
 		params[SI_PARAM_START_INSTANCE] = i32;
 		num_params = SI_PARAM_START_INSTANCE+1;
+
 		if (shader->key.vs.as_es) {
 			params[SI_PARAM_ES2GS_OFFSET] = i32;
 			num_params++;
 		} else {
+			if (shader->is_gs_copy_shader) {
+				last_array_pointer = SI_PARAM_CONST;
+				num_params = SI_PARAM_CONST+1;
+			}
+
 			/* The locations of the other parameters are assigned dynamically. */
 
 			/* Streamout SGPRs. */
@@ -2716,6 +2722,7 @@ static int si_generate_gs_copy_shader(struct si_screen *sscreen,
 	outputs = MALLOC(gs->noutput * sizeof(outputs[0]));
 
 	si_shader_ctx->type = TGSI_PROCESSOR_VERTEX;
+	shader->is_gs_copy_shader = true;
 
 	radeon_llvm_context_init(&si_shader_ctx->radeon_bld);
 
