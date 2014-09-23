@@ -1252,18 +1252,16 @@ idiv_emit_cpu(
    LLVMValueRef div_mask = lp_build_cmp(&bld_base->uint_bld,
                                         PIPE_FUNC_EQUAL, emit_data->args[1],
                                         bld_base->uint_bld.zero);
-   /* We want to make sure that we never divide/mod by zero to not 
-    * generate sigfpe. We don't want to crash just because the 
+   /* We want to make sure that we never divide/mod by zero to not
+    * generate sigfpe. We don't want to crash just because the
     * shader is doing something weird. */
    LLVMValueRef divisor = LLVMBuildOr(builder,
                                       div_mask,
                                       emit_data->args[1], "");
-   LLVMValueRef result = lp_build_div(&bld_base->uint_bld,
+   LLVMValueRef result = lp_build_div(&bld_base->int_bld,
                                       emit_data->args[0], divisor);
-                                      
    LLVMValueRef not_div_mask = LLVMBuildNot(builder,
                                             div_mask,"");
-                                          
    /* idiv by zero doesn't have a guaranteed return value chose 0 for now. */
    emit_data->output[emit_data->chan] = LLVMBuildAnd(builder,
                                                      not_div_mask,
@@ -1693,8 +1691,8 @@ udiv_emit_cpu(
    LLVMValueRef div_mask = lp_build_cmp(&bld_base->uint_bld,
                                         PIPE_FUNC_EQUAL, emit_data->args[1],
                                         bld_base->uint_bld.zero);
-   /* We want to make sure that we never divide/mod by zero to not 
-    * generate sigfpe. We don't want to crash just because the 
+   /* We want to make sure that we never divide/mod by zero to not
+    * generate sigfpe. We don't want to crash just because the
     * shader is doing something weird. */
    LLVMValueRef divisor = LLVMBuildOr(builder,
                                       div_mask,
