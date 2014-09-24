@@ -27,10 +27,10 @@
 
 #include "util/u_upload_mgr.h"
 
-#include "ilo_3d.h"
 #include "ilo_blit.h"
 #include "ilo_blitter.h"
 #include "ilo_cp.h"
+#include "ilo_draw.h"
 #include "ilo_gpgpu.h"
 #include "ilo_query.h"
 #include "ilo_resource.h"

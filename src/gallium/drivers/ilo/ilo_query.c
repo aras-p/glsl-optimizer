@@ -27,9 +27,9 @@
 
 #include "intel_winsys.h"
 
-#include "ilo_3d.h"
 #include "ilo_context.h"
 #include "ilo_cp.h"
+#include "ilo_draw.h"
 #include "ilo_query.h"
 
 static const struct {

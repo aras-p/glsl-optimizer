@@ -1,6 +1,4 @@
 C_SOURCES := \
-	ilo_3d.c \
-	ilo_3d.h \
 	ilo_3d_pipeline.c \
 	ilo_3d_pipeline_gen6.c \
 	ilo_3d_pipeline_gen6.h \
@@ -29,6 +27,8 @@ C_SOURCES := \
 	ilo_context.h \
 	ilo_cp.c \
 	ilo_cp.h \
+	ilo_draw.c \
+	ilo_draw.h \
 	ilo_format.c \
 	ilo_format.h \
 	ilo_gpgpu.c \

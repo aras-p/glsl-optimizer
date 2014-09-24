@@ -25,8 +25,8 @@
  *    Chia-I Wu <olv@lunarg.com>
  */
 
-#ifndef ILO_3D_H
-#define ILO_3D_H
+#ifndef ILO_DRAW_H
+#define ILO_DRAW_H
 
 #include "ilo_common.h"
 #include "ilo_cp.h"
@@ -77,4 +77,4 @@ ilo_3d_process_query(struct pipe_context *pipe, struct ilo_query *q);
 void
 ilo_init_3d_functions(struct ilo_context *ilo);
 
-#endif /* ILO_3D_H */
+#endif /* ILO_DRAW_H */

@@ -35,7 +35,7 @@
 #include "ilo_query.h"
 #include "ilo_shader.h"
 #include "ilo_state.h"
-#include "ilo_3d.h"
+#include "ilo_draw.h"
 
 static void
 ilo_3d_own_render_ring(struct ilo_3d *hw3d)
