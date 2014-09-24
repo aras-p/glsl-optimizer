@@ -102,8 +102,10 @@ vc4_create_rasterizer_state(struct pipe_context *pctx,
         if (!(cso->cull_face & PIPE_FACE_BACK))
                 so->config_bits[0] |= VC4_CONFIG_BITS_ENABLE_PRIM_BACK;
 
-        /* XXX: per_vertex */
-        so->point_size = cso->point_size;
+        /* Workaround: HW-2726 PTB does not handle zero-size points (BCM2835,
+         * BCM21553).
+         */
+        so->point_size = MAX2(cso->point_size, .125);
 
         if (cso->front_ccw)
                 so->config_bits[0] |= VC4_CONFIG_BITS_CW_PRIMITIVES;

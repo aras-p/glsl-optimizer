@@ -54,6 +54,9 @@ vc4_emit_state(struct pipe_context *pctx)
                 cl_u16(&vc4->bcl, vc4->rasterizer->offset_factor);
                 cl_u16(&vc4->bcl, vc4->rasterizer->offset_units);
 
+                cl_u8(&vc4->bcl, VC4_PACKET_POINT_SIZE);
+                cl_f(&vc4->bcl, vc4->rasterizer->point_size);
+
                 cl_u8(&vc4->bcl, VC4_PACKET_LINE_WIDTH);
                 cl_f(&vc4->bcl, vc4->rasterizer->base.line_width);
         }

@@ -243,7 +243,8 @@ vc4_screen_get_paramf(struct pipe_screen *pscreen, enum pipe_capf param)
 
         case PIPE_CAPF_MAX_POINT_WIDTH:
         case PIPE_CAPF_MAX_POINT_WIDTH_AA:
-                return 8192.0f;
+                return 512.0f;
+
         case PIPE_CAPF_MAX_TEXTURE_ANISOTROPY:
                 return 0.0f;
         case PIPE_CAPF_MAX_TEXTURE_LOD_BIAS:

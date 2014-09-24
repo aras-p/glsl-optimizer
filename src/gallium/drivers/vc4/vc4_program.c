@@ -67,6 +67,7 @@ struct vc4_fs_key {
 struct vc4_vs_key {
         struct vc4_key base;
         enum pipe_format attr_formats[8];
+        bool per_vertex_point_size;
 };
 
 static void
@@ -934,6 +935,9 @@ emit_tgsi_declaration(struct vc4_compile *c,
                 case TGSI_SEMANTIC_COLOR:
                         c->output_color_index = decl->Range.First * 4;
                         break;
+                case TGSI_SEMANTIC_PSIZE:
+                        c->output_point_size_index = decl->Range.First * 4;
+                        break;
                 }
 
                 break;
@@ -1432,6 +1436,24 @@ emit_rcp_wc_write(struct vc4_compile *c, struct qreg rcp_w)
 }
 
 static void
+emit_point_size_write(struct vc4_compile *c)
+{
+        struct qreg point_size;
+
+        if (c->output_point_size_index)
+                point_size = c->outputs[c->output_point_size_index + 3];
+        else
+                point_size = qir_uniform_f(c, 1.0);
+
+        /* Workaround: HW-2726 PTB does not handle zero-size points (BCM2835,
+         * BCM21553).
+         */
+        point_size = qir_FMAX(c, point_size, qir_uniform_f(c, .125));
+
+        qir_VPM_WRITE(c, point_size);
+}
+
+static void
 emit_vert_end(struct vc4_compile *c)
 {
         struct qreg rcp_w = qir_RCP(c, c->outputs[3]);
@@ -1439,6 +1461,8 @@ emit_vert_end(struct vc4_compile *c)
         emit_scaled_viewport_write(c, rcp_w);
         emit_zs_write(c, rcp_w);
         emit_rcp_wc_write(c, rcp_w);
+        if (c->vs_key->per_vertex_point_size)
+                emit_point_size_write(c);
 
         for (int i = 4; i < c->num_outputs; i++) {
                 qir_VPM_WRITE(c, c->outputs[i]);
@@ -1456,6 +1480,8 @@ emit_coord_end(struct vc4_compile *c)
         emit_scaled_viewport_write(c, rcp_w);
         emit_zs_write(c, rcp_w);
         emit_rcp_wc_write(c, rcp_w);
+        if (c->vs_key->per_vertex_point_size)
+                emit_point_size_write(c);
 }
 
 static struct vc4_compile *
@@ -1700,7 +1726,7 @@ vc4_update_compiled_fs(struct vc4_context *vc4, uint8_t prim_mode)
 }
 
 static void
-vc4_update_compiled_vs(struct vc4_context *vc4)
+vc4_update_compiled_vs(struct vc4_context *vc4, uint8_t prim_mode)
 {
         struct vc4_vs_key local_key;
         struct vc4_vs_key *key = &local_key;
@@ -1711,6 +1737,10 @@ vc4_update_compiled_vs(struct vc4_context *vc4)
 
         for (int i = 0; i < ARRAY_SIZE(key->attr_formats); i++)
                 key->attr_formats[i] = vc4->vtx->pipe[i].src_format;
+
+        key->per_vertex_point_size =
+                (prim_mode == PIPE_PRIM_POINTS &&
+                 vc4->rasterizer->base.point_size_per_vertex);
 
         vc4->prog.vs = util_hash_table_get(vc4->vs_cache, key);
         if (vc4->prog.vs)
@@ -1730,7 +1760,7 @@ void
 vc4_update_compiled_shaders(struct vc4_context *vc4, uint8_t prim_mode)
 {
         vc4_update_compiled_fs(vc4, prim_mode);
-        vc4_update_compiled_vs(vc4);
+        vc4_update_compiled_vs(vc4, prim_mode);
 }
 
 static unsigned

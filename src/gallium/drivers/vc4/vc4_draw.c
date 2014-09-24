@@ -153,7 +153,11 @@ vc4_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
                            1);
 
         cl_start_shader_reloc(&vc4->shader_rec, 3 + vtx->num_elements);
-        cl_u16(&vc4->shader_rec, VC4_SHADER_FLAG_ENABLE_CLIPPING);
+        cl_u16(&vc4->shader_rec,
+               VC4_SHADER_FLAG_ENABLE_CLIPPING |
+               ((info->mode == PIPE_PRIM_POINTS &&
+                 vc4->rasterizer->base.point_size_per_vertex) ?
+                VC4_SHADER_FLAG_VS_POINT_SIZE : 0));
         cl_u8(&vc4->shader_rec, 0); /* fs num uniforms (unused) */
         cl_u8(&vc4->shader_rec, vc4->prog.fs->num_inputs);
         cl_reloc(vc4, &vc4->shader_rec, vc4->prog.fs->bo, 0);
