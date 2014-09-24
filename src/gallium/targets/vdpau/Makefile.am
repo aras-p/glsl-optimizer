@@ -48,7 +48,7 @@ include $(top_srcdir)/src/gallium/drivers/radeonsi/Automake.inc
 if HAVE_GALLIUM_STATIC_TARGETS
 
 libvdpau_gallium_la_SOURCES += target.c
-libvdpau_gallium_la_CPPFLAGS = $(TARGET_CPPFLAGS)
+libvdpau_gallium_la_CPPFLAGS = $(TARGET_CPPFLAGS) -DGALLIUM_STATIC_TARGETS=1
 libvdpau_gallium_la_LIBADD += $(TARGET_LIB_DEPS) \
 	$(TARGET_RADEON_WINSYS) $(TARGET_RADEON_COMMON)
 

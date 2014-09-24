@@ -43,7 +43,7 @@ include $(top_srcdir)/src/gallium/drivers/r600/Automake.inc
 include $(top_srcdir)/src/gallium/drivers/radeonsi/Automake.inc
 
 libomx_mesa_la_SOURCES += target.c
-libomx_mesa_la_CPPFLAGS = $(TARGET_CPPFLAGS)
+libomx_mesa_la_CPPFLAGS = $(TARGET_CPPFLAGS) -DGALLIUM_STATIC_TARGETS=1
 libomx_mesa_la_LIBADD += $(TARGET_LIB_DEPS) \
 	$(TARGET_RADEON_WINSYS) $(TARGET_RADEON_COMMON)
 

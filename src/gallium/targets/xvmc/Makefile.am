@@ -43,7 +43,7 @@ include $(top_srcdir)/src/gallium/drivers/r600/Automake.inc
 if HAVE_GALLIUM_STATIC_TARGETS
 
 libXvMCgallium_la_SOURCES += target.c
-libXvMCgallium_la_CPPFLAGS = $(TARGET_CPPFLAGS)
+libXvMCgallium_la_CPPFLAGS = $(TARGET_CPPFLAGS) -DGALLIUM_STATIC_TARGETS=1
 libXvMCgallium_la_LIBADD += $(TARGET_LIB_DEPS) \
 	$(TARGET_RADEON_WINSYS) $(TARGET_RADEON_COMMON)
 
