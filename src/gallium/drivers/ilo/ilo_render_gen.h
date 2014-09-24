@@ -30,11 +30,11 @@
 
 #include "ilo_common.h"
 
-struct ilo_3d_pipeline;
 struct ilo_query;
+struct ilo_render;
 struct ilo_state_vector;
 
-struct gen6_pipeline_session {
+struct gen6_draw_session {
    uint32_t pipe_dirty;
 
    int reduced_prim;
@@ -46,13 +46,13 @@ struct gen6_pipeline_session {
    bool prim_changed;
    bool primitive_restart_changed;
 
-   void (*emit_draw_states)(struct ilo_3d_pipeline *p,
+   void (*emit_draw_states)(struct ilo_render *render,
                             const struct ilo_state_vector *ilo,
-                            struct gen6_pipeline_session *session);
+                            struct gen6_draw_session *session);
 
-   void (*emit_draw_commands)(struct ilo_3d_pipeline *p,
+   void (*emit_draw_commands)(struct ilo_render *render,
                               const struct ilo_state_vector *ilo,
-                              struct gen6_pipeline_session *session);
+                              struct gen6_draw_session *session);
 
    /* indirect states */
    bool viewport_state_changed;
@@ -80,86 +80,86 @@ struct gen6_rectlist_session {
 };
 
 void
-gen6_pipeline_prepare(const struct ilo_3d_pipeline *p,
-                      const struct ilo_state_vector *ilo,
-                      struct gen6_pipeline_session *session);
-
-void
-gen6_pipeline_draw(struct ilo_3d_pipeline *p,
-                   const struct ilo_state_vector *ilo,
-                   struct gen6_pipeline_session *session);
-
-void
-gen6_pipeline_end(struct ilo_3d_pipeline *p,
+gen6_draw_prepare(const struct ilo_render *r,
                   const struct ilo_state_vector *ilo,
-                  struct gen6_pipeline_session *session);
+                  struct gen6_draw_session *session);
 
 void
-gen6_pipeline_common_select(struct ilo_3d_pipeline *p,
-                            const struct ilo_state_vector *ilo,
-                            struct gen6_pipeline_session *session);
+gen6_draw_emit(struct ilo_render *r,
+               const struct ilo_state_vector *ilo,
+               struct gen6_draw_session *session);
 
 void
-gen6_pipeline_common_sip(struct ilo_3d_pipeline *p,
-                         const struct ilo_state_vector *ilo,
-                         struct gen6_pipeline_session *session);
+gen6_draw_end(struct ilo_render *r,
+              const struct ilo_state_vector *ilo,
+              struct gen6_draw_session *session);
 
 void
-gen6_pipeline_common_base_address(struct ilo_3d_pipeline *p,
-                                  const struct ilo_state_vector *ilo,
-                                  struct gen6_pipeline_session *session);
-
-void
-gen6_pipeline_vf(struct ilo_3d_pipeline *p,
-                 const struct ilo_state_vector *ilo,
-                 struct gen6_pipeline_session *session);
-
-void
-gen6_pipeline_vf_statistics(struct ilo_3d_pipeline *p,
-                            const struct ilo_state_vector *ilo,
-                            struct gen6_pipeline_session *session);
-
-void
-gen6_pipeline_vs(struct ilo_3d_pipeline *p,
-                 const struct ilo_state_vector *ilo,
-                 struct gen6_pipeline_session *session);
-
-void
-gen6_pipeline_clip(struct ilo_3d_pipeline *p,
-                   const struct ilo_state_vector *ilo,
-                   struct gen6_pipeline_session *session);
-
-void
-gen6_pipeline_sf_rect(struct ilo_3d_pipeline *p,
-                      const struct ilo_state_vector *ilo,
-                      struct gen6_pipeline_session *session);
-
-void
-gen6_pipeline_wm_raster(struct ilo_3d_pipeline *p,
+gen6_draw_common_select(struct ilo_render *r,
                         const struct ilo_state_vector *ilo,
-                        struct gen6_pipeline_session *session);
+                        struct gen6_draw_session *session);
 
 void
-gen6_pipeline_states(struct ilo_3d_pipeline *p,
+gen6_draw_common_sip(struct ilo_render *r,
                      const struct ilo_state_vector *ilo,
-                     struct gen6_pipeline_session *session);
+                     struct gen6_draw_session *session);
+
+void
+gen6_draw_common_base_address(struct ilo_render *r,
+                              const struct ilo_state_vector *ilo,
+                              struct gen6_draw_session *session);
+
+void
+gen6_draw_vf(struct ilo_render *r,
+             const struct ilo_state_vector *ilo,
+             struct gen6_draw_session *session);
+
+void
+gen6_draw_vf_statistics(struct ilo_render *r,
+                        const struct ilo_state_vector *ilo,
+                        struct gen6_draw_session *session);
+
+void
+gen6_draw_vs(struct ilo_render *r,
+             const struct ilo_state_vector *ilo,
+             struct gen6_draw_session *session);
+
+void
+gen6_draw_clip(struct ilo_render *r,
+               const struct ilo_state_vector *ilo,
+               struct gen6_draw_session *session);
+
+void
+gen6_draw_sf_rect(struct ilo_render *r,
+                  const struct ilo_state_vector *ilo,
+                  struct gen6_draw_session *session);
+
+void
+gen6_draw_wm_raster(struct ilo_render *r,
+                    const struct ilo_state_vector *ilo,
+                    struct gen6_draw_session *session);
+
+void
+gen6_draw_states(struct ilo_render *r,
+                 const struct ilo_state_vector *ilo,
+                 struct gen6_draw_session *session);
 
 int
-gen6_pipeline_estimate_state_size(const struct ilo_3d_pipeline *p,
-                                  const struct ilo_state_vector *ilo);
+gen6_render_estimate_state_size(const struct ilo_render *render,
+                                const struct ilo_state_vector *ilo);
 
 int
-gen6_pipeline_estimate_query_size(const struct ilo_3d_pipeline *p,
-                                  const struct ilo_query *q);
+gen6_render_estimate_query_size(const struct ilo_render *render,
+                                const struct ilo_query *q);
 
 void
-ilo_3d_pipeline_emit_flush_gen6(struct ilo_3d_pipeline *p);
+ilo_render_emit_flush_gen6(struct ilo_render *r);
 
 void
-ilo_3d_pipeline_emit_query_gen6(struct ilo_3d_pipeline *p,
-                                struct ilo_query *q, uint32_t offset);
+ilo_render_emit_query_gen6(struct ilo_render *r,
+                           struct ilo_query *q, uint32_t offset);
 
 void
-ilo_3d_pipeline_init_gen6(struct ilo_3d_pipeline *p);
+ilo_render_init_gen6(struct ilo_render *render);
 
 #endif /* ILO_RENDER_GEN_H */

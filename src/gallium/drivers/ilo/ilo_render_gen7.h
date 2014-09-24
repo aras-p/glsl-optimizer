@@ -30,9 +30,9 @@
 
 #include "ilo_common.h"
 
-struct ilo_3d_pipeline;
+struct ilo_render;
 
 void
-ilo_3d_pipeline_init_gen7(struct ilo_3d_pipeline *p);
+ilo_render_init_gen7(struct ilo_render *render);
 
 #endif /* ILO_RENDER_GEN7_H */

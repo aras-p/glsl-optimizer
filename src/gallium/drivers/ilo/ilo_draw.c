@@ -130,7 +130,7 @@ query_begin_bo(struct ilo_context *ilo, struct ilo_query *q)
 
    /* write the beginning value to the bo */
    if (q->in_pairs)
-      ilo_3d_pipeline_emit_query(ilo->pipeline, q, q->stride * q->used);
+      ilo_render_emit_query(ilo->render, q, q->stride * q->used);
 }
 
 static void
@@ -147,7 +147,7 @@ query_end_bo(struct ilo_context *ilo, struct ilo_query *q)
    q->used++;
 
    /* write the ending value to the bo */
-   ilo_3d_pipeline_emit_query(ilo->pipeline, q, offset);
+   ilo_render_emit_query(ilo->render, q, offset);
 }
 
 bool
@@ -176,8 +176,8 @@ ilo_init_draw_query(struct ilo_context *ilo, struct ilo_query *q)
       break;
    }
 
-   q->cmd_len = ilo_3d_pipeline_estimate_size(ilo->pipeline,
-         ILO_3D_PIPELINE_QUERY, q);
+   q->cmd_len = ilo_render_estimate_size(ilo->render,
+         ILO_RENDER_QUERY, q);
 
    /* double cmd_len and stride if in pairs */
    q->cmd_len <<= q->in_pairs;
@@ -321,11 +321,11 @@ draw_vbo(struct ilo_context *ilo, const struct ilo_state_vector *vec)
    ilo_draw_set_owner(ilo);
 
    /* make sure there is enough room first */
-   max_len = ilo_3d_pipeline_estimate_size(ilo->pipeline,
-         ILO_3D_PIPELINE_DRAW, vec);
+   max_len = ilo_render_estimate_size(ilo->render,
+         ILO_RENDER_DRAW, vec);
    if (need_flush) {
-      max_len += ilo_3d_pipeline_estimate_size(ilo->pipeline,
-            ILO_3D_PIPELINE_FLUSH, NULL);
+      max_len += ilo_render_estimate_size(ilo->render,
+            ILO_RENDER_FLUSH, NULL);
    }
 
    if (max_len > ilo_cp_space(ilo->cp)) {
@@ -338,14 +338,14 @@ draw_vbo(struct ilo_context *ilo, const struct ilo_state_vector *vec)
    before_space = ilo_cp_space(ilo->cp);
 
    if (need_flush)
-      ilo_3d_pipeline_emit_flush(ilo->pipeline);
+      ilo_render_emit_flush(ilo->render);
 
    while (true) {
       struct ilo_builder_snapshot snapshot;
 
       ilo_builder_batch_snapshot(&ilo->cp->builder, &snapshot);
 
-      ilo_3d_pipeline_emit_draw(ilo->pipeline, vec);
+      ilo_render_emit_draw(ilo->render, vec);
 
       if (!ilo_builder_validate(&ilo->cp->builder, 0, NULL)) {
          ilo_builder_batch_restore(&ilo->cp->builder, &snapshot);
@@ -362,7 +362,7 @@ draw_vbo(struct ilo_context *ilo, const struct ilo_state_vector *vec)
       break;
    }
 
-   ilo->pipeline->invalidate_flags = 0x0;
+   ilo->render->invalidate_flags = 0x0;
 
    /* sanity check size estimation */
    assert(before_space - ilo_cp_space(ilo->cp) <= max_len);
@@ -380,10 +380,10 @@ ilo_draw_rectlist(struct ilo_context *ilo)
 
    ilo_draw_set_owner(ilo);
 
-   max_len = ilo_3d_pipeline_estimate_size(ilo->pipeline,
-         ILO_3D_PIPELINE_RECTLIST, ilo->blitter);
-   max_len += ilo_3d_pipeline_estimate_size(ilo->pipeline,
-         ILO_3D_PIPELINE_FLUSH, NULL) * 2;
+   max_len = ilo_render_estimate_size(ilo->render,
+         ILO_RENDER_RECTLIST, ilo->blitter);
+   max_len += ilo_render_estimate_size(ilo->render,
+         ILO_RENDER_FLUSH, NULL) * 2;
 
    if (max_len > ilo_cp_space(ilo->cp)) {
       ilo_cp_submit(ilo->cp, "out of space");
@@ -416,14 +416,14 @@ ilo_draw_rectlist(struct ilo_context *ilo)
     * Skip checking blitter->op and do the flushes.
     */
    if (need_flush)
-      ilo_3d_pipeline_emit_flush(ilo->pipeline);
+      ilo_render_emit_flush(ilo->render);
 
    while (true) {
       struct ilo_builder_snapshot snapshot;
 
       ilo_builder_batch_snapshot(&ilo->cp->builder, &snapshot);
 
-      ilo_3d_pipeline_emit_rectlist(ilo->pipeline, ilo->blitter);
+      ilo_render_emit_rectlist(ilo->render, ilo->blitter);
 
       if (!ilo_builder_validate(&ilo->cp->builder, 0, NULL)) {
          ilo_builder_batch_restore(&ilo->cp->builder, &snapshot);
@@ -438,9 +438,9 @@ ilo_draw_rectlist(struct ilo_context *ilo)
       break;
    }
 
-   ilo_3d_pipeline_invalidate(ilo->pipeline, ILO_3D_PIPELINE_INVALIDATE_HW);
+   ilo_render_invalidate(ilo->render, ILO_RENDER_INVALIDATE_HW);
 
-   ilo_3d_pipeline_emit_flush(ilo->pipeline);
+   ilo_render_emit_flush(ilo->render);
 
    /* sanity check size estimation */
    assert(before_space - ilo_cp_space(ilo->cp) <= max_len);
@@ -593,7 +593,7 @@ ilo_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    ilo->state_vector.draw = NULL;
 
    if (ilo_debug & ILO_DEBUG_NOCACHE)
-      ilo_3d_pipeline_emit_flush(ilo->pipeline);
+      ilo_render_emit_flush(ilo->render);
 }
 
 static void
@@ -604,7 +604,7 @@ ilo_texture_barrier(struct pipe_context *pipe)
    if (ilo->cp->ring != INTEL_RING_RENDER)
       return;
 
-   ilo_3d_pipeline_emit_flush(ilo->pipeline);
+   ilo_render_emit_flush(ilo->render);
 
    /* don't know why */
    if (ilo_dev_gen(ilo->dev) >= ILO_GEN(7))
@@ -619,7 +619,7 @@ ilo_get_sample_position(struct pipe_context *pipe,
 {
    struct ilo_context *ilo = ilo_context(pipe);
 
-   ilo_3d_pipeline_get_sample_position(ilo->pipeline,
+   ilo_render_get_sample_position(ilo->render,
          sample_count, sample_index,
          &out_value[0], &out_value[1]);
 }

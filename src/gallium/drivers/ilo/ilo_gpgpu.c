@@ -29,7 +29,7 @@
 #include "ilo_gpgpu.h"
 
 /*
- * This is a placeholder.  We will need something similar to ilo_3d_pipeline.
+ * This is a placeholder.  We will need something similar to ilo_render.
  */
 
 static void

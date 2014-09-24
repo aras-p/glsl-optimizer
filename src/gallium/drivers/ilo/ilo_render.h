@@ -37,26 +37,26 @@ struct ilo_cp;
 struct ilo_query;
 struct ilo_state_vector;
 
-enum ilo_3d_pipeline_invalidate_flags {
-   ILO_3D_PIPELINE_INVALIDATE_HW         = 1 << 0,
-   ILO_3D_PIPELINE_INVALIDATE_BATCH_BO   = 1 << 1,
-   ILO_3D_PIPELINE_INVALIDATE_STATE_BO   = 1 << 2,
-   ILO_3D_PIPELINE_INVALIDATE_KERNEL_BO  = 1 << 3,
+enum ilo_render_invalidate_flags {
+   ILO_RENDER_INVALIDATE_HW         = 1 << 0,
+   ILO_RENDER_INVALIDATE_BATCH_BO   = 1 << 1,
+   ILO_RENDER_INVALIDATE_STATE_BO   = 1 << 2,
+   ILO_RENDER_INVALIDATE_KERNEL_BO  = 1 << 3,
 
-   ILO_3D_PIPELINE_INVALIDATE_ALL        = 0xffffffff,
+   ILO_RENDER_INVALIDATE_ALL        = 0xffffffff,
 };
 
-enum ilo_3d_pipeline_action {
-   ILO_3D_PIPELINE_DRAW,
-   ILO_3D_PIPELINE_FLUSH,
-   ILO_3D_PIPELINE_QUERY,
-   ILO_3D_PIPELINE_RECTLIST,
+enum ilo_render_action {
+   ILO_RENDER_DRAW,
+   ILO_RENDER_FLUSH,
+   ILO_RENDER_QUERY,
+   ILO_RENDER_RECTLIST,
 };
 
 /**
- * 3D pipeline.
+ * Render Engine.
  */
-struct ilo_3d_pipeline {
+struct ilo_render {
    const struct ilo_dev_info *dev;
    struct ilo_builder *builder;
 
@@ -68,25 +68,25 @@ struct ilo_3d_pipeline {
    uint32_t packed_sample_position_4x;
    uint32_t packed_sample_position_8x[2];
 
-   int (*estimate_size)(struct ilo_3d_pipeline *pipeline,
-                        enum ilo_3d_pipeline_action action,
+   int (*estimate_size)(struct ilo_render *render,
+                        enum ilo_render_action action,
                         const void *arg);
 
-   void (*emit_draw)(struct ilo_3d_pipeline *pipeline,
+   void (*emit_draw)(struct ilo_render *render,
                      const struct ilo_state_vector *vec);
 
-   void (*emit_flush)(struct ilo_3d_pipeline *pipeline);
+   void (*emit_flush)(struct ilo_render *render);
 
-   void (*emit_query)(struct ilo_3d_pipeline *pipeline,
+   void (*emit_query)(struct ilo_render *render,
                       struct ilo_query *q, uint32_t offset);
 
-   void (*emit_rectlist)(struct ilo_3d_pipeline *pipeline,
+   void (*emit_rectlist)(struct ilo_render *render,
                          const struct ilo_blitter *blitter);
 
    /**
     * HW states.
     */
-   struct ilo_3d_pipeline_state {
+   struct ilo_render_state {
       /*
        * When a WA is needed before some command, we always emit the WA right
        * before the command.  Knowing what have already been done since last
@@ -145,73 +145,73 @@ struct ilo_3d_pipeline {
    } state;
 };
 
-struct ilo_3d_pipeline *
-ilo_3d_pipeline_create(struct ilo_builder *builder);
+struct ilo_render *
+ilo_render_create(struct ilo_builder *builder);
 
 void
-ilo_3d_pipeline_destroy(struct ilo_3d_pipeline *pipeline);
+ilo_render_destroy(struct ilo_render *render);
 
 
 static inline void
-ilo_3d_pipeline_invalidate(struct ilo_3d_pipeline *p, uint32_t flags)
+ilo_render_invalidate(struct ilo_render *render, uint32_t flags)
 {
-   p->invalidate_flags |= flags;
+   render->invalidate_flags |= flags;
 
    /* Kernel flushes everything.  Shouldn't we set all bits here? */
-   p->state.current_pipe_control_dw1 = 0;
+   render->state.current_pipe_control_dw1 = 0;
 }
 
 /**
  * Estimate the size of an action.
  */
 static inline int
-ilo_3d_pipeline_estimate_size(struct ilo_3d_pipeline *pipeline,
-                              enum ilo_3d_pipeline_action action,
-                              const void *arg)
+ilo_render_estimate_size(struct ilo_render *render,
+                         enum ilo_render_action action,
+                         const void *arg)
 {
-   return pipeline->estimate_size(pipeline, action, arg);
+   return render->estimate_size(render, action, arg);
 }
 
 /**
  * Emit context states and 3DPRIMITIVE.
  */
 static inline void
-ilo_3d_pipeline_emit_draw(struct ilo_3d_pipeline *p,
-                          const struct ilo_state_vector *vec)
+ilo_render_emit_draw(struct ilo_render *render,
+                     const struct ilo_state_vector *vec)
 {
-   p->emit_draw(p, vec);
+   render->emit_draw(render, vec);
 }
 
 /**
  * Emit PIPE_CONTROL to flush all caches.
  */
 static inline void
-ilo_3d_pipeline_emit_flush(struct ilo_3d_pipeline *p)
+ilo_render_emit_flush(struct ilo_render *render)
 {
-   p->emit_flush(p);
+   render->emit_flush(render);
 }
 
 /**
  * Emit PIPE_CONTROL or MI_STORE_REGISTER_MEM to save register values.
  */
 static inline void
-ilo_3d_pipeline_emit_query(struct ilo_3d_pipeline *p,
-                           struct ilo_query *q, uint32_t offset)
+ilo_render_emit_query(struct ilo_render *render,
+                      struct ilo_query *q, uint32_t offset)
 {
-   p->emit_query(p, q, offset);
+   render->emit_query(render, q, offset);
 }
 
 static inline void
-ilo_3d_pipeline_emit_rectlist(struct ilo_3d_pipeline *p,
-                              const struct ilo_blitter *blitter)
+ilo_render_emit_rectlist(struct ilo_render *render,
+                         const struct ilo_blitter *blitter)
 {
-   p->emit_rectlist(p, blitter);
+   render->emit_rectlist(render, blitter);
 }
 
 void
-ilo_3d_pipeline_get_sample_position(struct ilo_3d_pipeline *p,
-                                    unsigned sample_count,
-                                    unsigned sample_index,
-                                    float *x, float *y);
+ilo_render_get_sample_position(struct ilo_render *render,
+                               unsigned sample_count,
+                               unsigned sample_index,
+                               float *x, float *y);
 
 #endif /* ILO_RENDER_H */

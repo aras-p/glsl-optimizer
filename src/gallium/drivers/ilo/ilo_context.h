@@ -39,8 +39,8 @@
 struct u_upload_mgr;
 struct intel_winsys;
 
-struct ilo_3d_pipeline;
 struct ilo_blitter;
+struct ilo_render;
 struct ilo_screen;
 struct ilo_shader_cache;
 
@@ -56,7 +56,7 @@ struct ilo_context {
 
    struct ilo_shader_cache *shader_cache;
    struct ilo_blitter *blitter;
-   struct ilo_3d_pipeline *pipeline;
+   struct ilo_render *render;
 
    struct u_upload_mgr *uploader;
 

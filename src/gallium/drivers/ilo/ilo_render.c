@@ -60,80 +60,80 @@ static const struct sample_position sample_position_8x[8] = {
    {  3, 15 }, /* distance from the center is sqrt(74) */
 };
 
-struct ilo_3d_pipeline *
-ilo_3d_pipeline_create(struct ilo_builder *builder)
+struct ilo_render *
+ilo_render_create(struct ilo_builder *builder)
 {
-   struct ilo_3d_pipeline *p;
+   struct ilo_render *render;
    int i;
 
-   p = CALLOC_STRUCT(ilo_3d_pipeline);
-   if (!p)
+   render = CALLOC_STRUCT(ilo_render);
+   if (!render)
       return NULL;
 
-   p->dev = builder->dev;
-   p->builder = builder;
+   render->dev = builder->dev;
+   render->builder = builder;
 
-   switch (ilo_dev_gen(p->dev)) {
+   switch (ilo_dev_gen(render->dev)) {
    case ILO_GEN(6):
-      ilo_3d_pipeline_init_gen6(p);
+      ilo_render_init_gen6(render);
       break;
    case ILO_GEN(7):
    case ILO_GEN(7.5):
-      ilo_3d_pipeline_init_gen7(p);
+      ilo_render_init_gen7(render);
       break;
    default:
       assert(!"unsupported GEN");
-      FREE(p);
+      FREE(render);
       return NULL;
       break;
    }
 
-   p->invalidate_flags = ILO_3D_PIPELINE_INVALIDATE_ALL;
+   render->invalidate_flags = ILO_RENDER_INVALIDATE_ALL;
 
-   p->workaround_bo = intel_winsys_alloc_buffer(builder->winsys,
+   render->workaround_bo = intel_winsys_alloc_buffer(builder->winsys,
          "PIPE_CONTROL workaround", 4096, false);
-   if (!p->workaround_bo) {
+   if (!render->workaround_bo) {
       ilo_warn("failed to allocate PIPE_CONTROL workaround bo\n");
-      FREE(p);
+      FREE(render);
       return NULL;
    }
 
-   p->packed_sample_position_1x =
+   render->packed_sample_position_1x =
       sample_position_1x[0].x << 4 |
       sample_position_1x[0].y;
 
    /* pack into dwords */
    for (i = 0; i < 4; i++) {
-      p->packed_sample_position_4x |=
+      render->packed_sample_position_4x |=
          sample_position_4x[i].x << (8 * i + 4) |
          sample_position_4x[i].y << (8 * i);
 
-      p->packed_sample_position_8x[0] |=
+      render->packed_sample_position_8x[0] |=
          sample_position_8x[i].x << (8 * i + 4) |
          sample_position_8x[i].y << (8 * i);
 
-      p->packed_sample_position_8x[1] |=
+      render->packed_sample_position_8x[1] |=
          sample_position_8x[4 + i].x << (8 * i + 4) |
          sample_position_8x[4 + i].y << (8 * i);
    }
 
-   return p;
+   return render;
 }
 
 void
-ilo_3d_pipeline_destroy(struct ilo_3d_pipeline *p)
+ilo_render_destroy(struct ilo_render *render)
 {
-   if (p->workaround_bo)
-      intel_bo_unreference(p->workaround_bo);
+   if (render->workaround_bo)
+      intel_bo_unreference(render->workaround_bo);
 
-   FREE(p);
+   FREE(render);
 }
 
 void
-ilo_3d_pipeline_get_sample_position(struct ilo_3d_pipeline *p,
-                                    unsigned sample_count,
-                                    unsigned sample_index,
-                                    float *x, float *y)
+ilo_render_get_sample_position(struct ilo_render *render,
+                               unsigned sample_count,
+                               unsigned sample_index,
+                               float *x, float *y)
 {
    const struct sample_position *pos;
 

@@ -48,10 +48,10 @@ ilo_context_cp_submitted(struct ilo_cp *cp, void *data)
    struct ilo_context *ilo = ilo_context(data);
 
    /* invalidate the pipeline */
-   ilo_3d_pipeline_invalidate(ilo->pipeline,
-         ILO_3D_PIPELINE_INVALIDATE_BATCH_BO |
-         ILO_3D_PIPELINE_INVALIDATE_STATE_BO |
-         ILO_3D_PIPELINE_INVALIDATE_KERNEL_BO);
+   ilo_render_invalidate(ilo->render,
+         ILO_RENDER_INVALIDATE_BATCH_BO |
+         ILO_RENDER_INVALIDATE_STATE_BO |
+         ILO_RENDER_INVALIDATE_KERNEL_BO);
 }
 
 static void
@@ -124,8 +124,8 @@ ilo_context_destroy(struct pipe_context *pipe)
 
    if (ilo->blitter)
       ilo_blitter_destroy(ilo->blitter);
-   if (ilo->pipeline)
-      ilo_3d_pipeline_destroy(ilo->pipeline);
+   if (ilo->render)
+      ilo_render_destroy(ilo->render);
    if (ilo->shader_cache)
       ilo_shader_cache_destroy(ilo->shader_cache);
    if (ilo->cp)
@@ -159,9 +159,9 @@ ilo_context_create(struct pipe_screen *screen, void *priv)
    ilo->shader_cache = ilo_shader_cache_create();
    ilo->cp = ilo_cp_create(ilo->dev, ilo->winsys, ilo->shader_cache);
    if (ilo->cp)
-      ilo->pipeline = ilo_3d_pipeline_create(&ilo->cp->builder);
+      ilo->render = ilo_render_create(&ilo->cp->builder);
 
-   if (!ilo->cp || !ilo->shader_cache || !ilo->pipeline) {
+   if (!ilo->cp || !ilo->shader_cache || !ilo->render) {
       ilo_context_destroy(&ilo->base);
       return NULL;
    }
