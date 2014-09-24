@@ -1146,6 +1146,7 @@ fill_tex_info(struct ir3_compile_context *ctx,
 	case TGSI_OPCODE_TXB:
 	case TGSI_OPCODE_TXB2:
 	case TGSI_OPCODE_TXL:
+	case TGSI_OPCODE_TXF:
 		info->args = 2;
 		break;
 	case TGSI_OPCODE_TXP:
@@ -1250,11 +1251,16 @@ get_tex_coord(struct ir3_compile_context *ctx,
 
 		/* fix up .y coord: */
 		if (is_1d(tex)) {
+			struct ir3_register *imm;
 			instr = instr_create(ctx, 1, 0);  /* mov */
 			instr->cat1.src_type = type_mov;
 			instr->cat1.dst_type = type_mov;
 			add_dst_reg(ctx, instr, &tmp_dst, 1);  /* .y */
-			ir3_reg_create(instr, 0, IR3_REG_IMMED)->fim_val = 0.5;
+			imm = ir3_reg_create(instr, 0, IR3_REG_IMMED);
+			if (inst->Instruction.Opcode == TGSI_OPCODE_TXF)
+				imm->iim_val = 0;
+			else
+				imm->fim_val = 0.5;
 		}
 
 		coord = tmp_src;
@@ -1304,6 +1310,37 @@ trans_samp(const struct instr_translater *t,
 	}
 	if (tinf.args > 1 && is_rel_or_const(orig))
 		orig = get_unconst(ctx, orig);
+
+	/* scale up integer coords for TXF based on the LOD */
+	if (inst->Instruction.Opcode == TGSI_OPCODE_TXF) {
+		struct tgsi_dst_register tmp_dst;
+		struct tgsi_src_register *tmp_src;
+		type_t type_mov = get_utype(ctx);
+
+		tmp_src = get_internal_temp(ctx, &tmp_dst);
+		for (i = 0; i < tgt->dims; i++) {
+			instr = instr_create(ctx, 2, OPC_SHL_B);
+			add_dst_reg(ctx, instr, &tmp_dst, i);
+			add_src_reg(ctx, instr, coord, src_swiz(coord, i));
+			add_src_reg(ctx, instr, orig, orig->SwizzleW);
+		}
+		if (tgt->dims < 2) {
+			instr = instr_create(ctx, 1, 0);
+			instr->cat1.src_type = type_mov;
+			instr->cat1.dst_type = type_mov;
+			add_dst_reg(ctx, instr, &tmp_dst, i);
+			add_src_reg(ctx, instr, &zero, 0);
+			i++;
+		}
+		if (tgt->array) {
+			instr = instr_create(ctx, 1, 0);
+			instr->cat1.src_type = type_mov;
+			instr->cat1.dst_type = type_mov;
+			add_dst_reg(ctx, instr, &tmp_dst, i);
+			add_src_reg(ctx, instr, coord, src_swiz(coord, i));
+		}
+		coord = tmp_src;
+	}
 
 	if (inst->Texture.NumOffsets) {
 		struct tgsi_texture_offset *tex_offset = &inst->TexOffsets[0];
@@ -2530,6 +2567,7 @@ static const struct instr_translater translaters[TGSI_OPCODE_LAST] = {
 	INSTR(TXB2,         trans_samp, .opc = OPC_SAMB, .arg = TGSI_OPCODE_TXB2),
 	INSTR(TXL,          trans_samp, .opc = OPC_SAML, .arg = TGSI_OPCODE_TXL),
 	INSTR(TXD,          trans_samp, .opc = OPC_SAMGQ, .arg = TGSI_OPCODE_TXD),
+	INSTR(TXF,          trans_samp, .opc = OPC_ISAML, .arg = TGSI_OPCODE_TXF),
 	INSTR(TXQ,          trans_txq),
 	INSTR(DDX,          trans_deriv, .opc = OPC_DSX),
 	INSTR(DDY,          trans_deriv, .opc = OPC_DSY),
