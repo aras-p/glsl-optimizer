@@ -25,8 +25,8 @@
  *    Chia-I Wu <olv@lunarg.com>
  */
 
-#ifndef ILO_3D_PIPELINE_GEN7_H
-#define ILO_3D_PIPELINE_GEN7_H
+#ifndef ILO_RENDER_GEN7_H
+#define ILO_RENDER_GEN7_H
 
 #include "ilo_common.h"
 
@@ -35,4 +35,4 @@ struct ilo_3d_pipeline;
 void
 ilo_3d_pipeline_init_gen7(struct ilo_3d_pipeline *p);
 
-#endif /* ILO_3D_PIPELINE_GEN7_H */
+#endif /* ILO_RENDER_GEN7_H */

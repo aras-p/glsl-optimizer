@@ -28,7 +28,7 @@
 #include "util/u_prim.h"
 #include "intel_winsys.h"
 
-#include "ilo_3d_pipeline.h"
+#include "ilo_render.h"
 #include "ilo_blit.h"
 #include "ilo_context.h"
 #include "ilo_cp.h"

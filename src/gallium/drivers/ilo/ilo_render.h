@@ -25,8 +25,8 @@
  *    Chia-I Wu <olv@lunarg.com>
  */
 
-#ifndef ILO_3D_PIPELINE_H
-#define ILO_3D_PIPELINE_H
+#ifndef ILO_RENDER_H
+#define ILO_RENDER_H
 
 #include "ilo_common.h"
 #include "ilo_state.h"
@@ -214,4 +214,4 @@ ilo_3d_pipeline_get_sample_position(struct ilo_3d_pipeline *p,
                                     unsigned sample_index,
                                     float *x, float *y);
 
-#endif /* ILO_3D_PIPELINE_H */
+#endif /* ILO_RENDER_H */

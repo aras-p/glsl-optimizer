@@ -28,9 +28,9 @@
 #include "intel_winsys.h"
 
 #include "ilo_builder.h"
-#include "ilo_3d_pipeline_gen6.h"
-#include "ilo_3d_pipeline_gen7.h"
-#include "ilo_3d_pipeline.h"
+#include "ilo_render_gen.h"
+#include "ilo_render_gen7.h"
+#include "ilo_render.h"
 
 /* in U0.4 */
 struct sample_position {

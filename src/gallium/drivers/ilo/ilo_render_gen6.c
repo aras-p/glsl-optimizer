@@ -36,8 +36,8 @@
 #include "ilo_query.h"
 #include "ilo_shader.h"
 #include "ilo_state.h"
-#include "ilo_3d_pipeline.h"
-#include "ilo_3d_pipeline_gen6.h"
+#include "ilo_render.h"
+#include "ilo_render_gen.h"
 
 /**
  * A wrapper for gen6_PIPE_CONTROL().

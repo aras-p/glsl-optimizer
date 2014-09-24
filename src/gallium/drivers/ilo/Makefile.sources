@@ -1,10 +1,4 @@
 C_SOURCES := \
-	ilo_3d_pipeline.c \
-	ilo_3d_pipeline_gen6.c \
-	ilo_3d_pipeline_gen6.h \
-	ilo_3d_pipeline_gen7.c \
-	ilo_3d_pipeline_gen7.h \
-	ilo_3d_pipeline.h \
 	ilo_blit.c \
 	ilo_blit.h \
 	ilo_blitter.c \
@@ -40,6 +34,12 @@ C_SOURCES := \
 	ilo_query.h \
 	ilo_resource.c \
 	ilo_resource.h \
+	ilo_render.c \
+	ilo_render.h \
+	ilo_render_gen.h \
+	ilo_render_gen6.c \
+	ilo_render_gen7.c \
+	ilo_render_gen7.h \
 	ilo_screen.c \
 	ilo_screen.h \
 	ilo_shader.c \
