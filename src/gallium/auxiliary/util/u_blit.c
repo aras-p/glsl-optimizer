@@ -444,7 +444,7 @@ util_blit_pixels(struct blit_state *ctx,
    assert(info.dst.box.width >= 0);
    assert(info.dst.box.height >= 0);
    info.dst.box.depth = 1;
-   info.dst.format = dst->texture->format;
+   info.dst.format = dst_format;
    info.src.resource = src_tex;
    info.src.level = src_level;
    info.src.box.x = srcX0;
@@ -453,7 +453,7 @@ util_blit_pixels(struct blit_state *ctx,
    info.src.box.width = srcX1 - srcX0;
    info.src.box.height = srcY1 - srcY0;
    info.src.box.depth = 1;
-   info.src.format = src_tex->format;
+   info.src.format = src_format;
    info.mask = writemask;
    info.filter = filter;
    info.scissor_enable = 0;
