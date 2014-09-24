@@ -214,9 +214,9 @@ enum vc4_packet {
 #define VC4_RENDER_CONFIG_DECIMATE_MODE_4X         (1 << 4)
 #define VC4_RENDER_CONFIG_DECIMATE_MODE_16X        (2 << 4)
 
-#define VC4_RENDER_CONFIG_FORMAT_BGR565            (0 << 2)
+#define VC4_RENDER_CONFIG_FORMAT_BGR565_DITHERED   (0 << 2)
 #define VC4_RENDER_CONFIG_FORMAT_RGBA8888          (1 << 2)
-#define VC4_RENDER_CONFIG_FORMAT_BGR565_DITHERED   (2 << 2)
+#define VC4_RENDER_CONFIG_FORMAT_BGR565            (2 << 2)
 #define VC4_RENDER_CONFIG_FORMAT_MASK              (3 << 2)
 
 #define VC4_RENDER_CONFIG_TILE_BUFFER_64BIT        (1 << 1)
