@@ -226,7 +226,7 @@ gen6_draw_common_select(struct ilo_render *r,
                         struct gen6_draw_session *session)
 {
    /* PIPELINE_SELECT */
-   if (session->hw_ctx_changed) {
+   if (r->hw_ctx_changed) {
       if (ilo_dev_gen(r->dev) == ILO_GEN(6))
          gen6_wa_pre_non_pipelined(r);
 
@@ -240,7 +240,7 @@ gen6_draw_common_sip(struct ilo_render *r,
                      struct gen6_draw_session *session)
 {
    /* STATE_SIP */
-   if (session->hw_ctx_changed) {
+   if (r->hw_ctx_changed) {
       if (ilo_dev_gen(r->dev) == ILO_GEN(6))
          gen6_wa_pre_non_pipelined(r);
 
@@ -254,12 +254,12 @@ gen6_draw_common_base_address(struct ilo_render *r,
                               struct gen6_draw_session *session)
 {
    /* STATE_BASE_ADDRESS */
-   if (session->state_bo_changed || session->kernel_bo_changed ||
-       session->batch_bo_changed) {
+   if (r->state_bo_changed || r->instruction_bo_changed ||
+       r->batch_bo_changed) {
       if (ilo_dev_gen(r->dev) == ILO_GEN(6))
          gen6_wa_pre_non_pipelined(r);
 
-      gen6_state_base_address(r->builder, session->hw_ctx_changed);
+      gen6_state_base_address(r->builder, r->hw_ctx_changed);
 
       /*
        * From the Sandy Bridge PRM, volume 1 part 1, page 28:
@@ -441,7 +441,7 @@ gen6_draw_vf(struct ilo_render *r,
 {
    if (ilo_dev_gen(r->dev) >= ILO_GEN(7.5)) {
       /* 3DSTATE_INDEX_BUFFER */
-      if (DIRTY(IB) || session->batch_bo_changed) {
+      if (DIRTY(IB) || r->batch_bo_changed) {
          gen6_3DSTATE_INDEX_BUFFER(r->builder,
                &vec->ib, false);
       }
@@ -455,14 +455,14 @@ gen6_draw_vf(struct ilo_render *r,
    else {
       /* 3DSTATE_INDEX_BUFFER */
       if (DIRTY(IB) || session->primitive_restart_changed ||
-          session->batch_bo_changed) {
+          r->batch_bo_changed) {
          gen6_3DSTATE_INDEX_BUFFER(r->builder,
                &vec->ib, vec->draw->primitive_restart);
       }
    }
 
    /* 3DSTATE_VERTEX_BUFFERS */
-   if (DIRTY(VB) || DIRTY(VE) || session->batch_bo_changed)
+   if (DIRTY(VB) || DIRTY(VE) || r->batch_bo_changed)
       gen6_3DSTATE_VERTEX_BUFFERS(r->builder, vec->ve, &vec->vb);
 
    /* 3DSTATE_VERTEX_ELEMENTS */
@@ -499,7 +499,7 @@ gen6_draw_vf_statistics(struct ilo_render *r,
                         struct gen6_draw_session *session)
 {
    /* 3DSTATE_VF_STATISTICS */
-   if (session->hw_ctx_changed)
+   if (r->hw_ctx_changed)
       gen6_3DSTATE_VF_STATISTICS(r->builder, false);
 }
 
@@ -521,7 +521,7 @@ gen6_draw_vs(struct ilo_render *r,
              struct gen6_draw_session *session)
 {
    const bool emit_3dstate_vs = (DIRTY(VS) || DIRTY(SAMPLER_VS) ||
-                                 session->kernel_bo_changed);
+                                 r->instruction_bo_changed);
    const bool emit_3dstate_constant_vs = session->pcb_state_vs_changed;
 
    /*
@@ -561,7 +561,7 @@ gen6_draw_gs(struct ilo_render *r,
 
    /* 3DSTATE_GS */
    if (DIRTY(GS) || DIRTY(VS) ||
-       session->prim_changed || session->kernel_bo_changed) {
+       session->prim_changed || r->instruction_bo_changed) {
       const int verts_per_prim = u_vertices_per_prim(session->reduced_prim);
 
       gen6_3DSTATE_GS(r->builder, vec->gs, vec->vs, verts_per_prim);
@@ -628,7 +628,7 @@ gen6_draw_gs_svbi(struct ilo_render *r,
             0, 0, r->state.so_max_vertices,
             false);
 
-      if (session->hw_ctx_changed) {
+      if (r->hw_ctx_changed) {
          int i;
 
          /*
@@ -717,13 +717,13 @@ gen6_draw_wm(struct ilo_render *r,
 
    /* 3DSTATE_WM */
    if (DIRTY(FS) || DIRTY(SAMPLER_FS) || DIRTY(BLEND) || DIRTY(DSA) ||
-       DIRTY(RASTERIZER) || session->kernel_bo_changed) {
+       DIRTY(RASTERIZER) || r->instruction_bo_changed) {
       const int num_samplers = vec->sampler[PIPE_SHADER_FRAGMENT].count;
       const bool dual_blend = vec->blend->dual_blend;
       const bool cc_may_kill = (vec->dsa->dw_alpha ||
                                 vec->blend->alpha_to_coverage);
 
-      if (ilo_dev_gen(r->dev) == ILO_GEN(6) && session->hw_ctx_changed)
+      if (ilo_dev_gen(r->dev) == ILO_GEN(6) && r->hw_ctx_changed)
          gen6_wa_pre_3dstate_wm_max_threads(r);
 
       gen6_3DSTATE_WM(r->builder, vec->fs, num_samplers,
@@ -763,7 +763,7 @@ gen6_draw_wm_depth(struct ilo_render *r,
                    struct gen6_draw_session *session)
 {
    /* 3DSTATE_DEPTH_BUFFER and 3DSTATE_CLEAR_PARAMS */
-   if (DIRTY(FB) || session->batch_bo_changed) {
+   if (DIRTY(FB) || r->batch_bo_changed) {
       const struct ilo_zs_surface *zs;
       uint32_t clear_params;
 
@@ -1395,7 +1395,7 @@ gen6_draw_states(struct ilo_render *render,
 }
 
 void
-gen6_draw_prepare(const struct ilo_render *render,
+gen6_draw_prepare(struct ilo_render *render,
                   const struct ilo_state_vector *vec,
                   struct gen6_draw_session *session)
 {
@@ -1403,29 +1403,15 @@ gen6_draw_prepare(const struct ilo_render *render,
    session->pipe_dirty = vec->dirty;
    session->reduced_prim = u_reduced_prim(vec->draw->mode);
 
-   session->hw_ctx_changed =
-      (render->invalidate_flags & ILO_RENDER_INVALIDATE_HW);
-
-   if (session->hw_ctx_changed) {
+   if (render->hw_ctx_changed) {
       /* these should be enough to make everything uploaded */
-      session->batch_bo_changed = true;
-      session->state_bo_changed = true;
-      session->kernel_bo_changed = true;
+      render->batch_bo_changed = true;
+      render->state_bo_changed = true;
+      render->instruction_bo_changed = true;
+
       session->prim_changed = true;
       session->primitive_restart_changed = true;
    } else {
-      /*
-       * Any state that involves resources needs to be re-emitted when the
-       * batch bo changed.  This is because we do not pin the resources and
-       * their offsets (or existence) may change between batch buffers.
-       */
-      session->batch_bo_changed =
-         (render->invalidate_flags & ILO_RENDER_INVALIDATE_BATCH_BO);
-
-      session->state_bo_changed =
-         (render->invalidate_flags & ILO_RENDER_INVALIDATE_STATE_BO);
-      session->kernel_bo_changed =
-         (render->invalidate_flags & ILO_RENDER_INVALIDATE_KERNEL_BO);
       session->prim_changed =
          (render->state.reduced_prim != session->reduced_prim);
       session->primitive_restart_changed =
@@ -1439,7 +1425,7 @@ gen6_draw_emit(struct ilo_render *render,
                struct gen6_draw_session *session)
 {
    /* force all states to be uploaded if the state bo changed */
-   if (session->state_bo_changed)
+   if (render->state_bo_changed)
       session->pipe_dirty = ILO_DIRTY_ALL;
    else
       session->pipe_dirty = vec->dirty;
@@ -1447,7 +1433,7 @@ gen6_draw_emit(struct ilo_render *render,
    session->emit_draw_states(render, vec, session);
 
    /* force all commands to be uploaded if the HW context changed */
-   if (session->hw_ctx_changed)
+   if (render->hw_ctx_changed)
       session->pipe_dirty = ILO_DIRTY_ALL;
    else
       session->pipe_dirty = vec->dirty;
@@ -1460,6 +1446,12 @@ gen6_draw_end(struct ilo_render *render,
               const struct ilo_state_vector *vec,
               struct gen6_draw_session *session)
 {
+   render->hw_ctx_changed = false;
+
+   render->batch_bo_changed = false;
+   render->state_bo_changed = false;
+   render->instruction_bo_changed = false;
+
    render->state.reduced_prim = session->reduced_prim;
    render->state.primitive_restart = vec->draw->primitive_restart;
 }

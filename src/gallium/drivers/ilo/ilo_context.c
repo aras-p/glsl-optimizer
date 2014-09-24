@@ -47,11 +47,8 @@ ilo_context_cp_submitted(struct ilo_cp *cp, void *data)
 {
    struct ilo_context *ilo = ilo_context(data);
 
-   /* invalidate the pipeline */
-   ilo_render_invalidate(ilo->render,
-         ILO_RENDER_INVALIDATE_BATCH_BO |
-         ILO_RENDER_INVALIDATE_STATE_BO |
-         ILO_RENDER_INVALIDATE_KERNEL_BO);
+   /* builder buffers are reallocated */
+   ilo_render_invalidate_builder(ilo->render);
 }
 
 static void

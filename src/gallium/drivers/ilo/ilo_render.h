@@ -37,15 +37,6 @@ struct ilo_cp;
 struct ilo_query;
 struct ilo_state_vector;
 
-enum ilo_render_invalidate_flags {
-   ILO_RENDER_INVALIDATE_HW         = 1 << 0,
-   ILO_RENDER_INVALIDATE_BATCH_BO   = 1 << 1,
-   ILO_RENDER_INVALIDATE_STATE_BO   = 1 << 2,
-   ILO_RENDER_INVALIDATE_KERNEL_BO  = 1 << 3,
-
-   ILO_RENDER_INVALIDATE_ALL        = 0xffffffff,
-};
-
 enum ilo_render_action {
    ILO_RENDER_DRAW,
    ILO_RENDER_FLUSH,
@@ -59,8 +50,6 @@ enum ilo_render_action {
 struct ilo_render {
    const struct ilo_dev_info *dev;
    struct ilo_builder *builder;
-
-   uint32_t invalidate_flags;
 
    struct intel_bo *workaround_bo;
 
@@ -82,6 +71,17 @@ struct ilo_render {
 
    void (*emit_rectlist)(struct ilo_render *render,
                          const struct ilo_blitter *blitter);
+
+   bool hw_ctx_changed;
+
+   /*
+    * Any state that involves resources needs to be re-emitted when the
+    * batch bo changed.  This is because we do not pin the resources and
+    * their offsets (or existence) may change between batch buffers.
+    */
+   bool batch_bo_changed;
+   bool state_bo_changed;
+   bool instruction_bo_changed;
 
    /**
     * HW states.
@@ -151,16 +151,6 @@ ilo_render_create(struct ilo_builder *builder);
 void
 ilo_render_destroy(struct ilo_render *render);
 
-
-static inline void
-ilo_render_invalidate(struct ilo_render *render, uint32_t flags)
-{
-   render->invalidate_flags |= flags;
-
-   /* Kernel flushes everything.  Shouldn't we set all bits here? */
-   render->state.current_pipe_control_dw1 = 0;
-}
-
 /**
  * Estimate the size of an action.
  */
@@ -213,5 +203,11 @@ ilo_render_get_sample_position(const struct ilo_render *render,
                                unsigned sample_count,
                                unsigned sample_index,
                                float *x, float *y);
+
+void
+ilo_render_invalidate_hw(struct ilo_render *render);
+
+void
+ilo_render_invalidate_builder(struct ilo_render *render);
 
 #endif /* ILO_RENDER_H */

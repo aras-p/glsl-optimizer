@@ -362,8 +362,6 @@ draw_vbo(struct ilo_context *ilo, const struct ilo_state_vector *vec)
       break;
    }
 
-   ilo->render->invalidate_flags = 0x0;
-
    /* sanity check size estimation */
    assert(before_space - ilo_cp_space(ilo->cp) <= max_len);
 
@@ -438,7 +436,7 @@ ilo_draw_rectlist(struct ilo_context *ilo)
       break;
    }
 
-   ilo_render_invalidate(ilo->render, ILO_RENDER_INVALIDATE_HW);
+   ilo_render_invalidate_hw(ilo->render);
 
    ilo_render_emit_flush(ilo->render);
 

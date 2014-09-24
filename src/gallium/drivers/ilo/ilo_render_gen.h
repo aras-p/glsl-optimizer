@@ -39,10 +39,6 @@ struct gen6_draw_session {
 
    int reduced_prim;
 
-   bool hw_ctx_changed;
-   bool batch_bo_changed;
-   bool state_bo_changed;
-   bool kernel_bo_changed;
    bool prim_changed;
    bool primitive_restart_changed;
 
@@ -80,7 +76,7 @@ struct gen6_rectlist_session {
 };
 
 void
-gen6_draw_prepare(const struct ilo_render *r,
+gen6_draw_prepare(struct ilo_render *r,
                   const struct ilo_state_vector *ilo,
                   struct gen6_draw_session *session);
 

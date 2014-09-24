@@ -88,8 +88,6 @@ ilo_render_create(struct ilo_builder *builder)
       break;
    }
 
-   render->invalidate_flags = ILO_RENDER_INVALIDATE_ALL;
-
    render->workaround_bo = intel_winsys_alloc_buffer(builder->winsys,
          "PIPE_CONTROL workaround", 4096, false);
    if (!render->workaround_bo) {
@@ -116,6 +114,9 @@ ilo_render_create(struct ilo_builder *builder)
          sample_position_8x[4 + i].x << (8 * i + 4) |
          sample_position_8x[4 + i].y << (8 * i);
    }
+
+   ilo_render_invalidate_hw(render);
+   ilo_render_invalidate_builder(render);
 
    return render;
 }
@@ -160,4 +161,21 @@ ilo_render_get_sample_position(const struct ilo_render *render,
 
    *x = (float) pos[sample_index].x / 16.0f;
    *y = (float) pos[sample_index].y / 16.0f;
+}
+
+void
+ilo_render_invalidate_hw(struct ilo_render *render)
+{
+   render->hw_ctx_changed = true;
+}
+
+void
+ilo_render_invalidate_builder(struct ilo_render *render)
+{
+   render->batch_bo_changed = true;
+   render->state_bo_changed = true;
+   render->instruction_bo_changed = true;
+
+   /* Kernel flushes everything.  Shouldn't we set all bits here? */
+   render->state.current_pipe_control_dw1 = 0;
 }

@@ -270,7 +270,7 @@ gen7_draw_common_pcb_alloc(struct ilo_render *r,
                            struct gen6_draw_session *session)
 {
    /* 3DSTATE_PUSH_CONSTANT_ALLOC_{VS,PS} */
-   if (session->hw_ctx_changed) {
+   if (r->hw_ctx_changed) {
       /*
        * Push constant buffers are only allowed to take up at most the first
        * 16KB of the URB.  Split the space evenly for VS and FS.
@@ -339,7 +339,7 @@ gen7_draw_vs(struct ilo_render *r,
    /* see gen6_draw_vs() */
    const bool emit_3dstate_constant_vs = session->pcb_state_vs_changed;
    const bool emit_3dstate_vs = (DIRTY(VS) || DIRTY(SAMPLER_VS) ||
-           session->kernel_bo_changed);
+           r->instruction_bo_changed);
 
    /* emit depth stall before any of the VS commands */
    if (emit_3dstate_binding_table || emit_3dstate_sampler_state ||
@@ -380,13 +380,13 @@ gen7_draw_hs(struct ilo_render *r,
              struct gen6_draw_session *session)
 {
    /* 3DSTATE_CONSTANT_HS and 3DSTATE_HS */
-   if (session->hw_ctx_changed) {
+   if (r->hw_ctx_changed) {
       gen7_3DSTATE_CONSTANT_HS(r->builder, 0, 0, 0);
       gen7_3DSTATE_HS(r->builder, NULL, 0);
    }
 
    /* 3DSTATE_BINDING_TABLE_POINTERS_HS */
-   if (session->hw_ctx_changed)
+   if (r->hw_ctx_changed)
       gen7_3DSTATE_BINDING_TABLE_POINTERS_HS(r->builder, 0);
 }
 
@@ -396,7 +396,7 @@ gen7_draw_te(struct ilo_render *r,
              struct gen6_draw_session *session)
 {
    /* 3DSTATE_TE */
-   if (session->hw_ctx_changed)
+   if (r->hw_ctx_changed)
       gen7_3DSTATE_TE(r->builder);
 }
 
@@ -406,13 +406,13 @@ gen7_draw_ds(struct ilo_render *r,
              struct gen6_draw_session *session)
 {
    /* 3DSTATE_CONSTANT_DS and 3DSTATE_DS */
-   if (session->hw_ctx_changed) {
+   if (r->hw_ctx_changed) {
       gen7_3DSTATE_CONSTANT_DS(r->builder, 0, 0, 0);
       gen7_3DSTATE_DS(r->builder, NULL, 0);
    }
 
    /* 3DSTATE_BINDING_TABLE_POINTERS_DS */
-   if (session->hw_ctx_changed)
+   if (r->hw_ctx_changed)
       gen7_3DSTATE_BINDING_TABLE_POINTERS_DS(r->builder, 0);
 
 }
@@ -423,7 +423,7 @@ gen7_draw_gs(struct ilo_render *r,
              struct gen6_draw_session *session)
 {
    /* 3DSTATE_CONSTANT_GS and 3DSTATE_GS */
-   if (session->hw_ctx_changed) {
+   if (r->hw_ctx_changed) {
       gen7_3DSTATE_CONSTANT_GS(r->builder, 0, 0, 0);
       gen7_3DSTATE_GS(r->builder, NULL, 0);
    }
@@ -456,7 +456,7 @@ gen7_draw_sol(struct ilo_render *r,
    so_info = ilo_shader_get_kernel_so_info(shader);
 
    /* 3DSTATE_SO_BUFFER */
-   if ((DIRTY(SO) || dirty_sh || session->batch_bo_changed) &&
+   if ((DIRTY(SO) || dirty_sh || r->batch_bo_changed) &&
        vec->so.enabled) {
       int i;
 
@@ -542,13 +542,13 @@ gen7_draw_wm(struct ilo_render *r,
 
    /* 3DSTATE_PS */
    if (DIRTY(FS) || DIRTY(SAMPLER_FS) || DIRTY(BLEND) ||
-       session->kernel_bo_changed) {
+       r->instruction_bo_changed) {
       const int num_samplers = vec->sampler[PIPE_SHADER_FRAGMENT].count;
       const bool dual_blend = vec->blend->dual_blend;
 
       if ((ilo_dev_gen(r->dev) == ILO_GEN(7) ||
            ilo_dev_gen(r->dev) == ILO_GEN(7.5)) &&
-          session->hw_ctx_changed)
+          r->hw_ctx_changed)
          gen7_wa_pre_3dstate_ps_max_threads(r);
 
       gen7_3DSTATE_PS(r->builder, vec->fs, num_samplers, dual_blend);
@@ -565,7 +565,7 @@ gen7_draw_wm(struct ilo_render *r,
       const bool emit_3dstate_ps =
          (DIRTY(FS) || DIRTY(SAMPLER_FS) || DIRTY(BLEND));
       const bool emit_3dstate_depth_buffer =
-         (DIRTY(FB) || DIRTY(DSA) || session->state_bo_changed);
+         (DIRTY(FB) || DIRTY(DSA) || r->state_bo_changed);
 
       if (emit_3dstate_ps ||
           session->pcb_state_fs_changed ||
@@ -582,7 +582,7 @@ gen7_draw_wm(struct ilo_render *r,
    }
 
    /* 3DSTATE_DEPTH_BUFFER and 3DSTATE_CLEAR_PARAMS */
-   if (DIRTY(FB) || session->batch_bo_changed) {
+   if (DIRTY(FB) || r->batch_bo_changed) {
       const struct ilo_zs_surface *zs;
       uint32_t clear_params;
 
