@@ -737,6 +737,8 @@ brw_try_compact_instruction(struct brw_context *brw, brw_compact_inst *dst,
 {
    brw_compact_inst temp;
 
+   assert(brw_inst_cmpt_control(brw, src) == 0);
+
    if (brw_inst_opcode(brw, src) == BRW_OPCODE_IF ||
        brw_inst_opcode(brw, src) == BRW_OPCODE_ELSE ||
        brw_inst_opcode(brw, src) == BRW_OPCODE_ENDIF ||
@@ -1117,8 +1119,7 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
 
       brw_inst saved = *src;
 
-      if (!brw_inst_cmpt_control(brw, src) &&
-          brw_try_compact_instruction(brw, dst, src)) {
+      if (brw_try_compact_instruction(brw, dst, src)) {
          compacted_count++;
 
          if (INTEL_DEBUG) {
