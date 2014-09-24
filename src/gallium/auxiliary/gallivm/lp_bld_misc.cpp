@@ -55,7 +55,9 @@
 #include <llvm/Target/TargetOptions.h>
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include <llvm/ADT/Triple.h>
+#if HAVE_LLVM < 0x0306
 #include <llvm/ExecutionEngine/JITMemoryManager.h>
+#endif
 #include <llvm/Support/CommandLine.h>
 #include <llvm/Support/Host.h>
 #include <llvm/Support/PrettyStackTrace.h>
