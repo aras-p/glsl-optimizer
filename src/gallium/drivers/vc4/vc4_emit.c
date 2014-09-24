@@ -49,6 +49,12 @@ vc4_emit_state(struct pipe_context *pctx)
                       vc4->zsa->config_bits[2]);
         }
 
+        if (vc4->dirty & VC4_DIRTY_RASTERIZER) {
+                cl_u8(&vc4->bcl, VC4_PACKET_DEPTH_OFFSET);
+                cl_u16(&vc4->bcl, vc4->rasterizer->offset_factor);
+                cl_u16(&vc4->bcl, vc4->rasterizer->offset_units);
+        }
+
         if (vc4->dirty & VC4_DIRTY_VIEWPORT) {
                 cl_u8(&vc4->bcl, VC4_PACKET_CLIPPER_XY_SCALING);
                 cl_f(&vc4->bcl, vc4->viewport.scale[0] * 16.0f);

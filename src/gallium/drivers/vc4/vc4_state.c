@@ -79,6 +79,12 @@ vc4_set_sample_mask(struct pipe_context *pctx, unsigned sample_mask)
         vc4->dirty |= VC4_DIRTY_SAMPLE_MASK;
 }
 
+static uint16_t
+float_to_187_half(float f)
+{
+        return fui(f) >> 16;
+}
+
 static void *
 vc4_create_rasterizer_state(struct pipe_context *pctx,
                             const struct pipe_rasterizer_state *cso)
@@ -102,8 +108,12 @@ vc4_create_rasterizer_state(struct pipe_context *pctx,
         if (cso->front_ccw)
                 so->config_bits[0] |= VC4_CONFIG_BITS_CW_PRIMITIVES;
 
-        if (cso->offset_tri)
+        if (cso->offset_tri) {
                 so->config_bits[0] |= VC4_CONFIG_BITS_ENABLE_DEPTH_OFFSET;
+
+                so->offset_units = float_to_187_half(cso->offset_units);
+                so->offset_factor = float_to_187_half(cso->offset_scale);
+        }
 
         return so;
 }

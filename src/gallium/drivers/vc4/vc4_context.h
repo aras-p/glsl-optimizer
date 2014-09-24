@@ -205,6 +205,17 @@ struct vc4_rasterizer_state {
         uint8_t config_bits[3];
 
         float point_size;
+
+        /**
+         * Half-float (1/8/7 bits) value of polygon offset units for
+         * VC4_PACKET_DEPTH_OFFSET
+         */
+        uint16_t offset_units;
+        /**
+         * Half-float (1/8/7 bits) value of polygon offset scale for
+         * VC4_PACKET_DEPTH_OFFSET
+         */
+        uint16_t offset_factor;
 };
 
 struct vc4_depth_stencil_alpha_state {
