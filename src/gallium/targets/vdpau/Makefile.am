@@ -36,15 +36,9 @@ libvdpau_gallium_la_LIBADD = \
 	$(LIBDRM_LIBS) \
 	$(GALLIUM_COMMON_LIB_DEPS)
 
-
-MEGADRIVERS =
-STATIC_TARGET_CPPFLAGS = -DGALLIUM_STATIC_TARGETS=1
-STATIC_TARGET_LIB_DEPS = \
-	$(top_builddir)/src/loader/libloader.la
-
 TARGET_DRIVERS =
 TARGET_CPPFLAGS =
-TARGET_LIB_DEPS =
+TARGET_LIB_DEPS = $(top_builddir)/src/loader/libloader.la
 
 include $(top_srcdir)/src/gallium/drivers/nouveau/Automake.inc
 
@@ -54,8 +48,8 @@ include $(top_srcdir)/src/gallium/drivers/radeonsi/Automake.inc
 if HAVE_GALLIUM_STATIC_TARGETS
 
 libvdpau_gallium_la_SOURCES += target.c
-libvdpau_gallium_la_CPPFLAGS = $(STATIC_TARGET_CPPFLAGS) $(TARGET_CPPFLAGS)
-libvdpau_gallium_la_LIBADD += $(STATIC_TARGET_LIB_DEPS) $(TARGET_LIB_DEPS) \
+libvdpau_gallium_la_CPPFLAGS = $(TARGET_CPPFLAGS)
+libvdpau_gallium_la_LIBADD += $(TARGET_LIB_DEPS) \
 	$(TARGET_RADEON_WINSYS) $(TARGET_RADEON_COMMON)
 
 else # HAVE_GALLIUM_STATIC_TARGETS
@@ -81,7 +75,7 @@ if HAVE_COMPAT_SYMLINKS
 all-local: $(vdpau_LTLIBRARIES)
 	$(AM_V_GEN)link_dir=$(top_builddir)/$(LIB_DIR)/gallium;		\
 	$(MKDIR_P) $${link_dir};					\
-	for i in $(MEGADRIVERS) $(TARGET_DRIVERS); do			\
+	for i in $(TARGET_DRIVERS); do					\
 		j=libvdpau_gallium.$(LIB_EXT);				\
 		k=libvdpau_$${i}.$(LIB_EXT);				\
 		l=$${k}.$(VDPAU_MAJOR).$(VDPAU_MINOR).0;		\
@@ -100,7 +94,7 @@ endif
 # libvdpau_gallium.so in the set of final installed files.
 install-data-hook:
 	$(AM_V_GEN)dest_dir=$(DESTDIR)/$(vdpaudir);			\
-	for i in $(MEGADRIVERS) $(TARGET_DRIVERS); do			\
+	for i in $(TARGET_DRIVERS); do					\
 		j=libvdpau_gallium.$(LIB_EXT);				\
 		k=libvdpau_$${i}.$(LIB_EXT);				\
 		l=$${k}.$(VDPAU_MAJOR).$(VDPAU_MINOR).0;		\

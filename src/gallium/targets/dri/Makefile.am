@@ -59,14 +59,9 @@ gallium_dri_la_LIBADD = \
 gallium_dri_la_LDFLAGS += \
 	-Wl,--allow-multiple-definition
 
-MEGADRIVERS =
-STATIC_TARGET_CPPFLAGS =
-STATIC_TARGET_LIB_DEPS = \
-	$(top_builddir)/src/loader/libloader.la
-
 TARGET_DRIVERS =
 TARGET_CPPFLAGS =
-TARGET_LIB_DEPS =
+TARGET_LIB_DEPS = $(top_builddir)/src/loader/libloader.la
 
 include $(top_srcdir)/src/gallium/drivers/i915/Automake.inc
 
@@ -90,8 +85,8 @@ include $(top_srcdir)/src/gallium/drivers/llvmpipe/Automake.inc
 if HAVE_GALLIUM_STATIC_TARGETS
 
 gallium_dri_la_SOURCES += target.c
-AM_CPPFLAGS += $(STATIC_TARGET_CPPFLAGS) $(TARGET_CPPFLAGS)
-gallium_dri_la_LIBADD += $(STATIC_TARGET_LIB_DEPS) $(TARGET_LIB_DEPS) \
+gallium_dri_la_CPPFLAGS = $(AM_CPPFLAGS) $(TARGET_CPPFLAGS)
+gallium_dri_la_LIBADD += $(TARGET_LIB_DEPS) \
 	$(TARGET_RADEON_WINSYS) $(TARGET_RADEON_COMMON)
 
 else # HAVE_GALLIUM_STATIC_TARGETS
@@ -113,7 +108,7 @@ if HAVE_COMPAT_SYMLINKS
 all-local: $(dri_LTLIBRARIES)
 	$(AM_V_GEN)link_dir=$(top_builddir)/$(LIB_DIR)/gallium;         \
 	$(MKDIR_P) $${link_dir};                                        \
-	for i in $(MEGADRIVERS) $(TARGET_DRIVERS); do                   \
+	for i in $(TARGET_DRIVERS); do                                  \
 		j=gallium_dri.so;                                       \
 		k=$${i}_dri.so;                                         \
 		ln -f .libs/$${j}                                       \
@@ -125,7 +120,7 @@ endif
 # gallium_dri.so in the set of final installed files.
 install-data-hook:
 	$(AM_V_GEN)dest_dir=$(DESTDIR)/$(dridir);                       \
-	for i in $(MEGADRIVERS) $(TARGET_DRIVERS); do                   \
+	for i in $(TARGET_DRIVERS); do                                  \
 		j=gallium_dri.so;                                       \
 		k=$${i}_dri.so;                                         \
 		ln -f $${dest_dir}/$${j}                                \

@@ -32,13 +32,10 @@ libomx_mesa_la_LIBADD = \
 
 if HAVE_GALLIUM_STATIC_TARGETS
 
-STATIC_TARGET_CPPFLAGS = -DGALLIUM_STATIC_TARGETS=1
-STATIC_TARGET_LIB_DEPS = \
-	$(top_builddir)/src/loader/libloader.la
-
 TARGET_DRIVERS =
 TARGET_CPPFLAGS =
-TARGET_LIB_DEPS =
+TARGET_LIB_DEPS = $(top_builddir)/src/loader/libloader.la
+
 
 include $(top_srcdir)/src/gallium/drivers/nouveau/Automake.inc
 
@@ -46,8 +43,8 @@ include $(top_srcdir)/src/gallium/drivers/r600/Automake.inc
 include $(top_srcdir)/src/gallium/drivers/radeonsi/Automake.inc
 
 libomx_mesa_la_SOURCES += target.c
-libomx_mesa_la_CPPFLAGS = $(STATIC_TARGET_CPPFLAGS) $(TARGET_CPPFLAGS)
-libomx_mesa_la_LIBADD += $(STATIC_TARGET_LIB_DEPS) $(TARGET_LIB_DEPS) \
+libomx_mesa_la_CPPFLAGS = $(TARGET_CPPFLAGS)
+libomx_mesa_la_LIBADD += $(TARGET_LIB_DEPS) \
 	$(TARGET_RADEON_WINSYS) $(TARGET_RADEON_COMMON)
 
 else # HAVE_GALLIUM_STATIC_TARGETS

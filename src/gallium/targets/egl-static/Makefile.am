@@ -154,9 +154,6 @@ endif
 
 #if HAVE_GALLIUM_STATIC_TARGETS
 
-egl_gallium_la_LDFLAGS = $(AM_LDFLAGS)
-egl_gallium_la_CPPFLAGS = $(AM_CPPFLAGS)
-
 TARGET_DRIVERS =
 TARGET_CPPFLAGS =
 TARGET_LIB_DEPS =
@@ -178,7 +175,8 @@ include $(top_srcdir)/src/gallium/drivers/freedreno/Automake.inc
 include $(top_srcdir)/src/gallium/drivers/softpipe/Automake.inc
 include $(top_srcdir)/src/gallium/drivers/llvmpipe/Automake.inc
 
-egl_gallium_la_CPPFLAGS += $(TARGET_CPPFLAGS)
+egl_gallium_la_LDFLAGS = $(AM_LDFLAGS)
+egl_gallium_la_CPPFLAGS = $(AM_CPPFLAGS) $(TARGET_CPPFLAGS)
 egl_gallium_la_LIBADD += $(TARGET_LIB_DEPS) \
 	$(TARGET_RADEON_WINSYS) $(TARGET_RADEON_COMMON)
 

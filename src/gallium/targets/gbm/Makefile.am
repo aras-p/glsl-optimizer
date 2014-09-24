@@ -52,13 +52,9 @@ endif
 
 if HAVE_GALLIUM_STATIC_TARGETS
 
-STATIC_TARGET_CPPFLAGS =
-STATIC_TARGET_LIB_DEPS = \
-	$(top_builddir)/src/loader/libloader.la
-
 TARGET_DRIVERS =
 TARGET_CPPFLAGS =
-TARGET_LIB_DEPS =
+TARGET_LIB_DEPS = $(top_builddir)/src/loader/libloader.la
 
 include $(top_srcdir)/src/gallium/drivers/i915/Automake.inc
 
@@ -75,8 +71,8 @@ include $(top_srcdir)/src/gallium/drivers/svga/Automake.inc
 include $(top_srcdir)/src/gallium/drivers/freedreno/Automake.inc
 
 gbm_gallium_drm_la_SOURCES += target.c
-gbm_gallium_drm_la_CPPFLAGS = $(STATIC_TARGET_CPPFLAGS) $(TARGET_CPPFLAGS)
-gbm_gallium_drm_la_LIBADD += $(STATIC_TARGET_LIB_DEPS) $(TARGET_LIB_DEPS) \
+gbm_gallium_drm_la_CPPFLAGS = $(TARGET_CPPFLAGS)
+gbm_gallium_drm_la_LIBADD += $(TARGET_LIB_DEPS) \
 	$(TARGET_RADEON_WINSYS) $(TARGET_RADEON_COMMON)
 
 else # HAVE_GALLIUM_STATIC_TARGETS
