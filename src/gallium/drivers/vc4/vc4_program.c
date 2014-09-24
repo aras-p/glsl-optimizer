@@ -59,7 +59,9 @@ struct vc4_fs_key {
         bool is_points;
         bool is_lines;
         bool alpha_test;
+        bool point_coord_upper_left;
         uint8_t alpha_test_func;
+        uint32_t point_sprite_mask;
 
         struct pipe_rt_blend_state blend;
 };
@@ -868,6 +870,26 @@ emit_fragcoord_input(struct vc4_compile *c, int attr)
         c->inputs[attr * 4 + 3] = qir_RCP(c, qir_FRAG_W(c));
 }
 
+static void
+emit_point_coord_input(struct vc4_compile *c, int attr)
+{
+        if (c->point_x.file == QFILE_NULL) {
+                c->point_x = qir_uniform_f(c, 0.0);
+                c->point_y = qir_uniform_f(c, 0.0);
+        }
+
+        c->inputs[attr * 4 + 0] = c->point_x;
+        if (c->fs_key->point_coord_upper_left) {
+                c->inputs[attr * 4 + 1] = qir_FSUB(c,
+                                                   qir_uniform_f(c, 1.0),
+                                                   c->point_y);
+        } else {
+                c->inputs[attr * 4 + 1] = c->point_y;
+        }
+        c->inputs[attr * 4 + 2] = qir_uniform_f(c, 0.0);
+        c->inputs[attr * 4 + 3] = qir_uniform_f(c, 1.0);
+}
+
 static struct qreg
 emit_fragment_varying(struct vc4_compile *c, int index)
 {
@@ -915,6 +937,10 @@ emit_tgsi_declaration(struct vc4_compile *c,
                                 if (decl->Semantic.Name ==
                                     TGSI_SEMANTIC_POSITION) {
                                         emit_fragcoord_input(c, i);
+                                } else if (decl->Semantic.Name == TGSI_SEMANTIC_GENERIC &&
+                                           (c->fs_key->point_sprite_mask &
+                                            (1 << decl->Semantic.Index))) {
+                                        emit_point_coord_input(c, i);
                                 } else {
                                         emit_fragment_input(c, i, decl);
                                 }
@@ -1703,6 +1729,14 @@ vc4_update_compiled_fs(struct vc4_context *vc4, uint8_t prim_mode)
         if (vc4->zsa->base.alpha.enabled) {
                 key->alpha_test = true;
                 key->alpha_test_func = vc4->zsa->base.alpha.func;
+        }
+
+        if (key->is_points) {
+                key->point_sprite_mask =
+                        vc4->rasterizer->base.sprite_coord_enable;
+                key->point_coord_upper_left =
+                        (vc4->rasterizer->base.sprite_coord_mode ==
+                         PIPE_SPRITE_COORD_UPPER_LEFT);
         }
 
         vc4->prog.fs = util_hash_table_get(vc4->fs_cache, key);
