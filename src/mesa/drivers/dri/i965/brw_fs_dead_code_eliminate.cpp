@@ -58,7 +58,7 @@ fs_visitor::dead_code_eliminate()
                int var = live_intervals->var_from_reg(&inst->dst);
                result_live = BITSET_TEST(live, var);
             } else {
-               int var = live_intervals->var_from_vgrf[inst->dst.reg];
+               int var = live_intervals->var_from_reg(&inst->dst);
                for (int i = 0; i < inst->regs_written; i++) {
                   result_live = result_live || BITSET_TEST(live, var + i);
                }
