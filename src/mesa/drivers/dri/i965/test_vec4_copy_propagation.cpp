@@ -116,6 +116,7 @@ copy_propagation(vec4_visitor *v)
       v->dump_instructions();
    }
 
+   v->calculate_cfg();
    v->opt_copy_propagation();
 
    if (print) {

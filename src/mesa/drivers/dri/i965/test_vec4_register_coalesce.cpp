@@ -119,6 +119,7 @@ _register_coalesce(vec4_visitor *v, const char *func)
       v->dump_instructions();
    }
 
+   v->calculate_cfg();
    v->opt_register_coalesce();
 
    if (print) {
