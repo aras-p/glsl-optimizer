@@ -58,6 +58,8 @@ struct vc4_fs_key {
         bool stencil_full_writemasks;
         bool is_points;
         bool is_lines;
+        bool alpha_test;
+        uint8_t alpha_test_func;
 
         struct pipe_rt_blend_state blend;
 };
@@ -1227,8 +1229,66 @@ vc4_blend(struct vc4_compile *c, struct qreg *result,
 }
 
 static void
+alpha_test_discard(struct vc4_compile *c)
+{
+        struct qreg src_alpha;
+        struct qreg alpha_ref = get_temp_for_uniform(c, QUNIFORM_ALPHA_REF, 0);
+
+        if (!c->fs_key->alpha_test)
+                return;
+
+        if (c->output_color_index != -1)
+                src_alpha = c->outputs[c->output_color_index + 3];
+        else
+                src_alpha = qir_uniform_f(c, 1.0);
+
+        if (c->discard.file == QFILE_NULL)
+                c->discard = qir_uniform_f(c, 0.0);
+
+        switch (c->fs_key->alpha_test_func) {
+        case PIPE_FUNC_NEVER:
+                c->discard = qir_uniform_f(c, 1.0);
+                break;
+        case PIPE_FUNC_ALWAYS:
+                break;
+        case PIPE_FUNC_EQUAL:
+                qir_SF(c, qir_FSUB(c, src_alpha, alpha_ref));
+                c->discard = qir_SEL_X_Y_ZS(c, c->discard,
+                                            qir_uniform_f(c, 1.0));
+                break;
+        case PIPE_FUNC_NOTEQUAL:
+                qir_SF(c, qir_FSUB(c, src_alpha, alpha_ref));
+                c->discard = qir_SEL_X_Y_ZC(c, c->discard,
+                                            qir_uniform_f(c, 1.0));
+                break;
+        case PIPE_FUNC_GREATER:
+                qir_SF(c, qir_FSUB(c, src_alpha, alpha_ref));
+                c->discard = qir_SEL_X_Y_NC(c, c->discard,
+                                            qir_uniform_f(c, 1.0));
+                break;
+        case PIPE_FUNC_GEQUAL:
+                qir_SF(c, qir_FSUB(c, alpha_ref, src_alpha));
+                c->discard = qir_SEL_X_Y_NS(c, c->discard,
+                                            qir_uniform_f(c, 1.0));
+                break;
+        case PIPE_FUNC_LESS:
+                qir_SF(c, qir_FSUB(c, src_alpha, alpha_ref));
+                c->discard = qir_SEL_X_Y_NS(c, c->discard,
+                                            qir_uniform_f(c, 1.0));
+                break;
+        case PIPE_FUNC_LEQUAL:
+                qir_SF(c, qir_FSUB(c, alpha_ref, src_alpha));
+                c->discard = qir_SEL_X_Y_NC(c, c->discard,
+                                            qir_uniform_f(c, 1.0));
+                break;
+        }
+}
+
+static void
 emit_frag_end(struct vc4_compile *c)
 {
+        alpha_test_discard(c);
+
         enum pipe_format color_format = c->fs_key->color_format;
         const uint8_t *format_swiz = vc4_get_format_swizzle(color_format);
         struct qreg tlb_read_color[4] = { c->undef, c->undef, c->undef, c->undef };
@@ -1614,6 +1674,10 @@ vc4_update_compiled_fs(struct vc4_context *vc4, uint8_t prim_mode)
         key->stencil_full_writemasks = vc4->zsa->stencil_uniforms[2] != 0;
         key->depth_enabled = (vc4->zsa->base.depth.enabled ||
                               key->stencil_enabled);
+        if (vc4->zsa->base.alpha.enabled) {
+                key->alpha_test = true;
+                key->alpha_test_func = vc4->zsa->base.alpha.func;
+        }
 
         vc4->prog.fs = util_hash_table_get(vc4->fs_cache, key);
         if (vc4->prog.fs)
@@ -1885,6 +1949,10 @@ vc4_write_uniforms(struct vc4_context *vc4, struct vc4_compiled_shader *shader,
                                (uinfo->data[i] <= 1 ?
                                 (vc4->stencil_ref.ref_value[uinfo->data[i]] << 8) :
                                 0));
+                        break;
+
+                case QUNIFORM_ALPHA_REF:
+                        cl_f(&vc4->uniforms, vc4->zsa->base.alpha.ref_value);
                         break;
                 }
 #if 0

@@ -206,6 +206,8 @@ enum quniform_contents {
 
         QUNIFORM_BLEND_CONST_COLOR,
         QUNIFORM_STENCIL,
+
+        QUNIFORM_ALPHA_REF,
 };
 
 struct vc4_compile {
