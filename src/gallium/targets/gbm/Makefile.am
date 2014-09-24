@@ -133,9 +133,9 @@ gbm_gallium_drm_la_LIBADD += $(STATIC_TARGET_LIB_DEPS)
 
 else # HAVE_GALLIUM_STATIC_TARGETS
 gbm_gallium_drm_la_LIBADD += \
-	$(top_builddir)/src/gallium/auxiliary/pipe-loader/libpipe_loader_client.la \
-	$(GALLIUM_PIPE_LOADER_CLIENT_LIBS) \
-	$(GALLIUM_PIPE_LOADER_WINSYS_LIBS)
+	$(top_builddir)/src/gallium/auxiliary/pipe-loader/libpipe_loader.la \
+	$(GALLIUM_PIPE_LOADER_WINSYS_LIBS) \
+	$(GALLIUM_PIPE_LOADER_LIBS)
 
 endif # HAVE_GALLIUM_STATIC_TARGETS
 

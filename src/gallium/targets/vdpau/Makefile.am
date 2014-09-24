@@ -95,7 +95,6 @@ libvdpau_gallium_la_CPPFLAGS = \
 	$(GALLIUM_PIPE_LOADER_DEFINES) \
 	-DPIPE_SEARCH_DIR=\"$(libdir)/gallium-pipe\"
 
-# XXX: Use the pipe-loader-client over pipe-loader ?
 libvdpau_gallium_la_LIBADD += \
 	$(top_builddir)/src/gallium/auxiliary/pipe-loader/libpipe_loader.la \
 	$(GALLIUM_PIPE_LOADER_WINSYS_LIBS) \

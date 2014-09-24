@@ -273,7 +273,7 @@ gbm_gallium_drm_device_create(int fd)
    gdrm->screen = dd_create_screen(gdrm->base.base.fd);
 #else
 #ifdef HAVE_PIPE_LOADER_DRM
-   if (pipe_loader_drm_probe_fd(&gdrm->dev, gdrm->base.base.fd, true))
+   if (pipe_loader_drm_probe_fd(&gdrm->dev, gdrm->base.base.fd, false))
       gdrm->screen = pipe_loader_create_screen(gdrm->dev,
                                                get_library_search_path());
 #endif /* HAVE_PIPE_LOADER_DRM */

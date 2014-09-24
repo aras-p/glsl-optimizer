@@ -379,7 +379,7 @@ vl_screen_create(Display *display, int screen)
 #if GALLIUM_STATIC_TARGETS
    scrn->base.pscreen = dd_create_screen(fd);
 #else
-   if (pipe_loader_drm_probe_fd(&scrn->base.dev, fd, true))
+   if (pipe_loader_drm_probe_fd(&scrn->base.dev, fd, false))
       scrn->base.pscreen = pipe_loader_create_screen(scrn->base.dev, PIPE_SEARCH_DIR);
 #endif // GALLIUM_STATIC_TARGETS
 
