@@ -31,8 +31,6 @@
 
 
 #include "pipe/p_compiler.h"
-/* for TGSI_WRITEMASK_* specification in util_blit_pixels */
-#include "pipe/p_shader_tokens.h"
 
 
 #ifdef __cplusplus
@@ -45,9 +43,6 @@ struct pipe_context;
 struct pipe_resource;
 struct pipe_sampler_view;
 struct pipe_surface;
-
-#define BLIT_WRITEMASK_Z         1
-#define BLIT_WRITEMASK_STENCIL   2
 
 extern struct blit_state *
 util_create_blit(struct pipe_context *pipe, struct cso_context *cso);
@@ -66,7 +61,7 @@ util_blit_pixels(struct blit_state *ctx,
                  int dstX0, int dstY0,
                  int dstX1, int dstY1,
                  float z, uint filter,
-                 uint writemask, uint zs_writemask);
+                 uint writemask);
 
 extern void
 util_blit_pixels_tex(struct blit_state *ctx,

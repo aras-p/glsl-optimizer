@@ -337,9 +337,9 @@ formats_compatible(enum pipe_format src_format,
  * Overlapping regions are acceptable.
  * Flipping and stretching are supported.
  * \param filter  one of PIPE_TEX_FILTER_NEAREST/LINEAR
- * \param writemask  controls which channels in the dest surface are sourced
- *                   from the src surface.  Disabled channels are sourced
- *                   from (0,0,0,1).
+ * \param writemask  bitmask of PIPE_MASK_[RGBAZS].  Controls which channels
+ *                   in the dest surface are sourced from the src surface.
+ *                   Disabled color channels are sourced from (0,0,0,1).
  */
 void
 util_blit_pixels(struct blit_state *ctx,
@@ -352,7 +352,7 @@ util_blit_pixels(struct blit_state *ctx,
                  int dstX0, int dstY0,
                  int dstX1, int dstY1,
                  float z, uint filter,
-                 uint writemask, uint zs_writemask)
+                 uint writemask)
 {
    struct pipe_context *pipe = ctx->pipe;
    enum pipe_format src_format, dst_format;
@@ -383,11 +383,18 @@ util_blit_pixels(struct blit_state *ctx,
    is_depth = util_format_has_depth(src_desc);
    is_stencil = util_format_has_stencil(src_desc);
 
-   blit_depth = is_depth && (zs_writemask & BLIT_WRITEMASK_Z);
-   blit_stencil = is_stencil && (zs_writemask & BLIT_WRITEMASK_STENCIL);
+   blit_depth = is_depth && (writemask & PIPE_MASK_Z);
+   blit_stencil = is_stencil && (writemask & PIPE_MASK_S);
 
-   assert((writemask && !zs_writemask && !is_depth && !is_stencil) ||
-          (!writemask && (blit_depth || blit_stencil)));
+   if (is_depth || is_stencil) {
+      assert((writemask & PIPE_MASK_RGBA) == 0);
+      assert(blit_depth || blit_stencil);
+   }
+   else {
+      assert((writemask & PIPE_MASK_ZS) == 0);
+      assert(!blit_depth);
+      assert(!blit_stencil);
+   }
 
    /*
     * XXX: z parameter is deprecated. dst->u.tex.first_layer
@@ -447,7 +454,7 @@ util_blit_pixels(struct blit_state *ctx,
    info.src.box.height = srcY1 - srcY0;
    info.src.box.depth = 1;
    info.src.format = src_tex->format;
-   info.mask = writemask | (zs_writemask << 4);
+   info.mask = writemask;
    info.filter = filter;
    info.scissor_enable = 0;
 
