@@ -451,7 +451,8 @@ st_update_renderbuffer_surface(struct st_context *st,
    }
 
    /* Adjust for texture views */
-   if (strb->is_rtt) {
+   if (strb->is_rtt && resource->array_size > 1 &&
+       strb->Base.TexImage->TexObject->Immutable) {
       struct gl_texture_object *tex = strb->Base.TexImage->TexObject;
       first_layer += tex->MinLayer;
       if (!strb->rtt_layered)

@@ -223,7 +223,7 @@ static unsigned last_level(struct st_texture_object *stObj)
 
 static unsigned last_layer(struct st_texture_object *stObj)
 {
-   if (stObj->base.Immutable)
+   if (stObj->base.Immutable && stObj->pt->array_size > 1)
       return MIN2(stObj->base.MinLayer + stObj->base.NumLayers - 1,
                   stObj->pt->array_size - 1);
    return stObj->pt->array_size - 1;
