@@ -276,7 +276,10 @@ vc4_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader,
         case PIPE_SHADER_CAP_MAX_CONTROL_FLOW_DEPTH:
                 return 0;
         case PIPE_SHADER_CAP_MAX_INPUTS:
-                return 16;
+                if (shader == PIPE_SHADER_FRAGMENT)
+                        return 8;
+                else
+                        return 16;
         case PIPE_SHADER_CAP_MAX_TEMPS:
                 return 256; /* GL_MAX_PROGRAM_TEMPORARIES_ARB */
         case PIPE_SHADER_CAP_MAX_CONST_BUFFER_SIZE:
