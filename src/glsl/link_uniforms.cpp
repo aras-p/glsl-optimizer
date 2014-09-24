@@ -771,40 +771,6 @@ link_update_uniform_buffer_variables(struct gl_shader *shader)
    }
 }
 
-void
-link_assign_uniform_block_offsets(struct gl_shader *shader)
-{
-   for (unsigned b = 0; b < shader->NumUniformBlocks; b++) {
-      struct gl_uniform_block *block = &shader->UniformBlocks[b];
-
-      unsigned offset = 0;
-      for (unsigned int i = 0; i < block->NumUniforms; i++) {
-	 struct gl_uniform_buffer_variable *ubo_var = &block->Uniforms[i];
-	 const struct glsl_type *type = ubo_var->Type;
-
-	 unsigned alignment = type->std140_base_alignment(ubo_var->RowMajor);
-	 unsigned size = type->std140_size(ubo_var->RowMajor);
-
-	 offset = glsl_align(offset, alignment);
-	 ubo_var->Offset = offset;
-	 offset += size;
-      }
-
-      /* From the GL_ARB_uniform_buffer_object spec:
-       *
-       *     "For uniform blocks laid out according to [std140] rules,
-       *      the minimum buffer object size returned by the
-       *      UNIFORM_BLOCK_DATA_SIZE query is derived by taking the
-       *      offset of the last basic machine unit consumed by the
-       *      last uniform of the uniform block (including any
-       *      end-of-array or end-of-structure padding), adding one,
-       *      and rounding up to the next multiple of the base
-       *      alignment required for a vec4."
-       */
-      block->UniformBufferSize = glsl_align(offset, 16);
-   }
-}
-
 /**
  * Scan the program for image uniforms and store image unit access
  * information into the gl_shader data structure.
