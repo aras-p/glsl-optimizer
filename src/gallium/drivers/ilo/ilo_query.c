@@ -33,30 +33,30 @@
 #include "ilo_query.h"
 
 static const struct {
-   bool (*init)(struct pipe_context *pipe, struct ilo_query *q);
-   void (*begin)(struct pipe_context *pipe, struct ilo_query *q);
-   void (*end)(struct pipe_context *pipe, struct ilo_query *q);
-   void (*process)(struct pipe_context *pipe, struct ilo_query *q);
+   bool (*init)(struct ilo_context *ilo, struct ilo_query *q);
+   void (*begin)(struct ilo_context *ilo, struct ilo_query *q);
+   void (*end)(struct ilo_context *ilo, struct ilo_query *q);
+   void (*process)(struct ilo_context *ilo, struct ilo_query *q);
 } ilo_query_table[PIPE_QUERY_TYPES] = {
-#define INFO(prefix) {                    \
-   .init = prefix ## _init_query,         \
-   .begin = prefix ## _begin_query,       \
-   .end = prefix ## _end_query,           \
-   .process = prefix ## _process_query,   \
+#define INFO(mod) {                    \
+   .init = ilo_init_ ## mod ## _query,         \
+   .begin = ilo_begin_ ## mod ## _query,       \
+   .end = ilo_end_ ## mod ## _query,           \
+   .process = ilo_process_ ## mod ## _query,   \
 }
 #define INFOX(prefix) { NULL, NULL, NULL, NULL, }
 
-   [PIPE_QUERY_OCCLUSION_COUNTER]      = INFO(ilo_3d),
-   [PIPE_QUERY_OCCLUSION_PREDICATE]    = INFOX(ilo_3d),
-   [PIPE_QUERY_TIMESTAMP]              = INFO(ilo_3d),
-   [PIPE_QUERY_TIMESTAMP_DISJOINT]     = INFOX(ilo_3d),
-   [PIPE_QUERY_TIME_ELAPSED]           = INFO(ilo_3d),
-   [PIPE_QUERY_PRIMITIVES_GENERATED]   = INFO(ilo_3d),
-   [PIPE_QUERY_PRIMITIVES_EMITTED]     = INFO(ilo_3d),
-   [PIPE_QUERY_SO_STATISTICS]          = INFOX(ilo_3d),
-   [PIPE_QUERY_SO_OVERFLOW_PREDICATE]  = INFOX(ilo_3d),
-   [PIPE_QUERY_GPU_FINISHED]           = INFOX(ilo_3d),
-   [PIPE_QUERY_PIPELINE_STATISTICS]    = INFO(ilo_3d),
+   [PIPE_QUERY_OCCLUSION_COUNTER]      = INFO(draw),
+   [PIPE_QUERY_OCCLUSION_PREDICATE]    = INFOX(draw),
+   [PIPE_QUERY_TIMESTAMP]              = INFO(draw),
+   [PIPE_QUERY_TIMESTAMP_DISJOINT]     = INFOX(draw),
+   [PIPE_QUERY_TIME_ELAPSED]           = INFO(draw),
+   [PIPE_QUERY_PRIMITIVES_GENERATED]   = INFO(draw),
+   [PIPE_QUERY_PRIMITIVES_EMITTED]     = INFO(draw),
+   [PIPE_QUERY_SO_STATISTICS]          = INFOX(draw),
+   [PIPE_QUERY_SO_OVERFLOW_PREDICATE]  = INFOX(draw),
+   [PIPE_QUERY_GPU_FINISHED]           = INFOX(draw),
+   [PIPE_QUERY_PIPELINE_STATISTICS]    = INFO(draw),
 
 #undef INFO
 #undef INFOX
@@ -94,7 +94,7 @@ ilo_create_query(struct pipe_context *pipe, unsigned query_type, unsigned index)
 
    list_inithead(&q->list);
 
-   if (!ilo_query_table[q->type].init(pipe, q)) {
+   if (!ilo_query_table[q->type].init(ilo_context(pipe), q)) {
       FREE(q);
       return NULL;
    }
@@ -125,7 +125,7 @@ ilo_begin_query(struct pipe_context *pipe, struct pipe_query *query)
    q->used = 0;
    q->active = true;
 
-   ilo_query_table[q->type].begin(pipe, q);
+   ilo_query_table[q->type].begin(ilo_context(pipe), q);
 }
 
 static void
@@ -143,7 +143,7 @@ ilo_end_query(struct pipe_context *pipe, struct pipe_query *query)
 
    q->active = false;
 
-   ilo_query_table[q->type].end(pipe, q);
+   ilo_query_table[q->type].end(ilo_context(pipe), q);
 }
 
 /**
@@ -208,7 +208,7 @@ ilo_get_query_result(struct pipe_context *pipe, struct pipe_query *query,
          return false;
    }
 
-   ilo_query_table[q->type].process(pipe, q);
+   ilo_query_table[q->type].process(ilo_context(pipe), q);
 
    if (result)
       query_serialize(q, (void *) result);

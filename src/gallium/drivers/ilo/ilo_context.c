@@ -33,6 +33,7 @@
 #include "ilo_draw.h"
 #include "ilo_gpgpu.h"
 #include "ilo_query.h"
+#include "ilo_render.h"
 #include "ilo_resource.h"
 #include "ilo_screen.h"
 #include "ilo_shader.h"
@@ -46,7 +47,11 @@ ilo_context_cp_submitted(struct ilo_cp *cp, void *data)
 {
    struct ilo_context *ilo = ilo_context(data);
 
-   ilo_3d_cp_submitted(ilo->hw3d);
+   /* invalidate the pipeline */
+   ilo_3d_pipeline_invalidate(ilo->pipeline,
+         ILO_3D_PIPELINE_INVALIDATE_BATCH_BO |
+         ILO_3D_PIPELINE_INVALIDATE_STATE_BO |
+         ILO_3D_PIPELINE_INVALIDATE_KERNEL_BO);
 }
 
 static void
@@ -119,8 +124,8 @@ ilo_context_destroy(struct pipe_context *pipe)
 
    if (ilo->blitter)
       ilo_blitter_destroy(ilo->blitter);
-   if (ilo->hw3d)
-      ilo_3d_destroy(ilo->hw3d);
+   if (ilo->pipeline)
+      ilo_3d_pipeline_destroy(ilo->pipeline);
    if (ilo->shader_cache)
       ilo_shader_cache_destroy(ilo->shader_cache);
    if (ilo->cp)
@@ -154,9 +159,9 @@ ilo_context_create(struct pipe_screen *screen, void *priv)
    ilo->shader_cache = ilo_shader_cache_create();
    ilo->cp = ilo_cp_create(ilo->dev, ilo->winsys, ilo->shader_cache);
    if (ilo->cp)
-      ilo->hw3d = ilo_3d_create(ilo->cp, ilo->dev);
+      ilo->pipeline = ilo_3d_pipeline_create(&ilo->cp->builder);
 
-   if (!ilo->cp || !ilo->shader_cache || !ilo->hw3d) {
+   if (!ilo->cp || !ilo->shader_cache || !ilo->pipeline) {
       ilo_context_destroy(&ilo->base);
       return NULL;
    }
@@ -171,7 +176,7 @@ ilo_context_create(struct pipe_screen *screen, void *priv)
    ilo->base.flush = ilo_flush;
    ilo->base.render_condition = ilo_render_condition;
 
-   ilo_init_3d_functions(ilo);
+   ilo_init_draw_functions(ilo);
    ilo_init_query_functions(ilo);
    ilo_init_state_functions(ilo);
    ilo_init_blit_functions(ilo);
@@ -179,6 +184,7 @@ ilo_context_create(struct pipe_screen *screen, void *priv)
    ilo_init_video_functions(ilo);
    ilo_init_gpgpu_functions(ilo);
 
+   ilo_init_draw(ilo);
    ilo_state_vector_init(ilo->dev, &ilo->state_vector);
 
    /*

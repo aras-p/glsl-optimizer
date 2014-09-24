@@ -32,14 +32,15 @@
 #include "util/u_slab.h"
 
 #include "ilo_common.h"
+#include "ilo_cp.h"
+#include "ilo_draw.h"
 #include "ilo_state.h"
 
 struct u_upload_mgr;
-
 struct intel_winsys;
-struct ilo_3d;
+
+struct ilo_3d_pipeline;
 struct ilo_blitter;
-struct ilo_cp;
 struct ilo_screen;
 struct ilo_shader_cache;
 
@@ -54,8 +55,8 @@ struct ilo_context {
    struct ilo_cp *cp;
 
    struct ilo_shader_cache *shader_cache;
-   struct ilo_3d *hw3d;
    struct ilo_blitter *blitter;
+   struct ilo_3d_pipeline *pipeline;
 
    struct u_upload_mgr *uploader;
 
@@ -66,6 +67,11 @@ struct ilo_context {
       bool condition;
       unsigned mode;
    } render_condition;
+
+   struct {
+      struct ilo_cp_owner cp_owner;
+      struct list_head queries;
+   } draw;
 };
 
 static inline struct ilo_context *

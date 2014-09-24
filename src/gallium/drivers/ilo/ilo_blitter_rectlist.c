@@ -308,7 +308,7 @@ hiz_emit_rectlist(struct ilo_blitter *blitter)
    ilo_blitter_set_rectlist(blitter, 0, 0,
          blitter->fb.width, blitter->fb.height);
 
-   ilo_3d_draw_rectlist(blitter->ilo->hw3d, blitter);
+   ilo_draw_rectlist(blitter->ilo);
 }
 
 static bool

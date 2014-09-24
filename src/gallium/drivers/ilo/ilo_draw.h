@@ -29,52 +29,29 @@
 #define ILO_DRAW_H
 
 #include "ilo_common.h"
-#include "ilo_cp.h"
 
-struct ilo_3d_pipeline;
-struct ilo_blitter;
 struct ilo_context;
 struct ilo_query;
 
-/**
- * 3D context.
- */
-struct ilo_3d {
-   struct ilo_cp *cp;
-   struct ilo_cp_owner owner;
-
-   bool new_batch;
-
-   struct list_head queries;
-
-   struct ilo_3d_pipeline *pipeline;
-};
-
-struct ilo_3d *
-ilo_3d_create(struct ilo_cp *cp, const struct ilo_dev_info *dev);
+void
+ilo_init_draw_functions(struct ilo_context *ilo);
 
 void
-ilo_3d_destroy(struct ilo_3d *hw3d);
-
-void
-ilo_3d_cp_submitted(struct ilo_3d *hw3d);
-
-void
-ilo_3d_draw_rectlist(struct ilo_3d *hw3d, const struct ilo_blitter *blitter);
+ilo_init_draw(struct ilo_context *ilo);
 
 bool
-ilo_3d_init_query(struct pipe_context *pipe, struct ilo_query *q);
+ilo_init_draw_query(struct ilo_context *ilo, struct ilo_query *q);
 
 void
-ilo_3d_begin_query(struct pipe_context *pipe, struct ilo_query *q);
+ilo_begin_draw_query(struct ilo_context *ilo, struct ilo_query *q);
 
 void
-ilo_3d_end_query(struct pipe_context *pipe, struct ilo_query *q);
+ilo_end_draw_query(struct ilo_context *ilo, struct ilo_query *q);
 
 void
-ilo_3d_process_query(struct pipe_context *pipe, struct ilo_query *q);
+ilo_process_draw_query(struct ilo_context *ilo, struct ilo_query *q);
 
 void
-ilo_init_3d_functions(struct ilo_context *ilo);
+ilo_draw_rectlist(struct ilo_context *ilo);
 
 #endif /* ILO_DRAW_H */
