@@ -209,7 +209,7 @@ ilo_render_emit_rectlist(struct ilo_render *render,
 }
 
 void
-ilo_render_get_sample_position(struct ilo_render *render,
+ilo_render_get_sample_position(const struct ilo_render *render,
                                unsigned sample_count,
                                unsigned sample_index,
                                float *x, float *y);
