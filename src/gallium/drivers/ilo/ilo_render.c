@@ -238,41 +238,28 @@ ilo_render_get_query_len(const struct ilo_render *render,
 
    ILO_DEV_ASSERT(render->dev, 6, 7.5);
 
+   /* always a flush or a variant of flush */
+   len = ilo_render_get_flush_len(render);
+
    switch (query_type) {
    case PIPE_QUERY_OCCLUSION_COUNTER:
-      len = GEN6_PIPE_CONTROL__SIZE;
-      if (ilo_dev_gen(render->dev) == ILO_GEN(6))
-         len *= 3;
-      break;
    case PIPE_QUERY_TIMESTAMP:
    case PIPE_QUERY_TIME_ELAPSED:
-      len = GEN6_PIPE_CONTROL__SIZE;
-      if (ilo_dev_gen(render->dev) == ILO_GEN(6))
-         len *= 2;
+      /* no reg */
       break;
    case PIPE_QUERY_PRIMITIVES_GENERATED:
    case PIPE_QUERY_PRIMITIVES_EMITTED:
-      len = GEN6_PIPE_CONTROL__SIZE;
-      if (ilo_dev_gen(render->dev) == ILO_GEN(6))
-         len *= 3;
-
       len += GEN6_MI_STORE_REGISTER_MEM__SIZE * 2;
       break;
    case PIPE_QUERY_PIPELINE_STATISTICS:
-      if (ilo_dev_gen(render->dev) >= ILO_GEN(7)) {
-         const int num_regs = 10;
-         const int num_pads = 1;
+      {
+         const int num_regs =
+            (ilo_dev_gen(render->dev) >= ILO_GEN(7)) ? 10 : 8;
+         const int num_pads =
+            (ilo_dev_gen(render->dev) >= ILO_GEN(7)) ? 1 : 3;
 
-         len = GEN6_PIPE_CONTROL__SIZE +
-            GEN6_MI_STORE_REGISTER_MEM__SIZE * 2 * num_regs +
-            GEN6_MI_STORE_DATA_IMM__SIZE * num_pads;
-      } else {
-         const int num_regs = 8;
-         const int num_pads = 3;
-
-         len = GEN6_PIPE_CONTROL__SIZE * 3 +
-            GEN6_MI_STORE_REGISTER_MEM__SIZE * 2 * num_regs +
-            GEN6_MI_STORE_DATA_IMM__SIZE * num_pads;
+         len += GEN6_MI_STORE_REGISTER_MEM__SIZE * 2 * num_regs +
+                GEN6_MI_STORE_DATA_IMM__SIZE * num_pads;
       }
       break;
    default:
