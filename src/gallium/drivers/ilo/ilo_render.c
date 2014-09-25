@@ -215,6 +215,7 @@ ilo_render_emit_flush(struct ilo_render *render)
                         GEN6_PIPE_CONTROL_VF_CACHE_INVALIDATE |
                         GEN6_PIPE_CONTROL_TEXTURE_CACHE_INVALIDATE |
                         GEN6_PIPE_CONTROL_CS_STALL;
+   const unsigned batch_used = ilo_builder_batch_used(render->builder);
 
    ILO_DEV_ASSERT(render->dev, 6, 7.5);
 
@@ -225,6 +226,9 @@ ilo_render_emit_flush(struct ilo_render *render)
 
    render->state.current_pipe_control_dw1 |= dw1;
    render->state.deferred_pipe_control_dw1 &= ~dw1;
+
+   assert(ilo_builder_batch_used(render->builder) <= batch_used +
+         ilo_render_get_flush_len(render));
 }
 
 /**
@@ -300,6 +304,7 @@ ilo_render_emit_query(struct ilo_render *render,
       (ilo_dev_gen(render->dev) >= ILO_GEN(7)) ?
       GEN7_REG_SO_NUM_PRIMS_WRITTEN(q->index) :
       GEN6_REG_SO_NUM_PRIMS_WRITTEN;
+   const unsigned batch_used = ilo_builder_batch_used(render->builder);
    const uint32_t *regs;
    int reg_count = 0, i;
    uint32_t pipe_control_dw1 = 0;
@@ -332,6 +337,8 @@ ilo_render_emit_query(struct ilo_render *render,
    }
 
    if (pipe_control_dw1) {
+      assert(!reg_count);
+
       if (ilo_dev_gen(render->dev) == ILO_GEN(6))
          gen6_wa_pre_pipe_control(render, pipe_control_dw1);
 
@@ -340,12 +347,9 @@ ilo_render_emit_query(struct ilo_render *render,
 
       render->state.current_pipe_control_dw1 |= pipe_control_dw1;
       render->state.deferred_pipe_control_dw1 &= ~pipe_control_dw1;
+   } else if (reg_count) {
+      ilo_render_emit_flush(render);
    }
-
-   if (!reg_count)
-      return;
-
-   ilo_render_emit_flush(render);
 
    for (i = 0; i < reg_count; i++) {
       if (regs[i]) {
@@ -360,4 +364,7 @@ ilo_render_emit_query(struct ilo_render *render,
 
       offset += 8;
    }
+
+   assert(ilo_builder_batch_used(render->builder) <= batch_used +
+         ilo_render_get_query_len(render, q->type));
 }
