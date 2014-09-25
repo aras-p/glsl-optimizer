@@ -30,50 +30,72 @@
 
 #include "ilo_common.h"
 
-struct ilo_query;
+struct ilo_blitter;
 struct ilo_render;
 struct ilo_state_vector;
 
 struct gen6_draw_session {
    uint32_t pipe_dirty;
 
+   /* commands */
    int reduced_prim;
 
    bool prim_changed;
    bool primitive_restart_changed;
 
-   void (*emit_draw_states)(struct ilo_render *render,
-                            const struct ilo_state_vector *ilo,
-                            struct gen6_draw_session *session);
-
    void (*emit_draw_commands)(struct ilo_render *render,
                               const struct ilo_state_vector *ilo,
                               struct gen6_draw_session *session);
 
-   /* indirect states */
-   bool viewport_state_changed;
-   bool cc_state_blend_changed;
-   bool cc_state_dsa_changed;
-   bool cc_state_cc_changed;
-   bool scissor_state_changed;
+   /* dynamic states */
+   bool viewport_changed;
+   bool scissor_changed;
+
+   bool cc_changed;
+   bool dsa_changed;
+   bool blend_changed;
+
+   bool sampler_vs_changed;
+   bool sampler_gs_changed;
+   bool sampler_fs_changed;
+
+   bool pcb_vs_changed;
+   bool pcb_gs_changed;
+   bool pcb_fs_changed;
+
+   /* surface states */
    bool binding_table_vs_changed;
    bool binding_table_gs_changed;
    bool binding_table_fs_changed;
-   bool sampler_state_vs_changed;
-   bool sampler_state_gs_changed;
-   bool sampler_state_fs_changed;
-   bool pcb_state_vs_changed;
-   bool pcb_state_gs_changed;
-   bool pcb_state_fs_changed;
 
    int num_surfaces[PIPE_SHADER_TYPES];
 };
 
-struct gen6_rectlist_session {
-   uint32_t DEPTH_STENCIL_STATE;
-   uint32_t COLOR_CALC_STATE;
-   uint32_t CC_VIEWPORT;
-};
+int
+ilo_render_get_draw_dynamic_states_len(const struct ilo_render *render,
+                                       const struct ilo_state_vector *vec);
+
+void
+ilo_render_emit_draw_dynamic_states(struct ilo_render *render,
+                                    const struct ilo_state_vector *vec,
+                                    struct gen6_draw_session *session);
+
+int
+ilo_render_get_rectlist_dynamic_states_len(const struct ilo_render *render,
+                                           const struct ilo_blitter *blitter);
+
+void
+ilo_render_emit_rectlist_dynamic_states(struct ilo_render *render,
+                                        const struct ilo_blitter *blitter);
+
+int
+ilo_render_get_draw_surface_states_len(const struct ilo_render *render,
+                                       const struct ilo_state_vector *vec);
+
+void
+ilo_render_emit_draw_surface_states(struct ilo_render *render,
+                                    const struct ilo_state_vector *vec,
+                                    struct gen6_draw_session *session);
 
 void
 gen6_wa_pre_pipe_control(struct ilo_render *r, uint32_t dw1);
@@ -137,15 +159,6 @@ void
 gen6_draw_wm_raster(struct ilo_render *r,
                     const struct ilo_state_vector *ilo,
                     struct gen6_draw_session *session);
-
-void
-gen6_draw_states(struct ilo_render *r,
-                 const struct ilo_state_vector *ilo,
-                 struct gen6_draw_session *session);
-
-int
-gen6_render_estimate_state_size(const struct ilo_render *render,
-                                const struct ilo_state_vector *ilo);
 
 void
 ilo_render_init_gen6(struct ilo_render *render);

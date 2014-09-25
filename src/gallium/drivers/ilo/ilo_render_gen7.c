@@ -296,7 +296,7 @@ gen7_draw_common_pointers_1(struct ilo_render *r,
                             struct gen6_draw_session *session)
 {
    /* 3DSTATE_VIEWPORT_STATE_POINTERS_{CC,SF_CLIP} */
-   if (session->viewport_state_changed) {
+   if (session->viewport_changed) {
       gen7_3DSTATE_VIEWPORT_STATE_POINTERS_CC(r->builder,
             r->state.CC_VIEWPORT);
 
@@ -311,19 +311,19 @@ gen7_draw_common_pointers_2(struct ilo_render *r,
                             struct gen6_draw_session *session)
 {
    /* 3DSTATE_BLEND_STATE_POINTERS */
-   if (session->cc_state_blend_changed) {
+   if (session->blend_changed) {
       gen7_3DSTATE_BLEND_STATE_POINTERS(r->builder,
             r->state.BLEND_STATE);
    }
 
    /* 3DSTATE_CC_STATE_POINTERS */
-   if (session->cc_state_cc_changed) {
+   if (session->cc_changed) {
       gen7_3DSTATE_CC_STATE_POINTERS(r->builder,
             r->state.COLOR_CALC_STATE);
    }
 
    /* 3DSTATE_DEPTH_STENCIL_STATE_POINTERS */
-   if (session->cc_state_dsa_changed) {
+   if (session->dsa_changed) {
       gen7_3DSTATE_DEPTH_STENCIL_STATE_POINTERS(r->builder,
             r->state.DEPTH_STENCIL_STATE);
    }
@@ -334,10 +334,12 @@ gen7_draw_vs(struct ilo_render *r,
              const struct ilo_state_vector *vec,
              struct gen6_draw_session *session)
 {
-   const bool emit_3dstate_binding_table = session->binding_table_vs_changed;
-   const bool emit_3dstate_sampler_state = session->sampler_state_vs_changed;
+   const bool emit_3dstate_binding_table =
+      session->binding_table_vs_changed;
+   const bool emit_3dstate_sampler_state =
+      session->sampler_vs_changed;
    /* see gen6_draw_vs() */
-   const bool emit_3dstate_constant_vs = session->pcb_state_vs_changed;
+   const bool emit_3dstate_constant_vs = session->pcb_vs_changed;
    const bool emit_3dstate_vs = (DIRTY(VS) || DIRTY(SAMPLER_VS) ||
            r->instruction_bo_changed);
 
@@ -527,13 +529,13 @@ gen7_draw_wm(struct ilo_render *r,
    }
 
    /* 3DSTATE_SAMPLER_STATE_POINTERS_PS */
-   if (session->sampler_state_fs_changed) {
+   if (session->sampler_fs_changed) {
       gen7_3DSTATE_SAMPLER_STATE_POINTERS_PS(r->builder,
             r->state.wm.SAMPLER_STATE);
    }
 
    /* 3DSTATE_CONSTANT_PS */
-   if (session->pcb_state_fs_changed) {
+   if (session->pcb_fs_changed) {
       gen7_3DSTATE_CONSTANT_PS(r->builder,
             &r->state.wm.PUSH_CONSTANT_BUFFER,
             &r->state.wm.PUSH_CONSTANT_BUFFER_size,
@@ -555,7 +557,7 @@ gen7_draw_wm(struct ilo_render *r,
    }
 
    /* 3DSTATE_SCISSOR_STATE_POINTERS */
-   if (session->scissor_state_changed) {
+   if (session->scissor_changed) {
       gen6_3DSTATE_SCISSOR_STATE_POINTERS(r->builder,
             r->state.SCISSOR_RECT);
    }
@@ -568,13 +570,13 @@ gen7_draw_wm(struct ilo_render *r,
          (DIRTY(FB) || DIRTY(DSA) || r->state_bo_changed);
 
       if (emit_3dstate_ps ||
-          session->pcb_state_fs_changed ||
-          session->viewport_state_changed ||
+          session->pcb_fs_changed ||
+          session->viewport_changed ||
           session->binding_table_fs_changed ||
-          session->sampler_state_fs_changed ||
-          session->cc_state_cc_changed ||
-          session->cc_state_blend_changed ||
-          session->cc_state_dsa_changed)
+          session->sampler_fs_changed ||
+          session->cc_changed ||
+          session->blend_changed ||
+          session->dsa_changed)
          gen7_wa_post_ps_and_later(r);
 
       if (emit_3dstate_depth_buffer)
@@ -692,7 +694,6 @@ ilo_render_emit_draw_gen7(struct ilo_render *render,
 
    gen6_draw_prepare(render, vec, &session);
 
-   session.emit_draw_states = gen6_draw_states;
    session.emit_draw_commands = gen7_draw_commands;
 
    gen6_draw_emit(render, vec, &session);
@@ -701,8 +702,7 @@ ilo_render_emit_draw_gen7(struct ilo_render *render,
 
 static void
 gen7_rectlist_pcb_alloc(struct ilo_render *r,
-                        const struct ilo_blitter *blitter,
-                        struct gen6_rectlist_session *session)
+                        const struct ilo_blitter *blitter)
 {
    /*
     * Push constant buffers are only allowed to take up at most the first
@@ -723,8 +723,7 @@ gen7_rectlist_pcb_alloc(struct ilo_render *r,
 
 static void
 gen7_rectlist_urb(struct ilo_render *r,
-                  const struct ilo_blitter *blitter,
-                  struct gen6_rectlist_session *session)
+                  const struct ilo_blitter *blitter)
 {
    /* the first 16KB are reserved for VS and PS PCBs */
    const int offset =
@@ -740,8 +739,7 @@ gen7_rectlist_urb(struct ilo_render *r,
 
 static void
 gen7_rectlist_vs_to_sf(struct ilo_render *r,
-                       const struct ilo_blitter *blitter,
-                       struct gen6_rectlist_session *session)
+                       const struct ilo_blitter *blitter)
 {
    gen7_3DSTATE_CONSTANT_VS(r->builder, NULL, NULL, 0);
    gen6_3DSTATE_VS(r->builder, NULL, 0);
@@ -769,8 +767,7 @@ gen7_rectlist_vs_to_sf(struct ilo_render *r,
 
 static void
 gen7_rectlist_wm(struct ilo_render *r,
-                 const struct ilo_blitter *blitter,
-                 struct gen6_rectlist_session *session)
+                 const struct ilo_blitter *blitter)
 {
    uint32_t hiz_op;
 
@@ -799,8 +796,7 @@ gen7_rectlist_wm(struct ilo_render *r,
 
 static void
 gen7_rectlist_wm_depth(struct ilo_render *r,
-                       const struct ilo_blitter *blitter,
-                       struct gen6_rectlist_session *session)
+                       const struct ilo_blitter *blitter)
 {
    gen7_wa_pre_depth(r);
 
@@ -826,8 +822,7 @@ gen7_rectlist_wm_depth(struct ilo_render *r,
 
 static void
 gen7_rectlist_wm_multisample(struct ilo_render *r,
-                             const struct ilo_blitter *blitter,
-                             struct gen6_rectlist_session *session)
+                             const struct ilo_blitter *blitter)
 {
    const uint32_t *packed_sample_pos =
       (blitter->fb.num_samples > 4) ? r->packed_sample_position_8x :
@@ -845,10 +840,9 @@ gen7_rectlist_wm_multisample(struct ilo_render *r,
 
 static void
 gen7_rectlist_commands(struct ilo_render *r,
-                       const struct ilo_blitter *blitter,
-                       struct gen6_rectlist_session *session)
+                       const struct ilo_blitter *blitter)
 {
-   gen7_rectlist_wm_multisample(r, blitter, session);
+   gen7_rectlist_wm_multisample(r, blitter);
 
    gen6_state_base_address(r->builder, true);
 
@@ -858,32 +852,32 @@ gen7_rectlist_commands(struct ilo_render *r,
    gen6_3DSTATE_VERTEX_ELEMENTS(r->builder,
          &blitter->ve, false, false);
 
-   gen7_rectlist_pcb_alloc(r, blitter, session);
+   gen7_rectlist_pcb_alloc(r, blitter);
 
    /* needed for any VS-related commands */
    gen7_wa_pre_vs(r);
 
-   gen7_rectlist_urb(r, blitter, session);
+   gen7_rectlist_urb(r, blitter);
 
    if (blitter->uses & ILO_BLITTER_USE_DSA) {
       gen7_3DSTATE_DEPTH_STENCIL_STATE_POINTERS(r->builder,
-            session->DEPTH_STENCIL_STATE);
+            r->state.DEPTH_STENCIL_STATE);
    }
 
    if (blitter->uses & ILO_BLITTER_USE_CC) {
       gen7_3DSTATE_CC_STATE_POINTERS(r->builder,
-            session->COLOR_CALC_STATE);
+            r->state.COLOR_CALC_STATE);
    }
 
-   gen7_rectlist_vs_to_sf(r, blitter, session);
-   gen7_rectlist_wm(r, blitter, session);
+   gen7_rectlist_vs_to_sf(r, blitter);
+   gen7_rectlist_wm(r, blitter);
 
    if (blitter->uses & ILO_BLITTER_USE_VIEWPORT) {
       gen7_3DSTATE_VIEWPORT_STATE_POINTERS_CC(r->builder,
-            session->CC_VIEWPORT);
+            r->state.CC_VIEWPORT);
    }
 
-   gen7_rectlist_wm_depth(r, blitter, session);
+   gen7_rectlist_wm_depth(r, blitter);
 
    gen6_3DSTATE_DRAWING_RECTANGLE(r->builder, 0, 0,
          blitter->fb.width, blitter->fb.height);
@@ -892,36 +886,11 @@ gen7_rectlist_commands(struct ilo_render *r,
 }
 
 static void
-gen7_rectlist_states(struct ilo_render *r,
-                     const struct ilo_blitter *blitter,
-                     struct gen6_rectlist_session *session)
-{
-   if (blitter->uses & ILO_BLITTER_USE_DSA) {
-      session->DEPTH_STENCIL_STATE =
-         gen6_DEPTH_STENCIL_STATE(r->builder, &blitter->dsa);
-   }
-
-   if (blitter->uses & ILO_BLITTER_USE_CC) {
-      session->COLOR_CALC_STATE =
-         gen6_COLOR_CALC_STATE(r->builder, &blitter->cc.stencil_ref,
-               blitter->cc.alpha_ref, &blitter->cc.blend_color);
-   }
-
-   if (blitter->uses & ILO_BLITTER_USE_VIEWPORT) {
-      session->CC_VIEWPORT =
-         gen6_CC_VIEWPORT(r->builder, &blitter->viewport, 1);
-   }
-}
-
-static void
 ilo_render_emit_rectlist_gen7(struct ilo_render *render,
                               const struct ilo_blitter *blitter)
 {
-   struct gen6_rectlist_session session;
-
-   memset(&session, 0, sizeof(session));
-   gen7_rectlist_states(render, blitter, &session);
-   gen7_rectlist_commands(render, blitter, &session);
+   ilo_render_emit_rectlist_dynamic_states(render, blitter);
+   gen7_rectlist_commands(render, blitter);
 }
 
 static int
@@ -985,14 +954,20 @@ ilo_render_estimate_size_gen7(struct ilo_render *render,
    switch (action) {
    case ILO_RENDER_DRAW:
       {
-         const struct ilo_state_vector *ilo = arg;
+         const struct ilo_state_vector *vec = arg;
 
          size = gen7_render_max_command_size(render) +
-            gen6_render_estimate_state_size(render, ilo);
+            ilo_render_get_draw_dynamic_states_len(render, vec) +
+            ilo_render_get_draw_surface_states_len(render, vec);
       }
       break;
    case ILO_RENDER_RECTLIST:
-      size = 64 + 256; /* states + commands */
+      {
+         const struct ilo_blitter *blitter = arg;
+
+         size = ilo_render_get_rectlist_dynamic_states_len(render, blitter);
+         size += 256; /* commands */
+      }
       break;
    default:
       assert(!"unknown render action");

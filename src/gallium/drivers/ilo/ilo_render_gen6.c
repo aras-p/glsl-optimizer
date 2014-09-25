@@ -276,25 +276,25 @@ gen6_draw_common_base_address(struct ilo_render *r,
        * 3DSTATE_SCISSOR_STATE_POINTERS is not on the list, but it is
        * reasonable to also reissue the command.  Same to PCB.
        */
-      session->viewport_state_changed = true;
+      session->viewport_changed = true;
 
-      session->cc_state_blend_changed = true;
-      session->cc_state_dsa_changed = true;
-      session->cc_state_cc_changed = true;
+      session->scissor_changed = true;
 
-      session->scissor_state_changed = true;
+      session->blend_changed = true;
+      session->dsa_changed = true;
+      session->cc_changed = true;
+
+      session->sampler_vs_changed = true;
+      session->sampler_gs_changed = true;
+      session->sampler_fs_changed = true;
+
+      session->pcb_vs_changed = true;
+      session->pcb_gs_changed = true;
+      session->pcb_fs_changed = true;
 
       session->binding_table_vs_changed = true;
       session->binding_table_gs_changed = true;
       session->binding_table_fs_changed = true;
-
-      session->sampler_state_vs_changed = true;
-      session->sampler_state_gs_changed = true;
-      session->sampler_state_fs_changed = true;
-
-      session->pcb_state_vs_changed = true;
-      session->pcb_state_gs_changed = true;
-      session->pcb_state_fs_changed = true;
    }
 }
 
@@ -378,7 +378,7 @@ gen6_draw_common_pointers_1(struct ilo_render *r,
                             struct gen6_draw_session *session)
 {
    /* 3DSTATE_VIEWPORT_STATE_POINTERS */
-   if (session->viewport_state_changed) {
+   if (session->viewport_changed) {
       gen6_3DSTATE_VIEWPORT_STATE_POINTERS(r->builder,
             r->state.CLIP_VIEWPORT,
             r->state.SF_VIEWPORT,
@@ -392,9 +392,9 @@ gen6_draw_common_pointers_2(struct ilo_render *r,
                             struct gen6_draw_session *session)
 {
    /* 3DSTATE_CC_STATE_POINTERS */
-   if (session->cc_state_blend_changed ||
-       session->cc_state_dsa_changed ||
-       session->cc_state_cc_changed) {
+   if (session->blend_changed ||
+       session->dsa_changed ||
+       session->cc_changed) {
       gen6_3DSTATE_CC_STATE_POINTERS(r->builder,
             r->state.BLEND_STATE,
             r->state.DEPTH_STENCIL_STATE,
@@ -402,9 +402,9 @@ gen6_draw_common_pointers_2(struct ilo_render *r,
    }
 
    /* 3DSTATE_SAMPLER_STATE_POINTERS */
-   if (session->sampler_state_vs_changed ||
-       session->sampler_state_gs_changed ||
-       session->sampler_state_fs_changed) {
+   if (session->sampler_vs_changed ||
+       session->sampler_gs_changed ||
+       session->sampler_fs_changed) {
       gen6_3DSTATE_SAMPLER_STATE_POINTERS(r->builder,
             r->state.vs.SAMPLER_STATE,
             0,
@@ -418,7 +418,7 @@ gen6_draw_common_pointers_3(struct ilo_render *r,
                             struct gen6_draw_session *session)
 {
    /* 3DSTATE_SCISSOR_STATE_POINTERS */
-   if (session->scissor_state_changed) {
+   if (session->scissor_changed) {
       gen6_3DSTATE_SCISSOR_STATE_POINTERS(r->builder,
             r->state.SCISSOR_RECT);
    }
@@ -522,7 +522,7 @@ gen6_draw_vs(struct ilo_render *r,
 {
    const bool emit_3dstate_vs = (DIRTY(VS) || DIRTY(SAMPLER_VS) ||
                                  r->instruction_bo_changed);
-   const bool emit_3dstate_constant_vs = session->pcb_state_vs_changed;
+   const bool emit_3dstate_constant_vs = session->pcb_vs_changed;
 
    /*
     * the classic i965 does this in upload_vs_state(), citing a spec that I
@@ -556,7 +556,7 @@ gen6_draw_gs(struct ilo_render *r,
              struct gen6_draw_session *session)
 {
    /* 3DSTATE_CONSTANT_GS */
-   if (session->pcb_state_gs_changed)
+   if (session->pcb_gs_changed)
       gen6_3DSTATE_CONSTANT_GS(r->builder, NULL, NULL, 0);
 
    /* 3DSTATE_GS */
@@ -708,7 +708,7 @@ gen6_draw_wm(struct ilo_render *r,
              struct gen6_draw_session *session)
 {
    /* 3DSTATE_CONSTANT_PS */
-   if (session->pcb_state_fs_changed) {
+   if (session->pcb_fs_changed) {
       gen6_3DSTATE_CONSTANT_PS(r->builder,
             &r->state.wm.PUSH_CONSTANT_BUFFER,
             &r->state.wm.PUSH_CONSTANT_BUFFER_size,
@@ -832,504 +832,6 @@ gen6_draw_wm_raster(struct ilo_render *r,
    }
 }
 
-static void
-gen6_draw_state_viewports(struct ilo_render *r,
-                          const struct ilo_state_vector *vec,
-                          struct gen6_draw_session *session)
-{
-   /* SF_CLIP_VIEWPORT and CC_VIEWPORT */
-   if (ilo_dev_gen(r->dev) >= ILO_GEN(7) && DIRTY(VIEWPORT)) {
-      r->state.SF_CLIP_VIEWPORT = gen7_SF_CLIP_VIEWPORT(r->builder,
-            vec->viewport.cso, vec->viewport.count);
-
-      r->state.CC_VIEWPORT = gen6_CC_VIEWPORT(r->builder,
-            vec->viewport.cso, vec->viewport.count);
-
-      session->viewport_state_changed = true;
-   }
-   /* SF_VIEWPORT, CLIP_VIEWPORT, and CC_VIEWPORT */
-   else if (DIRTY(VIEWPORT)) {
-      r->state.CLIP_VIEWPORT = gen6_CLIP_VIEWPORT(r->builder,
-            vec->viewport.cso, vec->viewport.count);
-
-      r->state.SF_VIEWPORT = gen6_SF_VIEWPORT(r->builder,
-            vec->viewport.cso, vec->viewport.count);
-
-      r->state.CC_VIEWPORT = gen6_CC_VIEWPORT(r->builder,
-            vec->viewport.cso, vec->viewport.count);
-
-      session->viewport_state_changed = true;
-   }
-}
-
-static void
-gen6_draw_state_cc(struct ilo_render *r,
-                   const struct ilo_state_vector *vec,
-                   struct gen6_draw_session *session)
-{
-   /* BLEND_STATE */
-   if (DIRTY(BLEND) || DIRTY(FB) || DIRTY(DSA)) {
-      r->state.BLEND_STATE = gen6_BLEND_STATE(r->builder,
-            vec->blend, &vec->fb, vec->dsa);
-
-      session->cc_state_blend_changed = true;
-   }
-
-   /* COLOR_CALC_STATE */
-   if (DIRTY(DSA) || DIRTY(STENCIL_REF) || DIRTY(BLEND_COLOR)) {
-      r->state.COLOR_CALC_STATE =
-         gen6_COLOR_CALC_STATE(r->builder, &vec->stencil_ref,
-               vec->dsa->alpha_ref, &vec->blend_color);
-
-      session->cc_state_cc_changed = true;
-   }
-
-   /* DEPTH_STENCIL_STATE */
-   if (DIRTY(DSA)) {
-      r->state.DEPTH_STENCIL_STATE =
-         gen6_DEPTH_STENCIL_STATE(r->builder, vec->dsa);
-
-      session->cc_state_dsa_changed = true;
-   }
-}
-
-static void
-gen6_draw_state_scissors(struct ilo_render *r,
-                         const struct ilo_state_vector *vec,
-                         struct gen6_draw_session *session)
-{
-   /* SCISSOR_RECT */
-   if (DIRTY(SCISSOR) || DIRTY(VIEWPORT)) {
-      /* there should be as many scissors as there are viewports */
-      r->state.SCISSOR_RECT = gen6_SCISSOR_RECT(r->builder,
-            &vec->scissor, vec->viewport.count);
-
-      session->scissor_state_changed = true;
-   }
-}
-
-static void
-gen6_draw_state_surfaces_rt(struct ilo_render *r,
-                            const struct ilo_state_vector *vec,
-                            struct gen6_draw_session *session)
-{
-   /* SURFACE_STATEs for render targets */
-   if (DIRTY(FB)) {
-      const struct ilo_fb_state *fb = &vec->fb;
-      const int offset = ILO_WM_DRAW_SURFACE(0);
-      uint32_t *surface_state = &r->state.wm.SURFACE_STATE[offset];
-      int i;
-
-      for (i = 0; i < fb->state.nr_cbufs; i++) {
-         const struct ilo_surface_cso *surface =
-            (const struct ilo_surface_cso *) fb->state.cbufs[i];
-
-         if (!surface) {
-            surface_state[i] =
-               gen6_SURFACE_STATE(r->builder, &fb->null_rt, true);
-         }
-         else {
-            assert(surface && surface->is_rt);
-            surface_state[i] =
-               gen6_SURFACE_STATE(r->builder, &surface->u.rt, true);
-         }
-      }
-
-      /*
-       * Upload at least one render target, as
-       * brw_update_renderbuffer_surfaces() does.  I don't know why.
-       */
-      if (i == 0) {
-         surface_state[i] =
-            gen6_SURFACE_STATE(r->builder, &fb->null_rt, true);
-
-         i++;
-      }
-
-      memset(&surface_state[i], 0, (ILO_MAX_DRAW_BUFFERS - i) * 4);
-
-      if (i && session->num_surfaces[PIPE_SHADER_FRAGMENT] < offset + i)
-         session->num_surfaces[PIPE_SHADER_FRAGMENT] = offset + i;
-
-      session->binding_table_fs_changed = true;
-   }
-}
-
-static void
-gen6_draw_state_surfaces_so(struct ilo_render *r,
-                            const struct ilo_state_vector *vec,
-                            struct gen6_draw_session *session)
-{
-   const struct ilo_so_state *so = &vec->so;
-
-   if (ilo_dev_gen(r->dev) != ILO_GEN(6))
-      return;
-
-   /* SURFACE_STATEs for stream output targets */
-   if (DIRTY(VS) || DIRTY(GS) || DIRTY(SO)) {
-      const struct pipe_stream_output_info *so_info =
-         (vec->gs) ? ilo_shader_get_kernel_so_info(vec->gs) :
-         (vec->vs) ? ilo_shader_get_kernel_so_info(vec->vs) : NULL;
-      const int offset = ILO_GS_SO_SURFACE(0);
-      uint32_t *surface_state = &r->state.gs.SURFACE_STATE[offset];
-      int i;
-
-      for (i = 0; so_info && i < so_info->num_outputs; i++) {
-         const int target = so_info->output[i].output_buffer;
-         const struct pipe_stream_output_target *so_target =
-            (target < so->count) ? so->states[target] : NULL;
-
-         if (so_target) {
-            surface_state[i] = gen6_so_SURFACE_STATE(r->builder,
-                  so_target, so_info, i);
-         }
-         else {
-            surface_state[i] = 0;
-         }
-      }
-
-      memset(&surface_state[i], 0, (ILO_MAX_SO_BINDINGS - i) * 4);
-
-      if (i && session->num_surfaces[PIPE_SHADER_GEOMETRY] < offset + i)
-         session->num_surfaces[PIPE_SHADER_GEOMETRY] = offset + i;
-
-      session->binding_table_gs_changed = true;
-   }
-}
-
-static void
-gen6_draw_state_surfaces_view(struct ilo_render *r,
-                              const struct ilo_state_vector *vec,
-                              int shader_type,
-                              struct gen6_draw_session *session)
-{
-   const struct ilo_view_state *view = &vec->view[shader_type];
-   uint32_t *surface_state;
-   int offset, i;
-   bool skip = false;
-
-   /* SURFACE_STATEs for sampler views */
-   switch (shader_type) {
-   case PIPE_SHADER_VERTEX:
-      if (DIRTY(VIEW_VS)) {
-         offset = ILO_VS_TEXTURE_SURFACE(0);
-         surface_state = &r->state.vs.SURFACE_STATE[offset];
-
-         session->binding_table_vs_changed = true;
-      }
-      else {
-         skip = true;
-      }
-      break;
-   case PIPE_SHADER_FRAGMENT:
-      if (DIRTY(VIEW_FS)) {
-         offset = ILO_WM_TEXTURE_SURFACE(0);
-         surface_state = &r->state.wm.SURFACE_STATE[offset];
-
-         session->binding_table_fs_changed = true;
-      }
-      else {
-         skip = true;
-      }
-      break;
-   default:
-      skip = true;
-      break;
-   }
-
-   if (skip)
-      return;
-
-   for (i = 0; i < view->count; i++) {
-      if (view->states[i]) {
-         const struct ilo_view_cso *cso =
-            (const struct ilo_view_cso *) view->states[i];
-
-         surface_state[i] =
-            gen6_SURFACE_STATE(r->builder, &cso->surface, false);
-      }
-      else {
-         surface_state[i] = 0;
-      }
-   }
-
-   memset(&surface_state[i], 0, (ILO_MAX_SAMPLER_VIEWS - i) * 4);
-
-   if (i && session->num_surfaces[shader_type] < offset + i)
-      session->num_surfaces[shader_type] = offset + i;
-}
-
-static void
-gen6_draw_state_surfaces_const(struct ilo_render *r,
-                               const struct ilo_state_vector *vec,
-                               int shader_type,
-                               struct gen6_draw_session *session)
-{
-   const struct ilo_cbuf_state *cbuf = &vec->cbuf[shader_type];
-   uint32_t *surface_state;
-   bool *binding_table_changed;
-   int offset, count, i;
-
-   if (!DIRTY(CBUF))
-      return;
-
-   /* SURFACE_STATEs for constant buffers */
-   switch (shader_type) {
-   case PIPE_SHADER_VERTEX:
-      offset = ILO_VS_CONST_SURFACE(0);
-      surface_state = &r->state.vs.SURFACE_STATE[offset];
-      binding_table_changed = &session->binding_table_vs_changed;
-      break;
-   case PIPE_SHADER_FRAGMENT:
-      offset = ILO_WM_CONST_SURFACE(0);
-      surface_state = &r->state.wm.SURFACE_STATE[offset];
-      binding_table_changed = &session->binding_table_fs_changed;
-      break;
-   default:
-      return;
-      break;
-   }
-
-   /* constants are pushed via PCB */
-   if (cbuf->enabled_mask == 0x1 && !cbuf->cso[0].resource) {
-      memset(surface_state, 0, ILO_MAX_CONST_BUFFERS * 4);
-      return;
-   }
-
-   count = util_last_bit(cbuf->enabled_mask);
-   for (i = 0; i < count; i++) {
-      if (cbuf->cso[i].resource) {
-         surface_state[i] = gen6_SURFACE_STATE(r->builder,
-               &cbuf->cso[i].surface, false);
-      }
-      else {
-         surface_state[i] = 0;
-      }
-   }
-
-   memset(&surface_state[count], 0, (ILO_MAX_CONST_BUFFERS - count) * 4);
-
-   if (count && session->num_surfaces[shader_type] < offset + count)
-      session->num_surfaces[shader_type] = offset + count;
-
-   *binding_table_changed = true;
-}
-
-static void
-gen6_draw_state_binding_tables(struct ilo_render *r,
-                               const struct ilo_state_vector *vec,
-                               int shader_type,
-                               struct gen6_draw_session *session)
-{
-   uint32_t *binding_table_state, *surface_state;
-   int *binding_table_state_size, size;
-   bool skip = false;
-
-   /* BINDING_TABLE_STATE */
-   switch (shader_type) {
-   case PIPE_SHADER_VERTEX:
-      surface_state = r->state.vs.SURFACE_STATE;
-      binding_table_state = &r->state.vs.BINDING_TABLE_STATE;
-      binding_table_state_size = &r->state.vs.BINDING_TABLE_STATE_size;
-
-      skip = !session->binding_table_vs_changed;
-      break;
-   case PIPE_SHADER_GEOMETRY:
-      surface_state = r->state.gs.SURFACE_STATE;
-      binding_table_state = &r->state.gs.BINDING_TABLE_STATE;
-      binding_table_state_size = &r->state.gs.BINDING_TABLE_STATE_size;
-
-      skip = !session->binding_table_gs_changed;
-      break;
-   case PIPE_SHADER_FRAGMENT:
-      surface_state = r->state.wm.SURFACE_STATE;
-      binding_table_state = &r->state.wm.BINDING_TABLE_STATE;
-      binding_table_state_size = &r->state.wm.BINDING_TABLE_STATE_size;
-
-      skip = !session->binding_table_fs_changed;
-      break;
-   default:
-      skip = true;
-      break;
-   }
-
-   if (skip)
-      return;
-
-   /*
-    * If we have seemingly less SURFACE_STATEs than before, it could be that
-    * we did not touch those reside at the tail in this upload.  Loop over
-    * them to figure out the real number of SURFACE_STATEs.
-    */
-   for (size = *binding_table_state_size;
-         size > session->num_surfaces[shader_type]; size--) {
-      if (surface_state[size - 1])
-         break;
-   }
-   if (size < session->num_surfaces[shader_type])
-      size = session->num_surfaces[shader_type];
-
-   *binding_table_state = gen6_BINDING_TABLE_STATE(r->builder,
-         surface_state, size);
-   *binding_table_state_size = size;
-}
-
-static void
-gen6_draw_state_samplers(struct ilo_render *r,
-                         const struct ilo_state_vector *vec,
-                         int shader_type,
-                         struct gen6_draw_session *session)
-{
-   const struct ilo_sampler_cso * const *samplers =
-      vec->sampler[shader_type].cso;
-   const struct pipe_sampler_view * const *views =
-      (const struct pipe_sampler_view **) vec->view[shader_type].states;
-   const int num_samplers = vec->sampler[shader_type].count;
-   const int num_views = vec->view[shader_type].count;
-   uint32_t *sampler_state, *border_color_state;
-   bool emit_border_color = false;
-   bool skip = false;
-
-   /* SAMPLER_BORDER_COLOR_STATE and SAMPLER_STATE */
-   switch (shader_type) {
-   case PIPE_SHADER_VERTEX:
-      if (DIRTY(SAMPLER_VS) || DIRTY(VIEW_VS)) {
-         sampler_state = &r->state.vs.SAMPLER_STATE;
-         border_color_state = r->state.vs.SAMPLER_BORDER_COLOR_STATE;
-
-         if (DIRTY(SAMPLER_VS))
-            emit_border_color = true;
-
-         session->sampler_state_vs_changed = true;
-      }
-      else {
-         skip = true;
-      }
-      break;
-   case PIPE_SHADER_FRAGMENT:
-      if (DIRTY(SAMPLER_FS) || DIRTY(VIEW_FS)) {
-         sampler_state = &r->state.wm.SAMPLER_STATE;
-         border_color_state = r->state.wm.SAMPLER_BORDER_COLOR_STATE;
-
-         if (DIRTY(SAMPLER_FS))
-            emit_border_color = true;
-
-         session->sampler_state_fs_changed = true;
-      }
-      else {
-         skip = true;
-      }
-      break;
-   default:
-      skip = true;
-      break;
-   }
-
-   if (skip)
-      return;
-
-   if (emit_border_color) {
-      int i;
-
-      for (i = 0; i < num_samplers; i++) {
-         border_color_state[i] = (samplers[i]) ?
-            gen6_SAMPLER_BORDER_COLOR_STATE(r->builder, samplers[i]) : 0;
-      }
-   }
-
-   /* should we take the minimum of num_samplers and num_views? */
-   *sampler_state = gen6_SAMPLER_STATE(r->builder,
-         samplers, views,
-         border_color_state,
-         MIN2(num_samplers, num_views));
-}
-
-static void
-gen6_draw_state_pcb(struct ilo_render *r,
-                    const struct ilo_state_vector *vec,
-                    struct gen6_draw_session *session)
-{
-   /* push constant buffer for VS */
-   if (DIRTY(VS) || DIRTY(CBUF) || DIRTY(CLIP)) {
-      const int cbuf0_size = (vec->vs) ?
-            ilo_shader_get_kernel_param(vec->vs,
-                  ILO_KERNEL_PCB_CBUF0_SIZE) : 0;
-      const int clip_state_size = (vec->vs) ?
-            ilo_shader_get_kernel_param(vec->vs,
-                  ILO_KERNEL_VS_PCB_UCP_SIZE) : 0;
-      const int total_size = cbuf0_size + clip_state_size;
-
-      if (total_size) {
-         void *pcb;
-
-         r->state.vs.PUSH_CONSTANT_BUFFER =
-            gen6_push_constant_buffer(r->builder, total_size, &pcb);
-         r->state.vs.PUSH_CONSTANT_BUFFER_size = total_size;
-
-         if (cbuf0_size) {
-            const struct ilo_cbuf_state *cbuf =
-               &vec->cbuf[PIPE_SHADER_VERTEX];
-
-            if (cbuf0_size <= cbuf->cso[0].user_buffer_size) {
-               memcpy(pcb, cbuf->cso[0].user_buffer, cbuf0_size);
-            }
-            else {
-               memcpy(pcb, cbuf->cso[0].user_buffer,
-                     cbuf->cso[0].user_buffer_size);
-               memset(pcb + cbuf->cso[0].user_buffer_size, 0,
-                     cbuf0_size - cbuf->cso[0].user_buffer_size);
-            }
-
-            pcb += cbuf0_size;
-         }
-
-         if (clip_state_size)
-            memcpy(pcb, &vec->clip, clip_state_size);
-
-         session->pcb_state_vs_changed = true;
-      }
-      else if (r->state.vs.PUSH_CONSTANT_BUFFER_size) {
-         r->state.vs.PUSH_CONSTANT_BUFFER = 0;
-         r->state.vs.PUSH_CONSTANT_BUFFER_size = 0;
-
-         session->pcb_state_vs_changed = true;
-      }
-   }
-
-   /* push constant buffer for FS */
-   if (DIRTY(FS) || DIRTY(CBUF)) {
-      const int cbuf0_size = (vec->fs) ?
-         ilo_shader_get_kernel_param(vec->fs, ILO_KERNEL_PCB_CBUF0_SIZE) : 0;
-
-      if (cbuf0_size) {
-         const struct ilo_cbuf_state *cbuf = &vec->cbuf[PIPE_SHADER_FRAGMENT];
-         void *pcb;
-
-         r->state.wm.PUSH_CONSTANT_BUFFER =
-            gen6_push_constant_buffer(r->builder, cbuf0_size, &pcb);
-         r->state.wm.PUSH_CONSTANT_BUFFER_size = cbuf0_size;
-
-         if (cbuf0_size <= cbuf->cso[0].user_buffer_size) {
-            memcpy(pcb, cbuf->cso[0].user_buffer, cbuf0_size);
-         }
-         else {
-            memcpy(pcb, cbuf->cso[0].user_buffer,
-                  cbuf->cso[0].user_buffer_size);
-            memset(pcb + cbuf->cso[0].user_buffer_size, 0,
-                  cbuf0_size - cbuf->cso[0].user_buffer_size);
-         }
-
-         session->pcb_state_fs_changed = true;
-      }
-      else if (r->state.wm.PUSH_CONSTANT_BUFFER_size) {
-         r->state.wm.PUSH_CONSTANT_BUFFER = 0;
-         r->state.wm.PUSH_CONSTANT_BUFFER_size = 0;
-
-         session->pcb_state_fs_changed = true;
-      }
-   }
-}
-
 #undef DIRTY
 
 static void
@@ -1362,36 +864,6 @@ gen6_draw_commands(struct ilo_render *render,
    gen6_draw_sf_rect(render, vec, session);
    gen6_draw_vf(render, vec, session);
    gen6_draw_vf_draw(render, vec, session);
-}
-
-void
-gen6_draw_states(struct ilo_render *render,
-                 const struct ilo_state_vector *vec,
-                 struct gen6_draw_session *session)
-{
-   int shader_type;
-
-   gen6_draw_state_viewports(render, vec, session);
-   gen6_draw_state_cc(render, vec, session);
-   gen6_draw_state_scissors(render, vec, session);
-   gen6_draw_state_pcb(render, vec, session);
-
-   /*
-    * upload all SURAFCE_STATEs together so that we know there are minimal
-    * paddings
-    */
-   gen6_draw_state_surfaces_rt(render, vec, session);
-   gen6_draw_state_surfaces_so(render, vec, session);
-   for (shader_type = 0; shader_type < PIPE_SHADER_TYPES; shader_type++) {
-      gen6_draw_state_surfaces_view(render, vec, shader_type, session);
-      gen6_draw_state_surfaces_const(render, vec, shader_type, session);
-   }
-
-   for (shader_type = 0; shader_type < PIPE_SHADER_TYPES; shader_type++) {
-      gen6_draw_state_samplers(render, vec, shader_type, session);
-      /* this must be called after all SURFACE_STATEs are uploaded */
-      gen6_draw_state_binding_tables(render, vec, shader_type, session);
-   }
 }
 
 void
@@ -1430,7 +902,8 @@ gen6_draw_emit(struct ilo_render *render,
    else
       session->pipe_dirty = vec->dirty;
 
-   session->emit_draw_states(render, vec, session);
+   ilo_render_emit_draw_dynamic_states(render, vec, session);
+   ilo_render_emit_draw_surface_states(render, vec, session);
 
    /* force all commands to be uploaded if the HW context changed */
    if (render->hw_ctx_changed)
@@ -1464,7 +937,6 @@ ilo_render_emit_draw_gen6(struct ilo_render *render,
 
    gen6_draw_prepare(render, vec, &session);
 
-   session.emit_draw_states = gen6_draw_states;
    session.emit_draw_commands = gen6_draw_commands;
 
    gen6_draw_emit(render, vec, &session);
@@ -1473,8 +945,7 @@ ilo_render_emit_draw_gen6(struct ilo_render *render,
 
 static void
 gen6_rectlist_vs_to_sf(struct ilo_render *r,
-                       const struct ilo_blitter *blitter,
-                       struct gen6_rectlist_session *session)
+                       const struct ilo_blitter *blitter)
 {
    gen6_3DSTATE_CONSTANT_VS(r->builder, NULL, NULL, 0);
    gen6_3DSTATE_VS(r->builder, NULL, 0);
@@ -1490,8 +961,7 @@ gen6_rectlist_vs_to_sf(struct ilo_render *r,
 
 static void
 gen6_rectlist_wm(struct ilo_render *r,
-                 const struct ilo_blitter *blitter,
-                 struct gen6_rectlist_session *session)
+                 const struct ilo_blitter *blitter)
 {
    uint32_t hiz_op;
 
@@ -1518,8 +988,7 @@ gen6_rectlist_wm(struct ilo_render *r,
 
 static void
 gen6_rectlist_wm_depth(struct ilo_render *r,
-                       const struct ilo_blitter *blitter,
-                       struct gen6_rectlist_session *session)
+                       const struct ilo_blitter *blitter)
 {
    gen6_wa_pre_depth(r);
 
@@ -1545,8 +1014,7 @@ gen6_rectlist_wm_depth(struct ilo_render *r,
 
 static void
 gen6_rectlist_wm_multisample(struct ilo_render *r,
-                             const struct ilo_blitter *blitter,
-                             struct gen6_rectlist_session *session)
+                             const struct ilo_blitter *blitter)
 {
    const uint32_t *packed_sample_pos = (blitter->fb.num_samples > 1) ?
       &r->packed_sample_position_4x : &r->packed_sample_position_1x;
@@ -1562,12 +1030,11 @@ gen6_rectlist_wm_multisample(struct ilo_render *r,
 
 static void
 gen6_rectlist_commands(struct ilo_render *r,
-                       const struct ilo_blitter *blitter,
-                       struct gen6_rectlist_session *session)
+                       const struct ilo_blitter *blitter)
 {
    gen6_wa_pre_non_pipelined(r);
 
-   gen6_rectlist_wm_multisample(r, blitter, session);
+   gen6_rectlist_wm_multisample(r, blitter);
 
    gen6_state_base_address(r->builder, true);
 
@@ -1588,18 +1055,18 @@ gen6_rectlist_commands(struct ilo_render *r,
    if (blitter->uses &
        (ILO_BLITTER_USE_DSA | ILO_BLITTER_USE_CC)) {
       gen6_3DSTATE_CC_STATE_POINTERS(r->builder, 0,
-            session->DEPTH_STENCIL_STATE, session->COLOR_CALC_STATE);
+            r->state.DEPTH_STENCIL_STATE, r->state.COLOR_CALC_STATE);
    }
 
-   gen6_rectlist_vs_to_sf(r, blitter, session);
-   gen6_rectlist_wm(r, blitter, session);
+   gen6_rectlist_vs_to_sf(r, blitter);
+   gen6_rectlist_wm(r, blitter);
 
    if (blitter->uses & ILO_BLITTER_USE_VIEWPORT) {
       gen6_3DSTATE_VIEWPORT_STATE_POINTERS(r->builder,
-            0, 0, session->CC_VIEWPORT);
+            0, 0, r->state.CC_VIEWPORT);
    }
 
-   gen6_rectlist_wm_depth(r, blitter, session);
+   gen6_rectlist_wm_depth(r, blitter);
 
    gen6_3DSTATE_DRAWING_RECTANGLE(r->builder, 0, 0,
          blitter->fb.width, blitter->fb.height);
@@ -1608,36 +1075,11 @@ gen6_rectlist_commands(struct ilo_render *r,
 }
 
 static void
-gen6_rectlist_states(struct ilo_render *r,
-                     const struct ilo_blitter *blitter,
-                     struct gen6_rectlist_session *session)
-{
-   if (blitter->uses & ILO_BLITTER_USE_DSA) {
-      session->DEPTH_STENCIL_STATE =
-         gen6_DEPTH_STENCIL_STATE(r->builder, &blitter->dsa);
-   }
-
-   if (blitter->uses & ILO_BLITTER_USE_CC) {
-      session->COLOR_CALC_STATE =
-         gen6_COLOR_CALC_STATE(r->builder, &blitter->cc.stencil_ref,
-               blitter->cc.alpha_ref, &blitter->cc.blend_color);
-   }
-
-   if (blitter->uses & ILO_BLITTER_USE_VIEWPORT) {
-      session->CC_VIEWPORT =
-         gen6_CC_VIEWPORT(r->builder, &blitter->viewport, 1);
-   }
-}
-
-static void
 ilo_render_emit_rectlist_gen6(struct ilo_render *render,
                               const struct ilo_blitter *blitter)
 {
-   struct gen6_rectlist_session session;
-
-   memset(&session, 0, sizeof(session));
-   gen6_rectlist_states(render, blitter, &session);
-   gen6_rectlist_commands(render, blitter, &session);
+   ilo_render_emit_rectlist_dynamic_states(render, blitter);
+   gen6_rectlist_commands(render, blitter);
 }
 
 static int
@@ -1686,117 +1128,6 @@ gen6_render_max_command_size(const struct ilo_render *render)
    return size;
 }
 
-int
-gen6_render_estimate_state_size(const struct ilo_render *render,
-                                const struct ilo_state_vector *vec)
-{
-   static int static_size;
-   int sh_type, size;
-
-   if (!static_size) {
-      /* 64 bytes, or 16 dwords */
-      const int alignment = 64 / 4;
-
-      /* pad first */
-      size = alignment - 1;
-
-      /* CC states */
-      size += align(GEN6_BLEND_STATE__SIZE * ILO_MAX_DRAW_BUFFERS, alignment);
-      size += align(GEN6_DEPTH_STENCIL_STATE__SIZE, alignment);
-      size += align(GEN6_COLOR_CALC_STATE__SIZE, alignment);
-
-      /* viewport arrays */
-      if (ilo_dev_gen(render->dev) >= ILO_GEN(7)) {
-         size +=
-            align(GEN7_SF_CLIP_VIEWPORT__SIZE * ILO_MAX_VIEWPORTS, 16) +
-            align(GEN6_CC_VIEWPORT__SIZE * ILO_MAX_VIEWPORTS, 8) +
-            align(GEN6_SCISSOR_RECT__SIZE * ILO_MAX_VIEWPORTS, 8);
-      }
-      else {
-         size +=
-            align(GEN6_SF_VIEWPORT__SIZE * ILO_MAX_VIEWPORTS, 8) +
-            align(GEN6_CLIP_VIEWPORT__SIZE * ILO_MAX_VIEWPORTS, 8) +
-            align(GEN6_CC_VIEWPORT__SIZE * ILO_MAX_VIEWPORTS, 8) +
-            align(GEN6_SCISSOR_RECT__SIZE * ILO_MAX_VIEWPORTS, 8);
-      }
-
-      static_size = size;
-   }
-
-   size = static_size;
-
-   for (sh_type = 0; sh_type < PIPE_SHADER_TYPES; sh_type++) {
-      const int alignment = 32 / 4;
-      int num_samplers, num_surfaces, pcb_size;
-
-      /* samplers */
-      num_samplers = vec->sampler[sh_type].count;
-
-      /* sampler views and constant buffers */
-      num_surfaces = vec->view[sh_type].count +
-         util_bitcount(vec->cbuf[sh_type].enabled_mask);
-
-      pcb_size = 0;
-
-      switch (sh_type) {
-      case PIPE_SHADER_VERTEX:
-         if (vec->vs) {
-            if (ilo_dev_gen(render->dev) == ILO_GEN(6)) {
-               const struct pipe_stream_output_info *so_info =
-                  ilo_shader_get_kernel_so_info(vec->vs);
-
-               /* stream outputs */
-               num_surfaces += so_info->num_outputs;
-            }
-
-            pcb_size = ilo_shader_get_kernel_param(vec->vs,
-                  ILO_KERNEL_PCB_CBUF0_SIZE);
-            pcb_size += ilo_shader_get_kernel_param(vec->vs,
-                  ILO_KERNEL_VS_PCB_UCP_SIZE);
-         }
-         break;
-      case PIPE_SHADER_GEOMETRY:
-         if (vec->gs && ilo_dev_gen(render->dev) == ILO_GEN(6)) {
-            const struct pipe_stream_output_info *so_info =
-               ilo_shader_get_kernel_so_info(vec->gs);
-
-            /* stream outputs */
-            num_surfaces += so_info->num_outputs;
-         }
-         break;
-      case PIPE_SHADER_FRAGMENT:
-         /* render targets */
-         num_surfaces += vec->fb.state.nr_cbufs;
-
-         if (vec->fs) {
-            pcb_size = ilo_shader_get_kernel_param(vec->fs,
-                  ILO_KERNEL_PCB_CBUF0_SIZE);
-         }
-         break;
-      default:
-         break;
-      }
-
-      /* SAMPLER_STATE array and SAMPLER_BORDER_COLORs */
-      if (num_samplers) {
-         size += align(GEN6_SAMPLER_STATE__SIZE * num_samplers, alignment) +
-            align(GEN6_SAMPLER_BORDER_COLOR__SIZE, alignment) * num_samplers;
-      }
-
-      /* BINDING_TABLE_STATE and SURFACE_STATEs */
-      if (num_surfaces) {
-         size += align(num_surfaces, alignment) +
-            align(GEN6_SURFACE_STATE__SIZE, alignment) * num_surfaces;
-      }
-
-      /* PCB */
-      if (pcb_size)
-         size += align(pcb_size, alignment);
-   }
-
-   return size;
-}
-
 static int
 ilo_render_estimate_size_gen6(struct ilo_render *render,
                               enum ilo_render_action action,
@@ -1807,14 +1138,20 @@ ilo_render_estimate_size_gen6(struct ilo_render *render,
    switch (action) {
    case ILO_RENDER_DRAW:
       {
-         const struct ilo_state_vector *ilo = arg;
+         const struct ilo_state_vector *vec = arg;
 
          size = gen6_render_max_command_size(render) +
-            gen6_render_estimate_state_size(render, ilo);
+            ilo_render_get_draw_dynamic_states_len(render, vec) +
+            ilo_render_get_draw_surface_states_len(render, vec);
       }
       break;
    case ILO_RENDER_RECTLIST:
-      size = 64 + 256; /* states + commands */
+      {
+         const struct ilo_blitter *blitter = arg;
+
+         size = ilo_render_get_rectlist_dynamic_states_len(render, blitter);
+         size += 256; /* commands */
+      }
       break;
    default:
       assert(!"unknown render action");
