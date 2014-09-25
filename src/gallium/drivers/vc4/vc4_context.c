@@ -248,8 +248,10 @@ vc4_flush(struct pipe_context *pctx)
 #else
                 ret = vc4_simulator_flush(vc4, &submit);
 #endif
-                if (ret)
-                        errx(1, "VC4 submit failed\n");
+                if (ret) {
+                        fprintf(stderr, "VC4 submit failed\n");
+                        abort();
+                }
         }
 
         vc4_reset_cl(&vc4->bcl);
