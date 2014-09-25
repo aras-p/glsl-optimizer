@@ -58,6 +58,7 @@ GM107LoweringPass::handleManualTXD(TexInstruction *i)
    Value *zero = bld.loadImm(bld.getSSA(), 0);
    int l, c;
    const int dim = i->tex.target.getDim();
+   const int array = i->tex.target.isArray();
 
    i->op = OP_TEX; // no need to clone dPdx/dPdy later
 
@@ -69,7 +70,7 @@ GM107LoweringPass::handleManualTXD(TexInstruction *i)
       // mov coordinates from lane l to all lanes
       bld.mkOp(OP_QUADON, TYPE_NONE, NULL);
       for (c = 0; c < dim; ++c) {
-         bld.mkOp2(OP_SHFL, TYPE_F32, crd[c], i->getSrc(c), bld.mkImm(l));
+         bld.mkOp2(OP_SHFL, TYPE_F32, crd[c], i->getSrc(c + array), bld.mkImm(l));
          add = bld.mkOp2(OP_QUADOP, TYPE_F32, crd[c], crd[c], zero);
          add->subOp = 0x00;
          add->lanes = 1; /* abused for .ndv */
@@ -94,7 +95,7 @@ GM107LoweringPass::handleManualTXD(TexInstruction *i)
       // texture
       bld.insert(tex = cloneForward(func, i));
       for (c = 0; c < dim; ++c)
-         tex->setSrc(c, crd[c]);
+         tex->setSrc(c + array, crd[c]);
       bld.mkOp(OP_QUADPOP, TYPE_NONE, NULL);
 
       // save results
