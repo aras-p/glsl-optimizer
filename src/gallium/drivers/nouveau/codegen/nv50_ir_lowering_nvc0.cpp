@@ -601,6 +601,21 @@ NVC0LoweringPass::handleTEX(TexInstruction *i)
    //  lod bias
    //  depth compare
    //  offsets (same as fermi, except txd which takes it with array)
+   //
+   // Maxwell (tex):
+   //  array
+   //  coords
+   //  indirect handle
+   //  sample
+   //  lod bias
+   //  depth compare
+   //  offsets
+   //
+   // Maxwell (txd):
+   //  indirect handle
+   //  coords
+   //  array + offsets
+   //  derivatives
 
    if (chipset >= NVISA_GK104_CHIPSET) {
       if (i->tex.rIndirectSrc >= 0 || i->tex.sIndirectSrc >= 0) {
@@ -634,12 +649,17 @@ NVC0LoweringPass::handleTEX(TexInstruction *i)
          const int sat = (i->op == OP_TXF) ? 1 : 0;
          DataType sTy = (i->op == OP_TXF) ? TYPE_U32 : TYPE_F32;
          bld.mkCvt(OP_CVT, TYPE_U16, layer, sTy, src)->saturate = sat;
-         for (int s = dim; s >= 1; --s)
-            i->setSrc(s, i->getSrc(s - 1));
-         i->setSrc(0, layer);
+         if (i->op != OP_TXD || chipset < NVISA_GM107_CHIPSET) {
+            for (int s = dim; s >= 1; --s)
+               i->setSrc(s, i->getSrc(s - 1));
+            i->setSrc(0, layer);
+         } else {
+            i->setSrc(dim, layer);
+         }
       }
       // Move the indirect reference to the first place
-      if (i->tex.rIndirectSrc >= 0) {
+      if (i->tex.rIndirectSrc >= 0 && (
+                i->op == OP_TXD || chipset < NVISA_GM107_CHIPSET)) {
          Value *hnd = i->getIndirectR();
 
          i->setIndirectR(NULL);
@@ -742,8 +762,10 @@ NVC0LoweringPass::handleTEX(TexInstruction *i)
             // create it if it's not already there, and INSBF it if it already
             // is.
             s = (i->tex.rIndirectSrc >= 0) ? 1 : 0;
+            if (chipset >= NVISA_GM107_CHIPSET)
+               s += dim;
             if (i->tex.target.isArray()) {
-               bld.mkOp3(OP_INSBF, TYPE_U32, i->getSrc(0),
+               bld.mkOp3(OP_INSBF, TYPE_U32, i->getSrc(s),
                          bld.loadImm(NULL, imm), bld.mkImm(0xc10),
                          i->getSrc(s));
             } else {

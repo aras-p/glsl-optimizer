@@ -1921,6 +1921,13 @@ RegAlloc::InsertConstraintsPass::texConstraintGM107(TexInstruction *tex)
    if (isTextureOp(tex->op)) {
       if (tex->op != OP_TXQ) {
          s = tex->tex.target.getArgCount() - tex->tex.target.isMS();
+         if (tex->op == OP_TXD) {
+            // Indirect handle belongs in the first arg
+            if (tex->tex.rIndirectSrc >= 0)
+               s++;
+            if (!tex->tex.target.isArray() && tex->tex.useOffsets)
+               s++;
+         }
          n = tex->srcCount(0xff) - s;
       } else {
          s = tex->srcCount(0xff);
