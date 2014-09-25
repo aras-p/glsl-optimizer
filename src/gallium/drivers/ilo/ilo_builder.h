@@ -311,6 +311,15 @@ ilo_builder_dynamic_write(struct ilo_builder *builder,
    return offset;
 }
 
+static inline unsigned
+ilo_builder_dynamic_used(const struct ilo_builder *builder)
+{
+   const enum ilo_builder_writer_type which = ILO_BUILDER_WRITER_BATCH;
+   const struct ilo_builder_writer *writer = &builder->writers[which];
+
+   return writer->stolen >> 2;
+}
+
 /**
  * Write a surface state to the surface buffer.  The offset, in bytes, of the
  * state is returned.
@@ -342,6 +351,12 @@ ilo_builder_surface_reloc(struct ilo_builder *builder,
 
    ilo_builder_writer_reloc(builder, which, offset + (dw_index << 2),
          bo, bo_offset, reloc_flags);
+}
+
+static inline unsigned
+ilo_builder_surface_used(const struct ilo_builder *builder)
+{
+   return ilo_builder_dynamic_used(builder);
 }
 
 /**
