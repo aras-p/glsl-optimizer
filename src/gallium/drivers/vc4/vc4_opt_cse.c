@@ -62,7 +62,8 @@ inst_key_equals(const void *a, const void *b)
 }
 
 static struct qinst *
-vc4_find_cse(struct hash_table *ht, struct qinst *inst, uint32_t sf_count,
+vc4_find_cse(struct vc4_compile *c, struct hash_table *ht,
+             struct qinst *inst, uint32_t sf_count,
              uint32_t r4_count)
 {
         if (inst->dst.file != QFILE_TEMP ||
@@ -90,11 +91,11 @@ vc4_find_cse(struct hash_table *ht, struct qinst *inst, uint32_t sf_count,
                         fprintf(stderr, "CSE found match:\n");
 
                         fprintf(stderr, "  Original inst: ");
-                        qir_dump_inst(entry->data);
+                        qir_dump_inst(c, entry->data);
                         fprintf(stderr, "\n");
 
                         fprintf(stderr, "  Our inst:      ");
-                        qir_dump_inst(inst);
+                        qir_dump_inst(c, inst);
                         fprintf(stderr, "\n");
                 }
 
@@ -109,7 +110,7 @@ vc4_find_cse(struct hash_table *ht, struct qinst *inst, uint32_t sf_count,
 
         if (debug) {
                 fprintf(stderr, "Added to CSE HT: ");
-                qir_dump_inst(inst);
+                qir_dump_inst(c, inst);
                 fprintf(stderr, "\n");
         }
 
@@ -143,7 +144,7 @@ qir_opt_cse(struct vc4_compile *c)
                                 if (debug) {
                                         fprintf(stderr,
                                                 "Removing redundant SF: ");
-                                        qir_dump_inst(inst);
+                                        qir_dump_inst(c, inst);
                                         fprintf(stderr, "\n");
                                 }
                                 qir_remove_instruction(inst);
@@ -154,7 +155,7 @@ qir_opt_cse(struct vc4_compile *c)
                                 sf_count++;
                         }
                 } else {
-                        struct qinst *cse = vc4_find_cse(ht, inst,
+                        struct qinst *cse = vc4_find_cse(c, ht, inst,
                                                          sf_count, r4_count);
                         if (cse) {
                                 inst->src[0] = cse->dst;
@@ -166,7 +167,7 @@ qir_opt_cse(struct vc4_compile *c)
 
                                 if (debug) {
                                         fprintf(stderr, "  Turned into:   ");
-                                        qir_dump_inst(inst);
+                                        qir_dump_inst(c, inst);
                                         fprintf(stderr, "\n");
                                 }
                         }

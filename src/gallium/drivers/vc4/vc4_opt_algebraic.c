@@ -37,24 +37,24 @@
 static bool debug;
 
 static void
-dump_from(struct qinst *inst)
+dump_from(struct vc4_compile *c, struct qinst *inst)
 {
         if (!debug)
                 return;
 
         fprintf(stderr, "optimizing: ");
-        qir_dump_inst(inst);
+        qir_dump_inst(c, inst);
         fprintf(stderr, "\n");
 }
 
 static void
-dump_to(struct qinst *inst)
+dump_to(struct vc4_compile *c, struct qinst *inst)
 {
         if (!debug)
                 return;
 
         fprintf(stderr, "to: ");
-        qir_dump_inst(inst);
+        qir_dump_inst(c, inst);
         fprintf(stderr, "\n");
 }
 
@@ -99,21 +99,21 @@ qir_opt_algebraic(struct vc4_compile *c)
                                 /* Turn "dst = (sf == x) ? a : a)" into
                                  * "dst = a"
                                  */
-                                dump_from(inst);
+                                dump_from(c, inst);
                                 inst->op = QOP_MOV;
                                 inst->src[0] = inst->src[1];
                                 inst->src[1] = c->undef;
                                 progress = true;
-                                dump_to(inst);
+                                dump_to(c, inst);
                         } else if (is_zero(c, defs, inst->src[1])) {
                                 /* Replace references to a 0 uniform value
                                  * with the SEL_X_0 equivalent.
                                  */
-                                dump_from(inst);
+                                dump_from(c, inst);
                                 inst->op -= (QOP_SEL_X_Y_ZS - QOP_SEL_X_0_ZS);
                                 inst->src[1] = c->undef;
                                 progress = true;
-                                dump_to(inst);
+                                dump_to(c, inst);
                         }
                         break;
 

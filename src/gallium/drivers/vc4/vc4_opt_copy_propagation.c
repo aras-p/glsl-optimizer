@@ -63,7 +63,7 @@ qir_opt_copy_propagation(struct vc4_compile *c)
                               !reads_a_uniform))) {
                                 if (debug) {
                                         fprintf(stderr, "Copy propagate: ");
-                                        qir_dump_inst(inst);
+                                        qir_dump_inst(c, inst);
                                         fprintf(stderr, "\n");
                                 }
 
@@ -73,7 +73,7 @@ qir_opt_copy_propagation(struct vc4_compile *c)
 
                                 if (debug) {
                                         fprintf(stderr, "to: ");
-                                        qir_dump_inst(inst);
+                                        qir_dump_inst(c, inst);
                                         fprintf(stderr, "\n");
                                 }
 

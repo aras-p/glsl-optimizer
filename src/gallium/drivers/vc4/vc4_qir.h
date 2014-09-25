@@ -277,7 +277,7 @@ bool qir_writes_r4(struct qinst *inst);
 bool qir_reads_r4(struct qinst *inst);
 
 void qir_dump(struct vc4_compile *c);
-void qir_dump_inst(struct qinst *inst);
+void qir_dump_inst(struct vc4_compile *c, struct qinst *inst);
 const char *qir_get_stage_name(enum qstage stage);
 
 void qir_optimize(struct vc4_compile *c);

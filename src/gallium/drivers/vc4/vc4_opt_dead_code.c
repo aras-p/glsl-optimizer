@@ -51,7 +51,7 @@ qir_opt_dead_code(struct vc4_compile *c)
                     !qir_has_side_effects(inst)) {
                         if (debug) {
                                 fprintf(stderr, "Removing: ");
-                                qir_dump_inst(inst);
+                                qir_dump_inst(c, inst);
                                 fprintf(stderr, "\n");
                         }
                         qir_remove_instruction(inst);

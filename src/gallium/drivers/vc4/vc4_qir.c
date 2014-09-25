@@ -181,7 +181,7 @@ qir_reads_r4(struct qinst *inst)
 }
 
 static void
-qir_print_reg(struct qreg reg)
+qir_print_reg(struct vc4_compile *c, struct qreg reg)
 {
         const char *files[] = {
                 [QFILE_TEMP] = "t",
@@ -193,17 +193,24 @@ qir_print_reg(struct qreg reg)
                 fprintf(stderr, "null");
         else
                 fprintf(stderr, "%s%d", files[reg.file], reg.index);
+
+        if (reg.file == QFILE_UNIF &&
+            c->uniform_contents[reg.index] == QUNIFORM_CONSTANT) {
+                fprintf(stderr, " (0x%08x / %f)",
+                        c->uniform_data[reg.index],
+                        uif(c->uniform_data[reg.index]));
+        }
 }
 
 void
-qir_dump_inst(struct qinst *inst)
+qir_dump_inst(struct vc4_compile *c, struct qinst *inst)
 {
         fprintf(stderr, "%s ", qir_get_op_name(inst->op));
 
-        qir_print_reg(inst->dst);
+        qir_print_reg(c, inst->dst);
         for (int i = 0; i < qir_get_op_nsrc(inst->op); i++) {
                 fprintf(stderr, ", ");
-                qir_print_reg(inst->src[i]);
+                qir_print_reg(c, inst->src[i]);
         }
 }
 
@@ -214,7 +221,7 @@ qir_dump(struct vc4_compile *c)
 
         foreach(node, &c->instructions) {
                 struct qinst *inst = (struct qinst *)node;
-                qir_dump_inst(inst);
+                qir_dump_inst(c, inst);
                 fprintf(stderr, "\n");
         }
 }
