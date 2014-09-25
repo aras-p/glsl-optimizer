@@ -1523,7 +1523,7 @@ fs_visitor::emit_math(enum opcode opcode, fs_reg dst, fs_reg src0, fs_reg src1)
       fs_reg &op0 = is_int_div ? src1 : src0;
       fs_reg &op1 = is_int_div ? src0 : src1;
 
-      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + 1, op1.type), op1);
+      emit(MOV(fs_reg(MRF, base_mrf + 1, op1.type, dispatch_width), op1));
       inst = emit(opcode, dst, op0, reg_null_f);
 
       inst->base_mrf = base_mrf;
