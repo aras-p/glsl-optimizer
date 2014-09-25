@@ -73,13 +73,6 @@ _mesa_dlsym(void *handle, const char *fname)
    } u;
 #if defined(__blrts)
    u.v = NULL;
-#elif defined(__DJGPP__)
-   /* need '_' prefix on symbol names */
-   char fname2[1000];
-   fname2[0] = '_';
-   strncpy(fname2 + 1, fname, 998);
-   fname2[999] = 0;
-   u.v = dlsym(handle, fname2);
 #elif defined(HAVE_DLOPEN)
    u.v = dlsym(handle, fname);
 #elif defined(__MINGW32__)

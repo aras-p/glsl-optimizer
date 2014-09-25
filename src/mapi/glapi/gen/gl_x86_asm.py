@@ -72,7 +72,7 @@ class PrintGenericStubs(gl_XML.gl_print_base):
         print ''
         print '#define GL_OFFSET(x) CODEPTR(REGOFF(4 * x, EAX))'
         print ''
-        print '#if defined(GNU_ASSEMBLER) && !defined(__DJGPP__) && !defined(__MINGW32__) && !defined(__APPLE__)'
+        print '#if defined(GNU_ASSEMBLER) && !defined(__MINGW32__) && !defined(__APPLE__)'
         print '#define GLOBL_FN(x) GLOBL x ; .type x, @function'
         print '#else'
         print '#define GLOBL_FN(x) GLOBL x'

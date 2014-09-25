@@ -51,8 +51,6 @@
 #define DXTN_LIBNAME "dxtn.dll"
 #define RTLD_LAZY 0
 #define RTLD_GLOBAL 0
-#elif defined(__DJGPP__)
-#define DXTN_LIBNAME "dxtn.dxe"
 #else
 #define DXTN_LIBNAME "libtxc_dxtn.so"
 #endif
