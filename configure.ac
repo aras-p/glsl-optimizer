@@ -1686,11 +1686,10 @@ if test "x$enable_gallium_llvm" = xyes; then
         AC_COMPUTE_INT([LLVM_VERSION_MINOR], [LLVM_VERSION_MINOR],
             [#include "${LLVM_INCLUDEDIR}/llvm/Config/llvm-config.h"])
 
-        dnl In LLVM 3.4.1 patch level was defined in config.h and not
-        dnl llvm-config.h
-        AC_COMPUTE_INT([LLVM_VERSION_PATCH], [LLVM_VERSION_PATCH],
-            [#include "${LLVM_INCLUDEDIR}/llvm/Config/config.h"],
-            LLVM_VERSION_PATCH=0) dnl Default if LLVM_VERSION_PATCH not found
+        LLVM_VERSION_PATCH=`echo $LLVM_VERSION | cut -d. -f3 | egrep -o '^[[0-9]]+'`
+        if test -z "$LLVM_VERSION_PATCH"; then
+            LLVM_VERSION_PATCH=0
+        fi
 
         if test -n "${LLVM_VERSION_MAJOR}"; then
             LLVM_VERSION_INT="${LLVM_VERSION_MAJOR}0${LLVM_VERSION_MINOR}"
