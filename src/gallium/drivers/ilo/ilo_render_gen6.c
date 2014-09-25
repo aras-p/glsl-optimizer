@@ -1028,10 +1028,21 @@ gen6_rectlist_wm_multisample(struct ilo_render *r,
          (1 << blitter->fb.num_samples) - 1);
 }
 
-static void
-gen6_rectlist_commands(struct ilo_render *r,
-                       const struct ilo_blitter *blitter)
+int
+ilo_render_get_rectlist_commands_len_gen6(const struct ilo_render *render,
+                                          const struct ilo_blitter *blitter)
 {
+   ILO_DEV_ASSERT(render->dev, 6, 7.5);
+
+   return 256;
+}
+
+void
+ilo_render_emit_rectlist_commands_gen6(struct ilo_render *r,
+                                       const struct ilo_blitter *blitter)
+{
+   ILO_DEV_ASSERT(r->dev, 6, 6);
+
    gen6_wa_pre_non_pipelined(r);
 
    gen6_rectlist_wm_multisample(r, blitter);
@@ -1072,14 +1083,6 @@ gen6_rectlist_commands(struct ilo_render *r,
          blitter->fb.width, blitter->fb.height);
 
    gen6_3DPRIMITIVE(r->builder, &blitter->draw, NULL);
-}
-
-static void
-ilo_render_emit_rectlist_gen6(struct ilo_render *render,
-                              const struct ilo_blitter *blitter)
-{
-   ilo_render_emit_rectlist_dynamic_states(render, blitter);
-   gen6_rectlist_commands(render, blitter);
 }
 
 static int
@@ -1145,14 +1148,6 @@ ilo_render_estimate_size_gen6(struct ilo_render *render,
             ilo_render_get_draw_surface_states_len(render, vec);
       }
       break;
-   case ILO_RENDER_RECTLIST:
-      {
-         const struct ilo_blitter *blitter = arg;
-
-         size = ilo_render_get_rectlist_dynamic_states_len(render, blitter);
-         size += 256; /* commands */
-      }
-      break;
    default:
       assert(!"unknown render action");
       size = 0;
@@ -1167,5 +1162,4 @@ ilo_render_init_gen6(struct ilo_render *render)
 {
    render->estimate_size = ilo_render_estimate_size_gen6;
    render->emit_draw = ilo_render_emit_draw_gen6;
-   render->emit_rectlist = ilo_render_emit_rectlist_gen6;
 }

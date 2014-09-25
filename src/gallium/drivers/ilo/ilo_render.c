@@ -368,3 +368,23 @@ ilo_render_emit_query(struct ilo_render *render,
    assert(ilo_builder_batch_used(render->builder) <= batch_used +
          ilo_render_get_query_len(render, q->type));
 }
+
+int
+ilo_render_get_rectlist_len(const struct ilo_render *render,
+                            const struct ilo_blitter *blitter)
+{
+   ILO_DEV_ASSERT(render->dev, 6, 7.5);
+
+   return ilo_render_get_rectlist_dynamic_states_len(render, blitter) +
+          ilo_render_get_rectlist_commands_len(render, blitter);
+}
+
+void
+ilo_render_emit_rectlist(struct ilo_render *render,
+                         const struct ilo_blitter *blitter)
+{
+   ILO_DEV_ASSERT(render->dev, 6, 7.5);
+
+   ilo_render_emit_rectlist_dynamic_states(render, blitter);
+   ilo_render_emit_rectlist_commands(render, blitter);
+}

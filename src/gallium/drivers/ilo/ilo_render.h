@@ -39,7 +39,6 @@ struct ilo_state_vector;
 
 enum ilo_render_action {
    ILO_RENDER_DRAW,
-   ILO_RENDER_RECTLIST,
 };
 
 /**
@@ -61,9 +60,6 @@ struct ilo_render {
 
    void (*emit_draw)(struct ilo_render *render,
                      const struct ilo_state_vector *vec);
-
-   void (*emit_rectlist)(struct ilo_render *render,
-                         const struct ilo_blitter *blitter);
 
    bool hw_ctx_changed;
 
@@ -165,13 +161,6 @@ ilo_render_emit_draw(struct ilo_render *render,
    render->emit_draw(render, vec);
 }
 
-static inline void
-ilo_render_emit_rectlist(struct ilo_render *render,
-                         const struct ilo_blitter *blitter)
-{
-   render->emit_rectlist(render, blitter);
-}
-
 void
 ilo_render_get_sample_position(const struct ilo_render *render,
                                unsigned sample_count,
@@ -197,5 +186,13 @@ ilo_render_get_query_len(const struct ilo_render *render,
 void
 ilo_render_emit_query(struct ilo_render *render,
                       struct ilo_query *q, uint32_t offset);
+
+int
+ilo_render_get_rectlist_len(const struct ilo_render *render,
+                            const struct ilo_blitter *blitter);
+
+void
+ilo_render_emit_rectlist(struct ilo_render *render,
+                         const struct ilo_blitter *blitter);
 
 #endif /* ILO_RENDER_H */

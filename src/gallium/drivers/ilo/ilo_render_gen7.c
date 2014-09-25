@@ -838,10 +838,12 @@ gen7_rectlist_wm_multisample(struct ilo_render *r,
          (1 << blitter->fb.num_samples) - 1, blitter->fb.num_samples);
 }
 
-static void
-gen7_rectlist_commands(struct ilo_render *r,
-                       const struct ilo_blitter *blitter)
+void
+ilo_render_emit_rectlist_commands_gen7(struct ilo_render *r,
+                                       const struct ilo_blitter *blitter)
 {
+   ILO_DEV_ASSERT(r->dev, 7, 7.5);
+
    gen7_rectlist_wm_multisample(r, blitter);
 
    gen6_state_base_address(r->builder, true);
@@ -883,14 +885,6 @@ gen7_rectlist_commands(struct ilo_render *r,
          blitter->fb.width, blitter->fb.height);
 
    gen7_3DPRIMITIVE(r->builder, &blitter->draw, NULL);
-}
-
-static void
-ilo_render_emit_rectlist_gen7(struct ilo_render *render,
-                              const struct ilo_blitter *blitter)
-{
-   ilo_render_emit_rectlist_dynamic_states(render, blitter);
-   gen7_rectlist_commands(render, blitter);
 }
 
 static int
@@ -961,14 +955,6 @@ ilo_render_estimate_size_gen7(struct ilo_render *render,
             ilo_render_get_draw_surface_states_len(render, vec);
       }
       break;
-   case ILO_RENDER_RECTLIST:
-      {
-         const struct ilo_blitter *blitter = arg;
-
-         size = ilo_render_get_rectlist_dynamic_states_len(render, blitter);
-         size += 256; /* commands */
-      }
-      break;
    default:
       assert(!"unknown render action");
       size = 0;
@@ -983,5 +969,4 @@ ilo_render_init_gen7(struct ilo_render *render)
 {
    render->estimate_size = ilo_render_estimate_size_gen7;
    render->emit_draw = ilo_render_emit_draw_gen7;
-   render->emit_rectlist = ilo_render_emit_rectlist_gen7;
 }

@@ -29,6 +29,8 @@
 #define ILO_RENDER_GEN_H
 
 #include "ilo_common.h"
+#include "ilo_builder.h"
+#include "ilo_render.h"
 
 struct ilo_blitter;
 struct ilo_render;
@@ -70,6 +72,40 @@ struct gen6_draw_session {
 
    int num_surfaces[PIPE_SHADER_TYPES];
 };
+
+int
+ilo_render_get_rectlist_commands_len_gen6(const struct ilo_render *render,
+                                          const struct ilo_blitter *blitter);
+
+static inline int
+ilo_render_get_rectlist_commands_len(const struct ilo_render *render,
+                                     const struct ilo_blitter *blitter)
+{
+   return ilo_render_get_rectlist_commands_len_gen6(render, blitter);
+}
+
+void
+ilo_render_emit_rectlist_commands_gen6(struct ilo_render *r,
+                                       const struct ilo_blitter *blitter);
+
+void
+ilo_render_emit_rectlist_commands_gen7(struct ilo_render *r,
+                                       const struct ilo_blitter *blitter);
+
+static inline void
+ilo_render_emit_rectlist_commands(struct ilo_render *render,
+                                  const struct ilo_blitter *blitter)
+{
+   const unsigned batch_used = ilo_builder_batch_used(render->builder);
+
+   if (ilo_dev_gen(render->dev) >= ILO_GEN(7))
+      ilo_render_emit_rectlist_commands_gen7(render, blitter);
+   else
+      ilo_render_emit_rectlist_commands_gen6(render, blitter);
+
+   assert(ilo_builder_batch_used(render->builder) <= batch_used +
+         ilo_render_get_rectlist_commands_len(render, blitter));
+}
 
 int
 ilo_render_get_draw_dynamic_states_len(const struct ilo_render *render,

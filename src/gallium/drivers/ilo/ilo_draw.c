@@ -375,8 +375,7 @@ ilo_draw_rectlist(struct ilo_context *ilo)
 
    ilo_draw_set_owner(ilo);
 
-   max_len = ilo_render_estimate_size(ilo->render,
-         ILO_RENDER_RECTLIST, ilo->blitter);
+   max_len = ilo_render_get_rectlist_len(ilo->render, ilo->blitter);
    max_len += ilo_render_get_flush_len(ilo->render) * 2;
 
    if (max_len > ilo_cp_space(ilo->cp)) {
