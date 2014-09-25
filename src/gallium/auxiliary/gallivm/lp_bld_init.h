@@ -49,7 +49,7 @@ struct gallivm_state
 };
 
 
-void
+boolean
 lp_build_init(void);
 
 

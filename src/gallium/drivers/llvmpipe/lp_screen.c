@@ -557,6 +557,9 @@ llvmpipe_create_screen(struct sw_winsys *winsys)
        return NULL;
 #endif
 
+   if (!lp_jit_screen_init(screen))
+      return NULL;
+
 #ifdef DEBUG
    LP_DEBUG = debug_get_flags_option("LP_DEBUG", lp_debug_flags, 0 );
 #endif
@@ -587,8 +590,6 @@ llvmpipe_create_screen(struct sw_winsys *winsys)
    screen->base.get_timestamp = llvmpipe_get_timestamp;
 
    llvmpipe_init_screen_resource_funcs(&screen->base);
-
-   lp_jit_screen_init(screen);
 
    screen->num_threads = util_cpu_caps.nr_cpus > 1 ? util_cpu_caps.nr_cpus : 0;
 #ifdef PIPE_SUBSYSTEM_EMBEDDED

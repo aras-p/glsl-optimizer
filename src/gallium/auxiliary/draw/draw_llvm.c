@@ -484,11 +484,12 @@ draw_llvm_create(struct draw_context *draw)
 {
    struct draw_llvm *llvm;
 
+   if (!lp_build_init())
+      return NULL;
+
    llvm = CALLOC_STRUCT( draw_llvm );
    if (!llvm)
       return NULL;
-
-   lp_build_init();
 
    llvm->draw = draw;
 

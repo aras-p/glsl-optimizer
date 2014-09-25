@@ -93,8 +93,6 @@ draw_create_context(struct pipe_context *pipe, boolean try_llvm)
 #if HAVE_LLVM
    if (try_llvm && draw_get_option_use_llvm()) {
       draw->llvm = draw_llvm_create(draw);
-      if (!draw->llvm)
-         goto err_destroy;
    }
 #endif
 

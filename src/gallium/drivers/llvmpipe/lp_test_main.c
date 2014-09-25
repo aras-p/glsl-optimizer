@@ -376,6 +376,9 @@ int main(int argc, char **argv)
    fpstate = util_fpstate_get();
    util_fpstate_set_denorms_to_zero(fpstate);
 
+   if (!lp_build_init())
+      return 1;
+
    for(i = 1; i < argc; ++i) {
       if(strcmp(argv[i], "-v") == 0)
          ++verbose;
@@ -386,8 +389,6 @@ int main(int argc, char **argv)
       else
          n = atoi(argv[i]);
    }
-
-   lp_build_init();
 
 #ifdef DEBUG
    if (verbose >= 2) {

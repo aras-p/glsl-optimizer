@@ -306,7 +306,8 @@ init_gallivm_state(struct gallivm_state *gallivm, const char *name)
    assert(!gallivm->context);
    assert(!gallivm->module);
 
-   lp_build_init();
+   if (!lp_build_init())
+      return FALSE;
 
    if (USE_GLOBAL_CONTEXT) {
       gallivm->context = LLVMGetGlobalContext();
@@ -382,11 +383,18 @@ fail:
 }
 
 
-void
+boolean
 lp_build_init(void)
 {
    if (gallivm_initialized)
-      return;
+      return TRUE;
+
+   /* XXX: Remove this once lp_bld_misc.cpp has been adapted to the removal
+    * of JITMemoryManager
+    */
+#if HAVE_LLVM >= 0x0306
+   return FALSE;
+#endif
 
 #ifdef DEBUG
    gallivm_debug = debug_get_option_gallivm_debug();
@@ -477,6 +485,8 @@ lp_build_init(void)
    util_cpu_caps.has_avx = 0;
    util_cpu_caps.has_f16c = 0;
 #endif
+
+   return TRUE;
 }
 
 
