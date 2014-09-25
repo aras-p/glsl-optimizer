@@ -34,7 +34,6 @@
 #include "ilo_builder_render.h"
 #include "ilo_query.h"
 #include "ilo_render_gen.h"
-#include "ilo_render.h"
 
 /* in U0.4 */
 struct sample_position {

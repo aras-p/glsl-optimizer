@@ -30,7 +30,6 @@
 #include "ilo_builder_3d.h"
 #include "ilo_state.h"
 #include "ilo_render_gen.h"
-#include "ilo_render.h"
 
 #define DIRTY(state) (session->pipe_dirty & ILO_DIRTY_ ## state)
 

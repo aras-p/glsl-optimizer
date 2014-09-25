@@ -33,7 +33,6 @@
 #include "ilo_builder_render.h"
 #include "ilo_shader.h"
 #include "ilo_state.h"
-#include "ilo_render.h"
 #include "ilo_render_gen.h"
 
 /**
