@@ -150,7 +150,7 @@ extern "C" {
 #elif defined(__APPLE__)
 #include <CoreFoundation/CFByteOrder.h>
 #define CPU_TO_LE32( x )	CFSwapInt32HostToLittle( x )
-#elif (defined(_AIX) || defined(__blrts))
+#elif (defined(_AIX))
 static inline GLuint CPU_TO_LE32(GLuint x)
 {
    return (((x & 0x000000ff) << 24) |
