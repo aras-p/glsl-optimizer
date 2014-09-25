@@ -31,6 +31,7 @@
 
 #include <llvm-c/Core.h> /* LLVMModuleRef */
 #include "tgsi/tgsi_scan.h"
+#include "si_state.h"
 
 #define SI_SGPR_CONST		0
 #define SI_SGPR_SAMPLER		2
@@ -140,7 +141,7 @@ union si_shader_key {
 		unsigned	alpha_to_one:1;
 	} ps;
 	struct {
-		unsigned	instance_divisors[PIPE_MAX_ATTRIBS];
+		unsigned	instance_divisors[SI_NUM_VERTEX_BUFFERS];
 		/* The mask of "get_unique_index" bits, needed for ES,
 		 * it describes how the ES->GS ring buffer is laid out. */
 		uint64_t	gs_used_inputs;
