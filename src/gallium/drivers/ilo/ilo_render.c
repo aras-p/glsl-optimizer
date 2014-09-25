@@ -29,7 +29,9 @@
 #include "intel_winsys.h"
 
 #include "ilo_builder.h"
+#include "ilo_builder_mi.h"
 #include "ilo_builder_render.h"
+#include "ilo_query.h"
 #include "ilo_render_gen.h"
 #include "ilo_render_gen7.h"
 #include "ilo_render.h"
@@ -223,4 +225,152 @@ ilo_render_emit_flush(struct ilo_render *render)
 
    render->state.current_pipe_control_dw1 |= dw1;
    render->state.deferred_pipe_control_dw1 &= ~dw1;
+}
+
+/**
+ * Return the command length of ilo_render_emit_query().
+ */
+int
+ilo_render_get_query_len(const struct ilo_render *render,
+                         unsigned query_type)
+{
+   int len;
+
+   ILO_DEV_ASSERT(render->dev, 6, 7.5);
+
+   switch (query_type) {
+   case PIPE_QUERY_OCCLUSION_COUNTER:
+      len = GEN6_PIPE_CONTROL__SIZE;
+      if (ilo_dev_gen(render->dev) == ILO_GEN(6))
+         len *= 3;
+      break;
+   case PIPE_QUERY_TIMESTAMP:
+   case PIPE_QUERY_TIME_ELAPSED:
+      len = GEN6_PIPE_CONTROL__SIZE;
+      if (ilo_dev_gen(render->dev) == ILO_GEN(6))
+         len *= 2;
+      break;
+   case PIPE_QUERY_PRIMITIVES_GENERATED:
+   case PIPE_QUERY_PRIMITIVES_EMITTED:
+      len = GEN6_PIPE_CONTROL__SIZE;
+      if (ilo_dev_gen(render->dev) == ILO_GEN(6))
+         len *= 3;
+
+      len += GEN6_MI_STORE_REGISTER_MEM__SIZE * 2;
+      break;
+   case PIPE_QUERY_PIPELINE_STATISTICS:
+      if (ilo_dev_gen(render->dev) >= ILO_GEN(7)) {
+         const int num_regs = 10;
+         const int num_pads = 1;
+
+         len = GEN6_PIPE_CONTROL__SIZE +
+            GEN6_MI_STORE_REGISTER_MEM__SIZE * 2 * num_regs +
+            GEN6_MI_STORE_DATA_IMM__SIZE * num_pads;
+      } else {
+         const int num_regs = 8;
+         const int num_pads = 3;
+
+         len = GEN6_PIPE_CONTROL__SIZE * 3 +
+            GEN6_MI_STORE_REGISTER_MEM__SIZE * 2 * num_regs +
+            GEN6_MI_STORE_DATA_IMM__SIZE * num_pads;
+      }
+      break;
+   default:
+      len = 0;
+      break;
+   }
+
+   return len;
+}
+
+/**
+ * Emit PIPE_CONTROLs or MI_STORE_REGISTER_MEMs to store register values.
+ */
+void
+ilo_render_emit_query(struct ilo_render *render,
+                      struct ilo_query *q, uint32_t offset)
+{
+   const uint32_t pipeline_statistics_regs[11] = {
+      GEN6_REG_IA_VERTICES_COUNT,
+      GEN6_REG_IA_PRIMITIVES_COUNT,
+      GEN6_REG_VS_INVOCATION_COUNT,
+      GEN6_REG_GS_INVOCATION_COUNT,
+      GEN6_REG_GS_PRIMITIVES_COUNT,
+      GEN6_REG_CL_INVOCATION_COUNT,
+      GEN6_REG_CL_PRIMITIVES_COUNT,
+      GEN6_REG_PS_INVOCATION_COUNT,
+      (ilo_dev_gen(render->dev) >= ILO_GEN(7)) ?
+         GEN7_REG_HS_INVOCATION_COUNT : 0,
+      (ilo_dev_gen(render->dev) >= ILO_GEN(7)) ?
+         GEN7_REG_DS_INVOCATION_COUNT : 0,
+      0,
+   };
+   const uint32_t primitives_generated_reg =
+      (ilo_dev_gen(render->dev) >= ILO_GEN(7) && q->index > 0) ?
+      GEN7_REG_SO_PRIM_STORAGE_NEEDED(q->index) :
+      GEN6_REG_CL_INVOCATION_COUNT;
+   const uint32_t primitives_emitted_reg =
+      (ilo_dev_gen(render->dev) >= ILO_GEN(7)) ?
+      GEN7_REG_SO_NUM_PRIMS_WRITTEN(q->index) :
+      GEN6_REG_SO_NUM_PRIMS_WRITTEN;
+   const uint32_t *regs;
+   int reg_count = 0, i;
+   uint32_t pipe_control_dw1 = 0;
+
+   ILO_DEV_ASSERT(render->dev, 6, 7.5);
+
+   switch (q->type) {
+   case PIPE_QUERY_OCCLUSION_COUNTER:
+      pipe_control_dw1 = GEN6_PIPE_CONTROL_DEPTH_STALL |
+                         GEN6_PIPE_CONTROL_WRITE_PS_DEPTH_COUNT;
+      break;
+   case PIPE_QUERY_TIMESTAMP:
+   case PIPE_QUERY_TIME_ELAPSED:
+      pipe_control_dw1 = GEN6_PIPE_CONTROL_WRITE_TIMESTAMP;
+      break;
+   case PIPE_QUERY_PRIMITIVES_GENERATED:
+      regs = &primitives_generated_reg;
+      reg_count = 1;
+      break;
+   case PIPE_QUERY_PRIMITIVES_EMITTED:
+      regs = &primitives_emitted_reg;
+      reg_count = 1;
+      break;
+   case PIPE_QUERY_PIPELINE_STATISTICS:
+      regs = pipeline_statistics_regs;
+      reg_count = Elements(pipeline_statistics_regs);
+      break;
+   default:
+      break;
+   }
+
+   if (pipe_control_dw1) {
+      if (ilo_dev_gen(render->dev) == ILO_GEN(6))
+         gen6_wa_pre_pipe_control(render, pipe_control_dw1);
+
+      gen6_PIPE_CONTROL(render->builder, pipe_control_dw1,
+            q->bo, offset, true);
+
+      render->state.current_pipe_control_dw1 |= pipe_control_dw1;
+      render->state.deferred_pipe_control_dw1 &= ~pipe_control_dw1;
+   }
+
+   if (!reg_count)
+      return;
+
+   ilo_render_emit_flush(render);
+
+   for (i = 0; i < reg_count; i++) {
+      if (regs[i]) {
+         /* store lower 32 bits */
+         gen6_MI_STORE_REGISTER_MEM(render->builder, q->bo, offset, regs[i]);
+         /* store higher 32 bits */
+         gen6_MI_STORE_REGISTER_MEM(render->builder, q->bo,
+               offset + 4, regs[i] + 4);
+      } else {
+         gen6_MI_STORE_DATA_IMM(render->builder, q->bo, offset, 0, true);
+      }
+
+      offset += 8;
+   }
 }

@@ -1471,92 +1471,6 @@ ilo_render_emit_draw_gen6(struct ilo_render *render,
    gen6_draw_end(render, vec, &session);
 }
 
-void
-ilo_render_emit_query_gen6(struct ilo_render *r,
-                           struct ilo_query *q, uint32_t offset)
-{
-   const uint32_t pipeline_statistics_regs[] = {
-      GEN6_REG_IA_VERTICES_COUNT,
-      GEN6_REG_IA_PRIMITIVES_COUNT,
-      GEN6_REG_VS_INVOCATION_COUNT,
-      GEN6_REG_GS_INVOCATION_COUNT,
-      GEN6_REG_GS_PRIMITIVES_COUNT,
-      GEN6_REG_CL_INVOCATION_COUNT,
-      GEN6_REG_CL_PRIMITIVES_COUNT,
-      GEN6_REG_PS_INVOCATION_COUNT,
-      (ilo_dev_gen(r->dev) >= ILO_GEN(7)) ? GEN7_REG_HS_INVOCATION_COUNT : 0,
-      (ilo_dev_gen(r->dev) >= ILO_GEN(7)) ? GEN7_REG_DS_INVOCATION_COUNT : 0,
-      0,
-   };
-   const uint32_t primitives_generated_reg =
-      (ilo_dev_gen(r->dev) >= ILO_GEN(7) && q->index > 0) ?
-      GEN7_REG_SO_PRIM_STORAGE_NEEDED(q->index) :
-      GEN6_REG_CL_INVOCATION_COUNT;
-   const uint32_t primitives_emitted_reg =
-      (ilo_dev_gen(r->dev) >= ILO_GEN(7)) ?
-      GEN7_REG_SO_NUM_PRIMS_WRITTEN(q->index) :
-      GEN6_REG_SO_NUM_PRIMS_WRITTEN;
-   const uint32_t *regs;
-   int reg_count = 0, i;
-   uint32_t pipe_control_dw1 = 0;
-
-   ILO_DEV_ASSERT(r->dev, 6, 7.5);
-
-   switch (q->type) {
-   case PIPE_QUERY_OCCLUSION_COUNTER:
-      pipe_control_dw1 = GEN6_PIPE_CONTROL_DEPTH_STALL |
-                         GEN6_PIPE_CONTROL_WRITE_PS_DEPTH_COUNT;
-      break;
-   case PIPE_QUERY_TIMESTAMP:
-   case PIPE_QUERY_TIME_ELAPSED:
-      pipe_control_dw1 = GEN6_PIPE_CONTROL_WRITE_TIMESTAMP;
-      break;
-   case PIPE_QUERY_PRIMITIVES_GENERATED:
-      regs = &primitives_generated_reg;
-      reg_count = 1;
-      break;
-   case PIPE_QUERY_PRIMITIVES_EMITTED:
-      regs = &primitives_emitted_reg;
-      reg_count = 1;
-      break;
-   case PIPE_QUERY_PIPELINE_STATISTICS:
-      regs = pipeline_statistics_regs;
-      reg_count = Elements(pipeline_statistics_regs);
-      break;
-   default:
-      break;
-   }
-
-   if (pipe_control_dw1) {
-      if (ilo_dev_gen(r->dev) == ILO_GEN(6))
-         gen6_wa_pre_pipe_control(r, pipe_control_dw1);
-
-      gen6_PIPE_CONTROL(r->builder, pipe_control_dw1, q->bo, offset, true);
-
-      r->state.current_pipe_control_dw1 |= pipe_control_dw1;
-      r->state.deferred_pipe_control_dw1 &= ~pipe_control_dw1;
-   }
-
-   if (!reg_count)
-      return;
-
-   ilo_render_emit_flush(r);
-
-   for (i = 0; i < reg_count; i++) {
-      if (regs[i]) {
-         /* store lower 32 bits */
-         gen6_MI_STORE_REGISTER_MEM(r->builder, q->bo, offset, regs[i]);
-         /* store higher 32 bits */
-         gen6_MI_STORE_REGISTER_MEM(r->builder, q->bo,
-               offset + 4, regs[i] + 4);
-      } else {
-         gen6_MI_STORE_DATA_IMM(r->builder, q->bo, offset, 0, true);
-      }
-
-      offset += 8;
-   }
-}
-
 static void
 gen6_rectlist_vs_to_sf(struct ilo_render *r,
                        const struct ilo_blitter *blitter,
@@ -1883,59 +1797,6 @@ gen6_render_estimate_state_size(const struct ilo_render *render,
    return size;
 }
 
-int
-gen6_render_estimate_query_size(const struct ilo_render *render,
-                                const struct ilo_query *q)
-{
-   int size;
-
-   ILO_DEV_ASSERT(render->dev, 6, 7.5);
-
-   switch (q->type) {
-   case PIPE_QUERY_OCCLUSION_COUNTER:
-      size = GEN6_PIPE_CONTROL__SIZE;
-      if (ilo_dev_gen(render->dev) == ILO_GEN(6))
-         size *= 3;
-      break;
-   case PIPE_QUERY_TIMESTAMP:
-   case PIPE_QUERY_TIME_ELAPSED:
-      size = GEN6_PIPE_CONTROL__SIZE;
-      if (ilo_dev_gen(render->dev) == ILO_GEN(6))
-         size *= 2;
-      break;
-   case PIPE_QUERY_PRIMITIVES_GENERATED:
-   case PIPE_QUERY_PRIMITIVES_EMITTED:
-      size = GEN6_PIPE_CONTROL__SIZE;
-      if (ilo_dev_gen(render->dev) == ILO_GEN(6))
-         size *= 3;
-
-      size += GEN6_MI_STORE_REGISTER_MEM__SIZE * 2;
-      break;
-   case PIPE_QUERY_PIPELINE_STATISTICS:
-      if (ilo_dev_gen(render->dev) >= ILO_GEN(7)) {
-         const int num_regs = 10;
-         const int num_pads = 1;
-
-         size = GEN6_PIPE_CONTROL__SIZE +
-            GEN6_MI_STORE_REGISTER_MEM__SIZE * 2 * num_regs +
-            GEN6_MI_STORE_DATA_IMM__SIZE * num_pads;
-      } else {
-         const int num_regs = 8;
-         const int num_pads = 3;
-
-         size = GEN6_PIPE_CONTROL__SIZE * 3 +
-            GEN6_MI_STORE_REGISTER_MEM__SIZE * 2 * num_regs +
-            GEN6_MI_STORE_DATA_IMM__SIZE * num_pads;
-      }
-      break;
-   default:
-      size = 0;
-      break;
-   }
-
-   return size;
-}
-
 static int
 ilo_render_estimate_size_gen6(struct ilo_render *render,
                               enum ilo_render_action action,
@@ -1951,10 +1812,6 @@ ilo_render_estimate_size_gen6(struct ilo_render *render,
          size = gen6_render_max_command_size(render) +
             gen6_render_estimate_state_size(render, ilo);
       }
-      break;
-   case ILO_RENDER_QUERY:
-      size = gen6_render_estimate_query_size(render,
-            (const struct ilo_query *) arg);
       break;
    case ILO_RENDER_RECTLIST:
       size = 64 + 256; /* states + commands */
@@ -1973,6 +1830,5 @@ ilo_render_init_gen6(struct ilo_render *render)
 {
    render->estimate_size = ilo_render_estimate_size_gen6;
    render->emit_draw = ilo_render_emit_draw_gen6;
-   render->emit_query = ilo_render_emit_query_gen6;
    render->emit_rectlist = ilo_render_emit_rectlist_gen6;
 }

@@ -176,8 +176,7 @@ ilo_init_draw_query(struct ilo_context *ilo, struct ilo_query *q)
       break;
    }
 
-   q->cmd_len = ilo_render_estimate_size(ilo->render,
-         ILO_RENDER_QUERY, q);
+   q->cmd_len = ilo_render_get_query_len(ilo->render, q->type);
 
    /* double cmd_len and stride if in pairs */
    q->cmd_len <<= q->in_pairs;

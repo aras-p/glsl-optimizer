@@ -147,14 +147,6 @@ int
 gen6_render_estimate_state_size(const struct ilo_render *render,
                                 const struct ilo_state_vector *ilo);
 
-int
-gen6_render_estimate_query_size(const struct ilo_render *render,
-                                const struct ilo_query *q);
-
-void
-ilo_render_emit_query_gen6(struct ilo_render *r,
-                           struct ilo_query *q, uint32_t offset);
-
 void
 ilo_render_init_gen6(struct ilo_render *render);
 
