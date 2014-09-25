@@ -241,6 +241,20 @@ GM107LoweringPass::visit(Instruction *i)
             i->op = OP_VFETCH;
             assert(prog->getType() != Program::TYPE_FRAGMENT); // INTERP
          }
+      } else if (i->src(0).getFile() == FILE_MEMORY_CONST) {
+         if (i->src(0).isIndirect(1)) {
+            Value *ptr;
+            if (i->src(0).isIndirect(0))
+               ptr = bld.mkOp3v(OP_INSBF, TYPE_U32, bld.getSSA(),
+                                i->getIndirect(0, 1), bld.mkImm(0x1010),
+                                i->getIndirect(0, 0));
+            else
+               ptr = bld.mkOp2v(OP_SHL, TYPE_U32, bld.getSSA(),
+                                i->getIndirect(0, 1), bld.mkImm(16));
+            i->setIndirect(0, 1, NULL);
+            i->setIndirect(0, 0, ptr);
+            i->subOp = NV50_IR_SUBOP_LDC_IS;
+         }
       }
       break;
    case OP_ATOM:
