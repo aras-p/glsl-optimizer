@@ -1490,7 +1490,7 @@ gen6_SAMPLER_STATE(struct ilo_builder *builder,
    if (!num_samplers)
       return 0;
 
-   state_offset = ilo_builder_state_pointer(builder,
+   state_offset = ilo_builder_dynamic_pointer(builder,
          ILO_BUILDER_ITEM_SAMPLER, state_align, state_len, &dw);
 
    for (i = 0; i < num_samplers; i++) {
@@ -1587,7 +1587,7 @@ gen6_SAMPLER_BORDER_COLOR_STATE(struct ilo_builder *builder,
    assert(Elements(sampler->payload) >= 3 + state_len);
 
    /* see ilo_gpe_init_sampler_cso() */
-   return ilo_builder_state_write(builder, ILO_BUILDER_ITEM_BLOB,
+   return ilo_builder_dynamic_write(builder, ILO_BUILDER_ITEM_BLOB,
          state_align, state_len, &sampler->payload[3]);
 }
 
@@ -1606,7 +1606,7 @@ gen6_push_constant_buffer(struct ilo_builder *builder,
 
    ILO_DEV_ASSERT(builder->dev, 6, 7.5);
 
-   state_offset = ilo_builder_state_pointer(builder,
+   state_offset = ilo_builder_dynamic_pointer(builder,
          ILO_BUILDER_ITEM_BLOB, state_align, state_len, (uint32_t **) &buf);
 
    /* zero out the unused range */

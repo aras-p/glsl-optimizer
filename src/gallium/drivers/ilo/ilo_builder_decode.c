@@ -545,7 +545,7 @@ ilo_builder_writer_decode(struct ilo_builder *builder,
       if (writer->used)
          intel_winsys_decode_bo(builder->winsys, writer->bo, writer->used);
 
-      ilo_printf("decoding state buffer: %d states\n",
+      ilo_printf("decoding dynamic/surface buffer: %d states\n",
             writer->item_used);
       ilo_builder_writer_decode_items(builder, which);
       break;

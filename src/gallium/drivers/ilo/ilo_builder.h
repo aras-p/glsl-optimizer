@@ -39,7 +39,7 @@ enum ilo_builder_writer_type {
 };
 
 enum ilo_builder_item_type {
-   /* for state buffer */
+   /* for dynamic buffer */
    ILO_BUILDER_ITEM_BLOB,
    ILO_BUILDER_ITEM_CLIP_VIEWPORT,
    ILO_BUILDER_ITEM_SF_VIEWPORT,
@@ -264,17 +264,17 @@ ilo_builder_writer_reloc(struct ilo_builder *builder,
 }
 
 /**
- * Reserve a region from the state buffer.  Both the offset, in bytes, and the
- * pointer to the reserved region are returned.  The pointer is only valid
+ * Reserve a region from the dynamic buffer.  Both the offset, in bytes, and
+ * the pointer to the reserved region are returned.  The pointer is only valid
  * until the next reserve call.
  *
  * Note that \p alignment is in bytes and \p len is in DWords.
  */
 static inline uint32_t
-ilo_builder_state_pointer(struct ilo_builder *builder,
-                          enum ilo_builder_item_type item,
-                          unsigned alignment, unsigned len,
-                          uint32_t **dw)
+ilo_builder_dynamic_pointer(struct ilo_builder *builder,
+                            enum ilo_builder_item_type item,
+                            unsigned alignment, unsigned len,
+                            uint32_t **dw)
 {
    const enum ilo_builder_writer_type which = ILO_BUILDER_WRITER_BATCH;
    const unsigned size = len << 2;
@@ -295,17 +295,17 @@ ilo_builder_state_pointer(struct ilo_builder *builder,
 }
 
 /**
- * Write a dynamic state to the state buffer.
+ * Write a dynamic state to the dynamic buffer.
  */
 static inline uint32_t
-ilo_builder_state_write(struct ilo_builder *builder,
-                        enum ilo_builder_item_type item,
-                        unsigned alignment, unsigned len,
-                        const uint32_t *dw)
+ilo_builder_dynamic_write(struct ilo_builder *builder,
+                          enum ilo_builder_item_type item,
+                          unsigned alignment, unsigned len,
+                          const uint32_t *dw)
 {
    uint32_t offset, *dst;
 
-   offset = ilo_builder_state_pointer(builder, item, alignment, len, &dst);
+   offset = ilo_builder_dynamic_pointer(builder, item, alignment, len, &dst);
    memcpy(dst, dw, len << 2);
 
    return offset;
@@ -326,7 +326,7 @@ ilo_builder_surface_write(struct ilo_builder *builder,
    assert(item == ILO_BUILDER_ITEM_SURFACE ||
           item == ILO_BUILDER_ITEM_BINDING_TABLE);
 
-   return ilo_builder_state_write(builder, item, alignment, len, dw);
+   return ilo_builder_dynamic_write(builder, item, alignment, len, dw);
 }
 
 /**

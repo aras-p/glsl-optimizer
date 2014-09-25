@@ -984,7 +984,7 @@ gen6_CLIP_VIEWPORT(struct ilo_builder *builder,
     */
    assert(num_viewports && num_viewports <= 16);
 
-   state_offset = ilo_builder_state_pointer(builder,
+   state_offset = ilo_builder_dynamic_pointer(builder,
          ILO_BUILDER_ITEM_CLIP_VIEWPORT, state_align, state_len, &dw);
 
    for (i = 0; i < num_viewports; i++) {
@@ -1021,7 +1021,7 @@ gen6_SF_VIEWPORT(struct ilo_builder *builder,
     */
    assert(num_viewports && num_viewports <= 16);
 
-   state_offset = ilo_builder_state_pointer(builder,
+   state_offset = ilo_builder_dynamic_pointer(builder,
          ILO_BUILDER_ITEM_SF_VIEWPORT, state_align, state_len, &dw);
 
    for (i = 0; i < num_viewports; i++) {
@@ -1066,7 +1066,7 @@ gen7_SF_CLIP_VIEWPORT(struct ilo_builder *builder,
     */
    assert(num_viewports && num_viewports <= 16);
 
-   state_offset = ilo_builder_state_pointer(builder,
+   state_offset = ilo_builder_dynamic_pointer(builder,
          ILO_BUILDER_ITEM_SF_VIEWPORT, state_align, state_len, &dw);
 
    for (i = 0; i < num_viewports; i++) {
@@ -1114,7 +1114,7 @@ gen6_CC_VIEWPORT(struct ilo_builder *builder,
     */
    assert(num_viewports && num_viewports <= 16);
 
-   state_offset = ilo_builder_state_pointer(builder,
+   state_offset = ilo_builder_dynamic_pointer(builder,
          ILO_BUILDER_ITEM_CC_VIEWPORT, state_align, state_len, &dw);
 
    for (i = 0; i < num_viewports; i++) {
@@ -1148,7 +1148,7 @@ gen6_SCISSOR_RECT(struct ilo_builder *builder,
    assert(num_viewports && num_viewports <= 16);
    assert(Elements(scissor->payload) >= state_len);
 
-   return ilo_builder_state_write(builder, ILO_BUILDER_ITEM_SCISSOR_RECT,
+   return ilo_builder_dynamic_write(builder, ILO_BUILDER_ITEM_SCISSOR_RECT,
          state_align, state_len, scissor->payload);
 }
 
@@ -1164,7 +1164,7 @@ gen6_COLOR_CALC_STATE(struct ilo_builder *builder,
 
    ILO_DEV_ASSERT(builder->dev, 6, 7.5);
 
-   state_offset = ilo_builder_state_pointer(builder,
+   state_offset = ilo_builder_dynamic_pointer(builder,
          ILO_BUILDER_ITEM_COLOR_CALC, state_align, state_len, &dw);
 
    dw[0] = stencil_ref->ref_value[0] << 24 |
@@ -1190,7 +1190,7 @@ gen6_DEPTH_STENCIL_STATE(struct ilo_builder *builder,
 
    STATIC_ASSERT(Elements(dsa->payload) >= state_len);
 
-   return ilo_builder_state_write(builder, ILO_BUILDER_ITEM_DEPTH_STENCIL,
+   return ilo_builder_dynamic_write(builder, ILO_BUILDER_ITEM_DEPTH_STENCIL,
          state_align, state_len, dsa->payload);
 }
 
@@ -1224,7 +1224,7 @@ gen6_BLEND_STATE(struct ilo_builder *builder,
 
    state_len = 2 * num_targets;
 
-   state_offset = ilo_builder_state_pointer(builder,
+   state_offset = ilo_builder_dynamic_pointer(builder,
          ILO_BUILDER_ITEM_BLEND, state_align, state_len, &dw);
 
    for (i = 0; i < num_targets; i++) {
