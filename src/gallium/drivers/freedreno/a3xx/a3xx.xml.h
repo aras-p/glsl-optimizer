@@ -13,7 +13,7 @@ The rules-ng-ng source files this header was generated from are:
 - /home/robclark/src/freedreno/envytools/rnndb/adreno/a2xx.xml          (  32901 bytes, from 2014-06-02 15:21:30)
 - /home/robclark/src/freedreno/envytools/rnndb/adreno/adreno_common.xml (   9859 bytes, from 2014-06-02 15:21:30)
 - /home/robclark/src/freedreno/envytools/rnndb/adreno/adreno_pm4.xml    (  14960 bytes, from 2014-07-27 17:22:13)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno/a3xx.xml          (  58613 bytes, from 2014-09-13 16:40:36)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno/a3xx.xml          (  60542 bytes, from 2014-09-27 15:55:28)
 - /home/robclark/src/freedreno/envytools/rnndb/adreno/a4xx.xml          (  41068 bytes, from 2014-08-01 12:22:48)
 
 Copyright (C) 2013-2014 by the following authors:
@@ -86,6 +86,14 @@ enum a3xx_vtx_fmt {
 	VFMT_NORM_USHORT_16_16 = 29,
 	VFMT_NORM_USHORT_16_16_16 = 30,
 	VFMT_NORM_USHORT_16_16_16_16 = 31,
+	VFMT_UINT_32 = 32,
+	VFMT_UINT_32_32 = 33,
+	VFMT_UINT_32_32_32 = 34,
+	VFMT_UINT_32_32_32_32 = 35,
+	VFMT_INT_32 = 36,
+	VFMT_INT_32_32 = 37,
+	VFMT_INT_32_32_32 = 38,
+	VFMT_INT_32_32_32_32 = 39,
 	VFMT_UBYTE_8 = 40,
 	VFMT_UBYTE_8_8 = 41,
 	VFMT_UBYTE_8_8_8 = 42,
@@ -194,6 +202,11 @@ enum a3xx_rb_blend_opcode {
 	BLEND_DST_MINUS_SRC = 2,
 	BLEND_MIN_DST_SRC = 3,
 	BLEND_MAX_DST_SRC = 4,
+};
+
+enum a3xx_intp_mode {
+	SMOOTH = 0,
+	FLAT = 1,
 };
 
 enum a3xx_tex_filter {
@@ -634,13 +647,13 @@ static inline uint32_t A3XX_GRAS_CL_VPORT_ZSCALE(float val)
 #define A3XX_GRAS_SU_POINT_MINMAX_MIN__SHIFT			0
 static inline uint32_t A3XX_GRAS_SU_POINT_MINMAX_MIN(float val)
 {
-	return ((((uint32_t)(val * 8.0))) << A3XX_GRAS_SU_POINT_MINMAX_MIN__SHIFT) & A3XX_GRAS_SU_POINT_MINMAX_MIN__MASK;
+	return ((((uint32_t)(val * 16.0))) << A3XX_GRAS_SU_POINT_MINMAX_MIN__SHIFT) & A3XX_GRAS_SU_POINT_MINMAX_MIN__MASK;
 }
 #define A3XX_GRAS_SU_POINT_MINMAX_MAX__MASK			0xffff0000
 #define A3XX_GRAS_SU_POINT_MINMAX_MAX__SHIFT			16
 static inline uint32_t A3XX_GRAS_SU_POINT_MINMAX_MAX(float val)
 {
-	return ((((uint32_t)(val * 8.0))) << A3XX_GRAS_SU_POINT_MINMAX_MAX__SHIFT) & A3XX_GRAS_SU_POINT_MINMAX_MAX__MASK;
+	return ((((uint32_t)(val * 16.0))) << A3XX_GRAS_SU_POINT_MINMAX_MAX__SHIFT) & A3XX_GRAS_SU_POINT_MINMAX_MAX__MASK;
 }
 
 #define REG_A3XX_GRAS_SU_POINT_SIZE				0x00002069
@@ -648,7 +661,7 @@ static inline uint32_t A3XX_GRAS_SU_POINT_MINMAX_MAX(float val)
 #define A3XX_GRAS_SU_POINT_SIZE__SHIFT				0
 static inline uint32_t A3XX_GRAS_SU_POINT_SIZE(float val)
 {
-	return ((((uint32_t)(val * 8.0))) << A3XX_GRAS_SU_POINT_SIZE__SHIFT) & A3XX_GRAS_SU_POINT_SIZE__MASK;
+	return ((((int32_t)(val * 16.0))) << A3XX_GRAS_SU_POINT_SIZE__SHIFT) & A3XX_GRAS_SU_POINT_SIZE__MASK;
 }
 
 #define REG_A3XX_GRAS_SU_POLY_OFFSET_SCALE			0x0000206c
@@ -656,7 +669,7 @@ static inline uint32_t A3XX_GRAS_SU_POINT_SIZE(float val)
 #define A3XX_GRAS_SU_POLY_OFFSET_SCALE_VAL__SHIFT		0
 static inline uint32_t A3XX_GRAS_SU_POLY_OFFSET_SCALE_VAL(float val)
 {
-	return ((((uint32_t)(val * 28.0))) << A3XX_GRAS_SU_POLY_OFFSET_SCALE_VAL__SHIFT) & A3XX_GRAS_SU_POLY_OFFSET_SCALE_VAL__MASK;
+	return ((((int32_t)(val * 16384.0))) << A3XX_GRAS_SU_POLY_OFFSET_SCALE_VAL__SHIFT) & A3XX_GRAS_SU_POLY_OFFSET_SCALE_VAL__MASK;
 }
 
 #define REG_A3XX_GRAS_SU_POLY_OFFSET_OFFSET			0x0000206d
@@ -664,7 +677,7 @@ static inline uint32_t A3XX_GRAS_SU_POLY_OFFSET_SCALE_VAL(float val)
 #define A3XX_GRAS_SU_POLY_OFFSET_OFFSET__SHIFT			0
 static inline uint32_t A3XX_GRAS_SU_POLY_OFFSET_OFFSET(float val)
 {
-	return ((((uint32_t)(val * 28.0))) << A3XX_GRAS_SU_POLY_OFFSET_OFFSET__SHIFT) & A3XX_GRAS_SU_POLY_OFFSET_OFFSET__MASK;
+	return ((((int32_t)(val * 16384.0))) << A3XX_GRAS_SU_POLY_OFFSET_OFFSET__SHIFT) & A3XX_GRAS_SU_POLY_OFFSET_OFFSET__MASK;
 }
 
 #define REG_A3XX_GRAS_SU_MODE_CONTROL				0x00002070
@@ -675,7 +688,7 @@ static inline uint32_t A3XX_GRAS_SU_POLY_OFFSET_OFFSET(float val)
 #define A3XX_GRAS_SU_MODE_CONTROL_LINEHALFWIDTH__SHIFT		3
 static inline uint32_t A3XX_GRAS_SU_MODE_CONTROL_LINEHALFWIDTH(float val)
 {
-	return ((((uint32_t)(val * 4.0))) << A3XX_GRAS_SU_MODE_CONTROL_LINEHALFWIDTH__SHIFT) & A3XX_GRAS_SU_MODE_CONTROL_LINEHALFWIDTH__MASK;
+	return ((((int32_t)(val * 4.0))) << A3XX_GRAS_SU_MODE_CONTROL_LINEHALFWIDTH__SHIFT) & A3XX_GRAS_SU_MODE_CONTROL_LINEHALFWIDTH__MASK;
 }
 #define A3XX_GRAS_SU_MODE_CONTROL_POLY_OFFSET			0x00000800
 
@@ -1540,6 +1553,7 @@ static inline uint32_t A3XX_VFD_DECODE_INSTR_REGID(uint32_t val)
 {
 	return ((val) << A3XX_VFD_DECODE_INSTR_REGID__SHIFT) & A3XX_VFD_DECODE_INSTR_REGID__MASK;
 }
+#define A3XX_VFD_DECODE_INSTR_INT				0x00100000
 #define A3XX_VFD_DECODE_INSTR_SWAP__MASK			0x00c00000
 #define A3XX_VFD_DECODE_INSTR_SWAP__SHIFT			22
 static inline uint32_t A3XX_VFD_DECODE_INSTR_SWAP(enum a3xx_color_swap val)
@@ -1607,6 +1621,102 @@ static inline uint32_t A3XX_VPC_PACK_NUMNONPOSVSVAR(uint32_t val)
 static inline uint32_t REG_A3XX_VPC_VARYING_INTERP(uint32_t i0) { return 0x00002282 + 0x1*i0; }
 
 static inline uint32_t REG_A3XX_VPC_VARYING_INTERP_MODE(uint32_t i0) { return 0x00002282 + 0x1*i0; }
+#define A3XX_VPC_VARYING_INTERP_MODE_C0__MASK			0x00000003
+#define A3XX_VPC_VARYING_INTERP_MODE_C0__SHIFT			0
+static inline uint32_t A3XX_VPC_VARYING_INTERP_MODE_C0(enum a3xx_intp_mode val)
+{
+	return ((val) << A3XX_VPC_VARYING_INTERP_MODE_C0__SHIFT) & A3XX_VPC_VARYING_INTERP_MODE_C0__MASK;
+}
+#define A3XX_VPC_VARYING_INTERP_MODE_C1__MASK			0x0000000c
+#define A3XX_VPC_VARYING_INTERP_MODE_C1__SHIFT			2
+static inline uint32_t A3XX_VPC_VARYING_INTERP_MODE_C1(enum a3xx_intp_mode val)
+{
+	return ((val) << A3XX_VPC_VARYING_INTERP_MODE_C1__SHIFT) & A3XX_VPC_VARYING_INTERP_MODE_C1__MASK;
+}
+#define A3XX_VPC_VARYING_INTERP_MODE_C2__MASK			0x00000030
+#define A3XX_VPC_VARYING_INTERP_MODE_C2__SHIFT			4
+static inline uint32_t A3XX_VPC_VARYING_INTERP_MODE_C2(enum a3xx_intp_mode val)
+{
+	return ((val) << A3XX_VPC_VARYING_INTERP_MODE_C2__SHIFT) & A3XX_VPC_VARYING_INTERP_MODE_C2__MASK;
+}
+#define A3XX_VPC_VARYING_INTERP_MODE_C3__MASK			0x000000c0
+#define A3XX_VPC_VARYING_INTERP_MODE_C3__SHIFT			6
+static inline uint32_t A3XX_VPC_VARYING_INTERP_MODE_C3(enum a3xx_intp_mode val)
+{
+	return ((val) << A3XX_VPC_VARYING_INTERP_MODE_C3__SHIFT) & A3XX_VPC_VARYING_INTERP_MODE_C3__MASK;
+}
+#define A3XX_VPC_VARYING_INTERP_MODE_C4__MASK			0x00000300
+#define A3XX_VPC_VARYING_INTERP_MODE_C4__SHIFT			8
+static inline uint32_t A3XX_VPC_VARYING_INTERP_MODE_C4(enum a3xx_intp_mode val)
+{
+	return ((val) << A3XX_VPC_VARYING_INTERP_MODE_C4__SHIFT) & A3XX_VPC_VARYING_INTERP_MODE_C4__MASK;
+}
+#define A3XX_VPC_VARYING_INTERP_MODE_C5__MASK			0x00000c00
+#define A3XX_VPC_VARYING_INTERP_MODE_C5__SHIFT			10
+static inline uint32_t A3XX_VPC_VARYING_INTERP_MODE_C5(enum a3xx_intp_mode val)
+{
+	return ((val) << A3XX_VPC_VARYING_INTERP_MODE_C5__SHIFT) & A3XX_VPC_VARYING_INTERP_MODE_C5__MASK;
+}
+#define A3XX_VPC_VARYING_INTERP_MODE_C6__MASK			0x00003000
+#define A3XX_VPC_VARYING_INTERP_MODE_C6__SHIFT			12
+static inline uint32_t A3XX_VPC_VARYING_INTERP_MODE_C6(enum a3xx_intp_mode val)
+{
+	return ((val) << A3XX_VPC_VARYING_INTERP_MODE_C6__SHIFT) & A3XX_VPC_VARYING_INTERP_MODE_C6__MASK;
+}
+#define A3XX_VPC_VARYING_INTERP_MODE_C7__MASK			0x0000c000
+#define A3XX_VPC_VARYING_INTERP_MODE_C7__SHIFT			14
+static inline uint32_t A3XX_VPC_VARYING_INTERP_MODE_C7(enum a3xx_intp_mode val)
+{
+	return ((val) << A3XX_VPC_VARYING_INTERP_MODE_C7__SHIFT) & A3XX_VPC_VARYING_INTERP_MODE_C7__MASK;
+}
+#define A3XX_VPC_VARYING_INTERP_MODE_C8__MASK			0x00030000
+#define A3XX_VPC_VARYING_INTERP_MODE_C8__SHIFT			16
+static inline uint32_t A3XX_VPC_VARYING_INTERP_MODE_C8(enum a3xx_intp_mode val)
+{
+	return ((val) << A3XX_VPC_VARYING_INTERP_MODE_C8__SHIFT) & A3XX_VPC_VARYING_INTERP_MODE_C8__MASK;
+}
+#define A3XX_VPC_VARYING_INTERP_MODE_C9__MASK			0x000c0000
+#define A3XX_VPC_VARYING_INTERP_MODE_C9__SHIFT			18
+static inline uint32_t A3XX_VPC_VARYING_INTERP_MODE_C9(enum a3xx_intp_mode val)
+{
+	return ((val) << A3XX_VPC_VARYING_INTERP_MODE_C9__SHIFT) & A3XX_VPC_VARYING_INTERP_MODE_C9__MASK;
+}
+#define A3XX_VPC_VARYING_INTERP_MODE_CA__MASK			0x00300000
+#define A3XX_VPC_VARYING_INTERP_MODE_CA__SHIFT			20
+static inline uint32_t A3XX_VPC_VARYING_INTERP_MODE_CA(enum a3xx_intp_mode val)
+{
+	return ((val) << A3XX_VPC_VARYING_INTERP_MODE_CA__SHIFT) & A3XX_VPC_VARYING_INTERP_MODE_CA__MASK;
+}
+#define A3XX_VPC_VARYING_INTERP_MODE_CB__MASK			0x00c00000
+#define A3XX_VPC_VARYING_INTERP_MODE_CB__SHIFT			22
+static inline uint32_t A3XX_VPC_VARYING_INTERP_MODE_CB(enum a3xx_intp_mode val)
+{
+	return ((val) << A3XX_VPC_VARYING_INTERP_MODE_CB__SHIFT) & A3XX_VPC_VARYING_INTERP_MODE_CB__MASK;
+}
+#define A3XX_VPC_VARYING_INTERP_MODE_CC__MASK			0x03000000
+#define A3XX_VPC_VARYING_INTERP_MODE_CC__SHIFT			24
+static inline uint32_t A3XX_VPC_VARYING_INTERP_MODE_CC(enum a3xx_intp_mode val)
+{
+	return ((val) << A3XX_VPC_VARYING_INTERP_MODE_CC__SHIFT) & A3XX_VPC_VARYING_INTERP_MODE_CC__MASK;
+}
+#define A3XX_VPC_VARYING_INTERP_MODE_CD__MASK			0x0c000000
+#define A3XX_VPC_VARYING_INTERP_MODE_CD__SHIFT			26
+static inline uint32_t A3XX_VPC_VARYING_INTERP_MODE_CD(enum a3xx_intp_mode val)
+{
+	return ((val) << A3XX_VPC_VARYING_INTERP_MODE_CD__SHIFT) & A3XX_VPC_VARYING_INTERP_MODE_CD__MASK;
+}
+#define A3XX_VPC_VARYING_INTERP_MODE_CE__MASK			0x30000000
+#define A3XX_VPC_VARYING_INTERP_MODE_CE__SHIFT			28
+static inline uint32_t A3XX_VPC_VARYING_INTERP_MODE_CE(enum a3xx_intp_mode val)
+{
+	return ((val) << A3XX_VPC_VARYING_INTERP_MODE_CE__SHIFT) & A3XX_VPC_VARYING_INTERP_MODE_CE__MASK;
+}
+#define A3XX_VPC_VARYING_INTERP_MODE_CF__MASK			0xc0000000
+#define A3XX_VPC_VARYING_INTERP_MODE_CF__SHIFT			30
+static inline uint32_t A3XX_VPC_VARYING_INTERP_MODE_CF(enum a3xx_intp_mode val)
+{
+	return ((val) << A3XX_VPC_VARYING_INTERP_MODE_CF__SHIFT) & A3XX_VPC_VARYING_INTERP_MODE_CF__MASK;
+}
 
 static inline uint32_t REG_A3XX_VPC_VARYING_PS_REPL(uint32_t i0) { return 0x00002286 + 0x1*i0; }
 
@@ -2350,17 +2460,23 @@ static inline uint32_t A3XX_TEX_SAMP_0_COMPARE_FUNC(enum adreno_compare_func val
 #define A3XX_TEX_SAMP_0_UNNORM_COORDS				0x80000000
 
 #define REG_A3XX_TEX_SAMP_1					0x00000001
+#define A3XX_TEX_SAMP_1_LOD_BIAS__MASK				0x000007ff
+#define A3XX_TEX_SAMP_1_LOD_BIAS__SHIFT				0
+static inline uint32_t A3XX_TEX_SAMP_1_LOD_BIAS(float val)
+{
+	return ((((int32_t)(val * 64.0))) << A3XX_TEX_SAMP_1_LOD_BIAS__SHIFT) & A3XX_TEX_SAMP_1_LOD_BIAS__MASK;
+}
 #define A3XX_TEX_SAMP_1_MAX_LOD__MASK				0x003ff000
 #define A3XX_TEX_SAMP_1_MAX_LOD__SHIFT				12
 static inline uint32_t A3XX_TEX_SAMP_1_MAX_LOD(float val)
 {
-	return ((((uint32_t)(val * 12.0))) << A3XX_TEX_SAMP_1_MAX_LOD__SHIFT) & A3XX_TEX_SAMP_1_MAX_LOD__MASK;
+	return ((((uint32_t)(val * 64.0))) << A3XX_TEX_SAMP_1_MAX_LOD__SHIFT) & A3XX_TEX_SAMP_1_MAX_LOD__MASK;
 }
 #define A3XX_TEX_SAMP_1_MIN_LOD__MASK				0xffc00000
 #define A3XX_TEX_SAMP_1_MIN_LOD__SHIFT				22
 static inline uint32_t A3XX_TEX_SAMP_1_MIN_LOD(float val)
 {
-	return ((((uint32_t)(val * 12.0))) << A3XX_TEX_SAMP_1_MIN_LOD__SHIFT) & A3XX_TEX_SAMP_1_MIN_LOD__MASK;
+	return ((((uint32_t)(val * 64.0))) << A3XX_TEX_SAMP_1_MIN_LOD__SHIFT) & A3XX_TEX_SAMP_1_MIN_LOD__MASK;
 }
 
 #define REG_A3XX_TEX_CONST_0					0x00000000
