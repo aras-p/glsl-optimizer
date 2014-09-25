@@ -222,7 +222,7 @@ gen6_wa_pre_depth(struct ilo_render *r)
 void
 gen6_draw_common_select(struct ilo_render *r,
                         const struct ilo_state_vector *vec,
-                        struct gen6_draw_session *session)
+                        struct ilo_render_draw_session *session)
 {
    /* PIPELINE_SELECT */
    if (r->hw_ctx_changed) {
@@ -236,7 +236,7 @@ gen6_draw_common_select(struct ilo_render *r,
 void
 gen6_draw_common_sip(struct ilo_render *r,
                      const struct ilo_state_vector *vec,
-                     struct gen6_draw_session *session)
+                     struct ilo_render_draw_session *session)
 {
    /* STATE_SIP */
    if (r->hw_ctx_changed) {
@@ -250,7 +250,7 @@ gen6_draw_common_sip(struct ilo_render *r,
 void
 gen6_draw_common_base_address(struct ilo_render *r,
                               const struct ilo_state_vector *vec,
-                              struct gen6_draw_session *session)
+                              struct ilo_render_draw_session *session)
 {
    /* STATE_BASE_ADDRESS */
    if (r->state_bo_changed || r->instruction_bo_changed ||
@@ -300,7 +300,7 @@ gen6_draw_common_base_address(struct ilo_render *r,
 static void
 gen6_draw_common_urb(struct ilo_render *r,
                      const struct ilo_state_vector *vec,
-                     struct gen6_draw_session *session)
+                     struct ilo_render_draw_session *session)
 {
    /* 3DSTATE_URB */
    if (DIRTY(VE) || DIRTY(VS) || DIRTY(GS)) {
@@ -374,7 +374,7 @@ gen6_draw_common_urb(struct ilo_render *r,
 static void
 gen6_draw_common_pointers_1(struct ilo_render *r,
                             const struct ilo_state_vector *vec,
-                            struct gen6_draw_session *session)
+                            struct ilo_render_draw_session *session)
 {
    /* 3DSTATE_VIEWPORT_STATE_POINTERS */
    if (session->viewport_changed) {
@@ -388,7 +388,7 @@ gen6_draw_common_pointers_1(struct ilo_render *r,
 static void
 gen6_draw_common_pointers_2(struct ilo_render *r,
                             const struct ilo_state_vector *vec,
-                            struct gen6_draw_session *session)
+                            struct ilo_render_draw_session *session)
 {
    /* 3DSTATE_CC_STATE_POINTERS */
    if (session->blend_changed ||
@@ -414,7 +414,7 @@ gen6_draw_common_pointers_2(struct ilo_render *r,
 static void
 gen6_draw_common_pointers_3(struct ilo_render *r,
                             const struct ilo_state_vector *vec,
-                            struct gen6_draw_session *session)
+                            struct ilo_render_draw_session *session)
 {
    /* 3DSTATE_SCISSOR_STATE_POINTERS */
    if (session->scissor_changed) {
@@ -436,7 +436,7 @@ gen6_draw_common_pointers_3(struct ilo_render *r,
 void
 gen6_draw_vf(struct ilo_render *r,
              const struct ilo_state_vector *vec,
-             struct gen6_draw_session *session)
+             struct ilo_render_draw_session *session)
 {
    if (ilo_dev_gen(r->dev) >= ILO_GEN(7.5)) {
       /* 3DSTATE_INDEX_BUFFER */
@@ -495,7 +495,7 @@ gen6_draw_vf(struct ilo_render *r,
 void
 gen6_draw_vf_statistics(struct ilo_render *r,
                         const struct ilo_state_vector *vec,
-                        struct gen6_draw_session *session)
+                        struct ilo_render_draw_session *session)
 {
    /* 3DSTATE_VF_STATISTICS */
    if (r->hw_ctx_changed)
@@ -505,7 +505,7 @@ gen6_draw_vf_statistics(struct ilo_render *r,
 static void
 gen6_draw_vf_draw(struct ilo_render *r,
                   const struct ilo_state_vector *vec,
-                  struct gen6_draw_session *session)
+                  struct ilo_render_draw_session *session)
 {
    /* 3DPRIMITIVE */
    gen6_3DPRIMITIVE(r->builder, vec->draw, &vec->ib);
@@ -517,7 +517,7 @@ gen6_draw_vf_draw(struct ilo_render *r,
 void
 gen6_draw_vs(struct ilo_render *r,
              const struct ilo_state_vector *vec,
-             struct gen6_draw_session *session)
+             struct ilo_render_draw_session *session)
 {
    const bool emit_3dstate_vs = (DIRTY(VS) || DIRTY(SAMPLER_VS) ||
                                  r->instruction_bo_changed);
@@ -552,7 +552,7 @@ gen6_draw_vs(struct ilo_render *r,
 static void
 gen6_draw_gs(struct ilo_render *r,
              const struct ilo_state_vector *vec,
-             struct gen6_draw_session *session)
+             struct ilo_render_draw_session *session)
 {
    /* 3DSTATE_CONSTANT_GS */
    if (session->pcb_gs_changed)
@@ -570,7 +570,7 @@ gen6_draw_gs(struct ilo_render *r,
 static bool
 gen6_draw_update_max_svbi(struct ilo_render *r,
                           const struct ilo_state_vector *vec,
-                          struct gen6_draw_session *session)
+                          struct ilo_render_draw_session *session)
 {
    if (DIRTY(VS) || DIRTY(GS) || DIRTY(SO)) {
       const struct pipe_stream_output_info *so_info =
@@ -614,7 +614,7 @@ gen6_draw_update_max_svbi(struct ilo_render *r,
 static void
 gen6_draw_gs_svbi(struct ilo_render *r,
                   const struct ilo_state_vector *vec,
-                  struct gen6_draw_session *session)
+                  struct ilo_render_draw_session *session)
 {
    const bool emit = gen6_draw_update_max_svbi(r, vec, session);
 
@@ -650,7 +650,7 @@ gen6_draw_gs_svbi(struct ilo_render *r,
 void
 gen6_draw_clip(struct ilo_render *r,
                const struct ilo_state_vector *vec,
-               struct gen6_draw_session *session)
+               struct ilo_render_draw_session *session)
 {
    /* 3DSTATE_CLIP */
    if (DIRTY(RASTERIZER) || DIRTY(FS) || DIRTY(VIEWPORT) || DIRTY(FB)) {
@@ -679,7 +679,7 @@ gen6_draw_clip(struct ilo_render *r,
 static void
 gen6_draw_sf(struct ilo_render *r,
              const struct ilo_state_vector *vec,
-             struct gen6_draw_session *session)
+             struct ilo_render_draw_session *session)
 {
    /* 3DSTATE_SF */
    if (DIRTY(RASTERIZER) || DIRTY(FS))
@@ -689,7 +689,7 @@ gen6_draw_sf(struct ilo_render *r,
 void
 gen6_draw_sf_rect(struct ilo_render *r,
                   const struct ilo_state_vector *vec,
-                  struct gen6_draw_session *session)
+                  struct ilo_render_draw_session *session)
 {
    /* 3DSTATE_DRAWING_RECTANGLE */
    if (DIRTY(FB)) {
@@ -704,7 +704,7 @@ gen6_draw_sf_rect(struct ilo_render *r,
 static void
 gen6_draw_wm(struct ilo_render *r,
              const struct ilo_state_vector *vec,
-             struct gen6_draw_session *session)
+             struct ilo_render_draw_session *session)
 {
    /* 3DSTATE_CONSTANT_PS */
    if (session->pcb_fs_changed) {
@@ -733,7 +733,7 @@ gen6_draw_wm(struct ilo_render *r,
 static void
 gen6_draw_wm_multisample(struct ilo_render *r,
                          const struct ilo_state_vector *vec,
-                         struct gen6_draw_session *session)
+                         struct ilo_render_draw_session *session)
 {
    /* 3DSTATE_MULTISAMPLE and 3DSTATE_SAMPLE_MASK */
    if (DIRTY(SAMPLE_MASK) || DIRTY(FB)) {
@@ -759,7 +759,7 @@ gen6_draw_wm_multisample(struct ilo_render *r,
 static void
 gen6_draw_wm_depth(struct ilo_render *r,
                    const struct ilo_state_vector *vec,
-                   struct gen6_draw_session *session)
+                   struct ilo_render_draw_session *session)
 {
    /* 3DSTATE_DEPTH_BUFFER and 3DSTATE_CLEAR_PARAMS */
    if (DIRTY(FB) || r->batch_bo_changed) {
@@ -798,7 +798,7 @@ gen6_draw_wm_depth(struct ilo_render *r,
 void
 gen6_draw_wm_raster(struct ilo_render *r,
                     const struct ilo_state_vector *vec,
-                    struct gen6_draw_session *session)
+                    struct ilo_render_draw_session *session)
 {
    /* 3DSTATE_POLY_STIPPLE_PATTERN and 3DSTATE_POLY_STIPPLE_OFFSET */
    if ((DIRTY(RASTERIZER) || DIRTY(POLY_STIPPLE)) &&
@@ -836,7 +836,7 @@ gen6_draw_wm_raster(struct ilo_render *r,
 void
 ilo_render_emit_draw_commands_gen6(struct ilo_render *render,
                                    const struct ilo_state_vector *vec,
-                                   struct gen6_draw_session *session)
+                                   struct ilo_render_draw_session *session)
 {
    ILO_DEV_ASSERT(render->dev, 6, 6);
 

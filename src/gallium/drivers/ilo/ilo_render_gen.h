@@ -124,7 +124,7 @@ struct ilo_render {
    } state;
 };
 
-struct gen6_draw_session {
+struct ilo_render_draw_session {
    uint32_t pipe_dirty;
 
    /* commands */
@@ -178,17 +178,17 @@ ilo_render_get_draw_commands_len(const struct ilo_render *render,
 void
 ilo_render_emit_draw_commands_gen6(struct ilo_render *render,
                                    const struct ilo_state_vector *vec,
-                                   struct gen6_draw_session *session);
+                                   struct ilo_render_draw_session *session);
 
 void
 ilo_render_emit_draw_commands_gen7(struct ilo_render *render,
                                    const struct ilo_state_vector *vec,
-                                   struct gen6_draw_session *session);
+                                   struct ilo_render_draw_session *session);
 
 static inline void
 ilo_render_emit_draw_commands(struct ilo_render *render,
                               const struct ilo_state_vector *vec,
-                              struct gen6_draw_session *session)
+                              struct ilo_render_draw_session *session)
 {
    const unsigned batch_used = ilo_builder_batch_used(render->builder);
 
@@ -242,7 +242,7 @@ ilo_render_get_draw_dynamic_states_len(const struct ilo_render *render,
 void
 ilo_render_emit_draw_dynamic_states(struct ilo_render *render,
                                     const struct ilo_state_vector *vec,
-                                    struct gen6_draw_session *session);
+                                    struct ilo_render_draw_session *session);
 
 int
 ilo_render_get_rectlist_dynamic_states_len(const struct ilo_render *render,
@@ -259,7 +259,7 @@ ilo_render_get_draw_surface_states_len(const struct ilo_render *render,
 void
 ilo_render_emit_draw_surface_states(struct ilo_render *render,
                                     const struct ilo_state_vector *vec,
-                                    struct gen6_draw_session *session);
+                                    struct ilo_render_draw_session *session);
 
 void
 gen6_wa_pre_pipe_control(struct ilo_render *r, uint32_t dw1);
@@ -267,46 +267,46 @@ gen6_wa_pre_pipe_control(struct ilo_render *r, uint32_t dw1);
 void
 gen6_draw_common_select(struct ilo_render *r,
                         const struct ilo_state_vector *ilo,
-                        struct gen6_draw_session *session);
+                        struct ilo_render_draw_session *session);
 
 void
 gen6_draw_common_sip(struct ilo_render *r,
                      const struct ilo_state_vector *ilo,
-                     struct gen6_draw_session *session);
+                     struct ilo_render_draw_session *session);
 
 void
 gen6_draw_common_base_address(struct ilo_render *r,
                               const struct ilo_state_vector *ilo,
-                              struct gen6_draw_session *session);
+                              struct ilo_render_draw_session *session);
 
 void
 gen6_draw_vf(struct ilo_render *r,
              const struct ilo_state_vector *ilo,
-             struct gen6_draw_session *session);
+             struct ilo_render_draw_session *session);
 
 void
 gen6_draw_vf_statistics(struct ilo_render *r,
                         const struct ilo_state_vector *ilo,
-                        struct gen6_draw_session *session);
+                        struct ilo_render_draw_session *session);
 
 void
 gen6_draw_vs(struct ilo_render *r,
              const struct ilo_state_vector *ilo,
-             struct gen6_draw_session *session);
+             struct ilo_render_draw_session *session);
 
 void
 gen6_draw_clip(struct ilo_render *r,
                const struct ilo_state_vector *ilo,
-               struct gen6_draw_session *session);
+               struct ilo_render_draw_session *session);
 
 void
 gen6_draw_sf_rect(struct ilo_render *r,
                   const struct ilo_state_vector *ilo,
-                  struct gen6_draw_session *session);
+                  struct ilo_render_draw_session *session);
 
 void
 gen6_draw_wm_raster(struct ilo_render *r,
                     const struct ilo_state_vector *ilo,
-                    struct gen6_draw_session *session);
+                    struct ilo_render_draw_session *session);
 
 #endif /* ILO_RENDER_GEN_H */

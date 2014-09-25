@@ -385,9 +385,9 @@ ilo_render_get_draw_len(const struct ilo_render *render,
 }
 
 static void
-gen6_draw_prepare(struct ilo_render *render,
-                  const struct ilo_state_vector *vec,
-                  struct gen6_draw_session *session)
+draw_session_prepare(struct ilo_render *render,
+                     const struct ilo_state_vector *vec,
+                     struct ilo_render_draw_session *session)
 {
    memset(session, 0, sizeof(*session));
    session->pipe_dirty = vec->dirty;
@@ -410,9 +410,9 @@ gen6_draw_prepare(struct ilo_render *render,
 }
 
 static void
-gen6_draw_end(struct ilo_render *render,
-              const struct ilo_state_vector *vec,
-              struct gen6_draw_session *session)
+draw_session_end(struct ilo_render *render,
+                 const struct ilo_state_vector *vec,
+                 struct ilo_render_draw_session *session)
 {
    render->hw_ctx_changed = false;
 
@@ -428,11 +428,11 @@ void
 ilo_render_emit_draw(struct ilo_render *render,
                      const struct ilo_state_vector *vec)
 {
-   struct gen6_draw_session session;
+   struct ilo_render_draw_session session;
 
    ILO_DEV_ASSERT(render->dev, 6, 7.5);
 
-   gen6_draw_prepare(render, vec, &session);
+   draw_session_prepare(render, vec, &session);
 
    /* force all states to be uploaded if the state bo changed */
    if (render->state_bo_changed)
@@ -451,5 +451,5 @@ ilo_render_emit_draw(struct ilo_render *render,
 
    ilo_render_emit_draw_commands(render, vec, &session);
 
-   gen6_draw_end(render, vec, &session);
+   draw_session_end(render, vec, &session);
 }

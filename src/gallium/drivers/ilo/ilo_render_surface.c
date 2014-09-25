@@ -36,7 +36,7 @@
 static void
 gen6_emit_draw_surface_rt(struct ilo_render *r,
                           const struct ilo_state_vector *vec,
-                          struct gen6_draw_session *session)
+                          struct ilo_render_draw_session *session)
 {
    ILO_DEV_ASSERT(r->dev, 6, 7.5);
 
@@ -84,7 +84,7 @@ gen6_emit_draw_surface_rt(struct ilo_render *r,
 static void
 gen6_emit_draw_surface_so(struct ilo_render *r,
                           const struct ilo_state_vector *vec,
-                          struct gen6_draw_session *session)
+                          struct ilo_render_draw_session *session)
 {
    const struct ilo_so_state *so = &vec->so;
 
@@ -125,7 +125,7 @@ static void
 gen6_emit_draw_surface_view(struct ilo_render *r,
                             const struct ilo_state_vector *vec,
                             int shader_type,
-                            struct gen6_draw_session *session)
+                            struct ilo_render_draw_session *session)
 {
    const struct ilo_view_state *view = &vec->view[shader_type];
    uint32_t *surface_state;
@@ -186,7 +186,7 @@ static void
 gen6_emit_draw_surface_const(struct ilo_render *r,
                              const struct ilo_state_vector *vec,
                              int shader_type,
-                             struct gen6_draw_session *session)
+                             struct ilo_render_draw_session *session)
 {
    const struct ilo_cbuf_state *cbuf = &vec->cbuf[shader_type];
    uint32_t *surface_state;
@@ -243,7 +243,7 @@ static void
 gen6_emit_draw_surface_binding_tables(struct ilo_render *r,
                                       const struct ilo_state_vector *vec,
                                       int shader_type,
-                                      struct gen6_draw_session *session)
+                                      struct ilo_render_draw_session *session)
 {
    uint32_t *binding_table_state, *surface_state;
    int *binding_table_state_size, size;
@@ -371,7 +371,7 @@ ilo_render_get_draw_surface_states_len(const struct ilo_render *render,
 void
 ilo_render_emit_draw_surface_states(struct ilo_render *render,
                                     const struct ilo_state_vector *vec,
-                                    struct gen6_draw_session *session)
+                                    struct ilo_render_draw_session *session)
 {
    const unsigned surface_used = ilo_builder_surface_used(render->builder);
    int shader_type;

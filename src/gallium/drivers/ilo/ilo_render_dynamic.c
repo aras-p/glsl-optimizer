@@ -36,7 +36,7 @@
 static void
 gen6_emit_draw_dynamic_viewports(struct ilo_render *r,
                                  const struct ilo_state_vector *vec,
-                                 struct gen6_draw_session *session)
+                                 struct ilo_render_draw_session *session)
 {
    ILO_DEV_ASSERT(r->dev, 6, 6);
 
@@ -58,7 +58,7 @@ gen6_emit_draw_dynamic_viewports(struct ilo_render *r,
 static void
 gen7_emit_draw_dynamic_viewports(struct ilo_render *r,
                                  const struct ilo_state_vector *vec,
-                                 struct gen6_draw_session *session)
+                                 struct ilo_render_draw_session *session)
 {
    ILO_DEV_ASSERT(r->dev, 7, 7.5);
 
@@ -77,7 +77,7 @@ gen7_emit_draw_dynamic_viewports(struct ilo_render *r,
 static void
 gen6_emit_draw_dynamic_scissors(struct ilo_render *r,
                                 const struct ilo_state_vector *vec,
-                                struct gen6_draw_session *session)
+                                struct ilo_render_draw_session *session)
 {
    ILO_DEV_ASSERT(r->dev, 6, 7.5);
 
@@ -94,7 +94,7 @@ gen6_emit_draw_dynamic_scissors(struct ilo_render *r,
 static void
 gen6_emit_draw_dynamic_cc(struct ilo_render *r,
                           const struct ilo_state_vector *vec,
-                          struct gen6_draw_session *session)
+                          struct ilo_render_draw_session *session)
 {
    ILO_DEV_ASSERT(r->dev, 6, 7.5);
 
@@ -128,7 +128,7 @@ static void
 gen6_emit_draw_dynamic_samplers(struct ilo_render *r,
                                 const struct ilo_state_vector *vec,
                                 int shader_type,
-                                struct gen6_draw_session *session)
+                                struct ilo_render_draw_session *session)
 {
    const struct ilo_sampler_cso * const *samplers =
       vec->sampler[shader_type].cso;
@@ -197,7 +197,7 @@ gen6_emit_draw_dynamic_samplers(struct ilo_render *r,
 static void
 gen6_emit_draw_dynamic_pcb(struct ilo_render *r,
                            const struct ilo_state_vector *vec,
-                           struct gen6_draw_session *session)
+                           struct ilo_render_draw_session *session)
 {
    ILO_DEV_ASSERT(r->dev, 6, 7.5);
 
@@ -365,7 +365,7 @@ ilo_render_get_draw_dynamic_states_len(const struct ilo_render *render,
 void
 ilo_render_emit_draw_dynamic_states(struct ilo_render *render,
                                     const struct ilo_state_vector *vec,
-                                    struct gen6_draw_session *session)
+                                    struct ilo_render_draw_session *session)
 {
    const unsigned dynamic_used = ilo_builder_dynamic_used(render->builder);
 
