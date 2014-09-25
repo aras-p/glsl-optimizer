@@ -117,6 +117,17 @@ qir_opt_algebraic(struct vc4_compile *c)
                         }
                         break;
 
+                case QOP_FSUB:
+                case QOP_SUB:
+                        if (is_zero(c, defs, inst->src[1])) {
+                                dump_from(c, inst);
+                                inst->op = QOP_MOV;
+                                inst->src[1] = c->undef;
+                                progress = true;
+                                dump_to(c, inst);
+                        }
+                        break;
+
                 default:
                         break;
                 }
