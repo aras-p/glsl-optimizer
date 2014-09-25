@@ -25,9 +25,11 @@
  *    Chia-I Wu <olv@lunarg.com>
  */
 
+#include "genhw/genhw.h"
 #include "intel_winsys.h"
 
 #include "ilo_builder.h"
+#include "ilo_builder_render.h"
 #include "ilo_render_gen.h"
 #include "ilo_render_gen7.h"
 #include "ilo_render.h"
@@ -178,4 +180,47 @@ ilo_render_invalidate_builder(struct ilo_render *render)
 
    /* Kernel flushes everything.  Shouldn't we set all bits here? */
    render->state.current_pipe_control_dw1 = 0;
+}
+
+/**
+ * Return the command length of ilo_render_emit_flush().
+ */
+int
+ilo_render_get_flush_len(const struct ilo_render *render)
+{
+   int len;
+
+   ILO_DEV_ASSERT(render->dev, 6, 7.5);
+
+   len = GEN6_PIPE_CONTROL__SIZE;
+
+   /* plus gen6_wa_pre_pipe_control() */
+   if (ilo_dev_gen(render->dev) == ILO_GEN(6))
+      len *= 3;
+
+   return len;
+}
+
+/**
+ * Emit PIPE_CONTROLs to flush all caches.
+ */
+void
+ilo_render_emit_flush(struct ilo_render *render)
+{
+   const uint32_t dw1 = GEN6_PIPE_CONTROL_INSTRUCTION_CACHE_INVALIDATE |
+                        GEN6_PIPE_CONTROL_RENDER_CACHE_FLUSH |
+                        GEN6_PIPE_CONTROL_DEPTH_CACHE_FLUSH |
+                        GEN6_PIPE_CONTROL_VF_CACHE_INVALIDATE |
+                        GEN6_PIPE_CONTROL_TEXTURE_CACHE_INVALIDATE |
+                        GEN6_PIPE_CONTROL_CS_STALL;
+
+   ILO_DEV_ASSERT(render->dev, 6, 7.5);
+
+   if (ilo_dev_gen(render->dev) == ILO_GEN(6))
+      gen6_wa_pre_pipe_control(render, dw1);
+
+   gen6_PIPE_CONTROL(render->builder, dw1, NULL, 0, false);
+
+   render->state.current_pipe_control_dw1 |= dw1;
+   render->state.deferred_pipe_control_dw1 &= ~dw1;
 }

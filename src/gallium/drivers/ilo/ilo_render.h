@@ -39,7 +39,6 @@ struct ilo_state_vector;
 
 enum ilo_render_action {
    ILO_RENDER_DRAW,
-   ILO_RENDER_FLUSH,
    ILO_RENDER_QUERY,
    ILO_RENDER_RECTLIST,
 };
@@ -63,8 +62,6 @@ struct ilo_render {
 
    void (*emit_draw)(struct ilo_render *render,
                      const struct ilo_state_vector *vec);
-
-   void (*emit_flush)(struct ilo_render *render);
 
    void (*emit_query)(struct ilo_render *render,
                       struct ilo_query *q, uint32_t offset);
@@ -173,15 +170,6 @@ ilo_render_emit_draw(struct ilo_render *render,
 }
 
 /**
- * Emit PIPE_CONTROL to flush all caches.
- */
-static inline void
-ilo_render_emit_flush(struct ilo_render *render)
-{
-   render->emit_flush(render);
-}
-
-/**
  * Emit PIPE_CONTROL or MI_STORE_REGISTER_MEM to save register values.
  */
 static inline void
@@ -209,5 +197,11 @@ ilo_render_invalidate_hw(struct ilo_render *render);
 
 void
 ilo_render_invalidate_builder(struct ilo_render *render);
+
+int
+ilo_render_get_flush_len(const struct ilo_render *render);
+
+void
+ilo_render_emit_flush(struct ilo_render *render);
 
 #endif /* ILO_RENDER_H */

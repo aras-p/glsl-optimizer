@@ -323,10 +323,8 @@ draw_vbo(struct ilo_context *ilo, const struct ilo_state_vector *vec)
    /* make sure there is enough room first */
    max_len = ilo_render_estimate_size(ilo->render,
          ILO_RENDER_DRAW, vec);
-   if (need_flush) {
-      max_len += ilo_render_estimate_size(ilo->render,
-            ILO_RENDER_FLUSH, NULL);
-   }
+   if (need_flush)
+      max_len += ilo_render_get_flush_len(ilo->render);
 
    if (max_len > ilo_cp_space(ilo->cp)) {
       ilo_cp_submit(ilo->cp, "out of space");
@@ -380,8 +378,7 @@ ilo_draw_rectlist(struct ilo_context *ilo)
 
    max_len = ilo_render_estimate_size(ilo->render,
          ILO_RENDER_RECTLIST, ilo->blitter);
-   max_len += ilo_render_estimate_size(ilo->render,
-         ILO_RENDER_FLUSH, NULL) * 2;
+   max_len += ilo_render_get_flush_len(ilo->render) * 2;
 
    if (max_len > ilo_cp_space(ilo->cp)) {
       ilo_cp_submit(ilo->cp, "out of space");

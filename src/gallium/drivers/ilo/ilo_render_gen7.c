@@ -991,9 +991,6 @@ ilo_render_estimate_size_gen7(struct ilo_render *render,
             gen6_render_estimate_state_size(render, ilo);
       }
       break;
-   case ILO_RENDER_FLUSH:
-      size = GEN6_PIPE_CONTROL__SIZE;
-      break;
    case ILO_RENDER_QUERY:
       size = gen6_render_estimate_query_size(render,
             (const struct ilo_query *) arg);
@@ -1015,7 +1012,6 @@ ilo_render_init_gen7(struct ilo_render *render)
 {
    render->estimate_size = ilo_render_estimate_size_gen7;
    render->emit_draw = ilo_render_emit_draw_gen7;
-   render->emit_flush = ilo_render_emit_flush_gen6;
    render->emit_query = ilo_render_emit_query_gen6;
    render->emit_rectlist = ilo_render_emit_rectlist_gen7;
 }

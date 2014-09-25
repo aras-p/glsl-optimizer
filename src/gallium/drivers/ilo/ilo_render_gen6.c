@@ -60,7 +60,7 @@ gen6_pipe_control(struct ilo_render *r, uint32_t dw1)
 /**
  * This should be called before PIPE_CONTROL.
  */
-static void
+void
 gen6_wa_pre_pipe_control(struct ilo_render *r, uint32_t dw1)
 {
    /*
@@ -366,7 +366,7 @@ gen6_draw_common_urb(struct ilo_render *r,
        *      be taking over GS URB space."
        */
       if (r->state.gs.active && !gs_active)
-         ilo_render_emit_flush_gen6(r);
+         ilo_render_emit_flush(r);
 
       r->state.gs.active = gs_active;
    }
@@ -1472,27 +1472,6 @@ ilo_render_emit_draw_gen6(struct ilo_render *render,
 }
 
 void
-ilo_render_emit_flush_gen6(struct ilo_render *r)
-{
-   const uint32_t dw1 = GEN6_PIPE_CONTROL_INSTRUCTION_CACHE_INVALIDATE |
-                        GEN6_PIPE_CONTROL_RENDER_CACHE_FLUSH |
-                        GEN6_PIPE_CONTROL_DEPTH_CACHE_FLUSH |
-                        GEN6_PIPE_CONTROL_VF_CACHE_INVALIDATE |
-                        GEN6_PIPE_CONTROL_TEXTURE_CACHE_INVALIDATE |
-                        GEN6_PIPE_CONTROL_CS_STALL;
-
-   ILO_DEV_ASSERT(r->dev, 6, 7.5);
-
-   if (ilo_dev_gen(r->dev) == ILO_GEN(6))
-      gen6_wa_pre_pipe_control(r, dw1);
-
-   gen6_PIPE_CONTROL(r->builder, dw1, NULL, 0, false);
-
-   r->state.current_pipe_control_dw1 |= dw1;
-   r->state.deferred_pipe_control_dw1 &= ~dw1;
-}
-
-void
 ilo_render_emit_query_gen6(struct ilo_render *r,
                            struct ilo_query *q, uint32_t offset)
 {
@@ -1561,7 +1540,7 @@ ilo_render_emit_query_gen6(struct ilo_render *r,
    if (!reg_count)
       return;
 
-   r->emit_flush(r);
+   ilo_render_emit_flush(r);
 
    for (i = 0; i < reg_count; i++) {
       if (regs[i]) {
@@ -1688,7 +1667,7 @@ gen6_rectlist_commands(struct ilo_render *r,
          r->dev->urb_size, 0, blitter->ve.count * 4 * sizeof(float), 0);
    /* 3DSTATE_URB workaround */
    if (r->state.gs.active) {
-      ilo_render_emit_flush_gen6(r);
+      ilo_render_emit_flush(r);
       r->state.gs.active = false;
    }
 
@@ -1973,9 +1952,6 @@ ilo_render_estimate_size_gen6(struct ilo_render *render,
             gen6_render_estimate_state_size(render, ilo);
       }
       break;
-   case ILO_RENDER_FLUSH:
-      size = GEN6_PIPE_CONTROL__SIZE * 3;
-      break;
    case ILO_RENDER_QUERY:
       size = gen6_render_estimate_query_size(render,
             (const struct ilo_query *) arg);
@@ -1997,7 +1973,6 @@ ilo_render_init_gen6(struct ilo_render *render)
 {
    render->estimate_size = ilo_render_estimate_size_gen6;
    render->emit_draw = ilo_render_emit_draw_gen6;
-   render->emit_flush = ilo_render_emit_flush_gen6;
    render->emit_query = ilo_render_emit_query_gen6;
    render->emit_rectlist = ilo_render_emit_rectlist_gen6;
 }

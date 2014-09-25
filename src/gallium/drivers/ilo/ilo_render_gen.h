@@ -76,6 +76,9 @@ struct gen6_rectlist_session {
 };
 
 void
+gen6_wa_pre_pipe_control(struct ilo_render *r, uint32_t dw1);
+
+void
 gen6_draw_prepare(struct ilo_render *r,
                   const struct ilo_state_vector *ilo,
                   struct gen6_draw_session *session);
@@ -147,9 +150,6 @@ gen6_render_estimate_state_size(const struct ilo_render *render,
 int
 gen6_render_estimate_query_size(const struct ilo_render *render,
                                 const struct ilo_query *q);
-
-void
-ilo_render_emit_flush_gen6(struct ilo_render *r);
 
 void
 ilo_render_emit_query_gen6(struct ilo_render *r,
