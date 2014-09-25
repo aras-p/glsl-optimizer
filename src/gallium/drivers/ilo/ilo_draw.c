@@ -320,8 +320,7 @@ draw_vbo(struct ilo_context *ilo, const struct ilo_state_vector *vec)
    ilo_draw_set_owner(ilo);
 
    /* make sure there is enough room first */
-   max_len = ilo_render_estimate_size(ilo->render,
-         ILO_RENDER_DRAW, vec);
+   max_len = ilo_render_get_draw_len(ilo->render, vec);
    if (need_flush)
       max_len += ilo_render_get_flush_len(ilo->render);
 

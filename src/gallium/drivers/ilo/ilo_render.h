@@ -37,10 +37,6 @@ struct ilo_cp;
 struct ilo_query;
 struct ilo_state_vector;
 
-enum ilo_render_action {
-   ILO_RENDER_DRAW,
-};
-
 /**
  * Render Engine.
  */
@@ -53,13 +49,6 @@ struct ilo_render {
    uint32_t packed_sample_position_1x;
    uint32_t packed_sample_position_4x;
    uint32_t packed_sample_position_8x[2];
-
-   int (*estimate_size)(struct ilo_render *render,
-                        enum ilo_render_action action,
-                        const void *arg);
-
-   void (*emit_draw)(struct ilo_render *render,
-                     const struct ilo_state_vector *vec);
 
    bool hw_ctx_changed;
 
@@ -143,24 +132,6 @@ ilo_render_destroy(struct ilo_render *render);
 /**
  * Estimate the size of an action.
  */
-static inline int
-ilo_render_estimate_size(struct ilo_render *render,
-                         enum ilo_render_action action,
-                         const void *arg)
-{
-   return render->estimate_size(render, action, arg);
-}
-
-/**
- * Emit context states and 3DPRIMITIVE.
- */
-static inline void
-ilo_render_emit_draw(struct ilo_render *render,
-                     const struct ilo_state_vector *vec)
-{
-   render->emit_draw(render, vec);
-}
-
 void
 ilo_render_get_sample_position(const struct ilo_render *render,
                                unsigned sample_count,
@@ -194,5 +165,13 @@ ilo_render_get_rectlist_len(const struct ilo_render *render,
 void
 ilo_render_emit_rectlist(struct ilo_render *render,
                          const struct ilo_blitter *blitter);
+
+int
+ilo_render_get_draw_len(const struct ilo_render *render,
+                        const struct ilo_state_vector *vec);
+
+void
+ilo_render_emit_draw(struct ilo_render *render,
+                     const struct ilo_state_vector *vec);
 
 #endif /* ILO_RENDER_H */

@@ -26,6 +26,7 @@
  */
 
 #include "genhw/genhw.h"
+#include "util/u_prim.h"
 #include "intel_winsys.h"
 
 #include "ilo_builder.h"
@@ -33,7 +34,6 @@
 #include "ilo_builder_render.h"
 #include "ilo_query.h"
 #include "ilo_render_gen.h"
-#include "ilo_render_gen7.h"
 #include "ilo_render.h"
 
 /* in U0.4 */
@@ -76,21 +76,6 @@ ilo_render_create(struct ilo_builder *builder)
 
    render->dev = builder->dev;
    render->builder = builder;
-
-   switch (ilo_dev_gen(render->dev)) {
-   case ILO_GEN(6):
-      ilo_render_init_gen6(render);
-      break;
-   case ILO_GEN(7):
-   case ILO_GEN(7.5):
-      ilo_render_init_gen7(render);
-      break;
-   default:
-      assert(!"unsupported GEN");
-      FREE(render);
-      return NULL;
-      break;
-   }
 
    render->workaround_bo = intel_winsys_alloc_buffer(builder->winsys,
          "PIPE_CONTROL workaround", 4096, false);
@@ -387,4 +372,85 @@ ilo_render_emit_rectlist(struct ilo_render *render,
 
    ilo_render_emit_rectlist_dynamic_states(render, blitter);
    ilo_render_emit_rectlist_commands(render, blitter);
+}
+
+int
+ilo_render_get_draw_len(const struct ilo_render *render,
+                        const struct ilo_state_vector *vec)
+{
+   ILO_DEV_ASSERT(render->dev, 6, 7.5);
+
+   return ilo_render_get_draw_dynamic_states_len(render, vec) +
+          ilo_render_get_draw_surface_states_len(render, vec) +
+          ilo_render_get_draw_commands_len(render, vec);
+}
+
+static void
+gen6_draw_prepare(struct ilo_render *render,
+                  const struct ilo_state_vector *vec,
+                  struct gen6_draw_session *session)
+{
+   memset(session, 0, sizeof(*session));
+   session->pipe_dirty = vec->dirty;
+   session->reduced_prim = u_reduced_prim(vec->draw->mode);
+
+   if (render->hw_ctx_changed) {
+      /* these should be enough to make everything uploaded */
+      render->batch_bo_changed = true;
+      render->state_bo_changed = true;
+      render->instruction_bo_changed = true;
+
+      session->prim_changed = true;
+      session->primitive_restart_changed = true;
+   } else {
+      session->prim_changed =
+         (render->state.reduced_prim != session->reduced_prim);
+      session->primitive_restart_changed =
+         (render->state.primitive_restart != vec->draw->primitive_restart);
+   }
+}
+
+static void
+gen6_draw_end(struct ilo_render *render,
+              const struct ilo_state_vector *vec,
+              struct gen6_draw_session *session)
+{
+   render->hw_ctx_changed = false;
+
+   render->batch_bo_changed = false;
+   render->state_bo_changed = false;
+   render->instruction_bo_changed = false;
+
+   render->state.reduced_prim = session->reduced_prim;
+   render->state.primitive_restart = vec->draw->primitive_restart;
+}
+
+void
+ilo_render_emit_draw(struct ilo_render *render,
+                     const struct ilo_state_vector *vec)
+{
+   struct gen6_draw_session session;
+
+   ILO_DEV_ASSERT(render->dev, 6, 7.5);
+
+   gen6_draw_prepare(render, vec, &session);
+
+   /* force all states to be uploaded if the state bo changed */
+   if (render->state_bo_changed)
+      session.pipe_dirty = ILO_DIRTY_ALL;
+   else
+      session.pipe_dirty = vec->dirty;
+
+   ilo_render_emit_draw_dynamic_states(render, vec, &session);
+   ilo_render_emit_draw_surface_states(render, vec, &session);
+
+   /* force all commands to be uploaded if the HW context changed */
+   if (render->hw_ctx_changed)
+      session.pipe_dirty = ILO_DIRTY_ALL;
+   else
+      session.pipe_dirty = vec->dirty;
+
+   ilo_render_emit_draw_commands(render, vec, &session);
+
+   gen6_draw_end(render, vec, &session);
 }

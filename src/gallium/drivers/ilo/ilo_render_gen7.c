@@ -35,7 +35,6 @@
 #include "ilo_state.h"
 #include "ilo_render.h"
 #include "ilo_render_gen.h"
-#include "ilo_render_gen7.h"
 
 /**
  * A wrapper for gen6_PIPE_CONTROL().
@@ -652,11 +651,13 @@ gen7_draw_vf_draw(struct ilo_render *r,
    r->state.deferred_pipe_control_dw1 = 0;
 }
 
-static void
-gen7_draw_commands(struct ilo_render *render,
-                   const struct ilo_state_vector *vec,
-                   struct gen6_draw_session *session)
+void
+ilo_render_emit_draw_commands_gen7(struct ilo_render *render,
+                                   const struct ilo_state_vector *vec,
+                                   struct gen6_draw_session *session)
 {
+   ILO_DEV_ASSERT(render->dev, 7, 7.5);
+
    /*
     * We try to keep the order of the commands match, as closely as possible,
     * that of the classic i965 driver.  It allows us to compare the command
@@ -684,20 +685,6 @@ gen7_draw_commands(struct ilo_render *render,
    gen6_draw_sf_rect(render, vec, session);
    gen6_draw_vf(render, vec, session);
    gen7_draw_vf_draw(render, vec, session);
-}
-
-static void
-ilo_render_emit_draw_gen7(struct ilo_render *render,
-                          const struct ilo_state_vector *vec)
-{
-   struct gen6_draw_session session;
-
-   gen6_draw_prepare(render, vec, &session);
-
-   session.emit_draw_commands = gen7_draw_commands;
-
-   gen6_draw_emit(render, vec, &session);
-   gen6_draw_end(render, vec, &session);
 }
 
 static void
@@ -887,20 +874,23 @@ ilo_render_emit_rectlist_commands_gen7(struct ilo_render *r,
    gen7_3DPRIMITIVE(r->builder, &blitter->draw, NULL);
 }
 
-static int
-gen7_render_max_command_size(const struct ilo_render *render)
+int
+ilo_render_get_draw_commands_len_gen7(const struct ilo_render *render,
+                                      const struct ilo_state_vector *vec)
 {
-   static int size;
+   static int len;
 
-   if (!size) {
-      size += GEN7_3DSTATE_URB_ANY__SIZE * 4;
-      size += GEN7_3DSTATE_PUSH_CONSTANT_ALLOC_ANY__SIZE * 5;
-      size += GEN6_3DSTATE_CONSTANT_ANY__SIZE * 5;
-      size += GEN7_3DSTATE_POINTERS_ANY__SIZE * (5 + 5 + 4);
-      size += GEN7_3DSTATE_SO_BUFFER__SIZE * 4;
-      size += GEN6_PIPE_CONTROL__SIZE * 5;
+   ILO_DEV_ASSERT(render->dev, 7, 7.5);
 
-      size +=
+   if (!len) {
+      len += GEN7_3DSTATE_URB_ANY__SIZE * 4;
+      len += GEN7_3DSTATE_PUSH_CONSTANT_ALLOC_ANY__SIZE * 5;
+      len += GEN6_3DSTATE_CONSTANT_ANY__SIZE * 5;
+      len += GEN7_3DSTATE_POINTERS_ANY__SIZE * (5 + 5 + 4);
+      len += GEN7_3DSTATE_SO_BUFFER__SIZE * 4;
+      len += GEN6_PIPE_CONTROL__SIZE * 5;
+
+      len +=
          GEN6_STATE_BASE_ADDRESS__SIZE +
          GEN6_STATE_SIP__SIZE +
          GEN6_3DSTATE_VF_STATISTICS__SIZE +
@@ -935,38 +925,5 @@ gen7_render_max_command_size(const struct ilo_render *render)
          GEN6_3DPRIMITIVE__SIZE;
    }
 
-   return size;
-}
-
-static int
-ilo_render_estimate_size_gen7(struct ilo_render *render,
-                              enum ilo_render_action action,
-                              const void *arg)
-{
-   int size;
-
-   switch (action) {
-   case ILO_RENDER_DRAW:
-      {
-         const struct ilo_state_vector *vec = arg;
-
-         size = gen7_render_max_command_size(render) +
-            ilo_render_get_draw_dynamic_states_len(render, vec) +
-            ilo_render_get_draw_surface_states_len(render, vec);
-      }
-      break;
-   default:
-      assert(!"unknown render action");
-      size = 0;
-      break;
-   }
-
-   return size;
-}
-
-void
-ilo_render_init_gen7(struct ilo_render *render)
-{
-   render->estimate_size = ilo_render_estimate_size_gen7;
-   render->emit_draw = ilo_render_emit_draw_gen7;
+   return len;
 }

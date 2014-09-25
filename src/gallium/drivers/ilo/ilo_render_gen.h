@@ -45,10 +45,6 @@ struct gen6_draw_session {
    bool prim_changed;
    bool primitive_restart_changed;
 
-   void (*emit_draw_commands)(struct ilo_render *render,
-                              const struct ilo_state_vector *ilo,
-                              struct gen6_draw_session *session);
-
    /* dynamic states */
    bool viewport_changed;
    bool scissor_changed;
@@ -72,6 +68,50 @@ struct gen6_draw_session {
 
    int num_surfaces[PIPE_SHADER_TYPES];
 };
+
+int
+ilo_render_get_draw_commands_len_gen6(const struct ilo_render *render,
+                                      const struct ilo_state_vector *vec);
+
+int
+ilo_render_get_draw_commands_len_gen7(const struct ilo_render *render,
+                                      const struct ilo_state_vector *vec);
+
+static inline int
+ilo_render_get_draw_commands_len(const struct ilo_render *render,
+                                 const struct ilo_state_vector *vec)
+{
+   if (ilo_dev_gen(render->dev) >= ILO_GEN(7))
+      return ilo_render_get_draw_commands_len_gen7(render, vec);
+   else
+      return ilo_render_get_draw_commands_len_gen6(render, vec);
+}
+
+void
+ilo_render_emit_draw_commands_gen6(struct ilo_render *render,
+                                   const struct ilo_state_vector *vec,
+                                   struct gen6_draw_session *session);
+
+void
+ilo_render_emit_draw_commands_gen7(struct ilo_render *render,
+                                   const struct ilo_state_vector *vec,
+                                   struct gen6_draw_session *session);
+
+static inline void
+ilo_render_emit_draw_commands(struct ilo_render *render,
+                              const struct ilo_state_vector *vec,
+                              struct gen6_draw_session *session)
+{
+   const unsigned batch_used = ilo_builder_batch_used(render->builder);
+
+   if (ilo_dev_gen(render->dev) >= ILO_GEN(7))
+      ilo_render_emit_draw_commands_gen7(render, vec, session);
+   else
+      ilo_render_emit_draw_commands_gen6(render, vec, session);
+
+   assert(ilo_builder_batch_used(render->builder) <= batch_used +
+         ilo_render_get_draw_commands_len(render, vec));
+}
 
 int
 ilo_render_get_rectlist_commands_len_gen6(const struct ilo_render *render,
@@ -137,21 +177,6 @@ void
 gen6_wa_pre_pipe_control(struct ilo_render *r, uint32_t dw1);
 
 void
-gen6_draw_prepare(struct ilo_render *r,
-                  const struct ilo_state_vector *ilo,
-                  struct gen6_draw_session *session);
-
-void
-gen6_draw_emit(struct ilo_render *r,
-               const struct ilo_state_vector *ilo,
-               struct gen6_draw_session *session);
-
-void
-gen6_draw_end(struct ilo_render *r,
-              const struct ilo_state_vector *ilo,
-              struct gen6_draw_session *session);
-
-void
 gen6_draw_common_select(struct ilo_render *r,
                         const struct ilo_state_vector *ilo,
                         struct gen6_draw_session *session);
@@ -195,8 +220,5 @@ void
 gen6_draw_wm_raster(struct ilo_render *r,
                     const struct ilo_state_vector *ilo,
                     struct gen6_draw_session *session);
-
-void
-ilo_render_init_gen6(struct ilo_render *render);
 
 #endif /* ILO_RENDER_GEN_H */
