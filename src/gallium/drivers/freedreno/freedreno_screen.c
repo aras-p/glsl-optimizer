@@ -398,6 +398,7 @@ fd_screen_bo_get_handle(struct pipe_screen *pscreen,
 		return TRUE;
 	} else if (whandle->type == DRM_API_HANDLE_TYPE_FD) {
 		whandle->handle = fd_bo_dmabuf(bo);
+		return TRUE;
 	} else {
 		return FALSE;
 	}
