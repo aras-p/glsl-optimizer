@@ -254,7 +254,7 @@ const struct brw_tracked_state gen7_sf_state = {
 		_NEW_POINT |
                 _NEW_MULTISAMPLE),
       .brw   = BRW_NEW_CONTEXT,
-      .cache = CACHE_NEW_VS_PROG
+      .cache = 0,
    },
    .emit = upload_sf_state,
 };
