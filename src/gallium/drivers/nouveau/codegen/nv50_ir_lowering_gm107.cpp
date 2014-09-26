@@ -159,7 +159,10 @@ GM107LoweringPass::handlePFETCH(Instruction *i)
    bld.mkOp2(OP_SHR , TYPE_U32, tmp1, tmp0, bld.mkImm(16));
    bld.mkOp2(OP_AND , TYPE_U32, tmp0, tmp0, bld.mkImm(0xff));
    bld.mkOp2(OP_AND , TYPE_U32, tmp1, tmp1, bld.mkImm(0xff));
-   bld.mkOp1(OP_MOV , TYPE_U32, tmp2, bld.mkImm(i->getSrc(0)->reg.data.u32));
+   if (i->getSrc(1))
+      bld.mkOp2(OP_ADD , TYPE_U32, tmp2, i->getSrc(0), i->getSrc(1));
+   else
+      bld.mkOp1(OP_MOV , TYPE_U32, tmp2, i->getSrc(0));
    bld.mkOp3(OP_MAD , TYPE_U32, tmp0, tmp0, tmp1, tmp2);
    i->setSrc(0, tmp0);
    i->setSrc(1, NULL);
