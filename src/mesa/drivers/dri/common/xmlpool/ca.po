@@ -21,12 +21,11 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-
 msgid ""
 msgstr ""
 "Project-Id-Version: Mesa 10.1.0-devel\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-01-13 22:30-0700\n"
+"POT-Creation-Date: 2014-09-25 22:29-0600\n"
 "PO-Revision-Date: 2014-01-15 10:37-0700\n"
 "Last-Translator: Alex Henrie <alexhenrie24@gmail.com>\n"
 "Language-Team: Catalan <ca@li.org>\n"
@@ -87,108 +86,112 @@ msgstr ""
 "Força una versió GLSL per defecte en els shaders als quals falta una línia "
 "#version explícita"
 
-#: t_options.h:115
+#: t_options.h:110
+msgid "Allow GLSL #extension directives in the middle of shaders"
+msgstr ""
+
+#: t_options.h:120
 msgid "Image Quality"
 msgstr "Qualitat d'Imatge"
 
-#: t_options.h:128
+#: t_options.h:133
 msgid "Texture color depth"
 msgstr "Profunditat de color de textura"
 
-#: t_options.h:129
+#: t_options.h:134
 msgid "Prefer frame buffer color depth"
 msgstr "Prefereix profunditat de color del framebuffer"
 
-#: t_options.h:130
+#: t_options.h:135
 msgid "Prefer 32 bits per texel"
 msgstr "Prefereix 32 bits per texel"
 
-#: t_options.h:131
+#: t_options.h:136
 msgid "Prefer 16 bits per texel"
 msgstr "Prefereix 16 bits per texel"
 
-#: t_options.h:132
+#: t_options.h:137
 msgid "Force 16 bits per texel"
 msgstr "Força 16 bits per texel"
 
-#: t_options.h:138
+#: t_options.h:143
 msgid "Initial maximum value for anisotropic texture filtering"
 msgstr "Valor màxim inicial per a la filtració de textura anisòtropa"
 
-#: t_options.h:143
+#: t_options.h:148
 msgid "Forbid negative texture LOD bias"
 msgstr ""
 "Prohibeix una parcialitat negativa del Nivell de Detalle (LOD) de les "
 "textures"
 
-#: t_options.h:148
+#: t_options.h:153
 msgid ""
 "Enable S3TC texture compression even if software support is not available"
 msgstr ""
 "Habilitar la compressió de textures S3TC encara que el suport de programari "
 "no estigui disponible"
 
-#: t_options.h:155
+#: t_options.h:160
 msgid "Initial color reduction method"
 msgstr "Mètode inicial de reducció de color"
 
-#: t_options.h:156
+#: t_options.h:161
 msgid "Round colors"
 msgstr "Colors arrodonits"
 
-#: t_options.h:157
+#: t_options.h:162
 msgid "Dither colors"
 msgstr "Colors tramats"
 
-#: t_options.h:165
+#: t_options.h:170
 msgid "Color rounding method"
 msgstr "Mètode d'arrodoniment de color"
 
-#: t_options.h:166
+#: t_options.h:171
 msgid "Round color components downward"
 msgstr "Arrondeix els components de color a baix"
 
-#: t_options.h:167
+#: t_options.h:172
 msgid "Round to nearest color"
 msgstr "Arrondeix al color més proper"
 
-#: t_options.h:176
+#: t_options.h:181
 msgid "Color dithering method"
 msgstr "Mètode de tramat de color"
 
-#: t_options.h:177
+#: t_options.h:182
 msgid "Horizontal error diffusion"
 msgstr "Difusió d'error horitzontal"
 
-#: t_options.h:178
+#: t_options.h:183
 msgid "Horizontal error diffusion, reset error at line start"
 msgstr "Difusió d'error horitzontal, reinicia l'error a l'inici de la línia"
 
-#: t_options.h:179
+#: t_options.h:184
 msgid "Ordered 2D color dithering"
 msgstr "Tramat de color 2D ordenat"
 
-#: t_options.h:185
+#: t_options.h:190
 msgid "Floating point depth buffer"
 msgstr "Buffer de profunditat de punt flotant"
 
-#: t_options.h:190
+#: t_options.h:195
 msgid "A post-processing filter to cel-shade the output"
 msgstr "Un filtre de postprocessament per a aplicar cel shading a la sortida"
 
-#: t_options.h:195
+#: t_options.h:200
 msgid "A post-processing filter to remove the red channel"
 msgstr "Un filtre de postprocessament per a treure el canal vermell"
 
-#: t_options.h:200
+#: t_options.h:205
 msgid "A post-processing filter to remove the green channel"
 msgstr "Un filtre de postprocessament per a treure el canal verd"
 
-#: t_options.h:205
+#: t_options.h:210
 msgid "A post-processing filter to remove the blue channel"
 msgstr "Un filtre de postprocessament per a treure el canal blau"
 
-#: t_options.h:210
+#: t_options.h:215
 msgid ""
 "Morphological anti-aliasing based on Jimenez\\' MLAA. 0 to disable, 8 for "
 "default quality"
@@ -196,7 +199,7 @@ msgstr ""
 "Antialiàsing morfològic basat en el MLAA de Jimenez. 0 per deshabilitar, 8 "
 "per qualitat per defecte"
 
-#: t_options.h:215
+#: t_options.h:220
 msgid ""
 "Morphological anti-aliasing based on Jimenez\\' MLAA. 0 to disable, 8 for "
 "default quality. Color version, usable with 2d GL apps"
@@ -205,68 +208,68 @@ msgstr ""
 "per qualitat per defecte. Versió en color, utilitzable amb les aplicacions "
 "GL 2D"
 
-#: t_options.h:225
+#: t_options.h:230
 msgid "Performance"
 msgstr "Rendiment"
 
-#: t_options.h:233
+#: t_options.h:238
 msgid "TCL mode (Transformation, Clipping, Lighting)"
 msgstr "Mode TCL (Transformació, Retall, Il·luminació)"
 
-#: t_options.h:234
+#: t_options.h:239
 msgid "Use software TCL pipeline"
 msgstr "Utilitza la canonada TCL de programari"
 
-#: t_options.h:235
+#: t_options.h:240
 msgid "Use hardware TCL as first TCL pipeline stage"
 msgstr "Utilitza el TCL maquinàri com la primera fase de la canonada TCL"
 
-#: t_options.h:236
+#: t_options.h:241
 msgid "Bypass the TCL pipeline"
 msgstr "Passar per alt la canonada TCL"
 
-#: t_options.h:237
+#: t_options.h:242
 msgid ""
 "Bypass the TCL pipeline with state-based machine code generated on-the-fly"
 msgstr ""
 "Passar per alt la canonada TCL amb codi màquina basat en estats, generat "
 "sobre la marxa"
 
-#: t_options.h:246
+#: t_options.h:251
 msgid "Method to limit rendering latency"
 msgstr "Mètode per a limitar la latència de renderització"
 
-#: t_options.h:247
+#: t_options.h:252
 msgid "Busy waiting for the graphics hardware"
 msgstr "Espera activa pel maquinari de gràfics"
 
-#: t_options.h:248
+#: t_options.h:253
 msgid "Sleep for brief intervals while waiting for the graphics hardware"
 msgstr "Dormi per intervals breus mentre s'espera al maquinari de gràfics"
 
-#: t_options.h:249
+#: t_options.h:254
 msgid "Let the graphics hardware emit a software interrupt and sleep"
 msgstr ""
 "Deixa que el maquinari de gràfics emeti una interrupció de programari i dormi"
 
-#: t_options.h:259
+#: t_options.h:264
 msgid "Synchronization with vertical refresh (swap intervals)"
 msgstr "Sincronització amb refresc vertical (intervals d'intercanvi)"
 
-#: t_options.h:260
+#: t_options.h:265
 msgid "Never synchronize with vertical refresh, ignore application's choice"
 msgstr ""
 "Mai sincronitzis amb el refresc vertial, ignora l'elecció de l'aplicació"
 
-#: t_options.h:261
+#: t_options.h:266
 msgid "Initial swap interval 0, obey application's choice"
 msgstr "Interval d'intercanvi inicial 0, obeeix l'elecció de l'aplicació"
 
-#: t_options.h:262
+#: t_options.h:267
 msgid "Initial swap interval 1, obey application's choice"
 msgstr "Interval d'intercanvi inicial 1, obeeix l'elecció de l'aplicació"
 
-#: t_options.h:263
+#: t_options.h:268
 msgid ""
 "Always synchronize with vertical refresh, application chooses the minimum "
 "swap interval"
@@ -274,48 +277,56 @@ msgstr ""
 "Sempre sincronitza amb el refresc vertical, l'aplicació tria l'interval "
 "mínim d'intercanvi"
 
-#: t_options.h:271
+#: t_options.h:276
 msgid "Use HyperZ to boost performance"
 msgstr "Utilitza el HyperZ per a augmentar el rendiment"
 
-#: t_options.h:276
+#: t_options.h:281
 msgid "Number of texture units used"
 msgstr "Nombre d'unitats de textura utilitzades"
 
-#: t_options.h:281
+#: t_options.h:286
 msgid "Texture filtering quality vs. speed, AKA “brilinear” texture filtering"
 msgstr ""
 "Qualitat vs. velocitat de filtració de textura, àlies filtració \"brilinear"
 "\" de textura"
 
-#: t_options.h:289
+#: t_options.h:294
 msgid "Used types of texture memory"
 msgstr "Tipus utilitzats de memòria de textura"
 
-#: t_options.h:290
+#: t_options.h:295
 msgid "All available memory"
 msgstr "Tota la memòria disponible"
 
-#: t_options.h:291
+#: t_options.h:296
 msgid "Only card memory (if available)"
 msgstr "Només memòria de tarjeta (si està disponible)"
 
-#: t_options.h:292
+#: t_options.h:297
 msgid "Only GART (AGP/PCIE) memory (if available)"
 msgstr "Només memòria GART (AGP/PCIE) (si està disponible)"
 
-#: t_options.h:304
+#: t_options.h:309
 msgid "Features that are not hardware-accelerated"
 msgstr "Característiques no accelerades per maquinari"
 
-#: t_options.h:308
+#: t_options.h:313
 msgid "Enable extension GL_ARB_vertex_program"
 msgstr "Habilita l'extensió GL_ARB_vertex_program"
 
-#: t_options.h:318
+#: t_options.h:323
 msgid "Miscellaneous"
 msgstr "Miscel·lània"
 
-#: t_options.h:322
+#: t_options.h:327
 msgid "Create all visuals with a depth buffer"
 msgstr "Crea tots els visuals amb buffer de profunditat"
+
+#: t_options.h:337
+msgid "Initialization"
+msgstr ""
+
+#: t_options.h:341
+msgid "Define the graphic device to use if possible"
+msgstr ""

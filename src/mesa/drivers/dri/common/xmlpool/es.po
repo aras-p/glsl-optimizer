@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-01-13 22:30-0700\n"
+"POT-Creation-Date: 2014-09-25 22:29-0600\n"
 "PO-Revision-Date: 2014-01-15 10:34-0700\n"
 "Last-Translator: Alex Henrie <alexhenrie24@gmail.com>\n"
 "Language-Team: Spanish <es@li.org>\n"
@@ -70,106 +70,110 @@ msgstr ""
 "Forzar una versión de GLSL por defecto en los shaders a los cuales les falta "
 "una línea #version explícita"
 
-#: t_options.h:115
+#: t_options.h:110
+msgid "Allow GLSL #extension directives in the middle of shaders"
+msgstr ""
+
+#: t_options.h:120
 msgid "Image Quality"
 msgstr "Calidad de imagen"
 
-#: t_options.h:128
+#: t_options.h:133
 msgid "Texture color depth"
 msgstr "Profundidad de color de textura"
 
-#: t_options.h:129
+#: t_options.h:134
 msgid "Prefer frame buffer color depth"
 msgstr "Preferir profundidad de color del framebuffer"
 
-#: t_options.h:130
+#: t_options.h:135
 msgid "Prefer 32 bits per texel"
 msgstr "Preferir 32 bits por texel"
 
-#: t_options.h:131
+#: t_options.h:136
 msgid "Prefer 16 bits per texel"
 msgstr "Preferir 16 bits por texel"
 
-#: t_options.h:132
+#: t_options.h:137
 msgid "Force 16 bits per texel"
 msgstr "Forzar a 16 bits por texel"
 
-#: t_options.h:138
+#: t_options.h:143
 msgid "Initial maximum value for anisotropic texture filtering"
 msgstr "Valor máximo inicial para filtrado anisotrópico de textura"
 
-#: t_options.h:143
+#: t_options.h:148
 msgid "Forbid negative texture LOD bias"
 msgstr "Prohibir valores negativos de Nivel De Detalle (LOD) de texturas"
 
-#: t_options.h:148
+#: t_options.h:153
 msgid ""
 "Enable S3TC texture compression even if software support is not available"
 msgstr ""
 "Habilitar la compresión de texturas S3TC incluso si el soporte por software "
 "no está disponible"
 
-#: t_options.h:155
+#: t_options.h:160
 msgid "Initial color reduction method"
 msgstr "Método inicial de reducción de color"
 
-#: t_options.h:156
+#: t_options.h:161
 msgid "Round colors"
 msgstr "Colores redondeados"
 
-#: t_options.h:157
+#: t_options.h:162
 msgid "Dither colors"
 msgstr "Colores suavizados"
 
-#: t_options.h:165
+#: t_options.h:170
 msgid "Color rounding method"
 msgstr "Método de redondeo de colores"
 
-#: t_options.h:166
+#: t_options.h:171
 msgid "Round color components downward"
 msgstr "Redondear hacia abajo los componentes de color"
 
-#: t_options.h:167
+#: t_options.h:172
 msgid "Round to nearest color"
 msgstr "Redondear al color más cercano"
 
-#: t_options.h:176
+#: t_options.h:181
 msgid "Color dithering method"
 msgstr "Método de suavizado de color"
 
-#: t_options.h:177
+#: t_options.h:182
 msgid "Horizontal error diffusion"
 msgstr "Difusión de error horizontal"
 
-#: t_options.h:178
+#: t_options.h:183
 msgid "Horizontal error diffusion, reset error at line start"
 msgstr "Difusión de error horizontal, reiniciar error al comienzo de línea"
 
-#: t_options.h:179
+#: t_options.h:184
 msgid "Ordered 2D color dithering"
 msgstr "Suavizado de color 2D ordenado"
 
-#: t_options.h:185
+#: t_options.h:190
 msgid "Floating point depth buffer"
 msgstr "Búfer de profundidad en coma flotante"
 
-#: t_options.h:190
+#: t_options.h:195
 msgid "A post-processing filter to cel-shade the output"
 msgstr "Un filtro de postprocesamiento para aplicar cel shading a la salida"
 
-#: t_options.h:195
+#: t_options.h:200
 msgid "A post-processing filter to remove the red channel"
 msgstr "Un filtro de postprocesamiento para eliminar el canal rojo"
 
-#: t_options.h:200
+#: t_options.h:205
 msgid "A post-processing filter to remove the green channel"
 msgstr "Un filtro de postprocesamiento para eliminar el canal verde"
 
-#: t_options.h:205
+#: t_options.h:210
 msgid "A post-processing filter to remove the blue channel"
 msgstr "Un filtro de postprocesamiento para eliminar el canal azul"
 
-#: t_options.h:210
+#: t_options.h:215
 msgid ""
 "Morphological anti-aliasing based on Jimenez\\' MLAA. 0 to disable, 8 for "
 "default quality"
@@ -177,7 +181,7 @@ msgstr ""
 "Antialiasing morfológico basado en el MLAA de Jimenez. 0 para deshabilitar, "
 "8 para calidad por defecto"
 
-#: t_options.h:215
+#: t_options.h:220
 msgid ""
 "Morphological anti-aliasing based on Jimenez\\' MLAA. 0 to disable, 8 for "
 "default quality. Color version, usable with 2d GL apps"
@@ -185,71 +189,71 @@ msgstr ""
 "Antialiasing morfológico basado en el MLAA de Jimenez. 0 para deshabilitar, "
 "8 para calidad por defecto. Versión en color, usable con aplicaciones GL 2D"
 
-#: t_options.h:225
+#: t_options.h:230
 msgid "Performance"
 msgstr "Rendimiento"
 
-#: t_options.h:233
+#: t_options.h:238
 msgid "TCL mode (Transformation, Clipping, Lighting)"
 msgstr "Modo TCL (Transformación, Recorte, Iluminación)"
 
-#: t_options.h:234
+#: t_options.h:239
 msgid "Use software TCL pipeline"
 msgstr "Usar tubería TCL por software"
 
-#: t_options.h:235
+#: t_options.h:240
 msgid "Use hardware TCL as first TCL pipeline stage"
 msgstr "Usar TCL por hardware en la primera fase de la tubería TCL"
 
-#: t_options.h:236
+#: t_options.h:241
 msgid "Bypass the TCL pipeline"
 msgstr "Pasar por alto la tubería TCL"
 
-#: t_options.h:237
+#: t_options.h:242
 msgid ""
 "Bypass the TCL pipeline with state-based machine code generated on-the-fly"
 msgstr ""
 "Pasar por alto la tubería TCL con código máquina basado en estados, generado "
 "al vuelo"
 
-#: t_options.h:246
+#: t_options.h:251
 msgid "Method to limit rendering latency"
 msgstr "Método para limitar la latencia de renderización"
 
-#: t_options.h:247
+#: t_options.h:252
 msgid "Busy waiting for the graphics hardware"
 msgstr "Esperar activamente al hardware gráfico"
 
-#: t_options.h:248
+#: t_options.h:253
 msgid "Sleep for brief intervals while waiting for the graphics hardware"
 msgstr "Dormir en intervalos cortos mientras se espera al hardware gráfico"
 
-#: t_options.h:249
+#: t_options.h:254
 msgid "Let the graphics hardware emit a software interrupt and sleep"
 msgstr ""
 "Permitir que el hardware gráfico emita una interrupción de software y duerma"
 
-#: t_options.h:259
+#: t_options.h:264
 msgid "Synchronization with vertical refresh (swap intervals)"
 msgstr "Sincronización con el refresco vertical (intervalos de intercambio)"
 
-#: t_options.h:260
+#: t_options.h:265
 msgid "Never synchronize with vertical refresh, ignore application's choice"
 msgstr ""
 "No sincronizar nunca con el refresco vertical, ignorar la elección de la "
 "aplicación"
 
-#: t_options.h:261
+#: t_options.h:266
 msgid "Initial swap interval 0, obey application's choice"
 msgstr ""
 "Intervalo de intercambio inicial 0, obedecer la elección de la aplicación"
 
-#: t_options.h:262
+#: t_options.h:267
 msgid "Initial swap interval 1, obey application's choice"
 msgstr ""
 "Intervalo de intercambio inicial 1, obedecer la elección de la aplicación"
 
-#: t_options.h:263
+#: t_options.h:268
 msgid ""
 "Always synchronize with vertical refresh, application chooses the minimum "
 "swap interval"
@@ -257,48 +261,56 @@ msgstr ""
 "Sincronizar siempre con el refresco vertical, la aplicación elige el "
 "intervalo de intercambio mínimo"
 
-#: t_options.h:271
+#: t_options.h:276
 msgid "Use HyperZ to boost performance"
 msgstr "Usar HyperZ para potenciar rendimiento"
 
-#: t_options.h:276
+#: t_options.h:281
 msgid "Number of texture units used"
 msgstr "Número de unidades de textura usadas"
 
-#: t_options.h:281
+#: t_options.h:286
 msgid "Texture filtering quality vs. speed, AKA “brilinear” texture filtering"
 msgstr ""
 "Calidad de filtrado de textura vs. velocidad, alias filtrado \"brilinear\" "
 "de textura"
 
-#: t_options.h:289
+#: t_options.h:294
 msgid "Used types of texture memory"
 msgstr "Tipos de memoria de textura usados"
 
-#: t_options.h:290
+#: t_options.h:295
 msgid "All available memory"
 msgstr "Toda la memoria disponible"
 
-#: t_options.h:291
+#: t_options.h:296
 msgid "Only card memory (if available)"
 msgstr "Solo memoria de tarjeta (si está disponible)"
 
-#: t_options.h:292
+#: t_options.h:297
 msgid "Only GART (AGP/PCIE) memory (if available)"
 msgstr "Solo memoria GART (AGP/PCIE) (si está disponible)"
 
-#: t_options.h:304
+#: t_options.h:309
 msgid "Features that are not hardware-accelerated"
 msgstr "Características no aceleradas por hardware"
 
-#: t_options.h:308
+#: t_options.h:313
 msgid "Enable extension GL_ARB_vertex_program"
 msgstr "Habilitar la extensión GL_ARB_vertex_program"
 
-#: t_options.h:318
+#: t_options.h:323
 msgid "Miscellaneous"
 msgstr "Misceláneo"
 
-#: t_options.h:322
+#: t_options.h:327
 msgid "Create all visuals with a depth buffer"
 msgstr "Crear todos los visuales con buffer de profundidad"
+
+#: t_options.h:337
+msgid "Initialization"
+msgstr ""
+
+#: t_options.h:341
+msgid "Define the graphic device to use if possible"
+msgstr ""

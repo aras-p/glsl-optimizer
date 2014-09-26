@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mesa 6.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-01-13 22:30-0700\n"
+"POT-Creation-Date: 2014-09-25 22:29-0600\n"
 "PO-Revision-Date: 2005-04-11 01:34+0200\n"
 "Last-Translator: Stephane Marchesin <marchesin@icps.u-strasbg.fr>\n"
 "Language-Team: French <fr@li.org>\n"
@@ -62,182 +62,186 @@ msgid ""
 "Force a default GLSL version for shaders that lack an explicit #version line"
 msgstr ""
 
-#: t_options.h:115
+#: t_options.h:110
+msgid "Allow GLSL #extension directives in the middle of shaders"
+msgstr ""
+
+#: t_options.h:120
 msgid "Image Quality"
 msgstr "Qualité d'image"
 
-#: t_options.h:128
+#: t_options.h:133
 msgid "Texture color depth"
 msgstr "Profondeur de texture"
 
-#: t_options.h:129
+#: t_options.h:134
 msgid "Prefer frame buffer color depth"
 msgstr "Profondeur de couleur"
 
-#: t_options.h:130
+#: t_options.h:135
 msgid "Prefer 32 bits per texel"
 msgstr "Préférer 32 bits par texel"
 
-#: t_options.h:131
+#: t_options.h:136
 msgid "Prefer 16 bits per texel"
 msgstr "Prérérer 16 bits par texel"
 
-#: t_options.h:132
+#: t_options.h:137
 msgid "Force 16 bits per texel"
 msgstr "Forcer 16 bits par texel"
 
-#: t_options.h:138
+#: t_options.h:143
 msgid "Initial maximum value for anisotropic texture filtering"
 msgstr "Valeur maximale initiale pour le filtrage anisotropique de texture"
 
-#: t_options.h:143
+#: t_options.h:148
 msgid "Forbid negative texture LOD bias"
 msgstr "Interdire le LOD bias negatif"
 
-#: t_options.h:148
+#: t_options.h:153
 msgid ""
 "Enable S3TC texture compression even if software support is not available"
 msgstr ""
 "Activer la compression de texture S3TC même si le support logiciel est absent"
 
-#: t_options.h:155
+#: t_options.h:160
 msgid "Initial color reduction method"
 msgstr "Technique de réduction de couleurs"
 
-#: t_options.h:156
+#: t_options.h:161
 msgid "Round colors"
 msgstr "Arrondir les valeurs de couleur"
 
-#: t_options.h:157
+#: t_options.h:162
 msgid "Dither colors"
 msgstr "Tramer les couleurs"
 
-#: t_options.h:165
+#: t_options.h:170
 msgid "Color rounding method"
 msgstr "Méthode d'arrondi des couleurs"
 
-#: t_options.h:166
+#: t_options.h:171
 msgid "Round color components downward"
 msgstr "Arrondi à l'inférieur"
 
-#: t_options.h:167
+#: t_options.h:172
 msgid "Round to nearest color"
 msgstr "Arrondi au plus proche"
 
-#: t_options.h:176
+#: t_options.h:181
 msgid "Color dithering method"
 msgstr "Méthode de tramage"
 
-#: t_options.h:177
+#: t_options.h:182
 msgid "Horizontal error diffusion"
 msgstr "Diffusion d'erreur horizontale"
 
-#: t_options.h:178
+#: t_options.h:183
 msgid "Horizontal error diffusion, reset error at line start"
 msgstr "Diffusion d'erreur horizontale, réinitialisé pour chaque ligne"
 
-#: t_options.h:179
+#: t_options.h:184
 msgid "Ordered 2D color dithering"
 msgstr "Tramage ordonné des couleurs"
 
-#: t_options.h:185
+#: t_options.h:190
 msgid "Floating point depth buffer"
 msgstr "Z-buffer en virgule flottante"
 
-#: t_options.h:190
+#: t_options.h:195
 msgid "A post-processing filter to cel-shade the output"
 msgstr ""
 
-#: t_options.h:195
+#: t_options.h:200
 msgid "A post-processing filter to remove the red channel"
 msgstr ""
 
-#: t_options.h:200
+#: t_options.h:205
 msgid "A post-processing filter to remove the green channel"
 msgstr ""
 
-#: t_options.h:205
-msgid "A post-processing filter to remove the blue channel"
-msgstr ""
-
 #: t_options.h:210
-msgid ""
-"Morphological anti-aliasing based on Jimenez\\' MLAA. 0 to disable, 8 for "
-"default quality"
+msgid "A post-processing filter to remove the blue channel"
 msgstr ""
 
 #: t_options.h:215
 msgid ""
 "Morphological anti-aliasing based on Jimenez\\' MLAA. 0 to disable, 8 for "
+"default quality"
+msgstr ""
+
+#: t_options.h:220
+msgid ""
+"Morphological anti-aliasing based on Jimenez\\' MLAA. 0 to disable, 8 for "
 "default quality. Color version, usable with 2d GL apps"
 msgstr ""
 
-#: t_options.h:225
+#: t_options.h:230
 msgid "Performance"
 msgstr "Performance"
 
-#: t_options.h:233
+#: t_options.h:238
 msgid "TCL mode (Transformation, Clipping, Lighting)"
 msgstr "Mode de TCL (Transformation, Clipping, Eclairage)"
 
-#: t_options.h:234
+#: t_options.h:239
 msgid "Use software TCL pipeline"
 msgstr "Utiliser un pipeline TCL logiciel"
 
-#: t_options.h:235
+#: t_options.h:240
 msgid "Use hardware TCL as first TCL pipeline stage"
 msgstr "Utiliser le TCL matériel pour le premier niveau de pipeline"
 
-#: t_options.h:236
+#: t_options.h:241
 msgid "Bypass the TCL pipeline"
 msgstr "Court-circuiter le pipeline TCL"
 
-#: t_options.h:237
+#: t_options.h:242
 msgid ""
 "Bypass the TCL pipeline with state-based machine code generated on-the-fly"
 msgstr ""
 "Court-circuiter le pipeline TCL par une machine à états qui génère le codede "
 "TCL à la volée"
 
-#: t_options.h:246
+#: t_options.h:251
 msgid "Method to limit rendering latency"
 msgstr "Méthode d'attente de la carte graphique"
 
-#: t_options.h:247
+#: t_options.h:252
 msgid "Busy waiting for the graphics hardware"
 msgstr "Attente active de la carte graphique"
 
-#: t_options.h:248
+#: t_options.h:253
 msgid "Sleep for brief intervals while waiting for the graphics hardware"
 msgstr "Attente utilisant usleep()"
 
-#: t_options.h:249
+#: t_options.h:254
 msgid "Let the graphics hardware emit a software interrupt and sleep"
 msgstr "Utiliser les interruptions"
 
-#: t_options.h:259
+#: t_options.h:264
 msgid "Synchronization with vertical refresh (swap intervals)"
 msgstr "Synchronisation de l'affichage avec le balayage vertical"
 
-#: t_options.h:260
+#: t_options.h:265
 msgid "Never synchronize with vertical refresh, ignore application's choice"
 msgstr ""
 "Ne jamais synchroniser avec le balayage vertical, ignorer le choix de "
 "l'application"
 
-#: t_options.h:261
+#: t_options.h:266
 msgid "Initial swap interval 0, obey application's choice"
 msgstr ""
 "Ne pas synchroniser avec le balayage vertical par défaut, mais obéir au "
 "choix de l'application"
 
-#: t_options.h:262
+#: t_options.h:267
 msgid "Initial swap interval 1, obey application's choice"
 msgstr ""
 "Synchroniser avec le balayage vertical par défaut, mais obéir au choix de "
 "l'application"
 
-#: t_options.h:263
+#: t_options.h:268
 msgid ""
 "Always synchronize with vertical refresh, application chooses the minimum "
 "swap interval"
@@ -245,49 +249,57 @@ msgstr ""
 "Toujours synchroniser avec le balayage vertical, l'application choisit "
 "l'intervalle minimal"
 
-#: t_options.h:271
+#: t_options.h:276
 msgid "Use HyperZ to boost performance"
 msgstr "Utiliser le HyperZ pour améliorer les performances"
 
-#: t_options.h:276
+#: t_options.h:281
 msgid "Number of texture units used"
 msgstr "Nombre d'unités de texture"
 
-#: t_options.h:281
+#: t_options.h:286
 msgid "Texture filtering quality vs. speed, AKA “brilinear” texture filtering"
 msgstr ""
 "Qualité/performance du filtrage trilinéaire de texture (filtrage brilinéaire)"
 
-#: t_options.h:289
+#: t_options.h:294
 msgid "Used types of texture memory"
 msgstr "Types de mémoire de texture"
 
-#: t_options.h:290
+#: t_options.h:295
 msgid "All available memory"
 msgstr "Utiliser toute la mémoire disponible"
 
-#: t_options.h:291
+#: t_options.h:296
 msgid "Only card memory (if available)"
 msgstr "Utiliser uniquement la mémoire graphique (si disponible)"
 
-#: t_options.h:292
+#: t_options.h:297
 msgid "Only GART (AGP/PCIE) memory (if available)"
 msgstr "Utiliser uniquement la mémoire GART (AGP/PCIE) (si disponible)"
 
-#: t_options.h:304
+#: t_options.h:309
 msgid "Features that are not hardware-accelerated"
 msgstr "Fonctionnalités ne bénéficiant pas d'une accélération matérielle"
 
-#: t_options.h:308
+#: t_options.h:313
 msgid "Enable extension GL_ARB_vertex_program"
 msgstr "Activer l'extension GL_ARB_vertex_program"
 
-#: t_options.h:318
+#: t_options.h:323
 msgid "Miscellaneous"
 msgstr ""
 
-#: t_options.h:322
+#: t_options.h:327
 msgid "Create all visuals with a depth buffer"
+msgstr ""
+
+#: t_options.h:337
+msgid "Initialization"
+msgstr ""
+
+#: t_options.h:341
+msgid "Define the graphic device to use if possible"
 msgstr ""
 
 #~ msgid ""

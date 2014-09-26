@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mesa DRI\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-01-13 22:30-0700\n"
+"POT-Creation-Date: 2014-09-25 22:29-0600\n"
 "PO-Revision-Date: 2006-09-18 10:56+0100\n"
 "Last-Translator: Daniel Nylander <po@danielnylander.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -62,174 +62,178 @@ msgid ""
 "Force a default GLSL version for shaders that lack an explicit #version line"
 msgstr ""
 
-#: t_options.h:115
+#: t_options.h:110
+msgid "Allow GLSL #extension directives in the middle of shaders"
+msgstr ""
+
+#: t_options.h:120
 msgid "Image Quality"
 msgstr "Bildkvalitet"
 
-#: t_options.h:128
+#: t_options.h:133
 msgid "Texture color depth"
 msgstr "Färgdjup för texturer"
 
-#: t_options.h:129
+#: t_options.h:134
 msgid "Prefer frame buffer color depth"
 msgstr "Föredra färgdjupet för framebuffer"
 
-#: t_options.h:130
+#: t_options.h:135
 msgid "Prefer 32 bits per texel"
 msgstr "Föredra 32 bitar per texel"
 
-#: t_options.h:131
+#: t_options.h:136
 msgid "Prefer 16 bits per texel"
 msgstr "Föredra 16 bitar per texel"
 
-#: t_options.h:132
+#: t_options.h:137
 msgid "Force 16 bits per texel"
 msgstr "Tvinga 16 bitar per texel"
 
-#: t_options.h:138
+#: t_options.h:143
 msgid "Initial maximum value for anisotropic texture filtering"
 msgstr "Initialt maximalt värde för anisotropisk texturfiltrering"
 
-#: t_options.h:143
+#: t_options.h:148
 msgid "Forbid negative texture LOD bias"
 msgstr "Förbjud negativ LOD-kompensation för texturer"
 
-#: t_options.h:148
+#: t_options.h:153
 msgid ""
 "Enable S3TC texture compression even if software support is not available"
 msgstr "Aktivera S3TC-texturkomprimering även om programvarustöd saknas"
 
-#: t_options.h:155
+#: t_options.h:160
 msgid "Initial color reduction method"
 msgstr "Initial färgminskningsmetod"
 
-#: t_options.h:156
+#: t_options.h:161
 msgid "Round colors"
 msgstr "Avrunda färger"
 
-#: t_options.h:157
+#: t_options.h:162
 msgid "Dither colors"
 msgstr "Utjämna färger"
 
-#: t_options.h:165
+#: t_options.h:170
 msgid "Color rounding method"
 msgstr "Färgavrundningsmetod"
 
-#: t_options.h:166
+#: t_options.h:171
 msgid "Round color components downward"
 msgstr "Avrunda färdkomponenter nedåt"
 
-#: t_options.h:167
+#: t_options.h:172
 msgid "Round to nearest color"
 msgstr "Avrunda till närmsta färg"
 
-#: t_options.h:176
+#: t_options.h:181
 msgid "Color dithering method"
 msgstr "Färgutjämningsmetod"
 
-#: t_options.h:177
+#: t_options.h:182
 msgid "Horizontal error diffusion"
 msgstr "Horisontell felspridning"
 
-#: t_options.h:178
+#: t_options.h:183
 msgid "Horizontal error diffusion, reset error at line start"
 msgstr "Horisontell felspridning, återställ fel vid radbörjan"
 
-#: t_options.h:179
+#: t_options.h:184
 msgid "Ordered 2D color dithering"
 msgstr "Ordnad 2D-färgutjämning"
 
-#: t_options.h:185
+#: t_options.h:190
 msgid "Floating point depth buffer"
 msgstr "Buffert för flytande punktdjup"
 
-#: t_options.h:190
+#: t_options.h:195
 msgid "A post-processing filter to cel-shade the output"
 msgstr ""
 
-#: t_options.h:195
+#: t_options.h:200
 msgid "A post-processing filter to remove the red channel"
 msgstr ""
 
-#: t_options.h:200
+#: t_options.h:205
 msgid "A post-processing filter to remove the green channel"
 msgstr ""
 
-#: t_options.h:205
-msgid "A post-processing filter to remove the blue channel"
-msgstr ""
-
 #: t_options.h:210
-msgid ""
-"Morphological anti-aliasing based on Jimenez\\' MLAA. 0 to disable, 8 for "
-"default quality"
+msgid "A post-processing filter to remove the blue channel"
 msgstr ""
 
 #: t_options.h:215
 msgid ""
 "Morphological anti-aliasing based on Jimenez\\' MLAA. 0 to disable, 8 for "
+"default quality"
+msgstr ""
+
+#: t_options.h:220
+msgid ""
+"Morphological anti-aliasing based on Jimenez\\' MLAA. 0 to disable, 8 for "
 "default quality. Color version, usable with 2d GL apps"
 msgstr ""
 
-#: t_options.h:225
+#: t_options.h:230
 msgid "Performance"
 msgstr "Prestanda"
 
-#: t_options.h:233
+#: t_options.h:238
 msgid "TCL mode (Transformation, Clipping, Lighting)"
 msgstr "TCL-läge (Transformation, Clipping, Lighting)"
 
-#: t_options.h:234
+#: t_options.h:239
 msgid "Use software TCL pipeline"
 msgstr "Använd programvaru-TCL-rörledning"
 
-#: t_options.h:235
+#: t_options.h:240
 msgid "Use hardware TCL as first TCL pipeline stage"
 msgstr "Använd maskinvaru-TCL som första TCL-rörledningssteg"
 
-#: t_options.h:236
+#: t_options.h:241
 msgid "Bypass the TCL pipeline"
 msgstr "Kringgå TCL-rörledningen"
 
-#: t_options.h:237
+#: t_options.h:242
 msgid ""
 "Bypass the TCL pipeline with state-based machine code generated on-the-fly"
 msgstr ""
 "Kringgå TCL-rörledningen med tillståndsbaserad maskinkod som direktgenereras"
 
-#: t_options.h:246
+#: t_options.h:251
 msgid "Method to limit rendering latency"
 msgstr "Metod för att begränsa renderingslatens"
 
-#: t_options.h:247
+#: t_options.h:252
 msgid "Busy waiting for the graphics hardware"
 msgstr "Upptagen med att vänta på grafikhårdvaran"
 
-#: t_options.h:248
+#: t_options.h:253
 msgid "Sleep for brief intervals while waiting for the graphics hardware"
 msgstr "Sov i korta intervall under väntan på grafikhårdvaran"
 
-#: t_options.h:249
+#: t_options.h:254
 msgid "Let the graphics hardware emit a software interrupt and sleep"
 msgstr "Låt grafikhårdvaran sända ut ett programvaruavbrott och sov"
 
-#: t_options.h:259
+#: t_options.h:264
 msgid "Synchronization with vertical refresh (swap intervals)"
 msgstr "Synkronisering med vertikal uppdatering (växlingsintervall)"
 
-#: t_options.h:260
+#: t_options.h:265
 msgid "Never synchronize with vertical refresh, ignore application's choice"
 msgstr "Synkronisera aldrig med vertikal uppdatering, ignorera programmets val"
 
-#: t_options.h:261
+#: t_options.h:266
 msgid "Initial swap interval 0, obey application's choice"
 msgstr "Initialt växlingsintervall 0, följ programmets val"
 
-#: t_options.h:262
+#: t_options.h:267
 msgid "Initial swap interval 1, obey application's choice"
 msgstr "Initialt växlingsintervall 1, följ programmets val"
 
-#: t_options.h:263
+#: t_options.h:268
 msgid ""
 "Always synchronize with vertical refresh, application chooses the minimum "
 "swap interval"
@@ -237,50 +241,58 @@ msgstr ""
 "Synkronisera alltid med vertikal uppdatering, programmet väljer den minsta "
 "växlingsintervallen"
 
-#: t_options.h:271
+#: t_options.h:276
 msgid "Use HyperZ to boost performance"
 msgstr "Använd HyperZ för att maximera prestandan"
 
-#: t_options.h:276
+#: t_options.h:281
 msgid "Number of texture units used"
 msgstr "Antal använda texturenheter"
 
-#: t_options.h:281
+#: t_options.h:286
 msgid "Texture filtering quality vs. speed, AKA “brilinear” texture filtering"
 msgstr ""
 "Texturfiltreringskvalitet mot hastighet, även kallad \"brilinear\"-"
 "texturfiltrering"
 
-#: t_options.h:289
+#: t_options.h:294
 msgid "Used types of texture memory"
 msgstr "Använda typer av texturminne"
 
-#: t_options.h:290
+#: t_options.h:295
 msgid "All available memory"
 msgstr "Allt tillgängligt minne"
 
-#: t_options.h:291
+#: t_options.h:296
 msgid "Only card memory (if available)"
 msgstr "Endast kortminne (om tillgängligt)"
 
-#: t_options.h:292
+#: t_options.h:297
 msgid "Only GART (AGP/PCIE) memory (if available)"
 msgstr "Endast GART-minne (AGP/PCIE) (om tillgängligt)"
 
-#: t_options.h:304
+#: t_options.h:309
 msgid "Features that are not hardware-accelerated"
 msgstr "Funktioner som inte är hårdvaruaccelererade"
 
-#: t_options.h:308
+#: t_options.h:313
 msgid "Enable extension GL_ARB_vertex_program"
 msgstr "Aktivera tillägget GL_ARB_vertex_program"
 
-#: t_options.h:318
+#: t_options.h:323
 msgid "Miscellaneous"
 msgstr ""
 
-#: t_options.h:322
+#: t_options.h:327
 msgid "Create all visuals with a depth buffer"
+msgstr ""
+
+#: t_options.h:337
+msgid "Initialization"
+msgstr ""
+
+#: t_options.h:341
+msgid "Define the graphic device to use if possible"
 msgstr ""
 
 #~ msgid "Support larger textures not guaranteed to fit into graphics memory"
