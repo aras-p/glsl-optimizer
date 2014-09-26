@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-09-25 22:29-0600\n"
-"PO-Revision-Date: 2014-01-15 10:34-0700\n"
+"PO-Revision-Date: 2014-09-26 14:22-0700\n"
 "Last-Translator: Alex Henrie <alexhenrie24@gmail.com>\n"
 "Language-Team: Spanish <es@li.org>\n"
 "Language: es\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 1.5.4\n"
+"X-Generator: Poedit 1.6.9\n"
 
 #: t_options.h:56
 msgid "Debugging"
@@ -72,7 +72,7 @@ msgstr ""
 
 #: t_options.h:110
 msgid "Allow GLSL #extension directives in the middle of shaders"
-msgstr ""
+msgstr "Permite directivas #extension GLSL en medio de los shaders"
 
 #: t_options.h:120
 msgid "Image Quality"
@@ -309,8 +309,8 @@ msgstr "Crear todos los visuales con buffer de profundidad"
 
 #: t_options.h:337
 msgid "Initialization"
-msgstr ""
+msgstr "Inicialización"
 
 #: t_options.h:341
 msgid "Define the graphic device to use if possible"
-msgstr ""
+msgstr "Define el dispositivo de gráficos que usar si es posible"
