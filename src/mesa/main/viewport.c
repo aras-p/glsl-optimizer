@@ -58,6 +58,12 @@ set_viewport_no_notify(struct gl_context *ctx, unsigned idx,
                 ctx->Const.ViewportBounds.Min, ctx->Const.ViewportBounds.Max);
    }
 
+   if (ctx->ViewportArray[idx].X == x &&
+       ctx->ViewportArray[idx].Width == width &&
+       ctx->ViewportArray[idx].Y == y &&
+       ctx->ViewportArray[idx].Height == height)
+      return;
+
    ctx->ViewportArray[idx].X = x;
    ctx->ViewportArray[idx].Width = width;
    ctx->ViewportArray[idx].Y = y;
