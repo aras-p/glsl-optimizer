@@ -155,6 +155,7 @@ calculate_attr_overrides(const struct brw_context *brw,
    memset(attr_overrides, 0, 16*sizeof(*attr_overrides));
 
    for (int attr = 0; attr < VARYING_SLOT_MAX; attr++) {
+      /* BRW_NEW_FRAGMENT_PROGRAM */
       enum glsl_interp_qualifier interp_qualifier =
          brw->fragment_program->InterpQualifier[attr];
       bool is_gl_Color = attr == VARYING_SLOT_COL0 || attr == VARYING_SLOT_COL1;
@@ -369,8 +370,8 @@ upload_sf_state(struct brw_context *brw)
 	 (1 << GEN6_SF_TRIFAN_PROVOKE_SHIFT);
    }
 
-   /* BRW_NEW_VUE_MAP_GEOM_OUT | _NEW_POINT | _NEW_LIGHT | _NEW_PROGRAM |
-    * CACHE_NEW_WM_PROG
+   /* BRW_NEW_VUE_MAP_GEOM_OUT | BRW_NEW_FRAGMENT_PROGRAM |
+    * _NEW_POINT | _NEW_LIGHT | _NEW_PROGRAM | CACHE_NEW_WM_PROG
     */
    uint32_t urb_entry_read_length;
    calculate_attr_overrides(brw, attr_overrides, &point_sprite_enables,

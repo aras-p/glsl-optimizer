@@ -57,8 +57,8 @@ upload_sbe(struct brw_context *brw)
    else
       dw1 |= GEN6_SF_POINT_SPRITE_UPPERLEFT;
 
-   /* BRW_NEW_VUE_MAP_GEOM_OUT | _NEW_POINT | _NEW_LIGHT | _NEW_PROGRAM |
-    * CACHE_NEW_WM_PROG
+   /* BRW_NEW_VUE_MAP_GEOM_OUT | BRW_NEW_FRAGMENT_PROGRAM |
+    * _NEW_POINT | _NEW_LIGHT | _NEW_PROGRAM | CACHE_NEW_WM_PROG
     */
    calculate_attr_overrides(brw, attr_overrides,
                             &point_sprite_enables,
