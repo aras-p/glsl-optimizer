@@ -442,6 +442,7 @@ private:
    ir_swizzle *matrix_elt(ir_variable *var, int col, int row);
 
    ir_expression *asin_expr(ir_variable *x);
+   void do_atan(ir_factory &body, const glsl_type *type, ir_variable *res, operand y_over_x);
 
    /**
     * Call function \param f with parameters specified as the linked
@@ -2684,11 +2685,7 @@ builtin_builder::_atan2(const glsl_type *type)
       ir_factory outer_then(&outer_if->then_instructions, mem_ctx);
 
       /* Then...call atan(y/x) */
-      ir_variable *y_over_x = outer_then.make_temp(glsl_type::float_type, "y_over_x");
-      outer_then.emit(assign(y_over_x, div(y, x)));
-      outer_then.emit(assign(r, mul(y_over_x, rsq(add(mul(y_over_x, y_over_x),
-                                                      imm(1.0f))))));
-      outer_then.emit(assign(r, asin_expr(r)));
+      do_atan(body, glsl_type::float_type, r, div(y, x));
 
       /*     ...and fix it up: */
       ir_if *inner_if = new(mem_ctx) ir_if(less(x, imm(0.0f)));
@@ -2711,17 +2708,65 @@ builtin_builder::_atan2(const glsl_type *type)
    return sig;
 }
 
+void
+builtin_builder::do_atan(ir_factory &body, const glsl_type *type, ir_variable *res, operand y_over_x)
+{
+   /*
+    * range-reduction, first step:
+    *
+    *      / y_over_x         if |y_over_x| <= 1.0;
+    * x = <
+    *      \ 1.0 / y_over_x   otherwise
+    */
+   ir_variable *x = body.make_temp(type, "atan_x");
+   body.emit(assign(x, div(min2(abs(y_over_x),
+                                imm(1.0f)),
+                           max2(abs(y_over_x),
+                                imm(1.0f)))));
+
+   /*
+    * approximate atan by evaluating polynomial:
+    *
+    * x   * 0.9999793128310355 - x^3  * 0.3326756418091246 +
+    * x^5 * 0.1938924977115610 - x^7  * 0.1173503194786851 +
+    * x^9 * 0.0536813784310406 - x^11 * 0.0121323213173444
+    */
+   ir_variable *tmp = body.make_temp(type, "atan_tmp");
+   body.emit(assign(tmp, mul(x, x)));
+   body.emit(assign(tmp, mul(add(mul(sub(mul(add(mul(sub(mul(add(mul(imm(-0.0121323213173444f),
+                                                                     tmp),
+                                                                 imm(0.0536813784310406f)),
+                                                             tmp),
+                                                         imm(0.1173503194786851f)),
+                                                     tmp),
+                                                 imm(0.1938924977115610f)),
+                                             tmp),
+                                         imm(0.3326756418091246f)),
+                                     tmp),
+                                 imm(0.9999793128310355f)),
+                             x)));
+
+   /* range-reduction fixup */
+   body.emit(assign(tmp, add(tmp,
+                             mul(b2f(greater(abs(y_over_x),
+                                          imm(1.0f, type->components()))),
+                                  add(mul(tmp,
+                                          imm(-2.0f)),
+                                      imm(M_PI_2f))))));
+
+   /* sign fixup */
+   body.emit(assign(res, mul(tmp, sign(y_over_x))));
+}
+
 ir_function_signature *
 builtin_builder::_atan(const glsl_type *type)
 {
    ir_variable *y_over_x = in_var(type, "y_over_x");
    MAKE_SIG(type, always_available, 1, y_over_x);
 
-   ir_variable *t = body.make_temp(type, "t");
-   body.emit(assign(t, mul(y_over_x, rsq(add(mul(y_over_x, y_over_x),
-                                             imm(1.0f))))));
-
-   body.emit(ret(asin_expr(t)));
+   ir_variable *tmp = body.make_temp(type, "tmp");
+   do_atan(body, type, tmp, y_over_x);
+   body.emit(ret(tmp));
 
    return sig;
 }
