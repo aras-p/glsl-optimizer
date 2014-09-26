@@ -525,7 +525,8 @@ fd3_emit_state(struct fd_context *ctx, struct fd_ringbuffer *ring,
 	}
 
 	if (dirty & FD_DIRTY_PROG) {
-		fd3_program_emit(ring, prog, key);
+		bool flat = ctx->rasterizer && ctx->rasterizer->flatshade;
+		fd3_program_emit(ring, prog, key, flat);
 	}
 
 	/* TODO we should not need this or fd_wfi() before emit_constants():

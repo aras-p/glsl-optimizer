@@ -173,7 +173,9 @@ find_output_regid(const struct ir3_shader_variant *so, ir3_semantic semantic)
 
 void
 fd3_program_emit(struct fd_ringbuffer *ring,
-		struct fd_program_stateobj *prog, struct ir3_shader_key key)
+		struct fd_program_stateobj *prog,
+		struct ir3_shader_key key,
+		boolean rasterflat)
 {
 	const struct ir3_shader_variant *vp, *fp;
 	const struct ir3_info *vsi, *fsi;
@@ -334,10 +336,6 @@ fd3_program_emit(struct fd_ringbuffer *ring,
 		OUT_RELOC(ring, fp->bo, 0, 0, 0);  /* SP_FS_OBJ_START_REG */
 	}
 
-	OUT_PKT0(ring, REG_A3XX_SP_FS_FLAT_SHAD_MODE_REG_0, 2);
-	OUT_RING(ring, 0x00000000);        /* SP_FS_FLAT_SHAD_MODE_REG_0 */
-	OUT_RING(ring, 0x00000000);        /* SP_FS_FLAT_SHAD_MODE_REG_1 */
-
 	OUT_PKT0(ring, REG_A3XX_SP_FS_OUTPUT_REG, 1);
 	if (fp->writes_pos) {
 		OUT_RING(ring, A3XX_SP_FS_OUTPUT_REG_DEPTH_ENABLE |
@@ -360,6 +358,30 @@ fd3_program_emit(struct fd_ringbuffer *ring,
 				COND(vp->writes_psize, A3XX_VPC_ATTR_PSIZE));
 		OUT_RING(ring, 0x00000000);
 	} else {
+		uint32_t vinterp[4] = {0}, flatshade[2] = {0};
+
+		/* figure out VARYING_INTERP / FLAT_SHAD register values: */
+		for (j = -1; (j = next_varying(fp, j)) < (int)fp->inputs_count; ) {
+			uint32_t interp = fp->inputs[j].interpolate;
+			if ((interp == TGSI_INTERPOLATE_CONSTANT) ||
+					((interp == TGSI_INTERPOLATE_COLOR) && rasterflat)) {
+				/* TODO might be cleaner to just +8 in SP_VS_VPC_DST_REG
+				 * instead.. rather than -8 everywhere else..
+				 */
+				uint32_t loc = fp->inputs[j].inloc - 8;
+
+				/* currently assuming varyings aligned to 4 (not
+				 * packed):
+				 */
+				debug_assert((loc % 4) == 0);
+
+				for (i = 0; i < 4; i++, loc++) {
+					vinterp[loc / 16] |= FLAT << ((loc % 16) * 2);
+					flatshade[loc / 32] |= 1 << (loc % 32);
+				}
+			}
+		}
+
 		OUT_PKT0(ring, REG_A3XX_VPC_ATTR, 2);
 		OUT_RING(ring, A3XX_VPC_ATTR_TOTALATTR(fp->total_in) |
 				A3XX_VPC_ATTR_THRDASSIGN(1) |
@@ -369,16 +391,20 @@ fd3_program_emit(struct fd_ringbuffer *ring,
 				A3XX_VPC_PACK_NUMNONPOSVSVAR(fp->total_in));
 
 		OUT_PKT0(ring, REG_A3XX_VPC_VARYING_INTERP_MODE(0), 4);
-		OUT_RING(ring, fp->shader->vinterp[0]);    /* VPC_VARYING_INTERP[0].MODE */
-		OUT_RING(ring, fp->shader->vinterp[1]);    /* VPC_VARYING_INTERP[1].MODE */
-		OUT_RING(ring, fp->shader->vinterp[2]);    /* VPC_VARYING_INTERP[2].MODE */
-		OUT_RING(ring, fp->shader->vinterp[3]);    /* VPC_VARYING_INTERP[3].MODE */
+		OUT_RING(ring, vinterp[0]);    /* VPC_VARYING_INTERP[0].MODE */
+		OUT_RING(ring, vinterp[1]);    /* VPC_VARYING_INTERP[1].MODE */
+		OUT_RING(ring, vinterp[2]);    /* VPC_VARYING_INTERP[2].MODE */
+		OUT_RING(ring, vinterp[3]);    /* VPC_VARYING_INTERP[3].MODE */
 
 		OUT_PKT0(ring, REG_A3XX_VPC_VARYING_PS_REPL_MODE(0), 4);
 		OUT_RING(ring, fp->shader->vpsrepl[0]);    /* VPC_VARYING_PS_REPL[0].MODE */
 		OUT_RING(ring, fp->shader->vpsrepl[1]);    /* VPC_VARYING_PS_REPL[1].MODE */
 		OUT_RING(ring, fp->shader->vpsrepl[2]);    /* VPC_VARYING_PS_REPL[2].MODE */
 		OUT_RING(ring, fp->shader->vpsrepl[3]);    /* VPC_VARYING_PS_REPL[3].MODE */
+
+		OUT_PKT0(ring, REG_A3XX_SP_FS_FLAT_SHAD_MODE_REG_0, 2);
+		OUT_RING(ring, flatshade[0]);        /* SP_FS_FLAT_SHAD_MODE_REG_0 */
+		OUT_RING(ring, flatshade[1]);        /* SP_FS_FLAT_SHAD_MODE_REG_1 */
 	}
 
 	OUT_PKT0(ring, REG_A3XX_VFD_VS_THREADING_THRESHOLD, 1);

@@ -183,7 +183,7 @@ emit_binning_workaround(struct fd_context *ctx)
 			A3XX_GRAS_SC_CONTROL_MSAA_SAMPLES(MSAA_ONE) |
 			A3XX_GRAS_SC_CONTROL_RASTER_MODE(1));
 
-	fd3_program_emit(ring, &ctx->solid_prog, key);
+	fd3_program_emit(ring, &ctx->solid_prog, key, false);
 	fd3_emit_vertex_bufs(ring, fd3_shader_variant(ctx->solid_prog.vp, key),
 			(struct fd3_vertex_buf[]) {{
 				.prsc = fd3_ctx->solid_vbuf,
@@ -408,7 +408,7 @@ fd3_emit_tile_gmem2mem(struct fd_context *ctx, struct fd_tile *tile)
 	OUT_RING(ring, 0);            /* VFD_INSTANCEID_OFFSET */
 	OUT_RING(ring, 0);            /* VFD_INDEX_OFFSET */
 
-	fd3_program_emit(ring, &ctx->solid_prog, key);
+	fd3_program_emit(ring, &ctx->solid_prog, key, false);
 	fd3_emit_vertex_bufs(ring, fd3_shader_variant(ctx->solid_prog.vp, key),
 			(struct fd3_vertex_buf[]) {{
 				.prsc = fd3_ctx->solid_vbuf,
@@ -552,7 +552,7 @@ fd3_emit_tile_mem2gmem(struct fd_context *ctx, struct fd_tile *tile)
 	OUT_RING(ring, 0);            /* VFD_INSTANCEID_OFFSET */
 	OUT_RING(ring, 0);            /* VFD_INDEX_OFFSET */
 
-	fd3_program_emit(ring, &ctx->blit_prog, key);
+	fd3_program_emit(ring, &ctx->blit_prog, key, false);
 	fd3_emit_vertex_bufs(ring, fd3_shader_variant(ctx->blit_prog.vp, key),
 			(struct fd3_vertex_buf[]) {{
 				.prsc = fd3_ctx->blit_texcoord_vbuf,

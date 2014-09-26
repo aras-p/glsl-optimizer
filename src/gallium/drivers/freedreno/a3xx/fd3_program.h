@@ -38,7 +38,9 @@ struct fd3_shader_stateobj {
 };
 
 void fd3_program_emit(struct fd_ringbuffer *ring,
-		struct fd_program_stateobj *prog, struct ir3_shader_key key);
+		struct fd_program_stateobj *prog,
+		struct ir3_shader_key key,
+		boolean rasterflat);
 
 void fd3_prog_init(struct pipe_context *pctx);
 

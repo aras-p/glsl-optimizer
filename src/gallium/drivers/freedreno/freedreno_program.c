@@ -67,7 +67,7 @@ static const char *solid_vp =
 static const char *blit_fp =
 	"FRAG                                        \n"
 	"PROPERTY FS_COLOR0_WRITES_ALL_CBUFS 1       \n"
-	"DCL IN[0], TEXCOORD                         \n"
+	"DCL IN[0], TEXCOORD[0], PERSPECTIVE         \n"
 	"DCL OUT[0], COLOR                           \n"
 	"DCL SAMP[0]                                 \n"
 	"  0: TEX OUT[0], IN[0], SAMP[0], 2D         \n"
@@ -77,7 +77,7 @@ static const char *blit_vp =
 	"VERT                                        \n"
 	"DCL IN[0]                                   \n"
 	"DCL IN[1]                                   \n"
-	"DCL OUT[0], TEXCOORD                        \n"
+	"DCL OUT[0], TEXCOORD[0]                     \n"
 	"DCL OUT[1], POSITION                        \n"
 	"  0: MOV OUT[0], IN[0]                      \n"
 	"  0: MOV OUT[1], IN[1]                      \n"

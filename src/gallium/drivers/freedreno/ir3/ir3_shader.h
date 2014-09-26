@@ -122,9 +122,20 @@ struct ir3_shader_variant {
 		uint8_t regid;
 		uint8_t compmask;
 		uint8_t ncomp;
-		/* in theory inloc of fs should match outloc of vs: */
+		/* In theory inloc of fs should match outloc of vs.  Or
+		 * rather the outloc of the vs is 8 plus the offset passed
+		 * to bary.f.  Presumably that +8 is to account for
+		 * gl_Position/gl_PointSize?
+		 *
+		 * NOTE inloc is currently aligned to 4 (we don't try
+		 * to pack varyings).  Changing this would likely break
+		 * assumptions in few places (like setting up of flat
+		 * shading in fd3_program) so be sure to check all the
+		 * spots where inloc is used.
+		 */
 		uint8_t inloc;
 		uint8_t bary;
+		uint8_t interpolate;
 	} inputs[16 + 2];  /* +POSITION +FACE */
 
 	unsigned total_in;       /* sum of inputs (scalar) */
@@ -159,9 +170,9 @@ struct ir3_shader {
 	struct ir3_shader_variant *variants;
 
 	/* so far, only used for blit_prog shader.. values for
-	 * VPC_VARYING_INTERP[i].MODE and VPC_VARYING_PS_REPL[i].MODE
+	 * VPC_VARYING_PS_REPL[i].MODE
 	 */
-	uint32_t vinterp[4], vpsrepl[4];
+	uint32_t vpsrepl[4];
 };
 
 

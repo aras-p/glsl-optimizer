@@ -2380,6 +2380,7 @@ decl_in(struct ir3_compile_context *ctx, struct tgsi_full_declaration *decl)
 		so->inputs[n].compmask = (1 << ncomp) - 1;
 		so->inputs[n].regid = r;
 		so->inputs[n].inloc = ctx->next_inloc;
+		so->inputs[n].interpolate = decl->Interp.Interpolate;
 
 		for (j = 0; j < ncomp; j++) {
 			struct ir3_instruction *instr = NULL;
