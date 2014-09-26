@@ -54,25 +54,6 @@ get_new_program_id(struct intel_screen *screen)
    return id;
 }
 
-static void brwBindProgram( struct gl_context *ctx,
-			    GLenum target,
-			    struct gl_program *prog )
-{
-   struct brw_context *brw = brw_context(ctx);
-
-   switch (target) {
-   case GL_VERTEX_PROGRAM_ARB:
-      brw->state.dirty.brw |= BRW_NEW_VERTEX_PROGRAM;
-      break;
-   case MESA_GEOMETRY_PROGRAM:
-      brw->state.dirty.brw |= BRW_NEW_GEOMETRY_PROGRAM;
-      break;
-   case GL_FRAGMENT_PROGRAM_ARB:
-      brw->state.dirty.brw |= BRW_NEW_FRAGMENT_PROGRAM;
-      break;
-   }
-}
-
 static struct gl_program *brwNewProgram( struct gl_context *ctx,
 				      GLenum target,
 				      GLuint id )
@@ -250,7 +231,6 @@ void brwInitFragProgFuncs( struct dd_function_table *functions )
 {
    assert(functions->ProgramStringNotify == _tnl_program_string);
 
-   functions->BindProgram = brwBindProgram;
    functions->NewProgram = brwNewProgram;
    functions->DeleteProgram = brwDeleteProgram;
    functions->IsProgramNative = brwIsProgramNative;
