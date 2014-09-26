@@ -343,6 +343,7 @@ fd3_emit_vertex_bufs(struct fd_ringbuffer *ring,
 			enum pipe_format pfmt = vbufs[i].format;
 			enum a3xx_vtx_fmt fmt = fd3_pipe2vtx(pfmt);
 			bool switchnext = (i != last);
+			bool isint = util_format_is_pure_integer(pfmt);
 			uint32_t fs = util_format_get_blocksize(pfmt);
 
 			debug_assert(fmt != ~0);
@@ -363,6 +364,7 @@ fd3_emit_vertex_bufs(struct fd_ringbuffer *ring,
 					A3XX_VFD_DECODE_INSTR_REGID(vp->inputs[i].regid) |
 					A3XX_VFD_DECODE_INSTR_SHIFTCNT(fs) |
 					A3XX_VFD_DECODE_INSTR_LASTCOMPVALID |
+					COND(isint, A3XX_VFD_DECODE_INSTR_INT) |
 					COND(switchnext, A3XX_VFD_DECODE_INSTR_SWITCHNEXT));
 
 			total_in += vp->inputs[i].ncomp;
