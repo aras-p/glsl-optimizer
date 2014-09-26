@@ -26,14 +26,14 @@ msgstr ""
 "Project-Id-Version: Mesa 10.1.0-devel\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-09-25 22:29-0600\n"
-"PO-Revision-Date: 2014-01-15 10:37-0700\n"
+"PO-Revision-Date: 2014-09-26 14:43-0700\n"
 "Last-Translator: Alex Henrie <alexhenrie24@gmail.com>\n"
 "Language-Team: Catalan <ca@li.org>\n"
 "Language: ca\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.5.4\n"
+"X-Generator: Poedit 1.6.9\n"
 
 #: t_options.h:56
 msgid "Debugging"
@@ -72,8 +72,8 @@ msgstr "Deshabilita la barreja de font dual"
 #: t_options.h:95
 msgid "Disable backslash-based line continuations in GLSL source"
 msgstr ""
-"Deshabilitar les continuacions de línia basades en barra invertida en la "
-"font GLSL"
+"Deshabilita les continuacions de línia basades en barra invertida en la font "
+"GLSL"
 
 #: t_options.h:100
 msgid "Disable GL_ARB_shader_bit_encoding"
@@ -88,7 +88,7 @@ msgstr ""
 
 #: t_options.h:110
 msgid "Allow GLSL #extension directives in the middle of shaders"
-msgstr ""
+msgstr "Permet les directives #extension GLSL en el mitjà dels shaders"
 
 #: t_options.h:120
 msgid "Image Quality"
@@ -128,7 +128,7 @@ msgstr ""
 msgid ""
 "Enable S3TC texture compression even if software support is not available"
 msgstr ""
-"Habilitar la compressió de textures S3TC encara que el suport de programari "
+"Habilita la compressió de textures S3TC encara que el suport de programari "
 "no estigui disponible"
 
 #: t_options.h:160
@@ -325,8 +325,8 @@ msgstr "Crea tots els visuals amb buffer de profunditat"
 
 #: t_options.h:337
 msgid "Initialization"
-msgstr ""
+msgstr "Inicialització"
 
 #: t_options.h:341
 msgid "Define the graphic device to use if possible"
-msgstr ""
+msgstr "Defineix el dispositiu de gràfics que usar si és possible"
