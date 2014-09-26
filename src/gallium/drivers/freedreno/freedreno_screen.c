@@ -184,6 +184,10 @@ fd_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_TEXTURE_BARRIER:
 	case PIPE_CAP_TEXTURE_MIRROR_CLAMP:
 	case PIPE_CAP_SM3:
+	case PIPE_CAP_CUBE_MAP_ARRAY:
+	case PIPE_CAP_TEXTURE_BUFFER_OBJECTS:
+	case PIPE_CAP_TEXTURE_BUFFER_OFFSET_ALIGNMENT:
+	case PIPE_CAP_MAX_TEXTURE_BUFFER_SIZE:
 		return 0;
 
 	case PIPE_CAP_PRIMITIVE_RESTART:
@@ -288,11 +292,9 @@ fd_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 		return 10;
 	case PIPE_CAP_UMA:
 		return 1;
-
-	default:
-		DBG("unknown param %d", param);
-		return 0;
 	}
+	debug_printf("unknown param %d\n", param);
+	return 0;
 }
 
 static float
@@ -313,10 +315,9 @@ fd_screen_get_paramf(struct pipe_screen *pscreen, enum pipe_capf param)
 	case PIPE_CAPF_GUARD_BAND_RIGHT:
 	case PIPE_CAPF_GUARD_BAND_BOTTOM:
 		return 0.0f;
-	default:
-		DBG("unknown paramf %d", param);
-		return 0;
 	}
+	debug_printf("unknown paramf %d\n", param);
+	return 0;
 }
 
 static int
@@ -366,6 +367,7 @@ fd_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader,
 	case PIPE_SHADER_CAP_INDIRECT_CONST_ADDR:
 		return 1;
 	case PIPE_SHADER_CAP_SUBROUTINES:
+	case PIPE_SHADER_CAP_DOUBLES:
 		return 0;
 	case PIPE_SHADER_CAP_TGSI_SQRT_SUPPORTED:
 		return 1;
@@ -379,10 +381,8 @@ fd_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader,
 		return 16;
 	case PIPE_SHADER_CAP_PREFERRED_IR:
 		return PIPE_SHADER_IR_TGSI;
-	default:
-		DBG("unknown shader param %d", param);
-		return 0;
 	}
+	debug_printf("unknown shader param %d\n", param);
 	return 0;
 }
 
