@@ -388,7 +388,7 @@ void brw_init_state( struct brw_context *brw )
    brw_upload_initial_gpu_state(brw);
 
    brw->state.dirty.mesa = ~0;
-   brw->state.dirty.brw = ~0;
+   brw->state.dirty.brw = ~0ull;
 
    /* Make sure that brw->state.dirty.brw has enough bits to hold all possible
     * dirty flags.
@@ -575,7 +575,7 @@ void brw_upload_state(struct brw_context *brw)
    if (0) {
       /* Always re-emit all state. */
       state->mesa |= ~0;
-      state->brw |= ~0;
+      state->brw |= ~0ull;
       state->cache |= ~0;
    }
 
