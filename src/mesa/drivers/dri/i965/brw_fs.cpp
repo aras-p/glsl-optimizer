@@ -3400,7 +3400,9 @@ fs_visitor::calculate_register_pressure()
    invalidate_live_intervals();
    calculate_live_intervals();
 
-   unsigned num_instructions = instructions.length();
+   unsigned num_instructions = 0;
+   foreach_block(block, cfg)
+      num_instructions += block->instructions.length();
 
    regs_live_at_ip = rzalloc_array(mem_ctx, int, num_instructions);
 
