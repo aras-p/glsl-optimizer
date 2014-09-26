@@ -2329,98 +2329,44 @@ fs_visitor::compute_to_mrf()
  * instructions to FS_OPCODE_REP_FB_WRITE.
  */
 void
-fs_visitor::try_rep_send()
+fs_visitor::emit_repclear_shader()
 {
-   int i, count;
-   fs_inst *start = NULL;
-   bblock_t *mov_block;
+   int base_mrf = 1;
+   int color_mrf = base_mrf + 2;
 
-   /* From the Ivybridge PRM, Volume 4 Part 1, section 3.9.11.2
-    * ("Message Descriptor - Render Target Write"):
-    *
-    * "SIMD16_REPDATA message must not be used in SIMD8 pixel-shaders."
-    */
-   if (dispatch_width != 16)
-      return;
+   fs_inst *mov = emit(MOV(vec4(brw_message_reg(color_mrf)),
+                           fs_reg(UNIFORM, 0, BRW_REGISTER_TYPE_F)));
+   mov->force_writemask_all = true;
+   mov->force_uncompressed = true;
 
-   /* The constant color write message can't handle anything but the 4 color
-    * values.  We could do MRT, but the loops below would need to understand
-    * handling the header being enabled or disabled on different messages.  It
-    * also requires that the render target be tiled, which might not be the
-    * case for some EGLImage paths or if we some day do rendering to PBOs.
-    */
-   if (prog->OutputsWritten & BITFIELD64_BIT(FRAG_RESULT_DEPTH) ||
-       payload.aa_dest_stencil_reg ||
-       payload.dest_depth_reg ||
-       dual_src_output.file != BAD_FILE)
-      return;
-
-   /* The optimization is implemented as one pass through the instruction
-    * list.  We keep track of the most recent block of MOVs into sequential
-    * MRFs from single, sequential float registers (ie uniforms).  Then when
-    * we find an FB_WRITE opcode, we see if the payload registers match the
-    * destination registers in our block of MOVs.
-    */
-   count = 0;
-   foreach_block_and_inst_safe(block, fs_inst, inst, cfg) {
-      if (count == 0) {
-         start = inst;
-         mov_block = block;
-      }
-      if (inst->opcode == BRW_OPCODE_MOV &&
-	  inst->dst.file == MRF &&
-          inst->dst.reg == start->dst.reg + 2 * count &&
-          inst->src[0].file == HW_REG &&
-          inst->src[0].reg_offset == start->src[0].reg_offset + count) {
-         if (count == 0) {
-            start = inst;
-            mov_block = block;
-         }
-         count++;
-      }
-
-      if (inst->opcode == FS_OPCODE_FB_WRITE &&
-          count == 4 &&
-          (inst->base_mrf == start->dst.reg ||
-           (inst->base_mrf + 2 == start->dst.reg && inst->header_present))) {
-         fs_inst *mov = MOV(start->dst, start->src[0]);
-
-         /* Make a MOV that moves the four floats into the replicated write
-          * payload.  Since we're running at the very end of code generation
-          * we can use hw registers and generate the stride and offsets we
-          * need for this MOV.  We use the first of the eight registers
-          * allocated for the SIMD16 payload for the four floats.
-          */
-         mov->dst.fixed_hw_reg =
-            brw_vec4_reg(BRW_MESSAGE_REGISTER_FILE,
-                         start->dst.reg, 0);
-         mov->dst.file = HW_REG;
-         mov->dst.type = mov->dst.fixed_hw_reg.type;
-
-         mov->src[0].fixed_hw_reg =
-            brw_vec4_grf(mov->src[0].fixed_hw_reg.nr, 0);
-         mov->src[0].file = HW_REG;
-         mov->src[0].type = mov->src[0].fixed_hw_reg.type;
-         mov->force_writemask_all = true;
-         mov->dst.type = BRW_REGISTER_TYPE_F;
-
-         /* Replace the four MOVs with the new vec4 MOV. */
-         start->insert_before(mov_block, mov);
-         for (i = 0; i < 4; i++)
-            ((fs_inst *) mov->next)->remove(mov_block);
-
-         /* Finally, adjust the message length and set the opcode to
-          * REP_FB_WRITE for the send, so that the generator will use the
-          * replicated data mesage type.  Then reset count so we'll start
-          * looking for a new block in case we're in a MRT shader.
-          */
-         inst->opcode = FS_OPCODE_REP_FB_WRITE;
-         inst->mlen -= 7;
-         count = 0;
+   fs_inst *write;
+   if (key->nr_color_regions == 1) {
+      write = emit(FS_OPCODE_REP_FB_WRITE);
+      write->saturate = key->clamp_fragment_color;
+      write->base_mrf = color_mrf;
+      write->target = 0;
+      write->header_present = false;
+      write->mlen = 1;
+   } else {
+      for (int i = 0; i < key->nr_color_regions; ++i) {
+         write = emit(FS_OPCODE_REP_FB_WRITE);
+         write->saturate = key->clamp_fragment_color;
+         write->base_mrf = base_mrf;
+         write->target = i;
+         write->header_present = true;
+         write->mlen = 3;
       }
    }
+   write->eot = true;
 
-   return;
+   calculate_cfg();
+
+   assign_constant_locations();
+   assign_curb_setup();
+
+   /* Now that we have the uniform assigned, go ahead and force it to a vec4. */
+   assert(mov->src[0].file == HW_REG);
+   mov->src[0] = brw_vec4_grf(mov->src[0].fixed_hw_reg.nr, 0);
 }
 
 /**
@@ -3199,6 +3145,9 @@ fs_visitor::run()
 
    if (0) {
       emit_dummy_fs();
+   } else if (brw->use_rep_send && dispatch_width == 16) {
+      emit_repclear_shader();
+      allocated_without_spills = true;
    } else {
       if (INTEL_DEBUG & DEBUG_SHADER_TIME)
          emit_shader_time_begin();
@@ -3378,9 +3327,6 @@ fs_visitor::run()
    if (last_scratch > 0) {
       prog_data->total_scratch = brw_get_scratch_size(last_scratch);
    }
-
-   if (brw->use_rep_send)
-      try_rep_send();
 
    if (stage == MESA_SHADER_FRAGMENT) {
       brw_wm_prog_data *prog_data = (brw_wm_prog_data*) this->prog_data;

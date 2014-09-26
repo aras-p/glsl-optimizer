@@ -358,12 +358,11 @@ public:
    void lower_uniform_pull_constant_loads();
    bool lower_load_payload();
 
-   void try_rep_send();
-
    void push_force_uncompressed();
    void pop_force_uncompressed();
 
    void emit_dummy_fs();
+   void emit_repclear_shader();
    fs_reg *emit_fragcoord_interpolation(ir_variable *ir);
    fs_inst *emit_linterp(const fs_reg &attr, const fs_reg &interp,
                          glsl_interp_qualifier interpolation_mode,
