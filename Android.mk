@@ -81,6 +81,7 @@ SUBDIRS := \
 	src/mapi \
 	src/glsl \
 	src/mesa \
+	src/util \
 	src/egl/main
 
 ifeq ($(strip $(MESA_BUILD_CLASSIC)),true)

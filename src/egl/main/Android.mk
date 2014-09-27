@@ -143,6 +143,7 @@ LOCAL_STATIC_LIBRARIES := \
 	libmesa_st_egl \
 	$(gallium_DRIVERS) \
 	libmesa_st_mesa \
+	libmesa_util \
 	libmesa_glsl \
 	libmesa_glsl_utils \
 	libmesa_gallium \

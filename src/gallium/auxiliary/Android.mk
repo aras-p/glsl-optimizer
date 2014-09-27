@@ -30,7 +30,9 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := $(C_SOURCES)
 
-LOCAL_C_INCLUDES := $(GALLIUM_TOP)/auxiliary/util
+LOCAL_C_INCLUDES := \
+	$(GALLIUM_TOP)/auxiliary/util \
+	$(MESA_TOP)/src
 
 LOCAL_MODULE := libmesa_gallium
 
