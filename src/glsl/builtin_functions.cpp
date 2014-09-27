@@ -1882,8 +1882,8 @@ builtin_builder::create_builtins()
                 NULL);
 
    add_function("texture2DProjLod",
-                _texture(ir_txl, v110_lod, glsl_type::vec4_type,  glsl_type::sampler2D_type, glsl_type::vec3_type, TEX_PROJECT),
-                _texture(ir_txl, v110_lod, glsl_type::vec4_type,  glsl_type::sampler2D_type, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txl, lod_exists_in_stage, glsl_type::vec4_type,  glsl_type::sampler2D_type, glsl_type::vec3_type, TEX_PROJECT),
+                _texture(ir_txl, lod_exists_in_stage, glsl_type::vec4_type,  glsl_type::sampler2D_type, glsl_type::vec4_type, TEX_PROJECT),
                 NULL);
 
    add_function("texture3D",
@@ -1910,7 +1910,7 @@ builtin_builder::create_builtins()
                 NULL);
 
    add_function("textureCubeLod",
-                _texture(ir_txl, v110_lod, glsl_type::vec4_type,  glsl_type::samplerCube_type, glsl_type::vec3_type),
+                _texture(ir_txl, lod_exists_in_stage, glsl_type::vec4_type,  glsl_type::samplerCube_type, glsl_type::vec3_type),
                 NULL);
 
    add_function("texture2DRect",
