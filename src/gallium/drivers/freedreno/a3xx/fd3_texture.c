@@ -109,6 +109,7 @@ fd3_sampler_state_create(struct pipe_context *pctx,
 
 	if (cso->min_mip_filter != PIPE_TEX_MIPFILTER_NONE) {
 		so->texsamp1 =
+				A3XX_TEX_SAMP_1_LOD_BIAS(cso->lod_bias) |
 				A3XX_TEX_SAMP_1_MIN_LOD(cso->min_lod) |
 				A3XX_TEX_SAMP_1_MAX_LOD(cso->max_lod);
 	} else {
