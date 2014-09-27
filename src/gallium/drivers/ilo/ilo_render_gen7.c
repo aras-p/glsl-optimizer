@@ -826,7 +826,8 @@ gen7_rectlist_wm_multisample(struct ilo_render *r,
 
 void
 ilo_render_emit_rectlist_commands_gen7(struct ilo_render *r,
-                                       const struct ilo_blitter *blitter)
+                                       const struct ilo_blitter *blitter,
+                                       const struct ilo_render_rectlist_session *session)
 {
    ILO_DEV_ASSERT(r->dev, 7, 7.5);
 
@@ -834,8 +835,9 @@ ilo_render_emit_rectlist_commands_gen7(struct ilo_render *r,
 
    gen6_state_base_address(r->builder, true);
 
-   gen6_3DSTATE_VERTEX_BUFFERS(r->builder,
-         &blitter->ve, &blitter->vb);
+   gen6_user_3DSTATE_VERTEX_BUFFERS(r->builder,
+         session->vb_start, session->vb_end,
+         sizeof(blitter->vertices[0]));
 
    gen6_3DSTATE_VERTEX_ELEMENTS(r->builder,
          &blitter->ve, false, false);

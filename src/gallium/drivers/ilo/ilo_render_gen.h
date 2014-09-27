@@ -157,6 +157,11 @@ struct ilo_render_draw_session {
    int num_surfaces[PIPE_SHADER_TYPES];
 };
 
+struct ilo_render_rectlist_session {
+   uint32_t vb_start;
+   uint32_t vb_end;
+};
+
 int
 ilo_render_get_draw_commands_len_gen6(const struct ilo_render *render,
                                       const struct ilo_state_vector *vec);
@@ -214,22 +219,25 @@ ilo_render_get_rectlist_commands_len(const struct ilo_render *render,
 
 void
 ilo_render_emit_rectlist_commands_gen6(struct ilo_render *r,
-                                       const struct ilo_blitter *blitter);
+                                       const struct ilo_blitter *blitter,
+                                       const struct ilo_render_rectlist_session *session);
 
 void
 ilo_render_emit_rectlist_commands_gen7(struct ilo_render *r,
-                                       const struct ilo_blitter *blitter);
+                                       const struct ilo_blitter *blitter,
+                                       const struct ilo_render_rectlist_session *session);
 
 static inline void
 ilo_render_emit_rectlist_commands(struct ilo_render *render,
-                                  const struct ilo_blitter *blitter)
+                                  const struct ilo_blitter *blitter,
+                                  const struct ilo_render_rectlist_session *session)
 {
    const unsigned batch_used = ilo_builder_batch_used(render->builder);
 
    if (ilo_dev_gen(render->dev) >= ILO_GEN(7))
-      ilo_render_emit_rectlist_commands_gen7(render, blitter);
+      ilo_render_emit_rectlist_commands_gen7(render, blitter, session);
    else
-      ilo_render_emit_rectlist_commands_gen6(render, blitter);
+      ilo_render_emit_rectlist_commands_gen6(render, blitter, session);
 
    assert(ilo_builder_batch_used(render->builder) <= batch_used +
          ilo_render_get_rectlist_commands_len(render, blitter));
@@ -250,7 +258,8 @@ ilo_render_get_rectlist_dynamic_states_len(const struct ilo_render *render,
 
 void
 ilo_render_emit_rectlist_dynamic_states(struct ilo_render *render,
-                                        const struct ilo_blitter *blitter);
+                                        const struct ilo_blitter *blitter,
+                                        struct ilo_render_rectlist_session *session);
 
 int
 ilo_render_get_draw_surface_states_len(const struct ilo_render *render,

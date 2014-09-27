@@ -408,6 +408,36 @@ gen6_3DSTATE_VERTEX_BUFFERS(struct ilo_builder *builder,
    }
 }
 
+/* the user vertex buffer must be uploaded with gen6_user_vertex_buffer() */
+static inline void
+gen6_user_3DSTATE_VERTEX_BUFFERS(struct ilo_builder *builder,
+                                 uint32_t vb_begin, uint32_t vb_end,
+                                 uint32_t stride)
+{
+   const struct ilo_builder_writer *bat =
+      &builder->writers[ILO_BUILDER_WRITER_BATCH];
+   const uint8_t cmd_len = 1 + 4;
+   uint32_t *dw;
+   unsigned pos;
+
+   ILO_DEV_ASSERT(builder->dev, 6, 7.5);
+
+   pos = ilo_builder_batch_pointer(builder, cmd_len, &dw);
+
+   dw[0] = GEN6_RENDER_CMD(3D, 3DSTATE_VERTEX_BUFFERS) | (cmd_len - 2);
+   dw++;
+   pos++;
+
+   /* VERTEX_BUFFER_STATE */
+   dw[0] = 0 << GEN6_VB_STATE_DW0_INDEX__SHIFT |
+           GEN6_VB_STATE_DW0_ACCESS_VERTEXDATA |
+           stride << GEN6_VB_STATE_DW0_PITCH__SHIFT;
+   dw[3] = 0;
+
+   ilo_builder_batch_reloc(builder, pos + 1, bat->bo, vb_begin, 0);
+   ilo_builder_batch_reloc(builder, pos + 2, bat->bo, vb_end, 0);
+}
+
 static inline void
 ve_init_cso_with_components(const struct ilo_dev_info *dev,
                             int comp0, int comp1, int comp2, int comp3,
@@ -1617,6 +1647,21 @@ gen6_push_constant_buffer(struct ilo_builder *builder,
       *pcb = buf;
 
    return state_offset;
+}
+
+static inline uint32_t
+gen6_user_vertex_buffer(struct ilo_builder *builder,
+                        int size, const void *vertices)
+{
+   const int state_align = 8;
+   const int state_len = size / 4;
+
+   ILO_DEV_ASSERT(builder->dev, 6, 7.5);
+
+   assert(size % 4 == 0);
+
+   return ilo_builder_dynamic_write(builder, ILO_BUILDER_ITEM_BLOB,
+         state_align, state_len, vertices);
 }
 
 #endif /* ILO_BUILDER_3D_TOP_H */

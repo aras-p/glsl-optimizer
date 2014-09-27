@@ -395,16 +395,22 @@ ilo_render_get_rectlist_dynamic_states_len(const struct ilo_render *render,
 {
    ILO_DEV_ASSERT(render->dev, 6, 7.5);
 
-   return 64;
+   return 96;
 }
 
 void
 ilo_render_emit_rectlist_dynamic_states(struct ilo_render *render,
-                                        const struct ilo_blitter *blitter)
+                                        const struct ilo_blitter *blitter,
+                                        struct ilo_render_rectlist_session *session)
 {
    const unsigned dynamic_used = ilo_builder_dynamic_used(render->builder);
 
    ILO_DEV_ASSERT(render->dev, 6, 7.5);
+
+   /* both are inclusive */
+   session->vb_start = gen6_user_vertex_buffer(render->builder,
+         sizeof(blitter->vertices), (const void *) blitter->vertices);
+   session->vb_end = session->vb_start + sizeof(blitter->vertices) - 1;
 
    if (blitter->uses & ILO_BLITTER_USE_DSA) {
       render->state.DEPTH_STENCIL_STATE =

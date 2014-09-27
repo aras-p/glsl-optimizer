@@ -963,7 +963,8 @@ ilo_render_get_rectlist_commands_len_gen6(const struct ilo_render *render,
 
 void
 ilo_render_emit_rectlist_commands_gen6(struct ilo_render *r,
-                                       const struct ilo_blitter *blitter)
+                                       const struct ilo_blitter *blitter,
+                                       const struct ilo_render_rectlist_session *session)
 {
    ILO_DEV_ASSERT(r->dev, 6, 6);
 
@@ -973,8 +974,9 @@ ilo_render_emit_rectlist_commands_gen6(struct ilo_render *r,
 
    gen6_state_base_address(r->builder, true);
 
-   gen6_3DSTATE_VERTEX_BUFFERS(r->builder,
-         &blitter->ve, &blitter->vb);
+   gen6_user_3DSTATE_VERTEX_BUFFERS(r->builder,
+         session->vb_start, session->vb_end,
+         sizeof(blitter->vertices[0]));
 
    gen6_3DSTATE_VERTEX_ELEMENTS(r->builder,
          &blitter->ve, false, false);

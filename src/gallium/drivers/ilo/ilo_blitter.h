@@ -62,13 +62,8 @@ struct ilo_blitter {
 
    bool initialized;
 
-   struct {
-      struct pipe_resource *res;
-      unsigned offset, size;
-   } buffer;
-
+   float vertices[3][2];
    struct ilo_ve_state ve;
-   struct ilo_vb_state vb;
    struct pipe_draw_info draw;
 
    struct ilo_viewport_cso viewport;

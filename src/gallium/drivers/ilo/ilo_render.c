@@ -367,10 +367,13 @@ void
 ilo_render_emit_rectlist(struct ilo_render *render,
                          const struct ilo_blitter *blitter)
 {
+   struct ilo_render_rectlist_session session;
+
    ILO_DEV_ASSERT(render->dev, 6, 7.5);
 
-   ilo_render_emit_rectlist_dynamic_states(render, blitter);
-   ilo_render_emit_rectlist_commands(render, blitter);
+   memset(&session, 0, sizeof(session));
+   ilo_render_emit_rectlist_dynamic_states(render, blitter, &session);
+   ilo_render_emit_rectlist_commands(render, blitter, &session);
 }
 
 int

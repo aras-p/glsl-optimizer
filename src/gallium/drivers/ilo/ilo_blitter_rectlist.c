@@ -41,32 +41,13 @@
 static bool
 ilo_blitter_set_invariants(struct ilo_blitter *blitter)
 {
-   struct pipe_screen *screen = blitter->ilo->base.screen;
-   struct pipe_resource templ;
    struct pipe_vertex_element velems[2];
    struct pipe_viewport_state vp;
 
    if (blitter->initialized)
       return true;
 
-   blitter->buffer.size = 4096;
-
-   /* allocate the vertex buffer */
-   memset(&templ, 0, sizeof(templ));
-   templ.target = PIPE_BUFFER;
-   templ.width0 = blitter->buffer.size;
-   templ.usage = PIPE_USAGE_STREAM;
-   templ.bind = PIPE_BIND_VERTEX_BUFFER;
-   blitter->buffer.res = screen->resource_create(screen, &templ);
-   if (!blitter->buffer.res)
-      return false;
-
-   /* do not increase reference count */
-   blitter->vb.states[0].buffer = blitter->buffer.res;
-
    /* only vertex X and Y */
-   blitter->vb.states[0].stride = 2 * sizeof(float);
-   blitter->vb.enabled_mask = 0x1;
    memset(&velems, 0, sizeof(velems));
    velems[1].src_format = PIPE_FORMAT_R32G32_FLOAT;
    ilo_gpe_init_ve(blitter->ilo->dev, 2, velems, &blitter->ve);
@@ -120,10 +101,6 @@ ilo_blitter_set_rectlist(struct ilo_blitter *blitter,
                          unsigned x, unsigned y,
                          unsigned width, unsigned height)
 {
-   unsigned usage = PIPE_TRANSFER_WRITE | PIPE_TRANSFER_UNSYNCHRONIZED;
-   float vertices[3][2];
-   struct pipe_box box;
-
    /*
     * From the Sandy Bridge PRM, volume 2 part 1, page 11:
     *
@@ -132,28 +109,12 @@ ilo_blitter_set_rectlist(struct ilo_blitter *blitter,
     *      by the definition of a rectangle. V0=LowerRight, V1=LowerLeft,
     *      V2=UpperLeft. Implied V3 = V0- V1+V2."
     */
-   vertices[0][0] = (float) (x + width);
-   vertices[0][1] = (float) (y + height);
-   vertices[1][0] = (float) x;
-   vertices[1][1] = (float) (y + height);
-   vertices[2][0] = (float) x;
-   vertices[2][1] = (float) y;
-
-   /* buffer is full */
-   if (blitter->buffer.offset + sizeof(vertices) > blitter->buffer.size) {
-      if (!ilo_buffer_rename_bo(ilo_buffer(blitter->buffer.res)))
-         usage &= ~PIPE_TRANSFER_UNSYNCHRONIZED;
-
-      blitter->buffer.offset = 0;
-   }
-
-   u_box_1d(blitter->buffer.offset, sizeof(vertices), &box);
-
-   blitter->ilo->base.transfer_inline_write(&blitter->ilo->base,
-         blitter->buffer.res, 0, usage, &box, vertices, 0, 0);
-
-   blitter->vb.states[0].buffer_offset = blitter->buffer.offset;
-   blitter->buffer.offset += sizeof(vertices);
+   blitter->vertices[0][0] = (float) (x + width);
+   blitter->vertices[0][1] = (float) (y + height);
+   blitter->vertices[1][0] = (float) x;
+   blitter->vertices[1][1] = (float) (y + height);
+   blitter->vertices[2][0] = (float) x;
+   blitter->vertices[2][1] = (float) y;
 }
 
 static void

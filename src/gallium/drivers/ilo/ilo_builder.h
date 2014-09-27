@@ -283,7 +283,8 @@ ilo_builder_dynamic_pointer(struct ilo_builder *builder,
    struct ilo_builder_writer *writer = &builder->writers[which];
 
    /* all states are at least aligned to 32-bytes */
-   assert(alignment % 32 == 0);
+   if (item != ILO_BUILDER_ITEM_BLOB)
+      assert(alignment % 32 == 0);
 
    *dw = (uint32_t *) ((char *) writer->ptr + offset);
 
