@@ -32,6 +32,8 @@ LOCAL_PATH := $(call my-dir)
 #     MESA_FILES
 #     X86_FILES
 include $(LOCAL_PATH)/Makefile.sources
+SRCDIR :=
+BUILDDIR :=
 
 include $(CLEAR_VARS)
 
