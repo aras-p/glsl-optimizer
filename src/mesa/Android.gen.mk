@@ -115,3 +115,12 @@ GET_HASH_GEN := $(LOCAL_PATH)/main/get_hash_generator.py
 $(intermediates)/main/get_hash.h: $(glapi)/gl_and_es_API.xml \
                $(LOCAL_PATH)/main/get_hash_params.py $(GET_HASH_GEN)
 	@$(MESA_PYTHON2) $(GET_HASH_GEN) -f $< > $@
+
+FORMAT_INFO := $(LOCAL_PATH)/main/format_info.py
+format_info_deps := \
+	$(LOCAL_PATH)/main/formats.csv \
+	$(LOCAL_PATH)/main/format_parser.py \
+	$(FORMAT_INFO)
+
+$(intermediates)/main/format_info.c: $(format_info_deps)
+	@$(MESA_PYTHON2) $(FORMAT_INFO) $< > $@
