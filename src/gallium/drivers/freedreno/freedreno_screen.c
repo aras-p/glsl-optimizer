@@ -179,7 +179,6 @@ fd_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_TEXTURE_MULTISAMPLE:
 	case PIPE_CAP_TEXTURE_BARRIER:
 	case PIPE_CAP_TEXTURE_MIRROR_CLAMP:
-	case PIPE_CAP_SM3:
 	case PIPE_CAP_CUBE_MAP_ARRAY:
 	case PIPE_CAP_TEXTURE_BUFFER_OBJECTS:
 	case PIPE_CAP_TEXTURE_BUFFER_OFFSET_ALIGNMENT:
@@ -190,6 +189,7 @@ fd_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_COMPUTE:
 		return 0;
 
+	case PIPE_CAP_SM3:
 	case PIPE_CAP_PRIMITIVE_RESTART:
 		return (screen->gpu_id >= 300) ? 1 : 0;
 

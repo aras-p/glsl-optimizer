@@ -97,6 +97,8 @@ struct ir3_register {
 	int wrmask;
 };
 
+#define IR3_INSTR_SRCS 10
+
 struct ir3_instruction {
 	struct ir3_block *block;
 	int category;
@@ -156,7 +158,7 @@ struct ir3_instruction {
 	} flags;
 	int repeat;
 	unsigned regs_count;
-	struct ir3_register *regs[5];
+	struct ir3_register *regs[1 + IR3_INSTR_SRCS];
 	union {
 		struct {
 			char inv;
@@ -444,7 +446,7 @@ static inline void regmask_set(regmask_t *regmask, struct ir3_register *reg)
 {
 	unsigned idx = regmask_idx(reg);
 	unsigned i;
-	for (i = 0; i < 4; i++, idx++)
+	for (i = 0; i < IR3_INSTR_SRCS; i++, idx++)
 		if (reg->wrmask & (1 << i))
 			(*regmask)[idx / 8] |= 1 << (idx % 8);
 }
@@ -457,7 +459,7 @@ static inline void regmask_set_if_not(regmask_t *a,
 {
 	unsigned idx = regmask_idx(reg);
 	unsigned i;
-	for (i = 0; i < 4; i++, idx++)
+	for (i = 0; i < IR3_INSTR_SRCS; i++, idx++)
 		if (reg->wrmask & (1 << i))
 			if (!((*b)[idx / 8] & (1 << (idx % 8))))
 				(*a)[idx / 8] |= 1 << (idx % 8);
@@ -468,7 +470,7 @@ static inline unsigned regmask_get(regmask_t *regmask,
 {
 	unsigned idx = regmask_idx(reg);
 	unsigned i;
-	for (i = 0; i < 4; i++, idx++)
+	for (i = 0; i < IR3_INSTR_SRCS; i++, idx++)
 		if (reg->wrmask & (1 << i))
 			if ((*regmask)[idx / 8] & (1 << (idx % 8)))
 				return true;

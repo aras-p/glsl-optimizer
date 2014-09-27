@@ -1152,6 +1152,7 @@ fill_tex_info(struct ir3_compile_context *ctx,
 		info->flags |= IR3_INSTR_P;
 		/* fallthrough */
 	case TGSI_OPCODE_TEX:
+	case TGSI_OPCODE_TXD:
 		info->args = 1;
 		break;
 	}
@@ -1270,7 +1271,7 @@ trans_samp(const struct instr_translater *t,
 	struct ir3_instruction *instr, *collect;
 	struct ir3_register *reg;
 	struct tgsi_dst_register *dst = &inst->Dst[0].Register;
-	struct tgsi_src_register *orig, *coord, *samp, *offset;
+	struct tgsi_src_register *orig, *coord, *samp, *offset, *dpdx, *dpdy;
 	struct tgsi_src_register zero;
 	const struct target_info *tgt = &tex_targets[inst->Texture.Texture];
 	struct tex_info tinf;
@@ -1281,12 +1282,25 @@ trans_samp(const struct instr_translater *t,
 	coord = get_tex_coord(ctx, inst, &tinf);
 	get_immediate(ctx, &zero, 0);
 
-	if (inst->Instruction.Opcode == TGSI_OPCODE_TXB2) {
+	switch (inst->Instruction.Opcode) {
+	case TGSI_OPCODE_TXB2:
 		orig = &inst->Src[1].Register;
 		samp = &inst->Src[2].Register;
-	} else {
+		break;
+	case TGSI_OPCODE_TXD:
+		orig = &inst->Src[0].Register;
+		dpdx = &inst->Src[1].Register;
+		dpdy = &inst->Src[2].Register;
+		samp = &inst->Src[3].Register;
+		if (is_rel_or_const(dpdx))
+				dpdx = get_unconst(ctx, dpdx);
+		if (is_rel_or_const(dpdy))
+				dpdy = get_unconst(ctx, dpdy);
+		break;
+	default:
 		orig = &inst->Src[0].Register;
 		samp = &inst->Src[1].Register;
+		break;
 	}
 	if (tinf.args > 1 && is_rel_or_const(orig))
 		orig = get_unconst(ctx, orig);
@@ -1311,7 +1325,37 @@ trans_samp(const struct instr_translater *t,
 	instr->flags |= tinf.flags;
 
 	add_dst_reg_wrmask(ctx, instr, dst, 0, dst->WriteMask);
-	add_src_reg_wrmask(ctx, instr, coord, coord->SwizzleX, tinf.src_wrmask);
+
+	reg = ir3_reg_create(instr, 0, IR3_REG_SSA);
+
+	collect = ir3_instr_create(ctx->block, -1, OPC_META_FI);
+	ir3_reg_create(collect, 0, 0);
+	for (i = 0; i < 4; i++)
+		if (tinf.src_wrmask & (1 << i))
+			ssa_src(ctx, ir3_reg_create(collect, 0, IR3_REG_SSA),
+					coord, src_swiz(coord, i));
+		else if (tinf.src_wrmask & ~((1 << i) - 1))
+			ir3_reg_create(collect, 0, 0);
+
+	/* Attach derivatives onto the end of the fan-in. Derivatives start after
+	 * the 4th argument, so make sure that fi is padded up to 4 first.
+	 */
+	if (inst->Instruction.Opcode == TGSI_OPCODE_TXD) {
+		while (collect->regs_count < 5)
+			ssa_src(ctx, ir3_reg_create(collect, 0, IR3_REG_SSA), &zero, 0);
+		for (i = 0; i < tgt->dims; i++)
+			ssa_src(ctx, ir3_reg_create(collect, 0, IR3_REG_SSA), dpdx, i);
+		if (tgt->dims < 2)
+			ssa_src(ctx, ir3_reg_create(collect, 0, IR3_REG_SSA), &zero, 0);
+		for (i = 0; i < tgt->dims; i++)
+			ssa_src(ctx, ir3_reg_create(collect, 0, IR3_REG_SSA), dpdy, i);
+		if (tgt->dims < 2)
+			ssa_src(ctx, ir3_reg_create(collect, 0, IR3_REG_SSA), &zero, 0);
+		tinf.src_wrmask |= ((1 << (2 * MAX2(tgt->dims, 2))) - 1) << 4;
+	}
+
+	reg->instr = collect;
+	reg->wrmask = tinf.src_wrmask;
 
 	/* The second argument contains the offsets, followed by the lod/bias
 	 * argument. This is constructed more manually due to the dynamic nature.
@@ -2485,6 +2529,7 @@ static const struct instr_translater translaters[TGSI_OPCODE_LAST] = {
 	INSTR(TXB,          trans_samp, .opc = OPC_SAMB, .arg = TGSI_OPCODE_TXB),
 	INSTR(TXB2,         trans_samp, .opc = OPC_SAMB, .arg = TGSI_OPCODE_TXB2),
 	INSTR(TXL,          trans_samp, .opc = OPC_SAML, .arg = TGSI_OPCODE_TXL),
+	INSTR(TXD,          trans_samp, .opc = OPC_SAMGQ, .arg = TGSI_OPCODE_TXD),
 	INSTR(TXQ,          trans_txq),
 	INSTR(DDX,          trans_deriv, .opc = OPC_DSX),
 	INSTR(DDY,          trans_deriv, .opc = OPC_DSY),
