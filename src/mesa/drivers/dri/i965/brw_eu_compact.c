@@ -1201,28 +1201,24 @@ update_uip_jip(struct brw_context *brw, brw_inst *insn,
     *    - bytes on Gen8+; and
     *    - compacted instructions on Gen6+.
     */
-   int32_t jip = brw_inst_jip(brw, insn);
-   int32_t jip_compacted = jip / (brw->gen >= 8 ? sizeof(brw_compact_inst) : 1);
-   int32_t jip_uncompacted = jip / (brw->gen >= 8 ? sizeof(brw_inst) : 2);
+   int shift = brw->gen >= 8 ? 3 : 0;
+
+   int32_t jip_compacted = brw_inst_jip(brw, insn) >> shift;
    jip_compacted -= compacted_between(this_old_ip,
-                                      this_old_ip + jip_uncompacted,
+                                      this_old_ip + (jip_compacted / 2),
                                       compacted_counts);
-   brw_inst_set_jip(brw, insn,
-                    jip_compacted * (brw->gen >= 8 ? sizeof(brw_compact_inst) : 1));
+   brw_inst_set_jip(brw, insn, jip_compacted << shift);
 
    if (brw_inst_opcode(brw, insn) == BRW_OPCODE_ENDIF ||
        brw_inst_opcode(brw, insn) == BRW_OPCODE_WHILE ||
        (brw_inst_opcode(brw, insn) == BRW_OPCODE_ELSE && brw->gen <= 7))
       return;
 
-   int32_t uip = brw_inst_uip(brw, insn);
-   int32_t uip_compacted = uip / (brw->gen >= 8 ? sizeof(brw_compact_inst) : 1);
-   int32_t uip_uncompacted = uip / (brw->gen >= 8 ? sizeof(brw_inst) : 2);
+   int32_t uip_compacted = brw_inst_uip(brw, insn) >> shift;
    uip_compacted -= compacted_between(this_old_ip,
-                                      this_old_ip + uip_uncompacted,
+                                      this_old_ip + (uip_compacted / 2),
                                       compacted_counts);
-   brw_inst_set_uip(brw, insn,
-                    uip_compacted * (brw->gen >= 8 ? sizeof(brw_compact_inst) : 1));
+   brw_inst_set_uip(brw, insn, uip_compacted << shift);
 }
 
 static void
@@ -1235,18 +1231,17 @@ update_gen4_jump_count(struct brw_context *brw, brw_inst *insn,
     *    - uncompacted instructions on G45; and
     *    - compacted instructions on Gen5.
     */
-   int jump_count = brw_inst_gen4_jump_count(brw, insn);
-   int jump_count_compacted = jump_count * (brw->is_g4x ? 2 : 1);
-   int jump_count_uncompacted = jump_count / (brw->is_g4x ? 1 : 2);
+   int shift = brw->is_g4x ? 1 : 0;
 
-   int target_old_ip = this_old_ip + jump_count_uncompacted;
+   int jump_count_compacted = brw_inst_gen4_jump_count(brw, insn) << shift;
+
+   int target_old_ip = this_old_ip + (jump_count_compacted / 2);
 
    int this_compacted_count = compacted_counts[this_old_ip];
    int target_compacted_count = compacted_counts[target_old_ip];
 
    jump_count_compacted -= (target_compacted_count - this_compacted_count);
-   brw_inst_set_gen4_jump_count(brw, insn, jump_count_compacted /
-                                           (brw->is_g4x ? 2 : 1));
+   brw_inst_set_gen4_jump_count(brw, insn, jump_count_compacted >> shift);
 }
 
 void
@@ -1421,9 +1416,8 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
 
             /* Jump Count is in units of compacted instructions on Gen6. */
             int jump_count_compacted = brw_inst_gen6_jump_count(brw, insn);
-            int jump_count_uncompacted = jump_count_compacted / 2;
 
-            target_old_ip = this_old_ip + jump_count_uncompacted;
+            target_old_ip = this_old_ip + (jump_count_compacted / 2);
             target_compacted_count = compacted_counts[target_old_ip];
             jump_count_compacted -= (target_compacted_count - this_compacted_count);
             brw_inst_set_gen6_jump_count(brw, insn, jump_count_compacted);
@@ -1444,15 +1438,13 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
              brw_inst_dst_da_reg_nr(brw, insn) == BRW_ARF_IP) {
             assert(brw_inst_src1_reg_file(brw, insn) == BRW_IMMEDIATE_VALUE);
 
-            int jump = brw_inst_imm_d(brw, insn);
-            int jump_compacted = jump / sizeof(brw_compact_inst);
-            int jump_uncompacted = jump / sizeof(brw_inst);
+            int shift = 3;
+            int jump_compacted = brw_inst_imm_d(brw, insn) >> shift;
 
-            target_old_ip = this_old_ip + jump_uncompacted;
+            target_old_ip = this_old_ip + (jump_compacted / 2);
             target_compacted_count = compacted_counts[target_old_ip];
             jump_compacted -= (target_compacted_count - this_compacted_count);
-            brw_inst_set_imm_ud(brw, insn, jump_compacted *
-                                           sizeof(brw_compact_inst));
+            brw_inst_set_imm_ud(brw, insn, jump_compacted << shift);
          }
          break;
       }
