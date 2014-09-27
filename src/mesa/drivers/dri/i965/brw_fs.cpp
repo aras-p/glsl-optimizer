@@ -2334,6 +2334,17 @@ fs_visitor::opt_algebraic()
             }
          }
          break;
+      case SHADER_OPCODE_RCP: {
+         fs_inst *prev = (fs_inst *)inst->prev;
+         if (prev->opcode == SHADER_OPCODE_SQRT) {
+            if (inst->src[0].equals(prev->dst)) {
+               inst->opcode = SHADER_OPCODE_RSQ;
+               inst->src[0] = prev->src[0];
+               progress = true;
+            }
+         }
+         break;
+      }
       default:
 	 break;
       }
