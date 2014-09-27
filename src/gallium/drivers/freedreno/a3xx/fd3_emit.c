@@ -194,11 +194,10 @@ emit_textures(struct fd_context *ctx, struct fd_ringbuffer *ring,
 					(BORDERCOLOR_SIZE * tex_off[sb]) +
 					(BORDERCOLOR_SIZE * i));
 
-			/* TODO not quite sure if bcolor is pre or post swizzle: */
-			for (j = 0; j < 4; j++) {
-				bcolor[j] =
-					util_float_to_half(sampler->base.border_color.f[j]);
-			}
+			bcolor[0] = util_float_to_half(sampler->base.border_color.f[2]);
+			bcolor[1] = util_float_to_half(sampler->base.border_color.f[1]);
+			bcolor[2] = util_float_to_half(sampler->base.border_color.f[0]);
+			bcolor[3] = util_float_to_half(sampler->base.border_color.f[3]);
 
 			OUT_RING(ring, sampler->texsamp0);
 			OUT_RING(ring, sampler->texsamp1);
