@@ -1907,10 +1907,10 @@ static void
 print_array(const char *name, GLint index, const struct gl_client_array *array)
 {
    if (index >= 0)
-      printf("  %s[%d]: ", name, index);
+      fprintf(stderr, "  %s[%d]: ", name, index);
    else
-      printf("  %s: ", name);
-   printf("Ptr=%p, Type=0x%x, Size=%d, ElemSize=%u, Stride=%d, Buffer=%u(Size %lu)\n",
+      fprintf(stderr, "  %s: ", name);
+   fprintf(stderr, "Ptr=%p, Type=0x%x, Size=%d, ElemSize=%u, Stride=%d, Buffer=%u(Size %lu)\n",
 	  array->Ptr, array->Type, array->Size,
 	  array->_ElementSize, array->StrideB,
 	  array->BufferObj->Name, (unsigned long) array->BufferObj->Size);
