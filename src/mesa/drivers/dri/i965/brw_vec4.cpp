@@ -1790,8 +1790,8 @@ vec4_visitor::run()
       OPT(dead_code_eliminate);
       OPT(dead_control_flow_eliminate, this);
       OPT(opt_copy_propagation);
-      OPT(opt_algebraic);
       OPT(opt_cse);
+      OPT(opt_algebraic);
       OPT(opt_register_coalesce);
    } while (progress);
 
