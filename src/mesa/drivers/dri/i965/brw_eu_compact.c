@@ -1378,7 +1378,6 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
       brw_inst *insn = store + offset;
       int this_old_ip = old_ip[offset / sizeof(brw_compact_inst)];
       int this_compacted_count = compacted_counts[this_old_ip];
-      int target_old_ip, target_compacted_count;
 
       switch (brw_inst_opcode(brw, insn)) {
       case BRW_OPCODE_BREAK:
@@ -1417,8 +1416,8 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
             /* Jump Count is in units of compacted instructions on Gen6. */
             int jump_count_compacted = brw_inst_gen6_jump_count(brw, insn);
 
-            target_old_ip = this_old_ip + (jump_count_compacted / 2);
-            target_compacted_count = compacted_counts[target_old_ip];
+            int target_old_ip = this_old_ip + (jump_count_compacted / 2);
+            int target_compacted_count = compacted_counts[target_old_ip];
             jump_count_compacted -= (target_compacted_count - this_compacted_count);
             brw_inst_set_gen6_jump_count(brw, insn, jump_count_compacted);
          } else {
@@ -1441,8 +1440,8 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
             int shift = 3;
             int jump_compacted = brw_inst_imm_d(brw, insn) >> shift;
 
-            target_old_ip = this_old_ip + (jump_compacted / 2);
-            target_compacted_count = compacted_counts[target_old_ip];
+            int target_old_ip = this_old_ip + (jump_compacted / 2);
+            int target_compacted_count = compacted_counts[target_old_ip];
             jump_compacted -= (target_compacted_count - this_compacted_count);
             brw_inst_set_imm_ud(brw, insn, jump_compacted << shift);
          }
