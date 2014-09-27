@@ -1267,14 +1267,19 @@ trans_samp(const struct instr_translater *t,
 		struct ir3_compile_context *ctx,
 		struct tgsi_full_instruction *inst)
 {
-	struct ir3_instruction *instr;
+	struct ir3_instruction *instr, *collect;
+	struct ir3_register *reg;
 	struct tgsi_dst_register *dst = &inst->Dst[0].Register;
-	struct tgsi_src_register *orig, *coord, *samp;
+	struct tgsi_src_register *orig, *coord, *samp, *offset;
+	struct tgsi_src_register zero;
+	const struct target_info *tgt = &tex_targets[inst->Texture.Texture];
 	struct tex_info tinf;
+	int i;
 
 	memset(&tinf, 0, sizeof(tinf));
 	fill_tex_info(ctx, inst, &tinf);
 	coord = get_tex_coord(ctx, inst, &tinf);
+	get_immediate(ctx, &zero, 0);
 
 	if (inst->Instruction.Opcode == TGSI_OPCODE_TXB2) {
 		orig = &inst->Src[1].Register;
@@ -1286,6 +1291,19 @@ trans_samp(const struct instr_translater *t,
 	if (tinf.args > 1 && is_rel_or_const(orig))
 		orig = get_unconst(ctx, orig);
 
+	if (inst->Texture.NumOffsets) {
+		struct tgsi_texture_offset *tex_offset = &inst->TexOffsets[0];
+		struct tgsi_src_register offset_src = {0};
+
+		offset_src.File = tex_offset->File;
+		offset_src.Index = tex_offset->Index;
+		offset_src.SwizzleX = tex_offset->SwizzleX;
+		offset_src.SwizzleY = tex_offset->SwizzleY;
+		offset_src.SwizzleZ = tex_offset->SwizzleZ;
+		offset = get_unconst(ctx, &offset_src);
+		tinf.flags |= IR3_INSTR_O;
+	}
+
 	instr = instr_create(ctx, 5, t->opc);
 	instr->cat5.type = get_ftype(ctx);
 	instr->cat5.samp = samp->Index;
@@ -1295,10 +1313,33 @@ trans_samp(const struct instr_translater *t,
 	add_dst_reg_wrmask(ctx, instr, dst, 0, dst->WriteMask);
 	add_src_reg_wrmask(ctx, instr, coord, coord->SwizzleX, tinf.src_wrmask);
 
+	/* The second argument contains the offsets, followed by the lod/bias
+	 * argument. This is constructed more manually due to the dynamic nature.
+	 */
+	if (inst->Texture.NumOffsets == 0 && tinf.args == 1)
+		return;
+
+	reg = ir3_reg_create(instr, 0, IR3_REG_SSA);
+
+	collect = ir3_instr_create(ctx->block, -1, OPC_META_FI);
+	ir3_reg_create(collect, 0, 0);
+
+	if (inst->Texture.NumOffsets) {
+		for (i = 0; i < tgt->dims; i++)
+			ssa_src(ctx, ir3_reg_create(collect, 0, IR3_REG_SSA),
+					offset, i);
+		if (tgt->dims < 2)
+			ssa_src(ctx, ir3_reg_create(collect, 0, IR3_REG_SSA), &zero, 0);
+	}
 	if (inst->Instruction.Opcode == TGSI_OPCODE_TXB2)
-		add_src_reg_wrmask(ctx, instr, orig, orig->SwizzleX, 0x1);
+		ssa_src(ctx, ir3_reg_create(collect, 0, IR3_REG_SSA),
+				orig, orig->SwizzleX);
 	else if (tinf.args > 1)
-		add_src_reg_wrmask(ctx, instr, orig, orig->SwizzleW, 0x1);
+		ssa_src(ctx, ir3_reg_create(collect, 0, IR3_REG_SSA),
+				orig, orig->SwizzleW);
+
+	reg->instr = collect;
+	reg->wrmask = (1 << (collect->regs_count - 1)) - 1;
 }
 
 static void
