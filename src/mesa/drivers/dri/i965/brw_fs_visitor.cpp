@@ -654,8 +654,29 @@ fs_visitor::visit(ir_expression *ir)
       struct brw_reg acc = retype(brw_acc_reg(dispatch_width),
                                   this->result.type);
 
-      emit(MUL(acc, op[0], op[1]));
+      fs_inst *mul = emit(MUL(acc, op[0], op[1]));
       emit(MACH(this->result, op[0], op[1]));
+
+      /* Until Gen8, integer multiplies read 32-bits from one source, and
+       * 16-bits from the other, and relying on the MACH instruction to
+       * generate the high bits of the result.
+       *
+       * On Gen8, the multiply instruction does a full 32x32-bit multiply,
+       * but in order to do a 64x64-bit multiply we have to simulate the
+       * previous behavior and then use a MACH instruction.
+       *
+       * FINISHME: Don't use source modifiers on src1.
+       */
+      if (brw->gen >= 8) {
+         assert(mul->src[1].type == BRW_REGISTER_TYPE_D ||
+                mul->src[1].type == BRW_REGISTER_TYPE_UD);
+         if (mul->src[1].type == BRW_REGISTER_TYPE_D) {
+            mul->src[1].type = BRW_REGISTER_TYPE_W;
+         } else {
+            mul->src[1].type = BRW_REGISTER_TYPE_UW;
+         }
+      }
+
       break;
    }
    case ir_binop_div:
