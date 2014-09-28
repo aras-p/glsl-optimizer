@@ -432,7 +432,7 @@ CodeEmitterGM107::emitNEG2(int pos, const ValueRef &a, const ValueRef &b)
 void
 CodeEmitterGM107::emitFMZ(int pos, int len)
 {
-   emitField(pos, len, /*XXX: insn->dnz << 1 | */ insn->ftz);
+   emitField(pos, len, insn->dnz << 1 | insn->ftz);
 }
 
 void
