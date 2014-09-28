@@ -201,6 +201,9 @@ enum quniform_contents {
          */
         QUNIFORM_TEXTURE_CONFIG_P1,
 
+        /** A reference to a texture config parameter 2 cubemap stride uniform */
+        QUNIFORM_TEXTURE_CONFIG_P2,
+
         QUNIFORM_TEXRECT_SCALE_X,
         QUNIFORM_TEXRECT_SCALE_Y,
 

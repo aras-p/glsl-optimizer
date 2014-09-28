@@ -45,7 +45,8 @@ vc4_resource_transfer_unmap(struct pipe_context *pctx,
 
         if (trans->map) {
                 if (ptrans->usage & PIPE_TRANSFER_WRITE) {
-                        vc4_store_tiled_image(rsc->bo->map + slice->offset,
+                        vc4_store_tiled_image(rsc->bo->map + slice->offset +
+                                              ptrans->box.z * rsc->cube_map_stride,
                                               slice->stride,
                                               trans->map, ptrans->stride,
                                               slice->tiling, rsc->cpp,
@@ -137,7 +138,8 @@ vc4_resource_transfer_map(struct pipe_context *pctx,
                 trans->map = malloc(ptrans->stride * ptrans->box.height);
                 if (usage & PIPE_TRANSFER_READ) {
                         vc4_load_tiled_image(trans->map, ptrans->stride,
-                                             buf + slice->offset,
+                                             buf + slice->offset +
+                                             box->z * rsc->cube_map_stride,
                                              slice->stride,
                                              slice->tiling, rsc->cpp,
                                              &ptrans->box);
@@ -152,7 +154,7 @@ vc4_resource_transfer_map(struct pipe_context *pctx,
                 return buf + slice->offset +
                         box->y / util_format_get_blockheight(format) * ptrans->stride +
                         box->x / util_format_get_blockwidth(format) * rsc->cpp +
-                        box->z * slice->size;
+                        box->z * rsc->cube_map_stride;
         }
 
 
@@ -196,7 +198,6 @@ vc4_setup_slices(struct vc4_resource *rsc)
         struct pipe_resource *prsc = &rsc->base.b;
         uint32_t width = prsc->width0;
         uint32_t height = prsc->height0;
-        uint32_t depth = prsc->depth0;
         uint32_t offset = 0;
         uint32_t utile_w = vc4_utile_width(rsc->cpp);
         uint32_t utile_h = vc4_utile_height(rsc->cpp);
@@ -228,10 +229,7 @@ vc4_setup_slices(struct vc4_resource *rsc)
                 slice->stride = level_width * rsc->cpp;
                 slice->size = level_height * slice->stride;
 
-                /* Note, since we have cubes but no 3D, depth is invariant
-                 * with miplevel.
-                 */
-                offset += slice->size * depth;
+                offset += slice->size;
         }
 
         /* The texture base pointer that has to point to level 0 doesn't have
@@ -243,6 +241,14 @@ vc4_setup_slices(struct vc4_resource *rsc)
         if (page_align_offset) {
                 for (int i = 0; i <= prsc->last_level; i++)
                         rsc->slices[i].offset += page_align_offset;
+        }
+
+        /* Cube map faces appear as whole miptrees at a page-aligned offset
+         * from the first face's miptree.
+         */
+        if (prsc->target == PIPE_TEXTURE_CUBE) {
+                rsc->cube_map_stride = align(rsc->slices[0].offset +
+                                             rsc->slices[0].size, 4096);
         }
 }
 
@@ -306,7 +312,8 @@ vc4_resource_create(struct pipe_screen *pscreen,
 
         rsc->bo = vc4_bo_alloc(vc4_screen(pscreen),
                                rsc->slices[0].offset +
-                               rsc->slices[0].size * prsc->depth0,
+                               rsc->slices[0].size +
+                               rsc->cube_map_stride * (prsc->array_size - 1),
                                "resource");
         if (!rsc->bo)
                 goto fail;

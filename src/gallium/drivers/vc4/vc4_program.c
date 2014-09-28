@@ -489,6 +489,7 @@ tgsi_to_qir_tex(struct vc4_compile *c,
 
         struct qreg s = src[0 * 4 + 0];
         struct qreg t = src[0 * 4 + 1];
+        struct qreg r = src[0 * 4 + 2];
         uint32_t unit = tgsi_inst->Src[1].Register.Index;
 
         struct qreg proj = c->undef;
@@ -497,6 +498,14 @@ tgsi_to_qir_tex(struct vc4_compile *c,
                 s = qir_FMUL(c, s, proj);
                 t = qir_FMUL(c, t, proj);
         }
+
+        struct qreg texture_u[] = {
+                add_uniform(c, QUNIFORM_TEXTURE_CONFIG_P0, unit),
+                add_uniform(c, QUNIFORM_TEXTURE_CONFIG_P1, unit),
+                add_uniform(c, QUNIFORM_CONSTANT, 0),
+                add_uniform(c, QUNIFORM_CONSTANT, 0),
+        };
+        uint32_t next_texture_u = 0;
 
         /* There is no native support for GL texture rectangle coordinates, so
          * we have to rescale from ([0, width], [0, height]) to ([0, 1], [0,
@@ -512,18 +521,25 @@ tgsi_to_qir_tex(struct vc4_compile *c,
                              get_temp_for_uniform(c,
                                                   QUNIFORM_TEXRECT_SCALE_Y,
                                                   unit));
+        } else if (tgsi_inst->Texture.Texture == TGSI_TEXTURE_CUBE ||
+                   tgsi_inst->Texture.Texture == TGSI_TEXTURE_SHADOWCUBE) {
+                struct qreg ma = qir_FMAXABS(c, qir_FMAXABS(c, s, t), r);
+                struct qreg rcp_ma = qir_RCP(c, ma);
+                s = qir_FMUL(c, s, rcp_ma);
+                t = qir_FMUL(c, t, rcp_ma);
+                r = qir_FMUL(c, r, rcp_ma);
+
+                texture_u[2] = add_uniform(c, QUNIFORM_TEXTURE_CONFIG_P2, unit);
+
+                qir_TEX_R(c, r, texture_u[next_texture_u++]);
         }
 
-        qir_TEX_T(c, t, add_uniform(c, QUNIFORM_TEXTURE_CONFIG_P0, unit));
+        qir_TEX_T(c, t, texture_u[next_texture_u++]);
 
-        struct qreg sampler_p1 = add_uniform(c, QUNIFORM_TEXTURE_CONFIG_P1,
-                                             unit);
-        if (tgsi_inst->Instruction.Opcode == TGSI_OPCODE_TXB) {
-                qir_TEX_B(c, src[0 * 4 + 3], sampler_p1);
-                qir_TEX_S(c, s, add_uniform(c, QUNIFORM_CONSTANT, 0));
-        } else {
-                qir_TEX_S(c, s, sampler_p1);
-        }
+        if (tgsi_inst->Instruction.Opcode == TGSI_OPCODE_TXB)
+                qir_TEX_B(c, src[0 * 4 + 3], texture_u[next_texture_u++]);
+
+        qir_TEX_S(c, s, texture_u[next_texture_u++]);
 
         c->num_texture_samples++;
         struct qreg r4 = qir_TEX_RESULT(c);
@@ -1890,8 +1906,11 @@ write_texture_p0(struct vc4_context *vc4,
         struct pipe_sampler_view *texture = texstate->textures[unit];
         struct vc4_resource *rsc = vc4_resource(texture->texture);
 
+        bool is_cube = texture->target == PIPE_TEXTURE_CUBE;
+
         cl_reloc(vc4, &vc4->uniforms, rsc->bo,
                  rsc->slices[0].offset | texture->u.tex.last_level |
+                 is_cube << 9 |
                  ((rsc->vc4_format & 7) << 4));
 }
 
@@ -1922,6 +1941,17 @@ write_texture_p1(struct vc4_context *vc4,
                  mipfilter_map[sampler->min_mip_filter]) << 4) |
                (translate_wrap(sampler->wrap_t) << 2) |
                (translate_wrap(sampler->wrap_s) << 0));
+}
+
+static void
+write_texture_p2(struct vc4_context *vc4,
+                 struct vc4_texture_stateobj *texstate,
+                 uint32_t unit)
+{
+        struct pipe_sampler_view *texture = texstate->textures[unit];
+        struct vc4_resource *rsc = vc4_resource(texture->texture);
+
+        cl_u32(&vc4->uniforms, (1 << 30) | rsc->cube_map_stride);
 }
 
 static uint32_t
@@ -1981,6 +2011,10 @@ vc4_write_uniforms(struct vc4_context *vc4, struct vc4_compiled_shader *shader,
 
                 case QUNIFORM_TEXTURE_CONFIG_P1:
                         write_texture_p1(vc4, texstate, uinfo->data[i]);
+                        break;
+
+                case QUNIFORM_TEXTURE_CONFIG_P2:
+                        write_texture_p2(vc4, texstate, uinfo->data[i]);
                         break;
 
                 case QUNIFORM_TEXRECT_SCALE_X:
