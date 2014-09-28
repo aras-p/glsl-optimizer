@@ -115,7 +115,7 @@ brw_emit_sampler_state(struct brw_context *brw,
       ss[0] |= SET_FIELD(lod_bias & 0x1fff, GEN7_SAMPLER_LOD_BIAS);
 
       if (min_filter == BRW_MAPFILTER_ANISOTROPIC)
-         ss[0] |= GEN7_SAMPLER_EWA_ANISOTROPIC_ALGORIHTM;
+         ss[0] |= GEN7_SAMPLER_EWA_ANISOTROPIC_ALGORITHM;
 
       ss[1] = SET_FIELD(min_lod, GEN7_SAMPLER_MIN_LOD) |
               SET_FIELD(max_lod, GEN7_SAMPLER_MAX_LOD) |
