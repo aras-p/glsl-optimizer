@@ -530,11 +530,22 @@ renderer_draw_yuv(struct xa_context *r,
                          src_x, src_y, src_w, src_h,
                          dst_x, dst_y, dst_w, dst_h, srf);
 
+   if (!r->scissor_valid) {
+       r->scissor.minx = 0;
+       r->scissor.miny = 0;
+       r->scissor.maxx = r->dst->tex->width0;
+       r->scissor.maxy = r->dst->tex->height0;
+   }
+
+   r->pipe->set_scissor_states(r->pipe, 0, 1, &r->scissor);
+
    cso_set_vertex_elements(r->cso, num_attribs, r->velems);
    util_draw_user_vertex_buffer(r->cso, r->buffer, PIPE_PRIM_QUADS,
                                 4,	/* verts */
                                 num_attribs);	/* attribs/vert */
    r->buffer_size = 0;
+
+   xa_scissor_reset(r);
 }
 
 void
