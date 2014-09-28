@@ -152,7 +152,7 @@ vc4_resource_transfer_map(struct pipe_context *pctx,
                 return buf + slice->offset +
                         box->y / util_format_get_blockheight(format) * ptrans->stride +
                         box->x / util_format_get_blockwidth(format) * rsc->cpp +
-                        box->z * slice->size0;
+                        box->z * slice->size;
         }
 
 
@@ -226,12 +226,12 @@ vc4_setup_slices(struct vc4_resource *rsc)
 
                 slice->offset = offset;
                 slice->stride = level_width * rsc->cpp;
-                slice->size0 = level_height * slice->stride;
+                slice->size = level_height * slice->stride;
 
                 /* Note, since we have cubes but no 3D, depth is invariant
                  * with miplevel.
                  */
-                offset += slice->size0 * depth;
+                offset += slice->size * depth;
         }
 
         /* The texture base pointer that has to point to level 0 doesn't have
@@ -306,7 +306,7 @@ vc4_resource_create(struct pipe_screen *pscreen,
 
         rsc->bo = vc4_bo_alloc(vc4_screen(pscreen),
                                rsc->slices[0].offset +
-                               rsc->slices[0].size0 * prsc->depth0,
+                               rsc->slices[0].size * prsc->depth0,
                                "resource");
         if (!rsc->bo)
                 goto fail;

@@ -37,7 +37,7 @@ struct vc4_transfer {
 struct vc4_resource_slice {
         uint32_t offset;
         uint32_t stride;
-        uint32_t size0;
+        uint32_t size;
         /** One of VC4_TILING_FORMAT_* */
         uint8_t tiling;
 };
