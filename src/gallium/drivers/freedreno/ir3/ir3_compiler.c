@@ -1318,7 +1318,7 @@ trans_txq(const struct instr_translater *t,
 		level = get_unconst(ctx, level);
 
 	instr = instr_create(ctx, 5, OPC_GETSIZE);
-	instr->cat5.type = get_ftype(ctx);
+	instr->cat5.type = get_utype(ctx);
 	instr->cat5.samp = samp->Index;
 	instr->cat5.tex  = samp->Index;
 	instr->flags |= tinf.flags;
