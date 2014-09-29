@@ -49,7 +49,7 @@ fd_sampler_view_destroy(struct pipe_context *pctx,
 	FREE(view);
 }
 
-static void bind_sampler_states(struct fd_texture_stateobj *prog,
+static void bind_sampler_states(struct fd_texture_stateobj *tex,
 		unsigned nr, void **hwcso)
 {
 	unsigned i;
@@ -58,19 +58,19 @@ static void bind_sampler_states(struct fd_texture_stateobj *prog,
 	for (i = 0; i < nr; i++) {
 		if (hwcso[i])
 			new_nr = i + 1;
-		prog->samplers[i] = hwcso[i];
-		prog->dirty_samplers |= (1 << i);
+		tex->samplers[i] = hwcso[i];
+		tex->dirty_samplers |= (1 << i);
 	}
 
-	for (; i < prog->num_samplers; i++) {
-		prog->samplers[i] = NULL;
-		prog->dirty_samplers |= (1 << i);
+	for (; i < tex->num_samplers; i++) {
+		tex->samplers[i] = NULL;
+		tex->dirty_samplers |= (1 << i);
 	}
 
-	prog->num_samplers = new_nr;
+	tex->num_samplers = new_nr;
 }
 
-static void set_sampler_views(struct fd_texture_stateobj *prog,
+static void set_sampler_views(struct fd_texture_stateobj *tex,
 		unsigned nr, struct pipe_sampler_view **views)
 {
 	unsigned i;
@@ -79,19 +79,19 @@ static void set_sampler_views(struct fd_texture_stateobj *prog,
 	for (i = 0; i < nr; i++) {
 		if (views[i])
 			new_nr = i + 1;
-		pipe_sampler_view_reference(&prog->textures[i], views[i]);
-		prog->dirty_samplers |= (1 << i);
+		pipe_sampler_view_reference(&tex->textures[i], views[i]);
+		tex->dirty_samplers |= (1 << i);
 	}
 
-	for (; i < prog->num_textures; i++) {
-		pipe_sampler_view_reference(&prog->textures[i], NULL);
-		prog->dirty_samplers |= (1 << i);
+	for (; i < tex->num_textures; i++) {
+		pipe_sampler_view_reference(&tex->textures[i], NULL);
+		tex->dirty_samplers |= (1 << i);
 	}
 
-	prog->num_textures = new_nr;
+	tex->num_textures = new_nr;
 }
 
-static void
+void
 fd_sampler_states_bind(struct pipe_context *pctx,
 		unsigned shader, unsigned start,
 		unsigned nr, void **hwcso)
@@ -101,13 +101,6 @@ fd_sampler_states_bind(struct pipe_context *pctx,
 	assert(start == 0);
 
 	if (shader == PIPE_SHADER_FRAGMENT) {
-		/* on a2xx, since there is a flat address space for textures/samplers,
-		 * a change in # of fragment textures/samplers will trigger patching and
-		 * re-emitting the vertex shader:
-		 */
-		if (nr != ctx->fragtex.num_samplers)
-			ctx->dirty |= FD_DIRTY_TEXSTATE;
-
 		bind_sampler_states(&ctx->fragtex, nr, hwcso);
 		ctx->dirty |= FD_DIRTY_FRAGTEX;
 	}
@@ -169,6 +162,5 @@ fd_texture_init(struct pipe_context *pctx)
 
 	pctx->sampler_view_destroy = fd_sampler_view_destroy;
 
-	pctx->bind_sampler_states = fd_sampler_states_bind;
 	pctx->set_sampler_views = fd_set_sampler_views;
 }

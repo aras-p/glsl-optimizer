@@ -101,6 +101,25 @@ fd2_sampler_state_create(struct pipe_context *pctx,
 	return so;
 }
 
+static void
+fd2_sampler_states_bind(struct pipe_context *pctx,
+		unsigned shader, unsigned start,
+		unsigned nr, void **hwcso)
+{
+	if (shader == PIPE_SHADER_FRAGMENT) {
+		struct fd_context *ctx = fd_context(pctx);
+
+		/* on a2xx, since there is a flat address space for textures/samplers,
+		 * a change in # of fragment textures/samplers will trigger patching and
+		 * re-emitting the vertex shader:
+		 */
+		if (nr != ctx->fragtex.num_samplers)
+			ctx->dirty |= FD_DIRTY_TEXSTATE;
+	}
+
+	fd_sampler_states_bind(pctx, shader, start, nr, hwcso);
+}
+
 static struct pipe_sampler_view *
 fd2_sampler_view_create(struct pipe_context *pctx, struct pipe_resource *prsc,
 		const struct pipe_sampler_view *cso)
@@ -154,5 +173,6 @@ void
 fd2_texture_init(struct pipe_context *pctx)
 {
 	pctx->create_sampler_state = fd2_sampler_state_create;
+	pctx->bind_sampler_states = fd2_sampler_states_bind;
 	pctx->create_sampler_view = fd2_sampler_view_create;
 }

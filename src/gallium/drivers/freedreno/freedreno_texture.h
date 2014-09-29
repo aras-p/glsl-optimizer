@@ -31,6 +31,10 @@
 
 #include "pipe/p_context.h"
 
+void fd_sampler_states_bind(struct pipe_context *pctx,
+		unsigned shader, unsigned start,
+		unsigned nr, void **hwcso);
+
 void fd_texture_init(struct pipe_context *pctx);
 
 #endif /* FREEDRENO_TEXTURE_H_ */

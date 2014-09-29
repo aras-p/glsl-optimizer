@@ -119,6 +119,14 @@ fd3_sampler_state_create(struct pipe_context *pctx,
 	return so;
 }
 
+static void
+fd3_sampler_states_bind(struct pipe_context *pctx,
+		unsigned shader, unsigned start,
+		unsigned nr, void **hwcso)
+{
+	fd_sampler_states_bind(pctx, shader, start, nr, hwcso);
+}
+
 static enum a3xx_tex_type
 tex_type(unsigned target)
 {
@@ -204,5 +212,6 @@ void
 fd3_texture_init(struct pipe_context *pctx)
 {
 	pctx->create_sampler_state = fd3_sampler_state_create;
+	pctx->bind_sampler_states = fd3_sampler_states_bind;
 	pctx->create_sampler_view = fd3_sampler_view_create;
 }
