@@ -185,11 +185,17 @@ ir3_shader_variant(struct ir3_shader *shader, struct ir3_shader_key key)
 	 */
 	if (shader->type == SHADER_FRAGMENT) {
 		key.binning_pass = false;
+		key.vsaturate_s = 0;
+		key.vsaturate_t = 0;
+		key.vsaturate_r = 0;
 	}
 	if (shader->type == SHADER_VERTEX) {
 		key.color_two_side = false;
 		key.half_precision = false;
 		key.alpha = false;
+		key.fsaturate_s = 0;
+		key.fsaturate_t = 0;
+		key.fsaturate_r = 0;
 	}
 
 	for (v = shader->variants; v; v = v->next)

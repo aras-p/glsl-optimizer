@@ -76,6 +76,16 @@ struct fd3_context {
 
 	struct u_upload_mgr *border_color_uploader;
 	struct pipe_resource *border_color_buf;
+
+	/* bitmask of sampler which needs coords clamped for vertex
+	 * shader:
+	 */
+	unsigned vsaturate_s, vsaturate_t, vsaturate_r;
+
+	/* bitmask of sampler which needs coords clamped for frag
+	 * shader:
+	 */
+	unsigned fsaturate_s, fsaturate_t, fsaturate_r;
 };
 
 static INLINE struct fd3_context *

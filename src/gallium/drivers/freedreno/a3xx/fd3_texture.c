@@ -36,30 +36,31 @@
 #include "fd3_util.h"
 
 static enum a3xx_tex_clamp
-tex_clamp(unsigned wrap)
+tex_clamp(unsigned wrap, bool clamp_to_edge)
 {
-	/* hardware probably supports more, but we can't coax all the
-	 * wrap/clamp modes out of the GLESv2 blob driver.
-	 *
-	 * TODO once we have basics working, go back and just try
-	 * different values and see what happens
-	 */
+	/* Hardware does not support _CLAMP, but we emulate it: */
+	if (wrap == PIPE_TEX_WRAP_CLAMP) {
+		wrap = (clamp_to_edge) ?
+			PIPE_TEX_WRAP_CLAMP_TO_EDGE : PIPE_TEX_WRAP_CLAMP_TO_BORDER;
+	}
+
 	switch (wrap) {
 	case PIPE_TEX_WRAP_REPEAT:
 		return A3XX_TEX_REPEAT;
-	case PIPE_TEX_WRAP_CLAMP:
 	case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
 		return A3XX_TEX_CLAMP_TO_EDGE;
 	case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
 		return A3XX_TEX_CLAMP_TO_BORDER;
-	case PIPE_TEX_WRAP_MIRROR_CLAMP:
-	case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
-		/* these two we should emulate! */
 	case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
 		/* only works for PoT.. need to emulate otherwise! */
 		return A3XX_TEX_MIRROR_CLAMP;
 	case PIPE_TEX_WRAP_MIRROR_REPEAT:
 		return A3XX_TEX_MIRROR_REPEAT;
+	case PIPE_TEX_WRAP_MIRROR_CLAMP:
+	case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
+		/* these two we could perhaps emulate, but we currently
+		 * just don't advertise PIPE_CAP_TEXTURE_MIRROR_CLAMP
+		 */
 	default:
 		DBG("invalid wrap: %u", wrap);
 		return 0;
@@ -86,6 +87,7 @@ fd3_sampler_state_create(struct pipe_context *pctx,
 {
 	struct fd3_sampler_stateobj *so = CALLOC_STRUCT(fd3_sampler_stateobj);
 	bool miplinear = false;
+	bool clamp_to_edge;
 
 	if (!so)
 		return NULL;
@@ -95,14 +97,29 @@ fd3_sampler_state_create(struct pipe_context *pctx,
 
 	so->base = *cso;
 
+	/*
+	 * For nearest filtering, _CLAMP means _CLAMP_TO_EDGE;  for linear
+	 * filtering, _CLAMP means _CLAMP_TO_BORDER while additionally
+	 * clamping the texture coordinates to [0.0, 1.0].
+	 *
+	 * The clamping will be taken care of in the shaders.  There are two
+	 * filters here, but let the minification one has a say.
+	 */
+	clamp_to_edge = (cso->min_img_filter == PIPE_TEX_FILTER_NEAREST);
+	if (!clamp_to_edge) {
+		so->saturate_s = (cso->wrap_s == PIPE_TEX_WRAP_CLAMP);
+		so->saturate_t = (cso->wrap_t == PIPE_TEX_WRAP_CLAMP);
+		so->saturate_r = (cso->wrap_r == PIPE_TEX_WRAP_CLAMP);
+	}
+
 	so->texsamp0 =
 			COND(!cso->normalized_coords, A3XX_TEX_SAMP_0_UNNORM_COORDS) |
 			COND(miplinear, A3XX_TEX_SAMP_0_MIPFILTER_LINEAR) |
 			A3XX_TEX_SAMP_0_XY_MAG(tex_filter(cso->mag_img_filter)) |
 			A3XX_TEX_SAMP_0_XY_MIN(tex_filter(cso->min_img_filter)) |
-			A3XX_TEX_SAMP_0_WRAP_S(tex_clamp(cso->wrap_s)) |
-			A3XX_TEX_SAMP_0_WRAP_T(tex_clamp(cso->wrap_t)) |
-			A3XX_TEX_SAMP_0_WRAP_R(tex_clamp(cso->wrap_r));
+			A3XX_TEX_SAMP_0_WRAP_S(tex_clamp(cso->wrap_s, clamp_to_edge)) |
+			A3XX_TEX_SAMP_0_WRAP_T(tex_clamp(cso->wrap_t, clamp_to_edge)) |
+			A3XX_TEX_SAMP_0_WRAP_R(tex_clamp(cso->wrap_r, clamp_to_edge));
 
 	if (cso->compare_mode)
 		so->texsamp0 |= A3XX_TEX_SAMP_0_COMPARE_FUNC(cso->compare_func); /* maps 1:1 */
@@ -124,7 +141,35 @@ fd3_sampler_states_bind(struct pipe_context *pctx,
 		unsigned shader, unsigned start,
 		unsigned nr, void **hwcso)
 {
+	struct fd_context *ctx = fd_context(pctx);
+	struct fd3_context *fd3_ctx = fd3_context(ctx);
+	unsigned saturate_s = 0, saturate_t = 0, saturate_r = 0;
+	unsigned i;
+
+	for (i = 0; i < nr; i++) {
+		if (hwcso[i]) {
+			struct fd3_sampler_stateobj *sampler =
+					fd3_sampler_stateobj(hwcso[i]);
+			if (sampler->saturate_s)
+				saturate_s |= (1 << i);
+			if (sampler->saturate_t)
+				saturate_t |= (1 << i);
+			if (sampler->saturate_r)
+				saturate_r |= (1 << i);
+		}
+	}
+
 	fd_sampler_states_bind(pctx, shader, start, nr, hwcso);
+
+	if (shader == PIPE_SHADER_FRAGMENT) {
+		fd3_ctx->fsaturate_s = saturate_s;
+		fd3_ctx->fsaturate_t = saturate_t;
+		fd3_ctx->fsaturate_r = saturate_r;
+	} else if (shader == PIPE_SHADER_VERTEX) {
+		fd3_ctx->vsaturate_s = saturate_s;
+		fd3_ctx->vsaturate_t = saturate_t;
+		fd3_ctx->vsaturate_r = saturate_r;
+	}
 }
 
 static enum a3xx_tex_type

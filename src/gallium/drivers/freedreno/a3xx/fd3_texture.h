@@ -40,6 +40,7 @@
 struct fd3_sampler_stateobj {
 	struct pipe_sampler_state base;
 	uint32_t texsamp0, texsamp1;
+	bool saturate_s, saturate_t, saturate_r;
 };
 
 static INLINE struct fd3_sampler_stateobj *

@@ -100,6 +100,7 @@ static void
 fd3_draw(struct fd_context *ctx, const struct pipe_draw_info *info)
 {
 	unsigned dirty = ctx->dirty;
+	struct fd3_context *fd3_ctx = fd3_context(ctx);
 	struct ir3_shader_key key = {
 			/* do binning pass first: */
 			.binning_pass = true,
@@ -108,7 +109,14 @@ fd3_draw(struct fd_context *ctx, const struct pipe_draw_info *info)
 			// TODO set .half_precision based on render target format,
 			// ie. float16 and smaller use half, float32 use full..
 			.half_precision = !!(fd_mesa_debug & FD_DBG_FRAGHALF),
+			.vsaturate_s = fd3_ctx->vsaturate_s,
+			.vsaturate_t = fd3_ctx->vsaturate_t,
+			.vsaturate_r = fd3_ctx->vsaturate_r,
+			.fsaturate_s = fd3_ctx->fsaturate_s,
+			.fsaturate_t = fd3_ctx->fsaturate_t,
+			.fsaturate_r = fd3_ctx->fsaturate_r,
 	};
+
 	draw_impl(ctx, info, ctx->binning_ring,
 			dirty & ~(FD_DIRTY_BLEND), key);
 	/* and now regular (non-binning) pass: */

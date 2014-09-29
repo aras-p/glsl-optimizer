@@ -135,7 +135,7 @@ compile_init(struct ir3_compile_context *ctx, struct ir3_shader_variant *so,
 {
 	unsigned ret;
 	struct tgsi_shader_info *info = &ctx->info;
-	const struct fd_lowering_config lconfig = {
+	struct fd_lowering_config lconfig = {
 			.color_two_side = so->key.color_two_side,
 			.lower_DST  = true,
 			.lower_XPD  = true,
@@ -152,6 +152,20 @@ compile_init(struct ir3_compile_context *ctx, struct ir3_shader_variant *so,
 			.lower_DP2  = true,
 			.lower_DP2A = true,
 	};
+
+	switch (so->type) {
+	case SHADER_FRAGMENT:
+	case SHADER_COMPUTE:
+		lconfig.saturate_s = so->key.fsaturate_s;
+		lconfig.saturate_t = so->key.fsaturate_t;
+		lconfig.saturate_r = so->key.fsaturate_r;
+		break;
+	case SHADER_VERTEX:
+		lconfig.saturate_s = so->key.vsaturate_s;
+		lconfig.saturate_t = so->key.vsaturate_t;
+		lconfig.saturate_r = so->key.vsaturate_r;
+		break;
+	}
 
 	ctx->tokens = fd_transform_lowering(&lconfig, tokens, &ctx->info);
 	ctx->free_tokens = !!ctx->tokens;
