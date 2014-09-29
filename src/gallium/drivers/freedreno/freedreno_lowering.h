@@ -69,6 +69,16 @@ struct fd_lowering_config {
 	unsigned lower_DPH : 1;
 	unsigned lower_DP2 : 1;
 	unsigned lower_DP2A : 1;
+
+	/* To emulate certain texture wrap modes, this can be used
+	 * to saturate the specified tex coord to [0.0, 1.0].  The
+	 * bits are according to sampler #, ie. if, for example:
+	 *
+	 *   (conf->saturate_s & (1 << n))
+	 *
+	 * is true, then the s coord for sampler n is saturated.
+	 */
+	unsigned saturate_s, saturate_t, saturate_r;
 };
 
 const struct tgsi_token * fd_transform_lowering(

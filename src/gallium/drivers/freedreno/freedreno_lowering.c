@@ -52,6 +52,7 @@ struct fd_lowering_context {
 #define B 1
 	struct tgsi_full_src_register imm;
 	int emitted_decls;
+	unsigned saturate;
 };
 
 static inline struct fd_lowering_context *
@@ -130,12 +131,14 @@ aliases(const struct tgsi_full_dst_register *dst, unsigned dst_mask,
 static void
 create_mov(struct tgsi_transform_context *tctx,
 	const struct tgsi_full_dst_register *dst,
-	const struct tgsi_full_src_register *src, unsigned mask)
+	const struct tgsi_full_src_register *src,
+	unsigned mask, unsigned saturate)
 {
 	struct tgsi_full_instruction new_inst;
 
 	new_inst = tgsi_default_full_instruction();
 	new_inst.Instruction.Opcode = TGSI_OPCODE_MOV;
+	new_inst.Instruction.Saturate = saturate;
 	new_inst.Instruction.NumDstRegs = 1;
 	reg_dst(&new_inst.Dst[0], dst, mask);
 	new_inst.Instruction.NumSrcRegs = 1;
@@ -182,12 +185,12 @@ transform_dst(struct tgsi_transform_context *tctx,
 	struct tgsi_full_instruction new_inst;
 
 	if (aliases(dst, TGSI_WRITEMASK_Y, src0, TGSI_WRITEMASK_Z)) {
-		create_mov(tctx, &ctx->tmp[A].dst, src0, TGSI_WRITEMASK_YZ);
+		create_mov(tctx, &ctx->tmp[A].dst, src0, TGSI_WRITEMASK_YZ, 0);
 		src0 = &ctx->tmp[A].src;
 	}
 
 	if (aliases(dst, TGSI_WRITEMASK_YZ, src1, TGSI_WRITEMASK_W)) {
-		create_mov(tctx, &ctx->tmp[B].dst, src1, TGSI_WRITEMASK_YW);
+		create_mov(tctx, &ctx->tmp[B].dst, src1, TGSI_WRITEMASK_YW, 0);
 		src1 = &ctx->tmp[B].src;
 	}
 
@@ -332,7 +335,7 @@ transform_scs(struct tgsi_transform_context *tctx,
 	struct tgsi_full_instruction new_inst;
 
 	if (aliases(dst, TGSI_WRITEMASK_X, src, TGSI_WRITEMASK_X)) {
-		create_mov(tctx, &ctx->tmp[A].dst, src, TGSI_WRITEMASK_X);
+		create_mov(tctx, &ctx->tmp[A].dst, src, TGSI_WRITEMASK_X, 0);
 		src = &ctx->tmp[A].src;
 	}
 
@@ -981,6 +984,138 @@ transform_dotp(struct tgsi_transform_context *tctx,
 	}
 }
 
+/* Inserts a MOV_SAT for the needed components of tex coord.  Note that
+ * in the case of TXP, the clamping must happen *after* projection, so
+ * we need to lower TXP to TEX.
+ *
+ *   MOV tmpA, src0
+ *   if (opc == TXP) {
+ *     ; do perspective division manually before clamping:
+ *     RCP tmpB, tmpA.w
+ *     MUL tmpB.<pmask>, tmpA, tmpB.xxxx
+ *     opc = TEX;
+ *   }
+ *   MOV_SAT tmpA.<mask>, tmpA  ; <mask> is the clamped s/t/r coords
+ *   <opc> dst, tmpA, ...
+ */
+#define SAMP_GROW (13)
+#define SAMP_TMP  2
+static int
+transform_samp(struct tgsi_transform_context *tctx,
+		struct tgsi_full_instruction *inst)
+{
+	struct fd_lowering_context *ctx = fd_lowering_context(tctx);
+	struct tgsi_full_src_register *coord = &inst->Src[0];
+	struct tgsi_full_src_register *samp;
+	struct tgsi_full_instruction new_inst;
+	/* mask is clamped coords, pmask is all coords (for projection): */
+	unsigned mask = 0, pmask = 0, smask;
+	unsigned opcode = inst->Instruction.Opcode;
+
+	if (opcode == TGSI_OPCODE_TXB2) {
+		samp = &inst->Src[2];
+	} else {
+		samp = &inst->Src[1];
+	}
+
+	/* convert sampler # to bitmask to test: */
+	smask = 1 << samp->Register.Index;
+
+	/* check if we actually need to lower this one: */
+	if (!(ctx->saturate & smask))
+		return -1;
+
+	/* figure out which coordinates need saturating:
+	 *   - RECT textures should not get saturated
+	 *   - array index coords should not get saturated
+	 */
+	switch (inst->Texture.Texture) {
+	case TGSI_TEXTURE_3D:
+	case TGSI_TEXTURE_CUBE:
+	case TGSI_TEXTURE_CUBE_ARRAY:
+	case TGSI_TEXTURE_SHADOWCUBE:
+	case TGSI_TEXTURE_SHADOWCUBE_ARRAY:
+		if (ctx->config->saturate_r & smask)
+			mask |= TGSI_WRITEMASK_Z;
+		pmask |= TGSI_WRITEMASK_Z;
+		/* fallthrough */
+
+	case TGSI_TEXTURE_2D:
+	case TGSI_TEXTURE_2D_ARRAY:
+	case TGSI_TEXTURE_SHADOW2D:
+	case TGSI_TEXTURE_SHADOW2D_ARRAY:
+	case TGSI_TEXTURE_2D_MSAA:
+	case TGSI_TEXTURE_2D_ARRAY_MSAA:
+		if (ctx->config->saturate_t & smask)
+			mask |= TGSI_WRITEMASK_Y;
+		pmask |= TGSI_WRITEMASK_Y;
+		/* fallthrough */
+
+	case TGSI_TEXTURE_1D:
+	case TGSI_TEXTURE_1D_ARRAY:
+	case TGSI_TEXTURE_SHADOW1D:
+	case TGSI_TEXTURE_SHADOW1D_ARRAY:
+		if (ctx->config->saturate_s & smask)
+			mask |= TGSI_WRITEMASK_X;
+		pmask |= TGSI_WRITEMASK_X;
+		break;
+
+	/* TODO: I think we should ignore these?
+	case TGSI_TEXTURE_RECT:
+	case TGSI_TEXTURE_SHADOWRECT:
+	*/
+	}
+
+	/* sanity check.. driver could be asking to saturate a non-
+	 * existent coordinate component:
+	 */
+	if (!mask)
+		return -1;
+
+	/* MOV tmpA, src0 */
+	create_mov(tctx, &ctx->tmp[A].dst, coord, TGSI_WRITEMASK_XYZW, 0);
+
+	/* This is a bit sad.. we need to clamp *after* the coords
+	 * are projected, which means lowering TXP to TEX and doing
+	 * the projection ourself.  But since I haven't figured out
+	 * how to make the lowering code deliver an electric shock
+	 * to anyone using GL_CLAMP, we must do this instead:
+	 */
+	if (opcode == TGSI_OPCODE_TXP) {
+		/* RCP tmpB.x tmpA.w */
+		new_inst = tgsi_default_full_instruction();
+		new_inst.Instruction.Opcode = TGSI_OPCODE_RCP;
+		new_inst.Instruction.NumDstRegs = 1;
+		reg_dst(&new_inst.Dst[0], &ctx->tmp[B].dst, TGSI_WRITEMASK_X);
+		new_inst.Instruction.NumSrcRegs = 1;
+		reg_src(&new_inst.Src[0], &ctx->tmp[A].src, SWIZ(W,_,_,_));
+		tctx->emit_instruction(tctx, &new_inst);
+
+		/* MUL tmpA.mask, tmpA, tmpB.xxxx */
+		new_inst = tgsi_default_full_instruction();
+		new_inst.Instruction.Opcode = TGSI_OPCODE_MUL;
+		new_inst.Instruction.NumDstRegs = 1;
+		reg_dst(&new_inst.Dst[0], &ctx->tmp[A].dst, pmask);
+		new_inst.Instruction.NumSrcRegs = 2;
+		reg_src(&new_inst.Src[0], &ctx->tmp[A].src, SWIZ(X,Y,Z,W));
+		reg_src(&new_inst.Src[1], &ctx->tmp[B].src, SWIZ(X,X,X,X));
+		tctx->emit_instruction(tctx, &new_inst);
+
+		opcode = TGSI_OPCODE_TEX;
+	}
+
+	/* MOV_SAT tmpA.<mask>, tmpA */
+	create_mov(tctx, &ctx->tmp[A].dst, &ctx->tmp[A].src, mask,
+			TGSI_SAT_ZERO_ONE);
+
+	/* modify the texture samp instruction to take fixed up coord: */
+	new_inst = *inst;
+	new_inst.Instruction.Opcode = opcode;
+	new_inst.Src[0] = ctx->tmp[A].src;
+	tctx->emit_instruction(tctx, &new_inst);
+
+	return 0;
+}
 
 /* Two-sided color emulation:
  * For each COLOR input, create a corresponding BCOLOR input, plus
@@ -1234,6 +1369,14 @@ transform_instr(struct tgsi_transform_context *tctx,
 			goto skip;
 		transform_dotp(tctx, inst);
 		break;
+	case TGSI_OPCODE_TEX:
+	case TGSI_OPCODE_TXP:
+	case TGSI_OPCODE_TXB:
+	case TGSI_OPCODE_TXB2:
+	case TGSI_OPCODE_TXL:
+		if (transform_samp(tctx, inst))
+			goto skip;
+		break;
 	default:
 	skip:
 		tctx->emit_instruction(tctx, inst);
@@ -1253,6 +1396,9 @@ fd_transform_lowering(const struct fd_lowering_config *config,
 	struct fd_lowering_context ctx;
 	struct tgsi_token *newtoks;
 	int newlen, numtmp;
+
+	/* sanity check in case limit is ever increased: */
+	assert((sizeof(config->saturate_s) * 8) >= PIPE_MAX_SAMPLERS);
 
 	memset(&ctx, 0, sizeof(ctx));
 	ctx.base.transform_instruction = transform_instr;
@@ -1277,6 +1423,8 @@ fd_transform_lowering(const struct fd_lowering_config *config,
 		}
 	}
 
+	ctx.saturate = config->saturate_r | config->saturate_s | config->saturate_t;
+
 #define OPCS(x) ((config->lower_ ## x) ? info->opcode_count[TGSI_OPCODE_ ## x] : 0)
 	/* if there are no instructions to lower, then we are done: */
 	if (!(OPCS(DST) ||
@@ -1293,7 +1441,8 @@ fd_transform_lowering(const struct fd_lowering_config *config,
 			OPCS(DPH) ||
 			OPCS(DP2) ||
 			OPCS(DP2A) ||
-			ctx.two_side_colors))
+			ctx.two_side_colors ||
+			ctx.saturate))
 		return NULL;
 
 #if 0  /* debug */
@@ -1358,6 +1507,15 @@ fd_transform_lowering(const struct fd_lowering_config *config,
 	if (OPCS(DP2A)) {
 		newlen += DP2A_GROW * OPCS(DP2A);
 		numtmp = MAX2(numtmp, DOTP_TMP);
+	}
+	if (ctx.saturate) {
+		int n = info->opcode_count[TGSI_OPCODE_TEX] +
+			info->opcode_count[TGSI_OPCODE_TXP] +
+			info->opcode_count[TGSI_OPCODE_TXB] +
+			info->opcode_count[TGSI_OPCODE_TXB2] +
+			info->opcode_count[TGSI_OPCODE_TXL];
+		newlen += SAMP_GROW * n;
+		numtmp = MAX2(numtmp, SAMP_TMP);
 	}
 
 	/* specifically don't include two_side_colors temps in the count: */
