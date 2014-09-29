@@ -545,6 +545,16 @@ tgsi_to_qir_tex(struct vc4_compile *c,
                           texture_u[next_texture_u++]);
         }
 
+        if (c->key->tex[unit].wrap_s == PIPE_TEX_WRAP_CLAMP) {
+                s = qir_FMIN(c, qir_FMAX(c, s, qir_uniform_f(c, 0.0)),
+                             qir_uniform_f(c, 1.0));
+        }
+
+        if (c->key->tex[unit].wrap_t == PIPE_TEX_WRAP_CLAMP) {
+                t = qir_FMIN(c, qir_FMAX(c, t, qir_uniform_f(c, 0.0)),
+                             qir_uniform_f(c, 1.0));
+        }
+
         qir_TEX_T(c, t, texture_u[next_texture_u++]);
 
         if (tgsi_inst->Instruction.Opcode == TGSI_OPCODE_TXB)
@@ -1892,18 +1902,19 @@ vc4_shader_state_delete(struct pipe_context *pctx, void *hwcso)
         free(so);
 }
 
-static uint32_t translate_wrap(uint32_t p_wrap)
+static uint32_t translate_wrap(uint32_t p_wrap, bool using_nearest)
 {
         switch (p_wrap) {
         case PIPE_TEX_WRAP_REPEAT:
                 return 0;
-        case PIPE_TEX_WRAP_CLAMP:
         case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
                 return 1;
         case PIPE_TEX_WRAP_MIRROR_REPEAT:
                 return 2;
         case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
                 return 3;
+        case PIPE_TEX_WRAP_CLAMP:
+                return (using_nearest ? 1 : 3);
         default:
                 fprintf(stderr, "Unknown wrap mode %d\n", p_wrap);
                 assert(!"not reached");
@@ -1945,6 +1956,10 @@ write_texture_p1(struct vc4_context *vc4,
                 [PIPE_TEX_FILTER_LINEAR] = 0,
         };
 
+        bool either_nearest =
+                (sampler->mag_img_filter == PIPE_TEX_MIPFILTER_NEAREST ||
+                 sampler->min_img_filter == PIPE_TEX_MIPFILTER_NEAREST);
+
         cl_u32(&vc4->uniforms,
                ((rsc->vc4_format >> 4) << 31) |
                (texture->texture->height0 << 20) |
@@ -1952,8 +1967,8 @@ write_texture_p1(struct vc4_context *vc4,
                (imgfilter_map[sampler->mag_img_filter] << 7) |
                ((imgfilter_map[sampler->min_img_filter] +
                  mipfilter_map[sampler->min_mip_filter]) << 4) |
-               (translate_wrap(sampler->wrap_t) << 2) |
-               (translate_wrap(sampler->wrap_s) << 0));
+               (translate_wrap(sampler->wrap_t, either_nearest) << 2) |
+               (translate_wrap(sampler->wrap_s, either_nearest) << 0));
 }
 
 static void
