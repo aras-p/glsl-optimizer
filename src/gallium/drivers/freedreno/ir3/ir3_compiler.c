@@ -1995,9 +1995,10 @@ trans_umul(const struct instr_translater *t,
 }
 
 /*
- * IDIV / UDIV
+ * IDIV / UDIV / UMOD
  *
- * See NV50LegalizeSSA::handleDIV for the origin of this implementation.
+ * See NV50LegalizeSSA::handleDIV for the origin of this implementation. For
+ * UMOD, it becomes a - UDIV(a, modulus) * modulus.
  */
 static void
 trans_idiv(const struct instr_translater *t,
@@ -2005,7 +2006,7 @@ trans_idiv(const struct instr_translater *t,
 		struct tgsi_full_instruction *inst)
 {
 	struct ir3_instruction *instr;
-	struct tgsi_dst_register *dst = get_dst(ctx, inst);
+	struct tgsi_dst_register *dst = get_dst(ctx, inst), *premod_dst = dst;
 	struct tgsi_src_register *a = &inst->Src[0].Register;
 	struct tgsi_src_register *b = &inst->Src[1].Register;
 
@@ -2026,6 +2027,9 @@ trans_idiv(const struct instr_translater *t,
 
 	get_immediate(ctx, &negative_2, -2);
 	get_immediate(ctx, &thirty_one, 31);
+
+	if (t->tgsi_opc == TGSI_OPCODE_UMOD)
+		premod_dst = &q_dst;
 
 	/* cov.[us]32f32 af, numerator */
 	instr = instr_create(ctx, 1, 0);
@@ -2147,10 +2151,10 @@ trans_idiv(const struct instr_translater *t,
 	instr->cat2.condition = IR3_COND_GE;
 	vectorize(ctx, instr, &r_dst, 2, r_src, 0, b_src, 0);
 
-	if (t->tgsi_opc == TGSI_OPCODE_UDIV) {
+	if (t->tgsi_opc != TGSI_OPCODE_IDIV) {
 		/* add.u dst, q, r */
 		instr = instr_create(ctx, 2, OPC_ADD_U);
-		vectorize(ctx, instr, dst, 2, q_src, 0, r_src, 0);
+		vectorize(ctx, instr, premod_dst, 2, q_src, 0, r_src, 0);
 	} else {
 		/* add.u q, q, r */
 		instr = instr_create(ctx, 2, OPC_ADD_U);
@@ -2174,7 +2178,27 @@ trans_idiv(const struct instr_translater *t,
 
 		/* sel.b dst, b, r, q */
 		instr = instr_create(ctx, 3, OPC_SEL_B32);
-		vectorize(ctx, instr, dst, 3, b_src, 0, r_src, 0, q_src, 0);
+		vectorize(ctx, instr, premod_dst, 3, b_src, 0, r_src, 0, q_src, 0);
+	}
+
+	if (t->tgsi_opc == TGSI_OPCODE_UMOD) {
+		/* The division result will have ended up in q. */
+
+		/* mull.u r, q, b */
+		instr = instr_create(ctx, 2, OPC_MULL_U);
+		vectorize(ctx, instr, &r_dst, 2, q_src, 0, b, 0);
+
+		/* madsh.m16 r, q, b, r */
+		instr = instr_create(ctx, 3, OPC_MADSH_M16);
+		vectorize(ctx, instr, &r_dst, 3, q_src, 0, b, 0, r_src, 0);
+
+		/* madsh.m16 r, b, q, r */
+		instr = instr_create(ctx, 3, OPC_MADSH_M16);
+		vectorize(ctx, instr, &r_dst, 3, b, 0, q_src, 0, r_src, 0);
+
+		/* sub.u dst, a, r */
+		instr = instr_create(ctx, 2, OPC_SUB_U);
+		vectorize(ctx, instr, dst, 2, a, 0, r_src, 0);
 	}
 
 	put_dst(ctx, inst, dst);
@@ -2341,6 +2365,7 @@ static const struct instr_translater translaters[TGSI_OPCODE_LAST] = {
 	INSTR(UMUL,         trans_umul),
 	INSTR(UDIV,         trans_idiv),
 	INSTR(IDIV,         trans_idiv),
+	INSTR(UMOD,         trans_idiv),
 	INSTR(SHL,          instr_cat2, .opc = OPC_SHL_B),
 	INSTR(USHR,         instr_cat2, .opc = OPC_SHR_B),
 	INSTR(ISHR,         instr_cat2, .opc = OPC_ASHR_B),
