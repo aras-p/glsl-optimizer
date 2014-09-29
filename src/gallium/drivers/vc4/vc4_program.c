@@ -28,6 +28,7 @@
 #include "util/u_hash_table.h"
 #include "util/u_hash.h"
 #include "util/u_memory.h"
+#include "util/u_pack_color.h"
 #include "util/ralloc.h"
 #include "tgsi/tgsi_dump.h"
 #include "tgsi/tgsi_info.h"
@@ -45,6 +46,8 @@ struct vc4_key {
                 enum pipe_format format;
                 unsigned compare_mode:1;
                 unsigned compare_func:3;
+                unsigned wrap_s:3;
+                unsigned wrap_t:3;
                 uint8_t swizzle[4];
         } tex[VC4_MAX_TEXTURE_SAMPLERS];
 };
@@ -521,7 +524,9 @@ tgsi_to_qir_tex(struct vc4_compile *c,
                              get_temp_for_uniform(c,
                                                   QUNIFORM_TEXRECT_SCALE_Y,
                                                   unit));
-        } else if (tgsi_inst->Texture.Texture == TGSI_TEXTURE_CUBE ||
+        }
+
+        if (tgsi_inst->Texture.Texture == TGSI_TEXTURE_CUBE ||
                    tgsi_inst->Texture.Texture == TGSI_TEXTURE_SHADOWCUBE) {
                 struct qreg ma = qir_FMAXABS(c, qir_FMAXABS(c, s, t), r);
                 struct qreg rcp_ma = qir_RCP(c, ma);
@@ -532,6 +537,12 @@ tgsi_to_qir_tex(struct vc4_compile *c,
                 texture_u[2] = add_uniform(c, QUNIFORM_TEXTURE_CONFIG_P2, unit);
 
                 qir_TEX_R(c, r, texture_u[next_texture_u++]);
+        } else if (c->key->tex[unit].wrap_s == PIPE_TEX_WRAP_CLAMP_TO_BORDER ||
+                   c->key->tex[unit].wrap_s == PIPE_TEX_WRAP_CLAMP ||
+                   c->key->tex[unit].wrap_t == PIPE_TEX_WRAP_CLAMP_TO_BORDER ||
+                   c->key->tex[unit].wrap_t == PIPE_TEX_WRAP_CLAMP) {
+                qir_TEX_R(c, get_temp_for_uniform(c, QUNIFORM_TEXTURE_BORDER_COLOR, unit),
+                          texture_u[next_texture_u++]);
         }
 
         qir_TEX_T(c, t, texture_u[next_texture_u++]);
@@ -1705,6 +1716,8 @@ texstate->samplers[i];
                         key->tex[i].swizzle[3] = sampler->swizzle_a;
                         key->tex[i].compare_mode = sampler_state->compare_mode;
                         key->tex[i].compare_func = sampler_state->compare_func;
+                        key->tex[i].wrap_s = sampler_state->wrap_s;
+                        key->tex[i].wrap_t = sampler_state->wrap_t;
                 }
         }
 }
@@ -1954,6 +1967,70 @@ write_texture_p2(struct vc4_context *vc4,
         cl_u32(&vc4->uniforms, (1 << 30) | rsc->cube_map_stride);
 }
 
+
+#define SWIZ(x,y,z,w) {          \
+        UTIL_FORMAT_SWIZZLE_##x, \
+        UTIL_FORMAT_SWIZZLE_##y, \
+        UTIL_FORMAT_SWIZZLE_##z, \
+        UTIL_FORMAT_SWIZZLE_##w  \
+}
+
+static void
+write_texture_border_color(struct vc4_context *vc4,
+                           struct vc4_texture_stateobj *texstate,
+                           uint32_t unit)
+{
+        struct pipe_sampler_state *sampler = texstate->samplers[unit];
+        struct pipe_sampler_view *texture = texstate->textures[unit];
+        struct vc4_resource *rsc = vc4_resource(texture->texture);
+        union util_color uc;
+
+        const struct util_format_description *tex_format_desc =
+                util_format_description(texture->format);
+
+        /* Turn the border color into the layout of channels that it would
+         * have when stored as texture contents.
+         */
+        float storage_color[4];
+        util_format_unswizzle_4f(storage_color,
+                                 sampler->border_color.f,
+                                 tex_format_desc->swizzle);
+
+        /* Now, pack so that when the vc4_format-sampled texture contents are
+         * replaced with our border color, the vc4_get_format_swizzle()
+         * swizzling will get the right channels.
+         */
+        if (util_format_is_depth_or_stencil(texture->format)) {
+                uc.ui[0] = util_pack_z(PIPE_FORMAT_Z24X8_UNORM,
+                                       sampler->border_color.f[0]) << 8;
+        } else {
+                switch (rsc->vc4_format) {
+                default:
+                case VC4_TEXTURE_TYPE_RGBA8888:
+                        util_pack_color(storage_color,
+                                        PIPE_FORMAT_R8G8B8A8_UNORM, &uc);
+                        break;
+                case VC4_TEXTURE_TYPE_RGBA4444:
+                        util_pack_color(storage_color,
+                                        PIPE_FORMAT_A8B8G8R8_UNORM, &uc);
+                        break;
+                case VC4_TEXTURE_TYPE_RGB565:
+                        util_pack_color(storage_color,
+                                        PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
+                        break;
+                case VC4_TEXTURE_TYPE_ALPHA:
+                        uc.ui[0] = float_to_ubyte(storage_color[0]) << 24;
+                        break;
+                case VC4_TEXTURE_TYPE_LUMALPHA:
+                        uc.ui[0] = ((float_to_ubyte(storage_color[1]) << 24) |
+                                    (float_to_ubyte(storage_color[0]) << 0));
+                        break;
+                }
+        }
+
+        cl_u32(&vc4->uniforms, uc.ui[0]);
+}
+
 static uint32_t
 get_texrect_scale(struct vc4_texture_stateobj *texstate,
                   enum quniform_contents contents,
@@ -2015,6 +2092,10 @@ vc4_write_uniforms(struct vc4_context *vc4, struct vc4_compiled_shader *shader,
 
                 case QUNIFORM_TEXTURE_CONFIG_P2:
                         write_texture_p2(vc4, texstate, uinfo->data[i]);
+                        break;
+
+                case QUNIFORM_TEXTURE_BORDER_COLOR:
+                        write_texture_border_color(vc4, texstate, uinfo->data[i]);
                         break;
 
                 case QUNIFORM_TEXRECT_SCALE_X:
