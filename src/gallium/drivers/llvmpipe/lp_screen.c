@@ -557,9 +557,6 @@ llvmpipe_create_screen(struct sw_winsys *winsys)
        return NULL;
 #endif
 
-   if (!lp_jit_screen_init(screen))
-      return NULL;
-
 #ifdef DEBUG
    LP_DEBUG = debug_get_flags_option("LP_DEBUG", lp_debug_flags, 0 );
 #endif
@@ -569,6 +566,11 @@ llvmpipe_create_screen(struct sw_winsys *winsys)
    screen = CALLOC_STRUCT(llvmpipe_screen);
    if (!screen)
       return NULL;
+
+   if (!lp_jit_screen_init(screen)) {
+      FREE(screen);
+      return NULL;
+   }
 
    screen->winsys = winsys;
 
