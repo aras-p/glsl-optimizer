@@ -1159,7 +1159,7 @@ disasm_printer_add_mdesc_sampler(struct disasm_printer *printer,
    if (ilo_dev_gen(inst->dev) >= ILO_GEN(7)) {
       op = GEN_EXTRACT(mdesc, GEN7_MSG_SAMPLER_OP);
       simd = GEN_EXTRACT(mdesc, GEN7_MSG_SAMPLER_SIMD);
-   } {
+   } else {
       op = GEN_EXTRACT(mdesc, GEN6_MSG_SAMPLER_OP);
       simd = GEN_EXTRACT(mdesc, GEN6_MSG_SAMPLER_SIMD);
    }
