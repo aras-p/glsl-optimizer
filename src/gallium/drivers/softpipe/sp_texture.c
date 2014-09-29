@@ -68,8 +68,9 @@ softpipe_resource_layout(struct pipe_screen *screen,
       nblocksy = util_format_get_nblocksy(pt->format, height);
 
       if (pt->target == PIPE_TEXTURE_CUBE)
-         slices = 6;
-      else if (pt->target == PIPE_TEXTURE_3D)
+         assert(pt->array_size == 6);
+
+      if (pt->target == PIPE_TEXTURE_3D)
          slices = depth;
       else
          slices = pt->array_size;
