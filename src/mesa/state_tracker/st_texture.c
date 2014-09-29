@@ -88,7 +88,7 @@ st_texture_create(struct st_context *st,
    pt.width0 = width0;
    pt.height0 = height0;
    pt.depth0 = depth0;
-   pt.array_size = (target == PIPE_TEXTURE_CUBE ? 6 : layers);
+   pt.array_size = layers;
    pt.usage = PIPE_USAGE_DEFAULT;
    pt.bind = bind;
    pt.flags = 0;
