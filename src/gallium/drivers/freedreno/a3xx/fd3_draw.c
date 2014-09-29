@@ -96,10 +96,45 @@ draw_impl(struct fd_context *ctx, const struct pipe_draw_info *info,
 			info);
 }
 
+/* fixup dirty shader state in case some "unrelated" (from the state-
+ * tracker's perspective) state change causes us to switch to a
+ * different variant.
+ */
+static void
+fixup_shader_state(struct fd_context *ctx, struct ir3_shader_key *key)
+{
+	struct fd3_context *fd3_ctx = fd3_context(ctx);
+	struct ir3_shader_key *last_key = &fd3_ctx->last_key;
+
+	if (memcmp(last_key, key, sizeof(*key))) {
+		ctx->dirty |= FD_DIRTY_PROG;
+
+		if ((last_key->vsaturate_s != key->vsaturate_s) ||
+				(last_key->vsaturate_t != key->vsaturate_t) ||
+				(last_key->vsaturate_r != key->vsaturate_r))
+			ctx->prog.dirty |= FD_SHADER_DIRTY_VP;
+
+		if ((last_key->fsaturate_s != key->fsaturate_s) ||
+				(last_key->fsaturate_t != key->fsaturate_t) ||
+				(last_key->fsaturate_r != key->fsaturate_r))
+			ctx->prog.dirty |= FD_SHADER_DIRTY_FP;
+
+		if (last_key->color_two_side != key->color_two_side)
+			ctx->prog.dirty |= FD_SHADER_DIRTY_FP;
+
+		if (last_key->half_precision != key->half_precision)
+			ctx->prog.dirty |= FD_SHADER_DIRTY_FP;
+
+		if (last_key->alpha != key->alpha)
+			ctx->prog.dirty |= FD_SHADER_DIRTY_FP;
+
+		fd3_ctx->last_key = *key;
+	}
+}
+
 static void
 fd3_draw(struct fd_context *ctx, const struct pipe_draw_info *info)
 {
-	unsigned dirty = ctx->dirty;
 	struct fd3_context *fd3_ctx = fd3_context(ctx);
 	struct ir3_shader_key key = {
 			/* do binning pass first: */
@@ -116,6 +151,11 @@ fd3_draw(struct fd_context *ctx, const struct pipe_draw_info *info)
 			.fsaturate_t = fd3_ctx->fsaturate_t,
 			.fsaturate_r = fd3_ctx->fsaturate_r,
 	};
+	unsigned dirty;
+
+	fixup_shader_state(ctx, &key);
+
+	dirty = ctx->dirty;
 
 	draw_impl(ctx, info, ctx->binning_ring,
 			dirty & ~(FD_DIRTY_BLEND), key);

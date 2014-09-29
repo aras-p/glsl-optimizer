@@ -35,6 +35,9 @@
 
 #include "freedreno_context.h"
 
+#include "ir3_shader.h"
+
+
 struct fd3_context {
 	struct fd_context base;
 
@@ -86,6 +89,12 @@ struct fd3_context {
 	 * shader:
 	 */
 	unsigned fsaturate_s, fsaturate_t, fsaturate_r;
+
+	/* some state changes require a different shader variant.  Keep
+	 * track of this so we know when we need to re-emit shader state
+	 * due to variant change.  See fixup_shader_state()
+	 */
+	struct ir3_shader_key last_key;
 };
 
 static INLINE struct fd3_context *
