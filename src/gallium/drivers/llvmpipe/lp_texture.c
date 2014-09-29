@@ -132,12 +132,15 @@ llvmpipe_texture_layout(struct llvmpipe_screen *screen,
       lpr->img_stride[level] = lpr->row_stride[level] * nblocksy;
 
       /* Number of 3D image slices, cube faces or texture array layers */
-      if (lpr->base.target == PIPE_TEXTURE_CUBE)
-         num_slices = 6;
-      else if (lpr->base.target == PIPE_TEXTURE_3D)
+      if (lpr->base.target == PIPE_TEXTURE_CUBE) {
+         assert(layers == 6);
+      }
+
+      if (lpr->base.target == PIPE_TEXTURE_3D)
          num_slices = depth;
       else if (lpr->base.target == PIPE_TEXTURE_1D_ARRAY ||
                lpr->base.target == PIPE_TEXTURE_2D_ARRAY ||
+               lpr->base.target == PIPE_TEXTURE_CUBE ||
                lpr->base.target == PIPE_TEXTURE_CUBE_ARRAY)
          num_slices = layers;
       else
