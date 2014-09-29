@@ -43,6 +43,11 @@ vc4_setup_rcl(struct vc4_context *vc4)
         struct vc4_resource *ctex = csurf ? vc4_resource(csurf->base.texture) : NULL;
         struct vc4_surface *zsurf = vc4_surface(vc4->framebuffer.zsbuf);
         struct vc4_resource *ztex = zsurf ? vc4_resource(zsurf->base.texture) : NULL;
+
+        if (!csurf)
+                vc4->resolve &= ~PIPE_CLEAR_COLOR0;
+        if (!zsurf)
+                vc4->resolve &= ~(PIPE_CLEAR_DEPTH | PIPE_CLEAR_STENCIL);
         uint32_t resolve_uncleared = vc4->resolve & ~vc4->cleared;
         uint32_t width = vc4->framebuffer.width;
         uint32_t height = vc4->framebuffer.height;
@@ -113,7 +118,7 @@ vc4_setup_rcl(struct vc4_context *vc4)
                         /* Note that the load doesn't actually occur until the
                          * tile coords packet is processed.
                          */
-                        if (csurf && (resolve_uncleared & PIPE_CLEAR_COLOR)) {
+                        if (resolve_uncleared & PIPE_CLEAR_COLOR) {
                                 cl_start_reloc(&vc4->rcl, 1);
                                 cl_u8(&vc4->rcl, VC4_PACKET_LOAD_TILE_BUFFER_GENERAL);
                                 cl_u8(&vc4->rcl,
@@ -133,8 +138,7 @@ vc4_setup_rcl(struct vc4_context *vc4)
                                 coords_emitted = true;
                         }
 
-                        if (zsurf && (resolve_uncleared & (PIPE_CLEAR_DEPTH |
-                                                           PIPE_CLEAR_STENCIL))) {
+                        if (resolve_uncleared & (PIPE_CLEAR_DEPTH | PIPE_CLEAR_STENCIL)) {
                                 cl_start_reloc(&vc4->rcl, 1);
                                 cl_u8(&vc4->rcl, VC4_PACKET_LOAD_TILE_BUFFER_GENERAL);
                                 cl_u8(&vc4->rcl,
@@ -166,8 +170,7 @@ vc4_setup_rcl(struct vc4_context *vc4)
                         cl_reloc(vc4, &vc4->rcl, vc4->tile_alloc,
                                  (y * xtiles + x) * 32);
 
-                        if (zsurf && (vc4->resolve & (PIPE_CLEAR_DEPTH |
-                                                      PIPE_CLEAR_STENCIL))) {
+                        if (vc4->resolve & (PIPE_CLEAR_DEPTH | PIPE_CLEAR_STENCIL)) {
                                 cl_start_reloc(&vc4->rcl, 1);
                                 cl_u8(&vc4->rcl, VC4_PACKET_STORE_TILE_BUFFER_GENERAL);
                                 cl_u8(&vc4->rcl,
