@@ -244,6 +244,7 @@ struct pipe_context *vc4_context_create(struct pipe_screen *pscreen,
 void vc4_draw_init(struct pipe_context *pctx);
 void vc4_state_init(struct pipe_context *pctx);
 void vc4_program_init(struct pipe_context *pctx);
+void vc4_query_init(struct pipe_context *pctx);
 void vc4_simulator_init(struct vc4_screen *screen);
 int vc4_simulator_flush(struct vc4_context *vc4,
                         struct drm_vc4_submit_cl *args);
@@ -266,5 +267,5 @@ bool vc4_rt_format_is_565(enum pipe_format f);
 bool vc4_tex_format_supported(enum pipe_format f);
 uint8_t vc4_get_tex_format(enum pipe_format f);
 const uint8_t *vc4_get_format_swizzle(enum pipe_format f);
-
+void vc4_init_query_functions(struct vc4_context *vc4);
 #endif /* VC4_CONTEXT_H */

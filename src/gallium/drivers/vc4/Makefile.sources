@@ -24,6 +24,7 @@ C_SOURCES := \
 	vc4_qpu_emit.c \
 	vc4_qpu.h \
 	vc4_qpu_validate.c \
+	vc4_query.c \
 	vc4_register_allocate.c \
 	vc4_reorder_uniforms.c \
 	vc4_resource.c \
