@@ -486,6 +486,8 @@ memory).  This is used to implement OpenGL's proxy textures.  Typically, a
 driver will simply check if the total size of the given resource is less than
 some limit.
 
+For PIPE_TEXTURE_CUBE, the pipe_resource::array_size field should be 6.
+
 
 .. _resource_create:
 
