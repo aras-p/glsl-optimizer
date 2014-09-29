@@ -111,19 +111,8 @@ static struct qreg
 get_temp_for_uniform(struct vc4_compile *c, enum quniform_contents contents,
                      uint32_t data)
 {
-        for (int i = 0; i < c->num_uniforms; i++) {
-                if (c->uniform_contents[i] == contents &&
-                    c->uniform_data[i] == data)
-                        return c->uniforms[i];
-        }
-
         struct qreg u = add_uniform(c, contents, data);
         struct qreg t = qir_MOV(c, u);
-
-        resize_qreg_array(c, &c->uniforms, &c->uniforms_array_size,
-                          u.index + 1);
-
-        c->uniforms[u.index] = t;
         return t;
 }
 
