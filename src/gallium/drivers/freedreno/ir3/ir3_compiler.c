@@ -1589,6 +1589,44 @@ trans_ucmp(const struct instr_translater *t,
 	put_dst(ctx, inst, dst);
 }
 
+/*
+ * ISSG(a) = a < 0 ? -1 : a > 0 ? 1 : 0
+ *   cmps.s.lt tmp_neg, a, 0  # 1 if a is negative
+ *   cmps.s.gt tmp_pos, a, 0  # 1 if a is positive
+ *   sub.u dst, tmp_pos, tmp_neg
+ */
+static void
+trans_issg(const struct instr_translater *t,
+		struct ir3_compile_context *ctx,
+		struct tgsi_full_instruction *inst)
+{
+	struct ir3_instruction *instr;
+	struct tgsi_dst_register *dst = get_dst(ctx, inst);
+	struct tgsi_src_register *a = &inst->Src[0].Register;
+	struct tgsi_dst_register neg_dst, pos_dst;
+	struct tgsi_src_register *neg_src, *pos_src;
+
+	neg_src = get_internal_temp(ctx, &neg_dst);
+	pos_src = get_internal_temp(ctx, &pos_dst);
+
+	/* cmps.s.lt neg, a, 0 */
+	instr = instr_create(ctx, 2, OPC_CMPS_S);
+	instr->cat2.condition = IR3_COND_LT;
+	vectorize(ctx, instr, &neg_dst, 2, a, 0, 0, IR3_REG_IMMED);
+
+	/* cmps.s.gt pos, a, 0 */
+	instr = instr_create(ctx, 2, OPC_CMPS_S);
+	instr->cat2.condition = IR3_COND_GT;
+	vectorize(ctx, instr, &pos_dst, 2, a, 0, 0, IR3_REG_IMMED);
+
+	/* sub.u dst, pos, neg */
+	instr = instr_create(ctx, 2, OPC_SUB_U);
+	vectorize(ctx, instr, dst, 2, pos_src, 0, neg_src, 0);
+
+	put_dst(ctx, inst, dst);
+}
+
+
 
 /*
  * Conditional / Flow control
@@ -2416,6 +2454,7 @@ static const struct instr_translater translaters[TGSI_OPCODE_LAST] = {
 	INSTR(ISLT,         trans_icmp, .opc = OPC_CMPS_S),
 	INSTR(USLT,         trans_icmp, .opc = OPC_CMPS_U),
 	INSTR(UCMP,         trans_ucmp),
+	INSTR(ISSG,         trans_issg),
 	INSTR(IF,           trans_if,   .opc = OPC_CMPS_F),
 	INSTR(UIF,          trans_if,   .opc = OPC_CMPS_U),
 	INSTR(ELSE,         trans_else),
