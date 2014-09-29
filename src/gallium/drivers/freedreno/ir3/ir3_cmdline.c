@@ -85,7 +85,7 @@ static void dump_info(struct ir3_shader_variant *so)
 }
 
 
-static void
+static int
 read_file(const char *filename, void **ptr, size_t *size)
 {
 	int fd, ret;
@@ -94,8 +94,10 @@ read_file(const char *filename, void **ptr, size_t *size)
 	*ptr = MAP_FAILED;
 
 	fd = open(filename, O_RDONLY);
-	if (fd == -1)
-		errx(1, "couldn't open `%s'", filename);
+	if (fd == -1) {
+		warnx("couldn't open `%s'", filename);
+		return 1;
+	}
 
 	ret = fstat(fd, &st);
 	if (ret)
@@ -107,6 +109,8 @@ read_file(const char *filename, void **ptr, size_t *size)
 		errx(1, "couldn't map `%s'", filename);
 
 	close(fd);
+
+	return 0;
 }
 
 static void reset_variant(struct ir3_shader_variant *v, const char *msg)
@@ -119,26 +123,101 @@ static void reset_variant(struct ir3_shader_variant *v, const char *msg)
 	v->immediates_count = 0;
 }
 
+static void print_usage(void)
+{
+	printf("Usage: ir3_compiler [OPTIONS]... FILE\n");
+	printf("    --verbose         - verbose compiler/debug messages\n");
+	printf("    --binning-pass    - generate binning pass shader (VERT)\n");
+	printf("    --color-two-side  - emulate two-sided color (FRAG)\n");
+	printf("    --half-precision  - use half-precision\n");
+	printf("    --alpha           - generate render-to-alpha shader (FRAG)\n");
+	printf("    --saturate-s MASK - bitmask of samplers to saturate S coord\n");
+	printf("    --saturate-t MASK - bitmask of samplers to saturate T coord\n");
+	printf("    --saturate-r MASK - bitmask of samplers to saturate R coord\n");
+	printf("    --help            - show this message\n");
+}
+
 int main(int argc, char **argv)
 {
-	int ret = 0;
-	const char *filename = argv[1];
+	int ret = 0, n = 1;
+	const char *filename;
 	struct tgsi_token toks[65536];
 	struct tgsi_parse_context parse;
 	struct ir3_shader_variant v;
 	struct ir3_shader_key key = {
-		.color_two_side = true,
 	};
 	void *ptr;
 	size_t size;
 
-	fd_mesa_debug |= FD_DBG_DISASM | FD_DBG_OPTDUMP | FD_DBG_MSGS | FD_DBG_OPTMSGS;
+	fd_mesa_debug |= FD_DBG_DISASM;
 
+	while (n < argc) {
+		if (!strcmp(argv[n], "--verbose")) {
+			fd_mesa_debug |=  FD_DBG_OPTDUMP | FD_DBG_MSGS | FD_DBG_OPTMSGS;
+			n++;
+			continue;
+		}
+
+		if (!strcmp(argv[n], "--binning-pass")) {
+			key.binning_pass = true;
+			n++;
+			continue;
+		}
+
+		if (!strcmp(argv[n], "--color-two-side")) {
+			key.color_two_side = true;
+			n++;
+			continue;
+		}
+
+		if (!strcmp(argv[n], "--half-precision")) {
+			key.half_precision = true;
+			n++;
+			continue;
+		}
+
+		if (!strcmp(argv[n], "--alpha")) {
+			key.alpha = true;
+			n++;
+			continue;
+		}
+
+		if (!strcmp(argv[n], "--saturate-s")) {
+			key.vsaturate_s = key.fsaturate_s = strtol(argv[n+1], NULL, 0);
+			n += 2;
+			continue;
+		}
+
+		if (!strcmp(argv[n], "--saturate-t")) {
+			key.vsaturate_t = key.fsaturate_t = strtol(argv[n+1], NULL, 0);
+			n += 2;
+			continue;
+		}
+
+		if (!strcmp(argv[n], "--saturate-r")) {
+			key.vsaturate_r = key.fsaturate_r = strtol(argv[n+1], NULL, 0);
+			n += 2;
+			continue;
+		}
+
+		if (!strcmp(argv[n], "--help")) {
+			print_usage();
+			return 0;
+		}
+
+		break;
+	}
+
+	filename = argv[n];
 
 	memset(&v, 0, sizeof(v));
 	v.key = key;
 
-	read_file(filename, &ptr, &size);
+	ret = read_file(filename, &ptr, &size);
+	if (ret) {
+		print_usage();
+		return ret;
+	}
 
 	if (!tgsi_text_translate(ptr, toks, Elements(toks)))
 		errx(1, "could not parse `%s'", filename);
