@@ -223,6 +223,7 @@ dri2_x11_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
 
    dri2_surf->region = XCB_NONE;
    if (type == EGL_PBUFFER_BIT) {
+      s = xcb_setup_roots_iterator(xcb_get_setup(dri2_dpy->conn));
       screen = get_xcb_screen(s, dri2_dpy->screen);
       if (!screen) {
          _eglError(EGL_BAD_NATIVE_WINDOW, "dri2_create_surface");
@@ -230,7 +231,6 @@ dri2_x11_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
       }
 
       dri2_surf->drawable = xcb_generate_id(dri2_dpy->conn);
-      s = xcb_setup_roots_iterator(xcb_get_setup(dri2_dpy->conn));
       xcb_create_pixmap(dri2_dpy->conn, conf->BufferSize,
                        dri2_surf->drawable, screen->root,
 			dri2_surf->base.Width, dri2_surf->base.Height);
