@@ -576,13 +576,13 @@ tgsi_to_qir_tex(struct vc4_compile *c,
 
                 struct qreg depth_output;
 
-                struct qreg compare = src[0 * 4 + 2];
-
-                if (tgsi_inst->Instruction.Opcode == TGSI_OPCODE_TXP)
-                        compare = qir_FMUL(c, compare, proj);
-
                 struct qreg one = qir_uniform_f(c, 1.0f);
                 if (c->key->tex[unit].compare_mode) {
+                        struct qreg compare = src[0 * 4 + 2];
+
+                        if (tgsi_inst->Instruction.Opcode == TGSI_OPCODE_TXP)
+                                compare = qir_FMUL(c, compare, proj);
+
                         switch (c->key->tex[unit].compare_func) {
                         case PIPE_FUNC_NEVER:
                                 depth_output = qir_uniform_f(c, 0.0f);
