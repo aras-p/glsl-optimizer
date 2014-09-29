@@ -627,10 +627,11 @@ static INLINE unsigned
 util_max_layer(const struct pipe_resource *r, unsigned level)
 {
    switch (r->target) {
-   case PIPE_TEXTURE_CUBE:
-      return 6 - 1;
    case PIPE_TEXTURE_3D:
       return u_minify(r->depth0, level) - 1;
+   case PIPE_TEXTURE_CUBE:
+      assert(r->array_size == 6);
+      /* fall-through */
    case PIPE_TEXTURE_1D_ARRAY:
    case PIPE_TEXTURE_2D_ARRAY:
    case PIPE_TEXTURE_CUBE_ARRAY:
