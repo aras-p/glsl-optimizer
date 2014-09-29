@@ -32,7 +32,6 @@
 #include <sys/time.h>
 #include "dri_util.h"
 #include "intel_bufmgr.h"
-#include "intel_chipset.h"
 #include "brw_device_info.h"
 #include "i915_drm.h"
 #include "xmlconfig.h"

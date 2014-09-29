@@ -96,7 +96,6 @@ DRI_CONF_END
 #include "intel_batchbuffer.h"
 #include "intel_buffers.h"
 #include "intel_bufmgr.h"
-#include "intel_chipset.h"
 #include "intel_fbo.h"
 #include "intel_mipmap_tree.h"
 #include "intel_screen.h"

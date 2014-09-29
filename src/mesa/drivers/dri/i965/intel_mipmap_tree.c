@@ -29,7 +29,6 @@
 #include <GL/internal/dri_interface.h>
 
 #include "intel_batchbuffer.h"
-#include "intel_chipset.h"
 #include "intel_mipmap_tree.h"
 #include "intel_resolve_map.h"
 #include "intel_tex.h"

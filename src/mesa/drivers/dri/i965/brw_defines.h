@@ -2390,6 +2390,4 @@ enum brw_wm_barycentric_interp_mode {
 #define BDW_MOCS_WB 0x78
 #define BDW_MOCS_WT 0x58
 
-#include "intel_chipset.h"
-
 #endif
