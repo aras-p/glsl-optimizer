@@ -554,3 +554,12 @@ lp_get_default_memory_manager()
    return 0;
 #endif
 }
+
+extern "C"
+void
+lp_free_memory_manager(LLVMMCJITMemoryManagerRef memorymgr)
+{
+#if HAVE_LLVM < 0x0306
+   delete reinterpret_cast<llvm::JITMemoryManager*>(memorymgr);
+#endif
+}

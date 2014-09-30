@@ -219,10 +219,8 @@ gallivm_free_code(struct gallivm_state *gallivm)
    assert(!gallivm->engine);
    lp_free_generated_code(gallivm->code);
    gallivm->code = NULL;
-#if HAVE_LLVM < 0x0306
-   LLVMDisposeMCJITMemoryManager(gallivm->memorymgr);
+   lp_free_memory_manager(gallivm->memorymgr);
    gallivm->memorymgr = NULL;
-#endif
 }
 
 

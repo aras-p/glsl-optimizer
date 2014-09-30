@@ -58,6 +58,14 @@
 #endif
 
 
+#if HAVE_LLVM <= 0x0303
+/* We won't actually use LLVMMCJITMemoryManagerRef, just create a dummy
+ * typedef to simplify things elsewhere.
+ */
+typedef void *LLVMMCJITMemoryManagerRef;
+#endif
+
+
 /**
  * Redefine these LLVM entrypoints as invalid macros to make sure we
  * don't accidentally use them.  We need to use the functions which
