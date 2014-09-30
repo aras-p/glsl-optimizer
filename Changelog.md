@@ -1,6 +1,14 @@
 GLSL optimizer Change Log
 =========================
 
+2014 09
+-------
+
+Goodies:
+
+* Supports GL_EXT_draw_buffers in ES2.0, for MRT.
+
+
 2014 08
 -------
 

@@ -328,6 +328,8 @@ struct _mesa_glsl_parse_state {
    bool ARB_arrays_of_arrays_warn;
    bool ARB_draw_buffers_enable;
    bool ARB_draw_buffers_warn;
+   bool EXT_draw_buffers_enable;
+   bool EXT_draw_buffers_warn;
    bool ARB_draw_instanced_enable;
    bool ARB_draw_instanced_warn;
    bool ARB_explicit_attrib_location_enable;

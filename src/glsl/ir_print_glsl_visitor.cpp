@@ -231,6 +231,11 @@ _mesa_print_ir_glsl(exec_list *instructions,
 			str.asprintf_append ("#extension GL_EXT_shadow_samplers : enable\n");
 		if (state->EXT_frag_depth_enable)
 			str.asprintf_append ("#extension GL_EXT_frag_depth : enable\n");
+		if (state->es_shader && state->language_version < 300)
+		{
+			if (state->EXT_draw_buffers_enable)
+				str.asprintf_append ("#extension GL_EXT_draw_buffers : require\n");
+		}
 		if (state->EXT_shader_framebuffer_fetch_enable)
 			str.asprintf_append ("#extension GL_EXT_shader_framebuffer_fetch : enable\n");
 	}
