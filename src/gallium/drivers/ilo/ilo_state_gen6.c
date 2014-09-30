@@ -354,12 +354,12 @@ ilo_gpe_set_ve_edgeflag(const struct ilo_dev_info *dev,
    cso->payload[0] |= GEN6_VE_STATE_DW0_EDGE_FLAG_ENABLE;
 
    /*
-    * Edge flags have format GEN6_FORMAT_R8_UINT when defined via
+    * Edge flags have format GEN6_FORMAT_R8_USCALED when defined via
     * glEdgeFlagPointer(), and format GEN6_FORMAT_R32_FLOAT when defined
     * via glEdgeFlag(), as can be seen in vbo_attrib_tmp.h.
     *
     * Since all the hardware cares about is whether the flags are zero or not,
-    * we can treat them as GEN6_FORMAT_R32_UINT in the latter case.
+    * we can treat them as the corresponding _UINT formats.
     */
    format = GEN_EXTRACT(cso->payload[0], GEN6_VE_STATE_DW0_FORMAT);
    cso->payload[0] &= ~GEN6_VE_STATE_DW0_FORMAT__MASK;
@@ -368,8 +368,10 @@ ilo_gpe_set_ve_edgeflag(const struct ilo_dev_info *dev,
    case GEN6_FORMAT_R32_FLOAT:
       format = GEN6_FORMAT_R32_UINT;
       break;
+   case GEN6_FORMAT_R8_USCALED:
+      format = GEN6_FORMAT_R8_UINT;
+      break;
    default:
-      assert(format == GEN6_FORMAT_R8_UINT);
       break;
    }
 
