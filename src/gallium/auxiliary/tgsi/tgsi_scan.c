@@ -293,14 +293,6 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
    info->uses_kill = (info->opcode_count[TGSI_OPCODE_KILL_IF] ||
                       info->opcode_count[TGSI_OPCODE_KILL]);
 
-   /* extract simple properties */
-   info->origin_lower_left =
-         info->properties[TGSI_PROPERTY_FS_COORD_ORIGIN][0];
-   info->pixel_center_integer =
-         info->properties[TGSI_PROPERTY_FS_COORD_PIXEL_CENTER][0];
-   info->color0_writes_all_cbufs =
-         info->properties[TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS][0];
-
    /* The dimensions of the IN decleration in geometry shader have
     * to be deduced from the type of the input primitive.
     */

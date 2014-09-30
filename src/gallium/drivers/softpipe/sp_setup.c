@@ -562,17 +562,21 @@ static void
 setup_fragcoord_coeff(struct setup_context *setup, uint slot)
 {
    const struct tgsi_shader_info *fsInfo = &setup->softpipe->fs_variant->info;
+   boolean origin_lower_left =
+         fsInfo->properties[TGSI_PROPERTY_FS_COORD_ORIGIN][0];
+   boolean pixel_center_integer =
+         fsInfo->properties[TGSI_PROPERTY_FS_COORD_PIXEL_CENTER][0];
 
    /*X*/
-   setup->coef[slot].a0[0] = fsInfo->pixel_center_integer ? 0.0f : 0.5f;
+   setup->coef[slot].a0[0] = pixel_center_integer ? 0.0f : 0.5f;
    setup->coef[slot].dadx[0] = 1.0f;
    setup->coef[slot].dady[0] = 0.0f;
    /*Y*/
    setup->coef[slot].a0[1] =
-		   (fsInfo->origin_lower_left ? setup->softpipe->framebuffer.height-1 : 0)
-		   + (fsInfo->pixel_center_integer ? 0.0f : 0.5f);
+		   (origin_lower_left ? setup->softpipe->framebuffer.height-1 : 0)
+		   + (pixel_center_integer ? 0.0f : 0.5f);
    setup->coef[slot].dadx[1] = 0.0f;
-   setup->coef[slot].dady[1] = fsInfo->origin_lower_left ? -1.0f : 1.0f;
+   setup->coef[slot].dady[1] = origin_lower_left ? -1.0f : 1.0f;
    /*Z*/
    setup->coef[slot].a0[2] = setup->posCoef.a0[2];
    setup->coef[slot].dadx[2] = setup->posCoef.dadx[2];

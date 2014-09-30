@@ -76,9 +76,6 @@ struct tgsi_shader_info
    boolean uses_vertexid;
    boolean uses_primid;
    boolean uses_frontface;
-   boolean origin_lower_left;
-   boolean pixel_center_integer;
-   boolean color0_writes_all_cbufs;
    boolean writes_viewport_index;
    boolean writes_layer;
    boolean is_msaa_sampler[PIPE_MAX_SAMPLERS];

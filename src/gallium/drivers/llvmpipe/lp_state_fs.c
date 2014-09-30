@@ -2323,6 +2323,8 @@ generate_fragment(struct llvmpipe_context *lp,
       LLVMValueRef mask_store = lp_build_array_alloca(gallivm, mask_type,
                                                       num_loop, "mask_store");
       LLVMValueRef color_store[PIPE_MAX_COLOR_BUFS][TGSI_NUM_CHANNELS];
+      boolean pixel_center_integer =
+         shader->info.base.properties[TGSI_PROPERTY_FS_COORD_PIXEL_CENTER][0];
 
       /*
        * The shader input interpolation info is not explicitely baked in the
@@ -2333,7 +2335,7 @@ generate_fragment(struct llvmpipe_context *lp,
                                gallivm,
                                shader->info.base.num_inputs,
                                inputs,
-                               shader->info.base.pixel_center_integer,
+                               pixel_center_integer,
                                builder, fs_type,
                                a0_ptr, dadx_ptr, dady_ptr,
                                x, y);
