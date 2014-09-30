@@ -2701,14 +2701,13 @@ int si_compile_llvm(struct si_screen *sscreen, struct si_shader *shader,
 /* Generate code for the hardware VS shader stage to go with a geometry shader */
 static int si_generate_gs_copy_shader(struct si_screen *sscreen,
 				      struct si_shader_context *si_shader_ctx,
-				      bool dump)
+				      struct si_shader *gs, bool dump)
 {
 	struct gallivm_state *gallivm = &si_shader_ctx->radeon_bld.gallivm;
 	struct lp_build_tgsi_context *bld_base = &si_shader_ctx->radeon_bld.soa.bld_base;
 	struct lp_build_context *base = &bld_base->base;
 	struct lp_build_context *uint = &bld_base->uint_bld;
 	struct si_shader *shader = si_shader_ctx->shader;
-	struct si_shader *gs = si_shader_ctx->shader->selector->current;
 	struct si_shader_output_values *outputs;
 	LLVMValueRef t_list_ptr, t_list;
 	LLVMValueRef args[9];
@@ -2910,7 +2909,8 @@ int si_shader_create(struct si_screen *sscreen, struct si_shader *shader)
 		shader->gs_copy_shader->selector = shader->selector;
 		shader->gs_copy_shader->key = shader->key;
 		si_shader_ctx.shader = shader->gs_copy_shader;
-		if ((r = si_generate_gs_copy_shader(sscreen, &si_shader_ctx, dump))) {
+		if ((r = si_generate_gs_copy_shader(sscreen, &si_shader_ctx,
+						    shader, dump))) {
 			free(shader->gs_copy_shader);
 			shader->gs_copy_shader = NULL;
 			goto out;
