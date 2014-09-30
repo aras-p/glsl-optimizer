@@ -231,7 +231,7 @@ void si_dma_copy(struct pipe_context *ctx,
 	struct si_context *sctx = (struct si_context *)ctx;
 	struct r600_texture *rsrc = (struct r600_texture*)src;
 	struct r600_texture *rdst = (struct r600_texture*)dst;
-	unsigned dst_pitch, src_pitch, bpp, dst_mode, src_mode, copy_height;
+	unsigned dst_pitch, src_pitch, bpp, dst_mode, src_mode;
 	unsigned src_w, dst_w;
 	unsigned src_x, src_y;
 	unsigned dst_x = dstx, dst_y = dsty, dst_z = dstz;
@@ -271,7 +271,6 @@ void si_dma_copy(struct pipe_context *ctx,
 	src_pitch = rsrc->surface.level[src_level].pitch_bytes;
 	src_w = rsrc->surface.level[src_level].npix_x;
 	dst_w = rdst->surface.level[dst_level].npix_x;
-	copy_height = src_box->height / rsrc->surface.blk_h;
 
 	dst_mode = rdst->surface.level[dst_level].mode;
 	src_mode = rsrc->surface.level[src_level].mode;
@@ -310,11 +309,12 @@ void si_dma_copy(struct pipe_context *ctx,
 		dst_offset += rdst->surface.level[dst_level].slice_size * dst_z;
 		dst_offset += dst_y * dst_pitch + dst_x * bpp;
 		si_dma_copy_buffer(sctx, dst, src, dst_offset, src_offset,
-				   copy_height * src_pitch);
+				   rsrc->surface.level[src_level].slice_size);
 	} else {
 		si_dma_copy_tile(sctx, dst, dst_level, dst_x, dst_y, dst_z,
 				 src, src_level, src_x, src_y, src_box->z,
-				 copy_height, dst_pitch, bpp);
+				 src_box->height / rsrc->surface.blk_h,
+				 dst_pitch, bpp);
 	}
 	return;
 
