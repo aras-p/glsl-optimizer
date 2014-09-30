@@ -812,6 +812,17 @@ tgsi_to_qir_cos(struct vc4_compile *c,
         return sum;
 }
 
+static struct qreg
+tgsi_to_qir_clamp(struct vc4_compile *c,
+                struct tgsi_full_instruction *tgsi_inst,
+                enum qop op, struct qreg *src, int i)
+{
+        return qir_FMAX(c, qir_FMIN(c,
+                                    src[0 * 4 + i],
+                                    src[2 * 4 + i]),
+                        src[1 * 4 + i]);
+}
+
 static void
 emit_vertex_input(struct vc4_compile *c, int attr)
 {
@@ -1062,6 +1073,7 @@ emit_tgsi_instruction(struct vc4_compile *c,
                 [TGSI_OPCODE_FLR] = { 0, tgsi_to_qir_flr },
                 [TGSI_OPCODE_SIN] = { 0, tgsi_to_qir_sin },
                 [TGSI_OPCODE_COS] = { 0, tgsi_to_qir_cos },
+                [TGSI_OPCODE_CLAMP] = { 0, tgsi_to_qir_clamp },
         };
         static int asdf = 0;
         uint32_t tgsi_op = tgsi_inst->Instruction.Opcode;
