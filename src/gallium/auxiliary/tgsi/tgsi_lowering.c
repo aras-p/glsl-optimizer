@@ -31,11 +31,11 @@
 #include "util/u_debug.h"
 #include "util/u_math.h"
 
-#include "freedreno_lowering.h"
+#include "tgsi_lowering.h"
 
-struct fd_lowering_context {
+struct tgsi_lowering_context {
    struct tgsi_transform_context base;
-   const struct fd_lowering_config *config;
+   const struct tgsi_lowering_config *config;
    struct tgsi_shader_info *info;
    unsigned two_side_colors;
    unsigned two_side_idx[PIPE_MAX_SHADER_INPUTS];
@@ -53,10 +53,10 @@ struct fd_lowering_context {
    unsigned saturate;
 };
 
-static inline struct fd_lowering_context *
-fd_lowering_context(struct tgsi_transform_context *tctx)
+static inline struct tgsi_lowering_context *
+tgsi_lowering_context(struct tgsi_transform_context *tctx)
 {
-   return (struct fd_lowering_context *)tctx;
+   return (struct tgsi_lowering_context *)tctx;
 }
 
 /*
@@ -196,7 +196,7 @@ static void
 transform_dst(struct tgsi_transform_context *tctx,
               struct tgsi_full_instruction *inst)
 {
-   struct fd_lowering_context *ctx = fd_lowering_context(tctx);
+   struct tgsi_lowering_context *ctx = tgsi_lowering_context(tctx);
    struct tgsi_full_dst_register *dst  = &inst->Dst[0];
    struct tgsi_full_src_register *src0 = &inst->Src[0];
    struct tgsi_full_src_register *src1 = &inst->Src[1];
@@ -276,7 +276,7 @@ static void
 transform_xpd(struct tgsi_transform_context *tctx,
               struct tgsi_full_instruction *inst)
 {
-   struct fd_lowering_context *ctx = fd_lowering_context(tctx);
+   struct tgsi_lowering_context *ctx = tgsi_lowering_context(tctx);
    struct tgsi_full_dst_register *dst  = &inst->Dst[0];
    struct tgsi_full_src_register *src0 = &inst->Src[0];
    struct tgsi_full_src_register *src1 = &inst->Src[1];
@@ -347,7 +347,7 @@ static void
 transform_scs(struct tgsi_transform_context *tctx,
               struct tgsi_full_instruction *inst)
 {
-   struct fd_lowering_context *ctx = fd_lowering_context(tctx);
+   struct tgsi_lowering_context *ctx = tgsi_lowering_context(tctx);
    struct tgsi_full_dst_register *dst = &inst->Dst[0];
    struct tgsi_full_src_register *src = &inst->Src[0];
    struct tgsi_full_instruction new_inst;
@@ -409,7 +409,7 @@ static void
 transform_lrp(struct tgsi_transform_context *tctx,
               struct tgsi_full_instruction *inst)
 {
-   struct fd_lowering_context *ctx = fd_lowering_context(tctx);
+   struct tgsi_lowering_context *ctx = tgsi_lowering_context(tctx);
    struct tgsi_full_dst_register *dst  = &inst->Dst[0];
    struct tgsi_full_src_register *src0 = &inst->Src[0];
    struct tgsi_full_src_register *src1 = &inst->Src[1];
@@ -475,7 +475,7 @@ static void
 transform_frc(struct tgsi_transform_context *tctx,
               struct tgsi_full_instruction *inst)
 {
-   struct fd_lowering_context *ctx = fd_lowering_context(tctx);
+   struct tgsi_lowering_context *ctx = tgsi_lowering_context(tctx);
    struct tgsi_full_dst_register *dst = &inst->Dst[0];
    struct tgsi_full_src_register *src = &inst->Src[0];
    struct tgsi_full_instruction new_inst;
@@ -519,7 +519,7 @@ static void
 transform_pow(struct tgsi_transform_context *tctx,
               struct tgsi_full_instruction *inst)
 {
-   struct fd_lowering_context *ctx = fd_lowering_context(tctx);
+   struct tgsi_lowering_context *ctx = tgsi_lowering_context(tctx);
    struct tgsi_full_dst_register *dst  = &inst->Dst[0];
    struct tgsi_full_src_register *src0 = &inst->Src[0];
    struct tgsi_full_src_register *src1 = &inst->Src[1];
@@ -579,7 +579,7 @@ static void
 transform_lit(struct tgsi_transform_context *tctx,
               struct tgsi_full_instruction *inst)
 {
-   struct fd_lowering_context *ctx = fd_lowering_context(tctx);
+   struct tgsi_lowering_context *ctx = tgsi_lowering_context(tctx);
    struct tgsi_full_dst_register *dst = &inst->Dst[0];
    struct tgsi_full_src_register *src = &inst->Src[0];
    struct tgsi_full_instruction new_inst;
@@ -690,7 +690,7 @@ static void
 transform_exp(struct tgsi_transform_context *tctx,
               struct tgsi_full_instruction *inst)
 {
-   struct fd_lowering_context *ctx = fd_lowering_context(tctx);
+   struct tgsi_lowering_context *ctx = tgsi_lowering_context(tctx);
    struct tgsi_full_dst_register *dst = &inst->Dst[0];
    struct tgsi_full_src_register *src = &inst->Src[0];
    struct tgsi_full_instruction new_inst;
@@ -785,7 +785,7 @@ static void
 transform_log(struct tgsi_transform_context *tctx,
               struct tgsi_full_instruction *inst)
 {
-   struct fd_lowering_context *ctx = fd_lowering_context(tctx);
+   struct tgsi_lowering_context *ctx = tgsi_lowering_context(tctx);
    struct tgsi_full_dst_register *dst = &inst->Dst[0];
    struct tgsi_full_src_register *src = &inst->Src[0];
    struct tgsi_full_instruction new_inst;
@@ -913,7 +913,7 @@ static void
 transform_dotp(struct tgsi_transform_context *tctx,
                struct tgsi_full_instruction *inst)
 {
-   struct fd_lowering_context *ctx = fd_lowering_context(tctx);
+   struct tgsi_lowering_context *ctx = tgsi_lowering_context(tctx);
    struct tgsi_full_dst_register *dst  = &inst->Dst[0];
    struct tgsi_full_src_register *src0 = &inst->Src[0];
    struct tgsi_full_src_register *src1 = &inst->Src[1];
@@ -1025,7 +1025,7 @@ static int
 transform_samp(struct tgsi_transform_context *tctx,
                struct tgsi_full_instruction *inst)
 {
-   struct fd_lowering_context *ctx = fd_lowering_context(tctx);
+   struct tgsi_lowering_context *ctx = tgsi_lowering_context(tctx);
    struct tgsi_full_src_register *coord = &inst->Src[0];
    struct tgsi_full_src_register *samp;
    struct tgsi_full_instruction new_inst;
@@ -1152,7 +1152,7 @@ transform_samp(struct tgsi_transform_context *tctx,
 static void
 emit_twoside(struct tgsi_transform_context *tctx)
 {
-   struct fd_lowering_context *ctx = fd_lowering_context(tctx);
+   struct tgsi_lowering_context *ctx = tgsi_lowering_context(tctx);
    struct tgsi_shader_info *info = ctx->info;
    struct tgsi_full_declaration decl;
    struct tgsi_full_instruction new_inst;
@@ -1232,7 +1232,7 @@ emit_twoside(struct tgsi_transform_context *tctx)
 static void
 emit_decls(struct tgsi_transform_context *tctx)
 {
-   struct fd_lowering_context *ctx = fd_lowering_context(tctx);
+   struct tgsi_lowering_context *ctx = tgsi_lowering_context(tctx);
    struct tgsi_shader_info *info = ctx->info;
    struct tgsi_full_declaration decl;
    struct tgsi_full_immediate immed;
@@ -1283,7 +1283,7 @@ emit_decls(struct tgsi_transform_context *tctx)
 }
 
 static void
-rename_color_inputs(struct fd_lowering_context *ctx,
+rename_color_inputs(struct tgsi_lowering_context *ctx,
                     struct tgsi_full_instruction *inst)
 {
    unsigned i, j;
@@ -1306,7 +1306,7 @@ static void
 transform_instr(struct tgsi_transform_context *tctx,
 		struct tgsi_full_instruction *inst)
 {
-   struct fd_lowering_context *ctx = fd_lowering_context(tctx);
+   struct tgsi_lowering_context *ctx = tgsi_lowering_context(tctx);
 
    if (!ctx->emitted_decls) {
       emit_decls(tctx);
@@ -1410,11 +1410,11 @@ transform_instr(struct tgsi_transform_context *tctx,
  * returns the current info.
  */
 const struct tgsi_token *
-fd_transform_lowering(const struct fd_lowering_config *config,
-                      const struct tgsi_token *tokens,
-                      struct tgsi_shader_info *info)
+tgsi_transform_lowering(const struct tgsi_lowering_config *config,
+                        const struct tgsi_token *tokens,
+                        struct tgsi_shader_info *info)
 {
-   struct fd_lowering_context ctx;
+   struct tgsi_lowering_context ctx;
    struct tgsi_token *newtoks;
    int newlen, numtmp;
 

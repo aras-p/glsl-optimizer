@@ -75,6 +75,7 @@ C_SOURCES := \
 	tgsi/tgsi_exec.c \
 	tgsi/tgsi_info.c \
 	tgsi/tgsi_iterate.c \
+	tgsi/tgsi_lowering.c \
 	tgsi/tgsi_parse.c \
 	tgsi/tgsi_sanity.c \
 	tgsi/tgsi_scan.c \

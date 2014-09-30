@@ -24,13 +24,13 @@
  *    Rob Clark <robclark@freedesktop.org>
  */
 
-#ifndef FREEDRENO_LOWERING_H_
-#define FREEDRENO_LOWERING_H_
+#ifndef TGSI_LOWERING_H_
+#define TGSI_LOWERING_H_
 
 #include "pipe/p_shader_tokens.h"
 #include "tgsi/tgsi_scan.h"
 
-struct fd_lowering_config
+struct tgsi_lowering_config
 {
    /* For fragment shaders, generate a shader that emulates two
     * sided color by inserting a BGCOLOR input for each COLOR
@@ -81,8 +81,8 @@ struct fd_lowering_config
 };
 
 const struct tgsi_token *
-fd_transform_lowering(const struct fd_lowering_config *config,
-                      const struct tgsi_token *tokens,
-                      struct tgsi_shader_info *info);
+tgsi_transform_lowering(const struct tgsi_lowering_config *config,
+                        const struct tgsi_token *tokens,
+                        struct tgsi_shader_info *info);
 
 #endif /* FREEDRENO_LOWERING_H_ */
