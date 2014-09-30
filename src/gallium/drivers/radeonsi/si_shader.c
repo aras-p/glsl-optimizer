@@ -109,7 +109,7 @@ static struct si_shader_context * si_shader_context(
  * less than 64, so that a 64-bit bitmask of used inputs or outputs can be
  * calculated.
  */
-static unsigned get_unique_index(unsigned semantic_name, unsigned index)
+unsigned si_shader_io_get_unique_index(unsigned semantic_name, unsigned index)
 {
 	switch (semantic_name) {
 	case TGSI_SEMANTIC_POSITION:
@@ -160,7 +160,7 @@ static unsigned get_unique_index(unsigned semantic_name, unsigned index)
 static int get_param_index(unsigned semantic_name, unsigned index,
 			   uint64_t mask)
 {
-	unsigned unique_index = get_unique_index(semantic_name, index);
+	unsigned unique_index = si_shader_io_get_unique_index(semantic_name, index);
 	int i, param_index = 0;
 
 	/* If not present... */
@@ -337,13 +337,6 @@ static void declare_input_gs(
 	struct si_shader *shader = si_shader_ctx->shader;
 
 	si_store_shader_io_attribs(shader, decl);
-
-	if (decl->Semantic.Name != TGSI_SEMANTIC_PRIMID) {
-		shader->gs_used_inputs |=
-			1llu << get_unique_index(decl->Semantic.Name,
-						 decl->Semantic.Index);
-		shader->nparam++;
-	}
 }
 
 static LLVMValueRef fetch_input_gs(
@@ -410,7 +403,7 @@ static LLVMValueRef fetch_input_gs(
 	args[1] = vtx_offset;
 	args[2] = lp_build_const_int32(gallivm,
 				       (get_param_index(input->name, input->sid,
-							shader->gs_used_inputs) * 4 +
+							shader->selector->gs_used_inputs) * 4 +
 					swizzle) * 256);
 	args[3] = uint->zero;
 	args[4] = uint->one;  /* OFFEN */
@@ -2304,7 +2297,7 @@ static void si_llvm_emit_vertex(
 	 */
 	can_emit = LLVMBuildICmp(gallivm->builder, LLVMIntULE, gs_next_vertex,
 				 lp_build_const_int32(gallivm,
-						      shader->gs_max_out_vertices), "");
+						      shader->selector->gs_max_out_vertices), "");
 	kill = lp_build_select(&bld_base->base, can_emit,
 			       lp_build_const_float(gallivm, 1.0f),
 			       lp_build_const_float(gallivm, -1.0f));
@@ -2319,7 +2312,7 @@ static void si_llvm_emit_vertex(
 			LLVMValueRef out_val = LLVMBuildLoad(gallivm->builder, out_ptr[chan], "");
 			LLVMValueRef voffset =
 				lp_build_const_int32(gallivm, (i * 4 + chan) *
-						     shader->gs_max_out_vertices);
+						     shader->selector->gs_max_out_vertices);
 
 			voffset = lp_build_add(uint, voffset, gs_next_vertex);
 			voffset = lp_build_mul_imm(uint, voffset, 4);
@@ -2767,7 +2760,7 @@ static int si_generate_gs_copy_shader(struct si_screen *sscreen,
 		for (chan = 0; chan < 4; chan++) {
 			args[2] = lp_build_const_int32(gallivm,
 						       (i * 4 + chan) *
-						       gs->gs_max_out_vertices * 16 * 4);
+						       gs->selector->gs_max_out_vertices * 16 * 4);
 
 			outputs[i].values[chan] =
 				LLVMBuildBitCast(gallivm->builder,
@@ -2866,11 +2859,6 @@ int si_shader_create(struct si_screen *sscreen, struct si_shader *shader)
 		si_shader_ctx.radeon_bld.load_input = declare_input_gs;
 		bld_base->emit_fetch_funcs[TGSI_FILE_INPUT] = fetch_input_gs;
 		bld_base->emit_epilogue = si_llvm_emit_gs_epilogue;
-
-		shader->gs_output_prim =
-			sel->info.properties[TGSI_PROPERTY_GS_OUTPUT_PRIM][0];
-		shader->gs_max_out_vertices =
-			sel->info.properties[TGSI_PROPERTY_GS_MAX_OUTPUT_VERTICES][0];
 		break;
 	case TGSI_PROCESSOR_FRAGMENT:
 		si_shader_ctx.radeon_bld.load_input = declare_input_fs;

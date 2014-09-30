@@ -2210,9 +2210,8 @@ static INLINE void si_shader_selector_key(struct pipe_context *ctx,
 			key->vs.instance_divisors[i] = sctx->vertex_elements->elements[i].instance_divisor;
 
 		if (sctx->gs_shader) {
-			/* At this point, the GS should be selected and compiled. */
 			key->vs.as_es = 1;
-			key->vs.gs_used_inputs = sctx->gs_shader->current->gs_used_inputs;
+			key->vs.gs_used_inputs = sctx->gs_shader->gs_used_inputs;
 		}
 	} else if (sel->type == PIPE_SHADER_FRAGMENT) {
 		if (sel->info.properties[TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS][0])
@@ -2305,11 +2304,33 @@ static void *si_create_shader_state(struct pipe_context *ctx,
 				    unsigned pipe_shader_type)
 {
 	struct si_shader_selector *sel = CALLOC_STRUCT(si_shader_selector);
+	int i;
 
 	sel->type = pipe_shader_type;
 	sel->tokens = tgsi_dup_tokens(state->tokens);
 	sel->so = state->stream_output;
 	tgsi_scan_shader(state->tokens, &sel->info);
+
+	switch (pipe_shader_type) {
+	case PIPE_SHADER_GEOMETRY:
+		sel->gs_output_prim =
+			sel->info.properties[TGSI_PROPERTY_GS_OUTPUT_PRIM][0];
+		sel->gs_max_out_vertices =
+			sel->info.properties[TGSI_PROPERTY_GS_MAX_OUTPUT_VERTICES][0];
+
+		for (i = 0; i < sel->info.num_inputs; i++) {
+			unsigned name = sel->info.input_semantic_name[i];
+			unsigned index = sel->info.input_semantic_index[i];
+
+			switch (name) {
+			case TGSI_SEMANTIC_PRIMID:
+				break;
+			default:
+				sel->gs_used_inputs |=
+					1llu << si_shader_io_get_unique_index(name, index);
+			}
+		}
+	}
 
 	return sel;
 }

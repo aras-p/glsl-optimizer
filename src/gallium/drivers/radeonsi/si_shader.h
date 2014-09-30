@@ -124,6 +124,10 @@ struct si_shader_selector {
 
 	/* PIPE_SHADER_[VERTEX|FRAGMENT|...] */
 	unsigned	type;
+
+	unsigned	gs_output_prim;
+	unsigned	gs_max_out_vertices;
+	uint64_t	gs_used_inputs; /* mask of "get_unique_index" bits */
 };
 
 union si_shader_key {
@@ -171,11 +175,6 @@ struct si_shader {
 	unsigned		noutput;
 	struct si_shader_output	output[40];
 
-	/* geometry shader properties */
-	unsigned		gs_output_prim;
-	unsigned		gs_max_out_vertices;
-	uint64_t		gs_used_inputs; /* mask of "get_unique_index" bits */
-
 	unsigned		nparam;
 	bool			uses_instanceid;
 	bool			vs_out_misc_write;
@@ -199,5 +198,6 @@ int si_shader_create(struct si_screen *sscreen, struct si_shader *shader);
 int si_compile_llvm(struct si_screen *sscreen, struct si_shader *shader,
 		    LLVMModuleRef mod);
 void si_shader_destroy(struct pipe_context *ctx, struct si_shader *shader);
+unsigned si_shader_io_get_unique_index(unsigned semantic_name, unsigned index);
 
 #endif

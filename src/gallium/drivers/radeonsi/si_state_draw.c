@@ -83,7 +83,7 @@ static void si_shader_gs(struct pipe_context *ctx, struct si_shader *shader)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
 	unsigned gs_vert_itemsize = shader->noutput * (16 >> 2);
-	unsigned gs_max_vert_out = shader->gs_max_out_vertices;
+	unsigned gs_max_vert_out = shader->selector->gs_max_out_vertices;
 	unsigned gsvs_itemsize = gs_vert_itemsize * gs_max_vert_out;
 	unsigned cut_mode;
 	struct si_pm4_state *pm4;
@@ -121,7 +121,7 @@ static void si_shader_gs(struct pipe_context *ctx, struct si_shader *shader)
 	si_pm4_set_reg(pm4, R_028A68_VGT_GSVS_RING_OFFSET_3, gsvs_itemsize);
 
 	si_pm4_set_reg(pm4, R_028AAC_VGT_ESGS_RING_ITEMSIZE,
-		       shader->nparam * (16 >> 2));
+		       util_bitcount64(shader->selector->gs_used_inputs) * (16 >> 2));
 	si_pm4_set_reg(pm4, R_028AB0_VGT_GSVS_RING_ITEMSIZE, gsvs_itemsize);
 
 	si_pm4_set_reg(pm4, R_028B38_VGT_GS_MAX_VERT_OUT, gs_max_vert_out);
@@ -427,7 +427,7 @@ static bool si_update_draw_info_state(struct si_context *sctx,
 	unsigned prim = si_conv_pipe_prim(info->mode);
 	unsigned gs_out_prim =
 		si_conv_prim_to_gs_out(sctx->gs_shader ?
-				       sctx->gs_shader->current->gs_output_prim :
+				       sctx->gs_shader->gs_output_prim :
 				       info->mode);
 	unsigned ls_mask = 0;
 	unsigned ia_multi_vgt_param = si_get_ia_multi_vgt_param(sctx, info);
@@ -629,7 +629,7 @@ static void si_update_derived_state(struct si_context *sctx)
 
 		si_set_ring_buffer(ctx, PIPE_SHADER_GEOMETRY, SI_RING_GSVS,
 				   sctx->gsvs_ring,
-				   sctx->gs_shader->current->gs_max_out_vertices *
+				   sctx->gs_shader->gs_max_out_vertices *
 				   sctx->gs_shader->current->noutput * 16,
 				   64, true, true, 4, 16);
 
