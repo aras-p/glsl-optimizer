@@ -176,6 +176,13 @@ galahad_screen_resource_create(struct pipe_screen *_screen,
       glhd_check("%u", templat->height0, == templat->width0);
       glhd_check("%u", templat->depth0,  == 1);
       glhd_check("%u", templat->array_size, == 6);
+   } else if (templat->target == PIPE_TEXTURE_CUBE_ARRAY) {
+      unsigned max_texture_cube_levels = screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS);
+      glhd_check("%u", templat->last_level, < max_texture_cube_levels);
+      glhd_check("%u", templat->width0,  <= (1 << (max_texture_cube_levels - 1)));
+      glhd_check("%u", templat->height0, == templat->width0);
+      glhd_check("%u", templat->depth0,  == 1);
+      glhd_check("%u", templat->array_size, % 6 == 0);
    } else if (templat->target == PIPE_TEXTURE_RECT) {
       unsigned max_texture_2d_levels = screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS);
       glhd_check("%u", templat->last_level, == 0);
