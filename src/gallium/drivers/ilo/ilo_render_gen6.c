@@ -332,8 +332,8 @@ gen6_draw_common_urb(struct ilo_render *r,
        *          VS-generated output data, output URB availability isn't a
        *          factor."
        */
-      if (vs_entry_size < vec->ve->count)
-         vs_entry_size = vec->ve->count;
+      if (vs_entry_size < vec->ve->count + vec->ve->prepend_nosrc_cso)
+         vs_entry_size = vec->ve->count + vec->ve->prepend_nosrc_cso;
 
       gs_entry_size = (vec->gs) ?
          ilo_shader_get_kernel_param(vec->gs, ILO_KERNEL_OUTPUT_COUNT) :
@@ -465,31 +465,8 @@ gen6_draw_vf(struct ilo_render *r,
       gen6_3DSTATE_VERTEX_BUFFERS(r->builder, vec->ve, &vec->vb);
 
    /* 3DSTATE_VERTEX_ELEMENTS */
-   if (DIRTY(VE) || DIRTY(VS)) {
-      const struct ilo_ve_state *ve = vec->ve;
-      bool last_velement_edgeflag = false;
-      bool prepend_generate_ids = false;
-
-      if (vec->vs) {
-         if (ilo_shader_get_kernel_param(vec->vs,
-                  ILO_KERNEL_VS_INPUT_EDGEFLAG)) {
-            /* we rely on the state tracker here */
-            assert(ilo_shader_get_kernel_param(vec->vs,
-                     ILO_KERNEL_INPUT_COUNT) == ve->count);
-
-            last_velement_edgeflag = true;
-         }
-
-         if (ilo_shader_get_kernel_param(vec->vs,
-                  ILO_KERNEL_VS_INPUT_INSTANCEID) ||
-             ilo_shader_get_kernel_param(vec->vs,
-                  ILO_KERNEL_VS_INPUT_VERTEXID))
-            prepend_generate_ids = true;
-      }
-
-      gen6_3DSTATE_VERTEX_ELEMENTS(r->builder, ve,
-            last_velement_edgeflag, prepend_generate_ids);
-   }
+   if (DIRTY(VE))
+      gen6_3DSTATE_VERTEX_ELEMENTS(r->builder, vec->ve);
 }
 
 void
@@ -978,11 +955,12 @@ ilo_render_emit_rectlist_commands_gen6(struct ilo_render *r,
          session->vb_start, session->vb_end,
          sizeof(blitter->vertices[0]));
 
-   gen6_3DSTATE_VERTEX_ELEMENTS(r->builder,
-         &blitter->ve, false, false);
+   gen6_3DSTATE_VERTEX_ELEMENTS(r->builder, &blitter->ve);
 
-   gen6_3DSTATE_URB(r->builder,
-         r->dev->urb_size, 0, blitter->ve.count * 4 * sizeof(float), 0);
+   gen6_3DSTATE_URB(r->builder, r->dev->urb_size, 0,
+         (blitter->ve.count + blitter->ve.prepend_nosrc_cso) * 4 * sizeof(float),
+         0);
+
    /* 3DSTATE_URB workaround */
    if (r->state.gs.active) {
       ilo_render_emit_flush(r);

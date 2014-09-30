@@ -176,6 +176,13 @@ struct ilo_ve_state {
    unsigned instance_divisors[PIPE_MAX_ATTRIBS];
    unsigned vb_mapping[PIPE_MAX_ATTRIBS];
    unsigned vb_count;
+
+   /* these are not valid until the state is finalized */
+   struct ilo_ve_cso edgeflag_cso;
+   bool last_cso_edgeflag;
+
+   struct ilo_ve_cso nosrc_cso;
+   bool prepend_nosrc_cso;
 };
 
 struct ilo_so_state {
@@ -385,7 +392,7 @@ struct ilo_state_vector {
    uint32_t dirty;
 
    struct ilo_vb_state vb;
-   const struct ilo_ve_state *ve;
+   struct ilo_ve_state *ve;
    struct ilo_ib_state ib;
 
    struct ilo_shader_state *vs;

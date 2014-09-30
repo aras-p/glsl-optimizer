@@ -328,6 +328,83 @@ ilo_gpe_init_ve(const struct ilo_dev_info *dev,
 }
 
 void
+ilo_gpe_set_ve_edgeflag(const struct ilo_dev_info *dev,
+                        struct ilo_ve_cso *cso)
+{
+   int format;
+
+   ILO_DEV_ASSERT(dev, 6, 7.5);
+
+   /*
+    * From the Sandy Bridge PRM, volume 2 part 1, page 94:
+    *
+    *     "- This bit (Edge Flag Enable) must only be ENABLED on the last
+    *        valid VERTEX_ELEMENT structure.
+    *
+    *      - When set, Component 0 Control must be set to VFCOMP_STORE_SRC,
+    *        and Component 1-3 Control must be set to VFCOMP_NOSTORE.
+    *
+    *      - The Source Element Format must be set to the UINT format.
+    *
+    *      - [DevSNB]: Edge Flags are not supported for QUADLIST
+    *        primitives.  Software may elect to convert QUADLIST primitives
+    *        to some set of corresponding edge-flag-supported primitive
+    *        types (e.g., POLYGONs) prior to submission to the 3D pipeline."
+    */
+   cso->payload[0] |= GEN6_VE_STATE_DW0_EDGE_FLAG_ENABLE;
+
+   /*
+    * Edge flags have format GEN6_FORMAT_R8_UINT when defined via
+    * glEdgeFlagPointer(), and format GEN6_FORMAT_R32_FLOAT when defined
+    * via glEdgeFlag(), as can be seen in vbo_attrib_tmp.h.
+    *
+    * Since all the hardware cares about is whether the flags are zero or not,
+    * we can treat them as GEN6_FORMAT_R32_UINT in the latter case.
+    */
+   format = GEN_EXTRACT(cso->payload[0], GEN6_VE_STATE_DW0_FORMAT);
+   cso->payload[0] &= ~GEN6_VE_STATE_DW0_FORMAT__MASK;
+
+   switch (format) {
+   case GEN6_FORMAT_R32_FLOAT:
+      format = GEN6_FORMAT_R32_UINT;
+      break;
+   default:
+      assert(format == GEN6_FORMAT_R8_UINT);
+      break;
+   }
+
+   cso->payload[0] |= GEN_SHIFT32(format, GEN6_VE_STATE_DW0_FORMAT);
+
+   cso->payload[1] =
+         GEN6_VFCOMP_STORE_SRC << GEN6_VE_STATE_DW1_COMP0__SHIFT |
+         GEN6_VFCOMP_NOSTORE << GEN6_VE_STATE_DW1_COMP1__SHIFT |
+         GEN6_VFCOMP_NOSTORE << GEN6_VE_STATE_DW1_COMP2__SHIFT |
+         GEN6_VFCOMP_NOSTORE << GEN6_VE_STATE_DW1_COMP3__SHIFT;
+}
+
+void
+ilo_gpe_init_ve_nosrc(const struct ilo_dev_info *dev,
+                          int comp0, int comp1, int comp2, int comp3,
+                          struct ilo_ve_cso *cso)
+{
+   ILO_DEV_ASSERT(dev, 6, 7.5);
+
+   STATIC_ASSERT(Elements(cso->payload) >= 2);
+
+   assert(comp0 != GEN6_VFCOMP_STORE_SRC &&
+          comp1 != GEN6_VFCOMP_STORE_SRC &&
+          comp2 != GEN6_VFCOMP_STORE_SRC &&
+          comp3 != GEN6_VFCOMP_STORE_SRC);
+
+   cso->payload[0] = GEN6_VE_STATE_DW0_VALID;
+   cso->payload[1] =
+         comp0 << GEN6_VE_STATE_DW1_COMP0__SHIFT |
+         comp1 << GEN6_VE_STATE_DW1_COMP1__SHIFT |
+         comp2 << GEN6_VE_STATE_DW1_COMP2__SHIFT |
+         comp3 << GEN6_VE_STATE_DW1_COMP3__SHIFT;
+}
+
+void
 ilo_gpe_init_vs_cso(const struct ilo_dev_info *dev,
                     const struct ilo_shader_state *vs,
                     struct ilo_shader_cso *cso)

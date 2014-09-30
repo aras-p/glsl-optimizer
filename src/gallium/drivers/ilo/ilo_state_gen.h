@@ -87,6 +87,15 @@ ilo_gpe_init_ve(const struct ilo_dev_info *dev,
                 struct ilo_ve_state *ve);
 
 void
+ilo_gpe_set_ve_edgeflag(const struct ilo_dev_info *dev,
+                        struct ilo_ve_cso *cso);
+
+void
+ilo_gpe_init_ve_nosrc(const struct ilo_dev_info *dev,
+                      int comp0, int comp1, int comp2, int comp3,
+                      struct ilo_ve_cso *cso);
+
+void
 ilo_gpe_set_viewport_cso(const struct ilo_dev_info *dev,
                          const struct pipe_viewport_state *state,
                          struct ilo_viewport_cso *vp);

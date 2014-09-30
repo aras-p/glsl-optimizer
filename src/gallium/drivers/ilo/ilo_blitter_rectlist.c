@@ -28,7 +28,6 @@
 #include "util/u_draw.h"
 #include "util/u_pack_color.h"
 
-#include "ilo_builder_3d_top.h" /* for ve_init_cso_with_components() */
 #include "ilo_draw.h"
 #include "ilo_state.h"
 #include "ilo_state_gen.h"
@@ -41,24 +40,25 @@
 static bool
 ilo_blitter_set_invariants(struct ilo_blitter *blitter)
 {
-   struct pipe_vertex_element velems[2];
+   struct pipe_vertex_element velem;
    struct pipe_viewport_state vp;
 
    if (blitter->initialized)
       return true;
 
    /* only vertex X and Y */
-   memset(&velems, 0, sizeof(velems));
-   velems[1].src_format = PIPE_FORMAT_R32G32_FLOAT;
-   ilo_gpe_init_ve(blitter->ilo->dev, 2, velems, &blitter->ve);
+   memset(&velem, 0, sizeof(velem));
+   velem.src_format = PIPE_FORMAT_R32G32_FLOAT;
+   ilo_gpe_init_ve(blitter->ilo->dev, 1, &velem, &blitter->ve);
 
-   /* override first VE to be VUE header */
-   ve_init_cso_with_components(blitter->ilo->dev,
+   /* generate VUE header */
+   ilo_gpe_init_ve_nosrc(blitter->ilo->dev,
          GEN6_VFCOMP_STORE_0, /* Reserved */
          GEN6_VFCOMP_STORE_0, /* Render Target Array Index */
          GEN6_VFCOMP_STORE_0, /* Viewport Index */
          GEN6_VFCOMP_STORE_0, /* Point Width */
-         &blitter->ve.cso[0]);
+         &blitter->ve.nosrc_cso);
+   blitter->ve.prepend_nosrc_cso = true;
 
    /* a rectangle has 3 vertices in a RECTLIST */
    util_draw_init_info(&blitter->draw);

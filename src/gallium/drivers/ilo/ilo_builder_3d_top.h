@@ -439,76 +439,8 @@ gen6_user_3DSTATE_VERTEX_BUFFERS(struct ilo_builder *builder,
 }
 
 static inline void
-ve_init_cso_with_components(const struct ilo_dev_info *dev,
-                            int comp0, int comp1, int comp2, int comp3,
-                            struct ilo_ve_cso *cso)
-{
-   ILO_DEV_ASSERT(dev, 6, 7.5);
-
-   STATIC_ASSERT(Elements(cso->payload) >= 2);
-   cso->payload[0] = GEN6_VE_STATE_DW0_VALID;
-   cso->payload[1] =
-         comp0 << GEN6_VE_STATE_DW1_COMP0__SHIFT |
-         comp1 << GEN6_VE_STATE_DW1_COMP1__SHIFT |
-         comp2 << GEN6_VE_STATE_DW1_COMP2__SHIFT |
-         comp3 << GEN6_VE_STATE_DW1_COMP3__SHIFT;
-}
-
-static inline void
-ve_set_cso_edgeflag(const struct ilo_dev_info *dev,
-                    struct ilo_ve_cso *cso)
-{
-   int format;
-
-   ILO_DEV_ASSERT(dev, 6, 7.5);
-
-   /*
-    * From the Sandy Bridge PRM, volume 2 part 1, page 94:
-    *
-    *     "- This bit (Edge Flag Enable) must only be ENABLED on the last
-    *        valid VERTEX_ELEMENT structure.
-    *
-    *      - When set, Component 0 Control must be set to VFCOMP_STORE_SRC,
-    *        and Component 1-3 Control must be set to VFCOMP_NOSTORE.
-    *
-    *      - The Source Element Format must be set to the UINT format.
-    *
-    *      - [DevSNB]: Edge Flags are not supported for QUADLIST
-    *        primitives.  Software may elect to convert QUADLIST primitives
-    *        to some set of corresponding edge-flag-supported primitive
-    *        types (e.g., POLYGONs) prior to submission to the 3D pipeline."
-    */
-
-   cso->payload[0] |= GEN6_VE_STATE_DW0_EDGE_FLAG_ENABLE;
-   cso->payload[1] =
-         GEN6_VFCOMP_STORE_SRC << GEN6_VE_STATE_DW1_COMP0__SHIFT |
-         GEN6_VFCOMP_NOSTORE << GEN6_VE_STATE_DW1_COMP1__SHIFT |
-         GEN6_VFCOMP_NOSTORE << GEN6_VE_STATE_DW1_COMP2__SHIFT |
-         GEN6_VFCOMP_NOSTORE << GEN6_VE_STATE_DW1_COMP3__SHIFT;
-
-   /*
-    * Edge flags have format GEN6_FORMAT_R8_UINT when defined via
-    * glEdgeFlagPointer(), and format GEN6_FORMAT_R32_FLOAT when defined
-    * via glEdgeFlag(), as can be seen in vbo_attrib_tmp.h.
-    *
-    * Since all the hardware cares about is whether the flags are zero or not,
-    * we can treat them as GEN6_FORMAT_R32_UINT in the latter case.
-    */
-   format = (cso->payload[0] >> GEN6_VE_STATE_DW0_FORMAT__SHIFT) & 0x1ff;
-   if (format == GEN6_FORMAT_R32_FLOAT) {
-      STATIC_ASSERT(GEN6_FORMAT_R32_UINT == GEN6_FORMAT_R32_FLOAT - 1);
-      cso->payload[0] -= (1 << GEN6_VE_STATE_DW0_FORMAT__SHIFT);
-   }
-   else {
-      assert(format == GEN6_FORMAT_R8_UINT);
-   }
-}
-
-static inline void
 gen6_3DSTATE_VERTEX_ELEMENTS(struct ilo_builder *builder,
-                             const struct ilo_ve_state *ve,
-                             bool last_velement_edgeflag,
-                             bool prepend_generated_ids)
+                             const struct ilo_ve_state *ve)
 {
    uint8_t cmd_len;
    uint32_t *dw;
@@ -517,66 +449,37 @@ gen6_3DSTATE_VERTEX_ELEMENTS(struct ilo_builder *builder,
    ILO_DEV_ASSERT(builder->dev, 6, 7.5);
 
    /*
+    * From the Sandy Bridge PRM, volume 2 part 1, page 92:
+    *
+    *    "At least one VERTEX_ELEMENT_STATE structure must be included."
+    *
     * From the Sandy Bridge PRM, volume 2 part 1, page 93:
     *
     *     "Up to 34 (DevSNB+) vertex elements are supported."
     */
-   assert(ve->count + prepend_generated_ids <= 34);
+   assert(ve->count + ve->prepend_nosrc_cso >= 1);
+   assert(ve->count + ve->prepend_nosrc_cso <= 34);
 
    STATIC_ASSERT(Elements(ve->cso[0].payload) == 2);
 
-   if (!ve->count && !prepend_generated_ids) {
-      struct ilo_ve_cso dummy;
-
-      ve_init_cso_with_components(builder->dev,
-            GEN6_VFCOMP_STORE_0,
-            GEN6_VFCOMP_STORE_0,
-            GEN6_VFCOMP_STORE_0,
-            GEN6_VFCOMP_STORE_1_FP,
-            &dummy);
-
-      cmd_len = 3;
-
-      ilo_builder_batch_pointer(builder, cmd_len, &dw);
-      dw[0] = GEN6_RENDER_CMD(3D, 3DSTATE_VERTEX_ELEMENTS) | (cmd_len - 2);
-      memcpy(&dw[1], dummy.payload, sizeof(dummy.payload));
-
-      return;
-   }
-
-   cmd_len = 2 * (ve->count + prepend_generated_ids) + 1;
+   cmd_len = 1 + 2 * (ve->count + ve->prepend_nosrc_cso);
    ilo_builder_batch_pointer(builder, cmd_len, &dw);
 
    dw[0] = GEN6_RENDER_CMD(3D, 3DSTATE_VERTEX_ELEMENTS) | (cmd_len - 2);
    dw++;
 
-   if (prepend_generated_ids) {
-      struct ilo_ve_cso gen_ids;
-
-      ve_init_cso_with_components(builder->dev,
-            GEN6_VFCOMP_STORE_VID,
-            GEN6_VFCOMP_STORE_IID,
-            GEN6_VFCOMP_NOSTORE,
-            GEN6_VFCOMP_NOSTORE,
-            &gen_ids);
-
-      memcpy(dw, gen_ids.payload, sizeof(gen_ids.payload));
+   if (ve->prepend_nosrc_cso) {
+      memcpy(dw, ve->nosrc_cso.payload, sizeof(ve->nosrc_cso.payload));
       dw += 2;
    }
 
-   if (last_velement_edgeflag && ve->count) {
-      struct ilo_ve_cso edgeflag;
-
-      for (i = 0; i < ve->count - 1; i++)
-         memcpy(&dw[2 * i], ve->cso[i].payload, sizeof(ve->cso[i].payload));
-
-      edgeflag = ve->cso[i];
-      ve_set_cso_edgeflag(builder->dev, &edgeflag);
-      memcpy(&dw[2 * i], edgeflag.payload, sizeof(edgeflag.payload));
-   } else {
-      for (i = 0; i < ve->count; i++)
-         memcpy(&dw[2 * i], ve->cso[i].payload, sizeof(ve->cso[i].payload));
+   for (i = 0; i < ve->count - ve->last_cso_edgeflag; i++) {
+      memcpy(dw, ve->cso[i].payload, sizeof(ve->cso[i].payload));
+      dw += 2;
    }
+
+   if (ve->last_cso_edgeflag)
+      memcpy(dw, ve->edgeflag_cso.payload, sizeof(ve->edgeflag_cso.payload));
 }
 
 static inline void

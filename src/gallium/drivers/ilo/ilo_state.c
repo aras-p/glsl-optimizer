@@ -186,6 +186,63 @@ finalize_index_buffer(struct ilo_context *ilo)
    pipe_resource_reference(&current_hw_res, NULL);
 }
 
+static void
+finalize_vertex_elements(struct ilo_context *ilo)
+{
+   struct ilo_state_vector *vec = &ilo->state_vector;
+
+   if (!(vec->dirty & (ILO_DIRTY_VE | ILO_DIRTY_VS)))
+      return;
+
+   vec->dirty |= ILO_DIRTY_VE;
+
+   vec->ve->last_cso_edgeflag = false;
+   if (vec->ve->count && vec->vs &&
+         ilo_shader_get_kernel_param(vec->vs, ILO_KERNEL_VS_INPUT_EDGEFLAG)) {
+      vec->ve->edgeflag_cso = vec->ve->cso[vec->ve->count - 1];
+      ilo_gpe_set_ve_edgeflag(ilo->dev, &vec->ve->edgeflag_cso);
+      vec->ve->last_cso_edgeflag = true;
+   }
+
+   vec->ve->prepend_nosrc_cso = false;
+   if (vec->vs &&
+       (ilo_shader_get_kernel_param(vec->vs,
+                                    ILO_KERNEL_VS_INPUT_INSTANCEID) ||
+        ilo_shader_get_kernel_param(vec->vs,
+                                    ILO_KERNEL_VS_INPUT_VERTEXID))) {
+      ilo_gpe_init_ve_nosrc(ilo->dev,
+            GEN6_VFCOMP_STORE_VID,
+            GEN6_VFCOMP_STORE_IID,
+            GEN6_VFCOMP_NOSTORE,
+            GEN6_VFCOMP_NOSTORE,
+            &vec->ve->nosrc_cso);
+      vec->ve->prepend_nosrc_cso = true;
+   } else if (!vec->vs) {
+      /* generate VUE header */
+      ilo_gpe_init_ve_nosrc(ilo->dev,
+            GEN6_VFCOMP_STORE_0, /* Reserved */
+            GEN6_VFCOMP_STORE_0, /* Render Target Array Index */
+            GEN6_VFCOMP_STORE_0, /* Viewport Index */
+            GEN6_VFCOMP_STORE_0, /* Point Width */
+            &vec->ve->nosrc_cso);
+      vec->ve->prepend_nosrc_cso = true;
+   } else if (!vec->ve->count) {
+      /*
+       * From the Sandy Bridge PRM, volume 2 part 1, page 92:
+       *
+       *    "SW must ensure that at least one vertex element is defined prior
+       *     to issuing a 3DPRIMTIVE command, or operation is UNDEFINED."
+       */
+      ilo_gpe_init_ve_nosrc(ilo->dev,
+            GEN6_VFCOMP_STORE_0,
+            GEN6_VFCOMP_STORE_0,
+            GEN6_VFCOMP_STORE_0,
+            GEN6_VFCOMP_STORE_1_FP,
+            &vec->ve->nosrc_cso);
+      vec->ve->prepend_nosrc_cso = true;
+   }
+}
+
 /**
  * Finalize states.  Some states depend on other states and are
  * incomplete/invalid until finalized.
@@ -199,6 +256,7 @@ ilo_finalize_3d_states(struct ilo_context *ilo,
    finalize_shader_states(&ilo->state_vector);
    finalize_constant_buffers(ilo);
    finalize_index_buffer(ilo);
+   finalize_vertex_elements(ilo);
 
    u_upload_unmap(ilo->uploader);
 }

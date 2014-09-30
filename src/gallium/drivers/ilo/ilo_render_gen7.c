@@ -245,8 +245,8 @@ gen7_draw_common_urb(struct ilo_render *r,
        *      Allocation Size must be sized to the maximum of the vertex input
        *      and output structures."
        */
-      if (vs_entry_size < vec->ve->count)
-         vs_entry_size = vec->ve->count;
+      if (vs_entry_size < vec->ve->count + vec->ve->prepend_nosrc_cso)
+         vs_entry_size = vec->ve->count + vec->ve->prepend_nosrc_cso;
 
       vs_entry_size *= sizeof(float) * 4;
       vs_total_size = r->dev->urb_size - offset;
@@ -716,7 +716,8 @@ gen7_rectlist_urb(struct ilo_render *r,
       (ilo_dev_gen(r->dev) == ILO_GEN(7.5) && r->dev->gt == 3) ? 32768 : 16384;
 
    gen7_3DSTATE_URB_VS(r->builder, offset, r->dev->urb_size - offset,
-         blitter->ve.count * 4 * sizeof(float));
+         (blitter->ve.count + blitter->ve.prepend_nosrc_cso) *
+         4 * sizeof(float));
 
    gen7_3DSTATE_URB_GS(r->builder, offset, 0, 0);
    gen7_3DSTATE_URB_HS(r->builder, offset, 0, 0);
@@ -839,8 +840,7 @@ ilo_render_emit_rectlist_commands_gen7(struct ilo_render *r,
          session->vb_start, session->vb_end,
          sizeof(blitter->vertices[0]));
 
-   gen6_3DSTATE_VERTEX_ELEMENTS(r->builder,
-         &blitter->ve, false, false);
+   gen6_3DSTATE_VERTEX_ELEMENTS(r->builder, &blitter->ve);
 
    gen7_rectlist_pcb_alloc(r, blitter);
 
