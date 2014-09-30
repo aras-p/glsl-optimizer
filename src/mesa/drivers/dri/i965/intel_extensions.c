@@ -87,6 +87,7 @@ can_do_pipelined_register_writes(struct brw_context *brw)
 
    /* Check whether the value got written. */
    drm_intel_bo_map(brw->batch.workaround_bo, false);
+   data = brw->batch.workaround_bo->virtual;
    bool success = data[offset] == expected_value;
    drm_intel_bo_unmap(brw->batch.workaround_bo);
 
@@ -145,6 +146,7 @@ can_write_oacontrol(struct brw_context *brw)
 
    /* Check whether the value got written. */
    drm_intel_bo_map(brw->batch.workaround_bo, false);
+   data = brw->batch.workaround_bo->virtual;
    bool success = data[offset] == expected_value;
    drm_intel_bo_unmap(brw->batch.workaround_bo);
 
