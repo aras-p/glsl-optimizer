@@ -696,16 +696,6 @@ tgsi_to_qir_tex(struct vc4_compile *c,
 }
 
 static struct qreg
-tgsi_to_qir_pow(struct vc4_compile *c,
-                struct tgsi_full_instruction *tgsi_inst,
-                enum qop op, struct qreg *src, int i)
-{
-        /* Note that this instruction replicates its result from the x channel
-         */
-        return qir_POW(c, src[0 * 4 + 0], src[1 * 4 + 0]);
-}
-
-static struct qreg
 tgsi_to_qir_trunc(struct vc4_compile *c,
                 struct tgsi_full_instruction *tgsi_inst,
                 enum qop op, struct qreg *src, int i)
@@ -1096,7 +1086,6 @@ emit_tgsi_instruction(struct vc4_compile *c,
                 [TGSI_OPCODE_LG2] = { QOP_LOG2, tgsi_to_qir_alu },
                 [TGSI_OPCODE_LIT] = { 0, tgsi_to_qir_lit },
                 [TGSI_OPCODE_LRP] = { 0, tgsi_to_qir_lrp },
-                [TGSI_OPCODE_POW] = { 0, tgsi_to_qir_pow },
                 [TGSI_OPCODE_TRUNC] = { 0, tgsi_to_qir_trunc },
                 [TGSI_OPCODE_FRC] = { 0, tgsi_to_qir_frc },
                 [TGSI_OPCODE_FLR] = { 0, tgsi_to_qir_flr },
@@ -1694,6 +1683,7 @@ vc4_shader_state_create(struct pipe_context *pctx,
                 .lower_DST = true,
                 .lower_XPD = true,
                 .lower_SCS = true,
+                .lower_POW = true,
                 .lower_EXP = true,
                 .lower_LOG = true,
                 .lower_DP4 = true,
