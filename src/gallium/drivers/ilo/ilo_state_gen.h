@@ -80,41 +80,6 @@ ilo_gpe_gen6_translate_texture(enum pipe_texture_target target)
    }
 }
 
-static inline void
-zs_align_surface(const struct ilo_dev_info *dev,
-                 unsigned align_w, unsigned align_h,
-                 struct ilo_zs_surface *zs)
-{
-   unsigned mask, shift_w, shift_h;
-   unsigned width, height;
-   uint32_t dw3;
-
-   ILO_DEV_ASSERT(dev, 6, 7.5);
-
-   if (ilo_dev_gen(dev) >= ILO_GEN(7)) {
-      shift_w = 4;
-      shift_h = 18;
-      mask = 0x3fff;
-   }
-   else {
-      shift_w = 6;
-      shift_h = 19;
-      mask = 0x1fff;
-   }
-
-   dw3 = zs->payload[2];
-
-   /* aligned width and height */
-   width = align(((dw3 >> shift_w) & mask) + 1, align_w);
-   height = align(((dw3 >> shift_h) & mask) + 1, align_h);
-
-   dw3 = (dw3 & ~((mask << shift_w) | (mask << shift_h))) |
-      (width - 1) << shift_w |
-      (height - 1) << shift_h;
-
-   zs->payload[2] = dw3;
-}
-
 void
 ilo_gpe_init_ve(const struct ilo_dev_info *dev,
                 unsigned num_states,

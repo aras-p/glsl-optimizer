@@ -747,7 +747,8 @@ gen6_3DSTATE_AA_LINE_PARAMETERS(struct ilo_builder *builder)
 
 static inline void
 gen6_3DSTATE_DEPTH_BUFFER(struct ilo_builder *builder,
-                          const struct ilo_zs_surface *zs)
+                          const struct ilo_zs_surface *zs,
+                          bool aligned_8x4)
 {
    const uint32_t cmd = (ilo_dev_gen(builder->dev) >= ILO_GEN(7)) ?
       GEN7_RENDER_CMD(3D, 3DSTATE_DEPTH_BUFFER) :
@@ -762,7 +763,7 @@ gen6_3DSTATE_DEPTH_BUFFER(struct ilo_builder *builder,
 
    dw[0] = cmd | (cmd_len - 2);
    dw[1] = zs->payload[0];
-   dw[3] = zs->payload[2];
+   dw[3] = (aligned_8x4) ? zs->dw_aligned_8x4 : zs->payload[2];
    dw[4] = zs->payload[3];
    dw[5] = zs->payload[4];
    dw[6] = zs->payload[5];

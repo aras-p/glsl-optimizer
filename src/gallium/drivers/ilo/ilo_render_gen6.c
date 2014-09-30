@@ -788,7 +788,7 @@ gen6_draw_wm_depth(struct ilo_render *r,
          gen6_wa_pre_depth(r);
       }
 
-      gen6_3DSTATE_DEPTH_BUFFER(r->builder, zs);
+      gen6_3DSTATE_DEPTH_BUFFER(r->builder, zs, false);
       gen6_3DSTATE_HIER_DEPTH_BUFFER(r->builder, zs);
       gen6_3DSTATE_STENCIL_BUFFER(r->builder, zs);
       gen6_3DSTATE_CLEAR_PARAMS(r->builder, clear_params);
@@ -919,7 +919,7 @@ gen6_rectlist_wm_depth(struct ilo_render *r,
    if (blitter->uses & (ILO_BLITTER_USE_FB_DEPTH |
                         ILO_BLITTER_USE_FB_STENCIL)) {
       gen6_3DSTATE_DEPTH_BUFFER(r->builder,
-            &blitter->fb.dst.u.zs);
+            &blitter->fb.dst.u.zs, true);
    }
 
    if (blitter->uses & ILO_BLITTER_USE_FB_DEPTH) {

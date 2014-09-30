@@ -31,7 +31,7 @@
 #include "ilo_builder_3d_top.h" /* for ve_init_cso_with_components() */
 #include "ilo_draw.h"
 #include "ilo_state.h"
-#include "ilo_state_gen.h" /* for zs_align_surface() */
+#include "ilo_state_gen.h"
 #include "ilo_blit.h"
 #include "ilo_blitter.h"
 
@@ -254,10 +254,6 @@ hiz_align_fb(struct ilo_blitter *blitter)
    if (blitter->fb.width % align_w || blitter->fb.height % align_h) {
       blitter->fb.width = align(blitter->fb.width, align_w);
       blitter->fb.height = align(blitter->fb.height, align_h);
-
-      assert(!blitter->fb.dst.is_rt);
-      zs_align_surface(blitter->ilo->dev, align_w, align_h,
-            &blitter->fb.dst.u.zs);
    }
 }
 

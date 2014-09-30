@@ -335,6 +335,8 @@ struct ilo_surface_cso {
       struct ilo_view_surface rt;
       struct ilo_zs_surface {
          uint32_t payload[10];
+         uint32_t dw_aligned_8x4;
+
          struct intel_bo *bo;
          struct intel_bo *hiz_bo;
          struct intel_bo *separate_s8_bo;

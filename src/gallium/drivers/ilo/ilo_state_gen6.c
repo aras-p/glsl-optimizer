@@ -1140,13 +1140,35 @@ ilo_gpe_init_zs_surface(const struct ilo_dev_info *dev,
    const int max_array_size = (ilo_dev_gen(dev) >= ILO_GEN(7)) ? 2048 : 512;
    struct ilo_zs_surface_info info;
    uint32_t dw1, dw2, dw3, dw4, dw5, dw6;
+   int align_w = 8, align_h = 4;
 
    ILO_DEV_ASSERT(dev, 6, 7.5);
 
-   if (tex)
+   if (tex) {
       zs_init_info(dev, tex, format, level, first_layer, num_layers, &info);
-   else
+
+      switch (tex->base.nr_samples) {
+      case 2:
+         align_w /= 2;
+         break;
+      case 4:
+         align_w /= 2;
+         align_h /= 2;
+         break;
+      case 8:
+         align_w /= 4;
+         align_h /= 2;
+         break;
+      case 16:
+         align_w /= 4;
+         align_h /= 4;
+         break;
+      default:
+         break;
+      }
+   } else {
       zs_init_info_null(dev, &info);
+   }
 
    switch (info.surface_type) {
    case GEN6_SURFTYPE_NULL:
@@ -1209,6 +1231,10 @@ ilo_gpe_init_zs_surface(const struct ilo_dev_info *dev,
             (info.width - 1) << 4 |
             info.lod;
 
+      zs->dw_aligned_8x4 = (align(info.height, align_h) - 1) << 18 |
+                           (align(info.width, align_w) - 1) << 4 |
+                           info.lod;
+
       dw4 = (info.depth - 1) << 21 |
             info.first_layer << 10;
 
@@ -1230,6 +1256,11 @@ ilo_gpe_init_zs_surface(const struct ilo_dev_info *dev,
             (info.width - 1) << 6 |
             info.lod << 2 |
             GEN6_DEPTH_DW3_MIPLAYOUT_BELOW;
+
+      zs->dw_aligned_8x4 = (align(info.height, align_h) - 1) << 19 |
+                           (align(info.width, align_w) - 1) << 6 |
+                           info.lod << 2 |
+                           GEN6_DEPTH_DW3_MIPLAYOUT_BELOW;
 
       dw4 = (info.depth - 1) << 21 |
             info.first_layer << 10 |
