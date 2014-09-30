@@ -2215,7 +2215,7 @@ static INLINE void si_shader_selector_key(struct pipe_context *ctx,
 			key->vs.gs_used_inputs = sctx->gs_shader->current->gs_used_inputs;
 		}
 	} else if (sel->type == PIPE_SHADER_FRAGMENT) {
-		if (sel->fs_write_all)
+		if (sel->info.properties[TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS][0])
 			key->ps.nr_cbufs = sctx->framebuffer.state.nr_cbufs;
 		key->ps.export_16bpc = sctx->framebuffer.export_16bpc;
 
@@ -2311,9 +2311,6 @@ static void *si_create_shader_state(struct pipe_context *ctx,
 	sel->tokens = tgsi_dup_tokens(state->tokens);
 	sel->so = state->stream_output;
 	tgsi_scan_shader(state->tokens, &sel->info);
-
-	if (pipe_shader_type == PIPE_SHADER_FRAGMENT)
-		sel->fs_write_all = sel->info.color0_writes_all_cbufs;
 
 	r = si_shader_select(ctx, sel);
 	if (r) {

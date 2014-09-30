@@ -124,11 +124,6 @@ struct si_shader_selector {
 
 	/* PIPE_SHADER_[VERTEX|FRAGMENT|...] */
 	unsigned	type;
-
-	/* 1 when the shader contains
-	 * TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS, otherwise it's 0.
-	 * Used to determine whether we need to include nr_cbufs in the key */
-	unsigned	fs_write_all;
 };
 
 union si_shader_key {
@@ -184,7 +179,6 @@ struct si_shader {
 
 	unsigned		nparam;
 	bool			uses_instanceid;
-	bool			fs_write_all;
 	bool			vs_out_misc_write;
 	bool			vs_out_point_size;
 	bool			vs_out_edgeflag;
