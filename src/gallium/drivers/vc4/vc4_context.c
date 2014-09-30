@@ -174,7 +174,7 @@ vc4_setup_rcl(struct vc4_context *vc4)
                                 cl_start_reloc(&vc4->rcl, 1);
                                 cl_u8(&vc4->rcl, VC4_PACKET_STORE_TILE_BUFFER_GENERAL);
                                 cl_u8(&vc4->rcl,
-                                      VC4_LOADSTORE_TILE_BUFFER_Z |
+                                      VC4_LOADSTORE_TILE_BUFFER_ZS |
                                       (zsurf->tiling <<
                                        VC4_LOADSTORE_TILE_BUFFER_FORMAT_SHIFT));
                                 cl_u8(&vc4->rcl,
