@@ -112,9 +112,8 @@ check_valid_to_render(struct gl_context *ctx, const char *function)
 
    switch (ctx->API) {
    case API_OPENGLES2:
-      /* For ES2, we can draw if any vertex array is enabled (and we
-       * should always have a vertex program/shader). */
-      if (ctx->Array.VAO->_Enabled == 0x0 || !ctx->VertexProgram._Current)
+      /* For ES2, we can draw if we have a vertex program/shader). */
+      if (!ctx->VertexProgram._Current)
 	 return GL_FALSE;
       break;
 
