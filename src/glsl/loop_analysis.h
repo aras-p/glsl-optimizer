@@ -140,22 +140,7 @@ public:
       hash_table_dtor(this->var_hash);
    }
 
-   static void* operator new(size_t size, void *ctx)
-   {
-      void *lvs = ralloc_size(ctx, size);
-      assert(lvs != NULL);
-
-      ralloc_set_destructor(lvs, (void (*)(void*)) destructor);
-
-      return lvs;
-   }
-
-private:
-   static void
-   destructor(loop_variable_state *lvs)
-   {
-      lvs->~loop_variable_state();
-   }
+   DECLARE_RALLOC_CXX_OPERATORS(loop_variable_state)
 };
 
 

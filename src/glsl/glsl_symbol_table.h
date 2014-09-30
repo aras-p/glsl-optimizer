@@ -43,37 +43,8 @@ struct glsl_type;
  * type safe and some symbol table invariants.
  */
 struct glsl_symbol_table {
-private:
-   static void
-   _glsl_symbol_table_destructor (glsl_symbol_table *table)
-   {
-      table->~glsl_symbol_table();
-   }
+   DECLARE_RALLOC_CXX_OPERATORS(glsl_symbol_table)
 
-public:
-   /* Callers of this ralloc-based new need not call delete. It's
-    * easier to just ralloc_free 'ctx' (or any of its ancestors). */
-   static void* operator new(size_t size, void *ctx)
-   {
-      void *table;
-
-      table = ralloc_size(ctx, size);
-      assert(table != NULL);
-
-      ralloc_set_destructor(table, (void (*)(void*)) _glsl_symbol_table_destructor);
-
-      return table;
-   }
-
-   /* If the user *does* call delete, that's OK, we will just
-    * ralloc_free in that case. Here, C++ will have already called the
-    * destructor so tell ralloc not to do that again. */
-   static void operator delete(void *table)
-   {
-      ralloc_set_destructor(table, NULL);
-      ralloc_free(table);
-   }
-   
    glsl_symbol_table();
    ~glsl_symbol_table();
 
