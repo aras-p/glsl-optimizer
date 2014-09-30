@@ -44,7 +44,7 @@
  * never actually modified, this shouldn't be a problem.
  */
 
-#include "vc4_simulator_validate.h"
+#include "vc4_drv.h"
 #include "vc4_qpu.h"
 #include "vc4_qpu_defines.h"
 

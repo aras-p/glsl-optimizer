@@ -32,10 +32,11 @@ C_SOURCES := \
 	vc4_screen.c \
 	vc4_screen.h \
 	vc4_simulator.c \
-	vc4_simulator_validate.c \
 	vc4_simulator_validate.h \
-	vc4_simulator_validate_shaders.c \
 	vc4_state.c \
 	vc4_tiling.c \
 	vc4_tiling.h \
+	kernel/vc4_gem.c \
+	kernel/vc4_validate.c \
+	kernel/vc4_validate_shaders.c \
 	$()

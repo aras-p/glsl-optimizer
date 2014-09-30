@@ -39,7 +39,7 @@
  * is where GEM relocation processing happens.
  */
 
-#include "vc4_simulator_validate.h"
+#include "vc4_drv.h"
 #include "vc4_packet.h"
 
 #define VALIDATE_ARGS \

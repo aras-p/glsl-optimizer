@@ -1,0 +1,5 @@
+C_SOURCES := \
+	vc4_gem.c \
+	vc4_validate.c \
+	vc4_validate_shaders.c \
+	$()

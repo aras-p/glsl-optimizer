@@ -19,14 +19,11 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-SUBDIRS = kernel
-
 include Makefile.sources
 include $(top_srcdir)/src/gallium/Automake.inc
 
 if USE_VC4_SIMULATOR
 SIM_CFLAGS = -DUSE_VC4_SIMULATOR=1
-SIM_LDFLAGS = -lsimpenrose
 endif
 
 AM_CFLAGS = \
@@ -34,10 +31,10 @@ AM_CFLAGS = \
 	$(GALLIUM_DRIVER_CFLAGS) \
 	$(SIM_CFLAGS) \
 	-I$(top_srcdir)/src/mesa/ \
+	-I$(srcdir)/../ \
 	$()
 
-noinst_LTLIBRARIES = libvc4.la
+noinst_LTLIBRARIES = libvc4_kernel.la
 
-libvc4_la_SOURCES = $(C_SOURCES)
-libvc4_la_LIBADD = $(SIM_LIB) kernel/libvc4_kernel.la
-libvc4_la_LDFLAGS = $(SIM_LDFLAGS)
+libvc4_kernel_la_SOURCES = $(C_SOURCES)
+libvc4_kernel_la_LDFLAGS = $(SIM_LDFLAGS)
