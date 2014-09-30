@@ -2386,8 +2386,12 @@ enum brw_wm_barycentric_interp_mode {
 #define HSW_MOCS_WB_LLC_WB_ELLC         (2 << 1)
 #define HSW_MOCS_UC_LLC_WB_ELLC         (3 << 1)
 
-/* Broadwell: write-back or write-through; always use all the caches. */
-#define BDW_MOCS_WB 0x78
-#define BDW_MOCS_WT 0x58
+/* Broadwell: these defines always use all available caches (L3, LLC, eLLC),
+ * and let you force write-back (WB) or write-through (WT) caching, or leave
+ * it up to the page table entry (PTE) specified by the kernel.
+ */
+#define BDW_MOCS_WB  0x78
+#define BDW_MOCS_WT  0x58
+#define BDW_MOCS_PTE 0x18
 
 #endif
