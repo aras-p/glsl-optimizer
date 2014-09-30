@@ -2866,52 +2866,33 @@ int si_shader_create(struct si_screen *sscreen, struct si_shader *shader)
 			bld_base->emit_epilogue = si_llvm_emit_vs_epilogue;
 		}
 		break;
-	case TGSI_PROCESSOR_GEOMETRY: {
-		int i;
-
+	case TGSI_PROCESSOR_GEOMETRY:
 		si_shader_ctx.radeon_bld.load_input = declare_input_gs;
 		bld_base->emit_fetch_funcs[TGSI_FILE_INPUT] = fetch_input_gs;
 		bld_base->emit_epilogue = si_llvm_emit_gs_epilogue;
 
-		for (i = 0; i < sel->info.num_properties; i++) {
-			switch (sel->info.properties[i].name) {
-			case TGSI_PROPERTY_GS_INPUT_PRIM:
-				shader->gs_input_prim = sel->info.properties[i].data[0];
-				break;
-			case TGSI_PROPERTY_GS_OUTPUT_PRIM:
-				shader->gs_output_prim = sel->info.properties[i].data[0];
-				break;
-			case TGSI_PROPERTY_GS_MAX_OUTPUT_VERTICES:
-				shader->gs_max_out_vertices = sel->info.properties[i].data[0];
-				break;
-			}
-		}
+		shader->gs_input_prim =
+			sel->info.properties[TGSI_PROPERTY_GS_INPUT_PRIM][0];
+		shader->gs_output_prim =
+			sel->info.properties[TGSI_PROPERTY_GS_OUTPUT_PRIM][0];
+		shader->gs_max_out_vertices =
+			sel->info.properties[TGSI_PROPERTY_GS_MAX_OUTPUT_VERTICES][0];
 		break;
-	}
-	case TGSI_PROCESSOR_FRAGMENT: {
-		int i;
-
+	case TGSI_PROCESSOR_FRAGMENT:
 		si_shader_ctx.radeon_bld.load_input = declare_input_fs;
 		bld_base->emit_epilogue = si_llvm_emit_fs_epilogue;
 
-		for (i = 0; i < sel->info.num_properties; i++) {
-			switch (sel->info.properties[i].name) {
-			case TGSI_PROPERTY_FS_DEPTH_LAYOUT:
-				switch (sel->info.properties[i].data[0]) {
-				case TGSI_FS_DEPTH_LAYOUT_GREATER:
-					shader->db_shader_control |=
-						S_02880C_CONSERVATIVE_Z_EXPORT(V_02880C_EXPORT_GREATER_THAN_Z);
-					break;
-				case TGSI_FS_DEPTH_LAYOUT_LESS:
-					shader->db_shader_control |=
-						S_02880C_CONSERVATIVE_Z_EXPORT(V_02880C_EXPORT_LESS_THAN_Z);
-					break;
-				}
-				break;
-			}
+		switch (sel->info.properties[TGSI_PROPERTY_FS_DEPTH_LAYOUT][0]) {
+		case TGSI_FS_DEPTH_LAYOUT_GREATER:
+			shader->db_shader_control |=
+				S_02880C_CONSERVATIVE_Z_EXPORT(V_02880C_EXPORT_GREATER_THAN_Z);
+			break;
+		case TGSI_FS_DEPTH_LAYOUT_LESS:
+			shader->db_shader_control |=
+				S_02880C_CONSERVATIVE_Z_EXPORT(V_02880C_EXPORT_LESS_THAN_Z);
+			break;
 		}
 		break;
-	}
 	default:
 		assert(!"Unsupported shader type");
 		return -1;

@@ -407,7 +407,6 @@ util_pstipple_create_fragment_shader(struct pipe_context *pipe,
    struct pipe_shader_state *new_fs;
    struct pstip_transform_context transform;
    const uint newLen = tgsi_num_tokens(fs->tokens) + NUM_NEW_TOKENS;
-   unsigned i;
 
    new_fs = MALLOC(sizeof(*new_fs));
    if (!new_fs)
@@ -433,11 +432,8 @@ util_pstipple_create_fragment_shader(struct pipe_context *pipe,
 
    tgsi_scan_shader(fs->tokens, &transform.info);
 
-   /* find fragment coordinate origin property */
-   for (i = 0; i < transform.info.num_properties; i++) {
-      if (transform.info.properties[i].name == TGSI_PROPERTY_FS_COORD_ORIGIN)
-         transform.coordOrigin = transform.info.properties[i].data[0];
-   }
+   transform.coordOrigin =
+      transform.info.properties[TGSI_PROPERTY_FS_COORD_ORIGIN][0];
 
    tgsi_transform_shader(fs->tokens,
                          (struct tgsi_token *) new_fs->tokens,

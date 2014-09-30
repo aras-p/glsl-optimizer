@@ -1138,24 +1138,12 @@ _nvfx_fragprog_translate(uint16_t oclass, struct nv30_fragprog *fp)
    fpc->num_regs = 2;
    memset(fp->texcoord, 0xff, sizeof(fp->texcoord));
 
-   for (unsigned i = 0; i < fp->info.num_properties; ++i) {
-      switch (fp->info.properties[i].name) {
-      case TGSI_PROPERTY_FS_COORD_ORIGIN:
-         if (fp->info.properties[i].data[0])
-            fp->coord_conventions |= NV30_3D_COORD_CONVENTIONS_ORIGIN_INVERTED;
-         break;
-      case TGSI_PROPERTY_FS_COORD_PIXEL_CENTER:
-         if (fp->info.properties[i].data[0])
-            fp->coord_conventions |= NV30_3D_COORD_CONVENTIONS_CENTER_INTEGER;
-         break;
-      case TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS:
-         if (fp->info.properties[i].data[0])
-            fp->rt_enable |= NV30_3D_RT_ENABLE_MRT;
-         break;
-      default:
-         break;
-      }
-   }
+   if (fp->info.properties[TGSI_PROPERTY_FS_COORD_ORIGIN][0])
+      fp->coord_conventions |= NV30_3D_COORD_CONVENTIONS_ORIGIN_INVERTED;
+   if (fp->info.properties[TGSI_PROPERTY_FS_COORD_PIXEL_CENTER][0])
+      fp->coord_conventions |= NV30_3D_COORD_CONVENTIONS_CENTER_INTEGER;
+   if (fp->info.properties[TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS][0])
+      fp->rt_enable |= NV30_3D_RT_ENABLE_MRT;
 
    if (!nvfx_fragprog_prepare(fpc))
       goto out_err;

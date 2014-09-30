@@ -750,9 +750,6 @@ draw_create_geometry_shader(struct draw_context *draw,
    tgsi_scan_shader(state->tokens, &gs->info);
 
    /* setup the defaults */
-   gs->input_primitive = PIPE_PRIM_TRIANGLES;
-   gs->output_primitive = PIPE_PRIM_TRIANGLE_STRIP;
-   gs->max_output_vertices = 32;
    gs->max_out_prims = 0;
 
 #ifdef HAVE_LLVM
@@ -768,17 +765,15 @@ draw_create_geometry_shader(struct draw_context *draw,
       gs->vector_length = 1;
    }
 
-   for (i = 0; i < gs->info.num_properties; ++i) {
-      if (gs->info.properties[i].name ==
-          TGSI_PROPERTY_GS_INPUT_PRIM)
-         gs->input_primitive = gs->info.properties[i].data[0];
-      else if (gs->info.properties[i].name ==
-               TGSI_PROPERTY_GS_OUTPUT_PRIM)
-         gs->output_primitive = gs->info.properties[i].data[0];
-      else if (gs->info.properties[i].name ==
-               TGSI_PROPERTY_GS_MAX_OUTPUT_VERTICES)
-         gs->max_output_vertices = gs->info.properties[i].data[0];
-   }
+   gs->input_primitive =
+         gs->info.properties[TGSI_PROPERTY_GS_INPUT_PRIM][0];
+   gs->output_primitive =
+         gs->info.properties[TGSI_PROPERTY_GS_OUTPUT_PRIM][0];
+   gs->max_output_vertices =
+         gs->info.properties[TGSI_PROPERTY_GS_MAX_OUTPUT_VERTICES][0];
+   if (!gs->max_output_vertices)
+      gs->max_output_vertices = 32;
+
    /* Primitive boundary is bigger than max_output_vertices by one, because
     * the specification says that the geometry shader should exit if the 
     * number of emitted vertices is bigger or equal to max_output_vertices and

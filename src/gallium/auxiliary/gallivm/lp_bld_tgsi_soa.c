@@ -3855,8 +3855,8 @@ lp_build_tgsi_soa(struct gallivm_state *gallivm,
        * were forgetting so we're using MAX_VERTEX_VARYING from
        * that spec even though we could debug_assert if it's not
        * set, but that's a lot uglier. */
-      uint max_output_vertices = 32;
-      uint i = 0;
+      uint max_output_vertices;
+
       /* inputs are always indirect with gs */
       bld.indirect_files |= (1 << TGSI_FILE_INPUT);
       bld.gs_iface = gs_iface;
@@ -3864,12 +3864,11 @@ lp_build_tgsi_soa(struct gallivm_state *gallivm,
       bld.bld_base.op_actions[TGSI_OPCODE_EMIT].emit = emit_vertex;
       bld.bld_base.op_actions[TGSI_OPCODE_ENDPRIM].emit = end_primitive;
 
-      for (i = 0; i < info->num_properties; ++i) {
-         if (info->properties[i].name ==
-             TGSI_PROPERTY_GS_MAX_OUTPUT_VERTICES) {
-            max_output_vertices = info->properties[i].data[0];
-         }
-      }
+      max_output_vertices =
+            info->properties[TGSI_PROPERTY_GS_MAX_OUTPUT_VERTICES][0];
+      if (!max_output_vertices)
+         max_output_vertices = 32;
+
       bld.max_output_vertices_vec =
          lp_build_const_int_vec(gallivm, bld.bld_base.int_bld.type,
                                 max_output_vertices);

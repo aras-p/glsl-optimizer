@@ -2212,14 +2212,8 @@ generate_fragment(struct llvmpipe_context *lp,
    }
 
    /* check if writes to cbuf[0] are to be copied to all cbufs */
-   cbuf0_write_all = FALSE;
-   for (i = 0;i < shader->info.base.num_properties; i++) {
-      if (shader->info.base.properties[i].name ==
-          TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS) {
-         cbuf0_write_all = TRUE;
-         break;
-      }
-   }
+   cbuf0_write_all =
+     shader->info.base.properties[TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS][0];
 
    /* TODO: actually pick these based on the fs and color buffer
     * characteristics. */

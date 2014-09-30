@@ -277,13 +277,11 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
          {
             const struct tgsi_full_property *fullprop
                = &parse.FullToken.FullProperty;
+            unsigned name = fullprop->Property.PropertyName;
 
-            info->properties[info->num_properties].name =
-               fullprop->Property.PropertyName;
-            memcpy(info->properties[info->num_properties].data,
-                   fullprop->u, 8 * sizeof(unsigned));;
-
-            ++info->num_properties;
+            assert(name < Elements(info->properties));
+            memcpy(info->properties[name],
+                   fullprop->u, 8 * sizeof(unsigned));
          }
          break;
 
@@ -296,35 +294,26 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                       info->opcode_count[TGSI_OPCODE_KILL]);
 
    /* extract simple properties */
-   for (i = 0; i < info->num_properties; ++i) {
-      switch (info->properties[i].name) {
-      case TGSI_PROPERTY_FS_COORD_ORIGIN:
-         info->origin_lower_left = info->properties[i].data[0];
-         break;
-      case TGSI_PROPERTY_FS_COORD_PIXEL_CENTER:
-         info->pixel_center_integer = info->properties[i].data[0];
-         break;
-      case TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS:
-         info->color0_writes_all_cbufs = info->properties[i].data[0];
-         break;
-      case TGSI_PROPERTY_GS_INPUT_PRIM:
-         /* The dimensions of the IN decleration in geometry shader have
-          * to be deduced from the type of the input primitive.
-          */
-         if (procType == TGSI_PROCESSOR_GEOMETRY) {
-            unsigned input_primitive = info->properties[i].data[0];
-            int num_verts = u_vertices_per_prim(input_primitive);
-            int j;
-            info->file_count[TGSI_FILE_INPUT] = num_verts;
-            info->file_max[TGSI_FILE_INPUT] =
-               MAX2(info->file_max[TGSI_FILE_INPUT], num_verts - 1);
-            for (j = 0; j < num_verts; ++j) {
-               info->file_mask[TGSI_FILE_INPUT] |= (1 << j);
-            }
-         }
-         break;
-      default:
-         ;
+   info->origin_lower_left =
+         info->properties[TGSI_PROPERTY_FS_COORD_ORIGIN][0];
+   info->pixel_center_integer =
+         info->properties[TGSI_PROPERTY_FS_COORD_PIXEL_CENTER][0];
+   info->color0_writes_all_cbufs =
+         info->properties[TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS][0];
+
+   /* The dimensions of the IN decleration in geometry shader have
+    * to be deduced from the type of the input primitive.
+    */
+   if (procType == TGSI_PROCESSOR_GEOMETRY) {
+      unsigned input_primitive =
+            info->properties[TGSI_PROPERTY_GS_INPUT_PRIM][0];
+      int num_verts = u_vertices_per_prim(input_primitive);
+      int j;
+      info->file_count[TGSI_FILE_INPUT] = num_verts;
+      info->file_max[TGSI_FILE_INPUT] =
+            MAX2(info->file_max[TGSI_FILE_INPUT], num_verts - 1);
+      for (j = 0; j < num_verts; ++j) {
+         info->file_mask[TGSI_FILE_INPUT] |= (1 << j);
       }
    }
 
