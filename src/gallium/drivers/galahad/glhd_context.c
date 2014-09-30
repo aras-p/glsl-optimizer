@@ -49,7 +49,7 @@ galahad_context_destroy(struct pipe_context *_pipe)
 
 static void
 galahad_context_draw_vbo(struct pipe_context *_pipe,
-                 const struct pipe_draw_info *info)
+                         const struct pipe_draw_info *info)
 {
    struct galahad_context *glhd_pipe = galahad_context(_pipe);
    struct pipe_context *pipe = glhd_pipe->pipe;
@@ -58,7 +58,14 @@ galahad_context_draw_vbo(struct pipe_context *_pipe,
     * before drawing.
     */
 
-   pipe->draw_vbo(pipe, info);
+   if (info->indirect) {
+      struct pipe_draw_info info_unwrapped = *info;
+      info_unwrapped.indirect = galahad_resource_unwrap(info->indirect);
+      pipe->draw_vbo(pipe, &info_unwrapped);
+   }
+   else {
+      pipe->draw_vbo(pipe, info);
+   }
 }
 
 static struct pipe_query *
