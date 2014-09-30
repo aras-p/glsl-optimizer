@@ -491,40 +491,6 @@ tgsi_to_qir_mad(struct vc4_compile *c,
 }
 
 static struct qreg
-tgsi_to_qir_lit(struct vc4_compile *c,
-                 struct tgsi_full_instruction *tgsi_inst,
-                 enum qop op, struct qreg *src, int i)
-{
-        struct qreg x = src[0 * 4 + 0];
-        struct qreg y = src[0 * 4 + 1];
-        struct qreg w = src[0 * 4 + 3];
-
-        switch (i) {
-        case 0:
-        case 3:
-                return qir_uniform_f(c, 1.0);
-        case 1:
-                return qir_FMAX(c, src[0 * 4 + 0], qir_uniform_f(c, 0.0));
-        case 2: {
-                struct qreg zero = qir_uniform_f(c, 0.0);
-
-                qir_SF(c, x);
-                /* XXX: Clamp w to -128..128 */
-                return qir_SEL_X_0_NC(c,
-                                      qir_EXP2(c, qir_FMUL(c,
-                                                           w,
-                                                           qir_LOG2(c,
-                                                                    qir_FMAX(c,
-                                                                             y,
-                                                                             zero)))));
-        }
-        default:
-                assert(!"not reached");
-                return c->undef;
-        }
-}
-
-static struct qreg
 tgsi_to_qir_lrp(struct vc4_compile *c,
                  struct tgsi_full_instruction *tgsi_inst,
                  enum qop op, struct qreg *src, int i)
@@ -1097,7 +1063,6 @@ emit_tgsi_instruction(struct vc4_compile *c,
                 [TGSI_OPCODE_RSQ] = { QOP_RSQ, tgsi_to_qir_scalar },
                 [TGSI_OPCODE_EX2] = { QOP_EXP2, tgsi_to_qir_scalar },
                 [TGSI_OPCODE_LG2] = { QOP_LOG2, tgsi_to_qir_scalar },
-                [TGSI_OPCODE_LIT] = { 0, tgsi_to_qir_lit },
                 [TGSI_OPCODE_LRP] = { 0, tgsi_to_qir_lrp },
                 [TGSI_OPCODE_TRUNC] = { 0, tgsi_to_qir_trunc },
                 [TGSI_OPCODE_FRC] = { 0, tgsi_to_qir_frc },
@@ -1720,6 +1685,7 @@ vc4_shader_state_create(struct pipe_context *pctx,
                 .lower_XPD = true,
                 .lower_SCS = true,
                 .lower_POW = true,
+                .lower_LIT = true,
                 .lower_EXP = true,
                 .lower_LOG = true,
                 .lower_DP4 = true,
