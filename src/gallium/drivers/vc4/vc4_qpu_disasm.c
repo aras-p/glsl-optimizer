@@ -305,7 +305,7 @@ print_alu_src(uint64_t inst, uint32_t mux)
 
         if (unpack != QPU_UNPACK_NOP &&
             ((mux == QPU_MUX_A && !(inst & QPU_PM)) ||
-             (mux == QPU_MUX_R4) && (inst & QPU_PM))) {
+             (mux == QPU_MUX_R4 && (inst & QPU_PM)))) {
                 fprintf(stderr, ".%s", DESC(qpu_unpack, unpack));
         }
 }
