@@ -146,6 +146,25 @@ create_mov(struct tgsi_transform_context *tctx,
 	tctx->emit_instruction(tctx, &new_inst);
 }
 
+/* to help calculate # of tgsi tokens for a lowering.. we assume
+ * the worst case, ie. removed instructions don't have ADDR[] or
+ * anything which increases the # of tokens per src/dst and the
+ * inserted instructions do.
+ *
+ * OINST() - old instruction
+ *    1         : instruction itself
+ *    1         : dst
+ *    1 * nargs : srcN
+ *
+ * NINST() - new instruction
+ *    1         : instruction itself
+ *    2         : dst
+ *    2 * nargs : srcN
+ */
+
+#define OINST(nargs)  (1 + 1 + 1 * (nargs))
+#define NINST(nargs)  (1 + 2 + 2 * (nargs))
+
 /*
  * Lowering Translators:
  */
@@ -172,7 +191,8 @@ create_mov(struct tgsi_transform_context *tctx,
  * MOV dst.w, src1.w
  * MOV dst.x, imm{1.0}
  */
-#define DST_GROW (19 - 4)
+#define DST_GROW (NINST(1) + NINST(1) + NINST(2) + NINST(1) + \
+		NINST(1) + NINST(1) - OINST(2))
 #define DST_TMP  2
 static void
 transform_dst(struct tgsi_transform_context *tctx,
@@ -252,7 +272,7 @@ transform_dst(struct tgsi_transform_context *tctx,
  * SUB dst.xyz, tmpA.xyz, tmpB.xyz
  * MOV dst.w, imm{1.0}
  */
-#define XPD_GROW (15 - 4)
+#define XPD_GROW (NINST(2) + NINST(2) + NINST(2) + NINST(1) - OINST(2))
 #define XPD_TMP  2
 static void
 transform_xpd(struct tgsi_transform_context *tctx,
@@ -323,7 +343,7 @@ transform_xpd(struct tgsi_transform_context *tctx,
  * SIN dst.y, src.x
  * MOV dst.zw, imm{0.0, 1.0}
  */
-#define SCS_GROW (12 - 3)
+#define SCS_GROW (NINST(1) + NINST(1) + NINST(1) + NINST(1) - OINST(1))
 #define SCS_TMP  1
 static void
 transform_scs(struct tgsi_transform_context *tctx,
@@ -385,7 +405,7 @@ transform_scs(struct tgsi_transform_context *tctx,
  * MUL tmpB, tmpB, src2
  * ADD dst, tmpA, tmpB
  */
-#define LRP_GROW (16 - 4)
+#define LRP_GROW (NINST(2) + NINST(2) + NINST(2) + NINST(2) - OINST(3))
 #define LRP_TMP  2
 static void
 transform_lrp(struct tgsi_transform_context *tctx,
@@ -451,7 +471,7 @@ transform_lrp(struct tgsi_transform_context *tctx,
  * FLR tmpA, src
  * SUB dst, src, tmpA
  */
-#define FRC_GROW (7 - 3)
+#define FRC_GROW (NINST(1) + NINST(2) - OINST(1))
 #define FRC_TMP  1
 static void
 transform_frc(struct tgsi_transform_context *tctx,
@@ -495,7 +515,7 @@ transform_frc(struct tgsi_transform_context *tctx,
  * MUL tmpA.x, src1.x, tmpA.x
  * EX2 dst, tmpA.x
  */
-#define POW_GROW (10 - 4)
+#define POW_GROW (NINST(1) + NINST(2) + NINST(1) - OINST(2))
 #define POW_TMP  1
 static void
 transform_pow(struct tgsi_transform_context *tctx,
@@ -554,7 +574,8 @@ transform_pow(struct tgsi_transform_context *tctx,
  * MOV dst.yz, tmpA.xy
  * MOV dst.xw, imm{1.0}
  */
-#define LIT_GROW (30 - 3)
+#define LIT_GROW (NINST(1) + NINST(3) + NINST(1) + NINST(2) + \
+		NINST(1) + NINST(3) + NINST(1) + NINST(1) - OINST(1))
 #define LIT_TMP  1
 static void
 transform_lit(struct tgsi_transform_context *tctx,
@@ -664,7 +685,8 @@ transform_lit(struct tgsi_transform_context *tctx,
  * MOV dst.z, tmpA.y
  * MOV dst.w, imm{1.0}
  */
-#define EXP_GROW (19 - 3)
+#define EXP_GROW (NINST(1) + NINST(1) + NINST(2) + NINST(1) + \
+		NINST(1)+ NINST(1) - OINST(1))
 #define EXP_TMP  1
 static void
 transform_exp(struct tgsi_transform_context *tctx,
@@ -758,7 +780,8 @@ transform_exp(struct tgsi_transform_context *tctx,
  * MOV dst.xz, tmpA.yx
  * MOV dst.w, imm{1.0}
  */
-#define LOG_GROW (25 - 3)
+#define LOG_GROW (NINST(1) + NINST(1) + NINST(1) + NINST(1) + \
+		NINST(2) + NINST(1) + NINST(1) - OINST(1))
 #define LOG_TMP  1
 static void
 transform_log(struct tgsi_transform_context *tctx,
@@ -882,11 +905,11 @@ transform_log(struct tgsi_transform_context *tctx,
  * }
  * ; fixup last instruction to replicate into dst
  */
-#define DP4_GROW  (19 - 4)
-#define DP3_GROW  (14 - 4)
-#define DPH_GROW  (18 - 4)
-#define DP2_GROW  ( 9 - 4)
-#define DP2A_GROW (13 - 4)
+#define DP4_GROW  (NINST(2) + NINST(3) + NINST(3) + NINST(3) - OINST(2))
+#define DP3_GROW  (NINST(2) + NINST(3) + NINST(3) - OINST(2))
+#define DPH_GROW  (NINST(2) + NINST(3) + NINST(3) + NINST(2) - OINST(2))
+#define DP2_GROW  (NINST(2) + NINST(3) - OINST(2))
+#define DP2A_GROW (NINST(2) + NINST(3) + NINST(2) - OINST(3))
 #define DOTP_TMP  1
 static void
 transform_dotp(struct tgsi_transform_context *tctx,
@@ -998,7 +1021,7 @@ transform_dotp(struct tgsi_transform_context *tctx,
  *   MOV_SAT tmpA.<mask>, tmpA  ; <mask> is the clamped s/t/r coords
  *   <opc> dst, tmpA, ...
  */
-#define SAMP_GROW (13)
+#define SAMP_GROW (NINST(1) + NINST(1) + NINST(2) + NINST(1))
 #define SAMP_TMP  2
 static int
 transform_samp(struct tgsi_transform_context *tctx,
@@ -1125,7 +1148,7 @@ transform_samp(struct tgsi_transform_context *tctx,
 			2 +         /* FACE */               \
 			((n) * 2) + /* IN[] BCOLOR[n] */     \
 			((n) * 1) + /* TEMP[] */             \
-			((n) * 5)   /* CMP instr */          \
+			((n) * NINST(3))   /* CMP instr */   \
 		)
 
 static void
