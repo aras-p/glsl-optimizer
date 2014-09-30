@@ -2221,8 +2221,6 @@ static INLINE void si_shader_selector_key(struct pipe_context *ctx,
 		if (sctx->queued.named.rasterizer) {
 			key->ps.color_two_side = sctx->queued.named.rasterizer->two_side;
 			key->ps.flatshade = sctx->queued.named.rasterizer->flatshade;
-			key->ps.interp_at_sample = sctx->framebuffer.nr_samples > 1 &&
-						   sctx->ps_iter_samples == sctx->framebuffer.nr_samples;
 
 			if (sctx->queued.named.blend) {
 				key->ps.alpha_to_one = sctx->queued.named.blend->alpha_to_one &&

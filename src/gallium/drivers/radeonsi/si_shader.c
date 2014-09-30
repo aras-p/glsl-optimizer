@@ -501,7 +501,7 @@ static void declare_input_fs(
 		interp_param = 0;
 		break;
 	case TGSI_INTERPOLATE_LINEAR:
-		if (si_shader_ctx->shader->key.ps.interp_at_sample)
+		if (decl->Interp.Location == TGSI_INTERPOLATE_LOC_SAMPLE)
 			interp_param = LLVMGetParam(main_fn, SI_PARAM_LINEAR_SAMPLE);
 		else if (decl->Interp.Location == TGSI_INTERPOLATE_LOC_CENTROID)
 			interp_param = LLVMGetParam(main_fn, SI_PARAM_LINEAR_CENTROID);
@@ -515,7 +515,7 @@ static void declare_input_fs(
 		}
 		/* fall through to perspective */
 	case TGSI_INTERPOLATE_PERSPECTIVE:
-		if (si_shader_ctx->shader->key.ps.interp_at_sample)
+		if (decl->Interp.Location == TGSI_INTERPOLATE_LOC_SAMPLE)
 			interp_param = LLVMGetParam(main_fn, SI_PARAM_PERSP_SAMPLE);
 		else if (decl->Interp.Location == TGSI_INTERPOLATE_LOC_CENTROID)
 			interp_param = LLVMGetParam(main_fn, SI_PARAM_PERSP_CENTROID);

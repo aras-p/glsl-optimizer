@@ -137,7 +137,6 @@ union si_shader_key {
 		unsigned	color_two_side:1;
 		unsigned	alpha_func:3;
 		unsigned	flatshade:1;
-		unsigned	interp_at_sample:1;
 		unsigned	alpha_to_one:1;
 	} ps;
 	struct {
