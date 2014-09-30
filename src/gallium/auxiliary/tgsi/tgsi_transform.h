@@ -120,7 +120,7 @@ tgsi_transform_input_decl(struct tgsi_transform_context *ctx,
    decl.Declaration.File = TGSI_FILE_INPUT;
    decl.Declaration.Interpolate = 1;
    decl.Declaration.Semantic = 1;
-   decl.Semantic.Name = TGSI_SEMANTIC_GENERIC;
+   decl.Semantic.Name = sem_name;
    decl.Semantic.Index = sem_index;
    decl.Range.First =
    decl.Range.Last = index;
