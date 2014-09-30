@@ -30,6 +30,7 @@
 #define SI_SHADER_H
 
 #include <llvm-c/Core.h> /* LLVMModuleRef */
+#include "tgsi/tgsi_scan.h"
 
 #define SI_SGPR_CONST		0
 #define SI_SGPR_SAMPLER		2
@@ -117,6 +118,7 @@ struct si_shader_selector {
 
 	struct tgsi_token       *tokens;
 	struct pipe_stream_output_info  so;
+	struct tgsi_shader_info		info;
 
 	unsigned	num_shaders;
 

@@ -30,7 +30,6 @@
 #include "radeon/r600_cs.h"
 
 #include "tgsi/tgsi_parse.h"
-#include "tgsi/tgsi_scan.h"
 #include "util/u_format.h"
 #include "util/u_format_s3tc.h"
 #include "util/u_framebuffer.h"
@@ -2311,13 +2310,10 @@ static void *si_create_shader_state(struct pipe_context *ctx,
 	sel->type = pipe_shader_type;
 	sel->tokens = tgsi_dup_tokens(state->tokens);
 	sel->so = state->stream_output;
+	tgsi_scan_shader(state->tokens, &sel->info);
 
-	if (pipe_shader_type == PIPE_SHADER_FRAGMENT) {
-		struct tgsi_shader_info info;
-
-		tgsi_scan_shader(state->tokens, &info);
-		sel->fs_write_all = info.color0_writes_all_cbufs;
-	}
+	if (pipe_shader_type == PIPE_SHADER_FRAGMENT)
+		sel->fs_write_all = sel->info.color0_writes_all_cbufs;
 
 	r = si_shader_select(ctx, sel);
 	if (r) {

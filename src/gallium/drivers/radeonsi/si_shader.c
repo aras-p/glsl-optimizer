@@ -2805,7 +2805,6 @@ int si_shader_create(struct si_screen *sscreen, struct si_shader *shader)
 {
 	struct si_shader_selector *sel = shader->selector;
 	struct si_shader_context si_shader_ctx;
-	struct tgsi_shader_info shader_info;
 	struct lp_build_tgsi_context * bld_base;
 	LLVMModuleRef mod;
 	int r = 0;
@@ -2826,13 +2825,11 @@ int si_shader_create(struct si_screen *sscreen, struct si_shader *shader)
 	radeon_llvm_context_init(&si_shader_ctx.radeon_bld);
 	bld_base = &si_shader_ctx.radeon_bld.soa.bld_base;
 
-	tgsi_scan_shader(sel->tokens, &shader_info);
-
-	if (shader_info.uses_kill)
+	if (sel->info.uses_kill)
 		shader->db_shader_control |= S_02880C_KILL_ENABLE(1);
 
-	shader->uses_instanceid = shader_info.uses_instanceid;
-	bld_base->info = &shader_info;
+	shader->uses_instanceid = sel->info.uses_instanceid;
+	bld_base->info = &sel->info;
 	bld_base->emit_fetch_funcs[TGSI_FILE_CONSTANT] = fetch_constant;
 
 	bld_base->op_actions[TGSI_OPCODE_TEX] = tex_action;
@@ -2876,16 +2873,16 @@ int si_shader_create(struct si_screen *sscreen, struct si_shader *shader)
 		bld_base->emit_fetch_funcs[TGSI_FILE_INPUT] = fetch_input_gs;
 		bld_base->emit_epilogue = si_llvm_emit_gs_epilogue;
 
-		for (i = 0; i < shader_info.num_properties; i++) {
-			switch (shader_info.properties[i].name) {
+		for (i = 0; i < sel->info.num_properties; i++) {
+			switch (sel->info.properties[i].name) {
 			case TGSI_PROPERTY_GS_INPUT_PRIM:
-				shader->gs_input_prim = shader_info.properties[i].data[0];
+				shader->gs_input_prim = sel->info.properties[i].data[0];
 				break;
 			case TGSI_PROPERTY_GS_OUTPUT_PRIM:
-				shader->gs_output_prim = shader_info.properties[i].data[0];
+				shader->gs_output_prim = sel->info.properties[i].data[0];
 				break;
 			case TGSI_PROPERTY_GS_MAX_OUTPUT_VERTICES:
-				shader->gs_max_out_vertices = shader_info.properties[i].data[0];
+				shader->gs_max_out_vertices = sel->info.properties[i].data[0];
 				break;
 			}
 		}
@@ -2897,10 +2894,10 @@ int si_shader_create(struct si_screen *sscreen, struct si_shader *shader)
 		si_shader_ctx.radeon_bld.load_input = declare_input_fs;
 		bld_base->emit_epilogue = si_llvm_emit_fs_epilogue;
 
-		for (i = 0; i < shader_info.num_properties; i++) {
-			switch (shader_info.properties[i].name) {
+		for (i = 0; i < sel->info.num_properties; i++) {
+			switch (sel->info.properties[i].name) {
 			case TGSI_PROPERTY_FS_DEPTH_LAYOUT:
-				switch (shader_info.properties[i].data[0]) {
+				switch (sel->info.properties[i].data[0]) {
 				case TGSI_FS_DEPTH_LAYOUT_GREATER:
 					shader->db_shader_control |=
 						S_02880C_CONSERVATIVE_Z_EXPORT(V_02880C_EXPORT_GREATER_THAN_Z);
