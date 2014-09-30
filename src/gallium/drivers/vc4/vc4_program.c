@@ -33,6 +33,7 @@
 #include "util/ralloc.h"
 #include "tgsi/tgsi_dump.h"
 #include "tgsi/tgsi_info.h"
+#include "tgsi/tgsi_lowering.h"
 
 #include "vc4_context.h"
 #include "vc4_qpu.h"
@@ -1730,7 +1731,20 @@ vc4_shader_state_create(struct pipe_context *pctx,
         if (!so)
                 return NULL;
 
-        so->tokens = tgsi_dup_tokens(cso->tokens);
+        const struct tgsi_lowering_config lowering_config = {
+                .lower_DST = true,
+                .lower_XPD = true,
+                .lower_SCS = true,
+                .lower_EXP = true,
+                .lower_LOG = true,
+                .lower_DPH = true,
+                .lower_DP2A = true,
+        };
+
+        struct tgsi_shader_info info;
+        so->tokens = tgsi_transform_lowering(&lowering_config, cso->tokens, &info);
+        if (!so->tokens)
+                so->tokens = tgsi_dup_tokens(cso->tokens);
 
         return so;
 }
