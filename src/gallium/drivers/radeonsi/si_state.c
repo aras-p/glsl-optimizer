@@ -2305,18 +2305,11 @@ static void *si_create_shader_state(struct pipe_context *ctx,
 				    unsigned pipe_shader_type)
 {
 	struct si_shader_selector *sel = CALLOC_STRUCT(si_shader_selector);
-	int r;
 
 	sel->type = pipe_shader_type;
 	sel->tokens = tgsi_dup_tokens(state->tokens);
 	sel->so = state->stream_output;
 	tgsi_scan_shader(state->tokens, &sel->info);
-
-	r = si_shader_select(ctx, sel);
-	if (r) {
-	    free(sel);
-	    return NULL;
-	}
 
 	return sel;
 }
@@ -2344,10 +2337,7 @@ static void si_bind_vs_shader(struct pipe_context *ctx, void *state)
 	struct si_context *sctx = (struct si_context *)ctx;
 	struct si_shader_selector *sel = state;
 
-	if (sctx->vs_shader == sel)
-		return;
-
-	if (!sel || !sel->current)
+	if (sctx->vs_shader == sel || !sel)
 		return;
 
 	sctx->vs_shader = sel;
@@ -2373,8 +2363,8 @@ static void si_bind_ps_shader(struct pipe_context *ctx, void *state)
 	if (sctx->ps_shader == sel)
 		return;
 
-	/* use dummy shader if supplied shader is corrupt */
-	if (!sel || !sel->current) {
+	/* use a dummy shader if binding a NULL shader */
+	if (!sel) {
 		if (!sctx->dummy_pixel_shader) {
 			sctx->dummy_pixel_shader =
 				util_make_fragment_cloneinput_shader(&sctx->b.b, 0,
