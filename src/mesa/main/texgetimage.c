@@ -78,14 +78,19 @@ get_tex_depth(struct gl_context *ctx, GLuint dimensions,
               struct gl_texture_image *texImage)
 {
    const GLint width = texImage->Width;
-   const GLint height = texImage->Height;
-   const GLint depth = texImage->Depth;
+   GLint height = texImage->Height;
+   GLint depth = texImage->Depth;
    GLint img, row;
    GLfloat *depthRow = malloc(width * sizeof(GLfloat));
 
    if (!depthRow) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGetTexImage");
       return;
+   }
+
+   if (texImage->TexObject->Target == GL_TEXTURE_1D_ARRAY) {
+      depth = height;
+      height = 1;
    }
 
    for (img = 0; img < depth; img++) {
