@@ -87,6 +87,7 @@ static const struct qir_op_info qir_op_info[] = {
         [QOP_FRAG_Y] = { "frag_y", 1, 0 },
         [QOP_FRAG_Z] = { "frag_z", 1, 0 },
         [QOP_FRAG_W] = { "frag_w", 1, 0 },
+        [QOP_FRAG_REV_FLAG] = { "frag_rev_flag", 1, 0 },
 
         [QOP_TEX_S] = { "tex_s", 0, 2 },
         [QOP_TEX_T] = { "tex_t", 0, 2 },

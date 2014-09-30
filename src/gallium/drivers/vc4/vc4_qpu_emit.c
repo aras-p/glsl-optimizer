@@ -426,6 +426,11 @@ vc4_generate_code(struct vc4_context *vc4, struct vc4_compile *c)
                                             qpu_rb(QPU_R_XY_PIXEL_COORD)));
                         break;
 
+                case QOP_FRAG_REV_FLAG:
+                        queue(c, qpu_a_ITOF(dst,
+                                            qpu_rb(QPU_R_MS_REV_FLAGS)));
+                        break;
+
                 case QOP_FRAG_Z:
                 case QOP_FRAG_W:
                         /* QOP_FRAG_Z/W don't emit instructions, just allocate

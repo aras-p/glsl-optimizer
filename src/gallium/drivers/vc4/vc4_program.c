@@ -954,6 +954,19 @@ emit_fragment_input(struct vc4_compile *c, int attr,
 }
 
 static void
+emit_face_input(struct vc4_compile *c, int attr)
+{
+        c->inputs[attr * 4 + 0] = qir_FSUB(c,
+                                           qir_uniform_f(c, 1.0),
+                                           qir_FMUL(c,
+                                                    qir_ITOF(c, qir_FRAG_REV_FLAG(c)),
+                                                    qir_uniform_f(c, 2.0)));
+        c->inputs[attr * 4 + 1] = qir_uniform_f(c, 0.0);
+        c->inputs[attr * 4 + 2] = qir_uniform_f(c, 0.0);
+        c->inputs[attr * 4 + 3] = qir_uniform_f(c, 1.0);
+}
+
+static void
 emit_tgsi_declaration(struct vc4_compile *c,
                       struct tgsi_full_declaration *decl)
 {
@@ -974,6 +987,8 @@ emit_tgsi_declaration(struct vc4_compile *c,
                                 if (decl->Semantic.Name ==
                                     TGSI_SEMANTIC_POSITION) {
                                         emit_fragcoord_input(c, i);
+                                } else if (decl->Semantic.Name == TGSI_SEMANTIC_FACE) {
+                                        emit_face_input(c, i);
                                 } else if (decl->Semantic.Name == TGSI_SEMANTIC_GENERIC &&
                                            (c->fs_key->point_sprite_mask &
                                             (1 << decl->Semantic.Index))) {
