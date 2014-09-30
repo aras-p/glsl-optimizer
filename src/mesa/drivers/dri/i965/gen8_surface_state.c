@@ -377,7 +377,7 @@ gen8_update_renderbuffer_surface(struct brw_context *brw,
              horizontal_alignment(mt) |
              surface_tiling_mode(tiling);
 
-   surf[1] = SET_FIELD(BDW_MOCS_WT, GEN8_SURFACE_MOCS) | mt->qpitch >> 2;
+   surf[1] = SET_FIELD(BDW_MOCS_PTE, GEN8_SURFACE_MOCS) | mt->qpitch >> 2;
 
    surf[2] = SET_FIELD(width - 1, GEN7_SURFACE_WIDTH) |
              SET_FIELD(height - 1, GEN7_SURFACE_HEIGHT);
