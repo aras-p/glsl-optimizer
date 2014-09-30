@@ -2391,7 +2391,7 @@ static void create_function(struct si_shader_context *si_shader_ctx)
 	struct gallivm_state *gallivm = bld_base->base.gallivm;
 	struct si_shader *shader = si_shader_ctx->shader;
 	LLVMTypeRef params[SI_NUM_PARAMS], f32, i8, i32, v2i32, v3i32, v16i8, v4i32, v8i32;
-	unsigned i, last_sgpr, num_params;
+	unsigned i, last_array_pointer, last_sgpr, num_params;
 
 	i8 = LLVMInt8TypeInContext(gallivm->context);
 	i32 = LLVMInt32TypeInContext(gallivm->context);
@@ -2406,10 +2406,12 @@ static void create_function(struct si_shader_context *si_shader_ctx)
 	params[SI_PARAM_RW_BUFFERS] = const_array(v16i8, SI_NUM_RW_BUFFERS);
 	params[SI_PARAM_SAMPLER] = const_array(v4i32, SI_NUM_SAMPLER_STATES);
 	params[SI_PARAM_RESOURCE] = const_array(v8i32, SI_NUM_SAMPLER_VIEWS);
+	last_array_pointer = SI_PARAM_RESOURCE;
 
 	switch (si_shader_ctx->type) {
 	case TGSI_PROCESSOR_VERTEX:
 		params[SI_PARAM_VERTEX_BUFFER] = const_array(v16i8, SI_NUM_VERTEX_BUFFERS);
+		last_array_pointer = SI_PARAM_VERTEX_BUFFER;
 		params[SI_PARAM_BASE_VERTEX] = i32;
 		params[SI_PARAM_START_INSTANCE] = i32;
 		num_params = SI_PARAM_START_INSTANCE+1;
@@ -2493,18 +2495,13 @@ static void create_function(struct si_shader_context *si_shader_ctx)
 
 	for (i = 0; i <= last_sgpr; ++i) {
 		LLVMValueRef P = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn, i);
-		switch (i) {
-		default:
-			LLVMAddAttribute(P, LLVMInRegAttribute);
-			break;
+
 		/* We tell llvm that array inputs are passed by value to allow Sinking pass
 		 * to move load. Inputs are constant so this is fine. */
-		case SI_PARAM_CONST:
-		case SI_PARAM_SAMPLER:
-		case SI_PARAM_RESOURCE:
+		if (i <= last_array_pointer)
 			LLVMAddAttribute(P, LLVMByValAttribute);
-			break;
-		}
+		else
+			LLVMAddAttribute(P, LLVMInRegAttribute);
 	}
 
 	if (bld_base->info &&
