@@ -2867,8 +2867,6 @@ int si_shader_create(struct si_screen *sscreen, struct si_shader *shader)
 		bld_base->emit_fetch_funcs[TGSI_FILE_INPUT] = fetch_input_gs;
 		bld_base->emit_epilogue = si_llvm_emit_gs_epilogue;
 
-		shader->gs_input_prim =
-			sel->info.properties[TGSI_PROPERTY_GS_INPUT_PRIM][0];
 		shader->gs_output_prim =
 			sel->info.properties[TGSI_PROPERTY_GS_OUTPUT_PRIM][0];
 		shader->gs_max_out_vertices =

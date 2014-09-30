@@ -172,7 +172,6 @@ struct si_shader {
 	struct si_shader_output	output[40];
 
 	/* geometry shader properties */
-	unsigned		gs_input_prim;
 	unsigned		gs_output_prim;
 	unsigned		gs_max_out_vertices;
 	uint64_t		gs_used_inputs; /* mask of "get_unique_index" bits */
