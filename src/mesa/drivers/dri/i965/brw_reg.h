@@ -639,9 +639,10 @@ brw_ip_reg(void)
 }
 
 static inline struct brw_reg
-brw_acc_reg(void)
+brw_acc_reg(unsigned width)
 {
-   return brw_vec8_reg(BRW_ARCHITECTURE_REGISTER_FILE, BRW_ARF_ACCUMULATOR, 0);
+   return brw_vecn_reg(width, BRW_ARCHITECTURE_REGISTER_FILE,
+                       BRW_ARF_ACCUMULATOR, 0);
 }
 
 static inline struct brw_reg

@@ -1455,7 +1455,7 @@ vec4_visitor::visit(ir_expression *ir)
             else
                emit(MUL(result_dst, op[0], op[1]));
          } else {
-            struct brw_reg acc = retype(brw_acc_reg(), result_dst.type);
+            struct brw_reg acc = retype(brw_acc_reg(8), result_dst.type);
 
             emit(MUL(acc, op[0], op[1]));
             emit(MACH(dst_null_d(), op[0], op[1]));
@@ -1466,7 +1466,7 @@ vec4_visitor::visit(ir_expression *ir)
       }
       break;
    case ir_binop_imul_high: {
-      struct brw_reg acc = retype(brw_acc_reg(), result_dst.type);
+      struct brw_reg acc = retype(brw_acc_reg(8), result_dst.type);
 
       emit(MUL(acc, op[0], op[1]));
       emit(MACH(result_dst, op[0], op[1]));
@@ -1478,14 +1478,14 @@ vec4_visitor::visit(ir_expression *ir)
       emit_math(SHADER_OPCODE_INT_QUOTIENT, result_dst, op[0], op[1]);
       break;
    case ir_binop_carry: {
-      struct brw_reg acc = retype(brw_acc_reg(), BRW_REGISTER_TYPE_UD);
+      struct brw_reg acc = retype(brw_acc_reg(8), BRW_REGISTER_TYPE_UD);
 
       emit(ADDC(dst_null_ud(), op[0], op[1]));
       emit(MOV(result_dst, src_reg(acc)));
       break;
    }
    case ir_binop_borrow: {
-      struct brw_reg acc = retype(brw_acc_reg(), BRW_REGISTER_TYPE_UD);
+      struct brw_reg acc = retype(brw_acc_reg(8), BRW_REGISTER_TYPE_UD);
 
       emit(SUBB(dst_null_ud(), op[0], op[1]));
       emit(MOV(result_dst, src_reg(acc)));
