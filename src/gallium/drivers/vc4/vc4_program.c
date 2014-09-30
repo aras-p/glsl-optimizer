@@ -43,7 +43,7 @@
 #endif
 
 struct vc4_key {
-        struct pipe_shader_state *shader_state;
+        struct vc4_uncompiled_shader *shader_state;
         struct {
                 enum pipe_format format;
                 unsigned compare_mode:1;
@@ -65,6 +65,7 @@ struct vc4_fs_key {
         bool is_lines;
         bool alpha_test;
         bool point_coord_upper_left;
+        bool light_twoside;
         uint8_t alpha_test_func;
         uint32_t point_sprite_mask;
 
@@ -1588,15 +1589,7 @@ vc4_shader_tgsi_to_qir(struct vc4_context *vc4,
         int ret;
 
         c->stage = stage;
-
-        c->shader_state = key->shader_state;
-        ret = tgsi_parse_init(&c->parser, c->shader_state->tokens);
-        assert(ret == TGSI_PARSE_OK);
-
-        if (vc4_debug & VC4_DEBUG_TGSI) {
-                fprintf(stderr, "TGSI:\n");
-                tgsi_dump(c->shader_state->tokens, 0);
-        }
+        c->shader_state = &key->shader_state->base;
 
         c->key = key;
         switch (stage) {
@@ -1615,6 +1608,37 @@ vc4_shader_tgsi_to_qir(struct vc4_context *vc4,
         case QSTAGE_COORD:
                 c->vs_key = (struct vc4_vs_key *)key;
                 break;
+        }
+
+        const struct tgsi_token *tokens = key->shader_state->base.tokens;
+        if (c->fs_key && c->fs_key->light_twoside) {
+                if (!key->shader_state->twoside_tokens) {
+                        const struct tgsi_lowering_config lowering_config = {
+                                .color_two_side = true,
+                        };
+                        struct tgsi_shader_info info;
+                        key->shader_state->twoside_tokens =
+                                tgsi_transform_lowering(&lowering_config,
+                                                        key->shader_state->base.tokens,
+                                                        &info);
+
+                        /* If no transformation occurred, then NULL is
+                         * returned and we just use our original tokens.
+                         */
+                        if (!key->shader_state->twoside_tokens) {
+                                key->shader_state->twoside_tokens =
+                                        key->shader_state->base.tokens;
+                        }
+                }
+                tokens = key->shader_state->twoside_tokens;
+        }
+
+        ret = tgsi_parse_init(&c->parser, tokens);
+        assert(ret == TGSI_PARSE_OK);
+
+        if (vc4_debug & VC4_DEBUG_TGSI) {
+                fprintf(stderr, "TGSI:\n");
+                tgsi_dump(tokens, 0);
         }
 
         while (!tgsi_parse_end_of_tokens(&c->parser)) {
@@ -1675,7 +1699,7 @@ static void *
 vc4_shader_state_create(struct pipe_context *pctx,
                         const struct pipe_shader_state *cso)
 {
-        struct pipe_shader_state *so = CALLOC_STRUCT(pipe_shader_state);
+        struct vc4_uncompiled_shader *so = CALLOC_STRUCT(vc4_uncompiled_shader);
         if (!so)
                 return NULL;
 
@@ -1694,9 +1718,9 @@ vc4_shader_state_create(struct pipe_context *pctx,
         };
 
         struct tgsi_shader_info info;
-        so->tokens = tgsi_transform_lowering(&lowering_config, cso->tokens, &info);
-        if (!so->tokens)
-                so->tokens = tgsi_dup_tokens(cso->tokens);
+        so->base.tokens = tgsi_transform_lowering(&lowering_config, cso->tokens, &info);
+        if (!so->base.tokens)
+                so->base.tokens = tgsi_dup_tokens(cso->tokens);
 
         return so;
 }
@@ -1823,6 +1847,8 @@ vc4_update_compiled_fs(struct vc4_context *vc4, uint8_t prim_mode)
                          PIPE_SPRITE_COORD_UPPER_LEFT);
         }
 
+        key->light_twoside = vc4->rasterizer->base.light_twoside;
+
         vc4->prog.fs = util_hash_table_get(vc4->fs_cache, key);
         if (vc4->prog.fs)
                 return;
@@ -1907,7 +1933,7 @@ vs_cache_compare(void *key1, void *key2)
 
 struct delete_state {
         struct vc4_context *vc4;
-        struct pipe_shader_state *shader_state;
+        struct vc4_uncompiled_shader *shader_state;
 };
 
 static enum pipe_error
@@ -1946,7 +1972,7 @@ static void
 vc4_shader_state_delete(struct pipe_context *pctx, void *hwcso)
 {
         struct vc4_context *vc4 = vc4_context(pctx);
-        struct pipe_shader_state *so = hwcso;
+        struct vc4_uncompiled_shader *so = hwcso;
         struct delete_state del;
 
         del.vc4 = vc4;
@@ -1954,7 +1980,9 @@ vc4_shader_state_delete(struct pipe_context *pctx, void *hwcso)
         util_hash_table_foreach(vc4->fs_cache, fs_delete_from_cache, &del);
         util_hash_table_foreach(vc4->vs_cache, vs_delete_from_cache, &del);
 
-        free((void *)so->tokens);
+        if (so->twoside_tokens != so->base.tokens)
+                free((void *)so->twoside_tokens);
+        free((void *)so->base.tokens);
         free(so);
 }
 

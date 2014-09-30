@@ -76,6 +76,11 @@ struct vc4_shader_uniform_info {
         uint32_t num_texture_samples;
 };
 
+struct vc4_uncompiled_shader {
+        struct pipe_shader_state base;
+        const struct tgsi_token *twoside_tokens;
+};
+
 struct vc4_compiled_shader {
         struct vc4_bo *bo;
 
@@ -90,7 +95,7 @@ struct vc4_compiled_shader {
 };
 
 struct vc4_program_stateobj {
-        struct pipe_shader_state *bind_vs, *bind_fs;
+        struct vc4_uncompiled_shader *bind_vs, *bind_fs;
         struct vc4_compiled_shader *vs, *fs;
         uint32_t dirty;
         uint8_t num_exports;
