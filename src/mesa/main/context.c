@@ -894,7 +894,7 @@ _mesa_generic_nop(void)
  * Allocate and initialize a new dispatch table.
  */
 struct _glapi_table *
-_mesa_alloc_dispatch_table()
+_mesa_alloc_dispatch_table(void)
 {
    /* Find the larger of Mesa's dispatch table and libGL's dispatch table.
     * In practice, this'll be the same for stand-alone Mesa.  But for DRI
