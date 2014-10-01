@@ -70,7 +70,7 @@ static void walk_children(struct ir3_instruction *instr, bool keep)
 static struct ir3_instruction *
 instr_cp_fanin(struct ir3_instruction *instr)
 {
-	unsigned i;
+	unsigned i, j;
 
 	/* we need to handle fanin specially, to detect cases
 	 * when we need to keep a mov
@@ -92,7 +92,15 @@ instr_cp_fanin(struct ir3_instruction *instr)
 			if (is_meta(cand) && (cand->opc == OPC_META_FO))
 				cand = instr_cp(src->instr, true);
 
-			src->instr = cand;
+			/* we can't have 2 registers referring to the same instruction, so
+			 * go through and check if any already refer to the candidate
+			 * instruction. if so, don't do the propagation.
+			 */
+			for (j = 1; j < instr->regs_count; j++)
+				if (instr->regs[j]->instr == cand)
+					break;
+			if (j == instr->regs_count)
+				src->instr = cand;
 		}
 	}
 
