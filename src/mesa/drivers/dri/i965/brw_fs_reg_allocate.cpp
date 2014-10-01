@@ -105,7 +105,7 @@ brw_alloc_reg_set(struct intel_screen *screen, int reg_width)
    int class_sizes[BRW_MAX_MRF];
 
    if (devinfo->gen >= 7) {
-      for (class_count = 0; class_count < BRW_MAX_MRF; class_count++)
+      for (class_count = 0; class_count < MAX_VGRF_SIZE; class_count++)
          class_sizes[class_count] = class_count + 1;
    } else {
       for (class_count = 0; class_count < 4; class_count++)

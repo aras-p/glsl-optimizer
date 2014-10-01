@@ -52,6 +52,7 @@ extern "C" {
 #include "glsl/ir.h"
 
 #define MAX_SAMPLER_MESSAGE_SIZE 11
+#define MAX_VGRF_SIZE 16
 
 struct bblock_t;
 namespace {

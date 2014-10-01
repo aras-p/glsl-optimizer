@@ -1924,6 +1924,7 @@ fs_visitor::split_virtual_grfs()
           * new virtual GRF for the previous offset many registers
           */
          if (split_points[reg]) {
+            assert(offset <= MAX_VGRF_SIZE);
             int grf = virtual_grf_alloc(offset);
             for (int k = reg - offset; k < reg; k++)
                new_virtual_grf[k] = grf;
@@ -1935,6 +1936,7 @@ fs_visitor::split_virtual_grfs()
       }
 
       /* The last one gets the original register number */
+      assert(offset <= MAX_VGRF_SIZE);
       virtual_grf_sizes[i] = offset;
       for (int k = reg - offset; k < reg; k++)
          new_virtual_grf[k] = i;

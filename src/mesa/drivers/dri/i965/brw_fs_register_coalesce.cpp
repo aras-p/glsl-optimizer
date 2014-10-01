@@ -161,10 +161,10 @@ fs_visitor::register_coalesce()
    int src_size = 0;
    int channels_remaining = 0;
    int reg_from = -1, reg_to = -1;
-   int reg_to_offset[MAX_SAMPLER_MESSAGE_SIZE];
-   fs_inst *mov[MAX_SAMPLER_MESSAGE_SIZE];
-   int var_to[MAX_SAMPLER_MESSAGE_SIZE];
-   int var_from[MAX_SAMPLER_MESSAGE_SIZE];
+   int reg_to_offset[MAX_VGRF_SIZE];
+   fs_inst *mov[MAX_VGRF_SIZE];
+   int var_to[MAX_VGRF_SIZE];
+   int var_from[MAX_VGRF_SIZE];
 
    foreach_block_and_inst(block, fs_inst, inst, cfg) {
       if (!is_coalesce_candidate(this, inst))
@@ -180,7 +180,7 @@ fs_visitor::register_coalesce()
          reg_from = inst->src[0].reg;
 
          src_size = virtual_grf_sizes[inst->src[0].reg];
-         assert(src_size <= MAX_SAMPLER_MESSAGE_SIZE);
+         assert(src_size <= MAX_VGRF_SIZE);
 
          assert(inst->src[0].width % 8 == 0);
          channels_remaining = src_size;
