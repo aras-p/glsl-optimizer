@@ -2975,7 +2975,7 @@ fs_visitor::lower_load_payload()
 
    foreach_block_and_inst_safe (block, fs_inst, inst, cfg) {
       int dst_reg;
-      } if (inst->dst.file == GRF) {
+      if (inst->dst.file == GRF) {
          dst_reg = vgrf_to_reg[inst->dst.reg];
       } else {
          /* MRF */
