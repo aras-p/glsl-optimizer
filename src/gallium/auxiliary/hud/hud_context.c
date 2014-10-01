@@ -44,6 +44,7 @@
 #include "util/u_inlines.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
+#include "util/u_sampler.h"
 #include "util/u_simple_shaders.h"
 #include "util/u_string.h"
 #include "util/u_upload_mgr.h"
@@ -1050,12 +1051,8 @@ hud_create(struct pipe_context *pipe, struct cso_context *cso)
    }
 
    /* sampler view */
-   memset(&view_templ, 0, sizeof(view_templ));
-   view_templ.format = hud->font.texture->format;
-   view_templ.swizzle_r = PIPE_SWIZZLE_RED;
-   view_templ.swizzle_g = PIPE_SWIZZLE_GREEN;
-   view_templ.swizzle_b = PIPE_SWIZZLE_BLUE;
-   view_templ.swizzle_a = PIPE_SWIZZLE_ALPHA;
+   u_sampler_view_default_template(
+         &view_templ, hud->font.texture, hud->font.texture->format);
    hud->font_sampler_view = pipe->create_sampler_view(pipe, hud->font.texture,
                                                       &view_templ);
 
