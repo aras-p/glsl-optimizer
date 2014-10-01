@@ -1995,10 +1995,10 @@ trans_umul(const struct instr_translater *t,
 }
 
 /*
- * IDIV / UDIV / UMOD
+ * IDIV / UDIV / MOD / UMOD
  *
  * See NV50LegalizeSSA::handleDIV for the origin of this implementation. For
- * UMOD, it becomes a - UDIV(a, modulus) * modulus.
+ * MOD/UMOD, it becomes a - [IU]DIV(a, modulus) * modulus.
  */
 static void
 trans_idiv(const struct instr_translater *t,
@@ -2014,9 +2014,12 @@ trans_idiv(const struct instr_translater *t,
 	struct tgsi_src_register *af_src, *bf_src, *q_src, *r_src, *a_src, *b_src;
 
 	struct tgsi_src_register negative_2, thirty_one;
+	type_t src_type;
 
-	type_t src_type = t->tgsi_opc == TGSI_OPCODE_IDIV ?
-		get_stype(ctx) : get_utype(ctx);
+	if (t->tgsi_opc == TGSI_OPCODE_IDIV || t->tgsi_opc == TGSI_OPCODE_MOD)
+		src_type = get_stype(ctx);
+	else
+		src_type = get_utype(ctx);
 
 	af_src = get_internal_temp(ctx, &af_dst);
 	bf_src = get_internal_temp(ctx, &bf_dst);
@@ -2028,7 +2031,7 @@ trans_idiv(const struct instr_translater *t,
 	get_immediate(ctx, &negative_2, -2);
 	get_immediate(ctx, &thirty_one, 31);
 
-	if (t->tgsi_opc == TGSI_OPCODE_UMOD)
+	if (t->tgsi_opc == TGSI_OPCODE_MOD || t->tgsi_opc == TGSI_OPCODE_UMOD)
 		premod_dst = &q_dst;
 
 	/* cov.[us]32f32 af, numerator */
@@ -2044,7 +2047,7 @@ trans_idiv(const struct instr_translater *t,
 	vectorize(ctx, instr, &bf_dst, 1, b, 0);
 
 	/* Get the absolute values for IDIV */
-	if (t->tgsi_opc == TGSI_OPCODE_IDIV) {
+	if (type_sint(src_type)) {
 		/* absneg.f af, (abs)af */
 		instr = instr_create(ctx, 2, OPC_ABSNEG_F);
 		vectorize(ctx, instr, &af_dst, 1, af_src, IR3_REG_ABS);
@@ -2151,7 +2154,7 @@ trans_idiv(const struct instr_translater *t,
 	instr->cat2.condition = IR3_COND_GE;
 	vectorize(ctx, instr, &r_dst, 2, r_src, 0, b_src, 0);
 
-	if (t->tgsi_opc != TGSI_OPCODE_IDIV) {
+	if (type_uint(src_type)) {
 		/* add.u dst, q, r */
 		instr = instr_create(ctx, 2, OPC_ADD_U);
 		vectorize(ctx, instr, premod_dst, 2, q_src, 0, r_src, 0);
@@ -2181,7 +2184,7 @@ trans_idiv(const struct instr_translater *t,
 		vectorize(ctx, instr, premod_dst, 3, b_src, 0, r_src, 0, q_src, 0);
 	}
 
-	if (t->tgsi_opc == TGSI_OPCODE_UMOD) {
+	if (t->tgsi_opc == TGSI_OPCODE_MOD || t->tgsi_opc == TGSI_OPCODE_UMOD) {
 		/* The division result will have ended up in q. */
 
 		/* mull.u r, q, b */
@@ -2365,6 +2368,7 @@ static const struct instr_translater translaters[TGSI_OPCODE_LAST] = {
 	INSTR(UMUL,         trans_umul),
 	INSTR(UDIV,         trans_idiv),
 	INSTR(IDIV,         trans_idiv),
+	INSTR(MOD,          trans_idiv),
 	INSTR(UMOD,         trans_idiv),
 	INSTR(SHL,          instr_cat2, .opc = OPC_SHL_B),
 	INSTR(USHR,         instr_cat2, .opc = OPC_SHR_B),
