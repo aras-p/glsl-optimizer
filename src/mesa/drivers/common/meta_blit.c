@@ -69,7 +69,7 @@ setup_glsl_msaa_blit_scaled_shader(struct gl_context *ctx,
    const uint8_t *sample_map;
    char *sample_map_str = rzalloc_size(mem_ctx, 1);
    char *sample_map_expr = rzalloc_size(mem_ctx, 1);
-   char *texel_fetch_macro = rzalloc_size(mem_ctx, 1);;
+   char *texel_fetch_macro = rzalloc_size(mem_ctx, 1);
    const char *vs_source;
    const char *sampler_array_suffix = "";
    const char *texcoord_type = "vec2";
