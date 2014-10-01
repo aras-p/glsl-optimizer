@@ -4465,9 +4465,11 @@ builtin_builder::_image_prototype(const glsl_type *image_type,
       sig->parameters.push_tail(in_var(glsl_type::int_type, "sample"));
 
    /* Data arguments. */
-   for (unsigned i = 0; i < num_arguments; ++i)
-      sig->parameters.push_tail(in_var(data_type,
-                                       ralloc_asprintf(NULL, "arg%d", i)));
+   for (unsigned i = 0; i < num_arguments; ++i) {
+      char *arg_name = ralloc_asprintf(NULL, "arg%d", i);
+      sig->parameters.push_tail(in_var(data_type, arg_name));
+      ralloc_free(arg_name);
+   }
 
    /* Set the maximal set of qualifiers allowed for this image
     * built-in.  Function calls with arguments having fewer
