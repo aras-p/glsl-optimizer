@@ -223,7 +223,7 @@ test_format_unorm8(unsigned verbose, FILE *fp,
    boolean success = TRUE;
    unsigned i, j, k, l;
 
-   gallivm = gallivm_create("test_module_unorm8");
+   gallivm = gallivm_create("test_module_unorm8", LLVMGetGlobalContext());
 
    fetch = add_fetch_rgba_test(gallivm, verbose, desc, lp_unorm8_vec4_type());
 
