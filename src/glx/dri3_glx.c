@@ -816,11 +816,15 @@ dri3_alloc_render_buffer(struct glx_screen *glx_screen, Drawable draw,
     */
 
    fence_fd = xshmfence_alloc_shm();
-   if (fence_fd < 0)
+   if (fence_fd < 0) {
+      ErrorMessageF("DRI3 Fence object allocation failure %s\n", strerror(errno));
       return NULL;
+   }
    shm_fence = xshmfence_map_shm(fence_fd);
-   if (shm_fence == NULL)
+   if (shm_fence == NULL) {
+      ErrorMessageF("DRI3 Fence object map failure %s\n", strerror(errno));
       goto no_shm_fence;
+   }
 
    /* Allocate the image from the driver
     */
@@ -829,8 +833,10 @@ dri3_alloc_render_buffer(struct glx_screen *glx_screen, Drawable draw,
       goto no_buffer;
 
    buffer->cpp = dri3_cpp_for_format(format);
-   if (!buffer->cpp)
+   if (!buffer->cpp) {
+      ErrorMessageF("DRI3 buffer format %d invalid\n", format);
       goto no_image;
+   }
 
    if (!psc->is_different_gpu) {
       buffer->image = (*psc->image->createImage) (psc->driScreen,
@@ -841,8 +847,10 @@ dri3_alloc_render_buffer(struct glx_screen *glx_screen, Drawable draw,
                                                   buffer);
       pixmap_buffer = buffer->image;
 
-      if (!buffer->image)
+      if (!buffer->image) {
+         ErrorMessageF("DRI3 gpu image creation failure\n");
          goto no_image;
+      }
    } else {
       buffer->image = (*psc->image->createImage) (psc->driScreen,
                                                   width, height,
@@ -850,8 +858,10 @@ dri3_alloc_render_buffer(struct glx_screen *glx_screen, Drawable draw,
                                                   0,
                                                   buffer);
 
-      if (!buffer->image)
+      if (!buffer->image) {
+         ErrorMessageF("DRI3 other gpu image creation failure\n");
          goto no_image;
+      }
 
       buffer->linear_buffer = (*psc->image->createImage) (psc->driScreen,
                                                           width, height,
@@ -861,19 +871,25 @@ dri3_alloc_render_buffer(struct glx_screen *glx_screen, Drawable draw,
                                                           buffer);
       pixmap_buffer = buffer->linear_buffer;
 
-      if (!buffer->linear_buffer)
+      if (!buffer->linear_buffer) {
+         ErrorMessageF("DRI3 gpu linear image creation failure\n");
          goto no_linear_buffer;
+      }
    }
 
    /* X wants the stride, so ask the image for it
     */
-   if (!(*psc->image->queryImage)(pixmap_buffer, __DRI_IMAGE_ATTRIB_STRIDE, &stride))
+   if (!(*psc->image->queryImage)(pixmap_buffer, __DRI_IMAGE_ATTRIB_STRIDE, &stride)) {
+      ErrorMessageF("DRI3 get image stride failed\n");
       goto no_buffer_attrib;
+   }
 
    buffer->pitch = stride;
 
-   if (!(*psc->image->queryImage)(pixmap_buffer, __DRI_IMAGE_ATTRIB_FD, &buffer_fd))
+   if (!(*psc->image->queryImage)(pixmap_buffer, __DRI_IMAGE_ATTRIB_FD, &buffer_fd)) {
+      ErrorMessageF("DRI3 get image FD failed\n");
       goto no_buffer_attrib;
+   }
 
    xcb_dri3_pixmap_from_buffer(c,
                                (pixmap = xcb_generate_id(c)),
@@ -913,6 +929,7 @@ no_buffer:
    xshmfence_unmap_shm(shm_fence);
 no_shm_fence:
    close(fence_fd);
+   ErrorMessageF("DRI3 alloc_render_buffer failed\n");
    return NULL;
 }
 
