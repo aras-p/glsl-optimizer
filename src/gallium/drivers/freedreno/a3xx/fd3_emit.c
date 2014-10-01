@@ -92,14 +92,13 @@ emit_constants(struct fd_ringbuffer *ring,
 	uint32_t enabled_mask = constbuf->enabled_mask;
 	uint32_t first_immediate;
 	uint32_t base = 0;
-	unsigned i;
 
 	// XXX TODO only emit dirty consts.. but we need to keep track if
 	// they are clobbered by a clear, gmem2mem, or mem2gmem..
 	constbuf->dirty_mask = enabled_mask;
 
-	/* in particular, with binning shader and a unneeded consts no
-	 * longer referenced, we could end up w/ constlen that is smaller
+	/* in particular, with binning shader we may end up with unused
+	 * consts, ie. we could end up w/ constlen that is smaller
 	 * than first_immediate.  In that case truncate the user consts
 	 * early to avoid HLSQ lockup caused by writing too many consts
 	 */
@@ -137,12 +136,21 @@ emit_constants(struct fd_ringbuffer *ring,
 
 	/* emit shader immediates: */
 	if (shader) {
-		for (i = 0; i < shader->immediates_count; i++) {
-			base = 4 * (shader->first_immediate + i);
-			if (base >= (4 * shader->constlen))
-				break;
+		int size = shader->immediates_count;
+		base = shader->first_immediate;
+
+		/* truncate size to avoid writing constants that shader
+		 * does not use:
+		 */
+		size = MIN2(size + base, shader->constlen) - base;
+
+		/* convert out of vec4: */
+		base *= 4;
+		size *= 4;
+
+		if (size > 0) {
 			fd3_emit_constant(ring, sb, base,
-				0, 4, shader->immediates[i].val, NULL);
+				0, size, shader->immediates[0].val, NULL);
 		}
 	}
 }
