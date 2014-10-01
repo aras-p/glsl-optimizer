@@ -115,8 +115,6 @@ fs_visitor::emit_fragment_program_code()
 {
    setup_fp_regs();
 
-   fs_reg null = fs_reg(brw_null_reg());
-
    /* Keep a reg with 1.0 around, for reuse by emit_fp_sop so that it can just
     * be:
     *
@@ -163,7 +161,7 @@ fs_visitor::emit_fragment_program_code()
             if (fpi->DstReg.WriteMask & (1 << i)) {
                fs_inst *inst;
 
-               emit(CMP(null, offset(src[0], i), fs_reg(0.0f),
+               emit(CMP(reg_null_f, offset(src[0], i), fs_reg(0.0f),
                         BRW_CONDITIONAL_L));
 
                inst = emit(BRW_OPCODE_SEL, offset(dst, i),
@@ -250,8 +248,8 @@ fs_visitor::emit_fragment_program_code()
              * undiscarded pixels, and updates just those pixels to be
              * turned off.
              */
-            fs_inst *cmp = emit(CMP(null, offset(src[0], i), fs_reg(0.0f),
-                                    BRW_CONDITIONAL_GE));
+            fs_inst *cmp = emit(CMP(reg_null_f, offset(src[0], i),
+                                    fs_reg(0.0f), BRW_CONDITIONAL_GE));
             cmp->predicate = BRW_PREDICATE_NORMAL;
             cmp->flag_subreg = 1;
          }
@@ -283,7 +281,7 @@ fs_visitor::emit_fragment_program_code()
 
          if (fpi->DstReg.WriteMask & WRITEMASK_YZ) {
             fs_inst *inst;
-            emit(CMP(null, offset(src[0], 0), fs_reg(0.0f),
+            emit(CMP(reg_null_f, offset(src[0], 0), fs_reg(0.0f),
                      BRW_CONDITIONAL_LE));
 
             if (fpi->DstReg.WriteMask & WRITEMASK_Y) {
