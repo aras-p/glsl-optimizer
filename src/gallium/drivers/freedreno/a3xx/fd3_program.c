@@ -179,6 +179,8 @@ fd3_program_emit(struct fd_ringbuffer *ring,
 {
 	const struct ir3_shader_variant *vp, *fp;
 	const struct ir3_info *vsi, *fsi;
+	enum a3xx_instrbuffermode fpbuffer, vpbuffer;
+	uint32_t fpbuffersz, vpbuffersz, fsoff;
 	uint32_t pos_regid, posz_regid, psize_regid, color_regid;
 	int i, j, k;
 
@@ -194,6 +196,46 @@ fd3_program_emit(struct fd_ringbuffer *ring,
 
 	vsi = &vp->info;
 	fsi = &fp->info;
+
+	fpbuffer = BUFFER;
+	vpbuffer = BUFFER;
+	fpbuffersz = fp->instrlen;
+	vpbuffersz = vp->instrlen;
+
+	/*
+	 * Decide whether to use BUFFER or CACHE mode for VS and FS.  It
+	 * appears like 256 is the hard limit, but when the combined size
+	 * exceeds 128 then blob will try to keep FS in BUFFER mode and
+	 * switch to CACHE for VS until VS is too large.  The blob seems
+	 * to switch FS out of BUFFER mode at slightly under 128.  But
+	 * a bit fuzzy on the decision tree, so use slightly conservative
+	 * limits.
+	 *
+	 * TODO check if these thresholds for BUFFER vs CACHE mode are the
+	 *      same for all a3xx or whether we need to consider the gpuid
+	 */
+
+	if ((fpbuffersz + vpbuffersz) > 128) {
+		if (fpbuffersz < 112) {
+			/* FP:BUFFER   VP:CACHE  */
+			vpbuffer = CACHE;
+			vpbuffersz = 256 - fpbuffersz;
+		} else if (vpbuffersz < 112) {
+			/* FP:CACHE    VP:BUFFER */
+			fpbuffer = CACHE;
+			fpbuffersz = 256 - vpbuffersz;
+		} else {
+			/* FP:CACHE    VP:CACHE  */
+			vpbuffer = fpbuffer = CACHE;
+			vpbuffersz = fpbuffersz = 192;
+		}
+	}
+
+	if (fpbuffer == BUFFER) {
+		fsoff = 128 - fpbuffersz;
+	} else {
+		fsoff = 256 - fpbuffersz;
+	}
 
 	pos_regid = find_output_regid(vp,
 		ir3_semantic_name(TGSI_SEMANTIC_POSITION, 0));
@@ -223,10 +265,10 @@ fd3_program_emit(struct fd_ringbuffer *ring,
 	OUT_RING(ring, A3XX_HLSQ_CONTROL_3_REG_REGID(fp->pos_regid));
 	OUT_RING(ring, A3XX_HLSQ_VS_CONTROL_REG_CONSTLENGTH(vp->constlen) |
 			A3XX_HLSQ_VS_CONTROL_REG_CONSTSTARTOFFSET(0) |
-			A3XX_HLSQ_VS_CONTROL_REG_INSTRLENGTH(vp->instrlen));
+			A3XX_HLSQ_VS_CONTROL_REG_INSTRLENGTH(vpbuffersz));
 	OUT_RING(ring, A3XX_HLSQ_FS_CONTROL_REG_CONSTLENGTH(fp->constlen) |
 			A3XX_HLSQ_FS_CONTROL_REG_CONSTSTARTOFFSET(128) |
-			A3XX_HLSQ_FS_CONTROL_REG_INSTRLENGTH(fp->instrlen));
+			A3XX_HLSQ_FS_CONTROL_REG_INSTRLENGTH(fpbuffersz));
 
 	OUT_PKT0(ring, REG_A3XX_SP_SP_CTRL_REG, 1);
 	OUT_RING(ring, A3XX_SP_SP_CTRL_REG_CONSTMODE(0) |
@@ -239,15 +281,15 @@ fd3_program_emit(struct fd_ringbuffer *ring,
 
 	OUT_PKT0(ring, REG_A3XX_SP_VS_CTRL_REG0, 3);
 	OUT_RING(ring, A3XX_SP_VS_CTRL_REG0_THREADMODE(MULTI) |
-			A3XX_SP_VS_CTRL_REG0_INSTRBUFFERMODE(BUFFER) |
-			A3XX_SP_VS_CTRL_REG0_CACHEINVALID |
+			A3XX_SP_VS_CTRL_REG0_INSTRBUFFERMODE(vpbuffer) |
+			COND(vpbuffer == CACHE, A3XX_SP_VS_CTRL_REG0_CACHEINVALID) |
 			A3XX_SP_VS_CTRL_REG0_HALFREGFOOTPRINT(vsi->max_half_reg + 1) |
 			A3XX_SP_VS_CTRL_REG0_FULLREGFOOTPRINT(vsi->max_reg + 1) |
 			A3XX_SP_VS_CTRL_REG0_INOUTREGOVERLAP(0) |
 			A3XX_SP_VS_CTRL_REG0_THREADSIZE(TWO_QUADS) |
 			A3XX_SP_VS_CTRL_REG0_SUPERTHREADMODE |
 			COND(vp->has_samp, A3XX_SP_VS_CTRL_REG0_PIXLODENABLE) |
-			A3XX_SP_VS_CTRL_REG0_LENGTH(vp->instrlen));
+			A3XX_SP_VS_CTRL_REG0_LENGTH(vpbuffersz));
 	OUT_RING(ring, A3XX_SP_VS_CTRL_REG1_CONSTLENGTH(vp->constlen) |
 			A3XX_SP_VS_CTRL_REG1_INITIALOUTSTANDING(vp->total_in) |
 			A3XX_SP_VS_CTRL_REG1_CONSTFOOTPRINT(MAX2(vp->constlen + 1, 0)));
@@ -311,28 +353,36 @@ fd3_program_emit(struct fd_ringbuffer *ring,
 		OUT_RING(ring, A3XX_SP_FS_CTRL_REG0_THREADMODE(MULTI) |
 				A3XX_SP_FS_CTRL_REG0_INSTRBUFFERMODE(BUFFER));
 		OUT_RING(ring, 0x00000000);
+
+		OUT_PKT0(ring, REG_A3XX_SP_FS_OBJ_OFFSET_REG, 1);
+		OUT_RING(ring, A3XX_SP_FS_OBJ_OFFSET_REG_CONSTOBJECTOFFSET(128) |
+				A3XX_SP_FS_OBJ_OFFSET_REG_SHADEROBJOFFSET(0));
 	} else {
 		OUT_PKT0(ring, REG_A3XX_SP_FS_LENGTH_REG, 1);
 		OUT_RING(ring, A3XX_SP_FS_LENGTH_REG_SHADERLENGTH(fp->instrlen));
 
 		OUT_PKT0(ring, REG_A3XX_SP_FS_CTRL_REG0, 2);
 		OUT_RING(ring, A3XX_SP_FS_CTRL_REG0_THREADMODE(MULTI) |
-				A3XX_SP_FS_CTRL_REG0_INSTRBUFFERMODE(BUFFER) |
-				A3XX_SP_FS_CTRL_REG0_CACHEINVALID |
+				A3XX_SP_FS_CTRL_REG0_INSTRBUFFERMODE(fpbuffer) |
+				COND(fpbuffer == CACHE, A3XX_SP_FS_CTRL_REG0_CACHEINVALID) |
 				A3XX_SP_FS_CTRL_REG0_HALFREGFOOTPRINT(fsi->max_half_reg + 1) |
 				A3XX_SP_FS_CTRL_REG0_FULLREGFOOTPRINT(fsi->max_reg + 1) |
 				A3XX_SP_FS_CTRL_REG0_INOUTREGOVERLAP(1) |
 				A3XX_SP_FS_CTRL_REG0_THREADSIZE(FOUR_QUADS) |
 				A3XX_SP_FS_CTRL_REG0_SUPERTHREADMODE |
 				COND(fp->has_samp > 0, A3XX_SP_FS_CTRL_REG0_PIXLODENABLE) |
-				A3XX_SP_FS_CTRL_REG0_LENGTH(fp->instrlen));
+				A3XX_SP_FS_CTRL_REG0_LENGTH(fpbuffersz));
 		OUT_RING(ring, A3XX_SP_FS_CTRL_REG1_CONSTLENGTH(fp->constlen) |
 				A3XX_SP_FS_CTRL_REG1_INITIALOUTSTANDING(fp->total_in) |
 				A3XX_SP_FS_CTRL_REG1_CONSTFOOTPRINT(MAX2(fp->constlen + 1, 0)) |
 				A3XX_SP_FS_CTRL_REG1_HALFPRECVAROFFSET(63));
+
+		/* NOTE: I believe VS.CONSTLEN should be <= FS.CONSTOBJOFFSET*/
+		debug_assert(vp->constlen <= 128);
+
 		OUT_PKT0(ring, REG_A3XX_SP_FS_OBJ_OFFSET_REG, 2);
 		OUT_RING(ring, A3XX_SP_FS_OBJ_OFFSET_REG_CONSTOBJECTOFFSET(128) |
-				A3XX_SP_FS_OBJ_OFFSET_REG_SHADEROBJOFFSET(0));
+				A3XX_SP_FS_OBJ_OFFSET_REG_SHADEROBJOFFSET(fsoff));
 		OUT_RELOC(ring, fp->bo, 0, 0, 0);  /* SP_FS_OBJ_START_REG */
 	}
 
@@ -411,13 +461,15 @@ fd3_program_emit(struct fd_ringbuffer *ring,
 	OUT_RING(ring, A3XX_VFD_VS_THREADING_THRESHOLD_REGID_THRESHOLD(15) |
 			A3XX_VFD_VS_THREADING_THRESHOLD_REGID_VTXCNT(252));
 
-	emit_shader(ring, vp);
+	if (vpbuffer == BUFFER)
+		emit_shader(ring, vp);
 
 	OUT_PKT0(ring, REG_A3XX_VFD_PERFCOUNTER0_SELECT, 1);
 	OUT_RING(ring, 0x00000000);        /* VFD_PERFCOUNTER0_SELECT */
 
 	if (!key.binning_pass) {
-		emit_shader(ring, fp);
+		if (fpbuffer == BUFFER)
+			emit_shader(ring, fp);
 
 		OUT_PKT0(ring, REG_A3XX_VFD_PERFCOUNTER0_SELECT, 1);
 		OUT_RING(ring, 0x00000000);        /* VFD_PERFCOUNTER0_SELECT */
