@@ -1170,10 +1170,10 @@ fill_tex_info(struct ir3_compile_context *ctx,
 		info->order[arg] = pos++;
 	if (tgt->dims == 1)
 		info->order[pos++] = -1;
+	if (tgt->shadow)
+		info->order[pos++] = MAX2(arg + tgt->array, 2);
 	if (tgt->array)
 		info->order[pos++] = arg++;
-	if (tgt->shadow)
-		info->order[pos++] = MAX2(arg, 2);
 	if (info->flags & IR3_INSTR_P)
 		info->order[pos++] = 3;
 
