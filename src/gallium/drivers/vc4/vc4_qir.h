@@ -238,6 +238,7 @@ struct vc4_compile {
 
         uint32_t *uniform_data;
         enum quniform_contents *uniform_contents;
+        uint32_t uniform_array_size;
         uint32_t num_uniforms;
         uint32_t num_outputs;
         uint32_t num_texture_samples;

@@ -104,6 +104,18 @@ add_uniform(struct vc4_compile *c,
         uint32_t uniform = c->num_uniforms++;
         struct qreg u = { QFILE_UNIF, uniform };
 
+        if (uniform >= c->uniform_array_size) {
+                c->uniform_array_size = MAX2(MAX2(16, uniform + 1),
+                                             c->uniform_array_size * 2);
+
+                c->uniform_data = reralloc(c, c->uniform_data,
+                                           uint32_t,
+                                           c->uniform_array_size);
+                c->uniform_contents = reralloc(c, c->uniform_contents,
+                                               enum quniform_contents,
+                                               c->uniform_array_size);
+        }
+
         c->uniform_contents[uniform] = contents;
         c->uniform_data[uniform] = data;
 
@@ -1572,9 +1584,6 @@ vc4_shader_tgsi_to_qir(struct vc4_context *vc4,
         int ret;
 
         c->stage = stage;
-
-        c->uniform_data = ralloc_array(c, uint32_t, 1024);
-        c->uniform_contents = ralloc_array(c, enum quniform_contents, 1024);
 
         c->shader_state = key->shader_state;
         ret = tgsi_parse_init(&c->parser, c->shader_state->tokens);
