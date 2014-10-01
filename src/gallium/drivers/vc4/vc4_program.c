@@ -1982,12 +1982,12 @@ write_texture_p1(struct vc4_context *vc4,
         struct pipe_sampler_view *texture = texstate->textures[unit];
         struct vc4_resource *rsc = vc4_resource(texture->texture);
         struct pipe_sampler_state *sampler = texstate->samplers[unit];
-        static const uint32_t mipfilter_map[] = {
-                [PIPE_TEX_MIPFILTER_NEAREST] = 2,
-                [PIPE_TEX_MIPFILTER_LINEAR] = 4,
-                [PIPE_TEX_MIPFILTER_NONE] = 0
+        static const uint8_t minfilter_map[6] = {
+                2, 4, /* mipfilter nearest */
+                3, 5, /* mipfilter linear */
+                1, 0, /* mipfilter none */
         };
-        static const uint32_t imgfilter_map[] = {
+        static const uint32_t magfilter_map[] = {
                 [PIPE_TEX_FILTER_NEAREST] = 1,
                 [PIPE_TEX_FILTER_LINEAR] = 0,
         };
@@ -2000,9 +2000,9 @@ write_texture_p1(struct vc4_context *vc4,
                ((rsc->vc4_format >> 4) << 31) |
                (texture->texture->height0 << 20) |
                (texture->texture->width0 << 8) |
-               (imgfilter_map[sampler->mag_img_filter] << 7) |
-               ((imgfilter_map[sampler->min_img_filter] +
-                 mipfilter_map[sampler->min_mip_filter]) << 4) |
+               (magfilter_map[sampler->mag_img_filter] << 7) |
+               (minfilter_map[sampler->min_mip_filter * 2 +
+                              sampler->min_img_filter] << 4) |
                (translate_wrap(sampler->wrap_t, either_nearest) << 2) |
                (translate_wrap(sampler->wrap_s, either_nearest) << 0));
 }
