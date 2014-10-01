@@ -45,6 +45,7 @@
 #include "main/texenv.h"
 #include "main/teximage.h"
 #include "main/texparam.h"
+#include "main/uniforms.h"
 #include "main/varray.h"
 #include "main/viewport.h"
 #include "swrast/swrast.h"
@@ -105,11 +106,11 @@ setup_glsl_msaa_blit_scaled_shader(struct gl_context *ctx,
       _mesa_UseProgram(blit->msaa_shaders[shader_index]);
       /* Update the uniform values. */
       loc_src_width =
-         glGetUniformLocation(blit->msaa_shaders[shader_index], "src_width");
+         _mesa_GetUniformLocation(blit->msaa_shaders[shader_index], "src_width");
       loc_src_height =
-         glGetUniformLocation(blit->msaa_shaders[shader_index], "src_height");
-      glUniform1f(loc_src_width, src_rb->Width);
-      glUniform1f(loc_src_height, src_rb->Height);
+         _mesa_GetUniformLocation(blit->msaa_shaders[shader_index], "src_height");
+      _mesa_Uniform1f(loc_src_width, src_rb->Width);
+      _mesa_Uniform1f(loc_src_height, src_rb->Height);
       return;
    }
 
@@ -218,11 +219,11 @@ setup_glsl_msaa_blit_scaled_shader(struct gl_context *ctx,
    _mesa_meta_compile_and_link_program(ctx, vs_source, fs_source, name,
                                        &blit->msaa_shaders[shader_index]);
    loc_src_width =
-      glGetUniformLocation(blit->msaa_shaders[shader_index], "src_width");
+      _mesa_GetUniformLocation(blit->msaa_shaders[shader_index], "src_width");
    loc_src_height =
-      glGetUniformLocation(blit->msaa_shaders[shader_index], "src_height");
-   glUniform1f(loc_src_width, src_rb->Width);
-   glUniform1f(loc_src_height, src_rb->Height);
+      _mesa_GetUniformLocation(blit->msaa_shaders[shader_index], "src_height");
+   _mesa_Uniform1f(loc_src_width, src_rb->Width);
+   _mesa_Uniform1f(loc_src_height, src_rb->Height);
 
    ralloc_free(mem_ctx);
 }
