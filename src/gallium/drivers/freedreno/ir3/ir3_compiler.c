@@ -1986,7 +1986,7 @@ trans_cov(const struct instr_translater *t,
 }
 
 /*
- * UMUL
+ * UMUL / UMAD
  *
  * There is no 32-bit multiply instruction, so splitting a and b into high and
  * low components, we get that
@@ -1996,6 +1996,8 @@ trans_cov(const struct instr_translater *t,
  *  mull.u tmp0, a, b (mul low, i.e. al * bl)
  *  madsh.m16 tmp1, a, b, tmp0 (mul-add shift high mix, i.e. ah * bl << 16)
  *  madsh.m16 dst, b, a, tmp1 (i.e. al * bh << 16)
+ *
+ * For UMAD, replace first mull.u with mad.u16.
  */
 static void
 trans_umul(const struct instr_translater *t,
@@ -2018,9 +2020,17 @@ trans_umul(const struct instr_translater *t,
 	if (is_rel_or_const(b))
 		b = get_unconst(ctx, b);
 
-	/* mull.u tmp0, a, b */
-	instr = instr_create(ctx, 2, OPC_MULL_U);
-	vectorize(ctx, instr, &tmp0_dst, 2, a, 0, b, 0);
+	if (t->tgsi_opc == TGSI_OPCODE_UMUL) {
+		/* mull.u tmp0, a, b */
+		instr = instr_create(ctx, 2, OPC_MULL_U);
+		vectorize(ctx, instr, &tmp0_dst, 2, a, 0, b, 0);
+	} else {
+		struct tgsi_src_register *c = &inst->Src[2].Register;
+
+		/* mad.u16 tmp0, a, b, c */
+		instr = instr_create(ctx, 3, OPC_MAD_U16);
+		vectorize(ctx, instr, &tmp0_dst, 3, a, 0, b, 0, c, 0);
+	}
 
 	/* madsh.m16 tmp1, a, b, tmp0 */
 	instr = instr_create(ctx, 3, OPC_MADSH_M16);
@@ -2404,6 +2414,7 @@ static const struct instr_translater translaters[TGSI_OPCODE_LAST] = {
 	INSTR(NOT,          instr_cat2, .opc = OPC_NOT_B),
 	INSTR(XOR,          instr_cat2, .opc = OPC_XOR_B),
 	INSTR(UMUL,         trans_umul),
+	INSTR(UMAD,         trans_umul),
 	INSTR(UDIV,         trans_idiv),
 	INSTR(IDIV,         trans_idiv),
 	INSTR(MOD,          trans_idiv),
