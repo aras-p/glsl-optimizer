@@ -29,6 +29,7 @@
 #include "util/u_hash.h"
 #include "util/u_memory.h"
 #include "util/u_pack_color.h"
+#include "util/format_srgb.h"
 #include "util/ralloc.h"
 #include "tgsi/tgsi_dump.h"
 #include "tgsi/tgsi_info.h"
@@ -269,6 +270,22 @@ tgsi_to_qir_alu(struct vc4_compile *c,
                               src[2 * 4 + i],
                               c->undef));
         return dst;
+}
+
+static struct qreg
+qir_srgb_decode(struct vc4_compile *c, struct qreg srgb)
+{
+        struct qreg low = qir_FMUL(c, srgb, qir_uniform_f(c, 1.0 / 12.92));
+        struct qreg high = qir_POW(c,
+                                   qir_FMUL(c,
+                                            qir_FADD(c,
+                                                     srgb,
+                                                     qir_uniform_f(c, 0.055)),
+                                            qir_uniform_f(c, 1.0 / 1.055)),
+                                   qir_uniform_f(c, 2.4));
+
+        qir_SF(c, qir_FSUB(c, srgb, qir_uniform_f(c, 0.04045)));
+        return qir_SEL_X_Y_NS(c, low, high);
 }
 
 static struct qreg
@@ -639,14 +656,25 @@ tgsi_to_qir_tex(struct vc4_compile *c,
         }
 
         const uint8_t *format_swiz = vc4_get_format_swizzle(format);
-        uint8_t swiz[4];
-        util_format_compose_swizzles(format_swiz, c->key->tex[unit].swizzle, swiz);
+        struct qreg texture_output[4];
+        for (int i = 0; i < 4; i++) {
+                texture_output[i] = get_swizzled_channel(c, unpacked,
+                                                         format_swiz[i]);
+        }
+
+        if (util_format_is_srgb(format)) {
+                for (int i = 0; i < 3; i++)
+                        texture_output[i] = qir_srgb_decode(c,
+                                                            texture_output[i]);
+        }
+
         for (int i = 0; i < 4; i++) {
                 if (!(tgsi_inst->Dst[0].Register.WriteMask & (1 << i)))
                         continue;
 
                 update_dst(c, tgsi_inst, i,
-                           get_swizzled_channel(c, unpacked, swiz[i]));
+                           get_swizzled_channel(c, texture_output,
+                                                c->key->tex[unit].swizzle[i]));
         }
 }
 
@@ -657,9 +685,7 @@ tgsi_to_qir_pow(struct vc4_compile *c,
 {
         /* Note that this instruction replicates its result from the x channel
          */
-        return qir_EXP2(c, qir_FMUL(c,
-                                    src[1 * 4 + 0],
-                                    qir_LOG2(c, src[0 * 4 + 0])));
+        return qir_POW(c, src[0 * 4 + 0], src[1 * 4 + 0]);
 }
 
 static struct qreg
@@ -1754,8 +1780,7 @@ vc4_setup_shared_key(struct vc4_key *key, struct vc4_texture_stateobj *texstate)
                         texstate->samplers[i];
 
                 if (sampler) {
-                        struct pipe_resource *prsc = sampler->texture;
-                        key->tex[i].format = prsc->format;
+                        key->tex[i].format = sampler->format;
                         key->tex[i].swizzle[0] = sampler->swizzle_r;
                         key->tex[i].swizzle[1] = sampler->swizzle_g;
                         key->tex[i].swizzle[2] = sampler->swizzle_b;
@@ -2039,12 +2064,21 @@ write_texture_border_color(struct vc4_context *vc4,
         const struct util_format_description *tex_format_desc =
                 util_format_description(texture->format);
 
+        float border_color[4];
+        for (int i = 0; i < 4; i++)
+                border_color[i] = sampler->border_color.f[i];
+        if (util_format_is_srgb(texture->format)) {
+                for (int i = 0; i < 3; i++)
+                        border_color[i] =
+                                util_format_linear_to_srgb_float(border_color[i]);
+        }
+
         /* Turn the border color into the layout of channels that it would
          * have when stored as texture contents.
          */
         float storage_color[4];
         util_format_unswizzle_4f(storage_color,
-                                 sampler->border_color.f,
+                                 border_color,
                                  tex_format_desc->swizzle);
 
         /* Now, pack so that when the vc4_format-sampled texture contents are

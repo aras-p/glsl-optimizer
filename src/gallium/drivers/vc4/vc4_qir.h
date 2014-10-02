@@ -410,4 +410,12 @@ qir_UNPACK_8(struct vc4_compile *c, struct qreg src, int i)
         return t;
 }
 
+static inline struct qreg
+qir_POW(struct vc4_compile *c, struct qreg x, struct qreg y)
+{
+        return qir_EXP2(c, qir_FMUL(c,
+                                    y,
+                                    qir_LOG2(c, x)));
+}
+
 #endif /* VC4_QIR_H */
