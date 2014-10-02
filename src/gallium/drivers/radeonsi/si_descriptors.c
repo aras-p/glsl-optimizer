@@ -422,6 +422,11 @@ static void si_set_sampler_views(struct pipe_context *ctx,
 				si_set_sampler_view(sctx, shader, SI_FMASK_TEX_OFFSET + slot,
 						    NULL, NULL);
 			}
+		} else {
+			samplers->depth_texture_mask &= ~(1 << slot);
+			samplers->compressed_colortex_mask &= ~(1 << slot);
+			si_set_sampler_view(sctx, shader, SI_FMASK_TEX_OFFSET + slot,
+					    NULL, NULL);
 		}
 	}
 
