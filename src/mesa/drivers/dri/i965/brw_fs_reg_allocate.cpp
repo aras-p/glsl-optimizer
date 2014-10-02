@@ -656,11 +656,12 @@ void
 fs_visitor::emit_spill(bblock_t *block, fs_inst *inst, fs_reg src,
                        uint32_t spill_offset, int count)
 {
-   int spill_base_mrf = dispatch_width > 8 ? 13 : 14;
-
    int reg_size = 1;
-   if (count % 2 == 0)
+   int spill_base_mrf = 14;
+   if (count % 2 == 0) {
+      spill_base_mrf = 13;
       reg_size = 2;
+   }
 
    for (int i = 0; i < count / reg_size; i++) {
       fs_inst *spill_inst =
