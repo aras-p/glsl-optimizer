@@ -289,6 +289,22 @@ qir_srgb_decode(struct vc4_compile *c, struct qreg srgb)
 }
 
 static struct qreg
+qir_srgb_encode(struct vc4_compile *c, struct qreg linear)
+{
+        struct qreg low = qir_FMUL(c, linear, qir_uniform_f(c, 12.92));
+        struct qreg high = qir_FSUB(c,
+                                    qir_FMUL(c,
+                                             qir_uniform_f(c, 1.055),
+                                             qir_POW(c,
+                                                     linear,
+                                                     qir_uniform_f(c, 0.41666))),
+                                    qir_uniform_f(c, 0.055));
+
+        qir_SF(c, qir_FSUB(c, linear, qir_uniform_f(c, 0.0031308)));
+        return qir_SEL_X_Y_NS(c, low, high);
+}
+
+static struct qreg
 tgsi_to_qir_umul(struct vc4_compile *c,
                  struct tgsi_full_instruction *tgsi_inst,
                  enum qop op, struct qreg *src, int i)
@@ -1414,25 +1430,38 @@ emit_frag_end(struct vc4_compile *c)
         const uint8_t *format_swiz = vc4_get_format_swizzle(color_format);
         struct qreg tlb_read_color[4] = { c->undef, c->undef, c->undef, c->undef };
         struct qreg dst_color[4] = { c->undef, c->undef, c->undef, c->undef };
+        struct qreg linear_dst_color[4] = { c->undef, c->undef, c->undef, c->undef };
         if (c->fs_key->blend.blend_enable ||
             c->fs_key->blend.colormask != 0xf) {
                 struct qreg r4 = qir_TLB_COLOR_READ(c);
                 for (int i = 0; i < 4; i++)
                         tlb_read_color[i] = qir_R4_UNPACK(c, r4, i);
-                for (int i = 0; i < 4; i++)
+                for (int i = 0; i < 4; i++) {
                         dst_color[i] = get_swizzled_channel(c,
                                                             tlb_read_color,
                                                             format_swiz[i]);
+                        if (util_format_is_srgb(color_format) && i != 3) {
+                                linear_dst_color[i] =
+                                        qir_srgb_decode(c, dst_color[i]);
+                        } else {
+                                linear_dst_color[i] = dst_color[i];
+                        }
+                }
         }
 
         struct qreg blend_color[4];
         struct qreg undef_array[4] = {
                 c->undef, c->undef, c->undef, c->undef
         };
-        vc4_blend(c, blend_color, dst_color,
+        vc4_blend(c, blend_color, linear_dst_color,
                   (c->output_color_index != -1 ?
                    c->outputs + c->output_color_index :
                    undef_array));
+
+        if (util_format_is_srgb(color_format)) {
+                for (int i = 0; i < 3; i++)
+                        blend_color[i] = qir_srgb_encode(c, blend_color[i]);
+        }
 
         /* If the bit isn't set in the color mask, then just return the
          * original dst color, instead.
