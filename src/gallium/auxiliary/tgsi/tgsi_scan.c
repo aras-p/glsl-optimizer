@@ -280,8 +280,7 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
             unsigned name = fullprop->Property.PropertyName;
 
             assert(name < Elements(info->properties));
-            memcpy(info->properties[name],
-                   fullprop->u, 8 * sizeof(unsigned));
+            info->properties[name] = fullprop->u[0].Data;
          }
          break;
 
@@ -298,7 +297,7 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
     */
    if (procType == TGSI_PROCESSOR_GEOMETRY) {
       unsigned input_primitive =
-            info->properties[TGSI_PROPERTY_GS_INPUT_PRIM][0];
+            info->properties[TGSI_PROPERTY_GS_INPUT_PRIM];
       int num_verts = u_vertices_per_prim(input_primitive);
       int j;
       info->file_count[TGSI_FILE_INPUT] = num_verts;

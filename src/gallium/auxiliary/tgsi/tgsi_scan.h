@@ -88,7 +88,7 @@ struct tgsi_shader_info
     */
    unsigned indirect_files;
 
-   unsigned properties[TGSI_PROPERTY_COUNT][8]; /* index with TGSI_PROPERTY_ */
+   unsigned properties[TGSI_PROPERTY_COUNT]; /* index with TGSI_PROPERTY_ */
 };
 
 extern void

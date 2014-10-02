@@ -338,7 +338,7 @@ make_fs_key(const struct svga_context *svga,
                                     == PIPE_SPRITE_COORD_LOWER_LEFT);
 
    /* SVGA_NEW_FRAME_BUFFER */
-   if (fs->base.info.properties[TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS][0]) {
+   if (fs->base.info.properties[TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS]) {
       /* Replicate color0 output to N colorbuffers */
       key->write_color0_to_n_cbufs = svga->curr.framebuffer.nr_cbufs;
    }

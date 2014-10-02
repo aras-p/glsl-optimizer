@@ -433,7 +433,7 @@ util_pstipple_create_fragment_shader(struct pipe_context *pipe,
    tgsi_scan_shader(fs->tokens, &transform.info);
 
    transform.coordOrigin =
-      transform.info.properties[TGSI_PROPERTY_FS_COORD_ORIGIN][0];
+      transform.info.properties[TGSI_PROPERTY_FS_COORD_ORIGIN];
 
    tgsi_transform_shader(fs->tokens,
                          (struct tgsi_token *) new_fs->tokens,

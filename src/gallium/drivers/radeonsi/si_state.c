@@ -2214,7 +2214,7 @@ static INLINE void si_shader_selector_key(struct pipe_context *ctx,
 			key->vs.gs_used_inputs = sctx->gs_shader->gs_used_inputs;
 		}
 	} else if (sel->type == PIPE_SHADER_FRAGMENT) {
-		if (sel->info.properties[TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS][0])
+		if (sel->info.properties[TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS])
 			key->ps.nr_cbufs = sctx->framebuffer.state.nr_cbufs;
 		key->ps.export_16bpc = sctx->framebuffer.export_16bpc;
 
@@ -2312,9 +2312,9 @@ static void *si_create_shader_state(struct pipe_context *ctx,
 	switch (pipe_shader_type) {
 	case PIPE_SHADER_GEOMETRY:
 		sel->gs_output_prim =
-			sel->info.properties[TGSI_PROPERTY_GS_OUTPUT_PRIM][0];
+			sel->info.properties[TGSI_PROPERTY_GS_OUTPUT_PRIM];
 		sel->gs_max_out_vertices =
-			sel->info.properties[TGSI_PROPERTY_GS_MAX_OUTPUT_VERTICES][0];
+			sel->info.properties[TGSI_PROPERTY_GS_MAX_OUTPUT_VERTICES];
 
 		for (i = 0; i < sel->info.num_inputs; i++) {
 			unsigned name = sel->info.input_semantic_name[i];

@@ -2213,7 +2213,7 @@ generate_fragment(struct llvmpipe_context *lp,
 
    /* check if writes to cbuf[0] are to be copied to all cbufs */
    cbuf0_write_all =
-     shader->info.base.properties[TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS][0];
+     shader->info.base.properties[TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS];
 
    /* TODO: actually pick these based on the fs and color buffer
     * characteristics. */
@@ -2324,7 +2324,7 @@ generate_fragment(struct llvmpipe_context *lp,
                                                       num_loop, "mask_store");
       LLVMValueRef color_store[PIPE_MAX_COLOR_BUFS][TGSI_NUM_CHANNELS];
       boolean pixel_center_integer =
-         shader->info.base.properties[TGSI_PROPERTY_FS_COORD_PIXEL_CENTER][0];
+         shader->info.base.properties[TGSI_PROPERTY_FS_COORD_PIXEL_CENTER];
 
       /*
        * The shader input interpolation info is not explicitely baked in the

@@ -766,11 +766,11 @@ draw_create_geometry_shader(struct draw_context *draw,
    }
 
    gs->input_primitive =
-         gs->info.properties[TGSI_PROPERTY_GS_INPUT_PRIM][0];
+         gs->info.properties[TGSI_PROPERTY_GS_INPUT_PRIM];
    gs->output_primitive =
-         gs->info.properties[TGSI_PROPERTY_GS_OUTPUT_PRIM][0];
+         gs->info.properties[TGSI_PROPERTY_GS_OUTPUT_PRIM];
    gs->max_output_vertices =
-         gs->info.properties[TGSI_PROPERTY_GS_MAX_OUTPUT_VERTICES][0];
+         gs->info.properties[TGSI_PROPERTY_GS_MAX_OUTPUT_VERTICES];
    if (!gs->max_output_vertices)
       gs->max_output_vertices = 32;
 

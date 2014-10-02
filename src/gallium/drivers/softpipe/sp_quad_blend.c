@@ -924,7 +924,7 @@ blend_fallback(struct quad_stage *qs,
    const struct pipe_blend_state *blend = softpipe->blend;
    unsigned cbuf;
    boolean write_all =
-      softpipe->fs_variant->info.properties[TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS][0];
+      softpipe->fs_variant->info.properties[TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS];
 
    for (cbuf = 0; cbuf < softpipe->framebuffer.nr_cbufs; cbuf++) {
       if (softpipe->framebuffer.cbufs[cbuf]) {

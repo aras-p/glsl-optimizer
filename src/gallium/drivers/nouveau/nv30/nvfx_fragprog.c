@@ -1138,11 +1138,11 @@ _nvfx_fragprog_translate(uint16_t oclass, struct nv30_fragprog *fp)
    fpc->num_regs = 2;
    memset(fp->texcoord, 0xff, sizeof(fp->texcoord));
 
-   if (fp->info.properties[TGSI_PROPERTY_FS_COORD_ORIGIN][0])
+   if (fp->info.properties[TGSI_PROPERTY_FS_COORD_ORIGIN])
       fp->coord_conventions |= NV30_3D_COORD_CONVENTIONS_ORIGIN_INVERTED;
-   if (fp->info.properties[TGSI_PROPERTY_FS_COORD_PIXEL_CENTER][0])
+   if (fp->info.properties[TGSI_PROPERTY_FS_COORD_PIXEL_CENTER])
       fp->coord_conventions |= NV30_3D_COORD_CONVENTIONS_CENTER_INTEGER;
-   if (fp->info.properties[TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS][0])
+   if (fp->info.properties[TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS])
       fp->rt_enable |= NV30_3D_RT_ENABLE_MRT;
 
    if (!nvfx_fragprog_prepare(fpc))

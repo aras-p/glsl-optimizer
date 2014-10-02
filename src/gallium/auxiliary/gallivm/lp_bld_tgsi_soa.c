@@ -3865,7 +3865,7 @@ lp_build_tgsi_soa(struct gallivm_state *gallivm,
       bld.bld_base.op_actions[TGSI_OPCODE_ENDPRIM].emit = end_primitive;
 
       max_output_vertices =
-            info->properties[TGSI_PROPERTY_GS_MAX_OUTPUT_VERTICES][0];
+            info->properties[TGSI_PROPERTY_GS_MAX_OUTPUT_VERTICES];
       if (!max_output_vertices)
          max_output_vertices = 32;
 

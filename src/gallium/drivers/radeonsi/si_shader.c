@@ -1487,7 +1487,7 @@ static void si_llvm_emit_fs_epilogue(struct lp_build_tgsi_context * bld_base)
 				memcpy(last_args, args, sizeof(args));
 
 				/* Handle FS_COLOR0_WRITES_ALL_CBUFS. */
-				if (shader->selector->info.properties[TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS][0] &&
+				if (shader->selector->info.properties[TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS] &&
                                     shader->output[i].sid == 0 &&
 				    si_shader_ctx->shader->key.ps.nr_cbufs > 1) {
 					for (int c = 1; c < si_shader_ctx->shader->key.ps.nr_cbufs; c++) {
@@ -2867,7 +2867,7 @@ int si_shader_create(struct si_screen *sscreen, struct si_shader *shader)
 		si_shader_ctx.radeon_bld.load_input = declare_input_fs;
 		bld_base->emit_epilogue = si_llvm_emit_fs_epilogue;
 
-		switch (sel->info.properties[TGSI_PROPERTY_FS_DEPTH_LAYOUT][0]) {
+		switch (sel->info.properties[TGSI_PROPERTY_FS_DEPTH_LAYOUT]) {
 		case TGSI_FS_DEPTH_LAYOUT_GREATER:
 			shader->db_shader_control |=
 				S_02880C_CONSERVATIVE_Z_EXPORT(V_02880C_EXPORT_GREATER_THAN_Z);
