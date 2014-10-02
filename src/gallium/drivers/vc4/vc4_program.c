@@ -75,6 +75,7 @@ struct vc4_fs_key {
 struct vc4_vs_key {
         struct vc4_key base;
         enum pipe_format attr_formats[8];
+        bool is_coord;
         bool per_vertex_point_size;
 };
 
@@ -1563,8 +1564,7 @@ emit_coord_end(struct vc4_compile *c)
 }
 
 static struct vc4_compile *
-vc4_shader_tgsi_to_qir(struct vc4_context *vc4,
-                       struct vc4_compiled_shader *shader, enum qstage stage,
+vc4_shader_tgsi_to_qir(struct vc4_context *vc4, enum qstage stage,
                        struct vc4_key *key)
 {
         struct vc4_compile *c = qir_compile_init();
@@ -1710,67 +1710,58 @@ vc4_shader_state_create(struct pipe_context *pctx,
 
 static void
 copy_uniform_state_to_shader(struct vc4_compiled_shader *shader,
-                             int shader_index,
                              struct vc4_compile *c)
 {
         int count = c->num_uniforms;
-        struct vc4_shader_uniform_info *uinfo = &shader->uniforms[shader_index];
+        struct vc4_shader_uniform_info *uinfo = &shader->uniforms;
 
         uinfo->count = count;
-        uinfo->data = malloc(count * sizeof(*uinfo->data));
+        uinfo->data = ralloc_array(shader, uint32_t, count);
         memcpy(uinfo->data, c->uniform_data,
                count * sizeof(*uinfo->data));
-        uinfo->contents = malloc(count * sizeof(*uinfo->contents));
+        uinfo->contents = ralloc_array(shader, enum quniform_contents, count);
         memcpy(uinfo->contents, c->uniform_contents,
                count * sizeof(*uinfo->contents));
         uinfo->num_texture_samples = c->num_texture_samples;
 }
 
-static void
-vc4_fs_compile(struct vc4_context *vc4, struct vc4_compiled_shader *shader,
-               struct vc4_fs_key *key)
+static struct vc4_compiled_shader *
+vc4_get_compiled_shader(struct vc4_context *vc4, enum qstage stage,
+                        struct vc4_key *key)
 {
-        struct vc4_compile *c = vc4_shader_tgsi_to_qir(vc4, shader,
-                                                       QSTAGE_FRAG,
-                                                       &key->base);
+        struct util_hash_table *ht;
+        uint32_t key_size;
+        if (stage == QSTAGE_FRAG) {
+                ht = vc4->fs_cache;
+                key_size = sizeof(struct vc4_fs_key);
+        } else {
+                ht = vc4->vs_cache;
+                key_size = sizeof(struct vc4_vs_key);
+        }
+
+        struct vc4_compiled_shader *shader;
+        shader = util_hash_table_get(ht, key);
+        if (shader)
+                return shader;
+
+        struct vc4_compile *c = vc4_shader_tgsi_to_qir(vc4, stage, key);
+        shader = rzalloc(NULL, struct vc4_compiled_shader);
+
         shader->num_inputs = c->num_inputs;
         shader->color_inputs = c->color_inputs;
-        copy_uniform_state_to_shader(shader, 0, c);
+        copy_uniform_state_to_shader(shader, c);
         shader->bo = vc4_bo_alloc_mem(vc4->screen, c->qpu_insts,
                                       c->qpu_inst_count * sizeof(uint64_t),
-                                      "fs_code");
+                                      "code");
 
         qir_compile_destroy(c);
-}
 
-static void
-vc4_vs_compile(struct vc4_context *vc4, struct vc4_compiled_shader *shader,
-               struct vc4_vs_key *key)
-{
-        struct vc4_compile *vs_c = vc4_shader_tgsi_to_qir(vc4, shader,
-                                                          QSTAGE_VERT,
-                                                          &key->base);
-        copy_uniform_state_to_shader(shader, 0, vs_c);
+        struct vc4_key *dup_key;
+        dup_key = malloc(key_size);
+        memcpy(dup_key, key, key_size);
+        util_hash_table_set(ht, dup_key, shader);
 
-        struct vc4_compile *cs_c = vc4_shader_tgsi_to_qir(vc4, shader,
-                                                          QSTAGE_COORD,
-                                                          &key->base);
-        copy_uniform_state_to_shader(shader, 1, cs_c);
-
-        uint32_t vs_size = vs_c->qpu_inst_count * sizeof(uint64_t);
-        uint32_t cs_size = cs_c->qpu_inst_count * sizeof(uint64_t);
-        shader->coord_shader_offset = vs_size; /* XXX: alignment? */
-        shader->bo = vc4_bo_alloc(vc4->screen,
-                                  shader->coord_shader_offset + cs_size,
-                                  "vs_code");
-
-        void *map = vc4_bo_map(shader->bo);
-        memcpy(map, vs_c->qpu_insts, vs_size);
-        memcpy(map + shader->coord_shader_offset,
-               cs_c->qpu_insts, cs_size);
-
-        qir_compile_destroy(vs_c);
-        qir_compile_destroy(cs_c);
+        return shader;
 }
 
 static void
@@ -1832,24 +1823,15 @@ vc4_update_compiled_fs(struct vc4_context *vc4, uint8_t prim_mode)
 
         key->light_twoside = vc4->rasterizer->base.light_twoside;
 
-        vc4->prog.fs = util_hash_table_get(vc4->fs_cache, key);
-        if (vc4->prog.fs)
+        struct vc4_compiled_shader *old_fs = vc4->prog.fs;
+        vc4->prog.fs = vc4_get_compiled_shader(vc4, QSTAGE_FRAG, &key->base);
+        if (vc4->prog.fs == old_fs)
                 return;
 
-        key = malloc(sizeof(*key));
-        memcpy(key, &local_key, sizeof(*key));
-
-        struct vc4_compiled_shader *shader = CALLOC_STRUCT(vc4_compiled_shader);
-        vc4_fs_compile(vc4, shader, key);
-        util_hash_table_set(vc4->fs_cache, key, shader);
-
         if (vc4->rasterizer->base.flatshade &&
-            vc4->prog.fs &&
-            vc4->prog.fs->color_inputs != shader->color_inputs) {
+            old_fs && vc4->prog.fs->color_inputs != old_fs->color_inputs) {
                 vc4->dirty |= VC4_DIRTY_FLAT_SHADE_FLAGS;
         }
-
-        vc4->prog.fs = shader;
 }
 
 static void
@@ -1869,18 +1851,9 @@ vc4_update_compiled_vs(struct vc4_context *vc4, uint8_t prim_mode)
                 (prim_mode == PIPE_PRIM_POINTS &&
                  vc4->rasterizer->base.point_size_per_vertex);
 
-        vc4->prog.vs = util_hash_table_get(vc4->vs_cache, key);
-        if (vc4->prog.vs)
-                return;
-
-        key = malloc(sizeof(*key));
-        memcpy(key, &local_key, sizeof(*key));
-
-        struct vc4_compiled_shader *shader = CALLOC_STRUCT(vc4_compiled_shader);
-        vc4_vs_compile(vc4, shader, key);
-        util_hash_table_set(vc4->vs_cache, key, shader);
-
-        vc4->prog.vs = shader;
+        vc4->prog.vs = vc4_get_compiled_shader(vc4, QSTAGE_VERT, &key->base);
+        key->is_coord = true;
+        vc4->prog.cs = vc4_get_compiled_shader(vc4, QSTAGE_COORD, &key->base);
 }
 
 void
@@ -1929,7 +1902,7 @@ fs_delete_from_cache(void *in_key, void *in_value, void *data)
         if (key->base.shader_state == data) {
                 util_hash_table_remove(del->vc4->fs_cache, key);
                 vc4_bo_unreference(&shader->bo);
-                free(shader);
+                ralloc_free(shader);
         }
 
         return 0;
@@ -1945,7 +1918,7 @@ vs_delete_from_cache(void *in_key, void *in_value, void *data)
         if (key->base.shader_state == data) {
                 util_hash_table_remove(del->vc4->vs_cache, key);
                 vc4_bo_unreference(&shader->bo);
-                free(shader);
+                ralloc_free(shader);
         }
 
         return 0;
@@ -2153,10 +2126,9 @@ get_texrect_scale(struct vc4_texture_stateobj *texstate,
 void
 vc4_write_uniforms(struct vc4_context *vc4, struct vc4_compiled_shader *shader,
                    struct vc4_constbuf_stateobj *cb,
-                   struct vc4_texture_stateobj *texstate,
-                   int shader_index)
+                   struct vc4_texture_stateobj *texstate)
 {
-        struct vc4_shader_uniform_info *uinfo = &shader->uniforms[shader_index];
+        struct vc4_shader_uniform_info *uinfo = &shader->uniforms;
         const uint32_t *gallium_uniforms = cb->cb[0].user_buffer;
 
         cl_start_shader_reloc(&vc4->uniforms, uinfo->num_texture_samples);
@@ -2229,7 +2201,7 @@ vc4_write_uniforms(struct vc4_context *vc4, struct vc4_compiled_shader *shader,
 #if 0
                 uint32_t written_val = *(uint32_t *)(vc4->uniforms.next - 4);
                 fprintf(stderr, "%p/%d: %d: 0x%08x (%f)\n",
-                        shader, shader_index, i, written_val, uif(written_val));
+                        shader, i, written_val, uif(written_val));
 #endif
         }
 }

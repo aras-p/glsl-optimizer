@@ -84,9 +84,7 @@ struct vc4_uncompiled_shader {
 struct vc4_compiled_shader {
         struct vc4_bo *bo;
 
-        struct vc4_shader_uniform_info uniforms[2];
-
-        uint32_t coord_shader_offset;
+        struct vc4_shader_uniform_info uniforms;
 
         /** bitmask of which inputs are color inputs, for flat shade handling. */
         uint32_t color_inputs;
@@ -96,7 +94,7 @@ struct vc4_compiled_shader {
 
 struct vc4_program_stateobj {
         struct vc4_uncompiled_shader *bind_vs, *bind_fs;
-        struct vc4_compiled_shader *vs, *fs;
+        struct vc4_compiled_shader *cs, *vs, *fs;
         uint32_t dirty;
         uint8_t num_exports;
         /* Indexed by semantic name or TGSI_SEMANTIC_COUNT + semantic index
@@ -257,8 +255,7 @@ int vc4_simulator_flush(struct vc4_context *vc4,
 void vc4_write_uniforms(struct vc4_context *vc4,
                         struct vc4_compiled_shader *shader,
                         struct vc4_constbuf_stateobj *cb,
-                        struct vc4_texture_stateobj *texstate,
-                        int shader_index);
+                        struct vc4_texture_stateobj *texstate);
 
 void vc4_flush(struct pipe_context *pctx);
 void vc4_flush_for_bo(struct pipe_context *pctx, struct vc4_bo *bo);
