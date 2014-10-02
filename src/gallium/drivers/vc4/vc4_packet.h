@@ -81,6 +81,18 @@ enum vc4_packet {
         VC4_PACKET_GEM_HANDLES = 254,
 } __attribute__ ((__packed__));
 
+
+#define VC4_MASK(high, low) (((1 << ((high) - (low) + 1)) - 1) << (low))
+/* Using the GNU statement expression extension */
+#define VC4_SET_FIELD(value, field)                                       \
+        ({                                                                \
+                uint32_t fieldval = (value) << field ## _SHIFT;		  \
+                assert((fieldval & ~ field ## _MASK) == 0);               \
+                fieldval & field ## _MASK;                                \
+         })
+
+#define VC4_GET_FIELD(word, field) (((word)  & field ## _MASK) >> field ## _SHIFT)
+
 /** @{
  * Bits used by packets like VC4_PACKET_STORE_TILE_BUFFER_GENERAL and
  * VC4_PACKET_TILE_RENDERING_MODE_CONFIG.
@@ -243,5 +255,75 @@ enum vc4_texture_data_type {
         VC4_TEXTURE_TYPE_RGBA32R = 16,
         VC4_TEXTURE_TYPE_YUV422R = 17,
 };
+
+#define VC4_TEX_P0_OFFSET_MASK                     VC4_MASK(31, 12)
+#define VC4_TEX_P0_OFFSET_SHIFT                    12
+#define VC4_TEX_P0_CSWIZ_MASK                      VC4_MASK(11, 10)
+#define VC4_TEX_P0_CSWIZ_SHIFT                     10
+#define VC4_TEX_P0_CMMODE_MASK                     VC4_MASK(9, 9)
+#define VC4_TEX_P0_CMMODE_SHIFT                    9
+#define VC4_TEX_P0_FLIPY_MASK                      VC4_MASK(8, 8)
+#define VC4_TEX_P0_FLIPY_SHIFT                     8
+#define VC4_TEX_P0_TYPE_MASK                       VC4_MASK(7, 4)
+#define VC4_TEX_P0_TYPE_SHIFT                      4
+#define VC4_TEX_P0_MIPLVLS_MASK                    VC4_MASK(3, 0)
+#define VC4_TEX_P0_MIPLVLS_SHIFT                   0
+
+#define VC4_TEX_P1_TYPE4_MASK                      VC4_MASK(31, 31)
+#define VC4_TEX_P1_TYPE4_SHIFT                     31
+#define VC4_TEX_P1_HEIGHT_MASK                     VC4_MASK(30, 20)
+#define VC4_TEX_P1_HEIGHT_SHIFT                    20
+#define VC4_TEX_P1_ETCFLIP_MASK                    VC4_MASK(19, 19)
+#define VC4_TEX_P1_ETCFLIP_SHIFT                   19
+#define VC4_TEX_P1_WIDTH_MASK                      VC4_MASK(18, 8)
+#define VC4_TEX_P1_WIDTH_SHIFT                     8
+
+#define VC4_TEX_P1_MAGFILT_MASK                    VC4_MASK(7, 7)
+#define VC4_TEX_P1_MAGFILT_SHIFT                   7
+# define VC4_TEX_P1_MAGFILT_LINEAR                 0
+# define VC4_TEX_P1_MAGFILT_NEAREST                1
+
+#define VC4_TEX_P1_MINFILT_MASK                    VC4_MASK(6, 4)
+#define VC4_TEX_P1_MINFILT_SHIFT                   4
+# define VC4_TEX_P1_MINFILT_LINEAR                 0
+# define VC4_TEX_P1_MINFILT_NEAREST                1
+# define VC4_TEX_P1_MINFILT_NEAR_MIP_NEAR          2
+# define VC4_TEX_P1_MINFILT_NEAR_MIP_LIN           3
+# define VC4_TEX_P1_MINFILT_LIN_MIP_NEAR           4
+# define VC4_TEX_P1_MINFILT_LIN_MIP_LIN            5
+
+#define VC4_TEX_P1_WRAP_T_MASK                     VC4_MASK(3, 2)
+#define VC4_TEX_P1_WRAP_T_SHIFT                    2
+#define VC4_TEX_P1_WRAP_S_MASK                     VC4_MASK(1, 0)
+#define VC4_TEX_P1_WRAP_S_SHIFT                    0
+# define VC4_TEX_P1_WRAP_REPEAT                    0
+# define VC4_TEX_P1_WRAP_CLAMP                     1
+# define VC4_TEX_P1_WRAP_MIRROR                    2
+# define VC4_TEX_P1_WRAP_BORDER                    3
+
+#define VC4_TEX_P2_PTYPE_MASK                      VC4_MASK(31, 30)
+#define VC4_TEX_P2_PTYPE_SHIFT                     30
+# define VC4_TEX_P2_PTYPE_IGNORED                  0
+# define VC4_TEX_P2_PTYPE_CUBE_MAP_STRIDE          1
+# define VC4_TEX_P2_PTYPE_CHILD_IMAGE_DIMENSIONS   2
+# define VC4_TEX_P2_PTYPE_CHILD_IMAGE_OFFSETS      3
+
+/* VC4_TEX_P2_PTYPE_CUBE_MAP_STRIDE bits */
+#define VC4_TEX_P2_CMST_MASK                       VC4_MASK(29, 12)
+#define VC4_TEX_P2_CMST_SHIFT                      12
+#define VC4_TEX_P2_BSLOD_MASK                      VC4_MASK(0, 0)
+#define VC4_TEX_P2_BSLOD_SHIFT                     0
+
+/* VC4_TEX_P2_PTYPE_CHILD_IMAGE_DIMENSIONS */
+#define VC4_TEX_P2_CHEIGHT_MASK                    VC4_MASK(22, 12)
+#define VC4_TEX_P2_CHEIGHT_SHIFT                   12
+#define VC4_TEX_P2_CWIDTH_MASK                     VC4_MASK(10, 0)
+#define VC4_TEX_P2_CWIDTH_SHIFT                    0
+
+/* VC4_TEX_P2_PTYPE_CHILD_IMAGE_OFFSETS */
+#define VC4_TEX_P2_CYOFF_MASK                      VC4_MASK(22, 12)
+#define VC4_TEX_P2_CYOFF_SHIFT                     12
+#define VC4_TEX_P2_CXOFF_MASK                      VC4_MASK(10, 0)
+#define VC4_TEX_P2_CXOFF_SHIFT                     0
 
 #endif /* VC4_PACKET_H */
