@@ -891,7 +891,21 @@ _mesa_generic_nop(void)
 
 
 /**
- * Allocate and initialize a new dispatch table.
+ * Special no-op glFlush, see below.
+ */
+#if defined(_WIN32)
+static void GLAPIENTRY
+nop_glFlush(void)
+{
+   /* don't record an error like we do in _mesa_generic_nop() */
+}
+#endif
+
+
+/**
+ * Allocate and initialize a new dispatch table.  All the dispatch
+ * function pointers will point at the _mesa_generic_nop() function
+ * which raises GL_INVALID_OPERATION.
  */
 struct _glapi_table *
 _mesa_alloc_dispatch_table(void)
@@ -911,6 +925,26 @@ _mesa_alloc_dispatch_table(void)
       for (i = 0; i < numEntries; i++) {
          entry[i] = (_glapi_proc) _mesa_generic_nop;
       }
+
+#if defined(_WIN32)
+      /* This is a special case for Windows in the event that
+       * wglGetProcAddress is called between glBegin/End().
+       *
+       * The MS opengl32.dll library apparently calls glFlush from
+       * wglGetProcAddress().  If we're inside glBegin/End(), glFlush
+       * will dispatch to _mesa_generic_nop() and we'll generate a
+       * GL_INVALID_OPERATION error.
+       *
+       * The specific case which hits this is piglit's primitive-restart
+       * test which calls glPrimitiveRestartNV() inside glBegin/End.  The
+       * first time we call glPrimitiveRestartNV() Piglit's API dispatch
+       * code will try to resolve the function by calling wglGetProcAddress.
+       * This raises GL_INVALID_OPERATION and an assert(glGetError()==0)
+       * will fail causing the test to fail.  By suppressing the error, the
+       * assertion passes and the test continues.
+       */
+      SET_Flush(table, nop_glFlush);
+#endif
    }
    return table;
 }
