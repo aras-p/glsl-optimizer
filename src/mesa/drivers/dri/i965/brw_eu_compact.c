@@ -1311,6 +1311,12 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
     */
    int old_ip[(p->next_insn_offset - start_offset) / sizeof(brw_compact_inst)];
 
+   /* FIXME: Mark reported that SNB GT2 (GT1 appears fine) is hanging after
+    * commit a36631b74.
+    */
+   if (brw->gen == 6)
+      return;
+
    if (brw->gen == 4 && !brw->is_g4x)
       return;
 
