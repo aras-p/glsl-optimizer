@@ -50,8 +50,8 @@
 HGLRC WINAPI
 wglCreateContextAttribsARB(HDC hDC, HGLRC hShareContext, const int *attribList)
 {
-   typedef HGLRC (*wglCreateContext_t)(HDC hdc);
-   typedef BOOL (*wglDeleteContext_t)(HGLRC hglrc);
+   typedef HGLRC (WINAPI *wglCreateContext_t)(HDC hdc);
+   typedef BOOL (WINAPI *wglDeleteContext_t)(HGLRC hglrc);
    HGLRC context;
    static HMODULE opengl_lib = 0;
    static wglCreateContext_t wglCreateContext_func = 0;
