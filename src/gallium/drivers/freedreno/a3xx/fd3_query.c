@@ -119,14 +119,14 @@ occlusion_predicate_accumulate_result(struct fd_context *ctx,
 
 static const struct fd_hw_sample_provider occlusion_counter = {
 		.query_type = PIPE_QUERY_OCCLUSION_COUNTER,
-		.active = FD_STAGE_DRAW, /* | FD_STAGE_CLEAR ??? */
+		.active = FD_STAGE_DRAW,
 		.get_sample = occlusion_get_sample,
 		.accumulate_result = occlusion_counter_accumulate_result,
 };
 
 static const struct fd_hw_sample_provider occlusion_predicate = {
 		.query_type = PIPE_QUERY_OCCLUSION_PREDICATE,
-		.active = FD_STAGE_DRAW, /* | FD_STAGE_CLEAR ??? */
+		.active = FD_STAGE_DRAW,
 		.get_sample = occlusion_get_sample,
 		.accumulate_result = occlusion_predicate_accumulate_result,
 };

@@ -183,12 +183,16 @@ fd_hw_get_query_result(struct fd_context *ctx, struct fd_query *q,
 		return false;
 
 	/* if the app tries to read back the query result before the
-	 * back is submitted, that forces us to flush so that there
+	 * batch is submitted, that forces us to flush so that there
 	 * are actually results to wait for:
 	 */
 	if (!LIST_IS_EMPTY(&hq->list)) {
+		/* if app didn't actually trigger any cmdstream, then
+		 * we have nothing to do:
+		 */
+		if (!ctx->needs_flush)
+			return true;
 		DBG("reading query result forces flush!");
-		ctx->needs_flush = true;
 		fd_context_render(&ctx->base);
 	}
 
@@ -200,9 +204,6 @@ fd_hw_get_query_result(struct fd_context *ctx, struct fd_query *q,
 	assert(LIST_IS_EMPTY(&hq->list));
 	assert(LIST_IS_EMPTY(&hq->current_periods));
 	assert(!hq->period);
-
-	if (LIST_IS_EMPTY(&hq->periods))
-		return true;
 
 	/* if !wait, then check the last sample (the one most likely to
 	 * not be ready yet) and bail if it is not ready:

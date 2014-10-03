@@ -209,6 +209,10 @@ static inline void
 OUT_IB(struct fd_ringbuffer *ring, struct fd_ringmarker *start,
 		struct fd_ringmarker *end)
 {
+	uint32_t dwords = fd_ringmarker_dwords(start, end);
+
+	assert(dwords > 0);
+
 	/* for debug after a lock up, write a unique counter value
 	 * to scratch6 for each IB, to make it easier to match up
 	 * register dumps to cmdstream.  The combination of IB and
@@ -219,7 +223,7 @@ OUT_IB(struct fd_ringbuffer *ring, struct fd_ringmarker *start,
 
 	OUT_PKT3(ring, CP_INDIRECT_BUFFER_PFD, 2);
 	fd_ringbuffer_emit_reloc_ring(ring, start, end);
-	OUT_RING(ring, fd_ringmarker_dwords(start, end));
+	OUT_RING(ring, dwords);
 
 	emit_marker(ring, 6);
 }
