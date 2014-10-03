@@ -185,23 +185,29 @@ qpu_m_alu2(enum qpu_op_mul op,
         return inst;
 }
 
+static uint64_t
+merge_fields(uint64_t merge,
+             uint64_t add, uint64_t mul,
+             uint64_t mask, uint64_t ignore)
+{
+        if ((add & mask) == ignore)
+                return (merge & ~mask) | (mul & mask);
+        else if ((mul & mask) == ignore)
+                return (merge & ~mask) | (add & mask);
+        else {
+                assert((add & mask) == (mul & mask));
+                return merge;
+        }
+}
+
 uint64_t
 qpu_inst(uint64_t add, uint64_t mul)
 {
         uint64_t merge = ((add & ~QPU_WADDR_MUL_MASK) |
                           (mul & ~QPU_WADDR_ADD_MASK));
 
-        /* If either one has no signal field, then use the other's signal field.
-         * (since QPU_SIG_NONE != 0).
-         */
-        if (QPU_GET_FIELD(add, QPU_SIG) == QPU_SIG_NONE)
-                merge = (merge & ~QPU_SIG_MASK) | (mul & QPU_SIG_MASK);
-        else if (QPU_GET_FIELD(mul, QPU_SIG) == QPU_SIG_NONE)
-                merge = (merge & ~QPU_SIG_MASK) | (add & QPU_SIG_MASK);
-        else {
-                assert(QPU_GET_FIELD(add, QPU_SIG) ==
-                       QPU_GET_FIELD(mul, QPU_SIG));
-        }
+        merge = merge_fields(merge, add, mul, QPU_SIG_MASK,
+                             QPU_SET_FIELD(QPU_SIG_NONE, QPU_SIG));
 
         return merge;
 }
