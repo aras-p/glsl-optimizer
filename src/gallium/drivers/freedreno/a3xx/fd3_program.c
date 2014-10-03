@@ -140,12 +140,20 @@ find_output(const struct ir3_shader_variant *so, ir3_semantic semantic)
 	 * in the vertex shader.. but the fragment shader doesn't know this
 	 * so  it will always have both IN.COLOR[n] and IN.BCOLOR[n].  So
 	 * at link time if there is no matching OUT.BCOLOR[n], we must map
-	 * OUT.COLOR[n] to IN.BCOLOR[n].
+	 * OUT.COLOR[n] to IN.BCOLOR[n].  And visa versa if there is only
+	 * a OUT.BCOLOR[n] but no matching OUT.COLOR[n]
 	 */
 	if (sem2name(semantic) == TGSI_SEMANTIC_BCOLOR) {
 		unsigned idx = sem2idx(semantic);
-		return find_output(so, ir3_semantic_name(TGSI_SEMANTIC_COLOR, idx));
+		semantic = ir3_semantic_name(TGSI_SEMANTIC_COLOR, idx);
+	} else if (sem2name(semantic) == TGSI_SEMANTIC_COLOR) {
+		unsigned idx = sem2idx(semantic);
+		semantic = ir3_semantic_name(TGSI_SEMANTIC_BCOLOR, idx);
 	}
+
+	for (j = 0; j < so->outputs_count; j++)
+		if (so->outputs[j].semantic == semantic)
+			return j;
 
 	debug_assert(0);
 
