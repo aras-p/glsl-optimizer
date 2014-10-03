@@ -58,6 +58,7 @@ struct ir3_ra_ctx {
 	bool frag_face;
 	bool has_samp;
 	int cnt;
+	int max_bary;
 	bool error;
 };
 
@@ -614,6 +615,12 @@ static void legalize(struct ir3_ra_ctx *ctx, struct ir3_block *block)
 		if (is_meta(n))
 			continue;
 
+		if (is_input(n)) {
+			struct ir3_register *inloc = n->regs[1];
+			assert(inloc->flags & IR3_REG_IMMED);
+			ctx->max_bary = MAX2(ctx->max_bary, inloc->iim_val);
+		}
+
 		for (i = 1; i < n->regs_count; i++) {
 			reg = n->regs[i];
 
@@ -775,7 +782,7 @@ static int block_ra(struct ir3_ra_ctx *ctx, struct ir3_block *block)
 
 int ir3_block_ra(struct ir3_block *block, enum shader_t type,
 		bool half_precision, bool frag_coord, bool frag_face,
-		bool *has_samp)
+		bool *has_samp, int *max_bary)
 {
 	struct ir3_ra_ctx ctx = {
 			.block = block,
@@ -783,12 +790,14 @@ int ir3_block_ra(struct ir3_block *block, enum shader_t type,
 			.half_precision = half_precision,
 			.frag_coord = frag_coord,
 			.frag_face = frag_face,
+			.max_bary = -1,
 	};
 	int ret;
 
 	ir3_clear_mark(block->shader);
 	ret = block_ra(&ctx, block);
 	*has_samp = ctx.has_samp;
+	*max_bary = ctx.max_bary;
 
 	return ret;
 }

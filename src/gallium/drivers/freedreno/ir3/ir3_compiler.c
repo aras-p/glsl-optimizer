@@ -3068,7 +3068,7 @@ ir3_compile_shader(struct ir3_shader_variant *so,
 	struct ir3_block *block;
 	struct ir3_instruction **inputs;
 	unsigned i, j, actual_in;
-	int ret = 0;
+	int ret = 0, max_bary;
 
 	assert(!so->ir);
 
@@ -3183,7 +3183,7 @@ ir3_compile_shader(struct ir3_shader_variant *so,
 	}
 
 	ret = ir3_block_ra(block, so->type, key.half_precision,
-			so->frag_coord, so->frag_face, &so->has_samp);
+			so->frag_coord, so->frag_face, &so->has_samp, &max_bary);
 	if (ret) {
 		DBG("RA failed!");
 		goto out;
@@ -3230,6 +3230,8 @@ ir3_compile_shader(struct ir3_shader_variant *so,
 	 */
 	if (so->type == SHADER_VERTEX)
 		so->total_in = actual_in;
+	else
+		so->total_in = align(max_bary + 1, 4);
 
 out:
 	if (ret) {

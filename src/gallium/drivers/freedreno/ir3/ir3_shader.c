@@ -91,12 +91,12 @@ fixup_vp_regfootprint(struct ir3_shader_variant *v)
 	unsigned i;
 	for (i = 0; i < v->inputs_count; i++) {
 		if (v->inputs[i].compmask) {
-			uint32_t regid = (v->inputs[i].regid + 3) >> 2;
+			int32_t regid = (v->inputs[i].regid + 3) >> 2;
 			v->info.max_reg = MAX2(v->info.max_reg, regid);
 		}
 	}
 	for (i = 0; i < v->outputs_count; i++) {
-		uint32_t regid = (v->outputs[i].regid + 3) >> 2;
+		int32_t regid = (v->outputs[i].regid + 3) >> 2;
 		v->info.max_reg = MAX2(v->info.max_reg, regid);
 	}
 }
