@@ -292,7 +292,6 @@ struct ilo_sampler_cso {
 
 struct ilo_sampler_state {
    const struct ilo_sampler_cso *cso[ILO_MAX_SAMPLERS];
-   unsigned count;
 };
 
 struct ilo_view_surface {

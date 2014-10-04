@@ -544,8 +544,7 @@ gen6_3DSTATE_INDEX_BUFFER(struct ilo_builder *builder,
 
 static inline void
 gen6_3DSTATE_VS(struct ilo_builder *builder,
-                const struct ilo_shader_state *vs,
-                int num_samplers)
+                const struct ilo_shader_state *vs)
 {
    const uint8_t cmd_len = 6;
    const uint32_t dw0 = GEN6_RENDER_CMD(3D, 3DSTATE_VS) | (cmd_len - 2);
@@ -571,8 +570,6 @@ gen6_3DSTATE_VS(struct ilo_builder *builder,
    dw4 = cso->payload[1];
    dw5 = cso->payload[2];
 
-   dw2 |= ((num_samplers + 3) / 4) << GEN6_THREADDISP_SAMPLER_COUNT__SHIFT;
-
    ilo_builder_batch_pointer(builder, cmd_len, &dw);
    dw[0] = dw0;
    dw[1] = ilo_shader_get_kernel_offset(vs);
@@ -584,8 +581,7 @@ gen6_3DSTATE_VS(struct ilo_builder *builder,
 
 static inline void
 gen7_3DSTATE_HS(struct ilo_builder *builder,
-                const struct ilo_shader_state *hs,
-                int num_samplers)
+                const struct ilo_shader_state *hs)
 {
    const uint8_t cmd_len = 7;
    uint32_t *dw;
@@ -623,8 +619,7 @@ gen7_3DSTATE_TE(struct ilo_builder *builder)
 
 static inline void
 gen7_3DSTATE_DS(struct ilo_builder *builder,
-                const struct ilo_shader_state *ds,
-                int num_samplers)
+                const struct ilo_shader_state *ds)
 {
    const uint8_t cmd_len = 6;
    uint32_t *dw;
@@ -736,8 +731,7 @@ gen6_3DSTATE_GS_SVB_INDEX(struct ilo_builder *builder,
 
 static inline void
 gen7_3DSTATE_GS(struct ilo_builder *builder,
-                const struct ilo_shader_state *gs,
-                int num_samplers)
+                const struct ilo_shader_state *gs)
 {
    const uint8_t cmd_len = 7;
    const uint32_t dw0 = GEN6_RENDER_CMD(3D, 3DSTATE_GS) | (cmd_len - 2);
@@ -762,8 +756,6 @@ gen7_3DSTATE_GS(struct ilo_builder *builder,
    dw2 = cso->payload[0];
    dw4 = cso->payload[1];
    dw5 = cso->payload[2];
-
-   dw2 |= ((num_samplers + 3) / 4) << GEN6_THREADDISP_SAMPLER_COUNT__SHIFT;
 
    ilo_builder_batch_pointer(builder, cmd_len, &dw);
 
@@ -1422,6 +1414,17 @@ gen6_SAMPLER_STATE(struct ilo_builder *builder,
 
    if (!num_samplers)
       return 0;
+
+   /*
+    * From the Sandy Bridge PRM, volume 2 part 1, page 132:
+    *
+    *     "(Sampler Count of 3DSTATE_VS) Specifies how many samplers (in
+    *      multiples of 4) the vertex shader 0 kernel uses. Used only for
+    *      prefetching the associated sampler state entries.
+    *
+    * It also applies to other shader stages.
+    */
+   ilo_builder_dynamic_pad_top(builder, 4 * (4 - (num_samplers % 4)));
 
    state_offset = ilo_builder_dynamic_pointer(builder,
          ILO_BUILDER_ITEM_SAMPLER, state_align, state_len, &dw);

@@ -1000,6 +1000,9 @@ ilo_shader_get_kernel_param(const struct ilo_shader_state *shader,
    case ILO_KERNEL_OUTPUT_COUNT:
       val = kernel->out.count;
       break;
+   case ILO_KERNEL_SAMPLER_COUNT:
+      val = shader->info.num_samplers;
+      break;
    case ILO_KERNEL_URB_DATA_START_REG:
       val = kernel->in.start_grf;
       break;

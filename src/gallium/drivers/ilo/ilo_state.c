@@ -338,18 +338,6 @@ ilo_bind_sampler_states(struct pipe_context *pipe, unsigned shader,
          dst->cso[start + i] = NULL;
    }
 
-   if (dst->count <= start + count) {
-      if (samplers)
-         count += start;
-      else
-         count = start;
-
-      while (count > 0 && !dst->cso[count - 1])
-         count--;
-
-      dst->count = count;
-   }
-
    if (changed) {
       switch (shader) {
       case PIPE_SHADER_VERTEX:

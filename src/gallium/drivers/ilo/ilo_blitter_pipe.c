@@ -69,12 +69,12 @@ ilo_blitter_pipe_begin(struct ilo_blitter *blitter,
    case ILO_BLITTER_PIPE_BLIT:
    case ILO_BLITTER_PIPE_COPY:
       /*
-       * we are about to call util_blitter_blit() or
-       * util_blitter_copy_texture()
+       * We are about to call util_blitter_blit() or
+       * util_blitter_copy_texture().  Note that util_blitter uses at most two
+       * textures.
        */
       util_blitter_save_fragment_sampler_states(b,
-            vec->sampler[PIPE_SHADER_FRAGMENT].count,
-            (void **) vec->sampler[PIPE_SHADER_FRAGMENT].cso);
+            2, (void **) vec->sampler[PIPE_SHADER_FRAGMENT].cso);
 
       util_blitter_save_fragment_sampler_views(b,
             vec->view[PIPE_SHADER_FRAGMENT].count,

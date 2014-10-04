@@ -39,13 +39,14 @@ ilo_gpe_init_gs_cso_gen7(const struct ilo_dev_info *dev,
                          const struct ilo_shader_state *gs,
                          struct ilo_shader_cso *cso)
 {
-   int start_grf, vue_read_len, max_threads;
+   int start_grf, vue_read_len, sampler_count, max_threads;
    uint32_t dw2, dw4, dw5;
 
    ILO_DEV_ASSERT(dev, 7, 7.5);
 
    start_grf = ilo_shader_get_kernel_param(gs, ILO_KERNEL_URB_DATA_START_REG);
    vue_read_len = ilo_shader_get_kernel_param(gs, ILO_KERNEL_INPUT_COUNT);
+   sampler_count = ilo_shader_get_kernel_param(gs, ILO_KERNEL_SAMPLER_COUNT);
 
    /* in pairs */
    vue_read_len = (vue_read_len + 1) / 2;
@@ -63,6 +64,7 @@ ilo_gpe_init_gs_cso_gen7(const struct ilo_dev_info *dev,
    }
 
    dw2 = (true) ? 0 : GEN6_THREADDISP_FP_MODE_ALT;
+   dw2 |= ((sampler_count + 3) / 4) << GEN6_THREADDISP_SAMPLER_COUNT__SHIFT;
 
    dw4 = vue_read_len << GEN7_GS_DW4_URB_READ_LEN__SHIFT |
          GEN7_GS_DW4_INCLUDE_VERTEX_HANDLES |
@@ -131,15 +133,17 @@ ilo_gpe_init_fs_cso_gen7(const struct ilo_dev_info *dev,
                          const struct ilo_shader_state *fs,
                          struct ilo_shader_cso *cso)
 {
-   int start_grf, max_threads;
+   int start_grf, sampler_count, max_threads;
    uint32_t dw2, dw4, dw5;
    uint32_t wm_interps, wm_dw1;
 
    ILO_DEV_ASSERT(dev, 7, 7.5);
 
    start_grf = ilo_shader_get_kernel_param(fs, ILO_KERNEL_URB_DATA_START_REG);
+   sampler_count = ilo_shader_get_kernel_param(fs, ILO_KERNEL_SAMPLER_COUNT);
 
    dw2 = (true) ? 0 : GEN6_THREADDISP_FP_MODE_ALT;
+   dw2 |= ((sampler_count + 3) / 4) << GEN6_THREADDISP_SAMPLER_COUNT__SHIFT;
 
    dw4 = GEN7_PS_DW4_POSOFFSET_NONE;
 

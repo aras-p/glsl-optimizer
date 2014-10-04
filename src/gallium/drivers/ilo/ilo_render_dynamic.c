@@ -134,9 +134,8 @@ gen6_emit_draw_dynamic_samplers(struct ilo_render *r,
       vec->sampler[shader_type].cso;
    const struct pipe_sampler_view * const *views =
       (const struct pipe_sampler_view **) vec->view[shader_type].states;
-   const int num_samplers = vec->sampler[shader_type].count;
-   const int num_views = vec->view[shader_type].count;
    uint32_t *sampler_state, *border_color_state;
+   int sampler_count;
    bool emit_border_color = false;
    bool skip = false;
 
@@ -145,12 +144,15 @@ gen6_emit_draw_dynamic_samplers(struct ilo_render *r,
    /* SAMPLER_BORDER_COLOR_STATE and SAMPLER_STATE */
    switch (shader_type) {
    case PIPE_SHADER_VERTEX:
-      if (DIRTY(SAMPLER_VS) || DIRTY(VIEW_VS)) {
+      if (DIRTY(VS) || DIRTY(SAMPLER_VS) || DIRTY(VIEW_VS)) {
          sampler_state = &r->state.vs.SAMPLER_STATE;
          border_color_state = r->state.vs.SAMPLER_BORDER_COLOR_STATE;
 
-         if (DIRTY(SAMPLER_VS))
+         if (DIRTY(VS) || DIRTY(SAMPLER_VS))
             emit_border_color = true;
+
+         sampler_count = (vec->vs) ? ilo_shader_get_kernel_param(vec->vs,
+               ILO_KERNEL_SAMPLER_COUNT) : 0;
 
          session->sampler_vs_changed = true;
       } else {
@@ -158,12 +160,15 @@ gen6_emit_draw_dynamic_samplers(struct ilo_render *r,
       }
       break;
    case PIPE_SHADER_FRAGMENT:
-      if (DIRTY(SAMPLER_FS) || DIRTY(VIEW_FS)) {
+      if (DIRTY(FS) || DIRTY(SAMPLER_FS) || DIRTY(VIEW_FS)) {
          sampler_state = &r->state.wm.SAMPLER_STATE;
          border_color_state = r->state.wm.SAMPLER_BORDER_COLOR_STATE;
 
-         if (DIRTY(SAMPLER_FS))
+         if (DIRTY(VS) || DIRTY(SAMPLER_FS))
             emit_border_color = true;
+
+         sampler_count = (vec->fs) ? ilo_shader_get_kernel_param(vec->fs,
+               ILO_KERNEL_SAMPLER_COUNT) : 0;
 
          session->sampler_fs_changed = true;
       } else {
@@ -178,20 +183,20 @@ gen6_emit_draw_dynamic_samplers(struct ilo_render *r,
    if (skip)
       return;
 
+   assert(sampler_count <= Elements(vec->view[shader_type].states) &&
+          sampler_count <= Elements(vec->sampler[shader_type].cso));
+
    if (emit_border_color) {
       int i;
 
-      for (i = 0; i < num_samplers; i++) {
+      for (i = 0; i < sampler_count; i++) {
          border_color_state[i] = (samplers[i]) ?
             gen6_SAMPLER_BORDER_COLOR_STATE(r->builder, samplers[i]) : 0;
       }
    }
 
-   /* should we take the minimum of num_samplers and num_views? */
    *sampler_state = gen6_SAMPLER_STATE(r->builder,
-         samplers, views,
-         border_color_state,
-         MIN2(num_samplers, num_views));
+         samplers, views, border_color_state, sampler_count);
 }
 
 static void
@@ -322,14 +327,13 @@ ilo_render_get_draw_dynamic_states_len(const struct ilo_render *render,
 
    for (sh_type = 0; sh_type < PIPE_SHADER_TYPES; sh_type++) {
       const int alignment = 32 / 4;
-      int num_samplers, pcb_len;
-
-      num_samplers = vec->sampler[sh_type].count;
-      pcb_len = 0;
+      int num_samplers = 0, pcb_len = 0;
 
       switch (sh_type) {
       case PIPE_SHADER_VERTEX:
          if (vec->vs) {
+            num_samplers = ilo_shader_get_kernel_param(vec->vs,
+                  ILO_KERNEL_SAMPLER_COUNT);
             pcb_len = ilo_shader_get_kernel_param(vec->vs,
                   ILO_KERNEL_PCB_CBUF0_SIZE);
             pcb_len += ilo_shader_get_kernel_param(vec->vs,
@@ -340,6 +344,8 @@ ilo_render_get_draw_dynamic_states_len(const struct ilo_render *render,
          break;
       case PIPE_SHADER_FRAGMENT:
          if (vec->fs) {
+            num_samplers = ilo_shader_get_kernel_param(vec->fs,
+                  ILO_KERNEL_SAMPLER_COUNT);
             pcb_len = ilo_shader_get_kernel_param(vec->fs,
                   ILO_KERNEL_PCB_CBUF0_SIZE);
          }
@@ -350,6 +356,9 @@ ilo_render_get_draw_dynamic_states_len(const struct ilo_render *render,
 
       /* SAMPLER_STATE array and SAMPLER_BORDER_COLORs */
       if (num_samplers) {
+         /* prefetches are done in multiples of 4 */
+         num_samplers = align(num_samplers, 4);
+
          len += align(GEN6_SAMPLER_STATE__SIZE * num_samplers, alignment) +
             align(GEN6_SAMPLER_BORDER_COLOR__SIZE, alignment) * num_samplers;
       }

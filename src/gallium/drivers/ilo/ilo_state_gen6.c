@@ -411,13 +411,14 @@ ilo_gpe_init_vs_cso(const struct ilo_dev_info *dev,
                     const struct ilo_shader_state *vs,
                     struct ilo_shader_cso *cso)
 {
-   int start_grf, vue_read_len, max_threads;
+   int start_grf, vue_read_len, sampler_count, max_threads;
    uint32_t dw2, dw4, dw5;
 
    ILO_DEV_ASSERT(dev, 6, 7.5);
 
    start_grf = ilo_shader_get_kernel_param(vs, ILO_KERNEL_URB_DATA_START_REG);
    vue_read_len = ilo_shader_get_kernel_param(vs, ILO_KERNEL_INPUT_COUNT);
+   sampler_count = ilo_shader_get_kernel_param(vs, ILO_KERNEL_SAMPLER_COUNT);
 
    /*
     * From the Sandy Bridge PRM, volume 2 part 1, page 135:
@@ -464,6 +465,7 @@ ilo_gpe_init_vs_cso(const struct ilo_dev_info *dev,
    }
 
    dw2 = (true) ? 0 : GEN6_THREADDISP_FP_MODE_ALT;
+   dw2 |= ((sampler_count + 3) / 4) << GEN6_THREADDISP_SAMPLER_COUNT__SHIFT;
 
    dw4 = start_grf << GEN6_VS_DW4_URB_GRF_START__SHIFT |
          vue_read_len << GEN6_VS_DW4_URB_READ_LEN__SHIFT |
@@ -933,13 +935,14 @@ ilo_gpe_init_fs_cso_gen6(const struct ilo_dev_info *dev,
                          const struct ilo_shader_state *fs,
                          struct ilo_shader_cso *cso)
 {
-   int start_grf, input_count, interps, max_threads;
+   int start_grf, input_count, sampler_count, interps, max_threads;
    uint32_t dw2, dw4, dw5, dw6;
 
    ILO_DEV_ASSERT(dev, 6, 6);
 
    start_grf = ilo_shader_get_kernel_param(fs, ILO_KERNEL_URB_DATA_START_REG);
    input_count = ilo_shader_get_kernel_param(fs, ILO_KERNEL_INPUT_COUNT);
+   sampler_count = ilo_shader_get_kernel_param(fs, ILO_KERNEL_SAMPLER_COUNT);
    interps = ilo_shader_get_kernel_param(fs,
          ILO_KERNEL_FS_BARYCENTRIC_INTERPOLATIONS);
 
@@ -947,6 +950,7 @@ ilo_gpe_init_fs_cso_gen6(const struct ilo_dev_info *dev,
    max_threads = (dev->gt == 2) ? 80 : 40;
 
    dw2 = (true) ? 0 : GEN6_THREADDISP_FP_MODE_ALT;
+   dw2 |= ((sampler_count + 3) / 4) << GEN6_THREADDISP_SAMPLER_COUNT__SHIFT;
 
    dw4 = start_grf << GEN6_WM_DW4_URB_GRF_START0__SHIFT |
          0 << GEN6_WM_DW4_URB_GRF_START1__SHIFT |

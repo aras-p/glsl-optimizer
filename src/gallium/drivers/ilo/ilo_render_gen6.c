@@ -496,8 +496,7 @@ gen6_draw_vs(struct ilo_render *r,
              const struct ilo_state_vector *vec,
              struct ilo_render_draw_session *session)
 {
-   const bool emit_3dstate_vs = (DIRTY(VS) || DIRTY(SAMPLER_VS) ||
-                                 r->instruction_bo_changed);
+   const bool emit_3dstate_vs = (DIRTY(VS) || r->instruction_bo_changed);
    const bool emit_3dstate_constant_vs = session->pcb_vs_changed;
 
    /*
@@ -516,11 +515,8 @@ gen6_draw_vs(struct ilo_render *r,
    }
 
    /* 3DSTATE_VS */
-   if (emit_3dstate_vs) {
-      const int num_samplers = vec->sampler[PIPE_SHADER_VERTEX].count;
-
-      gen6_3DSTATE_VS(r->builder, vec->vs, num_samplers);
-   }
+   if (emit_3dstate_vs)
+      gen6_3DSTATE_VS(r->builder, vec->vs);
 
    if (emit_3dstate_constant_vs && ilo_dev_gen(r->dev) == ILO_GEN(6))
       gen6_wa_post_3dstate_constant_vs(r);
@@ -692,9 +688,8 @@ gen6_draw_wm(struct ilo_render *r,
    }
 
    /* 3DSTATE_WM */
-   if (DIRTY(FS) || DIRTY(SAMPLER_FS) || DIRTY(BLEND) || DIRTY(DSA) ||
+   if (DIRTY(FS) || DIRTY(BLEND) || DIRTY(DSA) ||
        DIRTY(RASTERIZER) || r->instruction_bo_changed) {
-      const int num_samplers = vec->sampler[PIPE_SHADER_FRAGMENT].count;
       const bool dual_blend = vec->blend->dual_blend;
       const bool cc_may_kill = (vec->dsa->dw_alpha ||
                                 vec->blend->alpha_to_coverage);
@@ -702,7 +697,7 @@ gen6_draw_wm(struct ilo_render *r,
       if (ilo_dev_gen(r->dev) == ILO_GEN(6) && r->hw_ctx_changed)
          gen6_wa_pre_3dstate_wm_max_threads(r);
 
-      gen6_3DSTATE_WM(r->builder, vec->fs, num_samplers,
+      gen6_3DSTATE_WM(r->builder, vec->fs,
             vec->rasterizer, dual_blend, cc_may_kill, 0);
    }
 }
@@ -849,7 +844,7 @@ gen6_rectlist_vs_to_sf(struct ilo_render *r,
                        const struct ilo_blitter *blitter)
 {
    gen6_3DSTATE_CONSTANT_VS(r->builder, NULL, NULL, 0);
-   gen6_3DSTATE_VS(r->builder, NULL, 0);
+   gen6_3DSTATE_VS(r->builder, NULL);
 
    gen6_wa_post_3dstate_constant_vs(r);
 
@@ -884,7 +879,7 @@ gen6_rectlist_wm(struct ilo_render *r,
    gen6_3DSTATE_CONSTANT_PS(r->builder, NULL, NULL, 0);
 
    gen6_wa_pre_3dstate_wm_max_threads(r);
-   gen6_3DSTATE_WM(r->builder, NULL, 0, NULL, false, false, hiz_op);
+   gen6_3DSTATE_WM(r->builder, NULL, NULL, false, false, hiz_op);
 }
 
 static void

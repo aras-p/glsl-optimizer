@@ -273,7 +273,6 @@ gen7_3DSTATE_SBE(struct ilo_builder *builder,
 static inline void
 gen6_3DSTATE_WM(struct ilo_builder *builder,
                 const struct ilo_shader_state *fs,
-                int num_samplers,
                 const struct ilo_rasterizer_state *rasterizer,
                 bool dual_blend, bool cc_may_kill,
                 uint32_t hiz_op)
@@ -310,8 +309,6 @@ gen6_3DSTATE_WM(struct ilo_builder *builder,
    dw4 = fs_cso->payload[1];
    dw5 = fs_cso->payload[2];
    dw6 = fs_cso->payload[3];
-
-   dw2 |= (num_samplers + 3) / 4 << GEN6_THREADDISP_SAMPLER_COUNT__SHIFT;
 
    /*
     * From the Sandy Bridge PRM, volume 2 part 1, page 248:
@@ -399,7 +396,7 @@ gen7_3DSTATE_WM(struct ilo_builder *builder,
 static inline void
 gen7_3DSTATE_PS(struct ilo_builder *builder,
                 const struct ilo_shader_state *fs,
-                int num_samplers, bool dual_blend)
+                bool dual_blend)
 {
    const uint8_t cmd_len = 8;
    const uint32_t dw0 = GEN7_RENDER_CMD(3D, 3DSTATE_PS) | (cmd_len - 2);
@@ -445,8 +442,6 @@ gen7_3DSTATE_PS(struct ilo_builder *builder,
    dw2 = cso->payload[0];
    dw4 = cso->payload[1];
    dw5 = cso->payload[2];
-
-   dw2 |= (num_samplers + 3) / 4 << GEN6_THREADDISP_SAMPLER_COUNT__SHIFT;
 
    if (dual_blend)
       dw4 |= GEN7_PS_DW4_DUAL_SOURCE_BLEND;

@@ -312,6 +312,23 @@ ilo_builder_dynamic_write(struct ilo_builder *builder,
    return offset;
 }
 
+/**
+ * Reserve some space from the top (for prefetches).
+ */
+static inline void
+ilo_builder_dynamic_pad_top(struct ilo_builder *builder, unsigned len)
+{
+   const enum ilo_builder_writer_type which = ILO_BUILDER_WRITER_BATCH;
+   const unsigned size = len << 2;
+   struct ilo_builder_writer *writer = &builder->writers[which];
+
+   if (writer->stolen < size) {
+      ilo_builder_writer_reserve_top(builder, which,
+            1, size - writer->stolen);
+      writer->stolen = size;
+   }
+}
+
 static inline unsigned
 ilo_builder_dynamic_used(const struct ilo_builder *builder)
 {

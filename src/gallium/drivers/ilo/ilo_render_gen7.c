@@ -338,8 +338,7 @@ gen7_draw_vs(struct ilo_render *r,
       session->sampler_vs_changed;
    /* see gen6_draw_vs() */
    const bool emit_3dstate_constant_vs = session->pcb_vs_changed;
-   const bool emit_3dstate_vs = (DIRTY(VS) || DIRTY(SAMPLER_VS) ||
-           r->instruction_bo_changed);
+   const bool emit_3dstate_vs = (DIRTY(VS) || r->instruction_bo_changed);
 
    /* emit depth stall before any of the VS commands */
    if (emit_3dstate_binding_table || emit_3dstate_sampler_state ||
@@ -367,11 +366,8 @@ gen7_draw_vs(struct ilo_render *r,
    }
 
    /* 3DSTATE_VS */
-   if (emit_3dstate_vs) {
-      const int num_samplers = vec->sampler[PIPE_SHADER_VERTEX].count;
-
-      gen6_3DSTATE_VS(r->builder, vec->vs, num_samplers);
-   }
+   if (emit_3dstate_vs)
+      gen6_3DSTATE_VS(r->builder, vec->vs);
 }
 
 static void
@@ -382,7 +378,7 @@ gen7_draw_hs(struct ilo_render *r,
    /* 3DSTATE_CONSTANT_HS and 3DSTATE_HS */
    if (r->hw_ctx_changed) {
       gen7_3DSTATE_CONSTANT_HS(r->builder, 0, 0, 0);
-      gen7_3DSTATE_HS(r->builder, NULL, 0);
+      gen7_3DSTATE_HS(r->builder, NULL);
    }
 
    /* 3DSTATE_BINDING_TABLE_POINTERS_HS */
@@ -408,7 +404,7 @@ gen7_draw_ds(struct ilo_render *r,
    /* 3DSTATE_CONSTANT_DS and 3DSTATE_DS */
    if (r->hw_ctx_changed) {
       gen7_3DSTATE_CONSTANT_DS(r->builder, 0, 0, 0);
-      gen7_3DSTATE_DS(r->builder, NULL, 0);
+      gen7_3DSTATE_DS(r->builder, NULL);
    }
 
    /* 3DSTATE_BINDING_TABLE_POINTERS_DS */
@@ -425,7 +421,7 @@ gen7_draw_gs(struct ilo_render *r,
    /* 3DSTATE_CONSTANT_GS and 3DSTATE_GS */
    if (r->hw_ctx_changed) {
       gen7_3DSTATE_CONSTANT_GS(r->builder, 0, 0, 0);
-      gen7_3DSTATE_GS(r->builder, NULL, 0);
+      gen7_3DSTATE_GS(r->builder, NULL);
    }
 
    /* 3DSTATE_BINDING_TABLE_POINTERS_GS */
@@ -541,9 +537,7 @@ gen7_draw_wm(struct ilo_render *r,
    }
 
    /* 3DSTATE_PS */
-   if (DIRTY(FS) || DIRTY(SAMPLER_FS) || DIRTY(BLEND) ||
-       r->instruction_bo_changed) {
-      const int num_samplers = vec->sampler[PIPE_SHADER_FRAGMENT].count;
+   if (DIRTY(FS) || DIRTY(BLEND) || r->instruction_bo_changed) {
       const bool dual_blend = vec->blend->dual_blend;
 
       if ((ilo_dev_gen(r->dev) == ILO_GEN(7) ||
@@ -551,7 +545,7 @@ gen7_draw_wm(struct ilo_render *r,
           r->hw_ctx_changed)
          gen7_wa_pre_3dstate_ps_max_threads(r);
 
-      gen7_3DSTATE_PS(r->builder, vec->fs, num_samplers, dual_blend);
+      gen7_3DSTATE_PS(r->builder, vec->fs, dual_blend);
    }
 
    /* 3DSTATE_SCISSOR_STATE_POINTERS */
@@ -562,8 +556,7 @@ gen7_draw_wm(struct ilo_render *r,
 
    /* XXX what is the best way to know if this workaround is needed? */
    {
-      const bool emit_3dstate_ps =
-         (DIRTY(FS) || DIRTY(SAMPLER_FS) || DIRTY(BLEND));
+      const bool emit_3dstate_ps = (DIRTY(FS) || DIRTY(BLEND));
       const bool emit_3dstate_depth_buffer =
          (DIRTY(FB) || DIRTY(DSA) || r->state_bo_changed);
 
@@ -729,18 +722,18 @@ gen7_rectlist_vs_to_sf(struct ilo_render *r,
                        const struct ilo_blitter *blitter)
 {
    gen7_3DSTATE_CONSTANT_VS(r->builder, NULL, NULL, 0);
-   gen6_3DSTATE_VS(r->builder, NULL, 0);
+   gen6_3DSTATE_VS(r->builder, NULL);
 
    gen7_3DSTATE_CONSTANT_HS(r->builder, NULL, NULL, 0);
-   gen7_3DSTATE_HS(r->builder, NULL, 0);
+   gen7_3DSTATE_HS(r->builder, NULL);
 
    gen7_3DSTATE_TE(r->builder);
 
    gen7_3DSTATE_CONSTANT_DS(r->builder, NULL, NULL, 0);
-   gen7_3DSTATE_DS(r->builder, NULL, 0);
+   gen7_3DSTATE_DS(r->builder, NULL);
 
    gen7_3DSTATE_CONSTANT_GS(r->builder, NULL, NULL, 0);
-   gen7_3DSTATE_GS(r->builder, NULL, 0);
+   gen7_3DSTATE_GS(r->builder, NULL);
 
    gen7_3DSTATE_STREAMOUT(r->builder, 0x0, 0, false);
 
@@ -778,7 +771,7 @@ gen7_rectlist_wm(struct ilo_render *r,
    gen7_3DSTATE_CONSTANT_PS(r->builder, NULL, NULL, 0);
 
    gen7_wa_pre_3dstate_ps_max_threads(r);
-   gen7_3DSTATE_PS(r->builder, NULL, 0, false);
+   gen7_3DSTATE_PS(r->builder, NULL, false);
 }
 
 static void
