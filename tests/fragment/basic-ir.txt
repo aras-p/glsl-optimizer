@@ -14,5 +14,8 @@ void main ()
   vec4 tmpvar_4;
   tmpvar_4 = x_1;
   gl_FragData[0] = tmpvar_4;
+  vec4 tmpvar_5;
+  tmpvar_5 = vec4((1.0/0.0), (-1.0/0.0), (0.0/0.0), (0.0/0.0));
+  gl_FragData[1] = tmpvar_5;
 }
 

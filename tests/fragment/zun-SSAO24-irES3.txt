@@ -8,16 +8,16 @@ layout(location=0) out mediump vec4 _glesFragData[4];
 uniform highp vec4 _ProjectionParams;
 uniform highp vec2 _NoiseScale;
 uniform highp vec4 _CameraDepthNormalsTexture_ST;
-uniform sampler2D _CameraDepthNormalsTexture;
+uniform highp sampler2D _CameraDepthNormalsTexture;
 uniform sampler2D _RandomTexture;
 uniform highp vec4 _Params;
 in highp vec2 xlv_TEXCOORD0;
 in highp vec2 xlv_TEXCOORD1;
 float xll_saturate_f (
-  in float x_1
+  in highp float x_1
 )
 {
-  float tmpvar_2;
+  highp float tmpvar_2;
   tmpvar_2 = clamp (x_1, 0.0, 1.0);
   return tmpvar_2;
 }
@@ -27,7 +27,7 @@ float DecodeFloatRG (
 )
 {
   highp vec2 kDecodeDot_4;
-  vec2 tmpvar_5;
+  mediump vec2 tmpvar_5;
   tmpvar_5 = vec2(1.0, 0.00392157);
   kDecodeDot_4 = tmpvar_5;
   highp float tmpvar_6;
@@ -43,7 +43,7 @@ vec3 DecodeViewNormalStereo (
   highp float g_9;
   highp vec3 nn_10;
   highp float kScale_11;
-  float tmpvar_12;
+  mediump float tmpvar_12;
   tmpvar_12 = 1.7777;
   kScale_11 = tmpvar_12;
   highp vec3 tmpvar_13;
@@ -107,9 +107,9 @@ mediump float frag_ao (
   lowp vec3 tmpvar_38;
   tmpvar_38 = ((tmpvar_37.xyz * 2.0) - 1.0);
   randN_36 = tmpvar_38;
-  lowp vec4 tmpvar_39;
+  highp vec4 tmpvar_39;
   tmpvar_39 = texture (_CameraDepthNormalsTexture, i_27.uv);
-  lowp vec4 tmpvar_40;
+  highp vec4 tmpvar_40;
   tmpvar_40 = tmpvar_39;
   depthnormal_35 = tmpvar_40;
   DecodeDepthNormal (depthnormal_35, depth_33, viewNorm_34);
@@ -119,7 +119,7 @@ mediump float frag_ao (
   highp float tmpvar_42;
   tmpvar_42 = (_Params.x / depth_33);
   scale_32 = tmpvar_42;
-  float tmpvar_43;
+  mediump float tmpvar_43;
   tmpvar_43 = 0.0;
   occ_31 = tmpvar_43;
   int tmpvar_44;
@@ -144,13 +144,13 @@ mediump float frag_ao (
     randomDir_52 = tmpvar_54;
     highp float tmpvar_55;
     tmpvar_55 = dot (viewNorm_34, randomDir_52);
-    float tmpvar_56;
+    mediump float tmpvar_56;
     if ((tmpvar_55 < 0.0)) {
       tmpvar_56 = 1.0;
     } else {
       tmpvar_56 = -(1.0);
     };
-    float tmpvar_57;
+    mediump float tmpvar_57;
     tmpvar_57 = tmpvar_56;
     flip_51 = tmpvar_57;
     mediump vec3 tmpvar_58;
@@ -165,18 +165,18 @@ mediump float frag_ao (
     highp float tmpvar_61;
     tmpvar_61 = (depth_33 - (randomDir_52.z * _Params.x));
     sD_49 = tmpvar_61;
-    lowp vec4 tmpvar_62;
+    highp vec4 tmpvar_62;
     tmpvar_62 = texture (_CameraDepthNormalsTexture, (i_27.uv + offset_50));
-    lowp vec4 tmpvar_63;
+    highp vec4 tmpvar_63;
     tmpvar_63 = tmpvar_62;
     sampleND_48 = tmpvar_63;
     DecodeDepthNormal (sampleND_48, sampleD_47, sampleN_46);
     highp float tmpvar_64;
     tmpvar_64 = (sampleD_47 * _ProjectionParams.z);
     sampleD_47 = tmpvar_64;
-    float tmpvar_65;
+    highp float tmpvar_65;
     tmpvar_65 = xll_saturate_f ((sD_49 - sampleD_47));
-    float tmpvar_66;
+    highp float tmpvar_66;
     tmpvar_66 = tmpvar_65;
     zd_45 = tmpvar_66;
     if ((zd_45 > _Params.y)) {
@@ -215,7 +215,7 @@ void main ()
 {
   v2f_ao xlt_i_76;
   mediump vec4 xl_retval_77;
-  vec4 tmpvar_78;
+  mediump vec4 tmpvar_78;
   tmpvar_78 = vec4(0.0, 0.0, 0.0, 0.0);
   xlt_i_76.pos = tmpvar_78;
   highp vec2 tmpvar_79;

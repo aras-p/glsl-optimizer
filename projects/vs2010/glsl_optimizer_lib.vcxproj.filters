@@ -476,6 +476,9 @@
     <ClCompile Include="..\..\src\glsl\ir_stats.cpp">
       <Filter>src\glsl</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\glsl\opt_vector_splitting.cpp">
+      <Filter>src\glsl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\README.md" />

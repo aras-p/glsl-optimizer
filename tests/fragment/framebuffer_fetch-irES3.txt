@@ -1,0 +1,46 @@
+#version 300 es
+#extension GL_EXT_shader_framebuffer_fetch : enable
+struct v2f {
+  highp vec4 vertex;
+  lowp vec4 color;
+};
+layout(location=0) inout mediump vec4 _glesFragData[4];
+in lowp vec4 xlv_TEXCOORD0;
+void frag (
+  in v2f i_1,
+  inout lowp vec4 ocol_2
+)
+{
+  lowp vec2 tmpvar_3;
+  tmpvar_3 = i_1.color.xy;
+  ocol_2.xy = tmpvar_3.xy.xy;
+  lowp float tmpvar_4;
+  tmpvar_4 = (ocol_2.z * 2.0);
+  ocol_2.z = vec3(tmpvar_4).z;
+}
+
+void main ()
+{
+  lowp vec4 xlt_ocol_5;
+  v2f xlt_i_6;
+  mediump vec4 tmpvar_7;
+  tmpvar_7 = vec4(0.0, 0.0, 0.0, 0.0);
+  xlt_i_6.vertex = tmpvar_7;
+  lowp vec4 tmpvar_8;
+  tmpvar_8 = xlv_TEXCOORD0.xyzw;
+  lowp vec4 tmpvar_9;
+  tmpvar_9 = tmpvar_8;
+  xlt_i_6.color = tmpvar_9;
+  mediump vec4 tmpvar_10;
+  tmpvar_10 = _glesFragData[0].xyzw;
+  mediump vec4 tmpvar_11;
+  tmpvar_11 = tmpvar_10;
+  xlt_ocol_5 = tmpvar_11;
+  frag (xlt_i_6, xlt_ocol_5);
+  lowp vec4 tmpvar_12;
+  tmpvar_12 = xlt_ocol_5.xyzw;
+  lowp vec4 tmpvar_13;
+  tmpvar_13 = tmpvar_12;
+  _glesFragData[0] = tmpvar_13;
+}
+

@@ -1302,6 +1302,7 @@ struct gl_extensions
    GLboolean EXT_blend_func_separate;
    GLboolean EXT_blend_minmax;
    GLboolean EXT_depth_bounds_test;
+   GLboolean EXT_draw_buffers;
    GLboolean EXT_draw_buffers2;
    GLboolean EXT_framebuffer_blit;
    GLboolean EXT_framebuffer_multisample;
@@ -1335,6 +1336,7 @@ struct gl_extensions
    GLboolean OES_standard_derivatives;
    GLboolean EXT_shadow_samplers;
    GLboolean EXT_frag_depth;
+   GLboolean EXT_shader_framebuffer_fetch;
    /* vendor extensions */
    GLboolean AMD_performance_monitor;
    GLboolean AMD_seamless_cubemap_per_texture;

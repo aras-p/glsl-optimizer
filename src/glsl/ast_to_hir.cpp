@@ -2185,6 +2185,13 @@ validate_explicit_location(const struct ast_type_qualifier *qual,
 
          break;
       }
+      // EXT_shader_framebuffer_fetch:
+      // ability to use the inout qualifier at global scope
+      // in a fragment shader, is optional and must be enabled by
+      // #extension GL_EXT_shader_framebuffer_fetch
+      if (var->data.mode == ir_var_function_inout && state->EXT_shader_framebuffer_fetch_enable) {
+         break;
+      }
 
       fail = true;
       break;
@@ -4728,6 +4735,7 @@ ast_type_specifier::hir(exec_list *instructions,
                                    ir_var_temporary, (glsl_precision)this->default_precision);
 
          state->symbols->add_variable(junk);
+         state->had_float_precision = true;
       }
 
       /* FINISHME: Translate precision statements into IR. */

@@ -29,6 +29,7 @@
 #include "loop_analysis.h"
 #include "program/hash_table.h"
 #include <math.h>
+#include <limits>
 
 
 class string_buffer
@@ -186,6 +187,7 @@ public:
 	virtual void visit(ir_end_primitive *);
 	
 	void emit_assignment_part (ir_dereference* lhs, ir_rvalue* rhs, unsigned write_mask, ir_rvalue* dstIndex);
+    bool can_emit_canonical_for (loop_variable_state *ls);
 	bool emit_canonical_for (ir_loop* ir);
 	bool try_print_array_assignment (ir_dereference* lhs, ir_rvalue* rhs);
 	
@@ -229,6 +231,13 @@ _mesa_print_ir_glsl(exec_list *instructions,
 			str.asprintf_append ("#extension GL_EXT_shadow_samplers : enable\n");
 		if (state->EXT_frag_depth_enable)
 			str.asprintf_append ("#extension GL_EXT_frag_depth : enable\n");
+		if (state->es_shader && state->language_version < 300)
+		{
+			if (state->EXT_draw_buffers_enable)
+				str.asprintf_append ("#extension GL_EXT_draw_buffers : require\n");
+		}
+		if (state->EXT_shader_framebuffer_fetch_enable)
+			str.asprintf_append ("#extension GL_EXT_shader_framebuffer_fetch : enable\n");
 	}
 	
 	// remove unused struct declarations
@@ -336,6 +345,17 @@ void ir_print_glsl_visitor::print_precision (ir_instruction* ir, const glsl_type
 	}
 	glsl_precision prec = precision_from_ir(ir);
 	
+	// In fragment shader, default float precision is undefined.
+	// We must thus always print it, when there was no default precision
+	// and for whatever reason our type ended up having undefined precision.
+	if (prec == glsl_precision_undefined &&
+		type && type->is_float() &&
+		this->state->stage == MESA_SHADER_FRAGMENT &&
+		!this->state->had_float_precision)
+	{
+		prec = glsl_precision_medium;
+	}		
+	
 	// skip precision for samplers that end up being lowp (default anyway) or undefined;
 	// except always emit it for shadowmap samplers (some drivers don't implement
 	// default EXT_shadow_samplers precision)
@@ -420,7 +440,8 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 	if (!inside_loop_body)
 	{
 		loop_variable_state* inductor_state = loopstate->get_for_inductor(ir);
-		if (inductor_state && inductor_state->private_induction_variable_count == 1)
+		if (inductor_state && inductor_state->private_induction_variable_count == 1 &&
+            can_emit_canonical_for(inductor_state))
 		{
 			skipped_this_ir = true;
 			return;
@@ -905,7 +926,7 @@ void ir_print_glsl_visitor::visit(ir_swizzle *ir)
       ir->mask.w,
    };
 
-	if (ir->val->type == glsl_type::float_type || ir->val->type == glsl_type::int_type)
+   if (ir->val->type == glsl_type::float_type || ir->val->type == glsl_type::int_type || ir->val->type == glsl_type::uint_type)
 	{
 		if (ir->mask.num_components != 1)
 		{
@@ -916,7 +937,7 @@ void ir_print_glsl_visitor::visit(ir_swizzle *ir)
 
 	ir->val->accept(this);
 	
-	if (ir->val->type == glsl_type::float_type || ir->val->type == glsl_type::int_type)
+	if (ir->val->type == glsl_type::float_type || ir->val->type == glsl_type::int_type || ir->val->type == glsl_type::uint_type)
 	{
 		if (ir->mask.num_components != 1)
 		{
@@ -1115,7 +1136,8 @@ void ir_print_glsl_visitor::visit(ir_assignment *ir)
 		if (!ir->condition && whole_var)
 		{
 			loop_variable_state* inductor_state = loopstate->get_for_inductor(whole_var);
-			if (inductor_state && inductor_state->private_induction_variable_count == 1)
+			if (inductor_state && inductor_state->private_induction_variable_count == 1 &&
+                can_emit_canonical_for(inductor_state))
 			{
 				skipped_this_ir = true;
 				return;
@@ -1189,6 +1211,18 @@ static void print_float (string_buffer& buffer, float f)
 	if (!posE)
 		posE = strchr(tmp, 'E');
 
+	// snprintf formats infinity as inf.0 or -inf.0, which isn't useful here.
+	// GLSL has no infinity constant so print an equivalent expression instead.
+	if (f == std::numeric_limits<float>::infinity())
+		strcpy(tmp, "(1.0/0.0)");
+
+	if (f == -std::numeric_limits<float>::infinity())
+		strcpy(tmp, "(-1.0/0.0)");
+	
+	// Do similar thing for NaN
+	if (f != f)
+		strcpy(tmp, "(0.0/0.0)");
+
 	#if _MSC_VER
 	// While gcc would print something like 1.0e+07, MSVC will print 1.0e+007 -
 	// only for exponential notation, it seems, will add one extra useless zero. Let's try to remove
@@ -1230,7 +1264,12 @@ void ir_print_glsl_visitor::visit(ir_constant *ir)
 	}
 	else if (type == glsl_type::uint_type)
 	{
-		buffer.asprintf_append ("%u", ir->value.u[0]);
+		// ES 2.0 doesn't support uints, neither does GLSL < 130
+		if ((state->es_shader && (state->language_version < 300))
+			|| (state->language_version < 130))
+			buffer.asprintf_append("%u", ir->value.u[0]);
+		else
+			buffer.asprintf_append("%uu", ir->value.u[0]);
 		return;
 	}
 
@@ -1262,7 +1301,16 @@ void ir_print_glsl_visitor::visit(ir_constant *ir)
 	    buffer.asprintf_append (", ");
 	 first = false;
 	 switch (base_type->base_type) {
-	 case GLSL_TYPE_UINT:  buffer.asprintf_append ("%u", ir->value.u[i]); break;
+	 case GLSL_TYPE_UINT:
+	 {
+		 // ES 2.0 doesn't support uints, neither does GLSL < 130
+		 if ((state->es_shader && (state->language_version < 300))
+			 || (state->language_version < 130))
+			 buffer.asprintf_append("%u", ir->value.u[i]);
+		 else
+			 buffer.asprintf_append("%uu", ir->value.u[i]);
+		 break;
+	 }
 	 case GLSL_TYPE_INT:   buffer.asprintf_append ("%d", ir->value.i[i]); break;
 	 case GLSL_TYPE_FLOAT: print_float(buffer, ir->value.f[i]); break;
 	 case GLSL_TYPE_BOOL:  buffer.asprintf_append ("%d", ir->value.b[i]); break;
@@ -1370,10 +1418,8 @@ ir_print_glsl_visitor::visit(ir_if *ir)
    }
 }
 
-
-bool ir_print_glsl_visitor::emit_canonical_for (ir_loop* ir)
+bool ir_print_glsl_visitor::can_emit_canonical_for (loop_variable_state *ls)
 {
-	loop_variable_state* const ls = this->loopstate->get(ir);
 	if (ls == NULL)
 		return false;
 	
@@ -1390,6 +1436,16 @@ bool ir_print_glsl_visitor::emit_canonical_for (ir_loop* ir)
 	}
 	if (terminatorCount != 1)
 		return false;
+
+    return true;
+}
+
+bool ir_print_glsl_visitor::emit_canonical_for (ir_loop* ir)
+{
+	loop_variable_state* const ls = this->loopstate->get(ir);
+
+    if (!can_emit_canonical_for(ls))
+        return false;
 	
 	hash_table* terminator_hash = hash_table_ctor(0, hash_table_pointer_hash, hash_table_pointer_compare);
 	hash_table* induction_hash = hash_table_ctor(0, hash_table_pointer_hash, hash_table_pointer_compare);

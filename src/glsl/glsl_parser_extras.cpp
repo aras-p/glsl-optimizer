@@ -83,6 +83,7 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
                             ctx->Const.ForceGLSLVersion : 110;
    this->es_shader = false;
    this->had_version_string = false;
+   this->had_float_precision = false;
    this->ARB_texture_rectangle_enable = true;
 
    /* OpenGL ES 2.0 has different defaults from desktop GL. */
@@ -509,6 +510,7 @@ static const _mesa_glsl_extension _mesa_glsl_supported_extensions[] = {
    EXT(ARB_arrays_of_arrays,           true,  false,     ARB_arrays_of_arrays),
    EXT(ARB_conservative_depth,         true,  false,     ARB_conservative_depth),
    EXT(ARB_draw_buffers,               true,  false,     dummy_true),
+   EXT(EXT_draw_buffers,               false,  true,     EXT_draw_buffers),
    EXT(ARB_draw_instanced,             true,  false,     ARB_draw_instanced),
    EXT(ARB_explicit_attrib_location,   true,  false,     ARB_explicit_attrib_location),
    EXT(ARB_fragment_coord_conventions, true,  false,     ARB_fragment_coord_conventions),
@@ -526,6 +528,7 @@ static const _mesa_glsl_extension _mesa_glsl_supported_extensions[] = {
    EXT(OES_standard_derivatives,       false,  true,     OES_standard_derivatives),
    EXT(EXT_shadow_samplers,            false,  true,     EXT_shadow_samplers),
    EXT(EXT_frag_depth,                 false,  true,     EXT_frag_depth),
+   EXT(EXT_shader_framebuffer_fetch,   false,  true,     EXT_shader_framebuffer_fetch),
    EXT(ARB_texture_cube_map_array,     true,  false,     ARB_texture_cube_map_array),
    EXT(ARB_shading_language_packing,   true,  false,     ARB_shading_language_packing),
    EXT(ARB_shading_language_420pack,   true,  false,     ARB_shading_language_420pack),

@@ -944,6 +944,13 @@ builtin_variable_generator::generate_fs_special_vars()
 		if (state->EXT_frag_depth_warn)
 			var->warn_extension = "GL_EXT_frag_depth";
 	}
+	
+	if (state->EXT_shader_framebuffer_fetch_enable) {
+		ir_variable *const var =
+			add_input(VARYING_SLOT_VAR0, array(vec4_t, state->Const.MaxDrawBuffers), "gl_LastFragData", glsl_precision_medium);
+		if (state->EXT_shader_framebuffer_fetch_warn)
+			var->warn_extension = "GL_EXT_shader_framebuffer_fetch";
+	}
 
    if (state->ARB_sample_shading_enable) {
       add_system_value(SYSTEM_VALUE_SAMPLE_ID, int_t, "gl_SampleID", glsl_precision_high);

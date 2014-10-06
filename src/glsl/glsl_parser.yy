@@ -1661,6 +1661,13 @@ storage_qualifier:
 	  $$.precision = ast_precision_none;
       $$.flags.q.out = 1;
    }
+   | INOUT_TOK
+   {
+      memset(& $$, 0, sizeof($$));
+      $$.precision = ast_precision_none;
+      $$.flags.q.in = 1;
+      $$.flags.q.out = 1;
+   }
    | UNIFORM
    {
       memset(& $$, 0, sizeof($$));

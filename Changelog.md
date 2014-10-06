@@ -1,6 +1,46 @@
 GLSL optimizer Change Log
 =========================
 
+2014 09
+-------
+
+Goodies:
+
+* Supports GL_EXT_draw_buffers in ES2.0, for MRT.
+
+
+2014 08
+-------
+
+Goodies:
+
+* Supports GL_EXT_shader_framebuffer_fetch now, in both ES2.0 & 3.0.
+
+Fixes:
+
+* Fixed printing of infinities & NaNs.
+* Fixed vectorization pass in some cases going wrong on texture lookups.
+
+
+2014 06
+-------
+
+Goodies:
+
+* Optimization: split vectors with only some used components into scalars.
+
+Fixes:
+
+* Fixed more issues with for-loop printing.
+* Fixed printing of unsigned integer swizzled & constants.
+
+2014 03
+-------
+
+Fixes:
+
+* Fixed missing precision qualifier in some ES shaders (mostly due to expansion of ternary ?: check).
+
 2014 02
 -------
 

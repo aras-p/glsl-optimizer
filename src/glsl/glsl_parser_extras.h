@@ -166,6 +166,7 @@ struct _mesa_glsl_parse_state {
    bool es_shader;
    unsigned language_version;
    bool had_version_string;
+   bool had_float_precision;
    gl_shader_stage stage;
 
    /**
@@ -327,6 +328,8 @@ struct _mesa_glsl_parse_state {
    bool ARB_arrays_of_arrays_warn;
    bool ARB_draw_buffers_enable;
    bool ARB_draw_buffers_warn;
+   bool EXT_draw_buffers_enable;
+   bool EXT_draw_buffers_warn;
    bool ARB_draw_instanced_enable;
    bool ARB_draw_instanced_warn;
    bool ARB_explicit_attrib_location_enable;
@@ -347,6 +350,8 @@ struct _mesa_glsl_parse_state {
    bool EXT_shadow_samplers_warn;
    bool EXT_frag_depth_enable;
    bool EXT_frag_depth_warn;
+   bool EXT_shader_framebuffer_fetch_enable;
+   bool EXT_shader_framebuffer_fetch_warn;
    bool ARB_shader_stencil_export_enable;
    bool ARB_shader_stencil_export_warn;
    bool AMD_conservative_depth_enable;
