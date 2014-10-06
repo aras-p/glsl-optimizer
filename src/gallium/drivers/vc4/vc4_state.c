@@ -389,10 +389,21 @@ vc4_set_framebuffer_state(struct pipe_context *pctx,
 
         cso->nr_cbufs = framebuffer->nr_cbufs;
 
+        pipe_surface_reference(&cso->zsbuf, framebuffer->zsbuf);
+
         cso->width = framebuffer->width;
         cso->height = framebuffer->height;
 
-        pipe_surface_reference(&cso->zsbuf, framebuffer->zsbuf);
+        /* Nonzero texture mipmap levels are laid out as if they were in
+         * power-of-two-sized spaces.  The renderbuffer config infers its
+         * stride from the width parameter, so we need to configure our
+         * framebuffer.  Note that if the z/color buffers were mismatched
+         * sizes, we wouldn't be able to do this.
+         */
+        if ((cso->cbufs[0] && cso->cbufs[0]->u.tex.level) ||
+             (cso->zsbuf && cso->zsbuf->u.tex.level)) {
+                cso->width = util_next_power_of_two(cso->width);
+        }
 
         vc4->dirty |= VC4_DIRTY_FRAMEBUFFER;
 }

@@ -198,14 +198,23 @@ vc4_setup_slices(struct vc4_resource *rsc)
         struct pipe_resource *prsc = &rsc->base.b;
         uint32_t width = prsc->width0;
         uint32_t height = prsc->height0;
+        uint32_t pot_width = util_next_power_of_two(width);
+        uint32_t pot_height = util_next_power_of_two(height);
         uint32_t offset = 0;
         uint32_t utile_w = vc4_utile_width(rsc->cpp);
         uint32_t utile_h = vc4_utile_height(rsc->cpp);
 
         for (int i = prsc->last_level; i >= 0; i--) {
                 struct vc4_resource_slice *slice = &rsc->slices[i];
-                uint32_t level_width = u_minify(width, i);
-                uint32_t level_height = u_minify(height, i);
+
+                uint32_t level_width, level_height;
+                if (i == 0) {
+                        level_width = width;
+                        level_height = height;
+                } else {
+                        level_width = u_minify(pot_width, i);
+                        level_height = u_minify(pot_height, i);
+                }
 
                 if (rsc->tiled == VC4_TILING_FORMAT_LINEAR) {
                         slice->tiling = VC4_TILING_FORMAT_LINEAR;
