@@ -662,6 +662,16 @@ static void si_update_derived_state(struct si_context *sctx)
 
 	si_shader_select(ctx, sctx->ps_shader);
 
+	if (!sctx->ps_shader->current) {
+		struct si_shader_selector *sel;
+
+		/* use a dummy shader if compiling the shader (variant) failed */
+		si_make_dummy_ps(sctx);
+		sel = sctx->dummy_pixel_shader;
+		si_shader_select(ctx, sel);
+		sctx->ps_shader->current = sel->current;
+	}
+
 	if (!sctx->ps_shader->current->pm4)
 		si_shader_ps(ctx, sctx->ps_shader->current);
 

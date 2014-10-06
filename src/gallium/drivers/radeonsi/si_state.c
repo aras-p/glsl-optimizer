@@ -2373,6 +2373,16 @@ static void si_bind_gs_shader(struct pipe_context *ctx, void *state)
 	sctx->gs_shader = sel;
 }
 
+void si_make_dummy_ps(struct si_context *sctx)
+{
+	if (!sctx->dummy_pixel_shader) {
+		sctx->dummy_pixel_shader =
+			util_make_fragment_cloneinput_shader(&sctx->b.b, 0,
+							     TGSI_SEMANTIC_GENERIC,
+							     TGSI_INTERPOLATE_CONSTANT);
+	}
+}
+
 static void si_bind_ps_shader(struct pipe_context *ctx, void *state)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
@@ -2384,13 +2394,7 @@ static void si_bind_ps_shader(struct pipe_context *ctx, void *state)
 
 	/* use a dummy shader if binding a NULL shader */
 	if (!sel) {
-		if (!sctx->dummy_pixel_shader) {
-			sctx->dummy_pixel_shader =
-				util_make_fragment_cloneinput_shader(&sctx->b.b, 0,
-								     TGSI_SEMANTIC_GENERIC,
-								     TGSI_INTERPOLATE_CONSTANT);
-		}
-
+		si_make_dummy_ps(sctx);
 		sel = sctx->dummy_pixel_shader;
 	}
 

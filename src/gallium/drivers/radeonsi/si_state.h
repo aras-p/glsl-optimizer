@@ -257,6 +257,7 @@ boolean si_is_format_supported(struct pipe_screen *screen,
                                unsigned usage);
 int si_shader_select(struct pipe_context *ctx,
 		     struct si_shader_selector *sel);
+void si_make_dummy_ps(struct si_context *sctx);
 void si_init_state_functions(struct si_context *sctx);
 void si_init_config(struct si_context *sctx);
 unsigned cik_bank_wh(unsigned bankwh);
