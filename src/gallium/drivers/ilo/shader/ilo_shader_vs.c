@@ -130,7 +130,7 @@ vs_lower_opcode_tgsi_const_gen6(struct vs_compile_context *vcc,
    msg_len = 2;
 
    desc = tsrc_imm_mdesc_data_port(tc, false, msg_len, 1, true, false,
-         msg_type, msg_ctrl, ILO_VS_CONST_SURFACE(dim));
+         msg_type, msg_ctrl, vcc->shader->bt.const_base + dim);
 
    tc_SEND(tc, dst, tsrc_from(header), desc, vcc->const_cache);
 }
@@ -162,7 +162,7 @@ vs_lower_opcode_tgsi_const_gen7(struct vs_compile_context *vcc,
          GEN6_MSG_SAMPLER_SIMD4X2,
          GEN6_MSG_SAMPLER_LD,
          0,
-         ILO_VS_CONST_SURFACE(dim));
+         vcc->shader->bt.const_base + dim);
 
    tc_SEND(tc, dst, tsrc_from(offset), desc, GEN6_SFID_SAMPLER);
 }
@@ -387,9 +387,11 @@ vs_add_sampler_params(struct toy_compiler *tc, int msg_type, int base_mrf,
  * Set up message registers and return the message descriptor for sampling.
  */
 static struct toy_src
-vs_prepare_tgsi_sampling(struct toy_compiler *tc, const struct toy_inst *inst,
+vs_prepare_tgsi_sampling(struct vs_compile_context *vcc,
+                         const struct toy_inst *inst,
                          int base_mrf, unsigned *ret_sampler_index)
 {
+   struct toy_compiler *tc = &vcc->tc;
    unsigned simd_mode, msg_type, msg_len, sampler_index, binding_table_index;
    struct toy_src coords, ddx, ddy, bias_or_lod, ref_or_si;
    int num_coords, ref_pos, num_derivs;
@@ -502,7 +504,7 @@ vs_prepare_tgsi_sampling(struct toy_compiler *tc, const struct toy_inst *inst,
 
    assert(inst->src[sampler_src].file == TOY_FILE_IMM);
    sampler_index = inst->src[sampler_src].val32;
-   binding_table_index = ILO_VS_TEXTURE_SURFACE(sampler_index);
+   binding_table_index = vcc->shader->bt.tex_base + sampler_index;
 
    /*
     * From the Sandy Bridge PRM, volume 4 part 1, page 18:
@@ -573,7 +575,7 @@ vs_lower_opcode_tgsi_sampling(struct vs_compile_context *vcc,
    unsigned swizzle_zero_mask, swizzle_one_mask, swizzle_normal_mask;
    bool need_filter;
 
-   desc = vs_prepare_tgsi_sampling(tc, inst,
+   desc = vs_prepare_tgsi_sampling(vcc, inst,
          vcc->first_free_mrf, &sampler_index);
 
    switch (inst->opcode) {
@@ -1281,6 +1283,16 @@ vs_setup(struct vs_compile_context *vcc,
    vcc->shader->in.start_grf = vcc->first_const_grf;
    vcc->shader->pcb.clip_state_size =
       vcc->variant->u.vs.num_ucps * (sizeof(float) * 4);
+
+   vcc->shader->bt.tex_base = 0;
+   vcc->shader->bt.tex_count = vcc->variant->num_sampler_views;
+
+   vcc->shader->bt.const_base = vcc->shader->bt.tex_base +
+                                vcc->shader->bt.tex_count;
+   vcc->shader->bt.const_count = state->info.constant_buffer_count;
+
+   vcc->shader->bt.total_count = vcc->shader->bt.const_base +
+                                 vcc->shader->bt.const_count;
 
    return true;
 }

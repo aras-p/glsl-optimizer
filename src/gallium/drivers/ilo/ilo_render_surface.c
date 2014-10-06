@@ -38,46 +38,37 @@ gen6_emit_draw_surface_rt(struct ilo_render *r,
                           const struct ilo_state_vector *vec,
                           struct ilo_render_draw_session *session)
 {
+   const struct ilo_shader_state *fs = vec->fs;
+   const struct ilo_fb_state *fb = &vec->fb;
+   uint32_t *surface_state;
+   int base, count, i;
+
    ILO_DEV_ASSERT(r->dev, 6, 7.5);
 
-   /* SURFACE_STATEs for render targets */
-   if (DIRTY(FB)) {
-      const struct ilo_fb_state *fb = &vec->fb;
-      const int offset = ILO_WM_DRAW_SURFACE(0);
-      uint32_t *surface_state = &r->state.wm.SURFACE_STATE[offset];
-      int i;
+   if (!DIRTY(FS) && !DIRTY(FB))
+      return;
+   if (!fs)
+      return;
 
-      for (i = 0; i < fb->state.nr_cbufs; i++) {
+   session->binding_table_fs_changed = true;
+
+   base = ilo_shader_get_kernel_param(fs, ILO_KERNEL_FS_SURFACE_RT_BASE);
+   count = ilo_shader_get_kernel_param(fs, ILO_KERNEL_FS_SURFACE_RT_COUNT);
+
+   /* SURFACE_STATEs for render targets */
+   surface_state = &r->state.wm.SURFACE_STATE[base];
+   for (i = 0; i < count; i++) {
+      if (i < fb->state.nr_cbufs && fb->state.cbufs[i]) {
          const struct ilo_surface_cso *surface =
             (const struct ilo_surface_cso *) fb->state.cbufs[i];
 
-         if (!surface) {
-            surface_state[i] =
-               gen6_SURFACE_STATE(r->builder, &fb->null_rt, true);
-         } else {
-            assert(surface && surface->is_rt);
-            surface_state[i] =
-               gen6_SURFACE_STATE(r->builder, &surface->u.rt, true);
-         }
-      }
-
-      /*
-       * Upload at least one render target, as
-       * brw_update_renderbuffer_surfaces() does.  I don't know why.
-       */
-      if (i == 0) {
+         assert(surface->is_rt);
+         surface_state[i] =
+            gen6_SURFACE_STATE(r->builder, &surface->u.rt, true);
+      } else {
          surface_state[i] =
             gen6_SURFACE_STATE(r->builder, &fb->null_rt, true);
-
-         i++;
       }
-
-      memset(&surface_state[i], 0, (ILO_MAX_DRAW_BUFFERS - i) * 4);
-
-      if (i && session->num_surfaces[PIPE_SHADER_FRAGMENT] < offset + i)
-         session->num_surfaces[PIPE_SHADER_FRAGMENT] = offset + i;
-
-      session->binding_table_fs_changed = true;
    }
 }
 
@@ -86,38 +77,49 @@ gen6_emit_draw_surface_so(struct ilo_render *r,
                           const struct ilo_state_vector *vec,
                           struct ilo_render_draw_session *session)
 {
+   const struct ilo_shader_state *vs = vec->vs;
+   const struct ilo_shader_state *gs = vec->gs;
    const struct ilo_so_state *so = &vec->so;
+   const struct pipe_stream_output_info *so_info;
+   uint32_t *surface_state;
+   int base, count, i;
 
    ILO_DEV_ASSERT(r->dev, 6, 6);
 
+   if (!DIRTY(VS) && !DIRTY(GS) && !DIRTY(SO))
+      return;
+
+   if (gs) {
+      so_info = ilo_shader_get_kernel_so_info(gs);
+      base = ilo_shader_get_kernel_param(gs,
+            ILO_KERNEL_GS_GEN6_SURFACE_SO_BASE);
+      count = ilo_shader_get_kernel_param(gs,
+            ILO_KERNEL_GS_GEN6_SURFACE_SO_COUNT);
+   } else if (vs) {
+      so_info = ilo_shader_get_kernel_so_info(vs);
+      base = 0;
+      count = ilo_shader_get_kernel_param(vs,
+            ILO_KERNEL_VS_GEN6_SO_SURFACE_COUNT);
+   } else {
+      return;
+   }
+
+   session->binding_table_gs_changed = true;
+
    /* SURFACE_STATEs for stream output targets */
-   if (DIRTY(VS) || DIRTY(GS) || DIRTY(SO)) {
-      const struct pipe_stream_output_info *so_info =
-         (vec->gs) ? ilo_shader_get_kernel_so_info(vec->gs) :
-         (vec->vs) ? ilo_shader_get_kernel_so_info(vec->vs) : NULL;
-      const int offset = ILO_GS_SO_SURFACE(0);
-      uint32_t *surface_state = &r->state.gs.SURFACE_STATE[offset];
-      int i;
-
-      for (i = 0; so_info && i < so_info->num_outputs; i++) {
-         const int target = so_info->output[i].output_buffer;
+   surface_state = &r->state.gs.SURFACE_STATE[base];
+   for (i = 0; i < count; i++) {
+      if (so_info && i < so_info->num_outputs &&
+          so_info->output[i].output_buffer < so->count &&
+          so->states[so_info->output[i].output_buffer]) {
          const struct pipe_stream_output_target *so_target =
-            (target < so->count) ? so->states[target] : NULL;
+            so->states[so_info->output[i].output_buffer];
 
-         if (so_target) {
-            surface_state[i] = gen6_so_SURFACE_STATE(r->builder,
-                  so_target, so_info, i);
-         } else {
-            surface_state[i] = 0;
-         }
+         surface_state[i] = gen6_so_SURFACE_STATE(r->builder,
+               so_target, so_info, i);
+      } else {
+         surface_state[i] = 0;
       }
-
-      memset(&surface_state[i], 0, (ILO_MAX_SO_BINDINGS - i) * 4);
-
-      if (i && session->num_surfaces[PIPE_SHADER_GEOMETRY] < offset + i)
-         session->num_surfaces[PIPE_SHADER_GEOMETRY] = offset + i;
-
-      session->binding_table_gs_changed = true;
    }
 }
 
@@ -128,44 +130,45 @@ gen6_emit_draw_surface_view(struct ilo_render *r,
                             struct ilo_render_draw_session *session)
 {
    const struct ilo_view_state *view = &vec->view[shader_type];
+   const struct ilo_shader_state *sh;
    uint32_t *surface_state;
-   int offset, i;
-   bool skip = false;
+   int base, count, i;
 
    ILO_DEV_ASSERT(r->dev, 6, 7.5);
 
-   /* SURFACE_STATEs for sampler views */
    switch (shader_type) {
    case PIPE_SHADER_VERTEX:
-      if (DIRTY(VIEW_VS)) {
-         offset = ILO_VS_TEXTURE_SURFACE(0);
-         surface_state = &r->state.vs.SURFACE_STATE[offset];
+      if (!DIRTY(VS) && !DIRTY(VIEW_VS))
+         return;
+      if (!vec->vs)
+         return;
 
-         session->binding_table_vs_changed = true;
-      } else {
-         skip = true;
-      }
+      sh = vec->vs;
+      surface_state = r->state.vs.SURFACE_STATE;
+      session->binding_table_vs_changed = true;
       break;
    case PIPE_SHADER_FRAGMENT:
-      if (DIRTY(VIEW_FS)) {
-         offset = ILO_WM_TEXTURE_SURFACE(0);
-         surface_state = &r->state.wm.SURFACE_STATE[offset];
+      if (!DIRTY(FS) && !DIRTY(VIEW_FS))
+         return;
+      if (!vec->fs)
+         return;
 
-         session->binding_table_fs_changed = true;
-      } else {
-         skip = true;
-      }
+      sh = vec->fs;
+      surface_state = r->state.wm.SURFACE_STATE;
+      session->binding_table_fs_changed = true;
       break;
    default:
-      skip = true;
+      return;
       break;
    }
 
-   if (skip)
-      return;
+   base = ilo_shader_get_kernel_param(sh, ILO_KERNEL_SURFACE_TEX_BASE);
+   count = ilo_shader_get_kernel_param(sh, ILO_KERNEL_SURFACE_TEX_COUNT);
 
-   for (i = 0; i < view->count; i++) {
-      if (view->states[i]) {
+   /* SURFACE_STATEs for sampler views */
+   surface_state += base;
+   for (i = 0; i < count; i++) {
+      if (i < view->count && view->states[i]) {
          const struct ilo_view_cso *cso =
             (const struct ilo_view_cso *) view->states[i];
 
@@ -175,11 +178,6 @@ gen6_emit_draw_surface_view(struct ilo_render *r,
          surface_state[i] = 0;
       }
    }
-
-   memset(&surface_state[i], 0, (ILO_MAX_SAMPLER_VIEWS - i) * 4);
-
-   if (i && session->num_surfaces[shader_type] < offset + i)
-      session->num_surfaces[shader_type] = offset + i;
 }
 
 static void
@@ -189,54 +187,53 @@ gen6_emit_draw_surface_const(struct ilo_render *r,
                              struct ilo_render_draw_session *session)
 {
    const struct ilo_cbuf_state *cbuf = &vec->cbuf[shader_type];
+   const struct ilo_shader_state *sh;
    uint32_t *surface_state;
-   bool *binding_table_changed;
-   int offset, count, i;
+   int base, count, i;
 
    ILO_DEV_ASSERT(r->dev, 6, 7.5);
 
-   if (!DIRTY(CBUF))
-      return;
-
-   /* SURFACE_STATEs for constant buffers */
    switch (shader_type) {
    case PIPE_SHADER_VERTEX:
-      offset = ILO_VS_CONST_SURFACE(0);
-      surface_state = &r->state.vs.SURFACE_STATE[offset];
-      binding_table_changed = &session->binding_table_vs_changed;
+      if (!DIRTY(VS) && !DIRTY(CBUF))
+         return;
+      if (!vec->vs)
+         return;
+
+      sh = vec->vs;
+      surface_state = r->state.vs.SURFACE_STATE;
+      session->binding_table_vs_changed = true;
       break;
    case PIPE_SHADER_FRAGMENT:
-      offset = ILO_WM_CONST_SURFACE(0);
-      surface_state = &r->state.wm.SURFACE_STATE[offset];
-      binding_table_changed = &session->binding_table_fs_changed;
+      if (!DIRTY(FS) && !DIRTY(CBUF))
+         return;
+      if (!vec->fs)
+         return;
+
+      sh = vec->fs;
+      surface_state = r->state.wm.SURFACE_STATE;
+      session->binding_table_fs_changed = true;
       break;
    default:
       return;
       break;
    }
 
-   /* constants are pushed via PCB */
-   if (cbuf->enabled_mask == 0x1 && !cbuf->cso[0].resource) {
-      memset(surface_state, 0, ILO_MAX_CONST_BUFFERS * 4);
-      return;
-   }
+   base = ilo_shader_get_kernel_param(sh, ILO_KERNEL_SURFACE_CONST_BASE);
+   count = ilo_shader_get_kernel_param(sh, ILO_KERNEL_SURFACE_CONST_COUNT);
 
-   count = util_last_bit(cbuf->enabled_mask);
+   /* SURFACE_STATEs for constant buffers */
+   surface_state += base;
    for (i = 0; i < count; i++) {
-      if (cbuf->cso[i].resource) {
+      const struct ilo_cbuf_cso *cso = &cbuf->cso[i];
+
+      if (cso->resource) {
          surface_state[i] = gen6_SURFACE_STATE(r->builder,
-               &cbuf->cso[i].surface, false);
+               &cso->surface, false);
       } else {
          surface_state[i] = 0;
       }
    }
-
-   memset(&surface_state[count], 0, (ILO_MAX_CONST_BUFFERS - count) * 4);
-
-   if (count && session->num_surfaces[shader_type] < offset + count)
-      session->num_surfaces[shader_type] = offset + count;
-
-   *binding_table_changed = true;
 }
 
 static void
@@ -245,59 +242,55 @@ gen6_emit_draw_surface_binding_tables(struct ilo_render *r,
                                       int shader_type,
                                       struct ilo_render_draw_session *session)
 {
-   uint32_t *binding_table_state, *surface_state;
-   int *binding_table_state_size, size;
-   bool skip = false;
+   int count;
 
    ILO_DEV_ASSERT(r->dev, 6, 7.5);
 
    /* BINDING_TABLE_STATE */
    switch (shader_type) {
    case PIPE_SHADER_VERTEX:
-      surface_state = r->state.vs.SURFACE_STATE;
-      binding_table_state = &r->state.vs.BINDING_TABLE_STATE;
-      binding_table_state_size = &r->state.vs.BINDING_TABLE_STATE_size;
+      if (!session->binding_table_vs_changed)
+         return;
+      if (!vec->vs)
+         return;
 
-      skip = !session->binding_table_vs_changed;
+      count = ilo_shader_get_kernel_param(vec->vs,
+            ILO_KERNEL_SURFACE_TOTAL_COUNT);
+
+      r->state.vs.BINDING_TABLE_STATE = gen6_BINDING_TABLE_STATE(r->builder,
+            r->state.vs.SURFACE_STATE, count);
       break;
    case PIPE_SHADER_GEOMETRY:
-      surface_state = r->state.gs.SURFACE_STATE;
-      binding_table_state = &r->state.gs.BINDING_TABLE_STATE;
-      binding_table_state_size = &r->state.gs.BINDING_TABLE_STATE_size;
+      if (!session->binding_table_gs_changed)
+         return;
+      if (vec->gs) {
+         count = ilo_shader_get_kernel_param(vec->gs,
+               ILO_KERNEL_SURFACE_TOTAL_COUNT);
+      } else if (ilo_dev_gen(r->dev) == ILO_GEN(6) && vec->vs) {
+         count = ilo_shader_get_kernel_param(vec->vs,
+               ILO_KERNEL_VS_GEN6_SO_SURFACE_COUNT);
+      } else {
+         return;
+      }
 
-      skip = !session->binding_table_gs_changed;
+      r->state.gs.BINDING_TABLE_STATE = gen6_BINDING_TABLE_STATE(r->builder,
+            r->state.gs.SURFACE_STATE, count);
       break;
    case PIPE_SHADER_FRAGMENT:
-      surface_state = r->state.wm.SURFACE_STATE;
-      binding_table_state = &r->state.wm.BINDING_TABLE_STATE;
-      binding_table_state_size = &r->state.wm.BINDING_TABLE_STATE_size;
+      if (!session->binding_table_fs_changed)
+         return;
+      if (!vec->fs)
+         return;
 
-      skip = !session->binding_table_fs_changed;
+      count = ilo_shader_get_kernel_param(vec->fs,
+            ILO_KERNEL_SURFACE_TOTAL_COUNT);
+
+      r->state.wm.BINDING_TABLE_STATE = gen6_BINDING_TABLE_STATE(r->builder,
+            r->state.wm.SURFACE_STATE, count);
       break;
    default:
-      skip = true;
       break;
    }
-
-   if (skip)
-      return;
-
-   /*
-    * If we have seemingly less SURFACE_STATEs than before, it could be that
-    * we did not touch those reside at the tail in this upload.  Loop over
-    * them to figure out the real number of SURFACE_STATEs.
-    */
-   for (size = *binding_table_state_size;
-         size > session->num_surfaces[shader_type]; size--) {
-      if (surface_state[size - 1])
-         break;
-   }
-   if (size < session->num_surfaces[shader_type])
-      size = session->num_surfaces[shader_type];
-
-   *binding_table_state = gen6_BINDING_TABLE_STATE(r->builder,
-         surface_state, size);
-   *binding_table_state_size = size;
 }
 
 #undef DIRTY
@@ -318,40 +311,26 @@ ilo_render_get_draw_surface_states_len(const struct ilo_render *render,
 
       switch (sh_type) {
       case PIPE_SHADER_VERTEX:
-         if (vec->view[sh_type].count) {
-            num_surfaces = ILO_VS_TEXTURE_SURFACE(vec->view[sh_type].count);
-         } else {
-            num_surfaces = ILO_VS_CONST_SURFACE(
-                  util_last_bit(vec->cbuf[sh_type].enabled_mask));
-         }
-
          if (vec->vs) {
-            if (ilo_dev_gen(render->dev) == ILO_GEN(6)) {
-               const struct pipe_stream_output_info *so_info =
-                  ilo_shader_get_kernel_so_info(vec->vs);
+            num_surfaces = ilo_shader_get_kernel_param(vec->vs,
+                  ILO_KERNEL_SURFACE_TOTAL_COUNT);
 
-               /* stream outputs */
-               num_surfaces += so_info->num_outputs;
+            if (ilo_dev_gen(render->dev) == ILO_GEN(6)) {
+               num_surfaces += ilo_shader_get_kernel_param(vec->vs,
+                     ILO_KERNEL_VS_GEN6_SO_SURFACE_COUNT);
             }
          }
          break;
       case PIPE_SHADER_GEOMETRY:
-         if (vec->gs && ilo_dev_gen(render->dev) == ILO_GEN(6)) {
-            const struct pipe_stream_output_info *so_info =
-               ilo_shader_get_kernel_so_info(vec->gs);
-
-            /* stream outputs */
-            num_surfaces += so_info->num_outputs;
+         if (vec->gs) {
+            num_surfaces = ilo_shader_get_kernel_param(vec->gs,
+                  ILO_KERNEL_SURFACE_TOTAL_COUNT);
          }
          break;
       case PIPE_SHADER_FRAGMENT:
-         if (vec->view[sh_type].count) {
-            num_surfaces = ILO_WM_TEXTURE_SURFACE(vec->view[sh_type].count);
-         } else if (vec->cbuf[sh_type].enabled_mask) {
-            num_surfaces = ILO_WM_CONST_SURFACE(
-                  util_last_bit(vec->cbuf[sh_type].enabled_mask));
-         } else {
-            num_surfaces = vec->fb.state.nr_cbufs;
+         if (vec->fs) {
+            num_surfaces = ilo_shader_get_kernel_param(vec->fs,
+                  ILO_KERNEL_SURFACE_TOTAL_COUNT);
          }
          break;
       default:

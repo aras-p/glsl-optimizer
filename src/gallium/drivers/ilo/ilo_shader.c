@@ -385,6 +385,14 @@ ilo_shader_info_parse_decl(struct ilo_shader_info *info,
           decl->Semantic.Name == TGSI_SEMANTIC_EDGEFLAG)
          info->edgeflag_out = decl->Range.First;
       break;
+   case TGSI_FILE_CONSTANT:
+      {
+         const int idx = (decl->Declaration.Dimension) ?
+            decl->Dim.Index2D : 0;
+         if (info->constant_buffer_count <= idx)
+            info->constant_buffer_count = idx + 1;
+      }
+      break;
    case TGSI_FILE_SYSTEM_VALUE:
       if (decl->Declaration.Semantic &&
           decl->Semantic.Name == TGSI_SEMANTIC_INSTANCEID)
@@ -1013,6 +1021,22 @@ ilo_shader_get_kernel_param(const struct ilo_shader_state *shader,
       val = kernel->pcb.cbuf0_size;
       break;
 
+   case ILO_KERNEL_SURFACE_TOTAL_COUNT:
+      val = kernel->bt.total_count;
+      break;
+   case ILO_KERNEL_SURFACE_TEX_BASE:
+      val = kernel->bt.tex_base;
+      break;
+   case ILO_KERNEL_SURFACE_TEX_COUNT:
+      val = kernel->bt.tex_count;
+      break;
+   case ILO_KERNEL_SURFACE_CONST_BASE:
+      val = kernel->bt.const_base;
+      break;
+   case ILO_KERNEL_SURFACE_CONST_COUNT:
+      val = kernel->bt.const_count;
+      break;
+
    case ILO_KERNEL_VS_INPUT_INSTANCEID:
       val = shader->info.has_instanceid;
       break;
@@ -1047,12 +1071,21 @@ ilo_shader_get_kernel_param(const struct ilo_shader_state *shader,
    case ILO_KERNEL_VS_GEN6_SO_TRI_OFFSET:
       val = kernel->gs_offsets[2];
       break;
+   case ILO_KERNEL_VS_GEN6_SO_SURFACE_COUNT:
+      val = kernel->gs_bt_so_count;
+      break;
 
    case ILO_KERNEL_GS_DISCARD_ADJACENCY:
       val = kernel->in.discard_adj;
       break;
    case ILO_KERNEL_GS_GEN6_SVBI_POST_INC:
       val = kernel->svbi_post_inc;
+      break;
+   case ILO_KERNEL_GS_GEN6_SURFACE_SO_BASE:
+      val = kernel->bt.gen6_so_base;
+      break;
+   case ILO_KERNEL_GS_GEN6_SURFACE_SO_COUNT:
+      val = kernel->bt.gen6_so_count;
       break;
 
    case ILO_KERNEL_FS_INPUT_Z:
@@ -1070,6 +1103,12 @@ ilo_shader_get_kernel_param(const struct ilo_shader_state *shader,
       break;
    case ILO_KERNEL_FS_DISPATCH_16_OFFSET:
       val = 0;
+      break;
+   case ILO_KERNEL_FS_SURFACE_RT_BASE:
+      val = kernel->bt.rt_base;
+      break;
+   case ILO_KERNEL_FS_SURFACE_RT_COUNT:
+      val = kernel->bt.rt_count;
       break;
 
    default:

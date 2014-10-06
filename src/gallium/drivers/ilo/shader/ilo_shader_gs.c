@@ -488,7 +488,7 @@ gs_lower_opcode_emit_so_static(struct gs_compile_context *gcc)
                 j == gcc->so_info->num_outputs - 1);
 
 
-            binding_table_index = ILO_GS_SO_SURFACE(j);
+            binding_table_index = gcc->shader->bt.gen6_so_base + j;
 
             gs_write_so(gcc, gcc->vars.tmp, index,
                   out, write_commit, binding_table_index);
@@ -1347,6 +1347,11 @@ gs_setup(struct gs_compile_context *gcc,
    gcc->first_free_mrf = 1;
    gcc->last_free_mrf = 15;
 
+   gcc->shader->bt.gen6_so_base = 0;
+   gcc->shader->bt.gen6_so_count = gcc->so_info->num_outputs;
+
+   gcc->shader->bt.total_count = gcc->shader->bt.gen6_so_count;
+
    return true;
 }
 
@@ -1397,6 +1402,7 @@ append_gs_to_vs(struct ilo_shader *vs, struct ilo_shader *gs, int num_verts)
    vs->stream_output = true;
    vs->gs_offsets[num_verts - 1] = gs_offset;
    vs->gs_start_grf = gs->in.start_grf;
+   vs->gs_bt_so_count = gs->bt.gen6_so_count;
 
    ilo_shader_destroy_kernel(gs);
 

@@ -116,6 +116,7 @@ struct ilo_shader {
    /* for VS stream output / rasterizer discard */
    int gs_offsets[3];
    int gs_start_grf;
+   int gs_bt_so_count;
 
    void *kernel;
    int kernel_size;
@@ -131,6 +132,17 @@ struct ilo_shader {
       int cbuf0_size;
       int clip_state_size;
    } pcb;
+
+   /* binding table */
+   struct {
+      int rt_base, rt_count;
+      int tex_base, tex_count;
+      int const_base, const_count;
+
+      int gen6_so_base, gen6_so_count;
+
+      int total_count;
+   } bt;
 
    struct list_head list;
 
@@ -168,6 +180,8 @@ struct ilo_shader_info {
 
    uint32_t shadow_samplers;
    int num_samplers;
+
+   int constant_buffer_count;
 };
 
 /**

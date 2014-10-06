@@ -97,8 +97,7 @@ struct ilo_render {
 
       struct {
          uint32_t BINDING_TABLE_STATE;
-         int BINDING_TABLE_STATE_size;
-         uint32_t SURFACE_STATE[ILO_MAX_VS_SURFACES];
+         uint32_t SURFACE_STATE[ILO_MAX_SURFACES];
          uint32_t SAMPLER_STATE;
          uint32_t SAMPLER_BORDER_COLOR_STATE[ILO_MAX_SAMPLERS];
          uint32_t PUSH_CONSTANT_BUFFER;
@@ -107,15 +106,13 @@ struct ilo_render {
 
       struct {
          uint32_t BINDING_TABLE_STATE;
-         int BINDING_TABLE_STATE_size;
-         uint32_t SURFACE_STATE[ILO_MAX_GS_SURFACES];
+         uint32_t SURFACE_STATE[ILO_MAX_SURFACES];
          bool active;
       } gs;
 
       struct {
          uint32_t BINDING_TABLE_STATE;
-         int BINDING_TABLE_STATE_size;
-         uint32_t SURFACE_STATE[ILO_MAX_WM_SURFACES];
+         uint32_t SURFACE_STATE[ILO_MAX_SURFACES];
          uint32_t SAMPLER_STATE;
          uint32_t SAMPLER_BORDER_COLOR_STATE[ILO_MAX_SAMPLERS];
          uint32_t PUSH_CONSTANT_BUFFER;
@@ -153,8 +150,6 @@ struct ilo_render_draw_session {
    bool binding_table_vs_changed;
    bool binding_table_gs_changed;
    bool binding_table_fs_changed;
-
-   int num_surfaces[PIPE_SHADER_TYPES];
 };
 
 struct ilo_render_rectlist_session {
