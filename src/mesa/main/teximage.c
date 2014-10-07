@@ -2449,7 +2449,7 @@ texsubimage_error_check(struct gl_context *ctx, GLuint dimensions,
 
    /* level check */
    if (level < 0 || level >= _mesa_max_texture_levels(ctx, target)) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glTexSubImage%uD(level=%d)",
+      _mesa_error(ctx, GL_INVALID_VALUE, "glTexSubImage%uD(level=%d)",
                   dimensions, level);
       return GL_TRUE;
    }
