@@ -275,6 +275,18 @@ tgsi_to_qir_alu(struct vc4_compile *c,
 }
 
 static struct qreg
+tgsi_to_qir_scalar(struct vc4_compile *c,
+                   struct tgsi_full_instruction *tgsi_inst,
+                   enum qop op, struct qreg *src, int i)
+{
+        struct qreg dst = qir_get_temp(c);
+        qir_emit(c, qir_inst(op, dst,
+                             src[0 * 4 + 0],
+                             c->undef));
+        return dst;
+}
+
+static struct qreg
 qir_srgb_decode(struct vc4_compile *c, struct qreg srgb)
 {
         struct qreg low = qir_FMUL(c, srgb, qir_uniform_f(c, 1.0 / 12.92));
@@ -1081,10 +1093,10 @@ emit_tgsi_instruction(struct vc4_compile *c,
 
                 [TGSI_OPCODE_CMP] = { 0, tgsi_to_qir_cmp },
                 [TGSI_OPCODE_MAD] = { 0, tgsi_to_qir_mad },
-                [TGSI_OPCODE_RCP] = { QOP_RCP, tgsi_to_qir_alu },
-                [TGSI_OPCODE_RSQ] = { QOP_RSQ, tgsi_to_qir_alu },
-                [TGSI_OPCODE_EX2] = { QOP_EXP2, tgsi_to_qir_alu },
-                [TGSI_OPCODE_LG2] = { QOP_LOG2, tgsi_to_qir_alu },
+                [TGSI_OPCODE_RCP] = { QOP_RCP, tgsi_to_qir_scalar },
+                [TGSI_OPCODE_RSQ] = { QOP_RSQ, tgsi_to_qir_scalar },
+                [TGSI_OPCODE_EX2] = { QOP_EXP2, tgsi_to_qir_scalar },
+                [TGSI_OPCODE_LG2] = { QOP_LOG2, tgsi_to_qir_scalar },
                 [TGSI_OPCODE_LIT] = { 0, tgsi_to_qir_lit },
                 [TGSI_OPCODE_LRP] = { 0, tgsi_to_qir_lrp },
                 [TGSI_OPCODE_TRUNC] = { 0, tgsi_to_qir_trunc },
