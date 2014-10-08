@@ -432,6 +432,9 @@ gen6_user_3DSTATE_VERTEX_BUFFERS(struct ilo_builder *builder,
    dw[0] = 0 << GEN6_VB_STATE_DW0_INDEX__SHIFT |
            GEN6_VB_STATE_DW0_ACCESS_VERTEXDATA |
            stride << GEN6_VB_STATE_DW0_PITCH__SHIFT;
+   if (ilo_dev_gen(builder->dev) >= ILO_GEN(7))
+      dw[0] |= GEN7_VB_STATE_DW0_ADDR_MODIFIED;
+
    dw[3] = 0;
 
    ilo_builder_batch_reloc(builder, pos + 1, bat->bo, vb_begin, 0);
