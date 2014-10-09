@@ -99,6 +99,18 @@ replace_with_mov(struct vc4_compile *c, struct qinst *inst, struct qreg arg)
 }
 
 static bool
+add_replace_zero(struct vc4_compile *c,
+                 struct qinst **defs,
+                 struct qinst *inst,
+                 int arg)
+{
+        if (!is_zero(c, defs, inst->src[arg]))
+                return false;
+        replace_with_mov(c, inst, inst->src[1 - arg]);
+        return true;
+}
+
+static bool
 fmul_replace_zero(struct vc4_compile *c,
                   struct qinst **defs,
                   struct qinst *inst,
@@ -181,7 +193,21 @@ qir_opt_algebraic(struct vc4_compile *c)
                         }
                         break;
 
+                case QOP_ADD:
+                        if (add_replace_zero(c, defs, inst, 0) ||
+                            add_replace_zero(c, defs, inst, 1)) {
+                                progress = true;
+                                break;
+                        }
+                        break;
+
                 case QOP_FADD:
+                        if (add_replace_zero(c, defs, inst, 0) ||
+                            add_replace_zero(c, defs, inst, 1)) {
+                                progress = true;
+                                break;
+                        }
+
                         /* FADD(a, FSUB(0, b)) -> FSUB(a, b) */
                         if (inst->src[1].file == QFILE_TEMP &&
                             defs[inst->src[1].index]->op == QOP_FSUB) {
