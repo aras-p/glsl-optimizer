@@ -174,7 +174,10 @@ qir_opt_algebraic(struct vc4_compile *c)
                                  */
                                 replace_with_mov(c, inst, inst->src[1]);
                                 progress = true;
-                        } else if (is_zero(c, defs, inst->src[1])) {
+                                break;
+                        }
+
+                        if (is_zero(c, defs, inst->src[1])) {
                                 /* Replace references to a 0 uniform value
                                  * with the SEL_X_0 equivalent.
                                  */
@@ -183,7 +186,26 @@ qir_opt_algebraic(struct vc4_compile *c)
                                 inst->src[1] = c->undef;
                                 progress = true;
                                 dump_to(c, inst);
+                                break;
                         }
+
+                        if (is_zero(c, defs, inst->src[0])) {
+                                /* Replace references to a 0 uniform value
+                                 * with the SEL_X_0 equivalent, flipping the
+                                 * condition being evaluated since the operand
+                                 * order is flipped.
+                                 */
+                                dump_from(c, inst);
+                                inst->op -= QOP_SEL_X_Y_ZS;
+                                inst->op ^= 1;
+                                inst->op += QOP_SEL_X_0_ZS;
+                                inst->src[0] = inst->src[1];
+                                inst->src[1] = c->undef;
+                                progress = true;
+                                dump_to(c, inst);
+                                break;
+                        }
+
                         break;
 
                 case QOP_FSUB:
