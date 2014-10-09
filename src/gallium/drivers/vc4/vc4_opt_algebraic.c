@@ -91,6 +91,22 @@ qir_opt_algebraic(struct vc4_compile *c)
                         defs[inst->dst.index] = inst;
 
                 switch (inst->op) {
+                case QOP_SF:
+                        /* SF just looks at the sign bit, or whether all the
+                         * bits are 0.  This is preserved across an itof
+                         * transformation.
+                         */
+                        if (inst->src[0].file == QFILE_TEMP &&
+                            defs[inst->src[0].index]->op == QOP_ITOF) {
+                                dump_from(c, inst);
+                                inst->src[0] =
+                                        defs[inst->src[0].index]->src[0];
+                                progress =  true;
+                                dump_to(c, inst);
+                                break;
+                        }
+                        break;
+
                 case QOP_SEL_X_Y_ZS:
                 case QOP_SEL_X_Y_ZC:
                 case QOP_SEL_X_Y_NS:
