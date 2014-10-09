@@ -33,6 +33,7 @@
  */
 
 #include "vc4_qir.h"
+#include "util/u_math.h"
 
 static bool debug;
 
@@ -77,6 +78,16 @@ is_zero(struct vc4_compile *c, struct qinst **defs, struct qreg reg)
                 c->uniform_data[reg.index] == 0);
 }
 
+static bool
+is_1f(struct vc4_compile *c, struct qinst **defs, struct qreg reg)
+{
+        reg = follow_movs(defs, reg);
+
+        return (reg.file == QFILE_UNIF &&
+                c->uniform_contents[reg.index] == QUNIFORM_CONSTANT &&
+                c->uniform_data[reg.index] == fui(1.0));
+}
+
 static void
 replace_with_mov(struct vc4_compile *c, struct qinst *inst, struct qreg arg)
 {
@@ -85,6 +96,30 @@ replace_with_mov(struct vc4_compile *c, struct qinst *inst, struct qreg arg)
         inst->src[0] = arg;
         inst->src[1] = c->undef;
         dump_to(c, inst);
+}
+
+static bool
+fmul_replace_zero(struct vc4_compile *c,
+                  struct qinst **defs,
+                  struct qinst *inst,
+                  int arg)
+{
+        if (!is_zero(c, defs, inst->src[arg]))
+                return false;
+        replace_with_mov(c, inst, inst->src[arg]);
+        return true;
+}
+
+static bool
+fmul_replace_one(struct vc4_compile *c,
+                 struct qinst **defs,
+                 struct qinst *inst,
+                 int arg)
+{
+        if (!is_1f(c, defs, inst->src[arg]))
+                return false;
+        replace_with_mov(c, inst, inst->src[1 - arg]);
+        return true;
 }
 
 bool
@@ -174,6 +209,16 @@ qir_opt_algebraic(struct vc4_compile *c)
                                         progress = true;
                                         break;
                                 }
+                        }
+                        break;
+
+                case QOP_FMUL:
+                        if (fmul_replace_zero(c, defs, inst, 0) ||
+                            fmul_replace_zero(c, defs, inst, 1) ||
+                            fmul_replace_one(c, defs, inst, 0) ||
+                            fmul_replace_one(c, defs, inst, 1)) {
+                                progress = true;
+                                break;
                         }
                         break;
 
