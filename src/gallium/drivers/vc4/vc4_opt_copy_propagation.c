@@ -41,9 +41,13 @@ qir_opt_copy_propagation(struct vc4_compile *c)
         struct simple_node *node;
         bool debug = false;
         struct qreg *movs = calloc(c->num_temps, sizeof(struct qreg));
+        struct qinst **defs = calloc(c->num_temps, sizeof(struct qreg));
 
         foreach(node, &c->instructions) {
                 struct qinst *inst = (struct qinst *)node;
+
+                if (inst->dst.file == QFILE_TEMP)
+                        defs[inst->dst.index] = inst;
 
                 /* A single instruction can only read one uniform value.  (It
                  * could maybe read the same uniform value in two operands,
@@ -81,10 +85,16 @@ qir_opt_copy_propagation(struct vc4_compile *c)
                         }
                 }
 
-                if (inst->op == QOP_MOV && inst->dst.file == QFILE_TEMP)
+                if (inst->op == QOP_MOV &&
+                    inst->dst.file == QFILE_TEMP &&
+                    (inst->src[0].file != QFILE_TEMP ||
+                     (defs[inst->src[0].index]->op != QOP_TEX_RESULT &&
+                      defs[inst->dst.index]->op != QOP_TLB_COLOR_READ))) {
                         movs[inst->dst.index] = inst->src[0];
+                }
         }
 
         free(movs);
+        free(defs);
         return progress;
 }
