@@ -957,10 +957,15 @@ emit_tgsi_declaration(struct vc4_compile *c,
                       struct tgsi_full_declaration *decl)
 {
         switch (decl->Declaration.File) {
-        case TGSI_FILE_TEMPORARY:
+        case TGSI_FILE_TEMPORARY: {
+                uint32_t old_size = c->temps_array_size;
                 resize_qreg_array(c, &c->temps, &c->temps_array_size,
                                   (decl->Range.Last + 1) * 4);
+
+                for (int i = old_size; i < c->temps_array_size; i++)
+                        c->temps[i] = qir_uniform_ui(c, 0);
                 break;
+        }
 
         case TGSI_FILE_INPUT:
                 resize_qreg_array(c, &c->inputs, &c->inputs_array_size,
