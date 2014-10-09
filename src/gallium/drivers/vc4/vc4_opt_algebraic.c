@@ -77,6 +77,16 @@ is_zero(struct vc4_compile *c, struct qinst **defs, struct qreg reg)
                 c->uniform_data[reg.index] == 0);
 }
 
+static void
+replace_with_mov(struct vc4_compile *c, struct qinst *inst, struct qreg arg)
+{
+        dump_from(c, inst);
+        inst->op = QOP_MOV;
+        inst->src[0] = arg;
+        inst->src[1] = c->undef;
+        dump_to(c, inst);
+}
+
 bool
 qir_opt_algebraic(struct vc4_compile *c)
 {
@@ -115,12 +125,8 @@ qir_opt_algebraic(struct vc4_compile *c)
                                 /* Turn "dst = (sf == x) ? a : a)" into
                                  * "dst = a"
                                  */
-                                dump_from(c, inst);
-                                inst->op = QOP_MOV;
-                                inst->src[0] = inst->src[1];
-                                inst->src[1] = c->undef;
+                                replace_with_mov(c, inst, inst->src[1]);
                                 progress = true;
-                                dump_to(c, inst);
                         } else if (is_zero(c, defs, inst->src[1])) {
                                 /* Replace references to a 0 uniform value
                                  * with the SEL_X_0 equivalent.
@@ -136,11 +142,7 @@ qir_opt_algebraic(struct vc4_compile *c)
                 case QOP_FSUB:
                 case QOP_SUB:
                         if (is_zero(c, defs, inst->src[1])) {
-                                dump_from(c, inst);
-                                inst->op = QOP_MOV;
-                                inst->src[1] = c->undef;
-                                progress = true;
-                                dump_to(c, inst);
+                                replace_with_mov(c, inst, inst->src[0]);
                         }
                         break;
 
