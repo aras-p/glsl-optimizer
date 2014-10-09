@@ -128,6 +128,37 @@ qir_opt_algebraic(struct vc4_compile *c)
                         }
                         break;
 
+                case QOP_FADD:
+                        /* FADD(a, FSUB(0, b)) -> FSUB(a, b) */
+                        if (inst->src[1].file == QFILE_TEMP &&
+                            defs[inst->src[1].index]->op == QOP_FSUB) {
+                                struct qinst *fsub = defs[inst->src[1].index];
+                                if (is_zero(c, defs, fsub->src[0])) {
+                                        dump_from(c, inst);
+                                        inst->op = QOP_FSUB;
+                                        inst->src[1] = fsub->src[1];
+                                        progress = true;
+                                        dump_to(c, inst);
+                                        break;
+                                }
+                        }
+
+                        /* FADD(FSUB(0, b), a) -> FSUB(a, b) */
+                        if (inst->src[0].file == QFILE_TEMP &&
+                            defs[inst->src[0].index]->op == QOP_FSUB) {
+                                struct qinst *fsub = defs[inst->src[0].index];
+                                if (is_zero(c, defs, fsub->src[0])) {
+                                        dump_from(c, inst);
+                                        inst->op = QOP_FSUB;
+                                        inst->src[0] = inst->src[1];
+                                        inst->src[1] = fsub->src[1];
+                                        dump_to(c, inst);
+                                        progress = true;
+                                        break;
+                                }
+                        }
+                        break;
+
                 default:
                         break;
                 }
