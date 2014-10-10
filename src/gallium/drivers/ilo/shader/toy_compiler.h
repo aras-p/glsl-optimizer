@@ -136,6 +136,13 @@ struct toy_inst {
    struct list_head list;
 };
 
+struct toy_compaction_table {
+   uint32_t control[32];
+   uint32_t datatype[32];
+   uint32_t subreg[32];
+   uint32_t src[32];
+};
+
 /**
  * Toy compiler.
  */
@@ -468,6 +475,9 @@ toy_compiler_dump(struct toy_compiler *tc);
 
 void *
 toy_compiler_assemble(struct toy_compiler *tc, int *size);
+
+const struct toy_compaction_table *
+toy_compiler_get_compaction_table(const struct ilo_dev_info *dev);
 
 void
 toy_compiler_disassemble(const struct ilo_dev_info *dev,

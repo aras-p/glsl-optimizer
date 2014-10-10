@@ -1414,6 +1414,94 @@ disasm_printer_print_inst(struct disasm_printer *printer,
    ilo_printf("%s\n", disasm_printer_get_string(printer));
 }
 
+static void
+disasm_uncompact(const struct ilo_dev_info *dev,
+                 uint64_t compact, uint32_t *dw)
+{
+   const struct toy_compaction_table *tbl =
+      toy_compiler_get_compaction_table(dev);
+   bool src_is_imm;
+   uint32_t tmp;
+
+   memset(dw, 0, sizeof(*dw) * 4);
+
+   tmp = GEN_EXTRACT(compact, GEN6_COMPACT_OPCODE);
+   dw[0] |= GEN_SHIFT32(tmp, GEN6_INST_OPCODE);
+
+   if (ilo_dev_gen(dev) >= ILO_GEN(7) && (compact & GEN6_COMPACT_DEBUGCTRL))
+      dw[0] |= GEN6_INST_DEBUGCTRL;
+
+   /* ControlIndex */
+   tmp = GEN_EXTRACT(compact, GEN6_COMPACT_CONTROL_INDEX);
+   tmp = tbl->control[tmp];
+
+   dw[0] |= (tmp & 0xffff) << GEN6_INST_ACCESSMODE__SHIFT;
+   if (tmp & 0x10000)
+      dw[0] |= GEN6_INST_SATURATE;
+
+   if (ilo_dev_gen(dev) >= ILO_GEN(7))
+      dw[2] |= (tmp >> 17) << GEN6_INST_FLAG_SUBREG__SHIFT;
+
+   /* DataTypeIndex */
+   tmp = GEN_EXTRACT(compact, GEN6_COMPACT_DATATYPE_INDEX);
+   tmp = tbl->datatype[tmp];
+
+   dw[1] |= (tmp & 0x7fff) << GEN6_INST_DST_FILE__SHIFT;
+   dw[1] |= (tmp >> 15) << GEN6_INST_DST_HORZSTRIDE__SHIFT;
+
+   /* SubRegIndex */
+   tmp = GEN_EXTRACT(compact, GEN6_COMPACT_SUBREG_INDEX);
+   tmp = tbl->subreg[tmp];
+
+   dw[1] |= (tmp & 0x1f) << 16;
+   dw[2] |= ((tmp >> 5) & 0x1f);
+   dw[3] |= ((tmp >> 10) & 0x1f);
+
+   if (compact & GEN6_COMPACT_ACCWRCTRL)
+      dw[0] |= GEN6_INST_ACCWRCTRL;
+
+   tmp = GEN_EXTRACT(compact, GEN6_COMPACT_CONDMODIFIER);
+   dw[0] |= GEN_SHIFT32(tmp, GEN6_INST_CONDMODIFIER);
+
+   if (ilo_dev_gen(dev) == ILO_GEN(6)) {
+      tmp = GEN_EXTRACT(compact, GEN6_COMPACT_FLAG_SUBREG);
+      dw[2] |= GEN_SHIFT32(compact, GEN6_INST_FLAG_SUBREG);
+   }
+
+   assert(compact & GEN6_COMPACT_CMPTCTRL);
+
+   /* Src0Index */
+   tmp = GEN_EXTRACT(compact, GEN6_COMPACT_SRC0_INDEX);
+   tmp = tbl->src[tmp];
+   dw[2] |= tmp << 13;
+
+   src_is_imm = (GEN_EXTRACT(dw[1], GEN6_INST_SRC0_FILE) == GEN6_FILE_IMM) ||
+                (GEN_EXTRACT(dw[1], GEN6_INST_SRC1_FILE) == GEN6_FILE_IMM);
+
+   /* Src1Index */
+   tmp = GEN_EXTRACT(compact, GEN6_COMPACT_SRC1_INDEX);
+   if (src_is_imm) {
+      if (tmp & 0x10)
+         tmp |= 0xfffff0;
+      dw[3] |= tmp << 8;
+   } else {
+      tmp = tbl->src[tmp];
+      dw[3] |= tmp << 13;
+   }
+
+   tmp = GEN_EXTRACT(compact, GEN6_COMPACT_DST_REG);
+   dw[1] |= GEN_SHIFT32(tmp, GEN6_INST_DST_REG);
+
+   tmp = GEN_EXTRACT(compact, GEN6_COMPACT_SRC0_REG);
+   dw[2] |= GEN_SHIFT32(tmp, GEN6_INST_SRC_REG);
+
+   tmp = GEN_EXTRACT(compact, GEN6_COMPACT_SRC1_REG);
+   if (src_is_imm)
+      dw[3] |= tmp;
+   else
+      dw[3] |= GEN_SHIFT32(tmp, GEN6_INST_SRC_REG);
+}
+
 void
 toy_compiler_disassemble(const struct ilo_dev_info *dev,
                          const void *kernel, int size,
@@ -1437,8 +1525,8 @@ toy_compiler_disassemble(const struct ilo_dev_info *dev,
          break;
 
       if (compacted) {
-         /* no compaction support yet */
-         memset(temp, 0, sizeof(temp));
+         const uint64_t compact = (uint64_t) dw[1] << 32 | dw[0];
+         disasm_uncompact(dev, compact, temp);
          dw = temp;
       }
 
