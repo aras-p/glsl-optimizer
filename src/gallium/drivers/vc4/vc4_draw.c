@@ -103,6 +103,7 @@ vc4_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
         vc4_update_compiled_shaders(vc4, info->mode);
 
         vc4_emit_state(pctx);
+        vc4->dirty = 0;
 
         vc4_write_uniforms(vc4, vc4->prog.fs,
                            &vc4->constbuf[PIPE_SHADER_FRAGMENT],
