@@ -1792,6 +1792,17 @@ vc4_update_compiled_fs(struct vc4_context *vc4, uint8_t prim_mode)
         struct vc4_fs_key local_key;
         struct vc4_fs_key *key = &local_key;
 
+        if (!(vc4->dirty & (VC4_DIRTY_PRIM_MODE |
+                            VC4_DIRTY_BLEND |
+                            VC4_DIRTY_FRAMEBUFFER |
+                            VC4_DIRTY_ZSA |
+                            VC4_DIRTY_RASTERIZER |
+                            VC4_DIRTY_FRAGTEX |
+                            VC4_DIRTY_TEXSTATE |
+                            VC4_DIRTY_PROG))) {
+                return;
+        }
+
         memset(key, 0, sizeof(*key));
         vc4_setup_shared_key(&key->base, &vc4->fragtex);
         key->base.shader_state = vc4->prog.bind_fs;
@@ -1839,6 +1850,15 @@ vc4_update_compiled_vs(struct vc4_context *vc4, uint8_t prim_mode)
 {
         struct vc4_vs_key local_key;
         struct vc4_vs_key *key = &local_key;
+
+        if (!(vc4->dirty & (VC4_DIRTY_PRIM_MODE |
+                            VC4_DIRTY_RASTERIZER |
+                            VC4_DIRTY_VERTTEX |
+                            VC4_DIRTY_TEXSTATE |
+                            VC4_DIRTY_VTXSTATE |
+                            VC4_DIRTY_PROG))) {
+                return;
+        }
 
         memset(key, 0, sizeof(*key));
         vc4_setup_shared_key(&key->base, &vc4->verttex);

@@ -99,6 +99,11 @@ vc4_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
         struct vc4_vertex_stateobj *vtx = vc4->vtx;
         struct vc4_vertexbuf_stateobj *vertexbuf = &vc4->vertexbuf;
 
+        if (vc4->prim_mode != info->mode) {
+                vc4->prim_mode = info->mode;
+                vc4->dirty |= VC4_DIRTY_PRIM_MODE;
+        }
+
         vc4_start_draw(vc4);
         vc4_update_compiled_shaders(vc4, info->mode);
 

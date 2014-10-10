@@ -57,6 +57,7 @@
 #define VC4_DIRTY_INDEXBUF      (1 << 16)
 #define VC4_DIRTY_SCISSOR       (1 << 17)
 #define VC4_DIRTY_FLAT_SHADE_FLAGS (1 << 18)
+#define VC4_DIRTY_PRIM_MODE     (1 << 19)
 
 #define VC4_SHADER_DIRTY_VP     (1 << 0)
 #define VC4_SHADER_DIRTY_FP     (1 << 1)
@@ -176,6 +177,8 @@ struct vc4_context {
         struct ra_regs *regs;
         unsigned int reg_class_any;
         unsigned int reg_class_a;
+
+        uint8_t prim_mode;
 
         /** @{ Current pipeline state objects */
         struct pipe_scissor_state scissor;
