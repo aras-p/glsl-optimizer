@@ -31,6 +31,7 @@
 #include "util/u_pack_color.h"
 #include "util/format_srgb.h"
 #include "util/ralloc.h"
+#include "util/hash_table.h"
 #include "tgsi/tgsi_dump.h"
 #include "tgsi/tgsi_info.h"
 #include "tgsi/tgsi_lowering.h"
@@ -1886,13 +1887,13 @@ vc4_update_compiled_shaders(struct vc4_context *vc4, uint8_t prim_mode)
 static unsigned
 fs_cache_hash(void *key)
 {
-        return util_hash_crc32(key, sizeof(struct vc4_fs_key));
+        return _mesa_hash_data(key, sizeof(struct vc4_fs_key));
 }
 
 static unsigned
 vs_cache_hash(void *key)
 {
-        return util_hash_crc32(key, sizeof(struct vc4_vs_key));
+        return _mesa_hash_data(key, sizeof(struct vc4_vs_key));
 }
 
 static int
