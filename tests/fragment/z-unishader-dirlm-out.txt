@@ -146,9 +146,7 @@ void main ()
   float tmpvar_36;
   float tmpvar_37;
   tmpvar_37 = max (0.0, dot (tmpvar_26, tmpvar_29));
-  tmpvar_36 = (0.5 + ((2.0 * 
-    (tmpvar_37 * tmpvar_37)
-  ) * tmpvar_14));
+  tmpvar_36 = (0.5 + ((2.0 * tmpvar_37) * (tmpvar_37 * tmpvar_14)));
   vec4 tmpvar_38;
   tmpvar_38.xyz = (((
     (min (((_Color.xyz * texture2D (_MainTex, xlv_TEXCOORD0.xy).xyz) * (2.0 * texture2D (_DetailAlbedoMap, xlv_TEXCOORD0.zw).xyz)), (vec3(1.0, 1.0, 1.0) - tmpvar_13)) * (((

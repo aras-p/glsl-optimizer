@@ -10,7 +10,7 @@ void main ()
   light_2 = -(log2(texture2DProj (_LightBuffer, gl_TexCoord[1])));
   light_2.xyz = (light_2.xyz + unity_Ambient.xyz);
   vec4 c_3;
-  c_3.xyz = (((texture2D (_MainTex, tmpvar_1.xy).xyz * texture2D (_Detail, tmpvar_1.zw).xyz) * 2.0) * light_2.xyz);
+  c_3.xyz = ((texture2D (_MainTex, tmpvar_1.xy).xyz * texture2D (_Detail, tmpvar_1.zw).xyz) * (2.0 * light_2.xyz));
   c_3.w = 0.0;
   gl_FragData[0] = c_3;
 }

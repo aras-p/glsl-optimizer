@@ -75,10 +75,10 @@ void main ()
   float tmpvar_51;
   tmpvar_51 = tmpvar_50.w;
   float tmpvar_52;
-  tmpvar_52 = max (max (tmpvar_48.w, tmpvar_50.w), max (tmpvar_45.w, max (tmpvar_43.w, tmpvar_41.w)));
-  range_37 = (tmpvar_52 - min (min (tmpvar_48.w, tmpvar_50.w), min (tmpvar_45.w, 
-    min (tmpvar_43.w, tmpvar_41.w)
-  )));
+  tmpvar_52 = max (max (tmpvar_48.w, tmpvar_50.w), max (max (tmpvar_45.w, tmpvar_43.w), tmpvar_41.w));
+  range_37 = (tmpvar_52 - min (min (tmpvar_48.w, tmpvar_50.w), min (
+    min (tmpvar_45.w, tmpvar_43.w)
+  , tmpvar_41.w)));
   if ((range_37 < max (0.0833, (tmpvar_52 * 0.166)))) {
     tmpvar_2 = tmpvar_41;
   } else {

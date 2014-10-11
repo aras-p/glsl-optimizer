@@ -17,9 +17,7 @@ void main ()
   c4_1 = (texture2D (tex_lowp, var_mediump) * 2.0);
   lowp vec4 tmpvar_6;
   tmpvar_6 = abs(var_lowp.xxxx);
-  gl_FragColor = (((
-    (c1_4 + c2_3)
-   + c3_2) + c4_1) + tmpvar_6);
+  gl_FragColor = ((c1_4 + c2_3) + ((c3_2 + c4_1) + tmpvar_6));
 }
 
 

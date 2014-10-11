@@ -85,10 +85,10 @@ void main ()
   rgba_56 = tmpvar_54;
   tmpvar_55 = rgba_56.w;
   highp float tmpvar_57;
-  tmpvar_57 = max (max (rgba_52.w, rgba_56.w), max (rgba_49.w, max (rgba_45.w, rgbyM_40.w)));
-  range_37 = (tmpvar_57 - min (min (rgba_52.w, rgba_56.w), min (rgba_49.w, 
-    min (rgba_45.w, rgbyM_40.w)
-  )));
+  tmpvar_57 = max (max (rgba_52.w, rgba_56.w), max (max (rgba_49.w, rgba_45.w), rgbyM_40.w));
+  range_37 = (tmpvar_57 - min (min (rgba_52.w, rgba_56.w), min (
+    min (rgba_49.w, rgba_45.w)
+  , rgbyM_40.w)));
   if ((range_37 < max (0.0833, (tmpvar_57 * 0.166)))) {
     tmpvar_2 = rgbyM_40;
   } else {

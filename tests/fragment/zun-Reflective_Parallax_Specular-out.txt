@@ -49,9 +49,7 @@ void main ()
   ) + (
     (_LightColor0.xyz * _SpecColor.xyz)
    * spec_14)) * (tmpvar_12.w * 2.0));
-  c_13.w = (((textureCube (_Cube, tmpvar_5) * tmpvar_9.w).w * _ReflectColor.w) + ((
-    (_LightColor0.w * _SpecColor.w)
-   * spec_14) * tmpvar_12.w));
+  c_13.w = (((textureCube (_Cube, tmpvar_5) * tmpvar_9.w).w * _ReflectColor.w) + ((_LightColor0.w * _SpecColor.w) * (spec_14 * tmpvar_12.w)));
   c_4.xyz = c_13.xyz;
   c_4.w = 0.0;
   gl_FragData[0] = c_4;

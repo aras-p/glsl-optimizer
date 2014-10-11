@@ -38,9 +38,7 @@ void main ()
   ) + (
     (_LightColor0.xyz * _SpecColor.xyz)
    * spec_10)) * (atten_8 * 2.0));
-  c_9.w = (tmpvar_4 + ((
-    (_LightColor0.w * _SpecColor.w)
-   * spec_10) * atten_8));
+  c_9.w = (tmpvar_4 + ((_LightColor0.w * _SpecColor.w) * (spec_10 * atten_8)));
   c_3.xyz = c_9.xyz;
   c_3.w = tmpvar_4;
   gl_FragData[0] = c_3;

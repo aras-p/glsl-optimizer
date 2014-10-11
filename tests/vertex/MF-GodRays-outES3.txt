@@ -78,8 +78,10 @@ void main ()
    + 
     (tmpvar_19 * tmpvar_1.y)
   ) * (
-    ((tmpvar_20 * tmpvar_20) * _MaxGrowSize)
-   * tmpvar_2.w)));
+    (tmpvar_20 * tmpvar_20)
+   * 
+    (_MaxGrowSize * tmpvar_2.w)
+  )));
   time_7 = (_Time.y + (_BlinkingTimeOffsScale * tmpvar_2.z));
   highp float y_21;
   y_21 = (_TimeOnDuration + _TimeOffDuration);
@@ -133,7 +135,7 @@ void main ()
   nfadeout_31 = (tmpvar_32 * tmpvar_32);
   nfadeout_31 = (nfadeout_31 * nfadeout_31);
   nfadeout_31 = (nfadeout_31 * ffadeout_30);
-  tmpvar_3 = (((nfadeout_31 * _Color) * _Multiplier) * wave_6);
+  tmpvar_3 = ((nfadeout_31 * _Color) * (_Multiplier * wave_6));
   xlv_SV_POSITION = (glstate_matrix_mvp * tmpvar_29);
   xlv_TEXCOORD0 = _uv0.xy;
   xlv_TEXCOORD1 = tmpvar_3;

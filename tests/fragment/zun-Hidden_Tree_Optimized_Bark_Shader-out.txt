@@ -32,7 +32,7 @@ void main ()
    * 
     max (0.0, dot (normal_5.xyz, tmpvar_6))
   ) + (_LightColor0.xyz * spec_9)) * (atten_7 * 2.0));
-  c_8.w = (((_LightColor0.w * spec_9) * atten_7) * gl_Color.w);
+  c_8.w = ((_LightColor0.w * spec_9) * (atten_7 * gl_Color.w));
   c_3.xyz = c_8.xyz;
   c_3.w = 0.0;
   gl_FragData[0] = c_3;

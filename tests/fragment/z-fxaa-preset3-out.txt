@@ -54,13 +54,11 @@ void main ()
   tmpvar_29 = ((tmpvar_24.y * 1.96321) + tmpvar_24.x);
   lumaS_14 = tmpvar_29;
   float tmpvar_30;
-  tmpvar_30 = max (tmpvar_27, max (max (tmpvar_25, tmpvar_26), max (tmpvar_29, tmpvar_28)));
+  tmpvar_30 = max (max (tmpvar_27, tmpvar_25), max (max (tmpvar_26, tmpvar_29), tmpvar_28));
   float tmpvar_31;
-  tmpvar_31 = (tmpvar_30 - min (tmpvar_27, min (
-    min (tmpvar_25, tmpvar_26)
-  , 
-    min (tmpvar_29, tmpvar_28)
-  )));
+  tmpvar_31 = (tmpvar_30 - min (min (tmpvar_27, tmpvar_25), min (
+    min (tmpvar_26, tmpvar_29)
+  , tmpvar_28)));
   float tmpvar_32;
   tmpvar_32 = max (0.0416667, (tmpvar_30 * 0.125));
   if ((tmpvar_31 < tmpvar_32)) {
@@ -69,7 +67,7 @@ void main ()
     float tmpvar_33;
     tmpvar_33 = min (0.75, (max (0.0, 
       ((abs((
-        ((((tmpvar_25 + tmpvar_26) + tmpvar_28) + tmpvar_29) * 0.25)
+        (((tmpvar_25 + tmpvar_26) + (tmpvar_28 + tmpvar_29)) * 0.25)
        - tmpvar_27)) / tmpvar_31) - 0.25)
     ) * 1.33333));
     vec4 tmpvar_34;
@@ -92,11 +90,9 @@ void main ()
     tmpvar_40.xy = (xlv_TEXCOORD0 + _MainTex_TexelSize.xy);
     vec4 tmpvar_41;
     tmpvar_41 = texture2DLod (_MainTex, tmpvar_40.xy, 0.0);
-    rgbL_13 = (((
-      ((tmpvar_17.xyz + tmpvar_19.xyz) + tmpvar_20.xyz)
-     + tmpvar_22.xyz) + tmpvar_24.xyz) + ((
-      (tmpvar_35.xyz + tmpvar_37.xyz)
-     + tmpvar_39.xyz) + tmpvar_41.xyz));
+    rgbL_13 = (((tmpvar_17.xyz + tmpvar_19.xyz) + (tmpvar_20.xyz + tmpvar_22.xyz)) + ((tmpvar_24.xyz + tmpvar_35.xyz) + (
+      (tmpvar_37.xyz + tmpvar_39.xyz)
+     + tmpvar_41.xyz)));
     rgbL_13 = (rgbL_13 * vec3(0.111111, 0.111111, 0.111111));
     float tmpvar_42;
     tmpvar_42 = ((tmpvar_35.y * 1.96321) + tmpvar_35.x);

@@ -86,8 +86,10 @@ vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], 
    + 
     (tmpvar_19 * tmpvar_1.y)
   ) * (
-    ((tmpvar_20 * tmpvar_20) * _mtl_u._MaxGrowSize)
-   * tmpvar_2.w)));
+    (tmpvar_20 * tmpvar_20)
+   * 
+    (_mtl_u._MaxGrowSize * tmpvar_2.w)
+  )));
   time_7 = (_mtl_u._Time.y + (_mtl_u._BlinkingTimeOffsScale * tmpvar_2.z));
   float y_21;
   y_21 = (_mtl_u._TimeOnDuration + _mtl_u._TimeOffDuration);
@@ -141,7 +143,7 @@ vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], 
   nfadeout_31 = (tmpvar_32 * tmpvar_32);
   nfadeout_31 = (nfadeout_31 * nfadeout_31);
   nfadeout_31 = (nfadeout_31 * ffadeout_30);
-  tmpvar_3 = half4((((nfadeout_31 * _mtl_u._Color) * _mtl_u._Multiplier) * wave_6));
+  tmpvar_3 = half4(((nfadeout_31 * _mtl_u._Color) * (_mtl_u._Multiplier * wave_6)));
   _mtl_o.xlv_SV_POSITION = (_mtl_u.glstate_matrix_mvp * tmpvar_29);
   _mtl_o.xlv_TEXCOORD0 = _mtl_i._uv0.xy;
   _mtl_o.xlv_TEXCOORD1 = tmpvar_3;
