@@ -1,9 +1,9 @@
 varying lowp float xx;
 int func (
-  inout mediump float x_1
+  inout highp float x_1
 )
 {
-  mediump float tmpvar_2;
+  highp float tmpvar_2;
   tmpvar_2 = (x_1 * 2.0);
   x_1 = tmpvar_2;
   return 0;
@@ -25,7 +25,7 @@ void main ()
   if ((x_5 < 0.0)) {
     discard;
   };
-  mediump float tmpvar_9;
+  highp float tmpvar_9;
   tmpvar_9 = 0.0;
   c_3 = tmpvar_9;
   while (true) {

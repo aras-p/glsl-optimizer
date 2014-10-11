@@ -3,14 +3,14 @@ void main ()
 {
   mediump vec4 c_1;
   c_1 = vec4(0.0, 0.0, 0.0, 0.0);
-  mediump float tmpvar_2;
+  highp float tmpvar_2;
   if ((xlv_TEXCOORD0.x > 0.5)) {
     tmpvar_2 = 0.9;
   } else {
     tmpvar_2 = 0.1;
   };
   c_1 = vec4(tmpvar_2);
-  mediump vec4 tmpvar_3;
+  highp vec4 tmpvar_3;
   if ((xlv_TEXCOORD0.x > 0.5)) {
     tmpvar_3 = vec4(0.9, 0.9, 0.9, 0.9);
   } else {
@@ -19,14 +19,14 @@ void main ()
   mediump vec4 tmpvar_4;
   tmpvar_4 = (vec4(tmpvar_2) + tmpvar_3);
   c_1 = tmpvar_4;
-  mediump vec3 tmpvar_5;
+  highp vec3 tmpvar_5;
   if ((xlv_TEXCOORD0.x > 0.5)) {
     tmpvar_5 = vec3(0.9, 0.9, 0.9);
   } else {
     tmpvar_5 = vec3(0.1, 0.1, 0.1);
   };
   c_1.xyz = (tmpvar_4.xyz + tmpvar_5);
-  mediump vec2 tmpvar_6;
+  highp vec2 tmpvar_6;
   if ((xlv_TEXCOORD0.x > 0.5)) {
     tmpvar_6 = vec2(0.9, 0.9);
   } else {
@@ -35,7 +35,7 @@ void main ()
   c_1.xy = (c_1.xy + tmpvar_6);
   highp float tmpvar_7;
   tmpvar_7 = fract(xlv_TEXCOORD0.x);
-  mediump float tmpvar_8;
+  highp float tmpvar_8;
   if (bool(tmpvar_7)) {
     tmpvar_8 = 0.9;
   } else {
@@ -46,4 +46,6 @@ void main ()
 }
 
 
-// inputs: 1, stats: 21 alu 0 tex 5 flow
+// stats: 21 alu 0 tex 5 flow
+// inputs: 1
+//  #0: xlv_TEXCOORD0 (high float) 4x1 [-1]

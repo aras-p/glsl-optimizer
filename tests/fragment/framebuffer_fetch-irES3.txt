@@ -23,7 +23,7 @@ void main ()
 {
   lowp vec4 xlt_ocol_5;
   v2f xlt_i_6;
-  mediump vec4 tmpvar_7;
+  highp vec4 tmpvar_7;
   tmpvar_7 = vec4(0.0, 0.0, 0.0, 0.0);
   xlt_i_6.vertex = tmpvar_7;
   lowp vec4 tmpvar_8;

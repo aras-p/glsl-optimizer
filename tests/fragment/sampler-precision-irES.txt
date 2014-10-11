@@ -1,7 +1,7 @@
 uniform sampler2D texlow;
 uniform mediump sampler2D texmed;
 uniform highp sampler2D texhigh;
-uniform samplerCube cubelow;
+uniform lowp samplerCube cubelow;
 uniform mediump samplerCube cubemed;
 uniform highp samplerCube cubehigh;
 varying highp vec4 varUV;

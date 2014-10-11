@@ -135,14 +135,14 @@ v2f_surf vert_surf (
   highp vec3 tmpvar_39;
   tmpvar_39 = (tmpvar_38 * v_27.tangent.w);
   binormal_31 = tmpvar_39;
-  mat3 tmpvar_40;
-  vec3 tmpvar_41;
+  highp mat3 tmpvar_40;
+  highp vec3 tmpvar_41;
   tmpvar_41 = v_27.tangent.xyz;
   tmpvar_40[0] = tmpvar_41;
-  vec3 tmpvar_42;
+  highp vec3 tmpvar_42;
   tmpvar_42 = binormal_31;
   tmpvar_40[1] = tmpvar_42;
-  vec3 tmpvar_43;
+  highp vec3 tmpvar_43;
   tmpvar_43 = v_27.normal;
   tmpvar_40[2] = tmpvar_43;
   mat3 tmpvar_44;

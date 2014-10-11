@@ -2,7 +2,7 @@
 in mediump vec3 uv;
 out lowp vec4 outColor;
 uniform sampler2D tex;
-uniform sampler3D vol;
+uniform lowp sampler3D vol;
 void main ()
 {
   outColor = (((
