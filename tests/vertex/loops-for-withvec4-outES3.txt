@@ -12,79 +12,92 @@ in vec4 dcl_Input1_NORMAL0;
 in vec4 dcl_Input2_TEXCOORD0;
 out vec4 VtxGeoOutput1_TEXCOORD0;
 out vec4 VtxGeoOutput2_COLOR0;
-vec4 tmpvar_1;
-vec4 tmpvar_2;
-vec4 tmpvar_3;
-vec4 tmpvar_4;
-int tmpvar_5;
+vec4 Temp_0;
+vec4 Temp_1;
+vec4 Temp_2;
+vec4 Temp_3;
+int tmpvar_1;
 void main ()
 {
-  tmpvar_1 = (dcl_Input0_POSITION0.yyyy * glstate_matrix_mvp[1]);
-  tmpvar_1 = ((glstate_matrix_mvp[0] * dcl_Input0_POSITION0.xxxx) + tmpvar_1);
-  tmpvar_1 = ((glstate_matrix_mvp[2] * dcl_Input0_POSITION0.zzzz) + tmpvar_1);
-  vec4 tmpvar_6;
-  tmpvar_6 = ((glstate_matrix_mvp[3] * dcl_Input0_POSITION0.wwww) + tmpvar_1);
+  Temp_0 = (dcl_Input0_POSITION0.yyyy * glstate_matrix_mvp[1]);
+  Temp_0 = ((glstate_matrix_mvp[0] * dcl_Input0_POSITION0.xxxx) + Temp_0);
+  Temp_0 = ((glstate_matrix_mvp[2] * dcl_Input0_POSITION0.zzzz) + Temp_0);
+  vec4 tmpvar_2;
+  tmpvar_2 = ((glstate_matrix_mvp[3] * dcl_Input0_POSITION0.wwww) + Temp_0);
   VtxGeoOutput1_TEXCOORD0.xy = ((dcl_Input2_TEXCOORD0.xyxx * _MainTex_ST.xyxx) + _MainTex_ST.zwzz).xy;
-  tmpvar_1.xyz = (dcl_Input0_POSITION0.yyyy * glstate_matrix_modelview0[1].xyzx).xyz;
-  tmpvar_1.xyz = ((glstate_matrix_modelview0[0].xyzx * dcl_Input0_POSITION0.xxxx) + tmpvar_1.xyzx).xyz;
-  tmpvar_1.xyz = ((glstate_matrix_modelview0[2].xyzx * dcl_Input0_POSITION0.zzzz) + tmpvar_1.xyzx).xyz;
-  tmpvar_1.xyz = ((glstate_matrix_modelview0[3].xyzx * dcl_Input0_POSITION0.wwww) + tmpvar_1.xyzx).xyz;
-  tmpvar_2.xyz = (dcl_Input1_NORMAL0.yyyy * glstate_matrix_invtrans_modelview0[1].xyzx).xyz;
-  tmpvar_2.xyz = ((glstate_matrix_invtrans_modelview0[0].xyzx * dcl_Input1_NORMAL0.xxxx) + tmpvar_2.xyzx).xyz;
-  tmpvar_2.xyz = ((glstate_matrix_invtrans_modelview0[2].xyzx * dcl_Input1_NORMAL0.zzzz) + tmpvar_2.xyzx).xyz;
-  tmpvar_1.w = dot (tmpvar_2.xyz, tmpvar_2.xyz);
-  tmpvar_1.w = inversesqrt(tmpvar_1.w);
-  tmpvar_2.xyz = (tmpvar_1.wwww * tmpvar_2.xyzx).xyz;
-  tmpvar_3.xyz = glstate_lightmodel_ambient.xyz;
-  tmpvar_5 = 0;
-  tmpvar_4.xyz = ((-(tmpvar_1.xyzx) * unity_LightPosition[tmpvar_5].wwww) + unity_LightPosition[tmpvar_5].xyzx).xyz;
-  tmpvar_2.w = dot (tmpvar_4.xyz, tmpvar_4.xyz);
-  tmpvar_3.w = ((tmpvar_2.w * unity_LightAtten[tmpvar_5].z) + 1.0);
-  tmpvar_3.w = (1.0/(tmpvar_3.w));
-  tmpvar_2.w = inversesqrt(tmpvar_2.w);
-  tmpvar_4.xyz = (tmpvar_2.wwww * tmpvar_4.xyzx).xyz;
-  tmpvar_2.w = dot (tmpvar_2.xyz, tmpvar_4.xyz);
-  tmpvar_2.w = max (tmpvar_2.w, 0.0);
-  tmpvar_2.w = (tmpvar_2.w * tmpvar_3.w);
-  tmpvar_3.xyz = ((unity_LightColor[tmpvar_5].xyzx * tmpvar_2.wwww) + glstate_lightmodel_ambient.xyzx).xyz;
-  tmpvar_5++;
-  tmpvar_4.xyz = ((-(tmpvar_1.xyzx) * unity_LightPosition[tmpvar_5].wwww) + unity_LightPosition[tmpvar_5].xyzx).xyz;
-  tmpvar_2.w = dot (tmpvar_4.xyz, tmpvar_4.xyz);
-  tmpvar_3.w = ((tmpvar_2.w * unity_LightAtten[tmpvar_5].z) + 1.0);
-  tmpvar_3.w = (1.0/(tmpvar_3.w));
-  tmpvar_2.w = inversesqrt(tmpvar_2.w);
-  tmpvar_4.xyz = (tmpvar_2.wwww * tmpvar_4.xyzx).xyz;
-  tmpvar_2.w = dot (tmpvar_2.xyz, tmpvar_4.xyz);
-  tmpvar_2.w = max (tmpvar_2.w, 0.0);
-  tmpvar_2.w = (tmpvar_2.w * tmpvar_3.w);
-  tmpvar_3.xyz = ((unity_LightColor[tmpvar_5].xyzx * tmpvar_2.wwww) + tmpvar_3.xyzx).xyz;
-  tmpvar_5++;
-  tmpvar_4.xyz = ((-(tmpvar_1.xyzx) * unity_LightPosition[tmpvar_5].wwww) + unity_LightPosition[tmpvar_5].xyzx).xyz;
-  tmpvar_2.w = dot (tmpvar_4.xyz, tmpvar_4.xyz);
-  tmpvar_3.w = ((tmpvar_2.w * unity_LightAtten[tmpvar_5].z) + 1.0);
-  tmpvar_3.w = (1.0/(tmpvar_3.w));
-  tmpvar_2.w = inversesqrt(tmpvar_2.w);
-  tmpvar_4.xyz = (tmpvar_2.wwww * tmpvar_4.xyzx).xyz;
-  tmpvar_2.w = dot (tmpvar_2.xyz, tmpvar_4.xyz);
-  tmpvar_2.w = max (tmpvar_2.w, 0.0);
-  tmpvar_2.w = (tmpvar_2.w * tmpvar_3.w);
-  tmpvar_3.xyz = ((unity_LightColor[tmpvar_5].xyzx * tmpvar_2.wwww) + tmpvar_3.xyzx).xyz;
-  tmpvar_5++;
-  tmpvar_4.xyz = ((-(tmpvar_1.xyzx) * unity_LightPosition[tmpvar_5].wwww) + unity_LightPosition[tmpvar_5].xyzx).xyz;
-  tmpvar_2.w = dot (tmpvar_4.xyz, tmpvar_4.xyz);
-  tmpvar_3.w = ((tmpvar_2.w * unity_LightAtten[tmpvar_5].z) + 1.0);
-  tmpvar_3.w = (1.0/(tmpvar_3.w));
-  tmpvar_2.w = inversesqrt(tmpvar_2.w);
-  tmpvar_4.xyz = (tmpvar_2.wwww * tmpvar_4.xyzx).xyz;
-  tmpvar_2.w = dot (tmpvar_2.xyz, tmpvar_4.xyz);
-  tmpvar_2.w = max (tmpvar_2.w, 0.0);
-  tmpvar_2.w = (tmpvar_2.w * tmpvar_3.w);
-  tmpvar_3.xyz = ((unity_LightColor[tmpvar_5].xyzx * tmpvar_2.wwww) + tmpvar_3.xyzx).xyz;
-  tmpvar_5++;
-  VtxGeoOutput2_COLOR0.xyz = (tmpvar_3.xyzx + tmpvar_3.xyzx).xyz;
+  Temp_0.xyz = (dcl_Input0_POSITION0.yyyy * glstate_matrix_modelview0[1].xyzx).xyz;
+  Temp_0.xyz = ((glstate_matrix_modelview0[0].xyzx * dcl_Input0_POSITION0.xxxx) + Temp_0.xyzx).xyz;
+  Temp_0.xyz = ((glstate_matrix_modelview0[2].xyzx * dcl_Input0_POSITION0.zzzz) + Temp_0.xyzx).xyz;
+  Temp_0.xyz = ((glstate_matrix_modelview0[3].xyzx * dcl_Input0_POSITION0.wwww) + Temp_0.xyzx).xyz;
+  Temp_1.xyz = (dcl_Input1_NORMAL0.yyyy * glstate_matrix_invtrans_modelview0[1].xyzx).xyz;
+  Temp_1.xyz = ((glstate_matrix_invtrans_modelview0[0].xyzx * dcl_Input1_NORMAL0.xxxx) + Temp_1.xyzx).xyz;
+  Temp_1.xyz = ((glstate_matrix_invtrans_modelview0[2].xyzx * dcl_Input1_NORMAL0.zzzz) + Temp_1.xyzx).xyz;
+  Temp_0.w = dot (Temp_1.xyz, Temp_1.xyz);
+  Temp_0.w = inversesqrt(Temp_0.w);
+  Temp_1.xyz = (Temp_0.wwww * Temp_1.xyzx).xyz;
+  Temp_2.xyz = glstate_lightmodel_ambient.xyz;
+  tmpvar_1 = 0;
+  Temp_3.xyz = ((-(Temp_0.xyzx) * unity_LightPosition[tmpvar_1].wwww) + unity_LightPosition[tmpvar_1].xyzx).xyz;
+  Temp_1.w = dot (Temp_3.xyz, Temp_3.xyz);
+  Temp_2.w = ((Temp_1.w * unity_LightAtten[tmpvar_1].z) + 1.0);
+  Temp_2.w = (1.0/(Temp_2.w));
+  Temp_1.w = inversesqrt(Temp_1.w);
+  Temp_3.xyz = (Temp_1.wwww * Temp_3.xyzx).xyz;
+  Temp_1.w = dot (Temp_1.xyz, Temp_3.xyz);
+  Temp_1.w = max (Temp_1.w, 0.0);
+  Temp_1.w = (Temp_1.w * Temp_2.w);
+  Temp_2.xyz = ((unity_LightColor[tmpvar_1].xyzx * Temp_1.wwww) + glstate_lightmodel_ambient.xyzx).xyz;
+  tmpvar_1++;
+  Temp_3.xyz = ((-(Temp_0.xyzx) * unity_LightPosition[tmpvar_1].wwww) + unity_LightPosition[tmpvar_1].xyzx).xyz;
+  Temp_1.w = dot (Temp_3.xyz, Temp_3.xyz);
+  Temp_2.w = ((Temp_1.w * unity_LightAtten[tmpvar_1].z) + 1.0);
+  Temp_2.w = (1.0/(Temp_2.w));
+  Temp_1.w = inversesqrt(Temp_1.w);
+  Temp_3.xyz = (Temp_1.wwww * Temp_3.xyzx).xyz;
+  Temp_1.w = dot (Temp_1.xyz, Temp_3.xyz);
+  Temp_1.w = max (Temp_1.w, 0.0);
+  Temp_1.w = (Temp_1.w * Temp_2.w);
+  Temp_2.xyz = ((unity_LightColor[tmpvar_1].xyzx * Temp_1.wwww) + Temp_2.xyzx).xyz;
+  tmpvar_1++;
+  Temp_3.xyz = ((-(Temp_0.xyzx) * unity_LightPosition[tmpvar_1].wwww) + unity_LightPosition[tmpvar_1].xyzx).xyz;
+  Temp_1.w = dot (Temp_3.xyz, Temp_3.xyz);
+  Temp_2.w = ((Temp_1.w * unity_LightAtten[tmpvar_1].z) + 1.0);
+  Temp_2.w = (1.0/(Temp_2.w));
+  Temp_1.w = inversesqrt(Temp_1.w);
+  Temp_3.xyz = (Temp_1.wwww * Temp_3.xyzx).xyz;
+  Temp_1.w = dot (Temp_1.xyz, Temp_3.xyz);
+  Temp_1.w = max (Temp_1.w, 0.0);
+  Temp_1.w = (Temp_1.w * Temp_2.w);
+  Temp_2.xyz = ((unity_LightColor[tmpvar_1].xyzx * Temp_1.wwww) + Temp_2.xyzx).xyz;
+  tmpvar_1++;
+  Temp_3.xyz = ((-(Temp_0.xyzx) * unity_LightPosition[tmpvar_1].wwww) + unity_LightPosition[tmpvar_1].xyzx).xyz;
+  Temp_1.w = dot (Temp_3.xyz, Temp_3.xyz);
+  Temp_2.w = ((Temp_1.w * unity_LightAtten[tmpvar_1].z) + 1.0);
+  Temp_2.w = (1.0/(Temp_2.w));
+  Temp_1.w = inversesqrt(Temp_1.w);
+  Temp_3.xyz = (Temp_1.wwww * Temp_3.xyzx).xyz;
+  Temp_1.w = dot (Temp_1.xyz, Temp_3.xyz);
+  Temp_1.w = max (Temp_1.w, 0.0);
+  Temp_1.w = (Temp_1.w * Temp_2.w);
+  Temp_2.xyz = ((unity_LightColor[tmpvar_1].xyzx * Temp_1.wwww) + Temp_2.xyzx).xyz;
+  tmpvar_1++;
+  VtxGeoOutput2_COLOR0.xyz = (Temp_2.xyzx + Temp_2.xyzx).xyz;
   VtxGeoOutput2_COLOR0.w = 1.0;
-  gl_Position = tmpvar_6;
+  gl_Position = tmpvar_2;
 }
 
 
-// inputs: 3, stats: 87 alu 0 tex 0 flow
+// stats: 87 alu 0 tex 0 flow
+// inputs: 3
+//  #0: dcl_Input0_POSITION0 (high float) 4x1 [-1]
+//  #1: dcl_Input1_NORMAL0 (high float) 4x1 [-1]
+//  #2: dcl_Input2_TEXCOORD0 (high float) 4x1 [-1]
+// uniforms: 8 (total size: 0)
+//  #0: glstate_lightmodel_ambient (high float) 4x1 [-1]
+//  #1: glstate_matrix_invtrans_modelview0 (high float) 4x1 [4]
+//  #2: glstate_matrix_modelview0 (high float) 4x1 [4]
+//  #3: glstate_matrix_mvp (high float) 4x1 [4]
+//  #4: unity_LightAtten (high float) 4x1 [8]
+//  #5: unity_LightPosition (high float) 4x1 [8]
+//  #6: unity_LightColor (high float) 4x1 [8]
+//  #7: _MainTex_ST (high float) 4x1 [-1]
