@@ -39,79 +39,87 @@
    /* Put the tokens into the symbol table, so that GDB and other debuggers
       know about them.  */
    enum yytokentype {
-     COMMA_FINAL = 258,
-     DEFINED = 259,
-     ELIF_EXPANDED = 260,
-     HASH = 261,
-     HASH_DEFINE = 262,
-     FUNC_IDENTIFIER = 263,
-     OBJ_IDENTIFIER = 264,
-     HASH_ELIF = 265,
-     HASH_ELSE = 266,
-     HASH_ENDIF = 267,
-     HASH_IF = 268,
-     HASH_IFDEF = 269,
-     HASH_IFNDEF = 270,
-     HASH_LINE = 271,
-     HASH_UNDEF = 272,
-     HASH_VERSION = 273,
-     IDENTIFIER = 274,
-     IF_EXPANDED = 275,
-     INTEGER = 276,
-     INTEGER_STRING = 277,
-     LINE_EXPANDED = 278,
-     NEWLINE = 279,
-     OTHER = 280,
-     PLACEHOLDER = 281,
-     SPACE = 282,
-     PASTE = 283,
-     OR = 284,
-     AND = 285,
-     NOT_EQUAL = 286,
-     EQUAL = 287,
-     GREATER_OR_EQUAL = 288,
-     LESS_OR_EQUAL = 289,
-     RIGHT_SHIFT = 290,
-     LEFT_SHIFT = 291,
-     UNARY = 292
+     DEFINED = 258,
+     ELIF_EXPANDED = 259,
+     HASH_TOKEN = 260,
+     DEFINE_TOKEN = 261,
+     FUNC_IDENTIFIER = 262,
+     OBJ_IDENTIFIER = 263,
+     ELIF = 264,
+     ELSE = 265,
+     ENDIF = 266,
+     ERROR_TOKEN = 267,
+     IF = 268,
+     IFDEF = 269,
+     IFNDEF = 270,
+     LINE = 271,
+     PRAGMA = 272,
+     UNDEF = 273,
+     VERSION_TOKEN = 274,
+     GARBAGE = 275,
+     IDENTIFIER = 276,
+     IF_EXPANDED = 277,
+     INTEGER = 278,
+     INTEGER_STRING = 279,
+     LINE_EXPANDED = 280,
+     NEWLINE = 281,
+     OTHER = 282,
+     PLACEHOLDER = 283,
+     SPACE = 284,
+     PLUS_PLUS = 285,
+     MINUS_MINUS = 286,
+     PASTE = 287,
+     OR = 288,
+     AND = 289,
+     NOT_EQUAL = 290,
+     EQUAL = 291,
+     GREATER_OR_EQUAL = 292,
+     LESS_OR_EQUAL = 293,
+     RIGHT_SHIFT = 294,
+     LEFT_SHIFT = 295,
+     UNARY = 296
    };
 #endif
 /* Tokens.  */
-#define COMMA_FINAL 258
-#define DEFINED 259
-#define ELIF_EXPANDED 260
-#define HASH 261
-#define HASH_DEFINE 262
-#define FUNC_IDENTIFIER 263
-#define OBJ_IDENTIFIER 264
-#define HASH_ELIF 265
-#define HASH_ELSE 266
-#define HASH_ENDIF 267
-#define HASH_IF 268
-#define HASH_IFDEF 269
-#define HASH_IFNDEF 270
-#define HASH_LINE 271
-#define HASH_UNDEF 272
-#define HASH_VERSION 273
-#define IDENTIFIER 274
-#define IF_EXPANDED 275
-#define INTEGER 276
-#define INTEGER_STRING 277
-#define LINE_EXPANDED 278
-#define NEWLINE 279
-#define OTHER 280
-#define PLACEHOLDER 281
-#define SPACE 282
-#define PASTE 283
-#define OR 284
-#define AND 285
-#define NOT_EQUAL 286
-#define EQUAL 287
-#define GREATER_OR_EQUAL 288
-#define LESS_OR_EQUAL 289
-#define RIGHT_SHIFT 290
-#define LEFT_SHIFT 291
-#define UNARY 292
+#define DEFINED 258
+#define ELIF_EXPANDED 259
+#define HASH_TOKEN 260
+#define DEFINE_TOKEN 261
+#define FUNC_IDENTIFIER 262
+#define OBJ_IDENTIFIER 263
+#define ELIF 264
+#define ELSE 265
+#define ENDIF 266
+#define ERROR_TOKEN 267
+#define IF 268
+#define IFDEF 269
+#define IFNDEF 270
+#define LINE 271
+#define PRAGMA 272
+#define UNDEF 273
+#define VERSION_TOKEN 274
+#define GARBAGE 275
+#define IDENTIFIER 276
+#define IF_EXPANDED 277
+#define INTEGER 278
+#define INTEGER_STRING 279
+#define LINE_EXPANDED 280
+#define NEWLINE 281
+#define OTHER 282
+#define PLACEHOLDER 283
+#define SPACE 284
+#define PLUS_PLUS 285
+#define MINUS_MINUS 286
+#define PASTE 287
+#define OR 288
+#define AND 289
+#define NOT_EQUAL 290
+#define EQUAL 291
+#define GREATER_OR_EQUAL 292
+#define LESS_OR_EQUAL 293
+#define RIGHT_SHIFT 294
+#define LEFT_SHIFT 295
+#define UNARY 296
 
 
 
