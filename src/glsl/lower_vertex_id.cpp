@@ -85,11 +85,11 @@ lower_vertex_id_visitor::visit(ir_dereference_variable *ir)
       void *const mem_ctx = ralloc_parent(ir);
 
       VertexID = new(mem_ctx) ir_variable(int_t, "__VertexID",
-                                          ir_var_temporary);
+                                          ir_var_temporary, glsl_precision_high);
       ir_list->push_head(VertexID);
 
       gl_VertexID = new(mem_ctx) ir_variable(int_t, "gl_VertexIDMESA",
-                                             ir_var_system_value);
+                                             ir_var_system_value, glsl_precision_high);
       gl_VertexID->data.how_declared = ir_var_declared_implicitly;
       gl_VertexID->data.read_only = true;
       gl_VertexID->data.location = SYSTEM_VALUE_VERTEX_ID_ZERO_BASE;
@@ -99,7 +99,7 @@ lower_vertex_id_visitor::visit(ir_dereference_variable *ir)
 
       if (gl_BaseVertex == NULL) {
          gl_BaseVertex = new(mem_ctx) ir_variable(int_t, "gl_BaseVertex",
-                                                  ir_var_system_value);
+                                                  ir_var_system_value, glsl_precision_high);
          gl_BaseVertex->data.how_declared = ir_var_declared_implicitly;
          gl_BaseVertex->data.read_only = true;
          gl_BaseVertex->data.location = SYSTEM_VALUE_BASE_VERTEX;
