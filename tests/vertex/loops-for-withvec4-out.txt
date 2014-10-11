@@ -1,12 +1,36 @@
 #version 140
+uniform vec4 unity_AmbientGround;
+uniform vec4 unity_AmbientSky;
+uniform vec4 unity_MatrixVP[4];
+uniform vec4 unity_MatrixV[4];
 uniform vec4 glstate_lightmodel_ambient;
+uniform vec4 glstate_matrix_projection[4];
+uniform vec4 unity_LODFade;
+uniform vec4 unity_Scale;
+uniform vec4 _World2Object[4];
+uniform vec4 _Object2World[4];
 uniform vec4 glstate_matrix_invtrans_modelview0[4];
 uniform vec4 glstate_matrix_modelview0[4];
 uniform vec4 glstate_matrix_mvp[4];
+uniform vec4 unity_SHC;
+uniform vec4 unity_SHBb;
+uniform vec4 unity_SHBg;
+uniform vec4 unity_SHBr;
+uniform vec4 unity_SHAb;
+uniform vec4 unity_SHAg;
+uniform vec4 unity_SHAr;
+uniform vec4 unity_SpotDirection[8];
 uniform vec4 unity_LightAtten[8];
 uniform vec4 unity_LightPosition[8];
 uniform vec4 unity_LightColor[8];
+uniform vec4 unity_4LightAtten0;
+uniform vec4 unity_4LightPosZ0;
+uniform vec4 unity_4LightPosY0;
+uniform vec4 unity_4LightPosX0;
+uniform vec4 _LightPositionRange;
+uniform vec4 _WorldSpaceLightPos0;
 uniform vec4 _MainTex_ST;
+uniform vec4 unity_ColorSpaceGrey;
 in vec4 dcl_Input0_POSITION0;
 in vec4 dcl_Input1_NORMAL0;
 in vec4 dcl_Input2_TEXCOORD0;
@@ -92,12 +116,36 @@ void main ()
 //  #0: dcl_Input0_POSITION0 (high float) 4x1 [-1]
 //  #1: dcl_Input1_NORMAL0 (high float) 4x1 [-1]
 //  #2: dcl_Input2_TEXCOORD0 (high float) 4x1 [-1]
-// uniforms: 8 (total size: 0)
-//  #0: glstate_lightmodel_ambient (high float) 4x1 [-1]
-//  #1: glstate_matrix_invtrans_modelview0 (high float) 4x1 [4]
-//  #2: glstate_matrix_modelview0 (high float) 4x1 [4]
-//  #3: glstate_matrix_mvp (high float) 4x1 [4]
-//  #4: unity_LightAtten (high float) 4x1 [8]
-//  #5: unity_LightPosition (high float) 4x1 [8]
-//  #6: unity_LightColor (high float) 4x1 [8]
-//  #7: _MainTex_ST (high float) 4x1 [-1]
+// uniforms: 32 (total size: 0)
+//  #0: unity_AmbientGround (high float) 4x1 [-1]
+//  #1: unity_AmbientSky (high float) 4x1 [-1]
+//  #2: unity_MatrixVP (high float) 4x1 [4]
+//  #3: unity_MatrixV (high float) 4x1 [4]
+//  #4: glstate_lightmodel_ambient (high float) 4x1 [-1]
+//  #5: glstate_matrix_projection (high float) 4x1 [4]
+//  #6: unity_LODFade (high float) 4x1 [-1]
+//  #7: unity_Scale (high float) 4x1 [-1]
+//  #8: _World2Object (high float) 4x1 [4]
+//  #9: _Object2World (high float) 4x1 [4]
+//  #10: glstate_matrix_invtrans_modelview0 (high float) 4x1 [4]
+//  #11: glstate_matrix_modelview0 (high float) 4x1 [4]
+//  #12: glstate_matrix_mvp (high float) 4x1 [4]
+//  #13: unity_SHC (high float) 4x1 [-1]
+//  #14: unity_SHBb (high float) 4x1 [-1]
+//  #15: unity_SHBg (high float) 4x1 [-1]
+//  #16: unity_SHBr (high float) 4x1 [-1]
+//  #17: unity_SHAb (high float) 4x1 [-1]
+//  #18: unity_SHAg (high float) 4x1 [-1]
+//  #19: unity_SHAr (high float) 4x1 [-1]
+//  #20: unity_SpotDirection (high float) 4x1 [8]
+//  #21: unity_LightAtten (high float) 4x1 [8]
+//  #22: unity_LightPosition (high float) 4x1 [8]
+//  #23: unity_LightColor (high float) 4x1 [8]
+//  #24: unity_4LightAtten0 (high float) 4x1 [-1]
+//  #25: unity_4LightPosZ0 (high float) 4x1 [-1]
+//  #26: unity_4LightPosY0 (high float) 4x1 [-1]
+//  #27: unity_4LightPosX0 (high float) 4x1 [-1]
+//  #28: _LightPositionRange (high float) 4x1 [-1]
+//  #29: _WorldSpaceLightPos0 (high float) 4x1 [-1]
+//  #30: _MainTex_ST (high float) 4x1 [-1]
+//  #31: unity_ColorSpaceGrey (high float) 4x1 [-1]
