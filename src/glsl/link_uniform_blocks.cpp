@@ -22,6 +22,7 @@
  */
 
 #include "main/core.h"
+#include "main/errors.h"
 #include "ir.h"
 #include "linker.h"
 #include "ir_uniform.h"

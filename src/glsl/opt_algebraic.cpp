@@ -682,7 +682,7 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
 
       if (is_vec_two(op_const[1])) {
          ir_variable *x = new(ir) ir_variable(ir->operands[1]->type, "x",
-                                              ir_var_temporary);
+                                              ir_var_temporary, ir->operands[1]->get_precision());
          base_ir->insert_before(x);
          base_ir->insert_before(assign(x, ir->operands[0]));
          return mul(x, x);

@@ -65,6 +65,7 @@
  */
 
 #include "main/core.h"
+#include "main/errors.h"
 #include "glsl_symbol_table.h"
 #include "glsl_parser_extras.h"
 #include "ir.h"

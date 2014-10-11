@@ -21,7 +21,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include "main/imports.h"
+#include "main/errors.h"
 #include "symbol_table.h"
 #include "hash_table.h"
 

@@ -4058,7 +4058,7 @@ builtin_builder::_EmitStreamVertex(builtin_available_predicate avail,
     *     integral expression."
     */
    ir_variable *stream =
-      new(mem_ctx) ir_variable(stream_type, "stream", ir_var_const_in);
+      new(mem_ctx) ir_variable(stream_type, "stream", ir_var_const_in, glsl_precision_undefined);
 
    MAKE_SIG(glsl_type::void_type, avail, 1, stream);
 
@@ -4089,7 +4089,7 @@ builtin_builder::_EndStreamPrimitive(builtin_available_predicate avail,
     *     expression."
     */
    ir_variable *stream =
-      new(mem_ctx) ir_variable(stream_type, "stream", ir_var_const_in);
+      new(mem_ctx) ir_variable(stream_type, "stream", ir_var_const_in, glsl_precision_undefined);
 
    MAKE_SIG(glsl_type::void_type, avail, 1, stream);
 
@@ -4641,9 +4641,10 @@ builtin_builder::_memory_barrier(builtin_available_predicate avail)
 /******************************************************************************/
 
 //@TODO: implement
-#define _glthread_DECLARE_STATIC_MUTEX(name)
-#define _glthread_LOCK_MUTEX(name)
-#define _glthread_UNLOCK_MUTEX(name)
+typedef int mtx_t;
+#define _MTX_INITIALIZER_NP 0
+#define mtx_lock(name)
+#define mtx_unlock(name)
 
 
 /* The singleton instance of builtin_builder. */

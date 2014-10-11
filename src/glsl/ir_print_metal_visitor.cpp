@@ -221,9 +221,8 @@ _mesa_print_ir_metal(exec_list *instructions,
 	if (ls->loop_found)
 		set_loop_controls(instructions, ls);
 
-	foreach_list(node, instructions)
+	foreach_in_list(ir_instruction, ir, instructions)
 	{
-		ir_instruction *ir = (ir_instruction *)node;
 		string_buffer* strOut = &ctx.str;
 		ctx.writingParams = false;
 		if (ir->ir_type == ir_type_variable)
@@ -288,9 +287,9 @@ _mesa_print_ir_metal(exec_list *instructions,
 	ctx.uniformStr.asprintf_append("};\n");
 
 	// emit global array/struct constants
-	foreach_list_safe(node, &gtracker.global_constants)
+	foreach_in_list_safe(gconst_entry_metal, node, &gtracker.global_constants)
 	{
-		ir_constant* c = ((gconst_entry_metal*)node)->ir;
+		ir_constant* c = node->ir;
 
 		ir_print_metal_visitor v (ctx, ctx.prefixStr, &gtracker, mode, state);
 
@@ -313,12 +312,11 @@ _mesa_print_ir_metal(exec_list *instructions,
 		{
 			assert(c->type->is_record());
 			bool first = true;
-			foreach_list(n, &c->components)
+			foreach_in_list(ir_constant, inst, &c->components)
 			{
 				if (!first)
 					v.buffer.asprintf_append (", ");
 				first = false;
-				ir_constant* inst = (ir_constant*)n;
 				inst->accept(&v);
 			}
 		}
@@ -681,9 +679,8 @@ void ir_print_metal_visitor::visit(ir_function_signature *ir)
 
 			indentation++; previous_skipped = false;
 			bool first = true;
-			foreach_list(node, &ir->parameters)
+			foreach_in_list(ir_variable, inst, &ir->parameters)
 			{
-				ir_variable *const inst = (ir_variable *)node;
 				if (!first)
 					buffer.asprintf_append (",\n");
 				indent();
@@ -729,17 +726,15 @@ void ir_print_metal_visitor::visit(ir_function_signature *ir)
 		// insert postponed global assigments and variable declarations
 		assert (!globals->main_function_done);
 		globals->main_function_done = true;
-		foreach_list(node, &globals->global_assignements)
+		foreach_in_list(ga_entry_metal, node, &globals->global_assignements)
 		{
-			ir_instruction* as = ((ga_entry_metal *)node)->ir;
+			ir_instruction* as = node->ir;
 			as->accept(this);
 			buffer.asprintf_append(";\n");
 		}
 	}
 
-   foreach_list(node, &ir->body) {
-      ir_instruction *const inst = (ir_instruction *)node;
-
+   foreach_in_list(ir_instruction, inst, &ir->body) {
       indent();
       inst->accept(this);
 	   end_statement_line();
@@ -760,10 +755,9 @@ void ir_print_metal_visitor::visit(ir_function *ir)
 {
    bool found_non_builtin_proto = false;
 
-   foreach_list(node, &ir->signatures) {
-      ir_function_signature *const sig = (ir_function_signature *)node;
-      if (!sig->is_builtin())
-	 found_non_builtin_proto = true;
+   foreach_in_list(ir_function_signature, sig, &ir->signatures) {
+	   if (!sig->is_builtin())
+		   found_non_builtin_proto = true;
    }
    if (!found_non_builtin_proto)
       return;
@@ -771,9 +765,7 @@ void ir_print_metal_visitor::visit(ir_function *ir)
    PrintGlslMode oldMode = this->mode;
    this->mode = kPrintGlslNone;
 
-   foreach_list(node, &ir->signatures) {
-      ir_function_signature *const sig = (ir_function_signature *)node;
-
+   foreach_in_list(ir_function_signature, sig, &ir->signatures) {
       indent();
       sig->accept(this);
       buffer.asprintf_append ("\n");
@@ -1643,8 +1635,7 @@ ir_print_metal_visitor::visit(ir_call *ir)
 
    buffer.asprintf_append ("%s (", ir->callee_name());
    bool first = true;
-   foreach_list(node, &ir->actual_parameters) {
-      ir_instruction *const inst = (ir_instruction *)node;
+   foreach_in_list(ir_instruction, inst, &ir->actual_parameters) {
 	  if (!first)
 		  buffer.asprintf_append (", ");
       inst->accept(this);
@@ -1689,9 +1680,7 @@ ir_print_metal_visitor::visit(ir_if *ir)
 	indentation++; previous_skipped = false;
 
 
-   foreach_list(n, &ir->then_instructions) {
-      ir_instruction *const inst = (ir_instruction *)n;
-
+   foreach_in_list(ir_instruction, inst, &ir->then_instructions) {
       indent();
       inst->accept(this);
 	   end_statement_line();
@@ -1706,9 +1695,7 @@ ir_print_metal_visitor::visit(ir_if *ir)
 	   buffer.asprintf_append (" else {\n");
 	   indentation++; previous_skipped = false;
 
-	   foreach_list(n, &ir->else_instructions) {
-		  ir_instruction *const inst = (ir_instruction *)n;
-
+	   foreach_in_list(ir_instruction, inst, &ir->else_instructions) {
 		  indent();
 		  inst->accept(this);
 		   end_statement_line();
@@ -1733,10 +1720,7 @@ bool ir_print_metal_visitor::emit_canonical_for (ir_loop* ir)
 		return false;
 
 	// only support for loops with one terminator condition
-	int terminatorCount = 0;
-	foreach_list(node, &ls->terminators) {
-		++terminatorCount;
-	}
+	int terminatorCount = ls->terminators.length();
 	if (terminatorCount != 1)
 		return false;
 
@@ -1750,9 +1734,8 @@ bool ir_print_metal_visitor::emit_canonical_for (ir_loop* ir)
 	// only for loops with single induction variable, to avoid cases of different types of them
 	if (ls->private_induction_variable_count == 1)
 	{
-		foreach_list(node, &ls->induction_variables)
+		foreach_in_list(loop_variable, indvar, &ls->induction_variables)
 		{
-			loop_variable* indvar = (loop_variable *) node;
 			if (!this->loopstate->get_for_inductor(indvar->var))
 				continue;
 
@@ -1772,9 +1755,8 @@ bool ir_print_metal_visitor::emit_canonical_for (ir_loop* ir)
 	buffer.asprintf_append("; ");
 
 	// emit loop terminating conditions
-	foreach_list(node, &ls->terminators)
+	foreach_in_list(loop_terminator, term, &ls->terminators)
 	{
-		loop_terminator* term = (loop_terminator *) node;
 		hash_table_insert(terminator_hash, term, term->ir);
 
 		// IR has conditions in the form of "if (x) break",
@@ -1825,9 +1807,8 @@ bool ir_print_metal_visitor::emit_canonical_for (ir_loop* ir)
 
 	// emit loop induction variable updates
 	bool first = true;
-	foreach_list(node, &ls->induction_variables)
+	foreach_in_list(loop_variable, indvar, &ls->induction_variables)
 	{
-		loop_variable* indvar = (loop_variable *) node;
 		hash_table_insert(induction_hash, indvar, indvar->first_assignment);
 		if (!first)
 			buffer.asprintf_append(", ");
@@ -1840,9 +1821,7 @@ bool ir_print_metal_visitor::emit_canonical_for (ir_loop* ir)
 
 	// emit loop body
 	indentation++; previous_skipped = false;
-	foreach_list(node, &ir->body_instructions) {
-		ir_instruction *const inst = (ir_instruction *)node;
-
+	foreach_in_list(ir_instruction, inst, &ir->body_instructions) {
 		// skip termination & induction statements,
 		// they are part of "for" clause
 		if (hash_table_find(terminator_hash, inst))
@@ -1874,8 +1853,7 @@ ir_print_metal_visitor::visit(ir_loop *ir)
 
 	buffer.asprintf_append ("while (true) {\n");
 	indentation++; previous_skipped = false;
-	foreach_list(n, &ir->body_instructions) {
-		ir_instruction *const inst = (ir_instruction *)n;
+	foreach_in_list(ir_instruction, inst, &ir->body_instructions) {
 		indent();
 		inst->accept(this);
 		end_statement_line();

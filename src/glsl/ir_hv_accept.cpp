@@ -392,15 +392,7 @@ ir_if::accept(ir_hierarchical_visitor *v)
 ir_visitor_status
 ir_precision_statement::accept(ir_hierarchical_visitor *v)
 {
-   ir_visitor_status s = v->visit_enter(this);
-   if (s != visit_continue)
-      return (s == visit_continue_with_parent) ? visit_continue : s;
-
-   s = this->stream->accept(v);
-   if (s != visit_continue)
-      return (s == visit_continue_with_parent) ? visit_continue : s;
-
-   return (s == visit_stop) ? s : v->visit_leave(this);
+	return v->visit(this);
 }
 
 ir_visitor_status
@@ -412,7 +404,15 @@ ir_typedecl_statement::accept(ir_hierarchical_visitor *v)
 ir_visitor_status
 ir_emit_vertex::accept(ir_hierarchical_visitor *v)
 {
-   return v->visit(this);
+	ir_visitor_status s = v->visit_enter(this);
+	if (s != visit_continue)
+		return (s == visit_continue_with_parent) ? visit_continue : s;
+	
+	s = this->stream->accept(v);
+	if (s != visit_continue)
+		return (s == visit_continue_with_parent) ? visit_continue : s;
+	
+	return (s == visit_stop) ? s : v->visit_leave(this);
 }
 
 ir_visitor_status

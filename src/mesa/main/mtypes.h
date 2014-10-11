@@ -299,6 +299,7 @@ struct gl_transform_feedback_output
    unsigned OutputRegister;
    unsigned OutputBuffer;
    unsigned NumComponents;
+   unsigned StreamId;
 
    /** offset (in DWORDs) of this output within the interleaved structure */
    unsigned DstOffset;
@@ -810,7 +811,6 @@ struct gl_active_atomic_buffer
    /** Shader stages making use of it. */
    GLboolean StageReferences[MESA_SHADER_STAGES];
 };
-
 
 /**
  * A GLSL program object.

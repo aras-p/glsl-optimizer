@@ -29,6 +29,7 @@
  */
 
 
+#include "main/errors.h"
 #include "main/mtypes.h"
 #include "glsl_symbol_table.h"
 #include "glsl_parser_extras.h"

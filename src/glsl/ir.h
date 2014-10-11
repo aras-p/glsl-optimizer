@@ -2031,17 +2031,8 @@ public:
     */
    virtual ir_variable *variable_referenced() const = 0;
 
-   /**
-    * Get the constant that is ultimately referenced by an r-value,
-    * in a constant expression evaluation context.
-    *
-    * The offset is used when the reference is to a specific column of
-    * a matrix.
-    */
-  virtual void constant_referenced(struct hash_table *variable_context, ir_constant *&store, int &offset) const = 0;
-
 protected:
-  ir_dereference(glsl_precision precision) : ir_rvalue(precision) { }
+   ir_dereference(ir_node_type t, glsl_precision precision) : ir_rvalue(t, precision) { }
 };
 
 
@@ -2306,6 +2297,7 @@ private:
 class ir_precision_statement : public ir_instruction {
 public:
    ir_precision_statement(const char *statement_to_store)
+	: ir_instruction(ir_type_precision)
    {
 	   ir_type = ir_type_precision;
 	   precision_statement = statement_to_store;
@@ -2330,6 +2322,7 @@ public:
 class ir_typedecl_statement : public ir_instruction {
 public:
 	ir_typedecl_statement(const glsl_type* type_decl)
+	: ir_instruction(ir_type_typedecl)
 	{
 		this->ir_type = ir_type_typedecl;
 		this->type_decl = type_decl;

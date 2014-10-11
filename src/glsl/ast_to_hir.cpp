@@ -4592,7 +4592,7 @@ ast_switch_statement::hir(exec_list *instructions,
    state->switch_state.run_default =
       new(ctx) ir_variable(glsl_type::bool_type,
                              "run_default_tmp",
-                             ir_var_temporary);
+                             ir_var_temporary, glsl_precision_low);
    instructions->push_tail(state->switch_state.run_default);
 
    /* Cache test expression.

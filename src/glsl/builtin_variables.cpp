@@ -25,7 +25,6 @@
 #include "glsl_parser_extras.h"
 #include "glsl_symbol_table.h"
 #include "main/core.h"
-#include "main/uniforms.h"
 #include "program/prog_parameter.h"
 #include "program/prog_statevars.h"
 #include "program/prog_instruction.h"
@@ -38,7 +37,7 @@ struct gl_builtin_uniform_element {
 };
 struct gl_builtin_uniform_desc {
 	const char *name;
-	struct gl_builtin_uniform_element *elements;
+	const struct gl_builtin_uniform_element *elements;
 	unsigned int num_elements;
 };
 
@@ -759,7 +758,7 @@ builtin_variable_generator::generate_uniforms()
    add_uniform(array(vec4_t, VARYING_SLOT_MAX), "gl_CurrentAttribFragMESA", glsl_precision_undefined);
 
    if (compatibility) {
-      add_uniform(mat4_t, "gl_ModelViewMatrix",);
+      add_uniform(mat4_t, "gl_ModelViewMatrix");
       add_uniform(mat4_t, "gl_ProjectionMatrix");
       add_uniform(mat4_t, "gl_ModelViewProjectionMatrix");
       add_uniform(mat3_t, "gl_NormalMatrix");
@@ -840,7 +839,7 @@ builtin_variable_generator::generate_vs_special_vars()
    if (state->AMD_vertex_shader_layer_enable)
       add_output(VARYING_SLOT_LAYER, int_t, "gl_Layer", glsl_precision_high);
    if (state->AMD_vertex_shader_viewport_index_enable)
-      add_output(VARYING_SLOT_VIEWPORT, int_t, "gl_ViewportIndex");
+      add_output(VARYING_SLOT_VIEWPORT, int_t, "gl_ViewportIndex", glsl_precision_high);
    if (compatibility) {
       add_input(VERT_ATTRIB_POS, vec4_t, "gl_Vertex", glsl_precision_high);
       add_input(VERT_ATTRIB_NORMAL, vec3_t, "gl_Normal", glsl_precision_medium);
@@ -869,7 +868,7 @@ builtin_variable_generator::generate_gs_special_vars()
    if (state->ARB_viewport_array_enable)
       add_output(VARYING_SLOT_VIEWPORT, int_t, "gl_ViewportIndex", glsl_precision_high);
    if (state->ARB_gpu_shader5_enable)
-      add_system_value(SYSTEM_VALUE_INVOCATION_ID, int_t, "gl_InvocationID");
+      add_system_value(SYSTEM_VALUE_INVOCATION_ID, int_t, "gl_InvocationID", glsl_precision_high);
 
    /* Although gl_PrimitiveID appears in tessellation control and tessellation
     * evaluation shaders, it has a different function there than it has in
@@ -940,14 +939,14 @@ builtin_variable_generator::generate_fs_special_vars()
 		ir_variable *const var =
 		add_output(FRAG_RESULT_DEPTH, float_t, "gl_FragDepthEXT", glsl_precision_high);
 		if (state->EXT_frag_depth_warn)
-			var->warn_extension = "GL_EXT_frag_depth";
+			var->enable_extension_warning("GL_EXT_frag_depth");
 	}
 	
 	if (state->EXT_shader_framebuffer_fetch_enable) {
 		ir_variable *const var =
 			add_input(VARYING_SLOT_VAR0, array(vec4_t, state->Const.MaxDrawBuffers), "gl_LastFragData", glsl_precision_medium);
 		if (state->EXT_shader_framebuffer_fetch_warn)
-			var->warn_extension = "GL_EXT_shader_framebuffer_fetch";
+			var->enable_extension_warning("GL_EXT_shader_framebuffer_fetch");
 	}
 
    if (state->ARB_sample_shading_enable) {
@@ -968,8 +967,8 @@ builtin_variable_generator::generate_fs_special_vars()
    }
 
    if (state->ARB_fragment_layer_viewport_enable) {
-      add_input(VARYING_SLOT_LAYER, int_t, "gl_Layer");
-      add_input(VARYING_SLOT_VIEWPORT, int_t, "gl_ViewportIndex");
+      add_input(VARYING_SLOT_LAYER, int_t, "gl_Layer", glsl_precision_high);
+      add_input(VARYING_SLOT_VIEWPORT, int_t, "gl_ViewportIndex", glsl_precision_high);
    }
 }
 

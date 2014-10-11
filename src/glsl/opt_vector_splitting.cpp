@@ -149,8 +149,7 @@ ir_vector_reference_visitor::get_variable_entry(ir_variable *var)
 	   }
    }
 
-   foreach_list(n, &this->variable_list) {
-      variable_entry *entry = (variable_entry *) n;
+   foreach_in_list(variable_entry, entry, &this->variable_list) {
       if (entry->var == var)
 	 return entry;
    }
@@ -285,8 +284,7 @@ ir_vector_reference_visitor::get_split_list(exec_list *instructions,
     * declarations, which need to be matched by name across shaders.
     */
    if (!linked) {
-      foreach_list(node, instructions) {
-	 ir_variable *var = ((ir_instruction *)node)->as_variable();
+      foreach_in_list(ir_variable, var, instructions) {
 	 if (var) {
 	    variable_entry *entry = get_variable_entry(var);
 	    if (entry)
@@ -296,8 +294,7 @@ ir_vector_reference_visitor::get_split_list(exec_list *instructions,
    }
 
    /* Trim out variables we found that we can't split. */
-   foreach_list_safe(n, &variable_list) {
-      variable_entry *entry = (variable_entry *) n;
+   foreach_in_list_safe(variable_entry, entry, &variable_list) {
 
       if (debug) {
 	 printf("array %s@%p: decl %d, split %d\n",
@@ -351,8 +348,7 @@ ir_vector_splitting_visitor::get_splitting_entry(ir_variable *var)
 {
    assert(var);
 
-   foreach_list(n, this->variable_list) {
-      variable_entry *entry = (variable_entry *) n;
+   foreach_in_list(variable_entry, entry, this->variable_list) {
       if (entry->var == var) {
 	 return entry;
       }
@@ -451,8 +447,7 @@ optimize_split_vectors(exec_list *instructions, bool linked, glsl_vector_splitti
    /* Replace the decls of the vectors to be split with their split
     * components.
     */
-   foreach_list(n, &refs.variable_list) {
-      variable_entry *entry = (variable_entry *) n;
+   foreach_in_list(variable_entry, entry, &refs.variable_list) {
       const struct glsl_type *type = entry->var->type;
       const struct glsl_type *subtype;
       glsl_precision subprec = (glsl_precision)entry->var->data.precision;
@@ -481,7 +476,7 @@ optimize_split_vectors(exec_list *instructions, bool linked, glsl_vector_splitti
    visit_list_elements(&split, instructions);
 
    if (debug)
-      _mesa_print_ir(instructions, NULL);
+      _mesa_print_ir(stdout, instructions, NULL);
 
    ralloc_free(mem_ctx);
 

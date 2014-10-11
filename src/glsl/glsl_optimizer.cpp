@@ -87,14 +87,12 @@ struct glslopt_ctx {
 		this->target = target;
 		mem_ctx = ralloc_context (NULL);
 		initialize_mesa_context (&mesa_ctx, target);
-		max_unroll_iterations = 8;
 	}
 	~glslopt_ctx() {
 		ralloc_free (mem_ctx);
 	}
 	struct gl_context mesa_ctx;
 	void* mem_ctx;
-	unsigned int max_unroll_iterations;
 	glslopt_target target;
 };
 
@@ -111,7 +109,8 @@ void glslopt_cleanup (glslopt_ctx* ctx)
 
 void glslopt_set_max_unroll_iterations (glslopt_ctx* ctx, unsigned iterations)
 {
-	ctx->max_unroll_iterations = iterations;
+	for (int i = 0; i < MESA_SHADER_STAGES; ++i)
+		ctx->mesa_ctx.Const.ShaderCompilerOptions[i].MaxUnrollIterations = iterations;
 }
 
 struct glslopt_shader_var
@@ -315,9 +314,8 @@ static bool propagate_precision(exec_list* list, bool assign_high_to_undefined)
 	bool res;
 	do {
 		res = false;
-		foreach_list(node, list)
+		foreach_in_list(ir_instruction, ir, list)
 		{
-			ir_instruction* ir = (ir_instruction*)node;
 			visit_tree (ir, propagate_precision_deref, &res);
 			visit_tree (ir, propagate_precision_assign, &res);
 			visit_tree (ir, propagate_precision_call, &res);
@@ -330,9 +328,8 @@ static bool propagate_precision(exec_list* list, bool assign_high_to_undefined)
 	// for globals that have undefined precision, set it to highp
 	if (assign_high_to_undefined)
 	{
-		foreach_list(node, list)
+		foreach_in_list(ir_instruction, ir, list)
 		{
-			ir_instruction* ir = (ir_instruction*)node;
 			ir_variable* var = ir->as_variable();
 			if (var)
 			{
@@ -349,7 +346,7 @@ static bool propagate_precision(exec_list* list, bool assign_high_to_undefined)
 }
 
 
-static void do_optimization_passes(exec_list* ir, bool linked, unsigned max_unroll_iterations, _mesa_glsl_parse_state* state, void* mem_ctx)
+static void do_optimization_passes(exec_list* ir, bool linked, _mesa_glsl_parse_state* state, void* mem_ctx)
 {
 	bool progress;
 	do {
@@ -390,8 +387,8 @@ static void do_optimization_passes(exec_list* ir, bool linked, unsigned max_unro
 			progress2 = do_constant_variable_unlinked(ir); progress |= progress2; if (progress2) debug_print_ir ("After const variable unlinked", ir, state, mem_ctx);
 		}
 		progress2 = do_constant_folding(ir); progress |= progress2; if (progress2) debug_print_ir ("After const folding", ir, state, mem_ctx);
-		progress2 = do_cse(ir); progress |= progress2; if (progress2) debug_print_ir ("After CSE", ir, state, mem_ctx);
-		progress2 = do_algebraic(ir); progress |= progress2; if (progress2) debug_print_ir ("After algebraic", ir, state, mem_ctx);
+		progress2 = do_cse(ir); progress |= progress2; if (progress2) debug_print_ir ("After CSE", ir, state, mem_ctx);		
+		progress2 = do_algebraic(ir, state->ctx->Const.NativeIntegers, &state->ctx->Const.ShaderCompilerOptions[state->stage]); progress |= progress2; if (progress2) debug_print_ir ("After algebraic", ir, state, mem_ctx);
 		progress2 = do_lower_jumps(ir); progress |= progress2; if (progress2) debug_print_ir ("After lower jumps", ir, state, mem_ctx);
 		progress2 = do_vec_index_to_swizzle(ir); progress |= progress2; if (progress2) debug_print_ir ("After vec index to swizzle", ir, state, mem_ctx);
 		progress2 = do_swizzle_swizzle(ir); progress |= progress2; if (progress2) debug_print_ir ("After swizzle swizzle", ir, state, mem_ctx);
@@ -407,7 +404,7 @@ static void do_optimization_passes(exec_list* ir, bool linked, unsigned max_unro
 			loop_state *ls = analyze_loop_variables(ir);
 			if (ls->loop_found) {
 				progress2 = set_loop_controls(ir, ls); progress |= progress2; if (progress2) debug_print_ir ("After set loop", ir, state, mem_ctx);
-				progress2 = unroll_loops(ir, ls, max_unroll_iterations); progress |= progress2; if (progress2) debug_print_ir ("After unroll", ir, state, mem_ctx);
+				progress2 = unroll_loops(ir, ls, &state->ctx->Const.ShaderCompilerOptions[state->stage]); progress |= progress2; if (progress2) debug_print_ir ("After unroll", ir, state, mem_ctx);
 			}
 			delete ls;
 		}
@@ -458,9 +455,9 @@ static void glsl_type_to_optimizer_desc(const glsl_type* type, glsl_precision pr
 
 static void find_shader_variables(glslopt_shader* sh, exec_list* ir)
 {
-	foreach_list(node, ir)
+	foreach_in_list(ir_instruction, node, ir)
 	{
-		ir_variable* const var = ((ir_instruction *)node)->as_variable();
+		ir_variable* const var = node->as_variable();
 		if (var == NULL)
 			continue;
 		if (var->data.mode == ir_var_shader_in)
@@ -587,7 +584,7 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 	if (!state->error && !ir->is_empty())
 	{		
 		const bool linked = !(options & kGlslOptionNotFullShader);
-		do_optimization_passes(ir, linked, ctx->max_unroll_iterations, state, shader);
+		do_optimization_passes(ir, linked, state, shader);
 		validate_ir_tree(ir);
 	}	
 	

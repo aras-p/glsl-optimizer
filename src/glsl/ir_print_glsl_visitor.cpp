@@ -192,9 +192,8 @@ _mesa_print_ir_glsl(exec_list *instructions,
 	if (ls->loop_found)
 		set_loop_controls(instructions, ls);
 
-	foreach_list(node, instructions)
+	foreach_in_list(ir_instruction, ir, instructions)
 	{
-		ir_instruction *ir = (ir_instruction *)node;
 		if (ir->ir_type == ir_type_variable) {
 			ir_variable *var = static_cast<ir_variable*>(ir);
 			if ((strstr(var->name, "gl_") == var->name)
@@ -432,9 +431,7 @@ void ir_print_glsl_visitor::visit(ir_function_signature *ir)
 
 	   indentation++; previous_skipped = false;
 	   bool first = true;
-	   foreach_list(node, &ir->parameters) {
-		  ir_variable *const inst = (ir_variable *)node;
-
+	   foreach_in_list(ir_variable, inst, &ir->parameters) {
 		  if (!first)
 			  buffer.asprintf_append (",\n");
 		  indent();
@@ -464,17 +461,15 @@ void ir_print_glsl_visitor::visit(ir_function_signature *ir)
 	{
 		assert (!globals->main_function_done);
 		globals->main_function_done = true;
-		foreach_list(node, &globals->global_assignements)
+		foreach_in_list(ga_entry, node, &globals->global_assignements)
 		{
-			ir_instruction* as = ((ga_entry *)node)->ir;
+			ir_instruction* as = node->ir;
 			as->accept(this);
 			buffer.asprintf_append(";\n");
 		}
 	}
 
-   foreach_list(node, &ir->body) {
-      ir_instruction *const inst = (ir_instruction *)node;
-
+   foreach_in_list(ir_instruction, inst, &ir->body) {
       indent();
       inst->accept(this);
 	   end_statement_line();
@@ -488,8 +483,7 @@ void ir_print_glsl_visitor::visit(ir_function *ir)
 {
    bool found_non_builtin_proto = false;
 
-   foreach_list(node, &ir->signatures) {
-      ir_function_signature *const sig = (ir_function_signature *)node;
+   foreach_in_list(ir_function_signature, sig, &ir->signatures) {
       if (!sig->is_builtin())
 	 found_non_builtin_proto = true;
    }
@@ -499,9 +493,7 @@ void ir_print_glsl_visitor::visit(ir_function *ir)
    PrintGlslMode oldMode = this->mode;
    this->mode = kPrintGlslNone;
 
-   foreach_list(node, &ir->signatures) {
-      ir_function_signature *const sig = (ir_function_signature *)node;
-
+   foreach_in_list(ir_function_signature, sig, &ir->signatures) {
       indent();
       sig->accept(this);
       buffer.asprintf_append ("\n");
@@ -1231,11 +1223,10 @@ void ir_print_glsl_visitor::visit(ir_constant *ir)
       }
    } else if (ir->type->is_record()) {
       bool first = true;
-      foreach_list(n, &ir->components) {
+      foreach_in_list(ir_constant, inst, &ir->components) {
 	 if (!first)
 	    buffer.asprintf_append (", ");
 	 first = false;
-	 ir_constant* inst = (ir_constant*)n;
 	 inst->accept(this);
      } 
    }else {
@@ -1286,8 +1277,7 @@ ir_print_glsl_visitor::visit(ir_call *ir)
 	
    buffer.asprintf_append ("%s (", ir->callee_name());
    bool first = true;
-   foreach_list(node, &ir->actual_parameters) {
-      ir_instruction *const inst = (ir_instruction *)node;
+   foreach_in_list(ir_instruction, inst, &ir->actual_parameters) {
 	  if (!first)
 		  buffer.asprintf_append (", ");
       inst->accept(this);
@@ -1332,9 +1322,7 @@ ir_print_glsl_visitor::visit(ir_if *ir)
 	indentation++; previous_skipped = false;
 
 
-   foreach_list(n, &ir->then_instructions) {
-      ir_instruction *const inst = (ir_instruction *)n;
-
+   foreach_in_list(ir_instruction, inst, &ir->then_instructions) {
       indent();
       inst->accept(this);
 	   end_statement_line();
@@ -1349,9 +1337,7 @@ ir_print_glsl_visitor::visit(ir_if *ir)
 	   buffer.asprintf_append (" else {\n");
 	   indentation++; previous_skipped = false;
 
-	   foreach_list(n, &ir->else_instructions) {
-		  ir_instruction *const inst = (ir_instruction *)n;
-
+	   foreach_in_list(ir_instruction, inst, &ir->else_instructions) {
 		  indent();
 		  inst->accept(this);
 		   end_statement_line();
@@ -1374,10 +1360,7 @@ bool ir_print_glsl_visitor::can_emit_canonical_for (loop_variable_state *ls)
 		return false;
 	
 	// only support for loops with one terminator condition
-	int terminatorCount = 0;
-	foreach_list(node, &ls->terminators) {
-		++terminatorCount;
-	}
+	int terminatorCount = ls->terminators.length();
 	if (terminatorCount != 1)
 		return false;
 
@@ -1401,9 +1384,8 @@ bool ir_print_glsl_visitor::emit_canonical_for (ir_loop* ir)
 	// only for loops with single induction variable, to avoid cases of different types of them
 	if (ls->private_induction_variable_count == 1)
 	{
-		foreach_list(node, &ls->induction_variables)
+		foreach_in_list(loop_variable, indvar, &ls->induction_variables)
 		{
-			loop_variable* indvar = (loop_variable *) node;
 			if (!this->loopstate->get_for_inductor(indvar->var))
 				continue;
 			
@@ -1423,9 +1405,8 @@ bool ir_print_glsl_visitor::emit_canonical_for (ir_loop* ir)
 	buffer.asprintf_append("; ");
 	
 	// emit loop terminating conditions
-	foreach_list(node, &ls->terminators)
+	foreach_in_list(loop_terminator, term, &ls->terminators)
 	{
-		loop_terminator* term = (loop_terminator *) node;
 		hash_table_insert(terminator_hash, term, term->ir);
 		
 		// IR has conditions in the form of "if (x) break",
@@ -1476,9 +1457,8 @@ bool ir_print_glsl_visitor::emit_canonical_for (ir_loop* ir)
 	
 	// emit loop induction variable updates
 	bool first = true;
-	foreach_list(node, &ls->induction_variables)
+	foreach_in_list(loop_variable, indvar, &ls->induction_variables)
 	{
-		loop_variable* indvar = (loop_variable *) node;
 		hash_table_insert(induction_hash, indvar, indvar->first_assignment);
 		if (!first)
 			buffer.asprintf_append(", ");
@@ -1491,9 +1471,8 @@ bool ir_print_glsl_visitor::emit_canonical_for (ir_loop* ir)
 	
 	// emit loop body
 	indentation++; previous_skipped = false;
-	foreach_list(node, &ir->body_instructions) {
-		ir_instruction *const inst = (ir_instruction *)node;
-		
+	foreach_in_list(ir_instruction, inst, &ir->body_instructions) {
+
 		// skip termination & induction statements,
 		// they are part of "for" clause
 		if (hash_table_find(terminator_hash, inst))
@@ -1525,8 +1504,7 @@ ir_print_glsl_visitor::visit(ir_loop *ir)
 	
 	buffer.asprintf_append ("while (true) {\n");
 	indentation++; previous_skipped = false;
-	foreach_list(n, &ir->body_instructions) {
-		ir_instruction *const inst = (ir_instruction *)n;
+	foreach_in_list(ir_instruction, inst, &ir->body_instructions) {
 		indent();
 		inst->accept(this);
 		end_statement_line();
