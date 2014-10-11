@@ -15,6 +15,7 @@ Goodies:
   useful to get list of inputs/uniforms, their names and types.
 * Improved dead code elimation: some cases of swizzled/masked assignments where same variable was on both sides
   were not eliminated if that variable was totally unused later.
+* Merged with upstream Mesa, comes with new optimizations (min/max pruning, tree rebalancing, vector_insert lowering).
 
 Fixes:
 
