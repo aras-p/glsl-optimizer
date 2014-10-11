@@ -68,6 +68,8 @@
         'glsl/ir_optimization.h',
         'glsl/ir_print_glsl_visitor.cpp',
         'glsl/ir_print_glsl_visitor.h',
+        'glsl/ir_print_metal_visitor.cpp',
+        'glsl/ir_print_metal_visitor.h',
         'glsl/ir_print_visitor.cpp',
         'glsl/ir_print_visitor.h',
         'glsl/ir_rvalue_visitor.cpp',

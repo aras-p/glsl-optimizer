@@ -60,6 +60,9 @@
     <ClInclude Include="..\..\src\glsl\ir_print_glsl_visitor.h">
       <Filter>src\glsl</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\glsl\ir_print_metal_visitor.h">
+      <Filter>src\glsl</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\glsl\ir_print_visitor.h">
       <Filter>src\glsl</Filter>
     </ClInclude>
@@ -252,6 +255,9 @@
       <Filter>src\glsl</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\glsl\ir_print_glsl_visitor.cpp">
+      <Filter>src\glsl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\glsl\ir_print_metal_visitor.cpp">
       <Filter>src\glsl</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\glsl\ir_print_visitor.cpp">

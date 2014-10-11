@@ -154,6 +154,8 @@
 		2BBD9DC4171969F700515007 /* hash_table.c in Sources */ = {isa = PBXBuildFile; fileRef = 2BBD9DC2171969F700515007 /* hash_table.c */; };
 		2BBD9DC6171969F700515007 /* hash_table.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BBD9DC3171969F700515007 /* hash_table.h */; };
 		2BBD9DC817196A3B00515007 /* imports.c in Sources */ = {isa = PBXBuildFile; fileRef = 2BBD9DC717196A3B00515007 /* imports.c */; };
+		2BCF3A8D19ADE1E50057C395 /* ir_print_metal_visitor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BCF3A8B19ADE1E50057C395 /* ir_print_metal_visitor.cpp */; };
+		2BCF3A8E19ADE1E50057C395 /* ir_print_metal_visitor.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BCF3A8C19ADE1E50057C395 /* ir_print_metal_visitor.h */; };
 		2BDCB95D184E182B0075CE6F /* ir_stats.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BDCB95B184E182B0075CE6F /* ir_stats.cpp */; };
 		2BDCB95E184E182B0075CE6F /* ir_stats.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BDCB95C184E182B0075CE6F /* ir_stats.h */; };
 		2BEC22EA1356E98300B5E301 /* opt_copy_propagation_elements.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BEC22CB1356E94E00B5E301 /* opt_copy_propagation_elements.cpp */; };
@@ -313,6 +315,8 @@
 		2BBD9DC2171969F700515007 /* hash_table.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = hash_table.c; path = ../../src/mesa/main/hash_table.c; sourceTree = "<group>"; };
 		2BBD9DC3171969F700515007 /* hash_table.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = hash_table.h; path = ../../src/mesa/main/hash_table.h; sourceTree = "<group>"; };
 		2BBD9DC717196A3B00515007 /* imports.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = imports.c; path = ../../src/mesa/main/imports.c; sourceTree = "<group>"; };
+		2BCF3A8B19ADE1E50057C395 /* ir_print_metal_visitor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_print_metal_visitor.cpp; path = ../../src/glsl/ir_print_metal_visitor.cpp; sourceTree = "<group>"; };
+		2BCF3A8C19ADE1E50057C395 /* ir_print_metal_visitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ir_print_metal_visitor.h; path = ../../src/glsl/ir_print_metal_visitor.h; sourceTree = "<group>"; };
 		2BDCB95B184E182B0075CE6F /* ir_stats.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_stats.cpp; path = ../../src/glsl/ir_stats.cpp; sourceTree = "<group>"; };
 		2BDCB95C184E182B0075CE6F /* ir_stats.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ir_stats.h; path = ../../src/glsl/ir_stats.h; sourceTree = "<group>"; };
 		2BEC22CB1356E94E00B5E301 /* opt_copy_propagation_elements.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = opt_copy_propagation_elements.cpp; path = ../../src/glsl/opt_copy_propagation_elements.cpp; sourceTree = SOURCE_ROOT; };
@@ -436,6 +440,8 @@
 				2BA55A801207FEA6002DC82D /* ir_optimization.h */,
 				2BA55A811207FEA6002DC82D /* ir_print_glsl_visitor.cpp */,
 				2BA55A821207FEA6002DC82D /* ir_print_glsl_visitor.h */,
+				2BCF3A8B19ADE1E50057C395 /* ir_print_metal_visitor.cpp */,
+				2BCF3A8C19ADE1E50057C395 /* ir_print_metal_visitor.h */,
 				2BA55A831207FEA6002DC82D /* ir_print_visitor.cpp */,
 				2BA55A841207FEA6002DC82D /* ir_print_visitor.h */,
 				2B62490D12191339003F6EEE /* ir_rvalue_visitor.cpp */,
@@ -563,6 +569,7 @@
 				2BA55ACD1207FEA6002DC82D /* ir_print_glsl_visitor.h in Headers */,
 				2BA55ACF1207FEA6002DC82D /* ir_print_visitor.h in Headers */,
 				2BA55AD61207FEA6002DC82D /* ir_unused_structs.h in Headers */,
+				2BCF3A8E19ADE1E50057C395 /* ir_print_metal_visitor.h in Headers */,
 				2BA55AD91207FEA6002DC82D /* ir_variable_refcount.h in Headers */,
 				2BA55ADD1207FEA6002DC82D /* ir_visitor.h in Headers */,
 				2BA55ADF1207FEA6002DC82D /* ir.h in Headers */,
@@ -667,6 +674,7 @@
 				2BA55AAA1207FEA6002DC82D /* glsl_parser.cpp in Sources */,
 				2BA55AAE1207FEA6002DC82D /* glsl_types.cpp in Sources */,
 				2BA55AB01207FEA6002DC82D /* hir_field_selection.cpp in Sources */,
+				2BCF3A8D19ADE1E50057C395 /* ir_print_metal_visitor.cpp in Sources */,
 				2BA55AB21207FEA6002DC82D /* ir_basic_block.cpp in Sources */,
 				2BA55AB41207FEA6002DC82D /* ir_clone.cpp in Sources */,
 				2BA55AB51207FEA6002DC82D /* ir_constant_expression.cpp in Sources */,

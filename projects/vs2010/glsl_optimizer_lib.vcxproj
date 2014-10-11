@@ -179,6 +179,7 @@
     <ClInclude Include="..\..\src\glsl\ir_hierarchical_visitor.h" />
     <ClInclude Include="..\..\src\glsl\ir_optimization.h" />
     <ClInclude Include="..\..\src\glsl\ir_print_glsl_visitor.h" />
+    <ClInclude Include="..\..\src\glsl\ir_print_metal_visitor.h" />
     <ClInclude Include="..\..\src\glsl\ir_print_visitor.h" />
     <ClInclude Include="..\..\src\glsl\ir_rvalue_visitor.h" />
     <ClInclude Include="..\..\src\glsl\ir_stats.h" />
@@ -246,6 +247,7 @@
     <ClCompile Include="..\..\src\glsl\ir_hv_accept.cpp" />
     <ClCompile Include="..\..\src\glsl\ir_import_prototypes.cpp" />
     <ClCompile Include="..\..\src\glsl\ir_print_glsl_visitor.cpp" />
+    <ClCompile Include="..\..\src\glsl\ir_print_metal_visitor.cpp" />
     <ClCompile Include="..\..\src\glsl\ir_print_visitor.cpp" />
     <ClCompile Include="..\..\src\glsl\ir_rvalue_visitor.cpp" />
     <ClCompile Include="..\..\src\glsl\ir_stats.cpp" />

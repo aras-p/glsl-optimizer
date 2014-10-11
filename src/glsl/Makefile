@@ -35,6 +35,7 @@ SRC =	ast_expr.cpp \
 	ir_hv_accept.cpp \
 	ir_import_prototypes.cpp \
 	ir_print_glsl_visitor.cpp \
+	ir_print_metal_visitor.cpp \
 	ir_print_visitor.cpp \
 	ir_rvalue_visitor.cpp \
 	ir_stats.cpp \
