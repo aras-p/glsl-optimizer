@@ -148,7 +148,7 @@ void initialize_context_to_defaults(struct gl_context *ctx, gl_api api)
    /* Set up default shader compiler options. */
    struct gl_shader_compiler_options options;
    memset(&options, 0, sizeof(options));
-   options.MaxUnrollIterations = 32;
+   options.MaxUnrollIterations = 8;
    options.MaxIfDepth = UINT_MAX;
 
    /* Default pragma settings */
