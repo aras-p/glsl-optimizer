@@ -409,6 +409,12 @@ static void do_optimization_passes(exec_list* ir, bool linked, _mesa_glsl_parse_
 			delete ls;
 		}
 	} while (progress);
+
+	if (!state->metal_target)
+	{
+		// GLSL/ES does not have saturate, so lower it
+		lower_instructions(ir, SAT_TO_CLAMP);
+	}
 }
 
 static void glsl_type_to_optimizer_desc(const glsl_type* type, glsl_precision prec, glslopt_shader_var* out)

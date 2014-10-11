@@ -816,7 +816,11 @@ static const char *const operator_glsl_strs[] = {
 	"fast::sin", // reduced
 	"fast::cos", // reduced
 	"dfdx",
+	"dfdx", // coarse
+	"dfdx", // fine
 	"dfdy",
+	"dfdy", // coarse
+	"dfdy", // fine
 	"packSnorm2x16",
 	"packSnorm4x8",
 	"packUnorm2x16",
@@ -833,7 +837,9 @@ static const char *const operator_glsl_strs[] = {
 	"bitCount",
 	"findMSB",
 	"findLSB",
+	"saturate",
 	"noise",
+	"interpolateAtCentroid_TODO",
 	"+",
 	"-",
 	"*",
@@ -867,6 +873,8 @@ static const char *const operator_glsl_strs[] = {
 	"uboloadTODO",
 	"ldexp_TODO",
 	"vectorExtract_TODO",
+	"interpolateAtOffset_TODO",
+	"interpolateAtSample_TODO",
 	"fma",
 	"clamp",
 	"mix",

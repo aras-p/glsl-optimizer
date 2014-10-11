@@ -2347,7 +2347,7 @@ validate_explicit_location(const struct ast_type_qualifier *qual,
             break;
 
          case MESA_SHADER_FRAGMENT:
-            var->data.location = (var->data.mode == ir_var_shader_out)
+            var->data.location = (var->data.mode == ir_var_shader_out || var->data.mode == ir_var_shader_inout)
                ? (qual->location + FRAG_RESULT_DATA0)
                : (qual->location + VARYING_SLOT_VAR0);
             break;
