@@ -19,4 +19,11 @@ void main ()
 }
 
 
-// inputs: 2, stats: 9 alu 4 tex 0 flow
+// stats: 9 alu 4 tex 0 flow
+// inputs: 2
+//  #0: var_lowp (low float) 2x1 [-1]
+//  #1: var_mediump (medium float) 2x1 [-1]
+// textures: 3
+//  #0: tex_def (low 2d) 0x0 [-1]
+//  #1: tex_lowp (low 2d) 0x0 [-1]
+//  #2: tex_highp (high 2d) 0x0 [-1]

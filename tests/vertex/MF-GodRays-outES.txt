@@ -141,4 +141,28 @@ void main ()
 }
 
 
-// inputs: 5, stats: 95 alu 0 tex 3 flow
+// stats: 95 alu 0 tex 3 flow
+// inputs: 5
+//  #0: _glesVertex (high float) 4x1 [-1]
+//  #1: _glesNormal (medium float) 3x1 [-1]
+//  #2: _glesMultiTexCoord0 (high float) 4x1 [-1]
+//  #3: _glesMultiTexCoord1 (high float) 4x1 [-1]
+//  #4: _glesColor (low float) 4x1 [-1]
+// uniforms: 17 (total size: 0)
+//  #0: _Bias (high float) 1x1 [-1]
+//  #1: _BlinkingTimeOffsScale (high float) 1x1 [-1]
+//  #2: _Color (high float) 4x1 [-1]
+//  #3: _FadeOutDistFar (high float) 1x1 [-1]
+//  #4: _FadeOutDistNear (high float) 1x1 [-1]
+//  #5: _MaxGrowSize (high float) 1x1 [-1]
+//  #6: _Multiplier (high float) 1x1 [-1]
+//  #7: _NoiseAmount (high float) 1x1 [-1]
+//  #8: _SizeGrowEndDist (high float) 1x1 [-1]
+//  #9: _SizeGrowStartDist (high float) 1x1 [-1]
+//  #10: _Time (high float) 4x1 [-1]
+//  #11: _TimeOffDuration (high float) 1x1 [-1]
+//  #12: _TimeOnDuration (high float) 1x1 [-1]
+//  #13: _VerticalBillboarding (high float) 1x1 [-1]
+//  #14: _World2Object (high float) 4x4 [-1]
+//  #15: _WorldSpaceCameraPos (high float) 3x1 [-1]
+//  #16: glstate_matrix_mvp (high float) 4x4 [-1]

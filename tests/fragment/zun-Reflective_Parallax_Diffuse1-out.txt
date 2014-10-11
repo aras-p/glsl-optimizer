@@ -58,4 +58,17 @@ void main ()
 }
 
 
-// inputs: 1, stats: 32 alu 5 tex 0 flow
+// stats: 32 alu 5 tex 0 flow
+// inputs: 1
+//  #0: gl_TexCoord (high float) 4x1 [6] loc 4
+// uniforms: 4 (total size: 0)
+//  #0: _Color (high float) 4x1 [-1]
+//  #1: _Parallax (high float) 1x1 [-1]
+//  #2: _ReflectColor (high float) 4x1 [-1]
+//  #3: unity_Ambient (high float) 4x1 [-1]
+// textures: 5
+//  #0: _BumpMap (high 2d) 0x0 [-1]
+//  #1: _Cube (high cube) 0x0 [-1]
+//  #2: _LightBuffer (high 2d) 0x0 [-1]
+//  #3: _MainTex (high 2d) 0x0 [-1]
+//  #4: _ParallaxMap (high 2d) 0x0 [-1]

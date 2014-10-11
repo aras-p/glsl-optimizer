@@ -100,4 +100,28 @@ void main ()
 }
 
 
-// inputs: 6, stats: 66 alu 0 tex 0 flow
+// stats: 66 alu 0 tex 0 flow
+// inputs: 6
+//  #0: gl_MultiTexCoord1 (high float) 4x1 [-1] loc 9
+//  #1: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 8
+//  #2: gl_Color (high float) 4x1 [-1] loc 3
+//  #3: gl_Normal (high float) 3x1 [-1] loc 2
+//  #4: gl_Vertex (high float) 4x1 [-1] loc 0
+//  #5: TANGENT (high float) 4x1 [-1]
+// uniforms: 16 (total size: 0)
+//  #0: gl_ModelViewMatrixInverseTranspose (high float) 4x4 [-1]
+//  #1: gl_ModelViewProjectionMatrix (high float) 4x4 [-1]
+//  #2: gl_ModelViewMatrix (high float) 4x4 [-1]
+//  #3: _Color (high float) 4x1 [-1]
+//  #4: _LightShadowData (high float) 4x1 [-1]
+//  #5: _MainTex_ST (high float) 4x1 [-1]
+//  #6: _Object2World (high float) 4x4 [-1]
+//  #7: _Scale (high float) 4x1 [-1]
+//  #8: _SquashAmount (high float) 1x1 [-1]
+//  #9: _SquashPlaneNormal (high float) 4x1 [-1]
+//  #10: _TimeX (high float) 1x1 [-1]
+//  #11: _Wind (high float) 4x1 [-1]
+//  #12: _World2Shadow (high float) 4x4 [-1]
+//  #13: _World2Shadow1 (high float) 4x4 [-1]
+//  #14: _World2Shadow2 (high float) 4x4 [-1]
+//  #15: _World2Shadow3 (high float) 4x4 [-1]

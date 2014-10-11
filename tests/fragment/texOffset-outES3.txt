@@ -11,4 +11,9 @@ void main ()
 }
 
 
-// inputs: 1, stats: 7 alu 8 tex 0 flow
+// stats: 7 alu 8 tex 0 flow
+// inputs: 1
+//  #0: uv (medium float) 3x1 [-1]
+// textures: 2
+//  #0: tex (low 2d) 0x0 [-1]
+//  #1: vol (low 3d) 0x0 [-1]

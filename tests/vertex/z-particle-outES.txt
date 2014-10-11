@@ -17,4 +17,11 @@ void main ()
 }
 
 
-// inputs: 3, stats: 3 alu 0 tex 0 flow
+// stats: 3 alu 0 tex 0 flow
+// inputs: 3
+//  #0: _glesVertex (high float) 4x1 [-1]
+//  #1: _glesMultiTexCoord0 (high float) 4x1 [-1]
+//  #2: _glesColor (low float) 4x1 [-1]
+// uniforms: 2 (total size: 0)
+//  #0: _MainTex_ST (high float) 4x1 [-1]
+//  #1: glstate_matrix_mvp (high float) 4x4 [-1]

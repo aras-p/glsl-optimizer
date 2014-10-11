@@ -25,4 +25,10 @@ void main ()
 }
 
 
-// inputs: 2, stats: 14 alu 0 tex 0 flow
+// stats: 14 alu 0 tex 0 flow
+// inputs: 2
+//  #0: inN (high float) 3x1 [-1]
+//  #1: inE (high float) 3x1 [-1]
+// uniforms: 2 (total size: 0)
+//  #0: _Fresnel (high float) 1x1 [-1]
+//  #1: _SpecIntensity (high float) 1x1 [-1]

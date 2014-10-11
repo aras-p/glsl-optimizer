@@ -75,4 +75,11 @@ void main ()
 }
 
 
-// inputs: 1, stats: 88 alu 9 tex 0 flow
+// stats: 88 alu 9 tex 0 flow
+// inputs: 1
+//  #0: gl_TexCoord (high float) 4x1 [1] loc 4
+// uniforms: 2 (total size: 0)
+//  #0: _BlurOffsets (high float) 4x1 [8]
+//  #1: unity_ShadowBlurParams (high float) 4x1 [-1]
+// textures: 1
+//  #0: _MainTex (high 2d) 0x0 [-1]

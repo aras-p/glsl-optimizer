@@ -70,4 +70,19 @@ void main ()
 }
 
 
-// inputs: 2, stats: 30 alu 2 tex 1 flow
+// stats: 30 alu 2 tex 1 flow
+// inputs: 2
+//  #0: xlv_TEXCOORD0 (high float) 2x1 [-1]
+//  #1: xlv_TEXCOORD1 (high float) 3x1 [-1]
+// uniforms: 8 (total size: 0)
+//  #0: _LightShadowData (high float) 4x1 [-1]
+//  #1: _LightSplitsFar (high float) 4x1 [-1]
+//  #2: _LightSplitsNear (high float) 4x1 [-1]
+//  #3: _View2Shadow (high float) 4x4 [-1]
+//  #4: _View2Shadow1 (high float) 4x4 [-1]
+//  #5: _View2Shadow2 (high float) 4x4 [-1]
+//  #6: _View2Shadow3 (high float) 4x4 [-1]
+//  #7: _ZBufferParams (high float) 4x1 [-1]
+// textures: 2
+//  #0: _CameraDepthTexture (low 2d) 0x0 [-1]
+//  #1: _ShadowMapTexture (low 2d) 0x0 [-1]

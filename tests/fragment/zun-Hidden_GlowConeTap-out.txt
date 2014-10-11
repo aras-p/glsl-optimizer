@@ -15,4 +15,10 @@ void main ()
 }
 
 
-// inputs: 1, stats: 5 alu 4 tex 0 flow
+// stats: 5 alu 4 tex 0 flow
+// inputs: 1
+//  #0: gl_TexCoord (high float) 4x1 [2] loc 4
+// uniforms: 1 (total size: 0)
+//  #0: _Color (high float) 4x1 [-1]
+// textures: 1
+//  #0: _MainTex (high 2d) 0x0 [-1]

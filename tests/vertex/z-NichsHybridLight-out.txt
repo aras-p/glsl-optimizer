@@ -197,4 +197,31 @@ void main ()
 }
 
 
-// inputs: 6, stats: 141 alu 1 tex 0 flow
+// stats: 141 alu 1 tex 0 flow
+// inputs: 6
+//  #0: gl_MultiTexCoord1 (high float) 4x1 [-1] loc 9
+//  #1: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 8
+//  #2: gl_Color (high float) 4x1 [-1] loc 3
+//  #3: gl_Normal (high float) 3x1 [-1] loc 2
+//  #4: gl_Vertex (high float) 4x1 [-1] loc 0
+//  #5: TANGENT (high float) 4x1 [-1]
+// uniforms: 17 (total size: 0)
+//  #0: gl_ModelViewProjectionMatrix (high float) 4x4 [-1]
+//  #1: _Object2World (high float) 4x4 [-1]
+//  #2: _World2Object (high float) 4x4 [-1]
+//  #3: _Tonemap_blackLevel (high float) 3x1 [-1]
+//  #4: _Tonemap_toeLength (high float) 3x1 [-1]
+//  #5: _Tonemap_heel (high float) 3x1 [-1]
+//  #6: _Tonemap_shoulder (high float) 3x1 [-1]
+//  #7: _Tonemap_colorScale1 (high float) 3x1 [-1]
+//  #8: _Tonemap_colorScale2 (high float) 3x1 [-1]
+//  #9: _HybridSunDir (high float) 3x1 [-1]
+//  #10: _HybridSunCol (high float) 4x1 [-1]
+//  #11: GridLightTextureStartCell (high float) 3x1 [-1]
+//  #12: GridLightTextureCellSize (high float) 3x1 [-1]
+//  #13: IngameGridLimit (high float) 4x1 [-1]
+//  #14: LightPos (high float) 4x1 [30]
+//  #15: LightCol (high float) 4x1 [30]
+//  #16: _MainTex_ST (high float) 4x1 [-1]
+// textures: 1
+//  #0: GridLightTexture (high 2d) 0x0 [-1]

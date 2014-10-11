@@ -90,4 +90,13 @@ void main ()
 }
 
 
-// inputs: 2, stats: 65 alu 3 tex 4 flow
+// stats: 65 alu 3 tex 4 flow
+// inputs: 2
+//  #0: xlv_TEXCOORD0 (high float) 2x1 [-1]
+//  #1: xlv_TEXCOORD1 (high float) 2x1 [-1]
+// uniforms: 2 (total size: 0)
+//  #0: _ProjectionParams (high float) 4x1 [-1]
+//  #1: _Params (high float) 4x1 [-1]
+// textures: 2
+//  #0: _CameraDepthNormalsTexture (high 2d) 0x0 [-1]
+//  #1: _RandomTexture (high 2d) 0x0 [-1]

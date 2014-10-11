@@ -109,4 +109,26 @@ void main ()
 }
 
 
-// inputs: 6, stats: 64 alu 0 tex 0 flow
+// stats: 64 alu 0 tex 0 flow
+// inputs: 6
+//  #0: gl_MultiTexCoord1 (high float) 4x1 [-1] loc 9
+//  #1: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 8
+//  #2: gl_Color (high float) 4x1 [-1] loc 3
+//  #3: gl_Normal (high float) 3x1 [-1] loc 2
+//  #4: gl_Vertex (high float) 4x1 [-1] loc 0
+//  #5: TANGENT (high float) 4x1 [-1]
+// uniforms: 14 (total size: 0)
+//  #0: gl_ModelViewProjectionMatrix (high float) 4x4 [-1]
+//  #1: _Color (high float) 4x1 [-1]
+//  #2: _LightMatrix0 (high float) 4x4 [-1]
+//  #3: _MainTex_ST (high float) 4x1 [-1]
+//  #4: _Object2World (high float) 4x4 [-1]
+//  #5: _Scale (high float) 4x1 [-1]
+//  #6: _SquashAmount (high float) 1x1 [-1]
+//  #7: _SquashPlaneNormal (high float) 4x1 [-1]
+//  #8: _TimeX (high float) 1x1 [-1]
+//  #9: _Wind (high float) 4x1 [-1]
+//  #10: _World2Object (high float) 4x4 [-1]
+//  #11: _WorldSpaceCameraPos (high float) 3x1 [-1]
+//  #12: _WorldSpaceLightPos0 (high float) 4x1 [-1]
+//  #13: unity_Scale (high float) 4x1 [-1]

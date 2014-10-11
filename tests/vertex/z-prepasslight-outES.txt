@@ -25,4 +25,11 @@ void main ()
 }
 
 
-// inputs: 2, stats: 9 alu 0 tex 0 flow
+// stats: 9 alu 0 tex 0 flow
+// inputs: 2
+//  #0: _glesVertex (high float) 4x1 [-1]
+//  #1: _glesNormal (medium float) 3x1 [-1]
+// uniforms: 3 (total size: 0)
+//  #0: _ProjectionParams (high float) 4x1 [-1]
+//  #1: glstate_matrix_modelview0 (high float) 4x4 [-1]
+//  #2: glstate_matrix_mvp (high float) 4x4 [-1]

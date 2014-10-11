@@ -38,4 +38,9 @@ void main ()
 }
 
 
-// inputs: 2, stats: 29 alu 0 tex 1 flow
+// stats: 29 alu 0 tex 1 flow
+// inputs: 2
+//  #0: position (high float) 4x1 [-1]
+//  #1: varyingNormalDirection (high float) 3x1 [-1]
+// uniforms: 1 (total size: 0)
+//  #0: v_inv (high float) 4x4 [-1]

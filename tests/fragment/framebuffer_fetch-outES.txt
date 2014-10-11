@@ -15,4 +15,7 @@ void main ()
 }
 
 
-// inputs: 2, stats: 1 alu 0 tex 0 flow
+// stats: 1 alu 0 tex 0 flow
+// inputs: 2
+//  #0: gl_LastFragData (medium float) 4x1 [4] loc 24
+//  #1: xlv_TEXCOORD0 (low float) 4x1 [-1]

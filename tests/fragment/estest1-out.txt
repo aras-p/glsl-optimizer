@@ -9,4 +9,12 @@ void main ()
 }
 
 
-// inputs: 2, stats: 3 alu 2 tex 0 flow
+// stats: 3 alu 2 tex 0 flow
+// inputs: 2
+//  #0: xlv_TEXCOORD0 (high float) 4x1 [-1]
+//  #1: xlv_TEXCOORD1 (high float) 4x1 [-1]
+// uniforms: 1 (total size: 0)
+//  #0: _Color (high float) 4x1 [-1]
+// textures: 2
+//  #0: _Detail (high 2d) 0x0 [-1]
+//  #1: _MainTex (high 2d) 0x0 [-1]

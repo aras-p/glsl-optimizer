@@ -63,4 +63,10 @@ void main ()
 }
 
 
-// inputs: 1, stats: 20 alu 0 tex 0 flow
+// stats: 20 alu 0 tex 0 flow
+// inputs: 1
+//  #0: _glesVertex (high float) 4x1 [-1]
+// uniforms: 3 (total size: 0)
+//  #0: UNITY_MATRIX_MVP (high float) 4x4 [-1]
+//  #1: unity_LightAtten (high float) 4x1 [4]
+//  #2: unity_LightColor (high float) 4x1 [4]

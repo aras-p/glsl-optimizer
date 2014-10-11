@@ -63,4 +63,21 @@ void main ()
 }
 
 
-// inputs: 5, stats: 26 alu 0 tex 0 flow
+// stats: 26 alu 0 tex 0 flow
+// inputs: 5
+//  #0: gl_MultiTexCoord1 (high float) 4x1 [-1] loc 9
+//  #1: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 8
+//  #2: gl_Normal (high float) 3x1 [-1] loc 2
+//  #3: gl_Vertex (high float) 4x1 [-1] loc 0
+//  #4: TANGENT (high float) 4x1 [-1]
+// uniforms: 10 (total size: 0)
+//  #0: gl_ModelViewProjectionMatrix (high float) 4x4 [-1]
+//  #1: gl_ModelViewMatrix (high float) 4x4 [-1]
+//  #2: _BumpMap_ST (high float) 4x1 [-1]
+//  #3: _MainTex_ST (high float) 4x1 [-1]
+//  #4: _ProjectionParams (high float) 4x1 [-1]
+//  #5: _World2Object (high float) 4x4 [-1]
+//  #6: _WorldSpaceCameraPos (high float) 3x1 [-1]
+//  #7: unity_LightmapFade (high float) 4x1 [-1]
+//  #8: unity_LightmapST (high float) 4x1 [-1]
+//  #9: unity_Scale (high float) 4x1 [-1]

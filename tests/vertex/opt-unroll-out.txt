@@ -34,4 +34,10 @@ void main ()
 }
 
 
-// inputs: 2, stats: 32 alu 0 tex 0 flow
+// stats: 32 alu 0 tex 0 flow
+// inputs: 2
+//  #0: gl_Normal (high float) 3x1 [-1] loc 2
+//  #1: gl_Vertex (high float) 4x1 [-1] loc 0
+// uniforms: 2 (total size: 0)
+//  #0: _TerrainTreeLightDirections (high float) 3x1 [4]
+//  #1: _TranslucencyViewDependency (high float) 1x1 [-1]

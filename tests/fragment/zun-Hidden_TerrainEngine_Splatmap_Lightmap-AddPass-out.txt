@@ -32,4 +32,16 @@ void main ()
 }
 
 
-// inputs: 1, stats: 16 alu 6 tex 0 flow
+// stats: 16 alu 6 tex 0 flow
+// inputs: 1
+//  #0: gl_TexCoord (high float) 4x1 [6] loc 4
+// uniforms: 2 (total size: 0)
+//  #0: _LightColor0 (high float) 4x1 [-1]
+//  #1: _WorldSpaceLightPos0 (high float) 4x1 [-1]
+// textures: 6
+//  #0: _Control (high 2d) 0x0 [-1]
+//  #1: _ShadowMapTexture (high 2d) 0x0 [-1]
+//  #2: _Splat0 (high 2d) 0x0 [-1]
+//  #3: _Splat1 (high 2d) 0x0 [-1]
+//  #4: _Splat2 (high 2d) 0x0 [-1]
+//  #5: _Splat3 (high 2d) 0x0 [-1]

@@ -30,4 +30,11 @@ void main ()
 }
 
 
-// inputs: 2, stats: 11 alu 1 tex 2 flow
+// stats: 11 alu 1 tex 2 flow
+// inputs: 2
+//  #0: xlv_uv (high float) 2x1 [-1]
+//  #1: xlv_nl (high float) 3x1 [-1]
+// uniforms: 1 (total size: 0)
+//  #0: _TerrainTreeLightColors (high float) 4x1 [4]
+// textures: 1
+//  #0: _MainTex (low 2d) 0x0 [-1]

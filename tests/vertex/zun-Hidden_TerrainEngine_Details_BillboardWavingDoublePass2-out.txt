@@ -72,4 +72,18 @@ void main ()
 }
 
 
-// inputs: 4, stats: 50 alu 0 tex 2 flow
+// stats: 50 alu 0 tex 2 flow
+// inputs: 4
+//  #0: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 8
+//  #1: gl_Color (high float) 4x1 [-1] loc 3
+//  #2: gl_Vertex (high float) 4x1 [-1] loc 0
+//  #3: TANGENT (high float) 4x1 [-1]
+// uniforms: 8 (total size: 0)
+//  #0: gl_ModelViewProjectionMatrix (high float) 4x4 [-1]
+//  #1: _CameraPosition (high float) 4x1 [-1]
+//  #2: _CameraRight (high float) 3x1 [-1]
+//  #3: _CameraUp (high float) 3x1 [-1]
+//  #4: _MainTex_ST (high float) 4x1 [-1]
+//  #5: _WaveAndDistance (high float) 4x1 [-1]
+//  #6: _WavingTint (high float) 4x1 [-1]
+//  #7: unity_LightShadowBias (high float) 4x1 [-1]
