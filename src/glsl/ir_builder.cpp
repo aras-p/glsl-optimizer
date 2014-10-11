@@ -35,11 +35,11 @@ ir_factory::emit(ir_instruction *ir)
 }
 
 ir_variable *
-ir_factory::make_temp(const glsl_type *type, const char *name)
+ir_factory::make_temp(const glsl_type *type, const char *name, glsl_precision prec)
 {
    ir_variable *var;
 
-   var = new(mem_ctx) ir_variable(type, name, ir_var_temporary, glsl_precision_undefined);
+   var = new(mem_ctx) ir_variable(type, name, ir_var_temporary, prec);
    emit(var);
 
    return var;

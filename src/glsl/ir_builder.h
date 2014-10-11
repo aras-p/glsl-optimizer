@@ -90,7 +90,7 @@ public:
    }
 
    void emit(ir_instruction *ir);
-   ir_variable *make_temp(const glsl_type *type, const char *name);
+   ir_variable *make_temp(const glsl_type *type, const char *name, glsl_precision prec = glsl_precision_undefined);
 
    ir_constant*
    constant(float f)
