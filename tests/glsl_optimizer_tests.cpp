@@ -459,7 +459,6 @@ static const char* kGlslPrecNames[kGlslPrecCount] = {
 static bool TestFile (glslopt_ctx* ctx, bool vertex,
 	const std::string& testName,
 	const std::string& inputPath,
-	const std::string& hirPath,
 	const std::string& outputPath,
 	bool gles,
 	bool doCheckGLSL,
@@ -565,27 +564,8 @@ static bool TestFile (glslopt_ctx* ctx, bool vertex,
 			textOpt += buffer;
 		}
 
-		std::string outputHir;
-		ReadStringFromFile (hirPath.c_str(), outputHir);
 		std::string outputOpt;
 		ReadStringFromFile (outputPath.c_str(), outputOpt);
-
-		if (!hirPath.empty() && (textHir != outputHir))
-		{
-			// write output
-			FILE* f = fopen (hirPath.c_str(), "wb");
-			if (!f)
-			{
-				printf ("\n  %s: can't write to IR file!\n", testName.c_str());
-			}
-			else
-			{
-				fwrite (textHir.c_str(), 1, textHir.size(), f);
-				fclose (f);
-			}
-			printf ("\n  %s: does not match raw output\n", testName.c_str());
-			res = false;
-		}
 
 		if (res && doCheckMetal && !CheckMetal (vertex, gles, testName, "metal", textOpt.c_str()))
 			res = false;
@@ -656,7 +636,6 @@ int main (int argc, const char** argv)
 
 		static const char* kAPIName[3] = { "OpenGL ES 2.0", "OpenGL ES 3.0", "OpenGL" };
 		static const char* kApiIn [3] = {"-inES.txt", "-inES3.txt", "-in.txt"};
-		static const char* kApiIR [3] = {"-irES.txt", "-irES3.txt", "-ir.txt"};
 		static const char* kApiOut[3] = {"-outES.txt", "-outES3.txt", "-out.txt"};
 		static const char* kApiOutMetal[3] = {"-outESMetal.txt", "-outES3Metal.txt", "-outMetal.txt"};
 		for (int api = 0; api < 3; ++api)
@@ -670,18 +649,17 @@ int main (int argc, const char** argv)
 				std::string inname = inputFiles[i];
 				//if (inname != "ast-in.txt")
 				//	continue;
-				std::string hirname = inname.substr (0,inname.size()-strlen(kApiIn[api])) + kApiIR[api];
 				std::string outname = inname.substr (0,inname.size()-strlen(kApiIn[api])) + kApiOut[api];
 				std::string outnameMetal = inname.substr (0,inname.size()-strlen(kApiIn[api])) + kApiOutMetal[api];
 				const bool useMetal = (api == 1);
-				bool ok = TestFile (ctx[api], type==0, inname, testFolder + "/" + inname, testFolder + "/" + hirname, testFolder + "/" + outname, api<=1, hasOpenGL, false);
+				bool ok = TestFile (ctx[api], type==0, inname, testFolder + "/" + inname, testFolder + "/" + outname, api<=1, hasOpenGL, false);
 				if (!ok)
 				{
 					++errors;
 				}
 				if (useMetal)
 				{
-					ok = TestFile (ctxMetal, type==0, inname, testFolder + "/" + inname, "", testFolder + "/" + outnameMetal, api==0, false, hasMetal);
+					ok = TestFile (ctxMetal, type==0, inname, testFolder + "/" + inname, testFolder + "/" + outnameMetal, api==0, false, hasMetal);
 					if (!ok)
 					{
 						++errors;
