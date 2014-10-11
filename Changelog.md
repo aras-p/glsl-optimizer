@@ -1,6 +1,26 @@
 GLSL optimizer Change Log
 =========================
 
+2014 10
+-------
+
+Goodies:
+
+* Support for translating GLSL shaders into Apple Metal shading language.
+  Exactly same process; GLSL in (preferably ES3 variant), optimization passes, Metal out.
+  All uniforms currently will be put into one constant buffer.
+  Pass kGlslTargetMetal target to get Metal.
+* Shader reflection API. See glslopt_shader_get_* functions. Binding indices
+  are only automatically assigned on Metal now; on GL/ES targets the reflection API is only
+  useful to get list of inputs/uniforms, their names and types.
+* Improved dead code elimation: some cases of swizzled/masked assignments where same variable was on both sides
+  were not eliminated if that variable was totally unused later.
+
+Fixes:
+
+* sampler3D declarations were missing precision qualifier on GLES3.0.
+
+
 2014 09
 -------
 
