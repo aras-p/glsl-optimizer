@@ -1,6 +1,7 @@
 #version 120
 uniform float inInit = 13.0;
 uniform mat4x3 nonSqMat;
+uniform vec4 uniInit = vec4(1.0, 2.0, 3.0, 4.0);
 void main ()
 {
   float arr_1[4];
@@ -33,8 +34,11 @@ void main ()
   float tmpvar_12;
   tmpvar_12 = (v_2.z + float(4));
   v_2.z = vec3(tmpvar_12).z;
-  vec4 tmpvar_13;
-  tmpvar_13 = v_2;
-  gl_FragColor = tmpvar_13;
+  float tmpvar_13;
+  tmpvar_13 = (v_2.w + uniInit.w);
+  v_2.w = vec4(tmpvar_13).w;
+  vec4 tmpvar_14;
+  tmpvar_14 = v_2;
+  gl_FragColor = tmpvar_14;
 }
 

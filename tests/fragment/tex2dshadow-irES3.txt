@@ -1,7 +1,8 @@
 #version 300 es
 precision mediump float;
 uniform lowp sampler2DShadow shadowmap;
-in highp vec4 xlv_TEXCOORD0;
+in highp vec4 uvHi;
+in mediump vec4 uvMed;
 out lowp vec4 _fragColor;
 float xll_shadow2D (
   in lowp sampler2DShadow s_1,
@@ -46,18 +47,19 @@ lowp vec4 xlat_main (
 
 void main ()
 {
-  lowp vec4 xl_retval_15;
-  highp vec4 tmpvar_16;
-  tmpvar_16 = xlv_TEXCOORD0.xyzw;
+  lowp vec4 r_15;
+  lowp vec4 tmpvar_16;
+  tmpvar_16 = xlat_main (uvHi);
   lowp vec4 tmpvar_17;
-  tmpvar_17 = xlat_main (tmpvar_16);
-  lowp vec4 tmpvar_18;
-  tmpvar_18 = tmpvar_17;
-  xl_retval_15 = tmpvar_18;
-  lowp vec4 tmpvar_19;
-  tmpvar_19 = xl_retval_15.xyzw;
+  tmpvar_17 = tmpvar_16;
+  r_15 = tmpvar_17;
+  lowp float tmpvar_18;
+  tmpvar_18 = texture (shadowmap, uvMed.xyz);
+  lowp float tmpvar_19;
+  tmpvar_19 = (r_15.x + tmpvar_18);
+  r_15.x = tmpvar_19;
   lowp vec4 tmpvar_20;
-  tmpvar_20 = tmpvar_19;
+  tmpvar_20 = r_15;
   _fragColor = tmpvar_20;
 }
 

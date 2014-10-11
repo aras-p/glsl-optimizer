@@ -1,8 +1,8 @@
 #extension GL_EXT_shader_texture_lod : enable
 #extension GL_OES_standard_derivatives : enable
 uniform sampler2D tex;
-uniform samplerCube cub;
-varying mediump vec3 uv;
+uniform lowp samplerCube cub;
+varying highp vec3 uv;
 void main ()
 {
   lowp vec4 tmpvar_1;
