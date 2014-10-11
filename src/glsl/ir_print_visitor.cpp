@@ -151,7 +151,7 @@ void ir_print_visitor::visit(ir_variable *ir)
    const char *const cent = (ir->data.centroid) ? "centroid " : "";
    const char *const samp = (ir->data.sample) ? "sample " : "";
    const char *const inv = (ir->data.invariant) ? "invariant " : "";
-   const char *const mode[] = { "", "uniform ", "shader_in ", "shader_out ",
+   const char *const mode[] = { "", "uniform ", "shader_in ", "shader_out ", "shader_inout ",
                                 "in ", "out ", "inout ",
 			        "const_in ", "sys ", "temporary " };
    STATIC_ASSERT(ARRAY_SIZE(mode) == ir_var_mode_count);

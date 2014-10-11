@@ -421,6 +421,7 @@ private:
 
    const glsl_type * const bool_t;
    const glsl_type * const int_t;
+   const glsl_type * const uint_t;
    const glsl_type * const float_t;
    const glsl_type * const vec2_t;
    const glsl_type * const vec3_t;
@@ -437,7 +438,7 @@ builtin_variable_generator::builtin_variable_generator(
    exec_list *instructions, struct _mesa_glsl_parse_state *state)
    : instructions(instructions), state(state), symtab(state->symbols),
      compatibility(!state->is_version(140, 100)),
-     bool_t(glsl_type::bool_type), int_t(glsl_type::int_type),
+     bool_t(glsl_type::bool_type), int_t(glsl_type::int_type), uint_t(glsl_type::uint_type),
      float_t(glsl_type::float_type), vec2_t(glsl_type::vec2_type),
      vec3_t(glsl_type::vec3_type), vec4_t(glsl_type::vec4_type),
      mat3_t(glsl_type::mat3_type), mat4_t(glsl_type::mat4_type)
@@ -838,11 +839,11 @@ builtin_variable_generator::generate_vs_special_vars()
 {
 
    if (state->is_version(130, 300))
-      add_system_value(SYSTEM_VALUE_VERTEX_ID, int_t, "gl_VertexID", glsl_precision_high);
+      add_system_value(SYSTEM_VALUE_VERTEX_ID, state->metal_target ? uint_t : int_t, "gl_VertexID", glsl_precision_high);
    if (state->ARB_draw_instanced_enable)
       add_system_value(SYSTEM_VALUE_INSTANCE_ID, int_t, "gl_InstanceIDARB", glsl_precision_high);
    if (state->ARB_draw_instanced_enable || state->is_version(140, 300))
-      add_system_value(SYSTEM_VALUE_INSTANCE_ID, int_t, "gl_InstanceID", glsl_precision_high);
+	   add_system_value(SYSTEM_VALUE_INSTANCE_ID, state->metal_target ? uint_t : int_t, "gl_InstanceID", glsl_precision_high);
    if (state->AMD_vertex_shader_layer_enable)
       add_output(VARYING_SLOT_LAYER, int_t, "gl_Layer", glsl_precision_high);
    if (compatibility) {
@@ -900,7 +901,7 @@ builtin_variable_generator::generate_fs_special_vars()
    add_input(VARYING_SLOT_POS, vec4_t, "gl_FragCoord", glsl_precision_high);
    add_input(VARYING_SLOT_FACE, bool_t, "gl_FrontFacing", glsl_precision_low);
    if (state->is_version(120, 100))
-      add_input(VARYING_SLOT_PNTC, vec2_t, "gl_PointCoord", glsl_precision_medium);
+	   add_input(VARYING_SLOT_PNTC, vec2_t, "gl_PointCoord", state->metal_target ? glsl_precision_high : glsl_precision_medium);
 
    if (state->is_version(150, 0)) {
       ir_variable *var =

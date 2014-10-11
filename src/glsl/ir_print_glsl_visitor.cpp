@@ -32,63 +32,6 @@
 #include <limits>
 
 
-class string_buffer
-{
-public:
-	string_buffer(void* mem_ctx)
-	{
-		m_Capacity = 512;
-		m_Ptr = (char*)ralloc_size(mem_ctx, m_Capacity);
-		m_Size = 0;
-		m_Ptr[0] = 0;
-	}
-
-	~string_buffer()
-	{
-		ralloc_free(m_Ptr);
-	}
-
-	const char* c_str() const { return m_Ptr; }
-
-	void asprintf_append(const char *fmt, ...) PRINTFLIKE(2, 3)
-	{
-		va_list args;
-		va_start(args, fmt);
-		vasprintf_append(fmt, args);
-		va_end(args);
-	}
-
-	void vasprintf_append(const char *fmt, va_list args)
-	{
-		assert (m_Ptr != NULL);
-		vasprintf_rewrite_tail (&m_Size, fmt, args);
-	}
-
-	void vasprintf_rewrite_tail (size_t *start, const char *fmt, va_list args)
-	{
-		assert (m_Ptr != NULL);
-
-		size_t new_length = printf_length(fmt, args);
-		size_t needed_length = m_Size + new_length + 1;
-
-		if (m_Capacity < needed_length)
-		{
-			m_Capacity = MAX2 (m_Capacity + m_Capacity/2, needed_length);
-			m_Ptr = (char*)reralloc_size(ralloc_parent(m_Ptr), m_Ptr, m_Capacity);
-		}
-
-		vsnprintf(m_Ptr + m_Size, new_length+1, fmt, args);
-		m_Size += new_length;
-		assert (m_Capacity >= m_Size);
-	}
-
-private:
-	char* m_Ptr;
-	size_t m_Size;
-	size_t m_Capacity;
-};
-
-
 static void print_type(string_buffer& buffer, const glsl_type *t, bool arraySize);
 static void print_type_post(string_buffer& buffer, const glsl_type *t, bool arraySize);
 
@@ -353,13 +296,13 @@ void ir_print_glsl_visitor::print_precision (ir_instruction* ir, const glsl_type
 		this->state->stage == MESA_SHADER_FRAGMENT &&
 		!this->state->had_float_precision)
 	{
-		prec = glsl_precision_medium;
-	}		
-	
+		prec = glsl_precision_high;
+	}
+
 	// skip precision for samplers that end up being lowp (default anyway) or undefined;
 	// except always emit it for shadowmap samplers (some drivers don't implement
-	// default EXT_shadow_samplers precision)
-	if (type && type->is_sampler() && !type->sampler_shadow)
+	// default EXT_shadow_samplers precision) and 3D textures (they always require precision)
+	if (type && type->is_sampler() && !type->sampler_shadow && !(type->sampler_dimensionality > GLSL_SAMPLER_DIM_2D))
 	{
 		if (prec == glsl_precision_low || prec == glsl_precision_undefined)
 			return;
@@ -403,9 +346,9 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 	const char *const inv = (ir->data.invariant) ? "invariant " : "";
 	const char *const mode[3][ir_var_mode_count] =
 	{
-		{ "", "uniform ", "in ",        "out ",     "in ", "out ", "inout ", "", "", "" },
-		{ "", "uniform ", "attribute ", "varying ", "in ", "out ", "inout ", "", "", "" },
-		{ "", "uniform ", "varying ",   "out ",     "in ", "out ", "inout ", "", "", "" },
+		{ "", "uniform ", "in ",        "out ",     "inout ", "in ", "out ", "inout ", "", "", "" },
+		{ "", "uniform ", "attribute ", "varying ", "inout ", "in ", "out ", "inout ", "", "", "" },
+		{ "", "uniform ", "varying ",   "out ",     "inout ", "in ", "out ", "inout ", "", "", "" },
 	};
 	
 	const char *const interp[] = { "", "smooth ", "flat ", "noperspective " };
@@ -466,6 +409,7 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 	if (ir->constant_value &&
 		ir->data.mode != ir_var_shader_in &&
 		ir->data.mode != ir_var_shader_out &&
+		ir->data.mode != ir_var_shader_inout &&
 		ir->data.mode != ir_var_function_in &&
 		ir->data.mode != ir_var_function_out &&
 		ir->data.mode != ir_var_function_inout)

@@ -1983,7 +1983,7 @@ is_varying_var(ir_variable *var, gl_shader_stage target)
    case MESA_SHADER_VERTEX:
       return var->data.mode == ir_var_shader_out;
    case MESA_SHADER_FRAGMENT:
-      return var->data.mode == ir_var_shader_in;
+      return var->data.mode == ir_var_shader_in || var->data.mode == ir_var_shader_inout;
    default:
       return var->data.mode == ir_var_shader_out || var->data.mode == ir_var_shader_in;
    }
@@ -2189,7 +2189,7 @@ validate_explicit_location(const struct ast_type_qualifier *qual,
       // ability to use the inout qualifier at global scope
       // in a fragment shader, is optional and must be enabled by
       // #extension GL_EXT_shader_framebuffer_fetch
-      if (var->data.mode == ir_var_function_inout && state->EXT_shader_framebuffer_fetch_enable) {
+      if (var->data.mode == ir_var_shader_inout && state->EXT_shader_framebuffer_fetch_enable) {
          break;
       }
 
@@ -2355,7 +2355,12 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
     * the setting alone.
     */
    if (qual->flags.q.in && qual->flags.q.out)
-      var->data.mode = ir_var_function_inout;
+   {
+	   if (!is_parameter && (state->stage == MESA_SHADER_FRAGMENT))
+		   var->data.mode = ir_var_shader_inout;
+	   else
+		   var->data.mode = ir_var_function_inout;
+   }
    else if (qual->flags.q.in)
       var->data.mode = is_parameter ? ir_var_function_in : ir_var_shader_in;
    else if (qual->flags.q.attribute

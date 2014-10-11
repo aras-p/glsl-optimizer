@@ -1926,6 +1926,9 @@ mode_string(const ir_variable *var)
    case ir_var_shader_out:
       return "shader output";
 
+   case ir_var_shader_inout:
+	   return "shader inout";
+
    case ir_var_function_in:
    case ir_var_const_in:
       return "function input";

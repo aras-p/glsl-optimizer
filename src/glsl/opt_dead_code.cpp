@@ -71,7 +71,7 @@ do_dead_code(exec_list *instructions, bool uniform_locations_assigned)
 		entry->declaration ? "" : "not ");
       }
 
-      if ((entry->referenced_count > entry->assigned_count)
+      if ((entry->referenced_count_noself > entry->assigned_count)
 	  || !entry->declaration)
 	 continue;
 

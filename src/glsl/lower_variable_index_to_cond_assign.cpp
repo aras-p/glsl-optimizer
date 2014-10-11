@@ -379,6 +379,7 @@ public:
       case ir_var_function_out:
          return this->lower_temps;
       case ir_var_shader_out:
+	  case ir_var_shader_inout:
          return this->lower_outputs;
       case ir_var_function_inout:
 	 return this->lower_temps;

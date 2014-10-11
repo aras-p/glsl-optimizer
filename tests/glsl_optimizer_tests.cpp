@@ -180,6 +180,20 @@ static void CleanupGL()
 #endif // #if GOT_GFX
 }
 
+
+static bool InitializeMetal ()
+{
+	bool hasMetal = false;
+	
+#if defined(__APPLE__)
+
+	hasMetal = true; //@TODO: detect metal compiler presence
+	
+#endif
+	
+	return hasMetal;
+}
+
 static void replace_string (std::string& target, const std::string& search, const std::string& replace, size_t startPos)
 {
 	if (search.empty())
@@ -277,7 +291,7 @@ static bool CheckGLSL (bool vertex, bool gles, const std::string& testName, cons
 	bool res = true;
 	if (status == 0)
 	{
-		char log[4096];
+		char log[20000];
 		log[0] = 0;
 		GLsizei logLength;
 		glGetInfoLogARB (shader, sizeof(log), &logLength, log);
@@ -286,6 +300,26 @@ static bool CheckGLSL (bool vertex, bool gles, const std::string& testName, cons
 	}
 	glDeleteObjectARB (shader);
 	return res;
+}
+
+
+static bool CheckMetal (bool vertex, bool gles, const std::string& testName, const char* prefix, const std::string& source)
+{
+#if !GOT_GFX
+	return true; // just assume it's ok
+#endif
+	
+	FILE* f = fopen ("metalTemp.metal", "wb");
+	fwrite (source.c_str(), source.size(), 1, f);
+	fclose (f);
+	
+	int res = system("/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/usr/bin/metal metalTemp.metal -o metalTemp.o -std=ios-metal1.0 -Wno-parentheses-equality");
+	if (res != 0)
+	{
+		printf ("\n  %s: Metal compiler failed\n", testName.c_str());
+		return false;
+	}
+	return true;
 }
 
 
@@ -373,6 +407,8 @@ static void DeleteFile (const std::string& path)
 
 static void MassageVertexForGLES (std::string& s)
 {
+	if (s.find ("_glesVertex") != std::string::npos)
+		return;
 	std::string pre;
 	std::string version = "#version 300 es\n";
 	size_t insertPoint = s.find(version);
@@ -404,13 +440,30 @@ static void MassageFragmentForGLES (std::string& s)
 	s = pre + s;
 }
 
+static const char* kGlslTypeNames[kGlslTypeCount] = {
+	"float",
+	"int",
+	"bool",
+	"2d",
+	"3d",
+	"cube",
+	"other",
+};
+static const char* kGlslPrecNames[kGlslPrecCount] = {
+	"high",
+	"medium",
+	"low",
+};
+
+
 static bool TestFile (glslopt_ctx* ctx, bool vertex,
 	const std::string& testName,
 	const std::string& inputPath,
 	const std::string& hirPath,
 	const std::string& outputPath,
 	bool gles,
-	bool doCheckGLSL)
+	bool doCheckGLSL,
+	bool doCheckMetal)
 {
 	std::string input;
 	if (!ReadStringFromFile (inputPath.c_str(), input))
@@ -443,19 +496,81 @@ static bool TestFile (glslopt_ctx* ctx, bool vertex,
 		std::string textHir = glslopt_get_raw_output (shader);
 		std::string textOpt = glslopt_get_output (shader);
 
-		char buffer[200];
+		// append stats
+		char buffer[1000];
 		int statsAlu, statsTex, statsFlow;
 		glslopt_shader_get_stats (shader, &statsAlu, &statsTex, &statsFlow);
-		int inputCount = glslopt_shader_get_input_count (shader);
-		sprintf(buffer, "\n// inputs: %i, stats: %i alu %i tex %i flow\n", inputCount, statsAlu, statsTex, statsFlow);
+		sprintf(buffer, "\n// stats: %i alu %i tex %i flow\n", statsAlu, statsTex, statsFlow);
 		textOpt += buffer;
+		
+		// append inputs
+		const int inputCount = glslopt_shader_get_input_count (shader);
+		if (inputCount > 0)
+		{
+			sprintf(buffer, "// inputs: %i\n", inputCount);
+			textOpt += buffer;
+		}
+		for (int i = 0; i < inputCount; ++i)
+		{
+			const char* parName;
+			glslopt_basic_type parType;
+			glslopt_precision parPrec;
+			int parVecSize, parMatSize, parArrSize, location;
+			glslopt_shader_get_input_desc(shader, i, &parName, &parType, &parPrec, &parVecSize, &parMatSize, &parArrSize, &location);
+			if (location >= 0)
+				sprintf(buffer, "//  #%i: %s (%s %s) %ix%i [%i] loc %i\n", i, parName, kGlslPrecNames[parPrec], kGlslTypeNames[parType], parVecSize, parMatSize, parArrSize, location);
+			else
+				sprintf(buffer, "//  #%i: %s (%s %s) %ix%i [%i]\n", i, parName, kGlslPrecNames[parPrec], kGlslTypeNames[parType], parVecSize, parMatSize, parArrSize);
+			textOpt += buffer;
+		}
+		// append uniforms
+		const int uniformCount = glslopt_shader_get_uniform_count (shader);
+		const int uniformSize = glslopt_shader_get_uniform_total_size (shader);
+		if (uniformCount > 0)
+		{
+			sprintf(buffer, "// uniforms: %i (total size: %i)\n", uniformCount, uniformSize);
+			textOpt += buffer;
+		}
+		for (int i = 0; i < uniformCount; ++i)
+		{
+			const char* parName;
+			glslopt_basic_type parType;
+			glslopt_precision parPrec;
+			int parVecSize, parMatSize, parArrSize, location;
+			glslopt_shader_get_uniform_desc(shader, i, &parName, &parType, &parPrec, &parVecSize, &parMatSize, &parArrSize, &location);
+			if (location >= 0)
+				sprintf(buffer, "//  #%i: %s (%s %s) %ix%i [%i] loc %i\n", i, parName, kGlslPrecNames[parPrec], kGlslTypeNames[parType], parVecSize, parMatSize, parArrSize, location);
+			else
+				sprintf(buffer, "//  #%i: %s (%s %s) %ix%i [%i]\n", i, parName, kGlslPrecNames[parPrec], kGlslTypeNames[parType], parVecSize, parMatSize, parArrSize);
+			textOpt += buffer;
+		}
+		// append textures
+		const int textureCount = glslopt_shader_get_texture_count (shader);
+		if (textureCount > 0)
+		{
+			sprintf(buffer, "// textures: %i\n", textureCount);
+			textOpt += buffer;
+		}
+		for (int i = 0; i < textureCount; ++i)
+		{
+			const char* parName;
+			glslopt_basic_type parType;
+			glslopt_precision parPrec;
+			int parVecSize, parMatSize, parArrSize, location;
+			glslopt_shader_get_texture_desc(shader, i, &parName, &parType, &parPrec, &parVecSize, &parMatSize, &parArrSize, &location);
+			if (location >= 0)
+				sprintf(buffer, "//  #%i: %s (%s %s) %ix%i [%i] loc %i\n", i, parName, kGlslPrecNames[parPrec], kGlslTypeNames[parType], parVecSize, parMatSize, parArrSize, location);
+			else
+				sprintf(buffer, "//  #%i: %s (%s %s) %ix%i [%i]\n", i, parName, kGlslPrecNames[parPrec], kGlslTypeNames[parType], parVecSize, parMatSize, parArrSize);
+			textOpt += buffer;
+		}
 
 		std::string outputHir;
 		ReadStringFromFile (hirPath.c_str(), outputHir);
 		std::string outputOpt;
 		ReadStringFromFile (outputPath.c_str(), outputOpt);
 
-		if (textHir != outputHir)
+		if (!hirPath.empty() && (textHir != outputHir))
 		{
 			// write output
 			FILE* f = fopen (hirPath.c_str(), "wb");
@@ -472,6 +587,9 @@ static bool TestFile (glslopt_ctx* ctx, bool vertex,
 			res = false;
 		}
 
+		if (res && doCheckMetal && !CheckMetal (vertex, gles, testName, "metal", textOpt.c_str()))
+			res = false;
+		
 		if (textOpt != outputOpt)
 		{
 			// write output
@@ -514,11 +632,13 @@ int main (int argc, const char** argv)
 	}
 
 	bool hasOpenGL = InitializeOpenGL ();
+	bool hasMetal = InitializeMetal ();
 	glslopt_ctx* ctx[3] = {
 		glslopt_initialize(kGlslTargetOpenGLES20),
 		glslopt_initialize(kGlslTargetOpenGLES30),
 		glslopt_initialize(kGlslTargetOpenGL),
 	};
+	glslopt_ctx* ctxMetal = glslopt_initialize(kGlslTargetMetal);
 
 	std::string baseFolder = argv[1];
 
@@ -538,6 +658,7 @@ int main (int argc, const char** argv)
 		static const char* kApiIn [3] = {"-inES.txt", "-inES3.txt", "-in.txt"};
 		static const char* kApiIR [3] = {"-irES.txt", "-irES3.txt", "-ir.txt"};
 		static const char* kApiOut[3] = {"-outES.txt", "-outES3.txt", "-out.txt"};
+		static const char* kApiOutMetal[3] = {"-outESMetal.txt", "-outES3Metal.txt", "-outMetal.txt"};
 		for (int api = 0; api < 3; ++api)
 		{
 			printf ("\n** running %s tests for %s...\n", kTypeName[type], kAPIName[api]);
@@ -551,10 +672,20 @@ int main (int argc, const char** argv)
 				//	continue;
 				std::string hirname = inname.substr (0,inname.size()-strlen(kApiIn[api])) + kApiIR[api];
 				std::string outname = inname.substr (0,inname.size()-strlen(kApiIn[api])) + kApiOut[api];
-				bool ok = TestFile (ctx[api], type==0, inname, testFolder + "/" + inname, testFolder + "/" + hirname, testFolder + "/" + outname, api<=1, hasOpenGL);
+				std::string outnameMetal = inname.substr (0,inname.size()-strlen(kApiIn[api])) + kApiOutMetal[api];
+				const bool useMetal = (api == 1);
+				bool ok = TestFile (ctx[api], type==0, inname, testFolder + "/" + inname, testFolder + "/" + hirname, testFolder + "/" + outname, api<=1, hasOpenGL, false);
 				if (!ok)
 				{
 					++errors;
+				}
+				if (useMetal)
+				{
+					ok = TestFile (ctxMetal, type==0, inname, testFolder + "/" + inname, "", testFolder + "/" + outnameMetal, api==0, false, hasMetal);
+					if (!ok)
+					{
+						++errors;
+					}
 				}
 				++tests;
 			}
@@ -573,6 +704,7 @@ int main (int argc, const char** argv)
 
 	for (int i = 0; i < 2; ++i)
 		glslopt_cleanup (ctx[i]);
+	glslopt_cleanup (ctxMetal);
 	CleanupGL();
 
 	return errors ? 1 : 0;

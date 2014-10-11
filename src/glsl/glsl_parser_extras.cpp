@@ -82,6 +82,7 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
    this->language_version = ctx->Const.ForceGLSLVersion ?
                             ctx->Const.ForceGLSLVersion : 110;
    this->es_shader = false;
+   this->metal_target = false;
    this->had_version_string = false;
    this->had_float_precision = false;
    this->ARB_texture_rectangle_enable = true;
@@ -386,8 +387,9 @@ _mesa_glsl_msg(const YYLTYPE *locp, _mesa_glsl_parse_state *state,
    /* Get the offset that the new message will be written to. */
    int msg_offset = strlen(state->info_log);
 
-   ralloc_asprintf_append(&state->info_log, "%u:%u(%u): %s: ",
-					    locp->source,
+	// format:
+	// (line,col): type: message
+   ralloc_asprintf_append(&state->info_log, "(%u,%u): %s: ",
 					    locp->first_line,
 					    locp->first_column,
 					    error ? "error" : "warning");
@@ -1546,7 +1548,7 @@ do_common_optimization(exec_list *ir, bool linked,
    progress = do_swizzle_swizzle(ir) || progress;
    progress = do_noop_swizzle(ir) || progress;
 
-   progress = optimize_split_arrays(ir, linked) || progress;
+   progress = optimize_split_arrays(ir, linked, false) || progress;
    progress = optimize_redundant_jumps(ir) || progress;
 
    loop_state *ls = analyze_loop_variables(ir);

@@ -1613,6 +1613,7 @@ ast_function_expression::hir(exec_list *instructions,
       unsigned matrix_parameters = 0;
       unsigned nonmatrix_parameters = 0;
       exec_list actual_parameters;
+	   glsl_precision params_precision = glsl_precision_undefined;
 
       foreach_list (n, &this->expressions) {
 	 ast_node *ast = exec_node_data(ast_node, n, link);
@@ -1646,6 +1647,7 @@ ast_function_expression::hir(exec_list *instructions,
 	    nonmatrix_parameters++;
 
 	 actual_parameters.push_tail(result);
+		  params_precision = higher_precision(params_precision, result->get_precision());
 	 components_used += result->type->components();
       }
 
@@ -1755,13 +1757,13 @@ ast_function_expression::hir(exec_list *instructions,
 	 return dereference_component((ir_rvalue *) actual_parameters.head,
 				      0);
       } else if (constructor_type->is_vector()) {
-	 return emit_inline_vector_constructor(constructor_type, ast_precision_none, // TODO: type->precision,
+	 return emit_inline_vector_constructor(constructor_type, params_precision,
 					       instructions,
 					       &actual_parameters,
 					       ctx);
       } else {
 	 assert(constructor_type->is_matrix());
-	 return emit_inline_matrix_constructor(constructor_type, ast_precision_none, // TODO: type->precision,
+	 return emit_inline_matrix_constructor(constructor_type, params_precision,
 					       instructions,
 					       &actual_parameters,
 					       ctx);

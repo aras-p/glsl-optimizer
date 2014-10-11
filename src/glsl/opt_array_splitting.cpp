@@ -89,8 +89,9 @@ using namespace opt_array_splitting;
  */
 class ir_array_reference_visitor : public ir_hierarchical_visitor {
 public:
-   ir_array_reference_visitor(void)
+   ir_array_reference_visitor(bool split_shader_outputs)
    {
+      this->split_shader_outputs = split_shader_outputs;
       this->mem_ctx = ralloc_context(NULL);
       this->variable_list.make_empty();
    }
@@ -113,6 +114,7 @@ public:
    exec_list variable_list;
 
    void *mem_ctx;
+   bool split_shader_outputs;
 };
 
 } /* namespace */
@@ -123,7 +125,9 @@ ir_array_reference_visitor::get_variable_entry(ir_variable *var)
    assert(var);
 
    if (var->data.mode != ir_var_auto &&
-       var->data.mode != ir_var_temporary)
+       var->data.mode != ir_var_temporary &&
+	   (!this->split_shader_outputs || (var->data.mode != ir_var_shader_out && var->data.mode != ir_var_shader_inout))
+	   )
       return NULL;
 
    if (!(var->type->is_array() || var->type->is_matrix()))
@@ -357,9 +361,9 @@ ir_array_splitting_visitor::visit_leave(ir_assignment *ir)
 }
 
 bool
-optimize_split_arrays(exec_list *instructions, bool linked)
+optimize_split_arrays(exec_list *instructions, bool linked, bool split_shader_outputs)
 {
-   ir_array_reference_visitor refs;
+   ir_array_reference_visitor refs(split_shader_outputs);
    if (!refs.get_split_list(instructions, linked))
       return false;
 
@@ -391,8 +395,13 @@ optimize_split_arrays(exec_list *instructions, bool linked)
 					    entry->var->name, i);
 
 	 entry->components[i] =
-	    new(entry->mem_ctx) ir_variable(subtype, name, ir_var_temporary, subprec);
+	    new(entry->mem_ctx) ir_variable(subtype, name, (ir_variable_mode)entry->var->data.mode, subprec);
 	 entry->var->insert_before(entry->components[i]);
+		  if (entry->var->data.explicit_location)
+		  {
+			  entry->components[i]->data.explicit_location = true;
+			  entry->components[i]->data.location = entry->var->data.location + i;
+		  }
       }
 
       entry->var->remove();

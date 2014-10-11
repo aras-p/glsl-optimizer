@@ -118,7 +118,7 @@ void lower_packed_varyings(void *mem_ctx, unsigned location_base,
 bool lower_vector_insert(exec_list *instructions, bool lower_nonconstant_index);
 void lower_named_interface_blocks(void *mem_ctx, gl_shader *shader);
 bool optimize_redundant_jumps(exec_list *instructions);
-bool optimize_split_arrays(exec_list *instructions, bool linked);
+bool optimize_split_arrays(exec_list *instructions, bool linked, bool split_shader_outputs);
 
 typedef enum {
 	OPT_SPLIT_ONLY_LOOP_INDUCTORS = 0, //< only split vectors that are used as loop inductors (and are not used by any vector operation)

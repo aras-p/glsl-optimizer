@@ -332,7 +332,10 @@ ir_copy_propagation_visitor::add_copy(ir_assignment *ir)
 	 ir->condition = new(ralloc_parent(ir)) ir_constant(false);
 	 this->progress = true;
       } else {
-		  if (lhs_var->data.precision == rhs_var->data.precision || lhs_var->data.precision==glsl_precision_undefined || rhs_var->data.precision==glsl_precision_undefined) {
+		  // Note: do not add to candidate list when RHS has undefined precision:
+		  // it might eventually leave our rvalue node with a different precision
+		  // than rhs. Which would trip up platforms that need strict casts (like Metal).
+		  if (lhs_var->data.precision == rhs_var->data.precision || lhs_var->data.precision==glsl_precision_undefined) {
 			entry = new(this->mem_ctx) acp_entry(lhs_var, rhs_var);
 			this->acp->push_tail(entry);
 		  }

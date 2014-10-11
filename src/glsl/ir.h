@@ -293,6 +293,7 @@ enum ir_variable_mode {
    ir_var_uniform,      /**< Variable declared as a uniform. */
    ir_var_shader_in,
    ir_var_shader_out,
+   ir_var_shader_inout,
    ir_var_function_in,
    ir_var_function_out,
    ir_var_function_inout,
