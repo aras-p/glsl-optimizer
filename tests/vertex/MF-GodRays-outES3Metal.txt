@@ -39,112 +39,110 @@ vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], 
   tmpvar_1 = float3(_mtl_i._inNormal);
   tmpvar_2 = float4(_mtl_i._color);
   half4 tmpvar_3;
-  float3 localDir_4;
-  float3 tmpvar_5;
-  tmpvar_5.z = 0.0;
-  tmpvar_5.xy = (float2(0.5, 0.5) - tmpvar_2.xy);
-  float3 tmpvar_6;
-  tmpvar_6 = (tmpvar_5 * _mtl_i._uv1.xyy);
-  float3 tmpvar_7;
-  tmpvar_7 = (_mtl_i._inVertex.xyz + tmpvar_6);
-  float4 tmpvar_8;
-  tmpvar_8.w = 1.0;
-  tmpvar_8.xyz = _mtl_u._WorldSpaceCameraPos;
-  float3 tmpvar_9;
-  tmpvar_9 = ((_mtl_u._World2Object * tmpvar_8).xyz - tmpvar_7);
-  localDir_4.xz = tmpvar_9.xz;
-  localDir_4.y = mix (0.0, tmpvar_9.y, _mtl_u._VerticalBillboarding);
-  float tmpvar_10;
-  tmpvar_10 = sqrt(dot (localDir_4, localDir_4));
-  float3 dir_11;
-  dir_11 = (localDir_4 / tmpvar_10);
-  float tmpvar_12;
-  tmpvar_12 = abs(dir_11.y);
-  float3 tmpvar_13;
-  if ((tmpvar_12 > 0.999)) {
-    tmpvar_13 = float3(0.0, 0.0, 1.0);
-  } else {
-    tmpvar_13 = float3(0.0, 1.0, 0.0);
-  };
-  float3 tmpvar_14;
-  tmpvar_14 = normalize(((tmpvar_13.yzx * dir_11.zxy) - (tmpvar_13.zxy * dir_11.yzx)));
-  float3 tmpvar_15;
-  tmpvar_15 = ((dir_11.yzx * tmpvar_14.zxy) - (dir_11.zxy * tmpvar_14.yzx));
+  float noiseWave_4;
+  float noiseTime_5;
+  float wave_6;
+  float time_7;
+  float3 BBLocalPos_8;
+  float3 localDir_9;
+  float3 centerLocal_10;
+  float3 centerOffs_11;
+  float3 tmpvar_12;
+  tmpvar_12.z = 0.0;
+  tmpvar_12.xy = (float2(0.5, 0.5) - tmpvar_2.xy);
+  centerOffs_11 = (tmpvar_12 * _mtl_i._uv1.xyy);
+  centerLocal_10 = (_mtl_i._inVertex.xyz + centerOffs_11);
+  float4 tmpvar_13;
+  tmpvar_13.w = 1.0;
+  tmpvar_13.xyz = _mtl_u._WorldSpaceCameraPos;
+  localDir_9 = ((_mtl_u._World2Object * tmpvar_13).xyz - centerLocal_10);
+  localDir_9.y = (localDir_9.y * _mtl_u._VerticalBillboarding);
+  float tmpvar_14;
+  tmpvar_14 = sqrt(dot (localDir_9, localDir_9));
+  float3 dir_15;
+  dir_15 = (localDir_9 / tmpvar_14);
   float tmpvar_16;
-  tmpvar_16 = min ((max (
-    (tmpvar_10 - _mtl_u._SizeGrowStartDist)
-  , 0.0) / _mtl_u._SizeGrowEndDist), 1.0);
+  tmpvar_16 = abs(dir_15.y);
   float3 tmpvar_17;
-  tmpvar_17 = ((tmpvar_7 - (
-    (tmpvar_14 * tmpvar_6.x)
-   + 
-    (tmpvar_15 * tmpvar_6.y)
-  )) + ((
-    (tmpvar_14 * tmpvar_1.x)
-   + 
-    (tmpvar_15 * tmpvar_1.y)
-  ) * (
-    ((tmpvar_16 * tmpvar_16) * _mtl_u._MaxGrowSize)
-   * tmpvar_2.w)));
-  float tmpvar_18;
-  tmpvar_18 = (_mtl_u._Time.y + (_mtl_u._BlinkingTimeOffsScale * tmpvar_2.z));
-  float y_19;
-  y_19 = (_mtl_u._TimeOnDuration + _mtl_u._TimeOffDuration);
-  float tmpvar_20;
-  tmpvar_20 = (tmpvar_18 / y_19);
-  float tmpvar_21;
-  tmpvar_21 = (fract(abs(tmpvar_20)) * y_19);
-  float tmpvar_22;
-  if ((tmpvar_20 >= 0.0)) {
-    tmpvar_22 = tmpvar_21;
+  if ((tmpvar_16 > 0.999)) {
+    tmpvar_17 = float3(0.0, 0.0, 1.0);
   } else {
-    tmpvar_22 = -(tmpvar_21);
+    tmpvar_17 = float3(0.0, 1.0, 0.0);
   };
+  float3 tmpvar_18;
+  tmpvar_18 = normalize(((tmpvar_17.yzx * dir_15.zxy) - (tmpvar_17.zxy * dir_15.yzx)));
+  float3 tmpvar_19;
+  tmpvar_19 = ((dir_15.yzx * tmpvar_18.zxy) - (dir_15.zxy * tmpvar_18.yzx));
+  float tmpvar_20;
+  tmpvar_20 = min ((max (
+    (tmpvar_14 - _mtl_u._SizeGrowStartDist)
+  , 0.0) / _mtl_u._SizeGrowEndDist), 1.0);
+  BBLocalPos_8 = ((centerLocal_10 - (
+    (tmpvar_18 * centerOffs_11.x)
+   + 
+    (tmpvar_19 * centerOffs_11.y)
+  )) + ((
+    (tmpvar_18 * tmpvar_1.x)
+   + 
+    (tmpvar_19 * tmpvar_1.y)
+  ) * (
+    ((tmpvar_20 * tmpvar_20) * _mtl_u._MaxGrowSize)
+   * tmpvar_2.w)));
+  time_7 = (_mtl_u._Time.y + (_mtl_u._BlinkingTimeOffsScale * tmpvar_2.z));
+  float y_21;
+  y_21 = (_mtl_u._TimeOnDuration + _mtl_u._TimeOffDuration);
+  float tmpvar_22;
+  tmpvar_22 = (time_7 / y_21);
   float tmpvar_23;
-  tmpvar_23 = clamp ((tmpvar_22 / (_mtl_u._TimeOnDuration * 0.25)), 0.0, 1.0);
-  float edge0_24;
-  edge0_24 = (_mtl_u._TimeOnDuration * 0.75);
+  tmpvar_23 = (fract(abs(tmpvar_22)) * y_21);
+  float tmpvar_24;
+  if ((tmpvar_22 >= 0.0)) {
+    tmpvar_24 = tmpvar_23;
+  } else {
+    tmpvar_24 = -(tmpvar_23);
+  };
   float tmpvar_25;
-  tmpvar_25 = clamp (((tmpvar_22 - edge0_24) / (_mtl_u._TimeOnDuration - edge0_24)), 0.0, 1.0);
-  float tmpvar_26;
-  tmpvar_26 = ((tmpvar_23 * (tmpvar_23 * 
-    (3.0 - (2.0 * tmpvar_23))
-  )) * (1.0 - (tmpvar_25 * 
-    (tmpvar_25 * (3.0 - (2.0 * tmpvar_25)))
-  )));
+  tmpvar_25 = clamp ((tmpvar_24 / (_mtl_u._TimeOnDuration * 0.25)), 0.0, 1.0);
+  float edge0_26;
+  edge0_26 = (_mtl_u._TimeOnDuration * 0.75);
   float tmpvar_27;
-  tmpvar_27 = (tmpvar_18 * (6.28319 / _mtl_u._TimeOnDuration));
-  float tmpvar_28;
-  tmpvar_28 = ((_mtl_u._NoiseAmount * (
-    sin(tmpvar_27)
+  tmpvar_27 = clamp (((tmpvar_24 - edge0_26) / (_mtl_u._TimeOnDuration - edge0_26)), 0.0, 1.0);
+  wave_6 = ((tmpvar_25 * (tmpvar_25 * 
+    (3.0 - (2.0 * tmpvar_25))
+  )) * (1.0 - (tmpvar_27 * 
+    (tmpvar_27 * (3.0 - (2.0 * tmpvar_27)))
+  )));
+  noiseTime_5 = (time_7 * (6.28319 / _mtl_u._TimeOnDuration));
+  noiseWave_4 = ((_mtl_u._NoiseAmount * (
+    sin(noiseTime_5)
    * 
     ((0.5 * cos((
-      (tmpvar_27 * 0.6366)
+      (noiseTime_5 * 0.6366)
      + 56.7272))) + 0.5)
   )) + (1.0 - _mtl_u._NoiseAmount));
-  float tmpvar_29;
+  float tmpvar_28;
   if ((_mtl_u._NoiseAmount < 0.01)) {
-    tmpvar_29 = tmpvar_26;
+    tmpvar_28 = wave_6;
   } else {
-    tmpvar_29 = tmpvar_28;
+    tmpvar_28 = noiseWave_4;
   };
-  float4 tmpvar_30;
-  tmpvar_30.w = 1.0;
-  tmpvar_30.xyz = tmpvar_17;
-  float tmpvar_31;
-  tmpvar_31 = clamp ((tmpvar_10 / _mtl_u._FadeOutDistNear), 0.0, 1.0);
+  wave_6 = (tmpvar_28 + _mtl_u._Bias);
+  float4 tmpvar_29;
+  tmpvar_29.w = 1.0;
+  tmpvar_29.xyz = BBLocalPos_8;
+  float ffadeout_30;
+  float nfadeout_31;
   float tmpvar_32;
-  tmpvar_32 = (1.0 - clamp ((
-    max ((tmpvar_10 - _mtl_u._FadeOutDistFar), 0.0)
+  tmpvar_32 = clamp ((tmpvar_14 / _mtl_u._FadeOutDistNear), 0.0, 1.0);
+  ffadeout_30 = (1.0 - clamp ((
+    max ((tmpvar_14 - _mtl_u._FadeOutDistFar), 0.0)
    * 0.2), 0.0, 1.0));
-  float tmpvar_33;
-  tmpvar_33 = (tmpvar_31 * tmpvar_31);
-  float4 tmpvar_34;
-  tmpvar_34 = (((
-    ((tmpvar_33 * tmpvar_33) * (tmpvar_32 * tmpvar_32))
-   * _mtl_u._Color) * _mtl_u._Multiplier) * (tmpvar_29 + _mtl_u._Bias));
-  tmpvar_3 = half4(tmpvar_34);
-  _mtl_o.xlv_SV_POSITION = (_mtl_u.glstate_matrix_mvp * tmpvar_30);
+  ffadeout_30 = (ffadeout_30 * ffadeout_30);
+  nfadeout_31 = (tmpvar_32 * tmpvar_32);
+  nfadeout_31 = (nfadeout_31 * nfadeout_31);
+  nfadeout_31 = (nfadeout_31 * ffadeout_30);
+  tmpvar_3 = half4((((nfadeout_31 * _mtl_u._Color) * _mtl_u._Multiplier) * wave_6));
+  _mtl_o.xlv_SV_POSITION = (_mtl_u.glstate_matrix_mvp * tmpvar_29);
   _mtl_o.xlv_TEXCOORD0 = _mtl_i._uv0.xy;
   _mtl_o.xlv_TEXCOORD1 = tmpvar_3;
   return _mtl_o;

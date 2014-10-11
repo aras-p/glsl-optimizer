@@ -25,9 +25,9 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   half4 tmpvar_1;
   float4 res_2;
   float depth_3;
-  half tmpvar_4;
-  tmpvar_4 = _CameraDepthTexture.sample(_mtlsmp__CameraDepthTexture, (float2)(_mtl_i.xlv_TEXCOORD0)).x;
-  depth_3 = float(tmpvar_4);
+  half4 tmpvar_4;
+  tmpvar_4 = _CameraDepthTexture.sample(_mtlsmp__CameraDepthTexture, (float2)(_mtl_i.xlv_TEXCOORD0));
+  depth_3 = float(tmpvar_4.x);
   float tmpvar_5;
   tmpvar_5 = (1.0/(((_mtl_u._ZBufferParams.x * depth_3) + _mtl_u._ZBufferParams.y)));
   depth_3 = tmpvar_5;
@@ -35,29 +35,29 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   tmpvar_6.w = 1.0;
   tmpvar_6.xyz = (_mtl_i.xlv_TEXCOORD1 * tmpvar_5);
   half shadow_7;
-  float4 far_8;
-  float4 near_9;
-  bool4 tmpvar_10;
-  tmpvar_10 = bool4((tmpvar_6.zzzz >= _mtl_u._LightSplitsNear));
-  half4 tmpvar_11;
-  tmpvar_11 = half4(tmpvar_10);
-  near_9 = float4(tmpvar_11);
-  bool4 tmpvar_12;
-  tmpvar_12 = bool4((tmpvar_6.zzzz < _mtl_u._LightSplitsFar));
-  half4 tmpvar_13;
-  tmpvar_13 = half4(tmpvar_12);
-  far_8 = float4(tmpvar_13);
-  float4 tmpvar_14;
-  tmpvar_14 = (near_9 * far_8);
+  float4 weights_8;
+  float4 far_9;
+  float4 near_10;
+  bool4 tmpvar_11;
+  tmpvar_11 = bool4((tmpvar_6.zzzz >= _mtl_u._LightSplitsNear));
+  half4 tmpvar_12;
+  tmpvar_12 = half4(tmpvar_11);
+  near_10 = float4(tmpvar_12);
+  bool4 tmpvar_13;
+  tmpvar_13 = bool4((tmpvar_6.zzzz < _mtl_u._LightSplitsFar));
+  half4 tmpvar_14;
+  tmpvar_14 = half4(tmpvar_13);
+  far_9 = float4(tmpvar_14);
+  weights_8 = (near_10 * far_9);
   float4 tmpvar_15;
   tmpvar_15.w = 1.0;
   tmpvar_15.xyz = (((
-    ((_mtl_u._View2Shadow * tmpvar_6).xyz * tmpvar_14.x)
+    ((_mtl_u._View2Shadow * tmpvar_6).xyz * weights_8.x)
    + 
-    ((_mtl_u._View2Shadow1 * tmpvar_6).xyz * tmpvar_14.y)
+    ((_mtl_u._View2Shadow1 * tmpvar_6).xyz * weights_8.y)
   ) + (
     (_mtl_u._View2Shadow2 * tmpvar_6)
-  .xyz * tmpvar_14.z)) + ((_mtl_u._View2Shadow3 * tmpvar_6).xyz * tmpvar_14.w));
+  .xyz * weights_8.z)) + ((_mtl_u._View2Shadow3 * tmpvar_6).xyz * weights_8.w));
   half4 tmpvar_16;
   tmpvar_16 = _ShadowMapTexture.sample(_mtlsmp__ShadowMapTexture, (float2)(tmpvar_15.xy));
   float tmpvar_17;
@@ -70,8 +70,9 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   res_2.x = float(shadow_7);
   res_2.y = 1.0;
   float2 enc_18;
+  enc_18 = (float2(1.0, 255.0) * (1.0 - tmpvar_5));
   float2 tmpvar_19;
-  tmpvar_19 = fract((float2(1.0, 255.0) * (1.0 - tmpvar_5)));
+  tmpvar_19 = fract(enc_18);
   enc_18.y = tmpvar_19.y;
   enc_18.x = (tmpvar_19.x - (tmpvar_19.y * 0.00392157));
   res_2.zw = enc_18;

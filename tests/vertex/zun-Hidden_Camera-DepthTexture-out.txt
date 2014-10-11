@@ -10,10 +10,10 @@ void main ()
   pos_2 = gl_Vertex;
   vec2 offset_3;
   offset_3 = gl_MultiTexCoord1.xy;
-  vec3 tmpvar_4;
-  tmpvar_4 = (gl_Vertex.xyz - _TreeBillboardCameraPos.xyz);
+  vec3 treePos_4;
+  treePos_4 = (gl_Vertex.xyz - _TreeBillboardCameraPos.xyz);
   float tmpvar_5;
-  tmpvar_5 = dot (tmpvar_4, tmpvar_4);
+  tmpvar_5 = dot (treePos_4, treePos_4);
   if ((tmpvar_5 > _TreeBillboardDistances.x)) {
     offset_3 = vec2(0.0, 0.0);
   };

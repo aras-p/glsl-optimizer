@@ -2,9 +2,9 @@ varying lowp float xx;
 void main ()
 {
   lowp float c_1;
-  lowp float tmpvar_2;
-  tmpvar_2 = (xx * 2.0);
-  if ((tmpvar_2 < 0.0)) {
+  lowp float x_2;
+  x_2 = (xx * 2.0);
+  if ((x_2 < 0.0)) {
     discard;
   };
   c_1 = (xx + xx);

@@ -21,12 +21,12 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
 {
   xlatMtlShaderOutput _mtl_o;
   half4 c_1;
-  half4 tmpvar_2;
-  tmpvar_2 = _MainTex.sample(_mtlsmp__MainTex, (float2)(_mtl_i._uv0.xy));
-  half3 tmpvar_3;
-  tmpvar_3 = (tmpvar_2.xyz * _mtl_u._Color.xyz);
-  half tmpvar_4;
-  tmpvar_4 = (tmpvar_2.w * _mtl_u._Color.w);
+  half3 tmpvar_2;
+  half tmpvar_3;
+  half4 tmpvar_4;
+  tmpvar_4 = _MainTex.sample(_mtlsmp__MainTex, (float2)(_mtl_i._uv0.xy));
+  tmpvar_2 = (tmpvar_4.xyz * _mtl_u._Color.xyz);
+  tmpvar_3 = (tmpvar_4.w * _mtl_u._Color.w);
   half4 tmpvar_5;
   tmpvar_5 = _BumpMap.sample(_mtlsmp__BumpMap, (float2)(_mtl_i._uv0.zw));
   half4 packednormal_6;
@@ -37,24 +37,24 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
     (normal_7.x * normal_7.x)
   ) - (normal_7.y * normal_7.y)));
   half4 c_8;
-  half tmpvar_9;
-  float y_10;
-  y_10 = (_mtl_u._Shininess * 128.0);
-  tmpvar_9 = ((half)pow ((float)max ((half)0.0, dot (normal_7.xyz, 
+  half spec_9;
+  half tmpvar_10;
+  float y_11;
+  y_11 = (_mtl_u._Shininess * 128.0);
+  tmpvar_10 = ((half)pow ((float)max ((half)0.0, dot (normal_7.xyz, 
     normalize((_mtl_i._uv2 + normalize(_mtl_i._uv1)))
-  )), y_10));
-  half tmpvar_11;
-  tmpvar_11 = (tmpvar_9 * tmpvar_2.w);
+  )), y_11));
+  spec_9 = (tmpvar_10 * tmpvar_4.w);
   c_8.xyz = (((
-    (tmpvar_3 * _mtl_u._LightColor0.xyz)
+    (tmpvar_2 * _mtl_u._LightColor0.xyz)
    * 
     max ((half)0.0, dot (normal_7.xyz, _mtl_i._uv2))
   ) + (
     (_mtl_u._LightColor0.xyz * _mtl_u._SpecColor.xyz)
-   * tmpvar_11)) * (half)2.0);
-  c_8.w = (tmpvar_4 + ((_mtl_u._LightColor0.w * _mtl_u._SpecColor.w) * tmpvar_11));
-  c_1.xyz = (c_8.xyz + (tmpvar_3 * _mtl_i._uv3));
-  c_1.w = tmpvar_4;
+   * spec_9)) * (half)2.0);
+  c_8.w = (tmpvar_3 + ((_mtl_u._LightColor0.w * _mtl_u._SpecColor.w) * spec_9));
+  c_1.xyz = (c_8.xyz + (tmpvar_2 * _mtl_i._uv3));
+  c_1.w = tmpvar_3;
   _mtl_o._fragData = c_1;
   return _mtl_o;
 }

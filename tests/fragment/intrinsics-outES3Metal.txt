@@ -107,9 +107,9 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   c_1 = ((half4)((float4)c_1 + tmpvar_22));
   float tmpvar_23;
   half ip_24;
-  float tmpvar_25;
-  tmpvar_25 = float(int(_mtl_i.xlv_TEXCOORD0.x));
-  ip_24 = half(tmpvar_25);
+  int tmpvar_25;
+  tmpvar_25 = int(_mtl_i.xlv_TEXCOORD0.x);
+  ip_24 = half(float(tmpvar_25));
   tmpvar_23 = (_mtl_i.xlv_TEXCOORD0.x - (float)ip_24);
   c_1.x = ((half)((float)c_1.x + tmpvar_23));
   float2 tmpvar_26;

@@ -4,16 +4,14 @@ in mediump vec4 uv;
 void main ()
 {
   mediump vec4 c_1;
-  highp vec4 tmpvar_2;
-  tmpvar_2 = (uv + gl_FragCoord);
-  c_1 = tmpvar_2;
-  highp float tmpvar_3;
+  c_1 = (uv + gl_FragCoord);
+  highp float tmpvar_2;
   if (gl_FrontFacing) {
-    tmpvar_3 = 1.0;
+    tmpvar_2 = 1.0;
   } else {
-    tmpvar_3 = 0.0;
+    tmpvar_2 = 0.0;
   };
-  c_1.x = (c_1.x + tmpvar_3);
+  c_1.x = (c_1.x + tmpvar_2);
   c_1.xy = (c_1.xy + gl_PointCoord);
   _fragData = c_1;
 }

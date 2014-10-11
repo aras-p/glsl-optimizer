@@ -24,12 +24,8 @@ vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], 
   half2 uv_3;
   uv_3 = half2(tmpvar_1);
   half4 tmpvar_4;
-  half2 tmpvar_5;
-  tmpvar_5 = ((half2)(_mtl_i._glesMultiTexCoord0.xy * 0.3));
-  tmpvar_4.xy = tmpvar_5;
-  float3 tmpvar_6;
-  tmpvar_6 = ((float3)tmpvar_4.xyz + ((tmpvar_2.xyz * 0.5) + 0.5));
-  tmpvar_4.xyz = half3(tmpvar_6);
+  tmpvar_4.xy = ((half2)(_mtl_i._glesMultiTexCoord0.xy * 0.3));
+  tmpvar_4.xyz = half3(((float3)tmpvar_4.xyz + ((tmpvar_2.xyz * 0.5) + 0.5)));
   tmpvar_4.w = half(0.0);
   _mtl_o.gl_Position = (_mtl_u.glstate_matrix_mvp * _mtl_i._glesVertex);
   _mtl_o.xlv_TEXCOORD0 = uv_3;

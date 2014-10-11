@@ -5,11 +5,13 @@ uniform lowp sampler2DShadow shadowmap;
 varying highp vec4 uv;
 void main ()
 {
-  lowp vec4 tmpvar_1;
-  tmpvar_1 = (((
-    ((texture2DProj (tex, uv) + texture2DProj (tex, uv.xyz)) + texture2DProjLodEXT (tex, uv, 1.0))
-   + texture2DProjLodEXT (tex, uv.xyz, 1.0)) + vec4(shadow2DEXT (shadowmap, uv.xyz))) + vec4(shadow2DProjEXT (shadowmap, uv)));
-  gl_FragColor = tmpvar_1;
+  lowp vec4 c_1;
+  c_1 = (texture2DProj (tex, uv) + texture2DProj (tex, uv.xyz));
+  c_1 = (c_1 + texture2DProjLodEXT (tex, uv, 1.0));
+  c_1 = (c_1 + texture2DProjLodEXT (tex, uv.xyz, 1.0));
+  c_1 = (c_1 + vec4(shadow2DEXT (shadowmap, uv.xyz)));
+  c_1 = (c_1 + vec4(shadow2DProjEXT (shadowmap, uv)));
+  gl_FragColor = c_1;
 }
 
 

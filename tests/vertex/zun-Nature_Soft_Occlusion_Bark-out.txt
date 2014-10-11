@@ -26,16 +26,16 @@ void main ()
     dot (_SquashPlaneNormal.xyz, (tmpvar_3 - pos_1.xyz))
    * _SquashPlaneNormal.xyz)), pos_1.xyz, vec3(_SquashAmount));
   pos_1 = tmpvar_4;
-  vec4 tmpvar_5;
-  tmpvar_5 = (gl_ModelViewProjectionMatrix * tmpvar_4);
+  vec4 pos_5;
+  pos_5 = (gl_ModelViewProjectionMatrix * tmpvar_4);
   mat3 tmpvar_6;
   tmpvar_6[0] = _Object2World[0].xyz;
   tmpvar_6[1] = _Object2World[1].xyz;
   tmpvar_6[2] = _Object2World[2].xyz;
-  gl_Position = tmpvar_5;
+  gl_Position = pos_5;
   vec4 tmpvar_7;
   tmpvar_7.yzw = vec3(0.0, 0.0, 0.0);
-  tmpvar_7.x = tmpvar_5.z;
+  tmpvar_7.x = pos_5.z;
   xlv_FOG = tmpvar_7;
   vec4 tmpvar_8;
   tmpvar_8.zw = vec2(0.0, 0.0);

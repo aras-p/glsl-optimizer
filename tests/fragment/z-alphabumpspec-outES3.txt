@@ -13,12 +13,12 @@ in mediump vec3 _uv3;
 void main ()
 {
   mediump vec4 c_1;
-  lowp vec4 tmpvar_2;
-  tmpvar_2 = texture (_MainTex, _uv0.xy);
-  mediump vec3 tmpvar_3;
-  tmpvar_3 = (tmpvar_2.xyz * _Color.xyz);
-  mediump float tmpvar_4;
-  tmpvar_4 = (tmpvar_2.w * _Color.w);
+  mediump vec3 tmpvar_2;
+  mediump float tmpvar_3;
+  lowp vec4 tmpvar_4;
+  tmpvar_4 = texture (_MainTex, _uv0.xy);
+  tmpvar_2 = (tmpvar_4.xyz * _Color.xyz);
+  tmpvar_3 = (tmpvar_4.w * _Color.w);
   lowp vec4 tmpvar_5;
   tmpvar_5 = texture (_BumpMap, _uv0.zw);
   mediump vec4 packednormal_6;
@@ -29,22 +29,22 @@ void main ()
     (normal_7.x * normal_7.x)
   ) - (normal_7.y * normal_7.y)));
   mediump vec4 c_8;
-  mediump float tmpvar_9;
-  tmpvar_9 = pow (max (0.0, dot (normal_7.xyz, 
+  lowp float spec_9;
+  mediump float tmpvar_10;
+  tmpvar_10 = pow (max (0.0, dot (normal_7.xyz, 
     normalize((_uv2 + normalize(_uv1)))
   )), (_Shininess * 128.0));
-  lowp float tmpvar_10;
-  tmpvar_10 = (tmpvar_9 * tmpvar_2.w);
+  spec_9 = (tmpvar_10 * tmpvar_4.w);
   c_8.xyz = (((
-    (tmpvar_3 * _LightColor0.xyz)
+    (tmpvar_2 * _LightColor0.xyz)
    * 
     max (0.0, dot (normal_7.xyz, _uv2))
   ) + (
     (_LightColor0.xyz * _SpecColor.xyz)
-   * tmpvar_10)) * 2.0);
-  c_8.w = (tmpvar_4 + ((_LightColor0.w * _SpecColor.w) * tmpvar_10));
-  c_1.xyz = (c_8.xyz + (tmpvar_3 * _uv3));
-  c_1.w = tmpvar_4;
+   * spec_9)) * 2.0);
+  c_8.w = (tmpvar_3 + ((_LightColor0.w * _SpecColor.w) * spec_9));
+  c_1.xyz = (c_8.xyz + (tmpvar_2 * _uv3));
+  c_1.w = tmpvar_3;
   _fragData = c_1;
 }
 

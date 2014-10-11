@@ -5,11 +5,13 @@ uniform lowp sampler2DShadow shadowmap;
 in highp vec4 uv;
 void main ()
 {
-  lowp vec4 tmpvar_1;
-  tmpvar_1 = (((
-    ((textureProj (tex, uv) + textureProj (tex, uv.xyz)) + textureProjLod (tex, uv, 1.0))
-   + textureProjLod (tex, uv.xyz, 1.0)) + vec4(texture (shadowmap, uv.xyz))) + vec4(textureProj (shadowmap, uv)));
-  _fragData = tmpvar_1;
+  lowp vec4 c_1;
+  c_1 = (textureProj (tex, uv) + textureProj (tex, uv.xyz));
+  c_1 = (c_1 + textureProjLod (tex, uv, 1.0));
+  c_1 = (c_1 + textureProjLod (tex, uv.xyz, 1.0));
+  c_1 = (c_1 + vec4(texture (shadowmap, uv.xyz)));
+  c_1 = (c_1 + vec4(textureProj (shadowmap, uv)));
+  _fragData = c_1;
 }
 
 

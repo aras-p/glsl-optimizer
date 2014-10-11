@@ -7,11 +7,9 @@ out mediump vec2 xlv_TEXCOORD1;
 void main ()
 {
   highp vec4 tmpvar_1;
-  highp vec4 tmpvar_2;
-  tmpvar_2 = (glstate_matrix_mvp * _glesVertex);
-  tmpvar_1.xyw = tmpvar_2.xyw;
-  tmpvar_1.z = (tmpvar_2.z + clamp ((unity_LightShadowBias.x / tmpvar_2.w), 0.0, 1.0));
-  tmpvar_1.z = mix (tmpvar_1.z, max (tmpvar_1.z, -(tmpvar_2.w)), unity_LightShadowBias.y);
+  tmpvar_1 = (glstate_matrix_mvp * _glesVertex);
+  tmpvar_1.z = (tmpvar_1.z + clamp ((unity_LightShadowBias.x / tmpvar_1.w), 0.0, 1.0));
+  tmpvar_1.z = mix (tmpvar_1.z, max (tmpvar_1.z, -(tmpvar_1.w)), unity_LightShadowBias.y);
   gl_Position = tmpvar_1;
   xlv_TEXCOORD1 = _glesMultiTexCoord0.xy;
 }

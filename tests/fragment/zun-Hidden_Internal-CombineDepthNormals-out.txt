@@ -16,15 +16,18 @@ void main ()
   vec4 tmpvar_5;
   if ((tmpvar_4 < 0.999985)) {
     vec4 enc_6;
-    enc_6.xy = (((
-      (n_2.xy / (n_2.z + 1.0))
-     / 1.7777) * 0.5) + 0.5);
     vec2 enc_7;
-    vec2 tmpvar_8;
-    tmpvar_8 = fract((vec2(1.0, 255.0) * tmpvar_4));
-    enc_7.y = tmpvar_8.y;
-    enc_7.x = (tmpvar_8.x - (tmpvar_8.y * 0.00392157));
-    enc_6.zw = enc_7;
+    enc_7 = (n_2.xy / (n_2.z + 1.0));
+    enc_7 = (enc_7 / 1.7777);
+    enc_7 = ((enc_7 * 0.5) + 0.5);
+    enc_6.xy = enc_7;
+    vec2 enc_8;
+    enc_8 = (vec2(1.0, 255.0) * tmpvar_4);
+    vec2 tmpvar_9;
+    tmpvar_9 = fract(enc_8);
+    enc_8.y = tmpvar_9.y;
+    enc_8.x = (tmpvar_9.x - (tmpvar_9.y * 0.00392157));
+    enc_6.zw = enc_8;
     tmpvar_5 = enc_6;
   } else {
     tmpvar_5 = vec4(0.5, 0.5, 1.0, 1.0);

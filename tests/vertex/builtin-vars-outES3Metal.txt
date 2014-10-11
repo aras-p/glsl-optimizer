@@ -19,14 +19,12 @@ vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], 
   p_1.z = _mtl_i._inPos.z;
   p_1.x = (_mtl_i._inPos.x + float(gl_VertexID));
   p_1.y = (_mtl_i._inPos.y + float(gl_InstanceID));
-  float3 tmpvar_2;
-  tmpvar_2 = (p_1 + _mtl_i._inNor);
-  p_1 = tmpvar_2;
-  float4 tmpvar_3;
-  tmpvar_3.w = 1.0;
-  tmpvar_3.xyz = tmpvar_2;
-  _mtl_o.gl_Position = tmpvar_3;
-  _mtl_o.gl_PointSize = tmpvar_2.x;
+  p_1 = (p_1 + _mtl_i._inNor);
+  float4 tmpvar_2;
+  tmpvar_2.w = 1.0;
+  tmpvar_2.xyz = p_1;
+  _mtl_o.gl_Position = tmpvar_2;
+  _mtl_o.gl_PointSize = p_1.x;
   return _mtl_o;
 }
 

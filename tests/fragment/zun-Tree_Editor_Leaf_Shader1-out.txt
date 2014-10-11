@@ -10,20 +10,20 @@ void main ()
   vec2 tmpvar_1;
   tmpvar_1 = gl_TexCoord[4].xy;
   vec4 res_2;
-  float x_3;
-  x_3 = ((texture2D (_MainTex, gl_TexCoord[5].xy).w * gl_Color.w) - _Cutoff);
-  if ((x_3 < 0.0)) {
+  vec4 weights_3;
+  float x_4;
+  x_4 = ((texture2D (_MainTex, gl_TexCoord[5].xy).w * gl_Color.w) - _Cutoff);
+  if ((x_4 < 0.0)) {
     discard;
   };
-  vec4 tmpvar_4;
-  tmpvar_4 = (vec4(greaterThanEqual (tmpvar_1.xxxx, _LightSplitsNear)) * vec4(lessThan (tmpvar_1.xxxx, _LightSplitsFar)));
+  weights_3 = (vec4(greaterThanEqual (tmpvar_1.xxxx, _LightSplitsNear)) * vec4(lessThan (tmpvar_1.xxxx, _LightSplitsFar)));
   vec4 tmpvar_5;
   tmpvar_5.w = 1.0;
   tmpvar_5.xyz = (((
-    (gl_TexCoord[0].xyz * tmpvar_4.x)
+    (gl_TexCoord[0].xyz * weights_3.x)
    + 
-    (gl_TexCoord[1].xyz * tmpvar_4.y)
-  ) + (gl_TexCoord[2].xyz * tmpvar_4.z)) + (gl_TexCoord[3].xyz * tmpvar_4.w));
+    (gl_TexCoord[1].xyz * weights_3.y)
+  ) + (gl_TexCoord[2].xyz * weights_3.z)) + (gl_TexCoord[3].xyz * weights_3.w));
   vec4 tmpvar_6;
   tmpvar_6 = texture2D (_ShadowMapTexture, tmpvar_5.xy);
   float tmpvar_7;
@@ -35,10 +35,9 @@ void main ()
   res_2.x = clamp ((tmpvar_7 + clamp (tmpvar_1.y, 0.0, 1.0)), 0.0, 1.0);
   res_2.y = 1.0;
   vec2 enc_8;
+  enc_8 = (vec2(1.0, 255.0) * (1.0 - (tmpvar_1.xxxx * _ProjectionParams.w)).x);
   vec2 tmpvar_9;
-  tmpvar_9 = fract((vec2(1.0, 255.0) * (1.0 - 
-    (tmpvar_1.xxxx * _ProjectionParams.w)
-  ).x));
+  tmpvar_9 = fract(enc_8);
   enc_8.y = tmpvar_9.y;
   enc_8.x = (tmpvar_9.x - (tmpvar_9.y * 0.00392157));
   res_2.zw = enc_8;

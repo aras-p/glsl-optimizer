@@ -11,9 +11,7 @@ void main ()
   mediump vec2 tmpvar_1;
   lowp vec4 tmpvar_2;
   tmpvar_2.w = _color.w;
-  mediump vec3 tmpvar_3;
-  tmpvar_3 = (_color.xyz + _inNormal);
-  tmpvar_2.xyz = tmpvar_3;
+  tmpvar_2.xyz = (_color.xyz + _inNormal);
   tmpvar_1 = _uv0;
   gl_Position = (mvp * _inVertex);
   xlv_TEXCOORD0 = tmpvar_1;

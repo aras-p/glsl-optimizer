@@ -22,39 +22,35 @@ void main ()
   lowp vec4 tmpvar_8;
   tmpvar_8 = texture (_MainTex, xlv_TEXCOORD0);
   c_7 = tmpvar_8;
-  mediump vec3 tmpvar_9;
-  tmpvar_9 = c_7.xyz;
-  tmpvar_5 = tmpvar_9;
-  mediump float tmpvar_10;
-  tmpvar_10 = c_7.w;
-  tmpvar_6 = tmpvar_10;
-  highp vec4 tmpvar_11;
-  tmpvar_11.w = 1.0;
-  tmpvar_11.xyz = xlv_TEXCOORD2;
-  highp vec4 tmpvar_12;
-  tmpvar_12 = (_LightMatrix0 * tmpvar_11);
-  lightCoord_3 = tmpvar_12;
-  lowp vec4 tmpvar_13;
-  mediump vec2 P_14;
-  P_14 = ((lightCoord_3.xy / lightCoord_3.w) + 0.5);
-  tmpvar_13 = texture (_LightTexture0, P_14);
+  tmpvar_5 = c_7.xyz;
+  tmpvar_6 = c_7.w;
+  highp vec4 tmpvar_9;
+  tmpvar_9.w = 1.0;
+  tmpvar_9.xyz = xlv_TEXCOORD2;
+  highp vec4 tmpvar_10;
+  tmpvar_10 = (_LightMatrix0 * tmpvar_9);
+  lightCoord_3 = tmpvar_10;
+  lowp vec4 tmpvar_11;
+  mediump vec2 P_12;
+  P_12 = ((lightCoord_3.xy / lightCoord_3.w) + 0.5);
+  tmpvar_11 = texture (_LightTexture0, P_12);
+  mediump float tmpvar_13;
+  tmpvar_13 = dot (lightCoord_3.xyz, lightCoord_3.xyz);
+  lowp vec4 tmpvar_14;
+  tmpvar_14 = texture (_LightTextureB0, vec2(tmpvar_13));
   mediump float tmpvar_15;
-  tmpvar_15 = dot (lightCoord_3.xyz, lightCoord_3.xyz);
-  lowp vec4 tmpvar_16;
-  tmpvar_16 = texture (_LightTextureB0, vec2(tmpvar_15));
-  mediump float tmpvar_17;
-  tmpvar_17 = ((float(
+  tmpvar_15 = ((float(
     (lightCoord_3.z > 0.0)
-  ) * tmpvar_13.w) * tmpvar_16.w);
-  atten_2 = tmpvar_17;
-  lowp vec3 lightDir_18;
-  lightDir_18 = tmpvar_4;
-  lowp vec4 c_19;
-  c_19.xyz = ((tmpvar_5 * _LightColor0.xyz) * ((
-    max (0.0, dot (xlv_TEXCOORD1, lightDir_18))
+  ) * tmpvar_11.w) * tmpvar_14.w);
+  atten_2 = tmpvar_15;
+  lowp vec3 lightDir_16;
+  lightDir_16 = tmpvar_4;
+  lowp vec4 c_17;
+  c_17.xyz = ((tmpvar_5 * _LightColor0.xyz) * ((
+    max (0.0, dot (xlv_TEXCOORD1, lightDir_16))
    * atten_2) * 2.0));
-  c_19.w = tmpvar_6;
-  c_1.xyz = c_19.xyz;
+  c_17.w = tmpvar_6;
+  c_1.xyz = c_17.xyz;
   c_1.w = 0.0;
   _glesFragData[0] = c_1;
 }

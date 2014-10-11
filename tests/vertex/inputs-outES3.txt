@@ -11,12 +11,8 @@ void main ()
   tmpvar_1.xyz = normalize(_glesTANGENT.xyz);
   tmpvar_1.w = _glesTANGENT.w;
   lowp vec4 tmpvar_2;
-  mediump vec2 tmpvar_3;
-  tmpvar_3 = (_glesMultiTexCoord0.xy * 0.3);
-  tmpvar_2.xy = tmpvar_3;
-  highp vec3 tmpvar_4;
-  tmpvar_4 = (tmpvar_2.xyz + ((tmpvar_1.xyz * 0.5) + 0.5));
-  tmpvar_2.xyz = tmpvar_4;
+  tmpvar_2.xy = (_glesMultiTexCoord0.xy * 0.3);
+  tmpvar_2.xyz = (tmpvar_2.xyz + ((tmpvar_1.xyz * 0.5) + 0.5));
   tmpvar_2.w = 0.0;
   gl_Position = (glstate_matrix_mvp * _glesVertex);
   xlv_TEXCOORD0 = _glesMultiTexCoord0.xy;

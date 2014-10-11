@@ -99,9 +99,9 @@ void main ()
   c_1 = (c_1 + tmpvar_22);
   highp float tmpvar_23;
   mediump float ip_24;
-  highp float tmpvar_25;
-  tmpvar_25 = float(int(xlv_TEXCOORD0.x));
-  ip_24 = tmpvar_25;
+  int tmpvar_25;
+  tmpvar_25 = int(xlv_TEXCOORD0.x);
+  ip_24 = float(tmpvar_25);
   tmpvar_23 = (xlv_TEXCOORD0.x - ip_24);
   c_1.x = (c_1.x + tmpvar_23);
   highp vec2 tmpvar_26;

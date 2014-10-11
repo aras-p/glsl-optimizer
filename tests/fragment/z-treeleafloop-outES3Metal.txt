@@ -39,68 +39,40 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   if ((x_11 < (half)0.0)) {
     discard_fragment();
   };
-  float3 tmpvar_12;
-  tmpvar_12 = ((float3)tmpvar_10.xyz * _mtl_i.xlv_TEXCOORD1);
-  albedo_9 = half3(tmpvar_12);
-  half tmpvar_13;
-  tmpvar_13 = (_BumpSpecMap.sample(_mtlsmp__BumpSpecMap, (float2)(_mtl_i.xlv_TEXCOORD0)).x * (half)128.0);
-  specular_8 = tmpvar_13;
-  half4 tmpvar_14;
-  tmpvar_14 = _TranslucencyMap.sample(_mtlsmp__TranslucencyMap, (float2)(_mtl_i.xlv_TEXCOORD0));
-  half tmpvar_15;
-  tmpvar_15 = tmpvar_14.w;
-  gloss_7 = tmpvar_15;
-  half3 tmpvar_16;
-  tmpvar_16 = (_mtl_u.UNITY_LIGHTMODEL_AMBIENT.xyz * albedo_9);
-  light_6 = tmpvar_16;
-  float3 tmpvar_17;
-  tmpvar_17 = (_mtl_i.xlv_TEXCOORD2 * (float)tmpvar_14.z);
-  backContribs_5 = half3(tmpvar_17);
-  float3 tmpvar_18;
-  tmpvar_18 = _mtl_u._TerrainTreeLightColors[0].xyz;
-  lightColor_4 = half3(tmpvar_18);
-  float tmpvar_19;
-  tmpvar_19 = _mtl_i.xlv_TEXCOORD3.x;
-  nl_3 = half(tmpvar_19);
-  float tmpvar_20;
-  tmpvar_20 = _mtl_i.xlv_TEXCOORD4.x;
-  nh_2 = half(tmpvar_20);
+  albedo_9 = half3(((float3)tmpvar_10.xyz * _mtl_i.xlv_TEXCOORD1));
+  half4 tmpvar_12;
+  tmpvar_12 = _BumpSpecMap.sample(_mtlsmp__BumpSpecMap, (float2)(_mtl_i.xlv_TEXCOORD0));
+  specular_8 = (tmpvar_12.x * (half)128.0);
+  half4 tmpvar_13;
+  tmpvar_13 = _TranslucencyMap.sample(_mtlsmp__TranslucencyMap, (float2)(_mtl_i.xlv_TEXCOORD0));
+  gloss_7 = tmpvar_13.w;
+  light_6 = (_mtl_u.UNITY_LIGHTMODEL_AMBIENT.xyz * albedo_9);
+  backContribs_5 = half3((_mtl_i.xlv_TEXCOORD2 * (float)tmpvar_13.z));
+  lightColor_4 = half3(_mtl_u._TerrainTreeLightColors[0].xyz);
+  nl_3 = half(_mtl_i.xlv_TEXCOORD3.x);
+  nh_2 = half(_mtl_i.xlv_TEXCOORD4.x);
   light_6 = (light_6 + ((
     (albedo_9 * ((backContribs_5.x * _mtl_u._TranslucencyColor) + nl_3))
    + 
     (_mtl_u._SpecColor.xyz * (pow (nh_2, specular_8) * gloss_7))
   ) * lightColor_4));
-  float3 tmpvar_21;
-  tmpvar_21 = _mtl_u._TerrainTreeLightColors[1].xyz;
-  lightColor_4 = half3(tmpvar_21);
-  float tmpvar_22;
-  tmpvar_22 = _mtl_i.xlv_TEXCOORD3.y;
-  nl_3 = half(tmpvar_22);
-  float tmpvar_23;
-  tmpvar_23 = _mtl_i.xlv_TEXCOORD4.y;
-  nh_2 = half(tmpvar_23);
+  lightColor_4 = half3(_mtl_u._TerrainTreeLightColors[1].xyz);
+  nl_3 = half(_mtl_i.xlv_TEXCOORD3.y);
+  nh_2 = half(_mtl_i.xlv_TEXCOORD4.y);
   light_6 = (light_6 + ((
     (albedo_9 * ((backContribs_5.y * _mtl_u._TranslucencyColor) + nl_3))
    + 
     (_mtl_u._SpecColor.xyz * (pow (nh_2, specular_8) * gloss_7))
   ) * lightColor_4));
-  float3 tmpvar_24;
-  tmpvar_24 = _mtl_u._TerrainTreeLightColors[2].xyz;
-  lightColor_4 = half3(tmpvar_24);
-  float tmpvar_25;
-  tmpvar_25 = _mtl_i.xlv_TEXCOORD3.z;
-  nl_3 = half(tmpvar_25);
-  float tmpvar_26;
-  tmpvar_26 = _mtl_i.xlv_TEXCOORD4.z;
-  nh_2 = half(tmpvar_26);
+  lightColor_4 = half3(_mtl_u._TerrainTreeLightColors[2].xyz);
+  nl_3 = half(_mtl_i.xlv_TEXCOORD3.z);
+  nh_2 = half(_mtl_i.xlv_TEXCOORD4.z);
   light_6 = (light_6 + ((
     (albedo_9 * ((backContribs_5.z * _mtl_u._TranslucencyColor) + nl_3))
    + 
     (_mtl_u._SpecColor.xyz * (pow (nh_2, specular_8) * gloss_7))
   ) * lightColor_4));
-  half3 tmpvar_27;
-  tmpvar_27 = (light_6 * (half)2.0);
-  c_1.xyz = tmpvar_27;
+  c_1.xyz = (light_6 * (half)2.0);
   c_1.w = half(1.0);
   _mtl_o._fragData = c_1;
   return _mtl_o;

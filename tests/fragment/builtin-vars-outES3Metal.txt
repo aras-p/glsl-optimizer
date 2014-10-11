@@ -15,19 +15,15 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
 {
   xlatMtlShaderOutput _mtl_o;
   half4 c_1;
-  float4 tmpvar_2;
-  tmpvar_2 = ((float4)_mtl_i.uv + _mtl_i.gl_FragCoord);
-  c_1 = half4(tmpvar_2);
-  float tmpvar_3;
+  c_1 = half4(((float4)_mtl_i.uv + _mtl_i.gl_FragCoord));
+  float tmpvar_2;
   if (_mtl_i.gl_FrontFacing) {
-    tmpvar_3 = 1.0;
+    tmpvar_2 = 1.0;
   } else {
-    tmpvar_3 = 0.0;
+    tmpvar_2 = 0.0;
   };
-  c_1.x = (c_1.x + (half)tmpvar_3);
-  float2 tmpvar_4;
-  tmpvar_4 = ((float2)c_1.xy + _mtl_i.gl_PointCoord);
-  c_1.xy = half2(tmpvar_4);
+  c_1.x = (c_1.x + (half)tmpvar_2);
+  c_1.xy = half2(((float2)c_1.xy + _mtl_i.gl_PointCoord));
   _mtl_o._fragData = c_1;
   return _mtl_o;
 }

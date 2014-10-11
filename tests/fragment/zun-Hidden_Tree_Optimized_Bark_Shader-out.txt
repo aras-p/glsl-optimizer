@@ -23,16 +23,16 @@ void main ()
   float atten_7;
   atten_7 = (texture2D (_LightTextureB0, vec2(dot (tmpvar_2, tmpvar_2))).w * textureCube (_LightTexture0, tmpvar_2).w);
   vec4 c_8;
-  float tmpvar_9;
-  tmpvar_9 = (pow (max (0.0, 
+  float spec_9;
+  spec_9 = (pow (max (0.0, 
     dot (normal_5.xyz, normalize((tmpvar_6 + normalize(gl_TexCoord[2].xyz))))
   ), (tmpvar_4.x * 128.0)) * texture2D (_TranslucencyMap, tmpvar_1).w);
   c_8.xyz = (((
     ((texture2D (_MainTex, tmpvar_1).xyz * gl_Color.xyz) * _LightColor0.xyz)
    * 
     max (0.0, dot (normal_5.xyz, tmpvar_6))
-  ) + (_LightColor0.xyz * tmpvar_9)) * (atten_7 * 2.0));
-  c_8.w = (((_LightColor0.w * tmpvar_9) * atten_7) * gl_Color.w);
+  ) + (_LightColor0.xyz * spec_9)) * (atten_7 * 2.0));
+  c_8.w = (((_LightColor0.w * spec_9) * atten_7) * gl_Color.w);
   c_3.xyz = c_8.xyz;
   c_3.w = 0.0;
   gl_FragData[0] = c_3;

@@ -20,9 +20,7 @@ vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], 
   half2 tmpvar_1;
   half4 tmpvar_2;
   tmpvar_2.w = _mtl_i._color.w;
-  half3 tmpvar_3;
-  tmpvar_3 = (_mtl_i._color.xyz + _mtl_i._inNormal);
-  tmpvar_2.xyz = tmpvar_3;
+  tmpvar_2.xyz = (_mtl_i._color.xyz + _mtl_i._inNormal);
   tmpvar_1 = half2(_mtl_i._uv0);
   _mtl_o.gl_Position = (_mtl_u.mvp * _mtl_i._inVertex);
   _mtl_o.xlv_TEXCOORD0 = tmpvar_1;
