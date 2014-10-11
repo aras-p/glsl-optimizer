@@ -229,8 +229,7 @@ write_mask_to_swizzle(unsigned write_mask)
    case WRITEMASK_Z: return SWIZZLE_Z;
    case WRITEMASK_W: return SWIZZLE_W;
    }
-   assert(!"not reached");
-   unreachable();
+   unreachable("not reached");
 }
 
 /**
@@ -262,7 +261,7 @@ ir_vectorize_visitor::visit_enter(ir_assignment *ir)
    if (ir->condition ||
        this->channels >= 4 ||
        !single_channel_write_mask(ir->write_mask) ||
-	   this->assignment[write_mask_to_swizzle(ir->write_mask)] != NULL ||
+       this->assignment[write_mask_to_swizzle(ir->write_mask)] != NULL ||
        (lhs && !ir->lhs->equals(lhs)) ||
        (rhs && !ir->rhs->equals(rhs, ir_type_swizzle))) {
       try_vectorize();
@@ -301,7 +300,7 @@ ir_vectorize_visitor::visit_enter(ir_swizzle *ir)
  * FINISHME: If all of scalar indices are identical we could vectorize.
  */
 ir_visitor_status
-ir_vectorize_visitor::visit_enter(ir_dereference_array *ir)
+ir_vectorize_visitor::visit_enter(ir_dereference_array *)
 {
    this->current_assignment = NULL;
    return visit_continue_with_parent;

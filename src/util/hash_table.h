@@ -28,10 +28,11 @@
 #ifndef _HASH_TABLE_H
 #define _HASH_TABLE_H
 
+#include <stdlib.h>
 #include <inttypes.h>
 #include <stdbool.h>
-
-#include "compiler.h"
+#include "c99_compat.h"
+#include "macros.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -44,7 +45,6 @@ struct hash_entry {
 };
 
 struct hash_table {
-   void *mem_ctx;
    struct hash_entry *table;
    bool (*key_equals_function)(const void *a, const void *b);
    const void *deleted_key;

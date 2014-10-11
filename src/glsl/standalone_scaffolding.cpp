@@ -31,7 +31,7 @@
 
 #include <assert.h>
 #include <string.h>
-#include "ralloc.h"
+#include "util/ralloc.h"
 
 void
 _mesa_warning(struct gl_context *ctx, const char *fmt, ...)
@@ -98,6 +98,7 @@ void initialize_context_to_defaults(struct gl_context *ctx, gl_api api)
    ctx->Extensions.ARB_ES3_compatibility = true;
    ctx->Extensions.ARB_explicit_attrib_location = true;
    ctx->Extensions.ARB_fragment_coord_conventions = true;
+   ctx->Extensions.ARB_fragment_layer_viewport = true;
    ctx->Extensions.ARB_gpu_shader5 = true;
    ctx->Extensions.ARB_sample_shading = true;
    ctx->Extensions.ARB_shader_bit_encoding = true;
@@ -164,5 +165,5 @@ void initialize_context_to_defaults(struct gl_context *ctx, gl_api api)
    options.DefaultPragmas.Optimize = true;
 
    for (int sh = 0; sh < MESA_SHADER_STAGES; ++sh)
-      memcpy(&ctx->ShaderCompilerOptions[sh], &options, sizeof(options));
+      memcpy(&ctx->Const.ShaderCompilerOptions[sh], &options, sizeof(options));
 }

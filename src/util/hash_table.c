@@ -43,9 +43,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "main/hash_table.h"
-#include "main/macros.h"
-#include "../../glsl/ralloc.h"
+#include "hash_table.h"
+#include "ralloc.h"
+#include "macros.h"
 
 static const uint32_t deleted_key_value;
 
@@ -119,7 +119,6 @@ _mesa_hash_table_create(void *mem_ctx,
    if (ht == NULL)
       return NULL;
 
-   ht->mem_ctx = mem_ctx;
    ht->size_index = 0;
    ht->size = hash_sizes[ht->size_index].size;
    ht->rehash = hash_sizes[ht->size_index].rehash;

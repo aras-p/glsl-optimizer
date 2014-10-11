@@ -25,6 +25,7 @@
 #include "glsl_parser_extras.h"
 #include "glsl_symbol_table.h"
 #include "main/core.h"
+#include "main/uniforms.h"
 #include "program/prog_parameter.h"
 #include "program/prog_statevars.h"
 #include "program/prog_instruction.h"
@@ -42,22 +43,22 @@ struct gl_builtin_uniform_desc {
 };
 
 
-static struct gl_builtin_uniform_element gl_NumSamples_elements[] = {
-	{NULL, {STATE_NUM_SAMPLES, 0, 0}, SWIZZLE_XXXX}
+static const struct gl_builtin_uniform_element gl_NumSamples_elements[] = {
+   {NULL, {STATE_NUM_SAMPLES, 0, 0}, SWIZZLE_XXXX}
 };
 
 
-static struct gl_builtin_uniform_element gl_DepthRange_elements[] = {
+static const struct gl_builtin_uniform_element gl_DepthRange_elements[] = {
    {"near", {STATE_DEPTH_RANGE, 0, 0}, SWIZZLE_XXXX},
    {"far", {STATE_DEPTH_RANGE, 0, 0}, SWIZZLE_YYYY},
    {"diff", {STATE_DEPTH_RANGE, 0, 0}, SWIZZLE_ZZZZ},
 };
 
-static struct gl_builtin_uniform_element gl_ClipPlane_elements[] = {
+static const struct gl_builtin_uniform_element gl_ClipPlane_elements[] = {
    {NULL, {STATE_CLIPPLANE, 0, 0}, SWIZZLE_XYZW}
 };
 
-static struct gl_builtin_uniform_element gl_Point_elements[] = {
+static const struct gl_builtin_uniform_element gl_Point_elements[] = {
    {"size", {STATE_POINT_SIZE}, SWIZZLE_XXXX},
    {"sizeMin", {STATE_POINT_SIZE}, SWIZZLE_YYYY},
    {"sizeMax", {STATE_POINT_SIZE}, SWIZZLE_ZZZZ},
@@ -67,7 +68,7 @@ static struct gl_builtin_uniform_element gl_Point_elements[] = {
    {"distanceQuadraticAttenuation", {STATE_POINT_ATTENUATION}, SWIZZLE_ZZZZ},
 };
 
-static struct gl_builtin_uniform_element gl_FrontMaterial_elements[] = {
+static const struct gl_builtin_uniform_element gl_FrontMaterial_elements[] = {
    {"emission", {STATE_MATERIAL, 0, STATE_EMISSION}, SWIZZLE_XYZW},
    {"ambient", {STATE_MATERIAL, 0, STATE_AMBIENT}, SWIZZLE_XYZW},
    {"diffuse", {STATE_MATERIAL, 0, STATE_DIFFUSE}, SWIZZLE_XYZW},
@@ -75,7 +76,7 @@ static struct gl_builtin_uniform_element gl_FrontMaterial_elements[] = {
    {"shininess", {STATE_MATERIAL, 0, STATE_SHININESS}, SWIZZLE_XXXX},
 };
 
-static struct gl_builtin_uniform_element gl_BackMaterial_elements[] = {
+static const struct gl_builtin_uniform_element gl_BackMaterial_elements[] = {
    {"emission", {STATE_MATERIAL, 1, STATE_EMISSION}, SWIZZLE_XYZW},
    {"ambient", {STATE_MATERIAL, 1, STATE_AMBIENT}, SWIZZLE_XYZW},
    {"diffuse", {STATE_MATERIAL, 1, STATE_DIFFUSE}, SWIZZLE_XYZW},
@@ -83,7 +84,7 @@ static struct gl_builtin_uniform_element gl_BackMaterial_elements[] = {
    {"shininess", {STATE_MATERIAL, 1, STATE_SHININESS}, SWIZZLE_XXXX},
 };
 
-static struct gl_builtin_uniform_element gl_LightSource_elements[] = {
+static const struct gl_builtin_uniform_element gl_LightSource_elements[] = {
    {"ambient", {STATE_LIGHT, 0, STATE_AMBIENT}, SWIZZLE_XYZW},
    {"diffuse", {STATE_LIGHT, 0, STATE_DIFFUSE}, SWIZZLE_XYZW},
    {"specular", {STATE_LIGHT, 0, STATE_SPECULAR}, SWIZZLE_XYZW},
@@ -102,67 +103,67 @@ static struct gl_builtin_uniform_element gl_LightSource_elements[] = {
    {"quadraticAttenuation", {STATE_LIGHT, 0, STATE_ATTENUATION}, SWIZZLE_ZZZZ},
 };
 
-static struct gl_builtin_uniform_element gl_LightModel_elements[] = {
+static const struct gl_builtin_uniform_element gl_LightModel_elements[] = {
    {"ambient", {STATE_LIGHTMODEL_AMBIENT, 0}, SWIZZLE_XYZW},
 };
 
-static struct gl_builtin_uniform_element gl_FrontLightModelProduct_elements[] = {
+static const struct gl_builtin_uniform_element gl_FrontLightModelProduct_elements[] = {
    {"sceneColor", {STATE_LIGHTMODEL_SCENECOLOR, 0}, SWIZZLE_XYZW},
 };
 
-static struct gl_builtin_uniform_element gl_BackLightModelProduct_elements[] = {
+static const struct gl_builtin_uniform_element gl_BackLightModelProduct_elements[] = {
    {"sceneColor", {STATE_LIGHTMODEL_SCENECOLOR, 1}, SWIZZLE_XYZW},
 };
 
-static struct gl_builtin_uniform_element gl_FrontLightProduct_elements[] = {
+static const struct gl_builtin_uniform_element gl_FrontLightProduct_elements[] = {
    {"ambient", {STATE_LIGHTPROD, 0, 0, STATE_AMBIENT}, SWIZZLE_XYZW},
    {"diffuse", {STATE_LIGHTPROD, 0, 0, STATE_DIFFUSE}, SWIZZLE_XYZW},
    {"specular", {STATE_LIGHTPROD, 0, 0, STATE_SPECULAR}, SWIZZLE_XYZW},
 };
 
-static struct gl_builtin_uniform_element gl_BackLightProduct_elements[] = {
+static const struct gl_builtin_uniform_element gl_BackLightProduct_elements[] = {
    {"ambient", {STATE_LIGHTPROD, 0, 1, STATE_AMBIENT}, SWIZZLE_XYZW},
    {"diffuse", {STATE_LIGHTPROD, 0, 1, STATE_DIFFUSE}, SWIZZLE_XYZW},
    {"specular", {STATE_LIGHTPROD, 0, 1, STATE_SPECULAR}, SWIZZLE_XYZW},
 };
 
-static struct gl_builtin_uniform_element gl_TextureEnvColor_elements[] = {
+static const struct gl_builtin_uniform_element gl_TextureEnvColor_elements[] = {
    {NULL, {STATE_TEXENV_COLOR, 0}, SWIZZLE_XYZW},
 };
 
-static struct gl_builtin_uniform_element gl_EyePlaneS_elements[] = {
+static const struct gl_builtin_uniform_element gl_EyePlaneS_elements[] = {
    {NULL, {STATE_TEXGEN, 0, STATE_TEXGEN_EYE_S}, SWIZZLE_XYZW},
 };
 
-static struct gl_builtin_uniform_element gl_EyePlaneT_elements[] = {
+static const struct gl_builtin_uniform_element gl_EyePlaneT_elements[] = {
    {NULL, {STATE_TEXGEN, 0, STATE_TEXGEN_EYE_T}, SWIZZLE_XYZW},
 };
 
-static struct gl_builtin_uniform_element gl_EyePlaneR_elements[] = {
+static const struct gl_builtin_uniform_element gl_EyePlaneR_elements[] = {
    {NULL, {STATE_TEXGEN, 0, STATE_TEXGEN_EYE_R}, SWIZZLE_XYZW},
 };
 
-static struct gl_builtin_uniform_element gl_EyePlaneQ_elements[] = {
+static const struct gl_builtin_uniform_element gl_EyePlaneQ_elements[] = {
    {NULL, {STATE_TEXGEN, 0, STATE_TEXGEN_EYE_Q}, SWIZZLE_XYZW},
 };
 
-static struct gl_builtin_uniform_element gl_ObjectPlaneS_elements[] = {
+static const struct gl_builtin_uniform_element gl_ObjectPlaneS_elements[] = {
    {NULL, {STATE_TEXGEN, 0, STATE_TEXGEN_OBJECT_S}, SWIZZLE_XYZW},
 };
 
-static struct gl_builtin_uniform_element gl_ObjectPlaneT_elements[] = {
+static const struct gl_builtin_uniform_element gl_ObjectPlaneT_elements[] = {
    {NULL, {STATE_TEXGEN, 0, STATE_TEXGEN_OBJECT_T}, SWIZZLE_XYZW},
 };
 
-static struct gl_builtin_uniform_element gl_ObjectPlaneR_elements[] = {
+static const struct gl_builtin_uniform_element gl_ObjectPlaneR_elements[] = {
    {NULL, {STATE_TEXGEN, 0, STATE_TEXGEN_OBJECT_R}, SWIZZLE_XYZW},
 };
 
-static struct gl_builtin_uniform_element gl_ObjectPlaneQ_elements[] = {
+static const struct gl_builtin_uniform_element gl_ObjectPlaneQ_elements[] = {
    {NULL, {STATE_TEXGEN, 0, STATE_TEXGEN_OBJECT_Q}, SWIZZLE_XYZW},
 };
 
-static struct gl_builtin_uniform_element gl_Fog_elements[] = {
+static const struct gl_builtin_uniform_element gl_Fog_elements[] = {
    {"color", {STATE_FOG_COLOR}, SWIZZLE_XYZW},
    {"density", {STATE_FOG_PARAMS}, SWIZZLE_XXXX},
    {"start", {STATE_FOG_PARAMS}, SWIZZLE_YYYY},
@@ -170,32 +171,24 @@ static struct gl_builtin_uniform_element gl_Fog_elements[] = {
    {"scale", {STATE_FOG_PARAMS}, SWIZZLE_WWWW},
 };
 
-static struct gl_builtin_uniform_element gl_NormalScale_elements[] = {
+static const struct gl_builtin_uniform_element gl_NormalScale_elements[] = {
    {NULL, {STATE_NORMAL_SCALE}, SWIZZLE_XXXX},
 };
 
-static struct gl_builtin_uniform_element gl_BumpRotMatrix0MESA_elements[] = {
-   {NULL, {STATE_INTERNAL, STATE_ROT_MATRIX_0}, SWIZZLE_XYZW},
-};
-
-static struct gl_builtin_uniform_element gl_BumpRotMatrix1MESA_elements[] = {
-   {NULL, {STATE_INTERNAL, STATE_ROT_MATRIX_1}, SWIZZLE_XYZW},
-};
-
-static struct gl_builtin_uniform_element gl_FogParamsOptimizedMESA_elements[] = {
+static const struct gl_builtin_uniform_element gl_FogParamsOptimizedMESA_elements[] = {
    {NULL, {STATE_INTERNAL, STATE_FOG_PARAMS_OPTIMIZED}, SWIZZLE_XYZW},
 };
 
-static struct gl_builtin_uniform_element gl_CurrentAttribVertMESA_elements[] = {
+static const struct gl_builtin_uniform_element gl_CurrentAttribVertMESA_elements[] = {
    {NULL, {STATE_INTERNAL, STATE_CURRENT_ATTRIB, 0}, SWIZZLE_XYZW},
 };
 
-static struct gl_builtin_uniform_element gl_CurrentAttribFragMESA_elements[] = {
+static const struct gl_builtin_uniform_element gl_CurrentAttribFragMESA_elements[] = {
    {NULL, {STATE_INTERNAL, STATE_CURRENT_ATTRIB_MAYBE_VP_CLAMPED, 0}, SWIZZLE_XYZW},
 };
 
 #define MATRIX(name, statevar, modifier)				\
-   static struct gl_builtin_uniform_element name ## _elements[] = {	\
+   static const struct gl_builtin_uniform_element name ## _elements[] = { \
       { NULL, { statevar, 0, 0, 0, modifier}, SWIZZLE_XYZW },		\
       { NULL, { statevar, 0, 1, 1, modifier}, SWIZZLE_XYZW },		\
       { NULL, { statevar, 0, 2, 2, modifier}, SWIZZLE_XYZW },		\
@@ -238,7 +231,7 @@ MATRIX(gl_TextureMatrixTranspose,
 MATRIX(gl_TextureMatrixInverseTranspose,
        STATE_TEXTURE_MATRIX, STATE_MATRIX_INVERSE);
 
-static struct gl_builtin_uniform_element gl_NormalMatrix_elements[] = {
+static const struct gl_builtin_uniform_element gl_NormalMatrix_elements[] = {
    { NULL, { STATE_MODELVIEW_MATRIX, 0, 0, 0, STATE_MATRIX_INVERSE},
      MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_Z) },
    { NULL, { STATE_MODELVIEW_MATRIX, 0, 1, 1, STATE_MATRIX_INVERSE},
@@ -298,8 +291,6 @@ static const struct gl_builtin_uniform_desc _mesa_builtin_uniform_desc[] = {
    STATEVAR(gl_NormalMatrix),
    STATEVAR(gl_NormalScale),
 
-   STATEVAR(gl_BumpRotMatrix0MESA),
-   STATEVAR(gl_BumpRotMatrix1MESA),
    STATEVAR(gl_FogParamsOptimizedMESA),
    STATEVAR(gl_CurrentAttribVertMESA),
    STATEVAR(gl_CurrentAttribFragMESA),
@@ -341,7 +332,7 @@ per_vertex_accumulator::add_field(int slot, const glsl_type *type,
    assert(this->num_fields < ARRAY_SIZE(this->fields));
    this->fields[this->num_fields].type = type;
    this->fields[this->num_fields].name = name;
-   this->fields[this->num_fields].row_major = false;
+   this->fields[this->num_fields].matrix_layout = GLSL_MATRIX_LAYOUT_INHERITED;
    this->fields[this->num_fields].precision = prec;
    this->fields[this->num_fields].location = slot;
    this->fields[this->num_fields].interpolation = INTERP_QUALIFIER_NONE;
@@ -402,7 +393,7 @@ private:
 
    ir_variable *add_variable(const char *name, const glsl_type *type,
                              enum ir_variable_mode mode, int slot, glsl_precision prec);
-   ir_variable *add_uniform(const glsl_type *type, const char *name, glsl_precision prec);
+   ir_variable *add_uniform(const glsl_type *type, const char *name, glsl_precision prec = glsl_precision_undefined);
    ir_variable *add_const(const char *name, int value);
    ir_variable *add_const_ivec3(const char *name, int x, int y, int z);
    void add_varying(int slot, const glsl_type *type, const char *name,
@@ -507,16 +498,14 @@ builtin_variable_generator::add_uniform(const glsl_type *type,
       &_mesa_builtin_uniform_desc[i];
 
    const unsigned array_count = type->is_array() ? type->length : 1;
-   uni->num_state_slots = array_count * statevar->num_elements;
 
    ir_state_slot *slots =
-      ralloc_array(uni, ir_state_slot, uni->num_state_slots);
-
-   uni->state_slots = slots;
+      uni->allocate_state_slots(array_count * statevar->num_elements);
 
    for (unsigned a = 0; a < array_count; a++) {
       for (unsigned j = 0; j < statevar->num_elements; j++) {
-	 struct gl_builtin_uniform_element *element = &statevar->elements[j];
+	 const struct gl_builtin_uniform_element *element =
+	    &statevar->elements[j];
 
 	 memcpy(slots->tokens, element->tokens, sizeof(element->tokens));
 	 if (type->is_array()) {
@@ -700,6 +689,12 @@ builtin_variable_generator::generate_constants()
    }
 
    if (state->is_version(430, 0) || state->ARB_compute_shader_enable) {
+      add_const("gl_MaxComputeAtomicCounterBuffers", MAX_COMPUTE_ATOMIC_COUNTER_BUFFERS);
+      add_const("gl_MaxComputeAtomicCounters", MAX_COMPUTE_ATOMIC_COUNTERS);
+      add_const("gl_MaxComputeImageUniforms", MAX_COMPUTE_IMAGE_UNIFORMS);
+      add_const("gl_MaxComputeTextureImageUnits", MAX_COMPUTE_TEXTURE_IMAGE_UNITS);
+      add_const("gl_MaxComputeUniformComponents", MAX_COMPUTE_UNIFORM_COMPONENTS);
+
       add_const_ivec3("gl_MaxComputeWorkGroupCount",
                       state->Const.MaxComputeWorkGroupCount[0],
                       state->Const.MaxComputeWorkGroupCount[1],
@@ -764,24 +759,22 @@ builtin_variable_generator::generate_uniforms()
    add_uniform(array(vec4_t, VARYING_SLOT_MAX), "gl_CurrentAttribFragMESA", glsl_precision_undefined);
 
    if (compatibility) {
-      add_uniform(mat4_t, "gl_ModelViewMatrix", glsl_precision_undefined);
-      add_uniform(mat4_t, "gl_ProjectionMatrix", glsl_precision_undefined);
-      add_uniform(mat4_t, "gl_ModelViewProjectionMatrix", glsl_precision_undefined);
-      add_uniform(mat3_t, "gl_NormalMatrix", glsl_precision_undefined);
-      add_uniform(mat4_t, "gl_ModelViewMatrixInverse", glsl_precision_undefined);
-      add_uniform(mat4_t, "gl_ProjectionMatrixInverse", glsl_precision_undefined);
-      add_uniform(mat4_t, "gl_ModelViewProjectionMatrixInverse", glsl_precision_undefined);
-      add_uniform(mat4_t, "gl_ModelViewMatrixTranspose", glsl_precision_undefined);
-      add_uniform(mat4_t, "gl_ProjectionMatrixTranspose", glsl_precision_undefined);
-      add_uniform(mat4_t, "gl_ModelViewProjectionMatrixTranspose", glsl_precision_undefined);
-      add_uniform(mat4_t, "gl_ModelViewMatrixInverseTranspose", glsl_precision_undefined);
-      add_uniform(mat4_t, "gl_ProjectionMatrixInverseTranspose", glsl_precision_undefined);
-      add_uniform(mat4_t, "gl_ModelViewProjectionMatrixInverseTranspose", glsl_precision_undefined);
-      add_uniform(float_t, "gl_NormalScale", glsl_precision_undefined);
-      add_uniform(type("gl_LightModelParameters"), "gl_LightModel", glsl_precision_undefined);
-      add_uniform(vec2_t, "gl_BumpRotMatrix0MESA", glsl_precision_undefined);
-      add_uniform(vec2_t, "gl_BumpRotMatrix1MESA", glsl_precision_undefined);
-      add_uniform(vec4_t, "gl_FogParamsOptimizedMESA", glsl_precision_undefined);
+      add_uniform(mat4_t, "gl_ModelViewMatrix",);
+      add_uniform(mat4_t, "gl_ProjectionMatrix");
+      add_uniform(mat4_t, "gl_ModelViewProjectionMatrix");
+      add_uniform(mat3_t, "gl_NormalMatrix");
+      add_uniform(mat4_t, "gl_ModelViewMatrixInverse");
+      add_uniform(mat4_t, "gl_ProjectionMatrixInverse");
+      add_uniform(mat4_t, "gl_ModelViewProjectionMatrixInverse");
+      add_uniform(mat4_t, "gl_ModelViewMatrixTranspose");
+      add_uniform(mat4_t, "gl_ProjectionMatrixTranspose");
+      add_uniform(mat4_t, "gl_ModelViewProjectionMatrixTranspose");
+      add_uniform(mat4_t, "gl_ModelViewMatrixInverseTranspose");
+      add_uniform(mat4_t, "gl_ProjectionMatrixInverseTranspose");
+      add_uniform(mat4_t, "gl_ModelViewProjectionMatrixInverseTranspose");
+      add_uniform(float_t, "gl_NormalScale");
+      add_uniform(type("gl_LightModelParameters"), "gl_LightModel");
+      add_uniform(vec4_t, "gl_FogParamsOptimizedMESA");
 
       const glsl_type *const mat4_array_type =
 	 array(mat4_t, state->Const.MaxTextureCoords);
@@ -846,6 +839,8 @@ builtin_variable_generator::generate_vs_special_vars()
 	   add_system_value(SYSTEM_VALUE_INSTANCE_ID, state->metal_target ? uint_t : int_t, "gl_InstanceID", glsl_precision_high);
    if (state->AMD_vertex_shader_layer_enable)
       add_output(VARYING_SLOT_LAYER, int_t, "gl_Layer", glsl_precision_high);
+   if (state->AMD_vertex_shader_viewport_index_enable)
+      add_output(VARYING_SLOT_VIEWPORT, int_t, "gl_ViewportIndex");
    if (compatibility) {
       add_input(VERT_ATTRIB_POS, vec4_t, "gl_Vertex", glsl_precision_high);
       add_input(VERT_ATTRIB_NORMAL, vec3_t, "gl_Normal", glsl_precision_medium);
@@ -873,6 +868,8 @@ builtin_variable_generator::generate_gs_special_vars()
    add_output(VARYING_SLOT_LAYER, int_t, "gl_Layer", glsl_precision_high);
    if (state->ARB_viewport_array_enable)
       add_output(VARYING_SLOT_VIEWPORT, int_t, "gl_ViewportIndex", glsl_precision_high);
+   if (state->ARB_gpu_shader5_enable)
+      add_system_value(SYSTEM_VALUE_INVOCATION_ID, int_t, "gl_InvocationID");
 
    /* Although gl_PrimitiveID appears in tessellation control and tessellation
     * evaluation shaders, it has a different function there than it has in
@@ -929,14 +926,14 @@ builtin_variable_generator::generate_fs_special_vars()
       ir_variable *const var =
          add_output(FRAG_RESULT_STENCIL, int_t, "gl_FragStencilRefARB", glsl_precision_high);
       if (state->ARB_shader_stencil_export_warn)
-         var->warn_extension = "GL_ARB_shader_stencil_export";
+         var->enable_extension_warning("GL_ARB_shader_stencil_export");
    }
 
    if (state->AMD_shader_stencil_export_enable) {
       ir_variable *const var =
          add_output(FRAG_RESULT_STENCIL, int_t, "gl_FragStencilRefAMD", glsl_precision_high);
       if (state->AMD_shader_stencil_export_warn)
-         var->warn_extension = "GL_AMD_shader_stencil_export";
+         var->enable_extension_warning("GL_AMD_shader_stencil_export");
    }
 	
 	if (state->EXT_frag_depth_enable) {
@@ -968,6 +965,11 @@ builtin_variable_generator::generate_fs_special_vars()
 
    if (state->ARB_gpu_shader5_enable) {
       add_system_value(SYSTEM_VALUE_SAMPLE_MASK_IN, array(int_t, 1), "gl_SampleMaskIn", glsl_precision_high);
+   }
+
+   if (state->ARB_fragment_layer_viewport_enable) {
+      add_input(VARYING_SLOT_LAYER, int_t, "gl_Layer");
+      add_input(VARYING_SLOT_VIEWPORT, int_t, "gl_ViewportIndex");
    }
 }
 
