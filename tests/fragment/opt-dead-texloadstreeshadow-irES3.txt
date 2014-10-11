@@ -1,0 +1,139 @@
+#version 300 es
+struct SurfaceOutput {
+  lowp vec3 Albedo;
+  lowp vec3 Normal;
+  lowp vec3 Emission;
+  mediump float Specular;
+  lowp float Gloss;
+  lowp float Alpha;
+};
+struct Input {
+  highp vec2 uv_MainTex;
+  lowp vec4 color;
+};
+struct v2f_surf {
+  highp vec4 pos;
+};
+layout(location=0) out mediump vec4 _glesFragData[4];
+uniform lowp vec4 _Color;
+uniform lowp vec3 _TranslucencyColor;
+uniform lowp float _TranslucencyViewDependency;
+uniform mediump float _ShadowStrength;
+uniform sampler2D _MainTex;
+uniform sampler2D _BumpSpecMap;
+uniform sampler2D _TranslucencyMap;
+float xll_saturate_f (
+  in highp float x_1
+)
+{
+  highp float tmpvar_2;
+  tmpvar_2 = clamp (x_1, 0.0, 1.0);
+  return tmpvar_2;
+}
+
+lowp vec3 UnpackNormalDXT5nm (
+  in lowp vec4 packednormal_3
+)
+{
+  lowp vec3 normal_4;
+  lowp vec2 tmpvar_5;
+  tmpvar_5 = ((packednormal_3.wy * 2.0) - 1.0);
+  normal_4.xy = tmpvar_5.xy.xy;
+  lowp float tmpvar_6;
+  tmpvar_6 = dot (normal_4.xy, normal_4.xy);
+  highp float tmpvar_7;
+  tmpvar_7 = xll_saturate_f (tmpvar_6);
+  highp float tmpvar_8;
+  tmpvar_8 = sqrt ((1.0 - tmpvar_7));
+  highp float tmpvar_9;
+  tmpvar_9 = tmpvar_8;
+  normal_4.z = vec3(tmpvar_9).z;
+  return normal_4;
+}
+
+void surf (
+  in Input IN_10,
+  inout SurfaceOutput o_11
+)
+{
+  mediump vec4 norspc_12;
+  lowp vec4 trngls_13;
+  lowp vec4 c_14;
+  lowp vec4 tmpvar_15;
+  tmpvar_15 = texture (_MainTex, IN_10.uv_MainTex);
+  lowp vec4 tmpvar_16;
+  tmpvar_16 = tmpvar_15;
+  c_14 = tmpvar_16;
+  lowp vec3 tmpvar_17;
+  tmpvar_17 = ((c_14.xyz * _Color.xyz) * IN_10.color.w);
+  o_11.Albedo = tmpvar_17;
+  lowp vec4 tmpvar_18;
+  tmpvar_18 = texture (_TranslucencyMap, IN_10.uv_MainTex);
+  lowp vec4 tmpvar_19;
+  tmpvar_19 = tmpvar_18;
+  trngls_13 = tmpvar_19;
+  lowp float tmpvar_20;
+  tmpvar_20 = (trngls_13.w * _Color.x);
+  o_11.Gloss = tmpvar_20;
+  lowp float tmpvar_21;
+  tmpvar_21 = c_14.w;
+  o_11.Alpha = tmpvar_21;
+  lowp vec4 tmpvar_22;
+  tmpvar_22 = texture (_BumpSpecMap, IN_10.uv_MainTex);
+  lowp vec4 tmpvar_23;
+  tmpvar_23 = tmpvar_22;
+  norspc_12 = tmpvar_23;
+  mediump float tmpvar_24;
+  tmpvar_24 = norspc_12.x;
+  o_11.Specular = tmpvar_24;
+  lowp vec3 tmpvar_25;
+  tmpvar_25 = UnpackNormalDXT5nm (norspc_12);
+  lowp vec3 tmpvar_26;
+  tmpvar_26 = tmpvar_25;
+  o_11.Normal = tmpvar_26;
+}
+
+lowp vec4 frag_surf (
+  in v2f_surf IN_27
+)
+{
+  SurfaceOutput o_28;
+  Input surfIN_29;
+  highp vec3 tmpvar_30;
+  tmpvar_30 = vec3(0.0, 0.0, 0.0);
+  o_28.Albedo = tmpvar_30;
+  highp vec3 tmpvar_31;
+  tmpvar_31 = vec3(0.0, 0.0, 0.0);
+  o_28.Emission = tmpvar_31;
+  highp float tmpvar_32;
+  tmpvar_32 = 0.0;
+  o_28.Specular = tmpvar_32;
+  highp float tmpvar_33;
+  tmpvar_33 = 0.0;
+  o_28.Alpha = tmpvar_33;
+  highp float tmpvar_34;
+  tmpvar_34 = 0.0;
+  o_28.Gloss = tmpvar_34;
+  surf (surfIN_29, o_28);
+  return vec4(0.0, 0.0, 0.0, 0.0);
+}
+
+void main ()
+{
+  v2f_surf xlt_IN_35;
+  lowp vec4 xl_retval_36;
+  highp vec4 tmpvar_37;
+  tmpvar_37 = vec4(0.0, 0.0, 0.0, 0.0);
+  xlt_IN_35.pos = tmpvar_37;
+  lowp vec4 tmpvar_38;
+  tmpvar_38 = frag_surf (xlt_IN_35);
+  lowp vec4 tmpvar_39;
+  tmpvar_39 = tmpvar_38;
+  xl_retval_36 = tmpvar_39;
+  lowp vec4 tmpvar_40;
+  tmpvar_40 = xl_retval_36.xyzw;
+  lowp vec4 tmpvar_41;
+  tmpvar_41 = tmpvar_40;
+  _glesFragData[0] = tmpvar_41;
+}
+

@@ -1,0 +1,29 @@
+#version 300 es
+out mediump vec4 _fragData;
+in mediump vec4 uv;
+void main ()
+{
+  mediump vec4 c_1;
+  mediump vec4 tmpvar_2;
+  tmpvar_2 = uv;
+  c_1 = tmpvar_2;
+  highp vec4 tmpvar_3;
+  tmpvar_3 = (c_1 + gl_FragCoord);
+  c_1 = tmpvar_3;
+  highp float tmpvar_4;
+  if (gl_FrontFacing) {
+    tmpvar_4 = 1.0;
+  } else {
+    tmpvar_4 = 0.0;
+  };
+  mediump float tmpvar_5;
+  tmpvar_5 = (c_1.x + tmpvar_4);
+  c_1.x = tmpvar_5;
+  mediump vec2 tmpvar_6;
+  tmpvar_6 = (c_1.xy + gl_PointCoord);
+  c_1.xy = tmpvar_6.xy.xy;
+  mediump vec4 tmpvar_7;
+  tmpvar_7 = c_1;
+  _fragData = tmpvar_7;
+}
+

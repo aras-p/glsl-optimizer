@@ -1,0 +1,895 @@
+#version 300 es
+struct VertexOutput {
+  vec4 pos;
+  vec4 tex;
+  vec4 posWorld;
+  vec3 normalWorld;
+  vec4 tangentWorld;
+  vec3 extra;
+  vec4 _ShadowCoord;
+  vec3 lightDir;
+};
+out mediump vec4 _fragData;
+uniform highp vec3 _WorldSpaceCameraPos;
+uniform highp vec4 _ProjectionParams;
+uniform highp vec4 _ScreenParams;
+uniform highp vec4 _ZBufferParams;
+uniform highp vec4 _WorldSpaceLightPos0;
+uniform highp vec4 unity_SHAr;
+uniform highp vec4 unity_SHAg;
+uniform highp vec4 unity_SHAb;
+uniform highp vec4 unity_SHBr;
+uniform highp vec4 unity_SHBg;
+uniform highp vec4 unity_SHBb;
+uniform highp vec4 unity_SHC;
+uniform highp vec4 _LightShadowData;
+uniform highp mat4 _Object2World;
+uniform highp mat4 _World2Object;
+uniform highp vec4 unity_Scale;
+uniform highp mat4 glstate_matrix_transpose_modelview0;
+uniform highp mat4 unity_MatrixV;
+uniform highp mat4 unity_MatrixVP;
+uniform lowp samplerCube _Cube;
+uniform sampler2D _MainTex;
+uniform highp vec4 _MainTex_ST;
+uniform sampler2D _DetailAlbedoMap;
+uniform highp vec4 _DetailAlbedoMap_ST;
+uniform sampler2D _AlphaMap;
+uniform sampler2D _Occlusion;
+uniform sampler2D _DetailNormalMap;
+uniform highp vec4 _DetailNormalMap_ST;
+uniform highp float _DetailNormalMapScale;
+uniform sampler2D _BumpMap;
+uniform highp float _BumpScale;
+uniform highp float _Exposure;
+uniform highp float _DetailBumpScale;
+uniform highp float _AlphaTestRef;
+uniform highp float _DetailBumpTiling;
+uniform highp vec4 _Color;
+uniform highp vec4 _SpecularColor;
+uniform sampler2D _SpecGlossMap;
+uniform highp float _Glossiness;
+uniform highp vec4 unity_ColorSpaceGrey;
+uniform sampler2D _ShadowMapTexture;
+uniform highp vec4 _LightColor0;
+uniform lowp samplerCube _SpecCube;
+uniform highp vec4 unity_LightmapST;
+uniform sampler2D unity_Lightmap;
+uniform sampler2D unity_LightmapInd;
+uniform highp float _SelfIllumScale;
+uniform sampler2D _SelfIllum;
+in highp vec4 xlv_TEXCOORD0;
+in highp vec4 xlv_TEXCOORD1;
+in highp vec3 xlv_TEXCOORD2;
+in highp vec4 xlv_TEXCOORD3;
+in highp vec3 xlv_TEXCOORD4;
+in highp vec4 xlv_TEXCOORD5;
+in highp vec3 xlv_TEXCOORD7;
+vec4 xll_texCUBElod (
+  in lowp samplerCube s_1,
+  in highp vec4 coord_2
+)
+{
+  lowp vec4 tmpvar_3;
+  tmpvar_3 = textureLod (s_1, coord_2.xyz, coord_2.w);
+  return tmpvar_3;
+}
+
+mat3 xll_transpose_mf3x3 (
+  in highp mat3 m_4
+)
+{
+  highp mat3 tmpvar_5;
+  highp float tmpvar_6;
+  tmpvar_6 = m_4[0][0];
+  tmpvar_5[0u].x = tmpvar_6;
+  highp float tmpvar_7;
+  tmpvar_7 = m_4[1][0];
+  tmpvar_5[0u].y = tmpvar_7;
+  highp float tmpvar_8;
+  tmpvar_8 = m_4[2][0];
+  tmpvar_5[0u].z = tmpvar_8;
+  highp float tmpvar_9;
+  tmpvar_9 = m_4[0][1];
+  tmpvar_5[1u].x = tmpvar_9;
+  highp float tmpvar_10;
+  tmpvar_10 = m_4[1][1];
+  tmpvar_5[1u].y = tmpvar_10;
+  highp float tmpvar_11;
+  tmpvar_11 = m_4[2][1];
+  tmpvar_5[1u].z = tmpvar_11;
+  highp float tmpvar_12;
+  tmpvar_12 = m_4[0][2];
+  tmpvar_5[2u].x = tmpvar_12;
+  highp float tmpvar_13;
+  tmpvar_13 = m_4[1][2];
+  tmpvar_5[2u].y = tmpvar_13;
+  highp float tmpvar_14;
+  tmpvar_14 = m_4[2][2];
+  tmpvar_5[2u].z = tmpvar_14;
+  return tmpvar_5;
+}
+
+float xll_saturate_f (
+  in highp float x_15
+)
+{
+  highp float tmpvar_16;
+  tmpvar_16 = clamp (x_15, 0.0, 1.0);
+  return tmpvar_16;
+}
+
+vec3 xll_saturate_vf3 (
+  in highp vec3 x_17
+)
+{
+  highp vec3 tmpvar_18;
+  tmpvar_18 = clamp (x_17, 0.0, 1.0);
+  return tmpvar_18;
+}
+
+vec3 xll_matrixindex_mf3x3_i (
+  in highp mat3 m_19,
+  in int i_20
+)
+{
+  highp vec3 v_21;
+  highp float tmpvar_22;
+  tmpvar_22 = m_19[0][i_20];
+  v_21.x = tmpvar_22;
+  highp float tmpvar_23;
+  tmpvar_23 = m_19[1][i_20];
+  v_21.y = vec2(tmpvar_23).y;
+  highp float tmpvar_24;
+  tmpvar_24 = m_19[2][i_20];
+  v_21.z = vec3(tmpvar_24).z;
+  return v_21;
+}
+
+vec3 Albedo (
+  in highp vec4 texcoords_25
+)
+{
+  lowp vec3 albedo_26;
+  lowp vec4 tmpvar_27;
+  tmpvar_27 = texture2D (_MainTex, texcoords_25.xy);
+  lowp vec3 tmpvar_28;
+  tmpvar_28 = (_Color.xyz * tmpvar_27.xyz);
+  albedo_26 = tmpvar_28;
+  lowp vec4 tmpvar_29;
+  tmpvar_29 = texture2D (_DetailAlbedoMap, texcoords_25.zw);
+  lowp vec3 tmpvar_30;
+  tmpvar_30 = (albedo_26 * (2.0 * tmpvar_29.xyz));
+  albedo_26 = tmpvar_30;
+  return albedo_26;
+}
+
+float Alpha (
+  in highp vec2 uv_31
+)
+{
+  lowp vec4 tmpvar_32;
+  tmpvar_32 = texture2D (_AlphaMap, uv_31);
+  return (tmpvar_32.w * _Color.w);
+}
+
+float BlinnPhongTerm (
+  in highp float roughness_33,
+  in highp float NdotH_34
+)
+{
+  highp float specTerm_35;
+  highp float normTerm_36;
+  highp float n_37;
+  highp float m_38;
+  highp float tmpvar_39;
+  tmpvar_39 = pow (roughness_33, 4.0);
+  highp float tmpvar_40;
+  tmpvar_40 = (tmpvar_39 + 1e-05);
+  m_38 = tmpvar_40;
+  highp float tmpvar_41;
+  tmpvar_41 = ((1.0 / m_38) - 2.0);
+  n_37 = tmpvar_41;
+  highp float tmpvar_42;
+  tmpvar_42 = ((n_37 + 1.0) / 6.28318);
+  normTerm_36 = tmpvar_42;
+  highp float tmpvar_43;
+  tmpvar_43 = pow (NdotH_34, n_37);
+  highp float tmpvar_44;
+  tmpvar_44 = tmpvar_43;
+  specTerm_35 = tmpvar_44;
+  return (specTerm_35 * normTerm_36);
+}
+
+float BlinnTerm (
+  in highp vec3 normal_45,
+  in highp vec3 halfDir_46
+)
+{
+  highp float tmpvar_47;
+  tmpvar_47 = dot (normal_45, halfDir_46);
+  highp float tmpvar_48;
+  tmpvar_48 = max (0.0, tmpvar_47);
+  return tmpvar_48;
+}
+
+float FresnelTerm (
+  in highp float F0_49,
+  in highp float cosA_50
+)
+{
+  highp float t_51;
+  highp float _Falloff_52;
+  highp float tmpvar_53;
+  tmpvar_53 = 5.0;
+  _Falloff_52 = tmpvar_53;
+  highp float tmpvar_54;
+  tmpvar_54 = abs ((1.0 - cosA_50));
+  highp float tmpvar_55;
+  tmpvar_55 = pow (tmpvar_54, _Falloff_52);
+  highp float tmpvar_56;
+  tmpvar_56 = tmpvar_55;
+  t_51 = tmpvar_56;
+  return (F0_49 + ((1.0 - F0_49) * t_51));
+}
+
+float CTGeometricTerm (
+  in highp float NdotL_57,
+  in highp float NdotH_58,
+  in highp float NdotV_59,
+  in highp float VdotH_60
+)
+{
+  highp float tmpvar_61;
+  tmpvar_61 = (VdotH_60 + 1e-05);
+  VdotH_60 = tmpvar_61;
+  highp float tmpvar_62;
+  tmpvar_62 = min ((((2.0 * NdotH_58) * NdotV_59) / VdotH_60), (((2.0 * NdotH_58) * NdotL_57) / VdotH_60));
+  highp float tmpvar_63;
+  tmpvar_63 = min (1.0, tmpvar_62);
+  return tmpvar_63;
+}
+
+float GeometricTerm (
+  in highp float NdotL_64,
+  in highp float NdotH_65,
+  in highp float NdotV_66,
+  in highp float VdotH_67,
+  in highp float LdotV_68
+)
+{
+  highp float tmpvar_69;
+  tmpvar_69 = CTGeometricTerm (NdotL_64, NdotH_65, NdotV_66, VdotH_67);
+  return tmpvar_69;
+}
+
+float LambertTerm (
+  in highp vec3 normal_70,
+  in highp vec3 lightDir_71
+)
+{
+  highp float tmpvar_72;
+  tmpvar_72 = dot (normal_70, lightDir_71);
+  highp float tmpvar_73;
+  tmpvar_73 = max (0.0, tmpvar_72);
+  return tmpvar_73;
+}
+
+float RGBToLuminance (
+  in highp vec3 color_74
+)
+{
+  highp float luminance_75;
+  highp vec3 lumSensitivity_76;
+  highp vec3 tmpvar_77;
+  tmpvar_77 = vec3(0.299, 0.587, 0.114);
+  lumSensitivity_76 = tmpvar_77;
+  highp float tmpvar_78;
+  tmpvar_78 = dot (color_74, lumSensitivity_76);
+  highp float tmpvar_79;
+  tmpvar_79 = tmpvar_78;
+  luminance_75 = tmpvar_79;
+  return luminance_75;
+}
+
+vec3 BRDF_Disney_PBS (
+  in highp vec3 baseColor_80,
+  in highp vec3 lightColor_81,
+  in highp vec3 specColor_82,
+  in highp float specular_83,
+  in highp float roughness_84,
+  in highp vec3 normal_85,
+  in highp vec3 lightDir_86,
+  in highp vec3 viewDir_87,
+  in highp vec3 ambient_88,
+  in highp vec3 env_89
+)
+{
+  highp vec3 color_90;
+  highp vec3 diffuseColor_91;
+  highp float diffuseTerm_92;
+  highp float specularTerm_93;
+  highp float disneyDiffuse_94;
+  highp float nvPow_95;
+  highp float nlPow_96;
+  highp float Fd90_97;
+  highp float R_98;
+  highp float G_99;
+  highp float F_100;
+  highp float lh_101;
+  highp float lv_102;
+  highp float vh_103;
+  highp float nv_104;
+  highp float nh_105;
+  highp float nl_106;
+  highp vec3 halfDir_107;
+  highp vec3 tmpvar_108;
+  tmpvar_108 = normalize ((lightDir_86 + viewDir_87));
+  highp vec3 tmpvar_109;
+  tmpvar_109 = tmpvar_108;
+  halfDir_107 = tmpvar_109;
+  highp float tmpvar_110;
+  tmpvar_110 = LambertTerm (normal_85, lightDir_86);
+  highp float tmpvar_111;
+  tmpvar_111 = tmpvar_110;
+  nl_106 = tmpvar_111;
+  highp float tmpvar_112;
+  tmpvar_112 = BlinnTerm (normal_85, halfDir_107);
+  highp float tmpvar_113;
+  tmpvar_113 = tmpvar_112;
+  nh_105 = tmpvar_113;
+  highp float tmpvar_114;
+  tmpvar_114 = dot (normal_85, viewDir_87);
+  highp float tmpvar_115;
+  tmpvar_115 = max (0.0, tmpvar_114);
+  highp float tmpvar_116;
+  tmpvar_116 = tmpvar_115;
+  nv_104 = tmpvar_116;
+  highp float tmpvar_117;
+  tmpvar_117 = dot (viewDir_87, halfDir_107);
+  highp float tmpvar_118;
+  tmpvar_118 = max (0.0, tmpvar_117);
+  highp float tmpvar_119;
+  tmpvar_119 = tmpvar_118;
+  vh_103 = tmpvar_119;
+  highp float tmpvar_120;
+  tmpvar_120 = dot (lightDir_86, viewDir_87);
+  highp float tmpvar_121;
+  tmpvar_121 = max (0.0, tmpvar_120);
+  highp float tmpvar_122;
+  tmpvar_122 = tmpvar_121;
+  lv_102 = tmpvar_122;
+  highp float tmpvar_123;
+  tmpvar_123 = dot (lightDir_86, halfDir_107);
+  highp float tmpvar_124;
+  tmpvar_124 = max (0.0, tmpvar_123);
+  highp float tmpvar_125;
+  tmpvar_125 = tmpvar_124;
+  lh_101 = tmpvar_125;
+  highp float tmpvar_126;
+  tmpvar_126 = FresnelTerm (specular_83, vh_103);
+  highp float tmpvar_127;
+  tmpvar_127 = tmpvar_126;
+  F_100 = tmpvar_127;
+  highp float tmpvar_128;
+  tmpvar_128 = GeometricTerm (nl_106, nh_105, nv_104, vh_103, lv_102);
+  highp float tmpvar_129;
+  tmpvar_129 = tmpvar_128;
+  G_99 = tmpvar_129;
+  highp float tmpvar_130;
+  tmpvar_130 = BlinnPhongTerm (roughness_84, nh_105);
+  highp float tmpvar_131;
+  tmpvar_131 = tmpvar_130;
+  R_98 = tmpvar_131;
+  highp float tmpvar_132;
+  tmpvar_132 = max (0.0, R_98);
+  highp float tmpvar_133;
+  tmpvar_133 = tmpvar_132;
+  R_98 = tmpvar_133;
+  highp float tmpvar_134;
+  tmpvar_134 = pow (lh_101, 2.0);
+  highp float tmpvar_135;
+  tmpvar_135 = (0.5 + ((2.0 * tmpvar_134) * roughness_84));
+  Fd90_97 = tmpvar_135;
+  highp float tmpvar_136;
+  tmpvar_136 = pow ((1.00001 - nl_106), 5.0);
+  highp float tmpvar_137;
+  tmpvar_137 = tmpvar_136;
+  nlPow_96 = tmpvar_137;
+  highp float tmpvar_138;
+  tmpvar_138 = pow ((1.00001 - nv_104), 5.0);
+  highp float tmpvar_139;
+  tmpvar_139 = tmpvar_138;
+  nvPow_95 = tmpvar_139;
+  highp float tmpvar_140;
+  tmpvar_140 = ((1.0 + (
+    (Fd90_97 - 1.0)
+   * nlPow_96)) * (1.0 + (
+    (Fd90_97 - 1.0)
+   * nvPow_95)));
+  disneyDiffuse_94 = tmpvar_140;
+  highp float tmpvar_141;
+  tmpvar_141 = max (0.0, (((F_100 * G_99) * R_98) / ((4.0 * nv_104) + 1e-05)));
+  highp float tmpvar_142;
+  tmpvar_142 = tmpvar_141;
+  specularTerm_93 = tmpvar_142;
+  highp float tmpvar_143;
+  tmpvar_143 = (disneyDiffuse_94 * nl_106);
+  diffuseTerm_92 = tmpvar_143;
+  highp vec3 tmpvar_144;
+  tmpvar_144 = baseColor_80;
+  diffuseColor_91 = tmpvar_144;
+  highp float tmpvar_145;
+  tmpvar_145 = RGBToLuminance (specColor_82);
+  highp float tmpvar_146;
+  tmpvar_146 = FresnelTerm (0.0, nv_104);
+  highp vec3 tmpvar_147;
+  tmpvar_147 = (((diffuseColor_91 * 
+    (ambient_88 + (diffuseTerm_92 * lightColor_81))
+  ) + (specColor_82 * 
+    (env_89 + (lightColor_81 * specularTerm_93))
+  )) + ((
+    ((1.0 - tmpvar_145) * (1.0 - roughness_84))
+   * tmpvar_146) * env_89));
+  color_90 = tmpvar_147;
+  return color_90;
+}
+
+vec3 DecodeLightmap (
+  in highp vec4 color_148
+)
+{
+  return ((8.0 * color_148.w) * color_148.xyz);
+}
+
+vec3 DirLightmapDiffuse (
+  in highp mat3 dirBasis_149,
+  in highp vec4 color_150,
+  in highp vec4 scale_151,
+  in highp vec3 normal_152,
+  in bool surfFuncWritesNormal_153,
+  out highp vec3 scalePerBasisVector_154
+)
+{
+  highp vec3 lm_155;
+  highp vec3 tmpvar_156;
+  tmpvar_156 = DecodeLightmap (color_150);
+  highp vec3 tmpvar_157;
+  tmpvar_157 = tmpvar_156;
+  lm_155 = tmpvar_157;
+  highp vec3 tmpvar_158;
+  tmpvar_158 = DecodeLightmap (scale_151);
+  highp vec3 tmpvar_159;
+  tmpvar_159 = tmpvar_158;
+  scalePerBasisVector_154 = tmpvar_159;
+  if (surfFuncWritesNormal_153) {
+    highp vec3 normalInRnmBasis_160;
+    highp vec3 tmpvar_161;
+    tmpvar_161 = xll_saturate_vf3 ((dirBasis_149 * normal_152));
+    highp vec3 tmpvar_162;
+    tmpvar_162 = tmpvar_161;
+    normalInRnmBasis_160 = tmpvar_162;
+    highp float tmpvar_163;
+    tmpvar_163 = dot (normalInRnmBasis_160, scalePerBasisVector_154);
+    highp vec3 tmpvar_164;
+    tmpvar_164 = (lm_155 * tmpvar_163);
+    lm_155 = tmpvar_164;
+  };
+  return lm_155;
+}
+
+void DecodeDirLightmap (
+  in highp vec3 normal_165,
+  in highp vec4 colorLM_166,
+  in highp vec4 scaleLM_167,
+  out highp vec3 lightColor_168,
+  out highp vec3 lightDir_169
+)
+{
+  highp vec3 scalePerBasisVector_170;
+  highp mat3 unity_DirBasis_171;
+  highp mat3 tmpvar_172;
+  tmpvar_172 = xll_transpose_mf3x3 (mat3(0.816497, 0.0, 0.57735, -0.408248, 0.707107, 0.57735, -0.408248, -0.707107, 0.57735));
+  highp mat3 tmpvar_173;
+  tmpvar_173 = tmpvar_172;
+  unity_DirBasis_171 = tmpvar_173;
+  highp vec3 tmpvar_174;
+  tmpvar_174 = DirLightmapDiffuse (unity_DirBasis_171, colorLM_166, scaleLM_167, normal_165, bool(1), scalePerBasisVector_170);
+  highp vec3 tmpvar_175;
+  tmpvar_175 = tmpvar_174;
+  lightColor_168 = tmpvar_175;
+  highp vec3 tmpvar_176;
+  tmpvar_176 = xll_matrixindex_mf3x3_i (unity_DirBasis_171, 0);
+  highp vec3 tmpvar_177;
+  tmpvar_177 = xll_matrixindex_mf3x3_i (unity_DirBasis_171, 1);
+  highp vec3 tmpvar_178;
+  tmpvar_178 = xll_matrixindex_mf3x3_i (unity_DirBasis_171, 2);
+  highp vec3 tmpvar_179;
+  tmpvar_179 = normalize ((((scalePerBasisVector_170.x * tmpvar_176) + (scalePerBasisVector_170.y * tmpvar_177)) + (scalePerBasisVector_170.z * tmpvar_178)));
+  highp vec3 tmpvar_180;
+  tmpvar_180 = tmpvar_179;
+  lightDir_169 = tmpvar_180;
+}
+
+vec3 EnergyCalculator (
+  in highp vec3 specColor_181,
+  in highp float specular_182,
+  in highp vec3 baseColor_183
+)
+{
+  highp vec3 tmpvar_184;
+  tmpvar_184 = min (baseColor_183, (vec3(1.0, 1.0, 1.0) - specular_182));
+  return tmpvar_184;
+}
+
+float toLinearFast1 (
+  in highp float c_185
+)
+{
+  highp float c2_186;
+  highp float tmpvar_187;
+  tmpvar_187 = (c_185 * c_185);
+  c2_186 = tmpvar_187;
+  highp vec2 tmpvar_188;
+  tmpvar_188.x = c2_186;
+  tmpvar_188.y = (c_185 * c2_186);
+  highp float tmpvar_189;
+  tmpvar_189 = dot (vec2(0.7532, 0.2468), tmpvar_188);
+  return tmpvar_189;
+}
+
+vec3 fromRGBM (
+  in highp vec4 c_190
+)
+{
+  highp float tmpvar_191;
+  tmpvar_191 = toLinearFast1 (c_190.w);
+  return ((c_190.xyz * tmpvar_191) * _Exposure);
+}
+
+vec3 EnvMap (
+  in highp vec4 worldNormal_192
+)
+{
+  highp vec4 envTexel_193;
+  highp vec4 tmpvar_194;
+  tmpvar_194.xyz = worldNormal_192.xyz.xyz;
+  tmpvar_194.w = worldNormal_192.w;
+  highp vec4 tmpvar_195;
+  tmpvar_195 = xll_texCUBElod (_SpecCube, tmpvar_194);
+  highp vec4 tmpvar_196;
+  tmpvar_196 = tmpvar_195;
+  envTexel_193 = tmpvar_196;
+  highp vec3 tmpvar_197;
+  tmpvar_197 = fromRGBM (envTexel_193);
+  return tmpvar_197;
+}
+
+float Occlusion (
+  in highp vec2 uv_198
+)
+{
+  lowp vec4 tmpvar_199;
+  tmpvar_199 = texture2D (_Occlusion, uv_198);
+  return tmpvar_199.x;
+}
+
+vec4 SpecularGloss (
+  in highp vec2 uv_200
+)
+{
+  lowp vec4 specGloss_201;
+  lowp vec4 tmpvar_202;
+  tmpvar_202 = texture2D (_SpecGlossMap, uv_200);
+  lowp vec4 tmpvar_203;
+  tmpvar_203 = tmpvar_202;
+  specGloss_201 = tmpvar_203;
+  lowp vec4 tmpvar_204;
+  tmpvar_204.xyz = specGloss_201.xyz.xyz;
+  tmpvar_204.w = specGloss_201.w;
+  return tmpvar_204;
+}
+
+vec3 BlendNormals (
+  in highp vec3 n1_205,
+  in highp vec3 n2_206
+)
+{
+  highp vec3 tmpvar_207;
+  tmpvar_207.xy = (n1_205.xy + n2_206.xy).xy;
+  tmpvar_207.z = (n1_205.z * n2_206.z);
+  highp vec3 tmpvar_208;
+  tmpvar_208 = normalize (tmpvar_207);
+  return tmpvar_208;
+}
+
+vec3 UnpackScaleNormal (
+  in highp vec4 packednormal_209,
+  in highp float bumpScale_210
+)
+{
+  highp vec3 normal_211;
+  highp vec2 tmpvar_212;
+  tmpvar_212 = ((packednormal_209.wy * 2.0) - 1.0);
+  normal_211.xy = tmpvar_212.xy.xy;
+  highp vec2 tmpvar_213;
+  tmpvar_213 = (normal_211.xy * bumpScale_210);
+  normal_211.xy = tmpvar_213.xy.xy;
+  highp float tmpvar_214;
+  tmpvar_214 = dot (normal_211.xy, normal_211.xy);
+  highp float tmpvar_215;
+  tmpvar_215 = xll_saturate_f (tmpvar_214);
+  highp float tmpvar_216;
+  tmpvar_216 = sqrt ((1.0 - tmpvar_215));
+  highp float tmpvar_217;
+  tmpvar_217 = tmpvar_216;
+  normal_211.z = vec3(tmpvar_217).z;
+  return normal_211;
+}
+
+vec3 TangentNormal (
+  in highp vec4 texcoords_218
+)
+{
+  highp vec3 detailNormalTangent_219;
+  highp vec3 normalTangent_220;
+  lowp vec4 tmpvar_221;
+  tmpvar_221 = texture2D (_BumpMap, texcoords_218.xy);
+  highp vec3 tmpvar_222;
+  tmpvar_222 = UnpackScaleNormal (tmpvar_221, _BumpScale);
+  highp vec3 tmpvar_223;
+  tmpvar_223 = tmpvar_222;
+  normalTangent_220 = tmpvar_223;
+  lowp vec4 tmpvar_224;
+  tmpvar_224 = texture2D (_DetailNormalMap, texcoords_218.zw);
+  highp vec3 tmpvar_225;
+  tmpvar_225 = UnpackScaleNormal (tmpvar_224, _DetailNormalMapScale);
+  highp vec3 tmpvar_226;
+  tmpvar_226 = tmpvar_225;
+  detailNormalTangent_219 = tmpvar_226;
+  highp vec3 tmpvar_227;
+  tmpvar_227 = BlendNormals (normalTangent_220, detailNormalTangent_219);
+  highp vec3 tmpvar_228;
+  tmpvar_228 = tmpvar_227;
+  normalTangent_220 = tmpvar_228;
+  return normalTangent_220;
+}
+
+mat3 TangentToWorld (
+  in highp vec3 normal_229,
+  in highp vec3 tangent_230,
+  in highp vec3 flip_231
+)
+{
+  highp vec3 binormal_232;
+  highp vec3 tmpvar_233;
+  tmpvar_233 = cross (normal_229, tangent_230);
+  highp vec3 tmpvar_234;
+  tmpvar_234 = (tmpvar_233 * flip_231);
+  binormal_232 = tmpvar_234;
+  highp mat3 tmpvar_235;
+  highp vec3 tmpvar_236;
+  tmpvar_236 = tangent_230;
+  tmpvar_235[0u] = tmpvar_236;
+  highp vec3 tmpvar_237;
+  tmpvar_237 = binormal_232;
+  tmpvar_235[1u] = tmpvar_237;
+  highp vec3 tmpvar_238;
+  tmpvar_238 = normal_229;
+  tmpvar_235[2u] = tmpvar_238;
+  highp mat3 tmpvar_239;
+  tmpvar_239 = xll_transpose_mf3x3 (tmpvar_235);
+  return tmpvar_239;
+}
+
+float unitySampleShadow (
+  in highp vec4 shadowCoord_240
+)
+{
+  lowp float shadow_241;
+  lowp vec4 tmpvar_242;
+  tmpvar_242 = texture2DProj (_ShadowMapTexture, shadowCoord_240);
+  lowp float tmpvar_243;
+  tmpvar_243 = tmpvar_242.x;
+  shadow_241 = tmpvar_243;
+  return shadow_241;
+}
+
+vec4 frag (
+  in VertexOutput i_244
+)
+{
+  highp float alpha_245;
+  lowp vec3 color_246;
+  highp vec3 baseColor_247;
+  highp vec3 lightDirTangent_248;
+  lowp vec4 lmIndTex_249;
+  lowp vec4 lmtex_250;
+  highp vec3 ambient_251;
+  highp float subsurface_252;
+  highp vec3 lightDir_253;
+  highp vec3 lightColor_254;
+  highp vec3 env_255;
+  highp float roughness_256;
+  highp float specular_257;
+  highp vec3 specColor_258;
+  highp vec4 specGloss_259;
+  highp vec3 eyeVec_260;
+  highp vec3 normalWorld_261;
+  highp vec3 normalTangent_262;
+  highp mat3 tanToWorld_263;
+  highp float atten_264;
+  highp float tmpvar_265;
+  tmpvar_265 = unitySampleShadow (i_244._ShadowCoord);
+  highp float tmpvar_266;
+  tmpvar_266 = tmpvar_265;
+  atten_264 = tmpvar_266;
+  highp vec3 tmpvar_267;
+  tmpvar_267 = vec3(i_244.tangentWorld.w);
+  highp mat3 tmpvar_268;
+  tmpvar_268 = TangentToWorld (i_244.normalWorld, i_244.tangentWorld.xyz, tmpvar_267);
+  highp mat3 tmpvar_269;
+  tmpvar_269 = tmpvar_268;
+  tanToWorld_263 = tmpvar_269;
+  highp vec3 tmpvar_270;
+  tmpvar_270 = normalize (i_244.normalWorld);
+  highp vec3 tmpvar_271;
+  tmpvar_271 = tmpvar_270;
+  i_244.normalWorld = tmpvar_271;
+  highp vec3 tmpvar_272;
+  tmpvar_272 = TangentNormal (i_244.tex);
+  highp vec3 tmpvar_273;
+  tmpvar_273 = tmpvar_272;
+  normalTangent_262 = tmpvar_273;
+  highp vec3 tmpvar_274;
+  tmpvar_274 = (normalTangent_262 * tanToWorld_263);
+  normalWorld_261 = tmpvar_274;
+  highp vec3 tmpvar_275;
+  tmpvar_275 = normalize ((i_244.posWorld.xyz - _WorldSpaceCameraPos));
+  highp vec3 tmpvar_276;
+  tmpvar_276 = tmpvar_275;
+  eyeVec_260 = tmpvar_276;
+  highp vec4 tmpvar_277;
+  tmpvar_277 = SpecularGloss (i_244.tex.xy);
+  highp vec4 tmpvar_278;
+  tmpvar_278 = tmpvar_277;
+  specGloss_259 = tmpvar_278;
+  highp vec3 tmpvar_279;
+  tmpvar_279 = specGloss_259.xyz;
+  specColor_258 = tmpvar_279;
+  highp float tmpvar_280;
+  tmpvar_280 = RGBToLuminance (specGloss_259.xyz);
+  highp float tmpvar_281;
+  tmpvar_281 = tmpvar_280;
+  specular_257 = tmpvar_281;
+  highp float tmpvar_282;
+  tmpvar_282 = (1.0 - specGloss_259.w);
+  roughness_256 = tmpvar_282;
+  highp vec3 tmpvar_283;
+  tmpvar_283 = vec3(0.0, 0.0, 0.0);
+  env_255 = tmpvar_283;
+  highp vec3 tmpvar_284;
+  tmpvar_284 = reflect (eyeVec_260, normalWorld_261);
+  highp vec4 tmpvar_285;
+  tmpvar_285.xyz = tmpvar_284.xyz;
+  tmpvar_285.w = (roughness_256 * 5.0);
+  highp vec3 tmpvar_286;
+  tmpvar_286 = EnvMap (tmpvar_285);
+  highp float tmpvar_287;
+  tmpvar_287 = Occlusion (i_244.tex.xy);
+  highp vec3 tmpvar_288;
+  tmpvar_288 = (tmpvar_286 * tmpvar_287);
+  env_255 = tmpvar_288;
+  highp vec3 tmpvar_289;
+  tmpvar_289 = (_LightColor0.xyz * 2.0);
+  lightColor_254 = tmpvar_289;
+  highp vec3 tmpvar_290;
+  tmpvar_290 = _WorldSpaceLightPos0.xyz;
+  lightDir_253 = tmpvar_290;
+  highp float tmpvar_291;
+  tmpvar_291 = 1.0;
+  subsurface_252 = tmpvar_291;
+  highp vec3 tmpvar_292;
+  tmpvar_292 = vec3(0.0, 0.0, 0.0);
+  ambient_251 = tmpvar_292;
+  lowp vec4 tmpvar_293;
+  tmpvar_293 = texture2D (unity_Lightmap, i_244.extra.xy);
+  lowp vec4 tmpvar_294;
+  tmpvar_294 = tmpvar_293;
+  lmtex_250 = tmpvar_294;
+  lowp vec4 tmpvar_295;
+  tmpvar_295 = texture2D (unity_LightmapInd, i_244.extra.xy);
+  lowp vec4 tmpvar_296;
+  tmpvar_296 = tmpvar_295;
+  lmIndTex_249 = tmpvar_296;
+  DecodeDirLightmap (normalTangent_262, lmtex_250, lmIndTex_249, lightColor_254, lightDirTangent_248);
+  highp vec3 tmpvar_297;
+  tmpvar_297 = (lightDirTangent_248 * tanToWorld_263);
+  lightDir_253 = tmpvar_297;
+  highp vec3 tmpvar_298;
+  tmpvar_298 = normalize (lightDir_253);
+  highp vec3 tmpvar_299;
+  tmpvar_299 = tmpvar_298;
+  lightDir_253 = tmpvar_299;
+  highp vec3 tmpvar_300;
+  tmpvar_300 = Albedo (i_244.tex);
+  highp vec3 tmpvar_301;
+  tmpvar_301 = EnergyCalculator (specColor_258, specular_257, tmpvar_300);
+  highp vec3 tmpvar_302;
+  tmpvar_302 = tmpvar_301;
+  baseColor_247 = tmpvar_302;
+  highp vec3 tmpvar_303;
+  tmpvar_303 = BRDF_Disney_PBS (baseColor_247, (atten_264 * lightColor_254), specColor_258, specular_257, roughness_256, normalWorld_261, lightDir_253, -(eyeVec_260), ambient_251, env_255);
+  highp vec3 tmpvar_304;
+  tmpvar_304 = tmpvar_303;
+  color_246 = tmpvar_304;
+  lowp vec4 tmpvar_305;
+  tmpvar_305 = texture2D (_SelfIllum, i_244.tex.xy);
+  lowp vec3 tmpvar_306;
+  tmpvar_306 = (color_246 + (tmpvar_305.xyz * _SelfIllumScale));
+  color_246 = tmpvar_306;
+  highp float tmpvar_307;
+  tmpvar_307 = Alpha (i_244.tex.xy);
+  highp float tmpvar_308;
+  tmpvar_308 = tmpvar_307;
+  alpha_245 = tmpvar_308;
+  lowp vec4 tmpvar_309;
+  tmpvar_309.xyz = color_246.xyz;
+  tmpvar_309.w = alpha_245;
+  return tmpvar_309;
+}
+
+void main ()
+{
+  VertexOutput xlt_i_310;
+  highp vec4 xl_retval_311;
+  highp vec4 tmpvar_312;
+  tmpvar_312 = vec4(0.0, 0.0, 0.0, 0.0);
+  xlt_i_310.pos = tmpvar_312;
+  highp vec4 tmpvar_313;
+  tmpvar_313 = xlv_TEXCOORD0.xyzw;
+  highp vec4 tmpvar_314;
+  tmpvar_314 = tmpvar_313;
+  xlt_i_310.tex = tmpvar_314;
+  highp vec4 tmpvar_315;
+  tmpvar_315 = xlv_TEXCOORD1.xyzw;
+  highp vec4 tmpvar_316;
+  tmpvar_316 = tmpvar_315;
+  xlt_i_310.posWorld = tmpvar_316;
+  highp vec3 tmpvar_317;
+  tmpvar_317 = xlv_TEXCOORD2.xyz;
+  highp vec3 tmpvar_318;
+  tmpvar_318 = tmpvar_317;
+  xlt_i_310.normalWorld = tmpvar_318;
+  highp vec4 tmpvar_319;
+  tmpvar_319 = xlv_TEXCOORD3.xyzw;
+  highp vec4 tmpvar_320;
+  tmpvar_320 = tmpvar_319;
+  xlt_i_310.tangentWorld = tmpvar_320;
+  highp vec3 tmpvar_321;
+  tmpvar_321 = xlv_TEXCOORD4.xyz;
+  highp vec3 tmpvar_322;
+  tmpvar_322 = tmpvar_321;
+  xlt_i_310.extra = tmpvar_322;
+  highp vec4 tmpvar_323;
+  tmpvar_323 = xlv_TEXCOORD5.xyzw;
+  highp vec4 tmpvar_324;
+  tmpvar_324 = tmpvar_323;
+  xlt_i_310._ShadowCoord = tmpvar_324;
+  highp vec3 tmpvar_325;
+  tmpvar_325 = xlv_TEXCOORD7.xyz;
+  highp vec3 tmpvar_326;
+  tmpvar_326 = tmpvar_325;
+  xlt_i_310.lightDir = tmpvar_326;
+  highp vec4 tmpvar_327;
+  tmpvar_327 = frag (xlt_i_310);
+  highp vec4 tmpvar_328;
+  tmpvar_328 = tmpvar_327;
+  xl_retval_311 = tmpvar_328;
+  highp vec4 tmpvar_329;
+  tmpvar_329 = xl_retval_311.xyzw;
+  highp vec4 tmpvar_330;
+  tmpvar_330 = tmpvar_329;
+  _fragData = tmpvar_330;
+}
+

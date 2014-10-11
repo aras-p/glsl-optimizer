@@ -1,0 +1,27 @@
+#version 300 es
+out lowp vec4 _fragData;
+uniform mediump mat4 _LightMatrix;
+uniform highp vec3 _WorldPos;
+void main ()
+{
+  mediump vec4 r_1;
+  mediump vec3 lightCoord_2;
+  highp vec4 tmpvar_3;
+  tmpvar_3.w = 1.0;
+  tmpvar_3.xyz = _WorldPos.xyz;
+  highp vec3 tmpvar_4;
+  tmpvar_4 = (_LightMatrix * tmpvar_3).xyz;
+  highp vec3 tmpvar_5;
+  tmpvar_5 = tmpvar_4;
+  lightCoord_2 = tmpvar_5;
+  mediump vec3 tmpvar_6;
+  tmpvar_6 = lightCoord_2;
+  r_1.xyz = tmpvar_6.xyz.xyz;
+  highp float tmpvar_7;
+  tmpvar_7 = 1.0;
+  r_1.w = vec4(tmpvar_7).w;
+  mediump vec4 tmpvar_8;
+  tmpvar_8 = r_1;
+  _fragData = tmpvar_8;
+}
+

@@ -1,0 +1,53 @@
+#include <metal_stdlib>
+using namespace metal;
+struct xlatMtlShaderInput {
+  float4 _glesVertex [[attribute(0)]];
+};
+struct xlatMtlShaderOutput {
+  float4 gl_Position [[position]];
+  float3 xlv_TEXCOORD2;
+};
+struct xlatMtlShaderUniform {
+  float3 _WorldSpaceCameraPos;
+  float4x4 glstate_matrix_mvp;
+  float4x4 _World2Object;
+  float3 _TerrainTreeLightDirections[4];
+};
+vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
+{
+  xlatMtlShaderOutput _mtl_o;
+  float3 viewDir_1;
+  float3 tmpvar_2;
+  float4 tmpvar_3;
+  tmpvar_3.w = 1.0;
+  tmpvar_3.xyz = _mtl_u._WorldSpaceCameraPos;
+  viewDir_1 = normalize(((_mtl_u._World2Object * tmpvar_3).xyz - _mtl_i._glesVertex.xyz));
+  half backContrib_4;
+  float tmpvar_5;
+  tmpvar_5 = clamp (dot (viewDir_1, -(_mtl_u._TerrainTreeLightDirections[0])), 0.0, 1.0);
+  backContrib_4 = half(tmpvar_5);
+  tmpvar_2.x = float((backContrib_4 * (half)2.0));
+  half backContrib_6;
+  float tmpvar_7;
+  tmpvar_7 = clamp (dot (viewDir_1, -(_mtl_u._TerrainTreeLightDirections[1])), 0.0, 1.0);
+  backContrib_6 = half(tmpvar_7);
+  tmpvar_2.y = float((backContrib_6 * (half)2.0));
+  half backContrib_8;
+  float tmpvar_9;
+  tmpvar_9 = clamp (dot (viewDir_1, -(_mtl_u._TerrainTreeLightDirections[2])), 0.0, 1.0);
+  backContrib_8 = half(tmpvar_9);
+  tmpvar_2.z = float((backContrib_8 * (half)2.0));
+  _mtl_o.gl_Position = (_mtl_u.glstate_matrix_mvp * _mtl_i._glesVertex);
+  _mtl_o.xlv_TEXCOORD2 = tmpvar_2;
+  return _mtl_o;
+}
+
+
+// stats: 20 alu 0 tex 0 flow
+// inputs: 1
+//  #0: _glesVertex (high float) 4x1 [-1] loc 0
+// uniforms: 4 (total size: 208)
+//  #0: _WorldSpaceCameraPos (high float) 3x1 [-1] loc 0
+//  #1: glstate_matrix_mvp (high float) 4x4 [-1] loc 16
+//  #2: _World2Object (high float) 4x4 [-1] loc 80
+//  #3: _TerrainTreeLightDirections (high float) 3x1 [4] loc 144

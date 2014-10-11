@@ -1,0 +1,15 @@
+#version 300 es
+layout(location=0) out mediump vec4 _glesFragData[4];
+uniform highp vec4 _Color;
+in lowp vec4 xlv_COLOR0;
+void main ()
+{
+  lowp vec4 c_1;
+  highp vec4 tmpvar_2;
+  tmpvar_2 = (xlv_COLOR0 * _Color);
+  c_1 = tmpvar_2;
+  lowp vec4 tmpvar_3;
+  tmpvar_3 = c_1;
+  _glesFragData[0] = tmpvar_3;
+}
+

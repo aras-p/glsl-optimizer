@@ -1,0 +1,348 @@
+#version 300 es
+struct posuv {
+  highp vec4 pos;
+  highp vec2 uv;
+};
+layout(location=0) out mediump vec4 _glesFragData[4];
+uniform highp vec4 _ZBufferParams;
+uniform highp vec4 _LightPos;
+uniform highp float _InterpolationStep;
+uniform highp mat4 _FrustumRays;
+uniform highp vec4 _CameraPosLocal;
+uniform highp float _FrustumApex;
+uniform highp vec4 _CoordTexDim;
+uniform highp vec4 _ScreenTexDim;
+uniform sampler2D _CameraDepthTexture;
+in highp vec2 xlv_TEXCOORD0;
+float xll_saturate_f (
+  in highp float x_1
+)
+{
+  highp float tmpvar_2;
+  tmpvar_2 = clamp (x_1, 0.0, 1.0);
+  return tmpvar_2;
+}
+
+vec4 xll_matrixindex_mf4x4_i (
+  in highp mat4 m_3,
+  in int i_4
+)
+{
+  highp vec4 v_5;
+  highp float tmpvar_6;
+  tmpvar_6 = m_3[0][i_4];
+  v_5.x = tmpvar_6;
+  highp float tmpvar_7;
+  tmpvar_7 = m_3[1][i_4];
+  v_5.y = vec2(tmpvar_7).y;
+  highp float tmpvar_8;
+  tmpvar_8 = m_3[2][i_4];
+  v_5.z = vec3(tmpvar_8).z;
+  highp float tmpvar_9;
+  tmpvar_9 = m_3[3][i_4];
+  v_5.w = vec4(tmpvar_9).w;
+  return v_5;
+}
+
+vec2 GetEpipolarLineEntryPoint (
+  in highp vec2 exit_10
+)
+{
+  return _LightPos.xy;
+}
+
+bool Cube (
+  in highp vec3 org_11,
+  in highp vec3 dir_12,
+  out highp float tnear_13,
+  out highp float tfar_14
+)
+{
+  highp vec2 t0_15;
+  highp vec3 tmax_16;
+  highp vec3 tmin_17;
+  highp vec3 ttop_18;
+  highp vec3 tbot_19;
+  highp vec3 invR_20;
+  highp vec3 tmpvar_21;
+  tmpvar_21 = (1.0 / dir_12);
+  invR_20 = tmpvar_21;
+  highp vec3 tmpvar_22;
+  tmpvar_22 = (invR_20 * (-(0.5) - org_11));
+  tbot_19 = tmpvar_22;
+  highp vec3 tmpvar_23;
+  tmpvar_23 = (invR_20 * (0.5 - org_11));
+  ttop_18 = tmpvar_23;
+  highp vec3 tmpvar_24;
+  tmpvar_24 = min (ttop_18, tbot_19);
+  highp vec3 tmpvar_25;
+  tmpvar_25 = tmpvar_24;
+  tmin_17 = tmpvar_25;
+  highp vec3 tmpvar_26;
+  tmpvar_26 = max (ttop_18, tbot_19);
+  highp vec3 tmpvar_27;
+  tmpvar_27 = tmpvar_26;
+  tmax_16 = tmpvar_27;
+  highp vec2 tmpvar_28;
+  tmpvar_28 = max (tmin_17.xx, tmin_17.yz);
+  highp vec2 tmpvar_29;
+  tmpvar_29 = tmpvar_28;
+  t0_15 = tmpvar_29;
+  highp float tmpvar_30;
+  tmpvar_30 = max (t0_15.x, t0_15.y);
+  highp float tmpvar_31;
+  tmpvar_31 = tmpvar_30;
+  tnear_13 = tmpvar_31;
+  highp vec2 tmpvar_32;
+  tmpvar_32 = min (tmax_16.xx, tmax_16.yz);
+  highp vec2 tmpvar_33;
+  tmpvar_33 = tmpvar_32;
+  t0_15 = tmpvar_33;
+  highp float tmpvar_34;
+  tmpvar_34 = min (t0_15.x, t0_15.y);
+  highp float tmpvar_35;
+  tmpvar_35 = tmpvar_34;
+  tfar_14 = tmpvar_35;
+  return ((tnear_13 < tfar_14) && (tfar_14 > 0.0));
+}
+
+vec3 FrustumRay (
+  in highp vec2 uv_36,
+  out highp float rayLength_37
+)
+{
+  highp vec3 ray_38;
+  highp vec3 ray1_39;
+  highp vec3 ray0_40;
+  highp vec4 tmpvar_41;
+  tmpvar_41 = xll_matrixindex_mf4x4_i (_FrustumRays, 0);
+  highp vec4 tmpvar_42;
+  tmpvar_42 = xll_matrixindex_mf4x4_i (_FrustumRays, 1);
+  highp vec3 tmpvar_43;
+  tmpvar_43 = vec3(uv_36.x);
+  highp vec3 tmpvar_44;
+  tmpvar_44 = mix (tmpvar_41.xyz, tmpvar_42.xyz, tmpvar_43);
+  highp vec3 tmpvar_45;
+  tmpvar_45 = tmpvar_44;
+  ray0_40 = tmpvar_45;
+  highp vec4 tmpvar_46;
+  tmpvar_46 = xll_matrixindex_mf4x4_i (_FrustumRays, 3);
+  highp vec4 tmpvar_47;
+  tmpvar_47 = xll_matrixindex_mf4x4_i (_FrustumRays, 2);
+  highp vec3 tmpvar_48;
+  tmpvar_48 = vec3(uv_36.x);
+  highp vec3 tmpvar_49;
+  tmpvar_49 = mix (tmpvar_46.xyz, tmpvar_47.xyz, tmpvar_48);
+  highp vec3 tmpvar_50;
+  tmpvar_50 = tmpvar_49;
+  ray1_39 = tmpvar_50;
+  highp vec3 tmpvar_51;
+  tmpvar_51 = vec3(uv_36.y);
+  highp vec3 tmpvar_52;
+  tmpvar_52 = mix (ray0_40, ray1_39, tmpvar_51);
+  highp vec3 tmpvar_53;
+  tmpvar_53 = tmpvar_52;
+  ray_38 = tmpvar_53;
+  highp float tmpvar_54;
+  tmpvar_54 = length (ray_38);
+  highp float tmpvar_55;
+  tmpvar_55 = tmpvar_54;
+  rayLength_37 = tmpvar_55;
+  return (ray_38 / rayLength_37);
+}
+
+bool IntersectVolume (
+  in highp vec2 uv_56,
+  out highp float near_57,
+  out highp float far_58,
+  out highp vec3 rayN_59,
+  out highp float rayLength_60
+)
+{
+  highp vec3 tmpvar_61;
+  tmpvar_61 = FrustumRay (uv_56, rayLength_60);
+  highp vec3 tmpvar_62;
+  tmpvar_62 = tmpvar_61;
+  rayN_59 = tmpvar_62;
+  bool tmpvar_63;
+  tmpvar_63 = Cube (_CameraPosLocal.xyz, rayN_59, near_57, far_58);
+  return tmpvar_63;
+}
+
+float Linear01Depth (
+  in highp float z_64
+)
+{
+  return (1.0 / ((_ZBufferParams.x * z_64) + _ZBufferParams.y));
+}
+
+void frag (
+  in posuv i_65,
+  out highp vec4 coord_66,
+  out highp vec4 depth_67
+)
+{
+  highp vec3 rayN_68;
+  highp float rayLength_69;
+  highp float far_70;
+  highp float near_71;
+  highp vec2 coordTemp_72;
+  highp vec2 entry_73;
+  highp vec2 exit_74;
+  bvec4 edgeFlags_75;
+  highp vec4 edgeY_76;
+  highp vec4 edgeX_77;
+  highp float edgeCoord_78;
+  highp float posOnEdge_79;
+  int edge_80;
+  highp float epipolarLine_81;
+  highp float sampleOnEpipolarLine_82;
+  highp vec2 uv_83;
+  highp vec2 tmpvar_84;
+  tmpvar_84 = i_65.uv;
+  uv_83 = tmpvar_84;
+  highp float tmpvar_85;
+  tmpvar_85 = (uv_83.x - (0.5 / _CoordTexDim.x));
+  sampleOnEpipolarLine_82 = tmpvar_85;
+  highp float tmpvar_86;
+  tmpvar_86 = xll_saturate_f ((uv_83.y - (0.5 / _CoordTexDim.y)));
+  highp float tmpvar_87;
+  tmpvar_87 = tmpvar_86;
+  epipolarLine_81 = tmpvar_87;
+  highp float tmpvar_88;
+  tmpvar_88 = (sampleOnEpipolarLine_82 * (_CoordTexDim.x / (_CoordTexDim.x - 1.0)));
+  sampleOnEpipolarLine_82 = tmpvar_88;
+  highp float tmpvar_89;
+  tmpvar_89 = xll_saturate_f (sampleOnEpipolarLine_82);
+  highp float tmpvar_90;
+  tmpvar_90 = tmpvar_89;
+  sampleOnEpipolarLine_82 = tmpvar_90;
+  highp float tmpvar_91;
+  tmpvar_91 = floor ((epipolarLine_81 * 4.0));
+  highp float tmpvar_92;
+  tmpvar_92 = clamp (tmpvar_91, 0.0, 3.0);
+  int tmpvar_93;
+  tmpvar_93 = int(tmpvar_92);
+  edge_80 = tmpvar_93;
+  highp float tmpvar_94;
+  tmpvar_94 = fract ((epipolarLine_81 * 4.0));
+  highp float tmpvar_95;
+  tmpvar_95 = tmpvar_94;
+  posOnEdge_79 = tmpvar_95;
+  highp float tmpvar_96;
+  tmpvar_96 = (-(1.0) + (2.0 * posOnEdge_79));
+  edgeCoord_78 = tmpvar_96;
+  highp vec4 tmpvar_97;
+  tmpvar_97.xz = vec2(-1.0, 1.0);
+  tmpvar_97.y = edgeCoord_78;
+  tmpvar_97.w = -(edgeCoord_78);
+  highp vec4 tmpvar_98;
+  tmpvar_98 = tmpvar_97;
+  edgeX_77 = tmpvar_98;
+  highp vec4 tmpvar_99;
+  tmpvar_99.yw = vec2(-1.0, 1.0);
+  tmpvar_99.x = -(edgeCoord_78);
+  tmpvar_99.z = edgeCoord_78;
+  highp vec4 tmpvar_100;
+  tmpvar_100 = tmpvar_99;
+  edgeY_76 = tmpvar_100;
+  ivec4 tmpvar_101;
+  tmpvar_101 = ivec4(edge_80);
+  bvec4 tmpvar_102;
+  tmpvar_102 = equal (tmpvar_101, ivec4(0, 1, 2, 3));
+  bvec4 tmpvar_103;
+  tmpvar_103 = tmpvar_102;
+  edgeFlags_75 = tmpvar_103;
+  lowp vec4 tmpvar_104;
+  tmpvar_104 = vec4(edgeFlags_75).xyzw;
+  highp float tmpvar_105;
+  tmpvar_105 = dot (edgeY_76, tmpvar_104);
+  lowp vec4 tmpvar_106;
+  tmpvar_106 = vec4(edgeFlags_75).xyzw;
+  highp float tmpvar_107;
+  tmpvar_107 = dot (edgeX_77, tmpvar_106);
+  highp vec2 tmpvar_108;
+  tmpvar_108.x = tmpvar_105;
+  tmpvar_108.y = tmpvar_107;
+  highp vec2 tmpvar_109;
+  tmpvar_109 = -(tmpvar_108);
+  exit_74 = tmpvar_109;
+  highp vec2 tmpvar_110;
+  tmpvar_110 = GetEpipolarLineEntryPoint (exit_74);
+  highp vec2 tmpvar_111;
+  tmpvar_111 = tmpvar_110;
+  entry_73 = tmpvar_111;
+  highp vec2 tmpvar_112;
+  tmpvar_112 = vec2(sampleOnEpipolarLine_82);
+  highp vec2 tmpvar_113;
+  tmpvar_113 = mix (entry_73, exit_74, tmpvar_112);
+  highp vec2 tmpvar_114;
+  tmpvar_114 = tmpvar_113;
+  coordTemp_72 = tmpvar_114;
+  highp vec2 tmpvar_115;
+  tmpvar_115 = ((coordTemp_72 * 0.5) + 0.5);
+  coordTemp_72 = tmpvar_115;
+  highp vec4 tmpvar_116;
+  tmpvar_116.zw = vec2(0.0, 0.0);
+  tmpvar_116.x = coordTemp_72.x;
+  tmpvar_116.y = coordTemp_72.y;
+  highp vec4 tmpvar_117;
+  tmpvar_117 = tmpvar_116;
+  coord_66 = tmpvar_117;
+  highp vec2 tmpvar_118;
+  tmpvar_118 = floor ((coordTemp_72 * _ScreenTexDim.xy));
+  highp vec2 tmpvar_119;
+  tmpvar_119 = ((tmpvar_118 + 0.5) * _ScreenTexDim.zw);
+  coordTemp_72 = tmpvar_119;
+  lowp vec4 tmpvar_120;
+  tmpvar_120 = texture (_CameraDepthTexture, coordTemp_72);
+  highp float tmpvar_121;
+  tmpvar_121 = Linear01Depth (tmpvar_120.x);
+  highp vec4 tmpvar_122;
+  tmpvar_122 = vec4(tmpvar_121);
+  highp vec4 tmpvar_123;
+  tmpvar_123 = tmpvar_122;
+  depth_67 = tmpvar_123;
+  bool tmpvar_124;
+  tmpvar_124 = IntersectVolume (coord_66.xy, near_71, far_70, rayN_68, rayLength_69);
+  if ((!(tmpvar_124) || (depth_67.x < (near_71 / rayLength_69)))) {
+    highp vec4 tmpvar_125;
+    tmpvar_125 = (depth_67 * -(1.0));
+    depth_67 = tmpvar_125;
+  } else {
+    highp vec4 tmpvar_126;
+    tmpvar_126 = vec4((far_70 / rayLength_69));
+    highp vec4 tmpvar_127;
+    tmpvar_127 = min (depth_67, tmpvar_126);
+    highp vec4 tmpvar_128;
+    tmpvar_128 = tmpvar_127;
+    depth_67 = tmpvar_128;
+  };
+}
+
+void main ()
+{
+  highp vec4 xlt_depth_129;
+  highp vec4 xlt_coord_130;
+  posuv xlt_i_131;
+  highp vec4 tmpvar_132;
+  tmpvar_132 = vec4(0.0, 0.0, 0.0, 0.0);
+  xlt_i_131.pos = tmpvar_132;
+  highp vec2 tmpvar_133;
+  tmpvar_133 = xlv_TEXCOORD0.xy;
+  highp vec2 tmpvar_134;
+  tmpvar_134 = tmpvar_133;
+  xlt_i_131.uv = tmpvar_134;
+  frag (xlt_i_131, xlt_coord_130, xlt_depth_129);
+  highp vec4 tmpvar_135;
+  tmpvar_135 = xlt_coord_130.xyzw;
+  highp vec4 tmpvar_136;
+  tmpvar_136 = tmpvar_135;
+  _glesFragData[0] = tmpvar_136;
+  highp vec4 tmpvar_137;
+  tmpvar_137 = xlt_depth_129.xyzw;
+  highp vec4 tmpvar_138;
+  tmpvar_138 = tmpvar_137;
+  _glesFragData[1] = tmpvar_138;
+}
+

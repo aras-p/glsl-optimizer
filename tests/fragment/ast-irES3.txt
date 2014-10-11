@@ -1,0 +1,72 @@
+#version 300 es
+out lowp vec4 _fragData;
+void main ()
+{
+  int i_1;
+  highp float a_2;
+  if ((gl_FragCoord.x == 1.0)) {
+    discard;
+  };
+  if ((2 == 3)) {
+    highp float tmpvar_3;
+    tmpvar_3 = 2.0;
+    a_2 = tmpvar_3;
+  };
+  if ((3 == 4)) {
+    highp float tmpvar_4;
+    tmpvar_4 = 3.0;
+    a_2 = tmpvar_4;
+  } else {
+    highp float tmpvar_5;
+    tmpvar_5 = 4.0;
+    a_2 = tmpvar_5;
+  };
+  int tmpvar_6;
+  tmpvar_6 = 0;
+  i_1 = tmpvar_6;
+  while (true) {
+    if (!((i_1 < 10))) {
+      break;
+    };
+    highp float tmpvar_7;
+    tmpvar_7 = (a_2 + 1.0);
+    a_2 = tmpvar_7;
+    int tmpvar_8;
+    tmpvar_8 = (i_1 + 1);
+    i_1 = tmpvar_8;
+  };
+  while (true) {
+    highp float tmpvar_9;
+    tmpvar_9 = (a_2 + 2.0);
+    a_2 = tmpvar_9;
+    if (!((0 == 1))) {
+      break;
+    };
+  };
+  highp float tmpvar_10;
+  tmpvar_10 = (a_2 + 1.0);
+  a_2 = tmpvar_10;
+  highp float tmpvar_11;
+  tmpvar_11 = (a_2 * a_2);
+  a_2 = tmpvar_11;
+  highp float tmpvar_12;
+  tmpvar_12 = -(a_2);
+  a_2 = tmpvar_12;
+  highp float tmpvar_13;
+  tmpvar_13 = (a_2 - 1.0);
+  a_2 = tmpvar_13;
+  highp float tmpvar_14;
+  tmpvar_14 = sqrt (a_2);
+  highp float tmpvar_15;
+  tmpvar_15 = tmpvar_14;
+  a_2 = tmpvar_15;
+  highp float tmpvar_16;
+  tmpvar_16 = (1.0 / a_2);
+  a_2 = tmpvar_16;
+  highp vec4 tmpvar_17;
+  tmpvar_17 = vec4(a_2);
+  highp vec4 tmpvar_18;
+  tmpvar_18 = tmpvar_17;
+  _fragData = tmpvar_18;
+}
+

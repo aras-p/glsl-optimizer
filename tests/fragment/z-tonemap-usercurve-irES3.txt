@@ -1,0 +1,121 @@
+#version 300 es
+struct v2f {
+  highp vec4 pos;
+  highp vec2 uv;
+};
+layout(location=0) out mediump vec4 _glesFragData[4];
+uniform sampler2D _MainTex;
+uniform sampler2D _Curve;
+uniform highp float _RangeScale;
+in highp vec2 xlv_TEXCOORD0;
+vec3 FromCIE (
+  in highp vec3 Yxy_1
+)
+{
+  highp mat3 XYZ2RGB_2;
+  highp vec3 XYZ_3;
+  highp float tmpvar_4;
+  tmpvar_4 = ((Yxy_1.x * Yxy_1.y) / Yxy_1.z);
+  XYZ_3.x = tmpvar_4;
+  highp float tmpvar_5;
+  tmpvar_5 = Yxy_1.x;
+  XYZ_3.y = vec2(tmpvar_5).y;
+  highp float tmpvar_6;
+  tmpvar_6 = ((Yxy_1.x * (
+    (1.0 - Yxy_1.y)
+   - Yxy_1.z)) / Yxy_1.z);
+  XYZ_3.z = vec3(tmpvar_6).z;
+  highp mat3 tmpvar_7;
+  tmpvar_7 = mat3(2.5651, -1.0217, 0.0753, -1.1665, 1.9777, -0.2543, -0.3986, 0.0439, 1.1892);
+  XYZ2RGB_2 = tmpvar_7;
+  return (XYZ2RGB_2 * XYZ_3);
+}
+
+vec3 ToCIE (
+  in highp vec3 FullScreenImage_8
+)
+{
+  highp float temp_9;
+  highp vec3 Yxy_10;
+  highp vec3 XYZ_11;
+  highp mat3 RGB2XYZ_12;
+  highp mat3 tmpvar_13;
+  tmpvar_13 = mat3(0.514136, 0.265068, 0.0241188, 0.323879, 0.670234, 0.122818, 0.160364, 0.0640916, 0.844427);
+  RGB2XYZ_12 = tmpvar_13;
+  highp vec3 tmpvar_14;
+  tmpvar_14 = (RGB2XYZ_12 * FullScreenImage_8.xyz);
+  XYZ_11 = tmpvar_14;
+  highp float tmpvar_15;
+  tmpvar_15 = XYZ_11.y;
+  Yxy_10.x = tmpvar_15;
+  highp float tmpvar_16;
+  tmpvar_16 = dot (vec3(1.0, 1.0, 1.0), XYZ_11.xyz);
+  highp float tmpvar_17;
+  tmpvar_17 = tmpvar_16;
+  temp_9 = tmpvar_17;
+  highp vec2 tmpvar_18;
+  tmpvar_18 = (XYZ_11.xy / temp_9);
+  Yxy_10.yz = tmpvar_18.xxy.yz;
+  return Yxy_10;
+}
+
+vec4 fragCurve (
+  in v2f i_19
+)
+{
+  highp float newLum_20;
+  highp vec3 cie_21;
+  highp vec4 color_22;
+  lowp vec4 tmpvar_23;
+  tmpvar_23 = texture (_MainTex, i_19.uv);
+  lowp vec4 tmpvar_24;
+  tmpvar_24 = tmpvar_23;
+  color_22 = tmpvar_24;
+  highp vec3 tmpvar_25;
+  tmpvar_25 = ToCIE (color_22.xyz);
+  highp vec3 tmpvar_26;
+  tmpvar_26 = tmpvar_25;
+  cie_21 = tmpvar_26;
+  highp vec2 tmpvar_27;
+  tmpvar_27.y = 0.5;
+  tmpvar_27.x = (cie_21.x * _RangeScale);
+  lowp vec4 tmpvar_28;
+  tmpvar_28 = texture (_Curve, tmpvar_27);
+  lowp float tmpvar_29;
+  tmpvar_29 = tmpvar_28.x;
+  newLum_20 = tmpvar_29;
+  highp float tmpvar_30;
+  tmpvar_30 = newLum_20;
+  cie_21.x = tmpvar_30;
+  highp vec3 tmpvar_31;
+  tmpvar_31 = FromCIE (cie_21);
+  highp vec3 tmpvar_32;
+  tmpvar_32 = tmpvar_31;
+  color_22.xyz = tmpvar_32.xyz.xyz;
+  return color_22;
+}
+
+void main ()
+{
+  v2f xlt_i_33;
+  highp vec4 xl_retval_34;
+  highp vec4 tmpvar_35;
+  tmpvar_35 = vec4(0.0, 0.0, 0.0, 0.0);
+  xlt_i_33.pos = tmpvar_35;
+  highp vec2 tmpvar_36;
+  tmpvar_36 = xlv_TEXCOORD0.xy;
+  highp vec2 tmpvar_37;
+  tmpvar_37 = tmpvar_36;
+  xlt_i_33.uv = tmpvar_37;
+  highp vec4 tmpvar_38;
+  tmpvar_38 = fragCurve (xlt_i_33);
+  highp vec4 tmpvar_39;
+  tmpvar_39 = tmpvar_38;
+  xl_retval_34 = tmpvar_39;
+  highp vec4 tmpvar_40;
+  tmpvar_40 = xl_retval_34.xyzw;
+  highp vec4 tmpvar_41;
+  tmpvar_41 = tmpvar_40;
+  _glesFragData[0] = tmpvar_41;
+}
+

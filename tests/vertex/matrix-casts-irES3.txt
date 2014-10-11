@@ -1,0 +1,67 @@
+#version 300 es
+in highp vec4 _glesVertex;
+in mediump vec3 _glesNormal;
+in highp vec4 _glesMultiTexCoord0;
+in highp vec4 _glesMultiTexCoord1;
+in lowp vec4 _glesColor;
+uniform highp mat4 uniMat4F;
+uniform mediump mat4 uniMat4H;
+uniform highp mat3 uniMat3F;
+uniform mediump mat3 uniMat3H;
+uniform highp mat2 uniMat2F;
+uniform mediump mat2 uniMat2H;
+in highp vec4 inf;
+in mediump vec4 inh;
+void main ()
+{
+  highp mat2 htof2_1;
+  highp mat3 htof3_2;
+  highp mat4 htof4_3;
+  mediump mat2 ftoh2_4;
+  mediump mat3 ftoh3_5;
+  mediump mat4 ftoh4_6;
+  highp vec4 r_7;
+  vec4 tmpvar_8;
+  tmpvar_8 = vec4(0.0, 0.0, 0.0, 0.0);
+  r_7 = tmpvar_8;
+  highp mat4 tmpvar_9;
+  tmpvar_9 = uniMat4F;
+  ftoh4_6 = tmpvar_9;
+  highp float tmpvar_10;
+  tmpvar_10 = (r_7.x + ftoh4_6[0][0]);
+  r_7.x = tmpvar_10;
+  highp mat3 tmpvar_11;
+  tmpvar_11 = uniMat3F;
+  ftoh3_5 = tmpvar_11;
+  highp float tmpvar_12;
+  tmpvar_12 = (r_7.x + ftoh4_6[0][0]);
+  r_7.x = tmpvar_12;
+  highp mat2 tmpvar_13;
+  tmpvar_13 = uniMat2F;
+  ftoh2_4 = tmpvar_13;
+  highp float tmpvar_14;
+  tmpvar_14 = (r_7.x + ftoh2_4[0][0]);
+  r_7.x = tmpvar_14;
+  mediump mat4 tmpvar_15;
+  tmpvar_15 = uniMat4H;
+  htof4_3 = tmpvar_15;
+  highp float tmpvar_16;
+  tmpvar_16 = (r_7.x + htof4_3[0][0]);
+  r_7.x = tmpvar_16;
+  mediump mat3 tmpvar_17;
+  tmpvar_17 = uniMat3H;
+  htof3_2 = tmpvar_17;
+  highp float tmpvar_18;
+  tmpvar_18 = (r_7.x + htof3_2[0][0]);
+  r_7.x = tmpvar_18;
+  mediump mat2 tmpvar_19;
+  tmpvar_19 = uniMat2H;
+  htof2_1 = tmpvar_19;
+  highp float tmpvar_20;
+  tmpvar_20 = (r_7.x + htof2_1[0][0]);
+  r_7.x = tmpvar_20;
+  highp vec4 tmpvar_21;
+  tmpvar_21 = r_7;
+  gl_Position = tmpvar_21;
+}
+
