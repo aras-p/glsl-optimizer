@@ -1835,6 +1835,16 @@ ast_expression::do_hir(exec_list *instructions,
    if (result && result->type->is_error() && !error_emitted)
       _mesa_glsl_error(& loc, state, "type mismatch");
 
+   if (result) {
+      if (ir_expression *ex = result->as_expression()) {
+         for (int i=0; i<ex->get_num_operands(); ++i) {
+            ir_variable *v = ex->operands[i]->variable_referenced();
+            if (v && strstr(v->name, "compiler_temp") && v->type->base_type == result->type->base_type)
+              v->data.precision = higher_precision(v, result);
+         }
+      }
+   }
+
    return result;
 }
 
