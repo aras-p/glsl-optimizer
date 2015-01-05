@@ -1,6 +1,14 @@
 GLSL optimizer Change Log
 =========================
 
+2015 01
+-------
+
+Fixes:
+
+* Float literals are printed with 7 significant digits now.
+
+
 2014 10
 -------
 

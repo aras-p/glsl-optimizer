@@ -1509,7 +1509,7 @@ static void print_float (string_buffer& buffer, float f)
 	// * GLSL (early version at least) require floats to have ".0" or
 	//   exponential notation.
 	char tmp[64];
-	snprintf(tmp, 64, "%.6g", f);
+	snprintf(tmp, 64, "%.7g", f);
 
 	char* posE = NULL;
 	posE = strchr(tmp, 'e');
