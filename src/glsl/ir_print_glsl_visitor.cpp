@@ -1140,7 +1140,8 @@ void ir_print_glsl_visitor::visit(ir_assignment *ir)
 	emit_assignment_part (ir->lhs, ir->rhs, ir->write_mask, NULL);
 }
 
-static void print_float (string_buffer& buffer, float f)
+
+void print_float (string_buffer& buffer, float f)
 {
 	// Kind of roundabout way, but this is to satisfy two things:
 	// * MSVC and gcc-based compilers differ a bit in how they treat float

@@ -1501,45 +1501,6 @@ void ir_print_metal_visitor::visit(ir_assignment *ir)
 	emit_assignment_part (ir->lhs, ir->rhs, ir->write_mask, NULL);
 }
 
-static void print_float (string_buffer& buffer, float f)
-{
-	// Kind of roundabout way, but this is to satisfy two things:
-	// * MSVC and gcc-based compilers differ a bit in how they treat float
-	//   widht/precision specifiers. Want to match for tests.
-	// * GLSL (early version at least) require floats to have ".0" or
-	//   exponential notation.
-	char tmp[64];
-	snprintf(tmp, 64, "%.7g", f);
-
-	char* posE = NULL;
-	posE = strchr(tmp, 'e');
-	if (!posE)
-		posE = strchr(tmp, 'E');
-
-	#if _MSC_VER
-	// While gcc would print something like 1.0e+07, MSVC will print 1.0e+007 -
-	// only for exponential notation, it seems, will add one extra useless zero. Let's try to remove
-	// that so compiler output matches.
-	if (posE != NULL)
-	{
-		if((posE[1] == '+' || posE[1] == '-') && posE[2] == '0')
-		{
-			char* p = posE+2;
-			while (p[0])
-			{
-				p[0] = p[1];
-				++p;
-			}
-		}
-	}
-	#endif
-
-	buffer.asprintf_append ("%s", tmp);
-
-	// need to append ".0"?
-	if (!strchr(tmp,'.') && (posE == NULL))
-		buffer.asprintf_append(".0");
-}
 
 void ir_print_metal_visitor::visit(ir_constant *ir)
 {
