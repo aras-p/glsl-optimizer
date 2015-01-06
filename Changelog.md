@@ -7,6 +7,7 @@ GLSL optimizer Change Log
 Fixes:
 
 * Float literals are printed with 7 significant digits now.
+* Metal: GLSL mod() is properly translated into Metal's fmod().
 
 
 2014 10

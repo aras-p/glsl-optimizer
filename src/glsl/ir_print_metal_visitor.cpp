@@ -847,7 +847,7 @@ static const char *const operator_glsl_strs[] = {
 	"/",
 	"carry_TODO",
 	"borrow_TODO",
-	"mod",
+	"fmod",
 	"<",
 	">",
 	"<=",
