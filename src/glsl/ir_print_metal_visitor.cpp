@@ -969,7 +969,8 @@ void ir_print_metal_visitor::visit(ir_expression *ir)
 			print_type(buffer, ir, ir->type, true);
 			buffer.asprintf_append ("(");
 		} else if (ir->operation == ir_unop_rcp) {
-			buffer.asprintf_append ("(1.0/(");
+			const bool halfCast = (arg_prec == glsl_precision_medium || arg_prec == glsl_precision_low);
+			buffer.asprintf_append (halfCast ? "((half)1.0/(" : "(1.0/(");
 		} else {
 			buffer.asprintf_append ("%s(", operator_glsl_strs[ir->operation]);
 		}

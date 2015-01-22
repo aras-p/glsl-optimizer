@@ -8,6 +8,7 @@ Fixes:
 
 * Float literals are printed with 7 significant digits now.
 * Metal: GLSL mod() is properly translated into Metal's fmod().
+* Metal: Fixed some cases of reciprocal (1/x) printing missing half precision cast.
 
 
 2014 10

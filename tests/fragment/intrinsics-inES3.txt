@@ -75,6 +75,16 @@ mediump vec4 xlat_main (in highp vec4 uv)
     c.xy += mod(uv.xy, d.xy);
     c.xyz += mod(uv.xyz, d.xyz);
 
+    // inverse
+    c.x += 1.0/uv.x; // float
+    c.x += max(0.0, 1.0/uv.x);
+
+    c.y += 1.0/c.z; // half
+    c.y += max(0.0, 1.0/c.w);
+
+    // max with different precision arguments
+    c.x += max(uv.x, c.z);
+
     return c;
 }
 
