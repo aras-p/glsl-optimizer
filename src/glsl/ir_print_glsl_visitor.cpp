@@ -792,13 +792,6 @@ void ir_print_glsl_visitor::visit(ir_texture *ir)
 	// texture coordinate
 	ir->coordinate->accept(this);
 	
-	// lod bias
-	if (ir->op == ir_txb)
-	{
-		buffer.asprintf_append (", ");
-		ir->lod_info.bias->accept(this);
-	}
-	
 	// lod
 	if (ir->op == ir_txl || ir->op == ir_txf)
 	{
@@ -814,11 +807,21 @@ void ir_print_glsl_visitor::visit(ir_texture *ir)
 		buffer.asprintf_append (", ");
 		ir->lod_info.grad.dPdy->accept(this);
 	}
+
+	// texel offset
+	if (ir->offset != NULL)
+	{
+		buffer.asprintf_append (", ");
+		ir->offset->accept(this);
+	}
 	
-   if (ir->offset != NULL) {
-      buffer.asprintf_append (", ");
-      ir->offset->accept(this);
-   }
+	// lod bias
+	if (ir->op == ir_txb)
+	{
+		buffer.asprintf_append (", ");
+		ir->lod_info.bias->accept(this);
+	}
+	
     /*
 	
 	
