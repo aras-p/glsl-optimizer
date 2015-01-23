@@ -12,6 +12,7 @@ Fixes:
 * GLES3: textureOffset with a mipmap bias is printed correctly now.
 * Fixed a bug with loop inductor detection if the inductor was used before the loop for some things.
 * Fixed printing of int/float bitcast operations.
+* Improved precision determination of some constructs.
 
 
 2014 10
