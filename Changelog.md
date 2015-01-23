@@ -10,6 +10,7 @@ Fixes:
 * Metal: GLSL mod() is properly translated into Metal's fmod().
 * Metal: Fixed some cases of reciprocal (1/x) printing missing half precision cast.
 * GLES3: textureOffset with a mipmap bias is printed correctly now.
+* Fixed a bug with loop inductor detection if the inductor was used before the loop for some things.
 
 
 2014 10

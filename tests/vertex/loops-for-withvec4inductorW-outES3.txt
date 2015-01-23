@@ -19,9 +19,13 @@ out highp vec4 COLOR0;
 highp vec4 phase0_Output2;
 highp vec4 Temp_2;
 highp vec4 Temp_3;
+ivec4 Temp_int_0;
 ivec4 Temp_int_1;
 void main ()
 {
+  Temp_int_0 = ivec4((in_POSITION0.yyyy * glstate_matrix_mvp[1]));
+  Temp_int_0 = ivec4(((glstate_matrix_mvp[0] * in_POSITION0.xxxx) + vec4(Temp_int_0)));
+  Temp_int_0 = ivec4(((glstate_matrix_mvp[2] * in_POSITION0.zzzz) + vec4(Temp_int_0)));
   phase0_Output2 = ((glstate_matrix_mvp[3] * in_POSITION0.wwww) + vec4(Temp_int_0));
   TEXCOORD0.xy = ((in_TEXCOORD0.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
   Temp_int_0.xyz = ivec3((in_POSITION0.yyy * glstate_matrix_modelview0[1].xyz));
@@ -36,7 +40,7 @@ void main ()
   Temp_int_1.xyz = ivec3((vec4(Temp_int_0).www * vec4(Temp_int_1).xyz));
   Temp_2.xyz = glstate_lightmodel_ambient.xyz;
   Temp_int_0.w = 0;
-  for (ivec4 Temp_int_0 = 0; Temp_int_0.w < 4; Temp_int_0.w = (Temp_int_0.w + 1)) {
+  for (; Temp_int_0.w < 4; Temp_int_0.w = (Temp_int_0.w + 1)) {
     Temp_3.xyz = ((-(
       vec4(Temp_int_0)
     .xyz) * unity_LightPosition[Temp_int_0.w].www) + unity_LightPosition[Temp_int_0.w].xyz);
