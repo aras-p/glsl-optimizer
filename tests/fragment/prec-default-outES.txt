@@ -21,7 +21,7 @@ void main ()
   int tmpvar_4;
   tmpvar_4 = (((il1 + il2) + im) + s1.i);
   i_1 = tmpvar_4;
-  float tmpvar_5;
+  highp float tmpvar_5;
   if ((gl_FragCoord.x > 0.5)) {
     tmpvar_5 = 0.9;
   } else {

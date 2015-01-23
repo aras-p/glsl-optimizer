@@ -24,16 +24,16 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   c_4 = tmpvar_5;
   tmpvar_2 = c_4.xyz;
   tmpvar_3 = ((c_4.xyz * (half)2.0) - (half)1.0);
-  float3x3 tmpvar_6;
-  tmpvar_6[0].x = 0.8164966;
-  tmpvar_6[0].y = -0.4082483;
-  tmpvar_6[0].z = -0.4082483;
-  tmpvar_6[1].x = 0.0;
-  tmpvar_6[1].y = 0.7071068;
-  tmpvar_6[1].z = -0.7071068;
-  tmpvar_6[2].x = 0.5773503;
-  tmpvar_6[2].y = 0.5773503;
-  tmpvar_6[2].z = 0.5773503;
+  half3x3 tmpvar_6;
+  tmpvar_6[0].x = half(0.8164966);
+  tmpvar_6[0].y = half(-0.4082483);
+  tmpvar_6[0].z = half(-0.4082483);
+  tmpvar_6[1].x = half(0.0);
+  tmpvar_6[1].y = half(0.7071068);
+  tmpvar_6[1].z = half(-0.7071068);
+  tmpvar_6[2].x = half(0.5773503);
+  tmpvar_6[2].y = half(0.5773503);
+  tmpvar_6[2].z = half(0.5773503);
   half3 normal_7;
   normal_7 = tmpvar_3;
   half3 scalePerBasisVector_8;
@@ -45,7 +45,7 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   tmpvar_11 = ((half)2.0 * unity_LightmapInd.sample(_mtlsmp_unity_LightmapInd, (float2)(_mtl_i.xlv_TEXCOORD4.xy)).xyz);
   scalePerBasisVector_8 = tmpvar_11;
   lm_9 = (lm_9 * dot (clamp (
-    ((half3)(tmpvar_6 * (float3)normal_7))
+    (tmpvar_6 * normal_7)
   , (half)0.0, (half)1.0), scalePerBasisVector_8));
   c_1.xyz = (tmpvar_2 * lm_9);
   c_1.w = half(1.0);

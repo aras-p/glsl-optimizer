@@ -4,7 +4,7 @@ in mediump vec3 inNormal;
 void main ()
 {
   mediump vec4 c_1;
-  highp mat3 tmpvar_2;
+  mediump mat3 tmpvar_2;
   tmpvar_2[0u].x = 0.8164966;
   tmpvar_2[0u].y = -0.4082483;
   tmpvar_2[0u].z = -0.4082483;

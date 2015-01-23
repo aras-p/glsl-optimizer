@@ -171,7 +171,9 @@ void main ()
     (((1.0 - dot (tmpvar_12.xyz, vec3(0.299, 0.587, 0.114))) * (1.0 - tmpvar_14)) * pow (abs((1.0 - tmpvar_32)), 5.0))
    * env_2)) + (texture (_SelfIllum, xlv_TEXCOORD0.xy).xyz * _SelfIllumScale));
   tmpvar_38.w = (texture (_AlphaMap, xlv_TEXCOORD0.xy).w * _Color.w);
-  _fragData = tmpvar_38;
+  mediump vec4 tmpvar_39;
+  tmpvar_39 = tmpvar_38;
+  _fragData = tmpvar_39;
 }
 
 

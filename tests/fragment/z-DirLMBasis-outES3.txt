@@ -16,7 +16,7 @@ void main ()
   c_4 = tmpvar_5;
   tmpvar_2 = c_4.xyz;
   tmpvar_3 = ((c_4.xyz * 2.0) - 1.0);
-  highp mat3 tmpvar_6;
+  mediump mat3 tmpvar_6;
   tmpvar_6[0u].x = 0.8164966;
   tmpvar_6[0u].y = -0.4082483;
   tmpvar_6[0u].z = -0.4082483;
