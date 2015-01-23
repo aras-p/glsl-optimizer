@@ -529,10 +529,10 @@ static const char *const operator_glsl_strs[] = {
 	"float",	// u2f
 	"int",		// i2u
 	"int",		// u2i
-	"float",	// bit i2f
-	"int",		// bit f2i
-	"float",	// bit u2f
-	"int",		// bit f2u
+	"intBitsToFloat",	// bit i2f
+	"floatBitsToInt",		// bit f2i
+	"uintBitsToFloat",	// bit u2f
+	"floatBitsToUint",		// bit f2u
 	"any",
 	"trunc",
 	"ceil",
@@ -644,7 +644,7 @@ void ir_print_glsl_visitor::visit(ir_expression *ir)
 	newline_indent();
 	
 	if (ir->get_num_operands() == 1) {
-		if (ir->operation >= ir_unop_f2i && ir->operation < ir_unop_any) {
+		if (ir->operation >= ir_unop_f2i && ir->operation <= ir_unop_u2i) {
 			print_type(buffer, ir->type, true);
 			buffer.asprintf_append ("(");
 		} else if (ir->operation == ir_unop_rcp) {

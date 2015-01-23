@@ -801,10 +801,10 @@ static const char *const operator_glsl_strs[] = {
 	"float",	// u2f
 	"int",		// i2u
 	"int",		// u2i
-	"float",	// bit i2f
-	"int",		// bit f2i
-	"float",	// bit u2f
-	"int",		// bit f2u
+	"as_type_",	// bit i2f
+	"as_type_",	// bit f2i
+	"as_type_",	// bit u2f
+	"as_type_",	// bit f2u
 	"any",
 	"trunc",
 	"ceil",
@@ -965,9 +965,13 @@ void ir_print_metal_visitor::visit(ir_expression *ir)
 	{
 		if (op0cast)
 			print_cast (buffer, arg_prec, ir->operands[0]);
-		if (ir->operation >= ir_unop_f2i && ir->operation < ir_unop_any) {
+		if (ir->operation >= ir_unop_f2i && ir->operation <= ir_unop_u2i) {
 			print_type(buffer, ir, ir->type, true);
 			buffer.asprintf_append ("(");
+		} else if (ir->operation >= ir_unop_bitcast_i2f && ir->operation <= ir_unop_bitcast_f2u) {
+			buffer.asprintf_append("as_type<");
+			print_type(buffer, ir, ir->type, true);
+			buffer.asprintf_append(">(");
 		} else if (ir->operation == ir_unop_rcp) {
 			const bool halfCast = (arg_prec == glsl_precision_medium || arg_prec == glsl_precision_low);
 			buffer.asprintf_append (halfCast ? "((half)1.0/(" : "(1.0/(");
