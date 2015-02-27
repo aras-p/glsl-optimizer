@@ -19,8 +19,8 @@ out highp vec4 COLOR0;
 highp vec4 phase0_Output2;
 highp vec4 Temp_2;
 highp vec4 Temp_3;
-ivec4 Temp_int_0;
-ivec4 Temp_int_1;
+highp ivec4 Temp_int_0;
+highp ivec4 Temp_int_1;
 void main ()
 {
   Temp_int_0 = floatBitsToInt((in_POSITION0.yyyy * glstate_matrix_mvp[1]));
