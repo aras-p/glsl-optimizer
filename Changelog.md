@@ -1,6 +1,16 @@
 GLSL optimizer Change Log
 =========================
 
+2015 02
+-------
+
+Tweaks:
+
+* Texture LOD sampling functions on GLES2.0 now produce a wrapper call, that does approximation
+  (mip bias) on devices that don't support GL_EXT_shader_texture_lod.
+* Undefined precision integers on GLES now default to highp.
+
+
 2015 01
 -------
 
