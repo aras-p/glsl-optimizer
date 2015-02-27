@@ -96,6 +96,7 @@ public:
 		, skipped_this_ir(false)
 		, previous_skipped(false)
 		, uses_texlod_impl(0)
+		, uses_texlodproj_impl(0)
 	{
 		indentation = 0;
 		expression_depth = 0;
@@ -155,10 +156,11 @@ public:
 	bool	inside_loop_body;
 	bool	skipped_this_ir;
 	bool	previous_skipped;
-	int		uses_texlod_impl; // Bitfield on tex_dimension, bit set to true if any texture sampler needs the GLES2 lod workaround.
+	int		uses_texlod_impl; // 3 bits per tex_dimension, bit set for each precision if any texture sampler needs the GLES2 lod workaround.
+	int		uses_texlodproj_impl; // 3 bits per tex_dimension, bit set for each precision if any texture sampler needs the GLES2 lod workaround.
 };
 
-static void print_texlod_workarounds(int usage_bitfield, string_buffer &str)
+static void print_texlod_workarounds(int usage_bitfield, int usage_proj_bitfield, string_buffer &str)
 {
 	static const char *precStrings[3] = {"lowp", "mediump", "highp"};
 	static const char *precNameStrings[3] = { "low_", "medium_", "high_" };
@@ -170,17 +172,29 @@ static void print_texlod_workarounds(int usage_bitfield, string_buffer &str)
 
 		for (int dim = 0; dim < tex_sampler_type_count; dim++)
 		{
-			if (!(usage_bitfield & (1 << (dim + (prec * 8)))))
-				continue;
-
-			str.asprintf_append("%s vec4 impl_%stexture%sLodEXT(%s sampler%s sampler, highp vec%d coord, mediump float lod)\n", precString, precName, tex_sampler_dim_name[dim], precString, tex_sampler_dim_name[dim], tex_sampler_dim_size[dim]);
-			str.asprintf_append("{\n");
-			str.asprintf_append("#if defined(GL_EXT_shader_texture_lod)\n");
-			str.asprintf_append("\treturn texture%sLodEXT(sampler, coord, lod);\n", tex_sampler_dim_name[dim]);
-			str.asprintf_append("#else\n");
-			str.asprintf_append("\treturn texture%s(sampler, coord, lod);\n", tex_sampler_dim_name[dim]);
-			str.asprintf_append("#endif\n");
-			str.asprintf_append("}\n\n");
+			int mask = 1 << (dim + (prec * 8));
+			if (usage_bitfield & mask)
+			{
+				str.asprintf_append("%s vec4 impl_%stexture%sLodEXT(%s sampler%s sampler, highp vec%d coord, mediump float lod)\n", precString, precName, tex_sampler_dim_name[dim], precString, tex_sampler_dim_name[dim], tex_sampler_dim_size[dim]);
+				str.asprintf_append("{\n");
+				str.asprintf_append("#if defined(GL_EXT_shader_texture_lod)\n");
+				str.asprintf_append("\treturn texture%sLodEXT(sampler, coord, lod);\n", tex_sampler_dim_name[dim]);
+				str.asprintf_append("#else\n");
+				str.asprintf_append("\treturn texture%s(sampler, coord, lod);\n", tex_sampler_dim_name[dim]);
+				str.asprintf_append("#endif\n");
+				str.asprintf_append("}\n\n");
+			}
+			if (usage_proj_bitfield & mask)
+			{
+				str.asprintf_append("%s vec4 impl_%stexture%sProjLodEXT(%s sampler%s sampler, highp vec%d coord, mediump float lod)\n", precString, precName, tex_sampler_dim_name[dim], precString, tex_sampler_dim_name[dim], tex_sampler_dim_size[dim] + 1);
+				str.asprintf_append("{\n");
+				str.asprintf_append("#if defined(GL_EXT_shader_texture_lod)\n");
+				str.asprintf_append("\treturn texture%sProjLodEXT(sampler, coord, lod);\n", tex_sampler_dim_name[dim]);
+				str.asprintf_append("#else\n");
+				str.asprintf_append("\treturn texture%sProj(sampler, coord, lod);\n", tex_sampler_dim_name[dim]);
+				str.asprintf_append("#endif\n");
+				str.asprintf_append("}\n\n");
+			}
 		}
 	}
 }
@@ -229,6 +243,7 @@ _mesa_print_ir_glsl(exec_list *instructions,
 	
 	global_print_tracker gtracker;
 	int uses_texlod_impl = 0;
+	int uses_texlodproj_impl = 0;
 	
 	loop_state* ls = analyze_loop_variables(instructions);
 	if (ls->loop_found)
@@ -251,11 +266,12 @@ _mesa_print_ir_glsl(exec_list *instructions,
 			body.asprintf_append (";\n");
 
 		uses_texlod_impl |= v.uses_texlod_impl;
+		uses_texlodproj_impl |= v.uses_texlodproj_impl;
 	}
 	
 	delete ls;
 	
-	print_texlod_workarounds(uses_texlod_impl, str);
+	print_texlod_workarounds(uses_texlod_impl, uses_texlodproj_impl, str);
 	
 	// Add the optimized glsl code
 	str.asprintf_append("%s", body.c_str());
@@ -817,7 +833,10 @@ void ir_print_glsl_visitor::visit(ir_texture *ir)
 			break;
 		}
 		buffer.asprintf_append("impl%s", precString);
-		uses_texlod_impl |= (1 << position);
+		if (is_proj)
+			uses_texlodproj_impl |= (1 << position);
+		else
+			uses_texlod_impl |= (1 << position);
 	}
 
 	
