@@ -1,7 +1,9 @@
+#include <cstdlib>
 #include <string>
 #include <vector>
 #include <time.h>
 #include "../src/glsl/glsl_optimizer.h"
+
 
 #define GL_GLEXT_PROTOTYPES 1
 
