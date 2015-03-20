@@ -1342,7 +1342,13 @@ void ir_print_glsl_visitor::visit(ir_constant *ir)
 			|| (state->language_version < 130))
 			buffer.asprintf_append("%u", ir->value.u[0]);
 		else
-			buffer.asprintf_append("%uu", ir->value.u[0]);
+		{
+			// Old Adreno drivers try to be smart with '0u' and treat that as 'const int'. Sigh.
+			if (ir->value.u[0] == 0)
+				buffer.asprintf_append("uint(0)");
+			else
+				buffer.asprintf_append("%uu", ir->value.u[0]);
+		}
 		return;
 	}
 
