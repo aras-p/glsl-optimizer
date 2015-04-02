@@ -1,6 +1,14 @@
 GLSL optimizer Change Log
 =========================
 
+2015 04
+-------
+
+Fixes:
+
+* Metal: fixed some bugs with translation of weird loops.
+
+
 2015 02
 -------
 
