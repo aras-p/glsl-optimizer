@@ -3730,7 +3730,7 @@ _arguments_parse (argument_list_t *arguments,
 		else {
 			if (argument->head == NULL) {
 				/* Don't treat initial whitespace as
-				 * part of the arguement. */
+				 * part of the argument. */
 				if (node->token->type == SPACE)
 					continue;
 			}
