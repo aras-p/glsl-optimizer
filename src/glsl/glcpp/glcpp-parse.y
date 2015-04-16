@@ -2414,6 +2414,9 @@ _glcpp_parser_handle_version_declaration(glcpp_parser_t *parser, intmax_t versio
 	      if (extensions->ARB_draw_instanced)
 	         add_builtin_define(parser, "GL_ARB_draw_instanced", 1);
 
+	      if (extensions->EXT_draw_instanced)
+	         add_builtin_define(parser, "GL_EXT_draw_instanced", 1);
+
 	      if (extensions->ARB_conservative_depth) {
 	         add_builtin_define(parser, "GL_AMD_conservative_depth", 1);
 	         add_builtin_define(parser, "GL_ARB_conservative_depth", 1);

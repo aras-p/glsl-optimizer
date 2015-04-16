@@ -266,6 +266,8 @@ static bool CheckGLSL (bool vertex, bool gles, const std::string& testName, cons
 	if (gles)
 	{
 		replace_string (src, "GL_EXT_shader_texture_lod", "GL_ARB_shader_texture_lod", 0);
+		replace_string (src, "GL_EXT_draw_instanced", "GL_ARB_draw_instanced", 0);
+		replace_string (src, "gl_InstanceIDEXT", "gl_InstanceIDARB	", 0);
 		replace_string (src, "#extension GL_OES_standard_derivatives : require", "", 0);
 		replace_string (src, "#extension GL_EXT_shadow_samplers : require", "", 0);
 		replace_string (src, "#extension GL_EXT_frag_depth : require", "", 0);

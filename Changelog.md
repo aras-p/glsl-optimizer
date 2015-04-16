@@ -7,6 +7,7 @@ GLSL optimizer Change Log
 Fixes:
 
 * Metal: fixed some bugs with translation of weird loops.
+* GLES2: support EXT_draw_instanced / gl_InstanceIDEXT.
 
 
 2015 02

@@ -231,6 +231,8 @@ _mesa_print_ir_glsl(exec_list *instructions,
 		}
 		if (state->ARB_shader_texture_lod_enable)
 			str.asprintf_append ("#extension GL_ARB_shader_texture_lod : enable\n");
+		if (state->ARB_draw_instanced_enable)
+			str.asprintf_append ("#extension GL_ARB_draw_instanced : enable\n");
 		if (state->EXT_shader_texture_lod_enable)
 			str.asprintf_append ("#extension GL_EXT_shader_texture_lod : enable\n");
 		if (state->OES_standard_derivatives_enable)
@@ -242,7 +244,9 @@ _mesa_print_ir_glsl(exec_list *instructions,
 		if (state->es_shader && state->language_version < 300)
 		{
 			if (state->EXT_draw_buffers_enable)
-				str.asprintf_append ("#extension GL_EXT_draw_buffers : require\n");
+				str.asprintf_append ("#extension GL_EXT_draw_buffers : enable\n");
+			if (state->EXT_draw_instanced_enable)
+				str.asprintf_append ("#extension GL_EXT_draw_instanced : enable\n");
 		}
 		if (state->EXT_shader_framebuffer_fetch_enable)
 			str.asprintf_append ("#extension GL_EXT_shader_framebuffer_fetch : enable\n");

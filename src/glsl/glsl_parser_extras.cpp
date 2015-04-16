@@ -562,6 +562,7 @@ static const _mesa_glsl_extension _mesa_glsl_supported_extensions[] = {
    EXT(AMD_vertex_shader_layer,        true,  false,     AMD_vertex_shader_layer),
    EXT(AMD_vertex_shader_viewport_index, true,  false,   AMD_vertex_shader_viewport_index),
    EXT(EXT_draw_buffers,               false,  true,     EXT_draw_buffers),
+   EXT(EXT_draw_instanced,             false,  true,     EXT_draw_instanced),
    EXT(EXT_frag_depth,                 false,  true,     EXT_frag_depth),
    EXT(EXT_separate_shader_objects,    false, true,      dummy_true),
    EXT(EXT_shader_framebuffer_fetch,   false, true,      EXT_shader_framebuffer_fetch),
