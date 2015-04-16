@@ -564,6 +564,7 @@ static const _mesa_glsl_extension _mesa_glsl_supported_extensions[] = {
    EXT(EXT_draw_buffers,               false,  true,     EXT_draw_buffers),
    EXT(EXT_draw_instanced,             false,  true,     EXT_draw_instanced),
    EXT(EXT_frag_depth,                 false,  true,     EXT_frag_depth),
+   EXT(EXT_gpu_shader4,				   true,  false,     EXT_gpu_shader4),
    EXT(EXT_separate_shader_objects,    false, true,      dummy_true),
    EXT(EXT_shader_framebuffer_fetch,   false, true,      EXT_shader_framebuffer_fetch),
    EXT(EXT_shader_integer_mix,         true,  true,      EXT_shader_integer_mix),

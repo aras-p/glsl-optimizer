@@ -233,6 +233,8 @@ _mesa_print_ir_glsl(exec_list *instructions,
 			str.asprintf_append ("#extension GL_ARB_shader_texture_lod : enable\n");
 		if (state->ARB_draw_instanced_enable)
 			str.asprintf_append ("#extension GL_ARB_draw_instanced : enable\n");
+		if (state->EXT_gpu_shader4_enable)
+			str.asprintf_append ("#extension GL_EXT_gpu_shader4 : enable\n");
 		if (state->EXT_shader_texture_lod_enable)
 			str.asprintf_append ("#extension GL_EXT_shader_texture_lod : enable\n");
 		if (state->OES_standard_derivatives_enable)

@@ -477,6 +477,8 @@ struct _mesa_glsl_parse_state {
    bool EXT_draw_instanced_warn;
    bool EXT_frag_depth_enable;
    bool EXT_frag_depth_warn;
+   bool EXT_gpu_shader4_enable;
+   bool EXT_gpu_shader4_warn;
    bool EXT_separate_shader_objects_enable;
    bool EXT_separate_shader_objects_warn;
    bool EXT_shader_framebuffer_fetch_enable;

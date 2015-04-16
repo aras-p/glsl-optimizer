@@ -4,10 +4,13 @@ GLSL optimizer Change Log
 2015 04
 -------
 
+Goodies:
+* GLES2: support EXT_draw_instanced / gl_InstanceIDEXT.
+* Support gl_VertexID in GLSL < 1.30 when EXT_gpu_shader4 is used.
+
 Fixes:
 
 * Metal: fixed some bugs with translation of weird loops.
-* GLES2: support EXT_draw_instanced / gl_InstanceIDEXT.
 
 
 2015 02
