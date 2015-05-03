@@ -58,50 +58,54 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   tmpvar_18 = _NoiseTex.sample(_mtlsmp__NoiseTex, (float2)(coord_17.xy), level(coord_17.w));
   float4 tmpvar_19;
   tmpvar_19 = float4(((tmpvar_18 * (half)2.0) - (half)1.0));
-  half4 tmpvar_20;
-  tmpvar_20 = _CameraDepthTexture.sample(_mtlsmp__CameraDepthTexture, (float2)(_mtl_i.xlv_TEXCOORD0), level(0.0));
-  float tmpvar_21;
-  tmpvar_21 = float(tmpvar_20.x);
   zx_6 = -((1.0/((
-    (_mtl_u._ZBufferParams.x * tmpvar_21)
+    (_mtl_u._ZBufferParams.x * _CameraDepthTexture.sample(_mtlsmp__CameraDepthTexture, (float2)(_mtl_i.xlv_TEXCOORD0), level(0.0)).x)
    + _mtl_u._ZBufferParams.y))));
   weight_5 = 1.0;
   sum_4 = tmpvar_13;
-  float4 tmpvar_22;
-  tmpvar_22 = (tmpvar_11.xyxy + (tmpvar_19 * (_mtl_u._MainTex_TexelSize.xyxy * _mtl_u._Jitter)).xyyz);
+  float4 tmpvar_20;
+  tmpvar_20 = (tmpvar_11.xyxy + (tmpvar_19 * (_mtl_u._MainTex_TexelSize.xyxy * _mtl_u._Jitter)).xyyz);
   jitteredDir_3 = ((max (
-    abs(tmpvar_22.xyxy)
+    abs(tmpvar_20.xyxy)
   , 
     ((_mtl_u._MainTex_TexelSize.xyxy * _mtl_u._MaxVelocity) * 0.15)
-  ) * sign(tmpvar_22.xyxy)) * float4(1.0, 1.0, -1.0, -1.0));
+  ) * sign(tmpvar_20.xyxy)) * float4(1.0, 1.0, -1.0, -1.0));
   for (int l_2 = 0; l_2 < 12; l_2++) {
-    float zy_23;
-    float4 yf_24;
-    float4 tmpvar_25;
-    tmpvar_25 = (tmpvar_1.xyxy + ((jitteredDir_3.xyxy * _xlat_mtl_const1[l_2].xyxy) * float4(1.0, 1.0, -1.0, -1.0)));
-    yf_24 = tmpvar_25;
+    float zy_21;
+    float4 yf_22;
+    float4 tmpvar_23;
+    tmpvar_23 = (tmpvar_1.xyxy + ((jitteredDir_3.xyxy * _xlat_mtl_const1[l_2].xyxy) * float4(1.0, 1.0, -1.0, -1.0)));
+    yf_22 = tmpvar_23;
     if ((_mtl_u._MainTex_TexelSize.y < 0.0)) {
-      yf_24.yw = (1.0 - tmpvar_25.yw);
+      yf_22.yw = (1.0 - tmpvar_23.yw);
     };
-    half4 tmpvar_26;
-    tmpvar_26 = _VelTex.sample(_mtlsmp__VelTex, (float2)(yf_24.xy), level(0.0));
-    float2 tmpvar_27;
-    tmpvar_27 = float2(tmpvar_26.xy);
-    half4 tmpvar_28;
-    tmpvar_28 = _CameraDepthTexture.sample(_mtlsmp__CameraDepthTexture, (float2)(tmpvar_25.xy), level(0.0));
-    float tmpvar_29;
-    tmpvar_29 = float(tmpvar_28.x);
-    zy_23 = -((1.0/((
-      (_mtl_u._ZBufferParams.x * tmpvar_29)
+    half4 tmpvar_24;
+    tmpvar_24 = _VelTex.sample(_mtlsmp__VelTex, (float2)(yf_22.xy), level(0.0));
+    float2 tmpvar_25;
+    tmpvar_25 = float2(tmpvar_24.xy);
+    zy_21 = -((1.0/((
+      (_mtl_u._ZBufferParams.x * _CameraDepthTexture.sample(_mtlsmp__CameraDepthTexture, (float2)(tmpvar_23.xy), level(0.0)).x)
      + _mtl_u._ZBufferParams.y))));
-    float2 x_30;
-    x_30 = (x_8 - tmpvar_25.xy);
-    float2 x_31;
-    x_31 = (tmpvar_25.xy - x_8);
+    float2 x_26;
+    x_26 = (x_8 - tmpvar_23.xy);
+    float2 x_27;
+    x_27 = (tmpvar_23.xy - x_8);
+    float tmpvar_28;
+    tmpvar_28 = sqrt(dot (tmpvar_25, tmpvar_25));
+    float2 x_29;
+    x_29 = (tmpvar_23.xy - x_8);
+    float edge0_30;
+    edge0_30 = (0.95 * tmpvar_28);
+    float tmpvar_31;
+    tmpvar_31 = clamp (((
+      sqrt(dot (x_29, x_29))
+     - edge0_30) / (
+      (1.05 * tmpvar_28)
+     - edge0_30)), 0.0, 1.0);
     float tmpvar_32;
-    tmpvar_32 = sqrt(dot (tmpvar_27, tmpvar_27));
+    tmpvar_32 = sqrt(dot (vx_7, vx_7));
     float2 x_33;
-    x_33 = (tmpvar_25.xy - x_8);
+    x_33 = (x_8 - tmpvar_23.xy);
     float edge0_34;
     edge0_34 = (0.95 * tmpvar_32);
     float tmpvar_35;
@@ -111,53 +115,41 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
       (1.05 * tmpvar_32)
      - edge0_34)), 0.0, 1.0);
     float tmpvar_36;
-    tmpvar_36 = sqrt(dot (vx_7, vx_7));
-    float2 x_37;
-    x_37 = (x_8 - tmpvar_25.xy);
-    float edge0_38;
-    edge0_38 = (0.95 * tmpvar_36);
-    float tmpvar_39;
-    tmpvar_39 = clamp (((
-      sqrt(dot (x_37, x_37))
-     - edge0_38) / (
-      (1.05 * tmpvar_36)
-     - edge0_38)), 0.0, 1.0);
-    float tmpvar_40;
-    tmpvar_40 = (((
-      clamp ((1.0 - ((zy_23 - zx_6) / _mtl_u._SoftZDistance)), 0.0, 1.0)
+    tmpvar_36 = (((
+      clamp ((1.0 - ((zy_21 - zx_6) / _mtl_u._SoftZDistance)), 0.0, 1.0)
      * 
       clamp ((1.0 - (sqrt(
-        dot (x_30, x_30)
+        dot (x_26, x_26)
       ) / sqrt(
         dot (vx_7, vx_7)
       ))), 0.0, 1.0)
     ) + (
-      clamp ((1.0 - ((zx_6 - zy_23) / _mtl_u._SoftZDistance)), 0.0, 1.0)
+      clamp ((1.0 - ((zx_6 - zy_21) / _mtl_u._SoftZDistance)), 0.0, 1.0)
      * 
       clamp ((1.0 - (sqrt(
-        dot (x_31, x_31)
+        dot (x_27, x_27)
       ) / sqrt(
-        dot (tmpvar_27, tmpvar_27)
+        dot (tmpvar_25, tmpvar_25)
       ))), 0.0, 1.0)
     )) + ((
+      (1.0 - (tmpvar_31 * (tmpvar_31 * (3.0 - 
+        (2.0 * tmpvar_31)
+      ))))
+     * 
       (1.0 - (tmpvar_35 * (tmpvar_35 * (3.0 - 
         (2.0 * tmpvar_35)
       ))))
-     * 
-      (1.0 - (tmpvar_39 * (tmpvar_39 * (3.0 - 
-        (2.0 * tmpvar_39)
-      ))))
     ) * 2.0));
-    half4 tmpvar_41;
-    tmpvar_41 = _MainTex.sample(_mtlsmp__MainTex, (float2)(tmpvar_25.xy), level(0.0));
-    float4 tmpvar_42;
-    tmpvar_42 = float4(tmpvar_41);
-    sum_4 = (sum_4 + (tmpvar_42 * tmpvar_40));
-    weight_5 = (weight_5 + tmpvar_40);
+    half4 tmpvar_37;
+    tmpvar_37 = _MainTex.sample(_mtlsmp__MainTex, (float2)(tmpvar_23.xy), level(0.0));
+    float4 tmpvar_38;
+    tmpvar_38 = float4(tmpvar_37);
+    sum_4 = (sum_4 + (tmpvar_38 * tmpvar_36));
+    weight_5 = (weight_5 + tmpvar_36);
   };
-  float4 tmpvar_43;
-  tmpvar_43 = (sum_4 / weight_5);
-  _mtl_o._fragData = half4(tmpvar_43);
+  float4 tmpvar_39;
+  tmpvar_39 = (sum_4 / weight_5);
+  _mtl_o._fragData = half4(tmpvar_39);
   return _mtl_o;
 }
 

@@ -4,13 +4,9 @@ in highp vec2 varUV;
 out mediump vec4 _fragData;
 void main ()
 {
-  lowp vec4 tmpvar_1;
-  tmpvar_1 = textureLod (_CameraDepthTexture, varUV, 0.0);
-  highp float tmpvar_2;
-  tmpvar_2 = tmpvar_1.x;
-  highp vec4 tmpvar_3;
-  tmpvar_3 = vec4(tmpvar_2);
-  _fragData = tmpvar_3;
+  highp vec4 tmpvar_1;
+  tmpvar_1 = textureLod (_CameraDepthTexture, varUV, 0.0).xxxx;
+  _fragData = tmpvar_1;
 }
 
 

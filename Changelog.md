@@ -1,6 +1,14 @@
 GLSL optimizer Change Log
 =========================
 
+2015 05
+-------
+
+Fixes:
+
+* Fixes some cases of highp/mediump sampler sampling resulting in resulting temporaries wrongly being lowp.
+
+
 2015 04
 -------
 
