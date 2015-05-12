@@ -5,9 +5,9 @@ void main ()
 {
   mediump vec4 c_1;
   mediump mat3 tmpvar_2;
-  tmpvar_2[0u].x = 0.8164966;
-  tmpvar_2[0u].y = -0.4082483;
-  tmpvar_2[0u].z = -0.4082483;
+  tmpvar_2[uint(0)].x = 0.8164966;
+  tmpvar_2[uint(0)].y = -0.4082483;
+  tmpvar_2[uint(0)].z = -0.4082483;
   tmpvar_2[1u].x = 0.0;
   tmpvar_2[1u].y = 0.7071068;
   tmpvar_2[1u].z = -0.7071068;

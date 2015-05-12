@@ -17,9 +17,9 @@ void main ()
   tmpvar_2 = c_4.xyz;
   tmpvar_3 = ((c_4.xyz * 2.0) - 1.0);
   mediump mat3 tmpvar_6;
-  tmpvar_6[0u].x = 0.8164966;
-  tmpvar_6[0u].y = -0.4082483;
-  tmpvar_6[0u].z = -0.4082483;
+  tmpvar_6[uint(0)].x = 0.8164966;
+  tmpvar_6[uint(0)].y = -0.4082483;
+  tmpvar_6[uint(0)].z = -0.4082483;
   tmpvar_6[1u].x = 0.0;
   tmpvar_6[1u].y = 0.7071068;
   tmpvar_6[1u].z = -0.7071068;

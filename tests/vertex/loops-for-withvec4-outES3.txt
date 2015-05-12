@@ -40,7 +40,7 @@ vec4 Temp_0;
 vec4 Temp_1;
 vec4 Temp_2;
 vec4 Temp_3;
-int tmpvar_1;
+highp int tmpvar_1;
 void main ()
 {
   Temp_0 = (dcl_Input0_POSITION0.yyyy * glstate_matrix_mvp[1]);
