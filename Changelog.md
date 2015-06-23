@@ -1,6 +1,15 @@
 GLSL optimizer Change Log
 =========================
 
+2015 06
+-------
+
+Fixes:
+
+* Fixed some cases of different precision matrix assignments being miscompiled on Metal.
+* Fixed yet more issues with translation of weird loops.
+
+
 2015 05
 -------
 
