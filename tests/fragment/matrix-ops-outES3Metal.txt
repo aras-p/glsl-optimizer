@@ -1,5 +1,11 @@
 #include <metal_stdlib>
 using namespace metal;
+inline float4x4 _xlinit_float4x4(float v) { return float4x4(float4(v), float4(v), float4(v), float4(v)); }
+inline float3x3 _xlinit_float3x3(float v) { return float3x3(float3(v), float3(v), float3(v)); }
+inline float2x2 _xlinit_float2x2(float v) { return float2x2(float2(v), float2(v)); }
+inline half4x4 _xlinit_half4x4(half v) { return half4x4(half4(v), half4(v), half4(v), half4(v)); }
+inline half3x3 _xlinit_half3x3(half v) { return half3x3(half3(v), half3(v), half3(v)); }
+inline half2x2 _xlinit_half2x2(half v) { return half2x2(half2(v), half2(v)); }
 inline float4x4 _xlcast_float4x4(half4x4 v) { return float4x4(float4(v[0]), float4(v[1]), float4(v[2]), float4(v[3])); }
 inline float3x3 _xlcast_float3x3(half3x3 v) { return float3x3(float3(v[0]), float3(v[1]), float3(v[2])); }
 inline float2x2 _xlcast_float2x2(half2x2 v) { return float2x2(float2(v[0]), float2(v[1])); }
@@ -33,10 +39,10 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   tmpvar_6[1].x = -(tmpvar_3);
   tmpvar_6[1].y = tmpvar_5;
   rotationMatrix_2 = (tmpvar_6 * 2.0);
-  rotationMatrix_2 = (rotationMatrix_2 - 1.0);
-  rotationMatrix_2 = (tmpvar_3 - rotationMatrix_2);
-  rotationMatrix_2 = (tmpvar_5 + rotationMatrix_2);
-  rotationMatrix_2 = (rotationMatrix_2 / tmpvar_3);
+  rotationMatrix_2 = (rotationMatrix_2 - _xlinit_float2x2(1.0));
+  rotationMatrix_2 = (_xlinit_float2x2(tmpvar_3) - rotationMatrix_2);
+  rotationMatrix_2 = (_xlinit_float2x2(tmpvar_5) + rotationMatrix_2);
+  rotationMatrix_2 = (rotationMatrix_2 * (1.0/(tmpvar_3)));
   float2x2 tmpvar_7;
   tmpvar_7[0].x = tmpvar_5;
   tmpvar_7[0].y = tmpvar_3;
@@ -44,10 +50,10 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   tmpvar_7[1].y = tmpvar_5;
   halfMatrix_1 = _xlcast_half2x2(tmpvar_7);
   halfMatrix_1 = (halfMatrix_1 * (half)2.0);
-  halfMatrix_1 = (halfMatrix_1 - (half)1.0);
-  halfMatrix_1 = _xlcast_half2x2(((float2x2)((half)tmpvar_3 - halfMatrix_1)));
-  halfMatrix_1 = _xlcast_half2x2(((float2x2)((half)tmpvar_5 + halfMatrix_1)));
-  halfMatrix_1 = _xlcast_half2x2(((float2x2)(halfMatrix_1 / (half)tmpvar_3)));
+  halfMatrix_1 = (halfMatrix_1 - _xlinit_half2x2(1.0));
+  halfMatrix_1 = _xlcast_half2x2(((float2x2)(_xlinit_half2x2(tmpvar_3) - halfMatrix_1)));
+  halfMatrix_1 = _xlcast_half2x2(((float2x2)(_xlinit_half2x2(tmpvar_5) + halfMatrix_1)));
+  halfMatrix_1 = _xlcast_half2x2(((float2x2)(halfMatrix_1 * (1.0h/half(tmpvar_3)))));
   float4 tmpvar_8;
   tmpvar_8.xy = (rotationMatrix_2 * _mtl_i.uv);
   tmpvar_8.zw = ((float2)(halfMatrix_1 * (half2)_mtl_i.uv));

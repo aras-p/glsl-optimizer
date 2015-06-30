@@ -8,6 +8,7 @@ Fixes:
 
 * Fixed some cases of different precision matrix assignments being miscompiled on Metal.
 * Fixed yet more issues with translation of weird loops.
+* Fixed translation of matrix+scalar, matrix-scalar, matrix/scalar operations on Metal.
 
 
 2015 05
