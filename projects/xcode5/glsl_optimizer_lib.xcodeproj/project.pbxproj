@@ -323,8 +323,8 @@
 		942994131B1DB9040095A86F /* glcpp-parse.c in Sources */ = {isa = PBXBuildFile; fileRef = 2B6A99EE1223B1670059FBED /* glcpp-parse.c */; };
 		942994141B1DB9040095A86F /* glcpp-parse.h in Headers */ = {isa = PBXBuildFile; fileRef = 2B6A99EF1223B1670059FBED /* glcpp-parse.h */; };
 		942994151B1DB9040095A86F /* glcpp.h in Headers */ = {isa = PBXBuildFile; fileRef = 2B6A99F21223B1670059FBED /* glcpp.h */; };
-		94801B881B4B6AAC001A40C8 /* GLSLOptimizer.h in Headers */ = {isa = PBXBuildFile; fileRef = 94801B851B4B6AAC001A40C8 /* GLSLOptimizer.h */; };
-		94801B891B4B6AAC001A40C8 /* GLSLOptimizerBridge.h in Headers */ = {isa = PBXBuildFile; fileRef = 94801B861B4B6AAC001A40C8 /* GLSLOptimizerBridge.h */; };
+		94801B881B4B6AAC001A40C8 /* GLSLOptimizer.h in Headers */ = {isa = PBXBuildFile; fileRef = 94801B851B4B6AAC001A40C8 /* GLSLOptimizer.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		94801B891B4B6AAC001A40C8 /* GLSLOptimizerBridge.h in Headers */ = {isa = PBXBuildFile; fileRef = 94801B861B4B6AAC001A40C8 /* GLSLOptimizerBridge.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		94801B8A1B4B6AAC001A40C8 /* GLSLOptimizerBridge.mm in Sources */ = {isa = PBXBuildFile; fileRef = 94801B871B4B6AAC001A40C8 /* GLSLOptimizerBridge.mm */; };
 		94801B8C1B4B6AB1001A40C8 /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 94801B8B1B4B6AB1001A40C8 /* Info.plist */; };
 /* End PBXBuildFile section */
@@ -495,8 +495,6 @@
 		2BDCB95C184E182B0075CE6F /* ir_stats.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ir_stats.h; path = ../../src/glsl/ir_stats.h; sourceTree = "<group>"; };
 		2BEC22CB1356E94E00B5E301 /* opt_copy_propagation_elements.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = opt_copy_propagation_elements.cpp; path = ../../src/glsl/opt_copy_propagation_elements.cpp; sourceTree = SOURCE_ROOT; };
 		9429935F1B1DB6E20095A86F /* GLSLOptimizer.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = GLSLOptimizer.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		9429936F1B1DB6E20095A86F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		942993701B1DB6E20095A86F /* GLSLOptimiserTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GLSLOptimiserTests.m; sourceTree = "<group>"; };
 		94801B851B4B6AAC001A40C8 /* GLSLOptimizer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GLSLOptimizer.h; path = GLSLOptimizer/GLSLOptimizer.h; sourceTree = SOURCE_ROOT; };
 		94801B861B4B6AAC001A40C8 /* GLSLOptimizerBridge.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GLSLOptimizerBridge.h; path = GLSLOptimizer/GLSLOptimizerBridge.h; sourceTree = SOURCE_ROOT; };
 		94801B871B4B6AAC001A40C8 /* GLSLOptimizerBridge.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = GLSLOptimizerBridge.mm; path = GLSLOptimizer/GLSLOptimizerBridge.mm; sourceTree = SOURCE_ROOT; };
@@ -528,7 +526,6 @@
 				2BBD9DA717193BEA00515007 /* README.md */,
 				08FB7795FE84155DC02AAC07 /* Source */,
 				942993601B1DB6E20095A86F /* GLSLOptimizer */,
-				9429936D1B1DB6E20095A86F /* GLSLOptimiserTests */,
 				1AB674ADFE9D54B511CA2CBB /* Products */,
 			);
 			name = mesaglsl2;
@@ -773,23 +770,6 @@
 			name = "Supporting Files";
 			sourceTree = "<group>";
 		};
-		9429936D1B1DB6E20095A86F /* GLSLOptimiserTests */ = {
-			isa = PBXGroup;
-			children = (
-				942993701B1DB6E20095A86F /* GLSLOptimiserTests.m */,
-				9429936E1B1DB6E20095A86F /* Supporting Files */,
-			);
-			path = GLSLOptimiserTests;
-			sourceTree = "<group>";
-		};
-		9429936E1B1DB6E20095A86F /* Supporting Files */ = {
-			isa = PBXGroup;
-			children = (
-				9429936F1B1DB6E20095A86F /* Info.plist */,
-			);
-			name = "Supporting Files";
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
@@ -797,8 +777,9 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9429938B1B1DB7190095A86F /* prog_statevars.h in Headers */,
 				94801B891B4B6AAC001A40C8 /* GLSLOptimizerBridge.h in Headers */,
+				94801B881B4B6AAC001A40C8 /* GLSLOptimizer.h in Headers */,
+				9429938B1B1DB7190095A86F /* prog_statevars.h in Headers */,
 				9429939C1B1DB74D0095A86F /* glsl_optimizer.h in Headers */,
 				942993A71B1DB74D0095A86F /* ir.h in Headers */,
 				942993D71B1DB74D0095A86F /* list.h in Headers */,
@@ -806,7 +787,6 @@
 				942993D61B1DB74D0095A86F /* linker.h in Headers */,
 				942993B41B1DB74D0095A86F /* ir_function_inlining.h in Headers */,
 				9429938D1B1DB7190095A86F /* hash_table.h in Headers */,
-				94801B881B4B6AAC001A40C8 /* GLSLOptimizer.h in Headers */,
 				942993801B1DB7120095A86F /* context.h in Headers */,
 				942993891B1DB7190095A86F /* prog_instruction.h in Headers */,
 				942993881B1DB7120095A86F /* simple_list.h in Headers */,
@@ -1334,7 +1314,7 @@
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
-				INFOPLIST_FILE = GLSLOptimiser/Info.plist;
+				INFOPLIST_FILE = "$(SRCROOT)/GLSLOptimizer/Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 8.3;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
@@ -1382,7 +1362,7 @@
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
-				INFOPLIST_FILE = GLSLOptimiser/Info.plist;
+				INFOPLIST_FILE = "$(SRCROOT)/GLSLOptimizer/Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 8.3;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
