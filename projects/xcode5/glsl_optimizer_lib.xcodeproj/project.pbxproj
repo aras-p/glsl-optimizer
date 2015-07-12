@@ -326,7 +326,6 @@
 		94801B881B4B6AAC001A40C8 /* GLSLOptimizer.h in Headers */ = {isa = PBXBuildFile; fileRef = 94801B851B4B6AAC001A40C8 /* GLSLOptimizer.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		94801B891B4B6AAC001A40C8 /* GLSLOptimizerBridge.h in Headers */ = {isa = PBXBuildFile; fileRef = 94801B861B4B6AAC001A40C8 /* GLSLOptimizerBridge.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		94801B8A1B4B6AAC001A40C8 /* GLSLOptimizerBridge.mm in Sources */ = {isa = PBXBuildFile; fileRef = 94801B871B4B6AAC001A40C8 /* GLSLOptimizerBridge.mm */; };
-		94801B8C1B4B6AB1001A40C8 /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 94801B8B1B4B6AB1001A40C8 /* Info.plist */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -971,7 +970,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				94801B8C1B4B6AB1001A40C8 /* Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
