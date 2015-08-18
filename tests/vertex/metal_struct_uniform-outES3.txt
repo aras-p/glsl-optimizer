@@ -1,0 +1,19 @@
+#version 300 es
+precision mediump float;
+struct MyStruct {
+  vec4 v1;
+  vec4 v2;
+};
+uniform MyStruct s1;
+void main ()
+{
+  highp vec4 tmpvar_1;
+  tmpvar_1.w = 1.0;
+  tmpvar_1.xyz = s1.v1.xyz;
+  gl_Position = tmpvar_1;
+}
+
+
+// stats: 1 alu 0 tex 0 flow
+// uniforms: 1 (total size: 0)
+//  #0: s1 (high other) 0x0 [-1]
