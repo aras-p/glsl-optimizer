@@ -454,10 +454,6 @@ static void do_optimization_passes(exec_list* ir, bool linked, _mesa_glsl_parse_
 		progress2 = propagate_precision (ir, state->metal_target); progress |= progress2; if (progress2) debug_print_ir ("After prec propagation", ir, state, mem_ctx);
 		progress2 = do_copy_propagation(ir); progress |= progress2; if (progress2) debug_print_ir ("After copy propagation", ir, state, mem_ctx);
 		progress2 = do_copy_propagation_elements(ir); progress |= progress2; if (progress2) debug_print_ir ("After copy propagation elems", ir, state, mem_ctx);
-		if (state->es_shader && linked)
-		{
-			progress2 = optimize_split_vectors(ir, linked, OPT_SPLIT_ONLY_LOOP_INDUCTORS); progress |= progress2; if (progress2) debug_print_ir("After split vectors", ir, state, mem_ctx);
-		}
 
 		if (linked)
 		{
@@ -488,7 +484,6 @@ static void do_optimization_passes(exec_list* ir, bool linked, _mesa_glsl_parse_
 		progress2 = do_swizzle_swizzle(ir); progress |= progress2; if (progress2) debug_print_ir ("After swizzle swizzle", ir, state, mem_ctx);
 		progress2 = do_noop_swizzle(ir); progress |= progress2; if (progress2) debug_print_ir ("After noop swizzle", ir, state, mem_ctx);
 		progress2 = optimize_split_arrays(ir, linked, state->metal_target && state->stage == MESA_SHADER_FRAGMENT); progress |= progress2; if (progress2) debug_print_ir ("After split arrays", ir, state, mem_ctx);
-		progress2 = optimize_split_vectors(ir, linked, OPT_SPLIT_ONLY_UNUSED); progress |= progress2; if (progress2) debug_print_ir("After split unused vectors", ir, state, mem_ctx);
 		progress2 = optimize_redundant_jumps(ir); progress |= progress2; if (progress2) debug_print_ir ("After redundant jumps", ir, state, mem_ctx);
 
 		// do loop stuff only when linked; otherwise causes duplicate loop induction variable
