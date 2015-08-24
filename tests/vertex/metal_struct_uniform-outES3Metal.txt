@@ -1,0 +1,29 @@
+#include <metal_stdlib>
+using namespace metal;
+struct xlatMtlShaderInput {
+};
+struct xlatMtlShaderOutput {
+  float4 gl_Position [[position]];
+};
+struct MyStruct {
+  float4 v1;
+  float4 v2;
+};
+struct xlatMtlShaderUniform {
+  MyStruct s1;
+};
+;
+vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
+{
+  xlatMtlShaderOutput _mtl_o;
+  float4 tmpvar_1;
+  tmpvar_1.w = 1.0;
+  tmpvar_1.xyz = _mtl_u.s1.v1.xyz;
+  _mtl_o.gl_Position = tmpvar_1;
+  return _mtl_o;
+}
+
+
+// stats: 1 alu 0 tex 0 flow
+// uniforms: 1 (total size: 0)
+//  #0: s1 (high other) 0x0 [-1] loc 0

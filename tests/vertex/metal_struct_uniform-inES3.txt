@@ -1,0 +1,16 @@
+#version 300 es
+
+precision mediump float;
+
+struct MyStruct
+{
+	vec4 v1;
+	vec4 v2;
+};
+
+uniform MyStruct s1;
+
+void main()
+{
+	gl_Position = vec4(s1.v1.xyz, 1.0);
+}
