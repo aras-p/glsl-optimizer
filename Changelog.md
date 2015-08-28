@@ -1,6 +1,14 @@
 GLSL optimizer Change Log
 =========================
 
+2015 08
+-------
+
+Fixes:
+
+* Fixed translation of 2D texture arrays (GLSL with EXT_texture_array, GLES3 and Metal).
+
+
 2015 06
 -------
 
