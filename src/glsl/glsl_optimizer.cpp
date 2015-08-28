@@ -523,7 +523,14 @@ static void glsl_type_to_optimizer_desc(const glsl_type* type, glsl_precision pr
 	else if (type->is_sampler())
 	{
 		if (type->sampler_dimensionality == GLSL_SAMPLER_DIM_2D)
-			out->type = kGlslTypeTex2D;
+		{
+			if (type->sampler_shadow)
+				out->type = kGlslTypeTex2DShadow;
+			else if (type->sampler_array)
+				out->type = kGlslTypeTex2DArray;
+			else
+				out->type = kGlslTypeTex2D;
+		}
 		else if (type->sampler_dimensionality == GLSL_SAMPLER_DIM_3D)
 			out->type = kGlslTypeTex3D;
 		else if (type->sampler_dimensionality == GLSL_SAMPLER_DIM_CUBE)
