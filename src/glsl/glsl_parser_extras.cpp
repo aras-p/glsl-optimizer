@@ -214,7 +214,7 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
    memset(this->atomic_counter_offsets, 0,
           sizeof(this->atomic_counter_offsets));
    this->allow_extension_directive_midshader =
-      ctx->Const.AllowGLSLExtensionDirectiveMidShader;
+      ctx->Const.AllowGLSLExtensionDirectiveMidShader != GL_FALSE;
 }
 
 /**
@@ -1494,7 +1494,7 @@ _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader,
        * and reduce later work if the same shader is linked multiple times
        */
       while (do_common_optimization(shader->ir, false, false, options,
-                                    ctx->Const.NativeIntegers))
+                                    ctx->Const.NativeIntegers!=GL_FALSE))
          ;
 
       validate_ir_tree(shader->ir);

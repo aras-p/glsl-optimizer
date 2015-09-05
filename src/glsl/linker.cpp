@@ -2531,7 +2531,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
       }
 
       prog->ARB_fragment_coord_conventions_enable |=
-         prog->Shaders[i]->ARB_fragment_coord_conventions_enable;
+         ( prog->Shaders[i]->ARB_fragment_coord_conventions_enable ? GL_TRUE : GL_FALSE );
 
       gl_shader_stage shader_type = prog->Shaders[i]->Stage;
       shader_list[shader_type][num_shaders[shader_type]] = prog->Shaders[i];
@@ -2695,7 +2695,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 
       while (do_common_optimization(prog->_LinkedShaders[i]->ir, true, false,
                                     &ctx->Const.ShaderCompilerOptions[i],
-                                    ctx->Const.NativeIntegers))
+                                    ctx->Const.NativeIntegers != GL_FALSE))
 	 ;
    }
 
