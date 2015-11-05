@@ -828,8 +828,11 @@ void ir_print_glsl_visitor::visit(ir_texture *ir)
 	{
 		buffer.asprintf_append("textureSize (");
 		ir->sampler->accept(this);
-		buffer.asprintf_append(", ");
-		ir->lod_info.lod->accept(this);
+		if (ir_texture::has_lod(ir->sampler->type))
+		{
+			buffer.asprintf_append(", ");
+			ir->lod_info.lod->accept(this);
+		}
 		buffer.asprintf_append(")");
 		return;
 	}
