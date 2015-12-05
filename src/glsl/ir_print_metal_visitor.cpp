@@ -228,6 +228,14 @@ _mesa_print_ir_metal(exec_list *instructions,
 	{
 		string_buffer* strOut = &ctx.str;
 		ctx.writingParams = false;
+        
+        if (ir->ir_type == ir_type_typedecl) {
+            ir_typedecl_statement *typedecl = static_cast<ir_typedecl_statement*>(ir);
+            if (typedecl->type_decl->is_record()) {
+                strOut = &ctx.prefixStr;
+            }
+        }
+        
 		if (ir->ir_type == ir_type_variable)
 		{
 			ir_variable *var = static_cast<ir_variable*>(ir);
@@ -263,8 +271,7 @@ _mesa_print_ir_metal(exec_list *instructions,
 				strOut = &ctx.outputStr;
 			if (var->data.mode == ir_var_shader_inout)
 				strOut = &ctx.inoutStr;
-		}
-
+        }
 
 		ir_print_metal_visitor v (ctx, *strOut, &gtracker, mode, state);
 		v.loopstate = ls;
