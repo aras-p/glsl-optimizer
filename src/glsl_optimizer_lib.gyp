@@ -137,6 +137,8 @@
         'glsl/opt_vectorize.cpp',
         'glsl/opt_flip_matrices.cpp',
         'glsl/opt_dead_builtin_varyings.cpp',
+        'glsl/opt_minmax.cpp',
+        'glsl/opt_rebalance_tree.cpp',
         'glsl/program.h',
         'glsl/s_expression.cpp',
         'glsl/s_expression.h',
