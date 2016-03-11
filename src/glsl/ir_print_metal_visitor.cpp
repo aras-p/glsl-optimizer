@@ -1545,7 +1545,7 @@ void ir_print_metal_visitor::visit(ir_assignment *ir)
 	// assignments in global scope are postponed to main function
 	if (this->mode != kPrintGlslNone)
 	{
-		assert (!this->globals->main_function_done);
+		//assert (!this->globals->main_function_done);
 		this->globals->global_assignements.push_tail (new(this->globals->mem_ctx) ga_entry_metal(ir));
 		buffer.asprintf_append ("//"); // for the ; that will follow (ugly, I know)
 		return;
