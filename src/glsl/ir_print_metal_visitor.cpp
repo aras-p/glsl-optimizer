@@ -107,6 +107,8 @@ struct metal_print_context
 	, attributeCounter(0)
 	, uniformLocationCounter(0)
 	, colorCounter(0)
+    , automaticUniformCounter(0)
+    , frustumUniformCounter(0)
 	{
 	}
 
@@ -125,6 +127,8 @@ struct metal_print_context
 	int attributeCounter;
 	int uniformLocationCounter;
 	int colorCounter;
+    int automaticUniformCounter;
+    int frustumUniformCounter;
 };
 
 
@@ -210,7 +214,8 @@ _mesa_print_ir_metal(exec_list *instructions,
 	// includes, prefix etc.
 	ctx.prefixStr.asprintf_append ("#include <metal_stdlib>\n");
 	ctx.prefixStr.asprintf_append ("using namespace metal;\n");
-
+    ctx.prefixStr.asprintf_append ("struct AutomaticUniform\n{\n    float3x3 czm_a_viewRotation;\n    float3x3 czm_a_temeToPseudoFixed;\n    float3 czm_a_sunDirectionEC;\n    float3 czm_a_sunDirectionWC;\n    float3 czm_a_moonDirectionEC;\n    float3 czm_a_viewerPositionWC;\n    float czm_a_morphTime;\n    float czm_a_fogDensity;\n    float czm_a_frameNumber;\n};\n");
+    ctx.prefixStr.asprintf_append("struct FrustumUniform\n{\n    float4x4 czm_f_viewportOrthographic;\n    float4x4 czm_f_viewportTransformation;\n    float4x4 czm_f_projection;\n    float4x4 czm_f_inverseProjection;\n    float4x4 czm_f_view;\n    float4x4 czm_f_modelView;\n    float4x4 czm_f_modelView3D;\n    float4x4 czm_f_inverseModelView;\n    float4x4 czm_f_modelViewProjection;\n    float4 czm_f_viewport;\n    float3x3 czm_f_normal;\n    float3x3 czm_f_normal3D;    \n    float2 czm_f_entireFrustum;\n};\n");
 	ctx.inputStr.asprintf_append("struct xlatMtlShaderInput {\n");
 	ctx.outputStr.asprintf_append("struct xlatMtlShaderOutput {\n");
 	ctx.uniformStr.asprintf_append("struct xlatMtlShaderUniform {\n");
@@ -255,7 +260,15 @@ _mesa_print_ir_metal(exec_list *instructions,
 					strOut = &ctx.paramsStr;
 					ctx.writingParams = true;
 					strOut->asprintf_append ("\n  , ");
-				}
+                }
+                // don't write automatic or frustum uniforms
+                else if (strstr(var->name, "czm_a_") == var->name) {
+                    ctx.automaticUniformCounter += 1;
+                    continue;
+                } else if (strstr(var->name, "czm_f_") == var->name) {
+                    ctx.frustumUniformCounter += 1;
+                    continue;
+                }
 				else
 					strOut = &ctx.uniformStr;
 			}
@@ -332,7 +345,6 @@ _mesa_print_ir_metal(exec_list *instructions,
 		}
 		v.buffer.asprintf_append ("};\n");
 	}
-
 
 	ctx.prefixStr.asprintf_append("%s", ctx.inputStr.c_str());
 	ctx.prefixStr.asprintf_append("%s", ctx.outputStr.c_str());
@@ -710,7 +722,16 @@ void ir_print_metal_visitor::visit(ir_function_signature *ir)
 			buffer.asprintf_append ("fragment ");
 		if (this->mode_whole == kPrintGlslVertex)
 			buffer.asprintf_append ("vertex ");
-		buffer.asprintf_append ("xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]");
+        
+        buffer.asprintf_append ("xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], ");
+        if (ctx.automaticUniformCounter > 0) {
+            buffer.asprintf_append("constant AutomaticUniform& _auto [[buffer(0)]], ");
+        }
+        if (ctx.frustumUniformCounter > 0) {
+            buffer.asprintf_append("constant FrustumUniform& _frustum [[buffer(1)]], ");
+        }
+        buffer.asprintf_append("constant xlatMtlShaderUniform& _mtl_u [[buffer(2)]]");
+        
 		if (!ctx.paramsStr.empty())
 		{
 			buffer.asprintf_append ("%s", ctx.paramsStr.c_str());
@@ -1334,9 +1355,17 @@ static void print_var_inout (string_buffer& buf, ir_variable* var, bool insideLH
 		buf.asprintf_append ("_mtl_i.");
 	if (var->data.mode == ir_var_shader_out)
 		buf.asprintf_append ("_mtl_o.");
-	if (var->data.mode == ir_var_uniform && !var->type->is_sampler())
-		buf.asprintf_append ("_mtl_u.");
-	if (var->data.mode == ir_var_shader_inout)
+    if (var->data.mode == ir_var_uniform && !var->type->is_sampler()) {
+        if (strstr(var->name, "czm_a_") == var->name) {
+            buf.asprintf_append ("_auto.");
+        }
+        else if (strstr(var->name, "czm_f_") == var->name) {
+            buf.asprintf_append ("_frustum.");
+        } else {
+            buf.asprintf_append ("_mtl_u.");
+        }
+    }
+    if (var->data.mode == ir_var_shader_inout)
 		buf.asprintf_append (insideLHS ? "_mtl_o." : "_mtl_i.");
 }
 
