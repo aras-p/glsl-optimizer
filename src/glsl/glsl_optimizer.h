@@ -66,7 +66,7 @@ void glslopt_cleanup (glslopt_ctx* ctx);
 
 void glslopt_set_max_unroll_iterations (glslopt_ctx* ctx, unsigned iterations);
 
-glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, const char* shaderSource, unsigned options);
+glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, const char* shaderSource, const char* manualUniformStruct, unsigned options);
 bool glslopt_get_status (glslopt_shader* shader);
 const char* glslopt_get_output (glslopt_shader* shader);
 const char* glslopt_get_raw_output (glslopt_shader* shader);

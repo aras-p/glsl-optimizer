@@ -90,8 +90,7 @@ typedef NS_ENUM(NSUInteger, GLSLOptPrecision) {
 
 -(void)setMaxUnrollIterations:(UInt32)iterations;
 
--(GLSLShader *)optimize:(GLSLOptShaderType)shaderType shaderSource:(NSString *)shaderSource options:(NSUInteger)options;
-
+-(GLSLShader *)optimize:(GLSLOptShaderType)shaderType shaderSource:(NSString *)shaderSource manualUniformStruct:(NSString *)manualUniformStruct options:(NSUInteger)options;
 @end
 
 

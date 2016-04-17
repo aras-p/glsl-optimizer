@@ -195,8 +195,8 @@ typedef NS_ENUM(NSUInteger, GLSLShaderVariableType) {
     glslopt_set_max_unroll_iterations(_ctx, iterations);
 }
 
--(GLSLShader *)optimize:(GLSLOptShaderType)shaderType shaderSource:(NSString *)shaderSource options:(NSUInteger)options {
-    glslopt_shader* shader = glslopt_optimize(_ctx, glslopt_shader_type(shaderType), shaderSource.UTF8String, UInt32(options));
+-(GLSLShader *)optimize:(GLSLOptShaderType)shaderType shaderSource:(NSString *)shaderSource manualUniformStruct:(NSString *)manualUniformStruct options:(NSUInteger)options {
+    glslopt_shader* shader = glslopt_optimize(_ctx, glslopt_shader_type(shaderType), shaderSource.UTF8String, manualUniformStruct.UTF8String, UInt32(options));
     
     GLSLShader *glslShader = [[GLSLShader alloc] initWithShader: shader];
     

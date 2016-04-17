@@ -207,7 +207,7 @@ public:
 char*
 _mesa_print_ir_metal(exec_list *instructions,
 	    struct _mesa_glsl_parse_state *state,
-		char* buffer, PrintGlslMode mode, int* outUniformsSize)
+		char* buffer, PrintGlslMode mode, const char *manualUniformStruct, int* outUniformsSize)
 {
 	metal_print_context ctx(buffer);
 
@@ -216,9 +216,13 @@ _mesa_print_ir_metal(exec_list *instructions,
 	ctx.prefixStr.asprintf_append ("using namespace metal;\n");
     ctx.prefixStr.asprintf_append ("struct AutomaticUniform\n{\n    float3x3 czm_a_viewRotation;\n    float3x3 czm_a_temeToPseudoFixed;\n    float3 czm_a_sunDirectionEC;\n    float3 czm_a_sunDirectionWC;\n    float3 czm_a_moonDirectionEC;\n    float3 czm_a_viewerPositionWC;\n    float czm_a_morphTime;\n    float czm_a_fogDensity;\n    float czm_a_frameNumber;\n};\n");
     ctx.prefixStr.asprintf_append("struct FrustumUniform\n{\n    float4x4 czm_f_viewportOrthographic;\n    float4x4 czm_f_viewportTransformation;\n    float4x4 czm_f_projection;\n    float4x4 czm_f_inverseProjection;\n    float4x4 czm_f_view;\n    float4x4 czm_f_modelView;\n    float4x4 czm_f_modelView3D;\n    float4x4 czm_f_inverseModelView;\n    float4x4 czm_f_modelViewProjection;\n    float4 czm_f_viewport;\n    float3x3 czm_f_normal;\n    float3x3 czm_f_normal3D;    \n    float2 czm_f_entireFrustum;\n};\n");
+    if (manualUniformStruct != NULL) {
+        ctx.prefixStr.asprintf_append(manualUniformStruct);
+    } else {
+        ctx.uniformStr.asprintf_append("struct xlatMtlShaderUniform {\n");
+    }
 	ctx.inputStr.asprintf_append("struct xlatMtlShaderInput {\n");
 	ctx.outputStr.asprintf_append("struct xlatMtlShaderOutput {\n");
-	ctx.uniformStr.asprintf_append("struct xlatMtlShaderUniform {\n");
 
 	// remove unused struct declarations
 	do_remove_unused_typedecls(instructions);
@@ -269,6 +273,10 @@ _mesa_print_ir_metal(exec_list *instructions,
                     ctx.frustumUniformCounter += 1;
                     continue;
                 }
+                // don't write uniforms if we're using a struct
+                else if (manualUniformStruct != NULL) {
+                    continue;
+                }
 				else
 					strOut = &ctx.uniformStr;
 			}
@@ -307,7 +315,9 @@ _mesa_print_ir_metal(exec_list *instructions,
 	}
 	ctx.inputStr.asprintf_append("};\n");
 	ctx.outputStr.asprintf_append("};\n");
-	ctx.uniformStr.asprintf_append("};\n");
+    if (manualUniformStruct == NULL) {
+        ctx.uniformStr.asprintf_append("};\n");
+    }
 
 	// emit global array/struct constants
 	foreach_in_list_safe(gconst_entry_metal, node, &gtracker.global_constants)
@@ -348,7 +358,9 @@ _mesa_print_ir_metal(exec_list *instructions,
 
 	ctx.prefixStr.asprintf_append("%s", ctx.inputStr.c_str());
 	ctx.prefixStr.asprintf_append("%s", ctx.outputStr.c_str());
-	ctx.prefixStr.asprintf_append("%s", ctx.uniformStr.c_str());
+    if (manualUniformStruct == NULL) {
+        ctx.prefixStr.asprintf_append("%s", ctx.uniformStr.c_str());
+    }
 	ctx.prefixStr.asprintf_append("%s", ctx.str.c_str());
 
 	*outUniformsSize = ctx.uniformLocationCounter;
