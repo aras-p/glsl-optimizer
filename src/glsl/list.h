@@ -305,9 +305,9 @@ struct exec_node;
 #endif
 
 struct exec_list {
-   struct exec_node *head;
-   struct exec_node *tail;
-   struct exec_node *tail_pred;
+   struct exec_node * volatile head;
+   struct exec_node *          tail;
+   struct exec_node * volatile tail_pred;
 
 #ifdef __cplusplus
    DECLARE_RALLOC_CXX_OPERATORS(exec_list)
