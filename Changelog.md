@@ -1,6 +1,14 @@
 GLSL optimizer Change Log
 =========================
 
+2016 06
+-------
+
+Fixed:
+
+* Fixed Metal translation in some cases having wrong precision on constants or constant arrays.
+
+
 2016 05
 -------
 
