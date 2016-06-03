@@ -1317,6 +1317,8 @@ enum ir_expression_operation {
    ir_unop_cos,
    ir_unop_sin_reduced,    /**< Reduced range sin. [-pi, pi] */
    ir_unop_cos_reduced,    /**< Reduced range cos. [-pi, pi] */
+   ir_unop_acos,
+   ir_unop_atan,
    /*@}*/
 
    /**
@@ -1515,9 +1517,16 @@ enum ir_expression_operation {
    ir_binop_interpolate_at_sample,
 
    /**
+    * \name Trigonometric operations.
+    */
+   /*@{*/
+   ir_binop_atan2,
+   /*@}*/
+
+   /**
     * A sentinel marking the last of the binary operations.
     */
-   ir_last_binop = ir_binop_interpolate_at_sample,
+   ir_last_binop = ir_binop_atan2,
 
    /**
     * \name Fused floating-point multiply-add, part of ARB_gpu_shader5.

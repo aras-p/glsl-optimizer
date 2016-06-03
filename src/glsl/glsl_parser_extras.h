@@ -222,6 +222,8 @@ struct _mesa_glsl_parse_state {
    unsigned language_version;
    bool had_version_string;
    bool had_float_precision;
+   bool emit_native_acos;
+   bool emit_native_atan;
    gl_shader_stage stage;
 
    /**

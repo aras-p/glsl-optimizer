@@ -539,8 +539,11 @@ private:
    B1(tan)
    B1(asin)
    B1(acos)
+   B1(acos_native)
    B1(atan2)
    B1(atan)
+   B1(atan2_native)
+   B1(atan_native)
    B1(sinh)
    B1(cosh)
    B1(tanh)
@@ -743,7 +746,15 @@ builtin_builder::find(_mesa_glsl_parse_state *state,
     */
    state->uses_builtin_functions = true;
 
-   ir_function *f = shader->symbols->get_function(name);
+   ir_function *f;
+   if (state->emit_native_acos && strcmp(name,"acos")==0)
+      f = shader->symbols->get_function("acos_native");
+   else
+   if (state->emit_native_atan && strcmp(name,"atan")==0)
+      f = shader->symbols->get_function("atan_native");
+   else
+      f = shader->symbols->get_function(name);
+
    if (f == NULL)
       return NULL;
 
@@ -944,6 +955,7 @@ builtin_builder::create_builtins()
    F(tan)
    F(asin)
    F(acos)
+   F(acos_native)
 
    add_function("atan",
                 _atan(glsl_type::float_type),
@@ -954,6 +966,17 @@ builtin_builder::create_builtins()
                 _atan2(glsl_type::vec2_type),
                 _atan2(glsl_type::vec3_type),
                 _atan2(glsl_type::vec4_type),
+                NULL);
+
+   add_function("atan_native",
+                _atan_native(glsl_type::float_type),
+                _atan_native(glsl_type::vec2_type),
+                _atan_native(glsl_type::vec3_type),
+                _atan_native(glsl_type::vec4_type),
+                _atan2_native(glsl_type::float_type),
+                _atan2_native(glsl_type::vec2_type),
+                _atan2_native(glsl_type::vec3_type),
+                _atan2_native(glsl_type::vec4_type),
                 NULL);
 
    F(sinh)
@@ -2711,11 +2734,30 @@ builtin_builder::_acos(const glsl_type *type)
 {
    ir_variable *x = in_var(type, "x");
    MAKE_SIG(type, always_available, 1, x);
-
    body.emit(ret(sub(imm(M_PI_2f), asin_expr(x))));
-
    return sig;
 }
+
+ir_function_signature *
+builtin_builder::_acos_native(const glsl_type *type)
+{
+   ir_variable *x = in_var(type, "x");
+   MAKE_SIG(type, always_available, 1, x);
+   body.emit(ret(acos(x)));
+   return sig;
+}
+
+
+ir_function_signature *
+builtin_builder::_atan2_native(const glsl_type *type)
+{
+   ir_variable *vec_y = in_var(type, "vec_y");
+   ir_variable *vec_x = in_var(type, "vec_x");
+   MAKE_SIG(type, always_available, 2, vec_y, vec_x);
+   body.emit(ret(atan2(vec_y, vec_x)));
+   return sig;
+}
+
 
 ir_function_signature *
 builtin_builder::_atan2(const glsl_type *type)
@@ -2821,6 +2863,17 @@ builtin_builder::_atan(const glsl_type *type)
    ir_variable *tmp = body.make_temp(type, "tmp");
    do_atan(body, type, tmp, y_over_x);
    body.emit(ret(tmp));
+
+   return sig;
+}
+
+ir_function_signature *
+builtin_builder::_atan_native(const glsl_type *type)
+{
+   ir_variable *y_over_x = in_var(type, "y_over_x");
+   MAKE_SIG(type, always_available, 1, y_over_x);
+
+   body.emit(ret(atan(y_over_x)));
 
    return sig;
 }

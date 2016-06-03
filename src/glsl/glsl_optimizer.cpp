@@ -632,6 +632,9 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 		state->metal_target = true;
 	state->error = 0;
 
+	state->emit_native_acos = (options & kGlslOptionsEmitNativeAcos)!=0; 
+	state->emit_native_atan = (options & kGlslOptionsEmitNativeAtan)!=0;
+
 	if (!(options & kGlslOptionSkipPreprocessor))
 	{
 		state->error = !!glcpp_preprocess (state, &shaderSource, &state->info_log, state->extensions, &ctx->mesa_ctx);
