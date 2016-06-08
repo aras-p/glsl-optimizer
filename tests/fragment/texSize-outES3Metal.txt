@@ -15,7 +15,6 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   float4 tmpvar_1;
   tmpvar_1.zw = float2(0.0, 0.0);
   tmpvar_1.xy = float2(map.get_width(0), map.get_height(0));
-);
   _mtl_o.out_color = half4(tmpvar_1);
   return _mtl_o;
 }

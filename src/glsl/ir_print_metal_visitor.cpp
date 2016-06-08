@@ -1239,7 +1239,7 @@ void ir_print_metal_visitor::visit(ir_texture *ir)
 		ir->sampler->accept(this);
 		buffer.asprintf_append (".get_height(");
 		ir->lod_info.lod->accept(this);
-		buffer.asprintf_append ("));\n");
+		buffer.asprintf_append (")\n");
 		return;
 	}
 
