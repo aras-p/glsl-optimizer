@@ -1125,7 +1125,6 @@ void ir_print_glsl_visitor::emit_assignment_part (ir_dereference* lhs, ir_rvalue
 		hasWriteMask = true;
 	}
 	size_t lhs_end = buffer.get_size();
-
 	buffer.asprintf_append (" = ");
 
 	size_t rhs_start = buffer.get_size();
