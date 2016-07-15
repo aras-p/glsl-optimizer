@@ -91,6 +91,16 @@ public:
 		m_Size += new_length;
 		assert (m_Capacity >= m_Size);
 	}
+
+	size_t get_size()
+	{
+		return m_Size;
+	}
+	void set_size(size_t inSize)
+	{
+		m_Size = inSize;
+		assert(m_Capacity >= m_Size);
+	}
 	
 private:
 	char* m_Ptr;

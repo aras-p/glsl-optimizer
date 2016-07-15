@@ -1082,6 +1082,7 @@ bool ir_print_glsl_visitor::try_print_array_assignment (ir_dereference* lhs, ir_
 
 void ir_print_glsl_visitor::emit_assignment_part (ir_dereference* lhs, ir_rvalue* rhs, unsigned write_mask, ir_rvalue* dstIndex)
 {
+	size_t lhs_start = buffer.get_size();
 	lhs->accept(this);
 	
 	if (dstIndex)
@@ -1123,9 +1124,11 @@ void ir_print_glsl_visitor::emit_assignment_part (ir_dereference* lhs, ir_rvalue
 		buffer.asprintf_append (".%s", mask);
 		hasWriteMask = true;
 	}
-	
+	size_t lhs_end = buffer.get_size();
+
 	buffer.asprintf_append (" = ");
-	
+
+	size_t rhs_start = buffer.get_size();
 	bool typeMismatch = !dstIndex && (lhsType != rhsType);
 	const bool addSwizzle = hasWriteMask && typeMismatch;
 	if (typeMismatch)
@@ -1142,6 +1145,18 @@ void ir_print_glsl_visitor::emit_assignment_part (ir_dereference* lhs, ir_rvalue
 		buffer.asprintf_append (")");
 		if (addSwizzle)
 			buffer.asprintf_append (".%s", mask);
+	}
+
+	size_t rhs_end = buffer.get_size();
+	size_t llen = lhs_end - lhs_start;
+	if(llen == rhs_end-rhs_start && llen != 0)
+	{
+		if(memcmp(buffer.c_str()+lhs_start,buffer.c_str()+rhs_start,llen) == 0)
+		{
+			buffer.set_size(lhs_start);
+			skipped_this_ir = true;
+			//printf("same l = r");
+		}
 	}
 }
 
