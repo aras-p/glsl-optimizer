@@ -16,8 +16,8 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   ,   depth2d<float> shadowmap [[texture(0)]], sampler _mtlsmp_shadowmap [[sampler(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half4 r_1;
-  half4 tmpvar_2;
+  half4 r_1 = 0;
+  half4 tmpvar_2 = 0;
   tmpvar_2 = half4((shadowmap.sample_compare(_mtl_xl_shadow_sampler, (float2)(_mtl_i.uvHi.xyz).xy, (float)(_mtl_i.uvHi.xyz).z) + shadowmap.sample_compare(_mtl_xl_shadow_sampler, (float2)(_mtl_i.uvHi).xy / (float)(_mtl_i.uvHi).w, (float)(_mtl_i.uvHi).z / (float)(_mtl_i.uvHi).w)));
   r_1.yzw = tmpvar_2.yzw;
   r_1.x = (tmpvar_2.x + shadowmap.sample_compare(_mtl_xl_shadow_sampler, (float2)(_mtl_i.uvMed.xyz).xy, (float)(_mtl_i.uvMed.xyz).z));
