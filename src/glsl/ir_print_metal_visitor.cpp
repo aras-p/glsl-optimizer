@@ -675,6 +675,20 @@ void ir_print_metal_visitor::visit(ir_variable *ir)
 		buffer.asprintf_append (" = ");
 		visit (ir->constant_value);
 	}
+
+	if ((ir->data.mode == ir_var_auto || ir->data.mode == ir_var_temporary) && (ir->type->matrix_columns == 1)) {
+		switch (ir->type->base_type) {
+			case GLSL_TYPE_INT:
+			case GLSL_TYPE_FLOAT:
+				buffer.asprintf_append (" = 0");
+				break;
+			case GLSL_TYPE_BOOL:
+				buffer.asprintf_append (" = false");
+				break;
+			default:
+				break;
+		}
+	}
 }
 
 
@@ -1099,9 +1113,10 @@ void ir_print_metal_visitor::visit(ir_expression *ir)
 			else if (op0cast)
 			{
 				print_cast (buffer, arg_prec, ir->operands[0]);
+				buffer.asprintf_append ("(");
 			}
 			ir->operands[0]->accept(this);
-			if (op0castTo1)
+			if (op0castTo1 || op0cast)
 			{
 				buffer.asprintf_append (")");
 			}
@@ -1120,9 +1135,10 @@ void ir_print_metal_visitor::visit(ir_expression *ir)
 			else if (op1cast)
 			{
 				print_cast (buffer, arg_prec, ir->operands[1]);
+				buffer.asprintf_append ("(");
 			}
 			ir->operands[1]->accept(this);
-			if (op1castTo0)
+			if (op1castTo0 || op1cast)
 			{
 				buffer.asprintf_append (")");
 			}
