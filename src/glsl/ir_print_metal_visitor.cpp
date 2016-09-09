@@ -1266,7 +1266,7 @@ void ir_print_metal_visitor::visit(ir_texture *ir)
 		// For shadow sampling, Metal right now needs a hardcoded sampler state :|
 		if (!ctx.shadowSamplerDone)
 		{
-			ctx.prefixStr.asprintf_append("constexpr sampler _mtl_xl_shadow_sampler(address::clamp_to_edge, filter::linear, compare_func::less);\n");
+			ctx.prefixStr.asprintf_append("constexpr sampler _mtl_xl_shadow_sampler(address::clamp_to_edge, filter::linear, compare_func::less_equal);\n");
 			ctx.shadowSamplerDone = true;
 		}
 		buffer.asprintf_append (".sample_compare(_mtl_xl_shadow_sampler");
