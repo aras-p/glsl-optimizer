@@ -1219,14 +1219,17 @@ static void print_texture_uv (ir_print_metal_visitor* vis, ir_texture* ir, bool 
 	}
 	else if (is_shadow)
 	{
+		// Note that on metal sample_compare works differently than shadow2DEXT on GLES:
+		// it does not clamp neither the pixel value nor compare value to the [0.0, 1.0] range. To
+		// preserve same behavior we're clamping the argument explicitly.
 		if (!is_proj)
 		{
 			// regular shadow
 			vis->buffer.asprintf_append (uv_dim == 4 ? "(float3)(" : "(float2)(");
 			ir->coordinate->accept(vis);
-			vis->buffer.asprintf_append (uv_dim == 4 ? ").xyz, (" : ").xy, (float)(");
+			vis->buffer.asprintf_append (uv_dim == 4 ? ").xyz, (" : ").xy, saturate((float)(");
 			ir->coordinate->accept(vis);
-			vis->buffer.asprintf_append (uv_dim == 4 ? ").w" : ").z");
+			vis->buffer.asprintf_append (uv_dim == 4 ? ").w" : ").z)");
 		}
 		else
 		{
@@ -1235,11 +1238,11 @@ static void print_texture_uv (ir_print_metal_visitor* vis, ir_texture* ir, bool 
 			ir->coordinate->accept(vis);
 			vis->buffer.asprintf_append (").xy / (float)(");
 			ir->coordinate->accept(vis);
-			vis->buffer.asprintf_append (").w, (float)(");
+			vis->buffer.asprintf_append (").w, saturate((float)(");
 			ir->coordinate->accept(vis);
 			vis->buffer.asprintf_append (").z / (float)(");
 			ir->coordinate->accept(vis);
-			vis->buffer.asprintf_append (").w");
+			vis->buffer.asprintf_append (").w)");
 		}
 	}
 }
@@ -1263,7 +1266,7 @@ void ir_print_metal_visitor::visit(ir_texture *ir)
 		// For shadow sampling, Metal right now needs a hardcoded sampler state :|
 		if (!ctx.shadowSamplerDone)
 		{
-			ctx.prefixStr.asprintf_append("constexpr sampler _mtl_xl_shadow_sampler(address::clamp_to_edge, filter::linear, compare_func::less);\n");
+			ctx.prefixStr.asprintf_append("constexpr sampler _mtl_xl_shadow_sampler(address::clamp_to_edge, filter::linear, compare_func::less_equal);\n");
 			ctx.shadowSamplerDone = true;
 		}
 		buffer.asprintf_append (".sample_compare(_mtl_xl_shadow_sampler");

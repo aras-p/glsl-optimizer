@@ -1,7 +1,7 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
-constexpr sampler _mtl_xl_shadow_sampler(address::clamp_to_edge, filter::linear, compare_func::less);
+constexpr sampler _mtl_xl_shadow_sampler(address::clamp_to_edge, filter::linear, compare_func::less_equal);
 struct xlatMtlShaderInput {
   half4 uv;
 };
