@@ -51,7 +51,7 @@ typedef NS_ENUM(NSUInteger, GLSLOptPrecision) {
 @interface GLSLShaderVariableDescription : NSObject
 
 @property UInt32 index;
-@property NSString *name;
+@property (nonnull) NSString *name;
 @property GLSLOptBasicType type;
 @property GLSLOptPrecision prec;
 @property UInt32 vecSize;
@@ -73,24 +73,24 @@ typedef NS_ENUM(NSUInteger, GLSLOptPrecision) {
 -(NSString *)rawOutput;
 -(NSString *)log;
 -(UInt32)inputCount;
--(GLSLShaderVariableDescription *)inputDescription:(UInt32)index;
+-(nonnull GLSLShaderVariableDescription *)inputDescription:(UInt32)index;
 
 -(UInt32)uniformCount;
 -(UInt32)uniformTotalSize;
--(GLSLShaderVariableDescription *)uniformDescription:(UInt32)index;
+-(nonnull GLSLShaderVariableDescription *)uniformDescription:(UInt32)index;
 
 -(UInt32)textureCount;
--(GLSLShaderVariableDescription *)textureDescription:(UInt32)index;
+-(nonnull GLSLShaderVariableDescription *)textureDescription:(UInt32)index;
 
 @end
 
 @interface GLSLOptimizer: NSObject
 
--(id)init:(GLSLOptTarget)target;
+-(nonnull id)init:(GLSLOptTarget)target;
 
 -(void)setMaxUnrollIterations:(UInt32)iterations;
 
--(GLSLShader *)optimize:(GLSLOptShaderType)shaderType shaderSource:(NSString *)shaderSource manualUniformStruct:(NSString *)manualUniformStruct options:(NSUInteger)options;
+-(nonnull GLSLShader *)optimize:(GLSLOptShaderType)shaderType shaderSource:(nonnull NSString *)shaderSource manualUniformStruct:(nullable NSString *)manualUniformStruct options:(NSUInteger)options;
 @end
 
 
