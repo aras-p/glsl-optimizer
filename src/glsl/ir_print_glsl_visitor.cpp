@@ -823,6 +823,20 @@ void ir_print_glsl_visitor::visit(ir_texture *ir)
 	glsl_sampler_dim sampler_dim = (glsl_sampler_dim)ir->sampler->type->sampler_dimensionality;
 	const bool is_shadow = ir->sampler->type->sampler_shadow;
 	const bool is_array = ir->sampler->type->sampler_array;
+
+	if (ir->op == ir_txs)
+	{
+		buffer.asprintf_append("textureSize (");
+		ir->sampler->accept(this);
+		if (ir_texture::has_lod(ir->sampler->type))
+		{
+			buffer.asprintf_append(", ");
+			ir->lod_info.lod->accept(this);
+		}
+		buffer.asprintf_append(")");
+		return;
+	}
+
 	const glsl_type* uv_type = ir->coordinate->type;
 	const int uv_dim = uv_type->vector_elements;
 	int sampler_uv_dim = tex_sampler_dim_size[sampler_dim];
