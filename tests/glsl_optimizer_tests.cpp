@@ -1,7 +1,16 @@
+#include <cstdio>
+#include <cstdlib>
 #include <string>
 #include <vector>
 #include <time.h>
 #include "../src/glsl/glsl_optimizer.h"
+
+extern "C" void
+_mesa_error_no_memory(const char *caller)
+{
+   fprintf(stderr, "Mesa error: out of memory in %s", caller);
+}
+
 
 #define GL_GLEXT_PROTOTYPES 1
 

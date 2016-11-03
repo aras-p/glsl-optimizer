@@ -4,6 +4,12 @@
 #include <stdlib.h>
 #include "glsl_optimizer.h"
 
+extern "C" void
+_mesa_error_no_memory(const char *caller)
+{
+   fprintf(stderr, "Mesa error: out of memory in %s", caller);
+}
+
 static glslopt_ctx* gContext = 0;
 
 static int printhelp(const char* msg)

@@ -228,6 +228,11 @@ ir_array_reference_visitor::get_split_list(exec_list *instructions,
 
    /* Trim out variables we found that we can't split. */
    foreach_in_list_safe(variable_entry, entry, &variable_list) {
+#ifdef __GNUC__
+       // without this memory fence (or something like it),
+       // gcc will optimize out this loop.  See issue #44
+       __asm__("":::"memory");
+#endif
       if (debug) {
 	 printf("array %s@%p: decl %d, split %d\n",
 		entry->var->name, (void *) entry->var, entry->declaration,
