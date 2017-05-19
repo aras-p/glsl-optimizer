@@ -36,6 +36,6 @@
     "test": "tests"
   },
   "dependencies": {
-    "nan": "~2.6.2"
+    "nan": "~2.6.x"
   }
 }
