@@ -313,6 +313,7 @@ static bool CheckGLSL (bool vertex, bool gles, const std::string& testName, cons
 	return res;
 }
 
+#ifdef __APPLE__
 
 static bool CheckMetal (bool vertex, bool gles, const std::string& testName, const char* prefix, const std::string& source)
 {
@@ -334,6 +335,7 @@ static bool CheckMetal (bool vertex, bool gles, const std::string& testName, con
 #endif
 }
 
+#endif
 
 static bool ReadStringFromFile (const char* pathName, std::string& output)
 {
@@ -581,8 +583,12 @@ static bool TestFile (glslopt_ctx* ctx, bool vertex,
 		std::string outputOpt;
 		ReadStringFromFile (outputPath.c_str(), outputOpt);
 
+#		ifdef __APPLE__
+
 		if (res && doCheckMetal && !CheckMetal (vertex, gles, testName, "metal", textOpt.c_str()))
 			res = false;
+
+#		endif
 		
 		if (textOpt != outputOpt)
 		{

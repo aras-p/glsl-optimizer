@@ -3,9 +3,6 @@
 using namespace v8;
 using namespace node;
 
-
-Persistent<Function> Compiler::constructor;
-
 //----------------------------------------------------------------------
 
 Compiler::Compiler(glslopt_target target)
@@ -34,54 +31,37 @@ void Compiler::release()
 
 //----------------------------------------------------------------------
 
-void Compiler::Init(Handle<Object> exports)
-{
-	NanScope();
-
-	// Prepare constructor template
-	Local<FunctionTemplate> tpl = NanNew<FunctionTemplate>(New);
-	
-	tpl->SetClassName(NanNew<String>("Compiler"));
-	tpl->InstanceTemplate()->SetInternalFieldCount(1);
-
-	// Prototype
-	NanSetPrototypeTemplate(tpl, "dispose", NanNew<FunctionTemplate>(Dispose));
-
-	// Export the class
-	NanAssignPersistent<Function>(constructor, tpl->GetFunction());
-	exports->Set(NanNew<String>("Compiler"), tpl->GetFunction());
-}
-
-//----------------------------------------------------------------------
-
 NAN_METHOD(Compiler::New)
 {
-	NanScope();
-
-	if (args.IsConstructCall()) {
+	if(info.IsConstructCall())
+	{
 		glslopt_target target = kGlslTargetOpenGL;
-		if (args[0]->IsInt32()) 
-			target = (glslopt_target)args[0]->Int32Value();
-		else if (args[0]->IsBoolean())
-			target = (glslopt_target)( (int)args[0]->BooleanValue() );
+
+		if (info[0]->IsInt32())
+			target = (glslopt_target)info[0]->Int32Value();
+
+		else if (info[0]->IsBoolean())
+			target = (glslopt_target)((int)info[0]->BooleanValue());
 
 		Compiler* obj = new Compiler(target);
-		obj->Wrap(args.This());
-		NanReturnValue(args.This());
-	} else {
-		Local<Function> cons = NanNew<Function>(constructor);
-		NanReturnValue(cons->NewInstance());
-	}
+    obj->Wrap(info.This());
+    info.GetReturnValue().Set(info.This());
+  }
+	else
+	{
+		const int argc = 1;
+    Local<Value> argv[argc] = {info[0]};
+    Local<Function> cons = Nan::New(constructor());
+    info.GetReturnValue().Set(Nan::NewInstance(cons, argc, argv).ToLocalChecked());
+  }
 }
 
 //----------------------------------------------------------------------
 
 NAN_METHOD(Compiler::Dispose)
 {
-	NanScope();
-
-	Compiler* obj = ObjectWrap::Unwrap<Compiler>(args.This());
+	Compiler* obj = ObjectWrap::Unwrap<Compiler>(info.This());
 	obj->release();
 
-	NanReturnUndefined();
+	info.GetReturnValue().Set(Nan::Undefined());
 }
