@@ -1,6 +1,10 @@
 GLSL optimizer
 ==============
 
+> :warning: As of mid-2016, the project is unlikely to have any significant developments. At Unity we are moving to a different
+shader compilation pipeline, with glsl-optimizer is not used. So from my side there won't be significant work done on it. :warning:
+
+
 A C++ library that takes GLSL shaders, does some GPU-independent optimizations on them
 and outputs GLSL or Metal source back. Optimizations are function inlining, dead code removal, copy propagation,
 constant folding, constant propagation, arithmetic optimizations and so on.
@@ -75,12 +79,6 @@ Notes
 * GLSL versions 1.10 and 1.20 are supported. 1.10 is the default, use #version 120 to specify 
 1.20. Higher GLSL versions might work, but aren't tested now.
 * GLSL ES versions 1.00 and 3.00 are supported.
-
-Status and Future
------------------
-
-**Note**: As of mid-2016, the project is unlikely to have any significant developments. At Unity we are largely moving to a different
-shader compilation pipeline, with glsl-optimizer mostly not used. So from my side there won't be significant work done on it :(
 
 
 Dev Notes
