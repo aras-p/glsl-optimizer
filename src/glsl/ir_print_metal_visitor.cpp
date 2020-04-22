@@ -843,6 +843,8 @@ static const char *const operator_glsl_strs[] = {
 	"cos",
 	"fast::sin", // reduced
 	"fast::cos", // reduced
+	"acos", // native
+	"atan", // native
 	"dfdx",
 	"dfdx", // coarse
 	"dfdx", // fine
@@ -903,6 +905,7 @@ static const char *const operator_glsl_strs[] = {
 	"vectorExtract_TODO",
 	"interpolateAtOffset_TODO",
 	"interpolateAtSample_TODO",
+	"atan2TODO", //atan2 native
 	"fma",
 	"clamp",
 	"mix",

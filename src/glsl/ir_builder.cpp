@@ -299,6 +299,24 @@ cos(operand a)
 }
 
 ir_expression *
+acos(operand a)
+{
+    return expr(ir_unop_acos, a);
+}
+
+ir_expression *
+atan(operand a)
+{
+    return expr(ir_unop_atan, a);
+}
+
+ir_expression *
+atan2(operand a, operand b)
+{
+    return expr(ir_binop_atan2, a, b);
+}
+
+ir_expression *
 exp(operand a)
 {
    return expr(ir_unop_exp, a);
