@@ -31,6 +31,8 @@
 #include <math.h>
 #include <limits>
 
+static const char* processed_uniform_blocks[64] = { 0 };
+static int   num_uniform_blocks = 0;
 
 static void print_type(string_buffer& buffer, const glsl_type *t, bool arraySize);
 static void print_type_post(string_buffer& buffer, const glsl_type *t, bool arraySize);
@@ -116,7 +118,7 @@ public:
 	void end_statement_line();
 	void newline_deindent();
 	void print_var_name (ir_variable* v);
-	void print_precision (ir_instruction* ir, const glsl_type* type);
+  void print_precision( ir_instruction* ir, const glsl_type* type, glsl_precision=glsl_precision_undefined );
 
 	virtual void visit(ir_variable *);
 	virtual void visit(ir_function_signature *);
@@ -140,10 +142,14 @@ public:
 	virtual void visit(ir_emit_vertex *);
 	virtual void visit(ir_end_primitive *);
 	
+  void visit_uniform_block( ir_variable* );
+
 	void emit_assignment_part (ir_dereference* lhs, ir_rvalue* rhs, unsigned write_mask, ir_rvalue* dstIndex);
     bool can_emit_canonical_for (loop_variable_state *ls);
 	bool emit_canonical_for (ir_loop* ir);
 	bool try_print_array_assignment (ir_dereference* lhs, ir_rvalue* rhs);
+
+
 	
 	int indentation;
 	int expression_depth;
@@ -219,6 +225,9 @@ _mesa_print_ir_glsl(exec_list *instructions,
 {
 	string_buffer str(buffer);
 	string_buffer body(buffer);
+
+  num_uniform_blocks = 0;
+  memset( processed_uniform_blocks, 0, sizeof( processed_uniform_blocks ) );
 
 	// print version & extensions
 	if (state) {
@@ -358,7 +367,7 @@ void ir_print_glsl_visitor::print_var_name (ir_variable* v)
 	}
 }
 
-void ir_print_glsl_visitor::print_precision (ir_instruction* ir, const glsl_type* type)
+void ir_print_glsl_visitor::print_precision (ir_instruction* ir, const glsl_type* type, glsl_precision prec)
 {
 	if (!this->use_precision)
 		return;
@@ -372,7 +381,8 @@ void ir_print_glsl_visitor::print_precision (ir_instruction* ir, const glsl_type
 	{
 		return;
 	}
-	glsl_precision prec = precision_from_ir(ir);
+
+	if ( ir ) prec = precision_from_ir(ir);
 	
 	// In fragment shader, default float precision is undefined.
 	// We must thus always print it, when there was no default precision
@@ -404,7 +414,7 @@ void ir_print_glsl_visitor::print_precision (ir_instruction* ir, const glsl_type
 	
 	if (prec == glsl_precision_high || prec == glsl_precision_undefined)
 	{
-		if (ir->ir_type == ir_type_function_signature)
+		if (ir && ir->ir_type == ir_type_function_signature)
 			return;
 	}
 	buffer.asprintf_append ("%s", get_precision_string(prec));
@@ -433,9 +443,71 @@ static void print_type_post(string_buffer& buffer, const glsl_type *t, bool arra
 	}
 }
 
+void ir_print_glsl_visitor::visit_uniform_block( ir_variable* ir )
+{
+  const glsl_type* itype = ir->get_interface_type();
+
+  for ( int i = 0; i < num_uniform_blocks; i++ )
+  {
+    if ( itype->name == processed_uniform_blocks[i] )
+    {
+      skipped_this_ir = true;
+      return;
+    }
+  }
+
+  assert( num_uniform_blocks < sizeof( processed_uniform_blocks ) / sizeof( processed_uniform_blocks[0] ) );
+
+  processed_uniform_blocks[num_uniform_blocks++] = itype->name;
+
+  const char* packing = nullptr;
+
+  switch ( itype->interface_packing )
+  {
+  case GLSL_INTERFACE_PACKING_STD140: packing = "std140"; break;
+  case GLSL_INTERFACE_PACKING_SHARED: packing = "shared"; break;
+  default: packing = nullptr;  break;
+  }
+
+  // TODO: handle explicit locations and bindings within layout expression for uniform blocks.
+  // that does not appear to be getting preserved.
+  if ( packing )
+  {
+    buffer.asprintf_append( "layout(%s) ", packing );
+  }
+
+  buffer.asprintf_append( "uniform %s {\n", itype->name );
+
+  for ( unsigned int i = 0; i < itype->length; i++ )
+  {
+    const glsl_type* field_type = itype->fields.structure[i].type;
+    const char* field_name = itype->fields.structure[i].name;
+    const glsl_precision field_precision = itype->fields.structure[i].precision;
+
+    buffer.asprintf_append( "  " );
+    print_precision( nullptr, field_type, field_precision );
+    print_type( buffer, field_type, false );
+    buffer.asprintf_append( " %s", field_name );
+    print_type_post( buffer, field_type, false );
+    buffer.asprintf_append( ";\n" );
+  }
+
+  buffer.asprintf_append( "}" );
+
+  if ( ir->is_interface_instance() )
+  {
+    buffer.asprintf_append( " %s", ir->name );
+  }
+}
 
 void ir_print_glsl_visitor::visit(ir_variable *ir)
 {
+  if ( ir->is_interface_instance() || ir->is_in_uniform_block() )
+  {
+    visit_uniform_block( ir );
+    return;
+  }
+
 	const char *const cent = (ir->data.centroid) ? "centroid " : "";
 	const char *const inv = (ir->data.invariant) ? "invariant " : "";
 	const char *const mode[3][ir_var_mode_count] =
