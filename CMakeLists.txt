@@ -4,6 +4,7 @@ include_directories(include)
 include_directories(src/mesa)
 include_directories(src/mapi)
 include_directories(src/glsl)
+include_directories(src/getopt)
 include_directories(src)
 
 option (DEBUG "Enable debugging" FALSE)
@@ -31,7 +32,7 @@ list(REMOVE_ITEM glsl_sources ${glsl_sources_remove})
 add_library(glsl_optimizer ${glsl_sources})
 target_link_libraries(glsl_optimizer glcpp-library mesa)
 
-add_executable(glsl_compiler src/glsl/main.cpp)
+add_executable(glsl_compiler src/glsl/main.cpp src/getopt/getopt_long.c)
 target_link_libraries(glsl_compiler glsl_optimizer)
 
 file(GLOB glsl_test_sources tests/*.cpp)
