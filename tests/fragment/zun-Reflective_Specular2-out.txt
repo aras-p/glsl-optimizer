@@ -11,9 +11,9 @@ void main ()
   vec4 light_2;
   vec4 reflcol_3;
   vec4 tmpvar_4;
-  tmpvar_4 = texture2D (_MainTex, gl_TexCoord[0].xy);
-  reflcol_3 = (textureCube (_Cube, gl_TexCoord[1].xyz) * tmpvar_4.w);
-  light_2 = -(log2(texture2DProj (_LightBuffer, gl_TexCoord[2])));
+  tmpvar_4 = texture (_MainTex, gl_TexCoord[0].xy);
+  reflcol_3 = (texture (_Cube, gl_TexCoord[1].xyz) * tmpvar_4.w);
+  light_2 = -(log2(textureProj (_LightBuffer, gl_TexCoord[2])));
   light_2.xyz = (light_2.xyz + unity_Ambient.xyz);
   vec4 c_5;
   float spec_6;

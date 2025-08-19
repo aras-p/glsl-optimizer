@@ -15,19 +15,19 @@ uniform vec4 IngameGridLimit;
 uniform vec4 LightPos[30];
 uniform vec4 LightCol[30];
 uniform vec4 _MainTex_ST;
-attribute vec4 TANGENT;
-varying vec3 xlv_TEXCOORD0;
-varying vec3 xlv_TEXCOORD1;
-varying vec3 xlv_COLOR;
-varying vec2 xlv_TEXCOORD2;
+in vec4 TANGENT;
+out vec3 xlv_TEXCOORD0;
+out vec3 xlv_TEXCOORD1;
+out vec3 xlv_COLOR;
+out vec2 xlv_TEXCOORD2;
 void main ()
 {
   vec3 tmpvar_1;
   tmpvar_1 = (_Object2World * gl_Vertex).xyz;
   mat3 tmpvar_2;
-  tmpvar_2[0] = _Object2World[0].xyz;
-  tmpvar_2[1] = _Object2World[1].xyz;
-  tmpvar_2[2] = _Object2World[2].xyz;
+  tmpvar_2[uint(0)] = _Object2World[0].xyz;
+  tmpvar_2[1u] = _Object2World[1].xyz;
+  tmpvar_2[2u] = _Object2World[2].xyz;
   vec3 tmpvar_3;
   tmpvar_3 = normalize((tmpvar_2 * gl_Normal));
   vec4 nn_4;
@@ -43,7 +43,7 @@ void main ()
   tmpvar_8 = (gl_Color.xyz * 3.0);
   tmpvar_7 = (tmpvar_8 * tmpvar_8);
   ivec4 tmpvar_9;
-  tmpvar_9 = ivec4((texture2DLod (GridLightTexture, clamp (
+  tmpvar_9 = ivec4((textureLod (GridLightTexture, clamp (
     ((tmpvar_1 - GridLightTextureStartCell) * GridLightTextureCellSize)
   .xz, IngameGridLimit.xy, IngameGridLimit.zw), 0.0) * 255.0));
   vec4 tmpvar_10;
@@ -176,19 +176,19 @@ void main ()
   tmpvar_52 = TANGENT.xyz;
   tmpvar_53 = (((gl_Normal.yzx * TANGENT.zxy) - (gl_Normal.zxy * TANGENT.yzx)) * TANGENT.w);
   mat3 tmpvar_54;
-  tmpvar_54[0].x = tmpvar_52.x;
-  tmpvar_54[0].y = tmpvar_53.x;
-  tmpvar_54[0].z = gl_Normal.x;
-  tmpvar_54[1].x = tmpvar_52.y;
-  tmpvar_54[1].y = tmpvar_53.y;
-  tmpvar_54[1].z = gl_Normal.y;
-  tmpvar_54[2].x = tmpvar_52.z;
-  tmpvar_54[2].y = tmpvar_53.z;
-  tmpvar_54[2].z = gl_Normal.z;
+  tmpvar_54[uint(0)].x = tmpvar_52.x;
+  tmpvar_54[uint(0)].y = tmpvar_53.x;
+  tmpvar_54[uint(0)].z = gl_Normal.x;
+  tmpvar_54[1u].x = tmpvar_52.y;
+  tmpvar_54[1u].y = tmpvar_53.y;
+  tmpvar_54[1u].z = gl_Normal.y;
+  tmpvar_54[2u].x = tmpvar_52.z;
+  tmpvar_54[2u].y = tmpvar_53.z;
+  tmpvar_54[2u].z = gl_Normal.z;
   mat3 tmpvar_55;
-  tmpvar_55[0] = _World2Object[0].xyz;
-  tmpvar_55[1] = _World2Object[1].xyz;
-  tmpvar_55[2] = _World2Object[2].xyz;
+  tmpvar_55[uint(0)] = _World2Object[0].xyz;
+  tmpvar_55[1u] = _World2Object[1].xyz;
+  tmpvar_55[2u] = _World2Object[2].xyz;
   gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex);
   xlv_TEXCOORD0 = (tmpvar_54 * (tmpvar_55 * (lAgg_21 / wAgg_20)));
   xlv_TEXCOORD1 = (x_47 * 4.0);

@@ -4,7 +4,7 @@ uniform mat4 UNITY_MATRIX_MVP;
 uniform vec4 unity_LightAtten[4];
 uniform vec4 unity_LightColor[4];
 uniform vec4 unity_LightPosition[4];
-varying vec4 xlv_TEXCOORD0;
+out vec4 xlv_TEXCOORD0;
 void main ()
 {
   vec3 toLight_1;
@@ -13,9 +13,9 @@ void main ()
   vec3 viewpos_4;
   viewpos_4 = (UNITY_MATRIX_MV * gl_Vertex).xyz;
   mat3 tmpvar_5;
-  tmpvar_5[0] = UNITY_MATRIX_IT_MV[0].xyz;
-  tmpvar_5[1] = UNITY_MATRIX_IT_MV[1].xyz;
-  tmpvar_5[2] = UNITY_MATRIX_IT_MV[2].xyz;
+  tmpvar_5[uint(0)] = UNITY_MATRIX_IT_MV[0].xyz;
+  tmpvar_5[1u] = UNITY_MATRIX_IT_MV[1].xyz;
+  tmpvar_5[2u] = UNITY_MATRIX_IT_MV[2].xyz;
   viewN_3 = (tmpvar_5 * gl_Normal);
   toLight_1 = (unity_LightPosition[0].xyz - viewpos_4);
   lightColor_2 = (unity_LightColor[0].xyz * (max (0.0, 

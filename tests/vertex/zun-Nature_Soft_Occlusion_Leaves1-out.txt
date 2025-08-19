@@ -4,7 +4,7 @@ uniform vec4 _Scale;
 uniform float _SquashAmount;
 uniform vec4 _SquashPlaneNormal;
 uniform mat4 _TerrainEngineBendTree;
-varying vec4 xlv_FOG;
+out vec4 xlv_FOG;
 void main ()
 {
   vec4 pos_1;

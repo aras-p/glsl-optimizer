@@ -1,0 +1,30 @@
+#version 300 es
+uniform highp float u_x;
+uniform highp float u_y;
+uniform highp vec4 u_u4;
+uniform highp vec4 u_v4;
+out highp vec3 xlv_out;
+void main ()
+{
+  if (((u_x == u_y) || (u_u4 == u_v4))) {
+    xlv_out = vec3(0.0, 0.0, 0.0);
+  } else {
+    if (((u_x != u_y) || (u_u4 != u_v4))) {
+      xlv_out = vec3(1.0, 1.0, 1.0);
+    } else {
+      xlv_out = vec3(2.0, 2.0, 2.0);
+    };
+  };
+  highp vec4 tmpvar_1;
+  tmpvar_1.w = 1.0;
+  tmpvar_1.xyz = xlv_out;
+  gl_Position = tmpvar_1;
+}
+
+
+// stats: 10 alu 0 tex 2 flow
+// uniforms: 4 (total size: 0)
+//  #0: u_x (high float) 1x1 [-1]
+//  #1: u_y (high float) 1x1 [-1]
+//  #2: u_u4 (high float) 4x1 [-1]
+//  #3: u_v4 (high float) 4x1 [-1]

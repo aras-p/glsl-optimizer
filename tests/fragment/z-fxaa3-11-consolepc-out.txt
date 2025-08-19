@@ -1,8 +1,8 @@
 #extension GL_ARB_shader_texture_lod : enable
 uniform sampler2D _MainTex;
 uniform vec4 _MainTex_TexelSize;
-varying vec2 xlv_TEXCOORD0;
-varying vec4 xlv_TEXCOORD1;
+in vec2 xlv_TEXCOORD0;
+in vec4 xlv_TEXCOORD1;
 void main ()
 {
   vec4 fxaaConsoleRcpFrameOpt_1;
@@ -18,14 +18,14 @@ void main ()
   float dirSwMinusNe_9;
   float lumaNe_10;
   vec4 tmpvar_11;
-  tmpvar_11 = texture2DLod (_MainTex, xlv_TEXCOORD1.xy, 0.0);
+  tmpvar_11 = textureLod (_MainTex, xlv_TEXCOORD1.xy, 0.0);
   vec4 tmpvar_12;
-  tmpvar_12 = texture2DLod (_MainTex, xlv_TEXCOORD1.xw, 0.0);
+  tmpvar_12 = textureLod (_MainTex, xlv_TEXCOORD1.xw, 0.0);
   vec4 tmpvar_13;
-  tmpvar_13 = texture2DLod (_MainTex, xlv_TEXCOORD1.zw, 0.0);
+  tmpvar_13 = textureLod (_MainTex, xlv_TEXCOORD1.zw, 0.0);
   vec4 tmpvar_14;
-  tmpvar_14 = texture2DLod (_MainTex, xlv_TEXCOORD0, 0.0);
-  lumaNe_10 = (texture2DLod (_MainTex, xlv_TEXCOORD1.zy, 0.0).y + 0.00260417);
+  tmpvar_14 = textureLod (_MainTex, xlv_TEXCOORD0, 0.0);
+  lumaNe_10 = (textureLod (_MainTex, xlv_TEXCOORD1.zy, 0.0).y + 0.00260417);
   float tmpvar_15;
   tmpvar_15 = max (max (lumaNe_10, tmpvar_13.y), max (tmpvar_11.y, tmpvar_12.y));
   float tmpvar_16;
@@ -58,8 +58,8 @@ void main ()
     vec4 tmpvar_23;
     tmpvar_23.zw = vec2(0.0, 0.0);
     tmpvar_23.xy = (xlv_TEXCOORD0 + (tmpvar_21 * fxaaConsoleRcpFrameOpt2_2.zw));
-    rgbyA_5 = (texture2DLod (_MainTex, tmpvar_19.xy, 0.0) + texture2DLod (_MainTex, tmpvar_20.xy, 0.0));
-    rgbyB_4 = (((texture2DLod (_MainTex, tmpvar_22.xy, 0.0) + texture2DLod (_MainTex, tmpvar_23.xy, 0.0)) * 0.25) + (rgbyA_5 * 0.25));
+    rgbyA_5 = (textureLod (_MainTex, tmpvar_19.xy, 0.0) + textureLod (_MainTex, tmpvar_20.xy, 0.0));
+    rgbyB_4 = (((textureLod (_MainTex, tmpvar_22.xy, 0.0) + textureLod (_MainTex, tmpvar_23.xy, 0.0)) * 0.25) + (rgbyA_5 * 0.25));
     if (((rgbyB_4.y < tmpvar_16) || (rgbyB_4.y > tmpvar_15))) {
       rgbyB_4.xyz = (rgbyA_5.xyz * 0.5);
     };

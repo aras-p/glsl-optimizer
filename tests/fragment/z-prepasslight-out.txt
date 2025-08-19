@@ -13,8 +13,8 @@ uniform samplerCube _ShadowMapTexture;
 uniform vec3 _WorldSpaceCameraPos;
 uniform vec4 _ZBufferParams;
 uniform vec4 unity_LightmapFade;
-varying vec4 xlv_TEXCOORD0;
-varying vec3 xlv_TEXCOORD1;
+in vec4 xlv_TEXCOORD0;
+in vec3 xlv_TEXCOORD1;
 void main ()
 {
   vec4 res_1;
@@ -26,26 +26,26 @@ void main ()
   vec2 uv_7;
   uv_7 = (xlv_TEXCOORD0.xy / xlv_TEXCOORD0.w);
   vec4 tmpvar_8;
-  tmpvar_8 = texture2D (_CameraNormalsTexture, uv_7);
+  tmpvar_8 = texture (_CameraNormalsTexture, uv_7);
   normal_6 = ((tmpvar_8.xyz * 2.0) - 1.0);
   normal_6 = normalize(normal_6);
   vec4 tmpvar_9;
   tmpvar_9.w = 1.0;
   tmpvar_9.xyz = ((xlv_TEXCOORD1 * (_ProjectionParams.z / xlv_TEXCOORD1.z)) * (1.0/((
-    (_ZBufferParams.x * texture2D (_CameraDepthTexture, uv_7).x)
+    (_ZBufferParams.x * texture (_CameraDepthTexture, uv_7).x)
    + _ZBufferParams.y))));
   wpos_5 = (_CameraToWorld * tmpvar_9).xyz;
   tolight_4 = (wpos_5 - _LightPos.xyz);
   lightDir_3 = -(normalize(tolight_4));
-  atten_2 = texture2D (_LightTextureB0, vec2((dot (tolight_4, tolight_4) * _LightPos.w))).w;
+  atten_2 = texture (_LightTextureB0, vec2((dot (tolight_4, tolight_4) * _LightPos.w))).w;
   float mydist_10;
   mydist_10 = (sqrt(dot (tolight_4, tolight_4)) * _LightPositionRange.w);
   mydist_10 = (mydist_10 * 0.97);
   vec4 shadowVals_11;
-  shadowVals_11.x = dot (textureCube (_ShadowMapTexture, (tolight_4 + vec3(0.0078125, 0.0078125, 0.0078125))), vec4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09));
-  shadowVals_11.y = dot (textureCube (_ShadowMapTexture, (tolight_4 + vec3(-0.0078125, -0.0078125, 0.0078125))), vec4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09));
-  shadowVals_11.z = dot (textureCube (_ShadowMapTexture, (tolight_4 + vec3(-0.0078125, 0.0078125, -0.0078125))), vec4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09));
-  shadowVals_11.w = dot (textureCube (_ShadowMapTexture, (tolight_4 + vec3(0.0078125, -0.0078125, -0.0078125))), vec4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09));
+  shadowVals_11.x = dot (texture (_ShadowMapTexture, (tolight_4 + vec3(0.0078125, 0.0078125, 0.0078125))), vec4(1.0, 0.00392157, 1.53787e-5, 6.22737e-9));
+  shadowVals_11.y = dot (texture (_ShadowMapTexture, (tolight_4 + vec3(-0.0078125, -0.0078125, 0.0078125))), vec4(1.0, 0.00392157, 1.53787e-5, 6.22737e-9));
+  shadowVals_11.z = dot (texture (_ShadowMapTexture, (tolight_4 + vec3(-0.0078125, 0.0078125, -0.0078125))), vec4(1.0, 0.00392157, 1.53787e-5, 6.22737e-9));
+  shadowVals_11.w = dot (texture (_ShadowMapTexture, (tolight_4 + vec3(0.0078125, -0.0078125, -0.0078125))), vec4(1.0, 0.00392157, 1.53787e-5, 6.22737e-9));
   bvec4 tmpvar_12;
   tmpvar_12 = lessThan (shadowVals_11, vec4(mydist_10));
   vec4 tmpvar_13;
@@ -83,7 +83,7 @@ void main ()
   vec4 tmpvar_19;
   tmpvar_19.w = 1.0;
   tmpvar_19.xyz = wpos_5;
-  atten_2 = (atten_2 * textureCube (_LightTexture0, (_LightMatrix0 * tmpvar_19).xyz).w);
+  atten_2 = (atten_2 * texture (_LightTexture0, (_LightMatrix0 * tmpvar_19).xyz).w);
   res_1.xyz = (_LightColor.xyz * (max (0.0, 
     dot (lightDir_3, normal_6)
   ) * atten_2));

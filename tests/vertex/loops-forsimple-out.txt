@@ -1,5 +1,5 @@
 uniform vec4 uniColors[4];
-varying vec4 varColor;
+out vec4 varColor;
 void main ()
 {
   vec4 col_1;

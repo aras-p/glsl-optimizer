@@ -4,7 +4,7 @@ void main ()
   vec3 tmpvar_1;
   tmpvar_1 = gl_TexCoord[0].xyz;
   vec4 enc_2;
-  enc_2 = (vec4(1.0, 255.0, 65025.0, 1.60581e+08) * (sqrt(
+  enc_2 = (vec4(1.0, 255.0, 65025.0, 1.60581e+8) * (sqrt(
     dot (tmpvar_1, tmpvar_1)
   ) * _LightPositionRange.w));
   vec4 tmpvar_3;

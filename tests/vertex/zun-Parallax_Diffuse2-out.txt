@@ -6,8 +6,8 @@ uniform vec3 _WorldSpaceCameraPos;
 uniform vec4 unity_LightmapFade;
 uniform vec4 unity_LightmapST;
 uniform vec4 unity_Scale;
-attribute vec4 TANGENT;
-varying vec4 xlv_FOG;
+in vec4 TANGENT;
+out vec4 xlv_FOG;
 void main ()
 {
   vec3 binormal_1;
@@ -30,15 +30,15 @@ void main ()
   .z) * unity_LightmapFade.z) + unity_LightmapFade.w);
   binormal_1 = (((gl_Normal.yzx * TANGENT.zxy) - (gl_Normal.zxy * TANGENT.yzx)) * TANGENT.w);
   mat3 tmpvar_7;
-  tmpvar_7[0].x = TANGENT.x;
-  tmpvar_7[0].y = binormal_1.x;
-  tmpvar_7[0].z = gl_Normal.x;
-  tmpvar_7[1].x = TANGENT.y;
-  tmpvar_7[1].y = binormal_1.y;
-  tmpvar_7[1].z = gl_Normal.y;
-  tmpvar_7[2].x = TANGENT.z;
-  tmpvar_7[2].y = binormal_1.z;
-  tmpvar_7[2].z = gl_Normal.z;
+  tmpvar_7[uint(0)].x = TANGENT.x;
+  tmpvar_7[uint(0)].y = binormal_1.x;
+  tmpvar_7[uint(0)].z = gl_Normal.x;
+  tmpvar_7[1u].x = TANGENT.y;
+  tmpvar_7[1u].y = binormal_1.y;
+  tmpvar_7[1u].z = gl_Normal.y;
+  tmpvar_7[2u].x = TANGENT.z;
+  tmpvar_7[2u].y = binormal_1.z;
+  tmpvar_7[2u].z = gl_Normal.z;
   vec4 tmpvar_8;
   tmpvar_8.w = 1.0;
   tmpvar_8.xyz = _WorldSpaceCameraPos;

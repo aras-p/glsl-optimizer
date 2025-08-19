@@ -18,13 +18,13 @@ void main ()
   tmpvar_6 = normalize(gl_TexCoord[1].xyz);
   v_5.xy = tmpvar_6.xy;
   v_5.z = (tmpvar_6.z + 0.42);
-  c_4 = (texture2D (_MainTex, (tmpvar_1.xy + (
-    ((texture2D (_ParallaxMap, tmpvar_1.zw).w * _Parallax) - (_Parallax / 2.0))
+  c_4 = (texture (_MainTex, (tmpvar_1.xy + (
+    ((texture (_ParallaxMap, tmpvar_1.zw).w * _Parallax) - (_Parallax / 2.0))
    * 
     (tmpvar_6.xy / v_5.z)
   ))) * _Color);
-  light_3 = -(log2(texture2DProj (_LightBuffer, gl_TexCoord[2])));
-  light_3.xyz = (light_3.xyz + mix ((2.0 * texture2D (unity_LightmapInd, tmpvar_2.xy).xyz), (2.0 * texture2D (unity_Lightmap, tmpvar_2.xy).xyz), vec3(clamp (tmpvar_2.z, 0.0, 1.0))));
+  light_3 = -(log2(textureProj (_LightBuffer, gl_TexCoord[2])));
+  light_3.xyz = (light_3.xyz + mix ((2.0 * texture (unity_LightmapInd, tmpvar_2.xy).xyz), (2.0 * texture (unity_Lightmap, tmpvar_2.xy).xyz), vec3(clamp (tmpvar_2.z, 0.0, 1.0))));
   vec4 c_7;
   c_7.xyz = (c_4.xyz * light_3.xyz);
   c_7.w = c_4.w;

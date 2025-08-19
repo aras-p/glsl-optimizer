@@ -2,7 +2,7 @@ uniform sampler2D _MainTex;
 void main ()
 {
   vec4 prev_1;
-  prev_1 = (gl_Color * texture2D (_MainTex, gl_TexCoord[0].xy));
+  prev_1 = (gl_Color * texture (_MainTex, gl_TexCoord[0].xy));
   gl_FragData[0] = mix (vec4(1.0, 1.0, 1.0, 1.0), prev_1, prev_1.wwww);
 }
 

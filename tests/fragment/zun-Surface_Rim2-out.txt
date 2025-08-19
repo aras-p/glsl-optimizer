@@ -10,10 +10,10 @@ void main ()
   tmpvar_1 = gl_TexCoord[4].xyz;
   vec4 col_2;
   vec4 light_3;
-  light_3 = -(log2(texture2DProj (_LightBuffer, gl_TexCoord[2])));
-  light_3.xyz = (light_3.xyz + mix ((2.0 * texture2D (unity_LightmapInd, tmpvar_1.xy).xyz), (2.0 * texture2D (unity_Lightmap, tmpvar_1.xy).xyz), vec3(clamp (tmpvar_1.z, 0.0, 1.0))));
+  light_3 = -(log2(textureProj (_LightBuffer, gl_TexCoord[2])));
+  light_3.xyz = (light_3.xyz + mix ((2.0 * texture (unity_LightmapInd, tmpvar_1.xy).xyz), (2.0 * texture (unity_Lightmap, tmpvar_1.xy).xyz), vec3(clamp (tmpvar_1.z, 0.0, 1.0))));
   vec4 c_4;
-  c_4.xyz = (texture2D (_MainTex, gl_TexCoord[0].xy).xyz * light_3.xyz);
+  c_4.xyz = (texture (_MainTex, gl_TexCoord[0].xy).xyz * light_3.xyz);
   c_4.w = 0.0;
   col_2.w = c_4.w;
   col_2.xyz = (c_4.xyz + (_RimColor.xyz * pow (

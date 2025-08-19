@@ -12,15 +12,15 @@ void main ()
   vec4 light_2;
   float tmpvar_3;
   vec4 tmpvar_4;
-  tmpvar_4 = texture2D (_MainTex, gl_TexCoord[0].xy);
+  tmpvar_4 = texture (_MainTex, gl_TexCoord[0].xy);
   tmpvar_3 = (tmpvar_4.w * _Color.w);
   float x_5;
   x_5 = (tmpvar_3 - _Cutoff);
   if ((x_5 < 0.0)) {
     discard;
   };
-  light_2 = -(log2(texture2DProj (_LightBuffer, gl_TexCoord[1])));
-  light_2.xyz = (light_2.xyz + mix ((2.0 * texture2D (unity_LightmapInd, tmpvar_1.xy).xyz), (2.0 * texture2D (unity_Lightmap, tmpvar_1.xy).xyz), vec3(clamp (tmpvar_1.z, 0.0, 1.0))));
+  light_2 = -(log2(textureProj (_LightBuffer, gl_TexCoord[1])));
+  light_2.xyz = (light_2.xyz + mix ((2.0 * texture (unity_LightmapInd, tmpvar_1.xy).xyz), (2.0 * texture (unity_Lightmap, tmpvar_1.xy).xyz), vec3(clamp (tmpvar_1.z, 0.0, 1.0))));
   vec4 c_6;
   float spec_7;
   spec_7 = (light_2.w * tmpvar_4.w);

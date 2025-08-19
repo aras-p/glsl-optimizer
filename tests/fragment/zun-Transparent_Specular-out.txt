@@ -13,10 +13,10 @@ void main ()
   vec4 c_3;
   float tmpvar_4;
   vec4 tmpvar_5;
-  tmpvar_5 = texture2D (_MainTex, gl_TexCoord[0].xy);
+  tmpvar_5 = texture (_MainTex, gl_TexCoord[0].xy);
   tmpvar_4 = (tmpvar_5.w * _Color.w);
   float atten_6;
-  atten_6 = texture2D (_LightTexture0, gl_TexCoord[4].xy).w;
+  atten_6 = texture (_LightTexture0, gl_TexCoord[4].xy).w;
   vec4 c_7;
   float spec_8;
   spec_8 = (pow (max (0.0, 

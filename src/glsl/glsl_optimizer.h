@@ -63,7 +63,9 @@ enum glslopt_precision {
 	kGlslPrecCount
 };
 
-glslopt_ctx* glslopt_initialize (glslopt_target target);
+typedef const char* (*glslopt_filter_name)(const char*, int mode, long id);
+
+glslopt_ctx* glslopt_initialize (glslopt_target target, glslopt_filter_name filter_name = 0);
 void glslopt_cleanup (glslopt_ctx* ctx);
 
 void glslopt_set_max_unroll_iterations (glslopt_ctx* ctx, unsigned iterations);

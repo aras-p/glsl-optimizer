@@ -3846,7 +3846,7 @@ builtin_builder::_textureSize(builtin_available_predicate avail,
       sig->parameters.push_tail(lod);
       tex->lod_info.lod = var_ref(lod);
    } else {
-      tex->lod_info.lod = imm(0u);
+      tex->lod_info.lod = imm(0);
    }
 
    body.emit(ret(tex));
@@ -4006,7 +4006,7 @@ builtin_builder::_texelFetch(builtin_available_predicate avail,
       sig->parameters.push_tail(lod);
       tex->lod_info.lod = var_ref(lod);
    } else {
-      tex->lod_info.lod = imm(0u);
+      tex->lod_info.lod = imm(0);
    }
 
    if (offset_type != NULL) {

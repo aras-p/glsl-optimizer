@@ -24,9 +24,9 @@ void main ()
   tmpvar_7.z = tmpvar_4.w;
   vec4 reflcol_8;
   vec4 tmpvar_9;
-  tmpvar_9 = texture2D (_MainTex, tmpvar_1.xy);
+  tmpvar_9 = texture (_MainTex, tmpvar_1.xy);
   vec4 normal_10;
-  normal_10.xy = ((texture2D (_BumpMap, tmpvar_1.zw).wy * 2.0) - 1.0);
+  normal_10.xy = ((texture (_BumpMap, tmpvar_1.zw).wy * 2.0) - 1.0);
   normal_10.z = sqrt(((1.0 - 
     (normal_10.x * normal_10.x)
   ) - (normal_10.y * normal_10.y)));
@@ -34,10 +34,10 @@ void main ()
   tmpvar_11.x = dot (tmpvar_2.xyz, normal_10.xyz);
   tmpvar_11.y = dot (tmpvar_3.xyz, normal_10.xyz);
   tmpvar_11.z = dot (tmpvar_4.xyz, normal_10.xyz);
-  reflcol_8 = (textureCube (_Cube, (tmpvar_7 - (2.0 * 
+  reflcol_8 = (texture (_Cube, (tmpvar_7 - (2.0 * 
     (dot (tmpvar_11, tmpvar_7) * tmpvar_11)
   ))) * tmpvar_9.w);
-  light_6 = -(log2(texture2DProj (_LightBuffer, gl_TexCoord[1])));
+  light_6 = -(log2(textureProj (_LightBuffer, gl_TexCoord[1])));
   light_6.xyz = (light_6.xyz + unity_Ambient.xyz);
   vec4 c_12;
   float spec_13;

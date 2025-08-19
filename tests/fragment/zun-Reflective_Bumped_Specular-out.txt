@@ -16,16 +16,16 @@ void main ()
   vec4 c_3;
   vec3 tmpvar_4;
   vec4 tmpvar_5;
-  tmpvar_5 = texture2D (_MainTex, tmpvar_1.xy);
+  tmpvar_5 = texture (_MainTex, tmpvar_1.xy);
   vec4 normal_6;
-  normal_6.xy = ((texture2D (_BumpMap, tmpvar_1.zw).wy * 2.0) - 1.0);
+  normal_6.xy = ((texture (_BumpMap, tmpvar_1.zw).wy * 2.0) - 1.0);
   normal_6.z = sqrt(((1.0 - 
     (normal_6.x * normal_6.x)
   ) - (normal_6.y * normal_6.y)));
   vec3 tmpvar_7;
   tmpvar_7 = normalize(gl_TexCoord[1].xyz);
   vec4 tmpvar_8;
-  tmpvar_8 = texture2D (_LightTexture0, vec2(dot (tmpvar_2, tmpvar_2)));
+  tmpvar_8 = texture (_LightTexture0, vec2(dot (tmpvar_2, tmpvar_2)));
   vec4 c_9;
   float spec_10;
   spec_10 = (pow (max (0.0, 
@@ -38,7 +38,7 @@ void main ()
   ) + (
     (_LightColor0.xyz * _SpecColor.xyz)
    * spec_10)) * (tmpvar_8.w * 2.0));
-  c_9.w = (((textureCube (_Cube, tmpvar_4) * tmpvar_5.w).w * _ReflectColor.w) + ((_LightColor0.w * _SpecColor.w) * (spec_10 * tmpvar_8.w)));
+  c_9.w = (((texture (_Cube, tmpvar_4) * tmpvar_5.w).w * _ReflectColor.w) + ((_LightColor0.w * _SpecColor.w) * (spec_10 * tmpvar_8.w)));
   c_3.xyz = c_9.xyz;
   c_3.w = 0.0;
   gl_FragData[0] = c_3;

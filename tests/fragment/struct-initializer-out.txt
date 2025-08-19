@@ -1,5 +1,5 @@
-varying vec4 position;
-varying vec3 varyingNormalDirection;
+in vec4 position;
+in vec3 varyingNormalDirection;
 uniform mat4 v_inv;
 void main ()
 {

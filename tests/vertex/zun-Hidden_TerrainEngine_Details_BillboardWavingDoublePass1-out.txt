@@ -8,8 +8,8 @@ uniform vec4 _WaveAndDistance;
 uniform vec4 _WavingTint;
 uniform vec4 _WorldSpaceLightPos0;
 uniform vec4 unity_Scale;
-attribute vec4 TANGENT;
-varying vec4 xlv_FOG;
+in vec4 TANGENT;
+out vec4 xlv_FOG;
 void main ()
 {
   vec4 pos_1;
@@ -63,9 +63,9 @@ void main ()
   vec4 pos_17;
   pos_17 = (gl_ModelViewProjectionMatrix * vertex_5);
   mat3 tmpvar_18;
-  tmpvar_18[0] = _Object2World[0].xyz;
-  tmpvar_18[1] = _Object2World[1].xyz;
-  tmpvar_18[2] = _Object2World[2].xyz;
+  tmpvar_18[uint(0)] = _Object2World[0].xyz;
+  tmpvar_18[1u] = _Object2World[1].xyz;
+  tmpvar_18[2u] = _Object2World[2].xyz;
   gl_Position = pos_17;
   vec4 tmpvar_19;
   tmpvar_19.yzw = vec3(0.0, 0.0, 0.0);

@@ -12,7 +12,7 @@ struct FragmentCommonData {
   half3 posWorld;
   half alpha;
 };
-constant FragmentCommonData _xlat_mtl_const1 = {float3(0.0, 0.0, 0.0), float3(0.0, 0.0, 0.0), 0.0, 0.0, float3(0.0, 0.0, 0.0), float3(0.0, 0.0, 0.0), float3(0.0, 0.0, 0.0), 0.0};
+constant FragmentCommonData _xlat_mtl_const1 = {half3(0.0, 0.0, 0.0), half3(0.0, 0.0, 0.0), 0.0, 0.0, half3(0.0, 0.0, 0.0), half3(0.0, 0.0, 0.0), half3(0.0, 0.0, 0.0), 0.0};
 struct xlatMtlShaderInput {
   float4 xlv_TEXCOORD0;
   half3 xlv_TEXCOORD1;

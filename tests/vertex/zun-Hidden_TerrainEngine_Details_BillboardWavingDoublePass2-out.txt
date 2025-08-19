@@ -5,7 +5,7 @@ uniform vec4 _MainTex_ST;
 uniform vec4 _WaveAndDistance;
 uniform vec4 _WavingTint;
 uniform vec4 unity_LightShadowBias;
-attribute vec4 TANGENT;
+in vec4 TANGENT;
 void main ()
 {
   vec4 tmpvar_1;

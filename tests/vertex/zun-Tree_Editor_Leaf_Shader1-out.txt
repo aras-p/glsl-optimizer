@@ -11,7 +11,7 @@ uniform mat4 _World2Shadow;
 uniform mat4 _World2Shadow1;
 uniform mat4 _World2Shadow2;
 uniform mat4 _World2Shadow3;
-attribute vec4 TANGENT;
+in vec4 TANGENT;
 void main ()
 {
   vec4 wpos_1;

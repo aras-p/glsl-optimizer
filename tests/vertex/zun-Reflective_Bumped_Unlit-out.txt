@@ -3,8 +3,8 @@ uniform vec4 _MainTex_ST;
 uniform mat4 _Object2World;
 uniform vec3 _WorldSpaceCameraPos;
 uniform vec4 unity_Scale;
-attribute vec4 TANGENT;
-varying vec4 xlv_FOG;
+in vec4 TANGENT;
+out vec4 xlv_FOG;
 void main ()
 {
   vec3 binormal_1;
@@ -12,15 +12,15 @@ void main ()
   pos_2 = (gl_ModelViewProjectionMatrix * gl_Vertex);
   binormal_1 = (((gl_Normal.yzx * TANGENT.zxy) - (gl_Normal.zxy * TANGENT.yzx)) * TANGENT.w);
   mat3 tmpvar_3;
-  tmpvar_3[0].x = TANGENT.x;
-  tmpvar_3[0].y = binormal_1.x;
-  tmpvar_3[0].z = gl_Normal.x;
-  tmpvar_3[1].x = TANGENT.y;
-  tmpvar_3[1].y = binormal_1.y;
-  tmpvar_3[1].z = gl_Normal.y;
-  tmpvar_3[2].x = TANGENT.z;
-  tmpvar_3[2].y = binormal_1.z;
-  tmpvar_3[2].z = gl_Normal.z;
+  tmpvar_3[uint(0)].x = TANGENT.x;
+  tmpvar_3[uint(0)].y = binormal_1.x;
+  tmpvar_3[uint(0)].z = gl_Normal.x;
+  tmpvar_3[1u].x = TANGENT.y;
+  tmpvar_3[1u].y = binormal_1.y;
+  tmpvar_3[1u].z = gl_Normal.y;
+  tmpvar_3[2u].x = TANGENT.z;
+  tmpvar_3[2u].y = binormal_1.z;
+  tmpvar_3[2u].z = gl_Normal.z;
   gl_Position = pos_2;
   vec4 tmpvar_4;
   tmpvar_4.yzw = vec3(0.0, 0.0, 0.0);

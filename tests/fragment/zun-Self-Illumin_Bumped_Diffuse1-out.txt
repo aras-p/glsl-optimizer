@@ -4,7 +4,7 @@ void main ()
   vec4 res_1;
   vec3 viewN_2;
   vec4 normal_3;
-  normal_3.xy = ((texture2D (_BumpMap, gl_TexCoord[0].xy).wy * 2.0) - 1.0);
+  normal_3.xy = ((texture (_BumpMap, gl_TexCoord[0].xy).wy * 2.0) - 1.0);
   normal_3.z = sqrt(((1.0 - 
     (normal_3.x * normal_3.x)
   ) - (normal_3.y * normal_3.y)));

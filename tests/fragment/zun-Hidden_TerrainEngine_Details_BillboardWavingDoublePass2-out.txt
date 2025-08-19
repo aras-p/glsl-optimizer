@@ -3,7 +3,7 @@ uniform sampler2D _MainTex;
 void main ()
 {
   float x_1;
-  x_1 = ((texture2D (_MainTex, gl_TexCoord[1].xy) * gl_Color).w - _Cutoff);
+  x_1 = ((texture (_MainTex, gl_TexCoord[1].xy) * gl_Color).w - _Cutoff);
   if ((x_1 < 0.0)) {
     discard;
   };

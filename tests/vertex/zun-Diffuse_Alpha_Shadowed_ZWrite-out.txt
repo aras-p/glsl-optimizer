@@ -8,16 +8,16 @@ uniform vec4 unity_SHBg;
 uniform vec4 unity_SHBr;
 uniform vec4 unity_SHC;
 uniform vec4 unity_Scale;
-varying vec4 xlv_FOG;
+out vec4 xlv_FOG;
 void main ()
 {
   vec3 worldN_1;
   vec4 pos_2;
   pos_2 = (gl_ModelViewProjectionMatrix * gl_Vertex);
   mat3 tmpvar_3;
-  tmpvar_3[0] = _Object2World[0].xyz;
-  tmpvar_3[1] = _Object2World[1].xyz;
-  tmpvar_3[2] = _Object2World[2].xyz;
+  tmpvar_3[uint(0)] = _Object2World[0].xyz;
+  tmpvar_3[1u] = _Object2World[1].xyz;
+  tmpvar_3[2u] = _Object2World[2].xyz;
   worldN_1 = (tmpvar_3 * (gl_Normal * unity_Scale.w));
   vec4 tmpvar_4;
   tmpvar_4.w = 1.0;

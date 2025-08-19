@@ -1,19 +1,19 @@
 uniform vec4 _BumpMap_ST;
-attribute vec4 TANGENT;
+in vec4 TANGENT;
 void main ()
 {
   vec3 binormal_1;
   binormal_1 = (((gl_Normal.yzx * TANGENT.zxy) - (gl_Normal.zxy * TANGENT.yzx)) * TANGENT.w);
   mat3 tmpvar_2;
-  tmpvar_2[0].x = TANGENT.x;
-  tmpvar_2[0].y = binormal_1.x;
-  tmpvar_2[0].z = gl_Normal.x;
-  tmpvar_2[1].x = TANGENT.y;
-  tmpvar_2[1].y = binormal_1.y;
-  tmpvar_2[1].z = gl_Normal.y;
-  tmpvar_2[2].x = TANGENT.z;
-  tmpvar_2[2].y = binormal_1.z;
-  tmpvar_2[2].z = gl_Normal.z;
+  tmpvar_2[uint(0)].x = TANGENT.x;
+  tmpvar_2[uint(0)].y = binormal_1.x;
+  tmpvar_2[uint(0)].z = gl_Normal.x;
+  tmpvar_2[1u].x = TANGENT.y;
+  tmpvar_2[1u].y = binormal_1.y;
+  tmpvar_2[1u].z = gl_Normal.y;
+  tmpvar_2[2u].x = TANGENT.z;
+  tmpvar_2[2u].y = binormal_1.z;
+  tmpvar_2[2u].z = gl_Normal.z;
   gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex);
   vec4 tmpvar_3;
   tmpvar_3.zw = vec2(0.0, 0.0);

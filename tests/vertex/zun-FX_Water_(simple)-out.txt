@@ -3,7 +3,7 @@ uniform float _WaveScale;
 uniform mat4 _World2Object;
 uniform vec3 _WorldSpaceCameraPos;
 uniform vec4 unity_Scale;
-varying vec4 xlv_FOG;
+out vec4 xlv_FOG;
 void main ()
 {
   vec4 temp_1;

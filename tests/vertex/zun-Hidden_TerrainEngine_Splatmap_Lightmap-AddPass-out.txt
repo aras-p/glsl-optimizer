@@ -21,7 +21,7 @@ uniform vec4 unity_SHBg;
 uniform vec4 unity_SHBr;
 uniform vec4 unity_SHC;
 uniform vec4 unity_Scale;
-varying vec4 xlv_FOG;
+out vec4 xlv_FOG;
 void main ()
 {
   vec3 worldPos_1;
@@ -35,9 +35,9 @@ void main ()
   tmpvar_4.xy = ((gl_MultiTexCoord0.xy * _Splat1_ST.xy) + _Splat1_ST.zw);
   tmpvar_4.zw = ((gl_MultiTexCoord0.xy * _Splat2_ST.xy) + _Splat2_ST.zw);
   mat3 tmpvar_6;
-  tmpvar_6[0] = _Object2World[0].xyz;
-  tmpvar_6[1] = _Object2World[1].xyz;
-  tmpvar_6[2] = _Object2World[2].xyz;
+  tmpvar_6[uint(0)] = _Object2World[0].xyz;
+  tmpvar_6[1u] = _Object2World[1].xyz;
+  tmpvar_6[2u] = _Object2World[2].xyz;
   worldN_2 = (tmpvar_6 * (gl_Normal * unity_Scale.w));
   vec4 tmpvar_7;
   tmpvar_7.w = 1.0;

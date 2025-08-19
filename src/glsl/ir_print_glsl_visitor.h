@@ -34,9 +34,12 @@ enum PrintGlslMode {
 	kPrintGlslFragment,
 };
 
+typedef const char* (*filter_name_f)(const char*, int mode, long id);
+
 extern char* _mesa_print_ir_glsl(exec_list *instructions,
 			struct _mesa_glsl_parse_state *state,
-			char* buf, PrintGlslMode mode);
+			char* buf, PrintGlslMode mode,
+			filter_name_f filter_name);
 
 
 

@@ -4,7 +4,7 @@ uniform vec4 _MainTex_ST;
 uniform mat4 _Object2World;
 uniform vec4 _WorldSpaceLightPos0;
 uniform vec4 unity_Scale;
-varying vec4 xlv_FOG;
+out vec4 xlv_FOG;
 void main ()
 {
   vec4 tmpvar_1;
@@ -13,9 +13,9 @@ void main ()
   tmpvar_1.xy = ((gl_MultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
   tmpvar_1.zw = ((gl_MultiTexCoord1.xy * _Detail_ST.xy) + _Detail_ST.zw);
   mat3 tmpvar_3;
-  tmpvar_3[0] = _Object2World[0].xyz;
-  tmpvar_3[1] = _Object2World[1].xyz;
-  tmpvar_3[2] = _Object2World[2].xyz;
+  tmpvar_3[uint(0)] = _Object2World[0].xyz;
+  tmpvar_3[1u] = _Object2World[1].xyz;
+  tmpvar_3[2u] = _Object2World[2].xyz;
   gl_Position = pos_2;
   vec4 tmpvar_4;
   tmpvar_4.yzw = vec3(0.0, 0.0, 0.0);

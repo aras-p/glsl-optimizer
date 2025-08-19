@@ -20,7 +20,7 @@ void main ()
   uv_2.x = ((tmpvar_7 * tmpvar_1.x) - (tmpvar_6 * tmpvar_1.y));
   uv_2.y = ((tmpvar_6 * tmpvar_1.x) + (tmpvar_7 * tmpvar_1.y));
   uv_2 = (uv_2 + _CenterRadius.xy);
-  gl_FragData[0] = texture2D (_MainTex, uv_2);
+  gl_FragData[0] = texture (_MainTex, uv_2);
 }
 
 

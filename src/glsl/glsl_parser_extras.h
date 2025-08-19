@@ -215,7 +215,7 @@ struct _mesa_glsl_parse_state {
    struct {
       unsigned ver;
       bool es;
-   } supported_versions[12];
+   } supported_versions[32];
 
    bool es_shader;
    bool metal_target;

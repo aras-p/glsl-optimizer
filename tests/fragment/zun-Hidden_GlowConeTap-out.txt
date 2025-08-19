@@ -7,9 +7,9 @@ void main ()
   tmpvar_1 = gl_TexCoord[0];
   tmpvar_2 = gl_TexCoord[1];
   vec4 c_3;
-  c_3 = (texture2D (_MainTex, tmpvar_1.xy) + texture2D (_MainTex, tmpvar_1.zw));
-  c_3 = (c_3 + texture2D (_MainTex, tmpvar_2.xy));
-  c_3 = (c_3 + texture2D (_MainTex, tmpvar_2.zw));
+  c_3 = (texture (_MainTex, tmpvar_1.xy) + texture (_MainTex, tmpvar_1.zw));
+  c_3 = (c_3 + texture (_MainTex, tmpvar_2.xy));
+  c_3 = (c_3 + texture (_MainTex, tmpvar_2.zw));
   c_3.xyz = (c_3.xyz * _Color.xyz);
   gl_FragData[0] = (c_3 * _Color.w);
 }

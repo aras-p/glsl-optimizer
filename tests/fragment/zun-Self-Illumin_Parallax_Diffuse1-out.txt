@@ -17,17 +17,17 @@ void main ()
   tmpvar_6 = normalize(gl_TexCoord[1].xyz);
   v_5.xy = tmpvar_6.xy;
   v_5.z = (tmpvar_6.z + 0.42);
-  tmpvar_4 = (((texture2D (_ParallaxMap, tmpvar_1.zw).w * _Parallax) - (_Parallax / 2.0)) * (tmpvar_6.xy / v_5.z));
-  c_3 = (texture2D (_MainTex, (tmpvar_1.xy + tmpvar_4)) * _Color);
+  tmpvar_4 = (((texture (_ParallaxMap, tmpvar_1.zw).w * _Parallax) - (_Parallax / 2.0)) * (tmpvar_6.xy / v_5.z));
+  c_3 = (texture (_MainTex, (tmpvar_1.xy + tmpvar_4)) * _Color);
   vec4 normal_7;
-  normal_7.xy = ((texture2D (_BumpMap, (tmpvar_1.zw + tmpvar_4)).wy * 2.0) - 1.0);
+  normal_7.xy = ((texture (_BumpMap, (tmpvar_1.zw + tmpvar_4)).wy * 2.0) - 1.0);
   normal_7.z = sqrt(((1.0 - 
     (normal_7.x * normal_7.x)
   ) - (normal_7.y * normal_7.y)));
   vec4 c_8;
   c_8.xyz = ((c_3.xyz * _LightColor0.xyz) * ((
     max (0.0, dot (normal_7.xyz, gl_TexCoord[2].xyz))
-   * texture2D (_LightTexture0, gl_TexCoord[3].xy).w) * 2.0));
+   * texture (_LightTexture0, gl_TexCoord[3].xy).w) * 2.0));
   c_8.w = c_3.w;
   c_2.xyz = c_8.xyz;
   c_2.w = 0.0;

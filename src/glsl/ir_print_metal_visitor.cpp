@@ -132,7 +132,9 @@ struct metal_print_context
 
 class ir_print_metal_visitor : public ir_visitor {
 public:
-	ir_print_metal_visitor(metal_print_context& ctx_, string_buffer& buf, global_print_tracker_metal* globals_, PrintGlslMode mode_, const _mesa_glsl_parse_state* state_)
+	static const char* filter_name_null(const char* const name, int mode, long id) { return name; }
+
+	ir_print_metal_visitor(metal_print_context& ctx_, string_buffer& buf, global_print_tracker_metal* globals_, PrintGlslMode mode_, const _mesa_glsl_parse_state* state_, filter_name_f filter_name_)
 		: ctx(ctx_)
 		, buffer(buf)
 		, loopstate(NULL)
@@ -141,6 +143,7 @@ public:
 		, skipped_this_ir(false)
 		, previous_skipped(false)
 		, mode_whole(mode_)
+		, filter_name(filter_name_ ? filter_name_ : filter_name_null)
 	{
 		indentation = 0;
 		expression_depth = 0;
@@ -199,13 +202,15 @@ public:
 	bool	inside_lhs;
 	bool	skipped_this_ir;
 	bool	previous_skipped;
+	filter_name_f filter_name;
 };
 
 
 char*
 _mesa_print_ir_metal(exec_list *instructions,
-	    struct _mesa_glsl_parse_state *state,
-		char* buffer, PrintGlslMode mode, int* outUniformsSize)
+		struct _mesa_glsl_parse_state *state,
+		char* buffer, PrintGlslMode mode, int* outUniformsSize,
+		filter_name_f filter_name)
 {
 	metal_print_context ctx(buffer);
 
@@ -272,7 +277,7 @@ _mesa_print_ir_metal(exec_list *instructions,
 			strOut = &ctx.typedeclStr;
 		}
 
-		ir_print_metal_visitor v (ctx, *strOut, &gtracker, mode, state);
+		ir_print_metal_visitor v (ctx, *strOut, &gtracker, mode, state, filter_name);
 		v.loopstate = ls;
 
 		ir->accept(&v);
@@ -302,7 +307,7 @@ _mesa_print_ir_metal(exec_list *instructions,
 	{
 		ir_constant* c = node->ir;
 
-		ir_print_metal_visitor v (ctx, ctx.prefixStr, &gtracker, mode, state);
+		ir_print_metal_visitor v (ctx, ctx.prefixStr, &gtracker, mode, state, filter_name);
 
 		v.buffer.asprintf_append ("constant ");
 		print_type(v.buffer, c, c->type, false);
@@ -319,17 +324,29 @@ _mesa_print_ir_metal(exec_list *instructions,
 				c->get_array_element(i)->accept(&v);
 			}
 		}
-		else
+		else if (c->type->is_record())
 		{
-			assert(c->type->is_record());
-			bool first = true;
+			int i = 0;
+
 			foreach_in_list(ir_constant, inst, &c->components)
 			{
-				if (!first)
+				if (i > 0) {
 					v.buffer.asprintf_append (", ");
-				first = false;
+				}
+
+				// Hack to get (more) correct precision for constants.
+				ir_constant inst_ = (*inst);
+				if (inst->get_precision() == glsl_precision_undefined) {
+					inst_.set_precision(c->type->fields.structure[i].precision);
+					inst = &inst_;
+				}
+
 				inst->accept(&v);
+				++i;
 			}
+		}
+		else {
+			assert(false);
 		}
 		v.buffer.asprintf_append ("};\n");
 	}
@@ -385,22 +402,22 @@ void ir_print_metal_visitor::newline_deindent()
 
 void ir_print_metal_visitor::print_var_name (ir_variable* v)
 {
-    long id = (long)hash_table_find (globals->var_hash, v);
+	long id = (long)hash_table_find (globals->var_hash, v);
 	if (!id && v->data.mode == ir_var_temporary)
 	{
-        id = ++globals->var_counter;
-        hash_table_insert (globals->var_hash, (void*)id, v);
+		id = ++globals->var_counter;
+		hash_table_insert (globals->var_hash, (void*)id, v);
 	}
-    if (id)
-    {
-        if (v->data.mode == ir_var_temporary)
-            buffer.asprintf_append ("tmpvar_%d", (int)id);
-        else
-            buffer.asprintf_append ("%s_%d", v->name, (int)id);
-    }
+	if (id)
+	{
+		if (v->data.mode == ir_var_temporary)
+			buffer.asprintf_append ("tmpvar_%d", (int)id);
+		else
+			buffer.asprintf_append ("%s_%d", filter_name(v->name, v->data.mode, id), (int)id);
+	}
 	else
 	{
-		buffer.asprintf_append ("%s", v->name);
+		buffer.asprintf_append ("%s", filter_name(v->name, v->data.mode, id));
 	}
 }
 
@@ -1100,6 +1117,18 @@ void ir_print_metal_visitor::visit(ir_expression *ir)
 	}
 	else if (ir->get_num_operands() == 2)
 	{
+		if (ir->operands[0] && ir->operands[1] && ir->operands[0]->type->is_vector() && ir->operands[1]->type->is_vector())
+		{
+			if (ir->operation == ir_binop_all_equal)
+			{
+				buffer.asprintf_append("all");
+			}
+			else if (ir->operation == ir_binop_any_nequal)
+			{
+				buffer.asprintf_append("any");
+			}
+		}
+
 		// regular binary operator
 		buffer.asprintf_append ("(");
 		if (ir->operands[0])

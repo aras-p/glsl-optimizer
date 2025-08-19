@@ -1,4 +1,4 @@
-varying vec4 texcoord;
+out vec4 texcoord;
 void main ()
 {
   gl_Position.zw = (gl_Vertex.xy * 2.0);

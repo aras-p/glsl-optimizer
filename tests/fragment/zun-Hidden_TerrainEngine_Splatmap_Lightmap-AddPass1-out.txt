@@ -14,12 +14,12 @@ void main ()
   vec4 light_3;
   vec3 col_4;
   vec4 tmpvar_5;
-  tmpvar_5 = texture2D (_Control, tmpvar_1.xy);
-  col_4 = (tmpvar_5.x * texture2D (_Splat0, tmpvar_1.zw).xyz);
-  col_4 = (col_4 + (tmpvar_5.y * texture2D (_Splat1, tmpvar_2.xy).xyz));
-  col_4 = (col_4 + (tmpvar_5.z * texture2D (_Splat2, tmpvar_2.zw).xyz));
-  col_4 = (col_4 + (tmpvar_5.w * texture2D (_Splat3, gl_TexCoord[2].xy).xyz));
-  light_3 = -(log2(texture2DProj (_LightBuffer, gl_TexCoord[3])));
+  tmpvar_5 = texture (_Control, tmpvar_1.xy);
+  col_4 = (tmpvar_5.x * texture (_Splat0, tmpvar_1.zw).xyz);
+  col_4 = (col_4 + (tmpvar_5.y * texture (_Splat1, tmpvar_2.xy).xyz));
+  col_4 = (col_4 + (tmpvar_5.z * texture (_Splat2, tmpvar_2.zw).xyz));
+  col_4 = (col_4 + (tmpvar_5.w * texture (_Splat3, gl_TexCoord[2].xy).xyz));
+  light_3 = -(log2(textureProj (_LightBuffer, gl_TexCoord[3])));
   light_3.xyz = (light_3.xyz + unity_Ambient.xyz);
   vec4 c_6;
   c_6.xyz = (col_4 * light_3.xyz);

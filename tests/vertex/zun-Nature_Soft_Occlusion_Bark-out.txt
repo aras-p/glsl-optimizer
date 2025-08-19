@@ -7,7 +7,7 @@ uniform vec4 _SquashPlaneNormal;
 uniform mat4 _TerrainEngineBendTree;
 uniform vec4 _WorldSpaceLightPos0;
 uniform vec4 unity_Scale;
-varying vec4 xlv_FOG;
+out vec4 xlv_FOG;
 void main ()
 {
   vec4 pos_1;
@@ -29,9 +29,9 @@ void main ()
   vec4 pos_5;
   pos_5 = (gl_ModelViewProjectionMatrix * tmpvar_4);
   mat3 tmpvar_6;
-  tmpvar_6[0] = _Object2World[0].xyz;
-  tmpvar_6[1] = _Object2World[1].xyz;
-  tmpvar_6[2] = _Object2World[2].xyz;
+  tmpvar_6[uint(0)] = _Object2World[0].xyz;
+  tmpvar_6[1u] = _Object2World[1].xyz;
+  tmpvar_6[2u] = _Object2World[2].xyz;
   gl_Position = pos_5;
   vec4 tmpvar_7;
   tmpvar_7.yzw = vec3(0.0, 0.0, 0.0);

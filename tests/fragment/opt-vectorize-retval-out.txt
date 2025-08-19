@@ -1,7 +1,7 @@
 uniform float _Fresnel;
 uniform float _SpecIntensity;
-varying vec3 inN;
-varying vec3 inE;
+in vec3 inN;
+in vec3 inE;
 void main ()
 {
   vec3 p_1;

@@ -31,6 +31,7 @@
 
 extern char* _mesa_print_ir_metal(exec_list *instructions,
 			struct _mesa_glsl_parse_state *state,
-			char* buf, PrintGlslMode mode, int* outUniformsSize);
+			char* buf, PrintGlslMode mode, int* outUniformsSize,
+			filter_name_f filter_name);
 
 #endif /* IR_PRINT_GLSL_VISITOR_H */

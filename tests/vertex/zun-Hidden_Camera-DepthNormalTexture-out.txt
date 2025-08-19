@@ -23,9 +23,9 @@ void main ()
    * _SquashPlaneNormal.xyz)), pos_2.xyz, vec3(_SquashAmount));
   pos_2 = tmpvar_5;
   mat3 tmpvar_6;
-  tmpvar_6[0] = gl_ModelViewMatrixInverseTranspose[0].xyz;
-  tmpvar_6[1] = gl_ModelViewMatrixInverseTranspose[1].xyz;
-  tmpvar_6[2] = gl_ModelViewMatrixInverseTranspose[2].xyz;
+  tmpvar_6[uint(0)] = gl_ModelViewMatrixInverseTranspose[0].xyz;
+  tmpvar_6[1u] = gl_ModelViewMatrixInverseTranspose[1].xyz;
+  tmpvar_6[2u] = gl_ModelViewMatrixInverseTranspose[2].xyz;
   tmpvar_1.xyz = (tmpvar_6 * gl_Normal);
   tmpvar_1.w = -(((gl_ModelViewMatrix * tmpvar_5).z * _ProjectionParams.w));
   gl_Position = (gl_ModelViewProjectionMatrix * tmpvar_5);

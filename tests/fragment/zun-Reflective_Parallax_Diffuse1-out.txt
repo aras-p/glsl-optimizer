@@ -30,11 +30,11 @@ void main ()
   tmpvar_11 = normalize(gl_TexCoord[1].xyz);
   v_10.xy = tmpvar_11.xy;
   v_10.z = (tmpvar_11.z + 0.42);
-  tmpvar_9 = (((texture2D (_ParallaxMap, tmpvar_1.zw).w * _Parallax) - (_Parallax / 2.0)) * (tmpvar_11.xy / v_10.z));
+  tmpvar_9 = (((texture (_ParallaxMap, tmpvar_1.zw).w * _Parallax) - (_Parallax / 2.0)) * (tmpvar_11.xy / v_10.z));
   vec4 tmpvar_12;
-  tmpvar_12 = texture2D (_MainTex, (tmpvar_1.xy + tmpvar_9));
+  tmpvar_12 = texture (_MainTex, (tmpvar_1.xy + tmpvar_9));
   vec4 normal_13;
-  normal_13.xy = ((texture2D (_BumpMap, (tmpvar_1.zw + tmpvar_9)).wy * 2.0) - 1.0);
+  normal_13.xy = ((texture (_BumpMap, (tmpvar_1.zw + tmpvar_9)).wy * 2.0) - 1.0);
   normal_13.z = sqrt(((1.0 - 
     (normal_13.x * normal_13.x)
   ) - (normal_13.y * normal_13.y)));
@@ -42,10 +42,10 @@ void main ()
   tmpvar_14.x = dot (tmpvar_2.xyz, normal_13.xyz);
   tmpvar_14.y = dot (tmpvar_3.xyz, normal_13.xyz);
   tmpvar_14.z = dot (tmpvar_4.xyz, normal_13.xyz);
-  reflcol_8 = (textureCube (_Cube, (tmpvar_7 - (2.0 * 
+  reflcol_8 = (texture (_Cube, (tmpvar_7 - (2.0 * 
     (dot (tmpvar_14, tmpvar_7) * tmpvar_14)
   ))) * tmpvar_12.w);
-  light_6 = -(log2(texture2DProj (_LightBuffer, gl_TexCoord[2])));
+  light_6 = -(log2(textureProj (_LightBuffer, gl_TexCoord[2])));
   light_6.xyz = (light_6.xyz + unity_Ambient.xyz);
   vec4 c_15;
   c_15.xyz = ((tmpvar_12 * _Color).xyz * light_6.xyz);

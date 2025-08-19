@@ -1,0 +1,72 @@
+# This starter workflow is for a CMake project running on multiple platforms. There is a different starter workflow if you just want a single platform.
+# See: https://github.com/actions/starter-workflows/blob/main/ci/cmake-single-platform.yml
+name: CMake on multiple platforms
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      # Set fail-fast to false to ensure that feedback is delivered for all matrix combinations. Consider changing this to true when your workflow is stable.
+      fail-fast: false
+
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+        build_type: [Debug, Release]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set reusable strings
+      # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
+      id: strings
+      shell: bash
+      run: |
+        echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+
+    - name: Install dependencies
+      if: runner.os == 'Linux'
+      uses: awalsh128/cache-apt-pkgs-action@latest
+      with:
+        packages: libgl1-mesa-dev libglu1-mesa-dev mesa-utils xvfb
+        version: 1.0
+
+    - name: Configure CMake
+      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
+      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
+      run: |
+        cmake -S ${{ github.workspace }} -B ${{ steps.strings.outputs.build-output-dir }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+
+    - name: Build
+      # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
+      run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
+
+    - name: Test
+      if: runner.os == 'MacOS'
+      working-directory: ${{ steps.strings.outputs.build-output-dir }}
+      # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
+      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
+      run: |
+        ./glsl_test ${{ github.workspace }}/tests
+
+#    - name: Test
+#      if: runner.os == 'Linux'
+#      working-directory: ${{ steps.strings.outputs.build-output-dir }}
+#      # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
+#      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
+#      run: |
+#        xvfb-run ./glsl_test ${{ github.workspace }}/tests
+
+    - name: Test
+      if: runner.os == 'Windows'
+      working-directory: ${{ steps.strings.outputs.build-output-dir }}
+      # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
+      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
+      run: |
+        ${{ matrix.build_type }}/glsl_test ${{ github.workspace }}/tests

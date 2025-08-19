@@ -1,0 +1,30 @@
+#version 300 es
+
+// Metal translation was not producing required any/all
+// for comparing vector operands using == or != (which
+// GLSL does implicitly according to spec).
+
+uniform highp float u_x;
+uniform highp float u_y;
+uniform highp vec4 u_u4;
+uniform highp vec4 u_v4;
+
+out highp vec3 xlv_out;
+
+void main()
+{
+  if ((u_x == u_y) || (u_u4 == u_v4))
+  {
+    xlv_out = vec3(0.0);
+  }
+  else if ((u_x != u_y) || (u_u4 != u_v4))
+  {
+    xlv_out = vec3(1.0);
+  }
+    else
+  {
+    xlv_out = vec3(2.0);
+  }
+
+  gl_Position = vec4(xlv_out, 1.0);
+}

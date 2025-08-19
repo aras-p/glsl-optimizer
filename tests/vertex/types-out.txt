@@ -1,6 +1,6 @@
 uniform mat4 mvp;
-varying vec2 xlv_TEXCOORD0;
-varying vec4 xlv_COLOR;
+out vec2 xlv_TEXCOORD0;
+out vec4 xlv_COLOR;
 void main ()
 {
   vec4 tmpvar_1;

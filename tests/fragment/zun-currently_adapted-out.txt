@@ -8,8 +8,8 @@ void main ()
   vec4 valNew_2;
   vec2 delta_3;
   vec4 tmpvar_4;
-  tmpvar_4 = texture2D (_MainTex, tmpvar_1);
-  delta_3 = ((texture2D (_CurTex, tmpvar_1).xy - tmpvar_4.xy) * _AdaptParams.x);
+  tmpvar_4 = texture (_MainTex, tmpvar_1);
+  delta_3 = ((texture (_CurTex, tmpvar_1).xy - tmpvar_4.xy) * _AdaptParams.x);
   delta_3 = (sign(delta_3) * max (vec2(0.00392157, 0.00392157), abs(delta_3)));
   valNew_2.xy = (tmpvar_4.xy + delta_3);
   valNew_2.x = max (valNew_2.x, _AdaptParams.z);

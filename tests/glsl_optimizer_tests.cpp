@@ -320,17 +320,29 @@ static bool CheckMetal (bool vertex, bool gles, const std::string& testName, con
 #if !GOT_GFX || !defined(__APPLE__)
 	return true; // just assume it's ok
 #else
-	
+
 	FILE* f = fopen ("metalTemp.metal", "wb");
 	fwrite (source.c_str(), source.size(), 1, f);
 	fclose (f);
-	
-	int res = system("/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/usr/bin/metal metalTemp.metal -o metalTemp.o -std=ios-metal1.0 -Wno-parentheses-equality");
-	if (res != 0)
+
 	{
-		printf ("\n  %s: Metal compiler failed\n", testName.c_str());
-		return false;
+		int res = system("/usr/bin/xcrun metal metalTemp.metal -o metalTemp-ios.o -std=ios-metal2.4 -Wno-parentheses-equality");
+		if (res != 0)
+		{
+			printf ("\n  %s: iOS Metal compiler failed\n", testName.c_str());
+			return false;
+		}
 	}
+
+	{
+		int res = system("/usr/bin/xcrun metal metalTemp.metal -o metalTemp-macos.o -std=macos-metal2.4 -Wno-parentheses-equality");
+		if (res != 0)
+		{
+			printf ("\n  %s: macOS Metal compiler failed\n", testName.c_str());
+			return false;
+		}
+	}
+
 	return true;
 #endif
 }

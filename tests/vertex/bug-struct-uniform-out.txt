@@ -2,7 +2,7 @@ struct shadow_map_t {
   mat4 transform;
 };
 uniform shadow_map_t ShadowMaps[1];
-attribute vec3 _in_position;
+in vec3 _in_position;
 void main ()
 {
   vec4 tmpvar_1;

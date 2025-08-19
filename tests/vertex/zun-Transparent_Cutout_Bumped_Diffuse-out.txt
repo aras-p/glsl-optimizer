@@ -2,8 +2,8 @@ uniform vec4 _BumpMap_ST;
 uniform vec4 _MainTex_ST;
 uniform mat4 _World2Object;
 uniform vec4 _WorldSpaceLightPos0;
-attribute vec4 TANGENT;
-varying vec4 xlv_FOG;
+in vec4 TANGENT;
+out vec4 xlv_FOG;
 void main ()
 {
   vec3 binormal_1;
@@ -14,15 +14,15 @@ void main ()
   tmpvar_2.zw = ((gl_MultiTexCoord0.xy * _BumpMap_ST.xy) + _BumpMap_ST.zw);
   binormal_1 = (((gl_Normal.yzx * TANGENT.zxy) - (gl_Normal.zxy * TANGENT.yzx)) * TANGENT.w);
   mat3 tmpvar_4;
-  tmpvar_4[0].x = TANGENT.x;
-  tmpvar_4[0].y = binormal_1.x;
-  tmpvar_4[0].z = gl_Normal.x;
-  tmpvar_4[1].x = TANGENT.y;
-  tmpvar_4[1].y = binormal_1.y;
-  tmpvar_4[1].z = gl_Normal.y;
-  tmpvar_4[2].x = TANGENT.z;
-  tmpvar_4[2].y = binormal_1.z;
-  tmpvar_4[2].z = gl_Normal.z;
+  tmpvar_4[uint(0)].x = TANGENT.x;
+  tmpvar_4[uint(0)].y = binormal_1.x;
+  tmpvar_4[uint(0)].z = gl_Normal.x;
+  tmpvar_4[1u].x = TANGENT.y;
+  tmpvar_4[1u].y = binormal_1.y;
+  tmpvar_4[1u].z = gl_Normal.y;
+  tmpvar_4[2u].x = TANGENT.z;
+  tmpvar_4[2u].y = binormal_1.z;
+  tmpvar_4[2u].z = gl_Normal.z;
   gl_Position = pos_3;
   vec4 tmpvar_5;
   tmpvar_5.yzw = vec3(0.0, 0.0, 0.0);

@@ -23,11 +23,11 @@ void main ()
   tmpvar_7 = normalize(tmpvar_2);
   v_6.xy = tmpvar_7.xy;
   v_6.z = (tmpvar_7.z + 0.42);
-  tmpvar_5 = (((texture2D (_ParallaxMap, tmpvar_1.zw).w * _Parallax) - (_Parallax / 2.0)) * (tmpvar_7.xy / v_6.z));
+  tmpvar_5 = (((texture (_ParallaxMap, tmpvar_1.zw).w * _Parallax) - (_Parallax / 2.0)) * (tmpvar_7.xy / v_6.z));
   vec4 tmpvar_8;
-  tmpvar_8 = texture2D (_MainTex, (tmpvar_1.xy + tmpvar_5));
+  tmpvar_8 = texture (_MainTex, (tmpvar_1.xy + tmpvar_5));
   vec4 normal_9;
-  normal_9.xy = ((texture2D (_BumpMap, (tmpvar_1.zw + tmpvar_5)).wy * 2.0) - 1.0);
+  normal_9.xy = ((texture (_BumpMap, (tmpvar_1.zw + tmpvar_5)).wy * 2.0) - 1.0);
   normal_9.z = sqrt(((1.0 - 
     (normal_9.x * normal_9.x)
   ) - (normal_9.y * normal_9.y)));
@@ -36,9 +36,9 @@ void main ()
   float atten_11;
   atten_11 = ((float(
     (tmpvar_3.z > 0.0)
-  ) * texture2D (_LightTexture0, (
+  ) * texture (_LightTexture0, (
     (tmpvar_3.xy / tmpvar_3.w)
-   + 0.5)).w) * texture2D (_LightTextureB0, vec2(dot (tmpvar_3.xyz, tmpvar_3.xyz))).w);
+   + 0.5)).w) * texture (_LightTextureB0, vec2(dot (tmpvar_3.xyz, tmpvar_3.xyz))).w);
   vec4 c_12;
   float spec_13;
   spec_13 = (pow (max (0.0, 

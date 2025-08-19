@@ -8,7 +8,7 @@ void main ()
   vec4 c_1;
   float tmpvar_2;
   vec4 c_3;
-  c_3 = (texture2D (_MainTex, gl_TexCoord[0].xy) * gl_Color);
+  c_3 = (texture (_MainTex, gl_TexCoord[0].xy) * gl_Color);
   tmpvar_2 = c_3.w;
   float x_4;
   x_4 = (c_3.w - _Cutoff);
@@ -18,7 +18,7 @@ void main ()
   vec4 c_5;
   c_5.xyz = ((c_3.xyz * _LightColor0.xyz) * ((
     max (0.0, dot (gl_TexCoord[1].xyz, _WorldSpaceLightPos0.xyz))
-   * texture2DProj (_ShadowMapTexture, gl_TexCoord[3]).x) * 2.0));
+   * textureProj (_ShadowMapTexture, gl_TexCoord[3]).x) * 2.0));
   c_5.w = tmpvar_2;
   c_1.xyz = (c_5.xyz + (c_3.xyz * gl_TexCoord[2].xyz));
   c_1.w = tmpvar_2;

@@ -9,14 +9,14 @@ void main ()
   vec4 light_1;
   float tmpvar_2;
   vec4 tmpvar_3;
-  tmpvar_3 = texture2D (_MainTex, gl_TexCoord[0].xy);
+  tmpvar_3 = texture (_MainTex, gl_TexCoord[0].xy);
   tmpvar_2 = (tmpvar_3.w * _Color.w);
   float x_4;
   x_4 = (tmpvar_2 - _Cutoff);
   if ((x_4 < 0.0)) {
     discard;
   };
-  light_1 = -(log2(texture2DProj (_LightBuffer, gl_TexCoord[1])));
+  light_1 = -(log2(textureProj (_LightBuffer, gl_TexCoord[1])));
   light_1.xyz = (light_1.xyz + unity_Ambient.xyz);
   vec4 c_5;
   float spec_6;

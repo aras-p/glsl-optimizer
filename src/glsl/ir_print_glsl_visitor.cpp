@@ -29,8 +29,9 @@
 #include "loop_analysis.h"
 #include "program/hash_table.h"
 #include <math.h>
+#include <algorithm>
 #include <limits>
-
+#include <string>
 
 static void print_type(string_buffer& buffer, const glsl_type *t, bool arraySize);
 static void print_type_post(string_buffer& buffer, const glsl_type *t, bool arraySize);
@@ -89,7 +90,9 @@ struct global_print_tracker {
 
 class ir_print_glsl_visitor : public ir_visitor {
 public:
-	ir_print_glsl_visitor(string_buffer& buf, global_print_tracker* globals_, PrintGlslMode mode_, bool use_precision_, const _mesa_glsl_parse_state* state_)
+	static const char* filter_name_null(const char* const name, int mode, long id) { return name; }
+
+	ir_print_glsl_visitor(string_buffer& buf, global_print_tracker* globals_, PrintGlslMode mode_, bool use_precision_, const _mesa_glsl_parse_state* state_, filter_name_f filter_name_)
 		: buffer(buf)
 		, loopstate(NULL)
 		, inside_loop_body(false)
@@ -97,6 +100,7 @@ public:
 		, previous_skipped(false)
 		, uses_texlod_impl(0)
 		, uses_texlodproj_impl(0)
+		, filter_name(filter_name_ ? filter_name_ : filter_name_null)
 	{
 		indentation = 0;
 		expression_depth = 0;
@@ -158,6 +162,7 @@ public:
 	bool	previous_skipped;
 	int		uses_texlod_impl; // 3 bits per tex_dimension, bit set for each precision if any texture sampler needs the GLES2 lod workaround.
 	int		uses_texlodproj_impl; // 3 bits per tex_dimension, bit set for each precision if any texture sampler needs the GLES2 lod workaround.
+	filter_name_f filter_name;
 };
 
 static void print_texlod_workarounds(int usage_bitfield, int usage_proj_bitfield, string_buffer &str)
@@ -214,8 +219,9 @@ static void print_texlod_workarounds(int usage_bitfield, int usage_proj_bitfield
 
 char*
 _mesa_print_ir_glsl(exec_list *instructions,
-	    struct _mesa_glsl_parse_state *state,
-		char* buffer, PrintGlslMode mode)
+		struct _mesa_glsl_parse_state *state,
+		char* buffer, PrintGlslMode mode,
+		filter_name_f filter_name)
 {
 	string_buffer str(buffer);
 	string_buffer body(buffer);
@@ -278,7 +284,7 @@ _mesa_print_ir_glsl(exec_list *instructions,
 				continue;
 		}
 
-		ir_print_glsl_visitor v (body, &gtracker, mode, state->es_shader, state);
+		ir_print_glsl_visitor v (body, &gtracker, mode, state->es_shader, state, filter_name);
 		v.loopstate = ls;
 
 		ir->accept(&v);
@@ -326,6 +332,7 @@ void ir_print_glsl_visitor::newline_indent()
 		indent();
 	}
 }
+
 void ir_print_glsl_visitor::newline_deindent()
 {
 	if (expression_depth % 4 == 0)
@@ -336,25 +343,24 @@ void ir_print_glsl_visitor::newline_deindent()
 	}
 }
 
-
 void ir_print_glsl_visitor::print_var_name (ir_variable* v)
 {
-    long id = (long)hash_table_find (globals->var_hash, v);
+	long id = (long)hash_table_find (globals->var_hash, v);
 	if (!id && v->data.mode == ir_var_temporary)
 	{
-        id = ++globals->var_counter;
-        hash_table_insert (globals->var_hash, (void*)id, v);
+		id = ++globals->var_counter;
+		hash_table_insert (globals->var_hash, (void*)id, v);
 	}
-    if (id)
-    {
-        if (v->data.mode == ir_var_temporary)
-            buffer.asprintf_append ("tmpvar_%d", (int)id);
-        else
-            buffer.asprintf_append ("%s_%d", v->name, (int)id);
-    }
+	if (id)
+	{
+		if (v->data.mode == ir_var_temporary)
+			buffer.asprintf_append ("tmpvar_%d", (int)id);
+		else
+			buffer.asprintf_append ("%s_%d", filter_name(v->name, v->data.mode, id), (int)id);
+	}
 	else
 	{
-		buffer.asprintf_append ("%s", v->name);
+		buffer.asprintf_append ("%s", filter_name(v->name, v->data.mode, id));
 	}
 }
 
@@ -931,7 +937,7 @@ void ir_print_glsl_visitor::visit(ir_texture *ir)
 	ir->coordinate->accept(this);
 	
 	// lod
-	if (ir->op == ir_txl || ir->op == ir_txf)
+	if ((ir->op == ir_txl || ir->op == ir_txf) && ir_texture::has_lod(ir->sampler->type))
 	{
 		buffer.asprintf_append (", ");
 		ir->lod_info.lod->accept(this);
@@ -1327,15 +1333,14 @@ void print_float (string_buffer& buffer, float f)
 	if (f != f)
 		strcpy(tmp, "(0.0/0.0)");
 
-	#if _MSC_VER
 	// While gcc would print something like 1.0e+07, MSVC will print 1.0e+007 -
-	// only for exponential notation, it seems, will add one extra useless zero. Let's try to remove
-	// that so compiler output matches.
+	// Remove leading zeroes from exponent across platforms.
 	if (posE != NULL)
 	{
 		if((posE[1] == '+' || posE[1] == '-') && posE[2] == '0')
 		{
 			char* p = posE+2;
+			while (p[1] == '0') ++p;
 			while (p[0])
 			{
 				p[0] = p[1];
@@ -1343,7 +1348,6 @@ void print_float (string_buffer& buffer, float f)
 			}
 		}
 	}
-	#endif
 
 	buffer.asprintf_append ("%s", tmp);
 

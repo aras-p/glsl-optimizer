@@ -13,15 +13,15 @@ void main ()
   tmpvar_2 = gl_TexCoord[4];
   vec4 c_3;
   vec4 tmpvar_4;
-  tmpvar_4 = texture2D (_MainTex, gl_TexCoord[0].xy);
+  tmpvar_4 = texture (_MainTex, gl_TexCoord[0].xy);
   vec3 tmpvar_5;
   tmpvar_5 = normalize(gl_TexCoord[2].xyz);
   float atten_6;
   atten_6 = ((float(
     (tmpvar_2.z > 0.0)
-  ) * texture2D (_LightTexture0, (
+  ) * texture (_LightTexture0, (
     (tmpvar_2.xy / tmpvar_2.w)
-   + 0.5)).w) * texture2D (_LightTextureB0, vec2(dot (tmpvar_2.xyz, tmpvar_2.xyz))).w);
+   + 0.5)).w) * texture (_LightTextureB0, vec2(dot (tmpvar_2.xyz, tmpvar_2.xyz))).w);
   vec4 c_7;
   float spec_8;
   spec_8 = (pow (max (0.0, 

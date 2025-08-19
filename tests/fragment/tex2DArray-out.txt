@@ -1,9 +1,9 @@
 #extension GL_EXT_texture_array : enable
 uniform sampler2DArray myarr;
-varying vec4 uv;
+in vec4 uv;
 void main ()
 {
-  gl_FragData[0] = ((texture2DArray (myarr, uv.xyz) + texture2DArray (myarr, uv.xyw)) + texture2DArray (myarr, uv.xyz, 1.5));
+  gl_FragData[0] = ((textureArray (myarr, uv.xyz) + textureArray (myarr, uv.xyw)) + textureArray (myarr, uv.xyz, 1.5));
 }
 
 

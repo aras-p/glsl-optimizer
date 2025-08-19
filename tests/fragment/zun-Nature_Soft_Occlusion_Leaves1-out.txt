@@ -7,13 +7,13 @@ void main ()
 {
   vec4 light_1;
   vec4 c_2;
-  c_2 = (texture2D (_MainTex, gl_TexCoord[0].xy) * _Color);
+  c_2 = (texture (_MainTex, gl_TexCoord[0].xy) * _Color);
   float x_3;
   x_3 = (c_2.w - _Cutoff);
   if ((x_3 < 0.0)) {
     discard;
   };
-  light_1 = -(log2(texture2DProj (_LightBuffer, gl_TexCoord[1])));
+  light_1 = -(log2(textureProj (_LightBuffer, gl_TexCoord[1])));
   light_1.xyz = (light_1.xyz + unity_Ambient.xyz);
   vec4 c_4;
   c_4.xyz = (c_2.xyz * light_1.xyz);

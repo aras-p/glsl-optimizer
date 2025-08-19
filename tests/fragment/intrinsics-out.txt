@@ -1,4 +1,4 @@
-varying vec4 xlv_TEXCOORD0;
+in vec4 xlv_TEXCOORD0;
 void main ()
 {
   vec4 c_1;

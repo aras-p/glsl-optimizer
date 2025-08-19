@@ -7,7 +7,7 @@ void main ()
   vec4 c_1;
   float tmpvar_2;
   vec4 c_3;
-  c_3 = (texture2D (_MainTex, gl_TexCoord[0].xy) * gl_Color);
+  c_3 = (texture (_MainTex, gl_TexCoord[0].xy) * gl_Color);
   tmpvar_2 = c_3.w;
   float x_4;
   x_4 = (c_3.w - _Cutoff);

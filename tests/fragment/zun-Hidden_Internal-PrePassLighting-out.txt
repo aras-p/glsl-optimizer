@@ -27,27 +27,27 @@ void main ()
   vec2 uv_9;
   uv_9 = (tmpvar_1.xy / tmpvar_1.w);
   vec4 tmpvar_10;
-  tmpvar_10 = texture2D (_CameraNormalsTexture, uv_9);
+  tmpvar_10 = texture (_CameraNormalsTexture, uv_9);
   normal_8 = ((tmpvar_10.xyz * 2.0) - 1.0);
   normal_8 = normalize(normal_8);
   vpos_7 = ((tmpvar_2 * (_ProjectionParams.z / tmpvar_2.z)) * (1.0/((
-    (_ZBufferParams.x * texture2D (_CameraDepthTexture, uv_9).x)
+    (_ZBufferParams.x * texture (_CameraDepthTexture, uv_9).x)
    + _ZBufferParams.y))));
   tolight_6 = (_LightPos.xyz - vpos_7);
   lightDir_5 = normalize(tolight_6);
-  atten_4 = texture2D (_LightTextureB0, vec2((dot (tolight_6, tolight_6) * _LightPos.w))).w;
+  atten_4 = texture (_LightTextureB0, vec2((dot (tolight_6, tolight_6) * _LightPos.w))).w;
   vec3 vec_11;
   vec_11 = -(tolight_6);
   float mydist_12;
   mat3 tmpvar_13;
-  tmpvar_13[0] = _View2Shadow[0].xyz;
-  tmpvar_13[1] = _View2Shadow[1].xyz;
-  tmpvar_13[2] = _View2Shadow[2].xyz;
+  tmpvar_13[uint(0)] = _View2Shadow[0].xyz;
+  tmpvar_13[1u] = _View2Shadow[1].xyz;
+  tmpvar_13[2u] = _View2Shadow[2].xyz;
   vec_11 = (tmpvar_13 * vec_11);
   mydist_12 = (sqrt(dot (vec_11, vec_11)) * _LightPositionRange.w);
   mydist_12 = (mydist_12 * 0.97);
   float tmpvar_14;
-  tmpvar_14 = dot (textureCube (_ShadowMapTexture, vec_11), vec4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09));
+  tmpvar_14 = dot (texture (_ShadowMapTexture, vec_11), vec4(1.0, 0.00392157, 1.53787e-5, 6.22737e-9));
   float tmpvar_15;
   if ((tmpvar_14 < mydist_12)) {
     tmpvar_15 = _LightShadowData.x;
@@ -58,7 +58,7 @@ void main ()
   vec4 tmpvar_16;
   tmpvar_16.w = 1.0;
   tmpvar_16.xyz = vpos_7;
-  atten_4 = (atten_4 * textureCube (_LightTexture0, (_ViewToCookie * tmpvar_16).xyz).w);
+  atten_4 = (atten_4 * texture (_LightTexture0, (_ViewToCookie * tmpvar_16).xyz).w);
   res_3.xyz = (_LightColor.xyz * (max (0.0, 
     dot (lightDir_5, normal_8)
   ) * atten_4));

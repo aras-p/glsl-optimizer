@@ -15,15 +15,15 @@ void main ()
   vec4 c_3;
   vec3 col_4;
   vec4 tmpvar_5;
-  tmpvar_5 = texture2D (_Control, tmpvar_1.xy);
-  col_4 = (tmpvar_5.x * texture2D (_Splat0, tmpvar_1.zw).xyz);
-  col_4 = (col_4 + (tmpvar_5.y * texture2D (_Splat1, tmpvar_2.xy).xyz));
-  col_4 = (col_4 + (tmpvar_5.z * texture2D (_Splat2, tmpvar_2.zw).xyz));
-  col_4 = (col_4 + (tmpvar_5.w * texture2D (_Splat3, gl_TexCoord[2].xy).xyz));
+  tmpvar_5 = texture (_Control, tmpvar_1.xy);
+  col_4 = (tmpvar_5.x * texture (_Splat0, tmpvar_1.zw).xyz);
+  col_4 = (col_4 + (tmpvar_5.y * texture (_Splat1, tmpvar_2.xy).xyz));
+  col_4 = (col_4 + (tmpvar_5.z * texture (_Splat2, tmpvar_2.zw).xyz));
+  col_4 = (col_4 + (tmpvar_5.w * texture (_Splat3, gl_TexCoord[2].xy).xyz));
   vec4 c_6;
   c_6.xyz = ((col_4 * _LightColor0.xyz) * ((
     max (0.0, dot (gl_TexCoord[3].xyz, _WorldSpaceLightPos0.xyz))
-   * texture2DProj (_ShadowMapTexture, gl_TexCoord[5]).x) * 2.0));
+   * textureProj (_ShadowMapTexture, gl_TexCoord[5]).x) * 2.0));
   c_6.w = 0.0;
   c_3.w = c_6.w;
   c_3.xyz = (c_6.xyz + (col_4 * gl_TexCoord[4].xyz));

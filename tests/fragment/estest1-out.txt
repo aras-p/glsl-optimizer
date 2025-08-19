@@ -1,13 +1,13 @@
 uniform vec4 _Color;
 uniform sampler2D _Detail;
 uniform sampler2D _MainTex;
-varying vec4 xlv_TEXCOORD0;
-varying vec4 xlv_TEXCOORD1;
+in vec4 xlv_TEXCOORD0;
+in vec4 xlv_TEXCOORD1;
 void main ()
 {
   vec4 c_1;
-  c_1 = (_Color * texture2D (_MainTex, xlv_TEXCOORD0.xy));
-  c_1 = ((c_1 * texture2D (_Detail, xlv_TEXCOORD1.xy)) * 2.0);
+  c_1 = (_Color * texture (_MainTex, xlv_TEXCOORD0.xy));
+  c_1 = ((c_1 * texture (_Detail, xlv_TEXCOORD1.xy)) * 2.0);
   gl_FragData[0] = c_1;
 }
 

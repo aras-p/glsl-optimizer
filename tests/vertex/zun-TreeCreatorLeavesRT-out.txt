@@ -3,7 +3,7 @@ uniform float _TranslucencyViewDependency;
 uniform mat4 _World2Object;
 uniform vec3 _WorldSpaceCameraPos;
 uniform vec4 unity_Scale;
-attribute vec4 TANGENT;
+in vec4 TANGENT;
 void main ()
 {
   vec3 lightDir_1;

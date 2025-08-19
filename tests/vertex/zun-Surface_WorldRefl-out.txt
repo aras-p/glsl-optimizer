@@ -3,7 +3,7 @@ uniform mat4 _World2Object;
 uniform vec3 _WorldSpaceCameraPos;
 uniform vec4 _WorldSpaceLightPos0;
 uniform vec4 unity_Scale;
-varying vec4 xlv_FOG;
+out vec4 xlv_FOG;
 void main ()
 {
   vec3 viewDir_1;
@@ -14,13 +14,13 @@ void main ()
   tmpvar_3.xyz = _WorldSpaceCameraPos;
   viewDir_1 = (gl_Vertex.xyz - ((_World2Object * tmpvar_3).xyz * unity_Scale.w));
   mat3 tmpvar_4;
-  tmpvar_4[0] = _Object2World[0].xyz;
-  tmpvar_4[1] = _Object2World[1].xyz;
-  tmpvar_4[2] = _Object2World[2].xyz;
+  tmpvar_4[uint(0)] = _Object2World[0].xyz;
+  tmpvar_4[1u] = _Object2World[1].xyz;
+  tmpvar_4[2u] = _Object2World[2].xyz;
   mat3 tmpvar_5;
-  tmpvar_5[0] = _Object2World[0].xyz;
-  tmpvar_5[1] = _Object2World[1].xyz;
-  tmpvar_5[2] = _Object2World[2].xyz;
+  tmpvar_5[uint(0)] = _Object2World[0].xyz;
+  tmpvar_5[1u] = _Object2World[1].xyz;
+  tmpvar_5[2u] = _Object2World[2].xyz;
   gl_Position = pos_2;
   vec4 tmpvar_6;
   tmpvar_6.yzw = vec3(0.0, 0.0, 0.0);

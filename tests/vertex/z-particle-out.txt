@@ -1,7 +1,7 @@
 uniform vec4 _MainTex_ST;
 uniform mat4 glstate_matrix_mvp;
-varying vec4 xlv_COLOR;
-varying vec2 xlv_TEXCOORD0;
+out vec4 xlv_COLOR;
+out vec2 xlv_TEXCOORD0;
 void main ()
 {
   gl_Position = (glstate_matrix_mvp * gl_Vertex);

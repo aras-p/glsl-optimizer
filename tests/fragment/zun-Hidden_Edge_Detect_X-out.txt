@@ -5,9 +5,9 @@ void main ()
   vec3 diff_1;
   vec4 original_2;
   vec4 tmpvar_3;
-  tmpvar_3 = texture2D (_MainTex, gl_TexCoord[0].xy);
+  tmpvar_3 = texture (_MainTex, gl_TexCoord[0].xy);
   original_2 = tmpvar_3;
-  diff_1 = (((tmpvar_3.xyz * 2.0) - texture2D (_MainTex, gl_TexCoord[1].xy).xyz) - texture2D (_MainTex, gl_TexCoord[2].xy).xyz);
+  diff_1 = (((tmpvar_3.xyz * 2.0) - texture (_MainTex, gl_TexCoord[1].xy).xyz) - texture (_MainTex, gl_TexCoord[2].xy).xyz);
   float tmpvar_4;
   tmpvar_4 = dot (diff_1, diff_1);
   if ((tmpvar_4 >= _Treshold)) {

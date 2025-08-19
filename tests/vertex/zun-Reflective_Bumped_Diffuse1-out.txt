@@ -7,8 +7,8 @@ uniform vec3 _WorldSpaceCameraPos;
 uniform vec4 unity_LightmapFade;
 uniform vec4 unity_LightmapST;
 uniform vec4 unity_Scale;
-attribute vec4 TANGENT;
-varying vec4 xlv_FOG;
+in vec4 TANGENT;
+out vec4 xlv_FOG;
 void main ()
 {
   vec3 binormal_1;
@@ -23,23 +23,23 @@ void main ()
   tmpvar_6.w = 1.0;
   tmpvar_6.xyz = _WorldSpaceCameraPos;
   mat3 tmpvar_7;
-  tmpvar_7[0] = _Object2World[0].xyz;
-  tmpvar_7[1] = _Object2World[1].xyz;
-  tmpvar_7[2] = _Object2World[2].xyz;
+  tmpvar_7[uint(0)] = _Object2World[0].xyz;
+  tmpvar_7[1u] = _Object2World[1].xyz;
+  tmpvar_7[2u] = _Object2World[2].xyz;
   worldRefl_2 = (tmpvar_7 * (gl_Vertex.xyz - (
     (_World2Object * tmpvar_6)
   .xyz * unity_Scale.w)));
   binormal_1 = (((gl_Normal.yzx * TANGENT.zxy) - (gl_Normal.zxy * TANGENT.yzx)) * TANGENT.w);
   mat3 tmpvar_8;
-  tmpvar_8[0].x = TANGENT.x;
-  tmpvar_8[0].y = binormal_1.x;
-  tmpvar_8[0].z = gl_Normal.x;
-  tmpvar_8[1].x = TANGENT.y;
-  tmpvar_8[1].y = binormal_1.y;
-  tmpvar_8[1].z = gl_Normal.y;
-  tmpvar_8[2].x = TANGENT.z;
-  tmpvar_8[2].y = binormal_1.z;
-  tmpvar_8[2].z = gl_Normal.z;
+  tmpvar_8[uint(0)].x = TANGENT.x;
+  tmpvar_8[uint(0)].y = binormal_1.x;
+  tmpvar_8[uint(0)].z = gl_Normal.x;
+  tmpvar_8[1u].x = TANGENT.y;
+  tmpvar_8[1u].y = binormal_1.y;
+  tmpvar_8[1u].z = gl_Normal.y;
+  tmpvar_8[2u].x = TANGENT.z;
+  tmpvar_8[2u].y = binormal_1.z;
+  tmpvar_8[2u].z = gl_Normal.z;
   vec4 tmpvar_9;
   tmpvar_9.xyz = (tmpvar_8 * _Object2World[0].xyz);
   tmpvar_9.w = worldRefl_2.x;

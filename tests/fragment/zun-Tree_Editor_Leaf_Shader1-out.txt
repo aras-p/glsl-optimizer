@@ -12,7 +12,7 @@ void main ()
   vec4 res_2;
   vec4 weights_3;
   float x_4;
-  x_4 = ((texture2D (_MainTex, gl_TexCoord[5].xy).w * gl_Color.w) - _Cutoff);
+  x_4 = ((texture (_MainTex, gl_TexCoord[5].xy).w * gl_Color.w) - _Cutoff);
   if ((x_4 < 0.0)) {
     discard;
   };
@@ -25,7 +25,7 @@ void main ()
     (gl_TexCoord[1].xyz * weights_3.y)
   ) + (gl_TexCoord[2].xyz * weights_3.z)) + (gl_TexCoord[3].xyz * weights_3.w));
   vec4 tmpvar_6;
-  tmpvar_6 = texture2D (_ShadowMapTexture, tmpvar_5.xy);
+  tmpvar_6 = texture (_ShadowMapTexture, tmpvar_5.xy);
   float tmpvar_7;
   if ((tmpvar_6.x < tmpvar_5.z)) {
     tmpvar_7 = _LightShadowData.x;

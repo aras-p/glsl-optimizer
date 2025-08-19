@@ -1,0 +1,41 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct xlatMtlShaderInput {
+};
+struct xlatMtlShaderOutput {
+  float4 gl_Position [[position]];
+  float3 xlv_out;
+};
+struct xlatMtlShaderUniform {
+  float u_x;
+  float u_y;
+  float4 u_u4;
+  float4 u_v4;
+};
+vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
+{
+  xlatMtlShaderOutput _mtl_o;
+  if (((_mtl_u.u_x == _mtl_u.u_y) || all(_mtl_u.u_u4 == _mtl_u.u_v4))) {
+    _mtl_o.xlv_out = float3(0.0, 0.0, 0.0);
+  } else {
+    if (((_mtl_u.u_x != _mtl_u.u_y) || any(_mtl_u.u_u4 != _mtl_u.u_v4))) {
+      _mtl_o.xlv_out = float3(1.0, 1.0, 1.0);
+    } else {
+      _mtl_o.xlv_out = float3(2.0, 2.0, 2.0);
+    };
+  };
+  float4 tmpvar_1 = 0;
+  tmpvar_1.w = 1.0;
+  tmpvar_1.xyz = _mtl_o.xlv_out;
+  _mtl_o.gl_Position = tmpvar_1;
+  return _mtl_o;
+}
+
+
+// stats: 10 alu 0 tex 2 flow
+// uniforms: 4 (total size: 48)
+//  #0: u_x (high float) 1x1 [-1] loc 0
+//  #1: u_y (high float) 1x1 [-1] loc 4
+//  #2: u_u4 (high float) 4x1 [-1] loc 16
+//  #3: u_v4 (high float) 4x1 [-1] loc 32

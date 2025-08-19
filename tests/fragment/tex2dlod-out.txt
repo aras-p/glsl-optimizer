@@ -1,9 +1,9 @@
 #extension GL_ARB_shader_texture_lod : enable
 uniform sampler2D tex;
-varying vec4 xlv_TEXCOORD0;
+in vec4 xlv_TEXCOORD0;
 void main ()
 {
-  gl_FragData[0] = texture2DLod (tex, xlv_TEXCOORD0.xy, 0.0);
+  gl_FragData[0] = textureLod (tex, xlv_TEXCOORD0.xy, 0.0);
 }
 
 

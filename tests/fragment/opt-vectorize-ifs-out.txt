@@ -1,11 +1,11 @@
 uniform sampler2D maintex;
 uniform float factor;
-varying vec2 uv;
+in vec2 uv;
 void main ()
 {
   vec2 coord_1;
   vec4 tmpvar_2;
-  tmpvar_2 = texture2D (maintex, uv);
+  tmpvar_2 = texture (maintex, uv);
   coord_1 = tmpvar_2.xy;
   bool tmpvar_3;
   tmpvar_3 = (tmpvar_2.w >= 0.5);

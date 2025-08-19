@@ -12,7 +12,7 @@ void main ()
 {
   vec4 res_1;
   float tmpvar_2;
-  tmpvar_2 = (1.0/(((_ZBufferParams.x * texture2D (_CameraDepthTexture, gl_TexCoord[0].xy).x) + _ZBufferParams.y)));
+  tmpvar_2 = (1.0/(((_ZBufferParams.x * texture (_CameraDepthTexture, gl_TexCoord[0].xy).x) + _ZBufferParams.y)));
   vec4 tmpvar_3;
   tmpvar_3.w = 1.0;
   tmpvar_3.xyz = (gl_TexCoord[1].xyz * tmpvar_2);
@@ -28,7 +28,7 @@ void main ()
     (_View2Shadow2 * tmpvar_3)
   .xyz * weights_4.z)) + ((_View2Shadow3 * tmpvar_3).xyz * weights_4.w));
   vec4 tmpvar_6;
-  tmpvar_6 = texture2D (_ShadowMapTexture, tmpvar_5.xy);
+  tmpvar_6 = texture (_ShadowMapTexture, tmpvar_5.xy);
   float tmpvar_7;
   if ((tmpvar_6.x < tmpvar_5.z)) {
     tmpvar_7 = _LightShadowData.x;

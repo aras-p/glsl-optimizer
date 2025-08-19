@@ -1,7 +1,7 @@
 #extension GL_ARB_draw_instanced : enable
 #extension GL_EXT_gpu_shader4 : enable
-attribute vec3 _inPos;
-attribute vec3 _inNor;
+in vec3 _inPos;
+in vec3 _inNor;
 void main ()
 {
   vec3 p_1;

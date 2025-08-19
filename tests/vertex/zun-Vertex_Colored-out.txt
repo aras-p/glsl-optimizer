@@ -1,5 +1,5 @@
 uniform vec4 _MainTex_ST;
-varying vec4 xlv_FOG;
+out vec4 xlv_FOG;
 void main ()
 {
   vec4 pos_1;

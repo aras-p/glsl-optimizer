@@ -15,7 +15,7 @@ void main ()
   vec4 c_3;
   float tmpvar_4;
   vec4 tmpvar_5;
-  tmpvar_5 = texture2D (_MainTex, gl_TexCoord[0].xy);
+  tmpvar_5 = texture (_MainTex, gl_TexCoord[0].xy);
   tmpvar_4 = (tmpvar_5.w * _Color.w);
   float x_6;
   x_6 = (tmpvar_4 - _Cutoff);
@@ -25,7 +25,7 @@ void main ()
   vec3 tmpvar_7;
   tmpvar_7 = normalize(gl_TexCoord[2].xyz);
   float atten_8;
-  atten_8 = (texture2D (_LightTextureB0, vec2(dot (tmpvar_2, tmpvar_2))).w * textureCube (_LightTexture0, tmpvar_2).w);
+  atten_8 = (texture (_LightTextureB0, vec2(dot (tmpvar_2, tmpvar_2))).w * texture (_LightTexture0, tmpvar_2).w);
   vec4 c_9;
   float spec_10;
   spec_10 = (pow (max (0.0, 

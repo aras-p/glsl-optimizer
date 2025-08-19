@@ -1,5 +1,5 @@
 uniform mat4 mvp;
-attribute vec4 myColor;
+in vec4 myColor;
 void main ()
 {
   gl_Position = (mvp * gl_Vertex);

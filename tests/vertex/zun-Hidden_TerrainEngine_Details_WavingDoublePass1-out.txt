@@ -5,7 +5,7 @@ uniform vec4 _WaveAndDistance;
 uniform vec4 _WavingTint;
 uniform vec4 _WorldSpaceLightPos0;
 uniform vec4 unity_Scale;
-varying vec4 xlv_FOG;
+out vec4 xlv_FOG;
 void main ()
 {
   vec4 vertex_1;
@@ -46,9 +46,9 @@ void main ()
   vec4 pos_13;
   pos_13 = (gl_ModelViewProjectionMatrix * vertex_1);
   mat3 tmpvar_14;
-  tmpvar_14[0] = _Object2World[0].xyz;
-  tmpvar_14[1] = _Object2World[1].xyz;
-  tmpvar_14[2] = _Object2World[2].xyz;
+  tmpvar_14[uint(0)] = _Object2World[0].xyz;
+  tmpvar_14[1u] = _Object2World[1].xyz;
+  tmpvar_14[2u] = _Object2World[2].xyz;
   gl_Position = pos_13;
   vec4 tmpvar_15;
   tmpvar_15.yzw = vec3(0.0, 0.0, 0.0);

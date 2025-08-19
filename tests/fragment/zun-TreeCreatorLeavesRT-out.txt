@@ -19,16 +19,16 @@ void main ()
   float specular_7;
   vec3 albedo_8;
   vec4 tmpvar_9;
-  tmpvar_9 = texture2D (_MainTex, tmpvar_1);
+  tmpvar_9 = texture (_MainTex, tmpvar_1);
   float x_10;
   x_10 = (tmpvar_9.w - _Cutoff);
   if ((x_10 < 0.0)) {
     discard;
   };
   albedo_8 = (tmpvar_9.xyz * gl_TexCoord[1].xyz);
-  specular_7 = (texture2D (_BumpSpecMap, tmpvar_1).x * 128.0);
+  specular_7 = (texture (_BumpSpecMap, tmpvar_1).x * 128.0);
   vec4 tmpvar_11;
-  tmpvar_11 = texture2D (_TranslucencyMap, tmpvar_1);
+  tmpvar_11 = texture (_TranslucencyMap, tmpvar_1);
   light_6 = (gl_LightModel.ambient.xyz * albedo_8);
   backContribs_5 = (gl_TexCoord[2].xyz * tmpvar_11.z);
   light_6 = (light_6 + ((

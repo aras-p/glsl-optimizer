@@ -48,7 +48,7 @@ initialize_mesa_context(struct gl_context *ctx, glslopt_target api)
 	{
 	default:
 	case kGlslTargetOpenGL:
-		ctx->Const.GLSLVersion = 150;
+		ctx->Const.GLSLVersion = 460;
 		break;
 	case kGlslTargetOpenGLES20:
 		ctx->Extensions.OES_standard_derivatives = true;
@@ -83,8 +83,9 @@ initialize_mesa_context(struct gl_context *ctx, glslopt_target api)
 
 
 struct glslopt_ctx {
-	glslopt_ctx (glslopt_target target) {
+	glslopt_ctx (glslopt_target target, glslopt_filter_name filter_name) {
 		this->target = target;
+		this->filter_name = filter_name;
 		mem_ctx = ralloc_context (NULL);
 		initialize_mesa_context (&mesa_ctx, target);
 	}
@@ -94,11 +95,12 @@ struct glslopt_ctx {
 	struct gl_context mesa_ctx;
 	void* mem_ctx;
 	glslopt_target target;
+	glslopt_filter_name filter_name;
 };
 
-glslopt_ctx* glslopt_initialize (glslopt_target target)
+glslopt_ctx* glslopt_initialize (glslopt_target target, glslopt_filter_name filter_name)
 {
-	return new glslopt_ctx(target);
+	return new glslopt_ctx(target, filter_name);
 }
 
 void glslopt_cleanup (glslopt_ctx* ctx)
@@ -657,9 +659,9 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 	if (!state->error) {
 		validate_ir_tree(ir);
 		if (ctx->target == kGlslTargetMetal)
-			shader->rawOutput = _mesa_print_ir_metal(ir, state, ralloc_strdup(shader, ""), printMode, &shader->uniformsSize);
+			shader->rawOutput = _mesa_print_ir_metal(ir, state, ralloc_strdup(shader, ""), printMode, &shader->uniformsSize, ctx->filter_name);
 		else
-			shader->rawOutput = _mesa_print_ir_glsl(ir, state, ralloc_strdup(shader, ""), printMode);
+			shader->rawOutput = _mesa_print_ir_glsl(ir, state, ralloc_strdup(shader, ""), printMode, ctx->filter_name);
 	}
 	
 	// Link built-in functions
@@ -698,9 +700,9 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 	if (!state->error)
 	{
 		if (ctx->target == kGlslTargetMetal)
-			shader->optimizedOutput = _mesa_print_ir_metal(ir, state, ralloc_strdup(shader, ""), printMode, &shader->uniformsSize);
+			shader->optimizedOutput = _mesa_print_ir_metal(ir, state, ralloc_strdup(shader, ""), printMode, &shader->uniformsSize, ctx->filter_name);
 		else
-			shader->optimizedOutput = _mesa_print_ir_glsl(ir, state, ralloc_strdup(shader, ""), printMode);
+			shader->optimizedOutput = _mesa_print_ir_glsl(ir, state, ralloc_strdup(shader, ""), printMode, ctx->filter_name);
 	}
 
 	shader->status = !state->error;

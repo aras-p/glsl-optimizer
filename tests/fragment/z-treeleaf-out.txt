@@ -8,20 +8,20 @@ uniform float _ShadowStrength;
 uniform vec3 _TranslucencyColor;
 uniform sampler2D _TranslucencyMap;
 uniform float _TranslucencyViewDependency;
-varying vec2 xlv_TEXCOORD0;
-varying vec4 xlv_COLOR0;
-varying vec3 xlv_TEXCOORD1;
-varying vec3 xlv_TEXCOORD2;
-varying vec2 xlv_TEXCOORD3;
+in vec2 xlv_TEXCOORD0;
+in vec4 xlv_COLOR0;
+in vec3 xlv_TEXCOORD1;
+in vec3 xlv_TEXCOORD2;
+in vec2 xlv_TEXCOORD3;
 void main ()
 {
   vec4 c_1;
   vec4 tmpvar_2;
-  tmpvar_2 = texture2D (_MainTex, xlv_TEXCOORD0);
+  tmpvar_2 = texture (_MainTex, xlv_TEXCOORD0);
   vec4 tmpvar_3;
-  tmpvar_3 = texture2D (_TranslucencyMap, xlv_TEXCOORD0);
+  tmpvar_3 = texture (_TranslucencyMap, xlv_TEXCOORD0);
   vec4 tmpvar_4;
-  tmpvar_4 = texture2D (_BumpSpecMap, xlv_TEXCOORD0);
+  tmpvar_4 = texture (_BumpSpecMap, xlv_TEXCOORD0);
   vec4 normal_5;
   normal_5.xy = ((tmpvar_4.wy * 2.0) - 1.0);
   normal_5.z = sqrt(((1.0 - 
@@ -51,7 +51,7 @@ void main ()
   , 
     (tmpvar_4.x * 128.0)
   ) * (tmpvar_3.w * _Color.x)));
-  c_8.xyz = (c_8.xyz * mix (2.0, (texture2D (_LightTexture0, xlv_TEXCOORD3).w * 2.0), _ShadowStrength));
+  c_8.xyz = (c_8.xyz * mix (2.0, (texture (_LightTexture0, xlv_TEXCOORD3).w * 2.0), _ShadowStrength));
   c_1.xyz = c_8.xyz;
   c_1.w = tmpvar_2.w;
   gl_FragData[0] = c_1;

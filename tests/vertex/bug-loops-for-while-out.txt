@@ -1,4 +1,4 @@
-attribute vec4 a_position;
+in vec4 a_position;
 uniform int u_iter;
 uniform vec4 u_deltas[5];
 void main ()

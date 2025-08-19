@@ -139,11 +139,11 @@ void main ()
   lowp float tmpvar_33;
   tmpvar_33 = max (0.0, dot (viewDir_28, tmpvar_29));
   lowp float VdotH_34;
-  VdotH_34 = (tmpvar_33 + 1e-05);
+  VdotH_34 = (tmpvar_33 + 1e-5);
   lowp float tmpvar_35;
   tmpvar_35 = ((1.0/((
     pow (tmpvar_14, 4.0)
-   + 1e-05))) - 2.0);
+   + 1e-5))) - 2.0);
   lowp float tmpvar_36;
   lowp float tmpvar_37;
   tmpvar_37 = max (0.0, dot (tmpvar_26, tmpvar_29));
@@ -165,7 +165,7 @@ void main ()
         pow (tmpvar_31, tmpvar_35)
        * 
         ((tmpvar_35 + 1.0) / 6.28318)
-      ))) / ((4.0 * tmpvar_32) + 1e-05))
+      ))) / ((4.0 * tmpvar_32) + 1e-5))
     ))))
   ) + (
     (((1.0 - dot (tmpvar_12.xyz, vec3(0.299, 0.587, 0.114))) * (1.0 - tmpvar_14)) * pow (abs((1.0 - tmpvar_32)), 5.0))

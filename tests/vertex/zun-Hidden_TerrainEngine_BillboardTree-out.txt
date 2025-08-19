@@ -3,7 +3,7 @@ uniform vec4 _TreeBillboardCameraPos;
 uniform vec3 _TreeBillboardCameraRight;
 uniform vec4 _TreeBillboardCameraUp;
 uniform vec4 _TreeBillboardDistances;
-varying vec4 xlv_FOG;
+out vec4 xlv_FOG;
 void main ()
 {
   vec4 tmpvar_1;

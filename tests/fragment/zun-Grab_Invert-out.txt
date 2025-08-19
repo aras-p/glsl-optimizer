@@ -1,7 +1,7 @@
 uniform sampler2D _GrabTexture;
 void main ()
 {
-  gl_FragData[0] = (1.0 - texture2DProj (_GrabTexture, gl_TexCoord[0]));
+  gl_FragData[0] = (1.0 - textureProj (_GrabTexture, gl_TexCoord[0]));
 }
 
 

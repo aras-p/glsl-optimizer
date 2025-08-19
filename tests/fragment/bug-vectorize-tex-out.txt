@@ -1,14 +1,14 @@
 uniform sampler2D _MainTex;
 uniform sampler2D _RampTex;
-varying vec2 varUV;
+in vec2 varUV;
 void main ()
 {
   vec4 tmpvar_1;
-  tmpvar_1 = texture2D (_MainTex, varUV);
+  tmpvar_1 = texture (_MainTex, varUV);
   vec4 tmpvar_2;
-  tmpvar_2.x = texture2D (_RampTex, tmpvar_1.xx).x;
-  tmpvar_2.y = texture2D (_RampTex, tmpvar_1.yy).y;
-  tmpvar_2.z = texture2D (_RampTex, tmpvar_1.zz).z;
+  tmpvar_2.x = texture (_RampTex, tmpvar_1.xx).x;
+  tmpvar_2.y = texture (_RampTex, tmpvar_1.yy).y;
+  tmpvar_2.z = texture (_RampTex, tmpvar_1.zz).z;
   tmpvar_2.w = tmpvar_1.w;
   gl_FragData[0] = tmpvar_2;
 }

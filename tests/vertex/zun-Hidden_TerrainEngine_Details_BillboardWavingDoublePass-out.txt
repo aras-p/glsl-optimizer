@@ -21,8 +21,8 @@ uniform vec4 unity_SHBg;
 uniform vec4 unity_SHBr;
 uniform vec4 unity_SHC;
 uniform vec4 unity_Scale;
-attribute vec4 TANGENT;
-varying vec4 xlv_FOG;
+in vec4 TANGENT;
+out vec4 xlv_FOG;
 void main ()
 {
   vec3 worldPos_1;
@@ -78,9 +78,9 @@ void main ()
   vec4 pos_19;
   pos_19 = (gl_ModelViewProjectionMatrix * vertex_7);
   mat3 tmpvar_20;
-  tmpvar_20[0] = _Object2World[0].xyz;
-  tmpvar_20[1] = _Object2World[1].xyz;
-  tmpvar_20[2] = _Object2World[2].xyz;
+  tmpvar_20[uint(0)] = _Object2World[0].xyz;
+  tmpvar_20[1u] = _Object2World[1].xyz;
+  tmpvar_20[2u] = _Object2World[2].xyz;
   worldN_2 = (tmpvar_20 * (gl_Normal * unity_Scale.w));
   vec4 tmpvar_21;
   tmpvar_21.w = 1.0;

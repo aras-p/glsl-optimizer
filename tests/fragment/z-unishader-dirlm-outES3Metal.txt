@@ -148,11 +148,11 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   half tmpvar_33 = 0;
   tmpvar_33 = max ((half)0.0, ((half)dot (viewDir_28, (float3)tmpvar_29)));
   half VdotH_34 = 0;
-  VdotH_34 = (tmpvar_33 + (half)(1e-05));
+  VdotH_34 = (tmpvar_33 + (half)(1e-5));
   half tmpvar_35 = 0;
   tmpvar_35 = (((half)1.0/((
     pow (tmpvar_14, (half)4.0)
-   + (half)(1e-05)))) - (half)(2.0));
+   + (half)(1e-5)))) - (half)(2.0));
   half tmpvar_36 = 0;
   half tmpvar_37 = 0;
   tmpvar_37 = max ((half)0.0, dot (tmpvar_26, tmpvar_29));
@@ -174,7 +174,7 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
         pow (tmpvar_31, tmpvar_35)
        * 
         ((tmpvar_35 + (half)(1.0)) / (half)(6.28318))
-      ))) / (((half)(4.0) * tmpvar_32) + (half)(1e-05)))
+      ))) / (((half)(4.0) * tmpvar_32) + (half)(1e-5)))
     ))))
   ) + (
     ((((half)(1.0) - dot (tmpvar_12.xyz, (half3)float3(0.299, 0.587, 0.114))) * ((half)(1.0) - tmpvar_14)) * pow (abs(((half)(1.0) - tmpvar_32)), (half)5.0))

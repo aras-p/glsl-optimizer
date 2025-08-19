@@ -1,4 +1,4 @@
-varying vec2 xlv_VPOS;
+in vec2 xlv_VPOS;
 void main ()
 {
   vec4 tmpvar_1;
