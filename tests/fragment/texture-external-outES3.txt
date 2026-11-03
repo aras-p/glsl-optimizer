@@ -1,0 +1,26 @@
+#version 300 es
+#extension GL_OES_EGL_image_external_essl3 : enable
+precision mediump float;
+uniform mediump samplerExternalOES tex;
+out mediump vec4 color;
+in vec4 uv;
+void main ()
+{
+  mediump ivec2 tmpvar_1;
+  tmpvar_1 = textureSize (tex, 0);
+  mediump vec4 tmpvar_2;
+  tmpvar_2.zw = vec2(0.0, 0.0);
+  tmpvar_2.xy = vec2(tmpvar_1);
+  color = (((
+    ((texture (tex, uv.xy) + textureProj (tex, uv.xyz)) + (textureProj (tex, uv) + texture (tex, uv.xy, uv.w)))
+   + 
+    (textureProj (tex, uv.xyz, uv.w) + textureProj (tex, uv, uv.z))
+  ) + texelFetch (tex, ivec2(uv.xy), 0)) + tmpvar_2);
+}
+
+
+// stats: 10 alu 8 tex 0 flow
+// inputs: 1
+//  #0: uv (high float) 4x1 [-1]
+// textures: 1
+//  #0: tex (medium other) 0x0 [-1]

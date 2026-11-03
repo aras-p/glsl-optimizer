@@ -1,0 +1,37 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct xlatMtlShaderInput {
+  half2 var_lowp;
+  half2 var_mediump;
+};
+struct xlatMtlShaderOutput {
+  half4 _fragData [[color(0)]];
+};
+struct xlatMtlShaderUniform {
+};
+fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  ,   texture2d<half> tex_def [[texture(0)]], sampler _mtlsmp_tex_def [[sampler(0)]]
+  ,   texture2d<half> tex_lowp [[texture(1)]], sampler _mtlsmp_tex_lowp [[sampler(1)]]
+  ,   texture2d<float> tex_highp [[texture(2)]], sampler _mtlsmp_tex_highp [[sampler(2)]])
+{
+  xlatMtlShaderOutput _mtl_o;
+  half4 c3_1 = 0;
+  float4 tmpvar_2 = 0;
+  tmpvar_2 = tex_highp.sample(_mtlsmp_tex_highp, (float2)(_mtl_i.var_mediump));
+  c3_1 = half4((tmpvar_2 * 2.0));
+  _mtl_o._fragData = (((
+    ((tex_def.sample(_mtlsmp_tex_def, (float2)(_mtl_i.var_lowp)) * (half)(2.0)) + (tex_def.sample(_mtlsmp_tex_def, (float2)(_mtl_i.var_mediump)) * (half)(2.0)))
+   + c3_1) + (tex_lowp.sample(_mtlsmp_tex_lowp, (float2)(_mtl_i.var_mediump)) * (half)(2.0))) + abs(_mtl_i.var_lowp.xxxx));
+  return _mtl_o;
+}
+
+
+// stats: 9 alu 4 tex 0 flow
+// inputs: 2
+//  #0: var_lowp (medium float) 2x1 [-1]
+//  #1: var_mediump (medium float) 2x1 [-1]
+// textures: 3
+//  #0: tex_def (medium 2d) 0x0 [-1] loc 0
+//  #1: tex_lowp (medium 2d) 0x0 [-1] loc 1
+//  #2: tex_highp (high 2d) 0x0 [-1] loc 2

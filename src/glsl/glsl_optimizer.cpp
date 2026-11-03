@@ -32,9 +32,6 @@ initialize_mesa_context(struct gl_context *ctx, glslopt_target api)
 		case kGlslTargetOpenGL:
 			mesaAPI = API_OPENGL_COMPAT;
 			break;
-		case kGlslTargetOpenGLES20:
-			mesaAPI = API_OPENGLES2;
-			break;
 		case kGlslTargetOpenGLES30:
 			mesaAPI = API_OPENGL_CORE;
 			break;
@@ -49,12 +46,6 @@ initialize_mesa_context(struct gl_context *ctx, glslopt_target api)
 	default:
 	case kGlslTargetOpenGL:
 		ctx->Const.GLSLVersion = 150;
-		break;
-	case kGlslTargetOpenGLES20:
-		ctx->Extensions.OES_standard_derivatives = true;
-		ctx->Extensions.EXT_shadow_samplers = true;
-		ctx->Extensions.EXT_frag_depth = true;
-		ctx->Extensions.EXT_shader_framebuffer_fetch = true;
 		break;
 	case kGlslTargetOpenGLES30:
 		ctx->Extensions.ARB_ES3_compatibility = true;
@@ -74,7 +65,6 @@ initialize_mesa_context(struct gl_context *ctx, glslopt_target api)
    ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits = 16;
    ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxTextureImageUnits = 16;
 
-   // For GLES2.0 this would be 1, but we do support GL_EXT_draw_buffers
    ctx->Const.MaxDrawBuffers = 4;
 
    ctx->Driver.NewShader = _mesa_new_shader;
@@ -98,6 +88,8 @@ struct glslopt_ctx {
 
 glslopt_ctx* glslopt_initialize (glslopt_target target)
 {
+	if (target != kGlslTargetOpenGL && target != kGlslTargetOpenGLES30 && target != kGlslTargetMetal)
+		return NULL;
 	return new glslopt_ctx(target);
 }
 
@@ -265,21 +257,6 @@ static void propagate_precision_expr(ir_instruction *ir, void *data)
 	
 }
 
-static void propagate_precision_texture(ir_instruction *ir, void *data)
-{
-	ir_texture* tex = ir->as_texture();
-	if (!tex)
-		return;
-
-	glsl_precision sampler_prec = tex->sampler->get_precision();
-	if (tex->get_precision() == sampler_prec || sampler_prec == glsl_precision_undefined)
-		return;
-
-	// set precision of ir_texture node to that of the sampler itself
-	tex->set_precision(sampler_prec);
-	((precision_ctx*)data)->res = true;
-}
-
 struct undefined_ass_ctx
 {
 	ir_variable* var;
@@ -396,7 +373,6 @@ static bool propagate_precision(exec_list* list, bool assign_high_to_undefined)
 		ctx.root_ir = list;
 		foreach_in_list(ir_instruction, ir, list)
 		{
-			visit_tree (ir, propagate_precision_texture, &ctx);
 			visit_tree (ir, propagate_precision_deref, &ctx);
 			bool hadProgress = ctx.res;
 			ctx.res = false;
@@ -645,6 +621,13 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 	_mesa_glsl_lexer_ctor (state, shaderSource);
 	_mesa_glsl_parse (state);
 	_mesa_glsl_lexer_dtor (state);
+
+	if (!state->error && ctx->target != kGlslTargetMetal && state->es_shader && state->language_version < 300)
+	{
+		shader->status = false;
+		shader->infoLog = ralloc_strdup(shader, "OpenGL ES 2.0 output is no longer supported; use #version 300 es or newer.");
+		return shader;
+	}
 
 	exec_list* ir = new (shader) exec_list();
 	shader->shader->ir = ir;

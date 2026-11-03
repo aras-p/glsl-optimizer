@@ -1,0 +1,16 @@
+#version 300 es
+layout(location = 0) out mediump vec4 _fragData;
+in lowp float xx;
+
+void main()
+{
+    int i = 0;
+    
+    if (xx < 0.0)
+        discard;
+
+    lowp float c = 0.0;
+    for (; i < 4; ++i)
+        c += xx;
+    _fragData = vec4(c);
+}

@@ -102,9 +102,9 @@ feature, it would be cool to add tests to cover it as well!
 Notes
 -----
 
-* GLSL versions 1.10 and 1.20 are supported. 1.10 is the default, use #version 120 to specify 
+* Desktop: GLSL versions 1.10 and 1.20 are supported. 1.10 is the default, use `#version 120` to specify 
 1.20. Higher GLSL versions might work, but aren't tested now.
-* GLSL ES versions 1.00 and 3.00 are supported.
+* Mobile: only GLSL ES 3.00  (`#version 300 es`) is supported.
 
 
 Dev Notes

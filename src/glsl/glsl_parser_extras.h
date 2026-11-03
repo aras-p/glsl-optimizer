@@ -454,6 +454,9 @@ struct _mesa_glsl_parse_state {
     */
    bool OES_EGL_image_external_enable;
    bool OES_EGL_image_external_warn;
+   bool OES_EGL_image_external_essl3_enable;
+   bool OES_EGL_image_external_essl3_warn;
+
    bool OES_standard_derivatives_enable;
    bool OES_standard_derivatives_warn;
    bool OES_texture_3D_enable;

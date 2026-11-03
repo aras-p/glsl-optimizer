@@ -5,7 +5,12 @@ GLSL optimizer Change Log
 2026 11
 -------
 
+Added:
+* Recognize `GL_OES_EGL_image_external_essl3` in GLES3 inputs.
+
 Changed:
+* Removed OpenGL ES 2.0 language input/output support; for GLES only `#version 300 es`
+  shaders are accepted and produced now.
 * `lowp` and `mediump` precision are treated as the same precision now. Last time any GPU
   had _actual_ `lowp` was, like, 15 years ago.
 

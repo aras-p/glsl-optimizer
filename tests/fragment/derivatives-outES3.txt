@@ -1,0 +1,23 @@
+#version 300 es
+layout(location=0) out mediump vec4 _fragData;
+in highp vec4 xlv_TEXCOORD0;
+void main ()
+{
+  mediump vec4 res_1;
+  highp float tmpvar_2;
+  tmpvar_2 = dFdx(xlv_TEXCOORD0.x);
+  res_1.x = tmpvar_2;
+  highp float tmpvar_3;
+  tmpvar_3 = dFdx(xlv_TEXCOORD0.y);
+  res_1.y = tmpvar_3;
+  highp float tmpvar_4;
+  tmpvar_4 = (abs(dFdx(xlv_TEXCOORD0.z)) + abs(dFdy(xlv_TEXCOORD0.z)));
+  res_1.z = tmpvar_4;
+  res_1.w = 1.0;
+  _fragData = res_1;
+}
+
+
+// stats: 8 alu 0 tex 0 flow
+// inputs: 1
+//  #0: xlv_TEXCOORD0 (high float) 4x1 [-1]

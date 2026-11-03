@@ -106,6 +106,7 @@ void initialize_context_to_defaults(struct gl_context *ctx, gl_api api)
    ctx->Extensions.ARB_viewport_array = true;
 
    ctx->Extensions.OES_EGL_image_external = true;
+   ctx->Extensions.OES_EGL_image_external_essl3 = true;
    ctx->Extensions.OES_standard_derivatives = true;
 
    ctx->Extensions.EXT_draw_instanced = true;

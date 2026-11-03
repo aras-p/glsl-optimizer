@@ -147,6 +147,19 @@ texture_external(const _mesa_glsl_parse_state *state)
    return state->OES_EGL_image_external_enable;
 }
 
+static bool
+texture_external_essl3(const _mesa_glsl_parse_state *state)
+{
+   return state->es_shader && state->language_version >= 300 &&
+          state->OES_EGL_image_external_essl3_enable;
+}
+
+static bool
+texture_external_essl3_fs(const _mesa_glsl_parse_state *state)
+{
+   return texture_external_essl3(state) && state->stage == MESA_SHADER_FRAGMENT;
+}
+
 /** True if texturing functions with explicit LOD are allowed. */
 static bool
 lod_exists_in_stage(const _mesa_glsl_parse_state *state)
@@ -1158,6 +1171,7 @@ builtin_builder::create_builtins()
                 NULL);
 
    add_function("textureSize",
+                _textureSize(texture_external_essl3, glsl_type::ivec2_type, glsl_type::samplerExternalOES_type),
                 _textureSize(v130, glsl_type::int_type,   glsl_type::sampler1D_type),
                 _textureSize(v130, glsl_type::int_type,   glsl_type::isampler1D_type),
                 _textureSize(v130, glsl_type::int_type,   glsl_type::usampler1D_type),
@@ -1211,6 +1225,8 @@ builtin_builder::create_builtins()
                 NULL);
 
    add_function("texture",
+                _texture(ir_tex, texture_external_essl3, glsl_type::vec4_type, glsl_type::samplerExternalOES_type, glsl_type::vec2_type),
+                _texture(ir_txb, texture_external_essl3_fs, glsl_type::vec4_type, glsl_type::samplerExternalOES_type, glsl_type::vec2_type),
                 _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  glsl_type::float_type),
                 _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, glsl_type::float_type),
                 _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, glsl_type::float_type),
@@ -1385,6 +1401,10 @@ builtin_builder::create_builtins()
                 NULL);
 
    add_function("textureProj",
+                _texture(ir_tex, texture_external_essl3, glsl_type::vec4_type, glsl_type::samplerExternalOES_type, glsl_type::vec3_type, TEX_PROJECT),
+                _texture(ir_tex, texture_external_essl3, glsl_type::vec4_type, glsl_type::samplerExternalOES_type, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txb, texture_external_essl3_fs, glsl_type::vec4_type, glsl_type::samplerExternalOES_type, glsl_type::vec3_type, TEX_PROJECT),
+                _texture(ir_txb, texture_external_essl3_fs, glsl_type::vec4_type, glsl_type::samplerExternalOES_type, glsl_type::vec4_type, TEX_PROJECT),
                 _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  glsl_type::vec2_type, TEX_PROJECT),
                 _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, glsl_type::vec2_type, TEX_PROJECT),
                 _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, glsl_type::vec2_type, TEX_PROJECT),
@@ -1438,6 +1458,7 @@ builtin_builder::create_builtins()
                 NULL);
 
    add_function("texelFetch",
+                _texelFetch(texture_external_essl3, glsl_type::vec4_type, glsl_type::samplerExternalOES_type, glsl_type::ivec2_type),
                 _texelFetch(v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  glsl_type::int_type),
                 _texelFetch(v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, glsl_type::int_type),
                 _texelFetch(v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, glsl_type::int_type),

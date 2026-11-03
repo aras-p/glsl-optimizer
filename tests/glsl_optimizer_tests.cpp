@@ -631,8 +631,7 @@ int main (int argc, const char** argv)
 		}
 	}
 
-	glslopt_ctx* ctx[3] = {
-		glslopt_initialize(kGlslTargetOpenGLES20),
+	glslopt_ctx* ctx[2] = {
 		glslopt_initialize(kGlslTargetOpenGLES30),
 		glslopt_initialize(kGlslTargetOpenGL),
 	};
@@ -662,11 +661,11 @@ int main (int argc, const char** argv)
 		}
 		size_t stageTests = 0;
 
-		static const char* kAPIName[3] = { "OpenGL ES 2.0", "OpenGL ES 3.0", "OpenGL" };
-		static const char* kApiIn [3] = {"-inES.txt", "-inES3.txt", "-in.txt"};
-		static const char* kApiOut[3] = {"-outES.txt", "-outES3.txt", "-out.txt"};
-		static const char* kApiOutMetal[3] = {"-outESMetal.txt", "-outES3Metal.txt", "-outMetal.txt"};
-		for (int api = 0; api < 3; ++api)
+		static const char* kAPIName[2] = { "OpenGL ES 3.0", "OpenGL" };
+		static const char* kApiIn [2] = {"-inES3.txt", "-in.txt"};
+		static const char* kApiOut[2] = {"-outES3.txt", "-out.txt"};
+		static const char* kApiOutMetal[2] = {"-outES3Metal.txt", "-outMetal.txt"};
+		for (int api = 0; api < 2; ++api)
 		{
 			printf ("\n** running %s tests for %s...\n", kTypeName[type], kAPIName[api]);
 			StringVector inputFiles;
@@ -684,15 +683,15 @@ int main (int argc, const char** argv)
 				//	continue;
 				std::string outname = inname.substr (0,inname.size()-strlen(kApiIn[api])) + kApiOut[api];
 				std::string outnameMetal = inname.substr (0,inname.size()-strlen(kApiIn[api])) + kApiOutMetal[api];
-				const bool useMetal = (api == 1);
-				bool ok = TestFile (ctx[api], type==0, inname, testFolder + "/" + inname, testFolder + "/" + outname, actualFolder + "/" + outname + ".actual", updateExpected, api<=1, hasOpenGL, false);
+				const bool useMetal = (api == 0);
+				bool ok = TestFile (ctx[api], type==0, inname, testFolder + "/" + inname, testFolder + "/" + outname, actualFolder + "/" + outname + ".actual", updateExpected, api==0, hasOpenGL, false);
 				if (!ok)
 				{
 					++errors;
 				}
 				if (useMetal)
 				{
-					ok = TestFile (ctxMetal, type==0, inname, testFolder + "/" + inname, testFolder + "/" + outnameMetal, actualFolder + "/" + outnameMetal + ".actual", updateExpected, api==0, false, hasMetal);
+					ok = TestFile (ctxMetal, type==0, inname, testFolder + "/" + inname, testFolder + "/" + outnameMetal, actualFolder + "/" + outnameMetal + ".actual", updateExpected, false, false, hasMetal);
 					if (!ok)
 					{
 						++errors;
@@ -719,7 +718,7 @@ int main (int argc, const char** argv)
 	// 3.25s
 	// with builtin call linking, 3.84s
 
-	for (int i = 0; i < 3; ++i)
+	for (int i = 0; i < 2; ++i)
 		glslopt_cleanup (ctx[i]);
 	glslopt_cleanup (ctxMetal);
 	CleanupGL();

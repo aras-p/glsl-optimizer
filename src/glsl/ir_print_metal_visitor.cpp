@@ -467,7 +467,7 @@ static void print_type_precision(string_buffer& buffer, const glsl_type *t, glsl
 	else if (!strcmp(typeName, "mat4x4"))
 		typeName = halfPrec ? "half4x4" : "float4x4";
 	// samplers
-	else if (!strcmp(typeName, "sampler2D"))
+	else if (!strcmp(typeName, "sampler2D") || !strcmp(typeName, "samplerExternalOES"))
 		typeName = halfPrec ? "texture2d<half>" : "texture2d<float>";
 	else if (!strcmp(typeName, "samplerCube"))
 		typeName = halfPrec ? "texturecube<half>" : "texturecube<float>";
@@ -1245,8 +1245,21 @@ static void print_texture_uv (ir_print_metal_visitor* vis, ir_texture* ir, bool 
 
 void ir_print_metal_visitor::visit(ir_texture *ir)
 {
+	const bool external = ir->sampler->type->sampler_dimensionality == GLSL_SAMPLER_DIM_EXTERNAL;
+	if (external && ir->op == ir_txf)
+	{
+		ir->sampler->accept(this);
+		buffer.asprintf_append (".read(uint2(");
+		ir->coordinate->accept(this);
+		buffer.asprintf_append ("), uint(");
+		ir->lod_info.lod->accept(this);
+		buffer.asprintf_append ("))");
+		return;
+	}
 	if (ir->op == ir_txs)
 	{
+		if (external)
+			buffer.asprintf_append ("int2(");
 		ir->sampler->accept(this);
 		buffer.asprintf_append (".get_width(");
 		ir->lod_info.lod->accept(this);
@@ -1255,6 +1268,8 @@ void ir_print_metal_visitor::visit(ir_texture *ir)
 		buffer.asprintf_append (".get_height(");
 		ir->lod_info.lod->accept(this);
 		buffer.asprintf_append (")");
+		if (external)
+			buffer.asprintf_append (")");
 		return;
 	}
 	glsl_sampler_dim sampler_dim = (glsl_sampler_dim)ir->sampler->type->sampler_dimensionality;
