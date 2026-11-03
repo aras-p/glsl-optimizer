@@ -297,6 +297,11 @@ _mesa_glsl_release_types(void)
       hash_table_dtor(glsl_type::record_types);
       glsl_type::record_types = NULL;
    }
+
+   if (glsl_type::interface_types != NULL) {
+	   hash_table_dtor(glsl_type::interface_types);
+	   glsl_type::interface_types = NULL;
+   }
 }
 
 
