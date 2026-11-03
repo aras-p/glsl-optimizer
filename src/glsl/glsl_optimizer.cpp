@@ -32,9 +32,6 @@ initialize_mesa_context(struct gl_context *ctx, glslopt_target api)
 		case kGlslTargetOpenGL:
 			mesaAPI = API_OPENGL_COMPAT;
 			break;
-		case kGlslTargetOpenGLES20:
-			mesaAPI = API_OPENGLES2;
-			break;
 		case kGlslTargetOpenGLES30:
 			mesaAPI = API_OPENGL_CORE;
 			break;
@@ -49,12 +46,6 @@ initialize_mesa_context(struct gl_context *ctx, glslopt_target api)
 	default:
 	case kGlslTargetOpenGL:
 		ctx->Const.GLSLVersion = 150;
-		break;
-	case kGlslTargetOpenGLES20:
-		ctx->Extensions.OES_standard_derivatives = true;
-		ctx->Extensions.EXT_shadow_samplers = true;
-		ctx->Extensions.EXT_frag_depth = true;
-		ctx->Extensions.EXT_shader_framebuffer_fetch = true;
 		break;
 	case kGlslTargetOpenGLES30:
 		ctx->Extensions.ARB_ES3_compatibility = true;
@@ -74,7 +65,6 @@ initialize_mesa_context(struct gl_context *ctx, glslopt_target api)
    ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits = 16;
    ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxTextureImageUnits = 16;
 
-   // For GLES2.0 this would be 1, but we do support GL_EXT_draw_buffers
    ctx->Const.MaxDrawBuffers = 4;
 
    ctx->Driver.NewShader = _mesa_new_shader;
@@ -98,6 +88,8 @@ struct glslopt_ctx {
 
 glslopt_ctx* glslopt_initialize (glslopt_target target)
 {
+	if (target != kGlslTargetOpenGL && target != kGlslTargetOpenGLES30 && target != kGlslTargetMetal)
+		return NULL;
 	return new glslopt_ctx(target);
 }
 
@@ -629,6 +621,13 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 	_mesa_glsl_lexer_ctor (state, shaderSource);
 	_mesa_glsl_parse (state);
 	_mesa_glsl_lexer_dtor (state);
+
+	if (!state->error && ctx->target != kGlslTargetMetal && state->es_shader && state->language_version < 300)
+	{
+		shader->status = false;
+		shader->infoLog = ralloc_strdup(shader, "OpenGL ES 2.0 output is no longer supported; use #version 300 es or newer.");
+		return shader;
+	}
 
 	exec_list* ir = new (shader) exec_list();
 	shader->shader->ir = ir;

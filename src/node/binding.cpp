@@ -17,7 +17,6 @@ void InitAll(Local<Object> exports)
 	exports->CreateDataProperty(ctx, String::NewFromUtf8(isolate, "VERTEX_SHADER"), Int32::New(isolate, kGlslOptShaderVertex));
 	exports->CreateDataProperty(ctx, String::NewFromUtf8(isolate, "FRAGMENT_SHADER"), Int32::New(isolate, kGlslOptShaderFragment));
 	exports->CreateDataProperty(ctx, String::NewFromUtf8(isolate, "TARGET_OPENGL"), Int32::New(isolate, kGlslTargetOpenGL));
-	exports->CreateDataProperty(ctx, String::NewFromUtf8(isolate, "TARGET_OPENGLES20"), Int32::New(isolate, kGlslTargetOpenGLES20));
 	exports->CreateDataProperty(ctx, String::NewFromUtf8(isolate, "TARGET_OPENGLES30"), Int32::New(isolate, kGlslTargetOpenGLES30));
 
 #else
@@ -28,7 +27,6 @@ void InitAll(Local<Object> exports)
 	exports->Set(String::NewFromUtf8(isolate, "VERTEX_SHADER"), Int32::New(isolate, kGlslOptShaderVertex));
 	exports->Set(String::NewFromUtf8(isolate, "FRAGMENT_SHADER"), Int32::New(isolate, kGlslOptShaderFragment));
 	exports->Set(String::NewFromUtf8(isolate, "TARGET_OPENGL"), Int32::New(isolate, kGlslTargetOpenGL));
-	exports->Set(String::NewFromUtf8(isolate, "TARGET_OPENGLES20"), Int32::New(isolate, kGlslTargetOpenGLES20));
 	exports->Set(String::NewFromUtf8(isolate, "TARGET_OPENGLES30"), Int32::New(isolate, kGlslTargetOpenGLES30));
 #endif
 

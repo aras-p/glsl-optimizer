@@ -41,7 +41,10 @@ NAN_METHOD(Compiler::New)
 			target = (glslopt_target)info[0]->Int32Value();
 
 		else if (info[0]->IsBoolean())
-			target = (glslopt_target)((int)info[0]->BooleanValue());
+			target = info[0]->BooleanValue() ? kGlslTargetOpenGLES30 : kGlslTargetOpenGL;
+
+		if (target != kGlslTargetOpenGL && target != kGlslTargetOpenGLES30 && target != kGlslTargetMetal)
+			return Nan::ThrowRangeError("Unsupported shader target");
 
 		Compiler* obj = new Compiler(target);
     obj->Wrap(info.This());

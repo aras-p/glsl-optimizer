@@ -38,7 +38,6 @@ enum glslopt_options {
 // Optimizer target language
 enum glslopt_target {
 	kGlslTargetOpenGL = 0,
-	kGlslTargetOpenGLES20 = 1,
 	kGlslTargetOpenGLES30 = 2,
 	kGlslTargetMetal = 3,
 };

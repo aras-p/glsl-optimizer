@@ -95,8 +95,6 @@ public:
 		, inside_loop_body(false)
 		, skipped_this_ir(false)
 		, previous_skipped(false)
-		, uses_texlod_impl(0)
-		, uses_texlodproj_impl(0)
 	{
 		indentation = 0;
 		expression_depth = 0;
@@ -156,61 +154,7 @@ public:
 	bool	inside_loop_body;
 	bool	skipped_this_ir;
 	bool	previous_skipped;
-	int		uses_texlod_impl; // Two groups of 8 dimension bits, one per precision if any texture sampler needs the GLES2 lod workaround.
-	int		uses_texlodproj_impl; // Two groups of 8 dimension bits, one per precision if any texture sampler needs the GLES2 lod workaround.
 };
-
-static void print_texlod_workarounds(int usage_bitfield, int usage_proj_bitfield, string_buffer &str)
-{
-	static const char *precStrings[2] = {"mediump", "highp"};
-	static const char *precNameStrings[2] = { "medium_", "high_" };
-	// Print out the texlod workarounds
-	for (int prec = 0; prec < 2; prec++)
-	{
-		const char *precString = precStrings[prec];
-		const char *precName = precNameStrings[prec];
-
-		for (int dim = 0; dim < tex_sampler_type_count; dim++)
-		{
-			int mask = 1 << (dim + (prec * 8));
-			if (usage_bitfield & mask)
-			{
-				str.asprintf_append("%s vec4 impl_%stexture%sLodEXT(%s sampler%s sampler, highp vec%d coord, mediump float lod)\n", precString, precName, tex_sampler_dim_name[dim], precString, tex_sampler_dim_name[dim], tex_sampler_dim_size[dim]);
-				str.asprintf_append("{\n");
-				str.asprintf_append("#if defined(GL_EXT_shader_texture_lod)\n");
-				str.asprintf_append("\treturn texture%sLodEXT(sampler, coord, lod);\n", tex_sampler_dim_name[dim]);
-				str.asprintf_append("#else\n");
-				str.asprintf_append("\treturn texture%s(sampler, coord, lod);\n", tex_sampler_dim_name[dim]);
-				str.asprintf_append("#endif\n");
-				str.asprintf_append("}\n\n");
-			}
-			if (usage_proj_bitfield & mask)
-			{
-				// 2D projected read also has a vec4 UV variant
-				if (dim == GLSL_SAMPLER_DIM_2D)
-				{
-					str.asprintf_append("%s vec4 impl_%stexture2DProjLodEXT(%s sampler2D sampler, highp vec4 coord, mediump float lod)\n", precString, precName, precString);
-					str.asprintf_append("{\n");
-					str.asprintf_append("#if defined(GL_EXT_shader_texture_lod)\n");
-					str.asprintf_append("\treturn texture%sProjLodEXT(sampler, coord, lod);\n", tex_sampler_dim_name[dim]);
-					str.asprintf_append("#else\n");
-					str.asprintf_append("\treturn texture%sProj(sampler, coord, lod);\n", tex_sampler_dim_name[dim]);
-					str.asprintf_append("#endif\n");
-					str.asprintf_append("}\n\n");
-				}
-				str.asprintf_append("%s vec4 impl_%stexture%sProjLodEXT(%s sampler%s sampler, highp vec%d coord, mediump float lod)\n", precString, precName, tex_sampler_dim_name[dim], precString, tex_sampler_dim_name[dim], tex_sampler_dim_size[dim] + 1);
-				str.asprintf_append("{\n");
-				str.asprintf_append("#if defined(GL_EXT_shader_texture_lod)\n");
-				str.asprintf_append("\treturn texture%sProjLodEXT(sampler, coord, lod);\n", tex_sampler_dim_name[dim]);
-				str.asprintf_append("#else\n");
-				str.asprintf_append("\treturn texture%sProj(sampler, coord, lod);\n", tex_sampler_dim_name[dim]);
-				str.asprintf_append("#endif\n");
-				str.asprintf_append("}\n\n");
-			}
-		}
-	}
-}
-
 
 char*
 _mesa_print_ir_glsl(exec_list *instructions,
@@ -225,7 +169,7 @@ _mesa_print_ir_glsl(exec_list *instructions,
 		if (state->had_version_string)
 		{
 			str.asprintf_append ("#version %i", state->language_version);
-			if (state->es_shader && state->language_version >= 300)
+			if (state->es_shader)
 				str.asprintf_append (" es");
 			str.asprintf_append ("\n");
 		}
@@ -235,25 +179,8 @@ _mesa_print_ir_glsl(exec_list *instructions,
 			str.asprintf_append ("#extension GL_ARB_draw_instanced : enable\n");
 		if (state->EXT_gpu_shader4_enable)
 			str.asprintf_append ("#extension GL_EXT_gpu_shader4 : enable\n");
-		if (state->EXT_shader_texture_lod_enable)
-			str.asprintf_append ("#extension GL_EXT_shader_texture_lod : enable\n");
-		if (state->OES_standard_derivatives_enable)
-			str.asprintf_append ("#extension GL_OES_standard_derivatives : enable\n");
 		if (state->OES_EGL_image_external_essl3_enable)
 			str.asprintf_append ("#extension GL_OES_EGL_image_external_essl3 : enable\n");
-		if (state->OES_EGL_image_external_enable)
-			str.asprintf_append ("#extension GL_OES_EGL_image_external : enable\n");
-		if (state->EXT_shadow_samplers_enable)
-			str.asprintf_append ("#extension GL_EXT_shadow_samplers : enable\n");
-		if (state->EXT_frag_depth_enable)
-			str.asprintf_append ("#extension GL_EXT_frag_depth : enable\n");
-		if (state->es_shader && state->language_version < 300)
-		{
-			if (state->EXT_draw_buffers_enable)
-				str.asprintf_append ("#extension GL_EXT_draw_buffers : enable\n");
-			if (state->EXT_draw_instanced_enable)
-				str.asprintf_append ("#extension GL_EXT_draw_instanced : enable\n");
-		}
 		if (state->EXT_shader_framebuffer_fetch_enable)
 			str.asprintf_append ("#extension GL_EXT_shader_framebuffer_fetch : enable\n");
 		if (state->ARB_shader_bit_encoding_enable)
@@ -266,8 +193,6 @@ _mesa_print_ir_glsl(exec_list *instructions,
 	do_remove_unused_typedecls(instructions);
 	
 	global_print_tracker gtracker;
-	int uses_texlod_impl = 0;
-	int uses_texlodproj_impl = 0;
 	
 	loop_state* ls = analyze_loop_variables(instructions);
 	if (ls->loop_found)
@@ -289,13 +214,10 @@ _mesa_print_ir_glsl(exec_list *instructions,
 		if (ir->ir_type != ir_type_function && !v.skipped_this_ir)
 			body.asprintf_append (";\n");
 
-		uses_texlod_impl |= v.uses_texlod_impl;
-		uses_texlodproj_impl |= v.uses_texlodproj_impl;
 	}
 	
 	delete ls;
 	
-	print_texlod_workarounds(uses_texlod_impl, uses_texlodproj_impl, str);
 	
 	// Add the optimized glsl code
 	str.asprintf_append("%s", body.c_str());
@@ -854,24 +776,6 @@ void ir_print_glsl_visitor::visit(ir_texture *ir)
 	if (is_array)
 		sampler_uv_dim += 1;
 	const bool is_proj = ((ir->op == ir_tex || ir->op == ir_txb || ir->op == ir_txl || ir->op == ir_txd) && uv_dim > sampler_uv_dim);
-	const bool is_lod = (ir->op == ir_txl);
-	
-	if (is_lod && state->es_shader && state->language_version < 300 && state->stage == MESA_SHADER_FRAGMENT)
-	{
-		// Special workaround for GLES 2.0 LOD samplers to prevent a lot of debug spew.
-		const glsl_precision prec = ir->sampler->get_precision();
-		// Use bits 0-7 for mediump and 8-15 for highp (including unspecified).
-		const bool medium = prec == glsl_precision_medium;
-		const char *precString = medium ? "_medium_" : "_high_";
-		const int position = (int)sampler_dim + (medium ? 0 : 8);
-		buffer.asprintf_append("impl%s", precString);
-		if (is_proj)
-			uses_texlodproj_impl |= (1 << position);
-		else
-			uses_texlod_impl |= (1 << position);
-	}
-
-	
     // texture function name
     //ACS: shadow lookups and lookups with dimensionality included in the name were deprecated in 130
     if(state->language_version<130) 
@@ -899,23 +803,9 @@ void ir_print_glsl_visitor::visit(ir_texture *ir)
     if (ir->offset != NULL)
         buffer.asprintf_append ("Offset");
 	
-	if (state->es_shader)
-	{
-		if ( (is_shadow && state->EXT_shadow_samplers_enable) ||
-			(ir->op == ir_txl && state->EXT_shader_texture_lod_enable) )
-		{
-			buffer.asprintf_append ("EXT");
-		}
-	}
-	
-	if(ir->op == ir_txd)
-	{
-		if(state->es_shader && state->EXT_shader_texture_lod_enable)
-			buffer.asprintf_append ("EXT");
-		else if(!state->es_shader && state->ARB_shader_texture_lod_enable)
-			buffer.asprintf_append ("ARB");
-	}
-	
+	if (ir->op == ir_txd && !state->es_shader && state->ARB_shader_texture_lod_enable)
+		buffer.asprintf_append ("ARB");
+
 	buffer.asprintf_append (" (");
 	
 	// sampler
@@ -1162,8 +1052,7 @@ void ir_print_glsl_visitor::emit_assignment_part (ir_dereference* lhs, ir_rvalue
 }
 
 
-// Try to print (X = X + const) as (X += const), mostly to satisfy
-// OpenGL ES 2.0 loop syntax restrictions.
+// Try to print (X = X + const) as (X += const).
 static bool try_print_increment (ir_print_glsl_visitor* vis, ir_assignment* ir)
 {
 	if (ir->condition)
@@ -1331,7 +1220,7 @@ void ir_print_glsl_visitor::visit(ir_constant *ir)
 		if (!std::isfinite(ir->value.f[0]))
 		{
 			// Non-printable float. If we have bit conversions, we're fine. otherwise do hand-wavey things in print_float().
-			if ((state->es_shader && (state->language_version >= 300))
+			if (state->es_shader
 				|| (state->language_version >= 330)
 				|| (state->ARB_shader_bit_encoding_enable))
 			{
@@ -1354,9 +1243,8 @@ void ir_print_glsl_visitor::visit(ir_constant *ir)
 	}
 	else if (type == glsl_type::uint_type)
 	{
-		// ES 2.0 doesn't support uints, neither does GLSL < 130
-		if ((state->es_shader && (state->language_version < 300))
-			|| (state->language_version < 130))
+		// GLSL < 130 does not support uints
+		if (state->language_version < 130)
 			buffer.asprintf_append("%u", ir->value.u[0]);
 		else
 		{
@@ -1398,9 +1286,8 @@ void ir_print_glsl_visitor::visit(ir_constant *ir)
 	 switch (base_type->base_type) {
 	 case GLSL_TYPE_UINT:
 	 {
-		 // ES 2.0 doesn't support uints, neither does GLSL < 130
-		 if ((state->es_shader && (state->language_version < 300))
-			 || (state->language_version < 130))
+		 // GLSL < 130 does not support uints
+		 if (state->language_version < 130)
 			 buffer.asprintf_append("%u", ir->value.u[i]);
 		 else
 			 buffer.asprintf_append("%uu", ir->value.u[i]);

@@ -6,7 +6,6 @@ var path = require('path');
 var frag = fs.readFileSync( path.join( __dirname, 'fragment', 'glsl140-basic-in.txt' ), 'utf8' );
 
 assert.equal(glslOptimizer.TARGET_OPENGL, 0, 'exports TARGET_OPENGL');
-assert.equal(glslOptimizer.TARGET_OPENGLES20, 1, 'exports TARGET_OPENGLES20');
 assert.equal(glslOptimizer.TARGET_OPENGLES30, 2, 'exports TARGET_OPENGLES30');
 assert.equal(glslOptimizer.VERTEX_SHADER, 0, 'exports VERTEX_SHADER');
 assert.equal(glslOptimizer.FRAGMENT_SHADER, 1, 'exports FRAGMENT_SHADER');

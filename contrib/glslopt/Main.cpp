@@ -14,7 +14,6 @@ static int printhelp(const char* msg)
 	printf("\t-f : fragment shader (default)\n");
 	printf("\t-v : vertex shader\n");
 	printf("\t-1 : target OpenGL (default)\n");
-	printf("\t-2 : target OpenGL ES 2.0\n");
 	printf("\t-3 : target OpenGL ES 3.0\n");
 	printf("\n\tIf no output specified, output is to [input].out.\n");
 	return 1;
@@ -120,10 +119,10 @@ int main(int argc, char* argv[])
 				vertexShader = false;
 			else if( 0 == strcmp("-1", argv[i]) )
 				languageTarget = kGlslTargetOpenGL;
-			else if( 0 == strcmp("-2", argv[i]) )
-				languageTarget = kGlslTargetOpenGLES20;
 			else if( 0 == strcmp("-3", argv[i]) )
 				languageTarget = kGlslTargetOpenGLES30;
+			else
+				return printhelp("Unknown option");
 		}
 		else
 		{
