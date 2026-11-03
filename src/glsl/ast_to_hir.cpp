@@ -59,6 +59,15 @@
 
 using namespace ir_builder;
 
+/* Treat explicit lowp qualifiers as mediump when entering the IR. Keep the
+ * AST unchanged for diagnostics, and preserve highp and unspecified precision. */
+static glsl_precision
+precision_from_ast(unsigned precision)
+{
+   return precision == ast_precision_low
+      ? glsl_precision_medium : (glsl_precision)precision;
+}
+
 static void
 detect_conflicting_assignments(struct _mesa_glsl_parse_state *state,
 			       exec_list *instructions);
@@ -3045,10 +3054,10 @@ process_initializer(ir_variable *var, ast_declaration *decl,
    /* Propagate precision qualifier for constant value */
    if (type->qualifier.flags.q.constant) {
       ir_constant *constant_value = rhs->constant_expression_value();
-      constant_value->set_precision((glsl_precision)type->qualifier.precision);
+      constant_value->set_precision(precision_from_ast(type->qualifier.precision));
       if (constant_value->type->is_array()) {
          for (unsigned i = 0; i < constant_value->type->length; i++) {
-            constant_value->get_array_element(i)->set_precision((glsl_precision)type->qualifier.precision);
+            constant_value->get_array_element(i)->set_precision(precision_from_ast(type->qualifier.precision));
          }
       }
    }
@@ -3155,7 +3164,7 @@ apply_precision_to_variable(const struct ast_type_qualifier& qual,
 	if (var->type->is_sampler() && qual.precision == ast_precision_none && !function_param)
 		var->data.precision = ast_precision_low; // samplers default to low precision (outside of function arguments)
 	else
-		var->data.precision = qual.precision;
+		var->data.precision = precision_from_ast(qual.precision);
 }
 
 
@@ -3505,7 +3514,7 @@ ast_declarator_list::hir(exec_list *instructions,
       var_type = process_array_type(&loc, decl_type, decl->array_specifier,
                                     state);
 
-      var = new(ctx) ir_variable(var_type, decl->identifier, ir_var_auto, (glsl_precision)this->type->qualifier.precision);
+      var = new(ctx) ir_variable(var_type, decl->identifier, ir_var_auto, precision_from_ast(this->type->qualifier.precision));
 
       /* The 'varying in' and 'varying out' qualifiers can only be used with
        * ARB_geometry_shader4 and EXT_geometry_shader4, which we don't support
@@ -4009,7 +4018,7 @@ ast_parameter_declarator::hir(exec_list *instructions,
 
    is_void = false;
    ir_variable *var = new(ctx)
-      ir_variable(type, this->identifier, ir_var_function_in, (glsl_precision)this->type->qualifier.precision);
+      ir_variable(type, this->identifier, ir_var_function_in, precision_from_ast(this->type->qualifier.precision));
 
    /* Apply any specified qualifiers to the parameter declaration.  Note that
     * for function parameters the default mode is 'in'.
@@ -4265,7 +4274,7 @@ ast_function::hir(exec_list *instructions,
    /* Finish storing the information about this new function in its signature.
     */
    if (sig == NULL) {
-      sig = new(ctx) ir_function_signature(return_type, (glsl_precision)this->return_type->qualifier.precision);
+      sig = new(ctx) ir_function_signature(return_type, precision_from_ast(this->return_type->qualifier.precision));
       f->add_signature(sig);
    }
 
@@ -5079,7 +5088,7 @@ ast_type_specifier::hir(exec_list *instructions,
          void *ctx = state;
 
          const char* precision_type = NULL;
-         switch (this->default_precision) {
+         switch (precision_from_ast(this->default_precision)) {
          case glsl_precision_high:		precision_type = "highp"; break;
          case glsl_precision_medium:		precision_type = "mediump"; break;
          case glsl_precision_low:		precision_type = "lowp"; break;
@@ -5125,7 +5134,7 @@ ast_type_specifier::hir(exec_list *instructions,
           */
          ir_variable *const junk =
             new(state) ir_variable(type, "#default precision",
-                                   ir_var_auto, (glsl_precision)this->default_precision);
+                                   ir_var_auto, precision_from_ast(this->default_precision));
 
          state->symbols->add_variable(junk);
          state->had_float_precision = true;
@@ -5277,7 +5286,7 @@ ast_process_structure_or_interface_block(exec_list *instructions,
                                          decl->array_specifier, state);
          fields[i].type = field_type;
          fields[i].name = decl->identifier;
-         fields[i].precision = (glsl_precision)decl_list->type->qualifier.precision;
+         fields[i].precision = precision_from_ast(decl_list->type->qualifier.precision);
          fields[i].location = -1;
          fields[i].interpolation =
             interpret_interpolation_qualifier(qual, var_mode, state, &loc);
