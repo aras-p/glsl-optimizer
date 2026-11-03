@@ -7,6 +7,8 @@ GLSL optimizer Change Log
 
 * Build: moved to CMake build and C++17 version, updates for recent compilers/toolchains.
 * Build: compilation and tests are now ran on Github Actions.
+* Build: Linux build now uses `-fPIC` by default (#52).
+* Fixed `glsl_types::interface_types` memory leak (#141).
 
 2016 10
 -------

@@ -127,6 +127,9 @@ set(SRC
     "src/glsl/standalone_scaffolding.cpp"
 )
 add_library(glsl_optimizer STATIC ${SRC})
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT DEFINED CMAKE_POSITION_INDEPENDENT_CODE)
+    set_target_properties(glsl_optimizer PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
 target_compile_features(glsl_optimizer PRIVATE c_std_99)
 # Mesa's exec_list sentinels alias list fields as exec_node objects.
 target_compile_options(glsl_optimizer PRIVATE
