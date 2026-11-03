@@ -9,6 +9,7 @@ GLSL optimizer Change Log
 * Build: compilation and tests are now ran on Github Actions.
 * Build: Linux build now uses `-fPIC` by default (#52).
 * Fixed `glsl_types::interface_types` memory leak (#141).
+* Fixed missing precision on `sampler2DArray` (#146).
 
 2016 10
 -------

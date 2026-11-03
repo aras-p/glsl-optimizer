@@ -396,8 +396,8 @@ void ir_print_glsl_visitor::print_precision (ir_instruction* ir, const glsl_type
 
 	// skip precision for samplers that end up being lowp (default anyway) or undefined;
 	// except always emit it for shadowmap samplers (some drivers don't implement
-	// default EXT_shadow_samplers precision) and 3D textures (they always require precision)
-	if (type && type->is_sampler() && !type->sampler_shadow && !(type->sampler_dimensionality > GLSL_SAMPLER_DIM_2D))
+	// default EXT_shadow_samplers precision), array textures and 3D textures (they require precision)
+	if (type && type->is_sampler() && !type->sampler_shadow && !type->sampler_array && !(type->sampler_dimensionality > GLSL_SAMPLER_DIM_2D))
 	{
 		if (prec == glsl_precision_low || prec == glsl_precision_undefined)
 			return;

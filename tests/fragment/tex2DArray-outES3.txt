@@ -1,6 +1,6 @@
 #version 300 es
 out lowp vec4 _fragData;
-uniform sampler2DArray myarr;
+uniform lowp sampler2DArray myarr;
 in highp vec4 uv;
 void main ()
 {
