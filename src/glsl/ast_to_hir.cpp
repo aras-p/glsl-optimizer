@@ -64,8 +64,12 @@ using namespace ir_builder;
 static glsl_precision
 precision_from_ast(unsigned precision)
 {
-   return precision == ast_precision_low
-      ? glsl_precision_medium : (glsl_precision)precision;
+   switch (precision) {
+   case ast_precision_high: return glsl_precision_high;
+   case ast_precision_medium:
+   case ast_precision_low: return glsl_precision_medium;
+   default: return glsl_precision_undefined;
+   }
 }
 
 static void
@@ -1409,7 +1413,7 @@ ast_expression::do_hir(exec_list *instructions,
       } else {
          ir_variable *const tmp = new(ctx) ir_variable(glsl_type::bool_type,
                                                        "and_tmp",
-                                                       ir_var_temporary, glsl_precision_low);
+                                                       ir_var_temporary, glsl_precision_medium);
          instructions->push_tail(tmp);
 
          ir_if *const stmt = new(ctx) ir_if(op[0]);
@@ -1445,7 +1449,7 @@ ast_expression::do_hir(exec_list *instructions,
       } else {
          ir_variable *const tmp = new(ctx) ir_variable(glsl_type::bool_type,
                                                        "or_tmp",
-                                                       ir_var_temporary, glsl_precision_low);
+                                                       ir_var_temporary, glsl_precision_medium);
          instructions->push_tail(tmp);
 
          ir_if *const stmt = new(ctx) ir_if(op[0]);
@@ -4588,7 +4592,7 @@ ast_switch_statement::hir(exec_list *instructions,
    state->switch_state.is_fallthru_var =
       new(ctx) ir_variable(glsl_type::bool_type,
                            "switch_is_fallthru_tmp",
-                           ir_var_temporary, glsl_precision_low);
+                           ir_var_temporary, glsl_precision_medium);
    instructions->push_tail(state->switch_state.is_fallthru_var);
 
    ir_dereference_variable *deref_is_fallthru_var =
@@ -4602,7 +4606,7 @@ ast_switch_statement::hir(exec_list *instructions,
    state->switch_state.is_break_var =
       new(ctx) ir_variable(glsl_type::bool_type,
                            "switch_is_break_tmp",
-                           ir_var_temporary, glsl_precision_low);
+                           ir_var_temporary, glsl_precision_medium);
    instructions->push_tail(state->switch_state.is_break_var);
 
    ir_dereference_variable *deref_is_break_var =
@@ -4613,7 +4617,7 @@ ast_switch_statement::hir(exec_list *instructions,
    state->switch_state.run_default =
       new(ctx) ir_variable(glsl_type::bool_type,
                              "run_default_tmp",
-                             ir_var_temporary, glsl_precision_low);
+                             ir_var_temporary, glsl_precision_medium);
    instructions->push_tail(state->switch_state.run_default);
 
    /* Cache test expression.
@@ -5092,7 +5096,6 @@ ast_type_specifier::hir(exec_list *instructions,
          switch (precision_from_ast(this->default_precision)) {
          case glsl_precision_high:		precision_type = "highp"; break;
          case glsl_precision_medium:		precision_type = "mediump"; break;
-         case glsl_precision_low:		precision_type = "lowp"; break;
          case glsl_precision_undefined:	precision_type = ""; break;
          }
          char* precision_statement = ralloc_asprintf(ctx, "precision %s %s", precision_type, this->type_name);

@@ -138,7 +138,7 @@ lower_discard_flow(exec_list *ir)
 
    ir_variable *var = new(mem_ctx) ir_variable(glsl_type::bool_type,
 					       "discarded",
-					       ir_var_temporary, glsl_precision_low);
+					       ir_var_temporary, glsl_precision_medium);
 
    ir->push_head(var);
 

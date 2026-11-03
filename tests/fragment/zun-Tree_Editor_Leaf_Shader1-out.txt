@@ -16,35 +16,31 @@ void main ()
   if ((x_4 < 0.0)) {
     discard;
   };
-  bvec4 tmpvar_5;
-  tmpvar_5 = greaterThanEqual (tmpvar_1.xxxx, _LightSplitsNear);
-  bvec4 tmpvar_6;
-  tmpvar_6 = lessThan (tmpvar_1.xxxx, _LightSplitsFar);
-  weights_3 = (vec4(tmpvar_5) * vec4(tmpvar_6));
-  vec4 tmpvar_7;
-  tmpvar_7.w = 1.0;
-  tmpvar_7.xyz = (((
+  weights_3 = (vec4(greaterThanEqual (tmpvar_1.xxxx, _LightSplitsNear)) * vec4(lessThan (tmpvar_1.xxxx, _LightSplitsFar)));
+  vec4 tmpvar_5;
+  tmpvar_5.w = 1.0;
+  tmpvar_5.xyz = (((
     (gl_TexCoord[0].xyz * weights_3.x)
    + 
     (gl_TexCoord[1].xyz * weights_3.y)
   ) + (gl_TexCoord[2].xyz * weights_3.z)) + (gl_TexCoord[3].xyz * weights_3.w));
-  vec4 tmpvar_8;
-  tmpvar_8 = texture2D (_ShadowMapTexture, tmpvar_7.xy);
-  float tmpvar_9;
-  if ((tmpvar_8.x < tmpvar_7.z)) {
-    tmpvar_9 = _LightShadowData.x;
+  vec4 tmpvar_6;
+  tmpvar_6 = texture2D (_ShadowMapTexture, tmpvar_5.xy);
+  float tmpvar_7;
+  if ((tmpvar_6.x < tmpvar_5.z)) {
+    tmpvar_7 = _LightShadowData.x;
   } else {
-    tmpvar_9 = 1.0;
+    tmpvar_7 = 1.0;
   };
-  res_2.x = clamp ((tmpvar_9 + clamp (tmpvar_1.y, 0.0, 1.0)), 0.0, 1.0);
+  res_2.x = clamp ((tmpvar_7 + clamp (tmpvar_1.y, 0.0, 1.0)), 0.0, 1.0);
   res_2.y = 1.0;
-  vec2 enc_10;
-  enc_10 = (vec2(1.0, 255.0) * (1.0 - (tmpvar_1.xxxx * _ProjectionParams.w)).x);
-  vec2 tmpvar_11;
-  tmpvar_11 = fract(enc_10);
-  enc_10.y = tmpvar_11.y;
-  enc_10.x = (tmpvar_11.x - (tmpvar_11.y * 0.00392157));
-  res_2.zw = enc_10;
+  vec2 enc_8;
+  enc_8 = (vec2(1.0, 255.0) * (1.0 - (tmpvar_1.xxxx * _ProjectionParams.w)).x);
+  vec2 tmpvar_9;
+  tmpvar_9 = fract(enc_8);
+  enc_8.y = tmpvar_9.y;
+  enc_8.x = (tmpvar_9.x - (tmpvar_9.y * 0.00392157));
+  res_2.zw = enc_8;
   gl_FragData[0] = res_2;
 }
 

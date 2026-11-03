@@ -95,9 +95,9 @@ static glsl_precision precision_for_call (const ir_function_signature* sig, glsl
 	if (sig->precision != glsl_precision_undefined)
 		return sig->precision;
 	
-	// if return type is boolean, treat as lowp
+	// Boolean results use the shared lower precision class.
 	if (sig->return_type->base_type == GLSL_TYPE_BOOL)
-		return glsl_precision_low;
+		return glsl_precision_medium;
 	
 	// if it's a built-in texture function, precision comes from sampler (1st param) precision
 	if (sig->is_builtin())

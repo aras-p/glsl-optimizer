@@ -897,7 +897,7 @@ void
 builtin_variable_generator::generate_fs_special_vars()
 {
    add_input(VARYING_SLOT_POS, vec4_t, "gl_FragCoord", glsl_precision_high);
-   add_input(VARYING_SLOT_FACE, bool_t, "gl_FrontFacing", glsl_precision_low);
+   add_input(VARYING_SLOT_FACE, bool_t, "gl_FrontFacing", glsl_precision_medium);
    if (state->is_version(120, 100))
 	   add_input(VARYING_SLOT_PNTC, vec2_t, "gl_PointCoord", state->metal_target ? glsl_precision_high : glsl_precision_medium);
 

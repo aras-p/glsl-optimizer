@@ -177,7 +177,7 @@ lower_discard_visitor::visit_leave(ir_if *ir)
 
    ir_variable *temp = new(mem_ctx) ir_variable(glsl_type::bool_type,
 						"discard_cond_temp",
-						ir_var_temporary, glsl_precision_low);
+						ir_var_temporary, glsl_precision_medium);
    ir_assignment *temp_initializer =
       new(mem_ctx) ir_assignment(new(mem_ctx) ir_dereference_variable(temp),
 				 new(mem_ctx) ir_constant(false), NULL);

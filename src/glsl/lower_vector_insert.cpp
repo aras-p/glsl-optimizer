@@ -113,7 +113,7 @@ vector_insert_visitor::handle_rvalue(ir_rvalue **rv)
             new(factory.mem_ctx) ir_constant(int(i));
 
          ir_variable *const cmp_result =
-            factory.make_temp(glsl_type::bool_type, "index_condition", glsl_precision_low);
+            factory.make_temp(glsl_type::bool_type, "index_condition", glsl_precision_medium);
 
          factory.emit(assign(cmp_result,
                              equal(expr->operands[2]->clone(factory.mem_ctx,

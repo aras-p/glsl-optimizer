@@ -20,6 +20,6 @@ void main ()
 // stats: 5 alu 0 tex 1 flow
 // inputs: 4
 //  #0: gl_PointCoord (medium float) 2x1 [-1] loc 23
-//  #1: gl_FrontFacing (low bool) 1x1 [-1] loc 22
+//  #1: gl_FrontFacing (medium bool) 1x1 [-1] loc 22
 //  #2: gl_FragCoord (high float) 4x1 [-1] loc 0
 //  #3: uv (medium float) 4x1 [-1]

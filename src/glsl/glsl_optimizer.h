@@ -59,7 +59,7 @@ enum glslopt_basic_type {
 enum glslopt_precision {
 	kGlslPrecHigh = 0,
 	kGlslPrecMedium,
-	kGlslPrecLow,
+	kGlslPrecLow, // never happens anymore, retained only for API compatibility
 	kGlslPrecCount
 };
 
