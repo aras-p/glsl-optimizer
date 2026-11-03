@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <memory>
 #include "glsl_optimizer.h"
 
 static glslopt_ctx* gContext = 0;
@@ -77,25 +78,25 @@ static bool saveFile(const char* filename, const char* data)
 
 static bool compileShader(const char* dstfilename, const char* srcfilename, bool vertexShader)
 {
-	const char* originalShader = loadFile(srcfilename);
+	std::unique_ptr<char[]> originalShader(loadFile(srcfilename));
 	if( !originalShader )
 		return false;
 
 	const glslopt_shader_type type = vertexShader ? kGlslOptShaderVertex : kGlslOptShaderFragment;
 
-	glslopt_shader* shader = glslopt_optimize(gContext, type, originalShader, 0);
-	if( !glslopt_get_status(shader) )
+	std::unique_ptr<glslopt_shader, decltype(&glslopt_shader_delete)> shader(
+		glslopt_optimize(gContext, type, originalShader.get(), 0), glslopt_shader_delete);
+	if( !glslopt_get_status(shader.get()) )
 	{
-		printf( "Failed to compile %s:\n\n%s\n", srcfilename, glslopt_get_log(shader));
+		printf( "Failed to compile %s:\n\n%s\n", srcfilename, glslopt_get_log(shader.get()));
 		return false;
 	}
 
-	const char* optimizedShader = glslopt_get_output(shader);
+	const char* optimizedShader = glslopt_get_output(shader.get());
 
 	if( !saveFile(dstfilename, optimizedShader) )
 		return false;
 
-	delete[] originalShader;
 	return true;
 }
 

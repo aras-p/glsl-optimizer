@@ -398,22 +398,11 @@ ralloc_asprintf(const void *ctx, const char *fmt, ...)
 size_t
 printf_length(const char *fmt, va_list untouched_args)
 {
-   int size;
-   char junk;
-
    /* Make a copy of the va_list so the original caller can still use it */
    va_list args;
    va_copy(args, untouched_args);
 
-#ifdef _WIN32
-   /* We need to use _vcsprintf to calculate the size as vsnprintf returns -1
-    * if the number of characters to write is greater than count.
-    */
-   size = _vscprintf(fmt, args);
-   (void)junk;
-#else
-   size = vsnprintf(&junk, 1, fmt, args);
-#endif
+   int size = vsnprintf(NULL, 0, fmt, args);
    assert(size >= 0);
 
    va_end(args);

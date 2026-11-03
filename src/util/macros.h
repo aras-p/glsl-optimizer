@@ -109,21 +109,11 @@ do {                        \
  * performs no action and all member variables and base classes are
  * trivially destructible themselves.
  */
-#   if defined(__GNUC__)
-#      if ((__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 3)))
-#         define HAS_TRIVIAL_DESTRUCTOR(T) __has_trivial_destructor(T)
-#      endif
-#   elif (defined(__clang__) && defined(__has_feature))
-#      if __has_feature(has_trivial_destructor)
-#         define HAS_TRIVIAL_DESTRUCTOR(T) __has_trivial_destructor(T)
-#      endif
-#   endif
-#   ifndef HAS_TRIVIAL_DESTRUCTOR
-       /* It's always safe (if inefficient) to assume that a
-        * destructor is non-trivial.
-        */
-#      define HAS_TRIVIAL_DESTRUCTOR(T) (false)
-#   endif
+/* This header can be included inside an extern "C" block. */
+extern "C++" {
+#  include <type_traits>
+}
+#  define HAS_TRIVIAL_DESTRUCTOR(T) std::is_trivially_destructible<T>::value
 #endif
 
 #endif /* UTIL_MACROS_H */

@@ -126,16 +126,6 @@ typedef union { GLfloat f; GLint i; GLuint u; } fi_type;
 #endif
 
 #if defined(_MSC_VER)
-#if _MSC_VER < 1800  /* Not req'd on VS2013 and above */
-static inline float truncf(float x) { return x < 0.0f ? ceilf(x) : floorf(x); }
-static inline float exp2f(float x) { return powf(2.0f, x); }
-static inline float log2f(float x) { return logf(x) * 1.442695041f; }
-static inline float asinhf(float x) { return logf(x + sqrtf(x * x + 1.0f)); }
-static inline float acoshf(float x) { return logf(x + sqrtf(x * x - 1.0f)); }
-static inline float atanhf(float x) { return (logf(1.0f + x) - logf(1.0f - x)) / 2.0f; }
-static inline int isblank(int ch) { return ch == ' ' || ch == '\t'; }
-#define strtoll(p, e, b) _strtoi64(p, e, b)
-#endif /* _MSC_VER < 1800 */
 #define strcasecmp(s1, s2) _stricmp(s1, s2)
 #endif
 /*@}*/
@@ -536,11 +526,6 @@ _mesa_snprintf( char *str, size_t size, const char *fmt, ... ) PRINTFLIKE(3, 4);
 
 extern int
 _mesa_vsnprintf(char *str, size_t size, const char *fmt, va_list arg);
-
-
-#if defined(_MSC_VER) && !defined(snprintf)
-#define snprintf _snprintf
-#endif
 
 
 #ifdef __cplusplus

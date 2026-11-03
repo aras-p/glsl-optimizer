@@ -51,6 +51,9 @@ public:
 		m_Ptr[0] = 0;
 	}
 	
+	string_buffer(const string_buffer&) = delete;
+	string_buffer& operator=(const string_buffer&) = delete;
+
 	~string_buffer()
 	{
 		ralloc_free(m_Ptr);
@@ -69,12 +72,6 @@ public:
 	}
 	
 	void vasprintf_append(const char *fmt, va_list args)
-	{
-		assert (m_Ptr != NULL);
-		vasprintf_rewrite_tail (&m_Size, fmt, args);
-	}
-	
-	void vasprintf_rewrite_tail (size_t *start, const char *fmt, va_list args)
 	{
 		assert (m_Ptr != NULL);
 		
