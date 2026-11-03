@@ -21,6 +21,9 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include <cmath>
+#include <limits>
+
 #include "ir_print_glsl_visitor.h"
 #include "ir_visitor.h"
 #include "glsl_types.h"
@@ -28,8 +31,6 @@
 #include "ir_unused_structs.h"
 #include "loop_analysis.h"
 #include "program/hash_table.h"
-#include <cmath>
-#include <limits>
 
 
 static void print_type(string_buffer& buffer, const glsl_type *t, bool arraySize);

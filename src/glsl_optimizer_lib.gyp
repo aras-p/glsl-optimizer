@@ -6,9 +6,12 @@
     {
       'target_name': 'glsl_optimizer_lib',
       'type': 'static_library',
+      # Mesa's exec_list sentinels rely on type-punning.
+      'cflags': ['-fno-strict-aliasing'],
       # The checked-in Flex scanner still uses register.
       'cflags_cc': ['-Wno-register'],
       'xcode_settings': {
+        'GCC_STRICT_ALIASING': 'NO',
         'OTHER_CPLUSPLUSFLAGS': ['-Wno-register'],
       },
       'include_dirs': [

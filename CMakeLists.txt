@@ -128,6 +128,11 @@ set(SRC
 )
 add_library(glsl_optimizer STATIC ${SRC})
 target_compile_features(glsl_optimizer PRIVATE c_std_99)
+# Mesa's exec_list sentinels alias list fields as exec_node objects.
+target_compile_options(glsl_optimizer PRIVATE
+    "$<$<COMPILE_LANG_AND_ID:C,GNU,Clang,AppleClang>:-fno-strict-aliasing>"
+    "$<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,AppleClang>:-fno-strict-aliasing>"
+)
 # generated Flex scanner uses 'register', which clang rejects
 set_source_files_properties(src/glsl/glsl_lexer.cpp PROPERTIES
     COMPILE_OPTIONS "$<$<CXX_COMPILER_ID:Clang,AppleClang>:-Wno-register>"
