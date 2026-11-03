@@ -1,0 +1,21 @@
+#extension GL_OES_EGL_image_external : enable
+precision mediump float;
+uniform lowp samplerExternalOES tex;
+varying vec4 uv;
+void main ()
+{
+  lowp vec4 tmpvar_1;
+  tmpvar_1 = texture2D (tex, uv.xy);
+  lowp vec4 tmpvar_2;
+  tmpvar_2 = texture2DProj (tex, uv.xyz);
+  lowp vec4 tmpvar_3;
+  tmpvar_3 = texture2DProj (tex, uv);
+  gl_FragColor = ((tmpvar_1 + tmpvar_2) + tmpvar_3);
+}
+
+
+// stats: 2 alu 3 tex 0 flow
+// inputs: 1
+//  #0: uv (high float) 4x1 [-1]
+// textures: 1
+//  #0: tex (low other) 0x0 [-1]
