@@ -1,0 +1,83 @@
+name: build_and_test
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        config: [Debug, Release]
+    steps:
+    - uses: actions/checkout@v6
+    - name: Configure
+      run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DGLSLOPT_BUILD_TOOLS=ON -DBUILD_TESTING=ON
+    - name: Build
+      run: cmake --build build --config ${{ matrix.config }} --parallel 2
+    - name: Test
+      run: ctest --test-dir build -C ${{ matrix.config }} --output-on-failure --no-tests=error
+    - uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: test-failures-windows-${{ matrix.config }}
+        path: |
+          build/Testing/Temporary/
+          build/test-output/
+          build/runner-checks/
+
+  mac:
+    runs-on: macos-15
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        config: [Debug, Release]
+    steps:
+    - uses: actions/checkout@v6
+    - name: Configure
+      run: cmake -S . -B build -G Xcode -DGLSLOPT_BUILD_TOOLS=ON -DBUILD_TESTING=ON
+    - name: Build
+      run: cmake --build build --config ${{ matrix.config }} --parallel 2
+    - name: Test
+      run: ctest --test-dir build -C ${{ matrix.config }} --output-on-failure --no-tests=error
+    - uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: test-failures-mac-${{ matrix.config }}
+        path: |
+          build/Testing/Temporary/
+          build/test-output/
+          build/runner-checks/
+
+  linux:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        config: [Debug, Release]
+    steps:
+    - uses: actions/checkout@v6
+    - name: Configure
+      run: cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DGLSLOPT_BUILD_TOOLS=ON -DBUILD_TESTING=ON
+    - name: Build
+      run: cmake --build build --config ${{ matrix.config }} --parallel 2
+    - name: Test
+      run: ctest --test-dir build -C ${{ matrix.config }} --output-on-failure --no-tests=error
+    - uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: test-failures-linux-${{ matrix.config }}
+        path: |
+          build/Testing/Temporary/
+          build/test-output/
+          build/runner-checks/

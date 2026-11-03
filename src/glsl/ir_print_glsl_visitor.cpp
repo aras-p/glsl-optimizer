@@ -21,6 +21,9 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include <cmath>
+#include <limits>
+
 #include "ir_print_glsl_visitor.h"
 #include "ir_visitor.h"
 #include "glsl_types.h"
@@ -28,8 +31,6 @@
 #include "ir_unused_structs.h"
 #include "loop_analysis.h"
 #include "program/hash_table.h"
-#include <math.h>
-#include <limits>
 
 
 static void print_type(string_buffer& buffer, const glsl_type *t, bool arraySize);
@@ -1293,13 +1294,6 @@ void ir_print_glsl_visitor::visit(ir_assignment *ir)
 }
 
 
-#ifdef _MSC_VER
-#define isnan(x) _isnan(x)
-#define isinf(x) (!_finite(x))
-#endif
-
-#define fpcheck(x) (isnan(x) || isinf(x))
-
 void print_float (string_buffer& buffer, float f)
 {
 	// Kind of roundabout way, but this is to satisfy two things:
@@ -1327,24 +1321,6 @@ void print_float (string_buffer& buffer, float f)
 	if (f != f)
 		strcpy(tmp, "(0.0/0.0)");
 
-	#if _MSC_VER
-	// While gcc would print something like 1.0e+07, MSVC will print 1.0e+007 -
-	// only for exponential notation, it seems, will add one extra useless zero. Let's try to remove
-	// that so compiler output matches.
-	if (posE != NULL)
-	{
-		if((posE[1] == '+' || posE[1] == '-') && posE[2] == '0')
-		{
-			char* p = posE+2;
-			while (p[0])
-			{
-				p[0] = p[1];
-				++p;
-			}
-		}
-	}
-	#endif
-
 	buffer.asprintf_append ("%s", tmp);
 
 	// need to append ".0"?
@@ -1358,7 +1334,7 @@ void ir_print_glsl_visitor::visit(ir_constant *ir)
 
 	if (type == glsl_type::float_type)
 	{
-		if (fpcheck(ir->value.f[0]))
+		if (!std::isfinite(ir->value.f[0]))
 		{
 			// Non-printable float. If we have bit conversions, we're fine. otherwise do hand-wavey things in print_float().
 			if ((state->es_shader && (state->language_version >= 300))

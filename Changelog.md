@@ -2,6 +2,12 @@ GLSL optimizer Change Log
 =========================
 
 
+2026 11
+-------
+
+* Build: moved to CMake build and C++17 version, updates for recent compilers/toolchains.
+* Build: compilation and tests are now ran on Github Actions.
+
 2016 10
 -------
 

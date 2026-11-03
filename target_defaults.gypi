@@ -1,5 +1,15 @@
 {
   'target_defaults': {
+    'cflags_cc': ['-std=c++17'],
+    'xcode_settings': {
+      'CLANG_CXX_LANGUAGE_STANDARD': 'c++17',
+    },
+    'msvs_settings': {
+      'VCCLCompilerTool': {
+        'AdditionalOptions': ['/std:c++17'],
+        'ExceptionHandling': '0',
+      },
+    },
     'configurations': {
       'Debug': {
         'defines': [
@@ -13,16 +23,5 @@
         ],
       },
     },
-    'conditions': [
-      ['OS=="win"', {
-        'target_defaults': {
-          'msvs_settings': {
-            'VCCLCompilerTool': {
-              'ExceptionHandling': '0',
-            },
-          },
-        },
-      }],
-    ],
   }
 }
