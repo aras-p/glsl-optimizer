@@ -1,14 +1,17 @@
+#include <algorithm>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <filesystem>
 #include <string>
 #include <vector>
 #include <time.h>
-#include "../src/glsl/glsl_optimizer.h"
+#include "glsl_optimizer.h"
 
 #define GL_GLEXT_PROTOTYPES 1
 
-#if __linux__
+#ifndef GOT_GFX
 #define GOT_GFX 0
-#else
-#define GOT_GFX 1
 #endif
 
 #if GOT_GFX
@@ -56,21 +59,7 @@ static bool s_GL3Active = false;
 #endif // ifdef __APPLE__
 
 
-#else // #if GOT_GFX
-
-#define GOT_MORE_THAN_GLSL_120 0
-#include <cstdio>
-#include <cstring>
-#include "dirent.h"
-#include "GL/gl.h"
-#include "GL/glext.h"
-
-#endif // ! #if GOT_GFX
-
-
-#ifndef _MSC_VER
-#include <unistd.h>
-#endif
+#endif // GOT_GFX
 
 
 static bool InitializeOpenGL ()
@@ -182,19 +171,6 @@ static void CleanupGL()
 }
 
 
-static bool InitializeMetal ()
-{
-	bool hasMetal = false;
-	
-#if defined(__APPLE__)
-
-	hasMetal = true; //@TODO: detect metal compiler presence
-	
-#endif
-	
-	return hasMetal;
-}
-
 static void replace_string (std::string& target, const std::string& search, const std::string& replace, size_t startPos)
 {
 	if (search.empty())
@@ -211,8 +187,8 @@ static void replace_string (std::string& target, const std::string& search, cons
 static bool CheckGLSL (bool vertex, bool gles, const std::string& testName, const char* prefix, const std::string& source)
 {
 	#if !GOT_GFX
-	return true; // just assume it's ok
-	#endif
+	return false;
+	#else
 
 	#if !GOT_MORE_THAN_GLSL_120
 	if (source.find("#version 140") != std::string::npos)
@@ -311,28 +287,31 @@ static bool CheckGLSL (bool vertex, bool gles, const std::string& testName, cons
 	}
 	glDeleteShader (shader);
 	return res;
+#	endif
 }
 
 #ifdef __APPLE__
 
 static bool CheckMetal (bool vertex, bool gles, const std::string& testName, const char* prefix, const std::string& source)
 {
-#if !GOT_GFX || !defined(__APPLE__)
-	return true; // just assume it's ok
-#else
-	
 	FILE* f = fopen ("metalTemp.metal", "wb");
-	fwrite (source.c_str(), source.size(), 1, f);
-	fclose (f);
-	
-	int res = system("/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/usr/bin/metal metalTemp.metal -o metalTemp.o -std=ios-metal1.0 -Wno-parentheses-equality");
+	if (!f)
+	{
+		printf ("\n  %s: could not write Metal compiler input\n", testName.c_str());
+		return false;
+	}
+	size_t written = fwrite (source.c_str(), 1, source.size(), f);
+	int closed = fclose (f);
+	if (written != source.size() || closed != 0)
+		return false;
+
+	int res = system("xcrun --sdk iphoneos metal -c metalTemp.metal -o metalTemp.air -Wno-parentheses-equality");
 	if (res != 0)
 	{
 		printf ("\n  %s: Metal compiler failed\n", testName.c_str());
 		return false;
 	}
 	return true;
-#endif
 }
 
 #endif
@@ -351,7 +330,7 @@ static bool ReadStringFromFile (const char* pathName, std::string& output)
 		return false;
 	}
 	output.resize(length);
-	int readLength = fread(&*output.begin(), 1, length, file);
+	size_t readLength = length ? fread(&output[0], 1, length, file) : 0;
 	fclose(file);
 	if (readLength != length)
 	{
@@ -363,60 +342,37 @@ static bool ReadStringFromFile (const char* pathName, std::string& output)
 	return true;
 }
 
-bool EndsWith (const std::string& str, const std::string& sub)
-{
-	return (str.size() >= sub.size()) && (strncmp (str.c_str()+str.size()-sub.size(), sub.c_str(), sub.size())==0);
-}
-
+namespace fs = std::filesystem;
 typedef std::vector<std::string> StringVector;
 
-static StringVector GetFiles (const std::string& folder, const std::string& endsWith)
+static bool GetFiles (const std::string& folder, const std::string& endsWith, StringVector& files)
 {
-	StringVector res;
-
-	#ifdef _MSC_VER
-	WIN32_FIND_DATAA FindFileData;
-	HANDLE hFind = FindFirstFileA ((folder+"/*"+endsWith).c_str(), &FindFileData);
-	if (hFind == INVALID_HANDLE_VALUE)
-		return res;
-
-	do {
-		res.push_back (FindFileData.cFileName);
-	} while (FindNextFileA (hFind, &FindFileData));
-
-	FindClose (hFind);
-	
-	#else
-	
-	DIR *dirp;
-	struct dirent *dp;
-
-	if ((dirp = opendir(folder.c_str())) == NULL)
-		return res;
-
-	while ( (dp = readdir(dirp)) )
+	std::error_code error;
+	fs::directory_iterator it(folder, error), end;
+	while (!error && it != end)
 	{
-		std::string fname = dp->d_name;
-		if (fname == "." || fname == "..")
-			continue;
-		if (!EndsWith (fname, endsWith))
-			continue;
-		res.push_back (fname);
+		std::string name = it->path().filename().string();
+		if (name.size() >= endsWith.size() && name.compare(name.size() - endsWith.size(), endsWith.size(), endsWith) == 0)
+			files.push_back(name);
+		it.increment(error);
 	}
-	closedir(dirp);
-	
-	#endif
-
-	return res;
+	if (error)
+	{
+		printf("Could not read test directory %s: %s\n", folder.c_str(), error.message().c_str());
+		return false;
+	}
+	std::sort(files.begin(), files.end());
+	return true;
 }
 
-static void DeleteFile (const std::string& path)
+static bool WriteStringToFile (const std::string& path, const std::string& text)
 {
-	#ifdef _MSC_VER
-	DeleteFileA (path.c_str());
-	#else
-	unlink (path.c_str());
-	#endif
+	FILE* file = fopen(path.c_str(), "wb");
+	if (!file)
+		return false;
+	size_t written = fwrite(text.data(), 1, text.size(), file);
+	int closed = fclose(file);
+	return written == text.size() && closed == 0;
 }
 
 static void MassageVertexForGLES (std::string& s)
@@ -476,6 +432,8 @@ static bool TestFile (glslopt_ctx* ctx, bool vertex,
 	const std::string& testName,
 	const std::string& inputPath,
 	const std::string& outputPath,
+	const std::string& actualPath,
+	bool updateExpected,
 	bool gles,
 	bool doCheckGLSL,
 	bool doCheckMetal)
@@ -581,7 +539,7 @@ static bool TestFile (glslopt_ctx* ctx, bool vertex,
 		}
 
 		std::string outputOpt;
-		ReadStringFromFile (outputPath.c_str(), outputOpt);
+		bool haveExpected = ReadStringFromFile (outputPath.c_str(), outputOpt);
 
 #		ifdef __APPLE__
 
@@ -590,21 +548,28 @@ static bool TestFile (glslopt_ctx* ctx, bool vertex,
 
 #		endif
 		
-		if (textOpt != outputOpt)
+		if (!haveExpected || textOpt != outputOpt)
 		{
-			// write output
-			FILE* f = fopen (outputPath.c_str(), "wb");
-			if (!f)
+			if (updateExpected)
 			{
-				printf ("\n  %s: can't write to optimized file!\n", testName.c_str());
+				if (!WriteStringToFile(outputPath, textOpt))
+				{
+					printf("\n  %s: could not update %s\n", testName.c_str(), outputPath.c_str());
+					res = false;
+				}
+				else
+					printf("\n  Updated %s\n", outputPath.c_str());
 			}
 			else
 			{
-				fwrite (textOpt.c_str(), 1, textOpt.size(), f);
-				fclose (f);
+				printf("\n  %s: %s (%s)\n", testName.c_str(),
+					haveExpected ? "does not match optimized output" : "missing or unreadable expected output", outputPath.c_str());
+				if (WriteStringToFile(actualPath, textOpt))
+					printf("  Actual output: %s\n", actualPath.c_str());
+				else
+					printf("  Could not write actual output: %s\n", actualPath.c_str());
+				res = false;
 			}
-			printf ("\n  %s: does not match optimized output\n", testName.c_str());
-			res = false;
 		}
 		if (res && doCheckGLSL && !CheckGLSL (vertex, gles, testName, "raw", textHir.c_str()))
 			res = false;
@@ -627,12 +592,45 @@ int main (int argc, const char** argv)
 {
 	if (argc < 2)
 	{
-		printf ("USAGE: glsloptimizer testfolder\n");
+		printf ("USAGE: glsl_optimizer_tests testfolder [--update-expected] [--check-glsl] [--check-metal]\n");
 		return 1;
 	}
 
-	bool hasOpenGL = InitializeOpenGL ();
-	bool hasMetal = InitializeMetal ();
+	bool updateExpected = false;
+	bool hasOpenGL = false;
+	bool hasMetal = false;
+	for (int i = 2; i < argc; ++i)
+	{
+		if (strcmp(argv[i], "--update-expected") == 0)
+			updateExpected = true;
+		else if (strcmp(argv[i], "--check-glsl") == 0)
+			hasOpenGL = true;
+		else if (strcmp(argv[i], "--check-metal") == 0)
+			hasMetal = true;
+		else
+		{
+			printf("Unknown option: %s\n", argv[i]);
+			return 1;
+		}
+	}
+	if (hasOpenGL && !InitializeOpenGL())
+	{
+		printf("OpenGL validation unavailable; enable GLSLOPT_TEST_OPENGL and provide a working OpenGL context.\n");
+		CleanupGL();
+		return 1;
+	}
+	if (hasMetal)
+	{
+#ifdef __APPLE__
+		if (system("xcrun --sdk iphoneos --find metal > /dev/null 2>&1") != 0)
+#endif
+		{
+			printf("Metal validation requires macOS and an Xcode iPhoneOS Metal compiler.\n");
+			CleanupGL();
+			return 1;
+		}
+	}
+
 	glslopt_ctx* ctx[3] = {
 		glslopt_initialize(kGlslTargetOpenGLES20),
 		glslopt_initialize(kGlslTargetOpenGLES30),
@@ -653,6 +651,16 @@ int main (int argc, const char** argv)
 	for (int type = 0; type < 2; ++type)
 	{
 		std::string testFolder = baseFolder + "/" + kTypeName[type];
+		std::string actualFolder = std::string("test-output/") + kTypeName[type];
+		std::error_code error;
+		fs::create_directories(actualFolder, error);
+		if (error)
+		{
+			printf("Could not create output directory %s: %s\n", actualFolder.c_str(), error.message().c_str());
+			++errors;
+			continue;
+		}
+		size_t stageTests = 0;
 
 		static const char* kAPIName[3] = { "OpenGL ES 2.0", "OpenGL ES 3.0", "OpenGL" };
 		static const char* kApiIn [3] = {"-inES.txt", "-inES3.txt", "-in.txt"};
@@ -661,7 +669,12 @@ int main (int argc, const char** argv)
 		for (int api = 0; api < 3; ++api)
 		{
 			printf ("\n** running %s tests for %s...\n", kTypeName[type], kAPIName[api]);
-			StringVector inputFiles = GetFiles (testFolder, kApiIn[api]);
+			StringVector inputFiles;
+			if (!GetFiles(testFolder, kApiIn[api], inputFiles))
+			{
+				++errors;
+				break;
+			}
 
 			size_t n = inputFiles.size();
 			for (size_t i = 0; i < n; ++i)
@@ -672,21 +685,27 @@ int main (int argc, const char** argv)
 				std::string outname = inname.substr (0,inname.size()-strlen(kApiIn[api])) + kApiOut[api];
 				std::string outnameMetal = inname.substr (0,inname.size()-strlen(kApiIn[api])) + kApiOutMetal[api];
 				const bool useMetal = (api == 1);
-				bool ok = TestFile (ctx[api], type==0, inname, testFolder + "/" + inname, testFolder + "/" + outname, api<=1, hasOpenGL, false);
+				bool ok = TestFile (ctx[api], type==0, inname, testFolder + "/" + inname, testFolder + "/" + outname, actualFolder + "/" + outname + ".actual", updateExpected, api<=1, hasOpenGL, false);
 				if (!ok)
 				{
 					++errors;
 				}
 				if (useMetal)
 				{
-					ok = TestFile (ctxMetal, type==0, inname, testFolder + "/" + inname, testFolder + "/" + outnameMetal, api==0, false, hasMetal);
+					ok = TestFile (ctxMetal, type==0, inname, testFolder + "/" + inname, testFolder + "/" + outnameMetal, actualFolder + "/" + outnameMetal + ".actual", updateExpected, api==0, false, hasMetal);
 					if (!ok)
 					{
 						++errors;
 					}
 				}
 				++tests;
+				++stageTests;
 			}
+		}
+		if (stageTests == 0)
+		{
+			printf("No shader inputs found in %s\n", testFolder.c_str());
+			++errors;
 		}
 	}
 	clock_t time1 = clock();
@@ -700,7 +719,7 @@ int main (int argc, const char** argv)
 	// 3.25s
 	// with builtin call linking, 3.84s
 
-	for (int i = 0; i < 2; ++i)
+	for (int i = 0; i < 3; ++i)
 		glslopt_cleanup (ctx[i]);
 	glslopt_cleanup (ctxMetal);
 	CleanupGL();
