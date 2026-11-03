@@ -219,6 +219,8 @@ ir_expression::ir_expression(int op, const struct glsl_type *type,
    this->operands[1] = op1;
    this->operands[2] = op2;
    this->operands[3] = op3;
+   if (this->operation == ir_unop_b2f)
+      this->set_precision(glsl_precision_medium);
 #ifndef NDEBUG
    int num_operands = get_num_operands(this->operation);
    for (int i = num_operands; i < 4; i++) {
@@ -235,6 +237,8 @@ ir_expression::ir_expression(int op, ir_rvalue *op0)
    this->operands[1] = NULL;
    this->operands[2] = NULL;
    this->operands[3] = NULL;
+   if (this->operation == ir_unop_b2f)
+      this->set_precision(glsl_precision_medium);
 
    assert(op <= ir_last_unop);
 
@@ -1386,6 +1390,17 @@ ir_texture::get_opcode(const char *str)
    return (ir_texture_opcode) -1;
 }
 
+
+glsl_precision
+ir_texture::get_precision() const
+{
+   /* Queries describe the texture; use high precision. */
+   if (op == ir_txs || op == ir_query_levels || op == ir_lod)
+      return glsl_precision_high;
+
+   /* For actual sampling, use the sampler precision. */
+   return sampler ? sampler->get_precision() : glsl_precision_undefined;
+}
 
 void
 ir_texture::set_sampler(ir_dereference *sampler, const glsl_type *type)

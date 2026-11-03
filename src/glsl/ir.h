@@ -246,7 +246,7 @@ public:
       return NULL;
    }
 
-   glsl_precision get_precision() const { return precision; }
+   virtual glsl_precision get_precision() const { return precision; }
    void set_precision (glsl_precision prec) { precision = prec; }
 
    /**
@@ -1893,7 +1893,7 @@ enum ir_texture_opcode {
 class ir_texture : public ir_rvalue {
 public:
    ir_texture(enum ir_texture_opcode op)
-      : ir_rvalue(ir_type_texture, glsl_precision_low),
+      : ir_rvalue(ir_type_texture, glsl_precision_undefined),
         op(op), sampler(NULL), coordinate(NULL),
         offset(NULL)
    {
@@ -1901,6 +1901,8 @@ public:
    }
 
    virtual ir_texture *clone(void *mem_ctx, struct hash_table *) const;
+
+   virtual glsl_precision get_precision() const;
 
    virtual ir_constant *constant_expression_value(struct hash_table *variable_context = NULL);
 
