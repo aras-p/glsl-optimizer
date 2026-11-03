@@ -1,17 +1,18 @@
-attribute highp vec4 _glesVertex;
-attribute mediump vec3 _glesNormal;
+#version 300 es
+in highp vec4 _inVertex;
+in mediump vec3 _inNormal;
 uniform highp vec4 _ProjectionParams;
 uniform highp mat4 glstate_matrix_modelview0;
 uniform highp mat4 glstate_matrix_mvp;
-varying highp vec4 xlv_TEXCOORD0;
-varying highp vec3 xlv_TEXCOORD1;
+out highp vec4 xlv_TEXCOORD0;
+out highp vec3 xlv_TEXCOORD1;
 void main ()
 {
   highp vec3 tmpvar_1;
-  tmpvar_1 = _glesNormal;
+  tmpvar_1 = _inNormal;
   highp vec4 tmpvar_2;
   highp vec3 tmpvar_3;
-  tmpvar_2 = (glstate_matrix_mvp * _glesVertex);
+  tmpvar_2 = (glstate_matrix_mvp * _inVertex);
   highp vec4 o_4;
   o_4 = (tmpvar_2 * 0.5);
   highp vec2 tmpvar_5;
@@ -19,7 +20,7 @@ void main ()
   tmpvar_5.y = (o_4.y * _ProjectionParams.x);
   o_4.xy = (tmpvar_5 + o_4.w);
   o_4.zw = tmpvar_2.zw;
-  tmpvar_3 = ((glstate_matrix_modelview0 * _glesVertex).xyz * vec3(-1.0, -1.0, 1.0));
+  tmpvar_3 = ((glstate_matrix_modelview0 * _inVertex).xyz * vec3(-1.0, -1.0, 1.0));
   mediump vec3 tmpvar_6;
   tmpvar_6 = vec3(float((tmpvar_1.z != 0.0)));
   highp vec3 tmpvar_7;
@@ -33,8 +34,8 @@ void main ()
 
 // stats: 9 alu 0 tex 0 flow
 // inputs: 2
-//  #0: _glesVertex (high float) 4x1 [-1]
-//  #1: _glesNormal (medium float) 3x1 [-1]
+//  #0: _inVertex (high float) 4x1 [-1]
+//  #1: _inNormal (medium float) 3x1 [-1]
 // uniforms: 3 (total size: 0)
 //  #0: _ProjectionParams (high float) 4x1 [-1]
 //  #1: glstate_matrix_modelview0 (high float) 4x4 [-1]

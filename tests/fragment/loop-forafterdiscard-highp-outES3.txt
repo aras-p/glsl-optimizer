@@ -1,12 +1,14 @@
+#version 300 es
+layout(location=0) out mediump vec4 _fragData;
 uniform mediump sampler2D _MainTex;
 uniform highp vec4 _TerrainTreeLightColors[4];
-varying highp vec2 xlv_uv;
-varying highp vec3 xlv_nl;
+in highp vec2 xlv_uv;
+in highp vec3 xlv_nl;
 void main ()
 {
   mediump vec3 light_1;
   mediump vec4 tmpvar_2;
-  tmpvar_2 = texture2D (_MainTex, xlv_uv);
+  tmpvar_2 = texture (_MainTex, xlv_uv);
   if ((tmpvar_2.w < 0.5)) {
     discard;
   };
@@ -16,7 +18,7 @@ void main ()
   mediump vec4 tmpvar_3;
   tmpvar_3.w = 1.0;
   tmpvar_3.xyz = light_1;
-  gl_FragData[0] = tmpvar_3;
+  _fragData = tmpvar_3;
 }
 
 

@@ -1,8 +1,9 @@
-attribute highp vec4 _glesVertex;
-attribute mediump vec3 _glesNormal;
-attribute highp vec4 _glesMultiTexCoord0;
-attribute highp vec4 _glesMultiTexCoord1;
-attribute mediump vec4 _glesColor;
+#version 300 es
+in highp vec4 _inVertex;
+in mediump vec3 _inNormal;
+in highp vec4 _uv0;
+in highp vec4 _uv1;
+in mediump vec4 _color;
 uniform highp mat4 _LightMatrix0;
 uniform highp vec4 _MainTex_ST;
 uniform highp mat4 _Object2World;
@@ -17,18 +18,18 @@ uniform highp vec4 _WorldSpaceLightPos0;
 uniform highp mat4 glstate_matrix_invtrans_modelview0;
 uniform highp mat4 glstate_matrix_mvp;
 uniform highp vec4 unity_Scale;
-attribute vec4 TANGENT;
-varying highp vec2 xlv_TEXCOORD0;
-varying highp vec4 xlv_COLOR0;
-varying highp vec3 xlv_TEXCOORD1;
-varying highp vec3 xlv_TEXCOORD2;
-varying highp vec2 xlv_TEXCOORD3;
+in vec4 TANGENT;
+out highp vec2 xlv_TEXCOORD0;
+out highp vec4 xlv_COLOR0;
+out highp vec3 xlv_TEXCOORD1;
+out highp vec3 xlv_TEXCOORD2;
+out highp vec2 xlv_TEXCOORD3;
 void main ()
 {
   highp vec3 tmpvar_1;
   highp vec4 tmpvar_2;
-  tmpvar_1 = _glesNormal;
-  tmpvar_2 = _glesColor;
+  tmpvar_1 = _inNormal;
+  tmpvar_2 = _color;
   highp vec3 binormal_3;
   highp vec4 tmpvar_4;
   highp vec4 tmpvar_5;
@@ -44,7 +45,7 @@ void main ()
   highp vec4 tmpvar_10;
   tmpvar_10.zw = vec2(0.0, 0.0);
   tmpvar_10.xy = tmpvar_1.xy;
-  pos_6 = (_glesVertex + ((tmpvar_10 * glstate_matrix_invtrans_modelview0) * isBillboard_7));
+  pos_6 = (_inVertex + ((tmpvar_10 * glstate_matrix_invtrans_modelview0) * isBillboard_7));
   highp vec3 tmpvar_11;
   tmpvar_11 = mix (tmpvar_1, normalize((tmpvar_8 * glstate_matrix_invtrans_modelview0)).xyz, vec3(isBillboard_7));
   highp vec4 tmpvar_12;
@@ -77,13 +78,13 @@ void main ()
   vWaves_17 = tmpvar_21;
   vWavesSum_16 = (tmpvar_21.xz + tmpvar_21.yw);
   bend_15.xz = ((tmpvar_2.y * 0.1) * tmpvar_11).xz;
-  bend_15.y = (_glesMultiTexCoord1.y * 0.3);
+  bend_15.y = (_uv1.y * 0.3);
   pos_14.xyz = (tmpvar_4.xyz + ((
     (vWavesSum_16.xyx * bend_15)
    + 
-    ((_Wind.xyz * vWavesSum_16.y) * _glesMultiTexCoord1.y)
+    ((_Wind.xyz * vWavesSum_16.y) * _uv1.y)
   ) * _Wind.w));
-  pos_14.xyz = (pos_14.xyz + (_glesMultiTexCoord1.x * _Wind.xyz));
+  pos_14.xyz = (pos_14.xyz + (_uv1.x * _Wind.xyz));
   highp vec3 tmpvar_22;
   tmpvar_22 = mix ((pos_14.xyz - (
     (dot (_SquashPlaneNormal.xyz, pos_14.xyz) + _SquashPlaneNormal.w)
@@ -100,20 +101,20 @@ void main ()
   tmpvar_5.xyz = normalize(tmpvar_13.xyz);
   binormal_3 = (((tmpvar_25.yzx * tmpvar_5.zxy) - (tmpvar_25.zxy * tmpvar_5.yzx)) * tmpvar_13.w);
   highp mat3 tmpvar_26;
-  tmpvar_26[0].x = tmpvar_5.x;
-  tmpvar_26[0].y = binormal_3.x;
-  tmpvar_26[0].z = tmpvar_25.x;
-  tmpvar_26[1].x = tmpvar_5.y;
-  tmpvar_26[1].y = binormal_3.y;
-  tmpvar_26[1].z = tmpvar_25.y;
-  tmpvar_26[2].x = tmpvar_5.z;
-  tmpvar_26[2].y = binormal_3.z;
-  tmpvar_26[2].z = tmpvar_25.z;
+  tmpvar_26[uint(0)].x = tmpvar_5.x;
+  tmpvar_26[uint(0)].y = binormal_3.x;
+  tmpvar_26[uint(0)].z = tmpvar_25.x;
+  tmpvar_26[1u].x = tmpvar_5.y;
+  tmpvar_26[1u].y = binormal_3.y;
+  tmpvar_26[1u].z = tmpvar_25.y;
+  tmpvar_26[2u].x = tmpvar_5.z;
+  tmpvar_26[2u].y = binormal_3.z;
+  tmpvar_26[2u].z = tmpvar_25.z;
   highp vec4 tmpvar_27;
   tmpvar_27.w = 1.0;
   tmpvar_27.xyz = _WorldSpaceCameraPos;
   gl_Position = (glstate_matrix_mvp * tmpvar_23);
-  xlv_TEXCOORD0 = ((_glesMultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
+  xlv_TEXCOORD0 = ((_uv0.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
   xlv_COLOR0 = tmpvar_24;
   xlv_TEXCOORD1 = (tmpvar_26 * (_World2Object * _WorldSpaceLightPos0).xyz);
   xlv_TEXCOORD2 = (tmpvar_26 * ((
@@ -125,11 +126,11 @@ void main ()
 
 // stats: 71 alu 0 tex 0 flow
 // inputs: 6
-//  #0: _glesVertex (high float) 4x1 [-1]
-//  #1: _glesNormal (medium float) 3x1 [-1]
-//  #2: _glesMultiTexCoord0 (high float) 4x1 [-1]
-//  #3: _glesMultiTexCoord1 (high float) 4x1 [-1]
-//  #4: _glesColor (medium float) 4x1 [-1]
+//  #0: _inVertex (high float) 4x1 [-1]
+//  #1: _inNormal (medium float) 3x1 [-1]
+//  #2: _uv0 (high float) 4x1 [-1]
+//  #3: _uv1 (high float) 4x1 [-1]
+//  #4: _color (medium float) 4x1 [-1]
 //  #5: TANGENT (high float) 4x1 [-1]
 // uniforms: 14 (total size: 0)
 //  #0: _LightMatrix0 (high float) 4x4 [-1]
