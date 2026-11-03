@@ -1,0 +1,13 @@
+#version 300 es
+layout(location = 0) out mediump vec4 _fragData;
+uniform sampler2D _FlareTexture;
+lowp vec4 xlat_main( in lowp vec4 color, in highp vec2 texcoord ) {
+    return (texture( _FlareTexture, texcoord) * color);
+}
+in lowp vec4 xlv_COLOR;
+in highp vec2 xlv_TEXCOORD0;
+void main() {
+    lowp vec4 xl_retval;
+    xl_retval = xlat_main( vec4(xlv_COLOR), vec2(xlv_TEXCOORD0));
+    _fragData = vec4( xl_retval);
+}

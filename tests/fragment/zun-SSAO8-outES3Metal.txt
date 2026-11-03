@@ -1,0 +1,106 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct xlatMtlShaderInput {
+  float2 xlv_TEXCOORD0;
+  float2 xlv_TEXCOORD1;
+};
+struct xlatMtlShaderOutput {
+  half4 _fragData [[color(0)]];
+};
+struct xlatMtlShaderUniform {
+  float4 _Params;
+  float4 _ProjectionParams;
+};
+fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  ,   texture2d<half> _CameraDepthNormalsTexture [[texture(0)]], sampler _mtlsmp__CameraDepthNormalsTexture [[sampler(0)]]
+  ,   texture2d<half> _RandomTexture [[texture(1)]], sampler _mtlsmp__RandomTexture [[sampler(1)]])
+{
+  xlatMtlShaderOutput _mtl_o;
+  float3 RAND_SAMPLES_1[8];
+  RAND_SAMPLES_1[0] = float3(0.0130572, 0.587232, -0.119337);
+  RAND_SAMPLES_1[1] = float3(0.323078, 0.0220727, -0.418873);
+  RAND_SAMPLES_1[2] = float3(-0.310725, -0.191367, 0.0561369);
+  RAND_SAMPLES_1[3] = float3(-0.479646, 0.0939877, -0.580265);
+  RAND_SAMPLES_1[4] = float3(0.139999, -0.33577, 0.559679);
+  RAND_SAMPLES_1[5] = float3(-0.248458, 0.255532, 0.348944);
+  RAND_SAMPLES_1[6] = float3(0.18719, -0.702764, -0.231748);
+  RAND_SAMPLES_1[7] = float3(0.884915, 0.284208, 0.368524);
+  half tmpvar_2 = 0;
+  float2 tmpvar_3 = 0;
+  tmpvar_3 = _mtl_i.xlv_TEXCOORD0;
+  float3 samples_4[8];
+  samples_4 = RAND_SAMPLES_1;
+  float occ_6 = 0;
+  float scale_7 = 0;
+  float depth_8 = 0;
+  float3 viewNorm_9 = 0;
+  float4 depthnormal_10 = 0;
+  half3 randN_11 = 0;
+  randN_11 = ((_RandomTexture.sample(_mtlsmp__RandomTexture, (float2)(_mtl_i.xlv_TEXCOORD1)).xyz * (half)(2.0)) - (half)(1.0));
+  half4 tmpvar_12 = 0;
+  tmpvar_12 = _CameraDepthNormalsTexture.sample(_mtlsmp__CameraDepthNormalsTexture, (float2)(_mtl_i.xlv_TEXCOORD0));
+  depthnormal_10 = float4(tmpvar_12);
+  float3 n_13 = 0;
+  float3 tmpvar_14 = 0;
+  tmpvar_14 = ((depthnormal_10.xyz * float3(3.5554, 3.5554, 0.0)) + float3(-1.7777, -1.7777, 1.0));
+  float tmpvar_15 = 0;
+  tmpvar_15 = (2.0 / dot (tmpvar_14, tmpvar_14));
+  n_13.xy = (tmpvar_15 * tmpvar_14.xy);
+  n_13.z = (tmpvar_15 - 1.0);
+  viewNorm_9 = n_13;
+  depth_8 = (dot (depthnormal_10.zw, float2(1.0, 0.00392157)) * _mtl_u._ProjectionParams.z);
+  scale_7 = (_mtl_u._Params.x / depth_8);
+  occ_6 = 0.0;
+  for (int s_5 = 0; s_5 < 8; s_5++) {
+    float4 sampleND_16 = 0;
+    half3 randomDir_17 = 0;
+    float3 tmpvar_18 = 0;
+    float3 I_19 = 0;
+    I_19 = samples_4[s_5];
+    tmpvar_18 = (I_19 - (float3)(((half)(2.0) * ((half3)(
+      dot ((float3)randN_11, I_19)
+     * (float3)(randN_11))))));
+    randomDir_17 = half3(tmpvar_18);
+    float tmpvar_20 = 0;
+    tmpvar_20 = dot (viewNorm_9, (float3)randomDir_17);
+    half tmpvar_21 = 0;
+    if ((tmpvar_20 < 0.0)) {
+      tmpvar_21 = half(1.0);
+    } else {
+      tmpvar_21 = half(-1.0);
+    };
+    randomDir_17 = (randomDir_17 * -(tmpvar_21));
+    randomDir_17 = half3(((float3)(randomDir_17) + (viewNorm_9 * 0.3)));
+    half4 tmpvar_22 = 0;
+    float2 P_23 = 0;
+    P_23 = (tmpvar_3 + ((float2)(randomDir_17.xy) * scale_7));
+    tmpvar_22 = _CameraDepthNormalsTexture.sample(_mtlsmp__CameraDepthNormalsTexture, (float2)(P_23));
+    sampleND_16 = float4(tmpvar_22);
+    float tmpvar_24 = 0;
+    tmpvar_24 = clamp (((depth_8 - 
+      ((float)(randomDir_17.z) * _mtl_u._Params.x)
+    ) - (
+      dot (sampleND_16.zw, float2(1.0, 0.00392157))
+     * _mtl_u._ProjectionParams.z)), 0.0, 1.0);
+    if ((tmpvar_24 > _mtl_u._Params.y)) {
+      occ_6 = (occ_6 + pow ((1.0 - tmpvar_24), _mtl_u._Params.z));
+    };
+  };
+  occ_6 = (occ_6 / 8.0);
+  tmpvar_2 = half((1.0 - occ_6));
+  _mtl_o._fragData = half4(tmpvar_2);
+  return _mtl_o;
+}
+
+
+// stats: 49 alu 3 tex 4 flow
+// inputs: 2
+//  #0: xlv_TEXCOORD0 (high float) 2x1 [-1]
+//  #1: xlv_TEXCOORD1 (high float) 2x1 [-1]
+// uniforms: 2 (total size: 32)
+//  #0: _Params (high float) 4x1 [-1] loc 0
+//  #1: _ProjectionParams (high float) 4x1 [-1] loc 16
+// textures: 2
+//  #0: _CameraDepthNormalsTexture (medium 2d) 0x0 [-1] loc 0
+//  #1: _RandomTexture (medium 2d) 0x0 [-1] loc 1

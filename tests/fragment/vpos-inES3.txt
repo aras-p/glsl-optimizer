@@ -1,0 +1,12 @@
+#version 300 es
+layout(location = 0) out mediump vec4 _fragData;
+mediump vec4 xlat_main( in highp vec2 pos );
+mediump vec4 xlat_main( in highp vec2 pos ) {
+    return vec4( pos, 0.000000, 0.000000);
+}
+in highp vec2 xlv_VPOS;
+void main() {
+    mediump vec4 xl_retval;
+    xl_retval = xlat_main( vec2(xlv_VPOS));
+    _fragData = vec4( xl_retval);
+}

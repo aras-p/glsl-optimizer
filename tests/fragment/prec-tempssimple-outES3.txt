@@ -1,0 +1,27 @@
+#version 300 es
+layout(location=0) out mediump vec4 _fragData;
+uniform mediump sampler2D tex_def;
+uniform mediump sampler2D tex_lowp;
+uniform highp sampler2D tex_highp;
+in mediump vec2 var_lowp;
+in mediump vec2 var_mediump;
+void main ()
+{
+  mediump vec4 c3_1;
+  highp vec4 tmpvar_2;
+  tmpvar_2 = texture (tex_highp, var_mediump);
+  c3_1 = (tmpvar_2 * 2.0);
+  _fragData = (((
+    ((texture (tex_def, var_lowp) * 2.0) + (texture (tex_def, var_mediump) * 2.0))
+   + c3_1) + (texture (tex_lowp, var_mediump) * 2.0)) + abs(var_lowp.xxxx));
+}
+
+
+// stats: 9 alu 4 tex 0 flow
+// inputs: 2
+//  #0: var_lowp (medium float) 2x1 [-1]
+//  #1: var_mediump (medium float) 2x1 [-1]
+// textures: 3
+//  #0: tex_def (medium 2d) 0x0 [-1]
+//  #1: tex_lowp (medium 2d) 0x0 [-1]
+//  #2: tex_highp (high 2d) 0x0 [-1]

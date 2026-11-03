@@ -1,0 +1,9 @@
+#version 300 es
+layout(location = 0) out mediump vec4 _fragData;
+void main() {
+    int i = 0;
+    float f = 0.0;
+    for (; i < 32; (++i))
+        f += gl_FragCoord.x * float(i);
+    _fragData = vec4(f);
+}

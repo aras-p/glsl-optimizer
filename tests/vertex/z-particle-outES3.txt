@@ -1,0 +1,26 @@
+#version 300 es
+in highp vec4 _inVertex;
+in highp vec4 _uv0;
+in mediump vec4 _color;
+uniform highp vec4 _MainTex_ST;
+uniform highp mat4 glstate_matrix_mvp;
+out mediump vec4 xlv_COLOR;
+out mediump vec2 xlv_TEXCOORD0;
+void main ()
+{
+  mediump vec2 tmpvar_1;
+  tmpvar_1 = ((_uv0.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
+  gl_Position = (glstate_matrix_mvp * _inVertex);
+  xlv_COLOR = _color;
+  xlv_TEXCOORD0 = tmpvar_1;
+}
+
+
+// stats: 3 alu 0 tex 0 flow
+// inputs: 3
+//  #0: _inVertex (high float) 4x1 [-1]
+//  #1: _uv0 (high float) 4x1 [-1]
+//  #2: _color (medium float) 4x1 [-1]
+// uniforms: 2 (total size: 0)
+//  #0: _MainTex_ST (high float) 4x1 [-1]
+//  #1: glstate_matrix_mvp (high float) 4x4 [-1]

@@ -1,0 +1,23 @@
+#version 300 es
+layout(location = 0) out mediump vec4 _fragData;
+uniform sampler2D tex_def;
+uniform lowp sampler2D tex_lowp;
+uniform highp sampler2D tex_highp;
+in lowp vec2 var_lowp;
+in mediump vec2 var_mediump;
+void main()
+{
+	lowp vec4 c1;
+	c1 = texture (tex_def, var_lowp) * 2.0;
+	lowp vec4 c2;
+	c2 = texture (tex_def, var_mediump) * 2.0;
+	lowp vec4 c3;
+	c3 = texture (tex_highp, var_mediump) * 2.0;
+	lowp vec4 c4;
+	c4 = texture (tex_lowp, var_mediump) * 2.0;
+	
+	lowp vec4 a1;
+	a1 = abs(var_lowp.xxxx);
+	
+	_fragData = c1 + c2 + c3 + c4 + a1;
+}

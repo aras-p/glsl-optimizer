@@ -1,0 +1,99 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct xlatMtlShaderInput {
+  float2 xlv_TEXCOORD0;
+  float4 xlv_COLOR0;
+  float3 xlv_TEXCOORD1;
+  float3 xlv_TEXCOORD2;
+  float2 xlv_TEXCOORD3;
+};
+struct xlatMtlShaderOutput {
+  half4 _fragData [[color(0)]];
+};
+struct xlatMtlShaderUniform {
+  float4 _Color;
+  float _Cutoff;
+  float4 _LightColor0;
+  half _ShadowStrength;
+  half3 _TranslucencyColor;
+  half _TranslucencyViewDependency;
+};
+fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  ,   texture2d<half> _BumpSpecMap [[texture(0)]], sampler _mtlsmp__BumpSpecMap [[sampler(0)]]
+  ,   texture2d<half> _LightTexture0 [[texture(1)]], sampler _mtlsmp__LightTexture0 [[sampler(1)]]
+  ,   texture2d<half> _MainTex [[texture(2)]], sampler _mtlsmp__MainTex [[sampler(2)]]
+  ,   texture2d<half> _TranslucencyMap [[texture(3)]], sampler _mtlsmp__TranslucencyMap [[sampler(3)]])
+{
+  xlatMtlShaderOutput _mtl_o;
+  half4 c_1 = 0;
+  half3 lightDir_2 = 0;
+  half3 tmpvar_3 = 0;
+  half tmpvar_4 = 0;
+  half4 tmpvar_5 = 0;
+  tmpvar_5 = _MainTex.sample(_mtlsmp__MainTex, (float2)(_mtl_i.xlv_TEXCOORD0));
+  tmpvar_3 = half3((((float3)(tmpvar_5.xyz) * _mtl_u._Color.xyz) * _mtl_i.xlv_COLOR0.w));
+  half4 tmpvar_6 = 0;
+  tmpvar_6 = _TranslucencyMap.sample(_mtlsmp__TranslucencyMap, (float2)(_mtl_i.xlv_TEXCOORD0));
+  tmpvar_4 = half(((float)(tmpvar_6.w) * _mtl_u._Color.x));
+  half4 tmpvar_7 = 0;
+  tmpvar_7 = _BumpSpecMap.sample(_mtlsmp__BumpSpecMap, (float2)(_mtl_i.xlv_TEXCOORD0));
+  half4 normal_8 = 0;
+  normal_8.xy = ((tmpvar_7.wy * (half)(2.0)) - (half)(1.0));
+  normal_8.z = sqrt((((half)(1.0) - 
+    (normal_8.x * normal_8.x)
+  ) - (normal_8.y * normal_8.y)));
+  float x_9 = 0;
+  x_9 = ((float)(tmpvar_5.w) - _mtl_u._Cutoff);
+  if ((x_9 < 0.0)) {
+    discard_fragment();
+  };
+  lightDir_2 = half3(_mtl_i.xlv_TEXCOORD1);
+  float3 tmpvar_10 = 0;
+  tmpvar_10 = normalize(_mtl_i.xlv_TEXCOORD2);
+  half3 viewDir_11 = 0;
+  viewDir_11 = half3(tmpvar_10);
+  half4 c_12 = 0;
+  half tmpvar_13 = 0;
+  tmpvar_13 = dot (normal_8.xyz, lightDir_2);
+  c_12.xyz = (tmpvar_3 * ((
+    ((mix (clamp (
+      -(tmpvar_13)
+    , (half)0.0, (half)1.0), clamp (
+      dot (viewDir_11, -(lightDir_2))
+    , (half)0.0, (half)1.0), _mtl_u._TranslucencyViewDependency) * tmpvar_6.z) * _mtl_u._TranslucencyColor)
+   * (half)(2.0)) + max ((half)0.0, 
+    ((tmpvar_13 * (half)(0.6)) + (half)(0.4))
+  )));
+  c_12.xyz = half3((((float3)(c_12.xyz) * _mtl_u._LightColor0.xyz) + (float)((pow (
+    max ((half)0.0, dot (normal_8.xyz, normalize((lightDir_2 + viewDir_11))))
+  , 
+    (tmpvar_7.x * (half)(128.0))
+  ) * tmpvar_4))));
+  c_12.xyz = (c_12.xyz * mix ((half)2.0, (_LightTexture0.sample(_mtlsmp__LightTexture0, (float2)(_mtl_i.xlv_TEXCOORD3)).w * (half)(2.0)), _mtl_u._ShadowStrength));
+  c_1.xyz = c_12.xyz;
+  c_1.w = tmpvar_5.w;
+  _mtl_o._fragData = c_1;
+  return _mtl_o;
+}
+
+
+// stats: 40 alu 5 tex 1 flow
+// inputs: 5
+//  #0: xlv_TEXCOORD0 (high float) 2x1 [-1]
+//  #1: xlv_COLOR0 (high float) 4x1 [-1]
+//  #2: xlv_TEXCOORD1 (high float) 3x1 [-1]
+//  #3: xlv_TEXCOORD2 (high float) 3x1 [-1]
+//  #4: xlv_TEXCOORD3 (high float) 2x1 [-1]
+// uniforms: 6 (total size: 66)
+//  #0: _Color (high float) 4x1 [-1] loc 0
+//  #1: _Cutoff (high float) 1x1 [-1] loc 16
+//  #2: _LightColor0 (high float) 4x1 [-1] loc 32
+//  #3: _ShadowStrength (medium float) 1x1 [-1] loc 48
+//  #4: _TranslucencyColor (medium float) 3x1 [-1] loc 56
+//  #5: _TranslucencyViewDependency (medium float) 1x1 [-1] loc 64
+// textures: 4
+//  #0: _BumpSpecMap (medium 2d) 0x0 [-1] loc 0
+//  #1: _LightTexture0 (medium 2d) 0x0 [-1] loc 1
+//  #2: _MainTex (medium 2d) 0x0 [-1] loc 2
+//  #3: _TranslucencyMap (medium 2d) 0x0 [-1] loc 3

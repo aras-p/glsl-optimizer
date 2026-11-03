@@ -1,0 +1,12 @@
+#version 300 es
+layout(location = 0) out mediump vec4 _fragData;
+mediump vec4 xlat_main( in highp float face );
+mediump vec4 xlat_main( in highp float face ) {
+    return vec4( face);
+}
+in highp float xlv_VFACE;
+void main() {
+    mediump vec4 xl_retval;
+    xl_retval = xlat_main( float(xlv_VFACE));
+    _fragData = vec4( xl_retval);
+}

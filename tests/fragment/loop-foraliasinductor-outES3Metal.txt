@@ -1,0 +1,46 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct xlatMtlShaderInput {
+  float2 xlv_uv;
+};
+struct xlatMtlShaderOutput {
+  half4 _fragData [[color(0)]];
+};
+struct xlatMtlShaderUniform {
+};
+fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  ,   texture2d<half> _MainTex [[texture(0)]], sampler _mtlsmp__MainTex [[sampler(0)]])
+{
+  xlatMtlShaderOutput _mtl_o;
+  float2 tmpvar_1 = 0;
+  tmpvar_1 = _mtl_i.xlv_uv;
+  half3 light_2 = 0;
+  half4 col_3 = 0;
+  half4 tmpvar_4 = 0;
+  tmpvar_4 = _MainTex.sample(_mtlsmp__MainTex, (float2)(_mtl_i.xlv_uv));
+  col_3 = tmpvar_4;
+  light_2 = half3(float3(0.0, 0.0, 0.0));
+  if ((tmpvar_4.x >= (half)(0.0))) {
+    for (float j_5 = 0.0; j_5 < tmpvar_1.x; j_5 += 1.0) {
+      light_2 = (light_2 + col_3.xyz);
+    };
+  };
+  if ((tmpvar_4.x >= (half)(1.0))) {
+    float j_6 = 0;
+    j_6 = (_mtl_i.xlv_uv.y * sin(_mtl_i.xlv_uv.y));
+    light_2 = half3(((float3)(light_2) + ((float3)(tmpvar_4.xyz) * j_6)));
+  };
+  half4 tmpvar_7 = 0;
+  tmpvar_7.w = half(1.0);
+  tmpvar_7.xyz = light_2;
+  _mtl_o._fragData = tmpvar_7;
+  return _mtl_o;
+}
+
+
+// stats: 12 alu 1 tex 4 flow
+// inputs: 1
+//  #0: xlv_uv (high float) 2x1 [-1]
+// textures: 1
+//  #0: _MainTex (medium 2d) 0x0 [-1] loc 0

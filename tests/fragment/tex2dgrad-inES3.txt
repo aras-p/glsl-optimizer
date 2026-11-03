@@ -9,5 +9,6 @@ void main() {
 	vec4 g1 = textureGrad(tex,uv1.xy,dFdx(uv1.xy),dFdy(uv1.xy)); // mediump UV
 	vec4 g2 = textureGrad(tex,uv2.xy,dFdx(uv2.xy),dFdy(uv2.xy)); // highp UV
 	vec4 g3 = textureGrad(tex,uv2.xy,uv1.xy,uv1.xy); // mediump gradient
-	_fragColor = g1 + g2 + g3;
+	vec4 g4 = textureGrad(cub,uv2,dFdx(uv2),dFdy(uv2)); // cube gradient
+	_fragColor = g1 + g2 + g3 + g4;
 }
