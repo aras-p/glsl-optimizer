@@ -180,9 +180,7 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
     ((((half)(1.0) - dot (tmpvar_12.xyz, (half3)float3(0.299, 0.587, 0.114))) * ((half)(1.0) - tmpvar_14)) * pow (abs(((half)(1.0) - tmpvar_32)), (half)5.0))
    * env_2)) + ((half3)((float3)(_SelfIllum.sample(_mtlsmp__SelfIllum, (float2)(_mtl_i.xlv_TEXCOORD0.xy)).xyz) * _mtl_u._SelfIllumScale)));
   tmpvar_38.w = ((half)((float)(_AlphaMap.sample(_mtlsmp__AlphaMap, (float2)(_mtl_i.xlv_TEXCOORD0.xy)).w) * _mtl_u._Color.w));
-  half4 tmpvar_39 = 0;
-  tmpvar_39 = tmpvar_38;
-  _mtl_o._fragData = tmpvar_39;
+  _mtl_o._fragData = tmpvar_38;
   return _mtl_o;
 }
 
@@ -203,15 +201,15 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
 //  #4: _Color (high float) 4x1 [-1] loc 32
 //  #5: _SelfIllumScale (high float) 1x1 [-1] loc 48
 // textures: 12
-//  #0: _MainTex (low 2d) 0x0 [-1] loc 0
-//  #1: _DetailAlbedoMap (low 2d) 0x0 [-1] loc 1
-//  #2: _AlphaMap (low 2d) 0x0 [-1] loc 2
-//  #3: _Occlusion (low 2d) 0x0 [-1] loc 3
-//  #4: _DetailNormalMap (low 2d) 0x0 [-1] loc 4
-//  #5: _BumpMap (low 2d) 0x0 [-1] loc 5
-//  #6: _SpecGlossMap (low 2d) 0x0 [-1] loc 6
-//  #7: _ShadowMapTexture (low 2d) 0x0 [-1] loc 7
-//  #8: _SpecCube (low cube) 0x0 [-1] loc 8
-//  #9: unity_Lightmap (low 2d) 0x0 [-1] loc 9
-//  #10: unity_LightmapInd (low 2d) 0x0 [-1] loc 10
-//  #11: _SelfIllum (low 2d) 0x0 [-1] loc 11
+//  #0: _MainTex (medium 2d) 0x0 [-1] loc 0
+//  #1: _DetailAlbedoMap (medium 2d) 0x0 [-1] loc 1
+//  #2: _AlphaMap (medium 2d) 0x0 [-1] loc 2
+//  #3: _Occlusion (medium 2d) 0x0 [-1] loc 3
+//  #4: _DetailNormalMap (medium 2d) 0x0 [-1] loc 4
+//  #5: _BumpMap (medium 2d) 0x0 [-1] loc 5
+//  #6: _SpecGlossMap (medium 2d) 0x0 [-1] loc 6
+//  #7: _ShadowMapTexture (medium 2d) 0x0 [-1] loc 7
+//  #8: _SpecCube (medium cube) 0x0 [-1] loc 8
+//  #9: unity_Lightmap (medium 2d) 0x0 [-1] loc 9
+//  #10: unity_LightmapInd (medium 2d) 0x0 [-1] loc 10
+//  #11: _SelfIllum (medium 2d) 0x0 [-1] loc 11

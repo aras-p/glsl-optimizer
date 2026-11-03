@@ -10,7 +10,7 @@ uniform highp mat4 glstate_matrix_modelview0;
 uniform highp mat4 glstate_matrix_invtrans_modelview0;
 uniform highp vec4 glstate_lightmodel_ambient;
 uniform mediump vec4 _Color;
-out lowp vec4 xlv_COLOR0;
+out mediump vec4 xlv_COLOR0;
 out highp vec2 xlv_TEXCOORD0;
 void main ()
 {
@@ -18,7 +18,7 @@ void main ()
   tmpvar_1 = _glesVertex.xyz;
   highp vec3 n_2;
   n_2 = _glesNormal;
-  lowp vec4 tmpvar_3;
+  mediump vec4 tmpvar_3;
   highp vec4 tmpvar_4;
   tmpvar_4.w = 1.0;
   tmpvar_4.xyz = tmpvar_1;

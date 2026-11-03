@@ -1,5 +1,5 @@
 #version 300 es
-out lowp vec4 _fragData;
+out mediump vec4 _fragData;
 in highp vec4 xlv_TEXCOORD0;
 void main ()
 {

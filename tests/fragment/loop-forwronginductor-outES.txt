@@ -1,26 +1,24 @@
-uniform sampler2D _MainTex;
+uniform mediump sampler2D _MainTex;
 varying highp vec2 xlv_uv;
 void main ()
 {
-  lowp vec4 tmpvar_1;
-  highp vec2 tmpvar_2;
-  tmpvar_2 = xlv_uv;
-  mediump vec3 light_3;
-  lowp vec4 col_4;
-  lowp vec4 tmpvar_5;
-  tmpvar_5 = texture2D (_MainTex, xlv_uv);
-  col_4 = tmpvar_5;
-  light_3 = vec3(0.0, 0.0, 0.0);
-  if ((tmpvar_5.x >= 0.0)) {
-    for (highp float j_6 = 0.0; j_6 < tmpvar_2.x; j_6 += 1.0) {
-      light_3 = (light_3 + col_4.xyz);
+  highp vec2 tmpvar_1;
+  tmpvar_1 = xlv_uv;
+  mediump vec3 light_2;
+  mediump vec4 col_3;
+  mediump vec4 tmpvar_4;
+  tmpvar_4 = texture2D (_MainTex, xlv_uv);
+  col_3 = tmpvar_4;
+  light_2 = vec3(0.0, 0.0, 0.0);
+  if ((tmpvar_4.x >= 0.0)) {
+    for (highp float j_5 = 0.0; j_5 < tmpvar_1.x; j_5 += 1.0) {
+      light_2 = (light_2 + col_3.xyz);
     };
   };
-  mediump vec4 tmpvar_7;
-  tmpvar_7.w = 1.0;
-  tmpvar_7.xyz = light_3;
-  tmpvar_1 = tmpvar_7;
-  gl_FragData[0] = tmpvar_1;
+  mediump vec4 tmpvar_6;
+  tmpvar_6.w = 1.0;
+  tmpvar_6.xyz = light_2;
+  gl_FragData[0] = tmpvar_6;
 }
 
 
@@ -28,4 +26,4 @@ void main ()
 // inputs: 1
 //  #0: xlv_uv (high float) 2x1 [-1]
 // textures: 1
-//  #0: _MainTex (low 2d) 0x0 [-1]
+//  #0: _MainTex (medium 2d) 0x0 [-1]

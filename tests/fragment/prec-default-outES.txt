@@ -1,4 +1,4 @@
-precision lowp int;
+precision mediump int;
 precision highp float;
 struct MyStruct {
   float f;
@@ -9,12 +9,12 @@ uniform float fh1;
 uniform highp float fh2;
 uniform mediump float fm;
 uniform highp int il1;
-uniform lowp int il2;
+uniform mediump int il2;
 uniform mediump int im;
 void main ()
 {
   highp int i_1;
-  lowp float f_2;
+  mediump float f_2;
   highp float tmpvar_3;
   tmpvar_3 = (((fh1 + fh2) + fm) + s1.f);
   f_2 = tmpvar_3;
@@ -45,5 +45,5 @@ void main ()
 //  #2: fh2 (high float) 1x1 [-1]
 //  #3: fm (medium float) 1x1 [-1]
 //  #4: il1 (high int) 1x1 [-1]
-//  #5: il2 (low int) 1x1 [-1]
+//  #5: il2 (medium int) 1x1 [-1]
 //  #6: im (medium int) 1x1 [-1]

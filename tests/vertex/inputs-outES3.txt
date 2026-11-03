@@ -4,13 +4,13 @@ in vec4 _glesMultiTexCoord0;
 in vec4 _glesTANGENT;
 uniform highp mat4 glstate_matrix_mvp;
 out mediump vec2 xlv_TEXCOORD0;
-out lowp vec4 xlv_TEXCOORD1;
+out mediump vec4 xlv_TEXCOORD1;
 void main ()
 {
   highp vec4 tmpvar_1;
   tmpvar_1.xyz = normalize(_glesTANGENT.xyz);
   tmpvar_1.w = _glesTANGENT.w;
-  lowp vec4 tmpvar_2;
+  mediump vec4 tmpvar_2;
   tmpvar_2.xy = (_glesMultiTexCoord0.xy * 0.3);
   tmpvar_2.xyz = (tmpvar_2.xyz + ((tmpvar_1.xyz * 0.5) + 0.5));
   tmpvar_2.w = 0.0;

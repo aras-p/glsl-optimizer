@@ -149,7 +149,7 @@ vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], 
 //  #1: _inNormal (medium float) 3x1 [-1] loc 1
 //  #2: _uv0 (high float) 4x1 [-1] loc 2
 //  #3: _uv1 (high float) 4x1 [-1] loc 3
-//  #4: _color (low float) 4x1 [-1] loc 4
+//  #4: _color (medium float) 4x1 [-1] loc 4
 //  #5: TANGENT (medium float) 4x1 [-1] loc 5
 // uniforms: 14 (total size: 464)
 //  #0: _LightMatrix0 (high float) 4x4 [-1] loc 0

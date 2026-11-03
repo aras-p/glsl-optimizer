@@ -1,11 +1,11 @@
 #version 300 es
 in mediump vec3 uv;
-out lowp vec4 outColor;
-uniform sampler2D tex;
-uniform lowp sampler3D vol;
+out mediump vec4 outColor;
+uniform mediump sampler2D tex;
+uniform mediump sampler3D vol;
 void main ()
 {
-  lowp vec4 c_1;
+  mediump vec4 c_1;
   c_1 = (textureOffset (tex, uv.xy, ivec2(-2, -3)) + textureOffset (tex, uv.xy, ivec2(4, 5), 0.5));
   c_1 = (c_1 + textureOffset (vol, uv, ivec3(-2, -3, -4)));
   c_1 = (c_1 + textureOffset (vol, uv, ivec3(4, 5, 6), -0.5));
@@ -21,5 +21,5 @@ void main ()
 // inputs: 1
 //  #0: uv (medium float) 3x1 [-1]
 // textures: 2
-//  #0: tex (low 2d) 0x0 [-1]
-//  #1: vol (low 3d) 0x0 [-1]
+//  #0: tex (medium 2d) 0x0 [-1]
+//  #1: vol (medium 3d) 0x0 [-1]
