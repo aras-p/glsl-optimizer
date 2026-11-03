@@ -32,7 +32,7 @@ See [change log here](Changelog.md).
 Usage
 -----
 
-Build with CMake 3.21 or newer and a C/C++ compiler on Windows, macOS, or Linux, using
+Build with CMake 3.21 or newer and a C/C++17 compiler on Windows, macOS, or Linux, using
 the typical CMake command lines like:
 
 ```sh
@@ -52,7 +52,7 @@ with `CMAKE_MSVC_RUNTIME_LIBRARY`.
 
 CMake options:
 
-* `BUILD_TESTING=OFF` builds without the regression runner; note that this requires C++17.
+* `BUILD_TESTING=OFF` builds without the regression runner.
 * `GLSLOPT_BUILD_TOOLS=ON` builds the optional `glslopt` command-line optimizer.
   Run it without arguments for usage.
 * `GLSLOPT_TEST_OPENGL=ON` enables optional external OpenGL validation in the test

@@ -6,6 +6,9 @@ endif()
 
 project(glsl_optimizer LANGUAGES C CXX)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 # use static MSVC runtime
 if(MSVC AND NOT DEFINED CMAKE_MSVC_RUNTIME_LIBRARY)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
@@ -124,7 +127,11 @@ set(SRC
     "src/glsl/standalone_scaffolding.cpp"
 )
 add_library(glsl_optimizer STATIC ${SRC})
-target_compile_features(glsl_optimizer PRIVATE c_std_99 cxx_std_11)
+target_compile_features(glsl_optimizer PRIVATE c_std_99)
+# generated Flex scanner uses 'register', which clang rejects
+set_source_files_properties(src/glsl/glsl_lexer.cpp PROPERTIES
+    COMPILE_OPTIONS "$<$<CXX_COMPILER_ID:Clang,AppleClang>:-Wno-register>"
+)
 target_include_directories(glsl_optimizer
     PUBLIC src/glsl
     PRIVATE include src src/mesa
@@ -155,7 +162,6 @@ option(BUILD_TESTING "Build the regression tests" ${GLSLOPT_TOP_LEVEL})
 include(CTest)
 if(BUILD_TESTING)
     add_executable(glsl_optimizer_tests tests/glsl_optimizer_tests.cpp)
-    target_compile_features(glsl_optimizer_tests PRIVATE cxx_std_17)
     target_link_libraries(glsl_optimizer_tests PRIVATE glsl_optimizer)
     if(MSVC)
         target_compile_definitions(glsl_optimizer_tests PRIVATE NOMINMAX _CRT_SECURE_NO_WARNINGS)

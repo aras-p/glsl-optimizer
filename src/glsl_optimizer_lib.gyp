@@ -6,6 +6,11 @@
     {
       'target_name': 'glsl_optimizer_lib',
       'type': 'static_library',
+      # The checked-in Flex scanner still uses register.
+      'cflags_cc': ['-Wno-register'],
+      'xcode_settings': {
+        'OTHER_CPLUSPLUSFLAGS': ['-Wno-register'],
+      },
       'include_dirs': [
         '.',
         'glsl',
@@ -174,16 +179,12 @@
       ],
       'conditions': [
         ['OS=="win"', {
-          'include_dirs': [
-            '../include/c99',
-          ],
           'defines': [
             '_LIB',
             'NOMINMAX',
             '_CRT_SECURE_NO_WARNINGS',
-            '_CRT_SECURE_NO_DEPRECATE',
-            '__STDC_VERSION__=199901L',
-            '__STDC__',
+            '_CRT_NONSTDC_NO_DEPRECATE',
+            '__STDC__=1',
             'strdup=_strdup',
           ],
           'msvs_disabled_warnings': [4028, 4244, 4267, 4996],
