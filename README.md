@@ -32,16 +32,35 @@ See [change log here](Changelog.md).
 Usage
 -----
 
-Visual Studio 2010 (Windows, x86/x64) and Xcode 5+ (Mac, i386) project files for a static
-library are provided in `projects/vs2010/glsl_optimizer.sln` and `projects/xcode5/glsl_optimizer_lib`
-respectively.
+Build with CMake 3.21 or newer and a C/C++ compiler on Windows, macOS, or Linux, using
+the typical CMake command lines like:
 
-> Note: only the VS and Xcode project files are maintained and should work at any time.
-> There's also a cmake and gyp build system for Linux et al., and some stuff in contrib folder -
-> all that may or might not work.
+```sh
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release --parallel
+ctest --test-dir build -C Release --output-on-failure
+```
 
-For Linux you can use cmake. Just type "cmake . && make" in the root directory.
-This will build the optimizer library and some executable binaries.
+To generate IDE projects, add `-G "Visual Studio 17 2022" -A x64` on Windows, or `-G Xcode`
+on macOS to the first command.
+
+The `glsl_optimizer` target produces a static library. To use it in another
+CMake project, use `add_subdirectory` and link against `glsl_optimizer`; the public
+header include directory is propagated automatically. Tests default to off when
+embedded. MSVC builds use the static runtime by default; callers can override this
+with `CMAKE_MSVC_RUNTIME_LIBRARY`.
+
+CMake options:
+
+* `BUILD_TESTING=OFF` builds without the regression runner; note that this requires C++17.
+* `GLSLOPT_BUILD_TOOLS=ON` builds the optional `glslopt` command-line optimizer.
+  Run it without arguments for usage.
+* `GLSLOPT_TEST_OPENGL=ON` enables optional external OpenGL validation in the test
+  runner on Windows/macOS. It is off by default and is not needed for regression tests.
+
+> There's a Node addon contributed; that is built via a separate `node-gyp` build.
+> Its JavaScript smoke test is `node tests/tests.js` after building the addon. I have no
+> idea if or how it works.
 
 Interface for the library is `src/glsl/glsl_optimizer.h`. General usage is:
  
@@ -61,12 +80,19 @@ Interface for the library is `src/glsl/glsl_optimizer.h`. General usage is:
 Tests
 -----
 
-There's a testing suite for catching regressions, see `tests` folder. In VS, build
-and run `glsl_optimizer_tests` project; in Xcode use `projects/xcode5/glsl_optimizer_tests`
-project. The test executable requires path to the `tests` folder as an argument.
+CMake's CTest runs the shader regression suite. Each shader input is compared against
+expected optimized output, including statistics and reflection data. GLES3 cases
+also check generated Metal output on every platform.
 
-Each test comes as three text files; input, expected IR dump and expected optimized
-GLSL dump. GLES3 tests are also converted into Metal.
+The test runner can also be invoked directly as `glsl_optimizer_tests /path/to/tests`.
+Mismatches leave expected files untouched and write actual output under
+`test-output/` in the working directory (the build directory when using CTest).
+
+To regenerate expectations, run the executable with
+`/path/to/tests --update-expected` and review the changed files.
+Optional `--check-glsl` validates against the system OpenGL compiler (requires
+`GLSLOPT_TEST_OPENGL=ON`); `--check-metal` invokes the iPhoneOS Metal compiler
+through `xcrun` on macOS.
 
 If you're making changes to the project and want pull requests accepted easier, I'd
 appreciate if there would be no test suite regressions. If you are implementing a
