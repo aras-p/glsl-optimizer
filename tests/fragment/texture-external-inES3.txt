@@ -1,0 +1,21 @@
+#version 300 es
+#extension GL_OES_EGL_image_external_essl3 : require
+precision mediump float;
+#ifndef GL_OES_EGL_image_external_essl3
+#error Missing external-texture extension macro
+#endif
+uniform samplerExternalOES tex;
+out mediump vec4 color;
+in vec4 uv;
+
+void main()
+{
+    color = texture(tex, uv.xy)
+        + textureProj(tex, uv.xyz)
+        + textureProj(tex, uv)
+        + texture(tex, uv.xy, uv.w)
+        + textureProj(tex, uv.xyz, uv.w)
+        + textureProj(tex, uv, uv.z)
+        + texelFetch(tex, ivec2(uv.xy), 0)
+        + vec4(vec2(textureSize(tex, 0)), 0.0, 0.0);
+}

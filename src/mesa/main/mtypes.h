@@ -1553,6 +1553,7 @@ struct gl_extensions
    GLboolean OES_draw_texture;
    GLboolean OES_depth_texture_cube_map;
    GLboolean OES_EGL_image_external;
+   GLboolean OES_EGL_image_external_essl3;
    GLboolean OES_compressed_ETC1_RGB8_texture;
    GLboolean extension_sentinel;
    /** The extension string */

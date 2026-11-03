@@ -5,6 +5,9 @@ GLSL optimizer Change Log
 2026 11
 -------
 
+Added:
+* Recognize `GL_OES_EGL_image_external_essl3` in GLES3 inputs.
+
 Changed:
 * `lowp` and `mediump` precision are treated as the same precision now. Last time any GPU
   had _actual_ `lowp` was, like, 15 years ago.

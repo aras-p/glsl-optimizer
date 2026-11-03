@@ -239,6 +239,8 @@ _mesa_print_ir_glsl(exec_list *instructions,
 			str.asprintf_append ("#extension GL_EXT_shader_texture_lod : enable\n");
 		if (state->OES_standard_derivatives_enable)
 			str.asprintf_append ("#extension GL_OES_standard_derivatives : enable\n");
+		if (state->OES_EGL_image_external_essl3_enable)
+			str.asprintf_append ("#extension GL_OES_EGL_image_external_essl3 : enable\n");
 		if (state->OES_EGL_image_external_enable)
 			str.asprintf_append ("#extension GL_OES_EGL_image_external : enable\n");
 		if (state->EXT_shadow_samplers_enable)

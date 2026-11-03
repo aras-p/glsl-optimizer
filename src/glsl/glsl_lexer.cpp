@@ -2153,7 +2153,7 @@ case 105:
 YY_RULE_SETUP
 #line 347 "src/glsl/glsl_lexer.ll"
 {
-			  if (yyextra->OES_EGL_image_external_enable)
+			  if (yyextra->OES_EGL_image_external_enable || yyextra->OES_EGL_image_external_essl3_enable)
 			     return SAMPLEREXTERNALOES;
 			  else
 			     return IDENTIFIER;

@@ -345,7 +345,7 @@ usamplerCubeArray KEYWORD_WITH_ALT(400, 0, 400, 0, yyextra->ARB_texture_cube_map
 samplerCubeArrayShadow   KEYWORD_WITH_ALT(400, 0, 400, 0, yyextra->ARB_texture_cube_map_array_enable, SAMPLERCUBEARRAYSHADOW);
 
 samplerExternalOES		{
-			  if (yyextra->OES_EGL_image_external_enable)
+			  if (yyextra->OES_EGL_image_external_enable || yyextra->OES_EGL_image_external_essl3_enable)
 			     return SAMPLEREXTERNALOES;
 			  else
 			     return IDENTIFIER;
