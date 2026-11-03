@@ -1,0 +1,34 @@
+#version 300 es
+precision mediump int;
+precision mediump float;
+struct Values {
+  mediump vec4 color;
+  highp vec4 position;
+};
+uniform Values values;
+uniform mediump sampler2D tex;
+uniform mediump vec4 tint;
+uniform mediump vec4 scale;
+uniform highp vec4 offset;
+in highp vec2 uv;
+out mediump vec4 fragColor;
+void main ()
+{
+  highp vec4 tmpvar_1;
+  tmpvar_1 = (values.position + offset);
+  fragColor = (((
+    ((values.color * tint) * scale)
+   + 0.25) * texture (tex, uv)) + tmpvar_1);
+}
+
+
+// stats: 6 alu 1 tex 0 flow
+// inputs: 1
+//  #0: uv (high float) 2x1 [-1]
+// uniforms: 4 (total size: 0)
+//  #0: values (high other) 0x0 [-1]
+//  #1: tint (medium float) 4x1 [-1]
+//  #2: scale (medium float) 4x1 [-1]
+//  #3: offset (high float) 4x1 [-1]
+// textures: 1
+//  #0: tex (medium 2d) 0x0 [-1]

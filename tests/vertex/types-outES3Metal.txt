@@ -35,6 +35,6 @@ vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], 
 //  #0: _inVertex (high float) 4x1 [-1] loc 0
 //  #1: _inNormal (medium float) 3x1 [-1] loc 1
 //  #2: _uv0 (high float) 2x1 [-1] loc 2
-//  #3: _color (low float) 4x1 [-1] loc 3
+//  #3: _color (medium float) 4x1 [-1] loc 3
 // uniforms: 1 (total size: 64)
 //  #0: mvp (high float) 4x4 [-1] loc 0

@@ -1,5 +1,5 @@
 #extension GL_EXT_shader_texture_lod : enable
-lowp vec4 impl_low_texture2DLodEXT(lowp sampler2D sampler, highp vec2 coord, mediump float lod)
+mediump vec4 impl_medium_texture2DLodEXT(mediump sampler2D sampler, highp vec2 coord, mediump float lod)
 {
 #if defined(GL_EXT_shader_texture_lod)
 	return texture2DLodEXT(sampler, coord, lod);
@@ -8,15 +8,11 @@ lowp vec4 impl_low_texture2DLodEXT(lowp sampler2D sampler, highp vec2 coord, med
 #endif
 }
 
-uniform sampler2D tex;
+uniform mediump sampler2D tex;
 varying highp vec4 xlv_TEXCOORD0;
 void main ()
 {
-  mediump vec4 tmpvar_1;
-  lowp vec4 tmpvar_2;
-  tmpvar_2 = impl_low_texture2DLodEXT (tex, xlv_TEXCOORD0.xy, 0.0);
-  tmpvar_1 = tmpvar_2;
-  gl_FragData[0] = tmpvar_1;
+  gl_FragData[0] = impl_medium_texture2DLodEXT (tex, xlv_TEXCOORD0.xy, 0.0);
 }
 
 
@@ -24,4 +20,4 @@ void main ()
 // inputs: 1
 //  #0: xlv_TEXCOORD0 (high float) 4x1 [-1]
 // textures: 1
-//  #0: tex (low 2d) 0x0 [-1]
+//  #0: tex (medium 2d) 0x0 [-1]

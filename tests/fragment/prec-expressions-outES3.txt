@@ -1,5 +1,5 @@
 #version 300 es
-out lowp vec4 _fragData;
+out mediump vec4 _fragData;
 uniform mediump mat4 _LightMatrix;
 uniform highp vec3 _WorldPos;
 void main ()

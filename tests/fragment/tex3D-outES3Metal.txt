@@ -23,4 +23,4 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
 // inputs: 1
 //  #0: uv (high float) 3x1 [-1]
 // textures: 1
-//  #0: tex (low 3d) 0x0 [-1] loc 0
+//  #0: tex (medium 3d) 0x0 [-1] loc 0

@@ -82,7 +82,6 @@ enum glsl_interface_packing {
 enum glsl_precision {
 	glsl_precision_high = 0,
 	glsl_precision_medium,
-	glsl_precision_low,
 	glsl_precision_undefined,
 };
 

@@ -144,7 +144,7 @@ void main ()
     };
     float tmpvar_62;
     tmpvar_62 = clamp ((abs(subpixB_28) * subpixRcpRange_34), 0.0, 1.0);
-    posB_22 = posM_40;
+    posB_22 = xlv_TEXCOORD0;
     float tmpvar_63;
     if (!(horzSpan_30)) {
       tmpvar_63 = 0.0;

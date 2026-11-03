@@ -6,7 +6,7 @@ uniform highp mat4 _FrustumRays;
 uniform highp vec4 _CameraPosLocal;
 uniform highp vec4 _CoordTexDim;
 uniform highp vec4 _ScreenTexDim;
-uniform sampler2D _CameraDepthTexture;
+uniform mediump sampler2D _CameraDepthTexture;
 in highp vec2 xlv_TEXCOORD0;
 void main ()
 {
@@ -37,9 +37,9 @@ void main ()
   tmpvar_9.z = tmpvar_7;
   bvec4 tmpvar_10;
   tmpvar_10 = equal (ivec4(tmpvar_6), ivec4(0, 1, 2, 3));
-  lowp vec4 tmpvar_11;
+  mediump vec4 tmpvar_11;
   tmpvar_11 = vec4(tmpvar_10);
-  lowp vec4 tmpvar_12;
+  mediump vec4 tmpvar_12;
   tmpvar_12 = vec4(tmpvar_10);
   highp vec2 tmpvar_13;
   tmpvar_13.x = dot (tmpvar_9, tmpvar_11);
@@ -53,7 +53,7 @@ void main ()
   coordTemp_2 = ((floor(
     (coordTemp_2 * _ScreenTexDim.xy)
   ) + 0.5) * _ScreenTexDim.zw);
-  lowp vec4 tmpvar_15;
+  mediump vec4 tmpvar_15;
   tmpvar_15 = texture (_CameraDepthTexture, coordTemp_2);
   highp float tmpvar_16;
   highp float z_17;
@@ -125,4 +125,4 @@ void main ()
 //  #4: _CoordTexDim (high float) 4x1 [-1]
 //  #5: _ScreenTexDim (high float) 4x1 [-1]
 // textures: 1
-//  #0: _CameraDepthTexture (low 2d) 0x0 [-1]
+//  #0: _CameraDepthTexture (medium 2d) 0x0 [-1]

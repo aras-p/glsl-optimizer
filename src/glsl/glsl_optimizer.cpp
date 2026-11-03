@@ -554,7 +554,6 @@ static void glsl_type_to_optimizer_desc(const glsl_type* type, glsl_precision pr
 	{
 		case glsl_precision_high: out->prec = kGlslPrecHigh; break;
 		case glsl_precision_medium: out->prec = kGlslPrecMedium; break;
-		case glsl_precision_low: out->prec = kGlslPrecLow; break;
 		default: out->prec = kGlslPrecHigh; break;
 	}
 }

@@ -1,8 +1,8 @@
-uniform sampler2D _CameraDepthTexture;
+uniform mediump sampler2D _CameraDepthTexture;
 uniform highp vec4 _LightShadowData;
 uniform highp vec4 _LightSplitsFar;
 uniform highp vec4 _LightSplitsNear;
-uniform sampler2D _ShadowMapTexture;
+uniform mediump sampler2D _ShadowMapTexture;
 uniform highp mat4 _View2Shadow;
 uniform highp mat4 _View2Shadow1;
 uniform highp mat4 _View2Shadow2;
@@ -15,7 +15,7 @@ void main ()
   mediump vec4 tmpvar_1;
   highp vec4 res_2;
   highp float depth_3;
-  lowp vec4 tmpvar_4;
+  mediump vec4 tmpvar_4;
   tmpvar_4 = texture2D (_CameraDepthTexture, xlv_TEXCOORD0);
   depth_3 = tmpvar_4.x;
   highp float tmpvar_5;
@@ -30,12 +30,12 @@ void main ()
   highp vec4 near_10;
   bvec4 tmpvar_11;
   tmpvar_11 = greaterThanEqual (tmpvar_6.zzzz, _LightSplitsNear);
-  lowp vec4 tmpvar_12;
+  mediump vec4 tmpvar_12;
   tmpvar_12 = vec4(tmpvar_11);
   near_10 = tmpvar_12;
   bvec4 tmpvar_13;
   tmpvar_13 = lessThan (tmpvar_6.zzzz, _LightSplitsFar);
-  lowp vec4 tmpvar_14;
+  mediump vec4 tmpvar_14;
   tmpvar_14 = vec4(tmpvar_13);
   far_9 = tmpvar_14;
   weights_8 = (near_10 * far_9);
@@ -48,7 +48,7 @@ void main ()
   ) + (
     (_View2Shadow2 * tmpvar_6)
   .xyz * weights_8.z)) + ((_View2Shadow3 * tmpvar_6).xyz * weights_8.w));
-  lowp vec4 tmpvar_16;
+  mediump vec4 tmpvar_16;
   tmpvar_16 = texture2D (_ShadowMapTexture, tmpvar_15.xy);
   highp float tmpvar_17;
   if ((tmpvar_16.x < tmpvar_15.z)) {
@@ -85,5 +85,5 @@ void main ()
 //  #6: _View2Shadow3 (high float) 4x4 [-1]
 //  #7: _ZBufferParams (high float) 4x1 [-1]
 // textures: 2
-//  #0: _CameraDepthTexture (low 2d) 0x0 [-1]
-//  #1: _ShadowMapTexture (low 2d) 0x0 [-1]
+//  #0: _CameraDepthTexture (medium 2d) 0x0 [-1]
+//  #1: _ShadowMapTexture (medium 2d) 0x0 [-1]

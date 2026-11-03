@@ -2,7 +2,7 @@ attribute highp vec4 _glesVertex;
 attribute mediump vec3 _glesNormal;
 attribute highp vec4 _glesMultiTexCoord0;
 attribute highp vec4 _glesMultiTexCoord1;
-attribute lowp vec4 _glesColor;
+attribute mediump vec4 _glesColor;
 uniform highp mat4 _LightMatrix0;
 uniform highp vec4 _MainTex_ST;
 uniform highp mat4 _Object2World;
@@ -129,7 +129,7 @@ void main ()
 //  #1: _glesNormal (medium float) 3x1 [-1]
 //  #2: _glesMultiTexCoord0 (high float) 4x1 [-1]
 //  #3: _glesMultiTexCoord1 (high float) 4x1 [-1]
-//  #4: _glesColor (low float) 4x1 [-1]
+//  #4: _glesColor (medium float) 4x1 [-1]
 //  #5: TANGENT (high float) 4x1 [-1]
 // uniforms: 14 (total size: 0)
 //  #0: _LightMatrix0 (high float) 4x4 [-1]

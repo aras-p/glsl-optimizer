@@ -61,4 +61,4 @@ float kKr4PI_4 = 0;
 //  #1: uni4 (medium float) 4x1 [-1] loc 8
 //  #2: _AtmosphereThickness (medium float) 1x1 [-1] loc 16
 // textures: 1
-//  #0: tex1 (low 2d) 0x0 [-1] loc 0
+//  #0: tex1 (medium 2d) 0x0 [-1] loc 0

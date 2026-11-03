@@ -5,9 +5,18 @@ GLSL optimizer Change Log
 2026 11
 -------
 
-* Build: moved to CMake build and C++17 version, updates for recent compilers/toolchains.
-* Build: compilation and tests are now ran on Github Actions.
-* Build: Linux build now uses `-fPIC` by default (#52).
+Changed:
+* `lowp` and `mediump` precision are treated as the same precision now. Last time any GPU
+  had _actual_ `lowp` was, like, 15 years ago.
+
+Build:
+
+* Moved to CMake build and C++17 version, updates for recent compilers/toolchains.
+* Compilation and tests are now ran on Github Actions.
+* Linux build now uses `-fPIC` by default (#52).
+
+Fixed:
+
 * Fixed `glsl_types::interface_types` memory leak (#141).
 * Fixed missing precision on `sampler2DArray` (#146).
 * Fixed GLSL generation for `OES_EGL_image_external` (#96).

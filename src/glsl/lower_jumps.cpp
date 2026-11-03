@@ -188,7 +188,7 @@ struct loop_record
       /* also supported for the "function loop" */
       if(!this->execute_flag) {
          exec_list& list = this->loop ? this->loop->body_instructions : signature->body;
-         this->execute_flag = new(this->signature) ir_variable(glsl_type::bool_type, "execute_flag", ir_var_temporary, glsl_precision_low);
+         this->execute_flag = new(this->signature) ir_variable(glsl_type::bool_type, "execute_flag", ir_var_temporary, glsl_precision_medium);
          list.push_head(new(this->signature) ir_assignment(new(this->signature) ir_dereference_variable(execute_flag), new(this->signature) ir_constant(true), 0));
          list.push_head(this->execute_flag);
       }
@@ -199,7 +199,7 @@ struct loop_record
    {
       assert(this->loop);
       if(!this->break_flag) {
-         this->break_flag = new(this->signature) ir_variable(glsl_type::bool_type, "break_flag", ir_var_temporary, glsl_precision_low);
+         this->break_flag = new(this->signature) ir_variable(glsl_type::bool_type, "break_flag", ir_var_temporary, glsl_precision_medium);
          this->loop->insert_before(this->break_flag);
          this->loop->insert_before(new(this->signature) ir_assignment(new(this->signature) ir_dereference_variable(break_flag), new(this->signature) ir_constant(false), 0));
       }
@@ -228,7 +228,7 @@ struct function_record
    ir_variable* get_return_flag()
    {
       if(!this->return_flag) {
-         this->return_flag = new(this->signature) ir_variable(glsl_type::bool_type, "return_flag", ir_var_temporary, glsl_precision_low);
+         this->return_flag = new(this->signature) ir_variable(glsl_type::bool_type, "return_flag", ir_var_temporary, glsl_precision_medium);
          this->signature->body.push_head(new(this->signature) ir_assignment(new(this->signature) ir_dereference_variable(return_flag), new(this->signature) ir_constant(false), 0));
          this->signature->body.push_head(this->return_flag);
       }

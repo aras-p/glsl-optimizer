@@ -1,0 +1,21 @@
+#version 300 es
+precision mediump float;
+uniform highp sampler2D fullTexture;
+uniform mediump sampler2D halfTexture;
+in highp vec2 uv;
+out highp vec4 result;
+
+// Inlining must preserve the actual sampler's precision in the texture IR.
+vec4 sampleLod(sampler2D tex, highp vec2 coord)
+{
+    return textureLod(tex, coord, 0.0);
+}
+
+void main()
+{
+    highp vec4 fullValue = sampleLod(fullTexture, uv);
+    mediump vec4 halfValue = sampleLod(halfTexture, uv);
+    highp vec4 mask = vec4(greaterThan(fullValue, vec4(0.5)));
+    highp float front = float(gl_FrontFacing);
+    result = fullValue + halfValue + mask + front;
+}

@@ -1,6 +1,6 @@
 #extension GL_EXT_shader_texture_lod : enable
 #extension GL_EXT_shadow_samplers : enable
-lowp vec4 impl_low_texture2DProjLodEXT(lowp sampler2D sampler, highp vec4 coord, mediump float lod)
+mediump vec4 impl_medium_texture2DProjLodEXT(mediump sampler2D sampler, highp vec4 coord, mediump float lod)
 {
 #if defined(GL_EXT_shader_texture_lod)
 	return texture2DProjLodEXT(sampler, coord, lod);
@@ -9,7 +9,7 @@ lowp vec4 impl_low_texture2DProjLodEXT(lowp sampler2D sampler, highp vec4 coord,
 #endif
 }
 
-lowp vec4 impl_low_texture2DProjLodEXT(lowp sampler2D sampler, highp vec3 coord, mediump float lod)
+mediump vec4 impl_medium_texture2DProjLodEXT(mediump sampler2D sampler, highp vec3 coord, mediump float lod)
 {
 #if defined(GL_EXT_shader_texture_lod)
 	return texture2DProjLodEXT(sampler, coord, lod);
@@ -18,15 +18,15 @@ lowp vec4 impl_low_texture2DProjLodEXT(lowp sampler2D sampler, highp vec3 coord,
 #endif
 }
 
-uniform sampler2D tex;
-uniform lowp sampler2DShadow shadowmap;
+uniform mediump sampler2D tex;
+uniform mediump sampler2DShadow shadowmap;
 varying highp vec4 uv;
 void main ()
 {
-  lowp vec4 c_1;
+  mediump vec4 c_1;
   c_1 = (texture2DProj (tex, uv) + texture2DProj (tex, uv.xyz));
-  c_1 = (c_1 + impl_low_texture2DProjLodEXT (tex, uv, 1.0));
-  c_1 = (c_1 + impl_low_texture2DProjLodEXT (tex, uv.xyz, 1.0));
+  c_1 = (c_1 + impl_medium_texture2DProjLodEXT (tex, uv, 1.0));
+  c_1 = (c_1 + impl_medium_texture2DProjLodEXT (tex, uv.xyz, 1.0));
   c_1 = (c_1 + vec4(shadow2DEXT (shadowmap, uv.xyz)));
   c_1 = (c_1 + vec4(shadow2DProjEXT (shadowmap, uv)));
   gl_FragColor = c_1;
@@ -37,5 +37,5 @@ void main ()
 // inputs: 1
 //  #0: uv (high float) 4x1 [-1]
 // textures: 2
-//  #0: tex (low 2d) 0x0 [-1]
-//  #1: shadowmap (low 2dshadow) 0x0 [-1]
+//  #0: tex (medium 2d) 0x0 [-1]
+//  #1: shadowmap (medium 2dshadow) 0x0 [-1]

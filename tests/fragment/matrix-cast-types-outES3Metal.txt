@@ -90,5 +90,5 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
 //  #2: xlv_TEXCOORD2 (high float) 4x1 [-1]
 //  #3: xlv_TEXCOORD3 (high float) 4x1 [-1]
 // textures: 2
-//  #0: _PanelNorm (low 2d) 0x0 [-1] loc 0
-//  #1: _DecalNorm (low 2d) 0x0 [-1] loc 1
+//  #0: _PanelNorm (medium 2d) 0x0 [-1] loc 0
+//  #1: _DecalNorm (medium 2d) 0x0 [-1] loc 1

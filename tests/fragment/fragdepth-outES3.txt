@@ -1,5 +1,5 @@
 #version 300 es
-out lowp vec4 _fragData;
+out mediump vec4 _fragData;
 void main ()
 {
   _fragData = vec4(0.5, 0.5, 0.5, 0.5);

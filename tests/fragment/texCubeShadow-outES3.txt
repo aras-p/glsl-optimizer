@@ -1,13 +1,11 @@
 #version 300 es
 precision mediump float;
-uniform lowp samplerCubeShadow shadowmap;
+uniform mediump samplerCubeShadow shadowmap;
 in mediump vec4 uv;
 out mediump vec4 _fragColor;
 void main ()
 {
-  lowp vec4 tmpvar_1;
-  tmpvar_1 = vec4(texture (shadowmap, uv));
-  _fragColor = tmpvar_1;
+  _fragColor = vec4(texture (shadowmap, uv));
 }
 
 
@@ -15,4 +13,4 @@ void main ()
 // inputs: 1
 //  #0: uv (medium float) 4x1 [-1]
 // textures: 1
-//  #0: shadowmap (low cube) 0x0 [-1]
+//  #0: shadowmap (medium cube) 0x0 [-1]

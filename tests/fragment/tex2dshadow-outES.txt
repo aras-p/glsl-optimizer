@@ -1,11 +1,9 @@
 #extension GL_EXT_shadow_samplers : enable
-uniform lowp sampler2DShadow shadowmap;
+uniform mediump sampler2DShadow shadowmap;
 varying highp vec4 xlv_TEXCOORD0;
 void main ()
 {
-  lowp vec4 tmpvar_1;
-  tmpvar_1 = vec4((shadow2DEXT (shadowmap, xlv_TEXCOORD0.xyz) + shadow2DProjEXT (shadowmap, xlv_TEXCOORD0)));
-  gl_FragData[0] = tmpvar_1;
+  gl_FragData[0] = vec4((shadow2DEXT (shadowmap, xlv_TEXCOORD0.xyz) + shadow2DProjEXT (shadowmap, xlv_TEXCOORD0)));
 }
 
 
@@ -13,4 +11,4 @@ void main ()
 // inputs: 1
 //  #0: xlv_TEXCOORD0 (high float) 4x1 [-1]
 // textures: 1
-//  #0: shadowmap (low 2dshadow) 0x0 [-1]
+//  #0: shadowmap (medium 2dshadow) 0x0 [-1]

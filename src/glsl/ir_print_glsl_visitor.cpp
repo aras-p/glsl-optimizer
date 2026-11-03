@@ -41,7 +41,6 @@ static inline const char* get_precision_string (glsl_precision p)
 	switch (p) {
 	case glsl_precision_high:		return "highp ";
 	case glsl_precision_medium:		return "mediump ";
-	case glsl_precision_low:		return "lowp ";
 	case glsl_precision_undefined:	return "";
 	}
 	assert(!"Should not get here.");
@@ -157,16 +156,16 @@ public:
 	bool	inside_loop_body;
 	bool	skipped_this_ir;
 	bool	previous_skipped;
-	int		uses_texlod_impl; // 3 bits per tex_dimension, bit set for each precision if any texture sampler needs the GLES2 lod workaround.
-	int		uses_texlodproj_impl; // 3 bits per tex_dimension, bit set for each precision if any texture sampler needs the GLES2 lod workaround.
+	int		uses_texlod_impl; // Two groups of 8 dimension bits, one per precision if any texture sampler needs the GLES2 lod workaround.
+	int		uses_texlodproj_impl; // Two groups of 8 dimension bits, one per precision if any texture sampler needs the GLES2 lod workaround.
 };
 
 static void print_texlod_workarounds(int usage_bitfield, int usage_proj_bitfield, string_buffer &str)
 {
-	static const char *precStrings[3] = {"lowp", "mediump", "highp"};
-	static const char *precNameStrings[3] = { "low_", "medium_", "high_" };
+	static const char *precStrings[2] = {"mediump", "highp"};
+	static const char *precNameStrings[2] = { "medium_", "high_" };
 	// Print out the texlod workarounds
-	for (int prec = 0; prec < 3; prec++)
+	for (int prec = 0; prec < 2; prec++)
 	{
 		const char *precString = precStrings[prec];
 		const char *precName = precNameStrings[prec];
@@ -401,12 +400,12 @@ void ir_print_glsl_visitor::print_precision (ir_instruction* ir, const glsl_type
 		}
 	}
 
-	// skip precision for samplers that end up being lowp (default anyway) or undefined;
+	// Skip unspecified sampler precision;
 	// except always emit it for shadowmap samplers (some drivers don't implement
 	// default EXT_shadow_samplers precision), array textures and 3D textures (they require precision)
 	if (type && type->is_sampler() && !type->sampler_shadow && !type->sampler_array && !(type->sampler_dimensionality > GLSL_SAMPLER_DIM_2D))
 	{
-		if (prec == glsl_precision_low || prec == glsl_precision_undefined)
+		if (prec == glsl_precision_undefined)
 			return;
 	}
 	
@@ -859,24 +858,10 @@ void ir_print_glsl_visitor::visit(ir_texture *ir)
 	{
 		// Special workaround for GLES 2.0 LOD samplers to prevent a lot of debug spew.
 		const glsl_precision prec = ir->sampler->get_precision();
-		const char *precString = "";
-		// Sampler bitfield is 7 bits, so use 0-7 for lowp, 8-15 for mediump and 16-23 for highp.
-		int position = (int)sampler_dim;
-		switch (prec)
-		{
-		case glsl_precision_high:
-			position += 16;
-			precString = "_high_";
-			break;
-		case glsl_precision_medium:
-			position += 8;
-			precString = "_medium_";
-			break;
-		case glsl_precision_low:
-		default:
-			precString = "_low_";
-			break;
-		}
+		// Use bits 0-7 for mediump and 8-15 for highp (including unspecified).
+		const bool medium = prec == glsl_precision_medium;
+		const char *precString = medium ? "_medium_" : "_high_";
+		const int position = (int)sampler_dim + (medium ? 0 : 8);
 		buffer.asprintf_append("impl%s", precString);
 		if (is_proj)
 			uses_texlodproj_impl |= (1 << position);

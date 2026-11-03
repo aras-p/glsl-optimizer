@@ -1,0 +1,29 @@
+#version 300 es
+precision lowp float;
+precision lowp int;
+
+struct Values {
+    lowp vec4 color;
+    highp vec4 position;
+};
+uniform Values values;
+uniform lowp sampler2D tex;
+uniform lowp vec4 tint;
+uniform mediump vec4 scale;
+uniform highp vec4 offset;
+in highp vec2 uv;
+out mediump vec4 fragColor;
+
+lowp vec4 shade(lowp vec4 color, mediump vec4 multiplier)
+{
+    const lowp float bias = 0.25;
+    lowp vec4 result = color * multiplier + bias;
+    return result;
+}
+
+void main()
+{
+    lowp vec4 color = shade(values.color * tint, scale);
+    highp vec4 position = values.position + offset;
+    fragColor = color * texture(tex, uv) + position;
+}
