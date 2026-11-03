@@ -1,0 +1,44 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct Values {
+  half4 color;
+  float4 position;
+};
+struct xlatMtlShaderInput {
+  float2 uv;
+};
+struct xlatMtlShaderOutput {
+  half4 fragColor [[color(0)]];
+};
+struct xlatMtlShaderUniform {
+  Values values;
+  half4 tint;
+  half4 scale;
+  float4 offset;
+};
+;
+;
+fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  ,   texture2d<half> tex [[texture(0)]], sampler _mtlsmp_tex [[sampler(0)]])
+{
+  xlatMtlShaderOutput _mtl_o;
+  float4 tmpvar_1 = 0;
+  tmpvar_1 = (_mtl_u.values.position + _mtl_u.offset);
+  _mtl_o.fragColor = half4(((float4)(((
+    ((_mtl_u.values.color * _mtl_u.tint) * _mtl_u.scale)
+   + 0.25) * tex.sample(_mtlsmp_tex, (float2)(_mtl_i.uv)))) + tmpvar_1));
+  return _mtl_o;
+}
+
+
+// stats: 6 alu 1 tex 0 flow
+// inputs: 1
+//  #0: uv (high float) 2x1 [-1]
+// uniforms: 4 (total size: 32)
+//  #0: values (high other) 0x0 [-1] loc 0
+//  #1: tint (medium float) 4x1 [-1] loc 0
+//  #2: scale (medium float) 4x1 [-1] loc 8
+//  #3: offset (high float) 4x1 [-1] loc 16
+// textures: 1
+//  #0: tex (medium 2d) 0x0 [-1] loc 0
