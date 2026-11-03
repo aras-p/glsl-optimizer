@@ -1,0 +1,17 @@
+#version 300 es
+precision mediump float;
+uniform int count_;
+in vec2 uv_;
+out vec4 color_;
+
+void main()
+{
+    float q = uv_.x;
+    float q_ = uv_.y;
+    for (int i_ = 0; i_ < count_; ++i_)
+    {
+        q += q_;
+        q_ *= uv_.x;
+    }
+    color_ = vec4(q, q_, 0.0, 1.0);
+}

@@ -1,0 +1,15 @@
+precision mediump float;
+uniform int count_;
+varying vec2 uv_;
+
+void main()
+{
+    float q = uv_.x;
+    float q_ = uv_.y;
+    for (int i_ = 0; i_ < count_; ++i_)
+    {
+        q += q_;
+        q_ *= uv_.x;
+    }
+    gl_FragColor = vec4(q, q_, 0.0, 1.0);
+}

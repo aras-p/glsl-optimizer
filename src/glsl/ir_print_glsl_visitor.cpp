@@ -353,7 +353,12 @@ void ir_print_glsl_visitor::print_var_name (ir_variable* v)
         if (v->data.mode == ir_var_temporary)
             buffer.asprintf_append ("tmpvar_%d", (int)id);
         else
-            buffer.asprintf_append ("%s_%d", v->name, (int)id);
+        {
+            // reuse trailing underscore (avoid reserved double underscores)
+            const size_t length = strlen(v->name);
+            const char* separator = (length > 0 && v->name[length - 1] == '_') ? "" : "_";
+            buffer.asprintf_append ("%s%s%d", v->name, separator, (int)id);
+        }
     }
 	else
 	{

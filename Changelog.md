@@ -11,6 +11,7 @@ GLSL optimizer Change Log
 * Fixed `glsl_types::interface_types` memory leak (#141).
 * Fixed missing precision on `sampler2DArray` (#146).
 * Fixed GLSL generation for `OES_EGL_image_external` (#96).
+* Fixed variables with double underscores (`__`) being generated in some cases (#61).
 
 2016 10
 -------
