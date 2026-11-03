@@ -3162,7 +3162,8 @@ apply_precision_to_variable(const struct ast_type_qualifier& qual,
 	if (!state->es_shader)
 		return;
 	if (var->type->is_sampler() && qual.precision == ast_precision_none && !function_param)
-		var->data.precision = ast_precision_low; // samplers default to low precision (outside of function arguments)
+		// samplers default to lowp; use mediump since we treat them the same
+		var->data.precision = glsl_precision_medium;
 	else
 		var->data.precision = precision_from_ast(qual.precision);
 }
