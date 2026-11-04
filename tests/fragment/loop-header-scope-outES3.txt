@@ -28,7 +28,9 @@ void main ()
   starts_2[1] = bound;
   arrayIndex_1 = starts_2[(bound & 1)];
   if ((0.0 < sum_7)) {
-    starts_2[(bound & 1)] = (starts_2[(bound & 1)] + 1);
+    highp int tmpvar_9;
+    tmpvar_9 = (bound & 1);
+    starts_2[tmpvar_9] = (starts_2[tmpvar_9] + 1);
   };
   for (; arrayIndex_1 < bound; arrayIndex_1++) {
     sum_7 = (sum_7 + (values[arrayIndex_1] + float(starts_2[
@@ -39,7 +41,7 @@ void main ()
 }
 
 
-// stats: 27 alu 0 tex 9 flow
+// stats: 26 alu 0 tex 9 flow
 // uniforms: 2 (total size: 0)
 //  #0: bound (high int) 1x1 [-1]
 //  #1: values (high float) 1x1 [32]

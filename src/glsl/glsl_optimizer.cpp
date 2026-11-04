@@ -229,6 +229,7 @@ static void do_optimization_passes(exec_list* ir, bool linked, glslopt_ctx* ctx,
 		}
 		progress |= do_constant_folding(ir);
 		progress |= do_minmax_prune(ir);
+		progress |= do_cse(ir);
 		progress |= do_rebalance_tree(ir);
 		progress |= do_algebraic(ir, ctx->mesa_ctx.Const.NativeIntegers, &ctx->mesa_ctx.Const.ShaderCompilerOptions[stage]);
 		progress |= do_lower_jumps(ir);

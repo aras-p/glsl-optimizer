@@ -32,16 +32,18 @@ void main ()
   gl_TexCoord[2] = tmpvar_6;
   vec4 tmpvar_7;
   tmpvar_7.w = 0.0;
-  tmpvar_7.xyz = (_WorldSpaceCameraPos - (_Object2World * gl_Vertex).xyz);
-  gl_TexCoord[3] = tmpvar_7;
   vec4 tmpvar_8;
-  tmpvar_8.zw = vec2(0.0, 0.0);
-  tmpvar_8.xy = (_LightMatrix0 * (_Object2World * gl_Vertex)).xy;
-  gl_TexCoord[4] = tmpvar_8;
+  tmpvar_8 = (_Object2World * gl_Vertex);
+  tmpvar_7.xyz = (_WorldSpaceCameraPos - tmpvar_8.xyz);
+  gl_TexCoord[3] = tmpvar_7;
+  vec4 tmpvar_9;
+  tmpvar_9.zw = vec2(0.0, 0.0);
+  tmpvar_9.xy = (_LightMatrix0 * tmpvar_8).xy;
+  gl_TexCoord[4] = tmpvar_9;
 }
 
 
-// stats: 15 alu 0 tex 0 flow
+// stats: 14 alu 0 tex 0 flow
 // inputs: 3
 //  #0: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 7
 //  #1: gl_Normal (high float) 3x1 [-1] loc 1

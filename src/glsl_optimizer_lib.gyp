@@ -97,6 +97,7 @@
         'compiler/glsl/opt_constant_propagation.cpp',
         'compiler/glsl/opt_constant_variable.cpp',
         'compiler/glsl/opt_copy_propagation_elements.cpp',
+        'compiler/glsl/opt_cse.cpp',
         'compiler/glsl/opt_dead_builtin_variables.cpp',
         'compiler/glsl/opt_dead_builtin_varyings.cpp',
         'compiler/glsl/opt_dead_code.cpp',

@@ -88,6 +88,7 @@ add_library(glsl_optimizer STATIC
     src/compiler/glsl/opt_constant_propagation.cpp
     src/compiler/glsl/opt_constant_variable.cpp
     src/compiler/glsl/opt_copy_propagation_elements.cpp
+    src/compiler/glsl/opt_cse.cpp
     src/compiler/glsl/opt_dead_builtin_variables.cpp
     src/compiler/glsl/opt_dead_builtin_varyings.cpp
     src/compiler/glsl/opt_dead_code.cpp
