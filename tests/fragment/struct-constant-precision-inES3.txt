@@ -1,0 +1,21 @@
+#version 300 es
+precision highp float;
+struct Pair {
+    highp float full;
+    mediump float rounded;
+};
+struct Data {
+    Pair pair;
+    highp float untouched;
+};
+in highp float value;
+uniform highp float scale;
+out highp vec4 result;
+void main()
+{
+    Data data = Data(Pair(0.0, 0.0), 3.0);
+    data.pair.full = value;
+    data.pair.rounded = value;
+    result = vec4(data.pair.full * scale, data.pair.rounded * scale,
+                  data.untouched, 1.0);
+}

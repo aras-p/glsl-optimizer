@@ -2,18 +2,6 @@
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
 constexpr sampler _mtl_xl_shadow_sampler(address::clamp_to_edge, filter::linear, compare_func::less_equal);
-struct FragmentCommonData {
-  half3 diffColor;
-  half3 specColor;
-  half oneMinusReflectivity;
-  half oneMinusRoughness;
-  half3 normalWorld;
-  half3 eyeVec;
-  half3 posWorld;
-  half alpha;
-};
-constant FragmentCommonData _xlat_mtl_const1 = {half3(float3(0.0, 0.0, 0.0)), half3(float3(0.0, 0.0, 0.0)), half(0.0), half(0.0), half3(float3(0.0, 0.0, 0.0)), half3(float3(0.0, 0.0, 0.0)), half3(float3(0.0, 0.0, 0.0)), half(0.0)};
-constant FragmentCommonData _xlat_mtl_const2 = {half3(float3(0.0, 0.0, 0.0)), half3(float3(0.0, 0.0, 0.0)), half(0.0), half(0.0), half3(float3(0.0, 0.0, 0.0)), half3(float3(0.0, 0.0, 0.0)), half3(float3(0.0, 0.0, 0.0)), half(0.0)};
 struct xlatMtlShaderInput {
   float4 xlv_TEXCOORD0;
   half3 xlv_TEXCOORD1;
@@ -49,124 +37,101 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   half4 c_1 = 0;
   half3 s_diffColor_2 = 0;
   half3 s_specColor_3 = 0;
-  half tmpvar_4 = 0;
-  FragmentCommonData o_5;
-  half2 tmpvar_6 = 0;
-  tmpvar_6.x = _mtl_u._Metallic;
-  tmpvar_6.y = _mtl_u._Glossiness;
+  half3 tmpvar_4 = 0;
+  tmpvar_4 = (_mtl_u._Color.xyz * _MainTex.sample(_mtlsmp__MainTex, (float2)((_mtl_i.xlv_TEXCOORD0.xy))).xyz);
+  half tmpvar_5 = 0;
+  tmpvar_5 = (_mtl_u.unity_ColorSpaceDielectricSpec.w - (_mtl_u._Metallic * _mtl_u.unity_ColorSpaceDielectricSpec.w));
+  half3 tmpvar_6 = 0;
+  tmpvar_6 = normalize(_mtl_i.xlv_TEXCOORD2_2.xyz);
   half3 tmpvar_7 = 0;
-  tmpvar_7 = (_mtl_u._Color.xyz * _MainTex.sample(_mtlsmp__MainTex, (float2)((_mtl_i.xlv_TEXCOORD0.xy))).xyz);
+  tmpvar_7 = normalize(_mtl_i.xlv_TEXCOORD1);
+  s_diffColor_2 = (tmpvar_4 * tmpvar_5);
+  s_specColor_3 = mix (_mtl_u.unity_ColorSpaceDielectricSpec.xyz, tmpvar_4, half3(_mtl_u._Metallic));
   half tmpvar_8 = 0;
-  tmpvar_8 = (_mtl_u.unity_ColorSpaceDielectricSpec.w - (_mtl_u._Metallic * _mtl_u.unity_ColorSpaceDielectricSpec.w));
-  o_5 = _xlat_mtl_const1;
-  o_5.diffColor = (tmpvar_7 * tmpvar_8);
-  o_5.specColor = mix (_mtl_u.unity_ColorSpaceDielectricSpec.xyz, tmpvar_7, half3(_mtl_u._Metallic));
-  o_5.oneMinusReflectivity = tmpvar_8;
-  o_5.oneMinusRoughness = tmpvar_6.y;
-  tmpvar_4 = o_5.oneMinusRoughness;
-  half3 tmpvar_9 = 0;
-  tmpvar_9 = normalize(_mtl_i.xlv_TEXCOORD2_2.xyz);
-  half3 tmpvar_10 = 0;
-  tmpvar_10 = normalize(_mtl_i.xlv_TEXCOORD1);
-  s_diffColor_2 = o_5.diffColor;
-  s_specColor_3 = o_5.specColor;
+  tmpvar_8 = (((half)(1.0) - _mtl_u._OcclusionStrength) + (_OcclusionMap.sample(_mtlsmp__OcclusionMap, (float2)((_mtl_i.xlv_TEXCOORD0.xy))).y * _mtl_u._OcclusionStrength));
+  float4 tmpvar_9 = 0;
+  tmpvar_9 = float4(_mtl_u.unity_SpecCube0_HDR);
+  half3 g_reflUVW_10 = 0;
   half tmpvar_11 = 0;
-  tmpvar_11 = (((half)(1.0) - _mtl_u._OcclusionStrength) + (_OcclusionMap.sample(_mtlsmp__OcclusionMap, (float2)((_mtl_i.xlv_TEXCOORD0.xy))).y * _mtl_u._OcclusionStrength));
-  FragmentCommonData s_12;
-  s_12 = _xlat_mtl_const2;
-  s_12.oneMinusRoughness = tmpvar_4;
-  s_12.normalWorld = tmpvar_9;
-  s_12.eyeVec = tmpvar_10;
-  s_12.posWorld = half3(float3(0.0, 0.0, 0.0));
-  half3 tmpvar_13 = 0;
-  half3 tmpvar_14 = 0;
-  tmpvar_13 = s_12.normalWorld;
-  tmpvar_14 = s_12.eyeVec;
-  float4 tmpvar_15 = 0;
-  tmpvar_15 = float4(_mtl_u.unity_SpecCube0_HDR);
-  half g_roughness_16 = 0;
-  half3 g_reflUVW_17 = 0;
-  g_roughness_16 = ((half)(1.0) - s_12.oneMinusRoughness);
-  g_reflUVW_17 = (tmpvar_14 - ((half)(2.0) * (
-    dot (tmpvar_13, tmpvar_14)
-   * tmpvar_13)));
-  half3 tmpvar_18 = 0;
-  half4 tmpvar_19 = 0;
-  tmpvar_19.w = half(1.0);
-  tmpvar_19.xyz = tmpvar_13;
-  half3 x_20 = 0;
-  x_20.x = dot (_mtl_u.unity_SHAr, tmpvar_19);
-  x_20.y = dot (_mtl_u.unity_SHAg, tmpvar_19);
-  x_20.z = dot (_mtl_u.unity_SHAb, tmpvar_19);
-  tmpvar_18 = max ((half3)float3(0.0, 0.0, 0.0), (_mtl_i.xlv_TEXCOORD5.xyz + x_20));
-  tmpvar_18 = max ((((half)(1.055) * 
-    pow (max (tmpvar_18, (half3)float3(0.0, 0.0, 0.0)), (half3)float3(0.4166667, 0.4166667, 0.4166667))
+  tmpvar_11 = ((half)(1.0) - _mtl_u._Glossiness);
+  g_reflUVW_10 = (tmpvar_7 - ((half)(2.0) * (
+    dot (tmpvar_6, tmpvar_7)
+   * tmpvar_6)));
+  half3 tmpvar_12 = 0;
+  half4 tmpvar_13 = 0;
+  tmpvar_13.w = half(1.0);
+  tmpvar_13.xyz = tmpvar_6;
+  half3 x_14 = 0;
+  x_14.x = dot (_mtl_u.unity_SHAr, tmpvar_13);
+  x_14.y = dot (_mtl_u.unity_SHAg, tmpvar_13);
+  x_14.z = dot (_mtl_u.unity_SHAb, tmpvar_13);
+  tmpvar_12 = max ((half3)float3(0.0, 0.0, 0.0), (_mtl_i.xlv_TEXCOORD5.xyz + x_14));
+  tmpvar_12 = max ((((half)(1.055) * 
+    pow (max (tmpvar_12, (half3)float3(0.0, 0.0, 0.0)), (half3)float3(0.4166667, 0.4166667, 0.4166667))
   ) - (half)(0.055)), (half3)float3(0.0, 0.0, 0.0));
-  half4 tmpvar_21 = 0;
-  tmpvar_21 = half4(tmpvar_15);
-  half4 tmpvar_22 = 0;
-  tmpvar_22.xyz = g_reflUVW_17;
-  tmpvar_22.w = ((g_roughness_16 * ((half)(1.7) - 
-    ((half)(0.7) * g_roughness_16)
+  half4 tmpvar_15 = 0;
+  tmpvar_15 = half4(tmpvar_9);
+  half4 tmpvar_16 = 0;
+  tmpvar_16.xyz = g_reflUVW_10;
+  tmpvar_16.w = ((tmpvar_11 * ((half)(1.7) - 
+    ((half)(0.7) * tmpvar_11)
   )) * (half)(6.0));
-  half4 tmpvar_23 = 0;
-  tmpvar_23 = unity_SpecCube0.sample(_mtlsmp_unity_SpecCube0, (float3)((g_reflUVW_17)), level(tmpvar_22.w));
-  half3 tmpvar_24 = 0;
-  tmpvar_24 = -(tmpvar_10);
-  half specular_25 = 0;
-  half3 tmpvar_26 = 0;
-  half3 tmpvar_27 = 0;
-  tmpvar_27 = (_mtl_u._WorldSpaceLightPos0.xyz + tmpvar_24);
-  tmpvar_26 = (tmpvar_27 * rsqrt(max ((half)0.001, 
-    dot (tmpvar_27, tmpvar_27)
+  half4 tmpvar_17 = 0;
+  tmpvar_17 = unity_SpecCube0.sample(_mtlsmp_unity_SpecCube0, (float3)((g_reflUVW_10)), level(tmpvar_16.w));
+  half3 tmpvar_18 = 0;
+  tmpvar_18 = -(tmpvar_7);
+  half specular_19 = 0;
+  half3 tmpvar_20 = 0;
+  half3 tmpvar_21 = 0;
+  tmpvar_21 = (_mtl_u._WorldSpaceLightPos0.xyz + tmpvar_18);
+  tmpvar_20 = (tmpvar_21 * rsqrt(max ((half)0.001, 
+    dot (tmpvar_21, tmpvar_21)
   )));
-  half tmpvar_28 = 0;
-  tmpvar_28 = max ((half)0.0, dot (_mtl_u._WorldSpaceLightPos0.xyz, tmpvar_26));
-  half tmpvar_29 = 0;
-  tmpvar_29 = ((half)(1.0) - tmpvar_4);
-  half tmpvar_30 = 0;
-  tmpvar_30 = max ((half)0.0001, (tmpvar_29 * tmpvar_29));
-  half tmpvar_31 = 0;
-  tmpvar_31 = max ((((half)(2.0) / 
-    (tmpvar_30 * tmpvar_30)
+  half tmpvar_22 = 0;
+  tmpvar_22 = max ((half)0.0, dot (_mtl_u._WorldSpaceLightPos0.xyz, tmpvar_20));
+  half tmpvar_23 = 0;
+  tmpvar_23 = max ((half)0.0001, (tmpvar_11 * tmpvar_11));
+  half tmpvar_24 = 0;
+  tmpvar_24 = max ((((half)(2.0) / 
+    (tmpvar_23 * tmpvar_23)
   ) - (half)(2.0)), (half)0.0001);
-  specular_25 = (((tmpvar_31 + (half)(1.0)) * pow (
-    max ((half)0.0, dot (tmpvar_9, tmpvar_26))
-  , tmpvar_31)) / ((
-    ((half)(8.0) * (((tmpvar_28 * tmpvar_28) * tmpvar_4) + (tmpvar_29 * tmpvar_29)))
-   * tmpvar_28) + (half)(0.0001)));
-  specular_25 = sqrt(max ((half)0.0001, specular_25));
-  half tmpvar_32 = 0;
-  tmpvar_32 = ((half)(1.0) - max ((half)0.0, dot (tmpvar_9, tmpvar_24)));
-  half4 tmpvar_33 = 0;
-  tmpvar_33.w = half(1.0);
-  tmpvar_33.xyz = (((
-    ((s_diffColor_2 + (specular_25 * s_specColor_3)) * (_mtl_u._LightColor0.xyz * mix (_mtl_u._LightShadowData.x, (half)1.0, half(_ShadowMapTexture.sample_compare(_mtl_xl_shadow_sampler, (float2)((_mtl_i.xlv_TEXCOORD6.xy)), saturate((float)(_mtl_i.xlv_TEXCOORD6.z)))))))
+  specular_19 = (((tmpvar_24 + (half)(1.0)) * pow (
+    max ((half)0.0, dot (tmpvar_6, tmpvar_20))
+  , tmpvar_24)) / ((
+    ((half)(8.0) * (((tmpvar_22 * tmpvar_22) * _mtl_u._Glossiness) + (tmpvar_11 * tmpvar_11)))
+   * tmpvar_22) + (half)(0.0001)));
+  specular_19 = sqrt(max ((half)0.0001, specular_19));
+  half tmpvar_25 = 0;
+  tmpvar_25 = ((half)(1.0) - max ((half)0.0, dot (tmpvar_6, tmpvar_18)));
+  half4 tmpvar_26 = 0;
+  tmpvar_26.w = half(1.0);
+  tmpvar_26.xyz = (((
+    ((s_diffColor_2 + (specular_19 * s_specColor_3)) * (_mtl_u._LightColor0.xyz * mix (_mtl_u._LightShadowData.x, (half)1.0, half(_ShadowMapTexture.sample_compare(_mtl_xl_shadow_sampler, (float2)((_mtl_i.xlv_TEXCOORD6.xy)), saturate((float)(_mtl_i.xlv_TEXCOORD6.z)))))))
    * 
-    max ((half)0.0, dot (tmpvar_9, _mtl_u._WorldSpaceLightPos0.xyz))
+    max ((half)0.0, dot (tmpvar_6, _mtl_u._WorldSpaceLightPos0.xyz))
   ) + (
-    (tmpvar_18 * tmpvar_11)
+    (tmpvar_12 * tmpvar_8)
    * s_diffColor_2)) + ((
-    ((half)(1.0) - ((tmpvar_29 * tmpvar_29) * (tmpvar_29 * (half)(0.28))))
+    ((half)(1.0) - ((tmpvar_11 * tmpvar_11) * (tmpvar_11 * (half)(0.28))))
    * 
-    (((tmpvar_21.x * tmpvar_23.w) * tmpvar_23.xyz) * tmpvar_11)
+    (((tmpvar_15.x * tmpvar_17.w) * tmpvar_17.xyz) * tmpvar_8)
   ) * mix (s_specColor_3, half3(
-    saturate((tmpvar_4 + ((half)(1.0) - o_5.oneMinusReflectivity)))
+    saturate((_mtl_u._Glossiness + ((half)(1.0) - tmpvar_5)))
   ), half3(
-    ((tmpvar_32 * tmpvar_32) * (tmpvar_32 * tmpvar_32))
+    ((tmpvar_25 * tmpvar_25) * (tmpvar_25 * tmpvar_25))
   ))));
-  c_1 = (tmpvar_33 * _mtl_i.xlv_COLOR);
+  c_1 = (tmpvar_26 * _mtl_i.xlv_COLOR);
   c_1.xyz = c_1.xyz;
   c_1.xyz = c_1.xyz;
-  half4 tmpvar_34 = 0;
-  tmpvar_34.xyz = c_1.xyz;
-  tmpvar_34.w = half(1.0);
-  _mtl_o.FragData_0 = tmpvar_34;
+  half4 tmpvar_27 = 0;
+  tmpvar_27.xyz = c_1.xyz;
+  tmpvar_27.w = half(1.0);
+  _mtl_o.FragData_0 = tmpvar_27;
   return _mtl_o;
 }
 
 
-// stats: 97 alu 4 tex 0 flow
+// stats: 93 alu 4 tex 0 flow
 // inputs: 6
 //  #0: xlv_TEXCOORD0 (high float) 4x1 [-1]
 //  #1: xlv_TEXCOORD1 (medium float) 3x1 [-1]

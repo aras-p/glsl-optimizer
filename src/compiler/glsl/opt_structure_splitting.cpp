@@ -160,8 +160,9 @@ ir_structure_reference_visitor::visit_enter(ir_assignment *ir)
       return visit_continue_with_parent;
 
    if (ir->lhs->as_dereference_variable() &&
-       ir->rhs->as_dereference_variable() &&
+       (ir->rhs->as_dereference_variable() || ir->rhs->as_constant()) &&
        !ir->condition) {
+      /* glsl-optimizer change: constant struct initializers can be split too. */
       /* We'll split copies of a structure to copies of components, so don't
        * descend to the ir_dereference_variables.
        */
@@ -266,7 +267,8 @@ ir_structure_splitting_visitor::visit_leave(ir_assignment *ir)
 
    if ((lhs_entry || rhs_entry) && !ir->condition) {
       for (unsigned int i = 0; i < type->length; i++) {
-	 ir_dereference *new_lhs, *new_rhs;
+	 ir_dereference *new_lhs;
+         ir_rvalue *new_rhs;
 	 void *mem_ctx = lhs_entry ? lhs_entry->mem_ctx : rhs_entry->mem_ctx;
 
 	 if (lhs_entry) {
@@ -279,6 +281,10 @@ ir_structure_splitting_visitor::visit_leave(ir_assignment *ir)
 
 	 if (rhs_entry) {
 	    new_rhs = new(mem_ctx) ir_dereference_variable(rhs_entry->components[i]);
+	 } else if (ir_constant *constant = ir->rhs->as_constant()) {
+            /* glsl-optimizer change: retain the destination field's precision
+             * on the split variable, just as for ordinary struct copies. */
+            new_rhs = constant->get_record_field(i)->clone(mem_ctx, NULL);
 	 } else {
 	    new_rhs = new(mem_ctx)
 	       ir_dereference_record(ir->rhs->clone(mem_ctx, NULL),
