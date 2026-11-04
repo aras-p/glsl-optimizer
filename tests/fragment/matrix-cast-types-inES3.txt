@@ -1,4 +1,5 @@
 #version 300 es
+precision mediump float;
 
 // Shader below was causing invalid matrix assignment (different types, i.e. half3x3 vs float3x3)
 // in the resulting Metal code. Caused by some combination of matrix transposes and other operations

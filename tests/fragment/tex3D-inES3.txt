@@ -1,4 +1,5 @@
 #version 300 es
+precision mediump sampler3D;
 precision mediump float;
 uniform sampler3D tex;
 in vec3 uv;

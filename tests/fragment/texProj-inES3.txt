@@ -1,4 +1,5 @@
 #version 300 es
+precision mediump sampler2DShadow;
 out mediump vec4 _fragData;
 
 uniform sampler2D tex;

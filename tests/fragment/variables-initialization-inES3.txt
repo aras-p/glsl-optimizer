@@ -1,4 +1,5 @@
 #version 300 es
+precision mediump float;
 #define gl_FragData _glesFragData
 layout(location = 0) out mediump vec4 _glesFragData[1];
 

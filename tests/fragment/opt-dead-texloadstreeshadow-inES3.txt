@@ -1,4 +1,5 @@
 #version 300 es
+precision mediump float;
 
 // Tree Creator Optimized Bark surface shader from Unity 4.x,
 // shadow caster pass. Used to not do dead code elimination

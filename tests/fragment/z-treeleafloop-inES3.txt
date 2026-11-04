@@ -1,4 +1,5 @@
 #version 300 es
+precision mediump float;
 out mediump vec4 _fragData;
 void xll_clip(float x) {
   if ( x<0.0 ) discard;

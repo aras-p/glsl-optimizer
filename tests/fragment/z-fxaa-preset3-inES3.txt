@@ -1,4 +1,5 @@
 #version 300 es
+precision mediump float;
 out lowp vec4 _fragData;
 vec4 xll_tex2Dlod(sampler2D s, vec4 coord) {
    return textureLod( s, coord.xy, coord.w);

@@ -1,4 +1,5 @@
 #version 300 es
+precision mediump float;
 float xll_mod( float x, float y ) {
   float d = x / y;
   float f = fract (abs(d)) * y;

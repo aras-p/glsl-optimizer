@@ -1,4 +1,5 @@
 #version 300 es
+precision mediump float;
 
 // From rcupisz light shafts package, "Coords" shader.
 // Is using vector equality, which was translating wrong to Metal

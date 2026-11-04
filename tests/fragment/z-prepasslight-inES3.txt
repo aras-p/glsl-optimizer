@@ -1,4 +1,5 @@
 #version 300 es
+precision mediump float;
 out mediump vec4 _fragData;
 float xll_saturate( float x) {
   return clamp( x, 0.0, 1.0);

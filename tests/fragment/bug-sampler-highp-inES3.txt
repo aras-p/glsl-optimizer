@@ -1,4 +1,5 @@
 #version 300 es
+precision mediump float;
 
 // There was a bug where due to xll_tex2Dlod sampling of a _CameraDepthTexture (that is a highp sampler)
 // was producing a missing cast between half4 and float4 on Metal output.

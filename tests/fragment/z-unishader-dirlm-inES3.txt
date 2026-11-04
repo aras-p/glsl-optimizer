@@ -1,4 +1,5 @@
 #version 300 es
+precision mediump float;
 out mediump vec4 _fragData;
 
 vec4 xll_texCUBElod(samplerCube s, vec4 coord) {
