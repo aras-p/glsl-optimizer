@@ -38,10 +38,10 @@ NAN_METHOD(Compiler::New)
 		glslopt_target target = kGlslTargetOpenGL;
 
 		if (info[0]->IsInt32())
-			target = (glslopt_target)info[0]->Int32Value();
+			target = (glslopt_target)Nan::To<int32_t>(info[0]).FromJust();
 
 		else if (info[0]->IsBoolean())
-			target = info[0]->BooleanValue() ? kGlslTargetOpenGLES30 : kGlslTargetOpenGL;
+			target = Nan::To<bool>(info[0]).FromJust() ? kGlslTargetOpenGLES30 : kGlslTargetOpenGL;
 
 		if (target != kGlslTargetOpenGL && target != kGlslTargetOpenGLES30 && target != kGlslTargetMetal)
 			return Nan::ThrowRangeError("Unsupported shader target");
