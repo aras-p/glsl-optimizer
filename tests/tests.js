@@ -9,6 +9,7 @@ assert.equal(glslOptimizer.TARGET_OPENGL, 0, 'exports TARGET_OPENGL');
 assert.equal(glslOptimizer.TARGET_OPENGLES30, 2, 'exports TARGET_OPENGLES30');
 assert.equal(glslOptimizer.VERTEX_SHADER, 0, 'exports VERTEX_SHADER');
 assert.equal(glslOptimizer.FRAGMENT_SHADER, 1, 'exports FRAGMENT_SHADER');
+assert.equal(glslOptimizer.COMPUTE_SHADER, 2, 'exports COMPUTE_SHADER');
 assert.equal(typeof glslOptimizer.Compiler, 'function', 'exports Compiler constructor');
 
 var ESSL = false; 

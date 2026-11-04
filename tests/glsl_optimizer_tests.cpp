@@ -435,7 +435,7 @@ static const char* kGlslPrecNames[kGlslPrecCount] = {
 };
 
 
-static bool TestFile (glslopt_ctx* ctx, bool vertex,
+static bool TestFile (glslopt_ctx* ctx, glslopt_shader_type type,
 	const std::string& testName,
 	const std::string& inputPath,
 	const std::string& outputPath,
@@ -445,6 +445,11 @@ static bool TestFile (glslopt_ctx* ctx, bool vertex,
 	bool doCheckGLSL,
 	bool doCheckMetal, bool reparse = false)
 {
+	const bool vertex = type == kGlslOptShaderVertex;
+	if (type == kGlslOptShaderCompute && doCheckGLSL) {
+		printf("\n  %s: compute validation is unavailable in the legacy OpenGL test context.\n", testName.c_str());
+		return false;
+	}
 	std::string input;
 	if (!ReadStringFromFile (inputPath.c_str(), input))
 	{
@@ -461,13 +466,12 @@ static bool TestFile (glslopt_ctx* ctx, bool vertex,
 	{
 		if (vertex)
 			MassageVertexForGLES (input);
-		else
+		else if (type == kGlslOptShaderFragment)
 			MassageFragmentForGLES (input);
 	}
 
 	bool res = true;
 
-	glslopt_shader_type type = vertex ? kGlslOptShaderVertex : kGlslOptShaderFragment;
 	glslopt_shader* shader = glslopt_optimize (ctx, type, input.c_str(), 0);
 
 	bool optimizeOk = glslopt_get_status(shader);
@@ -668,10 +672,11 @@ int main (int argc, const char** argv)
 	// 2.39s
 	// ralloc fix 256 initial: 1.35s
 
-	static const char* kTypeName[2] = { "vertex", "fragment" };
+	static const char* kTypeName[] = { "vertex", "fragment", "compute" };
+	static const glslopt_shader_type kTypes[] = { kGlslOptShaderVertex, kGlslOptShaderFragment, kGlslOptShaderCompute };
 	size_t tests = 0;
 	size_t errors = 0;
-	for (int type = 0; type < 2; ++type)
+	for (int type = 0; type < 3; ++type)
 	{
 		std::string testFolder = baseFolder + "/" + kTypeName[type];
 		std::string actualFolder = std::string("test-output/") + kTypeName[type];
@@ -708,14 +713,14 @@ int main (int argc, const char** argv)
 				std::string outname = inname.substr (0,inname.size()-strlen(kApiIn[api])) + kApiOut[api];
 				std::string outnameMetal = inname.substr (0,inname.size()-strlen(kApiIn[api])) + kApiOutMetal[api];
 				const bool useMetal = (api == 0);
-				bool ok = TestFile (ctx[api], type==0, inname, testFolder + "/" + inname, testFolder + "/" + outname, actualFolder + "/" + outname + ".actual", updateExpected, api==0, hasOpenGL, false, true);
+				bool ok = TestFile (ctx[api], kTypes[type], inname, testFolder + "/" + inname, testFolder + "/" + outname, actualFolder + "/" + outname + ".actual", updateExpected, api==0, hasOpenGL, false, true);
 				if (!ok)
 				{
 					++errors;
 				}
 				if (useMetal)
 				{
-					ok = TestFile (ctxMetal, type==0, inname, testFolder + "/" + inname, testFolder + "/" + outnameMetal, actualFolder + "/" + outnameMetal + ".actual", updateExpected, false, false, hasMetal);
+					ok = TestFile (ctxMetal, kTypes[type], inname, testFolder + "/" + inname, testFolder + "/" + outnameMetal, actualFolder + "/" + outnameMetal + ".actual", updateExpected, false, false, hasMetal);
 					if (!ok)
 					{
 						++errors;

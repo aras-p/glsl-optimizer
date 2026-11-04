@@ -49,7 +49,7 @@ initialize_mesa_context(struct gl_context *ctx, glslopt_target api)
 	{
 	default:
 	case kGlslTargetOpenGL:
-		ctx->Const.GLSLVersion = 150;
+		ctx->Const.GLSLVersion = 430;
 		break;
 	case kGlslTargetOpenGLES30:
 		ctx->Extensions.ARB_ES3_compatibility = true;
@@ -359,8 +359,13 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 	switch (type) {
 	case kGlslOptShaderVertex: shader->Stage = MESA_SHADER_VERTEX; break;
 	case kGlslOptShaderFragment: shader->Stage = MESA_SHADER_FRAGMENT; break;
+	case kGlslOptShaderCompute: shader->Stage = MESA_SHADER_COMPUTE; break;
 	default:
 		result->infoLog = ralloc_asprintf(result->mem_ctx, "Unknown shader type %d", (int)type);
+		return result;
+	}
+	if (type == kGlslOptShaderCompute && ctx->target == kGlslTargetMetal) {
+		result->infoLog = "Metal compute output is not supported yet.";
 		return result;
 	}
 	if (!shaderSource) {
@@ -386,7 +391,8 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 	add_neg_to_sub_visitor source_arithmetic;
 	visit_list_elements(&source_arithmetic, ir);
 
-	const PrintGlslMode printMode = type == kGlslOptShaderVertex ? kPrintGlslVertex : kPrintGlslFragment;
+	const PrintGlslMode printMode = type == kGlslOptShaderVertex ? kPrintGlslVertex :
+		type == kGlslOptShaderCompute ? kPrintGlslCompute : kPrintGlslFragment;
 	if (ctx->target != kGlslTargetMetal)
 		result->rawOutput = _mesa_print_ir_glsl(ir, state, ralloc_strdup(result->mem_ctx, ""), printMode);
 	else

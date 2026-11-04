@@ -208,6 +208,8 @@ _mesa_print_ir_glsl(exec_list *instructions,
 				str.asprintf_append (" es");
 			str.asprintf_append ("\n");
 		}
+		if (state->ARB_compute_shader_enable)
+			str.asprintf_append("#extension GL_ARB_compute_shader : enable\n");
 		if (state->ARB_shader_texture_lod_enable)
 			str.asprintf_append ("#extension GL_ARB_shader_texture_lod : enable\n");
 		if (state->ARB_draw_instanced_enable)
@@ -224,6 +226,15 @@ _mesa_print_ir_glsl(exec_list *instructions,
 			str.asprintf_append ("#extension GL_EXT_texture_array : enable\n");
 	}
 	
+	if (state->stage == MESA_SHADER_COMPUTE && state->cs_input_local_size_specified) {
+		str.asprintf_append("layout(local_size_x=%u", state->cs_input_local_size[0]);
+		if (state->cs_input_local_size[1] != 1)
+			str.asprintf_append(", local_size_y=%u", state->cs_input_local_size[1]);
+		if (state->cs_input_local_size[2] != 1)
+			str.asprintf_append(", local_size_z=%u", state->cs_input_local_size[2]);
+		str.asprintf_append(") in;\n");
+	}
+
 	// Struct declarations are reconstructed from the types that remain in IR.
 	print_struct_declarations(str, instructions, state->es_shader);
 	

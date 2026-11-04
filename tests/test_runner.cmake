@@ -9,6 +9,12 @@ foreach(name basic-in.txt basic-out.txt glsl120-basic-inES3.txt glsl120-basic-ou
     file(COPY "${TEST_SOURCE_DIR}/fragment/${name}" DESTINATION "${work}/fixtures/fragment")
 endforeach()
 
+# Compute inputs use the same golden-output and roundtrip checks as graphics.
+file(MAKE_DIRECTORY "${work}/fixtures/compute")
+foreach(name workgroup-layout-in.txt workgroup-layout-out.txt)
+    file(COPY "${TEST_SOURCE_DIR}/compute/${name}" DESTINATION "${work}/fixtures/compute")
+endforeach()
+
 function(check_run expected_result expected_message)
     execute_process(COMMAND "${TEST_RUNNER}" ${ARGN}
         WORKING_DIRECTORY "${work}"
@@ -18,9 +24,9 @@ function(check_run expected_result expected_message)
     endif()
 endfunction()
 
-check_run(0 "3 tests.*succeeded" "${work}/fixtures")
+check_run(0 "4 tests.*succeeded" "${work}/fixtures")
 check_run(1 "Could not read test directory" "${work}/missing")
-file(MAKE_DIRECTORY "${work}/empty/vertex" "${work}/empty/fragment")
+file(MAKE_DIRECTORY "${work}/empty/vertex" "${work}/empty/fragment" "${work}/empty/compute")
 check_run(1 "No shader inputs" "${work}/empty")
 check_run(1 "USAGE:")
 check_run(1 "Unknown option" "${work}/fixtures" --unknown)
@@ -50,7 +56,7 @@ file(READ "${expected}" updated)
 if(NOT updated STREQUAL original)
     message(FATAL_ERROR "Explicit expectation update wrote incorrect output")
 endif()
-check_run(0 "3 tests.*succeeded" "${work}/fixtures")
+check_run(0 "4 tests.*succeeded" "${work}/fixtures")
 
 # Empty files must be read safely, and Metal expectations are required on all OSes.
 file(WRITE "${expected}" "")
@@ -58,3 +64,15 @@ check_run(1 "does not match optimized output" "${work}/fixtures")
 file(WRITE "${expected}" "${original}")
 file(REMOVE "${work}/fixtures/fragment/glsl120-basic-outES3Metal.txt")
 check_run(1 "missing or unreadable expected output.*outES3Metal" "${work}/fixtures")
+
+# Restore the Metal expectation removed by the preceding failure check.
+file(COPY "${TEST_SOURCE_DIR}/fragment/glsl120-basic-outES3Metal.txt"
+    DESTINATION "${work}/fixtures/fragment")
+check_run(0 "4 tests.*succeeded" "${work}/fixtures")
+set(compute_input "${work}/fixtures/compute/workgroup-layout-in.txt")
+file(READ "${compute_input}" compute_source)
+string(REPLACE "layout(local_size_x=8, local_size_y=4) in;" "" no_layout "${compute_source}")
+string(REPLACE "gl_WorkGroupSize.z" "1u" no_layout "${no_layout}")
+file(WRITE "${compute_input}" "${no_layout}")
+check_run(1 "compute shader must contain a fixed or a variable local group size" "${work}/fixtures")
+file(WRITE "${compute_input}" "${compute_source}")
