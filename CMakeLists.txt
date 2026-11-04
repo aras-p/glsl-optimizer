@@ -112,15 +112,12 @@ add_library(glsl_optimizer STATIC
     src/compiler/shader_enums.c
     src/mesa/program/symbol_table.c
     src/util/bitscan.c
-    src/util/debug.c
     src/util/half_float.c
     src/util/hash_table.c
-    src/util/os_misc.c
     src/util/ralloc.c
     src/util/set.c
     src/util/string_buffer.c
     src/util/strtod.c
-    src/util/u_debug.c
     src/compiler/glsl/glsl_parser.cpp
     src/compiler/glsl/glsl_lexer.cpp
     src/compiler/glsl/glcpp/glcpp-parse.c

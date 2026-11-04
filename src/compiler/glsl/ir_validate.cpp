@@ -35,7 +35,6 @@
 
 #include "ir.h"
 #include "ir_hierarchical_visitor.h"
-#include "util/debug.h"
 #include "util/hash_table.h"
 #include "util/macros.h"
 #include "util/set.h"
@@ -1203,9 +1202,9 @@ validate_ir_tree(exec_list *instructions)
     * and it's half composed of assert()s anyway which wouldn't do
     * anything.
     */
-#ifndef DEBUG
-   if (!env_var_as_boolean("GLSL_VALIDATE", false))
-      return;
+   /* glsl-optimizer change: validation follows assertions, never the environment. */
+#ifdef NDEBUG
+   return;
 #endif
    ir_validate v;
 
