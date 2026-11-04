@@ -135,7 +135,9 @@ ir_constant_propagation_visitor::constant_folding(ir_rvalue **rvalue)
       this->progress = true;
 
    ir_dereference_variable *var_ref = (*rvalue)->as_dereference_variable();
-   if (var_ref && !var_ref->type->is_array()) {
+   /* glsl-optimizer change: propagate constant arrays too. Source printers
+    * support aggregate constants, including dynamically indexed arrays. */
+   if (var_ref) {
       ir_constant *constant =
          var_ref->constant_expression_value(ralloc_parent(var_ref));
       if (constant) {

@@ -1,6 +1,5 @@
 #version 300 es
 uniform highp vec4 _ZBufferParams;
-highp vec2 SmallDiscKernel[12] = vec2[12](vec2(-0.326212, -0.40581), vec2(-0.840144, -0.07358), vec2(-0.695914, 0.457137), vec2(-0.203345, 0.620716), vec2(0.96234, -0.194983), vec2(0.473434, -0.480026), vec2(0.519456, 0.767022), vec2(0.185461, -0.893124), vec2(0.507431, 0.064425), vec2(0.89642, 0.412458), vec2(-0.32194, -0.932615), vec2(-0.791559, -0.59771));
 uniform mediump sampler2D _MainTex;
 uniform highp sampler2D _CameraDepthTexture;
 uniform mediump sampler2D _VelTex;
@@ -14,7 +13,6 @@ in highp vec2 xlv_TEXCOORD0;
 out mediump vec4 _fragData;
 void main ()
 {
-  SmallDiscKernel = vec2[12](vec2(-0.326212, -0.40581), vec2(-0.840144, -0.07358), vec2(-0.695914, 0.457137), vec2(-0.203345, 0.620716), vec2(0.96234, -0.194983), vec2(0.473434, -0.480026), vec2(0.519456, 0.767022), vec2(0.185461, -0.893124), vec2(0.507431, 0.064425), vec2(0.89642, 0.412458), vec2(-0.32194, -0.932615), vec2(-0.791559, -0.59771));
   highp vec4 jitteredDir_2;
   highp vec4 sum_3;
   highp float weight_4;
@@ -77,7 +75,7 @@ void main ()
     highp vec2 vy_25;
     highp vec4 yf_26;
     highp vec4 tmpvar_27;
-    tmpvar_27 = (xlv_TEXCOORD0.xyxy + ((jitteredDir_2.xyxy * SmallDiscKernel[l_1].xyxy) * vec4(1.0, 1.0, -1.0, -1.0)));
+    tmpvar_27 = (xlv_TEXCOORD0.xyxy + ((jitteredDir_2.xyxy * vec2[12](vec2(-0.326212, -0.40581), vec2(-0.840144, -0.07358), vec2(-0.695914, 0.457137), vec2(-0.203345, 0.620716), vec2(0.96234, -0.194983), vec2(0.473434, -0.480026), vec2(0.519456, 0.767022), vec2(0.185461, -0.893124), vec2(0.507431, 0.064425), vec2(0.89642, 0.412458), vec2(-0.32194, -0.932615), vec2(-0.791559, -0.59771))[l_1].xyxy) * vec4(1.0, 1.0, -1.0, -1.0)));
     yf_26 = tmpvar_27;
     if ((_MainTex_TexelSize.y < 0.0)) {
       yf_26.yw = (1.0 - tmpvar_27.yw);
@@ -162,7 +160,7 @@ void main ()
 }
 
 
-// stats: 113 alu 8 tex 4 flow
+// stats: 112 alu 8 tex 4 flow
 // inputs: 1
 //  #0: xlv_TEXCOORD0 (high float) 2x1 [-1]
 // uniforms: 5 (total size: 0)

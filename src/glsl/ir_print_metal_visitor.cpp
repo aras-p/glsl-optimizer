@@ -333,7 +333,13 @@ _mesa_print_ir_metal(exec_list *instructions,
 			{
 				if (i != 0)
 					v.buffer.asprintf_append (", ");
-				c->get_array_element(i)->accept(&v);
+				ir_constant* element = c->get_array_element(i);
+				// Array precision applies to its elements, including propagated constants.
+				if ((c->get_precision() == GLSL_PRECISION_MEDIUM) !=
+					(element->get_precision() == GLSL_PRECISION_MEDIUM))
+					v.print_array_initializer(element, c->get_precision());
+				else
+					element->accept(&v);
 			}
 		}
 		else
