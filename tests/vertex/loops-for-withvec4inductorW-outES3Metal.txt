@@ -24,59 +24,54 @@ struct xlatMtlShaderUniform {
   float4 _Color;
   float4 _ReflectColor;
 };
-;
 vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
 float4 phase0_Output2_1 = 0;
-float4 Temp_2_2 = 0;
-float4 Temp_3_3 = 0;
-int4 Temp_int_0_4 = 0;
-int4 Temp_int_1_5 = 0;
-  Temp_int_0_4 = as_type<int4>((_mtl_i.in_POSITION0.yyyy * _mtl_u.glstate_matrix_mvp[1]));
-  Temp_int_0_4 = as_type<int4>(((_mtl_u.glstate_matrix_mvp[0] * _mtl_i.in_POSITION0.xxxx) + as_type<float4>(Temp_int_0_4)));
-  Temp_int_0_4 = as_type<int4>(((_mtl_u.glstate_matrix_mvp[2] * _mtl_i.in_POSITION0.zzzz) + as_type<float4>(Temp_int_0_4)));
-  phase0_Output2_1 = ((_mtl_u.glstate_matrix_mvp[3] * _mtl_i.in_POSITION0.wwww) + as_type<float4>(Temp_int_0_4));
+float4 tmpvar_2 = 0;
+float4 tmpvar_3 = 0;
+int4 tmpvar_4 = 0;
+int4 tmpvar_5 = 0;
+  tmpvar_4 = as_type<int4>((_mtl_i.in_POSITION0.yyyy * _mtl_u.glstate_matrix_mvp[1]));
+  tmpvar_4 = as_type<int4>(((_mtl_u.glstate_matrix_mvp[0] * _mtl_i.in_POSITION0.xxxx) + as_type<float4>(tmpvar_4)));
+  tmpvar_4 = as_type<int4>(((_mtl_u.glstate_matrix_mvp[2] * _mtl_i.in_POSITION0.zzzz) + as_type<float4>(tmpvar_4)));
+  phase0_Output2_1 = ((_mtl_u.glstate_matrix_mvp[3] * _mtl_i.in_POSITION0.wwww) + as_type<float4>(tmpvar_4));
   _mtl_o.TEXCOORD0.xy = ((_mtl_i.in_TEXCOORD0.xy * _mtl_u._MainTex_ST.xy) + _mtl_u._MainTex_ST.zw);
-  Temp_int_0_4.xyz = as_type<int3>((_mtl_i.in_POSITION0.yyy * _mtl_u.glstate_matrix_modelview0[1].xyz));
-  Temp_int_0_4.xyz = as_type<int3>(((_mtl_u.glstate_matrix_modelview0[0].xyz * _mtl_i.in_POSITION0.xxx) + as_type<float4>(Temp_int_0_4).xyz));
-  Temp_int_0_4.xyz = as_type<int3>(((_mtl_u.glstate_matrix_modelview0[2].xyz * _mtl_i.in_POSITION0.zzz) + as_type<float4>(Temp_int_0_4).xyz));
-  Temp_int_0_4.xyz = as_type<int3>(((_mtl_u.glstate_matrix_modelview0[3].xyz * _mtl_i.in_POSITION0.www) + as_type<float4>(Temp_int_0_4).xyz));
-  Temp_int_1_5.xyz = as_type<int3>((_mtl_i.in_NORMAL0.yyy * _mtl_u.glstate_matrix_invtrans_modelview0[1].xyz));
-  Temp_int_1_5.xyz = as_type<int3>(((_mtl_u.glstate_matrix_invtrans_modelview0[0].xyz * _mtl_i.in_NORMAL0.xxx) + as_type<float4>(Temp_int_1_5).xyz));
-  Temp_int_1_5.xyz = as_type<int3>(((_mtl_u.glstate_matrix_invtrans_modelview0[2].xyz * _mtl_i.in_NORMAL0.zzz) + as_type<float4>(Temp_int_1_5).xyz));
-  Temp_int_0_4.w = as_type<int>(dot (as_type<float4>(Temp_int_1_5).xyz, as_type<float4>(Temp_int_1_5).xyz));
-  Temp_int_0_4.w = as_type<int>(rsqrt(as_type<float4>(Temp_int_0_4).w));
-  Temp_int_1_5.xyz = as_type<int3>((as_type<float4>(Temp_int_0_4).www * as_type<float4>(Temp_int_1_5).xyz));
-  Temp_2_2.xyz = _mtl_u.glstate_lightmodel_ambient.xyz;
-  Temp_int_0_4.w = 0;
-  while (true) {
-    if ((Temp_int_0_4.w >= 4)) {
-      break;
-    };
-    Temp_3_3.xyz = ((-(
-      as_type<float4>(Temp_int_0_4)
-    .xyz) * _mtl_u.unity_LightPosition[Temp_int_0_4.w].www) + _mtl_u.unity_LightPosition[Temp_int_0_4.w].xyz);
-    Temp_int_1_5.w = as_type<int>(dot (Temp_3_3.xyz, Temp_3_3.xyz));
-    Temp_2_2.w = rsqrt(as_type<float4>(Temp_int_1_5).w);
-    Temp_3_3.xyz = (Temp_2_2.www * Temp_3_3.xyz);
-    Temp_int_1_5.w = as_type<int>(((
-      as_type<float4>(Temp_int_1_5)
-    .w * _mtl_u.unity_LightAtten[Temp_int_0_4.w].z) + 1.0));
-    Temp_int_1_5.w = as_type<int>((1.0/(as_type<float4>(Temp_int_1_5).w)));
-    Temp_2_2.w = dot (Temp_3_3.xyz, _mtl_u.unity_SpotDirection[Temp_int_0_4.w].xyz);
-    Temp_2_2.w = max (Temp_2_2.w, 0.0);
-    Temp_2_2.w = (Temp_2_2.w - _mtl_u.unity_LightAtten[Temp_int_0_4.w].x);
-    Temp_2_2.w = (Temp_2_2.w * _mtl_u.unity_LightAtten[Temp_int_0_4.w].y);
-    Temp_2_2.w = clamp (Temp_2_2.w, 0.0, 1.0);
-    Temp_int_1_5.w = as_type<int>((as_type<float4>(Temp_int_1_5).w * Temp_2_2.w));
-    Temp_2_2.w = dot (as_type<float4>(Temp_int_1_5).xyz, Temp_3_3.xyz);
-    Temp_2_2.w = max (Temp_2_2.w, 0.0);
-    Temp_int_1_5.w = as_type<int>((as_type<float4>(Temp_int_1_5).w * Temp_2_2.w));
-    Temp_2_2.xyz = ((_mtl_u.unity_LightColor[Temp_int_0_4.w].xyz * as_type<float4>(Temp_int_1_5).www) + Temp_2_2.xyz);
-    Temp_int_0_4.w = (Temp_int_0_4.w + 1);
+  tmpvar_4.xyz = as_type<int3>((_mtl_i.in_POSITION0.yyy * _mtl_u.glstate_matrix_modelview0[1].xyz));
+  tmpvar_4.xyz = as_type<int3>(((_mtl_u.glstate_matrix_modelview0[0].xyz * _mtl_i.in_POSITION0.xxx) + as_type<float4>(tmpvar_4).xyz));
+  tmpvar_4.xyz = as_type<int3>(((_mtl_u.glstate_matrix_modelview0[2].xyz * _mtl_i.in_POSITION0.zzz) + as_type<float4>(tmpvar_4).xyz));
+  tmpvar_4.xyz = as_type<int3>(((_mtl_u.glstate_matrix_modelview0[3].xyz * _mtl_i.in_POSITION0.www) + as_type<float4>(tmpvar_4).xyz));
+  tmpvar_5.xyz = as_type<int3>((_mtl_i.in_NORMAL0.yyy * _mtl_u.glstate_matrix_invtrans_modelview0[1].xyz));
+  tmpvar_5.xyz = as_type<int3>(((_mtl_u.glstate_matrix_invtrans_modelview0[0].xyz * _mtl_i.in_NORMAL0.xxx) + as_type<float4>(tmpvar_5).xyz));
+  tmpvar_5.xyz = as_type<int3>(((_mtl_u.glstate_matrix_invtrans_modelview0[2].xyz * _mtl_i.in_NORMAL0.zzz) + as_type<float4>(tmpvar_5).xyz));
+  tmpvar_4.w = as_type<int>(dot (as_type<float4>(tmpvar_5).xyz, as_type<float4>(tmpvar_5).xyz));
+  tmpvar_4.w = as_type<int>(rsqrt(as_type<float4>(tmpvar_4).w));
+  tmpvar_5.xyz = as_type<int3>((as_type<float4>(tmpvar_4).www * as_type<float4>(tmpvar_5).xyz));
+  tmpvar_2.xyz = _mtl_u.glstate_lightmodel_ambient.xyz;
+  tmpvar_4.w = 0;
+  for (; tmpvar_4.w < 4; tmpvar_4.w = (tmpvar_4.w + 1)) {
+    tmpvar_3.xyz = ((-(
+      as_type<float4>(tmpvar_4)
+    .xyz) * _mtl_u.unity_LightPosition[tmpvar_4.w].www) + _mtl_u.unity_LightPosition[tmpvar_4.w].xyz);
+    tmpvar_5.w = as_type<int>(dot (tmpvar_3.xyz, tmpvar_3.xyz));
+    tmpvar_2.w = rsqrt(as_type<float4>(tmpvar_5).w);
+    tmpvar_3.xyz = (tmpvar_2.www * tmpvar_3.xyz);
+    tmpvar_5.w = as_type<int>(((
+      as_type<float4>(tmpvar_5)
+    .w * _mtl_u.unity_LightAtten[tmpvar_4.w].z) + 1.0));
+    tmpvar_5.w = as_type<int>((1.0/(as_type<float4>(tmpvar_5).w)));
+    tmpvar_2.w = dot (tmpvar_3.xyz, _mtl_u.unity_SpotDirection[tmpvar_4.w].xyz);
+    tmpvar_2.w = max (tmpvar_2.w, 0.0);
+    tmpvar_2.w = (tmpvar_2.w - _mtl_u.unity_LightAtten[tmpvar_4.w].x);
+    tmpvar_2.w = (tmpvar_2.w * _mtl_u.unity_LightAtten[tmpvar_4.w].y);
+    tmpvar_2.w = saturate(tmpvar_2.w);
+    tmpvar_5.w = as_type<int>((as_type<float4>(tmpvar_5).w * tmpvar_2.w));
+    tmpvar_2.w = dot (as_type<float4>(tmpvar_5).xyz, tmpvar_3.xyz);
+    tmpvar_2.w = max (tmpvar_2.w, 0.0);
+    tmpvar_5.w = as_type<int>((as_type<float4>(tmpvar_5).w * tmpvar_2.w));
+    tmpvar_2.xyz = ((_mtl_u.unity_LightColor[tmpvar_4.w].xyz * as_type<float4>(tmpvar_5).www) + tmpvar_2.xyz);
   };
-  _mtl_o.COLOR0.xyz = (Temp_2_2.xyz * _mtl_u._Color.xyz);
+  _mtl_o.COLOR0.xyz = (tmpvar_2.xyz * _mtl_u._Color.xyz);
   _mtl_o.COLOR0.w = (_mtl_u._Color.w * _mtl_u._ReflectColor.w);
   _mtl_o.gl_Position = phase0_Output2_1;
   return _mtl_o;

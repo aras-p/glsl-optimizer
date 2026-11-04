@@ -1,6 +1,12 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
+inline float4x4 _xlcast_float4x4(half4x4 v) { return float4x4(float4(v[0]), float4(v[1]), float4(v[2]), float4(v[3])); }
+inline float3x3 _xlcast_float3x3(half3x3 v) { return float3x3(float3(v[0]), float3(v[1]), float3(v[2])); }
+inline float2x2 _xlcast_float2x2(half2x2 v) { return float2x2(float2(v[0]), float2(v[1])); }
+inline half4x4 _xlcast_half4x4(float4x4 v) { return half4x4(half4(v[0]), half4(v[1]), half4(v[2]), half4(v[3])); }
+inline half3x3 _xlcast_half3x3(float3x3 v) { return half3x3(half3(v[0]), half3(v[1]), half3(v[2])); }
+inline half2x2 _xlcast_half2x2(float2x2 v) { return half2x2(half2(v[0]), half2(v[1])); }
 struct xlatMtlShaderInput {
   float2 xlv_TEXCOORD0;
 };
@@ -17,26 +23,25 @@ struct xlatMtlShaderUniform {
   float4 _ScreenTexDim;
 };
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  ,   texture2d<half> _CameraDepthTexture [[texture(0)]], sampler _mtlsmp__CameraDepthTexture [[sampler(0)]])
+  , texture2d<half> _CameraDepthTexture [[texture(0)]], sampler _mtlsmp__CameraDepthTexture [[sampler(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  float4 depth_1 = 0;
+  float4 tmpvar_1 = 0;
   float2 coordTemp_2 = 0;
-  float sampleOnEpipolarLine_3 = 0;
-  float tmpvar_4 = 0;
-  tmpvar_4 = clamp ((_mtl_i.xlv_TEXCOORD0.y - (0.5 / _mtl_u._CoordTexDim.y)), 0.0, 1.0);
-  sampleOnEpipolarLine_3 = ((_mtl_i.xlv_TEXCOORD0.x - (0.5 / _mtl_u._CoordTexDim.x)) * (_mtl_u._CoordTexDim.x / (_mtl_u._CoordTexDim.x - 1.0)));
-  float tmpvar_5 = 0;
-  tmpvar_5 = clamp (sampleOnEpipolarLine_3, 0.0, 1.0);
-  sampleOnEpipolarLine_3 = tmpvar_5;
-  int tmpvar_6 = 0;
-  tmpvar_6 = int(clamp (floor(
-    (tmpvar_4 * 4.0)
-  ), 0.0, 3.0));
+  float epipolarLine_3 = 0;
+  float sampleOnEpipolarLine_4 = 0;
+  sampleOnEpipolarLine_4 = (_mtl_i.xlv_TEXCOORD0.x - (0.5 / _mtl_u._CoordTexDim.x));
+  half tmpvar_5 = 0;
+  tmpvar_5 = half((_mtl_i.xlv_TEXCOORD0.y - (0.5 / _mtl_u._CoordTexDim.y)));
+  epipolarLine_3 = float(saturate(tmpvar_5));
+  sampleOnEpipolarLine_4 = (sampleOnEpipolarLine_4 * (_mtl_u._CoordTexDim.x / (_mtl_u._CoordTexDim.x - 1.0)));
+  half tmpvar_6 = 0;
+  tmpvar_6 = half(sampleOnEpipolarLine_4);
+  sampleOnEpipolarLine_4 = float(saturate(tmpvar_6));
   float tmpvar_7 = 0;
-  tmpvar_7 = (-1.0 + (2.0 * fract(
-    (tmpvar_4 * 4.0)
-  )));
+  tmpvar_7 = ((2.0 * fract(
+    (epipolarLine_3 * 4.0)
+  )) - 1.0);
   float4 tmpvar_8 = 0;
   tmpvar_8.xz = float2(-1.0, 1.0);
   tmpvar_8.y = tmpvar_7;
@@ -46,86 +51,90 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   tmpvar_9.x = -(tmpvar_7);
   tmpvar_9.z = tmpvar_7;
   bool4 tmpvar_10 = false;
-  tmpvar_10 = bool4((int4(tmpvar_6) == int4(0, 1, 2, 3)));
-  half4 tmpvar_11 = 0;
-  tmpvar_11 = half4(tmpvar_10);
-  half4 tmpvar_12 = 0;
-  tmpvar_12 = half4(tmpvar_10);
-  float2 tmpvar_13 = 0;
-  tmpvar_13.x = dot (tmpvar_9, (float4)tmpvar_11);
-  tmpvar_13.y = dot (tmpvar_8, (float4)tmpvar_12);
+  tmpvar_10 = (int4(int(min (
+    max (floor((epipolarLine_3 * 4.0)), 0.0)
+  , 3.0))) == int4(0, 1, 2, 3));
+  float2 tmpvar_11 = 0;
+  tmpvar_11.x = dot (tmpvar_9, (float4)half4(tmpvar_10));
+  tmpvar_11.y = dot (tmpvar_8, (float4)half4(tmpvar_10));
   coordTemp_2 = ((mix (_mtl_u._LightPos.xy, 
-    -(tmpvar_13)
-  , float2(tmpvar_5)) * 0.5) + 0.5);
-  float4 tmpvar_14 = 0;
-  tmpvar_14.zw = float2(0.0, 0.0);
-  tmpvar_14.xy = coordTemp_2;
+    -(tmpvar_11)
+  , float2(sampleOnEpipolarLine_4)) * 0.5) + 0.5);
+  float4 tmpvar_12 = 0;
+  tmpvar_12.zw = float2(0.0, 0.0);
+  tmpvar_12.xy = coordTemp_2;
   coordTemp_2 = ((floor(
     (coordTemp_2 * _mtl_u._ScreenTexDim.xy)
   ) + 0.5) * _mtl_u._ScreenTexDim.zw);
-  half4 tmpvar_15 = 0;
-  tmpvar_15 = _CameraDepthTexture.sample(_mtlsmp__CameraDepthTexture, (float2)(coordTemp_2));
-  float tmpvar_16 = 0;
-  float z_17 = 0;
-  z_17 = float(tmpvar_15.x);
-  tmpvar_16 = (1.0/(((_mtl_u._ZBufferParams.x * z_17) + _mtl_u._ZBufferParams.y)));
-  depth_1 = float4(tmpvar_16);
-  float4 v_18 = 0;
-  v_18.x = _mtl_u._FrustumRays[0].x;
-  v_18.y = _mtl_u._FrustumRays[1].x;
-  v_18.z = _mtl_u._FrustumRays[2].x;
-  v_18.w = _mtl_u._FrustumRays[3].x;
-  float4 v_19 = 0;
-  v_19.x = _mtl_u._FrustumRays[0].y;
-  v_19.y = _mtl_u._FrustumRays[1].y;
-  v_19.z = _mtl_u._FrustumRays[2].y;
-  v_19.w = _mtl_u._FrustumRays[3].y;
-  float4 v_20 = 0;
-  v_20.x = _mtl_u._FrustumRays[0].w;
-  v_20.y = _mtl_u._FrustumRays[1].w;
-  v_20.z = _mtl_u._FrustumRays[2].w;
-  v_20.w = _mtl_u._FrustumRays[3].w;
-  float4 v_21 = 0;
-  v_21.x = _mtl_u._FrustumRays[0].z;
-  v_21.y = _mtl_u._FrustumRays[1].z;
-  v_21.z = _mtl_u._FrustumRays[2].z;
-  v_21.w = _mtl_u._FrustumRays[3].z;
-  float3 tmpvar_22 = 0;
-  tmpvar_22 = mix (mix (v_18.xyz, v_19.xyz, tmpvar_14.xxx), mix (v_20.xyz, v_21.xyz, tmpvar_14.xxx), tmpvar_14.yyy);
-  float tmpvar_23 = 0;
-  tmpvar_23 = sqrt(dot (tmpvar_22, tmpvar_22));
-  bool tmpvar_24 = false;
-  float3 tmpvar_25 = 0;
-  tmpvar_25 = (1.0/((tmpvar_22 / tmpvar_23)));
+  float tmpvar_13 = 0;
+  float tmpvar_14 = 0;
+  tmpvar_14 = float(_CameraDepthTexture.sample(_mtlsmp__CameraDepthTexture, (float2)((coordTemp_2))).x);
+  tmpvar_13 = (1.0/(((_mtl_u._ZBufferParams.x * tmpvar_14) + _mtl_u._ZBufferParams.y)));
+  tmpvar_1 = float4(tmpvar_13);
+  half4x4 tmpvar_15;
+  tmpvar_15 = _xlcast_half4x4(_mtl_u._FrustumRays);
+  half4 v_16 = 0;
+  v_16.x = tmpvar_15[0][0];
+  v_16.y = tmpvar_15[1][0];
+  v_16.z = tmpvar_15[2][0];
+  v_16.w = tmpvar_15[3][0];
+  half4x4 tmpvar_17;
+  tmpvar_17 = _xlcast_half4x4(_mtl_u._FrustumRays);
+  half4 v_18 = 0;
+  v_18.x = tmpvar_17[0][1];
+  v_18.y = tmpvar_17[1][1];
+  v_18.z = tmpvar_17[2][1];
+  v_18.w = tmpvar_17[3][1];
+  half4x4 tmpvar_19;
+  tmpvar_19 = _xlcast_half4x4(_mtl_u._FrustumRays);
+  half4 v_20 = 0;
+  v_20.x = tmpvar_19[0][3];
+  v_20.y = tmpvar_19[1][3];
+  v_20.z = tmpvar_19[2][3];
+  v_20.w = tmpvar_19[3][3];
+  half4x4 tmpvar_21;
+  tmpvar_21 = _xlcast_half4x4(_mtl_u._FrustumRays);
+  half4 v_22 = 0;
+  v_22.x = tmpvar_21[0][2];
+  v_22.y = tmpvar_21[1][2];
+  v_22.z = tmpvar_21[2][2];
+  v_22.w = tmpvar_21[3][2];
+  float3 tmpvar_23 = 0;
+  tmpvar_23 = mix (mix ((float3)v_16.xyz, (float3)v_18.xyz, tmpvar_12.xxx), mix ((float3)v_20.xyz, (float3)v_22.xyz, tmpvar_12.xxx), tmpvar_12.yyy);
+  float tmpvar_24 = 0;
+  tmpvar_24 = sqrt(dot (tmpvar_23, tmpvar_23));
+  bool tmpvar_25 = false;
   float3 tmpvar_26 = 0;
-  tmpvar_26 = (tmpvar_25 * (-0.5 - _mtl_u._CameraPosLocal.xyz));
+  tmpvar_26 = (1.0/((tmpvar_23 / tmpvar_24)));
   float3 tmpvar_27 = 0;
-  tmpvar_27 = (tmpvar_25 * (0.5 - _mtl_u._CameraPosLocal.xyz));
+  tmpvar_27 = (tmpvar_26 * (-(_mtl_u._CameraPosLocal.xyz) - 0.5));
   float3 tmpvar_28 = 0;
-  tmpvar_28 = min (tmpvar_27, tmpvar_26);
+  tmpvar_28 = (tmpvar_26 * (0.5 - _mtl_u._CameraPosLocal.xyz));
   float3 tmpvar_29 = 0;
-  tmpvar_29 = max (tmpvar_27, tmpvar_26);
-  float2 tmpvar_30 = 0;
-  tmpvar_30 = max (tmpvar_28.xx, tmpvar_28.yz);
-  float tmpvar_31 = 0;
-  tmpvar_31 = max (tmpvar_30.x, tmpvar_30.y);
-  float2 tmpvar_32 = 0;
-  tmpvar_32 = min (tmpvar_29.xx, tmpvar_29.yz);
-  float tmpvar_33 = 0;
-  tmpvar_33 = min (tmpvar_32.x, tmpvar_32.y);
-  tmpvar_24 = bool(((tmpvar_31 < tmpvar_33) && (tmpvar_33 > 0.0)));
-  if (((bool)(!(tmpvar_24)) || (tmpvar_16 < (tmpvar_31 / tmpvar_23)))) {
-    depth_1 = -(float4(tmpvar_16));
+  tmpvar_29 = min (tmpvar_28, tmpvar_27);
+  float3 tmpvar_30 = 0;
+  tmpvar_30 = max (tmpvar_28, tmpvar_27);
+  float2 tmpvar_31 = 0;
+  tmpvar_31 = max (tmpvar_29.xx, tmpvar_29.yz);
+  float tmpvar_32 = 0;
+  tmpvar_32 = max (tmpvar_31.x, tmpvar_31.y);
+  float2 tmpvar_33 = 0;
+  tmpvar_33 = min (tmpvar_30.xx, tmpvar_30.yz);
+  float tmpvar_34 = 0;
+  tmpvar_34 = min (tmpvar_33.x, tmpvar_33.y);
+  tmpvar_25 = ((tmpvar_32 < tmpvar_34) && (0.0 < tmpvar_34));
+  if ((!(tmpvar_25) || (tmpvar_13 < (tmpvar_32 / tmpvar_24)))) {
+    tmpvar_1 = -(float4(tmpvar_13));
   } else {
-    depth_1 = min (depth_1, float4((tmpvar_33 / tmpvar_23)));
+    tmpvar_1 = min (float4(tmpvar_13), float4((tmpvar_34 / tmpvar_24)));
   };
-  _mtl_o._glesFragData_0 = half4(tmpvar_14);
-  _mtl_o._glesFragData_1 = half4(depth_1);
+  _mtl_o._glesFragData_0 = half4(tmpvar_12);
+  _mtl_o._glesFragData_1 = half4(tmpvar_1);
   return _mtl_o;
 }
 
 
-// stats: 65 alu 1 tex 1 flow
+// stats: 67 alu 1 tex 1 flow
 // inputs: 1
 //  #0: xlv_TEXCOORD0 (high float) 2x1 [-1]
 // uniforms: 6 (total size: 144)

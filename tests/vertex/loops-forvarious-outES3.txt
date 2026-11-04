@@ -6,33 +6,27 @@ in highp vec4 _inVertex;
 out mediump vec4 xlv_TEXCOORD0;
 void main ()
 {
-  highp vec4 l_1_1;
-  highp vec4 l_2;
-  mediump vec4 tmpvar_3;
-  mediump vec4 tmpvar_4;
-  tmpvar_3 = (UNITY_MATRIX_MVP * _inVertex);
-  tmpvar_4 = unity_LightColor[0];
-  tmpvar_4 = (tmpvar_4 + unity_LightColor[1]);
-  tmpvar_4 = (tmpvar_4 + unity_LightColor[0]);
-  tmpvar_4 = (tmpvar_4 + unity_LightColor[1]);
-  tmpvar_4 = (tmpvar_4 + unity_LightColor[2]);
-  tmpvar_4 = (tmpvar_4 + unity_LightColor[3]);
-  tmpvar_4 = (tmpvar_4 + unity_LightColor[3]);
-  tmpvar_4 = (tmpvar_4 + unity_LightColor[2]);
-  tmpvar_4 = (tmpvar_4 + unity_LightColor[1]);
-  tmpvar_4 = (tmpvar_4 + unity_LightColor[0]);
-  l_2 = (unity_LightColor[0] * unity_LightAtten[0].x);
-  tmpvar_4 = (tmpvar_4 + l_2);
-  l_2 = (unity_LightColor[1] * unity_LightAtten[1].x);
-  tmpvar_4 = (tmpvar_4 + l_2);
-  l_1_1 = (unity_LightColor[0] * unity_LightAtten[0].z);
-  tmpvar_4 = (tmpvar_4 + l_1_1);
-  l_1_1 = (unity_LightColor[1] * unity_LightAtten[1].z);
-  tmpvar_4 = (tmpvar_4 + l_1_1);
-  tmpvar_4 = (tmpvar_4 + unity_LightColor[1].x);
-  tmpvar_4 = (tmpvar_4 + unity_LightColor[2].x);
-  gl_Position = tmpvar_3;
-  xlv_TEXCOORD0 = tmpvar_4;
+  mediump vec4 o_pos_1;
+  mediump vec4 o_color_2;
+  o_pos_1 = (UNITY_MATRIX_MVP * _inVertex);
+  o_color_2 = unity_LightColor[0];
+  o_color_2 = (o_color_2 + unity_LightColor[1]);
+  o_color_2 = (o_color_2 + unity_LightColor[0]);
+  o_color_2 = (o_color_2 + unity_LightColor[1]);
+  o_color_2 = (o_color_2 + unity_LightColor[2]);
+  o_color_2 = (o_color_2 + unity_LightColor[3]);
+  o_color_2 = (o_color_2 + unity_LightColor[3]);
+  o_color_2 = (o_color_2 + unity_LightColor[2]);
+  o_color_2 = (o_color_2 + unity_LightColor[1]);
+  o_color_2 = (o_color_2 + unity_LightColor[0]);
+  o_color_2 = (o_color_2 + (unity_LightColor[0] * unity_LightAtten[0].x));
+  o_color_2 = (o_color_2 + (unity_LightColor[1] * unity_LightAtten[1].x));
+  o_color_2 = (o_color_2 + (unity_LightColor[0] * unity_LightAtten[0].z));
+  o_color_2 = (o_color_2 + (unity_LightColor[1] * unity_LightAtten[1].z));
+  o_color_2 = (o_color_2 + unity_LightColor[1].x);
+  o_color_2 = (o_color_2 + unity_LightColor[2].x);
+  gl_Position = o_pos_1;
+  xlv_TEXCOORD0 = o_color_2;
 }
 
 

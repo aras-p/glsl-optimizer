@@ -6,20 +6,22 @@ uniform vec4 _ReflectColor;
 uniform vec4 unity_Ambient;
 void main ()
 {
-  vec4 col_1;
-  vec4 light_2;
-  vec4 reflcol_3;
-  vec4 tmpvar_4;
-  tmpvar_4 = texture2D (_MainTex, gl_TexCoord[0].xy);
-  reflcol_3 = (textureCube (_Cube, gl_TexCoord[1].xyz) * tmpvar_4.w);
-  light_2 = -(log2(texture2DProj (_LightBuffer, gl_TexCoord[2])));
-  light_2.xyz = (light_2.xyz + unity_Ambient.xyz);
-  vec4 c_5;
-  c_5.xyz = ((tmpvar_4 * _Color).xyz * light_2.xyz);
-  c_5.w = (reflcol_3.w * _ReflectColor.w);
-  col_1.w = c_5.w;
-  col_1.xyz = (c_5.xyz + (reflcol_3.xyz * _ReflectColor.xyz));
-  gl_FragData[0] = col_1;
+  vec4 xlt_IN_hip_screen_1;
+  xlt_IN_hip_screen_1 = gl_TexCoord[2];
+  vec4 col_2;
+  vec4 light_3;
+  vec4 reflcol_4;
+  vec4 tmpvar_5;
+  tmpvar_5 = texture2D (_MainTex, gl_TexCoord[0].xy);
+  reflcol_4 = (textureCube (_Cube, gl_TexCoord[1].xyz) * tmpvar_5.w);
+  light_3 = -(log2(texture2DProj (_LightBuffer, vec3(xlt_IN_hip_screen_1.xy, xlt_IN_hip_screen_1.w))));
+  light_3.xyz = (light_3.xyz + unity_Ambient.xyz);
+  vec4 c_6;
+  c_6.xyz = ((tmpvar_5 * _Color).xyz * light_3.xyz);
+  c_6.w = (reflcol_4.w * _ReflectColor.w);
+  col_2.w = c_6.w;
+  col_2.xyz = (c_6.xyz + (reflcol_4.xyz * _ReflectColor.xyz));
+  gl_FragData[0] = col_2;
 }
 
 

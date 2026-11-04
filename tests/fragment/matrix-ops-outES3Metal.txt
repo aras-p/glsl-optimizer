@@ -29,41 +29,39 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   half2x2 halfMatrix_1;
   float2x2 rotationMatrix_2;
   float tmpvar_3 = 0;
+  tmpvar_3 = sin((_mtl_u._Speed * _mtl_u._Time.x));
   float tmpvar_4 = 0;
-  tmpvar_4 = (_mtl_u._Speed * _mtl_u._Time.x);
-  tmpvar_3 = sin(tmpvar_4);
-  float tmpvar_5 = 0;
-  tmpvar_5 = cos(tmpvar_4);
-  float2x2 tmpvar_6;
-  tmpvar_6[0].x = tmpvar_5;
-  tmpvar_6[0].y = tmpvar_3;
-  tmpvar_6[1].x = -(tmpvar_3);
-  tmpvar_6[1].y = tmpvar_5;
-  rotationMatrix_2 = (tmpvar_6 * 2.0);
+  tmpvar_4 = cos((_mtl_u._Speed * _mtl_u._Time.x));
+  float2x2 tmpvar_5;
+  tmpvar_5[0].x = tmpvar_4;
+  tmpvar_5[0].y = tmpvar_3;
+  tmpvar_5[1].x = -(tmpvar_3);
+  tmpvar_5[1].y = tmpvar_4;
+  rotationMatrix_2 = (tmpvar_5 * 2.0);
   rotationMatrix_2 = (rotationMatrix_2 - _xlinit_float2x2(1.0));
   rotationMatrix_2 = (_xlinit_float2x2(tmpvar_3) - rotationMatrix_2);
-  rotationMatrix_2 = (_xlinit_float2x2(tmpvar_5) + rotationMatrix_2);
+  rotationMatrix_2 = (_xlinit_float2x2(tmpvar_4) + rotationMatrix_2);
   rotationMatrix_2 = (rotationMatrix_2 * (1.0/(tmpvar_3)));
-  float2x2 tmpvar_7;
-  tmpvar_7[0].x = tmpvar_5;
-  tmpvar_7[0].y = tmpvar_3;
-  tmpvar_7[1].x = -(tmpvar_3);
-  tmpvar_7[1].y = tmpvar_5;
-  halfMatrix_1 = _xlcast_half2x2(tmpvar_7);
+  float2x2 tmpvar_6;
+  tmpvar_6[0].x = tmpvar_4;
+  tmpvar_6[0].y = tmpvar_3;
+  tmpvar_6[1].x = -(tmpvar_3);
+  tmpvar_6[1].y = tmpvar_4;
+  halfMatrix_1 = _xlcast_half2x2(tmpvar_6);
   halfMatrix_1 = (halfMatrix_1 * (half)(2.0));
   halfMatrix_1 = (halfMatrix_1 - _xlinit_half2x2(1.0));
   halfMatrix_1 = _xlcast_half2x2(((float2x2)(_xlinit_half2x2(tmpvar_3) - halfMatrix_1)));
-  halfMatrix_1 = _xlcast_half2x2(((float2x2)(_xlinit_half2x2(tmpvar_5) + halfMatrix_1)));
+  halfMatrix_1 = _xlcast_half2x2(((float2x2)(_xlinit_half2x2(tmpvar_4) + halfMatrix_1)));
   halfMatrix_1 = _xlcast_half2x2(((float2x2)(halfMatrix_1 * (1.0h/half(tmpvar_3)))));
-  float4 tmpvar_8 = 0;
-  tmpvar_8.xy = (rotationMatrix_2 * _mtl_i.uv);
-  tmpvar_8.zw = ((float2)(halfMatrix_1 * (half2)(_mtl_i.uv)));
-  _mtl_o._fragData = half4(tmpvar_8);
+  float4 tmpvar_7 = 0;
+  tmpvar_7.xy = (rotationMatrix_2 * _mtl_i.uv);
+  tmpvar_7.zw = ((float2)(halfMatrix_1 * (half2)(_mtl_i.uv)));
+  _mtl_o._fragData = half4(tmpvar_7);
   return _mtl_o;
 }
 
 
-// stats: 17 alu 0 tex 0 flow
+// stats: 18 alu 0 tex 0 flow
 // inputs: 1
 //  #0: uv (high float) 2x1 [-1]
 // uniforms: 2 (total size: 32)

@@ -23,45 +23,39 @@ struct xlatMtlShaderUniform {
 vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half3 tmpvar_1 = 0;
-  half3 tmpvar_2 = 0;
-  half3 tmpvar_3 = 0;
+  half3 o_lightDir_1 = 0;
+  half3 o_viewDir_2 = 0;
+  half3 o_worldN_3 = 0;
   float3x3 tmpvar_4;
   tmpvar_4[0] = _mtl_u._Object2World[0].xyz;
   tmpvar_4[1] = _mtl_u._Object2World[1].xyz;
   tmpvar_4[2] = _mtl_u._Object2World[2].xyz;
+  o_worldN_3 = half3((tmpvar_4 * _mtl_i.attrNormal));
   float3 tmpvar_5 = 0;
-  tmpvar_5 = (tmpvar_4 * _mtl_i.attrNormal);
-  tmpvar_3 = half3(tmpvar_5);
-  float3 tmpvar_6 = 0;
+  tmpvar_5 = (((_mtl_i.attrNormal.yzx * _mtl_i.attrTangent.zxy) - (_mtl_i.attrNormal.zxy * _mtl_i.attrTangent.yzx)) * _mtl_i.attrTangent.w);
+  float3x3 tmpvar_6;
+  tmpvar_6[0].x = _mtl_i.attrTangent.xyz[0];
+  tmpvar_6[0].y = tmpvar_5[0];
+  tmpvar_6[0].z = _mtl_i.attrNormal[0];
+  tmpvar_6[1].x = _mtl_i.attrTangent.xyz[1];
+  tmpvar_6[1].y = tmpvar_5[1];
+  tmpvar_6[1].z = _mtl_i.attrNormal[1];
+  tmpvar_6[2].x = _mtl_i.attrTangent.xyz[2];
+  tmpvar_6[2].y = tmpvar_5[2];
+  tmpvar_6[2].z = _mtl_i.attrNormal[2];
   float3 tmpvar_7 = 0;
-  tmpvar_6 = _mtl_i.attrTangent.xyz;
-  tmpvar_7 = (((_mtl_i.attrNormal.yzx * _mtl_i.attrTangent.zxy) - (_mtl_i.attrNormal.zxy * _mtl_i.attrTangent.yzx)) * _mtl_i.attrTangent.w);
-  float3x3 tmpvar_8;
-  tmpvar_8[0].x = tmpvar_6.x;
-  tmpvar_8[0].y = tmpvar_7.x;
-  tmpvar_8[0].z = _mtl_i.attrNormal.x;
-  tmpvar_8[1].x = tmpvar_6.y;
-  tmpvar_8[1].y = tmpvar_7.y;
-  tmpvar_8[1].z = _mtl_i.attrNormal.y;
-  tmpvar_8[2].x = tmpvar_6.z;
-  tmpvar_8[2].y = tmpvar_7.z;
-  tmpvar_8[2].z = _mtl_i.attrNormal.z;
-  float3 tmpvar_9 = 0;
-  tmpvar_9 = (tmpvar_8 * (_mtl_u._World2Object * (float4)(_mtl_u._WorldSpaceLightPos0)).xyz);
-  tmpvar_1 = half3(tmpvar_9);
-  float4 tmpvar_10 = 0;
-  tmpvar_10.w = 1.0;
-  tmpvar_10.xyz = _mtl_u._WorldSpaceCameraPos;
-  float3 tmpvar_11 = 0;
-  tmpvar_11 = normalize((tmpvar_9 + normalize(
-    (tmpvar_8 * (((_mtl_u._World2Object * tmpvar_10).xyz * _mtl_u.unity_Scale.w) - _mtl_i.attrVertex.xyz))
-  )));
-  tmpvar_2 = half3(tmpvar_11);
+  tmpvar_7 = (tmpvar_6 * (_mtl_u._World2Object * (float4)(_mtl_u._WorldSpaceLightPos0)).xyz);
+  o_lightDir_1 = half3(tmpvar_7);
+  float4 tmpvar_8 = 0;
+  tmpvar_8.w = 1.0;
+  tmpvar_8.xyz = _mtl_u._WorldSpaceCameraPos;
+  o_viewDir_2 = half3(normalize((tmpvar_7 + normalize(
+    (tmpvar_6 * (((_mtl_u._World2Object * tmpvar_8).xyz * _mtl_u.unity_Scale.w) - _mtl_i.attrVertex.xyz))
+  ))));
   _mtl_o.gl_Position = (_mtl_u.glstate_matrix_mvp * _mtl_i.attrVertex);
-  _mtl_o.varWorldN = tmpvar_3;
-  _mtl_o.varLightDir = tmpvar_1;
-  _mtl_o.varViewDir = tmpvar_2;
+  _mtl_o.varWorldN = o_worldN_3;
+  _mtl_o.varLightDir = o_lightDir_1;
+  _mtl_o.varViewDir = o_viewDir_2;
   return _mtl_o;
 }
 

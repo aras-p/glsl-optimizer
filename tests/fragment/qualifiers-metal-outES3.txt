@@ -1,0 +1,20 @@
+#version 300 es
+flat in highp int material;
+centroid in highp vec2 uv;
+smooth in highp vec2 smoothUV;
+out highp vec4 color;
+void main ()
+{
+  highp vec4 tmpvar_1;
+  tmpvar_1.w = 1.0;
+  tmpvar_1.xy = (uv + smoothUV);
+  tmpvar_1.z = float(material);
+  color = tmpvar_1;
+}
+
+
+// stats: 3 alu 0 tex 0 flow
+// inputs: 3
+//  #0: material (high int) 1x1 [-1]
+//  #1: uv (high float) 2x1 [-1]
+//  #2: smoothUV (high float) 2x1 [-1]

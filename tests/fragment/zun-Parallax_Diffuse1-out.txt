@@ -6,26 +6,29 @@ uniform sampler2D _ParallaxMap;
 uniform vec4 unity_Ambient;
 void main ()
 {
-  vec4 tmpvar_1;
-  tmpvar_1 = gl_TexCoord[0];
-  vec4 light_2;
-  vec4 c_3;
-  vec3 v_4;
-  vec3 tmpvar_5;
-  tmpvar_5 = normalize(gl_TexCoord[1].xyz);
-  v_4.xy = tmpvar_5.xy;
-  v_4.z = (tmpvar_5.z + 0.42);
-  c_3 = (texture2D (_MainTex, (tmpvar_1.xy + (
-    ((texture2D (_ParallaxMap, tmpvar_1.zw).w * _Parallax) - (_Parallax / 2.0))
-   * 
-    (tmpvar_5.xy / v_4.z)
+  vec4 xlt_IN_hip_pack0_1;
+  vec4 xlt_IN_hip_screen_2;
+  xlt_IN_hip_pack0_1 = gl_TexCoord[0];
+  xlt_IN_hip_screen_2 = gl_TexCoord[2];
+  vec4 light_3;
+  vec4 c_4;
+  float tmpvar_5;
+  tmpvar_5 = texture2D (_ParallaxMap, xlt_IN_hip_pack0_1.zw).w;
+  vec3 v_6;
+  tmpvar_5 = ((tmpvar_5 * _Parallax) - (_Parallax / 2.0));
+  vec3 tmpvar_7;
+  tmpvar_7 = normalize(gl_TexCoord[1].xyz);
+  v_6.xy = tmpvar_7.xy;
+  v_6.z = (tmpvar_7.z + 0.42);
+  c_4 = (texture2D (_MainTex, (xlt_IN_hip_pack0_1.xy + (tmpvar_5 * 
+    (tmpvar_7.xy / v_6.z)
   ))) * _Color);
-  light_2 = -(log2(texture2DProj (_LightBuffer, gl_TexCoord[2])));
-  light_2.xyz = (light_2.xyz + unity_Ambient.xyz);
-  vec4 c_6;
-  c_6.xyz = (c_3.xyz * light_2.xyz);
-  c_6.w = c_3.w;
-  gl_FragData[0] = c_6;
+  light_3 = -(log2(texture2DProj (_LightBuffer, vec3(xlt_IN_hip_screen_2.xy, xlt_IN_hip_screen_2.w))));
+  light_3.xyz = (light_3.xyz + unity_Ambient.xyz);
+  vec4 c_8;
+  c_8.xyz = (c_4.xyz * light_3.xyz);
+  c_8.w = c_4.w;
+  gl_FragData[0] = c_8;
 }
 
 

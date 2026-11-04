@@ -30,16 +30,16 @@ vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], 
   float4 r_6 = 0;
   r_6.yzw = float3(0.0, 0.0, 0.0);
   ftoh4_5 = _xlcast_half4x4(_mtl_u.uniMat4F);
-  r_6.x = float(ftoh4_5[0].x);
-  r_6.x = (r_6.x + (float)(ftoh4_5[0].x));
+  r_6.x = float(ftoh4_5[0][0]);
+  r_6.x = (r_6.x + (float)(ftoh4_5[0][0]));
   ftoh2_4 = _xlcast_half2x2(_mtl_u.uniMat2F);
-  r_6.x = (r_6.x + (float)(ftoh2_4[0].x));
+  r_6.x = (r_6.x + (float)(ftoh2_4[0][0]));
   htof4_3 = _xlcast_float4x4(_mtl_u.uniMat4H);
-  r_6.x = (r_6.x + htof4_3[0].x);
+  r_6.x = (r_6.x + htof4_3[0][0]);
   htof3_2 = _xlcast_float3x3(_mtl_u.uniMat3H);
-  r_6.x = (r_6.x + htof3_2[0].x);
+  r_6.x = (r_6.x + htof3_2[0][0]);
   htof2_1 = _xlcast_float2x2(_mtl_u.uniMat2H);
-  r_6.x = (r_6.x + htof2_1[0].x);
+  r_6.x = (r_6.x + htof2_1[0][0]);
   _mtl_o.gl_Position = r_6;
   return _mtl_o;
 }

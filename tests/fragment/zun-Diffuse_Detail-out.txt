@@ -6,19 +6,19 @@ uniform sampler2D _LightTextureB0;
 uniform sampler2D _MainTex;
 void main ()
 {
-  vec4 tmpvar_1;
-  tmpvar_1 = gl_TexCoord[0];
-  vec4 tmpvar_2;
-  tmpvar_2 = gl_TexCoord[3];
+  vec4 xlt_IN_hip_pack0_1;
+  vec4 xlt_IN__LightCoord_2;
+  xlt_IN_hip_pack0_1 = gl_TexCoord[0];
+  xlt_IN__LightCoord_2 = gl_TexCoord[3];
   vec4 c_3;
   vec4 c_4;
-  c_4 = (texture2D (_MainTex, tmpvar_1.xy) * _Color);
-  c_4.xyz = (c_4.xyz * (texture2D (_Detail, tmpvar_1.zw).xyz * 2.0));
+  c_4 = (texture2D (_MainTex, xlt_IN_hip_pack0_1.xy) * _Color);
+  c_4.xyz = (c_4.xyz * (texture2D (_Detail, xlt_IN_hip_pack0_1.zw).xyz * 2.0));
   vec4 c_5;
   c_5.xyz = ((c_4.xyz * _LightColor0.xyz) * ((
     max (0.0, dot (gl_TexCoord[1].xyz, normalize(gl_TexCoord[2].xyz)))
    * 
-    ((float((tmpvar_2.z > 0.0)) * texture2D (_LightTexture0, ((tmpvar_2.xy / tmpvar_2.w) + 0.5)).w) * texture2D (_LightTextureB0, vec2(dot (tmpvar_2.xyz, tmpvar_2.xyz))).w)
+    ((float((0.0 < xlt_IN__LightCoord_2.z)) * texture2D (_LightTexture0, ((xlt_IN__LightCoord_2.xy / xlt_IN__LightCoord_2.w) + 0.5)).w) * texture2D (_LightTextureB0, vec2(dot (xlt_IN__LightCoord_2.xyz, xlt_IN__LightCoord_2.xyz))).w)
   ) * 2.0));
   c_5.w = c_4.w;
   c_3.xyz = c_5.xyz;

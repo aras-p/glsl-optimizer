@@ -13,33 +13,33 @@ void main ()
   mediump vec4 tmpvar_2;
   tmpvar_2 = texture (_MainTex, xlv_TEXCOORD0);
   t_1 = tmpvar_2;
-  if ((_NumPasses > 0.0)) {
+  if ((0.0 < _NumPasses)) {
     mediump vec3 res_3;
     res_3 = tmpvar_2.xyz;
     if ((0.0 != _NumPasses)) {
-      mediump float val_4;
-      val_4 = ((_ContrastShift.x * 3.0) + 12.0);
+      mediump float tmpvar_4;
+      tmpvar_4 = ((_ContrastShift.x * 3.0) + 12.0);
       res_3 = ((tmpvar_2.xyz - 0.5) * pow ((
-        cos(val_4)
-       + 1.0), val_4));
+        cos(tmpvar_4)
+       + 1.0), tmpvar_4));
       if ((1.0 != _NumPasses)) {
-        mediump float val_5;
-        val_5 = ((_SaturationShift.y * 3.0) + 12.0);
+        mediump float tmpvar_5;
+        tmpvar_5 = ((_SaturationShift.y * 3.0) + 12.0);
         res_3 = ((res_3 - 0.5) * pow ((
-          cos(val_5)
-         + 1.0), val_5));
+          cos(tmpvar_5)
+         + 1.0), tmpvar_5));
         if ((2.0 != _NumPasses)) {
-          mediump float val_6;
-          val_6 = ((_HueShift.z * 3.0) + 12.0);
+          mediump float tmpvar_6;
+          tmpvar_6 = ((_HueShift.z * 3.0) + 12.0);
           res_3 = ((res_3 - 0.5) * pow ((
-            cos(val_6)
-           + 1.0), val_6));
+            cos(tmpvar_6)
+           + 1.0), tmpvar_6));
           if ((3.0 != _NumPasses)) {
-            mediump float val_7;
-            val_7 = ((_LuminosityShift.x * 3.0) + 12.0);
+            mediump float tmpvar_7;
+            tmpvar_7 = ((_LuminosityShift.x * 3.0) + 12.0);
             res_3 = ((res_3 - 0.5) * pow ((
-              cos(val_7)
-             + 1.0), val_7));
+              cos(tmpvar_7)
+             + 1.0), tmpvar_7));
           };
         };
       };

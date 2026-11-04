@@ -1,0 +1,13 @@
+#version 300 es
+precision highp float;
+in vec4 position;
+invariant gl_Position;
+flat out highp int material;
+centroid out vec2 uv;
+smooth out vec2 smoothUV;
+void main() {
+    gl_Position = position;
+    material = int(position.z);
+    uv = position.xy;
+    smoothUV = position.zw;
+}

@@ -7,8 +7,8 @@ varying vec4 xlv_FOG;
 void main ()
 {
   vec3 viewDir_1;
-  vec4 pos_2;
-  pos_2 = (gl_ModelViewProjectionMatrix * gl_Vertex);
+  vec4 tmpvar_2;
+  tmpvar_2 = (gl_ModelViewProjectionMatrix * gl_Vertex);
   vec4 tmpvar_3;
   tmpvar_3.w = 1.0;
   tmpvar_3.xyz = _WorldSpaceCameraPos;
@@ -21,10 +21,10 @@ void main ()
   tmpvar_5[0] = _Object2World[0].xyz;
   tmpvar_5[1] = _Object2World[1].xyz;
   tmpvar_5[2] = _Object2World[2].xyz;
-  gl_Position = pos_2;
+  gl_Position = tmpvar_2;
   vec4 tmpvar_6;
   tmpvar_6.yzw = vec3(0.0, 0.0, 0.0);
-  tmpvar_6.x = pos_2.z;
+  tmpvar_6.x = tmpvar_2.z;
   xlv_FOG = tmpvar_6;
   vec4 tmpvar_7;
   tmpvar_7.w = 0.0;
@@ -45,7 +45,7 @@ void main ()
 
 // stats: 16 alu 0 tex 0 flow
 // inputs: 2
-//  #0: gl_Normal (high float) 3x1 [-1] loc 2
+//  #0: gl_Normal (high float) 3x1 [-1] loc 1
 //  #1: gl_Vertex (high float) 4x1 [-1] loc 0
 // uniforms: 6 (total size: 0)
 //  #0: gl_ModelViewProjectionMatrix (high float) 4x4 [-1]

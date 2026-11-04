@@ -16,146 +16,175 @@ struct xlatMtlShaderUniform {
   float _SoftZDistance;
 };
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  ,   texture2d<half> _MainTex [[texture(0)]], sampler _mtlsmp__MainTex [[sampler(0)]]
-  ,   texture2d<float> _CameraDepthTexture [[texture(1)]], sampler _mtlsmp__CameraDepthTexture [[sampler(1)]]
-  ,   texture2d<half> _VelTex [[texture(2)]], sampler _mtlsmp__VelTex [[sampler(2)]]
-  ,   texture2d<half> _NeighbourMaxTex [[texture(3)]], sampler _mtlsmp__NeighbourMaxTex [[sampler(3)]]
-  ,   texture2d<half> _NoiseTex [[texture(4)]], sampler _mtlsmp__NoiseTex [[sampler(4)]])
+  , texture2d<half> _MainTex [[texture(0)]], sampler _mtlsmp__MainTex [[sampler(0)]]
+  , texture2d<float> _CameraDepthTexture [[texture(1)]], sampler _mtlsmp__CameraDepthTexture [[sampler(1)]]
+  , texture2d<half> _VelTex [[texture(2)]], sampler _mtlsmp__VelTex [[sampler(2)]]
+  , texture2d<half> _NeighbourMaxTex [[texture(3)]], sampler _mtlsmp__NeighbourMaxTex [[sampler(3)]]
+  , texture2d<half> _NoiseTex [[texture(4)]], sampler _mtlsmp__NoiseTex [[sampler(4)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  float2 tmpvar_1 = 0;
-  tmpvar_1 = _mtl_i.xlv_TEXCOORD0;
+float2 SmallDiscKernel_1[12] = {float2(float2(-0.326212, -0.40581)), float2(float2(-0.840144, -0.07358)), float2(float2(-0.695914, 0.457137)), float2(float2(-0.203345, 0.620716)), float2(float2(0.96234, -0.194983)), float2(float2(0.473434, -0.480026)), float2(float2(0.519456, 0.767022)), float2(float2(0.185461, -0.893124)), float2(float2(0.507431, 0.064425)), float2(float2(0.89642, 0.412458)), float2(float2(-0.32194, -0.932615)), float2(float2(-0.791559, -0.59771))};
+  SmallDiscKernel_1[0] = _xlat_mtl_const1[0];
+  SmallDiscKernel_1[1] = _xlat_mtl_const1[1];
+  SmallDiscKernel_1[2] = _xlat_mtl_const1[2];
+  SmallDiscKernel_1[3] = _xlat_mtl_const1[3];
+  SmallDiscKernel_1[4] = _xlat_mtl_const1[4];
+  SmallDiscKernel_1[5] = _xlat_mtl_const1[5];
+  SmallDiscKernel_1[6] = _xlat_mtl_const1[6];
+  SmallDiscKernel_1[7] = _xlat_mtl_const1[7];
+  SmallDiscKernel_1[8] = _xlat_mtl_const1[8];
+  SmallDiscKernel_1[9] = _xlat_mtl_const1[9];
+  SmallDiscKernel_1[10] = _xlat_mtl_const1[10];
+  SmallDiscKernel_1[11] = _xlat_mtl_const1[11];
   float4 jitteredDir_3 = 0;
   float4 sum_4 = 0;
   float weight_5 = 0;
   float zx_6 = 0;
-  float2 vx_7 = 0;
-  float2 x_8 = 0;
-  float2 xf_9 = 0;
-  xf_9 = _mtl_i.xlv_TEXCOORD0;
-  x_8 = _mtl_i.xlv_TEXCOORD0;
+  float4 noise_7 = 0;
+  float2 vx_8 = 0;
+  float4 cx_9 = 0;
+  float2 vn_10 = 0;
+  float2 xf_11 = 0;
+  xf_11 = _mtl_i.xlv_TEXCOORD0;
   if ((_mtl_u._MainTex_TexelSize.y < 0.0)) {
-    xf_9.y = (1.0 - _mtl_i.xlv_TEXCOORD0.y);
+    xf_11.y = (1.0 - _mtl_i.xlv_TEXCOORD0.y);
   };
-  half4 tmpvar_10 = 0;
-  tmpvar_10 = _NeighbourMaxTex.sample(_mtlsmp__NeighbourMaxTex, (float2)(xf_9), level(0.0));
-  float2 tmpvar_11 = 0;
-  tmpvar_11 = float2(tmpvar_10.xy);
-  half4 tmpvar_12 = 0;
-  tmpvar_12 = _MainTex.sample(_mtlsmp__MainTex, (float2)(_mtl_i.xlv_TEXCOORD0), level(0.0));
-  float4 tmpvar_13 = 0;
-  tmpvar_13 = float4(tmpvar_12);
-  half4 tmpvar_14 = 0;
-  tmpvar_14 = _VelTex.sample(_mtlsmp__VelTex, (float2)(xf_9), level(0.0));
-  float2 tmpvar_15 = 0;
-  tmpvar_15 = float2(tmpvar_14.xy);
-  vx_7 = tmpvar_15;
+  float4 tmpvar_12 = 0;
+  tmpvar_12.zw = float2(0.0, 0.0);
+  tmpvar_12.xy = xf_11;
+  half4 tmpvar_13 = 0;
+  tmpvar_13 = half4(tmpvar_12);
+  vn_10 = float2(_NeighbourMaxTex.sample(_mtlsmp__NeighbourMaxTex, (float2)((tmpvar_13.xy)), level(tmpvar_13.w)).xy);
+  float4 tmpvar_14 = 0;
+  tmpvar_14.zw = float2(0.0, 0.0);
+  tmpvar_14.xy = _mtl_i.xlv_TEXCOORD0;
+  half4 tmpvar_15 = 0;
+  tmpvar_15 = half4(tmpvar_14);
+  cx_9 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_15.xy)), level(tmpvar_15.w)));
   float4 tmpvar_16 = 0;
   tmpvar_16.zw = float2(0.0, 0.0);
-  tmpvar_16.xy = _mtl_i.xlv_TEXCOORD0;
-  float4 coord_17 = 0;
-  coord_17 = (tmpvar_16 * 11.0);
-  half4 tmpvar_18 = 0;
-  tmpvar_18 = _NoiseTex.sample(_mtlsmp__NoiseTex, (float2)(coord_17.xy), level(coord_17.w));
-  float4 tmpvar_19 = 0;
-  tmpvar_19 = float4(((tmpvar_18 * (half)(2.0)) - (half)(1.0)));
-  zx_6 = -((1.0/((
-    (_mtl_u._ZBufferParams.x * _CameraDepthTexture.sample(_mtlsmp__CameraDepthTexture, (float2)(_mtl_i.xlv_TEXCOORD0), level(0.0)).x)
-   + _mtl_u._ZBufferParams.y))));
-  weight_5 = 1.0;
-  sum_4 = tmpvar_13;
+  tmpvar_16.xy = xf_11;
+  half4 tmpvar_17 = 0;
+  tmpvar_17 = half4(tmpvar_16);
+  vx_8 = float2(_VelTex.sample(_mtlsmp__VelTex, (float2)((tmpvar_17.xy)), level(tmpvar_17.w)).xy);
+  float4 tmpvar_18 = 0;
+  tmpvar_18.zw = float2(0.0, 0.0);
+  tmpvar_18.xy = _mtl_i.xlv_TEXCOORD0;
+  half4 tmpvar_19 = 0;
+  tmpvar_19 = half4((tmpvar_18 * 11.0));
+  noise_7 = float4(((_NoiseTex.sample(_mtlsmp__NoiseTex, (float2)((tmpvar_19.xy)), level(tmpvar_19.w)) * (half)(2.0)) - (half)(1.0)));
   float4 tmpvar_20 = 0;
-  tmpvar_20 = (tmpvar_11.xyxy + (tmpvar_19 * (_mtl_u._MainTex_TexelSize.xyxy * _mtl_u._Jitter)).xyyz);
+  tmpvar_20.zw = float2(0.0, 0.0);
+  tmpvar_20.xy = _mtl_i.xlv_TEXCOORD0;
+  half4 tmpvar_21 = 0;
+  tmpvar_21 = half4(tmpvar_20);
+  zx_6 = -((1.0/((
+    (_mtl_u._ZBufferParams.x * _CameraDepthTexture.sample(_mtlsmp__CameraDepthTexture, (float2)((tmpvar_21.xy)), level(tmpvar_21.w)).x)
+   + _mtl_u._ZBufferParams.y))));
+  noise_7 = (noise_7 * (_mtl_u._MainTex_TexelSize.xyxy * _mtl_u._Jitter));
+  weight_5 = 1.0;
+  sum_4 = cx_9;
+  float4 tmpvar_22 = 0;
+  tmpvar_22 = (vn_10.xyxy + noise_7.xyyz);
   jitteredDir_3 = ((max (
-    abs(tmpvar_20.xyxy)
+    abs(tmpvar_22.xyxy)
   , 
     ((_mtl_u._MainTex_TexelSize.xyxy * _mtl_u._MaxVelocity) * 0.15)
-  ) * sign(tmpvar_20.xyxy)) * float4(1.0, 1.0, -1.0, -1.0));
+  ) * sign(tmpvar_22.xyxy)) * float4(1.0, 1.0, -1.0, -1.0));
   for (int l_2 = 0; l_2 < 12; l_2++) {
-    float zy_21 = 0;
-    float4 yf_22 = 0;
-    float4 tmpvar_23 = 0;
-    tmpvar_23 = (tmpvar_1.xyxy + ((jitteredDir_3.xyxy * _xlat_mtl_const1[l_2].xyxy) * float4(1.0, 1.0, -1.0, -1.0)));
-    yf_22 = tmpvar_23;
+    float4 cy_23 = 0;
+    float alphay_24 = 0;
+    float zy_25 = 0;
+    float2 vy_26 = 0;
+    float4 yf_27 = 0;
+    float4 tmpvar_28 = 0;
+    tmpvar_28 = (_mtl_i.xlv_TEXCOORD0.xyxy + ((jitteredDir_3.xyxy * SmallDiscKernel_1[l_2].xyxy) * float4(1.0, 1.0, -1.0, -1.0)));
+    yf_27 = tmpvar_28;
     if ((_mtl_u._MainTex_TexelSize.y < 0.0)) {
-      yf_22.yw = (1.0 - tmpvar_23.yw);
+      yf_27.yw = (1.0 - tmpvar_28.yw);
     };
-    half4 tmpvar_24 = 0;
-    tmpvar_24 = _VelTex.sample(_mtlsmp__VelTex, (float2)(yf_22.xy), level(0.0));
-    float2 tmpvar_25 = 0;
-    tmpvar_25 = float2(tmpvar_24.xy);
-    zy_21 = -((1.0/((
-      (_mtl_u._ZBufferParams.x * _CameraDepthTexture.sample(_mtlsmp__CameraDepthTexture, (float2)(tmpvar_23.xy), level(0.0)).x)
+    float4 tmpvar_29 = 0;
+    tmpvar_29.zw = float2(0.0, 0.0);
+    tmpvar_29.xy = yf_27.xy;
+    half4 tmpvar_30 = 0;
+    tmpvar_30 = half4(tmpvar_29);
+    vy_26 = float2(_VelTex.sample(_mtlsmp__VelTex, (float2)((tmpvar_30.xy)), level(tmpvar_30.w)).xy);
+    float4 tmpvar_31 = 0;
+    tmpvar_31.zw = float2(0.0, 0.0);
+    tmpvar_31.xy = tmpvar_28.xy;
+    half4 tmpvar_32 = 0;
+    tmpvar_32 = half4(tmpvar_31);
+    zy_25 = -((1.0/((
+      (_mtl_u._ZBufferParams.x * _CameraDepthTexture.sample(_mtlsmp__CameraDepthTexture, (float2)((tmpvar_32.xy)), level(tmpvar_32.w)).x)
      + _mtl_u._ZBufferParams.y))));
-    float2 x_26 = 0;
-    x_26 = (x_8 - tmpvar_23.xy);
-    float2 x_27 = 0;
-    x_27 = (tmpvar_23.xy - x_8);
-    float tmpvar_28 = 0;
-    tmpvar_28 = sqrt(dot (tmpvar_25, tmpvar_25));
-    float2 x_29 = 0;
-    x_29 = (tmpvar_23.xy - x_8);
-    float edge0_30 = 0;
-    edge0_30 = (0.95 * tmpvar_28);
-    float tmpvar_31 = 0;
-    tmpvar_31 = clamp (((
-      sqrt(dot (x_29, x_29))
-     - edge0_30) / (
-      (1.05 * tmpvar_28)
-     - edge0_30)), 0.0, 1.0);
-    float tmpvar_32 = 0;
-    tmpvar_32 = sqrt(dot (vx_7, vx_7));
-    float2 x_33 = 0;
-    x_33 = (x_8 - tmpvar_23.xy);
-    float edge0_34 = 0;
-    edge0_34 = (0.95 * tmpvar_32);
+    float2 tmpvar_33 = 0;
+    tmpvar_33 = (_mtl_i.xlv_TEXCOORD0 - tmpvar_28.xy);
+    float2 tmpvar_34 = 0;
+    tmpvar_34 = (tmpvar_28.xy - _mtl_i.xlv_TEXCOORD0);
     float tmpvar_35 = 0;
-    tmpvar_35 = clamp (((
-      sqrt(dot (x_33, x_33))
-     - edge0_34) / (
-      (1.05 * tmpvar_32)
-     - edge0_34)), 0.0, 1.0);
-    float tmpvar_36 = 0;
-    tmpvar_36 = (((
-      clamp ((1.0 - ((zy_21 - zx_6) / _mtl_u._SoftZDistance)), 0.0, 1.0)
+    tmpvar_35 = sqrt(dot (vy_26, vy_26));
+    float2 tmpvar_36 = 0;
+    tmpvar_36 = (tmpvar_28.xy - _mtl_i.xlv_TEXCOORD0);
+    float tmpvar_37 = 0;
+    tmpvar_37 = (0.95 * tmpvar_35);
+    float tmpvar_38 = 0;
+    tmpvar_38 = saturate(((
+      sqrt(dot (tmpvar_36, tmpvar_36))
+     - tmpvar_37) / (
+      (1.05 * tmpvar_35)
+     - tmpvar_37)));
+    float tmpvar_39 = 0;
+    tmpvar_39 = sqrt(dot (vx_8, vx_8));
+    float2 tmpvar_40 = 0;
+    tmpvar_40 = (_mtl_i.xlv_TEXCOORD0 - tmpvar_28.xy);
+    float tmpvar_41 = 0;
+    tmpvar_41 = (0.95 * tmpvar_39);
+    float tmpvar_42 = 0;
+    tmpvar_42 = saturate(((
+      sqrt(dot (tmpvar_40, tmpvar_40))
+     - tmpvar_41) / (
+      (1.05 * tmpvar_39)
+     - tmpvar_41)));
+    alphay_24 = (((
+      saturate((1.0 - ((zy_25 - zx_6) / _mtl_u._SoftZDistance)))
      * 
-      clamp ((1.0 - (sqrt(
-        dot (x_26, x_26)
+      saturate((1.0 - (sqrt(
+        dot (tmpvar_33, tmpvar_33)
       ) / sqrt(
-        dot (vx_7, vx_7)
-      ))), 0.0, 1.0)
+        dot (vx_8, vx_8)
+      ))))
     ) + (
-      clamp ((1.0 - ((zx_6 - zy_21) / _mtl_u._SoftZDistance)), 0.0, 1.0)
+      saturate((1.0 - ((zx_6 - zy_25) / _mtl_u._SoftZDistance)))
      * 
-      clamp ((1.0 - (sqrt(
-        dot (x_27, x_27)
+      saturate((1.0 - (sqrt(
+        dot (tmpvar_34, tmpvar_34)
       ) / sqrt(
-        dot (tmpvar_25, tmpvar_25)
-      ))), 0.0, 1.0)
+        dot (vy_26, vy_26)
+      ))))
     )) + ((
-      (1.0 - (tmpvar_31 * (tmpvar_31 * (3.0 - 
-        (2.0 * tmpvar_31)
+      (1.0 - (tmpvar_38 * (tmpvar_38 * (3.0 - 
+        (2.0 * tmpvar_38)
       ))))
      * 
-      (1.0 - (tmpvar_35 * (tmpvar_35 * (3.0 - 
-        (2.0 * tmpvar_35)
+      (1.0 - (tmpvar_42 * (tmpvar_42 * (3.0 - 
+        (2.0 * tmpvar_42)
       ))))
     ) * 2.0));
-    half4 tmpvar_37 = 0;
-    tmpvar_37 = _MainTex.sample(_mtlsmp__MainTex, (float2)(tmpvar_23.xy), level(0.0));
-    float4 tmpvar_38 = 0;
-    tmpvar_38 = float4(tmpvar_37);
-    sum_4 = (sum_4 + (tmpvar_38 * tmpvar_36));
-    weight_5 = (weight_5 + tmpvar_36);
+    float4 tmpvar_43 = 0;
+    tmpvar_43.zw = float2(0.0, 0.0);
+    tmpvar_43.xy = tmpvar_28.xy;
+    half4 tmpvar_44 = 0;
+    tmpvar_44 = half4(tmpvar_43);
+    cy_23 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_44.xy)), level(tmpvar_44.w)));
+    sum_4 = (sum_4 + (cy_23 * alphay_24));
+    weight_5 = (weight_5 + alphay_24);
   };
-  float4 tmpvar_39 = 0;
-  tmpvar_39 = (sum_4 / weight_5);
-  _mtl_o._fragData = half4(tmpvar_39);
+  _mtl_o._fragData = half4((sum_4 / weight_5));
   return _mtl_o;
 }
 
 
-// stats: 99 alu 8 tex 4 flow
+// stats: 107 alu 8 tex 4 flow
 // inputs: 1
 //  #0: xlv_TEXCOORD0 (high float) 2x1 [-1]
 // uniforms: 5 (total size: 44)

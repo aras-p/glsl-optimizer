@@ -10,17 +10,20 @@ struct xlatMtlShaderOutput {
 struct xlatMtlShaderUniform {
 };
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  ,   texture2d<float> _CameraDepthTexture [[texture(0)]], sampler _mtlsmp__CameraDepthTexture [[sampler(0)]])
+  , texture2d<float> _CameraDepthTexture [[texture(0)]], sampler _mtlsmp__CameraDepthTexture [[sampler(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
   float4 tmpvar_1 = 0;
-  tmpvar_1 = _CameraDepthTexture.sample(_mtlsmp__CameraDepthTexture, (float2)(_mtl_i.varUV), level(0.0)).xxxx;
-  _mtl_o._fragData = half4(tmpvar_1);
+  tmpvar_1.zw = float2(0.0, 0.0);
+  tmpvar_1.xy = _mtl_i.varUV;
+  half4 tmpvar_2 = 0;
+  tmpvar_2 = half4(tmpvar_1);
+  _mtl_o._fragData = half4(_CameraDepthTexture.sample(_mtlsmp__CameraDepthTexture, (float2)((tmpvar_2.xy)), level(tmpvar_2.w)).xxxx);
   return _mtl_o;
 }
 
 
-// stats: 0 alu 1 tex 0 flow
+// stats: 1 alu 1 tex 0 flow
 // inputs: 1
 //  #0: varUV (high float) 2x1 [-1]
 // textures: 1

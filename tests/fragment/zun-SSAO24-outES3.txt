@@ -8,64 +8,213 @@ in highp vec2 xlv_TEXCOORD0;
 in highp vec2 xlv_TEXCOORD1;
 void main ()
 {
-  mediump float tmpvar_1;
-  highp vec2 tmpvar_2;
-  tmpvar_2 = xlv_TEXCOORD0;
-  highp float occ_4;
-  highp float scale_5;
-  highp float depth_6;
-  highp vec3 viewNorm_7;
-  mediump vec3 randN_8;
-  randN_8 = ((texture (_RandomTexture, xlv_TEXCOORD1).xyz * 2.0) - 1.0);
-  highp vec4 tmpvar_9;
-  tmpvar_9 = texture (_CameraDepthNormalsTexture, xlv_TEXCOORD0);
-  highp vec3 n_10;
-  highp vec3 tmpvar_11;
-  tmpvar_11 = ((tmpvar_9.xyz * vec3(3.5554, 3.5554, 0.0)) + vec3(-1.7777, -1.7777, 1.0));
-  highp float tmpvar_12;
-  tmpvar_12 = (2.0 / dot (tmpvar_11, tmpvar_11));
-  n_10.xy = (tmpvar_12 * tmpvar_11.xy);
-  n_10.z = (tmpvar_12 - 1.0);
-  viewNorm_7 = n_10;
-  depth_6 = (dot (tmpvar_9.zw, vec2(1.0, 0.00392157)) * _ProjectionParams.z);
-  scale_5 = (_Params.x / depth_6);
-  occ_4 = 0.0;
-  for (highp int s_3 = 0; s_3 < 8; s_3++) {
-    mediump vec3 randomDir_13;
-    highp vec3 tmpvar_14;
-    highp vec3 I_15;
-    I_15 = vec3[8](vec3(0.0130572, 0.587232, -0.119337), vec3(0.323078, 0.0220727, -0.418873), vec3(-0.310725, -0.191367, 0.0561369), vec3(-0.479646, 0.0939877, -0.580265), vec3(0.139999, -0.33577, 0.559679), vec3(-0.248458, 0.255532, 0.348944), vec3(0.18719, -0.702764, -0.231748), vec3(0.884915, 0.284208, 0.368524))[s_3];
-    tmpvar_14 = (I_15 - (2.0 * (
-      dot (randN_8, I_15)
-     * randN_8)));
-    randomDir_13 = tmpvar_14;
-    highp float tmpvar_16;
-    tmpvar_16 = dot (viewNorm_7, randomDir_13);
-    mediump float tmpvar_17;
-    if ((tmpvar_16 < 0.0)) {
-      tmpvar_17 = 1.0;
-    } else {
-      tmpvar_17 = -1.0;
-    };
-    randomDir_13 = (randomDir_13 * -(tmpvar_17));
-    randomDir_13 = (randomDir_13 + (viewNorm_7 * 0.3));
-    highp float tmpvar_18;
-    tmpvar_18 = clamp (((depth_6 - 
-      (randomDir_13.z * _Params.x)
-    ) - (
-      dot (texture (_CameraDepthNormalsTexture, (tmpvar_2 + (randomDir_13.xy * scale_5))).zw, vec2(1.0, 0.00392157))
-     * _ProjectionParams.z)), 0.0, 1.0);
-    if ((tmpvar_18 > _Params.y)) {
-      occ_4 = (occ_4 + pow ((1.0 - tmpvar_18), _Params.z));
-    };
+  highp float occ_1;
+  highp float scale_2;
+  highp float depth_3;
+  mediump vec3 randN_4;
+  randN_4 = ((texture (_RandomTexture, xlv_TEXCOORD1).xyz * 2.0) - 1.0);
+  highp vec4 tmpvar_5;
+  tmpvar_5 = texture (_CameraDepthNormalsTexture, xlv_TEXCOORD0);
+  highp vec3 n_6;
+  highp vec3 tmpvar_7;
+  tmpvar_7 = ((tmpvar_5.xyz * vec3(3.5554, 3.5554, 0.0)) + vec3(-1.7777, -1.7777, 1.0));
+  highp float tmpvar_8;
+  tmpvar_8 = (2.0 / dot (tmpvar_7, tmpvar_7));
+  n_6.xy = (tmpvar_8 * tmpvar_7.xy);
+  n_6.z = (tmpvar_8 - 1.0);
+  depth_3 = (dot (tmpvar_5.zw, vec2(1.0, 0.00392157)) * _ProjectionParams.z);
+  scale_2 = (_Params.x / depth_3);
+  occ_1 = 0.0;
+  mediump vec3 randomDir_9;
+  randomDir_9 = (vec3(0.0130572, 0.587232, -0.119337) - (2.0 * (
+    dot (randN_4, vec3(0.0130572, 0.587232, -0.119337))
+   * randN_4)));
+  highp float tmpvar_10;
+  tmpvar_10 = dot (n_6, randomDir_9);
+  highp float tmpvar_11;
+  if ((tmpvar_10 < 0.0)) {
+    tmpvar_11 = 1.0;
+  } else {
+    tmpvar_11 = -1.0;
   };
-  occ_4 = (occ_4 / 8.0);
-  tmpvar_1 = (1.0 - occ_4);
-  _glesFragData[0] = vec4(tmpvar_1);
+  randomDir_9 = (randomDir_9 * -(tmpvar_11));
+  randomDir_9 = (randomDir_9 + (n_6 * 0.3));
+  highp float tmpvar_12;
+  tmpvar_12 = clamp (((depth_3 - 
+    (randomDir_9.z * _Params.x)
+  ) - (
+    dot (texture (_CameraDepthNormalsTexture, (xlv_TEXCOORD0 + (randomDir_9.xy * scale_2))).zw, vec2(1.0, 0.00392157))
+   * _ProjectionParams.z)), 0.0, 1.0);
+  if ((_Params.y < tmpvar_12)) {
+    occ_1 = pow ((1.0 - tmpvar_12), _Params.z);
+  };
+  mediump vec3 randomDir_13;
+  randomDir_13 = (vec3(0.323078, 0.0220727, -0.418873) - (2.0 * (
+    dot (randN_4, vec3(0.323078, 0.0220727, -0.418873))
+   * randN_4)));
+  highp float tmpvar_14;
+  tmpvar_14 = dot (n_6, randomDir_13);
+  highp float tmpvar_15;
+  if ((tmpvar_14 < 0.0)) {
+    tmpvar_15 = 1.0;
+  } else {
+    tmpvar_15 = -1.0;
+  };
+  randomDir_13 = (randomDir_13 * -(tmpvar_15));
+  randomDir_13 = (randomDir_13 + (n_6 * 0.3));
+  highp float tmpvar_16;
+  tmpvar_16 = clamp (((depth_3 - 
+    (randomDir_13.z * _Params.x)
+  ) - (
+    dot (texture (_CameraDepthNormalsTexture, (xlv_TEXCOORD0 + (randomDir_13.xy * scale_2))).zw, vec2(1.0, 0.00392157))
+   * _ProjectionParams.z)), 0.0, 1.0);
+  if ((_Params.y < tmpvar_16)) {
+    occ_1 = (occ_1 + pow ((1.0 - tmpvar_16), _Params.z));
+  };
+  mediump vec3 randomDir_17;
+  randomDir_17 = (vec3(-0.310725, -0.191367, 0.0561369) - (2.0 * (
+    dot (randN_4, vec3(-0.310725, -0.191367, 0.0561369))
+   * randN_4)));
+  highp float tmpvar_18;
+  tmpvar_18 = dot (n_6, randomDir_17);
+  highp float tmpvar_19;
+  if ((tmpvar_18 < 0.0)) {
+    tmpvar_19 = 1.0;
+  } else {
+    tmpvar_19 = -1.0;
+  };
+  randomDir_17 = (randomDir_17 * -(tmpvar_19));
+  randomDir_17 = (randomDir_17 + (n_6 * 0.3));
+  highp float tmpvar_20;
+  tmpvar_20 = clamp (((depth_3 - 
+    (randomDir_17.z * _Params.x)
+  ) - (
+    dot (texture (_CameraDepthNormalsTexture, (xlv_TEXCOORD0 + (randomDir_17.xy * scale_2))).zw, vec2(1.0, 0.00392157))
+   * _ProjectionParams.z)), 0.0, 1.0);
+  if ((_Params.y < tmpvar_20)) {
+    occ_1 = (occ_1 + pow ((1.0 - tmpvar_20), _Params.z));
+  };
+  mediump vec3 randomDir_21;
+  randomDir_21 = (vec3(-0.479646, 0.0939877, -0.580265) - (2.0 * (
+    dot (randN_4, vec3(-0.479646, 0.0939877, -0.580265))
+   * randN_4)));
+  highp float tmpvar_22;
+  tmpvar_22 = dot (n_6, randomDir_21);
+  highp float tmpvar_23;
+  if ((tmpvar_22 < 0.0)) {
+    tmpvar_23 = 1.0;
+  } else {
+    tmpvar_23 = -1.0;
+  };
+  randomDir_21 = (randomDir_21 * -(tmpvar_23));
+  randomDir_21 = (randomDir_21 + (n_6 * 0.3));
+  highp float tmpvar_24;
+  tmpvar_24 = clamp (((depth_3 - 
+    (randomDir_21.z * _Params.x)
+  ) - (
+    dot (texture (_CameraDepthNormalsTexture, (xlv_TEXCOORD0 + (randomDir_21.xy * scale_2))).zw, vec2(1.0, 0.00392157))
+   * _ProjectionParams.z)), 0.0, 1.0);
+  if ((_Params.y < tmpvar_24)) {
+    occ_1 = (occ_1 + pow ((1.0 - tmpvar_24), _Params.z));
+  };
+  mediump vec3 randomDir_25;
+  randomDir_25 = (vec3(0.139999, -0.33577, 0.559679) - (2.0 * (
+    dot (randN_4, vec3(0.139999, -0.33577, 0.559679))
+   * randN_4)));
+  highp float tmpvar_26;
+  tmpvar_26 = dot (n_6, randomDir_25);
+  highp float tmpvar_27;
+  if ((tmpvar_26 < 0.0)) {
+    tmpvar_27 = 1.0;
+  } else {
+    tmpvar_27 = -1.0;
+  };
+  randomDir_25 = (randomDir_25 * -(tmpvar_27));
+  randomDir_25 = (randomDir_25 + (n_6 * 0.3));
+  highp float tmpvar_28;
+  tmpvar_28 = clamp (((depth_3 - 
+    (randomDir_25.z * _Params.x)
+  ) - (
+    dot (texture (_CameraDepthNormalsTexture, (xlv_TEXCOORD0 + (randomDir_25.xy * scale_2))).zw, vec2(1.0, 0.00392157))
+   * _ProjectionParams.z)), 0.0, 1.0);
+  if ((_Params.y < tmpvar_28)) {
+    occ_1 = (occ_1 + pow ((1.0 - tmpvar_28), _Params.z));
+  };
+  mediump vec3 randomDir_29;
+  randomDir_29 = (vec3(-0.248458, 0.255532, 0.348944) - (2.0 * (
+    dot (randN_4, vec3(-0.248458, 0.255532, 0.348944))
+   * randN_4)));
+  highp float tmpvar_30;
+  tmpvar_30 = dot (n_6, randomDir_29);
+  highp float tmpvar_31;
+  if ((tmpvar_30 < 0.0)) {
+    tmpvar_31 = 1.0;
+  } else {
+    tmpvar_31 = -1.0;
+  };
+  randomDir_29 = (randomDir_29 * -(tmpvar_31));
+  randomDir_29 = (randomDir_29 + (n_6 * 0.3));
+  highp float tmpvar_32;
+  tmpvar_32 = clamp (((depth_3 - 
+    (randomDir_29.z * _Params.x)
+  ) - (
+    dot (texture (_CameraDepthNormalsTexture, (xlv_TEXCOORD0 + (randomDir_29.xy * scale_2))).zw, vec2(1.0, 0.00392157))
+   * _ProjectionParams.z)), 0.0, 1.0);
+  if ((_Params.y < tmpvar_32)) {
+    occ_1 = (occ_1 + pow ((1.0 - tmpvar_32), _Params.z));
+  };
+  mediump vec3 randomDir_33;
+  randomDir_33 = (vec3(0.18719, -0.702764, -0.231748) - (2.0 * (
+    dot (randN_4, vec3(0.18719, -0.702764, -0.231748))
+   * randN_4)));
+  highp float tmpvar_34;
+  tmpvar_34 = dot (n_6, randomDir_33);
+  highp float tmpvar_35;
+  if ((tmpvar_34 < 0.0)) {
+    tmpvar_35 = 1.0;
+  } else {
+    tmpvar_35 = -1.0;
+  };
+  randomDir_33 = (randomDir_33 * -(tmpvar_35));
+  randomDir_33 = (randomDir_33 + (n_6 * 0.3));
+  highp float tmpvar_36;
+  tmpvar_36 = clamp (((depth_3 - 
+    (randomDir_33.z * _Params.x)
+  ) - (
+    dot (texture (_CameraDepthNormalsTexture, (xlv_TEXCOORD0 + (randomDir_33.xy * scale_2))).zw, vec2(1.0, 0.00392157))
+   * _ProjectionParams.z)), 0.0, 1.0);
+  if ((_Params.y < tmpvar_36)) {
+    occ_1 = (occ_1 + pow ((1.0 - tmpvar_36), _Params.z));
+  };
+  mediump vec3 randomDir_37;
+  randomDir_37 = (vec3(0.884915, 0.284208, 0.368524) - (2.0 * (
+    dot (randN_4, vec3(0.884915, 0.284208, 0.368524))
+   * randN_4)));
+  highp float tmpvar_38;
+  tmpvar_38 = dot (n_6, randomDir_37);
+  highp float tmpvar_39;
+  if ((tmpvar_38 < 0.0)) {
+    tmpvar_39 = 1.0;
+  } else {
+    tmpvar_39 = -1.0;
+  };
+  randomDir_37 = (randomDir_37 * -(tmpvar_39));
+  randomDir_37 = (randomDir_37 + (n_6 * 0.3));
+  highp float tmpvar_40;
+  tmpvar_40 = clamp (((depth_3 - 
+    (randomDir_37.z * _Params.x)
+  ) - (
+    dot (texture (_CameraDepthNormalsTexture, (xlv_TEXCOORD0 + (randomDir_37.xy * scale_2))).zw, vec2(1.0, 0.00392157))
+   * _ProjectionParams.z)), 0.0, 1.0);
+  if ((_Params.y < tmpvar_40)) {
+    occ_1 = (occ_1 + pow ((1.0 - tmpvar_40), _Params.z));
+  };
+  occ_1 = (occ_1 / 8.0);
+  _glesFragData[0] = vec4((1.0 - occ_1));
 }
 
 
-// stats: 41 alu 3 tex 4 flow
+// stats: 213 alu 10 tex 16 flow
 // inputs: 2
 //  #0: xlv_TEXCOORD0 (high float) 2x1 [-1]
 //  #1: xlv_TEXCOORD1 (high float) 2x1 [-1]

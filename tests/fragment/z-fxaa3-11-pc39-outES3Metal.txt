@@ -11,11 +11,11 @@ struct xlatMtlShaderUniform {
   float4 _MainTex_TexelSize;
 };
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  ,   texture2d<half> _MainTex [[texture(0)]], sampler _mtlsmp__MainTex [[sampler(0)]])
+  , texture2d<half> _MainTex [[texture(0)]], sampler _mtlsmp__MainTex [[sampler(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  float2 fxaaQualityRcpFrame_1 = 0;
-  fxaaQualityRcpFrame_1 = _mtl_u._MainTex_TexelSize.xy;
+  float2 tmpvar_1 = 0;
+  tmpvar_1 = _mtl_u._MainTex_TexelSize.xy;
   float4 tmpvar_2 = 0;
   float subpixH_3 = 0;
   float pixelOffset_4 = 0;
@@ -37,456 +37,629 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   float2 posP_20 = 0;
   float2 posN_21 = 0;
   float2 posB_22 = 0;
-  bool pairN_23 = false;
-  float lumaSS_24 = 0;
-  float lumaNN_25 = 0;
-  float gradientS_26 = 0;
-  float gradientN_27 = 0;
-  float subpixB_28 = 0;
-  float subpixA_29 = 0;
-  bool horzSpan_30 = false;
-  float lengthSign_31 = 0;
-  float lumaNWSW_32 = 0;
-  float lumaNESE_33 = 0;
-  float subpixRcpRange_34 = 0;
-  float lumaWE_35 = 0;
-  float lumaNS_36 = 0;
-  float range_37 = 0;
-  float lumaN_38 = 0;
-  float lumaS_39 = 0;
-  float2 posM_40 = 0;
-  posM_40 = _mtl_i.xlv_TEXCOORD0;
-  float4 tmpvar_41 = 0;
-  tmpvar_41 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)(_mtl_i.xlv_TEXCOORD0), level(0.0)));
-  float4 tmpvar_42 = 0;
-  tmpvar_42.zw = float2(0.0, 0.0);
-  tmpvar_42.xy = (_mtl_i.xlv_TEXCOORD0 + (float2(0.0, 1.0) * _mtl_u._MainTex_TexelSize.xy));
-  float4 tmpvar_43 = 0;
-  tmpvar_43 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)(tmpvar_42.xy), level(0.0)));
-  lumaS_39 = tmpvar_43.w;
+  float subpixC_23 = 0;
+  float gradient_24 = 0;
+  bool pairN_25 = false;
+  float lumaSS_26 = 0;
+  float lumaNN_27 = 0;
+  float gradientS_28 = 0;
+  float gradientN_29 = 0;
+  float subpixB_30 = 0;
+  float subpixA_31 = 0;
+  bool horzSpan_32 = false;
+  float lengthSign_33 = 0;
+  float lumaNWSW_34 = 0;
+  float lumaNESE_35 = 0;
+  float subpixRcpRange_36 = 0;
+  float lumaWE_37 = 0;
+  float lumaNS_38 = 0;
+  float range_39 = 0;
+  float lumaN_40 = 0;
+  float lumaS_41 = 0;
+  float4 rgbyM_42 = 0;
+  float2 posM_43 = 0;
+  posM_43 = _mtl_i.xlv_TEXCOORD0;
   float4 tmpvar_44 = 0;
   tmpvar_44.zw = float2(0.0, 0.0);
-  tmpvar_44.xy = (_mtl_i.xlv_TEXCOORD0 + (float2(1.0, 0.0) * _mtl_u._MainTex_TexelSize.xy));
-  float4 tmpvar_45 = 0;
-  tmpvar_45 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)(tmpvar_44.xy), level(0.0)));
-  float tmpvar_46 = 0;
-  tmpvar_46 = tmpvar_45.w;
-  float4 tmpvar_47 = 0;
-  tmpvar_47.zw = float2(0.0, 0.0);
-  tmpvar_47.xy = (_mtl_i.xlv_TEXCOORD0 + (float2(0.0, -1.0) * _mtl_u._MainTex_TexelSize.xy));
+  tmpvar_44.xy = _mtl_i.xlv_TEXCOORD0;
+  half4 tmpvar_45 = 0;
+  tmpvar_45 = half4(tmpvar_44);
+  rgbyM_42 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_45.xy)), level(tmpvar_45.w)));
+  float4 tmpvar_46 = 0;
+  tmpvar_46.zw = float2(0.0, 0.0);
+  tmpvar_46.xy = (_mtl_i.xlv_TEXCOORD0 + (float2(0.0, 1.0) * _mtl_u._MainTex_TexelSize.xy));
+  half4 tmpvar_47 = 0;
+  tmpvar_47 = half4(tmpvar_46);
   float4 tmpvar_48 = 0;
-  tmpvar_48 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)(tmpvar_47.xy), level(0.0)));
-  lumaN_38 = tmpvar_48.w;
+  tmpvar_48 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_47.xy)), level(tmpvar_47.w)));
+  lumaS_41 = tmpvar_48.w;
   float4 tmpvar_49 = 0;
   tmpvar_49.zw = float2(0.0, 0.0);
-  tmpvar_49.xy = (_mtl_i.xlv_TEXCOORD0 + (float2(-1.0, 0.0) * _mtl_u._MainTex_TexelSize.xy));
-  float4 tmpvar_50 = 0;
-  tmpvar_50 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)(tmpvar_49.xy), level(0.0)));
+  tmpvar_49.xy = (_mtl_i.xlv_TEXCOORD0 + (float2(1.0, 0.0) * _mtl_u._MainTex_TexelSize.xy));
+  half4 tmpvar_50 = 0;
+  tmpvar_50 = half4(tmpvar_49);
   float tmpvar_51 = 0;
-  tmpvar_51 = tmpvar_50.w;
-  float tmpvar_52 = 0;
-  tmpvar_52 = max (max (tmpvar_48.w, tmpvar_50.w), max (max (tmpvar_45.w, tmpvar_43.w), tmpvar_41.w));
-  range_37 = (tmpvar_52 - min (min (tmpvar_48.w, tmpvar_50.w), min (
-    min (tmpvar_45.w, tmpvar_43.w)
-  , tmpvar_41.w)));
-  if ((range_37 < max (0.0833, (tmpvar_52 * 0.166)))) {
-    tmpvar_2 = tmpvar_41;
+  float4 tmpvar_52 = 0;
+  tmpvar_52 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_50.xy)), level(tmpvar_50.w)));
+  tmpvar_51 = tmpvar_52.w;
+  float4 tmpvar_53 = 0;
+  tmpvar_53.zw = float2(0.0, 0.0);
+  tmpvar_53.xy = (_mtl_i.xlv_TEXCOORD0 + (float2(0.0, -1.0) * _mtl_u._MainTex_TexelSize.xy));
+  half4 tmpvar_54 = 0;
+  tmpvar_54 = half4(tmpvar_53);
+  float4 tmpvar_55 = 0;
+  tmpvar_55 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_54.xy)), level(tmpvar_54.w)));
+  lumaN_40 = tmpvar_55.w;
+  float4 tmpvar_56 = 0;
+  tmpvar_56.zw = float2(0.0, 0.0);
+  tmpvar_56.xy = (_mtl_i.xlv_TEXCOORD0 + (float2(-1.0, 0.0) * _mtl_u._MainTex_TexelSize.xy));
+  half4 tmpvar_57 = 0;
+  tmpvar_57 = half4(tmpvar_56);
+  float tmpvar_58 = 0;
+  float4 tmpvar_59 = 0;
+  tmpvar_59 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_57.xy)), level(tmpvar_57.w)));
+  tmpvar_58 = tmpvar_59.w;
+  float tmpvar_60 = 0;
+  tmpvar_60 = max (max (tmpvar_55.w, tmpvar_59.w), max (tmpvar_52.w, max (tmpvar_48.w, rgbyM_42.w)));
+  range_39 = (tmpvar_60 - min (min (tmpvar_55.w, tmpvar_59.w), min (
+    min (tmpvar_52.w, tmpvar_48.w)
+  , rgbyM_42.w)));
+  if ((range_39 < max (0.0833, (tmpvar_60 * 0.166)))) {
+    tmpvar_2 = rgbyM_42;
   } else {
-    float4 tmpvar_53 = 0;
-    tmpvar_53.zw = float2(0.0, 0.0);
-    tmpvar_53.xy = (_mtl_i.xlv_TEXCOORD0 - _mtl_u._MainTex_TexelSize.xy);
-    float4 tmpvar_54 = 0;
-    tmpvar_54 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)(tmpvar_53.xy), level(0.0)));
-    float4 tmpvar_55 = 0;
-    tmpvar_55.zw = float2(0.0, 0.0);
-    tmpvar_55.xy = (_mtl_i.xlv_TEXCOORD0 + _mtl_u._MainTex_TexelSize.xy);
-    float4 tmpvar_56 = 0;
-    tmpvar_56 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)(tmpvar_55.xy), level(0.0)));
-    float4 tmpvar_57 = 0;
-    tmpvar_57.zw = float2(0.0, 0.0);
-    tmpvar_57.xy = (_mtl_i.xlv_TEXCOORD0 + (float2(1.0, -1.0) * _mtl_u._MainTex_TexelSize.xy));
-    float4 tmpvar_58 = 0;
-    tmpvar_58 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)(tmpvar_57.xy), level(0.0)));
-    float4 tmpvar_59 = 0;
-    tmpvar_59.zw = float2(0.0, 0.0);
-    tmpvar_59.xy = (_mtl_i.xlv_TEXCOORD0 + (float2(-1.0, 1.0) * _mtl_u._MainTex_TexelSize.xy));
-    float4 tmpvar_60 = 0;
-    tmpvar_60 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)(tmpvar_59.xy), level(0.0)));
-    lumaNS_36 = (tmpvar_48.w + tmpvar_43.w);
-    lumaWE_35 = (tmpvar_50.w + tmpvar_45.w);
-    subpixRcpRange_34 = (1.0/(range_37));
-    lumaNESE_33 = (tmpvar_58.w + tmpvar_56.w);
-    lumaNWSW_32 = (tmpvar_54.w + tmpvar_60.w);
-    lengthSign_31 = fxaaQualityRcpFrame_1.x;
-    horzSpan_30 = ((abs(
-      ((-2.0 * tmpvar_50.w) + lumaNWSW_32)
-    ) + (
-      (abs(((-2.0 * tmpvar_41.w) + lumaNS_36)) * 2.0)
-     + 
-      abs(((-2.0 * tmpvar_45.w) + lumaNESE_33))
-    )) >= (abs(
-      ((-2.0 * tmpvar_43.w) + (tmpvar_60.w + tmpvar_56.w))
-    ) + (
-      (abs(((-2.0 * tmpvar_41.w) + lumaWE_35)) * 2.0)
-     + 
-      abs(((-2.0 * tmpvar_48.w) + (tmpvar_54.w + tmpvar_58.w)))
-    )));
-    subpixA_29 = (((lumaNS_36 + lumaWE_35) * 2.0) + (lumaNWSW_32 + lumaNESE_33));
-    if (!(horzSpan_30)) {
-      lumaN_38 = tmpvar_51;
-    };
-    if (!(horzSpan_30)) {
-      lumaS_39 = tmpvar_46;
-    };
-    if (horzSpan_30) {
-      lengthSign_31 = fxaaQualityRcpFrame_1.y;
-    };
-    subpixB_28 = ((subpixA_29 * 0.0833333) - tmpvar_41.w);
-    gradientN_27 = (lumaN_38 - tmpvar_41.w);
-    gradientS_26 = (lumaS_39 - tmpvar_41.w);
-    lumaNN_25 = (lumaN_38 + tmpvar_41.w);
-    lumaSS_24 = (lumaS_39 + tmpvar_41.w);
-    pairN_23 = (abs(gradientN_27) >= abs(gradientS_26));
-    float tmpvar_61 = 0;
-    tmpvar_61 = max (abs(gradientN_27), abs(gradientS_26));
-    if (pairN_23) {
-      lengthSign_31 = -(lengthSign_31);
-    };
-    float tmpvar_62 = 0;
-    tmpvar_62 = clamp ((abs(subpixB_28) * subpixRcpRange_34), 0.0, 1.0);
-    posB_22 = _mtl_i.xlv_TEXCOORD0;
-    float tmpvar_63 = 0;
-    if (!(horzSpan_30)) {
-      tmpvar_63 = 0.0;
-    } else {
-      tmpvar_63 = fxaaQualityRcpFrame_1.x;
-    };
-    float tmpvar_64 = 0;
-    if (horzSpan_30) {
-      tmpvar_64 = 0.0;
-    } else {
-      tmpvar_64 = fxaaQualityRcpFrame_1.y;
-    };
-    if (!(horzSpan_30)) {
-      posB_22.x = (_mtl_i.xlv_TEXCOORD0.x + (lengthSign_31 * 0.5));
-    };
-    if (horzSpan_30) {
-      posB_22.y = (_mtl_i.xlv_TEXCOORD0.y + (lengthSign_31 * 0.5));
-    };
-    posN_21.x = (posB_22.x - tmpvar_63);
-    posN_21.y = (posB_22.y - tmpvar_64);
-    posP_20.x = (posB_22.x + tmpvar_63);
-    posP_20.y = (posB_22.y + tmpvar_64);
-    subpixD_19 = ((-2.0 * tmpvar_62) + 3.0);
-    float4 tmpvar_65 = 0;
-    tmpvar_65 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)(posN_21), level(0.0)));
-    lumaEndN_18 = tmpvar_65.w;
-    subpixE_17 = (tmpvar_62 * tmpvar_62);
+    float4 tmpvar_61 = 0;
+    tmpvar_61.zw = float2(0.0, 0.0);
+    tmpvar_61.xy = (_mtl_i.xlv_TEXCOORD0 - _mtl_u._MainTex_TexelSize.xy);
+    half4 tmpvar_62 = 0;
+    tmpvar_62 = half4(tmpvar_61);
+    float4 tmpvar_63 = 0;
+    tmpvar_63 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_62.xy)), level(tmpvar_62.w)));
+    float4 tmpvar_64 = 0;
+    tmpvar_64.zw = float2(0.0, 0.0);
+    tmpvar_64.xy = (_mtl_i.xlv_TEXCOORD0 + _mtl_u._MainTex_TexelSize.xy);
+    half4 tmpvar_65 = 0;
+    tmpvar_65 = half4(tmpvar_64);
     float4 tmpvar_66 = 0;
-    tmpvar_66 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)(posP_20), level(0.0)));
-    lumaEndP_16 = tmpvar_66.w;
-    if (!(pairN_23)) {
-      lumaNN_25 = lumaSS_24;
+    tmpvar_66 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_65.xy)), level(tmpvar_65.w)));
+    float4 tmpvar_67 = 0;
+    tmpvar_67.zw = float2(0.0, 0.0);
+    tmpvar_67.xy = (_mtl_i.xlv_TEXCOORD0 + (float2(1.0, -1.0) * _mtl_u._MainTex_TexelSize.xy));
+    half4 tmpvar_68 = 0;
+    tmpvar_68 = half4(tmpvar_67);
+    float4 tmpvar_69 = 0;
+    tmpvar_69 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_68.xy)), level(tmpvar_68.w)));
+    float4 tmpvar_70 = 0;
+    tmpvar_70.zw = float2(0.0, 0.0);
+    tmpvar_70.xy = (_mtl_i.xlv_TEXCOORD0 + (float2(-1.0, 1.0) * _mtl_u._MainTex_TexelSize.xy));
+    half4 tmpvar_71 = 0;
+    tmpvar_71 = half4(tmpvar_70);
+    float4 tmpvar_72 = 0;
+    tmpvar_72 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_71.xy)), level(tmpvar_71.w)));
+    lumaNS_38 = (tmpvar_55.w + tmpvar_48.w);
+    lumaWE_37 = (tmpvar_59.w + tmpvar_52.w);
+    subpixRcpRange_36 = (1.0/(range_39));
+    lumaNESE_35 = (tmpvar_69.w + tmpvar_66.w);
+    lumaNWSW_34 = (tmpvar_63.w + tmpvar_72.w);
+    lengthSign_33 = tmpvar_1.x;
+    horzSpan_32 = ((abs(
+      ((-2.0 * tmpvar_59.w) + lumaNWSW_34)
+    ) + (
+      (abs(((-2.0 * rgbyM_42.w) + lumaNS_38)) * 2.0)
+     + 
+      abs(((-2.0 * tmpvar_52.w) + lumaNESE_35))
+    )) >= (abs(
+      ((-2.0 * tmpvar_48.w) + (tmpvar_72.w + tmpvar_66.w))
+    ) + (
+      (abs(((-2.0 * rgbyM_42.w) + lumaWE_37)) * 2.0)
+     + 
+      abs(((-2.0 * tmpvar_55.w) + (tmpvar_63.w + tmpvar_69.w)))
+    )));
+    subpixA_31 = (((lumaNS_38 + lumaWE_37) * 2.0) + (lumaNWSW_34 + lumaNESE_35));
+    if (!(horzSpan_32)) {
+      lumaN_40 = tmpvar_58;
     };
-    gradientScaled_15 = (tmpvar_61 / 4.0);
+    if (!(horzSpan_32)) {
+      lumaS_41 = tmpvar_51;
+    };
+    if (horzSpan_32) {
+      lengthSign_33 = tmpvar_1.y;
+    };
+    subpixB_30 = ((subpixA_31 * 0.0833333) - rgbyM_42.w);
+    gradientN_29 = (lumaN_40 - rgbyM_42.w);
+    gradientS_28 = (lumaS_41 - rgbyM_42.w);
+    lumaNN_27 = (lumaN_40 + rgbyM_42.w);
+    lumaSS_26 = (lumaS_41 + rgbyM_42.w);
+    pairN_25 = (abs(gradientN_29) >= abs(gradientS_28));
+    gradient_24 = max (abs(gradientN_29), abs(gradientS_28));
+    if (pairN_25) {
+      lengthSign_33 = -(lengthSign_33);
+    };
+    half tmpvar_73 = 0;
+    tmpvar_73 = half((abs(subpixB_30) * subpixRcpRange_36));
+    subpixC_23 = float(saturate(tmpvar_73));
+    posB_22 = _mtl_i.xlv_TEXCOORD0;
+    float tmpvar_74 = 0;
+    if (!(horzSpan_32)) {
+      tmpvar_74 = 0.0;
+    } else {
+      tmpvar_74 = tmpvar_1.x;
+    };
+    float tmpvar_75 = 0;
+    if (horzSpan_32) {
+      tmpvar_75 = 0.0;
+    } else {
+      tmpvar_75 = tmpvar_1.y;
+    };
+    if (!(horzSpan_32)) {
+      posB_22.x = (_mtl_i.xlv_TEXCOORD0.x + (lengthSign_33 * 0.5));
+    };
+    if (horzSpan_32) {
+      posB_22.y = (_mtl_i.xlv_TEXCOORD0.y + (lengthSign_33 * 0.5));
+    };
+    posN_21.x = (posB_22.x - tmpvar_74);
+    posN_21.y = (posB_22.y - tmpvar_75);
+    posP_20.x = (posB_22.x + tmpvar_74);
+    posP_20.y = (posB_22.y + tmpvar_75);
+    subpixD_19 = ((-2.0 * subpixC_23) + 3.0);
+    float4 tmpvar_76 = 0;
+    tmpvar_76.zw = float2(0.0, 0.0);
+    tmpvar_76.xy = posN_21;
+    half4 tmpvar_77 = 0;
+    tmpvar_77 = half4(tmpvar_76);
+    float4 tmpvar_78 = 0;
+    tmpvar_78 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_77.xy)), level(tmpvar_77.w)));
+    lumaEndN_18 = tmpvar_78.w;
+    subpixE_17 = (subpixC_23 * subpixC_23);
+    float4 tmpvar_79 = 0;
+    tmpvar_79.zw = float2(0.0, 0.0);
+    tmpvar_79.xy = posP_20;
+    half4 tmpvar_80 = 0;
+    tmpvar_80 = half4(tmpvar_79);
+    float4 tmpvar_81 = 0;
+    tmpvar_81 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_80.xy)), level(tmpvar_80.w)));
+    lumaEndP_16 = tmpvar_81.w;
+    if (!(pairN_25)) {
+      lumaNN_27 = lumaSS_26;
+    };
+    gradientScaled_15 = (gradient_24 / 4.0);
     subpixF_14 = (subpixD_19 * subpixE_17);
-    lumaMLTZero_13 = ((tmpvar_41.w - (lumaNN_25 * 0.5)) < 0.0);
-    lumaEndN_18 = (tmpvar_65.w - (lumaNN_25 * 0.5));
-    lumaEndP_16 = (tmpvar_66.w - (lumaNN_25 * 0.5));
+    lumaMLTZero_13 = (rgbyM_42.w < (lumaNN_27 * 0.5));
+    lumaEndN_18 = (tmpvar_78.w - (lumaNN_27 * 0.5));
+    lumaEndP_16 = (tmpvar_81.w - (lumaNN_27 * 0.5));
     doneN_12 = (abs(lumaEndN_18) >= gradientScaled_15);
     doneP_11 = (abs(lumaEndP_16) >= gradientScaled_15);
     if (!(doneN_12)) {
-      posN_21.x = (posN_21.x - tmpvar_63);
+      posN_21.x = (posN_21.x - tmpvar_74);
     };
     if (!(doneN_12)) {
-      posN_21.y = (posN_21.y - tmpvar_64);
+      posN_21.y = (posN_21.y - tmpvar_75);
     };
     doneNP_10 = !((doneN_12 && doneP_11));
     if (!(doneP_11)) {
-      posP_20.x = (posP_20.x + tmpvar_63);
+      posP_20.x = (posP_20.x + tmpvar_74);
     };
     if (!(doneP_11)) {
-      posP_20.y = (posP_20.y + tmpvar_64);
+      posP_20.y = (posP_20.y + tmpvar_75);
     };
     if (doneNP_10) {
       if (!(doneN_12)) {
-        lumaEndN_18 = _MainTex.sample(_mtlsmp__MainTex, (float2)(posN_21), level(0.0)).w;
+        float4 tmpvar_82 = 0;
+        tmpvar_82.zw = float2(0.0, 0.0);
+        tmpvar_82.xy = posN_21;
+        half4 tmpvar_83 = 0;
+        tmpvar_83 = half4(tmpvar_82);
+        float4 tmpvar_84 = 0;
+        tmpvar_84 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_83.xy)), level(tmpvar_83.w)));
+        lumaEndN_18 = tmpvar_84.w;
       };
       if (!(doneP_11)) {
-        lumaEndP_16 = _MainTex.sample(_mtlsmp__MainTex, (float2)(posP_20), level(0.0)).w;
+        float4 tmpvar_85 = 0;
+        tmpvar_85.zw = float2(0.0, 0.0);
+        tmpvar_85.xy = posP_20;
+        half4 tmpvar_86 = 0;
+        tmpvar_86 = half4(tmpvar_85);
+        float4 tmpvar_87 = 0;
+        tmpvar_87 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_86.xy)), level(tmpvar_86.w)));
+        lumaEndP_16 = tmpvar_87.w;
       };
       if (!(doneN_12)) {
-        lumaEndN_18 = (lumaEndN_18 - (lumaNN_25 * 0.5));
+        lumaEndN_18 = (lumaEndN_18 - (lumaNN_27 * 0.5));
       };
       if (!(doneP_11)) {
-        lumaEndP_16 = (lumaEndP_16 - (lumaNN_25 * 0.5));
+        lumaEndP_16 = (lumaEndP_16 - (lumaNN_27 * 0.5));
       };
       doneN_12 = (abs(lumaEndN_18) >= gradientScaled_15);
       doneP_11 = (abs(lumaEndP_16) >= gradientScaled_15);
       if (!(doneN_12)) {
-        posN_21.x = (posN_21.x - tmpvar_63);
+        posN_21.x = (posN_21.x - tmpvar_74);
       };
       if (!(doneN_12)) {
-        posN_21.y = (posN_21.y - tmpvar_64);
+        posN_21.y = (posN_21.y - tmpvar_75);
       };
       doneNP_10 = !((doneN_12 && doneP_11));
       if (!(doneP_11)) {
-        posP_20.x = (posP_20.x + tmpvar_63);
+        posP_20.x = (posP_20.x + tmpvar_74);
       };
       if (!(doneP_11)) {
-        posP_20.y = (posP_20.y + tmpvar_64);
+        posP_20.y = (posP_20.y + tmpvar_75);
       };
       if (doneNP_10) {
         if (!(doneN_12)) {
-          lumaEndN_18 = _MainTex.sample(_mtlsmp__MainTex, (float2)(posN_21), level(0.0)).w;
+          float4 tmpvar_88 = 0;
+          tmpvar_88.zw = float2(0.0, 0.0);
+          tmpvar_88.xy = posN_21;
+          half4 tmpvar_89 = 0;
+          tmpvar_89 = half4(tmpvar_88);
+          float4 tmpvar_90 = 0;
+          tmpvar_90 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_89.xy)), level(tmpvar_89.w)));
+          lumaEndN_18 = tmpvar_90.w;
         };
         if (!(doneP_11)) {
-          lumaEndP_16 = _MainTex.sample(_mtlsmp__MainTex, (float2)(posP_20), level(0.0)).w;
+          float4 tmpvar_91 = 0;
+          tmpvar_91.zw = float2(0.0, 0.0);
+          tmpvar_91.xy = posP_20;
+          half4 tmpvar_92 = 0;
+          tmpvar_92 = half4(tmpvar_91);
+          float4 tmpvar_93 = 0;
+          tmpvar_93 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_92.xy)), level(tmpvar_92.w)));
+          lumaEndP_16 = tmpvar_93.w;
         };
         if (!(doneN_12)) {
-          lumaEndN_18 = (lumaEndN_18 - (lumaNN_25 * 0.5));
+          lumaEndN_18 = (lumaEndN_18 - (lumaNN_27 * 0.5));
         };
         if (!(doneP_11)) {
-          lumaEndP_16 = (lumaEndP_16 - (lumaNN_25 * 0.5));
+          lumaEndP_16 = (lumaEndP_16 - (lumaNN_27 * 0.5));
         };
         doneN_12 = (abs(lumaEndN_18) >= gradientScaled_15);
         doneP_11 = (abs(lumaEndP_16) >= gradientScaled_15);
         if (!(doneN_12)) {
-          posN_21.x = (posN_21.x - tmpvar_63);
+          posN_21.x = (posN_21.x - tmpvar_74);
         };
         if (!(doneN_12)) {
-          posN_21.y = (posN_21.y - tmpvar_64);
+          posN_21.y = (posN_21.y - tmpvar_75);
         };
         doneNP_10 = !((doneN_12 && doneP_11));
         if (!(doneP_11)) {
-          posP_20.x = (posP_20.x + tmpvar_63);
+          posP_20.x = (posP_20.x + tmpvar_74);
         };
         if (!(doneP_11)) {
-          posP_20.y = (posP_20.y + tmpvar_64);
+          posP_20.y = (posP_20.y + tmpvar_75);
         };
         if (doneNP_10) {
           if (!(doneN_12)) {
-            lumaEndN_18 = _MainTex.sample(_mtlsmp__MainTex, (float2)(posN_21), level(0.0)).w;
+            float4 tmpvar_94 = 0;
+            tmpvar_94.zw = float2(0.0, 0.0);
+            tmpvar_94.xy = posN_21;
+            half4 tmpvar_95 = 0;
+            tmpvar_95 = half4(tmpvar_94);
+            float4 tmpvar_96 = 0;
+            tmpvar_96 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_95.xy)), level(tmpvar_95.w)));
+            lumaEndN_18 = tmpvar_96.w;
           };
           if (!(doneP_11)) {
-            lumaEndP_16 = _MainTex.sample(_mtlsmp__MainTex, (float2)(posP_20), level(0.0)).w;
+            float4 tmpvar_97 = 0;
+            tmpvar_97.zw = float2(0.0, 0.0);
+            tmpvar_97.xy = posP_20;
+            half4 tmpvar_98 = 0;
+            tmpvar_98 = half4(tmpvar_97);
+            float4 tmpvar_99 = 0;
+            tmpvar_99 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_98.xy)), level(tmpvar_98.w)));
+            lumaEndP_16 = tmpvar_99.w;
           };
           if (!(doneN_12)) {
-            lumaEndN_18 = (lumaEndN_18 - (lumaNN_25 * 0.5));
+            lumaEndN_18 = (lumaEndN_18 - (lumaNN_27 * 0.5));
           };
           if (!(doneP_11)) {
-            lumaEndP_16 = (lumaEndP_16 - (lumaNN_25 * 0.5));
+            lumaEndP_16 = (lumaEndP_16 - (lumaNN_27 * 0.5));
           };
           doneN_12 = (abs(lumaEndN_18) >= gradientScaled_15);
           doneP_11 = (abs(lumaEndP_16) >= gradientScaled_15);
           if (!(doneN_12)) {
-            posN_21.x = (posN_21.x - tmpvar_63);
+            posN_21.x = (posN_21.x - tmpvar_74);
           };
           if (!(doneN_12)) {
-            posN_21.y = (posN_21.y - tmpvar_64);
+            posN_21.y = (posN_21.y - tmpvar_75);
           };
           doneNP_10 = !((doneN_12 && doneP_11));
           if (!(doneP_11)) {
-            posP_20.x = (posP_20.x + tmpvar_63);
+            posP_20.x = (posP_20.x + tmpvar_74);
           };
           if (!(doneP_11)) {
-            posP_20.y = (posP_20.y + tmpvar_64);
+            posP_20.y = (posP_20.y + tmpvar_75);
           };
           if (doneNP_10) {
             if (!(doneN_12)) {
-              lumaEndN_18 = _MainTex.sample(_mtlsmp__MainTex, (float2)(posN_21), level(0.0)).w;
+              float4 tmpvar_100 = 0;
+              tmpvar_100.zw = float2(0.0, 0.0);
+              tmpvar_100.xy = posN_21;
+              half4 tmpvar_101 = 0;
+              tmpvar_101 = half4(tmpvar_100);
+              float4 tmpvar_102 = 0;
+              tmpvar_102 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_101.xy)), level(tmpvar_101.w)));
+              lumaEndN_18 = tmpvar_102.w;
             };
             if (!(doneP_11)) {
-              lumaEndP_16 = _MainTex.sample(_mtlsmp__MainTex, (float2)(posP_20), level(0.0)).w;
+              float4 tmpvar_103 = 0;
+              tmpvar_103.zw = float2(0.0, 0.0);
+              tmpvar_103.xy = posP_20;
+              half4 tmpvar_104 = 0;
+              tmpvar_104 = half4(tmpvar_103);
+              float4 tmpvar_105 = 0;
+              tmpvar_105 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_104.xy)), level(tmpvar_104.w)));
+              lumaEndP_16 = tmpvar_105.w;
             };
             if (!(doneN_12)) {
-              lumaEndN_18 = (lumaEndN_18 - (lumaNN_25 * 0.5));
+              lumaEndN_18 = (lumaEndN_18 - (lumaNN_27 * 0.5));
             };
             if (!(doneP_11)) {
-              lumaEndP_16 = (lumaEndP_16 - (lumaNN_25 * 0.5));
+              lumaEndP_16 = (lumaEndP_16 - (lumaNN_27 * 0.5));
             };
             doneN_12 = (abs(lumaEndN_18) >= gradientScaled_15);
             doneP_11 = (abs(lumaEndP_16) >= gradientScaled_15);
             if (!(doneN_12)) {
-              posN_21.x = (posN_21.x - (tmpvar_63 * 1.5));
+              posN_21.x = (posN_21.x - (tmpvar_74 * 1.5));
             };
             if (!(doneN_12)) {
-              posN_21.y = (posN_21.y - (tmpvar_64 * 1.5));
+              posN_21.y = (posN_21.y - (tmpvar_75 * 1.5));
             };
             doneNP_10 = !((doneN_12 && doneP_11));
             if (!(doneP_11)) {
-              posP_20.x = (posP_20.x + (tmpvar_63 * 1.5));
+              posP_20.x = (posP_20.x + (tmpvar_74 * 1.5));
             };
             if (!(doneP_11)) {
-              posP_20.y = (posP_20.y + (tmpvar_64 * 1.5));
+              posP_20.y = (posP_20.y + (tmpvar_75 * 1.5));
             };
             if (doneNP_10) {
               if (!(doneN_12)) {
-                lumaEndN_18 = _MainTex.sample(_mtlsmp__MainTex, (float2)(posN_21), level(0.0)).w;
+                float4 tmpvar_106 = 0;
+                tmpvar_106.zw = float2(0.0, 0.0);
+                tmpvar_106.xy = posN_21;
+                half4 tmpvar_107 = 0;
+                tmpvar_107 = half4(tmpvar_106);
+                float4 tmpvar_108 = 0;
+                tmpvar_108 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_107.xy)), level(tmpvar_107.w)));
+                lumaEndN_18 = tmpvar_108.w;
               };
               if (!(doneP_11)) {
-                lumaEndP_16 = _MainTex.sample(_mtlsmp__MainTex, (float2)(posP_20), level(0.0)).w;
+                float4 tmpvar_109 = 0;
+                tmpvar_109.zw = float2(0.0, 0.0);
+                tmpvar_109.xy = posP_20;
+                half4 tmpvar_110 = 0;
+                tmpvar_110 = half4(tmpvar_109);
+                float4 tmpvar_111 = 0;
+                tmpvar_111 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_110.xy)), level(tmpvar_110.w)));
+                lumaEndP_16 = tmpvar_111.w;
               };
               if (!(doneN_12)) {
-                lumaEndN_18 = (lumaEndN_18 - (lumaNN_25 * 0.5));
+                lumaEndN_18 = (lumaEndN_18 - (lumaNN_27 * 0.5));
               };
               if (!(doneP_11)) {
-                lumaEndP_16 = (lumaEndP_16 - (lumaNN_25 * 0.5));
+                lumaEndP_16 = (lumaEndP_16 - (lumaNN_27 * 0.5));
               };
               doneN_12 = (abs(lumaEndN_18) >= gradientScaled_15);
               doneP_11 = (abs(lumaEndP_16) >= gradientScaled_15);
               if (!(doneN_12)) {
-                posN_21.x = (posN_21.x - (tmpvar_63 * 2.0));
+                posN_21.x = (posN_21.x - (tmpvar_74 * 2.0));
               };
               if (!(doneN_12)) {
-                posN_21.y = (posN_21.y - (tmpvar_64 * 2.0));
+                posN_21.y = (posN_21.y - (tmpvar_75 * 2.0));
               };
               doneNP_10 = !((doneN_12 && doneP_11));
               if (!(doneP_11)) {
-                posP_20.x = (posP_20.x + (tmpvar_63 * 2.0));
+                posP_20.x = (posP_20.x + (tmpvar_74 * 2.0));
               };
               if (!(doneP_11)) {
-                posP_20.y = (posP_20.y + (tmpvar_64 * 2.0));
+                posP_20.y = (posP_20.y + (tmpvar_75 * 2.0));
               };
               if (doneNP_10) {
                 if (!(doneN_12)) {
-                  lumaEndN_18 = _MainTex.sample(_mtlsmp__MainTex, (float2)(posN_21), level(0.0)).w;
+                  float4 tmpvar_112 = 0;
+                  tmpvar_112.zw = float2(0.0, 0.0);
+                  tmpvar_112.xy = posN_21;
+                  half4 tmpvar_113 = 0;
+                  tmpvar_113 = half4(tmpvar_112);
+                  float4 tmpvar_114 = 0;
+                  tmpvar_114 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_113.xy)), level(tmpvar_113.w)));
+                  lumaEndN_18 = tmpvar_114.w;
                 };
                 if (!(doneP_11)) {
-                  lumaEndP_16 = _MainTex.sample(_mtlsmp__MainTex, (float2)(posP_20), level(0.0)).w;
+                  float4 tmpvar_115 = 0;
+                  tmpvar_115.zw = float2(0.0, 0.0);
+                  tmpvar_115.xy = posP_20;
+                  half4 tmpvar_116 = 0;
+                  tmpvar_116 = half4(tmpvar_115);
+                  float4 tmpvar_117 = 0;
+                  tmpvar_117 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_116.xy)), level(tmpvar_116.w)));
+                  lumaEndP_16 = tmpvar_117.w;
                 };
                 if (!(doneN_12)) {
-                  lumaEndN_18 = (lumaEndN_18 - (lumaNN_25 * 0.5));
+                  lumaEndN_18 = (lumaEndN_18 - (lumaNN_27 * 0.5));
                 };
                 if (!(doneP_11)) {
-                  lumaEndP_16 = (lumaEndP_16 - (lumaNN_25 * 0.5));
+                  lumaEndP_16 = (lumaEndP_16 - (lumaNN_27 * 0.5));
                 };
                 doneN_12 = (abs(lumaEndN_18) >= gradientScaled_15);
                 doneP_11 = (abs(lumaEndP_16) >= gradientScaled_15);
                 if (!(doneN_12)) {
-                  posN_21.x = (posN_21.x - (tmpvar_63 * 2.0));
+                  posN_21.x = (posN_21.x - (tmpvar_74 * 2.0));
                 };
                 if (!(doneN_12)) {
-                  posN_21.y = (posN_21.y - (tmpvar_64 * 2.0));
+                  posN_21.y = (posN_21.y - (tmpvar_75 * 2.0));
                 };
                 doneNP_10 = !((doneN_12 && doneP_11));
                 if (!(doneP_11)) {
-                  posP_20.x = (posP_20.x + (tmpvar_63 * 2.0));
+                  posP_20.x = (posP_20.x + (tmpvar_74 * 2.0));
                 };
                 if (!(doneP_11)) {
-                  posP_20.y = (posP_20.y + (tmpvar_64 * 2.0));
+                  posP_20.y = (posP_20.y + (tmpvar_75 * 2.0));
                 };
                 if (doneNP_10) {
                   if (!(doneN_12)) {
-                    lumaEndN_18 = _MainTex.sample(_mtlsmp__MainTex, (float2)(posN_21), level(0.0)).w;
+                    float4 tmpvar_118 = 0;
+                    tmpvar_118.zw = float2(0.0, 0.0);
+                    tmpvar_118.xy = posN_21;
+                    half4 tmpvar_119 = 0;
+                    tmpvar_119 = half4(tmpvar_118);
+                    float4 tmpvar_120 = 0;
+                    tmpvar_120 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_119.xy)), level(tmpvar_119.w)));
+                    lumaEndN_18 = tmpvar_120.w;
                   };
                   if (!(doneP_11)) {
-                    lumaEndP_16 = _MainTex.sample(_mtlsmp__MainTex, (float2)(posP_20), level(0.0)).w;
+                    float4 tmpvar_121 = 0;
+                    tmpvar_121.zw = float2(0.0, 0.0);
+                    tmpvar_121.xy = posP_20;
+                    half4 tmpvar_122 = 0;
+                    tmpvar_122 = half4(tmpvar_121);
+                    float4 tmpvar_123 = 0;
+                    tmpvar_123 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_122.xy)), level(tmpvar_122.w)));
+                    lumaEndP_16 = tmpvar_123.w;
                   };
                   if (!(doneN_12)) {
-                    lumaEndN_18 = (lumaEndN_18 - (lumaNN_25 * 0.5));
+                    lumaEndN_18 = (lumaEndN_18 - (lumaNN_27 * 0.5));
                   };
                   if (!(doneP_11)) {
-                    lumaEndP_16 = (lumaEndP_16 - (lumaNN_25 * 0.5));
+                    lumaEndP_16 = (lumaEndP_16 - (lumaNN_27 * 0.5));
                   };
                   doneN_12 = (abs(lumaEndN_18) >= gradientScaled_15);
                   doneP_11 = (abs(lumaEndP_16) >= gradientScaled_15);
                   if (!(doneN_12)) {
-                    posN_21.x = (posN_21.x - (tmpvar_63 * 2.0));
+                    posN_21.x = (posN_21.x - (tmpvar_74 * 2.0));
                   };
                   if (!(doneN_12)) {
-                    posN_21.y = (posN_21.y - (tmpvar_64 * 2.0));
+                    posN_21.y = (posN_21.y - (tmpvar_75 * 2.0));
                   };
                   doneNP_10 = !((doneN_12 && doneP_11));
                   if (!(doneP_11)) {
-                    posP_20.x = (posP_20.x + (tmpvar_63 * 2.0));
+                    posP_20.x = (posP_20.x + (tmpvar_74 * 2.0));
                   };
                   if (!(doneP_11)) {
-                    posP_20.y = (posP_20.y + (tmpvar_64 * 2.0));
+                    posP_20.y = (posP_20.y + (tmpvar_75 * 2.0));
                   };
                   if (doneNP_10) {
                     if (!(doneN_12)) {
-                      lumaEndN_18 = _MainTex.sample(_mtlsmp__MainTex, (float2)(posN_21), level(0.0)).w;
+                      float4 tmpvar_124 = 0;
+                      tmpvar_124.zw = float2(0.0, 0.0);
+                      tmpvar_124.xy = posN_21;
+                      half4 tmpvar_125 = 0;
+                      tmpvar_125 = half4(tmpvar_124);
+                      float4 tmpvar_126 = 0;
+                      tmpvar_126 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_125.xy)), level(tmpvar_125.w)));
+                      lumaEndN_18 = tmpvar_126.w;
                     };
                     if (!(doneP_11)) {
-                      lumaEndP_16 = _MainTex.sample(_mtlsmp__MainTex, (float2)(posP_20), level(0.0)).w;
+                      float4 tmpvar_127 = 0;
+                      tmpvar_127.zw = float2(0.0, 0.0);
+                      tmpvar_127.xy = posP_20;
+                      half4 tmpvar_128 = 0;
+                      tmpvar_128 = half4(tmpvar_127);
+                      float4 tmpvar_129 = 0;
+                      tmpvar_129 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_128.xy)), level(tmpvar_128.w)));
+                      lumaEndP_16 = tmpvar_129.w;
                     };
                     if (!(doneN_12)) {
-                      lumaEndN_18 = (lumaEndN_18 - (lumaNN_25 * 0.5));
+                      lumaEndN_18 = (lumaEndN_18 - (lumaNN_27 * 0.5));
                     };
                     if (!(doneP_11)) {
-                      lumaEndP_16 = (lumaEndP_16 - (lumaNN_25 * 0.5));
+                      lumaEndP_16 = (lumaEndP_16 - (lumaNN_27 * 0.5));
                     };
                     doneN_12 = (abs(lumaEndN_18) >= gradientScaled_15);
                     doneP_11 = (abs(lumaEndP_16) >= gradientScaled_15);
                     if (!(doneN_12)) {
-                      posN_21.x = (posN_21.x - (tmpvar_63 * 2.0));
+                      posN_21.x = (posN_21.x - (tmpvar_74 * 2.0));
                     };
                     if (!(doneN_12)) {
-                      posN_21.y = (posN_21.y - (tmpvar_64 * 2.0));
+                      posN_21.y = (posN_21.y - (tmpvar_75 * 2.0));
                     };
                     doneNP_10 = !((doneN_12 && doneP_11));
                     if (!(doneP_11)) {
-                      posP_20.x = (posP_20.x + (tmpvar_63 * 2.0));
+                      posP_20.x = (posP_20.x + (tmpvar_74 * 2.0));
                     };
                     if (!(doneP_11)) {
-                      posP_20.y = (posP_20.y + (tmpvar_64 * 2.0));
+                      posP_20.y = (posP_20.y + (tmpvar_75 * 2.0));
                     };
                     if (doneNP_10) {
                       if (!(doneN_12)) {
-                        lumaEndN_18 = _MainTex.sample(_mtlsmp__MainTex, (float2)(posN_21), level(0.0)).w;
+                        float4 tmpvar_130 = 0;
+                        tmpvar_130.zw = float2(0.0, 0.0);
+                        tmpvar_130.xy = posN_21;
+                        half4 tmpvar_131 = 0;
+                        tmpvar_131 = half4(tmpvar_130);
+                        float4 tmpvar_132 = 0;
+                        tmpvar_132 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_131.xy)), level(tmpvar_131.w)));
+                        lumaEndN_18 = tmpvar_132.w;
                       };
                       if (!(doneP_11)) {
-                        lumaEndP_16 = _MainTex.sample(_mtlsmp__MainTex, (float2)(posP_20), level(0.0)).w;
+                        float4 tmpvar_133 = 0;
+                        tmpvar_133.zw = float2(0.0, 0.0);
+                        tmpvar_133.xy = posP_20;
+                        half4 tmpvar_134 = 0;
+                        tmpvar_134 = half4(tmpvar_133);
+                        float4 tmpvar_135 = 0;
+                        tmpvar_135 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_134.xy)), level(tmpvar_134.w)));
+                        lumaEndP_16 = tmpvar_135.w;
                       };
                       if (!(doneN_12)) {
-                        lumaEndN_18 = (lumaEndN_18 - (lumaNN_25 * 0.5));
+                        lumaEndN_18 = (lumaEndN_18 - (lumaNN_27 * 0.5));
                       };
                       if (!(doneP_11)) {
-                        lumaEndP_16 = (lumaEndP_16 - (lumaNN_25 * 0.5));
+                        lumaEndP_16 = (lumaEndP_16 - (lumaNN_27 * 0.5));
                       };
                       doneN_12 = (abs(lumaEndN_18) >= gradientScaled_15);
                       doneP_11 = (abs(lumaEndP_16) >= gradientScaled_15);
                       if (!(doneN_12)) {
-                        posN_21.x = (posN_21.x - (tmpvar_63 * 4.0));
+                        posN_21.x = (posN_21.x - (tmpvar_74 * 4.0));
                       };
                       if (!(doneN_12)) {
-                        posN_21.y = (posN_21.y - (tmpvar_64 * 4.0));
+                        posN_21.y = (posN_21.y - (tmpvar_75 * 4.0));
                       };
                       doneNP_10 = !((doneN_12 && doneP_11));
                       if (!(doneP_11)) {
-                        posP_20.x = (posP_20.x + (tmpvar_63 * 4.0));
+                        posP_20.x = (posP_20.x + (tmpvar_74 * 4.0));
                       };
                       if (!(doneP_11)) {
-                        posP_20.y = (posP_20.y + (tmpvar_64 * 4.0));
+                        posP_20.y = (posP_20.y + (tmpvar_75 * 4.0));
                       };
                       if (doneNP_10) {
                         if (!(doneN_12)) {
-                          lumaEndN_18 = _MainTex.sample(_mtlsmp__MainTex, (float2)(posN_21), level(0.0)).w;
+                          float4 tmpvar_136 = 0;
+                          tmpvar_136.zw = float2(0.0, 0.0);
+                          tmpvar_136.xy = posN_21;
+                          half4 tmpvar_137 = 0;
+                          tmpvar_137 = half4(tmpvar_136);
+                          float4 tmpvar_138 = 0;
+                          tmpvar_138 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_137.xy)), level(tmpvar_137.w)));
+                          lumaEndN_18 = tmpvar_138.w;
                         };
                         if (!(doneP_11)) {
-                          lumaEndP_16 = _MainTex.sample(_mtlsmp__MainTex, (float2)(posP_20), level(0.0)).w;
+                          float4 tmpvar_139 = 0;
+                          tmpvar_139.zw = float2(0.0, 0.0);
+                          tmpvar_139.xy = posP_20;
+                          half4 tmpvar_140 = 0;
+                          tmpvar_140 = half4(tmpvar_139);
+                          float4 tmpvar_141 = 0;
+                          tmpvar_141 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_140.xy)), level(tmpvar_140.w)));
+                          lumaEndP_16 = tmpvar_141.w;
                         };
                         if (!(doneN_12)) {
-                          lumaEndN_18 = (lumaEndN_18 - (lumaNN_25 * 0.5));
+                          lumaEndN_18 = (lumaEndN_18 - (lumaNN_27 * 0.5));
                         };
                         if (!(doneP_11)) {
-                          lumaEndP_16 = (lumaEndP_16 - (lumaNN_25 * 0.5));
+                          lumaEndP_16 = (lumaEndP_16 - (lumaNN_27 * 0.5));
                         };
                         doneN_12 = (abs(lumaEndN_18) >= gradientScaled_15);
                         doneP_11 = (abs(lumaEndP_16) >= gradientScaled_15);
                         if (!(doneN_12)) {
-                          posN_21.x = (posN_21.x - (tmpvar_63 * 8.0));
+                          posN_21.x = (posN_21.x - (tmpvar_74 * 8.0));
                         };
                         if (!(doneN_12)) {
-                          posN_21.y = (posN_21.y - (tmpvar_64 * 8.0));
+                          posN_21.y = (posN_21.y - (tmpvar_75 * 8.0));
                         };
                         doneNP_10 = !((doneN_12 && doneP_11));
                         if (!(doneP_11)) {
-                          posP_20.x = (posP_20.x + (tmpvar_63 * 8.0));
+                          posP_20.x = (posP_20.x + (tmpvar_74 * 8.0));
                         };
                         if (!(doneP_11)) {
-                          posP_20.y = (posP_20.y + (tmpvar_64 * 8.0));
+                          posP_20.y = (posP_20.y + (tmpvar_75 * 8.0));
                         };
                       };
                     };
@@ -500,50 +673,55 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
     };
     dstN_9 = (_mtl_i.xlv_TEXCOORD0.x - posN_21.x);
     dstP_8 = (posP_20.x - _mtl_i.xlv_TEXCOORD0.x);
-    if (!(horzSpan_30)) {
+    if (!(horzSpan_32)) {
       dstN_9 = (_mtl_i.xlv_TEXCOORD0.y - posN_21.y);
     };
-    if (!(horzSpan_30)) {
+    if (!(horzSpan_32)) {
       dstP_8 = (posP_20.y - _mtl_i.xlv_TEXCOORD0.y);
     };
     goodSpanN_7 = ((lumaEndN_18 < 0.0) != lumaMLTZero_13);
     goodSpanP_6 = ((lumaEndP_16 < 0.0) != lumaMLTZero_13);
     spanLengthRcp_5 = (1.0/((dstP_8 + dstN_9)));
-    float tmpvar_67 = 0;
-    tmpvar_67 = min (dstN_9, dstP_8);
-    bool tmpvar_68 = false;
+    float tmpvar_142 = 0;
+    tmpvar_142 = min (dstN_9, dstP_8);
+    bool tmpvar_143 = false;
     if ((dstN_9 < dstP_8)) {
-      tmpvar_68 = goodSpanN_7;
+      tmpvar_143 = goodSpanN_7;
     } else {
-      tmpvar_68 = goodSpanP_6;
+      tmpvar_143 = goodSpanP_6;
     };
-    pixelOffset_4 = ((tmpvar_67 * -(spanLengthRcp_5)) + 0.5);
+    pixelOffset_4 = ((tmpvar_142 * -(spanLengthRcp_5)) + 0.5);
     subpixH_3 = ((subpixF_14 * subpixF_14) * 0.75);
-    float tmpvar_69 = 0;
-    if (tmpvar_68) {
-      tmpvar_69 = pixelOffset_4;
+    float tmpvar_144 = 0;
+    if (tmpvar_143) {
+      tmpvar_144 = pixelOffset_4;
     } else {
-      tmpvar_69 = 0.0;
+      tmpvar_144 = 0.0;
     };
-    float tmpvar_70 = 0;
-    tmpvar_70 = max (tmpvar_69, subpixH_3);
-    if (!(horzSpan_30)) {
-      posM_40.x = (_mtl_i.xlv_TEXCOORD0.x + (tmpvar_70 * lengthSign_31));
+    float tmpvar_145 = 0;
+    tmpvar_145 = max (tmpvar_144, subpixH_3);
+    if (!(horzSpan_32)) {
+      posM_43.x = (_mtl_i.xlv_TEXCOORD0.x + (tmpvar_145 * lengthSign_33));
     };
-    if (horzSpan_30) {
-      posM_40.y = (_mtl_i.xlv_TEXCOORD0.y + (tmpvar_70 * lengthSign_31));
+    if (horzSpan_32) {
+      posM_43.y = (_mtl_i.xlv_TEXCOORD0.y + (tmpvar_145 * lengthSign_33));
     };
-    float4 tmpvar_71 = 0;
-    tmpvar_71.xyz = float3(_MainTex.sample(_mtlsmp__MainTex, (float2)(posM_40), level(0.0)).xyz);
-    tmpvar_71.w = tmpvar_41.w;
-    tmpvar_2 = tmpvar_71;
+    float4 tmpvar_146 = 0;
+    tmpvar_146.zw = float2(0.0, 0.0);
+    tmpvar_146.xy = posM_43;
+    half4 tmpvar_147 = 0;
+    tmpvar_147 = half4(tmpvar_146);
+    float4 tmpvar_148 = 0;
+    tmpvar_148.xyz = float3(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_147.xy)), level(tmpvar_147.w)).xyz);
+    tmpvar_148.w = rgbyM_42.w;
+    tmpvar_2 = tmpvar_148;
   };
   _mtl_o._fragData = half4(tmpvar_2);
   return _mtl_o;
 }
 
 
-// stats: 401 alu 32 tex 110 flow
+// stats: 424 alu 32 tex 110 flow
 // inputs: 1
 //  #0: xlv_TEXCOORD0 (high float) 2x1 [-1]
 // uniforms: 1 (total size: 16)

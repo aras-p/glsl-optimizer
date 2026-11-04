@@ -1,0 +1,20 @@
+#version 300 es
+uniform highp float value;
+out highp vec4 color;
+void main ()
+{
+  highp float live_2;
+  live_2 = value;
+  for (mediump int i_1 = 0; i_1 < 32; i_1++) {
+    live_2 = (live_2 * 1.01);
+  };
+  highp float tmpvar_3;
+  tmpvar_3 = (live_2 + 0.25);
+  if ((tmpvar_3 < 0.0)) discard;
+  color = vec4(tmpvar_3);
+}
+
+
+// stats: 6 alu 1 tex 3 flow
+// uniforms: 1 (total size: 0)
+//  #0: value (high float) 1x1 [-1]

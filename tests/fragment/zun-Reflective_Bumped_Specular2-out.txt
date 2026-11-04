@@ -8,45 +8,47 @@ uniform vec4 _SpecColor;
 uniform vec4 unity_Ambient;
 void main ()
 {
-  vec4 tmpvar_1;
-  tmpvar_1 = gl_TexCoord[0];
-  vec4 tmpvar_2;
-  tmpvar_2 = gl_TexCoord[2];
-  vec4 tmpvar_3;
-  tmpvar_3 = gl_TexCoord[3];
-  vec4 tmpvar_4;
-  tmpvar_4 = gl_TexCoord[4];
-  vec4 col_5;
-  vec4 light_6;
-  vec3 tmpvar_7;
-  tmpvar_7.x = tmpvar_2.w;
-  tmpvar_7.y = tmpvar_3.w;
-  tmpvar_7.z = tmpvar_4.w;
-  vec4 reflcol_8;
-  vec4 tmpvar_9;
-  tmpvar_9 = texture2D (_MainTex, tmpvar_1.xy);
-  vec4 normal_10;
-  normal_10.xy = ((texture2D (_BumpMap, tmpvar_1.zw).wy * 2.0) - 1.0);
-  normal_10.z = sqrt(((1.0 - 
-    (normal_10.x * normal_10.x)
-  ) - (normal_10.y * normal_10.y)));
-  vec3 tmpvar_11;
-  tmpvar_11.x = dot (tmpvar_2.xyz, normal_10.xyz);
-  tmpvar_11.y = dot (tmpvar_3.xyz, normal_10.xyz);
-  tmpvar_11.z = dot (tmpvar_4.xyz, normal_10.xyz);
-  reflcol_8 = (textureCube (_Cube, (tmpvar_7 - (2.0 * 
-    (dot (tmpvar_11, tmpvar_7) * tmpvar_11)
-  ))) * tmpvar_9.w);
-  light_6 = -(log2(texture2DProj (_LightBuffer, gl_TexCoord[1])));
-  light_6.xyz = (light_6.xyz + unity_Ambient.xyz);
-  vec4 c_12;
-  float spec_13;
-  spec_13 = (light_6.w * tmpvar_9.w);
-  c_12.xyz = (((tmpvar_9 * _Color).xyz * light_6.xyz) + ((light_6.xyz * _SpecColor.xyz) * spec_13));
-  c_12.w = ((reflcol_8.w * _ReflectColor.w) + (spec_13 * _SpecColor.w));
-  col_5.w = c_12.w;
-  col_5.xyz = (c_12.xyz + (reflcol_8.xyz * _ReflectColor.xyz));
-  gl_FragData[0] = col_5;
+  vec4 xlt_IN_hip_pack0_1;
+  vec4 xlt_IN_hip_screen_2;
+  vec4 xlt_IN_TtoW0_3;
+  vec4 xlt_IN_TtoW1_4;
+  vec4 xlt_IN_TtoW2_5;
+  xlt_IN_hip_pack0_1 = gl_TexCoord[0];
+  xlt_IN_hip_screen_2 = gl_TexCoord[1];
+  xlt_IN_TtoW0_3 = gl_TexCoord[2];
+  xlt_IN_TtoW1_4 = gl_TexCoord[3];
+  xlt_IN_TtoW2_5 = gl_TexCoord[4];
+  vec4 col_6;
+  vec4 light_7;
+  vec3 tmpvar_8;
+  tmpvar_8.x = xlt_IN_TtoW0_3.w;
+  tmpvar_8.y = xlt_IN_TtoW1_4.w;
+  tmpvar_8.z = xlt_IN_TtoW2_5.w;
+  vec4 reflcol_9;
+  vec4 tmpvar_10;
+  tmpvar_10 = texture2D (_MainTex, xlt_IN_hip_pack0_1.xy);
+  vec4 normal_11;
+  normal_11.xy = ((texture2D (_BumpMap, xlt_IN_hip_pack0_1.zw).wy * 2.0) - 1.0);
+  normal_11.z = sqrt(((1.0 - 
+    (normal_11.x * normal_11.x)
+  ) - (normal_11.y * normal_11.y)));
+  vec3 tmpvar_12;
+  tmpvar_12.x = dot (xlt_IN_TtoW0_3.xyz, normal_11.xyz);
+  tmpvar_12.y = dot (xlt_IN_TtoW1_4.xyz, normal_11.xyz);
+  tmpvar_12.z = dot (xlt_IN_TtoW2_5.xyz, normal_11.xyz);
+  reflcol_9 = (textureCube (_Cube, (tmpvar_8 - (2.0 * 
+    (dot (tmpvar_12, tmpvar_8) * tmpvar_12)
+  ))) * tmpvar_10.w);
+  light_7 = -(log2(texture2DProj (_LightBuffer, vec3(xlt_IN_hip_screen_2.xy, xlt_IN_hip_screen_2.w))));
+  light_7.xyz = (light_7.xyz + unity_Ambient.xyz);
+  vec4 c_13;
+  float spec_14;
+  spec_14 = (light_7.w * tmpvar_10.w);
+  c_13.xyz = (((tmpvar_10 * _Color).xyz * light_7.xyz) + ((light_7.xyz * _SpecColor.xyz) * spec_14));
+  c_13.w = ((reflcol_9.w * _ReflectColor.w) + (spec_14 * _SpecColor.w));
+  col_6.w = c_13.w;
+  col_6.xyz = (c_13.xyz + (reflcol_9.xyz * _ReflectColor.xyz));
+  gl_FragData[0] = col_6;
 }
 
 

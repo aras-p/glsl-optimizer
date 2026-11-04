@@ -12,26 +12,26 @@ void main ()
 {
   vec4 wpos_1;
   float z_2;
-  vec2 tmpvar_3;
-  vec4 pos_4;
-  pos_4.w = gl_Vertex.w;
-  pos_4.xyz = (gl_Vertex.xyz * _Scale.xyz);
+  vec2 o__ShadowZFade_3;
+  vec4 tmpvar_4;
+  tmpvar_4.w = gl_Vertex.w;
+  tmpvar_4.xyz = (gl_Vertex.xyz * _Scale.xyz);
   vec4 tmpvar_5;
   tmpvar_5.w = 0.0;
-  tmpvar_5.xyz = pos_4.xyz;
-  pos_4.xyz = mix (pos_4.xyz, (_TerrainEngineBendTree * tmpvar_5).xyz, gl_Color.www);
+  tmpvar_5.xyz = tmpvar_4.xyz;
+  tmpvar_4.xyz = mix (tmpvar_4.xyz, (_TerrainEngineBendTree * tmpvar_5).xyz, gl_Color.www);
   vec3 tmpvar_6;
   tmpvar_6.xz = vec2(0.0, 0.0);
   tmpvar_6.y = _SquashPlaneNormal.w;
   vec4 tmpvar_7;
   tmpvar_7.w = 1.0;
-  tmpvar_7.xyz = mix ((pos_4.xyz + (
-    dot (_SquashPlaneNormal.xyz, (tmpvar_6 - pos_4.xyz))
-   * _SquashPlaneNormal.xyz)), pos_4.xyz, vec3(_SquashAmount));
-  pos_4 = tmpvar_7;
+  tmpvar_7.xyz = mix ((tmpvar_4.xyz + (
+    dot (_SquashPlaneNormal.xyz, (tmpvar_6 - tmpvar_4.xyz))
+   * _SquashPlaneNormal.xyz)), tmpvar_4.xyz, vec3(_SquashAmount));
+  tmpvar_4 = tmpvar_7;
   z_2 = -((gl_ModelViewMatrix * tmpvar_7).z);
-  tmpvar_3.x = z_2;
-  tmpvar_3.y = ((z_2 * _LightShadowData.z) + _LightShadowData.w);
+  o__ShadowZFade_3.x = z_2;
+  o__ShadowZFade_3.y = ((z_2 * _LightShadowData.z) + _LightShadowData.w);
   wpos_1 = (_Object2World * tmpvar_7);
   gl_Position = (gl_ModelViewProjectionMatrix * tmpvar_7);
   vec4 tmpvar_8;
@@ -52,14 +52,14 @@ void main ()
   gl_TexCoord[3] = tmpvar_11;
   vec4 tmpvar_12;
   tmpvar_12.zw = vec2(0.0, 0.0);
-  tmpvar_12.xy = tmpvar_3;
+  tmpvar_12.xy = o__ShadowZFade_3;
   gl_TexCoord[4] = tmpvar_12;
 }
 
 
 // stats: 26 alu 0 tex 0 flow
 // inputs: 2
-//  #0: gl_Color (high float) 4x1 [-1] loc 3
+//  #0: gl_Color (high float) 4x1 [-1] loc 2
 //  #1: gl_Vertex (high float) 4x1 [-1] loc 0
 // uniforms: 12 (total size: 0)
 //  #0: gl_ModelViewProjectionMatrix (high float) 4x4 [-1]

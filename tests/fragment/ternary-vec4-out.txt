@@ -4,7 +4,7 @@ void main ()
   vec4 a_1;
   a_1 = vec4(0.0, 0.0, 0.0, 0.0);
   bvec4 tmpvar_2;
-  tmpvar_2 = greaterThan (xlv_TEXCOORD0, vec4(0.5, 0.5, 0.5, 0.5));
+  tmpvar_2 = lessThan (vec4(0.5, 0.5, 0.5, 0.5), xlv_TEXCOORD0);
   float tmpvar_3;
   if (tmpvar_2.x) {
     tmpvar_3 = 1.0;
@@ -36,7 +36,7 @@ void main ()
   tmpvar_7.w = tmpvar_6;
   a_1 = tmpvar_7;
   bvec4 tmpvar_8;
-  tmpvar_8 = greaterThan (xlv_TEXCOORD0, vec4(0.5, 0.5, 0.5, 0.5));
+  tmpvar_8 = lessThan (vec4(0.5, 0.5, 0.5, 0.5), xlv_TEXCOORD0);
   float tmpvar_9;
   if (tmpvar_8.x) {
     tmpvar_9 = 1.0;
@@ -68,7 +68,7 @@ void main ()
   tmpvar_13.w = tmpvar_12;
   a_1 = (tmpvar_7 + tmpvar_13);
   bvec4 tmpvar_14;
-  tmpvar_14 = greaterThan (xlv_TEXCOORD0, vec4(0.5, 0.5, 0.5, 0.5));
+  tmpvar_14 = lessThan (vec4(0.5, 0.5, 0.5, 0.5), xlv_TEXCOORD0);
   float tmpvar_15;
   if (tmpvar_14.x) {
     tmpvar_15 = 1.0;
@@ -100,7 +100,7 @@ void main ()
   tmpvar_19.w = tmpvar_18;
   a_1 = (a_1 + tmpvar_19);
   bvec4 tmpvar_20;
-  tmpvar_20 = greaterThan (xlv_TEXCOORD0, vec4(0.5, 0.5, 0.5, 0.5));
+  tmpvar_20 = lessThan (vec4(0.5, 0.5, 0.5, 0.5), xlv_TEXCOORD0);
   float tmpvar_21;
   if (tmpvar_20.x) {
     tmpvar_21 = 1.0;

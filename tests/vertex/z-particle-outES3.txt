@@ -8,11 +8,11 @@ out mediump vec4 xlv_COLOR;
 out mediump vec2 xlv_TEXCOORD0;
 void main ()
 {
-  mediump vec2 tmpvar_1;
-  tmpvar_1 = ((_uv0.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
+  mediump vec2 o_texcoord_1;
+  o_texcoord_1 = ((_uv0.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
   gl_Position = (glstate_matrix_mvp * _inVertex);
   xlv_COLOR = _color;
-  xlv_TEXCOORD0 = tmpvar_1;
+  xlv_TEXCOORD0 = o_texcoord_1;
 }
 
 

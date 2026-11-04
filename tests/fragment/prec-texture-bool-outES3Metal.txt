@@ -10,34 +10,25 @@ struct xlatMtlShaderOutput {
 };
 struct xlatMtlShaderUniform {
 };
-;
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  ,   texture2d<float> fullTexture [[texture(0)]], sampler _mtlsmp_fullTexture [[sampler(0)]]
-  ,   texture2d<half> halfTexture [[texture(1)]], sampler _mtlsmp_halfTexture [[sampler(1)]])
+  , texture2d<float> fullTexture [[texture(0)]], sampler _mtlsmp_fullTexture [[sampler(0)]]
+  , texture2d<half> halfTexture [[texture(1)]], sampler _mtlsmp_halfTexture [[sampler(1)]])
 {
   xlatMtlShaderOutput _mtl_o;
   float front_1 = 0;
   float4 mask_2 = 0;
   float4 tmpvar_3 = 0;
-  tmpvar_3 = fullTexture.sample(_mtlsmp_fullTexture, (float2)(_mtl_i.uv), level(0.0));
-  half4 tmpvar_4 = 0;
-  tmpvar_4 = halfTexture.sample(_mtlsmp_halfTexture, (float2)(_mtl_i.uv), level(0.0));
-  bool4 tmpvar_5 = false;
-  tmpvar_5 = bool4((tmpvar_3 > float4(0.5, 0.5, 0.5, 0.5)));
-  half4 tmpvar_6 = 0;
-  tmpvar_6 = half4(tmpvar_5);
-  mask_2 = float4(tmpvar_6);
-  half tmpvar_7 = 0;
-  tmpvar_7 = half(_mtl_i.gl_FrontFacing);
-  front_1 = float(tmpvar_7);
-  _mtl_o.result = ((tmpvar_3 + (float4)(tmpvar_4)) + (mask_2 + front_1));
+  tmpvar_3 = fullTexture.sample(_mtlsmp_fullTexture, (float2)((_mtl_i.uv)), level(0.0));
+  mask_2 = float4(half4((float4(0.5, 0.5, 0.5, 0.5) < tmpvar_3)));
+  front_1 = float(half(_mtl_i.gl_FrontFacing));
+  _mtl_o.result = (((tmpvar_3 + (float4)(halfTexture.sample(_mtlsmp_halfTexture, (float2)((_mtl_i.uv)), level(0.0)))) + mask_2) + front_1);
   return _mtl_o;
 }
 
 
 // stats: 6 alu 2 tex 0 flow
 // inputs: 2
-//  #0: gl_FrontFacing (medium bool) 1x1 [-1] loc 22
+//  #0: gl_FrontFacing (high bool) 1x1 [-1] loc 24
 //  #1: uv (high float) 2x1 [-1]
 // textures: 2
 //  #0: fullTexture (high 2d) 0x0 [-1] loc 0

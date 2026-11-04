@@ -3,22 +3,22 @@ uniform vec4 _CenterRadius;
 uniform sampler2D _MainTex;
 void main ()
 {
-  vec2 tmpvar_1;
-  tmpvar_1 = gl_TexCoord[1].xy;
+  vec2 xlt_i_uvOrig_1;
+  xlt_i_uvOrig_1 = gl_TexCoord[1].xy;
   vec2 uv_2;
   float angle_3;
-  vec2 x_4;
-  x_4 = (tmpvar_1 / _CenterRadius.zw);
-  angle_3 = (1.0 - sqrt(dot (x_4, x_4)));
+  vec2 tmpvar_4;
+  tmpvar_4 = (xlt_i_uvOrig_1 / _CenterRadius.zw);
+  angle_3 = (1.0 - sqrt(dot (tmpvar_4, tmpvar_4)));
   float tmpvar_5;
   tmpvar_5 = max (0.0, angle_3);
   angle_3 = ((tmpvar_5 * tmpvar_5) * _Angle);
   float tmpvar_6;
-  tmpvar_6 = sin(angle_3);
   float tmpvar_7;
+  tmpvar_6 = sin(angle_3);
   tmpvar_7 = cos(angle_3);
-  uv_2.x = ((tmpvar_7 * tmpvar_1.x) - (tmpvar_6 * tmpvar_1.y));
-  uv_2.y = ((tmpvar_6 * tmpvar_1.x) + (tmpvar_7 * tmpvar_1.y));
+  uv_2.x = ((tmpvar_7 * xlt_i_uvOrig_1.x) - (tmpvar_6 * xlt_i_uvOrig_1.y));
+  uv_2.y = ((tmpvar_6 * xlt_i_uvOrig_1.x) + (tmpvar_7 * xlt_i_uvOrig_1.y));
   uv_2 = (uv_2 + _CenterRadius.xy);
   gl_FragData[0] = texture2D (_MainTex, uv_2);
 }

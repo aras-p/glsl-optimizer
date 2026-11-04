@@ -18,8 +18,8 @@ vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], 
   xlatMtlShaderOutput _mtl_o;
   float3 p_1 = 0;
   p_1.z = _mtl_i._inPos.z;
-  p_1.x = (_mtl_i._inPos.x + float(gl_VertexID));
-  p_1.y = (_mtl_i._inPos.y + float(gl_InstanceID));
+  p_1.x = (_mtl_i._inPos.x + float(int(gl_VertexID)));
+  p_1.y = (_mtl_i._inPos.y + float(int(gl_InstanceID)));
   p_1 = (p_1 + _mtl_i._inNor);
   float4 tmpvar_2 = 0;
   tmpvar_2.w = 1.0;

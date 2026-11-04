@@ -16,19 +16,19 @@ void main ()
 {
   vec4 wpos_1;
   float z_2;
-  vec2 tmpvar_3;
+  vec2 o__ShadowZFade_3;
   vec4 tmpvar_4;
-  vec4 pos_5;
+  vec4 tmpvar_5;
   float isBillboard_6;
   isBillboard_6 = (1.0 - abs(TANGENT.w));
   vec4 tmpvar_7;
   tmpvar_7.w = 0.0;
   tmpvar_7.xyz = gl_Normal;
-  pos_5 = (gl_Vertex + ((TANGENT * gl_ModelViewMatrixInverseTranspose) * isBillboard_6));
-  tmpvar_4.w = pos_5.w;
-  tmpvar_4.xyz = (pos_5.xyz * _Scale.xyz);
-  vec4 pos_8;
-  pos_8.w = tmpvar_4.w;
+  tmpvar_5 = (gl_Vertex + ((TANGENT * gl_ModelViewMatrixInverseTranspose) * isBillboard_6));
+  tmpvar_4.w = tmpvar_5.w;
+  tmpvar_4.xyz = (tmpvar_5.xyz * _Scale.xyz);
+  vec4 tmpvar_8;
+  tmpvar_8.w = tmpvar_4.w;
   vec3 bend_9;
   vec2 vWavesSum_10;
   vec4 vWaves_11;
@@ -52,27 +52,27 @@ void main ()
     (tmpvar_7 * gl_ModelViewMatrixInverseTranspose)
   ).xyz, vec3(isBillboard_6))).xz;
   bend_9.y = (gl_MultiTexCoord1.y * 0.3);
-  pos_8.xyz = (tmpvar_4.xyz + ((
+  tmpvar_8.xyz = (tmpvar_4.xyz + ((
     (vWavesSum_10.xyx * bend_9)
    + 
     ((_Wind.xyz * vWavesSum_10.y) * gl_MultiTexCoord1.y)
   ) * _Wind.w));
-  pos_8.xyz = (pos_8.xyz + (gl_MultiTexCoord1.x * _Wind.xyz));
+  tmpvar_8.xyz = (tmpvar_8.xyz + (gl_MultiTexCoord1.x * _Wind.xyz));
   vec3 tmpvar_16;
   tmpvar_16.xz = vec2(0.0, 0.0);
   tmpvar_16.y = _SquashPlaneNormal.w;
   vec4 tmpvar_17;
   tmpvar_17.w = 1.0;
-  tmpvar_17.xyz = mix ((pos_8.xyz + (
-    dot (_SquashPlaneNormal.xyz, (tmpvar_16 - pos_8.xyz))
-   * _SquashPlaneNormal.xyz)), pos_8.xyz, vec3(_SquashAmount));
+  tmpvar_17.xyz = mix ((tmpvar_8.xyz + (
+    dot (_SquashPlaneNormal.xyz, (tmpvar_16 - tmpvar_8.xyz))
+   * _SquashPlaneNormal.xyz)), tmpvar_8.xyz, vec3(_SquashAmount));
   tmpvar_4 = tmpvar_17;
   vec4 tmpvar_18;
   tmpvar_18.xyz = (gl_Color.w * _Color.xyz);
   tmpvar_18.w = _Color.w;
   z_2 = -((gl_ModelViewMatrix * tmpvar_17).z);
-  tmpvar_3.x = z_2;
-  tmpvar_3.y = ((z_2 * _LightShadowData.z) + _LightShadowData.w);
+  o__ShadowZFade_3.x = z_2;
+  o__ShadowZFade_3.y = ((z_2 * _LightShadowData.z) + _LightShadowData.w);
   wpos_1 = (_Object2World * tmpvar_17);
   gl_Position = (gl_ModelViewProjectionMatrix * tmpvar_17);
   vec4 tmpvar_19;
@@ -93,7 +93,7 @@ void main ()
   gl_TexCoord[3] = tmpvar_22;
   vec4 tmpvar_23;
   tmpvar_23.zw = vec2(0.0, 0.0);
-  tmpvar_23.xy = tmpvar_3;
+  tmpvar_23.xy = o__ShadowZFade_3;
   gl_TexCoord[4] = tmpvar_23;
   vec4 tmpvar_24;
   tmpvar_24.zw = vec2(0.0, 0.0);
@@ -105,10 +105,10 @@ void main ()
 
 // stats: 66 alu 0 tex 0 flow
 // inputs: 6
-//  #0: gl_MultiTexCoord1 (high float) 4x1 [-1] loc 9
-//  #1: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 8
-//  #2: gl_Color (high float) 4x1 [-1] loc 3
-//  #3: gl_Normal (high float) 3x1 [-1] loc 2
+//  #0: gl_MultiTexCoord1 (high float) 4x1 [-1] loc 8
+//  #1: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 7
+//  #2: gl_Color (high float) 4x1 [-1] loc 2
+//  #3: gl_Normal (high float) 3x1 [-1] loc 1
 //  #4: gl_Vertex (high float) 4x1 [-1] loc 0
 //  #5: TANGENT (high float) 4x1 [-1]
 // uniforms: 16 (total size: 0)

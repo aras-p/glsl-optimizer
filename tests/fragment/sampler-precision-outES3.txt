@@ -11,14 +11,10 @@ void main ()
 {
   mediump vec4 c_1;
   c_1 = (texture (texlow, varUV.xy) + texture (texmed, varUV.xy));
-  highp vec4 tmpvar_2;
-  tmpvar_2 = texture (texhigh, varUV.xy);
-  c_1 = (c_1 + tmpvar_2);
+  c_1 = (c_1 + texture (texhigh, varUV.xy));
   c_1 = (c_1 + texture (cubelow, varUV.xyz));
   c_1 = (c_1 + texture (cubemed, varUV.xyz));
-  highp vec4 tmpvar_3;
-  tmpvar_3 = texture (cubehigh, varUV.xyz);
-  c_1 = (c_1 + tmpvar_3);
+  c_1 = (c_1 + texture (cubehigh, varUV.xyz));
   _fragData = c_1;
 }
 

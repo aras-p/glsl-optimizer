@@ -35,115 +35,125 @@ out mediump vec4 FragData[1];
 void main ()
 {
   mediump vec4 c_1;
-  mediump vec2 tmpvar_2;
-  tmpvar_2.x = _Metallic;
-  tmpvar_2.y = _Glossiness;
-  mediump vec3 tmpvar_3;
-  tmpvar_3 = (_Color.xyz * texture (_MainTex, xlv_TEXCOORD0.xy).xyz);
-  mediump vec3 tmpvar_4;
-  mediump vec3 tmpvar_5;
-  tmpvar_5 = mix (unity_ColorSpaceDielectricSpec.xyz, tmpvar_3, vec3(_Metallic));
-  mediump float tmpvar_6;
-  tmpvar_6 = (unity_ColorSpaceDielectricSpec.w - (_Metallic * unity_ColorSpaceDielectricSpec.w));
-  tmpvar_4 = (tmpvar_3 * tmpvar_6);
+  mediump vec3 s_diffColor_2;
+  mediump vec3 s_specColor_3;
+  mediump float tmpvar_4;
+  FragmentCommonData o_5;
+  mediump vec2 tmpvar_6;
+  tmpvar_6.x = _Metallic;
+  tmpvar_6.y = _Glossiness;
   mediump vec3 tmpvar_7;
-  tmpvar_7 = normalize(xlv_TEXCOORD2_2.xyz);
-  mediump vec3 tmpvar_8;
-  tmpvar_8 = normalize(xlv_TEXCOORD1);
-  mediump float tmpvar_9;
-  tmpvar_9 = ((1.0 - _OcclusionStrength) + (texture (_OcclusionMap, xlv_TEXCOORD0.xy).y * _OcclusionStrength));
-  FragmentCommonData s_10;
-  s_10 = FragmentCommonData(vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), 0.0, 0.0, vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), 0.0);
-  s_10.oneMinusRoughness = tmpvar_2.y;
-  s_10.normalWorld = tmpvar_7;
-  s_10.eyeVec = tmpvar_8;
-  s_10.posWorld = vec3(0.0, 0.0, 0.0);
-  mediump vec3 tmpvar_11;
-  mediump vec3 tmpvar_12;
-  tmpvar_11 = s_10.normalWorld;
-  tmpvar_12 = s_10.eyeVec;
-  highp vec4 tmpvar_13;
-  tmpvar_13 = unity_SpecCube0_HDR;
-  mediump float tmpvar_14;
-  tmpvar_14 = (1.0 - s_10.oneMinusRoughness);
-  mediump vec3 tmpvar_15;
-  tmpvar_15 = (tmpvar_12 - (2.0 * (
-    dot (tmpvar_11, tmpvar_12)
-   * tmpvar_11)));
-  mediump vec4 tmpvar_16;
-  tmpvar_16.w = 1.0;
-  tmpvar_16.xyz = tmpvar_11;
-  mediump vec3 x_17;
-  x_17.x = dot (unity_SHAr, tmpvar_16);
-  x_17.y = dot (unity_SHAg, tmpvar_16);
-  x_17.z = dot (unity_SHAb, tmpvar_16);
-  mediump vec4 hdr_18;
-  hdr_18 = tmpvar_13;
+  tmpvar_7 = (_Color.xyz * texture (_MainTex, xlv_TEXCOORD0.xy).xyz);
+  mediump float tmpvar_8;
+  tmpvar_8 = (unity_ColorSpaceDielectricSpec.w - (_Metallic * unity_ColorSpaceDielectricSpec.w));
+  o_5 = FragmentCommonData(vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), 0.0, 0.0, vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), 0.0);
+  o_5.diffColor = (tmpvar_7 * tmpvar_8);
+  o_5.specColor = mix (unity_ColorSpaceDielectricSpec.xyz, tmpvar_7, vec3(_Metallic));
+  o_5.oneMinusReflectivity = tmpvar_8;
+  o_5.oneMinusRoughness = tmpvar_6.y;
+  tmpvar_4 = o_5.oneMinusRoughness;
+  mediump vec3 tmpvar_9;
+  tmpvar_9 = normalize(xlv_TEXCOORD2_2.xyz);
+  mediump vec3 tmpvar_10;
+  tmpvar_10 = normalize(xlv_TEXCOORD1);
+  s_diffColor_2 = o_5.diffColor;
+  s_specColor_3 = o_5.specColor;
+  mediump float tmpvar_11;
+  tmpvar_11 = ((1.0 - _OcclusionStrength) + (texture (_OcclusionMap, xlv_TEXCOORD0.xy).y * _OcclusionStrength));
+  FragmentCommonData s_12;
+  s_12 = FragmentCommonData(vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), 0.0, 0.0, vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), 0.0);
+  s_12.oneMinusRoughness = tmpvar_4;
+  s_12.normalWorld = tmpvar_9;
+  s_12.eyeVec = tmpvar_10;
+  s_12.posWorld = vec3(0.0, 0.0, 0.0);
+  mediump vec3 tmpvar_13;
+  mediump vec3 tmpvar_14;
+  tmpvar_13 = s_12.normalWorld;
+  tmpvar_14 = s_12.eyeVec;
+  highp vec4 tmpvar_15;
+  tmpvar_15 = unity_SpecCube0_HDR;
+  mediump float g_roughness_16;
+  mediump vec3 g_reflUVW_17;
+  g_roughness_16 = (1.0 - s_12.oneMinusRoughness);
+  g_reflUVW_17 = (tmpvar_14 - (2.0 * (
+    dot (tmpvar_13, tmpvar_14)
+   * tmpvar_13)));
+  mediump vec3 tmpvar_18;
   mediump vec4 tmpvar_19;
-  tmpvar_19.xyz = tmpvar_15;
-  tmpvar_19.w = ((tmpvar_14 * (1.7 - 
-    (0.7 * tmpvar_14)
+  tmpvar_19.w = 1.0;
+  tmpvar_19.xyz = tmpvar_13;
+  mediump vec3 x_20;
+  x_20.x = dot (unity_SHAr, tmpvar_19);
+  x_20.y = dot (unity_SHAg, tmpvar_19);
+  x_20.z = dot (unity_SHAb, tmpvar_19);
+  tmpvar_18 = max (vec3(0.0, 0.0, 0.0), (xlv_TEXCOORD5.xyz + x_20));
+  tmpvar_18 = max (((1.055 * 
+    pow (max (tmpvar_18, vec3(0.0, 0.0, 0.0)), vec3(0.4166667, 0.4166667, 0.4166667))
+  ) - 0.055), vec3(0.0, 0.0, 0.0));
+  mediump vec4 tmpvar_21;
+  tmpvar_21 = tmpvar_15;
+  mediump vec4 tmpvar_22;
+  tmpvar_22.xyz = g_reflUVW_17;
+  tmpvar_22.w = ((g_roughness_16 * (1.7 - 
+    (0.7 * g_roughness_16)
   )) * 6.0);
-  mediump vec4 tmpvar_20;
-  tmpvar_20 = textureLod (unity_SpecCube0, tmpvar_15, tmpvar_19.w);
-  mediump vec3 viewDir_21;
-  viewDir_21 = -(tmpvar_8);
-  mediump vec3 tmpvar_22;
-  mediump vec3 inVec_23;
-  inVec_23 = (_WorldSpaceLightPos0.xyz + viewDir_21);
-  tmpvar_22 = (inVec_23 * inversesqrt(max (0.001, 
-    dot (inVec_23, inVec_23)
+  mediump vec4 tmpvar_23;
+  tmpvar_23 = textureLod (unity_SpecCube0, g_reflUVW_17, tmpvar_22.w);
+  mediump vec3 tmpvar_24;
+  tmpvar_24 = -(tmpvar_10);
+  mediump float specular_25;
+  mediump vec3 tmpvar_26;
+  mediump vec3 tmpvar_27;
+  tmpvar_27 = (_WorldSpaceLightPos0.xyz + tmpvar_24);
+  tmpvar_26 = (tmpvar_27 * inversesqrt(max (0.001, 
+    dot (tmpvar_27, tmpvar_27)
   )));
-  mediump float tmpvar_24;
-  tmpvar_24 = max (0.0, dot (_WorldSpaceLightPos0.xyz, tmpvar_22));
-  mediump float tmpvar_25;
-  tmpvar_25 = (1.0 - _Glossiness);
-  mediump float tmpvar_26;
-  tmpvar_26 = max (0.0001, (tmpvar_25 * tmpvar_25));
-  mediump float tmpvar_27;
-  tmpvar_27 = max (((2.0 / 
-    (tmpvar_26 * tmpvar_26)
+  mediump float tmpvar_28;
+  tmpvar_28 = max (0.0, dot (_WorldSpaceLightPos0.xyz, tmpvar_26));
+  mediump float tmpvar_29;
+  tmpvar_29 = (1.0 - tmpvar_4);
+  mediump float tmpvar_30;
+  tmpvar_30 = max (0.0001, (tmpvar_29 * tmpvar_29));
+  mediump float tmpvar_31;
+  tmpvar_31 = max (((2.0 / 
+    (tmpvar_30 * tmpvar_30)
   ) - 2.0), 0.0001);
-  mediump float x_28;
-  x_28 = (1.0 - max (0.0, dot (tmpvar_7, viewDir_21)));
-  mediump vec4 tmpvar_29;
-  tmpvar_29.w = 1.0;
-  tmpvar_29.xyz = (((
-    ((tmpvar_4 + (sqrt(
-      max (0.0001, (((tmpvar_27 + 1.0) * pow (
-        max (0.0, dot (tmpvar_7, tmpvar_22))
-      , tmpvar_27)) / ((
-        (8.0 * (((tmpvar_24 * tmpvar_24) * _Glossiness) + (tmpvar_25 * tmpvar_25)))
-       * tmpvar_24) + 0.0001)))
-    ) * tmpvar_5)) * (_LightColor0.xyz * (_LightShadowData.x + (texture (_ShadowMapTexture, xlv_TEXCOORD6.xyz) * 
-      (1.0 - _LightShadowData.x)
-    ))))
+  specular_25 = (((tmpvar_31 + 1.0) * pow (
+    max (0.0, dot (tmpvar_9, tmpvar_26))
+  , tmpvar_31)) / ((
+    (8.0 * (((tmpvar_28 * tmpvar_28) * tmpvar_4) + (tmpvar_29 * tmpvar_29)))
+   * tmpvar_28) + 0.0001));
+  specular_25 = sqrt(max (0.0001, specular_25));
+  mediump float tmpvar_32;
+  tmpvar_32 = (1.0 - max (0.0, dot (tmpvar_9, tmpvar_24)));
+  mediump vec4 tmpvar_33;
+  tmpvar_33.w = 1.0;
+  tmpvar_33.xyz = (((
+    ((s_diffColor_2 + (specular_25 * s_specColor_3)) * (_LightColor0.xyz * mix (_LightShadowData.x, 1.0, texture (_ShadowMapTexture, vec3(xlv_TEXCOORD6.xy, xlv_TEXCOORD6.z)))))
    * 
-    max (0.0, dot (tmpvar_7, _WorldSpaceLightPos0.xyz))
+    max (0.0, dot (tmpvar_9, _WorldSpaceLightPos0.xyz))
   ) + (
-    (max (((1.055 * 
-      pow (max (vec3(0.0, 0.0, 0.0), (xlv_TEXCOORD5.xyz + x_17)), vec3(0.4166667, 0.4166667, 0.4166667))
-    ) - 0.055), vec3(0.0, 0.0, 0.0)) * tmpvar_9)
-   * tmpvar_4)) + ((
-    (1.0 - ((tmpvar_25 * tmpvar_25) * (tmpvar_25 * 0.28)))
+    (tmpvar_18 * tmpvar_11)
+   * s_diffColor_2)) + ((
+    (1.0 - ((tmpvar_29 * tmpvar_29) * (tmpvar_29 * 0.28)))
    * 
-    (((hdr_18.x * tmpvar_20.w) * tmpvar_20.xyz) * tmpvar_9)
-  ) * mix (tmpvar_5, vec3(
-    clamp ((_Glossiness + (1.0 - tmpvar_6)), 0.0, 1.0)
+    (((tmpvar_21.x * tmpvar_23.w) * tmpvar_23.xyz) * tmpvar_11)
+  ) * mix (s_specColor_3, vec3(
+    clamp ((tmpvar_4 + (1.0 - o_5.oneMinusReflectivity)), 0.0, 1.0)
   ), vec3(
-    ((x_28 * x_28) * (x_28 * x_28))
+    ((tmpvar_32 * tmpvar_32) * (tmpvar_32 * tmpvar_32))
   ))));
-  c_1 = (tmpvar_29 * xlv_COLOR);
+  c_1 = (tmpvar_33 * xlv_COLOR);
   c_1.xyz = c_1.xyz;
   c_1.xyz = c_1.xyz;
-  mediump vec4 xlat_varoutput_30;
-  xlat_varoutput_30.xyz = c_1.xyz;
-  xlat_varoutput_30.w = 1.0;
-  FragData[0] = xlat_varoutput_30;
+  mediump vec4 tmpvar_34;
+  tmpvar_34.xyz = c_1.xyz;
+  tmpvar_34.w = 1.0;
+  FragData[0] = tmpvar_34;
 }
 
 
-// stats: 97 alu 4 tex 0 flow
+// stats: 98 alu 4 tex 0 flow
 // inputs: 6
 //  #0: xlv_TEXCOORD0 (high float) 4x1 [-1]
 //  #1: xlv_TEXCOORD1 (medium float) 3x1 [-1]

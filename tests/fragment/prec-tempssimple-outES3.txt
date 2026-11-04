@@ -8,9 +8,7 @@ in mediump vec2 var_mediump;
 void main ()
 {
   mediump vec4 c3_1;
-  highp vec4 tmpvar_2;
-  tmpvar_2 = texture (tex_highp, var_mediump);
-  c3_1 = (tmpvar_2 * 2.0);
+  c3_1 = (texture (tex_highp, var_mediump) * 2.0);
   _fragData = (((
     ((texture (tex_def, var_lowp) * 2.0) + (texture (tex_def, var_mediump) * 2.0))
    + c3_1) + (texture (tex_lowp, var_mediump) * 2.0)) + abs(var_lowp.xxxx));

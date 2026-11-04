@@ -6,42 +6,42 @@ uniform mat4 _World2Shadow2;
 uniform mat4 _World2Shadow3;
 void main ()
 {
-  float z_1;
-  vec2 tmpvar_2;
-  z_1 = -((gl_ModelViewMatrix * gl_Vertex).z);
-  tmpvar_2.x = z_1;
-  tmpvar_2.y = ((z_1 * _LightShadowData.z) + _LightShadowData.w);
-  vec4 tmpvar_3;
-  tmpvar_3 = (_Object2World * gl_Vertex);
+  vec4 wpos_1;
+  float z_2;
+  vec2 o__ShadowZFade_3;
+  z_2 = -((gl_ModelViewMatrix * gl_Vertex).z);
+  o__ShadowZFade_3.x = z_2;
+  o__ShadowZFade_3.y = ((z_2 * _LightShadowData.z) + _LightShadowData.w);
+  wpos_1 = (_Object2World * gl_Vertex);
   gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex);
   vec4 tmpvar_4;
   tmpvar_4.w = 0.0;
-  tmpvar_4.xyz = (_World2Shadow * tmpvar_3).xyz;
+  tmpvar_4.xyz = (_World2Shadow * wpos_1).xyz;
   gl_TexCoord[0] = tmpvar_4;
   vec4 tmpvar_5;
   tmpvar_5.w = 0.0;
-  tmpvar_5.xyz = (_World2Shadow1 * tmpvar_3).xyz;
+  tmpvar_5.xyz = (_World2Shadow1 * wpos_1).xyz;
   gl_TexCoord[1] = tmpvar_5;
   vec4 tmpvar_6;
   tmpvar_6.w = 0.0;
-  tmpvar_6.xyz = (_World2Shadow2 * tmpvar_3).xyz;
+  tmpvar_6.xyz = (_World2Shadow2 * wpos_1).xyz;
   gl_TexCoord[2] = tmpvar_6;
   vec4 tmpvar_7;
   tmpvar_7.w = 0.0;
-  tmpvar_7.xyz = (_World2Shadow3 * tmpvar_3).xyz;
+  tmpvar_7.xyz = (_World2Shadow3 * wpos_1).xyz;
   gl_TexCoord[3] = tmpvar_7;
   vec4 tmpvar_8;
   tmpvar_8.zw = vec2(0.0, 0.0);
-  tmpvar_8.xy = tmpvar_2;
+  tmpvar_8.xy = o__ShadowZFade_3;
   gl_TexCoord[4] = tmpvar_8;
   vec4 tmpvar_9;
   tmpvar_9.w = 0.0;
-  tmpvar_9.xyz = tmpvar_3.xyz;
+  tmpvar_9.xyz = (_Object2World * gl_Vertex).xyz;
   gl_TexCoord[5] = tmpvar_9;
 }
 
 
-// stats: 16 alu 0 tex 0 flow
+// stats: 17 alu 0 tex 0 flow
 // inputs: 1
 //  #0: gl_Vertex (high float) 4x1 [-1] loc 0
 // uniforms: 8 (total size: 0)

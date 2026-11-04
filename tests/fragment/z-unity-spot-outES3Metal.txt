@@ -15,33 +15,29 @@ struct xlatMtlShaderUniform {
   half4x4 _LightMatrix0;
 };
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  ,   texture2d<half> _LightTexture0 [[texture(0)]], sampler _mtlsmp__LightTexture0 [[sampler(0)]]
-  ,   texture2d<half> _LightTextureB0 [[texture(1)]], sampler _mtlsmp__LightTextureB0 [[sampler(1)]]
-  ,   texture2d<half> _MainTex [[texture(2)]], sampler _mtlsmp__MainTex [[sampler(2)]])
+  , texture2d<half> _LightTexture0 [[texture(0)]], sampler _mtlsmp__LightTexture0 [[sampler(0)]]
+  , texture2d<half> _LightTextureB0 [[texture(1)]], sampler _mtlsmp__LightTextureB0 [[sampler(1)]]
+  , texture2d<half> _MainTex [[texture(2)]], sampler _mtlsmp__MainTex [[sampler(2)]])
 {
   xlatMtlShaderOutput _mtl_o;
   half4 c_1 = 0;
   half4 lightCoord_2 = 0;
-  float3 tmpvar_3 = 0;
-  tmpvar_3 = normalize((_mtl_u._WorldSpaceLightPos0.xyz - _mtl_i.xlv_TEXCOORD2));
-  half4 tmpvar_4 = 0;
-  tmpvar_4 = _MainTex.sample(_mtlsmp__MainTex, (float2)(_mtl_i.xlv_TEXCOORD0));
-  float4 tmpvar_5 = 0;
-  tmpvar_5.w = 1.0;
-  tmpvar_5.xyz = _mtl_i.xlv_TEXCOORD2;
-  float4 tmpvar_6 = 0;
-  tmpvar_6 = ((float4)(_mtl_u._LightMatrix0 * (half4)(tmpvar_5)));
-  lightCoord_2 = half4(tmpvar_6);
-  half3 lightDir_7 = 0;
-  lightDir_7 = half3(tmpvar_3);
-  half4 c_8 = 0;
-  c_8.xyz = ((tmpvar_4.xyz * _mtl_u._LightColor0.xyz) * ((
-    max ((half)0.0, dot (_mtl_i.xlv_TEXCOORD1, lightDir_7))
+  half4 tmpvar_3 = 0;
+  tmpvar_3 = _MainTex.sample(_mtlsmp__MainTex, (float2)((_mtl_i.xlv_TEXCOORD0)));
+  float4 tmpvar_4 = 0;
+  tmpvar_4.w = 1.0;
+  tmpvar_4.xyz = _mtl_i.xlv_TEXCOORD2;
+  lightCoord_2 = half4(((float4)(_mtl_u._LightMatrix0 * (half4)(tmpvar_4))));
+  half3 tmpvar_5 = 0;
+  tmpvar_5 = half3(normalize((_mtl_u._WorldSpaceLightPos0.xyz - _mtl_i.xlv_TEXCOORD2)));
+  half4 c_6 = 0;
+  c_6.xyz = ((tmpvar_3.xyz * _mtl_u._LightColor0.xyz) * ((
+    max ((half)0.0, dot (_mtl_i.xlv_TEXCOORD1, tmpvar_5))
    * 
-    ((half((lightCoord_2.z > (half)(0.0))) * _LightTexture0.sample(_mtlsmp__LightTexture0, (float2)(((lightCoord_2.xy / lightCoord_2.w) + (half)(0.5)))).w) * _LightTextureB0.sample(_mtlsmp__LightTextureB0, (float2)(half2(dot (lightCoord_2.xyz, lightCoord_2.xyz)))).w)
+    ((half(((half)(0.0) < lightCoord_2.z)) * _LightTexture0.sample(_mtlsmp__LightTexture0, (float2)((((lightCoord_2.xy / lightCoord_2.w) + (half)(0.5))))).w) * _LightTextureB0.sample(_mtlsmp__LightTextureB0, (float2)((half2(dot (lightCoord_2.xyz, lightCoord_2.xyz))))).w)
   ) * (half)(2.0)));
-  c_8.w = tmpvar_4.w;
-  c_1.xyz = c_8.xyz;
+  c_6.w = tmpvar_3.w;
+  c_1.xyz = c_6.xyz;
   c_1.w = half(0.0);
   _mtl_o._glesFragData_0 = c_1;
   return _mtl_o;

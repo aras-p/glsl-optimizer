@@ -25,40 +25,36 @@ void main ()
   mediump vec3 albedo_8;
   mediump vec4 tmpvar_9;
   tmpvar_9 = texture (_MainTex, xlv_TEXCOORD0);
-  mediump float x_10;
-  x_10 = (tmpvar_9.w - _Cutoff);
-  if ((x_10 < 0.0)) {
-    discard;
-  };
+  if (((tmpvar_9.w - _Cutoff) < 0.0)) discard;
   albedo_8 = (tmpvar_9.xyz * xlv_TEXCOORD1);
   specular_7 = (texture (_BumpSpecMap, xlv_TEXCOORD0).x * 128.0);
-  mediump vec4 tmpvar_11;
-  tmpvar_11 = texture (_TranslucencyMap, xlv_TEXCOORD0);
+  mediump vec4 tmpvar_10;
+  tmpvar_10 = texture (_TranslucencyMap, xlv_TEXCOORD0);
   light_6 = (UNITY_LIGHTMODEL_AMBIENT.xyz * albedo_8);
-  backContribs_5 = (xlv_TEXCOORD2 * tmpvar_11.z);
+  backContribs_5 = (xlv_TEXCOORD2 * tmpvar_10.z);
   lightColor_4 = _TerrainTreeLightColors[0].xyz;
-  nl_3 = xlv_TEXCOORD3.x;
-  nh_2 = xlv_TEXCOORD4.x;
+  nl_3 = xlv_TEXCOORD3[0];
+  nh_2 = xlv_TEXCOORD4[0];
   light_6 = (light_6 + ((
-    (albedo_8 * ((backContribs_5.x * _TranslucencyColor) + nl_3))
+    (albedo_8 * ((backContribs_5[0] * _TranslucencyColor) + nl_3))
    + 
-    (_SpecColor.xyz * (pow (nh_2, specular_7) * tmpvar_11.w))
+    (_SpecColor.xyz * (pow (nh_2, specular_7) * tmpvar_10.w))
   ) * lightColor_4));
   lightColor_4 = _TerrainTreeLightColors[1].xyz;
-  nl_3 = xlv_TEXCOORD3.y;
-  nh_2 = xlv_TEXCOORD4.y;
+  nl_3 = xlv_TEXCOORD3[1];
+  nh_2 = xlv_TEXCOORD4[1];
   light_6 = (light_6 + ((
-    (albedo_8 * ((backContribs_5.y * _TranslucencyColor) + nl_3))
+    (albedo_8 * ((backContribs_5[1] * _TranslucencyColor) + nl_3))
    + 
-    (_SpecColor.xyz * (pow (nh_2, specular_7) * tmpvar_11.w))
+    (_SpecColor.xyz * (pow (nh_2, specular_7) * tmpvar_10.w))
   ) * lightColor_4));
   lightColor_4 = _TerrainTreeLightColors[2].xyz;
-  nl_3 = xlv_TEXCOORD3.z;
-  nh_2 = xlv_TEXCOORD4.z;
+  nl_3 = xlv_TEXCOORD3[2];
+  nh_2 = xlv_TEXCOORD4[2];
   light_6 = (light_6 + ((
-    (albedo_8 * ((backContribs_5.z * _TranslucencyColor) + nl_3))
+    (albedo_8 * ((backContribs_5[2] * _TranslucencyColor) + nl_3))
    + 
-    (_SpecColor.xyz * (pow (nh_2, specular_7) * tmpvar_11.w))
+    (_SpecColor.xyz * (pow (nh_2, specular_7) * tmpvar_10.w))
   ) * lightColor_4));
   c_1.xyz = (light_6 * 2.0);
   c_1.w = 1.0;

@@ -18,11 +18,11 @@ void main ()
 {
   vec3 binormal_1;
   vec3 worldN_2;
-  vec4 tmpvar_3;
-  vec4 pos_4;
-  pos_4 = (gl_ModelViewProjectionMatrix * gl_Vertex);
-  tmpvar_3.xy = ((gl_MultiTexCoord0.xy * _Decal_ST.xy) + _Decal_ST.zw);
-  tmpvar_3.zw = ((gl_MultiTexCoord0.xy * _DecalBump_ST.xy) + _DecalBump_ST.zw);
+  vec4 o_hip_pack0_3;
+  vec4 tmpvar_4;
+  tmpvar_4 = (gl_ModelViewProjectionMatrix * gl_Vertex);
+  o_hip_pack0_3.xy = ((gl_MultiTexCoord0.xy * _Decal_ST.xy) + _Decal_ST.zw);
+  o_hip_pack0_3.zw = ((gl_MultiTexCoord0.xy * _DecalBump_ST.xy) + _DecalBump_ST.zw);
   mat3 tmpvar_5;
   tmpvar_5[0] = _Object2World[0].xyz;
   tmpvar_5[1] = _Object2World[1].xyz;
@@ -53,18 +53,18 @@ void main ()
   x2_8.y = dot (unity_SHBg, vB_9);
   x2_8.z = dot (unity_SHBb, vB_9);
   vec4 o_11;
-  o_11 = (pos_4 * 0.5);
+  o_11 = (tmpvar_4 * 0.5);
   vec2 tmpvar_12;
   tmpvar_12.x = o_11.x;
   tmpvar_12.y = (o_11.y * _ProjectionParams.x);
   o_11.xy = (tmpvar_12 + o_11.w);
-  o_11.zw = pos_4.zw;
-  gl_Position = pos_4;
+  o_11.zw = tmpvar_4.zw;
+  gl_Position = tmpvar_4;
   vec4 tmpvar_13;
   tmpvar_13.yzw = vec3(0.0, 0.0, 0.0);
-  tmpvar_13.x = pos_4.z;
+  tmpvar_13.x = tmpvar_4.z;
   xlv_FOG = tmpvar_13;
-  gl_TexCoord[0] = tmpvar_3;
+  gl_TexCoord[0] = o_hip_pack0_3;
   vec4 tmpvar_14;
   tmpvar_14.w = 0.0;
   tmpvar_14.xyz = (tmpvar_6 * (_World2Object * _WorldSpaceLightPos0).xyz);
@@ -83,8 +83,8 @@ void main ()
 
 // stats: 33 alu 0 tex 0 flow
 // inputs: 4
-//  #0: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 8
-//  #1: gl_Normal (high float) 3x1 [-1] loc 2
+//  #0: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 7
+//  #1: gl_Normal (high float) 3x1 [-1] loc 1
 //  #2: gl_Vertex (high float) 4x1 [-1] loc 0
 //  #3: TANGENT (high float) 4x1 [-1]
 // uniforms: 15 (total size: 0)

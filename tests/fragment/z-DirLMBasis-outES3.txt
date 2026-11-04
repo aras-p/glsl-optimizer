@@ -30,7 +30,7 @@ void main ()
 }
 
 
-// stats: 19 alu 3 tex 0 flow
+// stats: 20 alu 3 tex 0 flow
 // inputs: 2
 //  #0: xlv_TEXCOORD0 (high float) 2x1 [-1]
 //  #1: xlv_TEXCOORD4 (high float) 4x1 [-1]

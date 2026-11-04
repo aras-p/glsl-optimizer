@@ -1,0 +1,38 @@
+#version 300 es
+precision highp float;
+precision highp int;
+uniform int bound;
+uniform float values[32];
+out vec4 color;
+void main()
+{
+    float sum = 0.0;
+    // Private index: declaration and constant initializer belong in the header.
+    int privateIndex = 0;
+    sum += values[0];
+    for (; privateIndex < bound; ++privateIndex)
+        sum += values[privateIndex];
+
+    // Live after the loop: preserve the outer declaration and initialization.
+    int liveIndex = 0;
+    for (; liveIndex < bound; ++liveIndex)
+        sum += values[liveIndex];
+    sum += float(liveIndex);
+
+    // Moving this initializer across the update of start would change its value.
+    int start = int(sum);
+    int snapshotIndex = start;
+    start += bound;
+    for (; snapshotIndex < start; ++snapshotIndex)
+        sum += values[snapshotIndex];
+    // A partial write in a branch can change an initializer's array dependency.
+    int starts[2];
+    starts[0] = int(sum);
+    starts[1] = bound;
+    int arrayIndex = starts[bound & 1];
+    if (sum > 0.0)
+        starts[bound & 1] += 1;
+    for (; arrayIndex < bound; ++arrayIndex)
+        sum += values[arrayIndex] + float(starts[arrayIndex & 1]);
+    color = vec4(sum);
+}

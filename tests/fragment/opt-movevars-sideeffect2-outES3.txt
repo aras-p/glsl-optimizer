@@ -5,16 +5,14 @@ void main ()
 {
   mediump float c_1;
   highp int tmpvar_3;
-  if ((xx > 0.5)) {
+  if ((0.5 < xx)) {
     tmpvar_3 = 2;
   } else {
     tmpvar_3 = 4;
   };
-  if ((tmpvar_3 < 2)) {
-    discard;
-  };
+  if ((tmpvar_3 < 2)) discard;
   c_1 = 0.0;
-  for (highp int i_2 = tmpvar_3; i_2 < 4; i_2++) {
+  for (mediump int i_2 = tmpvar_3; i_2 < 4; i_2++) {
     c_1 = (c_1 + xx);
   };
   _fragData = vec4(c_1);

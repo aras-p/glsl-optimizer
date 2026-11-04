@@ -12,17 +12,17 @@ struct xlatMtlShaderUniform {
   half _EmberFadeStart;
 };
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  ,   texture2d<half> _MainTex [[texture(0)]], sampler _mtlsmp__MainTex [[sampler(0)]]
-  ,   texture2d<half> _BurntTex [[texture(1)]], sampler _mtlsmp__BurntTex [[sampler(1)]])
+  , texture2d<half> _MainTex [[texture(0)]], sampler _mtlsmp__MainTex [[sampler(0)]]
+  , texture2d<half> _BurntTex [[texture(1)]], sampler _mtlsmp__BurntTex [[sampler(1)]])
 {
   xlatMtlShaderOutput _mtl_o;
   half4 tmpvar_1 = 0;
   tmpvar_1.w = half(1.0);
-  tmpvar_1.xyz = mix (_MainTex.sample(_mtlsmp__MainTex, (float2)(_mtl_i.xlv_TEXCOORD0)).xyz, _BurntTex.sample(_mtlsmp__BurntTex, (float2)(_mtl_i.xlv_TEXCOORD0)).xyz, half3(clamp ((
+  tmpvar_1.xyz = mix (_MainTex.sample(_mtlsmp__MainTex, (float2)((_mtl_i.xlv_TEXCOORD0))).xyz, _BurntTex.sample(_mtlsmp__BurntTex, (float2)((_mtl_i.xlv_TEXCOORD0))).xyz, half3(saturate((
     (_mtl_u._EmberFadeStart - (half)(0.05))
    / 
     (_mtl_u._EmberFadeStart - _mtl_u._EmberFadeEnd)
-  ), (half)0.0, (half)1.0)));
+  ))));
   _mtl_o._fragData = tmpvar_1;
   return _mtl_o;
 }

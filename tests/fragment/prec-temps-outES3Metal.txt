@@ -15,15 +15,15 @@ struct xlatMtlShaderUniform {
   half _Shininess;
 };
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  ,   texture2d<half> _BumpMap [[texture(0)]], sampler _mtlsmp__BumpMap [[sampler(0)]]
-  ,   texture2d<half> _MainTex [[texture(1)]], sampler _mtlsmp__MainTex [[sampler(1)]])
+  , texture2d<half> _BumpMap [[texture(0)]], sampler _mtlsmp__BumpMap [[sampler(0)]]
+  , texture2d<half> _MainTex [[texture(1)]], sampler _mtlsmp__MainTex [[sampler(1)]])
 {
   xlatMtlShaderOutput _mtl_o;
   half4 c_1 = 0;
   half3 Normal_2 = 0;
   half4 tmpvar_3 = 0;
-  tmpvar_3 = _MainTex.sample(_mtlsmp__MainTex, (float2)(_mtl_i.xlv_TEXCOORD0));
-  Normal_2 = ((_BumpMap.sample(_mtlsmp__BumpMap, (float2)(_mtl_i.xlv_TEXCOORD0)).xyz * (half)(2.0)) - (half)(1.0));
+  tmpvar_3 = _MainTex.sample(_mtlsmp__MainTex, (float2)((_mtl_i.xlv_TEXCOORD0)));
+  Normal_2 = ((_BumpMap.sample(_mtlsmp__BumpMap, (float2)((_mtl_i.xlv_TEXCOORD0))).xyz * (half)(2.0)) - (half)(1.0));
   c_1.xyz = ((tmpvar_3.xyz * (
     (_mtl_u._LightColor0.xyz * max ((half)0.0, dot (Normal_2, _mtl_i.xlv_TEXCOORD2)))
    + _mtl_i.xlv_TEXCOORD3)) + (_mtl_u._LightColor0.xyz * (

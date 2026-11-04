@@ -1,5 +1,6 @@
 #version 300 es
 uniform highp vec4 _ZBufferParams;
+highp vec2 SmallDiscKernel[12] = vec2[12](vec2(-0.326212, -0.40581), vec2(-0.840144, -0.07358), vec2(-0.695914, 0.457137), vec2(-0.203345, 0.620716), vec2(0.96234, -0.194983), vec2(0.473434, -0.480026), vec2(0.519456, 0.767022), vec2(0.185461, -0.893124), vec2(0.507431, 0.064425), vec2(0.89642, 0.412458), vec2(-0.32194, -0.932615), vec2(-0.791559, -0.59771));
 uniform mediump sampler2D _MainTex;
 uniform highp sampler2D _CameraDepthTexture;
 uniform mediump sampler2D _VelTex;
@@ -13,138 +14,155 @@ in highp vec2 xlv_TEXCOORD0;
 out mediump vec4 _fragData;
 void main ()
 {
-  highp vec2 tmpvar_1;
-  tmpvar_1 = xlv_TEXCOORD0;
-  highp vec4 jitteredDir_3;
-  highp vec4 sum_4;
-  highp float weight_5;
-  highp float zx_6;
+  SmallDiscKernel = vec2[12](vec2(-0.326212, -0.40581), vec2(-0.840144, -0.07358), vec2(-0.695914, 0.457137), vec2(-0.203345, 0.620716), vec2(0.96234, -0.194983), vec2(0.473434, -0.480026), vec2(0.519456, 0.767022), vec2(0.185461, -0.893124), vec2(0.507431, 0.064425), vec2(0.89642, 0.412458), vec2(-0.32194, -0.932615), vec2(-0.791559, -0.59771));
+  highp vec4 jitteredDir_2;
+  highp vec4 sum_3;
+  highp float weight_4;
+  highp float zx_5;
+  highp vec4 noise_6;
   highp vec2 vx_7;
-  highp vec2 x_8;
-  highp vec2 xf_9;
-  xf_9 = xlv_TEXCOORD0;
-  x_8 = xlv_TEXCOORD0;
+  highp vec4 cx_8;
+  highp vec2 vn_9;
+  highp vec2 xf_10;
+  xf_10 = xlv_TEXCOORD0;
   if ((_MainTex_TexelSize.y < 0.0)) {
-    xf_9.y = (1.0 - xlv_TEXCOORD0.y);
+    xf_10.y = (1.0 - xlv_TEXCOORD0.y);
   };
-  mediump vec4 tmpvar_10;
-  tmpvar_10 = textureLod (_NeighbourMaxTex, xf_9, 0.0);
-  highp vec2 tmpvar_11;
-  tmpvar_11 = tmpvar_10.xy;
+  highp vec4 tmpvar_11;
+  tmpvar_11.zw = vec2(0.0, 0.0);
+  tmpvar_11.xy = xf_10;
   mediump vec4 tmpvar_12;
-  tmpvar_12 = textureLod (_MainTex, xlv_TEXCOORD0, 0.0);
+  tmpvar_12 = tmpvar_11;
+  vn_9 = textureLod (_NeighbourMaxTex, tmpvar_12.xy, tmpvar_12.w).xy;
   highp vec4 tmpvar_13;
-  tmpvar_13 = tmpvar_12;
+  tmpvar_13.zw = vec2(0.0, 0.0);
+  tmpvar_13.xy = xlv_TEXCOORD0;
   mediump vec4 tmpvar_14;
-  tmpvar_14 = textureLod (_VelTex, xf_9, 0.0);
-  highp vec2 tmpvar_15;
-  tmpvar_15 = tmpvar_14.xy;
-  vx_7 = tmpvar_15;
-  highp vec4 tmpvar_16;
-  tmpvar_16.zw = vec2(0.0, 0.0);
-  tmpvar_16.xy = xlv_TEXCOORD0;
-  highp vec4 coord_17;
-  coord_17 = (tmpvar_16 * 11.0);
+  tmpvar_14 = tmpvar_13;
+  cx_8 = textureLod (_MainTex, tmpvar_14.xy, tmpvar_14.w);
+  highp vec4 tmpvar_15;
+  tmpvar_15.zw = vec2(0.0, 0.0);
+  tmpvar_15.xy = xf_10;
+  mediump vec4 tmpvar_16;
+  tmpvar_16 = tmpvar_15;
+  vx_7 = textureLod (_VelTex, tmpvar_16.xy, tmpvar_16.w).xy;
+  highp vec4 tmpvar_17;
+  tmpvar_17.zw = vec2(0.0, 0.0);
+  tmpvar_17.xy = xlv_TEXCOORD0;
   mediump vec4 tmpvar_18;
-  tmpvar_18 = textureLod (_NoiseTex, coord_17.xy, coord_17.w);
+  tmpvar_18 = (tmpvar_17 * 11.0);
+  noise_6 = ((textureLod (_NoiseTex, tmpvar_18.xy, tmpvar_18.w) * 2.0) - 1.0);
   highp vec4 tmpvar_19;
-  tmpvar_19 = ((tmpvar_18 * 2.0) - 1.0);
-  zx_6 = -((1.0/((
-    (_ZBufferParams.x * textureLod (_CameraDepthTexture, xlv_TEXCOORD0, 0.0).x)
+  tmpvar_19.zw = vec2(0.0, 0.0);
+  tmpvar_19.xy = xlv_TEXCOORD0;
+  mediump vec4 tmpvar_20;
+  tmpvar_20 = tmpvar_19;
+  zx_5 = -((1.0/((
+    (_ZBufferParams.x * textureLod (_CameraDepthTexture, tmpvar_20.xy, tmpvar_20.w).x)
    + _ZBufferParams.y))));
-  weight_5 = 1.0;
-  sum_4 = tmpvar_13;
-  highp vec4 tmpvar_20;
-  tmpvar_20 = (tmpvar_11.xyxy + (tmpvar_19 * (_MainTex_TexelSize.xyxy * _Jitter)).xyyz);
-  jitteredDir_3 = ((max (
-    abs(tmpvar_20.xyxy)
+  noise_6 = (noise_6 * (_MainTex_TexelSize.xyxy * _Jitter));
+  weight_4 = 1.0;
+  sum_3 = cx_8;
+  highp vec4 tmpvar_21;
+  tmpvar_21 = (vn_9.xyxy + noise_6.xyyz);
+  jitteredDir_2 = ((max (
+    abs(tmpvar_21.xyxy)
   , 
     ((_MainTex_TexelSize.xyxy * _MaxVelocity) * 0.15)
-  ) * sign(tmpvar_20.xyxy)) * vec4(1.0, 1.0, -1.0, -1.0));
-  for (highp int l_2 = 0; l_2 < 12; l_2++) {
-    highp float zy_21;
-    highp vec4 yf_22;
-    highp vec4 tmpvar_23;
-    tmpvar_23 = (tmpvar_1.xyxy + ((jitteredDir_3.xyxy * vec2[12](vec2(-0.326212, -0.40581), vec2(-0.840144, -0.07358), vec2(-0.695914, 0.457137), vec2(-0.203345, 0.620716), vec2(0.96234, -0.194983), vec2(0.473434, -0.480026), vec2(0.519456, 0.767022), vec2(0.185461, -0.893124), vec2(0.507431, 0.064425), vec2(0.89642, 0.412458), vec2(-0.32194, -0.932615), vec2(-0.791559, -0.59771))[l_2].xyxy) * vec4(1.0, 1.0, -1.0, -1.0)));
-    yf_22 = tmpvar_23;
+  ) * sign(tmpvar_21.xyxy)) * vec4(1.0, 1.0, -1.0, -1.0));
+  for (highp int l_1 = 0; l_1 < 12; l_1++) {
+    highp vec4 cy_22;
+    highp float alphay_23;
+    highp float zy_24;
+    highp vec2 vy_25;
+    highp vec4 yf_26;
+    highp vec4 tmpvar_27;
+    tmpvar_27 = (xlv_TEXCOORD0.xyxy + ((jitteredDir_2.xyxy * SmallDiscKernel[l_1].xyxy) * vec4(1.0, 1.0, -1.0, -1.0)));
+    yf_26 = tmpvar_27;
     if ((_MainTex_TexelSize.y < 0.0)) {
-      yf_22.yw = (1.0 - tmpvar_23.yw);
+      yf_26.yw = (1.0 - tmpvar_27.yw);
     };
-    mediump vec4 tmpvar_24;
-    tmpvar_24 = textureLod (_VelTex, yf_22.xy, 0.0);
-    highp vec2 tmpvar_25;
-    tmpvar_25 = tmpvar_24.xy;
-    zy_21 = -((1.0/((
-      (_ZBufferParams.x * textureLod (_CameraDepthTexture, tmpvar_23.xy, 0.0).x)
+    highp vec4 tmpvar_28;
+    tmpvar_28.zw = vec2(0.0, 0.0);
+    tmpvar_28.xy = yf_26.xy;
+    mediump vec4 tmpvar_29;
+    tmpvar_29 = tmpvar_28;
+    vy_25 = textureLod (_VelTex, tmpvar_29.xy, tmpvar_29.w).xy;
+    highp vec4 tmpvar_30;
+    tmpvar_30.zw = vec2(0.0, 0.0);
+    tmpvar_30.xy = tmpvar_27.xy;
+    mediump vec4 tmpvar_31;
+    tmpvar_31 = tmpvar_30;
+    zy_24 = -((1.0/((
+      (_ZBufferParams.x * textureLod (_CameraDepthTexture, tmpvar_31.xy, tmpvar_31.w).x)
      + _ZBufferParams.y))));
-    highp vec2 x_26;
-    x_26 = (x_8 - tmpvar_23.xy);
-    highp vec2 x_27;
-    x_27 = (tmpvar_23.xy - x_8);
-    highp float tmpvar_28;
-    tmpvar_28 = sqrt(dot (tmpvar_25, tmpvar_25));
-    highp vec2 x_29;
-    x_29 = (tmpvar_23.xy - x_8);
-    highp float edge0_30;
-    edge0_30 = (0.95 * tmpvar_28);
-    highp float tmpvar_31;
-    tmpvar_31 = clamp (((
-      sqrt(dot (x_29, x_29))
-     - edge0_30) / (
-      (1.05 * tmpvar_28)
-     - edge0_30)), 0.0, 1.0);
-    highp float tmpvar_32;
-    tmpvar_32 = sqrt(dot (vx_7, vx_7));
-    highp vec2 x_33;
-    x_33 = (x_8 - tmpvar_23.xy);
-    highp float edge0_34;
-    edge0_34 = (0.95 * tmpvar_32);
-    highp float tmpvar_35;
-    tmpvar_35 = clamp (((
-      sqrt(dot (x_33, x_33))
-     - edge0_34) / (
-      (1.05 * tmpvar_32)
-     - edge0_34)), 0.0, 1.0);
+    highp vec2 tmpvar_32;
+    tmpvar_32 = (xlv_TEXCOORD0 - tmpvar_27.xy);
+    highp vec2 tmpvar_33;
+    tmpvar_33 = (tmpvar_27.xy - xlv_TEXCOORD0);
+    highp float tmpvar_34;
+    tmpvar_34 = sqrt(dot (vy_25, vy_25));
+    highp vec2 tmpvar_35;
+    tmpvar_35 = (tmpvar_27.xy - xlv_TEXCOORD0);
     highp float tmpvar_36;
-    tmpvar_36 = (((
-      clamp ((1.0 - ((zy_21 - zx_6) / _SoftZDistance)), 0.0, 1.0)
+    tmpvar_36 = (0.95 * tmpvar_34);
+    highp float tmpvar_37;
+    tmpvar_37 = clamp (((
+      sqrt(dot (tmpvar_35, tmpvar_35))
+     - tmpvar_36) / (
+      (1.05 * tmpvar_34)
+     - tmpvar_36)), 0.0, 1.0);
+    highp float tmpvar_38;
+    tmpvar_38 = sqrt(dot (vx_7, vx_7));
+    highp vec2 tmpvar_39;
+    tmpvar_39 = (xlv_TEXCOORD0 - tmpvar_27.xy);
+    highp float tmpvar_40;
+    tmpvar_40 = (0.95 * tmpvar_38);
+    highp float tmpvar_41;
+    tmpvar_41 = clamp (((
+      sqrt(dot (tmpvar_39, tmpvar_39))
+     - tmpvar_40) / (
+      (1.05 * tmpvar_38)
+     - tmpvar_40)), 0.0, 1.0);
+    alphay_23 = (((
+      clamp ((1.0 - ((zy_24 - zx_5) / _SoftZDistance)), 0.0, 1.0)
      * 
       clamp ((1.0 - (sqrt(
-        dot (x_26, x_26)
+        dot (tmpvar_32, tmpvar_32)
       ) / sqrt(
         dot (vx_7, vx_7)
       ))), 0.0, 1.0)
     ) + (
-      clamp ((1.0 - ((zx_6 - zy_21) / _SoftZDistance)), 0.0, 1.0)
+      clamp ((1.0 - ((zx_5 - zy_24) / _SoftZDistance)), 0.0, 1.0)
      * 
       clamp ((1.0 - (sqrt(
-        dot (x_27, x_27)
+        dot (tmpvar_33, tmpvar_33)
       ) / sqrt(
-        dot (tmpvar_25, tmpvar_25)
+        dot (vy_25, vy_25)
       ))), 0.0, 1.0)
     )) + ((
-      (1.0 - (tmpvar_31 * (tmpvar_31 * (3.0 - 
-        (2.0 * tmpvar_31)
+      (1.0 - (tmpvar_37 * (tmpvar_37 * (3.0 - 
+        (2.0 * tmpvar_37)
       ))))
      * 
-      (1.0 - (tmpvar_35 * (tmpvar_35 * (3.0 - 
-        (2.0 * tmpvar_35)
+      (1.0 - (tmpvar_41 * (tmpvar_41 * (3.0 - 
+        (2.0 * tmpvar_41)
       ))))
     ) * 2.0));
-    mediump vec4 tmpvar_37;
-    tmpvar_37 = textureLod (_MainTex, tmpvar_23.xy, 0.0);
-    highp vec4 tmpvar_38;
-    tmpvar_38 = tmpvar_37;
-    sum_4 = (sum_4 + (tmpvar_38 * tmpvar_36));
-    weight_5 = (weight_5 + tmpvar_36);
+    highp vec4 tmpvar_42;
+    tmpvar_42.zw = vec2(0.0, 0.0);
+    tmpvar_42.xy = tmpvar_27.xy;
+    mediump vec4 tmpvar_43;
+    tmpvar_43 = tmpvar_42;
+    cy_22 = textureLod (_MainTex, tmpvar_43.xy, tmpvar_43.w);
+    sum_3 = (sum_3 + (cy_22 * alphay_23));
+    weight_4 = (weight_4 + alphay_23);
   };
-  highp vec4 tmpvar_39;
-  tmpvar_39 = (sum_4 / weight_5);
-  _fragData = tmpvar_39;
+  _fragData = (sum_3 / weight_4);
 }
 
 
-// stats: 99 alu 8 tex 4 flow
+// stats: 113 alu 8 tex 4 flow
 // inputs: 1
 //  #0: xlv_TEXCOORD0 (high float) 2x1 [-1]
 // uniforms: 5 (total size: 0)

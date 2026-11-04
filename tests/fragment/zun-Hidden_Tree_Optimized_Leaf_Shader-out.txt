@@ -5,56 +5,52 @@ uniform sampler2D _MainTex;
 uniform sampler2D _TranslucencyMap;
 void main ()
 {
-  vec2 tmpvar_1;
-  tmpvar_1 = gl_TexCoord[0].xy;
-  vec3 tmpvar_2;
-  tmpvar_2 = gl_TexCoord[1].xyz;
+  vec2 xlt_IN_hip_pack0_1;
+  vec3 xlt_IN_lightDir_2;
+  xlt_IN_hip_pack0_1 = gl_TexCoord[0].xy;
+  xlt_IN_lightDir_2 = gl_TexCoord[1].xyz;
   vec4 c_3;
   float tmpvar_4;
   vec4 tmpvar_5;
-  tmpvar_5 = texture2D (_MainTex, tmpvar_1);
+  tmpvar_5 = texture2D (_MainTex, xlt_IN_hip_pack0_1);
   vec4 tmpvar_6;
-  tmpvar_6 = texture2D (_TranslucencyMap, tmpvar_1);
+  tmpvar_6 = texture2D (_TranslucencyMap, xlt_IN_hip_pack0_1);
   tmpvar_4 = (tmpvar_5.w * gl_Color.w);
   vec4 tmpvar_7;
-  tmpvar_7 = texture2D (_BumpSpecMap, tmpvar_1);
+  tmpvar_7 = texture2D (_BumpSpecMap, xlt_IN_hip_pack0_1);
   vec4 normal_8;
   normal_8.xy = ((tmpvar_7.wy * 2.0) - 1.0);
   normal_8.z = sqrt(((1.0 - 
     (normal_8.x * normal_8.x)
   ) - (normal_8.y * normal_8.y)));
-  float x_9;
-  x_9 = (tmpvar_4 - _Cutoff);
-  if ((x_9 < 0.0)) {
-    discard;
-  };
-  vec4 c_10;
-  vec3 col_11;
+  if (((tmpvar_4 - _Cutoff) < 0.0)) discard;
+  vec4 c_9;
+  vec3 col_10;
+  float tmpvar_11;
+  tmpvar_11 = dot (normal_8.xyz, xlt_IN_lightDir_2);
   float tmpvar_12;
-  tmpvar_12 = dot (normal_8.xyz, tmpvar_2);
-  float tmpvar_13;
-  tmpvar_13 = max (0.0, -(tmpvar_12));
-  col_11 = ((tmpvar_5.xyz * gl_Color.xyz) * (max (0.0, 
-    ((tmpvar_12 * 0.5) + 0.5)
+  tmpvar_12 = max (0.0, -(tmpvar_11));
+  col_10 = ((tmpvar_5.xyz * gl_Color.xyz) * (max (0.0, 
+    ((tmpvar_11 * 0.5) + 0.5)
   ) + (
-    (tmpvar_6.xyz * tmpvar_13)
+    (tmpvar_6.xyz * tmpvar_12)
    * 2.0)));
-  col_11 = (col_11 + ((
+  col_10 = (col_10 + ((
     pow (max (0.0, dot (normal_8.xyz, normalize(
-      (tmpvar_2 + normalize(gl_TexCoord[2].xyz))
+      (xlt_IN_lightDir_2 + normalize(gl_TexCoord[2].xyz))
     ))), (tmpvar_7.x * 128.0))
    * tmpvar_6.w) * (1.0 - 
-    clamp (ceil(tmpvar_13), 0.0, 1.0)
+    clamp (ceil(tmpvar_12), 0.0, 1.0)
   )));
-  col_11 = (col_11 * _LightColor0.xyz);
-  c_10.xyz = (col_11 * 2.0);
-  c_3.xyz = c_10.xyz;
+  col_10 = (col_10 * _LightColor0.xyz);
+  c_9.xyz = (col_10 * 2.0);
+  c_3.xyz = c_9.xyz;
   c_3.w = tmpvar_4;
   gl_FragData[0] = c_3;
 }
 
 
-// stats: 36 alu 4 tex 1 flow
+// stats: 37 alu 4 tex 1 flow
 // inputs: 2
 //  #0: gl_Color (high float) 4x1 [-1] loc 1
 //  #1: gl_TexCoord (high float) 4x1 [3] loc 4

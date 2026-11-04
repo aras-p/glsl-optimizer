@@ -25,11 +25,11 @@ out highp vec2 xlv_TEXCOORD0;
 out mediump vec4 xlv_TEXCOORD1;
 void main ()
 {
-  highp vec3 tmpvar_1;
-  highp vec4 tmpvar_2;
-  tmpvar_1 = _inNormal;
-  tmpvar_2 = _color;
-  mediump vec4 tmpvar_3;
+  highp vec3 xlt_v_normal_1;
+  highp vec4 xlt_v_color_2;
+  xlt_v_normal_1 = _inNormal;
+  xlt_v_color_2 = _color;
+  mediump vec4 o_color_3;
   highp float noiseWave_4;
   highp float noiseTime_5;
   highp float wave_6;
@@ -40,7 +40,7 @@ void main ()
   highp vec3 centerOffs_11;
   highp vec3 tmpvar_12;
   tmpvar_12.z = 0.0;
-  tmpvar_12.xy = (vec2(0.5, 0.5) - tmpvar_2.xy);
+  tmpvar_12.xy = (vec2(0.5, 0.5) - xlt_v_color_2.xy);
   centerOffs_11 = (tmpvar_12 * _uv1.xyy);
   centerLocal_10 = (_inVertex.xyz + centerOffs_11);
   highp vec4 tmpvar_13;
@@ -50,44 +50,44 @@ void main ()
   localDir_9.y = (localDir_9.y * _VerticalBillboarding);
   highp float tmpvar_14;
   tmpvar_14 = sqrt(dot (localDir_9, localDir_9));
-  highp vec3 dir_15;
-  dir_15 = (localDir_9 / tmpvar_14);
-  highp float tmpvar_16;
-  tmpvar_16 = abs(dir_15.y);
-  highp vec3 tmpvar_17;
-  if ((tmpvar_16 > 0.999)) {
-    tmpvar_17 = vec3(0.0, 0.0, 1.0);
-  } else {
-    tmpvar_17 = vec3(0.0, 1.0, 0.0);
-  };
+  highp vec3 tmpvar_15;
+  tmpvar_15 = (localDir_9 / tmpvar_14);
+  highp vec3 tmpvar_16;
+  highp float tmpvar_17;
+  tmpvar_17 = abs(tmpvar_15.y);
   highp vec3 tmpvar_18;
-  tmpvar_18 = normalize(((tmpvar_17.yzx * dir_15.zxy) - (tmpvar_17.zxy * dir_15.yzx)));
+  if ((0.999 < tmpvar_17)) {
+    tmpvar_18 = vec3(0.0, 0.0, 1.0);
+  } else {
+    tmpvar_18 = vec3(0.0, 1.0, 0.0);
+  };
   highp vec3 tmpvar_19;
-  tmpvar_19 = ((dir_15.yzx * tmpvar_18.zxy) - (dir_15.zxy * tmpvar_18.yzx));
+  tmpvar_19 = normalize(((tmpvar_18.yzx * tmpvar_15.zxy) - (tmpvar_18.zxy * tmpvar_15.yzx)));
+  tmpvar_16 = ((tmpvar_15.yzx * tmpvar_19.zxy) - (tmpvar_15.zxy * tmpvar_19.yzx));
   highp float tmpvar_20;
   tmpvar_20 = min ((max (
     (tmpvar_14 - _SizeGrowStartDist)
   , 0.0) / _SizeGrowEndDist), 1.0);
   BBLocalPos_8 = ((centerLocal_10 - (
-    (tmpvar_18 * centerOffs_11.x)
+    (tmpvar_19 * centerOffs_11.x)
    + 
-    (tmpvar_19 * centerOffs_11.y)
+    (tmpvar_16 * centerOffs_11.y)
   )) + ((
-    (tmpvar_18 * tmpvar_1.x)
+    (tmpvar_19 * xlt_v_normal_1.x)
    + 
-    (tmpvar_19 * tmpvar_1.y)
+    (tmpvar_16 * xlt_v_normal_1.y)
   ) * (
     (tmpvar_20 * tmpvar_20)
    * 
-    (_MaxGrowSize * tmpvar_2.w)
+    (_MaxGrowSize * xlt_v_color_2.w)
   )));
-  time_7 = (_Time.y + (_BlinkingTimeOffsScale * tmpvar_2.z));
-  highp float y_21;
-  y_21 = (_TimeOnDuration + _TimeOffDuration);
+  time_7 = (_Time.y + (_BlinkingTimeOffsScale * xlt_v_color_2.z));
+  highp float tmpvar_21;
+  tmpvar_21 = (_TimeOnDuration + _TimeOffDuration);
   highp float tmpvar_22;
-  tmpvar_22 = (time_7 / y_21);
+  tmpvar_22 = (time_7 / tmpvar_21);
   highp float tmpvar_23;
-  tmpvar_23 = (fract(abs(tmpvar_22)) * y_21);
+  tmpvar_23 = (fract(abs(tmpvar_22)) * tmpvar_21);
   highp float tmpvar_24;
   if ((tmpvar_22 >= 0.0)) {
     tmpvar_24 = tmpvar_23;
@@ -96,10 +96,10 @@ void main ()
   };
   highp float tmpvar_25;
   tmpvar_25 = clamp ((tmpvar_24 / (_TimeOnDuration * 0.25)), 0.0, 1.0);
-  highp float edge0_26;
-  edge0_26 = (_TimeOnDuration * 0.75);
+  highp float tmpvar_26;
+  tmpvar_26 = (_TimeOnDuration * 0.75);
   highp float tmpvar_27;
-  tmpvar_27 = clamp (((tmpvar_24 - edge0_26) / (_TimeOnDuration - edge0_26)), 0.0, 1.0);
+  tmpvar_27 = clamp (((tmpvar_24 - tmpvar_26) / (_TimeOnDuration - tmpvar_26)), 0.0, 1.0);
   wave_6 = ((tmpvar_25 * (tmpvar_25 * 
     (3.0 - (2.0 * tmpvar_25))
   )) * (1.0 - (tmpvar_27 * 
@@ -134,14 +134,14 @@ void main ()
   nfadeout_31 = (tmpvar_32 * tmpvar_32);
   nfadeout_31 = (nfadeout_31 * nfadeout_31);
   nfadeout_31 = (nfadeout_31 * ffadeout_30);
-  tmpvar_3 = ((nfadeout_31 * _Color) * (_Multiplier * wave_6));
+  o_color_3 = (((nfadeout_31 * _Color) * _Multiplier) * wave_6);
   gl_Position = (glstate_matrix_mvp * tmpvar_29);
   xlv_TEXCOORD0 = _uv0.xy;
-  xlv_TEXCOORD1 = tmpvar_3;
+  xlv_TEXCOORD1 = o_color_3;
 }
 
 
-// stats: 95 alu 0 tex 3 flow
+// stats: 99 alu 0 tex 3 flow
 // inputs: 5
 //  #0: _inVertex (high float) 4x1 [-1]
 //  #1: _inNormal (medium float) 3x1 [-1]

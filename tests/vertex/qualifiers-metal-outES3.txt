@@ -1,0 +1,18 @@
+#version 300 es
+invariant gl_Position;
+in highp vec4 position;
+flat out highp int material;
+centroid out highp vec2 uv;
+smooth out highp vec2 smoothUV;
+void main ()
+{
+  gl_Position = position;
+  material = int(position.z);
+  uv = position.xy;
+  smoothUV = position.zw;
+}
+
+
+// stats: 1 alu 0 tex 0 flow
+// inputs: 1
+//  #0: position (high float) 4x1 [-1]

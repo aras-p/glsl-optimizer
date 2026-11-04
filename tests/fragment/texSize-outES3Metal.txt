@@ -9,13 +9,15 @@ struct xlatMtlShaderOutput {
 struct xlatMtlShaderUniform {
 };
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  ,   texture2d<float> map [[texture(0)]], sampler _mtlsmp_map [[sampler(0)]])
+  , texture2d<float> map [[texture(0)]], sampler _mtlsmp_map [[sampler(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  float4 tmpvar_1 = 0;
-  tmpvar_1.zw = float2(0.0, 0.0);
-  tmpvar_1.xy = float2(map.get_width(0), map.get_height(0));
-  _mtl_o.out_color = half4(tmpvar_1);
+  half2 map_size_1 = 0;
+  map_size_1 = half2(float2(int2(map.get_width(0), map.get_height(0))));
+  half4 tmpvar_2 = 0;
+  tmpvar_2.zw = half2(float2(0.0, 0.0));
+  tmpvar_2.xy = map_size_1;
+  _mtl_o.out_color = tmpvar_2;
   return _mtl_o;
 }
 

@@ -5,9 +5,7 @@ in mediump vec4 xlv_COLOR0;
 void main ()
 {
   mediump vec4 c_1;
-  highp vec4 tmpvar_2;
-  tmpvar_2 = (xlv_COLOR0 * _Color);
-  c_1 = tmpvar_2;
+  c_1 = (xlv_COLOR0 * _Color);
   _glesFragData[0] = c_1;
 }
 

@@ -12,11 +12,7 @@ struct xlatMtlShaderUniform {
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half4 tmpvar_1 = 0;
-  float4 tmpvar_2 = 0;
-  tmpvar_2 = float4(_mtl_i.xlv_VFACE);
-  tmpvar_1 = half4(tmpvar_2);
-  _mtl_o._fragData = tmpvar_1;
+  _mtl_o._fragData = half4(float4(_mtl_i.xlv_VFACE));
   return _mtl_o;
 }
 

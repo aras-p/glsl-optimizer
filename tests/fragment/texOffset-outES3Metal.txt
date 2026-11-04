@@ -10,18 +10,18 @@ struct xlatMtlShaderOutput {
 struct xlatMtlShaderUniform {
 };
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  ,   texture2d<half> tex [[texture(0)]], sampler _mtlsmp_tex [[sampler(0)]]
-  ,   texture3d<half> vol [[texture(1)]], sampler _mtlsmp_vol [[sampler(1)]])
+  , texture2d<half> tex [[texture(0)]], sampler _mtlsmp_tex [[sampler(0)]]
+  , texture3d<half> vol [[texture(1)]], sampler _mtlsmp_vol [[sampler(1)]])
 {
   xlatMtlShaderOutput _mtl_o;
   half4 c_1 = 0;
-  c_1 = (tex.sample(_mtlsmp_tex, (float2)(_mtl_i.uv.xy)) + tex.sample(_mtlsmp_tex, (float2)(_mtl_i.uv.xy), bias(0.5)));
-  c_1 = (c_1 + vol.sample(_mtlsmp_vol, (float3)(_mtl_i.uv)));
-  c_1 = (c_1 + vol.sample(_mtlsmp_vol, (float3)(_mtl_i.uv), bias(-0.5)));
-  c_1 = (c_1 + tex.sample(_mtlsmp_tex, (float2)(int2(1, 2))));
-  c_1 = (c_1 + vol.sample(_mtlsmp_vol, (float3)(int3(1, 2, 3))));
-  c_1 = (c_1 + tex.sample(_mtlsmp_tex, (float2)(int2(1, 2))));
-  c_1 = (c_1 + vol.sample(_mtlsmp_vol, (float3)(int3(1, 2, 3))));
+  c_1 = (tex.sample(_mtlsmp_tex, (float2)((_mtl_i.uv.xy)), int2(-2, -3)) + tex.sample(_mtlsmp_tex, (float2)((_mtl_i.uv.xy)), bias(0.5), int2(4, 5)));
+  c_1 = (c_1 + vol.sample(_mtlsmp_vol, (float3)((_mtl_i.uv)), int3(-2, -3, -4)));
+  c_1 = (c_1 + vol.sample(_mtlsmp_vol, (float3)((_mtl_i.uv)), bias(-0.5), int3(4, 5, 6)));
+  c_1 = (c_1 + tex.read(uint2(int2(1, 2)), uint(1)));
+  c_1 = (c_1 + vol.read(uint3(int3(1, 2, 3)), uint(2)));
+  c_1 = (c_1 + tex.read(uint2(int2(1, 2) + int2(-2, -3)), uint(3)));
+  c_1 = (c_1 + vol.read(uint3(int3(1, 2, 3) + int3(-2, -3, -4)), uint(0)));
   _mtl_o.outColor = c_1;
   return _mtl_o;
 }

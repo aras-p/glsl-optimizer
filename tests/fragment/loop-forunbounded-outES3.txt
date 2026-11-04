@@ -6,29 +6,23 @@ in highp vec2 xlv_uv;
 in highp vec3 xlv_nl;
 void main ()
 {
-  highp vec3 tmpvar_1;
-  tmpvar_1 = xlv_nl;
-  mediump int loopCount_3;
-  mediump vec3 light_4;
-  mediump vec4 col_5;
-  mediump vec4 tmpvar_6;
-  tmpvar_6 = texture (_MainTex, xlv_uv);
-  col_5 = tmpvar_6;
-  light_4 = vec3(0.0, 0.0, 0.0);
-  loopCount_3 = int((tmpvar_6.w * 10.0));
-  for (highp int j_2 = 0; j_2 < loopCount_3; j_2++) {
-    light_4 = (light_4 + ((col_5.xyz * 
-      tmpvar_1[j_2]
-    ) * _TerrainTreeLightColors[j_2].xyz));
+  mediump vec3 light_2;
+  mediump vec4 tmpvar_3;
+  tmpvar_3 = texture (_MainTex, xlv_uv);
+  light_2 = vec3(0.0, 0.0, 0.0);
+  mediump int tmpvar_4;
+  tmpvar_4 = int((tmpvar_3.w * 10.0));
+  for (mediump int j_1 = 0; j_1 < tmpvar_4; j_1++) {
+    light_2 = (light_2 + ((tmpvar_3.xyz * xlv_nl[j_1]) * _TerrainTreeLightColors[j_1].xyz));
   };
-  mediump vec4 tmpvar_7;
-  tmpvar_7.w = 1.0;
-  tmpvar_7.xyz = light_4;
-  _fragData = tmpvar_7;
+  mediump vec4 tmpvar_5;
+  tmpvar_5.w = 1.0;
+  tmpvar_5.xyz = light_2;
+  _fragData = tmpvar_5;
 }
 
 
-// stats: 11 alu 1 tex 2 flow
+// stats: 10 alu 1 tex 2 flow
 // inputs: 2
 //  #0: xlv_uv (high float) 2x1 [-1]
 //  #1: xlv_nl (high float) 3x1 [-1]

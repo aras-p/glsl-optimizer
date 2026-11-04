@@ -1,5 +1,4 @@
 #version 300 es
-precision mediump float;
 uniform mediump sampler2D tex;
 uniform mediump samplerCube cub;
 in mediump vec3 uv1;
@@ -7,19 +6,15 @@ in highp vec3 uv2;
 out mediump vec4 _fragColor;
 void main ()
 {
-  highp vec2 tmpvar_1;
-  tmpvar_1 = dFdx(uv2.xy);
-  highp vec2 tmpvar_2;
-  tmpvar_2 = dFdy(uv2.xy);
-  highp vec3 tmpvar_3;
-  tmpvar_3 = dFdx(uv2);
-  highp vec3 tmpvar_4;
-  tmpvar_4 = dFdy(uv2);
   _fragColor = (((textureGrad (tex, uv1.xy, 
     dFdx(uv1.xy)
   , 
     dFdy(uv1.xy)
-  ) + textureGrad (tex, uv2.xy, tmpvar_1, tmpvar_2)) + textureGrad (tex, uv2.xy, uv1.xy, uv1.xy)) + textureGrad (cub, uv2, tmpvar_3, tmpvar_4));
+  ) + textureGrad (tex, uv2.xy, 
+    dFdx(uv2.xy)
+  , 
+    dFdy(uv2.xy)
+  )) + textureGrad (tex, uv2.xy, uv1.xy, uv1.xy)) + textureGrad (cub, uv2, dFdx(uv2), dFdy(uv2)));
 }
 
 
