@@ -599,15 +599,32 @@ void ir_print_glsl_visitor::visit(ir_expression *ir)
 		buffer.asprintf_append("clamp ("); ir->operands[0]->accept(this);
 		buffer.asprintf_append(", 0.0, 1.0)");
 	}
-	else if (ir->type->is_vector() && (ir->operation == ir_binop_logic_and || ir->operation == ir_binop_logic_or || ir->operation == ir_binop_logic_xor)) {
+	else if (ir->operation == ir_unop_b2f && ir->type->is_vector() &&
+		ir->operands[0]->as_expression() &&
+		ir->operands[0]->as_expression()->operation == ir_binop_logic_and) {
+		// Recover the numeric mask product without expanding vector comparisons.
+		ir_expression* mask = ir->operands[0]->as_expression();
+		buffer.asprintf_append("(");
 		print_type(buffer, ir->type, true); buffer.asprintf_append("(");
-		for (unsigned i = 0; i < ir->type->vector_elements; ++i) {
-			if (i) buffer.asprintf_append(", ");
-			buffer.asprintf_append("("); ir->operands[0]->accept(this);
-			buffer.asprintf_append(").%c %s (", "xyzw"[i], glsl_operator(ir->operation));
-			ir->operands[1]->accept(this); buffer.asprintf_append(").%c", "xyzw"[i]);
+		mask->operands[0]->accept(this); buffer.asprintf_append(") * ");
+		print_type(buffer, ir->type, true); buffer.asprintf_append("(");
+		mask->operands[1]->accept(this); buffer.asprintf_append("))");
+	}
+	else if (ir->type->is_vector() && (ir->operation == ir_binop_logic_and || ir->operation == ir_binop_logic_or || ir->operation == ir_binop_logic_xor)) {
+		// GLSL has no vector &&/||/^^ operators. Convert boolean lanes to 0/1
+		// for AND/OR, or compare them for XOR, evaluating each operand once.
+		if (ir->operation == ir_binop_logic_xor) {
+			buffer.asprintf_append("notEqual (");
+			ir->operands[0]->accept(this); buffer.asprintf_append(", ");
+			ir->operands[1]->accept(this); buffer.asprintf_append(")");
+		} else {
+			print_type(buffer, ir->type, true);
+			buffer.asprintf_append("(ivec%u(", ir->type->vector_elements);
+			ir->operands[0]->accept(this);
+			buffer.asprintf_append(") %s ivec%u(",
+				ir->operation == ir_binop_logic_and ? "*" : "+", ir->type->vector_elements);
+			ir->operands[1]->accept(this); buffer.asprintf_append("))");
 		}
-		buffer.asprintf_append(")");
 	}
 	else if (ir->num_operands == 1) {
 		if (ir->operation >= ir_unop_f2i && ir->operation <= ir_unop_u2i) {

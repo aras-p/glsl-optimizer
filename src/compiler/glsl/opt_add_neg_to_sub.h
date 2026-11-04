@@ -38,6 +38,17 @@ public:
 
    ir_visitor_status visit_leave(ir_expression *ir)
    {
+      /* glsl-optimizer change: recover a - b from -(b - a) after the
+       * children have had their additions converted to subtraction. */
+      if (ir->operation == ir_unop_neg) {
+         ir_expression *op = ir->operands[0]->as_expression();
+         if (op && op->operation == ir_binop_sub) {
+            ir->operation = ir_binop_sub;
+            ir->operands[0] = op->operands[1];
+            ir->operands[1] = op->operands[0];
+            ir->init_num_operands();
+         }
+      }
       if (ir->operation != ir_binop_add)
          return visit_continue;
 
