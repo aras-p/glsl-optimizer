@@ -46,15 +46,15 @@
 #ifndef RALLOC_H
 #define RALLOC_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stddef.h>
 #include <stdarg.h>
 #include <stdbool.h>
 
 #include "macros.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * \def ralloc(ctx, type)
@@ -121,6 +121,23 @@ void *rzalloc_size(const void *ctx, size_t size) MALLOCLIKE;
  */
 void *reralloc_size(const void *ctx, void *ptr, size_t size);
 
+/**
+ * Resize a ralloc-managed array, preserving data and initializing any newly
+ * allocated data to zero.
+ *
+ * Similar to \c realloc.  Unlike C89, passing 0 for \p size does not free the
+ * memory.  Instead, it resizes it to a 0-byte ralloc context, just like
+ * calling ralloc_size(ctx, 0).  This is different from talloc.
+ *
+ * \param ctx        The context to use for new allocation.  If \p ptr != NULL,
+ *                   it must be the same as ralloc_parent(\p ptr).
+ * \param ptr        Pointer to the memory to be resized.  May be NULL.
+ * \param old_size   The amount of memory in the previous allocation, in bytes.
+ * \param new_size   The amount of memory to allocate, in bytes.
+ */
+void *rerzalloc_size(const void *ctx, void *ptr,
+                     size_t old_size, size_t new_size);
+
 /// \defgroup array Array Allocators @{
 
 /**
@@ -178,6 +195,28 @@ void *reralloc_size(const void *ctx, void *ptr, size_t size);
    ((type *) reralloc_array_size(ctx, ptr, sizeof(type), count))
 
 /**
+ * \def rerzalloc(ctx, ptr, type, count)
+ * Resize a ralloc-managed array, preserving data and initializing any newly
+ * allocated data to zero.
+ *
+ * Similar to \c realloc.  Unlike C89, passing 0 for \p size does not free the
+ * memory.  Instead, it resizes it to a 0-byte ralloc context, just like
+ * calling ralloc_size(ctx, 0).  This is different from talloc.
+ *
+ * More than a convenience function, this also checks for integer overflow when
+ * multiplying \c sizeof(type) and \p count.  This is necessary for security.
+ *
+ * \param ctx        The context to use for new allocation.  If \p ptr != NULL,
+ *                   it must be the same as ralloc_parent(\p ptr).
+ * \param ptr        Pointer to the array to be resized.  May be NULL.
+ * \param type       The element type.
+ * \param old_count  The number of elements in the previous allocation.
+ * \param new_count  The number of elements to allocate.
+ */
+#define rerzalloc(ctx, ptr, type, old_count, new_count) \
+   ((type *) rerzalloc_array_size(ctx, ptr, sizeof(type), old_count, new_count))
+
+/**
  * Allocate memory for an array chained off the given context.
  *
  * Similar to \c calloc, but does not initialize the memory to zero.
@@ -185,7 +224,7 @@ void *reralloc_size(const void *ctx, void *ptr, size_t size);
  * More than a convenience function, this also checks for integer overflow when
  * multiplying \p size and \p count.  This is necessary for security.
  */
-void *ralloc_array_size(const void *ctx, size_t size, size_t count) MALLOCLIKE;
+void *ralloc_array_size(const void *ctx, size_t size, unsigned count) MALLOCLIKE;
 
 /**
  * Allocate a zero-initialized array chained off the given context.
@@ -195,7 +234,7 @@ void *ralloc_array_size(const void *ctx, size_t size, size_t count) MALLOCLIKE;
  * More than a convenience function, this also checks for integer overflow when
  * multiplying \p size and \p count.  This is necessary for security.
  */
-void *rzalloc_array_size(const void *ctx, size_t size, size_t count) MALLOCLIKE;
+void *rzalloc_array_size(const void *ctx, size_t size, unsigned count) MALLOCLIKE;
 
 /**
  * Resize a ralloc-managed array, preserving data.
@@ -216,7 +255,30 @@ void *rzalloc_array_size(const void *ctx, size_t size, size_t count) MALLOCLIKE;
  * \return True unless allocation failed.
  */
 void *reralloc_array_size(const void *ctx, void *ptr, size_t size,
-			  size_t count);
+			  unsigned count);
+
+/**
+ * Resize a ralloc-managed array, preserving data and initializing any newly
+ * allocated data to zero.
+ *
+ * Similar to \c realloc.  Unlike C89, passing 0 for \p size does not free the
+ * memory.  Instead, it resizes it to a 0-byte ralloc context, just like
+ * calling ralloc_size(ctx, 0).  This is different from talloc.
+ *
+ * More than a convenience function, this also checks for integer overflow when
+ * multiplying \c sizeof(type) and \p count.  This is necessary for security.
+ *
+ * \param ctx        The context to use for new allocation.  If \p ptr != NULL,
+ *                   it must be the same as ralloc_parent(\p ptr).
+ * \param ptr        Pointer to the array to be resized.  May be NULL.
+ * \param size       The size of an individual element.
+ * \param old_count  The number of elements in the previous allocation.
+ * \param new_count  The number of elements to allocate.
+ *
+ * \return True unless allocation failed.
+ */
+void *rerzalloc_array_size(const void *ctx, void *ptr, size_t size,
+			   unsigned old_count, unsigned new_count);
 /// @}
 
 /**
@@ -235,18 +297,16 @@ void ralloc_free(void *ptr);
 void ralloc_steal(const void *new_ctx, void *ptr);
 
 /**
+ * Reparent all children from one context to another.
+ *
+ * This effectively calls ralloc_steal(new_ctx, child) for all children of \p old_ctx.
+ */
+void ralloc_adopt(const void *new_ctx, void *old_ctx);
+
+/**
  * Return the given pointer's ralloc context.
  */
 void *ralloc_parent(const void *ptr);
-
-/**
- * Return a context whose memory will be automatically freed at program exit.
- *
- * The first call to this function creates a context and registers a handler
- * to free it using \c atexit.  This may cause trouble if used in a library
- * loaded with \c dlopen.
- */
-void *ralloc_autofree_context(void);
 
 /**
  * Set a callback to occur just before an object is freed.
@@ -293,6 +353,24 @@ bool ralloc_strcat(char **dest, const char *str);
  * \return True unless allocation failed.
  */
 bool ralloc_strncat(char **dest, const char *str, size_t n);
+
+/**
+ * Concatenate two strings, allocating the necessary space.
+ *
+ * This appends \p n bytes of \p str to \p *dest, using ralloc_resize
+ * to expand \p *dest to the appropriate size.  \p dest will be updated to the
+ * new pointer unless allocation fails.
+ *
+ * The result will always be null-terminated.
+ *
+ * This function differs from ralloc_strcat() and ralloc_strncat() in that it
+ * does not do any strlen() calls which can become costly on large strings.
+ *
+ * \return True unless allocation failed.
+ */
+bool
+ralloc_str_append(char **dest, const char *str,
+                  size_t existing_length, size_t str_size);
 
 /**
  * Print to a string.
@@ -400,14 +478,6 @@ bool ralloc_asprintf_append (char **str, const char *fmt, ...)
 bool ralloc_vasprintf_append(char **str, const char *fmt, va_list args);
 /// @}
 
-
-size_t printf_length(const char *fmt, va_list untouched_args);
-
-
-#ifdef __cplusplus
-} /* end of extern "C" */
-#endif
-
 /**
  * Declare C++ new and delete operators which use ralloc.
  *
@@ -418,16 +488,16 @@ size_t printf_length(const char *fmt, va_list untouched_args);
  *
  * which is more idiomatic in C++ than calling ralloc.
  */
-#define DECLARE_RALLOC_CXX_OPERATORS(TYPE)                               \
+#define DECLARE_ALLOC_CXX_OPERATORS_TEMPLATE(TYPE, ALLOC_FUNC)           \
 private:                                                                 \
    static void _ralloc_destructor(void *p)                               \
    {                                                                     \
-      reinterpret_cast<TYPE *>(p)->~TYPE();                              \
+      reinterpret_cast<TYPE *>(p)->TYPE::~TYPE();                        \
    }                                                                     \
 public:                                                                  \
    static void* operator new(size_t size, void *mem_ctx)                 \
    {                                                                     \
-      void *p = ralloc_size(mem_ctx, size);                              \
+      void *p = ALLOC_FUNC(mem_ctx, size);                               \
       assert(p != NULL);                                                 \
       if (!HAS_TRIVIAL_DESTRUCTOR(TYPE))                                 \
          ralloc_set_destructor(p, _ralloc_destructor);                   \
@@ -445,5 +515,90 @@ public:                                                                  \
       ralloc_free(p);                                                    \
    }
 
+#define DECLARE_RALLOC_CXX_OPERATORS(type) \
+   DECLARE_ALLOC_CXX_OPERATORS_TEMPLATE(type, ralloc_size)
+
+#define DECLARE_RZALLOC_CXX_OPERATORS(type) \
+   DECLARE_ALLOC_CXX_OPERATORS_TEMPLATE(type, rzalloc_size)
+
+#define DECLARE_LINEAR_ALLOC_CXX_OPERATORS(type) \
+   DECLARE_ALLOC_CXX_OPERATORS_TEMPLATE(type, linear_alloc_child)
+
+#define DECLARE_LINEAR_ZALLOC_CXX_OPERATORS(type) \
+   DECLARE_ALLOC_CXX_OPERATORS_TEMPLATE(type, linear_zalloc_child)
+
+
+/**
+ * Do a fast allocation from the linear buffer, also known as the child node
+ * from the allocator's point of view. It can't be freed directly. You have
+ * to free the parent or the ralloc parent.
+ *
+ * \param parent   parent node of the linear allocator
+ * \param size     size to allocate (max 32 bits)
+ */
+void *linear_alloc_child(void *parent, unsigned size);
+
+/**
+ * Allocate a parent node that will hold linear buffers. The returned
+ * allocation is actually the first child node, but it's also the handle
+ * of the parent node. Use it for all child node allocations.
+ *
+ * \param ralloc_ctx  ralloc context, must not be NULL
+ * \param size        size to allocate (max 32 bits)
+ */
+void *linear_alloc_parent(void *ralloc_ctx, unsigned size);
+
+/**
+ * Same as linear_alloc_child, but also clears memory.
+ */
+void *linear_zalloc_child(void *parent, unsigned size);
+
+/**
+ * Same as linear_alloc_parent, but also clears memory.
+ */
+void *linear_zalloc_parent(void *ralloc_ctx, unsigned size);
+
+/**
+ * Free the linear parent node. This will free all child nodes too.
+ * Freeing the ralloc parent will also free this.
+ */
+void linear_free_parent(void *ptr);
+
+/**
+ * Same as ralloc_steal, but steals the linear parent node.
+ */
+void ralloc_steal_linear_parent(void *new_ralloc_ctx, void *ptr);
+
+/**
+ * Return the ralloc parent of the linear parent node.
+ */
+void *ralloc_parent_of_linear_parent(void *ptr);
+
+/**
+ * Same as realloc except that the linear allocator doesn't free child nodes,
+ * so it's reduced to memory duplication. It's used in places where
+ * reallocation is required. Don't use it often. It's much slower than
+ * realloc.
+ */
+void *linear_realloc(void *parent, void *old, unsigned new_size);
+
+/* The functions below have the same semantics as their ralloc counterparts,
+ * except that they always allocate a linear child node.
+ */
+char *linear_strdup(void *parent, const char *str);
+char *linear_asprintf(void *parent, const char *fmt, ...);
+char *linear_vasprintf(void *parent, const char *fmt, va_list args);
+bool linear_asprintf_append(void *parent, char **str, const char *fmt, ...);
+bool linear_vasprintf_append(void *parent, char **str, const char *fmt,
+                             va_list args);
+bool linear_asprintf_rewrite_tail(void *parent, char **str, size_t *start,
+                                  const char *fmt, ...);
+bool linear_vasprintf_rewrite_tail(void *parent, char **str, size_t *start,
+                                   const char *fmt, va_list args);
+bool linear_strcat(void *parent, char **dest, const char *str);
+
+#ifdef __cplusplus
+} /* end of extern "C" */
+#endif
 
 #endif
