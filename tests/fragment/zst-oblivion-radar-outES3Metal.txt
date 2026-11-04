@@ -1,0 +1,523 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct xlatMtlShaderInput {
+  float4 gl_FragCoord [[position]];
+};
+struct xlatMtlShaderOutput {
+  float4 fragColor [[color(0)]];
+};
+struct xlatMtlShaderUniform {
+  float3 iResolution;
+  float iTime;
+};
+fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
+{
+  xlatMtlShaderOutput _mtl_o;
+  float3 finalColor_1 = 0;
+  float2 tmpvar_2 = 0;
+  tmpvar_2 = (_mtl_u.iResolution.xy / 2.0);
+  float tmpvar_3 = 0;
+  float2 tmpvar_4 = 0;
+  tmpvar_4 = (_mtl_i.gl_FragCoord.xy - tmpvar_2);
+  int tmpvar_5 = 0;
+  tmpvar_5 = int(tmpvar_4.x);
+  int tmpvar_6 = 0;
+  tmpvar_6 = int(tmpvar_4.y);
+  float tmpvar_7 = 0;
+  tmpvar_7 = sqrt(dot (tmpvar_4, tmpvar_4));
+  if (((tmpvar_7 < 240.0) && ((tmpvar_5 == tmpvar_6) || (tmpvar_5 == 
+    -(tmpvar_6)
+  )))) {
+    tmpvar_3 = 1.0;
+  } else {
+    tmpvar_3 = 0.0;
+  };
+  finalColor_1 = float3((0.3 * tmpvar_3));
+  float tmpvar_8 = 0;
+  float2 tmpvar_9 = 0;
+  tmpvar_9 = (_mtl_i.gl_FragCoord.xy - tmpvar_2);
+  tmpvar_8 = sqrt(dot (tmpvar_9, tmpvar_9));
+  float tmpvar_10 = 0;
+  tmpvar_10 = saturate(((
+    (tmpvar_8 - 0.5)
+   - 99.0) / 2.0));
+  float tmpvar_11 = 0;
+  tmpvar_11 = saturate(((
+    (tmpvar_8 + 0.5)
+   - 99.0) / 2.0));
+  float tmpvar_12 = 0;
+  float2 tmpvar_13 = 0;
+  tmpvar_13 = (_mtl_i.gl_FragCoord.xy - tmpvar_2);
+  tmpvar_12 = sqrt(dot (tmpvar_13, tmpvar_13));
+  float tmpvar_14 = 0;
+  tmpvar_14 = saturate(((
+    (tmpvar_12 - 0.5)
+   - 164.0) / 2.0));
+  float tmpvar_15 = 0;
+  tmpvar_15 = saturate(((
+    (tmpvar_12 + 0.5)
+   - 164.0) / 2.0));
+  finalColor_1 = (finalColor_1 + ((
+    ((1.0 - (tmpvar_10 * (tmpvar_10 * 
+      (3.0 - (2.0 * tmpvar_10))
+    ))) + ((tmpvar_11 * (tmpvar_11 * 
+      (3.0 - (2.0 * tmpvar_11))
+    )) - 1.0))
+   + 
+    ((1.0 - (tmpvar_14 * (tmpvar_14 * 
+      (3.0 - (2.0 * tmpvar_14))
+    ))) + ((tmpvar_15 * (tmpvar_15 * 
+      (3.0 - (2.0 * tmpvar_15))
+    )) - 1.0))
+  ) * float3(0.74, 0.95, 1.0)));
+  float tmpvar_16 = 0;
+  float2 tmpvar_17 = 0;
+  tmpvar_17 = (_mtl_i.gl_FragCoord.xy - tmpvar_2);
+  tmpvar_16 = sqrt(dot (tmpvar_17, tmpvar_17));
+  float tmpvar_18 = 0;
+  tmpvar_18 = saturate(((
+    (tmpvar_16 - 1.0)
+   - 239.0) / 2.0));
+  float tmpvar_19 = 0;
+  tmpvar_19 = saturate(((
+    (tmpvar_16 + 1.0)
+   - 239.0) / 2.0));
+  finalColor_1 = (finalColor_1 + ((1.0 - 
+    (tmpvar_18 * (tmpvar_18 * (3.0 - (2.0 * tmpvar_18))))
+  ) + (
+    (tmpvar_19 * (tmpvar_19 * (3.0 - (2.0 * tmpvar_19))))
+   - 1.0)));
+  float2 tmpvar_20 = 0;
+  tmpvar_20 = (_mtl_i.gl_FragCoord.xy - tmpvar_2);
+  float tmpvar_21 = 0;
+  tmpvar_21 = sqrt(dot (tmpvar_20, tmpvar_20));
+  float2 tmpvar_22 = 0;
+  tmpvar_22 = normalize(tmpvar_20);
+  bool tmpvar_23 = false;
+  tmpvar_23 = (0.0 >= tmpvar_22.x);
+  float tmpvar_24 = 0;
+  tmpvar_24 = select(tmpvar_22.y, abs(tmpvar_22.x), tmpvar_23);
+  float tmpvar_25 = 0;
+  tmpvar_25 = select(abs(tmpvar_22.x), tmpvar_22.y, tmpvar_23);
+  float tmpvar_26 = 0;
+  tmpvar_26 = select(1.0, 0.25, (abs(tmpvar_25) >= 1e+18));
+  float tmpvar_27 = 0;
+  tmpvar_27 = (1.0/((tmpvar_25 * tmpvar_26)));
+  float tmpvar_28 = 0;
+  float tmpvar_29 = 0;
+  tmpvar_29 = (min (abs(
+    select(abs(((tmpvar_24 * tmpvar_26) * tmpvar_27)), 1.0, (abs(tmpvar_22.x) == abs(tmpvar_22.y)))
+  ), 1.0) / max (abs(
+    select(abs(((tmpvar_24 * tmpvar_26) * tmpvar_27)), 1.0, (abs(tmpvar_22.x) == abs(tmpvar_22.y)))
+  ), 1.0));
+  float tmpvar_30 = 0;
+  tmpvar_30 = (tmpvar_29 * tmpvar_29);
+  tmpvar_30 = (((
+    ((((
+      ((((-0.01213232 * tmpvar_30) + 0.05368138) * tmpvar_30) - 0.1173503)
+     * tmpvar_30) + 0.1938925) * tmpvar_30) - 0.3326756)
+   * tmpvar_30) + 0.9999793) * tmpvar_29);
+  tmpvar_30 = (tmpvar_30 + ((float)(half(
+    (1.0 < abs(select(abs(
+      ((tmpvar_24 * tmpvar_26) * tmpvar_27)
+    ), 1.0, (
+      abs(tmpvar_22.x)
+     == 
+      abs(tmpvar_22.y)
+    ))))
+  )) * (
+    (tmpvar_30 * -2.0)
+   + 1.570796)));
+  tmpvar_28 = (tmpvar_30 * sign(select(
+    abs(((tmpvar_24 * tmpvar_26) * tmpvar_27))
+  , 1.0, 
+    (abs(tmpvar_22.x) == abs(tmpvar_22.y))
+  )));
+  tmpvar_28 = (tmpvar_28 + (float)((half(tmpvar_23) * (half)(1.570796))));
+  float tmpvar_31 = 0;
+  tmpvar_31 = (180.0 * (select(tmpvar_28, 
+    -(tmpvar_28)
+  , 
+    (min (tmpvar_22.y, tmpvar_27) < 0.0)
+  ) / 3.141593));
+  float tmpvar_32 = 0;
+  tmpvar_32 = saturate(((
+    abs(((float(fmod ((tmpvar_31 + 2.0), 45.0))) - 2.0))
+   - 2.0) / 0.0999999));
+  float tmpvar_33 = 0;
+  tmpvar_33 = saturate(((
+    (tmpvar_21 - 2.0)
+   - 312.0) / 2.0));
+  float tmpvar_34 = 0;
+  tmpvar_34 = saturate(((
+    (tmpvar_21 + 2.0)
+   - 312.0) / 2.0));
+  finalColor_1 = (finalColor_1 + ((
+    ((tmpvar_32 * (tmpvar_32 * (3.0 - 
+      (2.0 * tmpvar_32)
+    ))) * (float)(mix ((half)0.5, (half)1.0, half((
+      abs(((float(fmod (tmpvar_31, 180.0))) - 90.0))
+     >= 45.0)))))
+   * 
+    ((1.0 - (tmpvar_33 * (tmpvar_33 * 
+      (3.0 - (2.0 * tmpvar_33))
+    ))) + ((tmpvar_34 * (tmpvar_34 * 
+      (3.0 - (2.0 * tmpvar_34))
+    )) - 1.0))
+  ) * float3(0.74, 0.95, 1.0)));
+  float tmpvar_35 = 0;
+  tmpvar_35 = (315.0 + (30.0 * sin(_mtl_u.iTime)));
+  float2 tmpvar_36 = 0;
+  tmpvar_36 = (_mtl_i.gl_FragCoord.xy - tmpvar_2);
+  float tmpvar_37 = 0;
+  tmpvar_37 = saturate(((
+    (tmpvar_36.x - tmpvar_35)
+   + 9.0) / 2.0));
+  float tmpvar_38 = 0;
+  tmpvar_38 = saturate(((
+    (tmpvar_36.x - tmpvar_35)
+   + 1.0) / 2.0));
+  float tmpvar_39 = 0;
+  tmpvar_39 = ((7.0 + tmpvar_36.x) - tmpvar_35);
+  float tmpvar_40 = 0;
+  tmpvar_40 = saturate(((
+    abs(tmpvar_36.y)
+   - tmpvar_39) / (
+    ((9.0 + tmpvar_36.x) - tmpvar_35)
+   - tmpvar_39)));
+  float tmpvar_41 = 0;
+  tmpvar_41 = saturate(((
+    (tmpvar_36.x + tmpvar_35)
+   + 1.0) / 2.0));
+  float tmpvar_42 = 0;
+  tmpvar_42 = saturate(((
+    (tmpvar_36.x + tmpvar_35)
+   - 7.0) / 2.0));
+  float tmpvar_43 = 0;
+  tmpvar_43 = ((7.0 - tmpvar_36.x) - tmpvar_35);
+  float tmpvar_44 = 0;
+  tmpvar_44 = saturate(((
+    abs(tmpvar_36.y)
+   - tmpvar_43) / (
+    ((9.0 - tmpvar_36.x) - tmpvar_35)
+   - tmpvar_43)));
+  float tmpvar_45 = 0;
+  tmpvar_45 = saturate(((
+    (tmpvar_36.y - tmpvar_35)
+   + 9.0) / 2.0));
+  float tmpvar_46 = 0;
+  tmpvar_46 = saturate(((
+    (tmpvar_36.y - tmpvar_35)
+   + 1.0) / 2.0));
+  float tmpvar_47 = 0;
+  tmpvar_47 = ((7.0 + tmpvar_36.y) - tmpvar_35);
+  float tmpvar_48 = 0;
+  tmpvar_48 = saturate(((
+    abs(tmpvar_36.x)
+   - tmpvar_47) / (
+    ((9.0 + tmpvar_36.y) - tmpvar_35)
+   - tmpvar_47)));
+  float tmpvar_49 = 0;
+  tmpvar_49 = saturate(((
+    (tmpvar_36.y + tmpvar_35)
+   + 1.0) / 2.0));
+  float tmpvar_50 = 0;
+  tmpvar_50 = saturate(((
+    (tmpvar_36.y + tmpvar_35)
+   - 7.0) / 2.0));
+  float tmpvar_51 = 0;
+  tmpvar_51 = ((7.0 - tmpvar_36.y) - tmpvar_35);
+  float tmpvar_52 = 0;
+  tmpvar_52 = saturate(((
+    abs(tmpvar_36.x)
+   - tmpvar_51) / (
+    ((9.0 - tmpvar_36.y) - tmpvar_35)
+   - tmpvar_51)));
+  finalColor_1 = (finalColor_1 + ((
+    ((((
+      (tmpvar_37 * (tmpvar_37 * (3.0 - (2.0 * tmpvar_37))))
+     * 
+      (1.0 - (tmpvar_38 * (tmpvar_38 * (3.0 - 
+        (2.0 * tmpvar_38)
+      ))))
+    ) * (1.0 - 
+      (tmpvar_40 * (tmpvar_40 * (3.0 - (2.0 * tmpvar_40))))
+    )) + ((
+      (tmpvar_41 * (tmpvar_41 * (3.0 - (2.0 * tmpvar_41))))
+     * 
+      (1.0 - (tmpvar_42 * (tmpvar_42 * (3.0 - 
+        (2.0 * tmpvar_42)
+      ))))
+    ) * (1.0 - 
+      (tmpvar_44 * (tmpvar_44 * (3.0 - (2.0 * tmpvar_44))))
+    ))) + (((tmpvar_45 * 
+      (tmpvar_45 * (3.0 - (2.0 * tmpvar_45)))
+    ) * (1.0 - 
+      (tmpvar_46 * (tmpvar_46 * (3.0 - (2.0 * tmpvar_46))))
+    )) * (1.0 - (tmpvar_48 * 
+      (tmpvar_48 * (3.0 - (2.0 * tmpvar_48)))
+    ))))
+   + 
+    (((tmpvar_49 * (tmpvar_49 * 
+      (3.0 - (2.0 * tmpvar_49))
+    )) * (1.0 - (tmpvar_50 * 
+      (tmpvar_50 * (3.0 - (2.0 * tmpvar_50)))
+    ))) * (1.0 - (tmpvar_52 * (tmpvar_52 * 
+      (3.0 - (2.0 * tmpvar_52))
+    ))))
+  ) * float3(0.87, 0.98, 1.0)));
+  float tmpvar_53 = 0;
+  float tmpvar_54 = 0;
+  tmpvar_54 = (90.0 * _mtl_u.iTime);
+  float2 tmpvar_55 = 0;
+  tmpvar_55 = (_mtl_i.gl_FragCoord.xy - tmpvar_2);
+  float tmpvar_56 = 0;
+  tmpvar_56 = sqrt(dot (tmpvar_55, tmpvar_55));
+  if ((tmpvar_56 < 240.0)) {
+    float2 tmpvar_57 = 0;
+    tmpvar_57.x = cos(((tmpvar_54 * 3.141593) / 180.0));
+    tmpvar_57.y = -(sin((
+      (tmpvar_54 * 3.141593)
+     / 180.0)));
+    float2 tmpvar_58 = 0;
+    tmpvar_58 = (240.0 * tmpvar_57);
+    float2 tmpvar_59 = 0;
+    tmpvar_59 = (tmpvar_55 - (tmpvar_58 * saturate(
+      (dot (tmpvar_55, tmpvar_58) / dot (tmpvar_58, tmpvar_58))
+    )));
+    float2 tmpvar_60 = 0;
+    tmpvar_60 = normalize(tmpvar_55);
+    bool tmpvar_61 = false;
+    tmpvar_61 = (0.0 >= tmpvar_60.x);
+    float tmpvar_62 = 0;
+    tmpvar_62 = select(tmpvar_60.y, abs(tmpvar_60.x), tmpvar_61);
+    float tmpvar_63 = 0;
+    tmpvar_63 = select(abs(tmpvar_60.x), tmpvar_60.y, tmpvar_61);
+    float tmpvar_64 = 0;
+    tmpvar_64 = select(1.0, 0.25, (abs(tmpvar_63) >= 1e+18));
+    float tmpvar_65 = 0;
+    tmpvar_65 = (1.0/((tmpvar_63 * tmpvar_64)));
+    float tmpvar_66 = 0;
+    float tmpvar_67 = 0;
+    tmpvar_67 = (min (abs(
+      select(abs(((tmpvar_62 * tmpvar_64) * tmpvar_65)), 1.0, (abs(tmpvar_60.x) == abs(tmpvar_60.y)))
+    ), 1.0) / max (abs(
+      select(abs(((tmpvar_62 * tmpvar_64) * tmpvar_65)), 1.0, (abs(tmpvar_60.x) == abs(tmpvar_60.y)))
+    ), 1.0));
+    float tmpvar_68 = 0;
+    tmpvar_68 = (tmpvar_67 * tmpvar_67);
+    tmpvar_68 = (((
+      ((((
+        ((((-0.01213232 * tmpvar_68) + 0.05368138) * tmpvar_68) - 0.1173503)
+       * tmpvar_68) + 0.1938925) * tmpvar_68) - 0.3326756)
+     * tmpvar_68) + 0.9999793) * tmpvar_67);
+    tmpvar_68 = (tmpvar_68 + ((float)(half(
+      (1.0 < abs(select(abs(
+        ((tmpvar_62 * tmpvar_64) * tmpvar_65)
+      ), 1.0, (
+        abs(tmpvar_60.x)
+       == 
+        abs(tmpvar_60.y)
+      ))))
+    )) * (
+      (tmpvar_68 * -2.0)
+     + 1.570796)));
+    tmpvar_66 = (tmpvar_68 * sign(select(
+      abs(((tmpvar_62 * tmpvar_64) * tmpvar_65))
+    , 1.0, 
+      (abs(tmpvar_60.x) == abs(tmpvar_60.y))
+    )));
+    tmpvar_66 = (tmpvar_66 + (float)((half(tmpvar_61) * (half)(1.570796))));
+    float tmpvar_69 = 0;
+    tmpvar_69 = saturate((sqrt(
+      dot (tmpvar_59, tmpvar_59)
+    ) / 2.0));
+    tmpvar_53 = ((1.0 - (tmpvar_69 * 
+      (tmpvar_69 * (3.0 - (2.0 * tmpvar_69)))
+    )) + (0.5 * saturate(
+      (1.0 - ((float(fmod ((
+        ((180.0 * select(tmpvar_66, -(tmpvar_66), (
+          min (tmpvar_60.y, tmpvar_65)
+         < 0.0))) / 3.141593)
+       + tmpvar_54), 360.0))) / 90.0))
+    )));
+  } else {
+    tmpvar_53 = 0.0;
+  };
+  finalColor_1 = (finalColor_1 + (tmpvar_53 * float3(0.35, 0.76, 0.83)));
+  float tmpvar_70 = 0;
+  float2 tmpvar_71 = 0;
+  tmpvar_71 = (_mtl_i.gl_FragCoord.xy - tmpvar_2);
+  tmpvar_70 = sqrt(dot (tmpvar_71, tmpvar_71));
+  float tmpvar_72 = 0;
+  tmpvar_72 = saturate(((
+    (tmpvar_70 - 0.5)
+   - 9.0) / 2.0));
+  float tmpvar_73 = 0;
+  tmpvar_73 = saturate(((
+    (tmpvar_70 + 0.5)
+   - 9.0) / 2.0));
+  finalColor_1 = (finalColor_1 + ((
+    (1.0 - (tmpvar_72 * (tmpvar_72 * (3.0 - 
+      (2.0 * tmpvar_72)
+    ))))
+   + 
+    ((tmpvar_73 * (tmpvar_73 * (3.0 - 
+      (2.0 * tmpvar_73)
+    ))) - 1.0)
+  ) * float3(0.35, 0.76, 0.83)));
+  float tmpvar_74 = 0;
+  tmpvar_74 = (0.5 + (0.2 * cos(_mtl_u.iTime)));
+  float tmpvar_75 = 0;
+  float2 tmpvar_76 = 0;
+  tmpvar_76 = (_mtl_i.gl_FragCoord.xy - tmpvar_2);
+  float tmpvar_77 = 0;
+  tmpvar_77 = sqrt(dot (tmpvar_76, tmpvar_76));
+  float tmpvar_78 = 0;
+  tmpvar_78 = abs(normalize(tmpvar_76).y);
+  if ((tmpvar_74 < tmpvar_78)) {
+    float tmpvar_79 = 0;
+    tmpvar_79 = saturate(((
+      (tmpvar_77 - 0.5)
+     - 261.0) / 2.0));
+    float tmpvar_80 = 0;
+    tmpvar_80 = saturate(((
+      (tmpvar_77 + 0.5)
+     - 261.0) / 2.0));
+    tmpvar_75 = ((1.0 - (tmpvar_79 * 
+      (tmpvar_79 * (3.0 - (2.0 * tmpvar_79)))
+    )) + ((tmpvar_80 * 
+      (tmpvar_80 * (3.0 - (2.0 * tmpvar_80)))
+    ) - 1.0));
+  } else {
+    tmpvar_75 = 0.0;
+  };
+  finalColor_1 = (finalColor_1 + (float3(0.245, 0.532, 0.581) * tmpvar_75));
+  float tmpvar_81 = 0;
+  float2 tmpvar_82 = 0;
+  tmpvar_82 = (_mtl_i.gl_FragCoord.xy - tmpvar_2);
+  tmpvar_81 = sqrt(dot (tmpvar_82, tmpvar_82));
+  if ((tmpvar_81 < 240.0)) {
+    float2 p_83 = 0;
+    float2 tmpvar_84 = 0;
+    float tmpvar_85 = 0;
+    tmpvar_85 = (0.1 * _mtl_u.iTime);
+    tmpvar_84.x = ((1.3 * cos(
+      (3.0 + tmpvar_85)
+    )) + cos((0.1 * 
+      (3.0 + tmpvar_85)
+    )));
+    tmpvar_84.y = (sin((3.0 + tmpvar_85)) + (1.4 * cos(
+      (0.1 * (3.0 + tmpvar_85))
+    )));
+    float2 tmpvar_86 = 0;
+    tmpvar_86 = (_mtl_i.gl_FragCoord.xy - (tmpvar_2 + (130.0 * tmpvar_84)));
+    float tmpvar_87 = 0;
+    tmpvar_87 = saturate(((
+      sqrt(dot (tmpvar_86, tmpvar_86))
+     - 2.0) / 2.0));
+    finalColor_1 = (finalColor_1 + float3((1.0 - (tmpvar_87 * 
+      (tmpvar_87 * (3.0 - (2.0 * tmpvar_87)))
+    ))));
+    float2 tmpvar_88 = 0;
+    float tmpvar_89 = 0;
+    tmpvar_89 = (0.15 * _mtl_u.iTime);
+    tmpvar_88.x = ((0.9 * cos(
+      ((sin(tmpvar_85) - 2.0) + tmpvar_89)
+    )) + (-1.1 * cos(
+      (0.1 * ((sin(tmpvar_85) - 2.0) + tmpvar_89))
+    )));
+    tmpvar_88.y = ((1.7 * sin(
+      ((sin(tmpvar_85) - 2.0) + tmpvar_89)
+    )) + (0.8 * cos(
+      (0.1 * ((sin(tmpvar_85) - 2.0) + tmpvar_89))
+    )));
+    p_83 = (130.0 * tmpvar_88);
+    float2 tmpvar_90 = 0;
+    tmpvar_90 = (_mtl_i.gl_FragCoord.xy - (tmpvar_2 + p_83));
+    float tmpvar_91 = 0;
+    tmpvar_91 = saturate(((
+      sqrt(dot (tmpvar_90, tmpvar_90))
+     - 2.0) / 2.0));
+    finalColor_1 = (finalColor_1 + float3((1.0 - (tmpvar_91 * 
+      (tmpvar_91 * (3.0 - (2.0 * tmpvar_91)))
+    ))));
+    float2 tmpvar_92 = 0;
+    float tmpvar_93 = 0;
+    tmpvar_93 = (0.2 * _mtl_u.iTime);
+    tmpvar_92.x = ((1.54 * cos(
+      (sin((tmpvar_85 + 7.0)) + tmpvar_93)
+    )) + (1.7 * cos(
+      (0.1 * (sin((tmpvar_85 + 7.0)) + tmpvar_93))
+    )));
+    tmpvar_92.y = ((1.37 * sin(
+      (sin((tmpvar_85 + 7.0)) + tmpvar_93)
+    )) + (1.8 * cos(
+      (0.1 * (sin((tmpvar_85 + 7.0)) + tmpvar_93))
+    )));
+    p_83 = (50.0 * tmpvar_92);
+    float tmpvar_94 = 0;
+    float2 tmpvar_95 = 0;
+    tmpvar_95 = (_mtl_i.gl_FragCoord.xy - (tmpvar_2 + p_83));
+    tmpvar_94 = sqrt(dot (tmpvar_95, tmpvar_95));
+    float tmpvar_96 = 0;
+    tmpvar_96 = (8.0 + (float(fmod ((87.0 * _mtl_u.iTime), 80.0))));
+    float tmpvar_97 = 0;
+    tmpvar_97 = saturate(((tmpvar_94 - 4.0) / 2.0));
+    float tmpvar_98 = 0;
+    tmpvar_98 = (tmpvar_94 - 1.0);
+    float tmpvar_99 = 0;
+    tmpvar_99 = saturate(((6.0 - tmpvar_98) / (
+      (tmpvar_94 + 1.0)
+     - tmpvar_98)));
+    float tmpvar_100 = 0;
+    tmpvar_100 = (tmpvar_94 - 1.0);
+    float tmpvar_101 = 0;
+    tmpvar_101 = saturate(((8.0 - tmpvar_100) / (
+      (tmpvar_94 + 1.0)
+     - tmpvar_100)));
+    float tmpvar_102 = 0;
+    tmpvar_102 = max (8.0, (tmpvar_96 - 20.0));
+    float tmpvar_103 = 0;
+    tmpvar_103 = saturate(((tmpvar_94 - tmpvar_102) / (tmpvar_96 - tmpvar_102)));
+    float tmpvar_104 = 0;
+    tmpvar_104 = (tmpvar_94 - 1.0);
+    float tmpvar_105 = 0;
+    tmpvar_105 = saturate(((tmpvar_96 - tmpvar_104) / (
+      (tmpvar_94 + 1.0)
+     - tmpvar_104)));
+    finalColor_1 = (finalColor_1 + ((
+      ((((
+        (0.5 - (0.5 * cos((30.0 * _mtl_u.iTime))))
+       * 
+        (1.0 - (tmpvar_97 * (tmpvar_97 * (3.0 - 
+          (2.0 * tmpvar_97)
+        ))))
+      ) + (1.0 - 
+        (tmpvar_99 * (tmpvar_99 * (3.0 - (2.0 * tmpvar_99))))
+      )) + ((tmpvar_101 * 
+        (tmpvar_101 * (3.0 - (2.0 * tmpvar_101)))
+      ) - 1.0)) + (tmpvar_103 * (tmpvar_103 * (3.0 - 
+        (2.0 * tmpvar_103)
+      ))))
+     + 
+      ((tmpvar_105 * (tmpvar_105 * (3.0 - 
+        (2.0 * tmpvar_105)
+      ))) - 1.0)
+    ) * float3(1.0, 0.38, 0.227)));
+  };
+  float4 tmpvar_106 = 0;
+  tmpvar_106.w = 1.0;
+  tmpvar_106.xyz = finalColor_1;
+  _mtl_o.fragColor = tmpvar_106;
+  return _mtl_o;
+}
+
+
+// stats: 678 alu 0 tex 4 flow
+// inputs: 1
+//  #0: gl_FragCoord (high float) 4x1 [-1] loc 0
+// uniforms: 2 (total size: 20)
+//  #0: iResolution (high float) 3x1 [-1] loc 0
+//  #1: iTime (high float) 1x1 [-1] loc 16

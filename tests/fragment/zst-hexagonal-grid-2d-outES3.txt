@@ -1,0 +1,215 @@
+#version 300 es
+uniform highp vec3 iResolution;
+uniform highp float iTime;
+layout(location=0) out highp vec4 fragColor;
+void main ()
+{
+  highp vec2 tmpvar_1;
+  tmpvar_1 = (((2.0 * gl_FragCoord.xy) - iResolution.xy) / iResolution.y);
+  highp float tmpvar_2;
+  tmpvar_2 = (2.0 / iResolution.y);
+  highp float hdi_4;
+  highp ivec2 hid_5;
+  highp float s3_6;
+  highp float s2_7;
+  highp float s1_8;
+  highp ivec2 i3_9;
+  highp ivec2 i2_10;
+  highp ivec2 i1_11;
+  highp vec3 col_12;
+  highp vec2 rd_13;
+  highp vec2 ro_14;
+  tmpvar_1 = (tmpvar_1 * 8.0);
+  tmpvar_2 = (tmpvar_2 * 8.0);
+  ro_14 = (vec2(9.0, 2.0) * cos((
+    (0.11 * iTime)
+   + vec2(0.0, 1.0))));
+  rd_13 = normalize(cos((vec2(2.0, 1.0) + 
+    (vec2(0.13, 0.11) * iTime)
+  )));
+  highp ivec2 id_15;
+  highp vec2 f_16;
+  highp vec2 tmpvar_17;
+  tmpvar_17.x = tmpvar_1.x;
+  tmpvar_17.y = ((tmpvar_1.x * 0.5) + (tmpvar_1.y * 0.8660254));
+  highp ivec2 tmpvar_18;
+  tmpvar_18 = ivec2(floor(tmpvar_17));
+  f_16 = fract(tmpvar_17);
+  highp int tmpvar_19;
+  tmpvar_19 = (tmpvar_18.x + tmpvar_18.y);
+  highp int tmpvar_20;
+  if ((tmpvar_19 < 0)) {
+    tmpvar_20 = (2 - ((2 - tmpvar_19) % 3));
+  } else {
+    tmpvar_20 = (tmpvar_19 % 3);
+  };
+  highp ivec2 tmpvar_21;
+  tmpvar_21 = (tmpvar_18 + tmpvar_20);
+  id_15 = tmpvar_21;
+  if ((tmpvar_20 == 2)) {
+    highp ivec2 tmpvar_22;
+    if ((f_16.y < f_16.x)) {
+      tmpvar_22 = ivec2(1, 2);
+    } else {
+      tmpvar_22 = ivec2(2, 1);
+    };
+    id_15 = (tmpvar_21 - tmpvar_22);
+  };
+  highp ivec2 tmpvar_23;
+  tmpvar_23.x = id_15.x;
+  tmpvar_23.y = (((2 * id_15.y) - id_15.x) / 3);
+  col_12 = vec3((0.3 + (0.2 * sin(
+    (float((15 * id_15.x)) + cos(float((33 * tmpvar_23.y))))
+  ))));
+  highp vec2 tmpvar_24;
+  tmpvar_24 = (tmpvar_1 - ro_14);
+  highp vec2 tmpvar_25;
+  tmpvar_25 = ((ro_14 + (rd_13 * 30.0)) - ro_14);
+  highp vec2 tmpvar_26;
+  tmpvar_26 = (tmpvar_24 - (tmpvar_25 * clamp (
+    (dot (tmpvar_24, tmpvar_25) / dot (tmpvar_25, tmpvar_25))
+  , 0.0, 1.0)));
+  highp float tmpvar_27;
+  tmpvar_27 = (-(tmpvar_2) * 0.5);
+  highp float tmpvar_28;
+  tmpvar_28 = clamp (((
+    (sqrt(dot (tmpvar_26, tmpvar_26)) - 0.03)
+   - tmpvar_27) / (
+    (tmpvar_2 * 0.5)
+   - tmpvar_27)), 0.0, 1.0);
+  col_12 = mix (col_12, vec3(1.0, 1.0, 0.0), (1.0 - (tmpvar_28 * 
+    (tmpvar_28 * (3.0 - (2.0 * tmpvar_28)))
+  )));
+  i1_11 = ivec2(2, 0);
+  i2_10 = ivec2(1, 1);
+  i3_9 = ivec2(-1, 1);
+  highp float tmpvar_29;
+  tmpvar_29 = (1.0/(dot (rd_13, vec2(1.0, 0.0))));
+  highp float tmpvar_30;
+  tmpvar_30 = (1.0/(dot (rd_13, vec2(0.5, 0.866025))));
+  highp float tmpvar_31;
+  tmpvar_31 = (1.0/(dot (rd_13, vec2(-0.5, 0.866025))));
+  s1_8 = 1.0;
+  if ((tmpvar_29 < 0.0)) {
+    s1_8 = -1.0;
+    i1_11 = ivec2(-2, 0);
+  };
+  s1_8 = ((s1_8 - dot (ro_14, vec2(1.0, 0.0))) * tmpvar_29);
+  s2_7 = 1.0;
+  if ((tmpvar_30 < 0.0)) {
+    s2_7 = -1.0;
+    i2_10 = ivec2(-1, -1);
+  };
+  s2_7 = ((s2_7 - dot (ro_14, vec2(0.5, 0.866025))) * tmpvar_30);
+  s3_6 = 1.0;
+  if ((tmpvar_31 < 0.0)) {
+    s3_6 = -1.0;
+    i3_9 = ivec2(1, -1);
+  };
+  s3_6 = ((s3_6 - dot (ro_14, vec2(-0.5, 0.866025))) * tmpvar_31);
+  highp ivec2 id_32;
+  highp vec2 f_33;
+  highp vec2 tmpvar_34;
+  tmpvar_34.x = ro_14.x;
+  tmpvar_34.y = ((ro_14.x * 0.5) + (ro_14.y * 0.8660254));
+  highp ivec2 tmpvar_35;
+  tmpvar_35 = ivec2(floor(tmpvar_34));
+  f_33 = fract(tmpvar_34);
+  highp int tmpvar_36;
+  tmpvar_36 = (tmpvar_35.x + tmpvar_35.y);
+  highp int tmpvar_37;
+  if ((tmpvar_36 < 0)) {
+    tmpvar_37 = (2 - ((2 - tmpvar_36) % 3));
+  } else {
+    tmpvar_37 = (tmpvar_36 % 3);
+  };
+  highp ivec2 tmpvar_38;
+  tmpvar_38 = (tmpvar_35 + tmpvar_37);
+  id_32 = tmpvar_38;
+  if ((tmpvar_37 == 2)) {
+    highp ivec2 tmpvar_39;
+    if ((f_33.y < f_33.x)) {
+      tmpvar_39 = ivec2(1, 2);
+    } else {
+      tmpvar_39 = ivec2(2, 1);
+    };
+    id_32 = (tmpvar_38 - tmpvar_39);
+  };
+  highp ivec2 tmpvar_40;
+  tmpvar_40.x = id_32.x;
+  tmpvar_40.y = (((2 * id_32.y) - id_32.x) / 3);
+  hid_5 = tmpvar_40;
+  hdi_4 = 0.0;
+  for (highp int i_3 = 0; i_3 < 32; i_3++) {
+    if ((hid_5 == tmpvar_23)) {
+      col_12 = mix (col_12, vec3(1.0, 0.0, 0.0), 0.3);
+    };
+    highp vec2 tmpvar_41;
+    tmpvar_41.x = float(hid_5.x);
+    tmpvar_41.y = (float(hid_5.y) * 1.732051);
+    highp vec2 tmpvar_42;
+    tmpvar_42 = (tmpvar_1 - tmpvar_41);
+    highp float tmpvar_43;
+    tmpvar_43 = (-(tmpvar_2) * 0.5);
+    highp float tmpvar_44;
+    tmpvar_44 = clamp (((
+      (sqrt(dot (tmpvar_42, tmpvar_42)) - 0.1)
+     - tmpvar_43) / (
+      (tmpvar_2 * 0.5)
+     - tmpvar_43)), 0.0, 1.0);
+    col_12 = mix (col_12, vec3(1.0, 0.0, 0.0), (1.0 - (tmpvar_44 * 
+      (tmpvar_44 * (3.0 - (2.0 * tmpvar_44)))
+    )));
+    highp vec2 tmpvar_45;
+    tmpvar_45 = (tmpvar_1 - (ro_14 + (rd_13 * hdi_4)));
+    highp float tmpvar_46;
+    tmpvar_46 = (-(tmpvar_2) * 0.5);
+    highp float tmpvar_47;
+    tmpvar_47 = clamp (((
+      (sqrt(dot (tmpvar_45, tmpvar_45)) - 0.1)
+     - tmpvar_46) / (
+      (tmpvar_2 * 0.5)
+     - tmpvar_46)), 0.0, 1.0);
+    col_12 = mix (col_12, vec3(1.0, 1.0, 0.0), (1.0 - (tmpvar_47 * 
+      (tmpvar_47 * (3.0 - (2.0 * tmpvar_47)))
+    )));
+    highp float tmpvar_48;
+    tmpvar_48 = (s1_8 + (float(hid_5.x) * tmpvar_29));
+    highp float tmpvar_49;
+    tmpvar_49 = (s2_7 + ((
+      (float(hid_5.y) * 1.5)
+     + 
+      (float(hid_5.x) * 0.5)
+    ) * tmpvar_30));
+    highp float tmpvar_50;
+    tmpvar_50 = (s3_6 + ((
+      (float(hid_5.y) * 1.5)
+     - 
+      (float(hid_5.x) * 0.5)
+    ) * tmpvar_31));
+    if (((tmpvar_48 < tmpvar_49) && (tmpvar_48 < tmpvar_50))) {
+      hid_5 = (hid_5 + i1_11);
+      hdi_4 = tmpvar_48;
+    } else {
+      if ((tmpvar_49 < tmpvar_50)) {
+        hid_5 = (hid_5 + i2_10);
+        hdi_4 = tmpvar_49;
+      } else {
+        hid_5 = (hid_5 + i3_9);
+        hdi_4 = tmpvar_50;
+      };
+    };
+  };
+  highp vec4 tmpvar_51;
+  tmpvar_51.w = 1.0;
+  tmpvar_51.xyz = col_12;
+  fragColor = tmpvar_51;
+}
+
+
+// stats: 195 alu 0 tex 14 flow
+// inputs: 1
+//  #0: gl_FragCoord (high float) 4x1 [-1] loc 0
+// uniforms: 2 (total size: 0)
+//  #0: iResolution (high float) 3x1 [-1]
+//  #1: iTime (high float) 1x1 [-1]
