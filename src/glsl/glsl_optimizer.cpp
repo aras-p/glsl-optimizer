@@ -49,14 +49,13 @@ initialize_mesa_context(struct gl_context *ctx, glslopt_target api)
 	{
 	default:
 	case kGlslTargetOpenGL:
-		ctx->Const.GLSLVersion = 430;
+		ctx->Const.GLSLVersion = 450;
 		break;
 	case kGlslTargetOpenGLES30:
-		ctx->Extensions.ARB_ES3_compatibility = true;
-		ctx->Extensions.EXT_shader_framebuffer_fetch = true;
-		break;
 	case kGlslTargetMetal:
 		ctx->Extensions.ARB_ES3_compatibility = true;
+		ctx->Extensions.ARB_ES3_1_compatibility = true;
+		ctx->Extensions.ARB_ES3_2_compatibility = true;
 		ctx->Extensions.EXT_shader_framebuffer_fetch = true;
 		break;
 	}
@@ -78,8 +77,35 @@ initialize_mesa_context(struct gl_context *ctx, glslopt_target api)
    ctx->Const.MaxTransformFeedbackBuffers = 4;
    ctx->Const.MaxTransformFeedbackSeparateComponents = 64;
    ctx->Const.MaxTransformFeedbackInterleavedComponents = 64;
-   ctx->Const.Program[MESA_SHADER_VERTEX].MaxUniformBlocks = 12;
-   ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxUniformBlocks = 12;
+   // Compiler resource limits, independent of the eventual target device.
+   // Keep existing ordinary-uniform and varying limits unchanged.
+   ctx->Const.MaxUniformBufferBindings = 72;
+   ctx->Const.MaxUniformBlockSize = 16384;
+   ctx->Const.UniformBufferOffsetAlignment = 16;
+   ctx->Const.MaxCombinedUniformBlocks = 72;
+   ctx->Const.MaxShaderStorageBufferBindings = 16;
+   ctx->Const.MaxShaderStorageBlockSize = 1 << 27;
+   ctx->Const.ShaderStorageBufferOffsetAlignment = 16;
+   ctx->Const.MaxCombinedShaderStorageBlocks = 48;
+   ctx->Const.MaxUserAssignableUniformLocations = 1024;
+   ctx->Const.MaxAtomicBufferBindings = 8;
+   ctx->Const.MaxAtomicBufferSize = 16384;
+   ctx->Const.MaxCombinedAtomicBuffers = 48;
+   ctx->Const.MaxCombinedAtomicCounters = 24576;
+   ctx->Const.MaxImageUnits = 8;
+   ctx->Const.MaxImageSamples = 1;
+   ctx->Const.MaxCombinedImageUniforms = 48;
+   ctx->Const.MaxCombinedShaderOutputResources = 16;
+   ctx->Const.MaxComputeSharedMemorySize = 32768;
+   for (auto& program : ctx->Const.Program) {
+      program.MaxUniformBlocks = 12;
+      program.MaxCombinedUniformComponents = program.MaxUniformComponents +
+         program.MaxUniformBlocks * (ctx->Const.MaxUniformBlockSize / 4);
+      program.MaxShaderStorageBlocks = 8;
+      program.MaxAtomicBuffers = 8;
+      program.MaxAtomicCounters = 4096;
+      program.MaxImageUniforms = 8;
+   }
 
    ctx->Driver.NewProgram = new_program;
 }
@@ -385,6 +411,31 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 	}
 
 	exec_list* ir = shader->ir;
+
+	// These declarations need dedicated backend support before they can be
+	// printed safely. In particular, Metal's ordinary-uniform layout is not
+	// a substitute for std140/std430 buffer layouts.
+	foreach_in_list(ir_instruction, instruction, ir) {
+		ir_variable* var = instruction->as_variable();
+		if (!var || strncmp(var->name, "gl_", 3) == 0)
+			continue;
+		const char* unsupported = nullptr;
+		// Anonymous uniform blocks retain the existing flattened-uniform behavior.
+		if (var->is_interface_instance() || var->data.mode == ir_var_shader_storage)
+			unsupported = "Interface-block";
+		else if (var->type->contains_image())
+			unsupported = "Image";
+		else if (var->type->contains_atomic())
+			unsupported = "Atomic-counter";
+		else if (var->data.mode == ir_var_shader_shared)
+			unsupported = "Shared-variable";
+		if (unsupported) {
+			result->infoLog = ralloc_asprintf(result->mem_ctx,
+				"%s output is not supported yet (%s backend).", unsupported,
+				ctx->target == kGlslTargetMetal ? "Metal" : "GLSL");
+			return result;
+		}
+	}
 
 	// Note: restore source-level subtraction outside of regular optimization loop
     // (inside the loop, other passes would undo it).

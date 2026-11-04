@@ -76,3 +76,29 @@ string(REPLACE "gl_WorkGroupSize.z" "1u" no_layout "${no_layout}")
 file(WRITE "${compute_input}" "${no_layout}")
 check_run(1 "compute shader must contain a fixed or a variable local group size" "${work}/fixtures")
 file(WRITE "${compute_input}" "${compute_source}")
+
+# Modern ES resource bindings must be accepted up to their configured limits.
+# Until the printers support these declarations, valid bindings reach the
+# backend diagnostic; out-of-range bindings must fail in the frontend.
+set(resource_input "${work}/fixtures/compute/resource-binding-inES3.txt")
+function(check_resource_binding declaration last_binding invalid_binding backend_message frontend_message)
+    foreach(binding ${last_binding} ${invalid_binding})
+        string(REPLACE "BINDING" "${binding}" resource "${declaration}")
+        file(WRITE "${resource_input}" "#version 310 es\n${resource}\nlayout(local_size_x=1) in;\nvoid main() {}\n")
+        if(binding EQUAL last_binding)
+            check_run(1 "${backend_message}" "${work}/fixtures")
+        else()
+            check_run(1 "${frontend_message}" "${work}/fixtures")
+        endif()
+    endforeach()
+endfunction()
+check_resource_binding("layout(std430, binding=BINDING) buffer Data { uint value; };"
+    15 16 "Interface-block output is not supported" "maximum number of SSBO binding points")
+check_resource_binding("layout(std140, binding=BINDING) uniform Data { uint value; } data;"
+    71 72 "Interface-block output is not supported" "maximum number of UBO binding points")
+check_resource_binding("layout(r32ui, binding=BINDING) uniform highp uimage2D data;"
+    7 8 "Image output is not supported" "maximum number of image units")
+check_resource_binding("layout(binding=BINDING, offset=0) uniform atomic_uint counter;"
+    7 8 "Atomic-counter output is not supported" "maximum number of atomic counter buffer bindings")
+file(WRITE "${compute_input}" "${compute_source}")
+file(REMOVE "${resource_input}")

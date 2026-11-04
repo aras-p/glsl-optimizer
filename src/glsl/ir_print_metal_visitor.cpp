@@ -929,8 +929,8 @@ static const char* metal_operator(ir_expression_operation op)
 	case ir_unop_unpack_unorm_2x16: return "unpackUnorm2x16";
 	case ir_unop_unpack_unorm_4x8: return "unpackUnorm4x8";
 	case ir_unop_unpack_half_2x16: return "unpackHalf2x16";
-	case ir_unop_bitfield_reverse: return "bitfieldReverse";
-	case ir_unop_bit_count: return "bitCount";
+	case ir_unop_bitfield_reverse: return "reverse_bits";
+	case ir_unop_bit_count: return "popcount";
 	case ir_unop_find_msb: return "findMSB";
 	case ir_unop_find_lsb: return "findLSB";
 	case ir_unop_saturate: return "saturate";

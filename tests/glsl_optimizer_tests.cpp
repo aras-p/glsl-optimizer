@@ -387,11 +387,15 @@ static void MassageVertexForGLES (std::string& s)
 	if (s.find ("_glesVertex") != std::string::npos)
 		return;
 	std::string pre;
-	std::string version = "#version 300 es\n";
-	size_t insertPoint = s.find(version);
-	if (insertPoint != std::string::npos)
+	size_t insertPoint = s.find("#version");
+	int version = 0;
+	char profile[3] = {};
+	if (insertPoint != std::string::npos &&
+		sscanf(s.c_str() + insertPoint, "#version %d %2s", &version, profile) == 2 &&
+		version >= 300 && strcmp(profile, "es") == 0 &&
+		s.find('\n', insertPoint) != std::string::npos)
 	{
-		insertPoint += version.size();
+		insertPoint = s.find('\n', insertPoint) + 1;
 		pre += "#define gl_Vertex _glesVertex\nin highp vec4 _glesVertex;\n";
 		pre += "#define gl_Normal _glesNormal\nin mediump vec3 _glesNormal;\n";
 		pre += "#define gl_MultiTexCoord0 _glesMultiTexCoord0\nin highp vec4 _glesMultiTexCoord0;\n";
