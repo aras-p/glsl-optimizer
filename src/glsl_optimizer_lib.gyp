@@ -149,6 +149,7 @@
           ],
         }],
         ['OS=="linux"', {
+          'defines': ['HAVE_ENDIAN_H'],
           'cflags': ['-pthread'],
           'direct_dependent_settings': {'libraries': ['-pthread']},
         }],
@@ -156,6 +157,7 @@
           'defines': [
             '_LIB',
             'NOMINMAX',
+            '_USE_MATH_DEFINES',
             '_CRT_SECURE_NO_WARNINGS',
             '_CRT_NONSTDC_NO_DEPRECATE',
             '__STDC__=1',

@@ -153,6 +153,11 @@ if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
     )
 endif()
 include(CheckSymbolExists)
+include(CheckIncludeFile)
+check_include_file(endian.h GLSLOPT_HAVE_ENDIAN_H)
+if(GLSLOPT_HAVE_ENDIAN_H)
+    target_compile_definitions(glsl_optimizer PRIVATE HAVE_ENDIAN_H)
+endif()
 check_symbol_exists(posix_memalign "stdlib.h" GLSLOPT_HAVE_POSIX_MEMALIGN)
 check_symbol_exists(strtof "stdlib.h" GLSLOPT_HAVE_STRTOF)
 if(GLSLOPT_HAVE_POSIX_MEMALIGN)
@@ -163,7 +168,7 @@ if(GLSLOPT_HAVE_STRTOF)
 endif()
 if(MSVC)
     target_compile_definitions(glsl_optimizer PRIVATE
-        NOMINMAX _CRT_SECURE_NO_WARNINGS _CRT_NONSTDC_NO_DEPRECATE strdup=_strdup
+        NOMINMAX _USE_MATH_DEFINES _CRT_SECURE_NO_WARNINGS _CRT_NONSTDC_NO_DEPRECATE strdup=_strdup
         # the checked-in flex scanner requires this for const-correct prototypes
         __STDC__=1
     )
