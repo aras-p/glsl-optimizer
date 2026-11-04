@@ -1,0 +1,231 @@
+#version 430
+// Adapted from https://github.com/nvpro-samples/gl_occlusion_culling/blob/831841d9/cull-bitpack.comp.glsl
+// License of original file: Apache-2.0, Copyright (c) 2014-2022 NVIDIA CORPORATION
+// Included source: https://github.com/nvpro-samples/gl_occlusion_culling/blob/831841d9/cull-common.h
+// Changes done: inlined cull-common.h; removed include extension; set TEMPORAL=1;
+// added default highp float/int precision.
+precision highp float;
+precision highp int;
+#define TEMPORAL 1
+/*
+ * Copyright (c) 2014-2021, NVIDIA CORPORATION.  All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * SPDX-FileCopyrightText: Copyright (c) 2014-2021 NVIDIA CORPORATION
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+
+
+
+
+/*
+ * Copyright (c) 2021-2022, NVIDIA CORPORATION.  All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * SPDX-FileCopyrightText: Copyright (c) 2021-2022 NVIDIA CORPORATION
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+
+#ifdef __cplusplus
+namespace cullsys_glsl
+{
+  using namespace glm;
+#endif
+
+struct MatrixData {
+  mat4    worldTM;
+  mat4    worldInvTransTM;
+};
+
+struct BboxData {
+  vec4    bboxMin;
+  vec4    bboxMax;
+};
+
+struct ViewData {
+  mat4    viewProjTM;
+  vec3    viewDir;
+  float   _pad0;
+  vec3    viewPos;
+  float   _pad1;
+  vec2    viewSize;
+  float   viewCullThreshold;
+  float   _pad2;
+};
+
+#ifdef __cplusplus
+}
+#else
+  const int CULL_SKIP_ID = ~0;
+  
+  vec4 getBoxCorner(vec4 bboxMin, vec4 bboxMax, int n)
+  {
+  #if 1
+    bvec3 useMax = bvec3((n & 1) != 0, (n & 2) != 0, (n & 4) != 0);
+    return vec4(mix(bboxMin.xyz, bboxMax.xyz, useMax),1);
+  #else
+    switch(n){
+    case 0:
+      return vec4(bboxMin.x,bboxMin.y,bboxMin.z,1);
+    case 1:
+      return vec4(bboxMax.x,bboxMin.y,bboxMin.z,1);
+    case 2:
+      return vec4(bboxMin.x,bboxMax.y,bboxMin.z,1);
+    case 3:
+      return vec4(bboxMax.x,bboxMax.y,bboxMin.z,1);
+    case 4:
+      return vec4(bboxMin.x,bboxMin.y,bboxMax.z,1);
+    case 5:
+      return vec4(bboxMax.x,bboxMin.y,bboxMax.z,1);
+    case 6:
+      return vec4(bboxMin.x,bboxMax.y,bboxMax.z,1);
+    case 7:
+      return vec4(bboxMax.x,bboxMax.y,bboxMax.z,1);
+    }
+  #endif
+  }
+
+  uint getCullBits(vec4 hPos)
+  {
+    uint cullBits = 0;
+    cullBits |= hPos.x < -hPos.w ?  1 : 0;
+    cullBits |= hPos.x >  hPos.w ?  2 : 0;
+    cullBits |= hPos.y < -hPos.w ?  4 : 0;
+    cullBits |= hPos.y >  hPos.w ?  8 : 0;
+    cullBits |= hPos.z < -hPos.w ? 16 : 0;
+    cullBits |= hPos.z >  hPos.w ? 32 : 0;
+    cullBits |= hPos.w <= 0      ? 64 : 0; 
+    return cullBits;
+  }
+
+  vec3 projected(vec4 pos) {
+    return pos.xyz/pos.w;
+  }
+
+  bool pixelCull(vec2 viewSize, float viewCullThreshold, vec3 clipmin, vec3 clipmax)
+  {
+    vec2 dim = (clipmax.xy - clipmin.xy) * 0.5 * viewSize;;
+    return  max(dim.x, dim.y) < viewCullThreshold;
+  }
+#endif
+
+#define CULLSYS_UBO_VIEW            0
+#define CULLSYS_SSBO_OUT_VIS        0
+#define CULLSYS_SSBO_MATRICES       1
+#define CULLSYS_SSBO_BBOXES         2
+#define CULLSYS_SSBO_INPUT_BBOX     3
+#define CULLSYS_SSBO_INPUT_MATRIX   4
+#define CULLSYS_TEX_DEPTH           0
+
+#define CULLSYS_BIT_SSBO_OUT     0
+#define CULLSYS_BIT_SSBO_IN      1
+#define CULLSYS_BIT_SSBO_LAST    2
+
+#define CULLSYS_JOBIND_SSBO_COUNT 0
+#define CULLSYS_JOBIND_SSBO_OUT   1
+#define CULLSYS_JOBIND_SSBO_IN    2
+#define CULLSYS_JOBIND_SSBO_VIS   3
+
+// how many cmds per thread are processed
+// at high rejection rates 32 is faster
+// 1 or 32
+#define CULLSYS_JOBIND_BATCH          1
+
+#define CULLSYS_COMPUTE_THREADS       64
+
+#define CULLSYS_TASK_BATCH            32
+#define CULLSYS_MESH_BATCH            8
+
+// the instanced renderer uses pre-computed uint16_t index buffer for bboxes
+// uint16_t indices provide extra performance on current NVIDIA hardware
+#define CULLSYS_INSTANCED_VERTICES    8
+#define CULLSYS_INSTANCED_TRIANGLES   6
+#define CULLSYS_INSTANCED_INDICES     (CULLSYS_INSTANCED_TRIANGLES * 3)
+#define CULLSYS_INSTANCED_BBOXES      (0x10000 / CULLSYS_INSTANCED_VERTICES)
+
+// for debugging
+#define CULLSYS_DEBUG_VISIBLEBOXES    0
+
+
+layout(local_size_x=CULLSYS_COMPUTE_THREADS) in;
+
+#define TEMPORAL_LAST 1
+#define TEMPORAL_NEW  2
+
+#ifndef TEMPORAL
+#define TEMPORAL 0
+#endif
+
+
+layout(location=0) uniform uint numObjects;
+
+layout(std430,binding=CULLSYS_BIT_SSBO_IN)  readonly buffer inputBuffer {
+  uvec4 instream[];
+};
+
+#if TEMPORAL
+layout(std430,binding=CULLSYS_BIT_SSBO_LAST)  readonly buffer lastBuffer {
+  uint lasts[];
+};
+#endif
+
+layout(std430,binding=CULLSYS_BIT_SSBO_OUT)  writeonly buffer outputBuffer {
+  uint outstream[];
+};
+
+
+void main ()
+{
+  uint streamMax    = (numObjects - 1 + 31) / 32;
+  uint globalThreadID = gl_GlobalInvocationID.x;
+
+  uint bits = 0u;
+  int outbit = 0;
+  for (int i = 0; i < 8; i++){
+    uvec4 inbytes4 = instream[min(globalThreadID,streamMax) * 8 + i];
+    for (int n = 0; n < 4; n++, outbit++){
+      uint checkbytes = inbytes4[n];
+      bits |= (checkbytes & 1u) << outbit;
+    }
+  }
+  
+  if (globalThreadID > streamMax) return;
+  
+#if TEMPORAL
+  uint last = lasts[globalThreadID];
+#endif
+  
+#if TEMPORAL == TEMPORAL_LAST
+  // render what was visible in last frame and passes current test
+  bits &= last;
+#elif TEMPORAL == TEMPORAL_NEW
+  // render what was not visible in last frame (already rendered), but is now visible
+  bits &= (~last);
+#endif
+
+  outstream[globalThreadID] = bits;
+}
