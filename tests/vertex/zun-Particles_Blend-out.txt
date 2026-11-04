@@ -12,8 +12,8 @@ void main ()
 
 // stats: 4 alu 0 tex 0 flow
 // inputs: 3
-//  #0: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 8
-//  #1: gl_Color (high float) 4x1 [-1] loc 3
+//  #0: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 7
+//  #1: gl_Color (high float) 4x1 [-1] loc 2
 //  #2: gl_Vertex (high float) 4x1 [-1] loc 0
 // uniforms: 2 (total size: 0)
 //  #0: gl_ModelViewProjectionMatrix (high float) 4x4 [-1]

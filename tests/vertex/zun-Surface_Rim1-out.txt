@@ -8,15 +8,15 @@ varying vec4 xlv_FOG;
 void main ()
 {
   vec3 binormal_1;
-  vec4 pos_2;
-  pos_2 = (gl_ModelViewProjectionMatrix * gl_Vertex);
+  vec4 tmpvar_2;
+  tmpvar_2 = (gl_ModelViewProjectionMatrix * gl_Vertex);
   vec4 o_3;
-  o_3 = (pos_2 * 0.5);
+  o_3 = (tmpvar_2 * 0.5);
   vec2 tmpvar_4;
   tmpvar_4.x = o_3.x;
   tmpvar_4.y = (o_3.y * _ProjectionParams.x);
   o_3.xy = (tmpvar_4 + o_3.w);
-  o_3.zw = pos_2.zw;
+  o_3.zw = tmpvar_2.zw;
   binormal_1 = (((gl_Normal.yzx * TANGENT.zxy) - (gl_Normal.zxy * TANGENT.yzx)) * TANGENT.w);
   mat3 tmpvar_5;
   tmpvar_5[0].x = TANGENT.x;
@@ -31,10 +31,10 @@ void main ()
   vec4 tmpvar_6;
   tmpvar_6.w = 1.0;
   tmpvar_6.xyz = _WorldSpaceCameraPos;
-  gl_Position = pos_2;
+  gl_Position = tmpvar_2;
   vec4 tmpvar_7;
   tmpvar_7.yzw = vec3(0.0, 0.0, 0.0);
-  tmpvar_7.x = pos_2.z;
+  tmpvar_7.x = tmpvar_2.z;
   xlv_FOG = tmpvar_7;
   vec4 tmpvar_8;
   tmpvar_8.zw = vec2(0.0, 0.0);
@@ -56,8 +56,8 @@ void main ()
 
 // stats: 21 alu 0 tex 0 flow
 // inputs: 4
-//  #0: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 8
-//  #1: gl_Normal (high float) 3x1 [-1] loc 2
+//  #0: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 7
+//  #1: gl_Normal (high float) 3x1 [-1] loc 1
 //  #2: gl_Vertex (high float) 4x1 [-1] loc 0
 //  #3: TANGENT (high float) 4x1 [-1]
 // uniforms: 6 (total size: 0)

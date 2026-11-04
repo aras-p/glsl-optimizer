@@ -7,10 +7,10 @@ uniform mat4 _World2Shadow3;
 void main ()
 {
   float z_1;
-  vec2 tmpvar_2;
+  vec2 o__ShadowZFade_2;
   z_1 = -((gl_ModelViewMatrix * gl_Vertex).z);
-  tmpvar_2.x = z_1;
-  tmpvar_2.y = ((z_1 * _LightShadowData.z) + _LightShadowData.w);
+  o__ShadowZFade_2.x = z_1;
+  o__ShadowZFade_2.y = ((z_1 * _LightShadowData.z) + _LightShadowData.w);
   vec4 tmpvar_3;
   tmpvar_3 = (_Object2World * gl_Vertex);
   gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex);
@@ -32,7 +32,7 @@ void main ()
   gl_TexCoord[3] = tmpvar_7;
   vec4 tmpvar_8;
   tmpvar_8.zw = vec2(0.0, 0.0);
-  tmpvar_8.xy = tmpvar_2;
+  tmpvar_8.xy = o__ShadowZFade_2;
   gl_TexCoord[4] = tmpvar_8;
   vec4 tmpvar_9;
   tmpvar_9.w = 0.0;

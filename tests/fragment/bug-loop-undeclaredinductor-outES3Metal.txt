@@ -15,40 +15,40 @@ struct xlatMtlShaderUniform {
   half4 _LuminosityShift;
 };
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  ,   texture2d<half> _MainTex [[texture(0)]], sampler _mtlsmp__MainTex [[sampler(0)]])
+  , texture2d<half> _MainTex [[texture(0)]], sampler _mtlsmp__MainTex [[sampler(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
   half4 t_1 = 0;
   half4 tmpvar_2 = 0;
-  tmpvar_2 = _MainTex.sample(_mtlsmp__MainTex, (float2)(_mtl_i.xlv_TEXCOORD0));
+  tmpvar_2 = _MainTex.sample(_mtlsmp__MainTex, (float2)((_mtl_i.xlv_TEXCOORD0)));
   t_1 = tmpvar_2;
-  if ((_mtl_u._NumPasses > (half)(0.0))) {
+  if (((half)(0.0) < _mtl_u._NumPasses)) {
     half3 res_3 = 0;
     res_3 = tmpvar_2.xyz;
-    if (((half)(0.0) != _mtl_u._NumPasses)) {
-      half val_4 = 0;
-      val_4 = ((_mtl_u._ContrastShift.x * (half)(3.0)) + (half)(12.0));
+    if ((0.0 != (float)(_mtl_u._NumPasses))) {
+      half tmpvar_4 = 0;
+      tmpvar_4 = ((_mtl_u._ContrastShift.x * (half)(3.0)) + (half)(12.0));
       res_3 = ((tmpvar_2.xyz - (half)(0.5)) * pow ((
-        cos(val_4)
-       + (half)(1.0)), val_4));
-      if (((half)(1.0) != _mtl_u._NumPasses)) {
-        half val_5 = 0;
-        val_5 = ((_mtl_u._SaturationShift.y * (half)(3.0)) + (half)(12.0));
+        cos(tmpvar_4)
+       + (half)(1.0)), tmpvar_4));
+      if ((1.0 != (float)(_mtl_u._NumPasses))) {
+        half tmpvar_5 = 0;
+        tmpvar_5 = ((_mtl_u._SaturationShift.y * (half)(3.0)) + (half)(12.0));
         res_3 = ((res_3 - (half)(0.5)) * pow ((
-          cos(val_5)
-         + (half)(1.0)), val_5));
-        if (((half)(2.0) != _mtl_u._NumPasses)) {
-          half val_6 = 0;
-          val_6 = ((_mtl_u._HueShift.z * (half)(3.0)) + (half)(12.0));
+          cos(tmpvar_5)
+         + (half)(1.0)), tmpvar_5));
+        if ((2.0 != (float)(_mtl_u._NumPasses))) {
+          half tmpvar_6 = 0;
+          tmpvar_6 = ((_mtl_u._HueShift.z * (half)(3.0)) + (half)(12.0));
           res_3 = ((res_3 - (half)(0.5)) * pow ((
-            cos(val_6)
-           + (half)(1.0)), val_6));
-          if (((half)(3.0) != _mtl_u._NumPasses)) {
-            half val_7 = 0;
-            val_7 = ((_mtl_u._LuminosityShift.x * (half)(3.0)) + (half)(12.0));
+            cos(tmpvar_6)
+           + (half)(1.0)), tmpvar_6));
+          if ((3.0 != (float)(_mtl_u._NumPasses))) {
+            half tmpvar_7 = 0;
+            tmpvar_7 = ((_mtl_u._LuminosityShift.x * (half)(3.0)) + (half)(12.0));
             res_3 = ((res_3 - (half)(0.5)) * pow ((
-              cos(val_7)
-             + (half)(1.0)), val_7));
+              cos(tmpvar_7)
+             + (half)(1.0)), tmpvar_7));
           };
         };
       };

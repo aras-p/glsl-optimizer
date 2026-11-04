@@ -5,20 +5,20 @@ in mediump vec2 xlv_TEXCOORD0;
 void main ()
 {
   mediump vec4 col_1;
-  highp vec4 mat_0_2;
+  mediump vec4 tmpvar_2;
   bool bar_3;
-  highp vec4 foo_4;
+  mediump vec4 foo_4;
   mediump vec4 tmpvar_5;
   tmpvar_5 = texture (_MainTex, xlv_TEXCOORD0);
   col_1 = tmpvar_5;
-  highp vec4 tmpvar_6;
+  mediump vec4 tmpvar_6;
   if (bar_3) {
     tmpvar_6 = foo_4;
   } else {
     tmpvar_6 = vec4(0.5, 0.5, 0.5, 0.5);
   };
   col_1 = (tmpvar_5 + tmpvar_6);
-  col_1 = (col_1 + mat_0_2);
+  col_1 = (col_1 + tmpvar_2);
   _glesFragData[0] = col_1;
 }
 

@@ -10,31 +10,28 @@ struct xlatMtlShaderOutput {
 struct xlatMtlShaderUniform {
 };
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  ,   texture2d<half> _MainTex [[texture(0)]], sampler _mtlsmp__MainTex [[sampler(0)]])
+  , texture2d<half> _MainTex [[texture(0)]], sampler _mtlsmp__MainTex [[sampler(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  float2 tmpvar_1 = 0;
-  tmpvar_1 = _mtl_i.xlv_uv;
-  half3 light_2 = 0;
-  half4 col_3 = 0;
-  half4 tmpvar_4 = 0;
-  tmpvar_4 = _MainTex.sample(_mtlsmp__MainTex, (float2)(_mtl_i.xlv_uv));
-  col_3 = tmpvar_4;
-  light_2 = half3(float3(0.0, 0.0, 0.0));
-  if ((tmpvar_4.x >= (half)(0.0))) {
-    for (float j_5 = 0.0; j_5 < tmpvar_1.x; j_5 += 1.0) {
-      light_2 = (light_2 + col_3.xyz);
+  half3 light_1 = 0;
+  half4 tmpvar_2 = 0;
+  tmpvar_2 = _MainTex.sample(_mtlsmp__MainTex, (float2)((_mtl_i.xlv_uv)));
+  light_1 = half3(float3(0.0, 0.0, 0.0));
+  if ((tmpvar_2.x >= (half)(0.0))) {
+    for (half j_3 = half(0.0); j_3 < _mtl_i.xlv_uv.x; j_3 += 1.0) {
+      light_1 = (light_1 + tmpvar_2.xyz);
     };
   };
-  if ((tmpvar_4.x >= (half)(1.0))) {
-    float j_6 = 0;
-    j_6 = (_mtl_i.xlv_uv.y * sin(_mtl_i.xlv_uv.y));
-    light_2 = half3(((float3)(light_2) + ((float3)(tmpvar_4.xyz) * j_6)));
+  if ((tmpvar_2.x >= (half)(1.0))) {
+    half j_4 = 0;
+    j_4 = half(_mtl_i.xlv_uv.y);
+    j_4 = (j_4 * sin(j_4));
+    light_1 = (light_1 + (tmpvar_2.xyz * j_4));
   };
-  half4 tmpvar_7 = 0;
-  tmpvar_7.w = half(1.0);
-  tmpvar_7.xyz = light_2;
-  _mtl_o._fragData = tmpvar_7;
+  half4 tmpvar_5 = 0;
+  tmpvar_5.w = half(1.0);
+  tmpvar_5.xyz = light_1;
+  _mtl_o._fragData = tmpvar_5;
   return _mtl_o;
 }
 

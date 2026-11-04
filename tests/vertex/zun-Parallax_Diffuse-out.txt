@@ -25,47 +25,47 @@ attribute vec4 TANGENT;
 varying vec4 xlv_FOG;
 void main ()
 {
-  vec3 worldPos_1;
-  vec3 binormal_2;
-  vec3 worldN_3;
+  vec3 binormal_1;
+  vec3 worldN_2;
+  vec4 o_hip_pack0_3;
   vec4 tmpvar_4;
-  vec4 pos_5;
-  pos_5 = (gl_ModelViewProjectionMatrix * gl_Vertex);
-  tmpvar_4.xy = ((gl_MultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
-  tmpvar_4.zw = ((gl_MultiTexCoord0.xy * _BumpMap_ST.xy) + _BumpMap_ST.zw);
+  tmpvar_4 = (gl_ModelViewProjectionMatrix * gl_Vertex);
+  o_hip_pack0_3.xy = ((gl_MultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
+  o_hip_pack0_3.zw = ((gl_MultiTexCoord0.xy * _BumpMap_ST.xy) + _BumpMap_ST.zw);
+  mat3 tmpvar_5;
+  tmpvar_5[0] = _Object2World[0].xyz;
+  tmpvar_5[1] = _Object2World[1].xyz;
+  tmpvar_5[2] = _Object2World[2].xyz;
+  worldN_2 = (tmpvar_5 * (gl_Normal * unity_Scale.w));
+  binormal_1 = (((gl_Normal.yzx * TANGENT.zxy) - (gl_Normal.zxy * TANGENT.yzx)) * TANGENT.w);
   mat3 tmpvar_6;
-  tmpvar_6[0] = _Object2World[0].xyz;
-  tmpvar_6[1] = _Object2World[1].xyz;
-  tmpvar_6[2] = _Object2World[2].xyz;
-  worldN_3 = (tmpvar_6 * (gl_Normal * unity_Scale.w));
-  binormal_2 = (((gl_Normal.yzx * TANGENT.zxy) - (gl_Normal.zxy * TANGENT.yzx)) * TANGENT.w);
-  mat3 tmpvar_7;
-  tmpvar_7[0].x = TANGENT.x;
-  tmpvar_7[0].y = binormal_2.x;
-  tmpvar_7[0].z = gl_Normal.x;
-  tmpvar_7[1].x = TANGENT.y;
-  tmpvar_7[1].y = binormal_2.y;
-  tmpvar_7[1].z = gl_Normal.y;
-  tmpvar_7[2].x = TANGENT.z;
-  tmpvar_7[2].y = binormal_2.z;
-  tmpvar_7[2].z = gl_Normal.z;
+  tmpvar_6[0].x = TANGENT.x;
+  tmpvar_6[0].y = binormal_1.x;
+  tmpvar_6[0].z = gl_Normal.x;
+  tmpvar_6[1].x = TANGENT.y;
+  tmpvar_6[1].y = binormal_1.y;
+  tmpvar_6[1].z = gl_Normal.y;
+  tmpvar_6[2].x = TANGENT.z;
+  tmpvar_6[2].y = binormal_1.z;
+  tmpvar_6[2].z = gl_Normal.z;
+  vec4 tmpvar_7;
+  tmpvar_7.w = 1.0;
+  tmpvar_7.xyz = _WorldSpaceCameraPos;
   vec4 tmpvar_8;
   tmpvar_8.w = 1.0;
-  tmpvar_8.xyz = _WorldSpaceCameraPos;
-  vec4 tmpvar_9;
-  tmpvar_9.w = 1.0;
-  tmpvar_9.xyz = worldN_3;
-  vec3 x2_10;
-  vec4 vB_11;
-  vec3 x1_12;
-  x1_12.x = dot (unity_SHAr, tmpvar_9);
-  x1_12.y = dot (unity_SHAg, tmpvar_9);
-  x1_12.z = dot (unity_SHAb, tmpvar_9);
-  vB_11 = (worldN_3.xyzz * worldN_3.yzzx);
-  x2_10.x = dot (unity_SHBr, vB_11);
-  x2_10.y = dot (unity_SHBg, vB_11);
-  x2_10.z = dot (unity_SHBb, vB_11);
-  worldPos_1 = (_Object2World * gl_Vertex).xyz;
+  tmpvar_8.xyz = worldN_2;
+  vec3 x2_9;
+  vec4 vB_10;
+  vec3 x1_11;
+  x1_11.x = dot (unity_SHAr, tmpvar_8);
+  x1_11.y = dot (unity_SHAg, tmpvar_8);
+  x1_11.z = dot (unity_SHAb, tmpvar_8);
+  vB_10 = (worldN_2.xyzz * worldN_2.yzzx);
+  x2_9.x = dot (unity_SHBr, vB_10);
+  x2_9.y = dot (unity_SHBg, vB_10);
+  x2_9.z = dot (unity_SHBb, vB_10);
+  vec3 tmpvar_12;
+  tmpvar_12 = (_Object2World * gl_Vertex).xyz;
   vec3 col_13;
   vec4 diff_14;
   vec4 ndotl_15;
@@ -73,15 +73,15 @@ void main ()
   vec4 toLightZ_17;
   vec4 toLightY_18;
   vec4 toLightX_19;
-  toLightX_19 = (unity_4LightPosX0 - worldPos_1.x);
-  toLightY_18 = (unity_4LightPosY0 - worldPos_1.y);
-  toLightZ_17 = (unity_4LightPosZ0 - worldPos_1.z);
+  toLightX_19 = (unity_4LightPosX0 - tmpvar_12.x);
+  toLightY_18 = (unity_4LightPosY0 - tmpvar_12.y);
+  toLightZ_17 = (unity_4LightPosZ0 - tmpvar_12.z);
   lengthSq_16 = (toLightX_19 * toLightX_19);
   lengthSq_16 = (lengthSq_16 + (toLightY_18 * toLightY_18));
   lengthSq_16 = (lengthSq_16 + (toLightZ_17 * toLightZ_17));
-  ndotl_15 = (toLightX_19 * worldN_3.x);
-  ndotl_15 = (ndotl_15 + (toLightY_18 * worldN_3.y));
-  ndotl_15 = (ndotl_15 + (toLightZ_17 * worldN_3.z));
+  ndotl_15 = (toLightX_19 * worldN_2.x);
+  ndotl_15 = (ndotl_15 + (toLightY_18 * worldN_2.y));
+  ndotl_15 = (ndotl_15 + (toLightZ_17 * worldN_2.z));
   vec4 tmpvar_20;
   tmpvar_20 = max (vec4(0.0, 0.0, 0.0, 0.0), (ndotl_15 * inversesqrt(lengthSq_16)));
   ndotl_15 = tmpvar_20;
@@ -93,32 +93,32 @@ void main ()
   col_13 = (col_13 + (unity_LightColor2 * diff_14.z));
   col_13 = (col_13 + (unity_LightColor3 * diff_14.w));
   vec4 o_21;
-  o_21 = (pos_5 * 0.5);
+  o_21 = (tmpvar_4 * 0.5);
   vec2 tmpvar_22;
   tmpvar_22.x = o_21.x;
   tmpvar_22.y = (o_21.y * _ProjectionParams.x);
   o_21.xy = (tmpvar_22 + o_21.w);
-  o_21.zw = pos_5.zw;
-  gl_Position = pos_5;
+  o_21.zw = tmpvar_4.zw;
+  gl_Position = tmpvar_4;
   vec4 tmpvar_23;
   tmpvar_23.yzw = vec3(0.0, 0.0, 0.0);
-  tmpvar_23.x = pos_5.z;
+  tmpvar_23.x = tmpvar_4.z;
   xlv_FOG = tmpvar_23;
-  gl_TexCoord[0] = tmpvar_4;
+  gl_TexCoord[0] = o_hip_pack0_3;
   vec4 tmpvar_24;
   tmpvar_24.w = 0.0;
-  tmpvar_24.xyz = (tmpvar_7 * ((
-    (_World2Object * tmpvar_8)
+  tmpvar_24.xyz = (tmpvar_6 * ((
+    (_World2Object * tmpvar_7)
   .xyz * unity_Scale.w) - gl_Vertex.xyz));
   gl_TexCoord[1] = tmpvar_24;
   vec4 tmpvar_25;
   tmpvar_25.w = 0.0;
-  tmpvar_25.xyz = (tmpvar_7 * (_World2Object * _WorldSpaceLightPos0).xyz);
+  tmpvar_25.xyz = (tmpvar_6 * (_World2Object * _WorldSpaceLightPos0).xyz);
   gl_TexCoord[2] = tmpvar_25;
   vec4 tmpvar_26;
   tmpvar_26.w = 0.0;
-  tmpvar_26.xyz = (((x1_12 + x2_10) + (unity_SHC.xyz * 
-    ((worldN_3.x * worldN_3.x) - (worldN_3.y * worldN_3.y))
+  tmpvar_26.xyz = (((x1_11 + x2_9) + (unity_SHC.xyz * 
+    ((worldN_2.x * worldN_2.x) - (worldN_2.y * worldN_2.y))
   )) + col_13);
   gl_TexCoord[3] = tmpvar_26;
   gl_TexCoord[4] = o_21;
@@ -127,8 +127,8 @@ void main ()
 
 // stats: 68 alu 0 tex 0 flow
 // inputs: 4
-//  #0: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 8
-//  #1: gl_Normal (high float) 3x1 [-1] loc 2
+//  #0: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 7
+//  #1: gl_Normal (high float) 3x1 [-1] loc 1
 //  #2: gl_Vertex (high float) 4x1 [-1] loc 0
 //  #3: TANGENT (high float) 4x1 [-1]
 // uniforms: 24 (total size: 0)

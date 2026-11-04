@@ -1,0 +1,17 @@
+#version 300 es
+precision mediump float;
+in vec4 a;
+in vec4 b;
+layout(location = 0) out vec4 andMask;
+layout(location = 1) out vec4 orMask;
+layout(location = 2) out vec4 xorMask;
+layout(location = 3) out vec4 notAndMask;
+void main()
+{
+    bvec4 x = lessThan(a, b);
+    bvec4 y = greaterThanEqual(a, vec4(0.0));
+    andMask = vec4(x) * vec4(y);
+    notAndMask = vec4(not(bvec4(x.x && y.x, x.y && y.y, x.z && y.z, x.w && y.w)));
+    orMask = vec4(bvec4(x.x || y.x, x.y || y.y, x.z || y.z, x.w || y.w));
+    xorMask = vec4(bvec4(x.x ^^ y.x, x.y ^^ y.y, x.z ^^ y.z, x.w ^^ y.w));
+}

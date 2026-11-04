@@ -13,11 +13,7 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
 {
   xlatMtlShaderOutput _mtl_o;
   half c_1 = 0;
-  half x_2 = 0;
-  x_2 = (_mtl_i.xx * (half)(2.0));
-  if ((x_2 < (half)(0.0))) {
-    discard_fragment();
-  };
+  if (((_mtl_i.xx * (half)(2.0)) < (half)(0.0))) discard_fragment();
   c_1 = (_mtl_i.xx + _mtl_i.xx);
   c_1 = (c_1 + _mtl_i.xx);
   c_1 = (c_1 + _mtl_i.xx);

@@ -1,4 +1,6 @@
 #version 300 es
+precision mediump float;
+precision mediump sampler2DArray;
 out lowp vec4 _fragData;
 
 vec4 xll_tex2DArray(sampler2DArray s, vec3 coord) { return texture (s, coord); }

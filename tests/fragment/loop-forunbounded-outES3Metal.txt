@@ -12,33 +12,27 @@ struct xlatMtlShaderUniform {
   float4 _TerrainTreeLightColors[4];
 };
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  ,   texture2d<half> _MainTex [[texture(0)]], sampler _mtlsmp__MainTex [[sampler(0)]])
+  , texture2d<half> _MainTex [[texture(0)]], sampler _mtlsmp__MainTex [[sampler(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  float3 tmpvar_1 = 0;
-  tmpvar_1 = _mtl_i.xlv_nl;
-  short loopCount_3 = 0;
-  half3 light_4 = 0;
-  half4 col_5 = 0;
-  half4 tmpvar_6 = 0;
-  tmpvar_6 = _MainTex.sample(_mtlsmp__MainTex, (float2)(_mtl_i.xlv_uv));
-  col_5 = tmpvar_6;
-  light_4 = half3(float3(0.0, 0.0, 0.0));
-  loopCount_3 = short((tmpvar_6.w * (half)(10.0)));
-  for (int j_2 = 0; j_2 < loopCount_3; j_2++) {
-    light_4 = half3(((float3)(light_4) + (((float3)(col_5.xyz) * 
-      tmpvar_1[j_2]
-    ) * _mtl_u._TerrainTreeLightColors[j_2].xyz)));
+  half3 light_2 = 0;
+  half4 tmpvar_3 = 0;
+  tmpvar_3 = _MainTex.sample(_mtlsmp__MainTex, (float2)((_mtl_i.xlv_uv)));
+  light_2 = half3(float3(0.0, 0.0, 0.0));
+  short tmpvar_4 = 0;
+  tmpvar_4 = short((tmpvar_3.w * (half)(10.0)));
+  for (short j_1 = short(0); j_1 < tmpvar_4; j_1++) {
+    light_2 = half3(((float3)(light_2) + (((float3)(tmpvar_3.xyz) * _mtl_i.xlv_nl[j_1]) * _mtl_u._TerrainTreeLightColors[j_1].xyz)));
   };
-  half4 tmpvar_7 = 0;
-  tmpvar_7.w = half(1.0);
-  tmpvar_7.xyz = light_4;
-  _mtl_o._fragData = tmpvar_7;
+  half4 tmpvar_5 = 0;
+  tmpvar_5.w = half(1.0);
+  tmpvar_5.xyz = light_2;
+  _mtl_o._fragData = tmpvar_5;
   return _mtl_o;
 }
 
 
-// stats: 11 alu 1 tex 2 flow
+// stats: 10 alu 1 tex 2 flow
 // inputs: 2
 //  #0: xlv_uv (high float) 2x1 [-1]
 //  #1: xlv_nl (high float) 3x1 [-1]

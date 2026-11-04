@@ -7,24 +7,26 @@ uniform sampler2D _Splat3;
 uniform vec4 unity_Ambient;
 void main ()
 {
-  vec4 tmpvar_1;
-  tmpvar_1 = gl_TexCoord[0];
-  vec4 tmpvar_2;
-  tmpvar_2 = gl_TexCoord[1];
-  vec4 light_3;
-  vec3 col_4;
-  vec4 tmpvar_5;
-  tmpvar_5 = texture2D (_Control, tmpvar_1.xy);
-  col_4 = (tmpvar_5.x * texture2D (_Splat0, tmpvar_1.zw).xyz);
-  col_4 = (col_4 + (tmpvar_5.y * texture2D (_Splat1, tmpvar_2.xy).xyz));
-  col_4 = (col_4 + (tmpvar_5.z * texture2D (_Splat2, tmpvar_2.zw).xyz));
-  col_4 = (col_4 + (tmpvar_5.w * texture2D (_Splat3, gl_TexCoord[2].xy).xyz));
-  light_3 = -(log2(texture2DProj (_LightBuffer, gl_TexCoord[3])));
-  light_3.xyz = (light_3.xyz + unity_Ambient.xyz);
-  vec4 c_6;
-  c_6.xyz = (col_4 * light_3.xyz);
-  c_6.w = 0.0;
-  gl_FragData[0] = c_6;
+  vec4 xlt_IN_hip_pack0_1;
+  vec4 xlt_IN_hip_pack1_2;
+  vec4 xlt_IN_hip_screen_3;
+  xlt_IN_hip_pack0_1 = gl_TexCoord[0];
+  xlt_IN_hip_pack1_2 = gl_TexCoord[1];
+  xlt_IN_hip_screen_3 = gl_TexCoord[3];
+  vec4 light_4;
+  vec3 col_5;
+  vec4 tmpvar_6;
+  tmpvar_6 = texture2D (_Control, xlt_IN_hip_pack0_1.xy);
+  col_5 = (tmpvar_6.x * texture2D (_Splat0, xlt_IN_hip_pack0_1.zw).xyz);
+  col_5 = (col_5 + (tmpvar_6.y * texture2D (_Splat1, xlt_IN_hip_pack1_2.xy).xyz));
+  col_5 = (col_5 + (tmpvar_6.z * texture2D (_Splat2, xlt_IN_hip_pack1_2.zw).xyz));
+  col_5 = (col_5 + (tmpvar_6.w * texture2D (_Splat3, gl_TexCoord[2].xy).xyz));
+  light_4 = -(log2(texture2DProj (_LightBuffer, vec3(xlt_IN_hip_screen_3.xy, xlt_IN_hip_screen_3.w))));
+  light_4.xyz = (light_4.xyz + unity_Ambient.xyz);
+  vec4 c_7;
+  c_7.xyz = (col_5 * light_4.xyz);
+  c_7.w = 0.0;
+  gl_FragData[0] = c_7;
 }
 
 

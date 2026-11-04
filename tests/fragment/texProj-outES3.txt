@@ -6,11 +6,11 @@ in highp vec4 uv;
 void main ()
 {
   mediump vec4 c_1;
-  c_1 = (textureProj (tex, uv) + textureProj (tex, uv.xyz));
-  c_1 = (c_1 + textureProjLod (tex, uv, 1.0));
-  c_1 = (c_1 + textureProjLod (tex, uv.xyz, 1.0));
-  c_1 = (c_1 + vec4(texture (shadowmap, uv.xyz)));
-  c_1 = (c_1 + vec4(textureProj (shadowmap, uv)));
+  c_1 = (textureProj (tex, vec3(uv.xy, uv.w)) + textureProj (tex, vec3(uv.xy, uv.z)));
+  c_1 = (c_1 + textureProjLod (tex, vec3(uv.xy, uv.w), 1.0));
+  c_1 = (c_1 + textureProjLod (tex, vec3(uv.xy, uv.z), 1.0));
+  c_1 = (c_1 + vec4(texture (shadowmap, vec3(uv.xy, uv.z))));
+  c_1 = (c_1 + vec4(textureProj (shadowmap, vec4(uv.xy, uv.z, uv.w))));
   _fragData = c_1;
 }
 

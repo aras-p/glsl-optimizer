@@ -26,109 +26,101 @@ out mediump vec3 xlv_TEXCOORD2;
 out mediump vec2 xlv_TEXCOORD3;
 void main ()
 {
-  highp vec4 tmpvar_1;
-  highp vec3 tmpvar_2;
-  highp vec4 tmpvar_3;
-  tmpvar_1 = TANGENT;
-  tmpvar_2 = _inNormal;
-  tmpvar_3 = _color;
+  highp vec4 xlt_v_tangent_1;
+  highp vec3 xlt_v_normal_2;
+  highp vec4 xlt_v_color_3;
+  xlt_v_tangent_1 = TANGENT;
+  xlt_v_normal_2 = _inNormal;
+  xlt_v_color_3 = _color;
   highp vec3 binormal_4;
   highp vec4 tmpvar_5;
   highp vec4 tmpvar_6;
-  highp vec4 pos_7;
-  highp float isBillboard_8;
-  isBillboard_8 = (1.0 - abs(tmpvar_1.w));
-  highp vec4 tmpvar_9;
-  tmpvar_9.w = 0.0;
-  tmpvar_9.xyz = tmpvar_2;
+  highp vec3 tmpvar_7;
+  highp vec4 tmpvar_8;
+  highp vec3 tmpvar_9;
   highp vec4 tmpvar_10;
-  tmpvar_10.w = 0.0;
-  tmpvar_10.xyz = tmpvar_1.xyz;
-  highp vec4 tmpvar_11;
-  tmpvar_11.zw = vec2(0.0, 0.0);
-  tmpvar_11.xy = tmpvar_2.xy;
-  pos_7 = (_inVertex + ((tmpvar_11 * glstate_matrix_invtrans_modelview0) * isBillboard_8));
-  highp vec3 tmpvar_12;
-  tmpvar_12 = mix (tmpvar_2, normalize((tmpvar_9 * glstate_matrix_invtrans_modelview0)).xyz, vec3(isBillboard_8));
+  highp float isBillboard_11;
+  isBillboard_11 = (1.0 - abs(xlt_v_tangent_1.w));
+  highp vec4 tmpvar_12;
+  tmpvar_12.w = 0.0;
+  tmpvar_12.xyz = xlt_v_normal_2;
   highp vec4 tmpvar_13;
-  tmpvar_13.w = -1.0;
-  tmpvar_13.xyz = normalize((tmpvar_10 * glstate_matrix_invtrans_modelview0)).xyz;
+  tmpvar_13.w = 0.0;
+  tmpvar_13.xyz = xlt_v_tangent_1.xyz;
   highp vec4 tmpvar_14;
-  tmpvar_14 = mix (tmpvar_1, tmpvar_13, vec4(isBillboard_8));
-  tmpvar_5.w = pos_7.w;
-  tmpvar_6.w = tmpvar_14.w;
-  tmpvar_5.xyz = (pos_7.xyz * _Scale.xyz);
-  highp vec4 pos_15;
-  pos_15.w = tmpvar_5.w;
-  highp vec3 bend_16;
-  highp vec2 vWavesSum_17;
-  highp vec4 vWaves_18;
-  highp float fBranchPhase_19;
-  fBranchPhase_19 = (dot (_Object2World[3].xyz, vec3(1.0, 1.0, 1.0)) + tmpvar_3.x);
-  highp vec2 tmpvar_20;
-  tmpvar_20.x = dot (tmpvar_5.xyz, vec3((tmpvar_3.y + fBranchPhase_19)));
-  tmpvar_20.y = fBranchPhase_19;
-  vWaves_18 = ((fract(
-    ((_Time.yy + tmpvar_20).xxyy * vec4(1.975, 0.793, 0.375, 0.193))
+  tmpvar_14.zw = vec2(0.0, 0.0);
+  tmpvar_14.xy = xlt_v_normal_2.xy;
+  tmpvar_8 = (_inVertex + ((tmpvar_14 * glstate_matrix_invtrans_modelview0) * isBillboard_11));
+  tmpvar_9 = mix (xlt_v_normal_2, normalize((tmpvar_12 * glstate_matrix_invtrans_modelview0)).xyz, vec3(isBillboard_11));
+  highp vec4 tmpvar_15;
+  tmpvar_15.w = -1.0;
+  tmpvar_15.xyz = normalize((tmpvar_13 * glstate_matrix_invtrans_modelview0)).xyz;
+  tmpvar_10 = mix (xlt_v_tangent_1, tmpvar_15, vec4(isBillboard_11));
+  tmpvar_5.w = tmpvar_8.w;
+  tmpvar_6.w = tmpvar_10.w;
+  tmpvar_5.xyz = (tmpvar_8.xyz * _Scale.xyz);
+  highp vec4 tmpvar_16;
+  tmpvar_16.w = tmpvar_5.w;
+  highp vec3 bend_17;
+  highp vec2 vWavesSum_18;
+  highp vec4 vWaves_19;
+  highp float fBranchPhase_20;
+  fBranchPhase_20 = (dot (_Object2World[3].xyz, vec3(1.0, 1.0, 1.0)) + xlt_v_color_3.x);
+  highp vec2 tmpvar_21;
+  tmpvar_21.x = dot (tmpvar_5.xyz, vec3((xlt_v_color_3.y + fBranchPhase_20)));
+  tmpvar_21.y = fBranchPhase_20;
+  vWaves_19 = ((fract(
+    ((_Time.yy + tmpvar_21).xxyy * vec4(1.975, 0.793, 0.375, 0.193))
   ) * 2.0) - 1.0);
-  highp vec4 tmpvar_21;
-  tmpvar_21 = abs(((
-    fract((vWaves_18 + 0.5))
-   * 2.0) - 1.0));
   highp vec4 tmpvar_22;
-  tmpvar_22 = ((tmpvar_21 * tmpvar_21) * (3.0 - (2.0 * tmpvar_21)));
-  vWaves_18 = tmpvar_22;
-  vWavesSum_17 = (tmpvar_22.xz + tmpvar_22.yw);
-  bend_16.xz = ((tmpvar_3.y * 0.1) * tmpvar_12).xz;
-  bend_16.y = (_uv1.y * 0.3);
-  pos_15.xyz = (tmpvar_5.xyz + ((
-    (vWavesSum_17.xyx * bend_16)
+  tmpvar_22 = abs(((
+    fract((vWaves_19 + 0.5))
+   * 2.0) - 1.0));
+  highp vec4 tmpvar_23;
+  tmpvar_23 = ((tmpvar_22 * tmpvar_22) * (3.0 - (2.0 * tmpvar_22)));
+  vWaves_19 = tmpvar_23;
+  vWavesSum_18 = (tmpvar_23.xz + tmpvar_23.yw);
+  bend_17.xz = ((xlt_v_color_3.y * 0.1) * tmpvar_9).xz;
+  bend_17.y = (_uv1.y * 0.3);
+  tmpvar_16.xyz = (tmpvar_5.xyz + ((
+    (vWavesSum_18.xyx * bend_17)
    + 
-    ((_Wind.xyz * vWavesSum_17.y) * _uv1.y)
+    ((_Wind.xyz * vWavesSum_18.y) * _uv1.y)
   ) * _Wind.w));
-  pos_15.xyz = (pos_15.xyz + (_uv1.x * _Wind.xyz));
-  highp vec3 tmpvar_23;
-  tmpvar_23 = mix ((pos_15.xyz - (
-    (dot (_SquashPlaneNormal.xyz, pos_15.xyz) + _SquashPlaneNormal.w)
-   * _SquashPlaneNormal.xyz)), pos_15.xyz, vec3(_SquashAmount));
+  tmpvar_16.xyz = (tmpvar_16.xyz + (_uv1.x * _Wind.xyz));
   highp vec4 tmpvar_24;
   tmpvar_24.w = 1.0;
-  tmpvar_24.xyz = tmpvar_23;
+  tmpvar_24.xyz = mix ((tmpvar_16.xyz - (
+    (dot (_SquashPlaneNormal.xyz, tmpvar_16.xyz) + _SquashPlaneNormal.w)
+   * _SquashPlaneNormal.xyz)), tmpvar_16.xyz, vec3(_SquashAmount));
   tmpvar_5 = tmpvar_24;
   highp vec4 tmpvar_25;
   tmpvar_25.xyz = vec3(1.0, 1.0, 1.0);
-  tmpvar_25.w = tmpvar_3.w;
-  highp vec3 tmpvar_26;
-  tmpvar_26 = normalize(tmpvar_12);
-  tmpvar_6.xyz = normalize(tmpvar_14.xyz);
-  binormal_4 = (((tmpvar_26.yzx * tmpvar_6.zxy) - (tmpvar_26.zxy * tmpvar_6.yzx)) * tmpvar_14.w);
-  highp mat3 tmpvar_27;
-  tmpvar_27[uint(0)].x = tmpvar_6.x;
-  tmpvar_27[uint(0)].y = binormal_4.x;
-  tmpvar_27[uint(0)].z = tmpvar_26.x;
-  tmpvar_27[1u].x = tmpvar_6.y;
-  tmpvar_27[1u].y = binormal_4.y;
-  tmpvar_27[1u].z = tmpvar_26.y;
-  tmpvar_27[2u].x = tmpvar_6.z;
-  tmpvar_27[2u].y = binormal_4.z;
-  tmpvar_27[2u].z = tmpvar_26.z;
-  highp vec4 tmpvar_28;
-  tmpvar_28.w = 1.0;
-  tmpvar_28.xyz = _WorldSpaceCameraPos;
+  tmpvar_25.w = xlt_v_color_3.w;
+  tmpvar_7 = normalize(tmpvar_9);
+  tmpvar_6.xyz = normalize(tmpvar_10.xyz);
+  binormal_4 = (((tmpvar_7.yzx * tmpvar_6.zxy) - (tmpvar_7.zxy * tmpvar_6.yzx)) * tmpvar_10.w);
+  highp mat3 tmpvar_26;
+  tmpvar_26[uint(0)].x = tmpvar_6.x;
+  tmpvar_26[uint(0)].y = binormal_4.x;
+  tmpvar_26[uint(0)].z = tmpvar_7.x;
+  tmpvar_26[1u].x = tmpvar_6.y;
+  tmpvar_26[1u].y = binormal_4.y;
+  tmpvar_26[1u].z = tmpvar_7.y;
+  tmpvar_26[2u].x = tmpvar_6.z;
+  tmpvar_26[2u].y = binormal_4.z;
+  tmpvar_26[2u].z = tmpvar_7.z;
+  highp vec4 tmpvar_27;
+  tmpvar_27.w = 1.0;
+  tmpvar_27.xyz = _WorldSpaceCameraPos;
   gl_Position = (glstate_matrix_mvp * tmpvar_24);
   xlv_TEXCOORD0 = ((_uv0.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
   xlv_COLOR0 = tmpvar_25;
-  highp vec3 tmpvar_29;
-  tmpvar_29 = (tmpvar_27 * (_World2Object * _WorldSpaceLightPos0).xyz);
-  xlv_TEXCOORD1 = tmpvar_29;
-  highp vec3 tmpvar_30;
-  tmpvar_30 = (tmpvar_27 * ((
-    (_World2Object * tmpvar_28)
-  .xyz * unity_Scale.w) - tmpvar_23));
-  xlv_TEXCOORD2 = tmpvar_30;
-  highp vec2 tmpvar_31;
-  tmpvar_31 = (_LightMatrix0 * (_Object2World * tmpvar_24)).xy;
-  xlv_TEXCOORD3 = tmpvar_31;
+  xlv_TEXCOORD1 = (tmpvar_26 * (_World2Object * _WorldSpaceLightPos0).xyz);
+  xlv_TEXCOORD2 = (tmpvar_26 * ((
+    (_World2Object * tmpvar_27)
+  .xyz * unity_Scale.w) - tmpvar_24.xyz));
+  xlv_TEXCOORD3 = (_LightMatrix0 * (_Object2World * tmpvar_24)).xy;
 }
 
 

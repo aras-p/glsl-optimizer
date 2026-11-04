@@ -18,14 +18,14 @@ struct xlatMtlShaderUniform {
 vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half2 tmpvar_1 = 0;
-  half4 tmpvar_2 = 0;
-  tmpvar_2.w = _mtl_i._color.w;
-  tmpvar_2.xyz = (_mtl_i._color.xyz + _mtl_i._inNormal);
-  tmpvar_1 = half2(_mtl_i._uv0);
+  half2 o_uv_1 = 0;
+  half4 o_color_2 = 0;
+  o_color_2.w = _mtl_i._color.w;
+  o_color_2.xyz = (_mtl_i._color.xyz + _mtl_i._inNormal);
+  o_uv_1 = half2(_mtl_i._uv0);
   _mtl_o.gl_Position = (_mtl_u.mvp * _mtl_i._inVertex);
-  _mtl_o.xlv_TEXCOORD0 = tmpvar_1;
-  _mtl_o.xlv_COLOR = tmpvar_2;
+  _mtl_o.xlv_TEXCOORD0 = o_uv_1;
+  _mtl_o.xlv_COLOR = o_color_2;
   return _mtl_o;
 }
 

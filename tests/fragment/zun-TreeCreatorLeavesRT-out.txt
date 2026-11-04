@@ -7,44 +7,40 @@ uniform vec3 _TranslucencyColor;
 uniform sampler2D _TranslucencyMap;
 void main ()
 {
-  vec2 tmpvar_1;
-  tmpvar_1 = gl_TexCoord[0].xy;
-  vec3 tmpvar_2;
-  vec3 tmpvar_3;
-  tmpvar_2 = gl_TexCoord[3].xyz;
-  tmpvar_3 = gl_TexCoord[4].xyz;
+  vec2 xlt_i_uv_1;
+  vec3 xlt_i_nl_2;
+  vec3 xlt_i_nh_3;
+  xlt_i_uv_1 = gl_TexCoord[0].xy;
+  xlt_i_nl_2 = gl_TexCoord[3].xyz;
+  xlt_i_nh_3 = gl_TexCoord[4].xyz;
   vec4 c_4;
   vec3 backContribs_5;
   vec3 light_6;
   float specular_7;
   vec3 albedo_8;
   vec4 tmpvar_9;
-  tmpvar_9 = texture2D (_MainTex, tmpvar_1);
-  float x_10;
-  x_10 = (tmpvar_9.w - _Cutoff);
-  if ((x_10 < 0.0)) {
-    discard;
-  };
+  tmpvar_9 = texture2D (_MainTex, xlt_i_uv_1);
+  if (((tmpvar_9.w - _Cutoff) < 0.0)) discard;
   albedo_8 = (tmpvar_9.xyz * gl_TexCoord[1].xyz);
-  specular_7 = (texture2D (_BumpSpecMap, tmpvar_1).x * 128.0);
-  vec4 tmpvar_11;
-  tmpvar_11 = texture2D (_TranslucencyMap, tmpvar_1);
+  specular_7 = (texture2D (_BumpSpecMap, xlt_i_uv_1).x * 128.0);
+  vec4 tmpvar_10;
+  tmpvar_10 = texture2D (_TranslucencyMap, xlt_i_uv_1);
   light_6 = (gl_LightModel.ambient.xyz * albedo_8);
-  backContribs_5 = (gl_TexCoord[2].xyz * tmpvar_11.z);
+  backContribs_5 = (gl_TexCoord[2].xyz * tmpvar_10.z);
   light_6 = (light_6 + ((
-    (albedo_8 * ((backContribs_5.x * _TranslucencyColor) + tmpvar_2.x))
+    (albedo_8 * ((backContribs_5[0] * _TranslucencyColor) + xlt_i_nl_2[0]))
    + 
-    (_SpecColor.xyz * (pow (tmpvar_3.x, specular_7) * tmpvar_11.w))
+    (_SpecColor.xyz * (pow (xlt_i_nh_3[0], specular_7) * tmpvar_10.w))
   ) * _TerrainTreeLightColors[0].xyz));
   light_6 = (light_6 + ((
-    (albedo_8 * ((backContribs_5.y * _TranslucencyColor) + tmpvar_2.y))
+    (albedo_8 * ((backContribs_5[1] * _TranslucencyColor) + xlt_i_nl_2[1]))
    + 
-    (_SpecColor.xyz * (pow (tmpvar_3.y, specular_7) * tmpvar_11.w))
+    (_SpecColor.xyz * (pow (xlt_i_nh_3[1], specular_7) * tmpvar_10.w))
   ) * _TerrainTreeLightColors[1].xyz));
   light_6 = (light_6 + ((
-    (albedo_8 * ((backContribs_5.z * _TranslucencyColor) + tmpvar_2.z))
+    (albedo_8 * ((backContribs_5[2] * _TranslucencyColor) + xlt_i_nl_2[2]))
    + 
-    (_SpecColor.xyz * (pow (tmpvar_3.z, specular_7) * tmpvar_11.w))
+    (_SpecColor.xyz * (pow (xlt_i_nh_3[2], specular_7) * tmpvar_10.w))
   ) * _TerrainTreeLightColors[2].xyz));
   c_4.xyz = (light_6 * 2.0);
   c_4.w = 1.0;

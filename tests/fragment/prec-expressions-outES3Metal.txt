@@ -18,9 +18,7 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   float4 tmpvar_3 = 0;
   tmpvar_3.w = 1.0;
   tmpvar_3.xyz = _mtl_u._WorldPos;
-  float3 tmpvar_4 = 0;
-  tmpvar_4 = ((float4)(_mtl_u._LightMatrix * (half4)(tmpvar_3))).xyz;
-  lightCoord_2 = half3(tmpvar_4);
+  lightCoord_2 = half3(((float4)(_mtl_u._LightMatrix * (half4)(tmpvar_3))).xyz);
   r_1.xyz = lightCoord_2;
   r_1.w = half(1.0);
   _mtl_o._fragData = r_1;

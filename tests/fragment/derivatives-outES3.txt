@@ -4,15 +4,15 @@ in highp vec4 xlv_TEXCOORD0;
 void main ()
 {
   mediump vec4 res_1;
-  highp float tmpvar_2;
-  tmpvar_2 = dFdx(xlv_TEXCOORD0.x);
-  res_1.x = tmpvar_2;
-  highp float tmpvar_3;
-  tmpvar_3 = dFdx(xlv_TEXCOORD0.y);
-  res_1.y = tmpvar_3;
-  highp float tmpvar_4;
-  tmpvar_4 = (abs(dFdx(xlv_TEXCOORD0.z)) + abs(dFdy(xlv_TEXCOORD0.z)));
-  res_1.z = tmpvar_4;
+  mediump float tmpvar_2;
+  tmpvar_2 = xlv_TEXCOORD0.x;
+  res_1.x = dFdx(tmpvar_2);
+  mediump float tmpvar_3;
+  tmpvar_3 = xlv_TEXCOORD0.y;
+  res_1.y = dFdx(tmpvar_3);
+  mediump float tmpvar_4;
+  tmpvar_4 = xlv_TEXCOORD0.z;
+  res_1.z = (abs(dFdx(tmpvar_4)) + abs(dFdy(tmpvar_4)));
   res_1.w = 1.0;
   _fragData = res_1;
 }

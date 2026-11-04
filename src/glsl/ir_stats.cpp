@@ -1,6 +1,5 @@
 #include "ir.h"
 #include "ir_visitor.h"
-#include "ir_unused_structs.h"
 #include "glsl_types.h"
 
 struct ir_stats_counter_visitor : public ir_hierarchical_visitor {
@@ -38,9 +37,11 @@ struct ir_stats_counter_visitor : public ir_hierarchical_visitor {
 		++flow;
 		return visit_continue;
 	}
-	virtual ir_visitor_status visit_leave(class ir_discard *)
+	virtual ir_visitor_status visit_leave(class ir_discard *ir)
 	{
 		++tex;
+		if (ir->condition)
+			++flow;
 		return visit_continue;
 	}
 	virtual ir_visitor_status visit_leave(class ir_if *)

@@ -98,9 +98,9 @@ NAN_METHOD(Shader::New)
 	if(info.Length() == 3) {
 		if(info[0]->IsObject() && info[1]->IsInt32() && info[2]->IsString())
 		{
-			Compiler* compiler = ObjectWrap::Unwrap<Compiler>(info[0]->ToObject());
-			int type = info[1]->Int32Value();
-			String::Utf8Value sourceCode(info[2]->ToString());
+			Compiler* compiler = ObjectWrap::Unwrap<Compiler>(Nan::To<v8::Object>(info[0]).ToLocalChecked());
+			int type = Nan::To<int32_t>(info[1]).FromJust();
+			Nan::Utf8String sourceCode(info[2]);
 
 			Shader* obj = new Shader(compiler, type, *sourceCode);
 

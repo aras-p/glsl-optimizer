@@ -18,7 +18,7 @@ void main ()
 }
 
 
-// stats: 6 alu 2 tex 0 flow
+// stats: 7 alu 2 tex 0 flow
 // inputs: 1
 //  #0: xlv_TEXCOORD0 (medium float) 2x1 [-1]
 // uniforms: 2 (total size: 0)

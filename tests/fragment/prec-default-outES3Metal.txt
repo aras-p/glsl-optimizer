@@ -3,7 +3,7 @@
 using namespace metal;
 struct MyStruct {
   float f;
-  int i;
+  short i;
 };
 struct xlatMtlShaderInput {
   float4 gl_FragCoord [[position]];
@@ -16,35 +16,29 @@ struct xlatMtlShaderUniform {
   float fh1;
   float fh2;
   half fm;
-  int il1;
+  short il1;
   short il2;
   short im;
 };
-;
-;
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
   int i_1 = 0;
   half f_2 = 0;
+  f_2 = half((((_mtl_u.fh1 + _mtl_u.fh2) + (float)(_mtl_u.fm)) + _mtl_u.s1.f));
+  i_1 = int((((_mtl_u.il1 + _mtl_u.il2) + _mtl_u.im) + _mtl_u.s1.i));
   float tmpvar_3 = 0;
-  tmpvar_3 = (((_mtl_u.fh1 + _mtl_u.fh2) + (float)(_mtl_u.fm)) + _mtl_u.s1.f);
-  f_2 = half(tmpvar_3);
-  short tmpvar_4 = 0;
-  tmpvar_4 = ((((short)(_mtl_u.il1 + (int)(_mtl_u.il2))) + _mtl_u.im) + (short)(_mtl_u.s1.i));
-  i_1 = int(tmpvar_4);
-  float tmpvar_5 = 0;
-  if ((_mtl_i.gl_FragCoord.x > 0.5)) {
-    tmpvar_5 = 0.9;
+  if ((0.5 < _mtl_i.gl_FragCoord.x)) {
+    tmpvar_3 = 0.9;
   } else {
-    tmpvar_5 = 0.1;
+    tmpvar_3 = 0.1;
   };
-  float4 tmpvar_6 = 0;
-  tmpvar_6.w = 0.0;
-  tmpvar_6.x = float(f_2);
-  tmpvar_6.y = float(i_1);
-  tmpvar_6.z = tmpvar_5;
-  _mtl_o._fragData = half4(tmpvar_6);
+  float4 tmpvar_4 = 0;
+  tmpvar_4.w = 0.0;
+  tmpvar_4.x = float(f_2);
+  tmpvar_4.y = float(i_1);
+  tmpvar_4.z = tmpvar_3;
+  _mtl_o._fragData = half4(tmpvar_4);
   return _mtl_o;
 }
 
@@ -52,11 +46,11 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
 // stats: 11 alu 0 tex 1 flow
 // inputs: 1
 //  #0: gl_FragCoord (high float) 4x1 [-1] loc 0
-// uniforms: 7 (total size: 20)
+// uniforms: 7 (total size: 24)
 //  #0: s1 (high other) 0x0 [-1] loc 0
-//  #1: fh1 (high float) 1x1 [-1] loc 0
-//  #2: fh2 (high float) 1x1 [-1] loc 4
-//  #3: fm (medium float) 1x1 [-1] loc 8
-//  #4: il1 (high int) 1x1 [-1] loc 12
-//  #5: il2 (medium int) 1x1 [-1] loc 16
-//  #6: im (medium int) 1x1 [-1] loc 18
+//  #1: fh1 (high float) 1x1 [-1] loc 8
+//  #2: fh2 (high float) 1x1 [-1] loc 12
+//  #3: fm (medium float) 1x1 [-1] loc 16
+//  #4: il1 (medium int) 1x1 [-1] loc 18
+//  #5: il2 (medium int) 1x1 [-1] loc 20
+//  #6: im (medium int) 1x1 [-1] loc 22

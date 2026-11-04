@@ -1,11 +1,11 @@
 uniform vec4 _LightPositionRange;
 void main ()
 {
-  vec3 tmpvar_1;
-  tmpvar_1 = gl_TexCoord[0].xyz;
+  vec3 xlt_IN_vec_1;
+  xlt_IN_vec_1 = gl_TexCoord[0].xyz;
   vec4 enc_2;
   enc_2 = (vec4(1.0, 255.0, 65025.0, 1.60581e+08) * (sqrt(
-    dot (tmpvar_1, tmpvar_1)
+    dot (xlt_IN_vec_1, xlt_IN_vec_1)
   ) * _LightPositionRange.w));
   vec4 tmpvar_3;
   tmpvar_3 = fract(enc_2);

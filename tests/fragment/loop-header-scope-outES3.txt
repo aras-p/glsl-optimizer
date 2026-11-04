@@ -1,0 +1,47 @@
+#version 300 es
+uniform highp int bound;
+uniform highp float values[32];
+out highp vec4 color;
+void main ()
+{
+  highp int arrayIndex_1;
+  highp int starts_2[2];
+  highp int start_4;
+  highp int liveIndex_5;
+  highp float sum_7;
+  sum_7 = values[0];
+  for (highp int privateIndex_6 = 0; privateIndex_6 < bound; privateIndex_6++) {
+    sum_7 = (sum_7 + values[privateIndex_6]);
+  };
+  liveIndex_5 = 0;
+  for (; liveIndex_5 < bound; liveIndex_5++) {
+    sum_7 = (sum_7 + values[liveIndex_5]);
+  };
+  sum_7 = (sum_7 + float(liveIndex_5));
+  highp int tmpvar_8;
+  tmpvar_8 = int(sum_7);
+  start_4 = (tmpvar_8 + bound);
+  for (highp int snapshotIndex_3 = tmpvar_8; snapshotIndex_3 < start_4; snapshotIndex_3++) {
+    sum_7 = (sum_7 + values[snapshotIndex_3]);
+  };
+  starts_2[0] = int(sum_7);
+  starts_2[1] = bound;
+  arrayIndex_1 = starts_2[(bound & 1)];
+  if ((0.0 < sum_7)) {
+    highp int tmpvar_9;
+    tmpvar_9 = (bound & 1);
+    starts_2[tmpvar_9] = (starts_2[tmpvar_9] + 1);
+  };
+  for (; arrayIndex_1 < bound; arrayIndex_1++) {
+    sum_7 = (sum_7 + (values[arrayIndex_1] + float(starts_2[
+      (arrayIndex_1 & 1)
+    ])));
+  };
+  color = vec4(sum_7);
+}
+
+
+// stats: 26 alu 0 tex 9 flow
+// uniforms: 2 (total size: 0)
+//  #0: bound (high int) 1x1 [-1]
+//  #1: values (high float) 1x1 [32]

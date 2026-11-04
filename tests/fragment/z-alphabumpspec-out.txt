@@ -6,31 +6,31 @@ uniform float _Shininess;
 uniform vec4 _SpecColor;
 void main ()
 {
-  vec4 tmpvar_1;
-  tmpvar_1 = gl_TexCoord[0];
-  vec3 tmpvar_2;
-  tmpvar_2 = gl_TexCoord[2].xyz;
+  vec4 xlt_IN_hip_pack0_1;
+  vec3 xlt_IN_lightDir_2;
+  xlt_IN_hip_pack0_1 = gl_TexCoord[0];
+  xlt_IN_lightDir_2 = gl_TexCoord[2].xyz;
   vec4 c_3;
   vec3 tmpvar_4;
   float tmpvar_5;
   vec4 tmpvar_6;
-  tmpvar_6 = texture2D (_MainTex, tmpvar_1.xy);
+  tmpvar_6 = texture2D (_MainTex, xlt_IN_hip_pack0_1.xy);
   tmpvar_4 = (tmpvar_6.xyz * _Color.xyz);
   tmpvar_5 = (tmpvar_6.w * _Color.w);
   vec4 normal_7;
-  normal_7.xy = ((texture2D (_BumpMap, tmpvar_1.zw).wy * 2.0) - 1.0);
+  normal_7.xy = ((texture2D (_BumpMap, xlt_IN_hip_pack0_1.zw).wy * 2.0) - 1.0);
   normal_7.z = sqrt(((1.0 - 
     (normal_7.x * normal_7.x)
   ) - (normal_7.y * normal_7.y)));
   vec4 c_8;
   float spec_9;
   spec_9 = (pow (max (0.0, 
-    dot (normal_7.xyz, normalize((tmpvar_2 + normalize(gl_TexCoord[1].xyz))))
+    dot (normal_7.xyz, normalize((xlt_IN_lightDir_2 + normalize(gl_TexCoord[1].xyz))))
   ), (_Shininess * 128.0)) * tmpvar_6.w);
   c_8.xyz = (((
     (tmpvar_4 * _LightColor0.xyz)
    * 
-    max (0.0, dot (normal_7.xyz, tmpvar_2))
+    max (0.0, dot (normal_7.xyz, xlt_IN_lightDir_2))
   ) + (
     (_LightColor0.xyz * _SpecColor.xyz)
    * spec_9)) * 2.0);

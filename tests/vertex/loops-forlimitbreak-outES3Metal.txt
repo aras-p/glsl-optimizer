@@ -17,8 +17,8 @@ struct xlatMtlShaderUniform {
 vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  float3 tmpvar_1 = 0;
-  tmpvar_1 = _mtl_i._glesVertex.xyz;
+  float3 xlt_IN_pos_1 = 0;
+  xlt_IN_pos_1 = _mtl_i._glesVertex.xyz;
   int j_2 = 0;
   int j_3 = 0;
   int il_4 = 0;
@@ -35,21 +35,19 @@ vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], 
     if ((float(il_4) >= tmpvar_8)) {
       break;
     };
-    float3 tmpvar_9 = 0;
-    tmpvar_9 = _mtl_u.unity_LightPosition[il_4].xyz;
-    half3 dirToLight_10 = 0;
-    dirToLight_10 = half3(tmpvar_9);
+    half3 tmpvar_9 = 0;
+    tmpvar_9 = half3(_mtl_u.unity_LightPosition[il_4].xyz);
     lcolor_5 = (lcolor_5 + min ((
-      (max (dot (eyeNormal_6, dirToLight_10), (half)0.0) * _mtl_u.unity_LightColor[il_4].xyz)
-     * (half)(0.5)), (half3)float3(1.0, 1.0, 1.0)));
+      (max (dot (eyeNormal_6, tmpvar_9), (half)0.0) * _mtl_u.unity_LightColor[il_4].xyz)
+     * 0.5), (half3)float3(1.0, 1.0, 1.0)));
     il_4++;
   };
   color_7.xyz = lcolor_5;
   j_3 = 0;
   while (true) {
-    float tmpvar_11 = 0;
-    tmpvar_11 = min (float(_mtl_u.unity_VertexLightParams.y), 4.0);
-    if ((j_3 >= int(tmpvar_11))) {
+    float tmpvar_10 = 0;
+    tmpvar_10 = min (float(_mtl_u.unity_VertexLightParams.y), 4.0);
+    if ((j_3 >= int(tmpvar_10))) {
       break;
     };
     color_7.xyz = (color_7.xyz + _mtl_u.unity_LightColor[j_3].xyz);
@@ -57,19 +55,19 @@ vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], 
   };
   j_2 = 0;
   while (true) {
-    int tmpvar_12 = 0;
-    tmpvar_12 = min (_mtl_u.unity_VertexLightParams.y, 4);
-    if ((j_2 >= tmpvar_12)) {
+    int tmpvar_11 = 0;
+    tmpvar_11 = min (_mtl_u.unity_VertexLightParams.y, 4);
+    if ((j_2 >= tmpvar_11)) {
       break;
     };
     color_7.xyz = (color_7.xyz * _mtl_u.unity_LightColor[j_2].xyz);
     j_2++;
   };
-  float4 tmpvar_13 = 0;
-  tmpvar_13.w = 1.0;
-  tmpvar_13.xyz = tmpvar_1;
+  float4 tmpvar_12 = 0;
+  tmpvar_12.w = 1.0;
+  tmpvar_12.xyz = xlt_IN_pos_1;
   _mtl_o.xlv_COLOR0 = color_7;
-  _mtl_o.gl_Position = tmpvar_13;
+  _mtl_o.gl_Position = tmpvar_12;
   return _mtl_o;
 }
 

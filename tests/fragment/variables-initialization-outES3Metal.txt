@@ -10,24 +10,24 @@ struct xlatMtlShaderOutput {
 struct xlatMtlShaderUniform {
 };
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  ,   texture2d<half> _MainTex [[texture(0)]], sampler _mtlsmp__MainTex [[sampler(0)]])
+  , texture2d<half> _MainTex [[texture(0)]], sampler _mtlsmp__MainTex [[sampler(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
   half4 col_1 = 0;
-  float4 mat_0_2 = 0;
+  half4 tmpvar_2 = 0;
   bool bar_3 = false;
-  float4 foo_4 = 0;
+  half4 foo_4 = 0;
   half4 tmpvar_5 = 0;
-  tmpvar_5 = _MainTex.sample(_mtlsmp__MainTex, (float2)(_mtl_i.xlv_TEXCOORD0));
+  tmpvar_5 = _MainTex.sample(_mtlsmp__MainTex, (float2)((_mtl_i.xlv_TEXCOORD0)));
   col_1 = tmpvar_5;
-  float4 tmpvar_6 = 0;
+  half4 tmpvar_6 = 0;
   if (bar_3) {
     tmpvar_6 = foo_4;
   } else {
-    tmpvar_6 = float4(0.5, 0.5, 0.5, 0.5);
+    tmpvar_6 = half4(float4(0.5, 0.5, 0.5, 0.5));
   };
-  col_1 = (tmpvar_5 + (half4)(tmpvar_6));
-  col_1 = (col_1 + (half4)(mat_0_2));
+  col_1 = (tmpvar_5 + tmpvar_6);
+  col_1 = (col_1 + tmpvar_2);
   _mtl_o._glesFragData_0 = col_1;
   return _mtl_o;
 }

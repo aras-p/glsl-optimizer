@@ -6,13 +6,20 @@ GLSL optimizer Change Log
 -------
 
 Added:
+
 * Recognize `GL_OES_EGL_image_external_essl3` in GLES3 inputs.
 
 Changed:
+
 * Removed OpenGL ES 2.0 language input/output support; for GLES only `#version 300 es`
   shaders are accepted and produced now.
 * `lowp` and `mediump` precision are treated as the same precision now. Last time any GPU
   had _actual_ `lowp` was, like, 15 years ago.
+* Updated underlying Mesa compiler/optimizer codebase from 10.4-dev (2014 Oct) to Mesa 20.3.5 (2021 Mar).
+  This slightly improves constant folding, dead-code elimination, vector assignment
+  simplification, and arithmetic optimization. I did not pick more recent Mesa
+  since it moved a lot of optimization to their new "NIR" architecture, which would
+  have been a lot more work. Maybe someday!
 
 Build:
 

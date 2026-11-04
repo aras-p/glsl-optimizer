@@ -25,11 +25,32 @@
 #include "ir_visitor.h"
 #include "glsl_types.h"
 #include "glsl_parser_extras.h"
-#include "ir_unused_structs.h"
+#include "ir_hierarchical_visitor.h"
+#include "ir_optimization.h"
+#include <unordered_map>
+#include <unordered_set>
 #include "loop_analysis.h"
-#include "program/hash_table.h"
+#include "ir_print_loop.h"
+
 #include <math.h>
 
+
+static unsigned precision_from_ir(ir_instruction* ir)
+{
+	if (!ir) return GLSL_PRECISION_NONE;
+	if (ir_variable* v = ir->as_variable()) return v->data.precision;
+	if (ir_rvalue* r = ir->as_rvalue()) return r->get_precision();
+	if (ir->ir_type == ir_type_function_signature) return ((ir_function_signature*)ir)->return_precision;
+	return GLSL_PRECISION_NONE;
+}
+static unsigned higher_precision(unsigned a, unsigned b)
+{
+	if (!a) return b;
+	if (!b) return a;
+	return a < b ? a : b;
+}
+static void print_type_precision(string_buffer&, const glsl_type*, unsigned, bool);
+static void print_metal_structs(string_buffer&, exec_list*);
 
 static void print_type(string_buffer& buffer, ir_instruction* ir, const glsl_type *t, bool arraySize);
 static void print_type_post(string_buffer& buffer, const glsl_type *t, bool arraySize);
@@ -63,25 +84,21 @@ struct global_print_tracker_metal
 	{
 		mem_ctx = ralloc_context(0);
 		var_counter = 0;
-		var_hash = hash_table_ctor(0, hash_table_pointer_hash, hash_table_pointer_compare);
 		const_counter = 0;
-		const_hash = hash_table_ctor(0, hash_table_pointer_hash, hash_table_pointer_compare);
 		main_function_done = false;
 	}
 
 	~global_print_tracker_metal()
 	{
-		hash_table_dtor (var_hash);
-		hash_table_dtor (const_hash);
 		ralloc_free(mem_ctx);
 	}
 
 	unsigned	var_counter;
-	hash_table*	var_hash;
+	std::unordered_map<const ir_variable*, long> var_hash;
 	exec_list	global_assignements;
 
 	unsigned	const_counter;
-	hash_table*	const_hash;
+	std::unordered_map<const ir_constant*, long> const_hash;
 	exec_list	global_constants;
 
 	void*		mem_ctx;
@@ -136,7 +153,6 @@ public:
 		: ctx(ctx_)
 		, buffer(buf)
 		, loopstate(NULL)
-		, inside_loop_body(false)
 		, inside_lhs(false)
 		, skipped_this_ir(false)
 		, previous_skipped(false)
@@ -159,6 +175,7 @@ public:
 	void end_statement_line();
 	void newline_deindent();
 	void print_var_name (ir_variable* v);
+	void print_array_initializer(ir_constant* value, unsigned precision);
 
 	virtual void visit(ir_variable *);
 	virtual void visit(ir_function_signature *);
@@ -177,13 +194,13 @@ public:
 	virtual void visit(ir_if *);
 	virtual void visit(ir_loop *);
 	virtual void visit(ir_loop_jump *);
-	virtual void visit(ir_precision_statement *);
-	virtual void visit(ir_typedecl_statement *);
+	virtual void visit(ir_demote *) { buffer.asprintf_append("discard_fragment()"); }
+	virtual void visit(ir_barrier *) { buffer.asprintf_append("threadgroup_barrier(mem_flags::mem_threadgroup)"); }
 	virtual void visit(ir_emit_vertex *);
 	virtual void visit(ir_end_primitive *);
 
 	void emit_assignment_part (ir_dereference* lhs, ir_rvalue* rhs, unsigned write_mask, ir_rvalue* dstIndex);
-	bool can_emit_canonical_for (loop_variable_state *ls);
+
 	bool emit_canonical_for (ir_loop* ir);
 
 	metal_print_context& ctx;
@@ -195,7 +212,7 @@ public:
 	PrintGlslMode mode;
 	const PrintGlslMode mode_whole;
 	loop_state* loopstate;
-	bool	inside_loop_body;
+	print_loop_initializers* loop_initializers = nullptr;
 	bool	inside_lhs;
 	bool	skipped_this_ir;
 	bool	previous_skipped;
@@ -207,6 +224,7 @@ _mesa_print_ir_metal(exec_list *instructions,
 	    struct _mesa_glsl_parse_state *state,
 		char* buffer, PrintGlslMode mode, int* outUniformsSize)
 {
+	if (mode == kPrintGlslFragment) optimize_split_arrays(instructions, false, true);
 	metal_print_context ctx(buffer);
 
 	// includes, prefix etc.
@@ -218,14 +236,13 @@ _mesa_print_ir_metal(exec_list *instructions,
 	ctx.outputStr.asprintf_append("struct xlatMtlShaderOutput {\n");
 	ctx.uniformStr.asprintf_append("struct xlatMtlShaderUniform {\n");
 
-	// remove unused struct declarations
-	do_remove_unused_typedecls(instructions);
+	print_metal_structs(ctx.typedeclStr, instructions);
 
 	global_print_tracker_metal gtracker;
 
 	loop_state* ls = analyze_loop_variables(instructions);
-	if (ls->loop_found)
-		set_loop_controls(instructions, ls);
+	print_loop_initializers initializers(instructions, ls);
+
 
 	foreach_in_list(ir_instruction, ir, instructions)
 	{
@@ -245,7 +262,7 @@ _mesa_print_ir_metal(exec_list *instructions,
 			//
 			if (var->data.mode == ir_var_uniform)
 			{
-				if (var->type->is_sampler())
+				if (var->type->without_array()->is_sampler())
 				{
 					strOut = &ctx.paramsStr;
 					ctx.writingParams = true;
@@ -264,17 +281,17 @@ _mesa_print_ir_metal(exec_list *instructions,
 				strOut = &ctx.inputStr;
 			if (var->data.mode == ir_var_shader_out)
 				strOut = &ctx.outputStr;
-			if (var->data.mode == ir_var_shader_inout)
+			if (var->data.mode == ir_var_shader_out && var->data.fb_fetch_output)
 				strOut = &ctx.inoutStr;
 		}
 		
-		if (ir->ir_type == ir_type_typedecl) {
-			strOut = &ctx.typedeclStr;
-		}
 
 		ir_print_metal_visitor v (ctx, *strOut, &gtracker, mode, state);
 		v.loopstate = ls;
+		v.loop_initializers = &initializers;
 
+		if (strOut == &ctx.inputStr || strOut == &ctx.outputStr || strOut == &ctx.inoutStr || strOut == &ctx.uniformStr)
+			strOut->asprintf_append("  ");
 		ir->accept(&v);
 		if (ir->ir_type != ir_type_function && !v.skipped_this_ir)
 		{
@@ -316,19 +333,29 @@ _mesa_print_ir_metal(exec_list *instructions,
 			{
 				if (i != 0)
 					v.buffer.asprintf_append (", ");
-				c->get_array_element(i)->accept(&v);
+				ir_constant* element = c->get_array_element(i);
+				// Array precision applies to its elements, including propagated constants.
+				if ((c->get_precision() == GLSL_PRECISION_MEDIUM) !=
+					(element->get_precision() == GLSL_PRECISION_MEDIUM))
+					v.print_array_initializer(element, c->get_precision());
+				else
+					element->accept(&v);
 			}
 		}
 		else
 		{
-			assert(c->type->is_record());
+			assert(c->type->is_struct());
 			bool first = true;
-			foreach_in_list(ir_constant, inst, &c->components)
+			for (unsigned component = 0; component < c->type->length; ++component)
 			{
 				if (!first)
 					v.buffer.asprintf_append (", ");
 				first = false;
-				inst->accept(&v);
+				const glsl_struct_field& field = c->type->fields.structure[component];
+				const bool cast = field.type->is_numeric() && field.precision == GLSL_PRECISION_MEDIUM;
+				if (cast) { print_type_precision(v.buffer, field.type, field.precision, true); v.buffer.asprintf_append("("); }
+				c->const_elements[component]->accept(&v);
+				if (cast) v.buffer.asprintf_append(")");
 			}
 		}
 		v.buffer.asprintf_append ("};\n");
@@ -385,11 +412,11 @@ void ir_print_metal_visitor::newline_deindent()
 
 void ir_print_metal_visitor::print_var_name (ir_variable* v)
 {
-    long id = (long)hash_table_find (globals->var_hash, v);
+    long id = globals->var_hash[v];
 	if (!id && v->data.mode == ir_var_temporary)
 	{
         id = ++globals->var_counter;
-        hash_table_insert (globals->var_hash, (void*)id, v);
+        globals->var_hash[v] = id;
 	}
     if (id)
     {
@@ -411,9 +438,9 @@ void ir_print_metal_visitor::print_var_name (ir_variable* v)
 
 
 
-static void print_type_precision(string_buffer& buffer, const glsl_type *t, glsl_precision prec, bool arraySize)
+static void print_type_precision(string_buffer& buffer, const glsl_type *t, unsigned prec, bool arraySize)
 {
-	const bool halfPrec = (prec == glsl_precision_medium);
+	const bool halfPrec = (prec == GLSL_PRECISION_MEDIUM);
 
 	const char* typeName = t->name;
 	// scalars
@@ -421,6 +448,10 @@ static void print_type_precision(string_buffer& buffer, const glsl_type *t, glsl
 		typeName = halfPrec ? "half" : "float";
 	else if (!strcmp(typeName, "int"))
 		typeName = halfPrec ? "short" : "int";
+	else if (!strcmp(typeName, "uint")) typeName = halfPrec ? "ushort" : "uint";
+	else if (!strcmp(typeName, "uvec2")) typeName = halfPrec ? "ushort2" : "uint2";
+	else if (!strcmp(typeName, "uvec3")) typeName = halfPrec ? "ushort3" : "uint3";
+	else if (!strcmp(typeName, "uvec4")) typeName = halfPrec ? "ushort4" : "uint4";
 	// vectors
 	else if (!strcmp(typeName, "vec2"))
 		typeName = halfPrec ? "half2" : "float2";
@@ -495,7 +526,7 @@ static void print_type_precision(string_buffer& buffer, const glsl_type *t, glsl
 
 static void print_type(string_buffer& buffer, ir_instruction* ir, const glsl_type *t, bool arraySize)
 {
-	glsl_precision prec = precision_from_ir(ir);
+	unsigned prec = precision_from_ir(ir);
 	print_type_precision(buffer, t, prec, arraySize);
 }
 
@@ -508,63 +539,94 @@ static void print_type_post(string_buffer& buffer, const glsl_type *t, bool arra
 	}
 }
 
-static void get_metal_type_size(const glsl_type* type, glsl_precision prec, int& size, int& alignment)
+class metal_struct_declarations : public ir_hierarchical_visitor {
+public:
+	string_buffer& out;
+	std::unordered_set<const glsl_type*> emitted;
+	metal_struct_declarations(string_buffer& out) : out(out) {}
+	void emit(const glsl_type* type) {
+		type = type->without_array();
+		if (!type->is_struct() || !emitted.insert(type).second) return;
+		for (unsigned i = 0; i < type->length; ++i) emit(type->fields.structure[i].type);
+		out.asprintf_append("struct %s {\n", type->name);
+		for (unsigned i = 0; i < type->length; ++i) {
+			const glsl_struct_field& f = type->fields.structure[i];
+			out.asprintf_append("  "); print_type_precision(out, f.type, f.precision, false);
+			out.asprintf_append(" %s", f.name); print_type_post(out, f.type, false);
+			out.asprintf_append(";\n");
+		}
+		out.asprintf_append("};\n");
+	}
+	ir_visitor_status visit(ir_variable* v) override { emit(v->type); return visit_continue; }
+	ir_visitor_status visit(ir_constant* c) override { emit(c->type); return visit_continue; }
+	ir_visitor_status visit_enter(ir_function_signature* f) override { emit(f->return_type); return visit_continue; }
+};
+static void print_metal_structs(string_buffer& out, exec_list* ir)
 {
-	if (prec == glsl_precision_undefined)
-		prec = glsl_precision_high;
-	const bool half = (prec == glsl_precision_medium);
+	metal_struct_declarations visitor(out); visit_list_elements(&visitor, ir);
+}
 
-	const int asize = type->is_array() ? type->length : 1;
-	if (type->is_array())
-		type = type->element_type();
-
-	if (type->base_type == GLSL_TYPE_UINT || type->base_type == GLSL_TYPE_INT || type->base_type == GLSL_TYPE_FLOAT)
-	{
-		size = half ? 2 : 4;
+static void get_metal_type_size(const glsl_type* type, unsigned prec, int& size, int& alignment)
+{
+	if (type->is_array()) {
+		get_metal_type_size(type->fields.array, prec, size, alignment);
+		size = ((size + alignment - 1) & ~(alignment - 1)) * type->length;
+		return;
 	}
-	else if (type->base_type == GLSL_TYPE_BOOL)
-	{
-		size = 1;
+	if (type->is_struct()) {
+		size = 0; alignment = 1;
+		for (unsigned i = 0; i < type->length; ++i) {
+			int field_size, field_align;
+			get_metal_type_size(type->fields.structure[i].type, type->fields.structure[i].precision, field_size, field_align);
+			size = ((size + field_align - 1) & ~(field_align - 1)) + field_size;
+			alignment = MAX2(alignment, field_align);
+		}
+		size = (size + alignment - 1) & ~(alignment - 1);
+		return;
 	}
-	else
-	{
-		size = 0;
+	int scalar = type->is_boolean() ? 1 : prec == GLSL_PRECISION_MEDIUM ? 2 : 4;
+	int vector = type->vector_elements == 3 ? 4 : type->vector_elements;
+	alignment = scalar * vector;
+	size = alignment * type->matrix_columns;
+}
+
+void ir_print_metal_visitor::print_array_initializer(ir_constant* value, unsigned precision)
+{
+	if (value->type->is_array()) {
+		buffer.asprintf_append("{");
+		for (unsigned i = 0; i < value->type->length; ++i) {
+			if (i) buffer.asprintf_append(", ");
+			print_array_initializer(value->get_array_element(i), precision);
+		}
+		buffer.asprintf_append("}");
+	} else {
+		const bool cast = value->type->is_numeric();
+		if (cast) { print_type_precision(buffer, value->type, precision, true); buffer.asprintf_append("("); }
+		value->accept(this);
+		if (cast) buffer.asprintf_append(")");
 	}
-	alignment = MAX2(size,1);
-
-	int vsize = type->vector_elements;
-	// float3 etc in Metal has both sizeof and alignment same as float4
-	if (vsize == 3)
-		vsize = 4;
-
-	size *= vsize;
-	alignment *= vsize;
-
-	const int msize = type->matrix_columns;
-	size *= msize;
-
-	size *= asize;
 }
 
 void ir_print_metal_visitor::visit(ir_variable *ir)
 {
-	const char *const cent = (ir->data.centroid) ? "centroid " : "";
-	const char *const inv = (ir->data.invariant) ? "invariant " : "";
-	const char *const mode[ir_var_mode_count] = { "", "  ", "  ", "  ", "  ", "in ", "out ", "inout ", "", "", "" };
-
-	const char *const interp[] = { "", "smooth ", "flat ", "noperspective " };
+	const char* storage = (ir->data.mode == ir_var_function_out || ir->data.mode == ir_var_function_inout) ? "thread " : "";
 
 	// give an id to any variable defined in a function that is not an uniform
 	if ((this->mode == kPrintGlslNone && ir->data.mode != ir_var_uniform))
 	{
-		long id = (long)hash_table_find (globals->var_hash, ir);
+		long id = globals->var_hash[ir];
 		if (id == 0)
 		{
 			id = ++globals->var_counter;
-			hash_table_insert (globals->var_hash, (void*)id, ir);
+			globals->var_hash[ir] = id;
 		}
 	}
 	
+	if (loop_initializers && loop_initializers->omitted.count(ir)) {
+		skipped_this_ir = true;
+		return;
+	}
+
 	// auto/temp variables in global scope are postponed to main function
 	if (this->mode != kPrintGlslNone && (ir->data.mode == ir_var_auto || ir->data.mode == ir_var_temporary))
 	{
@@ -574,23 +636,15 @@ void ir_print_metal_visitor::visit(ir_variable *ir)
 		return;
 	}
 
-	// if this is a loop induction variable, do not print it
-	// (will be printed inside loop body)
-	if (!inside_loop_body)
-	{
-		loop_variable_state* inductor_state = loopstate->get_for_inductor(ir);
-		if (inductor_state && inductor_state->private_induction_variable_count == 1 &&
-			can_emit_canonical_for(inductor_state))
-		{
-			skipped_this_ir = true;
-			return;
-		}
-	}
-
-	buffer.asprintf_append ("%s%s%s%s",
-							cent, inv, interp[ir->data.interpolation], mode[ir->data.mode]);
-	print_type(buffer, ir, ir->type, false);
+	buffer.asprintf_append ("%s", storage);
+	if (!strcmp(ir->name, "gl_VertexID") || !strcmp(ir->name, "gl_InstanceID"))
+		buffer.asprintf_append("uint");
+	else if (!strcmp(ir->name, "gl_PointCoord"))
+		buffer.asprintf_append("float2");
+	else
+		print_type(buffer, ir, ir->type, false);
 	buffer.asprintf_append (" ");
+	if (ir->data.mode == ir_var_function_out || ir->data.mode == ir_var_function_inout) buffer.asprintf_append("&");
 	print_var_name (ir);
 	print_type_post(buffer, ir->type, false);
 
@@ -612,6 +666,22 @@ void ir_print_metal_visitor::visit(ir_variable *ir)
 	else if (!strcmp(ir->name, "gl_InstanceID"))
 		buffer.asprintf_append (" [[instance_id]]");
 
+	// Interpolation belongs to fragment inputs / vertex outputs, not attributes
+	// or render targets. Metal combines interpolation and sampling location.
+	const bool varying = (mode_whole == kPrintGlslFragment && ir->data.mode == ir_var_shader_in) ||
+		(mode_whole == kPrintGlslVertex && ir->data.mode == ir_var_shader_out);
+	if (varying && strncmp(ir->name, "gl_", 3) != 0) {
+		if (ir->data.interpolation == INTERP_MODE_FLAT)
+			buffer.asprintf_append(" [[flat]]");
+		else if (ir->data.centroid || ir->data.sample || ir->data.interpolation != INTERP_MODE_NONE)
+			buffer.asprintf_append(" [[%s_%s]]",
+				ir->data.sample ? "sample" : ir->data.centroid ? "centroid" : "center",
+				ir->data.interpolation == INTERP_MODE_NOPERSPECTIVE ? "no_perspective" : "perspective");
+	}
+	// Metal supports invariance on the position output only.
+	if (mode_whole == kPrintGlslVertex && !strcmp(ir->name, "gl_Position") && ir->data.invariant)
+		buffer.asprintf_append(" [[invariant]]");
+
 	// vertex shader input attribute?
 	if (this->mode_whole == kPrintGlslVertex && ir->data.mode == ir_var_shader_in)
 	{
@@ -622,7 +692,7 @@ void ir_print_metal_visitor::visit(ir_variable *ir)
 	}
 
 	// fragment shader output?
-	if (this->mode_whole == kPrintGlslFragment && (ir->data.mode == ir_var_shader_out || ir->data.mode == ir_var_shader_inout))
+	if (this->mode_whole == kPrintGlslFragment && ir->data.mode == ir_var_shader_out)
 	{
 		if (!ir->data.explicit_location)
 		{
@@ -653,7 +723,7 @@ void ir_print_metal_visitor::visit(ir_variable *ir)
 	if (ir->data.mode == ir_var_uniform && !ctx.writingParams)
 	{
 		int size, align;
-		get_metal_type_size(ir->type, (glsl_precision)ir->data.precision, size, align);
+		get_metal_type_size(ir->type, (unsigned)ir->data.precision, size, align);
 
 		int loc = ctx.uniformLocationCounter;
 		loc = (loc + align-1) & ~(align-1); // align it
@@ -668,16 +738,16 @@ void ir_print_metal_visitor::visit(ir_variable *ir)
 	if (ir->constant_value &&
 		ir->data.mode != ir_var_shader_in &&
 		ir->data.mode != ir_var_shader_out &&
-		ir->data.mode != ir_var_shader_inout &&
 		ir->data.mode != ir_var_function_in &&
 		ir->data.mode != ir_var_function_out &&
 		ir->data.mode != ir_var_function_inout)
 	{
 		buffer.asprintf_append (" = ");
-		visit (ir->constant_value);
+		if (ir->type->is_array()) print_array_initializer(ir->constant_value, ir->data.precision);
+		else visit (ir->constant_value);
 	}
 
-	if ((ir->data.mode == ir_var_auto || ir->data.mode == ir_var_temporary) && (ir->type->matrix_columns == 1)) {
+	if (!ir->constant_value && (ir->data.mode == ir_var_auto || ir->data.mode == ir_var_temporary) && !ir->type->is_array() && (ir->type->matrix_columns == 1)) {
 		switch (ir->type->base_type) {
 			case GLSL_TYPE_INT:
 			case GLSL_TYPE_FLOAT:
@@ -806,138 +876,115 @@ void ir_print_metal_visitor::visit(ir_function *ir)
 }
 
 
-static const char *const operator_glsl_strs[] = {
-	"~",
-	"!",
-	"-",
-	"abs",
-	"sign",
-	"1.0/",
-	"rsqrt",
-	"sqrt",
-	"normalize",
-	"exp",
-	"log",
-	"exp2",
-	"log2",
-	"int",		// f2i
-	"int",		// f2u
-	"float",	// i2f
-	"bool",		// f2b
-	"float",	// b2f
-	"bool",		// i2b
-	"int",		// b2i
-	"float",	// u2f
-	"int",		// i2u
-	"int",		// u2i
-	"as_type_",	// bit i2f
-	"as_type_",	// bit f2i
-	"as_type_",	// bit u2f
-	"as_type_",	// bit f2u
-	"any",
-	"trunc",
-	"ceil",
-	"floor",
-	"fract",
-	"rint",
-	"sin",
-	"cos",
-	"fast::sin", // reduced
-	"fast::cos", // reduced
-	"dfdx",
-	"dfdx", // coarse
-	"dfdx", // fine
-	"dfdy",
-	"dfdy", // coarse
-	"dfdy", // fine
-	"packSnorm2x16",
-	"packSnorm4x8",
-	"packUnorm2x16",
-	"packUnorm4x8",
-	"packHalf2x16",
-	"unpackSnorm2x16",
-	"unpackSnorm4x8",
-	"unpackUnorm2x16",
-	"unpackUnorm4x8",
-	"unpackHalf2x16",
-	"unpackHalf2x16_splitX_TODO",
-	"unpackHalf2x16_splitY_TODO",
-	"bitfieldReverse",
-	"bitCount",
-	"findMSB",
-	"findLSB",
-	"saturate",
-	"noise",
-	"interpolateAtCentroid_TODO",
-	"+",
-	"-",
-	"*",
-	"*_imul_high_TODO",
-	"/",
-	"carry_TODO",
-	"borrow_TODO",
-	"fmod",
-	"<",
-	">",
-	"<=",
-	">=",
-	"==",
-	"!=",
-	"==",
-	"!=",
-	"<<",
-	">>",
-	"&",
-	"^",
-	"|",
-	"&&",
-	"^^",
-	"||",
-	"dot",
-	"min",
-	"max",
-	"pow",
-	"packHalf2x16_split_TODO",
-	"bfm_TODO",
-	"uboloadTODO",
-	"ldexp_TODO",
-	"vectorExtract_TODO",
-	"interpolateAtOffset_TODO",
-	"interpolateAtSample_TODO",
-	"fma",
-	"clamp",
-	"mix",
-	"csel_TODO",
-	"bfi_TODO",
-	"bitfield_extract_TODO",
-	"vector_insert_TODO",
-	"bitfield_insert_TODO",
-	"vectorTODO",
-};
-
+static const char* metal_operator(ir_expression_operation op)
+{
+	switch (op) {
+	case ir_unop_bit_not: return "~";
+	case ir_unop_logic_not: return "!";
+	case ir_unop_neg: return "-";
+	case ir_unop_abs: return "abs";
+	case ir_unop_sign: return "sign";
+	case ir_unop_rcp: return "1.0/";
+	case ir_unop_rsq: return "rsqrt";
+	case ir_unop_sqrt: return "sqrt";
+	case ir_unop_normalize: return "normalize";
+	case ir_unop_exp: return "exp";
+	case ir_unop_log: return "log";
+	case ir_unop_exp2: return "exp2";
+	case ir_unop_log2: return "log2";
+	case ir_unop_f2i: return "int";
+	case ir_unop_f2u: return "int";
+	case ir_unop_i2f: return "float";
+	case ir_unop_f2b: return "bool";
+	case ir_unop_b2f: return "float";
+	case ir_unop_i2b: return "bool";
+	case ir_unop_b2i: return "int";
+	case ir_unop_u2f: return "float";
+	case ir_unop_i2u: return "int";
+	case ir_unop_u2i: return "int";
+	case ir_unop_bitcast_i2f: return "as_type_";
+	case ir_unop_bitcast_f2i: return "as_type_";
+	case ir_unop_bitcast_u2f: return "as_type_";
+	case ir_unop_bitcast_f2u: return "as_type_";
+	case ir_unop_trunc: return "trunc";
+	case ir_unop_ceil: return "ceil";
+	case ir_unop_floor: return "floor";
+	case ir_unop_fract: return "fract";
+	case ir_unop_round_even: return "rint";
+	case ir_unop_sin: return "sin";
+	case ir_unop_cos: return "cos";
+	case ir_unop_dFdx: return "dfdx";
+	case ir_unop_dFdx_coarse: return "dfdx";
+	case ir_unop_dFdx_fine: return "dfdx";
+	case ir_unop_dFdy: return "dfdy";
+	case ir_unop_dFdy_coarse: return "dfdy";
+	case ir_unop_dFdy_fine: return "dfdy";
+	case ir_unop_pack_snorm_2x16: return "packSnorm2x16";
+	case ir_unop_pack_snorm_4x8: return "packSnorm4x8";
+	case ir_unop_pack_unorm_2x16: return "packUnorm2x16";
+	case ir_unop_pack_unorm_4x8: return "packUnorm4x8";
+	case ir_unop_pack_half_2x16: return "packHalf2x16";
+	case ir_unop_unpack_snorm_2x16: return "unpackSnorm2x16";
+	case ir_unop_unpack_snorm_4x8: return "unpackSnorm4x8";
+	case ir_unop_unpack_unorm_2x16: return "unpackUnorm2x16";
+	case ir_unop_unpack_unorm_4x8: return "unpackUnorm4x8";
+	case ir_unop_unpack_half_2x16: return "unpackHalf2x16";
+	case ir_unop_bitfield_reverse: return "bitfieldReverse";
+	case ir_unop_bit_count: return "bitCount";
+	case ir_unop_find_msb: return "findMSB";
+	case ir_unop_find_lsb: return "findLSB";
+	case ir_unop_saturate: return "saturate";
+	case ir_binop_add: return "+";
+	case ir_binop_sub: return "-";
+	case ir_binop_mul: return "*";
+	case ir_binop_div: return "/";
+	case ir_binop_mod: return "fmod";
+	case ir_binop_less: return "<";
+	case ir_binop_gequal: return ">=";
+	case ir_binop_equal: return "==";
+	case ir_binop_nequal: return "!=";
+	case ir_binop_all_equal: return "==";
+	case ir_binop_any_nequal: return "!=";
+	case ir_binop_lshift: return "<<";
+	case ir_binop_rshift: return ">>";
+	case ir_binop_bit_and: return "&";
+	case ir_binop_bit_xor: return "^";
+	case ir_binop_bit_or: return "|";
+	case ir_binop_logic_and: return "&&";
+	case ir_binop_logic_xor: return "!=";
+	case ir_binop_logic_or: return "||";
+	case ir_binop_dot: return "dot";
+	case ir_binop_min: return "min";
+	case ir_binop_max: return "max";
+	case ir_binop_pow: return "pow";
+	case ir_triop_fma: return "fma";
+	case ir_triop_lrp: return "mix";
+	default: return ir_expression_operation_strings[op];
+	}
+}
 
 static bool is_binop_func_like(ir_expression_operation op, const glsl_type* type)
 {
-	if (op == ir_binop_mod ||
+	if ((op == ir_binop_mod && type->is_float()) ||
 		(op >= ir_binop_dot && op <= ir_binop_pow))
 		return true;
 	return false;
 }
 
 
-static bool is_different_precision(glsl_precision a, glsl_precision b)
+static bool is_different_precision(unsigned a, unsigned b)
 {
 	// Treat "undefined" as high precision
-	if (a == glsl_precision_undefined)
-		a = glsl_precision_high;
-	if (b == glsl_precision_undefined)
-		b = glsl_precision_high;
+	if (a == GLSL_PRECISION_NONE)
+		a = GLSL_PRECISION_HIGH;
+	if (b == GLSL_PRECISION_NONE)
+		b = GLSL_PRECISION_HIGH;
 
 	return a != b;
 }
 
 
-static void print_cast(string_buffer& buffer, glsl_precision prec, ir_rvalue* ir)
+static void print_cast(string_buffer& buffer, unsigned prec, ir_rvalue* ir)
 {
 	buffer.asprintf_append ("(");
 	print_type_precision(buffer, ir->type, prec, false);
@@ -950,14 +997,14 @@ void ir_print_metal_visitor::visit(ir_expression *ir)
 	++this->expression_depth;
 	newline_indent();
 
-	glsl_precision arg_prec = glsl_precision_undefined;
+	unsigned arg_prec = GLSL_PRECISION_NONE;
 	if (ir->operands[0])
 		arg_prec = higher_precision(arg_prec, ir->operands[0]->get_precision());
 	if (ir->operands[1])
 		arg_prec = higher_precision(arg_prec, ir->operands[1]->get_precision());
 	if (ir->operands[2])
 		arg_prec = higher_precision(arg_prec, ir->operands[2]->get_precision());
-	glsl_precision res_prec = ir->get_precision();
+	unsigned res_prec = ir->get_precision();
 
 	bool op0cast = ir->operands[0] && is_different_precision(arg_prec, ir->operands[0]->get_precision());
 	bool op1cast = ir->operands[1] && is_different_precision(arg_prec, ir->operands[1]->get_precision());
@@ -1014,16 +1061,17 @@ void ir_print_metal_visitor::visit(ir_expression *ir)
 	}
 	
 	
-	const bool rescast = is_different_precision(arg_prec, res_prec) && !ir->type->is_boolean();
+	const bool conversion = ir->operation >= ir_unop_f2i && ir->operation <= ir_unop_u2i;
+	const bool rescast = !conversion && is_different_precision(arg_prec, res_prec) && !ir->type->is_boolean();
 	if (rescast)
 	{
 		buffer.asprintf_append ("(");
 		print_cast (buffer, res_prec, ir);
 	}
 	
-	if (ir->get_num_operands() == 1)
+	if (ir->num_operands == 1)
 	{
-		if (op0cast)
+		if (op0cast && !conversion)
 			print_cast (buffer, arg_prec, ir->operands[0]);
 		if (ir->operation >= ir_unop_f2i && ir->operation <= ir_unop_u2i) {
 			print_type(buffer, ir, ir->type, true);
@@ -1033,10 +1081,10 @@ void ir_print_metal_visitor::visit(ir_expression *ir)
 			print_type(buffer, ir, ir->type, true);
 			buffer.asprintf_append(">(");
 		} else if (ir->operation == ir_unop_rcp) {
-			const bool halfCast = (arg_prec == glsl_precision_medium);
+			const bool halfCast = (arg_prec == GLSL_PRECISION_MEDIUM);
 			buffer.asprintf_append (halfCast ? "((half)1.0/(" : "(1.0/(");
 		} else {
-			buffer.asprintf_append ("%s(", operator_glsl_strs[ir->operation]);
+			buffer.asprintf_append ("%s(", metal_operator(ir->operation));
 		}
 		if (ir->operands[0])
 			ir->operands[0]->accept(this);
@@ -1044,6 +1092,31 @@ void ir_print_metal_visitor::visit(ir_expression *ir)
 		if (ir->operation == ir_unop_rcp) {
 			buffer.asprintf_append (")");
 		}
+	}
+	else if (ir->operation == ir_triop_csel) {
+		buffer.asprintf_append("select(");
+		if (op2cast) print_cast(buffer, arg_prec, ir->operands[2]);
+		ir->operands[2]->accept(this);
+		buffer.asprintf_append(", ");
+		if (op1cast) print_cast(buffer, arg_prec, ir->operands[1]);
+		ir->operands[1]->accept(this);
+		buffer.asprintf_append(", "); ir->operands[0]->accept(this); buffer.asprintf_append(")");
+	}
+	else if (ir->operands[0]->type->is_vector() &&
+		(ir->operation == ir_binop_all_equal || ir->operation == ir_binop_any_nequal)) {
+		buffer.asprintf_append(ir->operation == ir_binop_all_equal ? "all(" : "any(");
+		if (op0cast) print_cast(buffer, arg_prec, ir->operands[0]);
+		ir->operands[0]->accept(this);
+		buffer.asprintf_append(" %s ", metal_operator(ir->operation));
+		if (op1cast) print_cast(buffer, arg_prec, ir->operands[1]);
+		ir->operands[1]->accept(this); buffer.asprintf_append(")");
+	}
+	else if (ir->operation == ir_quadop_vector) {
+		print_type(buffer, ir, ir->type, true); buffer.asprintf_append("(");
+		for (unsigned i = 0; i < ir->type->vector_elements; ++i) {
+			if (i) buffer.asprintf_append(", "); ir->operands[i]->accept(this);
+		}
+		buffer.asprintf_append(")");
 	}
 	else if (ir->operation == ir_binop_vector_extract)
 	{
@@ -1065,7 +1138,7 @@ void ir_print_metal_visitor::visit(ir_expression *ir)
 			print_type(buffer, ir, ir->type, true);
 			buffer.asprintf_append ("(");
 		}
-		buffer.asprintf_append ("%s (", operator_glsl_strs[ir->operation]);
+		buffer.asprintf_append ("%s (", metal_operator(ir->operation));
 		
 		if (ir->operands[0])
 		{
@@ -1084,17 +1157,17 @@ void ir_print_metal_visitor::visit(ir_expression *ir)
 		if (ir->operation == ir_binop_mod)
             buffer.asprintf_append ("))");
 	}
-	else if (ir->get_num_operands() == 2 && ir->operation == ir_binop_div && op0matrix && !op1matrix)
+	else if (ir->num_operands == 2 && ir->operation == ir_binop_div && op0matrix && !op1matrix)
 	{
 		// "matrix/scalar" - Metal does not have it, so print multiply by inverse instead
 		buffer.asprintf_append ("(");
 		ir->operands[0]->accept(this);
-		const bool halfCast = (arg_prec == glsl_precision_medium);
+		const bool halfCast = (arg_prec == GLSL_PRECISION_MEDIUM);
 		buffer.asprintf_append (halfCast ? " * (1.0h/half(" : " * (1.0/(");
 		ir->operands[1]->accept(this);
 		buffer.asprintf_append (")))");
 	}
-	else if (ir->get_num_operands() == 2)
+	else if (ir->num_operands == 2)
 	{
 		// regular binary operator
 		buffer.asprintf_append ("(");
@@ -1118,7 +1191,7 @@ void ir_print_metal_visitor::visit(ir_expression *ir)
 			}
 		}
 
-		buffer.asprintf_append (" %s ", operator_glsl_strs[ir->operation]);
+		buffer.asprintf_append (" %s ", ir->operation == ir_binop_mod ? "%" : metal_operator(ir->operation));
 
 		if (ir->operands[1])
 		{
@@ -1144,7 +1217,7 @@ void ir_print_metal_visitor::visit(ir_expression *ir)
 	else
 	{
 		// ternary op
-		buffer.asprintf_append ("%s (", operator_glsl_strs[ir->operation]);
+		buffer.asprintf_append ("%s (", metal_operator(ir->operation));
 		if (ir->operands[0])
 		{
 			if (op0cast)
@@ -1178,79 +1251,37 @@ void ir_print_metal_visitor::visit(ir_expression *ir)
 	--this->expression_depth;
 }
 
-static int tex_sampler_dim_size[] = {
-	1, 2, 3, 3, 2, 2, 2,
-};
 
-
-static void print_texture_uv (ir_print_metal_visitor* vis, ir_texture* ir, bool is_shadow, bool is_proj, bool is_array, int uv_dim, int sampler_uv_dim)
+static void print_texture_uv(ir_print_metal_visitor* vis, ir_texture* ir, bool is_shadow, bool is_proj, bool is_array)
 {
-	if (!is_shadow)
-	{
-		if (!is_proj && !is_array)
-		{
-			// regular UV
-			vis->buffer.asprintf_append (sampler_uv_dim == 3 ? "(float3)(" : "(float2)(");
-			ir->coordinate->accept(vis);
-			vis->buffer.asprintf_append (")");
-		}
-		else if (is_array)
-		{
-			// array sample
-			vis->buffer.asprintf_append ("(float2)((");
-			ir->coordinate->accept(vis);
-			vis->buffer.asprintf_append (").xy), (uint)((");
-			ir->coordinate->accept(vis);
-			vis->buffer.asprintf_append (").z)");
-		}
-		else
-		{
-			// regular projected
-			vis->buffer.asprintf_append (sampler_uv_dim == 3 ? "((float3)(" : "((float2)(");
-			ir->coordinate->accept(vis);
-			vis->buffer.asprintf_append (sampler_uv_dim == 3 ? ").xyz / (float)(" : ").xy / (float)(");
-			ir->coordinate->accept(vis);
-			vis->buffer.asprintf_append (uv_dim == 4 ? ").w)" : ").z)");
-		}
+	const unsigned dim = ir->sampler->type->sampler_dimensionality;
+	const unsigned n = (dim == GLSL_SAMPLER_DIM_CUBE || dim == GLSL_SAMPLER_DIM_3D) ? 3 : 2;
+	vis->buffer.asprintf_append("(float%u)((", n);
+	ir->coordinate->accept(vis);
+	vis->buffer.asprintf_append(")");
+	if (is_array) vis->buffer.asprintf_append(n == 3 ? ".xyz" : ".xy");
+	vis->buffer.asprintf_append(")");
+	if (is_proj) { vis->buffer.asprintf_append(" / (float)("); ir->projector->accept(vis); vis->buffer.asprintf_append(")"); }
+	if (is_array) {
+		vis->buffer.asprintf_append(", uint(("); ir->coordinate->accept(vis);
+		vis->buffer.asprintf_append(n == 3 ? ").w)" : ").z)");
 	}
-	else if (is_shadow)
-	{
-		// Note that on metal sample_compare works differently than shadow2DEXT on GLES:
-		// it does not clamp neither the pixel value nor compare value to the [0.0, 1.0] range. To
-		// preserve same behavior we're clamping the argument explicitly.
-		if (!is_proj)
-		{
-			// regular shadow
-			vis->buffer.asprintf_append (uv_dim == 4 ? "(float3)(" : "(float2)(");
-			ir->coordinate->accept(vis);
-			vis->buffer.asprintf_append (uv_dim == 4 ? ").xyz, (" : ").xy, saturate((float)(");
-			ir->coordinate->accept(vis);
-			vis->buffer.asprintf_append (uv_dim == 4 ? ").w" : ").z)");
-		}
-		else
-		{
-			// projected shadow
-			vis->buffer.asprintf_append ("(float2)(");
-			ir->coordinate->accept(vis);
-			vis->buffer.asprintf_append (").xy / (float)(");
-			ir->coordinate->accept(vis);
-			vis->buffer.asprintf_append (").w, saturate((float)(");
-			ir->coordinate->accept(vis);
-			vis->buffer.asprintf_append (").z / (float)(");
-			ir->coordinate->accept(vis);
-			vis->buffer.asprintf_append (").w)");
-		}
+	if (is_shadow) {
+		vis->buffer.asprintf_append(", saturate((float)("); ir->shadow_comparator->accept(vis);
+		vis->buffer.asprintf_append(")");
+		if (is_proj) { vis->buffer.asprintf_append(" / (float)("); ir->projector->accept(vis); vis->buffer.asprintf_append(")"); }
+		vis->buffer.asprintf_append(")");
 	}
 }
 
 void ir_print_metal_visitor::visit(ir_texture *ir)
 {
-	const bool external = ir->sampler->type->sampler_dimensionality == GLSL_SAMPLER_DIM_EXTERNAL;
-	if (external && ir->op == ir_txf)
+	if (ir->op == ir_txf)
 	{
 		ir->sampler->accept(this);
-		buffer.asprintf_append (".read(uint2(");
+		buffer.asprintf_append (ir->sampler->type->sampler_dimensionality == GLSL_SAMPLER_DIM_3D ? ".read(uint3(" : ".read(uint2(");
 		ir->coordinate->accept(this);
+		if (ir->offset) { buffer.asprintf_append(" + "); ir->offset->accept(this); }
 		buffer.asprintf_append ("), uint(");
 		ir->lod_info.lod->accept(this);
 		buffer.asprintf_append ("))");
@@ -1258,8 +1289,7 @@ void ir_print_metal_visitor::visit(ir_texture *ir)
 	}
 	if (ir->op == ir_txs)
 	{
-		if (external)
-			buffer.asprintf_append ("int2(");
+		buffer.asprintf_append (ir->type->vector_elements == 3 ? "int3(" : "int2(");
 		ir->sampler->accept(this);
 		buffer.asprintf_append (".get_width(");
 		ir->lod_info.lod->accept(this);
@@ -1268,20 +1298,20 @@ void ir_print_metal_visitor::visit(ir_texture *ir)
 		buffer.asprintf_append (".get_height(");
 		ir->lod_info.lod->accept(this);
 		buffer.asprintf_append (")");
-		if (external)
-			buffer.asprintf_append (")");
+		if (ir->type->vector_elements == 3) {
+			buffer.asprintf_append(", "); ir->sampler->accept(this);
+			buffer.asprintf_append(ir->sampler->type->sampler_array ? ".get_array_size()" : ".get_depth()");
+		}
+		buffer.asprintf_append (")");
 		return;
 	}
 	glsl_sampler_dim sampler_dim = (glsl_sampler_dim)ir->sampler->type->sampler_dimensionality;
 	const bool is_shadow = ir->sampler->type->sampler_shadow;
 	const bool is_array = ir->sampler->type->sampler_array;
-	const glsl_type* uv_type = ir->coordinate->type;
-	const int uv_dim = uv_type->vector_elements;
-	int sampler_uv_dim = tex_sampler_dim_size[sampler_dim];
-	if (is_shadow)
-		sampler_uv_dim += 1;
-	const bool is_proj = (uv_dim > sampler_uv_dim) && !is_array;
+	const bool is_proj = ir->projector != nullptr;
 	
+	const bool halfShadow = is_shadow && ir->get_precision() == GLSL_PRECISION_MEDIUM;
+	if (halfShadow) buffer.asprintf_append("half(");
 	// texture name & call to sample
 	ir->sampler->accept(this);
 	if (is_shadow)
@@ -1302,7 +1332,7 @@ void ir_print_metal_visitor::visit(ir_texture *ir)
 	buffer.asprintf_append (", ");
 
 	// texture coordinate
-	print_texture_uv (this, ir, is_shadow, is_proj, is_array, uv_dim, sampler_uv_dim);
+	print_texture_uv (this, ir, is_shadow, is_proj, is_array);
 
 	// lod bias
 	if (ir->op == ir_txb)
@@ -1325,12 +1355,14 @@ void ir_print_metal_visitor::visit(ir_texture *ir)
 	{
 		if (sampler_dim == GLSL_SAMPLER_DIM_CUBE)
 			buffer.asprintf_append (", gradientcube((float3)(");
+		else if (sampler_dim == GLSL_SAMPLER_DIM_3D)
+			buffer.asprintf_append (", gradient3d((float3)(");
 		else
 			buffer.asprintf_append (", gradient2d((float2)(");
 
 		ir->lod_info.grad.dPdx->accept(this);
 
-		if (sampler_dim == GLSL_SAMPLER_DIM_CUBE)
+		if (sampler_dim == GLSL_SAMPLER_DIM_CUBE || sampler_dim == GLSL_SAMPLER_DIM_3D)
 			buffer.asprintf_append ("), (float3)(");
 		else
 			buffer.asprintf_append ("), (float2)(");
@@ -1339,12 +1371,10 @@ void ir_print_metal_visitor::visit(ir_texture *ir)
 		buffer.asprintf_append ("))");
 	}
 	
-	//@TODO: texelFetch
-	//@TODO: projected
-	//@TODO: shadowmaps
-	//@TODO: pixel offsets
+	if (ir->offset) { buffer.asprintf_append(", "); ir->offset->accept(this); }
 
 	buffer.asprintf_append (")");
+	if (halfShadow) buffer.asprintf_append(")");
 }
 
 
@@ -1387,19 +1417,24 @@ static void print_var_inout (string_buffer& buf, ir_variable* var, bool insideLH
 {
 	if (var->data.mode == ir_var_shader_in)
 		buf.asprintf_append ("_mtl_i.");
-	if (var->data.mode == ir_var_shader_out)
+	if (var->data.mode == ir_var_shader_out && !var->data.fb_fetch_output)
 		buf.asprintf_append ("_mtl_o.");
-	if (var->data.mode == ir_var_uniform && !var->type->is_sampler())
+	if (var->data.mode == ir_var_uniform && !var->type->without_array()->is_sampler())
 		buf.asprintf_append ("_mtl_u.");
-	if (var->data.mode == ir_var_shader_inout)
+	if (var->data.mode == ir_var_shader_out && var->data.fb_fetch_output)
 		buf.asprintf_append (insideLHS ? "_mtl_o." : "_mtl_i.");
 }
 
 void ir_print_metal_visitor::visit(ir_dereference_variable *ir)
 {
 	ir_variable *var = ir->variable_referenced();
+	const bool signedID = !strcmp(var->name, "gl_VertexID") || !strcmp(var->name, "gl_InstanceID");
+	const bool halfCoord = !strcmp(var->name, "gl_PointCoord") && var->data.precision == GLSL_PRECISION_MEDIUM;
+	if (signedID) buffer.asprintf_append("int(");
+	if (halfCoord) buffer.asprintf_append("half2(");
 	print_var_inout(buffer, var, this->inside_lhs);
 	print_var_name (var);
+	if (signedID || halfCoord) buffer.asprintf_append(")");
 }
 
 
@@ -1415,7 +1450,7 @@ void ir_print_metal_visitor::visit(ir_dereference_array *ir)
 void ir_print_metal_visitor::visit(ir_dereference_record *ir)
 {
    ir->record->accept(this);
-   buffer.asprintf_append (".%s", ir->field);
+   buffer.asprintf_append (".%s", ir->record->type->fields.structure[ir->field_idx].name);
 }
 
 
@@ -1423,6 +1458,17 @@ void ir_print_metal_visitor::visit(ir_dereference_record *ir)
 
 void ir_print_metal_visitor::emit_assignment_part (ir_dereference* lhs, ir_rvalue* rhs, unsigned write_mask, ir_rvalue* dstIndex)
 {
+	// Metal arrays are not assignable; copy elements, retaining precision casts.
+	if (lhs->type->is_array()) {
+		void* mem_ctx = ralloc_parent(lhs);
+		for (unsigned i = 0; i < lhs->type->length; ++i) {
+			if (i) { buffer.asprintf_append(";\n"); indent(); }
+			auto* dst = new(mem_ctx) ir_dereference_array(lhs, new(mem_ctx) ir_constant(i));
+			auto* src = new(mem_ctx) ir_dereference_array(rhs, new(mem_ctx) ir_constant(i));
+			emit_assignment_part(dst, src, (1u << dst->type->vector_elements) - 1, nullptr);
+		}
+		return;
+	}
 	const bool prev_lhs_flag = this->inside_lhs;
 	this->inside_lhs = true;
 
@@ -1580,23 +1626,10 @@ static bool try_print_increment (ir_print_metal_visitor* vis, ir_assignment* ir)
 
 void ir_print_metal_visitor::visit(ir_assignment *ir)
 {
-	// if this is a loop induction variable initial assignment, and we aren't inside loop body:
-	// do not print it (will be printed when inside loop body)
-	if (!inside_loop_body)
-	{
-		ir_variable* whole_var = ir->whole_variable_written();
-		if (!ir->condition && whole_var)
-		{
-			loop_variable_state* inductor_state = loopstate->get_for_inductor(whole_var);
-			if (inductor_state && inductor_state->private_induction_variable_count == 1 &&
-				can_emit_canonical_for(inductor_state))
-			{
-				skipped_this_ir = true;
-				return;
-			}
-		}
+	if (loop_initializers && loop_initializers->omitted.count(ir)) {
+		skipped_this_ir = true;
+		return;
 	}
-
 	// assignments in global scope are postponed to main function
 	if (this->mode != kPrintGlslNone)
 	{
@@ -1651,13 +1684,13 @@ void ir_print_metal_visitor::visit(ir_constant *ir)
 	const glsl_type* type = ir->type;
 
 	// hoist array & struct constants into global scope
-	if (type->is_array() || type->is_record())
+	if (type->is_array() || type->is_struct())
 	{
-		size_t id = (size_t)hash_table_find(globals->const_hash, ir);
+		size_t id = globals->const_hash[ir];
 		if (id == 0)
 		{
 			id = ++globals->const_counter;
-			hash_table_insert (globals->const_hash, (void*)id, ir);
+			globals->const_hash[ir] = id;
 			globals->global_constants.push_tail(new(globals->mem_ctx) gconst_entry_metal(ir,id));
 		}
 		buffer.asprintf_append("_xlat_mtl_const%i", (int)id);
@@ -1687,7 +1720,7 @@ void ir_print_metal_visitor::visit(ir_constant *ir)
 
 	// should be dealt with above
 	assert(!ir->type->is_array());
-	assert(!ir->type->is_record());
+	assert(!ir->type->is_struct());
 	bool first = true;
 
 	// Metal needs matrices to be constructed from vectors, not from a bunch of scalars.
@@ -1702,13 +1735,13 @@ void ir_print_metal_visitor::visit(ir_constant *ir)
 	{
 		if (!first)
 		{
-			if (mtx && (i % ir->type->matrix_columns == 0))
+			if (mtx && (i % ir->type->vector_elements == 0))
 				buffer.asprintf_append (")");
 			buffer.asprintf_append (", ");
 		}
 		first = false;
 
-		if (mtx && (i % ir->type->matrix_columns == 0))
+		if (mtx && (i % ir->type->vector_elements == 0))
 		{
 			print_type(buffer, ir, vec_type, true);
 			buffer.asprintf_append ("(");
@@ -1774,12 +1807,12 @@ ir_print_metal_visitor::visit(ir_return *ir)
 void
 ir_print_metal_visitor::visit(ir_discard *ir)
 {
-   buffer.asprintf_append ("discard_fragment()");
-
-   if (ir->condition != NULL) {
-      buffer.asprintf_append (" TODO ");
+   if (ir->condition) {
+      buffer.asprintf_append("if (");
       ir->condition->accept(this);
+      buffer.asprintf_append(") ");
    }
+   buffer.asprintf_append("discard_fragment()");
 }
 
 
@@ -1820,67 +1853,31 @@ ir_print_metal_visitor::visit(ir_if *ir)
 }
 
 
-bool ir_print_metal_visitor::can_emit_canonical_for (loop_variable_state *ls)
-{
-	if (ls == NULL)
-		return false;
-
-	if (ls->induction_variables.is_empty())
-		return false;
-
-	if (ls->terminators.is_empty())
-		return false;
-
-	// only support for loops with one terminator condition
-	int terminatorCount = ls->terminators.length();
-	if (terminatorCount != 1)
-		return false;
-
-	return true;
-}
-
 bool ir_print_metal_visitor::emit_canonical_for (ir_loop* ir)
 {
 	loop_variable_state* const ls = this->loopstate->get(ir);
 
-	if (!can_emit_canonical_for(ls))
-		return false;
+	if (!printable_for_loop(ir, ls)) return false;
+
+	std::unordered_set<ir_instruction*> terminator_hash;
+	std::unordered_set<ir_instruction*> induction_hash;
 	
-	hash_table* terminator_hash = hash_table_ctor(0, hash_table_pointer_hash, hash_table_pointer_compare);
-	hash_table* induction_hash = hash_table_ctor(0, hash_table_pointer_hash, hash_table_pointer_compare);
-
 	buffer.asprintf_append("for (");
-	inside_loop_body = true;
-
-	// emit loop induction variable declarations.
-	// only for loops with single induction variable, to avoid cases of different types of them
-	if (ls->private_induction_variable_count == 1)
-	{
-		foreach_in_list(loop_variable, indvar, &ls->induction_variables)
-		{
-			if (!this->loopstate->get_for_inductor(indvar->var))
-				continue;
-
-			ir_variable* var = indvar->var;
-			print_type(buffer, var, var->type, false);
-			buffer.asprintf_append (" ");
-			print_var_inout(buffer, var, true);
-			print_var_name (var);
-			print_type_post(buffer, var->type, false);
-			if (indvar->initial_value)
-			{
-				buffer.asprintf_append (" = ");
-				indvar->initial_value->accept(this);
-			}
-		}
+	
+	const auto init = loop_initializers->initializers.find(ir);
+	if (init != loop_initializers->initializers.end()) {
+		ir_variable* var = init->second->whole_variable_written();
+		print_type(buffer, var, var->type, false);
+		buffer.asprintf_append(" ");
+		emit_assignment_part(init->second->lhs, init->second->rhs, init->second->write_mask, nullptr);
 	}
 	buffer.asprintf_append("; ");
-
+	
 	// emit loop terminating conditions
 	foreach_in_list(loop_terminator, term, &ls->terminators)
 	{
-		hash_table_insert(terminator_hash, term, term->ir);
-
+		terminator_hash.insert(term->ir);
+		
 		// IR has conditions in the form of "if (x) break",
 		// whereas for loop needs them negated, in the form
 		// if "while (x) continue the loop".
@@ -1894,8 +1891,6 @@ bool ir_print_metal_visitor::emit_canonical_for (ir_loop* ir)
 			switch (term_expr->operation)
 			{
 				case ir_binop_less: termOp = ">="; break;
-				case ir_binop_greater: termOp = "<="; break;
-				case ir_binop_lequal: termOp = ">"; break;
 				case ir_binop_gequal: termOp = "<"; break;
 				case ir_binop_equal: termOp = "!="; break;
 				case ir_binop_nequal: termOp = "=="; break;
@@ -1908,7 +1903,7 @@ bool ir_print_metal_visitor::emit_canonical_for (ir_loop* ir)
 				term_expr->operands[1]->accept(this);
 				handled = true;
 			}
-
+			
 			// Unary logic not
 			if (!handled && term_expr->operation == ir_unop_logic_not)
 			{
@@ -1916,7 +1911,7 @@ bool ir_print_metal_visitor::emit_canonical_for (ir_loop* ir)
 				handled = true;
 			}
 		}
-
+		
 		// More complex condition, print as "!(x)"
 		if (!handled)
 		{
@@ -1926,43 +1921,44 @@ bool ir_print_metal_visitor::emit_canonical_for (ir_loop* ir)
 		}
 	}
 	buffer.asprintf_append("; ");
-
+	
 	// emit loop induction variable updates
 	bool first = true;
 	foreach_in_list(loop_variable, indvar, &ls->induction_variables)
 	{
-		hash_table_insert(induction_hash, indvar, indvar->first_assignment);
+		if (indvar != printed_for_induction(ir, ls)) continue;
+		induction_hash.insert(indvar->first_assignment);
 		if (!first)
 			buffer.asprintf_append(", ");
 		visit(indvar->first_assignment);
 		first = false;
 	}
 	buffer.asprintf_append(") {\n");
-
-	inside_loop_body = false;
-
+	
+	
 	// emit loop body
 	indentation++; previous_skipped = false;
 	foreach_in_list(ir_instruction, inst, &ir->body_instructions) {
+
 		// skip termination & induction statements,
 		// they are part of "for" clause
-		if (hash_table_find(terminator_hash, inst))
+		if (terminator_hash.count(inst))
 			continue;
-		if (hash_table_find(induction_hash, inst))
+		if (induction_hash.count(inst))
 			continue;
-
+		
 		indent();
 		inst->accept(this);
 		end_statement_line();
 	}
 	indentation--;
-
+	
 	indent();
 	buffer.asprintf_append("}");
+	
 
-	hash_table_dtor (terminator_hash);
-	hash_table_dtor (induction_hash);
 
+	
 	return true;
 }
 
@@ -1990,29 +1986,6 @@ void
 ir_print_metal_visitor::visit(ir_loop_jump *ir)
 {
    buffer.asprintf_append ("%s", ir->is_break() ? "break" : "continue");
-}
-
-void
-ir_print_metal_visitor::visit(ir_precision_statement *ir)
-{
-}
-
-void
-ir_print_metal_visitor::visit(ir_typedecl_statement *ir)
-{
-	const glsl_type *const s = ir->type_decl;
-	buffer.asprintf_append ("struct %s {\n", s->name);
-
-	for (unsigned j = 0; j < s->length; j++) {
-		buffer.asprintf_append ("  ");
-		//if (state->es_shader)
-		//	buffer.asprintf_append ("%s", get_precision_string(s->fields.structure[j].precision)); //@TODO
-		print_type_precision(buffer, s->fields.structure[j].type, s->fields.structure[j].precision, false);
-		buffer.asprintf_append (" %s", s->fields.structure[j].name);
-		print_type_post(buffer, s->fields.structure[j].type, false);
-		buffer.asprintf_append (";\n");
-	}
-	buffer.asprintf_append ("}");
 }
 
 void

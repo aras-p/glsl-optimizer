@@ -9,18 +9,18 @@ varying vec4 xlv_FOG;
 void main ()
 {
   vec3 binormal_1;
-  vec4 tmpvar_2;
-  vec4 pos_3;
-  pos_3 = (gl_ModelViewProjectionMatrix * gl_Vertex);
-  tmpvar_2.xy = ((gl_MultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
-  tmpvar_2.zw = ((gl_MultiTexCoord0.xy * _BumpMap_ST.xy) + _BumpMap_ST.zw);
+  vec4 o_hip_pack0_2;
+  vec4 tmpvar_3;
+  tmpvar_3 = (gl_ModelViewProjectionMatrix * gl_Vertex);
+  o_hip_pack0_2.xy = ((gl_MultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
+  o_hip_pack0_2.zw = ((gl_MultiTexCoord0.xy * _BumpMap_ST.xy) + _BumpMap_ST.zw);
   vec4 o_4;
-  o_4 = (pos_3 * 0.5);
+  o_4 = (tmpvar_3 * 0.5);
   vec2 tmpvar_5;
   tmpvar_5.x = o_4.x;
   tmpvar_5.y = (o_4.y * _ProjectionParams.x);
   o_4.xy = (tmpvar_5 + o_4.w);
-  o_4.zw = pos_3.zw;
+  o_4.zw = tmpvar_3.zw;
   binormal_1 = (((gl_Normal.yzx * TANGENT.zxy) - (gl_Normal.zxy * TANGENT.yzx)) * TANGENT.w);
   mat3 tmpvar_6;
   tmpvar_6[0].x = TANGENT.x;
@@ -35,12 +35,12 @@ void main ()
   vec4 tmpvar_7;
   tmpvar_7.w = 1.0;
   tmpvar_7.xyz = _WorldSpaceCameraPos;
-  gl_Position = pos_3;
+  gl_Position = tmpvar_3;
   vec4 tmpvar_8;
   tmpvar_8.yzw = vec3(0.0, 0.0, 0.0);
-  tmpvar_8.x = pos_3.z;
+  tmpvar_8.x = tmpvar_3.z;
   xlv_FOG = tmpvar_8;
-  gl_TexCoord[0] = tmpvar_2;
+  gl_TexCoord[0] = o_hip_pack0_2;
   vec4 tmpvar_9;
   tmpvar_9.w = 0.0;
   tmpvar_9.xyz = (tmpvar_6 * ((
@@ -53,8 +53,8 @@ void main ()
 
 // stats: 19 alu 0 tex 0 flow
 // inputs: 4
-//  #0: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 8
-//  #1: gl_Normal (high float) 3x1 [-1] loc 2
+//  #0: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 7
+//  #1: gl_Normal (high float) 3x1 [-1] loc 1
 //  #2: gl_Vertex (high float) 4x1 [-1] loc 0
 //  #3: TANGENT (high float) 4x1 [-1]
 // uniforms: 7 (total size: 0)

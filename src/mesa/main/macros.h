@@ -31,7 +31,12 @@
 #ifndef MACROS_H
 #define MACROS_H
 
-#include "imports.h"
+#include "util/macros.h"
+#include "util/u_math.h"
+#include "util/rounding.h"
+#include "util/compiler.h"
+#include "main/glheader.h"
+#include "mesa_private.h"
 
 
 /**
@@ -105,6 +110,10 @@ extern GLfloat _mesa_ubyte_to_float_color_tab[256];
 /* a close approximation: */
 #define FLOAT_TO_INT(X)     ( (GLint) (2147483647.0 * (X)) )
 
+/** Convert GLfloat in [-1.0,1.0] to GLint64 in [-(1<<63),(1 << 63) -1] */
+#define FLOAT_TO_INT64(X)     ( (GLint64) (9223372036854775807.0 * (double)(X)) )
+
+
 /** Convert GLint in [-2147483648,2147483647] to GLfloat in [-1.0,1.0], texture/fb data */
 #define INT_TO_FLOAT_TEX(I)    ((I) == -2147483648 ? -1.0F : (I) * (1.0F/2147483647.0))
 
@@ -125,12 +134,12 @@ extern GLfloat _mesa_ubyte_to_float_color_tab[256];
 #define INT_TO_USHORT(i)   ((i) < 0 ? 0 : ((GLushort) ((i) >> 15)))
 #define UINT_TO_USHORT(i)  ((i) < 0 ? 0 : ((GLushort) ((i) >> 16)))
 #define UNCLAMPED_FLOAT_TO_USHORT(us, f)  \
-        us = ( (GLushort) F_TO_I( CLAMP((f), 0.0F, 1.0F) * 65535.0F) )
+        us = ( (GLushort) _mesa_lroundevenf( CLAMP((f), 0.0F, 1.0F) * 65535.0F) )
 #define CLAMPED_FLOAT_TO_USHORT(us, f)  \
-        us = ( (GLushort) F_TO_I( (f) * 65535.0F) )
+        us = ( (GLushort) _mesa_lroundevenf( (f) * 65535.0F) )
 
 #define UNCLAMPED_FLOAT_TO_SHORT(s, f)  \
-        s = ( (GLshort) F_TO_I( CLAMP((f), -1.0F, 1.0F) * 32767.0F) )
+        s = ( (GLshort) _mesa_lroundevenf( CLAMP((f), -1.0F, 1.0F) * 32767.0F) )
 
 /***
  *** UNCLAMPED_FLOAT_TO_UBYTE: clamp float to [0,1] and map to ubyte in [0,255]
@@ -161,31 +170,55 @@ extern GLfloat _mesa_ubyte_to_float_color_tab[256];
         } while (0)
 #else
 #define UNCLAMPED_FLOAT_TO_UBYTE(ub, f) \
-	ub = ((GLubyte) F_TO_I(CLAMP((f), 0.0F, 1.0F) * 255.0F))
+	ub = ((GLubyte) _mesa_lroundevenf(CLAMP((f), 0.0F, 1.0F) * 255.0F))
 #define CLAMPED_FLOAT_TO_UBYTE(ub, f) \
-	ub = ((GLubyte) F_TO_I((f) * 255.0F))
+	ub = ((GLubyte) _mesa_lroundevenf((f) * 255.0F))
 #endif
 
-static inline GLfloat INT_AS_FLT(GLint i)
-{
-   fi_type tmp;
-   tmp.i = i;
-   return tmp.f;
-}
-
-static inline GLfloat UINT_AS_FLT(GLuint u)
+static fi_type UINT_AS_UNION(GLuint u)
 {
    fi_type tmp;
    tmp.u = u;
-   return tmp.f;
+   return tmp;
 }
 
-static inline unsigned FLT_AS_UINT(float f)
+static inline fi_type INT_AS_UNION(GLint i)
+{
+   fi_type tmp;
+   tmp.i = i;
+   return tmp;
+}
+
+static inline fi_type FLOAT_AS_UNION(GLfloat f)
 {
    fi_type tmp;
    tmp.f = f;
-   return tmp.u;
+   return tmp;
 }
+
+static inline uint64_t DOUBLE_AS_UINT64(double d)
+{
+   union {
+      double d;
+      uint64_t u64;
+   } tmp;
+   tmp.d = d;
+   return tmp.u64;
+}
+
+static inline double UINT64_AS_DOUBLE(uint64_t u)
+{
+   union {
+      double d;
+      uint64_t u64;
+   } tmp;
+   tmp.u64 = u;
+   return tmp.d;
+}
+
+/* First sign-extend x, then return uint32_t. */
+#define INT_AS_UINT(x) ((uint32_t)((int32_t)(x)))
+#define FLOAT_AS_UINT(x) (FLOAT_AS_UNION(x).u)
 
 /**
  * Convert a floating point value to an unsigned fixed point value.
@@ -270,23 +303,15 @@ COPY_4UBV(GLubyte dst[4], const GLubyte src[4])
 #endif
 }
 
-/** Copy a 4-element float vector */
-static inline void
-COPY_4FV(GLfloat dst[4], const GLfloat src[4])
-{
-   /* memcpy seems to be most efficient */
-   memcpy(dst, src, sizeof(GLfloat) * 4);
-}
-
 /** Copy \p SZ elements into a 4-element vector */
-#define COPY_SZ_4V(DST, SZ, SRC)  \
-do {                              \
-   switch (SZ) {                  \
-   case 4: (DST)[3] = (SRC)[3];   \
-   case 3: (DST)[2] = (SRC)[2];   \
-   case 2: (DST)[1] = (SRC)[1];   \
-   case 1: (DST)[0] = (SRC)[0];   \
-   }                              \
+#define COPY_SZ_4V(DST, SZ, SRC)                  \
+do {                                              \
+   switch (SZ) {                                  \
+   case 4: (DST)[3] = (SRC)[3]; /* fallthrough */ \
+   case 3: (DST)[2] = (SRC)[2]; /* fallthrough */ \
+   case 2: (DST)[1] = (SRC)[1]; /* fallthrough */ \
+   case 1: (DST)[0] = (SRC)[0]; /* fallthrough */ \
+   }                                              \
 } while(0)
 
 /** Copy \p SZ elements into a homegeneous (4-element) vector, giving
@@ -368,15 +393,6 @@ do {                                   \
       (DST)[2] *= S;                   \
       (DST)[3] *= S;                   \
 } while (0)
-
-/** Assignment */
-#define ASSIGN_4V( V, V0, V1, V2, V3 )  \
-do {                                    \
-    V[0] = V0;                          \
-    V[1] = V1;                          \
-    V[2] = V2;                          \
-    V[3] = V3;                          \
-} while(0)
 
 /*@}*/
 
@@ -616,24 +632,26 @@ do {				\
  * The default values are chosen based on \p type.
  */
 static inline void
-COPY_CLEAN_4V_TYPE_AS_FLOAT(GLfloat dst[4], int sz, const GLfloat src[4],
+COPY_CLEAN_4V_TYPE_AS_UNION(fi_type dst[4], int sz, const fi_type src[4],
                             GLenum type)
 {
    switch (type) {
    case GL_FLOAT:
-      ASSIGN_4V(dst, 0, 0, 0, 1);
+      ASSIGN_4V(dst, FLOAT_AS_UNION(0), FLOAT_AS_UNION(0),
+                FLOAT_AS_UNION(0), FLOAT_AS_UNION(1));
       break;
    case GL_INT:
-      ASSIGN_4V(dst, INT_AS_FLT(0), INT_AS_FLT(0),
-                     INT_AS_FLT(0), INT_AS_FLT(1));
+      ASSIGN_4V(dst, INT_AS_UNION(0), INT_AS_UNION(0),
+                INT_AS_UNION(0), INT_AS_UNION(1));
       break;
    case GL_UNSIGNED_INT:
-      ASSIGN_4V(dst, UINT_AS_FLT(0), UINT_AS_FLT(0),
-                     UINT_AS_FLT(0), UINT_AS_FLT(1));
+      ASSIGN_4V(dst, UINT_AS_UNION(0), UINT_AS_UNION(0),
+                UINT_AS_UNION(0), UINT_AS_UNION(1));
       break;
    default:
-      ASSIGN_4V(dst, 0.0f, 0.0f, 0.0f, 1.0f); /* silence warnings */
-      ASSERT(!"Unexpected type in COPY_CLEAN_4V_TYPE_AS_FLOAT macro");
+      ASSIGN_4V(dst, FLOAT_AS_UNION(0), FLOAT_AS_UNION(0),
+                FLOAT_AS_UNION(0), FLOAT_AS_UNION(1)); /* silence warnings */
+      assert(!"Unexpected type in COPY_CLEAN_4V_TYPE_AS_UNION macro");
    }
    COPY_SZ_4V(dst, sz, src);
 }
@@ -668,61 +686,11 @@ INTERP_4F(GLfloat t, GLfloat dst[4], const GLfloat out[4], const GLfloat in[4])
 
 
 
-/** Clamp X to [MIN,MAX] */
-#define CLAMP( X, MIN, MAX )  ( (X)<(MIN) ? (MIN) : ((X)>(MAX) ? (MAX) : (X)) )
-
-/** Minimum of two values: */
-#define MIN2( A, B )   ( (A)<(B) ? (A) : (B) )
-
-/** Maximum of two values: */
-#define MAX2( A, B )   ( (A)>(B) ? (A) : (B) )
-
-/** Minimum and maximum of three values: */
-#define MIN3( A, B, C ) ((A) < (B) ? MIN2(A, C) : MIN2(B, C))
-#define MAX3( A, B, C ) ((A) > (B) ? MAX2(A, C) : MAX2(B, C))
-
 static inline unsigned
 minify(unsigned value, unsigned levels)
 {
     return MAX2(1, value >> levels);
 }
-
-/**
- * Return true if the given value is a power of two.
- *
- * Note that this considers 0 a power of two.
- */
-static inline bool
-is_power_of_two(unsigned value)
-{
-   return (value & (value - 1)) == 0;
-}
-
-/**
- * Align a value up to an alignment value
- *
- * If \c value is not already aligned to the requested alignment value, it
- * will be rounded up.
- *
- * \param value  Value to be rounded
- * \param alignment  Alignment value to be used.  This must be a power of two.
- *
- * \sa ROUND_DOWN_TO()
- */
-#define ALIGN(value, alignment)  (((value) + (alignment) - 1) & ~((alignment) - 1))
-
-/**
- * Align a value down to an alignment value
- *
- * If \c value is not already aligned to the requested alignment value, it
- * will be rounded down.
- *
- * \param value  Value to be rounded
- * \param alignment  Alignment value to be used.  This must be a power of two.
- *
- * \sa ALIGN()
- */
-#define ROUND_DOWN_TO(value, alignment) ((value) & ~(alignment - 1))
 
 
 /** Cross product of two 3-element vectors */
@@ -787,7 +755,7 @@ NORMALIZE_3FV(GLfloat v[3])
 {
    GLfloat len = (GLfloat) LEN_SQUARED_3FV(v);
    if (len) {
-      len = INV_SQRTF(len);
+      len = 1.0f / sqrtf(len);
       v[0] *= len;
       v[1] *= len;
       v[2] *= len;
@@ -799,12 +767,15 @@ NORMALIZE_3FV(GLfloat v[3])
 static inline GLboolean
 DIFFERENT_SIGNS(GLfloat x, GLfloat y)
 {
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable : 6334 ) /* sizeof operator applied to an expression with an operator may yield unexpected results */
+#endif
    return signbit(x) != signbit(y);
+#ifdef _MSC_VER
+#pragma warning( pop )
+#endif
 }
-
-
-/** Compute ceiling of integer quotient of A divided by B. */
-#define CEILING( A, B )  ( (A) % (B) == 0 ? (A)/(B) : (A)/(B)+1 )
 
 
 /** casts to silence warnings with some compilers */
@@ -813,12 +784,17 @@ DIFFERENT_SIGNS(GLfloat x, GLfloat y)
 #define ENUM_TO_DOUBLE(E)  ((GLdouble)(GLint)(E))
 #define ENUM_TO_BOOLEAN(E) ((E) ? GL_TRUE : GL_FALSE)
 
-/* Compute the size of an array */
-#ifndef ARRAY_SIZE
-#  define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
-#endif
 
 /* Stringify */
 #define STRINGIFY(x) #x
+
+/*
+ * For GL_ARB_vertex_buffer_object we need to treat vertex array pointers
+ * as offsets into buffer stores.  Since the vertex array pointer and
+ * buffer store pointer are both pointers and we need to add them, we use
+ * this macro.
+ * Both pointers/offsets are expressed in bytes.
+ */
+#define ADD_POINTERS(A, B)  ( (GLubyte *) (A) + (uintptr_t) (B) )
 
 #endif

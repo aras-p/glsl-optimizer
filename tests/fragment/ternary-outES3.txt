@@ -6,28 +6,28 @@ void main ()
   mediump vec4 c_1;
   c_1 = vec4(0.0, 0.0, 0.0, 0.0);
   highp float tmpvar_2;
-  if ((xlv_TEXCOORD0.x > 0.5)) {
+  if ((0.5 < xlv_TEXCOORD0.x)) {
     tmpvar_2 = 0.9;
   } else {
     tmpvar_2 = 0.1;
   };
   c_1 = vec4(tmpvar_2);
   highp vec4 tmpvar_3;
-  if ((xlv_TEXCOORD0.x > 0.5)) {
+  if ((0.5 < xlv_TEXCOORD0.x)) {
     tmpvar_3 = vec4(0.9, 0.9, 0.9, 0.9);
   } else {
     tmpvar_3 = vec4(0.1, 0.1, 0.1, 0.1);
   };
   c_1 = (vec4(tmpvar_2) + tmpvar_3);
   highp vec3 tmpvar_4;
-  if ((xlv_TEXCOORD0.x > 0.5)) {
+  if ((0.5 < xlv_TEXCOORD0.x)) {
     tmpvar_4 = vec3(0.9, 0.9, 0.9);
   } else {
     tmpvar_4 = vec3(0.1, 0.1, 0.1);
   };
   c_1.xyz = (c_1.xyz + tmpvar_4);
   highp vec2 tmpvar_5;
-  if ((xlv_TEXCOORD0.x > 0.5)) {
+  if ((0.5 < xlv_TEXCOORD0.x)) {
     tmpvar_5 = vec2(0.9, 0.9);
   } else {
     tmpvar_5 = vec2(0.1, 0.1);

@@ -4,9 +4,9 @@ attribute vec4 TANGENT;
 void main ()
 {
   vec3 binormal_1;
-  vec4 tmpvar_2;
-  tmpvar_2.xy = ((gl_MultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
-  tmpvar_2.zw = ((gl_MultiTexCoord0.xy * _BumpMap_ST.xy) + _BumpMap_ST.zw);
+  vec4 o_hip_pack0_2;
+  o_hip_pack0_2.xy = ((gl_MultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
+  o_hip_pack0_2.zw = ((gl_MultiTexCoord0.xy * _BumpMap_ST.xy) + _BumpMap_ST.zw);
   binormal_1 = (((gl_Normal.yzx * TANGENT.zxy) - (gl_Normal.zxy * TANGENT.yzx)) * TANGENT.w);
   mat3 tmpvar_3;
   tmpvar_3[0].x = TANGENT.x;
@@ -19,7 +19,7 @@ void main ()
   tmpvar_3[2].y = binormal_1.z;
   tmpvar_3[2].z = gl_Normal.z;
   gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex);
-  gl_TexCoord[0] = tmpvar_2;
+  gl_TexCoord[0] = o_hip_pack0_2;
   vec4 tmpvar_4;
   tmpvar_4.w = 0.0;
   tmpvar_4.xyz = (tmpvar_3 * gl_ModelViewMatrixInverseTranspose[0].xyz);
@@ -37,8 +37,8 @@ void main ()
 
 // stats: 15 alu 0 tex 0 flow
 // inputs: 4
-//  #0: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 8
-//  #1: gl_Normal (high float) 3x1 [-1] loc 2
+//  #0: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 7
+//  #1: gl_Normal (high float) 3x1 [-1] loc 1
 //  #2: gl_Vertex (high float) 4x1 [-1] loc 0
 //  #3: TANGENT (high float) 4x1 [-1]
 // uniforms: 4 (total size: 0)

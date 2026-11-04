@@ -1,0 +1,15 @@
+#version 300 es
+precision highp float;
+uniform float value;
+out vec4 color;
+void main() {
+    float dead = value;
+    float live = value;
+    for (int i = 0; i < 32; ++i) {
+        dead += value;
+        live *= 1.01;
+    }
+    float threshold = live + 0.25;
+    if (threshold < 0.0) discard;
+    color = vec4(threshold);
+}

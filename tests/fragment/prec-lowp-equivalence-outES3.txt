@@ -1,6 +1,4 @@
 #version 300 es
-precision mediump int;
-precision mediump float;
 struct Values {
   mediump vec4 color;
   highp vec4 position;
@@ -14,11 +12,9 @@ in highp vec2 uv;
 out mediump vec4 fragColor;
 void main ()
 {
-  highp vec4 tmpvar_1;
-  tmpvar_1 = (values.position + offset);
   fragColor = (((
     ((values.color * tint) * scale)
-   + 0.25) * texture (tex, uv)) + tmpvar_1);
+   + 0.25) * texture (tex, uv)) + (values.position + offset));
 }
 
 

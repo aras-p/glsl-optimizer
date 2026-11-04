@@ -15,28 +15,28 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   half4 c_1 = 0;
   c_1 = half4(float4(0.0, 0.0, 0.0, 0.0));
   float tmpvar_2 = 0;
-  if ((_mtl_i.xlv_TEXCOORD0.x > 0.5)) {
+  if ((0.5 < _mtl_i.xlv_TEXCOORD0.x)) {
     tmpvar_2 = 0.9;
   } else {
     tmpvar_2 = 0.1;
   };
   c_1 = half4(float4(tmpvar_2));
   float4 tmpvar_3 = 0;
-  if ((_mtl_i.xlv_TEXCOORD0.x > 0.5)) {
+  if ((0.5 < _mtl_i.xlv_TEXCOORD0.x)) {
     tmpvar_3 = float4(0.9, 0.9, 0.9, 0.9);
   } else {
     tmpvar_3 = float4(0.1, 0.1, 0.1, 0.1);
   };
-  c_1 = ((half4)(float4(tmpvar_2) + tmpvar_3));
+  c_1 = half4((float4(tmpvar_2) + tmpvar_3));
   float3 tmpvar_4 = 0;
-  if ((_mtl_i.xlv_TEXCOORD0.x > 0.5)) {
+  if ((0.5 < _mtl_i.xlv_TEXCOORD0.x)) {
     tmpvar_4 = float3(0.9, 0.9, 0.9);
   } else {
     tmpvar_4 = float3(0.1, 0.1, 0.1);
   };
   c_1.xyz = (c_1.xyz + (half3)(tmpvar_4));
   float2 tmpvar_5 = 0;
-  if ((_mtl_i.xlv_TEXCOORD0.x > 0.5)) {
+  if ((0.5 < _mtl_i.xlv_TEXCOORD0.x)) {
     tmpvar_5 = float2(0.9, 0.9);
   } else {
     tmpvar_5 = float2(0.1, 0.1);

@@ -28,27 +28,19 @@
  */
 
 
+/* glsl-optimizer change: The offline linker needs only NewProgram allocation. Omit the rendering
+ * driver callback table and its format/dispatch dependencies.
+ */
+
 #ifndef DD_INCLUDED
 #define DD_INCLUDED
-
-/* THIS FILE ONLY INCLUDED BY mtypes.h !!!!! */
-
-#include "glheader.h"
-
+#include "compiler/shader_enums.h"
 struct gl_context;
 struct gl_program;
-struct gl_shader;
-
-
+/* The standalone linker only needs program allocation, not a driver table. */
 struct dd_function_table {
-
-   /**
-    * \name GLSL-related functions (ARB extensions and OpenGL 2.x)
-    */
-   /*@{*/
-   struct gl_shader *(*NewShader)(struct gl_context *ctx,
-                                  GLuint name, GLenum type);
-   void (*DeleteShader)(struct gl_context *ctx, struct gl_shader *shader);
+   struct gl_program *(*NewProgram)(struct gl_context *ctx,
+                                   gl_shader_stage stage,
+                                   unsigned id, bool is_arb_asm);
 };
-
-#endif /* DD_INCLUDED */
+#endif

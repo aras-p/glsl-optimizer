@@ -25,11 +25,11 @@ void main ()
   if ((tmpvar_10 < 0.0)) {
     specularReflection_1 = vec3(0.0, 0.0, 0.0);
   } else {
-    vec3 I_11;
-    I_11 = -(lightDirection_4);
+    vec3 tmpvar_11;
+    tmpvar_11 = -(lightDirection_4);
     specularReflection_1 = (vec3(attenuation_3) * pow (max (0.0, 
-      dot ((I_11 - (2.0 * (
-        dot (tmpvar_5, I_11)
+      dot ((tmpvar_11 - (2.0 * (
+        dot (tmpvar_5, tmpvar_11)
        * tmpvar_5))), tmpvar_6)
     ), 5.0));
   };

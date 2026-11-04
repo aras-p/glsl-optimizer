@@ -1,0 +1,33 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct xlatMtlShaderInput {
+  float2 uv;
+};
+struct xlatMtlShaderOutput {
+  float4 result [[color(0)]];
+};
+struct xlatMtlShaderUniform {
+};
+fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , texture2d<half> mediumTex [[texture(0)]], sampler _mtlsmp_mediumTex [[sampler(0)]]
+  , texture2d<float> highTex [[texture(1)]], sampler _mtlsmp_highTex [[sampler(1)]])
+{
+  xlatMtlShaderOutput _mtl_o;
+  half4 b_1 = 0;
+  float4 tmpvar_2 = 0;
+  tmpvar_2 = highTex.sample(_mtlsmp_highTex, (float2)((_mtl_i.uv)));
+  b_1 = half4(tmpvar_2);
+  half4 tmpvar_3 = 0;
+  tmpvar_3 = mediumTex.sample(_mtlsmp_mediumTex, (float2)((_mtl_i.uv)));
+  _mtl_o.result = ((tmpvar_2 * (float4)(tmpvar_3)) + (float4)((b_1 * tmpvar_3)));
+  return _mtl_o;
+}
+
+
+// stats: 3 alu 2 tex 0 flow
+// inputs: 1
+//  #0: uv (high float) 2x1 [-1]
+// textures: 2
+//  #0: mediumTex (medium 2d) 0x0 [-1] loc 0
+//  #1: highTex (high 2d) 0x0 [-1] loc 1

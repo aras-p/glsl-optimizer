@@ -2,9 +2,9 @@ uniform vec4 _ProjectionParams;
 uniform vec4 _WaveAndDistance;
 void main ()
 {
-  vec4 tmpvar_1;
-  vec4 vertex_2;
-  vertex_2.yw = gl_Vertex.yw;
+  vec4 o_nz_1;
+  vec4 tmpvar_2;
+  tmpvar_2.yw = gl_Vertex.yw;
   vec3 waveMove_3;
   vec4 s_4;
   vec4 waves_5;
@@ -15,39 +15,39 @@ void main ()
   vec4 tmpvar_6;
   tmpvar_6 = fract(waves_5);
   waves_5 = tmpvar_6;
-  vec4 val_7;
-  vec4 s_8;
+  vec4 tmpvar_7;
+  vec4 tmpvar_8;
   vec4 r2_9;
   vec4 r1_10;
   vec4 r5_11;
-  val_7 = ((tmpvar_6 * 6.40885) - 3.14159);
-  r5_11 = (val_7 * val_7);
-  r1_10 = (r5_11 * val_7);
+  tmpvar_7 = ((tmpvar_6 * 6.40885) - 3.14159);
+  r5_11 = (tmpvar_7 * tmpvar_7);
+  r1_10 = (r5_11 * tmpvar_7);
   r2_9 = (r1_10 * r5_11);
-  s_8 = (((val_7 + 
+  tmpvar_8 = (((tmpvar_7 + 
     (r1_10 * -0.161616)
   ) + (r2_9 * 0.0083333)) + ((r2_9 * r5_11) * -0.00019841));
-  s_4 = (s_8 * s_8);
+  s_4 = (tmpvar_8 * tmpvar_8);
   s_4 = (s_4 * s_4);
   s_4 = (s_4 * (gl_Color.w * _WaveAndDistance.z));
   waveMove_3.x = dot (s_4, vec4(0.024, 0.04, -0.12, 0.096));
   waveMove_3.z = dot (s_4, vec4(0.006, 0.02, -0.02, 0.1));
-  vertex_2.xz = (gl_Vertex.xz - (waveMove_3.xz * _WaveAndDistance.z));
-  tmpvar_1.xyz = vec3(0.0, 0.0, 1.0);
-  tmpvar_1.w = -(((gl_ModelViewMatrix * vertex_2).z * _ProjectionParams.w));
-  gl_Position = (gl_ModelViewProjectionMatrix * vertex_2);
+  tmpvar_2.xz = (gl_Vertex.xz - (waveMove_3.xz * _WaveAndDistance.z));
+  o_nz_1.xyz = vec3(0.0, 0.0, 1.0);
+  o_nz_1.w = -(((gl_ModelViewMatrix * tmpvar_2).z * _ProjectionParams.w));
+  gl_Position = (gl_ModelViewProjectionMatrix * tmpvar_2);
   vec4 tmpvar_12;
   tmpvar_12.zw = vec2(0.0, 0.0);
   tmpvar_12.xy = gl_MultiTexCoord0.xy;
   gl_TexCoord[0] = tmpvar_12;
-  gl_TexCoord[1] = tmpvar_1;
+  gl_TexCoord[1] = o_nz_1;
 }
 
 
 // stats: 35 alu 0 tex 0 flow
 // inputs: 3
-//  #0: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 8
-//  #1: gl_Color (high float) 4x1 [-1] loc 3
+//  #0: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 7
+//  #1: gl_Color (high float) 4x1 [-1] loc 2
 //  #2: gl_Vertex (high float) 4x1 [-1] loc 0
 // uniforms: 4 (total size: 0)
 //  #0: gl_ModelViewProjectionMatrix (high float) 4x4 [-1]

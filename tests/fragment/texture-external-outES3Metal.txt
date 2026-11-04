@@ -2,32 +2,31 @@
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
 struct xlatMtlShaderInput {
-  float4 uv;
+  half4 uv;
 };
 struct xlatMtlShaderOutput {
   half4 color [[color(0)]];
 };
 struct xlatMtlShaderUniform {
 };
-;
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  ,   texture2d<half> tex [[texture(0)]], sampler _mtlsmp_tex [[sampler(0)]])
+  , texture2d<half> tex [[texture(0)]], sampler _mtlsmp_tex [[sampler(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  int2 tmpvar_1 = 0;
-  tmpvar_1 = int2(_mtl_i.uv.xy);
-  short2 tmpvar_2 = 0;
-  tmpvar_2 = short2(int2(tex.get_width(0), tex.get_height(0)));
-  half4 tmpvar_3 = 0;
-  tmpvar_3.zw = half2(float2(0.0, 0.0));
-  tmpvar_3.xy = half2(tmpvar_2);
-  _mtl_o.color = (((tex.sample(_mtlsmp_tex, (float2)(_mtl_i.uv.xy)) + tex.sample(_mtlsmp_tex, ((float2)(_mtl_i.uv.xyz).xy / (float)(_mtl_i.uv.xyz).z))) + (tex.sample(_mtlsmp_tex, ((float2)(_mtl_i.uv).xy / (float)(_mtl_i.uv).w)) + tex.sample(_mtlsmp_tex, (float2)(_mtl_i.uv.xy), bias(_mtl_i.uv.w)))) + ((tex.sample(_mtlsmp_tex, ((float2)(_mtl_i.uv.xyz).xy / (float)(_mtl_i.uv.xyz).z), bias(_mtl_i.uv.w)) + tex.sample(_mtlsmp_tex, ((float2)(_mtl_i.uv).xy / (float)(_mtl_i.uv).w), bias(_mtl_i.uv.z))) + (tex.read(uint2(tmpvar_1), uint(0)) + tmpvar_3)));
+  float4 tmpvar_1 = 0;
+  tmpvar_1.zw = float2(0.0, 0.0);
+  tmpvar_1.xy = float2(int2(tex.get_width(0), tex.get_height(0)));
+  _mtl_o.color = half4(((float4)(((
+    ((tex.sample(_mtlsmp_tex, (float2)((_mtl_i.uv.xy))) + tex.sample(_mtlsmp_tex, (float2)((_mtl_i.uv.xy)) / (float)(_mtl_i.uv.z))) + (tex.sample(_mtlsmp_tex, (float2)((_mtl_i.uv.xy)) / (float)(_mtl_i.uv.w)) + tex.sample(_mtlsmp_tex, (float2)((_mtl_i.uv.xy)), bias(_mtl_i.uv.w))))
+   + 
+    (tex.sample(_mtlsmp_tex, (float2)((_mtl_i.uv.xy)) / (float)(_mtl_i.uv.z), bias(_mtl_i.uv.w)) + tex.sample(_mtlsmp_tex, (float2)((_mtl_i.uv.xy)) / (float)(_mtl_i.uv.w), bias(_mtl_i.uv.z)))
+  ) + tex.read(uint2(short2(_mtl_i.uv.xy)), uint(0)))) + tmpvar_1));
   return _mtl_o;
 }
 
 
 // stats: 10 alu 8 tex 0 flow
 // inputs: 1
-//  #0: uv (high float) 4x1 [-1]
+//  #0: uv (medium float) 4x1 [-1]
 // textures: 1
 //  #0: tex (medium other) 0x0 [-1] loc 0

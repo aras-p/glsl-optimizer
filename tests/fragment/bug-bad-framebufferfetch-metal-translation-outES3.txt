@@ -4,9 +4,7 @@ layout(location=0) inout mediump vec4 _glesFragData[4];
 in highp vec2 inUV;
 void main ()
 {
-  highp vec4 tmpvar_1;
-  tmpvar_1 = inUV.xxxx;
-  _glesFragData[0] = tmpvar_1;
+  _glesFragData[0] = inUV.xxxx;
 }
 
 

@@ -1,0 +1,7 @@
+#version 300 es
+precision highp float;
+flat in highp int material;
+centroid in vec2 uv;
+smooth in vec2 smoothUV;
+out vec4 color;
+void main() { color = vec4(uv + smoothUV, float(material), 1.0); }

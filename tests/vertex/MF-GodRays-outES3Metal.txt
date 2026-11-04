@@ -35,11 +35,11 @@ struct xlatMtlShaderUniform {
 vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  float3 tmpvar_1 = 0;
-  float4 tmpvar_2 = 0;
-  tmpvar_1 = float3(_mtl_i._inNormal);
-  tmpvar_2 = float4(_mtl_i._color);
-  half4 tmpvar_3 = 0;
+  float3 xlt_v_normal_1 = 0;
+  float4 xlt_v_color_2 = 0;
+  xlt_v_normal_1 = float3(_mtl_i._inNormal);
+  xlt_v_color_2 = float4(_mtl_i._color);
+  half4 o_color_3 = 0;
   float noiseWave_4 = 0;
   float noiseTime_5 = 0;
   float wave_6 = 0;
@@ -50,7 +50,7 @@ vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], 
   float3 centerOffs_11 = 0;
   float3 tmpvar_12 = 0;
   tmpvar_12.z = 0.0;
-  tmpvar_12.xy = (float2(0.5, 0.5) - tmpvar_2.xy);
+  tmpvar_12.xy = (float2(0.5, 0.5) - xlt_v_color_2.xy);
   centerOffs_11 = (tmpvar_12 * _mtl_i._uv1.xyy);
   centerLocal_10 = (_mtl_i._inVertex.xyz + centerOffs_11);
   float4 tmpvar_13 = 0;
@@ -60,44 +60,44 @@ vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], 
   localDir_9.y = (localDir_9.y * _mtl_u._VerticalBillboarding);
   float tmpvar_14 = 0;
   tmpvar_14 = sqrt(dot (localDir_9, localDir_9));
-  float3 dir_15 = 0;
-  dir_15 = (localDir_9 / tmpvar_14);
-  float tmpvar_16 = 0;
-  tmpvar_16 = abs(dir_15.y);
-  float3 tmpvar_17 = 0;
-  if ((tmpvar_16 > 0.999)) {
-    tmpvar_17 = float3(0.0, 0.0, 1.0);
-  } else {
-    tmpvar_17 = float3(0.0, 1.0, 0.0);
-  };
+  float3 tmpvar_15 = 0;
+  tmpvar_15 = (localDir_9 / tmpvar_14);
+  float3 tmpvar_16 = 0;
+  float tmpvar_17 = 0;
+  tmpvar_17 = abs(tmpvar_15.y);
   float3 tmpvar_18 = 0;
-  tmpvar_18 = normalize(((tmpvar_17.yzx * dir_15.zxy) - (tmpvar_17.zxy * dir_15.yzx)));
+  if ((0.999 < tmpvar_17)) {
+    tmpvar_18 = float3(0.0, 0.0, 1.0);
+  } else {
+    tmpvar_18 = float3(0.0, 1.0, 0.0);
+  };
   float3 tmpvar_19 = 0;
-  tmpvar_19 = ((dir_15.yzx * tmpvar_18.zxy) - (dir_15.zxy * tmpvar_18.yzx));
+  tmpvar_19 = normalize(((tmpvar_18.yzx * tmpvar_15.zxy) - (tmpvar_18.zxy * tmpvar_15.yzx)));
+  tmpvar_16 = ((tmpvar_15.yzx * tmpvar_19.zxy) - (tmpvar_15.zxy * tmpvar_19.yzx));
   float tmpvar_20 = 0;
   tmpvar_20 = min ((max (
     (tmpvar_14 - _mtl_u._SizeGrowStartDist)
   , 0.0) / _mtl_u._SizeGrowEndDist), 1.0);
   BBLocalPos_8 = ((centerLocal_10 - (
-    (tmpvar_18 * centerOffs_11.x)
+    (tmpvar_19 * centerOffs_11.x)
    + 
-    (tmpvar_19 * centerOffs_11.y)
+    (tmpvar_16 * centerOffs_11.y)
   )) + ((
-    (tmpvar_18 * tmpvar_1.x)
+    (tmpvar_19 * xlt_v_normal_1.x)
    + 
-    (tmpvar_19 * tmpvar_1.y)
+    (tmpvar_16 * xlt_v_normal_1.y)
   ) * (
     (tmpvar_20 * tmpvar_20)
    * 
-    (_mtl_u._MaxGrowSize * tmpvar_2.w)
+    (_mtl_u._MaxGrowSize * xlt_v_color_2.w)
   )));
-  time_7 = (_mtl_u._Time.y + (_mtl_u._BlinkingTimeOffsScale * tmpvar_2.z));
-  float y_21 = 0;
-  y_21 = (_mtl_u._TimeOnDuration + _mtl_u._TimeOffDuration);
+  time_7 = (_mtl_u._Time.y + (_mtl_u._BlinkingTimeOffsScale * xlt_v_color_2.z));
+  float tmpvar_21 = 0;
+  tmpvar_21 = (_mtl_u._TimeOnDuration + _mtl_u._TimeOffDuration);
   float tmpvar_22 = 0;
-  tmpvar_22 = (time_7 / y_21);
+  tmpvar_22 = (time_7 / tmpvar_21);
   float tmpvar_23 = 0;
-  tmpvar_23 = (fract(abs(tmpvar_22)) * y_21);
+  tmpvar_23 = (fract(abs(tmpvar_22)) * tmpvar_21);
   float tmpvar_24 = 0;
   if ((tmpvar_22 >= 0.0)) {
     tmpvar_24 = tmpvar_23;
@@ -105,11 +105,11 @@ vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], 
     tmpvar_24 = -(tmpvar_23);
   };
   float tmpvar_25 = 0;
-  tmpvar_25 = clamp ((tmpvar_24 / (_mtl_u._TimeOnDuration * 0.25)), 0.0, 1.0);
-  float edge0_26 = 0;
-  edge0_26 = (_mtl_u._TimeOnDuration * 0.75);
+  tmpvar_25 = saturate((tmpvar_24 / (_mtl_u._TimeOnDuration * 0.25)));
+  float tmpvar_26 = 0;
+  tmpvar_26 = (_mtl_u._TimeOnDuration * 0.75);
   float tmpvar_27 = 0;
-  tmpvar_27 = clamp (((tmpvar_24 - edge0_26) / (_mtl_u._TimeOnDuration - edge0_26)), 0.0, 1.0);
+  tmpvar_27 = saturate(((tmpvar_24 - tmpvar_26) / (_mtl_u._TimeOnDuration - tmpvar_26)));
   wave_6 = ((tmpvar_25 * (tmpvar_25 * 
     (3.0 - (2.0 * tmpvar_25))
   )) * (1.0 - (tmpvar_27 * 
@@ -136,18 +136,18 @@ vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], 
   float ffadeout_30 = 0;
   float nfadeout_31 = 0;
   float tmpvar_32 = 0;
-  tmpvar_32 = clamp ((tmpvar_14 / _mtl_u._FadeOutDistNear), 0.0, 1.0);
-  ffadeout_30 = (1.0 - clamp ((
+  tmpvar_32 = saturate((tmpvar_14 / _mtl_u._FadeOutDistNear));
+  ffadeout_30 = (1.0 - saturate((
     max ((tmpvar_14 - _mtl_u._FadeOutDistFar), 0.0)
-   * 0.2), 0.0, 1.0));
+   * 0.2)));
   ffadeout_30 = (ffadeout_30 * ffadeout_30);
   nfadeout_31 = (tmpvar_32 * tmpvar_32);
   nfadeout_31 = (nfadeout_31 * nfadeout_31);
   nfadeout_31 = (nfadeout_31 * ffadeout_30);
-  tmpvar_3 = half4(((nfadeout_31 * _mtl_u._Color) * (_mtl_u._Multiplier * wave_6)));
+  o_color_3 = half4((((nfadeout_31 * _mtl_u._Color) * _mtl_u._Multiplier) * wave_6));
   _mtl_o.gl_Position = (_mtl_u.glstate_matrix_mvp * tmpvar_29);
   _mtl_o.xlv_TEXCOORD0 = _mtl_i._uv0.xy;
-  _mtl_o.xlv_TEXCOORD1 = tmpvar_3;
+  _mtl_o.xlv_TEXCOORD1 = o_color_3;
   return _mtl_o;
 }
 

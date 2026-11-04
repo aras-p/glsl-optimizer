@@ -13,88 +13,218 @@ struct xlatMtlShaderUniform {
   float4 _ProjectionParams;
 };
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  ,   texture2d<half> _CameraDepthNormalsTexture [[texture(0)]], sampler _mtlsmp__CameraDepthNormalsTexture [[sampler(0)]]
-  ,   texture2d<half> _RandomTexture [[texture(1)]], sampler _mtlsmp__RandomTexture [[sampler(1)]])
+  , texture2d<half> _CameraDepthNormalsTexture [[texture(0)]], sampler _mtlsmp__CameraDepthNormalsTexture [[sampler(0)]]
+  , texture2d<half> _RandomTexture [[texture(1)]], sampler _mtlsmp__RandomTexture [[sampler(1)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  float3 RAND_SAMPLES_1[8];
-  RAND_SAMPLES_1[0] = float3(0.0130572, 0.587232, -0.119337);
-  RAND_SAMPLES_1[1] = float3(0.323078, 0.0220727, -0.418873);
-  RAND_SAMPLES_1[2] = float3(-0.310725, -0.191367, 0.0561369);
-  RAND_SAMPLES_1[3] = float3(-0.479646, 0.0939877, -0.580265);
-  RAND_SAMPLES_1[4] = float3(0.139999, -0.33577, 0.559679);
-  RAND_SAMPLES_1[5] = float3(-0.248458, 0.255532, 0.348944);
-  RAND_SAMPLES_1[6] = float3(0.18719, -0.702764, -0.231748);
-  RAND_SAMPLES_1[7] = float3(0.884915, 0.284208, 0.368524);
-  half tmpvar_2 = 0;
-  float2 tmpvar_3 = 0;
-  tmpvar_3 = _mtl_i.xlv_TEXCOORD0;
-  float3 samples_4[8];
-  samples_4 = RAND_SAMPLES_1;
-  float occ_6 = 0;
-  float scale_7 = 0;
-  float depth_8 = 0;
-  float3 viewNorm_9 = 0;
-  float4 depthnormal_10 = 0;
-  half3 randN_11 = 0;
-  randN_11 = ((_RandomTexture.sample(_mtlsmp__RandomTexture, (float2)(_mtl_i.xlv_TEXCOORD1)).xyz * (half)(2.0)) - (half)(1.0));
-  half4 tmpvar_12 = 0;
-  tmpvar_12 = _CameraDepthNormalsTexture.sample(_mtlsmp__CameraDepthNormalsTexture, (float2)(_mtl_i.xlv_TEXCOORD0));
-  depthnormal_10 = float4(tmpvar_12);
-  float3 n_13 = 0;
-  float3 tmpvar_14 = 0;
-  tmpvar_14 = ((depthnormal_10.xyz * float3(3.5554, 3.5554, 0.0)) + float3(-1.7777, -1.7777, 1.0));
-  float tmpvar_15 = 0;
-  tmpvar_15 = (2.0 / dot (tmpvar_14, tmpvar_14));
-  n_13.xy = (tmpvar_15 * tmpvar_14.xy);
-  n_13.z = (tmpvar_15 - 1.0);
-  viewNorm_9 = n_13;
-  depth_8 = (dot (depthnormal_10.zw, float2(1.0, 0.00392157)) * _mtl_u._ProjectionParams.z);
-  scale_7 = (_mtl_u._Params.x / depth_8);
-  occ_6 = 0.0;
-  for (int s_5 = 0; s_5 < 8; s_5++) {
-    float4 sampleND_16 = 0;
-    half3 randomDir_17 = 0;
-    float3 tmpvar_18 = 0;
-    float3 I_19 = 0;
-    I_19 = samples_4[s_5];
-    tmpvar_18 = (I_19 - (float3)(((half)(2.0) * ((half3)(
-      dot ((float3)randN_11, I_19)
-     * (float3)(randN_11))))));
-    randomDir_17 = half3(tmpvar_18);
-    float tmpvar_20 = 0;
-    tmpvar_20 = dot (viewNorm_9, (float3)randomDir_17);
-    half tmpvar_21 = 0;
-    if ((tmpvar_20 < 0.0)) {
-      tmpvar_21 = half(1.0);
-    } else {
-      tmpvar_21 = half(-1.0);
-    };
-    randomDir_17 = (randomDir_17 * -(tmpvar_21));
-    randomDir_17 = half3(((float3)(randomDir_17) + (viewNorm_9 * 0.3)));
-    half4 tmpvar_22 = 0;
-    float2 P_23 = 0;
-    P_23 = (tmpvar_3 + ((float2)(randomDir_17.xy) * scale_7));
-    tmpvar_22 = _CameraDepthNormalsTexture.sample(_mtlsmp__CameraDepthNormalsTexture, (float2)(P_23));
-    sampleND_16 = float4(tmpvar_22);
-    float tmpvar_24 = 0;
-    tmpvar_24 = clamp (((depth_8 - 
-      ((float)(randomDir_17.z) * _mtl_u._Params.x)
-    ) - (
-      dot (sampleND_16.zw, float2(1.0, 0.00392157))
-     * _mtl_u._ProjectionParams.z)), 0.0, 1.0);
-    if ((tmpvar_24 > _mtl_u._Params.y)) {
-      occ_6 = (occ_6 + pow ((1.0 - tmpvar_24), _mtl_u._Params.z));
-    };
+  float occ_1 = 0;
+  float scale_2 = 0;
+  float depth_3 = 0;
+  float4 depthnormal_4 = 0;
+  half3 randN_5 = 0;
+  randN_5 = ((_RandomTexture.sample(_mtlsmp__RandomTexture, (float2)((_mtl_i.xlv_TEXCOORD1))).xyz * (half)(2.0)) - (half)(1.0));
+  depthnormal_4 = float4(_CameraDepthNormalsTexture.sample(_mtlsmp__CameraDepthNormalsTexture, (float2)((_mtl_i.xlv_TEXCOORD0))));
+  float3 n_6 = 0;
+  float3 tmpvar_7 = 0;
+  tmpvar_7 = ((depthnormal_4.xyz * float3(3.5554, 3.5554, 0.0)) + float3(-1.7777, -1.7777, 1.0));
+  float tmpvar_8 = 0;
+  tmpvar_8 = (2.0 / dot (tmpvar_7, tmpvar_7));
+  n_6.xy = (tmpvar_8 * tmpvar_7.xy);
+  n_6.z = (tmpvar_8 - 1.0);
+  depth_3 = (dot (depthnormal_4.zw, float2(1.0, 0.00392157)) * _mtl_u._ProjectionParams.z);
+  scale_2 = (_mtl_u._Params.x / depth_3);
+  occ_1 = 0.0;
+  float zd_9 = 0;
+  float4 sampleND_10 = 0;
+  half3 randomDir_11 = 0;
+  randomDir_11 = half3((float3(0.0130572, 0.587232, -0.119337) - (2.0 * (
+    dot ((float3)randN_5, float3(0.0130572, 0.587232, -0.119337))
+   * (float3)(randN_5)))));
+  float tmpvar_12 = 0;
+  tmpvar_12 = dot (n_6, (float3)randomDir_11);
+  float tmpvar_13 = 0;
+  if ((tmpvar_12 < 0.0)) {
+    tmpvar_13 = 1.0;
+  } else {
+    tmpvar_13 = -1.0;
   };
-  occ_6 = (occ_6 / 8.0);
-  tmpvar_2 = half((1.0 - occ_6));
-  _mtl_o._fragData = half4(tmpvar_2);
+  randomDir_11 = (randomDir_11 * (half)(-(tmpvar_13)));
+  randomDir_11 = half3(((float3)(randomDir_11) + (n_6 * 0.3)));
+  sampleND_10 = float4(_CameraDepthNormalsTexture.sample(_mtlsmp__CameraDepthNormalsTexture, (float2)(((_mtl_i.xlv_TEXCOORD0 + ((float2)(randomDir_11.xy) * scale_2))))));
+  half tmpvar_14 = 0;
+  tmpvar_14 = half(((depth_3 - ((float)(randomDir_11.z) * _mtl_u._Params.x)) - (dot (sampleND_10.zw, float2(1.0, 0.00392157)) * _mtl_u._ProjectionParams.z)));
+  zd_9 = float(saturate(tmpvar_14));
+  if ((_mtl_u._Params.y < zd_9)) {
+    occ_1 = pow ((1.0 - zd_9), _mtl_u._Params.z);
+  };
+  float zd_15 = 0;
+  float4 sampleND_16 = 0;
+  half3 randomDir_17 = 0;
+  randomDir_17 = half3((float3(0.323078, 0.0220727, -0.418873) - (2.0 * (
+    dot ((float3)randN_5, float3(0.323078, 0.0220727, -0.418873))
+   * (float3)(randN_5)))));
+  float tmpvar_18 = 0;
+  tmpvar_18 = dot (n_6, (float3)randomDir_17);
+  float tmpvar_19 = 0;
+  if ((tmpvar_18 < 0.0)) {
+    tmpvar_19 = 1.0;
+  } else {
+    tmpvar_19 = -1.0;
+  };
+  randomDir_17 = (randomDir_17 * (half)(-(tmpvar_19)));
+  randomDir_17 = half3(((float3)(randomDir_17) + (n_6 * 0.3)));
+  sampleND_16 = float4(_CameraDepthNormalsTexture.sample(_mtlsmp__CameraDepthNormalsTexture, (float2)(((_mtl_i.xlv_TEXCOORD0 + ((float2)(randomDir_17.xy) * scale_2))))));
+  half tmpvar_20 = 0;
+  tmpvar_20 = half(((depth_3 - ((float)(randomDir_17.z) * _mtl_u._Params.x)) - (dot (sampleND_16.zw, float2(1.0, 0.00392157)) * _mtl_u._ProjectionParams.z)));
+  zd_15 = float(saturate(tmpvar_20));
+  if ((_mtl_u._Params.y < zd_15)) {
+    occ_1 = (occ_1 + pow ((1.0 - zd_15), _mtl_u._Params.z));
+  };
+  float zd_21 = 0;
+  float4 sampleND_22 = 0;
+  half3 randomDir_23 = 0;
+  randomDir_23 = half3((float3(-0.310725, -0.191367, 0.0561369) - (2.0 * (
+    dot ((float3)randN_5, float3(-0.310725, -0.191367, 0.0561369))
+   * (float3)(randN_5)))));
+  float tmpvar_24 = 0;
+  tmpvar_24 = dot (n_6, (float3)randomDir_23);
+  float tmpvar_25 = 0;
+  if ((tmpvar_24 < 0.0)) {
+    tmpvar_25 = 1.0;
+  } else {
+    tmpvar_25 = -1.0;
+  };
+  randomDir_23 = (randomDir_23 * (half)(-(tmpvar_25)));
+  randomDir_23 = half3(((float3)(randomDir_23) + (n_6 * 0.3)));
+  sampleND_22 = float4(_CameraDepthNormalsTexture.sample(_mtlsmp__CameraDepthNormalsTexture, (float2)(((_mtl_i.xlv_TEXCOORD0 + ((float2)(randomDir_23.xy) * scale_2))))));
+  half tmpvar_26 = 0;
+  tmpvar_26 = half(((depth_3 - ((float)(randomDir_23.z) * _mtl_u._Params.x)) - (dot (sampleND_22.zw, float2(1.0, 0.00392157)) * _mtl_u._ProjectionParams.z)));
+  zd_21 = float(saturate(tmpvar_26));
+  if ((_mtl_u._Params.y < zd_21)) {
+    occ_1 = (occ_1 + pow ((1.0 - zd_21), _mtl_u._Params.z));
+  };
+  float zd_27 = 0;
+  float4 sampleND_28 = 0;
+  half3 randomDir_29 = 0;
+  randomDir_29 = half3((float3(-0.479646, 0.0939877, -0.580265) - (2.0 * (
+    dot ((float3)randN_5, float3(-0.479646, 0.0939877, -0.580265))
+   * (float3)(randN_5)))));
+  float tmpvar_30 = 0;
+  tmpvar_30 = dot (n_6, (float3)randomDir_29);
+  float tmpvar_31 = 0;
+  if ((tmpvar_30 < 0.0)) {
+    tmpvar_31 = 1.0;
+  } else {
+    tmpvar_31 = -1.0;
+  };
+  randomDir_29 = (randomDir_29 * (half)(-(tmpvar_31)));
+  randomDir_29 = half3(((float3)(randomDir_29) + (n_6 * 0.3)));
+  sampleND_28 = float4(_CameraDepthNormalsTexture.sample(_mtlsmp__CameraDepthNormalsTexture, (float2)(((_mtl_i.xlv_TEXCOORD0 + ((float2)(randomDir_29.xy) * scale_2))))));
+  half tmpvar_32 = 0;
+  tmpvar_32 = half(((depth_3 - ((float)(randomDir_29.z) * _mtl_u._Params.x)) - (dot (sampleND_28.zw, float2(1.0, 0.00392157)) * _mtl_u._ProjectionParams.z)));
+  zd_27 = float(saturate(tmpvar_32));
+  if ((_mtl_u._Params.y < zd_27)) {
+    occ_1 = (occ_1 + pow ((1.0 - zd_27), _mtl_u._Params.z));
+  };
+  float zd_33 = 0;
+  float4 sampleND_34 = 0;
+  half3 randomDir_35 = 0;
+  randomDir_35 = half3((float3(0.139999, -0.33577, 0.559679) - (2.0 * (
+    dot ((float3)randN_5, float3(0.139999, -0.33577, 0.559679))
+   * (float3)(randN_5)))));
+  float tmpvar_36 = 0;
+  tmpvar_36 = dot (n_6, (float3)randomDir_35);
+  float tmpvar_37 = 0;
+  if ((tmpvar_36 < 0.0)) {
+    tmpvar_37 = 1.0;
+  } else {
+    tmpvar_37 = -1.0;
+  };
+  randomDir_35 = (randomDir_35 * (half)(-(tmpvar_37)));
+  randomDir_35 = half3(((float3)(randomDir_35) + (n_6 * 0.3)));
+  sampleND_34 = float4(_CameraDepthNormalsTexture.sample(_mtlsmp__CameraDepthNormalsTexture, (float2)(((_mtl_i.xlv_TEXCOORD0 + ((float2)(randomDir_35.xy) * scale_2))))));
+  half tmpvar_38 = 0;
+  tmpvar_38 = half(((depth_3 - ((float)(randomDir_35.z) * _mtl_u._Params.x)) - (dot (sampleND_34.zw, float2(1.0, 0.00392157)) * _mtl_u._ProjectionParams.z)));
+  zd_33 = float(saturate(tmpvar_38));
+  if ((_mtl_u._Params.y < zd_33)) {
+    occ_1 = (occ_1 + pow ((1.0 - zd_33), _mtl_u._Params.z));
+  };
+  float zd_39 = 0;
+  float4 sampleND_40 = 0;
+  half3 randomDir_41 = 0;
+  randomDir_41 = half3((float3(-0.248458, 0.255532, 0.348944) - (2.0 * (
+    dot ((float3)randN_5, float3(-0.248458, 0.255532, 0.348944))
+   * (float3)(randN_5)))));
+  float tmpvar_42 = 0;
+  tmpvar_42 = dot (n_6, (float3)randomDir_41);
+  float tmpvar_43 = 0;
+  if ((tmpvar_42 < 0.0)) {
+    tmpvar_43 = 1.0;
+  } else {
+    tmpvar_43 = -1.0;
+  };
+  randomDir_41 = (randomDir_41 * (half)(-(tmpvar_43)));
+  randomDir_41 = half3(((float3)(randomDir_41) + (n_6 * 0.3)));
+  sampleND_40 = float4(_CameraDepthNormalsTexture.sample(_mtlsmp__CameraDepthNormalsTexture, (float2)(((_mtl_i.xlv_TEXCOORD0 + ((float2)(randomDir_41.xy) * scale_2))))));
+  half tmpvar_44 = 0;
+  tmpvar_44 = half(((depth_3 - ((float)(randomDir_41.z) * _mtl_u._Params.x)) - (dot (sampleND_40.zw, float2(1.0, 0.00392157)) * _mtl_u._ProjectionParams.z)));
+  zd_39 = float(saturate(tmpvar_44));
+  if ((_mtl_u._Params.y < zd_39)) {
+    occ_1 = (occ_1 + pow ((1.0 - zd_39), _mtl_u._Params.z));
+  };
+  float zd_45 = 0;
+  float4 sampleND_46 = 0;
+  half3 randomDir_47 = 0;
+  randomDir_47 = half3((float3(0.18719, -0.702764, -0.231748) - (2.0 * (
+    dot ((float3)randN_5, float3(0.18719, -0.702764, -0.231748))
+   * (float3)(randN_5)))));
+  float tmpvar_48 = 0;
+  tmpvar_48 = dot (n_6, (float3)randomDir_47);
+  float tmpvar_49 = 0;
+  if ((tmpvar_48 < 0.0)) {
+    tmpvar_49 = 1.0;
+  } else {
+    tmpvar_49 = -1.0;
+  };
+  randomDir_47 = (randomDir_47 * (half)(-(tmpvar_49)));
+  randomDir_47 = half3(((float3)(randomDir_47) + (n_6 * 0.3)));
+  sampleND_46 = float4(_CameraDepthNormalsTexture.sample(_mtlsmp__CameraDepthNormalsTexture, (float2)(((_mtl_i.xlv_TEXCOORD0 + ((float2)(randomDir_47.xy) * scale_2))))));
+  half tmpvar_50 = 0;
+  tmpvar_50 = half(((depth_3 - ((float)(randomDir_47.z) * _mtl_u._Params.x)) - (dot (sampleND_46.zw, float2(1.0, 0.00392157)) * _mtl_u._ProjectionParams.z)));
+  zd_45 = float(saturate(tmpvar_50));
+  if ((_mtl_u._Params.y < zd_45)) {
+    occ_1 = (occ_1 + pow ((1.0 - zd_45), _mtl_u._Params.z));
+  };
+  float zd_51 = 0;
+  float4 sampleND_52 = 0;
+  half3 randomDir_53 = 0;
+  randomDir_53 = half3((float3(0.884915, 0.284208, 0.368524) - (2.0 * (
+    dot ((float3)randN_5, float3(0.884915, 0.284208, 0.368524))
+   * (float3)(randN_5)))));
+  float tmpvar_54 = 0;
+  tmpvar_54 = dot (n_6, (float3)randomDir_53);
+  float tmpvar_55 = 0;
+  if ((tmpvar_54 < 0.0)) {
+    tmpvar_55 = 1.0;
+  } else {
+    tmpvar_55 = -1.0;
+  };
+  randomDir_53 = (randomDir_53 * (half)(-(tmpvar_55)));
+  randomDir_53 = half3(((float3)(randomDir_53) + (n_6 * 0.3)));
+  sampleND_52 = float4(_CameraDepthNormalsTexture.sample(_mtlsmp__CameraDepthNormalsTexture, (float2)(((_mtl_i.xlv_TEXCOORD0 + ((float2)(randomDir_53.xy) * scale_2))))));
+  half tmpvar_56 = 0;
+  tmpvar_56 = half(((depth_3 - ((float)(randomDir_53.z) * _mtl_u._Params.x)) - (dot (sampleND_52.zw, float2(1.0, 0.00392157)) * _mtl_u._ProjectionParams.z)));
+  zd_51 = float(saturate(tmpvar_56));
+  if ((_mtl_u._Params.y < zd_51)) {
+    occ_1 = (occ_1 + pow ((1.0 - zd_51), _mtl_u._Params.z));
+  };
+  occ_1 = (occ_1 / 8.0);
+  _mtl_o._fragData = half4(float4((1.0 - occ_1)));
   return _mtl_o;
 }
 
 
-// stats: 49 alu 3 tex 4 flow
+// stats: 205 alu 10 tex 16 flow
 // inputs: 2
 //  #0: xlv_TEXCOORD0 (high float) 2x1 [-1]
 //  #1: xlv_TEXCOORD1 (high float) 2x1 [-1]

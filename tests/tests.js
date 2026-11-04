@@ -14,7 +14,7 @@ assert.equal(typeof glslOptimizer.Compiler, 'function', 'exports Compiler constr
 var ESSL = false; 
 
 //First we need to create a new compiler
-var compiler = new glslOptimizer.Compiler(2);
+var compiler = new glslOptimizer.Compiler(glslOptimizer.TARGET_OPENGL);
 
 assert.equal(typeof compiler.dispose, 'function', 'exports Compiler#dispose()');
 
@@ -25,7 +25,8 @@ var raw = shader.rawOutput();
 var output = shader.output();
 var log = shader.log();
 
-assert.equal(typeof didCompile, 'boolean', 'exports compiled()');
+assert.equal(didCompile, true, 'shader compiles');
+assert.ok(output.length > 0, 'optimized source is returned');
 assert.equal(typeof raw, 'string', 'exports rawOutput()');
 assert.equal(typeof output, 'string', 'exports output()');
 assert.equal(typeof log, 'string', 'exports log()');

@@ -14,16 +14,16 @@ void main ()
   highp vec4 r_6;
   r_6.yzw = vec3(0.0, 0.0, 0.0);
   ftoh4_5 = uniMat4F;
-  r_6.x = ftoh4_5[0].x;
-  r_6.x = (r_6.x + ftoh4_5[0].x);
+  r_6.x = ftoh4_5[0][0];
+  r_6.x = (r_6.x + ftoh4_5[0][0]);
   ftoh2_4 = uniMat2F;
-  r_6.x = (r_6.x + ftoh2_4[0].x);
+  r_6.x = (r_6.x + ftoh2_4[0][0]);
   htof4_3 = uniMat4H;
-  r_6.x = (r_6.x + htof4_3[0].x);
+  r_6.x = (r_6.x + htof4_3[0][0]);
   htof3_2 = uniMat3H;
-  r_6.x = (r_6.x + htof3_2[0].x);
+  r_6.x = (r_6.x + htof3_2[0][0]);
   htof2_1 = uniMat2H;
-  r_6.x = (r_6.x + htof2_1[0].x);
+  r_6.x = (r_6.x + htof2_1[0][0]);
   gl_Position = r_6;
 }
 

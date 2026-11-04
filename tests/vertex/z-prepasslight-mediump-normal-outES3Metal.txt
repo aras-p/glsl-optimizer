@@ -18,27 +18,23 @@ struct xlatMtlShaderUniform {
 vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  float3 tmpvar_1 = 0;
-  tmpvar_1 = float3(_mtl_i._inNormal);
-  float4 tmpvar_2 = 0;
-  float3 tmpvar_3 = 0;
-  tmpvar_2 = (_mtl_u.glstate_matrix_mvp * _mtl_i._inVertex);
+  float3 xlt_v_normal_1 = 0;
+  xlt_v_normal_1 = float3(_mtl_i._inNormal);
+  float4 o_pos_2 = 0;
+  float3 o_ray_3 = 0;
+  o_pos_2 = (_mtl_u.glstate_matrix_mvp * _mtl_i._inVertex);
   float4 o_4 = 0;
-  o_4 = (tmpvar_2 * 0.5);
+  o_4 = (o_pos_2 * 0.5);
   float2 tmpvar_5 = 0;
   tmpvar_5.x = o_4.x;
   tmpvar_5.y = (o_4.y * _mtl_u._ProjectionParams.x);
   o_4.xy = (tmpvar_5 + o_4.w);
-  o_4.zw = tmpvar_2.zw;
-  tmpvar_3 = ((_mtl_u.glstate_matrix_modelview0 * _mtl_i._inVertex).xyz * float3(-1.0, -1.0, 1.0));
-  half3 tmpvar_6 = 0;
-  tmpvar_6 = half3(((half)half((tmpvar_1.z != 0.0))));
-  float3 tmpvar_7 = 0;
-  tmpvar_7 = mix (tmpvar_3, tmpvar_1, (float3)tmpvar_6);
-  tmpvar_3 = tmpvar_7;
-  _mtl_o.gl_Position = tmpvar_2;
+  o_4.zw = o_pos_2.zw;
+  o_ray_3 = ((_mtl_u.glstate_matrix_modelview0 * _mtl_i._inVertex).xyz * float3(-1.0, -1.0, 1.0));
+  o_ray_3 = mix (o_ray_3, xlt_v_normal_1, (float3)half3(half((xlt_v_normal_1.z != 0.0))));
+  _mtl_o.gl_Position = o_pos_2;
   _mtl_o.xlv_TEXCOORD0 = o_4;
-  _mtl_o.xlv_TEXCOORD1 = tmpvar_7;
+  _mtl_o.xlv_TEXCOORD1 = o_ray_3;
   return _mtl_o;
 }
 

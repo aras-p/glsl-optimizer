@@ -21,11 +21,16 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+
 #include "main/errors.h"
 #include "symbol_table.h"
-#include "hash_table.h"
+#include "util/hash_table.h"
+#include "util/u_string.h"
 
 struct symbol {
+   /** Symbol name. */
+   char *name;
+
     /**
      * Link to the next symbol in the table with the same name
      *
@@ -34,7 +39,6 @@ struct symbol {
      */
     struct symbol *next_with_same_name;
 
-
     /**
      * Link to the next symbol in the table with the same scope
      *
@@ -42,21 +46,6 @@ struct symbol {
      * in this list my have unique names.
      */
     struct symbol *next_with_same_scope;
-
-
-    /**
-     * Header information for the list of symbols with the same name.
-     */
-    struct symbol_header *hdr;
-
-
-    /**
-     * Name space of the symbol
-     *
-     * Name space are arbitrary user assigned integers.  No two symbols can
-     * exist in the same name space at the same scope level.
-     */
-    int name_space;
 
     /** Scope depth where this symbol was defined. */
     unsigned depth;
@@ -69,26 +58,12 @@ struct symbol {
 
 
 /**
- */
-struct symbol_header {
-    /** Linkage in list of all headers in a given symbol table. */
-    struct symbol_header *next;
-
-    /** Symbol name. */
-    char *name;
-
-    /** Linked list of symbols with the same name. */
-    struct symbol *symbols;
-};
-
-
-/**
  * Element of the scope stack.
  */
 struct scope_level {
     /** Link to next (inner) scope level. */
     struct scope_level *next;
-    
+
     /** Linked list of symbols with the same scope. */
     struct symbol *symbols;
 };
@@ -104,40 +79,9 @@ struct _mesa_symbol_table {
     /** Top of scope stack. */
     struct scope_level *current_scope;
 
-    /** List of all symbol headers in the table. */
-    struct symbol_header *hdr;
-
     /** Current scope depth. */
     unsigned depth;
 };
-
-
-static void
-check_symbol_table(struct _mesa_symbol_table *table)
-{
-#if !defined(NDEBUG)
-    struct scope_level *scope;
-
-    for (scope = table->current_scope; scope != NULL; scope = scope->next) {
-        struct symbol *sym;
-
-        for (sym = scope->symbols
-             ; sym != NULL
-             ; sym = sym->next_with_same_name) {
-            const struct symbol_header *const hdr = sym->hdr;
-            struct symbol *sym2;
-
-            for (sym2 = hdr->symbols
-                 ; sym2 != NULL
-                 ; sym2 = sym2->next_with_same_name) {
-                assert(sym2->hdr == hdr);
-            }
-        }
-    }
-#else
-    (void) table;
-#endif /* !defined(NDEBUG) */
-}
 
 void
 _mesa_symbol_table_pop_scope(struct _mesa_symbol_table *table)
@@ -152,18 +96,22 @@ _mesa_symbol_table_pop_scope(struct _mesa_symbol_table *table)
 
     while (sym != NULL) {
         struct symbol *const next = sym->next_with_same_scope;
-        struct symbol_header *const hdr = sym->hdr;
-
-        assert(hdr->symbols == sym);
-
-        hdr->symbols = sym->next_with_same_name;
+        struct hash_entry *hte = _mesa_hash_table_search(table->ht,
+                                                         sym->name);
+        if (sym->next_with_same_name) {
+           /* If there is a symbol with this name in an outer scope update
+            * the hash table to point to it.
+            */
+           hte->key = sym->next_with_same_name->name;
+           hte->data = sym->next_with_same_name;
+        } else {
+           _mesa_hash_table_remove(table->ht, hte);
+           free(sym->name);
+        }
 
         free(sym);
-
         sym = next;
     }
-
-    check_symbol_table(table);
 }
 
 
@@ -171,7 +119,6 @@ void
 _mesa_symbol_table_push_scope(struct _mesa_symbol_table *table)
 {
     struct scope_level *const scope = calloc(1, sizeof(*scope));
-    
     if (scope == NULL) {
        _mesa_error_no_memory(__func__);
        return;
@@ -183,10 +130,11 @@ _mesa_symbol_table_push_scope(struct _mesa_symbol_table *table)
 }
 
 
-static struct symbol_header *
+static struct symbol *
 find_symbol(struct _mesa_symbol_table *table, const char *name)
 {
-    return (struct symbol_header *) hash_table_find(table->ht, name);
+   struct hash_entry *entry = _mesa_hash_table_search(table->ht, name);
+   return entry ? (struct symbol *) entry->data : NULL;
 }
 
 
@@ -200,200 +148,140 @@ find_symbol(struct _mesa_symbol_table *table, const char *name)
  */
 int
 _mesa_symbol_table_symbol_scope(struct _mesa_symbol_table *table,
-				int name_space, const char *name)
+                                const char *name)
 {
-    struct symbol_header *const hdr = find_symbol(table, name);
-    struct symbol *sym;
+   struct symbol *const sym = find_symbol(table, name);
 
-    if (hdr != NULL) {
-       for (sym = hdr->symbols; sym != NULL; sym = sym->next_with_same_name) {
-	  assert(sym->hdr == hdr);
+   if (sym) {
+      assert(sym->depth <= table->depth);
+      return sym->depth - table->depth;
+   }
 
-	  if ((name_space == -1) || (sym->name_space == name_space)) {
-	     assert(sym->depth <= table->depth);
-	     return sym->depth - table->depth;
-	  }
-       }
-    }
-
-    return -1;
+   return -1;
 }
 
 
 void *
 _mesa_symbol_table_find_symbol(struct _mesa_symbol_table *table,
-                               int name_space, const char *name)
+                               const char *name)
 {
-    struct symbol_header *const hdr = find_symbol(table, name);
+   struct symbol *const sym = find_symbol(table, name);
+   if (sym)
+      return sym->data;
 
-    if (hdr != NULL) {
-        struct symbol *sym;
-
-
-        for (sym = hdr->symbols; sym != NULL; sym = sym->next_with_same_name) {
-            assert(sym->hdr == hdr);
-
-            if ((name_space == -1) || (sym->name_space == name_space)) {
-                return sym->data;
-            }
-        }
-    }
-
-    return NULL;
+   return NULL;
 }
 
 
 int
 _mesa_symbol_table_add_symbol(struct _mesa_symbol_table *table,
-                              int name_space, const char *name,
-                              void *declaration)
+                              const char *name, void *declaration)
 {
-    struct symbol_header *hdr;
-    struct symbol *sym;
+   struct symbol *new_sym;
+   struct symbol *sym = find_symbol(table, name);
 
-    check_symbol_table(table);
+   if (sym && sym->depth == table->depth)
+      return -1;
 
-    hdr = find_symbol(table, name);
+   new_sym = calloc(1, sizeof(*sym));
+   if (new_sym == NULL) {
+      _mesa_error_no_memory(__func__);
+      return -1;
+   }
 
-    check_symbol_table(table);
+   if (sym) {
+      /* Store link to symbol in outer scope with the same name */
+      new_sym->next_with_same_name = sym;
+      new_sym->name = sym->name;
+   } else {
+      new_sym->name = strdup(name);
+      if (new_sym->name == NULL) {
+         free(new_sym);
+         _mesa_error_no_memory(__func__);
+         return -1;
+      }
+   }
 
-    if (hdr == NULL) {
-       hdr = calloc(1, sizeof(*hdr));
-       if (hdr == NULL) {
-          _mesa_error_no_memory(__func__);
-          return -1;
-       }
+   new_sym->next_with_same_scope = table->current_scope->symbols;
+   new_sym->data = declaration;
+   new_sym->depth = table->depth;
 
-       hdr->name = strdup(name);
-       if (hdr->name == NULL) {
-          free(hdr);
-          _mesa_error_no_memory(__func__);
-          return -1;
-       }
+   table->current_scope->symbols = new_sym;
 
-       hash_table_insert(table->ht, hdr, hdr->name);
-       hdr->next = table->hdr;
-       table->hdr = hdr;
-    }
+   _mesa_hash_table_insert(table->ht, new_sym->name, new_sym);
 
-    check_symbol_table(table);
+   return 0;
+}
 
-    /* If the symbol already exists in this namespace at this scope, it cannot
-     * be added to the table.
-     */
-    for (sym = hdr->symbols
-	 ; (sym != NULL) && (sym->name_space != name_space)
-	 ; sym = sym->next_with_same_name) {
-       /* empty */
-    }
+int
+_mesa_symbol_table_replace_symbol(struct _mesa_symbol_table *table,
+                                  const char *name,
+                                  void *declaration)
+{
+    struct symbol *sym = find_symbol(table, name);
 
-    if (sym && (sym->depth == table->depth))
+    /* If the symbol doesn't exist, it cannot be replaced. */
+    if (sym == NULL)
        return -1;
 
-    sym = calloc(1, sizeof(*sym));
-    if (sym == NULL) {
-       _mesa_error_no_memory(__func__);
-       return -1;
-    }
-
-    sym->next_with_same_name = hdr->symbols;
-    sym->next_with_same_scope = table->current_scope->symbols;
-    sym->hdr = hdr;
-    sym->name_space = name_space;
     sym->data = declaration;
-    sym->depth = table->depth;
-
-    assert(sym->hdr == hdr);
-
-    hdr->symbols = sym;
-    table->current_scope->symbols = sym;
-
-    check_symbol_table(table);
     return 0;
 }
 
-
 int
 _mesa_symbol_table_add_global_symbol(struct _mesa_symbol_table *table,
-				     int name_space, const char *name,
-				     void *declaration)
+                                     const char *name, void *declaration)
 {
-    struct symbol_header *hdr;
-    struct symbol *sym;
-    struct symbol *curr;
-    struct scope_level *top_scope;
+   struct scope_level *top_scope;
+   struct symbol *inner_sym = NULL;
+   struct symbol *sym = find_symbol(table, name);
 
-    check_symbol_table(table);
+   while (sym) {
+      if (sym->depth == 0)
+         return -1;
 
-    hdr = find_symbol(table, name);
+      inner_sym = sym;
 
-    check_symbol_table(table);
+      /* Get symbol from the outer scope with the same name */
+      sym = sym->next_with_same_name;
+   }
 
-    if (hdr == NULL) {
-        hdr = calloc(1, sizeof(*hdr));
-        if (hdr == NULL) {
-           _mesa_error_no_memory(__func__);
-           return -1;
-        }
+   /* Find the top-level scope */
+   for (top_scope = table->current_scope; top_scope->next != NULL;
+        top_scope = top_scope->next) {
+      /* empty */
+   }
 
-        hdr->name = strdup(name);
+   sym = calloc(1, sizeof(*sym));
+   if (sym == NULL) {
+      _mesa_error_no_memory(__func__);
+      return -1;
+   }
 
-        hash_table_insert(table->ht, hdr, hdr->name);
-        hdr->next = table->hdr;
-        table->hdr = hdr;
-    }
+   if (inner_sym) {
+      /* In case we add the global out of order store a link to the global
+       * symbol in global.
+       */
+      inner_sym->next_with_same_name = sym;
 
-    check_symbol_table(table);
+      sym->name = inner_sym->name;
+   } else {
+      sym->name = strdup(name);
+      if (sym->name == NULL) {
+         free(sym);
+         _mesa_error_no_memory(__func__);
+         return -1;
+      }
+   }
 
-    /* If the symbol already exists in this namespace at this scope, it cannot
-     * be added to the table.
-     */
-    for (sym = hdr->symbols
-	 ; (sym != NULL) && (sym->name_space != name_space)
-	 ; sym = sym->next_with_same_name) {
-       /* empty */
-    }
+   sym->next_with_same_scope = top_scope->symbols;
+   sym->data = declaration;
 
-    if (sym && sym->depth == 0)
-       return -1;
+   top_scope->symbols = sym;
 
-    /* Find the top-level scope */
-    for (top_scope = table->current_scope
-	 ; top_scope->next != NULL
-	 ; top_scope = top_scope->next) {
-       /* empty */
-    }
+   _mesa_hash_table_insert(table->ht, sym->name, sym);
 
-    sym = calloc(1, sizeof(*sym));
-    if (sym == NULL) {
-       _mesa_error_no_memory(__func__);
-       return -1;
-    }
-
-    sym->next_with_same_scope = top_scope->symbols;
-    sym->hdr = hdr;
-    sym->name_space = name_space;
-    sym->data = declaration;
-
-    assert(sym->hdr == hdr);
-
-    /* Since next_with_same_name is ordered by scope, we need to append the
-     * new symbol to the _end_ of the list.
-     */
-    if (hdr->symbols == NULL) {
-       hdr->symbols = sym;
-    } else {
-       for (curr = hdr->symbols
-	    ; curr->next_with_same_name != NULL
-	    ; curr = curr->next_with_same_name) {
-	  /* empty */
-       }
-       curr->next_with_same_name = sym;
-    }
-    top_scope->symbols = sym;
-
-    check_symbol_table(table);
-    return 0;
+   return 0;
 }
 
 
@@ -404,8 +292,8 @@ _mesa_symbol_table_ctor(void)
     struct _mesa_symbol_table *table = calloc(1, sizeof(*table));
 
     if (table != NULL) {
-       table->ht = hash_table_ctor(32, hash_table_string_hash,
-				   hash_table_string_compare);
+       table->ht = _mesa_hash_table_create(NULL, _mesa_hash_string,
+                                           _mesa_key_string_equal);
 
        _mesa_symbol_table_push_scope(table);
     }
@@ -417,19 +305,10 @@ _mesa_symbol_table_ctor(void)
 void
 _mesa_symbol_table_dtor(struct _mesa_symbol_table *table)
 {
-   struct symbol_header *hdr;
-   struct symbol_header *next;
-
    while (table->current_scope != NULL) {
       _mesa_symbol_table_pop_scope(table);
    }
 
-   for (hdr = table->hdr; hdr != NULL; hdr = next) {
-       next = hdr->next;
-       free(hdr->name);
-       free(hdr);
-   }
-
-   hash_table_dtor(table->ht);
+   _mesa_hash_table_destroy(table->ht, NULL);
    free(table);
 }

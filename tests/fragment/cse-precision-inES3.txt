@@ -1,0 +1,13 @@
+#version 300 es
+precision mediump float;
+uniform mediump sampler2D mediumTex;
+uniform highp sampler2D highTex;
+in highp vec2 uv;
+layout(location = 0) out highp vec4 result;
+void main()
+{
+    // Reuse each sample at its own precision; preserve the narrowing store.
+    highp vec4 a = texture(highTex, uv);
+    mediump vec4 b = texture(highTex, uv);
+    result = a * texture(mediumTex, uv) + b * texture(mediumTex, uv);
+}

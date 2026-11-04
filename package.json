@@ -25,7 +25,7 @@
   "author": "Aras Pranckevičius",
   "license": "MIT",
   "engines": {
-    "node": ">= 0.12.0"
+    "node": ">= 22"
   },
   "gypfile": true,
   "bugs": {
@@ -36,6 +36,6 @@
     "test": "tests"
   },
   "dependencies": {
-    "nan": "~2.6.x"
+    "nan": "^2.30.0"
   }
 }

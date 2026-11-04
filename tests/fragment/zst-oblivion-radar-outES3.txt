@@ -1,0 +1,512 @@
+#version 300 es
+uniform highp vec3 iResolution;
+uniform highp float iTime;
+layout(location=0) out highp vec4 fragColor;
+void main ()
+{
+  highp vec3 finalColor_1;
+  highp vec2 tmpvar_2;
+  tmpvar_2 = (iResolution.xy / 2.0);
+  highp float tmpvar_3;
+  highp vec2 tmpvar_4;
+  tmpvar_4 = (gl_FragCoord.xy - tmpvar_2);
+  highp int tmpvar_5;
+  tmpvar_5 = int(tmpvar_4.x);
+  highp int tmpvar_6;
+  tmpvar_6 = int(tmpvar_4.y);
+  highp float tmpvar_7;
+  tmpvar_7 = sqrt(dot (tmpvar_4, tmpvar_4));
+  if (((tmpvar_7 < 240.0) && ((tmpvar_5 == tmpvar_6) || (tmpvar_5 == 
+    -(tmpvar_6)
+  )))) {
+    tmpvar_3 = 1.0;
+  } else {
+    tmpvar_3 = 0.0;
+  };
+  finalColor_1 = vec3((0.3 * tmpvar_3));
+  highp float tmpvar_8;
+  highp vec2 tmpvar_9;
+  tmpvar_9 = (gl_FragCoord.xy - tmpvar_2);
+  tmpvar_8 = sqrt(dot (tmpvar_9, tmpvar_9));
+  highp float tmpvar_10;
+  tmpvar_10 = clamp (((
+    (tmpvar_8 - 0.5)
+   - 99.0) / 2.0), 0.0, 1.0);
+  highp float tmpvar_11;
+  tmpvar_11 = clamp (((
+    (tmpvar_8 + 0.5)
+   - 99.0) / 2.0), 0.0, 1.0);
+  highp float tmpvar_12;
+  highp vec2 tmpvar_13;
+  tmpvar_13 = (gl_FragCoord.xy - tmpvar_2);
+  tmpvar_12 = sqrt(dot (tmpvar_13, tmpvar_13));
+  highp float tmpvar_14;
+  tmpvar_14 = clamp (((
+    (tmpvar_12 - 0.5)
+   - 164.0) / 2.0), 0.0, 1.0);
+  highp float tmpvar_15;
+  tmpvar_15 = clamp (((
+    (tmpvar_12 + 0.5)
+   - 164.0) / 2.0), 0.0, 1.0);
+  finalColor_1 = (finalColor_1 + ((
+    ((1.0 - (tmpvar_10 * (tmpvar_10 * 
+      (3.0 - (2.0 * tmpvar_10))
+    ))) + ((tmpvar_11 * (tmpvar_11 * 
+      (3.0 - (2.0 * tmpvar_11))
+    )) - 1.0))
+   + 
+    ((1.0 - (tmpvar_14 * (tmpvar_14 * 
+      (3.0 - (2.0 * tmpvar_14))
+    ))) + ((tmpvar_15 * (tmpvar_15 * 
+      (3.0 - (2.0 * tmpvar_15))
+    )) - 1.0))
+  ) * vec3(0.74, 0.95, 1.0)));
+  highp float tmpvar_16;
+  highp vec2 tmpvar_17;
+  tmpvar_17 = (gl_FragCoord.xy - tmpvar_2);
+  tmpvar_16 = sqrt(dot (tmpvar_17, tmpvar_17));
+  highp float tmpvar_18;
+  tmpvar_18 = clamp (((
+    (tmpvar_16 - 1.0)
+   - 239.0) / 2.0), 0.0, 1.0);
+  highp float tmpvar_19;
+  tmpvar_19 = clamp (((
+    (tmpvar_16 + 1.0)
+   - 239.0) / 2.0), 0.0, 1.0);
+  finalColor_1 = (finalColor_1 + ((1.0 - 
+    (tmpvar_18 * (tmpvar_18 * (3.0 - (2.0 * tmpvar_18))))
+  ) + (
+    (tmpvar_19 * (tmpvar_19 * (3.0 - (2.0 * tmpvar_19))))
+   - 1.0)));
+  highp vec2 tmpvar_20;
+  tmpvar_20 = (gl_FragCoord.xy - tmpvar_2);
+  highp float tmpvar_21;
+  tmpvar_21 = sqrt(dot (tmpvar_20, tmpvar_20));
+  highp vec2 tmpvar_22;
+  tmpvar_22 = normalize(tmpvar_20);
+  bool tmpvar_23;
+  tmpvar_23 = (0.0 >= tmpvar_22.x);
+  highp float tmpvar_24;
+  tmpvar_24 = ((tmpvar_23) ? (abs(tmpvar_22.x)) : (tmpvar_22.y));
+  highp float tmpvar_25;
+  tmpvar_25 = ((tmpvar_23) ? (tmpvar_22.y) : (abs(tmpvar_22.x)));
+  highp float tmpvar_26;
+  tmpvar_26 = (((abs(tmpvar_25) >= 1e+18)) ? (0.25) : (1.0));
+  highp float tmpvar_27;
+  tmpvar_27 = (1.0/((tmpvar_25 * tmpvar_26)));
+  highp float tmpvar_28;
+  highp float tmpvar_29;
+  tmpvar_29 = (min (abs(
+    (((abs(tmpvar_22.x) == abs(tmpvar_22.y))) ? (1.0) : (abs(((tmpvar_24 * tmpvar_26) * tmpvar_27))))
+  ), 1.0) / max (abs(
+    (((abs(tmpvar_22.x) == abs(tmpvar_22.y))) ? (1.0) : (abs(((tmpvar_24 * tmpvar_26) * tmpvar_27))))
+  ), 1.0));
+  highp float tmpvar_30;
+  tmpvar_30 = (tmpvar_29 * tmpvar_29);
+  tmpvar_30 = (((
+    ((((
+      ((((-0.01213232 * tmpvar_30) + 0.05368138) * tmpvar_30) - 0.1173503)
+     * tmpvar_30) + 0.1938925) * tmpvar_30) - 0.3326756)
+   * tmpvar_30) + 0.9999793) * tmpvar_29);
+  tmpvar_30 = (tmpvar_30 + (float(
+    (1.0 < abs((((
+      abs(tmpvar_22.x)
+     == 
+      abs(tmpvar_22.y)
+    )) ? (1.0) : (abs(
+      ((tmpvar_24 * tmpvar_26) * tmpvar_27)
+    )))))
+  ) * (
+    (tmpvar_30 * -2.0)
+   + 1.570796)));
+  tmpvar_28 = (tmpvar_30 * sign(((
+    (abs(tmpvar_22.x) == abs(tmpvar_22.y))
+  ) ? (1.0) : (
+    abs(((tmpvar_24 * tmpvar_26) * tmpvar_27))
+  ))));
+  tmpvar_28 = (tmpvar_28 + (float(tmpvar_23) * 1.570796));
+  highp float tmpvar_31;
+  tmpvar_31 = (180.0 * (((
+    (min (tmpvar_22.y, tmpvar_27) < 0.0)
+  ) ? (
+    -(tmpvar_28)
+  ) : (tmpvar_28)) / 3.141593));
+  highp float tmpvar_32;
+  tmpvar_32 = clamp (((
+    abs(((float(mod ((tmpvar_31 + 2.0), 45.0))) - 2.0))
+   - 2.0) / 0.0999999), 0.0, 1.0);
+  highp float tmpvar_33;
+  tmpvar_33 = clamp (((
+    (tmpvar_21 - 2.0)
+   - 312.0) / 2.0), 0.0, 1.0);
+  highp float tmpvar_34;
+  tmpvar_34 = clamp (((
+    (tmpvar_21 + 2.0)
+   - 312.0) / 2.0), 0.0, 1.0);
+  finalColor_1 = (finalColor_1 + ((
+    ((tmpvar_32 * (tmpvar_32 * (3.0 - 
+      (2.0 * tmpvar_32)
+    ))) * mix (0.5, 1.0, float((
+      abs(((float(mod (tmpvar_31, 180.0))) - 90.0))
+     >= 45.0))))
+   * 
+    ((1.0 - (tmpvar_33 * (tmpvar_33 * 
+      (3.0 - (2.0 * tmpvar_33))
+    ))) + ((tmpvar_34 * (tmpvar_34 * 
+      (3.0 - (2.0 * tmpvar_34))
+    )) - 1.0))
+  ) * vec3(0.74, 0.95, 1.0)));
+  highp float tmpvar_35;
+  tmpvar_35 = (315.0 + (30.0 * sin(iTime)));
+  highp vec2 tmpvar_36;
+  tmpvar_36 = (gl_FragCoord.xy - tmpvar_2);
+  highp float tmpvar_37;
+  tmpvar_37 = clamp (((
+    (tmpvar_36.x - tmpvar_35)
+   + 9.0) / 2.0), 0.0, 1.0);
+  highp float tmpvar_38;
+  tmpvar_38 = clamp (((
+    (tmpvar_36.x - tmpvar_35)
+   + 1.0) / 2.0), 0.0, 1.0);
+  highp float tmpvar_39;
+  tmpvar_39 = ((7.0 + tmpvar_36.x) - tmpvar_35);
+  highp float tmpvar_40;
+  tmpvar_40 = clamp (((
+    abs(tmpvar_36.y)
+   - tmpvar_39) / (
+    ((9.0 + tmpvar_36.x) - tmpvar_35)
+   - tmpvar_39)), 0.0, 1.0);
+  highp float tmpvar_41;
+  tmpvar_41 = clamp (((
+    (tmpvar_36.x + tmpvar_35)
+   + 1.0) / 2.0), 0.0, 1.0);
+  highp float tmpvar_42;
+  tmpvar_42 = clamp (((
+    (tmpvar_36.x + tmpvar_35)
+   - 7.0) / 2.0), 0.0, 1.0);
+  highp float tmpvar_43;
+  tmpvar_43 = ((7.0 - tmpvar_36.x) - tmpvar_35);
+  highp float tmpvar_44;
+  tmpvar_44 = clamp (((
+    abs(tmpvar_36.y)
+   - tmpvar_43) / (
+    ((9.0 - tmpvar_36.x) - tmpvar_35)
+   - tmpvar_43)), 0.0, 1.0);
+  highp float tmpvar_45;
+  tmpvar_45 = clamp (((
+    (tmpvar_36.y - tmpvar_35)
+   + 9.0) / 2.0), 0.0, 1.0);
+  highp float tmpvar_46;
+  tmpvar_46 = clamp (((
+    (tmpvar_36.y - tmpvar_35)
+   + 1.0) / 2.0), 0.0, 1.0);
+  highp float tmpvar_47;
+  tmpvar_47 = ((7.0 + tmpvar_36.y) - tmpvar_35);
+  highp float tmpvar_48;
+  tmpvar_48 = clamp (((
+    abs(tmpvar_36.x)
+   - tmpvar_47) / (
+    ((9.0 + tmpvar_36.y) - tmpvar_35)
+   - tmpvar_47)), 0.0, 1.0);
+  highp float tmpvar_49;
+  tmpvar_49 = clamp (((
+    (tmpvar_36.y + tmpvar_35)
+   + 1.0) / 2.0), 0.0, 1.0);
+  highp float tmpvar_50;
+  tmpvar_50 = clamp (((
+    (tmpvar_36.y + tmpvar_35)
+   - 7.0) / 2.0), 0.0, 1.0);
+  highp float tmpvar_51;
+  tmpvar_51 = ((7.0 - tmpvar_36.y) - tmpvar_35);
+  highp float tmpvar_52;
+  tmpvar_52 = clamp (((
+    abs(tmpvar_36.x)
+   - tmpvar_51) / (
+    ((9.0 - tmpvar_36.y) - tmpvar_35)
+   - tmpvar_51)), 0.0, 1.0);
+  finalColor_1 = (finalColor_1 + ((
+    ((((
+      (tmpvar_37 * (tmpvar_37 * (3.0 - (2.0 * tmpvar_37))))
+     * 
+      (1.0 - (tmpvar_38 * (tmpvar_38 * (3.0 - 
+        (2.0 * tmpvar_38)
+      ))))
+    ) * (1.0 - 
+      (tmpvar_40 * (tmpvar_40 * (3.0 - (2.0 * tmpvar_40))))
+    )) + ((
+      (tmpvar_41 * (tmpvar_41 * (3.0 - (2.0 * tmpvar_41))))
+     * 
+      (1.0 - (tmpvar_42 * (tmpvar_42 * (3.0 - 
+        (2.0 * tmpvar_42)
+      ))))
+    ) * (1.0 - 
+      (tmpvar_44 * (tmpvar_44 * (3.0 - (2.0 * tmpvar_44))))
+    ))) + (((tmpvar_45 * 
+      (tmpvar_45 * (3.0 - (2.0 * tmpvar_45)))
+    ) * (1.0 - 
+      (tmpvar_46 * (tmpvar_46 * (3.0 - (2.0 * tmpvar_46))))
+    )) * (1.0 - (tmpvar_48 * 
+      (tmpvar_48 * (3.0 - (2.0 * tmpvar_48)))
+    ))))
+   + 
+    (((tmpvar_49 * (tmpvar_49 * 
+      (3.0 - (2.0 * tmpvar_49))
+    )) * (1.0 - (tmpvar_50 * 
+      (tmpvar_50 * (3.0 - (2.0 * tmpvar_50)))
+    ))) * (1.0 - (tmpvar_52 * (tmpvar_52 * 
+      (3.0 - (2.0 * tmpvar_52))
+    ))))
+  ) * vec3(0.87, 0.98, 1.0)));
+  highp float tmpvar_53;
+  highp float tmpvar_54;
+  tmpvar_54 = (90.0 * iTime);
+  highp vec2 tmpvar_55;
+  tmpvar_55 = (gl_FragCoord.xy - tmpvar_2);
+  highp float tmpvar_56;
+  tmpvar_56 = sqrt(dot (tmpvar_55, tmpvar_55));
+  if ((tmpvar_56 < 240.0)) {
+    highp vec2 tmpvar_57;
+    tmpvar_57.x = cos(((tmpvar_54 * 3.141593) / 180.0));
+    tmpvar_57.y = -(sin((
+      (tmpvar_54 * 3.141593)
+     / 180.0)));
+    highp vec2 tmpvar_58;
+    tmpvar_58 = (240.0 * tmpvar_57);
+    highp vec2 tmpvar_59;
+    tmpvar_59 = (tmpvar_55 - (tmpvar_58 * clamp (
+      (dot (tmpvar_55, tmpvar_58) / dot (tmpvar_58, tmpvar_58))
+    , 0.0, 1.0)));
+    highp vec2 tmpvar_60;
+    tmpvar_60 = normalize(tmpvar_55);
+    bool tmpvar_61;
+    tmpvar_61 = (0.0 >= tmpvar_60.x);
+    highp float tmpvar_62;
+    tmpvar_62 = ((tmpvar_61) ? (abs(tmpvar_60.x)) : (tmpvar_60.y));
+    highp float tmpvar_63;
+    tmpvar_63 = ((tmpvar_61) ? (tmpvar_60.y) : (abs(tmpvar_60.x)));
+    highp float tmpvar_64;
+    tmpvar_64 = (((abs(tmpvar_63) >= 1e+18)) ? (0.25) : (1.0));
+    highp float tmpvar_65;
+    tmpvar_65 = (1.0/((tmpvar_63 * tmpvar_64)));
+    highp float tmpvar_66;
+    highp float tmpvar_67;
+    tmpvar_67 = (min (abs(
+      (((abs(tmpvar_60.x) == abs(tmpvar_60.y))) ? (1.0) : (abs(((tmpvar_62 * tmpvar_64) * tmpvar_65))))
+    ), 1.0) / max (abs(
+      (((abs(tmpvar_60.x) == abs(tmpvar_60.y))) ? (1.0) : (abs(((tmpvar_62 * tmpvar_64) * tmpvar_65))))
+    ), 1.0));
+    highp float tmpvar_68;
+    tmpvar_68 = (tmpvar_67 * tmpvar_67);
+    tmpvar_68 = (((
+      ((((
+        ((((-0.01213232 * tmpvar_68) + 0.05368138) * tmpvar_68) - 0.1173503)
+       * tmpvar_68) + 0.1938925) * tmpvar_68) - 0.3326756)
+     * tmpvar_68) + 0.9999793) * tmpvar_67);
+    tmpvar_68 = (tmpvar_68 + (float(
+      (1.0 < abs((((
+        abs(tmpvar_60.x)
+       == 
+        abs(tmpvar_60.y)
+      )) ? (1.0) : (abs(
+        ((tmpvar_62 * tmpvar_64) * tmpvar_65)
+      )))))
+    ) * (
+      (tmpvar_68 * -2.0)
+     + 1.570796)));
+    tmpvar_66 = (tmpvar_68 * sign(((
+      (abs(tmpvar_60.x) == abs(tmpvar_60.y))
+    ) ? (1.0) : (
+      abs(((tmpvar_62 * tmpvar_64) * tmpvar_65))
+    ))));
+    tmpvar_66 = (tmpvar_66 + (float(tmpvar_61) * 1.570796));
+    highp float tmpvar_69;
+    tmpvar_69 = clamp ((sqrt(
+      dot (tmpvar_59, tmpvar_59)
+    ) / 2.0), 0.0, 1.0);
+    tmpvar_53 = ((1.0 - (tmpvar_69 * 
+      (tmpvar_69 * (3.0 - (2.0 * tmpvar_69)))
+    )) + (0.5 * clamp (
+      (1.0 - ((float(mod ((
+        ((180.0 * (((
+          min (tmpvar_60.y, tmpvar_65)
+         < 0.0)) ? (-(tmpvar_66)) : (tmpvar_66))) / 3.141593)
+       + tmpvar_54), 360.0))) / 90.0))
+    , 0.0, 1.0)));
+  } else {
+    tmpvar_53 = 0.0;
+  };
+  finalColor_1 = (finalColor_1 + (tmpvar_53 * vec3(0.35, 0.76, 0.83)));
+  highp float tmpvar_70;
+  highp vec2 tmpvar_71;
+  tmpvar_71 = (gl_FragCoord.xy - tmpvar_2);
+  tmpvar_70 = sqrt(dot (tmpvar_71, tmpvar_71));
+  highp float tmpvar_72;
+  tmpvar_72 = clamp (((
+    (tmpvar_70 - 0.5)
+   - 9.0) / 2.0), 0.0, 1.0);
+  highp float tmpvar_73;
+  tmpvar_73 = clamp (((
+    (tmpvar_70 + 0.5)
+   - 9.0) / 2.0), 0.0, 1.0);
+  finalColor_1 = (finalColor_1 + ((
+    (1.0 - (tmpvar_72 * (tmpvar_72 * (3.0 - 
+      (2.0 * tmpvar_72)
+    ))))
+   + 
+    ((tmpvar_73 * (tmpvar_73 * (3.0 - 
+      (2.0 * tmpvar_73)
+    ))) - 1.0)
+  ) * vec3(0.35, 0.76, 0.83)));
+  highp float tmpvar_74;
+  tmpvar_74 = (0.5 + (0.2 * cos(iTime)));
+  highp float tmpvar_75;
+  highp vec2 tmpvar_76;
+  tmpvar_76 = (gl_FragCoord.xy - tmpvar_2);
+  highp float tmpvar_77;
+  tmpvar_77 = sqrt(dot (tmpvar_76, tmpvar_76));
+  highp float tmpvar_78;
+  tmpvar_78 = abs(normalize(tmpvar_76).y);
+  if ((tmpvar_74 < tmpvar_78)) {
+    highp float tmpvar_79;
+    tmpvar_79 = clamp (((
+      (tmpvar_77 - 0.5)
+     - 261.0) / 2.0), 0.0, 1.0);
+    highp float tmpvar_80;
+    tmpvar_80 = clamp (((
+      (tmpvar_77 + 0.5)
+     - 261.0) / 2.0), 0.0, 1.0);
+    tmpvar_75 = ((1.0 - (tmpvar_79 * 
+      (tmpvar_79 * (3.0 - (2.0 * tmpvar_79)))
+    )) + ((tmpvar_80 * 
+      (tmpvar_80 * (3.0 - (2.0 * tmpvar_80)))
+    ) - 1.0));
+  } else {
+    tmpvar_75 = 0.0;
+  };
+  finalColor_1 = (finalColor_1 + (vec3(0.245, 0.532, 0.581) * tmpvar_75));
+  highp float tmpvar_81;
+  highp vec2 tmpvar_82;
+  tmpvar_82 = (gl_FragCoord.xy - tmpvar_2);
+  tmpvar_81 = sqrt(dot (tmpvar_82, tmpvar_82));
+  if ((tmpvar_81 < 240.0)) {
+    highp vec2 p_83;
+    highp vec2 tmpvar_84;
+    highp float tmpvar_85;
+    tmpvar_85 = (0.1 * iTime);
+    tmpvar_84.x = ((1.3 * cos(
+      (3.0 + tmpvar_85)
+    )) + cos((0.1 * 
+      (3.0 + tmpvar_85)
+    )));
+    tmpvar_84.y = (sin((3.0 + tmpvar_85)) + (1.4 * cos(
+      (0.1 * (3.0 + tmpvar_85))
+    )));
+    highp vec2 tmpvar_86;
+    tmpvar_86 = (gl_FragCoord.xy - (tmpvar_2 + (130.0 * tmpvar_84)));
+    highp float tmpvar_87;
+    tmpvar_87 = clamp (((
+      sqrt(dot (tmpvar_86, tmpvar_86))
+     - 2.0) / 2.0), 0.0, 1.0);
+    finalColor_1 = (finalColor_1 + vec3((1.0 - (tmpvar_87 * 
+      (tmpvar_87 * (3.0 - (2.0 * tmpvar_87)))
+    ))));
+    highp vec2 tmpvar_88;
+    highp float tmpvar_89;
+    tmpvar_89 = (0.15 * iTime);
+    tmpvar_88.x = ((0.9 * cos(
+      ((sin(tmpvar_85) - 2.0) + tmpvar_89)
+    )) + (-1.1 * cos(
+      (0.1 * ((sin(tmpvar_85) - 2.0) + tmpvar_89))
+    )));
+    tmpvar_88.y = ((1.7 * sin(
+      ((sin(tmpvar_85) - 2.0) + tmpvar_89)
+    )) + (0.8 * cos(
+      (0.1 * ((sin(tmpvar_85) - 2.0) + tmpvar_89))
+    )));
+    p_83 = (130.0 * tmpvar_88);
+    highp vec2 tmpvar_90;
+    tmpvar_90 = (gl_FragCoord.xy - (tmpvar_2 + p_83));
+    highp float tmpvar_91;
+    tmpvar_91 = clamp (((
+      sqrt(dot (tmpvar_90, tmpvar_90))
+     - 2.0) / 2.0), 0.0, 1.0);
+    finalColor_1 = (finalColor_1 + vec3((1.0 - (tmpvar_91 * 
+      (tmpvar_91 * (3.0 - (2.0 * tmpvar_91)))
+    ))));
+    highp vec2 tmpvar_92;
+    highp float tmpvar_93;
+    tmpvar_93 = (0.2 * iTime);
+    tmpvar_92.x = ((1.54 * cos(
+      (sin((tmpvar_85 + 7.0)) + tmpvar_93)
+    )) + (1.7 * cos(
+      (0.1 * (sin((tmpvar_85 + 7.0)) + tmpvar_93))
+    )));
+    tmpvar_92.y = ((1.37 * sin(
+      (sin((tmpvar_85 + 7.0)) + tmpvar_93)
+    )) + (1.8 * cos(
+      (0.1 * (sin((tmpvar_85 + 7.0)) + tmpvar_93))
+    )));
+    p_83 = (50.0 * tmpvar_92);
+    highp float tmpvar_94;
+    highp vec2 tmpvar_95;
+    tmpvar_95 = (gl_FragCoord.xy - (tmpvar_2 + p_83));
+    tmpvar_94 = sqrt(dot (tmpvar_95, tmpvar_95));
+    highp float tmpvar_96;
+    tmpvar_96 = (8.0 + (float(mod ((87.0 * iTime), 80.0))));
+    highp float tmpvar_97;
+    tmpvar_97 = clamp (((tmpvar_94 - 4.0) / 2.0), 0.0, 1.0);
+    highp float tmpvar_98;
+    tmpvar_98 = (tmpvar_94 - 1.0);
+    highp float tmpvar_99;
+    tmpvar_99 = clamp (((6.0 - tmpvar_98) / (
+      (tmpvar_94 + 1.0)
+     - tmpvar_98)), 0.0, 1.0);
+    highp float tmpvar_100;
+    tmpvar_100 = (tmpvar_94 - 1.0);
+    highp float tmpvar_101;
+    tmpvar_101 = clamp (((8.0 - tmpvar_100) / (
+      (tmpvar_94 + 1.0)
+     - tmpvar_100)), 0.0, 1.0);
+    highp float tmpvar_102;
+    tmpvar_102 = max (8.0, (tmpvar_96 - 20.0));
+    highp float tmpvar_103;
+    tmpvar_103 = clamp (((tmpvar_94 - tmpvar_102) / (tmpvar_96 - tmpvar_102)), 0.0, 1.0);
+    highp float tmpvar_104;
+    tmpvar_104 = (tmpvar_94 - 1.0);
+    highp float tmpvar_105;
+    tmpvar_105 = clamp (((tmpvar_96 - tmpvar_104) / (
+      (tmpvar_94 + 1.0)
+     - tmpvar_104)), 0.0, 1.0);
+    finalColor_1 = (finalColor_1 + ((
+      ((((
+        (0.5 - (0.5 * cos((30.0 * iTime))))
+       * 
+        (1.0 - (tmpvar_97 * (tmpvar_97 * (3.0 - 
+          (2.0 * tmpvar_97)
+        ))))
+      ) + (1.0 - 
+        (tmpvar_99 * (tmpvar_99 * (3.0 - (2.0 * tmpvar_99))))
+      )) + ((tmpvar_101 * 
+        (tmpvar_101 * (3.0 - (2.0 * tmpvar_101)))
+      ) - 1.0)) + (tmpvar_103 * (tmpvar_103 * (3.0 - 
+        (2.0 * tmpvar_103)
+      ))))
+     + 
+      ((tmpvar_105 * (tmpvar_105 * (3.0 - 
+        (2.0 * tmpvar_105)
+      ))) - 1.0)
+    ) * vec3(1.0, 0.38, 0.227)));
+  };
+  highp vec4 tmpvar_106;
+  tmpvar_106.w = 1.0;
+  tmpvar_106.xyz = finalColor_1;
+  fragColor = tmpvar_106;
+}
+
+
+// stats: 713 alu 0 tex 4 flow
+// inputs: 1
+//  #0: gl_FragCoord (high float) 4x1 [-1] loc 0
+// uniforms: 2 (total size: 0)
+//  #0: iResolution (high float) 3x1 [-1]
+//  #1: iTime (high float) 1x1 [-1]

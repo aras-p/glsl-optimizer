@@ -75,7 +75,10 @@ public:
 	{
 		assert (m_Ptr != NULL);
 		
-		size_t new_length = printf_length(fmt, args);
+		va_list copy;
+		va_copy(copy, args);
+		size_t new_length = vsnprintf(nullptr, 0, fmt, copy);
+		va_end(copy);
 		size_t needed_length = m_Size + new_length + 1;
 		
 		if (m_Capacity < needed_length)

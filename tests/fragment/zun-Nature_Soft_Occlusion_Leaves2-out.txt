@@ -6,26 +6,24 @@ uniform sampler2D unity_Lightmap;
 uniform sampler2D unity_LightmapInd;
 void main ()
 {
-  vec3 tmpvar_1;
-  tmpvar_1 = gl_TexCoord[2].xyz;
-  vec4 light_2;
-  vec4 c_3;
-  c_3 = (texture2D (_MainTex, gl_TexCoord[0].xy) * _Color);
-  float x_4;
-  x_4 = (c_3.w - _Cutoff);
-  if ((x_4 < 0.0)) {
-    discard;
-  };
-  light_2 = -(log2(texture2DProj (_LightBuffer, gl_TexCoord[1])));
-  light_2.xyz = (light_2.xyz + mix ((2.0 * texture2D (unity_LightmapInd, tmpvar_1.xy).xyz), (2.0 * texture2D (unity_Lightmap, tmpvar_1.xy).xyz), vec3(clamp (tmpvar_1.z, 0.0, 1.0))));
+  vec4 xlt_IN_hip_screen_1;
+  vec3 xlt_IN_hip_lmapFade_2;
+  xlt_IN_hip_screen_1 = gl_TexCoord[1];
+  xlt_IN_hip_lmapFade_2 = gl_TexCoord[2].xyz;
+  vec4 light_3;
+  vec4 c_4;
+  c_4 = (texture2D (_MainTex, gl_TexCoord[0].xy) * _Color);
+  if (((c_4.w - _Cutoff) < 0.0)) discard;
+  light_3 = -(log2(texture2DProj (_LightBuffer, vec3(xlt_IN_hip_screen_1.xy, xlt_IN_hip_screen_1.w))));
+  light_3.xyz = (light_3.xyz + mix ((2.0 * texture2D (unity_LightmapInd, xlt_IN_hip_lmapFade_2.xy).xyz), (2.0 * texture2D (unity_Lightmap, xlt_IN_hip_lmapFade_2.xy).xyz), vec3(clamp (xlt_IN_hip_lmapFade_2.z, 0.0, 1.0))));
   vec4 c_5;
-  c_5.xyz = (c_3.xyz * light_2.xyz);
-  c_5.w = c_3.w;
+  c_5.xyz = (c_4.xyz * light_3.xyz);
+  c_5.w = c_4.w;
   gl_FragData[0] = c_5;
 }
 
 
-// stats: 11 alu 5 tex 1 flow
+// stats: 12 alu 5 tex 1 flow
 // inputs: 1
 //  #0: gl_TexCoord (high float) 4x1 [3] loc 4
 // uniforms: 2 (total size: 0)

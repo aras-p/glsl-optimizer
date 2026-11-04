@@ -20,10 +20,10 @@ struct xlatMtlShaderUniform {
   half _TranslucencyViewDependency;
 };
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  ,   texture2d<half> _BumpSpecMap [[texture(0)]], sampler _mtlsmp__BumpSpecMap [[sampler(0)]]
-  ,   texture2d<half> _LightTexture0 [[texture(1)]], sampler _mtlsmp__LightTexture0 [[sampler(1)]]
-  ,   texture2d<half> _MainTex [[texture(2)]], sampler _mtlsmp__MainTex [[sampler(2)]]
-  ,   texture2d<half> _TranslucencyMap [[texture(3)]], sampler _mtlsmp__TranslucencyMap [[sampler(3)]])
+  , texture2d<half> _BumpSpecMap [[texture(0)]], sampler _mtlsmp__BumpSpecMap [[sampler(0)]]
+  , texture2d<half> _LightTexture0 [[texture(1)]], sampler _mtlsmp__LightTexture0 [[sampler(1)]]
+  , texture2d<half> _MainTex [[texture(2)]], sampler _mtlsmp__MainTex [[sampler(2)]]
+  , texture2d<half> _TranslucencyMap [[texture(3)]], sampler _mtlsmp__TranslucencyMap [[sampler(3)]])
 {
   xlatMtlShaderOutput _mtl_o;
   half4 c_1 = 0;
@@ -31,47 +31,44 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   half3 tmpvar_3 = 0;
   half tmpvar_4 = 0;
   half4 tmpvar_5 = 0;
-  tmpvar_5 = _MainTex.sample(_mtlsmp__MainTex, (float2)(_mtl_i.xlv_TEXCOORD0));
+  tmpvar_5 = _MainTex.sample(_mtlsmp__MainTex, (float2)((_mtl_i.xlv_TEXCOORD0)));
   tmpvar_3 = half3((((float3)(tmpvar_5.xyz) * _mtl_u._Color.xyz) * _mtl_i.xlv_COLOR0.w));
   half4 tmpvar_6 = 0;
-  tmpvar_6 = _TranslucencyMap.sample(_mtlsmp__TranslucencyMap, (float2)(_mtl_i.xlv_TEXCOORD0));
+  tmpvar_6 = _TranslucencyMap.sample(_mtlsmp__TranslucencyMap, (float2)((_mtl_i.xlv_TEXCOORD0)));
   tmpvar_4 = half(((float)(tmpvar_6.w) * _mtl_u._Color.x));
   half4 tmpvar_7 = 0;
-  tmpvar_7 = _BumpSpecMap.sample(_mtlsmp__BumpSpecMap, (float2)(_mtl_i.xlv_TEXCOORD0));
+  tmpvar_7 = _BumpSpecMap.sample(_mtlsmp__BumpSpecMap, (float2)((_mtl_i.xlv_TEXCOORD0)));
   half4 normal_8 = 0;
   normal_8.xy = ((tmpvar_7.wy * (half)(2.0)) - (half)(1.0));
   normal_8.z = sqrt((((half)(1.0) - 
     (normal_8.x * normal_8.x)
   ) - (normal_8.y * normal_8.y)));
-  float x_9 = 0;
-  x_9 = ((float)(tmpvar_5.w) - _mtl_u._Cutoff);
-  if ((x_9 < 0.0)) {
-    discard_fragment();
-  };
+  half tmpvar_9 = 0;
+  tmpvar_9 = half(((float)(tmpvar_5.w) - _mtl_u._Cutoff));
+  if ((tmpvar_9 < (half)(0.0))) discard_fragment();
   lightDir_2 = half3(_mtl_i.xlv_TEXCOORD1);
-  float3 tmpvar_10 = 0;
-  tmpvar_10 = normalize(_mtl_i.xlv_TEXCOORD2);
-  half3 viewDir_11 = 0;
-  viewDir_11 = half3(tmpvar_10);
-  half4 c_12 = 0;
+  half3 tmpvar_10 = 0;
+  tmpvar_10 = half3(normalize(_mtl_i.xlv_TEXCOORD2));
+  half4 c_11 = 0;
+  half nl_12 = 0;
+  nl_12 = dot (normal_8.xyz, lightDir_2);
   half tmpvar_13 = 0;
-  tmpvar_13 = dot (normal_8.xyz, lightDir_2);
-  c_12.xyz = (tmpvar_3 * ((
-    ((mix (clamp (
-      -(tmpvar_13)
-    , (half)0.0, (half)1.0), clamp (
-      dot (viewDir_11, -(lightDir_2))
-    , (half)0.0, (half)1.0), _mtl_u._TranslucencyViewDependency) * tmpvar_6.z) * _mtl_u._TranslucencyColor)
-   * (half)(2.0)) + max ((half)0.0, 
-    ((tmpvar_13 * (half)(0.6)) + (half)(0.4))
-  )));
-  c_12.xyz = half3((((float3)(c_12.xyz) * _mtl_u._LightColor0.xyz) + (float)((pow (
-    max ((half)0.0, dot (normal_8.xyz, normalize((lightDir_2 + viewDir_11))))
+  tmpvar_13 = mix (saturate(-(nl_12)), saturate(dot (tmpvar_10, 
+    -(lightDir_2)
+  )), _mtl_u._TranslucencyViewDependency);
+  half tmpvar_14 = 0;
+  tmpvar_14 = max ((half)0.0, ((nl_12 * (half)(0.6)) + (half)(0.4)));
+  nl_12 = tmpvar_14;
+  c_11.xyz = (tmpvar_3 * ((
+    ((tmpvar_13 * tmpvar_6.z) * _mtl_u._TranslucencyColor)
+   * (half)(2.0)) + tmpvar_14));
+  c_11.xyz = half3((((float3)(c_11.xyz) * _mtl_u._LightColor0.xyz) + (float)((pow (
+    max ((half)0.0, dot (normal_8.xyz, normalize((lightDir_2 + tmpvar_10))))
   , 
     (tmpvar_7.x * (half)(128.0))
   ) * tmpvar_4))));
-  c_12.xyz = (c_12.xyz * mix ((half)2.0, (_LightTexture0.sample(_mtlsmp__LightTexture0, (float2)(_mtl_i.xlv_TEXCOORD3)).w * (half)(2.0)), _mtl_u._ShadowStrength));
-  c_1.xyz = c_12.xyz;
+  c_11.xyz = (c_11.xyz * mix ((half)2.0, (_LightTexture0.sample(_mtlsmp__LightTexture0, (float2)((_mtl_i.xlv_TEXCOORD3))).w * (half)(2.0)), _mtl_u._ShadowStrength));
+  c_1.xyz = c_11.xyz;
   c_1.w = tmpvar_5.w;
   _mtl_o._fragData = c_1;
   return _mtl_o;

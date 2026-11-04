@@ -4,11 +4,7 @@ in mediump float xx;
 void main ()
 {
   mediump float c_1;
-  mediump float x_2;
-  x_2 = (xx * 2.0);
-  if ((x_2 < 0.0)) {
-    discard;
-  };
+  if (((xx * 2.0) < 0.0)) discard;
   c_1 = (xx + xx);
   c_1 = (c_1 + xx);
   c_1 = (c_1 + xx);

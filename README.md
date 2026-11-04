@@ -110,17 +110,11 @@ Notes
 Dev Notes
 ---------
 
-Pulling Mesa upstream:
-
-    git fetch upstream
-    git merge upstream/master
-    sh removeDeletedByUs.sh
-    # inspect files, git rm unneeded ones, fix conflicts etc.
-    # git commit
-    
-Rebuilding flex/bison parsers:
-
-* When .y/.l files are changed, the parsers are *not* rebuilt automatically,
-* Run ./generateParsers.sh to do that. You'll need bison & flex (on Mac, do "Install Command Line Tools" from Xcode)
-* I use bison 2.3 and flex 2.5.35 (in OS X 10.8/10.9)
+- Current Mesa codebase is from [Mesa 20.3.5](https://archive.mesa3d.org/older-versions/20.x/mesa-20.3.5.tar.xz).
+- Use release snapshots, not merges with whole Mesa history.
+- We only took the minimal subset of that, as needed by the glsl optimizer. A bunch
+  of files were reduced to only contain what we need; they are mostly marked
+  with `glsl-optimizer change:` comments.
+- In order to rebuild the generated GLSL/glcpp lexers, parsers and some tables,
+  you need to run `./generateParsers.sh`.
 

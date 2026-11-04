@@ -11,18 +11,16 @@ struct xlatMtlShaderOutput {
 struct xlatMtlShaderUniform {
 };
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  ,   texture2d<half> tex_def [[texture(0)]], sampler _mtlsmp_tex_def [[sampler(0)]]
-  ,   texture2d<half> tex_lowp [[texture(1)]], sampler _mtlsmp_tex_lowp [[sampler(1)]]
-  ,   texture2d<float> tex_highp [[texture(2)]], sampler _mtlsmp_tex_highp [[sampler(2)]])
+  , texture2d<half> tex_def [[texture(0)]], sampler _mtlsmp_tex_def [[sampler(0)]]
+  , texture2d<half> tex_lowp [[texture(1)]], sampler _mtlsmp_tex_lowp [[sampler(1)]]
+  , texture2d<float> tex_highp [[texture(2)]], sampler _mtlsmp_tex_highp [[sampler(2)]])
 {
   xlatMtlShaderOutput _mtl_o;
   half4 c3_1 = 0;
-  float4 tmpvar_2 = 0;
-  tmpvar_2 = tex_highp.sample(_mtlsmp_tex_highp, (float2)(_mtl_i.var_mediump));
-  c3_1 = half4((tmpvar_2 * 2.0));
+  c3_1 = half4((tex_highp.sample(_mtlsmp_tex_highp, (float2)((_mtl_i.var_mediump))) * 2.0));
   _mtl_o._fragData = (((
-    ((tex_def.sample(_mtlsmp_tex_def, (float2)(_mtl_i.var_lowp)) * (half)(2.0)) + (tex_def.sample(_mtlsmp_tex_def, (float2)(_mtl_i.var_mediump)) * (half)(2.0)))
-   + c3_1) + (tex_lowp.sample(_mtlsmp_tex_lowp, (float2)(_mtl_i.var_mediump)) * (half)(2.0))) + abs(_mtl_i.var_lowp.xxxx));
+    ((tex_def.sample(_mtlsmp_tex_def, (float2)((_mtl_i.var_lowp))) * (half)(2.0)) + (tex_def.sample(_mtlsmp_tex_def, (float2)((_mtl_i.var_mediump))) * (half)(2.0)))
+   + c3_1) + (tex_lowp.sample(_mtlsmp_tex_lowp, (float2)((_mtl_i.var_mediump))) * (half)(2.0))) + abs(_mtl_i.var_lowp.xxxx));
   return _mtl_o;
 }
 

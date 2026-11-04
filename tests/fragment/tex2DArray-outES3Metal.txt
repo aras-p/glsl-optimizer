@@ -10,33 +10,32 @@ struct xlatMtlShaderOutput {
 struct xlatMtlShaderUniform {
 };
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  ,   texture2d_array<half> myarr [[texture(0)]], sampler _mtlsmp_myarr [[sampler(0)]])
+  , texture2d_array<half> myarr [[texture(0)]], sampler _mtlsmp_myarr [[sampler(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half4 tmpvar_1 = 0;
-  float4 slod_2 = 0;
-  half4 tmpvar_3 = 0;
-  tmpvar_3 = myarr.sample(_mtlsmp_myarr, (float2)((_mtl_i.uv.xyz).xy), (uint)((_mtl_i.uv.xyz).z));
-  float4 tmpvar_4 = 0;
-  tmpvar_4 = float4(tmpvar_3);
-  half4 tmpvar_5 = 0;
-  tmpvar_5 = myarr.sample(_mtlsmp_myarr, (float2)((_mtl_i.uv.xyw).xy), (uint)((_mtl_i.uv.xyw).z));
-  float4 tmpvar_6 = 0;
-  tmpvar_6 = float4(tmpvar_5);
-  half4 tmpvar_7 = 0;
-  tmpvar_7 = myarr.sample(_mtlsmp_myarr, (float2)((_mtl_i.uv.xyz).xy), (uint)((_mtl_i.uv.xyz).z), bias(1.5));
-  float4 tmpvar_8 = 0;
-  tmpvar_8 = float4(tmpvar_7);
-  half4 tmpvar_9 = 0;
-  tmpvar_9 = myarr.sample(_mtlsmp_myarr, (float2)((_mtl_i.uv.xyz).xy), (uint)((_mtl_i.uv.xyz).z), level(2.5));
-  slod_2 = float4(tmpvar_9);
-  tmpvar_1 = half4(((tmpvar_4 + tmpvar_6) + (tmpvar_8 + slod_2)));
-  _mtl_o._fragData = tmpvar_1;
+  float4 slod_1 = 0;
+  float4 sbias_2 = 0;
+  float4 sswiz_3 = 0;
+  float4 s_4 = 0;
+  half3 tmpvar_5 = 0;
+  tmpvar_5 = half3(_mtl_i.uv.xyz);
+  s_4 = float4(myarr.sample(_mtlsmp_myarr, (float2)((tmpvar_5).xy), uint((tmpvar_5).z)));
+  half3 tmpvar_6 = 0;
+  tmpvar_6 = half3(_mtl_i.uv.xyw);
+  sswiz_3 = float4(myarr.sample(_mtlsmp_myarr, (float2)((tmpvar_6).xy), uint((tmpvar_6).z)));
+  float4 tmpvar_7 = 0;
+  tmpvar_7.w = 1.5;
+  tmpvar_7.xyz = _mtl_i.uv.xyz;
+  half4 tmpvar_8 = 0;
+  tmpvar_8 = half4(tmpvar_7);
+  sbias_2 = float4(myarr.sample(_mtlsmp_myarr, (float2)((tmpvar_8.xyz).xy), uint((tmpvar_8.xyz).z), bias(tmpvar_8.w)));
+  slod_1 = float4(myarr.sample(_mtlsmp_myarr, (float2)((_mtl_i.uv.xyz).xy), uint((_mtl_i.uv.xyz).z), level(2.5)));
+  _mtl_o._fragData = half4(((s_4 + sswiz_3) + (sbias_2 + slod_1)));
   return _mtl_o;
 }
 
 
-// stats: 3 alu 4 tex 0 flow
+// stats: 4 alu 4 tex 0 flow
 // inputs: 1
 //  #0: uv (high float) 4x1 [-1]
 // textures: 1

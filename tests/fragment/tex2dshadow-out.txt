@@ -2,7 +2,7 @@ uniform sampler2DShadow shadowmap;
 varying vec4 xlv_TEXCOORD0;
 void main ()
 {
-  gl_FragData[0] = vec4((shadow2D (shadowmap, xlv_TEXCOORD0.xyz).x + shadow2DProj (shadowmap, xlv_TEXCOORD0).x));
+  gl_FragData[0] = vec4((shadow2D (shadowmap, vec3(xlv_TEXCOORD0.xy, xlv_TEXCOORD0.z)).x + shadow2DProj (shadowmap, vec4(xlv_TEXCOORD0.xy, xlv_TEXCOORD0.z, xlv_TEXCOORD0.w)).x));
 }
 
 

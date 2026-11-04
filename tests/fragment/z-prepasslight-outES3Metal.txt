@@ -21,11 +21,11 @@ struct xlatMtlShaderUniform {
   float4 unity_LightmapFade;
 };
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  ,   texture2d<half> _CameraDepthTexture [[texture(0)]], sampler _mtlsmp__CameraDepthTexture [[sampler(0)]]
-  ,   texture2d<half> _CameraNormalsTexture [[texture(1)]], sampler _mtlsmp__CameraNormalsTexture [[sampler(1)]]
-  ,   texturecube<half> _LightTexture0 [[texture(2)]], sampler _mtlsmp__LightTexture0 [[sampler(2)]]
-  ,   texture2d<half> _LightTextureB0 [[texture(3)]], sampler _mtlsmp__LightTextureB0 [[sampler(3)]]
-  ,   texturecube<half> _ShadowMapTexture [[texture(4)]], sampler _mtlsmp__ShadowMapTexture [[sampler(4)]])
+  , texture2d<half> _CameraDepthTexture [[texture(0)]], sampler _mtlsmp__CameraDepthTexture [[sampler(0)]]
+  , texture2d<half> _CameraNormalsTexture [[texture(1)]], sampler _mtlsmp__CameraNormalsTexture [[sampler(1)]]
+  , texturecube<half> _LightTexture0 [[texture(2)]], sampler _mtlsmp__LightTexture0 [[sampler(2)]]
+  , texture2d<half> _LightTextureB0 [[texture(3)]], sampler _mtlsmp__LightTextureB0 [[sampler(3)]]
+  , texturecube<half> _ShadowMapTexture [[texture(4)]], sampler _mtlsmp__ShadowMapTexture [[sampler(4)]])
 {
   xlatMtlShaderOutput _mtl_o;
   half4 res_1 = 0;
@@ -40,130 +40,101 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   float2 uv_10 = 0;
   uv_10 = (_mtl_i.xlv_TEXCOORD0.xy / _mtl_i.xlv_TEXCOORD0.w);
   half4 tmpvar_11 = 0;
-  tmpvar_11 = _CameraNormalsTexture.sample(_mtlsmp__CameraNormalsTexture, (float2)(uv_10));
+  tmpvar_11 = _CameraNormalsTexture.sample(_mtlsmp__CameraNormalsTexture, (float2)((uv_10)));
   normal_9 = ((tmpvar_11.xyz * (half)(2.0)) - (half)(1.0));
   normal_9 = normalize(normal_9);
-  half4 tmpvar_12 = 0;
-  tmpvar_12 = _CameraDepthTexture.sample(_mtlsmp__CameraDepthTexture, (float2)(uv_10));
-  depth_8 = float(tmpvar_12.x);
-  float tmpvar_13 = 0;
-  tmpvar_13 = (1.0/(((_mtl_u._ZBufferParams.x * depth_8) + _mtl_u._ZBufferParams.y)));
-  depth_8 = tmpvar_13;
-  float4 tmpvar_14 = 0;
-  tmpvar_14.w = 1.0;
-  tmpvar_14.xyz = ((_mtl_i.xlv_TEXCOORD1 * (_mtl_u._ProjectionParams.z / _mtl_i.xlv_TEXCOORD1.z)) * tmpvar_13);
-  wpos_7 = (_mtl_u._CameraToWorld * tmpvar_14).xyz;
+  depth_8 = float(_CameraDepthTexture.sample(_mtlsmp__CameraDepthTexture, (float2)((uv_10))).x);
+  float tmpvar_12 = 0;
+  tmpvar_12 = (1.0/(((_mtl_u._ZBufferParams.x * depth_8) + _mtl_u._ZBufferParams.y)));
+  depth_8 = tmpvar_12;
+  float4 tmpvar_13 = 0;
+  tmpvar_13.w = 1.0;
+  tmpvar_13.xyz = ((_mtl_i.xlv_TEXCOORD1 * (_mtl_u._ProjectionParams.z / _mtl_i.xlv_TEXCOORD1.z)) * tmpvar_12);
+  wpos_7 = (_mtl_u._CameraToWorld * tmpvar_13).xyz;
   tolight_6 = (wpos_7 - _mtl_u._LightPos.xyz);
-  float3 tmpvar_15 = 0;
-  tmpvar_15 = normalize(tolight_6);
-  lightDir_5 = half3(-(tmpvar_15));
-  float2 tmpvar_16 = 0;
-  tmpvar_16 = float2((dot (tolight_6, tolight_6) * _mtl_u._LightPos.w));
-  half4 tmpvar_17 = 0;
-  tmpvar_17 = _LightTextureB0.sample(_mtlsmp__LightTextureB0, (float2)(tmpvar_16));
-  atten_4 = float(tmpvar_17.w);
-  float mydist_18 = 0;
-  mydist_18 = (sqrt(dot (tolight_6, tolight_6)) * _mtl_u._LightPositionRange.w);
-  mydist_18 = (mydist_18 * 0.97);
-  float4 shadowVals_19 = 0;
-  float3 vec_20 = 0;
-  vec_20 = (tolight_6 + float3(0.0078125, 0.0078125, 0.0078125));
+  lightDir_5 = half3(-(normalize(tolight_6)));
+  atten_4 = float(_LightTextureB0.sample(_mtlsmp__LightTextureB0, (float2)((float2((dot (tolight_6, tolight_6) * _mtl_u._LightPos.w))))).w);
+  float mydist_14 = 0;
+  float fade_15 = 0;
+  fade_15 = ((tmpvar_13.z * _mtl_u._LightShadowData.z) + _mtl_u._LightShadowData.w);
+  half tmpvar_16 = 0;
+  tmpvar_16 = half(fade_15);
+  fade_15 = float(saturate(tmpvar_16));
+  mydist_14 = (sqrt(dot (tolight_6, tolight_6)) * _mtl_u._LightPositionRange.w);
+  mydist_14 = (mydist_14 * 0.97);
+  float4 shadowVals_17 = 0;
+  float4 packDist_18 = 0;
+  packDist_18 = float4(_ShadowMapTexture.sample(_mtlsmp__ShadowMapTexture, (float3)(((tolight_6 + float3(0.0078125, 0.0078125, 0.0078125))))));
+  shadowVals_17.x = dot (packDist_18, float4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09));
+  float4 packDist_19 = 0;
+  packDist_19 = float4(_ShadowMapTexture.sample(_mtlsmp__ShadowMapTexture, (float3)(((tolight_6 + float3(-0.0078125, -0.0078125, 0.0078125))))));
+  shadowVals_17.y = dot (packDist_19, float4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09));
+  float4 packDist_20 = 0;
+  packDist_20 = float4(_ShadowMapTexture.sample(_mtlsmp__ShadowMapTexture, (float3)(((tolight_6 + float3(-0.0078125, 0.0078125, -0.0078125))))));
+  shadowVals_17.z = dot (packDist_20, float4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09));
   float4 packDist_21 = 0;
-  half4 tmpvar_22 = 0;
-  tmpvar_22 = _ShadowMapTexture.sample(_mtlsmp__ShadowMapTexture, (float3)(vec_20));
-  packDist_21 = float4(tmpvar_22);
-  shadowVals_19.x = dot (packDist_21, float4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09));
-  float3 vec_23 = 0;
-  vec_23 = (tolight_6 + float3(-0.0078125, -0.0078125, 0.0078125));
-  float4 packDist_24 = 0;
-  half4 tmpvar_25 = 0;
-  tmpvar_25 = _ShadowMapTexture.sample(_mtlsmp__ShadowMapTexture, (float3)(vec_23));
-  packDist_24 = float4(tmpvar_25);
-  shadowVals_19.y = dot (packDist_24, float4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09));
-  float3 vec_26 = 0;
-  vec_26 = (tolight_6 + float3(-0.0078125, 0.0078125, -0.0078125));
-  float4 packDist_27 = 0;
+  packDist_21 = float4(_ShadowMapTexture.sample(_mtlsmp__ShadowMapTexture, (float3)(((tolight_6 + float3(0.0078125, -0.0078125, -0.0078125))))));
+  shadowVals_17.w = dot (packDist_21, float4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09));
+  bool4 tmpvar_22 = false;
+  tmpvar_22 = (shadowVals_17 < float4(mydist_14));
+  half4 tmpvar_23 = 0;
+  tmpvar_23 = half4(_mtl_u._LightShadowData.xxxx);
+  half tmpvar_24 = 0;
+  if (tmpvar_22.x) {
+    tmpvar_24 = tmpvar_23.x;
+  } else {
+    tmpvar_24 = 1.0;
+  };
+  half tmpvar_25 = 0;
+  if (tmpvar_22.y) {
+    tmpvar_25 = tmpvar_23.y;
+  } else {
+    tmpvar_25 = 1.0;
+  };
+  half tmpvar_26 = 0;
+  if (tmpvar_22.z) {
+    tmpvar_26 = tmpvar_23.z;
+  } else {
+    tmpvar_26 = 1.0;
+  };
+  half tmpvar_27 = 0;
+  if (tmpvar_22.w) {
+    tmpvar_27 = tmpvar_23.w;
+  } else {
+    tmpvar_27 = 1.0;
+  };
   half4 tmpvar_28 = 0;
-  tmpvar_28 = _ShadowMapTexture.sample(_mtlsmp__ShadowMapTexture, (float3)(vec_26));
-  packDist_27 = float4(tmpvar_28);
-  shadowVals_19.z = dot (packDist_27, float4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09));
-  float3 vec_29 = 0;
-  vec_29 = (tolight_6 + float3(0.0078125, -0.0078125, -0.0078125));
-  float4 packDist_30 = 0;
-  half4 tmpvar_31 = 0;
-  tmpvar_31 = _ShadowMapTexture.sample(_mtlsmp__ShadowMapTexture, (float3)(vec_29));
-  packDist_30 = float4(tmpvar_31);
-  shadowVals_19.w = dot (packDist_30, float4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09));
-  bool4 tmpvar_32 = false;
-  tmpvar_32 = bool4((shadowVals_19 < float4(mydist_18)));
-  float4 tmpvar_33 = 0;
-  tmpvar_33 = _mtl_u._LightShadowData.xxxx;
-  float tmpvar_34 = 0;
-  if (tmpvar_32.x) {
-    tmpvar_34 = tmpvar_33.x;
-  } else {
-    tmpvar_34 = 1.0;
-  };
-  float tmpvar_35 = 0;
-  if (tmpvar_32.y) {
-    tmpvar_35 = tmpvar_33.y;
-  } else {
-    tmpvar_35 = 1.0;
-  };
-  float tmpvar_36 = 0;
-  if (tmpvar_32.z) {
-    tmpvar_36 = tmpvar_33.z;
-  } else {
-    tmpvar_36 = 1.0;
-  };
-  float tmpvar_37 = 0;
-  if (tmpvar_32.w) {
-    tmpvar_37 = tmpvar_33.w;
-  } else {
-    tmpvar_37 = 1.0;
-  };
-  half4 tmpvar_38 = 0;
-  tmpvar_38.x = half(tmpvar_34);
-  tmpvar_38.y = half(tmpvar_35);
-  tmpvar_38.z = half(tmpvar_36);
-  tmpvar_38.w = half(tmpvar_37);
-  half tmpvar_39 = 0;
-  tmpvar_39 = dot (tmpvar_38, (half4)float4(0.25, 0.25, 0.25, 0.25));
-  atten_4 = (atten_4 * (float)(tmpvar_39));
-  float4 tmpvar_40 = 0;
-  tmpvar_40.w = 1.0;
-  tmpvar_40.xyz = wpos_7;
-  half4 tmpvar_41 = 0;
-  float3 P_42 = 0;
-  P_42 = (_mtl_u._LightMatrix0 * tmpvar_40).xyz;
-  tmpvar_41 = _LightTexture0.sample(_mtlsmp__LightTexture0, (float3)(P_42));
-  atten_4 = (atten_4 * (float)(tmpvar_41.w));
-  float3 tmpvar_43 = 0;
-  tmpvar_43 = normalize(((float3)(lightDir_5) - normalize(
+  tmpvar_28.x = tmpvar_24;
+  tmpvar_28.y = tmpvar_25;
+  tmpvar_28.z = tmpvar_26;
+  tmpvar_28.w = tmpvar_27;
+  atten_4 = (atten_4 * (float)(dot (tmpvar_28, (half4)float4(0.25, 0.25, 0.25, 0.25))));
+  float4 tmpvar_29 = 0;
+  tmpvar_29.w = 1.0;
+  tmpvar_29.xyz = wpos_7;
+  atten_4 = (atten_4 * (float)(_LightTexture0.sample(_mtlsmp__LightTexture0, (float3)(((_mtl_u._LightMatrix0 * tmpvar_29).xyz))).w));
+  h_3 = half3(normalize(((float3)(lightDir_5) - normalize(
     (wpos_7 - _mtl_u._WorldSpaceCameraPos)
-  )));
-  h_3 = half3(tmpvar_43);
-  half tmpvar_44 = 0;
-  tmpvar_44 = pow (max ((half)0.0, dot (h_3, normal_9)), (tmpvar_11.w * (half)(128.0)));
-  spec_2 = float(tmpvar_44);
-  spec_2 = (spec_2 * clamp (atten_4, 0.0, 1.0));
+  ))));
+  spec_2 = float(pow (max ((half)0.0, dot (h_3, normal_9)), (tmpvar_11.w * (half)(128.0))));
+  half tmpvar_30 = 0;
+  tmpvar_30 = half(atten_4);
+  spec_2 = (spec_2 * (float)(saturate(tmpvar_30)));
   res_1.xyz = half3((_mtl_u._LightColor.xyz * ((float)(max ((half)0.0, 
     dot (lightDir_5, normal_9)
   )) * atten_4)));
-  half3 c_45 = 0;
-  c_45 = half3(_mtl_u._LightColor.xyz);
-  res_1.w = half((spec_2 * (float)(dot (c_45, (half3)float3(0.22, 0.707, 0.071)))));
-  float tmpvar_46 = 0;
-  tmpvar_46 = clamp ((1.0 - (
-    (tmpvar_14.z * _mtl_u.unity_LightmapFade.z)
-   + _mtl_u.unity_LightmapFade.w)), 0.0, 1.0);
-  res_1 = ((half4)((float4)(res_1) * tmpvar_46));
+  half3 tmpvar_31 = 0;
+  tmpvar_31 = half3(_mtl_u._LightColor.xyz);
+  res_1.w = half((spec_2 * (float)(dot (tmpvar_31, (half3)float3(0.22, 0.707, 0.071)))));
+  half tmpvar_32 = 0;
+  tmpvar_32 = half((1.0 - ((tmpvar_13.z * _mtl_u.unity_LightmapFade.z) + _mtl_u.unity_LightmapFade.w)));
+  res_1 = (res_1 * saturate(tmpvar_32));
   _mtl_o._fragData = exp2(-(res_1));
   return _mtl_o;
 }
 
 
-// stats: 62 alu 8 tex 4 flow
+// stats: 65 alu 8 tex 4 flow
 // inputs: 2
 //  #0: xlv_TEXCOORD0 (high float) 4x1 [-1]
 //  #1: xlv_TEXCOORD1 (high float) 3x1 [-1]

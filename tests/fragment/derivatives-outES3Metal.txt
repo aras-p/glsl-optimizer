@@ -13,15 +13,15 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
 {
   xlatMtlShaderOutput _mtl_o;
   half4 res_1 = 0;
-  float tmpvar_2 = 0;
-  tmpvar_2 = dfdx(_mtl_i.xlv_TEXCOORD0.x);
-  res_1.x = half(tmpvar_2);
-  float tmpvar_3 = 0;
-  tmpvar_3 = dfdx(_mtl_i.xlv_TEXCOORD0.y);
-  res_1.y = half(tmpvar_3);
-  float tmpvar_4 = 0;
-  tmpvar_4 = (abs(dfdx(_mtl_i.xlv_TEXCOORD0.z)) + abs(dfdy(_mtl_i.xlv_TEXCOORD0.z)));
-  res_1.z = half(tmpvar_4);
+  half tmpvar_2 = 0;
+  tmpvar_2 = half(_mtl_i.xlv_TEXCOORD0.x);
+  res_1.x = dfdx(tmpvar_2);
+  half tmpvar_3 = 0;
+  tmpvar_3 = half(_mtl_i.xlv_TEXCOORD0.y);
+  res_1.y = dfdx(tmpvar_3);
+  half tmpvar_4 = 0;
+  tmpvar_4 = half(_mtl_i.xlv_TEXCOORD0.z);
+  res_1.z = (abs(dfdx(tmpvar_4)) + abs(dfdy(tmpvar_4)));
   res_1.w = half(1.0);
   _mtl_o._fragData = res_1;
   return _mtl_o;

@@ -17,18 +17,18 @@ struct xlatMtlShaderUniform {
 vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half2 tmpvar_1 = 0;
-  tmpvar_1 = half2(_mtl_i._glesMultiTexCoord0.xy);
-  float4 tmpvar_2 = 0;
-  tmpvar_2.xyz = normalize(_mtl_i._glesTANGENT.xyz);
-  tmpvar_2.w = _mtl_i._glesTANGENT.w;
-  half4 tmpvar_3 = 0;
-  tmpvar_3.xy = (tmpvar_1 * (half)(0.3));
-  tmpvar_3.xyz = half3(((float3)(tmpvar_3.xyz) + ((tmpvar_2.xyz * 0.5) + 0.5)));
-  tmpvar_3.w = half(0.0);
+  float4 tmpvar_1 = 0;
+  tmpvar_1.xyz = normalize(_mtl_i._glesTANGENT.xyz);
+  tmpvar_1.w = _mtl_i._glesTANGENT.w;
+  half2 tmpvar_2 = 0;
+  tmpvar_2 = half2(_mtl_i._glesMultiTexCoord0.xy);
+  half4 o_color_3 = 0;
+  o_color_3.xy = (tmpvar_2 * (half)(0.3));
+  o_color_3.xyz = half3(((float3)(o_color_3.xyz) + ((tmpvar_1.xyz * 0.5) + 0.5)));
+  o_color_3.w = half(0.0);
   _mtl_o.gl_Position = (_mtl_u.glstate_matrix_mvp * _mtl_i._glesVertex);
-  _mtl_o.xlv_TEXCOORD0 = tmpvar_1;
-  _mtl_o.xlv_TEXCOORD1 = tmpvar_3;
+  _mtl_o.xlv_TEXCOORD0 = tmpvar_2;
+  _mtl_o.xlv_TEXCOORD1 = o_color_3;
   return _mtl_o;
 }
 

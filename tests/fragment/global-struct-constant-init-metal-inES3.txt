@@ -1,4 +1,5 @@
 #version 300 es
+precision mediump float;
 vec4 xll_texCUBElod(samplerCube s, vec4 coord) {
   return textureLod( s, coord.xyz, coord.w);
 }

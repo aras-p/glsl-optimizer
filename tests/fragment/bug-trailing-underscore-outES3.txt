@@ -1,19 +1,18 @@
 #version 300 es
-precision mediump float;
-uniform highp int count_;
-in vec2 uv_;
-out vec4 color_;
+uniform mediump int count_;
+in mediump vec2 uv_;
+out mediump vec4 color_;
 void main ()
 {
-  float q_2;
-  float q_3;
+  mediump float q_2;
+  mediump float q_3;
   q_3 = uv_.x;
   q_2 = uv_.y;
-  for (highp int i_1 = 0; i_1 < count_; i_1++) {
+  for (mediump int i_1 = 0; i_1 < count_; i_1++) {
     q_3 = (q_3 + q_2);
     q_2 = (q_2 * uv_.x);
   };
-  vec4 tmpvar_4;
+  mediump vec4 tmpvar_4;
   tmpvar_4.zw = vec2(0.0, 1.0);
   tmpvar_4.x = q_3;
   tmpvar_4.y = q_2;
@@ -23,6 +22,6 @@ void main ()
 
 // stats: 6 alu 0 tex 2 flow
 // inputs: 1
-//  #0: uv_ (high float) 2x1 [-1]
+//  #0: uv_ (medium float) 2x1 [-1]
 // uniforms: 1 (total size: 0)
-//  #0: count_ (high int) 1x1 [-1]
+//  #0: count_ (medium int) 1x1 [-1]
