@@ -430,7 +430,9 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 	print_var_name (ir);
 	print_type_post(buffer, ir->type, false);
 	
-	if (ir->constant_value &&
+	ir_constant* initializer = ir->data.mode == ir_var_uniform
+		? ir->constant_initializer : ir->constant_value;
+	if (initializer &&
 		ir->data.mode != ir_var_shader_in &&
 		ir->data.mode != ir_var_shader_out &&
 		ir->data.mode != ir_var_function_in &&
@@ -438,7 +440,7 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 		ir->data.mode != ir_var_function_inout)
 	{
 		buffer.asprintf_append (" = ");
-		visit (ir->constant_value);
+		visit (initializer);
 	}
 }
 

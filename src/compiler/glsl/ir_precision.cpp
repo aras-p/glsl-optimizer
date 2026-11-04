@@ -104,8 +104,13 @@ public:
    }
 
    ir_visitor_status visit_leave(ir_assignment *a) override {
-      // A struct field's precision belongs to its type, not its containing var.
-      if (ir_dereference_variable *d = a->lhs->as_dereference_variable())
+      // Element writes also determine matrix/array precision. Infer it before
+      // copy propagation can erase a conversion involving an untyped temporary.
+      // Stop at struct fields: their precision belongs to the field's type.
+      ir_rvalue *lhs = a->lhs;
+      while (ir_dereference_array *element = lhs->as_dereference_array())
+         lhs = element->array;
+      if (ir_dereference_variable *d = lhs->as_dereference_variable())
          infer(d->var, a->rhs->get_precision());
       return visit_continue;
    }
