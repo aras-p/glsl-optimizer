@@ -515,17 +515,25 @@ public:                                                                  \
       ralloc_free(p);                                                    \
    }
 
+/* glsl-optimizer change: matching placement deletes handle failed constructors.
+ * Ralloc cleanup must clear the registered destructor; an incompletely
+ * constructed object must not be destroyed. Linear children cannot be freed
+ * individually and remain owned by their allocator. */
 #define DECLARE_RALLOC_CXX_OPERATORS(type) \
-   DECLARE_ALLOC_CXX_OPERATORS_TEMPLATE(type, ralloc_size)
+   DECLARE_ALLOC_CXX_OPERATORS_TEMPLATE(type, ralloc_size) \
+   static void operator delete(void *p, void *) { operator delete(p); }
 
 #define DECLARE_RZALLOC_CXX_OPERATORS(type) \
-   DECLARE_ALLOC_CXX_OPERATORS_TEMPLATE(type, rzalloc_size)
+   DECLARE_ALLOC_CXX_OPERATORS_TEMPLATE(type, rzalloc_size) \
+   static void operator delete(void *p, void *) { operator delete(p); }
 
 #define DECLARE_LINEAR_ALLOC_CXX_OPERATORS(type) \
-   DECLARE_ALLOC_CXX_OPERATORS_TEMPLATE(type, linear_alloc_child)
+   DECLARE_ALLOC_CXX_OPERATORS_TEMPLATE(type, linear_alloc_child) \
+   static void operator delete(void *, void *) {}
 
 #define DECLARE_LINEAR_ZALLOC_CXX_OPERATORS(type) \
-   DECLARE_ALLOC_CXX_OPERATORS_TEMPLATE(type, linear_zalloc_child)
+   DECLARE_ALLOC_CXX_OPERATORS_TEMPLATE(type, linear_zalloc_child) \
+   static void operator delete(void *, void *) {}
 
 
 /**
