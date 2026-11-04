@@ -368,7 +368,8 @@ tree_grafting_basic_block(ir_instruction *bb_first,
           lhs_var->data.mode == ir_var_shader_shared)
          continue;
 
-      if (lhs_var->data.precise)
+      /* glsl-optimizer change: grafting must not remove a half/float conversion. */
+      if (lhs_var->data.precise || ir_precision_conversion(assign->lhs, assign->rhs))
          continue;
 
       /* Do not graft sampler and image variables. This is a workaround to

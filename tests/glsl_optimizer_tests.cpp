@@ -257,6 +257,13 @@ static bool CheckGLSL (bool vertex, bool gles, const std::string& testName, cons
 		replace_string (src, "#version 300 es", "", 0);
 	}
 	
+	// Desktop GL has no equivalent external-image sampler extension.
+	if (gles && src.find("#extension GL_OES_EGL_image_external_essl3") != std::string::npos) {
+		if (!strcmp(prefix, "input"))
+			printf("\n  %s: skipping desktop OpenGL validation of external textures\n", testName.c_str());
+		return true;
+	}
+
 	// can't check FB fetch on PC
 	if (src.find("#extension GL_EXT_shader_framebuffer_fetch") != std::string::npos)
 		return true;
@@ -436,7 +443,7 @@ static bool TestFile (glslopt_ctx* ctx, bool vertex,
 	bool updateExpected,
 	bool gles,
 	bool doCheckGLSL,
-	bool doCheckMetal)
+	bool doCheckMetal, bool reparse = false)
 {
 	std::string input;
 	if (!ReadStringFromFile (inputPath.c_str(), input))
@@ -464,11 +471,28 @@ static bool TestFile (glslopt_ctx* ctx, bool vertex,
 	glslopt_shader* shader = glslopt_optimize (ctx, type, input.c_str(), 0);
 
 	bool optimizeOk = glslopt_get_status(shader);
+	if (optimizeOk && (!glslopt_get_raw_output(shader) || !glslopt_get_output(shader))) {
+		printf("\n  %s: optimizer returned no source output.\n", testName.c_str());
+		glslopt_shader_delete(shader);
+		return false;
+	}
 	if (optimizeOk)
 	{
 		std::string textHir = glslopt_get_raw_output (shader);
 		std::string textOpt = glslopt_get_output (shader);
 
+		if (reparse) {
+			for (const std::string* output : {&textHir, &textOpt}) {
+				glslopt_shader* parsed = glslopt_optimize(ctx, type, output->c_str(), output == &textHir ? kGlslOptionNotFullShader : 0);
+				if (!glslopt_get_status(parsed)) {
+					printf("\n  %s: printed %s does not compile: %s\n", testName.c_str(),
+						output == &textHir ? "raw" : "optimized", glslopt_get_log(parsed));
+					WriteStringToFile(actualPath + (output == &textHir ? ".raw" : ".invalid"), *output);
+					res = false;
+				}
+				glslopt_shader_delete(parsed);
+			}
+		}
 		// append stats
 		char buffer[1000];
 		int statsAlu, statsTex, statsFlow;
@@ -550,7 +574,7 @@ static bool TestFile (glslopt_ctx* ctx, bool vertex,
 		
 		if (!haveExpected || textOpt != outputOpt)
 		{
-			if (updateExpected)
+			if (updateExpected && res)
 			{
 				if (!WriteStringToFile(outputPath, textOpt))
 				{
@@ -622,7 +646,7 @@ int main (int argc, const char** argv)
 	if (hasMetal)
 	{
 #ifdef __APPLE__
-		if (system("xcrun --sdk iphoneos --find metal > /dev/null 2>&1") != 0)
+		if (system("xcrun --sdk iphoneos metal --version > /dev/null 2>&1") != 0)
 #endif
 		{
 			printf("Metal validation requires macOS and an Xcode iPhoneOS Metal compiler.\n");
@@ -684,7 +708,7 @@ int main (int argc, const char** argv)
 				std::string outname = inname.substr (0,inname.size()-strlen(kApiIn[api])) + kApiOut[api];
 				std::string outnameMetal = inname.substr (0,inname.size()-strlen(kApiIn[api])) + kApiOutMetal[api];
 				const bool useMetal = (api == 0);
-				bool ok = TestFile (ctx[api], type==0, inname, testFolder + "/" + inname, testFolder + "/" + outname, actualFolder + "/" + outname + ".actual", updateExpected, api==0, hasOpenGL, false);
+				bool ok = TestFile (ctx[api], type==0, inname, testFolder + "/" + inname, testFolder + "/" + outname, actualFolder + "/" + outname + ".actual", updateExpected, api==0, hasOpenGL, false, true);
 				if (!ok)
 				{
 					++errors;

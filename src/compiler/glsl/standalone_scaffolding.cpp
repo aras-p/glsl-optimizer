@@ -273,3 +273,10 @@ void initialize_context_to_defaults(struct gl_context *ctx, gl_api api)
 
    _mesa_locale_init();
 }
+
+/* glsl-optimizer change: standalone allocation diagnostics need no Mesa driver. */
+extern "C" void
+_mesa_error_no_memory(const char *caller)
+{
+   fprintf(stderr, "Mesa: out of memory in %s\n", caller);
+}

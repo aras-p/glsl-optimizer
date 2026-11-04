@@ -58,6 +58,9 @@ public:
    /** Number of times the variable is referenced, including assignments. */
    unsigned referenced_count;
 
+   /* glsl-optimizer change: self-updates alone do not make a local live. */
+   unsigned referenced_count_noself;
+
    /** Number of times the variable is assigned. */
    unsigned assigned_count;
 
@@ -73,7 +76,10 @@ public:
    virtual ir_visitor_status visit(ir_dereference_variable *);
 
    virtual ir_visitor_status visit_enter(ir_function_signature *);
+   virtual ir_visitor_status visit_enter(ir_assignment *);
    virtual ir_visitor_status visit_leave(ir_assignment *);
+
+   ir_variable *current_lhs = nullptr;
 
    /**
     * Find variable in the hash table, and insert it if not present

@@ -320,6 +320,8 @@ ir_function_signature::clone_prototype(void *mem_ctx, struct hash_table *ht) con
       new(mem_ctx) ir_function_signature(this->return_type);
 
    copy->is_defined = false;
+   /* glsl-optimizer change: linking must retain declared return precision. */
+   copy->return_precision = this->return_precision;
    copy->builtin_avail = this->builtin_avail;
    copy->origin = this;
 
@@ -354,13 +356,17 @@ ir_constant::clone(void *mem_ctx, struct hash_table *ht) const
    case GLSL_TYPE_UINT8:
    case GLSL_TYPE_INT8:
    case GLSL_TYPE_SAMPLER:
-   case GLSL_TYPE_IMAGE:
-      return new(mem_ctx) ir_constant(this->type, &this->value);
+   case GLSL_TYPE_IMAGE: {
+      ir_constant *c = new(mem_ctx) ir_constant(this->type, &this->value);
+      c->source_precision = this->source_precision;
+      return c;
+   }
 
    case GLSL_TYPE_STRUCT:
    case GLSL_TYPE_ARRAY: {
       ir_constant *c = new(mem_ctx) ir_constant;
 
+      c->source_precision = this->source_precision;
       c->type = this->type;
       c->const_elements = ralloc_array(c, ir_constant *, this->type->length);
       for (unsigned i = 0; i < this->type->length; i++) {

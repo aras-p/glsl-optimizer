@@ -204,6 +204,7 @@ ir_expression::ir_expression(int op, const struct glsl_type *type,
    this->operands[2] = op2;
    this->operands[3] = op3;
    init_num_operands();
+   update_precision();
 
 #ifndef NDEBUG
    for (unsigned i = num_operands; i < 4; i++) {
@@ -227,6 +228,7 @@ ir_expression::ir_expression(int op, ir_rvalue *op0)
 
    assert(op <= ir_last_unop);
    init_num_operands();
+   update_precision();
    assert(num_operands == 1);
    assert(this->operands[0]);
 
@@ -238,6 +240,7 @@ ir_expression::ir_expression(int op, ir_rvalue *op0)
    case ir_unop_sign:
    case ir_unop_rcp:
    case ir_unop_rsq:
+   case ir_unop_normalize:
    case ir_unop_sqrt:
    case ir_unop_exp:
    case ir_unop_log:
@@ -474,6 +477,7 @@ ir_expression::ir_expression(int op, ir_rvalue *op0, ir_rvalue *op1)
 
    assert(op > ir_last_unop);
    init_num_operands();
+   update_precision();
    assert(num_operands == 2);
    for (unsigned i = 0; i < num_operands; i++) {
       assert(this->operands[i] != NULL);
@@ -611,6 +615,7 @@ ir_expression::ir_expression(int op, ir_rvalue *op0, ir_rvalue *op1,
 
    assert(op > ir_last_binop && op <= ir_last_triop);
    init_num_operands();
+   update_precision();
    assert(num_operands == 3);
    for (unsigned i = 0; i < num_operands; i++) {
       assert(this->operands[i] != NULL);
@@ -1876,6 +1881,7 @@ ir_swizzle::ir_swizzle(ir_rvalue *val, unsigned x, unsigned y, unsigned z,
 {
    const unsigned components[4] = { x, y, z, w };
    this->init_mask(components, count);
+   update_precision();
 }
 
 ir_swizzle::ir_swizzle(ir_rvalue *val, const unsigned *comp,
@@ -1883,11 +1889,13 @@ ir_swizzle::ir_swizzle(ir_rvalue *val, const unsigned *comp,
    : ir_rvalue(ir_type_swizzle), val(val)
 {
    this->init_mask(comp, count);
+   update_precision();
 }
 
 ir_swizzle::ir_swizzle(ir_rvalue *val, ir_swizzle_mask mask)
    : ir_rvalue(ir_type_swizzle), val(val), mask(mask)
 {
+   update_precision();
    this->type = glsl_type::get_instance(val->type->base_type,
 					mask.num_components, 1);
 }

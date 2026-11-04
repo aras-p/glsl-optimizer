@@ -30,6 +30,20 @@
 #include "ir.h"
 #include "ir_basic_block.h"
 
+/* glsl-optimizer change: discard-only branches do not interrupt execution
+ * for surviving fragments. Keep their condition in the block's traversal. */
+static ir_if *as_if_skip_discard(ir_instruction *ir)
+{
+   ir_if *branch = ir->as_if();
+   if (branch && branch->else_instructions.is_empty() &&
+       branch->then_instructions.length() == 1 &&
+       static_cast<ir_instruction*>(branch->then_instructions.get_head())->as_discard())
+      return nullptr;
+   return branch;
+}
+
+
+
 /**
  * Calls a user function for every basic block in the instruction stream.
  *
@@ -64,7 +78,7 @@ void call_for_basic_blocks(exec_list *instructions,
       if (!leader)
 	 leader = ir;
 
-      if ((ir_if = ir->as_if())) {
+      if ((ir_if = as_if_skip_discard(ir))) {
 	 callback(leader, ir, data);
 	 leader = NULL;
 
@@ -74,7 +88,8 @@ void call_for_basic_blocks(exec_list *instructions,
 	 callback(leader, ir, data);
 	 leader = NULL;
 	 call_for_basic_blocks(&ir_loop->body_instructions, callback, data);
-      } else if (ir->as_jump() || ir->as_call()) {
+      } else if ((ir->as_jump() &&
+                  !(ir->as_discard() && ir->as_discard()->condition)) || ir->as_call()) {
 	 callback(leader, ir, data);
 	 leader = NULL;
       } else if ((ir_function = ir->as_function())) {

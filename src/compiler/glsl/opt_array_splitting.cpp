@@ -89,7 +89,7 @@ using namespace opt_array_splitting;
  */
 class ir_array_reference_visitor : public ir_hierarchical_visitor {
 public:
-   ir_array_reference_visitor(void)
+   ir_array_reference_visitor(bool split_shader_outputs) : split_shader_outputs(split_shader_outputs)
    {
       this->mem_ctx = ralloc_context(NULL);
       this->variable_list.make_empty();
@@ -102,6 +102,7 @@ public:
    }
 
    bool get_split_list(exec_list *instructions, bool linked);
+   bool split_shader_outputs;
 
    virtual ir_visitor_status visit(ir_variable *);
    virtual ir_visitor_status visit(ir_dereference_variable *);
@@ -128,7 +129,8 @@ ir_array_reference_visitor::get_variable_entry(ir_variable *var)
    assert(var);
 
    if (var->data.mode != ir_var_auto &&
-       var->data.mode != ir_var_temporary)
+       var->data.mode != ir_var_temporary &&
+       !(split_shader_outputs && var->data.mode == ir_var_shader_out))
       return NULL;
 
    if (!(var->type->is_array() || var->type->is_matrix()))
@@ -445,9 +447,9 @@ ir_array_splitting_visitor::visit_leave(ir_assignment *ir)
 }
 
 bool
-optimize_split_arrays(exec_list *instructions, bool linked)
+optimize_split_arrays(exec_list *instructions, bool linked, bool split_shader_outputs)
 {
-   ir_array_reference_visitor refs;
+   ir_array_reference_visitor refs(split_shader_outputs);
    if (!refs.get_split_list(instructions, linked))
       return false;
 
@@ -473,7 +475,19 @@ optimize_split_arrays(exec_list *instructions, bool linked)
          const char *name = ralloc_asprintf(mem_ctx, "%s_%d",
                                             entry->var->name, i);
          ir_variable *new_var =
-            new(entry->mem_ctx) ir_variable(subtype, name, ir_var_temporary);
+            new(entry->mem_ctx) ir_variable(subtype, name,
+               entry->var->data.mode == ir_var_shader_out ? ir_var_shader_out : ir_var_temporary);
+
+         /* glsl-optimizer change: Metal color arrays become separate outputs. */
+         if (entry->var->data.mode == ir_var_shader_out) {
+            new_var->data.mode = ir_var_shader_out;
+            new_var->data.fb_fetch_output = entry->var->data.fb_fetch_output;
+            new_var->data.explicit_location = entry->var->data.explicit_location;
+            new_var->data.location = entry->var->data.location + i;
+         }
+         /* glsl-optimizer change: splitting must retain precision boundaries. */
+         new_var->data.precision = entry->var->data.precision;
+         new_var->data.precision_inferred = entry->var->data.precision_inferred;
 
          /* Do not lose memory/format qualifiers when arrays of images are
           * split.

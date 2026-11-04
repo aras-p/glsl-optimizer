@@ -85,6 +85,7 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
 
    /* Set default language version and extensions */
    this->language_version = 110;
+   this->had_version_string = false;
    this->forced_language_version = ctx->Const.ForceGLSLVersion;
    if (ctx->Const.GLSLZeroInit == 1) {
       this->zero_init = (1u << ir_var_auto) | (1u << ir_var_temporary) | (1u << ir_var_shader_out);
@@ -398,6 +399,7 @@ void
 _mesa_glsl_parse_state::process_version_directive(YYLTYPE *locp, int version,
                                                   const char *ident)
 {
+   this->had_version_string = true;
    bool es_token_present = false;
    bool compat_token_present = false;
    bool core_token_present = false;
@@ -2127,7 +2129,8 @@ opt_shader_and_create_symbol_table(struct gl_context *ctx,
 
 void
 _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader,
-                          bool dump_ast, bool dump_hir)
+                          bool dump_ast, bool dump_hir, bool skip_preprocessor,
+                          struct _mesa_glsl_parse_state **retained_state)
 {
    const char *source = shader->Source;
 
@@ -2138,8 +2141,10 @@ _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader,
       (void) p_atomic_cmpxchg(&ir_variable::temporaries_allocate_names,
                               false, true);
 
-   state->error = glcpp_preprocess(state, &source, &state->info_log,
-                                   add_builtin_defines, state, ctx);
+   /* glsl-optimizer change: preserve the public SkipPreprocessor option. */
+   if (!skip_preprocessor)
+      state->error = glcpp_preprocess(state, &source, &state->info_log,
+                                      add_builtin_defines, state, ctx);
 
    if (!state->error) {
      _mesa_glsl_lexer_ctor(state, source);
@@ -2190,7 +2195,12 @@ _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader,
    }
 
    delete state->symbols;
-   ralloc_free(state);
+   state->symbols = nullptr;
+   /* glsl-optimizer change: source printers need version/extension metadata. */
+   if (retained_state)
+      *retained_state = state;
+   else
+      ralloc_free(state);
 }
 
 } /* extern "C" */
@@ -2236,6 +2246,8 @@ do_common_optimization(exec_list *ir, bool linked,
       }                                                                 \
    } while (false)
 
+   /* glsl-optimizer change: infer before inlining/copying can erase boundaries. */
+   OPT(propagate_precision, ir);
    OPT(lower_instructions, ir, SUB_TO_ADD_NEG);
 
    if (linked) {
@@ -2243,6 +2255,7 @@ do_common_optimization(exec_list *ir, bool linked,
       OPT(do_dead_functions, ir);
       OPT(do_structure_splitting, ir);
    }
+   OPT(propagate_precision, ir);
    propagate_invariance(ir);
    OPT(do_if_simplification, ir);
    OPT(opt_flatten_nested_if_blocks, ir);

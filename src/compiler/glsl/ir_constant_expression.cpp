@@ -788,6 +788,22 @@ ir_expression::constant_expression_value(void *mem_ctx,
       break;
    }
 
+   /* glsl-optimizer change: fold normalize without forcing a value for zero. */
+   if (this->operation == ir_unop_normalize) {
+      double length_squared = 0.0;
+      for (unsigned i = 0; i < op[0]->type->vector_elements; ++i) {
+         double v = op[0]->type->is_double() ? op[0]->value.d[i] : op[0]->value.f[i];
+         length_squared += v * v;
+      }
+      if (length_squared == 0.0) return NULL;
+      double length = sqrt(length_squared);
+      for (unsigned i = 0; i < op[0]->type->vector_elements; ++i) {
+         if (return_type->is_double()) data.d[i] = op[0]->value.d[i] / length;
+         else data.f[i] = op[0]->value.f[i] / length;
+      }
+      return new(mem_ctx) ir_constant(return_type, &data);
+   }
+
    if (op[1] != NULL)
       switch (this->operation) {
       case ir_binop_lshift:

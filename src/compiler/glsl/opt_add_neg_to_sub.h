@@ -25,6 +25,8 @@
 #define OPT_ADD_NEG_TO_SUB_H
 
 #include "ir.h"
+#include <cmath>
+#include <climits>
 #include "ir_hierarchical_visitor.h"
 
 class add_neg_to_sub_visitor : public ir_hierarchical_visitor {
@@ -41,6 +43,43 @@ public:
 
       for (unsigned i = 0; i < 2; i++) {
          ir_expression *const op = ir->operands[i]->as_expression();
+
+         /* glsl-optimizer change: constant folding turns -(1.0) into -1.0.
+          * Restore subtraction for entirely negative constants too. Do not
+          * negate INT_MIN or non-finite values, or change signed-zero cases. */
+         ir_constant *constant = ir->operands[i]->as_constant();
+         if (constant && (constant->type->is_scalar() || constant->type->is_vector())) {
+            bool negative = true;
+            for (unsigned c = 0; c < constant->type->components(); ++c) {
+               switch (constant->type->base_type) {
+               case GLSL_TYPE_FLOAT:
+                  negative &= std::isfinite(constant->value.f[c]) && constant->value.f[c] < 0.0f;
+                  break;
+               case GLSL_TYPE_DOUBLE:
+                  negative &= std::isfinite(constant->value.d[c]) && constant->value.d[c] < 0.0;
+                  break;
+               case GLSL_TYPE_INT:
+                  negative &= constant->value.i[c] < 0 && constant->value.i[c] != INT_MIN;
+                  break;
+               default: negative = false; break;
+               }
+            }
+            if (negative) {
+               ir_constant *positive = constant->clone(ralloc_parent(ir), NULL);
+               for (unsigned c = 0; c < positive->type->components(); ++c) {
+                  switch (positive->type->base_type) {
+                  case GLSL_TYPE_FLOAT: positive->value.f[c] = -positive->value.f[c]; break;
+                  case GLSL_TYPE_DOUBLE: positive->value.d[c] = -positive->value.d[c]; break;
+                  case GLSL_TYPE_INT: positive->value.i[c] = -positive->value.i[c]; break;
+                  default: break;
+                  }
+               }
+               ir->operation = ir_binop_sub;
+               if (i == 0) ir->operands[0] = ir->operands[1];
+               ir->operands[1] = positive;
+               break;
+            }
+         }
 
          if (op != NULL && op->operation == ir_unop_neg) {
             ir->operation = ir_binop_sub;

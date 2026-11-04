@@ -103,6 +103,7 @@ ir_constant_fold(ir_rvalue **rvalue)
    ir_constant *constant =
       (*rvalue)->constant_expression_value(ralloc_parent(*rvalue));
    if (constant) {
+      constant->source_precision = (*rvalue)->get_precision();
       *rvalue = constant;
       return true;
    }

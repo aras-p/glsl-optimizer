@@ -1,26 +1,30 @@
 #include "glsl_optimizer.h"
-#include "ast.h"
-#include "glsl_parser_extras.h"
-#include "glsl_parser.h"
+#include "main/mtypes.h"
+#include "ir.h"
 #include "ir_optimization.h"
-#include "ir_print_metal_visitor.h"
-#include "ir_print_glsl_visitor.h"
-#include "ir_print_visitor.h"
+#include "builtin_functions.h"
+#include "string_to_uint_map.h"
 #include "ir_stats.h"
+#include "ir_print_glsl_visitor.h"
+#include "ir_print_metal_visitor.h"
+#include "opt_add_neg_to_sub.h"
+#include "glsl_parser_extras.h"
 #include "loop_analysis.h"
 #include "program.h"
 #include "linker.h"
 #include "standalone_scaffolding.h"
 
 
-extern "C" struct gl_shader *
-_mesa_new_shader(struct gl_context *ctx, GLuint name, GLenum type);
-
-static void DeleteShader(struct gl_context *ctx, struct gl_shader *shader)
+static gl_program* new_program(gl_context*, gl_shader_stage stage, GLuint id, bool is_arb_asm)
 {
-	ralloc_free(shader);
+	gl_program* program = rzalloc(NULL, gl_program);
+	program->RefCount = 1;
+	program->Id = id;
+	program->Format = GL_PROGRAM_FORMAT_ASCII_ARB;
+	program->info.stage = stage;
+	program->is_arb_asm = is_arb_asm;
+	return program;
 }
-
 
 static void
 initialize_mesa_context(struct gl_context *ctx, glslopt_target api)
@@ -65,24 +69,32 @@ initialize_mesa_context(struct gl_context *ctx, glslopt_target api)
    ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits = 16;
    ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxTextureImageUnits = 16;
 
-   ctx->Const.MaxDrawBuffers = 4;
+   // Note: use lower unroll iterations than Mesa default
+   for (auto& options : ctx->Const.ShaderCompilerOptions)
+      options.MaxUnrollIterations = 8;
 
-   ctx->Driver.NewShader = _mesa_new_shader;
-   ctx->Driver.DeleteShader = DeleteShader;
+   ctx->Const.MaxDrawBuffers = 4;
+   ctx->Const.MaxVertexStreams = 1;
+   ctx->Const.MaxTransformFeedbackBuffers = 4;
+   ctx->Const.MaxTransformFeedbackSeparateComponents = 64;
+   ctx->Const.MaxTransformFeedbackInterleavedComponents = 64;
+   ctx->Const.Program[MESA_SHADER_VERTEX].MaxUniformBlocks = 12;
+   ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxUniformBlocks = 12;
+
+   ctx->Driver.NewProgram = new_program;
 }
 
 
 struct glslopt_ctx {
 	glslopt_ctx (glslopt_target target) {
 		this->target = target;
-		mem_ctx = ralloc_context (NULL);
 		initialize_mesa_context (&mesa_ctx, target);
+		_mesa_glsl_builtin_functions_init_or_ref();
 	}
 	~glslopt_ctx() {
-		ralloc_free (mem_ctx);
+		_mesa_glsl_builtin_functions_decref();
 	}
 	struct gl_context mesa_ctx;
-	void* mem_ctx;
 	glslopt_target target;
 };
 
@@ -96,7 +108,6 @@ glslopt_ctx* glslopt_initialize (glslopt_target target)
 void glslopt_cleanup (glslopt_ctx* ctx)
 {
 	delete ctx;
-	_mesa_destroy_shader_compiler();
 }
 
 void glslopt_set_max_unroll_iterations (glslopt_ctx* ctx, unsigned iterations)
@@ -118,18 +129,6 @@ struct glslopt_shader_var
 
 struct glslopt_shader
 {
-	static void* operator new(size_t size, void *ctx)
-	{
-		void *node;
-		node = ralloc_size(ctx, size);
-		assert(node != NULL);
-		return node;
-	}
-	static void operator delete(void *node)
-	{
-		ralloc_free(node);
-	}
-
 	glslopt_shader ()
 		: rawOutput(0)
 		, optimizedOutput(0)
@@ -144,29 +143,34 @@ struct glslopt_shader
 	{
 		infoLog = "Shader not compiled yet";
 		
-		whole_program = rzalloc (NULL, struct gl_shader_program);
-		assert(whole_program != NULL);
-		whole_program->InfoLog = ralloc_strdup(whole_program, "");
-		
-		whole_program->Shaders = reralloc(whole_program, whole_program->Shaders, struct gl_shader *, whole_program->NumShaders + 1);
-		assert(whole_program->Shaders != NULL);
-		
+		// Results own their arena and keep shared types/builtins alive independently
+		// of the context, including when another context is destroyed.
+		_mesa_glsl_builtin_functions_init_or_ref();
+		mem_ctx = ralloc_context(NULL);
+		whole_program = rzalloc(mem_ctx, gl_shader_program);
+		whole_program->data = rzalloc(whole_program, gl_shader_program_data);
+		whole_program->data->InfoLog = ralloc_strdup(whole_program->data, "");
+		whole_program->data->LinkStatus = LINKING_SUCCESS;
+		whole_program->AttributeBindings = new string_to_uint_map;
+		whole_program->FragDataBindings = new string_to_uint_map;
+		whole_program->FragDataIndexBindings = new string_to_uint_map;
+		whole_program->Shaders = ralloc_array(whole_program, gl_shader*, 1);
 		shader = rzalloc(whole_program, gl_shader);
-		whole_program->Shaders[whole_program->NumShaders] = shader;
-		whole_program->NumShaders++;
-		
-		whole_program->LinkStatus = true;		
+		shader->RefCount = 1;
+		whole_program->Shaders[0] = shader;
+		whole_program->NumShaders = 1;
 	}
-	
+
 	~glslopt_shader()
 	{
-		for (unsigned i = 0; i < MESA_SHADER_STAGES; i++)
-			ralloc_free(whole_program->_LinkedShaders[i]);
-		ralloc_free(whole_program);
-		ralloc_free(rawOutput);
-		ralloc_free(optimizedOutput);
+		delete whole_program->AttributeBindings;
+		delete whole_program->FragDataBindings;
+		delete whole_program->FragDataIndexBindings;
+		ralloc_free(mem_ctx);
+		_mesa_glsl_builtin_functions_decref();
 	}
-	
+
+	void* mem_ctx;
 	struct gl_shader_program* whole_program;
 	struct gl_shader* shader;
 
@@ -187,284 +191,52 @@ struct glslopt_shader
 	bool	status;
 };
 
-static inline void debug_print_ir (const char* name, exec_list* ir, _mesa_glsl_parse_state* state, void* memctx)
-{
-	#if 0
-	printf("**** %s:\n", name);
-//	_mesa_print_ir (ir, state);
-	char* foobar = _mesa_print_ir_glsl(ir, state, ralloc_strdup(memctx, ""), kPrintGlslFragment);
-	printf("%s\n", foobar);
-	validate_ir_tree(ir);
-	#endif
-}
-
-
-struct precision_ctx
-{
-	exec_list* root_ir;
-	bool res;
-};
-
-
-static void propagate_precision_deref(ir_instruction *ir, void *data)
-{
-	// variable deref with undefined precision: take from variable itself
-	ir_dereference_variable* der = ir->as_dereference_variable();
-	if (der && der->get_precision() == glsl_precision_undefined && der->var->data.precision != glsl_precision_undefined)
-	{
-		der->set_precision ((glsl_precision)der->var->data.precision);
-		((precision_ctx*)data)->res = true;
-	}
-	
-	// array deref with undefined precision: take from array itself
-	ir_dereference_array* der_arr = ir->as_dereference_array();
-	if (der_arr && der_arr->get_precision() == glsl_precision_undefined && der_arr->array->get_precision() != glsl_precision_undefined)
-	{
-		der_arr->set_precision (der_arr->array->get_precision());
-		((precision_ctx*)data)->res = true;
-	}
-	
-	// swizzle with undefined precision: take from swizzle argument
-	ir_swizzle* swz = ir->as_swizzle();
-	if (swz && swz->get_precision() == glsl_precision_undefined && swz->val->get_precision() != glsl_precision_undefined)
-	{
-		swz->set_precision (swz->val->get_precision());
-		((precision_ctx*)data)->res = true;
-	}
-	
-}
-
-static void propagate_precision_expr(ir_instruction *ir, void *data)
-{
-	ir_expression* expr = ir->as_expression();
-	if (!expr)
-		return;
-	if (expr->get_precision() != glsl_precision_undefined)
-		return;
-	
-	glsl_precision prec_params_max = glsl_precision_undefined;
-	for (int i = 0; i < (int)expr->get_num_operands(); ++i)
-	{
-		ir_rvalue* op = expr->operands[i];
-		if (op && op->get_precision() != glsl_precision_undefined)
-			prec_params_max = higher_precision (prec_params_max, op->get_precision());
-	}
-	if (expr->get_precision() != prec_params_max)
-	{
-		expr->set_precision (prec_params_max);
-		((precision_ctx*)data)->res = true;
-	}
-	
-}
-
-struct undefined_ass_ctx
-{
-	ir_variable* var;
-	bool res;
-};
-
-static void has_only_undefined_precision_assignments(ir_instruction *ir, void *data)
-{
-	ir_assignment* ass = ir->as_assignment();
-	if (!ass)
-		return;
-	undefined_ass_ctx* ctx = (undefined_ass_ctx*)data;
-	if (ass->whole_variable_written() != ctx->var)
-		return;
-	glsl_precision prec = ass->rhs->get_precision();
-	if (prec == glsl_precision_undefined)
-		return;
-	ctx->res = false;
-}
-
-
-static void propagate_precision_assign(ir_instruction *ir, void *data)
-{
-	ir_assignment* ass = ir->as_assignment();
-	if (!ass || !ass->lhs || !ass->rhs)
-		return;
-
-	glsl_precision lp = ass->lhs->get_precision();
-	glsl_precision rp = ass->rhs->get_precision();
-
-	// for assignments with LHS having undefined precision, take it from RHS
-	if (rp != glsl_precision_undefined)
-	{
-		ir_variable* lhs_var = ass->lhs->variable_referenced();
-		if (lp == glsl_precision_undefined)
-		{		
-			if (lhs_var)
-				lhs_var->data.precision = rp;
-			ass->lhs->set_precision (rp);
-			((precision_ctx*)data)->res = true;
-		}
-		return;
-	}
-	
-	// for assignments where LHS has precision, but RHS is a temporary variable
-	// with undefined precision that's only assigned from other undefined precision
-	// sources -> make the RHS variable take LHS precision
-	if (lp != glsl_precision_undefined && rp == glsl_precision_undefined)
-	{
-		ir_dereference* deref = ass->rhs->as_dereference();
-		if (deref)
-		{
-			ir_variable* rhs_var = deref->variable_referenced();
-			if (rhs_var && rhs_var->data.mode == ir_var_temporary && rhs_var->data.precision == glsl_precision_undefined)
-			{
-				undefined_ass_ctx ctx;
-				ctx.var = rhs_var;
-				// find if we only assign to it from undefined precision sources
-				ctx.res = true;
-				exec_list* root_ir = ((precision_ctx*)data)->root_ir;
-				foreach_in_list(ir_instruction, inst, root_ir)
-				{
-					visit_tree (ir, has_only_undefined_precision_assignments, &ctx);
-				}
-				if (ctx.res)
-				{
-					rhs_var->data.precision = lp;
-					ass->rhs->set_precision(lp);
-					((precision_ctx*)data)->res = true;
-				}
-			}
-		}
-		return;
-	}
-}
-
-
-static void propagate_precision_call(ir_instruction *ir, void *data)
-{
-	ir_call* call = ir->as_call();
-	if (!call)
-		return;
-	if (!call->return_deref)
-		return;
-	if (call->return_deref->get_precision() == glsl_precision_undefined /*&& call->callee->precision == glsl_precision_undefined*/)
-	{
-		glsl_precision prec_params_max = glsl_precision_undefined;
-		foreach_two_lists(formal_node, &call->callee->parameters,
-						  actual_node, &call->actual_parameters) {
-			ir_variable* sig_param = (ir_variable*)formal_node;
-			ir_rvalue* param = (ir_rvalue*)actual_node;
-			
-			glsl_precision p = (glsl_precision)sig_param->data.precision;
-			if (p == glsl_precision_undefined)
-				p = param->get_precision();
-			
-			prec_params_max = higher_precision (prec_params_max, p);
-		}
-		if (call->return_deref->get_precision() != prec_params_max)
-		{
-			call->return_deref->set_precision (prec_params_max);
-			((precision_ctx*)data)->res = true;
-		}
-	}
-}
-
-static bool propagate_precision(exec_list* list, bool assign_high_to_undefined)
-{
-	bool anyProgress = false;
-	precision_ctx ctx;
-	
-	do {
-		ctx.res = false;
-		ctx.root_ir = list;
-		foreach_in_list(ir_instruction, ir, list)
-		{
-			visit_tree (ir, propagate_precision_deref, &ctx);
-			bool hadProgress = ctx.res;
-			ctx.res = false;
-			visit_tree (ir, propagate_precision_assign, &ctx);
-			if (ctx.res)
-			{
-				// assignment precision propagation might have added precision
-				// to some variables; need to propagate dereference precision right
-				// after that too.
-				visit_tree (ir, propagate_precision_deref, &ctx);
-			}
-			ctx.res |= hadProgress;
-			visit_tree (ir, propagate_precision_call, &ctx);
-			visit_tree (ir, propagate_precision_expr, &ctx);
-		}
-		anyProgress |= ctx.res;
-	} while (ctx.res);
-	anyProgress |= ctx.res;
-	
-	// for globals that have undefined precision, set it to highp
-	if (assign_high_to_undefined)
-	{
-		foreach_in_list(ir_instruction, ir, list)
-		{
-			ir_variable* var = ir->as_variable();
-			if (var)
-			{
-				if (var->data.precision == glsl_precision_undefined)
-				{
-					var->data.precision = glsl_precision_high;
-					anyProgress = true;
-				}
-			}
-		}
-	}
-	
-	return anyProgress;
-}
-
-
-static void do_optimization_passes(exec_list* ir, bool linked, _mesa_glsl_parse_state* state, void* mem_ctx)
+static void do_optimization_passes(exec_list* ir, bool linked, glslopt_ctx* ctx, gl_shader_stage stage)
 {
 	bool progress;
 	// FIXME: Shouldn't need to bound the number of passes
 	int passes = 0,
 		kMaximumPasses = 1000;
 	do {
-		progress = false;
+		progress = propagate_precision(ir);
 		++passes;
-		bool progress2;
-		debug_print_ir ("Initial", ir, state, mem_ctx);
 		if (linked) {
-			progress2 = do_function_inlining(ir); progress |= progress2; if (progress2) debug_print_ir ("After inlining", ir, state, mem_ctx);
-			progress2 = do_dead_functions(ir); progress |= progress2; if (progress2) debug_print_ir ("After dead functions", ir, state, mem_ctx);
-			progress2 = do_structure_splitting(ir); progress |= progress2; if (progress2) debug_print_ir ("After struct splitting", ir, state, mem_ctx);
+			progress |= do_function_inlining(ir);
+			progress |= do_dead_functions(ir);
+			progress |= do_structure_splitting(ir);
 		}
-		progress2 = do_if_simplification(ir); progress |= progress2; if (progress2) debug_print_ir ("After if simpl", ir, state, mem_ctx);
-		progress2 = opt_flatten_nested_if_blocks(ir); progress |= progress2; if (progress2) debug_print_ir ("After if flatten", ir, state, mem_ctx);
-		progress2 = propagate_precision (ir, state->metal_target); progress |= progress2; if (progress2) debug_print_ir ("After prec propagation", ir, state, mem_ctx);
-		progress2 = do_copy_propagation(ir); progress |= progress2; if (progress2) debug_print_ir ("After copy propagation", ir, state, mem_ctx);
-		progress2 = do_copy_propagation_elements(ir); progress |= progress2; if (progress2) debug_print_ir ("After copy propagation elems", ir, state, mem_ctx);
+		progress |= propagate_precision(ir);
+		progress |= do_if_simplification(ir);
+		progress |= opt_flatten_nested_if_blocks(ir);
+		progress |= do_copy_propagation_elements(ir);
 
 		if (linked)
 		{
-			progress2 = do_vectorize(ir); progress |= progress2; if (progress2) debug_print_ir ("After vectorize", ir, state, mem_ctx);
+			progress |= do_vectorize(ir);
 		}
 		if (linked) {
-			progress2 = do_dead_code(ir,false); progress |= progress2; if (progress2) debug_print_ir ("After dead code", ir, state, mem_ctx);
+			progress |= do_dead_code(ir,false);
 		} else {
-			progress2 = do_dead_code_unlinked(ir); progress |= progress2; if (progress2) debug_print_ir ("After dead code unlinked", ir, state, mem_ctx);
+			progress |= do_dead_code_unlinked(ir);
 		}
-		progress2 = do_dead_code_local(ir); progress |= progress2; if (progress2) debug_print_ir ("After dead code local", ir, state, mem_ctx);
-		progress2 = propagate_precision (ir, state->metal_target); progress |= progress2; if (progress2) debug_print_ir ("After prec propagation", ir, state, mem_ctx);
-		progress2 = do_tree_grafting(ir); progress |= progress2; if (progress2) debug_print_ir ("After tree grafting", ir, state, mem_ctx);
-		progress2 = do_constant_propagation(ir); progress |= progress2; if (progress2) debug_print_ir ("After const propagation", ir, state, mem_ctx);
+		progress |= do_dead_code_local(ir);
+		progress |= do_tree_grafting(ir);
+		progress |= do_constant_propagation(ir);
 		if (linked) {
-			progress2 = do_constant_variable(ir); progress |= progress2; if (progress2) debug_print_ir ("After const variable", ir, state, mem_ctx);
+			progress |= do_constant_variable(ir);
 		} else {
-			progress2 = do_constant_variable_unlinked(ir); progress |= progress2; if (progress2) debug_print_ir ("After const variable unlinked", ir, state, mem_ctx);
+			progress |= do_constant_variable_unlinked(ir);
 		}
-		progress2 = do_constant_folding(ir); progress |= progress2; if (progress2) debug_print_ir ("After const folding", ir, state, mem_ctx);
-		progress2 = do_minmax_prune(ir); progress |= progress2; if (progress2) debug_print_ir ("After minmax prune", ir, state, mem_ctx);
-		progress2 = do_cse(ir); progress |= progress2; if (progress2) debug_print_ir ("After CSE", ir, state, mem_ctx);
-		progress2 = do_rebalance_tree(ir); progress |= progress2; if (progress2) debug_print_ir ("After rebalance tree", ir, state, mem_ctx);
-		progress2 = do_algebraic(ir, state->ctx->Const.NativeIntegers, &state->ctx->Const.ShaderCompilerOptions[state->stage]); progress |= progress2; if (progress2) debug_print_ir ("After algebraic", ir, state, mem_ctx);
-		progress2 = do_lower_jumps(ir); progress |= progress2; if (progress2) debug_print_ir ("After lower jumps", ir, state, mem_ctx);
-		progress2 = do_vec_index_to_swizzle(ir); progress |= progress2; if (progress2) debug_print_ir ("After vec index to swizzle", ir, state, mem_ctx);
-		progress2 = lower_vector_insert(ir, false); progress |= progress2; if (progress2) debug_print_ir ("After lower vector insert", ir, state, mem_ctx);
-		progress2 = do_swizzle_swizzle(ir); progress |= progress2; if (progress2) debug_print_ir ("After swizzle swizzle", ir, state, mem_ctx);
-		progress2 = do_noop_swizzle(ir); progress |= progress2; if (progress2) debug_print_ir ("After noop swizzle", ir, state, mem_ctx);
-		progress2 = optimize_split_arrays(ir, linked, state->metal_target && state->stage == MESA_SHADER_FRAGMENT); progress |= progress2; if (progress2) debug_print_ir ("After split arrays", ir, state, mem_ctx);
-		progress2 = optimize_redundant_jumps(ir); progress |= progress2; if (progress2) debug_print_ir ("After redundant jumps", ir, state, mem_ctx);
+		progress |= do_constant_folding(ir);
+		progress |= do_minmax_prune(ir);
+		progress |= do_rebalance_tree(ir);
+		progress |= do_algebraic(ir, ctx->mesa_ctx.Const.NativeIntegers, &ctx->mesa_ctx.Const.ShaderCompilerOptions[stage]);
+		progress |= do_lower_jumps(ir);
+		progress |= do_vec_index_to_swizzle(ir);
+		progress |= lower_vector_insert(ir, false);
+		progress |= optimize_swizzles(ir);
+		progress |= optimize_split_arrays(ir, linked, ctx->target == kGlslTargetMetal && stage == MESA_SHADER_FRAGMENT);
+		progress |= optimize_redundant_jumps(ir);
 
 		// do loop stuff only when linked; otherwise causes duplicate loop induction variable
 		// problems (ast-in.txt test)
@@ -472,31 +244,30 @@ static void do_optimization_passes(exec_list* ir, bool linked, _mesa_glsl_parse_
 		{
 			loop_state *ls = analyze_loop_variables(ir);
 			if (ls->loop_found) {
-				progress2 = set_loop_controls(ir, ls); progress |= progress2; if (progress2) debug_print_ir ("After set loop", ir, state, mem_ctx);
-				progress2 = unroll_loops(ir, ls, &state->ctx->Const.ShaderCompilerOptions[state->stage]); progress |= progress2; if (progress2) debug_print_ir ("After unroll", ir, state, mem_ctx);
+				progress |= unroll_loops(ir, ls, &ctx->mesa_ctx.Const.ShaderCompilerOptions[stage]);
 			}
 			delete ls;
 		}
 	} while (progress && passes < kMaximumPasses);
 
-	if (!state->metal_target)
+	if (ctx->target != kGlslTargetMetal)
 	{
 		// GLSL/ES does not have saturate, so lower it
 		lower_instructions(ir, SAT_TO_CLAMP);
 	}
 }
 
-static void glsl_type_to_optimizer_desc(const glsl_type* type, glsl_precision prec, glslopt_shader_var* out)
+static void glsl_type_to_optimizer_desc(const glsl_type* type, unsigned prec, glslopt_shader_var* out)
 {
 	out->arraySize = type->array_size();
 
 	// type; use element type when in array
 	if (type->is_array())
-		type = type->element_type();
+		type = type->without_array();
 
 	if (type->is_float())
 		out->type = kGlslTypeFloat;
-	else if (type->is_integer())
+	else if (type->is_integer_32())
 		out->type = kGlslTypeInt;
 	else if (type->is_boolean())
 		out->type = kGlslTypeBool;
@@ -522,14 +293,14 @@ static void glsl_type_to_optimizer_desc(const glsl_type* type, glsl_precision pr
 		out->type = kGlslTypeOther;
 	
 	// sizes
-	out->vectorSize = type->vector_elements;
-	out->matrixSize = type->matrix_columns;
+	out->vectorSize = type->is_sampler() ? 0 : type->vector_elements;
+	out->matrixSize = type->is_sampler() ? 0 : type->matrix_columns;
 	
 	// precision
 	switch (prec)
 	{
-		case glsl_precision_high: out->prec = kGlslPrecHigh; break;
-		case glsl_precision_medium: out->prec = kGlslPrecMedium; break;
+		case GLSL_PRECISION_HIGH: out->prec = kGlslPrecHigh; break;
+		case GLSL_PRECISION_MEDIUM: out->prec = kGlslPrecMedium; break;
 		default: out->prec = kGlslPrecHigh; break;
 	}
 }
@@ -547,30 +318,30 @@ static void find_shader_variables(glslopt_shader* sh, exec_list* ir)
 				continue;
 
 			glslopt_shader_var& v = sh->inputs[sh->inputCount];
-			v.name = ralloc_strdup(sh, var->name);
-			glsl_type_to_optimizer_desc(var->type, (glsl_precision)var->data.precision, &v);
+			v.name = ralloc_strdup(sh->mem_ctx, var->name);
+			glsl_type_to_optimizer_desc(var->type, var->data.precision, &v);
 			v.location = var->data.explicit_location ? var->data.location : -1;
 			++sh->inputCount;
 		}
-		if (var->data.mode == ir_var_uniform && !var->type->is_sampler())
+		if (var->data.mode == ir_var_uniform && !var->type->without_array()->is_sampler())
 		{
 			if (sh->uniformCount >= glslopt_shader::kMaxShaderUniforms)
 				continue;
 			
 			glslopt_shader_var& v = sh->uniforms[sh->uniformCount];
-			v.name = ralloc_strdup(sh, var->name);
-			glsl_type_to_optimizer_desc(var->type, (glsl_precision)var->data.precision, &v);
+			v.name = ralloc_strdup(sh->mem_ctx, var->name);
+			glsl_type_to_optimizer_desc(var->type, var->data.precision, &v);
 			v.location = var->data.explicit_location ? var->data.location : -1;
 			++sh->uniformCount;
 		}
-		if (var->data.mode == ir_var_uniform && var->type->is_sampler())
+		if (var->data.mode == ir_var_uniform && var->type->without_array()->is_sampler())
 		{
 			if (sh->textureCount >= glslopt_shader::kMaxShaderTextures)
 				continue;
 			
 			glslopt_shader_var& v = sh->textures[sh->textureCount];
-			v.name = ralloc_strdup(sh, var->name);
-			glsl_type_to_optimizer_desc(var->type, (glsl_precision)var->data.precision, &v);
+			v.name = ralloc_strdup(sh->mem_ctx, var->name);
+			glsl_type_to_optimizer_desc(var->type, var->data.precision, &v);
 			v.location = var->data.explicit_location ? var->data.location : -1;
 			++sh->textureCount;
 		}
@@ -580,125 +351,67 @@ static void find_shader_variables(glslopt_shader* sh, exec_list* ir)
 
 glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, const char* shaderSource, unsigned options)
 {
-	glslopt_shader* shader = new (ctx->mem_ctx) glslopt_shader ();
-
-	PrintGlslMode printMode = kPrintGlslVertex;
+	if (!ctx)
+		return NULL;
+	glslopt_shader* result = new glslopt_shader;
+	gl_shader* shader = result->shader;
 	switch (type) {
-	case kGlslOptShaderVertex:
-			shader->shader->Type = GL_VERTEX_SHADER;
-			shader->shader->Stage = MESA_SHADER_VERTEX;
-			printMode = kPrintGlslVertex;
-			break;
-	case kGlslOptShaderFragment:
-			shader->shader->Type = GL_FRAGMENT_SHADER;
-			shader->shader->Stage = MESA_SHADER_FRAGMENT;
-			printMode = kPrintGlslFragment;
-			break;
+	case kGlslOptShaderVertex: shader->Stage = MESA_SHADER_VERTEX; break;
+	case kGlslOptShaderFragment: shader->Stage = MESA_SHADER_FRAGMENT; break;
+	default:
+		result->infoLog = ralloc_asprintf(result->mem_ctx, "Unknown shader type %d", (int)type);
+		return result;
 	}
-	if (!shader->shader->Type)
-	{
-		shader->infoLog = ralloc_asprintf (shader, "Unknown shader type %d", (int)type);
-		shader->status = false;
-		return shader;
+	if (!shaderSource) {
+		result->infoLog = "Shader source is null";
+		return result;
+	}
+	shader->Source = ralloc_strdup(shader, shaderSource);
+	_mesa_glsl_parse_state* state = nullptr;
+	_mesa_glsl_compile_shader(&ctx->mesa_ctx, shader, false, false,
+		(options & kGlslOptionSkipPreprocessor) != 0, &state);
+	result->infoLog = shader->InfoLog;
+	if (shader->CompileStatus == COMPILE_FAILURE)
+		return result;
+	if (ctx->target != kGlslTargetMetal && shader->IsES && shader->Version < 300) {
+		result->infoLog = "OpenGL ES 2.0 output is no longer supported; use #version 300 es or newer.";
+		return result;
 	}
 
-	_mesa_glsl_parse_state* state = new (shader) _mesa_glsl_parse_state (&ctx->mesa_ctx, shader->shader->Stage, shader);
-	if (ctx->target == kGlslTargetMetal)
-		state->metal_target = true;
-	state->error = 0;
+	exec_list* ir = shader->ir;
 
-	if (!(options & kGlslOptionSkipPreprocessor))
-	{
-		state->error = !!glcpp_preprocess (state, &shaderSource, &state->info_log, state->extensions, &ctx->mesa_ctx);
-		if (state->error)
-		{
-			shader->status = !state->error;
-			shader->infoLog = state->info_log;
-			return shader;
+	// Note: restore source-level subtraction outside of regular optimization loop
+    // (inside the loop, other passes would undo it).
+	add_neg_to_sub_visitor source_arithmetic;
+	visit_list_elements(&source_arithmetic, ir);
+
+	const PrintGlslMode printMode = type == kGlslOptShaderVertex ? kPrintGlslVertex : kPrintGlslFragment;
+	if (ctx->target != kGlslTargetMetal)
+		result->rawOutput = _mesa_print_ir_glsl(ir, state, ralloc_strdup(result->mem_ctx, ""), printMode);
+	else
+		result->rawOutput = _mesa_print_ir_metal(ir, state, ralloc_strdup(result->mem_ctx, ""), printMode, &result->uniformsSize);
+	const bool linked = !(options & kGlslOptionNotFullShader);
+	if (linked) {
+		gl_linked_shader* linked_shader = link_intrastage_shaders(result->mem_ctx,
+			&ctx->mesa_ctx, result->whole_program, result->whole_program->Shaders, 1, false);
+		if (!linked_shader) {
+			result->infoLog = result->whole_program->data->InfoLog;
+			return result;
 		}
-	}
-
-	_mesa_glsl_lexer_ctor (state, shaderSource);
-	_mesa_glsl_parse (state);
-	_mesa_glsl_lexer_dtor (state);
-
-	if (!state->error && ctx->target != kGlslTargetMetal && state->es_shader && state->language_version < 300)
-	{
-		shader->status = false;
-		shader->infoLog = ralloc_strdup(shader, "OpenGL ES 2.0 output is no longer supported; use #version 300 es or newer.");
-		return shader;
-	}
-
-	exec_list* ir = new (shader) exec_list();
-	shader->shader->ir = ir;
-
-	if (!state->error && !state->translation_unit.is_empty())
-		_mesa_ast_to_hir (ir, state);
-
-	// Un-optimized output
-	if (!state->error) {
-		validate_ir_tree(ir);
-		if (ctx->target == kGlslTargetMetal)
-			shader->rawOutput = _mesa_print_ir_metal(ir, state, ralloc_strdup(shader, ""), printMode, &shader->uniformsSize);
-		else
-			shader->rawOutput = _mesa_print_ir_glsl(ir, state, ralloc_strdup(shader, ""), printMode);
-	}
-	
-	// Link built-in functions
-	shader->shader->symbols = state->symbols;
-	shader->shader->uses_builtin_functions = state->uses_builtin_functions;
-	
-	struct gl_shader* linked_shader = NULL;
-
-	if (!state->error && !ir->is_empty() && !(options & kGlslOptionNotFullShader))
-	{
-		linked_shader = link_intrastage_shaders(shader,
-												&ctx->mesa_ctx,
-												shader->whole_program,
-												shader->whole_program->Shaders,
-												shader->whole_program->NumShaders);
-		if (!linked_shader)
-		{
-			shader->status = false;
-			shader->infoLog = shader->whole_program->InfoLog;
-			return shader;
-		}
+		result->whole_program->_LinkedShaders[shader->Stage] = linked_shader;
 		ir = linked_shader->ir;
-		
-		debug_print_ir ("==== After link ====", ir, state, shader);
 	}
-	
-	// Do optimization post-link
-	if (!state->error && !ir->is_empty())
-	{		
-		const bool linked = !(options & kGlslOptionNotFullShader);
-		do_optimization_passes(ir, linked, state, shader);
-		validate_ir_tree(ir);
-	}	
-	
-	// Final optimized output
-	if (!state->error)
-	{
-		if (ctx->target == kGlslTargetMetal)
-			shader->optimizedOutput = _mesa_print_ir_metal(ir, state, ralloc_strdup(shader, ""), printMode, &shader->uniformsSize);
-		else
-			shader->optimizedOutput = _mesa_print_ir_glsl(ir, state, ralloc_strdup(shader, ""), printMode);
-	}
-
-	shader->status = !state->error;
-	shader->infoLog = state->info_log;
-
-	find_shader_variables (shader, ir);
-	if (!state->error)
-		calculate_shader_stats (ir, &shader->statsMath, &shader->statsTex, &shader->statsFlow);
-
-	ralloc_free (ir);
-	ralloc_free (state);
-
-	if (linked_shader)
-		ralloc_free(linked_shader);
-
-	return shader;
+	do_optimization_passes(ir, linked, ctx, shader->Stage);
+	validate_ir_tree(ir);
+	visit_list_elements(&source_arithmetic, ir);
+	if (ctx->target != kGlslTargetMetal)
+		result->optimizedOutput = _mesa_print_ir_glsl(ir, state, ralloc_strdup(result->mem_ctx, ""), printMode);
+	else
+		result->optimizedOutput = _mesa_print_ir_metal(ir, state, ralloc_strdup(result->mem_ctx, ""), printMode, &result->uniformsSize);
+	find_shader_variables(result, ir);
+	calculate_shader_stats(ir, &result->statsMath, &result->statsTex, &result->statsFlow);
+	result->status = true;
+	return result;
 }
 
 void glslopt_shader_delete (glslopt_shader* shader)

@@ -422,6 +422,8 @@ ir_expression_operation = [
    operation("sign", 1, source_types=signed_numeric_types, c_expression={'i': "({src0} > 0) - ({src0} < 0)", 'f': "float(({src0} > 0.0F) - ({src0} < 0.0F))", 'd': "double(({src0} > 0.0) - ({src0} < 0.0))", 'i64': "({src0} > 0) - ({src0} < 0)"}),
    operation("rcp", 1, source_types=real_types, c_expression={'f': "1.0F / {src0}", 'd': "1.0 / {src0}"}),
    operation("rsq", 1, source_types=real_types, c_expression={'f': "1.0F / sqrtf({src0})", 'd': "1.0 / sqrt({src0})"}),
+   # glsl-optimizer change: retain normalize for source output (folded explicitly).
+   operation("normalize", 1, source_types=real_types),
    operation("sqrt", 1, source_types=real_types, c_expression={'f': "sqrtf({src0})", 'd': "sqrt({src0})"}),
    operation("exp", 1, source_types=(float_type,), c_expression="expf({src0})"),         # Log base e on gentype
    operation("log", 1, source_types=(float_type,), c_expression="logf({src0})"),         # Natural log on gentype

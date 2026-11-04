@@ -987,7 +987,8 @@ builtin_variable_generator::generate_uniforms()
    if (state->is_version(400, 320) ||
        state->ARB_sample_shading_enable ||
        state->OES_sample_variables_enable)
-      add_uniform(int_t, GLSL_PRECISION_LOW, "gl_NumSamples");
+      /* glsl-optimizer change: normalize builtin lowp to mediump too. */
+      add_uniform(int_t, GLSL_PRECISION_MEDIUM, "gl_NumSamples");
    add_uniform(type("gl_DepthRangeParameters"), "gl_DepthRange");
    add_uniform(array(vec4_t, VERT_ATTRIB_MAX), "gl_CurrentAttribVertMESA");
    add_uniform(array(vec4_t, VARYING_SLOT_MAX), "gl_CurrentAttribFragMESA");
@@ -1359,7 +1360,8 @@ builtin_variable_generator::generate_fs_special_vars()
    if (state->is_version(400, 320) ||
        state->ARB_sample_shading_enable ||
        state->OES_sample_variables_enable) {
-      add_system_value(SYSTEM_VALUE_SAMPLE_ID, int_t, GLSL_PRECISION_LOW,
+      /* glsl-optimizer change: normalize builtin lowp to mediump too. */
+      add_system_value(SYSTEM_VALUE_SAMPLE_ID, int_t, GLSL_PRECISION_MEDIUM,
                        "gl_SampleID");
       add_system_value(SYSTEM_VALUE_SAMPLE_POS, vec2_t, GLSL_PRECISION_MEDIUM,
                        "gl_SamplePosition");

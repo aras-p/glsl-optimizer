@@ -70,7 +70,8 @@ do_dead_code(exec_list *instructions, bool uniform_locations_assigned)
 		entry->declaration ? "" : "not ");
       }
 
-      if ((entry->referenced_count > entry->assigned_count)
+      /* glsl-optimizer change: remove locals used only by their own updates. */
+      if ((entry->referenced_count_noself > entry->assigned_count)
 	  || !entry->declaration)
 	 continue;
 

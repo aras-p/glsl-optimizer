@@ -387,6 +387,8 @@ struct _mesa_glsl_parse_state {
 
    bool es_shader;
    bool compat_shader;
+   /* glsl-optimizer change: distinguish an explicit directive from GLSL 110 defaults. */
+   bool had_version_string;
    unsigned language_version;
    unsigned forced_language_version;
    /* Bitfield of ir_variable_mode to zero init */

@@ -139,6 +139,7 @@ ir_constant_propagation_visitor::constant_folding(ir_rvalue **rvalue)
       ir_constant *constant =
          var_ref->constant_expression_value(ralloc_parent(var_ref));
       if (constant) {
+         constant->source_precision = var_ref->get_precision();
          *rvalue = constant;
          this->progress = true;
       }
@@ -241,7 +242,9 @@ ir_constant_propagation_visitor::constant_propagation(ir_rvalue **rvalue) {
       }
    }
 
-   *rvalue = new(ralloc_parent(deref)) ir_constant(type, &data);
+   ir_constant *constant = new(ralloc_parent(deref)) ir_constant(type, &data);
+   constant->source_precision = (*rvalue)->get_precision();
+   *rvalue = constant;
    this->progress = true;
 }
 

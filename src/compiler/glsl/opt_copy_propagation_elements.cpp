@@ -657,6 +657,10 @@ ir_copy_propagation_elements_visitor::add_copy(ir_assignment *ir)
    if (ir->condition)
       return;
 
+   /* glsl-optimizer change: keep precision-changing assignments for source output. */
+   if (ir_precision_conversion(ir->lhs, ir->rhs))
+      return;
+
    {
       ir_variable *lhs_var = ir->whole_variable_written();
       ir_dereference_variable *rhs = ir->rhs->as_dereference_variable();

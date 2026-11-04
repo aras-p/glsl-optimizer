@@ -29,6 +29,7 @@ enum ir_expression_operation {
    ir_unop_sign,
    ir_unop_rcp,
    ir_unop_rsq,
+   ir_unop_normalize,
    ir_unop_sqrt,
    ir_unop_exp,
    ir_unop_log,

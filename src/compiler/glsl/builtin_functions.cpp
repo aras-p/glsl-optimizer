@@ -203,6 +203,13 @@ texture_external_es3(const _mesa_glsl_parse_state *state)
       state->is_version(0, 300);
 }
 
+/* glsl-optimizer change: preserve external-texture fragment bias overloads. */
+static bool texture_external_es3_bias(const _mesa_glsl_parse_state *state)
+{
+   return texture_external_es3(state) && state->stage == MESA_SHADER_FRAGMENT;
+}
+
+
 /** True if texturing functions with explicit LOD are allowed. */
 static bool
 lod_exists_in_stage(const _mesa_glsl_parse_state *state)
@@ -2330,6 +2337,7 @@ builtin_builder::create_builtins()
                 _texture(ir_tex, v130, glsl_type::float_type, glsl_type::sampler2DRectShadow_type, glsl_type::vec3_type),
 
                 _texture(ir_tex, texture_external_es3, glsl_type::vec4_type,  glsl_type::samplerExternalOES_type, glsl_type::vec2_type),
+                _texture(ir_txb, texture_external_es3_bias, glsl_type::vec4_type,  glsl_type::samplerExternalOES_type, glsl_type::vec2_type),
 
                 _texture(ir_txb, v130_derivatives_only, glsl_type::vec4_type,  glsl_type::sampler1D_type,  glsl_type::float_type),
                 _texture(ir_txb, v130_derivatives_only, glsl_type::ivec4_type, glsl_type::isampler1D_type, glsl_type::float_type),
@@ -2575,7 +2583,9 @@ builtin_builder::create_builtins()
                 _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler2DRect_type,  glsl_type::vec3_type, TEX_PROJECT),
                 _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler2DRect_type, glsl_type::vec3_type, TEX_PROJECT),
                 _texture(ir_tex, texture_external_es3, glsl_type::vec4_type,  glsl_type::samplerExternalOES_type, glsl_type::vec3_type, TEX_PROJECT),
+                _texture(ir_txb, texture_external_es3_bias, glsl_type::vec4_type,  glsl_type::samplerExternalOES_type, glsl_type::vec3_type, TEX_PROJECT),
                 _texture(ir_tex, texture_external_es3, glsl_type::vec4_type,  glsl_type::samplerExternalOES_type, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txb, texture_external_es3_bias, glsl_type::vec4_type,  glsl_type::samplerExternalOES_type, glsl_type::vec4_type, TEX_PROJECT),
 
                 _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler2DRect_type, glsl_type::vec3_type, TEX_PROJECT),
                 _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler2DRect_type,  glsl_type::vec4_type, TEX_PROJECT),
@@ -5851,7 +5861,8 @@ builtin_builder::_normalize(builtin_available_predicate avail, const glsl_type *
    if (type->vector_elements == 1) {
       body.emit(ret(sign(x)));
    } else {
-      body.emit(ret(mul(x, rsq(dot(x, x)))));
+      /* glsl-optimizer change: preserve the source builtin instead of expanding it. */
+      body.emit(ret(expr(ir_unop_normalize, x)));
    }
 
    return sig;

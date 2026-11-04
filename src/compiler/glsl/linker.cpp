@@ -2467,7 +2467,9 @@ link_intrastage_shaders(void *mem_ctx,
       return NULL;
    }
 
-   gl_linked_shader *linked = rzalloc(NULL, struct gl_linked_shader);
+   /* glsl-optimizer change: the shader program owns linked shaders and programs,
+    * including allocations left behind by a failed link. */
+   gl_linked_shader *linked = rzalloc(prog, struct gl_linked_shader);
    linked->Stage = shader_list[0]->Stage;
 
    /* Create program and attach it to the linked shader */
@@ -2483,6 +2485,7 @@ link_intrastage_shaders(void *mem_ctx,
 
    /* Don't use _mesa_reference_program() just take ownership */
    linked->Program = gl_prog;
+   ralloc_steal(linked, gl_prog);
 
    linked->ir = new(linked) exec_list;
    clone_ir_list(mem_ctx, linked->ir, main->ir);

@@ -327,6 +327,7 @@ ir_validate::visit_leave(ir_expression *ir)
 
    case ir_unop_rcp:
    case ir_unop_rsq:
+   case ir_unop_normalize:
    case ir_unop_sqrt:
       assert(ir->type->is_float_16_32_64());
       assert(ir->type == ir->operands[0]->type);

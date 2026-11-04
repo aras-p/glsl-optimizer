@@ -225,6 +225,11 @@ class ir_rvalue : public ir_instruction {
 public:
    const struct glsl_type *type;
 
+   /* glsl-optimizer change: cached source precision; queries never walk expression trees. */
+   unsigned source_precision = GLSL_PRECISION_NONE;
+   unsigned get_precision() const;
+   void update_precision();
+
    virtual ir_rvalue *clone(void *mem_ctx, struct hash_table *) const;
 
    virtual void accept(ir_visitor *v)
@@ -851,6 +856,8 @@ public:
        * for this field will never break a desktop shader compile.
        */
       unsigned precision:2;
+      /* glsl-optimizer change: inferred values may be promoted by later passes. */
+      unsigned precision_inferred:1;
 
       /**
        * \brief Layout qualifier for gl_FragDepth.
@@ -2226,6 +2233,7 @@ union ir_constant_data {
 
 class ir_constant : public ir_rvalue {
 public:
+
    ir_constant(const struct glsl_type *type, const ir_constant_data *data);
    ir_constant(bool b, unsigned vector_elements=1);
    ir_constant(int16_t i16, unsigned vector_elements=1);
@@ -2550,5 +2558,9 @@ _mesa_glsl_get_builtin_uniform_desc(const char *name);
 
 unsigned
 vertices_per_prim(GLenum prim);
+
+/* glsl-optimizer change: source precision analysis and conversion boundaries. */
+bool propagate_precision(exec_list *instructions);
+bool ir_precision_conversion(const ir_rvalue *lhs, const ir_rvalue *rhs);
 
 #endif /* IR_H */

@@ -70,6 +70,7 @@ ir_variable_refcount_entry::ir_variable_refcount_entry(ir_variable *var)
    assigned_count = 0;
    declaration = false;
    referenced_count = 0;
+   referenced_count_noself = 0;
 }
 
 
@@ -107,8 +108,11 @@ ir_variable_refcount_visitor::visit(ir_dereference_variable *ir)
    ir_variable *const var = ir->variable_referenced();
    ir_variable_refcount_entry *entry = this->get_variable_entry(var);
 
-   if (entry)
+   if (entry) {
       entry->referenced_count++;
+      if (in_assignee || var != current_lhs)
+         entry->referenced_count_noself++;
+   }
 
    return visit_continue;
 }
@@ -126,8 +130,20 @@ ir_variable_refcount_visitor::visit_enter(ir_function_signature *ir)
 
 
 ir_visitor_status
+ir_variable_refcount_visitor::visit_enter(ir_assignment *ir)
+{
+   /* glsl-optimizer change: only ignore self-reads of a plain local LHS;
+    * calls and reads used by other assignments still keep the variable live. */
+   assert(!current_lhs);
+   auto* lhs = ir->lhs->as_dereference_variable();
+   current_lhs = lhs ? lhs->var : nullptr;
+   return visit_continue;
+}
+
+ir_visitor_status
 ir_variable_refcount_visitor::visit_leave(ir_assignment *ir)
 {
+   current_lhs = nullptr;
    ir_variable_refcount_entry *entry;
    entry = this->get_variable_entry(ir->lhs->variable_referenced());
    if (entry) {
@@ -140,7 +156,7 @@ ir_variable_refcount_visitor::visit_leave(ir_assignment *ir)
        * out.
        */
       assert(entry->referenced_count >= entry->assigned_count);
-      if (entry->referenced_count == entry->assigned_count) {
+      if (entry->referenced_count_noself == entry->assigned_count) {
          struct assignment_entry *assignment_entry =
             (struct assignment_entry *)calloc(1, sizeof(*assignment_entry));
          assignment_entry->assign = ir;

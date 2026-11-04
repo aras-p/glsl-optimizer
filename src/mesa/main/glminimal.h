@@ -27,10 +27,6 @@
  Minimized version of gl.h with only things that the GLSL compiler needs.
 */
 
-/* glsl-optimizer change: Preserve the fork's minimal GL declarations, extending types/constants
- * for the Mesa 20.3.5 compiler instead of importing full OpenGL headers.
- */
-
 #ifndef __gl_minimal_h_
 #define __gl_minimal_h_
 

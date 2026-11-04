@@ -37,9 +37,11 @@ struct gl_context;
 struct gl_shader;
 struct gl_shader_program;
 
+struct _mesa_glsl_parse_state;
 extern void
 _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader,
-			  bool dump_ast, bool dump_hir);
+			  bool dump_ast, bool dump_hir, bool skip_preprocessor,
+                          struct _mesa_glsl_parse_state **retained_state = nullptr);
 
 #ifdef __cplusplus
 } /* extern "C" */

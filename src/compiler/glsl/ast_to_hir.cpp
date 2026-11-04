@@ -2664,11 +2664,11 @@ select_gles_precision(unsigned qual_precision,
 
       precision =
          state->symbols->get_default_precision_qualifier(type_name);
-      if (precision == ast_precision_none) {
-         _mesa_glsl_error(loc, state,
-                          "No precision specified in this scope for type `%s'",
-                          type->name);
-      }
+      /* glsl-optimizer change: allow unspecified precision for later source
+       * inference. Samplers without a language default still use mediump,
+       * including arrays (the default lookup above strips array dimensions). */
+      if (precision == GLSL_PRECISION_NONE && type->without_array()->is_sampler())
+         precision = GLSL_PRECISION_MEDIUM;
    }
 
 

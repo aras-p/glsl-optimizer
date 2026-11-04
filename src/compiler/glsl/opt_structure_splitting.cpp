@@ -343,6 +343,9 @@ do_structure_splitting(exec_list *instructions)
                                             name,
                                             (ir_variable_mode) entry->var->data.mode);
 
+         /* glsl-optimizer change: a split field keeps its declared precision. */
+         new_var->data.precision = type->fields.structure[i].precision;
+
          if (type->fields.structure[i].type->without_array()->is_image()) {
             /* Do not lose memory/format qualifiers for images declared inside
              * structures as allowed by ARB_bindless_texture.
