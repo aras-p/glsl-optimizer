@@ -115,5 +115,6 @@ Dev Notes
 - We only took the minimal subset of that, as needed by the glsl optimizer. A bunch
   of files were reduced to only contain what we need; they are mostly marked
   with `glsl-optimizer change:` comments.
-
+- In order to rebuild the generated GLSL/glcpp lexers, parsers and some tables,
+  you need to run `./generateParsers.sh`.
 
