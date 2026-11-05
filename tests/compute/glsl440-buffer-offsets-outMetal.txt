@@ -1,0 +1,42 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct alignas(16) _xlat_buf_storage0 {
+  char _buf_pad0[32];
+  alignas(16) float4 color;
+  char _buf_pad1[16];
+  alignas(4) uint count;
+};
+static_assert(sizeof(_xlat_buf_storage0) == 80, "std140 size");
+struct alignas(16) _xlat_buf_storage2_element { float4 value; };
+struct _xlat_buf_storage2 { _xlat_buf_storage2_element elements[8]; };
+static_assert(sizeof(_xlat_buf_storage2) == 128, "std430 size");
+struct alignas(16) _xlat_buf_storage1 {
+  alignas(4) uint header;
+  char _buf_pad1[28];
+  alignas(16) _xlat_buf_storage2 values;
+};
+static_assert(sizeof(_xlat_buf_storage1) == 160, "std430 size");
+struct xlatMtlShaderUniform {
+};
+// threadsPerThreadgroup: 8, 1, 1
+kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , constant _xlat_buf_storage0& _mtl_buffer1 [[buffer(1)]]
+  , device _xlat_buf_storage1& _mtl_buffer2 [[buffer(2)]]
+  , uint3 gl_GlobalInvocationID [[thread_position_in_grid]])
+{
+  if (((gl_GlobalInvocationID.x < uint(_mtl_buffer1.count)) && (gl_GlobalInvocationID.x < 8))) {
+    _mtl_buffer2.values.elements[gl_GlobalInvocationID.x].value = float4(float4(_mtl_buffer1.color));
+  };
+}
+
+
+// stats: 3 alu 0 tex 1 flow
+// workgroup size: 8 1 1
+// buffer #0: Config instance config layout std140 binding 1 (size: 80) metal 1
+//  member #0: vec4 color offset 32
+//  member #1: uint count offset 64
+// buffer #1: Output storage instance outputData layout std430 binding 2 (size: 160) metal 2
+//  member #0: uint header offset 0 (unused)
+//  member #1: vec4[8] values offset 32 array 8 stride 16
+//  member #2: vec4 [] parent 1 offset 32
