@@ -139,4 +139,4 @@ check_storage_rejection("layout(std430) buffer Data { mat2 value; } data;"
 check_storage_rejection("struct Entry { vec4 color; }; layout(std430) buffer Data { Entry entry; } data;"
     "data.entry = Entry(vec4(1.0)); color = vec4(1.0);" "Metal storage-buffer aggregate assignments")
 check_storage_rejection("layout(std430) buffer Data { uint value; } data;"
-    "color = vec4(float(atomicAdd(data.value, 1u)));" "Buffer atomics and memory barriers")
+    "memoryBarrierBuffer(); color = vec4(float(data.value));" "Buffer atomics and memory barriers")

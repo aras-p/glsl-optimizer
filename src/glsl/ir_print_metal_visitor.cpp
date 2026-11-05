@@ -125,6 +125,7 @@ struct metal_print_context
 	, matrixCastsDone(false)
 	, matrixConstructorsDone(false)
 	, shadowSamplerDone(false)
+	, atomicCompSwapDone(false)
 	, textureCounter(0)
 	, attributeCounter(0)
 	, uniformLocationCounter(0)
@@ -157,6 +158,7 @@ struct metal_print_context
 	bool matrixCastsDone;
 	bool matrixConstructorsDone;
 	bool shadowSamplerDone;
+	bool atomicCompSwapDone;
 	int textureCounter;
 	int attributeCounter;
 	int uniformLocationCounter;
@@ -2144,6 +2146,72 @@ ir_print_metal_visitor::visit(ir_call *ir)
 		visit(ir->return_deref);
 		buffer.asprintf_append (" = ");
 	}
+
+   const auto* atomic = find_buffer_atomic(ir->callee);
+   if (atomic) {
+      bool compareSwap = atomic->intrinsic == ir_intrinsic_generic_atomic_comp_swap;
+      if (compareSwap && !ctx.atomicCompSwapDone) {
+         ctx.atomicCompSwapDone = true;
+         // Retry spurious failures; GLSL compare-and-swap returns the old value.
+         ctx.prefixStr.asprintf_append(
+            "template<typename A, typename T>\n"
+            "inline T _xlat_atomic_comp_swap(device A* address, T compare, T value) {\n"
+            "  T expected = compare;\n"
+            "  while (!atomic_compare_exchange_weak_explicit(address, &expected, value, memory_order_relaxed, memory_order_relaxed) && expected == compare) {}\n"
+            "  return expected;\n"
+            "}\n");
+      }
+      auto* target = ((ir_instruction*)ir->actual_parameters.get_head())->as_rvalue();
+      const char* type = target->type->base_type == GLSL_TYPE_UINT ? "uint" : "int";
+      const auto& block = ctx.blockNames.at(target->variable_referenced());
+      buffer.asprintf_append("%s (reinterpret_cast<device atomic_%s*>(&", atomic->metal, type);
+      auto* component = target->as_dereference_array();
+      auto* swizzle = target->as_swizzle();
+      ir_rvalue* vector = swizzle ? target :
+         component && component->array->type->is_vector() ? component->array : nullptr;
+      unsigned components[4] = {0, 1, 2, 3};
+      unsigned count = vector ? vector->type->vector_elements : 0;
+      bool remapped = false;
+      // Compose swizzles into component offsets without constructing a copy of
+      // the storage vector. The atomic must address the original buffer member.
+      while (vector && vector->as_swizzle()) {
+         auto* s = vector->as_swizzle();
+         const unsigned mask[] = {s->mask.x, s->mask.y, s->mask.z, s->mask.w};
+         for (unsigned i = 0; i < count; ++i) components[i] = mask[components[i]];
+         vector = s->val;
+         remapped = true;
+      }
+      // Metal cannot take the address of a vector component. Offset from the
+      // vector's address instead; each int/uint component occupies four bytes.
+      print_uniform_storage(vector ? vector : target, block);
+      buffer.asprintf_append(")");
+      if (swizzle) buffer.asprintf_append(" + %u", components[0]);
+      else if (vector) {
+         buffer.asprintf_append(" + ");
+         auto* index = component->array_index;
+         if (remapped && index->as_constant() && index->as_constant()->get_uint_component(0) < count) {
+            buffer.asprintf_append("%u", components[index->as_constant()->get_uint_component(0)]);
+         } else {
+            if (remapped) {
+               buffer.asprintf_append("uint%u(", count);
+               for (unsigned i = 0; i < count; ++i)
+                  buffer.asprintf_append("%s%u", i ? ", " : "", components[i]);
+               buffer.asprintf_append(")[");
+            }
+            index->accept(this);
+            if (remapped) buffer.asprintf_append("]");
+         }
+      }
+      bool first = true;
+      foreach_in_list(ir_rvalue, arg, &ir->actual_parameters) {
+         if (first) { first = false; continue; }
+         buffer.asprintf_append(", %s(", type);
+         arg->accept(this);
+         buffer.asprintf_append(")");
+      }
+      buffer.asprintf_append(compareSwap ? ")" : ", memory_order_relaxed)");
+      return;
+   }
 
    buffer.asprintf_append ("%s (", ir->callee_name());
    bool first = true;

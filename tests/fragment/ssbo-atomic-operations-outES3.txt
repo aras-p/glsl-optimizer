@@ -1,0 +1,70 @@
+#version 310 es
+layout(std430, column_major, binding=2) buffer Data {
+  highp int signedValue;
+  highp uint unsignedValue;
+} data;
+out highp vec4 color;
+void main ()
+{
+  highp uint u_1;
+  highp int s_2;
+  highp int tmpvar_3;
+  tmpvar_3 = atomicAdd (data.signedValue, -3);
+  s_2 = tmpvar_3;
+  highp int tmpvar_4;
+  tmpvar_4 = atomicMin (data.signedValue, -5);
+  s_2 = (tmpvar_3 + tmpvar_4);
+  highp int tmpvar_5;
+  tmpvar_5 = atomicMax (data.signedValue, 2);
+  s_2 = (s_2 + tmpvar_5);
+  highp int tmpvar_6;
+  tmpvar_6 = atomicAnd (data.signedValue, 7);
+  s_2 = (s_2 + tmpvar_6);
+  highp int tmpvar_7;
+  tmpvar_7 = atomicOr (data.signedValue, 8);
+  s_2 = (s_2 + tmpvar_7);
+  highp int tmpvar_8;
+  tmpvar_8 = atomicXor (data.signedValue, 3);
+  s_2 = (s_2 + tmpvar_8);
+  highp int tmpvar_9;
+  tmpvar_9 = atomicExchange (data.signedValue, -9);
+  s_2 = (s_2 + tmpvar_9);
+  highp int tmpvar_10;
+  tmpvar_10 = atomicCompSwap (data.signedValue, -9, 4);
+  s_2 = (s_2 + tmpvar_10);
+  highp uint tmpvar_11;
+  tmpvar_11 = atomicAdd (data.unsignedValue, 3u);
+  u_1 = tmpvar_11;
+  highp uint tmpvar_12;
+  tmpvar_12 = atomicMin (data.unsignedValue, 5u);
+  u_1 = (tmpvar_11 + tmpvar_12);
+  highp uint tmpvar_13;
+  tmpvar_13 = atomicMax (data.unsignedValue, 2147483648u);
+  u_1 = (u_1 + tmpvar_13);
+  highp uint tmpvar_14;
+  tmpvar_14 = atomicAnd (data.unsignedValue, 7u);
+  u_1 = (u_1 + tmpvar_14);
+  highp uint tmpvar_15;
+  tmpvar_15 = atomicOr (data.unsignedValue, 8u);
+  u_1 = (u_1 + tmpvar_15);
+  highp uint tmpvar_16;
+  tmpvar_16 = atomicXor (data.unsignedValue, 3u);
+  u_1 = (u_1 + tmpvar_16);
+  highp uint tmpvar_17;
+  tmpvar_17 = atomicExchange (data.unsignedValue, 9u);
+  u_1 = (u_1 + tmpvar_17);
+  highp uint tmpvar_18;
+  tmpvar_18 = atomicCompSwap (data.unsignedValue, 9u, 4u);
+  u_1 = (u_1 + tmpvar_18);
+  highp vec4 tmpvar_19;
+  tmpvar_19.zw = vec2(0.0, 1.0);
+  tmpvar_19.x = float(s_2);
+  tmpvar_19.y = float(u_1);
+  color = tmpvar_19;
+}
+
+
+// stats: 17 alu 0 tex 0 flow
+// buffer #0: Data storage instance data layout std430 binding 2 (size: 8)
+//  member #0: int signedValue offset 0
+//  member #1: uint unsignedValue offset 4

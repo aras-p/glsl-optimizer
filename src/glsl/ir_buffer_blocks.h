@@ -7,6 +7,37 @@
 #include <vector>
 #include <cstring>
 
+struct buffer_atomic_function {
+   ir_intrinsic_id intrinsic;
+   const char* glsl;
+   const char* metal;
+};
+
+inline const buffer_atomic_function* find_buffer_atomic(const ir_function_signature* signature)
+{
+   if (!signature->is_builtin()) return nullptr;
+   bool intrinsic = signature->is_intrinsic();
+   if (intrinsic) {
+      if (signature->intrinsic_id < ir_intrinsic_generic_atomic_add ||
+          signature->intrinsic_id > ir_intrinsic_generic_atomic_comp_swap) return nullptr;
+   } else if (strncmp(signature->function_name(), "atomic", 6) != 0) {
+      return nullptr;
+   }
+   static const buffer_atomic_function functions[] = {
+      {ir_intrinsic_generic_atomic_add, "atomicAdd", "atomic_fetch_add_explicit"},
+      {ir_intrinsic_generic_atomic_min, "atomicMin", "atomic_fetch_min_explicit"},
+      {ir_intrinsic_generic_atomic_max, "atomicMax", "atomic_fetch_max_explicit"},
+      {ir_intrinsic_generic_atomic_and, "atomicAnd", "atomic_fetch_and_explicit"},
+      {ir_intrinsic_generic_atomic_or, "atomicOr", "atomic_fetch_or_explicit"},
+      {ir_intrinsic_generic_atomic_xor, "atomicXor", "atomic_fetch_xor_explicit"},
+      {ir_intrinsic_generic_atomic_exchange, "atomicExchange", "atomic_exchange_explicit"},
+      {ir_intrinsic_generic_atomic_comp_swap, "atomicCompSwap", "_xlat_atomic_comp_swap"},
+   };
+   for (const auto& f : functions)
+      if (intrinsic ? signature->intrinsic_id == f.intrinsic : strcmp(signature->function_name(), f.glsl) == 0) return &f;
+   return nullptr;
+}
+
 // Shared by reflection and the Metal printer so resource indices agree.
 struct buffer_block {
    const glsl_type* type;

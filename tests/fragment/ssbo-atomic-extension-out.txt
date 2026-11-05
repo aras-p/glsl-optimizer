@@ -1,0 +1,23 @@
+#version 420
+#extension GL_ARB_shader_storage_buffer_object : enable
+layout(std140, column_major, binding=0) buffer Data {
+  ivec4 values[];
+};
+uniform int index;
+out vec4 color;
+void main ()
+{
+  int tmpvar_1;
+  tmpvar_1 = atomicAdd (values[index].x, 1);
+  int tmpvar_2;
+  tmpvar_2 = atomicCompSwap (values[index].y, tmpvar_1, 2);
+  color = vec4(float(tmpvar_1));
+}
+
+
+// stats: 1 alu 0 tex 0 flow
+// uniforms: 1 (total size: 0)
+//  #0: index (high int) 1x1 [-1]
+// buffer #0: Data storage layout std140 binding 0 (size: unknown)
+//  member #0: ivec4[] values offset 0 array runtime stride 16
+//  member #1: ivec4 [] parent 0 offset 0

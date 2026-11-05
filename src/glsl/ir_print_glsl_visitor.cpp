@@ -33,6 +33,7 @@
 #include <unordered_set>
 #include "loop_analysis.h"
 #include "ir_print_loop.h"
+#include "ir_buffer_blocks.h"
 
 
 
@@ -1355,7 +1356,8 @@ ir_print_glsl_visitor::visit(ir_call *ir)
 		buffer.asprintf_append (" = ");		
 	}
 	
-   buffer.asprintf_append ("%s (", ir->callee_name());
+   const auto* atomic = find_buffer_atomic(ir->callee);
+   buffer.asprintf_append ("%s (", atomic ? atomic->glsl : ir->callee_name());
    bool first = true;
    foreach_in_list(ir_instruction, inst, &ir->actual_parameters) {
 	  if (!first)

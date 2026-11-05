@@ -7,8 +7,11 @@ GLSL optimizer Change Log
 
 Added:
 
-* Uniform buffers (UBO) are actually parsed and get through to output correctly.
-  Reflection API was extended to be able to query buffers and their member data.
+* A whole bunch of stuff that could be summarized as "compute shader support":
+  * Uniform buffers (UBO) and storage buffers (SSBOs) are actually parsed and get through
+    to output correctly. Reflection API was extended to be able to query buffers and
+    their member data.
+  * Atomic operations are handled.
 * Recognize `GL_OES_EGL_image_external_essl3` in GLES3 inputs.
 
 Changed:

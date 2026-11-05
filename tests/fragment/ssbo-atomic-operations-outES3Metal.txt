@@ -1,0 +1,88 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+template<typename A, typename T>
+inline T _xlat_atomic_comp_swap(device A* address, T compare, T value) {
+  T expected = compare;
+  while (!atomic_compare_exchange_weak_explicit(address, &expected, value, memory_order_relaxed, memory_order_relaxed) && expected == compare) {}
+  return expected;
+}
+struct alignas(4) _xlat_ubo_storage0 {
+  alignas(4) int signedValue;
+  alignas(4) uint unsignedValue;
+};
+static_assert(sizeof(_xlat_ubo_storage0) == 8, "std430 size");
+struct xlatMtlShaderInput {
+};
+struct xlatMtlShaderOutput {
+  float4 color [[color(0)]];
+};
+struct xlatMtlShaderUniform {
+};
+fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , device _xlat_ubo_storage0& _mtl_buffer1 [[buffer(1)]])
+{
+  xlatMtlShaderOutput _mtl_o;
+  uint u_1;
+  int s_2 = 0;
+  int tmpvar_3 = 0;
+  tmpvar_3 = atomic_fetch_add_explicit (reinterpret_cast<device atomic_int*>(&_mtl_buffer1.signedValue), int(-3), memory_order_relaxed);
+  s_2 = tmpvar_3;
+  int tmpvar_4 = 0;
+  tmpvar_4 = atomic_fetch_min_explicit (reinterpret_cast<device atomic_int*>(&_mtl_buffer1.signedValue), int(-5), memory_order_relaxed);
+  s_2 = (tmpvar_3 + tmpvar_4);
+  int tmpvar_5 = 0;
+  tmpvar_5 = atomic_fetch_max_explicit (reinterpret_cast<device atomic_int*>(&_mtl_buffer1.signedValue), int(2), memory_order_relaxed);
+  s_2 = (s_2 + tmpvar_5);
+  int tmpvar_6 = 0;
+  tmpvar_6 = atomic_fetch_and_explicit (reinterpret_cast<device atomic_int*>(&_mtl_buffer1.signedValue), int(7), memory_order_relaxed);
+  s_2 = (s_2 + tmpvar_6);
+  int tmpvar_7 = 0;
+  tmpvar_7 = atomic_fetch_or_explicit (reinterpret_cast<device atomic_int*>(&_mtl_buffer1.signedValue), int(8), memory_order_relaxed);
+  s_2 = (s_2 + tmpvar_7);
+  int tmpvar_8 = 0;
+  tmpvar_8 = atomic_fetch_xor_explicit (reinterpret_cast<device atomic_int*>(&_mtl_buffer1.signedValue), int(3), memory_order_relaxed);
+  s_2 = (s_2 + tmpvar_8);
+  int tmpvar_9 = 0;
+  tmpvar_9 = atomic_exchange_explicit (reinterpret_cast<device atomic_int*>(&_mtl_buffer1.signedValue), int(-9), memory_order_relaxed);
+  s_2 = (s_2 + tmpvar_9);
+  int tmpvar_10 = 0;
+  tmpvar_10 = _xlat_atomic_comp_swap (reinterpret_cast<device atomic_int*>(&_mtl_buffer1.signedValue), int(-9), int(4));
+  s_2 = (s_2 + tmpvar_10);
+  uint tmpvar_11;
+  tmpvar_11 = atomic_fetch_add_explicit (reinterpret_cast<device atomic_uint*>(&_mtl_buffer1.unsignedValue), uint(3), memory_order_relaxed);
+  u_1 = tmpvar_11;
+  uint tmpvar_12;
+  tmpvar_12 = atomic_fetch_min_explicit (reinterpret_cast<device atomic_uint*>(&_mtl_buffer1.unsignedValue), uint(5), memory_order_relaxed);
+  u_1 = (tmpvar_11 + tmpvar_12);
+  uint tmpvar_13;
+  tmpvar_13 = atomic_fetch_max_explicit (reinterpret_cast<device atomic_uint*>(&_mtl_buffer1.unsignedValue), uint(2147483648), memory_order_relaxed);
+  u_1 = (u_1 + tmpvar_13);
+  uint tmpvar_14;
+  tmpvar_14 = atomic_fetch_and_explicit (reinterpret_cast<device atomic_uint*>(&_mtl_buffer1.unsignedValue), uint(7), memory_order_relaxed);
+  u_1 = (u_1 + tmpvar_14);
+  uint tmpvar_15;
+  tmpvar_15 = atomic_fetch_or_explicit (reinterpret_cast<device atomic_uint*>(&_mtl_buffer1.unsignedValue), uint(8), memory_order_relaxed);
+  u_1 = (u_1 + tmpvar_15);
+  uint tmpvar_16;
+  tmpvar_16 = atomic_fetch_xor_explicit (reinterpret_cast<device atomic_uint*>(&_mtl_buffer1.unsignedValue), uint(3), memory_order_relaxed);
+  u_1 = (u_1 + tmpvar_16);
+  uint tmpvar_17;
+  tmpvar_17 = atomic_exchange_explicit (reinterpret_cast<device atomic_uint*>(&_mtl_buffer1.unsignedValue), uint(9), memory_order_relaxed);
+  u_1 = (u_1 + tmpvar_17);
+  uint tmpvar_18;
+  tmpvar_18 = _xlat_atomic_comp_swap (reinterpret_cast<device atomic_uint*>(&_mtl_buffer1.unsignedValue), uint(9), uint(4));
+  u_1 = (u_1 + tmpvar_18);
+  float4 tmpvar_19 = 0;
+  tmpvar_19.zw = float2(0.0, 1.0);
+  tmpvar_19.x = float(s_2);
+  tmpvar_19.y = float(u_1);
+  _mtl_o.color = tmpvar_19;
+  return _mtl_o;
+}
+
+
+// stats: 17 alu 0 tex 0 flow
+// buffer #0: Data storage instance data layout std430 binding 2 (size: 8) metal 1
+//  member #0: int signedValue offset 0
+//  member #1: uint unsignedValue offset 4

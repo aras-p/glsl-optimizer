@@ -1,0 +1,19 @@
+#version 310 es
+precision highp float;
+precision highp int;
+layout(std430) buffer Data {
+    int unused;
+    int index;
+    ivec4 values[];
+} data;
+uniform int element;
+out vec4 color;
+void main()
+{
+    int a = atomicAdd(data.values[element].yx[0], 1);
+    int b = atomicExchange(data.values[element].yx[data.index], 2);
+    int c = atomicCompSwap(data.values[element].wzyx.yx[data.index], 3, 4);
+    int i = data.index;
+    atomicOr(data.values[element].zy[i++], 8);
+    color = vec4(float(a), float(b), float(c), float(i));
+}

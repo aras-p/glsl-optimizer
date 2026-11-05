@@ -47,6 +47,7 @@ initialize_mesa_context(struct gl_context *ctx, glslopt_target api)
 			break;
 	}
 	initialize_context_to_defaults (ctx, mesaAPI);
+	ctx->Extensions.ARB_shader_storage_buffer_object = true;
 
 	switch(api)
 	{
@@ -390,6 +391,7 @@ public:
 	}
 
 	unsigned resolve(ir_rvalue* value) {
+		if (auto s = value->as_swizzle()) return resolve(s->val);
 		if (auto v = value->as_dereference_variable()) return variables.at(v->var);
 		if (auto r = value->as_dereference_record())
 			return nodes[resolve(r->record)].first_child + r->field_idx;
@@ -570,9 +572,21 @@ public:
 		}
 		return visit_continue;
 	}
+	ir_visitor_status visit_enter(ir_function_signature* signature) override {
+		return signature->is_builtin() ? visit_continue_with_parent : visit_continue;
+	}
 	ir_visitor_status visit_enter(ir_call* call) override {
-		if (call->callee->is_builtin() && (strstr(call->callee_name(), "atomic") || strstr(call->callee_name(), "barrier") ||
-			strstr(call->callee_name(), "Barrier")))
+		if (!call->callee->is_builtin()) return visit_continue;
+		if (find_buffer_atomic(call->callee)) {
+			auto* target = ((ir_instruction*)call->actual_parameters.get_head())->as_rvalue();
+			auto* var = target->variable_referenced();
+			if (metal && (!var || var->data.mode != ir_var_shader_storage ||
+				!target->type->is_scalar() || !target->type->is_integer_32()))
+				error = "Metal buffer atomics require a 32-bit int or uint SSBO member.";
+			return visit_continue;
+		}
+		if (strstr(call->callee_name(), "atomic") || strstr(call->callee_name(), "barrier") ||
+			strstr(call->callee_name(), "Barrier"))
 			error = "Buffer atomics and memory barriers are not supported.";
 		return visit_continue;
 	}

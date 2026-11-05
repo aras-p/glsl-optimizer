@@ -1,0 +1,19 @@
+#version 310 es
+precision highp float;
+precision highp int;
+struct Entry { uint count; uvec3 values; };
+layout(std140) buffer Data {
+    uint header;
+    Entry entries[];
+} data[2];
+uniform int index;
+uniform int component;
+out vec4 color;
+void main()
+{
+    uint a = atomicAdd(data[0].entries[index].count, 1u);
+    uint b = atomicExchange(data[1].entries[index].values.y, 2u);
+    uint c = atomicCompSwap(data[0].entries[index].values[component], 3u, 4u);
+    atomicOr(data[1].header, 8u);
+    color = vec4(float(a), float(b), float(c), 1.0);
+}

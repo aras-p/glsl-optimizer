@@ -1,0 +1,28 @@
+#version 310 es
+layout(std430, column_major) buffer Data {
+  mediump ivec2 values[4];
+} data;
+uniform mediump int index;
+uniform mediump int operand;
+out mediump vec4 color;
+void main ()
+{
+  mediump int tmpvar_1;
+  tmpvar_1 = atomicAdd (data.values[index].x, operand);
+  mediump int tmpvar_2;
+  tmpvar_2 = atomicCompSwap (data.values[index].y, tmpvar_1, operand);
+  mediump vec4 tmpvar_3;
+  tmpvar_3.zw = vec2(0.0, 1.0);
+  tmpvar_3.x = float(tmpvar_1);
+  tmpvar_3.y = float(tmpvar_2);
+  color = tmpvar_3;
+}
+
+
+// stats: 3 alu 0 tex 0 flow
+// uniforms: 2 (total size: 0)
+//  #0: index (medium int) 1x1 [-1]
+//  #1: operand (medium int) 1x1 [-1]
+// buffer #0: Data storage instance data layout std430 (size: 32)
+//  member #0: ivec2[4] values offset 0 array 4 stride 8
+//  member #1: ivec2 [] parent 0 offset 0
