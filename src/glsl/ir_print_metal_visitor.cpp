@@ -156,7 +156,18 @@ struct metal_print_context
 	string_buffer stageExports;
 	std::unordered_map<const ir_variable*, const char*> stageNames;
 	unsigned stageFieldCount = 0;
-	enum storage_kind { uniform_std140, storage_std140, storage_std430, storage_kind_count };
+	enum storage_kind {
+		uniform_std140, storage_std140, storage_std430,
+		coherent_std140, coherent_std430, storage_kind_count
+	};
+	static bool is_std430(unsigned kind) { return kind == storage_std430 || kind == coherent_std430; }
+	static bool is_coherent(unsigned kind) { return kind == coherent_std140 || kind == coherent_std430; }
+	static const char* buffer_address(unsigned kind, bool readOnly)
+	{
+		if (kind == uniform_std140) return "constant";
+		if (is_coherent(kind)) return readOnly ? "const coherent(device) device" : "coherent(device) device";
+		return readOnly ? "const device" : "device";
+	}
 	struct runtime_field { const char* storage; unsigned offset; unsigned stride; };
 	struct block_reference {
 		unsigned index; bool array; unsigned storage; bool row_major;
@@ -167,6 +178,8 @@ struct metal_print_context
 	bool countersReadOnly = false;
 	std::unordered_map<const glsl_type*, unsigned> uniformStorageTypes[storage_kind_count][2];
 	std::vector<const char*> uniformStorageNames;
+	std::unordered_map<const glsl_type*, const char*> sharedStructTypes;
+	bool sharedMatrixTemplate = false;
 	std::unordered_map<const glsl_type*, bool> nativeBufferTypes[storage_kind_count][2];
 	void* mem_ctx;
 	bool writingParams;
@@ -246,7 +259,9 @@ public:
 	virtual void visit(ir_emit_vertex *);
 	virtual void visit(ir_end_primitive *);
 
-	bool emit_buffer_matrix_write(ir_dereference* lhs, ir_rvalue* rhs, unsigned write_mask, ir_rvalue* dstIndex);
+	bool print_shared_access(ir_rvalue* value);
+	void print_shared_storage(ir_rvalue* value);
+	bool emit_storage_matrix_write(ir_dereference* lhs, ir_rvalue* rhs, unsigned write_mask, ir_rvalue* dstIndex);
 	void emit_buffer_aggregate(ir_dereference* lhs, ir_rvalue* rhs);
 	void emit_assignment_part (ir_dereference* lhs, ir_rvalue* rhs, unsigned write_mask, ir_rvalue* dstIndex);
 
@@ -625,6 +640,118 @@ static void print_type_post(string_buffer& buffer, const glsl_type *t, bool arra
 	}
 }
 
+// Metal matrices have no threadgroup constructor. Store their columns in a
+// plain aggregate and use native matrices for values in private storage.
+static bool shared_storage_is_wrapped(const metal_print_context& ctx, const glsl_type* type)
+{
+   type = type->without_array();
+   if (type->is_matrix()) return true;
+   if (!type->is_struct()) return false;
+   auto found = ctx.sharedStructTypes.find(type);
+   return found != ctx.sharedStructTypes.end() && found->second;
+}
+
+static void copy_shared_field(metal_print_context& ctx, const glsl_type* type, const char* dst,
+   const char* src, bool toShared, unsigned depth)
+{
+   auto& out = ctx.typedeclStr;
+   if (toShared && type->is_array() && type->fields.array->is_matrix() && type->length <= 4) {
+      // Constant indices let Metal keep small private matrix arrays in registers.
+      for (unsigned i = 0; i < type->length; ++i)
+         out.asprintf_append("    %s[%u].write(%s[%u]);\n", dst, i, src, i);
+   } else if (type->is_array()) {
+      out.asprintf_append("    for (uint i%u = 0; i%u < %uu; ++i%u) {\n", depth, depth, type->length, depth);
+      copy_shared_field(ctx, type->fields.array,
+         ralloc_asprintf(ctx.mem_ctx, "%s[i%u]", dst, depth),
+         ralloc_asprintf(ctx.mem_ctx, "%s[i%u]", src, depth), toShared, depth + 1);
+      out.asprintf_append("    }\n");
+   } else if (shared_storage_is_wrapped(ctx, type)) {
+      out.asprintf_append(toShared ? "    %s.write(%s);\n" : "    %s = %s.read();\n", dst, src);
+   } else {
+      out.asprintf_append("    %s = %s;\n", dst, src);
+   }
+}
+
+static void print_shared_type(metal_print_context& ctx, string_buffer& out, const glsl_type* type, unsigned precision);
+
+static void ensure_shared_matrix_template(metal_print_context& ctx)
+{
+   if (!ctx.sharedMatrixTemplate) {
+      ctx.sharedMatrixTemplate = true;
+      ctx.typedeclStr.asprintf_append(
+         "template<typename M, typename V, uint N>\n"
+         "struct _xlat_shared_matrix {\n"
+         "  V columns[N];\n"
+         "  M read() const threadgroup {\n"
+         "    M value;\n"
+         "    for (uint i = 0; i < N; ++i) value[i] = columns[i];\n"
+         "    return value;\n"
+         "  }\n"
+         "  template<typename T> void write(T value) threadgroup {\n"
+         "    for (uint i = 0; i < N; ++i) columns[i] = V(value[i]);\n"
+         "  }\n"
+         "};\n");
+   }
+}
+
+static const char* shared_struct_type(metal_print_context& ctx, const glsl_type* type)
+{
+   auto found = ctx.sharedStructTypes.find(type);
+   if (found != ctx.sharedStructTypes.end()) return found->second;
+   bool wrapped = false;
+   for (unsigned i = 0; i < type->length; ++i) {
+      const auto* field = type->fields.structure[i].type->without_array();
+      if (field->is_matrix()) wrapped = true;
+      else if (field->is_struct() && shared_struct_type(ctx, field)) wrapped = true;
+   }
+   const char* name = wrapped ? ralloc_asprintf(ctx.mem_ctx, "_xlat_shared_struct%zu", ctx.sharedStructTypes.size()) : nullptr;
+   ctx.sharedStructTypes[type] = name;
+   if (!wrapped) return nullptr;
+
+   ensure_shared_matrix_template(ctx);
+   auto& out = ctx.typedeclStr;
+   out.asprintf_append("struct %s {\n", name);
+   for (unsigned i = 0; i < type->length; ++i) {
+      const auto& field = type->fields.structure[i];
+      out.asprintf_append("  ");
+      print_shared_type(ctx, out, field.type, field.precision);
+      out.asprintf_append(" %s", field.name);
+      print_type_post(out, field.type, false);
+      out.asprintf_append(";\n");
+   }
+   out.asprintf_append("  %s read() const threadgroup {\n    %s _value;\n", type->name, type->name);
+   for (unsigned i = 0; i < type->length; ++i) {
+      const auto& field = type->fields.structure[i];
+      copy_shared_field(ctx, field.type, ralloc_asprintf(ctx.mem_ctx, "_value.%s", field.name),
+         ralloc_asprintf(ctx.mem_ctx, "this->%s", field.name), false, 0);
+   }
+   out.asprintf_append("    return _value;\n  }\n  void write(%s _value) threadgroup {\n", type->name);
+   for (unsigned i = 0; i < type->length; ++i) {
+      const auto& field = type->fields.structure[i];
+      copy_shared_field(ctx, field.type, ralloc_asprintf(ctx.mem_ctx, "this->%s", field.name),
+         ralloc_asprintf(ctx.mem_ctx, "_value.%s", field.name), true, 0);
+   }
+   out.asprintf_append("  }\n};\n");
+   return name;
+}
+
+static void print_shared_type(metal_print_context& ctx, string_buffer& out, const glsl_type* type, unsigned precision)
+{
+   type = type->without_array();
+   if (type->is_matrix()) {
+      ensure_shared_matrix_template(ctx);
+      out.asprintf_append("_xlat_shared_matrix<");
+      print_type_precision(out, type, precision, false);
+      out.asprintf_append(", ");
+      print_type_precision(out, type->column_type(), precision, false);
+      out.asprintf_append(", %u>", type->matrix_columns);
+   } else if (const char* name = type->is_struct() ? shared_struct_type(ctx, type) : nullptr) {
+      out.asprintf_append("%s", name);
+   } else {
+      print_type_precision(out, type, precision, false);
+   }
+}
+
 class metal_struct_declarations : public ir_hierarchical_visitor {
 public:
 	string_buffer& out;
@@ -761,10 +888,13 @@ static const char* uniform_storage_type(metal_print_context& ctx, const glsl_typ
 // Excluding padding also keeps aggregate stores from overwriting padding bytes.
 static bool native_buffer_type(metal_print_context& ctx, const glsl_type* type, bool row, unsigned kind)
 {
+   // Coherent aggregate copies use explicit member accesses. Native matrix
+   // operators do not accept coherent references.
+   if (metal_print_context::is_coherent(kind)) return false;
    auto& cache = ctx.nativeBufferTypes[kind][row];
    auto found = cache.find(type);
    if (found != cache.end()) return found->second;
-   bool std430 = kind == metal_print_context::storage_std430;
+   bool std430 = metal_print_context::is_std430(kind);
    bool match = false;
    if (type->is_scalar() || type->is_vector()) {
       match = !type->is_boolean() && type->vector_elements != 3;
@@ -848,13 +978,18 @@ static void copy_uniform_value(metal_print_context& ctx, string_buffer& out,
    }
 }
 
+enum class aggregate_source { value, buffer, shared };
+
 // Write only value components, leaving layout padding untouched.
 static void store_buffer_value(metal_print_context& ctx, string_buffer& out,
    const glsl_type* type, bool row, const char* dst, const char* src, unsigned depth, unsigned kind,
-   bool sourceStorage, bool sourceRow, unsigned sourceKind, unsigned sourcePrecision)
+   aggregate_source source, bool sourceRow, unsigned sourceKind, unsigned sourcePrecision)
 {
    bool native = native_buffer_type(ctx, type, row, kind);
-   bool sourceNative = !sourceStorage || native_buffer_type(ctx, type, sourceRow, sourceKind);
+   bool sourceStorage = source == aggregate_source::buffer;
+   bool sourceShared = source == aggregate_source::shared;
+   bool sourceNative = sourceShared ? !shared_storage_is_wrapped(ctx, type) :
+      !sourceStorage || native_buffer_type(ctx, type, sourceRow, sourceKind);
    if ((type->is_struct() || type->is_matrix()) && native && sourceNative &&
        (!type->is_matrix() || !sourceStorage || sourcePrecision != GLSL_PRECISION_MEDIUM)) {
       out.asprintf_append("%*s%s = ", depth * 2, "", dst);
@@ -867,14 +1002,14 @@ static void store_buffer_value(metal_print_context& ctx, string_buffer& out,
          store_buffer_value(ctx, out, f.type, buffer_field_row_major(f, row),
             ralloc_asprintf(ctx.mem_ctx, "%s.%s", dst, f.name),
             ralloc_asprintf(ctx.mem_ctx, "%s.%s", src, f.name), depth, kind,
-            sourceStorage, buffer_field_row_major(f, sourceRow), sourceKind, f.precision);
+            source, buffer_field_row_major(f, sourceRow), sourceKind, f.precision);
       }
    } else if (type->is_array()) {
       out.asprintf_append("%*sfor (uint _buf_i%u = 0; _buf_i%u < %u; ++_buf_i%u) {\n", depth * 2, "", depth, depth, type->length, depth);
       store_buffer_value(ctx, out, type->fields.array, row,
          ralloc_asprintf(ctx.mem_ctx, "%s.elements[_buf_i%u].value", dst, depth),
          ralloc_asprintf(ctx.mem_ctx, sourceStorage ? "%s.elements[_buf_i%u].value" : "%s[_buf_i%u]", src, depth),
-         depth + 1, kind, sourceStorage, sourceRow, sourceKind, sourcePrecision);
+         depth + 1, kind, source, sourceRow, sourceKind, sourcePrecision);
       out.asprintf_append("%*s}\n", depth * 2, "");
    } else if (type->is_matrix()) {
       unsigned count = row ? type->vector_elements : type->matrix_columns;
@@ -884,12 +1019,17 @@ static void store_buffer_value(metal_print_context& ctx, string_buffer& out,
          if (native) out.asprintf_append("[%u]", i);
          else out.asprintf_append(".vectors[%u].%.*s", i, width, "xyzw");
          out.asprintf_append(" = float%u(", width);
+         if (sourceShared && !row) {
+            out.asprintf_append("%s.columns[%u]);\n", src, i);
+            continue;
+         }
          for (unsigned j = 0; j < width; ++j) {
             if (j) out.asprintf_append(", ");
             bool half = sourceStorage && sourcePrecision == GLSL_PRECISION_MEDIUM;
             if (half) out.asprintf_append("half(");
             unsigned c = row ? j : i, r = row ? i : j;
-            if (sourceNative) out.asprintf_append("%s[%u][%u]", src, c, r);
+            if (sourceShared) out.asprintf_append("%s.columns[%u][%u]", src, c, r);
+            else if (sourceNative) out.asprintf_append("%s[%u][%u]", src, c, r);
             else out.asprintf_append("%s.vectors[%u][%u]", src, sourceRow ? r : c, sourceRow ? c : r);
             if (half) out.asprintf_append(")");
          }
@@ -909,7 +1049,7 @@ static void store_buffer_value(metal_print_context& ctx, string_buffer& out,
 
 static const char* uniform_storage_type(metal_print_context& ctx, const glsl_type* type, bool row, unsigned kind)
 {
-   bool std430 = kind == metal_print_context::storage_std430;
+   bool std430 = metal_print_context::is_std430(kind);
    if (type->is_scalar() || type->is_vector()) {
       static const char* names[3][4] = {
          { "float", "float2", "packed_float3", "float4" },
@@ -979,7 +1119,7 @@ static const char* uniform_storage_type(metal_print_context& ctx, const glsl_typ
    }
    out.asprintf_append("static_assert(sizeof(%s) == %u, \"%s size\");\n", name, size, std430 ? "std430" : "std140");
    if (type->is_struct()) {
-      out.asprintf_append("inline __attribute__((always_inline)) %s %s_read(%s %s& storage)\n{\n  %s value;\n", type->name, name, kind ? "const device" : "constant", name, type->name);
+      out.asprintf_append("inline __attribute__((always_inline)) %s %s_read(%s %s& storage)\n{\n  %s value;\n", type->name, name, metal_print_context::buffer_address(kind, true), name, type->name);
       for (unsigned i = 0; i < type->length; ++i) {
          const auto& f = type->fields.structure[i];
          copy_uniform_value(ctx, out, f.type, buffer_field_row_major(f, row), f.precision,
@@ -993,13 +1133,31 @@ static const char* uniform_storage_type(metal_print_context& ctx, const glsl_typ
 static void prepare_buffer_blocks(metal_print_context& ctx, exec_list* ir)
 {
    auto blocks = collect_buffer_blocks(ir, true);
+   bool coherentGuard = false;
    for (unsigned i = 0; i < blocks.size(); ++i) {
       const auto& b = blocks[i];
       unsigned kind = b.variable->data.mode == ir_var_shader_storage ?
          (buffer_uses_std430(b, true) ? metal_print_context::storage_std430 : metal_print_context::storage_std140) : metal_print_context::uniform_std140;
       bool readOnly = true;
-      for (unsigned f = 0; f < b.type->length; ++f) readOnly &= b.type->fields.structure[f].memory_read_only;
-      const char* address = kind ? (readOnly ? "const device" : "device") : "constant";
+      bool coherent = false;
+      for (unsigned f = 0; f < b.type->length; ++f) {
+         const auto& field = b.type->fields.structure[f];
+         readOnly &= field.memory_read_only;
+         coherent |= field.memory_coherent;
+      }
+      // Metal qualifies the buffer address. A block with a coherent member
+      // uses device coherence for every access through that address.
+      if (kind != metal_print_context::uniform_std140 && coherent) {
+         kind = metal_print_context::is_std430(kind) ? metal_print_context::coherent_std430 : metal_print_context::coherent_std140;
+         if (!coherentGuard) {
+            coherentGuard = true;
+            ctx.prefixStr.asprintf_append(
+               "#if __METAL_VERSION__ < 320\n"
+               "#error Coherent storage buffers require Metal 3.2 or newer\n"
+               "#endif\n");
+         }
+      }
+      const char* address = metal_print_context::buffer_address(kind, readOnly);
       bool runtime = buffer_has_runtime_array(b.type);
       bool row = b.type->get_interface_row_major();
       metal_print_context::runtime_field* fields = nullptr;
@@ -1007,7 +1165,7 @@ static void prepare_buffer_blocks(metal_print_context& ctx, exec_list* ir)
       if (runtime) {
          fields = ralloc_array(ctx.mem_ctx, metal_print_context::runtime_field, b.type->length);
          unsigned cursor = 0;
-         bool std430 = kind == metal_print_context::storage_std430;
+         bool std430 = metal_print_context::is_std430(kind);
          for (unsigned f = 0; f < b.type->length; ++f) {
             const auto& field = b.type->fields.structure[f];
             bool fieldRow = buffer_field_row_major(field, row);
@@ -1143,6 +1301,8 @@ void ir_print_metal_visitor::visit(ir_variable *ir)
 		buffer.asprintf_append("uint");
 	else if (!strcmp(ir->name, "gl_PointCoord"))
 		buffer.asprintf_append("float2");
+	else if (ir->data.mode == ir_var_shader_shared)
+		print_shared_type(ctx, buffer, ir->type, ir->data.precision);
 	else
 		print_type(buffer, ir, ir->type, false);
 	buffer.asprintf_append (" ");
@@ -2092,8 +2252,40 @@ bool ir_print_metal_visitor::print_uniform_read(ir_rvalue* value)
    return true;
 }
 
+void ir_print_metal_visitor::print_shared_storage(ir_rvalue* value)
+{
+   if (auto* variable = value->as_dereference_variable()) {
+      print_var_name(variable->var);
+   } else if (auto* array = value->as_dereference_array()) {
+      print_shared_storage(array->array);
+      buffer.asprintf_append(array->array->type->is_matrix() ? ".columns[" : "[");
+      bool savedLhs = inside_lhs;
+      inside_lhs = false;
+      array->array_index->accept(this);
+      inside_lhs = savedLhs;
+      buffer.asprintf_append("]");
+   } else if (auto* record = value->as_dereference_record()) {
+      print_shared_storage(record->record);
+      buffer.asprintf_append(".%s", record->record->type->fields.structure[record->field_idx].name);
+   } else {
+      value->accept(this);
+   }
+}
+
+bool ir_print_metal_visitor::print_shared_access(ir_rvalue* value)
+{
+   if (!ctx.sharedMatrixTemplate) return false;
+   auto* var = value->variable_referenced();
+   if (!var || var->data.mode != ir_var_shader_shared || !shared_storage_is_wrapped(ctx, var->type)) return false;
+   print_shared_storage(value);
+   if (!inside_lhs && !value->type->is_array() && shared_storage_is_wrapped(ctx, value->type))
+      buffer.asprintf_append(".read()");
+   return true;
+}
+
 void ir_print_metal_visitor::visit(ir_dereference_variable *ir)
 {
+   if (print_shared_access(ir)) return;
 	ir_variable *var = ir->variable_referenced();
 	if (print_uniform_read(ir)) return;
 	if (!ctx.stageNames.empty()) {
@@ -2115,6 +2307,7 @@ void ir_print_metal_visitor::visit(ir_dereference_variable *ir)
 
 void ir_print_metal_visitor::visit(ir_dereference_array *ir)
 {
+   if (print_shared_access(ir)) return;
    if (print_uniform_read(ir)) return;
    ir->array->accept(this);
    buffer.asprintf_append ("[");
@@ -2125,6 +2318,7 @@ void ir_print_metal_visitor::visit(ir_dereference_array *ir)
 
 void ir_print_metal_visitor::visit(ir_dereference_record *ir)
 {
+   if (print_shared_access(ir)) return;
    if (print_uniform_read(ir)) return;
    ir->record->accept(this);
    buffer.asprintf_append (".%s", ir->record->type->fields.structure[ir->field_idx].name);
@@ -2139,13 +2333,16 @@ void ir_print_metal_visitor::emit_buffer_aggregate(ir_dereference* lhs, ir_rvalu
    bool row = uniform_read_row_major(lhs, block.row_major);
    const char* storage = uniform_storage_type(ctx, lhs->type, row, block.storage);
    buffer.asprintf_append("{\n"); ++indentation; indent();
-   buffer.asprintf_append("device %s& _buf_dst = ", storage);
+   buffer.asprintf_append("%s %s& _buf_dst = ", block.address, storage);
    print_uniform_storage(lhs, block); buffer.asprintf_append(";\n"); indent();
-   auto source = ctx.blockNames.find(rhs->variable_referenced());
+   auto* variable = rhs->variable_referenced();
+   auto source = ctx.blockNames.find(variable);
    bool sourceStorage = rhs->as_dereference() && source != ctx.blockNames.end();
+   bool sourceShared = rhs->as_dereference() && variable && variable->data.mode == ir_var_shader_shared &&
+      shared_storage_is_wrapped(ctx, rhs->type);
    bool sourceRow = sourceStorage ? uniform_read_row_major(rhs, source->second.row_major) : false;
    unsigned sourceKind = sourceStorage ? source->second.storage : 0;
-   if (native_buffer_type(ctx, lhs->type, row, block.storage) &&
+   if (!sourceShared && native_buffer_type(ctx, lhs->type, row, block.storage) &&
        (!sourceStorage || native_buffer_type(ctx, rhs->type, sourceRow, sourceKind))) {
       buffer.asprintf_append("_buf_dst = ");
       if (lhs->type->is_matrix()) buffer.asprintf_append("%s(", storage);
@@ -2157,11 +2354,13 @@ void ir_print_metal_visitor::emit_buffer_aggregate(ir_dereference* lhs, ir_rvalu
    }
    if (sourceStorage) {
       const auto& sourceBlock = source->second;
-      buffer.asprintf_append("const %s %s& _buf_src = ", sourceBlock.address,
+      buffer.asprintf_append("%s%s %s& _buf_src = ", strncmp(sourceBlock.address, "const ", 6) == 0 ? "" : "const ", sourceBlock.address,
          uniform_storage_type(ctx, rhs->type, sourceRow, sourceKind));
       print_uniform_storage(rhs, sourceBlock);
+   } else if (sourceShared) {
+      buffer.asprintf_append("const threadgroup auto& _buf_src = ");
+      print_shared_storage(rhs);
    } else {
-      auto* variable = rhs->variable_referenced();
       const char* address = variable && variable->data.mode == ir_var_uniform ? "constant" :
          variable && variable->data.mode == ir_var_shader_shared ? "threadgroup" : "thread";
       buffer.asprintf_append("const %s auto& _buf_src = ", address);
@@ -2169,13 +2368,14 @@ void ir_print_metal_visitor::emit_buffer_aggregate(ir_dereference* lhs, ir_rvalu
    }
    buffer.asprintf_append(";\n");
    store_buffer_value(ctx, buffer, lhs->type, row, "_buf_dst", "_buf_src", indentation, block.storage,
-      sourceStorage, sourceRow, sourceKind, rhs->get_precision());
+      sourceStorage ? aggregate_source::buffer : sourceShared ? aggregate_source::shared : aggregate_source::value,
+      sourceRow, sourceKind, rhs->get_precision());
    --indentation; indent(); buffer.asprintf_append("}");
 }
 
 // Matrix columns are contiguous only in column-major storage. Row-major
 // column writes scatter into rows, without loading or rewriting other values.
-bool ir_print_metal_visitor::emit_buffer_matrix_write(ir_dereference* lhs, ir_rvalue* rhs,
+bool ir_print_metal_visitor::emit_storage_matrix_write(ir_dereference* lhs, ir_rvalue* rhs,
    unsigned write_mask, ir_rvalue* dstIndex)
 {
    auto* column = lhs->as_dereference_array();
@@ -2194,17 +2394,28 @@ bool ir_print_metal_visitor::emit_buffer_matrix_write(ir_dereference* lhs, ir_rv
       column = vector->as_dereference_array();
    }
    if (!column || !column->array->type->is_matrix()) return false;
-   const auto& block = ctx.blockNames.at(lhs->variable_referenced());
-   bool row = uniform_read_row_major(column->array, block.row_major);
-   bool native = native_buffer_type(ctx, column->array->type, row, block.storage);
+   auto* variable = lhs->variable_referenced();
+   bool shared = variable->data.mode == ir_var_shader_shared;
+   const auto* block = shared ? nullptr : &ctx.blockNames.at(variable);
+   bool row = block && uniform_read_row_major(column->array, block->row_major);
+   bool native = block && native_buffer_type(ctx, column->array->type, row, block->storage);
+   const char* address = shared ? "threadgroup" : block->address;
+   const char* columns = shared ? "columns" : "vectors";
+   unsigned precision = shared ? column->array->as_dereference()->precision() : GLSL_PRECISION_HIGH;
+   const char* scalar = precision == GLSL_PRECISION_MEDIUM ? "half" : "float";
    unsigned width = column->array->type->vector_elements;
    char mask[5]; unsigned rows[4], count = 0;
    for (unsigned i = 0; i < width; ++i)
       if (write_mask & (1u << i)) { rows[count] = i; mask[count++] = "xyzw"[i]; }
    mask[count] = 0;
    buffer.asprintf_append("{\n"); ++indentation; indent();
-   buffer.asprintf_append("device %s& _buf_matrix = ", uniform_storage_type(ctx, column->array->type, row, block.storage));
-   print_uniform_storage(column->array, block); buffer.asprintf_append(";\n"); indent();
+   buffer.asprintf_append("%s ", address);
+   if (shared) print_shared_type(ctx, buffer, column->array->type, precision);
+   else buffer.asprintf_append("%s", uniform_storage_type(ctx, column->array->type, row, block->storage));
+   buffer.asprintf_append("& _buf_matrix = ");
+   if (shared) print_shared_storage(column->array);
+   else print_uniform_storage(column->array, *block);
+   buffer.asprintf_append(";\n"); indent();
    buffer.asprintf_append("const auto _buf_column = "); column->array_index->accept(this);
    buffer.asprintf_append(";\n"); indent();
    if (component) {
@@ -2221,7 +2432,7 @@ bool ir_print_metal_visitor::emit_buffer_matrix_write(ir_dereference* lhs, ir_rv
    }
    auto print_rhs = [&]() {
       unsigned rhsWidth = rhs->type->vector_elements;
-      buffer.asprintf_append(rhsWidth == 1 ? "float(" : "float%u(", rhsWidth);
+      buffer.asprintf_append(rhsWidth == 1 ? "%s(" : "%s%u(", scalar, rhsWidth);
       rhs->accept(this);
       if (!component && rhsWidth != count) buffer.asprintf_append(").%s", mask);
       else buffer.asprintf_append(")");
@@ -2229,20 +2440,20 @@ bool ir_print_metal_visitor::emit_buffer_matrix_write(ir_dereference* lhs, ir_rv
    // Scalar pointers prevent component stores from becoming vector read-modify-
    // writes that could clobber another invocation's adjacent component.
    auto print_scalar = [&](const char* selectedRow) {
-      buffer.asprintf_append("reinterpret_cast<device float*>(&_buf_matrix");
+      buffer.asprintf_append("reinterpret_cast<%s %s*>(&_buf_matrix", address, scalar);
       if (native) buffer.asprintf_append("[_buf_column]");
-      else buffer.asprintf_append(".vectors[%s]", row ? selectedRow : "_buf_column");
+      else buffer.asprintf_append(".%s[%s]", columns, row ? selectedRow : "_buf_column");
       buffer.asprintf_append(")[%s]", row ? "_buf_column" : selectedRow);
    };
-   unsigned storageWidth = native ? width : block.storage == metal_print_context::storage_std430 && width == 2 ? 2 : 4;
+   unsigned storageWidth = shared || native ? width : metal_print_context::is_std430(block->storage) && width == 2 ? 2 : 4;
    if (component) {
       print_scalar("_buf_component"); buffer.asprintf_append(" = ");
       print_rhs(); buffer.asprintf_append(";\n");
    } else if (!row && count == width && storageWidth == width) {
-      buffer.asprintf_append(native ? "_buf_matrix[_buf_column] = " : "_buf_matrix.vectors[_buf_column] = ");
+      buffer.asprintf_append(native ? "_buf_matrix[_buf_column] = " : "_buf_matrix.%s[_buf_column] = ", columns);
       print_rhs(); buffer.asprintf_append(";\n");
    } else {
-      buffer.asprintf_append(count == 1 ? "const float _buf_value = " : "const float%u _buf_value = ", count);
+      buffer.asprintf_append(count == 1 ? "const %s _buf_value = " : "const %s%u _buf_value = ", scalar, count);
       print_rhs(); buffer.asprintf_append(";\n");
       for (unsigned i = 0; i < count; ++i) {
          indent(); print_scalar(ralloc_asprintf(ctx.mem_ctx, "%u", rows[i]));
@@ -2257,9 +2468,18 @@ bool ir_print_metal_visitor::emit_buffer_matrix_write(ir_dereference* lhs, ir_rv
 
 void ir_print_metal_visitor::emit_assignment_part (ir_dereference* lhs, ir_rvalue* rhs, unsigned write_mask, ir_rvalue* dstIndex)
 {
-	if (lhs->variable_referenced()->data.mode == ir_var_shader_storage &&
-		emit_buffer_matrix_write(lhs, rhs, write_mask, dstIndex)) return;
-	if (lhs->variable_referenced()->data.mode == ir_var_shader_storage &&
+	const auto* variable = lhs->variable_referenced();
+	bool sharedMatrix = variable->data.mode == ir_var_shader_shared && shared_storage_is_wrapped(ctx, variable->type);
+	if ((variable->data.mode == ir_var_shader_storage || sharedMatrix) &&
+		emit_storage_matrix_write(lhs, rhs, write_mask, dstIndex)) return;
+	if (sharedMatrix && !lhs->type->is_array() && shared_storage_is_wrapped(ctx, lhs->type)) {
+		print_shared_storage(lhs);
+		buffer.asprintf_append(".write(");
+		rhs->accept(this);
+		buffer.asprintf_append(")");
+		return;
+	}
+	if (variable->data.mode == ir_var_shader_storage &&
 		(lhs->type->is_struct() || lhs->type->is_array() || lhs->type->is_matrix())) {
 		emit_buffer_aggregate(lhs, rhs);
 		return;
@@ -2346,10 +2566,9 @@ void ir_print_metal_visitor::emit_assignment_part (ir_dereference* lhs, ir_rvalu
 	{
 		if (!addSwizzle)
 		{
-			if (lhsType->is_matrix())
+			if (lhsType->is_matrix() && lhsType->matrix_columns == lhsType->vector_elements)
 			{
-				// Metal does not have matrix precision casts right now, so emit workaround
-				// functions that would do that.
+				// Keep the legacy square matrix precision helpers.
 				if (!ctx.matrixCastsDone)
 				{
 					ctx.prefixStr.asprintf_append(
@@ -2475,7 +2694,9 @@ void ir_print_metal_visitor::visit(ir_assignment *ir)
 		}
 
 		// Indexed storage writes must not rewrite the vector's other components.
-		if (ir->lhs->variable_referenced()->data.mode == ir_var_shader_storage &&
+		const auto* variable = ir->lhs->variable_referenced();
+		if ((variable->data.mode == ir_var_shader_storage ||
+		     (variable->data.mode == ir_var_shader_shared && shared_storage_is_wrapped(ctx, variable->type))) &&
 			ir->lhs->equals(rhsOp->operands[0])) skip_assign = true;
 		if (!skip_assign)
 		{
@@ -2781,9 +3002,11 @@ ir_print_metal_visitor::visit(ir_call *ir)
    const auto* atomic = find_buffer_atomic(ir->callee);
    if (atomic) {
       auto* target = ((ir_instruction*)ir->actual_parameters.get_head())->as_rvalue();
-      bool shared = target->variable_referenced()->data.mode == ir_var_shader_shared;
-      const char* address = shared ? "threadgroup" : "device";
-      unsigned spaceBit = shared ? 2 : 1;
+      const auto* variable = target->variable_referenced();
+      bool shared = variable->data.mode == ir_var_shader_shared;
+      const auto* block = shared ? nullptr : &ctx.blockNames.at(variable);
+      const char* address = shared ? "threadgroup" : block->address;
+      unsigned spaceBit = shared ? 2 : metal_print_context::is_coherent(block->storage) ? 4 : 1;
       bool compareSwap = atomic->intrinsic == ir_intrinsic_generic_atomic_comp_swap;
       if (compareSwap && !(ctx.atomicCompSwapSpaces & spaceBit)) {
          ctx.atomicCompSwapSpaces |= spaceBit;
@@ -2817,7 +3040,7 @@ ir_print_metal_visitor::visit(ir_call *ir)
       // Metal cannot take the address of a vector component. Offset from the
       // vector's address instead; each int/uint component occupies four bytes.
       if (shared) (vector ? vector : target)->accept(this);
-      else print_uniform_storage(vector ? vector : target, ctx.blockNames.at(target->variable_referenced()));
+      else print_uniform_storage(vector ? vector : target, *block);
       buffer.asprintf_append(")");
       if (swizzle) buffer.asprintf_append(" + %u", components[0]);
       else if (vector) {

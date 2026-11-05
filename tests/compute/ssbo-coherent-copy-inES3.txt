@@ -1,0 +1,23 @@
+#version 310 es
+precision highp float;
+precision highp int;
+layout(local_size_x=1) in;
+
+struct Entry { mat4 transform; vec4 color; };
+layout(std140, binding=0) coherent readonly buffer Input {
+    Entry value;
+} inputData[2];
+
+layout(std140, binding=2) buffer Ordinary {
+    Entry value;
+} ordinary;
+
+layout(std140, binding=3) coherent writeonly buffer Output {
+    Entry value;
+} outputData;
+
+void main()
+{
+    ordinary.value = inputData[1].value;
+    outputData.value = ordinary.value;
+}

@@ -315,7 +315,8 @@ static bool CheckMetal (bool vertex, bool gles, const std::string& testName, con
 	const char* command = source.find("#error Cube image atomics require Metal 4.0") != std::string::npos
 		? "xcrun --sdk iphoneos metal -std=metal4.0 -c metalTemp.metal -o metalTemp.air -Wno-parentheses-equality"
 		: (source.find("atomic_thread_fence(") != std::string::npos ||
-		source.find("memory_coherence_device") != std::string::npos)
+		source.find("memory_coherence_device") != std::string::npos ||
+		source.find("coherent(device)") != std::string::npos)
 		? "xcrun --sdk iphoneos metal -std=metal3.2 -c metalTemp.metal -o metalTemp.air -Wno-parentheses-equality"
 		: source.find("#error Image atomics require Metal 3.1") != std::string::npos
 		? "xcrun --sdk iphoneos metal -std=metal3.1 -c metalTemp.metal -o metalTemp.air -Wno-parentheses-equality"

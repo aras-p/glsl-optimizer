@@ -1,0 +1,138 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct Tile {
+  half2x3 transforms[2];
+};
+struct Entry {
+  Tile tile;
+  uint tag;
+};
+struct _xlat_buf_storage4 { float4 vectors[2]; };
+static_assert(sizeof(_xlat_buf_storage4) == 32, "std430 size");
+struct alignas(16) _xlat_buf_storage3_element { _xlat_buf_storage4 value; };
+struct _xlat_buf_storage3 { _xlat_buf_storage3_element elements[2]; };
+static_assert(sizeof(_xlat_buf_storage3) == 64, "std430 size");
+struct alignas(16) _xlat_buf_storage2 {
+  alignas(16) _xlat_buf_storage3 transforms;
+};
+static_assert(sizeof(_xlat_buf_storage2) == 64, "std430 size");
+inline __attribute__((always_inline)) Tile _xlat_buf_storage2_read(const device _xlat_buf_storage2& storage)
+{
+  Tile value;
+  for (uint _buf_i0 = 0; _buf_i0 < 2; ++_buf_i0) {
+    value.transforms[_buf_i0] = half2x3(half3(storage.transforms.elements[_buf_i0].value.vectors[0].xyz), half3(storage.transforms.elements[_buf_i0].value.vectors[1].xyz));
+  }
+  return value;
+}
+struct alignas(16) _xlat_buf_storage1 {
+  alignas(16) _xlat_buf_storage2 tile;
+  alignas(4) uint tag;
+};
+static_assert(sizeof(_xlat_buf_storage1) == 80, "std430 size");
+inline __attribute__((always_inline)) Entry _xlat_buf_storage1_read(const device _xlat_buf_storage1& storage)
+{
+  Entry value;
+  value.tile = _xlat_buf_storage2_read(storage.tile);
+  value.tag = uint(storage.tag);
+  return value;
+}
+struct alignas(16) _xlat_buf_storage0_element { _xlat_buf_storage1 value; };
+static_assert(sizeof(_xlat_buf_storage0_element) == 80, "array stride");
+template<typename M, typename V, uint N>
+struct _xlat_shared_matrix {
+  V columns[N];
+  M read() const threadgroup {
+    M value;
+    for (uint i = 0; i < N; ++i) value[i] = columns[i];
+    return value;
+  }
+  template<typename T> void write(T value) threadgroup {
+    for (uint i = 0; i < N; ++i) columns[i] = V(value[i]);
+  }
+};
+struct _xlat_shared_struct0 {
+  _xlat_shared_matrix<half2x3, half3, 2> transforms[2];
+  Tile read() const threadgroup {
+    Tile _value;
+    for (uint i0 = 0; i0 < 2u; ++i0) {
+    _value.transforms[i0] = this->transforms[i0].read();
+    }
+    return _value;
+  }
+  void write(Tile _value) threadgroup {
+    this->transforms[0].write(_value.transforms[0]);
+    this->transforms[1].write(_value.transforms[1]);
+  }
+};
+struct _xlat_shared_struct1 {
+  _xlat_shared_struct0 tile;
+  uint tag;
+  Entry read() const threadgroup {
+    Entry _value;
+    _value.tile = this->tile.read();
+    _value.tag = this->tag;
+    return _value;
+  }
+  void write(Entry _value) threadgroup {
+    this->tile.write(_value.tile);
+    this->tag = _value.tag;
+  }
+};
+struct xlatMtlShaderUniform {
+};
+// threadsPerThreadgroup: 8, 1, 1
+kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , device uchar* _mtl_buffer1 [[buffer(1)]]
+  , uint gl_LocalInvocationIndex [[thread_index_in_threadgroup]]
+  , uint3 gl_GlobalInvocationID [[thread_position_in_grid]])
+{
+threadgroup _xlat_shared_struct1 entries_1[8];
+  Entry entry_2;
+  float2x3 tmpvar_3;
+  float4 tmpvar_4 = 0;
+  tmpvar_4.yzw = float3(0.0, 0.0, 0.0);
+  tmpvar_4.x = float(gl_LocalInvocationIndex);
+  tmpvar_3[0] = tmpvar_4.xyy;
+  tmpvar_3[1] = tmpvar_4.yxy;
+  entry_2.tile.transforms[0] = half2x3(tmpvar_3);
+  entry_2.tile.transforms[1] = half2x3(float2x3(float3(2.0, 0.0, 0.0), float3(0.0, 2.0, 0.0)));
+  entry_2.tag = gl_LocalInvocationIndex;
+  entries_1[gl_LocalInvocationIndex].write(entry_2);
+  {
+    threadgroup _xlat_shared_matrix<half2x3, half3, 2>& _buf_matrix = entries_1[gl_LocalInvocationIndex].tile.transforms[1];
+    const auto _buf_column = (gl_LocalInvocationIndex & 1);
+    const half2 _buf_value = half2(float2(4.0, 3.0));
+    reinterpret_cast<threadgroup half*>(&_buf_matrix.columns[_buf_column])[0] = _buf_value.x;
+    reinterpret_cast<threadgroup half*>(&_buf_matrix.columns[_buf_column])[2] = _buf_value.y;
+  };
+  {
+    threadgroup _xlat_shared_matrix<half2x3, half3, 2>& _buf_matrix = entries_1[gl_LocalInvocationIndex].tile.transforms[0];
+    const auto _buf_column = 0;
+    const auto _buf_component = (gl_LocalInvocationIndex % 3);
+    reinterpret_cast<threadgroup half*>(&_buf_matrix.columns[_buf_column])[_buf_component] = half(5.0);
+  };
+  threadgroup_barrier(mem_flags::mem_threadgroup);
+  uint tmpvar_5;
+  tmpvar_5 = ((gl_LocalInvocationIndex + 1) % 8);
+  {
+    device _xlat_buf_storage1& _buf_dst = reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_GlobalInvocationID.x].value;
+    const threadgroup auto& _buf_src = entries_1[tmpvar_5];
+    for (uint _buf_i2 = 0; _buf_i2 < 2; ++_buf_i2) {
+      _buf_dst.tile.transforms.elements[_buf_i2].value.vectors[0].xyz = float3(_buf_src.tile.transforms[_buf_i2].columns[0]);
+      _buf_dst.tile.transforms.elements[_buf_i2].value.vectors[1].xyz = float3(_buf_src.tile.transforms[_buf_i2].columns[1]);
+    }
+    _buf_dst.tag = uint(_buf_src.tag);
+  };
+}
+
+
+// stats: 9 alu 0 tex 0 flow
+// workgroup size: 8 1 1
+// buffer #0: Output storage instance outputData layout std430 (size: unknown) metal 1
+//  member #0: Entry[] values offset 0 array runtime stride 80
+//  member #1: Entry [] parent 0 offset 0
+//  member #2: Tile tile parent 1 offset 0
+//  member #3: mat2x3[2] transforms parent 2 offset 0 array 2 stride 32
+//  member #4: mat2x3 [] parent 3 offset 0 matrix-stride 16
+//  member #5: uint tag parent 1 offset 64

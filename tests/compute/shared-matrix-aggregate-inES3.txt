@@ -1,0 +1,26 @@
+#version 310 es
+precision highp float;
+precision highp int;
+layout(local_size_x=8) in;
+
+struct Tile { mediump mat2x3 transforms[2]; };
+struct Entry { Tile tile; uint tag; };
+shared Entry entries[8];
+
+layout(std430) buffer Output { Entry values[]; } outputData;
+
+void main()
+{
+    uint i = gl_LocalInvocationIndex;
+    Entry entry;
+    entry.tile.transforms[0] = mat2x3(float(i));
+    entry.tile.transforms[1] = mat2x3(2.0);
+    entry.tag = i;
+    entries[i] = entry;
+    entries[i].tile.transforms[1][i & 1u].zx = vec2(3.0, 4.0);
+    entries[i].tile.transforms[0][0][i % 3u] = 5.0;
+    barrier();
+
+    uint next = (i + 1u) % 8u;
+    outputData.values[gl_GlobalInvocationID.x] = entries[next];
+}

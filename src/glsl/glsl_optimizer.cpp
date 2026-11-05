@@ -603,15 +603,14 @@ static void find_shader_variables(glslopt_shader* sh, exec_list* ir, bool metal)
 }
 
 
-static bool metal_uniform_type_supported(const glsl_type* type, bool allowMatrices = true)
+static bool metal_uniform_type_supported(const glsl_type* type)
 {
-	if (type->is_array()) return metal_uniform_type_supported(type->fields.array, allowMatrices);
+	if (type->is_array()) return metal_uniform_type_supported(type->fields.array);
 	if (type->is_struct() || type->is_interface()) {
 		for (unsigned i = 0; i < type->length; ++i)
-			if (!metal_uniform_type_supported(type->fields.structure[i].type, allowMatrices)) return false;
+			if (!metal_uniform_type_supported(type->fields.structure[i].type)) return false;
 		return true;
 	}
-	if (type->is_matrix() && !allowMatrices) return false;
 	return type->is_float() || type->is_integer_32() || type->is_boolean();
 }
 
@@ -637,8 +636,8 @@ public:
 		} else if (type->is_struct() || type->is_interface()) {
 			for (unsigned i = 0; i < type->length; ++i) {
 				const auto& f = type->fields.structure[i];
-				if (f.memory_coherent || f.memory_volatile)
-					error = "Metal coherent/volatile storage buffers are not supported.";
+				if (f.memory_volatile)
+					error = "Metal volatile storage buffers are not supported.";
 				check_type(f.type);
 			}
 		}
@@ -774,8 +773,7 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 			else if (var->data.memory_volatile)
 				unsupported = "Volatile image";
 		}
-		// Metal matrix constructors do not support threadgroup storage.
-		else if (ctx->target == kGlslTargetMetal && var->data.mode == ir_var_shader_shared && !metal_uniform_type_supported(var->type, false))
+		else if (ctx->target == kGlslTargetMetal && var->data.mode == ir_var_shader_shared && !metal_uniform_type_supported(var->type))
 			unsupported = "Shared-variable type";
 		if (unsupported) {
 			result->infoLog = ralloc_asprintf(result->mem_ctx,

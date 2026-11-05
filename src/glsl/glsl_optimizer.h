@@ -136,6 +136,8 @@ const glslopt_image_desc* glslopt_shader_get_image_desc(glslopt_shader* shader, 
 // - layout preserves the source packing qualifier for UBOs and SSBOs
 // - shared/packed layout for GLSL has size/offset/stride = -1
 // - Metal shared/packed buffers use std140 for UBOs and std430 for SSBOs
+// - Metal SSBOs with any coherent member use device coherence for the block
+//   (Metal 3.2+ on Apple silicon). Synchronization remains explicit.
 // - atomic counters sharing a binding form one kGlslBufferAtomicCounter buffer,
 //   named atomic_counters_BINDING, with kGlslLayoutAtomicCounter layout:
 //   32-bit unsigned storage at the reflected byte offsets, array stride 4
