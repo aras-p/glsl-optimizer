@@ -1,9 +1,6 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
-#if __METAL_VERSION__ < 320
-#error Memory barriers require Metal 3.2 or newer
-#endif
 struct Particle {
   float4 pos;
   float4 vel;
@@ -53,7 +50,6 @@ threadgroup float4 sharedData_1[256];
     } else {
       sharedData_1[gl_LocalInvocationID.x] = float4(0.0, 0.0, 0.0, 0.0);
     };
-    atomic_thread_fence(mem_flags::mem_threadgroup, memory_order_seq_cst, thread_scope_threadgroup);
     threadgroup_barrier(mem_flags::mem_threadgroup);
     if (tmpvar_6) {
       uint j_8;
@@ -74,7 +70,6 @@ threadgroup float4 sharedData_1[256];
         j_8++;
       };
     };
-    atomic_thread_fence(mem_flags::mem_threadgroup, memory_order_seq_cst, thread_scope_threadgroup);
     threadgroup_barrier(mem_flags::mem_threadgroup);
     i_2 += 256;
   };

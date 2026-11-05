@@ -1,9 +1,6 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
-#if __METAL_VERSION__ < 320
-#error Memory barriers require Metal 3.2 or newer
-#endif
 struct alignas(16) _xlat_buf_storage0 {
   alignas(16) int4 section;
   alignas(8) int2 target;
@@ -64,7 +61,6 @@ threadgroup float4 temp_cache_2[128];
   tmpvar_10.y = (1.0/(float(int4(_mtl_buffer1.section).w)));
   local_cache_1[(tmpvar_8 + 16)] = source_color.sample(_mtlsmp_source_color, (float2)(((tmpvar_7 + tmpvar_10))), level(0.0));
   local_cache_1[(17 + tmpvar_8)] = source_color.sample(_mtlsmp_source_color, (float2)(((tmpvar_7 + (1.0/(float2(int4(_mtl_buffer1.section).zw)))))), level(0.0));
-  atomic_thread_fence(mem_flags::mem_threadgroup, memory_order_seq_cst, thread_scope_threadgroup);
   threadgroup_barrier(mem_flags::mem_threadgroup);
   uint tmpvar_11;
   tmpvar_11 = ((gl_LocalInvocationID.x + (gl_LocalInvocationID.y * 32)) + 4);
@@ -86,7 +82,6 @@ threadgroup float4 temp_cache_2[128];
   tmpvar_12 = ((gl_LocalInvocationID.y * 2) + (gl_LocalInvocationID.x * 16));
   temp_cache_2[tmpvar_12] = color_top_5;
   temp_cache_2[(tmpvar_12 + 1)] = color_bottom_4;
-  atomic_thread_fence(mem_flags::mem_threadgroup, memory_order_seq_cst, thread_scope_threadgroup);
   threadgroup_barrier(mem_flags::mem_threadgroup);
   if (any((tmpvar_6 >= int4(_mtl_buffer1.section).zw) != bool2(0, 0))) {
     return;

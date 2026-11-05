@@ -2685,6 +2685,15 @@ ir_print_metal_visitor::visit(ir_call *ir)
    }
 
    if (const auto* barrier = find_memory_barrier(ir->callee)) {
+      // A following control barrier already synchronizes threadgroup memory.
+      // Keep separate fences when the instructions are not adjacent.
+      if (mode_whole == kPrintGlslCompute && barrier->intrinsic == ir_intrinsic_memory_barrier_shared) {
+         const exec_node* next = ir->get_next();
+         if (!next->is_tail_sentinel() && static_cast<const ir_instruction*>(next)->ir_type == ir_type_barrier) {
+            skipped_this_ir = true;
+            return;
+         }
+      }
       assert(barrier->metal_flags);
       if (!ctx.memoryBarrierDone) {
          ctx.memoryBarrierDone = true;
