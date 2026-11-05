@@ -1,0 +1,23 @@
+#version 430
+layout(local_size_x=8) in;
+layout(std430, column_major) buffer Data {
+  coherent uint values[];
+} data;
+void main ()
+{
+  data.values[gl_GlobalInvocationID.x] = gl_GlobalInvocationID.x;
+  memoryBarrierBuffer ();
+  groupMemoryBarrier ();
+  memoryBarrierShared ();
+  memoryBarrierAtomicCounter ();
+  memoryBarrierImage ();
+  memoryBarrier ();
+  barrier();
+  data.values[gl_GlobalInvocationID.x] = (data.values[gl_GlobalInvocationID.x] + data.values[(gl_GlobalInvocationID.x ^ 1u)]);
+}
+
+
+// stats: 2 alu 0 tex 0 flow
+// buffer #0: Data storage instance data layout std430 (size: unknown)
+//  member #0: uint[] values offset 0 array runtime stride 4
+//  member #1: uint [] parent 0 offset 0

@@ -126,6 +126,7 @@ struct metal_print_context
 	, matrixConstructorsDone(false)
 	, shadowSamplerDone(false)
 	, atomicCompSwapDone(false)
+	, memoryBarrierDone(false)
 	, textureCounter(0)
 	, attributeCounter(0)
 	, uniformLocationCounter(0)
@@ -159,6 +160,7 @@ struct metal_print_context
 	bool matrixConstructorsDone;
 	bool shadowSamplerDone;
 	bool atomicCompSwapDone;
+	bool memoryBarrierDone;
 	int textureCounter;
 	int attributeCounter;
 	int uniformLocationCounter;
@@ -2146,6 +2148,19 @@ ir_print_metal_visitor::visit(ir_call *ir)
 		visit(ir->return_deref);
 		buffer.asprintf_append (" = ");
 	}
+
+   if (const auto* barrier = find_memory_barrier(ir->callee)) {
+      assert(barrier->metal_flags);
+      if (!ctx.memoryBarrierDone) {
+         ctx.memoryBarrierDone = true;
+         ctx.prefixStr.asprintf_append(
+            "#if __METAL_VERSION__ < 320\n"
+            "#error Memory barriers require Metal 3.2 or newer\n"
+            "#endif\n");
+      }
+      buffer.asprintf_append("atomic_thread_fence(%s, memory_order_seq_cst, thread_scope_device)", barrier->metal_flags);
+      return;
+   }
 
    const auto* atomic = find_buffer_atomic(ir->callee);
    if (atomic) {

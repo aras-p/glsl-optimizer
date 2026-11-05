@@ -312,7 +312,10 @@ static bool CheckMetal (bool vertex, bool gles, const std::string& testName, con
 	if (written != source.size() || closed != 0)
 		return false;
 
-	int res = system("xcrun --sdk iphoneos metal -c metalTemp.metal -o metalTemp.air -Wno-parentheses-equality");
+	const char* command = source.find("atomic_thread_fence(") != std::string::npos
+		? "xcrun --sdk iphoneos metal -std=metal3.2 -c metalTemp.metal -o metalTemp.air -Wno-parentheses-equality"
+		: "xcrun --sdk iphoneos metal -c metalTemp.metal -o metalTemp.air -Wno-parentheses-equality";
+	int res = system(command);
 	if (res != 0)
 	{
 		printf ("\n  %s: Metal compiler failed\n", testName.c_str());

@@ -1,0 +1,16 @@
+#version 430
+layout(local_size_x=8) in;
+layout(std430) coherent buffer Data { uint values[]; } data;
+void main()
+{
+    uint i = gl_GlobalInvocationID.x;
+    data.values[i] = i;
+    memoryBarrierBuffer();
+    groupMemoryBarrier();
+    memoryBarrierShared();
+    memoryBarrierAtomicCounter();
+    memoryBarrierImage();
+    memoryBarrier();
+    barrier();
+    data.values[i] += data.values[i ^ 1u];
+}

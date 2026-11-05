@@ -1357,7 +1357,8 @@ ir_print_glsl_visitor::visit(ir_call *ir)
 	}
 	
    const auto* atomic = find_buffer_atomic(ir->callee);
-   buffer.asprintf_append ("%s (", atomic ? atomic->glsl : ir->callee_name());
+   const auto* barrier = find_memory_barrier(ir->callee);
+   buffer.asprintf_append ("%s (", atomic ? atomic->glsl : barrier ? barrier->glsl : ir->callee_name());
    bool first = true;
    foreach_in_list(ir_instruction, inst, &ir->actual_parameters) {
 	  if (!first)

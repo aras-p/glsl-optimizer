@@ -1,0 +1,31 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+#if __METAL_VERSION__ < 320
+#error Memory barriers require Metal 3.2 or newer
+#endif
+struct xlatMtlShaderInput {
+};
+struct xlatMtlShaderOutput {
+  float4 color [[color(0)]];
+};
+struct xlatMtlShaderUniform {
+  bool condition;
+};
+fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
+{
+  xlatMtlShaderOutput _mtl_o;
+  atomic_thread_fence(mem_flags::mem_device, memory_order_seq_cst, thread_scope_device);
+  atomic_thread_fence(mem_flags::mem_texture, memory_order_seq_cst, thread_scope_device);
+  if (_mtl_u.condition) {
+    atomic_thread_fence(mem_flags::mem_device, memory_order_seq_cst, thread_scope_device);
+  };
+  atomic_thread_fence(mem_flags::mem_device | mem_flags::mem_texture, memory_order_seq_cst, thread_scope_device);
+  _mtl_o.color = float4(1.0, 1.0, 1.0, 1.0);
+  return _mtl_o;
+}
+
+
+// stats: 1 alu 0 tex 1 flow
+// uniforms: 1 (total size: 1)
+//  #0: condition (high bool) 1x1 [-1] loc 0

@@ -38,6 +38,34 @@ inline const buffer_atomic_function* find_buffer_atomic(const ir_function_signat
    return nullptr;
 }
 
+struct memory_barrier_function {
+   ir_intrinsic_id intrinsic;
+   const char* glsl;
+   const char* metal_flags;
+};
+
+inline const memory_barrier_function* find_memory_barrier(const ir_function_signature* signature)
+{
+   if (!signature->is_builtin()) return nullptr;
+   bool intrinsic = signature->is_intrinsic();
+   if (intrinsic && (signature->intrinsic_id < ir_intrinsic_memory_barrier ||
+       signature->intrinsic_id > ir_intrinsic_memory_barrier_shared)) return nullptr;
+   if (!intrinsic && strncmp(signature->function_name(), "memoryBarrier", 13) != 0 &&
+       strcmp(signature->function_name(), "groupMemoryBarrier") != 0) return nullptr;
+   // Metal graphics stages have device and texture memory, but no threadgroup memory.
+   static const memory_barrier_function functions[] = {
+      {ir_intrinsic_memory_barrier, "memoryBarrier", "mem_flags::mem_device | mem_flags::mem_texture"},
+      {ir_intrinsic_memory_barrier_buffer, "memoryBarrierBuffer", "mem_flags::mem_device"},
+      {ir_intrinsic_memory_barrier_atomic_counter, "memoryBarrierAtomicCounter", "mem_flags::mem_device"},
+      {ir_intrinsic_memory_barrier_image, "memoryBarrierImage", "mem_flags::mem_texture"},
+      {ir_intrinsic_memory_barrier_shared, "memoryBarrierShared", nullptr},
+      {ir_intrinsic_group_memory_barrier, "groupMemoryBarrier", nullptr},
+   };
+   for (const auto& f : functions)
+      if (intrinsic ? signature->intrinsic_id == f.intrinsic : strcmp(signature->function_name(), f.glsl) == 0) return &f;
+   return nullptr;
+}
+
 // Shared by reflection and the Metal printer so resource indices agree.
 struct buffer_block {
    const glsl_type* type;

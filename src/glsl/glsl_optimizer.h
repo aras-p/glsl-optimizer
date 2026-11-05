@@ -40,7 +40,7 @@ enum glslopt_options {
 enum glslopt_target {
 	kGlslTargetOpenGL = 0,
 	kGlslTargetOpenGLES30 = 2,
-	kGlslTargetMetal = 3,
+	kGlslTargetMetal = 3, // Memory barriers require Metal 3.2 or newer
 };
 
 // Type info

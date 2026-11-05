@@ -577,6 +577,11 @@ public:
 	}
 	ir_visitor_status visit_enter(ir_call* call) override {
 		if (!call->callee->is_builtin()) return visit_continue;
+		if (auto* barrier = find_memory_barrier(call->callee)) {
+			if (metal && !barrier->metal_flags)
+				error = "Metal workgroup memory barriers require compute output support.";
+			return visit_continue;
+		}
 		if (find_buffer_atomic(call->callee)) {
 			auto* target = ((ir_instruction*)call->actual_parameters.get_head())->as_rvalue();
 			auto* var = target->variable_referenced();
