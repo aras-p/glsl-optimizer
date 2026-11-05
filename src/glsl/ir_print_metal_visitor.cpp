@@ -128,6 +128,8 @@ struct metal_print_context
 	, shadowSamplerDone(false)
 	, atomicCompSwapSpaces(0)
 	, memoryBarrierDone(false)
+	, imageAtomicDone(false)
+	, imageCompSwapDims(0)
 	, textureCounter(0)
 	, imageCounter(0)
 	, attributeCounter(0)
@@ -163,6 +165,8 @@ struct metal_print_context
 	bool shadowSamplerDone;
 	unsigned atomicCompSwapSpaces;
 	bool memoryBarrierDone;
+	bool imageAtomicDone;
+	unsigned imageCompSwapDims;
 	int textureCounter;
 	int imageCounter;
 	int attributeCounter;
@@ -267,6 +271,16 @@ _mesa_print_ir_metal(exec_list *instructions,
 	ctx.prefixStr.asprintf_append ("#include <metal_stdlib>\n");
 	ctx.prefixStr.asprintf_append ("#pragma clang diagnostic ignored \"-Wparentheses-equality\"\n");
 	ctx.prefixStr.asprintf_append ("using namespace metal;\n");
+	foreach_in_list(ir_instruction, instruction, instructions) {
+		const auto* var = instruction->as_variable();
+		if (var && var->type->is_image() && var->data.memory_coherent) {
+			ctx.prefixStr.asprintf_append(
+				"#if __METAL_VERSION__ < 320\n"
+				"#error Coherent images require Metal 3.2 or newer\n"
+				"#endif\n");
+			break;
+		}
+	}
 
 	ctx.inputStr.asprintf_append("struct xlatMtlShaderInput {\n");
 	ctx.outputStr.asprintf_append("struct xlatMtlShaderOutput {\n");
@@ -568,10 +582,11 @@ static void print_type(string_buffer& buffer, ir_instruction* ir, const glsl_typ
 {
 	if (t->is_image()) {
 		const auto* var = ir->as_variable();
-		buffer.asprintf_append("texture%s<%s, access::%s>",
+		buffer.asprintf_append("texture%s<%s, access::%s%s>",
 			t->sampler_dimensionality == GLSL_SAMPLER_DIM_3D ? "3d" : t->sampler_array ? "2d_array" : "2d",
 			t->sampled_type == GLSL_TYPE_UINT ? "uint" : t->sampled_type == GLSL_TYPE_INT ? "int" : "float",
-			var && var->data.memory_read_only ? "read" : var && var->data.memory_write_only ? "write" : "read_write");
+			var && var->data.memory_read_only ? "read" : var && var->data.memory_write_only ? "write" : "read_write",
+			var && var->data.memory_coherent ? ", memory_coherence_device" : "");
 		return;
 	}
 	unsigned prec = precision_from_ir(ir);
@@ -2187,6 +2202,56 @@ ir_print_metal_visitor::visit(ir_call *ir)
 		visit(ir->return_deref);
 		buffer.asprintf_append (" = ");
 	}
+
+   if (const auto* atomic = find_image_atomic(ir->callee)) {
+      if (!ctx.imageAtomicDone) {
+         ctx.imageAtomicDone = true;
+         ctx.prefixStr.asprintf_append(
+            "#if __METAL_VERSION__ < 310\n"
+            "#error Image atomics require Metal 3.1 or newer\n"
+            "#endif\n");
+      }
+      auto* image = ((ir_instruction*)ir->actual_parameters.get_head())->as_rvalue();
+      auto* coord = ((ir_instruction*)image->next)->as_rvalue();
+      auto* operand = ((ir_instruction*)coord->next)->as_rvalue();
+      bool array = image->type->sampler_array;
+      bool volume = image->type->sampler_dimensionality == GLSL_SAMPLER_DIM_3D;
+      const char* type = image->type->sampled_type == GLSL_TYPE_UINT ? "uint" : "int";
+      if (atomic->intrinsic == ir_intrinsic_image_atomic_comp_swap) {
+         const char* suffix = volume ? "3d" : array ? "array" : "2d";
+         unsigned bit = volume ? 4 : array ? 2 : 1;
+         if (!(ctx.imageCompSwapDims & bit)) {
+            ctx.imageCompSwapDims |= bit;
+            // Retry weak failures only while the original comparison still holds.
+            // Bounds checks also prevent endless retries for an out-of-range zero.
+            ctx.prefixStr.asprintf_append(
+               "template<typename I, typename T>\n"
+               "inline T _xlat_image_comp_swap_%s(I image, uint%s p, T compare, T value) {\n"
+               "  if (any(p >= uint%s(image.get_width(), image.get_height()%s))) return T(0);\n"
+               "  vec<T, 4> expected = vec<T, 4>(compare);\n"
+               "  while (!image.atomic_compare_exchange_weak(%s, &expected, vec<T, 4>(value)) && expected.x == compare) {}\n"
+               "  return expected.x;\n"
+               "}\n", suffix, array || volume ? "3" : "2", array || volume ? "3" : "2",
+               volume ? ", image.get_depth()" : array ? ", image.get_array_size()" : "", array ? "p.xy, p.z" : "p");
+         }
+         buffer.asprintf_append("_xlat_image_comp_swap_%s(", suffix);
+         image->accept(this);
+         buffer.asprintf_append(array || volume ? ", uint3(" : ", uint2(");
+         coord->accept(this);
+         buffer.asprintf_append("), %s(", type); operand->accept(this);
+         buffer.asprintf_append("), %s(", type);
+         ((ir_instruction*)operand->next)->accept(this);
+         buffer.asprintf_append("))");
+      } else {
+         image->accept(this); buffer.asprintf_append(".%s(", atomic->metal);
+         buffer.asprintf_append(volume ? "uint3(" : "uint2("); coord->accept(this);
+         buffer.asprintf_append(array ? ".xy), uint(" : ")");
+         if (array) { coord->accept(this); buffer.asprintf_append(".z)"); }
+         buffer.asprintf_append(", %s4(", type); operand->accept(this);
+         buffer.asprintf_append(")).x");
+      }
+      return;
+   }
 
    if (const char* imageFunction = image_function_name(ir->callee)) {
       auto* image = ((ir_instruction*)ir->actual_parameters.get_head())->as_rvalue();

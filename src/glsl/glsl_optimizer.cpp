@@ -555,6 +555,11 @@ public:
 	bool metal;
 	const char* error = nullptr;
 	explicit storage_validation(bool metal) : metal(metal) {}
+	ir_visitor_status visit(ir_variable* var) override {
+		if (metal && var->type->contains_image() && var->data.memory_volatile)
+			error = "Volatile image output is not supported yet (Metal backend).";
+		return visit_continue;
+	}
 	void check_type(const glsl_type* type) {
 		if (type->is_array()) {
 			check_type(type->fields.array);
@@ -587,9 +592,15 @@ public:
 	}
 	ir_visitor_status visit_enter(ir_call* call) override {
 		if (!call->callee->is_builtin()) return visit_continue;
+		if (find_image_atomic(call->callee) && metal) {
+			auto* image = ((ir_instruction*)call->actual_parameters.get_head())->as_rvalue();
+			if (image->type->sampled_type != GLSL_TYPE_INT && image->type->sampled_type != GLSL_TYPE_UINT)
+				error = "Metal image atomics require 32-bit integer images (r32i or r32ui).";
+			return visit_continue;
+		}
 		if (image_function_name(call->callee)) return visit_continue;
 		if (!strncmp(call->callee_name(), "__intrinsic_image_", 18) || !strncmp(call->callee_name(), "image", 5)) {
-			error = "Only imageLoad, imageStore and imageSize are supported.";
+			error = "Unsupported image operation.";
 			return visit_continue;
 		}
 		if (find_memory_barrier(call->callee)) return visit_continue;
@@ -683,8 +694,8 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 			if (!image->is_image() ||
 				(image->sampler_dimensionality != GLSL_SAMPLER_DIM_2D && image->sampler_dimensionality != GLSL_SAMPLER_DIM_3D))
 				unsupported = "Image dimension or resource-array";
-			else if (var->data.memory_coherent || var->data.memory_volatile)
-				unsupported = "Coherent/volatile image";
+			else if (var->data.memory_volatile)
+				unsupported = "Volatile image";
 		}
 		else if (var->type->contains_atomic())
 			unsupported = "Atomic-counter";

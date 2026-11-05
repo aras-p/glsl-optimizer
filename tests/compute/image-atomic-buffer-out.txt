@@ -1,0 +1,25 @@
+#version 430
+layout(local_size_x=8) in;
+layout(std430, column_major) buffer Results {
+  uint values[];
+} results;
+layout(r32ui, binding=3) coherent uniform uimageBuffer counters;
+void main ()
+{
+  int tmpvar_1;
+  tmpvar_1 = int(gl_GlobalInvocationID.x);
+  uint tmpvar_2;
+  tmpvar_2 = imageAtomicAdd (counters, tmpvar_1, 1u);
+  uint tmpvar_3;
+  tmpvar_3 = imageAtomicCompSwap (counters, tmpvar_1, (tmpvar_2 + 1u), uint(0));
+  results.values[tmpvar_1] = tmpvar_3;
+}
+
+
+// stats: 2 alu 2 tex 0 flow
+// workgroup size: 8 1 1
+// buffer #0: Results storage instance results layout std430 (size: unknown)
+//  member #0: uint[] values offset 0 array runtime stride 4
+//  member #1: uint [] parent 0 offset 0
+// textures: 1
+//  #0: counters (high other) 0x0 [-1] loc 3

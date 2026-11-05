@@ -1,0 +1,114 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+#if __METAL_VERSION__ < 310
+#error Image atomics require Metal 3.1 or newer
+#endif
+template<typename I, typename T>
+inline T _xlat_image_comp_swap_2d(I image, uint2 p, T compare, T value) {
+  if (any(p >= uint2(image.get_width(), image.get_height()))) return T(0);
+  vec<T, 4> expected = vec<T, 4>(compare);
+  while (!image.atomic_compare_exchange_weak(p, &expected, vec<T, 4>(value)) && expected.x == compare) {}
+  return expected.x;
+}
+template<typename I, typename T>
+inline T _xlat_image_comp_swap_array(I image, uint3 p, T compare, T value) {
+  if (any(p >= uint3(image.get_width(), image.get_height(), image.get_array_size()))) return T(0);
+  vec<T, 4> expected = vec<T, 4>(compare);
+  while (!image.atomic_compare_exchange_weak(p.xy, p.z, &expected, vec<T, 4>(value)) && expected.x == compare) {}
+  return expected.x;
+}
+struct alignas(16) _xlat_buf_storage0_element { int4 value; };
+static_assert(sizeof(_xlat_buf_storage0_element) == 16, "array stride");
+struct alignas(16) _xlat_buf_storage1_element { uint4 value; };
+static_assert(sizeof(_xlat_buf_storage1_element) == 16, "array stride");
+struct xlatMtlShaderUniform {
+};
+// threadsPerThreadgroup: 8, 1, 1
+kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , device uchar* _mtl_buffer1 [[buffer(1)]]
+  , device uchar* _mtl_buffer2 [[buffer(2)]]
+  , uint3 gl_GlobalInvocationID [[thread_position_in_grid]]
+  , texture2d<uint, access::read_write> counters [[texture(0)]]
+  , texture2d_array<int, access::read_write> layers [[texture(1)]])
+{
+  int2 tmpvar_1 = 0;
+  tmpvar_1.y = 0;
+  tmpvar_1.x = int(gl_GlobalInvocationID.x);
+  int3 tmpvar_2 = 0;
+  tmpvar_2.z = 1;
+  tmpvar_2.xy = tmpvar_1;
+  uint tmpvar_3;
+  tmpvar_3 = counters.atomic_fetch_add(uint2(tmpvar_1), uint4(1)).x;
+  uint tmpvar_4;
+  tmpvar_4 = counters.atomic_fetch_min(uint2(tmpvar_1), uint4(2)).x;
+  uint tmpvar_5;
+  tmpvar_5 = counters.atomic_fetch_max(uint2(tmpvar_1), uint4(3)).x;
+  uint tmpvar_6;
+  tmpvar_6 = counters.atomic_fetch_and(uint2(tmpvar_1), uint4(4)).x;
+  uint tmpvar_7;
+  tmpvar_7 = counters.atomic_fetch_or(uint2(tmpvar_1), uint4(5)).x;
+  uint tmpvar_8;
+  tmpvar_8 = counters.atomic_fetch_xor(uint2(tmpvar_1), uint4(6)).x;
+  uint tmpvar_9;
+  tmpvar_9 = counters.atomic_exchange(uint2(tmpvar_1), uint4(7)).x;
+  uint tmpvar_10;
+  tmpvar_10 = _xlat_image_comp_swap_2d(counters, uint2(tmpvar_1), uint(8), uint(9));
+  uint4 tmpvar_11;
+  tmpvar_11.x = tmpvar_3;
+  tmpvar_11.y = tmpvar_4;
+  tmpvar_11.z = tmpvar_5;
+  tmpvar_11.w = tmpvar_6;
+  uint tmpvar_12;
+  tmpvar_12 = (2 * gl_GlobalInvocationID.x);
+  reinterpret_cast<device _xlat_buf_storage1_element*>(_mtl_buffer2 + 0)[tmpvar_12].value = uint4(tmpvar_11);
+  uint4 tmpvar_13;
+  tmpvar_13.x = tmpvar_7;
+  tmpvar_13.y = tmpvar_8;
+  tmpvar_13.z = tmpvar_9;
+  tmpvar_13.w = tmpvar_10;
+  reinterpret_cast<device _xlat_buf_storage1_element*>(_mtl_buffer2 + 0)[(tmpvar_12 + 1)].value = uint4(tmpvar_13);
+  int tmpvar_14 = 0;
+  tmpvar_14 = layers.atomic_fetch_add(uint2(tmpvar_2.xy), uint(tmpvar_2.z), int4(1)).x;
+  int tmpvar_15 = 0;
+  tmpvar_15 = layers.atomic_fetch_min(uint2(tmpvar_2.xy), uint(tmpvar_2.z), int4(-3)).x;
+  int tmpvar_16 = 0;
+  tmpvar_16 = layers.atomic_fetch_max(uint2(tmpvar_2.xy), uint(tmpvar_2.z), int4(3)).x;
+  int tmpvar_17 = 0;
+  tmpvar_17 = layers.atomic_fetch_and(uint2(tmpvar_2.xy), uint(tmpvar_2.z), int4(-1)).x;
+  int tmpvar_18 = 0;
+  tmpvar_18 = layers.atomic_fetch_or(uint2(tmpvar_2.xy), uint(tmpvar_2.z), int4(5)).x;
+  int tmpvar_19 = 0;
+  tmpvar_19 = layers.atomic_fetch_xor(uint2(tmpvar_2.xy), uint(tmpvar_2.z), int4(6)).x;
+  int tmpvar_20 = 0;
+  tmpvar_20 = layers.atomic_exchange(uint2(tmpvar_2.xy), uint(tmpvar_2.z), int4(7)).x;
+  int tmpvar_21 = 0;
+  tmpvar_21 = _xlat_image_comp_swap_array(layers, uint3(tmpvar_2), int(8), int(9));
+  int4 tmpvar_22 = 0;
+  tmpvar_22.x = tmpvar_14;
+  tmpvar_22.y = tmpvar_15;
+  tmpvar_22.z = tmpvar_16;
+  tmpvar_22.w = tmpvar_17;
+  uint tmpvar_23;
+  tmpvar_23 = (2 * gl_GlobalInvocationID.x);
+  reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[tmpvar_23].value = int4(tmpvar_22);
+  int4 tmpvar_24 = 0;
+  tmpvar_24.x = tmpvar_18;
+  tmpvar_24.y = tmpvar_19;
+  tmpvar_24.z = tmpvar_20;
+  tmpvar_24.w = tmpvar_21;
+  reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[(tmpvar_23 + 1)].value = int4(tmpvar_24);
+}
+
+
+// stats: 7 alu 16 tex 0 flow
+// workgroup size: 8 1 1
+// buffer #0: SignedResults storage instance signedResults layout std430 (size: unknown) metal 1
+//  member #0: ivec4[] values offset 0 array runtime stride 16
+//  member #1: ivec4 [] parent 0 offset 0
+// buffer #1: UnsignedResults storage instance unsignedResults layout std430 (size: unknown) metal 2
+//  member #0: uvec4[] values offset 0 array runtime stride 16
+//  member #1: uvec4 [] parent 0 offset 0
+// textures: 2
+//  #0: counters (high image2d) 0x0 [-1] loc 0
+//  #1: layers (high image2darray) 0x0 [-1] loc 1

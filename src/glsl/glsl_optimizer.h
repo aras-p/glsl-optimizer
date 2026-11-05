@@ -92,6 +92,9 @@ void glslopt_shader_get_uniform_desc (glslopt_shader* shader, int index, const c
 // texture slot; Metal image slots follow sampled textures and do not consume
 // sampler slots. Bind a compatible texture format with shader-read/write usage
 // matching the source qualifiers.
+// Integer image atomics require Metal 3.1+ and a GPU supporting texture atomics.
+// Coherent images require Metal 3.2+ on Apple silicon; synchronization remains
+// the shader's responsibility. Volatile images are not supported on Metal.
 // Metal imageLoad uses native texture reads: out-of-bounds reads return zero
 // for present channels, but absent alpha remains 1 (GL/ES return all zeros).
 int glslopt_shader_get_texture_count (glslopt_shader* shader);

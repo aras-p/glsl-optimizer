@@ -1,0 +1,32 @@
+#version 320 es
+layout(local_size_x=8) in;
+layout(r32ui, binding=0) uniform highp uimage2D counters;
+layout(r32i, binding=1) uniform highp iimage2DArray layers;
+layout(std430) buffer UnsignedResults { uvec4 values[]; } unsignedResults;
+layout(std430) buffer SignedResults { ivec4 values[]; } signedResults;
+void main()
+{
+    uint i = gl_GlobalInvocationID.x;
+    ivec2 p = ivec2(i, 0);
+    ivec3 q = ivec3(p, 1);
+    uint u0 = imageAtomicAdd(counters, p, 1u);
+    uint u1 = imageAtomicMin(counters, p, 2u);
+    uint u2 = imageAtomicMax(counters, p, 3u);
+    uint u3 = imageAtomicAnd(counters, p, 4u);
+    uint u4 = imageAtomicOr(counters, p, 5u);
+    uint u5 = imageAtomicXor(counters, p, 6u);
+    uint u6 = imageAtomicExchange(counters, p, 7u);
+    uint u7 = imageAtomicCompSwap(counters, p, 8u, 9u);
+    unsignedResults.values[2u * i + 0u] = uvec4(u0, u1, u2, u3);
+    unsignedResults.values[2u * i + 1u] = uvec4(u4, u5, u6, u7);
+    int s0 = imageAtomicAdd(layers, q, 1);
+    int s1 = imageAtomicMin(layers, q, -3);
+    int s2 = imageAtomicMax(layers, q, 3);
+    int s3 = imageAtomicAnd(layers, q, -1);
+    int s4 = imageAtomicOr(layers, q, 5);
+    int s5 = imageAtomicXor(layers, q, 6);
+    int s6 = imageAtomicExchange(layers, q, 7);
+    int s7 = imageAtomicCompSwap(layers, q, 8, 9);
+    signedResults.values[2u * i + 0u] = ivec4(s0, s1, s2, s3);
+    signedResults.values[2u * i + 1u] = ivec4(s4, s5, s6, s7);
+}

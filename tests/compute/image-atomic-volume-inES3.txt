@@ -1,0 +1,15 @@
+#version 320 es
+layout(local_size_x=8) in;
+layout(r32ui) uniform coherent highp uimage3D volume;
+layout(std430) buffer Results { uvec4 values[]; } results;
+uint replace(ivec3 p, uint value) { return imageAtomicCompSwap(volume, p, 0u, value); }
+void main()
+{
+    uint i = gl_GlobalInvocationID.x;
+    int x = int(i);
+    uint a = imageAtomicAdd(volume, ivec3(x++, 0, 0), 1u);
+    uint b = replace(ivec3(x, 0, 0), i + 2u);
+    uint c = replace(ivec3(-1, 0, 0), i);
+    uint d = replace(ivec3(imageSize(volume)), i);
+    results.values[i] = uvec4(a, b, c, d);
+}

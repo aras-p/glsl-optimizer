@@ -1,0 +1,24 @@
+#version 310 es
+layout(local_size_x=4) in;
+layout(r32ui, binding=0) uniform writeonly highp uimage2D coherentData;
+layout(r32ui, binding=1) uniform writeonly highp uimage2D ordinaryData;
+void storeValue(coherent writeonly highp uimage2D image, ivec2 p)
+{
+    imageStore(image, p, uvec4(1u));
+}
+void forwardStore(writeonly highp uimage2D image, ivec2 p)
+{
+    storeValue(image, p);
+}
+void storeOrdinary(writeonly highp uimage2D image, ivec2 p)
+{
+    imageStore(image, p, uvec4(2u));
+}
+void main()
+{
+    ivec2 p = ivec2(gl_GlobalInvocationID.xy);
+    forwardStore(coherentData, p);
+    storeValue(coherentData, p + ivec2(0, 1));
+    storeOrdinary(ordinaryData, p);
+    memoryBarrierImage();
+}
