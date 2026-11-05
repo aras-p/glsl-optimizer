@@ -1,0 +1,79 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct alignas(16) _xlat_ubo_storage1_element { float4 value; };
+struct _xlat_ubo_storage1 { _xlat_ubo_storage1_element elements[256]; };
+static_assert(sizeof(_xlat_ubo_storage1) == 4096, "std140 size");
+struct alignas(16) _xlat_ubo_storage2_element { float value; };
+struct _xlat_ubo_storage2 { _xlat_ubo_storage2_element elements[256]; };
+static_assert(sizeof(_xlat_ubo_storage2) == 4096, "std140 size");
+struct _xlat_ubo_storage4 { float4 vectors[3]; };
+static_assert(sizeof(_xlat_ubo_storage4) == 48, "std140 size");
+struct alignas(16) _xlat_ubo_storage3_element { _xlat_ubo_storage4 value; };
+struct _xlat_ubo_storage3 { _xlat_ubo_storage3_element elements[4]; };
+static_assert(sizeof(_xlat_ubo_storage3) == 192, "std140 size");
+struct _xlat_ubo_storage6 { float4 vectors[3]; };
+static_assert(sizeof(_xlat_ubo_storage6) == 48, "std140 size");
+struct alignas(16) _xlat_ubo_storage5_element { _xlat_ubo_storage6 value; };
+struct _xlat_ubo_storage5 { _xlat_ubo_storage5_element elements[4]; };
+static_assert(sizeof(_xlat_ubo_storage5) == 192, "std140 size");
+struct alignas(16) _xlat_ubo_storage0 {
+  alignas(16) _xlat_ubo_storage1 colors;
+  alignas(16) _xlat_ubo_storage2 weights;
+  alignas(16) _xlat_ubo_storage3 rows;
+  alignas(16) _xlat_ubo_storage5 columns;
+  alignas(16) packed_uint3 indices;
+  char _ubo_pad5[4];
+  alignas(8) uint2 enabled;
+};
+static_assert(sizeof(_xlat_ubo_storage0) == 8608, "std140 size");
+struct xlatMtlShaderInput {
+};
+struct xlatMtlShaderOutput {
+  float4 color [[color(0)]];
+};
+struct xlatMtlShaderUniform {
+  int index;
+};
+fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , constant _xlat_ubo_storage0& _mtl_buffer1 [[buffer(1)]])
+{
+  xlatMtlShaderOutput _mtl_o;
+  float4 value_1 = 0;
+  float4 tmpvar_2 = 0;
+  tmpvar_2 = (float4(_mtl_buffer1.colors.elements[_mtl_u.index].value) * (float)(half(_mtl_buffer1.weights.elements[_mtl_u.index].value)));
+  value_1.w = tmpvar_2.w;
+  int tmpvar_3 = 0;
+  tmpvar_3 = (_mtl_u.index & 3);
+  int tmpvar_4 = 0;
+  tmpvar_4 = (_mtl_u.index % 3);
+  int tmpvar_5 = 0;
+  tmpvar_5 = (_mtl_u.index & 1);
+  value_1.x = (tmpvar_2.x + float(_mtl_buffer1.rows.elements[tmpvar_3].value.vectors[tmpvar_4][tmpvar_5]));
+  value_1.y = (tmpvar_2.y + float(_mtl_buffer1.columns.elements[tmpvar_3].value.vectors[tmpvar_4][tmpvar_5]));
+  value_1.z = (tmpvar_2.z + float(uint(_mtl_buffer1.indices[tmpvar_4])));
+  float4 tmpvar_6 = 0;
+  if (bool(_mtl_buffer1.enabled[(_mtl_u.index & 1)])) {
+    tmpvar_6 = value_1;
+  } else {
+    tmpvar_6 = float4(0.0, 0.0, 0.0, 0.0);
+  };
+  _mtl_o.color = tmpvar_6;
+  return _mtl_o;
+}
+
+
+// stats: 10 alu 0 tex 1 flow
+// uniforms: 1 (total size: 4)
+//  #0: index (high int) 1x1 [-1] loc 0
+// buffer #0: Lookup instance lookup layout std140 (size: 8608) metal 1
+//  member #0: vec4[256] colors offset 0 array 256 stride 16
+//  member #1: vec4 [] parent 0 offset 0
+//  member #2: float[256] weights offset 4096 array 256 stride 16
+//  member #3: float [] parent 2 offset 4096
+//  member #4: mat2x3[4] rows offset 8192 array 4 stride 48
+//  member #5: mat2x3 [] parent 4 offset 8192 matrix-stride 16 row-major
+//  member #6: mat3x2[4] columns offset 8384 array 4 stride 48
+//  member #7: mat3x2 [] parent 6 offset 8384 matrix-stride 16
+//  member #8: uvec3 indices offset 8576
+//  member #9: bvec2 enabled offset 8592

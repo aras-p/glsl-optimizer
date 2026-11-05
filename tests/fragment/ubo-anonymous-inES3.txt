@@ -1,0 +1,15 @@
+#version 300 es
+precision highp float;
+layout(std140) uniform Material {
+    float unusedBefore;
+    mediump vec4 tint;
+    float unusedAfter;
+};
+layout(std140) uniform Lighting {
+    vec3 direction;
+    float scale;
+};
+layout(std140) uniform Unused { vec4 padding; };
+uniform vec4 ordinary;
+out vec4 color;
+void main() { color = tint * vec4(direction, scale) + ordinary; }

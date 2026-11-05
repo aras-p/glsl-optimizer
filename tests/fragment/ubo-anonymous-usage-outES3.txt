@@ -1,0 +1,26 @@
+#version 310 es
+struct Entry {
+  highp vec4 color;
+  highp float unused;
+};
+layout(std140, column_major) uniform Data {
+  layout(column_major) Entry entries[2][3];
+  mediump ivec2 indices;
+  highp vec4 unused;
+};
+out highp vec4 color;
+void main ()
+{
+  color = (entries[indices.x][indices.y].color + entries[indices.y][indices.x].color);
+}
+
+
+// stats: 1 alu 0 tex 0 flow
+// buffer #0: Data layout std140 (size: 224)
+//  member #0: Entry[2][3] entries offset 0 array 2 stride 96
+//  member #1: Entry[3] [] parent 0 offset 0 array 3 stride 32
+//  member #2: Entry [] parent 1 offset 0
+//  member #3: vec4 color parent 2 offset 0
+//  member #4: float unused parent 2 offset 16 (unused)
+//  member #5: ivec2 indices offset 192
+//  member #6: vec4 unused offset 208 (unused)

@@ -1,0 +1,16 @@
+#version 310 es
+precision highp float;
+struct Entry {
+    vec4 color;
+    float unused;
+};
+layout(std140) uniform Data {
+    Entry entries[2][3];
+    ivec2 indices;
+    vec4 unused;
+};
+out vec4 color;
+void main()
+{
+    color = entries[indices.x][indices.y].color + entries[indices.y][indices.x].color;
+}

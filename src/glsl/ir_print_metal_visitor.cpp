@@ -33,6 +33,8 @@
 #include "ir_print_loop.h"
 
 #include <math.h>
+#include "ir_uniform_blocks.h"
+#include "string_to_uint_map.h"
 
 
 static unsigned precision_from_ir(ir_instruction* ir)
@@ -117,6 +119,8 @@ struct metal_print_context
 	, uniformStr(ralloc_strdup(buffer, ""))
 	, paramsStr(ralloc_strdup(buffer, ""))
 	, typedeclStr(ralloc_strdup(buffer, ""))
+	, blockAliases(ralloc_strdup(buffer, ""))
+	, mem_ctx(ralloc_context(NULL))
 	, writingParams(false)
 	, matrixCastsDone(false)
 	, matrixConstructorsDone(false)
@@ -128,6 +132,8 @@ struct metal_print_context
 	{
 	}
 
+	~metal_print_context() { ralloc_free(mem_ctx); }
+
 	string_buffer str;
 	string_buffer prefixStr;
 	string_buffer inputStr;
@@ -136,6 +142,12 @@ struct metal_print_context
 	string_buffer uniformStr;
 	string_buffer paramsStr;
 	string_buffer typedeclStr;
+	string_buffer blockAliases;
+	struct block_reference { unsigned index; bool array; };
+	std::unordered_map<const ir_variable*, block_reference> blockNames;
+	std::unordered_map<const glsl_type*, unsigned> uniformStorageTypes[2];
+	std::vector<const char*> uniformStorageNames;
+	void* mem_ctx;
 	bool writingParams;
 	bool matrixCastsDone;
 	bool matrixConstructorsDone;
@@ -146,6 +158,8 @@ struct metal_print_context
 	int colorCounter;
 };
 
+
+static void prepare_uniform_blocks(metal_print_context&, exec_list*);
 
 class ir_print_metal_visitor : public ir_visitor {
 public:
@@ -176,6 +190,8 @@ public:
 	void newline_deindent();
 	void print_var_name (ir_variable* v);
 	void print_array_initializer(ir_constant* value, unsigned precision);
+	bool print_uniform_read(ir_rvalue* value);
+	void print_uniform_storage(ir_rvalue* value);
 
 	virtual void visit(ir_variable *);
 	virtual void visit(ir_function_signature *);
@@ -237,6 +253,7 @@ _mesa_print_ir_metal(exec_list *instructions,
 	ctx.uniformStr.asprintf_append("struct xlatMtlShaderUniform {\n");
 
 	print_metal_structs(ctx.typedeclStr, instructions);
+	prepare_uniform_blocks(ctx, instructions);
 
 	global_print_tracker_metal gtracker;
 
@@ -251,6 +268,7 @@ _mesa_print_ir_metal(exec_list *instructions,
 		if (ir->ir_type == ir_type_variable)
 		{
 			ir_variable *var = static_cast<ir_variable*>(ir);
+			if (var->data.mode == ir_var_uniform && var->is_in_buffer_block()) continue;
 
 			// skip gl_ variables if they aren't used/assigned
 			if (strstr(var->name, "gl_") == var->name)
@@ -512,9 +530,9 @@ static void print_type_precision(string_buffer& buffer, const glsl_type *t, unsi
 		typeName = halfPrec ? "texture2d_array<half>" : "texture2d_array<float>";
 
 	if (t->base_type == GLSL_TYPE_ARRAY) {
-		print_type_precision(buffer, t->fields.array, prec, true);
+		print_type_precision(buffer, t->without_array(), prec, false);
 		if (arraySize)
-			buffer.asprintf_append ("[%u]", t->length);
+			for (auto a = t; a->is_array(); a = a->fields.array) buffer.asprintf_append("[%u]", a->length);
 	} else if ((t->base_type == GLSL_TYPE_STRUCT)
 			   && (strncmp("gl_", typeName, 3) != 0)) {
 		buffer.asprintf_append ("%s", typeName);
@@ -535,7 +553,7 @@ static void print_type_post(string_buffer& buffer, const glsl_type *t, bool arra
 {
 	if (t->base_type == GLSL_TYPE_ARRAY) {
 		if (!arraySize)
-			buffer.asprintf_append ("[%u]", t->length);
+			for (auto a = t; a->is_array(); a = a->fields.array) buffer.asprintf_append("[%u]", a->length);
 	}
 }
 
@@ -546,8 +564,9 @@ public:
 	metal_struct_declarations(string_buffer& out) : out(out) {}
 	void emit(const glsl_type* type) {
 		type = type->without_array();
-		if (!type->is_struct() || !emitted.insert(type).second) return;
+		if ((!type->is_struct() && !type->is_interface()) || !strncmp(type->name, "gl_", 3) || !emitted.insert(type).second) return;
 		for (unsigned i = 0; i < type->length; ++i) emit(type->fields.structure[i].type);
+		if (type->is_interface()) return;
 		out.asprintf_append("struct %s {\n", type->name);
 		for (unsigned i = 0; i < type->length; ++i) {
 			const glsl_struct_field& f = type->fields.structure[i];
@@ -557,13 +576,161 @@ public:
 		}
 		out.asprintf_append("};\n");
 	}
-	ir_visitor_status visit(ir_variable* v) override { emit(v->type); return visit_continue; }
+	ir_visitor_status visit(ir_variable* v) override { emit(v->type); if (v->data.mode == ir_var_uniform && v->get_interface_type()) emit(v->get_interface_type()); return visit_continue; }
 	ir_visitor_status visit(ir_constant* c) override { emit(c->type); return visit_continue; }
 	ir_visitor_status visit_enter(ir_function_signature* f) override { emit(f->return_type); return visit_continue; }
 };
 static void print_metal_structs(string_buffer& out, exec_list* ir)
 {
 	metal_struct_declarations visitor(out); visit_list_elements(&visitor, ir);
+}
+
+// Storage types have std140 layout independently of expression precision.
+// Packed vectors allow a scalar to follow a vec3 at byte offset 12.
+static const char* uniform_storage_type(metal_print_context& ctx, const glsl_type* type, bool row);
+
+template<typename PrintStorage>
+static void print_uniform_value(metal_print_context& ctx, string_buffer& out,
+   const glsl_type* type, bool row, unsigned precision, const PrintStorage& storage)
+{
+   if (type->is_struct()) {
+      out.asprintf_append("%s_read(", uniform_storage_type(ctx, type, row));
+      storage();
+      out.asprintf_append(")");
+   } else if (type->is_matrix()) {
+      unsigned columns = row ? type->vector_elements : type->matrix_columns;
+      unsigned rows = row ? type->matrix_columns : type->vector_elements;
+      const char* scalar = precision == GLSL_PRECISION_MEDIUM ? "half" : "float";
+      if (row) out.asprintf_append("transpose(");
+      out.asprintf_append("%s%ux%u(", scalar, columns, rows);
+      for (unsigned c = 0; c < columns; ++c) {
+         if (c) out.asprintf_append(", ");
+         out.asprintf_append("%s%u(", scalar, rows);
+         storage();
+         out.asprintf_append(".vectors[%u].%.*s)", c, rows, "xyzw");
+      }
+      out.asprintf_append(row ? "))" : ")");
+   } else {
+      print_type_precision(out, type, precision, false);
+      out.asprintf_append("(");
+      storage();
+      out.asprintf_append(")");
+   }
+}
+
+// Whole-struct expressions require value conversion; field and array-element
+// expressions read the constant buffer directly without copying their parents.
+static void copy_uniform_value(metal_print_context& ctx, string_buffer& out,
+   const glsl_type* type, bool row, unsigned precision,
+   const char* dst, const char* src, unsigned depth)
+{
+   if (type->is_array()) {
+      out.asprintf_append("%*sfor (uint _ubo_i%u = 0; _ubo_i%u < %u; ++_ubo_i%u) {\n", 2 + depth * 2, "", depth, depth, type->length, depth);
+      copy_uniform_value(ctx, out, type->fields.array, row, precision,
+         ralloc_asprintf(ctx.mem_ctx, "%s[_ubo_i%u]", dst, depth),
+         ralloc_asprintf(ctx.mem_ctx, "%s.elements[_ubo_i%u].value", src, depth), depth + 1);
+      out.asprintf_append("%*s}\n", 2 + depth * 2, "");
+   } else {
+      out.asprintf_append("%*s%s = ", 2 + depth * 2, "", dst);
+      print_uniform_value(ctx, out, type, row, precision, [&]() { out.asprintf_append("%s", src); });
+      out.asprintf_append(";\n");
+   }
+}
+
+static const char* uniform_storage_type(metal_print_context& ctx, const glsl_type* type, bool row)
+{
+   if (type->is_scalar() || type->is_vector()) {
+      static const char* names[3][4] = {
+         { "float", "float2", "packed_float3", "float4" },
+         { "int", "int2", "packed_int3", "int4" },
+         { "uint", "uint2", "packed_uint3", "uint4" }
+      };
+      unsigned scalar = type->is_float() ? 0 : type->base_type == GLSL_TYPE_INT ? 1 : 2;
+      return names[scalar][type->vector_elements - 1];
+   }
+   auto& types = ctx.uniformStorageTypes[row];
+   auto found = types.find(type);
+   if (found != types.end()) return ctx.uniformStorageNames[found->second];
+   unsigned id = (unsigned)ctx.uniformStorageNames.size();
+   const char* name = ralloc_asprintf(ctx.mem_ctx, "_xlat_ubo_storage%u", id);
+   types[type] = id;
+   ctx.uniformStorageNames.push_back(name);
+   auto& out = ctx.typedeclStr;
+   unsigned size = type->is_interface() ? uniform_block_size(type) : type->std140_size(row);
+   if (type->is_array()) {
+      auto element = type->fields.array;
+      const char* storage = uniform_storage_type(ctx, element, row);
+      unsigned align = MAX2(16, element->std140_base_alignment(row));
+      out.asprintf_append("struct alignas(%u) %s_element { %s value; };\n", align, name, storage);
+      out.asprintf_append("struct %s { %s_element elements[%u]; };\n", name, name, type->length);
+   } else if (type->is_matrix()) {
+      out.asprintf_append("struct %s { float4 vectors[%u]; };\n", name, row ? type->vector_elements : type->matrix_columns);
+   } else {
+      string_to_uint_map memberNames;
+      std::vector<const char*> fields;
+      for (unsigned i = 0; i < type->length; ++i) {
+         const auto& f = type->fields.structure[i];
+         memberNames.put(0, f.name);
+         fields.push_back(uniform_storage_type(ctx, f.type, uniform_field_row_major(f, row)));
+      }
+      out.asprintf_append("struct alignas(16) %s {\n", name);
+      unsigned cursor = 0, nextPadding = 0;
+      for (unsigned i = 0; i < type->length; ++i) {
+         const auto& f = type->fields.structure[i];
+         bool fieldRow = uniform_field_row_major(f, row);
+         unsigned offset = uniform_field_offset(type, i, cursor, row);
+         if (offset > cursor) {
+            unsigned suffix = MAX2(i, nextPadding), unused;
+            const char* padding;
+            do {
+               padding = ralloc_asprintf(ctx.mem_ctx, "_ubo_pad%u", suffix++);
+            } while (memberNames.get(unused, padding));
+            nextPadding = suffix;
+            memberNames.put(0, padding);
+            out.asprintf_append("  char %s[%u];\n", padding, offset - cursor);
+         }
+         out.asprintf_append("  alignas(%u) %s %s;\n", f.type->std140_base_alignment(fieldRow), fields[i], f.name);
+         cursor = offset + f.type->std140_size(fieldRow);
+      }
+      out.asprintf_append("};\n");
+   }
+   out.asprintf_append("static_assert(sizeof(%s) == %u, \"std140 size\");\n", name, size);
+   if (type->is_struct()) {
+      out.asprintf_append("inline __attribute__((always_inline)) %s %s_read(constant %s& storage)\n{\n  %s value;\n", type->name, name, name, type->name);
+      for (unsigned i = 0; i < type->length; ++i) {
+         const auto& f = type->fields.structure[i];
+         copy_uniform_value(ctx, out, f.type, uniform_field_row_major(f, row), f.precision,
+            ralloc_asprintf(ctx.mem_ctx, "value.%s", f.name), ralloc_asprintf(ctx.mem_ctx, "storage.%s", f.name), 0);
+      }
+      out.asprintf_append("  return value;\n}\n");
+   }
+   return name;
+}
+
+static void prepare_uniform_blocks(metal_print_context& ctx, exec_list* ir)
+{
+   auto blocks = collect_uniform_blocks(ir);
+   for (unsigned i = 0; i < blocks.size(); ++i) {
+      const auto& b = blocks[i];
+      const char* storage = uniform_storage_type(ctx, b.type, b.type->get_interface_row_major());
+      bool array = b.variable->is_interface_instance() && b.variable->type->is_array();
+      if (array) {
+         ctx.blockAliases.asprintf_append("  constant %s* _mtl_b%u", storage, i);
+         print_type_post(ctx.blockAliases, b.variable->type, false);
+         ctx.blockAliases.asprintf_append(" = {");
+      }
+      for (unsigned element = 0; element < b.array_size; ++element) {
+         unsigned slot = b.metal_index + element;
+         ctx.paramsStr.asprintf_append("\n  , constant %s& _mtl_buffer%u [[buffer(%u)]]", storage, slot, slot);
+         if (array) ctx.blockAliases.asprintf_append("%s&_mtl_buffer%u", element ? ", " : "", slot);
+      }
+      if (array) ctx.blockAliases.asprintf_append("};\n");
+      foreach_in_list(ir_instruction, instruction, ir) {
+         auto v = instruction->as_variable();
+         if (v && v->data.mode == ir_var_uniform && v->get_interface_type() == b.type)
+            ctx.blockNames[v] = {array ? i : b.metal_index, array};
+      }
+   }
 }
 
 static void get_metal_type_size(const glsl_type* type, unsigned prec, int& size, int& alignment)
@@ -819,6 +986,7 @@ void ir_print_metal_visitor::visit(ir_function_signature *ir)
 
 	if (isMain)
 	{
+		buffer.asprintf_append("%s", ctx.blockAliases.c_str());
 		// output struct
 		indent(); buffer.asprintf_append ("xlatMtlShaderOutput _mtl_o;\n");
 
@@ -1425,9 +1593,96 @@ static void print_var_inout (string_buffer& buf, ir_variable* var, bool insideLH
 		buf.asprintf_append (insideLHS ? "_mtl_o." : "_mtl_i.");
 }
 
+static bool uniform_read_row_major(ir_rvalue* value)
+{
+   if (auto var = value->as_dereference_variable()) {
+      const glsl_type* block = var->var->get_interface_type();
+      bool row = block->get_interface_row_major();
+      if (!var->var->is_interface_instance()) {
+         for (unsigned i = 0; i < block->length; ++i)
+            if (!strcmp(block->fields.structure[i].name, var->var->name))
+               return uniform_field_row_major(block->fields.structure[i], row);
+      }
+      return row;
+   }
+   if (auto record = value->as_dereference_record())
+      return uniform_field_row_major(record->record->type->fields.structure[record->field_idx], uniform_read_row_major(record->record));
+   return uniform_read_row_major(value->as_dereference_array()->array);
+}
+
+void ir_print_metal_visitor::print_uniform_storage(ir_rvalue* value)
+{
+   if (auto var = value->as_dereference_variable()) {
+      const auto& block = ctx.blockNames.at(var->var);
+      buffer.asprintf_append(block.array ? "_mtl_b%u" : "_mtl_buffer%u", block.index);
+      if (!var->var->is_interface_instance()) buffer.asprintf_append(".%s", var->var->name);
+   } else if (auto record = value->as_dereference_record()) {
+      print_uniform_storage(record->record);
+      buffer.asprintf_append(".%s", record->record->type->fields.structure[record->field_idx].name);
+   } else {
+      auto array = value->as_dereference_array();
+      bool blockArray = array->array->type->without_array()->is_interface();
+      if (blockArray && array->type->is_interface()) buffer.asprintf_append("(*");
+      print_uniform_storage(array->array);
+      buffer.asprintf_append(blockArray || array->array->type->is_vector() ? "[" : ".elements[");
+      array->array_index->accept(this);
+      buffer.asprintf_append("]");
+      if (blockArray && array->type->is_interface()) buffer.asprintf_append(")");
+      if (!blockArray && array->array->type->is_array()) buffer.asprintf_append(".value");
+   }
+}
+
+bool ir_print_metal_visitor::print_uniform_read(ir_rvalue* value)
+{
+   if (ctx.blockNames.empty()) return false;
+   auto var = value->variable_referenced();
+   if (!var || !ctx.blockNames.count(var)) return false;
+   bool row = uniform_read_row_major(value);
+   if (auto array = value->as_dereference_array()) {
+      if (array->array->type->is_matrix()) {
+         // Reading a matrix column does not require constructing the full matrix.
+         print_type_precision(buffer, value->type, value->get_precision(), false);
+         buffer.asprintf_append("(");
+         if (row) {
+            for (unsigned r = 0; r < value->type->vector_elements; ++r) {
+               if (r) buffer.asprintf_append(", ");
+               print_uniform_storage(array->array);
+               buffer.asprintf_append(".vectors[%u][", r);
+               array->array_index->accept(this);
+               buffer.asprintf_append("]");
+            }
+         } else {
+            print_uniform_storage(array->array);
+            buffer.asprintf_append(".vectors[");
+            array->array_index->accept(this);
+            buffer.asprintf_append("].%.*s", value->type->vector_elements, "xyzw");
+         }
+         buffer.asprintf_append(")");
+         return true;
+      }
+      // A scalar matrix read selects its storage vector and component directly.
+      if (auto column = array->array->as_dereference_array()) {
+         if (column->array->type->is_matrix()) {
+            print_type_precision(buffer, value->type, value->get_precision(), false);
+            buffer.asprintf_append("(");
+            print_uniform_storage(column->array);
+            buffer.asprintf_append(".vectors[");
+            (row ? array->array_index : column->array_index)->accept(this);
+            buffer.asprintf_append("][");
+            (row ? column->array_index : array->array_index)->accept(this);
+            buffer.asprintf_append("])");
+            return true;
+         }
+      }
+   }
+   print_uniform_value(ctx, buffer, value->type, row, value->get_precision(), [&]() { print_uniform_storage(value); });
+   return true;
+}
+
 void ir_print_metal_visitor::visit(ir_dereference_variable *ir)
 {
 	ir_variable *var = ir->variable_referenced();
+	if (print_uniform_read(ir)) return;
 	const bool signedID = !strcmp(var->name, "gl_VertexID") || !strcmp(var->name, "gl_InstanceID");
 	const bool halfCoord = !strcmp(var->name, "gl_PointCoord") && var->data.precision == GLSL_PRECISION_MEDIUM;
 	if (signedID) buffer.asprintf_append("int(");
@@ -1440,6 +1695,7 @@ void ir_print_metal_visitor::visit(ir_dereference_variable *ir)
 
 void ir_print_metal_visitor::visit(ir_dereference_array *ir)
 {
+   if (print_uniform_read(ir)) return;
    ir->array->accept(this);
    buffer.asprintf_append ("[");
    ir->array_index->accept(this);
@@ -1449,6 +1705,7 @@ void ir_print_metal_visitor::visit(ir_dereference_array *ir)
 
 void ir_print_metal_visitor::visit(ir_dereference_record *ir)
 {
+   if (print_uniform_read(ir)) return;
    ir->record->accept(this);
    buffer.asprintf_append (".%s", ir->record->type->fields.structure[ir->field_idx].name);
 }

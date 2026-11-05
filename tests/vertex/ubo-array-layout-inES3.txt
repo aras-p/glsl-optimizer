@@ -1,0 +1,22 @@
+#version 310 es
+precision highp float;
+struct Inner {
+    vec3 direction;
+    float scale;
+    mat2 basis;
+};
+struct Outer {
+    Inner inner;
+    vec2 pairs[2];
+};
+layout(std140, row_major) uniform Data {
+    float table[2][3];
+    Outer items[2];
+} data;
+uniform highp int index;
+void main()
+{
+    Outer value = data.items[index];
+    vec2 p = value.inner.basis * value.pairs[index];
+    gl_Position = vec4(p, data.table[index][2], value.inner.scale);
+}

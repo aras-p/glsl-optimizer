@@ -549,6 +549,37 @@ static bool TestFile (glslopt_ctx* ctx, glslopt_shader_type type,
 				sprintf(buffer, "//  #%i: %s (%s %s) %ix%i [%i]\n", i, parName, kGlslPrecNames[parPrec], kGlslTypeNames[parType], parVecSize, parMatSize, parArrSize);
 			textOpt += buffer;
 		}
+		// Buffer reflection includes inactive layout members and is separate from uniforms.
+		const int bufferCount = glslopt_shader_get_buffer_count(shader);
+		auto appendField = [&](const char* name, int value) {
+			textOpt += std::string(" ") + name + " " + std::to_string(value);
+		};
+		for (int i = 0; i < bufferCount; ++i) {
+			const auto* b = glslopt_shader_get_buffer_desc(shader, i);
+			const char* layouts[] = { "std140", "shared", "packed" };
+			snprintf(buffer, sizeof(buffer), "// buffer #%d: %s", i, b->name);
+			textOpt += buffer;
+			if (b->instanceName) textOpt += std::string(" instance ") + b->instanceName;
+			textOpt += std::string(" layout ") + layouts[b->layout];
+			if (b->binding >= 0) appendField("binding", b->binding);
+			if (b->arraySize > 1) appendField("array", b->arraySize);
+			textOpt += " (size: " + (b->size >= 0 ? std::to_string(b->size) : "unknown") + ")";
+			if (b->metalBufferIndex >= 0) appendField("metal", b->metalBufferIndex);
+			textOpt += "\n";
+			for (int j = 0; j < glslopt_shader_get_buffer_member_count(shader, i); ++j) {
+				const auto* m = glslopt_shader_get_buffer_member_desc(shader, i, j);
+				snprintf(buffer, sizeof(buffer), "//  member #%d: %s %s", j, m->typeName, m->name);
+				textOpt += buffer;
+				if (m->parentIndex >= 0) appendField("parent", m->parentIndex);
+				if (m->offset >= 0) appendField("offset", m->offset);
+				if (m->arraySize > 0) appendField("array", m->arraySize);
+				if (m->arrayStride > 0) appendField("stride", m->arrayStride);
+				if (m->matrixStride > 0) appendField("matrix-stride", m->matrixStride);
+				if (m->rowMajor) textOpt += " row-major";
+				if (!m->used) textOpt += " (unused)";
+				textOpt += "\n";
+			}
+		}
 		// append textures
 		const int textureCount = glslopt_shader_get_texture_count (shader);
 		if (textureCount > 0)

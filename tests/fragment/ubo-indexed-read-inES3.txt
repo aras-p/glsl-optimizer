@@ -1,0 +1,21 @@
+#version 310 es
+precision highp float;
+precision highp int;
+layout(std140) uniform Lookup {
+    vec4 colors[256];
+    mediump float weights[256];
+    layout(row_major) mat2x3 rows[4];
+    layout(column_major) mat3x2 columns[4];
+    uvec3 indices;
+    bvec2 enabled;
+} lookup;
+uniform int index;
+out vec4 color;
+void main()
+{
+    vec4 value = lookup.colors[index] * lookup.weights[index];
+    value.x += lookup.rows[index & 3][index & 1][index % 3];
+    value.y += lookup.columns[index & 3][index % 3][index & 1];
+    value.z += float(lookup.indices[index % 3]);
+    color = lookup.enabled[index & 1] ? value : vec4(0.0);
+}

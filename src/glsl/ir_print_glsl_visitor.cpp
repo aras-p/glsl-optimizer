@@ -81,6 +81,7 @@ struct global_print_tracker {
 		ralloc_free(mem_ctx);
 	}
 	
+	std::unordered_set<const glsl_type*> uniform_blocks;
 	unsigned	var_counter;
 	std::unordered_map<const ir_variable*, long> var_hash;
 	exec_list	global_assignements;
@@ -165,7 +166,11 @@ public:
 	struct_declarations(string_buffer& out, bool es) : out(out), es(es) {}
 	void emit(const glsl_type* type) {
 		type = type->without_array();
-		if (!type->is_struct() || !strncmp(type->name, "gl_", 3) || !emitted.insert(type).second) return;
+		if ((!type->is_struct() && !type->is_interface()) || !strncmp(type->name, "gl_", 3) || !emitted.insert(type).second) return;
+		if (type->is_interface()) {
+			for (unsigned i = 0; i < type->length; ++i) emit(type->fields.structure[i].type);
+			return;
+		}
 		for (unsigned i = 0; i < type->length; ++i) emit(type->fields.structure[i].type);
 		out.asprintf_append("struct %s {\n", type->name);
 		for (unsigned i = 0; i < type->length; ++i) {
@@ -181,7 +186,7 @@ public:
 		}
 		out.asprintf_append("};\n");
 	}
-	ir_visitor_status visit(ir_variable* v) override { emit(v->type); return visit_continue; }
+	ir_visitor_status visit(ir_variable* v) override { emit(v->type); if (v->get_interface_type()) emit(v->get_interface_type()); return visit_continue; }
 	ir_visitor_status visit(ir_constant* c) override { emit(c->type); return visit_continue; }
 	ir_visitor_status visit_enter(ir_function_signature* f) override { emit(f->return_type); return visit_continue; }
 };
@@ -208,6 +213,12 @@ _mesa_print_ir_glsl(exec_list *instructions,
 				str.asprintf_append (" es");
 			str.asprintf_append ("\n");
 		}
+		if (state->ARB_uniform_buffer_object_enable)
+			str.asprintf_append("#extension GL_ARB_uniform_buffer_object : enable\n");
+		if (state->ARB_shading_language_420pack_enable)
+			str.asprintf_append("#extension GL_ARB_shading_language_420pack : enable\n");
+		if (state->ARB_enhanced_layouts_enable)
+			str.asprintf_append("#extension GL_ARB_enhanced_layouts : enable\n");
 		if (state->ARB_compute_shader_enable)
 			str.asprintf_append("#extension GL_ARB_compute_shader : enable\n");
 		if (state->ARB_shader_texture_lod_enable)
@@ -366,9 +377,9 @@ void ir_print_glsl_visitor::print_precision (ir_instruction* ir, const glsl_type
 static void print_type(string_buffer& buffer, const glsl_type *t, bool arraySize)
 {
 	if (t->base_type == GLSL_TYPE_ARRAY) {
-		print_type(buffer, t->fields.array, true);
+		print_type(buffer, t->without_array(), false);
 		if (arraySize)
-			buffer.asprintf_append ("[%u]", t->length);
+			for (auto a = t; a->is_array(); a = a->fields.array) buffer.asprintf_append("[%u]", a->length);
 	} else if ((t->base_type == GLSL_TYPE_STRUCT)
 			   && (strncmp("gl_", t->name, 3) != 0)) {
 		buffer.asprintf_append ("%s", t->name);
@@ -381,13 +392,53 @@ static void print_type_post(string_buffer& buffer, const glsl_type *t, bool arra
 {
 	if (t->base_type == GLSL_TYPE_ARRAY) {
 		if (!arraySize)
-			buffer.asprintf_append ("[%u]", t->length);
+			for (auto a = t; a->is_array(); a = a->fields.array) buffer.asprintf_append("[%u]", a->length);
 	}
 }
 
 
 void ir_print_glsl_visitor::visit(ir_variable *ir)
 {
+	if (ir->data.mode == ir_var_uniform && ir->is_in_buffer_block()) {
+		const glsl_type* type = ir->get_interface_type();
+		if (!globals->uniform_blocks.insert(type).second) { skipped_this_ir = true; return; }
+		// Use the enum explicitly; its order is not part of the printer contract.
+		const char* layout = "shared";
+		switch (type->get_interface_packing()) {
+		case GLSL_INTERFACE_PACKING_STD140: layout = "std140"; break;
+		case GLSL_INTERFACE_PACKING_STD430: layout = "std430"; break;
+		case GLSL_INTERFACE_PACKING_PACKED: layout = "packed"; break;
+		default: break;
+		}
+		buffer.asprintf_append("layout(%s, %s", layout, type->get_interface_row_major() ? "row_major" : "column_major");
+		if (ir->data.explicit_binding) buffer.asprintf_append(", binding=%d", ir->data.binding);
+		buffer.asprintf_append(") uniform %s {\n", type->name);
+		for (unsigned i = 0; i < type->length; ++i) {
+			const auto& f = type->fields.structure[i];
+			buffer.asprintf_append("  ");
+			if (f.matrix_layout != GLSL_MATRIX_LAYOUT_INHERITED || f.offset >= 0) {
+				buffer.asprintf_append("layout(");
+				if (f.matrix_layout != GLSL_MATRIX_LAYOUT_INHERITED)
+					buffer.asprintf_append("%s", f.matrix_layout == GLSL_MATRIX_LAYOUT_ROW_MAJOR ? "row_major" : "column_major");
+				if (f.offset >= 0) buffer.asprintf_append("%soffset=%d", f.matrix_layout != GLSL_MATRIX_LAYOUT_INHERITED ? ", " : "", f.offset);
+				buffer.asprintf_append(") ");
+			}
+			const glsl_type* base = f.type->without_array();
+			if (use_precision && (base->is_float() || base->is_integer_32()))
+				buffer.asprintf_append("%s", get_precision_string(f.precision ? f.precision : GLSL_PRECISION_HIGH));
+			print_type(buffer, base, false);
+			buffer.asprintf_append(" %s", f.name);
+			for (auto t = f.type; t->is_array(); t = t->fields.array) buffer.asprintf_append("[%u]", t->length);
+			buffer.asprintf_append(";\n");
+		}
+		buffer.asprintf_append("}");
+		if (ir->is_interface_instance()) {
+			buffer.asprintf_append(" %s", ir->name);
+			for (auto t = ir->type; t->is_array(); t = t->fields.array) buffer.asprintf_append("[%u]", t->length);
+		}
+		return;
+	}
+
 	const char *const cent = (ir->data.centroid) ? "centroid " : "";
 	const char *const inv = (ir->data.explicit_invariant) ? "invariant " : "";
 	const char* storage = "";

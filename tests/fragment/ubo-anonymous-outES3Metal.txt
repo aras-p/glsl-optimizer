@@ -1,0 +1,53 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct alignas(16) _xlat_ubo_storage0 {
+  alignas(16) packed_float3 direction;
+  alignas(4) float scale;
+};
+static_assert(sizeof(_xlat_ubo_storage0) == 16, "std140 size");
+struct alignas(16) _xlat_ubo_storage1 {
+  alignas(4) float unusedBefore;
+  char _ubo_pad1[12];
+  alignas(16) float4 tint;
+  alignas(4) float unusedAfter;
+};
+static_assert(sizeof(_xlat_ubo_storage1) == 48, "std140 size");
+struct alignas(16) _xlat_ubo_storage2 {
+  alignas(16) float4 padding;
+};
+static_assert(sizeof(_xlat_ubo_storage2) == 16, "std140 size");
+struct xlatMtlShaderInput {
+};
+struct xlatMtlShaderOutput {
+  float4 color [[color(0)]];
+};
+struct xlatMtlShaderUniform {
+  float4 ordinary;
+};
+fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , constant _xlat_ubo_storage0& _mtl_buffer1 [[buffer(1)]]
+  , constant _xlat_ubo_storage1& _mtl_buffer2 [[buffer(2)]]
+  , constant _xlat_ubo_storage2& _mtl_buffer3 [[buffer(3)]])
+{
+  xlatMtlShaderOutput _mtl_o;
+  float4 tmpvar_1 = 0;
+  tmpvar_1.xyz = float3(_mtl_buffer1.direction);
+  tmpvar_1.w = float(_mtl_buffer1.scale);
+  _mtl_o.color = (((float4)(half4(_mtl_buffer2.tint)) * tmpvar_1) + _mtl_u.ordinary);
+  return _mtl_o;
+}
+
+
+// stats: 2 alu 0 tex 0 flow
+// uniforms: 1 (total size: 16)
+//  #0: ordinary (high float) 4x1 [-1] loc 0
+// buffer #0: Lighting layout std140 (size: 16) metal 1
+//  member #0: vec3 direction offset 0
+//  member #1: float scale offset 12
+// buffer #1: Material layout std140 (size: 48) metal 2
+//  member #0: float unusedBefore offset 0 (unused)
+//  member #1: vec4 tint offset 16
+//  member #2: float unusedAfter offset 32 (unused)
+// buffer #2: Unused layout std140 (size: 16) metal 3
+//  member #0: vec4 padding offset 0 (unused)

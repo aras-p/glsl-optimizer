@@ -1,6 +1,9 @@
 #include "glsl_optimizer.h"
 #include "main/mtypes.h"
 #include "ir.h"
+#include "ir_uniform_blocks.h"
+#include "ir_hierarchical_visitor.h"
+#include <unordered_map>
 #include "ir_optimization.h"
 #include "builtin_functions.h"
 #include "string_to_uint_map.h"
@@ -78,7 +81,6 @@ initialize_mesa_context(struct gl_context *ctx, glslopt_target api)
    ctx->Const.MaxTransformFeedbackSeparateComponents = 64;
    ctx->Const.MaxTransformFeedbackInterleavedComponents = 64;
    // Compiler resource limits, independent of the eventual target device.
-   // Keep existing ordinary-uniform and varying limits unchanged.
    ctx->Const.MaxUniformBufferBindings = 72;
    ctx->Const.MaxUniformBlockSize = 16384;
    ctx->Const.UniformBufferOffsetAlignment = 16;
@@ -153,6 +155,11 @@ struct glslopt_shader_var
 	int location;
 };
 
+struct glslopt_buffer {
+	glslopt_buffer_desc desc;
+	std::vector<glslopt_buffer_member_desc> members;
+};
+
 struct glslopt_shader
 {
 	glslopt_shader ()
@@ -206,6 +213,7 @@ struct glslopt_shader
 	glslopt_shader_var uniforms[kMaxShaderUniforms];
 	glslopt_shader_var inputs[kMaxShaderInputs];
 	glslopt_shader_var textures[kMaxShaderInputs];
+	std::vector<glslopt_buffer> buffers;
 	int uniformCount, uniformsSize;
 	int inputCount;
 	int textureCount;
@@ -332,6 +340,144 @@ static void glsl_type_to_optimizer_desc(const glsl_type* type, unsigned prec, gl
 	}
 }
 
+// Each reflected field has one usage node; arrays combine all element reads.
+// Direct aggregate reads mark descendants, while field reads mark ancestors only.
+class buffer_usage_visitor : public ir_hierarchical_visitor {
+public:
+	struct node {
+		unsigned first_child = 0;
+		unsigned child_count = 0;
+		bool referenced = false;
+		bool used = false;
+	};
+	std::vector<node> nodes;
+	std::vector<unsigned> roots;
+	std::unordered_map<const ir_variable*, unsigned> variables;
+
+	void build(unsigned index, const glsl_type* type) {
+		unsigned count = type->is_array() ? 1 :
+			(type->is_struct() || type->is_interface()) ? type->length : 0;
+		unsigned first = (unsigned)nodes.size();
+		nodes[index].first_child = first;
+		nodes[index].child_count = count;
+		nodes.resize(first + count);
+		for (unsigned i = 0; i < count; ++i)
+			build(first + i, type->is_array() ? type->fields.array : type->fields.structure[i].type);
+	}
+
+	buffer_usage_visitor(const std::vector<uniform_block>& blocks, exec_list* ir) {
+		for (const auto& block : blocks) {
+			unsigned root = (unsigned)nodes.size();
+			roots.push_back(root);
+			nodes.emplace_back();
+			build(root, block.type);
+			string_to_uint_map fields;
+			if (!block.variable->is_interface_instance())
+				for (unsigned i = 0; i < block.type->length; ++i)
+					fields.put(nodes[root].first_child + i, block.type->fields.structure[i].name);
+			foreach_in_list(ir_instruction, instruction, ir) {
+				auto* v = instruction->as_variable();
+				if (!v || v->data.mode != ir_var_uniform || v->get_interface_type() != block.type) continue;
+				unsigned member = root;
+				if (!v->is_interface_instance()) {
+					bool found = fields.get(member, v->name);
+					assert(found);
+					if (!found) continue;
+				}
+				variables[v] = member;
+			}
+		}
+	}
+
+	unsigned resolve(ir_rvalue* value) {
+		if (auto v = value->as_dereference_variable()) return variables.at(v->var);
+		if (auto r = value->as_dereference_record())
+			return nodes[resolve(r->record)].first_child + r->field_idx;
+		auto a = value->as_dereference_array();
+		a->array_index->accept(this);
+		unsigned parent = resolve(a->array);
+		return a->array->type->is_array() && !a->array->type->without_array()->is_interface() ? nodes[parent].first_child : parent;
+	}
+	ir_visitor_status record(ir_rvalue* value) {
+		auto v = value->variable_referenced();
+		if (!v || !variables.count(v)) return visit_continue;
+		nodes[resolve(value)].referenced = true;
+		return visit_continue_with_parent;
+	}
+	ir_visitor_status visit(ir_dereference_variable* value) override { record(value); return visit_continue; }
+	ir_visitor_status visit_enter(ir_dereference_record* value) override { return record(value); }
+	ir_visitor_status visit_enter(ir_dereference_array* value) override { return record(value); }
+
+	bool propagate(unsigned index, bool whole = false) {
+		auto& n = nodes[index];
+		whole |= n.referenced;
+		n.used = whole;
+		for (unsigned i = 0; i < n.child_count; ++i)
+			n.used |= propagate(n.first_child + i, whole);
+		return n.used;
+	}
+};
+
+static void reflect_buffer_member(glslopt_shader* shader, glslopt_buffer& buffer,
+	const glsl_type* type, const char* name, int parent, unsigned offset, bool row, bool known,
+	const buffer_usage_visitor& usage, unsigned usageIndex)
+{
+	int index = (int)buffer.members.size();
+	unsigned stride = type->is_array() ? uniform_align(type->fields.array->std140_size(row),
+		MAX2(16, type->fields.array->std140_base_alignment(row))) : 0;
+	unsigned matrixStride = type->is_matrix() ? uniform_align((row ? type->matrix_columns : type->vector_elements) * (type->is_64bit() ? 8 : 4), 16) : 0;
+	buffer.members.push_back({ralloc_strdup(shader->mem_ctx, name), ralloc_strdup(shader->mem_ctx, type->name),
+		parent, known ? (int)offset : -1, type->is_array() ? (int)type->length : 0,
+		type->is_array() ? (known ? (int)stride : -1) : 0,
+		type->is_matrix() ? (known ? (int)matrixStride : -1) : 0, type->is_matrix() && row, usage.nodes[usageIndex].used});
+	if (type->is_array()) {
+		reflect_buffer_member(shader, buffer, type->fields.array, "[]", index, offset, row, known,
+			usage, usage.nodes[usageIndex].first_child);
+	} else if (type->is_struct()) {
+		unsigned cursor = 0;
+		for (unsigned i = 0; i < type->length; ++i) {
+			const auto& f = type->fields.structure[i];
+			cursor = uniform_field_offset(type, i, cursor, row);
+			bool fieldRow = uniform_field_row_major(f, row);
+			reflect_buffer_member(shader, buffer, f.type, f.name, index, offset + cursor, fieldRow, known,
+				usage, usage.nodes[usageIndex].first_child + i);
+			cursor += f.type->std140_size(fieldRow);
+		}
+	}
+}
+
+static void find_shader_buffers(glslopt_shader* shader, exec_list* ir, bool metal)
+{
+	auto blocks = collect_uniform_blocks(ir);
+	if (blocks.empty()) return;
+	buffer_usage_visitor usage(blocks, ir);
+	visit_list_elements(&usage, ir);
+	for (unsigned root : usage.roots) usage.propagate(root);
+	for (unsigned blockIndex = 0; blockIndex < blocks.size(); ++blockIndex) {
+		const auto& b = blocks[blockIndex];
+		glslopt_buffer buffer;
+		auto layout = b.type->get_interface_packing();
+		bool known = metal || layout == GLSL_INTERFACE_PACKING_STD140;
+		buffer.desc = {ralloc_strdup(shader->mem_ctx, b.type->name),
+			b.variable->is_interface_instance() ? ralloc_strdup(shader->mem_ctx, b.variable->name) : nullptr,
+			kGlslBufferUniform, layout == GLSL_INTERFACE_PACKING_STD140 ? kGlslLayoutStd140 :
+			layout == GLSL_INTERFACE_PACKING_PACKED ? kGlslLayoutPacked : kGlslLayoutShared,
+			b.variable->data.explicit_binding ? b.variable->data.binding : -1,
+			(int)b.array_size, known ? (int)uniform_block_size(b.type) : -1, metal ? (int)b.metal_index : -1};
+		unsigned cursor = 0;
+		bool row = b.type->get_interface_row_major();
+		for (unsigned i = 0; i < b.type->length; ++i) {
+			const auto& f = b.type->fields.structure[i];
+			cursor = uniform_field_offset(b.type, i, cursor, row);
+			bool fieldRow = uniform_field_row_major(f, row);
+			reflect_buffer_member(shader, buffer, f.type, f.name, -1, cursor, fieldRow, known,
+				usage, usage.nodes[usage.roots[blockIndex]].first_child + i);
+			cursor += f.type->std140_size(fieldRow);
+		}
+		shader->buffers.push_back(std::move(buffer));
+	}
+}
+
 static void find_shader_variables(glslopt_shader* sh, exec_list* ir)
 {
 	foreach_in_list(ir_instruction, node, ir)
@@ -350,7 +496,7 @@ static void find_shader_variables(glslopt_shader* sh, exec_list* ir)
 			v.location = var->data.explicit_location ? var->data.location : -1;
 			++sh->inputCount;
 		}
-		if (var->data.mode == ir_var_uniform && !var->type->without_array()->is_sampler())
+		if (var->data.mode == ir_var_uniform && !var->is_in_buffer_block() && !var->type->without_array()->is_sampler())
 		{
 			if (sh->uniformCount >= glslopt_shader::kMaxShaderUniforms)
 				continue;
@@ -375,6 +521,17 @@ static void find_shader_variables(glslopt_shader* sh, exec_list* ir)
 	}
 }
 
+
+static bool metal_uniform_type_supported(const glsl_type* type)
+{
+	if (type->is_array()) return metal_uniform_type_supported(type->fields.array);
+	if (type->is_struct() || type->is_interface()) {
+		for (unsigned i = 0; i < type->length; ++i)
+			if (!metal_uniform_type_supported(type->fields.structure[i].type)) return false;
+		return true;
+	}
+	return type->is_float() || type->is_integer_32() || type->is_boolean();
+}
 
 glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, const char* shaderSource, unsigned options)
 {
@@ -420,8 +577,8 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 		if (!var || strncmp(var->name, "gl_", 3) == 0)
 			continue;
 		const char* unsupported = nullptr;
-		// Anonymous uniform blocks retain the existing flattened-uniform behavior.
-		if (var->is_interface_instance() || var->data.mode == ir_var_shader_storage)
+		// Stage interfaces and SSBOs are separate from uniform blocks.
+		if ((var->is_interface_instance() && var->data.mode != ir_var_uniform) || var->data.mode == ir_var_shader_storage)
 			unsupported = "Interface-block";
 		else if (var->type->contains_image())
 			unsupported = "Image";
@@ -434,6 +591,19 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 				"%s output is not supported yet (%s backend).", unsupported,
 				ctx->target == kGlslTargetMetal ? "Metal" : "GLSL");
 			return result;
+		}
+	}
+
+	if (ctx->target == kGlslTargetMetal) {
+		for (const auto& block : collect_uniform_blocks(ir)) {
+			if (!metal_uniform_type_supported(block.type)) {
+				result->infoLog = "Metal uniform blocks support only 32-bit float/integer and boolean storage.";
+				return result;
+			}
+			if (block.metal_index + block.array_size > 31) {
+				result->infoLog = "Metal uniform blocks exceed the available buffer slots (1 through 30).";
+				return result;
+			}
 		}
 	}
 
@@ -467,6 +637,7 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 	else
 		result->optimizedOutput = _mesa_print_ir_metal(ir, state, ralloc_strdup(result->mem_ctx, ""), printMode, &result->uniformsSize);
 	find_shader_variables(result, ir);
+	find_shader_buffers(result, ir, ctx->target == kGlslTargetMetal);
 	calculate_shader_stats(ir, &result->statsMath, &result->statsTex, &result->statsFlow);
 	result->status = true;
 	return result;
@@ -495,6 +666,22 @@ const char* glslopt_get_raw_output (glslopt_shader* shader)
 const char* glslopt_get_log (glslopt_shader* shader)
 {
 	return shader->infoLog;
+}
+
+int glslopt_shader_get_buffer_count(glslopt_shader* shader) { return (int)shader->buffers.size(); }
+const glslopt_buffer_desc* glslopt_shader_get_buffer_desc(glslopt_shader* shader, int index)
+{
+	return index >= 0 && index < (int)shader->buffers.size() ? &shader->buffers[index].desc : nullptr;
+}
+int glslopt_shader_get_buffer_member_count(glslopt_shader* shader, int index)
+{
+	return index >= 0 && index < (int)shader->buffers.size() ? (int)shader->buffers[index].members.size() : 0;
+}
+const glslopt_buffer_member_desc* glslopt_shader_get_buffer_member_desc(glslopt_shader* shader, int blockIndex, int memberIndex)
+{
+	if (blockIndex < 0 || blockIndex >= (int)shader->buffers.size()) return nullptr;
+	const auto& members = shader->buffers[blockIndex].members;
+	return memberIndex >= 0 && memberIndex < (int)members.size() ? &members[memberIndex] : nullptr;
 }
 
 int glslopt_shader_get_input_count (glslopt_shader* shader)

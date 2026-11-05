@@ -1,0 +1,25 @@
+#version 310 es
+precision highp float;
+struct Light {
+    vec3 direction;
+    float intensity;
+};
+layout(std140, binding=3, row_major) uniform Scene {
+    float unused;
+    mediump mat2x3 transform;
+    layout(column_major) mat3x2 other;
+    Light lights[2];
+    mediump float weights[3];
+    bool enabled;
+    uint flags;
+    mediump int count;
+} scene;
+uniform highp int index;
+void main()
+{
+    vec3 p = scene.transform * vec2(scene.weights[index], 1.0);
+    p += scene.lights[index].direction * scene.lights[1].intensity;
+    p.xy += scene.other * vec3(1.0);
+    p *= float(scene.count);
+    gl_Position = vec4(p, scene.enabled ? float(scene.flags) : 0.0);
+}

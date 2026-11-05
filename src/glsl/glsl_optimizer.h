@@ -83,6 +83,44 @@ void glslopt_shader_get_uniform_desc (glslopt_shader* shader, int index, const c
 int glslopt_shader_get_texture_count (glslopt_shader* shader);
 void glslopt_shader_get_texture_desc (glslopt_shader* shader, int index, const char** outName, glslopt_basic_type* outType, glslopt_precision* outPrec, int* outVecSize, int* outMatSize, int* outArraySize, int* outLocation);
 
+// Reflection for buffers (separate from "global" uniforms):
+// - names and descriptors remain valid until glslopt_shader_delete
+// - binding is -1 when absent in the source; array elements use consecutive bindings
+// - Metal reserves 0 buffer for ordinary uniforms and assigns blocks consecutive slots starting at 1
+// - shared/packed layout for GLSL has size/offset/stride = -1; for Metal it uses std140 storage
+enum glslopt_buffer_kind { kGlslBufferUniform };
+enum glslopt_buffer_layout { kGlslLayoutStd140, kGlslLayoutShared, kGlslLayoutPacked };
+struct glslopt_buffer_desc {
+	const char* name;
+	const char* instanceName; // NULL for anonymous blocks
+	glslopt_buffer_kind kind;
+	glslopt_buffer_layout layout;
+	int binding;
+	int arraySize; // 1 for non-array blocks; size is per array element
+	int size; // allocation size, rounded to the block alignment
+	int metalBufferIndex; // -1 for GLSL targets
+};
+// Buffer members form a tree in declaration order; parentIndex=-1 is for block fields.
+// Array nodes have one child describing element zero, with name "[]".
+// Offsets are relative to the block; add index * arrayStride for each array ancestor.
+// Struct nodes have field children.
+// Scalars/vectors/matrices are leaves.
+struct glslopt_buffer_member_desc {
+	const char* name;
+	const char* typeName; // GLSL type name, preserving uint vs int
+	int parentIndex;
+	int offset;
+	int arraySize; // 0 for non-array nodes
+	int arrayStride; // 0 when inapplicable
+	int matrixStride; // 0 when inapplicable
+	bool rowMajor; // true only for row-major matrix leaves
+	bool used; // referenced by optimized IR; arrays combine usage across elements
+};
+int glslopt_shader_get_buffer_count(glslopt_shader* shader);
+const glslopt_buffer_desc* glslopt_shader_get_buffer_desc(glslopt_shader* shader, int index);
+int glslopt_shader_get_buffer_member_count(glslopt_shader* shader, int index);
+const glslopt_buffer_member_desc* glslopt_shader_get_buffer_member_desc(glslopt_shader* shader, int blockIndex, int memberIndex);
+
 // Get *very* approximate shader stats:
 // Number of math, texture and flow control instructions.
 void glslopt_shader_get_stats (glslopt_shader* shader, int* approxMath, int* approxTex, int* approxFlow);

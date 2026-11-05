@@ -1,0 +1,57 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct Entry {
+  float4 color;
+  float unused;
+};
+struct alignas(16) _xlat_ubo_storage3 {
+  alignas(16) float4 color;
+  alignas(4) float unused;
+};
+static_assert(sizeof(_xlat_ubo_storage3) == 32, "std140 size");
+inline __attribute__((always_inline)) Entry _xlat_ubo_storage3_read(constant _xlat_ubo_storage3& storage)
+{
+  Entry value;
+  value.color = float4(storage.color);
+  value.unused = float(storage.unused);
+  return value;
+}
+struct alignas(16) _xlat_ubo_storage2_element { _xlat_ubo_storage3 value; };
+struct _xlat_ubo_storage2 { _xlat_ubo_storage2_element elements[3]; };
+static_assert(sizeof(_xlat_ubo_storage2) == 96, "std140 size");
+struct alignas(16) _xlat_ubo_storage1_element { _xlat_ubo_storage2 value; };
+struct _xlat_ubo_storage1 { _xlat_ubo_storage1_element elements[2]; };
+static_assert(sizeof(_xlat_ubo_storage1) == 192, "std140 size");
+struct alignas(16) _xlat_ubo_storage0 {
+  alignas(16) _xlat_ubo_storage1 entries;
+  alignas(8) int2 indices;
+  char _ubo_pad2[8];
+  alignas(16) float4 unused;
+};
+static_assert(sizeof(_xlat_ubo_storage0) == 224, "std140 size");
+struct xlatMtlShaderInput {
+};
+struct xlatMtlShaderOutput {
+  float4 color [[color(0)]];
+};
+struct xlatMtlShaderUniform {
+};
+fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , constant _xlat_ubo_storage0& _mtl_buffer1 [[buffer(1)]])
+{
+  xlatMtlShaderOutput _mtl_o;
+  _mtl_o.color = (float4(_mtl_buffer1.entries.elements[short2(_mtl_buffer1.indices).x].value.elements[short2(_mtl_buffer1.indices).y].value.color) + float4(_mtl_buffer1.entries.elements[short2(_mtl_buffer1.indices).y].value.elements[short2(_mtl_buffer1.indices).x].value.color));
+  return _mtl_o;
+}
+
+
+// stats: 1 alu 0 tex 0 flow
+// buffer #0: Data layout std140 (size: 224) metal 1
+//  member #0: Entry[2][3] entries offset 0 array 2 stride 96
+//  member #1: Entry[3] [] parent 0 offset 0 array 3 stride 32
+//  member #2: Entry [] parent 1 offset 0
+//  member #3: vec4 color parent 2 offset 0
+//  member #4: float unused parent 2 offset 16 (unused)
+//  member #5: ivec2 indices offset 192
+//  member #6: vec4 unused offset 208 (unused)

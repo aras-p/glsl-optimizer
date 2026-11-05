@@ -1,0 +1,8 @@
+#version 320 es
+precision highp float;
+layout(std140, binding=2) uniform Transform {
+    mat4 matrix;
+    float unused;
+} transforms[2];
+uniform highp int index;
+void main() { gl_Position = transforms[1].matrix * transforms[index].matrix[0]; }
