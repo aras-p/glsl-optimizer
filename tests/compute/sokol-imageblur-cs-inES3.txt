@@ -14,7 +14,8 @@ layout(std140, binding=0) uniform cs_params {
     int flip;
 };
 
-layout(binding=0) uniform highp sampler2D cs_inp_tex;
+// Use a nonzero sampler binding to exercise GLSL output and reflection.
+layout(binding=3) uniform highp sampler2D cs_inp_tex;
 layout(binding=1, rgba8) uniform writeonly highp image2D cs_outp_tex;
 
 

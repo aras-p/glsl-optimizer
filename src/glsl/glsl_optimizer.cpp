@@ -86,6 +86,7 @@ initialize_mesa_context(struct gl_context *ctx, glslopt_target api)
    ctx->Const.MaxTransformFeedbackSeparateComponents = 64;
    ctx->Const.MaxTransformFeedbackInterleavedComponents = 64;
    // Compiler resource limits, independent of the eventual target device.
+   ctx->Const.MaxCombinedTextureImageUnits = MAX_COMBINED_TEXTURE_IMAGE_UNITS;
    ctx->Const.MaxUniformBufferBindings = 72;
    ctx->Const.MaxUniformBlockSize = 16384;
    ctx->Const.UniformBufferOffsetAlignment = 16;
@@ -571,7 +572,7 @@ static void find_shader_variables(glslopt_shader* sh, exec_list* ir, bool metal)
 			glslopt_shader_var& v = sh->textures[sh->textureCount];
 			v.name = ralloc_strdup(sh->mem_ctx, var->name);
 			glsl_type_to_optimizer_desc(var->type, var->data.precision, &v);
-			v.location = !metal && var->type->contains_image() && var->data.explicit_binding ? var->data.binding :
+			v.location = !metal && var->data.explicit_binding ? var->data.binding :
 				var->data.explicit_location ? var->data.location : -1;
 			++sh->textureCount;
 		}

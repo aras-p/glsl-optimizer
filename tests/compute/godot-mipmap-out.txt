@@ -18,7 +18,7 @@ layout(std140, column_major, binding=0) uniform Params {
   vec2 octmap_border_size;
   vec4 set_color;
 } params;
-uniform sampler2D source_color;
+layout(binding=0) uniform sampler2D source_color;
 layout(rgba16f, binding=3) writeonly restrict uniform image2D dest_buffer;
 void main ()
 {
@@ -63,5 +63,5 @@ void main ()
 //  member #14: vec2 octmap_border_size offset 72 (unused)
 //  member #15: vec4 set_color offset 80 (unused)
 // textures: 2
-//  #0: source_color (high 2d) 0x0 [-1]
+//  #0: source_color (high 2d) 0x0 [-1] loc 0
 //  #1: dest_buffer (high image2d) 0x0 [-1] loc 3

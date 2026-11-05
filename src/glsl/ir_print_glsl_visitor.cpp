@@ -586,6 +586,9 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 		if (ir->data.memory_volatile) buffer.asprintf_append("volatile ");
 		if (ir->data.memory_restrict) buffer.asprintf_append("restrict ");
 	}
+	else if (ir->data.mode == ir_var_uniform && ir->type->without_array()->is_sampler() && ir->data.explicit_binding) {
+		buffer.asprintf_append("layout(binding=%u) ", ir->data.binding);
+	}
 	const char *const cent = (ir->data.centroid) ? "centroid " : "";
 	const char *const inv = (ir->data.explicit_invariant) ? "invariant " : "";
 	const char* storage = "";

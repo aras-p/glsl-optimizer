@@ -5,7 +5,7 @@ layout(std140, column_major, binding=0) uniform cs_params {
   highp int block_dim;
   highp int flip;
 };
-uniform highp sampler2D cs_inp_tex;
+layout(binding=3) uniform highp sampler2D cs_inp_tex;
 layout(rgba8, binding=1) writeonly uniform highp image2D cs_outp_tex;
 shared highp vec3 tile[4][128];
 void main ()
@@ -222,5 +222,5 @@ void main ()
 //  member #1: int block_dim offset 4
 //  member #2: int flip offset 8
 // textures: 2
-//  #0: cs_inp_tex (high 2d) 0x0 [-1]
+//  #0: cs_inp_tex (high 2d) 0x0 [-1] loc 3
 //  #1: cs_outp_tex (high image2d) 0x0 [-1] loc 1

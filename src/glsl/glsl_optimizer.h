@@ -88,9 +88,10 @@ void glslopt_shader_get_input_desc (glslopt_shader* shader, int index, const cha
 int glslopt_shader_get_uniform_count (glslopt_shader* shader);
 int glslopt_shader_get_uniform_total_size (glslopt_shader* shader);
 void glslopt_shader_get_uniform_desc (glslopt_shader* shader, int index, const char** outName, glslopt_basic_type* outType, glslopt_precision* outPrec, int* outVecSize, int* outMatSize, int* outArraySize, int* outLocation);
-// Includes storage images. For images, location is the GL image binding or Metal
-// texture slot; Metal image slots follow sampled textures and do not consume
-// sampler slots. Bind a compatible texture format with shader-read/write usage
+// Includes sampled textures and storage images. For GLSL, location is the
+// explicit binding if present, otherwise the explicit uniform location or -1.
+// For Metal, location is the texture slot. Image slots follow sampled textures
+// and do not consume sampler slots. Bind a compatible texture format with shader-read/write usage
 // matching the source qualifiers.
 // Integer image atomics require Metal 3.1+ and a GPU supporting texture atomics.
 // Coherent images require Metal 3.2+ on Apple silicon; synchronization remains
