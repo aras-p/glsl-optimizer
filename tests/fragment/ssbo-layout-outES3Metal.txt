@@ -1,0 +1,96 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct Pair {
+  float x;
+  float y;
+};
+struct alignas(4) _xlat_ubo_storage2 {
+  alignas(4) float x;
+  alignas(4) float y;
+};
+static_assert(sizeof(_xlat_ubo_storage2) == 8, "std430 size");
+inline __attribute__((always_inline)) Pair _xlat_ubo_storage2_read(const device _xlat_ubo_storage2& storage)
+{
+  Pair value;
+  value.x = float(storage.x);
+  value.y = float(storage.y);
+  return value;
+}
+struct alignas(4) _xlat_ubo_storage1_element { _xlat_ubo_storage2 value; };
+struct _xlat_ubo_storage1 { _xlat_ubo_storage1_element elements[2]; };
+static_assert(sizeof(_xlat_ubo_storage1) == 16, "std430 size");
+struct _xlat_ubo_storage4 { float2 vectors[2]; };
+static_assert(sizeof(_xlat_ubo_storage4) == 16, "std430 size");
+struct alignas(8) _xlat_ubo_storage3_element { _xlat_ubo_storage4 value; };
+struct _xlat_ubo_storage3 { _xlat_ubo_storage3_element elements[2]; };
+static_assert(sizeof(_xlat_ubo_storage3) == 32, "std430 size");
+struct _xlat_ubo_storage5 { float4 vectors[2]; };
+static_assert(sizeof(_xlat_ubo_storage5) == 32, "std430 size");
+struct alignas(16) _xlat_ubo_storage0 {
+  alignas(4) _xlat_ubo_storage1 pairs;
+  alignas(8) _xlat_ubo_storage3 matrices;
+  alignas(16) _xlat_ubo_storage5 transform;
+  alignas(16) packed_float3 direction;
+  alignas(4) float weight;
+};
+static_assert(sizeof(_xlat_ubo_storage0) == 96, "std430 size");
+struct alignas(16) _xlat_ubo_storage7_element { float value; };
+struct _xlat_ubo_storage7 { _xlat_ubo_storage7_element elements[2]; };
+static_assert(sizeof(_xlat_ubo_storage7) == 32, "std140 size");
+struct alignas(16) _xlat_ubo_storage6 {
+  alignas(16) _xlat_ubo_storage7 values;
+  alignas(16) float4 result;
+};
+static_assert(sizeof(_xlat_ubo_storage6) == 48, "std140 size");
+struct xlatMtlShaderInput {
+};
+struct xlatMtlShaderOutput {
+  float4 color [[color(0)]];
+};
+struct xlatMtlShaderUniform {
+  int index;
+};
+fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , const device _xlat_ubo_storage0& _mtl_buffer1 [[buffer(1)]]
+  , device _xlat_ubo_storage6& _mtl_buffer2 [[buffer(2)]])
+{
+  xlatMtlShaderOutput _mtl_o;
+  Pair tmpvar_1;
+  tmpvar_1 = _xlat_ubo_storage2_read(_mtl_buffer1.pairs.elements[_mtl_u.index].value);
+  float2 tmpvar_2 = 0;
+  tmpvar_2.x = tmpvar_1.x;
+  tmpvar_2.y = tmpvar_1.y;
+  float2 tmpvar_3 = 0;
+  tmpvar_3 = (transpose(float2x2(float2(_mtl_buffer1.matrices.elements[_mtl_u.index].value.vectors[0].xy), float2(_mtl_buffer1.matrices.elements[_mtl_u.index].value.vectors[1].xy))) * tmpvar_2);
+  _mtl_buffer2.values.elements[_mtl_u.index].value = float(tmpvar_3.x);
+  float4 tmpvar_4 = 0;
+  tmpvar_4.xyz = ((float2x3(float3(_mtl_buffer1.transform.vectors[0].xyz), float3(_mtl_buffer1.transform.vectors[1].xyz)) * tmpvar_3) + float3(_mtl_buffer1.direction));
+  tmpvar_4.w = float(_mtl_buffer1.weight);
+  _mtl_buffer2.result = float4(tmpvar_4);
+  float4 tmpvar_5 = 0;
+  tmpvar_5.xy = tmpvar_3;
+  tmpvar_5.z = tmpvar_1.x;
+  tmpvar_5.w = tmpvar_1.y;
+  _mtl_o.color = tmpvar_5;
+  return _mtl_o;
+}
+
+
+// stats: 3 alu 0 tex 0 flow
+// uniforms: 1 (total size: 4)
+//  #0: index (high int) 1x1 [-1] loc 0
+// buffer #0: Input storage instance source layout std430 binding 2 (size: 96) metal 1
+//  member #0: Pair[2] pairs offset 0 array 2 stride 8 readonly
+//  member #1: Pair [] parent 0 offset 0 readonly
+//  member #2: float x parent 1 offset 0 readonly
+//  member #3: float y parent 1 offset 4 readonly
+//  member #4: mat2[2] matrices offset 16 array 2 stride 16 readonly
+//  member #5: mat2 [] parent 4 offset 16 matrix-stride 8 row-major readonly
+//  member #6: mat2x3 transform offset 48 matrix-stride 16 readonly
+//  member #7: vec3 direction offset 80 readonly
+//  member #8: float weight offset 92 readonly
+// buffer #1: Output storage layout std140 binding 4 (size: 48) metal 2
+//  member #0: float[2] values offset 0 array 2 stride 16 writeonly
+//  member #1: float [] parent 0 offset 0 writeonly
+//  member #2: vec4 result offset 32 writeonly

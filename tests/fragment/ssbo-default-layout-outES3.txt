@@ -1,0 +1,57 @@
+#version 310 es
+struct Pair {
+  highp float x;
+  highp float y;
+};
+layout(shared, column_major) uniform UniformData {
+  highp float values[2];
+} uniforms;
+layout(std140, column_major) buffer ExplicitData {
+  readonly highp float values[2];
+} explicitSource;
+layout(packed, column_major) buffer PackedData {
+  layout(column_major) readonly Pair pairs[2];
+  layout(column_major) readonly highp mat2 matrix;
+} packedSource;
+layout(shared, column_major) buffer SharedData {
+  readonly highp vec2 sharedValues[2];
+};
+layout(shared, column_major) buffer DefaultData {
+  readonly highp float values[3];
+  readonly highp vec2 pairs[2];
+} source;
+out highp vec4 color;
+void main ()
+{
+  highp vec2 tmpvar_1;
+  tmpvar_1.x = packedSource.pairs[1].x;
+  tmpvar_1.y = packedSource.pairs[1].y;
+  highp vec4 tmpvar_2;
+  tmpvar_2.xy = ((source.pairs[1] + sharedValues[1]) + (packedSource.matrix * tmpvar_1));
+  tmpvar_2.z = (source.values[2] + explicitSource.values[1]);
+  tmpvar_2.w = uniforms.values[1];
+  color = tmpvar_2;
+}
+
+
+// stats: 4 alu 0 tex 0 flow
+// buffer #0: DefaultData storage instance source layout shared (size: unknown)
+//  member #0: float[3] values array 3 readonly
+//  member #1: float [] parent 0 readonly
+//  member #2: vec2[2] pairs array 2 readonly
+//  member #3: vec2 [] parent 2 readonly
+// buffer #1: ExplicitData storage instance explicitSource layout std140 (size: 32)
+//  member #0: float[2] values offset 0 array 2 stride 16 readonly
+//  member #1: float [] parent 0 offset 0 readonly
+// buffer #2: PackedData storage instance packedSource layout packed (size: unknown)
+//  member #0: Pair[2] pairs array 2 readonly
+//  member #1: Pair [] parent 0 readonly
+//  member #2: float x parent 1 readonly
+//  member #3: float y parent 1 readonly
+//  member #4: mat2 matrix readonly
+// buffer #3: SharedData storage layout shared (size: unknown)
+//  member #0: vec2[2] sharedValues array 2 readonly
+//  member #1: vec2 [] parent 0 readonly
+// buffer #4: UniformData instance uniforms layout shared (size: unknown)
+//  member #0: float[2] values array 2
+//  member #1: float [] parent 0

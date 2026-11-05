@@ -1,0 +1,14 @@
+#version 310 es
+precision highp float;
+struct Pair { float x; float y; };
+readonly buffer DefaultData { float values[3]; vec2 pairs[2]; } source;
+layout(shared) readonly buffer SharedData { vec2 sharedValues[2]; };
+layout(packed) readonly buffer PackedData { Pair pairs[2]; mat2 matrix; } packedSource;
+layout(std140) readonly buffer ExplicitData { float values[2]; } explicitSource;
+uniform UniformData { float values[2]; } uniforms;
+out vec4 color;
+void main()
+{
+    vec2 value = source.pairs[1] + sharedValues[1] + packedSource.matrix * vec2(packedSource.pairs[1].x, packedSource.pairs[1].y);
+    color = vec4(value, source.values[2] + explicitSource.values[1], uniforms.values[1]);
+}

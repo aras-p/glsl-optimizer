@@ -556,9 +556,10 @@ static bool TestFile (glslopt_ctx* ctx, glslopt_shader_type type,
 		};
 		for (int i = 0; i < bufferCount; ++i) {
 			const auto* b = glslopt_shader_get_buffer_desc(shader, i);
-			const char* layouts[] = { "std140", "shared", "packed" };
+			const char* layouts[] = { "std140", "shared", "packed", "std430" };
 			snprintf(buffer, sizeof(buffer), "// buffer #%d: %s", i, b->name);
 			textOpt += buffer;
+			if (b->kind == kGlslBufferStorage) textOpt += " storage";
 			if (b->instanceName) textOpt += std::string(" instance ") + b->instanceName;
 			textOpt += std::string(" layout ") + layouts[b->layout];
 			if (b->binding >= 0) appendField("binding", b->binding);
@@ -572,10 +573,13 @@ static bool TestFile (glslopt_ctx* ctx, glslopt_shader_type type,
 				textOpt += buffer;
 				if (m->parentIndex >= 0) appendField("parent", m->parentIndex);
 				if (m->offset >= 0) appendField("offset", m->offset);
+				if (m->arraySize < 0) textOpt += " array runtime";
 				if (m->arraySize > 0) appendField("array", m->arraySize);
 				if (m->arrayStride > 0) appendField("stride", m->arrayStride);
 				if (m->matrixStride > 0) appendField("matrix-stride", m->matrixStride);
 				if (m->rowMajor) textOpt += " row-major";
+				if (m->readOnly) textOpt += " readonly";
+				if (m->writeOnly) textOpt += " writeonly";
 				if (!m->used) textOpt += " (unused)";
 				textOpt += "\n";
 			}

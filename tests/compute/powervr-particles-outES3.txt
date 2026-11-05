@@ -1,0 +1,265 @@
+#version 310 es
+layout(local_size_x=64) in;
+struct Emitter {
+  highp mat4 mTransformation;
+  mediump float fHeight;
+  mediump float fRadius;
+};
+struct Particle {
+  highp vec3 vPosition;
+  mediump float _padding_particle_0;
+  mediump vec3 vVelocity;
+  mediump float fLife;
+};
+layout(std140, column_major, binding=2) uniform UboData {
+  layout(column_major) Emitter emitter;
+  highp vec3 gravity;
+  highp float dt;
+  highp float fTotalTime;
+  highp float dragCoeffLinear;
+  highp float dragCoeffQuadratic;
+  highp float inwardForceCoeff;
+  highp float inwardForceRadius;
+  highp float bounciness;
+  highp float minLifespan;
+  highp float maxLifespan;
+};
+layout(std140, column_major, binding=1) uniform UboSpheres {
+  highp vec4 aSpheres[8];
+};
+layout(std140, column_major, binding=4) buffer SsboParticlesOut {
+  layout(column_major) writeonly Particle aParticlesOut[];
+};
+layout(std140, column_major, binding=3) buffer SsboParticlesInput {
+  layout(column_major) readonly Particle aParticlesIn[];
+};
+void main ()
+{
+  mediump float life_1;
+  Particle particle_2;
+  highp int tmpvar_3;
+  tmpvar_3 = (int((fTotalTime * 1.357985e+07)) + (int(
+    (gl_GlobalInvocationID.x + 10000u)
+  ) * 145));
+  Particle tmpvar_4;
+  tmpvar_4 = aParticlesIn[gl_GlobalInvocationID.x];
+  particle_2 = tmpvar_4;
+  life_1 = (tmpvar_4.fLife - (dt * 0.1));
+  if ((life_1 < 0.0)) {
+    mediump float particle__padding_particle_0_5;
+    mediump float particle_fLife_6;
+    mediump vec4 emittedDirection_7;
+    highp int tmpvar_8;
+    tmpvar_8 = abs(((1103515245 * 
+      abs(tmpvar_3)
+    ) + 12345));
+    highp int tmpvar_9;
+    tmpvar_9 = abs(((1103515245 * 
+      abs(tmpvar_8)
+    ) + 12345));
+    highp float tmpvar_10;
+    tmpvar_10 = ((float(tmpvar_9) / 2.147484e+09) * emitter.fRadius);
+    highp vec4 tmpvar_11;
+    tmpvar_11.w = 1.0;
+    tmpvar_11.x = tmpvar_10;
+    tmpvar_11.y = ((float(tmpvar_8) / 2.147484e+09) * emitter.fHeight);
+    tmpvar_11.z = tmpvar_10;
+    emittedDirection_7 = tmpvar_11;
+    emittedDirection_7 = (emitter.mTransformation * emittedDirection_7);
+    particle_2.vPosition = vec3(0.0, 0.0, 0.0);
+    particle_2._padding_particle_0 = particle__padding_particle_0_5;
+    particle_2.vVelocity = ((emittedDirection_7.xyz * vec3(7.0, 15.0, 7.0)) + vec3(0.0, 15.0, 0.0));
+    particle_2.fLife = particle_fLife_6;
+    life_1 = mix (minLifespan, maxLifespan, (float(
+      abs(((1103515245 * abs(tmpvar_9)) + 12345))
+    ) / 2.147484e+09));
+  } else {
+    highp vec3 Ftotal_12;
+    highp vec3 v_13;
+    v_13 = tmpvar_4.vVelocity;
+    Ftotal_12 = gravity;
+    if ((inwardForceCoeff != 0.0)) {
+      mediump float inward_14;
+      inward_14 = (((tmpvar_4.vPosition.x * tmpvar_4.vPosition.x) + (tmpvar_4.vPosition.z * tmpvar_4.vPosition.z)) * inwardForceCoeff);
+      if ((0.001 < inward_14)) {
+        highp vec3 tmpvar_15;
+        tmpvar_15.y = 0.0;
+        tmpvar_15.x = -(tmpvar_4.vPosition.x);
+        tmpvar_15.z = -(tmpvar_4.vPosition.z);
+        Ftotal_12 = (gravity + (max (
+          ((inward_14 - inwardForceRadius) + life_1)
+        , 0.0) * normalize(tmpvar_15)));
+      };
+    };
+    if (((dragCoeffLinear != 0.0) && (dragCoeffQuadratic != 0.0))) {
+      mediump float vlength_16;
+      vlength_16 = sqrt(dot (v_13, v_13));
+      Ftotal_12 = (Ftotal_12 + ((v_13 / vlength_16) * (vlength_16 * 
+        (-((dragCoeffQuadratic * vlength_16)) - dragCoeffLinear)
+      )));
+    };
+    v_13 = ((Ftotal_12 * dt) + v_13);
+    particle_2.vPosition = ((v_13 * dt) + tmpvar_4.vPosition);
+    highp vec4 tmpvar_17;
+    tmpvar_17 = aSpheres[uint(0)];
+    highp vec3 tmpvar_18;
+    tmpvar_18 = (particle_2.vPosition - tmpvar_17.xyz);
+    highp float tmpvar_19;
+    tmpvar_19 = dot (tmpvar_18, tmpvar_18);
+    if ((tmpvar_19 < (tmpvar_17.w * tmpvar_17.w))) {
+      highp vec3 tmpvar_20;
+      tmpvar_20 = (tmpvar_18 * inversesqrt(tmpvar_19));
+      particle_2.vPosition = ((tmpvar_20 * tmpvar_17.w) + tmpvar_17.xyz);
+      v_13 = ((v_13 - (2.0 * 
+        (dot (tmpvar_20, v_13) * tmpvar_20)
+      )) * bounciness);
+    } else {
+      highp vec4 tmpvar_21;
+      tmpvar_21 = aSpheres[1u];
+      highp vec3 tmpvar_22;
+      tmpvar_22 = (particle_2.vPosition - tmpvar_21.xyz);
+      highp float tmpvar_23;
+      tmpvar_23 = dot (tmpvar_22, tmpvar_22);
+      if ((tmpvar_23 < (tmpvar_21.w * tmpvar_21.w))) {
+        highp vec3 tmpvar_24;
+        tmpvar_24 = (tmpvar_22 * inversesqrt(tmpvar_23));
+        particle_2.vPosition = ((tmpvar_24 * tmpvar_21.w) + tmpvar_21.xyz);
+        v_13 = ((v_13 - (2.0 * 
+          (dot (tmpvar_24, v_13) * tmpvar_24)
+        )) * bounciness);
+      } else {
+        highp vec4 tmpvar_25;
+        tmpvar_25 = aSpheres[2u];
+        highp vec3 tmpvar_26;
+        tmpvar_26 = (particle_2.vPosition - tmpvar_25.xyz);
+        highp float tmpvar_27;
+        tmpvar_27 = dot (tmpvar_26, tmpvar_26);
+        if ((tmpvar_27 < (tmpvar_25.w * tmpvar_25.w))) {
+          highp vec3 tmpvar_28;
+          tmpvar_28 = (tmpvar_26 * inversesqrt(tmpvar_27));
+          particle_2.vPosition = ((tmpvar_28 * tmpvar_25.w) + tmpvar_25.xyz);
+          v_13 = ((v_13 - (2.0 * 
+            (dot (tmpvar_28, v_13) * tmpvar_28)
+          )) * bounciness);
+        } else {
+          highp vec4 tmpvar_29;
+          tmpvar_29 = aSpheres[3u];
+          highp vec3 tmpvar_30;
+          tmpvar_30 = (particle_2.vPosition - tmpvar_29.xyz);
+          highp float tmpvar_31;
+          tmpvar_31 = dot (tmpvar_30, tmpvar_30);
+          if ((tmpvar_31 < (tmpvar_29.w * tmpvar_29.w))) {
+            highp vec3 tmpvar_32;
+            tmpvar_32 = (tmpvar_30 * inversesqrt(tmpvar_31));
+            particle_2.vPosition = ((tmpvar_32 * tmpvar_29.w) + tmpvar_29.xyz);
+            v_13 = ((v_13 - (2.0 * 
+              (dot (tmpvar_32, v_13) * tmpvar_32)
+            )) * bounciness);
+          } else {
+            highp vec4 tmpvar_33;
+            tmpvar_33 = aSpheres[4u];
+            highp vec3 tmpvar_34;
+            tmpvar_34 = (particle_2.vPosition - tmpvar_33.xyz);
+            highp float tmpvar_35;
+            tmpvar_35 = dot (tmpvar_34, tmpvar_34);
+            if ((tmpvar_35 < (tmpvar_33.w * tmpvar_33.w))) {
+              highp vec3 tmpvar_36;
+              tmpvar_36 = (tmpvar_34 * inversesqrt(tmpvar_35));
+              particle_2.vPosition = ((tmpvar_36 * tmpvar_33.w) + tmpvar_33.xyz);
+              v_13 = ((v_13 - (2.0 * 
+                (dot (tmpvar_36, v_13) * tmpvar_36)
+              )) * bounciness);
+            } else {
+              highp vec4 tmpvar_37;
+              tmpvar_37 = aSpheres[5u];
+              highp vec3 tmpvar_38;
+              tmpvar_38 = (particle_2.vPosition - tmpvar_37.xyz);
+              highp float tmpvar_39;
+              tmpvar_39 = dot (tmpvar_38, tmpvar_38);
+              if ((tmpvar_39 < (tmpvar_37.w * tmpvar_37.w))) {
+                highp vec3 tmpvar_40;
+                tmpvar_40 = (tmpvar_38 * inversesqrt(tmpvar_39));
+                particle_2.vPosition = ((tmpvar_40 * tmpvar_37.w) + tmpvar_37.xyz);
+                v_13 = ((v_13 - (2.0 * 
+                  (dot (tmpvar_40, v_13) * tmpvar_40)
+                )) * bounciness);
+              } else {
+                highp vec4 tmpvar_41;
+                tmpvar_41 = aSpheres[6u];
+                highp vec3 tmpvar_42;
+                tmpvar_42 = (particle_2.vPosition - tmpvar_41.xyz);
+                highp float tmpvar_43;
+                tmpvar_43 = dot (tmpvar_42, tmpvar_42);
+                if ((tmpvar_43 < (tmpvar_41.w * tmpvar_41.w))) {
+                  highp vec3 tmpvar_44;
+                  tmpvar_44 = (tmpvar_42 * inversesqrt(tmpvar_43));
+                  particle_2.vPosition = ((tmpvar_44 * tmpvar_41.w) + tmpvar_41.xyz);
+                  v_13 = ((v_13 - (2.0 * 
+                    (dot (tmpvar_44, v_13) * tmpvar_44)
+                  )) * bounciness);
+                } else {
+                  highp vec4 tmpvar_45;
+                  tmpvar_45 = aSpheres[7u];
+                  highp vec3 tmpvar_46;
+                  tmpvar_46 = (particle_2.vPosition - tmpvar_45.xyz);
+                  highp float tmpvar_47;
+                  tmpvar_47 = dot (tmpvar_46, tmpvar_46);
+                  if ((tmpvar_47 < (tmpvar_45.w * tmpvar_45.w))) {
+                    highp vec3 tmpvar_48;
+                    tmpvar_48 = (tmpvar_46 * inversesqrt(tmpvar_47));
+                    particle_2.vPosition = ((tmpvar_48 * tmpvar_45.w) + tmpvar_45.xyz);
+                    v_13 = ((v_13 - (2.0 * 
+                      (dot (tmpvar_48, v_13) * tmpvar_48)
+                    )) * bounciness);
+                  };
+                };
+              };
+            };
+          };
+        };
+      };
+    };
+    if ((particle_2.vPosition.y < 0.0)) {
+      particle_2.vPosition.y = -(particle_2.vPosition.y);
+      v_13 = (v_13 * vec3(0.4, -0.3, 0.4));
+    };
+    particle_2.vVelocity = v_13;
+  };
+  particle_2.fLife = life_1;
+  aParticlesOut[gl_GlobalInvocationID.x] = particle_2;
+}
+
+
+// stats: 173 alu 0 tex 13 flow
+// buffer #0: SsboParticlesInput storage layout std140 binding 3 (size: unknown)
+//  member #0: Particle[] aParticlesIn offset 0 array runtime stride 32 readonly
+//  member #1: Particle [] parent 0 offset 0 readonly
+//  member #2: vec3 vPosition parent 1 offset 0 readonly
+//  member #3: float _padding_particle_0 parent 1 offset 12 readonly
+//  member #4: vec3 vVelocity parent 1 offset 16 readonly
+//  member #5: float fLife parent 1 offset 28 readonly
+// buffer #1: SsboParticlesOut storage layout std140 binding 4 (size: unknown)
+//  member #0: Particle[] aParticlesOut offset 0 array runtime stride 32 writeonly
+//  member #1: Particle [] parent 0 offset 0 writeonly
+//  member #2: vec3 vPosition parent 1 offset 0 writeonly
+//  member #3: float _padding_particle_0 parent 1 offset 12 writeonly
+//  member #4: vec3 vVelocity parent 1 offset 16 writeonly
+//  member #5: float fLife parent 1 offset 28 writeonly
+// buffer #2: UboData layout std140 binding 2 (size: 128)
+//  member #0: Emitter emitter offset 0
+//  member #1: mat4 mTransformation parent 0 offset 0 matrix-stride 16
+//  member #2: float fHeight parent 0 offset 64
+//  member #3: float fRadius parent 0 offset 68
+//  member #4: vec3 gravity offset 80
+//  member #5: float dt offset 92
+//  member #6: float fTotalTime offset 96
+//  member #7: float dragCoeffLinear offset 100
+//  member #8: float dragCoeffQuadratic offset 104
+//  member #9: float inwardForceCoeff offset 108
+//  member #10: float inwardForceRadius offset 112
+//  member #11: float bounciness offset 116
+//  member #12: float minLifespan offset 120
+//  member #13: float maxLifespan offset 124
+// buffer #3: UboSpheres layout std140 binding 1 (size: 128)
+//  member #0: vec4[8] aSpheres offset 0 array 8 stride 16
+//  member #1: vec4 [] parent 0 offset 0

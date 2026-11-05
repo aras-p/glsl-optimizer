@@ -1,0 +1,38 @@
+#version 310 es
+struct Entry {
+  highp mat2x3 matrix;
+};
+layout(std140, row_major) uniform UniformData {
+  layout(row_major) highp mat2x3 uniformRows;
+  layout(column_major) highp mat2x3 uniformColumns;
+};
+layout(std430, row_major) buffer StorageData {
+  layout(row_major) readonly highp mat2x3 rows;
+  layout(column_major) readonly highp mat2x3 columns;
+  layout(row_major) readonly Entry entries[2];
+};
+uniform highp int index;
+out highp vec4 color;
+void main ()
+{
+  highp vec4 tmpvar_1;
+  tmpvar_1.w = 1.0;
+  tmpvar_1.xyz = (((
+    (rows * vec2(1.0, 2.0))
+   + columns[index]) + entries[index].matrix[1]) + (uniformRows[index] + (uniformColumns * vec2(2.0, 1.0))));
+  color = tmpvar_1;
+}
+
+
+// stats: 7 alu 0 tex 0 flow
+// uniforms: 1 (total size: 0)
+//  #0: index (high int) 1x1 [-1]
+// buffer #0: StorageData storage layout std430 (size: 112)
+//  member #0: mat2x3 rows offset 0 matrix-stride 8 row-major readonly
+//  member #1: mat2x3 columns offset 32 matrix-stride 16 readonly
+//  member #2: Entry[2] entries offset 64 array 2 stride 24 readonly
+//  member #3: Entry [] parent 2 offset 64 readonly
+//  member #4: mat2x3 matrix parent 3 offset 64 matrix-stride 8 row-major readonly
+// buffer #1: UniformData layout std140 (size: 80)
+//  member #0: mat2x3 uniformRows offset 0 matrix-stride 16 row-major
+//  member #1: mat2x3 uniformColumns offset 48 matrix-stride 16

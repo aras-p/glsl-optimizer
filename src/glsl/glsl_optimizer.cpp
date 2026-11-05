@@ -1,7 +1,7 @@
 #include "glsl_optimizer.h"
 #include "main/mtypes.h"
 #include "ir.h"
-#include "ir_uniform_blocks.h"
+#include "ir_buffer_blocks.h"
 #include "ir_hierarchical_visitor.h"
 #include <unordered_map>
 #include "ir_optimization.h"
@@ -340,8 +340,8 @@ static void glsl_type_to_optimizer_desc(const glsl_type* type, unsigned prec, gl
 	}
 }
 
-// Each reflected field has one usage node; arrays combine all element reads.
-// Direct aggregate reads mark descendants, while field reads mark ancestors only.
+// Each reflected field has one usage node; arrays combine all element accesses.
+// Aggregate accesses mark descendants, while field accesses mark ancestors only.
 class buffer_usage_visitor : public ir_hierarchical_visitor {
 public:
 	struct node {
@@ -365,7 +365,7 @@ public:
 			build(first + i, type->is_array() ? type->fields.array : type->fields.structure[i].type);
 	}
 
-	buffer_usage_visitor(const std::vector<uniform_block>& blocks, exec_list* ir) {
+	buffer_usage_visitor(const std::vector<buffer_block>& blocks, exec_list* ir) {
 		for (const auto& block : blocks) {
 			unsigned root = (unsigned)nodes.size();
 			roots.push_back(root);
@@ -377,7 +377,7 @@ public:
 					fields.put(nodes[root].first_child + i, block.type->fields.structure[i].name);
 			foreach_in_list(ir_instruction, instruction, ir) {
 				auto* v = instruction->as_variable();
-				if (!v || v->data.mode != ir_var_uniform || v->get_interface_type() != block.type) continue;
+				if (!v || (v->data.mode != ir_var_uniform && v->data.mode != ir_var_shader_storage) || v->get_interface_type() != block.type) continue;
 				unsigned member = root;
 				if (!v->is_interface_instance()) {
 					bool found = fields.get(member, v->name);
@@ -419,36 +419,35 @@ public:
 };
 
 static void reflect_buffer_member(glslopt_shader* shader, glslopt_buffer& buffer,
-	const glsl_type* type, const char* name, int parent, unsigned offset, bool row, bool known,
-	const buffer_usage_visitor& usage, unsigned usageIndex)
+	const glsl_type* type, const char* name, int parent, unsigned offset, bool row, bool known, bool std430,
+	const buffer_usage_visitor& usage, unsigned usageIndex, bool readOnly, bool writeOnly)
 {
 	int index = (int)buffer.members.size();
-	unsigned stride = type->is_array() ? uniform_align(type->fields.array->std140_size(row),
-		MAX2(16, type->fields.array->std140_base_alignment(row))) : 0;
-	unsigned matrixStride = type->is_matrix() ? uniform_align((row ? type->matrix_columns : type->vector_elements) * (type->is_64bit() ? 8 : 4), 16) : 0;
+	unsigned stride = type->is_array() ? buffer_array_stride(type->fields.array, row, std430) : 0;
+	unsigned matrixStride = type->is_matrix() ? buffer_array_stride(row ? type->row_type() : type->column_type(), false, std430) : 0;
 	buffer.members.push_back({ralloc_strdup(shader->mem_ctx, name), ralloc_strdup(shader->mem_ctx, type->name),
-		parent, known ? (int)offset : -1, type->is_array() ? (int)type->length : 0,
+		parent, known ? (int)offset : -1, type->is_array() ? (type->length ? (int)type->length : -1) : 0,
 		type->is_array() ? (known ? (int)stride : -1) : 0,
-		type->is_matrix() ? (known ? (int)matrixStride : -1) : 0, type->is_matrix() && row, usage.nodes[usageIndex].used});
+		type->is_matrix() ? (known ? (int)matrixStride : -1) : 0, type->is_matrix() && row, usage.nodes[usageIndex].used, readOnly, writeOnly});
 	if (type->is_array()) {
-		reflect_buffer_member(shader, buffer, type->fields.array, "[]", index, offset, row, known,
-			usage, usage.nodes[usageIndex].first_child);
+		reflect_buffer_member(shader, buffer, type->fields.array, "[]", index, offset, row, known, std430,
+			usage, usage.nodes[usageIndex].first_child, readOnly, writeOnly);
 	} else if (type->is_struct()) {
 		unsigned cursor = 0;
 		for (unsigned i = 0; i < type->length; ++i) {
 			const auto& f = type->fields.structure[i];
-			cursor = uniform_field_offset(type, i, cursor, row);
-			bool fieldRow = uniform_field_row_major(f, row);
-			reflect_buffer_member(shader, buffer, f.type, f.name, index, offset + cursor, fieldRow, known,
-				usage, usage.nodes[usageIndex].first_child + i);
-			cursor += f.type->std140_size(fieldRow);
+			cursor = buffer_field_offset(type, i, cursor, row, std430);
+			bool fieldRow = buffer_field_row_major(f, row);
+			reflect_buffer_member(shader, buffer, f.type, f.name, index, offset + cursor, fieldRow, known, std430,
+				usage, usage.nodes[usageIndex].first_child + i, readOnly, writeOnly);
+			cursor += buffer_size(f.type, fieldRow, std430);
 		}
 	}
 }
 
 static void find_shader_buffers(glslopt_shader* shader, exec_list* ir, bool metal)
 {
-	auto blocks = collect_uniform_blocks(ir);
+	auto blocks = collect_buffer_blocks(ir);
 	if (blocks.empty()) return;
 	buffer_usage_visitor usage(blocks, ir);
 	visit_list_elements(&usage, ir);
@@ -457,22 +456,25 @@ static void find_shader_buffers(glslopt_shader* shader, exec_list* ir, bool meta
 		const auto& b = blocks[blockIndex];
 		glslopt_buffer buffer;
 		auto layout = b.type->get_interface_packing();
-		bool known = metal || layout == GLSL_INTERFACE_PACKING_STD140;
+		bool std430 = buffer_uses_std430(b, metal);
+		bool known = metal || std430 || layout == GLSL_INTERFACE_PACKING_STD140;
+		const glsl_type* last = b.type->fields.structure[b.type->length - 1].type;
+		bool runtime = last->is_array() && !last->length;
 		buffer.desc = {ralloc_strdup(shader->mem_ctx, b.type->name),
 			b.variable->is_interface_instance() ? ralloc_strdup(shader->mem_ctx, b.variable->name) : nullptr,
-			kGlslBufferUniform, layout == GLSL_INTERFACE_PACKING_STD140 ? kGlslLayoutStd140 :
+			b.variable->data.mode == ir_var_shader_storage ? kGlslBufferStorage : kGlslBufferUniform, layout == GLSL_INTERFACE_PACKING_STD430 ? kGlslLayoutStd430 : layout == GLSL_INTERFACE_PACKING_STD140 ? kGlslLayoutStd140 :
 			layout == GLSL_INTERFACE_PACKING_PACKED ? kGlslLayoutPacked : kGlslLayoutShared,
 			b.variable->data.explicit_binding ? b.variable->data.binding : -1,
-			(int)b.array_size, known ? (int)uniform_block_size(b.type) : -1, metal ? (int)b.metal_index : -1};
+			(int)b.array_size, known && !runtime ? (int)buffer_block_size(b.type, std430) : -1, metal ? (int)b.metal_index : -1};
 		unsigned cursor = 0;
 		bool row = b.type->get_interface_row_major();
 		for (unsigned i = 0; i < b.type->length; ++i) {
 			const auto& f = b.type->fields.structure[i];
-			cursor = uniform_field_offset(b.type, i, cursor, row);
-			bool fieldRow = uniform_field_row_major(f, row);
-			reflect_buffer_member(shader, buffer, f.type, f.name, -1, cursor, fieldRow, known,
-				usage, usage.nodes[usage.roots[blockIndex]].first_child + i);
-			cursor += f.type->std140_size(fieldRow);
+			cursor = buffer_field_offset(b.type, i, cursor, row, std430);
+			bool fieldRow = buffer_field_row_major(f, row);
+			reflect_buffer_member(shader, buffer, f.type, f.name, -1, cursor, fieldRow, known, std430,
+				usage, usage.nodes[usage.roots[blockIndex]].first_child + i, f.memory_read_only, f.memory_write_only);
+			cursor += buffer_size(f.type, fieldRow, std430);
 		}
 		shader->buffers.push_back(std::move(buffer));
 	}
@@ -533,6 +535,48 @@ static bool metal_uniform_type_supported(const glsl_type* type)
 	return type->is_float() || type->is_integer_32() || type->is_boolean();
 }
 
+// Reject buffer operations that cannot be represented by the selected printer.
+class storage_validation : public ir_hierarchical_visitor {
+public:
+	bool metal;
+	const char* error = nullptr;
+	explicit storage_validation(bool metal) : metal(metal) {}
+	void check_type(const glsl_type* type) {
+		if (type->is_array()) {
+			if (!type->length) error = "Metal runtime-sized storage arrays are not supported.";
+			check_type(type->fields.array);
+		} else if (type->is_struct() || type->is_interface()) {
+			for (unsigned i = 0; i < type->length; ++i) {
+				const auto& f = type->fields.structure[i];
+				if (f.memory_coherent || f.memory_volatile)
+					error = "Metal coherent/volatile storage buffers are not supported.";
+				check_type(f.type);
+			}
+		}
+	}
+	ir_visitor_status visit_enter(ir_assignment* assignment) override {
+		auto* var = assignment->lhs->variable_referenced();
+		if (metal && var && var->data.mode == ir_var_shader_storage) {
+			if (!assignment->lhs->type->is_scalar() && !assignment->lhs->type->is_vector())
+				error = "Metal storage-buffer aggregate assignments are not supported.";
+			ir_rvalue* value = assignment->lhs;
+			while (value) {
+				if (value->type->is_matrix()) error = "Metal storage-buffer matrix writes are not supported.";
+				if (auto a = value->as_dereference_array()) value = a->array;
+				else if (auto r = value->as_dereference_record()) value = r->record;
+				else break;
+			}
+		}
+		return visit_continue;
+	}
+	ir_visitor_status visit_enter(ir_call* call) override {
+		if (call->callee->is_builtin() && (strstr(call->callee_name(), "atomic") || strstr(call->callee_name(), "barrier") ||
+			strstr(call->callee_name(), "Barrier")))
+			error = "Buffer atomics and memory barriers are not supported.";
+		return visit_continue;
+	}
+};
+
 glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, const char* shaderSource, unsigned options)
 {
 	if (!ctx)
@@ -568,6 +612,8 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 	}
 
 	exec_list* ir = shader->ir;
+	bool hasStorage = false;
+	storage_validation storageValidation(ctx->target == kGlslTargetMetal);
 
 	// These declarations need dedicated backend support before they can be
 	// printed safely. In particular, Metal's ordinary-uniform layout is not
@@ -576,9 +622,10 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 		ir_variable* var = instruction->as_variable();
 		if (!var || strncmp(var->name, "gl_", 3) == 0)
 			continue;
+		hasStorage |= var->data.mode == ir_var_shader_storage;
 		const char* unsupported = nullptr;
-		// Stage interfaces and SSBOs are separate from uniform blocks.
-		if ((var->is_interface_instance() && var->data.mode != ir_var_uniform) || var->data.mode == ir_var_shader_storage)
+		// Stage interfaces need their own input/output mapping.
+		if (var->is_interface_instance() && var->data.mode != ir_var_uniform && var->data.mode != ir_var_shader_storage)
 			unsupported = "Interface-block";
 		else if (var->type->contains_image())
 			unsupported = "Image";
@@ -595,17 +642,22 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 	}
 
 	if (ctx->target == kGlslTargetMetal) {
-		for (const auto& block : collect_uniform_blocks(ir)) {
+		for (const auto& block : collect_buffer_blocks(ir)) {
+			if (block.variable->data.mode == ir_var_shader_storage) {
+				storageValidation.check_type(block.type);
+			}
 			if (!metal_uniform_type_supported(block.type)) {
-				result->infoLog = "Metal uniform blocks support only 32-bit float/integer and boolean storage.";
+				result->infoLog = "Metal buffer blocks support only 32-bit float/integer and boolean storage.";
 				return result;
 			}
 			if (block.metal_index + block.array_size > 31) {
-				result->infoLog = "Metal uniform blocks exceed the available buffer slots (1 through 30).";
+				result->infoLog = "Metal buffer blocks exceed the available buffer slots (1 through 30).";
 				return result;
 			}
 		}
 	}
+	if (hasStorage) visit_list_elements(&storageValidation, ir);
+	if (storageValidation.error) { result->infoLog = storageValidation.error; return result; }
 
 	// Note: restore source-level subtraction outside of regular optimization loop
     // (inside the loop, other passes would undo it).

@@ -1,0 +1,130 @@
+#version 310 es
+layout(local_size_x=64) in;
+struct particle {
+  highp vec2 pos;
+  highp vec2 vel;
+};
+layout(std140, column_major, binding=0) uniform sim_params {
+  highp float dt;
+  highp float rule1_distance;
+  highp float rule2_distance;
+  highp float rule3_distance;
+  highp float rule1_scale;
+  highp float rule2_scale;
+  highp float rule3_scale;
+  highp int num_particles;
+};
+layout(std430, column_major, binding=1) buffer cs_ssbo_out {
+  layout(column_major) particle prt_out[];
+};
+layout(std430, column_major, binding=0) buffer cs_ssbo_in {
+  layout(column_major) readonly particle prt_in[];
+};
+void main ()
+{
+  highp int i_1;
+  highp int c_vel_count_2;
+  highp int c_mass_count_3;
+  highp vec2 col_vel_4;
+  highp vec2 c_vel_5;
+  highp vec2 c_mass_6;
+  highp vec2 v_vel_7;
+  highp vec2 v_pos_8;
+  if ((gl_GlobalInvocationID.x >= uint(num_particles))) {
+    return;
+  };
+  highp vec2 tmpvar_9;
+  tmpvar_9 = prt_in[gl_GlobalInvocationID.x].pos;
+  v_pos_8 = tmpvar_9;
+  highp vec2 tmpvar_10;
+  tmpvar_10 = prt_in[gl_GlobalInvocationID.x].vel;
+  v_vel_7 = tmpvar_10;
+  c_mass_6 = vec2(0.0, 0.0);
+  c_vel_5 = vec2(0.0, 0.0);
+  col_vel_4 = vec2(0.0, 0.0);
+  c_mass_count_3 = 0;
+  c_vel_count_2 = 0;
+  i_1 = 0;
+  while (true) {
+    if ((i_1 >= num_particles)) {
+      break;
+    };
+    if ((uint(i_1) == gl_GlobalInvocationID.x)) {
+      i_1++;
+      continue;
+    };
+    highp vec2 tmpvar_11;
+    tmpvar_11 = prt_in[i_1].pos;
+    highp vec2 tmpvar_12;
+    tmpvar_12 = prt_in[i_1].vel;
+    highp float tmpvar_13;
+    highp vec2 tmpvar_14;
+    tmpvar_14 = (tmpvar_11 - tmpvar_9);
+    tmpvar_13 = sqrt(dot (tmpvar_14, tmpvar_14));
+    if ((tmpvar_13 < rule1_distance)) {
+      c_mass_6 = (c_mass_6 + tmpvar_11);
+      c_mass_count_3++;
+    };
+    if ((tmpvar_13 < rule2_distance)) {
+      col_vel_4 = (col_vel_4 + (tmpvar_9 - tmpvar_11));
+    };
+    if ((tmpvar_13 < rule3_distance)) {
+      c_vel_5 = (c_vel_5 + tmpvar_12);
+      c_vel_count_2++;
+    };
+    i_1++;
+  };
+  if ((0 < c_mass_count_3)) {
+    c_mass_6 = ((c_mass_6 / float(c_mass_count_3)) - tmpvar_9);
+  };
+  if ((0 < c_vel_count_2)) {
+    c_vel_5 = (c_vel_5 / float(c_vel_count_2));
+  };
+  v_vel_7 = (tmpvar_10 + ((
+    (c_mass_6 * rule1_scale)
+   + 
+    (col_vel_4 * rule2_scale)
+  ) + (c_vel_5 * rule3_scale)));
+  v_vel_7 = (normalize(v_vel_7) * clamp (min (
+    sqrt(dot (v_vel_7, v_vel_7))
+  , 0.1), 0.0, 1.0));
+  v_pos_8 = (tmpvar_9 + (v_vel_7 * dt));
+  if ((v_pos_8.x < -1.0)) {
+    v_pos_8.x = 1.0;
+  } else {
+    if ((1.0 < v_pos_8.x)) {
+      v_pos_8.x = -1.0;
+    };
+  };
+  if ((v_pos_8.y < -1.0)) {
+    v_pos_8.y = 1.0;
+  } else {
+    if ((1.0 < v_pos_8.y)) {
+      v_pos_8.y = -1.0;
+    };
+  };
+  prt_out[gl_GlobalInvocationID.x].pos = v_pos_8;
+  prt_out[gl_GlobalInvocationID.x].vel = v_vel_7;
+}
+
+
+// stats: 55 alu 0 tex 14 flow
+// buffer #0: cs_ssbo_in storage layout std430 binding 0 (size: unknown)
+//  member #0: particle[] prt_in offset 0 array runtime stride 16 readonly
+//  member #1: particle [] parent 0 offset 0 readonly
+//  member #2: vec2 pos parent 1 offset 0 readonly
+//  member #3: vec2 vel parent 1 offset 8 readonly
+// buffer #1: cs_ssbo_out storage layout std430 binding 1 (size: unknown)
+//  member #0: particle[] prt_out offset 0 array runtime stride 16
+//  member #1: particle [] parent 0 offset 0
+//  member #2: vec2 pos parent 1 offset 0
+//  member #3: vec2 vel parent 1 offset 8
+// buffer #2: sim_params layout std140 binding 0 (size: 32)
+//  member #0: float dt offset 0
+//  member #1: float rule1_distance offset 4
+//  member #2: float rule2_distance offset 8
+//  member #3: float rule3_distance offset 12
+//  member #4: float rule1_scale offset 16
+//  member #5: float rule2_scale offset 20
+//  member #6: float rule3_scale offset 24
+//  member #7: int num_particles offset 28

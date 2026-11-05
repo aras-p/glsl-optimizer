@@ -91,8 +91,6 @@ function(check_resource_binding declaration last_binding invalid_binding backend
         endif()
     endforeach()
 endfunction()
-check_resource_binding("layout(std430, binding=BINDING) buffer Data { uint value; };"
-    15 16 "Interface-block output is not supported" "maximum number of SSBO binding points")
 check_resource_binding("layout(r32ui, binding=BINDING) uniform highp uimage2D data;"
     7 8 "Image output is not supported" "maximum number of image units")
 check_resource_binding("layout(binding=BINDING, offset=0) uniform atomic_uint counter;"
@@ -112,3 +110,35 @@ foreach(binding 71 72)
     endif()
 endforeach()
 file(REMOVE "${resource_input}" "${work}/fixtures/compute/uniform-binding-out.txt")
+
+# SSBO binding limits apply independently of UBO binding limits.
+set(resource_input "${work}/fixtures/compute/storage-binding-in.txt")
+foreach(binding 15 16)
+    file(WRITE "${resource_input}" "#version 430\nlayout(std430, binding=${binding}) buffer Data { uint value; } data;\nlayout(local_size_x=1) in;\nvoid main() { data.value = gl_GlobalInvocationID.x; }\n")
+    if(binding EQUAL 15)
+        check_run(0 "succeeded" "${work}/fixtures" --update-expected)
+        check_run(0 "succeeded" "${work}/fixtures")
+    else()
+        check_run(1 "maximum number of SSBO binding points" "${work}/fixtures")
+    endif()
+endforeach()
+file(REMOVE "${resource_input}" "${work}/fixtures/compute/storage-binding-out.txt")
+
+# Unsupported buffer operations must fail instead of producing invalid Metal.
+function(check_storage_rejection declaration body diagnostic)
+    set(input "${work}/fixtures/fragment/storage-reject-inES3.txt")
+    file(WRITE "${input}" "#version 310 es\nprecision highp float;\n${declaration}\nout vec4 color;\nvoid main() { ${body} }\n")
+    check_run(1 "${diagnostic}" "${work}/fixtures" --update-expected)
+    check_run(1 "${diagnostic}" "${work}/fixtures")
+    file(REMOVE "${input}" "${work}/fixtures/fragment/storage-reject-outES3.txt")
+endfunction()
+check_storage_rejection("layout(std430) buffer Data { float values[]; } data;"
+    "color = vec4(data.values[0]);" "Metal runtime-sized storage arrays")
+check_storage_rejection("layout(std430) coherent buffer Data { float value; } data;"
+    "data.value = 1.0; color = vec4(data.value);" "Metal coherent/volatile storage buffers")
+check_storage_rejection("layout(std430) buffer Data { mat2 value; } data;"
+    "data.value[0][0] = 1.0; color = vec4(1.0);" "Metal storage-buffer matrix writes")
+check_storage_rejection("struct Entry { vec4 color; }; layout(std430) buffer Data { Entry entry; } data;"
+    "data.entry = Entry(vec4(1.0)); color = vec4(1.0);" "Metal storage-buffer aggregate assignments")
+check_storage_rejection("layout(std430) buffer Data { uint value; } data;"
+    "color = vec4(float(atomicAdd(data.value, 1u)));" "Buffer atomics and memory barriers")

@@ -1,0 +1,107 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct Pair {
+  float x;
+  float y;
+};
+struct alignas(4) _xlat_ubo_storage1_element { float value; };
+struct _xlat_ubo_storage1 { _xlat_ubo_storage1_element elements[3]; };
+static_assert(sizeof(_xlat_ubo_storage1) == 12, "std430 size");
+struct alignas(8) _xlat_ubo_storage2_element { float2 value; };
+struct _xlat_ubo_storage2 { _xlat_ubo_storage2_element elements[2]; };
+static_assert(sizeof(_xlat_ubo_storage2) == 16, "std430 size");
+struct alignas(8) _xlat_ubo_storage0 {
+  alignas(4) _xlat_ubo_storage1 values;
+  char _ubo_pad1[4];
+  alignas(8) _xlat_ubo_storage2 pairs;
+};
+static_assert(sizeof(_xlat_ubo_storage0) == 32, "std430 size");
+struct alignas(16) _xlat_ubo_storage4_element { float value; };
+struct _xlat_ubo_storage4 { _xlat_ubo_storage4_element elements[2]; };
+static_assert(sizeof(_xlat_ubo_storage4) == 32, "std140 size");
+struct alignas(16) _xlat_ubo_storage3 {
+  alignas(16) _xlat_ubo_storage4 values;
+};
+static_assert(sizeof(_xlat_ubo_storage3) == 32, "std140 size");
+struct alignas(4) _xlat_ubo_storage7 {
+  alignas(4) float x;
+  alignas(4) float y;
+};
+static_assert(sizeof(_xlat_ubo_storage7) == 8, "std430 size");
+inline __attribute__((always_inline)) Pair _xlat_ubo_storage7_read(const device _xlat_ubo_storage7& storage)
+{
+  Pair value;
+  value.x = float(storage.x);
+  value.y = float(storage.y);
+  return value;
+}
+struct alignas(4) _xlat_ubo_storage6_element { _xlat_ubo_storage7 value; };
+struct _xlat_ubo_storage6 { _xlat_ubo_storage6_element elements[2]; };
+static_assert(sizeof(_xlat_ubo_storage6) == 16, "std430 size");
+struct _xlat_ubo_storage8 { float2 vectors[2]; };
+static_assert(sizeof(_xlat_ubo_storage8) == 16, "std430 size");
+struct alignas(8) _xlat_ubo_storage5 {
+  alignas(4) _xlat_ubo_storage6 pairs;
+  alignas(8) _xlat_ubo_storage8 matrix;
+};
+static_assert(sizeof(_xlat_ubo_storage5) == 32, "std430 size");
+struct alignas(8) _xlat_ubo_storage9 {
+  alignas(8) _xlat_ubo_storage2 sharedValues;
+};
+static_assert(sizeof(_xlat_ubo_storage9) == 16, "std430 size");
+struct alignas(16) _xlat_ubo_storage11_element { float value; };
+struct _xlat_ubo_storage11 { _xlat_ubo_storage11_element elements[2]; };
+static_assert(sizeof(_xlat_ubo_storage11) == 32, "std140 size");
+struct alignas(16) _xlat_ubo_storage10 {
+  alignas(16) _xlat_ubo_storage11 values;
+};
+static_assert(sizeof(_xlat_ubo_storage10) == 32, "std140 size");
+struct xlatMtlShaderInput {
+};
+struct xlatMtlShaderOutput {
+  float4 color [[color(0)]];
+};
+struct xlatMtlShaderUniform {
+};
+fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , const device _xlat_ubo_storage0& _mtl_buffer1 [[buffer(1)]]
+  , const device _xlat_ubo_storage3& _mtl_buffer2 [[buffer(2)]]
+  , const device _xlat_ubo_storage5& _mtl_buffer3 [[buffer(3)]]
+  , const device _xlat_ubo_storage9& _mtl_buffer4 [[buffer(4)]]
+  , constant _xlat_ubo_storage10& _mtl_buffer5 [[buffer(5)]])
+{
+  xlatMtlShaderOutput _mtl_o;
+  float2 tmpvar_1 = 0;
+  tmpvar_1.x = float(_mtl_buffer3.pairs.elements[1].value.x);
+  tmpvar_1.y = float(_mtl_buffer3.pairs.elements[1].value.y);
+  float4 tmpvar_2 = 0;
+  tmpvar_2.xy = ((float2(_mtl_buffer1.pairs.elements[1].value) + float2(_mtl_buffer4.sharedValues.elements[1].value)) + (float2x2(float2(_mtl_buffer3.matrix.vectors[0].xy), float2(_mtl_buffer3.matrix.vectors[1].xy)) * tmpvar_1));
+  tmpvar_2.z = (float(_mtl_buffer1.values.elements[2].value) + float(_mtl_buffer2.values.elements[1].value));
+  tmpvar_2.w = float(_mtl_buffer5.values.elements[1].value);
+  _mtl_o.color = tmpvar_2;
+  return _mtl_o;
+}
+
+
+// stats: 4 alu 0 tex 0 flow
+// buffer #0: DefaultData storage instance source layout shared (size: 32) metal 1
+//  member #0: float[3] values offset 0 array 3 stride 4 readonly
+//  member #1: float [] parent 0 offset 0 readonly
+//  member #2: vec2[2] pairs offset 16 array 2 stride 8 readonly
+//  member #3: vec2 [] parent 2 offset 16 readonly
+// buffer #1: ExplicitData storage instance explicitSource layout std140 (size: 32) metal 2
+//  member #0: float[2] values offset 0 array 2 stride 16 readonly
+//  member #1: float [] parent 0 offset 0 readonly
+// buffer #2: PackedData storage instance packedSource layout packed (size: 32) metal 3
+//  member #0: Pair[2] pairs offset 0 array 2 stride 8 readonly
+//  member #1: Pair [] parent 0 offset 0 readonly
+//  member #2: float x parent 1 offset 0 readonly
+//  member #3: float y parent 1 offset 4 readonly
+//  member #4: mat2 matrix offset 16 matrix-stride 8 readonly
+// buffer #3: SharedData storage layout shared (size: 16) metal 4
+//  member #0: vec2[2] sharedValues offset 0 array 2 stride 8 readonly
+//  member #1: vec2 [] parent 0 offset 0 readonly
+// buffer #4: UniformData instance uniforms layout shared (size: 32) metal 5
+//  member #0: float[2] values offset 0 array 2 stride 16
+//  member #1: float [] parent 0 offset 0

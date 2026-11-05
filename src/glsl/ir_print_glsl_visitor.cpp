@@ -213,6 +213,8 @@ _mesa_print_ir_glsl(exec_list *instructions,
 				str.asprintf_append (" es");
 			str.asprintf_append ("\n");
 		}
+		if (state->ARB_shader_storage_buffer_object_enable)
+			str.asprintf_append("#extension GL_ARB_shader_storage_buffer_object : enable\n");
 		if (state->ARB_uniform_buffer_object_enable)
 			str.asprintf_append("#extension GL_ARB_uniform_buffer_object : enable\n");
 		if (state->ARB_shading_language_420pack_enable)
@@ -237,6 +239,9 @@ _mesa_print_ir_glsl(exec_list *instructions,
 			str.asprintf_append ("#extension GL_EXT_texture_array : enable\n");
 	}
 	
+	if (state->stage == MESA_SHADER_FRAGMENT && state->fs_early_fragment_tests)
+		str.asprintf_append("layout(early_fragment_tests) in;\n");
+
 	if (state->stage == MESA_SHADER_COMPUTE && state->cs_input_local_size_specified) {
 		str.asprintf_append("layout(local_size_x=%u", state->cs_input_local_size[0]);
 		if (state->cs_input_local_size[1] != 1)
@@ -399,7 +404,7 @@ static void print_type_post(string_buffer& buffer, const glsl_type *t, bool arra
 
 void ir_print_glsl_visitor::visit(ir_variable *ir)
 {
-	if (ir->data.mode == ir_var_uniform && ir->is_in_buffer_block()) {
+	if ((ir->data.mode == ir_var_uniform || ir->data.mode == ir_var_shader_storage) && ir->is_in_buffer_block()) {
 		const glsl_type* type = ir->get_interface_type();
 		if (!globals->uniform_blocks.insert(type).second) { skipped_this_ir = true; return; }
 		// Use the enum explicitly; its order is not part of the printer contract.
@@ -412,7 +417,7 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 		}
 		buffer.asprintf_append("layout(%s, %s", layout, type->get_interface_row_major() ? "row_major" : "column_major");
 		if (ir->data.explicit_binding) buffer.asprintf_append(", binding=%d", ir->data.binding);
-		buffer.asprintf_append(") uniform %s {\n", type->name);
+		buffer.asprintf_append(") %s %s {\n", ir->data.mode == ir_var_shader_storage ? "buffer" : "uniform", type->name);
 		for (unsigned i = 0; i < type->length; ++i) {
 			const auto& f = type->fields.structure[i];
 			buffer.asprintf_append("  ");
@@ -423,12 +428,20 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 				if (f.offset >= 0) buffer.asprintf_append("%soffset=%d", f.matrix_layout != GLSL_MATRIX_LAYOUT_INHERITED ? ", " : "", f.offset);
 				buffer.asprintf_append(") ");
 			}
+			if (f.memory_read_only) buffer.asprintf_append("readonly ");
+			if (f.memory_write_only) buffer.asprintf_append("writeonly ");
+			if (f.memory_coherent) buffer.asprintf_append("coherent ");
+			if (f.memory_volatile) buffer.asprintf_append("volatile ");
+			if (f.memory_restrict) buffer.asprintf_append("restrict ");
 			const glsl_type* base = f.type->without_array();
 			if (use_precision && (base->is_float() || base->is_integer_32()))
 				buffer.asprintf_append("%s", get_precision_string(f.precision ? f.precision : GLSL_PRECISION_HIGH));
 			print_type(buffer, base, false);
 			buffer.asprintf_append(" %s", f.name);
-			for (auto t = f.type; t->is_array(); t = t->fields.array) buffer.asprintf_append("[%u]", t->length);
+			for (auto t = f.type; t->is_array(); t = t->fields.array) {
+				if (t->length) buffer.asprintf_append("[%u]", t->length);
+				else buffer.asprintf_append("[]");
+			}
 			buffer.asprintf_append(";\n");
 		}
 		buffer.asprintf_append("}");
@@ -457,7 +470,7 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 	if (this->state->language_version >= 300 && ir->data.explicit_location && strncmp(ir->name, "gl_", 3) != 0)
 	{
 		const int binding_base = (this->state->stage == MESA_SHADER_VERTEX ? (int)VERT_ATTRIB_GENERIC0 : (int)FRAG_RESULT_DATA0);
-		const int location = ir->data.location - binding_base;
+		const int location = ir->data.location - (ir->data.mode == ir_var_uniform ? 0 : binding_base);
 		buffer.asprintf_append ("layout(location=%d) ", location);
 	}
 	
@@ -651,7 +664,11 @@ void ir_print_glsl_visitor::visit(ir_expression *ir)
 	newline_indent();
 	
 	ir_expression* lower = ir->operation == ir_binop_min ? ir->operands[0]->as_expression() : nullptr;
-	if (lower && lower->operation == ir_binop_max) {
+	if (ir->operation == ir_unop_ssbo_unsized_array_length) {
+		ir->operands[0]->accept(this);
+		buffer.asprintf_append(".length()");
+	}
+	else if (lower && lower->operation == ir_binop_max) {
 		buffer.asprintf_append("clamp ("); lower->operands[0]->accept(this);
 		buffer.asprintf_append(", "); lower->operands[1]->accept(this);
 		buffer.asprintf_append(", "); ir->operands[1]->accept(this);

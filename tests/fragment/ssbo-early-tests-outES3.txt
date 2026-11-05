@@ -1,0 +1,14 @@
+#version 310 es
+layout(early_fragment_tests) in;
+layout(std430, column_major) buffer Data {
+  highp uint value;
+} data;
+void main ()
+{
+  data.value = 1u;
+}
+
+
+// stats: 1 alu 0 tex 0 flow
+// buffer #0: Data storage instance data layout std430 (size: 4)
+//  member #0: uint value offset 0

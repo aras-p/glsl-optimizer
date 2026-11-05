@@ -1,0 +1,46 @@
+#version 310 es
+layout(local_size_x=64) in;
+struct particle {
+  highp vec4 pos;
+  highp vec4 vel;
+};
+layout(std430, column_major, binding=0) buffer cs_ssbo {
+  layout(column_major) particle prt[];
+};
+void main ()
+{
+  highp uint tmpvar_1;
+  tmpvar_1 = (305419896u + gl_GlobalInvocationID.x);
+  tmpvar_1 = (tmpvar_1 ^ (tmpvar_1 << 13));
+  tmpvar_1 = (tmpvar_1 ^ (tmpvar_1 >> 17));
+  tmpvar_1 = (tmpvar_1 ^ (tmpvar_1 << 5));
+  highp uint tmpvar_2;
+  tmpvar_2 = (tmpvar_1 ^ (tmpvar_1 << 13));
+  tmpvar_2 = (tmpvar_2 ^ (tmpvar_2 >> 17));
+  tmpvar_2 = (tmpvar_2 ^ (tmpvar_2 << 5));
+  highp uint tmpvar_3;
+  tmpvar_3 = (tmpvar_2 ^ (tmpvar_2 << 13));
+  tmpvar_3 = (tmpvar_3 ^ (tmpvar_3 >> 17));
+  tmpvar_3 = (tmpvar_3 ^ (tmpvar_3 << 5));
+  prt[gl_GlobalInvocationID.x].pos = vec4(0.0, 0.0, 0.0, 0.0);
+  highp vec4 tmpvar_4;
+  tmpvar_4.w = 0.0;
+  tmpvar_4.x = ((float(
+    (tmpvar_1 & 32767u)
+  ) / 32767.0) - 0.5);
+  tmpvar_4.y = (((
+    float((tmpvar_2 & 32767u))
+   / 32767.0) * 0.5) + 2.0);
+  tmpvar_4.z = ((float(
+    (tmpvar_3 & 32767u)
+  ) / 32767.0) - 0.5);
+  prt[gl_GlobalInvocationID.x].vel = tmpvar_4;
+}
+
+
+// stats: 34 alu 0 tex 0 flow
+// buffer #0: cs_ssbo storage layout std430 binding 0 (size: unknown)
+//  member #0: particle[] prt offset 0 array runtime stride 32
+//  member #1: particle [] parent 0 offset 0
+//  member #2: vec4 pos parent 1 offset 0
+//  member #3: vec4 vel parent 1 offset 16

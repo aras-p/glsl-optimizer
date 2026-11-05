@@ -1,0 +1,25 @@
+#version 310 es
+precision highp float;
+precision highp int;
+struct Pair { float x; float y; };
+layout(std430, binding=2, row_major) readonly buffer Input {
+    Pair pairs[2];
+    mat2 matrices[2];
+    layout(column_major) mat2x3 transform;
+    vec3 direction;
+    float weight;
+} source;
+layout(std140, binding=4) writeonly buffer Output {
+    float values[2];
+    vec4 result;
+};
+uniform int index;
+out vec4 color;
+void main()
+{
+    Pair pair = source.pairs[index];
+    vec2 v = source.matrices[index] * vec2(pair.x, pair.y);
+    values[index] = v.x;
+    result = vec4(source.transform * v + source.direction, source.weight);
+    color = vec4(v, pair.x, pair.y);
+}

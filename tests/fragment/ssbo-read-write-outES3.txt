@@ -1,0 +1,50 @@
+#version 310 es
+struct Entry {
+  highp vec3 color;
+  highp float weight;
+};
+layout(std140, column_major, binding=1) uniform Params {
+  highp vec4 tint;
+} params;
+layout(std430, column_major, binding=3) buffer Data {
+  highp uint index;
+  highp float values[3];
+  layout(column_major) Entry entries[2];
+  highp vec2 pairs[2];
+  highp uint unused;
+} data;
+out highp vec4 color;
+void main ()
+{
+  highp uint tmpvar_1;
+  tmpvar_1 = (data.index & 1u);
+  highp float tmpvar_2;
+  tmpvar_2 = data.values[tmpvar_1];
+  data.values[tmpvar_1] = (tmpvar_2 + 1.0);
+  data.entries[tmpvar_1].color = params.tint.xyz;
+  data.entries[tmpvar_1].weight = tmpvar_2;
+  highp vec2 tmpvar_3;
+  tmpvar_3.x = tmpvar_2;
+  tmpvar_3.y = data.values[tmpvar_1];
+  data.pairs[tmpvar_1] = tmpvar_3;
+  highp vec4 tmpvar_4;
+  tmpvar_4.xyz = (data.entries[tmpvar_1].color * data.entries[tmpvar_1].weight);
+  tmpvar_4.w = data.values[tmpvar_1];
+  color = tmpvar_4;
+}
+
+
+// stats: 3 alu 0 tex 0 flow
+// buffer #0: Data storage instance data layout std430 binding 3 (size: 80)
+//  member #0: uint index offset 0
+//  member #1: float[3] values offset 4 array 3 stride 4
+//  member #2: float [] parent 1 offset 4
+//  member #3: Entry[2] entries offset 16 array 2 stride 16
+//  member #4: Entry [] parent 3 offset 16
+//  member #5: vec3 color parent 4 offset 16
+//  member #6: float weight parent 4 offset 28
+//  member #7: vec2[2] pairs offset 48 array 2 stride 8
+//  member #8: vec2 [] parent 7 offset 48
+//  member #9: uint unused offset 64 (unused)
+// buffer #1: Params instance params layout std140 binding 1 (size: 16)
+//  member #0: vec4 tint offset 0
