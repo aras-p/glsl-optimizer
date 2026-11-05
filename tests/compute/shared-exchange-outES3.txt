@@ -19,6 +19,7 @@ void main ()
   tmpvar_2.value = tmpvar_1;
   tmpvar_2.weight = 2.0;
   entries[gl_LocalInvocationIndex] = tmpvar_2;
+  memoryBarrierShared ();
   barrier();
   highp uint tmpvar_3;
   tmpvar_3 = ((gl_LocalInvocationIndex + 1u) % 8u);

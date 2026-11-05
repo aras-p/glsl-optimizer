@@ -13,6 +13,7 @@ void main()
 {
     uint i = gl_LocalInvocationIndex;
     fill(i);
+    memoryBarrierShared();
     barrier();
     uint other = (i + 1u) % 8u;
     outputData.values[gl_GlobalInvocationID.x] = vec4(entries[other].value,

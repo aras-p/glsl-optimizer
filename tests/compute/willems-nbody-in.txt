@@ -1,0 +1,91 @@
+#version 450
+// Adapted from https://github.com/SaschaWillems/Vulkan/blob/master/shaders/glsl/computenbody/particle_calculate.comp
+// License of original file: MIT, Copyright (c) 2016 Sascha Willems.
+// Changes done: replaced the Vulkan specialization constant with a fixed tile
+// size matching the workgroup, and kept partial workgroups participating in
+// the barriers by guarding particle accesses instead of returning early.
+/*
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2016 Sascha Willems
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+#define WORKGROUP_SIZE 256
+layout(local_size_x = WORKGROUP_SIZE) in;
+
+struct Particle {
+    vec4 pos;
+    vec4 vel;
+};
+
+layout(std140, binding = 0) buffer Pos {
+    Particle particles[];
+};
+
+layout(std140, binding = 1) uniform UBO {
+    float deltaT;
+    int particleCount;
+    float gravity;
+    float power;
+    float soften;
+} ubo;
+
+shared vec4 sharedData[WORKGROUP_SIZE];
+
+void main()
+{
+    uint index = gl_GlobalInvocationID.x;
+    uint count = uint(ubo.particleCount);
+    bool valid = index < count;
+    vec4 position = vec4(0.0);
+    if (valid)
+        position = particles[index].pos;
+
+    vec3 acceleration = vec3(0.0);
+    for (uint i = 0u; i < count; i += uint(WORKGROUP_SIZE)) {
+        uint source = i + gl_LocalInvocationID.x;
+        if (source < count)
+            sharedData[gl_LocalInvocationID.x] = particles[source].pos;
+        else
+            sharedData[gl_LocalInvocationID.x] = vec4(0.0);
+
+        memoryBarrierShared();
+        barrier();
+
+        if (valid) {
+            for (uint j = 0u; j < uint(WORKGROUP_SIZE); ++j) {
+                vec4 other = sharedData[j];
+                vec3 len = other.xyz - position.xyz;
+                acceleration += ubo.gravity * len * other.w / pow(dot(len, len) + ubo.soften, ubo.power);
+            }
+        }
+
+        memoryBarrierShared();
+        barrier();
+    }
+
+    if (valid) {
+        particles[index].vel.xyz += ubo.deltaT * acceleration;
+        particles[index].vel.w += 0.1 * ubo.deltaT;
+        if (particles[index].vel.w > 1.0)
+            particles[index].vel.w -= 1.0;
+    }
+}

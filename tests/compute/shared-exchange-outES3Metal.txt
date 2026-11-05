@@ -1,6 +1,9 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
+#if __METAL_VERSION__ < 320
+#error Memory barriers require Metal 3.2 or newer
+#endif
 struct Entry {
   float2 value;
   float weight;
@@ -25,6 +28,7 @@ threadgroup Entry entries_2[8];
   tmpvar_4.value = tmpvar_3;
   tmpvar_4.weight = 2.0;
   entries_2[gl_LocalInvocationIndex] = tmpvar_4;
+  atomic_thread_fence(mem_flags::mem_threadgroup, memory_order_seq_cst, thread_scope_threadgroup);
   threadgroup_barrier(mem_flags::mem_threadgroup);
   uint tmpvar_5;
   tmpvar_5 = ((gl_LocalInvocationIndex + 1) % 8);
