@@ -101,6 +101,19 @@ struct glslopt_buffer_desc {
 	int arraySize; // 1 for non-array blocks; size is per array element
 	int size; // allocation size rounded to block alignment; -1 for unknown/runtime-sized storage
 	int metalBufferIndex; // -1 for GLSL targets
+	// Metal binding slot for a uint32_t byte-size table; -1 if this buffer does not
+	// need it. All buffers needing .length() in the same shader share one table
+	// and report the same table binding slot here.
+	// Table entry [metalBufferIndex + i] gives the whole bound byte range of block
+	// array element i, starting at its bound offset and including any header before
+	// the runtime array. Supply byte sizes, not element counts. Unused entries may
+	// be zero; include entries through the highest data-buffer slot needing a size.
+	// Example: data buffers at slots 1 and 3, with metalSizeBufferIndex == 4:
+	//   uint32_t sizes[] = {0, bytesForBuffer1, 0, bytesForBuffer3};
+	//   [encoder setFragmentBytes:sizes length:sizeof(sizes) atIndex:4];
+	// Bind the table for the shader's stage (setVertexBytes for a vertex shader).
+	// The shader computes .length() as max(bufferBytes - arrayOffset, 0) / stride.
+	int metalSizeBufferIndex;
 };
 // Buffer members form a tree in declaration order; parentIndex=-1 is for block fields.
 // Array nodes have one child describing element zero, with name "[]".

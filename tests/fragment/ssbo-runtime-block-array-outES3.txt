@@ -1,0 +1,30 @@
+#version 310 es
+layout(std430, column_major) buffer Output {
+  writeonly highp float results[];
+};
+layout(std430, column_major) buffer Source {
+  readonly highp float values[][3];
+} sources[2];
+uniform highp int index;
+out highp vec4 color;
+void main ()
+{
+  results[index] = (sources[0].values[index][2] + sources[1].values[index][1]);
+  highp vec4 tmpvar_1;
+  tmpvar_1.zw = vec2(3.0, 1.0);
+  tmpvar_1.x = float(sources[0].values.length());
+  tmpvar_1.y = float(sources[1].values.length());
+  color = tmpvar_1;
+}
+
+
+// stats: 6 alu 0 tex 0 flow
+// uniforms: 1 (total size: 0)
+//  #0: index (high int) 1x1 [-1]
+// buffer #0: Output storage layout std430 (size: unknown)
+//  member #0: float[] results offset 0 array runtime stride 4 writeonly
+//  member #1: float [] parent 0 offset 0 writeonly
+// buffer #1: Source storage instance sources layout std430 array 2 (size: unknown)
+//  member #0: float[3][] values offset 0 array runtime stride 12 readonly
+//  member #1: float[3] [] parent 0 offset 0 array 3 stride 4 readonly
+//  member #2: float [] parent 1 offset 0 readonly

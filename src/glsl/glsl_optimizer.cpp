@@ -447,8 +447,9 @@ static void reflect_buffer_member(glslopt_shader* shader, glslopt_buffer& buffer
 
 static void find_shader_buffers(glslopt_shader* shader, exec_list* ir, bool metal)
 {
-	auto blocks = collect_buffer_blocks(ir);
+	auto blocks = collect_buffer_blocks(ir, metal);
 	if (blocks.empty()) return;
+	unsigned sizeTableIndex = metal ? buffer_size_table_index(blocks) : 0;
 	buffer_usage_visitor usage(blocks, ir);
 	visit_list_elements(&usage, ir);
 	for (unsigned root : usage.roots) usage.propagate(root);
@@ -465,7 +466,8 @@ static void find_shader_buffers(glslopt_shader* shader, exec_list* ir, bool meta
 			b.variable->data.mode == ir_var_shader_storage ? kGlslBufferStorage : kGlslBufferUniform, layout == GLSL_INTERFACE_PACKING_STD430 ? kGlslLayoutStd430 : layout == GLSL_INTERFACE_PACKING_STD140 ? kGlslLayoutStd140 :
 			layout == GLSL_INTERFACE_PACKING_PACKED ? kGlslLayoutPacked : kGlslLayoutShared,
 			b.variable->data.explicit_binding ? b.variable->data.binding : -1,
-			(int)b.array_size, known && !runtime ? (int)buffer_block_size(b.type, std430) : -1, metal ? (int)b.metal_index : -1};
+			(int)b.array_size, known && !runtime ? (int)buffer_block_size(b.type, std430) : -1, metal ? (int)b.metal_index : -1,
+			metal && b.needs_size ? (int)sizeTableIndex : -1};
 		unsigned cursor = 0;
 		bool row = b.type->get_interface_row_major();
 		for (unsigned i = 0; i < b.type->length; ++i) {
@@ -543,7 +545,6 @@ public:
 	explicit storage_validation(bool metal) : metal(metal) {}
 	void check_type(const glsl_type* type) {
 		if (type->is_array()) {
-			if (!type->length) error = "Metal runtime-sized storage arrays are not supported.";
 			check_type(type->fields.array);
 		} else if (type->is_struct() || type->is_interface()) {
 			for (unsigned i = 0; i < type->length; ++i) {
@@ -642,7 +643,12 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 	}
 
 	if (ctx->target == kGlslTargetMetal) {
-		for (const auto& block : collect_buffer_blocks(ir)) {
+		auto blocks = collect_buffer_blocks(ir, true);
+		if (buffer_size_table_index(blocks) > 30) {
+			result->infoLog = "Metal buffer size table exceeds the available buffer slots (1 through 30).";
+			return result;
+		}
+		for (const auto& block : blocks) {
 			if (block.variable->data.mode == ir_var_shader_storage) {
 				storageValidation.check_type(block.type);
 			}

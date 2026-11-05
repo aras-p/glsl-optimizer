@@ -1,0 +1,30 @@
+#version 310 es
+struct Entry {
+  highp vec3 color;
+  highp float weight;
+  highp vec2 pairs[2];
+};
+layout(std140, column_major) buffer Data {
+  highp int index;
+  layout(column_major) Entry entries[];
+};
+out highp vec4 color;
+void main ()
+{
+  entries[index].weight = entries[index].pairs[1].x;
+  highp vec4 tmpvar_1;
+  tmpvar_1.xyz = (entries[index].color * entries[index].weight);
+  tmpvar_1.w = float(entries.length());
+  color = tmpvar_1;
+}
+
+
+// stats: 3 alu 0 tex 0 flow
+// buffer #0: Data storage layout std140 (size: unknown)
+//  member #0: int index offset 0
+//  member #1: Entry[] entries offset 16 array runtime stride 48
+//  member #2: Entry [] parent 1 offset 16
+//  member #3: vec3 color parent 2 offset 16
+//  member #4: float weight parent 2 offset 28
+//  member #5: vec2[2] pairs parent 2 offset 32 array 2 stride 16
+//  member #6: vec2 [] parent 5 offset 32

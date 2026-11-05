@@ -1,0 +1,13 @@
+#version 310 es
+precision highp float;
+precision highp int;
+layout(std140, row_major) readonly buffer Input {
+    float bias;
+    mat2x3 matrices[];
+} source;
+uniform int index;
+out vec4 color;
+void main()
+{
+    color = vec4(source.matrices[index] * vec2(1.0, 2.0) + vec3(source.bias), float(source.matrices.length()));
+}

@@ -144,7 +144,11 @@ struct metal_print_context
 	string_buffer typedeclStr;
 	string_buffer blockAliases;
 	enum storage_kind { uniform_std140, storage_std140, storage_std430, storage_kind_count };
-	struct block_reference { unsigned index; bool array; unsigned storage; bool row_major; };
+	struct runtime_field { const char* storage; unsigned offset; unsigned stride; };
+	struct block_reference {
+		unsigned index; bool array; unsigned storage; bool row_major;
+		const runtime_field* fields; unsigned member_index; const char* address;
+	};
 	std::unordered_map<const ir_variable*, block_reference> blockNames;
 	std::unordered_map<const glsl_type*, unsigned> uniformStorageTypes[storage_kind_count][2];
 	std::vector<const char*> uniformStorageNames;
@@ -192,7 +196,8 @@ public:
 	void print_var_name (ir_variable* v);
 	void print_array_initializer(ir_constant* value, unsigned precision);
 	bool print_uniform_read(ir_rvalue* value);
-	void print_uniform_storage(ir_rvalue* value);
+	void print_uniform_storage(ir_rvalue* value, const metal_print_context::block_reference& block);
+	void print_buffer_size_index(ir_rvalue* value);
 
 	virtual void visit(ir_variable *);
 	virtual void visit(ir_function_signature *);
@@ -664,6 +669,10 @@ static const char* uniform_storage_type(metal_print_context& ctx, const glsl_typ
       const char* storage = uniform_storage_type(ctx, element, row, kind);
       unsigned align = MAX2(std430 ? 1 : 16, buffer_alignment(element, row, std430));
       out.asprintf_append("struct alignas(%u) %s_element { %s value; };\n", align, name, storage);
+      if (!type->length) {
+         out.asprintf_append("static_assert(sizeof(%s_element) == %u, \"array stride\");\n", name, buffer_array_stride(element, row, std430));
+         return name;
+      }
       out.asprintf_append("struct %s { %s_element elements[%u]; };\n", name, name, type->length);
    } else if (type->is_matrix()) {
       unsigned width = row ? type->matrix_columns : type->vector_elements;
@@ -712,7 +721,7 @@ static const char* uniform_storage_type(metal_print_context& ctx, const glsl_typ
 
 static void prepare_buffer_blocks(metal_print_context& ctx, exec_list* ir)
 {
-   auto blocks = collect_buffer_blocks(ir);
+   auto blocks = collect_buffer_blocks(ir, true);
    for (unsigned i = 0; i < blocks.size(); ++i) {
       const auto& b = blocks[i];
       unsigned kind = b.variable->data.mode == ir_var_shader_storage ?
@@ -720,7 +729,25 @@ static void prepare_buffer_blocks(metal_print_context& ctx, exec_list* ir)
       bool readOnly = true;
       for (unsigned f = 0; f < b.type->length; ++f) readOnly &= b.type->fields.structure[f].memory_read_only;
       const char* address = kind ? (readOnly ? "const device" : "device") : "constant";
-      const char* storage = uniform_storage_type(ctx, b.type, b.type->get_interface_row_major(), kind);
+      bool runtime = buffer_has_runtime_array(b.type);
+      bool row = b.type->get_interface_row_major();
+      metal_print_context::runtime_field* fields = nullptr;
+      const char* storage = "uchar";
+      if (runtime) {
+         fields = ralloc_array(ctx.mem_ctx, metal_print_context::runtime_field, b.type->length);
+         unsigned cursor = 0;
+         bool std430 = kind == metal_print_context::storage_std430;
+         for (unsigned f = 0; f < b.type->length; ++f) {
+            const auto& field = b.type->fields.structure[f];
+            bool fieldRow = buffer_field_row_major(field, row);
+            cursor = buffer_field_offset(b.type, f, cursor, row, std430);
+            fields[f] = {uniform_storage_type(ctx, field.type, fieldRow, kind), cursor,
+               field.type->is_unsized_array() ? buffer_array_stride(field.type->fields.array, fieldRow, std430) : 0};
+            cursor += buffer_size(field.type, fieldRow, std430);
+         }
+      } else {
+         storage = uniform_storage_type(ctx, b.type, row, kind);
+      }
       bool array = b.variable->is_interface_instance() && b.variable->type->is_array();
       if (array) {
          ctx.blockAliases.asprintf_append("  %s %s* _mtl_b%u", address, storage, i);
@@ -729,29 +756,40 @@ static void prepare_buffer_blocks(metal_print_context& ctx, exec_list* ir)
       }
       for (unsigned element = 0; element < b.array_size; ++element) {
          unsigned slot = b.metal_index + element;
-         ctx.paramsStr.asprintf_append("\n  , %s %s& _mtl_buffer%u [[buffer(%u)]]", address, storage, slot, slot);
-         if (array) ctx.blockAliases.asprintf_append("%s&_mtl_buffer%u", element ? ", " : "", slot);
+         ctx.paramsStr.asprintf_append("\n  , %s %s%s _mtl_buffer%u [[buffer(%u)]]", address, storage, runtime ? "*" : "&", slot, slot);
+         if (array) ctx.blockAliases.asprintf_append("%s%s_mtl_buffer%u", element ? ", " : "", runtime ? "" : "&", slot);
       }
       if (array) ctx.blockAliases.asprintf_append("};\n");
-      bool row = b.type->get_interface_row_major();
+      if (array && b.needs_size) {
+         ctx.blockAliases.asprintf_append("  const uint _mtl_bs%u", i);
+         print_type_post(ctx.blockAliases, b.variable->type, false);
+         ctx.blockAliases.asprintf_append(" = {");
+         for (unsigned element = 0; element < b.array_size; ++element)
+            ctx.blockAliases.asprintf_append("%s%uu", element ? ", " : "", b.metal_index + element);
+         ctx.blockAliases.asprintf_append("};\n");
+      }
       string_to_uint_map memberRows;
       if (!b.variable->is_interface_instance()) {
          for (unsigned f = 0; f < b.type->length; ++f)
-            memberRows.put(buffer_field_row_major(b.type->fields.structure[f], row), b.type->fields.structure[f].name);
+            memberRows.put(f, b.type->fields.structure[f].name);
       }
       foreach_in_list(ir_instruction, instruction, ir) {
          auto v = instruction->as_variable();
          if (v && (v->data.mode == ir_var_uniform || v->data.mode == ir_var_shader_storage) && v->get_interface_type() == b.type) {
-            unsigned memberRow = row;
+            bool memberRow = row;
+            unsigned member = 0;
             if (!v->is_interface_instance()) {
-               bool found = memberRows.get(memberRow, v->name);
+               bool found = memberRows.get(member, v->name);
                assert(found);
                if (!found) continue;
+               memberRow = buffer_field_row_major(b.type->fields.structure[member], row);
             }
-            ctx.blockNames[v] = {array ? i : b.metal_index, array, kind, memberRow != 0};
+            ctx.blockNames[v] = {array ? i : b.metal_index, array, kind, memberRow, fields, member, address};
          }
       }
    }
+   unsigned sizes = buffer_size_table_index(blocks);
+   if (sizes) ctx.paramsStr.asprintf_append("\n  , constant uint* _mtl_buffer_sizes [[buffer(%u)]]", sizes);
 }
 
 static void get_metal_type_size(const glsl_type* type, unsigned prec, int& size, int& alignment)
@@ -1187,6 +1225,18 @@ void ir_print_metal_visitor::visit(ir_expression *ir)
 {
 	++this->expression_depth;
 	newline_indent();
+
+	if (ir->operation == ir_unop_ssbo_unsized_array_length) {
+		auto* value = ir->operands[0];
+		const auto& block = ctx.blockNames.at(value->variable_referenced());
+		auto* record = value->as_dereference_record();
+		const auto& field = block.fields[record ? record->field_idx : block.member_index];
+		buffer.asprintf_append("int((max(_mtl_buffer_sizes[");
+		print_buffer_size_index(record ? record->record : value);
+		buffer.asprintf_append("], %uu) - %uu) / %uu)", field.offset, field.offset, field.stride);
+		--this->expression_depth;
+		return;
+	}
 
 	unsigned arg_prec = GLSL_PRECISION_NONE;
 	if (ir->operands[0])
@@ -1624,27 +1674,54 @@ static bool uniform_read_row_major(ir_rvalue* value, bool rootRow)
    return uniform_read_row_major(value->as_dereference_array()->array, rootRow);
 }
 
-void ir_print_metal_visitor::print_uniform_storage(ir_rvalue* value)
+void ir_print_metal_visitor::print_buffer_size_index(ir_rvalue* value)
 {
    if (auto var = value->as_dereference_variable()) {
       const auto& block = ctx.blockNames.at(var->var);
+      buffer.asprintf_append(block.array ? "_mtl_bs%u" : "%uu", block.index);
+   } else {
+      auto array = value->as_dereference_array();
+      print_buffer_size_index(array->array);
+      buffer.asprintf_append("[");
+      array->array_index->accept(this);
+      buffer.asprintf_append("]");
+   }
+}
+
+void ir_print_metal_visitor::print_uniform_storage(ir_rvalue* value, const metal_print_context::block_reference& block)
+{
+   auto var = value->as_dereference_variable();
+   auto record = value->as_dereference_record();
+   if (block.fields && ((var && !var->var->is_interface_instance()) ||
+       (record && record->record->type->is_interface()))) {
+      const auto& field = block.fields[record ? record->field_idx : block.member_index];
+      bool runtime = value->type->is_unsized_array();
+      buffer.asprintf_append(runtime ? "reinterpret_cast<%s %s_element*>(" : "(*reinterpret_cast<%s %s*>(", block.address, field.storage);
+      if (record) print_uniform_storage(record->record, block);
+      else buffer.asprintf_append("_mtl_buffer%u", block.index);
+      buffer.asprintf_append(" + %u)", field.offset);
+      if (!runtime) buffer.asprintf_append(")");
+      return;
+   }
+   if (auto var = value->as_dereference_variable()) {
       buffer.asprintf_append(block.array ? "_mtl_b%u" : "_mtl_buffer%u", block.index);
       if (!var->var->is_interface_instance()) buffer.asprintf_append(".%s", var->var->name);
    } else if (auto record = value->as_dereference_record()) {
-      print_uniform_storage(record->record);
+      print_uniform_storage(record->record, block);
       buffer.asprintf_append(".%s", record->record->type->fields.structure[record->field_idx].name);
    } else {
       auto array = value->as_dereference_array();
       bool blockArray = array->array->type->without_array()->is_interface();
-      if (blockArray && array->type->is_interface()) buffer.asprintf_append("(*");
-      print_uniform_storage(array->array);
-      buffer.asprintf_append(blockArray || array->array->type->is_vector() ? "[" : ".elements[");
+      bool dereferenceBlock = blockArray && array->type->is_interface() && !block.fields;
+      if (dereferenceBlock) buffer.asprintf_append("(*");
+      print_uniform_storage(array->array, block);
+      buffer.asprintf_append(blockArray || array->array->type->is_vector() || array->array->type->is_unsized_array() ? "[" : ".elements[");
       bool savedLhs = inside_lhs;
       inside_lhs = false;
       array->array_index->accept(this);
       inside_lhs = savedLhs;
       buffer.asprintf_append("]");
-      if (blockArray && array->type->is_interface()) buffer.asprintf_append(")");
+      if (dereferenceBlock) buffer.asprintf_append(")");
       if (!blockArray && array->array->type->is_array()) buffer.asprintf_append(".value");
    }
 }
@@ -1653,9 +1730,10 @@ bool ir_print_metal_visitor::print_uniform_read(ir_rvalue* value)
 {
    if (ctx.blockNames.empty()) return false;
    auto var = value->variable_referenced();
-   if (!var || !ctx.blockNames.count(var)) return false;
-   if (inside_lhs) { print_uniform_storage(value); return true; }
-   const auto& block = ctx.blockNames.at(var);
+   auto found = ctx.blockNames.find(var);
+   if (found == ctx.blockNames.end()) return false;
+   const auto& block = found->second;
+   if (inside_lhs) { print_uniform_storage(value, block); return true; }
    unsigned kind = block.storage;
    bool row = uniform_read_row_major(value, block.row_major);
    if (auto array = value->as_dereference_array()) {
@@ -1666,13 +1744,13 @@ bool ir_print_metal_visitor::print_uniform_read(ir_rvalue* value)
          if (row) {
             for (unsigned r = 0; r < value->type->vector_elements; ++r) {
                if (r) buffer.asprintf_append(", ");
-               print_uniform_storage(array->array);
+               print_uniform_storage(array->array, block);
                buffer.asprintf_append(".vectors[%u][", r);
                array->array_index->accept(this);
                buffer.asprintf_append("]");
             }
          } else {
-            print_uniform_storage(array->array);
+            print_uniform_storage(array->array, block);
             buffer.asprintf_append(".vectors[");
             array->array_index->accept(this);
             buffer.asprintf_append("].%.*s", value->type->vector_elements, "xyzw");
@@ -1685,7 +1763,7 @@ bool ir_print_metal_visitor::print_uniform_read(ir_rvalue* value)
          if (column->array->type->is_matrix()) {
             print_type_precision(buffer, value->type, value->get_precision(), false);
             buffer.asprintf_append("(");
-            print_uniform_storage(column->array);
+            print_uniform_storage(column->array, block);
             buffer.asprintf_append(".vectors[");
             (row ? array->array_index : column->array_index)->accept(this);
             buffer.asprintf_append("][");
@@ -1695,7 +1773,7 @@ bool ir_print_metal_visitor::print_uniform_read(ir_rvalue* value)
          }
       }
    }
-   print_uniform_value(ctx, buffer, value->type, row, value->get_precision(), kind, [&]() { print_uniform_storage(value); });
+   print_uniform_value(ctx, buffer, value->type, row, value->get_precision(), kind, [&]() { print_uniform_storage(value, block); });
    return true;
 }
 

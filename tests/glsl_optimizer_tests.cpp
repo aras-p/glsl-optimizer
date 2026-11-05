@@ -566,6 +566,7 @@ static bool TestFile (glslopt_ctx* ctx, glslopt_shader_type type,
 			if (b->arraySize > 1) appendField("array", b->arraySize);
 			textOpt += " (size: " + (b->size >= 0 ? std::to_string(b->size) : "unknown") + ")";
 			if (b->metalBufferIndex >= 0) appendField("metal", b->metalBufferIndex);
+			if (b->metalSizeBufferIndex >= 0) appendField("metal-size-buffer", b->metalSizeBufferIndex);
 			textOpt += "\n";
 			for (int j = 0; j < glslopt_shader_get_buffer_member_count(shader, i); ++j) {
 				const auto* m = glslopt_shader_get_buffer_member_desc(shader, i, j);

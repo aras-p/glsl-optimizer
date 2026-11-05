@@ -1,0 +1,59 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct Entry {
+  float3 color;
+  float weight;
+  float2 pairs[2];
+};
+struct alignas(16) _xlat_ubo_storage2_element { float2 value; };
+struct _xlat_ubo_storage2 { _xlat_ubo_storage2_element elements[2]; };
+static_assert(sizeof(_xlat_ubo_storage2) == 32, "std140 size");
+struct alignas(16) _xlat_ubo_storage1 {
+  alignas(16) packed_float3 color;
+  alignas(4) float weight;
+  alignas(16) _xlat_ubo_storage2 pairs;
+};
+static_assert(sizeof(_xlat_ubo_storage1) == 48, "std140 size");
+inline __attribute__((always_inline)) Entry _xlat_ubo_storage1_read(const device _xlat_ubo_storage1& storage)
+{
+  Entry value;
+  value.color = float3(storage.color);
+  value.weight = float(storage.weight);
+  for (uint _ubo_i0 = 0; _ubo_i0 < 2; ++_ubo_i0) {
+    value.pairs[_ubo_i0] = float2(storage.pairs.elements[_ubo_i0].value);
+  }
+  return value;
+}
+struct alignas(16) _xlat_ubo_storage0_element { _xlat_ubo_storage1 value; };
+static_assert(sizeof(_xlat_ubo_storage0_element) == 48, "array stride");
+struct xlatMtlShaderInput {
+};
+struct xlatMtlShaderOutput {
+  float4 color [[color(0)]];
+};
+struct xlatMtlShaderUniform {
+};
+fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , device uchar* _mtl_buffer1 [[buffer(1)]]
+  , constant uint* _mtl_buffer_sizes [[buffer(2)]])
+{
+  xlatMtlShaderOutput _mtl_o;
+  reinterpret_cast<device _xlat_ubo_storage0_element*>(_mtl_buffer1 + 16)[int((*reinterpret_cast<device int*>(_mtl_buffer1 + 0)))].value.weight = float(float2(reinterpret_cast<device _xlat_ubo_storage0_element*>(_mtl_buffer1 + 16)[int((*reinterpret_cast<device int*>(_mtl_buffer1 + 0)))].value.pairs.elements[1].value).x);
+  float4 tmpvar_1 = 0;
+  tmpvar_1.xyz = (float3(reinterpret_cast<device _xlat_ubo_storage0_element*>(_mtl_buffer1 + 16)[int((*reinterpret_cast<device int*>(_mtl_buffer1 + 0)))].value.color) * float(reinterpret_cast<device _xlat_ubo_storage0_element*>(_mtl_buffer1 + 16)[int((*reinterpret_cast<device int*>(_mtl_buffer1 + 0)))].value.weight));
+  tmpvar_1.w = float(int((max(_mtl_buffer_sizes[1u], 16u) - 16u) / 48u));
+  _mtl_o.color = tmpvar_1;
+  return _mtl_o;
+}
+
+
+// stats: 3 alu 0 tex 0 flow
+// buffer #0: Data storage layout std140 (size: unknown) metal 1 metal-size-buffer 2
+//  member #0: int index offset 0
+//  member #1: Entry[] entries offset 16 array runtime stride 48
+//  member #2: Entry [] parent 1 offset 16
+//  member #3: vec3 color parent 2 offset 16
+//  member #4: float weight parent 2 offset 28
+//  member #5: vec2[2] pairs parent 2 offset 32 array 2 stride 16
+//  member #6: vec2 [] parent 5 offset 32

@@ -1,0 +1,14 @@
+#version 310 es
+precision highp float;
+precision highp int;
+struct Entry { vec3 color; float weight; vec2 pairs[2]; };
+layout(std140) buffer Data {
+    int index;
+    Entry entries[];
+};
+out vec4 color;
+void main()
+{
+    entries[index].weight = entries[index].pairs[1].x;
+    color = vec4(entries[index].color * entries[index].weight, float(entries.length()));
+}

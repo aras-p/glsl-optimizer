@@ -1,0 +1,35 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct _xlat_ubo_storage1 { float4 vectors[3]; };
+static_assert(sizeof(_xlat_ubo_storage1) == 48, "std140 size");
+struct alignas(16) _xlat_ubo_storage0_element { _xlat_ubo_storage1 value; };
+static_assert(sizeof(_xlat_ubo_storage0_element) == 48, "array stride");
+struct xlatMtlShaderInput {
+};
+struct xlatMtlShaderOutput {
+  float4 color [[color(0)]];
+};
+struct xlatMtlShaderUniform {
+  int index;
+};
+fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , const device uchar* _mtl_buffer1 [[buffer(1)]]
+  , constant uint* _mtl_buffer_sizes [[buffer(2)]])
+{
+  xlatMtlShaderOutput _mtl_o;
+  float4 tmpvar_1 = 0;
+  tmpvar_1.xyz = ((transpose(float3x2(float2(reinterpret_cast<const device _xlat_ubo_storage0_element*>(_mtl_buffer1 + 16)[_mtl_u.index].value.vectors[0].xy), float2(reinterpret_cast<const device _xlat_ubo_storage0_element*>(_mtl_buffer1 + 16)[_mtl_u.index].value.vectors[1].xy), float2(reinterpret_cast<const device _xlat_ubo_storage0_element*>(_mtl_buffer1 + 16)[_mtl_u.index].value.vectors[2].xy))) * float2(1.0, 2.0)) + float3(float((*reinterpret_cast<const device float*>(_mtl_buffer1 + 0)))));
+  tmpvar_1.w = float(int((max(_mtl_buffer_sizes[1u], 16u) - 16u) / 48u));
+  _mtl_o.color = tmpvar_1;
+  return _mtl_o;
+}
+
+
+// stats: 4 alu 0 tex 0 flow
+// uniforms: 1 (total size: 4)
+//  #0: index (high int) 1x1 [-1] loc 0
+// buffer #0: Input storage instance source layout std140 (size: unknown) metal 1 metal-size-buffer 2
+//  member #0: float bias offset 0 readonly
+//  member #1: mat2x3[] matrices offset 16 array runtime stride 48 readonly
+//  member #2: mat2x3 [] parent 1 offset 16 matrix-stride 16 row-major readonly

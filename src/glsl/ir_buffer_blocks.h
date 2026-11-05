@@ -1,6 +1,8 @@
 #pragma once
 
 #include "ir.h"
+#include "ir_hierarchical_visitor.h"
+#include <unordered_set>
 #include <algorithm>
 #include <vector>
 #include <cstring>
@@ -11,9 +13,25 @@ struct buffer_block {
    ir_variable* variable;
    unsigned array_size;
    unsigned metal_index;
+   bool needs_size;
 };
 
-inline std::vector<buffer_block> collect_buffer_blocks(exec_list* ir)
+inline bool buffer_has_runtime_array(const glsl_type* block)
+{
+   return block->fields.structure[block->length - 1].type->is_unsized_array();
+}
+
+class buffer_length_visitor : public ir_hierarchical_visitor {
+public:
+   std::unordered_set<const glsl_type*> blocks;
+   ir_visitor_status visit_enter(ir_expression* expression) override {
+      if (expression->operation == ir_unop_ssbo_unsized_array_length)
+         blocks.insert(expression->operands[0]->variable_referenced()->get_interface_type());
+      return visit_continue;
+   }
+};
+
+inline std::vector<buffer_block> collect_buffer_blocks(exec_list* ir, bool find_lengths = false)
 {
    std::vector<buffer_block> blocks;
    foreach_in_list(ir_instruction, instruction, ir) {
@@ -22,12 +40,28 @@ inline std::vector<buffer_block> collect_buffer_blocks(exec_list* ir)
       const glsl_type* type = v->get_interface_type();
       auto found = std::find_if(blocks.begin(), blocks.end(), [type](const buffer_block& b) { return b.type == type; });
       if (found != blocks.end()) continue;
-      blocks.push_back({type, v, v->is_interface_instance() && v->type->is_array() ? v->type->arrays_of_arrays_size() : 1, 0});
+      blocks.push_back({type, v, v->is_interface_instance() && v->type->is_array() ? v->type->arrays_of_arrays_size() : 1, 0, false});
    }
    std::sort(blocks.begin(), blocks.end(), [](const buffer_block& a, const buffer_block& b) { return strcmp(a.type->name, b.type->name) < 0; });
    unsigned index = 1; // Slot zero is reserved for ordinary uniforms.
    for (auto& b : blocks) { b.metal_index = index; index += b.array_size; }
+   bool runtime = false;
+   if (find_lengths)
+      for (const auto& b : blocks) runtime |= buffer_has_runtime_array(b.type);
+   if (runtime) {
+      buffer_length_visitor lengths;
+      visit_list_elements(&lengths, ir);
+      for (auto& b : blocks) b.needs_size = lengths.blocks.count(b.type) != 0;
+   }
    return blocks;
+}
+
+// The size table follows all data buffers; entry N describes Metal buffer N.
+inline unsigned buffer_size_table_index(const std::vector<buffer_block>& blocks)
+{
+   for (const auto& b : blocks)
+      if (b.needs_size) return blocks.back().metal_index + blocks.back().array_size;
+   return 0;
 }
 
 // Shared/packed SSBOs use compact storage on Metal; explicit layouts are preserved.

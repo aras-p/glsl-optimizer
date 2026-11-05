@@ -1,0 +1,47 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct alignas(4) _xlat_ubo_storage0_element { float value; };
+static_assert(sizeof(_xlat_ubo_storage0_element) == 4, "array stride");
+struct alignas(4) _xlat_ubo_storage2_element { float value; };
+struct _xlat_ubo_storage2 { _xlat_ubo_storage2_element elements[3]; };
+static_assert(sizeof(_xlat_ubo_storage2) == 12, "std430 size");
+struct alignas(4) _xlat_ubo_storage1_element { _xlat_ubo_storage2 value; };
+static_assert(sizeof(_xlat_ubo_storage1_element) == 12, "array stride");
+struct xlatMtlShaderInput {
+};
+struct xlatMtlShaderOutput {
+  float4 color [[color(0)]];
+};
+struct xlatMtlShaderUniform {
+  int index;
+};
+fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , device uchar* _mtl_buffer1 [[buffer(1)]]
+  , const device uchar* _mtl_buffer2 [[buffer(2)]]
+  , const device uchar* _mtl_buffer3 [[buffer(3)]]
+  , constant uint* _mtl_buffer_sizes [[buffer(4)]])
+{
+  const device uchar* _mtl_b1[2] = {_mtl_buffer2, _mtl_buffer3};
+  const uint _mtl_bs1[2] = {2u, 3u};
+  xlatMtlShaderOutput _mtl_o;
+  reinterpret_cast<device _xlat_ubo_storage0_element*>(_mtl_buffer1 + 0)[_mtl_u.index].value = float((float(reinterpret_cast<const device _xlat_ubo_storage1_element*>(_mtl_b1[0] + 0)[_mtl_u.index].value.elements[2].value) + float(reinterpret_cast<const device _xlat_ubo_storage1_element*>(_mtl_b1[1] + 0)[_mtl_u.index].value.elements[1].value)));
+  float4 tmpvar_1 = 0;
+  tmpvar_1.zw = float2(3.0, 1.0);
+  tmpvar_1.x = float(int((max(_mtl_buffer_sizes[_mtl_bs1[0]], 0u) - 0u) / 12u));
+  tmpvar_1.y = float(int((max(_mtl_buffer_sizes[_mtl_bs1[1]], 0u) - 0u) / 12u));
+  _mtl_o.color = tmpvar_1;
+  return _mtl_o;
+}
+
+
+// stats: 6 alu 0 tex 0 flow
+// uniforms: 1 (total size: 4)
+//  #0: index (high int) 1x1 [-1] loc 0
+// buffer #0: Output storage layout std430 (size: unknown) metal 1
+//  member #0: float[] results offset 0 array runtime stride 4 writeonly
+//  member #1: float [] parent 0 offset 0 writeonly
+// buffer #1: Source storage instance sources layout std430 array 2 (size: unknown) metal 2 metal-size-buffer 4
+//  member #0: float[3][] values offset 0 array runtime stride 12 readonly
+//  member #1: float[3] [] parent 0 offset 0 array 3 stride 4 readonly
+//  member #2: float [] parent 1 offset 0 readonly

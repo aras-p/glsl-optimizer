@@ -132,8 +132,6 @@ function(check_storage_rejection declaration body diagnostic)
     check_run(1 "${diagnostic}" "${work}/fixtures")
     file(REMOVE "${input}" "${work}/fixtures/fragment/storage-reject-outES3.txt")
 endfunction()
-check_storage_rejection("layout(std430) buffer Data { float values[]; } data;"
-    "color = vec4(data.values[0]);" "Metal runtime-sized storage arrays")
 check_storage_rejection("layout(std430) coherent buffer Data { float value; } data;"
     "data.value = 1.0; color = vec4(data.value);" "Metal coherent/volatile storage buffers")
 check_storage_rejection("layout(std430) buffer Data { mat2 value; } data;"
