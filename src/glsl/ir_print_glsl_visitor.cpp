@@ -215,6 +215,8 @@ _mesa_print_ir_glsl(exec_list *instructions,
 				str.asprintf_append (" es");
 			str.asprintf_append ("\n");
 		}
+		if (state->ARB_shader_atomic_counters_enable)
+			str.asprintf_append("#extension GL_ARB_shader_atomic_counters : enable\n");
 		if (state->ARB_shader_image_load_store_enable)
 			str.asprintf_append("#extension GL_ARB_shader_image_load_store : enable\n");
 		if (state->ARB_shader_image_size_enable)
@@ -375,7 +377,7 @@ void ir_print_glsl_visitor::print_precision (ir_instruction* ir, const glsl_type
 		return;
 	if (!type) return;
 	const glsl_type* base = type->without_array();
-	if (!base->is_float() && !base->is_integer_32() && !base->is_sampler() && !base->is_image()) return;
+	if (!base->is_float() && !base->is_integer_32() && !base->is_sampler() && !base->is_image() && !base->is_atomic_uint()) return;
 	unsigned prec = GLSL_PRECISION_NONE;
 	if (ir_variable* var = ir->as_variable()) prec = var->data.precision;
 	else if (ir->ir_type == ir_type_function_signature)
@@ -504,6 +506,8 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 		return;
 	}
 
+	if (ir->data.mode == ir_var_uniform && ir->type->contains_atomic())
+		buffer.asprintf_append("layout(binding=%u, offset=%u) ", ir->data.binding, ir->data.offset);
 	if (ir->type->contains_image()) {
 		const char* format = image_format_name(ir->data.image_format);
 		if (format || ir->data.explicit_binding) {
@@ -1422,10 +1426,11 @@ ir_print_glsl_visitor::visit(ir_call *ir)
 		buffer.asprintf_append (" = ");		
 	}
 	
+   const auto* counter = find_atomic_counter(ir->callee);
    const auto* atomic = find_buffer_atomic(ir->callee);
    const auto* barrier = find_memory_barrier(ir->callee);
    const char* image = image_function_name(ir->callee);
-   buffer.asprintf_append ("%s (", atomic ? atomic->glsl : barrier ? barrier->glsl : image ? image : ir->callee_name());
+   buffer.asprintf_append ("%s (", counter ? counter->glsl : atomic ? atomic->glsl : barrier ? barrier->glsl : image ? image : ir->callee_name());
    bool first = true;
    foreach_in_list(ir_instruction, inst, &ir->actual_parameters) {
 	  if (!first)

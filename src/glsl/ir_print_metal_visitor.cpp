@@ -156,6 +156,8 @@ struct metal_print_context
 		const runtime_field* fields; unsigned member_index; const char* address;
 	};
 	std::unordered_map<const ir_variable*, block_reference> blockNames;
+	std::unordered_map<const ir_variable*, unsigned> counterSlots;
+	bool countersReadOnly = false;
 	std::unordered_map<const glsl_type*, unsigned> uniformStorageTypes[storage_kind_count][2];
 	std::vector<const char*> uniformStorageNames;
 	std::unordered_map<const glsl_type*, bool> nativeBufferTypes[storage_kind_count][2];
@@ -209,6 +211,7 @@ public:
 	void print_array_initializer(ir_constant* value, unsigned precision);
 	bool print_uniform_read(ir_rvalue* value);
 	void print_uniform_storage(ir_rvalue* value, const metal_print_context::block_reference& block);
+	void print_counter_address(ir_rvalue* value);
 	void print_buffer_size_index(ir_rvalue* value);
 
 	virtual void visit(ir_variable *);
@@ -262,6 +265,7 @@ _mesa_print_ir_metal(exec_list *instructions,
 {
 	if (mode == kPrintGlslFragment) optimize_split_arrays(instructions, false, true);
 	metal_print_context ctx(buffer);
+	ctx.countersReadOnly = state->stage == MESA_SHADER_VERTEX;
 	// Keep sampled textures paired with their sampler indices; images occupy
 	// the remaining texture slots without pushing sampler indices upward.
 	foreach_in_list(ir_instruction, instruction, instructions) {
@@ -305,7 +309,7 @@ _mesa_print_ir_metal(exec_list *instructions,
 		if (ir->ir_type == ir_type_variable)
 		{
 			ir_variable *var = static_cast<ir_variable*>(ir);
-			if (var->is_in_buffer_block()) continue;
+			if (var->is_in_buffer_block() || var->type->contains_atomic()) continue;
 
 			// skip gl_ variables if they aren't used/assigned
 			if (strstr(var->name, "gl_") == var->name)
@@ -941,6 +945,10 @@ static void prepare_buffer_blocks(metal_print_context& ctx, exec_list* ir)
    }
    unsigned sizes = buffer_size_table_index(blocks);
    if (sizes) ctx.paramsStr.asprintf_append("\n  , constant uint* _mtl_buffer_sizes [[buffer(%u)]]", sizes);
+   for (const auto& counter : collect_atomic_counter_buffers(ir)) {
+      ctx.paramsStr.asprintf_append("\n  , %sdevice atomic_uint* _mtl_atomic%u [[buffer(%u)]]", ctx.countersReadOnly ? "const " : "", counter.metal_index, counter.metal_index);
+      for (auto* v : counter.variables) ctx.counterSlots[v] = counter.metal_index;
+   }
 }
 
 static void get_metal_type_size(const glsl_type* type, unsigned prec, int& size, int& alignment)
@@ -1844,6 +1852,20 @@ static bool uniform_read_row_major(ir_rvalue* value, bool rootRow)
    return uniform_read_row_major(value->as_dereference_array()->array, rootRow);
 }
 
+void ir_print_metal_visitor::print_counter_address(ir_rvalue* value)
+{
+   if (auto* variable = value->as_dereference_variable()) {
+      buffer.asprintf_append("_mtl_atomic%u", ctx.counterSlots.at(variable->var));
+      if (variable->var->data.offset) buffer.asprintf_append(" + %uu", variable->var->data.offset / 4);
+   } else {
+      auto* array = value->as_dereference_array();
+      print_counter_address(array->array);
+      buffer.asprintf_append(" + ("); array->array_index->accept(this);
+      buffer.asprintf_append(")");
+      if (array->type->atomic_size() != 4) buffer.asprintf_append(" * %uu", array->type->atomic_size() / 4);
+   }
+}
+
 void ir_print_metal_visitor::print_buffer_size_index(ir_rvalue* value)
 {
    if (auto var = value->as_dereference_variable()) {
@@ -2451,6 +2473,17 @@ ir_print_metal_visitor::visit(ir_call *ir)
 		visit(ir->return_deref);
 		buffer.asprintf_append (" = ");
 	}
+
+   if (const auto* counter = find_atomic_counter(ir->callee)) {
+      bool decrement = counter->intrinsic == ir_intrinsic_atomic_counter_predecrement;
+      if (decrement) buffer.asprintf_append("(");
+      buffer.asprintf_append("%s(", counter->metal);
+      print_counter_address(((ir_instruction*)ir->actual_parameters.get_head())->as_rvalue());
+      if (counter->intrinsic != ir_intrinsic_atomic_counter_read) buffer.asprintf_append(", 1u");
+      buffer.asprintf_append(", memory_order_relaxed)");
+      if (decrement) buffer.asprintf_append(" - 1u)");
+      return;
+   }
 
    if (const auto* atomic = find_image_atomic(ir->callee)) {
       if (!ctx.imageAtomicDone) {

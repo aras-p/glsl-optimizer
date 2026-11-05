@@ -1,0 +1,29 @@
+#version 310 es
+precision highp float;
+precision highp int;
+layout(local_size_x = 1) in;
+layout(binding=0, offset=8) uniform highp atomic_uint first;
+layout(binding=0) uniform highp atomic_uint counters[3];
+layout(binding=3, offset=20) uniform highp atomic_uint other;
+layout(binding=3) uniform highp atomic_uint unused;
+layout(binding=3, offset=32) uniform highp atomic_uint grid[2][3];
+layout(std140) uniform Config { uint limit; } config;
+layout(std430) buffer Results { uint values[]; } results;
+uint increment(highp atomic_uint counter)
+{
+    return atomicCounterIncrement(counter);
+}
+void main()
+{
+    uint i = gl_GlobalInvocationID.x;
+    uint index = i % 3u;
+    uint value = atomicCounter(first);
+    value += increment(counters[index++]);
+    value += atomicCounterDecrement(counters[index % 3u]);
+    value += atomicCounterIncrement(other);
+    value += atomicCounter(grid[i & 1u][index % 3u]);
+    atomicCounterIncrement(first);
+    atomicCounterDecrement(other);
+    if (i < uint(results.values.length()) && i < config.limit)
+        results.values[i] = value;
+}

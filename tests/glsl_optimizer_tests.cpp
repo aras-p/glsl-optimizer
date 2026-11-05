@@ -575,10 +575,11 @@ static bool TestFile (glslopt_ctx* ctx, glslopt_shader_type type,
 		};
 		for (int i = 0; i < bufferCount; ++i) {
 			const auto* b = glslopt_shader_get_buffer_desc(shader, i);
-			const char* layouts[] = { "std140", "shared", "packed", "std430" };
+			const char* layouts[] = { "std140", "shared", "packed", "std430", "atomic-counter" };
 			snprintf(buffer, sizeof(buffer), "// buffer #%d: %s", i, b->name);
 			textOpt += buffer;
 			if (b->kind == kGlslBufferStorage) textOpt += " storage";
+			if (b->kind == kGlslBufferAtomicCounter) textOpt += " atomic-counter";
 			if (b->instanceName) textOpt += std::string(" instance ") + b->instanceName;
 			textOpt += std::string(" layout ") + layouts[b->layout];
 			if (b->binding >= 0) appendField("binding", b->binding);

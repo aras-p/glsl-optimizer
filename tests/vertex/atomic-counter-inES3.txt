@@ -1,0 +1,16 @@
+#version 310 es
+precision highp float;
+precision highp int;
+layout(binding=0, offset=4) uniform highp atomic_uint counter;
+layout(binding=2) uniform highp atomic_uint counters[2];
+uint readCounter(highp atomic_uint value)
+{
+    return atomicCounter(value);
+}
+void main()
+{
+    uint index = uint(gl_VertexID) & 1u;
+    uint next = readCounter(counters[index]);
+    uint remaining = atomicCounter(counter);
+    gl_Position = vec4(float(next), float(remaining), float(atomicCounter(counter)), 1.0);
+}

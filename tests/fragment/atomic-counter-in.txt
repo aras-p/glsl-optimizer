@@ -1,0 +1,9 @@
+#version 420
+layout(binding=2, offset=16) uniform atomic_uint counter;
+layout(binding=2) uniform atomic_uint nextCounter;
+layout(binding=0, offset=4) uniform atomic_uint other;
+layout(location=0) out uvec4 color;
+void main()
+{
+    color = uvec4(atomicCounterIncrement(counter), atomicCounterDecrement(nextCounter), atomicCounter(other), 1u);
+}

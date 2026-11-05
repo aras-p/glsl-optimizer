@@ -97,7 +97,7 @@ endfunction()
 check_resource_binding("layout(r32ui, binding=BINDING) uniform highp uimage2D data;"
     7 8 "" "maximum number of image units")
 check_resource_binding("layout(binding=BINDING, offset=0) uniform atomic_uint counter;"
-    7 8 "Atomic-counter output is not supported" "maximum number of atomic counter buffer bindings")
+    7 8 "" "maximum number of atomic counter buffer bindings")
 file(WRITE "${compute_input}" "${compute_source}")
 file(REMOVE "${resource_input}" "${work}/fixtures/compute/resource-binding-outES3.txt" "${work}/fixtures/compute/resource-binding-outES3Metal.txt")
 
@@ -198,3 +198,26 @@ foreach(name ssbo-aggregate ssbo-aggregate-alias powervr-particles buffer-native
     endforeach()
 endforeach()
 check_run(0 "21 tests.*succeeded" "${work}/fixtures")
+
+foreach(suffix inES3 outES3 outES3Metal)
+    file(COPY "${TEST_SOURCE_DIR}/compute/atomic-counter-${suffix}.txt" DESTINATION "${work}/fixtures/compute")
+    file(COPY "${TEST_SOURCE_DIR}/vertex/atomic-counter-${suffix}.txt" DESTINATION "${work}/fixtures/vertex")
+    file(COPY "${TEST_SOURCE_DIR}/fragment/cookbook-oit-build-${suffix}.txt" DESTINATION "${work}/fixtures/fragment")
+endforeach()
+foreach(suffix in out)
+    file(COPY "${TEST_SOURCE_DIR}/fragment/atomic-counter-${suffix}.txt" DESTINATION "${work}/fixtures/fragment")
+endforeach()
+check_run(0 "25 tests.*succeeded" "${work}/fixtures")
+
+# Counter buffers share Metal's slot budget with UBOs, SSBOs and the size table.
+set(counter_limit "${work}/fixtures/compute/counter-limit-inES3.txt")
+file(WRITE "${counter_limit}" "#version 310 es\nlayout(local_size_x=1) in;\nlayout(std140) uniform Pad { highp uint value; } pads[30];\nlayout(binding=0) uniform highp atomic_uint counter;\nvoid main() { atomicCounterIncrement(counter); }\n")
+check_run(1 "Metal atomic-counter buffers exceed" "${work}/fixtures" --update-expected)
+check_run(1 "Metal atomic-counter buffers exceed" "${work}/fixtures")
+file(REMOVE "${counter_limit}" "${work}/fixtures/compute/counter-limit-outES3.txt")
+
+set(counter_vertex "${work}/fixtures/vertex/counter-write-inES3.txt")
+file(WRITE "${counter_vertex}" "#version 310 es\nlayout(binding=0) uniform highp atomic_uint counter;\nvoid main() { gl_Position = vec4(float(atomicCounterIncrement(counter))); }\n")
+check_run(1 "Metal vertex shaders can only read atomic counters" "${work}/fixtures" --update-expected)
+check_run(1 "Metal vertex shaders can only read atomic counters" "${work}/fixtures")
+file(REMOVE "${counter_vertex}" "${work}/fixtures/vertex/counter-write-outES3.txt")

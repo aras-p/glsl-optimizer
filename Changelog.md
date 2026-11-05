@@ -13,7 +13,7 @@ Added:
   * Uniform buffers (UBO) and storage buffers (SSBOs) are actually parsed and get through
     to output correctly. Reflection API was extended to be able to query buffers and
     their member data.
-  * Atomic operations and barriers.
+  * Atomic operations, barriers and atomic counters.
   * Image load, store and atomics.
 * Recognize `GL_OES_EGL_image_external_essl3` in GLES3 inputs.
 

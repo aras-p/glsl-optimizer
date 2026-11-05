@@ -38,6 +38,19 @@ inline const buffer_atomic_function* find_buffer_atomic(const ir_function_signat
    return nullptr;
 }
 
+inline const buffer_atomic_function* find_atomic_counter(const ir_function_signature* signature)
+{
+   if (!signature->is_builtin()) return nullptr;
+   static const buffer_atomic_function functions[] = {
+      {ir_intrinsic_atomic_counter_read, "atomicCounter", "atomic_load_explicit"},
+      {ir_intrinsic_atomic_counter_increment, "atomicCounterIncrement", "atomic_fetch_add_explicit"},
+      {ir_intrinsic_atomic_counter_predecrement, "atomicCounterDecrement", "atomic_fetch_sub_explicit"},
+   };
+   for (const auto& f : functions)
+      if (signature->is_intrinsic() ? signature->intrinsic_id == f.intrinsic : strcmp(signature->function_name(), f.glsl) == 0) return &f;
+   return nullptr;
+}
+
 struct memory_barrier_function {
    ir_intrinsic_id intrinsic;
    const char* glsl;
@@ -120,6 +133,37 @@ inline unsigned buffer_size_table_index(const std::vector<buffer_block>& blocks)
    for (const auto& b : blocks)
       if (b.needs_size) return blocks.back().metal_index + blocks.back().array_size;
    return 0;
+}
+
+struct atomic_counter_buffer {
+   unsigned binding;
+   unsigned metal_index;
+   unsigned size;
+   std::vector<ir_variable*> variables;
+};
+
+// Counter buffers follow block buffers and their optional byte-size table.
+inline std::vector<atomic_counter_buffer> collect_atomic_counter_buffers(exec_list* ir)
+{
+   std::vector<atomic_counter_buffer> counters;
+   foreach_in_list(ir_instruction, instruction, ir) {
+      auto* v = instruction->as_variable();
+      if (!v || v->data.mode != ir_var_uniform || !v->type->contains_atomic()) continue;
+      auto found = std::find_if(counters.begin(), counters.end(), [v](const atomic_counter_buffer& b) { return b.binding == v->data.binding; });
+      if (found == counters.end()) {
+         counters.push_back({v->data.binding, 0, 0, {}});
+         found = counters.end() - 1;
+      }
+      found->size = MAX2(found->size, v->data.offset + v->type->atomic_size());
+      found->variables.push_back(v);
+   }
+   if (counters.empty()) return counters;
+   auto blocks = collect_buffer_blocks(ir, true);
+   unsigned index = blocks.empty() ? 1 : blocks.back().metal_index + blocks.back().array_size;
+   if (buffer_size_table_index(blocks)) ++index;
+   std::sort(counters.begin(), counters.end(), [](const atomic_counter_buffer& a, const atomic_counter_buffer& b) { return a.binding < b.binding; });
+   for (auto& b : counters) b.metal_index = index++;
+   return counters;
 }
 
 // Shared/packed SSBOs use compact storage on Metal; explicit layouts are preserved.

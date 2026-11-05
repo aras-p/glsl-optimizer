@@ -104,11 +104,19 @@ void glslopt_shader_get_texture_desc (glslopt_shader* shader, int index, const c
 // - names and descriptors remain valid until glslopt_shader_delete
 // - binding is -1 when absent in the source; array elements use consecutive bindings
 // - Metal reserves 0 buffer for ordinary uniforms and assigns blocks consecutive slots starting at 1
-// - layout preserves the source packing qualifier
+// - layout preserves the source packing qualifier for UBOs and SSBOs
 // - shared/packed layout for GLSL has size/offset/stride = -1
 // - Metal shared/packed buffers use std140 for UBOs and std430 for SSBOs
-enum glslopt_buffer_kind { kGlslBufferUniform, kGlslBufferStorage };
-enum glslopt_buffer_layout { kGlslLayoutStd140, kGlslLayoutShared, kGlslLayoutPacked, kGlslLayoutStd430 };
+// - atomic counters sharing a binding form one kGlslBufferAtomicCounter buffer,
+//   named atomic_counters_BINDING, with kGlslLayoutAtomicCounter layout:
+//   32-bit unsigned storage at the reflected byte offsets, array stride 4
+//   (multidimensional arrays use their reflected outer strides).
+// - Metal counter buffers follow block buffers and their optional size table;
+//   bind a writable buffer at metalBufferIndex and initialize counters on the host.
+//   Atomic counter operations use relaxed ordering; barriers remain explicit.
+//   Metal vertex shaders can only read atomic counters.
+enum glslopt_buffer_kind { kGlslBufferUniform, kGlslBufferStorage, kGlslBufferAtomicCounter };
+enum glslopt_buffer_layout { kGlslLayoutStd140, kGlslLayoutShared, kGlslLayoutPacked, kGlslLayoutStd430, kGlslLayoutAtomicCounter };
 struct glslopt_buffer_desc {
 	const char* name;
 	const char* instanceName; // NULL for anonymous blocks

@@ -455,6 +455,45 @@ static void reflect_buffer_member(glslopt_shader* shader, glslopt_buffer& buffer
 	}
 }
 
+class atomic_counter_usage : public ir_hierarchical_visitor {
+public:
+   std::unordered_set<const ir_variable*> used;
+   ir_visitor_status visit(ir_dereference_variable* value) override {
+      if (value->var->type->contains_atomic()) used.insert(value->var);
+      return visit_continue;
+   }
+   ir_visitor_status visit_enter(ir_function_signature* signature) override {
+      return signature->is_builtin() ? visit_continue_with_parent : visit_continue;
+   }
+};
+
+static void reflect_atomic_counter(glslopt_shader* shader, glslopt_buffer& buffer,
+   const glsl_type* type, const char* name, int parent, unsigned offset, bool used)
+{
+   int index = (int)buffer.members.size();
+   buffer.members.push_back({ralloc_strdup(shader->mem_ctx, name), ralloc_strdup(shader->mem_ctx, type->name),
+      parent, (int)offset, type->is_array() ? (int)type->length : 0,
+      type->is_array() ? (int)type->fields.array->atomic_size() : 0, 0, false, used, false, false});
+   if (type->is_array()) reflect_atomic_counter(shader, buffer, type->fields.array, "[]", index, offset, used);
+}
+
+static void find_shader_atomic_counters(glslopt_shader* shader, exec_list* ir, bool metal)
+{
+   auto counters = collect_atomic_counter_buffers(ir);
+   if (counters.empty()) return;
+   atomic_counter_usage usage;
+   visit_list_elements(&usage, ir);
+   for (const auto& counter : counters) {
+      glslopt_buffer buffer;
+      buffer.desc = {ralloc_asprintf(shader->mem_ctx, "atomic_counters_%u", counter.binding), nullptr,
+         kGlslBufferAtomicCounter, kGlslLayoutAtomicCounter, (int)counter.binding, 1, (int)counter.size,
+         metal ? (int)counter.metal_index : -1, -1};
+      for (auto* v : counter.variables)
+         reflect_atomic_counter(shader, buffer, v->type, v->name, -1, v->data.offset, usage.used.count(v) != 0);
+      shader->buffers.push_back(std::move(buffer));
+   }
+}
+
 static void find_shader_buffers(glslopt_shader* shader, exec_list* ir, bool metal)
 {
 	auto blocks = collect_buffer_blocks(ir, metal);
@@ -510,7 +549,7 @@ static void find_shader_variables(glslopt_shader* sh, exec_list* ir, bool metal)
 			v.location = var->data.explicit_location ? var->data.location : -1;
 			++sh->inputCount;
 		}
-		if (var->data.mode == ir_var_uniform && !var->is_in_buffer_block() && !var->type->without_array()->is_sampler() && !var->type->contains_image())
+		if (var->data.mode == ir_var_uniform && !var->is_in_buffer_block() && !var->type->without_array()->is_sampler() && !var->type->contains_image() && !var->type->contains_atomic())
 		{
 			if (sh->uniformCount >= glslopt_shader::kMaxShaderUniforms)
 				continue;
@@ -553,8 +592,9 @@ static bool metal_uniform_type_supported(const glsl_type* type, bool allowMatric
 class storage_validation : public ir_hierarchical_visitor {
 public:
 	bool metal;
+	bool vertex;
 	const char* error = nullptr;
-	explicit storage_validation(bool metal) : metal(metal) {}
+	storage_validation(bool metal, bool vertex) : metal(metal), vertex(vertex) {}
 	ir_visitor_status visit(ir_variable* var) override {
 		if (metal && var->type->contains_image() && var->data.memory_volatile)
 			error = "Volatile image output is not supported yet (Metal backend).";
@@ -586,6 +626,11 @@ public:
 		if (image_function_name(call->callee)) return visit_continue;
 		if (!strncmp(call->callee_name(), "__intrinsic_image_", 18) || !strncmp(call->callee_name(), "image", 5)) {
 			error = "Unsupported image operation.";
+			return visit_continue;
+		}
+		if (const auto* counter = find_atomic_counter(call->callee)) {
+			if (metal && vertex && counter->intrinsic != ir_intrinsic_atomic_counter_read)
+				error = "Metal vertex shaders can only read atomic counters.";
 			return visit_continue;
 		}
 		if (find_memory_barrier(call->callee)) return visit_continue;
@@ -658,7 +703,8 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 	bool hasStorage = false;
 	bool hasShared = false;
 	bool hasImages = false;
-	storage_validation storageValidation(ctx->target == kGlslTargetMetal);
+	bool hasCounters = false;
+	storage_validation storageValidation(ctx->target == kGlslTargetMetal, type == kGlslOptShaderVertex);
 
 	// These declarations need dedicated backend support before they can be
 	// printed safely. In particular, Metal's ordinary-uniform layout is not
@@ -670,6 +716,7 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 		hasStorage |= var->data.mode == ir_var_shader_storage;
 		hasShared |= var->data.mode == ir_var_shader_shared;
 		hasImages |= var->type->contains_image();
+		hasCounters |= var->type->contains_atomic();
 		const char* unsupported = nullptr;
 		// Stage interfaces need their own input/output mapping.
 		if (var->is_interface_instance() && var->data.mode != ir_var_uniform && var->data.mode != ir_var_shader_storage)
@@ -682,8 +729,6 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 			else if (var->data.memory_volatile)
 				unsupported = "Volatile image";
 		}
-		else if (var->type->contains_atomic())
-			unsupported = "Atomic-counter";
 		// Metal matrix constructors do not support threadgroup storage.
 		else if (ctx->target == kGlslTargetMetal && var->data.mode == ir_var_shader_shared && !metal_uniform_type_supported(var->type, false))
 			unsupported = "Shared-variable type";
@@ -696,6 +741,11 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 	}
 
 	if (ctx->target == kGlslTargetMetal) {
+		auto counters = collect_atomic_counter_buffers(ir);
+		if (!counters.empty() && counters.back().metal_index > 30) {
+			result->infoLog = "Metal atomic-counter buffers exceed the available buffer slots (1 through 30).";
+			return result;
+		}
 		auto blocks = collect_buffer_blocks(ir, true);
 		if (buffer_size_table_index(blocks) > 30) {
 			result->infoLog = "Metal buffer size table exceeds the available buffer slots (1 through 30).";
@@ -715,10 +765,10 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 			}
 		}
 	}
-	if (hasStorage || hasImages || (ctx->target == kGlslTargetMetal && type == kGlslOptShaderCompute))
+	if (hasStorage || hasImages || hasCounters || (ctx->target == kGlslTargetMetal && type == kGlslOptShaderCompute))
 		visit_list_elements(&storageValidation, ir);
 	if (storageValidation.error) { result->infoLog = storageValidation.error; return result; }
-	if (ctx->target == kGlslTargetMetal && (hasStorage || hasShared || hasImages)) {
+	if (ctx->target == kGlslTargetMetal && (hasStorage || hasShared || hasImages || hasCounters)) {
 		// Buffer, threadgroup storage and image parameters live inside the Metal entry point.
 		// Inline helpers so their resource references remain in scope.
 		while (do_function_inlining(ir)) {}
@@ -757,6 +807,7 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 		result->optimizedOutput = _mesa_print_ir_metal(ir, state, ralloc_strdup(result->mem_ctx, ""), printMode, &result->uniformsSize);
 	find_shader_variables(result, ir, ctx->target == kGlslTargetMetal);
 	find_shader_buffers(result, ir, ctx->target == kGlslTargetMetal);
+	find_shader_atomic_counters(result, ir, ctx->target == kGlslTargetMetal);
 	calculate_shader_stats(ir, &result->statsMath, &result->statsTex, &result->statsFlow);
 	result->status = true;
 	return result;
