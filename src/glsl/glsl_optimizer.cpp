@@ -60,6 +60,7 @@ initialize_mesa_context(struct gl_context *ctx, glslopt_target api)
 		break;
 	case kGlslTargetOpenGLES30:
 	case kGlslTargetMetal:
+		if (api == kGlslTargetMetal) ctx->Const.GLSLVersion = 450;
 		ctx->Extensions.ARB_ES3_compatibility = true;
 		ctx->Extensions.ARB_ES3_1_compatibility = true;
 		ctx->Extensions.ARB_ES3_2_compatibility = true;
@@ -547,6 +548,8 @@ static void find_shader_variables(glslopt_shader* sh, exec_list* ir, bool metal)
 			v.name = ralloc_strdup(sh->mem_ctx, var->name);
 			glsl_type_to_optimizer_desc(var->type, var->data.precision, &v);
 			v.location = var->data.explicit_location ? var->data.location : -1;
+			if (var->data.explicit_location && var->is_interface_instance())
+				v.location -= var->data.patch ? VARYING_SLOT_PATCH0 : VARYING_SLOT_VAR0;
 			++sh->inputCount;
 		}
 		if (var->data.mode == ir_var_uniform && !var->is_in_buffer_block() && !var->type->without_array()->is_sampler() && !var->type->contains_image() && !var->type->contains_atomic())
@@ -704,6 +707,7 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 	bool hasShared = false;
 	bool hasImages = false;
 	bool hasCounters = false;
+	bool hasStageBlocks = false;
 	storage_validation storageValidation(ctx->target == kGlslTargetMetal, type == kGlslOptShaderVertex);
 
 	// These declarations need dedicated backend support before they can be
@@ -718,9 +722,13 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 		hasImages |= var->type->contains_image();
 		hasCounters |= var->type->contains_atomic();
 		const char* unsupported = nullptr;
-		// Stage interfaces need their own input/output mapping.
-		if (var->is_interface_instance() && var->data.mode != ir_var_uniform && var->data.mode != ir_var_shader_storage)
-			unsupported = "Interface-block";
+		const auto* stageBlock = var->get_interface_type();
+		if (ctx->target == kGlslTargetMetal && stageBlock &&
+		    (var->data.mode == ir_var_shader_in || var->data.mode == ir_var_shader_out)) {
+			hasStageBlocks = true;
+			if (!metal_uniform_type_supported(stageBlock))
+				unsupported = "Stage interface block member type";
+		}
 		else if (ctx->target == kGlslTargetMetal && var->type->contains_image()) {
 			const glsl_type* image = var->type;
 			if (!image->is_image() ||
@@ -768,8 +776,8 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 	if (hasStorage || hasImages || hasCounters || (ctx->target == kGlslTargetMetal && type == kGlslOptShaderCompute))
 		visit_list_elements(&storageValidation, ir);
 	if (storageValidation.error) { result->infoLog = storageValidation.error; return result; }
-	if (ctx->target == kGlslTargetMetal && (hasStorage || hasShared || hasImages || hasCounters)) {
-		// Buffer, threadgroup storage and image parameters live inside the Metal entry point.
+	if (ctx->target == kGlslTargetMetal && (hasStorage || hasShared || hasImages || hasCounters || hasStageBlocks)) {
+		// Stage interfaces, buffers, threadgroup storage and images live inside the Metal entry point.
 		// Inline helpers so their resource references remain in scope.
 		while (do_function_inlining(ir)) {}
 		do_dead_functions(ir);

@@ -772,7 +772,7 @@ int main (int argc, const char** argv)
 				//	continue;
 				std::string outname = inname.substr (0,inname.size()-strlen(kApiIn[api])) + kApiOut[api];
 				std::string outnameMetal = inname.substr (0,inname.size()-strlen(kApiIn[api])) + kApiOutMetal[api];
-				const bool useMetal = (api == 0);
+				const bool useMetal = api == 0 || fs::is_regular_file(testFolder + "/" + outnameMetal, error);
 				bool ok = TestFile (ctx[api], kTypes[type], inname, testFolder + "/" + inname, testFolder + "/" + outname, actualFolder + "/" + outname + ".actual", updateExpected, api==0, hasOpenGL, false, true);
 				if (!ok)
 				{

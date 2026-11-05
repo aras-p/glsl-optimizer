@@ -221,3 +221,10 @@ file(WRITE "${counter_vertex}" "#version 310 es\nlayout(binding=0) uniform highp
 check_run(1 "Metal vertex shaders can only read atomic counters" "${work}/fixtures" --update-expected)
 check_run(1 "Metal vertex shaders can only read atomic counters" "${work}/fixtures")
 file(REMOVE "${counter_vertex}" "${work}/fixtures/vertex/counter-write-outES3.txt")
+
+foreach(suffix in out outMetal)
+    file(COPY "${TEST_SOURCE_DIR}/vertex/stage-interface-block-${suffix}.txt" DESTINATION "${work}/fixtures/vertex")
+    file(COPY "${TEST_SOURCE_DIR}/fragment/stage-interface-block-${suffix}.txt" DESTINATION "${work}/fixtures/fragment")
+    file(COPY "${TEST_SOURCE_DIR}/fragment/nvidia-cull-raster-${suffix}.txt" DESTINATION "${work}/fixtures/fragment")
+endforeach()
+check_run(0 "28 tests.*succeeded" "${work}/fixtures")

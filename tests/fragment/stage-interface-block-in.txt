@@ -1,0 +1,19 @@
+#version 450
+layout(location=4) in Extra {
+    noperspective vec2 uv;
+    mat2 basis;
+} extraIn[2];
+
+layout(location=12) in Anonymous {
+    vec4 unused;
+    layout(location=14) flat int id;
+};
+
+in Payload { vec2 value; } payloadIn;
+layout(location=0) out vec4 color;
+
+void main()
+{
+    int index = id & 1;
+    color = vec4(extraIn[index].basis * extraIn[index].uv, payloadIn.value);
+}

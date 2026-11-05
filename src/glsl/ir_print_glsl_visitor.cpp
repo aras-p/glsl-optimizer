@@ -84,6 +84,7 @@ struct global_print_tracker {
 	}
 	
 	std::unordered_set<const glsl_type*> uniform_blocks;
+	std::unordered_set<const glsl_type*> stage_blocks[2];
 	unsigned	var_counter;
 	std::unordered_map<const ir_variable*, long> var_hash;
 	exec_list	global_assignements;
@@ -215,6 +216,12 @@ _mesa_print_ir_glsl(exec_list *instructions,
 				str.asprintf_append (" es");
 			str.asprintf_append ("\n");
 		}
+		if (state->ARB_separate_shader_objects_enable)
+			str.asprintf_append("#extension GL_ARB_separate_shader_objects : enable\n");
+		if (state->EXT_shader_io_blocks_enable)
+			str.asprintf_append("#extension GL_EXT_shader_io_blocks : enable\n");
+		if (state->OES_shader_io_blocks_enable)
+			str.asprintf_append("#extension GL_OES_shader_io_blocks : enable\n");
 		if (state->ARB_shader_atomic_counters_enable)
 			str.asprintf_append("#extension GL_ARB_shader_atomic_counters : enable\n");
 		if (state->ARB_shader_image_load_store_enable)
@@ -458,6 +465,63 @@ static const char* image_format_name(pipe_format format)
 
 void ir_print_glsl_visitor::visit(ir_variable *ir)
 {
+	const bool input = ir->data.mode == ir_var_shader_in;
+	const glsl_type* interface = ir->get_interface_type();
+	if (interface && (input || ir->data.mode == ir_var_shader_out) &&
+	    strncmp(interface->name, "gl_", 3) != 0) {
+		if (!globals->stage_blocks[input].insert(interface).second) { skipped_this_ir = true; return; }
+		const bool instance = ir->is_interface_instance();
+		const int base = ir->data.patch ? VARYING_SLOT_PATCH0 : VARYING_SLOT_VAR0;
+		int nextLocation = -1;
+		if (instance && ir->data.explicit_location)
+			nextLocation = ir->data.location;
+		else if (!instance && interface->fields.structure[0].location >= 0) {
+			// Anonymous blocks retain member locations, but have no instance carrying the base location.
+			bool allLocated = true;
+			for (unsigned i = 0; i < interface->length; ++i)
+				allLocated &= interface->fields.structure[i].location >= 0;
+			if (allLocated) nextLocation = interface->fields.structure[0].location;
+		}
+		const bool blockLocation = nextLocation >= 0;
+		if (blockLocation) buffer.asprintf_append("layout(location=%d) ", nextLocation - base);
+		if (!input) {
+			for (unsigned i = 0; i < interface->length; ++i) {
+				const auto& field = interface->fields.structure[i];
+				if (field.explicit_xfb_buffer || field.offset >= 0 || field.xfb_stride >= 0) {
+					buffer.asprintf_append("layout(xfb_buffer=%d) ", field.xfb_buffer);
+					break;
+				}
+			}
+		}
+		buffer.asprintf_append("%s%s %s {\n", ir->data.patch ? "patch " : "", input ? "in" : "out", interface->name);
+		const char* interpolation[] = { "", "smooth ", "flat ", "noperspective " };
+		for (unsigned i = 0; i < interface->length; ++i) {
+			const auto& field = interface->fields.structure[i];
+			buffer.asprintf_append("  ");
+			if (field.location >= 0 && (!blockLocation || field.location != nextLocation))
+				buffer.asprintf_append("layout(location=%d) ", field.location - base);
+			if (field.location >= 0)
+				nextLocation = field.location + field.type->count_attribute_slots(false);
+			if (!input && field.offset >= 0) buffer.asprintf_append("layout(xfb_offset=%d) ", field.offset);
+			if (!input && field.xfb_stride >= 0) buffer.asprintf_append("layout(xfb_stride=%d) ", field.xfb_stride);
+			if (field.centroid) buffer.asprintf_append("centroid ");
+			if (field.sample) buffer.asprintf_append("sample ");
+			buffer.asprintf_append("%s", interpolation[field.interpolation]);
+			const glsl_type* member = field.type->without_array();
+			if (use_precision && (member->is_float() || member->is_integer_32()))
+				buffer.asprintf_append("%s", get_precision_string(field.precision ? field.precision : GLSL_PRECISION_HIGH));
+			print_type(buffer, field.type, false);
+			buffer.asprintf_append(" %s", field.name);
+			print_type_post(buffer, field.type, false);
+			buffer.asprintf_append(";\n");
+		}
+		buffer.asprintf_append("}");
+		if (instance) {
+			buffer.asprintf_append(" %s", ir->name);
+			print_type_post(buffer, ir->type, false);
+		}
+		return;
+	}
 	if ((ir->data.mode == ir_var_uniform || ir->data.mode == ir_var_shader_storage) && ir->is_in_buffer_block()) {
 		const glsl_type* type = ir->get_interface_type();
 		if (!globals->uniform_blocks.insert(type).second) { skipped_this_ir = true; return; }

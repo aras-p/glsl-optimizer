@@ -121,6 +121,8 @@ struct metal_print_context
 	, paramsStr(ralloc_strdup(buffer, ""))
 	, typedeclStr(ralloc_strdup(buffer, ""))
 	, blockAliases(ralloc_strdup(buffer, ""))
+	, stageLocals(ralloc_strdup(buffer, ""))
+	, stageExports(ralloc_strdup(buffer, ""))
 	, mem_ctx(ralloc_context(NULL))
 	, writingParams(false)
 	, matrixCastsDone(false)
@@ -149,6 +151,10 @@ struct metal_print_context
 	string_buffer paramsStr;
 	string_buffer typedeclStr;
 	string_buffer blockAliases;
+	string_buffer stageLocals;
+	string_buffer stageExports;
+	std::unordered_map<const ir_variable*, const char*> stageNames;
+	unsigned stageFieldCount = 0;
 	enum storage_kind { uniform_std140, storage_std140, storage_std430, storage_kind_count };
 	struct runtime_field { const char* storage; unsigned offset; unsigned stride; };
 	struct block_reference {
@@ -178,6 +184,7 @@ struct metal_print_context
 };
 
 
+static void prepare_stage_blocks(metal_print_context&, exec_list*);
 static void prepare_buffer_blocks(metal_print_context&, exec_list*);
 
 class ir_print_metal_visitor : public ir_visitor {
@@ -245,6 +252,7 @@ public:
 	metal_print_context& ctx;
 	int indentation;
 	int expression_depth;
+	bool inEntryPoint = false;
 	string_buffer& buffer;
 	global_print_tracker_metal* globals;
 	const _mesa_glsl_parse_state* state;
@@ -295,6 +303,7 @@ _mesa_print_ir_metal(exec_list *instructions,
 
 	print_metal_structs(ctx.typedeclStr, instructions);
 	prepare_buffer_blocks(ctx, instructions);
+	prepare_stage_blocks(ctx, instructions);
 
 	global_print_tracker_metal gtracker;
 
@@ -309,7 +318,7 @@ _mesa_print_ir_metal(exec_list *instructions,
 		if (ir->ir_type == ir_type_variable)
 		{
 			ir_variable *var = static_cast<ir_variable*>(ir);
-			if (var->is_in_buffer_block() || var->type->contains_atomic()) continue;
+			if (var->is_in_buffer_block() || var->type->contains_atomic() || ctx.stageNames.count(var)) continue;
 
 			// skip gl_ variables if they aren't used/assigned
 			if (strstr(var->name, "gl_") == var->name)
@@ -635,6 +644,106 @@ public:
 static void print_metal_structs(string_buffer& out, exec_list* ir)
 {
 	metal_struct_declarations visitor(out); visit_list_elements(&visitor, ir);
+}
+
+static void print_interpolation(string_buffer& out, unsigned mode, bool centroid, bool sample)
+{
+   if (mode == INTERP_MODE_FLAT)
+      out.asprintf_append(" [[flat]]");
+   else if (centroid || sample || mode != INTERP_MODE_NONE)
+      out.asprintf_append(" [[%s_%s]]", sample ? "sample" : centroid ? "centroid" : "center",
+         mode == INTERP_MODE_NOPERSPECTIVE ? "no_perspective" : "perspective");
+}
+
+// Metal stage interfaces carry scalar/vector fields. Keep the GLSL aggregate
+// in the entry point so array indexing and member accesses use its original type.
+static void emit_stage_fields(metal_print_context& ctx, const glsl_type* type, bool input,
+   const char* local, const char* key, int location, unsigned precision,
+   unsigned interpolation, bool centroid, bool sample)
+{
+   if (type->is_struct() || type->is_interface()) {
+      for (unsigned i = 0; i < type->length; ++i) {
+         const auto& f = type->fields.structure[i];
+         bool block = type->is_interface();
+         int fieldLocation = block ? (f.location < 0 ? -1 : f.location - VARYING_SLOT_VAR0 + location) : location;
+         emit_stage_fields(ctx, f.type, input, ralloc_asprintf(ctx.mem_ctx, "%s.%s", local, f.name),
+            ralloc_asprintf(ctx.mem_ctx, "%s_%u", key, i), fieldLocation, f.precision,
+            block ? f.interpolation : interpolation, block ? f.centroid : centroid, block ? f.sample : sample);
+         if (!block && location >= 0) location += f.type->count_attribute_slots(false);
+      }
+      return;
+   }
+   if (type->is_array() || type->is_matrix()) {
+      const glsl_type* element = type->is_array() ? type->fields.array : type->column_type();
+      unsigned count = type->is_array() ? type->length : type->matrix_columns;
+      for (unsigned i = 0; i < count; ++i) {
+         emit_stage_fields(ctx, element, input, ralloc_asprintf(ctx.mem_ctx, "%s[%u]", local, i),
+            ralloc_asprintf(ctx.mem_ctx, "%s_%u", key, i), location, precision, interpolation, centroid, sample);
+         if (location >= 0) location += element->count_attribute_slots(false);
+      }
+      return;
+   }
+
+   unsigned index = ctx.stageFieldCount++;
+   auto& fields = input ? ctx.inputStr : ctx.outputStr;
+   fields.asprintf_append("  ");
+   print_type_precision(fields, type, precision, false);
+   fields.asprintf_append(" _xlat_varying%u [[user(", index);
+   if (location >= 0) fields.asprintf_append("locn%d", location);
+   else fields.asprintf_append("%s", key);
+   fields.asprintf_append(")]]");
+   print_interpolation(fields, type->is_integer_32() ? INTERP_MODE_FLAT : interpolation, centroid, sample);
+   fields.asprintf_append(";\n");
+   if (input) ctx.stageLocals.asprintf_append("  %s = _mtl_i._xlat_varying%u;\n", local, index);
+   else ctx.stageExports.asprintf_append("  _mtl_o._xlat_varying%u = %s;\n", index, local);
+}
+
+static void prepare_stage_blocks(metal_print_context& ctx, exec_list* ir)
+{
+   foreach_in_list(ir_instruction, instruction, ir) {
+      auto* var = instruction->as_variable();
+      if (!var || (var->data.mode != ir_var_shader_in && var->data.mode != ir_var_shader_out)) continue;
+      const auto* block = var->get_interface_type();
+      if (!block || !strncmp(block->name, "gl_", 3)) continue;
+      bool input = var->data.mode == ir_var_shader_in;
+      unsigned index = (unsigned)ctx.stageNames.size();
+      const char* local = ralloc_asprintf(ctx.mem_ctx, "_xlat_stage%u", index);
+      const char* key = ralloc_asprintf(ctx.mem_ctx, "_xlat_block%zu_%s", strlen(block->name), block->name);
+      ctx.stageNames[var] = local;
+      ctx.stageLocals.asprintf_append("  ");
+      if (var->is_interface_instance()) {
+         const char* name = ralloc_asprintf(ctx.mem_ctx, "_xlat_stage_type%u", index);
+         ctx.typedeclStr.asprintf_append("struct %s {\n", name);
+         for (unsigned i = 0; i < block->length; ++i) {
+            const auto& f = block->fields.structure[i];
+            ctx.typedeclStr.asprintf_append("  ");
+            print_type_precision(ctx.typedeclStr, f.type, f.precision, false);
+            ctx.typedeclStr.asprintf_append(" %s", f.name);
+            print_type_post(ctx.typedeclStr, f.type, false);
+            ctx.typedeclStr.asprintf_append(";\n");
+         }
+         ctx.typedeclStr.asprintf_append("};\n");
+         ctx.stageLocals.asprintf_append("%s", name);
+      } else {
+         print_type_precision(ctx.stageLocals, var->type, var->data.precision, false);
+      }
+      ctx.stageLocals.asprintf_append(" %s", local);
+      print_type_post(ctx.stageLocals, var->type, false);
+      ctx.stageLocals.asprintf_append(input ? ";\n" : " = {};\n");
+
+      if (var->is_interface_instance()) {
+         emit_stage_fields(ctx, var->type, input, local, key, 0, 0, 0, false, false);
+      } else {
+         for (unsigned i = 0; i < block->length; ++i) {
+            const auto& f = block->fields.structure[i];
+            if (strcmp(f.name, var->name)) continue;
+            emit_stage_fields(ctx, var->type, input, local, ralloc_asprintf(ctx.mem_ctx, "%s_%u", key, i),
+               f.location < 0 ? -1 : f.location - VARYING_SLOT_VAR0,
+               var->data.precision, f.interpolation, f.centroid, f.sample);
+            break;
+         }
+      }
+   }
 }
 
 // Storage types follow the buffer layout independently of expression precision.
@@ -1067,12 +1176,9 @@ void ir_print_metal_visitor::visit(ir_variable *ir)
 	const bool varying = (mode_whole == kPrintGlslFragment && ir->data.mode == ir_var_shader_in) ||
 		(mode_whole == kPrintGlslVertex && ir->data.mode == ir_var_shader_out);
 	if (varying && strncmp(ir->name, "gl_", 3) != 0) {
-		if (ir->data.interpolation == INTERP_MODE_FLAT)
-			buffer.asprintf_append(" [[flat]]");
-		else if (ir->data.centroid || ir->data.sample || ir->data.interpolation != INTERP_MODE_NONE)
-			buffer.asprintf_append(" [[%s_%s]]",
-				ir->data.sample ? "sample" : ir->data.centroid ? "centroid" : "center",
-				ir->data.interpolation == INTERP_MODE_NOPERSPECTIVE ? "no_perspective" : "perspective");
+		if (ir->data.explicit_location)
+			buffer.asprintf_append(" [[user(locn%d)]]", ir->data.location - VARYING_SLOT_VAR0);
+		print_interpolation(buffer, ir->data.interpolation, ir->data.centroid, ir->data.sample);
 	}
 	// Metal supports invariance on the position output only.
 	if (mode_whole == kPrintGlslVertex && !strcmp(ir->name, "gl_Position") && ir->data.invariant)
@@ -1163,6 +1269,7 @@ void ir_print_metal_visitor::visit(ir_variable *ir)
 void ir_print_metal_visitor::visit(ir_function_signature *ir)
 {
 	const bool isMain = (strcmp(ir->function()->name, "main") == 0);
+	inEntryPoint = isMain;
 
 	if (!isMain)
 	{
@@ -1229,6 +1336,8 @@ void ir_print_metal_visitor::visit(ir_function_signature *ir)
 			indent(); buffer.asprintf_append ("xlatMtlShaderOutput _mtl_o;\n");
 		}
 
+		buffer.asprintf_append("%s", ctx.stageLocals.c_str());
+
 		// insert postponed global assigments and variable declarations
 		assert (!globals->main_function_done);
 		globals->main_function_done = true;
@@ -1248,7 +1357,7 @@ void ir_print_metal_visitor::visit(ir_function_signature *ir)
 
 	if (isMain && this->mode_whole != kPrintGlslCompute)
 	{
-		// return stuff
+		buffer.asprintf_append("%s", ctx.stageExports.c_str());
 		indent(); buffer.asprintf_append ("return _mtl_o;\n");
 	}
 
@@ -1978,6 +2087,13 @@ void ir_print_metal_visitor::visit(ir_dereference_variable *ir)
 {
 	ir_variable *var = ir->variable_referenced();
 	if (print_uniform_read(ir)) return;
+	if (!ctx.stageNames.empty()) {
+		auto stage = ctx.stageNames.find(var);
+		if (stage != ctx.stageNames.end()) {
+			buffer.asprintf_append("%s", stage->second);
+			return;
+		}
+	}
 	const bool signedID = !strcmp(var->name, "gl_VertexID") || !strcmp(var->name, "gl_InstanceID");
 	const bool halfCoord = !strcmp(var->name, "gl_PointCoord") && var->data.precision == GLSL_PRECISION_MEDIUM;
 	if (signedID) buffer.asprintf_append("int(");
@@ -2669,6 +2785,10 @@ ir_print_metal_visitor::visit(ir_call *ir)
 void
 ir_print_metal_visitor::visit(ir_return *ir)
 {
+   if (inEntryPoint && mode_whole != kPrintGlslCompute && !ctx.stageNames.empty()) {
+      buffer.asprintf_append("{\n%s  return _mtl_o;\n}", ctx.stageExports.c_str());
+      return;
+   }
    buffer.asprintf_append ("return");
 
    ir_rvalue *const value = ir->get_value();

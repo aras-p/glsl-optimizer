@@ -15,6 +15,7 @@ Added:
     their member data.
   * Atomic operations, barriers and atomic counters.
   * Image load, store and atomics.
+  * Stage interface blocks.
 * Recognize `GL_OES_EGL_image_external_essl3` in GLES3 inputs.
 
 Changed:
