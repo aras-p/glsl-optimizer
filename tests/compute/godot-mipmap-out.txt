@@ -1,0 +1,67 @@
+#version 430
+layout(local_size_x=8, local_size_y=8) in;
+layout(std140, column_major, binding=0) uniform Params {
+  ivec4 section;
+  ivec2 target;
+  uint flags;
+  float luminance_multiplier;
+  float glow_strength;
+  float glow_bloom;
+  float glow_hdr_threshold;
+  float glow_hdr_scale;
+  float glow_exposure;
+  float glow_white;
+  float glow_luminance_cap;
+  float glow_auto_exposure_scale;
+  float camera_z_far;
+  float camera_z_near;
+  vec2 octmap_border_size;
+  vec4 set_color;
+} params;
+uniform sampler2D source_color;
+layout(rgba16f, binding=3) writeonly restrict uniform image2D dest_buffer;
+void main ()
+{
+  vec4 color_1;
+  ivec2 tmpvar_2;
+  tmpvar_2 = ivec2(gl_GlobalInvocationID.xy);
+  if ((greaterThanEqual (tmpvar_2, params.section.zw) != bvec2(0, 0))) {
+    return;
+  };
+  ivec2 tmpvar_3;
+  tmpvar_3 = ((tmpvar_2 + params.section.xy) << 1);
+  color_1 = (texelFetch (source_color, tmpvar_3, 0) + texelFetch (source_color, (tmpvar_3 + ivec2(0, 1)), 0));
+  color_1 = (color_1 + texelFetch (source_color, (tmpvar_3 + ivec2(1, 0)), 0));
+  color_1 = (color_1 + texelFetch (source_color, (tmpvar_3 + ivec2(1, 1)), 0));
+  color_1 = (color_1 / 4.0);
+  vec4 tmpvar_4;
+  tmpvar_4 = vec4(((equal (abs(color_1), vec4((1.0/0.0), (1.0/0.0), (1.0/0.0), (1.0/0.0)))).x ? (vec4(100.0, 100.0, 100.0, 1.0)).x : (color_1).x), ((equal (abs(color_1), vec4((1.0/0.0), (1.0/0.0), (1.0/0.0), (1.0/0.0)))).y ? (vec4(100.0, 100.0, 100.0, 1.0)).y : (color_1).y), ((equal (abs(color_1), vec4((1.0/0.0), (1.0/0.0), (1.0/0.0), (1.0/0.0)))).z ? (vec4(100.0, 100.0, 100.0, 1.0)).z : (color_1).z), ((equal (abs(color_1), vec4((1.0/0.0), (1.0/0.0), (1.0/0.0), (1.0/0.0)))).w ? (vec4(100.0, 100.0, 100.0, 1.0)).w : (color_1).w));
+  vec4 tmpvar_5;
+  tmpvar_5 = vec4(((notEqual (tmpvar_4, tmpvar_4)).x ? (vec4(100.0, 100.0, 100.0, 1.0)).x : (tmpvar_4).x), ((notEqual (tmpvar_4, tmpvar_4)).y ? (vec4(100.0, 100.0, 100.0, 1.0)).y : (tmpvar_4).y), ((notEqual (tmpvar_4, tmpvar_4)).z ? (vec4(100.0, 100.0, 100.0, 1.0)).z : (tmpvar_4).z), ((notEqual (tmpvar_4, tmpvar_4)).w ? (vec4(100.0, 100.0, 100.0, 1.0)).w : (tmpvar_4).w));
+  color_1 = tmpvar_5;
+  imageStore (dest_buffer, (tmpvar_2 + params.target), tmpvar_5);
+}
+
+
+// stats: 18 alu 5 tex 2 flow
+// workgroup size: 8 8 1
+// buffer #0: Params instance params layout std140 binding 0 (size: 96)
+//  member #0: ivec4 section offset 0
+//  member #1: ivec2 target offset 16
+//  member #2: uint flags offset 24 (unused)
+//  member #3: float luminance_multiplier offset 28 (unused)
+//  member #4: float glow_strength offset 32 (unused)
+//  member #5: float glow_bloom offset 36 (unused)
+//  member #6: float glow_hdr_threshold offset 40 (unused)
+//  member #7: float glow_hdr_scale offset 44 (unused)
+//  member #8: float glow_exposure offset 48 (unused)
+//  member #9: float glow_white offset 52 (unused)
+//  member #10: float glow_luminance_cap offset 56 (unused)
+//  member #11: float glow_auto_exposure_scale offset 60 (unused)
+//  member #12: float camera_z_far offset 64 (unused)
+//  member #13: float camera_z_near offset 68 (unused)
+//  member #14: vec2 octmap_border_size offset 72 (unused)
+//  member #15: vec4 set_color offset 80 (unused)
+// textures: 2
+//  #0: source_color (high 2d) 0x0 [-1]
+//  #1: dest_buffer (high image2d) 0x0 [-1] loc 3

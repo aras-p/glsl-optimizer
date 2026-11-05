@@ -1,0 +1,54 @@
+#version 320 es
+struct Node {
+  highp vec4 color;
+  highp float depth;
+  highp uint next;
+};
+layout(std430, column_major, binding=1) buffer LinkedListSBO {
+  layout(column_major) Node nodes[];
+};
+layout(location=0) out highp vec4 outFragColor;
+layout(r32ui, binding=0) uniform highp uimage2D headIndexImage;
+void main ()
+{
+  highp vec4 color_2;
+  highp uint nodeIdx_4;
+  highp int count_5;
+  Node fragments_6[128];
+  count_5 = 0;
+  highp uvec4 tmpvar_7;
+  tmpvar_7 = imageLoad (headIndexImage, ivec2(gl_FragCoord.xy));
+  nodeIdx_4 = tmpvar_7.x;
+  for (; ((nodeIdx_4 != 4294967295u) && (count_5 < 128)); count_5++) {
+    fragments_6[count_5] = nodes[nodeIdx_4];
+    nodeIdx_4 = fragments_6[count_5].next;
+  };
+  for (highp uint i_3 = 1u; i_3 < uint(count_5); i_3++) {
+    highp uint j_8;
+    Node tmpvar_9;
+    tmpvar_9 = fragments_6[i_3];
+    j_8 = i_3;
+    for (; ((uint(0) < j_8) && (fragments_6[(j_8 + 4294967295u)].depth < tmpvar_9.depth)); j_8 += 4294967295u) {
+      fragments_6[j_8] = fragments_6[(j_8 + 4294967295u)];
+    };
+    fragments_6[j_8] = tmpvar_9;
+  };
+  color_2 = vec4(0.025, 0.025, 0.025, 1.0);
+  for (highp int i_1 = 0; i_1 < count_5; i_1++) {
+    color_2 = mix (color_2, fragments_6[i_1].color, fragments_6[i_1].color.w);
+  };
+  outFragColor = color_2;
+}
+
+
+// stats: 23 alu 1 tex 8 flow
+// inputs: 1
+//  #0: gl_FragCoord (high float) 4x1 [-1] loc 0
+// buffer #0: LinkedListSBO storage layout std430 binding 1 (size: unknown)
+//  member #0: Node[] nodes offset 0 array runtime stride 32
+//  member #1: Node [] parent 0 offset 0
+//  member #2: vec4 color parent 1 offset 0
+//  member #3: float depth parent 1 offset 16
+//  member #4: uint next parent 1 offset 20
+// textures: 1
+//  #0: headIndexImage (high image2d) 0x0 [-1] loc 0

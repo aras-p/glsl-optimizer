@@ -1,0 +1,42 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct xlatMtlShaderInput {
+  float4 gl_FragCoord [[position]];
+};
+struct xlatMtlShaderOutput {
+  float4 color [[color(0)]];
+};
+struct xlatMtlShaderUniform {
+};
+fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , texture3d<float, access::read> sourceImage [[texture(0)]]
+  , texture2d_array<uint, access::write> destinationImage [[texture(1)]])
+{
+  xlatMtlShaderOutput _mtl_o;
+  short2 p_1 = 0;
+  p_1 = short2(int2(_mtl_i.gl_FragCoord.xy));
+  int3 tmpvar_2 = 0;
+  tmpvar_2 = int3(sourceImage.get_width(), sourceImage.get_height(), sourceImage.get_depth());
+  int3 tmpvar_3 = 0;
+  tmpvar_3.xy = int2(p_1);
+  tmpvar_3.z = (tmpvar_2.z - 1);
+  float4 tmpvar_4 = 0;
+  tmpvar_4 = sourceImage.read(uint3(tmpvar_3));
+  _mtl_o.color = tmpvar_4;
+  int3 tmpvar_5 = 0;
+  tmpvar_5 = int3(destinationImage.get_width(), destinationImage.get_height(), destinationImage.get_array_size());
+  int3 tmpvar_6 = 0;
+  tmpvar_6.xy = int2(p_1);
+  tmpvar_6.z = (tmpvar_5.z - 1);
+  destinationImage.write(uint4(uint4((tmpvar_4 * 255.0))), uint2(tmpvar_6.xy), uint(tmpvar_6.z));
+  return _mtl_o;
+}
+
+
+// stats: 5 alu 4 tex 0 flow
+// inputs: 1
+//  #0: gl_FragCoord (high float) 4x1 [-1] loc 0
+// textures: 2
+//  #0: sourceImage (high image3d) 0x0 [-1] loc 0
+//  #1: destinationImage (high image2darray) 0x0 [-1] loc 1

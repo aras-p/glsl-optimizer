@@ -34,6 +34,7 @@
 
 #include <math.h>
 #include "ir_buffer_blocks.h"
+#include "ir_image.h"
 #include "string_to_uint_map.h"
 
 
@@ -128,6 +129,7 @@ struct metal_print_context
 	, atomicCompSwapSpaces(0)
 	, memoryBarrierDone(false)
 	, textureCounter(0)
+	, imageCounter(0)
 	, attributeCounter(0)
 	, uniformLocationCounter(0)
 	, colorCounter(0)
@@ -162,6 +164,7 @@ struct metal_print_context
 	unsigned atomicCompSwapSpaces;
 	bool memoryBarrierDone;
 	int textureCounter;
+	int imageCounter;
 	int attributeCounter;
 	int uniformLocationCounter;
 	int colorCounter;
@@ -252,6 +255,13 @@ _mesa_print_ir_metal(exec_list *instructions,
 {
 	if (mode == kPrintGlslFragment) optimize_split_arrays(instructions, false, true);
 	metal_print_context ctx(buffer);
+	// Keep sampled textures paired with their sampler indices; images occupy
+	// the remaining texture slots without pushing sampler indices upward.
+	foreach_in_list(ir_instruction, instruction, instructions) {
+		const auto* var = instruction->as_variable();
+		if (var && var->data.mode == ir_var_uniform && var->type->without_array()->is_sampler())
+			++ctx.imageCounter;
+	}
 
 	// includes, prefix etc.
 	ctx.prefixStr.asprintf_append ("#include <metal_stdlib>\n");
@@ -290,7 +300,7 @@ _mesa_print_ir_metal(exec_list *instructions,
 			//
 			if (var->data.mode == ir_var_uniform)
 			{
-				if (var->type->without_array()->is_sampler())
+				if (var->type->without_array()->is_sampler() || var->type->contains_image())
 				{
 					strOut = &ctx.paramsStr;
 					ctx.writingParams = true;
@@ -556,6 +566,14 @@ static void print_type_precision(string_buffer& buffer, const glsl_type *t, unsi
 
 static void print_type(string_buffer& buffer, ir_instruction* ir, const glsl_type *t, bool arraySize)
 {
+	if (t->is_image()) {
+		const auto* var = ir->as_variable();
+		buffer.asprintf_append("texture%s<%s, access::%s>",
+			t->sampler_dimensionality == GLSL_SAMPLER_DIM_3D ? "3d" : t->sampler_array ? "2d_array" : "2d",
+			t->sampled_type == GLSL_TYPE_UINT ? "uint" : t->sampled_type == GLSL_TYPE_INT ? "int" : "float",
+			var && var->data.memory_read_only ? "read" : var && var->data.memory_write_only ? "write" : "read_write");
+		return;
+	}
 	unsigned prec = precision_from_ir(ir);
 	print_type_precision(buffer, t, prec, arraySize);
 }
@@ -956,11 +974,12 @@ void ir_print_metal_visitor::visit(ir_variable *ir)
 	// uniform texture?
 	if (ir->data.mode == ir_var_uniform && ctx.writingParams)
 	{
-		buffer.asprintf_append (" [[texture(%i)]]", ctx.textureCounter);
-		buffer.asprintf_append (", sampler _mtlsmp_%s [[sampler(%i)]]", ir->name, ctx.textureCounter);
+		int index = ir->type->is_image() ? ctx.imageCounter++ : ctx.textureCounter++;
+		buffer.asprintf_append (" [[texture(%i)]]", index);
+		if (!ir->type->is_image())
+			buffer.asprintf_append (", sampler _mtlsmp_%s [[sampler(%i)]]", ir->name, index);
 		ir->data.explicit_location = 1;
-		ir->data.location = ctx.textureCounter;
-		++ctx.textureCounter;
+		ir->data.location = index;
 	}
 	// regular uniform?
 	if (ir->data.mode == ir_var_uniform && !ctx.writingParams)
@@ -1652,7 +1671,7 @@ void ir_print_metal_visitor::visit(ir_swizzle *ir)
       ir->mask.w,
    };
 
-	if (ir->val->type == glsl_type::float_type || ir->val->type == glsl_type::int_type)
+	if (ir->val->type == glsl_type::float_type || ir->val->type == glsl_type::int_type || ir->val->type == glsl_type::uint_type)
 	{
 		if (ir->mask.num_components != 1)
 		{
@@ -1663,7 +1682,7 @@ void ir_print_metal_visitor::visit(ir_swizzle *ir)
 
 	ir->val->accept(this);
 	
-	if (ir->val->type == glsl_type::float_type || ir->val->type == glsl_type::int_type)
+	if (ir->val->type == glsl_type::float_type || ir->val->type == glsl_type::int_type || ir->val->type == glsl_type::uint_type)
 	{
 		if (ir->mask.num_components != 1)
 		{
@@ -1684,7 +1703,7 @@ static void print_var_inout (string_buffer& buf, ir_variable* var, bool insideLH
 		buf.asprintf_append ("_mtl_i.");
 	if (var->data.mode == ir_var_shader_out && !var->data.fb_fetch_output)
 		buf.asprintf_append ("_mtl_o.");
-	if (var->data.mode == ir_var_uniform && !var->type->without_array()->is_sampler())
+	if (var->data.mode == ir_var_uniform && !var->type->without_array()->is_sampler() && !var->type->contains_image())
 		buf.asprintf_append ("_mtl_u.");
 	if (var->data.mode == ir_var_shader_out && var->data.fb_fetch_output)
 		buf.asprintf_append (insideLHS ? "_mtl_o." : "_mtl_i.");
@@ -2168,6 +2187,39 @@ ir_print_metal_visitor::visit(ir_call *ir)
 		visit(ir->return_deref);
 		buffer.asprintf_append (" = ");
 	}
+
+   if (const char* imageFunction = image_function_name(ir->callee)) {
+      auto* image = ((ir_instruction*)ir->actual_parameters.get_head())->as_rvalue();
+      const glsl_type* type = image->type;
+      bool array = type->sampler_array;
+      bool volume = type->sampler_dimensionality == GLSL_SAMPLER_DIM_3D;
+      if (!strcmp(imageFunction, "imageSize")) {
+         buffer.asprintf_append(array || volume ? "int3(" : "int2(");
+         image->accept(this); buffer.asprintf_append(".get_width(), ");
+         image->accept(this); buffer.asprintf_append(".get_height()");
+         if (array || volume) {
+            buffer.asprintf_append(", "); image->accept(this);
+            buffer.asprintf_append(array ? ".get_array_size()" : ".get_depth()");
+         }
+         buffer.asprintf_append(")");
+      } else {
+         auto* coord = ((ir_instruction*)image->next)->as_rvalue();
+         bool store = !strcmp(imageFunction, "imageStore");
+         image->accept(this);
+         buffer.asprintf_append(store ? ".write(" : ".read(");
+         if (store) {
+            auto* value = ((ir_instruction*)coord->next)->as_rvalue();
+            buffer.asprintf_append("%s4(", type->sampled_type == GLSL_TYPE_UINT ? "uint" : type->sampled_type == GLSL_TYPE_INT ? "int" : "float");
+            value->accept(this); buffer.asprintf_append("), ");
+         }
+         buffer.asprintf_append(volume ? "uint3(" : "uint2(");
+         coord->accept(this);
+         buffer.asprintf_append(array ? ".xy), uint(" : ")");
+         if (array) { coord->accept(this); buffer.asprintf_append(".z)"); }
+         buffer.asprintf_append(")");
+      }
+      return;
+   }
 
    if (const auto* barrier = find_memory_barrier(ir->callee)) {
       assert(barrier->metal_flags);

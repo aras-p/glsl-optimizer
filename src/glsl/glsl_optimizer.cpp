@@ -2,6 +2,7 @@
 #include "main/mtypes.h"
 #include "ir.h"
 #include "ir_buffer_blocks.h"
+#include "ir_image.h"
 #include "ir_hierarchical_visitor.h"
 #include <unordered_map>
 #include "ir_optimization.h"
@@ -48,6 +49,8 @@ initialize_mesa_context(struct gl_context *ctx, glslopt_target api)
 	}
 	initialize_context_to_defaults (ctx, mesaAPI);
 	ctx->Extensions.ARB_shader_storage_buffer_object = true;
+	ctx->Extensions.ARB_shader_image_load_store = true;
+	ctx->Extensions.ARB_shader_image_size = true;
 
 	switch(api)
 	{
@@ -308,6 +311,10 @@ static void glsl_type_to_optimizer_desc(const glsl_type* type, unsigned prec, gl
 		out->type = kGlslTypeInt;
 	else if (type->is_boolean())
 		out->type = kGlslTypeBool;
+	else if (type->is_image())
+		out->type = type->sampler_dimensionality == GLSL_SAMPLER_DIM_2D ?
+			(type->sampler_array ? kGlslTypeImage2DArray : kGlslTypeImage2D) :
+			type->sampler_dimensionality == GLSL_SAMPLER_DIM_3D ? kGlslTypeImage3D : kGlslTypeOther;
 	else if (type->is_sampler())
 	{
 		if (type->sampler_dimensionality == GLSL_SAMPLER_DIM_2D)
@@ -330,8 +337,8 @@ static void glsl_type_to_optimizer_desc(const glsl_type* type, unsigned prec, gl
 		out->type = kGlslTypeOther;
 	
 	// sizes
-	out->vectorSize = type->is_sampler() ? 0 : type->vector_elements;
-	out->matrixSize = type->is_sampler() ? 0 : type->matrix_columns;
+	out->vectorSize = (type->is_sampler() || type->is_image()) ? 0 : type->vector_elements;
+	out->matrixSize = (type->is_sampler() || type->is_image()) ? 0 : type->matrix_columns;
 	
 	// precision
 	switch (prec)
@@ -485,7 +492,7 @@ static void find_shader_buffers(glslopt_shader* shader, exec_list* ir, bool meta
 	}
 }
 
-static void find_shader_variables(glslopt_shader* sh, exec_list* ir)
+static void find_shader_variables(glslopt_shader* sh, exec_list* ir, bool metal)
 {
 	foreach_in_list(ir_instruction, node, ir)
 	{
@@ -503,7 +510,7 @@ static void find_shader_variables(glslopt_shader* sh, exec_list* ir)
 			v.location = var->data.explicit_location ? var->data.location : -1;
 			++sh->inputCount;
 		}
-		if (var->data.mode == ir_var_uniform && !var->is_in_buffer_block() && !var->type->without_array()->is_sampler())
+		if (var->data.mode == ir_var_uniform && !var->is_in_buffer_block() && !var->type->without_array()->is_sampler() && !var->type->contains_image())
 		{
 			if (sh->uniformCount >= glslopt_shader::kMaxShaderUniforms)
 				continue;
@@ -514,7 +521,7 @@ static void find_shader_variables(glslopt_shader* sh, exec_list* ir)
 			v.location = var->data.explicit_location ? var->data.location : -1;
 			++sh->uniformCount;
 		}
-		if (var->data.mode == ir_var_uniform && var->type->without_array()->is_sampler())
+		if (var->data.mode == ir_var_uniform && (var->type->without_array()->is_sampler() || var->type->contains_image()))
 		{
 			if (sh->textureCount >= glslopt_shader::kMaxShaderTextures)
 				continue;
@@ -522,7 +529,8 @@ static void find_shader_variables(glslopt_shader* sh, exec_list* ir)
 			glslopt_shader_var& v = sh->textures[sh->textureCount];
 			v.name = ralloc_strdup(sh->mem_ctx, var->name);
 			glsl_type_to_optimizer_desc(var->type, var->data.precision, &v);
-			v.location = var->data.explicit_location ? var->data.location : -1;
+			v.location = !metal && var->type->contains_image() && var->data.explicit_binding ? var->data.binding :
+				var->data.explicit_location ? var->data.location : -1;
 			++sh->textureCount;
 		}
 	}
@@ -579,6 +587,11 @@ public:
 	}
 	ir_visitor_status visit_enter(ir_call* call) override {
 		if (!call->callee->is_builtin()) return visit_continue;
+		if (image_function_name(call->callee)) return visit_continue;
+		if (!strncmp(call->callee_name(), "__intrinsic_image_", 18) || !strncmp(call->callee_name(), "image", 5)) {
+			error = "Only imageLoad, imageStore and imageSize are supported.";
+			return visit_continue;
+		}
 		if (find_memory_barrier(call->callee)) return visit_continue;
 		if (find_buffer_atomic(call->callee)) {
 			auto* target = ((ir_instruction*)call->actual_parameters.get_head())->as_rvalue();
@@ -648,6 +661,7 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 	exec_list* ir = shader->ir;
 	bool hasStorage = false;
 	bool hasShared = false;
+	bool hasImages = false;
 	storage_validation storageValidation(ctx->target == kGlslTargetMetal);
 
 	// These declarations need dedicated backend support before they can be
@@ -659,12 +673,19 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 			continue;
 		hasStorage |= var->data.mode == ir_var_shader_storage;
 		hasShared |= var->data.mode == ir_var_shader_shared;
+		hasImages |= var->type->contains_image();
 		const char* unsupported = nullptr;
 		// Stage interfaces need their own input/output mapping.
 		if (var->is_interface_instance() && var->data.mode != ir_var_uniform && var->data.mode != ir_var_shader_storage)
 			unsupported = "Interface-block";
-		else if (var->type->contains_image())
-			unsupported = "Image";
+		else if (ctx->target == kGlslTargetMetal && var->type->contains_image()) {
+			const glsl_type* image = var->type;
+			if (!image->is_image() ||
+				(image->sampler_dimensionality != GLSL_SAMPLER_DIM_2D && image->sampler_dimensionality != GLSL_SAMPLER_DIM_3D))
+				unsupported = "Image dimension or resource-array";
+			else if (var->data.memory_coherent || var->data.memory_volatile)
+				unsupported = "Coherent/volatile image";
+		}
 		else if (var->type->contains_atomic())
 			unsupported = "Atomic-counter";
 		// Metal matrix constructors do not support threadgroup storage.
@@ -698,12 +719,12 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 			}
 		}
 	}
-	if (hasStorage || (ctx->target == kGlslTargetMetal && type == kGlslOptShaderCompute))
+	if (hasStorage || hasImages || (ctx->target == kGlslTargetMetal && type == kGlslOptShaderCompute))
 		visit_list_elements(&storageValidation, ir);
 	if (storageValidation.error) { result->infoLog = storageValidation.error; return result; }
-	if (ctx->target == kGlslTargetMetal && hasShared) {
-		// Threadgroup declarations live inside the Metal kernel. Inline helpers
-		// before raw output so their shared-variable references remain in scope.
+	if (ctx->target == kGlslTargetMetal && (hasShared || hasImages)) {
+		// Threadgroup storage and image parameters live inside the Metal entry point.
+		// Inline helpers so their resource references remain in scope.
 		while (do_function_inlining(ir)) {}
 		do_dead_functions(ir);
 		propagate_precision(ir);
@@ -738,7 +759,7 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 		result->optimizedOutput = _mesa_print_ir_glsl(ir, state, ralloc_strdup(result->mem_ctx, ""), printMode);
 	else
 		result->optimizedOutput = _mesa_print_ir_metal(ir, state, ralloc_strdup(result->mem_ctx, ""), printMode, &result->uniformsSize);
-	find_shader_variables(result, ir);
+	find_shader_variables(result, ir, ctx->target == kGlslTargetMetal);
 	find_shader_buffers(result, ir, ctx->target == kGlslTargetMetal);
 	calculate_shader_stats(ir, &result->statsMath, &result->statsTex, &result->statsFlow);
 	result->status = true;

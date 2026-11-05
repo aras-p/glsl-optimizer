@@ -54,6 +54,9 @@ enum glslopt_basic_type {
 	kGlslTypeTex2DShadow,
 	kGlslTypeTex2DArray,
 	kGlslTypeOther,
+	kGlslTypeImage2D,
+	kGlslTypeImage2DArray,
+	kGlslTypeImage3D,
 	kGlslTypeCount
 };
 enum glslopt_precision {
@@ -85,6 +88,12 @@ void glslopt_shader_get_input_desc (glslopt_shader* shader, int index, const cha
 int glslopt_shader_get_uniform_count (glslopt_shader* shader);
 int glslopt_shader_get_uniform_total_size (glslopt_shader* shader);
 void glslopt_shader_get_uniform_desc (glslopt_shader* shader, int index, const char** outName, glslopt_basic_type* outType, glslopt_precision* outPrec, int* outVecSize, int* outMatSize, int* outArraySize, int* outLocation);
+// Includes storage images. For images, location is the GL image binding or Metal
+// texture slot; Metal image slots follow sampled textures and do not consume
+// sampler slots. Bind a compatible texture format with shader-read/write usage
+// matching the source qualifiers.
+// Metal imageLoad uses native texture reads: out-of-bounds reads return zero
+// for present channels, but absent alpha remains 1 (GL/ES return all zeros).
 int glslopt_shader_get_texture_count (glslopt_shader* shader);
 void glslopt_shader_get_texture_desc (glslopt_shader* shader, int index, const char** outName, glslopt_basic_type* outType, glslopt_precision* outPrec, int* outVecSize, int* outMatSize, int* outArraySize, int* outLocation);
 

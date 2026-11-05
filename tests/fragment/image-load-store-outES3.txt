@@ -1,0 +1,31 @@
+#version 310 es
+layout(rgba8, binding=1) readonly uniform highp image3D sourceImage;
+layout(rgba32ui, binding=3) writeonly uniform highp uimage2DArray destinationImage;
+layout(location=0) out highp vec4 color;
+void main ()
+{
+  mediump ivec2 p_1;
+  p_1 = ivec2(gl_FragCoord.xy);
+  highp ivec3 tmpvar_2;
+  tmpvar_2 = imageSize (sourceImage);
+  highp ivec3 tmpvar_3;
+  tmpvar_3.xy = p_1;
+  tmpvar_3.z = (tmpvar_2.z - 1);
+  highp vec4 tmpvar_4;
+  tmpvar_4 = imageLoad (sourceImage, tmpvar_3);
+  color = tmpvar_4;
+  highp ivec3 tmpvar_5;
+  tmpvar_5 = imageSize (destinationImage);
+  highp ivec3 tmpvar_6;
+  tmpvar_6.xy = p_1;
+  tmpvar_6.z = (tmpvar_5.z - 1);
+  imageStore (destinationImage, tmpvar_6, uvec4((tmpvar_4 * 255.0)));
+}
+
+
+// stats: 5 alu 4 tex 0 flow
+// inputs: 1
+//  #0: gl_FragCoord (high float) 4x1 [-1] loc 0
+// textures: 2
+//  #0: sourceImage (high image3d) 0x0 [-1] loc 1
+//  #1: destinationImage (high image2darray) 0x0 [-1] loc 3

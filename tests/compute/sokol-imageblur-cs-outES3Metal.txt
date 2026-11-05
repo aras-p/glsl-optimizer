@@ -1,0 +1,234 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct alignas(16) _xlat_buf_storage0 {
+  alignas(4) int filter_dim;
+  alignas(4) int block_dim;
+  alignas(4) int flip;
+};
+static_assert(sizeof(_xlat_buf_storage0) == 16, "std140 size");
+struct xlatMtlShaderUniform {
+};
+// threadsPerThreadgroup: 32, 1, 1
+kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , constant _xlat_buf_storage0& _mtl_buffer1 [[buffer(1)]]
+  , uint3 gl_WorkGroupID [[threadgroup_position_in_grid]]
+  , uint3 gl_LocalInvocationID [[thread_position_in_threadgroup]]
+  , texture2d<float> cs_inp_tex [[texture(0)]], sampler _mtlsmp_cs_inp_tex [[sampler(0)]]
+  , texture2d<float, access::write> cs_outp_tex [[texture(1)]])
+{
+threadgroup float3 tile_1[4][128];
+  int r_2 = 0;
+  uint tmpvar_3;
+  tmpvar_3 = ((uint(int(_mtl_buffer1.filter_dim)) + 4294967295) / 2);
+  int2 tmpvar_4 = 0;
+  tmpvar_4 = int2(cs_inp_tex.get_width(0), cs_inp_tex.get_height(0));
+  float2 tmpvar_5 = 0;
+  tmpvar_5.y = 4.0;
+  tmpvar_5.x = float(int(_mtl_buffer1.block_dim));
+  float2 tmpvar_6 = 0;
+  tmpvar_6.y = 0.0;
+  tmpvar_6.x = float(tmpvar_3);
+  int2 tmpvar_7 = 0;
+  tmpvar_7 = int2(((
+    (float2(gl_WorkGroupID.xy) * tmpvar_5)
+   + 
+    (float2(gl_LocalInvocationID.xy) * float2(4.0, 1.0))
+  ) - tmpvar_6));
+  float2 load_index_8 = 0;
+  float2 tmpvar_9 = 0;
+  tmpvar_9 = float2(tmpvar_7);
+  load_index_8 = tmpvar_9;
+  if ((int(_mtl_buffer1.flip) != 0)) {
+    load_index_8 = tmpvar_9.yx;
+  };
+  tile_1[0][(4 * gl_LocalInvocationID.x)] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (float2)((((load_index_8 + float2(0.25, 0.25)) / float2(tmpvar_4)))), level(0.0)).xyz;
+  float2 load_index_10 = 0;
+  float2 tmpvar_11 = 0;
+  tmpvar_11 = (float2(tmpvar_7) + float2(1.0, 0.0));
+  load_index_10 = tmpvar_11;
+  if ((int(_mtl_buffer1.flip) != 0)) {
+    load_index_10 = tmpvar_11.yx;
+  };
+  tile_1[0][((4 * gl_LocalInvocationID.x) + 1)] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (float2)((((load_index_10 + float2(0.25, 0.25)) / float2(tmpvar_4)))), level(0.0)).xyz;
+  float2 load_index_12 = 0;
+  float2 tmpvar_13 = 0;
+  tmpvar_13 = (float2(tmpvar_7) + float2(2.0, 0.0));
+  load_index_12 = tmpvar_13;
+  if ((int(_mtl_buffer1.flip) != 0)) {
+    load_index_12 = tmpvar_13.yx;
+  };
+  tile_1[0][((4 * gl_LocalInvocationID.x) + 2)] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (float2)((((load_index_12 + float2(0.25, 0.25)) / float2(tmpvar_4)))), level(0.0)).xyz;
+  float2 load_index_14 = 0;
+  float2 tmpvar_15 = 0;
+  tmpvar_15 = (float2(tmpvar_7) + float2(3.0, 0.0));
+  load_index_14 = tmpvar_15;
+  if ((int(_mtl_buffer1.flip) != 0)) {
+    load_index_14 = tmpvar_15.yx;
+  };
+  tile_1[0][((4 * gl_LocalInvocationID.x) + 3)] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (float2)((((load_index_14 + float2(0.25, 0.25)) / float2(tmpvar_4)))), level(0.0)).xyz;
+  float2 load_index_16 = 0;
+  float2 tmpvar_17 = 0;
+  tmpvar_17 = (float2(tmpvar_7) + float2(0.0, 1.0));
+  load_index_16 = tmpvar_17;
+  if ((int(_mtl_buffer1.flip) != 0)) {
+    load_index_16 = tmpvar_17.yx;
+  };
+  tile_1[1][(4 * gl_LocalInvocationID.x)] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (float2)((((load_index_16 + float2(0.25, 0.25)) / float2(tmpvar_4)))), level(0.0)).xyz;
+  float2 load_index_18 = 0;
+  float2 tmpvar_19 = 0;
+  tmpvar_19 = (float2(tmpvar_7) + float2(1.0, 1.0));
+  load_index_18 = tmpvar_19;
+  if ((int(_mtl_buffer1.flip) != 0)) {
+    load_index_18 = tmpvar_19.yx;
+  };
+  tile_1[1][((4 * gl_LocalInvocationID.x) + 1)] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (float2)((((load_index_18 + float2(0.25, 0.25)) / float2(tmpvar_4)))), level(0.0)).xyz;
+  float2 load_index_20 = 0;
+  float2 tmpvar_21 = 0;
+  tmpvar_21 = (float2(tmpvar_7) + float2(2.0, 1.0));
+  load_index_20 = tmpvar_21;
+  if ((int(_mtl_buffer1.flip) != 0)) {
+    load_index_20 = tmpvar_21.yx;
+  };
+  tile_1[1][((4 * gl_LocalInvocationID.x) + 2)] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (float2)((((load_index_20 + float2(0.25, 0.25)) / float2(tmpvar_4)))), level(0.0)).xyz;
+  float2 load_index_22 = 0;
+  float2 tmpvar_23 = 0;
+  tmpvar_23 = (float2(tmpvar_7) + float2(3.0, 1.0));
+  load_index_22 = tmpvar_23;
+  if ((int(_mtl_buffer1.flip) != 0)) {
+    load_index_22 = tmpvar_23.yx;
+  };
+  tile_1[1][((4 * gl_LocalInvocationID.x) + 3)] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (float2)((((load_index_22 + float2(0.25, 0.25)) / float2(tmpvar_4)))), level(0.0)).xyz;
+  float2 load_index_24 = 0;
+  float2 tmpvar_25 = 0;
+  tmpvar_25 = (float2(tmpvar_7) + float2(0.0, 2.0));
+  load_index_24 = tmpvar_25;
+  if ((int(_mtl_buffer1.flip) != 0)) {
+    load_index_24 = tmpvar_25.yx;
+  };
+  tile_1[2][(4 * gl_LocalInvocationID.x)] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (float2)((((load_index_24 + float2(0.25, 0.25)) / float2(tmpvar_4)))), level(0.0)).xyz;
+  float2 load_index_26 = 0;
+  float2 tmpvar_27 = 0;
+  tmpvar_27 = (float2(tmpvar_7) + float2(1.0, 2.0));
+  load_index_26 = tmpvar_27;
+  if ((int(_mtl_buffer1.flip) != 0)) {
+    load_index_26 = tmpvar_27.yx;
+  };
+  tile_1[2][((4 * gl_LocalInvocationID.x) + 1)] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (float2)((((load_index_26 + float2(0.25, 0.25)) / float2(tmpvar_4)))), level(0.0)).xyz;
+  float2 load_index_28 = 0;
+  float2 tmpvar_29 = 0;
+  tmpvar_29 = (float2(tmpvar_7) + float2(2.0, 2.0));
+  load_index_28 = tmpvar_29;
+  if ((int(_mtl_buffer1.flip) != 0)) {
+    load_index_28 = tmpvar_29.yx;
+  };
+  tile_1[2][((4 * gl_LocalInvocationID.x) + 2)] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (float2)((((load_index_28 + float2(0.25, 0.25)) / float2(tmpvar_4)))), level(0.0)).xyz;
+  float2 load_index_30 = 0;
+  float2 tmpvar_31 = 0;
+  tmpvar_31 = (float2(tmpvar_7) + float2(3.0, 2.0));
+  load_index_30 = tmpvar_31;
+  if ((int(_mtl_buffer1.flip) != 0)) {
+    load_index_30 = tmpvar_31.yx;
+  };
+  tile_1[2][((4 * gl_LocalInvocationID.x) + 3)] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (float2)((((load_index_30 + float2(0.25, 0.25)) / float2(tmpvar_4)))), level(0.0)).xyz;
+  float2 load_index_32 = 0;
+  float2 tmpvar_33 = 0;
+  tmpvar_33 = (float2(tmpvar_7) + float2(0.0, 3.0));
+  load_index_32 = tmpvar_33;
+  if ((int(_mtl_buffer1.flip) != 0)) {
+    load_index_32 = tmpvar_33.yx;
+  };
+  tile_1[3][(4 * gl_LocalInvocationID.x)] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (float2)((((load_index_32 + float2(0.25, 0.25)) / float2(tmpvar_4)))), level(0.0)).xyz;
+  float2 load_index_34 = 0;
+  float2 tmpvar_35 = 0;
+  tmpvar_35 = (float2(tmpvar_7) + float2(1.0, 3.0));
+  load_index_34 = tmpvar_35;
+  if ((int(_mtl_buffer1.flip) != 0)) {
+    load_index_34 = tmpvar_35.yx;
+  };
+  tile_1[3][((4 * gl_LocalInvocationID.x) + 1)] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (float2)((((load_index_34 + float2(0.25, 0.25)) / float2(tmpvar_4)))), level(0.0)).xyz;
+  float2 load_index_36 = 0;
+  float2 tmpvar_37 = 0;
+  tmpvar_37 = (float2(tmpvar_7) + float2(2.0, 3.0));
+  load_index_36 = tmpvar_37;
+  if ((int(_mtl_buffer1.flip) != 0)) {
+    load_index_36 = tmpvar_37.yx;
+  };
+  tile_1[3][((4 * gl_LocalInvocationID.x) + 2)] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (float2)((((load_index_36 + float2(0.25, 0.25)) / float2(tmpvar_4)))), level(0.0)).xyz;
+  float2 load_index_38 = 0;
+  float2 tmpvar_39 = 0;
+  tmpvar_39 = (float2(tmpvar_7) + float2(3.0, 3.0));
+  load_index_38 = tmpvar_39;
+  if ((int(_mtl_buffer1.flip) != 0)) {
+    load_index_38 = tmpvar_39.yx;
+  };
+  tile_1[3][((4 * gl_LocalInvocationID.x) + 3)] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (float2)((((load_index_38 + float2(0.25, 0.25)) / float2(tmpvar_4)))), level(0.0)).xyz;
+  threadgroup_barrier(mem_flags::mem_threadgroup);
+  r_2 = 0;
+  while (true) {
+    int c_40 = 0;
+    if ((r_2 >= 4)) {
+      break;
+    };
+    c_40 = 0;
+    while (true) {
+      int2 write_index_41 = 0;
+      if ((c_40 >= 4)) {
+        break;
+      };
+      int2 tmpvar_42 = 0;
+      tmpvar_42.x = c_40;
+      tmpvar_42.y = r_2;
+      int2 tmpvar_43 = 0;
+      tmpvar_43 = (tmpvar_7 + tmpvar_42);
+      write_index_41 = tmpvar_43;
+      if ((int(_mtl_buffer1.flip) != 0)) {
+        write_index_41 = tmpvar_43.yx;
+      };
+      int tmpvar_44 = 0;
+      tmpvar_44 = ((4 * int(gl_LocalInvocationID.x)) + c_40);
+      bool tmpvar_45 = false;
+      if (((tmpvar_44 >= int(tmpvar_3)) && (tmpvar_44 < (128 - 
+        int(tmpvar_3)
+      )))) {
+        tmpvar_45 = all((write_index_41 < tmpvar_4) == bool2(1, 1));
+      } else {
+        tmpvar_45 = bool(0);
+      };
+      if (tmpvar_45) {
+        int f_46 = 0;
+        float3 acc_47 = 0;
+        acc_47 = float3(0.0, 0.0, 0.0);
+        f_46 = 0;
+        while (true) {
+          if ((f_46 >= int(_mtl_buffer1.filter_dim))) {
+            break;
+          };
+          int tmpvar_48 = 0;
+          tmpvar_48 = ((tmpvar_44 + f_46) - int(tmpvar_3));
+          acc_47 = (acc_47 + ((1.0/(
+            float(int(_mtl_buffer1.filter_dim))
+          )) * tile_1[r_2][tmpvar_48]));
+          f_46++;
+        };
+        float4 tmpvar_49 = 0;
+        tmpvar_49.w = 1.0;
+        tmpvar_49.xyz = acc_47;
+        cs_outp_tex.write(float4(tmpvar_49), uint2(write_index_41));
+      };
+      c_40++;
+    };
+    r_2++;
+  };
+}
+
+
+// stats: 169 alu 18 tex 25 flow
+// workgroup size: 32 1 1
+// buffer #0: cs_params layout std140 binding 0 (size: 16) metal 1
+//  member #0: int filter_dim offset 0
+//  member #1: int block_dim offset 4
+//  member #2: int flip offset 8
+// textures: 2
+//  #0: cs_inp_tex (high 2d) 0x0 [-1] loc 0
+//  #1: cs_outp_tex (high image2d) 0x0 [-1] loc 1

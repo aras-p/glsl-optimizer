@@ -1,0 +1,48 @@
+#version 310 es
+layout(local_size_x=8) in;
+layout(std430, column_major) buffer Output {
+  highp vec4 values[];
+} outputData;
+layout(r32ui, binding=0) readonly uniform highp uimage2D source2D;
+layout(r32i, binding=1) readonly uniform highp iimage2DArray sourceArray;
+layout(r32f, binding=2) readonly uniform highp image3D source3D;
+void main ()
+{
+  highp int tmpvar_1;
+  tmpvar_1 = (int(gl_GlobalInvocationID.x) - 1);
+  highp ivec2 tmpvar_2;
+  tmpvar_2 = imageSize (source2D);
+  highp ivec2 tmpvar_3;
+  tmpvar_3.x = tmpvar_1;
+  tmpvar_3.y = tmpvar_2.y;
+  highp uvec4 tmpvar_4;
+  tmpvar_4 = imageLoad (source2D, tmpvar_3);
+  highp ivec3 tmpvar_5;
+  tmpvar_5 = imageSize (sourceArray);
+  highp ivec3 tmpvar_6;
+  tmpvar_6.y = 0;
+  tmpvar_6.x = tmpvar_1;
+  tmpvar_6.z = tmpvar_5.z;
+  highp ivec4 tmpvar_7;
+  tmpvar_7 = imageLoad (sourceArray, tmpvar_6);
+  highp ivec3 tmpvar_8;
+  tmpvar_8 = imageSize (source3D);
+  highp ivec3 tmpvar_9;
+  tmpvar_9.y = 0;
+  tmpvar_9.x = tmpvar_1;
+  tmpvar_9.z = tmpvar_8.z;
+  highp vec4 tmpvar_10;
+  tmpvar_10 = imageLoad (source3D, tmpvar_9);
+  outputData.values[gl_GlobalInvocationID.x] = ((vec4(tmpvar_4) + vec4(tmpvar_7)) + tmpvar_10);
+}
+
+
+// stats: 8 alu 6 tex 0 flow
+// workgroup size: 8 1 1
+// buffer #0: Output storage instance outputData layout std430 (size: unknown)
+//  member #0: vec4[] values offset 0 array runtime stride 16
+//  member #1: vec4 [] parent 0 offset 0
+// textures: 3
+//  #0: source2D (high image2d) 0x0 [-1] loc 0
+//  #1: sourceArray (high image2darray) 0x0 [-1] loc 1
+//  #2: source3D (high image3d) 0x0 [-1] loc 2

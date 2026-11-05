@@ -1,0 +1,154 @@
+#version 430
+layout(local_size_x=8, local_size_y=8) in;
+layout(std140, column_major, binding=0) uniform Params {
+  ivec4 section;
+  ivec2 target;
+  uint flags;
+  float luminance_multiplier;
+  float glow_strength;
+  float glow_bloom;
+  float glow_hdr_threshold;
+  float glow_hdr_scale;
+  float glow_exposure;
+  float glow_white;
+  float glow_luminance_cap;
+  float glow_auto_exposure_scale;
+  float camera_z_far;
+  float camera_z_near;
+  vec2 octmap_border_size;
+  vec4 set_color;
+} params;
+uniform sampler2D source_color;
+uniform sampler2D source_auto_exposure;
+layout(rgba16f, binding=3) writeonly restrict uniform image2D dest_buffer;
+shared vec4 local_cache[256];
+shared vec4 temp_cache[128];
+void main ()
+{
+  vec4 color_1;
+  vec4 color_bottom_2;
+  vec4 color_top_3;
+  ivec2 tmpvar_4;
+  tmpvar_4 = ivec2(gl_GlobalInvocationID.xy);
+  vec2 tmpvar_5;
+  tmpvar_5 = clamp (((
+    vec2(((uvec2(params.section.xy) + gl_GlobalInvocationID.xy) + gl_LocalInvocationID.xy))
+   - 3.5) / vec2(params.section.zw)), (0.5 / vec2(params.section.zw)), (1.0 - (1.5 / 
+    vec2(params.section.zw)
+  )));
+  uint tmpvar_6;
+  tmpvar_6 = ((gl_LocalInvocationID.x * 2u) + (32u * gl_LocalInvocationID.y));
+  local_cache[tmpvar_6] = textureLod (source_color, tmpvar_5, 0.0);
+  vec2 tmpvar_7;
+  tmpvar_7.y = 0.0;
+  tmpvar_7.x = (1.0/(float(params.section.z)));
+  local_cache[(tmpvar_6 + 1u)] = textureLod (source_color, (tmpvar_5 + tmpvar_7), 0.0);
+  vec2 tmpvar_8;
+  tmpvar_8.x = 0.0;
+  tmpvar_8.y = (1.0/(float(params.section.w)));
+  local_cache[(tmpvar_6 + 16u)] = textureLod (source_color, (tmpvar_5 + tmpvar_8), 0.0);
+  local_cache[(17u + tmpvar_6)] = textureLod (source_color, (tmpvar_5 + (1.0/(vec2(params.section.zw)))), 0.0);
+  if (bool(int((params.flags & 16u)))) {
+    vec3 tmpvar_9;
+    tmpvar_9 = (vec3(0.299, 0.587, 0.114) / max (params.glow_luminance_cap, 6.0));
+    local_cache[tmpvar_6] = (local_cache[tmpvar_6] / (1.0 + dot (local_cache[tmpvar_6].xyz, tmpvar_9)));
+    local_cache[(tmpvar_6 + 1u)] = (local_cache[(tmpvar_6 + 1u)] / (1.0 + dot (local_cache[
+      (tmpvar_6 + 1u)
+    ].xyz, tmpvar_9)));
+    local_cache[(tmpvar_6 + 16u)] = (local_cache[(tmpvar_6 + 16u)] / (1.0 + dot (local_cache[
+      (tmpvar_6 + 16u)
+    ].xyz, tmpvar_9)));
+    local_cache[(17u + tmpvar_6)] = (local_cache[(17u + tmpvar_6)] / (1.0 + dot (local_cache[
+      (17u + tmpvar_6)
+    ].xyz, tmpvar_9)));
+  };
+  memoryBarrierShared ();
+  barrier();
+  uint tmpvar_10;
+  tmpvar_10 = ((gl_LocalInvocationID.x + (gl_LocalInvocationID.y * 32u)) + 4u);
+  color_top_3 = (local_cache[tmpvar_10] * 0.2024);
+  color_top_3 = (color_top_3 + (local_cache[(tmpvar_10 + 1u)] * 0.179));
+  color_top_3 = (color_top_3 + (local_cache[(tmpvar_10 + 2u)] * 0.124));
+  color_top_3 = (color_top_3 + (local_cache[(tmpvar_10 + 3u)] * 0.0672));
+  color_top_3 = (color_top_3 + (local_cache[(tmpvar_10 + 4294967295u)] * 0.179));
+  color_top_3 = (color_top_3 + (local_cache[(tmpvar_10 + 4294967294u)] * 0.124));
+  color_top_3 = (color_top_3 + (local_cache[(tmpvar_10 + 4294967293u)] * 0.0672));
+  color_top_3 = (color_top_3 + (local_cache[(tmpvar_10 + 4u)] * 0.0285));
+  color_top_3 = (color_top_3 + (local_cache[(tmpvar_10 + 4294967292u)] * 0.0285));
+  color_bottom_2 = (local_cache[(tmpvar_10 + 16u)] * 0.2024);
+  color_bottom_2 = (color_bottom_2 + (local_cache[(17u + tmpvar_10)] * 0.179));
+  color_bottom_2 = (color_bottom_2 + (local_cache[(18u + tmpvar_10)] * 0.124));
+  color_bottom_2 = (color_bottom_2 + (local_cache[(19u + tmpvar_10)] * 0.0672));
+  color_bottom_2 = (color_bottom_2 + (local_cache[(15u + tmpvar_10)] * 0.179));
+  color_bottom_2 = (color_bottom_2 + (local_cache[(14u + tmpvar_10)] * 0.124));
+  color_bottom_2 = (color_bottom_2 + (local_cache[(13u + tmpvar_10)] * 0.0672));
+  color_bottom_2 = (color_bottom_2 + (local_cache[(20u + tmpvar_10)] * 0.0285));
+  color_bottom_2 = (color_bottom_2 + (local_cache[(12u + tmpvar_10)] * 0.0285));
+  uint tmpvar_11;
+  tmpvar_11 = ((gl_LocalInvocationID.y * 2u) + (gl_LocalInvocationID.x * 16u));
+  temp_cache[tmpvar_11] = color_top_3;
+  temp_cache[(tmpvar_11 + 1u)] = color_bottom_2;
+  memoryBarrierShared ();
+  barrier();
+  if ((greaterThanEqual (tmpvar_4, params.section.zw) != bvec2(0, 0))) {
+    return;
+  };
+  uint tmpvar_12;
+  tmpvar_12 = ((gl_LocalInvocationID.y + (gl_LocalInvocationID.x * 16u)) + 4u);
+  color_1 = (temp_cache[tmpvar_12] * 0.2024);
+  color_1 = (color_1 + (temp_cache[(tmpvar_12 + 1u)] * 0.179));
+  color_1 = (color_1 + (temp_cache[(tmpvar_12 + 2u)] * 0.124));
+  color_1 = (color_1 + (temp_cache[(tmpvar_12 + 3u)] * 0.0672));
+  color_1 = (color_1 + (temp_cache[(tmpvar_12 + 4294967295u)] * 0.179));
+  color_1 = (color_1 + (temp_cache[(tmpvar_12 + 4294967294u)] * 0.124));
+  color_1 = (color_1 + (temp_cache[(tmpvar_12 + 4294967293u)] * 0.0672));
+  color_1 = (color_1 + (temp_cache[(tmpvar_12 + 4u)] * 0.0285));
+  color_1 = (color_1 + (temp_cache[(tmpvar_12 + 4294967292u)] * 0.0285));
+  if (bool(int((params.flags & 16u)))) {
+    color_1 = (color_1 / (1.0 - dot (color_1.xyz, 
+      (vec3(0.299, 0.587, 0.114) / max (params.glow_luminance_cap, 6.0))
+    )));
+  };
+  color_1 = (color_1 * params.glow_strength);
+  if (bool(int((params.flags & 16u)))) {
+    color_1 = (color_1 / (texelFetch (source_auto_exposure, ivec2(0, 0), 0).x / params.glow_auto_exposure_scale));
+    color_1 = (color_1 * params.glow_exposure);
+    float tmpvar_13;
+    tmpvar_13 = params.glow_hdr_threshold;
+    float tmpvar_14;
+    tmpvar_14 = clamp (((
+      max (color_1.x, max (color_1.y, color_1.z))
+     - tmpvar_13) / (
+      (params.glow_hdr_threshold + params.glow_hdr_scale)
+     - tmpvar_13)), 0.0, 1.0);
+    color_1 = min ((color_1 * max (
+      (tmpvar_14 * (tmpvar_14 * (3.0 - (2.0 * tmpvar_14))))
+    , params.glow_bloom)), vec4(params.glow_luminance_cap));
+  };
+  imageStore (dest_buffer, (tmpvar_4 + params.target), color_1);
+}
+
+
+// stats: 177 alu 6 tex 5 flow
+// workgroup size: 8 8 1
+// buffer #0: Params instance params layout std140 binding 0 (size: 96)
+//  member #0: ivec4 section offset 0
+//  member #1: ivec2 target offset 16
+//  member #2: uint flags offset 24
+//  member #3: float luminance_multiplier offset 28 (unused)
+//  member #4: float glow_strength offset 32
+//  member #5: float glow_bloom offset 36
+//  member #6: float glow_hdr_threshold offset 40
+//  member #7: float glow_hdr_scale offset 44
+//  member #8: float glow_exposure offset 48
+//  member #9: float glow_white offset 52 (unused)
+//  member #10: float glow_luminance_cap offset 56
+//  member #11: float glow_auto_exposure_scale offset 60
+//  member #12: float camera_z_far offset 64 (unused)
+//  member #13: float camera_z_near offset 68 (unused)
+//  member #14: vec2 octmap_border_size offset 72 (unused)
+//  member #15: vec4 set_color offset 80 (unused)
+// textures: 3
+//  #0: source_color (high 2d) 0x0 [-1]
+//  #1: source_auto_exposure (high 2d) 0x0 [-1]
+//  #2: dest_buffer (high image2d) 0x0 [-1] loc 3

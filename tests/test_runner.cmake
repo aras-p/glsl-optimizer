@@ -77,26 +77,29 @@ file(WRITE "${compute_input}" "${no_layout}")
 check_run(1 "compute shader must contain a fixed or a variable local group size" "${work}/fixtures")
 file(WRITE "${compute_input}" "${compute_source}")
 
-# Valid ES resource bindings reach the unsupported-output diagnostic;
-# out-of-range bindings fail in the frontend.
+# Out-of-range resource bindings fail in the frontend.
 set(resource_input "${work}/fixtures/compute/resource-binding-inES3.txt")
 function(check_resource_binding declaration last_binding invalid_binding backend_message frontend_message)
     foreach(binding ${last_binding} ${invalid_binding})
         string(REPLACE "BINDING" "${binding}" resource "${declaration}")
         file(WRITE "${resource_input}" "#version 310 es\n${resource}\nlayout(local_size_x=1) in;\nvoid main() {}\n")
         if(binding EQUAL last_binding)
-            check_run(1 "${backend_message}" "${work}/fixtures")
+            if(backend_message STREQUAL "")
+                check_run(0 "succeeded" "${work}/fixtures" --update-expected)
+            else()
+                check_run(1 "${backend_message}" "${work}/fixtures")
+            endif()
         else()
             check_run(1 "${frontend_message}" "${work}/fixtures")
         endif()
     endforeach()
 endfunction()
 check_resource_binding("layout(r32ui, binding=BINDING) uniform highp uimage2D data;"
-    7 8 "Image output is not supported" "maximum number of image units")
+    7 8 "" "maximum number of image units")
 check_resource_binding("layout(binding=BINDING, offset=0) uniform atomic_uint counter;"
     7 8 "Atomic-counter output is not supported" "maximum number of atomic counter buffer bindings")
 file(WRITE "${compute_input}" "${compute_source}")
-file(REMOVE "${resource_input}")
+file(REMOVE "${resource_input}" "${work}/fixtures/compute/resource-binding-outES3.txt" "${work}/fixtures/compute/resource-binding-outES3Metal.txt")
 
 # Check uniform-block output at the highest valid binding and reject the next binding.
 set(resource_input "${work}/fixtures/compute/uniform-binding-in.txt")
@@ -166,3 +169,23 @@ foreach(name shared-exchange shared-atomics workgroup-memory-fences)
     endforeach()
 endforeach()
 check_run(0 "8 tests.*succeeded" "${work}/fixtures")
+
+# Image operations must fail explicitly when Metal cannot represent the resource.
+set(image_reject "${work}/fixtures/compute/image-reject-inES3.txt")
+foreach(declaration
+    "layout(r32ui) uniform coherent highp uimage2D value"
+    "layout(r32ui) uniform volatile highp uimage2D value")
+    file(WRITE "${image_reject}" "#version 310 es\nlayout(local_size_x=1) in;\n${declaration};\nvoid main() { imageStore(value, ivec2(0), uvec4(1u)); }\n")
+    check_run(1 "Coherent/volatile image" "${work}/fixtures" --update-expected)
+endforeach()
+file(WRITE "${image_reject}" "#version 310 es\nlayout(local_size_x=1) in;\nlayout(r32ui) uniform highp uimage2D value[2];\nvoid main() { imageStore(value[1], ivec2(0), uvec4(1u)); }\n")
+check_run(1 "Image dimension or resource-array" "${work}/fixtures" --update-expected)
+file(WRITE "${image_reject}" "#version 320 es\nlayout(local_size_x=1) in;\nlayout(r32ui) uniform highp uimage2D value;\nvoid main() { imageAtomicAdd(value, ivec2(0), 1u); }\n")
+check_run(1 "Only imageLoad, imageStore and imageSize" "${work}/fixtures" --update-expected)
+file(REMOVE "${image_reject}" "${work}/fixtures/compute/image-reject-outES3.txt")
+foreach(name image-copy image-integer image-load-bounds image-precision)
+    foreach(suffix inES3 outES3 outES3Metal)
+        file(COPY "${TEST_SOURCE_DIR}/compute/${name}-${suffix}.txt" DESTINATION "${work}/fixtures/compute")
+    endforeach()
+endforeach()
+check_run(0 "12 tests.*succeeded" "${work}/fixtures")

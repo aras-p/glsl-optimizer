@@ -1,6 +1,7 @@
 #include "ir.h"
 #include "ir_visitor.h"
 #include "glsl_types.h"
+#include "ir_image.h"
 
 struct ir_stats_counter_visitor : public ir_hierarchical_visitor {
 	ir_stats_counter_visitor()
@@ -21,6 +22,11 @@ struct ir_stats_counter_visitor : public ir_hierarchical_visitor {
 	virtual ir_visitor_status visit_leave(class ir_texture *)
 	{
 		++tex;
+		return visit_continue;
+	}
+	virtual ir_visitor_status visit_leave(ir_call *ir)
+	{
+		if (image_function_name(ir->callee)) ++tex;
 		return visit_continue;
 	}
 	virtual ir_visitor_status visit_leave(ir_assignment *ir)

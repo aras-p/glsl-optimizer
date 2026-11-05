@@ -434,6 +434,9 @@ static const char* kGlslTypeNames[kGlslTypeCount] = {
 	"2dshadow",
 	"2darray",
 	"other",
+	"image2d",
+	"image2darray",
+	"image3d",
 };
 static const char* kGlslPrecNames[kGlslPrecCount] = {
 	"high",
