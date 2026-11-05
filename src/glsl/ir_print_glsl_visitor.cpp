@@ -463,6 +463,7 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 	case ir_var_function_in: case ir_var_const_in: storage = "in "; break;
 	case ir_var_function_out: storage = "out "; break;
 	case ir_var_function_inout: storage = "inout "; break;
+	case ir_var_shader_shared: storage = "shared "; break;
 	default: break;
 	}
 

@@ -1,0 +1,24 @@
+#version 310 es
+layout(local_size_x=8) in;
+layout(std430, column_major) buffer Output {
+  highp uint values[];
+} outputData;
+shared highp uint values[8];
+void main ()
+{
+  values[gl_LocalInvocationIndex] = gl_LocalInvocationIndex;
+  if (((gl_LocalInvocationIndex & 1u) != uint(0))) {
+    memoryBarrierShared ();
+  };
+  groupMemoryBarrier ();
+  memoryBarrier ();
+  barrier();
+  outputData.values[gl_GlobalInvocationID.x] = values[((gl_LocalInvocationIndex + 1u) % 8u)];
+}
+
+
+// stats: 4 alu 0 tex 1 flow
+// workgroup size: 8 1 1
+// buffer #0: Output storage instance outputData layout std430 (size: unknown)
+//  member #0: uint[] values offset 0 array runtime stride 4
+//  member #1: uint [] parent 0 offset 0

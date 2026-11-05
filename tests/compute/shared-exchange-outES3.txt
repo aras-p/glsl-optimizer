@@ -1,0 +1,39 @@
+#version 310 es
+layout(local_size_x=8) in;
+struct Entry {
+  highp vec2 value;
+  highp float weight;
+};
+layout(std430, column_major) buffer Output {
+  highp vec4 values[];
+} outputData;
+shared highp uint values[8];
+shared Entry entries[8];
+void main ()
+{
+  values[gl_LocalInvocationIndex] = gl_LocalInvocationIndex;
+  highp vec2 tmpvar_1;
+  tmpvar_1.y = 1.0;
+  tmpvar_1.x = float(gl_LocalInvocationIndex);
+  Entry tmpvar_2;
+  tmpvar_2.value = tmpvar_1;
+  tmpvar_2.weight = 2.0;
+  entries[gl_LocalInvocationIndex] = tmpvar_2;
+  barrier();
+  highp uint tmpvar_3;
+  tmpvar_3 = ((gl_LocalInvocationIndex + 1u) % 8u);
+  highp vec4 tmpvar_4;
+  tmpvar_4.xy = entries[tmpvar_3].value;
+  tmpvar_4.z = float(values[tmpvar_3]);
+  tmpvar_4.w = entries[tmpvar_3].weight;
+  outputData.values[gl_GlobalInvocationID.x] = tmpvar_4;
+  barrier();
+  values[gl_LocalInvocationIndex] = uint(0);
+}
+
+
+// stats: 7 alu 0 tex 0 flow
+// workgroup size: 8 1 1
+// buffer #0: Output storage instance outputData layout std430 (size: unknown)
+//  member #0: vec4[] values offset 0 array runtime stride 16
+//  member #1: vec4 [] parent 0 offset 0

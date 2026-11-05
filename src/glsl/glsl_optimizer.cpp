@@ -529,14 +529,15 @@ static void find_shader_variables(glslopt_shader* sh, exec_list* ir)
 }
 
 
-static bool metal_uniform_type_supported(const glsl_type* type)
+static bool metal_uniform_type_supported(const glsl_type* type, bool allowMatrices = true)
 {
-	if (type->is_array()) return metal_uniform_type_supported(type->fields.array);
+	if (type->is_array()) return metal_uniform_type_supported(type->fields.array, allowMatrices);
 	if (type->is_struct() || type->is_interface()) {
 		for (unsigned i = 0; i < type->length; ++i)
-			if (!metal_uniform_type_supported(type->fields.structure[i].type)) return false;
+			if (!metal_uniform_type_supported(type->fields.structure[i].type, allowMatrices)) return false;
 		return true;
 	}
+	if (type->is_matrix() && !allowMatrices) return false;
 	return type->is_float() || type->is_integer_32() || type->is_boolean();
 }
 
@@ -546,10 +547,6 @@ public:
 	bool metal;
 	const char* error = nullptr;
 	explicit storage_validation(bool metal) : metal(metal) {}
-	ir_visitor_status visit(ir_barrier*) override {
-		if (metal) error = "Metal workgroup execution barriers are not supported.";
-		return visit_continue;
-	}
 	void check_type(const glsl_type* type) {
 		if (type->is_array()) {
 			check_type(type->fields.array);
@@ -582,17 +579,25 @@ public:
 	}
 	ir_visitor_status visit_enter(ir_call* call) override {
 		if (!call->callee->is_builtin()) return visit_continue;
-		if (auto* barrier = find_memory_barrier(call->callee)) {
-			if (metal && !barrier->metal_flags)
-				error = "Metal workgroup memory barriers require compute output support.";
-			return visit_continue;
-		}
+		if (find_memory_barrier(call->callee)) return visit_continue;
 		if (find_buffer_atomic(call->callee)) {
 			auto* target = ((ir_instruction*)call->actual_parameters.get_head())->as_rvalue();
 			auto* var = target->variable_referenced();
-			if (metal && (!var || var->data.mode != ir_var_shader_storage ||
+			if (metal && (!var || (var->data.mode != ir_var_shader_storage && var->data.mode != ir_var_shader_shared) ||
 				!target->type->is_scalar() || !target->type->is_integer_32()))
-				error = "Metal buffer atomics require a 32-bit int or uint SSBO member.";
+				error = "Metal atomics require a 32-bit int or uint in an SSBO or shared variable.";
+			if (metal && var && var->data.mode == ir_var_shader_shared) {
+				// Array indices and swizzles retain the underlying storage width.
+				// Stop at record fields so their declared precision is preserved.
+				ir_rvalue* storage = target;
+				while (true) {
+					if (auto* array = storage->as_dereference_array()) storage = array->array;
+					else if (auto* swizzle = storage->as_swizzle()) storage = swizzle->val;
+					else break;
+				}
+				if (storage->get_precision() == GLSL_PRECISION_MEDIUM)
+					error = "Metal shared atomics require highp int or uint storage.";
+			}
 			return visit_continue;
 		}
 		if (strstr(call->callee_name(), "atomic") || strstr(call->callee_name(), "barrier") ||
@@ -642,6 +647,7 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 
 	exec_list* ir = shader->ir;
 	bool hasStorage = false;
+	bool hasShared = false;
 	storage_validation storageValidation(ctx->target == kGlslTargetMetal);
 
 	// These declarations need dedicated backend support before they can be
@@ -652,6 +658,7 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 		if (!var || strncmp(var->name, "gl_", 3) == 0)
 			continue;
 		hasStorage |= var->data.mode == ir_var_shader_storage;
+		hasShared |= var->data.mode == ir_var_shader_shared;
 		const char* unsupported = nullptr;
 		// Stage interfaces need their own input/output mapping.
 		if (var->is_interface_instance() && var->data.mode != ir_var_uniform && var->data.mode != ir_var_shader_storage)
@@ -660,8 +667,9 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 			unsupported = "Image";
 		else if (var->type->contains_atomic())
 			unsupported = "Atomic-counter";
-		else if (var->data.mode == ir_var_shader_shared)
-			unsupported = "Shared-variable";
+		// Metal matrix constructors do not support threadgroup storage.
+		else if (ctx->target == kGlslTargetMetal && var->data.mode == ir_var_shader_shared && !metal_uniform_type_supported(var->type, false))
+			unsupported = "Shared-variable type";
 		if (unsupported) {
 			result->infoLog = ralloc_asprintf(result->mem_ctx,
 				"%s output is not supported yet (%s backend).", unsupported,
@@ -693,6 +701,13 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 	if (hasStorage || (ctx->target == kGlslTargetMetal && type == kGlslOptShaderCompute))
 		visit_list_elements(&storageValidation, ir);
 	if (storageValidation.error) { result->infoLog = storageValidation.error; return result; }
+	if (ctx->target == kGlslTargetMetal && hasShared) {
+		// Threadgroup declarations live inside the Metal kernel. Inline helpers
+		// before raw output so their shared-variable references remain in scope.
+		while (do_function_inlining(ir)) {}
+		do_dead_functions(ir);
+		propagate_precision(ir);
+	}
 
 	// Note: restore source-level subtraction outside of regular optimization loop
     // (inside the loop, other passes would undo it).

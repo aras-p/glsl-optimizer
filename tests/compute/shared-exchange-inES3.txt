@@ -1,0 +1,22 @@
+#version 310 es
+layout(local_size_x=8) in;
+shared highp uint values[8];
+struct Entry { highp vec2 value; highp float weight; };
+shared Entry entries[8];
+layout(std430) buffer Output { vec4 values[]; } outputData;
+void fill(uint i)
+{
+    values[i] = i;
+    entries[i] = Entry(vec2(float(i), 1.0), 2.0);
+}
+void main()
+{
+    uint i = gl_LocalInvocationIndex;
+    fill(i);
+    barrier();
+    uint other = (i + 1u) % 8u;
+    outputData.values[gl_GlobalInvocationID.x] = vec4(entries[other].value,
+        float(values[other]), entries[other].weight);
+    barrier();
+    values[i] = 0u;
+}

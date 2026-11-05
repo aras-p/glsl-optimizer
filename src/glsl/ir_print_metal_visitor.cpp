@@ -125,7 +125,7 @@ struct metal_print_context
 	, matrixCastsDone(false)
 	, matrixConstructorsDone(false)
 	, shadowSamplerDone(false)
-	, atomicCompSwapDone(false)
+	, atomicCompSwapSpaces(0)
 	, memoryBarrierDone(false)
 	, textureCounter(0)
 	, attributeCounter(0)
@@ -159,7 +159,7 @@ struct metal_print_context
 	bool matrixCastsDone;
 	bool matrixConstructorsDone;
 	bool shadowSamplerDone;
-	bool atomicCompSwapDone;
+	unsigned atomicCompSwapSpaces;
 	bool memoryBarrierDone;
 	int textureCounter;
 	int attributeCounter;
@@ -842,6 +842,7 @@ void ir_print_metal_visitor::print_array_initializer(ir_constant* value, unsigne
 void ir_print_metal_visitor::visit(ir_variable *ir)
 {
 	const char* storage = (ir->data.mode == ir_var_function_out || ir->data.mode == ir_var_function_inout) ? "thread " : "";
+	if (ir->data.mode == ir_var_shader_shared) storage = "threadgroup ";
 
 	// give an id to any variable defined in a function that is not an uniform
 	if ((this->mode == kPrintGlslNone && ir->data.mode != ir_var_uniform))
@@ -859,8 +860,8 @@ void ir_print_metal_visitor::visit(ir_variable *ir)
 		return;
 	}
 
-	// auto/temp variables in global scope are postponed to main function
-	if (this->mode != kPrintGlslNone && (ir->data.mode == ir_var_auto || ir->data.mode == ir_var_temporary))
+	// Global temporaries and shared declarations are emitted inside main.
+	if (this->mode != kPrintGlslNone && (ir->data.mode == ir_var_auto || ir->data.mode == ir_var_temporary || ir->data.mode == ir_var_shader_shared))
 	{
 		assert (!this->globals->main_function_done);
 		this->globals->global_assignements.push_tail (new(this->globals->mem_ctx) ga_entry_metal(ir));
@@ -2177,28 +2178,34 @@ ir_print_metal_visitor::visit(ir_call *ir)
             "#error Memory barriers require Metal 3.2 or newer\n"
             "#endif\n");
       }
-      buffer.asprintf_append("atomic_thread_fence(%s, memory_order_seq_cst, thread_scope_device)", barrier->metal_flags);
+      bool workgroup = barrier->intrinsic == ir_intrinsic_memory_barrier_shared || barrier->intrinsic == ir_intrinsic_group_memory_barrier;
+      buffer.asprintf_append("atomic_thread_fence(%s", barrier->metal_flags);
+      if (mode_whole == kPrintGlslCompute && barrier->intrinsic == ir_intrinsic_memory_barrier)
+         buffer.asprintf_append(" | mem_flags::mem_threadgroup");
+      buffer.asprintf_append(", memory_order_seq_cst, %s)", workgroup ? "thread_scope_threadgroup" : "thread_scope_device");
       return;
    }
 
    const auto* atomic = find_buffer_atomic(ir->callee);
    if (atomic) {
+      auto* target = ((ir_instruction*)ir->actual_parameters.get_head())->as_rvalue();
+      bool shared = target->variable_referenced()->data.mode == ir_var_shader_shared;
+      const char* address = shared ? "threadgroup" : "device";
+      unsigned spaceBit = shared ? 2 : 1;
       bool compareSwap = atomic->intrinsic == ir_intrinsic_generic_atomic_comp_swap;
-      if (compareSwap && !ctx.atomicCompSwapDone) {
-         ctx.atomicCompSwapDone = true;
+      if (compareSwap && !(ctx.atomicCompSwapSpaces & spaceBit)) {
+         ctx.atomicCompSwapSpaces |= spaceBit;
          // Retry spurious failures; GLSL compare-and-swap returns the old value.
          ctx.prefixStr.asprintf_append(
             "template<typename A, typename T>\n"
-            "inline T _xlat_atomic_comp_swap(device A* address, T compare, T value) {\n"
+            "inline T _xlat_atomic_comp_swap(%s A* address, T compare, T value) {\n"
             "  T expected = compare;\n"
             "  while (!atomic_compare_exchange_weak_explicit(address, &expected, value, memory_order_relaxed, memory_order_relaxed) && expected == compare) {}\n"
             "  return expected;\n"
-            "}\n");
+            "}\n", address);
       }
-      auto* target = ((ir_instruction*)ir->actual_parameters.get_head())->as_rvalue();
       const char* type = target->type->base_type == GLSL_TYPE_UINT ? "uint" : "int";
-      const auto& block = ctx.blockNames.at(target->variable_referenced());
-      buffer.asprintf_append("%s (reinterpret_cast<device atomic_%s*>(&", atomic->metal, type);
+      buffer.asprintf_append("%s (reinterpret_cast<%s atomic_%s*>(&", atomic->metal, address, type);
       auto* component = target->as_dereference_array();
       auto* swizzle = target->as_swizzle();
       ir_rvalue* vector = swizzle ? target :
@@ -2217,7 +2224,8 @@ ir_print_metal_visitor::visit(ir_call *ir)
       }
       // Metal cannot take the address of a vector component. Offset from the
       // vector's address instead; each int/uint component occupies four bytes.
-      print_uniform_storage(vector ? vector : target, block);
+      if (shared) (vector ? vector : target)->accept(this);
+      else print_uniform_storage(vector ? vector : target, ctx.blockNames.at(target->variable_referenced()));
       buffer.asprintf_append(")");
       if (swizzle) buffer.asprintf_append(" + %u", components[0]);
       else if (vector) {

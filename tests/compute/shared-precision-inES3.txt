@@ -1,0 +1,17 @@
+#version 310 es
+layout(local_size_x=8) in;
+shared mediump float weights[8];
+shared mediump int counts[8];
+shared bool flags[8];
+layout(std430) buffer Output { vec4 values[]; } outputData;
+void main()
+{
+    uint i = gl_LocalInvocationIndex;
+    weights[i] = float(i) * 0.5;
+    counts[i] = int(i);
+    flags[i] = (i & 1u) != 0u;
+    barrier();
+    uint other = (i + 1u) % 8u;
+    outputData.values[gl_GlobalInvocationID.x] = vec4(weights[other],
+        float(counts[other]), flags[other] ? 1.0 : 0.0, 1.0);
+}

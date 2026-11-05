@@ -1,0 +1,42 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct alignas(16) _xlat_buf_storage0_element { float4 value; };
+static_assert(sizeof(_xlat_buf_storage0_element) == 16, "array stride");
+struct xlatMtlShaderUniform {
+};
+// threadsPerThreadgroup: 8, 1, 1
+kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , device uchar* _mtl_buffer1 [[buffer(1)]]
+  , uint gl_LocalInvocationIndex [[thread_index_in_threadgroup]]
+  , uint3 gl_GlobalInvocationID [[thread_position_in_grid]])
+{
+threadgroup half weights_1[8];
+threadgroup short counts_2[8];
+threadgroup bool flags_3[8];
+  weights_1[gl_LocalInvocationIndex] = half((float(gl_LocalInvocationIndex) * 0.5));
+  counts_2[gl_LocalInvocationIndex] = short(int(gl_LocalInvocationIndex));
+  flags_3[gl_LocalInvocationIndex] = ((gl_LocalInvocationIndex & 1) != 0);
+  threadgroup_barrier(mem_flags::mem_threadgroup);
+  uint tmpvar_4;
+  tmpvar_4 = ((gl_LocalInvocationIndex + 1) % 8);
+  float tmpvar_5 = 0;
+  if (flags_3[tmpvar_4]) {
+    tmpvar_5 = 1.0;
+  } else {
+    tmpvar_5 = 0.0;
+  };
+  half4 tmpvar_6 = 0;
+  tmpvar_6.w = half(1.0);
+  tmpvar_6.x = weights_1[tmpvar_4];
+  tmpvar_6.y = half(counts_2[tmpvar_4]);
+  tmpvar_6.z = half(tmpvar_5);
+  reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_GlobalInvocationID.x].value = float4(tmpvar_6);
+}
+
+
+// stats: 11 alu 0 tex 1 flow
+// workgroup size: 8 1 1
+// buffer #0: Output storage instance outputData layout std430 (size: unknown) metal 1
+//  member #0: vec4[] values offset 0 array runtime stride 16
+//  member #1: vec4 [] parent 0 offset 0
