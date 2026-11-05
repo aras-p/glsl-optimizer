@@ -1,0 +1,14 @@
+#version 450
+layout(local_size_x=8) in;
+layout(r32ui, binding=0) uniform readonly uimage2DMS multisampleImage;
+layout(r32ui, binding=1) uniform readonly uimage2DMSArray multisampleLayers;
+layout(r32ui, binding=2) uniform writeonly uimage2D destination;
+void main()
+{
+    ivec2 p = ivec2(gl_GlobalInvocationID.xy);
+    int sampleIndex = int(gl_GlobalInvocationID.z);
+    uint value = imageLoad(multisampleImage, p, sampleIndex).x
+        + imageLoad(multisampleLayers, ivec3(p, 1), sampleIndex).x;
+    imageStore(destination, p, uvec4(value, imageSize(multisampleImage).x,
+        imageSize(multisampleLayers).z, imageSamples(multisampleImage) + imageSamples(multisampleLayers)));
+}

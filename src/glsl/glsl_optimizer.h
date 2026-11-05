@@ -57,6 +57,13 @@ enum glslopt_basic_type {
 	kGlslTypeImage2D,
 	kGlslTypeImage2DArray,
 	kGlslTypeImage3D,
+	kGlslTypeImage1D,
+	kGlslTypeImage1DArray,
+	kGlslTypeImageCube,
+	kGlslTypeImageCubeArray,
+	kGlslTypeImageBuffer,
+	kGlslTypeImage2DMS,
+	kGlslTypeImage2DMSArray,
 	kGlslTypeCount
 };
 enum glslopt_precision {
@@ -93,9 +100,13 @@ void glslopt_shader_get_uniform_desc (glslopt_shader* shader, int index, const c
 // For Metal, location is the texture slot. Image slots follow sampled textures
 // and do not consume sampler slots. See glslopt_shader_get_image_desc for
 // the image format and access qualifiers.
-// Integer image atomics require Metal 3.1+ and a GPU supporting texture atomics.
+// Fixed, one-dimensional image resource arrays use consecutive Metal texture
+// slots starting at location. Metal texture buffers require Metal 2.1+.
+// Integer image atomics require Metal 3.1+ (4.0+ for cube images) and a GPU
+// supporting texture atomics. Metal multisample images support reads and queries.
 // Coherent images require Metal 3.2+ on Apple silicon; synchronization remains
-// the shader's responsibility. Volatile images are not supported on Metal.
+// the shader's responsibility. Metal does not support volatile images or
+// coherent texture buffers.
 // Metal imageLoad uses native texture reads: out-of-bounds reads return zero
 // for present channels, but absent alpha remains 1 (GL/ES return all zeros).
 int glslopt_shader_get_texture_count (glslopt_shader* shader);

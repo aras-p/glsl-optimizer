@@ -1,0 +1,48 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct xlatMtlShaderUniform {
+};
+// threadsPerThreadgroup: 8, 1, 1
+kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , uint3 gl_GlobalInvocationID [[thread_position_in_grid]]
+  , texture2d_ms<uint, access::read> multisampleImage [[texture(0)]]
+  , texture2d_ms_array<uint, access::read> multisampleLayers [[texture(1)]]
+  , texture2d<uint, access::write> destination [[texture(2)]])
+{
+  int2 tmpvar_1 = 0;
+  tmpvar_1 = int2(gl_GlobalInvocationID.xy);
+  int tmpvar_2 = 0;
+  tmpvar_2 = int(gl_GlobalInvocationID.z);
+  uint4 tmpvar_3;
+  tmpvar_3 = multisampleImage.read(uint2(tmpvar_1), uint(tmpvar_2));
+  int3 tmpvar_4 = 0;
+  tmpvar_4.z = 1;
+  tmpvar_4.xy = tmpvar_1;
+  uint4 tmpvar_5;
+  tmpvar_5 = multisampleLayers.read(uint2(tmpvar_4.xy), uint(tmpvar_4.z), uint(tmpvar_2));
+  uint tmpvar_6;
+  tmpvar_6 = (tmpvar_3.x + tmpvar_5.x);
+  int2 tmpvar_7 = 0;
+  tmpvar_7 = int2(multisampleImage.get_width(), multisampleImage.get_height());
+  int3 tmpvar_8 = 0;
+  tmpvar_8 = int3(multisampleLayers.get_width(), multisampleLayers.get_height(), multisampleLayers.get_array_size());
+  int tmpvar_9 = 0;
+  tmpvar_9 = int(multisampleImage.get_num_samples());
+  int tmpvar_10 = 0;
+  tmpvar_10 = int(multisampleLayers.get_num_samples());
+  uint4 tmpvar_11;
+  tmpvar_11.x = tmpvar_6;
+  tmpvar_11.y = uint(tmpvar_7.x);
+  tmpvar_11.z = uint(tmpvar_8.z);
+  tmpvar_11.w = uint((tmpvar_9 + tmpvar_10));
+  destination.write(uint4(tmpvar_11), uint2(tmpvar_1));
+}
+
+
+// stats: 8 alu 7 tex 0 flow
+// workgroup size: 8 1 1
+// textures: 3
+//  #0: multisampleImage (high image2dms) 0x0 [-1] loc 0 format r32ui component uint readonly
+//  #1: multisampleLayers (high image2dmsarray) 0x0 [-1] loc 1 format r32ui component uint readonly
+//  #2: destination (high image2d) 0x0 [-1] loc 2 format r32ui component uint writeonly

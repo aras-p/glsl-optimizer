@@ -228,6 +228,8 @@ _mesa_print_ir_glsl(exec_list *instructions,
 			str.asprintf_append("#extension GL_ARB_shader_image_load_store : enable\n");
 		if (state->ARB_shader_image_size_enable)
 			str.asprintf_append("#extension GL_ARB_shader_image_size : enable\n");
+		if (state->ARB_shader_texture_image_samples_enable)
+			str.asprintf_append("#extension GL_ARB_shader_texture_image_samples : enable\n");
 		if (state->ARB_shader_storage_buffer_object_enable)
 			str.asprintf_append("#extension GL_ARB_shader_storage_buffer_object : enable\n");
 		if (state->ARB_uniform_buffer_object_enable)

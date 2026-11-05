@@ -316,9 +316,17 @@ static void glsl_type_to_optimizer_desc(const glsl_type* type, unsigned prec, gl
 	else if (type->is_boolean())
 		out->type = kGlslTypeBool;
 	else if (type->is_image())
-		out->type = type->sampler_dimensionality == GLSL_SAMPLER_DIM_2D ?
-			(type->sampler_array ? kGlslTypeImage2DArray : kGlslTypeImage2D) :
-			type->sampler_dimensionality == GLSL_SAMPLER_DIM_3D ? kGlslTypeImage3D : kGlslTypeOther;
+	{
+		switch (type->sampler_dimensionality) {
+		case GLSL_SAMPLER_DIM_1D: out->type = type->sampler_array ? kGlslTypeImage1DArray : kGlslTypeImage1D; break;
+		case GLSL_SAMPLER_DIM_2D: out->type = type->sampler_array ? kGlslTypeImage2DArray : kGlslTypeImage2D; break;
+		case GLSL_SAMPLER_DIM_3D: out->type = kGlslTypeImage3D; break;
+		case GLSL_SAMPLER_DIM_CUBE: out->type = type->sampler_array ? kGlslTypeImageCubeArray : kGlslTypeImageCube; break;
+		case GLSL_SAMPLER_DIM_BUF: out->type = kGlslTypeImageBuffer; break;
+		case GLSL_SAMPLER_DIM_MS: out->type = type->sampler_array ? kGlslTypeImage2DMSArray : kGlslTypeImage2DMS; break;
+		default: out->type = kGlslTypeOther; break;
+		}
+	}
 	else if (type->is_sampler())
 	{
 		if (type->sampler_dimensionality == GLSL_SAMPLER_DIM_2D)
@@ -615,8 +623,12 @@ public:
 	const char* error = nullptr;
 	storage_validation(bool metal, bool vertex) : metal(metal), vertex(vertex) {}
 	ir_visitor_status visit(ir_variable* var) override {
-		if (metal && var->type->contains_image() && var->data.memory_volatile)
-			error = "Volatile image output is not supported yet (Metal backend).";
+		if (metal && var->type->contains_image()) {
+			if (var->data.memory_volatile)
+				error = "Volatile image output is not supported yet (Metal backend).";
+			if (var->data.memory_coherent && var->type->without_array()->sampler_dimensionality == GLSL_SAMPLER_DIM_BUF)
+				error = "Coherent buffer image output is not supported yet (Metal backend).";
+		}
 		return visit_continue;
 	}
 	void check_type(const glsl_type* type) {
@@ -638,11 +650,20 @@ public:
 		if (!call->callee->is_builtin()) return visit_continue;
 		if (find_image_atomic(call->callee) && metal) {
 			auto* image = ((ir_instruction*)call->actual_parameters.get_head())->as_rvalue();
-			if (image->type->sampled_type != GLSL_TYPE_INT && image->type->sampled_type != GLSL_TYPE_UINT)
+			if (image->type->sampler_dimensionality == GLSL_SAMPLER_DIM_MS)
+				error = "Metal multisample images support reads and queries only.";
+			else if (image->type->sampled_type != GLSL_TYPE_INT && image->type->sampled_type != GLSL_TYPE_UINT)
 				error = "Metal image atomics require 32-bit integer images (r32i or r32ui).";
 			return visit_continue;
 		}
-		if (image_function_name(call->callee)) return visit_continue;
+		if (const char* imageFunction = image_function_name(call->callee)) {
+			if (metal && !strcmp(imageFunction, "imageStore")) {
+				auto* image = ((ir_instruction*)call->actual_parameters.get_head())->as_rvalue();
+				if (image->type->sampler_dimensionality == GLSL_SAMPLER_DIM_MS)
+					error = "Metal multisample images support reads and queries only.";
+			}
+			return visit_continue;
+		}
 		if (!strncmp(call->callee_name(), "__intrinsic_image_", 18) || !strncmp(call->callee_name(), "image", 5)) {
 			error = "Unsupported image operation.";
 			return visit_continue;
@@ -746,9 +767,9 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 				unsupported = "Stage interface block member type";
 		}
 		else if (ctx->target == kGlslTargetMetal && var->type->contains_image()) {
-			const glsl_type* image = var->type;
-			if (!image->is_image() ||
-				(image->sampler_dimensionality != GLSL_SAMPLER_DIM_2D && image->sampler_dimensionality != GLSL_SAMPLER_DIM_3D))
+			const glsl_type* image = var->type->without_array();
+			if (!image->is_image() || !metal_image_type_name(image) ||
+			    (var->type->is_array() && (!var->type->length || var->type->fields.array->is_array())))
 				unsupported = "Image dimension or resource-array";
 			else if (var->data.memory_volatile)
 				unsupported = "Volatile image";

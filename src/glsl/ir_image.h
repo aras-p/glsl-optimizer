@@ -49,6 +49,19 @@ inline const char* image_format_name(pipe_format format)
 	}
 }
 
+inline const char* metal_image_type_name(const glsl_type* type)
+{
+   switch (type->sampler_dimensionality) {
+   case GLSL_SAMPLER_DIM_1D: return type->sampler_array ? "texture1d_array" : "texture1d";
+   case GLSL_SAMPLER_DIM_2D: return type->sampler_array ? "texture2d_array" : "texture2d";
+   case GLSL_SAMPLER_DIM_3D: return "texture3d";
+   case GLSL_SAMPLER_DIM_CUBE: return type->sampler_array ? "texturecube_array" : "texturecube";
+   case GLSL_SAMPLER_DIM_BUF: return "texture_buffer";
+   case GLSL_SAMPLER_DIM_MS: return type->sampler_array ? "texture2d_ms_array" : "texture2d_ms";
+   default: return nullptr;
+   }
+}
+
 struct image_atomic_function {
    ir_intrinsic_id intrinsic;
    const char* glsl;
@@ -89,9 +102,10 @@ inline const char* image_function_name(const ir_function_signature* signature)
       case ir_intrinsic_image_load: return "imageLoad";
       case ir_intrinsic_image_store: return "imageStore";
       case ir_intrinsic_image_size: return "imageSize";
+      case ir_intrinsic_image_samples: return "imageSamples";
       default: return nullptr;
       }
    }
    const char* name = signature->function_name();
-   return !strcmp(name, "imageLoad") || !strcmp(name, "imageStore") || !strcmp(name, "imageSize") ? name : nullptr;
+   return !strcmp(name, "imageLoad") || !strcmp(name, "imageStore") || !strcmp(name, "imageSize") || !strcmp(name, "imageSamples") ? name : nullptr;
 }

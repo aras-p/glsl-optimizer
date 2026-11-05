@@ -1,0 +1,39 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+#if __METAL_VERSION__ < 400
+#error Cube image atomics require Metal 4.0 or newer
+#endif
+template<typename I, typename T>
+inline T _xlat_image_comp_swap_cube_array(I image, uint3 p, T compare, T value) {
+  if (any(p >= uint3(image.get_width(), image.get_height(), 6u * image.get_array_size()))) return T(0);
+  vec<T, 4> expected = vec<T, 4>(compare);
+  while (!image.atomic_compare_exchange_weak(p.xy, p.z % 6u, p.z / 6u, &expected, vec<T, 4>(value)) && expected.x == compare) {}
+  return expected.x;
+}
+struct xlatMtlShaderUniform {
+};
+// threadsPerThreadgroup: 8, 1, 1
+kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , uint3 gl_GlobalInvocationID [[thread_position_in_grid]]
+  , texturecube<uint, access::read_write> counters [[texture(0)]]
+  , texturecube_array<uint, access::read_write> layers [[texture(1)]])
+{
+  int3 tmpvar_1 = 0;
+  tmpvar_1.z = 4;
+  tmpvar_1.xy = int2(gl_GlobalInvocationID.xy);
+  uint tmpvar_2;
+  tmpvar_2 = counters.atomic_fetch_add(uint2(tmpvar_1.xy), uint(tmpvar_1.z), uint4(1)).x;
+  int3 tmpvar_3 = 0;
+  tmpvar_3.xy = tmpvar_1.xy;
+  tmpvar_3.z = (tmpvar_1.z + 6);
+  uint tmpvar_4;
+  tmpvar_4 = _xlat_image_comp_swap_cube_array(layers, uint3(tmpvar_3), uint(tmpvar_2), uint(0));
+}
+
+
+// stats: 3 alu 2 tex 0 flow
+// workgroup size: 8 1 1
+// textures: 2
+//  #0: counters (high imagecube) 0x0 [-1] loc 0 format r32ui component uint
+//  #1: layers (high imagecubearray) 0x0 [-1] loc 1 format r32ui component uint

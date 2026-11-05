@@ -131,6 +131,7 @@ struct metal_print_context
 	, atomicCompSwapSpaces(0)
 	, memoryBarrierDone(false)
 	, imageAtomicDone(false)
+	, cubeImageAtomicDone(false)
 	, imageCompSwapDims(0)
 	, textureCounter(0)
 	, imageCounter(0)
@@ -175,6 +176,7 @@ struct metal_print_context
 	unsigned atomicCompSwapSpaces;
 	bool memoryBarrierDone;
 	bool imageAtomicDone;
+	bool cubeImageAtomicDone;
 	unsigned imageCompSwapDims;
 	int textureCounter;
 	int imageCounter;
@@ -219,6 +221,7 @@ public:
 	bool print_uniform_read(ir_rvalue* value);
 	void print_uniform_storage(ir_rvalue* value, const metal_print_context::block_reference& block);
 	void print_counter_address(ir_rvalue* value);
+	void print_image_coordinates(ir_rvalue* coord, const glsl_type* image);
 	void print_buffer_size_index(ir_rvalue* value);
 
 	virtual void visit(ir_variable *);
@@ -288,7 +291,7 @@ _mesa_print_ir_metal(exec_list *instructions,
 	ctx.prefixStr.asprintf_append ("using namespace metal;\n");
 	foreach_in_list(ir_instruction, instruction, instructions) {
 		const auto* var = instruction->as_variable();
-		if (var && var->type->is_image() && var->data.memory_coherent) {
+		if (var && var->type->without_array()->is_image() && var->data.memory_coherent) {
 			ctx.prefixStr.asprintf_append(
 				"#if __METAL_VERSION__ < 320\n"
 				"#error Coherent images require Metal 3.2 or newer\n"
@@ -596,13 +599,17 @@ static void print_type_precision(string_buffer& buffer, const glsl_type *t, unsi
 
 static void print_type(string_buffer& buffer, ir_instruction* ir, const glsl_type *t, bool arraySize)
 {
-	if (t->is_image()) {
+	const glsl_type* image = t->without_array();
+	if (image->is_image()) {
 		const auto* var = ir->as_variable();
-		buffer.asprintf_append("texture%s<%s, access::%s%s>",
-			t->sampler_dimensionality == GLSL_SAMPLER_DIM_3D ? "3d" : t->sampler_array ? "2d_array" : "2d",
-			t->sampled_type == GLSL_TYPE_UINT ? "uint" : t->sampled_type == GLSL_TYPE_INT ? "int" : "float",
-			var && var->data.memory_read_only ? "read" : var && var->data.memory_write_only ? "write" : "read_write",
+		bool multisample = image->sampler_dimensionality == GLSL_SAMPLER_DIM_MS;
+		if (t->is_array()) buffer.asprintf_append("array<");
+		buffer.asprintf_append("%s<%s, access::%s%s>",
+			metal_image_type_name(image),
+			image->sampled_type == GLSL_TYPE_UINT ? "uint" : image->sampled_type == GLSL_TYPE_INT ? "int" : "float",
+			multisample || (var && var->data.memory_read_only) ? "read" : var && var->data.memory_write_only ? "write" : "read_write",
 			var && var->data.memory_coherent ? ", memory_coherence_device" : "");
+		if (t->is_array()) buffer.asprintf_append(", %u>", t->length);
 		return;
 	}
 	unsigned prec = precision_from_ir(ir);
@@ -612,7 +619,7 @@ static void print_type(string_buffer& buffer, ir_instruction* ir, const glsl_typ
 
 static void print_type_post(string_buffer& buffer, const glsl_type *t, bool arraySize)
 {
-	if (t->base_type == GLSL_TYPE_ARRAY) {
+	if (t->is_array() && !t->without_array()->is_image()) {
 		if (!arraySize)
 			for (auto a = t; a->is_array(); a = a->fields.array) buffer.asprintf_append("[%u]", a->length);
 	}
@@ -1215,9 +1222,11 @@ void ir_print_metal_visitor::visit(ir_variable *ir)
 	// uniform texture?
 	if (ir->data.mode == ir_var_uniform && ctx.writingParams)
 	{
-		int index = ir->type->is_image() ? ctx.imageCounter++ : ctx.textureCounter++;
+		bool image = ir->type->without_array()->is_image();
+		int index = image ? ctx.imageCounter : ctx.textureCounter++;
+		if (image) ctx.imageCounter += ir->type->is_array() ? ir->type->length : 1;
 		buffer.asprintf_append (" [[texture(%i)]]", index);
-		if (!ir->type->is_image())
+		if (!image)
 			buffer.asprintf_append (", sampler _mtlsmp_%s [[sampler(%i)]]", ir->name, index);
 		ir->data.explicit_location = 1;
 		ir->data.location = index;
@@ -2572,6 +2581,40 @@ void ir_print_metal_visitor::visit(ir_constant *ir)
 }
 
 
+static unsigned image_spatial_rank(const glsl_type* image)
+{
+   if (image->sampler_dimensionality == GLSL_SAMPLER_DIM_CUBE) return 2;
+   return glsl_get_sampler_dim_coordinate_components((glsl_sampler_dim)image->sampler_dimensionality);
+}
+
+static const char* uint_vector_type(unsigned rank)
+{
+   static const char* names[] = {"uint", "uint2", "uint3"};
+   return names[rank - 1];
+}
+
+void ir_print_metal_visitor::print_image_coordinates(ir_rvalue* coord, const glsl_type* image)
+{
+   unsigned spatial = image_spatial_rank(image);
+   bool split = spatial < (unsigned)image->coordinate_components();
+   bool cubeArray = image->sampler_dimensionality == GLSL_SAMPLER_DIM_CUBE && image->sampler_array;
+   buffer.asprintf_append("%s(", uint_vector_type(spatial));
+   coord->accept(this);
+   if (!split) {
+      buffer.asprintf_append(")");
+      return;
+   }
+   buffer.asprintf_append(spatial == 1 ? ".x), uint(" : ".xy), uint(");
+   coord->accept(this);
+   buffer.asprintf_append(spatial == 1 ? ".y)" : ".z)");
+   // GLSL packs the cube index and face into the third coordinate.
+   if (cubeArray) {
+      buffer.asprintf_append(" %% 6u, uint(");
+      coord->accept(this);
+      buffer.asprintf_append(".z) / 6u");
+   }
+}
+
 void
 ir_print_metal_visitor::visit(ir_call *ir)
 {
@@ -2602,39 +2645,57 @@ ir_print_metal_visitor::visit(ir_call *ir)
    }
 
    if (const auto* atomic = find_image_atomic(ir->callee)) {
-      if (!ctx.imageAtomicDone) {
-         ctx.imageAtomicDone = true;
-         ctx.prefixStr.asprintf_append(
-            "#if __METAL_VERSION__ < 310\n"
-            "#error Image atomics require Metal 3.1 or newer\n"
-            "#endif\n");
-      }
       auto* image = ((ir_instruction*)ir->actual_parameters.get_head())->as_rvalue();
+      const glsl_type* imageType = image->type;
       auto* coord = ((ir_instruction*)image->next)->as_rvalue();
       auto* operand = ((ir_instruction*)coord->next)->as_rvalue();
-      bool array = image->type->sampler_array;
-      bool volume = image->type->sampler_dimensionality == GLSL_SAMPLER_DIM_3D;
-      const char* type = image->type->sampled_type == GLSL_TYPE_UINT ? "uint" : "int";
+      bool array = imageType->sampler_array;
+      bool volume = imageType->sampler_dimensionality == GLSL_SAMPLER_DIM_3D;
+      bool cube = imageType->sampler_dimensionality == GLSL_SAMPLER_DIM_CUBE;
+      unsigned spatial = image_spatial_rank(imageType);
+      unsigned rank = imageType->coordinate_components();
+      bool& guard = cube ? ctx.cubeImageAtomicDone : ctx.imageAtomicDone;
+      if (!guard) {
+         guard = true;
+         ctx.prefixStr.asprintf_append(cube ?
+            "#if __METAL_VERSION__ < 400\n#error Cube image atomics require Metal 4.0 or newer\n#endif\n" :
+            "#if __METAL_VERSION__ < 310\n#error Image atomics require Metal 3.1 or newer\n#endif\n");
+      }
+      const char* type = imageType->sampled_type == GLSL_TYPE_UINT ? "uint" : "int";
       if (atomic->intrinsic == ir_intrinsic_image_atomic_comp_swap) {
-         const char* suffix = volume ? "3d" : array ? "array" : "2d";
-         unsigned bit = volume ? 4 : array ? 2 : 1;
+         const char* suffix = metal_image_type_name(imageType) + strlen("texture");
+         if (imageType->sampler_dimensionality == GLSL_SAMPLER_DIM_2D && array) suffix = "array";
+         if (imageType->sampler_dimensionality == GLSL_SAMPLER_DIM_BUF) suffix = "1d";
+         // Buffer and 1D images share the same address and bounds check.
+         unsigned dim = imageType->sampler_dimensionality == GLSL_SAMPLER_DIM_BUF ?
+            GLSL_SAMPLER_DIM_1D : imageType->sampler_dimensionality;
+         unsigned bit = 1u << (dim * 2 + array);
          if (!(ctx.imageCompSwapDims & bit)) {
             ctx.imageCompSwapDims |= bit;
-            // Retry weak failures only while the original comparison still holds.
-            // Bounds checks also prevent endless retries for an out-of-range zero.
-            ctx.prefixStr.asprintf_append(
-               "template<typename I, typename T>\n"
-               "inline T _xlat_image_comp_swap_%s(I image, uint%s p, T compare, T value) {\n"
-               "  if (any(p >= uint%s(image.get_width(), image.get_height()%s))) return T(0);\n"
+            const char* components = cube ? (array ? "p.xy, p.z % 6u, p.z / 6u" : "p.xy, p.z") :
+               array ? (spatial == 1 ? "p.x, p.y" : "p.xy, p.z") : "p";
+            auto& prefix = ctx.prefixStr;
+            prefix.asprintf_append("template<typename I, typename T>\n"
+               "inline T _xlat_image_comp_swap_%s(I image, %s p, T compare, T value) {\n", suffix, uint_vector_type(rank));
+            // Bounds checks prevent endless retries for an out-of-range zero.
+            if (rank == 1) prefix.asprintf_append("  if (p >= image.get_width()) return T(0);\n");
+            else {
+               prefix.asprintf_append("  if (any(p >= %s(image.get_width()", uint_vector_type(rank));
+               if (spatial >= 2) prefix.asprintf_append(", image.get_height()");
+               if (volume) prefix.asprintf_append(", image.get_depth()");
+               else if (cube) prefix.asprintf_append(array ? ", 6u * image.get_array_size()" : ", 6u");
+               else if (array) prefix.asprintf_append(", image.get_array_size()");
+               prefix.asprintf_append("))) return T(0);\n");
+            }
+            prefix.asprintf_append(
                "  vec<T, 4> expected = vec<T, 4>(compare);\n"
                "  while (!image.atomic_compare_exchange_weak(%s, &expected, vec<T, 4>(value)) && expected.x == compare) {}\n"
                "  return expected.x;\n"
-               "}\n", suffix, array || volume ? "3" : "2", array || volume ? "3" : "2",
-               volume ? ", image.get_depth()" : array ? ", image.get_array_size()" : "", array ? "p.xy, p.z" : "p");
+               "}\n", components);
          }
          buffer.asprintf_append("_xlat_image_comp_swap_%s(", suffix);
          image->accept(this);
-         buffer.asprintf_append(array || volume ? ", uint3(" : ", uint2(");
+         buffer.asprintf_append(", %s(", uint_vector_type(rank));
          coord->accept(this);
          buffer.asprintf_append("), %s(", type); operand->accept(this);
          buffer.asprintf_append("), %s(", type);
@@ -2642,9 +2703,7 @@ ir_print_metal_visitor::visit(ir_call *ir)
          buffer.asprintf_append("))");
       } else {
          image->accept(this); buffer.asprintf_append(".%s(", atomic->metal);
-         buffer.asprintf_append(volume ? "uint3(" : "uint2("); coord->accept(this);
-         buffer.asprintf_append(array ? ".xy), uint(" : ")");
-         if (array) { coord->accept(this); buffer.asprintf_append(".z)"); }
+         print_image_coordinates(coord, imageType);
          buffer.asprintf_append(", %s4(", type); operand->accept(this);
          buffer.asprintf_append(")).x");
       }
@@ -2654,15 +2713,22 @@ ir_print_metal_visitor::visit(ir_call *ir)
    if (const char* imageFunction = image_function_name(ir->callee)) {
       auto* image = ((ir_instruction*)ir->actual_parameters.get_head())->as_rvalue();
       const glsl_type* type = image->type;
-      bool array = type->sampler_array;
-      bool volume = type->sampler_dimensionality == GLSL_SAMPLER_DIM_3D;
-      if (!strcmp(imageFunction, "imageSize")) {
-         buffer.asprintf_append(array || volume ? "int3(" : "int2(");
-         image->accept(this); buffer.asprintf_append(".get_width(), ");
-         image->accept(this); buffer.asprintf_append(".get_height()");
-         if (array || volume) {
+      if (!strcmp(imageFunction, "imageSamples")) {
+         buffer.asprintf_append("int(");
+         image->accept(this);
+         buffer.asprintf_append(".get_num_samples())");
+      } else if (!strcmp(imageFunction, "imageSize")) {
+         unsigned spatial = image_spatial_rank(type);
+         unsigned rank = spatial + type->sampler_array;
+         buffer.asprintf_append(rank == 1 ? "int(" : rank == 2 ? "int2(" : "int3(");
+         image->accept(this); buffer.asprintf_append(".get_width()");
+         if (spatial >= 2) {
             buffer.asprintf_append(", "); image->accept(this);
-            buffer.asprintf_append(array ? ".get_array_size()" : ".get_depth()");
+            buffer.asprintf_append(".get_height()");
+         }
+         if (spatial == 3 || type->sampler_array) {
+            buffer.asprintf_append(", "); image->accept(this);
+            buffer.asprintf_append(type->sampler_array ? ".get_array_size()" : ".get_depth()");
          }
          buffer.asprintf_append(")");
       } else {
@@ -2675,10 +2741,12 @@ ir_print_metal_visitor::visit(ir_call *ir)
             buffer.asprintf_append("%s4(", type->sampled_type == GLSL_TYPE_UINT ? "uint" : type->sampled_type == GLSL_TYPE_INT ? "int" : "float");
             value->accept(this); buffer.asprintf_append("), ");
          }
-         buffer.asprintf_append(volume ? "uint3(" : "uint2(");
-         coord->accept(this);
-         buffer.asprintf_append(array ? ".xy), uint(" : ")");
-         if (array) { coord->accept(this); buffer.asprintf_append(".z)"); }
+         print_image_coordinates(coord, type);
+         if (type->sampler_dimensionality == GLSL_SAMPLER_DIM_MS) {
+            buffer.asprintf_append(", uint(");
+            ((ir_instruction*)coord->next)->accept(this);
+            buffer.asprintf_append(")");
+         }
          buffer.asprintf_append(")");
       }
       return;
