@@ -71,4 +71,4 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
 //  member #15: vec4 set_color offset 80 (unused)
 // textures: 2
 //  #0: source_color (high 2d) 0x0 [-1] loc 0
-//  #1: dest_buffer (high image2d) 0x0 [-1] loc 1
+//  #1: dest_buffer (high image2d) 0x0 [-1] loc 1 format rgba16f component float writeonly

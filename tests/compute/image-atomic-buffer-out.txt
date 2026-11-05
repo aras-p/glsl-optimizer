@@ -22,4 +22,4 @@ void main ()
 //  member #0: uint[] values offset 0 array runtime stride 4
 //  member #1: uint [] parent 0 offset 0
 // textures: 1
-//  #0: counters (high other) 0x0 [-1] loc 3
+//  #0: counters (high other) 0x0 [-1] loc 3 format r32ui component uint

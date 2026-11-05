@@ -669,11 +669,17 @@ static bool TestFile (glslopt_ctx* ctx, glslopt_shader_type type,
 			glslopt_precision parPrec;
 			int parVecSize, parMatSize, parArrSize, location;
 			glslopt_shader_get_texture_desc(shader, i, &parName, &parType, &parPrec, &parVecSize, &parMatSize, &parArrSize, &location);
-			if (location >= 0)
-				sprintf(buffer, "//  #%i: %s (%s %s) %ix%i [%i] loc %i\n", i, parName, kGlslPrecNames[parPrec], kGlslTypeNames[parType], parVecSize, parMatSize, parArrSize, location);
-			else
-				sprintf(buffer, "//  #%i: %s (%s %s) %ix%i [%i]\n", i, parName, kGlslPrecNames[parPrec], kGlslTypeNames[parType], parVecSize, parMatSize, parArrSize);
+			sprintf(buffer, "//  #%i: %s (%s %s) %ix%i [%i]", i, parName, kGlslPrecNames[parPrec], kGlslTypeNames[parType], parVecSize, parMatSize, parArrSize);
 			textOpt += buffer;
+			if (location >= 0) appendField("loc", location);
+			if (const auto* image = glslopt_shader_get_image_desc(shader, i)) {
+				const char* components[] = { "unknown", "float", "int", "uint" };
+				if (image->format) textOpt += std::string(" format ") + image->format;
+				textOpt += std::string(" component ") + components[image->componentType];
+				if (image->readOnly) textOpt += " readonly";
+				if (image->writeOnly) textOpt += " writeonly";
+			}
+			textOpt += "\n";
 		}
 
 #		ifdef __APPLE__

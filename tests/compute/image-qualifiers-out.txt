@@ -16,5 +16,5 @@ void main ()
 // stats: 2 alu 2 tex 0 flow
 // workgroup size: 8 1 1
 // textures: 2
-//  #0: sources (high image2d) 0x0 [2] loc 1
-//  #1: destination (high image2d) 0x0 [-1] loc 4
+//  #0: sources (high image2d) 0x0 [2] loc 1 format rg16f component float readonly
+//  #1: destination (high image2d) 0x0 [-1] loc 4 format r32ui component uint

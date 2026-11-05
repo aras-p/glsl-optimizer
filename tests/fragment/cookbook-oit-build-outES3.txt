@@ -56,4 +56,4 @@ void main ()
 // buffer #1: atomic_counters_0 atomic-counter layout atomic-counter binding 0 (size: 4)
 //  member #0: atomic_uint nextNodeCounter offset 0
 // textures: 1
-//  #0: headPointers (high image2d) 0x0 [-1] loc 0
+//  #0: headPointers (high image2d) 0x0 [-1] loc 0 format r32ui component uint

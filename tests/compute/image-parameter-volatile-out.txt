@@ -11,4 +11,4 @@ void main ()
 // stats: 1 alu 1 tex 0 flow
 // workgroup size: 4 1 1
 // textures: 1
-//  #0: data (high image2d) 0x0 [-1] loc 0
+//  #0: data (high image2d) 0x0 [-1] loc 0 format r32ui component uint writeonly

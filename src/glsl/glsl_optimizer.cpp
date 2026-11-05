@@ -218,7 +218,9 @@ struct glslopt_shader
 	static const int kMaxShaderTextures = 128;
 	glslopt_shader_var uniforms[kMaxShaderUniforms];
 	glslopt_shader_var inputs[kMaxShaderInputs];
-	glslopt_shader_var textures[kMaxShaderInputs];
+	glslopt_shader_var textures[kMaxShaderTextures];
+	glslopt_image_desc images[kMaxShaderTextures];
+	bool isImage[kMaxShaderTextures];
 	std::vector<glslopt_buffer> buffers;
 	int uniformCount, uniformsSize;
 	int inputCount;
@@ -574,6 +576,19 @@ static void find_shader_variables(glslopt_shader* sh, exec_list* ir, bool metal)
 			glsl_type_to_optimizer_desc(var->type, var->data.precision, &v);
 			v.location = !metal && var->data.explicit_binding ? var->data.binding :
 				var->data.explicit_location ? var->data.location : -1;
+			const auto* type = var->type->without_array();
+			sh->isImage[sh->textureCount] = type->is_image();
+			if (type->is_image()) {
+				glslopt_image_component_type component = kGlslImageComponentUnknown;
+				switch (type->sampled_type) {
+				case GLSL_TYPE_FLOAT: component = kGlslImageComponentFloat; break;
+				case GLSL_TYPE_INT: component = kGlslImageComponentInt; break;
+				case GLSL_TYPE_UINT: component = kGlslImageComponentUInt; break;
+				default: break;
+				}
+				sh->images[sh->textureCount] = {image_format_name(var->data.image_format), component,
+					var->data.memory_read_only != 0, var->data.memory_write_only != 0};
+			}
 			++sh->textureCount;
 		}
 	}
@@ -924,6 +939,13 @@ void glslopt_shader_get_texture_desc (glslopt_shader* shader, int index, const c
 	*outMatSize = v.matrixSize;
 	*outArraySize = v.arraySize;
 	*outLocation = v.location;
+}
+
+const glslopt_image_desc* glslopt_shader_get_image_desc(glslopt_shader* shader, int textureIndex)
+{
+	if (textureIndex < 0 || textureIndex >= shader->textureCount || !shader->isImage[textureIndex])
+		return nullptr;
+	return &shader->images[textureIndex];
 }
 
 void glslopt_shader_get_stats (glslopt_shader* shader, int* approxMath, int* approxTex, int* approxFlow)

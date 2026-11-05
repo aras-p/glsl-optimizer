@@ -91,8 +91,8 @@ void glslopt_shader_get_uniform_desc (glslopt_shader* shader, int index, const c
 // Includes sampled textures and storage images. For GLSL, location is the
 // explicit binding if present, otherwise the explicit uniform location or -1.
 // For Metal, location is the texture slot. Image slots follow sampled textures
-// and do not consume sampler slots. Bind a compatible texture format with shader-read/write usage
-// matching the source qualifiers.
+// and do not consume sampler slots. See glslopt_shader_get_image_desc for
+// the image format and access qualifiers.
 // Integer image atomics require Metal 3.1+ and a GPU supporting texture atomics.
 // Coherent images require Metal 3.2+ on Apple silicon; synchronization remains
 // the shader's responsibility. Volatile images are not supported on Metal.
@@ -100,6 +100,23 @@ void glslopt_shader_get_uniform_desc (glslopt_shader* shader, int index, const c
 // for present channels, but absent alpha remains 1 (GL/ES return all zeros).
 int glslopt_shader_get_texture_count (glslopt_shader* shader);
 void glslopt_shader_get_texture_desc (glslopt_shader* shader, int index, const char** outName, glslopt_basic_type* outType, glslopt_precision* outPrec, int* outVecSize, int* outMatSize, int* outArraySize, int* outLocation);
+
+enum glslopt_image_component_type {
+	kGlslImageComponentUnknown = 0,
+	kGlslImageComponentFloat,
+	kGlslImageComponentInt,
+	kGlslImageComponentUInt,
+};
+struct glslopt_image_desc {
+	const char* format; // GLSL layout name (e.g. "rgba8" or "r32ui"), NULL if unspecified.
+	glslopt_image_component_type componentType; // Image operation type. Normalized formats use float.
+	bool readOnly;
+	bool writeOnly;
+};
+// Index uses the texture list above. Returns NULL for samplers and invalid indices.
+// Access flags reflect the qualifiers. Neither flag means read/write, both means query only.
+// The descriptor remains valid until glslopt_shader_delete.
+const glslopt_image_desc* glslopt_shader_get_image_desc(glslopt_shader* shader, int textureIndex);
 
 // Reflection for buffers (separate from "global" uniforms):
 // - names and descriptors remain valid until glslopt_shader_delete

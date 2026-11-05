@@ -43,6 +43,6 @@ void main ()
 //  member #0: vec4[] values offset 0 array runtime stride 16
 //  member #1: vec4 [] parent 0 offset 0
 // textures: 3
-//  #0: source2D (high image2d) 0x0 [-1] loc 0
-//  #1: sourceArray (high image2darray) 0x0 [-1] loc 1
-//  #2: source3D (high image3d) 0x0 [-1] loc 2
+//  #0: source2D (high image2d) 0x0 [-1] loc 0 format r32ui component uint readonly
+//  #1: sourceArray (high image2darray) 0x0 [-1] loc 1 format r32i component int readonly
+//  #2: source3D (high image3d) 0x0 [-1] loc 2 format r32f component float readonly

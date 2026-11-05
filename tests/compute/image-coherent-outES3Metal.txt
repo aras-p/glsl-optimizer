@@ -40,6 +40,6 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
 // stats: 5 alu 4 tex 0 flow
 // workgroup size: 8 1 1
 // textures: 3
-//  #0: sourceImage (high image2d) 0x0 [-1] loc 0
-//  #1: destinationImage (high image3d) 0x0 [-1] loc 1
-//  #2: data (high image2darray) 0x0 [-1] loc 2
+//  #0: sourceImage (high image2d) 0x0 [-1] loc 0 format rgba32f component float readonly
+//  #1: destinationImage (high image3d) 0x0 [-1] loc 1 format rgba32f component float writeonly
+//  #2: data (high image2darray) 0x0 [-1] loc 2 format r32ui component uint

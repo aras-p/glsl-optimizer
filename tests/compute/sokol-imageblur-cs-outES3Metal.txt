@@ -231,4 +231,4 @@ threadgroup float3 tile_1[4][128];
 //  member #2: int flip offset 8
 // textures: 2
 //  #0: cs_inp_tex (high 2d) 0x0 [-1] loc 0
-//  #1: cs_outp_tex (high image2d) 0x0 [-1] loc 1
+//  #1: cs_outp_tex (high image2d) 0x0 [-1] loc 1 format rgba8 component float writeonly

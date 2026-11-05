@@ -61,4 +61,4 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
 //  member #0: uvec4[] values offset 0 array runtime stride 16
 //  member #1: uvec4 [] parent 0 offset 0
 // textures: 1
-//  #0: volume (high image3d) 0x0 [-1] loc 0
+//  #0: volume (high image3d) 0x0 [-1] loc 0 format r32ui component uint

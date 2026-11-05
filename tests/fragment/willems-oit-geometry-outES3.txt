@@ -47,4 +47,4 @@ void main ()
 //  member #0: mat4 model offset 0 matrix-stride 16 (unused)
 //  member #1: vec4 color offset 64
 // textures: 1
-//  #0: headIndexImage (high image2d) 0x0 [-1] loc 2
+//  #0: headIndexImage (high image2d) 0x0 [-1] loc 2 format r32ui component uint

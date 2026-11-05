@@ -151,4 +151,4 @@ void main ()
 // textures: 3
 //  #0: source_color (high 2d) 0x0 [-1] loc 0
 //  #1: source_auto_exposure (high 2d) 0x0 [-1] loc 1
-//  #2: dest_buffer (high image2d) 0x0 [-1] loc 3
+//  #2: dest_buffer (high image2d) 0x0 [-1] loc 3 format rgba16f component float writeonly

@@ -29,7 +29,7 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
 // stats: 3 alu 4 tex 0 flow
 // workgroup size: 4 1 1
 // textures: 4
-//  #0: sourceImage (medium image2d) 0x0 [-1] loc 0
-//  #1: destinationImage (medium image2d) 0x0 [-1] loc 1
-//  #2: sourceIntegers (medium image2d) 0x0 [-1] loc 2
-//  #3: destinationIntegers (medium image2d) 0x0 [-1] loc 3
+//  #0: sourceImage (medium image2d) 0x0 [-1] loc 0 format rgba16f component float readonly
+//  #1: destinationImage (medium image2d) 0x0 [-1] loc 1 format rgba8 component float writeonly
+//  #2: sourceIntegers (medium image2d) 0x0 [-1] loc 2 format rgba16i component int readonly
+//  #3: destinationIntegers (medium image2d) 0x0 [-1] loc 3 format rgba16i component int writeonly

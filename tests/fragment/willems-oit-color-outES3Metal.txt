@@ -76,4 +76,4 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
 //  member #3: float depth parent 1 offset 16
 //  member #4: uint next parent 1 offset 20
 // textures: 1
-//  #0: headIndexImage (high image2d) 0x0 [-1] loc 0
+//  #0: headIndexImage (high image2d) 0x0 [-1] loc 0 format r32ui component uint
