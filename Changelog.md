@@ -17,9 +17,9 @@ Changed:
   had _actual_ `lowp` was, like, 15 years ago.
 * Updated underlying Mesa compiler/optimizer codebase from 10.4-dev (2014 Oct) to Mesa 20.3.5 (2021 Mar).
   This slightly improves constant folding, dead-code elimination, vector assignment
-  simplification, and arithmetic optimization. I did not pick more recent Mesa
-  since it moved a lot of optimization to their new "NIR" architecture, which would
-  have been a lot more work. Maybe someday!
+  simplification, and arithmetic optimization. It also seems to have improved performance
+  of the optimizer itself (20-30% faster across tests). I did not pick more recent Mesa since it moved
+  a lot of optimization to their new "NIR" architecture, which would have been a lot more work. Maybe someday!
 
 Build:
 
