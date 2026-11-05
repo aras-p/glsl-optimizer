@@ -448,6 +448,31 @@ static const char* kGlslPrecNames[kGlslPrecCount] = {
 };
 
 
+static bool CompareExpectedOutput(const std::string& testName, const std::string& outputPath,
+	const std::string& actualPath, const std::string& expected, bool haveExpected,
+	const std::string& actual, const char* mismatch, bool updateExpected)
+{
+	if (haveExpected && actual == expected)
+		return true;
+	if (updateExpected)
+	{
+		if (WriteStringToFile(outputPath, actual))
+		{
+			printf("\n  Updated %s\n", outputPath.c_str());
+			return true;
+		}
+		printf("\n  %s: could not update %s\n", testName.c_str(), outputPath.c_str());
+		return false;
+	}
+	printf("\n  %s: %s (%s)\n", testName.c_str(),
+		haveExpected ? mismatch : "missing or unreadable expected output", outputPath.c_str());
+	if (WriteStringToFile(actualPath, actual))
+		printf("  Actual output: %s\n", actualPath.c_str());
+	else
+		printf("  Could not write actual output: %s\n", actualPath.c_str());
+	return false;
+}
+
 static bool TestFile (glslopt_ctx* ctx, glslopt_shader_type type,
 	const std::string& testName,
 	const std::string& inputPath,
@@ -459,17 +484,22 @@ static bool TestFile (glslopt_ctx* ctx, glslopt_shader_type type,
 	bool doCheckMetal, bool reparse = false)
 {
 	const bool vertex = type == kGlslOptShaderVertex;
-	if (type == kGlslOptShaderCompute && doCheckGLSL) {
-		printf("\n  %s: compute validation is unavailable in the legacy OpenGL test context.\n", testName.c_str());
-		return false;
-	}
 	std::string input;
 	if (!ReadStringFromFile (inputPath.c_str(), input))
 	{
 		printf ("\n  %s: failed to read input file\n", testName.c_str());
 		return false;
 	}
-	if (doCheckGLSL)
+	std::string outputOpt;
+	bool haveExpected = ReadStringFromFile(outputPath.c_str(), outputOpt);
+	// An explicit marker keeps unexpected optimizer failures from becoming expectations.
+	const char* errorMarker = "// expected error\n";
+	const bool expectError = haveExpected && outputOpt.compare(0, strlen(errorMarker), errorMarker) == 0;
+	if (type == kGlslOptShaderCompute && doCheckGLSL && !expectError) {
+		printf("\n  %s: compute validation is unavailable in the legacy OpenGL test context.\n", testName.c_str());
+		return false;
+	}
+	if (doCheckGLSL && !expectError)
 	{
 		if (!CheckGLSL (vertex, gles, testName, "input", input.c_str()))
 			return false;
@@ -488,6 +518,26 @@ static bool TestFile (glslopt_ctx* ctx, glslopt_shader_type type,
 	glslopt_shader* shader = glslopt_optimize (ctx, type, input.c_str(), 0);
 
 	bool optimizeOk = glslopt_get_status(shader);
+	if (expectError)
+	{
+		if (optimizeOk)
+		{
+			printf("\n  %s: optimizer succeeded but an error was expected (%s)\n",
+				testName.c_str(), outputPath.c_str());
+			res = false;
+		}
+		else
+		{
+			std::string diagnostics = std::string(errorMarker) + glslopt_get_log(shader);
+			replace_string(diagnostics, "\r\n", "\n", 0);
+			if (diagnostics.back() != '\n') diagnostics += '\n';
+			res = CompareExpectedOutput(testName, outputPath, actualPath, outputOpt, haveExpected,
+				diagnostics, "does not match expected diagnostics", updateExpected);
+		}
+		glslopt_shader_delete(shader);
+		return res;
+	}
+
 	if (optimizeOk && (!glslopt_get_raw_output(shader) || !glslopt_get_output(shader))) {
 		printf("\n  %s: optimizer returned no source output.\n", testName.c_str());
 		glslopt_shader_delete(shader);
@@ -626,9 +676,6 @@ static bool TestFile (glslopt_ctx* ctx, glslopt_shader_type type,
 			textOpt += buffer;
 		}
 
-		std::string outputOpt;
-		bool haveExpected = ReadStringFromFile (outputPath.c_str(), outputOpt);
-
 #		ifdef __APPLE__
 
 		if (res && doCheckMetal && !CheckMetal (vertex, gles, testName, "metal", textOpt.c_str()))
@@ -636,29 +683,8 @@ static bool TestFile (glslopt_ctx* ctx, glslopt_shader_type type,
 
 #		endif
 		
-		if (!haveExpected || textOpt != outputOpt)
-		{
-			if (updateExpected && res)
-			{
-				if (!WriteStringToFile(outputPath, textOpt))
-				{
-					printf("\n  %s: could not update %s\n", testName.c_str(), outputPath.c_str());
-					res = false;
-				}
-				else
-					printf("\n  Updated %s\n", outputPath.c_str());
-			}
-			else
-			{
-				printf("\n  %s: %s (%s)\n", testName.c_str(),
-					haveExpected ? "does not match optimized output" : "missing or unreadable expected output", outputPath.c_str());
-				if (WriteStringToFile(actualPath, textOpt))
-					printf("  Actual output: %s\n", actualPath.c_str());
-				else
-					printf("  Could not write actual output: %s\n", actualPath.c_str());
-				res = false;
-			}
-		}
+		res = CompareExpectedOutput(testName, outputPath, actualPath, outputOpt, haveExpected,
+			textOpt, "does not match optimized output", updateExpected && res) && res;
 		if (res && doCheckGLSL && !CheckGLSL (vertex, gles, testName, "raw", textHir.c_str()))
 			res = false;
 		if (res && doCheckGLSL && !CheckGLSL (vertex, gles, testName, "optimized", textOpt.c_str()))

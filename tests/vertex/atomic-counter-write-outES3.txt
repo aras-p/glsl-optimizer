@@ -1,0 +1,13 @@
+#version 310 es
+layout(binding=0, offset=0) uniform highp atomic_uint counter;
+void main ()
+{
+  highp uint tmpvar_1;
+  tmpvar_1 = atomicCounterIncrement (counter);
+  gl_Position = vec4(float(tmpvar_1));
+}
+
+
+// stats: 1 alu 0 tex 0 flow
+// buffer #0: atomic_counters_0 atomic-counter layout atomic-counter binding 0 (size: 4)
+//  member #0: atomic_uint counter offset 0
