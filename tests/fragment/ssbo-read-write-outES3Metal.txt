@@ -5,39 +5,39 @@ struct Entry {
   float3 color;
   float weight;
 };
-struct alignas(4) _xlat_ubo_storage1_element { float value; };
-struct _xlat_ubo_storage1 { _xlat_ubo_storage1_element elements[3]; };
-static_assert(sizeof(_xlat_ubo_storage1) == 12, "std430 size");
-struct alignas(16) _xlat_ubo_storage3 {
+struct alignas(4) _xlat_buf_storage1_element { float value; };
+struct _xlat_buf_storage1 { _xlat_buf_storage1_element elements[3]; };
+static_assert(sizeof(_xlat_buf_storage1) == 12, "std430 size");
+struct alignas(16) _xlat_buf_storage3 {
   alignas(16) packed_float3 color;
   alignas(4) float weight;
 };
-static_assert(sizeof(_xlat_ubo_storage3) == 16, "std430 size");
-inline __attribute__((always_inline)) Entry _xlat_ubo_storage3_read(const device _xlat_ubo_storage3& storage)
+static_assert(sizeof(_xlat_buf_storage3) == 16, "std430 size");
+inline __attribute__((always_inline)) Entry _xlat_buf_storage3_read(const device _xlat_buf_storage3& storage)
 {
   Entry value;
   value.color = float3(storage.color);
   value.weight = float(storage.weight);
   return value;
 }
-struct alignas(16) _xlat_ubo_storage2_element { _xlat_ubo_storage3 value; };
-struct _xlat_ubo_storage2 { _xlat_ubo_storage2_element elements[2]; };
-static_assert(sizeof(_xlat_ubo_storage2) == 32, "std430 size");
-struct alignas(8) _xlat_ubo_storage4_element { float2 value; };
-struct _xlat_ubo_storage4 { _xlat_ubo_storage4_element elements[2]; };
-static_assert(sizeof(_xlat_ubo_storage4) == 16, "std430 size");
-struct alignas(16) _xlat_ubo_storage0 {
+struct alignas(16) _xlat_buf_storage2_element { _xlat_buf_storage3 value; };
+struct _xlat_buf_storage2 { _xlat_buf_storage2_element elements[2]; };
+static_assert(sizeof(_xlat_buf_storage2) == 32, "std430 size");
+struct alignas(8) _xlat_buf_storage4_element { float2 value; };
+struct _xlat_buf_storage4 { _xlat_buf_storage4_element elements[2]; };
+static_assert(sizeof(_xlat_buf_storage4) == 16, "std430 size");
+struct alignas(16) _xlat_buf_storage0 {
   alignas(4) uint index;
-  alignas(4) _xlat_ubo_storage1 values;
-  alignas(16) _xlat_ubo_storage2 entries;
-  alignas(8) _xlat_ubo_storage4 pairs;
+  alignas(4) _xlat_buf_storage1 values;
+  alignas(16) _xlat_buf_storage2 entries;
+  alignas(8) _xlat_buf_storage4 pairs;
   alignas(4) uint unused;
 };
-static_assert(sizeof(_xlat_ubo_storage0) == 80, "std430 size");
-struct alignas(16) _xlat_ubo_storage5 {
+static_assert(sizeof(_xlat_buf_storage0) == 80, "std430 size");
+struct alignas(16) _xlat_buf_storage5 {
   alignas(16) float4 tint;
 };
-static_assert(sizeof(_xlat_ubo_storage5) == 16, "std140 size");
+static_assert(sizeof(_xlat_buf_storage5) == 16, "std140 size");
 struct xlatMtlShaderInput {
 };
 struct xlatMtlShaderOutput {
@@ -46,8 +46,8 @@ struct xlatMtlShaderOutput {
 struct xlatMtlShaderUniform {
 };
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , device _xlat_ubo_storage0& _mtl_buffer1 [[buffer(1)]]
-  , constant _xlat_ubo_storage5& _mtl_buffer2 [[buffer(2)]])
+  , device _xlat_buf_storage0& _mtl_buffer1 [[buffer(1)]]
+  , constant _xlat_buf_storage5& _mtl_buffer2 [[buffer(2)]])
 {
   xlatMtlShaderOutput _mtl_o;
   uint tmpvar_1;

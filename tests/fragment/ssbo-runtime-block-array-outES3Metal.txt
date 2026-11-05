@@ -1,13 +1,13 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
-struct alignas(4) _xlat_ubo_storage0_element { float value; };
-static_assert(sizeof(_xlat_ubo_storage0_element) == 4, "array stride");
-struct alignas(4) _xlat_ubo_storage2_element { float value; };
-struct _xlat_ubo_storage2 { _xlat_ubo_storage2_element elements[3]; };
-static_assert(sizeof(_xlat_ubo_storage2) == 12, "std430 size");
-struct alignas(4) _xlat_ubo_storage1_element { _xlat_ubo_storage2 value; };
-static_assert(sizeof(_xlat_ubo_storage1_element) == 12, "array stride");
+struct alignas(4) _xlat_buf_storage0_element { float value; };
+static_assert(sizeof(_xlat_buf_storage0_element) == 4, "array stride");
+struct alignas(4) _xlat_buf_storage2_element { float value; };
+struct _xlat_buf_storage2 { _xlat_buf_storage2_element elements[3]; };
+static_assert(sizeof(_xlat_buf_storage2) == 12, "std430 size");
+struct alignas(4) _xlat_buf_storage1_element { _xlat_buf_storage2 value; };
+static_assert(sizeof(_xlat_buf_storage1_element) == 12, "array stride");
 struct xlatMtlShaderInput {
 };
 struct xlatMtlShaderOutput {
@@ -25,7 +25,7 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   const device uchar* _mtl_b1[2] = {_mtl_buffer2, _mtl_buffer3};
   const uint _mtl_bs1[2] = {2u, 3u};
   xlatMtlShaderOutput _mtl_o;
-  reinterpret_cast<device _xlat_ubo_storage0_element*>(_mtl_buffer1 + 0)[_mtl_u.index].value = float((float(reinterpret_cast<const device _xlat_ubo_storage1_element*>(_mtl_b1[0] + 0)[_mtl_u.index].value.elements[2].value) + float(reinterpret_cast<const device _xlat_ubo_storage1_element*>(_mtl_b1[1] + 0)[_mtl_u.index].value.elements[1].value)));
+  reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[_mtl_u.index].value = float((float(reinterpret_cast<const device _xlat_buf_storage1_element*>(_mtl_b1[0] + 0)[_mtl_u.index].value.elements[2].value) + float(reinterpret_cast<const device _xlat_buf_storage1_element*>(_mtl_b1[1] + 0)[_mtl_u.index].value.elements[1].value)));
   float4 tmpvar_1 = 0;
   tmpvar_1.zw = float2(3.0, 1.0);
   tmpvar_1.x = float(int((max(_mtl_buffer_sizes[_mtl_bs1[0]], 0u) - 0u) / 12u));

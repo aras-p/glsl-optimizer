@@ -5,29 +5,29 @@ struct Entry {
   float4 color;
   float unused;
 };
-struct alignas(16) _xlat_ubo_storage2 {
+struct alignas(16) _xlat_buf_storage2 {
   alignas(16) float4 color;
   alignas(4) float unused;
 };
-static_assert(sizeof(_xlat_ubo_storage2) == 32, "std140 size");
-inline __attribute__((always_inline)) Entry _xlat_ubo_storage2_read(constant _xlat_ubo_storage2& storage)
+static_assert(sizeof(_xlat_buf_storage2) == 32, "std140 size");
+inline __attribute__((always_inline)) Entry _xlat_buf_storage2_read(constant _xlat_buf_storage2& storage)
 {
   Entry value;
   value.color = float4(storage.color);
   value.unused = float(storage.unused);
   return value;
 }
-struct alignas(16) _xlat_ubo_storage1_element { _xlat_ubo_storage2 value; };
-struct _xlat_ubo_storage1 { _xlat_ubo_storage1_element elements[2]; };
-static_assert(sizeof(_xlat_ubo_storage1) == 64, "std140 size");
-struct alignas(16) _xlat_ubo_storage0 {
+struct alignas(16) _xlat_buf_storage1_element { _xlat_buf_storage2 value; };
+struct _xlat_buf_storage1 { _xlat_buf_storage1_element elements[2]; };
+static_assert(sizeof(_xlat_buf_storage1) == 64, "std140 size");
+struct alignas(16) _xlat_buf_storage0 {
   alignas(4) int index;
   alignas(4) float removed;
-  char _ubo_pad2[8];
-  alignas(16) _xlat_ubo_storage1 entries;
+  char _buf_pad2[8];
+  alignas(16) _xlat_buf_storage1 entries;
   alignas(16) float4 unused;
 };
-static_assert(sizeof(_xlat_ubo_storage0) == 96, "std140 size");
+static_assert(sizeof(_xlat_buf_storage0) == 96, "std140 size");
 struct xlatMtlShaderInput {
 };
 struct xlatMtlShaderOutput {
@@ -36,7 +36,7 @@ struct xlatMtlShaderOutput {
 struct xlatMtlShaderUniform {
 };
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , constant _xlat_ubo_storage0& _mtl_buffer1 [[buffer(1)]])
+  , constant _xlat_buf_storage0& _mtl_buffer1 [[buffer(1)]])
 {
   xlatMtlShaderOutput _mtl_o;
   _mtl_o.color = float4(_mtl_buffer1.entries.elements[short(_mtl_buffer1.index)].value.color);

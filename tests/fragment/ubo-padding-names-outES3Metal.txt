@@ -2,38 +2,38 @@
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
 struct Entry {
-  float _ubo_pad1;
+  float _buf_pad1;
   float4 color;
-  float _ubo_pad2;
+  float _buf_pad2;
   float4 other;
 };
-struct alignas(16) _xlat_ubo_storage1 {
-  alignas(4) float _ubo_pad1;
-  char _ubo_pad3[12];
+struct alignas(16) _xlat_buf_storage1 {
+  alignas(4) float _buf_pad1;
+  char _buf_pad3[12];
   alignas(16) float4 color;
-  alignas(4) float _ubo_pad2;
-  char _ubo_pad4[12];
+  alignas(4) float _buf_pad2;
+  char _buf_pad4[12];
   alignas(16) float4 other;
 };
-static_assert(sizeof(_xlat_ubo_storage1) == 64, "std140 size");
-inline __attribute__((always_inline)) Entry _xlat_ubo_storage1_read(constant _xlat_ubo_storage1& storage)
+static_assert(sizeof(_xlat_buf_storage1) == 64, "std140 size");
+inline __attribute__((always_inline)) Entry _xlat_buf_storage1_read(constant _xlat_buf_storage1& storage)
 {
   Entry value;
-  value._ubo_pad1 = float(storage._ubo_pad1);
+  value._buf_pad1 = float(storage._buf_pad1);
   value.color = float4(storage.color);
-  value._ubo_pad2 = float(storage._ubo_pad2);
+  value._buf_pad2 = float(storage._buf_pad2);
   value.other = float4(storage.other);
   return value;
 }
-struct alignas(16) _xlat_ubo_storage0 {
-  alignas(4) float _ubo_pad1;
-  char _ubo_pad3[12];
+struct alignas(16) _xlat_buf_storage0 {
+  alignas(4) float _buf_pad1;
+  char _buf_pad3[12];
   alignas(16) float4 color;
-  alignas(4) float _ubo_pad2;
-  char _ubo_pad4[12];
-  alignas(16) _xlat_ubo_storage1 entry;
+  alignas(4) float _buf_pad2;
+  char _buf_pad4[12];
+  alignas(16) _xlat_buf_storage1 entry;
 };
-static_assert(sizeof(_xlat_ubo_storage0) == 112, "std140 size");
+static_assert(sizeof(_xlat_buf_storage0) == 112, "std140 size");
 struct xlatMtlShaderInput {
 };
 struct xlatMtlShaderOutput {
@@ -42,21 +42,21 @@ struct xlatMtlShaderOutput {
 struct xlatMtlShaderUniform {
 };
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , constant _xlat_ubo_storage0& _mtl_buffer1 [[buffer(1)]])
+  , constant _xlat_buf_storage0& _mtl_buffer1 [[buffer(1)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  _mtl_o.color = (((float4(_mtl_buffer1.color) * float(_mtl_buffer1._ubo_pad1)) + (float4(_mtl_buffer1.entry.color) * float(_mtl_buffer1.entry._ubo_pad1))) + (float4(_mtl_buffer1.entry.other) * (float(_mtl_buffer1._ubo_pad2) + float(_mtl_buffer1.entry._ubo_pad2))));
+  _mtl_o.color = (((float4(_mtl_buffer1.color) * float(_mtl_buffer1._buf_pad1)) + (float4(_mtl_buffer1.entry.color) * float(_mtl_buffer1.entry._buf_pad1))) + (float4(_mtl_buffer1.entry.other) * (float(_mtl_buffer1._buf_pad2) + float(_mtl_buffer1.entry._buf_pad2))));
   return _mtl_o;
 }
 
 
 // stats: 6 alu 0 tex 0 flow
 // buffer #0: Data instance data layout std140 (size: 112) metal 1
-//  member #0: float _ubo_pad1 offset 0
+//  member #0: float _buf_pad1 offset 0
 //  member #1: vec4 color offset 16
-//  member #2: float _ubo_pad2 offset 32
+//  member #2: float _buf_pad2 offset 32
 //  member #3: Entry entry offset 48
-//  member #4: float _ubo_pad1 parent 3 offset 48
+//  member #4: float _buf_pad1 parent 3 offset 48
 //  member #5: vec4 color parent 3 offset 64
-//  member #6: float _ubo_pad2 parent 3 offset 80
+//  member #6: float _buf_pad2 parent 3 offset 80
 //  member #7: vec4 other parent 3 offset 96

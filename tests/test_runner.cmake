@@ -138,3 +138,19 @@ check_storage_rejection("layout(std430) buffer Data { mat2 value; } data;"
     "data.value[0][0] = 1.0; color = vec4(1.0);" "Metal storage-buffer matrix writes")
 check_storage_rejection("struct Entry { vec4 color; }; layout(std430) buffer Data { Entry entry; } data;"
     "data.entry = Entry(vec4(1.0)); color = vec4(1.0);" "Metal storage-buffer aggregate assignments")
+
+# Compute memory-only and execution barriers must not silently acquire a
+# threadgroup mapping before shared-memory/workgroup support is implemented.
+set(compute_reject "${work}/fixtures/compute/workgroup-reject-inES3.txt")
+foreach(call "barrier()" "groupMemoryBarrier()" "memoryBarrierShared()")
+    file(WRITE "${compute_reject}" "#version 310 es\nlayout(local_size_x=4) in;\nvoid main() { ${call}; }\n")
+    check_run(1 "Metal workgroup .*barriers" "${work}/fixtures" --update-expected)
+endforeach()
+file(WRITE "${compute_reject}" "#version 310 es\nlayout(local_size_x=4) in;\nshared uint value;\nvoid main() { value = gl_LocalInvocationIndex; }\n")
+check_run(1 "Shared-variable output is not supported" "${work}/fixtures")
+file(REMOVE "${compute_reject}" "${work}/fixtures/compute/workgroup-reject-outES3.txt")
+
+foreach(name invocation-builtins-inES3.txt invocation-builtins-outES3.txt invocation-builtins-outES3Metal.txt)
+    file(COPY "${TEST_SOURCE_DIR}/compute/${name}" DESTINATION "${work}/fixtures/compute")
+endforeach()
+check_run(0 "5 tests.*succeeded" "${work}/fixtures")

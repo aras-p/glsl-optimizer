@@ -1,10 +1,10 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
-struct _xlat_ubo_storage1 { float4 vectors[3]; };
-static_assert(sizeof(_xlat_ubo_storage1) == 48, "std140 size");
-struct alignas(16) _xlat_ubo_storage0_element { _xlat_ubo_storage1 value; };
-static_assert(sizeof(_xlat_ubo_storage0_element) == 48, "array stride");
+struct _xlat_buf_storage1 { float4 vectors[3]; };
+static_assert(sizeof(_xlat_buf_storage1) == 48, "std140 size");
+struct alignas(16) _xlat_buf_storage0_element { _xlat_buf_storage1 value; };
+static_assert(sizeof(_xlat_buf_storage0_element) == 48, "array stride");
 struct xlatMtlShaderInput {
 };
 struct xlatMtlShaderOutput {
@@ -19,7 +19,7 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
 {
   xlatMtlShaderOutput _mtl_o;
   float4 tmpvar_1 = 0;
-  tmpvar_1.xyz = ((transpose(float3x2(float2(reinterpret_cast<const device _xlat_ubo_storage0_element*>(_mtl_buffer1 + 16)[_mtl_u.index].value.vectors[0].xy), float2(reinterpret_cast<const device _xlat_ubo_storage0_element*>(_mtl_buffer1 + 16)[_mtl_u.index].value.vectors[1].xy), float2(reinterpret_cast<const device _xlat_ubo_storage0_element*>(_mtl_buffer1 + 16)[_mtl_u.index].value.vectors[2].xy))) * float2(1.0, 2.0)) + float3(float((*reinterpret_cast<const device float*>(_mtl_buffer1 + 0)))));
+  tmpvar_1.xyz = ((transpose(float3x2(float2(reinterpret_cast<const device _xlat_buf_storage0_element*>(_mtl_buffer1 + 16)[_mtl_u.index].value.vectors[0].xy), float2(reinterpret_cast<const device _xlat_buf_storage0_element*>(_mtl_buffer1 + 16)[_mtl_u.index].value.vectors[1].xy), float2(reinterpret_cast<const device _xlat_buf_storage0_element*>(_mtl_buffer1 + 16)[_mtl_u.index].value.vectors[2].xy))) * float2(1.0, 2.0)) + float3(float((*reinterpret_cast<const device float*>(_mtl_buffer1 + 0)))));
   tmpvar_1.w = float(int((max(_mtl_buffer_sizes[1u], 16u) - 16u) / 48u));
   _mtl_o.color = tmpvar_1;
   return _mtl_o;

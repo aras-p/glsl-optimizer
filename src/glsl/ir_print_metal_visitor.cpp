@@ -390,8 +390,10 @@ _mesa_print_ir_metal(exec_list *instructions,
 	}
 
 
-	ctx.prefixStr.asprintf_append("%s", ctx.inputStr.c_str());
-	ctx.prefixStr.asprintf_append("%s", ctx.outputStr.c_str());
+	if (mode != kPrintGlslCompute) {
+		ctx.prefixStr.asprintf_append("%s", ctx.inputStr.c_str());
+		ctx.prefixStr.asprintf_append("%s", ctx.outputStr.c_str());
+	}
 	ctx.prefixStr.asprintf_append("%s", ctx.uniformStr.c_str());
 	ctx.prefixStr.asprintf_append("%s", ctx.str.c_str());
 
@@ -635,10 +637,10 @@ static void copy_uniform_value(metal_print_context& ctx, string_buffer& out,
    const char* dst, const char* src, unsigned depth, unsigned kind)
 {
    if (type->is_array()) {
-      out.asprintf_append("%*sfor (uint _ubo_i%u = 0; _ubo_i%u < %u; ++_ubo_i%u) {\n", 2 + depth * 2, "", depth, depth, type->length, depth);
+      out.asprintf_append("%*sfor (uint _buf_i%u = 0; _buf_i%u < %u; ++_buf_i%u) {\n", 2 + depth * 2, "", depth, depth, type->length, depth);
       copy_uniform_value(ctx, out, type->fields.array, row, precision,
-         ralloc_asprintf(ctx.mem_ctx, "%s[_ubo_i%u]", dst, depth),
-         ralloc_asprintf(ctx.mem_ctx, "%s.elements[_ubo_i%u].value", src, depth), depth + 1, kind);
+         ralloc_asprintf(ctx.mem_ctx, "%s[_buf_i%u]", dst, depth),
+         ralloc_asprintf(ctx.mem_ctx, "%s.elements[_buf_i%u].value", src, depth), depth + 1, kind);
       out.asprintf_append("%*s}\n", 2 + depth * 2, "");
    } else {
       out.asprintf_append("%*s%s = ", 2 + depth * 2, "", dst);
@@ -663,7 +665,7 @@ static const char* uniform_storage_type(metal_print_context& ctx, const glsl_typ
    auto found = types.find(type);
    if (found != types.end()) return ctx.uniformStorageNames[found->second];
    unsigned id = (unsigned)ctx.uniformStorageNames.size();
-   const char* name = ralloc_asprintf(ctx.mem_ctx, "_xlat_ubo_storage%u", id);
+   const char* name = ralloc_asprintf(ctx.mem_ctx, "_xlat_buf_storage%u", id);
    types[type] = id;
    ctx.uniformStorageNames.push_back(name);
    auto& out = ctx.typedeclStr;
@@ -699,7 +701,7 @@ static const char* uniform_storage_type(metal_print_context& ctx, const glsl_typ
             unsigned suffix = MAX2(i, nextPadding), unused;
             const char* padding;
             do {
-               padding = ralloc_asprintf(ctx.mem_ctx, "_ubo_pad%u", suffix++);
+               padding = ralloc_asprintf(ctx.mem_ctx, "_buf_pad%u", suffix++);
             } while (memberNames.get(unused, padding));
             nextPadding = suffix;
             memberNames.put(0, padding);
@@ -895,6 +897,16 @@ void ir_print_metal_visitor::visit(ir_variable *ir)
 		buffer.asprintf_append (" [[vertex_id]]");
 	else if (!strcmp(ir->name, "gl_InstanceID"))
 		buffer.asprintf_append (" [[instance_id]]");
+	else if (!strcmp(ir->name, "gl_GlobalInvocationID"))
+		buffer.asprintf_append(" [[thread_position_in_grid]]");
+	else if (!strcmp(ir->name, "gl_LocalInvocationID"))
+		buffer.asprintf_append(" [[thread_position_in_threadgroup]]");
+	else if (!strcmp(ir->name, "gl_LocalInvocationIndex"))
+		buffer.asprintf_append(" [[thread_index_in_threadgroup]]");
+	else if (!strcmp(ir->name, "gl_WorkGroupID"))
+		buffer.asprintf_append(" [[threadgroup_position_in_grid]]");
+	else if (!strcmp(ir->name, "gl_NumWorkGroups"))
+		buffer.asprintf_append(" [[threadgroups_per_grid]]");
 
 	// Interpolation belongs to fragment inputs / vertex outputs, not attributes
 	// or render targets. Metal combines interpolation and sampling location.
@@ -1030,14 +1042,19 @@ void ir_print_metal_visitor::visit(ir_function_signature *ir)
 		}
 		if (this->mode_whole == kPrintGlslVertex)
 			buffer.asprintf_append ("vertex ");
-		buffer.asprintf_append ("xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]");
+		if (this->mode_whole == kPrintGlslCompute) {
+			buffer.asprintf_append("// threadsPerThreadgroup: %u, %u, %u\n", state->cs_input_local_size[0], state->cs_input_local_size[1], state->cs_input_local_size[2]);
+			buffer.asprintf_append("kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]");
+		} else {
+			buffer.asprintf_append ("xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]");
+		}
 		if (!ctx.paramsStr.empty())
 		{
 			buffer.asprintf_append ("%s", ctx.paramsStr.c_str());
 		}
 	}
 
-   if (ir->body.is_empty())
+   if (!ir->is_defined)
    {
 	   buffer.asprintf_append (");\n");
 	   return;
@@ -1053,7 +1070,9 @@ void ir_print_metal_visitor::visit(ir_function_signature *ir)
 	{
 		buffer.asprintf_append("%s", ctx.blockAliases.c_str());
 		// output struct
-		indent(); buffer.asprintf_append ("xlatMtlShaderOutput _mtl_o;\n");
+		if (this->mode_whole != kPrintGlslCompute) {
+			indent(); buffer.asprintf_append ("xlatMtlShaderOutput _mtl_o;\n");
+		}
 
 		// insert postponed global assigments and variable declarations
 		assert (!globals->main_function_done);
@@ -1072,7 +1091,7 @@ void ir_print_metal_visitor::visit(ir_function_signature *ir)
 	   end_statement_line();
    }
 
-	if (isMain)
+	if (isMain && this->mode_whole != kPrintGlslCompute)
 	{
 		// return stuff
 		indent(); buffer.asprintf_append ("return _mtl_o;\n");

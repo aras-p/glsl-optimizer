@@ -7,3 +7,4 @@ void main ()
 
 
 // stats: 0 alu 0 tex 0 flow
+// workgroup size: 8 4 1

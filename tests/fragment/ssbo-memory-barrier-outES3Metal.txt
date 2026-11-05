@@ -4,11 +4,11 @@ using namespace metal;
 #if __METAL_VERSION__ < 320
 #error Memory barriers require Metal 3.2 or newer
 #endif
-struct alignas(4) _xlat_ubo_storage0 {
+struct alignas(4) _xlat_buf_storage0 {
   alignas(4) uint value;
   alignas(4) uint count;
 };
-static_assert(sizeof(_xlat_ubo_storage0) == 8, "std430 size");
+static_assert(sizeof(_xlat_buf_storage0) == 8, "std430 size");
 struct xlatMtlShaderInput {
 };
 struct xlatMtlShaderOutput {
@@ -18,7 +18,7 @@ struct xlatMtlShaderUniform {
   bool update;
 };
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , device _xlat_ubo_storage0& _mtl_buffer1 [[buffer(1)]])
+  , device _xlat_buf_storage0& _mtl_buffer1 [[buffer(1)]])
 {
   xlatMtlShaderOutput _mtl_o;
   uint before_1;

@@ -231,6 +231,7 @@ void main ()
 
 
 // stats: 173 alu 0 tex 13 flow
+// workgroup size: 64 1 1
 // buffer #0: SsboParticlesInput storage layout std140 binding 3 (size: unknown)
 //  member #0: Particle[] aParticlesIn offset 0 array runtime stride 32 readonly
 //  member #1: Particle [] parent 0 offset 0 readonly

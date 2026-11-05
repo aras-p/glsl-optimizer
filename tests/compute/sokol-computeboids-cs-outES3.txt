@@ -109,6 +109,7 @@ void main ()
 
 
 // stats: 55 alu 0 tex 14 flow
+// workgroup size: 64 1 1
 // buffer #0: cs_ssbo_in storage layout std430 binding 0 (size: unknown)
 //  member #0: particle[] prt_in offset 0 array runtime stride 16 readonly
 //  member #1: particle [] parent 0 offset 0 readonly

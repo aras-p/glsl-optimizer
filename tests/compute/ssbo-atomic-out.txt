@@ -13,6 +13,7 @@ void main ()
 
 
 // stats: 0 alu 0 tex 0 flow
+// workgroup size: 8 1 1
 // buffer #0: Data storage instance data layout std430 binding 0 (size: unknown)
 //  member #0: uint count offset 0
 //  member #1: uint[] values offset 4 array runtime stride 4

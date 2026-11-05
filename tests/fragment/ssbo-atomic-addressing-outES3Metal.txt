@@ -11,21 +11,21 @@ struct Entry {
   uint count;
   uint3 values;
 };
-struct alignas(16) _xlat_ubo_storage1 {
+struct alignas(16) _xlat_buf_storage1 {
   alignas(4) uint count;
-  char _ubo_pad1[12];
+  char _buf_pad1[12];
   alignas(16) packed_uint3 values;
 };
-static_assert(sizeof(_xlat_ubo_storage1) == 32, "std140 size");
-inline __attribute__((always_inline)) Entry _xlat_ubo_storage1_read(const device _xlat_ubo_storage1& storage)
+static_assert(sizeof(_xlat_buf_storage1) == 32, "std140 size");
+inline __attribute__((always_inline)) Entry _xlat_buf_storage1_read(const device _xlat_buf_storage1& storage)
 {
   Entry value;
   value.count = uint(storage.count);
   value.values = uint3(storage.values);
   return value;
 }
-struct alignas(16) _xlat_ubo_storage0_element { _xlat_ubo_storage1 value; };
-static_assert(sizeof(_xlat_ubo_storage0_element) == 32, "array stride");
+struct alignas(16) _xlat_buf_storage0_element { _xlat_buf_storage1 value; };
+static_assert(sizeof(_xlat_buf_storage0_element) == 32, "array stride");
 struct xlatMtlShaderInput {
 };
 struct xlatMtlShaderOutput {
@@ -42,11 +42,11 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   device uchar* _mtl_b0[2] = {_mtl_buffer1, _mtl_buffer2};
   xlatMtlShaderOutput _mtl_o;
   uint tmpvar_1;
-  tmpvar_1 = atomic_fetch_add_explicit (reinterpret_cast<device atomic_uint*>(&reinterpret_cast<device _xlat_ubo_storage0_element*>(_mtl_b0[0] + 16)[_mtl_u.index].value.count), uint(1), memory_order_relaxed);
+  tmpvar_1 = atomic_fetch_add_explicit (reinterpret_cast<device atomic_uint*>(&reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_b0[0] + 16)[_mtl_u.index].value.count), uint(1), memory_order_relaxed);
   uint tmpvar_2;
-  tmpvar_2 = atomic_exchange_explicit (reinterpret_cast<device atomic_uint*>(&reinterpret_cast<device _xlat_ubo_storage0_element*>(_mtl_b0[1] + 16)[_mtl_u.index].value.values) + 1, uint(2), memory_order_relaxed);
+  tmpvar_2 = atomic_exchange_explicit (reinterpret_cast<device atomic_uint*>(&reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_b0[1] + 16)[_mtl_u.index].value.values) + 1, uint(2), memory_order_relaxed);
   uint tmpvar_3;
-  tmpvar_3 = _xlat_atomic_comp_swap (reinterpret_cast<device atomic_uint*>(&reinterpret_cast<device _xlat_ubo_storage0_element*>(_mtl_b0[0] + 16)[_mtl_u.index].value.values) + _mtl_u.component, uint(3), uint(4));
+  tmpvar_3 = _xlat_atomic_comp_swap (reinterpret_cast<device atomic_uint*>(&reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_b0[0] + 16)[_mtl_u.index].value.values) + _mtl_u.component, uint(3), uint(4));
   uint tmpvar_4;
   tmpvar_4 = atomic_fetch_or_explicit (reinterpret_cast<device atomic_uint*>(&(*reinterpret_cast<device uint*>(_mtl_b0[1] + 0))), uint(8), memory_order_relaxed);
   float4 tmpvar_5 = 0;

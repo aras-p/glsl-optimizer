@@ -1,25 +1,25 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
-struct alignas(16) _xlat_ubo_storage0 {
+struct alignas(16) _xlat_buf_storage0 {
   alignas(16) float4 unity_ColorSpaceGrey;
   alignas(16) float4 _MainTex_ST;
 };
-static_assert(sizeof(_xlat_ubo_storage0) == 32, "std140 size");
-struct alignas(16) _xlat_ubo_storage2_element { float4 value; };
-struct _xlat_ubo_storage2 { _xlat_ubo_storage2_element elements[8]; };
-static_assert(sizeof(_xlat_ubo_storage2) == 128, "std140 size");
-struct alignas(16) _xlat_ubo_storage1 {
+static_assert(sizeof(_xlat_buf_storage0) == 32, "std140 size");
+struct alignas(16) _xlat_buf_storage2_element { float4 value; };
+struct _xlat_buf_storage2 { _xlat_buf_storage2_element elements[8]; };
+static_assert(sizeof(_xlat_buf_storage2) == 128, "std140 size");
+struct alignas(16) _xlat_buf_storage1 {
   alignas(16) float4 _WorldSpaceLightPos0;
   alignas(16) float4 _LightPositionRange;
   alignas(16) float4 unity_4LightPosX0;
   alignas(16) float4 unity_4LightPosY0;
   alignas(16) float4 unity_4LightPosZ0;
   alignas(16) float4 unity_4LightAtten0;
-  alignas(16) _xlat_ubo_storage2 unity_LightColor;
-  alignas(16) _xlat_ubo_storage2 unity_LightPosition;
-  alignas(16) _xlat_ubo_storage2 unity_LightAtten;
-  alignas(16) _xlat_ubo_storage2 unity_SpotDirection;
+  alignas(16) _xlat_buf_storage2 unity_LightColor;
+  alignas(16) _xlat_buf_storage2 unity_LightPosition;
+  alignas(16) _xlat_buf_storage2 unity_LightAtten;
+  alignas(16) _xlat_buf_storage2 unity_SpotDirection;
   alignas(16) float4 unity_SHAr;
   alignas(16) float4 unity_SHAg;
   alignas(16) float4 unity_SHAb;
@@ -28,29 +28,29 @@ struct alignas(16) _xlat_ubo_storage1 {
   alignas(16) float4 unity_SHBb;
   alignas(16) float4 unity_SHC;
 };
-static_assert(sizeof(_xlat_ubo_storage1) == 720, "std140 size");
-struct alignas(16) _xlat_ubo_storage4_element { float4 value; };
-struct _xlat_ubo_storage4 { _xlat_ubo_storage4_element elements[4]; };
-static_assert(sizeof(_xlat_ubo_storage4) == 64, "std140 size");
-struct alignas(16) _xlat_ubo_storage3 {
-  alignas(16) _xlat_ubo_storage4 glstate_matrix_mvp;
-  alignas(16) _xlat_ubo_storage4 glstate_matrix_modelview0;
-  alignas(16) _xlat_ubo_storage4 glstate_matrix_invtrans_modelview0;
-  alignas(16) _xlat_ubo_storage4 _Object2World;
-  alignas(16) _xlat_ubo_storage4 _World2Object;
+static_assert(sizeof(_xlat_buf_storage1) == 720, "std140 size");
+struct alignas(16) _xlat_buf_storage4_element { float4 value; };
+struct _xlat_buf_storage4 { _xlat_buf_storage4_element elements[4]; };
+static_assert(sizeof(_xlat_buf_storage4) == 64, "std140 size");
+struct alignas(16) _xlat_buf_storage3 {
+  alignas(16) _xlat_buf_storage4 glstate_matrix_mvp;
+  alignas(16) _xlat_buf_storage4 glstate_matrix_modelview0;
+  alignas(16) _xlat_buf_storage4 glstate_matrix_invtrans_modelview0;
+  alignas(16) _xlat_buf_storage4 _Object2World;
+  alignas(16) _xlat_buf_storage4 _World2Object;
   alignas(16) float4 unity_Scale;
   alignas(16) float4 unity_LODFade;
 };
-static_assert(sizeof(_xlat_ubo_storage3) == 352, "std140 size");
-struct alignas(16) _xlat_ubo_storage5 {
-  alignas(16) _xlat_ubo_storage4 glstate_matrix_projection;
+static_assert(sizeof(_xlat_buf_storage3) == 352, "std140 size");
+struct alignas(16) _xlat_buf_storage5 {
+  alignas(16) _xlat_buf_storage4 glstate_matrix_projection;
   alignas(16) float4 glstate_lightmodel_ambient;
-  alignas(16) _xlat_ubo_storage4 unity_MatrixV;
-  alignas(16) _xlat_ubo_storage4 unity_MatrixVP;
+  alignas(16) _xlat_buf_storage4 unity_MatrixV;
+  alignas(16) _xlat_buf_storage4 unity_MatrixVP;
   alignas(16) float4 unity_AmbientSky;
   alignas(16) float4 unity_AmbientGround;
 };
-static_assert(sizeof(_xlat_ubo_storage5) == 240, "std140 size");
+static_assert(sizeof(_xlat_buf_storage5) == 240, "std140 size");
 struct xlatMtlShaderInput {
   float4 dcl_Input0_POSITION0 [[attribute(0)]];
   float4 dcl_Input1_NORMAL0 [[attribute(1)]];
@@ -64,10 +64,10 @@ struct xlatMtlShaderOutput {
 struct xlatMtlShaderUniform {
 };
 vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , constant _xlat_ubo_storage0& _mtl_buffer1 [[buffer(1)]]
-  , constant _xlat_ubo_storage1& _mtl_buffer2 [[buffer(2)]]
-  , constant _xlat_ubo_storage3& _mtl_buffer3 [[buffer(3)]]
-  , constant _xlat_ubo_storage5& _mtl_buffer4 [[buffer(4)]])
+  , constant _xlat_buf_storage0& _mtl_buffer1 [[buffer(1)]]
+  , constant _xlat_buf_storage1& _mtl_buffer2 [[buffer(2)]]
+  , constant _xlat_buf_storage3& _mtl_buffer3 [[buffer(3)]]
+  , constant _xlat_buf_storage5& _mtl_buffer4 [[buffer(4)]])
 {
   xlatMtlShaderOutput _mtl_o;
 float4 tmpvar_1 = 0;

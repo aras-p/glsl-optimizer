@@ -7,14 +7,14 @@ inline T _xlat_atomic_comp_swap(device A* address, T compare, T value) {
   while (!atomic_compare_exchange_weak_explicit(address, &expected, value, memory_order_relaxed, memory_order_relaxed) && expected == compare) {}
   return expected;
 }
-struct alignas(4) _xlat_ubo_storage1_element { uint value; };
-struct _xlat_ubo_storage1 { _xlat_ubo_storage1_element elements[4]; };
-static_assert(sizeof(_xlat_ubo_storage1) == 16, "std430 size");
-struct alignas(4) _xlat_ubo_storage0 {
+struct alignas(4) _xlat_buf_storage1_element { uint value; };
+struct _xlat_buf_storage1 { _xlat_buf_storage1_element elements[4]; };
+static_assert(sizeof(_xlat_buf_storage1) == 16, "std430 size");
+struct alignas(4) _xlat_buf_storage0 {
   alignas(4) uint value;
-  alignas(4) _xlat_ubo_storage1 results;
+  alignas(4) _xlat_buf_storage1 results;
 };
-static_assert(sizeof(_xlat_ubo_storage0) == 20, "std430 size");
+static_assert(sizeof(_xlat_buf_storage0) == 20, "std430 size");
 struct xlatMtlShaderInput {
 };
 struct xlatMtlShaderOutput {
@@ -24,7 +24,7 @@ struct xlatMtlShaderUniform {
   bool update;
 };
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , device _xlat_ubo_storage0& _mtl_buffer1 [[buffer(1)]])
+  , device _xlat_buf_storage0& _mtl_buffer1 [[buffer(1)]])
 {
   xlatMtlShaderOutput _mtl_o;
   uint before_1;

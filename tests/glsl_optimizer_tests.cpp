@@ -512,6 +512,16 @@ static bool TestFile (glslopt_ctx* ctx, glslopt_shader_type type,
 		textOpt += buffer;
 		
 		// append inputs
+		int localX, localY, localZ;
+		glslopt_shader_get_compute_local_size(shader, &localX, &localY, &localZ);
+		if (type == kGlslOptShaderCompute) {
+			snprintf(buffer, sizeof(buffer), "// workgroup size: %d %d %d\n", localX, localY, localZ);
+			textOpt += buffer;
+		} else if (localX || localY || localZ) {
+			printf("\n  %s: non-compute shader reports a workgroup size.\n", testName.c_str());
+			res = false;
+		}
+
 		const int inputCount = glslopt_shader_get_input_count (shader);
 		if (inputCount > 0)
 		{

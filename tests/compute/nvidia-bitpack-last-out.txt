@@ -39,6 +39,7 @@ void main ()
 
 
 // stats: 29 alu 0 tex 4 flow
+// workgroup size: 64 1 1
 // uniforms: 1 (total size: 0)
 //  #0: numObjects (high int) 1x1 [-1] loc 0
 // buffer #0: inputBuffer storage layout std430 binding 1 (size: unknown)

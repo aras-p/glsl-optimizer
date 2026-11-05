@@ -75,6 +75,11 @@ const char* glslopt_get_raw_output (glslopt_shader* shader);
 const char* glslopt_get_log (glslopt_shader* shader);
 void glslopt_shader_delete (glslopt_shader* shader);
 
+// Fixed compute workgroup dimensions; zero for non-compute shaders.
+// Metal callers must dispatch full threadgroups with these threadsPerThreadgroup
+// dimensions (dispatchThreadgroups), matching GLSL's fixed workgroup size.
+void glslopt_shader_get_compute_local_size(glslopt_shader* shader, int* x, int* y, int* z);
+
 int glslopt_shader_get_input_count (glslopt_shader* shader);
 void glslopt_shader_get_input_desc (glslopt_shader* shader, int index, const char** outName, glslopt_basic_type* outType, glslopt_precision* outPrec, int* outVecSize, int* outMatSize, int* outArraySize, int* outLocation);
 int glslopt_shader_get_uniform_count (glslopt_shader* shader);
@@ -111,7 +116,8 @@ struct glslopt_buffer_desc {
 	// Example: data buffers at slots 1 and 3, with metalSizeBufferIndex == 4:
 	//   uint32_t sizes[] = {0, bytesForBuffer1, 0, bytesForBuffer3};
 	//   [encoder setFragmentBytes:sizes length:sizeof(sizes) atIndex:4];
-	// Bind the table for the shader's stage (setVertexBytes for a vertex shader).
+	// Bind the table for the shader's stage (setVertexBytes for a vertex shader,
+	// or setBytes on a compute encoder).
 	// The shader computes .length() as max(bufferBytes - arrayOffset, 0) / stride.
 	int metalSizeBufferIndex;
 };

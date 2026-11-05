@@ -4,39 +4,39 @@ using namespace metal;
 struct Entry {
   float2x3 matrix;
 };
-struct _xlat_ubo_storage1 { float2 vectors[3]; };
-static_assert(sizeof(_xlat_ubo_storage1) == 24, "std430 size");
-struct _xlat_ubo_storage2 { float4 vectors[2]; };
-static_assert(sizeof(_xlat_ubo_storage2) == 32, "std430 size");
-struct alignas(8) _xlat_ubo_storage4 {
-  alignas(8) _xlat_ubo_storage1 matrix;
+struct _xlat_buf_storage1 { float2 vectors[3]; };
+static_assert(sizeof(_xlat_buf_storage1) == 24, "std430 size");
+struct _xlat_buf_storage2 { float4 vectors[2]; };
+static_assert(sizeof(_xlat_buf_storage2) == 32, "std430 size");
+struct alignas(8) _xlat_buf_storage4 {
+  alignas(8) _xlat_buf_storage1 matrix;
 };
-static_assert(sizeof(_xlat_ubo_storage4) == 24, "std430 size");
-inline __attribute__((always_inline)) Entry _xlat_ubo_storage4_read(const device _xlat_ubo_storage4& storage)
+static_assert(sizeof(_xlat_buf_storage4) == 24, "std430 size");
+inline __attribute__((always_inline)) Entry _xlat_buf_storage4_read(const device _xlat_buf_storage4& storage)
 {
   Entry value;
   value.matrix = transpose(float3x2(float2(storage.matrix.vectors[0].xy), float2(storage.matrix.vectors[1].xy), float2(storage.matrix.vectors[2].xy)));
   return value;
 }
-struct alignas(8) _xlat_ubo_storage3_element { _xlat_ubo_storage4 value; };
-struct _xlat_ubo_storage3 { _xlat_ubo_storage3_element elements[2]; };
-static_assert(sizeof(_xlat_ubo_storage3) == 48, "std430 size");
-struct alignas(16) _xlat_ubo_storage0 {
-  alignas(8) _xlat_ubo_storage1 rows;
-  char _ubo_pad1[8];
-  alignas(16) _xlat_ubo_storage2 columns;
-  alignas(8) _xlat_ubo_storage3 entries;
+struct alignas(8) _xlat_buf_storage3_element { _xlat_buf_storage4 value; };
+struct _xlat_buf_storage3 { _xlat_buf_storage3_element elements[2]; };
+static_assert(sizeof(_xlat_buf_storage3) == 48, "std430 size");
+struct alignas(16) _xlat_buf_storage0 {
+  alignas(8) _xlat_buf_storage1 rows;
+  char _buf_pad1[8];
+  alignas(16) _xlat_buf_storage2 columns;
+  alignas(8) _xlat_buf_storage3 entries;
 };
-static_assert(sizeof(_xlat_ubo_storage0) == 112, "std430 size");
-struct _xlat_ubo_storage6 { float4 vectors[3]; };
-static_assert(sizeof(_xlat_ubo_storage6) == 48, "std140 size");
-struct _xlat_ubo_storage7 { float4 vectors[2]; };
-static_assert(sizeof(_xlat_ubo_storage7) == 32, "std140 size");
-struct alignas(16) _xlat_ubo_storage5 {
-  alignas(16) _xlat_ubo_storage6 uniformRows;
-  alignas(16) _xlat_ubo_storage7 uniformColumns;
+static_assert(sizeof(_xlat_buf_storage0) == 112, "std430 size");
+struct _xlat_buf_storage6 { float4 vectors[3]; };
+static_assert(sizeof(_xlat_buf_storage6) == 48, "std140 size");
+struct _xlat_buf_storage7 { float4 vectors[2]; };
+static_assert(sizeof(_xlat_buf_storage7) == 32, "std140 size");
+struct alignas(16) _xlat_buf_storage5 {
+  alignas(16) _xlat_buf_storage6 uniformRows;
+  alignas(16) _xlat_buf_storage7 uniformColumns;
 };
-static_assert(sizeof(_xlat_ubo_storage5) == 80, "std140 size");
+static_assert(sizeof(_xlat_buf_storage5) == 80, "std140 size");
 struct xlatMtlShaderInput {
 };
 struct xlatMtlShaderOutput {
@@ -46,8 +46,8 @@ struct xlatMtlShaderUniform {
   int index;
 };
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , const device _xlat_ubo_storage0& _mtl_buffer1 [[buffer(1)]]
-  , constant _xlat_ubo_storage5& _mtl_buffer2 [[buffer(2)]])
+  , const device _xlat_buf_storage0& _mtl_buffer1 [[buffer(1)]]
+  , constant _xlat_buf_storage5& _mtl_buffer2 [[buffer(2)]])
 {
   xlatMtlShaderOutput _mtl_o;
   float4 tmpvar_1 = 0;

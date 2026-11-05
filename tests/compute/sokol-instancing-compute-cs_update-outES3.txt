@@ -33,6 +33,7 @@ void main ()
 
 
 // stats: 8 alu 0 tex 3 flow
+// workgroup size: 64 1 1
 // buffer #0: cs_params layout std140 binding 0 (size: 16)
 //  member #0: float dt offset 0
 //  member #1: int num_particles offset 4

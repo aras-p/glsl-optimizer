@@ -1,0 +1,9 @@
+#version 310 es
+layout(local_size_x=1) in;
+void main ()
+{
+}
+
+
+// stats: 0 alu 0 tex 0 flow
+// workgroup size: 1 1 1

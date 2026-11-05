@@ -219,6 +219,7 @@ struct glslopt_shader
 	int inputCount;
 	int textureCount;
 	int statsMath, statsTex, statsFlow;
+	int computeLocalSize[3] = {};
 
 	char*	rawOutput;
 	char*	optimizedOutput;
@@ -545,6 +546,10 @@ public:
 	bool metal;
 	const char* error = nullptr;
 	explicit storage_validation(bool metal) : metal(metal) {}
+	ir_visitor_status visit(ir_barrier*) override {
+		if (metal) error = "Metal workgroup execution barriers are not supported.";
+		return visit_continue;
+	}
 	void check_type(const glsl_type* type) {
 		if (type->is_array()) {
 			check_type(type->fields.array);
@@ -611,10 +616,6 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 		result->infoLog = ralloc_asprintf(result->mem_ctx, "Unknown shader type %d", (int)type);
 		return result;
 	}
-	if (type == kGlslOptShaderCompute && ctx->target == kGlslTargetMetal) {
-		result->infoLog = "Metal compute output is not supported yet.";
-		return result;
-	}
 	if (!shaderSource) {
 		result->infoLog = "Shader source is null";
 		return result;
@@ -626,6 +627,14 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 	result->infoLog = shader->InfoLog;
 	if (shader->CompileStatus == COMPILE_FAILURE)
 		return result;
+	if (type == kGlslOptShaderCompute) {
+		if (!state->cs_input_local_size_specified && ctx->target == kGlslTargetMetal) {
+			result->infoLog = "Metal compute output requires a fixed local group size.";
+			return result;
+		}
+		for (unsigned i = 0; i < 3; ++i)
+			result->computeLocalSize[i] = state->cs_input_local_size[i];
+	}
 	if (ctx->target != kGlslTargetMetal && shader->IsES && shader->Version < 300) {
 		result->infoLog = "OpenGL ES 2.0 output is no longer supported; use #version 300 es or newer.";
 		return result;
@@ -681,7 +690,8 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 			}
 		}
 	}
-	if (hasStorage) visit_list_elements(&storageValidation, ir);
+	if (hasStorage || (ctx->target == kGlslTargetMetal && type == kGlslOptShaderCompute))
+		visit_list_elements(&storageValidation, ir);
 	if (storageValidation.error) { result->infoLog = storageValidation.error; return result; }
 
 	// Note: restore source-level subtraction outside of regular optimization loop
@@ -743,6 +753,13 @@ const char* glslopt_get_raw_output (glslopt_shader* shader)
 const char* glslopt_get_log (glslopt_shader* shader)
 {
 	return shader->infoLog;
+}
+
+void glslopt_shader_get_compute_local_size(glslopt_shader* shader, int* x, int* y, int* z)
+{
+	*x = shader->computeLocalSize[0];
+	*y = shader->computeLocalSize[1];
+	*z = shader->computeLocalSize[2];
 }
 
 int glslopt_shader_get_buffer_count(glslopt_shader* shader) { return (int)shader->buffers.size(); }

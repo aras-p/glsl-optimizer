@@ -1,8 +1,8 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
-struct alignas(16) _xlat_ubo_storage0_element { float4 value; };
-static_assert(sizeof(_xlat_ubo_storage0_element) == 16, "array stride");
+struct alignas(16) _xlat_buf_storage0_element { float4 value; };
+static_assert(sizeof(_xlat_buf_storage0_element) == 16, "array stride");
 struct xlatMtlShaderInput {
 };
 struct xlatMtlShaderOutput {

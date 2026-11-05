@@ -546,7 +546,7 @@ void ir_print_glsl_visitor::visit(ir_function_signature *ir)
 	   indent();
    }
 
-   if (prototypes || ir->body.is_empty())
+   if (prototypes || !ir->is_defined)
    {
 	   buffer.asprintf_append (");\n");
 	   return;

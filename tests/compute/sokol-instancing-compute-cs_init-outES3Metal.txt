@@ -1,0 +1,64 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct particle {
+  float4 pos;
+  float4 vel;
+};
+struct alignas(16) _xlat_buf_storage1 {
+  alignas(16) float4 pos;
+  alignas(16) float4 vel;
+};
+static_assert(sizeof(_xlat_buf_storage1) == 32, "std430 size");
+inline __attribute__((always_inline)) particle _xlat_buf_storage1_read(const device _xlat_buf_storage1& storage)
+{
+  particle value;
+  value.pos = float4(storage.pos);
+  value.vel = float4(storage.vel);
+  return value;
+}
+struct alignas(16) _xlat_buf_storage0_element { _xlat_buf_storage1 value; };
+static_assert(sizeof(_xlat_buf_storage0_element) == 32, "array stride");
+struct xlatMtlShaderUniform {
+};
+// threadsPerThreadgroup: 64, 1, 1
+kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , device uchar* _mtl_buffer1 [[buffer(1)]]
+  , uint3 gl_GlobalInvocationID [[thread_position_in_grid]])
+{
+  uint tmpvar_1;
+  tmpvar_1 = (305419896 + gl_GlobalInvocationID.x);
+  tmpvar_1 = (tmpvar_1 ^ (tmpvar_1 << 13));
+  tmpvar_1 = (tmpvar_1 ^ (tmpvar_1 >> 17));
+  tmpvar_1 = (tmpvar_1 ^ (tmpvar_1 << 5));
+  uint tmpvar_2;
+  tmpvar_2 = (tmpvar_1 ^ (tmpvar_1 << 13));
+  tmpvar_2 = (tmpvar_2 ^ (tmpvar_2 >> 17));
+  tmpvar_2 = (tmpvar_2 ^ (tmpvar_2 << 5));
+  uint tmpvar_3;
+  tmpvar_3 = (tmpvar_2 ^ (tmpvar_2 << 13));
+  tmpvar_3 = (tmpvar_3 ^ (tmpvar_3 >> 17));
+  tmpvar_3 = (tmpvar_3 ^ (tmpvar_3 << 5));
+  reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_GlobalInvocationID.x].value.pos = float4(float4(0.0, 0.0, 0.0, 0.0));
+  float4 tmpvar_4 = 0;
+  tmpvar_4.w = 0.0;
+  tmpvar_4.x = ((float(
+    (tmpvar_1 & 32767)
+  ) / 32767.0) - 0.5);
+  tmpvar_4.y = (((
+    float((tmpvar_2 & 32767))
+   / 32767.0) * 0.5) + 2.0);
+  tmpvar_4.z = ((float(
+    (tmpvar_3 & 32767)
+  ) / 32767.0) - 0.5);
+  reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_GlobalInvocationID.x].value.vel = float4(tmpvar_4);
+}
+
+
+// stats: 34 alu 0 tex 0 flow
+// workgroup size: 64 1 1
+// buffer #0: cs_ssbo storage layout std430 binding 0 (size: unknown) metal 1
+//  member #0: particle[] prt offset 0 array runtime stride 32
+//  member #1: particle [] parent 0 offset 0
+//  member #2: vec4 pos parent 1 offset 0
+//  member #3: vec4 vel parent 1 offset 16
