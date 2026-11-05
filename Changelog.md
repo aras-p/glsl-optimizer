@@ -5,22 +5,22 @@ GLSL optimizer Change Log
 2026 11
 -------
 
-Added:
+Added a whole bunch of stuff that could be summarized as "compute shader support":
 
-* A whole bunch of stuff that could be summarized as "compute shader support":
-  * Compute shaders are supported, including work group sizes, various built-in variables,
-    shared memory, workgroup synchronization. Reflection API was extended to query work group sizes.
-  * Uniform buffers (UBO) and storage buffers (SSBOs) are actually parsed and get through
-    to output correctly. Reflection API was extended to be able to query buffers and
-    their member data.
-  * Atomic operations, barriers and atomic counters.
-  * Image load, store and atomics.
-  * Stage interface blocks.
+* Compute shaders are supported, including work group sizes, various built-in variables,
+  shared memory, workgroup synchronization. Reflection API was extended to query work group sizes.
+* Uniform buffers (UBO) and storage buffers (SSBOs) are actually parsed and get through
+  to output correctly. Reflection API was extended to be able to query buffers and
+  their member data.
+* Atomic operations, barriers and atomic counters.
+* Image load, store and atomics.
+* Stage interface blocks.
+* Texture gather operations.
 * Recognize `GL_OES_EGL_image_external_essl3` in GLES3 inputs.
 
 Changed:
 
-* Removed OpenGL ES 2.0 language input/output support; for GLES only `#version 300 es`
+* Removed OpenGL ES 2.0 language input/output support; for GLES only `#version 300 es` and later
   shaders are accepted and produced now.
 * `lowp` and `mediump` precision are treated as the same precision now. Last time any GPU
   had _actual_ `lowp` was, like, 15 years ago.

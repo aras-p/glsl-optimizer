@@ -1,0 +1,25 @@
+#version 320 es
+uniform highp sampler2DArray layers;
+uniform highp samplerCube cubeMap;
+uniform highp samplerCubeArray cubeLayers;
+uniform highp sampler2DArrayShadow shadowLayers;
+uniform highp usampler2D labels;
+in highp vec4 coord;
+out highp vec4 color;
+void main ()
+{
+  color = (((
+    (textureGatherOffset (layers, coord.xyz, ivec2(1, -1), 2) + textureGather (cubeMap, coord.xyz, 0))
+   + textureGather (cubeLayers, coord, 3)) + textureGather (shadowLayers, coord.xyz, coord.w)) + vec4(textureGather (labels, coord.xy, 1)));
+}
+
+
+// stats: 5 alu 5 tex 0 flow
+// inputs: 1
+//  #0: coord (high float) 4x1 [-1]
+// textures: 5
+//  #0: layers (high 2darray) 0x0 [-1]
+//  #1: cubeMap (high cube) 0x0 [-1]
+//  #2: cubeLayers (high cube) 0x0 [-1]
+//  #3: shadowLayers (high 2dshadow) 0x0 [-1]
+//  #4: labels (high 2d) 0x0 [-1]

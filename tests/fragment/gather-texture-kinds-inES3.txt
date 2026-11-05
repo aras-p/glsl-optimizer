@@ -1,0 +1,18 @@
+#version 320 es
+precision highp float;
+uniform highp sampler2DArray layers;
+uniform highp samplerCube cubeMap;
+uniform highp samplerCubeArray cubeLayers;
+uniform highp sampler2DArrayShadow shadowLayers;
+uniform highp usampler2D labels;
+in vec4 coord;
+out vec4 color;
+
+void main()
+{
+    color = textureGatherOffset(layers, coord.xyz, ivec2(1, -1), 2)
+          + textureGather(cubeMap, coord.xyz)
+          + textureGather(cubeLayers, coord, 3)
+          + textureGather(shadowLayers, coord.xyz, coord.w)
+          + vec4(textureGather(labels, coord.xy, 1));
+}

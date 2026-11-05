@@ -599,6 +599,19 @@ static void print_type_precision(string_buffer& buffer, const glsl_type *t, unsi
 	else if (!strcmp(typeName, "sampler2DArray"))
 		typeName = halfPrec ? "texture2d_array<half>" : "texture2d_array<float>";
 
+	else if (!strcmp(typeName, "samplerCubeArray"))
+		typeName = halfPrec ? "texturecube_array<half>" : "texturecube_array<float>";
+	else if (!strcmp(typeName, "sampler2DArrayShadow"))
+		typeName = "depth2d_array<float>";
+	else if (!strcmp(typeName, "samplerCubeArrayShadow"))
+		typeName = "depthcube_array<float>";
+	else if (t->is_sampler() && (t->sampled_type == GLSL_TYPE_INT || t->sampled_type == GLSL_TYPE_UINT) &&
+	         (t->sampler_dimensionality == GLSL_SAMPLER_DIM_2D || t->sampler_dimensionality == GLSL_SAMPLER_DIM_CUBE)) {
+		buffer.asprintf_append("texture%s%s<%s>", t->sampler_dimensionality == GLSL_SAMPLER_DIM_CUBE ? "cube" : "2d",
+			t->sampler_array ? "_array" : "", t->sampled_type == GLSL_TYPE_INT ? "int" : "uint");
+		return;
+	}
+
 	if (t->base_type == GLSL_TYPE_ARRAY) {
 		print_type_precision(buffer, t->without_array(), prec, false);
 		if (arraySize)
@@ -1960,10 +1973,25 @@ static void print_texture_uv(ir_print_metal_visitor* vis, ir_texture* ir, bool i
 	vis->buffer.asprintf_append(")");
 	if (is_proj) { vis->buffer.asprintf_append(" / (float)("); ir->projector->accept(vis); vis->buffer.asprintf_append(")"); }
 	if (is_array) {
-		vis->buffer.asprintf_append(", uint(("); ir->coordinate->accept(vis);
-		vis->buffer.asprintf_append(n == 3 ? ").w)" : ").z)");
+		// GLSL gather rounds the layer to the nearest integer and clamps it to the array.
+		if (ir->op == ir_tg4)
+			vis->buffer.asprintf_append(", uint(clamp(floor(float((");
+		else
+			vis->buffer.asprintf_append(", uint((");
+		ir->coordinate->accept(vis);
+		if (ir->op == ir_tg4) {
+			vis->buffer.asprintf_append(n == 3 ? ").w) + 0.5), 0.0, float(" : ").z) + 0.5), 0.0, float(");
+			ir->sampler->accept(vis);
+			vis->buffer.asprintf_append(".get_array_size() - 1u)))");
+		} else {
+			vis->buffer.asprintf_append(n == 3 ? ").w)" : ").z)");
+		}
 	}
-	if (is_shadow) {
+	if (is_shadow && ir->op == ir_tg4) {
+		vis->buffer.asprintf_append(", float(");
+		ir->shadow_comparator->accept(vis);
+		vis->buffer.asprintf_append(")");
+	} else if (is_shadow) {
 		vis->buffer.asprintf_append(", saturate((float)("); ir->shadow_comparator->accept(vis);
 		vis->buffer.asprintf_append(")");
 		if (is_proj) { vis->buffer.asprintf_append(" / (float)("); ir->projector->accept(vis); vis->buffer.asprintf_append(")"); }
@@ -2007,11 +2035,17 @@ void ir_print_metal_visitor::visit(ir_texture *ir)
 	const bool is_array = ir->sampler->type->sampler_array;
 	const bool is_proj = ir->projector != nullptr;
 	
+	const bool is_gather = ir->op == ir_tg4;
+	if (is_gather && (sampler_dim == GLSL_SAMPLER_DIM_RECT || (ir->offset && ir->offset->type->is_array()))) {
+		ctx.prefixStr.asprintf_append("#error Metal texture gather does not support rectangle textures or four independent offsets\n");
+		buffer.asprintf_append("float4(0.0)");
+		return;
+	}
 	const bool halfShadow = is_shadow && ir->get_precision() == GLSL_PRECISION_MEDIUM;
-	if (halfShadow) buffer.asprintf_append("half(");
+	if (halfShadow) buffer.asprintf_append(is_gather ? "half4(" : "half(");
 	// texture name & call to sample
 	ir->sampler->accept(this);
-	if (is_shadow)
+	if (is_shadow && !is_gather)
 	{
 		// For shadow sampling, Metal right now needs a hardcoded sampler state :|
 		if (!ctx.shadowSamplerDone)
@@ -2023,7 +2057,8 @@ void ir_print_metal_visitor::visit(ir_texture *ir)
 	}
 	else
 	{
-		buffer.asprintf_append (".sample(_mtlsmp_");
+		const char* method = is_gather ? (is_shadow ? "gather_compare" : "gather") : "sample";
+		buffer.asprintf_append (".%s(_mtlsmp_", method);
 		ir->sampler->accept(this);
 	}
 	buffer.asprintf_append (", ");
@@ -2069,6 +2104,16 @@ void ir_print_metal_visitor::visit(ir_texture *ir)
 	}
 	
 	if (ir->offset) { buffer.asprintf_append(", "); ir->offset->accept(this); }
+	if (is_gather && !is_shadow) {
+		const auto* component = ir->lod_info.component->as_constant();
+		if (!component || component->value.i[0] < 0 || component->value.i[0] > 3) {
+			ctx.prefixStr.asprintf_append("#error Metal texture gather requires a constant component from 0 through 3\n");
+		} else if (component->value.i[0] != 0) {
+			if (sampler_dim == GLSL_SAMPLER_DIM_2D && !ir->offset)
+				buffer.asprintf_append(", int2(0)");
+			buffer.asprintf_append(", component::%c", "xyzw"[component->value.i[0]]);
+		}
+	}
 
 	buffer.asprintf_append (")");
 	if (halfShadow) buffer.asprintf_append(")");
