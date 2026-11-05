@@ -1,0 +1,75 @@
+#version 310 es
+layout(local_size_x=1) in;
+struct Entry {
+  highp mat2x3 value;
+};
+layout(std430, row_major) buffer Rows {
+  layout(row_major) highp mat2x3 rectangular;
+  layout(column_major) highp mat3x2 native;
+  layout(row_major) highp mat3x2 wide;
+  layout(row_major) mediump mat3 reduced;
+  layout(row_major) Entry entries[];
+} rows;
+layout(std140, row_major) buffer PaddedRows {
+  layout(row_major) highp mat2x3 value;
+} paddedRows;
+layout(std140, column_major) buffer Columns {
+  layout(column_major) highp mat2 small;
+  layout(column_major) highp mat2x3 rectangular;
+  layout(column_major) highp mat4 native;
+} columns;
+uniform mediump vec3 inputValue;
+void main ()
+{
+  highp uint c_1;
+  highp uint tmpvar_2;
+  tmpvar_2 = (gl_GlobalInvocationID.x & 1u);
+  highp uint tmpvar_3;
+  tmpvar_3 = (gl_GlobalInvocationID.y % 3u);
+  columns.small[tmpvar_2] = vec2(2.0, 3.0);
+  columns.small[tmpvar_2][tmpvar_2] = 4.0;
+  columns.rectangular[tmpvar_2].z = 1.5;
+  columns.rectangular[tmpvar_2].xz = vec2(5.0, 6.0);
+  columns.rectangular[tmpvar_2] = columns.rectangular[(1u - tmpvar_2)].zyx;
+  columns.native[tmpvar_2] = vec4(28.0, 29.0, 30.0, 31.0);
+  columns.native[tmpvar_2].yw = vec2(7.0, 8.0);
+  columns.native[tmpvar_2][tmpvar_3] = 9.0;
+  rows.rectangular[tmpvar_2] = inputValue;
+  rows.rectangular[tmpvar_2].yz = (rows.rectangular[tmpvar_2].zy + vec2(10.0, 11.0)).yx;
+  rows.rectangular[tmpvar_2].zy[(tmpvar_3 & 1u)] = 12.0;
+  rows.rectangular[tmpvar_2].xz = vec2(14.0, 13.0);
+  rows.rectangular[tmpvar_2][tmpvar_3] = 15.0;
+  paddedRows.value[tmpvar_2].yz = vec2(23.0, 22.0);
+  paddedRows.value[tmpvar_2][tmpvar_3] = 24.0;
+  rows.wide[tmpvar_3] = vec2(26.0, 25.0);
+  rows.wide[tmpvar_3].y = 27.0;
+  rows.native[tmpvar_2] = vec2(16.0, 17.0);
+  rows.native[tmpvar_2][tmpvar_2] = 18.0;
+  rows.reduced[tmpvar_2].xz = vec2(19.0, 20.0);
+  c_1 = (tmpvar_2 + 1u);
+  highp vec2 tmpvar_4;
+  tmpvar_4.y = 21.0;
+  tmpvar_4.x = float(c_1);
+  rows.entries[tmpvar_2].value[(c_1 & 1u)].xz = tmpvar_4;
+  rows.entries[c_1].value[(c_1 & 1u)][tmpvar_3] = (rows.entries[c_1].value[(c_1 & 1u)][tmpvar_3] + 1.0);
+}
+
+
+// stats: 29 alu 0 tex 0 flow
+// workgroup size: 1 1 1
+// uniforms: 1 (total size: 0)
+//  #0: inputValue (medium float) 3x1 [-1]
+// buffer #0: Columns storage instance columns layout std140 (size: 128)
+//  member #0: mat2 small offset 0 matrix-stride 16
+//  member #1: mat2x3 rectangular offset 32 matrix-stride 16
+//  member #2: mat4 native offset 64 matrix-stride 16
+// buffer #1: PaddedRows storage instance paddedRows layout std140 (size: 48)
+//  member #0: mat2x3 value offset 0 matrix-stride 16 row-major
+// buffer #2: Rows storage instance rows layout std430 (size: unknown)
+//  member #0: mat2x3 rectangular offset 0 matrix-stride 8 row-major
+//  member #1: mat3x2 native offset 24 matrix-stride 8
+//  member #2: mat3x2 wide offset 48 matrix-stride 16 row-major
+//  member #3: mat3 reduced offset 80 matrix-stride 16 row-major
+//  member #4: Entry[] entries offset 128 array runtime stride 24
+//  member #5: Entry [] parent 4 offset 128
+//  member #6: mat2x3 value parent 5 offset 128 matrix-stride 8 row-major

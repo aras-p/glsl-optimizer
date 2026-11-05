@@ -1,0 +1,33 @@
+#version 310 es
+precision highp float;
+precision highp int;
+layout(local_size_x = 1) in;
+struct Pair { vec4 a; uvec4 b; };
+struct Tiny { vec2 value; };
+struct Padded { vec2 a; float b; };
+struct Mixed { mediump mat4 m; vec4 v; };
+struct Entry { Pair pair; mat4 transform; };
+layout(std140) uniform Input { Entry entry; Mixed mixed; mat2 small; Tiny tiny; Padded padded; } sourceData;
+layout(std430) buffer Output { Entry entries[]; } data;
+layout(std430) buffer Matrices { Mixed mixed; vec2 values[2]; mat2 small; mat3x2 wide; layout(row_major) mat2x3 row; Tiny tiny; Padded padded; mediump mat4 reduced; vec4 result; } matrices;
+void main()
+{
+    uint i = gl_GlobalInvocationID.x;
+    vec2 values[2];
+    values[0] = vec2(float(i));
+    values[1] = sourceData.tiny.value;
+    matrices.values = values;
+    data.entries[i] = sourceData.entry;
+    data.entries[i + 1u].pair = data.entries[i].pair;
+    data.entries[i].transform = sourceData.entry.transform;
+    matrices.mixed = sourceData.mixed;
+    matrices.row = mat2x3(sourceData.entry.transform) * 0.5;
+    matrices.small = sourceData.small;
+    matrices.wide = mat3x2(sourceData.entry.transform);
+    matrices.tiny = sourceData.tiny;
+    matrices.padded = sourceData.padded;
+    matrices.reduced = sourceData.entry.transform;
+    mediump mat4 reduced = matrices.reduced;
+    matrices.result = data.entries[i].transform[1] + vec4(data.entries[i].transform[2][3])
+        + vec4(matrices.small[0], reduced[1].xy) + vec4(matrices.wide[2], matrices.tiny.value);
+}

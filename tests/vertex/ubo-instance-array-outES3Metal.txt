@@ -1,10 +1,9 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
-struct _xlat_buf_storage1 { float4 vectors[4]; };
-static_assert(sizeof(_xlat_buf_storage1) == 64, "std140 size");
+static_assert(sizeof(float4x4) == 64, "buffer size");
 struct alignas(16) _xlat_buf_storage0 {
-  alignas(16) _xlat_buf_storage1 matrix;
+  alignas(16) float4x4 matrix;
   alignas(4) float unused;
 };
 static_assert(sizeof(_xlat_buf_storage0) == 80, "std140 size");
@@ -22,7 +21,7 @@ vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], 
 {
   constant _xlat_buf_storage0* _mtl_b0[2] = {&_mtl_buffer1, &_mtl_buffer2};
   xlatMtlShaderOutput _mtl_o;
-  _mtl_o.gl_Position = (float4x4(float4((*_mtl_b0[1]).matrix.vectors[0].xyzw), float4((*_mtl_b0[1]).matrix.vectors[1].xyzw), float4((*_mtl_b0[1]).matrix.vectors[2].xyzw), float4((*_mtl_b0[1]).matrix.vectors[3].xyzw)) * float4((*_mtl_b0[_mtl_u.index]).matrix.vectors[0].xyzw));
+  _mtl_o.gl_Position = ((*_mtl_b0[1]).matrix * float4((*_mtl_b0[_mtl_u.index]).matrix[0]));
   return _mtl_o;
 }
 

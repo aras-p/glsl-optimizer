@@ -5,19 +5,8 @@ struct Pair {
   float x;
   float y;
 };
-struct alignas(4) _xlat_buf_storage2 {
-  alignas(4) float x;
-  alignas(4) float y;
-};
-static_assert(sizeof(_xlat_buf_storage2) == 8, "std430 size");
-inline __attribute__((always_inline)) Pair _xlat_buf_storage2_read(const device _xlat_buf_storage2& storage)
-{
-  Pair value;
-  value.x = float(storage.x);
-  value.y = float(storage.y);
-  return value;
-}
-struct alignas(4) _xlat_buf_storage1_element { _xlat_buf_storage2 value; };
+static_assert(sizeof(Pair) == 8, "buffer size");
+struct alignas(4) _xlat_buf_storage1_element { Pair value; };
 struct _xlat_buf_storage1 { _xlat_buf_storage1_element elements[2]; };
 static_assert(sizeof(_xlat_buf_storage1) == 16, "std430 size");
 struct _xlat_buf_storage4 { float2 vectors[2]; };
@@ -57,7 +46,7 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
 {
   xlatMtlShaderOutput _mtl_o;
   Pair tmpvar_1;
-  tmpvar_1 = _xlat_buf_storage2_read(_mtl_buffer1.pairs.elements[_mtl_u.index].value);
+  tmpvar_1 = _mtl_buffer1.pairs.elements[_mtl_u.index].value;
   float2 tmpvar_2 = 0;
   tmpvar_2.x = tmpvar_1.x;
   tmpvar_2.y = tmpvar_1.y;

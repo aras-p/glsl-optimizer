@@ -8,10 +8,13 @@ GLSL optimizer Change Log
 Added:
 
 * A whole bunch of stuff that could be summarized as "compute shader support":
+  * Compute shaders are supported, including work group sizes, various built-in variables,
+    shared memory, workgroup synchronization. Reflection API was extended to query work group sizes.
   * Uniform buffers (UBO) and storage buffers (SSBOs) are actually parsed and get through
     to output correctly. Reflection API was extended to be able to query buffers and
     their member data.
-  * Atomic operations are handled.
+  * Atomic operations and barriers.
+  * Image load, store and atomics.
 * Recognize `GL_OES_EGL_image_external_essl3` in GLES3 inputs.
 
 Changed:

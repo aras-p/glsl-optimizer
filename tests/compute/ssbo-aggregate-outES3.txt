@@ -1,0 +1,96 @@
+#version 310 es
+layout(local_size_x=4) in;
+struct Child {
+  highp vec3 position;
+  highp float weight;
+  bool enabled;
+};
+struct Entry {
+  Child children[2];
+  mediump vec2 weights[3];
+  highp mat2x3 transform;
+};
+layout(std140, row_major) buffer RowOutput {
+  layout(row_major) Entry entry;
+} rowData;
+layout(std430, column_major) buffer Output {
+  layout(column_major) Entry entries[4];
+  layout(column_major) Entry pair[2];
+  highp vec2 weights[2][3];
+  layout(column_major) highp mat2x3 transform;
+} outputData;
+layout(std140, row_major) uniform Input {
+  layout(row_major) Entry entry;
+  layout(row_major) Entry entries[2];
+  highp vec2 weights[2][3];
+} sourceData;
+void main ()
+{
+  outputData.entries[gl_GlobalInvocationID.x] = sourceData.entry;
+  outputData.weights = sourceData.weights;
+  outputData.pair = sourceData.entries;
+  outputData.transform = sourceData.entry.transform;
+  rowData.entry = sourceData.entry;
+}
+
+
+// stats: 0 alu 0 tex 0 flow
+// workgroup size: 4 1 1
+// buffer #0: Input instance sourceData layout std140 (size: 576)
+//  member #0: Entry entry offset 0
+//  member #1: Child[2] children parent 0 offset 0 array 2 stride 32
+//  member #2: Child [] parent 1 offset 0
+//  member #3: vec3 position parent 2 offset 0
+//  member #4: float weight parent 2 offset 12
+//  member #5: bool enabled parent 2 offset 16
+//  member #6: vec2[3] weights parent 0 offset 64 array 3 stride 16
+//  member #7: vec2 [] parent 6 offset 64
+//  member #8: mat2x3 transform parent 0 offset 112 matrix-stride 16 row-major
+//  member #9: Entry[2] entries offset 160 array 2 stride 160
+//  member #10: Entry [] parent 9 offset 160
+//  member #11: Child[2] children parent 10 offset 160 array 2 stride 32
+//  member #12: Child [] parent 11 offset 160
+//  member #13: vec3 position parent 12 offset 160
+//  member #14: float weight parent 12 offset 172
+//  member #15: bool enabled parent 12 offset 176
+//  member #16: vec2[3] weights parent 10 offset 224 array 3 stride 16
+//  member #17: vec2 [] parent 16 offset 224
+//  member #18: mat2x3 transform parent 10 offset 272 matrix-stride 16 row-major
+//  member #19: vec2[2][3] weights offset 480 array 2 stride 48
+//  member #20: vec2[3] [] parent 19 offset 480 array 3 stride 16
+//  member #21: vec2 [] parent 20 offset 480
+// buffer #1: Output storage instance outputData layout std430 (size: 848)
+//  member #0: Entry[4] entries offset 0 array 4 stride 128
+//  member #1: Entry [] parent 0 offset 0
+//  member #2: Child[2] children parent 1 offset 0 array 2 stride 32
+//  member #3: Child [] parent 2 offset 0
+//  member #4: vec3 position parent 3 offset 0
+//  member #5: float weight parent 3 offset 12
+//  member #6: bool enabled parent 3 offset 16
+//  member #7: vec2[3] weights parent 1 offset 64 array 3 stride 8
+//  member #8: vec2 [] parent 7 offset 64
+//  member #9: mat2x3 transform parent 1 offset 96 matrix-stride 16
+//  member #10: Entry[2] pair offset 512 array 2 stride 128
+//  member #11: Entry [] parent 10 offset 512
+//  member #12: Child[2] children parent 11 offset 512 array 2 stride 32
+//  member #13: Child [] parent 12 offset 512
+//  member #14: vec3 position parent 13 offset 512
+//  member #15: float weight parent 13 offset 524
+//  member #16: bool enabled parent 13 offset 528
+//  member #17: vec2[3] weights parent 11 offset 576 array 3 stride 8
+//  member #18: vec2 [] parent 17 offset 576
+//  member #19: mat2x3 transform parent 11 offset 608 matrix-stride 16
+//  member #20: vec2[2][3] weights offset 768 array 2 stride 24
+//  member #21: vec2[3] [] parent 20 offset 768 array 3 stride 8
+//  member #22: vec2 [] parent 21 offset 768
+//  member #23: mat2x3 transform offset 816 matrix-stride 16
+// buffer #2: RowOutput storage instance rowData layout std140 (size: 160)
+//  member #0: Entry entry offset 0
+//  member #1: Child[2] children parent 0 offset 0 array 2 stride 32
+//  member #2: Child [] parent 1 offset 0
+//  member #3: vec3 position parent 2 offset 0
+//  member #4: float weight parent 2 offset 12
+//  member #5: bool enabled parent 2 offset 16
+//  member #6: vec2[3] weights parent 0 offset 64 array 3 stride 16
+//  member #7: vec2 [] parent 6 offset 64
+//  member #8: mat2x3 transform parent 0 offset 112 matrix-stride 16 row-major

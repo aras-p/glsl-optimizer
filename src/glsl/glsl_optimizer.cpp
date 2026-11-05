@@ -572,21 +572,6 @@ public:
 			}
 		}
 	}
-	ir_visitor_status visit_enter(ir_assignment* assignment) override {
-		auto* var = assignment->lhs->variable_referenced();
-		if (metal && var && var->data.mode == ir_var_shader_storage) {
-			if (!assignment->lhs->type->is_scalar() && !assignment->lhs->type->is_vector())
-				error = "Metal storage-buffer aggregate assignments are not supported.";
-			ir_rvalue* value = assignment->lhs;
-			while (value) {
-				if (value->type->is_matrix()) error = "Metal storage-buffer matrix writes are not supported.";
-				if (auto a = value->as_dereference_array()) value = a->array;
-				else if (auto r = value->as_dereference_record()) value = r->record;
-				else break;
-			}
-		}
-		return visit_continue;
-	}
 	ir_visitor_status visit_enter(ir_function_signature* signature) override {
 		return signature->is_builtin() ? visit_continue_with_parent : visit_continue;
 	}
@@ -733,8 +718,8 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 	if (hasStorage || hasImages || (ctx->target == kGlslTargetMetal && type == kGlslOptShaderCompute))
 		visit_list_elements(&storageValidation, ir);
 	if (storageValidation.error) { result->infoLog = storageValidation.error; return result; }
-	if (ctx->target == kGlslTargetMetal && (hasShared || hasImages)) {
-		// Threadgroup storage and image parameters live inside the Metal entry point.
+	if (ctx->target == kGlslTargetMetal && (hasStorage || hasShared || hasImages)) {
+		// Buffer, threadgroup storage and image parameters live inside the Metal entry point.
 		// Inline helpers so their resource references remain in scope.
 		while (do_function_inlining(ir)) {}
 		do_dead_functions(ir);

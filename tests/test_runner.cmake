@@ -137,10 +137,7 @@ function(check_storage_rejection declaration body diagnostic)
 endfunction()
 check_storage_rejection("layout(std430) coherent buffer Data { float value; } data;"
     "data.value = 1.0; color = vec4(data.value);" "Metal coherent/volatile storage buffers")
-check_storage_rejection("layout(std430) buffer Data { mat2 value; } data;"
-    "data.value[0][0] = 1.0; color = vec4(1.0);" "Metal storage-buffer matrix writes")
-check_storage_rejection("struct Entry { vec4 color; }; layout(std430) buffer Data { Entry entry; } data;"
-    "data.entry = Entry(vec4(1.0)); color = vec4(1.0);" "Metal storage-buffer aggregate assignments")
+
 
 # Shared types and atomic widths must match Metal's threadgroup representation.
 set(compute_reject "${work}/fixtures/compute/workgroup-reject-inES3.txt")
@@ -194,3 +191,10 @@ foreach(name image-atomics image-atomic-volume image-coherent image-parameter-co
     endforeach()
 endforeach()
 check_run(0 "16 tests.*succeeded" "${work}/fixtures")
+
+foreach(name ssbo-aggregate ssbo-aggregate-alias powervr-particles buffer-native-types ssbo-matrix-write)
+    foreach(suffix inES3 outES3 outES3Metal)
+        file(COPY "${TEST_SOURCE_DIR}/compute/${name}-${suffix}.txt" DESTINATION "${work}/fixtures/compute")
+    endforeach()
+endforeach()
+check_run(0 "21 tests.*succeeded" "${work}/fixtures")

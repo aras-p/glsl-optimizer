@@ -1,0 +1,253 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct Mixed {
+  half4x4 m;
+  float4 v;
+};
+struct Tiny {
+  float2 value;
+};
+struct Padded {
+  float2 a;
+  float b;
+};
+struct Pair {
+  float4 a;
+  uint4 b;
+};
+struct Entry {
+  Pair pair;
+  float4x4 transform;
+};
+static_assert(sizeof(Entry) == 96, "buffer size");
+static_assert(sizeof(float4x4) == 64, "buffer size");
+struct alignas(16) _xlat_buf_storage2 {
+  alignas(16) float4x4 m;
+  alignas(16) float4 v;
+};
+static_assert(sizeof(_xlat_buf_storage2) == 80, "std140 size");
+inline __attribute__((always_inline)) Mixed _xlat_buf_storage2_read(constant _xlat_buf_storage2& storage)
+{
+  Mixed value;
+  value.m = half4x4(storage.m);
+  value.v = float4(storage.v);
+  return value;
+}
+struct _xlat_buf_storage4 { float4 vectors[2]; };
+static_assert(sizeof(_xlat_buf_storage4) == 32, "std140 size");
+struct alignas(16) _xlat_buf_storage5 {
+  alignas(8) float2 value;
+};
+static_assert(sizeof(_xlat_buf_storage5) == 16, "std140 size");
+inline __attribute__((always_inline)) Tiny _xlat_buf_storage5_read(constant _xlat_buf_storage5& storage)
+{
+  Tiny value;
+  value.value = float2(storage.value);
+  return value;
+}
+struct alignas(16) _xlat_buf_storage6 {
+  alignas(8) float2 a;
+  alignas(4) float b;
+};
+static_assert(sizeof(_xlat_buf_storage6) == 16, "std140 size");
+inline __attribute__((always_inline)) Padded _xlat_buf_storage6_read(constant _xlat_buf_storage6& storage)
+{
+  Padded value;
+  value.a = float2(storage.a);
+  value.b = float(storage.b);
+  return value;
+}
+struct alignas(16) _xlat_buf_storage0 {
+  alignas(16) Entry entry;
+  alignas(16) _xlat_buf_storage2 mixed;
+  alignas(16) _xlat_buf_storage4 small;
+  alignas(16) _xlat_buf_storage5 tiny;
+  alignas(16) _xlat_buf_storage6 padded;
+};
+static_assert(sizeof(_xlat_buf_storage0) == 240, "std140 size");
+static_assert(sizeof(float4x4) == 64, "buffer size");
+struct alignas(16) _xlat_buf_storage8 {
+  alignas(16) float4x4 m;
+  alignas(16) float4 v;
+};
+static_assert(sizeof(_xlat_buf_storage8) == 80, "std430 size");
+inline __attribute__((always_inline)) Mixed _xlat_buf_storage8_read(const device _xlat_buf_storage8& storage)
+{
+  Mixed value;
+  value.m = half4x4(storage.m);
+  value.v = float4(storage.v);
+  return value;
+}
+struct alignas(8) _xlat_buf_storage10_element { float2 value; };
+struct _xlat_buf_storage10 { _xlat_buf_storage10_element elements[2]; };
+static_assert(sizeof(_xlat_buf_storage10) == 16, "std430 size");
+static_assert(sizeof(float2x2) == 16, "buffer size");
+static_assert(sizeof(float3x2) == 24, "buffer size");
+struct _xlat_buf_storage13 { float2 vectors[3]; };
+static_assert(sizeof(_xlat_buf_storage13) == 24, "std430 size");
+static_assert(sizeof(Tiny) == 8, "buffer size");
+struct alignas(8) _xlat_buf_storage15 {
+  alignas(8) float2 a;
+  alignas(4) float b;
+};
+static_assert(sizeof(_xlat_buf_storage15) == 16, "std430 size");
+inline __attribute__((always_inline)) Padded _xlat_buf_storage15_read(const device _xlat_buf_storage15& storage)
+{
+  Padded value;
+  value.a = float2(storage.a);
+  value.b = float(storage.b);
+  return value;
+}
+struct alignas(16) _xlat_buf_storage7 {
+  alignas(16) _xlat_buf_storage8 mixed;
+  alignas(8) _xlat_buf_storage10 values;
+  alignas(8) float2x2 small;
+  alignas(8) float3x2 wide;
+  alignas(8) _xlat_buf_storage13 row;
+  alignas(8) Tiny tiny;
+  alignas(8) _xlat_buf_storage15 padded;
+  char _buf_pad7[8];
+  alignas(16) float4x4 reduced;
+  alignas(16) float4 result;
+};
+static_assert(sizeof(_xlat_buf_storage7) == 272, "std430 size");
+static_assert(sizeof(Entry) == 96, "buffer size");
+struct alignas(16) _xlat_buf_storage16_element { Entry value; };
+static_assert(sizeof(_xlat_buf_storage16_element) == 96, "array stride");
+static_assert(sizeof(Pair) == 32, "buffer size");
+struct xlatMtlShaderUniform {
+};
+// threadsPerThreadgroup: 1, 1, 1
+kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , constant _xlat_buf_storage0& _mtl_buffer1 [[buffer(1)]]
+  , device _xlat_buf_storage7& _mtl_buffer2 [[buffer(2)]]
+  , device uchar* _mtl_buffer3 [[buffer(3)]]
+  , uint3 gl_GlobalInvocationID [[thread_position_in_grid]])
+{
+  float2 values_1[2];
+  values_1[0] = float2(float(gl_GlobalInvocationID.x));
+  values_1[1] = float2(_mtl_buffer1.tiny.value);
+  {
+    device _xlat_buf_storage10& _buf_dst = _mtl_buffer2.values;
+    const thread auto& _buf_src = values_1;
+    for (uint _buf_i2 = 0; _buf_i2 < 2; ++_buf_i2) {
+      _buf_dst.elements[_buf_i2].value = float2(_buf_src[_buf_i2]);
+    }
+  };
+  {
+    device Entry& _buf_dst = reinterpret_cast<device _xlat_buf_storage16_element*>(_mtl_buffer3 + 0)[gl_GlobalInvocationID.x].value;
+    _buf_dst = _mtl_buffer1.entry;
+  };
+  {
+    device Pair& _buf_dst = reinterpret_cast<device _xlat_buf_storage16_element*>(_mtl_buffer3 + 0)[(gl_GlobalInvocationID.x + 1)].value.pair;
+    _buf_dst = reinterpret_cast<device _xlat_buf_storage16_element*>(_mtl_buffer3 + 0)[gl_GlobalInvocationID.x].value.pair;
+  };
+  {
+    device float4x4& _buf_dst = reinterpret_cast<device _xlat_buf_storage16_element*>(_mtl_buffer3 + 0)[gl_GlobalInvocationID.x].value.transform;
+    _buf_dst = float4x4(_mtl_buffer1.entry.transform);
+  };
+  {
+    device _xlat_buf_storage8& _buf_dst = _mtl_buffer2.mixed;
+    const constant _xlat_buf_storage2& _buf_src = _mtl_buffer1.mixed;
+    _buf_dst.m[0] = float4(half(_buf_src.m[0][0]), half(_buf_src.m[0][1]), half(_buf_src.m[0][2]), half(_buf_src.m[0][3]));
+    _buf_dst.m[1] = float4(half(_buf_src.m[1][0]), half(_buf_src.m[1][1]), half(_buf_src.m[1][2]), half(_buf_src.m[1][3]));
+    _buf_dst.m[2] = float4(half(_buf_src.m[2][0]), half(_buf_src.m[2][1]), half(_buf_src.m[2][2]), half(_buf_src.m[2][3]));
+    _buf_dst.m[3] = float4(half(_buf_src.m[3][0]), half(_buf_src.m[3][1]), half(_buf_src.m[3][2]), half(_buf_src.m[3][3]));
+    _buf_dst.v = float4(_buf_src.v);
+  };
+  float2x3 tmpvar_2;
+  float4x4 tmpvar_3;
+  tmpvar_3 = _mtl_buffer1.entry.transform;
+  tmpvar_2[0] = tmpvar_3[0].xyz;
+  tmpvar_2[1] = tmpvar_3[1].xyz;
+  {
+    device _xlat_buf_storage13& _buf_dst = _mtl_buffer2.row;
+    const thread auto& _buf_src = (tmpvar_2 * 0.5);
+    _buf_dst.vectors[0].xy = float2(_buf_src[0][0], _buf_src[1][0]);
+    _buf_dst.vectors[1].xy = float2(_buf_src[0][1], _buf_src[1][1]);
+    _buf_dst.vectors[2].xy = float2(_buf_src[0][2], _buf_src[1][2]);
+  };
+  {
+    device float2x2& _buf_dst = _mtl_buffer2.small;
+    const constant _xlat_buf_storage4& _buf_src = _mtl_buffer1.small;
+    _buf_dst[0] = float2(_buf_src.vectors[0][0], _buf_src.vectors[0][1]);
+    _buf_dst[1] = float2(_buf_src.vectors[1][0], _buf_src.vectors[1][1]);
+  };
+  float3x2 tmpvar_4;
+  float4x4 tmpvar_5;
+  tmpvar_5 = _mtl_buffer1.entry.transform;
+  tmpvar_4[0] = tmpvar_5[0].xy;
+  tmpvar_4[1] = tmpvar_5[1].xy;
+  tmpvar_4[2] = tmpvar_5[2].xy;
+  {
+    device float3x2& _buf_dst = _mtl_buffer2.wide;
+    _buf_dst = float3x2(tmpvar_4);
+  };
+  {
+    device Tiny& _buf_dst = _mtl_buffer2.tiny;
+    const constant _xlat_buf_storage5& _buf_src = _mtl_buffer1.tiny;
+    _buf_dst.value = float2(_buf_src.value);
+  };
+  {
+    device _xlat_buf_storage15& _buf_dst = _mtl_buffer2.padded;
+    const constant _xlat_buf_storage6& _buf_src = _mtl_buffer1.padded;
+    _buf_dst.a = float2(_buf_src.a);
+    _buf_dst.b = float(_buf_src.b);
+  };
+  {
+    device float4x4& _buf_dst = _mtl_buffer2.reduced;
+    _buf_dst = float4x4(_mtl_buffer1.entry.transform);
+  };
+  half4x4 tmpvar_6;
+  tmpvar_6 = half4x4(_mtl_buffer2.reduced);
+  float4 tmpvar_7 = 0;
+  tmpvar_7.xy = float2(_mtl_buffer2.small[0]);
+  tmpvar_7.zw = float2(tmpvar_6[1].xy);
+  float4 tmpvar_8 = 0;
+  tmpvar_8.xy = float2(_mtl_buffer2.wide[2]);
+  tmpvar_8.zw = float2(_mtl_buffer2.tiny.value);
+  _mtl_buffer2.result = float4((((float4(reinterpret_cast<device _xlat_buf_storage16_element*>(_mtl_buffer3 + 0)[gl_GlobalInvocationID.x].value.transform[1]) + float4(float(reinterpret_cast<device _xlat_buf_storage16_element*>(_mtl_buffer3 + 0)[gl_GlobalInvocationID.x].value.transform[2][3]))) + tmpvar_7) + tmpvar_8));
+}
+
+
+// stats: 6 alu 0 tex 0 flow
+// workgroup size: 1 1 1
+// buffer #0: Input instance sourceData layout std140 (size: 240) metal 1
+//  member #0: Entry entry offset 0
+//  member #1: Pair pair parent 0 offset 0
+//  member #2: vec4 a parent 1 offset 0
+//  member #3: uvec4 b parent 1 offset 16
+//  member #4: mat4 transform parent 0 offset 32 matrix-stride 16
+//  member #5: Mixed mixed offset 96
+//  member #6: mat4 m parent 5 offset 96 matrix-stride 16
+//  member #7: vec4 v parent 5 offset 160
+//  member #8: mat2 small offset 176 matrix-stride 16
+//  member #9: Tiny tiny offset 208
+//  member #10: vec2 value parent 9 offset 208
+//  member #11: Padded padded offset 224
+//  member #12: vec2 a parent 11 offset 224
+//  member #13: float b parent 11 offset 232
+// buffer #1: Matrices storage instance matrices layout std430 (size: 272) metal 2
+//  member #0: Mixed mixed offset 0
+//  member #1: mat4 m parent 0 offset 0 matrix-stride 16
+//  member #2: vec4 v parent 0 offset 64
+//  member #3: vec2[2] values offset 80 array 2 stride 8
+//  member #4: vec2 [] parent 3 offset 80
+//  member #5: mat2 small offset 96 matrix-stride 8
+//  member #6: mat3x2 wide offset 112 matrix-stride 8
+//  member #7: mat2x3 row offset 136 matrix-stride 8 row-major
+//  member #8: Tiny tiny offset 160
+//  member #9: vec2 value parent 8 offset 160
+//  member #10: Padded padded offset 168
+//  member #11: vec2 a parent 10 offset 168
+//  member #12: float b parent 10 offset 176
+//  member #13: mat4 reduced offset 192 matrix-stride 16
+//  member #14: vec4 result offset 256
+// buffer #2: Output storage instance data layout std430 (size: unknown) metal 3
+//  member #0: Entry[] entries offset 0 array runtime stride 96
+//  member #1: Entry [] parent 0 offset 0
+//  member #2: Pair pair parent 1 offset 0
+//  member #3: vec4 a parent 2 offset 0
+//  member #4: uvec4 b parent 2 offset 16
+//  member #5: mat4 transform parent 1 offset 32 matrix-stride 16

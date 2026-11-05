@@ -24,26 +24,14 @@ struct alignas(16) _xlat_buf_storage3 {
   alignas(16) _xlat_buf_storage4 values;
 };
 static_assert(sizeof(_xlat_buf_storage3) == 32, "std140 size");
-struct alignas(4) _xlat_buf_storage7 {
-  alignas(4) float x;
-  alignas(4) float y;
-};
-static_assert(sizeof(_xlat_buf_storage7) == 8, "std430 size");
-inline __attribute__((always_inline)) Pair _xlat_buf_storage7_read(const device _xlat_buf_storage7& storage)
-{
-  Pair value;
-  value.x = float(storage.x);
-  value.y = float(storage.y);
-  return value;
-}
-struct alignas(4) _xlat_buf_storage6_element { _xlat_buf_storage7 value; };
+static_assert(sizeof(Pair) == 8, "buffer size");
+struct alignas(4) _xlat_buf_storage6_element { Pair value; };
 struct _xlat_buf_storage6 { _xlat_buf_storage6_element elements[2]; };
 static_assert(sizeof(_xlat_buf_storage6) == 16, "std430 size");
-struct _xlat_buf_storage8 { float2 vectors[2]; };
-static_assert(sizeof(_xlat_buf_storage8) == 16, "std430 size");
+static_assert(sizeof(float2x2) == 16, "buffer size");
 struct alignas(8) _xlat_buf_storage5 {
   alignas(4) _xlat_buf_storage6 pairs;
-  alignas(8) _xlat_buf_storage8 matrix;
+  alignas(8) float2x2 matrix;
 };
 static_assert(sizeof(_xlat_buf_storage5) == 32, "std430 size");
 struct alignas(8) _xlat_buf_storage9 {
@@ -76,7 +64,7 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   tmpvar_1.x = float(_mtl_buffer3.pairs.elements[1].value.x);
   tmpvar_1.y = float(_mtl_buffer3.pairs.elements[1].value.y);
   float4 tmpvar_2 = 0;
-  tmpvar_2.xy = ((float2(_mtl_buffer1.pairs.elements[1].value) + float2(_mtl_buffer4.sharedValues.elements[1].value)) + (float2x2(float2(_mtl_buffer3.matrix.vectors[0].xy), float2(_mtl_buffer3.matrix.vectors[1].xy)) * tmpvar_1));
+  tmpvar_2.xy = ((float2(_mtl_buffer1.pairs.elements[1].value) + float2(_mtl_buffer4.sharedValues.elements[1].value)) + (_mtl_buffer3.matrix * tmpvar_1));
   tmpvar_2.z = (float(_mtl_buffer1.values.elements[2].value) + float(_mtl_buffer2.values.elements[1].value));
   tmpvar_2.w = float(_mtl_buffer5.values.elements[1].value);
   _mtl_o.color = tmpvar_2;

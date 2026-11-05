@@ -5,19 +5,8 @@ struct particle {
   float4 pos;
   float4 vel;
 };
-struct alignas(16) _xlat_buf_storage1 {
-  alignas(16) float4 pos;
-  alignas(16) float4 vel;
-};
-static_assert(sizeof(_xlat_buf_storage1) == 32, "std430 size");
-inline __attribute__((always_inline)) particle _xlat_buf_storage1_read(const device _xlat_buf_storage1& storage)
-{
-  particle value;
-  value.pos = float4(storage.pos);
-  value.vel = float4(storage.vel);
-  return value;
-}
-struct alignas(16) _xlat_buf_storage0_element { _xlat_buf_storage1 value; };
+static_assert(sizeof(particle) == 32, "buffer size");
+struct alignas(16) _xlat_buf_storage0_element { particle value; };
 static_assert(sizeof(_xlat_buf_storage0_element) == 32, "array stride");
 struct xlatMtlShaderUniform {
 };

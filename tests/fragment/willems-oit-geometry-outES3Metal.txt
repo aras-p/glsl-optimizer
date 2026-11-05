@@ -33,10 +33,9 @@ inline __attribute__((always_inline)) Node _xlat_buf_storage2_read(const device 
 }
 struct alignas(16) _xlat_buf_storage1_element { _xlat_buf_storage2 value; };
 static_assert(sizeof(_xlat_buf_storage1_element) == 32, "array stride");
-struct _xlat_buf_storage4 { float4 vectors[4]; };
-static_assert(sizeof(_xlat_buf_storage4) == 64, "std140 size");
+static_assert(sizeof(float4x4) == 64, "buffer size");
 struct alignas(16) _xlat_buf_storage3 {
-  alignas(16) _xlat_buf_storage4 model;
+  alignas(16) float4x4 model;
   alignas(16) float4 color;
 };
 static_assert(sizeof(_xlat_buf_storage3) == 80, "std140 size");
