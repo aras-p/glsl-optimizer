@@ -237,6 +237,15 @@ texture_shadow2Dext(const _mesa_glsl_parse_state *state)
       state->EXT_shadow_samplers_enable;
 }
 
+/* glsl-optimizer change: external-texture bias overloads in fragment shaders
+ * (OES_EGL_image_external_essl3 allows them).
+ */
+static bool
+texture_external_es3_bias(const _mesa_glsl_parse_state *state)
+{
+   return texture_external_es3(state) && state->stage == MESA_SHADER_FRAGMENT;
+}
+
 /** True if texturing functions with explicit LOD are allowed. */
 static bool
 lod_exists_in_stage(const _mesa_glsl_parse_state *state)
@@ -2961,6 +2970,8 @@ builtin_builder::create_builtins()
                 _texture(ir_tex, v130, &glsl_type_builtin_float, &glsl_type_builtin_sampler2DRectShadow, &glsl_type_builtin_vec3),
 
                 _texture(ir_tex, texture_external_es3, &glsl_type_builtin_vec4,  &glsl_type_builtin_samplerExternalOES, &glsl_type_builtin_vec2),
+                /* glsl-optimizer change: external-texture bias overload */
+                _texture(ir_txb, texture_external_es3_bias, &glsl_type_builtin_vec4,  &glsl_type_builtin_samplerExternalOES, &glsl_type_builtin_vec2),
 
                 _texture(ir_txb, v130_derivatives_only, &glsl_type_builtin_vec4,  &glsl_type_builtin_sampler1D,  &glsl_type_builtin_float),
                 _texture(ir_txb, v130_derivatives_only, &glsl_type_builtin_ivec4, &glsl_type_builtin_isampler1D, &glsl_type_builtin_float),
@@ -3207,6 +3218,9 @@ builtin_builder::create_builtins()
                 _texture(ir_tex, v130, &glsl_type_builtin_ivec4, &glsl_type_builtin_isampler2DRect, &glsl_type_builtin_vec3, TEX_PROJECT),
                 _texture(ir_tex, texture_external_es3, &glsl_type_builtin_vec4,  &glsl_type_builtin_samplerExternalOES, &glsl_type_builtin_vec3, TEX_PROJECT),
                 _texture(ir_tex, texture_external_es3, &glsl_type_builtin_vec4,  &glsl_type_builtin_samplerExternalOES, &glsl_type_builtin_vec4, TEX_PROJECT),
+                /* glsl-optimizer change: external-texture bias overloads */
+                _texture(ir_txb, texture_external_es3_bias, &glsl_type_builtin_vec4,  &glsl_type_builtin_samplerExternalOES, &glsl_type_builtin_vec3, TEX_PROJECT),
+                _texture(ir_txb, texture_external_es3_bias, &glsl_type_builtin_vec4,  &glsl_type_builtin_samplerExternalOES, &glsl_type_builtin_vec4, TEX_PROJECT),
 
                 _texture(ir_tex, v130, &glsl_type_builtin_uvec4, &glsl_type_builtin_usampler2DRect, &glsl_type_builtin_vec3, TEX_PROJECT),
                 _texture(ir_tex, v130, &glsl_type_builtin_vec4,  &glsl_type_builtin_sampler2DRect,  &glsl_type_builtin_vec4, TEX_PROJECT),

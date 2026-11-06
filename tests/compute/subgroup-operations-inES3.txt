@@ -1,0 +1,37 @@
+#version 310 es
+#extension GL_KHR_shader_subgroup_basic : require
+#extension GL_KHR_shader_subgroup_vote : require
+#extension GL_KHR_shader_subgroup_arithmetic : require
+#extension GL_KHR_shader_subgroup_ballot : require
+#extension GL_KHR_shader_subgroup_shuffle : require
+#extension GL_KHR_shader_subgroup_shuffle_relative : require
+#extension GL_KHR_shader_subgroup_clustered : require
+#extension GL_KHR_shader_subgroup_quad : require
+layout(local_size_x = 64) in;
+layout(std430, binding = 0) buffer Data { highp vec4 f[]; };
+layout(std430, binding = 1) buffer IData { highp uvec4 u[]; };
+void main()
+{
+  uint id = gl_LocalInvocationIndex;
+  vec4 v = f[id];
+  uvec4 r = uvec4(0u);
+  if (subgroupAny(v.x > 0.0)) r.x += 1u;
+  if (subgroupAll(v.y > 0.0)) r.x += 2u;
+  if (subgroupAllEqual(v.z)) r.x += 4u;
+  uvec4 b = subgroupBallot(v.w > 0.5);
+  r.y = subgroupBallotBitCount(b) + subgroupBallotInclusiveBitCount(b) + subgroupBallotExclusiveBitCount(b)
+      + subgroupBallotFindLSB(b) + subgroupBallotFindMSB(b) + (subgroupBallotBitExtract(b, 3u) ? 1u : 0u)
+      + (subgroupInverseBallot(b) ? 8u : 0u) + gl_SubgroupEqMask.x + gl_SubgroupLtMask.y;
+  vec4 s = subgroupAdd(v) + subgroupMul(v) + subgroupMin(v) + subgroupMax(v)
+         + subgroupInclusiveAdd(v) + subgroupExclusiveMax(v) + subgroupInclusiveMin(v) + subgroupExclusiveAdd(v) + subgroupClusteredMax(v, 8u) + subgroupClusteredAdd(v, 4u)
+         + subgroupShuffle(v, id ^ 1u) + subgroupShuffleXor(v, 2u) + subgroupShuffleUp(v, 1u) + subgroupShuffleDown(v, 1u)
+         + subgroupQuadBroadcast(v, 2u) + subgroupQuadSwapHorizontal(v) + subgroupQuadSwapVertical(v) + subgroupQuadSwapDiagonal(v)
+         + subgroupBroadcast(v, 3u) + subgroupBroadcastFirst(v);
+  r.z = subgroupAnd(id) | subgroupOr(id) | subgroupXor(id) | gl_SubgroupSize | gl_SubgroupInvocationID | gl_SubgroupID | gl_NumSubgroups | gl_SubgroupGeMask.x | gl_SubgroupLeMask.x | gl_SubgroupGtMask.x;
+  subgroupBarrier();
+  subgroupMemoryBarrier();
+  subgroupMemoryBarrierShared();
+  if (subgroupElect()) r.w = 1u;
+  f[id] = s;
+  u[id] = r;
+}

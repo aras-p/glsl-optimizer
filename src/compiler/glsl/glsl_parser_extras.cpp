@@ -2331,13 +2331,16 @@ opt_shader(const struct pipe_screen *screen,
  * fallback sources or source hashes.
  */
 
-void
-_mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader,
-                          FILE *dump_ir_file, bool dump_ast, bool dump_hir,
-                          bool force_recompile)
+/* glsl-optimizer change: _mesa_glsl_compile_shader body moved into a helper
+ * that can skip the preprocessor and hand out the parse state.
+ */
+static void
+compile_shader(struct gl_context *ctx, struct gl_shader *shader,
+               FILE *dump_ir_file, bool dump_ast, bool dump_hir,
+               bool skip_preprocessor,
+               glslopt_parse_state_callback callback, void *callback_data)
 {
    const char *source = shader->Source;
-   (void)force_recompile;
 
     struct _mesa_glsl_parse_state *state =
       new(shader) _mesa_glsl_parse_state(ctx, shader->Stage, shader);
@@ -2347,8 +2350,9 @@ _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader,
                               false, true);
 
    /* glsl-optimizer change: no shader disk cache / source hashes */
-   state->error = glcpp_preprocess(state, &source, &state->info_log,
-                                   add_builtin_defines, state, ctx);
+   if (!skip_preprocessor)
+      state->error = glcpp_preprocess(state, &source, &state->info_log,
+                                      add_builtin_defines, state, ctx);
 
    if (!state->error) {
      _mesa_glsl_lexer_ctor(state, source);
@@ -2433,10 +2437,30 @@ _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader,
       shader->nir = glsl_to_nir(shader, ctx->screen->nir_options[shader->Stage]);
    }
 
+   if (callback)
+      callback(state, callback_data);
+
    delete state->symbols;
    ralloc_free(state);
 
 /* glsl-optimizer change: no shader disk cache / source hashes */
+}
+
+void
+_mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader,
+                          FILE *dump_ir_file, bool dump_ast, bool dump_hir,
+                          bool force_recompile)
+{
+   (void)force_recompile;
+   compile_shader(ctx, shader, dump_ir_file, dump_ast, dump_hir, false, NULL, NULL);
+}
+
+void
+_mesa_glsl_compile_shader_glslopt(struct gl_context *ctx, struct gl_shader *shader,
+                                  bool skip_preprocessor,
+                                  glslopt_parse_state_callback callback, void *data)
+{
+   compile_shader(ctx, shader, NULL, false, false, skip_preprocessor, callback, data);
 }
 
 } /* extern "C" */

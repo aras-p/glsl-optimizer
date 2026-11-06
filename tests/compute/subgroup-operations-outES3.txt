@@ -1,0 +1,74 @@
+#version 310 es
+#extension GL_KHR_shader_subgroup_arithmetic : enable
+#extension GL_KHR_shader_subgroup_ballot : enable
+#extension GL_KHR_shader_subgroup_basic : enable
+#extension GL_KHR_shader_subgroup_vote : enable
+#extension GL_KHR_shader_subgroup_shuffle : enable
+#extension GL_KHR_shader_subgroup_shuffle_relative : enable
+#extension GL_KHR_shader_subgroup_clustered : enable
+#extension GL_KHR_shader_subgroup_quad : enable
+layout(local_size_x = 64) in;
+layout(std430, binding = 1) buffer IData {
+  highp uvec4 u[];
+};
+layout(std430, binding = 0) buffer Data {
+  highp vec4 f[];
+};
+void main ()
+{
+  highp vec4 t0 = f[int(gl_LocalInvocationIndex)];
+  bool t1 = subgroupAny((0.0 < t0.x));
+  bool t2 = subgroupAll((0.0 < t0.y));
+  highp ivec4 t3 = (t1 ? ivec4(1, 0, 0, 0) : ivec4(0));
+  highp ivec4 t4 = (t2 ? ivec4((t3.x + 2), t3.yzw) : t3);
+  bool t5 = subgroupAllEqual(t0.z);
+  highp ivec4 t6 = (t5 ? ivec4((t4.x + 4), t4.yzw) : t4);
+  highp uvec4 t7 = subgroupBallot((0.5 < t0.w));
+  highp uint t8 = subgroupBallotBitCount(t7);
+  highp uint t9 = subgroupBallotInclusiveBitCount(t7);
+  highp uint t10 = subgroupBallotExclusiveBitCount(t7);
+  highp uint t11 = subgroupBallotFindLSB(t7);
+  highp uint t12 = subgroupBallotFindMSB(t7);
+  bool t13 = subgroupBallotBitExtract(t7, 3u);
+  bool t14 = subgroupInverseBallot(t7);
+  highp int t15 = ((((((((int(t8) + int(t9)) + int(t10)) + int(t11)) + int(t12)) + int(t13)) + (t14 ? 8 : 0)) + int(gl_SubgroupEqMask.x)) + int(gl_SubgroupLtMask.y));
+  highp vec4 t16 = subgroupAdd(t0);
+  highp vec4 t17 = subgroupMul(t0);
+  highp vec4 t18 = subgroupMin(t0);
+  highp vec4 t19 = subgroupMax(t0);
+  highp vec4 t20 = subgroupInclusiveAdd(t0);
+  highp vec4 t21 = subgroupExclusiveMax(t0);
+  highp vec4 t22 = subgroupInclusiveMin(t0);
+  highp vec4 t23 = subgroupExclusiveAdd(t0);
+  highp vec4 t24 = subgroupClusteredMax(t0, 8u);
+  highp vec4 t25 = subgroupClusteredAdd(t0, 4u);
+  highp vec4 t26 = subgroupShuffle(t0, (gl_LocalInvocationIndex ^ 1u));
+  highp vec4 t27 = subgroupShuffleXor(t0, 2u);
+  highp vec4 t28 = subgroupShuffleUp(t0, 1u);
+  highp vec4 t29 = subgroupShuffleDown(t0, 1u);
+  highp vec4 t30 = subgroupQuadBroadcast(t0, 2u);
+  highp vec4 t31 = subgroupQuadSwapHorizontal(t0);
+  highp vec4 t32 = subgroupQuadSwapVertical(t0);
+  highp vec4 t33 = subgroupQuadSwapDiagonal(t0);
+  highp vec4 t34 = subgroupBroadcast(t0, 3u);
+  highp vec4 t35 = subgroupBroadcastFirst(t0);
+  highp uint t36 = subgroupAnd(gl_LocalInvocationIndex);
+  highp uint t37 = subgroupOr(gl_LocalInvocationIndex);
+  highp uint t38 = subgroupXor(gl_LocalInvocationIndex);
+  highp uint t39 = (((((((((t36 | t37) | t38) | gl_SubgroupSize) | gl_SubgroupInvocationID) | gl_SubgroupID) | gl_NumSubgroups) | gl_SubgroupGeMask.x) | gl_SubgroupLeMask.x) | gl_SubgroupGtMask.x);
+  subgroupBarrier();
+  subgroupMemoryBarrier();
+  subgroupMemoryBarrierShared();
+  bool t40 = subgroupElect();
+  f[int(gl_LocalInvocationIndex)] = (((((((((((((((((((t16 + t17) + t18) + t19) + t20) + t21) + t22) + t23) + t24) + t25) + t26) + t27) + t28) + t29) + t30) + t31) + t32) + t33) + t34) + t35);
+  u[int(gl_LocalInvocationIndex)] = uvec4((t40 ? ivec4(t6.x, t15, int(t39), 1) : ivec4(t6.x, t15, int(t39), t6.w)));
+}
+
+// stats: 48 alu 0 tex 0 flow
+// workgroup size: 64 1 1
+// buffer #0: Data storage layout std430 binding 0 (size: unknown)
+//  member #0: vec4[] f offset 0 array runtime stride 16
+//  member #1: vec4 [] parent 0 offset 0
+// buffer #1: IData storage layout std430 binding 1 (size: unknown)
+//  member #0: uvec4[] u offset 0 array runtime stride 16
+//  member #1: uvec4 [] parent 0 offset 0

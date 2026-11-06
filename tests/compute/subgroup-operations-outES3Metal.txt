@@ -1,0 +1,90 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+#if __METAL_VERSION__ < 320
+#error This shader requires Metal 3.2 or newer
+#endif
+struct _xlat_buf_Data_std430 {
+  float4 f[1];
+};
+struct _xlat_buf_IData_std430 {
+  uint4 u[1];
+};
+inline uint4 _xlat_ballot(bool b) { ulong m = ulong(simd_ballot(b)); return uint4(uint(m), uint(m >> 32), 0u, 0u); }
+inline ulong _xlat_ballot_bits(uint4 b) { return ulong(b.x) | (ulong(b.y) << 32); }
+inline ulong _xlat_lanes_below(uint n) { return n >= 64u ? ~0ul : ((1ul << n) - 1ul); }
+inline uint4 _xlat_lane_mask(uint lo, uint hi) { ulong m = _xlat_lanes_below(hi) & ~_xlat_lanes_below(lo); return uint4(uint(m), uint(m >> 32), 0u, 0u); }
+template <typename T> inline T _xlat_scan_max(T x, uint lane, T identity, bool inclusive) { if (!inclusive) { x = simd_shuffle_up(x, 1); if (lane == 0) x = identity; } for (ushort i = 1; i < 64; i <<= 1) { T a = x; T b = simd_shuffle_up(x, i); if (lane >= i) x = max(a, b); } return x; }
+template <typename T> inline T _xlat_scan_min(T x, uint lane, T identity, bool inclusive) { if (!inclusive) { x = simd_shuffle_up(x, 1); if (lane == 0) x = identity; } for (ushort i = 1; i < 64; i <<= 1) { T a = x; T b = simd_shuffle_up(x, i); if (lane >= i) x = min(a, b); } return x; }
+template <typename T> inline T _xlat_clustered_max(T x, uint size) { for (ushort i = 1; i < size; i <<= 1) { T a = x; T b = simd_shuffle_xor(x, i); x = max(a, b); } return x; }
+template <typename T> inline T _xlat_clustered_sum(T x, uint size) { for (ushort i = 1; i < size; i <<= 1) { T a = x; T b = simd_shuffle_xor(x, i); x = a + b; } return x; }
+struct xlatMtlShaderUniform {
+};
+// threadsPerThreadgroup: 64, 1, 1
+kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , device _xlat_buf_Data_std430& _xlat_blk_Data [[buffer(1)]]
+  , device _xlat_buf_IData_std430& _xlat_blk_IData [[buffer(2)]]
+  , uint gl_LocalInvocationIndex [[thread_index_in_threadgroup]]
+  , uint gl_SubgroupInvocationID [[thread_index_in_simdgroup]]
+  , uint gl_SubgroupSize [[threads_per_simdgroup]]
+  , uint gl_SubgroupID [[simdgroup_index_in_threadgroup]]
+  , uint gl_NumSubgroups [[simdgroups_per_threadgroup]])
+{
+  float4 t0 = float4(_xlat_blk_Data.f[int(gl_LocalInvocationIndex)]);
+  bool t1 = simd_any((0.0 < t0.x));
+  bool t2 = simd_all((0.0 < t0.y));
+  int4 t3 = (t1 ? int4(1, 0, 0, 0) : int4(0));
+  int4 t4 = (t2 ? int4((t3.x + 2), t3.yzw) : t3);
+  bool t5 = simd_all((t0.z == simd_broadcast_first(t0.z)));
+  int4 t6 = (t5 ? int4((t4.x + 4), t4.yzw) : t4);
+  uint4 t7 = _xlat_ballot((0.5 < t0.w));
+  uint t8 = uint(popcount(_xlat_ballot_bits(t7)));
+  uint t9 = uint(popcount(_xlat_ballot_bits(t7) & ((2ul << gl_SubgroupInvocationID) - 1ul)));
+  uint t10 = uint(popcount(_xlat_ballot_bits(t7) & ((1ul << gl_SubgroupInvocationID) - 1ul)));
+  uint t11 = uint(ctz(_xlat_ballot_bits(t7)));
+  uint t12 = uint(63 - clz(_xlat_ballot_bits(t7)));
+  bool t13 = (((_xlat_ballot_bits(t7) >> 3u) & 1ul) != 0ul);
+  bool t14 = (((_xlat_ballot_bits(t7) >> gl_SubgroupInvocationID) & 1ul) != 0ul);
+  int t15 = (((((((int(t8) + int(t9)) + int(t10)) + int(t11)) + int(t12)) + int(t13)) + (t14 ? 8 : 0)) + int(_xlat_lane_mask(gl_SubgroupInvocationID, gl_SubgroupInvocationID + 1u).x));
+  int t16 = (t15 + int(_xlat_lane_mask(0u, gl_SubgroupInvocationID).y));
+  float4 t17 = simd_sum(t0);
+  float4 t18 = simd_product(t0);
+  float4 t19 = simd_min(t0);
+  float4 t20 = simd_max(t0);
+  float4 t21 = simd_prefix_inclusive_sum(t0);
+  float4 t22 = _xlat_scan_max(t0, gl_SubgroupInvocationID, float4(-INFINITY), false);
+  float4 t23 = _xlat_scan_min(t0, gl_SubgroupInvocationID, float4(INFINITY), true);
+  float4 t24 = simd_prefix_exclusive_sum(t0);
+  float4 t25 = _xlat_clustered_max(t0, 8u);
+  float4 t26 = _xlat_clustered_sum(t0, 4u);
+  float4 t27 = simd_shuffle(t0, ushort((gl_LocalInvocationIndex ^ 1u)));
+  float4 t28 = simd_shuffle_xor(t0, ushort(2u));
+  float4 t29 = simd_shuffle_up(t0, ushort(1u));
+  float4 t30 = simd_shuffle_down(t0, ushort(1u));
+  float4 t31 = quad_broadcast(t0, ushort(2u));
+  float4 t32 = quad_shuffle_xor(t0, 1);
+  float4 t33 = quad_shuffle_xor(t0, 2);
+  float4 t34 = quad_shuffle_xor(t0, 3);
+  float4 t35 = simd_broadcast(t0, ushort(3u));
+  float4 t36 = simd_broadcast_first(t0);
+  uint t37 = simd_and(gl_LocalInvocationIndex);
+  uint t38 = simd_or(gl_LocalInvocationIndex);
+  uint t39 = simd_xor(gl_LocalInvocationIndex);
+  uint t40 = ((((((((t37 | t38) | t39) | gl_SubgroupSize) | gl_SubgroupInvocationID) | gl_SubgroupID) | gl_NumSubgroups) | _xlat_lane_mask(gl_SubgroupInvocationID, 64u).x) | _xlat_lane_mask(0u, gl_SubgroupInvocationID + 1u).x);
+  uint t41 = (t40 | _xlat_lane_mask(gl_SubgroupInvocationID + 1u, 64u).x);
+  simdgroup_barrier(mem_flags::mem_device | mem_flags::mem_texture | mem_flags::mem_threadgroup);
+  atomic_thread_fence(mem_flags::mem_device | mem_flags::mem_texture | mem_flags::mem_threadgroup, memory_order_seq_cst, thread_scope_simdgroup);
+  atomic_thread_fence(mem_flags::mem_threadgroup, memory_order_seq_cst, thread_scope_simdgroup);
+  bool t42 = simd_is_first();
+  _xlat_blk_Data.f[int(gl_LocalInvocationIndex)] = (((((((((((((((((((t17 + t18) + t19) + t20) + t21) + t22) + t23) + t24) + t25) + t26) + t27) + t28) + t29) + t30) + t31) + t32) + t33) + t34) + t35) + t36);
+  _xlat_blk_IData.u[int(gl_LocalInvocationIndex)] = uint4((t42 ? int4(t6.x, t16, int(t41), 1) : int4(t6.x, t16, int(t41), t6.w)));
+}
+
+// stats: 48 alu 0 tex 0 flow
+// workgroup size: 64 1 1
+// buffer #0: Data storage layout std430 binding 0 (size: unknown) metal 1
+//  member #0: vec4[] f offset 0 array runtime stride 16
+//  member #1: vec4 [] parent 0 offset 0
+// buffer #1: IData storage layout std430 binding 1 (size: unknown) metal 2
+//  member #0: uvec4[] u offset 0 array runtime stride 16
+//  member #1: uvec4 [] parent 0 offset 0

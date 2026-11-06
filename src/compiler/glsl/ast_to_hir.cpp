@@ -8817,8 +8817,13 @@ ast_interface_block::hir(ir_exec_list *instructions,
             }
 
             if (!allow_location) {
-               for (unsigned i = 0; i < num_variables; i++) {
-                  if (fields[i].location != -1) {
+               /* glsl-optimizer change: only member location qualifiers are
+                * an error; member locations derived from a block-level
+                * location qualifier are fine.
+                */
+               ir_foreach_list_typed (ast_declarator_list, decl_list, link,
+                                      &this->declarations) {
+                  if (decl_list->type->qualifier.flags.q.explicit_location) {
                      _mesa_glsl_error(&loc, state,
                                        "explicit member locations are not allowed in "
                                        "blocks declared as arrays %s shader",

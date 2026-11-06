@@ -8,7 +8,7 @@ GLSL optimizer
 
 A C++ library that takes GLSL vertex/fragment/compute shaders, does GPU-independent optimizations on them
 and outputs GLSL or Metal source back. Optimizations are function inlining, dead code removal, copy propagation,
-constant folding, constant propagation, arithmetic optimizations and so on.
+constant folding, constant propagation, arithmetic optimizations, loop unrolling and so on (Mesa's NIR optimizer).
 
 Apparently quite a few mobile platforms are pretty bad at optimizing shaders; and
 unfortunately they *also* lack offline shader compilers. So using a GLSL optimizer offline
@@ -19,7 +19,7 @@ Even for drivers that have decent shader optimization, GLSL optimizer could be u
 dead code, make shaders smaller and do uniform/input reflection offline.
 
 Almost all actual code is [Mesa 3D's GLSL](https://gitlab.freedesktop.org/mesa/mesa)
-compiler; all this library does is spits out optimized GLSL or Metal back, and adds GLES type precision
+compiler and NIR optimizer; all this library does is spits out optimized GLSL or Metal back, and adds GLES type precision
 handling to the optimizer.
 
 This GLSL optimizer is made for [Unity's](https://unity3d.com/) purposes and is built-in
@@ -98,8 +98,6 @@ Language Support
   2015, anything since then got much less "real" testing.
 * Geometry and tessellation shaders are not supported.
 * Double precision types and shader subroutines are not supported.
-* Subgroup (wave) support covers `subgroupAdd`, `subgroupMin`, `subgroupMax`, `subgroupOr`,
-  `subgroupElect` and `subgroupBroadcastFirst`.
 * Variable workgroup sizes (`GL_ARB_compute_variable_group_size`) are not supported.
 * Each shader stage is optimized independently. Optimizer retains vertex outputs
   even if fragment shader never reads them, and it does not match or validate
@@ -119,6 +117,8 @@ Language Support
   Metal 3.1+ (4.0+ for cube images) and GPU support for texture
   atomics.
 * Multisample storage images support reads and queries only.
+* Subgroup scans other than add/mul and clustered reductions are emulated with
+  shuffles and assume all lanes are active.
 * `memoryBarrier*()` and `groupMemoryBarrier()` translate to `atomic_thread_fence`
   and thus require Metal 3.2 or later. A `memoryBarrierShared()` immediately
   followed by `barrier()` in the optimizer's instruction stream can use a single
@@ -242,12 +242,28 @@ frontend, `glsl_to_nir`, NIR with the passes we run, and the util code they need
   was linked but never executed.
 - GLSL IR optimizations and `lower_precision`: NIR does all optimization.
 
+#### Our code (`src/glsl`)
+
+- `glsl_optimizer.cpp`: public API, GL context setup, validation of what the
+  printers can express, reflection and stats (all from the final NIR).
+- `nir_optimize.cpp`: the NIR pipeline (inlining, optimization loop, out of SSA),
+  and the GLSL ES precision analysis that the pipeline and printers share.
+- `nir_printer.cpp`: printing core shared by GLSL and Metal: typing of NIR values,
+  folding single-use values into expressions, and print-time recovery of shapes NIR
+  lowered (matrix multiplies, `normalize`/`length`/`clamp`/..., `for`/`while`/`do` loops).
+- `nir_print_glsl.cpp`, `nir_print_metal.cpp`: the dialects. `buffer_layout.h` has the
+  std140/std430 and Metal slot rules shared by reflection and the Metal printer.
+
 #### Behavior changes
 
 - No GLSL IR optimization before `glsl_to_nir`: it erased stores into locals of
   different precision, i.e. the source's precision conversions.
 - `glslopt_precision` NIR intrinsic: marks such precision conversions so they
   survive NIR optimization and get printed as properly qualified temporaries.
+- Frontend changes (marked in the Mesa sources): a compile entry point that can skip
+  the preprocessor and hands out the parse state (version, extensions) for printing;
+  `texture()`/`textureProj()` bias overloads for external textures in fragment shaders;
+  block-level locations allowed on arrays of interface blocks.
 
 #### Generated code size
 

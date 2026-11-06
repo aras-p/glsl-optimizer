@@ -132,9 +132,10 @@
         'compiler/glsl/glcpp/glcpp-parse.c',
         'compiler/glsl/glcpp/glcpp-lex.c',
         'glsl/glsl_optimizer.cpp',
-        'glsl/ir_stats.cpp',
-        'glsl/ir_print_glsl_visitor.cpp',
-        'glsl/ir_print_metal_visitor.cpp',
+        'glsl/nir_optimize.cpp',
+        'glsl/nir_printer.cpp',
+        'glsl/nir_print_glsl.cpp',
+        'glsl/nir_print_metal.cpp',
       ],
       'conditions': [
         ['OS!="win"', {

@@ -17,7 +17,12 @@ endif()
 option(GLSLOPT_BUILD_TOOLS "Build glslopt command-line tool" OFF)
 option(GLSLOPT_TEST_OPENGL "Build OpenGL validation into the test runner" OFF)
 
-add_library(glslopt_mesa STATIC
+add_library(glsl_optimizer STATIC
+    src/glsl/glsl_optimizer.cpp
+    src/glsl/nir_optimize.cpp
+    src/glsl/nir_printer.cpp
+    src/glsl/nir_print_glsl.cpp
+    src/glsl/nir_print_metal.cpp
     src/c11/impl/time.c
     src/compiler/builtin_types.c
     src/compiler/glsl/ast_array_index.cpp
@@ -149,22 +154,23 @@ add_library(glslopt_mesa STATIC
     src/util/u_worklist.c
 )
 if(WIN32)
-    target_sources(glslopt_mesa PRIVATE src/c11/impl/threads_win32.c src/c11/impl/threads_win32_tls_callback.cpp)
+    target_sources(glsl_optimizer PRIVATE src/c11/impl/threads_win32.c src/c11/impl/threads_win32_tls_callback.cpp)
 else()
-    target_sources(glslopt_mesa PRIVATE src/c11/impl/threads_posix.c)
+    target_sources(glsl_optimizer PRIVATE src/c11/impl/threads_posix.c)
 endif()
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT DEFINED CMAKE_POSITION_INDEPENDENT_CODE)
-    set_target_properties(glslopt_mesa PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    set_target_properties(glsl_optimizer PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
-target_compile_features(glslopt_mesa PUBLIC c_std_11)
+target_compile_features(glsl_optimizer PRIVATE c_std_11)
 find_package(Threads REQUIRED)
-target_link_libraries(glslopt_mesa PUBLIC Threads::Threads)
-target_include_directories(glslopt_mesa PUBLIC
-    include src src/mesa src/gallium/include src/compiler src/compiler/glsl
-    src/compiler/glsl/glcpp
+target_link_libraries(glsl_optimizer PRIVATE Threads::Threads)
+target_include_directories(glsl_optimizer
+    PUBLIC src/glsl
+    PRIVATE include src src/mesa src/gallium/include src/compiler src/compiler/glsl
+        src/compiler/glsl/glcpp
 )
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
-    target_compile_definitions(glslopt_mesa PUBLIC
+    target_compile_definitions(glsl_optimizer PRIVATE
         HAVE___BUILTIN_EXPECT HAVE___BUILTIN_CLZ HAVE___BUILTIN_CLZLL
         HAVE___BUILTIN_CTZ HAVE___BUILTIN_FFS HAVE___BUILTIN_FFSLL
         HAVE___BUILTIN_POPCOUNT HAVE___BUILTIN_POPCOUNTLL
@@ -174,37 +180,27 @@ include(CheckSymbolExists)
 include(CheckIncludeFile)
 check_include_file(endian.h GLSLOPT_HAVE_ENDIAN_H)
 if(GLSLOPT_HAVE_ENDIAN_H)
-    target_compile_definitions(glslopt_mesa PUBLIC HAVE_ENDIAN_H)
+    target_compile_definitions(glsl_optimizer PRIVATE HAVE_ENDIAN_H)
 endif()
 check_symbol_exists(posix_memalign "stdlib.h" GLSLOPT_HAVE_POSIX_MEMALIGN)
 check_symbol_exists(strtof "stdlib.h" GLSLOPT_HAVE_STRTOF)
 if(GLSLOPT_HAVE_POSIX_MEMALIGN)
-    target_compile_definitions(glslopt_mesa PUBLIC HAVE_POSIX_MEMALIGN)
+    target_compile_definitions(glsl_optimizer PRIVATE HAVE_POSIX_MEMALIGN)
 endif()
 if(GLSLOPT_HAVE_STRTOF)
-    target_compile_definitions(glslopt_mesa PUBLIC HAVE_STRTOF)
+    target_compile_definitions(glsl_optimizer PRIVATE HAVE_STRTOF)
 endif()
 # GL APIs the frontend accepts (desktop GL and GLES2+; checked by main/context.h)
-target_compile_definitions(glslopt_mesa PUBLIC HAVE_OPENGL=1 HAVE_OPENGL_ES_2=1)
+target_compile_definitions(glsl_optimizer PRIVATE HAVE_OPENGL=1 HAVE_OPENGL_ES_2=1)
 # c11/threads.h: pthreads or win32 threads; the platform has struct timespec
-target_compile_definitions(glslopt_mesa PUBLIC HAVE_STRUCT_TIMESPEC $<$<NOT:$<BOOL:${WIN32}>>:HAVE_PTHREAD>)
+target_compile_definitions(glsl_optimizer PRIVATE HAVE_STRUCT_TIMESPEC $<$<NOT:$<BOOL:${WIN32}>>:HAVE_PTHREAD>)
 if(MSVC)
-    target_compile_definitions(glslopt_mesa PUBLIC
+    target_compile_definitions(glsl_optimizer PRIVATE
         NOMINMAX _USE_MATH_DEFINES _CRT_SECURE_NO_WARNINGS _CRT_NONSTDC_NO_DEPRECATE strdup=_strdup
         # the checked-in flex scanner requires this for const-correct prototypes
         __STDC__=1
     )
 endif()
-
-add_library(glsl_optimizer STATIC
-    src/glsl/glsl_optimizer.cpp
-    src/glsl/ir_stats.cpp
-    src/glsl/ir_print_glsl_visitor.cpp
-    src/glsl/ir_print_metal_visitor.cpp
-)
-target_include_directories(glsl_optimizer PUBLIC src/glsl)
-target_link_libraries(glsl_optimizer PRIVATE glslopt_mesa)
-
 
 if(GLSLOPT_BUILD_TOOLS)
     add_executable(glslopt contrib/glslopt/Main.cpp)

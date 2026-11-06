@@ -1135,6 +1135,17 @@ _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader,
                           FILE *dump_ir_file, bool dump_ast, bool dump_hir,
                           bool force_recompile);
 
+/* glsl-optimizer change: compile with an option to skip the preprocessor,
+ * and a callback that sees the parse state (version, enabled extensions,
+ * layout qualifiers) before it is freed.
+ */
+typedef void (*glslopt_parse_state_callback)(const struct _mesa_glsl_parse_state *state,
+                                             void *data);
+extern void
+_mesa_glsl_compile_shader_glslopt(struct gl_context *ctx, struct gl_shader *shader,
+                                  bool skip_preprocessor,
+                                  glslopt_parse_state_callback callback, void *data);
+
 typedef void (*glcpp_extension_iterator)(
               struct _mesa_glsl_parse_state *state,
               void (*add_builtin_define)(struct glcpp_parser *, const char *, int),
