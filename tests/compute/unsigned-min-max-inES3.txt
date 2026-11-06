@@ -1,0 +1,18 @@
+#version 310 es
+precision highp int;
+
+layout(local_size_x = 1) in;
+layout(std430, binding = 0) buffer Data {
+    uint value;
+    uvec2 pair;
+    uvec4 result;
+    uvec2 vector_result;
+} data;
+
+void main()
+{
+    uint value = data.value;
+    data.result = uvec4(min(256u, value), min(value, 0xFFFFFFFEu),
+                        max(value, 4u), max(0x80000000u, value));
+    data.vector_result = min(data.pair, uvec2(8u, 16u));
+}

@@ -15,7 +15,7 @@ vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], 
 {
   xlatMtlShaderOutput _mtl_o;
   uint tmpvar_1;
-  tmpvar_1 = (uint(int(gl_VertexID)) & 1);
+  tmpvar_1 = (uint(int(gl_VertexID)) & 1u);
   uint tmpvar_2;
   tmpvar_2 = atomic_load_explicit(_mtl_atomic2 + (tmpvar_1), memory_order_relaxed);
   uint tmpvar_3;

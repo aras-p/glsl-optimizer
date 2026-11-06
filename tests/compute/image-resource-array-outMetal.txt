@@ -13,7 +13,7 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
   , texture2d<float, access::write> combined [[texture(5)]])
 {
   int tmpvar_1 = 0;
-  tmpvar_1 = int((gl_WorkGroupID.x & 1));
+  tmpvar_1 = int((gl_WorkGroupID.x & 1u));
   int2 tmpvar_2 = 0;
   tmpvar_2 = int2(gl_GlobalInvocationID.xy);
   float4 tmpvar_3 = 0;

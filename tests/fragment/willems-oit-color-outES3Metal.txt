@@ -43,17 +43,17 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   uint4 tmpvar_7;
   tmpvar_7 = headIndexImage.read(uint2(int2(_mtl_i.gl_FragCoord.xy)));
   nodeIdx_4 = tmpvar_7.x;
-  for (; ((nodeIdx_4 != 4294967295) && (count_5 < 128)); count_5++) {
+  for (; ((nodeIdx_4 != 4294967295u) && (count_5 < 128)); count_5++) {
     fragments_6[count_5] = _xlat_buf_storage1_read(reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[nodeIdx_4].value);
     nodeIdx_4 = fragments_6[count_5].next;
   };
-  for (uint i_3 = 1; i_3 < uint(count_5); i_3++) {
+  for (uint i_3 = 1u; i_3 < uint(count_5); i_3++) {
     uint j_8;
     Node tmpvar_9;
     tmpvar_9 = fragments_6[i_3];
     j_8 = i_3;
-    for (; ((0 < j_8) && (fragments_6[(j_8 + 4294967295)].depth < tmpvar_9.depth)); j_8 += 4294967295) {
-      fragments_6[j_8] = fragments_6[(j_8 + 4294967295)];
+    for (; ((0u < j_8) && (fragments_6[(j_8 + 4294967295u)].depth < tmpvar_9.depth)); j_8 += 4294967295u) {
+      fragments_6[j_8] = fragments_6[(j_8 + 4294967295u)];
     };
     fragments_6[j_8] = tmpvar_9;
   };

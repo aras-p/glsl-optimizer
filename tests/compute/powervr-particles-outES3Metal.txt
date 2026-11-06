@@ -80,7 +80,7 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
   Particle particle_2;
   int tmpvar_3 = 0;
   tmpvar_3 = (int((float(_mtl_buffer3.fTotalTime) * 1.357985e+07)) + (int(
-    (gl_GlobalInvocationID.x + 10000)
+    (gl_GlobalInvocationID.x + 10000u)
   ) * 145));
   Particle tmpvar_4;
   tmpvar_4 = _xlat_buf_storage1_read(reinterpret_cast<const device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_GlobalInvocationID.x].value);
@@ -142,7 +142,7 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
     v_13 = ((Ftotal_12 * float(_mtl_buffer3.dt)) + v_13);
     particle_2.vPosition = ((v_13 * float(_mtl_buffer3.dt)) + tmpvar_4.vPosition);
     float4 tmpvar_17 = 0;
-    tmpvar_17 = float4(_mtl_buffer4.aSpheres.elements[0].value);
+    tmpvar_17 = float4(_mtl_buffer4.aSpheres.elements[0u].value);
     float3 tmpvar_18 = 0;
     tmpvar_18 = (particle_2.vPosition - tmpvar_17.xyz);
     float tmpvar_19 = 0;
@@ -156,7 +156,7 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
       )) * float(_mtl_buffer3.bounciness));
     } else {
       float4 tmpvar_21 = 0;
-      tmpvar_21 = float4(_mtl_buffer4.aSpheres.elements[1].value);
+      tmpvar_21 = float4(_mtl_buffer4.aSpheres.elements[1u].value);
       float3 tmpvar_22 = 0;
       tmpvar_22 = (particle_2.vPosition - tmpvar_21.xyz);
       float tmpvar_23 = 0;
@@ -170,7 +170,7 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
         )) * float(_mtl_buffer3.bounciness));
       } else {
         float4 tmpvar_25 = 0;
-        tmpvar_25 = float4(_mtl_buffer4.aSpheres.elements[2].value);
+        tmpvar_25 = float4(_mtl_buffer4.aSpheres.elements[2u].value);
         float3 tmpvar_26 = 0;
         tmpvar_26 = (particle_2.vPosition - tmpvar_25.xyz);
         float tmpvar_27 = 0;
@@ -184,7 +184,7 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
           )) * float(_mtl_buffer3.bounciness));
         } else {
           float4 tmpvar_29 = 0;
-          tmpvar_29 = float4(_mtl_buffer4.aSpheres.elements[3].value);
+          tmpvar_29 = float4(_mtl_buffer4.aSpheres.elements[3u].value);
           float3 tmpvar_30 = 0;
           tmpvar_30 = (particle_2.vPosition - tmpvar_29.xyz);
           float tmpvar_31 = 0;
@@ -198,7 +198,7 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
             )) * float(_mtl_buffer3.bounciness));
           } else {
             float4 tmpvar_33 = 0;
-            tmpvar_33 = float4(_mtl_buffer4.aSpheres.elements[4].value);
+            tmpvar_33 = float4(_mtl_buffer4.aSpheres.elements[4u].value);
             float3 tmpvar_34 = 0;
             tmpvar_34 = (particle_2.vPosition - tmpvar_33.xyz);
             float tmpvar_35 = 0;
@@ -212,7 +212,7 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
               )) * float(_mtl_buffer3.bounciness));
             } else {
               float4 tmpvar_37 = 0;
-              tmpvar_37 = float4(_mtl_buffer4.aSpheres.elements[5].value);
+              tmpvar_37 = float4(_mtl_buffer4.aSpheres.elements[5u].value);
               float3 tmpvar_38 = 0;
               tmpvar_38 = (particle_2.vPosition - tmpvar_37.xyz);
               float tmpvar_39 = 0;
@@ -226,7 +226,7 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
                 )) * float(_mtl_buffer3.bounciness));
               } else {
                 float4 tmpvar_41 = 0;
-                tmpvar_41 = float4(_mtl_buffer4.aSpheres.elements[6].value);
+                tmpvar_41 = float4(_mtl_buffer4.aSpheres.elements[6u].value);
                 float3 tmpvar_42 = 0;
                 tmpvar_42 = (particle_2.vPosition - tmpvar_41.xyz);
                 float tmpvar_43 = 0;
@@ -240,7 +240,7 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
                   )) * float(_mtl_buffer3.bounciness));
                 } else {
                   float4 tmpvar_45 = 0;
-                  tmpvar_45 = float4(_mtl_buffer4.aSpheres.elements[7].value);
+                  tmpvar_45 = float4(_mtl_buffer4.aSpheres.elements[7u].value);
                   float3 tmpvar_46 = 0;
                   tmpvar_46 = (particle_2.vPosition - tmpvar_45.xyz);
                   float tmpvar_47 = 0;

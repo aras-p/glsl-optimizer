@@ -54,7 +54,7 @@ struct xlatMtlShaderUniform {
 {
   xlatMtlShaderOutput _mtl_o;
   uint tmpvar_1;
-  tmpvar_1 = atomic_fetch_add_explicit (reinterpret_cast<device atomic_uint*>(&_mtl_buffer1.count), uint(1), memory_order_relaxed);
+  tmpvar_1 = atomic_fetch_add_explicit (reinterpret_cast<device atomic_uint*>(&_mtl_buffer1.count), uint(1u), memory_order_relaxed);
   if ((tmpvar_1 < uint(_mtl_buffer1.maxNodeCount))) {
     uint tmpvar_2;
     tmpvar_2 = headIndexImage.atomic_exchange(uint2(int2(_mtl_i.gl_FragCoord.xy)), uint4(tmpvar_1)).x;

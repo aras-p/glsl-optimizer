@@ -51,78 +51,78 @@ threadgroup float4 temp_cache_2[128];
     float2(int4(_mtl_buffer1.section).zw)
   )));
   uint tmpvar_8;
-  tmpvar_8 = ((gl_LocalInvocationID.x * 2) + (32 * gl_LocalInvocationID.y));
+  tmpvar_8 = ((gl_LocalInvocationID.x * 2u) + (32u * gl_LocalInvocationID.y));
   local_cache_1[tmpvar_8] = source_color.sample(_mtlsmp_source_color, (float2)((tmpvar_7)), level(0.0));
   float2 tmpvar_9 = 0;
   tmpvar_9.y = 0.0;
   tmpvar_9.x = (1.0/(float(int4(_mtl_buffer1.section).z)));
-  local_cache_1[(tmpvar_8 + 1)] = source_color.sample(_mtlsmp_source_color, (float2)(((tmpvar_7 + tmpvar_9))), level(0.0));
+  local_cache_1[(tmpvar_8 + 1u)] = source_color.sample(_mtlsmp_source_color, (float2)(((tmpvar_7 + tmpvar_9))), level(0.0));
   float2 tmpvar_10 = 0;
   tmpvar_10.x = 0.0;
   tmpvar_10.y = (1.0/(float(int4(_mtl_buffer1.section).w)));
-  local_cache_1[(tmpvar_8 + 16)] = source_color.sample(_mtlsmp_source_color, (float2)(((tmpvar_7 + tmpvar_10))), level(0.0));
-  local_cache_1[(17 + tmpvar_8)] = source_color.sample(_mtlsmp_source_color, (float2)(((tmpvar_7 + (1.0/(float2(int4(_mtl_buffer1.section).zw)))))), level(0.0));
-  if (bool(int((uint(_mtl_buffer1.flags) & 16)))) {
+  local_cache_1[(tmpvar_8 + 16u)] = source_color.sample(_mtlsmp_source_color, (float2)(((tmpvar_7 + tmpvar_10))), level(0.0));
+  local_cache_1[(17u + tmpvar_8)] = source_color.sample(_mtlsmp_source_color, (float2)(((tmpvar_7 + (1.0/(float2(int4(_mtl_buffer1.section).zw)))))), level(0.0));
+  if (bool(int((uint(_mtl_buffer1.flags) & 16u)))) {
     float3 tmpvar_11 = 0;
     tmpvar_11 = (float3(0.299, 0.587, 0.114) / max (float(_mtl_buffer1.glow_luminance_cap), 6.0));
     local_cache_1[tmpvar_8] = (local_cache_1[tmpvar_8] / (1.0 + dot (local_cache_1[tmpvar_8].xyz, tmpvar_11)));
-    local_cache_1[(tmpvar_8 + 1)] = (local_cache_1[(tmpvar_8 + 1)] / (1.0 + dot (local_cache_1[
-      (tmpvar_8 + 1)
+    local_cache_1[(tmpvar_8 + 1u)] = (local_cache_1[(tmpvar_8 + 1u)] / (1.0 + dot (local_cache_1[
+      (tmpvar_8 + 1u)
     ].xyz, tmpvar_11)));
-    local_cache_1[(tmpvar_8 + 16)] = (local_cache_1[(tmpvar_8 + 16)] / (1.0 + dot (local_cache_1[
-      (tmpvar_8 + 16)
+    local_cache_1[(tmpvar_8 + 16u)] = (local_cache_1[(tmpvar_8 + 16u)] / (1.0 + dot (local_cache_1[
+      (tmpvar_8 + 16u)
     ].xyz, tmpvar_11)));
-    local_cache_1[(17 + tmpvar_8)] = (local_cache_1[(17 + tmpvar_8)] / (1.0 + dot (local_cache_1[
-      (17 + tmpvar_8)
+    local_cache_1[(17u + tmpvar_8)] = (local_cache_1[(17u + tmpvar_8)] / (1.0 + dot (local_cache_1[
+      (17u + tmpvar_8)
     ].xyz, tmpvar_11)));
   };
   threadgroup_barrier(mem_flags::mem_threadgroup);
   uint tmpvar_12;
-  tmpvar_12 = ((gl_LocalInvocationID.x + (gl_LocalInvocationID.y * 32)) + 4);
+  tmpvar_12 = ((gl_LocalInvocationID.x + (gl_LocalInvocationID.y * 32u)) + 4u);
   color_top_5 = (local_cache_1[tmpvar_12] * 0.2024);
-  color_top_5 = (color_top_5 + (local_cache_1[(tmpvar_12 + 1)] * 0.179));
-  color_top_5 = (color_top_5 + (local_cache_1[(tmpvar_12 + 2)] * 0.124));
-  color_top_5 = (color_top_5 + (local_cache_1[(tmpvar_12 + 3)] * 0.0672));
-  color_top_5 = (color_top_5 + (local_cache_1[(tmpvar_12 + 4294967295)] * 0.179));
-  color_top_5 = (color_top_5 + (local_cache_1[(tmpvar_12 + 4294967294)] * 0.124));
-  color_top_5 = (color_top_5 + (local_cache_1[(tmpvar_12 + 4294967293)] * 0.0672));
-  color_top_5 = (color_top_5 + (local_cache_1[(tmpvar_12 + 4)] * 0.0285));
-  color_top_5 = (color_top_5 + (local_cache_1[(tmpvar_12 + 4294967292)] * 0.0285));
-  color_bottom_4 = (local_cache_1[(tmpvar_12 + 16)] * 0.2024);
-  color_bottom_4 = (color_bottom_4 + (local_cache_1[(17 + tmpvar_12)] * 0.179));
-  color_bottom_4 = (color_bottom_4 + (local_cache_1[(18 + tmpvar_12)] * 0.124));
-  color_bottom_4 = (color_bottom_4 + (local_cache_1[(19 + tmpvar_12)] * 0.0672));
-  color_bottom_4 = (color_bottom_4 + (local_cache_1[(15 + tmpvar_12)] * 0.179));
-  color_bottom_4 = (color_bottom_4 + (local_cache_1[(14 + tmpvar_12)] * 0.124));
-  color_bottom_4 = (color_bottom_4 + (local_cache_1[(13 + tmpvar_12)] * 0.0672));
-  color_bottom_4 = (color_bottom_4 + (local_cache_1[(20 + tmpvar_12)] * 0.0285));
-  color_bottom_4 = (color_bottom_4 + (local_cache_1[(12 + tmpvar_12)] * 0.0285));
+  color_top_5 = (color_top_5 + (local_cache_1[(tmpvar_12 + 1u)] * 0.179));
+  color_top_5 = (color_top_5 + (local_cache_1[(tmpvar_12 + 2u)] * 0.124));
+  color_top_5 = (color_top_5 + (local_cache_1[(tmpvar_12 + 3u)] * 0.0672));
+  color_top_5 = (color_top_5 + (local_cache_1[(tmpvar_12 + 4294967295u)] * 0.179));
+  color_top_5 = (color_top_5 + (local_cache_1[(tmpvar_12 + 4294967294u)] * 0.124));
+  color_top_5 = (color_top_5 + (local_cache_1[(tmpvar_12 + 4294967293u)] * 0.0672));
+  color_top_5 = (color_top_5 + (local_cache_1[(tmpvar_12 + 4u)] * 0.0285));
+  color_top_5 = (color_top_5 + (local_cache_1[(tmpvar_12 + 4294967292u)] * 0.0285));
+  color_bottom_4 = (local_cache_1[(tmpvar_12 + 16u)] * 0.2024);
+  color_bottom_4 = (color_bottom_4 + (local_cache_1[(17u + tmpvar_12)] * 0.179));
+  color_bottom_4 = (color_bottom_4 + (local_cache_1[(18u + tmpvar_12)] * 0.124));
+  color_bottom_4 = (color_bottom_4 + (local_cache_1[(19u + tmpvar_12)] * 0.0672));
+  color_bottom_4 = (color_bottom_4 + (local_cache_1[(15u + tmpvar_12)] * 0.179));
+  color_bottom_4 = (color_bottom_4 + (local_cache_1[(14u + tmpvar_12)] * 0.124));
+  color_bottom_4 = (color_bottom_4 + (local_cache_1[(13u + tmpvar_12)] * 0.0672));
+  color_bottom_4 = (color_bottom_4 + (local_cache_1[(20u + tmpvar_12)] * 0.0285));
+  color_bottom_4 = (color_bottom_4 + (local_cache_1[(12u + tmpvar_12)] * 0.0285));
   uint tmpvar_13;
-  tmpvar_13 = ((gl_LocalInvocationID.y * 2) + (gl_LocalInvocationID.x * 16));
+  tmpvar_13 = ((gl_LocalInvocationID.y * 2u) + (gl_LocalInvocationID.x * 16u));
   temp_cache_2[tmpvar_13] = color_top_5;
-  temp_cache_2[(tmpvar_13 + 1)] = color_bottom_4;
+  temp_cache_2[(tmpvar_13 + 1u)] = color_bottom_4;
   threadgroup_barrier(mem_flags::mem_threadgroup);
   if (any((tmpvar_6 >= int4(_mtl_buffer1.section).zw) != bool2(0, 0))) {
     return;
   };
   uint tmpvar_14;
-  tmpvar_14 = ((gl_LocalInvocationID.y + (gl_LocalInvocationID.x * 16)) + 4);
+  tmpvar_14 = ((gl_LocalInvocationID.y + (gl_LocalInvocationID.x * 16u)) + 4u);
   color_3 = (temp_cache_2[tmpvar_14] * 0.2024);
-  color_3 = (color_3 + (temp_cache_2[(tmpvar_14 + 1)] * 0.179));
-  color_3 = (color_3 + (temp_cache_2[(tmpvar_14 + 2)] * 0.124));
-  color_3 = (color_3 + (temp_cache_2[(tmpvar_14 + 3)] * 0.0672));
-  color_3 = (color_3 + (temp_cache_2[(tmpvar_14 + 4294967295)] * 0.179));
-  color_3 = (color_3 + (temp_cache_2[(tmpvar_14 + 4294967294)] * 0.124));
-  color_3 = (color_3 + (temp_cache_2[(tmpvar_14 + 4294967293)] * 0.0672));
-  color_3 = (color_3 + (temp_cache_2[(tmpvar_14 + 4)] * 0.0285));
-  color_3 = (color_3 + (temp_cache_2[(tmpvar_14 + 4294967292)] * 0.0285));
-  if (bool(int((uint(_mtl_buffer1.flags) & 16)))) {
+  color_3 = (color_3 + (temp_cache_2[(tmpvar_14 + 1u)] * 0.179));
+  color_3 = (color_3 + (temp_cache_2[(tmpvar_14 + 2u)] * 0.124));
+  color_3 = (color_3 + (temp_cache_2[(tmpvar_14 + 3u)] * 0.0672));
+  color_3 = (color_3 + (temp_cache_2[(tmpvar_14 + 4294967295u)] * 0.179));
+  color_3 = (color_3 + (temp_cache_2[(tmpvar_14 + 4294967294u)] * 0.124));
+  color_3 = (color_3 + (temp_cache_2[(tmpvar_14 + 4294967293u)] * 0.0672));
+  color_3 = (color_3 + (temp_cache_2[(tmpvar_14 + 4u)] * 0.0285));
+  color_3 = (color_3 + (temp_cache_2[(tmpvar_14 + 4294967292u)] * 0.0285));
+  if (bool(int((uint(_mtl_buffer1.flags) & 16u)))) {
     color_3 = (color_3 / (1.0 - dot (color_3.xyz, 
       (float3(0.299, 0.587, 0.114) / max (float(_mtl_buffer1.glow_luminance_cap), 6.0))
     )));
   };
   color_3 = (color_3 * float(_mtl_buffer1.glow_strength));
-  if (bool(int((uint(_mtl_buffer1.flags) & 16)))) {
+  if (bool(int((uint(_mtl_buffer1.flags) & 16u)))) {
     color_3 = (color_3 / (source_auto_exposure.read(uint2(int2(0, 0)), uint(0)).x / float(_mtl_buffer1.glow_auto_exposure_scale)));
     color_3 = (color_3 * float(_mtl_buffer1.glow_exposure));
     float tmpvar_15 = 0;

@@ -23,12 +23,12 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
   tmpvar_1.z = 4;
   tmpvar_1.xy = int2(gl_GlobalInvocationID.xy);
   uint tmpvar_2;
-  tmpvar_2 = counters.atomic_fetch_add(uint2(tmpvar_1.xy), uint(tmpvar_1.z), uint4(1)).x;
+  tmpvar_2 = counters.atomic_fetch_add(uint2(tmpvar_1.xy), uint(tmpvar_1.z), uint4(1u)).x;
   int3 tmpvar_3 = 0;
   tmpvar_3.xy = tmpvar_1.xy;
   tmpvar_3.z = (tmpvar_1.z + 6);
   uint tmpvar_4;
-  tmpvar_4 = _xlat_image_comp_swap_cube_array(layers, uint3(tmpvar_3), uint(tmpvar_2), uint(0));
+  tmpvar_4 = _xlat_image_comp_swap_cube_array(layers, uint3(tmpvar_3), uint(tmpvar_2), uint(0u));
 }
 
 

@@ -16,13 +16,13 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
 {
 threadgroup uint values_1[8];
   values_1[gl_LocalInvocationIndex] = gl_LocalInvocationIndex;
-  if (((gl_LocalInvocationIndex & 1) != 0)) {
+  if (((gl_LocalInvocationIndex & 1u) != 0u)) {
     atomic_thread_fence(mem_flags::mem_threadgroup, memory_order_seq_cst, thread_scope_threadgroup);
   };
   atomic_thread_fence(mem_flags::mem_device | mem_flags::mem_texture | mem_flags::mem_threadgroup, memory_order_seq_cst, thread_scope_threadgroup);
   atomic_thread_fence(mem_flags::mem_device | mem_flags::mem_texture | mem_flags::mem_threadgroup, memory_order_seq_cst, thread_scope_device);
   threadgroup_barrier(mem_flags::mem_threadgroup);
-  reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_GlobalInvocationID.x].value = uint(values_1[((gl_LocalInvocationIndex + 1) % 8)]);
+  reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_GlobalInvocationID.x].value = uint(values_1[((gl_LocalInvocationIndex + 1u) % 8u)]);
 }
 
 

@@ -16,10 +16,10 @@ threadgroup short counts_2[8];
 threadgroup bool flags_3[8];
   weights_1[gl_LocalInvocationIndex] = half((float(gl_LocalInvocationIndex) * 0.5));
   counts_2[gl_LocalInvocationIndex] = short(int(gl_LocalInvocationIndex));
-  flags_3[gl_LocalInvocationIndex] = ((gl_LocalInvocationIndex & 1) != 0);
+  flags_3[gl_LocalInvocationIndex] = ((gl_LocalInvocationIndex & 1u) != 0u);
   threadgroup_barrier(mem_flags::mem_threadgroup);
   uint tmpvar_4;
-  tmpvar_4 = ((gl_LocalInvocationIndex + 1) % 8);
+  tmpvar_4 = ((gl_LocalInvocationIndex + 1u) % 8u);
   float tmpvar_5 = 0;
   if (flags_3[tmpvar_4]) {
     tmpvar_5 = 1.0;

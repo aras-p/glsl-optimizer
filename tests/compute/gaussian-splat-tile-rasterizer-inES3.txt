@@ -4,8 +4,7 @@
 // Changes done: selected GLSL ES 310, removed descriptor sets and cursor picking,
 // replaced push constants with a std140 UBO, and added default precision.
 // Used one lane to initialize and reset shared transmittance, and guarded partial
-// batches and edge pixels while keeping workgroup barriers uniform. Used a conditional
-// for the batch limit to keep Metal overload resolution unambiguous.
+// batches and edge pixels while keeping workgroup barriers uniform.
 precision highp float;
 precision highp int;
 
@@ -72,8 +71,7 @@ void main()
     float t = 1.0;
     for (uint i = 0u; i < num_iterations && shared_t > MIN_FACTOR; ++i) {
         uint sort_offset = WORKGROUP_SIZE * i;
-        uint remaining = num_splats - sort_offset;
-        uint chunk_size = remaining < WORKGROUP_SIZE ? remaining : WORKGROUP_SIZE;
+        uint chunk_size = min(WORKGROUP_SIZE, num_splats - sort_offset);
 
         // All lanes must read the previous reduction before it is reset.
         barrier();

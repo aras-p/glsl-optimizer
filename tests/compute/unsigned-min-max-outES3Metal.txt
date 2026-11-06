@@ -1,0 +1,36 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct alignas(16) _xlat_buf_storage0 {
+  alignas(4) uint value;
+  char _buf_pad1[4];
+  alignas(8) uint2 pair;
+  alignas(16) uint4 result;
+  alignas(8) uint2 vector_result;
+};
+static_assert(sizeof(_xlat_buf_storage0) == 48, "std430 size");
+struct xlatMtlShaderUniform {
+};
+// threadsPerThreadgroup: 1, 1, 1
+kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , device _xlat_buf_storage0& _mtl_buffer1 [[buffer(1)]])
+{
+  uint tmpvar_1;
+  tmpvar_1 = uint(_mtl_buffer1.value);
+  uint4 tmpvar_2;
+  tmpvar_2.x = min (256u, tmpvar_1);
+  tmpvar_2.y = min (tmpvar_1, 4294967294u);
+  tmpvar_2.z = max (tmpvar_1, 4u);
+  tmpvar_2.w = max (2147483648u, tmpvar_1);
+  _mtl_buffer1.result = uint4(tmpvar_2);
+  _mtl_buffer1.vector_result = uint2(min (uint2(_mtl_buffer1.pair), uint2(8u, 16u)));
+}
+
+
+// stats: 5 alu 0 tex 0 flow
+// workgroup size: 1 1 1
+// buffer #0: Data storage instance data layout std430 binding 0 (size: 48) metal 1
+//  member #0: uint value offset 0
+//  member #1: uvec2 pair offset 8
+//  member #2: uvec4 result offset 16
+//  member #3: uvec2 vector_result offset 32

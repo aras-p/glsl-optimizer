@@ -28,11 +28,11 @@ threadgroup _xlat_shared_matrix<float2x2, float2, 2> matrices_1[8];
   float4 tmpvar_3 = 0;
   tmpvar_3.yzw = float3(0.0, 0.0, 0.0);
   tmpvar_3.x = float(gl_LocalInvocationIndex);
-  tmpvar_2[0] = tmpvar_3.xy;
-  tmpvar_2[1] = tmpvar_3.yx;
+  tmpvar_2[0u] = tmpvar_3.xy;
+  tmpvar_2[1u] = tmpvar_3.yx;
   matrices_1[gl_LocalInvocationIndex].write(tmpvar_2);
   threadgroup_barrier(mem_flags::mem_threadgroup);
-  reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_GlobalInvocationID.x].value = float2(matrices_1[((gl_LocalInvocationIndex + 1) % 8)].columns[0]);
+  reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_GlobalInvocationID.x].value = float2(matrices_1[((gl_LocalInvocationIndex + 1u) % 8u)].columns[0]);
 }
 
 

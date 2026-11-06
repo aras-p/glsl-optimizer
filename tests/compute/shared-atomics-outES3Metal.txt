@@ -26,21 +26,21 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
 {
 threadgroup uint count_1;
 threadgroup int4 values_2;
-  if ((gl_LocalInvocationIndex == 0)) {
-    count_1 = 0;
+  if ((gl_LocalInvocationIndex == 0u)) {
+    count_1 = 0u;
     values_2 = int4(0, 0, 0, 0);
   };
   threadgroup_barrier(mem_flags::mem_threadgroup);
   uint tmpvar_3;
-  tmpvar_3 = atomic_fetch_add_explicit (reinterpret_cast<threadgroup atomic_uint*>(&count_1), uint(1), memory_order_relaxed);
+  tmpvar_3 = atomic_fetch_add_explicit (reinterpret_cast<threadgroup atomic_uint*>(&count_1), uint(1u), memory_order_relaxed);
   int tmpvar_4 = 0;
-  tmpvar_4 = _xlat_atomic_comp_swap (reinterpret_cast<threadgroup atomic_int*>(&values_2) + uint2(1, 0)[int((gl_LocalInvocationIndex & 1))], int(0), int(int((gl_LocalInvocationIndex + 1))));
+  tmpvar_4 = _xlat_atomic_comp_swap (reinterpret_cast<threadgroup atomic_int*>(&values_2) + uint2(1, 0)[int((gl_LocalInvocationIndex & 1u))], int(0), int(int((gl_LocalInvocationIndex + 1u))));
   int tmpvar_5 = 0;
   tmpvar_5 = atomic_fetch_min_explicit (reinterpret_cast<threadgroup atomic_int*>(&values_2) + 2, int(-(int(gl_LocalInvocationIndex))), memory_order_relaxed);
   int tmpvar_6 = 0;
   tmpvar_6 = atomic_fetch_max_explicit (reinterpret_cast<threadgroup atomic_int*>(&values_2) + 3, int(int(gl_LocalInvocationIndex)), memory_order_relaxed);
   threadgroup_barrier(mem_flags::mem_threadgroup);
-  if ((gl_LocalInvocationIndex == 0)) {
+  if ((gl_LocalInvocationIndex == 0u)) {
     uint4 tmpvar_7;
     tmpvar_7.x = count_1;
     tmpvar_7.y = uint(values_2.z);
@@ -49,7 +49,7 @@ threadgroup int4 values_2;
     reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_WorkGroupID.x].value = uint4(tmpvar_7);
   };
   uint tmpvar_8;
-  tmpvar_8 = _xlat_atomic_comp_swap (reinterpret_cast<device atomic_uint*>(&reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[(gl_GlobalInvocationID.x + 8)].value) + 0, uint(0), uint(uint(tmpvar_4)));
+  tmpvar_8 = _xlat_atomic_comp_swap (reinterpret_cast<device atomic_uint*>(&reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[(gl_GlobalInvocationID.x + 8u)].value) + 0, uint(0u), uint(uint(tmpvar_4)));
 }
 
 

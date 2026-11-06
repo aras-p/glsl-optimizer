@@ -25,11 +25,11 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
   int tmpvar_1 = 0;
   tmpvar_1 = int(gl_GlobalInvocationID.x);
   uint tmpvar_2;
-  tmpvar_2 = counters.atomic_fetch_add(uint(tmpvar_1), uint4(1)).x;
+  tmpvar_2 = counters.atomic_fetch_add(uint(tmpvar_1), uint4(1u)).x;
   uint tmpvar_3;
-  tmpvar_3 = _xlat_image_comp_swap_1d(counters, uint(tmpvar_1), uint((tmpvar_2 + 1)), uint(0));
+  tmpvar_3 = _xlat_image_comp_swap_1d(counters, uint(tmpvar_1), uint((tmpvar_2 + 1u)), uint(0u));
   uint tmpvar_4;
-  tmpvar_4 = _xlat_image_comp_swap_1d(line, uint(tmpvar_1), uint(tmpvar_2), uint(1));
+  tmpvar_4 = _xlat_image_comp_swap_1d(line, uint(tmpvar_1), uint(tmpvar_2), uint(1u));
   reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[tmpvar_1].value = uint((tmpvar_3 + tmpvar_4));
 }
 

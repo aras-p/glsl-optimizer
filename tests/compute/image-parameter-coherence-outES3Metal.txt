@@ -17,9 +17,9 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
 {
   int2 tmpvar_1 = 0;
   tmpvar_1 = int2(gl_GlobalInvocationID.xy);
-  coherentData.write(uint4(uint4(1, 1, 1, 1)), uint2(tmpvar_1));
-  coherentData.write(uint4(uint4(1, 1, 1, 1)), uint2((tmpvar_1 + int2(0, 1))));
-  ordinaryData.write(uint4(uint4(2, 2, 2, 2)), uint2(tmpvar_1));
+  coherentData.write(uint4(uint4(1u, 1u, 1u, 1u)), uint2(tmpvar_1));
+  coherentData.write(uint4(uint4(1u, 1u, 1u, 1u)), uint2((tmpvar_1 + int2(0, 1))));
+  ordinaryData.write(uint4(uint4(2u, 2u, 2u, 2u)), uint2(tmpvar_1));
   atomic_thread_fence(mem_flags::mem_texture, memory_order_seq_cst, thread_scope_device);
 }
 

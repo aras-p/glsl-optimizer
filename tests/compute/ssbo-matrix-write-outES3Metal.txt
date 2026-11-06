@@ -52,9 +52,9 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
 {
   uint c_1;
   uint tmpvar_2;
-  tmpvar_2 = (gl_GlobalInvocationID.x & 1);
+  tmpvar_2 = (gl_GlobalInvocationID.x & 1u);
   uint tmpvar_3;
-  tmpvar_3 = (gl_GlobalInvocationID.y % 3);
+  tmpvar_3 = (gl_GlobalInvocationID.y % 3u);
   {
     device _xlat_buf_storage1& _buf_matrix = _mtl_buffer1.small;
     const auto _buf_column = tmpvar_2;
@@ -84,7 +84,7 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
   {
     device _xlat_buf_storage2& _buf_matrix = _mtl_buffer1.rectangular;
     const auto _buf_column = tmpvar_2;
-    const float3 _buf_value = float3(float3(_mtl_buffer1.rectangular.vectors[(1 - tmpvar_2)].xyz).zyx);
+    const float3 _buf_value = float3(float3(_mtl_buffer1.rectangular.vectors[(1u - tmpvar_2)].xyz).zyx);
     reinterpret_cast<device float*>(&_buf_matrix.vectors[_buf_column])[0] = _buf_value.x;
     reinterpret_cast<device float*>(&_buf_matrix.vectors[_buf_column])[1] = _buf_value.y;
     reinterpret_cast<device float*>(&_buf_matrix.vectors[_buf_column])[2] = _buf_value.z;
@@ -125,7 +125,7 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
   {
     device _xlat_buf_storage6& _buf_matrix = (*reinterpret_cast<device _xlat_buf_storage6*>(_mtl_buffer3 + 0));
     const auto _buf_column = tmpvar_2;
-    const auto _buf_component = uint2(2u, 1u)[(tmpvar_3 & 1)];
+    const auto _buf_component = uint2(2u, 1u)[(tmpvar_3 & 1u)];
     reinterpret_cast<device float*>(&_buf_matrix.vectors[_buf_component])[_buf_column] = float(12.0);
   };
   {
@@ -185,22 +185,22 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
     reinterpret_cast<device float*>(&_buf_matrix.vectors[0])[_buf_column] = _buf_value.x;
     reinterpret_cast<device float*>(&_buf_matrix.vectors[2])[_buf_column] = _buf_value.y;
   };
-  c_1 = (tmpvar_2 + 1);
+  c_1 = (tmpvar_2 + 1u);
   float2 tmpvar_4 = 0;
   tmpvar_4.y = 21.0;
   tmpvar_4.x = float(c_1);
   {
     device _xlat_buf_storage6& _buf_matrix = reinterpret_cast<device _xlat_buf_storage10_element*>(_mtl_buffer3 + 128)[tmpvar_2].value.value;
-    const auto _buf_column = (c_1 & 1);
+    const auto _buf_column = (c_1 & 1u);
     const float2 _buf_value = float2(tmpvar_4);
     reinterpret_cast<device float*>(&_buf_matrix.vectors[0])[_buf_column] = _buf_value.x;
     reinterpret_cast<device float*>(&_buf_matrix.vectors[2])[_buf_column] = _buf_value.y;
   };
   {
     device _xlat_buf_storage6& _buf_matrix = reinterpret_cast<device _xlat_buf_storage10_element*>(_mtl_buffer3 + 128)[c_1].value.value;
-    const auto _buf_column = (c_1 & 1);
+    const auto _buf_column = (c_1 & 1u);
     const auto _buf_component = tmpvar_3;
-    reinterpret_cast<device float*>(&_buf_matrix.vectors[_buf_component])[_buf_column] = float((float(reinterpret_cast<device _xlat_buf_storage10_element*>(_mtl_buffer3 + 128)[c_1].value.value.vectors[tmpvar_3][(c_1 & 1)]) + 1.0));
+    reinterpret_cast<device float*>(&_buf_matrix.vectors[_buf_component])[_buf_column] = float((float(reinterpret_cast<device _xlat_buf_storage10_element*>(_mtl_buffer3 + 128)[c_1].value.value.vectors[tmpvar_3][(c_1 & 1u)]) + 1.0));
   };
 }
 

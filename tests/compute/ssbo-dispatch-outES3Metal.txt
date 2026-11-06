@@ -31,9 +31,9 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
     reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer2 + 4)[gl_GlobalInvocationID.x].value = uint(tmpvar_1);
     atomic_thread_fence(mem_flags::mem_device, memory_order_seq_cst, thread_scope_device);
     uint tmpvar_2;
-    tmpvar_2 = atomic_fetch_add_explicit (reinterpret_cast<device atomic_uint*>(&(*reinterpret_cast<device uint*>(_mtl_buffer2 + 0))), uint(1), memory_order_relaxed);
+    tmpvar_2 = atomic_fetch_add_explicit (reinterpret_cast<device atomic_uint*>(&(*reinterpret_cast<device uint*>(_mtl_buffer2 + 0))), uint(1u), memory_order_relaxed);
     uint tmpvar_3;
-    tmpvar_3 = _xlat_atomic_comp_swap (reinterpret_cast<device atomic_uint*>(&reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer2 + 4)[gl_GlobalInvocationID.x].value), uint(tmpvar_1), uint((tmpvar_1 + 1)));
+    tmpvar_3 = _xlat_atomic_comp_swap (reinterpret_cast<device atomic_uint*>(&reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer2 + 4)[gl_GlobalInvocationID.x].value), uint(tmpvar_1), uint((tmpvar_1 + 1u)));
   }
 
   

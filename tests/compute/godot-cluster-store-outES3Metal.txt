@@ -71,39 +71,39 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
   tmpvar_2 = (gl_GlobalInvocationID.x + (uint2(_mtl_buffer3.cluster_screen_size).x * gl_GlobalInvocationID.y));
   uint tmpvar_3;
   tmpvar_3 = (tmpvar_2 * uint(_mtl_buffer3.cluster_render_data_size));
-  for (uint render_element_offset_1 = 0; render_element_offset_1 < uint(_mtl_buffer3.render_element_count_div_32); render_element_offset_1++) {
+  for (uint render_element_offset_1 = 0u; render_element_offset_1 < uint(_mtl_buffer3.render_element_count_div_32); render_element_offset_1++) {
     uint bits_4;
     bits_4 = uint(reinterpret_cast<const device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[(tmpvar_3 + render_element_offset_1)].value);
     while (true) {
-      if ((bits_4 == 0)) {
+      if ((bits_4 == 0u)) {
         break;
       };
       uint tmpvar_5;
       tmpvar_5 = uint(_xlat_findLSB<int, uint>(bits_4));
       uint tmpvar_6;
-      tmpvar_6 = ((render_element_offset_1 * 32) + tmpvar_5);
+      tmpvar_6 = ((render_element_offset_1 * 32u) + tmpvar_5);
       uint tmpvar_7;
       tmpvar_7 = uint(reinterpret_cast<const device _xlat_buf_storage2_element*>(_mtl_buffer4 + 0)[tmpvar_6].value.type);
       uint tmpvar_8;
       tmpvar_8 = ((tmpvar_3 + uint(_mtl_buffer3.max_render_element_count_div_32)) + tmpvar_6);
       uint tmpvar_9;
       tmpvar_9 = uint(reinterpret_cast<const device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[tmpvar_8].value);
-      if ((tmpvar_9 != 0)) {
+      if ((tmpvar_9 != 0u)) {
         uint i_10;
         uint to_z_11;
         uint from_z_12;
         from_z_12 = uint(_xlat_findLSB<int, uint>(tmpvar_9));
-        to_z_11 = (uint(_xlat_findMSB<int, uint, false>(tmpvar_9)) + 1);
+        to_z_11 = (uint(_xlat_findMSB<int, uint, false>(tmpvar_9)) + 1u);
         if (bool(reinterpret_cast<const device _xlat_buf_storage2_element*>(_mtl_buffer4 + 0)[tmpvar_6].value.touches_near)) {
-          from_z_12 = 0;
+          from_z_12 = 0u;
         };
         if (bool(reinterpret_cast<const device _xlat_buf_storage2_element*>(_mtl_buffer4 + 0)[tmpvar_6].value.touches_far)) {
-          to_z_11 = 32;
+          to_z_11 = 32u;
         };
         uint tmpvar_13;
         tmpvar_13 = ((tmpvar_2 + (tmpvar_7 * 
           (uint2(_mtl_buffer3.cluster_screen_size).x * uint2(_mtl_buffer3.cluster_screen_size).y)
-        )) * (uint(_mtl_buffer3.max_cluster_element_count_div_32) + 32));
+        )) * (uint(_mtl_buffer3.max_cluster_element_count_div_32) + 32u));
         uint tmpvar_14;
         tmpvar_14 = uint(reinterpret_cast<const device _xlat_buf_storage2_element*>(_mtl_buffer4 + 0)[tmpvar_6].value.original_index);
         i_10 = from_z_12;
@@ -117,11 +117,11 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
           uint tmpvar_17;
           tmpvar_17 = uint(reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer2 + 0)[tmpvar_16].value);
           minmax_15 = tmpvar_17;
-          if ((tmpvar_17 == 0)) {
-            minmax_15 = 65535;
+          if ((tmpvar_17 == 0u)) {
+            minmax_15 = 65535u;
           };
-          minmax_15 = (min (tmpvar_14, (minmax_15 & 65535)) | (max (
-            (tmpvar_14 + 1)
+          minmax_15 = (min (tmpvar_14, (minmax_15 & 65535u)) | (max (
+            (tmpvar_14 + 1u)
           , 
             (minmax_15 >> 16)
           ) << 16));
@@ -130,9 +130,9 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
         };
         uint tmpvar_18;
         tmpvar_18 = (tmpvar_14 >> 5);
-        reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer2 + 0)[(tmpvar_13 + tmpvar_18)].value = uint((uint(reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer2 + 0)[(tmpvar_13 + tmpvar_18)].value) | (1 << (tmpvar_14 & 31))));
+        reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer2 + 0)[(tmpvar_13 + tmpvar_18)].value = uint((uint(reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer2 + 0)[(tmpvar_13 + tmpvar_18)].value) | (1u << (tmpvar_14 & 31u))));
       };
-      bits_4 = (bits_4 & ~((1 << tmpvar_5)));
+      bits_4 = (bits_4 & ~((1u << tmpvar_5)));
     };
   };
 }

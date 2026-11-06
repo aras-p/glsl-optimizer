@@ -2860,7 +2860,7 @@ void ir_print_metal_visitor::visit(ir_constant *ir)
    }
    else if (type == glsl_type::uint_type)
    {
-      buffer.asprintf_append ("%u", ir->value.u[0]);
+      buffer.asprintf_append ("%uu", ir->value.u[0]);
       return;
    }
 
@@ -2899,7 +2899,7 @@ void ir_print_metal_visitor::visit(ir_constant *ir)
       }
 
       switch (base_type->base_type) {
-      case GLSL_TYPE_UINT:  buffer.asprintf_append ("%u", ir->value.u[i]); break;
+      case GLSL_TYPE_UINT:  buffer.asprintf_append ("%uu", ir->value.u[i]); break;
       case GLSL_TYPE_INT:   buffer.asprintf_append ("%d", ir->value.i[i]); break;
       case GLSL_TYPE_FLOAT: print_float(buffer, ir->value.f[i]); break;
       case GLSL_TYPE_BOOL:  buffer.asprintf_append ("%d", ir->value.b[i]); break;

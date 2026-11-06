@@ -28,22 +28,22 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
 {
   xlatMtlShaderOutput _mtl_o;
   uint before_1;
-  _mtl_buffer1.value = uint(7);
+  _mtl_buffer1.value = uint(7u);
   before_1 = uint(_mtl_buffer1.value);
   uint tmpvar_2;
-  tmpvar_2 = atomic_fetch_add_explicit (reinterpret_cast<device atomic_uint*>(&_mtl_buffer1.value), uint(1), memory_order_relaxed);
+  tmpvar_2 = atomic_fetch_add_explicit (reinterpret_cast<device atomic_uint*>(&_mtl_buffer1.value), uint(1u), memory_order_relaxed);
   uint tmpvar_3;
   tmpvar_3 = uint(_mtl_buffer1.value);
   if (_mtl_u.update) {
     int i_4 = 0;
     i_4 = 1;
     uint tmpvar_5;
-    tmpvar_5 = atomic_exchange_explicit (reinterpret_cast<device atomic_uint*>(&_mtl_buffer1.results.elements[0].value), uint(5), memory_order_relaxed);
+    tmpvar_5 = atomic_exchange_explicit (reinterpret_cast<device atomic_uint*>(&_mtl_buffer1.results.elements[0].value), uint(5u), memory_order_relaxed);
     int tmpvar_6 = 0;
     tmpvar_6 = i_4;
     i_4++;
     uint tmpvar_7;
-    tmpvar_7 = _xlat_atomic_comp_swap (reinterpret_cast<device atomic_uint*>(&_mtl_buffer1.results.elements[tmpvar_6].value), uint(5), uint(6));
+    tmpvar_7 = _xlat_atomic_comp_swap (reinterpret_cast<device atomic_uint*>(&_mtl_buffer1.results.elements[tmpvar_6].value), uint(5u), uint(6u));
     _mtl_buffer1.results.elements[i_4].value = uint(uint(_mtl_buffer1.value));
   };
   float4 tmpvar_8 = 0;

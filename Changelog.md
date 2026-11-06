@@ -48,6 +48,7 @@ Fixed:
 * Fixed GLSL explicit varying locations not being respected.
 * Metal output now preserves explicit vertex attribute locations.
 * Fixed `bitfieldExtract` and `bitfieldInsert` handling.
+* Fixed Metal unsigned integer literals losing their unsigned type.
 
 2016 10
 -------

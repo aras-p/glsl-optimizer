@@ -22,22 +22,22 @@ threadgroup uint tile_ids_1[257];
   uint tmpvar_3;
   tmpvar_3 = uint((*reinterpret_cast<const device uint*>(_mtl_buffer2 + 0)));
   if ((gl_GlobalInvocationID.x < tmpvar_3)) {
-    if (((gl_LocalInvocationIndex == 0) && (gl_GlobalInvocationID.x != 0))) {
-      tile_ids_1[0] = (uint(reinterpret_cast<const device _xlat_buf_storage1_element*>(_mtl_buffer3 + 0)[(gl_GlobalInvocationID.x + 4294967295)].value) >> 16);
+    if (((gl_LocalInvocationIndex == 0u) && (gl_GlobalInvocationID.x != 0u))) {
+      tile_ids_1[0] = (uint(reinterpret_cast<const device _xlat_buf_storage1_element*>(_mtl_buffer3 + 0)[(gl_GlobalInvocationID.x + 4294967295u)].value) >> 16);
     };
-    tile_ids_1[(gl_LocalInvocationIndex + 1)] = (uint(reinterpret_cast<const device _xlat_buf_storage1_element*>(_mtl_buffer3 + 0)[gl_GlobalInvocationID.x].value) >> 16);
+    tile_ids_1[(gl_LocalInvocationIndex + 1u)] = (uint(reinterpret_cast<const device _xlat_buf_storage1_element*>(_mtl_buffer3 + 0)[gl_GlobalInvocationID.x].value) >> 16);
   };
   threadgroup_barrier(mem_flags::mem_threadgroup);
   if ((gl_GlobalInvocationID.x >= tmpvar_3)) {
     return;
   };
   uint tmpvar_4;
-  tmpvar_4 = tile_ids_1[(gl_LocalInvocationIndex + 1)];
+  tmpvar_4 = tile_ids_1[(gl_LocalInvocationIndex + 1u)];
   uint tmpvar_5;
   tmpvar_5 = uint(int((max(_mtl_buffer_sizes[1u], 0u) - 0u) / 8u));
-  if ((gl_GlobalInvocationID.x == 0)) {
+  if ((gl_GlobalInvocationID.x == 0u)) {
     if ((tmpvar_4 < tmpvar_5)) {
-      reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[tmpvar_4].value.x = uint(0);
+      reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[tmpvar_4].value.x = uint(0u);
     };
   } else {
     uint tmpvar_6;
@@ -51,7 +51,7 @@ threadgroup uint tile_ids_1[257];
       };
     };
   };
-  if ((((gl_GlobalInvocationID.x + 1) == tmpvar_3) && (tmpvar_4 < tmpvar_5))) {
+  if ((((gl_GlobalInvocationID.x + 1u) == tmpvar_3) && (tmpvar_4 < tmpvar_5))) {
     reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[tmpvar_4].value.y = uint(tmpvar_3);
   };
 }

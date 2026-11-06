@@ -40,9 +40,9 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   float3 tmpvar_7 = 0;
   tmpvar_7 = normalize(((tmpvar_6.yzx * float3(0.0, 0.0, 1.0)) - (tmpvar_6.zxy * float3(1.0, 0.0, 0.0))));
   float3x3 tmpvar_8;
-  tmpvar_8[0] = tmpvar_7;
-  tmpvar_8[1] = ((tmpvar_7.yzx * tmpvar_6.zxy) - (tmpvar_7.zxy * tmpvar_6.yzx));
-  tmpvar_8[2] = tmpvar_6;
+  tmpvar_8[0u] = tmpvar_7;
+  tmpvar_8[1u] = ((tmpvar_7.yzx * tmpvar_6.zxy) - (tmpvar_7.zxy * tmpvar_6.yzx));
+  tmpvar_8[2u] = tmpvar_6;
   tot_1 = float3(0.0, 0.0, 0.0);
   float3 tmpvar_9 = 0;
   tmpvar_9.z = 2.5;
@@ -650,10 +650,10 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
         float tmpvar_171 = 0;
         tmpvar_171 = sqrt(dot (tmpvar_170.xy, tmpvar_170.xy));
         float2x2 tmpvar_172;
-        tmpvar_172[0].x = -0.2674989;
-        tmpvar_172[0].y = 0.9635582;
-        tmpvar_172[1].x = 0.9635582;
-        tmpvar_172[1].y = 0.2674989;
+        tmpvar_172[0u].x = -0.2674989;
+        tmpvar_172[0u].y = 0.9635582;
+        tmpvar_172[1u].x = 0.9635582;
+        tmpvar_172[1u].y = 0.2674989;
         tmpvar_170.xy = (tmpvar_172 * tmpvar_170.xy);
         float tmpvar_173 = 0;
         if (((0.0 < tmpvar_170.y) || (0.0 < tmpvar_170.x))) {
@@ -1505,10 +1505,10 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
           float tmpvar_400 = 0;
           tmpvar_400 = sqrt(dot (tmpvar_399.xy, tmpvar_399.xy));
           float2x2 tmpvar_401;
-          tmpvar_401[0].x = -0.2674989;
-          tmpvar_401[0].y = 0.9635582;
-          tmpvar_401[1].x = 0.9635582;
-          tmpvar_401[1].y = 0.2674989;
+          tmpvar_401[0u].x = -0.2674989;
+          tmpvar_401[0u].y = 0.9635582;
+          tmpvar_401[1u].x = 0.9635582;
+          tmpvar_401[1u].y = 0.2674989;
           tmpvar_399.xy = (tmpvar_401 * tmpvar_399.xy);
           float tmpvar_402 = 0;
           if (((0.0 < tmpvar_399.y) || (0.0 < tmpvar_399.x))) {
@@ -2371,10 +2371,10 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
         float tmpvar_621 = 0;
         tmpvar_621 = sqrt(dot (tmpvar_620.xy, tmpvar_620.xy));
         float2x2 tmpvar_622;
-        tmpvar_622[0].x = -0.2674989;
-        tmpvar_622[0].y = 0.9635582;
-        tmpvar_622[1].x = 0.9635582;
-        tmpvar_622[1].y = 0.2674989;
+        tmpvar_622[0u].x = -0.2674989;
+        tmpvar_622[0u].y = 0.9635582;
+        tmpvar_622[1u].x = 0.9635582;
+        tmpvar_622[1u].y = 0.2674989;
         tmpvar_620.xy = (tmpvar_622 * tmpvar_620.xy);
         float tmpvar_623 = 0;
         if (((0.0 < tmpvar_620.y) || (0.0 < tmpvar_620.x))) {
@@ -3217,10 +3217,10 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
         float tmpvar_839 = 0;
         tmpvar_839 = sqrt(dot (tmpvar_838.xy, tmpvar_838.xy));
         float2x2 tmpvar_840;
-        tmpvar_840[0].x = -0.2674989;
-        tmpvar_840[0].y = 0.9635582;
-        tmpvar_840[1].x = 0.9635582;
-        tmpvar_840[1].y = 0.2674989;
+        tmpvar_840[0u].x = -0.2674989;
+        tmpvar_840[0u].y = 0.9635582;
+        tmpvar_840[1u].x = 0.9635582;
+        tmpvar_840[1u].y = 0.2674989;
         tmpvar_838.xy = (tmpvar_840 * tmpvar_838.xy);
         float tmpvar_841 = 0;
         if (((0.0 < tmpvar_838.y) || (0.0 < tmpvar_838.x))) {
@@ -4086,10 +4086,10 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
         float tmpvar_1060 = 0;
         tmpvar_1060 = sqrt(dot (tmpvar_1059.xy, tmpvar_1059.xy));
         float2x2 tmpvar_1061;
-        tmpvar_1061[0].x = -0.2674989;
-        tmpvar_1061[0].y = 0.9635582;
-        tmpvar_1061[1].x = 0.9635582;
-        tmpvar_1061[1].y = 0.2674989;
+        tmpvar_1061[0u].x = -0.2674989;
+        tmpvar_1061[0u].y = 0.9635582;
+        tmpvar_1061[1u].x = 0.9635582;
+        tmpvar_1061[1u].y = 0.2674989;
         tmpvar_1059.xy = (tmpvar_1061 * tmpvar_1059.xy);
         float tmpvar_1062 = 0;
         if (((0.0 < tmpvar_1059.y) || (0.0 < tmpvar_1059.x))) {

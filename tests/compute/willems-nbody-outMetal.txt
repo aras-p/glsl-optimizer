@@ -38,7 +38,7 @@ threadgroup float4 sharedData_1[256];
     position_4 = float4(reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_GlobalInvocationID.x].value.pos);
   };
   acceleration_3 = float3(0.0, 0.0, 0.0);
-  i_2 = 0;
+  i_2 = 0u;
   while (true) {
     if ((i_2 >= tmpvar_5)) {
       break;
@@ -53,9 +53,9 @@ threadgroup float4 sharedData_1[256];
     threadgroup_barrier(mem_flags::mem_threadgroup);
     if (tmpvar_6) {
       uint j_8;
-      j_8 = 0;
+      j_8 = 0u;
       while (true) {
-        if ((j_8 >= 256)) {
+        if ((j_8 >= 256u)) {
           break;
         };
         float4 tmpvar_9 = 0;
@@ -71,7 +71,7 @@ threadgroup float4 sharedData_1[256];
       };
     };
     threadgroup_barrier(mem_flags::mem_threadgroup);
-    i_2 += 256;
+    i_2 += 256u;
   };
   if (tmpvar_6) {
     reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_GlobalInvocationID.x].value.vel.xyz = float3((float4(reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_GlobalInvocationID.x].value.vel).xyz + (float(_mtl_buffer2.deltaT) * acceleration_3)));

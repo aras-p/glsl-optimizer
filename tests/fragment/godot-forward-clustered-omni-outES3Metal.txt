@@ -142,7 +142,7 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   uint2 tmpvar_7;
   tmpvar_7 = (uint2(_mtl_i.gl_FragCoord.xy) >> uint(_mtl_buffer3.cluster_shift));
   uint tmpvar_8;
-  tmpvar_8 = (((uint(_mtl_buffer3.cluster_width) * tmpvar_7.y) + tmpvar_7.x) * (uint(_mtl_buffer3.max_cluster_element_count_div_32) + 32));
+  tmpvar_8 = (((uint(_mtl_buffer3.cluster_width) * tmpvar_7.y) + tmpvar_7.x) * (uint(_mtl_buffer3.max_cluster_element_count_div_32) + 32u));
   uint tmpvar_9;
   tmpvar_9 = ((tmpvar_8 + uint(_mtl_buffer3.max_cluster_element_count_div_32)) + uint(min (
     max (((-(_mtl_i.view_position.z) / float(_mtl_buffer3.z_far)) * 32.0), 0.0)
@@ -152,14 +152,14 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   uint tmpvar_12;
   uint tmpvar_13;
   tmpvar_13 = uint(reinterpret_cast<const device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[tmpvar_9].value);
-  tmpvar_10 = (tmpvar_13 & 65535);
+  tmpvar_10 = (tmpvar_13 & 65535u);
   tmpvar_11 = (tmpvar_13 >> 16);
   tmpvar_12 = (tmpvar_10 >> 5);
   uint tmpvar_14;
-  if ((tmpvar_11 == 0)) {
-    tmpvar_14 = 0;
+  if ((tmpvar_11 == 0u)) {
+    tmpvar_14 = 0u;
   } else {
-    tmpvar_14 = (((tmpvar_11 + 4294967295) >> 5) + 1);
+    tmpvar_14 = (((tmpvar_11 + 4294967295u) >> 5) + 1u);
   };
   for (uint i_1 = tmpvar_12; i_1 < tmpvar_14; i_1++) {
     uint mask_15;
@@ -170,19 +170,19 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
      - 
       (int(i_1) * 32)
     ), 0), 31);
-    mask_15 = (mask_15 & insert_bits(uint(0), uint(4294967295), uint(tmpvar_16), uint(
+    mask_15 = (mask_15 & insert_bits(uint(0u), uint(4294967295u), uint(tmpvar_16), uint(
       min ((int(tmpvar_11) - int(tmpvar_10)), (32 - tmpvar_16))
     )));
     while (true) {
-      if ((mask_15 == 0)) {
+      if ((mask_15 == 0u)) {
         break;
       };
       uint tmpvar_17;
       tmpvar_17 = uint(_xlat_findMSB<int, uint, false>(mask_15));
-      mask_15 = (mask_15 & ~((1 << tmpvar_17)));
+      mask_15 = (mask_15 & ~((1u << tmpvar_17)));
       uint tmpvar_18;
-      tmpvar_18 = ((32 * i_1) + tmpvar_17);
-      if (((uint(reinterpret_cast<const device _xlat_buf_storage1_element*>(_mtl_buffer2 + 0)[tmpvar_18].value.mask) & uint(_mtl_buffer3.layer_mask)) != 0)) {
+      tmpvar_18 = ((32u * i_1) + tmpvar_17);
+      if (((uint(reinterpret_cast<const device _xlat_buf_storage1_element*>(_mtl_buffer2 + 0)[tmpvar_18].value.mask) & uint(_mtl_buffer3.layer_mask)) != 0u)) {
         float3 tmpvar_19 = 0;
         float3 specular_20 = 0;
         float3 tmpvar_21 = 0;

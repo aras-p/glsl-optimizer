@@ -18,7 +18,7 @@ vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], 
   tmpvar_1.w = 1.0;
   tmpvar_1.xyz = _mtl_i.position;
   _mtl_o.gl_Position = tmpvar_1;
-  _mtl_o.objectID = ((_mtl_i.ids.x << 16) | (_mtl_i.ids.y & 65535));
+  _mtl_o.objectID = ((_mtl_i.ids.x << 16u) | (_mtl_i.ids.y & 65535u));
   return _mtl_o;
 }
 

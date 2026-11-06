@@ -39,9 +39,9 @@ vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], 
   float3 tmpvar_7 = 0;
   tmpvar_7 = (_mtl_u.glstate_matrix_modelview0 * tmpvar_6).xyz;
   float3x3 tmpvar_8;
-  tmpvar_8[0] = _mtl_u.glstate_matrix_invtrans_modelview0[0].xyz;
-  tmpvar_8[1] = _mtl_u.glstate_matrix_invtrans_modelview0[1].xyz;
-  tmpvar_8[2] = _mtl_u.glstate_matrix_invtrans_modelview0[2].xyz;
+  tmpvar_8[0u] = _mtl_u.glstate_matrix_invtrans_modelview0[0u].xyz;
+  tmpvar_8[1u] = _mtl_u.glstate_matrix_invtrans_modelview0[1u].xyz;
+  tmpvar_8[2u] = _mtl_u.glstate_matrix_invtrans_modelview0[2u].xyz;
   float3 tmpvar_9 = 0;
   tmpvar_9 = (tmpvar_8 * tmpvar_2);
   float3 tmpvar_10 = 0;

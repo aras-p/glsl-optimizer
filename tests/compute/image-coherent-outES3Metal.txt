@@ -32,7 +32,7 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
   int3 tmpvar_6 = 0;
   tmpvar_6.z = 0;
   tmpvar_6.xy = tmpvar_1;
-  data.write(uint4((tmpvar_5 + uint4(1, 1, 1, 1))), uint2(tmpvar_6.xy), uint(tmpvar_6.z));
+  data.write(uint4((tmpvar_5 + uint4(1u, 1u, 1u, 1u))), uint2(tmpvar_6.xy), uint(tmpvar_6.z));
   atomic_thread_fence(mem_flags::mem_texture, memory_order_seq_cst, thread_scope_device);
 }
 

@@ -16,7 +16,7 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
   , uint3 gl_GlobalInvocationID [[thread_position_in_grid]])
 {
   uint tmpvar_1;
-  tmpvar_1 = (305419896 + gl_GlobalInvocationID.x);
+  tmpvar_1 = (305419896u + gl_GlobalInvocationID.x);
   tmpvar_1 = (tmpvar_1 ^ (tmpvar_1 << 13));
   tmpvar_1 = (tmpvar_1 ^ (tmpvar_1 >> 17));
   tmpvar_1 = (tmpvar_1 ^ (tmpvar_1 << 5));
@@ -32,13 +32,13 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
   float4 tmpvar_4 = 0;
   tmpvar_4.w = 0.0;
   tmpvar_4.x = ((float(
-    (tmpvar_1 & 32767)
+    (tmpvar_1 & 32767u)
   ) / 32767.0) - 0.5);
   tmpvar_4.y = (((
-    float((tmpvar_2 & 32767))
+    float((tmpvar_2 & 32767u))
    / 32767.0) * 0.5) + 2.0);
   tmpvar_4.z = ((float(
-    (tmpvar_3 & 32767)
+    (tmpvar_3 & 32767u)
   ) / 32767.0) - 0.5);
   reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_GlobalInvocationID.x].value.vel = float4(tmpvar_4);
 }

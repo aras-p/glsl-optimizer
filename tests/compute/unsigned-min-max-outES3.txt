@@ -1,0 +1,29 @@
+#version 310 es
+layout(local_size_x=1) in;
+layout(std430, column_major, binding=0) buffer Data {
+  highp uint value;
+  highp uvec2 pair;
+  highp uvec4 result;
+  highp uvec2 vector_result;
+} data;
+void main ()
+{
+  highp uint tmpvar_1;
+  tmpvar_1 = data.value;
+  highp uvec4 tmpvar_2;
+  tmpvar_2.x = min (256u, tmpvar_1);
+  tmpvar_2.y = min (tmpvar_1, 4294967294u);
+  tmpvar_2.z = max (tmpvar_1, 4u);
+  tmpvar_2.w = max (2147483648u, tmpvar_1);
+  data.result = tmpvar_2;
+  data.vector_result = min (data.pair, uvec2(8u, 16u));
+}
+
+
+// stats: 5 alu 0 tex 0 flow
+// workgroup size: 1 1 1
+// buffer #0: Data storage instance data layout std430 binding 0 (size: 48)
+//  member #0: uint value offset 0
+//  member #1: uvec2 pair offset 8
+//  member #2: uvec4 result offset 16
+//  member #3: uvec2 vector_result offset 32

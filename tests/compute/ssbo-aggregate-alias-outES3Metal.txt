@@ -37,8 +37,8 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
 {
   uint i_1;
   uint tmpvar_2;
-  tmpvar_2 = (gl_GlobalInvocationID.x + 1);
-  i_1 = (tmpvar_2 + 1);
+  tmpvar_2 = (gl_GlobalInvocationID.x + 1u);
+  i_1 = (tmpvar_2 + 1u);
   {
     device _xlat_buf_storage1& _buf_dst = reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[uint(reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[0].value.index)].value;
     const device _xlat_buf_storage1& _buf_src = reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[tmpvar_2].value;

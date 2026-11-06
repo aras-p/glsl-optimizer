@@ -61,14 +61,14 @@ threadgroup uint shared_t_4;
   uint2 tmpvar_9;
   tmpvar_9 = uint2(tmpvar_8);
   uint2 tmpvar_10;
-  tmpvar_10 = ((15 + tmpvar_9) / 16);
+  tmpvar_10 = ((15u + tmpvar_9) / 16u);
   if (any((gl_WorkGroupID.xy >= tmpvar_10) != bool2(0, 0))) {
     return;
   };
   uint tmpvar_11;
   tmpvar_11 = ((gl_WorkGroupID.y * tmpvar_10.x) + gl_WorkGroupID.x);
   uint2 tmpvar_12;
-  tmpvar_12 = ((gl_WorkGroupID.xy * 16) + gl_LocalInvocationID.xy);
+  tmpvar_12 = ((gl_WorkGroupID.xy * 16u) + gl_LocalInvocationID.xy);
   bool tmpvar_13 = false;
   tmpvar_13 = all((tmpvar_12 < tmpvar_9) == bool2(1, 1));
   uint2 tmpvar_14;
@@ -76,83 +76,77 @@ threadgroup uint shared_t_4;
   uint tmpvar_15;
   tmpvar_15 = (tmpvar_14.y - tmpvar_14.x);
   uint tmpvar_16;
-  tmpvar_16 = ((255 + tmpvar_15) / 256);
-  if ((gl_LocalInvocationIndex == 0)) {
-    shared_t_4 = 4294967295;
+  tmpvar_16 = ((255u + tmpvar_15) / 256u);
+  if ((gl_LocalInvocationIndex == 0u)) {
+    shared_t_4 = 4294967295u;
   };
   threadgroup_barrier(mem_flags::mem_threadgroup);
   blended_color_7 = float3(0.0, 0.0, 0.0);
   t_6 = 1.0;
-  i_5 = 0;
+  i_5 = 0u;
   while (true) {
-    if (!(((i_5 < tmpvar_16) && (255 < shared_t_4)))) {
+    if (!(((i_5 < tmpvar_16) && (255u < shared_t_4)))) {
       break;
     };
     uint tmpvar_17;
-    tmpvar_17 = (256 * i_5);
+    tmpvar_17 = (256u * i_5);
     uint tmpvar_18;
-    tmpvar_18 = (tmpvar_15 - tmpvar_17);
-    uint tmpvar_19;
-    if ((tmpvar_18 < 256)) {
-      tmpvar_19 = tmpvar_18;
-    } else {
-      tmpvar_19 = 256;
-    };
+    tmpvar_18 = min (256u, (tmpvar_15 - tmpvar_17));
     threadgroup_barrier(mem_flags::mem_threadgroup);
-    if ((gl_LocalInvocationIndex < tmpvar_19)) {
-      RasterizeData tmpvar_20;
-      tmpvar_20 = _xlat_buf_storage2_read(reinterpret_cast<const device _xlat_buf_storage1_element*>(_mtl_buffer2 + 0)[uint(reinterpret_cast<const device _xlat_buf_storage4_element*>(_mtl_buffer4 + 0)[((tmpvar_14.x + tmpvar_17) + gl_LocalInvocationIndex)].value)].value);
-      conic_tile_1[gl_LocalInvocationIndex] = tmpvar_20.conic;
-      color_tile_2[gl_LocalInvocationIndex] = tmpvar_20.color;
-      image_pos_tile_3[gl_LocalInvocationIndex] = tmpvar_20.image_pos;
+    if ((gl_LocalInvocationIndex < tmpvar_18)) {
+      RasterizeData tmpvar_19;
+      tmpvar_19 = _xlat_buf_storage2_read(reinterpret_cast<const device _xlat_buf_storage1_element*>(_mtl_buffer2 + 0)[uint(reinterpret_cast<const device _xlat_buf_storage4_element*>(_mtl_buffer4 + 0)[((tmpvar_14.x + tmpvar_17) + gl_LocalInvocationIndex)].value)].value);
+      conic_tile_1[gl_LocalInvocationIndex] = tmpvar_19.conic;
+      color_tile_2[gl_LocalInvocationIndex] = tmpvar_19.color;
+      image_pos_tile_3[gl_LocalInvocationIndex] = tmpvar_19.image_pos;
     };
-    if ((gl_LocalInvocationIndex == 0)) {
-      shared_t_4 = 0;
+    if ((gl_LocalInvocationIndex == 0u)) {
+      shared_t_4 = 0u;
     };
     threadgroup_barrier(mem_flags::mem_threadgroup);
     if (tmpvar_13) {
-      uint j_21;
-      j_21 = 0;
+      uint j_20;
+      j_20 = 0u;
       while (true) {
-        if (!(((j_21 < tmpvar_19) && (0.003921569 < t_6)))) {
+        if (!(((j_20 < tmpvar_18) && (0.003921569 < t_6)))) {
           break;
         };
-        float3 tmpvar_22 = 0;
-        tmpvar_22 = conic_tile_1[j_21];
-        float4 tmpvar_23 = 0;
-        tmpvar_23 = color_tile_2[j_21];
-        float2 tmpvar_24 = 0;
-        tmpvar_24 = (image_pos_tile_3[j_21] - float2(tmpvar_12));
-        float tmpvar_25 = 0;
-        tmpvar_25 = (tmpvar_23.w * exp((
-          (-0.5 * (((tmpvar_22.x * tmpvar_24.x) * tmpvar_24.x) + ((tmpvar_22.z * tmpvar_24.y) * tmpvar_24.y)))
+        float3 tmpvar_21 = 0;
+        tmpvar_21 = conic_tile_1[j_20];
+        float4 tmpvar_22 = 0;
+        tmpvar_22 = color_tile_2[j_20];
+        float2 tmpvar_23 = 0;
+        tmpvar_23 = (image_pos_tile_3[j_20] - float2(tmpvar_12));
+        float tmpvar_24 = 0;
+        tmpvar_24 = (tmpvar_22.w * exp((
+          (-0.5 * (((tmpvar_21.x * tmpvar_23.x) * tmpvar_23.x) + ((tmpvar_21.z * tmpvar_23.y) * tmpvar_23.y)))
          - 
-          ((tmpvar_22.y * tmpvar_24.x) * tmpvar_24.y)
+          ((tmpvar_21.y * tmpvar_23.x) * tmpvar_23.y)
         )));
-        blended_color_7 = (blended_color_7 + ((tmpvar_23.xyz * tmpvar_25) * t_6));
-        t_6 = (t_6 * (1.0 - tmpvar_25));
-        j_21++;
+        blended_color_7 = (blended_color_7 + ((tmpvar_22.xyz * tmpvar_24) * t_6));
+        t_6 = (t_6 * (1.0 - tmpvar_24));
+        j_20++;
       };
-      uint tmpvar_26;
-      tmpvar_26 = atomic_fetch_add_explicit (reinterpret_cast<threadgroup atomic_uint*>(&shared_t_4), uint(uint((t_6 * 255.0))), memory_order_relaxed);
+      uint tmpvar_25;
+      tmpvar_25 = atomic_fetch_add_explicit (reinterpret_cast<threadgroup atomic_uint*>(&shared_t_4), uint(uint((t_6 * 255.0))), memory_order_relaxed);
     };
     threadgroup_barrier(mem_flags::mem_threadgroup);
     i_5++;
   };
   if (tmpvar_13) {
-    float4 tmpvar_27 = 0;
-    tmpvar_27.w = 1.0;
-    tmpvar_27.xyz = (blended_color_7 + ((
+    float4 tmpvar_26 = 0;
+    tmpvar_26.w = 1.0;
+    tmpvar_26.xyz = (blended_color_7 + ((
       mix (float3(0.0, 0.0, 1.0), float3(1.0, 0.2, 0.2), (float(tmpvar_15) * 0.0005))
      * 
       (1.0 - t_6)
     ) * float(_mtl_buffer3.heatmap_factor)));
-    rasterized_image.write(float4(tmpvar_27), uint2(int2(tmpvar_12)));
+    rasterized_image.write(float4(tmpvar_26), uint2(int2(tmpvar_12)));
   };
 }
 
 
-// stats: 68 alu 2 tex 12 flow
+// stats: 67 alu 2 tex 11 flow
 // workgroup size: 16 16 1
 // buffer #0: BoundsBuffer storage layout std430 binding 2 (size: unknown) metal 1
 //  member #0: uvec2[] bounds_buffer offset 0 array runtime stride 8 readonly

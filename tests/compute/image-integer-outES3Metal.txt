@@ -14,7 +14,7 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
   tmpvar_1 = int2(gl_GlobalInvocationID.xy);
   uint4 tmpvar_2;
   tmpvar_2 = counters.read(uint2(tmpvar_1));
-  counters.write(uint4((tmpvar_2 + uint4((gl_GlobalInvocationID.x + 1)))), uint2(tmpvar_1));
+  counters.write(uint4((tmpvar_2 + uint4((gl_GlobalInvocationID.x + 1u)))), uint2(tmpvar_1));
   int3 tmpvar_3 = 0;
   tmpvar_3 = int3(layers.get_width(), layers.get_height(), layers.get_array_size());
   int3 tmpvar_4 = 0;

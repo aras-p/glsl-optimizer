@@ -93,15 +93,15 @@ threadgroup _xlat_shared_struct1 entries_1[8];
   float4 tmpvar_4 = 0;
   tmpvar_4.yzw = float3(0.0, 0.0, 0.0);
   tmpvar_4.x = float(gl_LocalInvocationIndex);
-  tmpvar_3[0] = tmpvar_4.xyy;
-  tmpvar_3[1] = tmpvar_4.yxy;
+  tmpvar_3[0u] = tmpvar_4.xyy;
+  tmpvar_3[1u] = tmpvar_4.yxy;
   entry_2.tile.transforms[0] = half2x3(tmpvar_3);
   entry_2.tile.transforms[1] = half2x3(float2x3(float3(2.0, 0.0, 0.0), float3(0.0, 2.0, 0.0)));
   entry_2.tag = gl_LocalInvocationIndex;
   entries_1[gl_LocalInvocationIndex].write(entry_2);
   {
     threadgroup _xlat_shared_matrix<half2x3, half3, 2>& _buf_matrix = entries_1[gl_LocalInvocationIndex].tile.transforms[1];
-    const auto _buf_column = (gl_LocalInvocationIndex & 1);
+    const auto _buf_column = (gl_LocalInvocationIndex & 1u);
     const half2 _buf_value = half2(float2(4.0, 3.0));
     reinterpret_cast<threadgroup half*>(&_buf_matrix.columns[_buf_column])[0] = _buf_value.x;
     reinterpret_cast<threadgroup half*>(&_buf_matrix.columns[_buf_column])[2] = _buf_value.y;
@@ -109,12 +109,12 @@ threadgroup _xlat_shared_struct1 entries_1[8];
   {
     threadgroup _xlat_shared_matrix<half2x3, half3, 2>& _buf_matrix = entries_1[gl_LocalInvocationIndex].tile.transforms[0];
     const auto _buf_column = 0;
-    const auto _buf_component = (gl_LocalInvocationIndex % 3);
+    const auto _buf_component = (gl_LocalInvocationIndex % 3u);
     reinterpret_cast<threadgroup half*>(&_buf_matrix.columns[_buf_column])[_buf_component] = half(5.0);
   };
   threadgroup_barrier(mem_flags::mem_threadgroup);
   uint tmpvar_5;
-  tmpvar_5 = ((gl_LocalInvocationIndex + 1) % 8);
+  tmpvar_5 = ((gl_LocalInvocationIndex + 1u) % 8u);
   {
     device _xlat_buf_storage1& _buf_dst = reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_GlobalInvocationID.x].value;
     const threadgroup auto& _buf_src = entries_1[tmpvar_5];

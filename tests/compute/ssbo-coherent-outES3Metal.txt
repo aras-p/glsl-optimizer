@@ -75,14 +75,14 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
   };
   {
     coherent(device) device _xlat_buf_storage2& _buf_matrix = _mtl_buffer3.entries.elements[gl_GlobalInvocationID.x].value.transform;
-    const auto _buf_column = (gl_GlobalInvocationID.x & 3);
+    const auto _buf_column = (gl_GlobalInvocationID.x & 3u);
     const auto _buf_component = 1;
     reinterpret_cast<coherent(device) device float*>(&_buf_matrix.vectors[_buf_column])[_buf_component] = float(tmpvar_2.value.x);
   };
   uint tmpvar_3;
-  tmpvar_3 = _xlat_atomic_comp_swap (reinterpret_cast<coherent(device) device atomic_uint*>(&_mtl_buffer3.counter), uint(tmpvar_1), uint((gl_GlobalInvocationID.x + 1)));
+  tmpvar_3 = _xlat_atomic_comp_swap (reinterpret_cast<coherent(device) device atomic_uint*>(&_mtl_buffer3.counter), uint(tmpvar_1), uint((gl_GlobalInvocationID.x + 1u)));
   uint tmpvar_4;
-  tmpvar_4 = _xlat_atomic_comp_swap (reinterpret_cast<device atomic_uint*>(&(*reinterpret_cast<device uint*>(_mtl_buffer2 + 0))), uint(tmpvar_1), uint((gl_GlobalInvocationID.x + 1)));
+  tmpvar_4 = _xlat_atomic_comp_swap (reinterpret_cast<device atomic_uint*>(&(*reinterpret_cast<device uint*>(_mtl_buffer2 + 0))), uint(tmpvar_1), uint((gl_GlobalInvocationID.x + 1u)));
   atomic_thread_fence(mem_flags::mem_device, memory_order_seq_cst, thread_scope_device);
   reinterpret_cast<device _xlat_buf_storage3_element*>(_mtl_buffer2 + 4)[gl_GlobalInvocationID.x].value = uint(((uint(_mtl_buffer3.payload) + tmpvar_3) + tmpvar_4));
 }

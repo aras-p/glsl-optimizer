@@ -140,7 +140,7 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
     _buf_dst = _mtl_buffer1.entry;
   };
   {
-    device Pair& _buf_dst = reinterpret_cast<device _xlat_buf_storage16_element*>(_mtl_buffer3 + 0)[(gl_GlobalInvocationID.x + 1)].value.pair;
+    device Pair& _buf_dst = reinterpret_cast<device _xlat_buf_storage16_element*>(_mtl_buffer3 + 0)[(gl_GlobalInvocationID.x + 1u)].value.pair;
     _buf_dst = reinterpret_cast<device _xlat_buf_storage16_element*>(_mtl_buffer3 + 0)[gl_GlobalInvocationID.x].value.pair;
   };
   {
@@ -159,8 +159,8 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
   float2x3 tmpvar_2;
   float4x4 tmpvar_3;
   tmpvar_3 = _mtl_buffer1.entry.transform;
-  tmpvar_2[0] = tmpvar_3[0].xyz;
-  tmpvar_2[1] = tmpvar_3[1].xyz;
+  tmpvar_2[0u] = tmpvar_3[0u].xyz;
+  tmpvar_2[1u] = tmpvar_3[1u].xyz;
   {
     device _xlat_buf_storage13& _buf_dst = _mtl_buffer2.row;
     const thread auto& _buf_src = (tmpvar_2 * 0.5);
@@ -177,9 +177,9 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
   float3x2 tmpvar_4;
   float4x4 tmpvar_5;
   tmpvar_5 = _mtl_buffer1.entry.transform;
-  tmpvar_4[0] = tmpvar_5[0].xy;
-  tmpvar_4[1] = tmpvar_5[1].xy;
-  tmpvar_4[2] = tmpvar_5[2].xy;
+  tmpvar_4[0u] = tmpvar_5[0u].xy;
+  tmpvar_4[1u] = tmpvar_5[1u].xy;
+  tmpvar_4[2u] = tmpvar_5[2u].xy;
   {
     device float3x2& _buf_dst = _mtl_buffer2.wide;
     _buf_dst = float3x2(tmpvar_4);

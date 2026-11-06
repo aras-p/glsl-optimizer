@@ -27,14 +27,14 @@ threadgroup Entry entries_2[8];
   entries_2[gl_LocalInvocationIndex] = tmpvar_4;
   threadgroup_barrier(mem_flags::mem_threadgroup);
   uint tmpvar_5;
-  tmpvar_5 = ((gl_LocalInvocationIndex + 1) % 8);
+  tmpvar_5 = ((gl_LocalInvocationIndex + 1u) % 8u);
   float4 tmpvar_6 = 0;
   tmpvar_6.xy = entries_2[tmpvar_5].value;
   tmpvar_6.z = float(values_1[tmpvar_5]);
   tmpvar_6.w = entries_2[tmpvar_5].weight;
   reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_GlobalInvocationID.x].value = float4(tmpvar_6);
   threadgroup_barrier(mem_flags::mem_threadgroup);
-  values_1[gl_LocalInvocationIndex] = 0;
+  values_1[gl_LocalInvocationIndex] = 0u;
 }
 
 

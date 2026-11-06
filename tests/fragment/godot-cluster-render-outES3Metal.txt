@@ -40,11 +40,11 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   uint tmpvar_4;
   tmpvar_4 = ((cluster_offset_1 + uint(_mtl_buffer2.cluster_depth_offset)) + _mtl_i.element_index);
   uint tmpvar_5;
-  tmpvar_5 = (1 << uint(min (
+  tmpvar_5 = (1u << uint(min (
     max (floor(((_mtl_i.depth_interp * float(_mtl_buffer2.inv_z_far)) * 32.0)), 0.0)
   , 31.0)));
   uint tmpvar_6;
-  tmpvar_6 = atomic_fetch_or_explicit (reinterpret_cast<device atomic_uint*>(&reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[tmpvar_3].value), uint((1 << (_mtl_i.element_index & 31))), memory_order_relaxed);
+  tmpvar_6 = atomic_fetch_or_explicit (reinterpret_cast<device atomic_uint*>(&reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[tmpvar_3].value), uint((1u << (_mtl_i.element_index & 31u))), memory_order_relaxed);
   uint tmpvar_7;
   tmpvar_7 = atomic_fetch_or_explicit (reinterpret_cast<device atomic_uint*>(&reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[tmpvar_4].value), uint(tmpvar_5), memory_order_relaxed);
   _mtl_o.frag_color = float4(float(tmpvar_7));

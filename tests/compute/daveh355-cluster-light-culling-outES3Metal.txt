@@ -69,10 +69,10 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
   uint lightCount_3;
   lightCount_3 = uint(int((max(_mtl_buffer_sizes[2u], 0u) - 0u) / 48u));
   uint tmpvar_4;
-  tmpvar_4 = ((gl_WorkGroupID.x * 128) + gl_LocalInvocationID.x);
+  tmpvar_4 = ((gl_WorkGroupID.x * 128u) + gl_LocalInvocationID.x);
   cluster_2 = _xlat_buf_storage1_read(reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[tmpvar_4].value);
-  cluster_2.count = 0;
-  for (uint i_1 = 0; i_1 < lightCount_3; i_1++) {
+  cluster_2.count = 0u;
+  for (uint i_1 = 0u; i_1 < lightCount_3; i_1++) {
     bool tmpvar_5 = false;
     float3 tmpvar_6 = 0;
     tmpvar_6 = (_mtl_u.viewMatrix * float4(reinterpret_cast<const device _xlat_buf_storage3_element*>(_mtl_buffer2 + 0)[i_1].value.position)).xyz;
@@ -81,9 +81,9 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
     float3 tmpvar_8 = 0;
     tmpvar_8 = min (max (tmpvar_6, cluster_2.minPoint.xyz), cluster_2.maxPoint.xyz);
     tmpvar_5 = ((tmpvar_7 * tmpvar_7) >= dot ((tmpvar_8 - tmpvar_6), (tmpvar_8 - tmpvar_6)));
-    if ((tmpvar_5 && (cluster_2.count < 100))) {
+    if ((tmpvar_5 && (cluster_2.count < 100u))) {
       cluster_2.lightIndices[cluster_2.count] = i_1;
-      cluster_2.count = (cluster_2.count + 1);
+      cluster_2.count = (cluster_2.count + 1u);
     };
   };
   {

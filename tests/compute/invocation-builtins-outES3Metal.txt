@@ -17,23 +17,23 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
   uint tmpvar_1;
   tmpvar_1 = (((
     (gl_WorkGroupID.x + (gl_NumWorkGroups.x * (gl_WorkGroupID.y + (gl_NumWorkGroups.y * gl_WorkGroupID.z))))
-   * 24) + gl_LocalInvocationIndex) * 4);
+   * 24u) + gl_LocalInvocationIndex) * 4u);
   uint4 tmpvar_2;
   tmpvar_2.xyz = gl_GlobalInvocationID;
   tmpvar_2.w = gl_LocalInvocationIndex;
   reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[tmpvar_1].value = uint4(tmpvar_2);
   uint4 tmpvar_3;
-  tmpvar_3.w = 4;
+  tmpvar_3.w = 4u;
   tmpvar_3.xyz = gl_LocalInvocationID;
-  reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[(tmpvar_1 + 1)].value = uint4(tmpvar_3);
+  reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[(tmpvar_1 + 1u)].value = uint4(tmpvar_3);
   uint4 tmpvar_4;
-  tmpvar_4.w = 2;
+  tmpvar_4.w = 2u;
   tmpvar_4.xyz = gl_WorkGroupID;
-  reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[(tmpvar_1 + 2)].value = uint4(tmpvar_4);
+  reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[(tmpvar_1 + 2u)].value = uint4(tmpvar_4);
   uint4 tmpvar_5;
-  tmpvar_5.w = 3;
+  tmpvar_5.w = 3u;
   tmpvar_5.xyz = gl_NumWorkGroups;
-  reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[(tmpvar_1 + 3)].value = uint4(tmpvar_5);
+  reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[(tmpvar_1 + 3u)].value = uint4(tmpvar_5);
 }
 
 

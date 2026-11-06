@@ -18,19 +18,19 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
   int outbit_2 = 0;
   uint bits_3;
   uint tmpvar_4;
-  tmpvar_4 = ((30 + _mtl_u.numObjects) / 32);
-  bits_3 = 0;
+  tmpvar_4 = ((30u + _mtl_u.numObjects) / 32u);
+  bits_3 = 0u;
   outbit_2 = 0;
   for (int i_1 = 0; i_1 < 8; i_1++) {
     uint4 tmpvar_5;
-    tmpvar_5 = uint4(reinterpret_cast<const device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[((min (gl_GlobalInvocationID.x, tmpvar_4) * 8) + uint(i_1))].value);
-    bits_3 = (bits_3 | ((tmpvar_5[0] & 1) << outbit_2));
+    tmpvar_5 = uint4(reinterpret_cast<const device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[((min (gl_GlobalInvocationID.x, tmpvar_4) * 8u) + uint(i_1))].value);
+    bits_3 = (bits_3 | ((tmpvar_5[0] & 1u) << outbit_2));
     outbit_2++;
-    bits_3 = (bits_3 | ((tmpvar_5[1] & 1) << outbit_2));
+    bits_3 = (bits_3 | ((tmpvar_5[1] & 1u) << outbit_2));
     outbit_2++;
-    bits_3 = (bits_3 | ((tmpvar_5[2] & 1) << outbit_2));
+    bits_3 = (bits_3 | ((tmpvar_5[2] & 1u) << outbit_2));
     outbit_2++;
-    bits_3 = (bits_3 | ((tmpvar_5[3] & 1) << outbit_2));
+    bits_3 = (bits_3 | ((tmpvar_5[3] & 1u) << outbit_2));
     outbit_2++;
   };
   if ((tmpvar_4 < gl_GlobalInvocationID.x)) {
