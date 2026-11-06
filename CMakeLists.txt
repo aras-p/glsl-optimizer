@@ -23,7 +23,7 @@ add_library(glsl_optimizer STATIC
     src/glsl/nir_printer.cpp
     src/glsl/nir_print_glsl.cpp
     src/glsl/nir_print_metal.cpp
-    src/c11/impl/time.c
+    src/c11/threads.cpp
     src/compiler/builtin_types.c
     src/compiler/glsl/ast_array_index.cpp
     src/compiler/glsl/ast_expr.cpp
@@ -139,11 +139,9 @@ add_library(glsl_optimizer STATIC
     src/util/range_minimum_query.c
     src/util/rb_tree.c
     src/util/set.c
-    src/util/simple_mtx.c
     src/util/softfloat.c
     src/util/string_buffer.c
     src/util/strtod.c
-    src/util/u_call_once.c
     src/util/u_debug.c
     src/util/u_dynarray.c
     src/util/u_printf.c
@@ -152,11 +150,6 @@ add_library(glsl_optimizer STATIC
     src/util/u_vector.c
     src/util/u_worklist.c
 )
-if(WIN32)
-    target_sources(glsl_optimizer PRIVATE src/c11/impl/threads_win32.c src/c11/impl/threads_win32_tls_callback.cpp)
-else()
-    target_sources(glsl_optimizer PRIVATE src/c11/impl/threads_posix.c)
-endif()
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT DEFINED CMAKE_POSITION_INDEPENDENT_CODE)
     set_target_properties(glsl_optimizer PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
@@ -191,8 +184,6 @@ if(GLSLOPT_HAVE_STRTOF)
 endif()
 # GL APIs the frontend accepts (desktop GL and GLES2+; checked by main/context.h)
 target_compile_definitions(glsl_optimizer PRIVATE HAVE_OPENGL=1 HAVE_OPENGL_ES_2=1)
-# c11/threads.h: pthreads or win32 threads; the platform has struct timespec
-target_compile_definitions(glsl_optimizer PRIVATE HAVE_STRUCT_TIMESPEC $<$<NOT:$<BOOL:${WIN32}>>:HAVE_PTHREAD>)
 # GLSL IR's operator new stores into the object before its constructor runs;
 # GCC's lifetime dead-store elimination would drop that (upstream Mesa uses this too)
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")

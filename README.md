@@ -242,6 +242,9 @@ frontend, `glsl_to_nir`, NIR with the passes we run, and the util code they need
   the compiler reads.
 - Khronos GL/GLES headers: `util/glminimal.h` has the types and enums we use.
 - Texture formats/codecs: only GLSL image formats are needed.
+- C11 threads emulation and futexes: `c11/threads.h` and `util/simple_mtx.h` are
+  minimal versions on one process-wide `std::recursive_mutex` (only shared caches
+  and debug output take locks).
 - Disk cache, BLAKE3 source hashes, fossilize, compression, NIR serialization,
   perf tracing, CPU detection, xxHash (hash tables use FNV-1a), most of
   logging/OS layers (`log.c`, `os_misc.c` are stderr/getenv-only).
