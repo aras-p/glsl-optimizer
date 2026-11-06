@@ -476,9 +476,12 @@ loop_unroll_visitor::visit_leave(ir_loop *ir)
     */
    loop_unroll_count count(&ir->body_instructions, ls, options);
 
-   /* glsl-optimizer change: larger unroll budget. */
+   /* glsl-optimizer change: larger unroll budget. A one-trip loop does
+    * not duplicate its body, so the size budget does not apply.
+    */
    bool loop_too_large =
-      count.nested_loop || count.nodes * iterations > max_iterations * 25;
+      count.nested_loop ||
+      (iterations > 1 && count.nodes * iterations > max_iterations * 25);
 
    if (loop_too_large && !count.unsupported_variable_indexing &&
        !count.array_indexed_by_induction_var_with_exact_iterations)

@@ -1,0 +1,50 @@
+#version 430
+layout(local_size_x=1) in;
+layout(std430, column_major, binding=0) buffer Results {
+  uint values[32];
+};
+uniform uint seed;
+void main ()
+{
+  values[0] = (((seed ^ 1u) * 2654435761u) ^ (seed + seed));
+  values[1] = (((seed ^ 2u) * 2654435761u) ^ ((seed * 2u) + (seed >> 1u)));
+  values[2] = (((seed ^ 3u) * 2654435761u) ^ ((seed * 3u) + (seed >> 2u)));
+  values[3] = (((seed ^ 4u) * 2654435761u) ^ ((seed * 4u) + (seed >> 3u)));
+  values[4] = (((seed ^ 5u) * 2654435761u) ^ ((seed * 5u) + (seed >> 4u)));
+  values[5] = (((seed ^ 6u) * 2654435761u) ^ ((seed * 6u) + (seed >> 5u)));
+  values[6] = (((seed ^ 7u) * 2654435761u) ^ ((seed * 7u) + (seed >> 6u)));
+  values[7] = (((seed ^ 8u) * 2654435761u) ^ ((seed * 8u) + (seed >> 7u)));
+  values[8] = (((seed ^ 9u) * 2654435761u) ^ ((seed * 9u) + (seed >> 8u)));
+  values[9] = (((seed ^ 10u) * 2654435761u) ^ ((seed * 10u) + (seed >> 9u)));
+  values[10] = (((seed ^ 11u) * 2654435761u) ^ ((seed * 11u) + (seed >> 10u)));
+  values[11] = (((seed ^ 12u) * 2654435761u) ^ ((seed * 12u) + (seed >> 11u)));
+  values[12] = (((seed ^ 13u) * 2654435761u) ^ ((seed * 13u) + (seed >> 12u)));
+  values[13] = (((seed ^ 14u) * 2654435761u) ^ ((seed * 14u) + (seed >> 13u)));
+  values[14] = (((seed ^ 15u) * 2654435761u) ^ ((seed * 15u) + (seed >> 14u)));
+  values[15] = (((seed ^ 16u) * 2654435761u) ^ ((seed * 16u) + (seed >> 15u)));
+  values[16] = (((seed ^ 17u) * 2654435761u) ^ ((seed * 17u) + (seed >> 16u)));
+  values[17] = (((seed ^ 18u) * 2654435761u) ^ ((seed * 18u) + (seed >> 17u)));
+  values[18] = (((seed ^ 19u) * 2654435761u) ^ ((seed * 19u) + (seed >> 18u)));
+  values[19] = (((seed ^ 20u) * 2654435761u) ^ ((seed * 20u) + (seed >> 19u)));
+  values[20] = (((seed ^ 21u) * 2654435761u) ^ ((seed * 21u) + (seed >> 20u)));
+  values[21] = (((seed ^ 22u) * 2654435761u) ^ ((seed * 22u) + (seed >> 21u)));
+  values[22] = (((seed ^ 23u) * 2654435761u) ^ ((seed * 23u) + (seed >> 22u)));
+  values[23] = (((seed ^ 24u) * 2654435761u) ^ ((seed * 24u) + (seed >> 23u)));
+  values[24] = (((seed ^ 25u) * 2654435761u) ^ ((seed * 25u) + (seed >> 24u)));
+  values[25] = (((seed ^ 26u) * 2654435761u) ^ ((seed * 26u) + (seed >> 25u)));
+  values[26] = (((seed ^ 27u) * 2654435761u) ^ ((seed * 27u) + (seed >> 26u)));
+  values[27] = (((seed ^ 28u) * 2654435761u) ^ ((seed * 28u) + (seed >> 27u)));
+  values[28] = (((seed ^ 29u) * 2654435761u) ^ ((seed * 29u) + (seed >> 28u)));
+  values[29] = (((seed ^ 30u) * 2654435761u) ^ ((seed * 30u) + (seed >> 29u)));
+  values[30] = (((seed ^ 31u) * 2654435761u) ^ ((seed * 31u) + (seed >> 30u)));
+  values[31] = (((seed ^ 32u) * 2654435761u) ^ ((seed * 32u) + (seed >> 31u)));
+}
+
+
+// stats: 190 alu 0 tex 0 flow
+// workgroup size: 1 1 1
+// uniforms: 1 (total size: 0)
+//  #0: seed (high int) 1x1 [-1]
+// buffer #0: Results storage layout std430 binding 0 (size: 128)
+//  member #0: uint[32] values offset 0 array 32 stride 4
+//  member #1: uint [] parent 0 offset 0
