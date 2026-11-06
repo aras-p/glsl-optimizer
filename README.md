@@ -55,7 +55,7 @@ CMake options:
 
 * `BUILD_TESTING=OFF` builds without the regression runner.
 * `GLSLOPT_BUILD_TOOLS=ON` builds the optional `glslopt` command-line optimizer.
-  Run it without arguments for usage.
+  Use `-m` for Metal output. Run it without arguments for usage.
 * `GLSLOPT_TEST_OPENGL=ON` enables optional external OpenGL validation in the test
   runner on Windows/macOS. It is off by default and is not needed for regression tests.
 
@@ -88,8 +88,8 @@ Language Support
 
 * Desktop GLSL: versions from 1.10 through 4.50 (no `#version` defaults to 1.10);
   they can produce GLSL or Metal.
-* GLSL ES: `#version 300 es`, `310 es`, and `320 es` are supported (no ES2.0 GLSL!),
-  and these produce either GLSL ES or Metal.
+* GLSL ES: the OpenGL ES and Metal targets accept `#version 300 es`, `310 es`,
+  and `320 es`. The desktop OpenGL target accepts ES 3.00 input only.
 * Supported shader stages are vertex, fragment, and compute.
 
 #### Limitations
@@ -97,24 +97,45 @@ Language Support
 * Last time this library was used "in production" in a big product (Unity) was around
   2015, anything since then got much less "real" testing.
 * Geometry and tessellation shaders are not supported.
+* Double precision types and shader subroutines are not supported.
 * Subgroup operations (`GL_KHR_shader_subgroup`) are not supported.
 * Variable workgroup sizes (`GL_ARB_compute_variable_group_size`) are not supported.
+* Each shader stage is optimized independently. Optimizer retains vertex outputs
+  even if fragment shader never reads them, and it does not match or validate
+  varyings across stages.
 
 #### Metal notes
 
-* Metal: texture buffers require Metal 2.1+. Integer image atomics require
+* Basic vertex and fragment shaders compile as Metal 1.2, but the version can
+  become higher depending on the features it uses.
+* Floating point `mediump` and `lowp` mostly translate to Metal `half`.
+* Vertex attributes get consecutive indices starting at 0 in emitted declaration
+  order; use the reflected indices to configure the vertex descriptor.
+* Shadow sampling uses a fixed sampler with clamp-to-edge addressing,
+  linear filtering, and a less-equal comparison. Shadow gathers use the bound sampler.
+* No support for arrays of samplers, `gl_ClipDistance`,
+  or sampled textures such as multisample, rectangle, buffer, 1D, or integer
+  3D textures.
+* Texture buffers require Metal 2.1+. Integer image atomics require
   Metal 3.1+ (4.0+ for cube images) and GPU support for texture
   atomics.
-* Metal: multisample storage images support reads and queries only.
-* Metal: `memoryBarrier*()` and `groupMemoryBarrier()` translate to `atomic_thread_fence`
-  and thus require Metal 3.2 or later.
-* Metal: coherent images and SSBOs require Metal 3.2+.
-* Metal: buffer atomics require 32-bit `int` or `uint` storage. Atomics on
+* Multisample storage images support reads and queries only.
+* `memoryBarrier*()` and `groupMemoryBarrier()` translate to `atomic_thread_fence`
+  and thus require Metal 3.2 or later. A `memoryBarrierShared()` immediately
+  followed by `barrier()` in the optimizer's instruction stream can use a single
+  threadgroup barrier on earlier Metal versions.
+* Coherent images and SSBOs require Metal 3.2+.
+* Buffer atomics require 32-bit `int` or `uint` storage. Atomics on
   shared variables require `highp` storage. Metal vertex shaders can only read
   atomic counters.
 
 #### Resource reflection
 
+* Reflection returns up to 1024 global uniforms, 128 inputs, and 128 textures,
+  including storage images.
+* Metal packs global uniforms into one struct at `buffer(0)` using Metal's
+  natural alignment and padding; reflected uniform location is a byte
+  offset within that struct.
 * For compute dispatch on Metal, use `glslopt_shader_get_compute_local_size` to
   get the `threadsPerThreadgroup` dimensions.
 * Texture reflection includes sampled textures and storage images.
@@ -154,7 +175,7 @@ slot that needs a size. Unused entries can be zero. The shader computes the
 array length as `max(bufferBytes - arrayOffset, 0) / arrayStride`.
 
 For example, if a fragment shader needs the sizes of data buffers at slots 1
-and 3 and reports a table slot of 4, bind itlike this.
+and 3 and reports a table slot of 4, bind it like this.
 
 ```objc
 uint32_t sizes[] = {0, bytesForBuffer1, 0, bytesForBuffer3};
