@@ -7,9 +7,8 @@ void main ()
 {
   highp int r0;
   mediump float r1;
-  r0 = ((0.5 < xx) ? 2 : 4);
   r1 = 0.0;
-  for (; (r0 < 4); r0++) {
+  for (r0 = ((0.5 < xx) ? 2 : 4); (r0 < 4); r0++) {
     r1 = (r1 + xx);
   }
   _fragData = vec4(r1);

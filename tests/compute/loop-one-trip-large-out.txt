@@ -6,41 +6,45 @@ layout(std430, binding = 0) buffer Results {
 uniform uint seed;
 void main ()
 {
-  values[0] = (uint((int((seed ^ 1u)) * -1640531535)) ^ uint((int(seed) + int(seed))));
-  values[1] = (uint((int((seed ^ 2u)) * -1640531535)) ^ uint(((int(seed) << 1u) + int((seed >> 1u)))));
-  values[2] = (uint((int((seed ^ 3u)) * -1640531535)) ^ uint(((int(seed) * 3) + int((seed >> 2u)))));
-  values[3] = (uint((int((seed ^ 4u)) * -1640531535)) ^ uint(((int(seed) << 2u) + int((seed >> 3u)))));
-  values[4] = (uint((int((seed ^ 5u)) * -1640531535)) ^ uint(((int(seed) * 5) + int((seed >> 4u)))));
-  values[5] = (uint((int((seed ^ 6u)) * -1640531535)) ^ uint(((int(seed) * 6) + int((seed >> 5u)))));
-  values[6] = (uint((int((seed ^ 7u)) * -1640531535)) ^ uint(((int(seed) * 7) + int((seed >> 6u)))));
-  values[7] = (uint((int((seed ^ 8u)) * -1640531535)) ^ uint(((int(seed) << 3u) + int((seed >> 7u)))));
-  values[8] = (uint((int((seed ^ 9u)) * -1640531535)) ^ uint(((int(seed) * 9) + int((seed >> 8u)))));
-  values[9] = (uint((int((seed ^ 10u)) * -1640531535)) ^ uint(((int(seed) * 10) + int((seed >> 9u)))));
-  values[10] = (uint((int((seed ^ 11u)) * -1640531535)) ^ uint(((int(seed) * 11) + int((seed >> 10u)))));
-  values[11] = (uint((int((seed ^ 12u)) * -1640531535)) ^ uint(((int(seed) * 12) + int((seed >> 11u)))));
-  values[12] = (uint((int((seed ^ 13u)) * -1640531535)) ^ uint(((int(seed) * 13) + int((seed >> 12u)))));
-  values[13] = (uint((int((seed ^ 14u)) * -1640531535)) ^ uint(((int(seed) * 14) + int((seed >> 13u)))));
-  values[14] = (uint((int((seed ^ 15u)) * -1640531535)) ^ uint(((int(seed) * 15) + int((seed >> 14u)))));
-  values[15] = (uint((int((seed ^ 16u)) * -1640531535)) ^ uint(((int(seed) << 4u) + int((seed >> 15u)))));
-  values[16] = (uint((int((seed ^ 17u)) * -1640531535)) ^ uint(((int(seed) * 17) + int((seed >> 16u)))));
-  values[17] = (uint((int((seed ^ 18u)) * -1640531535)) ^ uint(((int(seed) * 18) + int((seed >> 17u)))));
-  values[18] = (uint((int((seed ^ 19u)) * -1640531535)) ^ uint(((int(seed) * 19) + int((seed >> 18u)))));
-  values[19] = (uint((int((seed ^ 20u)) * -1640531535)) ^ uint(((int(seed) * 20) + int((seed >> 19u)))));
-  values[20] = (uint((int((seed ^ 21u)) * -1640531535)) ^ uint(((int(seed) * 21) + int((seed >> 20u)))));
-  values[21] = (uint((int((seed ^ 22u)) * -1640531535)) ^ uint(((int(seed) * 22) + int((seed >> 21u)))));
-  values[22] = (uint((int((seed ^ 23u)) * -1640531535)) ^ uint(((int(seed) * 23) + int((seed >> 22u)))));
-  values[23] = (uint((int((seed ^ 24u)) * -1640531535)) ^ uint(((int(seed) * 24) + int((seed >> 23u)))));
-  values[24] = (uint((int((seed ^ 25u)) * -1640531535)) ^ uint(((int(seed) * 25) + int((seed >> 24u)))));
-  values[25] = (uint((int((seed ^ 26u)) * -1640531535)) ^ uint(((int(seed) * 26) + int((seed >> 25u)))));
-  values[26] = (uint((int((seed ^ 27u)) * -1640531535)) ^ uint(((int(seed) * 27) + int((seed >> 26u)))));
-  values[27] = (uint((int((seed ^ 28u)) * -1640531535)) ^ uint(((int(seed) * 28) + int((seed >> 27u)))));
-  values[28] = (uint((int((seed ^ 29u)) * -1640531535)) ^ uint(((int(seed) * 29) + int((seed >> 28u)))));
-  values[29] = (uint((int((seed ^ 30u)) * -1640531535)) ^ uint(((int(seed) * 30) + int((seed >> 29u)))));
-  values[30] = (uint((int((seed ^ 31u)) * -1640531535)) ^ uint(((int(seed) * 31) + int((seed >> 30u)))));
-  values[31] = (uint((int((seed ^ 32u)) * -1640531535)) ^ uint(((int(seed) << 5u) + int((seed >> 31u)))));
+  int r0;
+  for (r0 = 0; (r0 < 1); r0++) {
+    int t0 = (int(seed) + r0);
+    values[0] = (uint((int((seed ^ 1u)) * -1640531535)) ^ uint((t0 + int(seed))));
+    values[1] = (uint((int((seed ^ 2u)) * -1640531535)) ^ uint(((t0 << 1u) + int((seed >> 1u)))));
+    values[2] = (uint((int((seed ^ 3u)) * -1640531535)) ^ uint(((t0 * 3) + int((seed >> 2u)))));
+    values[3] = (uint((int((seed ^ 4u)) * -1640531535)) ^ uint(((t0 << 2u) + int((seed >> 3u)))));
+    values[4] = (uint((int((seed ^ 5u)) * -1640531535)) ^ uint(((t0 * 5) + int((seed >> 4u)))));
+    values[5] = (uint((int((seed ^ 6u)) * -1640531535)) ^ uint(((t0 * 6) + int((seed >> 5u)))));
+    values[6] = (uint((int((seed ^ 7u)) * -1640531535)) ^ uint(((t0 * 7) + int((seed >> 6u)))));
+    values[7] = (uint((int((seed ^ 8u)) * -1640531535)) ^ uint(((t0 << 3u) + int((seed >> 7u)))));
+    values[8] = (uint((int((seed ^ 9u)) * -1640531535)) ^ uint(((t0 * 9) + int((seed >> 8u)))));
+    values[9] = (uint((int((seed ^ 10u)) * -1640531535)) ^ uint(((t0 * 10) + int((seed >> 9u)))));
+    values[10] = (uint((int((seed ^ 11u)) * -1640531535)) ^ uint(((t0 * 11) + int((seed >> 10u)))));
+    values[11] = (uint((int((seed ^ 12u)) * -1640531535)) ^ uint(((t0 * 12) + int((seed >> 11u)))));
+    values[12] = (uint((int((seed ^ 13u)) * -1640531535)) ^ uint(((t0 * 13) + int((seed >> 12u)))));
+    values[13] = (uint((int((seed ^ 14u)) * -1640531535)) ^ uint(((t0 * 14) + int((seed >> 13u)))));
+    values[14] = (uint((int((seed ^ 15u)) * -1640531535)) ^ uint(((t0 * 15) + int((seed >> 14u)))));
+    values[15] = (uint((int((seed ^ 16u)) * -1640531535)) ^ uint(((t0 << 4u) + int((seed >> 15u)))));
+    values[16] = (uint((int((seed ^ 17u)) * -1640531535)) ^ uint(((t0 * 17) + int((seed >> 16u)))));
+    values[17] = (uint((int((seed ^ 18u)) * -1640531535)) ^ uint(((t0 * 18) + int((seed >> 17u)))));
+    values[18] = (uint((int((seed ^ 19u)) * -1640531535)) ^ uint(((t0 * 19) + int((seed >> 18u)))));
+    values[19] = (uint((int((seed ^ 20u)) * -1640531535)) ^ uint(((t0 * 20) + int((seed >> 19u)))));
+    values[20] = (uint((int((seed ^ 21u)) * -1640531535)) ^ uint(((t0 * 21) + int((seed >> 20u)))));
+    values[21] = (uint((int((seed ^ 22u)) * -1640531535)) ^ uint(((t0 * 22) + int((seed >> 21u)))));
+    values[22] = (uint((int((seed ^ 23u)) * -1640531535)) ^ uint(((t0 * 23) + int((seed >> 22u)))));
+    values[23] = (uint((int((seed ^ 24u)) * -1640531535)) ^ uint(((t0 * 24) + int((seed >> 23u)))));
+    values[24] = (uint((int((seed ^ 25u)) * -1640531535)) ^ uint(((t0 * 25) + int((seed >> 24u)))));
+    values[25] = (uint((int((seed ^ 26u)) * -1640531535)) ^ uint(((t0 * 26) + int((seed >> 25u)))));
+    values[26] = (uint((int((seed ^ 27u)) * -1640531535)) ^ uint(((t0 * 27) + int((seed >> 26u)))));
+    values[27] = (uint((int((seed ^ 28u)) * -1640531535)) ^ uint(((t0 * 28) + int((seed >> 27u)))));
+    values[28] = (uint((int((seed ^ 29u)) * -1640531535)) ^ uint(((t0 * 29) + int((seed >> 28u)))));
+    values[29] = (uint((int((seed ^ 30u)) * -1640531535)) ^ uint(((t0 * 30) + int((seed >> 29u)))));
+    values[30] = (uint((int((seed ^ 31u)) * -1640531535)) ^ uint(((t0 * 31) + int((seed >> 30u)))));
+    values[31] = (uint((int((seed ^ 32u)) * -1640531535)) ^ uint(((t0 << 5u) + int((seed >> 31u)))));
+  }
 }
 
-// stats: 190 alu 0 tex 0 flow
+// stats: 193 alu 0 tex 2 flow
 // workgroup size: 1 1 1
 // uniforms: 1 (total size: 0)
 //  #0: seed (high int) 1x1 [-1]

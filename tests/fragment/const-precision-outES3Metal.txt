@@ -26,15 +26,10 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
       r1 = (((r1 + float3(14.0, 15.0, 16.0)) + t3) + t2);
       if ((short(2) < t1)) {
         r1 = (((r1 + float3(17.0, 18.0, 19.0)) + t3) + t2);
-        if ((short(3) < t1)) {
-          r0 = 3;
-          do {
-            r0 = (r0 + 1);
-          } while ((short(r0) < t1));
+        r2 = float3(12.0, 15.0, 18.0);
+        for (r0 = 3; (short(r0) < t1); r0++) {
           r1 = float3(NAN);
           r2 = float3(NAN);
-        } else {
-          r2 = float3(12.0, 15.0, 18.0);
         }
       } else {
         r2 = float3(5.0, 7.0, 9.0);
@@ -51,6 +46,6 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   return _mtl_o;
 }
 
-// stats: 18 alu 0 tex 6 flow
+// stats: 17 alu 0 tex 5 flow
 // inputs: 1
 //  #0: xlv_TEXCOORD0 (medium float) 2x1 [-1]

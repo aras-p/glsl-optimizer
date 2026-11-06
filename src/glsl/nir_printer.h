@@ -200,7 +200,6 @@ protected:
    bool cf_has_continue(struct exec_list* list);
    std::string loop_cond(nir_src& c, bool exit_when_true);
    int eval_cond_at(nir_def* cond, nir_def* reg, nir_const_value init);
-   nir_intrinsic_instr* const_init_before(nir_loop* loop);
    void emit_loop(nir_loop* loop);
    void emit_cf_list(struct exec_list* list);
    void emit_cf(nir_cf_node* node);

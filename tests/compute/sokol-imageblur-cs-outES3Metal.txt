@@ -72,9 +72,8 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
       int2 t27 = (t4 ? t26.yx : t26);
       int t28 = (t6 + r2);
       if ((((t28 >= int(t2)) && (t28 < (128 - int(t2)))) && all((t27 < t1) == bool2(true)))) {
-        r0 = 0;
         r1 = float3(0.0);
-        for (; (r0 < t0); r0++) {
+        for (r0 = 0; (r0 < t0); r0++) {
           r1 = (r1 + ((1.0 / float(t0)) * tile[r3][((t28 + r0) - int(t2))]));
         }
         cs_outp_tex.write(float4(r1.x, r1.y, r1.z, 1.0), uint2(int4(t27, 0, 0).xy));

@@ -60,9 +60,8 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   int2 t37 = (t22 ? int2(-2, 0) : int2(2, 0));
   int2 t38 = (t25 ? int2(-1) : int2(1));
   int2 t39 = (t28 ? int2(1, -1) : int2(-1, 1));
-  r2 = 0;
   r1 = 0.0;
-  do {
+  for (r2 = 0; (r2 < 32); r2++) {
     float t40 = float(r0.y);
     float t41 = float(r0.x);
     float2 t42 = (t3 - float2(t41, (t40 * 1.7320508)));
@@ -81,8 +80,7 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
     bool t54 = (t47 < min(t50, t51));
     r0 = (r0 + (t54 ? t37 : (t52 ? t38 : t39)));
     r1 = (t54 ? t47 : t53);
-    r2 = (r2 + 1);
-  } while ((r2 < 32));
+  }
   _mtl_o.fragColor = float4(r3.x, r3.y, r3.z, 1.0);
   return _mtl_o;
 }

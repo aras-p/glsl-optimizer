@@ -22,11 +22,7 @@ void main ()
   entries[int(gl_LocalInvocationIndex)].tile.transforms[1][int((gl_LocalInvocationIndex & 1u))].xz = vec2(4.0, 3.0);
   entries[int(gl_LocalInvocationIndex)].tile.transforms[0][0][int((gl_LocalInvocationIndex % 3u))] = 5.0;
   barrier();
-  outputData.values[int(gl_GlobalInvocationID.x)].tile.transforms[0][0] = entries[int((uint((int(gl_LocalInvocationIndex) + 1)) & 7u))].tile.transforms[0][0];
-  outputData.values[int(gl_GlobalInvocationID.x)].tile.transforms[0][1] = entries[int((uint((int(gl_LocalInvocationIndex) + 1)) & 7u))].tile.transforms[0][1];
-  outputData.values[int(gl_GlobalInvocationID.x)].tile.transforms[1][0] = entries[int((uint((int(gl_LocalInvocationIndex) + 1)) & 7u))].tile.transforms[1][0];
-  outputData.values[int(gl_GlobalInvocationID.x)].tile.transforms[1][1] = entries[int((uint((int(gl_LocalInvocationIndex) + 1)) & 7u))].tile.transforms[1][1];
-  outputData.values[int(gl_GlobalInvocationID.x)].tag = entries[int((uint((int(gl_LocalInvocationIndex) + 1)) & 7u))].tag;
+  outputData.values[int(gl_GlobalInvocationID.x)] = entries[int((uint((int(gl_LocalInvocationIndex) + 1)) & 7u))];
 }
 
 // stats: 5 alu 0 tex 0 flow

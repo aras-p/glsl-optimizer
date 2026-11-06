@@ -5,6 +5,7 @@
 #include "compiler/nir/nir.h"
 #include <map>
 #include <set>
+#include <functional>
 #include <vector>
 
 // Compiler options: keep what GLSL/Metal can express, lower what they can't.
@@ -16,6 +17,11 @@ void glslopt_lower_nir(nir_shader* nir);
 
 // Full optimization pipeline; ends out of SSA (registers) for printing.
 void glslopt_optimize_nir(nir_shader* nir);
+
+// Turn runs of leaf-by-leaf copies (store_deref(d.x, load_deref(s.x)) for
+// every leaf x of an aggregate) back into copy_deref(d, s), so they print as
+// one assignment. allow() can reject copies a dialect cannot express.
+void glslopt_combine_copies(nir_shader* nir, const std::function<bool(nir_deref_instr* dst, nir_deref_instr* src)>& allow);
 
 // Variables referenced from the entry point.
 std::set<const nir_variable*> glslopt_referenced_vars(nir_shader* nir);

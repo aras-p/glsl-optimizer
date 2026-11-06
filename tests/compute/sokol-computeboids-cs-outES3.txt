@@ -32,13 +32,12 @@ void main ()
     highp uint t0 = gl_GlobalInvocationID.x;
     highp vec2 t1 = prt_in[int(t0)].pos;
     highp vec2 t2 = prt_in[int(t0)].vel;
-    r0 = 0;
     r3 = 0;
     r1 = 0;
     r5 = vec2(0.0);
     r4 = vec2(0.0);
     r2 = vec2(0.0);
-    for (; (r0 < num_particles); r0++) {
+    for (r0 = 0; (r0 < num_particles); r0++) {
       if ((r0 != int(gl_GlobalInvocationID.x))) {
         highp vec2 t3 = prt_in[r0].pos;
         highp vec2 t4 = (t3 - t1);

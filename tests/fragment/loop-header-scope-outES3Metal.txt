@@ -20,34 +20,27 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   int r4 = 0;
   float r5 = 0;
   int starts[2];
-  int t0 = 0;
   r2 = _mtl_u.values[0];
-  r0 = 0;
-  while (true) {
-    t0 = _mtl_u.bound;
-    if ((r0 >= t0)) {
-      break;
-    }
+  for (r0 = 0; (r0 < _mtl_u.bound); r0++) {
     r2 = (r2 + _mtl_u.values[r0]);
-    r0 = (r0 + 1);
   }
-  for (r1 = 0; (r1 < t0); r1++) {
+  for (r1 = 0; (r1 < _mtl_u.bound); r1++) {
     r2 = (r2 + _mtl_u.values[r1]);
   }
   r5 = (r2 + float(r1));
   r3 = int(r5);
-  int t1 = (r3 + t0);
-  for (; (r3 < t1); r3++) {
+  int t0 = (r3 + _mtl_u.bound);
+  for (; (r3 < t0); r3++) {
     r5 = (r5 + _mtl_u.values[r3]);
   }
   starts[0] = int(r5);
-  starts[1] = t0;
-  uint t2 = (uint(t0) & 1u);
-  r4 = starts[int(t2)];
+  starts[1] = _mtl_u.bound;
+  uint t1 = (uint(_mtl_u.bound) & 1u);
+  r4 = starts[int(t1)];
   if ((0.0 < r5)) {
-    starts[int(t2)] = (r4 + 1);
+    starts[int(t1)] = (r4 + 1);
   }
-  for (; (r4 < t0); r4++) {
+  for (; (r4 < _mtl_u.bound); r4++) {
     r5 = (r5 + (_mtl_u.values[r4] + float(starts[int((uint(r4) & 1u))])));
   }
   _mtl_o.color = float4(r5);

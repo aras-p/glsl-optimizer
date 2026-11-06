@@ -45,11 +45,10 @@ void main ()
         if ((int(t5) != 0)) {
           mediump int t6 = findMSB(t5);
           highp int t7 = (t6 + 1);
-          r0 = (render_elements.data[t3].touches_near ? 0 : findLSB(int(t5)));
           highp int t8 = (render_elements.data[t3].touches_far ? 32 : t7);
           highp int t9 = ((t0 + (int(t4) * (int(params.cluster_screen_size.x) * int(params.cluster_screen_size.y)))) * (int(params.max_cluster_element_count_div_32) + 32));
           highp uint t10 = render_elements.data[t3].original_index;
-          for (; (uint(r0) < uint(t8)); r0++) {
+          for (r0 = (render_elements.data[t3].touches_near ? 0 : findLSB(int(t5))); (uint(r0) < uint(t8)); r0++) {
             highp uint t11 = cluster_store.data[((t9 + int(params.max_cluster_element_count_div_32)) + r0)];
             highp uint t12 = ((int(t11) == 0) ? 65535u : t11);
             cluster_store.data[((t9 + int(params.max_cluster_element_count_div_32)) + r0)] = (min(t10, (t12 & 65535u)) | uint((int(max(uint((int(t10) + 1)), (t12 >> 16u))) << 16u)));

@@ -35,10 +35,9 @@ vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], 
   float3 t1 = (_mtl_u.glstate_matrix_modelview0 * _mtl_i.in_POSITION0).xyz;
   float3 t2 = (float3x3(_mtl_u.glstate_matrix_invtrans_modelview0[0].xyz, _mtl_u.glstate_matrix_invtrans_modelview0[1].xyz, _mtl_u.glstate_matrix_invtrans_modelview0[2].xyz) * _mtl_i.in_NORMAL0.xyz);
   float3 t3 = normalize(t2);
-  r0 = as_type<int4>(float4(t1, 0.0));
   r1 = float4(t3, 0.0);
   r2 = float4(_mtl_u.glstate_lightmodel_ambient.xyz, 0.0);
-  while ((r0.w < 4)) {
+  for (r0 = as_type<int4>(float4(t1, 0.0)); (r0.w < 4); r0 = int4(r0.x, r0.y, r0.z, (r0.w + 1))) {
     int t4 = r0.w;
     float4 t5 = _mtl_u.unity_LightPosition[t4];
     float3 t6 = (t5.xyz - (as_type<float3>(r0.xyz) * t5.w));
@@ -48,7 +47,6 @@ vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], 
     float t10 = max(dot(r1.xyz, t8), 0.0);
     float t11 = (((1.0 / ((t7 * t9.z) + 1.0)) * saturate(((max(dot(t8, _mtl_u.unity_SpotDirection[t4].xyz), 0.0) - t9.x) * t9.y))) * t10);
     float3 t12 = ((_mtl_u.unity_LightColor[t4].xyz * t11) + r2.xyz);
-    r0 = int4(r0.x, r0.y, r0.z, (r0.w + 1));
     r1 = float4(r1.x, r1.y, r1.z, t11);
     r2 = float4(t12, t10);
   }

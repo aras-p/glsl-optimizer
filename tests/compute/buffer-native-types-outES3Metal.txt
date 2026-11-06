@@ -99,8 +99,7 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
   data.entries[int(gl_GlobalInvocationID.x)].transform[2] = t3;
   float4 t4 = float4(sourceData.entry.transform[3]);
   data.entries[int(gl_GlobalInvocationID.x)].transform[3] = t4;
-  data.entries[(1 + int(gl_GlobalInvocationID.x))].pair.a = float4(data.entries[int(gl_GlobalInvocationID.x)].pair.a);
-  data.entries[(1 + int(gl_GlobalInvocationID.x))].pair.b = uint4(data.entries[int(gl_GlobalInvocationID.x)].pair.b);
+  data.entries[(1 + int(gl_GlobalInvocationID.x))].pair = data.entries[int(gl_GlobalInvocationID.x)].pair;
   data.entries[int(gl_GlobalInvocationID.x)].transform[0] = t1;
   data.entries[int(gl_GlobalInvocationID.x)].transform[1] = t2;
   data.entries[int(gl_GlobalInvocationID.x)].transform[2] = t3;

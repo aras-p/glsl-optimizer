@@ -103,8 +103,7 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   if (((max(t28, 0.0) < t29) && (t28 < t22))) {
     float t30 = min(t29, t22);
     r7 = max(t28, 1.0);
-    r8 = 0;
-    while (((r8 < 70) && (r7 < t30))) {
+    for (r8 = 0; ((r8 < 70) && (r7 < t30)); r8++) {
       float3 t31 = (t19 + (t10 * r7));
       float3 t32 = (abs((t31 + float3(2.0, -0.3, -0.25))) - float3(0.3, 0.3, 1.0));
       float3 t33 = max(t32, float3(0.0));
@@ -324,7 +323,6 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
         break;
       }
       r7 = (r7 + r3.x);
-      r8 = (r8 + 1);
       r6 = r5;
     }
   }
@@ -332,9 +330,8 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
     float3 t206 = (t19 + (r51.x * t10));
     bool t207 = (r51.y < 1.5);
     if ((!t207)) {
-      r16 = min(_mtl_u.iFrame, 0);
       r17 = float3(0.0);
-      while ((r16 < 4)) {
+      for (r16 = min(_mtl_u.iFrame, 0); (r16 < 4); r16++) {
         float3 t208 = ((float3(float(int((uint(((r16 + 3) >> int(1u))) & 1u))), float(int((uint((r16 >> int(1u))) & 1u))), float(int((uint(r16) & 1u)))) * 2.0) - 1.0);
         float3 t209 = (t206 + (0.00028865002 * t208));
         float3 t210 = (abs((t209 + float3(2.0, -0.3, -0.25))) - float3(0.3, 0.3, 1.0));
@@ -551,7 +548,6 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
           r12 = ((t379.x < r11) ? t379 : float2(r11, 37.0));
         }
         r17 = (r17 + ((0.5773 * t208) * r12.x));
-        r16 = (r16 + 1);
         r15 = r14;
       }
       r49 = normalize(r17);
@@ -576,8 +572,7 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
     r45 = min(_mtl_u.iFrame, 0);
     r26 = 1.0;
     r27 = 0.0;
-    r25 = r45;
-    while ((r25 < 5)) {
+    for (r25 = r45; (r25 < 5); r25++) {
       float t392 = (0.01 + ((0.12 * float(r25)) / 4.0));
       float3 t393 = (t206 + (t392 * r49));
       float3 t394 = (abs((t393 + float3(2.0, -0.3, -0.25))) - float3(0.3, 0.3, 1.0));
@@ -797,7 +792,6 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
       if ((0.35 < r27)) {
         break;
       }
-      r25 = (r25 + 1);
       r26 = (r26 * 0.95);
       r24 = r23;
     }
@@ -811,8 +805,7 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
     float t575 = ((0.0 < t574) ? min(2.5, t574) : 2.5);
     r37 = 1.0;
     r36 = 0.02;
-    r35 = r45;
-    while ((r35 < 24)) {
+    for (r35 = r45; (r35 < 24); r35++) {
       float3 t576 = (t206 + (float3(-0.5698029, 0.45584232, -0.6837635) * r36));
       float3 t577 = (abs((t576 + float3(2.0, -0.3, -0.25))) - float3(0.3, 0.3, 1.0));
       float3 t578 = max(t577, float3(0.0));
@@ -1032,7 +1025,6 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
       if (((r37 < 0.004) || (t575 < r36))) {
         break;
       }
-      r35 = (r35 + 1);
       r34 = r33;
     }
     float t751 = saturate(r37);
@@ -1046,7 +1038,7 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
     float t759 = ((0.0 < t758) ? min(2.5, t758) : 2.5);
     r47 = 1.0;
     r46 = 0.02;
-    while ((r45 < 24)) {
+    for (; (r45 < 24); r45++) {
       float3 t760 = (t206 + (t385 * r46));
       float3 t761 = (abs((t760 + float3(2.0, -0.3, -0.25))) - float3(0.3, 0.3, 1.0));
       float3 t762 = max(t761, float3(0.0));
@@ -1266,7 +1258,6 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
       if (((r47 < 0.004) || (t759 < r46))) {
         break;
       }
-      r45 = (r45 + 1);
       r44 = r43;
     }
     float t935 = saturate(r47);

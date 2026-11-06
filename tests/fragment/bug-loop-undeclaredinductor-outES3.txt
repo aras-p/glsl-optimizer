@@ -25,7 +25,7 @@ void main ()
           mediump float t2 = ((_HueShift.z * 3.0) + 12.0);
           mediump vec3 t3 = ((r0 - 0.5) * pow((cos(t2) + 1.0), t2));
           mediump float t4 = ((_LuminosityShift.x * 3.0) + 12.0);
-          r0 = ((3.0 == _NumPasses) ? t3 : ((t3 - 0.5) * pow((cos(t4) + 1.0), t4)));
+          r0 = ((3.0 != _NumPasses) ? ((t3 - 0.5) * pow((cos(t4) + 1.0), t4)) : t3);
         }
       }
     } else {

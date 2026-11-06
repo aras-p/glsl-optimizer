@@ -28,11 +28,7 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
         r1 = half3((float3(r1) + (t2 * _mtl_u._TerrainTreeLightColors[2].xyz)));
         if ((short(3) < t1)) {
           r1 = half3((float3(r1) + (t2 * _mtl_u._TerrainTreeLightColors[3].xyz)));
-          if ((short(4) < t1)) {
-            r0 = 4;
-            do {
-              r0 = (r0 + 1);
-            } while ((short(r0) < t1));
+          for (r0 = 4; (short(r0) < t1); r0++) {
             r1 = half3(NAN);
           }
         }
@@ -45,7 +41,7 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   return _mtl_o;
 }
 
-// stats: 19 alu 1 tex 7 flow
+// stats: 18 alu 1 tex 6 flow
 // inputs: 2
 //  #0: xlv_uv (high float) 2x1 [-1]
 //  #1: xlv_nl (high float) 3x1 [-1]

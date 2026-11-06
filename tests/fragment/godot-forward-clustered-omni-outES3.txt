@@ -67,9 +67,8 @@ void main ()
   highp int t9 = ((int(t8) == 0) ? 0 : (int((uint((int(t8) - 1)) >> 5u)) + 1));
   highp vec3 t10 = (-t3);
   highp uint t11 = (t7 & 65535u);
-  r3 = int((t11 >> 5u));
   r4 = vec3(0.0);
-  for (; (uint(r3) < uint(t9)); r3++) {
+  for (r3 = int((t11 >> 5u)); (uint(r3) < uint(t9)); r3++) {
     highp int t12 = (r3 << 5u);
     highp int t13 = min(max((int(t11) - t12), 0), 31);
     highp int t14 = min((int(t8) - int(t11)), (32 - t13));

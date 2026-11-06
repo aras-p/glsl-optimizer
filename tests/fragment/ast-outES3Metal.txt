@@ -17,16 +17,11 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   if ((_mtl_i.gl_FragCoord.x == 1.0)) {
     discard_fragment();
   }
-  r0 = 0;
   r1 = 4.0;
-  while (true) {
-    r0 = (r0 + 1);
-    if ((r0 >= 10)) {
-      break;
-    }
+  for (r0 = 0; (r0 < 10); r0++) {
     r1 = (r1 + 1.0);
   }
-  float t0 = (4.0 + r1);
+  float t0 = (3.0 + r1);
   _mtl_o._fragData = half4(float4(rsqrt((-1.0 - (t0 * t0)))));
   return _mtl_o;
 }

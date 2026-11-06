@@ -27,9 +27,8 @@ void main ()
   } else {
     r0 = vec4(0.0);
   }
-  r2 = 0;
   r3 = vec3(0.0);
-  for (; (uint(r2) < uint(ubo.particleCount)); r2 = (r2 + 256)) {
+  for (r2 = 0; (uint(r2) < uint(ubo.particleCount)); r2 += 256) {
     int t1 = (r2 + int(gl_LocalInvocationID.x));
     if ((uint(t1) < uint(ubo.particleCount))) {
       sharedData[int(gl_LocalInvocationID.x)] = particles[t1].pos;

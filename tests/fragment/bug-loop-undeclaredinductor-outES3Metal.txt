@@ -32,7 +32,7 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
           half t2 = ((_mtl_u._HueShift.z * half(3.0)) + half(12.0));
           half3 t3 = ((r0 - half(0.5)) * pow((cos(t2) + half(1.0)), t2));
           half t4 = ((_mtl_u._LuminosityShift.x * half(3.0)) + half(12.0));
-          r0 = ((half(3.0) == _mtl_u._NumPasses) ? t3 : ((t3 - half(0.5)) * pow((cos(t4) + half(1.0)), t4)));
+          r0 = ((half(3.0) != _mtl_u._NumPasses) ? ((t3 - half(0.5)) * pow((cos(t4) + half(1.0)), t4)) : t3);
         }
       }
     } else {

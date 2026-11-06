@@ -18,15 +18,10 @@ void main ()
       r1 = (((r1 + vec3(14.0, 15.0, 16.0)) + t3) + t2);
       if ((2 < t1)) {
         r1 = (((r1 + vec3(17.0, 18.0, 19.0)) + t3) + t2);
-        if ((3 < t1)) {
-          r0 = 3;
-          do {
-            r0 = (r0 + 1);
-          } while ((r0 < t1));
+        r2 = vec3(12.0, 15.0, 18.0);
+        for (r0 = 3; (r0 < t1); r0++) {
           r1 = vec3((0.0/0.0));
           r2 = vec3((0.0/0.0));
-        } else {
-          r2 = vec3(12.0, 15.0, 18.0);
         }
       } else {
         r2 = vec3(5.0, 7.0, 9.0);
@@ -41,6 +36,6 @@ void main ()
   _glesFragData[0] = vec4(r2.x, r2.y, r1.x, r1.y);
 }
 
-// stats: 18 alu 0 tex 6 flow
+// stats: 17 alu 0 tex 5 flow
 // inputs: 1
 //  #0: xlv_TEXCOORD0 (medium float) 2x1 [-1]

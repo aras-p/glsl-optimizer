@@ -77,10 +77,9 @@ vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], 
   float4 t6 = ((float4(_xlat_blk_UnityPerDraw.glstate_matrix_invtrans_modelview0[2]).xyzx * _mtl_i.dcl_Input1_NORMAL0.z) + t5.xyzx);
   float4 t7 = (rsqrt(dot(t6.xyz, t6.xyz)) * t6.xyzx);
   float4 t8 = float4(_xlat_blk_UnityPerFrame.glstate_lightmodel_ambient);
-  r0 = int4(int3(0), 0);
   r1 = float4(t7.xyz, 0.0);
   r2 = float4(t8.xyz, 0.0);
-  while ((r0.w < 4)) {
+  for (r0 = int4(int3(0), 0); (r0.w < 4); r0 = int4(r0.x, r0.y, r0.z, (r0.w + 1))) {
     int t9 = r0.w;
     float4 t10 = float4(_xlat_blk_UnityLighting.unity_LightPosition[t9]);
     float4 t11 = (t10.xyzx - (t4.xyzx * t10.w));
@@ -88,7 +87,6 @@ vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], 
     float4 t13 = (1.0 / float4(((t12 * float4(_xlat_blk_UnityLighting.unity_LightAtten[t9]).z) + 1.0)));
     float t14 = (max(dot(r1.xyz, (rsqrt(t12) * t11.xyzx).xyz), 0.0) * t13.w);
     float4 t15 = ((float4(_xlat_blk_UnityLighting.unity_LightColor[t9]).xyzx * t14) + r2.xyzx);
-    r0 = int4(r0.x, r0.y, r0.z, (r0.w + 1));
     r1 = float4(r1.x, r1.y, r1.z, t14);
     r2 = float4(t15.xyz, t13.w);
   }

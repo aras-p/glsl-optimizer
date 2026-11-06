@@ -105,7 +105,6 @@ add_library(glsl_optimizer STATIC
     src/compiler/nir/nir_opt_dead_write_vars.c
     src/compiler/nir/nir_opt_gcm.c
     src/compiler/nir/nir_opt_if.c
-    src/compiler/nir/nir_opt_loop.c
     src/compiler/nir/nir_opt_loop_unroll.c
     src/compiler/nir/nir_opt_move.c
     src/compiler/nir/nir_opt_peephole_select.c

@@ -330,7 +330,6 @@ void glslopt_optimize_nir(nir_shader* nir)
       NIR_PASS(progress, nir, nir_opt_dead_cf);
       NIR_PASS(progress, nir, nir_opt_cse);
       NIR_PASS(progress, nir, nir_opt_if, (nir_opt_if_options)0);
-      NIR_PASS(progress, nir, nir_opt_loop);
       NIR_PASS(progress, nir, nir_opt_peephole_select, &peep);
       NIR_PASS(progress, nir, nir_opt_algebraic);
       NIR_PASS(progress, nir, nir_opt_constant_folding);
@@ -374,4 +373,183 @@ std::set<const nir_variable*> glslopt_referenced_vars(nir_shader* nir)
          if (instr->type == nir_instr_type_deref && nir_instr_as_deref(instr)->deref_type == nir_deref_type_var)
             vars.insert(nir_instr_as_deref(instr)->var);
    return vars;
+}
+
+// ---------------------------------------------------------------------------
+// aggregate copies
+
+static unsigned
+count_leaves(const glsl_type* t)
+{
+   if (glsl_type_is_vector_or_scalar(t))
+      return 1;
+   if (glsl_type_is_matrix(t))
+      return glsl_get_matrix_columns(t);
+   if (glsl_type_is_array(t))
+      return glsl_type_is_unsized_array(t) ? 0 : glsl_get_length(t) * count_leaves(glsl_get_array_element(t));
+   if (glsl_type_is_struct(t)) {
+      unsigned n = 0;
+      for (unsigned i = 0; i < glsl_get_length(t); i++) {
+         unsigned c = count_leaves(glsl_get_struct_field(t, i));
+         if (!c) return 0;
+         n += c;
+      }
+      return n;
+   }
+   return 0; // opaque types
+}
+
+static bool
+same_deref(nir_deref_instr* a, nir_deref_instr* b)
+{
+   if (a == b)
+      return true;
+   if (a->deref_type != b->deref_type || a->type != b->type)
+      return false;
+   switch (a->deref_type) {
+   case nir_deref_type_var:
+      return a->var == b->var;
+   case nir_deref_type_struct:
+      return a->strct.index == b->strct.index && same_deref(nir_deref_instr_parent(a), nir_deref_instr_parent(b));
+   case nir_deref_type_array:
+      if (a->arr.index.ssa != b->arr.index.ssa &&
+          !(nir_src_is_const(a->arr.index) && nir_src_is_const(b->arr.index) &&
+            nir_src_as_uint(a->arr.index) == nir_src_as_uint(b->arr.index)))
+         return false;
+      return same_deref(nir_deref_instr_parent(a), nir_deref_instr_parent(b));
+   default:
+      return false;
+   }
+}
+
+// the path from depth k of `d` down to the leaf, as (deref type, index) pairs;
+// empty if the path has dynamic indices or d is shallower than k
+typedef std::vector<nir_deref_instr*> deref_path; // variable first
+
+static deref_path
+make_path(nir_deref_instr* d)
+{
+   deref_path p;
+   for (; d; d = nir_deref_instr_parent(d))
+      p.insert(p.begin(), d);
+   return p;
+}
+
+static bool
+leaf_suffix(const deref_path& p, unsigned k, std::vector<std::pair<int, unsigned>>* out)
+{
+   out->clear();
+   if (p.size() <= k + 1)
+      return false;
+   for (unsigned j = k + 1; j < p.size(); j++) {
+      nir_deref_instr* d = p[j];
+      if (d->deref_type == nir_deref_type_struct)
+         out->push_back({0, d->strct.index});
+      else if (d->deref_type == nir_deref_type_array && nir_src_is_const(d->arr.index))
+         out->push_back({1, (unsigned)nir_src_as_uint(d->arr.index)});
+      else
+         return false;
+   }
+   return true;
+}
+
+struct leaf_copy {
+   nir_intrinsic_instr* store;
+   nir_intrinsic_instr* load;
+   deref_path dst, src;
+};
+
+// store_deref(dst, load_deref(src)) of a whole leaf, with a single-use load
+static bool
+as_leaf_copy(nir_instr* instr, leaf_copy* c)
+{
+   if (instr->type != nir_instr_type_intrinsic)
+      return false;
+   nir_intrinsic_instr* st = nir_instr_as_intrinsic(instr);
+   if (st->intrinsic != nir_intrinsic_store_deref ||
+       nir_intrinsic_write_mask(st) != nir_component_mask(st->num_components))
+      return false;
+   nir_instr* li = nir_def_instr(st->src[1].ssa);
+   if (li->type != nir_instr_type_intrinsic || nir_instr_as_intrinsic(li)->intrinsic != nir_intrinsic_load_deref ||
+       !list_is_singular(&st->src[1].ssa->uses))
+      return false;
+   c->store = st;
+   c->load = nir_instr_as_intrinsic(li);
+   return nir_src_as_deref(c->load->src[0])->type == nir_src_as_deref(st->src[0])->type;
+}
+
+void glslopt_combine_copies(nir_shader* nir, const std::function<bool(nir_deref_instr* dst, nir_deref_instr* src)>& allow)
+{
+   nir_function_impl* impl = nir_shader_get_entrypoint(nir);
+   nir_builder b = nir_builder_create(impl);
+   nir_foreach_block(block, impl) {
+      // runs of consecutive leaf copies (only side-effect free instructions between)
+      std::vector<leaf_copy> run;
+      auto flush = [&]() {
+         size_t i = 0;
+         while (i < run.size()) {
+            leaf_copy& first = run[i];
+            size_t used = 1;
+            // outermost aggregate level whose leaves are exactly the next stores
+            unsigned ddepth = first.dst.size() - 1, sdepth = first.src.size() - 1;
+            for (unsigned k = 0; k < ddepth && used == 1; k++) {
+               if (ddepth - k > sdepth)
+                  continue;
+               nir_deref_instr *dk = first.dst[k], *sk = first.src[sdepth - (ddepth - k)];
+               if (dk->type != sk->type)
+                  continue;
+               unsigned leaves = count_leaves(dk->type);
+               if (leaves < 2 || i + leaves > run.size() || !allow(dk, sk))
+                  continue;
+               std::set<std::vector<std::pair<int, unsigned>>> seen;
+               bool ok = true;
+               for (size_t j = i; j < i + leaves && ok; j++) {
+                  std::vector<std::pair<int, unsigned>> ds, ss;
+                  unsigned sk_depth = sdepth - (ddepth - k);
+                  ok = leaf_suffix(run[j].dst, k, &ds) && leaf_suffix(run[j].src, sk_depth, &ss) && ds == ss &&
+                       same_deref(run[j].dst[k], dk) && same_deref(run[j].src[sk_depth], sk) &&
+                       seen.insert(ds).second;
+               }
+               if (!ok)
+                  continue;
+               b.cursor = nir_before_instr(&first.store->instr);
+               nir_copy_deref(&b, dk, sk);
+               for (size_t j = i; j < i + leaves; j++) {
+                  nir_instr_remove(&run[j].store->instr);
+                  nir_instr_remove(&run[j].load->instr);
+               }
+               used = leaves;
+            }
+            i += used;
+         }
+         run.clear();
+      };
+      nir_foreach_instr_safe(instr, block) {
+         leaf_copy c;
+         if (as_leaf_copy(instr, &c)) {
+            c.dst = make_path(nir_src_as_deref(c.store->src[0]));
+            c.src = make_path(nir_src_as_deref(c.load->src[0]));
+            run.push_back(c);
+            continue;
+         }
+         // loads that feed a later leaf copy belong to the run; other loads
+         // must not move across the combined copy
+         bool pure = instr->type == nir_instr_type_deref || instr->type == nir_instr_type_load_const ||
+                     instr->type == nir_instr_type_alu;
+         if (instr->type == nir_instr_type_intrinsic && nir_instr_as_intrinsic(instr)->intrinsic == nir_intrinsic_load_deref) {
+            nir_def* d = &nir_instr_as_intrinsic(instr)->def;
+            nir_src* use = list_is_singular(&d->uses) ? list_first_entry(&d->uses, nir_src, use_link) : NULL;
+            if (use && !nir_src_is_if(use)) {
+               nir_instr* u = nir_src_use_instr(use);
+               pure = u->block == block && u->type == nir_instr_type_intrinsic &&
+                      nir_instr_as_intrinsic(u)->intrinsic == nir_intrinsic_store_deref;
+            }
+         }
+         if (!pure)
+            flush();
+      }
+      flush();
+   }
+   nir_progress(true, impl, nir_metadata_control_flow);
+   NIR_PASS(_, nir, nir_opt_dce);
 }

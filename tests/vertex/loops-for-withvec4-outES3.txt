@@ -55,10 +55,9 @@ void main ()
   highp vec4 t2 = ((glstate_matrix_modelview0[3].xyzx * dcl_Input0_POSITION0.w) + t1.xyzx);
   highp vec4 t3 = ((glstate_matrix_invtrans_modelview0[2].xyzx * dcl_Input1_NORMAL0.z) + ((glstate_matrix_invtrans_modelview0[0].xyzx * dcl_Input1_NORMAL0.x) + (dcl_Input1_NORMAL0.y * glstate_matrix_invtrans_modelview0[1].xyzx).xyzx).xyzx);
   highp vec4 t4 = (inversesqrt(dot(t3.xyz, t3.xyz)) * t3.xyzx);
-  r0 = ivec4(ivec3(0), 0);
   r1 = vec4(t4.xyz, 0.0);
   r2 = vec4(glstate_lightmodel_ambient.xyz, 0.0);
-  while ((r0.w < 4)) {
+  for (r0 = ivec4(ivec3(0), 0); (r0.w < 4); r0 = ivec4(r0.x, r0.y, r0.z, (r0.w + 1))) {
     highp int t5 = r0.w;
     highp vec4 t6 = unity_LightPosition[t5];
     highp vec4 t7 = (t6.xyzx - (t2.xyzx * t6.w));
@@ -66,7 +65,6 @@ void main ()
     highp vec4 t9 = (1.0 / vec4(((t8 * unity_LightAtten[t5].z) + 1.0)));
     highp float t10 = (max(dot(r1.xyz, (inversesqrt(t8) * t7.xyzx).xyz), 0.0) * t9.w);
     highp vec4 t11 = ((unity_LightColor[t5].xyzx * t10) + r2.xyzx);
-    r0 = ivec4(r0.x, r0.y, r0.z, (r0.w + 1));
     r1 = vec4(r1.x, r1.y, r1.z, t10);
     r2 = vec4(t11.xyz, t9.w);
   }

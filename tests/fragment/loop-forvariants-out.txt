@@ -9,43 +9,30 @@ void main ()
   int r4;
   int r5;
   vec4 r6;
-  vec2 t0;
-  float t3;
-  r0 = 0;
   r6 = vec4(0.0);
-  do {
-    t0 = uv;
-    float t1 = (r6.x + texture2D(mainTex, (t0 + float(r0))).x);
-    r0 = (r0 + 1);
+  for (r0 = 0; (r0 < 100); r0++) {
+    float t0 = (r6.x + texture2D(mainTex, (uv + float(r0))).x);
+    r6 = vec4(t0, r6.y, r6.z, r6.w);
+  }
+  for (r1 = 0; (100 >= r1); r1 += 3) {
+    float t1 = (r6.x + texture2D(mainTex, (uv + float(r1))).x);
     r6 = vec4(t1, r6.y, r6.z, r6.w);
-  } while ((r0 < 100));
-  r1 = 0;
-  do {
-    float t2 = (r6.x + texture2D(mainTex, (t0 + float(r1))).x);
-    r1 = (r1 + 3);
+  }
+  for (r2 = 100; (r2 >= 0); r2--) {
+    float t2 = (r6.x + texture2D(mainTex, (uv + float(r2))).x);
     r6 = vec4(t2, r6.y, r6.z, r6.w);
-  } while ((100 >= r1));
-  r2 = 100;
-  do {
-    t3 = (r6.x + texture2D(mainTex, (t0 + float(r2))).x);
-    r2 = (r2 - 1);
-    r6 = vec4(t3, r6.y, r6.z, r6.w);
-  } while ((r2 >= 0));
-  int t4 = int((t3 * 1e+01));
-  r3 = 3;
-  while ((r3 < t4)) {
-    float t5 = (r6.x + texture2D(mainTex, (t0 + float(r3))).x);
-    r3 = (r3 + 1);
-    r6 = vec4(t5, r6.y, r6.z, r6.w);
+  }
+  int t3 = int((r6.x * 1e+01));
+  for (r3 = 3; (r3 < t3); r3++) {
+    float t4 = (r6.x + texture2D(mainTex, (uv + float(r3))).x);
+    r6 = vec4(t4, r6.y, r6.z, r6.w);
   }
   r5 = 2;
-  r4 = 1;
-  do {
-    float t6 = (r6.x + texture2D(mainTex, (t0 + vec2(float(r4), float(r5)))).x);
+  for (r4 = 1; ((r4 < 100) && (r5 < 50)); r4 += 2) {
+    float t5 = (r6.x + texture2D(mainTex, (uv + vec2(float(r4), float(r5)))).x);
     r5 = (r5 + 3);
-    r4 = (r4 + 2);
-    r6 = vec4(t6, r6.y, r6.z, r6.w);
-  } while (((r4 < 100) && (r5 < 50)));
+    r6 = vec4(t5, r6.y, r6.z, r6.w);
+  }
   gl_FragColor = r6;
 }
 

@@ -14,9 +14,8 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   xlatMtlShaderOutput _mtl_o;
   int r0 = 0;
   half r1 = 0;
-  r0 = ((half(0.5) < _mtl_i.xx) ? 2 : 4);
   r1 = half(0.0);
-  for (; (r0 < 4); r0++) {
+  for (r0 = ((half(0.5) < _mtl_i.xx) ? 2 : 4); (r0 < 4); r0++) {
     r1 = (r1 + _mtl_i.xx);
   }
   _mtl_o._fragData = half4(r1);

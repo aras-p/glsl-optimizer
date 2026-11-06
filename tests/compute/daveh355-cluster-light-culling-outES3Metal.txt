@@ -240,9 +240,8 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
   cluster_lightIndices[97] = t100;
   cluster_lightIndices[98] = t101;
   cluster_lightIndices[99] = t102;
-  r0 = 0;
   r1 = 0;
-  for (; (uint(r0) < uint(t0)); r0++) {
+  for (r0 = 0; (uint(r0) < uint(t0)); r0++) {
     float4 t103 = float4(_xlat_blk_lightSSBO.pointLight[r0].position);
     float4 t104 = (_mtl_u.viewMatrix * t103);
     float t105 = float(_xlat_blk_lightSSBO.pointLight[r0].radius);

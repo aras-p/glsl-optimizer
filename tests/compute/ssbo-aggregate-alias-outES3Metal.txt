@@ -19,12 +19,7 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
   , device _xlat_buf_Data_std430& data [[buffer(1)]]
   , uint3 gl_GlobalInvocationID [[thread_position_in_grid]])
 {
-  uint t0 = uint(data.entries[0].index);
-  data.entries[int(t0)].index = uint(data.entries[(1 + int(gl_GlobalInvocationID.x))].index);
-  data.entries[int(t0)].value = float3(data.entries[(1 + int(gl_GlobalInvocationID.x))].value);
-  data.entries[int(t0)].weights[0] = float(data.entries[(1 + int(gl_GlobalInvocationID.x))].weights[0]);
-  data.entries[int(t0)].weights[1] = float(data.entries[(1 + int(gl_GlobalInvocationID.x))].weights[1]);
-  data.entries[int(t0)].weights[2] = float(data.entries[(1 + int(gl_GlobalInvocationID.x))].weights[2]);
+  data.entries[int(uint(data.entries[0].index))] = data.entries[(1 + int(gl_GlobalInvocationID.x))];
   data.entries[0].weights[0] = float(data.entries[(2 + int(gl_GlobalInvocationID.x))].weights[0]);
   data.entries[0].weights[1] = float(data.entries[(2 + int(gl_GlobalInvocationID.x))].weights[1]);
   data.entries[0].weights[2] = float(data.entries[(2 + int(gl_GlobalInvocationID.x))].weights[2]);

@@ -11,7 +11,7 @@ void main ()
   mediump vec4 t0 = texture(_MainTex, xlv_uv);
   if ((t0.x >= 0.0)) {
     r1 = vec3(0.0);
-    for (r0 = 0.0; (r0 < xlv_uv.x); r0 = (r0 + 1.0)) {
+    for (r0 = 0.0; (r0 < xlv_uv.x); r0 += 1.0) {
       r1 = (r1 + t0.xyz);
     }
   } else {

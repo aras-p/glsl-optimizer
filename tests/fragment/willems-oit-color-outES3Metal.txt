@@ -62,9 +62,8 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
     fragments_depth[r2] = t2;
     fragments_next[r2] = t3;
   }
-  r5 = 0;
   r6 = float4(0.025, 0.025, 0.025, 1.0);
-  for (; (r5 < r4); r5++) {
+  for (r5 = 0; (r5 < r4); r5++) {
     float4 t5 = fragments_color[r5];
     r6 = mix(r6, t5, t5.wwww);
   }

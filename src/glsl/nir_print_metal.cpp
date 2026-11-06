@@ -725,6 +725,14 @@ private:
          buffer_store(in);
          return true;
       }
+      case nir_intrinsic_copy_deref: {
+         // blocks of the same layout: copy the storage structs
+         nir_deref_instr *d = nir_src_as_deref(in->src[0]), *sr = nir_src_as_deref(in->src[1]);
+         if (!is_buffer_var(nir_deref_instr_get_variable(d)))
+            return false;
+         line(buffer_deref(d).expr + " = " + buffer_deref(sr).expr + ";");
+         return true;
+      }
       case nir_intrinsic_load_frag_coord:
          define(&in->def, frag_coord(), false, true);
          return true;

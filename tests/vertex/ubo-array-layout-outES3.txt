@@ -16,8 +16,7 @@ uniform highp int index;
 void main ()
 {
   highp vec2 value_pairs[2];
-  value_pairs[0] = data.items[index].pairs[0];
-  value_pairs[1] = data.items[index].pairs[1];
+  value_pairs = data.items[index].pairs;
   highp vec2 t0 = value_pairs[index];
   highp vec2 t1 = (data.items[index].inner.basis * t0);
   gl_Position = vec4(t1, data.table[index][2], data.items[index].inner.scale);

@@ -21,11 +21,7 @@ void main ()
         r1 = (r1 + (t2 * _TerrainTreeLightColors[2].xyz));
         if ((3 < t1)) {
           r1 = (r1 + (t2 * _TerrainTreeLightColors[3].xyz));
-          if ((4 < t1)) {
-            r0 = 4;
-            do {
-              r0 = (r0 + 1);
-            } while ((r0 < t1));
+          for (r0 = 4; (r0 < t1); r0++) {
             r1 = vec3((0.0/0.0));
           }
         }
@@ -37,7 +33,7 @@ void main ()
   _fragData = vec4(r1.x, r1.y, r1.z, 1.0);
 }
 
-// stats: 19 alu 1 tex 7 flow
+// stats: 18 alu 1 tex 6 flow
 // inputs: 2
 //  #0: xlv_uv (high float) 2x1 [-1]
 //  #1: xlv_nl (high float) 3x1 [-1]

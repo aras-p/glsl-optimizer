@@ -241,6 +241,8 @@ frontend, `glsl_to_nir`, NIR with the passes we run, and the util code they need
   unused passes. A coverage run over the test corpus was used to find code that
   was linked but never executed.
 - GLSL IR optimizations and `lower_precision`: NIR does all optimization.
+- `nir_opt_loop`: it rotates loops into shapes that cannot be printed as `for`
+  loops, with no measurable benefit for our use.
 
 #### Our code (`src/glsl`)
 

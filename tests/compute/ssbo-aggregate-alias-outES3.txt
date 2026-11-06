@@ -10,15 +10,8 @@ layout(std430) buffer Data {
 } data;
 void main ()
 {
-  highp uint t0 = data.entries[0].index;
-  data.entries[int(t0)].index = data.entries[(1 + int(gl_GlobalInvocationID.x))].index;
-  data.entries[int(t0)].value = data.entries[(1 + int(gl_GlobalInvocationID.x))].value;
-  data.entries[int(t0)].weights[0] = data.entries[(1 + int(gl_GlobalInvocationID.x))].weights[0];
-  data.entries[int(t0)].weights[1] = data.entries[(1 + int(gl_GlobalInvocationID.x))].weights[1];
-  data.entries[int(t0)].weights[2] = data.entries[(1 + int(gl_GlobalInvocationID.x))].weights[2];
-  data.entries[0].weights[0] = data.entries[(2 + int(gl_GlobalInvocationID.x))].weights[0];
-  data.entries[0].weights[1] = data.entries[(2 + int(gl_GlobalInvocationID.x))].weights[1];
-  data.entries[0].weights[2] = data.entries[(2 + int(gl_GlobalInvocationID.x))].weights[2];
+  data.entries[int(data.entries[0].index)] = data.entries[(1 + int(gl_GlobalInvocationID.x))];
+  data.entries[0].weights = data.entries[(2 + int(gl_GlobalInvocationID.x))].weights;
 }
 
 // stats: 2 alu 0 tex 0 flow

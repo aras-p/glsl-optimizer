@@ -18,7 +18,7 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   half4 t0 = _MainTex.sample(_mtlsmp__MainTex, _mtl_i.xlv_uv);
   if ((t0.x >= half(0.0))) {
     r1 = half3(0.0);
-    for (r0 = 0.0; (r0 < _mtl_i.xlv_uv.x); r0 = (r0 + 1.0)) {
+    for (r0 = 0.0; (r0 < _mtl_i.xlv_uv.x); r0 += 1.0) {
       r1 = (r1 + t0.xyz);
     }
   } else {

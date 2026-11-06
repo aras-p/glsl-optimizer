@@ -59,12 +59,11 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
         if ((int(t6) != 0)) {
           short t7 = short(int(_xlat_findMSBu(t6)));
           int t8 = int((t7 + short(1)));
-          r0 = (bool(render_elements.data[t4].touches_near) ? 0 : int(_xlat_findLSB(int(t6))));
           int t9 = (bool(render_elements.data[t4].touches_far) ? 32 : t8);
           uint t10 = uint(params.max_cluster_element_count_div_32);
           int t11 = ((t1 + (int(t5) * (int(t0.x) * int(t0.y)))) * (int(t10) + 32));
           uint t12 = uint(render_elements.data[t4].original_index);
-          for (; (uint(r0) < uint(t9)); r0++) {
+          for (r0 = (bool(render_elements.data[t4].touches_near) ? 0 : int(_xlat_findLSB(int(t6)))); (uint(r0) < uint(t9)); r0++) {
             uint t13 = uint(cluster_store.data[((t11 + int(t10)) + r0)]);
             uint t14 = ((int(t13) == 0) ? 65535u : t13);
             cluster_store.data[((t11 + int(t10)) + r0)] = (min(t12, (t14 & 65535u)) | uint((int(max(uint((int(t12) + 1)), (t14 >> uint(16u)))) << int(16u))));

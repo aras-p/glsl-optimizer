@@ -41,17 +41,15 @@ void main ()
   float t5 = (_Params.x / t4);
   vec3 t6 = ((texture2D(_RandomTexture, xlv_TEXCOORD1).xyz * 2.0) - 1.0);
   float t7 = (t2 - 1.0);
-  r0 = 0;
   r1 = 0.0;
-  do {
+  for (r0 = 0; (r0 < 24); r0++) {
     vec3 t8 = param[r0];
     vec3 t9 = (t8 - ((vec3(dot(t6, t8)) * 2.0) * t6));
     vec3 t10 = vec3(t3, t7);
     vec3 t11 = ((t10 * 0.3) - ((dot(t10, t9) < 0.0) ? t9 : (-t9)));
     float t12 = clamp(((t4 - (t11.z * _Params.x)) - (dot(texture2D(_CameraDepthNormalsTexture, (xlv_TEXCOORD0 + (t11.xy * t5))).zw, vec2(1.0, 0.00392157)) * _ProjectionParams.z)), 0.0, 1.0);
     r1 = ((_Params.y < t12) ? (r1 + pow((1.0 - t12), _Params.z)) : r1);
-    r0 = (r0 + 1);
-  } while ((r0 < 24));
+  }
   gl_FragData[0] = vec4((1.0 - (r1 / 24.0)));
 }
 

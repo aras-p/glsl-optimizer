@@ -60,12 +60,11 @@ void main ()
     r4 = (t36 + t35);
     r7 = (0.5 * (t7 + (t32 ? t28 : t29)));
     mediump float t37 = (max(t30, t31) * 0.25);
-    r2 = 0;
     r1 = false;
     r0 = false;
     r6 = r7;
     r5 = r7;
-    do {
+    for (r2 = 0; (r2 < 16); r2++) {
       if ((!r0)) {
         mediump vec4 t38 = textureLod(_MainTex, r3, 0.0);
         r6 = ((t38.y * 1.9632108) + t38.x);
@@ -81,8 +80,7 @@ void main ()
       }
       r3 = (r0 ? r3 : (r3 - t35));
       r4 = (r1 ? r4 : (r4 + t35));
-      r2 = (r2 + 1);
-    } while ((r2 < 16));
+    }
     mediump float t40 = (t26 ? (xlv_TEXCOORD0.x - r3.x) : (xlv_TEXCOORD0.y - r3.y));
     mediump float t41 = (t26 ? (r4.x - xlv_TEXCOORD0.x) : (r4.y - xlv_TEXCOORD0.y));
     mediump float t42 = ((0.5 + (min(t41, t40) * (-1.0 / (t41 + t40)))) * (((t7 < r7) == (((t40 < t41) ? r6 : r5) < r7)) ? 0.0 : t33));

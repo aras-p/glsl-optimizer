@@ -21,72 +21,63 @@ vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], 
   int r1 = 0;
   half3 r2 = 0;
   half4 r3 = 0;
-  int4 t1 = 0;
   half3 t0 = half3(_mtl_i._glesNormal);
-  r0 = 0;
   r2 = half3(0.0);
-  while (true) {
-    t1 = _mtl_u.unity_VertexLightParams;
-    if ((float(r0) >= min(8.0, float(t1.x)))) {
-      break;
-    }
-    half3 t2 = half3(_mtl_u.unity_LightPosition[r0].xyz);
-    r2 = (r2 + min(((half3(max(dot(t0, t2), half(0.0))) * half(0.5)) * _mtl_u.unity_LightColor[r0].xyz), half3(1.0)));
-    r0 = (r0 + 1);
+  for (r0 = 0; (float(r0) < min(8.0, float(_mtl_u.unity_VertexLightParams.x))); r0++) {
+    half3 t1 = half3(_mtl_u.unity_LightPosition[r0].xyz);
+    r2 = (r2 + min(((half3(max(dot(t0, t1), half(0.0))) * half(0.5)) * _mtl_u.unity_LightColor[r0].xyz), half3(1.0)));
   }
-  int t3 = int(min(float(t1.y), 4.0));
-  if ((0 < t3)) {
-    half3 t4 = (r2 + _mtl_u.unity_LightColor[0].xyz);
-    if ((1 < t3)) {
-      half3 t5 = (t4 + _mtl_u.unity_LightColor[1].xyz);
-      if ((2 < t3)) {
-        half3 t6 = (t5 + _mtl_u.unity_LightColor[2].xyz);
-        if ((3 < t3)) {
-          half3 t7 = (t6 + _mtl_u.unity_LightColor[3].xyz);
-          if ((4 < t3)) {
-            half3 t8 = (t7 + _mtl_u.unity_LightColor[4].xyz);
-            if ((5 < t3)) {
-              half3 t9 = (t8 + _mtl_u.unity_LightColor[5].xyz);
-              if ((6 < t3)) {
-                half3 t10 = (t9 + _mtl_u.unity_LightColor[6].xyz);
-                if ((7 < t3)) {
-                  half3 t11 = (t10 + _mtl_u.unity_LightColor[7].xyz);
-                  r3 = half4(t11, half(1.1));
-                  r1 = 8;
-                  while ((r1 < t3)) {
-                    r1 = (r1 + 1);
+  int t2 = int(min(float(_mtl_u.unity_VertexLightParams.y), 4.0));
+  if ((0 < t2)) {
+    half3 t3 = (r2 + _mtl_u.unity_LightColor[0].xyz);
+    if ((1 < t2)) {
+      half3 t4 = (t3 + _mtl_u.unity_LightColor[1].xyz);
+      if ((2 < t2)) {
+        half3 t5 = (t4 + _mtl_u.unity_LightColor[2].xyz);
+        if ((3 < t2)) {
+          half3 t6 = (t5 + _mtl_u.unity_LightColor[3].xyz);
+          if ((4 < t2)) {
+            half3 t7 = (t6 + _mtl_u.unity_LightColor[4].xyz);
+            if ((5 < t2)) {
+              half3 t8 = (t7 + _mtl_u.unity_LightColor[5].xyz);
+              if ((6 < t2)) {
+                half3 t9 = (t8 + _mtl_u.unity_LightColor[6].xyz);
+                if ((7 < t2)) {
+                  half3 t10 = (t9 + _mtl_u.unity_LightColor[7].xyz);
+                  r3 = half4(t10, half(1.1));
+                  for (r1 = 8; (r1 < t2); r1++) {
                     r3 = half4(half(NAN), half(NAN), half(NAN), r3.w);
                   }
                 } else {
-                  r3 = half4(t10, half(1.1));
+                  r3 = half4(t9, half(1.1));
                 }
               } else {
-                r3 = half4(t9, half(1.1));
+                r3 = half4(t8, half(1.1));
               }
             } else {
-              r3 = half4(t8, half(1.1));
+              r3 = half4(t7, half(1.1));
             }
           } else {
-            r3 = half4(t7, half(1.1));
+            r3 = half4(t6, half(1.1));
           }
         } else {
-          r3 = half4(t6, half(1.1));
+          r3 = half4(t5, half(1.1));
         }
       } else {
-        r3 = half4(t5, half(1.1));
+        r3 = half4(t4, half(1.1));
       }
     } else {
-      r3 = half4(t4, half(1.1));
+      r3 = half4(t3, half(1.1));
     }
   } else {
     r3 = half4(r2.x, r2.y, r2.z, half(1.1));
   }
-  if ((0 < t1.y)) {
-    half3 t12 = (r3.xyz * _mtl_u.unity_LightColor[0].xyz);
-    half3 t13 = (t12 * _mtl_u.unity_LightColor[1].xyz);
-    half3 t14 = (t13 * _mtl_u.unity_LightColor[2].xyz);
-    half3 t15 = (t14 * _mtl_u.unity_LightColor[3].xyz);
-    r3 = ((1 < t1.y) ? ((2 < t1.y) ? ((3 < t1.y) ? half4(t15, r3.w) : half4(t14, r3.w)) : half4(t13, r3.w)) : half4(t12, r3.w));
+  if ((0 < _mtl_u.unity_VertexLightParams.y)) {
+    half3 t11 = (r3.xyz * _mtl_u.unity_LightColor[0].xyz);
+    half3 t12 = (t11 * _mtl_u.unity_LightColor[1].xyz);
+    half3 t13 = (t12 * _mtl_u.unity_LightColor[2].xyz);
+    half3 t14 = (t13 * _mtl_u.unity_LightColor[3].xyz);
+    r3 = ((1 < _mtl_u.unity_VertexLightParams.y) ? ((2 < _mtl_u.unity_VertexLightParams.y) ? ((3 < _mtl_u.unity_VertexLightParams.y) ? half4(t14, r3.w) : half4(t13, r3.w)) : half4(t12, r3.w)) : half4(t11, r3.w));
   }
   _mtl_o.xlv_COLOR0 = r3;
   _mtl_o.gl_Position = float4(_mtl_i._glesVertex.xyz, 1.0);

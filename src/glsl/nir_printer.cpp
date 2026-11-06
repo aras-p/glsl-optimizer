@@ -1480,7 +1480,7 @@ void nir_printer::define(nir_def* def, const std::string& e, bool reads_memory, 
       expr[idx] = e;
       return;
    }
-   if (!force_temp && cheap && !reads_mutable && !escapes_scope(def)) {
+   if (!force_temp && cheap && !reads_mutable) {
       // read-only names (uniforms/inputs) are fine to repeat anywhere
       expr[idx] = e;
       return;
@@ -1657,6 +1657,9 @@ void nir_printer::emit_intrinsic(nir_intrinsic_instr* in)
       line(deref_str(d) + mask_str(mask, n) + " = " + masked_value(in->src[1], mask, n, bt_from_glsl(d->type), p) + ";");
       return;
    }
+   case nir_intrinsic_copy_deref:
+      line(deref_str(nir_src_as_deref(in->src[0])) + " = " + deref_str(nir_src_as_deref(in->src[1])) + ";");
+      return;
    case nir_intrinsic_terminate: case nir_intrinsic_demote:
       line(discard_stmt());
       return;
@@ -1748,30 +1751,6 @@ is_break_if(nir_cf_node* n, nir_if** out, bool* exit_when_true)
    return false;
 }
 
-// last line of buf without indentation; *start is where it begins
-static std::string
-peek_last_line(const std::string& buf, size_t* start = NULL)
-{
-   if (buf.empty() || buf.back() != '\n')
-      return "";
-   size_t b = buf.size() >= 2 ? buf.rfind('\n', buf.size() - 2) : std::string::npos;
-   b = b == std::string::npos ? 0 : b + 1;
-   if (start)
-      *start = b;
-   size_t f = buf.find_first_not_of(' ', b);
-   return f >= buf.size() - 1 ? "" : buf.substr(f, buf.size() - 1 - f);
-}
-
-static std::string
-pop_last_line(std::string& buf)
-{
-   size_t start = 0;
-   std::string l = peek_last_line(buf, &start);
-   if (!buf.empty() && buf.back() == '\n')
-      buf.erase(start);
-   return l;
-}
-
 // `rN = <expr>;` assigning register name
 static bool
 is_reg_assign(const std::string& l, std::string* reg)
@@ -1793,6 +1772,12 @@ pretty_incr(const std::string& l, const std::string& reg)
    std::string body = l.substr(0, l.size() - 1); // drop ';'
    if (body == reg + " = (" + reg + " + 1)") return reg + "++";
    if (body == reg + " = (" + reg + " - 1)") return reg + "--";
+   // rN = (rN + k)  ->  rN += k
+   for (const char* op : {" + ", " - "}) {
+      std::string pre = reg + " = (" + reg + op;
+      if (body.compare(0, pre.size(), pre) == 0 && body.back() == ')' && body.find(' ', pre.size()) == std::string::npos)
+         return reg + " " + op[1] + "= " + body.substr(pre.size(), body.size() - pre.size() - 1);
+   }
    return body;
 }
 
@@ -1881,20 +1866,87 @@ int nir_printer::eval_cond_at(nir_def* cond, nir_def* reg, nir_const_value init)
    }
 }
 
-// last instruction before the loop: `store_reg(const, reg)`?
-nir_intrinsic_instr* nir_printer::const_init_before(nir_loop* loop)
+// Loop counters in printed text. NIR schedules the counter update anywhere in
+// the body, and its initialization anywhere before the loop; both can move
+// into a `for` header when nothing in between mentions the counter.
+
+static std::vector<std::string>
+split_lines(const std::string& t)
 {
-   nir_cf_node* prev = nir_cf_node_prev(&loop->cf_node);
-   if (!prev || prev->type != nir_cf_node_block)
-      return NULL;
-   nir_instr* last = nir_block_last_instr(nir_cf_node_as_block(prev));
-   if (!last || last->type != nir_instr_type_intrinsic)
-      return NULL;
-   nir_intrinsic_instr* st = nir_instr_as_intrinsic(last);
-   if (st->intrinsic != nir_intrinsic_store_reg || st->src[0].ssa->num_components != 1 ||
-       nir_def_instr(st->src[0].ssa)->type != nir_instr_type_load_const)
-      return NULL;
-   return st;
+   std::vector<std::string> l;
+   for (size_t p = 0; p < t.size();) {
+      size_t e = t.find('\n', p);
+      l.push_back(t.substr(p, e - p));
+      p = e + 1;
+   }
+   return l;
+}
+
+static std::string
+join_lines(const std::vector<std::string>& l)
+{
+   std::string t;
+   for (const std::string& x : l)
+      t += x + "\n";
+   return t;
+}
+
+static bool
+at_indent(const std::string& l, size_t n)
+{
+   return l.size() > n && l.compare(0, n, std::string(n, ' ')) == 0 && l[n] != ' ';
+}
+
+// the last statement `<reg> = ...;` at indentation n of text, for want_reg
+// or else a register mentioned in `cond`, where nothing after it mentions reg
+// (or breaks out of a loop, if no_break_after); removed from text and returned
+// without ';'
+static bool
+take_reg_assign(std::string& text, size_t n, const std::string& want_reg, const std::string& cond,
+                bool no_break_after, std::string* reg, std::string* stmt)
+{
+   std::vector<std::string> l = split_lines(text);
+   for (size_t i = l.size(); i-- > 0;) {
+      size_t f = l[i].find_first_not_of(' ');
+      if (f != std::string::npos && f < n)
+         return false; // start of the enclosing scope
+      std::string r;
+      if (!at_indent(l[i], n) || !is_reg_assign(l[i].substr(n), &r) ||
+          (!want_reg.empty() ? r != want_reg : !mentions(cond, r))) {
+         if (!want_reg.empty() ? mentions(l[i], want_reg) : false)
+            return false;
+         if (no_break_after && l[i].find("break;") != std::string::npos)
+            return false;
+         continue;
+      }
+      // later lines must not mention this register
+      for (size_t j = i + 1; j < l.size(); j++)
+         if (mentions(l[j], r))
+            return false;
+      *reg = r;
+      *stmt = l[i].substr(n, l[i].size() - n - 1);
+      l.erase(l.begin() + i);
+      text = join_lines(l);
+      return true;
+   }
+   return false;
+}
+
+// value of a literal printed by const_comp: int, uint or float
+static bool
+parse_literal(const std::string& t, nir_const_value* v)
+{
+   char* end;
+   long i = strtol(t.c_str(), &end, 10);
+   if (*end == 0 || (*end == 'u' && end[1] == 0)) {
+      *v = nir_const_value_for_int(i, 32);
+      return !t.empty();
+   }
+   double d = strtod(t.c_str(), &end);
+   if (*end != 0 || t.empty())
+      return false;
+   *v = nir_const_value_for_float(d, 32);
+   return true;
 }
 
 void nir_printer::emit_loop(nir_loop* loop)
@@ -1939,17 +1991,14 @@ void nir_printer::emit_loop(nir_loop* loop)
          body.swap(out);
          ind--;
          out.swap(saved);
-         std::string reg, incr, init;
-         std::string last = peek_last_line(body);
-         if (is_reg_assign(last, &reg) && mentions(cond, reg) && !uses_body_decl(last, body)) {
-            incr = pretty_incr(pop_last_line(body), reg);
-            std::string r2, before = peek_last_line(out);
-            if (is_reg_assign(before, &r2) && r2 == reg) {
-               init = pop_last_line(out);
-               init.pop_back();
-            }
-            line("for (" + init + "; " + cond + "; " + incr + ") {");
+         std::string reg, incr, init, r2;
+         std::string body0 = body;
+         size_t inner = (ind + 1) * 2;
+         if (take_reg_assign(body, inner, "", cond, true, &reg, &incr) && mentions(cond, reg) && !uses_body_decl(incr, body0)) {
+            take_reg_assign(out, ind * 2, reg, "", false, &r2, &init);
+            line("for (" + init + "; " + cond + "; " + pretty_incr(incr + ";", reg) + ") {");
          } else {
+            body = body0;
             line("while (" + cond + ") {");
          }
          out += body;
@@ -1983,24 +2032,26 @@ void nir_printer::emit_loop(nir_loop* loop)
          body.swap(out);
          ind--;
          out.swap(saved);
-         // for loop if first iteration's test provably passes
-         nir_intrinsic_instr* init_st = const_init_before(loop);
-         nir_def* reg = init_st ? init_st->src[1].ssa : NULL;
-         std::string r1, r2, last = peek_last_line(body), before = peek_last_line(out);
-         if (init_st && is_reg_assign(last, &r1) && is_reg_assign(before, &r2) && r1 == r2 &&
-             r1 == name[reg->index] && mentions(cond, r1) && !uses_body_decl(last, body)) {
-            nir_const_value iv = nir_instr_as_load_const(nir_def_instr(init_st->src[0].ssa))->value[0];
-            int exit_now = eval_cond_at(brk->condition.ssa, reg, iv);
-            if (exit_now == (exit_true ? 0 : 1)) {
-               std::string incr = pretty_incr(pop_last_line(body), r1);
-               std::string init = pop_last_line(out);
-               init.pop_back();
-               line("for (" + init + "; " + cond + "; " + incr + ") {");
+         // for loop if the first iteration's test provably passes: the counter
+         // starts at a constant for which the exit test is false
+         std::string reg, incr, init, r2, body0 = body, out0 = out;
+         size_t inner = (ind + 1) * 2;
+         nir_const_value iv;
+         if (take_reg_assign(body, inner, "", cond, true, &reg, &incr) && mentions(cond, reg) && !uses_body_decl(incr, body0) &&
+             take_reg_assign(out, ind * 2, reg, "", false, &r2, &init) &&
+             parse_literal(init.substr(reg.size() + 3), &iv)) {
+            nir_def* rdef = NULL;
+            nir_foreach_reg_decl(decl, impl)
+               if (name[decl->def.index] == reg) rdef = &decl->def;
+            if (rdef && eval_cond_at(brk->condition.ssa, rdef, iv) == (exit_true ? 0 : 1)) {
+               line("for (" + init + "; " + cond + "; " + pretty_incr(incr + ";", reg) + ") {");
                out += body;
                line("}");
                return;
             }
          }
+         body = body0;
+         out = out0;
          line("do {");
          out += body;
          line("} while (" + cond + ");");

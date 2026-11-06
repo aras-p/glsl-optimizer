@@ -4,20 +4,11 @@ void main ()
   int r0;
   int r1;
   vec4 r2;
-  int t0;
   r2 = vec4(0.0);
-  r0 = 1;
-  while (true) {
-    t0 = loopNum;
-    if ((r0 >= t0)) {
-      break;
-    }
-    r0 = (r0 + 1);
+  for (r0 = 1; (r0 < loopNum); r0++) {
     r2 = vec4((r2.x + 1.0), (r2.y + 2.0), (r2.z + 3.0), r2.w);
   }
-  r1 = 2;
-  while ((r1 < t0)) {
-    r1 = (r1 + 1);
+  for (r1 = 2; (r1 < loopNum); r1++) {
     r2 = vec4((r2.x + 1.0), (r2.y + 2.0), (r2.z + 3.0), r2.w);
   }
   gl_FragColor = r2;

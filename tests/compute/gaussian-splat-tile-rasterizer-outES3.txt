@@ -43,10 +43,9 @@ void main ()
     }
     barrier();
     highp uint t7 = (uint((255 + t5)) >> 8u);
-    r1 = 0;
     r2 = 1.0;
     r3 = vec3(0.0);
-    for (; ((uint(r1) < t7) && (255u < shared_t)); r1++) {
+    for (r1 = 0; ((uint(r1) < t7) && (255u < shared_t)); r1++) {
       highp int t8 = (r1 << 8u);
       highp int t9 = (t5 - t8);
       barrier();

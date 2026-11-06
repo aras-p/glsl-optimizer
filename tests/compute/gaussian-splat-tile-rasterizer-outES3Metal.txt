@@ -57,10 +57,9 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
     }
     threadgroup_barrier(mem_flags::mem_threadgroup);
     uint t7 = (uint((255 + t5)) >> uint(8u));
-    r1 = 0;
     r2 = 1.0;
     r3 = float3(0.0);
-    for (; ((uint(r1) < t7) && (255u < shared_t)); r1++) {
+    for (r1 = 0; ((uint(r1) < t7) && (255u < shared_t)); r1++) {
       int t8 = (r1 << int(8u));
       int t9 = (t5 - t8);
       threadgroup_barrier(mem_flags::mem_threadgroup);

@@ -62,9 +62,8 @@ void main ()
       highp ivec2 t26 = (t3 ? t25.yx : t25);
       highp int t27 = (t5 + r2);
       if ((((t27 >= int(t1)) && (t27 < (128 - int(t1)))) && (lessThan(t26, t0) == bvec2(true)))) {
-        r0 = 0;
         r1 = vec3(0.0);
-        for (; (r0 < filter_dim); r0++) {
+        for (r0 = 0; (r0 < filter_dim); r0++) {
           r1 = (r1 + ((1.0 / float(filter_dim)) * tile[r3][((t27 + r0) - int(t1))]));
         }
         imageStore(cs_outp_tex, ivec4(t26, 0, 0).xy, vec4(r1.x, r1.y, r1.z, 1.0));

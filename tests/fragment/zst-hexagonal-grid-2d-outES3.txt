@@ -52,9 +52,8 @@ void main ()
   highp ivec2 t37 = (t22 ? ivec2(-2, 0) : ivec2(2, 0));
   highp ivec2 t38 = (t25 ? ivec2(-1) : ivec2(1));
   highp ivec2 t39 = (t28 ? ivec2(1, -1) : ivec2(-1, 1));
-  r2 = 0;
   r1 = 0.0;
-  do {
+  for (r2 = 0; (r2 < 32); r2++) {
     highp float t40 = float(r0.y);
     highp float t41 = float(r0.x);
     highp vec2 t42 = (t3 - vec2(t41, (t40 * 1.7320508)));
@@ -72,8 +71,7 @@ void main ()
     bool t53 = (t46 < min(t49, t50));
     r0 = (r0 + (t53 ? t37 : (t51 ? t38 : t39)));
     r1 = (t53 ? t46 : t52);
-    r2 = (r2 + 1);
-  } while ((r2 < 32));
+  }
   fragColor = vec4(r3.x, r3.y, r3.z, 1.0);
 }
 

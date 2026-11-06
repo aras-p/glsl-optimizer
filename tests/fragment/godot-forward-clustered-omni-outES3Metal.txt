@@ -84,9 +84,8 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   int t12 = ((int(t11) == 0) ? 0 : (int((uint((int(t11) - 1)) >> uint(5u))) + 1));
   float3 t13 = (-t3);
   uint t14 = (t10 & 65535u);
-  r3 = int((t14 >> uint(5u)));
   r4 = float3(0.0);
-  for (; (uint(r3) < uint(t12)); r3++) {
+  for (r3 = int((t14 >> uint(5u))); (uint(r3) < uint(t12)); r3++) {
     int t15 = (r3 << int(5u));
     int t16 = min(max((int(t14) - t15), 0), 31);
     int t17 = min((int(t11) - int(t14)), (32 - t16));

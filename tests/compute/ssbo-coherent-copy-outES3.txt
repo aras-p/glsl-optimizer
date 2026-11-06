@@ -15,16 +15,8 @@ layout(std140, binding = 0) coherent buffer Input {
 } inputData[2];
 void main ()
 {
-  ordinary.value.transform[0] = inputData[1].value.transform[0];
-  ordinary.value.transform[1] = inputData[1].value.transform[1];
-  ordinary.value.transform[2] = inputData[1].value.transform[2];
-  ordinary.value.transform[3] = inputData[1].value.transform[3];
-  ordinary.value.color = inputData[1].value.color;
-  outputData.value.transform[0] = ordinary.value.transform[0];
-  outputData.value.transform[1] = ordinary.value.transform[1];
-  outputData.value.transform[2] = ordinary.value.transform[2];
-  outputData.value.transform[3] = ordinary.value.transform[3];
-  outputData.value.color = ordinary.value.color;
+  ordinary.value = inputData[1].value;
+  outputData.value = ordinary.value;
 }
 
 // stats: 0 alu 0 tex 0 flow

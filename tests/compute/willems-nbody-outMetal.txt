@@ -39,9 +39,8 @@ kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
   } else {
     r0 = float4(0.0);
   }
-  r2 = 0;
   r3 = float3(0.0);
-  for (; (uint(r2) < uint(t0)); r2 = (r2 + 256)) {
+  for (r2 = 0; (uint(r2) < uint(t0)); r2 += 256) {
     int t2 = (r2 + int(gl_LocalInvocationID.x));
     if ((uint(t2) < uint(t0))) {
       sharedData[int(gl_LocalInvocationID.x)] = float4(_xlat_blk_Pos.particles[t2].pos);

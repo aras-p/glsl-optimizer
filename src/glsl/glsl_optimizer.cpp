@@ -822,6 +822,37 @@ glslopt_shader* glslopt_optimize(glslopt_ctx* ctx, glslopt_shader_type type, con
    }
 
    glslopt_optimize_nir(nir);
+   // aggregate copies print as one assignment where the dialect can express them
+   glslopt_combine_copies(nir, [&](nir_deref_instr* dst, nir_deref_instr* src) {
+      nir_variable* dv = nir_deref_instr_get_variable(dst);
+      nir_variable* sv = nir_deref_instr_get_variable(src);
+      if (!dv || !sv)
+         return false;
+      if (!metal)
+         return !glsl_type_is_array(dst->type) || info.es || info.version >= 120;
+      // Metal: C arrays do not assign, blocks have storage-layout structs, shared
+      // matrices are column arrays
+      if (glsl_type_is_array(dst->type))
+         return false;
+      bool dbuf = dv->data.mode & (nir_var_mem_ubo | nir_var_mem_ssbo), sbuf = sv->data.mode & (nir_var_mem_ubo | nir_var_mem_ssbo);
+      if (dbuf || sbuf)
+         return dbuf && sbuf && dv->interface_type == sv->interface_type;
+      auto has_matrix = [](const glsl_type* t) {
+         std::function<bool(const glsl_type*)> f = [&](const glsl_type* t) {
+            if (glsl_type_is_matrix(t)) return true;
+            if (glsl_type_is_array(t)) return f(glsl_get_array_element(t));
+            for (unsigned i = 0; glsl_type_is_struct(t) && i < glsl_get_length(t); i++)
+               if (f(glsl_get_struct_field(t, i))) return true;
+            return false;
+         };
+         return f(t);
+      };
+      if ((dv->data.mode == nir_var_mem_shared || sv->data.mode == nir_var_mem_shared) && has_matrix(dst->type))
+         return false;
+      // half vs float aggregates do not assign
+      auto p = [](nir_deref_instr* d) { return glslopt_precision_info::norm(glslopt_precision_info::deref_prec(d)) == GLSL_PRECISION_MEDIUM; };
+      return p(dst) == p(src);
+   });
    usage_info usage = collect_usage(nir);
    glslopt_metal_layout layout;
    std::string optText = metal ? glslopt_print_metal(nir, info, layout) : glslopt_print_glsl(nir, info);
