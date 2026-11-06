@@ -1,0 +1,23 @@
+#version 330
+uniform samplerBuffer buffer_texture;
+uniform sampler2DRect rectangle_texture;
+uniform sampler2DMS multisample_texture;
+uniform int sample_index;
+out vec4 color;
+void main ()
+{
+  ivec2 tmpvar_1;
+  tmpvar_1 = ivec2(gl_FragCoord.xy);
+  color = ((texelFetch (buffer_texture, tmpvar_1.x) + texelFetch (rectangle_texture, tmpvar_1)) + texelFetch (multisample_texture, tmpvar_1, sample_index));
+}
+
+
+// stats: 3 alu 3 tex 0 flow
+// inputs: 1
+//  #0: gl_FragCoord (high float) 4x1 [-1] loc 0
+// uniforms: 1 (total size: 0)
+//  #0: sample_index (high int) 1x1 [-1]
+// textures: 3
+//  #0: buffer_texture (high other) 0x0 [-1]
+//  #1: rectangle_texture (high other) 0x0 [-1]
+//  #2: multisample_texture (high other) 0x0 [-1]

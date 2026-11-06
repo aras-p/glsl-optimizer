@@ -1,0 +1,14 @@
+#version 330
+uniform samplerBuffer buffer_texture;
+uniform sampler2DRect rectangle_texture;
+uniform sampler2DMS multisample_texture;
+uniform int sample_index;
+out vec4 color;
+
+void main()
+{
+    ivec2 pixel = ivec2(gl_FragCoord.xy);
+    color = texelFetch(buffer_texture, pixel.x)
+          + texelFetch(rectangle_texture, pixel)
+          + texelFetch(multisample_texture, pixel, sample_index);
+}

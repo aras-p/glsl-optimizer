@@ -965,6 +965,9 @@ void ir_print_glsl_visitor::visit(ir_expression *ir)
 void ir_print_glsl_visitor::visit(ir_texture *ir)
 {
    glsl_sampler_dim sampler_dim = (glsl_sampler_dim)ir->sampler->type->sampler_dimensionality;
+   const bool has_lod = sampler_dim != GLSL_SAMPLER_DIM_RECT &&
+                        sampler_dim != GLSL_SAMPLER_DIM_BUF &&
+                        sampler_dim != GLSL_SAMPLER_DIM_MS;
    const bool is_shadow = ir->sampler->type->sampler_shadow;
    const bool is_array = ir->sampler->type->sampler_array;
 
@@ -979,7 +982,7 @@ void ir_print_glsl_visitor::visit(ir_texture *ir)
    {
       buffer.asprintf_append("textureSize (");
       ir->sampler->accept(this);
-      if ((sampler_dim != GLSL_SAMPLER_DIM_RECT && sampler_dim != GLSL_SAMPLER_DIM_BUF && sampler_dim != GLSL_SAMPLER_DIM_MS))
+      if (has_lod)
       {
          buffer.asprintf_append(", ");
          ir->lod_info.lod->accept(this);
@@ -1045,7 +1048,7 @@ void ir_print_glsl_visitor::visit(ir_texture *ir)
    if (separate_shadow) { buffer.asprintf_append(", "); ir->shadow_comparator->accept(this); }
 
    // lod
-   if (ir->op == ir_txl || ir->op == ir_txf)
+   if (has_lod && (ir->op == ir_txl || ir->op == ir_txf))
    {
       buffer.asprintf_append (", ");
       ir->lod_info.lod->accept(this);

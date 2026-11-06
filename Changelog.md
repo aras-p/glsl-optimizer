@@ -49,6 +49,7 @@ Fixed:
 * Metal output now preserves explicit vertex attribute locations.
 * Fixed `bitfieldExtract` and `bitfieldInsert` handling.
 * Fixed Metal unsigned integer literals losing their unsigned type.
+* Fixed GLSL `texelFetch` for buffer and rectangle textures.
 
 2016 10
 -------
