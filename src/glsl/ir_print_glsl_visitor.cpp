@@ -569,9 +569,14 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 
    if (this->state->language_version >= 300 && ir->data.explicit_location && strncmp(ir->name, "gl_", 3) != 0)
    {
-      const int binding_base = (this->state->stage == MESA_SHADER_VERTEX ? (int)VERT_ATTRIB_GENERIC0 : (int)FRAG_RESULT_DATA0);
-      const int location = ir->data.location - (ir->data.mode == ir_var_uniform ? 0 : binding_base);
-      buffer.asprintf_append ("layout(location=%d) ", location);
+      int base = VARYING_SLOT_VAR0;
+      if (ir->data.mode == ir_var_uniform)
+         base = 0;
+      else if (state->stage == MESA_SHADER_VERTEX && input)
+         base = VERT_ATTRIB_GENERIC0;
+      else if (state->stage == MESA_SHADER_FRAGMENT && ir->data.mode == ir_var_shader_out)
+         base = FRAG_RESULT_DATA0;
+      buffer.asprintf_append("layout(location=%d) ", ir->data.location - base);
    }
 
    // give an id to any variable defined in a function that is not an uniform

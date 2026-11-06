@@ -45,6 +45,7 @@ Fixed:
 * Fixed Metal output being incorrect for multiple `gl_FragData` outputs in some cases (#114).
 * Fixed broadcast of scalar bool not being correct in some cases (#73).
 * Fixed precision for constant literals being dropped in some cases (#90).
+* Fixed GLSL explicit varying locations not being respected.
 
 2016 10
 -------
