@@ -1,0 +1,58 @@
+#version 310 es
+layout(local_size_x=1) in;
+layout(std430, column_major, binding=0) buffer Data {
+  highp uint u;
+  highp int s;
+  highp uvec2 uv;
+  highp ivec2 sv;
+  highp int offset;
+  highp int width;
+  highp uvec4 unsigned_results;
+  highp ivec4 signed_results;
+  highp ivec4 scan_results;
+  highp ivec4 vector_scan_results;
+  highp uvec2 unsigned_insert;
+  highp ivec2 signed_insert;
+} data;
+void main ()
+{
+  highp uvec4 tmpvar_1;
+  tmpvar_1.x = bitfieldExtract (data.u, int(uint(data.offset)), int(uint(data.width)));
+  tmpvar_1.y = bitfieldInsert (data.u, data.uv.x, int(uint(data.offset)), int(uint(data.width)));
+  tmpvar_1.zw = bitfieldExtract (data.uv, int((uvec2(uint(data.offset))).x), int((uvec2(uint(data.width))).x));
+  data.unsigned_results = tmpvar_1;
+  highp ivec4 tmpvar_2;
+  tmpvar_2.x = bitfieldExtract (data.s, data.offset, data.width);
+  tmpvar_2.y = bitfieldInsert (data.s, data.sv.x, data.offset, data.width);
+  tmpvar_2.zw = bitfieldExtract (data.sv, (ivec2(data.offset)).x, (ivec2(data.width)).x);
+  data.signed_results = tmpvar_2;
+  data.unsigned_insert = bitfieldInsert (data.uv, uvec2(data.u), int((uvec2(uint(data.offset))).x), int((uvec2(uint(data.width))).x));
+  data.signed_insert = bitfieldInsert (data.sv, ivec2(data.s), (ivec2(data.offset)).x, (ivec2(data.width)).x);
+  highp ivec4 tmpvar_3;
+  tmpvar_3.x = findLSB(data.u);
+  tmpvar_3.y = findMSB(data.u);
+  tmpvar_3.z = findLSB(data.s);
+  tmpvar_3.w = findMSB(data.s);
+  data.scan_results = tmpvar_3;
+  highp ivec4 tmpvar_4;
+  tmpvar_4.xy = findLSB(data.uv);
+  tmpvar_4.zw = findMSB(data.sv);
+  data.vector_scan_results = tmpvar_4;
+}
+
+
+// stats: 22 alu 0 tex 0 flow
+// workgroup size: 1 1 1
+// buffer #0: Data storage instance data layout std430 binding 0 (size: 112)
+//  member #0: uint u offset 0
+//  member #1: int s offset 4
+//  member #2: uvec2 uv offset 8
+//  member #3: ivec2 sv offset 16
+//  member #4: int offset offset 24
+//  member #5: int width offset 28
+//  member #6: uvec4 unsigned_results offset 32
+//  member #7: ivec4 signed_results offset 48
+//  member #8: ivec4 scan_results offset 64
+//  member #9: ivec4 vector_scan_results offset 80
+//  member #10: uvec2 unsigned_insert offset 96
+//  member #11: ivec2 signed_insert offset 104

@@ -1,0 +1,35 @@
+#version 310 es
+precision highp float;
+precision highp int;
+
+layout(local_size_x = 1) in;
+layout(std430, binding = 0) buffer Data {
+    uint u;
+    int s;
+    uvec2 uv;
+    ivec2 sv;
+    int offset;
+    int width;
+    uvec4 unsigned_results;
+    ivec4 signed_results;
+    ivec4 scan_results;
+    ivec4 vector_scan_results;
+    uvec2 unsigned_insert;
+    ivec2 signed_insert;
+} data;
+
+void main()
+{
+    data.unsigned_results = uvec4(
+        bitfieldExtract(data.u, data.offset, data.width),
+        bitfieldInsert(data.u, data.uv.x, data.offset, data.width),
+        bitfieldExtract(data.uv, data.offset, data.width));
+    data.signed_results = ivec4(
+        bitfieldExtract(data.s, data.offset, data.width),
+        bitfieldInsert(data.s, data.sv.x, data.offset, data.width),
+        bitfieldExtract(data.sv, data.offset, data.width));
+    data.unsigned_insert = bitfieldInsert(data.uv, uvec2(data.u), data.offset, data.width);
+    data.signed_insert = bitfieldInsert(data.sv, ivec2(data.s), data.offset, data.width);
+    data.scan_results = ivec4(findLSB(data.u), findMSB(data.u), findLSB(data.s), findMSB(data.s));
+    data.vector_scan_results = ivec4(findLSB(data.uv), findMSB(data.sv));
+}

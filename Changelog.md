@@ -47,6 +47,7 @@ Fixed:
 * Fixed precision for constant literals being dropped in some cases (#90).
 * Fixed GLSL explicit varying locations not being respected.
 * Metal output now preserves explicit vertex attribute locations.
+* Fixed `bitfieldExtract` and `bitfieldInsert` handling.
 
 2016 10
 -------

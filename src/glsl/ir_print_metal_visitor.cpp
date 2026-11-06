@@ -180,6 +180,7 @@ struct metal_print_context
    std::vector<const char*> uniformStorageNames;
    std::unordered_map<const glsl_type*, const char*> sharedStructTypes;
    bool sharedMatrixTemplate = false;
+   bool bitScanHelpersDone = false;
    std::unordered_map<const glsl_type*, bool> nativeBufferTypes[storage_kind_count][2];
    void* mem_ctx;
    bool writingParams;
@@ -1651,8 +1652,6 @@ static const char* metal_operator(ir_expression_operation op)
    case ir_unop_unpack_half_2x16: return "unpackHalf2x16";
    case ir_unop_bitfield_reverse: return "reverse_bits";
    case ir_unop_bit_count: return "popcount";
-   case ir_unop_find_msb: return "findMSB";
-   case ir_unop_find_lsb: return "findLSB";
    case ir_unop_saturate: return "saturate";
    case ir_binop_add: return "+";
    case ir_binop_sub: return "-";
@@ -1801,7 +1800,57 @@ void ir_print_metal_visitor::visit(ir_expression *ir)
       print_cast (buffer, res_prec, ir);
    }
 
-   if (ir->num_operands == 1)
+   if (ir->operation == ir_unop_find_msb || ir->operation == ir_unop_find_lsb)
+   {
+      if (!ctx.bitScanHelpersDone) {
+         // GLSL returns -1 for zero and scans the complement for signed negative MSB inputs.
+         ctx.prefixStr.asprintf_append(
+            "template<typename R, typename T, bool Signed> inline R _xlat_findMSB(T x) {\n"
+            "  return R(31) - R(clz(Signed ? x ^ (x >> 31) : x));\n"
+            "}\n"
+            "template<typename R, typename T> inline R _xlat_findLSB(T x) {\n"
+            "  R n = R(ctz(x));\n"
+            "  return select(n, R(-1), n == R(32));\n"
+            "}\n");
+         ctx.bitScanHelpersDone = true;
+      }
+      buffer.asprintf_append(ir->operation == ir_unop_find_msb ? "_xlat_findMSB<" : "_xlat_findLSB<");
+      print_type(buffer, ir, ir->type, true);
+      buffer.asprintf_append(", ");
+      print_type(buffer, ir->operands[0], ir->operands[0]->type, true);
+      if (ir->operation == ir_unop_find_msb)
+         buffer.asprintf_append(ir->operands[0]->type->base_type == GLSL_TYPE_INT ? ", true" : ", false");
+      buffer.asprintf_append(">(");
+      ir->operands[0]->accept(this);
+      buffer.asprintf_append(")");
+   }
+   else if (ir->operation == ir_triop_bitfield_extract ||
+            ir->operation == ir_quadop_bitfield_insert)
+   {
+      buffer.asprintf_append(ir->operation == ir_triop_bitfield_extract ? "extract_bits(" : "insert_bits(");
+      for (unsigned i = 0; i < ir->num_operands; ++i) {
+         if (i) buffer.asprintf_append(", ");
+         ir_rvalue *operand = ir->operands[i];
+         const bool bitfield_range = i >= ir->num_operands - 2;
+         const bool cast_range = bitfield_range && operand->type->base_type != GLSL_TYPE_UINT;
+         const bool cast_data = !bitfield_range && operand->as_constant();
+         if (cast_range)
+            buffer.asprintf_append("uint(");
+         if (cast_data) {
+            print_type(buffer, operand, operand->type, true);
+            buffer.asprintf_append("(");
+         }
+         if (bitfield_range && operand->type->is_vector())
+            buffer.asprintf_append("(");
+         operand->accept(this);
+         if (bitfield_range && operand->type->is_vector())
+            buffer.asprintf_append(").x");
+         if (cast_range || cast_data)
+            buffer.asprintf_append(")");
+      }
+      buffer.asprintf_append(")");
+   }
+   else if (ir->num_operands == 1)
    {
       if (op0cast && !conversion)
          print_cast (buffer, arg_prec, ir->operands[0]);

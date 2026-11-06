@@ -925,6 +925,28 @@ void ir_print_glsl_visitor::visit(ir_expression *ir)
          ir->operands[1]->accept(this);
       buffer.asprintf_append (")");
    }
+   else if (ir->operation == ir_triop_bitfield_extract ||
+            ir->operation == ir_quadop_bitfield_insert)
+   {
+      buffer.asprintf_append("%s (", glsl_operator(ir->operation));
+      for (unsigned i = 0; i < ir->num_operands; ++i) {
+         if (i) buffer.asprintf_append(", ");
+         ir_rvalue *operand = ir->operands[i];
+         // The IR splats the offset and count to the width of the data.
+         const bool bitfield_range = i >= ir->num_operands - 2;
+         const bool cast_range = bitfield_range && operand->type->base_type == GLSL_TYPE_UINT;
+         if (cast_range)
+            buffer.asprintf_append("int(");
+         if (bitfield_range && operand->type->is_vector())
+            buffer.asprintf_append("(");
+         operand->accept(this);
+         if (bitfield_range && operand->type->is_vector())
+            buffer.asprintf_append(").x");
+         if (cast_range)
+            buffer.asprintf_append(")");
+      }
+      buffer.asprintf_append(")");
+   }
    else
    {
       buffer.asprintf_append("%s (", glsl_operator(ir->operation));

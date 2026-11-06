@@ -1,0 +1,71 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+template<typename R, typename T, bool Signed> inline R _xlat_findMSB(T x) {
+  return R(31) - R(clz(Signed ? x ^ (x >> 31) : x));
+}
+template<typename R, typename T> inline R _xlat_findLSB(T x) {
+  R n = R(ctz(x));
+  return select(n, R(-1), n == R(32));
+}
+struct alignas(16) _xlat_buf_storage0 {
+  alignas(4) uint u;
+  alignas(4) int s;
+  alignas(8) uint2 uv;
+  alignas(8) int2 sv;
+  alignas(4) int offset;
+  alignas(4) int width;
+  alignas(16) uint4 unsigned_results;
+  alignas(16) int4 signed_results;
+  alignas(16) int4 scan_results;
+  alignas(16) int4 vector_scan_results;
+  alignas(8) uint2 unsigned_insert;
+  alignas(8) int2 signed_insert;
+};
+static_assert(sizeof(_xlat_buf_storage0) == 112, "std430 size");
+struct xlatMtlShaderUniform {
+};
+// threadsPerThreadgroup: 1, 1, 1
+kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , device _xlat_buf_storage0& _mtl_buffer1 [[buffer(1)]])
+{
+  uint4 tmpvar_1;
+  tmpvar_1.x = extract_bits(uint(_mtl_buffer1.u), uint(int(_mtl_buffer1.offset)), uint(int(_mtl_buffer1.width)));
+  tmpvar_1.y = insert_bits(uint(_mtl_buffer1.u), uint2(_mtl_buffer1.uv).x, uint(int(_mtl_buffer1.offset)), uint(int(_mtl_buffer1.width)));
+  tmpvar_1.zw = extract_bits(uint2(_mtl_buffer1.uv), (uint2(uint(int(_mtl_buffer1.offset)))).x, (uint2(uint(int(_mtl_buffer1.width)))).x);
+  _mtl_buffer1.unsigned_results = uint4(tmpvar_1);
+  int4 tmpvar_2 = 0;
+  tmpvar_2.x = extract_bits(int(_mtl_buffer1.s), uint(int(_mtl_buffer1.offset)), uint(int(_mtl_buffer1.width)));
+  tmpvar_2.y = insert_bits(int(_mtl_buffer1.s), int2(_mtl_buffer1.sv).x, uint(int(_mtl_buffer1.offset)), uint(int(_mtl_buffer1.width)));
+  tmpvar_2.zw = extract_bits(int2(_mtl_buffer1.sv), uint((int2(int(_mtl_buffer1.offset))).x), uint((int2(int(_mtl_buffer1.width))).x));
+  _mtl_buffer1.signed_results = int4(tmpvar_2);
+  _mtl_buffer1.unsigned_insert = uint2(insert_bits(uint2(_mtl_buffer1.uv), uint2(uint(_mtl_buffer1.u)), (uint2(uint(int(_mtl_buffer1.offset)))).x, (uint2(uint(int(_mtl_buffer1.width)))).x));
+  _mtl_buffer1.signed_insert = int2(insert_bits(int2(_mtl_buffer1.sv), int2(int(_mtl_buffer1.s)), uint((int2(int(_mtl_buffer1.offset))).x), uint((int2(int(_mtl_buffer1.width))).x)));
+  int4 tmpvar_3 = 0;
+  tmpvar_3.x = _xlat_findLSB<int, uint>(uint(_mtl_buffer1.u));
+  tmpvar_3.y = _xlat_findMSB<int, uint, false>(uint(_mtl_buffer1.u));
+  tmpvar_3.z = _xlat_findLSB<int, int>(int(_mtl_buffer1.s));
+  tmpvar_3.w = _xlat_findMSB<int, int, true>(int(_mtl_buffer1.s));
+  _mtl_buffer1.scan_results = int4(tmpvar_3);
+  int4 tmpvar_4 = 0;
+  tmpvar_4.xy = _xlat_findLSB<int2, uint2>(uint2(_mtl_buffer1.uv));
+  tmpvar_4.zw = _xlat_findMSB<int2, int2, true>(int2(_mtl_buffer1.sv));
+  _mtl_buffer1.vector_scan_results = int4(tmpvar_4);
+}
+
+
+// stats: 22 alu 0 tex 0 flow
+// workgroup size: 1 1 1
+// buffer #0: Data storage instance data layout std430 binding 0 (size: 112) metal 1
+//  member #0: uint u offset 0
+//  member #1: int s offset 4
+//  member #2: uvec2 uv offset 8
+//  member #3: ivec2 sv offset 16
+//  member #4: int offset offset 24
+//  member #5: int width offset 28
+//  member #6: uvec4 unsigned_results offset 32
+//  member #7: ivec4 signed_results offset 48
+//  member #8: ivec4 scan_results offset 64
+//  member #9: ivec4 vector_scan_results offset 80
+//  member #10: uvec2 unsigned_insert offset 96
+//  member #11: ivec2 signed_insert offset 104
