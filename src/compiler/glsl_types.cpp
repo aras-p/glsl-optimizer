@@ -22,8 +22,7 @@
  */
 
 /* glsl-optimizer change: Use std::mutex/scoped locks for the shared type cache. Omit packed_type
- * and blob encode/decode routines: types are not serialized to a driver cache.
- */
+ * and blob encode/decode routines: types are not serialized to a driver cache. */
 
 #include <stdio.h>
 #include "main/macros.h"

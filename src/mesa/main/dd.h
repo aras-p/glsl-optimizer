@@ -29,8 +29,7 @@
 
 
 /* glsl-optimizer change: The offline linker needs only NewProgram allocation. Omit the rendering
- * driver callback table and its format/dispatch dependencies.
- */
+ * driver callback table and its format/dispatch dependencies. */
 
 #ifndef DD_INCLUDED
 #define DD_INCLUDED

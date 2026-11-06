@@ -46,8 +46,7 @@
 
 
 /* glsl-optimizer change: Retain compiler API/version/extension predicates only. Omit rendering
- * context lifecycle, dispatch, begin/end, vertex flushing and VBO helpers.
- */
+ * context lifecycle, dispatch, begin/end, vertex flushing and VBO helpers. */
 
 #ifndef CONTEXT_H
 #define CONTEXT_H

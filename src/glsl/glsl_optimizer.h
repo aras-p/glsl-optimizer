@@ -18,8 +18,7 @@
    }
    glslopt_shader_delete (shader);
  }
- glslopt_cleanup (ctx);
-*/
+ glslopt_cleanup (ctx); */
 
 struct glslopt_shader;
 struct glslopt_ctx;

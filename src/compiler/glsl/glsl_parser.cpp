@@ -379,8 +379,8 @@
  * DEALINGS IN THE SOFTWARE.
  */
 /* glsl-optimizer change: Image layout qualifiers need only pipe_format enum values. Include
- * p_format.h directly instead of the format conversion/codec API.
- */
+ * p_format.h directly instead of the format conversion/codec API. */
+
 
 #include <stdio.h>
 #include <stdlib.h>

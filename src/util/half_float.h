@@ -24,8 +24,7 @@
  */
 
 /* glsl-optimizer change: Expose scalar half conversions without CPU detection or F16C dispatch.
- * Omit unused RTZ and half/UNORM interfaces and their softfloat dependencies.
- */
+ * Omit unused RTZ and half/UNORM interfaces and their softfloat dependencies. */
 
 #ifndef _HALF_FLOAT_H_
 #define _HALF_FLOAT_H_

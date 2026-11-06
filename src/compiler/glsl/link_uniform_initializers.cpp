@@ -22,8 +22,7 @@
  */
 
 /* glsl-optimizer change: Initialize linked uniforms normally, but do not copy their initial values
- * into a second array for program-binary restoration; there is no binary cache.
- */
+ * into a second array for program-binary restoration; there is no binary cache. */
 
 #include "ir.h"
 #include "linker.h"

@@ -24,8 +24,7 @@
  */
 
 /*
- Minimized version of gl.h with only things that the GLSL compiler needs.
-*/
+ Minimized version of gl.h with only things that the GLSL compiler needs. */
 
 #ifndef __gl_minimal_h_
 #define __gl_minimal_h_

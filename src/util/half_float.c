@@ -27,8 +27,7 @@
 
 /* glsl-optimizer change: Keep upstream scalar float-to-half and half-to-float bodies unchanged.
  * Omit unused RTZ/softfloat and half/UNORM helpers; compiler-used rounding
- * behavior is preserved, not replaced with native casts.
- */
+ * behavior is preserved, not replaced with native casts. */
 
 #include <math.h>
 #include <assert.h>

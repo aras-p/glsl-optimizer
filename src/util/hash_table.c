@@ -41,8 +41,7 @@
  */
 
 /* glsl-optimizer change: Use small FNV-1a byte/string hashes and matching integer wrappers instead
- * of xxhash. Preserve upstream hash-table operations and key comparisons.
- */
+ * of xxhash. Preserve upstream hash-table operations and key comparisons. */
 
 #include <stdlib.h>
 #include <string.h>

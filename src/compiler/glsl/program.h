@@ -23,8 +23,7 @@
  */
 
 /* glsl-optimizer change: Compilation has no cache fallback/recompile mode; omit force_recompile
- * from the internal entry point and compile the supplied source directly.
- */
+ * from the internal entry point and compile the supplied source directly. */
 
 #ifndef GLSL_PROGRAM_H
 #define GLSL_PROGRAM_H

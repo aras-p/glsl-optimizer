@@ -23,8 +23,7 @@
 /* glsl-optimizer change: Compile source directly: no disk cache, SHA1, deferred compilation or
  * fallback source copies. Preserve source precision metadata instead of
  * running 16-bit precision lowering. Extension checks use direct predicates
- * with the parser's effective API/version, not a runtime extension table.
- */
+ * with the parser's effective API/version, not a runtime extension table. */
 
 #include <inttypes.h> /* for PRIx64 macro */
 #include <stdio.h>

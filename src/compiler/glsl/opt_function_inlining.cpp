@@ -172,8 +172,7 @@ ir_call::generate_inline(ir_instruction *next_ir)
           * visibility requirements. Keep those requirements on the storage
           * replacing the parameter.
           * Built-in image parameters accept all qualifiers; they do not
-          * impose coherence or volatility on their arguments.
-          */
+          * impose coherence or volatility on their arguments. */
          if (!callee->is_builtin() && sig_param->type->contains_image()) {
             ir_variable *actual = param->variable_referenced();
             if (actual) {

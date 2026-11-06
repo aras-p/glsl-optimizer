@@ -2377,8 +2377,7 @@ ast_function_expression::hir(exec_list *instructions,
       if (all_parameters_are_constant) {
          auto *constant = new(ctx) ir_constant(constructor_type, &actual_parameters);
          /* glsl-optimizer change: a folded constructor still takes its
-          * precision from its arguments.
-          */
+          * precision from its arguments. */
          foreach_in_list(ir_rvalue, argument, &actual_parameters) {
             unsigned precision = argument->get_precision();
             if (precision != GLSL_PRECISION_NONE &&

@@ -22,8 +22,7 @@
  */
 
 /* glsl-optimizer change: Allocate live uniform storage only. The unused UniformDataDefaults copy
- * for program-binary restoration and its allocation have been removed.
- */
+ * for program-binary restoration and its allocation have been removed. */
 
 #include "ir.h"
 #include "linker.h"

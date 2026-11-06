@@ -26,8 +26,7 @@
 /* glsl-optimizer change: Generate direct predicates from compiler-used extension metadata; omit
  * extensions_table.c, runtime names/offsets/years, string enumeration and
  * overrides. Preserve capability aliases, API-specific uint8_t thresholds
- * and the 255 sentinel, including explicit parser API/version checks.
- */
+ * and the 255 sentinel, including explicit parser API/version checks. */
 
 #ifndef _EXTENSIONS_H_
 #define _EXTENSIONS_H_

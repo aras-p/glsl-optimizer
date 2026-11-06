@@ -65,8 +65,7 @@
  */
 
 /* glsl-optimizer change: Always link the supplied IR. Omit program-cache metadata lookup and its
- * SHA1/cache dependencies; no cached-program fallback path is supported.
- */
+ * SHA1/cache dependencies; no cached-program fallback path is supported. */
 
 #include <ctype.h>
 #include "util/strndup.h"

@@ -74,8 +74,7 @@
 
 
 /* glsl-optimizer change: Use std::mutex and scoped locks for the shared builtin cache, rather than
- * Mesa C11 thread shims. Keep synchronization for concurrent compiler callers.
- */
+ * Mesa C11 thread shims. Keep synchronization for concurrent compiler callers. */
 
 #include <stdarg.h>
 #include <stdio.h>

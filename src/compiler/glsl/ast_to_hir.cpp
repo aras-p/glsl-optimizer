@@ -1019,8 +1019,7 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
    }
 
    /* glsl-optimizer change: keep the destination precision on a literal
-    * initializer when the assignment is later propagated into an expression.
-    */
+    * initializer when the assignment is later propagated into an expression. */
    if (!error_emitted && is_initializer && lhs->get_precision() == GLSL_PRECISION_HIGH) {
       if (auto *constant = rhs->as_constant())
          constant->source_precision = GLSL_PRECISION_HIGH;

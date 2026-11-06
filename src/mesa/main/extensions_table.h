@@ -1,7 +1,6 @@
 /* glsl-optimizer change: Retain only extensions used by the GLSL parser and context helpers.
  * Preserve capability aliases and all four API thresholds from Mesa 20.3.5;
- * omit extension-year metadata and unrelated rendering extensions.
- */
+ * omit extension-year metadata and unrelated rendering extensions. */
 
 /* Compiler extension capabilities and minimum API versions, from Mesa 20.3.5.
  * Columns: extension name, capability alias, GL compat, GL core, GLES1, GLES2+.

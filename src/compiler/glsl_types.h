@@ -24,8 +24,7 @@
 
 /* glsl-optimizer change: Keep shared type-cache locking with standard C++ mutexes, without Mesa
  * C11 thread shims. Omit blob serialization declarations; image formats need
- * only p_format.h enum values, not format conversion/codec utilities.
- */
+ * only p_format.h enum values, not format conversion/codec utilities. */
 
 #ifndef GLSL_TYPES_H
 #define GLSL_TYPES_H

@@ -32,8 +32,7 @@
  * if-to-conditional-assignment, offset arrays, discard, packing builtins,
  * matrix-to-vector, quadop-vector, and vector/variable index-to-conditional-
  * assignment. Keep passes called by the compiler/linker or optimizer. Also
- * omit 16-bit precision lowering: source output retains precision metadata.
- */
+ * omit 16-bit precision lowering: source output retains precision metadata. */
 
 #ifndef GLSL_IR_OPTIMIZATION_H
 #define GLSL_IR_OPTIMIZATION_H

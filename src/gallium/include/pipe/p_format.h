@@ -27,8 +27,7 @@
  **************************************************************************/
 
 /* glsl-optimizer change: Keep image-format enums needed by GLSL qualifiers. Pull endian definitions
- * directly from u_endian.h; Gallium rendering/configuration headers are omitted.
- */
+ * directly from u_endian.h; Gallium rendering/configuration headers are omitted. */
 
 #ifndef PIPE_FORMAT_H
 #define PIPE_FORMAT_H

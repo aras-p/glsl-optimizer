@@ -22,8 +22,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-/* glsl-optimizer change: Image metadata needs only p_format.h, not the format conversion/codec API.
- */
+/* glsl-optimizer change: Image metadata needs only p_format.h, not the format conversion/codec API. */
 
 #ifndef IR_H
 #define IR_H

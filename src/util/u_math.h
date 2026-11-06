@@ -37,8 +37,7 @@
 
 /* glsl-optimizer change: Omit unused approximate exp/log tables, initialization and FP-state
  * helpers, so u_math.c and CPU detection are unnecessary. Keep inline math
- * used by the compiler; unused double/softfloat libraries are not imported.
- */
+ * used by the compiler; unused double/softfloat libraries are not imported. */
 
 #ifndef U_MATH_H
 #define U_MATH_H

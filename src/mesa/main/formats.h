@@ -30,8 +30,7 @@
 
 
 /* glsl-optimizer change: Use minimal GL declarations rather than full OpenGL API headers. This
- * header supplies format metadata only; format codecs/tables are omitted.
- */
+ * header supplies format metadata only; format codecs/tables are omitted. */
 
 #ifndef FORMATS_H
 #define FORMATS_H

@@ -30,8 +30,7 @@
 
 
 /* glsl-optimizer change: Use glminimal.h for compiler-required GL types/constants instead of
- * full GL/gl.h and GL/glext.h API declarations.
- */
+ * full GL/gl.h and GL/glext.h API declarations. */
 
 #ifndef GLHEADER_H
 #define GLHEADER_H

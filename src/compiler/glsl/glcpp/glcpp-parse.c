@@ -191,8 +191,8 @@
 
 /* glsl-optimizer change: Reject active #include directives directly, as the former standalone
  * lookup stub always failed. Omit driver include lookup/cursor scaffolding,
- * recursive include expansion and macro copying; inactive includes still skip.
- */
+ * recursive include expansion and macro copying; inactive includes still skip. */
+
 
 #include <stdio.h>
 #include <stdlib.h>

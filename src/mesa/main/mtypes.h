@@ -34,8 +34,7 @@
  * state, dispatch/VBO/threaded-rendering machinery and unused runtime mutexes.
  * gl_context contains offline compiler state only. Omit shader-cache hashes,
  * fallback source, driver blobs, binary-restore uniform copies and shared
- * include state. Active shared compiler caches are locked in their C++ owners.
- */
+ * include state. Active shared compiler caches are locked in their C++ owners. */
 
 #ifndef MTYPES_H
 #define MTYPES_H
