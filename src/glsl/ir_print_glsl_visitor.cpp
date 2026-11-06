@@ -1034,30 +1034,20 @@ void ir_print_glsl_visitor::visit(ir_swizzle *ir)
       ir->mask.w,
    };
 
-   if (ir->val->type == glsl_type::float_type || ir->val->type == glsl_type::int_type || ir->val->type == glsl_type::uint_type)
-	{
-		if (ir->mask.num_components != 1)
-		{
+	if (ir->val->type->is_scalar()) {
+		// A vector constructor broadcasts a scalar to every component.
+		const bool broadcast = ir->mask.num_components > 1;
+		if (broadcast) {
 			print_type(buffer, ir->type, true);
-			buffer.asprintf_append ("(");
+			buffer.asprintf_append("(");
 		}
+		ir->val->accept(this);
+		if (broadcast)
+			buffer.asprintf_append(")");
+		return;
 	}
 
 	ir->val->accept(this);
-	
-	if (ir->val->type == glsl_type::float_type || ir->val->type == glsl_type::int_type || ir->val->type == glsl_type::uint_type)
-	{
-		if (ir->mask.num_components != 1)
-		{
-			buffer.asprintf_append (")");
-		}
-		return;
-	}
-	
-	// Swizzling scalar types is not allowed so just return now.
-	if (ir->val->type->vector_elements == 1)
-		return;
-
    buffer.asprintf_append (".");
    for (unsigned i = 0; i < ir->mask.num_components; i++) {
 		buffer.asprintf_append ("%c", "xyzw"[swiz[i]]);

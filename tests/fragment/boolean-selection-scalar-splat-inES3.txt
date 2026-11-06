@@ -1,0 +1,11 @@
+#version 300 es
+precision highp float;
+uniform vec3 a, b;
+uniform float value;
+uniform bvec3 mask;
+out vec4 color;
+
+void main()
+{
+    color = vec4(mix(a, b, mask) + mix(a, b, bvec3(value == 0.0)), 1.0);
+}
