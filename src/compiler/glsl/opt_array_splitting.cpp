@@ -363,8 +363,12 @@ ir_array_splitting_visitor::split_deref(ir_dereference **deref)
    assert(constant);
 
    if (constant->value.i[0] >= 0 && constant->value.i[0] < (int)entry->size) {
-      *deref = new(entry->mem_ctx)
-               ir_dereference_variable(entry->components[constant->value.i[0]]);
+      ir_variable *component = entry->components[constant->value.i[0]];
+      /* glsl-optimizer change: Metal printer skips unreferenced outputs.
+       * Mark each referenced element of a split output separately. */
+      if (component->data.mode == ir_var_shader_out)
+         component->data.used = true;
+      *deref = new(entry->mem_ctx) ir_dereference_variable(component);
    } else {
       /* There was a constant array access beyond the end of the
        * array.  This might have happened due to constant folding

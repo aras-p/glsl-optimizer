@@ -1,0 +1,9 @@
+#version 120
+uniform vec4 firstColor;
+uniform vec4 thirdColor;
+
+void main()
+{
+    gl_FragData[0] = firstColor;
+    gl_FragData[2] = thirdColor;
+}
