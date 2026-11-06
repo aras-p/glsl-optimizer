@@ -1,0 +1,14 @@
+#version 430
+layout(local_size_x=4) in;
+layout(r32ui, binding=0) writeonly volatile uniform uimage2D data;
+void main ()
+{
+  imageStore (data, ivec2(gl_GlobalInvocationID.xy), uvec4(1u, 1u, 1u, 1u));
+  memoryBarrierImage ();
+}
+
+
+// stats: 1 alu 1 tex 0 flow
+// workgroup size: 4 1 1
+// textures: 1
+//  #0: data (high image2d) 0x0 [-1] loc 0 format r32ui component uint writeonly

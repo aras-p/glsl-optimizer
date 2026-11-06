@@ -1,0 +1,67 @@
+#version 450
+layout(local_size_x=8) in;
+layout(r32f, binding=0) uniform image1D lineImage;
+layout(r32f, binding=1) uniform image1DArray lineLayers;
+layout(r32f, binding=2) uniform imageCube cubeImage;
+layout(r32f, binding=3) uniform imageCubeArray cubeLayers;
+layout(r32f, binding=4) uniform imageBuffer linearImage;
+void main ()
+{
+  int tmpvar_1;
+  tmpvar_1 = int(gl_GlobalInvocationID.x);
+  ivec3 tmpvar_2;
+  tmpvar_2.yz = ivec2(0, 5);
+  tmpvar_2.x = tmpvar_1;
+  ivec3 tmpvar_3;
+  tmpvar_3.yz = ivec2(0, 8);
+  tmpvar_3.x = tmpvar_1;
+  ivec2 tmpvar_4;
+  tmpvar_4.y = 1;
+  tmpvar_4.x = tmpvar_1;
+  vec4 tmpvar_5;
+  tmpvar_5 = imageLoad (lineImage, tmpvar_1);
+  vec4 tmpvar_6;
+  tmpvar_6 = imageLoad (lineLayers, tmpvar_4);
+  vec4 tmpvar_7;
+  tmpvar_7 = imageLoad (cubeImage, tmpvar_2);
+  vec4 tmpvar_8;
+  tmpvar_8 = imageLoad (cubeLayers, tmpvar_3);
+  vec4 tmpvar_9;
+  tmpvar_9 = imageLoad (linearImage, tmpvar_1);
+  vec4 tmpvar_10;
+  tmpvar_10 = (((tmpvar_5 + tmpvar_6) + (tmpvar_7 + tmpvar_8)) + tmpvar_9);
+  int tmpvar_11;
+  tmpvar_11 = imageSize (lineImage);
+  imageStore (lineImage, tmpvar_1, (tmpvar_10 + vec4(float(tmpvar_11))));
+  ivec2 tmpvar_12;
+  tmpvar_12 = imageSize (lineLayers);
+  vec4 tmpvar_13;
+  tmpvar_13.zw = vec2(0.0, 0.0);
+  tmpvar_13.xy = vec2(tmpvar_12);
+  imageStore (lineLayers, tmpvar_4, (tmpvar_10 + tmpvar_13));
+  ivec2 tmpvar_14;
+  tmpvar_14 = imageSize (cubeImage);
+  vec4 tmpvar_15;
+  tmpvar_15.zw = vec2(0.0, 0.0);
+  tmpvar_15.xy = vec2(tmpvar_14);
+  imageStore (cubeImage, tmpvar_2, (tmpvar_10 + tmpvar_15));
+  ivec3 tmpvar_16;
+  tmpvar_16 = imageSize (cubeLayers);
+  vec4 tmpvar_17;
+  tmpvar_17.w = 0.0;
+  tmpvar_17.xyz = vec3(tmpvar_16);
+  imageStore (cubeLayers, tmpvar_3, (tmpvar_10 + tmpvar_17));
+  int tmpvar_18;
+  tmpvar_18 = imageSize (linearImage);
+  imageStore (linearImage, tmpvar_1, (tmpvar_10 + vec4(float(tmpvar_18))));
+}
+
+
+// stats: 21 alu 15 tex 0 flow
+// workgroup size: 8 1 1
+// textures: 5
+//  #0: lineImage (high image1d) 0x0 [-1] loc 0 format r32f component float
+//  #1: lineLayers (high image1darray) 0x0 [-1] loc 1 format r32f component float
+//  #2: cubeImage (high imagecube) 0x0 [-1] loc 2 format r32f component float
+//  #3: cubeLayers (high imagecubearray) 0x0 [-1] loc 3 format r32f component float
+//  #4: linearImage (high imagebuffer) 0x0 [-1] loc 4 format r32f component float

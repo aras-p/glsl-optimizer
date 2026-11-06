@@ -1,0 +1,23 @@
+#version 310 es
+precision highp float;
+precision highp int;
+struct Entry { vec3 color; float weight; };
+layout(std430, binding=3) buffer Data {
+    uint index;
+    float values[3];
+    Entry entries[2];
+    vec2 pairs[2];
+    uint unused;
+} data;
+layout(std140, binding=1) uniform Params { vec4 tint; } params;
+out vec4 color;
+void main()
+{
+    uint i = data.index & 1u;
+    float before = data.values[i];
+    data.values[i] = before + 1.0;
+    data.entries[i].color = params.tint.xyz;
+    data.entries[i].weight = before;
+    data.pairs[i] = vec2(before, data.values[i]);
+    color = vec4(data.entries[i].color * data.entries[i].weight, data.values[i]);
+}

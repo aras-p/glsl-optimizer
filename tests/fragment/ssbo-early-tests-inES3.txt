@@ -1,0 +1,9 @@
+#version 310 es
+precision highp float;
+precision highp int;
+layout(early_fragment_tests) in;
+layout(std430) buffer Data { uint value; } data;
+void main()
+{
+    data.value = 1u;
+}

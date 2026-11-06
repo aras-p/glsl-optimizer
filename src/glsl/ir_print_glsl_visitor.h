@@ -32,6 +32,7 @@ enum PrintGlslMode {
 	kPrintGlslNone = 0,
 	kPrintGlslVertex,
 	kPrintGlslFragment,
+	kPrintGlslCompute,
 };
 
 extern char* _mesa_print_ir_glsl(exec_list *instructions,

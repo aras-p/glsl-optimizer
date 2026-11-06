@@ -1,0 +1,12 @@
+#version 300 es
+precision highp float;
+layout(shared) uniform Shared {
+    float unused;
+    vec4 tint;
+};
+layout(packed) uniform Packed {
+    float unusedPacked;
+    vec4 factor;
+} data;
+out vec4 color;
+void main() { color = tint * data.factor; }

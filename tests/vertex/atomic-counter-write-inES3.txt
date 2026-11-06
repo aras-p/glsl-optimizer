@@ -1,0 +1,6 @@
+#version 310 es
+layout(binding=0) uniform highp atomic_uint counter;
+void main()
+{
+    gl_Position = vec4(float(atomicCounterIncrement(counter)));
+}

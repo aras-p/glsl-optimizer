@@ -1,0 +1,29 @@
+#version 310 es
+layout(std430, column_major) buffer Data {
+  highp vec3 header;
+  highp float values[];
+} data;
+uniform highp int index;
+out highp vec4 color;
+void main ()
+{
+  highp int tmpvar_1;
+  tmpvar_1 = data.values.length();
+  if ((index < tmpvar_1)) {
+    data.values[index] = (data.values[index] + data.header.x);
+    data.header.y = data.values[index];
+  };
+  highp vec4 tmpvar_2;
+  tmpvar_2.xyz = data.header;
+  tmpvar_2.w = float(tmpvar_1);
+  color = tmpvar_2;
+}
+
+
+// stats: 4 alu 0 tex 1 flow
+// uniforms: 1 (total size: 0)
+//  #0: index (high int) 1x1 [-1]
+// buffer #0: Data storage instance data layout std430 (size: unknown)
+//  member #0: vec3 header offset 0
+//  member #1: float[] values offset 12 array runtime stride 4
+//  member #2: float [] parent 1 offset 12

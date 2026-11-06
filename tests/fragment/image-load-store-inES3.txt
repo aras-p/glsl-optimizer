@@ -1,0 +1,11 @@
+#version 310 es
+precision highp float;
+layout(rgba8, binding=1) uniform readonly highp image3D sourceImage;
+layout(rgba32ui, binding=3) uniform writeonly highp uimage2DArray destinationImage;
+layout(location=0) out vec4 color;
+void main()
+{
+    ivec2 p = ivec2(gl_FragCoord.xy);
+    color = imageLoad(sourceImage, ivec3(p, imageSize(sourceImage).z - 1));
+    imageStore(destinationImage, ivec3(p, imageSize(destinationImage).z - 1), uvec4(color * 255.0));
+}

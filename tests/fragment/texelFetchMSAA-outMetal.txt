@@ -1,0 +1,2 @@
+// expected error
+This sampler type is not supported by the Metal backend.

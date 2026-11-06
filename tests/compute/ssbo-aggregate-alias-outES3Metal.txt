@@ -1,0 +1,69 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct Entry {
+  uint index;
+  float3 value;
+  float weights[3];
+};
+struct alignas(4) _xlat_buf_storage2_element { float value; };
+struct _xlat_buf_storage2 { _xlat_buf_storage2_element elements[3]; };
+static_assert(sizeof(_xlat_buf_storage2) == 12, "std430 size");
+struct alignas(16) _xlat_buf_storage1 {
+  alignas(4) uint index;
+  char _buf_pad1[12];
+  alignas(16) packed_float3 value;
+  alignas(4) _xlat_buf_storage2 weights;
+};
+static_assert(sizeof(_xlat_buf_storage1) == 48, "std430 size");
+inline __attribute__((always_inline)) Entry _xlat_buf_storage1_read(const device _xlat_buf_storage1& storage)
+{
+  Entry value;
+  value.index = uint(storage.index);
+  value.value = float3(storage.value);
+  for (uint _buf_i0 = 0; _buf_i0 < 3; ++_buf_i0) {
+    value.weights[_buf_i0] = float(storage.weights.elements[_buf_i0].value);
+  }
+  return value;
+}
+struct alignas(16) _xlat_buf_storage0_element { _xlat_buf_storage1 value; };
+static_assert(sizeof(_xlat_buf_storage0_element) == 48, "array stride");
+struct xlatMtlShaderUniform {
+};
+// threadsPerThreadgroup: 1, 1, 1
+kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , device uchar* _mtl_buffer1 [[buffer(1)]]
+  , uint3 gl_GlobalInvocationID [[thread_position_in_grid]])
+{
+  uint i_1;
+  uint tmpvar_2;
+  tmpvar_2 = (gl_GlobalInvocationID.x + 1);
+  i_1 = (tmpvar_2 + 1);
+  {
+    device _xlat_buf_storage1& _buf_dst = reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[uint(reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[0].value.index)].value;
+    const device _xlat_buf_storage1& _buf_src = reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[tmpvar_2].value;
+    _buf_dst.index = uint(_buf_src.index);
+    _buf_dst.value = float3(_buf_src.value);
+    for (uint _buf_i2 = 0; _buf_i2 < 3; ++_buf_i2) {
+      _buf_dst.weights.elements[_buf_i2].value = float(_buf_src.weights.elements[_buf_i2].value);
+    }
+  };
+  {
+    device _xlat_buf_storage2& _buf_dst = reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[0].value.weights;
+    const device _xlat_buf_storage2& _buf_src = reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[i_1].value.weights;
+    for (uint _buf_i2 = 0; _buf_i2 < 3; ++_buf_i2) {
+      _buf_dst.elements[_buf_i2].value = float(_buf_src.elements[_buf_i2].value);
+    }
+  };
+}
+
+
+// stats: 2 alu 0 tex 0 flow
+// workgroup size: 1 1 1
+// buffer #0: Data storage instance data layout std430 (size: unknown) metal 1
+//  member #0: Entry[] entries offset 0 array runtime stride 48
+//  member #1: Entry [] parent 0 offset 0
+//  member #2: uint index parent 1 offset 0
+//  member #3: vec3 value parent 1 offset 16
+//  member #4: float[3] weights parent 1 offset 28 array 3 stride 4
+//  member #5: float [] parent 4 offset 28

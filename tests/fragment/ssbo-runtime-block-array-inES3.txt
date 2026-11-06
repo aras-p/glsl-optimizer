@@ -1,0 +1,16 @@
+#version 310 es
+precision highp float;
+precision highp int;
+layout(std430) readonly buffer Source {
+    float values[][3];
+} sources[2];
+layout(std430) writeonly buffer Output {
+    float results[];
+};
+uniform int index;
+out vec4 color;
+void main()
+{
+    results[index] = sources[0].values[index][2] + sources[1].values[index][1];
+    color = vec4(float(sources[0].values.length()), float(sources[1].values.length()), float(sources[0].values[0].length()), 1.0);
+}

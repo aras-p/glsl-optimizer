@@ -1,0 +1,37 @@
+#version 310 es
+layout(std430, column_major) buffer Data {
+  highp uint value;
+  highp uint count;
+} data;
+uniform bool update;
+out highp vec4 color;
+void main ()
+{
+  highp uint before_1;
+  before_1 = data.value;
+  data.value = 7u;
+  memoryBarrierBuffer ();
+  highp uint tmpvar_2;
+  tmpvar_2 = data.value;
+  if (update) {
+    highp uint tmpvar_3;
+    tmpvar_3 = atomicAdd (data.count, 1u);
+    memoryBarrier ();
+    data.value = data.count;
+  };
+  memoryBarrierBuffer ();
+  highp vec4 tmpvar_4;
+  tmpvar_4.w = 1.0;
+  tmpvar_4.x = float(before_1);
+  tmpvar_4.y = float(tmpvar_2);
+  tmpvar_4.z = float(data.value);
+  color = tmpvar_4;
+}
+
+
+// stats: 5 alu 0 tex 1 flow
+// uniforms: 1 (total size: 0)
+//  #0: update (high bool) 1x1 [-1]
+// buffer #0: Data storage instance data layout std430 (size: 8)
+//  member #0: uint value offset 0
+//  member #1: uint count offset 4

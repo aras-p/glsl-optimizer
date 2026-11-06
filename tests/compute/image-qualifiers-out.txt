@@ -1,0 +1,20 @@
+#version 430
+layout(local_size_x=8) in;
+layout(rg16f, binding=1) readonly restrict uniform image2D sources[2];
+layout(r32ui, binding=4) coherent volatile uniform uimage2D destination;
+void main ()
+{
+  ivec2 tmpvar_1;
+  tmpvar_1 = ivec2(gl_GlobalInvocationID.xy);
+  vec4 tmpvar_2;
+  tmpvar_2 = imageLoad (sources[1], tmpvar_1);
+  imageStore (destination, tmpvar_1, uvec4(tmpvar_2));
+  memoryBarrierImage ();
+}
+
+
+// stats: 2 alu 2 tex 0 flow
+// workgroup size: 8 1 1
+// textures: 2
+//  #0: sources (high image2d) 0x0 [2] loc 1 format rg16f component float readonly
+//  #1: destination (high image2d) 0x0 [-1] loc 4 format r32ui component uint

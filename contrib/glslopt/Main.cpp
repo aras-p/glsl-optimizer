@@ -10,11 +10,13 @@ static glslopt_ctx* gContext = 0;
 static int printhelp(const char* msg)
 {
 	if (msg) printf("%s\n\n\n", msg);
-	printf("Usage: glslopt <-f|-v> <input shader> [<output shader>]\n");
+	printf("Usage: glslopt [-f|-v|-c] [-1|-3|-m] <input shader> [<output shader>]\n");
 	printf("\t-f : fragment shader (default)\n");
 	printf("\t-v : vertex shader\n");
+	printf("\t-c : compute shader\n");
 	printf("\t-1 : target OpenGL (default)\n");
-	printf("\t-3 : target OpenGL ES 3.0\n");
+	printf("\t-3 : target OpenGL ES\n");
+	printf("\t-m : target Metal\n");
 	printf("\n\tIf no output specified, output is to [input].out.\n");
 	return 1;
 }
@@ -75,13 +77,12 @@ static bool saveFile(const char* filename, const char* data)
 	return true;
 }
 
-static bool compileShader(const char* dstfilename, const char* srcfilename, bool vertexShader)
+static bool compileShader(const char* dstfilename, const char* srcfilename, glslopt_shader_type type)
 {
 	std::unique_ptr<char[]> originalShader(loadFile(srcfilename));
 	if( !originalShader )
 		return false;
 
-	const glslopt_shader_type type = vertexShader ? kGlslOptShaderVertex : kGlslOptShaderFragment;
 
 	std::unique_ptr<glslopt_shader, decltype(&glslopt_shader_delete)> shader(
 		glslopt_optimize(gContext, type, originalShader.get(), 0), glslopt_shader_delete);
@@ -101,10 +102,11 @@ static bool compileShader(const char* dstfilename, const char* srcfilename, bool
 
 int main(int argc, char* argv[])
 {
-	if( argc < 3 )
+	if( argc < 2 )
 		return printhelp(NULL);
 
-	bool vertexShader = false, freename = false;
+	bool freename = false;
+	glslopt_shader_type type = kGlslOptShaderFragment;
 	glslopt_target languageTarget = kGlslTargetOpenGL;
 	const char* source = 0;
 	char* dest = 0;
@@ -114,13 +116,17 @@ int main(int argc, char* argv[])
 		if( argv[i][0] == '-' )
 		{
 			if( 0 == strcmp("-v", argv[i]) )
-				vertexShader = true;
+				type = kGlslOptShaderVertex;
 			else if( 0 == strcmp("-f", argv[i]) )
-				vertexShader = false;
+				type = kGlslOptShaderFragment;
+			else if( 0 == strcmp("-c", argv[i]) )
+				type = kGlslOptShaderCompute;
 			else if( 0 == strcmp("-1", argv[i]) )
 				languageTarget = kGlslTargetOpenGL;
 			else if( 0 == strcmp("-3", argv[i]) )
 				languageTarget = kGlslTargetOpenGLES30;
+			else if (0 == strcmp("-m", argv[i]))
+				languageTarget = kGlslTargetMetal;
 			else
 				return printhelp("Unknown option");
 		}
@@ -149,7 +155,7 @@ int main(int argc, char* argv[])
 	}
 
 	int result = 0;
-	if( !compileShader(dest, source, vertexShader) )
+	if( !compileShader(dest, source, type) )
 		result = 1;
 
 	if( freename ) free(dest);

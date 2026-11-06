@@ -1,0 +1,16 @@
+#version 310 es
+in highp vec4 position;
+uniform highp uint mask;
+flat out highp uint bits;
+void main ()
+{
+  bits = bitfieldReverse(mask);
+  gl_Position = (position * 1024.0);
+}
+
+
+// stats: 2 alu 0 tex 0 flow
+// inputs: 1
+//  #0: position (high float) 4x1 [-1]
+// uniforms: 1 (total size: 0)
+//  #0: mask (high int) 1x1 [-1]

@@ -1,0 +1,6 @@
+#version 310 es
+void main()
+{
+    memoryBarrierBuffer();
+    gl_Position = vec4(0.0);
+}

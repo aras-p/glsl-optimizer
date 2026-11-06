@@ -1,0 +1,8 @@
+#version 450
+layout(std140, binding=5) uniform Material {
+    layout(offset=32) vec3 direction;
+    layout(offset=48, row_major) mat2 transform;
+    layout(offset=96) float weight;
+} material;
+out vec4 color;
+void main() { color = vec4(material.transform * material.direction.xy, material.weight, 1.0); }

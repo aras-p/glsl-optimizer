@@ -1,0 +1,21 @@
+#version 310 es
+layout(local_size_x=8) in;
+shared highp uint count;
+shared highp ivec4 values;
+layout(std430) buffer Output { uvec4 values[]; } outputData;
+void main()
+{
+    uint i = gl_LocalInvocationIndex;
+    if (i == 0u) {
+        count = 0u;
+        values = ivec4(0);
+    }
+    barrier();
+    uint old = atomicAdd(count, 1u);
+    int exchanged = atomicCompSwap(values.yx[int(i & 1u)], 0, int(i + 1u));
+    atomicMin(values.z, -int(i));
+    atomicMax(values.w, int(i));
+    barrier();
+    if (i == 0u) outputData.values[gl_WorkGroupID.x] = uvec4(count, uint(values.z), uint(values.w), old);
+    atomicCompSwap(outputData.values[gl_GlobalInvocationID.x + 8u].x, 0u, uint(exchanged));
+}

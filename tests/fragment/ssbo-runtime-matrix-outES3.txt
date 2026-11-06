@@ -1,0 +1,23 @@
+#version 310 es
+layout(std140, row_major) buffer Input {
+  readonly highp float bias;
+  layout(row_major) readonly highp mat2x3 matrices[];
+} source;
+uniform highp int index;
+out highp vec4 color;
+void main ()
+{
+  highp vec4 tmpvar_1;
+  tmpvar_1.xyz = ((source.matrices[index] * vec2(1.0, 2.0)) + vec3(source.bias));
+  tmpvar_1.w = float(source.matrices.length());
+  color = tmpvar_1;
+}
+
+
+// stats: 4 alu 0 tex 0 flow
+// uniforms: 1 (total size: 0)
+//  #0: index (high int) 1x1 [-1]
+// buffer #0: Input storage instance source layout std140 (size: unknown)
+//  member #0: float bias offset 0 readonly
+//  member #1: mat2x3[] matrices offset 16 array runtime stride 48 readonly
+//  member #2: mat2x3 [] parent 1 offset 16 matrix-stride 16 row-major readonly

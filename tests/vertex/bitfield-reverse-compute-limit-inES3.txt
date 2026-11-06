@@ -1,0 +1,11 @@
+#version 310 es
+precision highp float;
+precision highp int;
+in vec4 position;
+uniform uint mask;
+flat out uint bits;
+void main()
+{
+    bits = bitfieldReverse(mask);
+    gl_Position = position * float(gl_MaxComputeWorkGroupSize.x);
+}

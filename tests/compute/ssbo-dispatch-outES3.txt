@@ -1,0 +1,39 @@
+#version 310 es
+layout(local_size_x=32) in;
+layout(std430, column_major) buffer Output {
+  highp uint count;
+  highp uint values[];
+} outputData;
+layout(std430, column_major) buffer Input {
+  readonly highp uint values[];
+} inputData;
+uniform highp uint limit;
+void main ()
+{
+  if (((gl_GlobalInvocationID.x >= limit) || (gl_GlobalInvocationID.x >= uint(
+    inputData.values.length()
+  )))) {
+    return;
+  };
+  highp uint tmpvar_1;
+  tmpvar_1 = inputData.values[gl_GlobalInvocationID.x];
+  outputData.values[gl_GlobalInvocationID.x] = tmpvar_1;
+  memoryBarrierBuffer ();
+  highp uint tmpvar_2;
+  tmpvar_2 = atomicAdd (outputData.count, 1u);
+  highp uint tmpvar_3;
+  tmpvar_3 = atomicCompSwap (outputData.values[gl_GlobalInvocationID.x], tmpvar_1, (tmpvar_1 + 1u));
+}
+
+
+// stats: 6 alu 0 tex 2 flow
+// workgroup size: 32 1 1
+// uniforms: 1 (total size: 0)
+//  #0: limit (high int) 1x1 [-1]
+// buffer #0: Input storage instance inputData layout std430 (size: unknown)
+//  member #0: uint[] values offset 0 array runtime stride 4 readonly
+//  member #1: uint [] parent 0 offset 0 readonly
+// buffer #1: Output storage instance outputData layout std430 (size: unknown)
+//  member #0: uint count offset 0
+//  member #1: uint[] values offset 4 array runtime stride 4
+//  member #2: uint [] parent 1 offset 4

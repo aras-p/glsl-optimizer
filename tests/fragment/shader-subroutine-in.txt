@@ -1,0 +1,10 @@
+#version 400
+subroutine vec4 Shade();
+subroutine(Shade) vec4 solid() { return vec4(1.0); }
+subroutine uniform Shade shade;
+out vec4 color;
+
+void main()
+{
+    color = shade();
+}

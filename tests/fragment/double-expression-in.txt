@@ -1,0 +1,8 @@
+#version 400
+uniform float value;
+out vec4 color;
+
+void main()
+{
+    color = vec4(float(double(value) * 2.0lf));
+}

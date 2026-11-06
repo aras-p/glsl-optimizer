@@ -33,6 +33,8 @@
 #include <unordered_set>
 #include "loop_analysis.h"
 #include "ir_print_loop.h"
+#include "ir_buffer_blocks.h"
+#include "ir_image.h"
 
 
 
@@ -81,6 +83,8 @@ struct global_print_tracker {
 		ralloc_free(mem_ctx);
 	}
 	
+	std::unordered_set<const glsl_type*> uniform_blocks;
+	std::unordered_set<const glsl_type*> stage_blocks[2];
 	unsigned	var_counter;
 	std::unordered_map<const ir_variable*, long> var_hash;
 	exec_list	global_assignements;
@@ -165,7 +169,11 @@ public:
 	struct_declarations(string_buffer& out, bool es) : out(out), es(es) {}
 	void emit(const glsl_type* type) {
 		type = type->without_array();
-		if (!type->is_struct() || !strncmp(type->name, "gl_", 3) || !emitted.insert(type).second) return;
+		if ((!type->is_struct() && !type->is_interface()) || !strncmp(type->name, "gl_", 3) || !emitted.insert(type).second) return;
+		if (type->is_interface()) {
+			for (unsigned i = 0; i < type->length; ++i) emit(type->fields.structure[i].type);
+			return;
+		}
 		for (unsigned i = 0; i < type->length; ++i) emit(type->fields.structure[i].type);
 		out.asprintf_append("struct %s {\n", type->name);
 		for (unsigned i = 0; i < type->length; ++i) {
@@ -181,7 +189,7 @@ public:
 		}
 		out.asprintf_append("};\n");
 	}
-	ir_visitor_status visit(ir_variable* v) override { emit(v->type); return visit_continue; }
+	ir_visitor_status visit(ir_variable* v) override { emit(v->type); if (v->get_interface_type()) emit(v->get_interface_type()); return visit_continue; }
 	ir_visitor_status visit(ir_constant* c) override { emit(c->type); return visit_continue; }
 	ir_visitor_status visit_enter(ir_function_signature* f) override { emit(f->return_type); return visit_continue; }
 };
@@ -208,6 +216,30 @@ _mesa_print_ir_glsl(exec_list *instructions,
 				str.asprintf_append (" es");
 			str.asprintf_append ("\n");
 		}
+		if (state->ARB_separate_shader_objects_enable)
+			str.asprintf_append("#extension GL_ARB_separate_shader_objects : enable\n");
+		if (state->EXT_shader_io_blocks_enable)
+			str.asprintf_append("#extension GL_EXT_shader_io_blocks : enable\n");
+		if (state->OES_shader_io_blocks_enable)
+			str.asprintf_append("#extension GL_OES_shader_io_blocks : enable\n");
+		if (state->ARB_shader_atomic_counters_enable)
+			str.asprintf_append("#extension GL_ARB_shader_atomic_counters : enable\n");
+		if (state->ARB_shader_image_load_store_enable)
+			str.asprintf_append("#extension GL_ARB_shader_image_load_store : enable\n");
+		if (state->ARB_shader_image_size_enable)
+			str.asprintf_append("#extension GL_ARB_shader_image_size : enable\n");
+		if (state->ARB_shader_texture_image_samples_enable)
+			str.asprintf_append("#extension GL_ARB_shader_texture_image_samples : enable\n");
+		if (state->ARB_shader_storage_buffer_object_enable)
+			str.asprintf_append("#extension GL_ARB_shader_storage_buffer_object : enable\n");
+		if (state->ARB_uniform_buffer_object_enable)
+			str.asprintf_append("#extension GL_ARB_uniform_buffer_object : enable\n");
+		if (state->ARB_shading_language_420pack_enable)
+			str.asprintf_append("#extension GL_ARB_shading_language_420pack : enable\n");
+		if (state->ARB_enhanced_layouts_enable)
+			str.asprintf_append("#extension GL_ARB_enhanced_layouts : enable\n");
+		if (state->ARB_compute_shader_enable)
+			str.asprintf_append("#extension GL_ARB_compute_shader : enable\n");
 		if (state->ARB_shader_texture_lod_enable)
 			str.asprintf_append ("#extension GL_ARB_shader_texture_lod : enable\n");
 		if (state->ARB_draw_instanced_enable)
@@ -224,6 +256,18 @@ _mesa_print_ir_glsl(exec_list *instructions,
 			str.asprintf_append ("#extension GL_EXT_texture_array : enable\n");
 	}
 	
+	if (state->stage == MESA_SHADER_FRAGMENT && state->fs_early_fragment_tests)
+		str.asprintf_append("layout(early_fragment_tests) in;\n");
+
+	if (state->stage == MESA_SHADER_COMPUTE && state->cs_input_local_size_specified) {
+		str.asprintf_append("layout(local_size_x=%u", state->cs_input_local_size[0]);
+		if (state->cs_input_local_size[1] != 1)
+			str.asprintf_append(", local_size_y=%u", state->cs_input_local_size[1]);
+		if (state->cs_input_local_size[2] != 1)
+			str.asprintf_append(", local_size_z=%u", state->cs_input_local_size[2]);
+		str.asprintf_append(") in;\n");
+	}
+
 	// Struct declarations are reconstructed from the types that remain in IR.
 	print_struct_declarations(str, instructions, state->es_shader);
 	
@@ -342,7 +386,7 @@ void ir_print_glsl_visitor::print_precision (ir_instruction* ir, const glsl_type
 		return;
 	if (!type) return;
 	const glsl_type* base = type->without_array();
-	if (!base->is_float() && !base->is_integer_32() && !base->is_sampler()) return;
+	if (!base->is_float() && !base->is_integer_32() && !base->is_sampler() && !base->is_image() && !base->is_atomic_uint()) return;
 	unsigned prec = GLSL_PRECISION_NONE;
 	if (ir_variable* var = ir->as_variable()) prec = var->data.precision;
 	else if (ir->ir_type == ir_type_function_signature)
@@ -355,9 +399,9 @@ void ir_print_glsl_visitor::print_precision (ir_instruction* ir, const glsl_type
 static void print_type(string_buffer& buffer, const glsl_type *t, bool arraySize)
 {
 	if (t->base_type == GLSL_TYPE_ARRAY) {
-		print_type(buffer, t->fields.array, true);
+		print_type(buffer, t->without_array(), false);
 		if (arraySize)
-			buffer.asprintf_append ("[%u]", t->length);
+			for (auto a = t; a->is_array(); a = a->fields.array) buffer.asprintf_append("[%u]", a->length);
 	} else if ((t->base_type == GLSL_TYPE_STRUCT)
 			   && (strncmp("gl_", t->name, 3) != 0)) {
 		buffer.asprintf_append ("%s", t->name);
@@ -370,13 +414,137 @@ static void print_type_post(string_buffer& buffer, const glsl_type *t, bool arra
 {
 	if (t->base_type == GLSL_TYPE_ARRAY) {
 		if (!arraySize)
-			buffer.asprintf_append ("[%u]", t->length);
+			for (auto a = t; a->is_array(); a = a->fields.array) buffer.asprintf_append("[%u]", a->length);
 	}
 }
 
 
 void ir_print_glsl_visitor::visit(ir_variable *ir)
 {
+	const bool input = ir->data.mode == ir_var_shader_in;
+	const glsl_type* interface = ir->get_interface_type();
+	if (interface && (input || ir->data.mode == ir_var_shader_out) &&
+	    strncmp(interface->name, "gl_", 3) != 0) {
+		if (!globals->stage_blocks[input].insert(interface).second) { skipped_this_ir = true; return; }
+		const bool instance = ir->is_interface_instance();
+		const int base = ir->data.patch ? VARYING_SLOT_PATCH0 : VARYING_SLOT_VAR0;
+		int nextLocation = -1;
+		if (instance && ir->data.explicit_location)
+			nextLocation = ir->data.location;
+		else if (!instance && interface->fields.structure[0].location >= 0) {
+			// Anonymous blocks retain member locations, but have no instance carrying the base location.
+			bool allLocated = true;
+			for (unsigned i = 0; i < interface->length; ++i)
+				allLocated &= interface->fields.structure[i].location >= 0;
+			if (allLocated) nextLocation = interface->fields.structure[0].location;
+		}
+		const bool blockLocation = nextLocation >= 0;
+		if (blockLocation) buffer.asprintf_append("layout(location=%d) ", nextLocation - base);
+		if (!input) {
+			for (unsigned i = 0; i < interface->length; ++i) {
+				const auto& field = interface->fields.structure[i];
+				if (field.explicit_xfb_buffer || field.offset >= 0 || field.xfb_stride >= 0) {
+					buffer.asprintf_append("layout(xfb_buffer=%d) ", field.xfb_buffer);
+					break;
+				}
+			}
+		}
+		buffer.asprintf_append("%s%s %s {\n", ir->data.patch ? "patch " : "", input ? "in" : "out", interface->name);
+		const char* interpolation[] = { "", "smooth ", "flat ", "noperspective " };
+		for (unsigned i = 0; i < interface->length; ++i) {
+			const auto& field = interface->fields.structure[i];
+			buffer.asprintf_append("  ");
+			if (field.location >= 0 && (!blockLocation || field.location != nextLocation))
+				buffer.asprintf_append("layout(location=%d) ", field.location - base);
+			if (field.location >= 0)
+				nextLocation = field.location + field.type->count_attribute_slots(false);
+			if (!input && field.offset >= 0) buffer.asprintf_append("layout(xfb_offset=%d) ", field.offset);
+			if (!input && field.xfb_stride >= 0) buffer.asprintf_append("layout(xfb_stride=%d) ", field.xfb_stride);
+			if (field.centroid) buffer.asprintf_append("centroid ");
+			if (field.sample) buffer.asprintf_append("sample ");
+			buffer.asprintf_append("%s", interpolation[field.interpolation]);
+			const glsl_type* member = field.type->without_array();
+			if (use_precision && (member->is_float() || member->is_integer_32()))
+				buffer.asprintf_append("%s", get_precision_string(field.precision ? field.precision : GLSL_PRECISION_HIGH));
+			print_type(buffer, field.type, false);
+			buffer.asprintf_append(" %s", field.name);
+			print_type_post(buffer, field.type, false);
+			buffer.asprintf_append(";\n");
+		}
+		buffer.asprintf_append("}");
+		if (instance) {
+			buffer.asprintf_append(" %s", ir->name);
+			print_type_post(buffer, ir->type, false);
+		}
+		return;
+	}
+	if ((ir->data.mode == ir_var_uniform || ir->data.mode == ir_var_shader_storage) && ir->is_in_buffer_block()) {
+		const glsl_type* type = ir->get_interface_type();
+		if (!globals->uniform_blocks.insert(type).second) { skipped_this_ir = true; return; }
+		// Use the enum explicitly; its order is not part of the printer contract.
+		const char* layout = "shared";
+		switch (type->get_interface_packing()) {
+		case GLSL_INTERFACE_PACKING_STD140: layout = "std140"; break;
+		case GLSL_INTERFACE_PACKING_STD430: layout = "std430"; break;
+		case GLSL_INTERFACE_PACKING_PACKED: layout = "packed"; break;
+		default: break;
+		}
+		buffer.asprintf_append("layout(%s, %s", layout, type->get_interface_row_major() ? "row_major" : "column_major");
+		if (ir->data.explicit_binding) buffer.asprintf_append(", binding=%d", ir->data.binding);
+		buffer.asprintf_append(") %s %s {\n", ir->data.mode == ir_var_shader_storage ? "buffer" : "uniform", type->name);
+		for (unsigned i = 0; i < type->length; ++i) {
+			const auto& f = type->fields.structure[i];
+			buffer.asprintf_append("  ");
+			if (f.matrix_layout != GLSL_MATRIX_LAYOUT_INHERITED || f.offset >= 0) {
+				buffer.asprintf_append("layout(");
+				if (f.matrix_layout != GLSL_MATRIX_LAYOUT_INHERITED)
+					buffer.asprintf_append("%s", f.matrix_layout == GLSL_MATRIX_LAYOUT_ROW_MAJOR ? "row_major" : "column_major");
+				if (f.offset >= 0) buffer.asprintf_append("%soffset=%d", f.matrix_layout != GLSL_MATRIX_LAYOUT_INHERITED ? ", " : "", f.offset);
+				buffer.asprintf_append(") ");
+			}
+			if (f.memory_read_only) buffer.asprintf_append("readonly ");
+			if (f.memory_write_only) buffer.asprintf_append("writeonly ");
+			if (f.memory_coherent) buffer.asprintf_append("coherent ");
+			if (f.memory_volatile) buffer.asprintf_append("volatile ");
+			if (f.memory_restrict) buffer.asprintf_append("restrict ");
+			const glsl_type* base = f.type->without_array();
+			if (use_precision && (base->is_float() || base->is_integer_32()))
+				buffer.asprintf_append("%s", get_precision_string(f.precision ? f.precision : GLSL_PRECISION_HIGH));
+			print_type(buffer, base, false);
+			buffer.asprintf_append(" %s", f.name);
+			for (auto t = f.type; t->is_array(); t = t->fields.array) {
+				if (t->length) buffer.asprintf_append("[%u]", t->length);
+				else buffer.asprintf_append("[]");
+			}
+			buffer.asprintf_append(";\n");
+		}
+		buffer.asprintf_append("}");
+		if (ir->is_interface_instance()) {
+			buffer.asprintf_append(" %s", ir->name);
+			for (auto t = ir->type; t->is_array(); t = t->fields.array) buffer.asprintf_append("[%u]", t->length);
+		}
+		return;
+	}
+
+	if (ir->data.mode == ir_var_uniform && ir->type->contains_atomic())
+		buffer.asprintf_append("layout(binding=%u, offset=%u) ", ir->data.binding, ir->data.offset);
+	if (ir->type->contains_image()) {
+		const char* format = image_format_name(ir->data.image_format);
+		if (format || ir->data.explicit_binding) {
+			buffer.asprintf_append("layout(");
+			if (format) buffer.asprintf_append("%s", format);
+			if (ir->data.explicit_binding) buffer.asprintf_append("%sbinding=%d", format ? ", " : "", ir->data.binding);
+			buffer.asprintf_append(") ");
+		}
+		if (ir->data.memory_read_only) buffer.asprintf_append("readonly ");
+		if (ir->data.memory_write_only) buffer.asprintf_append("writeonly ");
+		if (ir->data.memory_coherent) buffer.asprintf_append("coherent ");
+		if (ir->data.memory_volatile) buffer.asprintf_append("volatile ");
+		if (ir->data.memory_restrict) buffer.asprintf_append("restrict ");
+	}
+	else if (ir->data.mode == ir_var_uniform && ir->type->without_array()->is_sampler() && ir->data.explicit_binding) {
+		buffer.asprintf_append("layout(binding=%u) ", ir->data.binding);
+	}
 	const char *const cent = (ir->data.centroid) ? "centroid " : "";
 	const char *const inv = (ir->data.explicit_invariant) ? "invariant " : "";
 	const char* storage = "";
@@ -384,9 +552,10 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 	case ir_var_uniform: storage = "uniform "; break;
 	case ir_var_shader_in: storage = state->language_version >= 130 ? "in " : (state->stage == MESA_SHADER_VERTEX ? "attribute " : "varying "); break;
 	case ir_var_shader_out: storage = ir->data.fb_fetch_output ? "inout " : (state->language_version >= 130 ? "out " : "varying "); break;
-	case ir_var_function_in: case ir_var_const_in: storage = "in "; break;
+	case ir_var_function_in: case ir_var_const_in: storage = ir->type->contains_image() ? "" : "in "; break;
 	case ir_var_function_out: storage = "out "; break;
 	case ir_var_function_inout: storage = "inout "; break;
+	case ir_var_shader_shared: storage = "shared "; break;
 	default: break;
 	}
 
@@ -395,7 +564,7 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 	if (this->state->language_version >= 300 && ir->data.explicit_location && strncmp(ir->name, "gl_", 3) != 0)
 	{
 		const int binding_base = (this->state->stage == MESA_SHADER_VERTEX ? (int)VERT_ATTRIB_GENERIC0 : (int)FRAG_RESULT_DATA0);
-		const int location = ir->data.location - binding_base;
+		const int location = ir->data.location - (ir->data.mode == ir_var_uniform ? 0 : binding_base);
 		buffer.asprintf_append ("layout(location=%d) ", location);
 	}
 	
@@ -470,7 +639,7 @@ void ir_print_glsl_visitor::visit(ir_function_signature *ir)
 	   indent();
    }
 
-   if (prototypes || ir->body.is_empty())
+   if (prototypes || !ir->is_defined)
    {
 	   buffer.asprintf_append (");\n");
 	   return;
@@ -589,7 +758,11 @@ void ir_print_glsl_visitor::visit(ir_expression *ir)
 	newline_indent();
 	
 	ir_expression* lower = ir->operation == ir_binop_min ? ir->operands[0]->as_expression() : nullptr;
-	if (lower && lower->operation == ir_binop_max) {
+	if (ir->operation == ir_unop_ssbo_unsized_array_length) {
+		ir->operands[0]->accept(this);
+		buffer.asprintf_append(".length()");
+	}
+	else if (lower && lower->operation == ir_binop_max) {
 		buffer.asprintf_append("clamp ("); lower->operands[0]->accept(this);
 		buffer.asprintf_append(", "); lower->operands[1]->accept(this);
 		buffer.asprintf_append(", "); ir->operands[1]->accept(this);
@@ -1276,7 +1449,11 @@ ir_print_glsl_visitor::visit(ir_call *ir)
 		buffer.asprintf_append (" = ");		
 	}
 	
-   buffer.asprintf_append ("%s (", ir->callee_name());
+   const auto* counter = find_atomic_counter(ir->callee);
+   const auto* atomic = find_buffer_atomic(ir->callee);
+   const auto* barrier = find_memory_barrier(ir->callee);
+   const char* image = image_function_name(ir->callee);
+   buffer.asprintf_append ("%s (", counter ? counter->glsl : atomic ? atomic->glsl : barrier ? barrier->glsl : image ? image : ir->callee_name());
    bool first = true;
    foreach_in_list(ir_instruction, inst, &ir->actual_parameters) {
 	  if (!first)

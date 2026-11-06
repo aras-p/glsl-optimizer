@@ -1,0 +1,19 @@
+#version 440
+layout(local_size_x=8) in;
+
+layout(std140, binding=1) uniform Config {
+    layout(offset=32) vec4 color;
+    layout(offset=64) uint count;
+} config;
+
+layout(std430, binding=2) buffer Output {
+    uint header;
+    layout(offset=32) vec4 values[8];
+} outputData;
+
+void main()
+{
+    uint i = gl_GlobalInvocationID.x;
+    if (i < config.count && i < 8u)
+        outputData.values[i] = config.color;
+}

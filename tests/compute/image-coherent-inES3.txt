@@ -1,0 +1,14 @@
+#version 310 es
+layout(local_size_x=8) in;
+layout(rgba32f, binding=0) uniform coherent readonly highp image2D sourceImage;
+layout(rgba32f, binding=1) uniform coherent writeonly highp image3D destinationImage;
+layout(r32ui, binding=2) uniform coherent highp uimage2DArray data;
+void main()
+{
+    ivec2 p = ivec2(gl_GlobalInvocationID.xy);
+    vec4 value = imageLoad(sourceImage, p);
+    imageStore(destinationImage, ivec3(p, 0), value);
+    uvec4 old = imageLoad(data, ivec3(p, 0));
+    imageStore(data, ivec3(p, 0), old + uvec4(1u));
+    memoryBarrierImage();
+}

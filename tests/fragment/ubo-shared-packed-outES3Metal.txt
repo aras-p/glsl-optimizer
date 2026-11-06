@@ -1,0 +1,39 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct alignas(16) _xlat_buf_storage0 {
+  alignas(4) float unusedPacked;
+  char _buf_pad1[12];
+  alignas(16) float4 factor;
+};
+static_assert(sizeof(_xlat_buf_storage0) == 32, "std140 size");
+struct alignas(16) _xlat_buf_storage1 {
+  alignas(4) float unused;
+  char _buf_pad1[12];
+  alignas(16) float4 tint;
+};
+static_assert(sizeof(_xlat_buf_storage1) == 32, "std140 size");
+struct xlatMtlShaderInput {
+};
+struct xlatMtlShaderOutput {
+  float4 color [[color(0)]];
+};
+struct xlatMtlShaderUniform {
+};
+fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , constant _xlat_buf_storage0& _mtl_buffer1 [[buffer(1)]]
+  , constant _xlat_buf_storage1& _mtl_buffer2 [[buffer(2)]])
+{
+  xlatMtlShaderOutput _mtl_o;
+  _mtl_o.color = (float4(_mtl_buffer2.tint) * float4(_mtl_buffer1.factor));
+  return _mtl_o;
+}
+
+
+// stats: 1 alu 0 tex 0 flow
+// buffer #0: Packed instance data layout packed (size: 32) metal 1
+//  member #0: float unusedPacked offset 0 (unused)
+//  member #1: vec4 factor offset 16
+// buffer #1: Shared layout shared (size: 32) metal 2
+//  member #0: float unused offset 0 (unused)
+//  member #1: vec4 tint offset 16

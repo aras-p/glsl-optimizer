@@ -1,0 +1,39 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct xlatMtlShaderUniform {
+};
+// threadsPerThreadgroup: 8, 1, 1
+kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , uint3 gl_GlobalInvocationID [[thread_position_in_grid]]
+  , uint3 gl_WorkGroupID [[threadgroup_position_in_grid]]
+  , array<texture2d<float, access::read>, 2> sources [[texture(1)]]
+  , array<texture2d<float, access::write>, 2> destinations [[texture(3)]]
+  , texture2d<float> extra [[texture(0)]], sampler _mtlsmp_extra [[sampler(0)]]
+  , texture2d<float, access::write> combined [[texture(5)]])
+{
+  int tmpvar_1 = 0;
+  tmpvar_1 = int((gl_WorkGroupID.x & 1));
+  int2 tmpvar_2 = 0;
+  tmpvar_2 = int2(gl_GlobalInvocationID.xy);
+  float4 tmpvar_3 = 0;
+  tmpvar_3 = sources[tmpvar_1].read(uint2(tmpvar_2));
+  float4 tmpvar_4 = 0;
+  tmpvar_4 = (tmpvar_3 + extra.read(uint2(tmpvar_2), uint(0)));
+  destinations[tmpvar_1].write(float4(tmpvar_4), uint2(tmpvar_2));
+  int2 tmpvar_5 = 0;
+  tmpvar_5 = int2(sources[tmpvar_1].get_width(), sources[tmpvar_1].get_height());
+  float4 tmpvar_6 = 0;
+  tmpvar_6.zw = float2(0.0, 0.0);
+  tmpvar_6.xy = float2(tmpvar_5);
+  combined.write(float4((tmpvar_4 + tmpvar_6)), uint2(tmpvar_2));
+}
+
+
+// stats: 7 alu 5 tex 0 flow
+// workgroup size: 8 1 1
+// textures: 4
+//  #0: sources (high image2d) 0x0 [2] loc 1 format rgba8 component float readonly
+//  #1: destinations (high image2d) 0x0 [2] loc 3 format rgba8 component float writeonly
+//  #2: extra (high 2d) 0x0 [-1] loc 0
+//  #3: combined (high image2d) 0x0 [-1] loc 5 format rgba8 component float writeonly

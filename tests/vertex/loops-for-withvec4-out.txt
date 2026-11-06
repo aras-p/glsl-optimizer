@@ -1,36 +1,44 @@
 #version 140
-uniform vec4 unity_AmbientGround;
-uniform vec4 unity_AmbientSky;
-uniform vec4 unity_MatrixVP[4];
-uniform vec4 unity_MatrixV[4];
-uniform vec4 glstate_lightmodel_ambient;
-uniform vec4 glstate_matrix_projection[4];
-uniform vec4 unity_LODFade;
-uniform vec4 unity_Scale;
-uniform vec4 _World2Object[4];
-uniform vec4 _Object2World[4];
-uniform vec4 glstate_matrix_invtrans_modelview0[4];
-uniform vec4 glstate_matrix_modelview0[4];
-uniform vec4 glstate_matrix_mvp[4];
-uniform vec4 unity_SHC;
-uniform vec4 unity_SHBb;
-uniform vec4 unity_SHBg;
-uniform vec4 unity_SHBr;
-uniform vec4 unity_SHAb;
-uniform vec4 unity_SHAg;
-uniform vec4 unity_SHAr;
-uniform vec4 unity_SpotDirection[8];
-uniform vec4 unity_LightAtten[8];
-uniform vec4 unity_LightPosition[8];
-uniform vec4 unity_LightColor[8];
-uniform vec4 unity_4LightAtten0;
-uniform vec4 unity_4LightPosZ0;
-uniform vec4 unity_4LightPosY0;
-uniform vec4 unity_4LightPosX0;
-uniform vec4 _LightPositionRange;
-uniform vec4 _WorldSpaceLightPos0;
-uniform vec4 _MainTex_ST;
-uniform vec4 unity_ColorSpaceGrey;
+layout(shared, column_major) uniform UnityPerFrame {
+  vec4 glstate_matrix_projection[4];
+  vec4 glstate_lightmodel_ambient;
+  vec4 unity_MatrixV[4];
+  vec4 unity_MatrixVP[4];
+  vec4 unity_AmbientSky;
+  vec4 unity_AmbientGround;
+};
+layout(shared, column_major) uniform UnityPerDraw {
+  vec4 glstate_matrix_mvp[4];
+  vec4 glstate_matrix_modelview0[4];
+  vec4 glstate_matrix_invtrans_modelview0[4];
+  vec4 _Object2World[4];
+  vec4 _World2Object[4];
+  vec4 unity_Scale;
+  vec4 unity_LODFade;
+};
+layout(shared, column_major) uniform UnityLighting {
+  vec4 _WorldSpaceLightPos0;
+  vec4 _LightPositionRange;
+  vec4 unity_4LightPosX0;
+  vec4 unity_4LightPosY0;
+  vec4 unity_4LightPosZ0;
+  vec4 unity_4LightAtten0;
+  vec4 unity_LightColor[8];
+  vec4 unity_LightPosition[8];
+  vec4 unity_LightAtten[8];
+  vec4 unity_SpotDirection[8];
+  vec4 unity_SHAr;
+  vec4 unity_SHAg;
+  vec4 unity_SHAb;
+  vec4 unity_SHBr;
+  vec4 unity_SHBg;
+  vec4 unity_SHBb;
+  vec4 unity_SHC;
+};
+layout(shared, column_major) uniform Globals {
+  vec4 unity_ColorSpaceGrey;
+  vec4 _MainTex_ST;
+};
 in vec4 dcl_Input0_POSITION0;
 in vec4 dcl_Input1_NORMAL0;
 in vec4 dcl_Input2_TEXCOORD0;
@@ -84,36 +92,51 @@ void main ()
 //  #0: dcl_Input0_POSITION0 (high float) 4x1 [-1]
 //  #1: dcl_Input1_NORMAL0 (high float) 4x1 [-1]
 //  #2: dcl_Input2_TEXCOORD0 (high float) 4x1 [-1]
-// uniforms: 32 (total size: 0)
-//  #0: unity_AmbientGround (high float) 4x1 [-1]
-//  #1: unity_AmbientSky (high float) 4x1 [-1]
-//  #2: unity_MatrixVP (high float) 4x1 [4]
-//  #3: unity_MatrixV (high float) 4x1 [4]
-//  #4: glstate_lightmodel_ambient (high float) 4x1 [-1]
-//  #5: glstate_matrix_projection (high float) 4x1 [4]
-//  #6: unity_LODFade (high float) 4x1 [-1]
-//  #7: unity_Scale (high float) 4x1 [-1]
-//  #8: _World2Object (high float) 4x1 [4]
-//  #9: _Object2World (high float) 4x1 [4]
-//  #10: glstate_matrix_invtrans_modelview0 (high float) 4x1 [4]
-//  #11: glstate_matrix_modelview0 (high float) 4x1 [4]
-//  #12: glstate_matrix_mvp (high float) 4x1 [4]
-//  #13: unity_SHC (high float) 4x1 [-1]
-//  #14: unity_SHBb (high float) 4x1 [-1]
-//  #15: unity_SHBg (high float) 4x1 [-1]
-//  #16: unity_SHBr (high float) 4x1 [-1]
-//  #17: unity_SHAb (high float) 4x1 [-1]
-//  #18: unity_SHAg (high float) 4x1 [-1]
-//  #19: unity_SHAr (high float) 4x1 [-1]
-//  #20: unity_SpotDirection (high float) 4x1 [8]
-//  #21: unity_LightAtten (high float) 4x1 [8]
-//  #22: unity_LightPosition (high float) 4x1 [8]
-//  #23: unity_LightColor (high float) 4x1 [8]
-//  #24: unity_4LightAtten0 (high float) 4x1 [-1]
-//  #25: unity_4LightPosZ0 (high float) 4x1 [-1]
-//  #26: unity_4LightPosY0 (high float) 4x1 [-1]
-//  #27: unity_4LightPosX0 (high float) 4x1 [-1]
-//  #28: _LightPositionRange (high float) 4x1 [-1]
-//  #29: _WorldSpaceLightPos0 (high float) 4x1 [-1]
-//  #30: _MainTex_ST (high float) 4x1 [-1]
-//  #31: unity_ColorSpaceGrey (high float) 4x1 [-1]
+// buffer #0: Globals layout shared (size: unknown)
+//  member #0: vec4 unity_ColorSpaceGrey (unused)
+//  member #1: vec4 _MainTex_ST
+// buffer #1: UnityLighting layout shared (size: unknown)
+//  member #0: vec4 _WorldSpaceLightPos0 (unused)
+//  member #1: vec4 _LightPositionRange (unused)
+//  member #2: vec4 unity_4LightPosX0 (unused)
+//  member #3: vec4 unity_4LightPosY0 (unused)
+//  member #4: vec4 unity_4LightPosZ0 (unused)
+//  member #5: vec4 unity_4LightAtten0 (unused)
+//  member #6: vec4[8] unity_LightColor array 8
+//  member #7: vec4 [] parent 6
+//  member #8: vec4[8] unity_LightPosition array 8
+//  member #9: vec4 [] parent 8
+//  member #10: vec4[8] unity_LightAtten array 8
+//  member #11: vec4 [] parent 10
+//  member #12: vec4[8] unity_SpotDirection array 8 (unused)
+//  member #13: vec4 [] parent 12 (unused)
+//  member #14: vec4 unity_SHAr (unused)
+//  member #15: vec4 unity_SHAg (unused)
+//  member #16: vec4 unity_SHAb (unused)
+//  member #17: vec4 unity_SHBr (unused)
+//  member #18: vec4 unity_SHBg (unused)
+//  member #19: vec4 unity_SHBb (unused)
+//  member #20: vec4 unity_SHC (unused)
+// buffer #2: UnityPerDraw layout shared (size: unknown)
+//  member #0: vec4[4] glstate_matrix_mvp array 4
+//  member #1: vec4 [] parent 0
+//  member #2: vec4[4] glstate_matrix_modelview0 array 4
+//  member #3: vec4 [] parent 2
+//  member #4: vec4[4] glstate_matrix_invtrans_modelview0 array 4
+//  member #5: vec4 [] parent 4
+//  member #6: vec4[4] _Object2World array 4 (unused)
+//  member #7: vec4 [] parent 6 (unused)
+//  member #8: vec4[4] _World2Object array 4 (unused)
+//  member #9: vec4 [] parent 8 (unused)
+//  member #10: vec4 unity_Scale (unused)
+//  member #11: vec4 unity_LODFade (unused)
+// buffer #3: UnityPerFrame layout shared (size: unknown)
+//  member #0: vec4[4] glstate_matrix_projection array 4 (unused)
+//  member #1: vec4 [] parent 0 (unused)
+//  member #2: vec4 glstate_lightmodel_ambient
+//  member #3: vec4[4] unity_MatrixV array 4 (unused)
+//  member #4: vec4 [] parent 3 (unused)
+//  member #5: vec4[4] unity_MatrixVP array 4 (unused)
+//  member #6: vec4 [] parent 5 (unused)
+//  member #7: vec4 unity_AmbientSky (unused)
+//  member #8: vec4 unity_AmbientGround (unused)

@@ -1,0 +1,23 @@
+#version 450
+layout(local_size_x=8) in;
+layout(r32f, binding=0) uniform image1D lineImage;
+layout(r32f, binding=1) uniform image1DArray lineLayers;
+layout(r32f, binding=2) uniform imageCube cubeImage;
+layout(r32f, binding=3) uniform imageCubeArray cubeLayers;
+layout(r32f, binding=4) uniform imageBuffer linearImage;
+
+void main()
+{
+    int i = int(gl_GlobalInvocationID.x);
+    ivec3 cubePosition = ivec3(i, 0, 5);
+    ivec3 cubeLayerPosition = ivec3(i, 0, 8);
+    ivec2 linePosition = ivec2(i, 1);
+    vec4 value = imageLoad(lineImage, i) + imageLoad(lineLayers, linePosition)
+        + imageLoad(cubeImage, cubePosition) + imageLoad(cubeLayers, cubeLayerPosition)
+        + imageLoad(linearImage, i);
+    imageStore(lineImage, i, value + vec4(imageSize(lineImage)));
+    imageStore(lineLayers, linePosition, value + vec4(imageSize(lineLayers), 0, 0));
+    imageStore(cubeImage, cubePosition, value + vec4(imageSize(cubeImage), 0, 0));
+    imageStore(cubeLayers, cubeLayerPosition, value + vec4(imageSize(cubeLayers), 0));
+    imageStore(linearImage, i, value + vec4(imageSize(linearImage)));
+}

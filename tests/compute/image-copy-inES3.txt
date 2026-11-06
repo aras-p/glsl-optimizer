@@ -1,0 +1,12 @@
+#version 310 es
+layout(local_size_x=8, local_size_y=4) in;
+layout(rgba16f, binding=2) uniform readonly highp image2D sourceImage;
+layout(rgba8, binding=5) uniform writeonly highp image2D destinationImage;
+uniform highp sampler2D sampledImage;
+vec4 loadPixel(ivec2 p) { return imageLoad(sourceImage, p); }
+void main()
+{
+    ivec2 p = ivec2(gl_GlobalInvocationID.xy);
+    if (any(greaterThanEqual(p, imageSize(destinationImage)))) return;
+    imageStore(destinationImage, p, loadPixel(p) + texelFetch(sampledImage, p, 0));
+}

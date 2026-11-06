@@ -1,0 +1,10 @@
+#version 450
+layout(local_size_x=8) in;
+layout(r32ui, binding=0) uniform uimageCube counters;
+layout(r32ui, binding=1) uniform uimageCubeArray layers;
+void main()
+{
+    ivec3 p = ivec3(gl_GlobalInvocationID.xy, 4);
+    uint old = imageAtomicAdd(counters, p, 1u);
+    imageAtomicCompSwap(layers, ivec3(p.xy, p.z + 6), old, 0u);
+}

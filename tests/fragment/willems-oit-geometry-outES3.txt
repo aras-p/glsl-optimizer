@@ -1,0 +1,50 @@
+#version 320 es
+layout(early_fragment_tests) in;
+struct Node {
+  highp vec4 color;
+  highp float depth;
+  highp uint next;
+};
+layout(std140, column_major, binding=0) uniform PushConsts {
+  layout(column_major) highp mat4 model;
+  highp vec4 color;
+} pushConsts;
+layout(std430, column_major, binding=3) buffer LinkedListSBO {
+  layout(column_major) Node nodes[];
+};
+layout(std430, column_major, binding=1) buffer GeometrySBO {
+  highp uint count;
+  highp uint maxNodeCount;
+};
+layout(r32ui, binding=2) coherent uniform highp uimage2D headIndexImage;
+void main ()
+{
+  highp uint tmpvar_1;
+  tmpvar_1 = atomicAdd (count, 1u);
+  if ((tmpvar_1 < maxNodeCount)) {
+    highp uint tmpvar_2;
+    tmpvar_2 = imageAtomicExchange (headIndexImage, ivec2(gl_FragCoord.xy), tmpvar_1);
+    nodes[tmpvar_1].color = pushConsts.color;
+    nodes[tmpvar_1].depth = gl_FragCoord.z;
+    nodes[tmpvar_1].next = tmpvar_2;
+  };
+}
+
+
+// stats: 2 alu 1 tex 1 flow
+// inputs: 1
+//  #0: gl_FragCoord (high float) 4x1 [-1] loc 0
+// buffer #0: GeometrySBO storage layout std430 binding 1 (size: 8)
+//  member #0: uint count offset 0
+//  member #1: uint maxNodeCount offset 4
+// buffer #1: LinkedListSBO storage layout std430 binding 3 (size: unknown)
+//  member #0: Node[] nodes offset 0 array runtime stride 32
+//  member #1: Node [] parent 0 offset 0
+//  member #2: vec4 color parent 1 offset 0
+//  member #3: float depth parent 1 offset 16
+//  member #4: uint next parent 1 offset 20
+// buffer #2: PushConsts instance pushConsts layout std140 binding 0 (size: 80)
+//  member #0: mat4 model offset 0 matrix-stride 16 (unused)
+//  member #1: vec4 color offset 64
+// textures: 1
+//  #0: headIndexImage (high image2d) 0x0 [-1] loc 2 format r32ui component uint

@@ -1,0 +1,53 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+template<typename A, typename T>
+inline T _xlat_atomic_comp_swap(device A* address, T compare, T value) {
+  T expected = compare;
+  while (!atomic_compare_exchange_weak_explicit(address, &expected, value, memory_order_relaxed, memory_order_relaxed) && expected == compare) {}
+  return expected;
+}
+struct alignas(16) _xlat_buf_storage0_element { int4 value; };
+static_assert(sizeof(_xlat_buf_storage0_element) == 16, "array stride");
+struct xlatMtlShaderInput {
+};
+struct xlatMtlShaderOutput {
+  float4 color [[color(0)]];
+};
+struct xlatMtlShaderUniform {
+  int element;
+};
+fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , device uchar* _mtl_buffer1 [[buffer(1)]])
+{
+  xlatMtlShaderOutput _mtl_o;
+  int i_1 = 0;
+  int tmpvar_2 = 0;
+  tmpvar_2 = atomic_fetch_add_explicit (reinterpret_cast<device atomic_int*>(&reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 16)[_mtl_u.element].value) + 1, int(1), memory_order_relaxed);
+  int tmpvar_3 = 0;
+  tmpvar_3 = atomic_exchange_explicit (reinterpret_cast<device atomic_int*>(&reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 16)[_mtl_u.element].value) + uint2(1, 0)[int((*reinterpret_cast<device int*>(_mtl_buffer1 + 4)))], int(2), memory_order_relaxed);
+  int tmpvar_4 = 0;
+  tmpvar_4 = _xlat_atomic_comp_swap (reinterpret_cast<device atomic_int*>(&reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 16)[_mtl_u.element].value) + uint2(2, 3)[int((*reinterpret_cast<device int*>(_mtl_buffer1 + 4)))], int(3), int(4));
+  int tmpvar_5 = 0;
+  tmpvar_5 = int((*reinterpret_cast<device int*>(_mtl_buffer1 + 4)));
+  i_1 = (tmpvar_5 + 1);
+  int tmpvar_6 = 0;
+  tmpvar_6 = atomic_fetch_or_explicit (reinterpret_cast<device atomic_int*>(&reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 16)[_mtl_u.element].value) + uint2(2, 1)[tmpvar_5], int(8), memory_order_relaxed);
+  float4 tmpvar_7 = 0;
+  tmpvar_7.x = float(tmpvar_2);
+  tmpvar_7.y = float(tmpvar_3);
+  tmpvar_7.z = float(tmpvar_4);
+  tmpvar_7.w = float(i_1);
+  _mtl_o.color = tmpvar_7;
+  return _mtl_o;
+}
+
+
+// stats: 5 alu 0 tex 0 flow
+// uniforms: 1 (total size: 4)
+//  #0: element (high int) 1x1 [-1] loc 0
+// buffer #0: Data storage instance data layout std430 (size: unknown) metal 1
+//  member #0: int unused offset 0 (unused)
+//  member #1: int index offset 4
+//  member #2: ivec4[] values offset 16 array runtime stride 16
+//  member #3: ivec4 [] parent 2 offset 16

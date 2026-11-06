@@ -1,0 +1,63 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct alignas(16) _xlat_buf_storage0 {
+  alignas(16) packed_float3 value;
+  alignas(4) uint enabled;
+};
+static_assert(sizeof(_xlat_buf_storage0) == 16, "std430 size");
+struct alignas(8) _xlat_buf_storage3_element { float2 value; };
+struct _xlat_buf_storage3 { _xlat_buf_storage3_element elements[3]; };
+static_assert(sizeof(_xlat_buf_storage3) == 24, "std430 size");
+struct alignas(8) _xlat_buf_storage2_element { _xlat_buf_storage3 value; };
+struct _xlat_buf_storage2 { _xlat_buf_storage2_element elements[2]; };
+static_assert(sizeof(_xlat_buf_storage2) == 48, "std430 size");
+struct alignas(16) _xlat_buf_storage1 {
+  alignas(16) packed_float3 value;
+  char _buf_pad1[4];
+  alignas(16) packed_uint3 flags;
+  char _buf_pad2[4];
+  alignas(8) int2 indices;
+  alignas(8) _xlat_buf_storage2 values;
+};
+static_assert(sizeof(_xlat_buf_storage1) == 96, "std430 size");
+struct xlatMtlShaderInput {
+};
+struct xlatMtlShaderOutput {
+  float4 color [[color(0)]];
+};
+struct xlatMtlShaderUniform {
+};
+fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , const device _xlat_buf_storage0& _mtl_buffer1 [[buffer(1)]]
+  , const device _xlat_buf_storage0& _mtl_buffer2 [[buffer(2)]]
+  , device _xlat_buf_storage1& _mtl_buffer3 [[buffer(3)]])
+{
+  const device _xlat_buf_storage0* _mtl_b0[2] = {&_mtl_buffer1, &_mtl_buffer2};
+  xlatMtlShaderOutput _mtl_o;
+  _mtl_buffer3.value.xy = float2(half3((*_mtl_b0[0]).value).yx);
+  _mtl_buffer3.value.z = float(half3((*_mtl_b0[1]).value).z);
+  bool3 tmpvar_1 = false;
+  tmpvar_1.yz = bool2(1, 0);
+  tmpvar_1.x = bool((*_mtl_b0[1]).enabled);
+  _mtl_buffer3.flags = uint3(tmpvar_1);
+  _mtl_buffer3.values.elements[int2(_mtl_buffer3.indices).x].value.elements[int2(_mtl_buffer3.indices).y].value = float2(half3(_mtl_buffer3.value).xy);
+  half4 tmpvar_2 = 0;
+  tmpvar_2.xyz = half3(_mtl_buffer3.value);
+  tmpvar_2.w = half(bool3(_mtl_buffer3.flags).x);
+  _mtl_o.color = float4(tmpvar_2);
+  return _mtl_o;
+}
+
+
+// stats: 2 alu 0 tex 0 flow
+// buffer #0: Input storage instance source layout std430 binding 1 array 2 (size: 16) metal 1
+//  member #0: vec3 value offset 0 readonly
+//  member #1: bool enabled offset 12 readonly
+// buffer #1: Output storage instance dest layout std430 binding 3 (size: 96) metal 3
+//  member #0: vec3 value offset 0
+//  member #1: bvec3 flags offset 16
+//  member #2: ivec2 indices offset 32
+//  member #3: vec2[2][3] values offset 40 array 2 stride 24
+//  member #4: vec2[3] [] parent 3 offset 40 array 3 stride 8
+//  member #5: vec2 [] parent 4 offset 40

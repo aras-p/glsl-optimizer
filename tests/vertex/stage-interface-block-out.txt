@@ -1,0 +1,33 @@
+#version 450
+out Payload {
+  vec2 value;
+} payloadOut;
+layout(location=12) out Anonymous {
+  vec4 unused;
+  layout(location=14) flat int id;
+};
+layout(location=4) out Extra {
+  noperspective vec2 uv;
+  mat2 basis;
+} extra[2];
+layout(location=0) out Interpolant {
+  flat int f_objectID;
+} dataOut;
+void main ()
+{
+  gl_Position = vec4(0.0, 0.0, 0.0, 1.0);
+  dataOut.f_objectID = gl_InstanceID;
+  extra[0].uv = vec2(0.0, 0.0);
+  extra[1].uv = vec2(1.0, 1.0);
+  extra[0].basis = mat2(1.0, 0.0, 0.0, 1.0);
+  extra[1].basis = mat2(2.0, 0.0, 0.0, 2.0);
+  id = gl_VertexID;
+  payloadOut.value = vec2(float(gl_VertexID));
+  if ((gl_VertexID == 0)) {
+    return;
+  };
+  payloadOut.value = (payloadOut.value + 1.0);
+}
+
+
+// stats: 8 alu 0 tex 2 flow

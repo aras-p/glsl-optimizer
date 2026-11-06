@@ -1,0 +1,63 @@
+#version 320 es
+// Adapted from https://github.com/SaschaWillems/Vulkan/blob/6e1cc299/shaders/glsl/oit/color.frag
+// License of original file: MIT, Copyright (c) 2016 Sascha Willems
+// Changes done: removed Vulkan descriptor sets; made SSBO std430 layouts explicit;
+// added unsigned literals and explicit conversion of the fragment count for ES;
+// selected GLSL 320 es; added default and image precision declarations.
+precision highp float;
+precision highp int;
+
+#define MAX_FRAGMENT_COUNT 128
+
+struct Node
+{
+    vec4 color;
+    float depth;
+    uint next;
+};
+
+layout (location = 0) out vec4 outFragColor;
+
+layout (binding = 0, r32ui) uniform highp uimage2D headIndexImage;
+
+layout (std430, binding = 1) buffer LinkedListSBO
+{
+    Node nodes[];
+};
+
+void main()
+{
+    Node fragments[MAX_FRAGMENT_COUNT];
+    int count = 0;
+
+    uint nodeIdx = imageLoad(headIndexImage, ivec2(gl_FragCoord.xy)).r;
+
+    while (nodeIdx != 0xffffffffu && count < MAX_FRAGMENT_COUNT)
+    {
+        fragments[count] = nodes[nodeIdx];
+        nodeIdx = fragments[count].next;
+        ++count;
+    }
+    
+    // Do the insertion sort
+    for (uint i = 1u; i < uint(count); ++i)
+    {
+        Node insert = fragments[i];
+        uint j = i;
+        while (j > 0u && insert.depth > fragments[j - 1u].depth)
+        {
+            fragments[j] = fragments[j-1u];
+            --j;
+        }
+        fragments[j] = insert;
+    }
+
+    // Do blending
+    vec4 color = vec4(0.025, 0.025, 0.025, 1.0f);
+    for (int i = 0; i < count; ++i)
+    {
+        color = mix(color, fragments[i].color, fragments[i].color.a);
+    }
+
+    outFragColor = color;
+}

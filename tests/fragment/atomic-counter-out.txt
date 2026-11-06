@@ -1,0 +1,28 @@
+#version 420
+layout(binding=2, offset=16) uniform atomic_uint counter;
+layout(binding=2, offset=20) uniform atomic_uint nextCounter;
+layout(binding=0, offset=4) uniform atomic_uint other;
+layout(location=0) out uvec4 color;
+void main ()
+{
+  uint tmpvar_1;
+  tmpvar_1 = atomicCounterIncrement (counter);
+  uint tmpvar_2;
+  tmpvar_2 = atomicCounterDecrement (nextCounter);
+  uint tmpvar_3;
+  tmpvar_3 = atomicCounter (other);
+  uvec4 tmpvar_4;
+  tmpvar_4.w = 1u;
+  tmpvar_4.x = tmpvar_1;
+  tmpvar_4.y = tmpvar_2;
+  tmpvar_4.z = tmpvar_3;
+  color = tmpvar_4;
+}
+
+
+// stats: 1 alu 0 tex 0 flow
+// buffer #0: atomic_counters_0 atomic-counter layout atomic-counter binding 0 (size: 8)
+//  member #0: atomic_uint other offset 4
+// buffer #1: atomic_counters_2 atomic-counter layout atomic-counter binding 2 (size: 24)
+//  member #0: atomic_uint counter offset 16
+//  member #1: atomic_uint nextCounter offset 20

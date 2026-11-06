@@ -1,0 +1,14 @@
+#version 310 es
+layout(local_size_x=4, local_size_y=2, local_size_z=3) in;
+layout(std430) buffer Data { uvec4 values[]; } data;
+void main()
+{
+    uint group = gl_WorkGroupID.x + gl_NumWorkGroups.x *
+        (gl_WorkGroupID.y + gl_NumWorkGroups.y * gl_WorkGroupID.z);
+    uint i = (group * (gl_WorkGroupSize.x * gl_WorkGroupSize.y * gl_WorkGroupSize.z)
+        + gl_LocalInvocationIndex) * 4u;
+    data.values[i] = uvec4(gl_GlobalInvocationID, gl_LocalInvocationIndex);
+    data.values[i+1u] = uvec4(gl_LocalInvocationID, gl_WorkGroupSize.x);
+    data.values[i+2u] = uvec4(gl_WorkGroupID, gl_WorkGroupSize.y);
+    data.values[i+3u] = uvec4(gl_NumWorkGroups, gl_WorkGroupSize.z);
+}

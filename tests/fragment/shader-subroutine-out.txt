@@ -1,0 +1,2 @@
+// expected error
+Shader subroutines are not supported.

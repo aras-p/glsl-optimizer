@@ -1,0 +1,60 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+template<typename A, typename T>
+inline T _xlat_atomic_comp_swap(threadgroup A* address, T compare, T value) {
+  T expected = compare;
+  while (!atomic_compare_exchange_weak_explicit(address, &expected, value, memory_order_relaxed, memory_order_relaxed) && expected == compare) {}
+  return expected;
+}
+template<typename A, typename T>
+inline T _xlat_atomic_comp_swap(device A* address, T compare, T value) {
+  T expected = compare;
+  while (!atomic_compare_exchange_weak_explicit(address, &expected, value, memory_order_relaxed, memory_order_relaxed) && expected == compare) {}
+  return expected;
+}
+struct alignas(16) _xlat_buf_storage0_element { uint4 value; };
+static_assert(sizeof(_xlat_buf_storage0_element) == 16, "array stride");
+struct xlatMtlShaderUniform {
+};
+// threadsPerThreadgroup: 8, 1, 1
+kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , device uchar* _mtl_buffer1 [[buffer(1)]]
+  , uint gl_LocalInvocationIndex [[thread_index_in_threadgroup]]
+  , uint3 gl_GlobalInvocationID [[thread_position_in_grid]]
+  , uint3 gl_WorkGroupID [[threadgroup_position_in_grid]])
+{
+threadgroup uint count_1;
+threadgroup int4 values_2;
+  if ((gl_LocalInvocationIndex == 0)) {
+    count_1 = 0;
+    values_2 = int4(0, 0, 0, 0);
+  };
+  threadgroup_barrier(mem_flags::mem_threadgroup);
+  uint tmpvar_3;
+  tmpvar_3 = atomic_fetch_add_explicit (reinterpret_cast<threadgroup atomic_uint*>(&count_1), uint(1), memory_order_relaxed);
+  int tmpvar_4 = 0;
+  tmpvar_4 = _xlat_atomic_comp_swap (reinterpret_cast<threadgroup atomic_int*>(&values_2) + uint2(1, 0)[int((gl_LocalInvocationIndex & 1))], int(0), int(int((gl_LocalInvocationIndex + 1))));
+  int tmpvar_5 = 0;
+  tmpvar_5 = atomic_fetch_min_explicit (reinterpret_cast<threadgroup atomic_int*>(&values_2) + 2, int(-(int(gl_LocalInvocationIndex))), memory_order_relaxed);
+  int tmpvar_6 = 0;
+  tmpvar_6 = atomic_fetch_max_explicit (reinterpret_cast<threadgroup atomic_int*>(&values_2) + 3, int(int(gl_LocalInvocationIndex)), memory_order_relaxed);
+  threadgroup_barrier(mem_flags::mem_threadgroup);
+  if ((gl_LocalInvocationIndex == 0)) {
+    uint4 tmpvar_7;
+    tmpvar_7.x = count_1;
+    tmpvar_7.y = uint(values_2.z);
+    tmpvar_7.z = uint(values_2.w);
+    tmpvar_7.w = tmpvar_3;
+    reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_WorkGroupID.x].value = uint4(tmpvar_7);
+  };
+  uint tmpvar_8;
+  tmpvar_8 = _xlat_atomic_comp_swap (reinterpret_cast<device atomic_uint*>(&reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[(gl_GlobalInvocationID.x + 8)].value) + 0, uint(0), uint(uint(tmpvar_4)));
+}
+
+
+// stats: 15 alu 0 tex 2 flow
+// workgroup size: 8 1 1
+// buffer #0: Output storage instance outputData layout std430 (size: unknown) metal 1
+//  member #0: uvec4[] values offset 0 array runtime stride 16
+//  member #1: uvec4 [] parent 0 offset 0

@@ -1,0 +1,12 @@
+#version 450
+layout(std430, binding=2) buffer Data {
+    layout(offset=16) vec2 bias;
+    float values[];
+} data;
+uniform int index;
+out vec4 color;
+void main()
+{
+    data.values[index] += data.bias.x;
+    color = vec4(data.values[index], float(data.values.length()), data.bias);
+}

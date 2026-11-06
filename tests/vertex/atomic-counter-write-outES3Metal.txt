@@ -1,0 +1,2 @@
+// expected error
+Metal vertex shaders can only read atomic counters.

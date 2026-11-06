@@ -1,0 +1,20 @@
+#version 310 es
+precision highp float;
+struct Entry { mat2x3 matrix; };
+layout(std430, row_major) readonly buffer StorageData {
+    mat2x3 rows;
+    layout(column_major) mat2x3 columns;
+    Entry entries[2];
+};
+layout(std140, row_major) uniform UniformData {
+    mat2x3 uniformRows;
+    layout(column_major) mat2x3 uniformColumns;
+};
+uniform highp int index;
+out vec4 color;
+void main()
+{
+    vec3 value = rows * vec2(1.0, 2.0) + columns[index] + entries[index].matrix[1];
+    value += uniformRows[index] + uniformColumns * vec2(2.0, 1.0);
+    color = vec4(value, 1.0);
+}

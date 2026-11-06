@@ -1,0 +1,86 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+#if __METAL_VERSION__ < 310
+#error Image atomics require Metal 3.1 or newer
+#endif
+struct NodeType {
+  float4 color;
+  float depth;
+  uint next;
+};
+struct alignas(16) _xlat_buf_storage1 {
+  alignas(16) float4 color;
+  alignas(4) float depth;
+  alignas(4) uint next;
+};
+static_assert(sizeof(_xlat_buf_storage1) == 32, "std430 size");
+inline __attribute__((always_inline)) NodeType _xlat_buf_storage1_read(const device _xlat_buf_storage1& storage)
+{
+  NodeType value;
+  value.color = float4(storage.color);
+  value.depth = float(storage.depth);
+  value.next = uint(storage.next);
+  return value;
+}
+struct alignas(16) _xlat_buf_storage0_element { _xlat_buf_storage1 value; };
+static_assert(sizeof(_xlat_buf_storage0_element) == 32, "array stride");
+struct xlatMtlShaderInput {
+  float4 gl_FragCoord [[position]];
+  float3 Position;
+  float3 Normal;
+};
+struct xlatMtlShaderOutput {
+};
+struct xlatMtlShaderUniform {
+  float4 LightPosition;
+  float3 LightIntensity;
+  float4 Kd;
+  float4 Ka;
+  uint MaxNodes;
+};
+[[early_fragment_tests]] fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , device uchar* _mtl_buffer1 [[buffer(1)]]
+  , device atomic_uint* _mtl_atomic2 [[buffer(2)]]
+  , texture2d<uint, access::read_write> headPointers [[texture(0)]])
+{
+  xlatMtlShaderOutput _mtl_o;
+  uint tmpvar_1;
+  tmpvar_1 = atomic_fetch_add_explicit(_mtl_atomic2, 1u, memory_order_relaxed);
+  if ((tmpvar_1 < _mtl_u.MaxNodes)) {
+    uint tmpvar_2;
+    tmpvar_2 = headPointers.atomic_exchange(uint2(int2(_mtl_i.gl_FragCoord.xy)), uint4(tmpvar_1)).x;
+    float4 tmpvar_3 = 0;
+    tmpvar_3.xyz = (_mtl_u.LightIntensity * (_mtl_u.Ka.xyz + (_mtl_u.Kd.xyz * 
+      max (dot (normalize((_mtl_u.LightPosition.xyz - _mtl_i.Position)), normalize(_mtl_i.Normal)), 0.0)
+    )));
+    tmpvar_3.w = _mtl_u.Kd.w;
+    reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[tmpvar_1].value.color = float4(tmpvar_3);
+    reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[tmpvar_1].value.depth = float(_mtl_i.gl_FragCoord.z);
+    reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[tmpvar_1].value.next = uint(tmpvar_2);
+  };
+  return _mtl_o;
+}
+
+
+// stats: 10 alu 1 tex 1 flow
+// inputs: 3
+//  #0: gl_FragCoord (high float) 4x1 [-1] loc 0
+//  #1: Position (high float) 3x1 [-1]
+//  #2: Normal (high float) 3x1 [-1]
+// uniforms: 5 (total size: 68)
+//  #0: LightPosition (high float) 4x1 [-1] loc 0
+//  #1: LightIntensity (high float) 3x1 [-1] loc 16
+//  #2: Kd (high float) 4x1 [-1] loc 32
+//  #3: Ka (high float) 4x1 [-1] loc 48
+//  #4: MaxNodes (high int) 1x1 [-1] loc 64
+// buffer #0: linkedLists storage layout std430 binding 0 (size: unknown) metal 1
+//  member #0: NodeType[] nodes offset 0 array runtime stride 32
+//  member #1: NodeType [] parent 0 offset 0
+//  member #2: vec4 color parent 1 offset 0
+//  member #3: float depth parent 1 offset 16
+//  member #4: uint next parent 1 offset 20
+// buffer #1: atomic_counters_0 atomic-counter layout atomic-counter binding 0 (size: 4) metal 2
+//  member #0: atomic_uint nextNodeCounter offset 0
+// textures: 1
+//  #0: headPointers (high image2d) 0x0 [-1] loc 0 format r32ui component uint

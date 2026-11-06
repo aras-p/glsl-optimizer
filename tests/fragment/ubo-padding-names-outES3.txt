@@ -1,0 +1,30 @@
+#version 300 es
+struct Entry {
+  highp float _buf_pad1;
+  highp vec4 color;
+  highp float _buf_pad2;
+  highp vec4 other;
+};
+layout(std140, column_major) uniform Data {
+  highp float _buf_pad1;
+  highp vec4 color;
+  highp float _buf_pad2;
+  layout(column_major) Entry entry;
+} data;
+out highp vec4 color;
+void main ()
+{
+  color = (((data.color * data._buf_pad1) + (data.entry.color * data.entry._buf_pad1)) + (data.entry.other * (data._buf_pad2 + data.entry._buf_pad2)));
+}
+
+
+// stats: 6 alu 0 tex 0 flow
+// buffer #0: Data instance data layout std140 (size: 112)
+//  member #0: float _buf_pad1 offset 0
+//  member #1: vec4 color offset 16
+//  member #2: float _buf_pad2 offset 32
+//  member #3: Entry entry offset 48
+//  member #4: float _buf_pad1 parent 3 offset 48
+//  member #5: vec4 color parent 3 offset 64
+//  member #6: float _buf_pad2 parent 3 offset 80
+//  member #7: vec4 other parent 3 offset 96

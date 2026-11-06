@@ -1,0 +1,74 @@
+#version 320 es
+// Adapted from https://github.com/daw42/glslcookbook/blob/3a13cd80/chapter05/shader/oit.fs
+// License of original file: MIT, Copyright (c) 2017 Packt
+// Changes done: selected linked-list build pass; removed resolve pass, its unused declarations and subroutines;
+// selected GLSL ES 320; added default/image/atomic-counter precision; normalized line endings.
+precision highp float;
+precision highp int;
+
+layout (early_fragment_tests) in;
+
+
+in vec3 Position;
+in vec3 Normal;
+
+uniform vec4 LightPosition;
+uniform vec3 LightIntensity;
+
+uniform vec4 Kd;            // Diffuse reflectivity
+uniform vec4 Ka;            // Ambient reflectivity
+
+struct NodeType {
+  vec4 color;
+  float depth;
+  uint next;
+};
+
+layout( binding = 0, r32ui) uniform highp uimage2D headPointers;
+layout( binding = 0, offset = 0) uniform highp atomic_uint nextNodeCounter;
+layout( binding = 0, std430 ) buffer linkedLists {
+  NodeType nodes[];
+};
+uniform uint MaxNodes;
+
+
+
+
+vec3 diffuse( )
+{
+  vec3 s = normalize( LightPosition.xyz - Position );
+  vec3 n = normalize(Normal);
+  return
+    LightIntensity * ( Ka.rgb +
+        Kd.rgb * max( dot(s, n), 0.0 ) );
+}
+
+void pass1()
+{
+  // Get the index of the next empty slot in the buffer
+  uint nodeIdx = atomicCounterIncrement(nextNodeCounter);
+
+  // Is our buffer full?  If so, we don't add the fragment
+  // to the list.
+  if( nodeIdx < MaxNodes ) {
+
+    // Our fragment will be the new head of the linked list, so
+    // replace the value at gl_FragCoord.xy with our new node's
+    // index.  We use imageAtomicExchange to make sure that this
+    // is an atomic operation.  The return value is the old head
+    // of the list (the previous value), which will become the
+    // next element in the list once our node is inserted.
+    uint prevHead = imageAtomicExchange(headPointers, ivec2(gl_FragCoord.xy), nodeIdx);
+
+    // Here we set the color and depth of this new node to the color
+    // and depth of the fragment.  The next pointer, points to the
+    // previous head of the list.
+    nodes[nodeIdx].color = vec4(diffuse(), Kd.a);
+    nodes[nodeIdx].depth = gl_FragCoord.z;
+    nodes[nodeIdx].next = prevHead;
+  }
+}
+
+void main() {
+  pass1();
+}

@@ -1,0 +1,44 @@
+#version 310 es
+layout(local_size_x=8) in;
+struct Tile {
+  mediump mat2x3 transforms[2];
+};
+struct Entry {
+  Tile tile;
+  highp uint tag;
+};
+layout(std430, column_major) buffer Output {
+  layout(column_major) Entry values[];
+} outputData;
+shared Entry entries[8];
+void main ()
+{
+  Entry entry_1;
+  highp mat2x3 tmpvar_2;
+  highp vec4 tmpvar_3;
+  tmpvar_3.yzw = vec3(0.0, 0.0, 0.0);
+  tmpvar_3.x = float(gl_LocalInvocationIndex);
+  tmpvar_2[uint(0)] = tmpvar_3.xyy;
+  tmpvar_2[1u] = tmpvar_3.yxy;
+  entry_1.tile.transforms[0] = tmpvar_2;
+  entry_1.tile.transforms[1] = mat2x3(2.0, 0.0, 0.0, 0.0, 2.0, 0.0);
+  entry_1.tag = gl_LocalInvocationIndex;
+  entries[gl_LocalInvocationIndex] = entry_1;
+  entries[gl_LocalInvocationIndex].tile.transforms[1][(gl_LocalInvocationIndex & 1u)].xz = vec2(4.0, 3.0);
+  entries[gl_LocalInvocationIndex].tile.transforms[0][0][(gl_LocalInvocationIndex % 3u)] = 5.0;
+  barrier();
+  highp uint tmpvar_4;
+  tmpvar_4 = ((gl_LocalInvocationIndex + 1u) % 8u);
+  outputData.values[gl_GlobalInvocationID.x] = entries[tmpvar_4];
+}
+
+
+// stats: 9 alu 0 tex 0 flow
+// workgroup size: 8 1 1
+// buffer #0: Output storage instance outputData layout std430 (size: unknown)
+//  member #0: Entry[] values offset 0 array runtime stride 80
+//  member #1: Entry [] parent 0 offset 0
+//  member #2: Tile tile parent 1 offset 0
+//  member #3: mat2x3[2] transforms parent 2 offset 0 array 2 stride 32
+//  member #4: mat2x3 [] parent 3 offset 0 matrix-stride 16
+//  member #5: uint tag parent 1 offset 64

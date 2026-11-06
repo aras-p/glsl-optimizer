@@ -1,0 +1,10 @@
+#version 430
+layout(local_size_x=8) in;
+layout(rg16f, binding=1) uniform readonly restrict image2D sources[2];
+layout(r32ui, binding=4) uniform coherent volatile uimage2D destination;
+void main()
+{
+    ivec2 p = ivec2(gl_GlobalInvocationID.xy);
+    imageStore(destination, p, uvec4(imageLoad(sources[1], p)));
+    memoryBarrierImage();
+}

@@ -1,27 +1,28 @@
 GLSL optimizer
 ==============
 
-> :warning: As of mid-2016, the project is unlikely to have any significant developments. At Unity we are moving to a different
-shader compilation pipeline, with glsl-optimizer is not used. So from my side there won't be significant work done on it. :warning:
+> :warning: As of mid-2016, this project is unlikely to have any significant developments.
+> This project was developed for Unity needs around year 2010, but by year 2016 Unity's
+> shader compilation pipeline has evolved into a different one, and glsl-optimizer was no
+> longer used there. So from my side there won't be significant work done on it. :warning:
 
-
-A C++ library that takes GLSL shaders, does some GPU-independent optimizations on them
+A C++ library that takes GLSL vertex/fragment/compute shaders, does GPU-independent optimizations on them
 and outputs GLSL or Metal source back. Optimizations are function inlining, dead code removal, copy propagation,
 constant folding, constant propagation, arithmetic optimizations and so on.
 
 Apparently quite a few mobile platforms are pretty bad at optimizing shaders; and
 unfortunately they *also* lack offline shader compilers. So using a GLSL optimizer offline
 before can make the shader run much faster on a platform like that. See performance numbers
-in [this blog post](http://aras-p.info/blog/2010/09/29/glsl-optimizer/).
+in [this blog post](https://aras-p.info/blog/2010/09/29/glsl-optimizer/).
 
 Even for drivers that have decent shader optimization, GLSL optimizer could be useful to just strip away
 dead code, make shaders smaller and do uniform/input reflection offline.
 
-Almost all actual code is [Mesa 3D's GLSL](http://cgit.freedesktop.org/mesa/mesa/log/)
+Almost all actual code is [Mesa 3D's GLSL](https://gitlab.freedesktop.org/mesa/mesa)
 compiler; all this library does is spits out optimized GLSL or Metal back, and adds GLES type precision
 handling to the optimizer.
 
-This GLSL optimizer is made for [Unity's](http://unity3d.com/) purposes and is built-in
+This GLSL optimizer is made for [Unity's](https://unity3d.com/) purposes and is built-in
 starting with Unity 3.0.
 
 GLSL Optimizer is licensed according to the terms of the MIT license.
@@ -29,7 +30,7 @@ GLSL Optimizer is licensed according to the terms of the MIT license.
 See [change log here](Changelog.md).
 
 
-Usage
+Build
 -----
 
 Build with CMake 3.21 or newer and a C/C++17 compiler on Windows, macOS, or Linux, using
@@ -54,7 +55,7 @@ CMake options:
 
 * `BUILD_TESTING=OFF` builds without the regression runner.
 * `GLSLOPT_BUILD_TOOLS=ON` builds the optional `glslopt` command-line optimizer.
-  Run it without arguments for usage.
+  Use `-m` for Metal output. Run it without arguments for usage.
 * `GLSLOPT_TEST_OPENGL=ON` enables optional external OpenGL validation in the test
   runner on Windows/macOS. It is off by default and is not needed for regression tests.
 
@@ -62,19 +63,124 @@ CMake options:
 > Its JavaScript smoke test is `node tests/tests.js` after building the addon. I have no
 > idea if or how it works.
 
+Usage
+-----
+
 Interface for the library is `src/glsl/glsl_optimizer.h`. General usage is:
- 
-	ctx = glslopt_initialize(targetVersion);
-	for (lots of shaders) {
-		shader = glslopt_optimize (ctx, shaderType, shaderSource, options);
-		if (glslopt_get_status (shader)) {
-			newSource = glslopt_get_output (shader);
-		} else {
-			errorLog = glslopt_get_log (shader);
-		}
-		glslopt_shader_delete (shader);
-	}
-	glslopt_cleanup (ctx);
+
+```c 
+ctx = glslopt_initialize(targetVersion);
+for (lots of shaders) {
+    shader = glslopt_optimize (ctx, shaderType, shaderSource, options);
+    if (glslopt_get_status (shader)) {
+        newSource = glslopt_get_output (shader);
+    } else {
+        errorLog = glslopt_get_log (shader);
+    }
+    glslopt_shader_delete (shader);
+}
+glslopt_cleanup (ctx);
+```
+
+
+Language Support
+----------------
+
+* Desktop GLSL: versions from 1.10 through 4.50 (no `#version` defaults to 1.10);
+  they can produce GLSL or Metal.
+* GLSL ES: the OpenGL ES and Metal targets accept `#version 300 es`, `310 es`,
+  and `320 es`. The desktop OpenGL target accepts ES 3.00 input only.
+* Supported shader stages are vertex, fragment, and compute.
+
+#### Limitations
+
+* Last time this library was used "in production" in a big product (Unity) was around
+  2015, anything since then got much less "real" testing.
+* Geometry and tessellation shaders are not supported.
+* Double precision types and shader subroutines are not supported.
+* Subgroup operations (`GL_KHR_shader_subgroup`) are not supported.
+* Variable workgroup sizes (`GL_ARB_compute_variable_group_size`) are not supported.
+* Each shader stage is optimized independently. Optimizer retains vertex outputs
+  even if fragment shader never reads them, and it does not match or validate
+  varyings across stages.
+
+#### Metal notes
+
+* Basic vertex and fragment shaders compile as Metal 1.2, but the version can
+  become higher depending on the features it uses.
+* Floating point `mediump` and `lowp` mostly translate to Metal `half`.
+* Vertex attributes get consecutive indices starting at 0 in emitted declaration
+  order; use the reflected indices to configure the vertex descriptor.
+* Shadow sampling uses a fixed sampler with clamp-to-edge addressing,
+  linear filtering, and a less-equal comparison. Shadow gathers use the bound sampler.
+* No support for arrays of samplers, `gl_ClipDistance`,
+  or sampled textures such as multisample, rectangle, buffer, 1D, or integer
+  3D textures.
+* Texture buffers require Metal 2.1+. Integer image atomics require
+  Metal 3.1+ (4.0+ for cube images) and GPU support for texture
+  atomics.
+* Multisample storage images support reads and queries only.
+* `memoryBarrier*()` and `groupMemoryBarrier()` translate to `atomic_thread_fence`
+  and thus require Metal 3.2 or later. A `memoryBarrierShared()` immediately
+  followed by `barrier()` in the optimizer's instruction stream can use a single
+  threadgroup barrier on earlier Metal versions.
+* Coherent images and SSBOs require Metal 3.2+.
+* Buffer atomics require 32-bit `int` or `uint` storage. Atomics on
+  shared variables require `highp` storage. Metal vertex shaders can only read
+  atomic counters.
+
+#### Resource reflection
+
+* Reflection returns up to 1024 global uniforms, 128 inputs, and 128 textures,
+  including storage images.
+* Metal packs global uniforms into one struct at `buffer(0)` using Metal's
+  natural alignment and padding; reflected uniform location is a byte
+  offset within that struct.
+* For compute dispatch on Metal, use `glslopt_shader_get_compute_local_size` to
+  get the `threadsPerThreadgroup` dimensions.
+* Texture reflection includes sampled textures and storage images.
+  - GLSL: reflected location is the explicit binding if present, otherwise the
+    explicit uniform location or `-1`.
+  - Metal: the texture slot. Images follow sampled textures and consume only
+    texture slots. Metal image resource arrays must have a fixed size and one dimension;
+    their elements occupy consecutive texture slots.
+* Buffer reflection lists blocks separately from ordinary uniforms. The source
+  binding is `-1` when absent, and block arrays use consecutive bindings.
+  Metal reserves buffer slot 0 for ordinary uniforms. Use the `metalBufferIndex` when
+  binding a block.
+* Explicit `std140` and `std430` layouts are preserved. For GLSL output,
+  `shared` and `packed` block sizes, offsets, and strides are unknown
+  (reported as `-1`). Metal uses `std140` for `shared` and `packed` UBOs and `std430` for
+  those SSBOs. If any SSBO member is coherent, Metal applies device coherence to the whole block.
+* Atomic counters sharing a binding form one reflected buffer named
+  `atomic_counters_BINDING`, with layout `kGlslLayoutAtomicCounter`.
+  Counters are 32-bit unsigned values at their reflected byte offsets, with
+  an innermost array stride of 4 bytes. Use the reflected outer strides for
+  multidimensional arrays. Metal allocates counter slots after block buffers
+  and their optional size table. Initialize the counters on the host and bind
+  the buffer at `metalBufferIndex`, writable if the shader updates it.
+  Counter operations use relaxed ordering and barriers remain explicit.
+
+#### Runtime-sized SSBO arrays on Metal
+
+When a shader queries length of a runtime-sized array, bind one table of
+`uint32_t` byte sizes for that shader stage at the reflected
+`metalSizeBufferIndex` (all blocks that need the table report the same bind slot).
+A block that does not need it reports `-1`.
+
+Entry `metalBufferIndex + i` gives the size of the bound byte range for block
+array element `i`, measured from the bound offset and including any header
+before the runtime-sized array. Include entries through the highest data-buffer
+slot that needs a size. Unused entries can be zero. The shader computes the
+array length as `max(bufferBytes - arrayOffset, 0) / arrayStride`.
+
+For example, if a fragment shader needs the sizes of data buffers at slots 1
+and 3 and reports a table slot of 4, bind it like this.
+
+```objc
+uint32_t sizes[] = {0, bytesForBuffer1, 0, bytesForBuffer3};
+[encoder setFragmentBytes:sizes length:sizeof(sizes) atIndex:4]; // or setVertexBytes or setBytes
+```
 
 
 Tests
@@ -99,20 +205,12 @@ appreciate if there would be no test suite regressions. If you are implementing 
 feature, it would be cool to add tests to cover it as well!
 
 
-Notes
------
-
-* Desktop: GLSL versions 1.10 and 1.20 are supported. 1.10 is the default, use `#version 120` to specify 
-1.20. Higher GLSL versions might work, but aren't tested now.
-* Mobile: only GLSL ES 3.00  (`#version 300 es`) is supported.
-
-
 Dev Notes
 ---------
 
 - Current Mesa codebase is from [Mesa 20.3.5](https://archive.mesa3d.org/older-versions/20.x/mesa-20.3.5.tar.xz).
 - Use release snapshots, not merges with whole Mesa history.
-- We only took the minimal subset of that, as needed by the glsl optimizer. A bunch
+- Only minimal subset of that, as needed by the glsl optimizer. A bunch
   of files were reduced to only contain what we need; they are mostly marked
   with `glsl-optimizer change:` comments.
 - In order to rebuild the generated GLSL/glcpp lexers, parsers and some tables,

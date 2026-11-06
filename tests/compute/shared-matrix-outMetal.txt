@@ -1,0 +1,43 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct alignas(8) _xlat_buf_storage0_element { float2 value; };
+static_assert(sizeof(_xlat_buf_storage0_element) == 8, "array stride");
+template<typename M, typename V, uint N>
+struct _xlat_shared_matrix {
+  V columns[N];
+  M read() const threadgroup {
+    M value;
+    for (uint i = 0; i < N; ++i) value[i] = columns[i];
+    return value;
+  }
+  template<typename T> void write(T value) threadgroup {
+    for (uint i = 0; i < N; ++i) columns[i] = V(value[i]);
+  }
+};
+struct xlatMtlShaderUniform {
+};
+// threadsPerThreadgroup: 8, 1, 1
+kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , device uchar* _mtl_buffer1 [[buffer(1)]]
+  , uint gl_LocalInvocationIndex [[thread_index_in_threadgroup]]
+  , uint3 gl_GlobalInvocationID [[thread_position_in_grid]])
+{
+threadgroup _xlat_shared_matrix<float2x2, float2, 2> matrices_1[8];
+  float2x2 tmpvar_2;
+  float4 tmpvar_3 = 0;
+  tmpvar_3.yzw = float3(0.0, 0.0, 0.0);
+  tmpvar_3.x = float(gl_LocalInvocationIndex);
+  tmpvar_2[0] = tmpvar_3.xy;
+  tmpvar_2[1] = tmpvar_3.yx;
+  matrices_1[gl_LocalInvocationIndex].write(tmpvar_2);
+  threadgroup_barrier(mem_flags::mem_threadgroup);
+  reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_GlobalInvocationID.x].value = float2(matrices_1[((gl_LocalInvocationIndex + 1) % 8)].columns[0]);
+}
+
+
+// stats: 4 alu 0 tex 0 flow
+// workgroup size: 8 1 1
+// buffer #0: Output storage instance outputData layout std430 (size: unknown) metal 1
+//  member #0: vec2[] values offset 0 array runtime stride 8
+//  member #1: vec2 [] parent 0 offset 0

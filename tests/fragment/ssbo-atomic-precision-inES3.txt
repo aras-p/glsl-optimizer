@@ -1,0 +1,13 @@
+#version 310 es
+precision mediump float;
+precision mediump int;
+layout(std430) buffer Data { ivec2 values[4]; } data;
+uniform int index;
+uniform int operand;
+out vec4 color;
+void main()
+{
+    int old = atomicAdd(data.values[index].x, operand);
+    int swapped = atomicCompSwap(data.values[index].y, old, operand);
+    color = vec4(float(old), float(swapped), 0.0, 1.0);
+}

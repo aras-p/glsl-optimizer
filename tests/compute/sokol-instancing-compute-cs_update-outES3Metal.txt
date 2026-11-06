@@ -1,0 +1,52 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct particle {
+  float4 pos;
+  float4 vel;
+};
+struct alignas(16) _xlat_buf_storage0 {
+  alignas(4) float dt;
+  alignas(4) int num_particles;
+};
+static_assert(sizeof(_xlat_buf_storage0) == 16, "std140 size");
+static_assert(sizeof(particle) == 32, "buffer size");
+struct alignas(16) _xlat_buf_storage1_element { particle value; };
+static_assert(sizeof(_xlat_buf_storage1_element) == 32, "array stride");
+struct xlatMtlShaderUniform {
+};
+// threadsPerThreadgroup: 64, 1, 1
+kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , constant _xlat_buf_storage0& _mtl_buffer1 [[buffer(1)]]
+  , device uchar* _mtl_buffer2 [[buffer(2)]]
+  , uint3 gl_GlobalInvocationID [[thread_position_in_grid]])
+{
+  float4 vel_1 = 0;
+  float4 pos_2 = 0;
+  if ((gl_GlobalInvocationID.x >= uint(int(_mtl_buffer1.num_particles)))) {
+    return;
+  };
+  float4 tmpvar_3 = 0;
+  tmpvar_3 = float4(reinterpret_cast<device _xlat_buf_storage1_element*>(_mtl_buffer2 + 0)[gl_GlobalInvocationID.x].value.vel);
+  vel_1.xzw = tmpvar_3.xzw;
+  vel_1.y = (tmpvar_3.y - float(_mtl_buffer1.dt));
+  pos_2 = (float4(reinterpret_cast<device _xlat_buf_storage1_element*>(_mtl_buffer2 + 0)[gl_GlobalInvocationID.x].value.pos) + (vel_1 * float(_mtl_buffer1.dt)));
+  if ((pos_2.y < -2.0)) {
+    pos_2.y = -1.8;
+    vel_1 = (vel_1 * float4(0.8, -0.8, 0.8, 0.0));
+  };
+  reinterpret_cast<device _xlat_buf_storage1_element*>(_mtl_buffer2 + 0)[gl_GlobalInvocationID.x].value.pos = float4(pos_2);
+  reinterpret_cast<device _xlat_buf_storage1_element*>(_mtl_buffer2 + 0)[gl_GlobalInvocationID.x].value.vel = float4(vel_1);
+}
+
+
+// stats: 8 alu 0 tex 3 flow
+// workgroup size: 64 1 1
+// buffer #0: cs_params layout std140 binding 0 (size: 16) metal 1
+//  member #0: float dt offset 0
+//  member #1: int num_particles offset 4
+// buffer #1: cs_ssbo storage layout std430 binding 0 (size: unknown) metal 2
+//  member #0: particle[] prt offset 0 array runtime stride 32
+//  member #1: particle [] parent 0 offset 0
+//  member #2: vec4 pos parent 1 offset 0
+//  member #3: vec4 vel parent 1 offset 16

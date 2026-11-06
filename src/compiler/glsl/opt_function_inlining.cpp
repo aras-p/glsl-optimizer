@@ -168,6 +168,19 @@ ir_call::generate_inline(ir_instruction *next_ir)
 
       /* Generate a new variable for the parameter. */
       if (should_replace_variable(sig_param, param)) {
+         /* glsl-optimizer change: user image parameters can strengthen
+          * visibility requirements. Keep those requirements on the storage
+          * replacing the parameter.
+          * Built-in image parameters accept all qualifiers; they do not
+          * impose coherence or volatility on their arguments.
+          */
+         if (!callee->is_builtin() && sig_param->type->contains_image()) {
+            ir_variable *actual = param->variable_referenced();
+            if (actual) {
+               actual->data.memory_coherent |= sig_param->data.memory_coherent;
+               actual->data.memory_volatile |= sig_param->data.memory_volatile;
+            }
+         }
          /* Actual replacement happens below */
 	 parameters[i] = NULL;
       } else {

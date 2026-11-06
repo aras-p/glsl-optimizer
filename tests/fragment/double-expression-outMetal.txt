@@ -1,0 +1,2 @@
+// expected error
+Double-precision types are not supported.

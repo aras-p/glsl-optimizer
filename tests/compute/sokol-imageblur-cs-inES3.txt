@@ -1,0 +1,58 @@
+#version 310 es
+// Adapted from https://github.com/floooh/sokol-samples/blob/8d1e8969/sapp/imageblur-sapp.glsl
+// License of original file: MIT, Copyright (c) 2017 Andre Weissflog
+// Original blur source: https://github.com/webgpu/webgpu-samples/blob/e040ec1a/sample/imageBlur/blur.wgsl
+// Original blur license: BSD-3-Clause, Copyright 2019 WebGPU Samples Contributors
+// Changes done: extracted compute stage; combined texture/sampler; added UBO layout and precision.
+// Added explicit ES numeric conversions and unsigned literals; removed runtime const.
+// Selected GLSL ES 310.
+precision highp float;
+precision highp int;
+layout(std140, binding=0) uniform cs_params {
+    int filter_dim;
+    int block_dim;
+    int flip;
+};
+
+// Use a nonzero sampler binding to exercise GLSL output and reflection.
+layout(binding=3) uniform highp sampler2D cs_inp_tex;
+layout(binding=1, rgba8) uniform writeonly highp image2D cs_outp_tex;
+
+
+layout(local_size_x=32, local_size_y=1, local_size_z=1) in;
+
+shared vec3 tile[4][128];
+
+void main() {
+    uint filter_offset = (uint(filter_dim) - 1u) / 2u;
+    ivec2 dims = textureSize(cs_inp_tex, 0);
+    ivec2 base_index = ivec2(vec2(vec2(gl_WorkGroupID.xy) * vec2(block_dim, 4) + vec2(gl_LocalInvocationID.xy) * vec2(4, 1)) - vec2(filter_offset, 0));
+    for (int r = 0; r < 4; r++) {
+        for (int c = 0; c < 4; c++) {
+            vec2 load_index = vec2(base_index) + vec2(c, r);
+            if (flip != 0) {
+                load_index = load_index.yx;
+            }
+            vec2 uv = (load_index + vec2(0.25, 0.25)) / vec2(dims);
+            tile[r][4u * gl_LocalInvocationID.x + uint(c)] = textureLod(cs_inp_tex, uv, 0.0).rgb;
+        }
+    }
+    barrier();
+    for (int r = 0; r < 4; r++) {
+        for (int c = 0; c < 4; c++) {
+            ivec2 write_index = base_index + ivec2(c, r);
+            if (flip != 0) {
+                write_index = write_index.yx;
+            }
+            int center = 4 * int(gl_LocalInvocationID.x) + c;
+            if ((center >= int(filter_offset)) && (center < 128 - int(filter_offset)) && all(lessThan(write_index, dims))) {
+                vec3 acc = vec3(0);
+                for (int f = 0; f < filter_dim; f++) {
+                    int i = int(center + f - int(filter_offset));
+                    acc = acc + (1.0 / float(filter_dim)) * tile[r][i];
+                }
+                imageStore(cs_outp_tex, write_index, vec4(acc, 1));
+            }
+        }
+    }
+}

@@ -1,0 +1,28 @@
+#version 310 es
+precision highp float;
+precision highp int;
+layout(std430, binding=2) buffer Data {
+    int signedValue;
+    uint unsignedValue;
+} data;
+out vec4 color;
+void main()
+{
+    int s = atomicAdd(data.signedValue, -3);
+    s += atomicMin(data.signedValue, -5);
+    s += atomicMax(data.signedValue, 2);
+    s += atomicAnd(data.signedValue, 7);
+    s += atomicOr(data.signedValue, 8);
+    s += atomicXor(data.signedValue, 3);
+    s += atomicExchange(data.signedValue, -9);
+    s += atomicCompSwap(data.signedValue, -9, 4);
+    uint u = atomicAdd(data.unsignedValue, 3u);
+    u += atomicMin(data.unsignedValue, 5u);
+    u += atomicMax(data.unsignedValue, 0x80000000u);
+    u += atomicAnd(data.unsignedValue, 7u);
+    u += atomicOr(data.unsignedValue, 8u);
+    u += atomicXor(data.unsignedValue, 3u);
+    u += atomicExchange(data.unsignedValue, 9u);
+    u += atomicCompSwap(data.unsignedValue, 9u, 4u);
+    color = vec4(float(s), float(u), 0.0, 1.0);
+}

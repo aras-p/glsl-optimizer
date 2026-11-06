@@ -1,0 +1,44 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+#if __METAL_VERSION__ < 310
+#error Image atomics require Metal 3.1 or newer
+#endif
+template<typename I, typename T>
+inline T _xlat_image_comp_swap_1d(I image, uint p, T compare, T value) {
+  if (p >= image.get_width()) return T(0);
+  vec<T, 4> expected = vec<T, 4>(compare);
+  while (!image.atomic_compare_exchange_weak(p, &expected, vec<T, 4>(value)) && expected.x == compare) {}
+  return expected.x;
+}
+struct alignas(4) _xlat_buf_storage0_element { uint value; };
+static_assert(sizeof(_xlat_buf_storage0_element) == 4, "array stride");
+struct xlatMtlShaderUniform {
+};
+// threadsPerThreadgroup: 8, 1, 1
+kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , device uchar* _mtl_buffer1 [[buffer(1)]]
+  , uint3 gl_GlobalInvocationID [[thread_position_in_grid]]
+  , texture_buffer<uint, access::read_write> counters [[texture(0)]]
+  , texture1d<uint, access::read_write> line [[texture(1)]])
+{
+  int tmpvar_1 = 0;
+  tmpvar_1 = int(gl_GlobalInvocationID.x);
+  uint tmpvar_2;
+  tmpvar_2 = counters.atomic_fetch_add(uint(tmpvar_1), uint4(1)).x;
+  uint tmpvar_3;
+  tmpvar_3 = _xlat_image_comp_swap_1d(counters, uint(tmpvar_1), uint((tmpvar_2 + 1)), uint(0));
+  uint tmpvar_4;
+  tmpvar_4 = _xlat_image_comp_swap_1d(line, uint(tmpvar_1), uint(tmpvar_2), uint(1));
+  reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[tmpvar_1].value = uint((tmpvar_3 + tmpvar_4));
+}
+
+
+// stats: 3 alu 3 tex 0 flow
+// workgroup size: 8 1 1
+// buffer #0: Results storage instance results layout std430 (size: unknown) metal 1
+//  member #0: uint[] values offset 0 array runtime stride 4
+//  member #1: uint [] parent 0 offset 0
+// textures: 2
+//  #0: counters (high imagebuffer) 0x0 [-1] loc 0 format r32ui component uint
+//  #1: line (high image1d) 0x0 [-1] loc 1 format r32ui component uint

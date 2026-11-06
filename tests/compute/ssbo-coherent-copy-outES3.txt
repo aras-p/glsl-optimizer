@@ -1,0 +1,36 @@
+#version 310 es
+layout(local_size_x=1) in;
+struct Entry {
+  highp mat4 transform;
+  highp vec4 color;
+};
+layout(std140, column_major, binding=3) buffer Output {
+  layout(column_major) writeonly coherent Entry value;
+} outputData;
+layout(std140, column_major, binding=2) buffer Ordinary {
+  layout(column_major) Entry value;
+} ordinary;
+layout(std140, column_major, binding=0) buffer Input {
+  layout(column_major) readonly coherent Entry value;
+} inputData[2];
+void main ()
+{
+  ordinary.value = inputData[1].value;
+  outputData.value = ordinary.value;
+}
+
+
+// stats: 0 alu 0 tex 0 flow
+// workgroup size: 1 1 1
+// buffer #0: Input storage instance inputData layout std140 binding 0 array 2 (size: 80)
+//  member #0: Entry value offset 0 readonly
+//  member #1: mat4 transform parent 0 offset 0 matrix-stride 16 readonly
+//  member #2: vec4 color parent 0 offset 64 readonly
+// buffer #1: Ordinary storage instance ordinary layout std140 binding 2 (size: 80)
+//  member #0: Entry value offset 0
+//  member #1: mat4 transform parent 0 offset 0 matrix-stride 16
+//  member #2: vec4 color parent 0 offset 64
+// buffer #2: Output storage instance outputData layout std140 binding 3 (size: 80)
+//  member #0: Entry value offset 0 writeonly
+//  member #1: mat4 transform parent 0 offset 0 matrix-stride 16 writeonly
+//  member #2: vec4 color parent 0 offset 64 writeonly

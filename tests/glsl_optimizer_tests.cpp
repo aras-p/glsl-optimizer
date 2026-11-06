@@ -312,7 +312,16 @@ static bool CheckMetal (bool vertex, bool gles, const std::string& testName, con
 	if (written != source.size() || closed != 0)
 		return false;
 
-	int res = system("xcrun --sdk iphoneos metal -c metalTemp.metal -o metalTemp.air -Wno-parentheses-equality");
+	const char* command = source.find("#error Cube image atomics require Metal 4.0") != std::string::npos
+		? "xcrun --sdk iphoneos metal -std=metal4.0 -c metalTemp.metal -o metalTemp.air -Wno-parentheses-equality"
+		: (source.find("atomic_thread_fence(") != std::string::npos ||
+		source.find("memory_coherence_device") != std::string::npos ||
+		source.find("coherent(device)") != std::string::npos)
+		? "xcrun --sdk iphoneos metal -std=metal3.2 -c metalTemp.metal -o metalTemp.air -Wno-parentheses-equality"
+		: source.find("#error Image atomics require Metal 3.1") != std::string::npos
+		? "xcrun --sdk iphoneos metal -std=metal3.1 -c metalTemp.metal -o metalTemp.air -Wno-parentheses-equality"
+		: "xcrun --sdk iphoneos metal -c metalTemp.metal -o metalTemp.air -Wno-parentheses-equality";
+	int res = system(command);
 	if (res != 0)
 	{
 		printf ("\n  %s: Metal compiler failed\n", testName.c_str());
@@ -387,11 +396,15 @@ static void MassageVertexForGLES (std::string& s)
 	if (s.find ("_glesVertex") != std::string::npos)
 		return;
 	std::string pre;
-	std::string version = "#version 300 es\n";
-	size_t insertPoint = s.find(version);
-	if (insertPoint != std::string::npos)
+	size_t insertPoint = s.find("#version");
+	int version = 0;
+	char profile[3] = {};
+	if (insertPoint != std::string::npos &&
+		sscanf(s.c_str() + insertPoint, "#version %d %2s", &version, profile) == 2 &&
+		version >= 300 && strcmp(profile, "es") == 0 &&
+		s.find('\n', insertPoint) != std::string::npos)
 	{
-		insertPoint += version.size();
+		insertPoint = s.find('\n', insertPoint) + 1;
 		pre += "#define gl_Vertex _glesVertex\nin highp vec4 _glesVertex;\n";
 		pre += "#define gl_Normal _glesNormal\nin mediump vec3 _glesNormal;\n";
 		pre += "#define gl_MultiTexCoord0 _glesMultiTexCoord0\nin highp vec4 _glesMultiTexCoord0;\n";
@@ -427,6 +440,16 @@ static const char* kGlslTypeNames[kGlslTypeCount] = {
 	"2dshadow",
 	"2darray",
 	"other",
+	"image2d",
+	"image2darray",
+	"image3d",
+	"image1d",
+	"image1darray",
+	"imagecube",
+	"imagecubearray",
+	"imagebuffer",
+	"image2dms",
+	"image2dmsarray",
 };
 static const char* kGlslPrecNames[kGlslPrecCount] = {
 	"high",
@@ -435,7 +458,32 @@ static const char* kGlslPrecNames[kGlslPrecCount] = {
 };
 
 
-static bool TestFile (glslopt_ctx* ctx, bool vertex,
+static bool CompareExpectedOutput(const std::string& testName, const std::string& outputPath,
+	const std::string& actualPath, const std::string& expected, bool haveExpected,
+	const std::string& actual, const char* mismatch, bool updateExpected)
+{
+	if (haveExpected && actual == expected)
+		return true;
+	if (updateExpected)
+	{
+		if (WriteStringToFile(outputPath, actual))
+		{
+			printf("\n  Updated %s\n", outputPath.c_str());
+			return true;
+		}
+		printf("\n  %s: could not update %s\n", testName.c_str(), outputPath.c_str());
+		return false;
+	}
+	printf("\n  %s: %s (%s)\n", testName.c_str(),
+		haveExpected ? mismatch : "missing or unreadable expected output", outputPath.c_str());
+	if (WriteStringToFile(actualPath, actual))
+		printf("  Actual output: %s\n", actualPath.c_str());
+	else
+		printf("  Could not write actual output: %s\n", actualPath.c_str());
+	return false;
+}
+
+static bool TestFile (glslopt_ctx* ctx, glslopt_shader_type type,
 	const std::string& testName,
 	const std::string& inputPath,
 	const std::string& outputPath,
@@ -445,13 +493,23 @@ static bool TestFile (glslopt_ctx* ctx, bool vertex,
 	bool doCheckGLSL,
 	bool doCheckMetal, bool reparse = false)
 {
+	const bool vertex = type == kGlslOptShaderVertex;
 	std::string input;
 	if (!ReadStringFromFile (inputPath.c_str(), input))
 	{
 		printf ("\n  %s: failed to read input file\n", testName.c_str());
 		return false;
 	}
-	if (doCheckGLSL)
+	std::string outputOpt;
+	bool haveExpected = ReadStringFromFile(outputPath.c_str(), outputOpt);
+	// An explicit marker keeps unexpected optimizer failures from becoming expectations.
+	const char* errorMarker = "// expected error\n";
+	const bool expectError = haveExpected && outputOpt.compare(0, strlen(errorMarker), errorMarker) == 0;
+	if (type == kGlslOptShaderCompute && doCheckGLSL && !expectError) {
+		printf("\n  %s: compute validation is unavailable in the legacy OpenGL test context.\n", testName.c_str());
+		return false;
+	}
+	if (doCheckGLSL && !expectError)
 	{
 		if (!CheckGLSL (vertex, gles, testName, "input", input.c_str()))
 			return false;
@@ -461,16 +519,35 @@ static bool TestFile (glslopt_ctx* ctx, bool vertex,
 	{
 		if (vertex)
 			MassageVertexForGLES (input);
-		else
+		else if (type == kGlslOptShaderFragment)
 			MassageFragmentForGLES (input);
 	}
 
 	bool res = true;
 
-	glslopt_shader_type type = vertex ? kGlslOptShaderVertex : kGlslOptShaderFragment;
 	glslopt_shader* shader = glslopt_optimize (ctx, type, input.c_str(), 0);
 
 	bool optimizeOk = glslopt_get_status(shader);
+	if (expectError)
+	{
+		if (optimizeOk)
+		{
+			printf("\n  %s: optimizer succeeded but an error was expected (%s)\n",
+				testName.c_str(), outputPath.c_str());
+			res = false;
+		}
+		else
+		{
+			std::string diagnostics = std::string(errorMarker) + glslopt_get_log(shader);
+			replace_string(diagnostics, "\r\n", "\n", 0);
+			if (diagnostics.back() != '\n') diagnostics += '\n';
+			res = CompareExpectedOutput(testName, outputPath, actualPath, outputOpt, haveExpected,
+				diagnostics, "does not match expected diagnostics", updateExpected);
+		}
+		glslopt_shader_delete(shader);
+		return res;
+	}
+
 	if (optimizeOk && (!glslopt_get_raw_output(shader) || !glslopt_get_output(shader))) {
 		printf("\n  %s: optimizer returned no source output.\n", testName.c_str());
 		glslopt_shader_delete(shader);
@@ -501,6 +578,16 @@ static bool TestFile (glslopt_ctx* ctx, bool vertex,
 		textOpt += buffer;
 		
 		// append inputs
+		int localX, localY, localZ;
+		glslopt_shader_get_compute_local_size(shader, &localX, &localY, &localZ);
+		if (type == kGlslOptShaderCompute) {
+			snprintf(buffer, sizeof(buffer), "// workgroup size: %d %d %d\n", localX, localY, localZ);
+			textOpt += buffer;
+		} else if (localX || localY || localZ) {
+			printf("\n  %s: non-compute shader reports a workgroup size.\n", testName.c_str());
+			res = false;
+		}
+
 		const int inputCount = glslopt_shader_get_input_count (shader);
 		if (inputCount > 0)
 		{
@@ -541,6 +628,43 @@ static bool TestFile (glslopt_ctx* ctx, bool vertex,
 				sprintf(buffer, "//  #%i: %s (%s %s) %ix%i [%i]\n", i, parName, kGlslPrecNames[parPrec], kGlslTypeNames[parType], parVecSize, parMatSize, parArrSize);
 			textOpt += buffer;
 		}
+		// Buffer reflection includes inactive layout members and is separate from uniforms.
+		const int bufferCount = glslopt_shader_get_buffer_count(shader);
+		auto appendField = [&](const char* name, int value) {
+			textOpt += std::string(" ") + name + " " + std::to_string(value);
+		};
+		for (int i = 0; i < bufferCount; ++i) {
+			const auto* b = glslopt_shader_get_buffer_desc(shader, i);
+			const char* layouts[] = { "std140", "shared", "packed", "std430", "atomic-counter" };
+			snprintf(buffer, sizeof(buffer), "// buffer #%d: %s", i, b->name);
+			textOpt += buffer;
+			if (b->kind == kGlslBufferStorage) textOpt += " storage";
+			if (b->kind == kGlslBufferAtomicCounter) textOpt += " atomic-counter";
+			if (b->instanceName) textOpt += std::string(" instance ") + b->instanceName;
+			textOpt += std::string(" layout ") + layouts[b->layout];
+			if (b->binding >= 0) appendField("binding", b->binding);
+			if (b->arraySize > 1) appendField("array", b->arraySize);
+			textOpt += " (size: " + (b->size >= 0 ? std::to_string(b->size) : "unknown") + ")";
+			if (b->metalBufferIndex >= 0) appendField("metal", b->metalBufferIndex);
+			if (b->metalSizeBufferIndex >= 0) appendField("metal-size-buffer", b->metalSizeBufferIndex);
+			textOpt += "\n";
+			for (int j = 0; j < glslopt_shader_get_buffer_member_count(shader, i); ++j) {
+				const auto* m = glslopt_shader_get_buffer_member_desc(shader, i, j);
+				snprintf(buffer, sizeof(buffer), "//  member #%d: %s %s", j, m->typeName, m->name);
+				textOpt += buffer;
+				if (m->parentIndex >= 0) appendField("parent", m->parentIndex);
+				if (m->offset >= 0) appendField("offset", m->offset);
+				if (m->arraySize < 0) textOpt += " array runtime";
+				if (m->arraySize > 0) appendField("array", m->arraySize);
+				if (m->arrayStride > 0) appendField("stride", m->arrayStride);
+				if (m->matrixStride > 0) appendField("matrix-stride", m->matrixStride);
+				if (m->rowMajor) textOpt += " row-major";
+				if (m->readOnly) textOpt += " readonly";
+				if (m->writeOnly) textOpt += " writeonly";
+				if (!m->used) textOpt += " (unused)";
+				textOpt += "\n";
+			}
+		}
 		// append textures
 		const int textureCount = glslopt_shader_get_texture_count (shader);
 		if (textureCount > 0)
@@ -555,15 +679,18 @@ static bool TestFile (glslopt_ctx* ctx, bool vertex,
 			glslopt_precision parPrec;
 			int parVecSize, parMatSize, parArrSize, location;
 			glslopt_shader_get_texture_desc(shader, i, &parName, &parType, &parPrec, &parVecSize, &parMatSize, &parArrSize, &location);
-			if (location >= 0)
-				sprintf(buffer, "//  #%i: %s (%s %s) %ix%i [%i] loc %i\n", i, parName, kGlslPrecNames[parPrec], kGlslTypeNames[parType], parVecSize, parMatSize, parArrSize, location);
-			else
-				sprintf(buffer, "//  #%i: %s (%s %s) %ix%i [%i]\n", i, parName, kGlslPrecNames[parPrec], kGlslTypeNames[parType], parVecSize, parMatSize, parArrSize);
+			sprintf(buffer, "//  #%i: %s (%s %s) %ix%i [%i]", i, parName, kGlslPrecNames[parPrec], kGlslTypeNames[parType], parVecSize, parMatSize, parArrSize);
 			textOpt += buffer;
+			if (location >= 0) appendField("loc", location);
+			if (const auto* image = glslopt_shader_get_image_desc(shader, i)) {
+				const char* components[] = { "unknown", "float", "int", "uint" };
+				if (image->format) textOpt += std::string(" format ") + image->format;
+				textOpt += std::string(" component ") + components[image->componentType];
+				if (image->readOnly) textOpt += " readonly";
+				if (image->writeOnly) textOpt += " writeonly";
+			}
+			textOpt += "\n";
 		}
-
-		std::string outputOpt;
-		bool haveExpected = ReadStringFromFile (outputPath.c_str(), outputOpt);
 
 #		ifdef __APPLE__
 
@@ -572,29 +699,8 @@ static bool TestFile (glslopt_ctx* ctx, bool vertex,
 
 #		endif
 		
-		if (!haveExpected || textOpt != outputOpt)
-		{
-			if (updateExpected && res)
-			{
-				if (!WriteStringToFile(outputPath, textOpt))
-				{
-					printf("\n  %s: could not update %s\n", testName.c_str(), outputPath.c_str());
-					res = false;
-				}
-				else
-					printf("\n  Updated %s\n", outputPath.c_str());
-			}
-			else
-			{
-				printf("\n  %s: %s (%s)\n", testName.c_str(),
-					haveExpected ? "does not match optimized output" : "missing or unreadable expected output", outputPath.c_str());
-				if (WriteStringToFile(actualPath, textOpt))
-					printf("  Actual output: %s\n", actualPath.c_str());
-				else
-					printf("  Could not write actual output: %s\n", actualPath.c_str());
-				res = false;
-			}
-		}
+		res = CompareExpectedOutput(testName, outputPath, actualPath, outputOpt, haveExpected,
+			textOpt, "does not match optimized output", updateExpected && res) && res;
 		if (res && doCheckGLSL && !CheckGLSL (vertex, gles, testName, "raw", textHir.c_str()))
 			res = false;
 		if (res && doCheckGLSL && !CheckGLSL (vertex, gles, testName, "optimized", textOpt.c_str()))
@@ -668,10 +774,11 @@ int main (int argc, const char** argv)
 	// 2.39s
 	// ralloc fix 256 initial: 1.35s
 
-	static const char* kTypeName[2] = { "vertex", "fragment" };
+	static const char* kTypeName[] = { "vertex", "fragment", "compute" };
+	static const glslopt_shader_type kTypes[] = { kGlslOptShaderVertex, kGlslOptShaderFragment, kGlslOptShaderCompute };
 	size_t tests = 0;
 	size_t errors = 0;
-	for (int type = 0; type < 2; ++type)
+	for (int type = 0; type < 3; ++type)
 	{
 		std::string testFolder = baseFolder + "/" + kTypeName[type];
 		std::string actualFolder = std::string("test-output/") + kTypeName[type];
@@ -707,15 +814,15 @@ int main (int argc, const char** argv)
 				//	continue;
 				std::string outname = inname.substr (0,inname.size()-strlen(kApiIn[api])) + kApiOut[api];
 				std::string outnameMetal = inname.substr (0,inname.size()-strlen(kApiIn[api])) + kApiOutMetal[api];
-				const bool useMetal = (api == 0);
-				bool ok = TestFile (ctx[api], type==0, inname, testFolder + "/" + inname, testFolder + "/" + outname, actualFolder + "/" + outname + ".actual", updateExpected, api==0, hasOpenGL, false, true);
+				const bool useMetal = api == 0 || fs::is_regular_file(testFolder + "/" + outnameMetal, error);
+				bool ok = TestFile (ctx[api], kTypes[type], inname, testFolder + "/" + inname, testFolder + "/" + outname, actualFolder + "/" + outname + ".actual", updateExpected, api==0, hasOpenGL, false, true);
 				if (!ok)
 				{
 					++errors;
 				}
 				if (useMetal)
 				{
-					ok = TestFile (ctxMetal, type==0, inname, testFolder + "/" + inname, testFolder + "/" + outnameMetal, actualFolder + "/" + outnameMetal + ".actual", updateExpected, false, false, hasMetal);
+					ok = TestFile (ctxMetal, kTypes[type], inname, testFolder + "/" + inname, testFolder + "/" + outnameMetal, actualFolder + "/" + outnameMetal + ".actual", updateExpected, false, false, hasMetal);
 					if (!ok)
 					{
 						++errors;

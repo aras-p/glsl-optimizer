@@ -1,0 +1,13 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct xlatMtlShaderUniform {
+};
+// threadsPerThreadgroup: 1, 1, 1
+kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
+{
+}
+
+
+// stats: 0 alu 0 tex 0 flow
+// workgroup size: 1 1 1

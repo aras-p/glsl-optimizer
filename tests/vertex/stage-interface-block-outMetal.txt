@@ -1,0 +1,75 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct _xlat_stage_type0 {
+  float2 value;
+};
+struct _xlat_stage_type2 {
+  float2 uv;
+  float2x2 basis;
+};
+struct _xlat_stage_type3 {
+  int f_objectID;
+};
+struct xlatMtlShaderInput {
+};
+struct xlatMtlShaderOutput {
+  float2 _xlat_varying0 [[user(_xlat_block7_Payload_0)]];
+  int _xlat_varying1 [[user(locn14)]] [[flat]];
+  float2 _xlat_varying2 [[user(locn4)]] [[center_no_perspective]];
+  float2 _xlat_varying3 [[user(locn5)]];
+  float2 _xlat_varying4 [[user(locn6)]];
+  float2 _xlat_varying5 [[user(locn7)]] [[center_no_perspective]];
+  float2 _xlat_varying6 [[user(locn8)]];
+  float2 _xlat_varying7 [[user(locn9)]];
+  int _xlat_varying8 [[user(locn0)]] [[flat]];
+  float4 gl_Position [[position]];
+};
+struct xlatMtlShaderUniform {
+};
+vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , uint gl_InstanceID [[instance_id]]
+  , uint gl_VertexID [[vertex_id]])
+{
+  xlatMtlShaderOutput _mtl_o;
+  _xlat_stage_type0 _xlat_stage0 = {};
+  int _xlat_stage1 = {};
+  _xlat_stage_type2 _xlat_stage2[2] = {};
+  _xlat_stage_type3 _xlat_stage3 = {};
+  _mtl_o.gl_Position = float4(0.0, 0.0, 0.0, 1.0);
+  _xlat_stage3.f_objectID = int(gl_InstanceID);
+  _xlat_stage2[0].uv = float2(0.0, 0.0);
+  _xlat_stage2[1].uv = float2(1.0, 1.0);
+  _xlat_stage2[0].basis = float2x2(float2(1.0, 0.0), float2(0.0, 1.0));
+  _xlat_stage2[1].basis = float2x2(float2(2.0, 0.0), float2(0.0, 2.0));
+  _xlat_stage1 = int(gl_VertexID);
+  _xlat_stage0.value = float2(float(int(gl_VertexID)));
+  if ((int(gl_VertexID) == 0)) {
+    {
+  _mtl_o._xlat_varying0 = _xlat_stage0.value;
+  _mtl_o._xlat_varying1 = _xlat_stage1;
+  _mtl_o._xlat_varying2 = _xlat_stage2[0].uv;
+  _mtl_o._xlat_varying3 = _xlat_stage2[0].basis[0];
+  _mtl_o._xlat_varying4 = _xlat_stage2[0].basis[1];
+  _mtl_o._xlat_varying5 = _xlat_stage2[1].uv;
+  _mtl_o._xlat_varying6 = _xlat_stage2[1].basis[0];
+  _mtl_o._xlat_varying7 = _xlat_stage2[1].basis[1];
+  _mtl_o._xlat_varying8 = _xlat_stage3.f_objectID;
+  return _mtl_o;
+};
+  };
+  _xlat_stage0.value = (_xlat_stage0.value + 1.0);
+  _mtl_o._xlat_varying0 = _xlat_stage0.value;
+  _mtl_o._xlat_varying1 = _xlat_stage1;
+  _mtl_o._xlat_varying2 = _xlat_stage2[0].uv;
+  _mtl_o._xlat_varying3 = _xlat_stage2[0].basis[0];
+  _mtl_o._xlat_varying4 = _xlat_stage2[0].basis[1];
+  _mtl_o._xlat_varying5 = _xlat_stage2[1].uv;
+  _mtl_o._xlat_varying6 = _xlat_stage2[1].basis[0];
+  _mtl_o._xlat_varying7 = _xlat_stage2[1].basis[1];
+  _mtl_o._xlat_varying8 = _xlat_stage3.f_objectID;
+  return _mtl_o;
+}
+
+
+// stats: 8 alu 0 tex 2 flow

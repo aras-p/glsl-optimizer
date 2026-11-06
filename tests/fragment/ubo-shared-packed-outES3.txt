@@ -1,0 +1,23 @@
+#version 300 es
+layout(packed, column_major) uniform Packed {
+  highp float unusedPacked;
+  highp vec4 factor;
+} data;
+layout(shared, column_major) uniform Shared {
+  highp float unused;
+  highp vec4 tint;
+};
+out highp vec4 color;
+void main ()
+{
+  color = (tint * data.factor);
+}
+
+
+// stats: 1 alu 0 tex 0 flow
+// buffer #0: Packed instance data layout packed (size: unknown)
+//  member #0: float unusedPacked (unused)
+//  member #1: vec4 factor
+// buffer #1: Shared layout shared (size: unknown)
+//  member #0: float unused (unused)
+//  member #1: vec4 tint

@@ -1,0 +1,97 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct Inner {
+  float3 direction;
+  float scale;
+  float2x2 basis;
+};
+struct Outer {
+  Inner inner;
+  float2 pairs[2];
+};
+struct alignas(16) _xlat_buf_storage2_element { float value; };
+struct _xlat_buf_storage2 { _xlat_buf_storage2_element elements[3]; };
+static_assert(sizeof(_xlat_buf_storage2) == 48, "std140 size");
+struct alignas(16) _xlat_buf_storage1_element { _xlat_buf_storage2 value; };
+struct _xlat_buf_storage1 { _xlat_buf_storage1_element elements[2]; };
+static_assert(sizeof(_xlat_buf_storage1) == 96, "std140 size");
+struct _xlat_buf_storage6 { float4 vectors[2]; };
+static_assert(sizeof(_xlat_buf_storage6) == 32, "std140 size");
+struct alignas(16) _xlat_buf_storage5 {
+  alignas(16) packed_float3 direction;
+  alignas(4) float scale;
+  alignas(16) _xlat_buf_storage6 basis;
+};
+static_assert(sizeof(_xlat_buf_storage5) == 48, "std140 size");
+inline __attribute__((always_inline)) Inner _xlat_buf_storage5_read(constant _xlat_buf_storage5& storage)
+{
+  Inner value;
+  value.direction = float3(storage.direction);
+  value.scale = float(storage.scale);
+  value.basis = transpose(float2x2(float2(storage.basis.vectors[0].xy), float2(storage.basis.vectors[1].xy)));
+  return value;
+}
+struct alignas(16) _xlat_buf_storage7_element { float2 value; };
+struct _xlat_buf_storage7 { _xlat_buf_storage7_element elements[2]; };
+static_assert(sizeof(_xlat_buf_storage7) == 32, "std140 size");
+struct alignas(16) _xlat_buf_storage4 {
+  alignas(16) _xlat_buf_storage5 inner;
+  alignas(16) _xlat_buf_storage7 pairs;
+};
+static_assert(sizeof(_xlat_buf_storage4) == 80, "std140 size");
+inline __attribute__((always_inline)) Outer _xlat_buf_storage4_read(constant _xlat_buf_storage4& storage)
+{
+  Outer value;
+  value.inner = _xlat_buf_storage5_read(storage.inner);
+  for (uint _buf_i0 = 0; _buf_i0 < 2; ++_buf_i0) {
+    value.pairs[_buf_i0] = float2(storage.pairs.elements[_buf_i0].value);
+  }
+  return value;
+}
+struct alignas(16) _xlat_buf_storage3_element { _xlat_buf_storage4 value; };
+struct _xlat_buf_storage3 { _xlat_buf_storage3_element elements[2]; };
+static_assert(sizeof(_xlat_buf_storage3) == 160, "std140 size");
+struct alignas(16) _xlat_buf_storage0 {
+  alignas(16) _xlat_buf_storage1 table;
+  alignas(16) _xlat_buf_storage3 items;
+};
+static_assert(sizeof(_xlat_buf_storage0) == 256, "std140 size");
+struct xlatMtlShaderInput {
+};
+struct xlatMtlShaderOutput {
+  float4 gl_Position [[position]];
+};
+struct xlatMtlShaderUniform {
+  int index;
+};
+vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , constant _xlat_buf_storage0& _mtl_buffer1 [[buffer(1)]])
+{
+  xlatMtlShaderOutput _mtl_o;
+  Outer tmpvar_1;
+  tmpvar_1 = _xlat_buf_storage4_read(_mtl_buffer1.items.elements[_mtl_u.index].value);
+  float4 tmpvar_2 = 0;
+  tmpvar_2.xy = (tmpvar_1.inner.basis * tmpvar_1.pairs[_mtl_u.index]);
+  tmpvar_2.z = float(_mtl_buffer1.table.elements[_mtl_u.index].value.elements[2].value);
+  tmpvar_2.w = tmpvar_1.inner.scale;
+  _mtl_o.gl_Position = tmpvar_2;
+  return _mtl_o;
+}
+
+
+// stats: 1 alu 0 tex 0 flow
+// uniforms: 1 (total size: 4)
+//  #0: index (high int) 1x1 [-1] loc 0
+// buffer #0: Data instance data layout std140 (size: 256) metal 1
+//  member #0: float[2][3] table offset 0 array 2 stride 48
+//  member #1: float[3] [] parent 0 offset 0 array 3 stride 16
+//  member #2: float [] parent 1 offset 0
+//  member #3: Outer[2] items offset 96 array 2 stride 80
+//  member #4: Outer [] parent 3 offset 96
+//  member #5: Inner inner parent 4 offset 96
+//  member #6: vec3 direction parent 5 offset 96
+//  member #7: float scale parent 5 offset 108
+//  member #8: mat2 basis parent 5 offset 112 matrix-stride 16 row-major
+//  member #9: vec2[2] pairs parent 4 offset 144 array 2 stride 16
+//  member #10: vec2 [] parent 9 offset 144

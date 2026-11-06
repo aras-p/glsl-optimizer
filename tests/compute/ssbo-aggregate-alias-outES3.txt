@@ -1,0 +1,30 @@
+#version 310 es
+layout(local_size_x=1) in;
+struct Entry {
+  highp uint index;
+  highp vec3 value;
+  highp float weights[3];
+};
+layout(std430, column_major) buffer Data {
+  layout(column_major) Entry entries[];
+} data;
+void main ()
+{
+  highp uint i_1;
+  highp uint tmpvar_2;
+  tmpvar_2 = (gl_GlobalInvocationID.x + 1u);
+  i_1 = (tmpvar_2 + 1u);
+  data.entries[data.entries[0].index] = data.entries[tmpvar_2];
+  data.entries[0].weights = data.entries[i_1].weights;
+}
+
+
+// stats: 2 alu 0 tex 0 flow
+// workgroup size: 1 1 1
+// buffer #0: Data storage instance data layout std430 (size: unknown)
+//  member #0: Entry[] entries offset 0 array runtime stride 48
+//  member #1: Entry [] parent 0 offset 0
+//  member #2: uint index parent 1 offset 0
+//  member #3: vec3 value parent 1 offset 16
+//  member #4: float[3] weights parent 1 offset 28 array 3 stride 4
+//  member #5: float [] parent 4 offset 28

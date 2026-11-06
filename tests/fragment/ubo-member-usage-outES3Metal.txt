@@ -1,0 +1,55 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct Entry {
+  float4 color;
+  float unused;
+};
+struct alignas(16) _xlat_buf_storage2 {
+  alignas(16) float4 color;
+  alignas(4) float unused;
+};
+static_assert(sizeof(_xlat_buf_storage2) == 32, "std140 size");
+inline __attribute__((always_inline)) Entry _xlat_buf_storage2_read(constant _xlat_buf_storage2& storage)
+{
+  Entry value;
+  value.color = float4(storage.color);
+  value.unused = float(storage.unused);
+  return value;
+}
+struct alignas(16) _xlat_buf_storage1_element { _xlat_buf_storage2 value; };
+struct _xlat_buf_storage1 { _xlat_buf_storage1_element elements[2]; };
+static_assert(sizeof(_xlat_buf_storage1) == 64, "std140 size");
+struct alignas(16) _xlat_buf_storage0 {
+  alignas(4) int index;
+  alignas(4) float removed;
+  char _buf_pad2[8];
+  alignas(16) _xlat_buf_storage1 entries;
+  alignas(16) float4 unused;
+};
+static_assert(sizeof(_xlat_buf_storage0) == 96, "std140 size");
+struct xlatMtlShaderInput {
+};
+struct xlatMtlShaderOutput {
+  float4 color [[color(0)]];
+};
+struct xlatMtlShaderUniform {
+};
+fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , constant _xlat_buf_storage0& _mtl_buffer1 [[buffer(1)]])
+{
+  xlatMtlShaderOutput _mtl_o;
+  _mtl_o.color = float4(_mtl_buffer1.entries.elements[short(_mtl_buffer1.index)].value.color);
+  return _mtl_o;
+}
+
+
+// stats: 0 alu 0 tex 0 flow
+// buffer #0: Data instance data layout std140 (size: 96) metal 1
+//  member #0: int index offset 0
+//  member #1: float removed offset 4 (unused)
+//  member #2: Entry[2] entries offset 16 array 2 stride 32
+//  member #3: Entry [] parent 2 offset 16
+//  member #4: vec4 color parent 3 offset 16
+//  member #5: float unused parent 3 offset 32 (unused)
+//  member #6: vec4 unused offset 80 (unused)

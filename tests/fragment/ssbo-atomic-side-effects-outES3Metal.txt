@@ -1,0 +1,65 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+template<typename A, typename T>
+inline T _xlat_atomic_comp_swap(device A* address, T compare, T value) {
+  T expected = compare;
+  while (!atomic_compare_exchange_weak_explicit(address, &expected, value, memory_order_relaxed, memory_order_relaxed) && expected == compare) {}
+  return expected;
+}
+struct alignas(4) _xlat_buf_storage1_element { uint value; };
+struct _xlat_buf_storage1 { _xlat_buf_storage1_element elements[4]; };
+static_assert(sizeof(_xlat_buf_storage1) == 16, "std430 size");
+struct alignas(4) _xlat_buf_storage0 {
+  alignas(4) uint value;
+  alignas(4) _xlat_buf_storage1 results;
+};
+static_assert(sizeof(_xlat_buf_storage0) == 20, "std430 size");
+struct xlatMtlShaderInput {
+};
+struct xlatMtlShaderOutput {
+  float4 color [[color(0)]];
+};
+struct xlatMtlShaderUniform {
+  bool update;
+};
+fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , device _xlat_buf_storage0& _mtl_buffer1 [[buffer(1)]])
+{
+  xlatMtlShaderOutput _mtl_o;
+  uint before_1;
+  _mtl_buffer1.value = uint(7);
+  before_1 = uint(_mtl_buffer1.value);
+  uint tmpvar_2;
+  tmpvar_2 = atomic_fetch_add_explicit (reinterpret_cast<device atomic_uint*>(&_mtl_buffer1.value), uint(1), memory_order_relaxed);
+  uint tmpvar_3;
+  tmpvar_3 = uint(_mtl_buffer1.value);
+  if (_mtl_u.update) {
+    int i_4 = 0;
+    i_4 = 1;
+    uint tmpvar_5;
+    tmpvar_5 = atomic_exchange_explicit (reinterpret_cast<device atomic_uint*>(&_mtl_buffer1.results.elements[0].value), uint(5), memory_order_relaxed);
+    int tmpvar_6 = 0;
+    tmpvar_6 = i_4;
+    i_4++;
+    uint tmpvar_7;
+    tmpvar_7 = _xlat_atomic_comp_swap (reinterpret_cast<device atomic_uint*>(&_mtl_buffer1.results.elements[tmpvar_6].value), uint(5), uint(6));
+    _mtl_buffer1.results.elements[i_4].value = uint(uint(_mtl_buffer1.value));
+  };
+  float4 tmpvar_8 = 0;
+  tmpvar_8.w = 1.0;
+  tmpvar_8.x = float(before_1);
+  tmpvar_8.y = float(tmpvar_3);
+  tmpvar_8.z = float(uint(_mtl_buffer1.value));
+  _mtl_o.color = tmpvar_8;
+  return _mtl_o;
+}
+
+
+// stats: 7 alu 0 tex 1 flow
+// uniforms: 1 (total size: 1)
+//  #0: update (high bool) 1x1 [-1] loc 0
+// buffer #0: Data storage layout std430 (size: 20) metal 1
+//  member #0: uint value offset 0
+//  member #1: uint[4] results offset 4 array 4 stride 4
+//  member #2: uint [] parent 1 offset 4

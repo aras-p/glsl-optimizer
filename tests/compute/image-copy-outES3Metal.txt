@@ -1,0 +1,31 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct xlatMtlShaderUniform {
+};
+// threadsPerThreadgroup: 8, 4, 1
+kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , uint3 gl_GlobalInvocationID [[thread_position_in_grid]]
+  , texture2d<float, access::read> sourceImage [[texture(1)]]
+  , texture2d<float, access::write> destinationImage [[texture(2)]]
+  , texture2d<float> sampledImage [[texture(0)]], sampler _mtlsmp_sampledImage [[sampler(0)]])
+{
+  int2 tmpvar_1 = 0;
+  tmpvar_1 = int2(gl_GlobalInvocationID.xy);
+  int2 tmpvar_2 = 0;
+  tmpvar_2 = int2(destinationImage.get_width(), destinationImage.get_height());
+  if (any((tmpvar_1 >= tmpvar_2) != bool2(0, 0))) {
+    return;
+  };
+  float4 tmpvar_3 = 0;
+  tmpvar_3 = sourceImage.read(uint2(tmpvar_1));
+  destinationImage.write(float4((tmpvar_3 + sampledImage.read(uint2(tmpvar_1), uint(0)))), uint2(tmpvar_1));
+}
+
+
+// stats: 4 alu 4 tex 2 flow
+// workgroup size: 8 4 1
+// textures: 3
+//  #0: sourceImage (high image2d) 0x0 [-1] loc 1 format rgba16f component float readonly
+//  #1: destinationImage (high image2d) 0x0 [-1] loc 2 format rgba8 component float writeonly
+//  #2: sampledImage (high 2d) 0x0 [-1] loc 0

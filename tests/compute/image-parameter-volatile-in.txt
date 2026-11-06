@@ -1,0 +1,16 @@
+#version 430
+layout(local_size_x=4) in;
+layout(r32ui, binding=0) uniform writeonly uimage2D data;
+void storeValue(volatile writeonly uimage2D image, ivec2 p)
+{
+    imageStore(image, p, uvec4(1u));
+}
+void forwardStore(writeonly uimage2D image, ivec2 p)
+{
+    storeValue(image, p);
+}
+void main()
+{
+    forwardStore(data, ivec2(gl_GlobalInvocationID.xy));
+    memoryBarrierImage();
+}

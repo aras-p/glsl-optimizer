@@ -1,0 +1,22 @@
+#version 310 es
+precision highp float;
+precision highp int;
+layout(std430, binding=1) readonly buffer Input {
+    mediump vec3 value;
+    bool enabled;
+} source[2];
+layout(std430, binding=3) buffer Output {
+    mediump vec3 value;
+    bvec3 flags;
+    ivec2 indices;
+    vec2 values[2][3];
+} dest;
+out vec4 color;
+void main()
+{
+    dest.value.xy = source[0].value.yx;
+    dest.value.z = source[1].value.z;
+    dest.flags = bvec3(source[1].enabled, true, false);
+    dest.values[dest.indices.x][dest.indices.y] = vec2(dest.value.xy);
+    color = vec4(dest.value, float(dest.flags.x));
+}

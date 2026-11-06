@@ -1,0 +1,36 @@
+#version 310 es
+precision highp float;
+precision highp int;
+layout(local_size_x = 1) in;
+uniform mediump vec3 inputValue;
+struct Entry { mat2x3 value; };
+layout(std140) buffer Columns { mat2 small; mat2x3 rectangular; mat4 native; } columns;
+layout(std140, row_major) buffer PaddedRows { mat2x3 value; } paddedRows;
+layout(std430, row_major) buffer Rows { mat2x3 rectangular; layout(column_major) mat3x2 native; mat3x2 wide; mediump mat3 reduced; Entry entries[]; } rows;
+void main()
+{
+    uint c = gl_GlobalInvocationID.x & 1u;
+    uint r = gl_GlobalInvocationID.y % 3u;
+    columns.small[c] = vec2(2.0, 3.0);
+    columns.small[c][c] = 4.0;
+    columns.rectangular[c].z = 1.5;
+    columns.rectangular[c].xz = vec2(5.0, 6.0);
+    columns.rectangular[c].zyx = columns.rectangular[1u - c].xyz;
+    columns.native[c] = vec4(28.0, 29.0, 30.0, 31.0);
+    columns.native[c].yw = vec2(7.0, 8.0);
+    columns.native[c][r] = 9.0;
+    rows.rectangular[c] = inputValue;
+    rows.rectangular[c].zy += vec2(10.0, 11.0);
+    rows.rectangular[c].zy[r & 1u] = 12.0;
+    rows.rectangular[c].zx = vec2(13.0, 14.0);
+    rows.rectangular[c][r] = 15.0;
+    paddedRows.value[c].zy = vec2(22.0, 23.0);
+    paddedRows.value[c][r] = 24.0;
+    rows.wide[r].yx = vec2(25.0, 26.0);
+    rows.wide[r].y = 27.0;
+    rows.native[c] = vec2(16.0, 17.0);
+    rows.native[c][c] = 18.0;
+    rows.reduced[c].xz = vec2(19.0, 20.0);
+    rows.entries[c++].value[c & 1u].xz = vec2(float(c), 21.0);
+    rows.entries[c].value[c & 1u][r] += 1.0;
+}

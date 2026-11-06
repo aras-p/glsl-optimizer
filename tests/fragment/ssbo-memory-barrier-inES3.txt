@@ -1,0 +1,24 @@
+#version 310 es
+precision highp float;
+precision highp int;
+layout(std430) buffer Data { uint value; uint count; } data;
+uniform bool update;
+out vec4 color;
+void publish()
+{
+    memoryBarrierBuffer();
+}
+void main()
+{
+    uint before = data.value;
+    data.value = 7u;
+    publish();
+    uint after = data.value;
+    if (update) {
+        atomicAdd(data.count, 1u);
+        memoryBarrier();
+        data.value = data.count;
+    }
+    memoryBarrierBuffer();
+    color = vec4(float(before), float(after), float(data.value), 1.0);
+}

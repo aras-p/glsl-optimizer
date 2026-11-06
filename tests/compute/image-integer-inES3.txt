@@ -1,0 +1,14 @@
+#version 310 es
+layout(local_size_x=8) in;
+layout(r32ui, binding=0) uniform highp uimage2D counters;
+layout(rgba32i, binding=1) uniform readonly highp iimage2DArray layers;
+layout(rgba16i, binding=2) uniform writeonly highp iimage3D volume;
+void main()
+{
+    ivec2 p = ivec2(gl_GlobalInvocationID.xy);
+    uvec4 old = imageLoad(counters, p);
+    imageStore(counters, p, old + uvec4(gl_GlobalInvocationID.x + 1u));
+    ivec3 size = imageSize(layers);
+    ivec4 value = imageLoad(layers, ivec3(p, size.z - 1));
+    imageStore(volume, ivec3(p, imageSize(volume).z - 1), value);
+}

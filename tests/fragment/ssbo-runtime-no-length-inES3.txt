@@ -1,0 +1,11 @@
+#version 310 es
+precision highp float;
+precision highp int;
+layout(packed) buffer Data { vec2 values[]; } data;
+uniform int index;
+out vec4 color;
+void main()
+{
+    data.values[index].x = 2.0;
+    color = vec4(data.values[index], 0.0, 1.0);
+}

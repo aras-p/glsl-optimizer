@@ -1,0 +1,12 @@
+#version 310 es
+precision highp float;
+uniform bool condition;
+out vec4 color;
+void main()
+{
+    memoryBarrierAtomicCounter();
+    memoryBarrierImage();
+    if (condition) memoryBarrierBuffer();
+    memoryBarrier();
+    color = vec4(1.0);
+}

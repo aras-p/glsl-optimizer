@@ -1,0 +1,64 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+#if __METAL_VERSION__ < 320
+#error Coherent images require Metal 3.2 or newer
+#endif
+#if __METAL_VERSION__ < 310
+#error Image atomics require Metal 3.1 or newer
+#endif
+template<typename I, typename T>
+inline T _xlat_image_comp_swap_3d(I image, uint3 p, T compare, T value) {
+  if (any(p >= uint3(image.get_width(), image.get_height(), image.get_depth()))) return T(0);
+  vec<T, 4> expected = vec<T, 4>(compare);
+  while (!image.atomic_compare_exchange_weak(p, &expected, vec<T, 4>(value)) && expected.x == compare) {}
+  return expected.x;
+}
+struct alignas(16) _xlat_buf_storage0_element { uint4 value; };
+static_assert(sizeof(_xlat_buf_storage0_element) == 16, "array stride");
+struct xlatMtlShaderUniform {
+};
+// threadsPerThreadgroup: 8, 1, 1
+kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , device uchar* _mtl_buffer1 [[buffer(1)]]
+  , uint3 gl_GlobalInvocationID [[thread_position_in_grid]]
+  , texture3d<uint, access::read_write, memory_coherence_device> volume [[texture(0)]])
+{
+  int x_1 = 0;
+  uint i_2;
+  i_2 = gl_GlobalInvocationID.x;
+  int tmpvar_3 = 0;
+  tmpvar_3 = int(gl_GlobalInvocationID.x);
+  x_1 = (tmpvar_3 + 1);
+  int3 tmpvar_4 = 0;
+  tmpvar_4.yz = int2(0, 0);
+  tmpvar_4.x = tmpvar_3;
+  uint tmpvar_5;
+  tmpvar_5 = volume.atomic_fetch_add(uint3(tmpvar_4), uint4(1)).x;
+  int3 tmpvar_6 = 0;
+  tmpvar_6.yz = int2(0, 0);
+  tmpvar_6.x = x_1;
+  uint tmpvar_7;
+  tmpvar_7 = _xlat_image_comp_swap_3d(volume, uint3(tmpvar_6), uint(0), uint((gl_GlobalInvocationID.x + 2)));
+  uint tmpvar_8;
+  tmpvar_8 = _xlat_image_comp_swap_3d(volume, uint3(int3(-1, 0, 0)), uint(0), uint(i_2));
+  int3 tmpvar_9 = 0;
+  tmpvar_9 = int3(volume.get_width(), volume.get_height(), volume.get_depth());
+  uint tmpvar_10;
+  tmpvar_10 = _xlat_image_comp_swap_3d(volume, uint3(tmpvar_9), uint(0), uint(i_2));
+  uint4 tmpvar_11;
+  tmpvar_11.x = tmpvar_5;
+  tmpvar_11.y = tmpvar_7;
+  tmpvar_11.z = tmpvar_8;
+  tmpvar_11.w = tmpvar_10;
+  reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_GlobalInvocationID.x].value = uint4(tmpvar_11);
+}
+
+
+// stats: 5 alu 5 tex 0 flow
+// workgroup size: 8 1 1
+// buffer #0: Results storage instance results layout std430 (size: unknown) metal 1
+//  member #0: uvec4[] values offset 0 array runtime stride 16
+//  member #1: uvec4 [] parent 0 offset 0
+// textures: 1
+//  #0: volume (high image3d) 0x0 [-1] loc 0 format r32ui component uint

@@ -1,0 +1,18 @@
+#version 300 es
+precision highp float;
+struct Entry {
+    vec4 color;
+    float unused;
+};
+layout(std140) uniform Data {
+    int index;
+    float removed;
+    Entry entries[2];
+    vec4 unused;
+} data;
+out vec4 color;
+void main()
+{
+    float dead = data.removed;
+    color = data.entries[data.index].color;
+}

@@ -1,0 +1,18 @@
+#version 310 es
+precision highp float;
+precision highp int;
+layout(std430) buffer Data {
+    vec3 header;
+    float values[];
+} data;
+uniform int index;
+out vec4 color;
+void main()
+{
+    int count = data.values.length();
+    if (index < count) {
+        data.values[index] += data.header.x;
+        data.header.y = data.values[index];
+    }
+    color = vec4(data.header, float(count));
+}

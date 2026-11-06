@@ -1,0 +1,53 @@
+#version 310 es
+layout(local_size_x=8) in;
+struct Entry {
+  highp vec4 value;
+  highp mat4 transform;
+};
+layout(std430, column_major, binding=2) buffer Ordinary {
+  highp uint value;
+  highp uint results[];
+} ordinary;
+layout(std430, column_major, binding=1) buffer Output {
+  coherent highp uint counter;
+  highp uint payload;
+  layout(column_major) Entry entries[8];
+} outputData;
+layout(std430, column_major, binding=0) buffer Input {
+  layout(column_major) readonly coherent Entry entries[];
+} inputData;
+void main ()
+{
+  highp uint tmpvar_1;
+  tmpvar_1 = gl_GlobalInvocationID.x;
+  Entry tmpvar_2;
+  tmpvar_2 = inputData.entries[gl_GlobalInvocationID.x];
+  outputData.entries[gl_GlobalInvocationID.x] = tmpvar_2;
+  outputData.entries[gl_GlobalInvocationID.x].transform[(gl_GlobalInvocationID.x & 3u)][1] = tmpvar_2.value.x;
+  highp uint tmpvar_3;
+  tmpvar_3 = atomicCompSwap (outputData.counter, tmpvar_1, (gl_GlobalInvocationID.x + 1u));
+  highp uint tmpvar_4;
+  tmpvar_4 = atomicCompSwap (ordinary.value, tmpvar_1, (gl_GlobalInvocationID.x + 1u));
+  memoryBarrierBuffer ();
+  ordinary.results[gl_GlobalInvocationID.x] = ((outputData.payload + tmpvar_3) + tmpvar_4);
+}
+
+
+// stats: 5 alu 0 tex 0 flow
+// workgroup size: 8 1 1
+// buffer #0: Input storage instance inputData layout std430 binding 0 (size: unknown)
+//  member #0: Entry[] entries offset 0 array runtime stride 80 readonly
+//  member #1: Entry [] parent 0 offset 0 readonly
+//  member #2: vec4 value parent 1 offset 0 readonly
+//  member #3: mat4 transform parent 1 offset 16 matrix-stride 16 readonly
+// buffer #1: Ordinary storage instance ordinary layout std430 binding 2 (size: unknown)
+//  member #0: uint value offset 0
+//  member #1: uint[] results offset 4 array runtime stride 4
+//  member #2: uint [] parent 1 offset 4
+// buffer #2: Output storage instance outputData layout std430 binding 1 (size: 656)
+//  member #0: uint counter offset 0
+//  member #1: uint payload offset 4
+//  member #2: Entry[8] entries offset 16 array 8 stride 80
+//  member #3: Entry [] parent 2 offset 16
+//  member #4: vec4 value parent 3 offset 16
+//  member #5: mat4 transform parent 3 offset 32 matrix-stride 16

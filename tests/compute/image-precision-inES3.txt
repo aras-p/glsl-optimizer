@@ -1,0 +1,14 @@
+#version 310 es
+layout(local_size_x=4) in;
+layout(rgba16f, binding=0) uniform readonly mediump image2D sourceImage;
+layout(rgba8, binding=1) uniform writeonly mediump image2D destinationImage;
+layout(rgba16i, binding=2) uniform readonly mediump iimage2D sourceIntegers;
+layout(rgba16i, binding=3) uniform writeonly mediump iimage2D destinationIntegers;
+void main()
+{
+    ivec2 p = ivec2(gl_GlobalInvocationID.xy);
+    mediump vec4 color = imageLoad(sourceImage, p);
+    mediump ivec4 integers = imageLoad(sourceIntegers, p);
+    imageStore(destinationImage, p, color * 0.5);
+    imageStore(destinationIntegers, p, integers + ivec4(1));
+}

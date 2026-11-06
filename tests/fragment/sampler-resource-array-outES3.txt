@@ -1,0 +1,15 @@
+#version 300 es
+uniform mediump sampler2D textures[4];
+in highp vec2 uv;
+out highp vec4 color;
+void main ()
+{
+  color = texture (textures[2], uv);
+}
+
+
+// stats: 0 alu 1 tex 0 flow
+// inputs: 1
+//  #0: uv (high float) 2x1 [-1]
+// textures: 1
+//  #0: textures (medium 2d) 0x0 [4]

@@ -1,0 +1,22 @@
+#version 310 es
+layout(packed, column_major) buffer Data {
+  highp vec2 values[];
+} data;
+uniform highp int index;
+out highp vec4 color;
+void main ()
+{
+  data.values[index].x = 2.0;
+  highp vec4 tmpvar_1;
+  tmpvar_1.zw = vec2(0.0, 1.0);
+  tmpvar_1.xy = data.values[index];
+  color = tmpvar_1;
+}
+
+
+// stats: 2 alu 0 tex 0 flow
+// uniforms: 1 (total size: 0)
+//  #0: index (high int) 1x1 [-1]
+// buffer #0: Data storage instance data layout packed (size: unknown)
+//  member #0: vec2[] values array runtime
+//  member #1: vec2 [] parent 0

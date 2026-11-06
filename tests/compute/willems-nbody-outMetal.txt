@@ -1,0 +1,98 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct Particle {
+  float4 pos;
+  float4 vel;
+};
+static_assert(sizeof(Particle) == 32, "buffer size");
+struct alignas(16) _xlat_buf_storage0_element { Particle value; };
+static_assert(sizeof(_xlat_buf_storage0_element) == 32, "array stride");
+struct alignas(16) _xlat_buf_storage2 {
+  alignas(4) float deltaT;
+  alignas(4) int particleCount;
+  alignas(4) float gravity;
+  alignas(4) float power;
+  alignas(4) float soften;
+};
+static_assert(sizeof(_xlat_buf_storage2) == 32, "std140 size");
+struct xlatMtlShaderUniform {
+};
+// threadsPerThreadgroup: 256, 1, 1
+kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , device uchar* _mtl_buffer1 [[buffer(1)]]
+  , constant _xlat_buf_storage2& _mtl_buffer2 [[buffer(2)]]
+  , uint3 gl_GlobalInvocationID [[thread_position_in_grid]]
+  , uint3 gl_LocalInvocationID [[thread_position_in_threadgroup]])
+{
+threadgroup float4 sharedData_1[256];
+  uint i_2;
+  float3 acceleration_3 = 0;
+  float4 position_4 = 0;
+  uint tmpvar_5;
+  tmpvar_5 = uint(int(_mtl_buffer2.particleCount));
+  bool tmpvar_6 = false;
+  tmpvar_6 = (gl_GlobalInvocationID.x < tmpvar_5);
+  position_4 = float4(0.0, 0.0, 0.0, 0.0);
+  if (tmpvar_6) {
+    position_4 = float4(reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_GlobalInvocationID.x].value.pos);
+  };
+  acceleration_3 = float3(0.0, 0.0, 0.0);
+  i_2 = 0;
+  while (true) {
+    if ((i_2 >= tmpvar_5)) {
+      break;
+    };
+    uint tmpvar_7;
+    tmpvar_7 = (i_2 + gl_LocalInvocationID.x);
+    if ((tmpvar_7 < tmpvar_5)) {
+      sharedData_1[gl_LocalInvocationID.x] = float4(reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[tmpvar_7].value.pos);
+    } else {
+      sharedData_1[gl_LocalInvocationID.x] = float4(0.0, 0.0, 0.0, 0.0);
+    };
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+    if (tmpvar_6) {
+      uint j_8;
+      j_8 = 0;
+      while (true) {
+        if ((j_8 >= 256)) {
+          break;
+        };
+        float4 tmpvar_9 = 0;
+        tmpvar_9 = sharedData_1[j_8];
+        float3 tmpvar_10 = 0;
+        tmpvar_10 = (tmpvar_9.xyz - position_4.xyz);
+        acceleration_3 = (acceleration_3 + ((
+          (float(_mtl_buffer2.gravity) * tmpvar_10)
+         * tmpvar_9.w) / pow (
+          (dot (tmpvar_10, tmpvar_10) + float(_mtl_buffer2.soften))
+        , float(_mtl_buffer2.power))));
+        j_8++;
+      };
+    };
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+    i_2 += 256;
+  };
+  if (tmpvar_6) {
+    reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_GlobalInvocationID.x].value.vel.xyz = float3((float4(reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_GlobalInvocationID.x].value.vel).xyz + (float(_mtl_buffer2.deltaT) * acceleration_3)));
+    reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_GlobalInvocationID.x].value.vel.w = float((float4(reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_GlobalInvocationID.x].value.vel).w + (0.1 * float(_mtl_buffer2.deltaT))));
+    if ((1.0 < float4(reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_GlobalInvocationID.x].value.vel).w)) {
+      reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_GlobalInvocationID.x].value.vel.w = float((float4(reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_GlobalInvocationID.x].value.vel).w - 1.0));
+    };
+  };
+}
+
+
+// stats: 27 alu 0 tex 9 flow
+// workgroup size: 256 1 1
+// buffer #0: Pos storage layout std140 binding 0 (size: unknown) metal 1
+//  member #0: Particle[] particles offset 0 array runtime stride 32
+//  member #1: Particle [] parent 0 offset 0
+//  member #2: vec4 pos parent 1 offset 0
+//  member #3: vec4 vel parent 1 offset 16
+// buffer #1: UBO instance ubo layout std140 binding 1 (size: 32) metal 2
+//  member #0: float deltaT offset 0
+//  member #1: int particleCount offset 4
+//  member #2: float gravity offset 8
+//  member #3: float power offset 12
+//  member #4: float soften offset 16

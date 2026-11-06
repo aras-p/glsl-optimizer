@@ -1,0 +1,14 @@
+#version 450
+layout(local_size_x=8) in;
+layout(rgba8, binding=0) uniform readonly image2D sources[2];
+layout(rgba8, binding=2) uniform writeonly image2D destinations[2];
+layout(binding=5) uniform sampler2D extra;
+layout(rgba8, binding=4) uniform writeonly image2D combined;
+void main()
+{
+    int i = int(gl_WorkGroupID.x & 1u);
+    ivec2 p = ivec2(gl_GlobalInvocationID.xy);
+    vec4 color = imageLoad(sources[i], p) + texelFetch(extra, p, 0);
+    imageStore(destinations[i], p, color);
+    imageStore(combined, p, color + vec4(imageSize(sources[i]), 0, 0));
+}

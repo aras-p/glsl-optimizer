@@ -1,0 +1,40 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct xlatMtlShaderInput {
+};
+struct xlatMtlShaderOutput {
+  float4 gl_Position [[position]];
+};
+struct xlatMtlShaderUniform {
+};
+vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , const device atomic_uint* _mtl_atomic1 [[buffer(1)]]
+  , const device atomic_uint* _mtl_atomic2 [[buffer(2)]]
+  , uint gl_VertexID [[vertex_id]])
+{
+  xlatMtlShaderOutput _mtl_o;
+  uint tmpvar_1;
+  tmpvar_1 = (uint(int(gl_VertexID)) & 1);
+  uint tmpvar_2;
+  tmpvar_2 = atomic_load_explicit(_mtl_atomic2 + (tmpvar_1), memory_order_relaxed);
+  uint tmpvar_3;
+  tmpvar_3 = atomic_load_explicit(_mtl_atomic1 + 1u, memory_order_relaxed);
+  uint tmpvar_4;
+  tmpvar_4 = atomic_load_explicit(_mtl_atomic1 + 1u, memory_order_relaxed);
+  float4 tmpvar_5 = 0;
+  tmpvar_5.w = 1.0;
+  tmpvar_5.x = float(tmpvar_2);
+  tmpvar_5.y = float(tmpvar_3);
+  tmpvar_5.z = float(tmpvar_4);
+  _mtl_o.gl_Position = tmpvar_5;
+  return _mtl_o;
+}
+
+
+// stats: 6 alu 0 tex 0 flow
+// buffer #0: atomic_counters_0 atomic-counter layout atomic-counter binding 0 (size: 8) metal 1
+//  member #0: atomic_uint counter offset 4
+// buffer #1: atomic_counters_2 atomic-counter layout atomic-counter binding 2 (size: 8) metal 2
+//  member #0: atomic_uint[2] counters offset 0 array 2 stride 4
+//  member #1: atomic_uint [] parent 0 offset 0

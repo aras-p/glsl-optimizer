@@ -1,0 +1,53 @@
+#version 430
+layout(local_size_x=64) in;
+layout(std430, column_major, binding=0) buffer outputBuffer {
+  writeonly uint outstream[];
+};
+layout(std430, column_major, binding=2) buffer lastBuffer {
+  readonly uint lasts[];
+};
+layout(std430, column_major, binding=1) buffer inputBuffer {
+  readonly uvec4 instream[];
+};
+layout(location=0) uniform uint numObjects;
+void main ()
+{
+  int outbit_2;
+  uint bits_3;
+  uint tmpvar_4;
+  tmpvar_4 = ((30u + numObjects) / 32u);
+  bits_3 = uint(0);
+  outbit_2 = 0;
+  for (int i_1 = 0; i_1 < 8; i_1++) {
+    uvec4 tmpvar_5;
+    tmpvar_5 = instream[((min (gl_GlobalInvocationID.x, tmpvar_4) * 8u) + uint(i_1))];
+    bits_3 = (bits_3 | ((tmpvar_5[0] & 1u) << outbit_2));
+    outbit_2++;
+    bits_3 = (bits_3 | ((tmpvar_5[1] & 1u) << outbit_2));
+    outbit_2++;
+    bits_3 = (bits_3 | ((tmpvar_5[2] & 1u) << outbit_2));
+    outbit_2++;
+    bits_3 = (bits_3 | ((tmpvar_5[3] & 1u) << outbit_2));
+    outbit_2++;
+  };
+  if ((tmpvar_4 < gl_GlobalInvocationID.x)) {
+    return;
+  };
+  bits_3 = (bits_3 & ~(lasts[gl_GlobalInvocationID.x]));
+  outstream[gl_GlobalInvocationID.x] = bits_3;
+}
+
+
+// stats: 30 alu 0 tex 4 flow
+// workgroup size: 64 1 1
+// uniforms: 1 (total size: 0)
+//  #0: numObjects (high int) 1x1 [-1] loc 0
+// buffer #0: inputBuffer storage layout std430 binding 1 (size: unknown)
+//  member #0: uvec4[] instream offset 0 array runtime stride 16 readonly
+//  member #1: uvec4 [] parent 0 offset 0 readonly
+// buffer #1: lastBuffer storage layout std430 binding 2 (size: unknown)
+//  member #0: uint[] lasts offset 0 array runtime stride 4 readonly
+//  member #1: uint [] parent 0 offset 0 readonly
+// buffer #2: outputBuffer storage layout std430 binding 0 (size: unknown)
+//  member #0: uint[] outstream offset 0 array runtime stride 4 writeonly
+//  member #1: uint [] parent 0 offset 0 writeonly

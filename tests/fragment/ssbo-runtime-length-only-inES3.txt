@@ -1,0 +1,11 @@
+#version 310 es
+precision highp float;
+layout(std430) readonly buffer Data {
+    vec2 header;
+    vec4 values[];
+} data;
+out vec4 color;
+void main()
+{
+    color = vec4(float(data.values.length()));
+}

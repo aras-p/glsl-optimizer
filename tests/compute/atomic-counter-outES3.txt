@@ -1,0 +1,63 @@
+#version 310 es
+layout(local_size_x=1) in;
+layout(std430, column_major) buffer Results {
+  highp uint values[];
+} results;
+layout(std140, column_major) uniform Config {
+  highp uint limit;
+} config;
+layout(binding=0, offset=8) uniform highp atomic_uint first;
+layout(binding=0, offset=12) uniform highp atomic_uint counters[3];
+layout(binding=3, offset=20) uniform highp atomic_uint other;
+layout(binding=3, offset=32) uniform highp atomic_uint grid[2][3];
+void main ()
+{
+  highp uint value_1;
+  highp uint index_2;
+  highp uint tmpvar_3;
+  tmpvar_3 = (gl_GlobalInvocationID.x % 3u);
+  index_2 = tmpvar_3;
+  highp uint tmpvar_4;
+  tmpvar_4 = atomicCounter (first);
+  value_1 = tmpvar_4;
+  index_2 = (tmpvar_3 + 1u);
+  highp uint tmpvar_5;
+  tmpvar_5 = atomicCounterIncrement (counters[tmpvar_3]);
+  value_1 = (tmpvar_4 + tmpvar_5);
+  highp uint tmpvar_6;
+  tmpvar_6 = atomicCounterDecrement (counters[(index_2 % 3u)]);
+  value_1 = (value_1 + tmpvar_6);
+  highp uint tmpvar_7;
+  tmpvar_7 = atomicCounterIncrement (other);
+  value_1 = (value_1 + tmpvar_7);
+  highp uint tmpvar_8;
+  tmpvar_8 = atomicCounter (grid[(gl_GlobalInvocationID.x & 1u)][(index_2 % 3u)]);
+  value_1 = (value_1 + tmpvar_8);
+  highp uint tmpvar_9;
+  tmpvar_9 = atomicCounterIncrement (first);
+  highp uint tmpvar_10;
+  tmpvar_10 = atomicCounterDecrement (other);
+  if (((gl_GlobalInvocationID.x < uint(
+    results.values.length()
+  )) && (gl_GlobalInvocationID.x < config.limit))) {
+    results.values[gl_GlobalInvocationID.x] = value_1;
+  };
+}
+
+
+// stats: 14 alu 0 tex 1 flow
+// workgroup size: 1 1 1
+// buffer #0: Config instance config layout std140 (size: 16)
+//  member #0: uint limit offset 0
+// buffer #1: Results storage instance results layout std430 (size: unknown)
+//  member #0: uint[] values offset 0 array runtime stride 4
+//  member #1: uint [] parent 0 offset 0
+// buffer #2: atomic_counters_0 atomic-counter layout atomic-counter binding 0 (size: 24)
+//  member #0: atomic_uint first offset 8
+//  member #1: atomic_uint[3] counters offset 12 array 3 stride 4
+//  member #2: atomic_uint [] parent 1 offset 12
+// buffer #3: atomic_counters_3 atomic-counter layout atomic-counter binding 3 (size: 56)
+//  member #0: atomic_uint other offset 20
+//  member #1: atomic_uint[2][3] grid offset 32 array 2 stride 12
+//  member #2: atomic_uint[3] [] parent 1 offset 32 array 3 stride 4
+//  member #3: atomic_uint [] parent 2 offset 32
