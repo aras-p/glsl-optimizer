@@ -1,0 +1,39 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct _xlat_buf_storage1 { float4 vectors[2]; };
+static_assert(sizeof(_xlat_buf_storage1) == 32, "std140 size");
+struct alignas(16) _xlat_buf_storage0 {
+  char _buf_pad0[32];
+  alignas(16) packed_float3 direction;
+  char _buf_pad1[4];
+  alignas(16) _xlat_buf_storage1 transform;
+  char _buf_pad2[16];
+  alignas(4) float weight;
+};
+static_assert(sizeof(_xlat_buf_storage0) == 112, "std140 size");
+struct xlatMtlShaderInput {
+};
+struct xlatMtlShaderOutput {
+  float4 color [[color(0)]];
+};
+struct xlatMtlShaderUniform {
+};
+fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , constant _xlat_buf_storage0& _mtl_buffer1 [[buffer(1)]])
+{
+  xlatMtlShaderOutput _mtl_o;
+  float4 tmpvar_1 = 0;
+  tmpvar_1.w = 1.0;
+  tmpvar_1.xy = (transpose(float2x2(float2(_mtl_buffer1.transform.vectors[0].xy), float2(_mtl_buffer1.transform.vectors[1].xy))) * float3(_mtl_buffer1.direction).xy);
+  tmpvar_1.z = float(_mtl_buffer1.weight);
+  _mtl_o.color = tmpvar_1;
+  return _mtl_o;
+}
+
+
+// stats: 2 alu 0 tex 0 flow
+// buffer #0: Material instance material layout std140 binding 5 (size: 112) metal 1
+//  member #0: vec3 direction offset 32
+//  member #1: mat2 transform offset 48 matrix-stride 16 row-major
+//  member #2: float weight offset 96

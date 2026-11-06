@@ -1,0 +1,61 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct xlatMtlShaderInput {
+  float4 position;
+  float3 varyingNormalDirection;
+};
+struct xlatMtlShaderOutput {
+  float4 gl_FragColor;
+};
+struct xlatMtlShaderUniform {
+  float4x4 v_inv;
+};
+fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
+{
+  xlatMtlShaderOutput _mtl_o;
+  float3 specularReflection_1 = 0;
+  float3 totalLighting_2 = 0;
+  float attenuation_3 = 0;
+  float3 lightDirection_4 = 0;
+  float3 tmpvar_5 = 0;
+  tmpvar_5 = normalize(_mtl_i.varyingNormalDirection);
+  float3 tmpvar_6 = 0;
+  tmpvar_6 = normalize((_mtl_u.v_inv[3] - _mtl_i.position).xyz);
+  totalLighting_2 = float3(0.04, 0.04, 0.04);
+  float3 tmpvar_7 = 0;
+  tmpvar_7 = (float4(0.0, 3.0, 0.0, 1.0) - _mtl_i.position).xyz;
+  float tmpvar_8 = 0;
+  tmpvar_8 = dot (tmpvar_7, tmpvar_7);
+  lightDirection_4 = (rsqrt(tmpvar_8) * tmpvar_7);
+  attenuation_3 = (2.0 * rsqrt(tmpvar_8));
+  float3 tmpvar_9 = 0;
+  tmpvar_9 = ((float3(attenuation_3) * float3(1.0, 0.8, 0.8)) * max (0.0, dot (tmpvar_5, lightDirection_4)));
+  float tmpvar_10 = 0;
+  tmpvar_10 = dot (tmpvar_5, lightDirection_4);
+  if ((tmpvar_10 < 0.0)) {
+    specularReflection_1 = float3(0.0, 0.0, 0.0);
+  } else {
+    float3 tmpvar_11 = 0;
+    tmpvar_11 = -(lightDirection_4);
+    specularReflection_1 = (float3(attenuation_3) * pow (max (0.0, 
+      dot ((tmpvar_11 - (2.0 * (
+        dot (tmpvar_5, tmpvar_11)
+       * tmpvar_5))), tmpvar_6)
+    ), 5.0));
+  };
+  totalLighting_2 = ((float3(0.04, 0.04, 0.04) + tmpvar_9) + specularReflection_1);
+  float4 tmpvar_12 = 0;
+  tmpvar_12.w = 1.0;
+  tmpvar_12.xyz = totalLighting_2;
+  _mtl_o.gl_FragColor = tmpvar_12;
+  return _mtl_o;
+}
+
+
+// stats: 29 alu 0 tex 1 flow
+// inputs: 2
+//  #0: position (high float) 4x1 [-1]
+//  #1: varyingNormalDirection (high float) 3x1 [-1]
+// uniforms: 1 (total size: 64)
+//  #0: v_inv (high float) 4x4 [-1] loc 0

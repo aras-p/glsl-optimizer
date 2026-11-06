@@ -1,0 +1,115 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct xlatMtlShaderInput {
+  float2 xlv_TEXCOORD0;
+};
+struct xlatMtlShaderOutput {
+  half4 gl_FragData_0 [[color(0)]];
+};
+struct xlatMtlShaderUniform {
+  float4 _MainTex_TexelSize;
+};
+fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , texture2d<float> _MainTex [[texture(0)]], sampler _mtlsmp__MainTex [[sampler(0)]])
+{
+  xlatMtlShaderOutput _mtl_o;
+  half2 mx_2 = 0;
+  mx_2 = half2(_MainTex.sample(_mtlsmp__MainTex, (float2)((_mtl_i.xlv_TEXCOORD0))).xy);
+  for (int j_1 = 0; j_1 < 8; j_1++) {
+    float2 tmpvar_3 = 0;
+    tmpvar_3.x = 0.0;
+    tmpvar_3.y = float(j_1);
+    float2 tmpvar_4 = 0;
+    tmpvar_4 = _MainTex.sample(_mtlsmp__MainTex, (float2)(((_mtl_i.xlv_TEXCOORD0 + (tmpvar_3 * _mtl_u._MainTex_TexelSize.xy))))).xy;
+    mx_2 = mix (mx_2, (half2)tmpvar_4, half2(half(((half)(
+      dot (tmpvar_4, tmpvar_4)
+    ) >= 
+      dot (mx_2, mx_2)
+    ))));
+    float2 tmpvar_5 = 0;
+    tmpvar_5.x = 1.0;
+    tmpvar_5.y = float(j_1);
+    float2 tmpvar_6 = 0;
+    tmpvar_6 = _MainTex.sample(_mtlsmp__MainTex, (float2)(((_mtl_i.xlv_TEXCOORD0 + (tmpvar_5 * _mtl_u._MainTex_TexelSize.xy))))).xy;
+    mx_2 = mix (mx_2, (half2)tmpvar_6, half2(half(((half)(
+      dot (tmpvar_6, tmpvar_6)
+    ) >= 
+      dot (mx_2, mx_2)
+    ))));
+    float2 tmpvar_7 = 0;
+    tmpvar_7.x = 2.0;
+    tmpvar_7.y = float(j_1);
+    float2 tmpvar_8 = 0;
+    tmpvar_8 = _MainTex.sample(_mtlsmp__MainTex, (float2)(((_mtl_i.xlv_TEXCOORD0 + (tmpvar_7 * _mtl_u._MainTex_TexelSize.xy))))).xy;
+    mx_2 = mix (mx_2, (half2)tmpvar_8, half2(half(((half)(
+      dot (tmpvar_8, tmpvar_8)
+    ) >= 
+      dot (mx_2, mx_2)
+    ))));
+    float2 tmpvar_9 = 0;
+    tmpvar_9.x = 3.0;
+    tmpvar_9.y = float(j_1);
+    float2 tmpvar_10 = 0;
+    tmpvar_10 = _MainTex.sample(_mtlsmp__MainTex, (float2)(((_mtl_i.xlv_TEXCOORD0 + (tmpvar_9 * _mtl_u._MainTex_TexelSize.xy))))).xy;
+    mx_2 = mix (mx_2, (half2)tmpvar_10, half2(half(((half)(
+      dot (tmpvar_10, tmpvar_10)
+    ) >= 
+      dot (mx_2, mx_2)
+    ))));
+    float2 tmpvar_11 = 0;
+    tmpvar_11.x = 4.0;
+    tmpvar_11.y = float(j_1);
+    float2 tmpvar_12 = 0;
+    tmpvar_12 = _MainTex.sample(_mtlsmp__MainTex, (float2)(((_mtl_i.xlv_TEXCOORD0 + (tmpvar_11 * _mtl_u._MainTex_TexelSize.xy))))).xy;
+    mx_2 = mix (mx_2, (half2)tmpvar_12, half2(half(((half)(
+      dot (tmpvar_12, tmpvar_12)
+    ) >= 
+      dot (mx_2, mx_2)
+    ))));
+    float2 tmpvar_13 = 0;
+    tmpvar_13.x = 5.0;
+    tmpvar_13.y = float(j_1);
+    float2 tmpvar_14 = 0;
+    tmpvar_14 = _MainTex.sample(_mtlsmp__MainTex, (float2)(((_mtl_i.xlv_TEXCOORD0 + (tmpvar_13 * _mtl_u._MainTex_TexelSize.xy))))).xy;
+    mx_2 = mix (mx_2, (half2)tmpvar_14, half2(half(((half)(
+      dot (tmpvar_14, tmpvar_14)
+    ) >= 
+      dot (mx_2, mx_2)
+    ))));
+    float2 tmpvar_15 = 0;
+    tmpvar_15.x = 6.0;
+    tmpvar_15.y = float(j_1);
+    float2 tmpvar_16 = 0;
+    tmpvar_16 = _MainTex.sample(_mtlsmp__MainTex, (float2)(((_mtl_i.xlv_TEXCOORD0 + (tmpvar_15 * _mtl_u._MainTex_TexelSize.xy))))).xy;
+    mx_2 = mix (mx_2, (half2)tmpvar_16, half2(half(((half)(
+      dot (tmpvar_16, tmpvar_16)
+    ) >= 
+      dot (mx_2, mx_2)
+    ))));
+    float2 tmpvar_17 = 0;
+    tmpvar_17.x = 7.0;
+    tmpvar_17.y = float(j_1);
+    float2 tmpvar_18 = 0;
+    tmpvar_18 = _MainTex.sample(_mtlsmp__MainTex, (float2)(((_mtl_i.xlv_TEXCOORD0 + (tmpvar_17 * _mtl_u._MainTex_TexelSize.xy))))).xy;
+    mx_2 = mix (mx_2, (half2)tmpvar_18, half2(half(((half)(
+      dot (tmpvar_18, tmpvar_18)
+    ) >= 
+      dot (mx_2, mx_2)
+    ))));
+  };
+  half4 tmpvar_19 = 0;
+  tmpvar_19.zw = half2(float2(0.0, 0.0));
+  tmpvar_19.xy = mx_2;
+  _mtl_o.gl_FragData_0 = tmpvar_19;
+  return _mtl_o;
+}
+
+
+// stats: 76 alu 9 tex 2 flow
+// inputs: 1
+//  #0: xlv_TEXCOORD0 (high float) 2x1 [-1]
+// uniforms: 1 (total size: 16)
+//  #0: _MainTex_TexelSize (high float) 4x1 [-1] loc 0
+// textures: 1
+//  #0: _MainTex (high 2d) 0x0 [-1] loc 0
