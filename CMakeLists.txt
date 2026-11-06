@@ -193,6 +193,11 @@ endif()
 target_compile_definitions(glsl_optimizer PRIVATE HAVE_OPENGL=1 HAVE_OPENGL_ES_2=1)
 # c11/threads.h: pthreads or win32 threads; the platform has struct timespec
 target_compile_definitions(glsl_optimizer PRIVATE HAVE_STRUCT_TIMESPEC $<$<NOT:$<BOOL:${WIN32}>>:HAVE_PTHREAD>)
+# GLSL IR's operator new stores into the object before its constructor runs;
+# GCC's lifetime dead-store elimination would drop that (upstream Mesa uses this too)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_compile_options(glsl_optimizer PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-flifetime-dse=1>)
+endif()
 if(MSVC)
     # warnings upstream Mesa disables for MSVC (meson.build)
     target_compile_options(glsl_optimizer PRIVATE
