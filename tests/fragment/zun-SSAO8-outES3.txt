@@ -1,4 +1,12 @@
 #version 300 es
+const highp vec3 _glslo_highp0_1_ = vec3(0.0130572, 0.587232, -0.119337);
+const highp vec3 _glslo_highp0_2_ = vec3(0.323078, 0.0220727, -0.418873);
+const highp vec3 _glslo_highp0_3_ = vec3(-0.310725, -0.191367, 0.0561369);
+const highp vec3 _glslo_highp0_4_ = vec3(-0.479646, 0.0939877, -0.580265);
+const highp vec3 _glslo_highp0_5_ = vec3(0.139999, -0.33577, 0.559679);
+const highp vec3 _glslo_highp0_6_ = vec3(-0.248458, 0.255532, 0.348944);
+const highp vec3 _glslo_highp0_7_ = vec3(0.18719, -0.702764, -0.231748);
+const highp vec3 _glslo_highp0_8_ = vec3(0.884915, 0.284208, 0.368524);
 layout(location=0) out mediump vec4 _fragData;
 uniform mediump sampler2D _CameraDepthNormalsTexture;
 uniform mediump sampler2D _RandomTexture;
@@ -29,7 +37,7 @@ void main ()
   highp vec4 sampleND_10;
   mediump vec3 randomDir_11;
   randomDir_11 = (vec3(0.0130572, 0.587232, -0.119337) - (2.0 * (
-    dot (randN_5, vec3(0.0130572, 0.587232, -0.119337))
+    dot (randN_5, _glslo_highp0_1_)
    * randN_5)));
   highp float tmpvar_12;
   tmpvar_12 = dot (n_6, randomDir_11);
@@ -52,7 +60,7 @@ void main ()
   highp vec4 sampleND_16;
   mediump vec3 randomDir_17;
   randomDir_17 = (vec3(0.323078, 0.0220727, -0.418873) - (2.0 * (
-    dot (randN_5, vec3(0.323078, 0.0220727, -0.418873))
+    dot (randN_5, _glslo_highp0_2_)
    * randN_5)));
   highp float tmpvar_18;
   tmpvar_18 = dot (n_6, randomDir_17);
@@ -75,7 +83,7 @@ void main ()
   highp vec4 sampleND_22;
   mediump vec3 randomDir_23;
   randomDir_23 = (vec3(-0.310725, -0.191367, 0.0561369) - (2.0 * (
-    dot (randN_5, vec3(-0.310725, -0.191367, 0.0561369))
+    dot (randN_5, _glslo_highp0_3_)
    * randN_5)));
   highp float tmpvar_24;
   tmpvar_24 = dot (n_6, randomDir_23);
@@ -98,7 +106,7 @@ void main ()
   highp vec4 sampleND_28;
   mediump vec3 randomDir_29;
   randomDir_29 = (vec3(-0.479646, 0.0939877, -0.580265) - (2.0 * (
-    dot (randN_5, vec3(-0.479646, 0.0939877, -0.580265))
+    dot (randN_5, _glslo_highp0_4_)
    * randN_5)));
   highp float tmpvar_30;
   tmpvar_30 = dot (n_6, randomDir_29);
@@ -121,7 +129,7 @@ void main ()
   highp vec4 sampleND_34;
   mediump vec3 randomDir_35;
   randomDir_35 = (vec3(0.139999, -0.33577, 0.559679) - (2.0 * (
-    dot (randN_5, vec3(0.139999, -0.33577, 0.559679))
+    dot (randN_5, _glslo_highp0_5_)
    * randN_5)));
   highp float tmpvar_36;
   tmpvar_36 = dot (n_6, randomDir_35);
@@ -144,7 +152,7 @@ void main ()
   highp vec4 sampleND_40;
   mediump vec3 randomDir_41;
   randomDir_41 = (vec3(-0.248458, 0.255532, 0.348944) - (2.0 * (
-    dot (randN_5, vec3(-0.248458, 0.255532, 0.348944))
+    dot (randN_5, _glslo_highp0_6_)
    * randN_5)));
   highp float tmpvar_42;
   tmpvar_42 = dot (n_6, randomDir_41);
@@ -167,7 +175,7 @@ void main ()
   highp vec4 sampleND_46;
   mediump vec3 randomDir_47;
   randomDir_47 = (vec3(0.18719, -0.702764, -0.231748) - (2.0 * (
-    dot (randN_5, vec3(0.18719, -0.702764, -0.231748))
+    dot (randN_5, _glslo_highp0_7_)
    * randN_5)));
   highp float tmpvar_48;
   tmpvar_48 = dot (n_6, randomDir_47);
@@ -190,7 +198,7 @@ void main ()
   highp vec4 sampleND_52;
   mediump vec3 randomDir_53;
   randomDir_53 = (vec3(0.884915, 0.284208, 0.368524) - (2.0 * (
-    dot (randN_5, vec3(0.884915, 0.284208, 0.368524))
+    dot (randN_5, _glslo_highp0_8_)
    * randN_5)));
   highp float tmpvar_54;
   tmpvar_54 = dot (n_6, randomDir_53);

@@ -1018,6 +1018,14 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
      error_emitted = true;
    }
 
+   /* glsl-optimizer change: keep the destination precision on a literal
+    * initializer when the assignment is later propagated into an expression.
+    */
+   if (!error_emitted && is_initializer && lhs->get_precision() == GLSL_PRECISION_HIGH) {
+      if (auto *constant = rhs->as_constant())
+         constant->source_precision = GLSL_PRECISION_HIGH;
+   }
+
    /* Most callers of do_assignment (assign, add_assign, pre_inc/dec,
     * but not post_inc) need the converted assigned value as an rvalue
     * to handle things like:

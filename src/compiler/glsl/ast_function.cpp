@@ -59,8 +59,11 @@ process_parameters(exec_list *instructions, exec_list *actual_parameters,
       ir_constant *const constant =
          result->constant_expression_value(mem_ctx);
 
-      if (constant != NULL)
+      if (constant != NULL) {
+         /* glsl-optimizer change: retain the precision of folded arguments. */
+         constant->source_precision = result->get_precision();
          result = constant;
+      }
 
       actual_parameters->push_tail(result);
       count++;
@@ -2354,11 +2357,13 @@ ast_function_expression::hir(exec_list *instructions,
           * After doing so, track whether or not all the parameters to the
           * constructor are trivially constant valued expressions.
           */
-         ir_rvalue *const constant = result->constant_expression_value(ctx);
+         ir_constant *const constant = result->constant_expression_value(ctx);
 
-         if (constant != NULL)
+         if (constant != NULL) {
+            /* glsl-optimizer change: folding retains the argument precision. */
+            constant->source_precision = ir->get_precision();
             result = constant;
-         else
+         } else
             all_parameters_are_constant = false;
 
          if (result != ir) {
@@ -2370,7 +2375,18 @@ ast_function_expression::hir(exec_list *instructions,
        * constant representing the complete collection of parameters.
        */
       if (all_parameters_are_constant) {
-         return new(ctx) ir_constant(constructor_type, &actual_parameters);
+         auto *constant = new(ctx) ir_constant(constructor_type, &actual_parameters);
+         /* glsl-optimizer change: a folded constructor still takes its
+          * precision from its arguments.
+          */
+         foreach_in_list(ir_rvalue, argument, &actual_parameters) {
+            unsigned precision = argument->get_precision();
+            if (precision != GLSL_PRECISION_NONE &&
+                (constant->source_precision == GLSL_PRECISION_NONE ||
+                 precision < constant->source_precision))
+               constant->source_precision = precision;
+         }
+         return constant;
       } else if (constructor_type->is_scalar()) {
          return dereference_component((ir_rvalue *)
                                       actual_parameters.get_head_raw(),

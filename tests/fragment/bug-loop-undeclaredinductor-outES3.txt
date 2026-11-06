@@ -1,4 +1,8 @@
 #version 300 es
+const highp float _glslo_highp0_1_ = 0.0;
+const highp float _glslo_highp0_2_ = 1.0;
+const highp float _glslo_highp0_3_ = 2.0;
+const highp float _glslo_highp0_4_ = 3.0;
 out mediump vec4 _fragData;
 uniform mediump sampler2D _MainTex;
 uniform mediump float _NumPasses;
@@ -16,25 +20,25 @@ void main ()
   if ((0.0 < _NumPasses)) {
     mediump vec3 res_3;
     res_3 = tmpvar_2.xyz;
-    if ((0.0 != _NumPasses)) {
+    if ((_glslo_highp0_1_ != _NumPasses)) {
       mediump float tmpvar_4;
       tmpvar_4 = ((_ContrastShift.x * 3.0) + 12.0);
       res_3 = ((tmpvar_2.xyz - 0.5) * pow ((
         cos(tmpvar_4)
        + 1.0), tmpvar_4));
-      if ((1.0 != _NumPasses)) {
+      if ((_glslo_highp0_2_ != _NumPasses)) {
         mediump float tmpvar_5;
         tmpvar_5 = ((_SaturationShift.y * 3.0) + 12.0);
         res_3 = ((res_3 - 0.5) * pow ((
           cos(tmpvar_5)
          + 1.0), tmpvar_5));
-        if ((2.0 != _NumPasses)) {
+        if ((_glslo_highp0_3_ != _NumPasses)) {
           mediump float tmpvar_6;
           tmpvar_6 = ((_HueShift.z * 3.0) + 12.0);
           res_3 = ((res_3 - 0.5) * pow ((
             cos(tmpvar_6)
            + 1.0), tmpvar_6));
-          if ((3.0 != _NumPasses)) {
+          if ((_glslo_highp0_4_ != _NumPasses)) {
             mediump float tmpvar_7;
             tmpvar_7 = ((_LuminosityShift.x * 3.0) + 12.0);
             res_3 = ((res_3 - 0.5) * pow ((

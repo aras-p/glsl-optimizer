@@ -1,0 +1,12 @@
+#version 300 es
+precision mediump float;
+in vec2 coord;
+out highp vec4 color;
+
+void main()
+{
+    highp float time = 1.0;
+    const highp float offset = 2.0;
+    highp float dither = dot(vec2(171.0, 231.0), coord + vec2(time));
+    color = vec4(dither, coord + vec2(offset), 1.0);
+}

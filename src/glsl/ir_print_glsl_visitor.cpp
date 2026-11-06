@@ -71,7 +71,8 @@ struct ga_entry : public exec_node
 
 
 struct global_print_tracker {
-   global_print_tracker () {
+   global_print_tracker(string_buffer& declarations, exec_list* instructions)
+      : declarations(declarations), instructions(instructions) {
       mem_ctx = ralloc_context(0);
       var_counter = 0;
 
@@ -85,6 +86,10 @@ struct global_print_tracker {
 
    std::unordered_set<const glsl_type*> uniform_blocks;
    std::unordered_set<const glsl_type*> stage_blocks[2];
+   string_buffer& declarations;
+   exec_list* instructions;
+   char precision_constant_prefix[48] = {};
+   unsigned precision_constant_counter = 0;
    unsigned var_counter;
    std::unordered_map<const ir_variable*, long> var_hash;
    exec_list global_assignements;
@@ -155,6 +160,7 @@ public:
    PrintGlslMode mode;
    loop_state* loopstate;
    print_loop_initializers* loop_initializers = nullptr;
+   const ir_constant* highp_operand = nullptr;
    bool use_precision;
    bool prototypes = false;
    bool skipped_this_ir;
@@ -271,7 +277,7 @@ _mesa_print_ir_glsl(exec_list *instructions,
    // Struct declarations are reconstructed from the types that remain in IR.
    print_struct_declarations(str, instructions, state->es_shader);
 
-   global_print_tracker gtracker;
+   global_print_tracker gtracker(str, instructions);
    // Declarations make raw IR printable even after function reordering.
    foreach_in_list(ir_instruction, instruction, instructions) {
       ir_function* fn = instruction->as_function();
@@ -752,17 +758,48 @@ static bool is_binop_func_like(ir_expression_operation op, const glsl_type* type
    return false;
 }
 
+// A literal has no precision qualifier. Keep one qualified operand when
+// folding would otherwise leave the operation with only mediump operands.
+static const ir_constant* find_highp_operand(const ir_expression* ir)
+{
+   const ir_constant* constant = nullptr;
+   bool has_mediump_operand = false;
+   for (unsigned i = 0; i < ir->num_operands; ++i) {
+      if ((ir->operation == ir_triop_csel && i == 0) ||
+          (ir->operation == ir_binop_vector_extract && i == 1) ||
+          (ir->operation == ir_triop_vector_insert && i == 2))
+         continue;
+
+      const auto* operand = ir->operands[i];
+      if (!operand->type->is_float() && !operand->type->is_integer_32())
+         continue;
+      const auto* literal = operand->as_constant();
+      if (operand->get_precision() == GLSL_PRECISION_HIGH) {
+         if (!literal)
+            return nullptr;
+         constant = literal;
+      } else if (!literal && operand->get_precision() == GLSL_PRECISION_MEDIUM) {
+         has_mediump_operand = true;
+      }
+   }
+   return has_mediump_operand ? constant : nullptr;
+}
+
 void ir_print_glsl_visitor::visit(ir_expression *ir)
 {
    ++this->expression_depth;
    newline_indent();
+
+   const auto* previous_highp_operand = highp_operand;
+   highp_operand = use_precision ? find_highp_operand(ir) : nullptr;
 
    ir_expression* lower = ir->operation == ir_binop_min ? ir->operands[0]->as_expression() : nullptr;
    if (ir->operation == ir_unop_ssbo_unsized_array_length) {
       ir->operands[0]->accept(this);
       buffer.asprintf_append(".length()");
    }
-   else if (lower && lower->operation == ir_binop_max) {
+   else if (lower && lower->operation == ir_binop_max &&
+            (!use_precision || !find_highp_operand(lower))) {
       buffer.asprintf_append("clamp ("); lower->operands[0]->accept(this);
       buffer.asprintf_append(", "); lower->operands[1]->accept(this);
       buffer.asprintf_append(", "); ir->operands[1]->accept(this);
@@ -893,6 +930,7 @@ void ir_print_glsl_visitor::visit(ir_expression *ir)
       buffer.asprintf_append(")");
    }
 
+   highp_operand = previous_highp_operand;
    newline_deindent();
    --this->expression_depth;
 }
@@ -1322,6 +1360,38 @@ void print_float (string_buffer& buffer, float f)
 void ir_print_glsl_visitor::visit(ir_constant *ir)
 {
    const glsl_type* type = ir->type;
+
+   if (ir == highp_operand) {
+      auto& declarations = globals->declarations;
+      auto& prefix = globals->precision_constant_prefix;
+      if (!prefix[0]) {
+         bool collision;
+         unsigned suffix = 0;
+         do {
+            snprintf(prefix, sizeof(prefix), "_glslo_highp%u_", suffix++);
+            collision = strstr(declarations.c_str(), prefix) != nullptr;
+            foreach_in_list(ir_instruction, instruction, globals->instructions) {
+               const auto* var = instruction->as_variable();
+               if (var && var->name && strncmp(var->name, prefix, strlen(prefix)) == 0) {
+                  collision = true;
+                  break;
+               }
+            }
+         } while (collision);
+      }
+
+      // The trailing underscore avoids names produced by local variable renaming.
+      char name[64];
+      snprintf(name, sizeof(name), "%s%u_", prefix, ++globals->precision_constant_counter);
+      declarations.asprintf_append("const highp ");
+      print_type(declarations, type, true);
+      declarations.asprintf_append(" %s = ", name);
+      ir_print_glsl_visitor initializer(declarations, globals, kPrintGlslNone, use_precision, state);
+      ir->accept(&initializer);
+      declarations.asprintf_append(";\n");
+      buffer.asprintf_append("%s", name);
+      return;
+   }
 
    if (type == glsl_type::float_type)
    {

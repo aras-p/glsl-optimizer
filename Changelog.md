@@ -44,6 +44,7 @@ Fixed:
 * Fixed variables with double underscores (`__`) being generated in some cases (#61).
 * Fixed Metal output being incorrect for multiple `gl_FragData` outputs in some cases (#114).
 * Fixed broadcast of scalar bool not being correct in some cases (#73).
+* Fixed precision for constant literals being dropped in some cases (#90).
 
 2016 10
 -------
