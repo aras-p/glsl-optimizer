@@ -98,7 +98,8 @@ Language Support
   2015, anything since then got much less "real" testing.
 * Geometry and tessellation shaders are not supported.
 * Double precision types and shader subroutines are not supported.
-* Subgroup operations (`GL_KHR_shader_subgroup`) are not supported.
+* Subgroup (wave) support covers `subgroupAdd`, `subgroupMin`, `subgroupMax`, `subgroupOr`,
+  `subgroupElect` and `subgroupBroadcastFirst`.
 * Variable workgroup sizes (`GL_ARB_compute_variable_group_size`) are not supported.
 * Each shader stage is optimized independently. Optimizer retains vertex outputs
   even if fragment shader never reads them, and it does not match or validate

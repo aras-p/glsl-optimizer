@@ -16,6 +16,8 @@ Added a whole bunch of stuff that could be summarized as "compute shader support
 * Image load, store and atomics.
 * Stage interface blocks.
 * Texture gather operations.
+* Subgroup (wave) ops: `subgroupAdd`, `subgroupMin`, `subgroupMax`, `subgroupOr`,
+  `subgroupElect` and `subgroupBroadcastFirst`.
 * Recognize `GL_OES_EGL_image_external_essl3` in GLES3 inputs.
 
 Changed:

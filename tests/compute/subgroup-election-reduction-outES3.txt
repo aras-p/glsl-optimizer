@@ -1,0 +1,44 @@
+#version 310 es
+#extension GL_KHR_shader_subgroup_arithmetic : enable
+#extension GL_KHR_shader_subgroup_ballot : enable
+layout(local_size_x=64) in;
+layout(std430, column_major, binding=0) buffer Results {
+  highp uvec4 values[];
+};
+void main ()
+{
+  highp uvec4 result_1;
+  result_1 = uvec4(0u, 0u, 0u, 0u);
+  if (((gl_LocalInvocationIndex & 1u) != uint(0))) {
+    highp uint tmpvar_2;
+    tmpvar_2 = subgroupAdd (1u);
+    highp uint tmpvar_3;
+    tmpvar_3 = subgroupBroadcastFirst (gl_LocalInvocationIndex);
+    bvec2 tmpvar_4;
+    tmpvar_4.x = (gl_LocalInvocationIndex == 1u);
+    tmpvar_4.y = (16u < gl_LocalInvocationIndex);
+    bvec2 tmpvar_5;
+    tmpvar_5 = subgroupBroadcastFirst (tmpvar_4);
+    bool tmpvar_6;
+    tmpvar_6 = subgroupElect ();
+    if (tmpvar_6) {
+      highp uvec4 tmpvar_7;
+      tmpvar_7.x = tmpvar_2;
+      tmpvar_7.y = tmpvar_3;
+      tmpvar_7.zw = uvec2(ivec2(tmpvar_5));
+      result_1 = tmpvar_7;
+    };
+  } else {
+    highp uint tmpvar_8;
+    tmpvar_8 = subgroupAdd (1u);
+    result_1.x = tmpvar_8;
+  };
+  values[gl_LocalInvocationIndex] = result_1;
+}
+
+
+// stats: 7 alu 0 tex 2 flow
+// workgroup size: 64 1 1
+// buffer #0: Results storage layout std430 binding 0 (size: unknown)
+//  member #0: uvec4[] values offset 0 array runtime stride 16
+//  member #1: uvec4 [] parent 0 offset 0

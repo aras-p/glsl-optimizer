@@ -1,0 +1,15 @@
+#version 430
+#extension GL_KHR_shader_subgroup : require
+
+flat in ivec2 range;
+flat in uint mask;
+layout(location = 0) out uvec4 result;
+
+void main()
+{
+    int first = subgroupBroadcastFirst(subgroupMin(range.x));
+    int last = subgroupBroadcastFirst(subgroupMax(range.y));
+    uint merged = subgroupBroadcastFirst(subgroupOr(mask));
+    uvec2 limits = subgroupMax(uvec2(range));
+    result = uvec4(uint(first), uint(last), merged, limits.y);
+}

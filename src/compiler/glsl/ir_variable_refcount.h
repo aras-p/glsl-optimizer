@@ -38,7 +38,8 @@
 
 struct assignment_entry {
    exec_node link;
-   ir_assignment *assign;
+   /* glsl-optimizer change: includes subgroup calls whose result is dead. */
+   ir_instruction *assign;
 };
 
 class ir_variable_refcount_entry
@@ -78,6 +79,7 @@ public:
    virtual ir_visitor_status visit_enter(ir_function_signature *);
    virtual ir_visitor_status visit_enter(ir_assignment *);
    virtual ir_visitor_status visit_leave(ir_assignment *);
+   virtual ir_visitor_status visit_leave(ir_call *);
 
    ir_variable *current_lhs = nullptr;
 
@@ -85,6 +87,7 @@ public:
     * Find variable in the hash table, and insert it if not present
     */
    ir_variable_refcount_entry *get_variable_entry(ir_variable *var);
+   void record_assignment(ir_instruction *ir, ir_variable *var);
 
    /**
     * Hash table mapping ir_variable to ir_variable_refcount_entry.

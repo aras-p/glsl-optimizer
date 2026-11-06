@@ -222,6 +222,14 @@ _mesa_print_ir_glsl(exec_list *instructions,
             str.asprintf_append (" es");
          str.asprintf_append ("\n");
       }
+      if (state->KHR_shader_subgroup_enable)
+         str.asprintf_append("#extension GL_KHR_shader_subgroup : enable\n");
+      if (state->KHR_shader_subgroup_arithmetic_enable)
+         str.asprintf_append("#extension GL_KHR_shader_subgroup_arithmetic : enable\n");
+      if (state->KHR_shader_subgroup_ballot_enable)
+         str.asprintf_append("#extension GL_KHR_shader_subgroup_ballot : enable\n");
+      if (state->KHR_shader_subgroup_basic_enable)
+         str.asprintf_append("#extension GL_KHR_shader_subgroup_basic : enable\n");
       if (state->ARB_separate_shader_objects_enable)
          str.asprintf_append("#extension GL_ARB_separate_shader_objects : enable\n");
       if (state->EXT_shader_io_blocks_enable)

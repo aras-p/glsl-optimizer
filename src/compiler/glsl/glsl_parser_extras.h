@@ -703,6 +703,16 @@ struct _mesa_glsl_parse_state {
    bool ARB_shader_atomic_counter_ops_warn;
    bool ARB_shader_atomic_counters_enable;
    bool ARB_shader_atomic_counters_warn;
+   /* glsl-optimizer change: subgroup extension state. */
+   bool KHR_shader_subgroup_enable;
+   bool KHR_shader_subgroup_warn;
+   bool KHR_shader_subgroup_arithmetic_enable;
+   bool KHR_shader_subgroup_arithmetic_warn;
+   bool KHR_shader_subgroup_ballot_enable;
+   bool KHR_shader_subgroup_ballot_warn;
+   bool KHR_shader_subgroup_basic_enable;
+   bool KHR_shader_subgroup_basic_warn;
+
    bool ARB_shader_ballot_enable;
    bool ARB_shader_ballot_warn;
    bool ARB_shader_bit_encoding_enable;

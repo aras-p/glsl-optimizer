@@ -1,0 +1,47 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct alignas(16) _xlat_buf_storage0_element { uint4 value; };
+static_assert(sizeof(_xlat_buf_storage0_element) == 16, "array stride");
+struct xlatMtlShaderUniform {
+};
+// threadsPerThreadgroup: 64, 1, 1
+kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , device uchar* _mtl_buffer1 [[buffer(1)]]
+  , uint gl_LocalInvocationIndex [[thread_index_in_threadgroup]])
+{
+  uint4 result_1;
+  result_1 = uint4(0u, 0u, 0u, 0u);
+  if (((gl_LocalInvocationIndex & 1u) != 0u)) {
+    uint tmpvar_2;
+    tmpvar_2 = simd_sum (1u);
+    uint tmpvar_3;
+    tmpvar_3 = simd_broadcast_first (gl_LocalInvocationIndex);
+    bool2 tmpvar_4 = false;
+    tmpvar_4.x = (gl_LocalInvocationIndex == 1u);
+    tmpvar_4.y = (16u < gl_LocalInvocationIndex);
+    bool2 tmpvar_5 = false;
+    tmpvar_5 = bool2(simd_broadcast_first (uint2(tmpvar_4)));
+    bool tmpvar_6 = false;
+    tmpvar_6 = simd_is_first ();
+    if (tmpvar_6) {
+      uint4 tmpvar_7;
+      tmpvar_7.x = tmpvar_2;
+      tmpvar_7.y = tmpvar_3;
+      tmpvar_7.zw = uint2(int2(tmpvar_5));
+      result_1 = tmpvar_7;
+    };
+  } else {
+    uint tmpvar_8;
+    tmpvar_8 = simd_sum (1u);
+    result_1.x = tmpvar_8;
+  };
+  reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_LocalInvocationIndex].value = uint4(result_1);
+}
+
+
+// stats: 7 alu 0 tex 2 flow
+// workgroup size: 64 1 1
+// buffer #0: Results storage layout std430 binding 0 (size: unknown) metal 1
+//  member #0: uvec4[] values offset 0 array runtime stride 16
+//  member #1: uvec4 [] parent 0 offset 0

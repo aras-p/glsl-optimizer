@@ -1,0 +1,32 @@
+#version 310 es
+#extension GL_KHR_shader_subgroup_arithmetic : require
+#extension GL_KHR_shader_subgroup_ballot : require
+precision highp int;
+
+layout(local_size_x = 64) in;
+layout(std430, binding = 0) buffer Results {
+    uvec4 values[];
+};
+
+void main()
+{
+    uint lane = gl_LocalInvocationIndex;
+    subgroupElect();
+    subgroupBroadcastFirst(lane);
+    subgroupAdd(lane);
+    subgroupMin(lane);
+    subgroupMax(lane);
+    subgroupOr(lane);
+    uvec4 result = uvec4(0u);
+    if ((lane & 1u) != 0u) {
+        // The constant operand still counts only the lanes in this branch.
+        uint count = subgroupAdd(1u);
+        uint first = subgroupBroadcastFirst(lane);
+        bvec2 flags = subgroupBroadcastFirst(bvec2(lane == 1u, lane > 16u));
+        if (subgroupElect())
+            result = uvec4(count, first, uvec2(flags));
+    } else {
+        result.x = subgroupAdd(1u);
+    }
+    values[lane] = result;
+}

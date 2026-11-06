@@ -144,8 +144,24 @@ ir_visitor_status
 ir_variable_refcount_visitor::visit_leave(ir_assignment *ir)
 {
    current_lhs = nullptr;
-   ir_variable_refcount_entry *entry;
-   entry = this->get_variable_entry(ir->lhs->variable_referenced());
+   record_assignment(ir, ir->lhs->variable_referenced());
+   return visit_continue;
+}
+
+/* glsl-optimizer change: count pure subgroup call results as assignments for DCE. */
+ir_visitor_status
+ir_variable_refcount_visitor::visit_leave(ir_call *ir)
+{
+   if (ir_is_subgroup_intrinsic(ir->callee->intrinsic_id) && ir->return_deref &&
+       ir->return_deref->var->data.mode == ir_var_temporary)
+      record_assignment(ir, ir->return_deref->var);
+   return visit_continue;
+}
+
+void
+ir_variable_refcount_visitor::record_assignment(ir_instruction *ir, ir_variable *var)
+{
+   ir_variable_refcount_entry *entry = get_variable_entry(var);
    if (entry) {
       entry->assigned_count++;
 
@@ -163,6 +179,4 @@ ir_variable_refcount_visitor::visit_leave(ir_assignment *ir)
          entry->assign_list.push_head(&assignment_entry->link);
       }
    }
-
-   return visit_continue;
 }

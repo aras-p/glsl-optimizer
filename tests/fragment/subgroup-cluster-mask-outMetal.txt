@@ -1,0 +1,43 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct xlatMtlShaderInput {
+  int2 range [[flat]];
+  uint mask [[flat]];
+};
+struct xlatMtlShaderOutput {
+  uint4 result [[color(0)]];
+};
+struct xlatMtlShaderUniform {
+};
+fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
+{
+  xlatMtlShaderOutput _mtl_o;
+  int tmpvar_1 = 0;
+  tmpvar_1 = simd_min (_mtl_i.range.x);
+  int tmpvar_2 = 0;
+  tmpvar_2 = simd_broadcast_first (tmpvar_1);
+  int tmpvar_3 = 0;
+  tmpvar_3 = simd_max (_mtl_i.range.y);
+  int tmpvar_4 = 0;
+  tmpvar_4 = simd_broadcast_first (tmpvar_3);
+  uint tmpvar_5;
+  tmpvar_5 = simd_or (_mtl_i.mask);
+  uint tmpvar_6;
+  tmpvar_6 = simd_broadcast_first (tmpvar_5);
+  uint2 tmpvar_7;
+  tmpvar_7 = simd_max (uint2(_mtl_i.range));
+  uint4 tmpvar_8;
+  tmpvar_8.x = uint(tmpvar_2);
+  tmpvar_8.y = uint(tmpvar_4);
+  tmpvar_8.z = tmpvar_6;
+  tmpvar_8.w = tmpvar_7.y;
+  _mtl_o.result = tmpvar_8;
+  return _mtl_o;
+}
+
+
+// stats: 3 alu 0 tex 0 flow
+// inputs: 2
+//  #0: range (high int) 2x1 [-1]
+//  #1: mask (high int) 1x1 [-1]

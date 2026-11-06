@@ -111,6 +111,11 @@ EXT(INTEL_conservative_rasterization, INTEL_conservative_rasterization, 255, 0, 
 EXT(INTEL_shader_atomic_float_minmax, INTEL_shader_atomic_float_minmax, 0, 0, 255, 255)
 EXT(INTEL_shader_integer_functions2, INTEL_shader_integer_functions2, 0, 0, 255, 255)
 EXT(KHR_blend_equation_advanced, KHR_blend_equation_advanced, 0, 0, 255, 0)
+/* glsl-optimizer change: GLSL 1.40 and GLSL ES 3.10 subgroup syntax. */
+EXT(KHR_shader_subgroup, dummy_true, 31, 31, 255, 31)
+EXT(KHR_shader_subgroup_arithmetic, dummy_true, 31, 31, 255, 31)
+EXT(KHR_shader_subgroup_ballot, dummy_true, 31, 31, 255, 31)
+EXT(KHR_shader_subgroup_basic, dummy_true, 31, 31, 255, 31)
 EXT(MESA_shader_integer_functions, MESA_shader_integer_functions, 0, 0, 255, 30)
 EXT(NV_compute_shader_derivatives, NV_compute_shader_derivatives, 0, 0, 255, 32)
 EXT(NV_fragment_shader_interlock, ARB_fragment_shader_interlock, 0, 0, 255, 31)

@@ -181,6 +181,8 @@ struct metal_print_context
    std::unordered_map<const glsl_type*, const char*> sharedStructTypes;
    bool sharedMatrixTemplate = false;
    bool bitScanHelpersDone = false;
+   bool terminateDiscard = false;
+   bool propagateDiscard = false;
    std::unordered_map<const glsl_type*, bool> nativeBufferTypes[storage_kind_count][2];
    void* mem_ctx;
    bool writingParams;
@@ -274,6 +276,7 @@ public:
    int indentation;
    int expression_depth;
    bool inEntryPoint = false;
+   bool functionReturnsVoid = false;
    string_buffer& buffer;
    global_print_tracker_metal* globals;
    const _mesa_glsl_parse_state* state;
@@ -287,6 +290,35 @@ public:
 };
 
 
+class metal_fragment_discard_usage : public ir_hierarchical_visitor {
+public:
+   bool subgroup = false;
+   bool discard = false;
+   bool discardInHelper = false;
+
+   ir_visitor_status visit_enter(ir_function_signature *ir) override
+   {
+      inHelper = strcmp(ir->function_name(), "main") != 0;
+      return visit_continue;
+   }
+
+   ir_visitor_status visit_enter(ir_call *ir) override
+   {
+      subgroup |= ir_is_subgroup_intrinsic(ir->callee->intrinsic_id);
+      return visit_continue_with_parent;
+   }
+
+   ir_visitor_status visit_enter(ir_discard *) override
+   {
+      discard = true;
+      discardInHelper |= inHelper;
+      return visit_continue_with_parent;
+   }
+
+private:
+   bool inHelper = false;
+};
+
 char*
 _mesa_print_ir_metal(exec_list *instructions,
                      struct _mesa_glsl_parse_state *state,
@@ -295,6 +327,14 @@ _mesa_print_ir_metal(exec_list *instructions,
    if (mode == kPrintGlslFragment) optimize_split_arrays(instructions, false, true);
    metal_print_context ctx(buffer);
    ctx.countersReadOnly = state->stage == MESA_SHADER_VERTEX;
+   if (mode == kPrintGlslFragment &&
+       (state->KHR_shader_subgroup_enable || state->KHR_shader_subgroup_basic_enable ||
+        state->KHR_shader_subgroup_ballot_enable || state->KHR_shader_subgroup_arithmetic_enable)) {
+      metal_fragment_discard_usage usage;
+      visit_list_elements(&usage, instructions);
+      ctx.terminateDiscard = usage.subgroup && usage.discard;
+      ctx.propagateDiscard = usage.subgroup && usage.discardInHelper;
+   }
    // Raw printing leaves vertex locations in Mesa's slot numbering for linking.
    ctx.reflectAttributeLocations = outUniformsSize != nullptr;
    // Keep sampled textures paired with their sampler indices; images occupy
@@ -371,6 +411,8 @@ _mesa_print_ir_metal(exec_list *instructions,
          }
          if (var->data.mode == ir_var_system_value)
          {
+            if (!strcmp(var->name, "gl_HelperInvocation"))
+               continue;
             strOut = &ctx.paramsStr;
             ctx.writingParams = true;
             strOut->asprintf_append ("\n  , ");
@@ -1475,13 +1517,14 @@ void ir_print_metal_visitor::visit(ir_function_signature *ir)
 {
    const bool isMain = (strcmp(ir->function()->name, "main") == 0);
    inEntryPoint = isMain;
+   functionReturnsVoid = !isMain && ir->return_type->is_void();
 
    if (!isMain)
    {
       print_type(buffer, ir, ir->return_type, true);
       buffer.asprintf_append (" %s (", ir->function_name());
 
-      if (!ir->parameters.is_empty())
+      if (!ir->parameters.is_empty() || ctx.propagateDiscard)
       {
          buffer.asprintf_append ("\n");
 
@@ -1494,6 +1537,12 @@ void ir_print_metal_visitor::visit(ir_function_signature *ir)
             indent();
             inst->accept(this);
             first = false;
+         }
+         if (ctx.propagateDiscard) {
+            if (!first)
+               buffer.asprintf_append(",\n");
+            indent();
+            buffer.asprintf_append("thread bool& _xlat_discarded");
          }
          indentation--;
 
@@ -1536,6 +1585,10 @@ void ir_print_metal_visitor::visit(ir_function_signature *ir)
    if (isMain)
    {
       buffer.asprintf_append("%s", ctx.blockAliases.c_str());
+      if (ctx.propagateDiscard) {
+         indent();
+         buffer.asprintf_append("bool _xlat_discarded = false;\n");
+      }
       // output struct
       if (this->mode_whole != kPrintGlslCompute) {
          indent(); buffer.asprintf_append ("xlatMtlShaderOutput _mtl_o;\n");
@@ -2397,6 +2450,10 @@ void ir_print_metal_visitor::visit(ir_dereference_variable *ir)
 {
    if (print_shared_access(ir)) return;
    ir_variable *var = ir->variable_referenced();
+   if (var->data.mode == ir_var_system_value && !strcmp(var->name, "gl_HelperInvocation")) {
+      buffer.asprintf_append("simd_is_helper_thread()");
+      return;
+   }
    if (print_uniform_read(ir)) return;
    if (!ctx.stageNames.empty()) {
       auto stage = ctx.stageNames.find(var);
@@ -3180,7 +3237,28 @@ ir_print_metal_visitor::visit(ir_call *ir)
       return;
    }
 
-   buffer.asprintf_append ("%s (", ir->callee_name());
+   const char *subgroup = nullptr;
+   switch (ir->callee->intrinsic_id) {
+   case ir_intrinsic_subgroup_elect: subgroup = "simd_is_first"; break;
+   case ir_intrinsic_subgroup_broadcast_first: subgroup = "simd_broadcast_first"; break;
+   case ir_intrinsic_subgroup_add: subgroup = "simd_sum"; break;
+   case ir_intrinsic_subgroup_min: subgroup = "simd_min"; break;
+   case ir_intrinsic_subgroup_max: subgroup = "simd_max"; break;
+   case ir_intrinsic_subgroup_or: subgroup = "simd_or"; break;
+   default: break;
+   }
+   // Metal broadcasts numeric types. Convert boolean lanes through uint.
+   const bool bool_broadcast =
+      ir->callee->intrinsic_id == ir_intrinsic_subgroup_broadcast_first &&
+      ir->callee->return_type->is_boolean();
+   if (bool_broadcast) {
+      print_type(buffer, ir, ir->callee->return_type, true);
+      buffer.asprintf_append("(");
+   }
+   buffer.asprintf_append ("%s (", subgroup ? subgroup : ir->callee_name());
+   if (bool_broadcast) {
+      buffer.asprintf_append("%s(", uint_vector_type(ir->callee->return_type->vector_elements));
+   }
    bool first = true;
    foreach_in_list(ir_instruction, inst, &ir->actual_parameters) {
       if (!first)
@@ -3188,7 +3266,17 @@ ir_print_metal_visitor::visit(ir_call *ir)
       inst->accept(this);
       first = false;
    }
+   const bool propagate = ctx.propagateDiscard && !ir->callee->is_builtin();
+   if (propagate)
+      buffer.asprintf_append("%s_xlat_discarded", first ? "" : ", ");
    buffer.asprintf_append (")");
+   if (bool_broadcast)
+      buffer.asprintf_append("))");
+   if (propagate) {
+      buffer.asprintf_append(";\n");
+      indent();
+      buffer.asprintf_append("if (_xlat_discarded) return%s", functionReturnsVoid ? "" : " {}");
+   }
 }
 
 
@@ -3217,7 +3305,16 @@ ir_print_metal_visitor::visit(ir_discard *ir)
       ir->condition->accept(this);
       buffer.asprintf_append(") ");
    }
-   buffer.asprintf_append("discard_fragment()");
+   if (!ctx.terminateDiscard) {
+      buffer.asprintf_append("discard_fragment()");
+      return;
+   }
+
+   // GLSL discard exits control flow. Metal discard alone can keep the lane active.
+   buffer.asprintf_append("{ ");
+   if (ctx.propagateDiscard && !inEntryPoint)
+      buffer.asprintf_append("_xlat_discarded = true; ");
+   buffer.asprintf_append("discard_fragment(); return%s; }", functionReturnsVoid ? "" : " {}");
 }
 
 

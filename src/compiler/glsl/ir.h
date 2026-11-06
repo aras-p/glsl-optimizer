@@ -1164,6 +1164,14 @@ enum ir_intrinsic_id {
    ir_intrinsic_read_invocation,
    ir_intrinsic_read_first_invocation,
 
+   /* glsl-optimizer change: keep subgroup operations as calls in the IR. */
+   ir_intrinsic_subgroup_elect,
+   ir_intrinsic_subgroup_broadcast_first,
+   ir_intrinsic_subgroup_add,
+   ir_intrinsic_subgroup_min,
+   ir_intrinsic_subgroup_max,
+   ir_intrinsic_subgroup_or,
+
    ir_intrinsic_helper_invocation,
 
    ir_intrinsic_shared_load,
@@ -1177,6 +1185,13 @@ enum ir_intrinsic_id {
    ir_intrinsic_shared_atomic_exchange = MAKE_INTRINSIC_FOR_TYPE(atomic_exchange, shared),
    ir_intrinsic_shared_atomic_comp_swap = MAKE_INTRINSIC_FOR_TYPE(atomic_comp_swap, shared),
 };
+
+/* glsl-optimizer change: subgroup calls are convergent, with no side effects. */
+static inline bool
+ir_is_subgroup_intrinsic(ir_intrinsic_id id)
+{
+   return id >= ir_intrinsic_subgroup_elect && id <= ir_intrinsic_subgroup_or;
+}
 
 /*@{*/
 /**

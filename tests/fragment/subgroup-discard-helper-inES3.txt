@@ -1,0 +1,28 @@
+#version 310 es
+#extension GL_KHR_shader_subgroup_arithmetic : require
+precision highp float;
+precision highp int;
+
+layout(location = 0) out uvec4 result;
+
+uint classify(float x)
+{
+    if (x < 4.0)
+        discard;
+    if (x < 8.0)
+        return 1u;
+    return 2u;
+}
+
+void main()
+{
+    uint value = classify(gl_FragCoord.x);
+    if (gl_FragCoord.y < 4.0)
+        discard;
+
+    result = uvec4(value);
+    if (!gl_HelperInvocation) {
+        result.x = subgroupAdd(1u);
+        result.y = subgroupOr(value);
+    }
+}

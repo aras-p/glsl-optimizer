@@ -636,6 +636,28 @@ shader_atomic_counter_ops_or_v460_desktop(const _mesa_glsl_parse_state *state)
    return state->ARB_shader_atomic_counter_ops_enable || v460_desktop(state);
 }
 
+/* glsl-optimizer change: KHR subgroup availability. */
+static bool
+subgroup_arithmetic(const _mesa_glsl_parse_state *state)
+{
+   return state->KHR_shader_subgroup_enable ||
+          state->KHR_shader_subgroup_arithmetic_enable;
+}
+
+static bool
+subgroup_ballot(const _mesa_glsl_parse_state *state)
+{
+   return state->KHR_shader_subgroup_enable ||
+          state->KHR_shader_subgroup_ballot_enable;
+}
+
+static bool
+subgroup_basic(const _mesa_glsl_parse_state *state)
+{
+   return state->KHR_shader_subgroup_basic_enable ||
+          subgroup_arithmetic(state) || subgroup_ballot(state);
+}
+
 static bool
 shader_ballot(const _mesa_glsl_parse_state *state)
 {
@@ -944,6 +966,9 @@ private:
 
    /** Create a new function and add the given signatures. */
    void add_function(const char *name, ...);
+
+   void add_subgroup_function(const char *name, ir_intrinsic_id id,
+                              builtin_available_predicate avail);
 
    typedef ir_function_signature *(builtin_builder::*image_prototype_ctr)(const glsl_type *image_type,
                                                                           unsigned num_arguments,
@@ -4309,6 +4334,14 @@ builtin_builder::create_builtins()
                                 compute_shader),
                 NULL);
 
+   /* glsl-optimizer change: subgroup operations depend on the active lanes. */
+   add_subgroup_function("subgroupElect", ir_intrinsic_subgroup_elect, subgroup_basic);
+   add_subgroup_function("subgroupBroadcastFirst", ir_intrinsic_subgroup_broadcast_first, subgroup_ballot);
+   add_subgroup_function("subgroupAdd", ir_intrinsic_subgroup_add, subgroup_arithmetic);
+   add_subgroup_function("subgroupMin", ir_intrinsic_subgroup_min, subgroup_arithmetic);
+   add_subgroup_function("subgroupMax", ir_intrinsic_subgroup_max, subgroup_arithmetic);
+   add_subgroup_function("subgroupOr", ir_intrinsic_subgroup_or, subgroup_arithmetic);
+
    add_function("ballotARB", _ballot(), NULL);
 
    add_function("readInvocationARB",
@@ -4692,6 +4725,35 @@ builtin_builder::add_function(const char *name, ...)
    }
    va_end(ap);
 
+   shader->symbols->add_function(f);
+}
+
+/* glsl-optimizer change: register subgroup operations as intrinsic calls. */
+void
+builtin_builder::add_subgroup_function(const char *name, ir_intrinsic_id id,
+                                       builtin_available_predicate avail)
+{
+   ir_function *f = new(mem_ctx) ir_function(name);
+   if (id == ir_intrinsic_subgroup_elect) {
+      ir_function_signature *sig = new_sig(glsl_type::bool_type, avail, 0);
+      sig->intrinsic_id = id;
+      f->add_signature(sig);
+   } else {
+      const glsl_base_type types[] = { GLSL_TYPE_UINT, GLSL_TYPE_INT,
+                                      GLSL_TYPE_FLOAT, GLSL_TYPE_BOOL };
+      for (glsl_base_type base : types) {
+         if (base == GLSL_TYPE_FLOAT && id == ir_intrinsic_subgroup_or)
+            continue;
+         if (base == GLSL_TYPE_BOOL && id != ir_intrinsic_subgroup_broadcast_first)
+            continue;
+         for (unsigned width = 1; width <= 4; ++width) {
+            const glsl_type *type = glsl_type::get_instance(base, width, 1);
+            ir_function_signature *sig = new_sig(type, avail, 1, in_var(type, "value"));
+            sig->intrinsic_id = id;
+            f->add_signature(sig);
+         }
+      }
+   }
    shader->symbols->add_function(f);
 }
 

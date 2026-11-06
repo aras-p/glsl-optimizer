@@ -758,6 +758,11 @@ static const _mesa_glsl_extension _mesa_glsl_supported_extensions[] = {
    EXT(INTEL_conservative_rasterization),
    EXT(INTEL_shader_atomic_float_minmax),
    EXT(INTEL_shader_integer_functions2),
+   /* glsl-optimizer change: subgroup extensions. */
+   EXT(KHR_shader_subgroup),
+   EXT(KHR_shader_subgroup_arithmetic),
+   EXT(KHR_shader_subgroup_ballot),
+   EXT(KHR_shader_subgroup_basic),
    EXT(MESA_shader_integer_functions),
    EXT(NV_compute_shader_derivatives),
    EXT(NV_fragment_shader_interlock),
