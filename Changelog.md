@@ -46,6 +46,7 @@ Fixed:
 * Fixed broadcast of scalar bool not being correct in some cases (#73).
 * Fixed precision for constant literals being dropped in some cases (#90).
 * Fixed GLSL explicit varying locations not being respected.
+* Metal output now preserves explicit vertex attribute locations.
 
 2016 10
 -------

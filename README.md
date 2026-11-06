@@ -109,8 +109,6 @@ Language Support
 * Basic vertex and fragment shaders compile as Metal 1.2, but the version can
   become higher depending on the features it uses.
 * Floating point `mediump` and `lowp` mostly translate to Metal `half`.
-* Vertex attributes get consecutive indices starting at 0 in emitted declaration
-  order; use the reflected indices to configure the vertex descriptor.
 * Shadow sampling uses a fixed sampler with clamp-to-edge addressing,
   linear filtering, and a less-equal comparison. Shadow gathers use the bound sampler.
 * No support for arrays of samplers, `gl_ClipDistance`,

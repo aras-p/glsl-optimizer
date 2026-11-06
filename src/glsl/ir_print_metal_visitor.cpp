@@ -194,6 +194,8 @@ struct metal_print_context
    int textureCounter;
    int imageCounter;
    int attributeCounter;
+   std::unordered_set<int> explicitAttributeSlots;
+   bool reflectAttributeLocations = false;
    int uniformLocationCounter;
    int colorCounter;
 };
@@ -292,12 +294,21 @@ _mesa_print_ir_metal(exec_list *instructions,
    if (mode == kPrintGlslFragment) optimize_split_arrays(instructions, false, true);
    metal_print_context ctx(buffer);
    ctx.countersReadOnly = state->stage == MESA_SHADER_VERTEX;
+   // Raw printing leaves vertex locations in Mesa's slot numbering for linking.
+   ctx.reflectAttributeLocations = outUniformsSize != nullptr;
    // Keep sampled textures paired with their sampler indices; images occupy
    // the remaining texture slots without pushing sampler indices upward.
    foreach_in_list(ir_instruction, instruction, instructions) {
       const auto* var = instruction->as_variable();
       if (var && var->data.mode == ir_var_uniform && var->type->without_array()->is_sampler())
          ++ctx.imageCounter;
+      if (mode == kPrintGlslVertex && var && var->data.mode == ir_var_shader_in &&
+          var->data.explicit_location && strncmp(var->name, "gl_", 3) != 0) {
+         const int base = var->data.location - VERT_ATTRIB_GENERIC0;
+         const int slots = var->type->count_attribute_slots(true);
+         for (int i = 0; i < slots; ++i)
+            ctx.explicitAttributeSlots.insert(base + i);
+      }
    }
 
    // includes, prefix etc.
@@ -455,7 +466,8 @@ _mesa_print_ir_metal(exec_list *instructions,
    ctx.prefixStr.asprintf_append("%s", ctx.uniformStr.c_str());
    ctx.prefixStr.asprintf_append("%s", ctx.str.c_str());
 
-   *outUniformsSize = ctx.uniformLocationCounter;
+   if (outUniformsSize)
+      *outUniformsSize = ctx.uniformLocationCounter;
 
    return ralloc_strdup(buffer, ctx.prefixStr.c_str());
 }
@@ -1367,10 +1379,20 @@ void ir_print_metal_visitor::visit(ir_variable *ir)
    // vertex shader input attribute?
    if (this->mode_whole == kPrintGlslVertex && ir->data.mode == ir_var_shader_in)
    {
-      buffer.asprintf_append (" [[attribute(%i)]]", ctx.attributeCounter);
-      ir->data.explicit_location = 1;
-      ir->data.location = ctx.attributeCounter;
-      ++ctx.attributeCounter;
+      int location = ir->data.location - VERT_ATTRIB_GENERIC0;
+      if (!ir->data.explicit_location) {
+         const int slots = ir->type->count_attribute_slots(true);
+         for (int slot = ctx.attributeCounter; slot < ctx.attributeCounter + slots; ++slot)
+            if (ctx.explicitAttributeSlots.count(slot))
+               ctx.attributeCounter = slot + 1;
+         location = ctx.attributeCounter;
+         ctx.attributeCounter += slots;
+      }
+      buffer.asprintf_append(" [[attribute(%d)]]", location);
+      if (ctx.reflectAttributeLocations) {
+         ir->data.explicit_location = true;
+         ir->data.location = location;
+      }
    }
 
    // fragment shader output?

@@ -1,13 +1,17 @@
 #version 450
+in vec4 colorOffset;
 layout(location=3) in vec4 position;
+layout(location=0) in vec4 baseColor;
 layout(location=9) out vec4 varyingColor;
 void main ()
 {
   gl_Position = position;
-  varyingColor = position;
+  varyingColor = (baseColor + colorOffset);
 }
 
 
-// stats: 0 alu 0 tex 0 flow
-// inputs: 1
-//  #0: position (high float) 4x1 [-1] loc 19
+// stats: 1 alu 0 tex 0 flow
+// inputs: 3
+//  #0: colorOffset (high float) 4x1 [-1]
+//  #1: position (high float) 4x1 [-1] loc 19
+//  #2: baseColor (high float) 4x1 [-1] loc 16

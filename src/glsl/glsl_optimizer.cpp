@@ -890,7 +890,7 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
    if (ctx->target != kGlslTargetMetal)
       result->rawOutput = _mesa_print_ir_glsl(ir, state, ralloc_strdup(result->mem_ctx, ""), printMode);
    else
-      result->rawOutput = _mesa_print_ir_metal(ir, state, ralloc_strdup(result->mem_ctx, ""), printMode, &result->uniformsSize);
+      result->rawOutput = _mesa_print_ir_metal(ir, state, ralloc_strdup(result->mem_ctx, ""), printMode, nullptr);
    const bool linked = !(options & kGlslOptionNotFullShader);
    if (linked) {
       gl_linked_shader* linked_shader = link_intrastage_shaders(result->mem_ctx,

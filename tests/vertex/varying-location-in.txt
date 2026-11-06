@@ -1,9 +1,11 @@
 #version 450
+in vec4 colorOffset;
 layout(location = 3) in vec4 position;
+layout(location = 0) in vec4 baseColor;
 layout(location = 9) out vec4 varyingColor;
 
 void main()
 {
     gl_Position = position;
-    varyingColor = position;
+    varyingColor = baseColor + colorOffset;
 }
