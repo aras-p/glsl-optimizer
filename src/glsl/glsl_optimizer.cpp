@@ -614,7 +614,64 @@ static bool metal_uniform_type_supported(const glsl_type* type)
 	return type->is_float() || type->is_integer_32() || type->is_boolean();
 }
 
-// Reject buffer operations that cannot be represented by the selected printer.
+class source_output_preparation : public add_neg_to_sub_visitor {
+public:
+	source_output_preparation(bool metal, const _mesa_glsl_parse_state* state)
+		: metal(metal), check_double(state->has_double()),
+		  check_subroutines(state->ARB_shader_subroutine_enable || state->is_version(400, 0)) {}
+	const char* error = nullptr;
+
+	ir_visitor_status visit(ir_variable* var) override {
+		check_type(var->type);
+		if (!metal)
+			return visit_continue;
+		const auto* type = var->type->without_array();
+		if (type->is_sampler()) {
+			if (var->type->is_array())
+				error = "Sampler resource arrays are not supported by the Metal backend.";
+			else if (type->sampler_dimensionality != GLSL_SAMPLER_DIM_2D &&
+			         type->sampler_dimensionality != GLSL_SAMPLER_DIM_CUBE &&
+			         type != glsl_type::sampler3D_type && type != glsl_type::samplerExternalOES_type)
+				error = "This sampler type is not supported by the Metal backend.";
+		}
+		return visit_continue;
+	}
+	ir_visitor_status visit_enter(ir_function_signature* signature) override {
+		if (signature->is_builtin())
+			return visit_continue_with_parent;
+		check_type(signature->return_type);
+		if (signature->function()->is_subroutine || signature->function()->num_subroutine_types)
+			error = "Shader subroutines are not supported.";
+		return visit_continue;
+	}
+	ir_visitor_status visit(ir_constant* constant) override {
+		check_type(constant->type);
+		return visit_continue;
+	}
+	ir_visitor_status visit_leave(ir_expression* expression) override {
+		check_type(expression->type);
+		return add_neg_to_sub_visitor::visit_leave(expression);
+	}
+	ir_visitor_status visit(ir_dereference_variable* deref) override {
+		if (metal && deref->var->name && !strcmp(deref->var->name, "gl_ClipDistance"))
+			error = "gl_ClipDistance is not supported by the Metal backend.";
+		return visit_continue;
+	}
+
+private:
+	bool metal;
+	bool check_double;
+	bool check_subroutines;
+
+	void check_type(const glsl_type* type) {
+		if (check_double && type->contains_double())
+			error = "Double-precision types are not supported.";
+		else if (check_subroutines && type->contains_subroutine())
+			error = "Shader subroutines are not supported.";
+	}
+};
+
+// Reject resource declarations, atomics, and barriers the selected printer cannot represent.
 class storage_validation : public ir_hierarchical_visitor {
 public:
 	bool metal;
@@ -821,8 +878,12 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 
 	// Note: restore source-level subtraction outside of regular optimization loop
     // (inside the loop, other passes would undo it).
-	add_neg_to_sub_visitor source_arithmetic;
-	visit_list_elements(&source_arithmetic, ir);
+	source_output_preparation source_output(ctx->target == kGlslTargetMetal, state);
+	visit_list_elements(&source_output, ir);
+	if (source_output.error) {
+		result->infoLog = source_output.error;
+		return result;
+	}
 
 	const PrintGlslMode printMode = type == kGlslOptShaderVertex ? kPrintGlslVertex :
 		type == kGlslOptShaderCompute ? kPrintGlslCompute : kPrintGlslFragment;
@@ -843,6 +904,7 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 	}
 	do_optimization_passes(ir, linked, ctx, shader->Stage);
 	validate_ir_tree(ir);
+	add_neg_to_sub_visitor source_arithmetic;
 	visit_list_elements(&source_arithmetic, ir);
 	if (ctx->target != kGlslTargetMetal)
 		result->optimizedOutput = _mesa_print_ir_glsl(ir, state, ralloc_strdup(result->mem_ctx, ""), printMode);
