@@ -1,0 +1,80 @@
+#version 310 es
+// Adapted from https://github.com/2Retr0/GodotGaussianSplatting/blob/181ef739/resources/shaders/compute/gsplat_boundaries.glsl
+// License of original file: MIT, Copyright (c) 2024 Ethan Truong
+// Changes done: selected GLSL ES 310, removed descriptor sets, and added default precision.
+// Kept all invocations at the barrier and made the first and last entries write their
+// tile's range endpoints. Ranges are half-open, and each endpoint has one writer.
+precision highp float;
+precision highp int;
+
+#define BLOCK_SIZE 256
+
+layout(local_size_x = BLOCK_SIZE) in;
+
+layout(std430, binding = 0) restrict readonly buffer Histograms {
+    uint sort_buffer_size;
+    uint histogram[];
+};
+
+layout(std430, binding = 1) restrict readonly buffer SortBuffer {
+    uint sort_buffer[];
+};
+
+layout(std430, binding = 2) restrict writeonly buffer BoundsBuffer {
+    uvec2 bounds_buffer[];
+};
+
+shared uint tile_ids[BLOCK_SIZE + 1];
+
+void main()
+{
+    uint id = gl_GlobalInvocationID.x;
+    uint lane = gl_LocalInvocationIndex;
+    uint count = sort_buffer_size;
+    if (id < count) {
+        if (lane == 0u && id != 0u)
+            tile_ids[0] = sort_buffer[id - 1u] >> 16;
+        tile_ids[lane + 1u] = sort_buffer[id] >> 16;
+    }
+    barrier();
+
+    if (id >= count)
+        return;
+
+    uint tile_id = tile_ids[lane + 1u];
+    uint tile_count = uint(bounds_buffer.length());
+    if (id == 0u) {
+        if (tile_id < tile_count)
+            bounds_buffer[tile_id].x = 0u;
+    } else {
+        uint prev = tile_ids[lane];
+        if (prev != tile_id) {
+            if (prev < tile_count)
+                bounds_buffer[prev].y = id;
+            if (tile_id < tile_count)
+                bounds_buffer[tile_id].x = id;
+        }
+    }
+    if (id + 1u == count && tile_id < tile_count)
+        bounds_buffer[tile_id].y = count;
+}
+
+/*
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/

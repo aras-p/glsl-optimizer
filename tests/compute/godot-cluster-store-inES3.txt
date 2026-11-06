@@ -1,0 +1,141 @@
+#version 320 es
+// Adapted from https://github.com/godotengine/godot/blob/b47a795aa/servers/rendering/renderer_rd/shaders/cluster_store.glsl
+// License of original file: MIT, Copyright (c) 2014-present Godot Engine contributors;
+// Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur
+// Changes done: selected GLSL ES 320, removed engine markers and descriptor sets,
+// replaced push constants with a std140 UBO, and added default precision and explicit unsigned types.
+precision highp float;
+precision highp int;
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout(std140, binding = 0) uniform Params {
+	uint cluster_render_data_size; // how much data for a single cluster takes
+	uint max_render_element_count_div_32; //divided by 32
+	uvec2 cluster_screen_size;
+	uint render_element_count_div_32; //divided by 32
+
+	uint max_cluster_element_count_div_32; //divided by 32
+	uint pad1;
+	uint pad2;
+}
+params;
+
+layout(binding = 1, std430) restrict readonly buffer ClusterRender {
+	uint data[];
+}
+cluster_render;
+
+layout(binding = 2, std430) restrict buffer ClusterStore {
+	uint data[];
+}
+cluster_store;
+
+struct RenderElement {
+	uint type; //0-4
+	bool touches_near;
+	bool touches_far;
+	uint original_index;
+	mat3x4 transform_inv;
+	vec3 scale;
+	uint pad;
+};
+
+layout(binding = 3, std430) restrict readonly buffer RenderElements {
+	RenderElement data[];
+}
+render_elements;
+
+void main() {
+	uvec2 pos = gl_GlobalInvocationID.xy;
+	if (any(greaterThanEqual(pos, params.cluster_screen_size))) {
+		return;
+	}
+
+
+	//base offset for this cluster
+	uint base_offset = (pos.x + params.cluster_screen_size.x * pos.y);
+	uint src_offset = base_offset * params.cluster_render_data_size;
+
+	uint render_element_offset = 0u;
+
+	//check all render_elements and see which one was written to
+	while (render_element_offset < params.render_element_count_div_32) {
+		uint bits = cluster_render.data[src_offset + render_element_offset];
+		while (bits != 0u) {
+			//if bits exist, check the render_element
+			uint index_bit = uint(findLSB(bits));
+			uint index = render_element_offset * 32u + index_bit;
+			uint type = render_elements.data[index].type;
+
+			uint z_range_offset = src_offset + params.max_render_element_count_div_32 + index;
+			uint z_range = cluster_render.data[z_range_offset];
+
+			//if object was written, z was written, but check just in case
+			if (z_range != 0u) { //should always be > 0
+
+				uint from_z = uint(findLSB(z_range));
+				uint to_z = uint(findMSB(z_range)) + 1u;
+
+				if (render_elements.data[index].touches_near) {
+					from_z = 0u;
+				}
+
+				if (render_elements.data[index].touches_far) {
+					to_z = 32u;
+				}
+
+				// find cluster offset in the buffer used for indexing in the renderer
+				uint dst_offset = (base_offset + type * (params.cluster_screen_size.x * params.cluster_screen_size.y)) * (params.max_cluster_element_count_div_32 + 32u);
+
+				uint orig_index = render_elements.data[index].original_index;
+				//store this index in the Z slices by setting the relevant bit
+				for (uint i = from_z; i < to_z; i++) {
+					uint slice_ofs = dst_offset + params.max_cluster_element_count_div_32 + i;
+
+					uint minmax = cluster_store.data[slice_ofs];
+
+					if (minmax == 0u) {
+						minmax = 0xFFFFu; //min 0, max 0xFFFFu
+					}
+
+					uint elem_min = min(orig_index, minmax & 0xFFFFu);
+					uint elem_max = max(orig_index + 1u, minmax >> 16); //always store plus one, so zero means range is empty when not written to
+
+					minmax = elem_min | (elem_max << 16);
+					cluster_store.data[slice_ofs] = minmax;
+				}
+
+				uint store_word = orig_index >> 5;
+				uint store_bit = orig_index & 0x1Fu;
+
+				//store the actual render_element index at the end, so the rendering code can reference it
+				cluster_store.data[dst_offset + store_word] |= 1u << store_bit;
+			}
+
+			bits &= ~(1u << index_bit); //clear the bit to continue iterating
+		}
+
+		render_element_offset++;
+	}
+}
+
+/*
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/

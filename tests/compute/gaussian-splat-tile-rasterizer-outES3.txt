@@ -1,0 +1,147 @@
+#version 310 es
+layout(local_size_x=16, local_size_y=16) in;
+struct RasterizeData {
+  highp vec2 image_pos;
+  highp vec2 pos_xy;
+  highp vec3 conic;
+  highp float pos_z;
+  highp vec4 color;
+};
+layout(std140, column_major, binding=3) uniform Params {
+  highp float heatmap_factor;
+};
+layout(std430, column_major, binding=2) buffer BoundsBuffer {
+  readonly restrict highp uvec2 bounds_buffer[];
+};
+layout(std430, column_major, binding=1) buffer SortBuffer {
+  readonly restrict highp uint sort_buffer[];
+};
+layout(std430, column_major, binding=0) buffer CulledBuffer {
+  layout(column_major) readonly restrict RasterizeData culled_buffer[];
+};
+layout(rgba32f, binding=4) writeonly restrict uniform highp image2D rasterized_image;
+shared highp vec3 conic_tile[256];
+shared highp vec4 color_tile[256];
+shared highp vec2 image_pos_tile[256];
+shared highp uint shared_t;
+void main ()
+{
+  highp uint i_1;
+  highp float t_2;
+  highp vec3 blended_color_3;
+  highp ivec2 tmpvar_4;
+  tmpvar_4 = imageSize (rasterized_image);
+  highp uvec2 tmpvar_5;
+  tmpvar_5 = uvec2(tmpvar_4);
+  highp uvec2 tmpvar_6;
+  tmpvar_6 = ((15u + tmpvar_5) / 16u);
+  if ((greaterThanEqual (gl_WorkGroupID.xy, tmpvar_6) != bvec2(0, 0))) {
+    return;
+  };
+  highp uint tmpvar_7;
+  tmpvar_7 = ((gl_WorkGroupID.y * tmpvar_6.x) + gl_WorkGroupID.x);
+  highp uvec2 tmpvar_8;
+  tmpvar_8 = ((gl_WorkGroupID.xy * 16u) + gl_LocalInvocationID.xy);
+  bool tmpvar_9;
+  tmpvar_9 = (lessThan (tmpvar_8, tmpvar_5) == bvec2(1, 1));
+  highp uvec2 tmpvar_10;
+  tmpvar_10 = bounds_buffer[tmpvar_7];
+  highp uint tmpvar_11;
+  tmpvar_11 = (tmpvar_10.y - tmpvar_10.x);
+  highp uint tmpvar_12;
+  tmpvar_12 = ((255u + tmpvar_11) / 256u);
+  if ((gl_LocalInvocationIndex == uint(0))) {
+    shared_t = 4294967295u;
+  };
+  barrier();
+  blended_color_3 = vec3(0.0, 0.0, 0.0);
+  t_2 = 1.0;
+  i_1 = uint(0);
+  while (true) {
+    if (!(((i_1 < tmpvar_12) && (255u < shared_t)))) {
+      break;
+    };
+    highp uint tmpvar_13;
+    tmpvar_13 = (256u * i_1);
+    highp uint tmpvar_14;
+    tmpvar_14 = (tmpvar_11 - tmpvar_13);
+    highp uint tmpvar_15;
+    if ((tmpvar_14 < 256u)) {
+      tmpvar_15 = tmpvar_14;
+    } else {
+      tmpvar_15 = 256u;
+    };
+    barrier();
+    if ((gl_LocalInvocationIndex < tmpvar_15)) {
+      RasterizeData tmpvar_16;
+      tmpvar_16 = culled_buffer[sort_buffer[((tmpvar_10.x + tmpvar_13) + gl_LocalInvocationIndex)]];
+      conic_tile[gl_LocalInvocationIndex] = tmpvar_16.conic;
+      color_tile[gl_LocalInvocationIndex] = tmpvar_16.color;
+      image_pos_tile[gl_LocalInvocationIndex] = tmpvar_16.image_pos;
+    };
+    if ((gl_LocalInvocationIndex == uint(0))) {
+      shared_t = uint(0);
+    };
+    barrier();
+    if (tmpvar_9) {
+      highp uint j_17;
+      j_17 = uint(0);
+      while (true) {
+        if (!(((j_17 < tmpvar_15) && (0.003921569 < t_2)))) {
+          break;
+        };
+        highp vec3 tmpvar_18;
+        tmpvar_18 = conic_tile[j_17];
+        highp vec4 tmpvar_19;
+        tmpvar_19 = color_tile[j_17];
+        highp vec2 tmpvar_20;
+        tmpvar_20 = (image_pos_tile[j_17] - vec2(tmpvar_8));
+        highp float tmpvar_21;
+        tmpvar_21 = (tmpvar_19.w * exp((
+          (-0.5 * (((tmpvar_18.x * tmpvar_20.x) * tmpvar_20.x) + ((tmpvar_18.z * tmpvar_20.y) * tmpvar_20.y)))
+         - 
+          ((tmpvar_18.y * tmpvar_20.x) * tmpvar_20.y)
+        )));
+        blended_color_3 = (blended_color_3 + ((tmpvar_19.xyz * tmpvar_21) * t_2));
+        t_2 = (t_2 * (1.0 - tmpvar_21));
+        j_17++;
+      };
+      highp uint tmpvar_22;
+      tmpvar_22 = atomicAdd (shared_t, uint((t_2 * 255.0)));
+    };
+    barrier();
+    i_1++;
+  };
+  if (tmpvar_9) {
+    highp vec4 tmpvar_23;
+    tmpvar_23.w = 1.0;
+    tmpvar_23.xyz = (blended_color_3 + ((
+      mix (vec3(0.0, 0.0, 1.0), vec3(1.0, 0.2, 0.2), (float(tmpvar_11) * 0.0005))
+     * 
+      (1.0 - t_2)
+    ) * heatmap_factor));
+    imageStore (rasterized_image, ivec2(tmpvar_8), tmpvar_23);
+  };
+}
+
+
+// stats: 68 alu 2 tex 12 flow
+// workgroup size: 16 16 1
+// buffer #0: BoundsBuffer storage layout std430 binding 2 (size: unknown)
+//  member #0: uvec2[] bounds_buffer offset 0 array runtime stride 8 readonly
+//  member #1: uvec2 [] parent 0 offset 0 readonly
+// buffer #1: CulledBuffer storage layout std430 binding 0 (size: unknown)
+//  member #0: RasterizeData[] culled_buffer offset 0 array runtime stride 48 readonly
+//  member #1: RasterizeData [] parent 0 offset 0 readonly
+//  member #2: vec2 image_pos parent 1 offset 0 readonly
+//  member #3: vec2 pos_xy parent 1 offset 8 readonly
+//  member #4: vec3 conic parent 1 offset 16 readonly
+//  member #5: float pos_z parent 1 offset 28 readonly
+//  member #6: vec4 color parent 1 offset 32 readonly
+// buffer #2: Params layout std140 binding 3 (size: 16)
+//  member #0: float heatmap_factor offset 0
+// buffer #3: SortBuffer storage layout std430 binding 1 (size: unknown)
+//  member #0: uint[] sort_buffer offset 0 array runtime stride 4 readonly
+//  member #1: uint [] parent 0 offset 0 readonly
+// textures: 1
+//  #0: rasterized_image (high image2d) 0x0 [-1] loc 4 format rgba32f component float writeonly

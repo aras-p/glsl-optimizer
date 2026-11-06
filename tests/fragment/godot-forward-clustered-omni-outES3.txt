@@ -1,0 +1,218 @@
+#version 320 es
+struct LightData {
+  highp vec3 position;
+  highp float inv_radius;
+  highp vec3 direction;
+  highp float size;
+  highp vec3 color;
+  highp float attenuation;
+  mediump vec3 area_width;
+  highp float cone_attenuation;
+  mediump vec3 area_height;
+  highp float cone_angle;
+  highp float specular_amount;
+  highp float shadow_opacity;
+  highp float pad[2];
+  highp vec4 atlas_rect;
+  highp mat4 shadow_matrix;
+  highp float shadow_bias;
+  highp float shadow_normal_bias;
+  highp float transmittance_bias;
+  highp float soft_shadow_size;
+  highp float soft_shadow_scale;
+  highp uint mask;
+  highp float volumetric_fog_energy;
+  highp uint bake_mode;
+  highp vec4 projector_rect;
+};
+layout(std430, column_major, binding=9) buffer ClusterBuffer {
+  readonly restrict highp uint data[];
+} cluster_buffer;
+layout(std430, column_major, binding=3) buffer OmniLights {
+  layout(column_major) readonly restrict LightData data[];
+} omni_lights;
+layout(std140, column_major, binding=0) uniform Scene {
+  highp float z_far;
+  highp uint cluster_shift;
+  highp uint cluster_width;
+  highp uint max_cluster_element_count_div_32;
+  highp uint layer_mask;
+  highp float roughness;
+  highp float metallic;
+  highp float specular;
+} scene;
+layout(location=0) in highp vec3 view_position;
+layout(location=1) in highp vec3 normal_interp;
+layout(location=2) in highp vec2 uv;
+layout(location=0) out highp vec4 color;
+layout(binding=0) uniform mediump sampler2D albedo_texture;
+void main ()
+{
+  highp vec3 lighting_2;
+  highp vec3 f0_3;
+  highp vec3 V_4;
+  highp vec3 N_5;
+  highp vec4 base_color_6;
+  base_color_6 = texture (albedo_texture, uv);
+  N_5 = normalize(normal_interp);
+  V_4 = normalize(-(view_position));
+  f0_3 = mix (vec3(((0.16 * scene.specular) * scene.specular)), base_color_6.xyz, scene.metallic);
+  lighting_2 = vec3(0.0, 0.0, 0.0);
+  highp uvec2 tmpvar_7;
+  tmpvar_7 = (uvec2(gl_FragCoord.xy) >> scene.cluster_shift);
+  highp uint tmpvar_8;
+  tmpvar_8 = (((scene.cluster_width * tmpvar_7.y) + tmpvar_7.x) * (scene.max_cluster_element_count_div_32 + 32u));
+  highp uint tmpvar_9;
+  tmpvar_9 = ((tmpvar_8 + scene.max_cluster_element_count_div_32) + uint(clamp (
+    ((-(view_position.z) / scene.z_far) * 32.0)
+  , 0.0, 31.0)));
+  highp uint tmpvar_10;
+  highp uint tmpvar_11;
+  highp uint tmpvar_12;
+  highp uint tmpvar_13;
+  tmpvar_13 = cluster_buffer.data[tmpvar_9];
+  tmpvar_10 = (tmpvar_13 & 65535u);
+  tmpvar_11 = (tmpvar_13 >> 16);
+  tmpvar_12 = (tmpvar_10 >> 5);
+  highp uint tmpvar_14;
+  if ((tmpvar_11 == uint(0))) {
+    tmpvar_14 = uint(0);
+  } else {
+    tmpvar_14 = (((tmpvar_11 + 4294967295u) >> 5) + 1u);
+  };
+  for (highp uint i_1 = tmpvar_12; i_1 < tmpvar_14; i_1++) {
+    highp uint mask_15;
+    mask_15 = cluster_buffer.data[(tmpvar_8 + i_1)];
+    highp int tmpvar_16;
+    tmpvar_16 = clamp ((int(tmpvar_10) - (
+      int(i_1)
+     * 32)), 0, 31);
+    mask_15 = (mask_15 & bitfieldInsert (uint(0), 4294967295u, int(uint(tmpvar_16)), int(uint(
+      min ((int(tmpvar_11) - int(tmpvar_10)), (32 - tmpvar_16))
+    ))));
+    while (true) {
+      if ((mask_15 == uint(0))) {
+        break;
+      };
+      highp uint tmpvar_17;
+      tmpvar_17 = uint(findMSB(mask_15));
+      mask_15 = (mask_15 & ~((1u << tmpvar_17)));
+      highp uint tmpvar_18;
+      tmpvar_18 = ((32u * i_1) + tmpvar_17);
+      if (((omni_lights.data[tmpvar_18].mask & scene.layer_mask) != uint(0))) {
+        highp vec3 tmpvar_19;
+        highp vec3 specular_20;
+        highp vec3 tmpvar_21;
+        tmpvar_21 = (omni_lights.data[tmpvar_18].position - view_position);
+        highp float tmpvar_22;
+        highp float tmpvar_23;
+        tmpvar_23 = sqrt(dot (tmpvar_21, tmpvar_21));
+        highp float nd_24;
+        highp float tmpvar_25;
+        tmpvar_25 = (tmpvar_23 * omni_lights.data[tmpvar_18].inv_radius);
+        nd_24 = (tmpvar_25 * tmpvar_25);
+        nd_24 = (nd_24 * nd_24);
+        highp float tmpvar_26;
+        tmpvar_26 = max ((1.0 - nd_24), 0.0);
+        nd_24 = (tmpvar_26 * tmpvar_26);
+        tmpvar_22 = (nd_24 * pow (max (tmpvar_23, 0.0001), -(omni_lights.data[tmpvar_18].attenuation)));
+        if ((6.103516e-05 >= tmpvar_22)) {
+          tmpvar_19 = vec3(0.0, 0.0, 0.0);
+        } else {
+          highp vec3 tmpvar_27;
+          tmpvar_27 = normalize(tmpvar_21);
+          highp float tmpvar_28;
+          tmpvar_28 = max (dot (N_5, tmpvar_27), 0.0);
+          highp float tmpvar_29;
+          tmpvar_29 = max (dot (N_5, V_4), 0.0001);
+          highp vec3 tmpvar_30;
+          tmpvar_30 = (((1.0 - scene.metallic) * base_color_6.xyz) * (tmpvar_28 * 0.3183099));
+          specular_20 = vec3(0.0, 0.0, 0.0);
+          if ((0.0 < scene.roughness)) {
+            highp vec3 tmpvar_31;
+            tmpvar_31 = normalize((V_4 + tmpvar_27));
+            highp float tmpvar_32;
+            tmpvar_32 = clamp (dot (N_5, tmpvar_31), 0.0, 1.0);
+            highp float tmpvar_33;
+            tmpvar_33 = (scene.roughness * scene.roughness);
+            highp float tmpvar_34;
+            tmpvar_34 = (tmpvar_32 * tmpvar_33);
+            highp float tmpvar_35;
+            tmpvar_35 = (tmpvar_33 / ((1.0 - 
+              (tmpvar_32 * tmpvar_32)
+            ) + (tmpvar_34 * tmpvar_34)));
+            highp float tmpvar_36;
+            tmpvar_36 = (1.0 - clamp (dot (tmpvar_27, tmpvar_31), 0.0, 1.0));
+            highp float tmpvar_37;
+            tmpvar_37 = (tmpvar_36 * tmpvar_36);
+            specular_20 = (((
+              (tmpvar_28 * min (((tmpvar_35 * tmpvar_35) * 0.3183099), 65504.0))
+             * 
+              (f0_3 + ((clamp (
+                dot (f0_3, vec3(16.5, 16.5, 16.5))
+              , scene.metallic, 1.0) - f0_3) * ((tmpvar_37 * tmpvar_37) * tmpvar_36)))
+            ) * min (
+              (0.5 / mix (((2.0 * tmpvar_28) * tmpvar_29), (tmpvar_28 + tmpvar_29), tmpvar_33))
+            , 65504.0)) * omni_lights.data[tmpvar_18].specular_amount);
+          };
+          tmpvar_19 = (((tmpvar_30 + specular_20) * omni_lights.data[tmpvar_18].color) * tmpvar_22);
+        };
+        lighting_2 = (lighting_2 + tmpvar_19);
+      };
+    };
+  };
+  highp vec4 tmpvar_38;
+  tmpvar_38.xyz = lighting_2;
+  tmpvar_38.w = base_color_6.w;
+  color = tmpvar_38;
+}
+
+
+// stats: 125 alu 1 tex 8 flow
+// inputs: 4
+//  #0: gl_FragCoord (high float) 4x1 [-1] loc 0
+//  #1: view_position (high float) 3x1 [-1] loc 32
+//  #2: normal_interp (high float) 3x1 [-1] loc 33
+//  #3: uv (high float) 2x1 [-1] loc 34
+// buffer #0: ClusterBuffer storage instance cluster_buffer layout std430 binding 9 (size: unknown)
+//  member #0: uint[] data offset 0 array runtime stride 4 readonly
+//  member #1: uint [] parent 0 offset 0 readonly
+// buffer #1: OmniLights storage instance omni_lights layout std430 binding 3 (size: unknown)
+//  member #0: LightData[] data offset 0 array runtime stride 224 readonly
+//  member #1: LightData [] parent 0 offset 0 readonly
+//  member #2: vec3 position parent 1 offset 0 readonly
+//  member #3: float inv_radius parent 1 offset 12 readonly
+//  member #4: vec3 direction parent 1 offset 16 readonly (unused)
+//  member #5: float size parent 1 offset 28 readonly (unused)
+//  member #6: vec3 color parent 1 offset 32 readonly
+//  member #7: float attenuation parent 1 offset 44 readonly
+//  member #8: vec3 area_width parent 1 offset 48 readonly (unused)
+//  member #9: float cone_attenuation parent 1 offset 60 readonly (unused)
+//  member #10: vec3 area_height parent 1 offset 64 readonly (unused)
+//  member #11: float cone_angle parent 1 offset 76 readonly (unused)
+//  member #12: float specular_amount parent 1 offset 80 readonly
+//  member #13: float shadow_opacity parent 1 offset 84 readonly (unused)
+//  member #14: float[2] pad parent 1 offset 88 array 2 stride 4 readonly (unused)
+//  member #15: float [] parent 14 offset 88 readonly (unused)
+//  member #16: vec4 atlas_rect parent 1 offset 96 readonly (unused)
+//  member #17: mat4 shadow_matrix parent 1 offset 112 matrix-stride 16 readonly (unused)
+//  member #18: float shadow_bias parent 1 offset 176 readonly (unused)
+//  member #19: float shadow_normal_bias parent 1 offset 180 readonly (unused)
+//  member #20: float transmittance_bias parent 1 offset 184 readonly (unused)
+//  member #21: float soft_shadow_size parent 1 offset 188 readonly (unused)
+//  member #22: float soft_shadow_scale parent 1 offset 192 readonly (unused)
+//  member #23: uint mask parent 1 offset 196 readonly
+//  member #24: float volumetric_fog_energy parent 1 offset 200 readonly (unused)
+//  member #25: uint bake_mode parent 1 offset 204 readonly (unused)
+//  member #26: vec4 projector_rect parent 1 offset 208 readonly (unused)
+// buffer #2: Scene instance scene layout std140 binding 0 (size: 32)
+//  member #0: float z_far offset 0
+//  member #1: uint cluster_shift offset 4
+//  member #2: uint cluster_width offset 8
+//  member #3: uint max_cluster_element_count_div_32 offset 12
+//  member #4: uint layer_mask offset 16
+//  member #5: float roughness offset 20
+//  member #6: float metallic offset 24
+//  member #7: float specular offset 28
+// textures: 1
+//  #0: albedo_texture (medium 2d) 0x0 [-1] loc 0

@@ -1,0 +1,67 @@
+#version 310 es
+layout(local_size_x=128) in;
+struct PointLight {
+  highp vec4 position;
+  highp vec4 color;
+  highp float intensity;
+  highp float radius;
+};
+struct Cluster {
+  highp vec4 minPoint;
+  highp vec4 maxPoint;
+  highp uint count;
+  highp uint lightIndices[100];
+};
+layout(std430, column_major, binding=2) buffer lightSSBO {
+  layout(column_major) readonly restrict PointLight pointLight[];
+};
+layout(std430, column_major, binding=1) buffer clusterSSBO {
+  layout(column_major) restrict Cluster clusters[];
+};
+uniform highp mat4 viewMatrix;
+void main ()
+{
+  Cluster cluster_2;
+  highp uint lightCount_3;
+  lightCount_3 = uint(pointLight.length());
+  highp uint tmpvar_4;
+  tmpvar_4 = ((gl_WorkGroupID.x * 128u) + gl_LocalInvocationID.x);
+  cluster_2 = clusters[tmpvar_4];
+  cluster_2.count = uint(0);
+  for (highp uint i_1 = uint(0); i_1 < lightCount_3; i_1++) {
+    bool tmpvar_5;
+    highp vec3 tmpvar_6;
+    tmpvar_6 = (viewMatrix * pointLight[i_1].position).xyz;
+    highp float tmpvar_7;
+    tmpvar_7 = pointLight[i_1].radius;
+    highp vec3 tmpvar_8;
+    tmpvar_8 = clamp (tmpvar_6, cluster_2.minPoint.xyz, cluster_2.maxPoint.xyz);
+    tmpvar_5 = ((tmpvar_7 * tmpvar_7) >= dot ((tmpvar_8 - tmpvar_6), (tmpvar_8 - tmpvar_6)));
+    if ((tmpvar_5 && (cluster_2.count < 100u))) {
+      cluster_2.lightIndices[cluster_2.count] = i_1;
+      cluster_2.count = (cluster_2.count + 1u);
+    };
+  };
+  clusters[tmpvar_4] = cluster_2;
+}
+
+
+// stats: 19 alu 0 tex 3 flow
+// workgroup size: 128 1 1
+// uniforms: 1 (total size: 0)
+//  #0: viewMatrix (high float) 4x4 [-1]
+// buffer #0: clusterSSBO storage layout std430 binding 1 (size: unknown)
+//  member #0: Cluster[] clusters offset 0 array runtime stride 448
+//  member #1: Cluster [] parent 0 offset 0
+//  member #2: vec4 minPoint parent 1 offset 0
+//  member #3: vec4 maxPoint parent 1 offset 16
+//  member #4: uint count parent 1 offset 32
+//  member #5: uint[100] lightIndices parent 1 offset 36 array 100 stride 4
+//  member #6: uint [] parent 5 offset 36
+// buffer #1: lightSSBO storage layout std430 binding 2 (size: unknown)
+//  member #0: PointLight[] pointLight offset 0 array runtime stride 48 readonly
+//  member #1: PointLight [] parent 0 offset 0 readonly
+//  member #2: vec4 position parent 1 offset 0 readonly
+//  member #3: vec4 color parent 1 offset 16 readonly
+//  member #4: float intensity parent 1 offset 32 readonly
+//  member #5: float radius parent 1 offset 36 readonly

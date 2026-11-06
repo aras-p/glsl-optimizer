@@ -1,0 +1,83 @@
+#version 320 es
+// Adapted from https://github.com/godotengine/godot/blob/b47a795aa/servers/rendering/renderer_rd/shaders/cluster_render.glsl
+// License of original file: MIT, Copyright (c) 2014-present Godot Engine contributors;
+// Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur
+// Changes done: selected the direct atomic path and USE_ATTACHMENT; selected GLSL ES 320,
+// removed descriptor sets, added default precision, and clamped depth before converting to uint.
+precision highp float;
+precision highp int;
+
+layout(location = 0) in float depth_interp;
+layout(location = 1) flat in uint element_index;
+
+layout(binding = 1, std140) uniform State {
+	mat4 projection;
+	float inv_z_far;
+	uint screen_to_clusters_shift; // shift to obtain coordinates in block indices
+	uint cluster_screen_width; //
+	uint cluster_data_size; // how much data for a single cluster takes
+	uint cluster_depth_offset;
+	uint pad0;
+	uint pad1;
+	uint pad2;
+}
+state;
+
+//cluster data is layout linearly, each cell contains the follow information:
+// - list of bits for every element to mark as used, so (max_elem_count/32)*4 uints
+// - a uint for each element to mark the depth bits used when rendering (0-31)
+
+layout(binding = 3, std430) restrict buffer ClusterRender {
+	uint data[];
+}
+cluster_render;
+
+layout(location = 0) out vec4 frag_color;
+
+
+void main() {
+	//convert from screen to cluster
+	uvec2 cluster = uvec2(gl_FragCoord.xy) >> state.screen_to_clusters_shift;
+
+	//get linear cluster offset from screen poss
+	uint cluster_offset = cluster.x + state.cluster_screen_width * cluster.y;
+	//multiply by data size to position at the beginning of the element list for this cluster
+	cluster_offset *= state.cluster_data_size;
+
+	//find the current element in the list and plot the bit to mark it as used
+	uint usage_write_offset = cluster_offset + (element_index >> 5);
+	uint usage_write_bit = 1u << (element_index & 0x1Fu);
+
+	//find the current element in the depth usage list and mark the current depth as used
+	float unit_depth = depth_interp * state.inv_z_far;
+
+	uint z_bit = uint(clamp(floor(unit_depth * 32.0), 0.0, 31.0));
+
+	uint z_write_offset = cluster_offset + state.cluster_depth_offset + element_index;
+	uint z_write_bit = 1u << z_bit;
+
+	atomicOr(cluster_render.data[usage_write_offset], usage_write_bit);
+	uint aux = atomicOr(cluster_render.data[z_write_offset], z_write_bit);
+
+	frag_color = vec4(float(aux));
+}
+
+/*
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/

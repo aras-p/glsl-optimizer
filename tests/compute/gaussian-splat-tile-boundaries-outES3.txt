@@ -1,0 +1,67 @@
+#version 310 es
+layout(local_size_x=256) in;
+layout(std430, column_major, binding=2) buffer BoundsBuffer {
+  writeonly restrict highp uvec2 bounds_buffer[];
+};
+layout(std430, column_major, binding=1) buffer SortBuffer {
+  readonly restrict highp uint sort_buffer[];
+};
+layout(std430, column_major, binding=0) buffer Histograms {
+  readonly restrict highp uint sort_buffer_size;
+  readonly restrict highp uint histogram[];
+};
+shared highp uint tile_ids[257];
+void main ()
+{
+  highp uint tmpvar_1;
+  tmpvar_1 = gl_GlobalInvocationID.x;
+  highp uint tmpvar_2;
+  tmpvar_2 = sort_buffer_size;
+  if ((gl_GlobalInvocationID.x < tmpvar_2)) {
+    if (((gl_LocalInvocationIndex == uint(0)) && (gl_GlobalInvocationID.x != uint(0)))) {
+      tile_ids[0] = (sort_buffer[(gl_GlobalInvocationID.x + 4294967295u)] >> 16);
+    };
+    tile_ids[(gl_LocalInvocationIndex + 1u)] = (sort_buffer[gl_GlobalInvocationID.x] >> 16);
+  };
+  barrier();
+  if ((gl_GlobalInvocationID.x >= tmpvar_2)) {
+    return;
+  };
+  highp uint tmpvar_3;
+  tmpvar_3 = tile_ids[(gl_LocalInvocationIndex + 1u)];
+  highp uint tmpvar_4;
+  tmpvar_4 = uint(bounds_buffer.length());
+  if ((gl_GlobalInvocationID.x == uint(0))) {
+    if ((tmpvar_3 < tmpvar_4)) {
+      bounds_buffer[tmpvar_3].x = uint(0);
+    };
+  } else {
+    highp uint tmpvar_5;
+    tmpvar_5 = tile_ids[gl_LocalInvocationIndex];
+    if ((tmpvar_5 != tmpvar_3)) {
+      if ((tmpvar_5 < tmpvar_4)) {
+        bounds_buffer[tmpvar_5].y = tmpvar_1;
+      };
+      if ((tmpvar_3 < tmpvar_4)) {
+        bounds_buffer[tmpvar_3].x = tmpvar_1;
+      };
+    };
+  };
+  if ((((gl_GlobalInvocationID.x + 1u) == tmpvar_2) && (tmpvar_3 < tmpvar_4))) {
+    bounds_buffer[tmpvar_3].y = tmpvar_2;
+  };
+}
+
+
+// stats: 22 alu 0 tex 10 flow
+// workgroup size: 256 1 1
+// buffer #0: BoundsBuffer storage layout std430 binding 2 (size: unknown)
+//  member #0: uvec2[] bounds_buffer offset 0 array runtime stride 8 writeonly
+//  member #1: uvec2 [] parent 0 offset 0 writeonly
+// buffer #1: Histograms storage layout std430 binding 0 (size: unknown)
+//  member #0: uint sort_buffer_size offset 0 readonly
+//  member #1: uint[] histogram offset 4 array runtime stride 4 readonly (unused)
+//  member #2: uint [] parent 1 offset 4 readonly (unused)
+// buffer #2: SortBuffer storage layout std430 binding 1 (size: unknown)
+//  member #0: uint[] sort_buffer offset 0 array runtime stride 4 readonly
+//  member #1: uint [] parent 0 offset 0 readonly

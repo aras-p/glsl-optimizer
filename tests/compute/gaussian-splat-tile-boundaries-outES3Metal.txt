@@ -1,0 +1,71 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct alignas(8) _xlat_buf_storage0_element { uint2 value; };
+static_assert(sizeof(_xlat_buf_storage0_element) == 8, "array stride");
+struct alignas(4) _xlat_buf_storage1_element { uint value; };
+static_assert(sizeof(_xlat_buf_storage1_element) == 4, "array stride");
+struct xlatMtlShaderUniform {
+};
+// threadsPerThreadgroup: 256, 1, 1
+kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , device uchar* _mtl_buffer1 [[buffer(1)]]
+  , const device uchar* _mtl_buffer2 [[buffer(2)]]
+  , const device uchar* _mtl_buffer3 [[buffer(3)]]
+  , constant uint* _mtl_buffer_sizes [[buffer(4)]]
+  , uint gl_LocalInvocationIndex [[thread_index_in_threadgroup]]
+  , uint3 gl_GlobalInvocationID [[thread_position_in_grid]])
+{
+threadgroup uint tile_ids_1[257];
+  uint tmpvar_2;
+  tmpvar_2 = gl_GlobalInvocationID.x;
+  uint tmpvar_3;
+  tmpvar_3 = uint((*reinterpret_cast<const device uint*>(_mtl_buffer2 + 0)));
+  if ((gl_GlobalInvocationID.x < tmpvar_3)) {
+    if (((gl_LocalInvocationIndex == 0) && (gl_GlobalInvocationID.x != 0))) {
+      tile_ids_1[0] = (uint(reinterpret_cast<const device _xlat_buf_storage1_element*>(_mtl_buffer3 + 0)[(gl_GlobalInvocationID.x + 4294967295)].value) >> 16);
+    };
+    tile_ids_1[(gl_LocalInvocationIndex + 1)] = (uint(reinterpret_cast<const device _xlat_buf_storage1_element*>(_mtl_buffer3 + 0)[gl_GlobalInvocationID.x].value) >> 16);
+  };
+  threadgroup_barrier(mem_flags::mem_threadgroup);
+  if ((gl_GlobalInvocationID.x >= tmpvar_3)) {
+    return;
+  };
+  uint tmpvar_4;
+  tmpvar_4 = tile_ids_1[(gl_LocalInvocationIndex + 1)];
+  uint tmpvar_5;
+  tmpvar_5 = uint(int((max(_mtl_buffer_sizes[1u], 0u) - 0u) / 8u));
+  if ((gl_GlobalInvocationID.x == 0)) {
+    if ((tmpvar_4 < tmpvar_5)) {
+      reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[tmpvar_4].value.x = uint(0);
+    };
+  } else {
+    uint tmpvar_6;
+    tmpvar_6 = tile_ids_1[gl_LocalInvocationIndex];
+    if ((tmpvar_6 != tmpvar_4)) {
+      if ((tmpvar_6 < tmpvar_5)) {
+        reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[tmpvar_6].value.y = uint(tmpvar_2);
+      };
+      if ((tmpvar_4 < tmpvar_5)) {
+        reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[tmpvar_4].value.x = uint(tmpvar_2);
+      };
+    };
+  };
+  if ((((gl_GlobalInvocationID.x + 1) == tmpvar_3) && (tmpvar_4 < tmpvar_5))) {
+    reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[tmpvar_4].value.y = uint(tmpvar_3);
+  };
+}
+
+
+// stats: 22 alu 0 tex 10 flow
+// workgroup size: 256 1 1
+// buffer #0: BoundsBuffer storage layout std430 binding 2 (size: unknown) metal 1 metal-size-buffer 4
+//  member #0: uvec2[] bounds_buffer offset 0 array runtime stride 8 writeonly
+//  member #1: uvec2 [] parent 0 offset 0 writeonly
+// buffer #1: Histograms storage layout std430 binding 0 (size: unknown) metal 2
+//  member #0: uint sort_buffer_size offset 0 readonly
+//  member #1: uint[] histogram offset 4 array runtime stride 4 readonly (unused)
+//  member #2: uint [] parent 1 offset 4 readonly (unused)
+// buffer #2: SortBuffer storage layout std430 binding 1 (size: unknown) metal 3
+//  member #0: uint[] sort_buffer offset 0 array runtime stride 4 readonly
+//  member #1: uint [] parent 0 offset 0 readonly

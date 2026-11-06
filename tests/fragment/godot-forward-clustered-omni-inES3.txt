@@ -1,0 +1,178 @@
+#version 320 es
+// Adapted from https://github.com/godotengine/godot/blob/b47a795aa/servers/rendering/renderer_rd/shaders/forward_clustered/scene_forward_clustered.glsl
+// License of original file: MIT, Copyright (c) 2014-present Godot Engine contributors;
+// Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur
+// Included source: https://github.com/godotengine/godot/blob/b47a795aa/servers/rendering/renderer_rd/shaders/light_data_inc.glsl
+// Included source: https://github.com/godotengine/godot/blob/b47a795aa/servers/rendering/renderer_rd/shaders/scene_forward_lights_inc.glsl
+// Changes done: extracted unshadowed omni lighting (Lambert and Schlick GGX),
+// traversed the cluster mask per fragment, and supplied a minimal textured material
+// and scene interface. Used full-precision types and GLSL ES 320.
+precision highp float;
+precision highp int;
+
+layout(location = 0) in vec3 view_position;
+layout(location = 1) in vec3 normal_interp;
+layout(location = 2) in vec2 uv;
+layout(location = 0) out vec4 color;
+
+layout(std140, binding = 0) uniform Scene {
+    float z_far;
+    uint cluster_shift;
+    uint cluster_width;
+    uint max_cluster_element_count_div_32;
+    uint layer_mask;
+    float roughness;
+    float metallic;
+    float specular;
+} scene;
+
+layout(binding = 0) uniform sampler2D albedo_texture;
+
+struct LightData { //this structure needs to be as packed as possible
+	vec3 position;
+	float inv_radius;
+
+	vec3 direction;
+	float size;
+
+	vec3 color;
+	float attenuation;
+
+	mediump vec3 area_width;
+	float cone_attenuation; // area lights: 1 / (range + diagonal/2)
+
+	mediump vec3 area_height;
+	float cone_angle; // area lights: max mipmaps
+
+	float specular_amount;
+	float shadow_opacity;
+	float pad[2];
+
+	vec4 atlas_rect; // rect in the shadow atlas
+	mat4 shadow_matrix;
+	float shadow_bias;
+	float shadow_normal_bias;
+	float transmittance_bias;
+	float soft_shadow_size; // for spot, it's the size in uv coordinates of the light, for omni it's the span angle
+	float soft_shadow_scale; // scales the shadow kernel for blurrier shadows
+	uint mask;
+	float volumetric_fog_energy;
+	uint bake_mode;
+	vec4 projector_rect; //projector rect in srgb decal atlas
+};
+
+layout(std430, binding = 3) restrict readonly buffer OmniLights {
+    LightData data[];
+} omni_lights;
+
+layout(std430, binding = 9) restrict readonly buffer ClusterBuffer {
+    uint data[];
+} cluster_buffer;
+
+void cluster_get_item_range(uint p_offset, out uint item_min, out uint item_max, out uint item_from, out uint item_to) {
+	uint item_min_max = cluster_buffer.data[p_offset];
+	item_min = item_min_max & 0xFFFFu;
+	item_max = item_min_max >> 16;
+
+	item_from = item_min >> 5;
+	item_to = (item_max == 0u) ? 0u : ((item_max - 1u) >> 5) + 1u; //side effect of how it is stored, as item_max 0 means no elements
+}
+
+uint cluster_get_range_clip_mask(uint i, uint z_min, uint z_max) {
+	int local_min = clamp(int(z_min) - int(i) * 32, 0, 31);
+	int mask_width = min(int(z_max) - int(z_min), 32 - local_min);
+	return bitfieldInsert(0u, 0xFFFFFFFFu, local_min, mask_width);
+}
+
+float get_omni_attenuation(float distance, float inv_range, float decay) {
+	float nd = distance * inv_range;
+	nd *= nd;
+	nd *= nd; // nd^4
+	nd = max(1.0 - nd, 0.0);
+	nd *= nd; // nd^2
+	return float(nd * pow(max(distance, 0.0001), -decay));
+}
+
+const float INV_PI = 0.3183098861837907;
+
+vec3 light_process_omni(uint index, vec3 N, vec3 V, vec3 albedo, vec3 f0) {
+    vec3 light_rel_vec = omni_lights.data[index].position - view_position;
+    float light_length = length(light_rel_vec);
+    float attenuation = get_omni_attenuation(light_length,
+        omni_lights.data[index].inv_radius, omni_lights.data[index].attenuation);
+    if (attenuation <= 0.00006103515625) {
+        return vec3(0.0);
+    }
+
+    vec3 L = normalize(light_rel_vec);
+    float cNdotL = max(dot(N, L), 0.0);
+    float cNdotV = max(dot(N, V), 1e-4);
+    vec3 diffuse = (1.0 - scene.metallic) * albedo * (cNdotL * INV_PI);
+    vec3 specular = vec3(0.0);
+    if (scene.roughness > 0.0) {
+        vec3 H = normalize(V + L);
+        float cNdotH = clamp(dot(N, H), 0.0, 1.0);
+        float cLdotH = clamp(dot(L, H), 0.0, 1.0);
+        float alpha_ggx = scene.roughness * scene.roughness;
+        float a = cNdotH * alpha_ggx;
+        float k = alpha_ggx / (1.0 - cNdotH * cNdotH + a * a);
+        float D = min(k * k * INV_PI, 65504.0);
+        float G = min(0.5 / mix(2.0 * cNdotL * cNdotV, cNdotL + cNdotV, alpha_ggx), 65504.0);
+        float m = 1.0 - cLdotH;
+        float m2 = m * m;
+        float f90 = clamp(dot(f0, vec3(50.0 * 0.33)), scene.metallic, 1.0);
+        vec3 F = f0 + (f90 - f0) * (m2 * m2 * m);
+        specular = cNdotL * D * F * G * omni_lights.data[index].specular_amount;
+    }
+    return (diffuse + specular) * omni_lights.data[index].color * attenuation;
+}
+
+void main() {
+    vec4 base_color = texture(albedo_texture, uv);
+    vec3 N = normalize(normal_interp);
+    vec3 V = normalize(-view_position);
+    vec3 f0 = mix(vec3(0.16 * scene.specular * scene.specular), base_color.rgb, scene.metallic);
+    vec3 lighting = vec3(0.0);
+
+    uvec2 cluster_pos = uvec2(gl_FragCoord.xy) >> scene.cluster_shift;
+    uint cluster_offset = (scene.cluster_width * cluster_pos.y + cluster_pos.x) *
+        (scene.max_cluster_element_count_div_32 + 32u);
+    uint cluster_z = uint(clamp((-view_position.z / scene.z_far) * 32.0, 0.0, 31.0));
+
+    uint item_min, item_max, item_from, item_to;
+    cluster_get_item_range(cluster_offset + scene.max_cluster_element_count_div_32 + cluster_z,
+        item_min, item_max, item_from, item_to);
+    for (uint i = item_from; i < item_to; i++) {
+        uint mask = cluster_buffer.data[cluster_offset + i];
+        mask &= cluster_get_range_clip_mask(i, item_min, item_max);
+        while (mask != 0u) {
+            uint bit = uint(findMSB(mask));
+            mask &= ~(1u << bit);
+            uint light_index = 32u * i + bit;
+            if ((omni_lights.data[light_index].mask & scene.layer_mask) != 0u) {
+                lighting += light_process_omni(light_index, N, V, base_color.rgb, f0);
+            }
+        }
+    }
+    color = vec4(lighting, base_color.a);
+}
+
+/*
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/

@@ -1,0 +1,58 @@
+#version 320 es
+layout(std430, column_major, binding=3) buffer ClusterRender {
+  restrict highp uint data[];
+} cluster_render;
+layout(std140, column_major, binding=1) uniform State {
+  layout(column_major) highp mat4 projection;
+  highp float inv_z_far;
+  highp uint screen_to_clusters_shift;
+  highp uint cluster_screen_width;
+  highp uint cluster_data_size;
+  highp uint cluster_depth_offset;
+  highp uint pad0;
+  highp uint pad1;
+  highp uint pad2;
+} state;
+layout(location=0) in highp float depth_interp;
+layout(location=1) flat in highp uint element_index;
+layout(location=0) out highp vec4 frag_color;
+void main ()
+{
+  highp uint cluster_offset_1;
+  highp uvec2 tmpvar_2;
+  tmpvar_2 = (uvec2(gl_FragCoord.xy) >> state.screen_to_clusters_shift);
+  cluster_offset_1 = ((tmpvar_2.x + (state.cluster_screen_width * tmpvar_2.y)) * state.cluster_data_size);
+  highp uint tmpvar_3;
+  tmpvar_3 = (cluster_offset_1 + (element_index >> 5));
+  highp uint tmpvar_4;
+  tmpvar_4 = ((cluster_offset_1 + state.cluster_depth_offset) + element_index);
+  highp uint tmpvar_5;
+  tmpvar_5 = (1u << uint(clamp (
+    floor(((depth_interp * state.inv_z_far) * 32.0))
+  , 0.0, 31.0)));
+  highp uint tmpvar_6;
+  tmpvar_6 = atomicOr (cluster_render.data[tmpvar_3], (1u << (element_index & 31u)));
+  highp uint tmpvar_7;
+  tmpvar_7 = atomicOr (cluster_render.data[tmpvar_4], tmpvar_5);
+  frag_color = vec4(float(tmpvar_7));
+}
+
+
+// stats: 19 alu 0 tex 0 flow
+// inputs: 3
+//  #0: gl_FragCoord (high float) 4x1 [-1] loc 0
+//  #1: depth_interp (high float) 1x1 [-1] loc 32
+//  #2: element_index (high int) 1x1 [-1] loc 33
+// buffer #0: ClusterRender storage instance cluster_render layout std430 binding 3 (size: unknown)
+//  member #0: uint[] data offset 0 array runtime stride 4
+//  member #1: uint [] parent 0 offset 0
+// buffer #1: State instance state layout std140 binding 1 (size: 96)
+//  member #0: mat4 projection offset 0 matrix-stride 16 (unused)
+//  member #1: float inv_z_far offset 64
+//  member #2: uint screen_to_clusters_shift offset 68
+//  member #3: uint cluster_screen_width offset 72
+//  member #4: uint cluster_data_size offset 76
+//  member #5: uint cluster_depth_offset offset 80
+//  member #6: uint pad0 offset 84 (unused)
+//  member #7: uint pad1 offset 88 (unused)
+//  member #8: uint pad2 offset 92 (unused)

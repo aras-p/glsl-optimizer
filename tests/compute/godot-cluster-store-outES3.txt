@@ -1,0 +1,131 @@
+#version 320 es
+layout(local_size_x=8, local_size_y=8) in;
+struct RenderElement {
+  highp uint type;
+  bool touches_near;
+  bool touches_far;
+  highp uint original_index;
+  highp mat3x4 transform_inv;
+  highp vec3 scale;
+  highp uint pad;
+};
+layout(std430, column_major, binding=3) buffer RenderElements {
+  layout(column_major) readonly restrict RenderElement data[];
+} render_elements;
+layout(std430, column_major, binding=2) buffer ClusterStore {
+  restrict highp uint data[];
+} cluster_store;
+layout(std430, column_major, binding=1) buffer ClusterRender {
+  readonly restrict highp uint data[];
+} cluster_render;
+layout(std140, column_major, binding=0) uniform Params {
+  highp uint cluster_render_data_size;
+  highp uint max_render_element_count_div_32;
+  highp uvec2 cluster_screen_size;
+  highp uint render_element_count_div_32;
+  highp uint max_cluster_element_count_div_32;
+  highp uint pad1;
+  highp uint pad2;
+} params;
+void main ()
+{
+  if ((greaterThanEqual (gl_GlobalInvocationID.xy, params.cluster_screen_size) != bvec2(0, 0))) {
+    return;
+  };
+  highp uint tmpvar_2;
+  tmpvar_2 = (gl_GlobalInvocationID.x + (params.cluster_screen_size.x * gl_GlobalInvocationID.y));
+  highp uint tmpvar_3;
+  tmpvar_3 = (tmpvar_2 * params.cluster_render_data_size);
+  for (highp uint render_element_offset_1 = uint(0); render_element_offset_1 < params.render_element_count_div_32; render_element_offset_1++) {
+    highp uint bits_4;
+    bits_4 = cluster_render.data[(tmpvar_3 + render_element_offset_1)];
+    while (true) {
+      if ((bits_4 == uint(0))) {
+        break;
+      };
+      highp uint tmpvar_5;
+      tmpvar_5 = uint(findLSB(bits_4));
+      highp uint tmpvar_6;
+      tmpvar_6 = ((render_element_offset_1 * 32u) + tmpvar_5);
+      highp uint tmpvar_7;
+      tmpvar_7 = render_elements.data[tmpvar_6].type;
+      highp uint tmpvar_8;
+      tmpvar_8 = ((tmpvar_3 + params.max_render_element_count_div_32) + tmpvar_6);
+      highp uint tmpvar_9;
+      tmpvar_9 = cluster_render.data[tmpvar_8];
+      if ((tmpvar_9 != uint(0))) {
+        highp uint i_10;
+        highp uint to_z_11;
+        highp uint from_z_12;
+        from_z_12 = uint(findLSB(tmpvar_9));
+        to_z_11 = (uint(findMSB(tmpvar_9)) + 1u);
+        if (render_elements.data[tmpvar_6].touches_near) {
+          from_z_12 = uint(0);
+        };
+        if (render_elements.data[tmpvar_6].touches_far) {
+          to_z_11 = 32u;
+        };
+        highp uint tmpvar_13;
+        tmpvar_13 = ((tmpvar_2 + (tmpvar_7 * 
+          (params.cluster_screen_size.x * params.cluster_screen_size.y)
+        )) * (params.max_cluster_element_count_div_32 + 32u));
+        highp uint tmpvar_14;
+        tmpvar_14 = render_elements.data[tmpvar_6].original_index;
+        i_10 = from_z_12;
+        while (true) {
+          highp uint minmax_15;
+          if ((i_10 >= to_z_11)) {
+            break;
+          };
+          highp uint tmpvar_16;
+          tmpvar_16 = ((tmpvar_13 + params.max_cluster_element_count_div_32) + i_10);
+          highp uint tmpvar_17;
+          tmpvar_17 = cluster_store.data[tmpvar_16];
+          minmax_15 = tmpvar_17;
+          if ((tmpvar_17 == uint(0))) {
+            minmax_15 = 65535u;
+          };
+          minmax_15 = (min (tmpvar_14, (minmax_15 & 65535u)) | (max (
+            (tmpvar_14 + 1u)
+          , 
+            (minmax_15 >> 16)
+          ) << 16));
+          cluster_store.data[tmpvar_16] = minmax_15;
+          i_10++;
+        };
+        highp uint tmpvar_18;
+        tmpvar_18 = (tmpvar_14 >> 5);
+        cluster_store.data[(tmpvar_13 + tmpvar_18)] = (cluster_store.data[(tmpvar_13 + tmpvar_18)] | (1u << (tmpvar_14 & 31u)));
+      };
+      bits_4 = (bits_4 & ~((1u << tmpvar_5)));
+    };
+  };
+}
+
+
+// stats: 51 alu 0 tex 12 flow
+// workgroup size: 8 8 1
+// buffer #0: ClusterRender storage instance cluster_render layout std430 binding 1 (size: unknown)
+//  member #0: uint[] data offset 0 array runtime stride 4 readonly
+//  member #1: uint [] parent 0 offset 0 readonly
+// buffer #1: ClusterStore storage instance cluster_store layout std430 binding 2 (size: unknown)
+//  member #0: uint[] data offset 0 array runtime stride 4
+//  member #1: uint [] parent 0 offset 0
+// buffer #2: Params instance params layout std140 binding 0 (size: 32)
+//  member #0: uint cluster_render_data_size offset 0
+//  member #1: uint max_render_element_count_div_32 offset 4
+//  member #2: uvec2 cluster_screen_size offset 8
+//  member #3: uint render_element_count_div_32 offset 16
+//  member #4: uint max_cluster_element_count_div_32 offset 20
+//  member #5: uint pad1 offset 24 (unused)
+//  member #6: uint pad2 offset 28 (unused)
+// buffer #3: RenderElements storage instance render_elements layout std430 binding 3 (size: unknown)
+//  member #0: RenderElement[] data offset 0 array runtime stride 80 readonly
+//  member #1: RenderElement [] parent 0 offset 0 readonly
+//  member #2: uint type parent 1 offset 0 readonly
+//  member #3: bool touches_near parent 1 offset 4 readonly
+//  member #4: bool touches_far parent 1 offset 8 readonly
+//  member #5: uint original_index parent 1 offset 12 readonly
+//  member #6: mat3x4 transform_inv parent 1 offset 16 matrix-stride 16 readonly (unused)
+//  member #7: vec3 scale parent 1 offset 64 readonly (unused)
+//  member #8: uint pad parent 1 offset 76 readonly (unused)

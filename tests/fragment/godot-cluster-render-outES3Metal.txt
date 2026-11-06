@@ -1,0 +1,72 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct alignas(4) _xlat_buf_storage0_element { uint value; };
+static_assert(sizeof(_xlat_buf_storage0_element) == 4, "array stride");
+static_assert(sizeof(float4x4) == 64, "buffer size");
+struct alignas(16) _xlat_buf_storage1 {
+  alignas(16) float4x4 projection;
+  alignas(4) float inv_z_far;
+  alignas(4) uint screen_to_clusters_shift;
+  alignas(4) uint cluster_screen_width;
+  alignas(4) uint cluster_data_size;
+  alignas(4) uint cluster_depth_offset;
+  alignas(4) uint pad0;
+  alignas(4) uint pad1;
+  alignas(4) uint pad2;
+};
+static_assert(sizeof(_xlat_buf_storage1) == 96, "std140 size");
+struct xlatMtlShaderInput {
+  float4 gl_FragCoord [[position]];
+  float depth_interp [[user(locn0)]];
+  uint element_index [[user(locn1)]] [[flat]];
+};
+struct xlatMtlShaderOutput {
+  float4 frag_color [[color(0)]];
+};
+struct xlatMtlShaderUniform {
+};
+fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , device uchar* _mtl_buffer1 [[buffer(1)]]
+  , constant _xlat_buf_storage1& _mtl_buffer2 [[buffer(2)]])
+{
+  xlatMtlShaderOutput _mtl_o;
+  uint cluster_offset_1;
+  uint2 tmpvar_2;
+  tmpvar_2 = (uint2(_mtl_i.gl_FragCoord.xy) >> uint(_mtl_buffer2.screen_to_clusters_shift));
+  cluster_offset_1 = ((tmpvar_2.x + (uint(_mtl_buffer2.cluster_screen_width) * tmpvar_2.y)) * uint(_mtl_buffer2.cluster_data_size));
+  uint tmpvar_3;
+  tmpvar_3 = (cluster_offset_1 + (_mtl_i.element_index >> 5));
+  uint tmpvar_4;
+  tmpvar_4 = ((cluster_offset_1 + uint(_mtl_buffer2.cluster_depth_offset)) + _mtl_i.element_index);
+  uint tmpvar_5;
+  tmpvar_5 = (1 << uint(min (
+    max (floor(((_mtl_i.depth_interp * float(_mtl_buffer2.inv_z_far)) * 32.0)), 0.0)
+  , 31.0)));
+  uint tmpvar_6;
+  tmpvar_6 = atomic_fetch_or_explicit (reinterpret_cast<device atomic_uint*>(&reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[tmpvar_3].value), uint((1 << (_mtl_i.element_index & 31))), memory_order_relaxed);
+  uint tmpvar_7;
+  tmpvar_7 = atomic_fetch_or_explicit (reinterpret_cast<device atomic_uint*>(&reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[tmpvar_4].value), uint(tmpvar_5), memory_order_relaxed);
+  _mtl_o.frag_color = float4(float(tmpvar_7));
+  return _mtl_o;
+}
+
+
+// stats: 19 alu 0 tex 0 flow
+// inputs: 3
+//  #0: gl_FragCoord (high float) 4x1 [-1] loc 0
+//  #1: depth_interp (high float) 1x1 [-1] loc 32
+//  #2: element_index (high int) 1x1 [-1] loc 33
+// buffer #0: ClusterRender storage instance cluster_render layout std430 binding 3 (size: unknown) metal 1
+//  member #0: uint[] data offset 0 array runtime stride 4
+//  member #1: uint [] parent 0 offset 0
+// buffer #1: State instance state layout std140 binding 1 (size: 96) metal 2
+//  member #0: mat4 projection offset 0 matrix-stride 16 (unused)
+//  member #1: float inv_z_far offset 64
+//  member #2: uint screen_to_clusters_shift offset 68
+//  member #3: uint cluster_screen_width offset 72
+//  member #4: uint cluster_data_size offset 76
+//  member #5: uint cluster_depth_offset offset 80
+//  member #6: uint pad0 offset 84 (unused)
+//  member #7: uint pad1 offset 88 (unused)
+//  member #8: uint pad2 offset 92 (unused)

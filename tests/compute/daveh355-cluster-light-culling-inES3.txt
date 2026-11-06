@@ -1,0 +1,103 @@
+#version 310 es
+// Adapted from https://github.com/DaveH355/clustered-shading/blob/3589aefe/README.md#step-2-assigning-lights-to-clusters-culling
+// License of original file: MIT, Copyright (c) 2024 DaveH355
+// Changes done: selected GLSL ES 310, added default precision, and used explicit unsigned types,
+// and marked the light buffer readonly.
+precision highp float;
+precision highp int;
+
+#define LOCAL_SIZE 128u
+layout(local_size_x = LOCAL_SIZE, local_size_y = 1, local_size_z = 1) in;
+
+struct PointLight
+{
+    vec4 position;
+    vec4 color;
+    float intensity;
+    float radius;
+};
+
+struct Cluster
+{
+    vec4 minPoint;
+    vec4 maxPoint;
+    uint count;
+    uint lightIndices[100];
+};
+
+layout(std430, binding = 1) restrict buffer clusterSSBO
+{
+    Cluster clusters[];
+};
+
+layout(std430, binding = 2) restrict readonly buffer lightSSBO
+{
+    PointLight pointLight[];
+};
+
+uniform mat4 viewMatrix;
+
+bool testSphereAABB(uint i, Cluster c);
+
+// each invocation of main() is a thread processing a cluster
+void main()
+{
+    uint lightCount = uint(pointLight.length());
+    uint index = gl_WorkGroupID.x * LOCAL_SIZE + gl_LocalInvocationID.x;
+    Cluster cluster = clusters[index];
+
+    // we need to reset count because culling runs every frame.
+    // otherwise it would accumulate.
+    cluster.count = 0u;
+
+    for (uint i = 0u; i < lightCount; ++i)
+    {
+        if (testSphereAABB(i, cluster) && cluster.count < 100u)
+        {
+            cluster.lightIndices[cluster.count] = i;
+            cluster.count++;
+        }
+    }
+    clusters[index] = cluster;
+}
+
+bool sphereAABBIntersection(vec3 center, float radius, vec3 aabbMin, vec3 aabbMax)
+{
+    // closest point on the AABB to the sphere center
+    vec3 closestPoint = clamp(center, aabbMin, aabbMax);
+    // squared distance between the sphere center and closest point
+    float distanceSquared = dot(closestPoint - center, closestPoint - center);
+    return distanceSquared <= radius * radius;
+}
+
+// this just unpacks data for sphereAABBIntersection
+bool testSphereAABB(uint i, Cluster cluster)
+{
+    vec3 center = vec3(viewMatrix * pointLight[i].position);
+    float radius = pointLight[i].radius;
+
+    vec3 aabbMin = cluster.minPoint.xyz;
+    vec3 aabbMax = cluster.maxPoint.xyz;
+
+    return sphereAABBIntersection(center, radius, aabbMin, aabbMax);
+}
+
+/*
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/

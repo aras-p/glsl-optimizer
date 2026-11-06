@@ -1,0 +1,83 @@
+#version 320 es
+// Adapted from https://github.com/godotengine/godot/blob/b47a795aa/servers/rendering/renderer_rd/shaders/cluster_render.glsl
+// License of original file: MIT, Copyright (c) 2014-present Godot Engine contributors;
+// Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur
+// Changes done: selected GLSL ES 320, removed engine markers and descriptor sets,
+// replaced push constants with a std140 UBO, added default precision, and used gl_InstanceID.
+precision highp float;
+precision highp int;
+
+layout(location = 0) in vec3 vertex_attrib;
+
+layout(location = 0) out float depth_interp;
+layout(location = 1) flat out uint element_index;
+
+layout(std140, binding = 0) uniform Params {
+	uint base_index;
+	uint pad0;
+	uint pad1;
+	uint pad2;
+}
+params;
+
+layout(binding = 1, std140) uniform State {
+	mat4 projection;
+
+	float inv_z_far;
+	uint screen_to_clusters_shift; // shift to obtain coordinates in block indices
+	uint cluster_screen_width; //
+	uint cluster_data_size; // how much data for a single cluster takes
+
+	uint cluster_depth_offset;
+	uint pad0;
+	uint pad1;
+	uint pad2;
+}
+state;
+
+struct RenderElement {
+	uint type; //0-4
+	bool touches_near;
+	bool touches_far;
+	uint original_index;
+	mat3x4 transform_inv;
+	vec3 scale;
+	uint pad;
+};
+
+layout(binding = 2, std430) restrict readonly buffer RenderElements {
+	RenderElement data[];
+}
+render_elements;
+
+void main() {
+	element_index = params.base_index + uint(gl_InstanceID);
+
+	vec3 vertex = vertex_attrib;
+	vertex *= render_elements.data[element_index].scale;
+
+	vertex = vec4(vertex, 1.0) * render_elements.data[element_index].transform_inv;
+	depth_interp = -vertex.z;
+
+	gl_Position = state.projection * vec4(vertex, 1.0);
+}
+
+/*
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/

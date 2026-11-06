@@ -1,0 +1,134 @@
+#version 310 es
+// Adapted from https://github.com/2Retr0/GodotGaussianSplatting/blob/181ef739/resources/shaders/compute/gsplat_render.glsl
+// License of original file: MIT, Copyright (c) 2024 Ethan Truong
+// Changes done: selected GLSL ES 310, removed descriptor sets and cursor picking,
+// replaced push constants with a std140 UBO, and added default precision.
+// Used one lane to initialize and reset shared transmittance, and guarded partial
+// batches and edge pixels while keeping workgroup barriers uniform. Used a conditional
+// for the batch limit to keep Metal overload resolution unambiguous.
+precision highp float;
+precision highp int;
+
+#define MIN_FACTOR 255u
+#define MIN_ALPHA (1.0 / float(MIN_FACTOR))
+#define TILE_SIZE 16u
+#define WORKGROUP_SIZE (TILE_SIZE * TILE_SIZE)
+
+layout(local_size_x = TILE_SIZE, local_size_y = TILE_SIZE) in;
+
+struct RasterizeData {
+    vec2 image_pos;
+    vec2 pos_xy;
+    vec3 conic;
+    float pos_z;
+    vec4 color;
+};
+
+layout(std430, binding = 0) restrict readonly buffer CulledBuffer {
+    RasterizeData culled_buffer[];
+};
+
+layout(std430, binding = 1) restrict readonly buffer SortBuffer {
+    uint sort_buffer[];
+};
+
+layout(std430, binding = 2) restrict readonly buffer BoundsBuffer {
+    uvec2 bounds_buffer[];
+};
+
+layout(rgba32f, binding = 4) uniform restrict writeonly highp image2D rasterized_image;
+
+layout(std140, binding = 3) uniform Params {
+    float heatmap_factor;
+};
+
+shared vec3 conic_tile[WORKGROUP_SIZE];
+shared vec4 color_tile[WORKGROUP_SIZE];
+shared vec2 image_pos_tile[WORKGROUP_SIZE];
+shared uint shared_t;
+
+void main()
+{
+    uvec2 dims = uvec2(imageSize(rasterized_image));
+    uvec2 grid_size = (dims + TILE_SIZE - 1u) / TILE_SIZE;
+    uvec2 block = gl_WorkGroupID.xy;
+    if (any(greaterThanEqual(block, grid_size)))
+        return;
+
+    uint lane = gl_LocalInvocationIndex;
+    uint tile_id = block.y * grid_size.x + block.x;
+    uvec2 pixel = block * TILE_SIZE + gl_LocalInvocationID.xy;
+    bool pixel_in_bounds = all(lessThan(pixel, dims));
+
+    uvec2 bounds = bounds_buffer[tile_id];
+    uint num_splats = bounds.y - bounds.x;
+    uint num_iterations = (num_splats + WORKGROUP_SIZE - 1u) / WORKGROUP_SIZE;
+
+    if (lane == 0u)
+        shared_t = ~0u;
+    barrier();
+
+    vec3 blended_color = vec3(0.0);
+    float t = 1.0;
+    for (uint i = 0u; i < num_iterations && shared_t > MIN_FACTOR; ++i) {
+        uint sort_offset = WORKGROUP_SIZE * i;
+        uint remaining = num_splats - sort_offset;
+        uint chunk_size = remaining < WORKGROUP_SIZE ? remaining : WORKGROUP_SIZE;
+
+        // All lanes must read the previous reduction before it is reset.
+        barrier();
+        if (lane < chunk_size) {
+            RasterizeData data = culled_buffer[sort_buffer[bounds.x + sort_offset + lane]];
+            conic_tile[lane] = data.conic;
+            color_tile[lane] = data.color;
+            image_pos_tile[lane] = data.image_pos;
+        }
+        if (lane == 0u)
+            shared_t = 0u;
+        barrier();
+
+        if (pixel_in_bounds) {
+            for (uint j = 0u; j < chunk_size && t > MIN_ALPHA; ++j) {
+                vec3 conic = conic_tile[j];
+                vec4 color = color_tile[j];
+                vec2 offset = image_pos_tile[j] - vec2(pixel);
+
+                float power = -0.5 * (conic.x * offset.x * offset.x + conic.z * offset.y * offset.y)
+                    - conic.y * offset.x * offset.y;
+                float alpha = color.a * exp(power);
+
+                blended_color += color.rgb * alpha * t;
+                t *= 1.0 - alpha;
+            }
+            // Reduce remaining transmittance to decide whether to fetch another batch.
+            atomicAdd(shared_t, uint(t * float(MIN_FACTOR)));
+        }
+        barrier();
+    }
+
+    if (pixel_in_bounds) {
+        vec3 heatmap_color = mix(vec3(0, 0, 1), vec3(1, 0.2, 0.2), float(num_splats) * 5e-4)
+            * (1.0 - t) * heatmap_factor;
+        imageStore(rasterized_image, ivec2(pixel), vec4(blended_color + heatmap_color, 1.0));
+    }
+}
+
+/*
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/

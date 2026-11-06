@@ -1,0 +1,120 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct PointLight {
+  float4 position;
+  float4 color;
+  float intensity;
+  float radius;
+};
+struct Cluster {
+  float4 minPoint;
+  float4 maxPoint;
+  uint count;
+  uint lightIndices[100];
+};
+struct alignas(4) _xlat_buf_storage2_element { uint value; };
+struct _xlat_buf_storage2 { _xlat_buf_storage2_element elements[100]; };
+static_assert(sizeof(_xlat_buf_storage2) == 400, "std430 size");
+struct alignas(16) _xlat_buf_storage1 {
+  alignas(16) float4 minPoint;
+  alignas(16) float4 maxPoint;
+  alignas(4) uint count;
+  alignas(4) _xlat_buf_storage2 lightIndices;
+};
+static_assert(sizeof(_xlat_buf_storage1) == 448, "std430 size");
+inline __attribute__((always_inline)) Cluster _xlat_buf_storage1_read(const device _xlat_buf_storage1& storage)
+{
+  Cluster value;
+  value.minPoint = float4(storage.minPoint);
+  value.maxPoint = float4(storage.maxPoint);
+  value.count = uint(storage.count);
+  for (uint _buf_i0 = 0; _buf_i0 < 100; ++_buf_i0) {
+    value.lightIndices[_buf_i0] = uint(storage.lightIndices.elements[_buf_i0].value);
+  }
+  return value;
+}
+struct alignas(16) _xlat_buf_storage0_element { _xlat_buf_storage1 value; };
+static_assert(sizeof(_xlat_buf_storage0_element) == 448, "array stride");
+struct alignas(16) _xlat_buf_storage4 {
+  alignas(16) float4 position;
+  alignas(16) float4 color;
+  alignas(4) float intensity;
+  alignas(4) float radius;
+};
+static_assert(sizeof(_xlat_buf_storage4) == 48, "std430 size");
+inline __attribute__((always_inline)) PointLight _xlat_buf_storage4_read(const device _xlat_buf_storage4& storage)
+{
+  PointLight value;
+  value.position = float4(storage.position);
+  value.color = float4(storage.color);
+  value.intensity = float(storage.intensity);
+  value.radius = float(storage.radius);
+  return value;
+}
+struct alignas(16) _xlat_buf_storage3_element { _xlat_buf_storage4 value; };
+static_assert(sizeof(_xlat_buf_storage3_element) == 48, "array stride");
+struct xlatMtlShaderUniform {
+  float4x4 viewMatrix;
+};
+// threadsPerThreadgroup: 128, 1, 1
+kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , device uchar* _mtl_buffer1 [[buffer(1)]]
+  , const device uchar* _mtl_buffer2 [[buffer(2)]]
+  , constant uint* _mtl_buffer_sizes [[buffer(3)]]
+  , uint3 gl_WorkGroupID [[threadgroup_position_in_grid]]
+  , uint3 gl_LocalInvocationID [[thread_position_in_threadgroup]])
+{
+  Cluster cluster_2;
+  uint lightCount_3;
+  lightCount_3 = uint(int((max(_mtl_buffer_sizes[2u], 0u) - 0u) / 48u));
+  uint tmpvar_4;
+  tmpvar_4 = ((gl_WorkGroupID.x * 128) + gl_LocalInvocationID.x);
+  cluster_2 = _xlat_buf_storage1_read(reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[tmpvar_4].value);
+  cluster_2.count = 0;
+  for (uint i_1 = 0; i_1 < lightCount_3; i_1++) {
+    bool tmpvar_5 = false;
+    float3 tmpvar_6 = 0;
+    tmpvar_6 = (_mtl_u.viewMatrix * float4(reinterpret_cast<const device _xlat_buf_storage3_element*>(_mtl_buffer2 + 0)[i_1].value.position)).xyz;
+    float tmpvar_7 = 0;
+    tmpvar_7 = float(reinterpret_cast<const device _xlat_buf_storage3_element*>(_mtl_buffer2 + 0)[i_1].value.radius);
+    float3 tmpvar_8 = 0;
+    tmpvar_8 = min (max (tmpvar_6, cluster_2.minPoint.xyz), cluster_2.maxPoint.xyz);
+    tmpvar_5 = ((tmpvar_7 * tmpvar_7) >= dot ((tmpvar_8 - tmpvar_6), (tmpvar_8 - tmpvar_6)));
+    if ((tmpvar_5 && (cluster_2.count < 100))) {
+      cluster_2.lightIndices[cluster_2.count] = i_1;
+      cluster_2.count = (cluster_2.count + 1);
+    };
+  };
+  {
+    device _xlat_buf_storage1& _buf_dst = reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[tmpvar_4].value;
+    const thread auto& _buf_src = cluster_2;
+    _buf_dst.minPoint = float4(_buf_src.minPoint);
+    _buf_dst.maxPoint = float4(_buf_src.maxPoint);
+    _buf_dst.count = uint(_buf_src.count);
+    for (uint _buf_i2 = 0; _buf_i2 < 100; ++_buf_i2) {
+      _buf_dst.lightIndices.elements[_buf_i2].value = uint(_buf_src.lightIndices[_buf_i2]);
+    }
+  };
+}
+
+
+// stats: 19 alu 0 tex 3 flow
+// workgroup size: 128 1 1
+// uniforms: 1 (total size: 64)
+//  #0: viewMatrix (high float) 4x4 [-1] loc 0
+// buffer #0: clusterSSBO storage layout std430 binding 1 (size: unknown) metal 1
+//  member #0: Cluster[] clusters offset 0 array runtime stride 448
+//  member #1: Cluster [] parent 0 offset 0
+//  member #2: vec4 minPoint parent 1 offset 0
+//  member #3: vec4 maxPoint parent 1 offset 16
+//  member #4: uint count parent 1 offset 32
+//  member #5: uint[100] lightIndices parent 1 offset 36 array 100 stride 4
+//  member #6: uint [] parent 5 offset 36
+// buffer #1: lightSSBO storage layout std430 binding 2 (size: unknown) metal 2 metal-size-buffer 3
+//  member #0: PointLight[] pointLight offset 0 array runtime stride 48 readonly
+//  member #1: PointLight [] parent 0 offset 0 readonly
+//  member #2: vec4 position parent 1 offset 0 readonly
+//  member #3: vec4 color parent 1 offset 16 readonly
+//  member #4: float intensity parent 1 offset 32 readonly
+//  member #5: float radius parent 1 offset 36 readonly
