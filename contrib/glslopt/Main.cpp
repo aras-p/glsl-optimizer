@@ -10,12 +10,13 @@ static glslopt_ctx* gContext = 0;
 static int printhelp(const char* msg)
 {
 	if (msg) printf("%s\n\n\n", msg);
-	printf("Usage: glslopt <-f|-v|-c> <input shader> [<output shader>]\n");
+	printf("Usage: glslopt [-f|-v|-c] [-1|-3|-m] <input shader> [<output shader>]\n");
 	printf("\t-f : fragment shader (default)\n");
 	printf("\t-v : vertex shader\n");
 	printf("\t-c : compute shader\n");
 	printf("\t-1 : target OpenGL (default)\n");
-	printf("\t-3 : target OpenGL ES 3.0\n");
+	printf("\t-3 : target OpenGL ES\n");
+	printf("\t-m : target Metal\n");
 	printf("\n\tIf no output specified, output is to [input].out.\n");
 	return 1;
 }
@@ -101,7 +102,7 @@ static bool compileShader(const char* dstfilename, const char* srcfilename, glsl
 
 int main(int argc, char* argv[])
 {
-	if( argc < 3 )
+	if( argc < 2 )
 		return printhelp(NULL);
 
 	bool freename = false;
@@ -124,6 +125,8 @@ int main(int argc, char* argv[])
 				languageTarget = kGlslTargetOpenGL;
 			else if( 0 == strcmp("-3", argv[i]) )
 				languageTarget = kGlslTargetOpenGLES30;
+			else if (0 == strcmp("-m", argv[i]))
+				languageTarget = kGlslTargetMetal;
 			else
 				return printhelp("Unknown option");
 		}
