@@ -4,7 +4,8 @@
   "description": "GLSL optimizer",
   "main": "build/Release/glslOptimizer.node",
   "scripts": {
-    "install": "node-gyp rebuild"
+    "install": "cmake-js compile",
+    "test": "node tests/tests.js"
   },
   "repository": {
     "type": "git",
@@ -27,7 +28,6 @@
   "engines": {
     "node": ">= 22"
   },
-  "gypfile": true,
   "bugs": {
     "url": "https://github.com/aras-p/glsl-optimizer/issues"
   },
@@ -36,6 +36,7 @@
     "test": "tests"
   },
   "dependencies": {
+    "cmake-js": "^7.3.0",
     "nan": "^2.30.0"
   }
 }

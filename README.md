@@ -59,8 +59,8 @@ CMake options:
 * `GLSLOPT_TEST_OPENGL=ON` enables optional external OpenGL validation in the test
   runner on Windows/macOS. It is off by default and is not needed for regression tests.
 
-> There's a Node addon contributed; that is built via a separate `node-gyp` build.
-> Its JavaScript smoke test is `node tests/tests.js` after building the addon. I have no
+> There's a Node addon contributed; `npm install` builds it with `cmake-js` from the same
+> CMake project. Its JavaScript smoke test is `npm test` after building the addon. I have no
 > idea if or how it works.
 
 Usage

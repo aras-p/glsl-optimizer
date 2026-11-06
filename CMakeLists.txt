@@ -214,6 +214,9 @@ set(GLSLOPT_TOP_LEVEL OFF)
 if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
     set(GLSLOPT_TOP_LEVEL ON)
 endif()
+if(CMAKE_JS_VERSION)
+    set(GLSLOPT_TOP_LEVEL OFF) # building the Node addon
+endif()
 option(BUILD_TESTING "Build optimizer tests" ${GLSLOPT_TOP_LEVEL})
 include(CTest)
 if(BUILD_TESTING)
@@ -237,4 +240,19 @@ if(BUILD_TESTING)
         "-DTEST_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}/tests"
         -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_runner.cmake"
     )
+endif()
+
+# Node addon, when built through cmake-js (npm install)
+if(CMAKE_JS_VERSION)
+    execute_process(COMMAND node -p "require('nan')" WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        OUTPUT_VARIABLE NAN_INCLUDE_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
+    add_library(glslOptimizer SHARED src/node/binding.cpp src/node/compiler.cpp src/node/shader.cpp ${CMAKE_JS_SRC})
+    set_target_properties(glslOptimizer PROPERTIES PREFIX "" SUFFIX ".node")
+    target_include_directories(glslOptimizer PRIVATE ${CMAKE_JS_INC} ${NAN_INCLUDE_DIR})
+    target_link_libraries(glslOptimizer PRIVATE glsl_optimizer ${CMAKE_JS_LIB})
+    set_target_properties(glsl_optimizer PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    if(MSVC AND CMAKE_JS_NODELIB_DEF AND CMAKE_JS_NODELIB_TARGET)
+        # node.lib import library for the addon to link against
+        execute_process(COMMAND ${CMAKE_AR} /def:${CMAKE_JS_NODELIB_DEF} /out:${CMAKE_JS_NODELIB_TARGET} ${CMAKE_STATIC_LINKER_FLAGS})
+    endif()
 endif()
