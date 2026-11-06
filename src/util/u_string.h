@@ -113,7 +113,8 @@ util_asprintf(char **str, const char *fmt, ...)
 }
 
 #ifndef strcasecmp
-#define strcasecmp stricmp
+/* glsl-optimizer change: use the CRT name available with __STDC__ enabled. */
+#define strcasecmp _stricmp
 #endif
 
 #define strdup _strdup
