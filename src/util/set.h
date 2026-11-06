@@ -53,7 +53,32 @@ struct set {
    uint32_t size_index;
    uint32_t entries;
    uint32_t deleted_entries;
+
+   /* "table" points to here at first. A bigger storage is allocated separately
+    * when a bigger size is needed.
+    */
+   struct set_entry _initial_storage[19]; /* hash_sizes[0].size */
+
+   /* Don't insert any new fields here. All other fields must be before
+    * _initial_storage.
+    */
 };
+
+void
+_mesa_set_init(struct set *ht, void *mem_ctx,
+                 uint32_t (*key_hash_function)(const void *key),
+                 bool (*key_equals_function)(const void *a,
+                                             const void *b));
+
+void
+_mesa_set_fini(struct set *ht,
+               void (*delete_function)(struct set_entry *entry));
+
+void
+_mesa_pointer_set_init(struct set *ht, void *mem_ctx);
+
+void
+_mesa_u32_set_init(struct set *ht, void *mem_ctx);
 
 struct set *
 _mesa_set_create(void *mem_ctx,
@@ -62,6 +87,9 @@ _mesa_set_create(void *mem_ctx,
                                              const void *b));
 struct set *
 _mesa_set_create_u32_keys(void *mem_ctx);
+
+bool
+_mesa_set_copy(struct set *dst, struct set *src, void *dst_mem_ctx);
 
 struct set *
 _mesa_set_clone(struct set *set, void *dst_mem_ctx);
@@ -81,10 +109,10 @@ struct set_entry *
 _mesa_set_add_pre_hashed(struct set *set, uint32_t hash, const void *key);
 
 struct set_entry *
-_mesa_set_search_or_add(struct set *set, const void *key);
+_mesa_set_search_or_add(struct set *set, const void *key, bool *found);
 struct set_entry *
 _mesa_set_search_or_add_pre_hashed(struct set *set, uint32_t hash,
-                                   const void *key);
+                                   const void *key, bool *found);
 
 struct set_entry *
 _mesa_set_search(const struct set *set, const void *key);
@@ -105,16 +133,17 @@ _mesa_set_remove_key(struct set *set, const void *key);
 
 struct set_entry *
 _mesa_set_next_entry(const struct set *set, struct set_entry *entry);
-
 struct set_entry *
-_mesa_set_random_entry(struct set *set,
-                       int (*predicate)(struct set_entry *entry));
+_mesa_set_next_entry_unsafe(const struct set *set, struct set_entry *entry);
 
 struct set *
 _mesa_pointer_set_create(void *mem_ctx);
 
 bool
 _mesa_set_intersects(struct set *a, struct set *b);
+
+bool
+_mesa_set_equal(const struct set *a, const struct set *b);
 
 /**
  * This foreach function is safe against deletion, but not against
@@ -125,6 +154,15 @@ _mesa_set_intersects(struct set *a, struct set *b);
    for (struct set_entry *entry = _mesa_set_next_entry(set, NULL);  \
         entry != NULL;                                              \
         entry = _mesa_set_next_entry(set, entry))
+
+/**
+ * This foreach function destroys the table as it iterates.
+ * It is not safe to use when inserting or removing entries.
+ */
+#define set_foreach_remove(set, entry)                              \
+   for (struct set_entry *entry = _mesa_set_next_entry_unsafe(set, NULL);  \
+        (set)->entries;                                              \
+        entry->hash = 0, entry->key = (void*)NULL, (set)->entries--, entry = _mesa_set_next_entry_unsafe(set, entry))
 
 #ifdef __cplusplus
 } /* extern C */

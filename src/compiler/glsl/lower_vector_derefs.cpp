@@ -24,7 +24,7 @@
 #include "ir_builder.h"
 #include "ir_rvalue_visitor.h"
 #include "ir_optimization.h"
-#include "main/mtypes.h"
+#include "main/shader_types.h"
 
 using namespace ir_builder;
 
@@ -32,9 +32,9 @@ namespace {
 
 class vector_deref_visitor : public ir_rvalue_enter_visitor {
 public:
-   vector_deref_visitor(void *mem_ctx, gl_shader_stage shader_stage)
+   vector_deref_visitor(linear_ctx *linalloc, mesa_shader_stage shader_stage)
       : progress(false), shader_stage(shader_stage),
-        factory(&factory_instructions, mem_ctx)
+        factory(&factory_instructions, linalloc)
    {
    }
 
@@ -46,8 +46,8 @@ public:
    virtual ir_visitor_status visit_enter(ir_assignment *ir);
 
    bool progress;
-   gl_shader_stage shader_stage;
-   exec_list factory_instructions;
+   mesa_shader_stage shader_stage;
+   ir_exec_list factory_instructions;
    ir_factory factory;
 };
 
@@ -60,7 +60,7 @@ vector_deref_visitor::visit_enter(ir_assignment *ir)
       return ir_rvalue_enter_visitor::visit_enter(ir);
 
    ir_dereference_array *const deref = (ir_dereference_array *) ir->lhs;
-   if (!deref->array->type->is_vector())
+   if (!glsl_type_is_vector(deref->array->type))
       return ir_rvalue_enter_visitor::visit_enter(ir);
 
    /* SSBOs and shared variables are backed by memory and may be accessed by
@@ -75,9 +75,9 @@ vector_deref_visitor::visit_enter(ir_assignment *ir)
 
    ir_rvalue *const new_lhs = deref->array;
 
-   void *mem_ctx = ralloc_parent(ir);
+   linear_ctx *linalloc = ir->node_linalloc;
    ir_constant *old_index_constant =
-      deref->array_index->constant_expression_value(mem_ctx);
+      deref->array_index->constant_expression_value(linalloc);
    if (!old_index_constant) {
       if (shader_stage == MESA_SHADER_TESS_CTRL &&
           deref->variable_referenced()->data.mode == ir_var_shader_out) {
@@ -95,7 +95,7 @@ vector_deref_visitor::visit_enter(ir_assignment *ir)
           * because we're going to set it as the new LHS.
           */
          ir->insert_before(factory.instructions);
-         ir->set_lhs(new(mem_ctx) ir_dereference_variable(src_temp));
+         ir->set_lhs(new(linalloc) ir_dereference_variable(src_temp));
 
          ir_variable *const arr_index =
             factory.make_temp(deref->array_index->type, "index_tmp");
@@ -103,34 +103,33 @@ vector_deref_visitor::visit_enter(ir_assignment *ir)
 
          for (unsigned i = 0; i < new_lhs->type->vector_elements; i++) {
             ir_constant *const cmp_index =
-               ir_constant::zero(factory.mem_ctx, deref->array_index->type);
+               ir_constant::zero(factory.linalloc, deref->array_index->type);
             cmp_index->value.u[0] = i;
 
-            ir_rvalue *const lhs_clone = new_lhs->clone(factory.mem_ctx, NULL);
+            ir_rvalue *const lhs_clone = new_lhs->clone(factory.linalloc, NULL);
             ir_dereference_variable *const src_temp_deref =
-               new(mem_ctx) ir_dereference_variable(src_temp);
+               new(linalloc) ir_dereference_variable(src_temp);
 
             if (new_lhs->ir_type != ir_type_swizzle) {
                assert(lhs_clone->as_dereference());
-               ir_assignment *cond_assign =
-                  new(mem_ctx) ir_assignment(lhs_clone->as_dereference(),
-                                             src_temp_deref,
-                                             equal(arr_index, cmp_index),
-                                             WRITEMASK_X << i);
-               factory.emit(cond_assign);
+
+               factory.emit(if_tree(equal(arr_index, cmp_index),
+                                    assign(lhs_clone->as_dereference(),
+                                           src_temp_deref,
+                                           WRITEMASK_X << i)));
             } else {
                ir_assignment *cond_assign =
-                  new(mem_ctx) ir_assignment(swizzle(lhs_clone, i, 1),
-                                             src_temp_deref,
-                                             equal(arr_index, cmp_index));
-               factory.emit(cond_assign);
+                  new(linalloc) ir_assignment(swizzle(lhs_clone, i, 1),
+                                             src_temp_deref);
+
+               factory.emit(if_tree(equal(arr_index, cmp_index), cond_assign));
             }
          }
          ir->insert_after(factory.instructions);
       } else {
-         ir->rhs = new(mem_ctx) ir_expression(ir_triop_vector_insert,
+         ir->rhs = new(linalloc) ir_expression(ir_triop_vector_insert,
                                               new_lhs->type,
-                                              new_lhs->clone(mem_ctx, NULL),
+                                              new_lhs->clone(linalloc, NULL),
                                               ir->rhs,
                                               deref->array_index);
          ir->write_mask = (1 << new_lhs->type->vector_elements) - 1;
@@ -159,7 +158,7 @@ vector_deref_visitor::visit_enter(ir_assignment *ir)
           * swizzle the RHS.
           */
          unsigned component[1] = { index };
-         ir->set_lhs(new(mem_ctx) ir_swizzle(new_lhs, component, 1));
+         ir->set_lhs(new(linalloc) ir_swizzle(new_lhs, component, 1));
       }
    }
 
@@ -173,7 +172,7 @@ vector_deref_visitor::handle_rvalue(ir_rvalue **rv)
       return;
 
    ir_dereference_array *const deref = (ir_dereference_array *) *rv;
-   if (!deref->array->type->is_vector())
+   if (!glsl_type_is_vector(deref->array->type))
       return;
 
    /* Back-ends need to be able to handle derefs on vectors for SSBOs, UBOs,
@@ -187,16 +186,15 @@ vector_deref_visitor::handle_rvalue(ir_rvalue **rv)
                 var->get_interface_type())))
       return;
 
-   void *mem_ctx = ralloc_parent(deref);
-   *rv = new(mem_ctx) ir_expression(ir_binop_vector_extract,
+   *rv = new(deref->node_linalloc) ir_expression(ir_binop_vector_extract,
                                     deref->array,
                                     deref->array_index);
 }
 
 bool
-lower_vector_derefs(gl_linked_shader *shader)
+lower_vector_derefs(gl_shader *shader, linear_ctx *linalloc)
 {
-   vector_deref_visitor v(shader->ir, shader->Stage);
+   vector_deref_visitor v(linalloc, shader->Stage);
 
    visit_list_elements(&v, shader->ir);
 

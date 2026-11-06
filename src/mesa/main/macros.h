@@ -35,7 +35,7 @@
 #include "util/u_math.h"
 #include "util/rounding.h"
 #include "util/compiler.h"
-#include "main/glheader.h"
+#include "util/glheader.h"
 #include "mesa_private.h"
 
 
@@ -145,7 +145,7 @@ extern GLfloat _mesa_ubyte_to_float_color_tab[256];
  *** UNCLAMPED_FLOAT_TO_UBYTE: clamp float to [0,1] and map to ubyte in [0,255]
  *** CLAMPED_FLOAT_TO_UBYTE: map float known to be in [0,1] to ubyte in [0,255]
  ***/
-#ifndef DEBUG
+#if !MESA_DEBUG
 /* This function/macro is sensitive to precision.  Test very carefully
  * if you change it!
  */
@@ -307,10 +307,13 @@ COPY_4UBV(GLubyte dst[4], const GLubyte src[4])
 #define COPY_SZ_4V(DST, SZ, SRC)                  \
 do {                                              \
    switch (SZ) {                                  \
-   case 4: (DST)[3] = (SRC)[3]; /* fallthrough */ \
-   case 3: (DST)[2] = (SRC)[2]; /* fallthrough */ \
-   case 2: (DST)[1] = (SRC)[1]; /* fallthrough */ \
-   case 1: (DST)[0] = (SRC)[0]; /* fallthrough */ \
+   case 4: (DST)[3] = (SRC)[3];                   \
+           FALLTHROUGH;                           \
+   case 3: (DST)[2] = (SRC)[2];                   \
+           FALLTHROUGH;                           \
+   case 2: (DST)[1] = (SRC)[1];                   \
+           FALLTHROUGH;                           \
+   case 1: (DST)[0] = (SRC)[0];                   \
    }                                              \
 } while(0)
 
@@ -684,13 +687,6 @@ INTERP_4F(GLfloat t, GLfloat dst[4], const GLfloat out[4], const GLfloat in[4])
 
 /*@}*/
 
-
-
-static inline unsigned
-minify(unsigned value, unsigned levels)
-{
-    return MAX2(1, value >> levels);
-}
 
 
 /** Cross product of two 3-element vectors */

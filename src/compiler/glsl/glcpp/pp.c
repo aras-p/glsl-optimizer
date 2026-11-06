@@ -195,10 +195,10 @@ remove_line_continuations(glcpp_parser_t *ctx, const char *shader)
 			}
 		}
 
-		search_start = backslash + 1;
-
 		if (backslash == NULL)
 			break;
+
+		search_start = backslash + 1;
 
 		/* At each line continuation, (backslash followed by a
 		 * newline), copy all preceding text to the output, then

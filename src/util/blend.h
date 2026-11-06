@@ -1,0 +1,197 @@
+/*
+ * Copyright 2023 Valve Corporation
+ * Copyright 2007 VMware, Inc.
+ * SPDX-License-Identifier: MIT
+ */
+
+#ifndef UTIL_BLEND_H
+#define UTIL_BLEND_H
+
+#include <stdbool.h>
+
+#include "util/macros.h"
+
+#define PIPE_BLENDFACTOR_INVERT_BIT (0x10)
+
+enum pipe_blendfactor {
+   PIPE_BLENDFACTOR_ONE = 1,
+   PIPE_BLENDFACTOR_SRC_COLOR,
+   PIPE_BLENDFACTOR_SRC_ALPHA,
+   PIPE_BLENDFACTOR_DST_ALPHA,
+   PIPE_BLENDFACTOR_DST_COLOR,
+   PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE,
+   PIPE_BLENDFACTOR_CONST_COLOR,
+   PIPE_BLENDFACTOR_CONST_ALPHA,
+   PIPE_BLENDFACTOR_SRC1_COLOR,
+   PIPE_BLENDFACTOR_SRC1_ALPHA,
+
+   PIPE_BLENDFACTOR_ZERO = PIPE_BLENDFACTOR_INVERT_BIT | PIPE_BLENDFACTOR_ONE,
+   PIPE_BLENDFACTOR_INV_SRC_COLOR,
+   PIPE_BLENDFACTOR_INV_SRC_ALPHA,
+   PIPE_BLENDFACTOR_INV_DST_ALPHA,
+   PIPE_BLENDFACTOR_INV_DST_COLOR,
+
+   /* Intentionally weird wrapping due to Gallium trace parsing this file */
+   PIPE_BLENDFACTOR_INV_CONST_COLOR = PIPE_BLENDFACTOR_INVERT_BIT
+                                    | PIPE_BLENDFACTOR_CONST_COLOR,
+   PIPE_BLENDFACTOR_INV_CONST_ALPHA,
+   PIPE_BLENDFACTOR_INV_SRC1_COLOR,
+   PIPE_BLENDFACTOR_INV_SRC1_ALPHA,
+};
+
+static inline bool
+util_blendfactor_is_inverted(enum pipe_blendfactor factor)
+{
+   /* By construction of the enum */
+   return (factor & PIPE_BLENDFACTOR_INVERT_BIT);
+}
+
+static inline enum pipe_blendfactor
+util_blendfactor_without_invert(enum pipe_blendfactor factor)
+{
+   /* By construction of the enum */
+   return (enum pipe_blendfactor)(factor & ~PIPE_BLENDFACTOR_INVERT_BIT);
+}
+
+/**
+ * Color blend factor enums are treated as their alpha counterpart when used
+ * as the alpha blend factor.  This helper just converts from color to alpha.
+ */
+static inline enum pipe_blendfactor
+util_blendfactor_to_alpha(enum pipe_blendfactor factor)
+{
+   switch (factor) {
+#define UTIL_BLENDFACTOR_TO_ALPHA_CASE(x)       \
+   case PIPE_BLENDFACTOR_##x##_COLOR:           \
+      return PIPE_BLENDFACTOR_##x##_ALPHA;      \
+   case PIPE_BLENDFACTOR_INV_##x##_COLOR:       \
+      return PIPE_BLENDFACTOR_INV_##x##_ALPHA;
+
+   UTIL_BLENDFACTOR_TO_ALPHA_CASE(SRC)
+   UTIL_BLENDFACTOR_TO_ALPHA_CASE(DST)
+   UTIL_BLENDFACTOR_TO_ALPHA_CASE(CONST)
+   UTIL_BLENDFACTOR_TO_ALPHA_CASE(SRC1)
+
+#undef UTIL_BLENDFACTOR_TO_ALPHA_CASE
+
+   case PIPE_BLENDFACTOR_ONE:
+   case PIPE_BLENDFACTOR_SRC_ALPHA:
+   case PIPE_BLENDFACTOR_DST_ALPHA:
+   case PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE:
+   case PIPE_BLENDFACTOR_CONST_ALPHA:
+   case PIPE_BLENDFACTOR_SRC1_ALPHA:
+   case PIPE_BLENDFACTOR_ZERO:
+   case PIPE_BLENDFACTOR_INV_SRC_ALPHA:
+   case PIPE_BLENDFACTOR_INV_DST_ALPHA:
+   case PIPE_BLENDFACTOR_INV_CONST_ALPHA:
+   case PIPE_BLENDFACTOR_INV_SRC1_ALPHA:
+      return factor;
+   }
+
+   UNREACHABLE("Invalid blend factor");
+}
+
+enum pipe_blend_func {
+   PIPE_BLEND_ADD,
+   PIPE_BLEND_SUBTRACT,
+   PIPE_BLEND_REVERSE_SUBTRACT,
+   PIPE_BLEND_MIN,
+   PIPE_BLEND_MAX,
+};
+
+enum pipe_logicop {
+   PIPE_LOGICOP_CLEAR,
+   PIPE_LOGICOP_NOR,
+   PIPE_LOGICOP_AND_INVERTED,
+   PIPE_LOGICOP_COPY_INVERTED,
+   PIPE_LOGICOP_AND_REVERSE,
+   PIPE_LOGICOP_INVERT,
+   PIPE_LOGICOP_XOR,
+   PIPE_LOGICOP_NAND,
+   PIPE_LOGICOP_AND,
+   PIPE_LOGICOP_EQUIV,
+   PIPE_LOGICOP_NOOP,
+   PIPE_LOGICOP_OR_INVERTED,
+   PIPE_LOGICOP_COPY,
+   PIPE_LOGICOP_OR_REVERSE,
+   PIPE_LOGICOP_OR,
+   PIPE_LOGICOP_SET,
+};
+
+enum pipe_advanced_blend_mode {
+   PIPE_ADVANCED_BLEND_NONE = 0,
+   PIPE_ADVANCED_BLEND_MULTIPLY,
+   PIPE_ADVANCED_BLEND_SCREEN,
+   PIPE_ADVANCED_BLEND_OVERLAY,
+   PIPE_ADVANCED_BLEND_DARKEN,
+   PIPE_ADVANCED_BLEND_LIGHTEN,
+   PIPE_ADVANCED_BLEND_COLORDODGE,
+   PIPE_ADVANCED_BLEND_COLORBURN,
+   PIPE_ADVANCED_BLEND_HARDLIGHT,
+   PIPE_ADVANCED_BLEND_SOFTLIGHT,
+   PIPE_ADVANCED_BLEND_DIFFERENCE,
+   PIPE_ADVANCED_BLEND_EXCLUSION,
+   PIPE_ADVANCED_BLEND_HSL_HUE,
+   PIPE_ADVANCED_BLEND_HSL_SATURATION,
+   PIPE_ADVANCED_BLEND_HSL_COLOR,
+   PIPE_ADVANCED_BLEND_HSL_LUMINOSITY,
+
+   /* Extended blend modes */
+   PIPE_ADVANCED_BLEND_SRC,
+   PIPE_ADVANCED_BLEND_DST,
+   PIPE_ADVANCED_BLEND_SRC_OVER,
+   PIPE_ADVANCED_BLEND_DST_OVER,
+   PIPE_ADVANCED_BLEND_SRC_IN,
+   PIPE_ADVANCED_BLEND_DST_IN,
+   PIPE_ADVANCED_BLEND_SRC_OUT,
+   PIPE_ADVANCED_BLEND_DST_OUT,
+   PIPE_ADVANCED_BLEND_SRC_ATOP,
+   PIPE_ADVANCED_BLEND_DST_ATOP,
+   PIPE_ADVANCED_BLEND_XOR,
+   PIPE_ADVANCED_BLEND_INVERT,
+   PIPE_ADVANCED_BLEND_INVERT_RGB,
+   PIPE_ADVANCED_BLEND_LINEARDODGE,
+   PIPE_ADVANCED_BLEND_LINEARBURN,
+   PIPE_ADVANCED_BLEND_VIVIDLIGHT,
+   PIPE_ADVANCED_BLEND_LINEARLIGHT,
+   PIPE_ADVANCED_BLEND_PINLIGHT,
+   PIPE_ADVANCED_BLEND_HARDMIX,
+   PIPE_ADVANCED_BLEND_PLUS,
+   PIPE_ADVANCED_BLEND_PLUS_CLAMPED,
+   PIPE_ADVANCED_BLEND_PLUS_CLAMPED_ALPHA,
+   PIPE_ADVANCED_BLEND_PLUS_DARKER,
+   PIPE_ADVANCED_BLEND_MINUS,
+   PIPE_ADVANCED_BLEND_MINUS_CLAMPED,
+   PIPE_ADVANCED_BLEND_CONTRAST,
+   PIPE_ADVANCED_BLEND_INVERT_OVG,
+   PIPE_ADVANCED_BLEND_RED,
+   PIPE_ADVANCED_BLEND_GREEN,
+   PIPE_ADVANCED_BLEND_BLUE,
+};
+
+enum pipe_blend_overlap_mode {
+   PIPE_BLEND_OVERLAP_UNCORRELATED = 0,
+   PIPE_BLEND_OVERLAP_CONJOINT = 1,
+   PIPE_BLEND_OVERLAP_DISJOINT = 2,
+};
+
+/**
+ * When faking RGBX render target formats with RGBA ones, the blender is still
+ * supposed to treat the destination's alpha channel as 1 instead of the
+ * garbage that's there. Return a blend factor that will take that into
+ * account.
+ */
+static inline enum pipe_blendfactor
+util_blend_dst_alpha_to_one(enum pipe_blendfactor factor)
+{
+   switch (factor) {
+   case PIPE_BLENDFACTOR_DST_ALPHA:
+      return PIPE_BLENDFACTOR_ONE;
+   case PIPE_BLENDFACTOR_INV_DST_ALPHA:
+      return PIPE_BLENDFACTOR_ZERO;
+   default:
+      return factor;
+   }
+}
+
+#endif

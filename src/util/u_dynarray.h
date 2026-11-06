@@ -36,11 +36,10 @@
 extern "C" {
 #endif
 
-/* A zero-initialized version of this is guaranteed to represent an
- * empty array.
- *
- * Also, size <= capacity and data != 0 if and only if capacity != 0
- * capacity will always be the allocation size of data
+extern unsigned util_dynarray_is_data_stack_allocated;
+
+/* Size <= capacity and data != 0 if and only if capacity != 0 capacity will
+ * always be the allocation size of data.
  */
 struct util_dynarray
 {
@@ -50,6 +49,13 @@ struct util_dynarray
    unsigned capacity;
 };
 
+/* A zero-initialized util_dynarray represents an empty array. */
+#ifdef __cplusplus
+#define UTIL_DYNARRAY_INIT { 0 }
+#else
+#define UTIL_DYNARRAY_INIT (struct util_dynarray){ .capacity = 0 }
+#endif
+
 static inline void
 util_dynarray_init(struct util_dynarray *buf, void *mem_ctx)
 {
@@ -58,10 +64,20 @@ util_dynarray_init(struct util_dynarray *buf, void *mem_ctx)
 }
 
 static inline void
+util_dynarray_init_from_stack(struct util_dynarray *buf, void *data, unsigned capacity)
+{
+   memset(buf, 0, sizeof(*buf));
+   buf->mem_ctx = &util_dynarray_is_data_stack_allocated;
+   buf->data = data;
+   buf->capacity = capacity;
+}
+
+static inline void
 util_dynarray_fini(struct util_dynarray *buf)
 {
    if (buf->data) {
-      if (buf->mem_ctx) {
+      if (buf->mem_ctx == &util_dynarray_is_data_stack_allocated) {
+      } else if (buf->mem_ctx) {
          ralloc_free(buf->data);
       } else {
          free(buf->data);
@@ -85,13 +101,19 @@ util_dynarray_ensure_cap(struct util_dynarray *buf, unsigned newcap)
       unsigned capacity = MAX3(DYN_ARRAY_INITIAL_SIZE, buf->capacity * 2, newcap);
       void *data;
 
-      if (buf->mem_ctx) {
+      if (buf->mem_ctx == &util_dynarray_is_data_stack_allocated) {
+         data = malloc(capacity);
+         if (data) {
+            memcpy(data, buf->data, buf->size);
+            buf->mem_ctx = NULL;
+         }
+      } else if (buf->mem_ctx) {
          data = reralloc_size(buf->mem_ctx, buf->data, capacity);
       } else {
          data = realloc(buf->data, capacity);
       }
       if (!data)
-         return 0;
+         return NULL;
 
       buf->data = data;
       buf->capacity = capacity;
@@ -105,16 +127,28 @@ MUST_CHECK static inline void *
 util_dynarray_resize_bytes(struct util_dynarray *buf, unsigned nelts, size_t eltsize)
 {
    if (unlikely(nelts > UINT_MAX / eltsize))
-      return 0;
+      return NULL;
 
-   unsigned newsize = nelts * eltsize;
+   unsigned newsize = nelts * (unsigned)eltsize;
    void *p = util_dynarray_ensure_cap(buf, newsize);
    if (!p)
-      return 0;
+      return NULL;
 
    buf->size = newsize;
 
    return p;
+}
+
+MUST_CHECK static inline void *
+util_dynarray_resize_bytes_zero(struct util_dynarray *buf, unsigned nelts, size_t eltsize)
+{
+   size_t size = buf->capacity;
+   void *ret = util_dynarray_resize_bytes(buf, nelts, eltsize);
+   if (ret) {
+      uint8_t *data = (uint8_t*)buf->data;
+      memset(data + size, 0, buf->capacity - size);
+   }
+   return ret;
 }
 
 static inline void
@@ -129,16 +163,16 @@ util_dynarray_clone(struct util_dynarray *buf, void *mem_ctx,
 MUST_CHECK static inline void *
 util_dynarray_grow_bytes(struct util_dynarray *buf, unsigned ngrow, size_t eltsize)
 {
-   unsigned growbytes = ngrow * eltsize;
+   unsigned growbytes = ngrow * (unsigned)eltsize;
 
    if (unlikely(ngrow > (UINT_MAX / eltsize) ||
                 growbytes > UINT_MAX - buf->size))
-      return 0;
+      return NULL;
 
    unsigned newsize = buf->size + growbytes;
    void *p = util_dynarray_ensure_cap(buf, newsize);
    if (!p)
-      return 0;
+      return NULL;
 
    buf->size = newsize;
 
@@ -148,6 +182,9 @@ util_dynarray_grow_bytes(struct util_dynarray *buf, unsigned ngrow, size_t eltsi
 static inline void
 util_dynarray_trim(struct util_dynarray *buf)
 {
+   if (buf->mem_ctx == &util_dynarray_is_data_stack_allocated)
+      return;
+
    if (buf->size != buf->capacity) {
       if (buf->size) {
          if (buf->mem_ctx) {
@@ -168,19 +205,43 @@ util_dynarray_trim(struct util_dynarray *buf)
    }
 }
 
-#define util_dynarray_append(buf, type, v) do {type __v = (v); memcpy(util_dynarray_grow_bytes((buf), 1, sizeof(type)), &__v, sizeof(type));} while(0)
+static inline void
+util_dynarray_append_dynarray(struct util_dynarray *buf,
+                              const struct util_dynarray *other)
+{
+   if (other->size > 0) {
+      void *p = util_dynarray_grow_bytes(buf, 1, other->size);
+      memcpy(p, other->data, other->size);
+   }
+}
+
+#define util_dynarray_append_typed(buf, type, v) do {type __v = (v); memcpy(util_dynarray_grow_bytes((buf), 1, sizeof(type)), &__v, sizeof(type));} while(0)
+#define util_dynarray_append_array(buf, type, v, count) do {memcpy(util_dynarray_grow_bytes((buf), count, sizeof(type)), v, sizeof(type) * count);} while(0)
 /* Returns a pointer to the space of the first new element (in case of growth) or NULL on failure. */
 #define util_dynarray_resize(buf, type, nelts) util_dynarray_resize_bytes(buf, (nelts), sizeof(type))
+#define util_dynarray_resize_zero(buf, type, nelts) util_dynarray_resize_bytes_zero(buf, (nelts), sizeof(type))
 #define util_dynarray_grow(buf, type, ngrow) util_dynarray_grow_bytes(buf, (ngrow), sizeof(type))
-#define util_dynarray_top_ptr(buf, type) (type*)((char*)(buf)->data + (buf)->size - sizeof(type))
+#define util_dynarray_top_ptr(buf, type) ((type*)((char*)(buf)->data + (buf)->size - sizeof(type)))
 #define util_dynarray_top(buf, type) *util_dynarray_top_ptr(buf, type)
-#define util_dynarray_pop_ptr(buf, type) (type*)((char*)(buf)->data + ((buf)->size -= sizeof(type)))
+#define util_dynarray_pop_ptr(buf, type) ((type*)((char*)(buf)->data + ((buf)->size -= sizeof(type))))
 #define util_dynarray_pop(buf, type) *util_dynarray_pop_ptr(buf, type)
+#define util_dynarray_last_ptr(buf, type) ((type*)((char*)(buf)->data + ((buf)->size - sizeof(type))))
 #define util_dynarray_contains(buf, type) ((buf)->size >= sizeof(type))
 #define util_dynarray_element(buf, type, idx) ((type*)(buf)->data + (idx))
 #define util_dynarray_begin(buf) ((buf)->data)
 #define util_dynarray_end(buf) ((void*)util_dynarray_element((buf), char, (buf)->size))
 #define util_dynarray_num_elements(buf, type) ((buf)->size / sizeof(type))
+
+/* typeof is standard in C23 but not in C++, and MSVC lacks support when
+ * compiling as C++. Conversely, decltype is standard in C++11 but missing in C.
+ * For our purposes, they are equivalent - just use the right one depending
+ * whether we compile as C or C++ so the macro works everywhere with MSVC.
+ */
+#ifdef __cplusplus
+#define util_dynarray_append(buf, v) util_dynarray_append_typed(buf, decltype(v), v)
+#else
+#define util_dynarray_append(buf, v) util_dynarray_append_typed(buf, __typeof__(v), v)
+#endif
 
 #define util_dynarray_foreach(buf, type, elem) \
    for (type *elem = (type *)(buf)->data; \
@@ -211,4 +272,3 @@ util_dynarray_trim(struct util_dynarray *buf)
 #endif
 
 #endif /* U_DYNARRAY_H */
-

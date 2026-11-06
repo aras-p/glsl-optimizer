@@ -32,6 +32,7 @@
 #ifndef MENUMS_H
 #define MENUMS_H
 
+#include <stdbool.h>
 #include "util/macros.h"
 
 /**
@@ -48,6 +49,19 @@ typedef enum
    API_OPENGL_CORE,
    API_OPENGL_LAST = API_OPENGL_CORE
 } gl_api;
+
+/**
+ * Checks if the api is for GLES 2.0 or later
+ */
+static inline bool
+_mesa_is_api_gles2(gl_api api)
+{
+#if HAVE_OPENGL_ES_2
+   return api == API_OPENGLES2;
+#else
+   return false;
+#endif
+}
 
 /**
  * An index for each type of texture object.  These correspond to the GL
@@ -90,7 +104,7 @@ typedef enum
  *
  *    result_bit = logic_op & (1 << (2 * src_bit + dst_bit))
  */
-enum PACKED gl_logicop_mode {
+enum ENUM_PACKED gl_logicop_mode {
    COLOR_LOGICOP_CLEAR = 0,
    COLOR_LOGICOP_NOR = 1,
    COLOR_LOGICOP_AND_INVERTED = 2,
@@ -122,8 +136,6 @@ typedef enum
    BUFFER_DEPTH,
    BUFFER_STENCIL,
    BUFFER_ACCUM,
-   /* optional aux buffer */
-   BUFFER_AUX0,
    /* generic renderbuffers */
    BUFFER_COLOR0,
    BUFFER_COLOR1,

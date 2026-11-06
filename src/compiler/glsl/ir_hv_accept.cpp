@@ -44,12 +44,12 @@
  * processed, some of the added nodes may not be processed.
  */
 ir_visitor_status
-visit_list_elements(ir_hierarchical_visitor *v, exec_list *l,
+visit_list_elements(ir_hierarchical_visitor *v, ir_exec_list *l,
                     bool statement_list)
 {
    ir_instruction *prev_base_ir = v->base_ir;
 
-   foreach_in_list_safe(ir_instruction, ir, l) {
+   ir_foreach_in_list_safe(ir_instruction, ir, l) {
       if (statement_list)
          v->base_ir = ir;
       ir_visitor_status s = ir->accept(v);
@@ -87,6 +87,10 @@ ir_loop::accept(ir_hierarchical_visitor *v)
       return (s == visit_continue_with_parent) ? visit_continue : s;
 
    s = visit_list_elements(v, &this->body_instructions);
+   if (s == visit_stop)
+      return s;
+
+   s = visit_list_elements(v, &this->continue_instructions);
    if (s == visit_stop)
       return s;
 
@@ -188,6 +192,12 @@ ir_texture::accept(ir_hierarchical_visitor *v)
       s = this->offset->accept(v);
       if (s != visit_continue)
 	 return (s == visit_continue_with_parent) ? visit_continue : s;
+   }
+
+   if (this->clamp) {
+      s = this->clamp->accept(v);
+      if (s != visit_continue)
+         return (s == visit_continue_with_parent) ? visit_continue : s;
    }
 
    switch (this->op) {
@@ -305,9 +315,6 @@ ir_assignment::accept(ir_hierarchical_visitor *v)
    s = this->rhs->accept(v);
    if (s != visit_continue)
       return (s == visit_continue_with_parent) ? visit_continue : s;
-
-   if (this->condition)
-      s = this->condition->accept(v);
 
    return (s == visit_stop) ? s : v->visit_leave(this);
 }

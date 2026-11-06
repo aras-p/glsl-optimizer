@@ -207,11 +207,51 @@ feature, it would be cool to add tests to cover it as well!
 Dev Notes
 ---------
 
-- Current Mesa codebase is from [Mesa 20.3.5](https://archive.mesa3d.org/older-versions/20.x/mesa-20.3.5.tar.xz).
-- Use release snapshots, not merges with whole Mesa history.
-- Only minimal subset of that, as needed by the glsl optimizer. A bunch
-  of files were reduced to only contain what we need; they are mostly marked
-  with `glsl-optimizer change:` comments.
-- In order to rebuild the generated GLSL/glcpp lexers, parsers and some tables,
-  you need to run `./generateParsers.sh`.
+The Mesa code (`src/compiler`, `src/util`, `src/mesa`, `src/gallium`, `src/c11`,
+`include`) is a small subset of the
+[Mesa 26.2.6](https://archive.mesa3d.org/mesa-26.2.6.tar.xz) release: the GLSL
+frontend, `glsl_to_nir`, NIR with the passes we run, and the util code they need.
 
+#### Upgrading Mesa
+
+- Copy the new versions of the files that exist here from the new release, then
+  bring back the `glsl-optimizer change` edits. Files that fail to build usually
+  need a header that we deliberately dropped (see below), not the header itself.
+- Regenerate our minimal files with the scripts in `upgrade-tools/` (they take
+  the path of an upstream Mesa tree): `gen_minimal_formats.py` (pipe_format
+  enum + descriptions) and `extract_nir_helpers.py` (helpers copied out of NIR
+  passes we do not build).
+- Run `upgrade-tools/gen_sources.sh` to regenerate the checked-in lexers,
+  parsers and NIR/GLSL tables (needs bison, flex, python3 with Mako).
+- Check the test corpus output.
+
+#### What we have removed on purpose
+
+- GL context/driver state (vbo, state tracker, glapi, glthread, driver function
+  tables, gallium state): an offline compiler has no GL context. `mtypes.h`,
+  `context.h` and `pipe/p_screen.h` are minimal versions with just the members
+  the compiler reads.
+- Khronos GL/GLES headers: `util/glminimal.h` has the types and enums we use.
+- Texture formats/codecs: only GLSL image formats are needed.
+- Disk cache, BLAKE3 source hashes, fossilize, compression, NIR serialization,
+  perf tracing, CPU detection, xxHash (hash tables use FNV-1a), most of
+  logging/OS layers (`log.c`, `os_misc.c` are stderr/getenv-only).
+- Driver-oriented compiler parts: fp64 emulation library, NIR IO/explicit-IO/
+  int64/double lowering, divergence analysis, per-app workarounds, and all
+  unused passes. A coverage run over the test corpus was used to find code that
+  was linked but never executed.
+- GLSL IR optimizations and `lower_precision`: NIR does all optimization.
+
+#### Behavior changes
+
+- No GLSL IR optimization before `glsl_to_nir`: it erased stores into locals of
+  different precision, i.e. the source's precision conversions.
+- `glslopt_precision` NIR intrinsic: marks such precision conversions so they
+  survive NIR optimization and get printed as properly qualified temporaries.
+
+#### Generated code size
+
+`nir_opt_algebraic.c` now stores its automaton tables compressed (the dense
+`bcsel` table alone was 2.57M entries), only the two algebraic passes we use are
+generated, and `upgrade-tools/compact_c_tables.py` strips whitespace from generated
+tables. Original file was 51MB source, now about 4MB source.

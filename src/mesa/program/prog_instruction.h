@@ -38,7 +38,7 @@
 #define PROG_INSTRUCTION_H
 
 
-#include "main/glheader.h"
+#include "util/glheader.h"
 
 
 /**
@@ -68,29 +68,6 @@
 #define SWIZZLE_ZZZZ MAKE_SWIZZLE4(SWIZZLE_Z, SWIZZLE_Z, SWIZZLE_Z, SWIZZLE_Z)
 #define SWIZZLE_WWWW MAKE_SWIZZLE4(SWIZZLE_W, SWIZZLE_W, SWIZZLE_W, SWIZZLE_W)
 
-
-/**
- * Writemask values, 1 bit per component.
- */
-/*@{*/
-#define WRITEMASK_X     0x1
-#define WRITEMASK_Y     0x2
-#define WRITEMASK_XY    0x3
-#define WRITEMASK_Z     0x4
-#define WRITEMASK_XZ    0x5
-#define WRITEMASK_YZ    0x6
-#define WRITEMASK_XYZ   0x7
-#define WRITEMASK_W     0x8
-#define WRITEMASK_XW    0x9
-#define WRITEMASK_YW    0xa
-#define WRITEMASK_XYW   0xb
-#define WRITEMASK_ZW    0xc
-#define WRITEMASK_XZW   0xd
-#define WRITEMASK_YZW   0xe
-#define WRITEMASK_XYZW  0xf
-/*@}*/
-
-
 /**
  * Per-component negation masks
  */
@@ -115,12 +92,7 @@ enum prog_opcode {
    OPCODE_ABS,       /*   X        X       1.1               X   */
    OPCODE_ADD,       /*   X        X       X       X         X   */
    OPCODE_ARL,       /*   X                X                 X   */
-   OPCODE_BGNLOOP,   /*                                     opt  */
-   OPCODE_BGNSUB,    /*                                     opt  */
-   OPCODE_BRK,       /*                    2                opt  */
-   OPCODE_CAL,       /*                    2       2        opt  */
    OPCODE_CMP,       /*            X                         X   */
-   OPCODE_CONT,      /*                                     opt  */
    OPCODE_COS,       /*            X       2       X         X   */
    OPCODE_DDX,       /*                            X         X   */
    OPCODE_DDY,       /*                            X         X   */
@@ -129,16 +101,11 @@ enum prog_opcode {
    OPCODE_DP4,       /*   X        X       X       X         X   */
    OPCODE_DPH,       /*   X        X       1.1                   */
    OPCODE_DST,       /*   X        X       X       X             */
-   OPCODE_ELSE,      /*                                     opt  */
    OPCODE_END,       /*   X        X       X       X        opt  */
-   OPCODE_ENDIF,     /*                                     opt  */
-   OPCODE_ENDLOOP,   /*                                     opt  */
-   OPCODE_ENDSUB,    /*                                     opt  */
    OPCODE_EX2,       /*   X        X       2       X         X   */
    OPCODE_EXP,       /*   X                X                     */
    OPCODE_FLR,       /*   X        X       2       X         X   */
    OPCODE_FRC,       /*   X        X       2       X         X   */
-   OPCODE_IF,        /*                                     opt  */
    OPCODE_KIL,       /*            X                         X   */
    OPCODE_LG2,       /*   X        X       2       X         X   */
    OPCODE_LIT,       /*   X        X       X       X             */
@@ -149,13 +116,8 @@ enum prog_opcode {
    OPCODE_MIN,       /*   X        X       X       X         X   */
    OPCODE_MOV,       /*   X        X       X       X         X   */
    OPCODE_MUL,       /*   X        X       X       X         X   */
-   OPCODE_NOISE1,    /*                                      X   */
-   OPCODE_NOISE2,    /*                                      X   */
-   OPCODE_NOISE3,    /*                                      X   */
-   OPCODE_NOISE4,    /*                                      X   */
    OPCODE_POW,       /*   X        X               X         X   */
    OPCODE_RCP,       /*   X        X       X       X         X   */
-   OPCODE_RET,       /*                    2       2        opt  */
    OPCODE_RSQ,       /*   X        X       X       X         X   */
    OPCODE_SCS,       /*            X                         X   */
    OPCODE_SGE,       /*   X        X       X       X         X   */
@@ -169,7 +131,6 @@ enum prog_opcode {
    OPCODE_TXD,       /*                            X         X   */
    OPCODE_TXL,       /*                    3       2         X   */
    OPCODE_TXP,       /*            X                         X   */
-   OPCODE_TRUNC,     /*                                      X   */
    OPCODE_XPD,       /*   X        X                             */
    MAX_OPCODE
 };
@@ -245,15 +206,6 @@ struct prog_instruction
    /** True if tex instruction should do shadow comparison */
    GLuint TexShadow:1;
    /*@}*/
-
-   /**
-    * For BRA and CAL instructions, the location to jump to.
-    * For BGNLOOP, points to ENDLOOP (and vice-versa).
-    * For BRK, points to ENDLOOP
-    * For IF, points to ELSE or ENDIF.
-    * For ELSE, points to ENDIF.
-    */
-   GLint BranchTarget;
 };
 
 
@@ -266,21 +218,11 @@ struct gl_program;
 extern void
 _mesa_init_instructions(struct prog_instruction *inst, GLuint count);
 
-extern struct prog_instruction *
-_mesa_copy_instructions(struct prog_instruction *dest,
-                        const struct prog_instruction *src, GLuint n);
-
 extern GLuint
 _mesa_num_inst_src_regs(enum prog_opcode opcode);
 
 extern GLuint
 _mesa_num_inst_dst_regs(enum prog_opcode opcode);
-
-extern GLboolean
-_mesa_is_tex_instruction(enum prog_opcode opcode);
-
-extern GLboolean
-_mesa_check_soa_dependencies(const struct prog_instruction *inst);
 
 extern const char *
 _mesa_opcode_string(enum prog_opcode opcode);

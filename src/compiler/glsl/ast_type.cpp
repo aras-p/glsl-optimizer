@@ -22,6 +22,7 @@
  */
 
 #include "ast.h"
+#include "util/string_buffer.h"
 
 void
 ast_type_specifier::print(void) const
@@ -83,7 +84,8 @@ ast_type_qualifier::has_layout() const
           || this->flags.q.explicit_stream
           || this->flags.q.explicit_xfb_buffer
           || this->flags.q.explicit_xfb_offset
-          || this->flags.q.explicit_xfb_stride;
+          || this->flags.q.explicit_xfb_stride
+          || this->flags.q.explicit_numviews;
 }
 
 bool
@@ -96,6 +98,7 @@ ast_type_qualifier::has_storage() const
           || this->flags.q.out
           || this->flags.q.uniform
           || this->flags.q.buffer
+          || this->flags.q.task_payload
           || this->flags.q.shared_storage;
 }
 
@@ -104,7 +107,8 @@ ast_type_qualifier::has_auxiliary_storage() const
 {
    return this->flags.q.centroid
           || this->flags.q.sample
-          || this->flags.q.patch;
+          || this->flags.q.patch
+          || this->flags.q.per_primitive;
 }
 
 bool ast_type_qualifier::has_memory() const
@@ -181,6 +185,26 @@ validate_point_mode(ASSERTED const ast_type_qualifier &qualifier,
    /* Point mode can only be true if the flag is set. */
    assert (!qualifier.flags.q.point_mode || !new_qualifier.flags.q.point_mode
            || (qualifier.point_mode && new_qualifier.point_mode));
+
+   return true;
+}
+
+static bool
+validate_view_qualifier(YYLTYPE *loc, struct _mesa_glsl_parse_state *state,
+                          unsigned view)
+{
+   if (view > MAX_VIEWS_OVR) {
+      _mesa_glsl_error(loc, state,
+                       "invalid view specified %d is larger than "
+                       "MAX_VIEWS_OVR (%d).",
+                       view, MAX_VIEWS_OVR);
+      return false;
+   }
+   else if (view <= 0) {
+      _mesa_glsl_error(loc, state,
+                       "invalid view specified %d is less than 1", view);
+      return false;
+   }
 
    return true;
 }
@@ -271,6 +295,8 @@ ast_type_qualifier::merge_qualifier(YYLTYPE *loc,
    input_layout_mask.flags.q.sample = 1;
    input_layout_mask.flags.q.smooth = 1;
    input_layout_mask.flags.q.non_coherent = 1;
+   input_layout_mask.flags.q.explicit_numviews = 1;
+   input_layout_mask.flags.q.per_primitive = 1;
 
    if (state->has_bindless()) {
       /* Allow to use image qualifiers with shader inputs/outputs. */
@@ -328,6 +354,16 @@ ast_type_qualifier::merge_qualifier(YYLTYPE *loc,
       }
    }
 
+   if (q.flags.q.max_primitives) {
+      if (this->flags.q.max_primitives
+          && !is_single_layout_merge && !is_multiple_layouts_merge) {
+         this->max_primitives->merge_qualifier(q.max_primitives);
+      } else {
+         this->flags.q.max_primitives = 1;
+         this->max_primitives = q.max_primitives;
+      }
+   }
+
    if (q.subroutine_list) {
       if (this->subroutine_list) {
          _mesa_glsl_error(loc, state,
@@ -362,7 +398,9 @@ ast_type_qualifier::merge_qualifier(YYLTYPE *loc,
       }
    }
 
-   if (state->has_enhanced_layouts()) {
+   /* Not apply to mesh shader */
+   if (state->stage <= MESA_SHADER_GEOMETRY &&
+       state->has_enhanced_layouts()) {
       if (!this->flags.q.explicit_xfb_buffer) {
          if (q.flags.q.xfb_buffer) {
             this->flags.q.xfb_buffer = 1;
@@ -496,6 +534,18 @@ ast_type_qualifier::merge_qualifier(YYLTYPE *loc,
       this->flags.q.out = 1;
    }
 
+   if (q.flags.q.explicit_numviews) {
+      this->num_views = q.num_views;
+      unsigned num_views;
+      if (process_qualifier_constant(state, loc, "num_views",
+                                     this->num_views, &num_views)){
+         if (!validate_view_qualifier(loc, state, num_views)){
+            _mesa_glsl_error(loc, state, "Invalid num_views specified");
+         }
+         state->view_mask = BITFIELD_MASK(num_views);
+      }
+   }
+
    return r;
 }
 
@@ -550,6 +600,25 @@ ast_type_qualifier::validate_out_qualifier(YYLTYPE *loc,
    case MESA_SHADER_FRAGMENT:
       valid_out_mask.flags.q.blend_support = 1;
       break;
+   case MESA_SHADER_MESH:
+      if (this->flags.q.prim_type) {
+         /* Make sure this is a valid output primitive type. */
+         switch (this->prim_type) {
+         case GL_POINTS:
+         case GL_LINES:
+         case GL_TRIANGLES:
+            break;
+         default:
+            r = false;
+            _mesa_glsl_error(loc, state, "invalid mesh shader output "
+                             "primitive type");
+            break;
+         }
+      }
+      valid_out_mask.flags.q.max_vertices = 1;
+      valid_out_mask.flags.q.max_primitives = 1;
+      valid_out_mask.flags.q.prim_type = 1;
+      break;
    default:
       r = false;
       _mesa_glsl_error(loc, state,
@@ -582,6 +651,9 @@ ast_type_qualifier::merge_into_out_qualifier(YYLTYPE *loc,
    case MESA_SHADER_TESS_CTRL:
       node = new(state->linalloc) ast_tcs_output_layout(*loc);
       break;
+   case MESA_SHADER_MESH:
+      node = new(state->linalloc) ast_ms_output_layout(*loc);
+      break;
    default:
       break;
    }
@@ -602,6 +674,12 @@ ast_type_qualifier::validate_in_qualifier(YYLTYPE *loc,
    valid_in_mask.flags.i = 0;
 
    switch (state->stage) {
+   case MESA_SHADER_VERTEX:
+      if (this->flags.q.explicit_numviews){
+          valid_in_mask.flags.q.explicit_numviews = 1;
+          break;
+      }
+      break;
    case MESA_SHADER_TESS_EVAL:
       if (this->flags.q.prim_type) {
          /* Make sure this is a valid input primitive type. */
@@ -659,11 +737,16 @@ ast_type_qualifier::validate_in_qualifier(YYLTYPE *loc,
       valid_in_mask.flags.q.local_size_variable = 1;
       valid_in_mask.flags.q.derivative_group = 1;
       break;
+   case MESA_SHADER_TASK:
+   case MESA_SHADER_MESH:
+      valid_in_mask.flags.q.local_size = 7;
+      break;
    default:
       r = false;
       _mesa_glsl_error(loc, state,
                        "input layout qualifiers only valid in "
-                       "geometry, tessellation, fragment and compute shaders");
+                       "geometry, tessellation, fragment, task, mesh "
+                       "and compute shaders");
       break;
    }
 
@@ -691,7 +774,7 @@ ast_type_qualifier::merge_into_in_qualifier(YYLTYPE *loc,
                                             ast_node* &node)
 {
    bool r = true;
-   void *lin_ctx = state->linalloc;
+   linear_ctx *lin_ctx = state->linalloc;
 
    /* We create the gs_input_layout node before merging so, in the future, no
     * more repeated nodes will be created as we will have the flag set.
@@ -707,6 +790,8 @@ ast_type_qualifier::merge_into_in_qualifier(YYLTYPE *loc,
       state->fs_early_fragment_tests = true;
       state->in_qualifier->flags.q.early_fragment_tests = false;
    }
+
+   state->in_qualifier->flags.q.explicit_numviews = false;
 
    if (state->in_qualifier->flags.q.inner_coverage) {
       state->fs_inner_coverage = true;
@@ -772,8 +857,8 @@ ast_type_qualifier::merge_into_in_qualifier(YYLTYPE *loc,
     * into HIR.
     */
    if (state->in_qualifier->flags.q.local_size) {
-      node = new(lin_ctx) ast_cs_input_layout(*loc,
-                                              state->in_qualifier->local_size);
+      node = new(lin_ctx) ast_cs_ms_input_layout(*loc,
+                                                 state->in_qualifier->local_size);
       state->in_qualifier->flags.q.local_size = 0;
       for (int i = 0; i < 3; i++)
          state->in_qualifier->local_size[i] = NULL;
@@ -831,79 +916,96 @@ ast_type_qualifier::validate_flags(YYLTYPE *loc,
    if (bad.flags.i == 0)
       return true;
 
+   struct _mesa_string_buffer *buf = _mesa_string_buffer_create(NULL, 100);
+#define Q(f) \
+   if (bad.flags.q.f) \
+      _mesa_string_buffer_append(buf, "" #f)
+#define Q2(f, s) \
+   if (bad.flags.q.f) \
+      _mesa_string_buffer_append(buf, " " #s)
+
+   Q(invariant);
+   Q(precise);
+   Q(constant);
+   Q(attribute);
+   Q(varying);
+   Q(in);
+   Q(out);
+   Q(centroid);
+   Q(sample);
+   Q(patch);
+   Q(uniform);
+   Q(buffer);
+   Q(shared_storage);
+   Q(smooth);
+   Q(flat);
+   Q(noperspective);
+   Q(origin_upper_left);
+   Q(pixel_center_integer);
+   Q(pixel_local_storage);
+   Q2(explicit_align, align);
+   Q2(explicit_component, component);
+   Q2(explicit_location, location);
+   Q2(explicit_index, index);
+   Q2(explicit_binding, binding);
+   Q2(explicit_offset, offset);
+   Q(depth_type);
+   Q(std140);
+   Q(std430);
+   Q(shared);
+   Q(packed);
+   Q(column_major);
+   Q(row_major);
+   Q(prim_type);
+   Q(max_vertices);
+   Q(local_size);
+   Q(local_size_variable);
+   Q(early_fragment_tests);
+   Q2(explicit_image_format, image_format);
+   Q(coherent);
+   Q2(_volatile, volatile);
+   Q(restrict_flag);
+   Q(read_only);
+   Q(write_only);
+   Q(invocations);
+   Q(stream);
+   Q(stream);
+   Q2(explicit_xfb_offset, xfb_offset);
+   Q2(xfb_buffer, xfb_buffer);
+   Q2(explicit_xfb_buffer, xfb_buffer);
+   Q2(xfb_stride, xfb_stride);
+   Q2(explicit_xfb_stride, xfb_stride);
+   Q2(explicit_numviews, num_views);
+   Q(vertex_spacing);
+   Q(ordering);
+   Q(point_mode);
+   Q(vertices);
+   Q(subroutine);
+   Q(blend_support);
+   Q(inner_coverage);
+   Q(bindless_sampler);
+   Q(bindless_image);
+   Q(bound_sampler);
+   Q(bound_image);
+   Q(post_depth_coverage);
+   Q(pixel_interlock_ordered);
+   Q(pixel_interlock_unordered);
+   Q(sample_interlock_ordered);
+   Q(sample_interlock_unordered);
+   Q2(non_coherent, noncoherent);
+   Q(task_payload);
+   Q(per_primitive);
+   Q(max_primitives);
+
+#undef Q
+#undef Q2
+
    _mesa_glsl_error(loc, state,
-                    "%s '%s':"
-                    "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s"
-                    "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s"
-                    "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
+                    "%s '%s': %s\n",
                     message, name,
-                    bad.flags.q.invariant ? " invariant" : "",
-                    bad.flags.q.precise ? " precise" : "",
-                    bad.flags.q.constant ? " constant" : "",
-                    bad.flags.q.attribute ? " attribute" : "",
-                    bad.flags.q.varying ? " varying" : "",
-                    bad.flags.q.in ? " in" : "",
-                    bad.flags.q.out ? " out" : "",
-                    bad.flags.q.centroid ? " centroid" : "",
-                    bad.flags.q.sample ? " sample" : "",
-                    bad.flags.q.patch ? " patch" : "",
-                    bad.flags.q.uniform ? " uniform" : "",
-                    bad.flags.q.buffer ? " buffer" : "",
-                    bad.flags.q.shared_storage ? " shared_storage" : "",
-                    bad.flags.q.smooth ? " smooth" : "",
-                    bad.flags.q.flat ? " flat" : "",
-                    bad.flags.q.noperspective ? " noperspective" : "",
-                    bad.flags.q.origin_upper_left ? " origin_upper_left" : "",
-                    bad.flags.q.pixel_center_integer ? " pixel_center_integer" : "",
-                    bad.flags.q.explicit_align ? " align" : "",
-                    bad.flags.q.explicit_component ? " component" : "",
-                    bad.flags.q.explicit_location ? " location" : "",
-                    bad.flags.q.explicit_index ? " index" : "",
-                    bad.flags.q.explicit_binding ? " binding" : "",
-                    bad.flags.q.explicit_offset ? " offset" : "",
-                    bad.flags.q.depth_type ? " depth_type" : "",
-                    bad.flags.q.std140 ? " std140" : "",
-                    bad.flags.q.std430 ? " std430" : "",
-                    bad.flags.q.shared ? " shared" : "",
-                    bad.flags.q.packed ? " packed" : "",
-                    bad.flags.q.column_major ? " column_major" : "",
-                    bad.flags.q.row_major ? " row_major" : "",
-                    bad.flags.q.prim_type ? " prim_type" : "",
-                    bad.flags.q.max_vertices ? " max_vertices" : "",
-                    bad.flags.q.local_size ? " local_size" : "",
-                    bad.flags.q.local_size_variable ? " local_size_variable" : "",
-                    bad.flags.q.early_fragment_tests ? " early_fragment_tests" : "",
-                    bad.flags.q.explicit_image_format ? " image_format" : "",
-                    bad.flags.q.coherent ? " coherent" : "",
-                    bad.flags.q._volatile ? " _volatile" : "",
-                    bad.flags.q.restrict_flag ? " restrict_flag" : "",
-                    bad.flags.q.read_only ? " read_only" : "",
-                    bad.flags.q.write_only ? " write_only" : "",
-                    bad.flags.q.invocations ? " invocations" : "",
-                    bad.flags.q.stream ? " stream" : "",
-                    bad.flags.q.explicit_stream ? " stream" : "",
-                    bad.flags.q.explicit_xfb_offset ? " xfb_offset" : "",
-                    bad.flags.q.xfb_buffer ? " xfb_buffer" : "",
-                    bad.flags.q.explicit_xfb_buffer ? " xfb_buffer" : "",
-                    bad.flags.q.xfb_stride ? " xfb_stride" : "",
-                    bad.flags.q.explicit_xfb_stride ? " xfb_stride" : "",
-                    bad.flags.q.vertex_spacing ? " vertex_spacing" : "",
-                    bad.flags.q.ordering ? " ordering" : "",
-                    bad.flags.q.point_mode ? " point_mode" : "",
-                    bad.flags.q.vertices ? " vertices" : "",
-                    bad.flags.q.subroutine ? " subroutine" : "",
-                    bad.flags.q.blend_support ? " blend_support" : "",
-                    bad.flags.q.inner_coverage ? " inner_coverage" : "",
-                    bad.flags.q.bindless_sampler ? " bindless_sampler" : "",
-                    bad.flags.q.bindless_image ? " bindless_image" : "",
-                    bad.flags.q.bound_sampler ? " bound_sampler" : "",
-                    bad.flags.q.bound_image ? " bound_image" : "",
-                    bad.flags.q.post_depth_coverage ? " post_depth_coverage" : "",
-                    bad.flags.q.pixel_interlock_ordered ? " pixel_interlock_ordered" : "",
-                    bad.flags.q.pixel_interlock_unordered ? " pixel_interlock_unordered": "",
-                    bad.flags.q.sample_interlock_ordered ? " sample_interlock_ordered": "",
-                    bad.flags.q.sample_interlock_unordered ? " sample_interlock_unordered": "",
-                    bad.flags.q.non_coherent ? " noncoherent" : "");
+                    buf->buf);
+   _mesa_string_buffer_destroy(buf);
+
    return false;
 }
 
@@ -920,18 +1022,18 @@ ast_layout_expression::process_qualifier_constant(struct _mesa_glsl_parse_state 
    if (!can_be_zero)
       min_value = 1;
 
-   for (exec_node *node = layout_const_expressions.get_head_raw();
+   for (ir_exec_node *node = layout_const_expressions.get_head_raw();
         !node->is_tail_sentinel(); node = node->next) {
 
-      exec_list dummy_instructions;
-      ast_node *const_expression = exec_node_data(ast_node, node, link);
+      ir_exec_list dummy_instructions;
+      ast_node *const_expression = ir_exec_node_data(ast_node, node, link);
 
       ir_rvalue *const ir = const_expression->hir(&dummy_instructions, state);
 
       ir_constant *const const_int =
-         ir->constant_expression_value(ralloc_parent(ir));
+         ir->constant_expression_value(state->linalloc);
 
-      if (const_int == NULL || !const_int->type->is_integer_32()) {
+      if (const_int == NULL || !glsl_type_is_integer_32(const_int->type)) {
          YYLTYPE loc = const_expression->get_location();
          _mesa_glsl_error(&loc, state, "%s must be an integral constant "
                           "expression", qual_indentifier);
@@ -976,7 +1078,7 @@ process_qualifier_constant(struct _mesa_glsl_parse_state *state,
                            ast_expression *const_expression,
                            unsigned *value)
 {
-   exec_list dummy_instructions;
+   ir_exec_list dummy_instructions;
 
    if (const_expression == NULL) {
       *value = 0;
@@ -986,8 +1088,8 @@ process_qualifier_constant(struct _mesa_glsl_parse_state *state,
    ir_rvalue *const ir = const_expression->hir(&dummy_instructions, state);
 
    ir_constant *const const_int =
-      ir->constant_expression_value(ralloc_parent(ir));
-   if (const_int == NULL || !const_int->type->is_integer_32()) {
+      ir->constant_expression_value(state->linalloc);
+   if (const_int == NULL || !glsl_type_is_integer_32(const_int->type)) {
       _mesa_glsl_error(loc, state, "%s must be an integral constant "
                        "expression", qual_indentifier);
       return false;

@@ -34,7 +34,10 @@
 #include <string.h>
 #include "util/ralloc.h"
 #include "util/strtod.h"
+#include "util/u_range_remap.h"
 #include "main/mtypes.h"
+#include "string_to_uint_map.h"
+#include "pipe/p_screen.h"
 
 void
 _mesa_warning(struct gl_context *ctx, const char *fmt, ...)
@@ -55,7 +58,7 @@ _mesa_warning(struct gl_context *ctx, const char *fmt, ...)
 }
 
 void
-_mesa_problem(struct gl_context *ctx, const char *fmt, ...)
+_mesa_problem(const struct gl_context *ctx, const char *fmt, ...)
 {
     va_list vargs;
     (void) ctx;
@@ -73,11 +76,9 @@ _mesa_problem(struct gl_context *ctx, const char *fmt, ...)
 }
 
 void
-_mesa_reference_shader_program_data(struct gl_context *ctx,
-                                    struct gl_shader_program_data **ptr,
+_mesa_reference_shader_program_data(struct gl_shader_program_data **ptr,
                                     struct gl_shader_program_data *data)
 {
-   (void) ctx;
    *ptr = data;
 }
 
@@ -104,7 +105,7 @@ _mesa_shader_debug(struct gl_context *, GLenum, GLuint *,
 }
 
 struct gl_shader *
-_mesa_new_shader(GLuint name, gl_shader_stage stage)
+_mesa_new_shader(GLuint name, mesa_shader_stage stage)
 {
    struct gl_shader *shader;
 
@@ -142,6 +143,8 @@ void
 _mesa_delete_linked_shader(struct gl_context *,
                            struct gl_linked_shader *sh)
 {
+   ralloc_free(sh->Program->nir);
+   ralloc_free(sh->Program);
    ralloc_free(sh);
 }
 
@@ -149,7 +152,7 @@ void
 _mesa_clear_shader_program_data(struct gl_context *ctx,
                                 struct gl_shader_program *shProg)
 {
-   for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
+   for (unsigned i = 0; i < MESA_SHADER_MESH_STAGES; i++) {
       if (shProg->_LinkedShaders[i] != NULL) {
          _mesa_delete_linked_shader(ctx, shProg->_LinkedShaders[i]);
          shProg->_LinkedShaders[i] = NULL;
@@ -158,9 +161,8 @@ _mesa_clear_shader_program_data(struct gl_context *ctx,
 
    shProg->data->NumUniformStorage = 0;
    shProg->data->UniformStorage = NULL;
-   shProg->NumUniformRemapTable = 0;
-   shProg->UniformRemapTable = NULL;
-   shProg->UniformHash = NULL;
+   shProg->UniformRemapTable =
+      util_reset_range_remap(shProg->UniformRemapTable);
 
    ralloc_free(shProg->data->InfoLog);
    shProg->data->InfoLog = ralloc_strdup(shProg->data, "");
@@ -178,13 +180,33 @@ _mesa_clear_shader_program_data(struct gl_context *ctx,
    shProg->data->NumAtomicBuffers = 0;
 }
 
+
+static void
+init_gl_program(struct gl_program *prog, bool is_arb_asm, mesa_shader_stage stage)
+{
+   prog->RefCount = 1;
+   prog->Format = GL_PROGRAM_FORMAT_ASCII_ARB;
+   prog->info.use_legacy_math_rules = is_arb_asm;
+   prog->info.stage = stage;
+}
+
+static struct gl_program *
+standalone_new_program(UNUSED struct gl_context *ctx, mesa_shader_stage stage,
+                       UNUSED GLuint id, bool is_arb_asm)
+{
+   struct gl_program *prog = rzalloc(NULL, struct gl_program);
+   init_gl_program(prog, is_arb_asm, stage);
+   return prog;
+}
+
 void initialize_context_to_defaults(struct gl_context *ctx, gl_api api)
 {
    memset(ctx, 0, sizeof(*ctx));
 
+   ctx->screen = (struct pipe_screen*)calloc(1, sizeof(struct pipe_screen));
+
    ctx->API = api;
 
-   ctx->Extensions.dummy_false = false;
    ctx->Extensions.dummy_true = true;
    ctx->Extensions.ARB_compute_shader = true;
    ctx->Extensions.ARB_compute_variable_group_size = true;
@@ -204,7 +226,6 @@ void initialize_context_to_defaults(struct gl_context *ctx, gl_api api)
    ctx->Extensions.ARB_shader_stencil_export = true;
    ctx->Extensions.ARB_shader_texture_lod = true;
    ctx->Extensions.ARB_shading_language_420pack = true;
-   ctx->Extensions.ARB_shading_language_packing = true;
    ctx->Extensions.ARB_tessellation_shader = true;
    ctx->Extensions.ARB_texture_cube_map_array = true;
    ctx->Extensions.ARB_texture_gather = true;
@@ -218,9 +239,11 @@ void initialize_context_to_defaults(struct gl_context *ctx, gl_api api)
 
    ctx->Extensions.OES_EGL_image_external = true;
    ctx->Extensions.OES_standard_derivatives = true;
+   ctx->Extensions.OES_texture_3D = true;
 
    ctx->Extensions.EXT_gpu_shader4 = true;
    ctx->Extensions.EXT_shader_integer_mix = true;
+   ctx->Extensions.EXT_shadow_samplers = true;
    ctx->Extensions.EXT_texture_array = true;
 
    ctx->Extensions.MESA_shader_integer_functions = true;
@@ -262,21 +285,71 @@ void initialize_context_to_defaults(struct gl_context *ctx, gl_api api)
    ctx->Const.Program[MESA_SHADER_COMPUTE].MaxInputComponents = 0; /* not used */
    ctx->Const.Program[MESA_SHADER_COMPUTE].MaxOutputComponents = 0; /* not used */
 
-   /* Set up default shader compiler options. */
-   struct gl_shader_compiler_options options;
-   memset(&options, 0, sizeof(options));
-   options.MaxUnrollIterations = 32;
-   options.MaxIfDepth = UINT_MAX;
+   ctx->Const.MaxUniformBlockSize = 16384;
 
-   for (int sh = 0; sh < MESA_SHADER_STAGES; ++sh)
-      memcpy(&ctx->Const.ShaderCompilerOptions[sh], &options, sizeof(options));
-
-   _mesa_locale_init();
+   ctx->Driver.NewProgram = standalone_new_program;
 }
 
-/* glsl-optimizer change: standalone allocation diagnostics need no Mesa driver. */
-extern "C" void
-_mesa_error_no_memory(const char *caller)
+struct gl_shader_program *
+standalone_create_shader_program(void)
 {
-   fprintf(stderr, "Mesa: out of memory in %s\n", caller);
+   struct gl_shader_program *whole_program;
+
+   whole_program = rzalloc (NULL, struct gl_shader_program);
+   assert(whole_program != NULL);
+   whole_program->data = rzalloc(whole_program, struct gl_shader_program_data);
+   assert(whole_program->data != NULL);
+   whole_program->data->InfoLog = ralloc_strdup(whole_program->data, "");
+
+   /* Created just to avoid segmentation faults */
+   whole_program->AttributeBindings = new string_to_uint_map;
+   whole_program->FragDataBindings = new string_to_uint_map;
+   whole_program->FragDataIndexBindings = new string_to_uint_map;
+
+   whole_program->UniformRemapTable = util_create_range_remap();
+   ir_exec_list_make_empty(&whole_program->EmptyUniformLocations);
+
+   return whole_program;
+}
+
+void
+standalone_destroy_shader_program(struct gl_shader_program *whole_program)
+{
+   for (unsigned i = 0; i < whole_program->NumShaders; i++) {
+         ralloc_free(whole_program->Shaders[i]->nir);
+   }
+
+   for (unsigned i = 0; i < MESA_SHADER_MESH_STAGES; i++) {
+      if (whole_program->_LinkedShaders[i]) {
+         /* glsl-optimizer change: no program parameter lists (never allocated) */
+         _mesa_delete_linked_shader(NULL, whole_program->_LinkedShaders[i]);
+      }
+   }
+
+   delete whole_program->AttributeBindings;
+   delete whole_program->FragDataBindings;
+   delete whole_program->FragDataIndexBindings;
+
+   ralloc_free(whole_program->UniformRemapTable);
+   ralloc_free(whole_program);
+}
+
+struct gl_shader *
+standalone_add_shader_source(struct gl_context *ctx, struct gl_shader_program *whole_program, GLenum type, const char *source)
+{
+/* glsl-optimizer change: no source hashes */
+   struct gl_shader *shader = rzalloc(whole_program, gl_shader);
+   shader->Type = type;
+   shader->Stage = _mesa_shader_enum_to_shader_stage(type);
+   shader->Source = source;
+   /* glsl-optimizer change: no source hashes (blake3) */
+
+   whole_program->Shaders = reralloc(whole_program, whole_program->Shaders,
+                                     struct gl_shader *, whole_program->NumShaders + 1);
+   assert(whole_program->Shaders != NULL);
+
+   whole_program->Shaders[whole_program->NumShaders] = shader;
+   whole_program->NumShaders++;
+
+   return shader;
 }
