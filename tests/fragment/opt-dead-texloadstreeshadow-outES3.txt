@@ -1,9 +1,10 @@
 #version 300 es
-layout(location=0) out mediump vec4 _glesFragData[4];
+precision highp float;
+precision highp int;
+layout(location = 0) out mediump vec4 _glesFragData[4];
 void main ()
 {
-  _glesFragData[0] = vec4(0.0, 0.0, 0.0, 0.0);
+  _glesFragData[0] = vec4(0.0);
 }
 
-
-// stats: 1 alu 0 tex 0 flow
+// stats: 0 alu 0 tex 0 flow

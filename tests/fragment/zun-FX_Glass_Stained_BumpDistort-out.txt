@@ -5,23 +5,13 @@ uniform vec4 _GrabTexture_TexelSize;
 uniform sampler2D _MainTex;
 void main ()
 {
-  vec4 xlt_i_uvgrab_1;
-  xlt_i_uvgrab_1 = gl_TexCoord[0];
-  vec4 tmpvar_2;
-  tmpvar_2.zw = xlt_i_uvgrab_1.zw;
-  vec4 normal_3;
-  normal_3.xy = ((texture2D (_BumpMap, gl_TexCoord[1].xy).wy * 2.0) - 1.0);
-  normal_3.z = sqrt(((1.0 - 
-    (normal_3.x * normal_3.x)
-  ) - (normal_3.y * normal_3.y)));
-  tmpvar_2.xy = (((normal_3.xy * _BumpAmt) * (_GrabTexture_TexelSize.xy * xlt_i_uvgrab_1.z)) + xlt_i_uvgrab_1.xy);
-  gl_FragData[0] = (texture2DProj (_GrabTexture, vec3(tmpvar_2.xy, xlt_i_uvgrab_1.w)) * texture2D (_MainTex, gl_TexCoord[2].xy));
+  vec4 t0 = texture2DProj(_GrabTexture, vec3(((((((texture2D(_BumpMap, gl_TexCoord[1].xy).wy * 2.0) - 1.0) * _BumpAmt) * _GrabTexture_TexelSize.xy) * gl_TexCoord[0].z) + gl_TexCoord[0].xy), gl_TexCoord[0].w));
+  gl_FragData[0] = (t0 * texture2D(_MainTex, gl_TexCoord[2].xy));
 }
 
-
-// stats: 12 alu 3 tex 0 flow
+// stats: 6 alu 3 tex 0 flow
 // inputs: 1
-//  #0: gl_TexCoord (high float) 4x1 [3] loc 4
+//  #0: gl_TexCoord (high float) 4x1 [0] loc 4
 // uniforms: 2 (total size: 0)
 //  #0: _BumpAmt (high float) 1x1 [-1]
 //  #1: _GrabTexture_TexelSize (high float) 4x1 [-1]

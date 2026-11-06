@@ -1,5 +1,7 @@
 #version 310 es
-layout(std430, column_major) buffer Data {
+precision highp float;
+precision highp int;
+layout(std430) buffer Data {
   highp int unused;
   highp int index;
   highp ivec4 values[];
@@ -8,26 +10,13 @@ uniform highp int element;
 out highp vec4 color;
 void main ()
 {
-  highp int i_1;
-  highp int tmpvar_2;
-  tmpvar_2 = atomicAdd (data.values[element].yx[0], 1);
-  highp int tmpvar_3;
-  tmpvar_3 = atomicExchange (data.values[element].yx[data.index], 2);
-  highp int tmpvar_4;
-  tmpvar_4 = atomicCompSwap (data.values[element].zw[data.index], 3, 4);
-  highp int tmpvar_5;
-  tmpvar_5 = data.index;
-  i_1 = (tmpvar_5 + 1);
-  highp int tmpvar_6;
-  tmpvar_6 = atomicOr (data.values[element].zy[tmpvar_5], 8);
-  highp vec4 tmpvar_7;
-  tmpvar_7.x = float(tmpvar_2);
-  tmpvar_7.y = float(tmpvar_3);
-  tmpvar_7.z = float(tmpvar_4);
-  tmpvar_7.w = float(i_1);
-  color = tmpvar_7;
+  highp int t0 = atomicAdd(data.values[element][0], 1);
+  highp int t1 = atomicExchange(data.values[element][data.index], 2);
+  highp int t2 = atomicCompSwap(data.values[element][data.index], 3, 4);
+  highp int t3 = data.index;
+  atomicOr(data.values[element][t3], 8);
+  color = vec4(float(t0), float(t1), float(t2), float((t3 + 1)));
 }
-
 
 // stats: 5 alu 0 tex 0 flow
 // uniforms: 1 (total size: 0)

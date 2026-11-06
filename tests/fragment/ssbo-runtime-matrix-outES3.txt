@@ -1,18 +1,17 @@
 #version 310 es
+precision highp float;
+precision highp int;
 layout(std140, row_major) buffer Input {
   readonly highp float bias;
-  layout(row_major) readonly highp mat2x3 matrices[];
+  readonly highp mat2x3 matrices[];
 } source;
 uniform highp int index;
 out highp vec4 color;
 void main ()
 {
-  highp vec4 tmpvar_1;
-  tmpvar_1.xyz = ((source.matrices[index] * vec2(1.0, 2.0)) + vec3(source.bias));
-  tmpvar_1.w = float(source.matrices.length());
-  color = tmpvar_1;
+  highp vec3 t0 = ((source.matrices[index][0] + source.bias) + (source.matrices[index][1] * 2.0));
+  color = vec4(t0, float(source.matrices.length()));
 }
-
 
 // stats: 4 alu 0 tex 0 flow
 // uniforms: 1 (total size: 0)

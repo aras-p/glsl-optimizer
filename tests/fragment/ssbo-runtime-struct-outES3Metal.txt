@@ -1,32 +1,18 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
-struct Entry {
-  float3 color;
+struct _xlat_element_float2_16 { float2 value; char _pad[8]; };
+struct _xlat_Entry_std140 {
+  packed_float3 color;
   float weight;
-  float2 pairs[2];
+  _xlat_element_float2_16 pairs[2];
 };
-struct alignas(16) _xlat_buf_storage2_element { float2 value; };
-struct _xlat_buf_storage2 { _xlat_buf_storage2_element elements[2]; };
-static_assert(sizeof(_xlat_buf_storage2) == 32, "std140 size");
-struct alignas(16) _xlat_buf_storage1 {
-  alignas(16) packed_float3 color;
-  alignas(4) float weight;
-  alignas(16) _xlat_buf_storage2 pairs;
+static_assert(sizeof(_xlat_Entry_std140) == 48, "std140 size");
+struct _xlat_buf_Data_std140 {
+  int index;
+  char _pad0[12];
+  _xlat_Entry_std140 entries[1];
 };
-static_assert(sizeof(_xlat_buf_storage1) == 48, "std140 size");
-inline __attribute__((always_inline)) Entry _xlat_buf_storage1_read(const device _xlat_buf_storage1& storage)
-{
-  Entry value;
-  value.color = float3(storage.color);
-  value.weight = float(storage.weight);
-  for (uint _buf_i0 = 0; _buf_i0 < 2; ++_buf_i0) {
-    value.pairs[_buf_i0] = float2(storage.pairs.elements[_buf_i0].value);
-  }
-  return value;
-}
-struct alignas(16) _xlat_buf_storage0_element { _xlat_buf_storage1 value; };
-static_assert(sizeof(_xlat_buf_storage0_element) == 48, "array stride");
 struct xlatMtlShaderInput {
 };
 struct xlatMtlShaderOutput {
@@ -35,20 +21,17 @@ struct xlatMtlShaderOutput {
 struct xlatMtlShaderUniform {
 };
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , device uchar* _mtl_buffer1 [[buffer(1)]]
+  , device _xlat_buf_Data_std140& _xlat_blk_Data [[buffer(1)]]
   , constant uint* _mtl_buffer_sizes [[buffer(2)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 16)[int((*reinterpret_cast<device int*>(_mtl_buffer1 + 0)))].value.weight = float(float2(reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 16)[int((*reinterpret_cast<device int*>(_mtl_buffer1 + 0)))].value.pairs.elements[1].value).x);
-  float4 tmpvar_1 = 0;
-  tmpvar_1.xyz = (float3(reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 16)[int((*reinterpret_cast<device int*>(_mtl_buffer1 + 0)))].value.color) * float(reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 16)[int((*reinterpret_cast<device int*>(_mtl_buffer1 + 0)))].value.weight));
-  tmpvar_1.w = float(int((max(_mtl_buffer_sizes[1u], 16u) - 16u) / 48u));
-  _mtl_o.color = tmpvar_1;
+  _xlat_blk_Data.entries[int(_xlat_blk_Data.index)].weight = float2(_xlat_blk_Data.entries[int(_xlat_blk_Data.index)].pairs[1].value).x;
+  float3 t0 = (float3(_xlat_blk_Data.entries[int(_xlat_blk_Data.index)].color) * float(_xlat_blk_Data.entries[int(_xlat_blk_Data.index)].weight));
+  _mtl_o.color = float4(t0, float((max(int(_mtl_buffer_sizes[1]) - 16, 0) / 48)));
   return _mtl_o;
 }
 
-
-// stats: 3 alu 0 tex 0 flow
+// stats: 2 alu 0 tex 0 flow
 // buffer #0: Data storage layout std140 (size: unknown) metal 1 metal-size-buffer 2
 //  member #0: int index offset 0
 //  member #1: Entry[] entries offset 16 array runtime stride 48

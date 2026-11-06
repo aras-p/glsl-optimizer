@@ -7,27 +7,16 @@ uniform highp vec3 _TerrainTreeLightDirections[4];
 out highp vec3 xlv_TEXCOORD2;
 void main ()
 {
-  highp vec3 viewDir_1;
-  highp vec3 o_backContrib_2;
-  highp vec4 tmpvar_3;
-  tmpvar_3.w = 1.0;
-  tmpvar_3.xyz = _WorldSpaceCameraPos;
-  viewDir_1 = normalize(((_World2Object * tmpvar_3).xyz - _glesVertex.xyz));
-  mediump float backContrib_4;
-  backContrib_4 = clamp (dot (viewDir_1, -(_TerrainTreeLightDirections[0])), 0.0, 1.0);
-  o_backContrib_2[0] = (backContrib_4 * 2.0);
-  mediump float backContrib_5;
-  backContrib_5 = clamp (dot (viewDir_1, -(_TerrainTreeLightDirections[1])), 0.0, 1.0);
-  o_backContrib_2[1] = (backContrib_5 * 2.0);
-  mediump float backContrib_6;
-  backContrib_6 = clamp (dot (viewDir_1, -(_TerrainTreeLightDirections[2])), 0.0, 1.0);
-  o_backContrib_2[2] = (backContrib_6 * 2.0);
+  highp vec3 t0 = ((_World2Object * vec4(_WorldSpaceCameraPos, 1.0)).xyz - _glesVertex.xyz);
+  highp vec3 t1 = normalize(t0);
+  mediump float t2 = clamp(dot(t1, (-_TerrainTreeLightDirections[0])), 0.0, 1.0);
+  mediump float t3 = clamp(dot(t1, (-_TerrainTreeLightDirections[1])), 0.0, 1.0);
+  mediump float t4 = clamp(dot(t1, (-_TerrainTreeLightDirections[2])), 0.0, 1.0);
   gl_Position = (glstate_matrix_mvp * _glesVertex);
-  xlv_TEXCOORD2 = o_backContrib_2;
+  xlv_TEXCOORD2 = (2.0 * mix(mix(vec3(t2), vec3(t3), bvec3(false, true, false)), vec3(t4), bvec3(false, false, true)));
 }
 
-
-// stats: 20 alu 0 tex 0 flow
+// stats: 29 alu 0 tex 0 flow
 // inputs: 1
 //  #0: _glesVertex (high float) 4x1 [-1]
 // uniforms: 4 (total size: 0)

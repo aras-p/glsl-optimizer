@@ -1,23 +1,16 @@
 #version 300 es
+precision highp float;
+precision highp int;
 out mediump vec4 _fragData;
 in mediump vec4 uv;
 void main ()
 {
-  mediump vec4 c_1;
-  c_1 = (uv + gl_FragCoord);
-  highp float tmpvar_2;
-  if (gl_FrontFacing) {
-    tmpvar_2 = 1.0;
-  } else {
-    tmpvar_2 = 0.0;
-  };
-  c_1.x = (c_1.x + tmpvar_2);
-  c_1.xy = (c_1.xy + gl_PointCoord);
-  _fragData = c_1;
+  mediump vec4 t0 = (uv + gl_FragCoord);
+  mediump vec2 t1 = (vec2((t0.x + float(gl_FrontFacing)), t0.y) + gl_PointCoord);
+  _fragData = vec4(t1, t0.zw);
 }
 
-
-// stats: 5 alu 0 tex 1 flow
+// stats: 4 alu 0 tex 0 flow
 // inputs: 4
 //  #0: gl_PointCoord (medium float) 2x1 [-1] loc 25
 //  #1: gl_FrontFacing (high bool) 1x1 [-1] loc 24

@@ -1,4 +1,6 @@
 #version 300 es
+precision highp float;
+precision highp int;
 out mediump vec4 _fragData;
 uniform mediump vec3 _WorldSpaceCameraPos;
 uniform mediump sampler2D _MainTex;
@@ -26,154 +28,55 @@ in mediump vec3 xlv_TEXCOORD4;
 in mediump vec4 xlv_TEXCOORD5;
 void main ()
 {
-  mediump vec3 lightDir_1;
-  mediump vec3 env_2;
-  mediump vec3 eyeVec_3;
-  mediump vec3 normalWorld_4;
-  mediump vec3 tmpvar_5;
-  tmpvar_5 = (((xlv_TEXCOORD2.yzx * xlv_TEXCOORD3.zxy) - (xlv_TEXCOORD2.zxy * xlv_TEXCOORD3.yzx)) * xlv_TEXCOORD3.www);
-  mediump mat3 tmpvar_6;
-  tmpvar_6[uint(0)].x = xlv_TEXCOORD3.xyz[0];
-  tmpvar_6[uint(0)].y = tmpvar_5[0];
-  tmpvar_6[uint(0)].z = xlv_TEXCOORD2[0];
-  tmpvar_6[1u].x = xlv_TEXCOORD3.xyz[1];
-  tmpvar_6[1u].y = tmpvar_5[1];
-  tmpvar_6[1u].z = xlv_TEXCOORD2[1];
-  tmpvar_6[2u].x = xlv_TEXCOORD3.xyz[2];
-  tmpvar_6[2u].y = tmpvar_5[2];
-  tmpvar_6[2u].z = xlv_TEXCOORD2[2];
-  mediump vec3 normal_7;
-  normal_7.xy = ((texture (_BumpMap, xlv_TEXCOORD0.xy).wy * 2.0) - 1.0);
-  normal_7.xy = (normal_7.xy * _BumpScale);
-  normal_7.z = sqrt((1.0 - clamp (
-    dot (normal_7.xy, normal_7.xy)
-  , 0.0, 1.0)));
-  mediump vec3 normal_8;
-  normal_8.xy = ((texture (_DetailNormalMap, xlv_TEXCOORD0.zw).wy * 2.0) - 1.0);
-  normal_8.xy = (normal_8.xy * _DetailNormalMapScale);
-  normal_8.z = sqrt((1.0 - clamp (
-    dot (normal_8.xy, normal_8.xy)
-  , 0.0, 1.0)));
-  mediump vec3 tmpvar_9;
-  tmpvar_9.xy = (normal_7.xy + normal_8.xy);
-  tmpvar_9.z = (normal_7.z * normal_8.z);
-  mediump vec3 tmpvar_10;
-  tmpvar_10 = normalize(tmpvar_9);
-  normalWorld_4 = (tmpvar_10 * tmpvar_6);
-  eyeVec_3 = normalize((xlv_TEXCOORD1.xyz - _WorldSpaceCameraPos));
-  mediump vec4 tmpvar_11;
-  tmpvar_11 = texture (_SpecGlossMap, xlv_TEXCOORD0.xy);
-  mediump float tmpvar_12;
-  tmpvar_12 = dot (tmpvar_11.xyz, vec3(0.299, 0.587, 0.114));
-  mediump float tmpvar_13;
-  tmpvar_13 = (1.0 - tmpvar_11.w);
-  mediump vec4 tmpvar_14;
-  tmpvar_14.xyz = (eyeVec_3 - (2.0 * (
-    dot (normalWorld_4, eyeVec_3)
-   * normalWorld_4)));
-  tmpvar_14.w = (tmpvar_13 * 5.0);
-  mediump vec4 tmpvar_15;
-  tmpvar_15 = textureLod (_SpecCube, tmpvar_14.xyz, tmpvar_14.w);
-  mediump float tmpvar_16;
-  tmpvar_16 = (tmpvar_15.w * tmpvar_15.w);
-  mediump vec2 tmpvar_17;
-  tmpvar_17.x = tmpvar_16;
-  tmpvar_17.y = (tmpvar_15.w * tmpvar_16);
-  env_2 = (((tmpvar_15.xyz * 
-    dot (vec2(0.7532, 0.2468), tmpvar_17)
-  ) * _Exposure) * texture (_Occlusion, xlv_TEXCOORD0.xy).x);
-  mediump vec4 tmpvar_18;
-  tmpvar_18 = texture (unity_Lightmap, xlv_TEXCOORD4.xy);
-  mediump vec4 tmpvar_19;
-  tmpvar_19 = texture (unity_LightmapInd, xlv_TEXCOORD4.xy);
-  mediump mat3 tmpvar_20;
-  tmpvar_20[uint(0)].x = 0.816497;
-  tmpvar_20[uint(0)].y = -0.408248;
-  tmpvar_20[uint(0)].z = -0.408248;
-  tmpvar_20[1u].x = 0.0;
-  tmpvar_20[1u].y = 0.707107;
-  tmpvar_20[1u].z = -0.707107;
-  tmpvar_20[2u].x = 0.57735;
-  tmpvar_20[2u].y = 0.57735;
-  tmpvar_20[2u].z = 0.57735;
-  mediump vec3 tmpvar_21;
-  tmpvar_21 = ((8.0 * tmpvar_19.w) * tmpvar_19.xyz);
-  mediump vec3 v_22;
-  v_22.x = tmpvar_20[0][0];
-  v_22.y = tmpvar_20[1][0];
-  v_22.z = tmpvar_20[2][0];
-  mediump vec3 v_23;
-  v_23.x = tmpvar_20[0][1];
-  v_23.y = tmpvar_20[1][1];
-  v_23.z = tmpvar_20[2][1];
-  mediump vec3 v_24;
-  v_24.x = tmpvar_20[0][2];
-  v_24.y = tmpvar_20[1][2];
-  v_24.z = tmpvar_20[2][2];
-  lightDir_1 = (normalize((
-    ((tmpvar_21.x * v_22) + (tmpvar_21.y * v_23))
-   + 
-    (tmpvar_21.z * v_24)
-  )) * tmpvar_6);
-  lightDir_1 = normalize(lightDir_1);
-  mediump vec3 tmpvar_25;
-  tmpvar_25 = (textureProj (_ShadowMapTexture, vec3(xlv_TEXCOORD5.xy, xlv_TEXCOORD5.w)).x * ((
-    (8.0 * tmpvar_18.w)
-   * tmpvar_18.xyz) * dot (
-    clamp ((tmpvar_20 * tmpvar_10), 0.0, 1.0)
-  , tmpvar_21)));
-  mediump vec3 tmpvar_26;
-  tmpvar_26 = -(eyeVec_3);
-  mediump float lh_27;
-  mediump float nv_28;
-  mediump vec3 halfDir_29;
-  halfDir_29 = normalize((lightDir_1 + tmpvar_26));
-  mediump float tmpvar_30;
-  tmpvar_30 = max (0.0, dot (normalWorld_4, lightDir_1));
-  mediump float tmpvar_31;
-  tmpvar_31 = max (0.0, dot (normalWorld_4, halfDir_29));
-  nv_28 = max (0.0, dot (normalWorld_4, tmpvar_26));
-  mediump float tmpvar_32;
-  tmpvar_32 = max (0.0, dot (tmpvar_26, halfDir_29));
-  lh_27 = max (0.0, dot (lightDir_1, halfDir_29));
-  mediump float tmpvar_33;
-  tmpvar_33 = (tmpvar_32 + 1e-05);
-  mediump float tmpvar_34;
-  mediump float tmpvar_35;
-  tmpvar_35 = (tmpvar_13 * tmpvar_13);
-  tmpvar_34 = ((1.0/((
-    (tmpvar_35 * tmpvar_35)
-   + 1e-05))) - 2.0);
-  mediump float tmpvar_36;
-  tmpvar_36 = (0.5 + ((2.0 * lh_27) * (lh_27 * tmpvar_13)));
-  mediump vec4 tmpvar_37;
-  tmpvar_37.xyz = (((
-    (min (((_Color.xyz * texture (_MainTex, xlv_TEXCOORD0.xy).xyz) * (2.0 * texture (_DetailAlbedoMap, xlv_TEXCOORD0.zw).xyz)), (vec3(1.0, 1.0, 1.0) - tmpvar_12)) * (((
-      (1.0 + ((tmpvar_36 - 1.0) * pow ((1.00001 - tmpvar_30), 5.0)))
-     * 
-      (1.0 + ((tmpvar_36 - 1.0) * pow ((1.00001 - nv_28), 5.0)))
-    ) * tmpvar_30) * tmpvar_25))
-   + 
-    (tmpvar_11.xyz * (env_2 + (tmpvar_25 * max (0.0, 
-      (((mix (tmpvar_12, 1.0, 
-        pow (abs((1.0 - tmpvar_32)), 5.0)
-      ) * min (1.0, 
-        min ((((2.0 * tmpvar_31) * nv_28) / tmpvar_33), (((2.0 * tmpvar_31) * tmpvar_30) / tmpvar_33))
-      )) * max (0.0, (
-        pow (tmpvar_31, tmpvar_34)
-       * 
-        ((tmpvar_34 + 1.0) / 6.28318)
-      ))) / ((4.0 * nv_28) + 1e-05))
-    ))))
-  ) + (
-    (((1.0 - dot (tmpvar_11.xyz, vec3(0.299, 0.587, 0.114))) * (1.0 - tmpvar_13)) * pow (abs((1.0 - nv_28)), 5.0))
-   * env_2)) + (texture (_SelfIllum, xlv_TEXCOORD0.xy).xyz * _SelfIllumScale));
-  tmpvar_37.w = (texture (_AlphaMap, xlv_TEXCOORD0.xy).w * _Color.w);
-  _fragData = tmpvar_37;
+  mediump vec3 t0 = (((xlv_TEXCOORD2.yzx * xlv_TEXCOORD3.zxy) - (xlv_TEXCOORD2.zxy * xlv_TEXCOORD3.yzx)) * xlv_TEXCOORD3.w);
+  mediump vec2 t1 = xlv_TEXCOORD0.xy;
+  mediump vec2 t2 = (((texture(_BumpMap, t1).wy * 2.0) - 1.0) * _BumpScale);
+  mediump vec2 t3 = xlv_TEXCOORD0.zw;
+  mediump vec2 t4 = (((texture(_DetailNormalMap, t3).wy * 2.0) - 1.0) * _DetailNormalMapScale);
+  mediump vec2 t5 = (t2 + t4);
+  mediump vec3 t6 = vec3(t5, (sqrt((1.0 - clamp(dot(t2, t2), 0.0, 1.0))) * sqrt((1.0 - clamp(dot(t4, t4), 0.0, 1.0)))));
+  mediump vec3 t7 = normalize(t6);
+  mediump vec3 t8 = vec3(xlv_TEXCOORD3.x, t0.x, xlv_TEXCOORD2.x);
+  mediump vec3 t9 = vec3(xlv_TEXCOORD3.y, t0.y, xlv_TEXCOORD2.y);
+  mediump vec3 t10 = vec3(xlv_TEXCOORD3.z, t0.z, xlv_TEXCOORD2.z);
+  mediump vec3 t11 = (xlv_TEXCOORD1.xyz - _WorldSpaceCameraPos);
+  mediump vec3 t12 = normalize(t11);
+  mediump vec4 t13 = texture(_SpecGlossMap, t1);
+  mediump float t14 = dot(t13.xyz, vec3(0.299, 0.587, 0.114));
+  mediump vec3 t15 = vec3(dot(t7, t8), dot(t7, t9), dot(t7, t10));
+  mediump float t16 = (1.0 - t13.w);
+  mediump vec4 t17 = textureLod(_SpecCube, (t12 - ((vec3(dot(t15, t12)) * 2.0) * t15)), (t16 * 5.0));
+  mediump float t18 = (t17.w * t17.w);
+  mediump vec3 t19 = (((t17.xyz * dot(vec2(0.7532, 0.2468), vec2(t18, (t17.w * t18)))) * _Exposure) * texture(_Occlusion, t1).x);
+  mediump vec2 t20 = xlv_TEXCOORD4.xy;
+  mediump vec4 t21 = texture(unity_Lightmap, t20);
+  mediump vec4 t22 = texture(unity_LightmapInd, t20);
+  mediump vec3 t23 = ((8.0 * t22.w) * t22.xyz);
+  mediump vec3 t24 = (mat3(vec3(0.816497, 0.0, 0.57735), vec3(-0.408248, 0.707107, 0.57735), vec3(-0.408248, -0.707107, 0.57735)) * t23);
+  mediump vec3 t25 = normalize(t24);
+  mediump vec3 t26 = vec3(dot(t25, t8), dot(t25, t9), dot(t25, t10));
+  mediump vec3 t27 = normalize(t26);
+  mediump vec3 t28 = (textureProj(_ShadowMapTexture, vec3(xlv_TEXCOORD5.xy, xlv_TEXCOORD5.w)).x * (((8.0 * t21.w) * t21.xyz) * dot(clamp((mat3(vec3(0.816497, -0.408248, -0.408248), vec3(0.0, 0.707107, -0.707107), vec3(0.57735)) * t7), 0.0, 1.0), t23)));
+  mediump vec3 t29 = (t27 - t12);
+  mediump vec3 t30 = normalize(t29);
+  mediump vec3 t31 = (-t12);
+  mediump float t32 = max(0.0, dot(t31, t30));
+  mediump float t33 = max(0.0, dot(t15, t30));
+  mediump float t34 = (2.0 * t33);
+  mediump float t35 = max(0.0, dot(t15, t31));
+  mediump float t36 = (t32 + 1e-05);
+  mediump float t37 = max(0.0, dot(t15, t27));
+  mediump float t38 = (t16 * t16);
+  mediump float t39 = (1.0 / ((t38 * t38) + 1e-05));
+  mediump float t40 = max(0.0, dot(t27, t30));
+  mediump float t41 = (-0.5 + (((t40 * 2.0) * t40) * t16));
+  mediump float t42 = ((mix(t14, 1.0, pow(abs((1.0 - t32)), 5.0)) * min(1.0, min(((t34 * t35) / t36), ((t34 * t37) / t36)))) * max(0.0, (pow(t33, (t39 - 2.0)) * ((-1.0 + t39) / 6.28318))));
+  mediump vec3 t43 = (min(((_Color.xyz * texture(_MainTex, t1).xyz) * (2.0 * texture(_DetailAlbedoMap, t3).xyz)), (vec3(1.0) - t14)) * ((((1.0 + (t41 * pow((1.00001 - t37), 5.0))) * (1.0 + (t41 * pow((1.00001 - t35), 5.0)))) * t37) * t28));
+  mediump vec3 t44 = (((t43 + (t13.xyz * (t19 + (t28 * max(0.0, (t42 / ((4.0 * t35) + 1e-05))))))) + ((((1.0 - t14) * t13.w) * pow(abs((1.0 - t35)), 5.0)) * t19)) + (texture(_SelfIllum, t1).xyz * _SelfIllumScale));
+  _fragData = vec4(t44, (texture(_AlphaMap, t1).w * _Color.w));
 }
 
-
-// stats: 148 alu 12 tex 0 flow
+// stats: 147 alu 12 tex 0 flow
 // inputs: 6
 //  #0: xlv_TEXCOORD0 (medium float) 4x1 [-1]
 //  #1: xlv_TEXCOORD1 (medium float) 4x1 [-1]

@@ -1,5 +1,7 @@
 #version 300 es
-layout(location=0) out mediump vec4 _glesFragData[4];
+precision highp float;
+precision highp int;
+layout(location = 0) out mediump vec4 _glesFragData[4];
 uniform highp vec4 _WorldSpaceLightPos0;
 uniform mediump vec4 _LightColor0;
 uniform mediump sampler2D _LightTexture0;
@@ -11,30 +13,15 @@ in mediump vec3 xlv_TEXCOORD1;
 in highp vec3 xlv_TEXCOORD2;
 void main ()
 {
-  mediump vec4 c_1;
-  mediump vec4 lightCoord_2;
-  mediump vec4 tmpvar_3;
-  tmpvar_3 = texture (_MainTex, xlv_TEXCOORD0);
-  highp vec4 tmpvar_4;
-  tmpvar_4.w = 1.0;
-  tmpvar_4.xyz = xlv_TEXCOORD2;
-  lightCoord_2 = (_LightMatrix0 * tmpvar_4);
-  mediump vec3 tmpvar_5;
-  tmpvar_5 = normalize((_WorldSpaceLightPos0.xyz - xlv_TEXCOORD2));
-  mediump vec4 c_6;
-  c_6.xyz = ((tmpvar_3.xyz * _LightColor0.xyz) * ((
-    max (0.0, dot (xlv_TEXCOORD1, tmpvar_5))
-   * 
-    ((float((0.0 < lightCoord_2.z)) * texture (_LightTexture0, ((lightCoord_2.xy / lightCoord_2.w) + 0.5)).w) * texture (_LightTextureB0, vec2(dot (lightCoord_2.xyz, lightCoord_2.xyz))).w)
-  ) * 2.0));
-  c_6.w = tmpvar_3.w;
-  c_1.xyz = c_6.xyz;
-  c_1.w = 0.0;
-  _glesFragData[0] = c_1;
+  highp vec3 t0 = (_WorldSpaceLightPos0.xyz - xlv_TEXCOORD2);
+  mediump vec4 t1 = (_LightMatrix0 * vec4(xlv_TEXCOORD2, 1.0));
+  mediump vec3 t2 = normalize(t0);
+  mediump float t3 = ((max(0.0, dot(xlv_TEXCOORD1, t2)) * 2.0) * (mix(0.0, texture(_LightTexture0, ((t1.xy / t1.w) + 0.5)).w, (0.0 < t1.z)) * texture(_LightTextureB0, vec2(dot(t1.xyz, t1.xyz))).w));
+  mediump vec3 t4 = ((texture(_MainTex, xlv_TEXCOORD0).xyz * _LightColor0.xyz) * t3);
+  _glesFragData[0] = vec4(t4, 0.0);
 }
 
-
-// stats: 18 alu 3 tex 0 flow
+// stats: 22 alu 3 tex 0 flow
 // inputs: 3
 //  #0: xlv_TEXCOORD0 (high float) 2x1 [-1]
 //  #1: xlv_TEXCOORD1 (medium float) 3x1 [-1]

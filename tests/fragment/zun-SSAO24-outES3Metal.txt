@@ -6,7 +6,10 @@ struct xlatMtlShaderInput {
   float2 xlv_TEXCOORD1;
 };
 struct xlatMtlShaderOutput {
-  half4 _glesFragData_0 [[color(0)]];
+  half4 _xlat_varying0 [[color(0)]];
+  half4 _xlat_varying1 [[color(1)]];
+  half4 _xlat_varying2 [[color(2)]];
+  half4 _xlat_varying3 [[color(3)]];
 };
 struct xlatMtlShaderUniform {
   float4 _ProjectionParams;
@@ -17,214 +20,65 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   , texture2d<half> _RandomTexture [[texture(1)]], sampler _mtlsmp__RandomTexture [[sampler(1)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  float occ_1 = 0;
-  float scale_2 = 0;
-  float depth_3 = 0;
-  half3 randN_4 = 0;
-  randN_4 = ((_RandomTexture.sample(_mtlsmp__RandomTexture, (float2)((_mtl_i.xlv_TEXCOORD1))).xyz * (half)(2.0)) - (half)(1.0));
-  float4 tmpvar_5 = 0;
-  tmpvar_5 = _CameraDepthNormalsTexture.sample(_mtlsmp__CameraDepthNormalsTexture, (float2)((_mtl_i.xlv_TEXCOORD0)));
-  float3 n_6 = 0;
-  float3 tmpvar_7 = 0;
-  tmpvar_7 = ((tmpvar_5.xyz * float3(3.5554, 3.5554, 0.0)) + float3(-1.7777, -1.7777, 1.0));
-  float tmpvar_8 = 0;
-  tmpvar_8 = (2.0 / dot (tmpvar_7, tmpvar_7));
-  n_6.xy = (tmpvar_8 * tmpvar_7.xy);
-  n_6.z = (tmpvar_8 - 1.0);
-  depth_3 = (dot (tmpvar_5.zw, float2(1.0, 0.00392157)) * _mtl_u._ProjectionParams.z);
-  scale_2 = (_mtl_u._Params.x / depth_3);
-  occ_1 = 0.0;
-  half3 randomDir_9 = 0;
-  randomDir_9 = half3((float3(0.0130572, 0.587232, -0.119337) - (2.0 * (
-    dot ((float3)randN_4, float3(0.0130572, 0.587232, -0.119337))
-   * (float3)(randN_4)))));
-  float tmpvar_10 = 0;
-  tmpvar_10 = dot (n_6, (float3)randomDir_9);
-  float tmpvar_11 = 0;
-  if ((tmpvar_10 < 0.0)) {
-    tmpvar_11 = 1.0;
-  } else {
-    tmpvar_11 = -1.0;
-  };
-  randomDir_9 = (randomDir_9 * (half)(-(tmpvar_11)));
-  randomDir_9 = half3(((float3)(randomDir_9) + (n_6 * 0.3)));
-  float tmpvar_12 = 0;
-  tmpvar_12 = saturate(((depth_3 - 
-    ((float)(randomDir_9.z) * _mtl_u._Params.x)
-  ) - (
-    dot (_CameraDepthNormalsTexture.sample(_mtlsmp__CameraDepthNormalsTexture, (float2)(((_mtl_i.xlv_TEXCOORD0 + ((float2)(randomDir_9.xy) * scale_2))))).zw, float2(1.0, 0.00392157))
-   * _mtl_u._ProjectionParams.z)));
-  if ((_mtl_u._Params.y < tmpvar_12)) {
-    occ_1 = pow ((1.0 - tmpvar_12), _mtl_u._Params.z);
-  };
-  half3 randomDir_13 = 0;
-  randomDir_13 = half3((float3(0.323078, 0.0220727, -0.418873) - (2.0 * (
-    dot ((float3)randN_4, float3(0.323078, 0.0220727, -0.418873))
-   * (float3)(randN_4)))));
-  float tmpvar_14 = 0;
-  tmpvar_14 = dot (n_6, (float3)randomDir_13);
-  float tmpvar_15 = 0;
-  if ((tmpvar_14 < 0.0)) {
-    tmpvar_15 = 1.0;
-  } else {
-    tmpvar_15 = -1.0;
-  };
-  randomDir_13 = (randomDir_13 * (half)(-(tmpvar_15)));
-  randomDir_13 = half3(((float3)(randomDir_13) + (n_6 * 0.3)));
-  float tmpvar_16 = 0;
-  tmpvar_16 = saturate(((depth_3 - 
-    ((float)(randomDir_13.z) * _mtl_u._Params.x)
-  ) - (
-    dot (_CameraDepthNormalsTexture.sample(_mtlsmp__CameraDepthNormalsTexture, (float2)(((_mtl_i.xlv_TEXCOORD0 + ((float2)(randomDir_13.xy) * scale_2))))).zw, float2(1.0, 0.00392157))
-   * _mtl_u._ProjectionParams.z)));
-  if ((_mtl_u._Params.y < tmpvar_16)) {
-    occ_1 = (occ_1 + pow ((1.0 - tmpvar_16), _mtl_u._Params.z));
-  };
-  half3 randomDir_17 = 0;
-  randomDir_17 = half3((float3(-0.310725, -0.191367, 0.0561369) - (2.0 * (
-    dot ((float3)randN_4, float3(-0.310725, -0.191367, 0.0561369))
-   * (float3)(randN_4)))));
-  float tmpvar_18 = 0;
-  tmpvar_18 = dot (n_6, (float3)randomDir_17);
-  float tmpvar_19 = 0;
-  if ((tmpvar_18 < 0.0)) {
-    tmpvar_19 = 1.0;
-  } else {
-    tmpvar_19 = -1.0;
-  };
-  randomDir_17 = (randomDir_17 * (half)(-(tmpvar_19)));
-  randomDir_17 = half3(((float3)(randomDir_17) + (n_6 * 0.3)));
-  float tmpvar_20 = 0;
-  tmpvar_20 = saturate(((depth_3 - 
-    ((float)(randomDir_17.z) * _mtl_u._Params.x)
-  ) - (
-    dot (_CameraDepthNormalsTexture.sample(_mtlsmp__CameraDepthNormalsTexture, (float2)(((_mtl_i.xlv_TEXCOORD0 + ((float2)(randomDir_17.xy) * scale_2))))).zw, float2(1.0, 0.00392157))
-   * _mtl_u._ProjectionParams.z)));
-  if ((_mtl_u._Params.y < tmpvar_20)) {
-    occ_1 = (occ_1 + pow ((1.0 - tmpvar_20), _mtl_u._Params.z));
-  };
-  half3 randomDir_21 = 0;
-  randomDir_21 = half3((float3(-0.479646, 0.0939877, -0.580265) - (2.0 * (
-    dot ((float3)randN_4, float3(-0.479646, 0.0939877, -0.580265))
-   * (float3)(randN_4)))));
-  float tmpvar_22 = 0;
-  tmpvar_22 = dot (n_6, (float3)randomDir_21);
-  float tmpvar_23 = 0;
-  if ((tmpvar_22 < 0.0)) {
-    tmpvar_23 = 1.0;
-  } else {
-    tmpvar_23 = -1.0;
-  };
-  randomDir_21 = (randomDir_21 * (half)(-(tmpvar_23)));
-  randomDir_21 = half3(((float3)(randomDir_21) + (n_6 * 0.3)));
-  float tmpvar_24 = 0;
-  tmpvar_24 = saturate(((depth_3 - 
-    ((float)(randomDir_21.z) * _mtl_u._Params.x)
-  ) - (
-    dot (_CameraDepthNormalsTexture.sample(_mtlsmp__CameraDepthNormalsTexture, (float2)(((_mtl_i.xlv_TEXCOORD0 + ((float2)(randomDir_21.xy) * scale_2))))).zw, float2(1.0, 0.00392157))
-   * _mtl_u._ProjectionParams.z)));
-  if ((_mtl_u._Params.y < tmpvar_24)) {
-    occ_1 = (occ_1 + pow ((1.0 - tmpvar_24), _mtl_u._Params.z));
-  };
-  half3 randomDir_25 = 0;
-  randomDir_25 = half3((float3(0.139999, -0.33577, 0.559679) - (2.0 * (
-    dot ((float3)randN_4, float3(0.139999, -0.33577, 0.559679))
-   * (float3)(randN_4)))));
-  float tmpvar_26 = 0;
-  tmpvar_26 = dot (n_6, (float3)randomDir_25);
-  float tmpvar_27 = 0;
-  if ((tmpvar_26 < 0.0)) {
-    tmpvar_27 = 1.0;
-  } else {
-    tmpvar_27 = -1.0;
-  };
-  randomDir_25 = (randomDir_25 * (half)(-(tmpvar_27)));
-  randomDir_25 = half3(((float3)(randomDir_25) + (n_6 * 0.3)));
-  float tmpvar_28 = 0;
-  tmpvar_28 = saturate(((depth_3 - 
-    ((float)(randomDir_25.z) * _mtl_u._Params.x)
-  ) - (
-    dot (_CameraDepthNormalsTexture.sample(_mtlsmp__CameraDepthNormalsTexture, (float2)(((_mtl_i.xlv_TEXCOORD0 + ((float2)(randomDir_25.xy) * scale_2))))).zw, float2(1.0, 0.00392157))
-   * _mtl_u._ProjectionParams.z)));
-  if ((_mtl_u._Params.y < tmpvar_28)) {
-    occ_1 = (occ_1 + pow ((1.0 - tmpvar_28), _mtl_u._Params.z));
-  };
-  half3 randomDir_29 = 0;
-  randomDir_29 = half3((float3(-0.248458, 0.255532, 0.348944) - (2.0 * (
-    dot ((float3)randN_4, float3(-0.248458, 0.255532, 0.348944))
-   * (float3)(randN_4)))));
-  float tmpvar_30 = 0;
-  tmpvar_30 = dot (n_6, (float3)randomDir_29);
-  float tmpvar_31 = 0;
-  if ((tmpvar_30 < 0.0)) {
-    tmpvar_31 = 1.0;
-  } else {
-    tmpvar_31 = -1.0;
-  };
-  randomDir_29 = (randomDir_29 * (half)(-(tmpvar_31)));
-  randomDir_29 = half3(((float3)(randomDir_29) + (n_6 * 0.3)));
-  float tmpvar_32 = 0;
-  tmpvar_32 = saturate(((depth_3 - 
-    ((float)(randomDir_29.z) * _mtl_u._Params.x)
-  ) - (
-    dot (_CameraDepthNormalsTexture.sample(_mtlsmp__CameraDepthNormalsTexture, (float2)(((_mtl_i.xlv_TEXCOORD0 + ((float2)(randomDir_29.xy) * scale_2))))).zw, float2(1.0, 0.00392157))
-   * _mtl_u._ProjectionParams.z)));
-  if ((_mtl_u._Params.y < tmpvar_32)) {
-    occ_1 = (occ_1 + pow ((1.0 - tmpvar_32), _mtl_u._Params.z));
-  };
-  half3 randomDir_33 = 0;
-  randomDir_33 = half3((float3(0.18719, -0.702764, -0.231748) - (2.0 * (
-    dot ((float3)randN_4, float3(0.18719, -0.702764, -0.231748))
-   * (float3)(randN_4)))));
-  float tmpvar_34 = 0;
-  tmpvar_34 = dot (n_6, (float3)randomDir_33);
-  float tmpvar_35 = 0;
-  if ((tmpvar_34 < 0.0)) {
-    tmpvar_35 = 1.0;
-  } else {
-    tmpvar_35 = -1.0;
-  };
-  randomDir_33 = (randomDir_33 * (half)(-(tmpvar_35)));
-  randomDir_33 = half3(((float3)(randomDir_33) + (n_6 * 0.3)));
-  float tmpvar_36 = 0;
-  tmpvar_36 = saturate(((depth_3 - 
-    ((float)(randomDir_33.z) * _mtl_u._Params.x)
-  ) - (
-    dot (_CameraDepthNormalsTexture.sample(_mtlsmp__CameraDepthNormalsTexture, (float2)(((_mtl_i.xlv_TEXCOORD0 + ((float2)(randomDir_33.xy) * scale_2))))).zw, float2(1.0, 0.00392157))
-   * _mtl_u._ProjectionParams.z)));
-  if ((_mtl_u._Params.y < tmpvar_36)) {
-    occ_1 = (occ_1 + pow ((1.0 - tmpvar_36), _mtl_u._Params.z));
-  };
-  half3 randomDir_37 = 0;
-  randomDir_37 = half3((float3(0.884915, 0.284208, 0.368524) - (2.0 * (
-    dot ((float3)randN_4, float3(0.884915, 0.284208, 0.368524))
-   * (float3)(randN_4)))));
-  float tmpvar_38 = 0;
-  tmpvar_38 = dot (n_6, (float3)randomDir_37);
-  float tmpvar_39 = 0;
-  if ((tmpvar_38 < 0.0)) {
-    tmpvar_39 = 1.0;
-  } else {
-    tmpvar_39 = -1.0;
-  };
-  randomDir_37 = (randomDir_37 * (half)(-(tmpvar_39)));
-  randomDir_37 = half3(((float3)(randomDir_37) + (n_6 * 0.3)));
-  float tmpvar_40 = 0;
-  tmpvar_40 = saturate(((depth_3 - 
-    ((float)(randomDir_37.z) * _mtl_u._Params.x)
-  ) - (
-    dot (_CameraDepthNormalsTexture.sample(_mtlsmp__CameraDepthNormalsTexture, (float2)(((_mtl_i.xlv_TEXCOORD0 + ((float2)(randomDir_37.xy) * scale_2))))).zw, float2(1.0, 0.00392157))
-   * _mtl_u._ProjectionParams.z)));
-  if ((_mtl_u._Params.y < tmpvar_40)) {
-    occ_1 = (occ_1 + pow ((1.0 - tmpvar_40), _mtl_u._Params.z));
-  };
-  occ_1 = (occ_1 / 8.0);
-  _mtl_o._glesFragData_0 = half4(float4((1.0 - occ_1)));
+  half4 _glesFragData[4];
+  float4 t0 = _CameraDepthNormalsTexture.sample(_mtlsmp__CameraDepthNormalsTexture, _mtl_i.xlv_TEXCOORD0);
+  float3 t1 = ((t0.xyz * float3(3.5554, 3.5554, 0.0)) + float3(-1.7777, -1.7777, 1.0));
+  float t2 = (2.0 / dot(t1, t1));
+  float2 t3 = (t2 * t1.xy);
+  float t4 = (dot(t0.zw, float2(1.0, 0.00392157)) * _mtl_u._ProjectionParams.z);
+  float t5 = (_mtl_u._Params.x / t4);
+  half3 t6 = ((_RandomTexture.sample(_mtlsmp__RandomTexture, _mtl_i.xlv_TEXCOORD1).xyz * half(2.0)) - half(1.0));
+  half3 t7 = (half3(0.0130572, 0.587232, -0.119337) - ((half3(dot(t6, half3(0.0130572, 0.587232, -0.119337))) * half(2.0)) * t6));
+  float3 t8 = float3(t3, (t2 - 1.0));
+  float3 t9 = (t8 * 0.3);
+  half3 t10 = half3((t9 - float3(((dot(t8, float3(t7)) < 0.0) ? t7 : (-t7)))));
+  float t11 = (dot(_CameraDepthNormalsTexture.sample(_mtlsmp__CameraDepthNormalsTexture, (_mtl_i.xlv_TEXCOORD0 + (float2(t10.xy) * t5))).zw, float2(1.0, 0.00392157)) * _mtl_u._ProjectionParams.z);
+  float t12 = saturate(((t4 - (float(t10.z) * _mtl_u._Params.x)) - t11));
+  float t13 = ((_mtl_u._Params.y < t12) ? pow((1.0 - t12), _mtl_u._Params.z) : 0.0);
+  half3 t14 = (half3(0.323078, 0.0220727, -0.418873) - ((half3(dot(t6, half3(0.323078, 0.0220727, -0.418873))) * half(2.0)) * t6));
+  half3 t15 = half3((t9 - float3(((dot(t8, float3(t14)) < 0.0) ? t14 : (-t14)))));
+  float t16 = (dot(_CameraDepthNormalsTexture.sample(_mtlsmp__CameraDepthNormalsTexture, (_mtl_i.xlv_TEXCOORD0 + (float2(t15.xy) * t5))).zw, float2(1.0, 0.00392157)) * _mtl_u._ProjectionParams.z);
+  float t17 = saturate(((t4 - (float(t15.z) * _mtl_u._Params.x)) - t16));
+  float t18 = ((_mtl_u._Params.y < t17) ? (t13 + pow((1.0 - t17), _mtl_u._Params.z)) : t13);
+  half3 t19 = (half3(-0.310725, -0.191367, 0.0561369) - ((half3(dot(t6, half3(-0.310725, -0.191367, 0.0561369))) * half(2.0)) * t6));
+  half3 t20 = half3((t9 - float3(((dot(t8, float3(t19)) < 0.0) ? t19 : (-t19)))));
+  float t21 = (dot(_CameraDepthNormalsTexture.sample(_mtlsmp__CameraDepthNormalsTexture, (_mtl_i.xlv_TEXCOORD0 + (float2(t20.xy) * t5))).zw, float2(1.0, 0.00392157)) * _mtl_u._ProjectionParams.z);
+  float t22 = saturate(((t4 - (float(t20.z) * _mtl_u._Params.x)) - t21));
+  float t23 = ((_mtl_u._Params.y < t22) ? (t18 + pow((1.0 - t22), _mtl_u._Params.z)) : t18);
+  half3 t24 = (half3(-0.479646, 0.0939877, -0.580265) - ((half3(dot(t6, half3(-0.479646, 0.0939877, -0.580265))) * half(2.0)) * t6));
+  half3 t25 = half3((t9 - float3(((dot(t8, float3(t24)) < 0.0) ? t24 : (-t24)))));
+  float t26 = (dot(_CameraDepthNormalsTexture.sample(_mtlsmp__CameraDepthNormalsTexture, (_mtl_i.xlv_TEXCOORD0 + (float2(t25.xy) * t5))).zw, float2(1.0, 0.00392157)) * _mtl_u._ProjectionParams.z);
+  float t27 = saturate(((t4 - (float(t25.z) * _mtl_u._Params.x)) - t26));
+  float t28 = ((_mtl_u._Params.y < t27) ? (t23 + pow((1.0 - t27), _mtl_u._Params.z)) : t23);
+  half3 t29 = (half3(0.139999, -0.33577, 0.559679) - ((half3(dot(t6, half3(0.139999, -0.33577, 0.559679))) * half(2.0)) * t6));
+  half3 t30 = half3((t9 - float3(((dot(t8, float3(t29)) < 0.0) ? t29 : (-t29)))));
+  float t31 = (dot(_CameraDepthNormalsTexture.sample(_mtlsmp__CameraDepthNormalsTexture, (_mtl_i.xlv_TEXCOORD0 + (float2(t30.xy) * t5))).zw, float2(1.0, 0.00392157)) * _mtl_u._ProjectionParams.z);
+  float t32 = saturate(((t4 - (float(t30.z) * _mtl_u._Params.x)) - t31));
+  float t33 = ((_mtl_u._Params.y < t32) ? (t28 + pow((1.0 - t32), _mtl_u._Params.z)) : t28);
+  half3 t34 = (half3(-0.248458, 0.255532, 0.348944) - ((half3(dot(t6, half3(-0.248458, 0.255532, 0.348944))) * half(2.0)) * t6));
+  half3 t35 = half3((t9 - float3(((dot(t8, float3(t34)) < 0.0) ? t34 : (-t34)))));
+  float t36 = (dot(_CameraDepthNormalsTexture.sample(_mtlsmp__CameraDepthNormalsTexture, (_mtl_i.xlv_TEXCOORD0 + (float2(t35.xy) * t5))).zw, float2(1.0, 0.00392157)) * _mtl_u._ProjectionParams.z);
+  float t37 = saturate(((t4 - (float(t35.z) * _mtl_u._Params.x)) - t36));
+  float t38 = ((_mtl_u._Params.y < t37) ? (t33 + pow((1.0 - t37), _mtl_u._Params.z)) : t33);
+  half3 t39 = (half3(0.18719, -0.702764, -0.231748) - ((half3(dot(t6, half3(0.18719, -0.702764, -0.231748))) * half(2.0)) * t6));
+  half3 t40 = half3((t9 - float3(((dot(t8, float3(t39)) < 0.0) ? t39 : (-t39)))));
+  float t41 = (dot(_CameraDepthNormalsTexture.sample(_mtlsmp__CameraDepthNormalsTexture, (_mtl_i.xlv_TEXCOORD0 + (float2(t40.xy) * t5))).zw, float2(1.0, 0.00392157)) * _mtl_u._ProjectionParams.z);
+  float t42 = saturate(((t4 - (float(t40.z) * _mtl_u._Params.x)) - t41));
+  float t43 = ((_mtl_u._Params.y < t42) ? (t38 + pow((1.0 - t42), _mtl_u._Params.z)) : t38);
+  half3 t44 = (half3(0.884915, 0.284208, 0.368524) - ((half3(dot(t6, half3(0.884915, 0.284208, 0.368524))) * half(2.0)) * t6));
+  half3 t45 = half3((t9 - float3(((dot(t8, float3(t44)) < 0.0) ? t44 : (-t44)))));
+  float t46 = (dot(_CameraDepthNormalsTexture.sample(_mtlsmp__CameraDepthNormalsTexture, (_mtl_i.xlv_TEXCOORD0 + (float2(t45.xy) * t5))).zw, float2(1.0, 0.00392157)) * _mtl_u._ProjectionParams.z);
+  float t47 = saturate(((t4 - (float(t45.z) * _mtl_u._Params.x)) - t46));
+  half t48 = half((1.0 - (((_mtl_u._Params.y < t47) ? (t43 + pow((1.0 - t47), _mtl_u._Params.z)) : t43) / 8.0)));
+  _glesFragData[0] = half4(t48);
+  _mtl_o._xlat_varying0 = _glesFragData[0];
+  _mtl_o._xlat_varying1 = _glesFragData[1];
+  _mtl_o._xlat_varying2 = _glesFragData[2];
+  _mtl_o._xlat_varying3 = _glesFragData[3];
   return _mtl_o;
 }
 
-
-// stats: 205 alu 10 tex 16 flow
+// stats: 188 alu 10 tex 0 flow
 // inputs: 2
 //  #0: xlv_TEXCOORD0 (high float) 2x1 [-1]
 //  #1: xlv_TEXCOORD1 (high float) 2x1 [-1]

@@ -6,7 +6,6 @@ void main ()
   gl_ClipDistance[0] = position.x;
 }
 
-
 // stats: 0 alu 0 tex 0 flow
 // inputs: 1
 //  #0: position (high float) 4x1 [-1]

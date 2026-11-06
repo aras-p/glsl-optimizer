@@ -5,40 +5,30 @@ struct Entry {
   float2 value;
   float weight;
 };
-struct alignas(16) _xlat_buf_storage0_element { float4 value; };
-static_assert(sizeof(_xlat_buf_storage0_element) == 16, "array stride");
+struct _xlat_buf_Output_std430 {
+  float4 values[1];
+};
 struct xlatMtlShaderUniform {
 };
 // threadsPerThreadgroup: 8, 1, 1
 kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , device uchar* _mtl_buffer1 [[buffer(1)]]
+  , device _xlat_buf_Output_std430& outputData [[buffer(1)]]
   , uint gl_LocalInvocationIndex [[thread_index_in_threadgroup]]
   , uint3 gl_GlobalInvocationID [[thread_position_in_grid]])
 {
-threadgroup uint values_1[8];
-threadgroup Entry entries_2[8];
-  values_1[gl_LocalInvocationIndex] = gl_LocalInvocationIndex;
-  float2 tmpvar_3 = 0;
-  tmpvar_3.y = 1.0;
-  tmpvar_3.x = float(gl_LocalInvocationIndex);
-  Entry tmpvar_4;
-  tmpvar_4.value = tmpvar_3;
-  tmpvar_4.weight = 2.0;
-  entries_2[gl_LocalInvocationIndex] = tmpvar_4;
+  threadgroup uint values[8];
+  threadgroup Entry entries[8];
+  values[int(gl_LocalInvocationIndex)] = gl_LocalInvocationIndex;
+  entries[int(gl_LocalInvocationIndex)].value = float2(float(gl_LocalInvocationIndex), 1.0);
+  entries[int(gl_LocalInvocationIndex)].weight = 2.0;
   threadgroup_barrier(mem_flags::mem_threadgroup);
-  uint tmpvar_5;
-  tmpvar_5 = ((gl_LocalInvocationIndex + 1u) % 8u);
-  float4 tmpvar_6 = 0;
-  tmpvar_6.xy = entries_2[tmpvar_5].value;
-  tmpvar_6.z = float(values_1[tmpvar_5]);
-  tmpvar_6.w = entries_2[tmpvar_5].weight;
-  reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_GlobalInvocationID.x].value = float4(tmpvar_6);
+  uint t0 = (uint((int(gl_LocalInvocationIndex) + 1)) & 7u);
+  float2 t1 = entries[int(t0)].value;
+  outputData.values[int(gl_GlobalInvocationID.x)] = float4(t1, float(values[int(t0)]), entries[int(t0)].weight);
   threadgroup_barrier(mem_flags::mem_threadgroup);
-  values_1[gl_LocalInvocationIndex] = 0u;
 }
 
-
-// stats: 7 alu 0 tex 0 flow
+// stats: 4 alu 0 tex 0 flow
 // workgroup size: 8 1 1
 // buffer #0: Output storage instance outputData layout std430 (size: unknown) metal 1
 //  member #0: vec4[] values offset 0 array runtime stride 16

@@ -1,15 +1,15 @@
 #version 300 es
-layout(location=0) out mediump vec4 _fragData;
+precision highp float;
+precision highp int;
+layout(location = 0) out mediump vec4 _fragData;
 in highp vec2 xlv_TEXCOORD0;
 in highp vec4 xlv_COLOR;
 void main ()
 {
-  mediump vec4 c_1;
-  c_1 = xlv_COLOR;
-  c_1.xy = (c_1.xy + xlv_TEXCOORD0);
-  _fragData = c_1;
+  mediump vec4 t0 = xlv_COLOR;
+  mediump vec4 t1 = (t0.xy + xlv_TEXCOORD0).xyxx;
+  _fragData = vec4(t1.xy, t0.zw);
 }
-
 
 // stats: 1 alu 0 tex 0 flow
 // inputs: 2

@@ -1,19 +1,18 @@
 #version 300 es
+precision highp float;
+precision highp int;
 uniform highp sampler2D _CameraDepthTexture;
 in highp vec2 varUV;
 out mediump vec4 _fragData;
 void main ()
 {
-  highp vec4 tmpvar_1;
-  tmpvar_1.zw = vec2(0.0, 0.0);
-  tmpvar_1.xy = varUV;
-  mediump vec4 tmpvar_2;
-  tmpvar_2 = tmpvar_1;
-  _fragData = textureLod (_CameraDepthTexture, tmpvar_2.xy, tmpvar_2.w).xxxx;
+  mediump vec4 t0 = vec4(varUV, 0.0, 0.0);
+  mediump vec4 t1 = textureLod(_CameraDepthTexture, t0.xy, t0.w);
+  highp float t2 = t1.x;
+  _fragData = vec4(t2);
 }
 
-
-// stats: 1 alu 1 tex 0 flow
+// stats: 0 alu 1 tex 0 flow
 // inputs: 1
 //  #0: varUV (high float) 2x1 [-1]
 // textures: 1

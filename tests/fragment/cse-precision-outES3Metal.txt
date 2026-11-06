@@ -14,18 +14,13 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   , texture2d<float> highTex [[texture(1)]], sampler _mtlsmp_highTex [[sampler(1)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half4 b_1 = 0;
-  float4 tmpvar_2 = 0;
-  tmpvar_2 = highTex.sample(_mtlsmp_highTex, (float2)((_mtl_i.uv)));
-  b_1 = half4(tmpvar_2);
-  half4 tmpvar_3 = 0;
-  tmpvar_3 = mediumTex.sample(_mtlsmp_mediumTex, (float2)((_mtl_i.uv)));
-  _mtl_o.result = ((tmpvar_2 * (float4)(tmpvar_3)) + (float4)((b_1 * tmpvar_3)));
+  float4 t0 = highTex.sample(_mtlsmp_highTex, _mtl_i.uv);
+  half4 t1 = half4(t0);
+  _mtl_o.result = (float4(mediumTex.sample(_mtlsmp_mediumTex, _mtl_i.uv)) * (t0 + float4(t1)));
   return _mtl_o;
 }
 
-
-// stats: 3 alu 2 tex 0 flow
+// stats: 2 alu 2 tex 0 flow
 // inputs: 1
 //  #0: uv (high float) 2x1 [-1]
 // textures: 2

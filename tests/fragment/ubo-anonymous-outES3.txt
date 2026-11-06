@@ -1,12 +1,11 @@
 #version 300 es
-layout(std140, column_major) uniform Unused {
-  highp vec4 padding;
-};
-layout(std140, column_major) uniform Lighting {
+precision highp float;
+precision highp int;
+layout(std140) uniform Lighting {
   highp vec3 direction;
   highp float scale;
 };
-layout(std140, column_major) uniform Material {
+layout(std140) uniform Material {
   highp float unusedBefore;
   mediump vec4 tint;
   highp float unusedAfter;
@@ -15,12 +14,8 @@ uniform highp vec4 ordinary;
 out highp vec4 color;
 void main ()
 {
-  highp vec4 tmpvar_1;
-  tmpvar_1.xyz = direction;
-  tmpvar_1.w = scale;
-  color = ((tint * tmpvar_1) + ordinary);
+  color = ((tint * vec4(direction, scale)) + ordinary);
 }
-
 
 // stats: 2 alu 0 tex 0 flow
 // uniforms: 1 (total size: 0)
@@ -32,5 +27,3 @@ void main ()
 //  member #0: float unusedBefore offset 0 (unused)
 //  member #1: vec4 tint offset 16
 //  member #2: float unusedAfter offset 32 (unused)
-// buffer #2: Unused layout std140 (size: 16)
-//  member #0: vec4 padding offset 0 (unused)

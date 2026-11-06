@@ -1,5 +1,7 @@
 #version 310 es
-layout(std430, column_major) buffer Data {
+precision highp float;
+precision highp int;
+layout(std430) buffer Data {
   highp uint value;
   highp uint results[4];
 };
@@ -7,35 +9,18 @@ uniform bool update;
 out highp vec4 color;
 void main ()
 {
-  highp uint before_1;
   value = 7u;
-  before_1 = value;
-  highp uint tmpvar_2;
-  tmpvar_2 = atomicAdd (value, 1u);
-  highp uint tmpvar_3;
-  tmpvar_3 = value;
+  atomicAdd(value, 1u);
+  highp uint t0 = value;
   if (update) {
-    highp int i_4;
-    i_4 = 1;
-    highp uint tmpvar_5;
-    tmpvar_5 = atomicExchange (results[0], 5u);
-    highp int tmpvar_6;
-    tmpvar_6 = i_4;
-    i_4++;
-    highp uint tmpvar_7;
-    tmpvar_7 = atomicCompSwap (results[tmpvar_6], 5u, 6u);
-    results[i_4] = value;
-  };
-  highp vec4 tmpvar_8;
-  tmpvar_8.w = 1.0;
-  tmpvar_8.x = float(before_1);
-  tmpvar_8.y = float(tmpvar_3);
-  tmpvar_8.z = float(value);
-  color = tmpvar_8;
+    atomicExchange(results[0], 5u);
+    atomicCompSwap(results[1], 5u, 6u);
+    results[2] = value;
+  }
+  color = vec4(7.0, float(t0), float(value), 1.0);
 }
 
-
-// stats: 7 alu 0 tex 1 flow
+// stats: 2 alu 0 tex 1 flow
 // uniforms: 1 (total size: 0)
 //  #0: update (high bool) 1x1 [-1]
 // buffer #0: Data storage layout std430 (size: 20)

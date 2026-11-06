@@ -1,33 +1,20 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
-struct Entry {
+struct _xlat_Entry_std140 {
   float4 color;
   float unused;
+  char _pad0[12];
 };
-struct alignas(16) _xlat_buf_storage2 {
-  alignas(16) float4 color;
-  alignas(4) float unused;
+static_assert(sizeof(_xlat_Entry_std140) == 32, "std140 size");
+struct _xlat_buf_Data_std140 {
+  int index;
+  float removed;
+  char _pad0[8];
+  _xlat_Entry_std140 entries[2];
+  float4 unused;
 };
-static_assert(sizeof(_xlat_buf_storage2) == 32, "std140 size");
-inline __attribute__((always_inline)) Entry _xlat_buf_storage2_read(constant _xlat_buf_storage2& storage)
-{
-  Entry value;
-  value.color = float4(storage.color);
-  value.unused = float(storage.unused);
-  return value;
-}
-struct alignas(16) _xlat_buf_storage1_element { _xlat_buf_storage2 value; };
-struct _xlat_buf_storage1 { _xlat_buf_storage1_element elements[2]; };
-static_assert(sizeof(_xlat_buf_storage1) == 64, "std140 size");
-struct alignas(16) _xlat_buf_storage0 {
-  alignas(4) int index;
-  alignas(4) float removed;
-  char _buf_pad2[8];
-  alignas(16) _xlat_buf_storage1 entries;
-  alignas(16) float4 unused;
-};
-static_assert(sizeof(_xlat_buf_storage0) == 96, "std140 size");
+static_assert(sizeof(_xlat_buf_Data_std140) == 96, "std140 size");
 struct xlatMtlShaderInput {
 };
 struct xlatMtlShaderOutput {
@@ -36,13 +23,12 @@ struct xlatMtlShaderOutput {
 struct xlatMtlShaderUniform {
 };
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , constant _xlat_buf_storage0& _mtl_buffer1 [[buffer(1)]])
+  , constant _xlat_buf_Data_std140& data [[buffer(1)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  _mtl_o.color = float4(_mtl_buffer1.entries.elements[short(_mtl_buffer1.index)].value.color);
+  _mtl_o.color = float4(data.entries[short(data.index)].color);
   return _mtl_o;
 }
-
 
 // stats: 0 alu 0 tex 0 flow
 // buffer #0: Data instance data layout std140 (size: 96) metal 1

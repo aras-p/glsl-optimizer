@@ -8,7 +8,6 @@ void main ()
   gl_Position = (position * 1024.0);
 }
 
-
 // stats: 2 alu 0 tex 0 flow
 // inputs: 1
 //  #0: position (high float) 4x1 [-1]

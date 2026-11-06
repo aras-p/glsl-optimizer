@@ -1,18 +1,14 @@
 #version 300 es
-const highp vec2 _glslo_highp0_1_ = vec2(1.0, 1.0);
-const highp vec2 _glslo_highp0_2_ = vec2(2.0, 2.0);
+precision highp float;
+precision highp int;
 in mediump vec2 coord;
 out highp vec4 color;
 void main ()
 {
-  highp vec4 tmpvar_1;
-  tmpvar_1.w = 1.0;
-  tmpvar_1.x = dot (vec2(171.0, 231.0), (coord + _glslo_highp0_1_));
-  tmpvar_1.yz = (coord + _glslo_highp0_2_);
-  color = tmpvar_1;
+  mediump vec2 t0 = (coord + 2.0);
+  color = vec4(dot(vec2(171.0, 231.0), (coord + 1.0)), t0, 1.0);
 }
 
-
-// stats: 4 alu 0 tex 0 flow
+// stats: 3 alu 0 tex 0 flow
 // inputs: 1
 //  #0: coord (medium float) 2x1 [-1]

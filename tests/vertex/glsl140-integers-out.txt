@@ -5,26 +5,14 @@ out vec4 col;
 flat out ivec4 colint;
 void main ()
 {
-  vec4 tmpvar_1;
-  tmpvar_1.zw = vec2(0.0, 0.0);
-  tmpvar_1.xy = p;
-  gl_Position = (tmpvar_1 + position);
-  colint.x = gl_VertexID;
-  colint.y = (gl_InstanceID ^ gl_InstanceID);
-  colint.z = (gl_InstanceID << 2);
-  colint.w = (gl_VertexID + colint.y);
-  col.x = trunc(position.x);
-  float tmpvar_2;
-  tmpvar_2 = roundEven(position.y);
-  col.y = tmpvar_2;
-  col.z = tmpvar_2;
-  col.w = (0.5 * (exp(position.w) + exp(
-    -(position.w)
-  )));
+  gl_Position = (vec4(p, 0.0, 0.0) + position);
+  colint = ivec4(gl_VertexID, 0, (gl_InstanceID << 2u), gl_VertexID);
+  float t0 = (position.w * 1.442695);
+  float t1 = roundEven(position.y);
+  col = vec4(trunc(position.x), vec2(t1), (0.5 * (exp2(t0) + exp2((-t0)))));
 }
 
-
-// stats: 12 alu 0 tex 0 flow
+// stats: 10 alu 0 tex 0 flow
 // inputs: 1
 //  #0: position (high float) 4x1 [-1]
 // uniforms: 1 (total size: 0)

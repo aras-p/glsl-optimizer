@@ -1,147 +1,93 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
-struct alignas(16) _xlat_buf_storage0 {
-  alignas(16) int4 section;
-  alignas(8) int2 target;
-  alignas(4) uint flags;
-  alignas(4) float luminance_multiplier;
-  alignas(4) float glow_strength;
-  alignas(4) float glow_bloom;
-  alignas(4) float glow_hdr_threshold;
-  alignas(4) float glow_hdr_scale;
-  alignas(4) float glow_exposure;
-  alignas(4) float glow_white;
-  alignas(4) float glow_luminance_cap;
-  alignas(4) float glow_auto_exposure_scale;
-  alignas(4) float camera_z_far;
-  alignas(4) float camera_z_near;
-  alignas(8) float2 octmap_border_size;
-  alignas(16) float4 set_color;
+struct _xlat_buf_Params_std140 {
+  int4 section;
+  int2 target;
+  uint flags;
+  float luminance_multiplier;
+  float glow_strength;
+  float glow_bloom;
+  float glow_hdr_threshold;
+  float glow_hdr_scale;
+  float glow_exposure;
+  float glow_white;
+  float glow_luminance_cap;
+  float glow_auto_exposure_scale;
+  float camera_z_far;
+  float camera_z_near;
+  float2 octmap_border_size;
+  float4 set_color;
 };
-static_assert(sizeof(_xlat_buf_storage0) == 96, "std140 size");
+static_assert(sizeof(_xlat_buf_Params_std140) == 96, "std140 size");
 struct xlatMtlShaderUniform {
 };
 // threadsPerThreadgroup: 8, 8, 1
 kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , constant _xlat_buf_storage0& _mtl_buffer1 [[buffer(1)]]
-  , uint3 gl_GlobalInvocationID [[thread_position_in_grid]]
-  , uint3 gl_LocalInvocationID [[thread_position_in_threadgroup]]
+  , constant _xlat_buf_Params_std140& params [[buffer(1)]]
   , texture2d<float> source_color [[texture(0)]], sampler _mtlsmp_source_color [[sampler(0)]]
   , texture2d<float> source_auto_exposure [[texture(1)]], sampler _mtlsmp_source_auto_exposure [[sampler(1)]]
-  , texture2d<float, access::write> dest_buffer [[texture(2)]])
+  , texture2d<float, access::write> dest_buffer [[texture(2)]]
+  , uint3 gl_GlobalInvocationID [[thread_position_in_grid]]
+  , uint3 gl_LocalInvocationID [[thread_position_in_threadgroup]])
 {
-threadgroup float4 local_cache_1[256];
-threadgroup float4 temp_cache_2[128];
-  float4 color_3 = 0;
-  float4 color_bottom_4 = 0;
-  float4 color_top_5 = 0;
-  int2 tmpvar_6 = 0;
-  tmpvar_6 = int2(gl_GlobalInvocationID.xy);
-  float2 tmpvar_7 = 0;
-  tmpvar_7 = min (max ((
-    (float2(((
-      uint2(int4(_mtl_buffer1.section).xy)
-     + gl_GlobalInvocationID.xy) + gl_LocalInvocationID.xy)) - 3.5)
-   / 
-    float2(int4(_mtl_buffer1.section).zw)
-  ), (0.5 / 
-    float2(int4(_mtl_buffer1.section).zw)
-  )), (1.0 - (1.5 / 
-    float2(int4(_mtl_buffer1.section).zw)
-  )));
-  uint tmpvar_8;
-  tmpvar_8 = ((gl_LocalInvocationID.x * 2u) + (32u * gl_LocalInvocationID.y));
-  local_cache_1[tmpvar_8] = source_color.sample(_mtlsmp_source_color, (float2)((tmpvar_7)), level(0.0));
-  float2 tmpvar_9 = 0;
-  tmpvar_9.y = 0.0;
-  tmpvar_9.x = (1.0/(float(int4(_mtl_buffer1.section).z)));
-  local_cache_1[(tmpvar_8 + 1u)] = source_color.sample(_mtlsmp_source_color, (float2)(((tmpvar_7 + tmpvar_9))), level(0.0));
-  float2 tmpvar_10 = 0;
-  tmpvar_10.x = 0.0;
-  tmpvar_10.y = (1.0/(float(int4(_mtl_buffer1.section).w)));
-  local_cache_1[(tmpvar_8 + 16u)] = source_color.sample(_mtlsmp_source_color, (float2)(((tmpvar_7 + tmpvar_10))), level(0.0));
-  local_cache_1[(17u + tmpvar_8)] = source_color.sample(_mtlsmp_source_color, (float2)(((tmpvar_7 + (1.0/(float2(int4(_mtl_buffer1.section).zw)))))), level(0.0));
-  if (bool(int((uint(_mtl_buffer1.flags) & 16u)))) {
-    float3 tmpvar_11 = 0;
-    tmpvar_11 = (float3(0.299, 0.587, 0.114) / max (float(_mtl_buffer1.glow_luminance_cap), 6.0));
-    local_cache_1[tmpvar_8] = (local_cache_1[tmpvar_8] / (1.0 + dot (local_cache_1[tmpvar_8].xyz, tmpvar_11)));
-    local_cache_1[(tmpvar_8 + 1u)] = (local_cache_1[(tmpvar_8 + 1u)] / (1.0 + dot (local_cache_1[
-      (tmpvar_8 + 1u)
-    ].xyz, tmpvar_11)));
-    local_cache_1[(tmpvar_8 + 16u)] = (local_cache_1[(tmpvar_8 + 16u)] / (1.0 + dot (local_cache_1[
-      (tmpvar_8 + 16u)
-    ].xyz, tmpvar_11)));
-    local_cache_1[(17u + tmpvar_8)] = (local_cache_1[(17u + tmpvar_8)] / (1.0 + dot (local_cache_1[
-      (17u + tmpvar_8)
-    ].xyz, tmpvar_11)));
-  };
+  threadgroup float4 local_cache[256];
+  threadgroup float4 temp_cache[128];
+  float4 r0 = 0;
+  float4 r1 = 0;
+  int4 t0 = int4(params.section);
+  float2 t1 = float2(t0.zw);
+  float2 t2 = min(max(((float2(uint2(((t0.xy + int2(gl_GlobalInvocationID.xy)) + int2(gl_LocalInvocationID.xy)))) - 3.5) / t1), (0.5 / t1)), (1.0 - (1.5 / t1)));
+  int t3 = (int(gl_LocalInvocationID.y) << int(5u));
+  int t4 = ((int(gl_LocalInvocationID.x) << int(1u)) + t3);
+  local_cache[t4] = source_color.sample(_mtlsmp_source_color, t2, level(0.0));
+  int t5 = (t4 + 1);
+  local_cache[t5] = source_color.sample(_mtlsmp_source_color, (t2 + float2((1.0 / float(t0.z)), 0.0)), level(0.0));
+  int t6 = (t4 + 16);
+  local_cache[t6] = source_color.sample(_mtlsmp_source_color, (t2 + float2(0.0, (1.0 / float(t0.w)))), level(0.0));
+  int t7 = (17 + t4);
+  local_cache[t7] = source_color.sample(_mtlsmp_source_color, (t2 + (1.0 / t1)), level(0.0));
+  bool t8 = (int((uint(params.flags) & 16u)) != 0);
+  if (t8) {
+    float4 t9 = local_cache[t4];
+    float3 t10 = (float3(0.299, 0.587, 0.114) / max(float(params.glow_luminance_cap), 6.0));
+    local_cache[t4] = (t9 / (1.0 + dot(t9.xyz, t10)));
+    float4 t11 = local_cache[t5];
+    local_cache[t5] = (t11 / (1.0 + dot(t11.xyz, t10)));
+    float4 t12 = local_cache[t6];
+    local_cache[t6] = (t12 / (1.0 + dot(t12.xyz, t10)));
+    float4 t13 = local_cache[t7];
+    local_cache[t7] = (t13 / (1.0 + dot(t13.xyz, t10)));
+  }
   threadgroup_barrier(mem_flags::mem_threadgroup);
-  uint tmpvar_12;
-  tmpvar_12 = ((gl_LocalInvocationID.x + (gl_LocalInvocationID.y * 32u)) + 4u);
-  color_top_5 = (local_cache_1[tmpvar_12] * 0.2024);
-  color_top_5 = (color_top_5 + (local_cache_1[(tmpvar_12 + 1u)] * 0.179));
-  color_top_5 = (color_top_5 + (local_cache_1[(tmpvar_12 + 2u)] * 0.124));
-  color_top_5 = (color_top_5 + (local_cache_1[(tmpvar_12 + 3u)] * 0.0672));
-  color_top_5 = (color_top_5 + (local_cache_1[(tmpvar_12 + 4294967295u)] * 0.179));
-  color_top_5 = (color_top_5 + (local_cache_1[(tmpvar_12 + 4294967294u)] * 0.124));
-  color_top_5 = (color_top_5 + (local_cache_1[(tmpvar_12 + 4294967293u)] * 0.0672));
-  color_top_5 = (color_top_5 + (local_cache_1[(tmpvar_12 + 4u)] * 0.0285));
-  color_top_5 = (color_top_5 + (local_cache_1[(tmpvar_12 + 4294967292u)] * 0.0285));
-  color_bottom_4 = (local_cache_1[(tmpvar_12 + 16u)] * 0.2024);
-  color_bottom_4 = (color_bottom_4 + (local_cache_1[(17u + tmpvar_12)] * 0.179));
-  color_bottom_4 = (color_bottom_4 + (local_cache_1[(18u + tmpvar_12)] * 0.124));
-  color_bottom_4 = (color_bottom_4 + (local_cache_1[(19u + tmpvar_12)] * 0.0672));
-  color_bottom_4 = (color_bottom_4 + (local_cache_1[(15u + tmpvar_12)] * 0.179));
-  color_bottom_4 = (color_bottom_4 + (local_cache_1[(14u + tmpvar_12)] * 0.124));
-  color_bottom_4 = (color_bottom_4 + (local_cache_1[(13u + tmpvar_12)] * 0.0672));
-  color_bottom_4 = (color_bottom_4 + (local_cache_1[(20u + tmpvar_12)] * 0.0285));
-  color_bottom_4 = (color_bottom_4 + (local_cache_1[(12u + tmpvar_12)] * 0.0285));
-  uint tmpvar_13;
-  tmpvar_13 = ((gl_LocalInvocationID.y * 2u) + (gl_LocalInvocationID.x * 16u));
-  temp_cache_2[tmpvar_13] = color_top_5;
-  temp_cache_2[(tmpvar_13 + 1u)] = color_bottom_4;
+  int t14 = (int(gl_LocalInvocationID.x) + t3);
+  float4 t15 = (((((local_cache[(t14 + 4)] * 0.2024) + (local_cache[(5 + t14)] * 0.179)) + (local_cache[(6 + t14)] * 0.124)) + (local_cache[(7 + t14)] * 0.0672)) + (local_cache[(3 + t14)] * 0.179));
+  float4 t16 = (((((local_cache[(20 + t14)] * 0.2024) + (local_cache[(21 + t14)] * 0.179)) + (local_cache[(22 + t14)] * 0.124)) + (local_cache[(23 + t14)] * 0.0672)) + (local_cache[(19 + t14)] * 0.179));
+  float4 t17 = ((((t16 + (local_cache[(18 + t14)] * 0.124)) + (local_cache[(17 + t14)] * 0.0672)) + (local_cache[(24 + t14)] * 0.0285)) + (local_cache[(16 + t14)] * 0.0285));
+  int t18 = (int(gl_LocalInvocationID.x) << int(4u));
+  int t19 = ((int(gl_LocalInvocationID.y) << int(1u)) + t18);
+  temp_cache[t19] = ((((t15 + (local_cache[(2 + t14)] * 0.124)) + (local_cache[(1 + t14)] * 0.0672)) + (local_cache[(8 + t14)] * 0.0285)) + (local_cache[t14] * 0.0285));
+  temp_cache[(t19 + 1)] = t17;
   threadgroup_barrier(mem_flags::mem_threadgroup);
-  if (any((tmpvar_6 >= int4(_mtl_buffer1.section).zw) != bool2(0, 0))) {
-    return;
-  };
-  uint tmpvar_14;
-  tmpvar_14 = ((gl_LocalInvocationID.y + (gl_LocalInvocationID.x * 16u)) + 4u);
-  color_3 = (temp_cache_2[tmpvar_14] * 0.2024);
-  color_3 = (color_3 + (temp_cache_2[(tmpvar_14 + 1u)] * 0.179));
-  color_3 = (color_3 + (temp_cache_2[(tmpvar_14 + 2u)] * 0.124));
-  color_3 = (color_3 + (temp_cache_2[(tmpvar_14 + 3u)] * 0.0672));
-  color_3 = (color_3 + (temp_cache_2[(tmpvar_14 + 4294967295u)] * 0.179));
-  color_3 = (color_3 + (temp_cache_2[(tmpvar_14 + 4294967294u)] * 0.124));
-  color_3 = (color_3 + (temp_cache_2[(tmpvar_14 + 4294967293u)] * 0.0672));
-  color_3 = (color_3 + (temp_cache_2[(tmpvar_14 + 4u)] * 0.0285));
-  color_3 = (color_3 + (temp_cache_2[(tmpvar_14 + 4294967292u)] * 0.0285));
-  if (bool(int((uint(_mtl_buffer1.flags) & 16u)))) {
-    color_3 = (color_3 / (1.0 - dot (color_3.xyz, 
-      (float3(0.299, 0.587, 0.114) / max (float(_mtl_buffer1.glow_luminance_cap), 6.0))
-    )));
-  };
-  color_3 = (color_3 * float(_mtl_buffer1.glow_strength));
-  if (bool(int((uint(_mtl_buffer1.flags) & 16u)))) {
-    color_3 = (color_3 / (source_auto_exposure.read(uint2(int2(0, 0)), uint(0)).x / float(_mtl_buffer1.glow_auto_exposure_scale)));
-    color_3 = (color_3 * float(_mtl_buffer1.glow_exposure));
-    float tmpvar_15 = 0;
-    tmpvar_15 = float(_mtl_buffer1.glow_hdr_threshold);
-    float tmpvar_16 = 0;
-    tmpvar_16 = saturate(((
-      max (color_3.x, max (color_3.y, color_3.z))
-     - tmpvar_15) / (
-      (float(_mtl_buffer1.glow_hdr_threshold) + float(_mtl_buffer1.glow_hdr_scale))
-     - tmpvar_15)));
-    color_3 = min ((color_3 * max (
-      (tmpvar_16 * (tmpvar_16 * (3.0 - (2.0 * tmpvar_16))))
-    , float(_mtl_buffer1.glow_bloom))), float4(float(_mtl_buffer1.glow_luminance_cap)));
-  };
-  dest_buffer.write(float4(color_3), uint2((tmpvar_6 + int2(_mtl_buffer1.target))));
+  if ((!any((int2(gl_GlobalInvocationID.xy) >= t0.zw) != bool2(false)))) {
+    int t20 = (int(gl_LocalInvocationID.y) + t18);
+    float4 t21 = (((((temp_cache[(t20 + 4)] * 0.2024) + (temp_cache[(5 + t20)] * 0.179)) + (temp_cache[(6 + t20)] * 0.124)) + (temp_cache[(7 + t20)] * 0.0672)) + (temp_cache[(3 + t20)] * 0.179));
+    r0 = ((((t21 + (temp_cache[(2 + t20)] * 0.124)) + (temp_cache[(1 + t20)] * 0.0672)) + (temp_cache[(8 + t20)] * 0.0285)) + (temp_cache[t20] * 0.0285));
+    if (t8) {
+      r0 = (r0 / (1.0 - dot(r0.xyz, (float3(0.299, 0.587, 0.114) / max(float(params.glow_luminance_cap), 6.0)))));
+    }
+    r1 = (r0 * float(params.glow_strength));
+    if (t8) {
+      float4 t22 = ((r1 / (source_auto_exposure.read(uint2(int2(0)), uint(0)).x / float(params.glow_auto_exposure_scale))) * float(params.glow_exposure));
+      float t23 = saturate(((max(t22.x, max(t22.y, t22.z)) - float(params.glow_hdr_threshold)) / float(params.glow_hdr_scale)));
+      r1 = min((t22 * max((t23 * (t23 * (3.0 - (2.0 * t23)))), float(params.glow_bloom))), float4(float(params.glow_luminance_cap)));
+    }
+    int2 t24 = (int2(gl_GlobalInvocationID.xy) + int2(params.target));
+    dest_buffer.write(r1, uint2(int4(t24, 0, 0).xy));
+  }
 }
 
-
-// stats: 176 alu 6 tex 5 flow
+// stats: 148 alu 6 tex 4 flow
 // workgroup size: 8 8 1
 // buffer #0: Params instance params layout std140 binding 0 (size: 96) metal 1
 //  member #0: ivec4 section offset 0

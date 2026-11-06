@@ -1,4 +1,6 @@
 #version 300 es
+precision highp float;
+precision highp int;
 struct Values {
   mediump vec4 color;
   highp vec4 position;
@@ -12,11 +14,8 @@ in highp vec2 uv;
 out mediump vec4 fragColor;
 void main ()
 {
-  fragColor = (((
-    ((values.color * tint) * scale)
-   + 0.25) * texture (tex, uv)) + (values.position + offset));
+  fragColor = (((((values.color * tint) * scale) + 0.25) * texture(tex, uv)) + (values.position + offset));
 }
-
 
 // stats: 6 alu 1 tex 0 flow
 // inputs: 1

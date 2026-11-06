@@ -20,102 +20,42 @@ varying vec3 xlv_TEXCOORD2;
 varying vec2 xlv_TEXCOORD3;
 void main ()
 {
-  vec3 binormal_1;
-  vec4 tmpvar_2;
-  vec4 tmpvar_3;
-  vec3 tmpvar_4;
-  vec4 tmpvar_5;
-  vec3 tmpvar_6;
-  vec4 tmpvar_7;
-  float isBillboard_8;
-  isBillboard_8 = (1.0 - abs(TANGENT.w));
-  vec4 tmpvar_9;
-  tmpvar_9.w = 0.0;
-  tmpvar_9.xyz = gl_Normal;
-  vec4 tmpvar_10;
-  tmpvar_10.w = 0.0;
-  tmpvar_10.xyz = TANGENT.xyz;
-  vec4 tmpvar_11;
-  tmpvar_11.zw = vec2(0.0, 0.0);
-  tmpvar_11.xy = gl_Normal.xy;
-  tmpvar_5 = (gl_Vertex + ((tmpvar_11 * glstate_matrix_invtrans_modelview0) * isBillboard_8));
-  tmpvar_6 = mix (gl_Normal, normalize((tmpvar_9 * glstate_matrix_invtrans_modelview0)).xyz, vec3(isBillboard_8));
-  vec4 tmpvar_12;
-  tmpvar_12.w = -1.0;
-  tmpvar_12.xyz = normalize((tmpvar_10 * glstate_matrix_invtrans_modelview0)).xyz;
-  tmpvar_7 = mix (TANGENT, tmpvar_12, vec4(isBillboard_8));
-  tmpvar_2.w = tmpvar_5.w;
-  tmpvar_3.w = tmpvar_7.w;
-  tmpvar_2.xyz = (tmpvar_5.xyz * _Scale.xyz);
-  vec4 tmpvar_13;
-  tmpvar_13.w = tmpvar_2.w;
-  vec3 bend_14;
-  vec2 vWavesSum_15;
-  vec4 vWaves_16;
-  float fBranchPhase_17;
-  fBranchPhase_17 = (dot (_Object2World[3].xyz, vec3(1.0, 1.0, 1.0)) + gl_Color.x);
-  vec2 tmpvar_18;
-  tmpvar_18.x = dot (tmpvar_2.xyz, vec3((gl_Color.y + fBranchPhase_17)));
-  tmpvar_18.y = fBranchPhase_17;
-  vWaves_16 = ((fract(
-    ((_Time.yy + tmpvar_18).xxyy * vec4(1.975, 0.793, 0.375, 0.193))
-  ) * 2.0) - 1.0);
-  vec4 tmpvar_19;
-  tmpvar_19 = abs(((
-    fract((vWaves_16 + 0.5))
-   * 2.0) - 1.0));
-  vec4 tmpvar_20;
-  tmpvar_20 = ((tmpvar_19 * tmpvar_19) * (3.0 - (2.0 * tmpvar_19)));
-  vWaves_16 = tmpvar_20;
-  vWavesSum_15 = (tmpvar_20.xz + tmpvar_20.yw);
-  bend_14.xz = ((gl_Color.y * 0.1) * tmpvar_6).xz;
-  bend_14.y = (gl_MultiTexCoord1.y * 0.3);
-  tmpvar_13.xyz = (tmpvar_2.xyz + ((
-    (vWavesSum_15.xyx * bend_14)
-   + 
-    ((_Wind.xyz * vWavesSum_15.y) * gl_MultiTexCoord1.y)
-  ) * _Wind.w));
-  tmpvar_13.xyz = (tmpvar_13.xyz + (gl_MultiTexCoord1.x * _Wind.xyz));
-  vec4 tmpvar_21;
-  tmpvar_21.w = 1.0;
-  tmpvar_21.xyz = mix ((tmpvar_13.xyz - (
-    (dot (_SquashPlaneNormal.xyz, tmpvar_13.xyz) + _SquashPlaneNormal.w)
-   * _SquashPlaneNormal.xyz)), tmpvar_13.xyz, vec3(_SquashAmount));
-  tmpvar_2 = tmpvar_21;
-  vec4 tmpvar_22;
-  tmpvar_22.xyz = vec3(1.0, 1.0, 1.0);
-  tmpvar_22.w = gl_Color.w;
-  tmpvar_4 = normalize(tmpvar_6);
-  tmpvar_3.xyz = normalize(tmpvar_7.xyz);
-  binormal_1 = (((tmpvar_4.yzx * tmpvar_3.zxy) - (tmpvar_4.zxy * tmpvar_3.yzx)) * tmpvar_7.w);
-  mat3 tmpvar_23;
-  tmpvar_23[0].x = tmpvar_3.x;
-  tmpvar_23[0].y = binormal_1.x;
-  tmpvar_23[0].z = tmpvar_4.x;
-  tmpvar_23[1].x = tmpvar_3.y;
-  tmpvar_23[1].y = binormal_1.y;
-  tmpvar_23[1].z = tmpvar_4.y;
-  tmpvar_23[2].x = tmpvar_3.z;
-  tmpvar_23[2].y = binormal_1.z;
-  tmpvar_23[2].z = tmpvar_4.z;
-  vec4 tmpvar_24;
-  tmpvar_24.w = 1.0;
-  tmpvar_24.xyz = _WorldSpaceCameraPos;
-  gl_Position = (glstate_matrix_mvp * tmpvar_21);
+  vec4 t0 = vec4(dot(gl_Normal, glstate_matrix_invtrans_modelview0[0].xyz), dot(gl_Normal, glstate_matrix_invtrans_modelview0[1].xyz), dot(gl_Normal, glstate_matrix_invtrans_modelview0[2].xyz), dot(gl_Normal, glstate_matrix_invtrans_modelview0[3].xyz));
+  vec4 t1 = vec4(dot(TANGENT.xyz, glstate_matrix_invtrans_modelview0[0].xyz), dot(TANGENT.xyz, glstate_matrix_invtrans_modelview0[1].xyz), dot(TANGENT.xyz, glstate_matrix_invtrans_modelview0[2].xyz), dot(TANGENT.xyz, glstate_matrix_invtrans_modelview0[3].xyz));
+  vec4 t2 = normalize(t1);
+  vec4 t3 = vec4(dot(gl_Normal.xy, glstate_matrix_invtrans_modelview0[0].xy), dot(gl_Normal.xy, glstate_matrix_invtrans_modelview0[1].xy), dot(gl_Normal.xy, glstate_matrix_invtrans_modelview0[2].xy), dot(gl_Normal.xy, glstate_matrix_invtrans_modelview0[3].xy));
+  float t4 = (1.0 - abs(TANGENT.w));
+  vec3 t5 = mix(gl_Normal, normalize(t0).xyz, vec3(t4));
+  vec4 t6 = mix(TANGENT, vec4(t2.xyz, -1.0), vec4(t4));
+  vec3 t7 = ((gl_Vertex + (t3 * t4)).xyz * _Scale.xyz);
+  float t8 = (dot(_Object2World[3].xyz, vec3(1.0)) + gl_Color.x);
+  vec4 t9 = abs(((fract((-0.5 + (fract(((_Time.y + vec2(dot(t7, vec3((gl_Color.y + t8))), t8)).xxyy * vec4(1.975, 0.793, 0.375, 0.193))) * 2.0))) * 2.0) - 1.0));
+  vec4 t10 = ((t9 * t9) * (3.0 - (2.0 * t9)));
+  vec2 t11 = (t10.xz + t10.yw);
+  vec3 t12 = ((gl_Color.y * 0.1) * t5);
+  vec3 t13 = ((t7 + (((t11.xyx * vec3(t12.x, (gl_MultiTexCoord1.y * 0.3), t12.z)) + ((_Wind.xyz * t11.y) * gl_MultiTexCoord1.y)) * _Wind.w)) + (gl_MultiTexCoord1.x * _Wind.xyz));
+  vec3 t14 = mix((t13 - ((dot(_SquashPlaneNormal.xyz, t13) + _SquashPlaneNormal.w) * _SquashPlaneNormal.xyz)), t13, vec3(_SquashAmount));
+  vec3 t15 = normalize(t5);
+  vec3 t16 = normalize(t6.xyz);
+  vec3 t17 = (((t15.yzx * t16.zxy) - (t15.zxy * t16.yzx)) * t6.w);
+  vec4 t18 = (_World2Object * _WorldSpaceLightPos0);
+  vec3 t19 = vec3(t16.x, t17.x, t15.x);
+  vec3 t20 = vec3(t16.y, t17.y, t15.y);
+  vec3 t21 = vec3(t16.z, t17.z, t15.z);
+  vec3 t22 = (((_World2Object * vec4(_WorldSpaceCameraPos, 1.0)).xyz * unity_Scale.w) - t14);
+  vec4 t23 = (_Object2World * vec4(t14, 1.0));
+  gl_Position = (glstate_matrix_mvp * vec4(t14, 1.0));
   xlv_TEXCOORD0 = ((gl_MultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
-  xlv_COLOR0 = tmpvar_22;
-  xlv_TEXCOORD1 = (tmpvar_23 * (_World2Object * _WorldSpaceLightPos0).xyz);
-  xlv_TEXCOORD2 = (tmpvar_23 * ((
-    (_World2Object * tmpvar_24)
-  .xyz * unity_Scale.w) - tmpvar_21.xyz));
-  xlv_TEXCOORD3 = (_LightMatrix0 * (_Object2World * tmpvar_21)).xy;
+  xlv_COLOR0 = vec4(1.0, 1.0, 1.0, gl_Color.w);
+  xlv_TEXCOORD1 = (mat3(t19, t20, t21) * t18.xyz);
+  xlv_TEXCOORD2 = (mat3(t19, t20, t21) * t22);
+  xlv_TEXCOORD3 = (_LightMatrix0 * t23).xy;
 }
 
-
-// stats: 71 alu 0 tex 0 flow
+// stats: 114 alu 0 tex 0 flow
 // inputs: 6
-//  #0: gl_MultiTexCoord1 (high float) 4x1 [-1] loc 8
-//  #1: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 7
+//  #0: gl_MultiTexCoord1 (high float) 4x1 [-1] loc 7
+//  #1: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 6
 //  #2: gl_Color (high float) 4x1 [-1] loc 2
 //  #3: gl_Normal (high float) 3x1 [-1] loc 1
 //  #4: gl_Vertex (high float) 4x1 [-1] loc 0

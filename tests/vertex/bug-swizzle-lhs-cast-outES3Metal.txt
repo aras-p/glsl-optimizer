@@ -17,28 +17,17 @@ struct xlatMtlShaderUniform {
 vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  float3 viewDir_1 = 0;
-  float3 o_backContrib_2 = 0;
-  float4 tmpvar_3 = 0;
-  tmpvar_3.w = 1.0;
-  tmpvar_3.xyz = _mtl_u._WorldSpaceCameraPos;
-  viewDir_1 = normalize(((_mtl_u._World2Object * tmpvar_3).xyz - _mtl_i._glesVertex.xyz));
-  half backContrib_4 = 0;
-  backContrib_4 = half(saturate(dot (viewDir_1, -(_mtl_u._TerrainTreeLightDirections[0]))));
-  o_backContrib_2[0] = float((backContrib_4 * (half)(2.0)));
-  half backContrib_5 = 0;
-  backContrib_5 = half(saturate(dot (viewDir_1, -(_mtl_u._TerrainTreeLightDirections[1]))));
-  o_backContrib_2[1] = float((backContrib_5 * (half)(2.0)));
-  half backContrib_6 = 0;
-  backContrib_6 = half(saturate(dot (viewDir_1, -(_mtl_u._TerrainTreeLightDirections[2]))));
-  o_backContrib_2[2] = float((backContrib_6 * (half)(2.0)));
+  float3 t0 = ((_mtl_u._World2Object * float4(_mtl_u._WorldSpaceCameraPos, 1.0)).xyz - _mtl_i._glesVertex.xyz);
+  float3 t1 = normalize(t0);
+  half t2 = half(saturate(dot(t1, (-_mtl_u._TerrainTreeLightDirections[0]))));
+  half t3 = half(saturate(dot(t1, (-_mtl_u._TerrainTreeLightDirections[1]))));
+  half t4 = half(saturate(dot(t1, (-_mtl_u._TerrainTreeLightDirections[2]))));
   _mtl_o.gl_Position = (_mtl_u.glstate_matrix_mvp * _mtl_i._glesVertex);
-  _mtl_o.xlv_TEXCOORD2 = o_backContrib_2;
+  _mtl_o.xlv_TEXCOORD2 = float3((half(2.0) * select(select(half3(t2), half3(t3), bool3(false, true, false)), half3(t4), bool3(false, false, true))));
   return _mtl_o;
 }
 
-
-// stats: 17 alu 0 tex 0 flow
+// stats: 29 alu 0 tex 0 flow
 // inputs: 1
 //  #0: _glesVertex (high float) 4x1 [-1] loc 0
 // uniforms: 4 (total size: 208)

@@ -4,294 +4,127 @@ uniform vec4 _MainTex_TexelSize;
 varying vec2 xlv_TEXCOORD0;
 void main ()
 {
-  vec2 tmpvar_1;
-  tmpvar_1 = _MainTex_TexelSize.xy;
-  vec3 tmpvar_2;
-  float subPixelOffset_3;
-  float spanLength_4;
-  bool directionN_5;
-  int i_6;
-  bool doneP_7;
-  bool doneN_8;
-  float lumaEndP_9;
-  float lumaEndN_10;
-  vec2 offNP_11;
-  vec2 posP_12;
-  vec2 posN_13;
-  bool pairN_14;
-  float gradientN_15;
-  float lengthSign_16;
-  bool horzSpan_17;
-  float blendL_18;
-  vec3 rgbL_19;
-  float range_20;
-  float lumaS_21;
-  float lumaN_22;
-  vec3 rgbM_23;
-  doneN_8 = bool(0);
-  doneP_7 = bool(0);
-  i_6 = 0;
-  vec4 tmpvar_24;
-  tmpvar_24.zw = vec2(0.0, 0.0);
-  tmpvar_24.xy = (xlv_TEXCOORD0 + (vec2(0.0, -1.0) * _MainTex_TexelSize.xy));
-  vec4 tmpvar_25;
-  tmpvar_25 = texture2DLod (_MainTex, tmpvar_24.xy, 0.0);
-  vec4 tmpvar_26;
-  tmpvar_26.zw = vec2(0.0, 0.0);
-  tmpvar_26.xy = (xlv_TEXCOORD0 + (vec2(-1.0, 0.0) * _MainTex_TexelSize.xy));
-  vec4 tmpvar_27;
-  tmpvar_27 = texture2DLod (_MainTex, tmpvar_26.xy, 0.0);
-  vec4 tmpvar_28;
-  tmpvar_28 = texture2DLod (_MainTex, xlv_TEXCOORD0, 0.0);
-  rgbM_23 = tmpvar_28.xyz;
-  vec4 tmpvar_29;
-  tmpvar_29.zw = vec2(0.0, 0.0);
-  tmpvar_29.xy = (xlv_TEXCOORD0 + (vec2(1.0, 0.0) * _MainTex_TexelSize.xy));
-  vec4 tmpvar_30;
-  tmpvar_30 = texture2DLod (_MainTex, tmpvar_29.xy, 0.0);
-  vec4 tmpvar_31;
-  tmpvar_31.zw = vec2(0.0, 0.0);
-  tmpvar_31.xy = (xlv_TEXCOORD0 + (vec2(0.0, 1.0) * _MainTex_TexelSize.xy));
-  vec4 tmpvar_32;
-  tmpvar_32 = texture2DLod (_MainTex, tmpvar_31.xy, 0.0);
-  float tmpvar_33;
-  tmpvar_33 = ((tmpvar_25.y * 1.96321) + tmpvar_25.x);
-  lumaN_22 = tmpvar_33;
-  float tmpvar_34;
-  tmpvar_34 = ((tmpvar_27.y * 1.96321) + tmpvar_27.x);
-  float tmpvar_35;
-  tmpvar_35 = ((tmpvar_28.y * 1.96321) + tmpvar_28.x);
-  float tmpvar_36;
-  tmpvar_36 = ((tmpvar_30.y * 1.96321) + tmpvar_30.x);
-  float tmpvar_37;
-  tmpvar_37 = ((tmpvar_32.y * 1.96321) + tmpvar_32.x);
-  lumaS_21 = tmpvar_37;
-  float tmpvar_38;
-  tmpvar_38 = max (tmpvar_35, max (max (tmpvar_33, tmpvar_34), max (tmpvar_37, tmpvar_36)));
-  range_20 = (tmpvar_38 - min (min (tmpvar_35, tmpvar_33), min (
-    min (tmpvar_34, tmpvar_37)
-  , tmpvar_36)));
-  float tmpvar_39;
-  tmpvar_39 = max (0.0625, (tmpvar_38 * 0.125));
-  if ((range_20 < tmpvar_39)) {
-    tmpvar_2 = rgbM_23;
+  vec2 r0;
+  vec2 r1;
+  float r2;
+  float r3;
+  vec3 r4;
+  vec4 t0 = texture2DLod(_MainTex, (xlv_TEXCOORD0 + (vec2(0.0, -1.0) * _MainTex_TexelSize.xy)), 0.0);
+  vec4 t1 = texture2DLod(_MainTex, (xlv_TEXCOORD0 + (vec2(-1.0, 0.0) * _MainTex_TexelSize.xy)), 0.0);
+  vec4 t2 = texture2DLod(_MainTex, xlv_TEXCOORD0, 0.0);
+  vec4 t3 = texture2DLod(_MainTex, (xlv_TEXCOORD0 + (vec2(1.0, 0.0) * _MainTex_TexelSize.xy)), 0.0);
+  vec4 t4 = texture2DLod(_MainTex, (xlv_TEXCOORD0 + (vec2(0.0, 1.0) * _MainTex_TexelSize.xy)), 0.0);
+  float t5 = ((t0.y * 1.96321) + t0.x);
+  float t6 = ((t1.y * 1.96321) + t1.x);
+  float t7 = ((t2.y * 1.96321) + t2.x);
+  float t8 = ((t3.y * 1.96321) + t3.x);
+  float t9 = ((t4.y * 1.96321) + t4.x);
+  float t10 = max(t7, max(max(t5, t6), max(t9, t8)));
+  float t11 = (t10 - min(t7, min(min(t5, t6), min(t9, t8))));
+  if ((t11 < max(0.0625, (t10 * 0.125)))) {
+    r4 = t2.xyz;
   } else {
-    rgbL_19 = (((tmpvar_25.xyz + tmpvar_27.xyz) + (tmpvar_28.xyz + tmpvar_30.xyz)) + tmpvar_32.xyz);
-    blendL_18 = (max (0.0, (
-      (abs(((
-        ((tmpvar_33 + tmpvar_34) + (tmpvar_36 + tmpvar_37))
-       * 0.25) - tmpvar_35)) / range_20)
-     - 0.25)) * 1.33333);
-    blendL_18 = min (0.75, blendL_18);
-    vec4 tmpvar_40;
-    tmpvar_40.zw = vec2(0.0, 0.0);
-    tmpvar_40.xy = (xlv_TEXCOORD0 - _MainTex_TexelSize.xy);
-    vec4 tmpvar_41;
-    tmpvar_41 = texture2DLod (_MainTex, tmpvar_40.xy, 0.0);
-    vec4 tmpvar_42;
-    tmpvar_42.zw = vec2(0.0, 0.0);
-    tmpvar_42.xy = (xlv_TEXCOORD0 + (vec2(1.0, -1.0) * _MainTex_TexelSize.xy));
-    vec4 tmpvar_43;
-    tmpvar_43 = texture2DLod (_MainTex, tmpvar_42.xy, 0.0);
-    vec4 tmpvar_44;
-    tmpvar_44.zw = vec2(0.0, 0.0);
-    tmpvar_44.xy = (xlv_TEXCOORD0 + (vec2(-1.0, 1.0) * _MainTex_TexelSize.xy));
-    vec4 tmpvar_45;
-    tmpvar_45 = texture2DLod (_MainTex, tmpvar_44.xy, 0.0);
-    vec4 tmpvar_46;
-    tmpvar_46.zw = vec2(0.0, 0.0);
-    tmpvar_46.xy = (xlv_TEXCOORD0 + _MainTex_TexelSize.xy);
-    vec4 tmpvar_47;
-    tmpvar_47 = texture2DLod (_MainTex, tmpvar_46.xy, 0.0);
-    rgbL_19 = (rgbL_19 + ((tmpvar_41.xyz + tmpvar_43.xyz) + (tmpvar_45.xyz + tmpvar_47.xyz)));
-    rgbL_19 = (rgbL_19 * vec3(0.111111, 0.111111, 0.111111));
-    float tmpvar_48;
-    tmpvar_48 = ((tmpvar_41.y * 1.96321) + tmpvar_41.x);
-    float tmpvar_49;
-    tmpvar_49 = ((tmpvar_43.y * 1.96321) + tmpvar_43.x);
-    float tmpvar_50;
-    tmpvar_50 = ((tmpvar_45.y * 1.96321) + tmpvar_45.x);
-    float tmpvar_51;
-    tmpvar_51 = ((tmpvar_47.y * 1.96321) + tmpvar_47.x);
-    horzSpan_17 = (((
-      abs((((0.25 * tmpvar_48) + (-0.5 * tmpvar_34)) + (0.25 * tmpvar_50)))
-     + 
-      abs((((0.5 * tmpvar_33) - tmpvar_35) + (0.5 * tmpvar_37)))
-    ) + abs(
-      (((0.25 * tmpvar_49) + (-0.5 * tmpvar_36)) + (0.25 * tmpvar_51))
-    )) >= ((
-      abs((((0.25 * tmpvar_48) + (-0.5 * tmpvar_33)) + (0.25 * tmpvar_49)))
-     + 
-      abs((((0.5 * tmpvar_34) - tmpvar_35) + (0.5 * tmpvar_36)))
-    ) + abs(
-      (((0.25 * tmpvar_50) + (-0.5 * tmpvar_37)) + (0.25 * tmpvar_51))
-    )));
-    float tmpvar_52;
-    if (horzSpan_17) {
-      tmpvar_52 = -(_MainTex_TexelSize.y);
-    } else {
-      tmpvar_52 = -(_MainTex_TexelSize.x);
-    };
-    lengthSign_16 = tmpvar_52;
-    if (!(horzSpan_17)) {
-      lumaN_22 = tmpvar_34;
-    };
-    if (!(horzSpan_17)) {
-      lumaS_21 = tmpvar_36;
-    };
-    float tmpvar_53;
-    tmpvar_53 = abs((lumaN_22 - tmpvar_35));
-    gradientN_15 = tmpvar_53;
-    float tmpvar_54;
-    tmpvar_54 = abs((lumaS_21 - tmpvar_35));
-    lumaN_22 = ((lumaN_22 + tmpvar_35) * 0.5);
-    lumaS_21 = ((lumaS_21 + tmpvar_35) * 0.5);
-    pairN_14 = (tmpvar_53 >= tmpvar_54);
-    if (!(pairN_14)) {
-      lumaN_22 = lumaS_21;
-    };
-    if (!(pairN_14)) {
-      gradientN_15 = tmpvar_54;
-    };
-    if (!(pairN_14)) {
-      lengthSign_16 = -(tmpvar_52);
-    };
-    float tmpvar_55;
-    if (horzSpan_17) {
-      tmpvar_55 = 0.0;
-    } else {
-      tmpvar_55 = (lengthSign_16 * 0.5);
-    };
-    posN_13.x = (xlv_TEXCOORD0.x + tmpvar_55);
-    float tmpvar_56;
-    if (horzSpan_17) {
-      tmpvar_56 = (lengthSign_16 * 0.5);
-    } else {
-      tmpvar_56 = 0.0;
-    };
-    posN_13.y = (xlv_TEXCOORD0.y + tmpvar_56);
-    gradientN_15 = (gradientN_15 * 0.25);
-    posP_12 = posN_13;
-    vec2 tmpvar_57;
-    if (horzSpan_17) {
-      vec2 tmpvar_58;
-      tmpvar_58.y = 0.0;
-      tmpvar_58.x = tmpvar_1.x;
-      tmpvar_57 = tmpvar_58;
-    } else {
-      vec2 tmpvar_59;
-      tmpvar_59.x = 0.0;
-      tmpvar_59.y = tmpvar_1.y;
-      tmpvar_57 = tmpvar_59;
-    };
-    lumaEndN_10 = lumaN_22;
-    lumaEndP_9 = lumaN_22;
-    posN_13 = (posN_13 + (tmpvar_57 * vec2(-2.0, -2.0)));
-    posP_12 = (posP_12 + (tmpvar_57 * vec2(2.0, 2.0)));
-    offNP_11 = (tmpvar_57 * vec2(3.0, 3.0));
-    while (true) {
-      if ((i_6 >= 4)) {
-        break;
-      };
-      if (!(doneN_8)) {
-        vec4 tmpvar_60;
-        tmpvar_60 = texture2DGradARB (_MainTex, posN_13, offNP_11, offNP_11);
-        lumaEndN_10 = ((tmpvar_60.y * 1.96321) + tmpvar_60.x);
-      };
-      if (!(doneP_7)) {
-        vec4 tmpvar_61;
-        tmpvar_61 = texture2DGradARB (_MainTex, posP_12, offNP_11, offNP_11);
-        lumaEndP_9 = ((tmpvar_61.y * 1.96321) + tmpvar_61.x);
-      };
-      bool tmpvar_62;
-      if (doneN_8) {
-        tmpvar_62 = bool(1);
-      } else {
-        tmpvar_62 = (abs((lumaEndN_10 - lumaN_22)) >= gradientN_15);
-      };
-      doneN_8 = tmpvar_62;
-      bool tmpvar_63;
-      if (doneP_7) {
-        tmpvar_63 = bool(1);
-      } else {
-        tmpvar_63 = (abs((lumaEndP_9 - lumaN_22)) >= gradientN_15);
-      };
-      doneP_7 = tmpvar_63;
-      if ((tmpvar_62 && tmpvar_63)) {
-        break;
-      };
-      if (!(tmpvar_62)) {
-        posN_13 = (posN_13 - offNP_11);
-      };
-      if (!(tmpvar_63)) {
-        posP_12 = (posP_12 + offNP_11);
-      };
-      i_6++;
-    };
-    float tmpvar_64;
-    if (horzSpan_17) {
-      tmpvar_64 = (xlv_TEXCOORD0.x - posN_13.x);
-    } else {
-      tmpvar_64 = (xlv_TEXCOORD0.y - posN_13.y);
-    };
-    float tmpvar_65;
-    if (horzSpan_17) {
-      tmpvar_65 = (posP_12.x - xlv_TEXCOORD0.x);
-    } else {
-      tmpvar_65 = (posP_12.y - xlv_TEXCOORD0.y);
-    };
-    directionN_5 = (tmpvar_64 < tmpvar_65);
-    float tmpvar_66;
-    if (directionN_5) {
-      tmpvar_66 = lumaEndN_10;
-    } else {
-      tmpvar_66 = lumaEndP_9;
-    };
-    lumaEndN_10 = tmpvar_66;
-    if (((tmpvar_35 < lumaN_22) == (tmpvar_66 < lumaN_22))) {
-      lengthSign_16 = 0.0;
-    };
-    spanLength_4 = (tmpvar_65 + tmpvar_64);
-    float tmpvar_67;
-    if (directionN_5) {
-      tmpvar_67 = tmpvar_64;
-    } else {
-      tmpvar_67 = tmpvar_65;
-    };
-    subPixelOffset_3 = ((0.5 + (tmpvar_67 * 
-      (-1.0 / spanLength_4)
-    )) * lengthSign_16);
-    float tmpvar_68;
-    if (horzSpan_17) {
-      tmpvar_68 = 0.0;
-    } else {
-      tmpvar_68 = subPixelOffset_3;
-    };
-    float tmpvar_69;
-    if (horzSpan_17) {
-      tmpvar_69 = subPixelOffset_3;
-    } else {
-      tmpvar_69 = 0.0;
-    };
-    vec2 tmpvar_70;
-    tmpvar_70.x = (xlv_TEXCOORD0.x + tmpvar_68);
-    tmpvar_70.y = (xlv_TEXCOORD0.y + tmpvar_69);
-    vec4 tmpvar_71;
-    tmpvar_71 = texture2DLod (_MainTex, tmpvar_70, 0.0);
-    vec3 tmpvar_72;
-    tmpvar_72.x = -(blendL_18);
-    tmpvar_72.y = -(blendL_18);
-    tmpvar_72.z = -(blendL_18);
-    tmpvar_2 = ((tmpvar_72 * tmpvar_71.xyz) + ((rgbL_19 * vec3(blendL_18)) + tmpvar_71.xyz));
-  };
-  vec4 tmpvar_73;
-  tmpvar_73.w = 0.0;
-  tmpvar_73.xyz = tmpvar_2;
-  gl_FragData[0] = tmpvar_73;
+    float t12 = (abs((((((t5 + t6) + t8) + t9) * 0.25) - t7)) / t11);
+    vec4 t13 = texture2DLod(_MainTex, (xlv_TEXCOORD0 - _MainTex_TexelSize.xy), 0.0);
+    vec4 t14 = texture2DLod(_MainTex, (xlv_TEXCOORD0 + (vec2(1.0, -1.0) * _MainTex_TexelSize.xy)), 0.0);
+    vec4 t15 = texture2DLod(_MainTex, (xlv_TEXCOORD0 + (vec2(-1.0, 1.0) * _MainTex_TexelSize.xy)), 0.0);
+    vec4 t16 = texture2DLod(_MainTex, (xlv_TEXCOORD0 + _MainTex_TexelSize.xy), 0.0);
+    vec3 t17 = (((((t0.xyz + t1.xyz) + t2.xyz) + t3.xyz) + t4.xyz) + (((t13.xyz + t14.xyz) + t15.xyz) + t16.xyz));
+    float t18 = (0.5 * t5);
+    float t19 = (0.25 * ((t13.y * 1.96321) + t13.x));
+    float t20 = (0.25 * ((t14.y * 1.96321) + t14.x));
+    float t21 = (0.5 * t6);
+    float t22 = (0.5 * t8);
+    float t23 = (0.5 * t9);
+    float t24 = (0.25 * ((t15.y * 1.96321) + t15.x));
+    float t25 = (0.25 * ((t16.y * 1.96321) + t16.x));
+    bool t26 = (((abs(((t19 - t21) + t24)) + abs(((t18 - t7) + t23))) + abs(((t20 - t22) + t25))) >= ((abs(((t19 - t18) + t20)) + abs(((t21 - t7) + t22))) + abs(((t24 - t23) + t25))));
+    float t27 = (t26 ? _MainTex_TexelSize.y : _MainTex_TexelSize.x);
+    float t28 = (t26 ? t5 : t6);
+    float t29 = (t26 ? t9 : t8);
+    float t30 = abs((t29 - t7));
+    float t31 = abs((t28 - t7));
+    bool t32 = (t31 >= t30);
+    float t33 = (t32 ? (-t27) : t27);
+    float t34 = (t33 * 0.5);
+    vec2 t35 = (t26 ? vec2(_MainTex_TexelSize.x, 0.0) : vec2(0.0, _MainTex_TexelSize.y));
+    vec2 t36 = vec2((xlv_TEXCOORD0.x + (t26 ? 0.0 : t34)), (xlv_TEXCOORD0.y + (t26 ? t34 : 0.0)));
+    r0 = (t36 + (t35 * -2.0));
+    r1 = (t36 + (t35 * 2.0));
+    vec2 t37 = (t35 * 3.0);
+    vec4 t38 = texture2DGradARB(_MainTex, r0, t37, t37);
+    r3 = ((t38.y * 1.96321) + t38.x);
+    vec4 t39 = texture2DGradARB(_MainTex, r1, t37, t37);
+    r2 = ((t39.y * 1.96321) + t39.x);
+    float t40 = (0.5 * (t7 + (t32 ? t28 : t29)));
+    float t41 = abs((r2 - t40));
+    float t42 = (max(t30, t31) * 0.25);
+    bool t43 = (t41 >= t42);
+    float t44 = abs((r3 - t40));
+    bool t45 = (t44 >= t42);
+    if ((!(t45 && t43))) {
+      vec2 t46 = (r0 - t37);
+      r0 = (t45 ? r0 : t46);
+      vec2 t47 = (r1 + t37);
+      r1 = (t43 ? r1 : t47);
+      if ((!t45)) {
+        vec4 t48 = texture2DGradARB(_MainTex, t46, t37, t37);
+        r3 = ((t48.y * 1.96321) + t48.x);
+      }
+      if ((!t43)) {
+        vec4 t49 = texture2DGradARB(_MainTex, t47, t37, t37);
+        r2 = ((t49.y * 1.96321) + t49.x);
+      }
+      float t50 = max(abs((r3 - t40)), t44);
+      float t51 = max(abs((r2 - t40)), t41);
+      bool t52 = (t51 >= t42);
+      bool t53 = (t50 >= t42);
+      if ((!(t53 && t52))) {
+        vec2 t54 = (r0 - t37);
+        r0 = (t53 ? r0 : t54);
+        vec2 t55 = (r1 + t37);
+        r1 = (t52 ? r1 : t55);
+        if ((!t53)) {
+          vec4 t56 = texture2DGradARB(_MainTex, t54, t37, t37);
+          r3 = ((t56.y * 1.96321) + t56.x);
+        }
+        if ((!t52)) {
+          vec4 t57 = texture2DGradARB(_MainTex, t55, t37, t37);
+          r2 = ((t57.y * 1.96321) + t57.x);
+        }
+        float t58 = max(abs((r3 - t40)), t50);
+        float t59 = max(abs((r2 - t40)), t51);
+        bool t60 = (t59 >= t42);
+        bool t61 = (t58 >= t42);
+        if ((!(t61 && t60))) {
+          vec2 t62 = (r0 - t37);
+          vec2 t63 = (t61 ? r0 : t62);
+          vec2 t64 = (r1 + t37);
+          vec2 t65 = (t60 ? r1 : t64);
+          if ((!t61)) {
+            vec4 t66 = texture2DGradARB(_MainTex, t62, t37, t37);
+            r3 = ((t66.y * 1.96321) + t66.x);
+          }
+          if ((!t60)) {
+            vec4 t67 = texture2DGradARB(_MainTex, t64, t37, t37);
+            r2 = ((t67.y * 1.96321) + t67.x);
+          }
+          r1 = ((max(abs((r2 - t40)), t59) >= t42) ? t65 : (t65 + t37));
+          r0 = ((max(abs((r3 - t40)), t58) >= t42) ? t63 : (t63 - t37));
+        }
+      }
+    }
+    float t68 = (t26 ? (xlv_TEXCOORD0.x - r0.x) : (xlv_TEXCOORD0.y - r0.y));
+    float t69 = (t26 ? (r1.x - xlv_TEXCOORD0.x) : (r1.y - xlv_TEXCOORD0.y));
+    float t70 = ((0.5 + (min(t69, t68) * (-1.0 / (t69 + t68)))) * (((t7 < t40) == (((t68 < t69) ? r3 : r2) < t40)) ? 0.0 : t33));
+    vec4 t71 = texture2DLod(_MainTex, vec2((xlv_TEXCOORD0.x + (t26 ? 0.0 : t70)), (xlv_TEXCOORD0.y + (t26 ? t70 : 0.0))), 0.0);
+    float t72 = min(0.75, (max(0.0, (t12 - 0.25)) * 1.33333));
+    r4 = ((((t17 * 0.111111) * t72) + t71.xyz) - (t72 * t71.xyz));
+  }
+  gl_FragData[0] = vec4(r4.x, r4.y, r4.z, 0.0);
 }
 
-
-// stats: 192 alu 12 tex 26 flow
+// stats: 221 alu 18 tex 10 flow
 // inputs: 1
 //  #0: xlv_TEXCOORD0 (high float) 2x1 [-1]
 // uniforms: 1 (total size: 0)

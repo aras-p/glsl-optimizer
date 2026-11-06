@@ -16,7 +16,6 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   return _mtl_o;
 }
 
-
 // stats: 0 alu 0 tex 0 flow
 // inputs: 1
 //  #0: xlv_VFACE (high float) 1x1 [-1]

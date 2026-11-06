@@ -3,9 +3,9 @@ uniform sampler2DArray myarr;
 varying vec4 uv;
 void main ()
 {
-  gl_FragData[0] = ((texture2DArray (myarr, uv.xyz) + texture2DArray (myarr, uv.xyw)) + texture2DArray (myarr, uv.xyz, 1.5));
+  vec3 t0 = uv.xyz;
+  gl_FragData[0] = ((texture2DArray(myarr, t0) + texture2DArray(myarr, uv.xyw)) + texture2DArray(myarr, t0, 1.5));
 }
-
 
 // stats: 2 alu 3 tex 0 flow
 // inputs: 1

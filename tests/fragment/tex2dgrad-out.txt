@@ -4,11 +4,11 @@ uniform samplerCube cub;
 varying vec3 uv;
 void main ()
 {
-  gl_FragColor = (texture2DGradARB (tex, uv.xy, dFdx(uv.xy), dFdy(uv.xy)) + textureCubeGradARB (cub, uv, dFdx(uv), dFdy(uv)));
+  vec2 t0 = uv.xy;
+  gl_FragColor = (texture2DGradARB(tex, t0, dFdx(t0), dFdy(t0)) + textureCubeGradARB(cub, uv, dFdx(uv), dFdy(uv)));
 }
 
-
-// stats: 5 alu 2 tex 0 flow
+// stats: 1 alu 2 tex 0 flow
 // inputs: 1
 //  #0: uv (high float) 3x1 [-1]
 // textures: 2

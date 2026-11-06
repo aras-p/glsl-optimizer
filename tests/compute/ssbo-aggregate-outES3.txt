@@ -1,5 +1,5 @@
 #version 310 es
-layout(local_size_x=4) in;
+layout(local_size_x = 4) in;
 struct Child {
   highp vec3 position;
   highp float weight;
@@ -11,28 +11,74 @@ struct Entry {
   highp mat2x3 transform;
 };
 layout(std140, row_major) buffer RowOutput {
-  layout(row_major) Entry entry;
+  Entry entry;
 } rowData;
-layout(std430, column_major) buffer Output {
-  layout(column_major) Entry entries[4];
-  layout(column_major) Entry pair[2];
+layout(std430) buffer Output {
+  Entry entries[4];
+  Entry pair[2];
   highp vec2 weights[2][3];
-  layout(column_major) highp mat2x3 transform;
+  highp mat2x3 transform;
 } outputData;
 layout(std140, row_major) uniform Input {
-  layout(row_major) Entry entry;
-  layout(row_major) Entry entries[2];
+  Entry entry;
+  Entry entries[2];
   highp vec2 weights[2][3];
 } sourceData;
 void main ()
 {
-  outputData.entries[gl_GlobalInvocationID.x] = sourceData.entry;
-  outputData.weights = sourceData.weights;
-  outputData.pair = sourceData.entries;
-  outputData.transform = sourceData.entry.transform;
-  rowData.entry = sourceData.entry;
+  outputData.entries[int(gl_GlobalInvocationID.x)].children[0].position = sourceData.entry.children[0].position;
+  outputData.entries[int(gl_GlobalInvocationID.x)].children[1].position = sourceData.entry.children[1].position;
+  outputData.entries[int(gl_GlobalInvocationID.x)].children[0].weight = sourceData.entry.children[0].weight;
+  outputData.entries[int(gl_GlobalInvocationID.x)].children[1].weight = sourceData.entry.children[1].weight;
+  outputData.entries[int(gl_GlobalInvocationID.x)].children[0].enabled = sourceData.entry.children[0].enabled;
+  outputData.entries[int(gl_GlobalInvocationID.x)].children[1].enabled = sourceData.entry.children[1].enabled;
+  outputData.entries[int(gl_GlobalInvocationID.x)].weights[0] = sourceData.entry.weights[0];
+  outputData.entries[int(gl_GlobalInvocationID.x)].weights[1] = sourceData.entry.weights[1];
+  outputData.entries[int(gl_GlobalInvocationID.x)].weights[2] = sourceData.entry.weights[2];
+  outputData.entries[int(gl_GlobalInvocationID.x)].transform[0] = sourceData.entry.transform[0];
+  outputData.entries[int(gl_GlobalInvocationID.x)].transform[1] = sourceData.entry.transform[1];
+  outputData.weights[0][0] = sourceData.weights[0][0];
+  outputData.weights[0][1] = sourceData.weights[0][1];
+  outputData.weights[0][2] = sourceData.weights[0][2];
+  outputData.weights[1][0] = sourceData.weights[1][0];
+  outputData.weights[1][1] = sourceData.weights[1][1];
+  outputData.weights[1][2] = sourceData.weights[1][2];
+  outputData.pair[0].children[0].position = sourceData.entries[0].children[0].position;
+  outputData.pair[0].children[1].position = sourceData.entries[0].children[1].position;
+  outputData.pair[1].children[0].position = sourceData.entries[1].children[0].position;
+  outputData.pair[1].children[1].position = sourceData.entries[1].children[1].position;
+  outputData.pair[0].children[0].weight = sourceData.entries[0].children[0].weight;
+  outputData.pair[0].children[1].weight = sourceData.entries[0].children[1].weight;
+  outputData.pair[1].children[0].weight = sourceData.entries[1].children[0].weight;
+  outputData.pair[1].children[1].weight = sourceData.entries[1].children[1].weight;
+  outputData.pair[0].children[0].enabled = sourceData.entries[0].children[0].enabled;
+  outputData.pair[0].children[1].enabled = sourceData.entries[0].children[1].enabled;
+  outputData.pair[1].children[0].enabled = sourceData.entries[1].children[0].enabled;
+  outputData.pair[1].children[1].enabled = sourceData.entries[1].children[1].enabled;
+  outputData.pair[0].weights[0] = sourceData.entries[0].weights[0];
+  outputData.pair[0].weights[1] = sourceData.entries[0].weights[1];
+  outputData.pair[0].weights[2] = sourceData.entries[0].weights[2];
+  outputData.pair[1].weights[0] = sourceData.entries[1].weights[0];
+  outputData.pair[1].weights[1] = sourceData.entries[1].weights[1];
+  outputData.pair[1].weights[2] = sourceData.entries[1].weights[2];
+  outputData.pair[0].transform[0] = sourceData.entries[0].transform[0];
+  outputData.pair[0].transform[1] = sourceData.entries[0].transform[1];
+  outputData.pair[1].transform[0] = sourceData.entries[1].transform[0];
+  outputData.pair[1].transform[1] = sourceData.entries[1].transform[1];
+  outputData.transform[0] = sourceData.entry.transform[0];
+  outputData.transform[1] = sourceData.entry.transform[1];
+  rowData.entry.children[0].position = sourceData.entry.children[0].position;
+  rowData.entry.children[1].position = sourceData.entry.children[1].position;
+  rowData.entry.children[0].weight = sourceData.entry.children[0].weight;
+  rowData.entry.children[1].weight = sourceData.entry.children[1].weight;
+  rowData.entry.children[0].enabled = sourceData.entry.children[0].enabled;
+  rowData.entry.children[1].enabled = sourceData.entry.children[1].enabled;
+  rowData.entry.weights[0] = sourceData.entry.weights[0];
+  rowData.entry.weights[1] = sourceData.entry.weights[1];
+  rowData.entry.weights[2] = sourceData.entry.weights[2];
+  rowData.entry.transform[0] = sourceData.entry.transform[0];
+  rowData.entry.transform[1] = sourceData.entry.transform[1];
 }
-
 
 // stats: 0 alu 0 tex 0 flow
 // workgroup size: 4 1 1

@@ -2,19 +2,10 @@ attribute vec3 _in_position;
 uniform mat4 mtx;
 void main ()
 {
-  mat4 m_1;
-  m_1 = mtx;
-  m_1[0][3] = 0.0;
-  m_1[0][2] = 0.0;
-  m_1[0][1] = 0.0;
-  vec4 tmpvar_2;
-  tmpvar_2.w = 1.0;
-  tmpvar_2.xyz = _in_position;
-  gl_Position = (m_1 * tmpvar_2);
+  gl_Position = ((((vec4(mtx[0].x, 0.0, 0.0, 0.0) * _in_position.x) + (mtx[1] * _in_position.y)) + (mtx[2] * _in_position.z)) + mtx[3]);
 }
 
-
-// stats: 5 alu 0 tex 0 flow
+// stats: 6 alu 0 tex 0 flow
 // inputs: 1
 //  #0: _in_position (high float) 3x1 [-1]
 // uniforms: 1 (total size: 0)

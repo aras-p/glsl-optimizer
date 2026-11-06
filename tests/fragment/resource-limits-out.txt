@@ -3,13 +3,9 @@ uniform int value;
 out vec4 color;
 void main ()
 {
-  vec4 tmpvar_1;
-  tmpvar_1.yzw = vec3(8.0, 8.0, 8.0);
-  tmpvar_1.x = float(value);
-  color = tmpvar_1;
+  color = vec4(float(value), 8.0, 8.0, 8.0);
 }
 
-
-// stats: 2 alu 0 tex 0 flow
+// stats: 1 alu 0 tex 0 flow
 // uniforms: 1 (total size: 0)
 //  #0: value (high int) 1x1 [-1]

@@ -1,68 +1,34 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
+#if __METAL_VERSION__ < 210
+#error This shader requires Metal 2.1 or newer
+#endif
 struct xlatMtlShaderUniform {
 };
 // threadsPerThreadgroup: 8, 1, 1
 kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , uint3 gl_GlobalInvocationID [[thread_position_in_grid]]
   , texture1d<float, access::read_write> lineImage [[texture(0)]]
   , texture1d_array<float, access::read_write> lineLayers [[texture(1)]]
   , texturecube<float, access::read_write> cubeImage [[texture(2)]]
   , texturecube_array<float, access::read_write> cubeLayers [[texture(3)]]
-  , texture_buffer<float, access::read_write> linearImage [[texture(4)]])
+  , texture_buffer<float, access::read_write> linearImage [[texture(4)]]
+  , uint3 gl_GlobalInvocationID [[thread_position_in_grid]])
 {
-  int tmpvar_1 = 0;
-  tmpvar_1 = int(gl_GlobalInvocationID.x);
-  int3 tmpvar_2 = 0;
-  tmpvar_2.yz = int2(0, 5);
-  tmpvar_2.x = tmpvar_1;
-  int3 tmpvar_3 = 0;
-  tmpvar_3.yz = int2(0, 8);
-  tmpvar_3.x = tmpvar_1;
-  int2 tmpvar_4 = 0;
-  tmpvar_4.y = 1;
-  tmpvar_4.x = tmpvar_1;
-  float4 tmpvar_5 = 0;
-  tmpvar_5 = lineImage.read(uint(tmpvar_1));
-  float4 tmpvar_6 = 0;
-  tmpvar_6 = lineLayers.read(uint(tmpvar_4.x), uint(tmpvar_4.y));
-  float4 tmpvar_7 = 0;
-  tmpvar_7 = cubeImage.read(uint2(tmpvar_2.xy), uint(tmpvar_2.z));
-  float4 tmpvar_8 = 0;
-  tmpvar_8 = cubeLayers.read(uint2(tmpvar_3.xy), uint(tmpvar_3.z) % 6u, uint(tmpvar_3.z) / 6u);
-  float4 tmpvar_9 = 0;
-  tmpvar_9 = linearImage.read(uint(tmpvar_1));
-  float4 tmpvar_10 = 0;
-  tmpvar_10 = (((tmpvar_5 + tmpvar_6) + (tmpvar_7 + tmpvar_8)) + tmpvar_9);
-  int tmpvar_11 = 0;
-  tmpvar_11 = int(lineImage.get_width());
-  lineImage.write(float4((tmpvar_10 + float4(float(tmpvar_11)))), uint(tmpvar_1));
-  int2 tmpvar_12 = 0;
-  tmpvar_12 = int2(lineLayers.get_width(), lineLayers.get_array_size());
-  float4 tmpvar_13 = 0;
-  tmpvar_13.zw = float2(0.0, 0.0);
-  tmpvar_13.xy = float2(tmpvar_12);
-  lineLayers.write(float4((tmpvar_10 + tmpvar_13)), uint(tmpvar_4.x), uint(tmpvar_4.y));
-  int2 tmpvar_14 = 0;
-  tmpvar_14 = int2(cubeImage.get_width(), cubeImage.get_height());
-  float4 tmpvar_15 = 0;
-  tmpvar_15.zw = float2(0.0, 0.0);
-  tmpvar_15.xy = float2(tmpvar_14);
-  cubeImage.write(float4((tmpvar_10 + tmpvar_15)), uint2(tmpvar_2.xy), uint(tmpvar_2.z));
-  int3 tmpvar_16 = 0;
-  tmpvar_16 = int3(cubeLayers.get_width(), cubeLayers.get_height(), cubeLayers.get_array_size());
-  float4 tmpvar_17 = 0;
-  tmpvar_17.w = 0.0;
-  tmpvar_17.xyz = float3(tmpvar_16);
-  cubeLayers.write(float4((tmpvar_10 + tmpvar_17)), uint2(tmpvar_3.xy), uint(tmpvar_3.z) % 6u, uint(tmpvar_3.z) / 6u);
-  int tmpvar_18 = 0;
-  tmpvar_18 = int(linearImage.get_width());
-  linearImage.write(float4((tmpvar_10 + float4(float(tmpvar_18)))), uint(tmpvar_1));
+  float4 t0 = cubeLayers.read(uint2(int4(uint4(gl_GlobalInvocationID.x, 0u, 8u, 0u)).xy), uint(int4(uint4(gl_GlobalInvocationID.x, 0u, 8u, 0u)).z) % 6u, uint(int4(uint4(gl_GlobalInvocationID.x, 0u, 8u, 0u)).z) / 6u);
+  float4 t1 = (lineImage.read(uint(int4(uint4(gl_GlobalInvocationID.x, 0u, 0u, 0u)).x)) + lineLayers.read(uint(int4(uint4(gl_GlobalInvocationID.x, 1u, 0u, 0u)).x), uint(int4(uint4(gl_GlobalInvocationID.x, 1u, 0u, 0u)).y)));
+  float4 t2 = (((t1 + cubeImage.read(uint2(int4(uint4(gl_GlobalInvocationID.x, 0u, 5u, 0u)).xy), uint(int4(uint4(gl_GlobalInvocationID.x, 0u, 5u, 0u)).z))) + t0) + linearImage.read(uint(int4(uint4(gl_GlobalInvocationID.x, 0u, 0u, 0u)).x)));
+  lineImage.write((t2 + float(int(lineImage.get_width()))), uint(int4(uint4(gl_GlobalInvocationID.x, 0u, 0u, 0u)).x));
+  float2 t3 = float2(int2(lineLayers.get_width(), lineLayers.get_array_size()));
+  lineLayers.write((t2 + float4(t3, 0.0, 0.0)), uint(int4(uint4(gl_GlobalInvocationID.x, 1u, 0u, 0u)).x), uint(int4(uint4(gl_GlobalInvocationID.x, 1u, 0u, 0u)).y));
+  float2 t4 = float2(int2(cubeImage.get_width(), cubeImage.get_height()));
+  cubeImage.write((t2 + float4(t4, 0.0, 0.0)), uint2(int4(uint4(gl_GlobalInvocationID.x, 0u, 5u, 0u)).xy), uint(int4(uint4(gl_GlobalInvocationID.x, 0u, 5u, 0u)).z));
+  float3 t5 = float3(int3(cubeLayers.get_width(), cubeLayers.get_height(), cubeLayers.get_array_size()));
+  cubeLayers.write((t2 + float4(t5, 0.0)), uint2(int4(uint4(gl_GlobalInvocationID.x, 0u, 8u, 0u)).xy), uint(int4(uint4(gl_GlobalInvocationID.x, 0u, 8u, 0u)).z) % 6u, uint(int4(uint4(gl_GlobalInvocationID.x, 0u, 8u, 0u)).z) / 6u);
+  linearImage.write((t2 + float(int(linearImage.get_width()))), uint(int4(uint4(gl_GlobalInvocationID.x, 0u, 0u, 0u)).x));
 }
 
-
-// stats: 21 alu 15 tex 0 flow
+// stats: 14 alu 15 tex 0 flow
 // workgroup size: 8 1 1
 // textures: 5
 //  #0: lineImage (high image1d) 0x0 [-1] loc 0 format r32f component float

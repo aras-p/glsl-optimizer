@@ -2,29 +2,29 @@
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
 #if __METAL_VERSION__ < 320
-#error Memory barriers require Metal 3.2 or newer
+#error This shader requires Metal 3.2 or newer
 #endif
-struct alignas(4) _xlat_buf_storage0_element { uint value; };
-static_assert(sizeof(_xlat_buf_storage0_element) == 4, "array stride");
+struct _xlat_buf_Output_std430 {
+  uint values[1];
+};
 struct xlatMtlShaderUniform {
 };
 // threadsPerThreadgroup: 8, 1, 1
 kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , device uchar* _mtl_buffer1 [[buffer(1)]]
+  , device _xlat_buf_Output_std430& outputData [[buffer(1)]]
   , uint gl_LocalInvocationIndex [[thread_index_in_threadgroup]]
   , uint3 gl_GlobalInvocationID [[thread_position_in_grid]])
 {
-threadgroup uint values_1[8];
-  values_1[gl_LocalInvocationIndex] = gl_LocalInvocationIndex;
-  if (((gl_LocalInvocationIndex & 1u) != 0u)) {
-    atomic_thread_fence(mem_flags::mem_threadgroup, memory_order_seq_cst, thread_scope_threadgroup);
-  };
+  threadgroup uint values[8];
+  values[int(gl_LocalInvocationIndex)] = gl_LocalInvocationIndex;
+  if ((int((gl_LocalInvocationIndex & 1u)) != 0)) {
+    atomic_thread_fence(mem_flags::mem_threadgroup, memory_order_seq_cst, thread_scope_device);
+  }
   atomic_thread_fence(mem_flags::mem_device | mem_flags::mem_texture | mem_flags::mem_threadgroup, memory_order_seq_cst, thread_scope_threadgroup);
   atomic_thread_fence(mem_flags::mem_device | mem_flags::mem_texture | mem_flags::mem_threadgroup, memory_order_seq_cst, thread_scope_device);
   threadgroup_barrier(mem_flags::mem_threadgroup);
-  reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_GlobalInvocationID.x].value = uint(values_1[((gl_LocalInvocationIndex + 1u) % 8u)]);
+  outputData.values[int(gl_GlobalInvocationID.x)] = values[int((uint((int(gl_LocalInvocationIndex) + 1)) & 7u))];
 }
-
 
 // stats: 4 alu 0 tex 1 flow
 // workgroup size: 8 1 1

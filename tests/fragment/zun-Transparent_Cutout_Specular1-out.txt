@@ -8,42 +8,22 @@ uniform float _Shininess;
 uniform vec4 _SpecColor;
 void main ()
 {
-  vec3 xlt_IN_normal_1;
-  vec3 xlt_IN__LightCoord_2;
-  xlt_IN_normal_1 = gl_TexCoord[1].xyz;
-  xlt_IN__LightCoord_2 = gl_TexCoord[4].xyz;
-  vec4 c_3;
-  float tmpvar_4;
-  vec4 tmpvar_5;
-  tmpvar_5 = texture2D (_MainTex, gl_TexCoord[0].xy);
-  tmpvar_4 = (tmpvar_5.w * _Color.w);
-  if (((tmpvar_4 - _Cutoff) < 0.0)) discard;
-  vec3 tmpvar_6;
-  tmpvar_6 = normalize(gl_TexCoord[2].xyz);
-  float tmpvar_7;
-  tmpvar_7 = (texture2D (_LightTextureB0, vec2(dot (xlt_IN__LightCoord_2, xlt_IN__LightCoord_2))).w * textureCube (_LightTexture0, xlt_IN__LightCoord_2).w);
-  vec4 c_8;
-  float spec_9;
-  spec_9 = (pow (max (0.0, 
-    dot (xlt_IN_normal_1, normalize((tmpvar_6 + normalize(gl_TexCoord[3].xyz))))
-  ), (_Shininess * 128.0)) * tmpvar_5.w);
-  c_8.xyz = (((
-    ((tmpvar_5.xyz * _Color.xyz) * _LightColor0.xyz)
-   * 
-    max (0.0, dot (xlt_IN_normal_1, tmpvar_6))
-  ) + (
-    (_LightColor0.xyz * _SpecColor.xyz)
-   * spec_9)) * (tmpvar_7 * 2.0));
-  c_8.w = (tmpvar_4 + ((_LightColor0.w * _SpecColor.w) * (spec_9 * tmpvar_7)));
-  c_3.xyz = c_8.xyz;
-  c_3.w = tmpvar_4;
-  gl_FragData[0] = c_3;
+  vec4 t0 = texture2D(_MainTex, gl_TexCoord[0].xy);
+  vec3 t1 = (t0.xyz * _Color.xyz);
+  float t2 = (t0.w * _Color.w);
+  if ((t2 < _Cutoff)) {
+    discard;
+  }
+  vec3 t3 = normalize(gl_TexCoord[2].xyz);
+  vec3 t4 = (t3 + normalize(gl_TexCoord[3].xyz));
+  vec3 t5 = (((t1 * _LightColor0.xyz) * max(0.0, dot(gl_TexCoord[1].xyz, t3))) + ((_LightColor0.xyz * _SpecColor.xyz) * (pow(max(0.0, dot(gl_TexCoord[1].xyz, normalize(t4))), (_Shininess * 128.0)) * t0.w)));
+  vec3 t6 = (t5 * ((texture2D(_LightTextureB0, vec2(dot(gl_TexCoord[4].xyz, gl_TexCoord[4].xyz))).w * 2.0) * textureCube(_LightTexture0, gl_TexCoord[4].xyz).w));
+  gl_FragData[0] = vec4(t6, t2);
 }
 
-
-// stats: 28 alu 4 tex 1 flow
+// stats: 29 alu 4 tex 1 flow
 // inputs: 1
-//  #0: gl_TexCoord (high float) 4x1 [5] loc 4
+//  #0: gl_TexCoord (high float) 4x1 [0] loc 4
 // uniforms: 5 (total size: 0)
 //  #0: _Color (high float) 4x1 [-1]
 //  #1: _Cutoff (high float) 1x1 [-1]

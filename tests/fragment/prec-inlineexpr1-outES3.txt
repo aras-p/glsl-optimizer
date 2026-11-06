@@ -1,5 +1,7 @@
 #version 300 es
-layout(location=0) out mediump vec4 _fragData;
+precision highp float;
+precision highp int;
+layout(location = 0) out mediump vec4 _fragData;
 uniform mediump sampler2D _MainTex;
 uniform mediump sampler2D _BurntTex;
 uniform mediump float _EmberFadeEnd;
@@ -7,18 +9,11 @@ uniform mediump float _EmberFadeStart;
 in mediump vec2 xlv_TEXCOORD0;
 void main ()
 {
-  mediump vec4 tmpvar_1;
-  tmpvar_1.w = 1.0;
-  tmpvar_1.xyz = mix (texture (_MainTex, xlv_TEXCOORD0).xyz, texture (_BurntTex, xlv_TEXCOORD0).xyz, vec3(clamp ((
-    (_EmberFadeStart - 0.05)
-   / 
-    (_EmberFadeStart - _EmberFadeEnd)
-  ), 0.0, 1.0)));
-  _fragData = tmpvar_1;
+  mediump vec3 t0 = mix(texture(_MainTex, xlv_TEXCOORD0).xyz, texture(_BurntTex, xlv_TEXCOORD0).xyz, vec3(clamp(((_EmberFadeStart - 0.05) / (_EmberFadeStart - _EmberFadeEnd)), 0.0, 1.0)));
+  _fragData = vec4(t0, 1.0);
 }
 
-
-// stats: 7 alu 2 tex 0 flow
+// stats: 5 alu 2 tex 0 flow
 // inputs: 1
 //  #0: xlv_TEXCOORD0 (medium float) 2x1 [-1]
 // uniforms: 2 (total size: 0)

@@ -36,104 +36,42 @@ struct xlatMtlShaderUniform {
 vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  float3 xlt_v_normal_1 = 0;
-  float4 xlt_v_color_2 = 0;
-  xlt_v_normal_1 = float3(_mtl_i._inNormal);
-  xlt_v_color_2 = float4(_mtl_i._color);
-  float3 binormal_3 = 0;
-  float4 tmpvar_4 = 0;
-  float4 tmpvar_5 = 0;
-  float3 tmpvar_6 = 0;
-  float4 tmpvar_7 = 0;
-  float3 tmpvar_8 = 0;
-  float4 tmpvar_9 = 0;
-  float isBillboard_10 = 0;
-  isBillboard_10 = (1.0 - abs(_mtl_i.TANGENT.w));
-  float4 tmpvar_11 = 0;
-  tmpvar_11.w = 0.0;
-  tmpvar_11.xyz = xlt_v_normal_1;
-  float4 tmpvar_12 = 0;
-  tmpvar_12.w = 0.0;
-  tmpvar_12.xyz = _mtl_i.TANGENT.xyz;
-  float4 tmpvar_13 = 0;
-  tmpvar_13.zw = float2(0.0, 0.0);
-  tmpvar_13.xy = xlt_v_normal_1.xy;
-  tmpvar_7 = (_mtl_i._inVertex + ((tmpvar_13 * _mtl_u.glstate_matrix_invtrans_modelview0) * isBillboard_10));
-  tmpvar_8 = mix (xlt_v_normal_1, normalize((tmpvar_11 * _mtl_u.glstate_matrix_invtrans_modelview0)).xyz, float3(isBillboard_10));
-  float4 tmpvar_14 = 0;
-  tmpvar_14.w = -1.0;
-  tmpvar_14.xyz = normalize((tmpvar_12 * _mtl_u.glstate_matrix_invtrans_modelview0)).xyz;
-  tmpvar_9 = mix (_mtl_i.TANGENT, tmpvar_14, float4(isBillboard_10));
-  tmpvar_4.w = tmpvar_7.w;
-  tmpvar_5.w = tmpvar_9.w;
-  tmpvar_4.xyz = (tmpvar_7.xyz * _mtl_u._Scale.xyz);
-  float4 tmpvar_15 = 0;
-  tmpvar_15.w = tmpvar_4.w;
-  float3 bend_16 = 0;
-  float2 vWavesSum_17 = 0;
-  float4 vWaves_18 = 0;
-  float fBranchPhase_19 = 0;
-  fBranchPhase_19 = (dot (_mtl_u._Object2World[3].xyz, float3(1.0, 1.0, 1.0)) + xlt_v_color_2.x);
-  float2 tmpvar_20 = 0;
-  tmpvar_20.x = dot (tmpvar_4.xyz, float3((xlt_v_color_2.y + fBranchPhase_19)));
-  tmpvar_20.y = fBranchPhase_19;
-  vWaves_18 = ((fract(
-    ((_mtl_u._Time.yy + tmpvar_20).xxyy * float4(1.975, 0.793, 0.375, 0.193))
-  ) * 2.0) - 1.0);
-  float4 tmpvar_21 = 0;
-  tmpvar_21 = abs(((
-    fract((vWaves_18 + 0.5))
-   * 2.0) - 1.0));
-  float4 tmpvar_22 = 0;
-  tmpvar_22 = ((tmpvar_21 * tmpvar_21) * (3.0 - (2.0 * tmpvar_21)));
-  vWaves_18 = tmpvar_22;
-  vWavesSum_17 = (tmpvar_22.xz + tmpvar_22.yw);
-  bend_16.xz = ((xlt_v_color_2.y * 0.1) * tmpvar_8).xz;
-  bend_16.y = (_mtl_i._uv1.y * 0.3);
-  tmpvar_15.xyz = (tmpvar_4.xyz + ((
-    (vWavesSum_17.xyx * bend_16)
-   + 
-    ((_mtl_u._Wind.xyz * vWavesSum_17.y) * _mtl_i._uv1.y)
-  ) * _mtl_u._Wind.w));
-  tmpvar_15.xyz = (tmpvar_15.xyz + (_mtl_i._uv1.x * _mtl_u._Wind.xyz));
-  float4 tmpvar_23 = 0;
-  tmpvar_23.w = 1.0;
-  tmpvar_23.xyz = mix ((tmpvar_15.xyz - (
-    (dot (_mtl_u._SquashPlaneNormal.xyz, tmpvar_15.xyz) + _mtl_u._SquashPlaneNormal.w)
-   * _mtl_u._SquashPlaneNormal.xyz)), tmpvar_15.xyz, float3(_mtl_u._SquashAmount));
-  tmpvar_4 = tmpvar_23;
-  float4 tmpvar_24 = 0;
-  tmpvar_24.xyz = float3(1.0, 1.0, 1.0);
-  tmpvar_24.w = xlt_v_color_2.w;
-  tmpvar_6 = normalize(tmpvar_8);
-  tmpvar_5.xyz = normalize(tmpvar_9.xyz);
-  binormal_3 = (((tmpvar_6.yzx * tmpvar_5.zxy) - (tmpvar_6.zxy * tmpvar_5.yzx)) * tmpvar_9.w);
-  float3x3 tmpvar_25;
-  tmpvar_25[0u].x = tmpvar_5.x;
-  tmpvar_25[0u].y = binormal_3.x;
-  tmpvar_25[0u].z = tmpvar_6.x;
-  tmpvar_25[1u].x = tmpvar_5.y;
-  tmpvar_25[1u].y = binormal_3.y;
-  tmpvar_25[1u].z = tmpvar_6.y;
-  tmpvar_25[2u].x = tmpvar_5.z;
-  tmpvar_25[2u].y = binormal_3.z;
-  tmpvar_25[2u].z = tmpvar_6.z;
-  float4 tmpvar_26 = 0;
-  tmpvar_26.w = 1.0;
-  tmpvar_26.xyz = _mtl_u._WorldSpaceCameraPos;
-  _mtl_o.gl_Position = (_mtl_u.glstate_matrix_mvp * tmpvar_23);
+  float3 t0 = float3(_mtl_i._inNormal);
+  float4 t1 = float4(_mtl_i._color);
+  float4 t2 = float4(dot(t0, _mtl_u.glstate_matrix_invtrans_modelview0[0].xyz), dot(t0, _mtl_u.glstate_matrix_invtrans_modelview0[1].xyz), dot(t0, _mtl_u.glstate_matrix_invtrans_modelview0[2].xyz), dot(t0, _mtl_u.glstate_matrix_invtrans_modelview0[3].xyz));
+  float4 t3 = float4(dot(_mtl_i.TANGENT.xyz, _mtl_u.glstate_matrix_invtrans_modelview0[0].xyz), dot(_mtl_i.TANGENT.xyz, _mtl_u.glstate_matrix_invtrans_modelview0[1].xyz), dot(_mtl_i.TANGENT.xyz, _mtl_u.glstate_matrix_invtrans_modelview0[2].xyz), dot(_mtl_i.TANGENT.xyz, _mtl_u.glstate_matrix_invtrans_modelview0[3].xyz));
+  float4 t4 = normalize(t3);
+  float4 t5 = float4(dot(t0.xy, _mtl_u.glstate_matrix_invtrans_modelview0[0].xy), dot(t0.xy, _mtl_u.glstate_matrix_invtrans_modelview0[1].xy), dot(t0.xy, _mtl_u.glstate_matrix_invtrans_modelview0[2].xy), dot(t0.xy, _mtl_u.glstate_matrix_invtrans_modelview0[3].xy));
+  float t6 = (1.0 - abs(_mtl_i.TANGENT.w));
+  float3 t7 = mix(t0, normalize(t2).xyz, float3(t6));
+  float4 t8 = mix(_mtl_i.TANGENT, float4(t4.xyz, -1.0), float4(t6));
+  float3 t9 = ((_mtl_i._inVertex + (t5 * t6)).xyz * _mtl_u._Scale.xyz);
+  float t10 = (dot(_mtl_u._Object2World[3].xyz, float3(1.0)) + t1.x);
+  float4 t11 = abs(((fract((-0.5 + (fract(((_mtl_u._Time.y + float2(dot(t9, float3((t1.y + t10))), t10)).xxyy * float4(1.975, 0.793, 0.375, 0.193))) * 2.0))) * 2.0) - 1.0));
+  float4 t12 = ((t11 * t11) * (3.0 - (2.0 * t11)));
+  float2 t13 = (t12.xz + t12.yw);
+  float3 t14 = ((t1.y * 0.1) * t7);
+  float3 t15 = ((t9 + (((t13.xyx * float3(t14.x, (_mtl_i._uv1.y * 0.3), t14.z)) + ((_mtl_u._Wind.xyz * t13.y) * _mtl_i._uv1.y)) * _mtl_u._Wind.w)) + (_mtl_i._uv1.x * _mtl_u._Wind.xyz));
+  float3 t16 = mix((t15 - ((dot(_mtl_u._SquashPlaneNormal.xyz, t15) + _mtl_u._SquashPlaneNormal.w) * _mtl_u._SquashPlaneNormal.xyz)), t15, float3(_mtl_u._SquashAmount));
+  float3 t17 = normalize(t7);
+  float3 t18 = normalize(t8.xyz);
+  float3 t19 = (((t17.yzx * t18.zxy) - (t17.zxy * t18.yzx)) * t8.w);
+  float4 t20 = (_mtl_u._World2Object * _mtl_u._WorldSpaceLightPos0);
+  float3 t21 = float3(t18.x, t19.x, t17.x);
+  float3 t22 = float3(t18.y, t19.y, t17.y);
+  float3 t23 = float3(t18.z, t19.z, t17.z);
+  float3 t24 = (((_mtl_u._World2Object * float4(_mtl_u._WorldSpaceCameraPos, 1.0)).xyz * _mtl_u.unity_Scale.w) - t16);
+  float4 t25 = (_mtl_u._Object2World * float4(t16, 1.0));
+  _mtl_o.gl_Position = (_mtl_u.glstate_matrix_mvp * float4(t16, 1.0));
   _mtl_o.xlv_TEXCOORD0 = ((_mtl_i._uv0.xy * _mtl_u._MainTex_ST.xy) + _mtl_u._MainTex_ST.zw);
-  _mtl_o.xlv_COLOR0 = tmpvar_24;
-  _mtl_o.xlv_TEXCOORD1 = (tmpvar_25 * (_mtl_u._World2Object * _mtl_u._WorldSpaceLightPos0).xyz);
-  _mtl_o.xlv_TEXCOORD2 = (tmpvar_25 * ((
-    (_mtl_u._World2Object * tmpvar_26)
-  .xyz * _mtl_u.unity_Scale.w) - tmpvar_23.xyz));
-  _mtl_o.xlv_TEXCOORD3 = (_mtl_u._LightMatrix0 * (_mtl_u._Object2World * tmpvar_23)).xy;
+  _mtl_o.xlv_COLOR0 = float4(1.0, 1.0, 1.0, t1.w);
+  _mtl_o.xlv_TEXCOORD1 = (float3x3(t21, t22, t23) * t20.xyz);
+  _mtl_o.xlv_TEXCOORD2 = (float3x3(t21, t22, t23) * t24);
+  _mtl_o.xlv_TEXCOORD3 = (_mtl_u._LightMatrix0 * t25).xy;
   return _mtl_o;
 }
 
-
-// stats: 71 alu 0 tex 0 flow
+// stats: 114 alu 0 tex 0 flow
 // inputs: 6
 //  #0: _inVertex (high float) 4x1 [-1] loc 0
 //  #1: _inNormal (medium float) 3x1 [-1] loc 1

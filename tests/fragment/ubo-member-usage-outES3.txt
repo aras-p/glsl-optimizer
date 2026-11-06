@@ -1,12 +1,14 @@
 #version 300 es
+precision highp float;
+precision highp int;
 struct Entry {
   highp vec4 color;
   highp float unused;
 };
-layout(std140, column_major) uniform Data {
+layout(std140) uniform Data {
   mediump int index;
   highp float removed;
-  layout(column_major) Entry entries[2];
+  Entry entries[2];
   highp vec4 unused;
 } data;
 out highp vec4 color;
@@ -14,7 +16,6 @@ void main ()
 {
   color = data.entries[data.index].color;
 }
-
 
 // stats: 0 alu 0 tex 0 flow
 // buffer #0: Data instance data layout std140 (size: 96)

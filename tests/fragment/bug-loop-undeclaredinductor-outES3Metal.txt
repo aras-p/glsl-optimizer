@@ -18,52 +18,33 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   , texture2d<half> _MainTex [[texture(0)]], sampler _mtlsmp__MainTex [[sampler(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half4 t_1 = 0;
-  half4 tmpvar_2 = 0;
-  tmpvar_2 = _MainTex.sample(_mtlsmp__MainTex, (float2)((_mtl_i.xlv_TEXCOORD0)));
-  t_1 = tmpvar_2;
-  if (((half)(0.0) < _mtl_u._NumPasses)) {
-    half3 res_3 = 0;
-    res_3 = tmpvar_2.xyz;
-    if ((0.0 != (float)(_mtl_u._NumPasses))) {
-      half tmpvar_4 = 0;
-      tmpvar_4 = ((_mtl_u._ContrastShift.x * (half)(3.0)) + (half)(12.0));
-      res_3 = ((tmpvar_2.xyz - (half)(0.5)) * pow ((
-        cos(tmpvar_4)
-       + (half)(1.0)), tmpvar_4));
-      if ((1.0 != (float)(_mtl_u._NumPasses))) {
-        half tmpvar_5 = 0;
-        tmpvar_5 = ((_mtl_u._SaturationShift.y * (half)(3.0)) + (half)(12.0));
-        res_3 = ((res_3 - (half)(0.5)) * pow ((
-          cos(tmpvar_5)
-         + (half)(1.0)), tmpvar_5));
-        if ((2.0 != (float)(_mtl_u._NumPasses))) {
-          half tmpvar_6 = 0;
-          tmpvar_6 = ((_mtl_u._HueShift.z * (half)(3.0)) + (half)(12.0));
-          res_3 = ((res_3 - (half)(0.5)) * pow ((
-            cos(tmpvar_6)
-           + (half)(1.0)), tmpvar_6));
-          if ((3.0 != (float)(_mtl_u._NumPasses))) {
-            half tmpvar_7 = 0;
-            tmpvar_7 = ((_mtl_u._LuminosityShift.x * (half)(3.0)) + (half)(12.0));
-            res_3 = ((res_3 - (half)(0.5)) * pow ((
-              cos(tmpvar_7)
-             + (half)(1.0)), tmpvar_7));
-          };
-        };
-      };
-    };
-    t_1.xyz = res_3;
-  };
-  half4 tmpvar_8 = 0;
-  tmpvar_8.w = half(1.0);
-  tmpvar_8.xyz = t_1.xyz;
-  _mtl_o._fragData = tmpvar_8;
+  half3 r0 = 0;
+  half4 r1 = 0;
+  r1 = _MainTex.sample(_mtlsmp__MainTex, float2(_mtl_i.xlv_TEXCOORD0));
+  if ((half(0.0) < _mtl_u._NumPasses)) {
+    if ((half(0.0) != _mtl_u._NumPasses)) {
+      half t0 = ((_mtl_u._ContrastShift.x * half(3.0)) + half(12.0));
+      r0 = ((r1.xyz - half(0.5)) * pow((cos(t0) + half(1.0)), t0));
+      if ((half(1.0) != _mtl_u._NumPasses)) {
+        half t1 = ((_mtl_u._SaturationShift.y * half(3.0)) + half(12.0));
+        r0 = ((r0 - half(0.5)) * pow((cos(t1) + half(1.0)), t1));
+        if ((half(2.0) != _mtl_u._NumPasses)) {
+          half t2 = ((_mtl_u._HueShift.z * half(3.0)) + half(12.0));
+          half3 t3 = ((r0 - half(0.5)) * pow((cos(t2) + half(1.0)), t2));
+          half t4 = ((_mtl_u._LuminosityShift.x * half(3.0)) + half(12.0));
+          r0 = ((half(3.0) == _mtl_u._NumPasses) ? t3 : ((t3 - half(0.5)) * pow((cos(t4) + half(1.0)), t4)));
+        }
+      }
+    } else {
+      r0 = r1.xyz;
+    }
+    r1 = half4(r0.x, r0.y, r0.z, r1.w);
+  }
+  _mtl_o._fragData = half4(r1.x, r1.y, r1.z, half(1.0));
   return _mtl_o;
 }
 
-
-// stats: 34 alu 1 tex 5 flow
+// stats: 34 alu 1 tex 4 flow
 // inputs: 1
 //  #0: xlv_TEXCOORD0 (medium float) 2x1 [-1]
 // uniforms: 5 (total size: 40)

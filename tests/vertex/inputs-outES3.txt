@@ -7,22 +7,15 @@ out mediump vec2 xlv_TEXCOORD0;
 out mediump vec4 xlv_TEXCOORD1;
 void main ()
 {
-  highp vec4 tmpvar_1;
-  tmpvar_1.xyz = normalize(_glesTANGENT.xyz);
-  tmpvar_1.w = _glesTANGENT.w;
-  mediump vec2 tmpvar_2;
-  tmpvar_2 = _glesMultiTexCoord0.xy;
-  mediump vec4 o_color_3;
-  o_color_3.xy = (tmpvar_2 * 0.3);
-  o_color_3.xyz = (o_color_3.xyz + ((tmpvar_1.xyz * 0.5) + 0.5));
-  o_color_3.w = 0.0;
+  mediump vec2 t0 = _glesMultiTexCoord0.xy;
+  mediump vec2 t1 = (t0 * 0.3);
+  mediump vec4 t2 = (vec3(t1, 0.0) + (((_glesTANGENT.xyz * 0.5) * inversesqrt(dot(_glesTANGENT.xyz, _glesTANGENT.xyz))) + 0.5)).xyzx;
   gl_Position = (glstate_matrix_mvp * _glesVertex);
-  xlv_TEXCOORD0 = tmpvar_2;
-  xlv_TEXCOORD1 = o_color_3;
+  xlv_TEXCOORD0 = t0;
+  xlv_TEXCOORD1 = vec4(t2.xyz, 0.0);
 }
 
-
-// stats: 7 alu 0 tex 0 flow
+// stats: 14 alu 0 tex 0 flow
 // inputs: 3
 //  #0: _glesVertex (high float) 4x1 [-1]
 //  #1: _glesMultiTexCoord0 (high float) 4x1 [-1]

@@ -1,40 +1,31 @@
 #version 310 es
-layout(local_size_x=8) in;
-layout(std430, column_major) buffer Output {
+layout(local_size_x = 8) in;
+layout(std430) buffer Output {
   highp uvec4 values[];
 } outputData;
 shared highp uint count;
 shared highp ivec4 values;
 void main ()
 {
-  if ((gl_LocalInvocationIndex == uint(0))) {
-    count = uint(0);
-    values = ivec4(0, 0, 0, 0);
-  };
+  bool t0 = (int(gl_LocalInvocationIndex) == 0);
+  if (t0) {
+    count = 0u;
+    values = ivec4(0);
+  }
   barrier();
-  highp uint tmpvar_1;
-  tmpvar_1 = atomicAdd (count, 1u);
-  highp int tmpvar_2;
-  tmpvar_2 = atomicCompSwap (values.yx[int((gl_LocalInvocationIndex & 1u))], 0, int((gl_LocalInvocationIndex + 1u)));
-  highp int tmpvar_3;
-  tmpvar_3 = atomicMin (values.z, -(int(gl_LocalInvocationIndex)));
-  highp int tmpvar_4;
-  tmpvar_4 = atomicMax (values.w, int(gl_LocalInvocationIndex));
+  highp uint t1 = atomicAdd(count, 1u);
+  highp int t2 = atomicCompSwap(values[int((gl_LocalInvocationIndex & 1u))], 0, (int(gl_LocalInvocationIndex) + 1));
+  atomicMin(values[2], (-int(gl_LocalInvocationIndex)));
+  atomicMax(values[3], int(gl_LocalInvocationIndex));
   barrier();
-  if ((gl_LocalInvocationIndex == uint(0))) {
-    highp uvec4 tmpvar_5;
-    tmpvar_5.x = count;
-    tmpvar_5.y = uint(values.z);
-    tmpvar_5.z = uint(values.w);
-    tmpvar_5.w = tmpvar_1;
-    outputData.values[gl_WorkGroupID.x] = tmpvar_5;
-  };
-  highp uint tmpvar_6;
-  tmpvar_6 = atomicCompSwap (outputData.values[(gl_GlobalInvocationID.x + 8u)].x, uint(0), uint(tmpvar_2));
+  if (t0) {
+    highp ivec4 t3 = values;
+    outputData.values[int(gl_WorkGroupID.x)] = uvec4(count, uvec2(t3.zw), t1);
+  }
+  atomicCompSwap(outputData.values[(8 + int(gl_GlobalInvocationID.x))][0], 0u, uint(t2));
 }
 
-
-// stats: 15 alu 0 tex 2 flow
+// stats: 5 alu 0 tex 2 flow
 // workgroup size: 8 1 1
 // buffer #0: Output storage instance outputData layout std430 (size: unknown)
 //  member #0: uvec4[] values offset 0 array runtime stride 16

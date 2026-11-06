@@ -1,89 +1,77 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
-struct Particle {
+struct _xlat_Particle_std140 {
   float4 pos;
   float4 vel;
 };
-static_assert(sizeof(Particle) == 32, "buffer size");
-struct alignas(16) _xlat_buf_storage0_element { Particle value; };
-static_assert(sizeof(_xlat_buf_storage0_element) == 32, "array stride");
-struct alignas(16) _xlat_buf_storage2 {
-  alignas(4) float deltaT;
-  alignas(4) int particleCount;
-  alignas(4) float gravity;
-  alignas(4) float power;
-  alignas(4) float soften;
+static_assert(sizeof(_xlat_Particle_std140) == 32, "std140 size");
+struct _xlat_buf_Pos_std140 {
+  _xlat_Particle_std140 particles[1];
 };
-static_assert(sizeof(_xlat_buf_storage2) == 32, "std140 size");
+struct _xlat_buf_UBO_std140 {
+  float deltaT;
+  int particleCount;
+  float gravity;
+  float power;
+  float soften;
+  char _pad0[12];
+};
+static_assert(sizeof(_xlat_buf_UBO_std140) == 32, "std140 size");
 struct xlatMtlShaderUniform {
 };
 // threadsPerThreadgroup: 256, 1, 1
 kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , device uchar* _mtl_buffer1 [[buffer(1)]]
-  , constant _xlat_buf_storage2& _mtl_buffer2 [[buffer(2)]]
+  , device _xlat_buf_Pos_std140& _xlat_blk_Pos [[buffer(1)]]
+  , constant _xlat_buf_UBO_std140& ubo [[buffer(2)]]
   , uint3 gl_GlobalInvocationID [[thread_position_in_grid]]
   , uint3 gl_LocalInvocationID [[thread_position_in_threadgroup]])
 {
-threadgroup float4 sharedData_1[256];
-  uint i_2;
-  float3 acceleration_3 = 0;
-  float4 position_4 = 0;
-  uint tmpvar_5;
-  tmpvar_5 = uint(int(_mtl_buffer2.particleCount));
-  bool tmpvar_6 = false;
-  tmpvar_6 = (gl_GlobalInvocationID.x < tmpvar_5);
-  position_4 = float4(0.0, 0.0, 0.0, 0.0);
-  if (tmpvar_6) {
-    position_4 = float4(reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_GlobalInvocationID.x].value.pos);
-  };
-  acceleration_3 = float3(0.0, 0.0, 0.0);
-  i_2 = 0u;
-  while (true) {
-    if ((i_2 >= tmpvar_5)) {
-      break;
-    };
-    uint tmpvar_7;
-    tmpvar_7 = (i_2 + gl_LocalInvocationID.x);
-    if ((tmpvar_7 < tmpvar_5)) {
-      sharedData_1[gl_LocalInvocationID.x] = float4(reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[tmpvar_7].value.pos);
+  threadgroup float4 sharedData[256];
+  float4 r0 = 0;
+  int r1 = 0;
+  int r2 = 0;
+  float3 r3 = 0;
+  int t0 = int(ubo.particleCount);
+  bool t1 = (gl_GlobalInvocationID.x < uint(t0));
+  if (t1) {
+    r0 = float4(_xlat_blk_Pos.particles[int(gl_GlobalInvocationID.x)].pos);
+  } else {
+    r0 = float4(0.0);
+  }
+  r2 = 0;
+  r3 = float3(0.0);
+  for (; (uint(r2) < uint(t0)); r2 = (r2 + 256)) {
+    int t2 = (r2 + int(gl_LocalInvocationID.x));
+    if ((uint(t2) < uint(t0))) {
+      sharedData[int(gl_LocalInvocationID.x)] = float4(_xlat_blk_Pos.particles[t2].pos);
     } else {
-      sharedData_1[gl_LocalInvocationID.x] = float4(0.0, 0.0, 0.0, 0.0);
-    };
+      sharedData[int(gl_LocalInvocationID.x)] = float4(0.0);
+    }
     threadgroup_barrier(mem_flags::mem_threadgroup);
-    if (tmpvar_6) {
-      uint j_8;
-      j_8 = 0u;
-      while (true) {
-        if ((j_8 >= 256u)) {
-          break;
-        };
-        float4 tmpvar_9 = 0;
-        tmpvar_9 = sharedData_1[j_8];
-        float3 tmpvar_10 = 0;
-        tmpvar_10 = (tmpvar_9.xyz - position_4.xyz);
-        acceleration_3 = (acceleration_3 + ((
-          (float(_mtl_buffer2.gravity) * tmpvar_10)
-         * tmpvar_9.w) / pow (
-          (dot (tmpvar_10, tmpvar_10) + float(_mtl_buffer2.soften))
-        , float(_mtl_buffer2.power))));
-        j_8++;
-      };
-    };
+    if (t1) {
+      for (r1 = 0; (uint(r1) < 256u); r1++) {
+        float4 t3 = sharedData[r1];
+        float3 t4 = (t3.xyz - r0.xyz);
+        r3 = (r3 + (((float(ubo.gravity) * t4) * t3.w) / pow((dot(t4, t4) + float(ubo.soften)), float(ubo.power))));
+      }
+    }
     threadgroup_barrier(mem_flags::mem_threadgroup);
-    i_2 += 256u;
-  };
-  if (tmpvar_6) {
-    reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_GlobalInvocationID.x].value.vel.xyz = float3((float4(reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_GlobalInvocationID.x].value.vel).xyz + (float(_mtl_buffer2.deltaT) * acceleration_3)));
-    reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_GlobalInvocationID.x].value.vel.w = float((float4(reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_GlobalInvocationID.x].value.vel).w + (0.1 * float(_mtl_buffer2.deltaT))));
-    if ((1.0 < float4(reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_GlobalInvocationID.x].value.vel).w)) {
-      reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_GlobalInvocationID.x].value.vel.w = float((float4(reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_GlobalInvocationID.x].value.vel).w - 1.0));
-    };
-  };
+  }
+  if (t1) {
+    uint t5 = gl_GlobalInvocationID.x;
+    float4 t6 = float4(_xlat_blk_Pos.particles[int(t5)].vel);
+    float t7 = float(ubo.deltaT);
+    float3 t8 = (t6.xyz + (t7 * r3));
+    float t9 = (t6.w + (0.1 * t7));
+    _xlat_blk_Pos.particles[int(t5)].vel = float4(t8, t9);
+    if ((1.0 < t9)) {
+      _xlat_blk_Pos.particles[int(t5)].vel[3] = float4((t9 - 1.0)).w;
+    }
+  }
 }
 
-
-// stats: 27 alu 0 tex 9 flow
+// stats: 21 alu 0 tex 9 flow
 // workgroup size: 256 1 1
 // buffer #0: Pos storage layout std140 binding 0 (size: unknown) metal 1
 //  member #0: Particle[] particles offset 0 array runtime stride 32

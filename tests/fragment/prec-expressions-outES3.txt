@@ -1,22 +1,16 @@
 #version 300 es
+precision highp float;
+precision highp int;
 out mediump vec4 _fragData;
 uniform mediump mat4 _LightMatrix;
 uniform highp vec3 _WorldPos;
 void main ()
 {
-  mediump vec4 r_1;
-  mediump vec3 lightCoord_2;
-  highp vec4 tmpvar_3;
-  tmpvar_3.w = 1.0;
-  tmpvar_3.xyz = _WorldPos;
-  lightCoord_2 = (_LightMatrix * tmpvar_3).xyz;
-  r_1.xyz = lightCoord_2;
-  r_1.w = 1.0;
-  _fragData = r_1;
+  mediump vec3 t0 = (_LightMatrix * vec4(_WorldPos, 1.0)).xyz;
+  _fragData = vec4(t0, 1.0);
 }
 
-
-// stats: 3 alu 0 tex 0 flow
+// stats: 6 alu 0 tex 0 flow
 // uniforms: 2 (total size: 0)
 //  #0: _LightMatrix (medium float) 4x4 [-1]
 //  #1: _WorldPos (high float) 3x1 [-1]

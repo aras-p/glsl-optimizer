@@ -1,32 +1,26 @@
 #version 310 es
-layout(local_size_x=32) in;
-layout(std430, column_major) buffer Output {
+layout(local_size_x = 32) in;
+layout(std430) buffer Output {
   highp uint count;
   highp uint values[];
 } outputData;
-layout(std430, column_major) buffer Input {
+layout(std430) buffer Input {
   readonly highp uint values[];
 } inputData;
 uniform highp uint limit;
 void main ()
 {
-  if (((gl_GlobalInvocationID.x >= limit) || (gl_GlobalInvocationID.x >= uint(
-    inputData.values.length()
-  )))) {
-    return;
-  };
-  highp uint tmpvar_1;
-  tmpvar_1 = inputData.values[gl_GlobalInvocationID.x];
-  outputData.values[gl_GlobalInvocationID.x] = tmpvar_1;
-  memoryBarrierBuffer ();
-  highp uint tmpvar_2;
-  tmpvar_2 = atomicAdd (outputData.count, 1u);
-  highp uint tmpvar_3;
-  tmpvar_3 = atomicCompSwap (outputData.values[gl_GlobalInvocationID.x], tmpvar_1, (tmpvar_1 + 1u));
+  if ((gl_GlobalInvocationID.x < min(limit, uint(inputData.values.length())))) {
+    highp uint t0 = gl_GlobalInvocationID.x;
+    highp uint t1 = inputData.values[int(t0)];
+    outputData.values[int(t0)] = t1;
+    memoryBarrier();
+    atomicAdd(outputData.count, 1u);
+    atomicCompSwap(outputData.values[int(t0)], t1, uint((int(t1) + 1)));
+  }
 }
 
-
-// stats: 6 alu 0 tex 2 flow
+// stats: 3 alu 0 tex 1 flow
 // workgroup size: 32 1 1
 // uniforms: 1 (total size: 0)
 //  #0: limit (high int) 1x1 [-1]

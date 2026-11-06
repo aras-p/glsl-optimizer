@@ -5,32 +5,21 @@ struct xlatMtlShaderUniform {
 };
 // threadsPerThreadgroup: 8, 1, 1
 kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , uint3 gl_GlobalInvocationID [[thread_position_in_grid]]
-  , uint3 gl_WorkGroupID [[threadgroup_position_in_grid]]
   , array<texture2d<float, access::read>, 2> sources [[texture(1)]]
   , array<texture2d<float, access::write>, 2> destinations [[texture(3)]]
   , texture2d<float> extra [[texture(0)]], sampler _mtlsmp_extra [[sampler(0)]]
-  , texture2d<float, access::write> combined [[texture(5)]])
+  , texture2d<float, access::write> combined [[texture(5)]]
+  , uint3 gl_WorkGroupID [[threadgroup_position_in_grid]]
+  , uint3 gl_GlobalInvocationID [[thread_position_in_grid]])
 {
-  int tmpvar_1 = 0;
-  tmpvar_1 = int((gl_WorkGroupID.x & 1u));
-  int2 tmpvar_2 = 0;
-  tmpvar_2 = int2(gl_GlobalInvocationID.xy);
-  float4 tmpvar_3 = 0;
-  tmpvar_3 = sources[tmpvar_1].read(uint2(tmpvar_2));
-  float4 tmpvar_4 = 0;
-  tmpvar_4 = (tmpvar_3 + extra.read(uint2(tmpvar_2), uint(0)));
-  destinations[tmpvar_1].write(float4(tmpvar_4), uint2(tmpvar_2));
-  int2 tmpvar_5 = 0;
-  tmpvar_5 = int2(sources[tmpvar_1].get_width(), sources[tmpvar_1].get_height());
-  float4 tmpvar_6 = 0;
-  tmpvar_6.zw = float2(0.0, 0.0);
-  tmpvar_6.xy = float2(tmpvar_5);
-  combined.write(float4((tmpvar_4 + tmpvar_6)), uint2(tmpvar_2));
+  uint t0 = (gl_WorkGroupID.x & 1u);
+  float4 t1 = (sources[int(t0)].read(uint2(int4(uint4(gl_GlobalInvocationID.xy, 0u, 0u)).xy)) + extra.read(uint2(int2(gl_GlobalInvocationID.xy)), uint(0)));
+  destinations[int(t0)].write(t1, uint2(int4(uint4(gl_GlobalInvocationID.xy, 0u, 0u)).xy));
+  float2 t2 = float2(int2(sources[int(t0)].get_width(), sources[int(t0)].get_height()));
+  combined.write((t1 + float4(t2, 0.0, 0.0)), uint2(int4(uint4(gl_GlobalInvocationID.xy, 0u, 0u)).xy));
 }
 
-
-// stats: 7 alu 5 tex 0 flow
+// stats: 4 alu 5 tex 0 flow
 // workgroup size: 8 1 1
 // textures: 4
 //  #0: sources (high image2d) 0x0 [2] loc 1 format rgba8 component float readonly

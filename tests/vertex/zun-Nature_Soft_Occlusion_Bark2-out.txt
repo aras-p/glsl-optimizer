@@ -6,31 +6,15 @@ uniform vec4 _SquashPlaneNormal;
 uniform mat4 _TerrainEngineBendTree;
 void main ()
 {
-  vec4 tmpvar_1;
-  tmpvar_1.w = gl_Vertex.w;
-  tmpvar_1.xyz = (gl_Vertex.xyz * _Scale.xyz);
-  vec4 tmpvar_2;
-  tmpvar_2.w = 0.0;
-  tmpvar_2.xyz = tmpvar_1.xyz;
-  tmpvar_1.xyz = mix (tmpvar_1.xyz, (_TerrainEngineBendTree * tmpvar_2).xyz, gl_Color.www);
-  vec3 tmpvar_3;
-  tmpvar_3.xz = vec2(0.0, 0.0);
-  tmpvar_3.y = _SquashPlaneNormal.w;
-  vec4 tmpvar_4;
-  tmpvar_4.w = 1.0;
-  tmpvar_4.xyz = mix ((tmpvar_1.xyz + (
-    dot (_SquashPlaneNormal.xyz, (tmpvar_3 - tmpvar_1.xyz))
-   * _SquashPlaneNormal.xyz)), tmpvar_1.xyz, vec3(_SquashAmount));
-  tmpvar_1 = tmpvar_4;
-  gl_Position = (gl_ModelViewProjectionMatrix * tmpvar_4);
-  vec4 tmpvar_5;
-  tmpvar_5.w = 0.0;
-  tmpvar_5.xyz = ((_Object2World * tmpvar_4).xyz - _LightPositionRange.xyz);
-  gl_TexCoord[0] = tmpvar_5;
+  vec3 t0 = (gl_Vertex.xyz * _Scale.xyz);
+  vec3 t1 = mix(t0, (_TerrainEngineBendTree * vec4(t0, 0.0)).xyz, gl_Color.www);
+  vec3 t2 = mix((t1 + (dot(_SquashPlaneNormal.xyz, (vec3(0.0, _SquashPlaneNormal.w, 0.0) - t1)) * _SquashPlaneNormal.xyz)), t1, vec3(_SquashAmount));
+  vec3 t3 = ((_Object2World * vec4(t2, 1.0)).xyz - _LightPositionRange.xyz);
+  gl_Position = (gl_ModelViewProjectionMatrix * vec4(t2, 1.0));
+  gl_TexCoord[0] = vec4(t3, 0.0);
 }
 
-
-// stats: 15 alu 0 tex 0 flow
+// stats: 25 alu 0 tex 0 flow
 // inputs: 2
 //  #0: gl_Color (high float) 4x1 [-1] loc 2
 //  #1: gl_Vertex (high float) 4x1 [-1] loc 0

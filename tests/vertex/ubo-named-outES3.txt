@@ -3,11 +3,11 @@ struct Light {
   highp vec3 direction;
   highp float intensity;
 };
-layout(std140, row_major, binding=3) uniform Scene {
+layout(std140, row_major, binding = 3) uniform Scene {
   highp float unused;
-  layout(row_major) mediump mat2x3 transform;
+  mediump mat2x3 transform;
   layout(column_major) highp mat3x2 other;
-  layout(row_major) Light lights[2];
+  Light lights[2];
   mediump float weights[3];
   bool enabled;
   highp uint flags;
@@ -16,26 +16,18 @@ layout(std140, row_major, binding=3) uniform Scene {
 uniform highp int index;
 void main ()
 {
-  highp vec3 p_1;
-  mediump vec2 tmpvar_2;
-  tmpvar_2.y = 1.0;
-  tmpvar_2.x = scene.weights[index];
-  p_1 = (scene.transform * tmpvar_2);
-  p_1 = (p_1 + (scene.lights[index].direction * scene.lights[1].intensity));
-  p_1.xy = (p_1.xy + (scene.other * vec3(1.0, 1.0, 1.0)));
-  p_1 = (p_1 * float(scene.count));
-  highp float tmpvar_3;
+  highp float r0;
+  highp vec3 t0 = (scene.transform * vec2(scene.weights[index], 1.0));
+  highp vec3 t1 = (t0 + (scene.lights[index].direction * scene.lights[1].intensity));
+  highp vec2 t2 = (t1.xy + (scene.other * vec3(1.0, 1.0, 1.0)));
+  highp vec3 t3 = (vec3(t2, t1.z) * float(scene.count));
   if (scene.enabled) {
-    tmpvar_3 = float(scene.flags);
+    r0 = float(scene.flags);
   } else {
-    tmpvar_3 = 0.0;
-  };
-  highp vec4 tmpvar_4;
-  tmpvar_4.xyz = p_1;
-  tmpvar_4.w = tmpvar_3;
-  gl_Position = tmpvar_4;
+    r0 = 0.0;
+  }
+  gl_Position = vec4(t3, r0);
 }
-
 
 // stats: 10 alu 0 tex 1 flow
 // uniforms: 1 (total size: 0)

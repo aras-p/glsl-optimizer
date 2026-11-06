@@ -24,66 +24,28 @@ struct xlatMtlShaderUniform {
 vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  float3 tmpvar_1 = 0;
-  tmpvar_1 = _mtl_i._glesVertex.xyz;
-  float3 tmpvar_2 = 0;
-  tmpvar_2 = float3(_mtl_i._glesNormal);
-  half4 o_color_3 = 0;
-  float4 tmpvar_4 = 0;
-  tmpvar_4.w = 1.0;
-  tmpvar_4.xyz = tmpvar_1;
-  float3 lightColor_5 = 0;
-  float4 tmpvar_6 = 0;
-  tmpvar_6.w = 1.0;
-  tmpvar_6.xyz = tmpvar_1;
-  float3 tmpvar_7 = 0;
-  tmpvar_7 = (_mtl_u.glstate_matrix_modelview0 * tmpvar_6).xyz;
-  float3x3 tmpvar_8;
-  tmpvar_8[0u] = _mtl_u.glstate_matrix_invtrans_modelview0[0u].xyz;
-  tmpvar_8[1u] = _mtl_u.glstate_matrix_invtrans_modelview0[1u].xyz;
-  tmpvar_8[2u] = _mtl_u.glstate_matrix_invtrans_modelview0[2u].xyz;
-  float3 tmpvar_9 = 0;
-  tmpvar_9 = (tmpvar_8 * tmpvar_2);
-  float3 tmpvar_10 = 0;
-  tmpvar_10 = (_mtl_u.unity_LightPosition[0].xyz - (tmpvar_7 * _mtl_u.unity_LightPosition[0].w));
-  lightColor_5 = (_mtl_u.glstate_lightmodel_ambient.xyz + ((float3)(_mtl_u.unity_LightColor[0].xyz) * (
-    max (0.0, dot (tmpvar_9, normalize(tmpvar_10)))
-   * 
-    (1.0/((1.0 + (dot (tmpvar_10, tmpvar_10) * (float)(_mtl_u.unity_LightAtten[0].z)))))
-  )));
-  float3 tmpvar_11 = 0;
-  tmpvar_11 = (_mtl_u.unity_LightPosition[1].xyz - (tmpvar_7 * _mtl_u.unity_LightPosition[1].w));
-  lightColor_5 = (lightColor_5 + ((float3)(_mtl_u.unity_LightColor[1].xyz) * (
-    max (0.0, dot (tmpvar_9, normalize(tmpvar_11)))
-   * 
-    (1.0/((1.0 + (dot (tmpvar_11, tmpvar_11) * (float)(_mtl_u.unity_LightAtten[1].z)))))
-  )));
-  float3 tmpvar_12 = 0;
-  tmpvar_12 = (_mtl_u.unity_LightPosition[2].xyz - (tmpvar_7 * _mtl_u.unity_LightPosition[2].w));
-  lightColor_5 = (lightColor_5 + ((float3)(_mtl_u.unity_LightColor[2].xyz) * (
-    max (0.0, dot (tmpvar_9, normalize(tmpvar_12)))
-   * 
-    (1.0/((1.0 + (dot (tmpvar_12, tmpvar_12) * (float)(_mtl_u.unity_LightAtten[2].z)))))
-  )));
-  float3 tmpvar_13 = 0;
-  tmpvar_13 = (_mtl_u.unity_LightPosition[3].xyz - (tmpvar_7 * _mtl_u.unity_LightPosition[3].w));
-  lightColor_5 = (lightColor_5 + ((float3)(_mtl_u.unity_LightColor[3].xyz) * (
-    max (0.0, dot (tmpvar_9, normalize(tmpvar_13)))
-   * 
-    (1.0/((1.0 + (dot (tmpvar_13, tmpvar_13) * (float)(_mtl_u.unity_LightAtten[3].z)))))
-  )));
-  float4 tmpvar_14 = 0;
-  tmpvar_14.w = 1.0;
-  tmpvar_14.xyz = ((lightColor_5 * (float3)(_mtl_u._Color.xyz)) * 2.0);
-  o_color_3 = half4(tmpvar_14);
-  _mtl_o.gl_Position = (_mtl_u.glstate_matrix_mvp * tmpvar_4);
-  _mtl_o.xlv_COLOR0 = o_color_3;
+  float3 t0 = float3(_mtl_i._glesNormal);
+  float4 t1 = (_mtl_u.glstate_matrix_modelview0 * float4(_mtl_i._glesVertex.xyz, 1.0));
+  float3 t2 = (float3x3(_mtl_u.glstate_matrix_invtrans_modelview0[0].xyz, _mtl_u.glstate_matrix_invtrans_modelview0[1].xyz, _mtl_u.glstate_matrix_invtrans_modelview0[2].xyz) * t0);
+  float3 t3 = (_mtl_u.unity_LightPosition[0].xyz - (t1.xyz * _mtl_u.unity_LightPosition[0].w));
+  float t4 = dot(t3, t3);
+  float3 t5 = (_mtl_u.glstate_lightmodel_ambient.xyz + (float3(_mtl_u.unity_LightColor[0].xyz) * (max(0.0, dot(t2, (t3 * rsqrt(t4)))) * (1.0 / (1.0 + (t4 * float(_mtl_u.unity_LightAtten[0].z)))))));
+  float3 t6 = (_mtl_u.unity_LightPosition[1].xyz - (t1.xyz * _mtl_u.unity_LightPosition[1].w));
+  float t7 = dot(t6, t6);
+  float3 t8 = (_mtl_u.unity_LightPosition[2].xyz - (t1.xyz * _mtl_u.unity_LightPosition[2].w));
+  float t9 = dot(t8, t8);
+  float3 t10 = ((t5 + (float3(_mtl_u.unity_LightColor[1].xyz) * (max(0.0, dot(t2, (t6 * rsqrt(t7)))) * (1.0 / (1.0 + (t7 * float(_mtl_u.unity_LightAtten[1].z))))))) + (float3(_mtl_u.unity_LightColor[2].xyz) * (max(0.0, dot(t2, (t8 * rsqrt(t9)))) * (1.0 / (1.0 + (t9 * float(_mtl_u.unity_LightAtten[2].z)))))));
+  float3 t11 = (_mtl_u.unity_LightPosition[3].xyz - (t1.xyz * _mtl_u.unity_LightPosition[3].w));
+  float t12 = dot(t11, t11);
+  float3 t13 = ((t10 + (float3(_mtl_u.unity_LightColor[3].xyz) * (max(0.0, dot(t2, (t11 * rsqrt(t12)))) * (1.0 / (1.0 + (t12 * float(_mtl_u.unity_LightAtten[3].z))))))) * 2.0);
+  float3 t14 = (t13 * float3(_mtl_u._Color.xyz));
+  _mtl_o.gl_Position = (_mtl_u.glstate_matrix_mvp * float4(_mtl_i._glesVertex.xyz, 1.0));
+  _mtl_o.xlv_COLOR0 = half4(float4(t14, 1.0));
   _mtl_o.xlv_TEXCOORD0 = _mtl_i._glesMultiTexCoord0.xy;
   return _mtl_o;
 }
 
-
-// stats: 56 alu 0 tex 0 flow
+// stats: 71 alu 0 tex 0 flow
 // inputs: 3
 //  #0: _glesVertex (high float) 4x1 [-1] loc 0
 //  #1: _glesNormal (medium float) 3x1 [-1] loc 1

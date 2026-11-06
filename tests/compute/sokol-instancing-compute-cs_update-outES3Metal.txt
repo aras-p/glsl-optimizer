@@ -1,46 +1,41 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
-struct particle {
+struct _xlat_buf_cs_params_std140 {
+  float dt;
+  int num_particles;
+  char _pad0[8];
+};
+static_assert(sizeof(_xlat_buf_cs_params_std140) == 16, "std140 size");
+struct _xlat_particle_std430 {
   float4 pos;
   float4 vel;
 };
-struct alignas(16) _xlat_buf_storage0 {
-  alignas(4) float dt;
-  alignas(4) int num_particles;
+static_assert(sizeof(_xlat_particle_std430) == 32, "std430 size");
+struct _xlat_buf_cs_ssbo_std430 {
+  _xlat_particle_std430 prt[1];
 };
-static_assert(sizeof(_xlat_buf_storage0) == 16, "std140 size");
-static_assert(sizeof(particle) == 32, "buffer size");
-struct alignas(16) _xlat_buf_storage1_element { particle value; };
-static_assert(sizeof(_xlat_buf_storage1_element) == 32, "array stride");
 struct xlatMtlShaderUniform {
 };
 // threadsPerThreadgroup: 64, 1, 1
 kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , constant _xlat_buf_storage0& _mtl_buffer1 [[buffer(1)]]
-  , device uchar* _mtl_buffer2 [[buffer(2)]]
+  , constant _xlat_buf_cs_params_std140& _xlat_blk_cs_params [[buffer(1)]]
+  , device _xlat_buf_cs_ssbo_std430& _xlat_blk_cs_ssbo [[buffer(2)]]
   , uint3 gl_GlobalInvocationID [[thread_position_in_grid]])
 {
-  float4 vel_1 = 0;
-  float4 pos_2 = 0;
-  if ((gl_GlobalInvocationID.x >= uint(int(_mtl_buffer1.num_particles)))) {
-    return;
-  };
-  float4 tmpvar_3 = 0;
-  tmpvar_3 = float4(reinterpret_cast<device _xlat_buf_storage1_element*>(_mtl_buffer2 + 0)[gl_GlobalInvocationID.x].value.vel);
-  vel_1.xzw = tmpvar_3.xzw;
-  vel_1.y = (tmpvar_3.y - float(_mtl_buffer1.dt));
-  pos_2 = (float4(reinterpret_cast<device _xlat_buf_storage1_element*>(_mtl_buffer2 + 0)[gl_GlobalInvocationID.x].value.pos) + (vel_1 * float(_mtl_buffer1.dt)));
-  if ((pos_2.y < -2.0)) {
-    pos_2.y = -1.8;
-    vel_1 = (vel_1 * float4(0.8, -0.8, 0.8, 0.0));
-  };
-  reinterpret_cast<device _xlat_buf_storage1_element*>(_mtl_buffer2 + 0)[gl_GlobalInvocationID.x].value.pos = float4(pos_2);
-  reinterpret_cast<device _xlat_buf_storage1_element*>(_mtl_buffer2 + 0)[gl_GlobalInvocationID.x].value.vel = float4(vel_1);
+  if ((gl_GlobalInvocationID.x < uint(int(_xlat_blk_cs_params.num_particles)))) {
+    float4 t0 = float4(_xlat_blk_cs_ssbo.prt[int(gl_GlobalInvocationID.x)].vel);
+    float t1 = float(_xlat_blk_cs_params.dt);
+    float4 t2 = float4(t0.x, (t0.y - t1), t0.zw);
+    float4 t3 = (float4(_xlat_blk_cs_ssbo.prt[int(gl_GlobalInvocationID.x)].pos) + (t2 * t1));
+    bool t4 = (t3.y < -2.0);
+    float4 t5 = (t4 ? (t2 * float4(0.8, -0.8, 0.8, 0.0)) : t2);
+    _xlat_blk_cs_ssbo.prt[int(gl_GlobalInvocationID.x)].pos = (t4 ? float4(t3.x, -1.8, t3.zw) : t3);
+    _xlat_blk_cs_ssbo.prt[int(gl_GlobalInvocationID.x)].vel = t5;
+  }
 }
 
-
-// stats: 8 alu 0 tex 3 flow
+// stats: 8 alu 0 tex 1 flow
 // workgroup size: 64 1 1
 // buffer #0: cs_params layout std140 binding 0 (size: 16) metal 1
 //  member #0: float dt offset 0

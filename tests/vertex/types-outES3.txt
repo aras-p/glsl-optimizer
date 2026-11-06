@@ -8,18 +8,13 @@ out mediump vec2 xlv_TEXCOORD0;
 out mediump vec4 xlv_COLOR;
 void main ()
 {
-  mediump vec2 o_uv_1;
-  mediump vec4 o_color_2;
-  o_color_2.w = _color.w;
-  o_color_2.xyz = (_color.xyz + _inNormal);
-  o_uv_1 = _uv0;
+  mediump vec3 t0 = (_color.xyz + _inNormal);
   gl_Position = (mvp * _inVertex);
-  xlv_TEXCOORD0 = o_uv_1;
-  xlv_COLOR = o_color_2;
+  xlv_TEXCOORD0 = _uv0;
+  xlv_COLOR = vec4(t0, _color.w);
 }
 
-
-// stats: 2 alu 0 tex 0 flow
+// stats: 8 alu 0 tex 0 flow
 // inputs: 4
 //  #0: _inVertex (high float) 4x1 [-1]
 //  #1: _inNormal (medium float) 3x1 [-1]

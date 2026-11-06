@@ -1,5 +1,7 @@
 #version 300 es
-layout(location=0) out mediump vec4 _glesFragData[4];
+precision highp float;
+precision highp int;
+layout(location = 0) out mediump vec4 _glesFragData[4];
 uniform mediump sampler2D unity_Lightmap;
 uniform mediump sampler2D unity_LightmapInd;
 uniform mediump sampler2D _MainTex;
@@ -7,30 +9,15 @@ in highp vec2 xlv_TEXCOORD0;
 in highp vec4 xlv_TEXCOORD4;
 void main ()
 {
-  mediump vec4 c_1;
-  mediump vec4 tmpvar_2;
-  tmpvar_2 = texture (_MainTex, xlv_TEXCOORD0);
-  mediump mat3 tmpvar_3;
-  tmpvar_3[uint(0)].x = 0.8164966;
-  tmpvar_3[uint(0)].y = -0.4082483;
-  tmpvar_3[uint(0)].z = -0.4082483;
-  tmpvar_3[1u].x = 0.0;
-  tmpvar_3[1u].y = 0.7071068;
-  tmpvar_3[1u].z = -0.7071068;
-  tmpvar_3[2u].x = 0.5773503;
-  tmpvar_3[2u].y = 0.5773503;
-  tmpvar_3[2u].z = 0.5773503;
-  c_1.xyz = (tmpvar_2.xyz * ((2.0 * texture (unity_Lightmap, xlv_TEXCOORD4.xy).xyz) * dot (
-    clamp ((tmpvar_3 * ((tmpvar_2.xyz * 2.0) - 1.0)), 0.0, 1.0)
-  , 
-    (2.0 * texture (unity_LightmapInd, xlv_TEXCOORD4.xy).xyz)
-  )));
-  c_1.w = 1.0;
-  _glesFragData[0] = c_1;
+  mediump vec4 t0 = texture(_MainTex, xlv_TEXCOORD0);
+  highp vec2 t1 = xlv_TEXCOORD4.xy;
+  mediump vec3 t2 = ((t0.xyz * 2.0) - 1.0);
+  mediump float t3 = dot(clamp((mat3(vec3(0.8164966, -0.4082483, -0.4082483), vec3(0.0, 0.7071068, -0.7071068), vec3(0.5773503)) * t2), 0.0, 1.0), (2.0 * texture(unity_LightmapInd, t1).xyz));
+  mediump vec3 t4 = (t0.xyz * ((2.0 * texture(unity_Lightmap, t1).xyz) * t3));
+  _glesFragData[0] = vec4(t4, 1.0);
 }
 
-
-// stats: 20 alu 3 tex 0 flow
+// stats: 12 alu 3 tex 0 flow
 // inputs: 2
 //  #0: xlv_TEXCOORD0 (high float) 2x1 [-1]
 //  #1: xlv_TEXCOORD4 (high float) 4x1 [-1]

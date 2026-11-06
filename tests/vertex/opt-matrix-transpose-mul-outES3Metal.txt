@@ -1,12 +1,6 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
-inline float4x4 _xlcast_float4x4(half4x4 v) { return float4x4(float4(v[0]), float4(v[1]), float4(v[2]), float4(v[3])); }
-inline float3x3 _xlcast_float3x3(half3x3 v) { return float3x3(float3(v[0]), float3(v[1]), float3(v[2])); }
-inline float2x2 _xlcast_float2x2(half2x2 v) { return float2x2(float2(v[0]), float2(v[1])); }
-inline half4x4 _xlcast_half4x4(float4x4 v) { return half4x4(half4(v[0]), half4(v[1]), half4(v[2]), half4(v[3])); }
-inline half3x3 _xlcast_half3x3(float3x3 v) { return half3x3(half3(v[0]), half3(v[1]), half3(v[2])); }
-inline half2x2 _xlcast_half2x2(float2x2 v) { return half2x2(half2(v[0]), half2(v[1])); }
 struct xlatMtlShaderInput {
   float4 attrVertex [[attribute(0)]];
   half3 attrNormal [[attribute(1)]];
@@ -29,48 +23,25 @@ struct xlatMtlShaderUniform {
 vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half3 lightDir_1 = 0;
-  half3x3 rotation_2;
-  half3 o_viewDir_3 = 0;
-  half3 o_worldN_4 = 0;
-  float3x3 tmpvar_5;
-  tmpvar_5[0u] = _mtl_u._Object2World[0].xyz;
-  tmpvar_5[1u] = _mtl_u._Object2World[1].xyz;
-  tmpvar_5[2u] = _mtl_u._Object2World[2].xyz;
-  o_worldN_4 = half3((tmpvar_5 * (float3)(_mtl_i.attrNormal)));
-  half3x3 tmpvar_6;
-  tmpvar_6[0u] = _mtl_i.attrTangent.xyz;
-  tmpvar_6[1u] = (((_mtl_i.attrNormal.yzx * _mtl_i.attrTangent.zxy) - (_mtl_i.attrNormal.zxy * _mtl_i.attrTangent.yzx)) * _mtl_i.attrTangent.w);
-  tmpvar_6[2u] = _mtl_i.attrNormal;
-  float3x3 tmpvar_7;
-  tmpvar_7 = _xlcast_float3x3(tmpvar_6);
-  float3x3 tmpvar_8;
-  tmpvar_8[0u].x = tmpvar_7[0][0];
-  tmpvar_8[0u].y = tmpvar_7[1][0];
-  tmpvar_8[0u].z = tmpvar_7[2][0];
-  tmpvar_8[1u].x = tmpvar_7[0][1];
-  tmpvar_8[1u].y = tmpvar_7[1][1];
-  tmpvar_8[1u].z = tmpvar_7[2][1];
-  tmpvar_8[2u].x = tmpvar_7[0][2];
-  tmpvar_8[2u].y = tmpvar_7[1][2];
-  tmpvar_8[2u].z = tmpvar_7[2][2];
-  rotation_2 = _xlcast_half3x3(tmpvar_8);
-  lightDir_1 = half3(((float3)(rotation_2 * (half3)((_mtl_u._World2Object * (float4)(_mtl_u._WorldSpaceLightPos0)).xyz))));
-  float4 tmpvar_9 = 0;
-  tmpvar_9.w = 1.0;
-  tmpvar_9.xyz = _mtl_u._WorldSpaceCameraPos;
-  o_viewDir_3 = half3(normalize(((float3)(lightDir_1) + normalize(
-    ((float3)(rotation_2 * (half3)((((_mtl_u._World2Object * tmpvar_9).xyz * _mtl_u.unity_Scale.w) - _mtl_i.attrVertex.xyz))))
-  ))));
+  float3 t0 = float3(_mtl_i.attrTangent.xyz);
+  float3 t1 = float3((((_mtl_i.attrNormal.yzx * _mtl_i.attrTangent.zxy) - (_mtl_i.attrNormal.zxy * _mtl_i.attrTangent.yzx)) * _mtl_i.attrTangent.w));
+  float3 t2 = float3(_mtl_i.attrNormal);
+  half3 t3 = half3(float3(t0.x, t1.x, t2.x));
+  half3 t4 = half3(float3(t0.y, t1.y, t2.y));
+  half3 t5 = half3(float3(t0.z, t1.z, t2.z));
+  float4 t6 = (_mtl_u._World2Object * float4(_mtl_u._WorldSpaceLightPos0));
+  half3 t7 = half3((float3x3(float3(t3), float3(t4), float3(t5)) * t6.xyz));
+  float3 t8 = (((_mtl_u._World2Object * float4(_mtl_u._WorldSpaceCameraPos, 1.0)).xyz * _mtl_u.unity_Scale.w) - _mtl_i.attrVertex.xyz);
+  float3 t9 = (float3x3(float3(t3), float3(t4), float3(t5)) * t8);
+  float3 t10 = (float3(t7) + normalize(t9));
   _mtl_o.gl_Position = (_mtl_u.glstate_matrix_mvp * _mtl_i.attrVertex);
-  _mtl_o.varWorldN = o_worldN_4;
-  _mtl_o.varLightDir = lightDir_1;
-  _mtl_o.varViewDir = o_viewDir_3;
+  _mtl_o.varWorldN = half3((float3x3(_mtl_u._Object2World[0].xyz, _mtl_u._Object2World[1].xyz, _mtl_u._Object2World[2].xyz) * float3(_mtl_i.attrNormal)));
+  _mtl_o.varLightDir = t7;
+  _mtl_o.varViewDir = half3(normalize(t10));
   return _mtl_o;
 }
 
-
-// stats: 16 alu 0 tex 0 flow
+// stats: 48 alu 0 tex 0 flow
 // inputs: 3
 //  #0: attrVertex (high float) 4x1 [-1] loc 0
 //  #1: attrNormal (medium float) 3x1 [-1] loc 1

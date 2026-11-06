@@ -1,24 +1,20 @@
 #version 300 es
-layout(location=0) out mediump vec4 _fragData;
+precision highp float;
+precision highp int;
+layout(location = 0) out mediump vec4 _fragData;
 in mediump float xx;
 void main ()
 {
-  mediump float c_1;
-  highp int tmpvar_3;
-  if ((0.5 < xx)) {
-    tmpvar_3 = 2;
-  } else {
-    tmpvar_3 = 4;
-  };
-  if ((tmpvar_3 < 2)) discard;
-  c_1 = 0.0;
-  for (mediump int i_2 = tmpvar_3; i_2 < 4; i_2++) {
-    c_1 = (c_1 + xx);
-  };
-  _fragData = vec4(c_1);
+  highp int r0;
+  mediump float r1;
+  r0 = ((0.5 < xx) ? 2 : 4);
+  r1 = 0.0;
+  for (; (r0 < 4); r0++) {
+    r1 = (r1 + xx);
+  }
+  _fragData = vec4(r1);
 }
 
-
-// stats: 8 alu 1 tex 4 flow
+// stats: 5 alu 0 tex 2 flow
 // inputs: 1
 //  #0: xx (medium float) 1x1 [-1]

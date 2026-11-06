@@ -1,21 +1,23 @@
 void main ()
 {
-  float a_2;
-  if ((gl_FragCoord.x == 1.0)) discard;
-  a_2 = 4.0;
-  for (int i_1 = 0; i_1 < 10; i_1++) {
-    a_2 += 1.0;
-  };
-  a_2 += 2.0;
-  a_2 += 1.0;
-  a_2 = (a_2 * a_2);
-  a_2 = -(a_2);
-  a_2 = (a_2 - 1.0);
-  a_2 = inversesqrt(a_2);
-  gl_FragColor = vec4(a_2);
+  int r0;
+  float r1;
+  if ((gl_FragCoord.x == 1.0)) {
+    discard;
+  }
+  r0 = 0;
+  r1 = 4.0;
+  while (true) {
+    r0 = (r0 + 1);
+    if ((r0 >= 10)) {
+      break;
+    }
+    r1 = (r1 + 1.0);
+  }
+  float t0 = (4.0 + r1);
+  gl_FragColor = vec4(inversesqrt((-1.0 - (t0 * t0))));
 }
 
-
-// stats: 12 alu 1 tex 3 flow
+// stats: 8 alu 1 tex 3 flow
 // inputs: 1
 //  #0: gl_FragCoord (high float) 4x1 [-1] loc 0

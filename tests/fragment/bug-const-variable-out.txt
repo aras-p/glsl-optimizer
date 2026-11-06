@@ -1,26 +1,19 @@
 uniform float mode;
 void main ()
 {
-  vec4 c_1;
-  c_1 = gl_FragCoord;
-  float tmpvar_2;
-  tmpvar_2 = gl_FragCoord.x;
-  float tmpvar_3;
-  if ((mode == 2.0)) {
-    tmpvar_3 = tmpvar_2;
+  float r0;
+  if ((mode != 2.0)) {
+    if ((mode == 3.0)) {
+      discard;
+    }
+    r0 = ((mode == 1e+01) ? 0.1 : gl_FragCoord.x);
   } else {
-    if ((mode == 3.0)) discard;
-    if ((mode == 10.0)) {
-      tmpvar_2 = 0.1;
-    };
-    tmpvar_3 = tmpvar_2;
-  };
-  c_1.x = tmpvar_3;
-  gl_FragColor = c_1;
+    r0 = gl_FragCoord.x;
+  }
+  gl_FragColor = vec4(r0, gl_FragCoord.yzw);
 }
 
-
-// stats: 4 alu 1 tex 3 flow
+// stats: 4 alu 1 tex 2 flow
 // inputs: 1
 //  #0: gl_FragCoord (high float) 4x1 [-1] loc 0
 // uniforms: 1 (total size: 0)

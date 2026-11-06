@@ -16,74 +16,30 @@ attribute vec4 TANGENT;
 varying vec4 xlv_FOG;
 void main ()
 {
-  vec3 binormal_1;
-  vec3 worldN_2;
-  vec4 o_hip_pack0_3;
-  vec4 tmpvar_4;
-  tmpvar_4 = (gl_ModelViewProjectionMatrix * gl_Vertex);
-  o_hip_pack0_3.xy = ((gl_MultiTexCoord0.xy * _Decal_ST.xy) + _Decal_ST.zw);
-  o_hip_pack0_3.zw = ((gl_MultiTexCoord0.xy * _DecalBump_ST.xy) + _DecalBump_ST.zw);
-  mat3 tmpvar_5;
-  tmpvar_5[0] = _Object2World[0].xyz;
-  tmpvar_5[1] = _Object2World[1].xyz;
-  tmpvar_5[2] = _Object2World[2].xyz;
-  worldN_2 = (tmpvar_5 * (gl_Normal * unity_Scale.w));
-  binormal_1 = (((gl_Normal.yzx * TANGENT.zxy) - (gl_Normal.zxy * TANGENT.yzx)) * TANGENT.w);
-  mat3 tmpvar_6;
-  tmpvar_6[0].x = TANGENT.x;
-  tmpvar_6[0].y = binormal_1.x;
-  tmpvar_6[0].z = gl_Normal.x;
-  tmpvar_6[1].x = TANGENT.y;
-  tmpvar_6[1].y = binormal_1.y;
-  tmpvar_6[1].z = gl_Normal.y;
-  tmpvar_6[2].x = TANGENT.z;
-  tmpvar_6[2].y = binormal_1.z;
-  tmpvar_6[2].z = gl_Normal.z;
-  vec4 tmpvar_7;
-  tmpvar_7.w = 1.0;
-  tmpvar_7.xyz = worldN_2;
-  vec3 x2_8;
-  vec4 vB_9;
-  vec3 x1_10;
-  x1_10.x = dot (unity_SHAr, tmpvar_7);
-  x1_10.y = dot (unity_SHAg, tmpvar_7);
-  x1_10.z = dot (unity_SHAb, tmpvar_7);
-  vB_9 = (worldN_2.xyzz * worldN_2.yzzx);
-  x2_8.x = dot (unity_SHBr, vB_9);
-  x2_8.y = dot (unity_SHBg, vB_9);
-  x2_8.z = dot (unity_SHBb, vB_9);
-  vec4 o_11;
-  o_11 = (tmpvar_4 * 0.5);
-  vec2 tmpvar_12;
-  tmpvar_12.x = o_11.x;
-  tmpvar_12.y = (o_11.y * _ProjectionParams.x);
-  o_11.xy = (tmpvar_12 + o_11.w);
-  o_11.zw = tmpvar_4.zw;
-  gl_Position = tmpvar_4;
-  vec4 tmpvar_13;
-  tmpvar_13.yzw = vec3(0.0, 0.0, 0.0);
-  tmpvar_13.x = tmpvar_4.z;
-  xlv_FOG = tmpvar_13;
-  gl_TexCoord[0] = o_hip_pack0_3;
-  vec4 tmpvar_14;
-  tmpvar_14.w = 0.0;
-  tmpvar_14.xyz = (tmpvar_6 * (_World2Object * _WorldSpaceLightPos0).xyz);
-  gl_TexCoord[1] = tmpvar_14;
-  vec4 tmpvar_15;
-  tmpvar_15.w = 0.0;
-  tmpvar_15.xyz = ((x1_10 + x2_8) + (unity_SHC.xyz * (
-    (worldN_2.x * worldN_2.x)
-   - 
-    (worldN_2.y * worldN_2.y)
-  )));
-  gl_TexCoord[2] = tmpvar_15;
-  gl_TexCoord[3] = o_11;
+  vec4 t0 = (gl_ModelViewProjectionMatrix * gl_Vertex);
+  vec2 t1 = ((gl_MultiTexCoord0.xy * _Decal_ST.xy) + _Decal_ST.zw);
+  vec2 t2 = ((gl_MultiTexCoord0.xy * _DecalBump_ST.xy) + _DecalBump_ST.zw);
+  vec3 t3 = (gl_Normal * unity_Scale.w);
+  vec3 t4 = (mat3(_Object2World[0].xyz, _Object2World[1].xyz, _Object2World[2].xyz) * t3);
+  vec3 t5 = (((gl_Normal.yzx * TANGENT.zxy) - (gl_Normal.zxy * TANGENT.yzx)) * TANGENT.w);
+  vec4 t6 = (_World2Object * _WorldSpaceLightPos0);
+  vec3 t7 = (mat3(vec3(TANGENT.x, t5.x, gl_Normal.x), vec3(TANGENT.y, t5.y, gl_Normal.y), vec3(TANGENT.z, t5.z, gl_Normal.z)) * t6.xyz);
+  vec4 t8 = vec4(t4, 1.0);
+  vec4 t9 = (t4.xyzz * t4.yzzx);
+  vec3 t10 = ((vec3(dot(unity_SHAr, t8), dot(unity_SHAg, t8), dot(unity_SHAb, t8)) + vec3(dot(unity_SHBr, t9), dot(unity_SHBg, t9), dot(unity_SHBb, t9))) + (unity_SHC.xyz * ((t4.x * t4.x) - (t4.y * t4.y))));
+  vec4 t11 = (t0 * 0.5);
+  vec2 t12 = (vec2(t11.x, (t11.y * _ProjectionParams.x)) + t11.w);
+  gl_Position = t0;
+  xlv_FOG = vec4(t0.z, 0.0, 0.0, 0.0);
+  gl_TexCoord[0] = vec4(t1, t2);
+  gl_TexCoord[1] = vec4(t7, 0.0);
+  gl_TexCoord[2] = vec4(t10, 0.0);
+  gl_TexCoord[3] = vec4(t12, t0.zw);
 }
 
-
-// stats: 33 alu 0 tex 0 flow
+// stats: 49 alu 0 tex 0 flow
 // inputs: 4
-//  #0: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 7
+//  #0: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 6
 //  #1: gl_Normal (high float) 3x1 [-1] loc 1
 //  #2: gl_Vertex (high float) 4x1 [-1] loc 0
 //  #3: TANGENT (high float) 4x1 [-1]

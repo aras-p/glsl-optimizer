@@ -3,26 +3,12 @@ uniform float factor;
 varying vec2 uv;
 void main ()
 {
-  vec2 coord_1;
-  vec4 tmpvar_2;
-  tmpvar_2 = texture2D (maintex, uv);
-  coord_1 = tmpvar_2.xy;
-  bool tmpvar_3;
-  tmpvar_3 = (tmpvar_2.w >= 0.5);
-  if (!(tmpvar_3)) {
-    coord_1.x = (tmpvar_2.x + factor);
-  };
-  if (tmpvar_3) {
-    coord_1.y = (tmpvar_2.y + factor);
-  };
-  vec4 tmpvar_4;
-  tmpvar_4.zw = vec2(0.0, 0.0);
-  tmpvar_4.xy = coord_1;
-  gl_FragColor = tmpvar_4;
+  vec4 t0 = texture2D(maintex, uv);
+  vec2 t1 = ((t0.w >= 0.5) ? vec2(t0.x, (t0.y + factor)) : vec2((t0.x + factor), t0.y));
+  gl_FragColor = vec4(t1, 0.0, 0.0);
 }
 
-
-// stats: 5 alu 1 tex 2 flow
+// stats: 4 alu 1 tex 0 flow
 // inputs: 1
 //  #0: uv (high float) 2x1 [-1]
 // uniforms: 1 (total size: 0)

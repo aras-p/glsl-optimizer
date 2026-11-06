@@ -1,30 +1,27 @@
 #version 310 es
+precision highp float;
+precision highp int;
 struct Entry {
   highp mat2x3 matrix;
 };
 layout(std140, row_major) uniform UniformData {
-  layout(row_major) highp mat2x3 uniformRows;
+  highp mat2x3 uniformRows;
   layout(column_major) highp mat2x3 uniformColumns;
 };
 layout(std430, row_major) buffer StorageData {
-  layout(row_major) readonly highp mat2x3 rows;
+  readonly highp mat2x3 rows;
   layout(column_major) readonly highp mat2x3 columns;
-  layout(row_major) readonly Entry entries[2];
+  readonly Entry entries[2];
 };
 uniform highp int index;
 out highp vec4 color;
 void main ()
 {
-  highp vec4 tmpvar_1;
-  tmpvar_1.w = 1.0;
-  tmpvar_1.xyz = (((
-    (rows * vec2(1.0, 2.0))
-   + columns[index]) + entries[index].matrix[1]) + (uniformRows[index] + (uniformColumns * vec2(2.0, 1.0))));
-  color = tmpvar_1;
+  highp vec3 t0 = ((((rows[0] + columns[index]) + (rows[1] * 2.0)) + entries[index].matrix[1]) + (((uniformColumns[0] * 2.0) + uniformRows[index]) + uniformColumns[1]));
+  color = vec4(t0, 1.0);
 }
 
-
-// stats: 7 alu 0 tex 0 flow
+// stats: 8 alu 0 tex 0 flow
 // uniforms: 1 (total size: 0)
 //  #0: index (high int) 1x1 [-1]
 // buffer #0: StorageData storage layout std430 (size: 112)

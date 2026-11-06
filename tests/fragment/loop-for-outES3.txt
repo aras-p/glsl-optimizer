@@ -1,4 +1,6 @@
 #version 300 es
+precision highp float;
+precision highp int;
 out mediump vec4 _fragData;
 uniform mediump sampler2D _MainTex;
 uniform mediump vec4 _TerrainTreeLightColors[4];
@@ -6,20 +8,12 @@ in highp vec2 xlv_uv;
 in mediump vec3 xlv_nl;
 void main ()
 {
-  mediump vec3 light_1;
-  mediump vec4 tmpvar_2;
-  tmpvar_2 = texture (_MainTex, xlv_uv);
-  light_1 = ((tmpvar_2.xyz * xlv_nl[0]) * _TerrainTreeLightColors[0].xyz);
-  light_1 = (light_1 + ((tmpvar_2.xyz * xlv_nl[1]) * _TerrainTreeLightColors[1].xyz));
-  light_1 = (light_1 + ((tmpvar_2.xyz * xlv_nl[2]) * _TerrainTreeLightColors[2].xyz));
-  mediump vec4 tmpvar_3;
-  tmpvar_3.w = 1.0;
-  tmpvar_3.xyz = light_1;
-  _fragData = tmpvar_3;
+  mediump vec4 t0 = texture(_MainTex, xlv_uv);
+  mediump vec3 t1 = ((((t0.xyz * xlv_nl.x) * _TerrainTreeLightColors[0].xyz) + ((t0.xyz * xlv_nl.y) * _TerrainTreeLightColors[1].xyz)) + ((t0.xyz * xlv_nl.z) * _TerrainTreeLightColors[2].xyz));
+  _fragData = vec4(t1, 1.0);
 }
 
-
-// stats: 9 alu 1 tex 0 flow
+// stats: 8 alu 1 tex 0 flow
 // inputs: 2
 //  #0: xlv_uv (high float) 2x1 [-1]
 //  #1: xlv_nl (medium float) 3x1 [-1]

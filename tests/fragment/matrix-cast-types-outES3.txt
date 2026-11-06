@@ -1,4 +1,6 @@
 #version 300 es
+precision highp float;
+precision highp int;
 uniform mediump sampler2D _PanelNorm;
 uniform mediump sampler2D _DecalNorm;
 in highp vec4 xlv_TEXCOORD0;
@@ -8,66 +10,21 @@ in highp vec4 xlv_TEXCOORD3;
 out mediump vec4 _fragData;
 void main ()
 {
-  mediump vec4 res_1;
-  mediump vec3 worldN_2;
-  mediump vec3 tmpvar_3;
-  highp mat3 nBasis_4;
-  mediump vec3 detailNormal_5;
-  mediump vec3 tmpvar_6;
-  tmpvar_6 = ((texture (_DecalNorm, xlv_TEXCOORD0.zw).xyz * 2.0) - 1.0);
-  detailNormal_5 = ((texture (_PanelNorm, xlv_TEXCOORD0.xy).xyz * 2.0) - 1.0);
-  mediump vec3 tmpvar_7;
-  tmpvar_7.x = tmpvar_6.z;
-  tmpvar_7.y = tmpvar_6.y;
-  tmpvar_7.z = -(tmpvar_6.x);
-  mediump vec3 tmpvar_8;
-  tmpvar_8.x = tmpvar_6.x;
-  tmpvar_8.y = tmpvar_6.z;
-  tmpvar_8.z = -(tmpvar_6.y);
-  mediump mat3 tmpvar_9;
-  tmpvar_9[uint(0)].x = tmpvar_7[0];
-  tmpvar_9[uint(0)].y = tmpvar_8[0];
-  tmpvar_9[uint(0)].z = tmpvar_6[0];
-  tmpvar_9[1u].x = tmpvar_7[1];
-  tmpvar_9[1u].y = tmpvar_8[1];
-  tmpvar_9[1u].z = tmpvar_6[1];
-  tmpvar_9[2u].x = tmpvar_7[2];
-  tmpvar_9[2u].y = tmpvar_8[2];
-  tmpvar_9[2u].z = tmpvar_6[2];
-  nBasis_4 = tmpvar_9;
-  mediump mat3 tmpvar_10;
-  tmpvar_10 = nBasis_4;
-  mediump vec3 v_11;
-  v_11.x = tmpvar_10[0][0];
-  v_11.y = tmpvar_10[1][0];
-  v_11.z = tmpvar_10[2][0];
-  mediump mat3 tmpvar_12;
-  tmpvar_12 = nBasis_4;
-  mediump vec3 v_13;
-  v_13.x = tmpvar_12[0][1];
-  v_13.y = tmpvar_12[1][1];
-  v_13.z = tmpvar_12[2][1];
-  mediump mat3 tmpvar_14;
-  tmpvar_14 = nBasis_4;
-  mediump vec3 v_15;
-  v_15.x = tmpvar_14[0][2];
-  v_15.y = tmpvar_14[1][2];
-  v_15.z = tmpvar_14[2][2];
-  tmpvar_3 = normalize(((
-    (detailNormal_5.x * v_11)
-   + 
-    (detailNormal_5.y * v_13)
-  ) + (detailNormal_5.z * v_15)));
-  worldN_2.x = dot (xlv_TEXCOORD1.xyz, tmpvar_3);
-  worldN_2.y = dot (xlv_TEXCOORD2.xyz, tmpvar_3);
-  worldN_2.z = dot (xlv_TEXCOORD3.xyz, tmpvar_3);
-  res_1.xyz = ((worldN_2 * 0.5) + 0.5);
-  res_1.w = 0.0;
-  _fragData = res_1;
+  mediump vec3 t0 = ((texture(_DecalNorm, xlv_TEXCOORD0.zw).xyz * 2.0) - 1.0);
+  mediump vec3 t1 = vec3(t0.zxx);
+  mediump vec3 t2 = vec3(t0.yzy);
+  mediump vec3 t3 = vec3((-t0.x), (-t0.y), t0.z);
+  mediump vec3 t4 = ((texture(_PanelNorm, xlv_TEXCOORD0.xy).xyz * 2.0) - 1.0);
+  mediump vec3 t5 = (mat3(vec3(t1.x, t2.x, t3.x), vec3(t1.y, t2.y, t3.y), vec3(t1.z, t2.z, t3.z)) * t4);
+  mediump vec3 t6 = normalize(t5);
+  mediump vec3 t7 = vec3(dot(xlv_TEXCOORD1.xyz, t6));
+  mediump vec3 t8 = vec3(dot(xlv_TEXCOORD2.xyz, t6));
+  mediump vec3 t9 = vec3(dot(xlv_TEXCOORD3.xyz, t6));
+  mediump vec3 t10 = ((vec3(t7.x, t8.y, t9.z) * 0.5) + 0.5);
+  _fragData = vec4(t10, 0.0);
 }
 
-
-// stats: 18 alu 2 tex 0 flow
+// stats: 17 alu 2 tex 0 flow
 // inputs: 4
 //  #0: xlv_TEXCOORD0 (high float) 4x1 [-1]
 //  #1: xlv_TEXCOORD1 (high float) 4x1 [-1]

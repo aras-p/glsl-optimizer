@@ -18,16 +18,12 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   , texturecube<float> cubehigh [[texture(5)]], sampler _mtlsmp_cubehigh [[sampler(5)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half4 c_1 = 0;
-  c_1 = (texlow.sample(_mtlsmp_texlow, (float2)((_mtl_i.varUV.xy))) + texmed.sample(_mtlsmp_texmed, (float2)((_mtl_i.varUV.xy))));
-  c_1 = half4(((float4)(c_1) + texhigh.sample(_mtlsmp_texhigh, (float2)((_mtl_i.varUV.xy)))));
-  c_1 = (c_1 + cubelow.sample(_mtlsmp_cubelow, (float3)((_mtl_i.varUV.xyz))));
-  c_1 = (c_1 + cubemed.sample(_mtlsmp_cubemed, (float3)((_mtl_i.varUV.xyz))));
-  c_1 = half4(((float4)(c_1) + cubehigh.sample(_mtlsmp_cubehigh, (float3)((_mtl_i.varUV.xyz)))));
-  _mtl_o._fragData = c_1;
+  float2 t0 = _mtl_i.varUV.xy;
+  half4 t1 = half4((float4((texlow.sample(_mtlsmp_texlow, t0) + texmed.sample(_mtlsmp_texmed, t0))) + texhigh.sample(_mtlsmp_texhigh, t0)));
+  float3 t2 = _mtl_i.varUV.xyz;
+  _mtl_o._fragData = half4((float4(((t1 + cubelow.sample(_mtlsmp_cubelow, t2)) + cubemed.sample(_mtlsmp_cubemed, t2))) + cubehigh.sample(_mtlsmp_cubehigh, t2)));
   return _mtl_o;
 }
-
 
 // stats: 5 alu 6 tex 0 flow
 // inputs: 1

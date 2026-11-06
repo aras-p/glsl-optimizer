@@ -1,19 +1,18 @@
 #version 300 es
+precision highp float;
+precision highp int;
 out mediump vec4 _fragData;
 uniform mediump sampler2D tex;
 uniform mediump sampler2DShadow shadowmap;
 in highp vec4 uv;
 void main ()
 {
-  mediump vec4 c_1;
-  c_1 = (textureProj (tex, vec3(uv.xy, uv.w)) + textureProj (tex, vec3(uv.xy, uv.z)));
-  c_1 = (c_1 + textureProjLod (tex, vec3(uv.xy, uv.w), 1.0));
-  c_1 = (c_1 + textureProjLod (tex, vec3(uv.xy, uv.z), 1.0));
-  c_1 = (c_1 + vec4(texture (shadowmap, vec3(uv.xy, uv.z))));
-  c_1 = (c_1 + vec4(textureProj (shadowmap, vec4(uv.xy, uv.z, uv.w))));
-  _fragData = c_1;
+  highp float t0 = uv.w;
+  highp vec2 t1 = uv.xy;
+  highp float t2 = uv.z;
+  mediump vec4 t3 = ((((textureProj(tex, vec3(t1, t0)) + textureProj(tex, vec3(t1, t2))) + textureProjLod(tex, vec3(t1, t0), 1.0)) + textureProjLod(tex, vec3(t1, t2), 1.0)) + texture(shadowmap, vec3(t1, t2)));
+  _fragData = (t3 + textureProj(shadowmap, vec4(vec3(t1, t2), t0)));
 }
-
 
 // stats: 5 alu 6 tex 0 flow
 // inputs: 1

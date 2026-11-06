@@ -1,4 +1,6 @@
 #version 300 es
+precision highp float;
+precision highp int;
 out mediump vec4 _fragData;
 uniform mediump sampler2D _CameraDepthTexture;
 uniform mediump sampler2D _CameraNormalsTexture;
@@ -19,112 +21,38 @@ in highp vec4 xlv_TEXCOORD0;
 in highp vec3 xlv_TEXCOORD1;
 void main ()
 {
-  mediump vec4 res_1;
-  highp float spec_2;
-  mediump vec3 h_3;
-  highp float atten_4;
-  mediump vec3 lightDir_5;
-  highp vec3 tolight_6;
-  highp vec3 wpos_7;
-  highp float depth_8;
-  mediump vec3 normal_9;
-  highp vec2 uv_10;
-  uv_10 = (xlv_TEXCOORD0.xy / xlv_TEXCOORD0.w);
-  mediump vec4 tmpvar_11;
-  tmpvar_11 = texture (_CameraNormalsTexture, uv_10);
-  normal_9 = ((tmpvar_11.xyz * 2.0) - 1.0);
-  normal_9 = normalize(normal_9);
-  depth_8 = texture (_CameraDepthTexture, uv_10).x;
-  highp float tmpvar_12;
-  tmpvar_12 = (1.0/(((_ZBufferParams.x * depth_8) + _ZBufferParams.y)));
-  depth_8 = tmpvar_12;
-  highp vec4 tmpvar_13;
-  tmpvar_13.w = 1.0;
-  tmpvar_13.xyz = ((xlv_TEXCOORD1 * (_ProjectionParams.z / xlv_TEXCOORD1.z)) * tmpvar_12);
-  wpos_7 = (_CameraToWorld * tmpvar_13).xyz;
-  tolight_6 = (wpos_7 - _LightPos.xyz);
-  lightDir_5 = -(normalize(tolight_6));
-  atten_4 = texture (_LightTextureB0, vec2((dot (tolight_6, tolight_6) * _LightPos.w))).w;
-  highp float mydist_14;
-  highp float fade_15;
-  fade_15 = ((tmpvar_13.z * _LightShadowData.z) + _LightShadowData.w);
-  mediump float tmpvar_16;
-  tmpvar_16 = fade_15;
-  fade_15 = clamp (tmpvar_16, 0.0, 1.0);
-  mydist_14 = (sqrt(dot (tolight_6, tolight_6)) * _LightPositionRange.w);
-  mydist_14 = (mydist_14 * 0.97);
-  highp vec4 shadowVals_17;
-  highp vec4 packDist_18;
-  packDist_18 = texture (_ShadowMapTexture, (tolight_6 + vec3(0.0078125, 0.0078125, 0.0078125)));
-  shadowVals_17.x = dot (packDist_18, vec4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09));
-  highp vec4 packDist_19;
-  packDist_19 = texture (_ShadowMapTexture, (tolight_6 + vec3(-0.0078125, -0.0078125, 0.0078125)));
-  shadowVals_17.y = dot (packDist_19, vec4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09));
-  highp vec4 packDist_20;
-  packDist_20 = texture (_ShadowMapTexture, (tolight_6 + vec3(-0.0078125, 0.0078125, -0.0078125)));
-  shadowVals_17.z = dot (packDist_20, vec4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09));
-  highp vec4 packDist_21;
-  packDist_21 = texture (_ShadowMapTexture, (tolight_6 + vec3(0.0078125, -0.0078125, -0.0078125)));
-  shadowVals_17.w = dot (packDist_21, vec4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09));
-  bvec4 tmpvar_22;
-  tmpvar_22 = lessThan (shadowVals_17, vec4(mydist_14));
-  mediump vec4 tmpvar_23;
-  tmpvar_23 = _LightShadowData.xxxx;
-  mediump float tmpvar_24;
-  if (tmpvar_22.x) {
-    tmpvar_24 = tmpvar_23.x;
-  } else {
-    tmpvar_24 = 1.0;
-  };
-  mediump float tmpvar_25;
-  if (tmpvar_22.y) {
-    tmpvar_25 = tmpvar_23.y;
-  } else {
-    tmpvar_25 = 1.0;
-  };
-  mediump float tmpvar_26;
-  if (tmpvar_22.z) {
-    tmpvar_26 = tmpvar_23.z;
-  } else {
-    tmpvar_26 = 1.0;
-  };
-  mediump float tmpvar_27;
-  if (tmpvar_22.w) {
-    tmpvar_27 = tmpvar_23.w;
-  } else {
-    tmpvar_27 = 1.0;
-  };
-  mediump vec4 tmpvar_28;
-  tmpvar_28.x = tmpvar_24;
-  tmpvar_28.y = tmpvar_25;
-  tmpvar_28.z = tmpvar_26;
-  tmpvar_28.w = tmpvar_27;
-  atten_4 = (atten_4 * dot (tmpvar_28, vec4(0.25, 0.25, 0.25, 0.25)));
-  highp vec4 tmpvar_29;
-  tmpvar_29.w = 1.0;
-  tmpvar_29.xyz = wpos_7;
-  atten_4 = (atten_4 * texture (_LightTexture0, (_LightMatrix0 * tmpvar_29).xyz).w);
-  h_3 = normalize((lightDir_5 - normalize(
-    (wpos_7 - _WorldSpaceCameraPos)
-  )));
-  spec_2 = pow (max (0.0, dot (h_3, normal_9)), (tmpvar_11.w * 128.0));
-  mediump float tmpvar_30;
-  tmpvar_30 = atten_4;
-  spec_2 = (spec_2 * clamp (tmpvar_30, 0.0, 1.0));
-  res_1.xyz = (_LightColor.xyz * (max (0.0, 
-    dot (lightDir_5, normal_9)
-  ) * atten_4));
-  mediump vec3 tmpvar_31;
-  tmpvar_31 = _LightColor.xyz;
-  res_1.w = (spec_2 * dot (tmpvar_31, vec3(0.22, 0.707, 0.071)));
-  mediump float tmpvar_32;
-  tmpvar_32 = (1.0 - ((tmpvar_13.z * unity_LightmapFade.z) + unity_LightmapFade.w));
-  res_1 = (res_1 * clamp (tmpvar_32, 0.0, 1.0));
-  _fragData = exp2(-(res_1));
+  highp vec2 t0 = (xlv_TEXCOORD0.xy / xlv_TEXCOORD0.w);
+  mediump vec4 t1 = texture(_CameraNormalsTexture, t0);
+  mediump vec3 t2 = ((t1.xyz * 2.0) - 1.0);
+  mediump vec3 t3 = normalize(t2);
+  highp float t4 = texture(_CameraDepthTexture, t0).x;
+  highp vec3 t5 = ((xlv_TEXCOORD1 * (_ProjectionParams.z / xlv_TEXCOORD1.z)) * (1.0 / ((_ZBufferParams.x * t4) + _ZBufferParams.y)));
+  highp vec4 t6 = (_CameraToWorld * vec4(t5, 1.0));
+  highp vec3 t7 = (t6.xyz - _LightPos.xyz);
+  highp float t8 = dot(t7, t7);
+  mediump vec3 t9 = (-(t7 * inversesqrt(t8)));
+  highp float t10 = texture(_LightTextureB0, vec2((t8 * _LightPos.w))).w;
+  highp vec4 t11 = texture(_ShadowMapTexture, (t7 + 0.0078125));
+  highp vec4 t12 = texture(_ShadowMapTexture, (t7 + vec3(-0.0078125, -0.0078125, 0.0078125)));
+  highp vec4 t13 = texture(_ShadowMapTexture, (t7 + vec3(-0.0078125, 0.0078125, -0.0078125)));
+  highp vec4 t14 = texture(_ShadowMapTexture, (t7 + vec3(0.0078125, -0.0078125, -0.0078125)));
+  mediump vec4 t15 = _LightShadowData.xxxx;
+  highp vec4 t16 = vec4(dot(t11, vec4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09)), dot(t12, vec4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09)), dot(t13, vec4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09)), dot(t14, vec4(1.0, 0.00392157, 1.53787e-05, 6.22737e-09)));
+  bvec4 t17 = lessThan(t16, vec4(((sqrt(t8) * 0.97) * _LightPositionRange.w)));
+  highp float t18 = ((t10 * dot(vec4((t17.x ? t15.x : 1.0), (t17.y ? t15.y : 1.0), (t17.z ? t15.z : 1.0), (t17.w ? t15.w : 1.0)), vec4(0.25))) * texture(_LightTexture0, (_LightMatrix0 * vec4(t6.xyz, 1.0)).xyz).w);
+  highp vec3 t19 = (t6.xyz - _WorldSpaceCameraPos);
+  highp vec3 t20 = (t9 - normalize(t19));
+  mediump vec3 t21 = normalize(t20);
+  highp float t22 = pow(max(0.0, dot(t21, t3)), (t1.w * 128.0));
+  mediump float t23 = t18;
+  mediump vec4 t24 = (_LightColor.xyz * (max(0.0, dot(t9, t3)) * t18)).xyzx;
+  mediump vec3 t25 = _LightColor.xyz;
+  mediump vec4 t26 = vec4(((t22 * clamp(t23, 0.0, 1.0)) * dot(t25, vec3(0.22, 0.707, 0.071))));
+  mediump float t27 = (1.0 - ((t5.z * unity_LightmapFade.z) + unity_LightmapFade.w));
+  _fragData = exp2((-(vec4(t24.xyz, t26.w) * clamp(t27, 0.0, 1.0))));
 }
 
-
-// stats: 68 alu 8 tex 4 flow
+// stats: 75 alu 8 tex 0 flow
 // inputs: 2
 //  #0: xlv_TEXCOORD0 (high float) 4x1 [-1]
 //  #1: xlv_TEXCOORD1 (high float) 3x1 [-1]

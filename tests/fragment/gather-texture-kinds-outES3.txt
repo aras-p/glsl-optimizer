@@ -1,4 +1,6 @@
 #version 320 es
+precision highp float;
+precision highp int;
 uniform highp sampler2DArray layers;
 uniform highp samplerCube cubeMap;
 uniform highp samplerCubeArray cubeLayers;
@@ -8,11 +10,10 @@ in highp vec4 coord;
 out highp vec4 color;
 void main ()
 {
-  color = (((
-    (textureGatherOffset (layers, coord.xyz, ivec2(1, -1), 2) + textureGather (cubeMap, coord.xyz, 0))
-   + textureGather (cubeLayers, coord, 3)) + textureGather (shadowLayers, coord.xyz, coord.w)) + vec4(textureGather (labels, coord.xy, 1)));
+  highp vec3 t0 = coord.xyz;
+  highp vec4 t1 = (((textureGatherOffset(layers, t0, ivec2(1, -1), 2) + textureGather(cubeMap, t0)) + textureGather(cubeLayers, coord, 3)) + textureGather(shadowLayers, t0, coord.w));
+  color = (t1 + vec4(textureGather(labels, coord.xy, 1)));
 }
-
 
 // stats: 5 alu 5 tex 0 flow
 // inputs: 1

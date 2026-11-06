@@ -24,96 +24,39 @@ uniform vec4 unity_Scale;
 varying vec4 xlv_FOG;
 void main ()
 {
-  vec3 worldN_1;
-  vec4 o_hip_pack0_2;
-  vec4 o_hip_pack1_3;
-  vec4 tmpvar_4;
-  tmpvar_4 = (gl_ModelViewProjectionMatrix * gl_Vertex);
-  o_hip_pack0_2.xy = ((gl_MultiTexCoord0.xy * _Control_ST.xy) + _Control_ST.zw);
-  o_hip_pack0_2.zw = ((gl_MultiTexCoord0.xy * _Splat0_ST.xy) + _Splat0_ST.zw);
-  o_hip_pack1_3.xy = ((gl_MultiTexCoord0.xy * _Splat1_ST.xy) + _Splat1_ST.zw);
-  o_hip_pack1_3.zw = ((gl_MultiTexCoord0.xy * _Splat2_ST.xy) + _Splat2_ST.zw);
-  mat3 tmpvar_5;
-  tmpvar_5[0] = _Object2World[0].xyz;
-  tmpvar_5[1] = _Object2World[1].xyz;
-  tmpvar_5[2] = _Object2World[2].xyz;
-  worldN_1 = (tmpvar_5 * (gl_Normal * unity_Scale.w));
-  vec4 tmpvar_6;
-  tmpvar_6.w = 1.0;
-  tmpvar_6.xyz = worldN_1;
-  vec3 x2_7;
-  vec4 vB_8;
-  vec3 x1_9;
-  x1_9.x = dot (unity_SHAr, tmpvar_6);
-  x1_9.y = dot (unity_SHAg, tmpvar_6);
-  x1_9.z = dot (unity_SHAb, tmpvar_6);
-  vB_8 = (worldN_1.xyzz * worldN_1.yzzx);
-  x2_7.x = dot (unity_SHBr, vB_8);
-  x2_7.y = dot (unity_SHBg, vB_8);
-  x2_7.z = dot (unity_SHBb, vB_8);
-  vec3 tmpvar_10;
-  tmpvar_10 = (_Object2World * gl_Vertex).xyz;
-  vec3 col_11;
-  vec4 diff_12;
-  vec4 ndotl_13;
-  vec4 lengthSq_14;
-  vec4 toLightZ_15;
-  vec4 toLightY_16;
-  vec4 toLightX_17;
-  toLightX_17 = (unity_4LightPosX0 - tmpvar_10.x);
-  toLightY_16 = (unity_4LightPosY0 - tmpvar_10.y);
-  toLightZ_15 = (unity_4LightPosZ0 - tmpvar_10.z);
-  lengthSq_14 = (toLightX_17 * toLightX_17);
-  lengthSq_14 = (lengthSq_14 + (toLightY_16 * toLightY_16));
-  lengthSq_14 = (lengthSq_14 + (toLightZ_15 * toLightZ_15));
-  ndotl_13 = (toLightX_17 * worldN_1.x);
-  ndotl_13 = (ndotl_13 + (toLightY_16 * worldN_1.y));
-  ndotl_13 = (ndotl_13 + (toLightZ_15 * worldN_1.z));
-  vec4 tmpvar_18;
-  tmpvar_18 = max (vec4(0.0, 0.0, 0.0, 0.0), (ndotl_13 * inversesqrt(lengthSq_14)));
-  ndotl_13 = tmpvar_18;
-  diff_12 = (tmpvar_18 * (1.0/((1.0 + 
-    (lengthSq_14 * unity_4LightAtten0)
-  ))));
-  col_11 = (unity_LightColor0 * diff_12.x);
-  col_11 = (col_11 + (unity_LightColor1 * diff_12.y));
-  col_11 = (col_11 + (unity_LightColor2 * diff_12.z));
-  col_11 = (col_11 + (unity_LightColor3 * diff_12.w));
-  vec4 o_19;
-  o_19 = (tmpvar_4 * 0.5);
-  vec2 tmpvar_20;
-  tmpvar_20.x = o_19.x;
-  tmpvar_20.y = (o_19.y * _ProjectionParams.x);
-  o_19.xy = (tmpvar_20 + o_19.w);
-  o_19.zw = tmpvar_4.zw;
-  gl_Position = tmpvar_4;
-  vec4 tmpvar_21;
-  tmpvar_21.yzw = vec3(0.0, 0.0, 0.0);
-  tmpvar_21.x = tmpvar_4.z;
-  xlv_FOG = tmpvar_21;
-  gl_TexCoord[0] = o_hip_pack0_2;
-  gl_TexCoord[1] = o_hip_pack1_3;
-  vec4 tmpvar_22;
-  tmpvar_22.zw = vec2(0.0, 0.0);
-  tmpvar_22.xy = ((gl_MultiTexCoord0.xy * _Splat3_ST.xy) + _Splat3_ST.zw);
-  gl_TexCoord[2] = tmpvar_22;
-  vec4 tmpvar_23;
-  tmpvar_23.w = 0.0;
-  tmpvar_23.xyz = worldN_1;
-  gl_TexCoord[3] = tmpvar_23;
-  vec4 tmpvar_24;
-  tmpvar_24.w = 0.0;
-  tmpvar_24.xyz = (((x1_9 + x2_7) + (unity_SHC.xyz * 
-    ((worldN_1.x * worldN_1.x) - (worldN_1.y * worldN_1.y))
-  )) + col_11);
-  gl_TexCoord[4] = tmpvar_24;
-  gl_TexCoord[5] = o_19;
+  vec4 t0 = (gl_ModelViewProjectionMatrix * gl_Vertex);
+  vec2 t1 = ((gl_MultiTexCoord0.xy * _Control_ST.xy) + _Control_ST.zw);
+  vec2 t2 = ((gl_MultiTexCoord0.xy * _Splat0_ST.xy) + _Splat0_ST.zw);
+  vec2 t3 = ((gl_MultiTexCoord0.xy * _Splat1_ST.xy) + _Splat1_ST.zw);
+  vec2 t4 = ((gl_MultiTexCoord0.xy * _Splat2_ST.xy) + _Splat2_ST.zw);
+  vec2 t5 = ((gl_MultiTexCoord0.xy * _Splat3_ST.xy) + _Splat3_ST.zw);
+  vec3 t6 = (gl_Normal * unity_Scale.w);
+  vec3 t7 = (mat3(_Object2World[0].xyz, _Object2World[1].xyz, _Object2World[2].xyz) * t6);
+  vec4 t8 = vec4(t7, 1.0);
+  vec4 t9 = (t7.xyzz * t7.yzzx);
+  vec3 t10 = ((vec3(dot(unity_SHAr, t8), dot(unity_SHAg, t8), dot(unity_SHAb, t8)) + vec3(dot(unity_SHBr, t9), dot(unity_SHBg, t9), dot(unity_SHBb, t9))) + (unity_SHC.xyz * ((t7.x * t7.x) - (t7.y * t7.y))));
+  vec4 t11 = (_Object2World * gl_Vertex);
+  vec4 t12 = (unity_4LightPosX0 - t11.x);
+  vec4 t13 = (unity_4LightPosY0 - t11.y);
+  vec4 t14 = (unity_4LightPosZ0 - t11.z);
+  vec4 t15 = (((t12 * t12) + (t13 * t13)) + (t14 * t14));
+  vec4 t16 = (max(vec4(0.0), ((((t12 * t7.x) + (t13 * t7.y)) + (t14 * t7.z)) * inversesqrt(t15))) * (1.0 / (1.0 + (t15 * unity_4LightAtten0))));
+  vec3 t17 = (t10 + ((mat3(unity_LightColor0, unity_LightColor1, unity_LightColor2) * t16.xyz) + (unity_LightColor3 * t16.w)));
+  vec4 t18 = (t0 * 0.5);
+  vec2 t19 = (vec2(t18.x, (t18.y * _ProjectionParams.x)) + t18.w);
+  gl_Position = t0;
+  xlv_FOG = vec4(t0.z, 0.0, 0.0, 0.0);
+  gl_TexCoord[0] = vec4(t1, t2);
+  gl_TexCoord[1] = vec4(t3, t4);
+  gl_TexCoord[2] = vec4(t5, 0.0, 0.0);
+  gl_TexCoord[3] = vec4(t7, 0.0);
+  gl_TexCoord[4] = vec4(t17, 0.0);
+  gl_TexCoord[5] = vec4(t19, t0.zw);
 }
 
-
-// stats: 63 alu 0 tex 0 flow
+// stats: 74 alu 0 tex 0 flow
 // inputs: 3
-//  #0: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 7
+//  #0: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 6
 //  #1: gl_Normal (high float) 3x1 [-1] loc 1
 //  #2: gl_Vertex (high float) 4x1 [-1] loc 0
 // uniforms: 24 (total size: 0)

@@ -1,6 +1,8 @@
 #version 310 es
+precision highp float;
+precision highp int;
 layout(early_fragment_tests) in;
-layout(std430, column_major) buffer Data {
+layout(std430) buffer Data {
   highp uint value;
 } data;
 void main ()
@@ -8,7 +10,6 @@ void main ()
   data.value = 1u;
 }
 
-
-// stats: 1 alu 0 tex 0 flow
+// stats: 0 alu 0 tex 0 flow
 // buffer #0: Data storage instance data layout std430 (size: 4)
 //  member #0: uint value offset 0

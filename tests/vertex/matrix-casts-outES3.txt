@@ -6,29 +6,15 @@ uniform highp mat2 uniMat2F;
 uniform mediump mat2 uniMat2H;
 void main ()
 {
-  highp mat2 htof2_1;
-  highp mat3 htof3_2;
-  highp mat4 htof4_3;
-  mediump mat2 ftoh2_4;
-  mediump mat4 ftoh4_5;
-  highp vec4 r_6;
-  r_6.yzw = vec3(0.0, 0.0, 0.0);
-  ftoh4_5 = uniMat4F;
-  r_6.x = ftoh4_5[0][0];
-  r_6.x = (r_6.x + ftoh4_5[0][0]);
-  ftoh2_4 = uniMat2F;
-  r_6.x = (r_6.x + ftoh2_4[0][0]);
-  htof4_3 = uniMat4H;
-  r_6.x = (r_6.x + htof4_3[0][0]);
-  htof3_2 = uniMat3H;
-  r_6.x = (r_6.x + htof3_2[0][0]);
-  htof2_1 = uniMat2H;
-  r_6.x = (r_6.x + htof2_1[0][0]);
-  gl_Position = r_6;
+  mediump vec4 t0 = uniMat4F[0];
+  mediump vec2 t1 = uniMat2F[0];
+  highp vec4 t2 = uniMat4H[0];
+  highp vec3 t3 = uniMat3H[0];
+  highp vec2 t4 = uniMat2H[0];
+  gl_Position = vec4((((((t0.x * 2.0) + t1.x) + t2.x) + t3.x) + t4.x), 0.0, 0.0, 0.0);
 }
 
-
-// stats: 6 alu 0 tex 0 flow
+// stats: 5 alu 0 tex 0 flow
 // uniforms: 5 (total size: 0)
 //  #0: uniMat4F (high float) 4x4 [-1]
 //  #1: uniMat4H (medium float) 4x4 [-1]

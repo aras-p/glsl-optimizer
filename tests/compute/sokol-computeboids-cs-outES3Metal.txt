@@ -1,120 +1,80 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
-struct particle {
+struct _xlat_particle_std430 {
   float2 pos;
   float2 vel;
 };
-static_assert(sizeof(particle) == 16, "buffer size");
-struct alignas(8) _xlat_buf_storage0_element { particle value; };
-static_assert(sizeof(_xlat_buf_storage0_element) == 16, "array stride");
-struct alignas(16) _xlat_buf_storage2 {
-  alignas(4) float dt;
-  alignas(4) float rule1_distance;
-  alignas(4) float rule2_distance;
-  alignas(4) float rule3_distance;
-  alignas(4) float rule1_scale;
-  alignas(4) float rule2_scale;
-  alignas(4) float rule3_scale;
-  alignas(4) int num_particles;
+static_assert(sizeof(_xlat_particle_std430) == 16, "std430 size");
+struct _xlat_buf_cs_ssbo_in_std430 {
+  _xlat_particle_std430 prt_in[1];
 };
-static_assert(sizeof(_xlat_buf_storage2) == 32, "std140 size");
+struct _xlat_buf_cs_ssbo_out_std430 {
+  _xlat_particle_std430 prt_out[1];
+};
+struct _xlat_buf_sim_params_std140 {
+  float dt;
+  float rule1_distance;
+  float rule2_distance;
+  float rule3_distance;
+  float rule1_scale;
+  float rule2_scale;
+  float rule3_scale;
+  int num_particles;
+};
+static_assert(sizeof(_xlat_buf_sim_params_std140) == 32, "std140 size");
 struct xlatMtlShaderUniform {
 };
 // threadsPerThreadgroup: 64, 1, 1
 kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , const device uchar* _mtl_buffer1 [[buffer(1)]]
-  , device uchar* _mtl_buffer2 [[buffer(2)]]
-  , constant _xlat_buf_storage2& _mtl_buffer3 [[buffer(3)]]
+  , const device _xlat_buf_cs_ssbo_in_std430& _xlat_blk_cs_ssbo_in [[buffer(1)]]
+  , device _xlat_buf_cs_ssbo_out_std430& _xlat_blk_cs_ssbo_out [[buffer(2)]]
+  , constant _xlat_buf_sim_params_std140& _xlat_blk_sim_params [[buffer(3)]]
   , uint3 gl_GlobalInvocationID [[thread_position_in_grid]])
 {
-  int i_1 = 0;
-  int c_vel_count_2 = 0;
-  int c_mass_count_3 = 0;
-  float2 col_vel_4 = 0;
-  float2 c_vel_5 = 0;
-  float2 c_mass_6 = 0;
-  float2 v_vel_7 = 0;
-  float2 v_pos_8 = 0;
-  if ((gl_GlobalInvocationID.x >= uint(int(_mtl_buffer3.num_particles)))) {
-    return;
-  };
-  float2 tmpvar_9 = 0;
-  tmpvar_9 = float2(reinterpret_cast<const device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_GlobalInvocationID.x].value.pos);
-  v_pos_8 = tmpvar_9;
-  float2 tmpvar_10 = 0;
-  tmpvar_10 = float2(reinterpret_cast<const device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_GlobalInvocationID.x].value.vel);
-  v_vel_7 = tmpvar_10;
-  c_mass_6 = float2(0.0, 0.0);
-  c_vel_5 = float2(0.0, 0.0);
-  col_vel_4 = float2(0.0, 0.0);
-  c_mass_count_3 = 0;
-  c_vel_count_2 = 0;
-  i_1 = 0;
-  while (true) {
-    if ((i_1 >= int(_mtl_buffer3.num_particles))) {
-      break;
-    };
-    if ((uint(i_1) == gl_GlobalInvocationID.x)) {
-      i_1++;
-      continue;
-    };
-    float2 tmpvar_11 = 0;
-    tmpvar_11 = float2(reinterpret_cast<const device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[i_1].value.pos);
-    float2 tmpvar_12 = 0;
-    tmpvar_12 = float2(reinterpret_cast<const device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[i_1].value.vel);
-    float tmpvar_13 = 0;
-    float2 tmpvar_14 = 0;
-    tmpvar_14 = (tmpvar_11 - tmpvar_9);
-    tmpvar_13 = sqrt(dot (tmpvar_14, tmpvar_14));
-    if ((tmpvar_13 < float(_mtl_buffer3.rule1_distance))) {
-      c_mass_6 = (c_mass_6 + tmpvar_11);
-      c_mass_count_3++;
-    };
-    if ((tmpvar_13 < float(_mtl_buffer3.rule2_distance))) {
-      col_vel_4 = (col_vel_4 + (tmpvar_9 - tmpvar_11));
-    };
-    if ((tmpvar_13 < float(_mtl_buffer3.rule3_distance))) {
-      c_vel_5 = (c_vel_5 + tmpvar_12);
-      c_vel_count_2++;
-    };
-    i_1++;
-  };
-  if ((0 < c_mass_count_3)) {
-    c_mass_6 = ((c_mass_6 / float(c_mass_count_3)) - tmpvar_9);
-  };
-  if ((0 < c_vel_count_2)) {
-    c_vel_5 = (c_vel_5 / float(c_vel_count_2));
-  };
-  v_vel_7 = (tmpvar_10 + ((
-    (c_mass_6 * float(_mtl_buffer3.rule1_scale))
-   + 
-    (col_vel_4 * float(_mtl_buffer3.rule2_scale))
-  ) + (c_vel_5 * float(_mtl_buffer3.rule3_scale))));
-  v_vel_7 = (normalize(v_vel_7) * saturate(min (
-    sqrt(dot (v_vel_7, v_vel_7))
-  , 0.1)));
-  v_pos_8 = (tmpvar_9 + (v_vel_7 * float(_mtl_buffer3.dt)));
-  if ((v_pos_8.x < -1.0)) {
-    v_pos_8.x = 1.0;
-  } else {
-    if ((1.0 < v_pos_8.x)) {
-      v_pos_8.x = -1.0;
-    };
-  };
-  if ((v_pos_8.y < -1.0)) {
-    v_pos_8.y = 1.0;
-  } else {
-    if ((1.0 < v_pos_8.y)) {
-      v_pos_8.y = -1.0;
-    };
-  };
-  reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer2 + 0)[gl_GlobalInvocationID.x].value.pos = float2(v_pos_8);
-  reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer2 + 0)[gl_GlobalInvocationID.x].value.vel = float2(v_vel_7);
+  int r0 = 0;
+  int r1 = 0;
+  float2 r2 = 0;
+  int r3 = 0;
+  float2 r4 = 0;
+  float2 r5 = 0;
+  int t0 = int(_xlat_blk_sim_params.num_particles);
+  if ((gl_GlobalInvocationID.x < uint(t0))) {
+    uint t1 = gl_GlobalInvocationID.x;
+    float2 t2 = float2(_xlat_blk_cs_ssbo_in.prt_in[int(t1)].pos);
+    float2 t3 = float2(_xlat_blk_cs_ssbo_in.prt_in[int(t1)].vel);
+    r0 = 0;
+    r3 = 0;
+    r1 = 0;
+    r5 = float2(0.0);
+    r4 = float2(0.0);
+    r2 = float2(0.0);
+    for (; (r0 < t0); r0++) {
+      if ((r0 != int(gl_GlobalInvocationID.x))) {
+        float2 t4 = float2(_xlat_blk_cs_ssbo_in.prt_in[r0].pos);
+        float2 t5 = (t4 - t2);
+        float t6 = length(t5);
+        bool t7 = (t6 < float(_xlat_blk_sim_params.rule1_distance));
+        r2 = (t7 ? (r2 + t4) : r2);
+        r1 = (r1 + int(t7));
+        r5 = ((t6 < float(_xlat_blk_sim_params.rule2_distance)) ? (r5 - t5) : r5);
+        bool t8 = (t6 < float(_xlat_blk_sim_params.rule3_distance));
+        r4 = (t8 ? (r4 + float2(_xlat_blk_cs_ssbo_in.prt_in[r0].vel)) : r4);
+        r3 = (r3 + int(t8));
+      }
+    }
+    float2 t9 = (((((0 < r1) ? ((r2 / float(r1)) - t2) : r2) * float(_xlat_blk_sim_params.rule1_scale)) + (r5 * float(_xlat_blk_sim_params.rule2_scale))) + (((0 < r3) ? (r4 / float(r3)) : r4) * float(_xlat_blk_sim_params.rule3_scale)));
+    float2 t10 = (t3 + t9);
+    float t11 = dot(t10, t10);
+    float2 t12 = ((t10 * rsqrt(t11)) * clamp(sqrt(t11), 0.0, 0.1));
+    float2 t13 = (t2 + (t12 * float(_xlat_blk_sim_params.dt)));
+    float2 t14 = ((t13.x < -1.0) ? float2(1.0, t13.y) : ((1.0 < t13.x) ? float2(-1.0, t13.y) : t13));
+    _xlat_blk_cs_ssbo_out.prt_out[int(t1)].pos = ((t14.y < -1.0) ? float2(t14.x, 1.0) : ((1.0 < t14.y) ? float2(t14.x, -1.0) : t14));
+    _xlat_blk_cs_ssbo_out.prt_out[int(t1)].vel = t12;
+  }
 }
 
-
-// stats: 54 alu 0 tex 14 flow
+// stats: 52 alu 0 tex 4 flow
 // workgroup size: 64 1 1
 // buffer #0: cs_ssbo_in storage layout std430 binding 0 (size: unknown) metal 1
 //  member #0: particle[] prt_in offset 0 array runtime stride 16 readonly

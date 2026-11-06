@@ -8,72 +8,35 @@ uniform vec4 unity_Scale;
 varying vec4 xlv_FOG;
 void main ()
 {
-  vec4 tmpvar_1;
-  tmpvar_1.yw = gl_Vertex.yw;
-  vec4 tmpvar_2;
-  vec3 waveMove_3;
-  float lighting_4;
-  vec4 s_5;
-  vec4 waves_6;
-  waveMove_3.y = 0.0;
-  waves_6 = (gl_Vertex.x * (vec4(0.012, 0.02, 0.06, 0.024) * _WaveAndDistance.y));
-  waves_6 = (waves_6 + (gl_Vertex.z * (vec4(0.006, 0.02, 0.02, 0.05) * _WaveAndDistance.y)));
-  waves_6 = (waves_6 + (_WaveAndDistance.x * vec4(1.2, 2.0, 1.6, 4.8)));
-  vec4 tmpvar_7;
-  tmpvar_7 = fract(waves_6);
-  waves_6 = tmpvar_7;
-  vec4 tmpvar_8;
-  vec4 tmpvar_9;
-  vec4 r2_10;
-  vec4 r1_11;
-  vec4 r5_12;
-  tmpvar_8 = ((tmpvar_7 * 6.40885) - 3.14159);
-  r5_12 = (tmpvar_8 * tmpvar_8);
-  r1_11 = (r5_12 * tmpvar_8);
-  r2_10 = (r1_11 * r5_12);
-  tmpvar_9 = (((tmpvar_8 + 
-    (r1_11 * -0.161616)
-  ) + (r2_10 * 0.0083333)) + ((r2_10 * r5_12) * -0.00019841));
-  s_5 = (tmpvar_9 * tmpvar_9);
-  s_5 = (s_5 * s_5);
-  lighting_4 = (dot (s_5, vec4(0.6741999, 0.6741999, 0.2696799, 0.13484)) * 0.7);
-  s_5 = (s_5 * (gl_Color.w * _WaveAndDistance.z));
-  waveMove_3.x = dot (s_5, vec4(0.024, 0.04, -0.12, 0.096));
-  waveMove_3.z = dot (s_5, vec4(0.006, 0.02, -0.02, 0.1));
-  tmpvar_1.xz = (gl_Vertex.xz - (waveMove_3.xz * _WaveAndDistance.z));
-  tmpvar_2.xyz = ((gl_Color.xyz * mix (vec3(0.5, 0.5, 0.5), _WavingTint.xyz, vec3(lighting_4))) * 2.0);
-  tmpvar_2.w = 1.0;
-  vec4 tmpvar_13;
-  tmpvar_13 = (gl_ModelViewProjectionMatrix * tmpvar_1);
-  mat3 tmpvar_14;
-  tmpvar_14[0] = _Object2World[0].xyz;
-  tmpvar_14[1] = _Object2World[1].xyz;
-  tmpvar_14[2] = _Object2World[2].xyz;
-  gl_Position = tmpvar_13;
-  vec4 tmpvar_15;
-  tmpvar_15.yzw = vec3(0.0, 0.0, 0.0);
-  tmpvar_15.x = tmpvar_13.z;
-  xlv_FOG = tmpvar_15;
-  vec4 tmpvar_16;
-  tmpvar_16.zw = vec2(0.0, 0.0);
-  tmpvar_16.xy = ((gl_MultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
-  gl_TexCoord[0] = tmpvar_16;
-  gl_FrontColor = tmpvar_2;
-  vec4 tmpvar_17;
-  tmpvar_17.w = 0.0;
-  tmpvar_17.xyz = (tmpvar_14 * (gl_Normal * unity_Scale.w));
-  gl_TexCoord[1] = tmpvar_17;
-  vec4 tmpvar_18;
-  tmpvar_18.w = 0.0;
-  tmpvar_18.xyz = (_WorldSpaceLightPos0.xyz - (_Object2World * tmpvar_1).xyz);
-  gl_TexCoord[2] = tmpvar_18;
-  gl_TexCoord[3] = (_LightMatrix0 * (_Object2World * tmpvar_1));
+  vec4 t0 = (((gl_Vertex.x * (vec4(0.012, 0.02, 0.06, 0.024) * _WaveAndDistance.y)) + (gl_Vertex.z * (vec4(0.006, 0.02, 0.02, 0.05) * _WaveAndDistance.y))) + (_WaveAndDistance.x * vec4(1.2, 2.0, 1.6, 4.8)));
+  vec4 t1 = ((fract(t0) * 6.40885) - 3.14159);
+  vec4 t2 = (t1 * t1);
+  vec4 t3 = (t2 * t1);
+  vec4 t4 = (t3 * t2);
+  vec4 t5 = (((t1 + (t3 * -0.161616)) + (t4 * 0.0083333)) + ((t4 * -0.00019841) * t2));
+  vec4 t6 = (t5 * t5);
+  vec4 t7 = (t6 * t6);
+  vec4 t8 = (t7 * (gl_Color.w * _WaveAndDistance.z));
+  vec2 t9 = (gl_Vertex.xz - (vec2(dot(t8, vec4(0.024, 0.04, -0.12, 0.096)), dot(t8, vec4(0.006, 0.02, -0.02, 0.1))) * _WaveAndDistance.z));
+  vec3 t10 = ((gl_Color.xyz * 2.0) * mix(vec3(0.5), _WavingTint.xyz, vec3((dot(t7, vec4(0.6741998, 0.6741998, 0.26967993, 0.13483997)) * 0.7))));
+  vec4 t11 = (gl_ModelViewProjectionMatrix * vec4(t9.x, gl_Vertex.y, t9.y, gl_Vertex.w));
+  vec2 t12 = ((gl_MultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
+  vec3 t13 = (gl_Normal * unity_Scale.w);
+  vec3 t14 = (mat3(_Object2World[0].xyz, _Object2World[1].xyz, _Object2World[2].xyz) * t13);
+  vec4 t15 = (_Object2World * vec4(t9.x, gl_Vertex.y, t9.y, gl_Vertex.w));
+  vec3 t16 = (_WorldSpaceLightPos0.xyz - t15.xyz);
+  gl_Position = t11;
+  xlv_FOG = vec4(t11.z, 0.0, 0.0, 0.0);
+  gl_TexCoord[0] = vec4(t12, 0.0, 0.0);
+  gl_FrontColor = vec4(t10, 1.0);
+  gl_TexCoord[1] = vec4(t14, 0.0);
+  gl_TexCoord[2] = vec4(t16, 0.0);
+  gl_TexCoord[3] = (_LightMatrix0 * t15);
 }
 
-
-// stats: 48 alu 0 tex 0 flow
+// stats: 63 alu 0 tex 0 flow
 // inputs: 4
-//  #0: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 7
+//  #0: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 6
 //  #1: gl_Color (high float) 4x1 [-1] loc 2
 //  #2: gl_Normal (high float) 3x1 [-1] loc 1
 //  #3: gl_Vertex (high float) 4x1 [-1] loc 0

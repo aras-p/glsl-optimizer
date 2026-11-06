@@ -7,47 +7,22 @@ uniform mat4 _TerrainEngineBendTree;
 varying vec4 xlv_FOG;
 void main ()
 {
-  vec4 tmpvar_1;
-  tmpvar_1.w = gl_Vertex.w;
-  tmpvar_1.xyz = (gl_Vertex.xyz * _Scale.xyz);
-  vec4 tmpvar_2;
-  tmpvar_2.w = 0.0;
-  tmpvar_2.xyz = tmpvar_1.xyz;
-  tmpvar_1.xyz = mix (tmpvar_1.xyz, (_TerrainEngineBendTree * tmpvar_2).xyz, gl_Color.www);
-  vec3 tmpvar_3;
-  tmpvar_3.xz = vec2(0.0, 0.0);
-  tmpvar_3.y = _SquashPlaneNormal.w;
-  vec4 tmpvar_4;
-  tmpvar_4.w = 1.0;
-  tmpvar_4.xyz = mix ((tmpvar_1.xyz + (
-    dot (_SquashPlaneNormal.xyz, (tmpvar_3 - tmpvar_1.xyz))
-   * _SquashPlaneNormal.xyz)), tmpvar_1.xyz, vec3(_SquashAmount));
-  tmpvar_1 = tmpvar_4;
-  vec4 tmpvar_5;
-  tmpvar_5 = (gl_ModelViewProjectionMatrix * tmpvar_4);
-  vec4 o_6;
-  o_6 = (tmpvar_5 * 0.5);
-  vec2 tmpvar_7;
-  tmpvar_7.x = o_6.x;
-  tmpvar_7.y = (o_6.y * _ProjectionParams.x);
-  o_6.xy = (tmpvar_7 + o_6.w);
-  o_6.zw = tmpvar_5.zw;
-  gl_Position = tmpvar_5;
-  vec4 tmpvar_8;
-  tmpvar_8.yzw = vec3(0.0, 0.0, 0.0);
-  tmpvar_8.x = tmpvar_5.z;
-  xlv_FOG = tmpvar_8;
-  vec4 tmpvar_9;
-  tmpvar_9.zw = vec2(0.0, 0.0);
-  tmpvar_9.xy = ((gl_MultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
-  gl_TexCoord[0] = tmpvar_9;
-  gl_TexCoord[1] = o_6;
+  vec3 t0 = (gl_Vertex.xyz * _Scale.xyz);
+  vec3 t1 = mix(t0, (_TerrainEngineBendTree * vec4(t0, 0.0)).xyz, gl_Color.www);
+  vec3 t2 = mix((t1 + (dot(_SquashPlaneNormal.xyz, (vec3(0.0, _SquashPlaneNormal.w, 0.0) - t1)) * _SquashPlaneNormal.xyz)), t1, vec3(_SquashAmount));
+  vec4 t3 = (gl_ModelViewProjectionMatrix * vec4(t2, 1.0));
+  vec2 t4 = ((gl_MultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
+  vec4 t5 = (t3 * 0.5);
+  vec2 t6 = (vec2(t5.x, (t5.y * _ProjectionParams.x)) + t5.w);
+  gl_Position = t3;
+  xlv_FOG = vec4(t3.z, 0.0, 0.0, 0.0);
+  gl_TexCoord[0] = vec4(t4, 0.0, 0.0);
+  gl_TexCoord[1] = vec4(t6, t3.zw);
 }
 
-
-// stats: 19 alu 0 tex 0 flow
+// stats: 23 alu 0 tex 0 flow
 // inputs: 3
-//  #0: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 7
+//  #0: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 6
 //  #1: gl_Color (high float) 4x1 [-1] loc 2
 //  #2: gl_Vertex (high float) 4x1 [-1] loc 0
 // uniforms: 7 (total size: 0)

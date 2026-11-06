@@ -1,21 +1,18 @@
 #version 300 es
+precision highp float;
+precision highp int;
 uniform mediump sampler2D mediumTex;
 uniform highp sampler2D highTex;
 in highp vec2 uv;
-layout(location=0) out highp vec4 result;
+layout(location = 0) out highp vec4 result;
 void main ()
 {
-  mediump vec4 b_1;
-  highp vec4 tmpvar_2;
-  tmpvar_2 = texture (highTex, uv);
-  b_1 = tmpvar_2;
-  mediump vec4 tmpvar_3;
-  tmpvar_3 = texture (mediumTex, uv);
-  result = ((tmpvar_2 * tmpvar_3) + (b_1 * tmpvar_3));
+  highp vec4 t0 = texture(highTex, uv);
+  mediump vec4 t1 = t0;
+  result = (texture(mediumTex, uv) * (t0 + t1));
 }
 
-
-// stats: 3 alu 2 tex 0 flow
+// stats: 2 alu 2 tex 0 flow
 // inputs: 1
 //  #0: uv (high float) 2x1 [-1]
 // textures: 2

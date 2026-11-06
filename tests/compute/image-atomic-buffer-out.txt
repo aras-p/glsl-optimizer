@@ -1,25 +1,19 @@
 #version 430
-layout(local_size_x=8) in;
-layout(std430, column_major) buffer Results {
+layout(local_size_x = 8) in;
+layout(std430) buffer Results {
   uint values[];
 } results;
-layout(r32ui, binding=3) uniform uimageBuffer counters;
-layout(r32ui, binding=4) uniform uimage1D line;
+layout(r32ui, binding = 3) uniform uimageBuffer counters;
+layout(r32ui, binding = 4) uniform uimage1D line;
 void main ()
 {
-  int tmpvar_1;
-  tmpvar_1 = int(gl_GlobalInvocationID.x);
-  uint tmpvar_2;
-  tmpvar_2 = imageAtomicAdd (counters, tmpvar_1, 1u);
-  uint tmpvar_3;
-  tmpvar_3 = imageAtomicCompSwap (counters, tmpvar_1, (tmpvar_2 + 1u), uint(0));
-  uint tmpvar_4;
-  tmpvar_4 = imageAtomicCompSwap (line, tmpvar_1, tmpvar_2, 1u);
-  results.values[tmpvar_1] = (tmpvar_3 + tmpvar_4);
+  uint t0 = imageAtomicAdd(counters, int(uvec4(gl_GlobalInvocationID.x, 0u, 0u, 0u).x), 1u);
+  uint t1 = imageAtomicCompSwap(counters, int(uvec4(gl_GlobalInvocationID.x, 0u, 0u, 0u).x), uint((int(t0) + 1)), 0u);
+  uint t2 = imageAtomicCompSwap(line, int(uvec4(gl_GlobalInvocationID.x, 0u, 0u, 0u).x), t0, 1u);
+  results.values[int(gl_GlobalInvocationID.x)] = uint((int(t1) + int(t2)));
 }
 
-
-// stats: 3 alu 3 tex 0 flow
+// stats: 2 alu 3 tex 0 flow
 // workgroup size: 8 1 1
 // buffer #0: Results storage instance results layout std430 (size: unknown)
 //  member #0: uint[] values offset 0 array runtime stride 4

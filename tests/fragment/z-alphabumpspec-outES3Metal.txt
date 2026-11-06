@@ -21,39 +21,17 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   , texture2d<half> _MainTex [[texture(1)]], sampler _mtlsmp__MainTex [[sampler(1)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half4 xlt_IN_hip_pack0_1 = 0;
-  xlt_IN_hip_pack0_1 = half4(_mtl_i._uv0);
-  half4 c_2 = 0;
-  half3 tmpvar_3 = 0;
-  half tmpvar_4 = 0;
-  half4 tmpvar_5 = 0;
-  tmpvar_5 = _MainTex.sample(_mtlsmp__MainTex, (float2)((xlt_IN_hip_pack0_1.xy)));
-  tmpvar_3 = (tmpvar_5.xyz * _mtl_u._Color.xyz);
-  tmpvar_4 = (tmpvar_5.w * _mtl_u._Color.w);
-  half4 normal_6 = 0;
-  normal_6.xy = ((_BumpMap.sample(_mtlsmp__BumpMap, (float2)((xlt_IN_hip_pack0_1.zw))).wy * (half)(2.0)) - (half)(1.0));
-  normal_6.z = sqrt((((half)(1.0) - 
-    (normal_6.x * normal_6.x)
-  ) - (normal_6.y * normal_6.y)));
-  half4 c_7 = 0;
-  half spec_8 = 0;
-  spec_8 = (pow (max ((half)0.0, 
-    dot (normal_6.xyz, normalize((_mtl_i._uv2 + normalize(_mtl_i._uv1))))
-  ), (_mtl_u._Shininess * (half)(128.0))) * tmpvar_5.w);
-  c_7.xyz = (((
-    (tmpvar_3 * _mtl_u._LightColor0.xyz)
-   * 
-    max ((half)0.0, dot (normal_6.xyz, _mtl_i._uv2))
-  ) + (
-    (_mtl_u._LightColor0.xyz * _mtl_u._SpecColor.xyz)
-   * spec_8)) * 2.0);
-  c_7.w = (tmpvar_4 + ((_mtl_u._LightColor0.w * _mtl_u._SpecColor.w) * spec_8));
-  c_2.xyz = (c_7.xyz + (tmpvar_3 * _mtl_i._uv3));
-  c_2.w = tmpvar_4;
-  _mtl_o._fragData = c_2;
+  half4 t0 = half4(_mtl_i._uv0);
+  half4 t1 = _MainTex.sample(_mtlsmp__MainTex, float2(t0.xy));
+  half3 t2 = (t1.xyz * _mtl_u._Color.xyz);
+  half2 t3 = ((_BumpMap.sample(_mtlsmp__BumpMap, float2(t0.zw)).wy * half(2.0)) - half(1.0));
+  half3 t4 = (_mtl_i._uv2 + normalize(_mtl_i._uv1));
+  half3 t5 = half3(t3, sqrt(((half(1.0) - (t3.x * t3.x)) - (t3.y * t3.y))));
+  half3 t6 = (((t2 * _mtl_u._LightColor0.xyz) * max(half(0.0), dot(t5, _mtl_i._uv2))) + ((_mtl_u._LightColor0.xyz * _mtl_u._SpecColor.xyz) * (pow(max(half(0.0), dot(t5, normalize(t4))), (_mtl_u._Shininess * half(128.0))) * t1.w)));
+  half3 t7 = ((t6 * half(2.0)) + (t2 * _mtl_i._uv3));
+  _mtl_o._fragData = half4(t7, (t1.w * _mtl_u._Color.w));
   return _mtl_o;
 }
-
 
 // stats: 30 alu 2 tex 0 flow
 // inputs: 4

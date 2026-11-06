@@ -1,5 +1,5 @@
 #version 320 es
-layout(local_size_x=8, local_size_y=8) in;
+layout(local_size_x = 8, local_size_y = 8) in;
 struct RenderElement {
   highp uint type;
   bool touches_near;
@@ -9,16 +9,16 @@ struct RenderElement {
   highp vec3 scale;
   highp uint pad;
 };
-layout(std430, column_major, binding=3) buffer RenderElements {
-  layout(column_major) readonly restrict RenderElement data[];
+layout(std430, binding = 3) restrict buffer RenderElements {
+  restrict readonly RenderElement data[];
 } render_elements;
-layout(std430, column_major, binding=2) buffer ClusterStore {
+layout(std430, binding = 2) restrict buffer ClusterStore {
   restrict highp uint data[];
 } cluster_store;
-layout(std430, column_major, binding=1) buffer ClusterRender {
-  readonly restrict highp uint data[];
+layout(std430, binding = 1) restrict buffer ClusterRender {
+  restrict readonly highp uint data[];
 } cluster_render;
-layout(std140, column_major, binding=0) uniform Params {
+layout(std140, binding = 0) uniform Params {
   highp uint cluster_render_data_size;
   highp uint max_render_element_count_div_32;
   highp uvec2 cluster_screen_size;
@@ -29,81 +29,40 @@ layout(std140, column_major, binding=0) uniform Params {
 } params;
 void main ()
 {
-  if ((greaterThanEqual (gl_GlobalInvocationID.xy, params.cluster_screen_size) != bvec2(0, 0))) {
-    return;
-  };
-  highp uint tmpvar_2;
-  tmpvar_2 = (gl_GlobalInvocationID.x + (params.cluster_screen_size.x * gl_GlobalInvocationID.y));
-  highp uint tmpvar_3;
-  tmpvar_3 = (tmpvar_2 * params.cluster_render_data_size);
-  for (highp uint render_element_offset_1 = uint(0); render_element_offset_1 < params.render_element_count_div_32; render_element_offset_1++) {
-    highp uint bits_4;
-    bits_4 = cluster_render.data[(tmpvar_3 + render_element_offset_1)];
-    while (true) {
-      if ((bits_4 == uint(0))) {
-        break;
-      };
-      highp uint tmpvar_5;
-      tmpvar_5 = uint(findLSB(bits_4));
-      highp uint tmpvar_6;
-      tmpvar_6 = ((render_element_offset_1 * 32u) + tmpvar_5);
-      highp uint tmpvar_7;
-      tmpvar_7 = render_elements.data[tmpvar_6].type;
-      highp uint tmpvar_8;
-      tmpvar_8 = ((tmpvar_3 + params.max_render_element_count_div_32) + tmpvar_6);
-      highp uint tmpvar_9;
-      tmpvar_9 = cluster_render.data[tmpvar_8];
-      if ((tmpvar_9 != uint(0))) {
-        highp uint i_10;
-        highp uint to_z_11;
-        highp uint from_z_12;
-        from_z_12 = uint(findLSB(tmpvar_9));
-        to_z_11 = (uint(findMSB(tmpvar_9)) + 1u);
-        if (render_elements.data[tmpvar_6].touches_near) {
-          from_z_12 = uint(0);
-        };
-        if (render_elements.data[tmpvar_6].touches_far) {
-          to_z_11 = 32u;
-        };
-        highp uint tmpvar_13;
-        tmpvar_13 = ((tmpvar_2 + (tmpvar_7 * 
-          (params.cluster_screen_size.x * params.cluster_screen_size.y)
-        )) * (params.max_cluster_element_count_div_32 + 32u));
-        highp uint tmpvar_14;
-        tmpvar_14 = render_elements.data[tmpvar_6].original_index;
-        i_10 = from_z_12;
-        while (true) {
-          highp uint minmax_15;
-          if ((i_10 >= to_z_11)) {
-            break;
-          };
-          highp uint tmpvar_16;
-          tmpvar_16 = ((tmpvar_13 + params.max_cluster_element_count_div_32) + i_10);
-          highp uint tmpvar_17;
-          tmpvar_17 = cluster_store.data[tmpvar_16];
-          minmax_15 = tmpvar_17;
-          if ((tmpvar_17 == uint(0))) {
-            minmax_15 = 65535u;
-          };
-          minmax_15 = (min (tmpvar_14, (minmax_15 & 65535u)) | (max (
-            (tmpvar_14 + 1u)
-          , 
-            (minmax_15 >> 16)
-          ) << 16));
-          cluster_store.data[tmpvar_16] = minmax_15;
-          i_10++;
-        };
-        highp uint tmpvar_18;
-        tmpvar_18 = (tmpvar_14 >> 5);
-        cluster_store.data[(tmpvar_13 + tmpvar_18)] = (cluster_store.data[(tmpvar_13 + tmpvar_18)] | (1u << (tmpvar_14 & 31u)));
-      };
-      bits_4 = (bits_4 & ~((1u << tmpvar_5)));
-    };
-  };
+  highp int r0;
+  highp uint r1;
+  highp int r2;
+  if ((!(greaterThanEqual(gl_GlobalInvocationID.xy, params.cluster_screen_size) != bvec2(false)))) {
+    highp int t0 = (int(gl_GlobalInvocationID.x) + (int(params.cluster_screen_size.x) * int(gl_GlobalInvocationID.y)));
+    highp int t1 = (t0 * int(params.cluster_render_data_size));
+    for (r2 = 0; (uint(r2) < params.render_element_count_div_32); r2++) {
+      r1 = cluster_render.data[(t1 + r2)];
+      while ((int(r1) != 0)) {
+        highp int t2 = findLSB(int(r1));
+        highp int t3 = ((r2 << 5u) + t2);
+        highp uint t4 = render_elements.data[t3].type;
+        highp uint t5 = cluster_render.data[((t1 + int(params.max_render_element_count_div_32)) + t3)];
+        if ((int(t5) != 0)) {
+          mediump int t6 = findMSB(t5);
+          highp int t7 = (t6 + 1);
+          r0 = (render_elements.data[t3].touches_near ? 0 : findLSB(int(t5)));
+          highp int t8 = (render_elements.data[t3].touches_far ? 32 : t7);
+          highp int t9 = ((t0 + (int(t4) * (int(params.cluster_screen_size.x) * int(params.cluster_screen_size.y)))) * (int(params.max_cluster_element_count_div_32) + 32));
+          highp uint t10 = render_elements.data[t3].original_index;
+          for (; (uint(r0) < uint(t8)); r0++) {
+            highp uint t11 = cluster_store.data[((t9 + int(params.max_cluster_element_count_div_32)) + r0)];
+            highp uint t12 = ((int(t11) == 0) ? 65535u : t11);
+            cluster_store.data[((t9 + int(params.max_cluster_element_count_div_32)) + r0)] = (min(t10, (t12 & 65535u)) | uint((int(max(uint((int(t10) + 1)), (t12 >> 16u))) << 16u)));
+          }
+          cluster_store.data[(t9 + int((t10 >> 5u)))] = (cluster_store.data[(t9 + int((t10 >> 5u)))] | uint((1 << t10)));
+        }
+        r1 = (r1 & uint((~(1 << uint(t2)))));
+      }
+    }
+  }
 }
 
-
-// stats: 51 alu 0 tex 12 flow
+// stats: 46 alu 0 tex 8 flow
 // workgroup size: 8 8 1
 // buffer #0: ClusterRender storage instance cluster_render layout std430 binding 1 (size: unknown)
 //  member #0: uint[] data offset 0 array runtime stride 4 readonly

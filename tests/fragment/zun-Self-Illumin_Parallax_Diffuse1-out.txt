@@ -7,40 +7,16 @@ uniform float _Parallax;
 uniform sampler2D _ParallaxMap;
 void main ()
 {
-  vec4 xlt_IN_hip_pack0_1;
-  xlt_IN_hip_pack0_1 = gl_TexCoord[0];
-  vec4 c_2;
-  vec4 c_3;
-  vec2 tmpvar_4;
-  float tmpvar_5;
-  tmpvar_5 = texture2D (_ParallaxMap, xlt_IN_hip_pack0_1.zw).w;
-  vec3 v_6;
-  tmpvar_5 = ((tmpvar_5 * _Parallax) - (_Parallax / 2.0));
-  vec3 tmpvar_7;
-  tmpvar_7 = normalize(gl_TexCoord[1].xyz);
-  v_6.xy = tmpvar_7.xy;
-  v_6.z = (tmpvar_7.z + 0.42);
-  tmpvar_4 = (tmpvar_5 * (tmpvar_7.xy / v_6.z));
-  c_3 = (texture2D (_MainTex, (xlt_IN_hip_pack0_1.xy + tmpvar_4)) * _Color);
-  vec4 normal_8;
-  normal_8.xy = ((texture2D (_BumpMap, (xlt_IN_hip_pack0_1.zw + tmpvar_4)).wy * 2.0) - 1.0);
-  normal_8.z = sqrt(((1.0 - 
-    (normal_8.x * normal_8.x)
-  ) - (normal_8.y * normal_8.y)));
-  vec4 c_9;
-  c_9.xyz = ((c_3.xyz * _LightColor0.xyz) * ((
-    max (0.0, dot (normal_8.xyz, gl_TexCoord[2].xyz))
-   * texture2D (_LightTexture0, gl_TexCoord[3].xy).w) * 2.0));
-  c_9.w = c_3.w;
-  c_2.xyz = c_9.xyz;
-  c_2.w = 0.0;
-  gl_FragData[0] = c_2;
+  vec3 t0 = normalize(gl_TexCoord[1].xyz);
+  vec2 t1 = (((texture2D(_ParallaxMap, gl_TexCoord[0].zw).w * _Parallax) - (_Parallax / 2.0)) * (t0.xy / (t0.z + 0.42)));
+  vec2 t2 = ((texture2D(_BumpMap, (gl_TexCoord[0].zw + t1)).wy * 2.0) - 1.0);
+  vec3 t3 = (((texture2D(_MainTex, (gl_TexCoord[0].xy + t1)) * _Color).xyz * _LightColor0.xyz) * ((max(0.0, dot(vec3(t2, sqrt(((1.0 - (t2.x * t2.x)) - (t2.y * t2.y)))), gl_TexCoord[2].xyz)) * 2.0) * texture2D(_LightTexture0, gl_TexCoord[3].xy).w));
+  gl_FragData[0] = vec4(t3, 0.0);
 }
-
 
 // stats: 24 alu 4 tex 0 flow
 // inputs: 1
-//  #0: gl_TexCoord (high float) 4x1 [4] loc 4
+//  #0: gl_TexCoord (high float) 4x1 [0] loc 4
 // uniforms: 3 (total size: 0)
 //  #0: _Color (high float) 4x1 [-1]
 //  #1: _LightColor0 (high float) 4x1 [-1]

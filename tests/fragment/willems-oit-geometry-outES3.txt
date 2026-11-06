@@ -1,35 +1,35 @@
 #version 320 es
+precision highp float;
+precision highp int;
 layout(early_fragment_tests) in;
 struct Node {
   highp vec4 color;
   highp float depth;
   highp uint next;
 };
-layout(std140, column_major, binding=0) uniform PushConsts {
-  layout(column_major) highp mat4 model;
+layout(std140, binding = 0) uniform PushConsts {
+  highp mat4 model;
   highp vec4 color;
 } pushConsts;
-layout(std430, column_major, binding=3) buffer LinkedListSBO {
-  layout(column_major) Node nodes[];
+layout(std430, binding = 3) buffer LinkedListSBO {
+  Node nodes[];
 };
-layout(std430, column_major, binding=1) buffer GeometrySBO {
+layout(std430, binding = 1) buffer GeometrySBO {
   highp uint count;
   highp uint maxNodeCount;
 };
-layout(r32ui, binding=2) coherent uniform highp uimage2D headIndexImage;
+layout(r32ui, binding = 2) coherent uniform highp uimage2D headIndexImage;
 void main ()
 {
-  highp uint tmpvar_1;
-  tmpvar_1 = atomicAdd (count, 1u);
-  if ((tmpvar_1 < maxNodeCount)) {
-    highp uint tmpvar_2;
-    tmpvar_2 = imageAtomicExchange (headIndexImage, ivec2(gl_FragCoord.xy), tmpvar_1);
-    nodes[tmpvar_1].color = pushConsts.color;
-    nodes[tmpvar_1].depth = gl_FragCoord.z;
-    nodes[tmpvar_1].next = tmpvar_2;
-  };
+  highp uint t0 = atomicAdd(count, 1u);
+  if ((t0 < maxNodeCount)) {
+    highp ivec2 t1 = ivec2(gl_FragCoord.xy);
+    highp uint t2 = imageAtomicExchange(headIndexImage, ivec4(t1, 0, 0).xy, t0);
+    nodes[int(t0)].color = pushConsts.color;
+    nodes[int(t0)].depth = gl_FragCoord.z;
+    nodes[int(t0)].next = t2;
+  }
 }
-
 
 // stats: 2 alu 1 tex 1 flow
 // inputs: 1

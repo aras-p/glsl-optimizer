@@ -1,44 +1,26 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
-struct Light {
-  float3 direction;
+struct _xlat_element_float2_16 { float2 value; char _pad[8]; };
+struct _xlat_Light_std140_row {
+  packed_float3 direction;
   float intensity;
 };
-struct _xlat_buf_storage1 { float4 vectors[3]; };
-static_assert(sizeof(_xlat_buf_storage1) == 48, "std140 size");
-struct _xlat_buf_storage2 { float4 vectors[3]; };
-static_assert(sizeof(_xlat_buf_storage2) == 48, "std140 size");
-struct alignas(16) _xlat_buf_storage4 {
-  alignas(16) packed_float3 direction;
-  alignas(4) float intensity;
+static_assert(sizeof(_xlat_Light_std140_row) == 16, "std140 size");
+struct _xlat_element_float_16 { float value; char _pad[12]; };
+struct _xlat_buf_Scene_std140_row {
+  float unused;
+  char _pad0[12];
+  _xlat_element_float2_16 transform[3];
+  _xlat_element_float2_16 other[3];
+  _xlat_Light_std140_row lights[2];
+  _xlat_element_float_16 weights[3];
+  uint enabled;
+  uint flags;
+  int count;
+  char _pad1[4];
 };
-static_assert(sizeof(_xlat_buf_storage4) == 16, "std140 size");
-inline __attribute__((always_inline)) Light _xlat_buf_storage4_read(constant _xlat_buf_storage4& storage)
-{
-  Light value;
-  value.direction = float3(storage.direction);
-  value.intensity = float(storage.intensity);
-  return value;
-}
-struct alignas(16) _xlat_buf_storage3_element { _xlat_buf_storage4 value; };
-struct _xlat_buf_storage3 { _xlat_buf_storage3_element elements[2]; };
-static_assert(sizeof(_xlat_buf_storage3) == 32, "std140 size");
-struct alignas(16) _xlat_buf_storage5_element { float value; };
-struct _xlat_buf_storage5 { _xlat_buf_storage5_element elements[3]; };
-static_assert(sizeof(_xlat_buf_storage5) == 48, "std140 size");
-struct alignas(16) _xlat_buf_storage0 {
-  alignas(4) float unused;
-  char _buf_pad1[12];
-  alignas(16) _xlat_buf_storage1 transform;
-  alignas(16) _xlat_buf_storage2 other;
-  alignas(16) _xlat_buf_storage3 lights;
-  alignas(16) _xlat_buf_storage5 weights;
-  alignas(4) uint enabled;
-  alignas(4) uint flags;
-  alignas(4) int count;
-};
-static_assert(sizeof(_xlat_buf_storage0) == 208, "std140 size");
+static_assert(sizeof(_xlat_buf_Scene_std140_row) == 208, "std140 size");
 struct xlatMtlShaderInput {
 };
 struct xlatMtlShaderOutput {
@@ -48,30 +30,23 @@ struct xlatMtlShaderUniform {
   int index;
 };
 vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , constant _xlat_buf_storage0& _mtl_buffer1 [[buffer(1)]])
+  , constant _xlat_buf_Scene_std140_row& scene [[buffer(1)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  float3 p_1 = 0;
-  half2 tmpvar_2 = 0;
-  tmpvar_2.y = half(1.0);
-  tmpvar_2.x = half(_mtl_buffer1.weights.elements[_mtl_u.index].value);
-  p_1 = float3((transpose(half3x2(half2(_mtl_buffer1.transform.vectors[0].xy), half2(_mtl_buffer1.transform.vectors[1].xy), half2(_mtl_buffer1.transform.vectors[2].xy))) * tmpvar_2));
-  p_1 = (p_1 + (float3(_mtl_buffer1.lights.elements[_mtl_u.index].value.direction) * float(_mtl_buffer1.lights.elements[1].value.intensity)));
-  p_1.xy = (p_1.xy + (float3x2(float2(_mtl_buffer1.other.vectors[0].xy), float2(_mtl_buffer1.other.vectors[1].xy), float2(_mtl_buffer1.other.vectors[2].xy)) * float3(1.0, 1.0, 1.0)));
-  p_1 = (p_1 * (float)(half(short(_mtl_buffer1.count))));
-  float tmpvar_3 = 0;
-  if (bool(_mtl_buffer1.enabled)) {
-    tmpvar_3 = float(uint(_mtl_buffer1.flags));
+  float r0 = 0;
+  half3 t0 = ((half3(float3(scene.transform[0].value[0], scene.transform[1].value[0], scene.transform[2].value[0])) * half(scene.weights[_mtl_u.index].value)) + half3(float3(scene.transform[0].value[1], scene.transform[1].value[1], scene.transform[2].value[1])));
+  float3 t1 = float3(t0);
+  float3 t2 = (t1 + (float3(scene.lights[_mtl_u.index].direction) * float(scene.lights[1].intensity)));
+  float2 t3 = (t2.xy + ((float2(scene.other[0].value) + float2(scene.other[1].value)) + float2(scene.other[2].value)));
+  float3 t4 = (float3(t3, t2.z) * float(half(short(scene.count))));
+  if (bool(scene.enabled)) {
+    r0 = float(uint(scene.flags));
   } else {
-    tmpvar_3 = 0.0;
-  };
-  float4 tmpvar_4 = 0;
-  tmpvar_4.xyz = p_1;
-  tmpvar_4.w = tmpvar_3;
-  _mtl_o.gl_Position = tmpvar_4;
+    r0 = 0.0;
+  }
+  _mtl_o.gl_Position = float4(t4, r0);
   return _mtl_o;
 }
-
 
 // stats: 10 alu 0 tex 1 flow
 // uniforms: 1 (total size: 4)

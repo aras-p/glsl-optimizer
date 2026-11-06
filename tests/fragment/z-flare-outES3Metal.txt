@@ -14,10 +14,9 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   , texture2d<half> _FlareTexture [[texture(0)]], sampler _mtlsmp__FlareTexture [[sampler(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  _mtl_o._fragData = (_FlareTexture.sample(_mtlsmp__FlareTexture, (float2)((_mtl_i.xlv_TEXCOORD0))) * _mtl_i.xlv_COLOR);
+  _mtl_o._fragData = (_FlareTexture.sample(_mtlsmp__FlareTexture, _mtl_i.xlv_TEXCOORD0) * _mtl_i.xlv_COLOR);
   return _mtl_o;
 }
-
 
 // stats: 1 alu 1 tex 0 flow
 // inputs: 2

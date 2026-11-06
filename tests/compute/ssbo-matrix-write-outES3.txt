@@ -1,61 +1,52 @@
 #version 310 es
-layout(local_size_x=1) in;
+layout(local_size_x = 1) in;
 struct Entry {
   highp mat2x3 value;
 };
 layout(std430, row_major) buffer Rows {
-  layout(row_major) highp mat2x3 rectangular;
+  highp mat2x3 rectangular;
   layout(column_major) highp mat3x2 native;
-  layout(row_major) highp mat3x2 wide;
-  layout(row_major) mediump mat3 reduced;
-  layout(row_major) Entry entries[];
+  highp mat3x2 wide;
+  mediump mat3 reduced;
+  Entry entries[];
 } rows;
 layout(std140, row_major) buffer PaddedRows {
-  layout(row_major) highp mat2x3 value;
+  highp mat2x3 value;
 } paddedRows;
-layout(std140, column_major) buffer Columns {
-  layout(column_major) highp mat2 small;
-  layout(column_major) highp mat2x3 rectangular;
-  layout(column_major) highp mat4 native;
+layout(std140) buffer Columns {
+  highp mat2 small;
+  highp mat2x3 rectangular;
+  highp mat4 native;
 } columns;
 uniform mediump vec3 inputValue;
 void main ()
 {
-  highp uint c_1;
-  highp uint tmpvar_2;
-  tmpvar_2 = (gl_GlobalInvocationID.x & 1u);
-  highp uint tmpvar_3;
-  tmpvar_3 = (gl_GlobalInvocationID.y % 3u);
-  columns.small[tmpvar_2] = vec2(2.0, 3.0);
-  columns.small[tmpvar_2][tmpvar_2] = 4.0;
-  columns.rectangular[tmpvar_2].z = 1.5;
-  columns.rectangular[tmpvar_2].xz = vec2(5.0, 6.0);
-  columns.rectangular[tmpvar_2] = columns.rectangular[(1u - tmpvar_2)].zyx;
-  columns.native[tmpvar_2] = vec4(28.0, 29.0, 30.0, 31.0);
-  columns.native[tmpvar_2].yw = vec2(7.0, 8.0);
-  columns.native[tmpvar_2][tmpvar_3] = 9.0;
-  rows.rectangular[tmpvar_2] = inputValue;
-  rows.rectangular[tmpvar_2].yz = (rows.rectangular[tmpvar_2].zy + vec2(10.0, 11.0)).yx;
-  rows.rectangular[tmpvar_2].zy[(tmpvar_3 & 1u)] = 12.0;
-  rows.rectangular[tmpvar_2].xz = vec2(14.0, 13.0);
-  rows.rectangular[tmpvar_2][tmpvar_3] = 15.0;
-  paddedRows.value[tmpvar_2].yz = vec2(23.0, 22.0);
-  paddedRows.value[tmpvar_2][tmpvar_3] = 24.0;
-  rows.wide[tmpvar_3] = vec2(26.0, 25.0);
-  rows.wide[tmpvar_3].y = 27.0;
-  rows.native[tmpvar_2] = vec2(16.0, 17.0);
-  rows.native[tmpvar_2][tmpvar_2] = 18.0;
-  rows.reduced[tmpvar_2].xz = vec2(19.0, 20.0);
-  c_1 = (tmpvar_2 + 1u);
-  highp vec2 tmpvar_4;
-  tmpvar_4.y = 21.0;
-  tmpvar_4.x = float(c_1);
-  rows.entries[tmpvar_2].value[(c_1 & 1u)].xz = tmpvar_4;
-  rows.entries[c_1].value[(c_1 & 1u)][tmpvar_3] = (rows.entries[c_1].value[(c_1 & 1u)][tmpvar_3] + 1.0);
+  highp uint t0 = (gl_GlobalInvocationID.x & 1u);
+  columns.small[int(t0)] = vec2(2.0, 3.0);
+  columns.small[int(t0)][int(t0)] = 4.0;
+  columns.rectangular[int(t0)].xz = vec2(5.0, 6.0);
+  columns.rectangular[int(t0)] = columns.rectangular[(1 - int(t0))].zyx;
+  columns.native[int(t0)] = vec4(28.0, 7.0, 3e+01, 8.0);
+  highp uint t1 = (gl_GlobalInvocationID.y % 3u);
+  columns.native[int(t0)][int(t1)] = 9.0;
+  rows.rectangular[int(t0)].yz = ((inputValue.zy + vec2(1e+01, 11.0)).yyx).yz;
+  rows.rectangular[int(t0)][int((t1 & 1u))] = 12.0;
+  rows.rectangular[int(t0)].xz = vec2(14.0, 13.0);
+  rows.rectangular[int(t0)][int(t1)] = 15.0;
+  paddedRows.value[int(t0)].yz = vec2(23.0, 22.0);
+  paddedRows.value[int(t0)][int(t1)] = 24.0;
+  rows.wide[int(t1)] = vec2(26.0, 27.0);
+  rows.native[int(t0)] = vec2(16.0, 17.0);
+  rows.native[int(t0)][int(t0)] = 18.0;
+  rows.reduced[int(t0)].xz = vec2(19.0, 2e+01);
+  highp int t2 = (int(t0) + 1);
+  highp uint t3 = (uint(t2) & 1u);
+  highp float t4 = float(uint(t2));
+  rows.entries[int(t0)].value[int(t3)].xz = vec3(vec2(t4), 21.0).xz;
+  rows.entries[t2].value[int(t3)][int(t1)] = (rows.entries[t2].value[int(t3)][int(t1)] + 1.0);
 }
 
-
-// stats: 29 alu 0 tex 0 flow
+// stats: 9 alu 0 tex 0 flow
 // workgroup size: 1 1 1
 // uniforms: 1 (total size: 0)
 //  #0: inputValue (medium float) 3x1 [-1]

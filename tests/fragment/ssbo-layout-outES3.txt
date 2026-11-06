@@ -1,15 +1,17 @@
 #version 310 es
+precision highp float;
+precision highp int;
 struct Pair {
   highp float x;
   highp float y;
 };
-layout(std140, column_major, binding=4) buffer Output {
+layout(std140, binding = 4) buffer Output {
   writeonly highp float values[2];
   writeonly highp vec4 result;
 };
-layout(std430, row_major, binding=2) buffer Input {
-  layout(row_major) readonly Pair pairs[2];
-  layout(row_major) readonly highp mat2 matrices[2];
+layout(std430, row_major, binding = 2) buffer Input {
+  readonly Pair pairs[2];
+  readonly highp mat2 matrices[2];
   layout(column_major) readonly highp mat2x3 transform;
   readonly highp vec3 direction;
   readonly highp float weight;
@@ -18,27 +20,16 @@ uniform highp int index;
 out highp vec4 color;
 void main ()
 {
-  Pair tmpvar_1;
-  tmpvar_1 = source.pairs[index];
-  highp vec2 tmpvar_2;
-  tmpvar_2.x = tmpvar_1.x;
-  tmpvar_2.y = tmpvar_1.y;
-  highp vec2 tmpvar_3;
-  tmpvar_3 = (source.matrices[index] * tmpvar_2);
-  values[index] = tmpvar_3.x;
-  highp vec4 tmpvar_4;
-  tmpvar_4.xyz = ((source.transform * tmpvar_3) + source.direction);
-  tmpvar_4.w = source.weight;
-  result = tmpvar_4;
-  highp vec4 tmpvar_5;
-  tmpvar_5.xy = tmpvar_3;
-  tmpvar_5.z = tmpvar_1.x;
-  tmpvar_5.w = tmpvar_1.y;
-  color = tmpvar_5;
+  highp float t0 = source.pairs[index].x;
+  highp float t1 = source.pairs[index].y;
+  highp vec2 t2 = (source.matrices[index] * vec2(t0, t1));
+  values[index] = t2.x;
+  highp vec3 t3 = (((source.transform[0] * t2.x) + source.direction) + (source.transform[1] * t2.y));
+  result = vec4(t3, source.weight);
+  color = vec4(t2, t0, t1);
 }
 
-
-// stats: 3 alu 0 tex 0 flow
+// stats: 7 alu 0 tex 0 flow
 // uniforms: 1 (total size: 0)
 //  #0: index (high int) 1x1 [-1]
 // buffer #0: Input storage instance source layout std430 binding 2 (size: 96)

@@ -6,93 +6,37 @@ uniform vec4 unity_Scale;
 attribute vec4 TANGENT;
 void main ()
 {
-  float nl_1;
-  vec3 lightDir_2;
-  vec3 viewDir_3;
-  vec3 o_backContrib_4;
-  vec3 o_nl_5;
-  vec3 o_nh_6;
-  vec4 tmpvar_7;
-  vec3 tmpvar_8;
-  float isBillboard_9;
-  isBillboard_9 = (1.0 - abs(TANGENT.w));
-  vec4 tmpvar_10;
-  tmpvar_10.w = 0.0;
-  tmpvar_10.xyz = gl_Normal;
-  vec4 tmpvar_11;
-  tmpvar_11.zw = vec2(0.0, 0.0);
-  tmpvar_11.xy = gl_Normal.xy;
-  tmpvar_7 = (gl_Vertex + ((tmpvar_11 * gl_ModelViewMatrixInverseTranspose) * isBillboard_9));
-  tmpvar_8 = mix (gl_Normal, normalize((tmpvar_10 * gl_ModelViewMatrixInverseTranspose)).xyz, vec3(isBillboard_9));
-  vec4 tmpvar_12;
-  tmpvar_12.w = 1.0;
-  tmpvar_12.xyz = _WorldSpaceCameraPos;
-  viewDir_3 = normalize(((
-    (_World2Object * tmpvar_12)
-  .xyz * unity_Scale.w) - tmpvar_7.xyz));
-  lightDir_2 = _TerrainTreeLightDirections[0];
-  nl_1 = dot (tmpvar_8, lightDir_2);
-  o_backContrib_4[0] = (mix (clamp (
-    -(nl_1)
-  , 0.0, 1.0), clamp (
-    dot (viewDir_3, -(lightDir_2))
-  , 0.0, 1.0), _TranslucencyViewDependency) * 2.0);
-  o_nl_5[0] = max (0.0, ((nl_1 * 0.6) + 0.4));
-  o_nh_6[0] = max (0.0, dot (tmpvar_8, normalize(
-    (lightDir_2 + viewDir_3)
-  )));
-  lightDir_2 = _TerrainTreeLightDirections[1];
-  nl_1 = dot (tmpvar_8, lightDir_2);
-  o_backContrib_4[1] = (mix (clamp (
-    -(nl_1)
-  , 0.0, 1.0), clamp (
-    dot (viewDir_3, -(lightDir_2))
-  , 0.0, 1.0), _TranslucencyViewDependency) * 2.0);
-  o_nl_5[1] = max (0.0, ((nl_1 * 0.6) + 0.4));
-  o_nh_6[1] = max (0.0, dot (tmpvar_8, normalize(
-    (lightDir_2 + viewDir_3)
-  )));
-  lightDir_2 = _TerrainTreeLightDirections[2];
-  nl_1 = dot (tmpvar_8, lightDir_2);
-  o_backContrib_4[2] = (mix (clamp (
-    -(nl_1)
-  , 0.0, 1.0), clamp (
-    dot (viewDir_3, -(lightDir_2))
-  , 0.0, 1.0), _TranslucencyViewDependency) * 2.0);
-  float tmpvar_13;
-  tmpvar_13 = max (0.0, ((nl_1 * 0.6) + 0.4));
-  nl_1 = tmpvar_13;
-  o_nl_5[2] = tmpvar_13;
-  o_nh_6[2] = max (0.0, dot (tmpvar_8, normalize(
-    (lightDir_2 + viewDir_3)
-  )));
-  gl_Position = (gl_ModelViewProjectionMatrix * tmpvar_7);
-  vec4 tmpvar_14;
-  tmpvar_14.zw = vec2(0.0, 0.0);
-  tmpvar_14.xy = gl_MultiTexCoord0.xy;
-  gl_TexCoord[0] = tmpvar_14;
-  vec4 tmpvar_15;
-  tmpvar_15.w = 0.0;
-  tmpvar_15.xyz = gl_Color.www;
-  gl_TexCoord[1] = tmpvar_15;
-  vec4 tmpvar_16;
-  tmpvar_16.w = 0.0;
-  tmpvar_16.xyz = o_backContrib_4;
-  gl_TexCoord[2] = tmpvar_16;
-  vec4 tmpvar_17;
-  tmpvar_17.w = 0.0;
-  tmpvar_17.xyz = o_nl_5;
-  gl_TexCoord[3] = tmpvar_17;
-  vec4 tmpvar_18;
-  tmpvar_18.w = 0.0;
-  tmpvar_18.xyz = o_nh_6;
-  gl_TexCoord[4] = tmpvar_18;
+  vec4 t0 = vec4(dot(gl_Normal, gl_ModelViewMatrixInverseTranspose[0].xyz), dot(gl_Normal, gl_ModelViewMatrixInverseTranspose[1].xyz), dot(gl_Normal, gl_ModelViewMatrixInverseTranspose[2].xyz), dot(gl_Normal, gl_ModelViewMatrixInverseTranspose[3].xyz));
+  vec4 t1 = vec4(dot(gl_Normal.xy, gl_ModelViewMatrixInverseTranspose[0].xy), dot(gl_Normal.xy, gl_ModelViewMatrixInverseTranspose[1].xy), dot(gl_Normal.xy, gl_ModelViewMatrixInverseTranspose[2].xy), dot(gl_Normal.xy, gl_ModelViewMatrixInverseTranspose[3].xy));
+  float t2 = (1.0 - abs(TANGENT.w));
+  vec4 t3 = (gl_Vertex + (t1 * t2));
+  vec3 t4 = mix(gl_Normal, normalize(t0).xyz, vec3(t2));
+  vec3 t5 = (((_World2Object * vec4(_WorldSpaceCameraPos, 1.0)).xyz * unity_Scale.w) - t3.xyz);
+  vec3 t6 = normalize(t5);
+  float t7 = dot(t4, _TerrainTreeLightDirections[0]);
+  vec3 t8 = (_TerrainTreeLightDirections[0] + t6);
+  float t9 = dot(t4, _TerrainTreeLightDirections[1]);
+  vec3 t10 = vec3((false ? mix(clamp((-t9), 0.0, 1.0), clamp(dot(t6, (-_TerrainTreeLightDirections[1])), 0.0, 1.0), _TranslucencyViewDependency) : mix(clamp((-t7), 0.0, 1.0), clamp(dot(t6, (-_TerrainTreeLightDirections[0])), 0.0, 1.0), _TranslucencyViewDependency)), (true ? mix(clamp((-t9), 0.0, 1.0), clamp(dot(t6, (-_TerrainTreeLightDirections[1])), 0.0, 1.0), _TranslucencyViewDependency) : mix(clamp((-t7), 0.0, 1.0), clamp(dot(t6, (-_TerrainTreeLightDirections[0])), 0.0, 1.0), _TranslucencyViewDependency)), (false ? mix(clamp((-t9), 0.0, 1.0), clamp(dot(t6, (-_TerrainTreeLightDirections[1])), 0.0, 1.0), _TranslucencyViewDependency) : mix(clamp((-t7), 0.0, 1.0), clamp(dot(t6, (-_TerrainTreeLightDirections[0])), 0.0, 1.0), _TranslucencyViewDependency)));
+  vec3 t11 = (_TerrainTreeLightDirections[1] + t6);
+  vec3 t12 = vec3((false ? dot(t4, normalize(t11)) : dot(t4, normalize(t8))), (true ? dot(t4, normalize(t11)) : dot(t4, normalize(t8))), (false ? dot(t4, normalize(t11)) : dot(t4, normalize(t8))));
+  float t13 = dot(t4, _TerrainTreeLightDirections[2]);
+  vec3 t14 = vec3((false ? mix(clamp((-t13), 0.0, 1.0), clamp(dot(t6, (-_TerrainTreeLightDirections[2])), 0.0, 1.0), _TranslucencyViewDependency) : t10.x), (false ? mix(clamp((-t13), 0.0, 1.0), clamp(dot(t6, (-_TerrainTreeLightDirections[2])), 0.0, 1.0), _TranslucencyViewDependency) : t10.y), (true ? mix(clamp((-t13), 0.0, 1.0), clamp(dot(t6, (-_TerrainTreeLightDirections[2])), 0.0, 1.0), _TranslucencyViewDependency) : t10.z));
+  vec3 t15 = vec3((false ? (t13 * 0.6) : vec3((false ? (t9 * 0.6) : (t7 * 0.6)), (true ? (t9 * 0.6) : (t7 * 0.6)), (false ? (t9 * 0.6) : (t7 * 0.6))).x), (false ? (t13 * 0.6) : vec3((false ? (t9 * 0.6) : (t7 * 0.6)), (true ? (t9 * 0.6) : (t7 * 0.6)), (false ? (t9 * 0.6) : (t7 * 0.6))).y), (true ? (t13 * 0.6) : vec3((false ? (t9 * 0.6) : (t7 * 0.6)), (true ? (t9 * 0.6) : (t7 * 0.6)), (false ? (t9 * 0.6) : (t7 * 0.6))).z));
+  vec3 t16 = (_TerrainTreeLightDirections[2] + t6);
+  gl_Position = (gl_ModelViewProjectionMatrix * t3);
+  gl_TexCoord[0] = vec4(gl_MultiTexCoord0.xy, 0.0, 0.0);
+  gl_TexCoord[1] = vec4(gl_Color.www, 0.0);
+  vec3 t17 = (2.0 * t14);
+  gl_TexCoord[2] = vec4(t17, 0.0);
+  vec3 t18 = max(vec3(0.0), (0.4 + t15));
+  gl_TexCoord[3] = vec4(t18, 0.0);
+  vec3 t19 = max(vec3(0.0), vec3((false ? dot(t4, normalize(t16)) : t12.x), (false ? dot(t4, normalize(t16)) : t12.y), (true ? dot(t4, normalize(t16)) : t12.z)));
+  gl_TexCoord[4] = vec4(t19, 0.0);
 }
 
-
-// stats: 72 alu 0 tex 0 flow
+// stats: 83 alu 0 tex 0 flow
 // inputs: 5
-//  #0: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 7
+//  #0: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 6
 //  #1: gl_Color (high float) 4x1 [-1] loc 2
 //  #2: gl_Normal (high float) 3x1 [-1] loc 1
 //  #3: gl_Vertex (high float) 4x1 [-1] loc 0

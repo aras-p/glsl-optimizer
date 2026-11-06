@@ -13,30 +13,24 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   , texture2d<half> _MainTex [[texture(0)]], sampler _mtlsmp__MainTex [[sampler(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half3 light_1 = 0;
-  half4 tmpvar_2 = 0;
-  tmpvar_2 = _MainTex.sample(_mtlsmp__MainTex, (float2)((_mtl_i.xlv_uv)));
-  light_1 = half3(float3(0.0, 0.0, 0.0));
-  if ((tmpvar_2.x >= (half)(0.0))) {
-    for (half j_3 = half(0.0); j_3 < _mtl_i.xlv_uv.x; j_3 += 1.0) {
-      light_1 = (light_1 + tmpvar_2.xyz);
-    };
-  };
-  if ((tmpvar_2.x >= (half)(1.0))) {
-    half j_4 = 0;
-    j_4 = half(_mtl_i.xlv_uv.y);
-    j_4 = (j_4 * sin(j_4));
-    light_1 = (light_1 + (tmpvar_2.xyz * j_4));
-  };
-  half4 tmpvar_5 = 0;
-  tmpvar_5.w = half(1.0);
-  tmpvar_5.xyz = light_1;
-  _mtl_o._fragData = tmpvar_5;
+  float r0 = 0;
+  half3 r1 = 0;
+  half4 t0 = _MainTex.sample(_mtlsmp__MainTex, _mtl_i.xlv_uv);
+  if ((t0.x >= half(0.0))) {
+    r1 = half3(0.0);
+    for (r0 = 0.0; (r0 < _mtl_i.xlv_uv.x); r0 = (r0 + 1.0)) {
+      r1 = (r1 + t0.xyz);
+    }
+  } else {
+    r1 = half3(0.0);
+  }
+  half t1 = half(_mtl_i.xlv_uv.y);
+  half3 t2 = ((t0.x >= half(1.0)) ? (r1 + (t0.xyz * (t1 * sin(t1)))) : r1);
+  _mtl_o._fragData = half4(t2, half(1.0));
   return _mtl_o;
 }
 
-
-// stats: 12 alu 1 tex 4 flow
+// stats: 10 alu 1 tex 3 flow
 // inputs: 1
 //  #0: xlv_uv (high float) 2x1 [-1]
 // textures: 1

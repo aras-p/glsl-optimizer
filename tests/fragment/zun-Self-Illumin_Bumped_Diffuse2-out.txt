@@ -5,28 +5,14 @@ uniform sampler2D _MainTex;
 uniform vec4 unity_Ambient;
 void main ()
 {
-  vec4 xlt_IN_hip_pack0_1;
-  vec4 xlt_IN_hip_screen_2;
-  xlt_IN_hip_pack0_1 = gl_TexCoord[0];
-  xlt_IN_hip_screen_2 = gl_TexCoord[1];
-  vec4 col_3;
-  vec4 light_4;
-  vec4 c_5;
-  c_5 = (texture2D (_MainTex, xlt_IN_hip_pack0_1.xy) * _Color);
-  light_4 = -(log2(texture2DProj (_LightBuffer, vec3(xlt_IN_hip_screen_2.xy, xlt_IN_hip_screen_2.w))));
-  light_4.xyz = (light_4.xyz + unity_Ambient.xyz);
-  vec4 c_6;
-  c_6.xyz = (c_5.xyz * light_4.xyz);
-  c_6.w = c_5.w;
-  col_3.w = c_6.w;
-  col_3.xyz = (c_6.xyz + (c_5.xyz * texture2D (_Illum, xlt_IN_hip_pack0_1.zw).w));
-  gl_FragData[0] = col_3;
+  vec4 t0 = (texture2D(_MainTex, gl_TexCoord[0].xy) * _Color);
+  vec3 t1 = (t0.xyz * ((unity_Ambient.xyz - log2(texture2DProj(_LightBuffer, vec3(gl_TexCoord[1].xy, gl_TexCoord[1].w))).xyz) + texture2D(_Illum, gl_TexCoord[0].zw).w));
+  gl_FragData[0] = vec4(t1, t0.w);
 }
 
-
-// stats: 7 alu 3 tex 0 flow
+// stats: 5 alu 3 tex 0 flow
 // inputs: 1
-//  #0: gl_TexCoord (high float) 4x1 [2] loc 4
+//  #0: gl_TexCoord (high float) 4x1 [0] loc 4
 // uniforms: 2 (total size: 0)
 //  #0: _Color (high float) 4x1 [-1]
 //  #1: unity_Ambient (high float) 4x1 [-1]

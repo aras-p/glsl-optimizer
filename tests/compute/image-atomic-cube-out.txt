@@ -1,23 +1,14 @@
 #version 450
-layout(local_size_x=8) in;
-layout(r32ui, binding=0) uniform uimageCube counters;
-layout(r32ui, binding=1) uniform uimageCubeArray layers;
+layout(local_size_x = 8) in;
+layout(r32ui, binding = 0) uniform uimageCube counters;
+layout(r32ui, binding = 1) uniform uimageCubeArray layers;
 void main ()
 {
-  ivec3 tmpvar_1;
-  tmpvar_1.z = 4;
-  tmpvar_1.xy = ivec2(gl_GlobalInvocationID.xy);
-  uint tmpvar_2;
-  tmpvar_2 = imageAtomicAdd (counters, tmpvar_1, 1u);
-  ivec3 tmpvar_3;
-  tmpvar_3.xy = tmpvar_1.xy;
-  tmpvar_3.z = (tmpvar_1.z + 6);
-  uint tmpvar_4;
-  tmpvar_4 = imageAtomicCompSwap (layers, tmpvar_3, tmpvar_2, uint(0));
+  uint t0 = imageAtomicAdd(counters, ivec3(uvec4(gl_GlobalInvocationID.xy, 4u, 0u).xyz), 1u);
+  imageAtomicCompSwap(layers, ivec3(uvec4(gl_GlobalInvocationID.xy, 10u, 0u).xyz), t0, 0u);
 }
 
-
-// stats: 3 alu 2 tex 0 flow
+// stats: 0 alu 2 tex 0 flow
 // workgroup size: 8 1 1
 // textures: 2
 //  #0: counters (high imagecube) 0x0 [-1] loc 0 format r32ui component uint

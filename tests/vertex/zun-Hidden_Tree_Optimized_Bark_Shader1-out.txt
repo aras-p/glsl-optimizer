@@ -7,60 +7,23 @@ uniform vec4 _Wind;
 uniform vec4 unity_LightShadowBias;
 void main ()
 {
-  vec4 o_pos_1;
-  vec4 tmpvar_2;
-  tmpvar_2.w = gl_Vertex.w;
-  tmpvar_2.xyz = (gl_Vertex.xyz * _Scale.xyz);
-  vec4 tmpvar_3;
-  tmpvar_3.w = tmpvar_2.w;
-  vec3 bend_4;
-  vec2 vWavesSum_5;
-  vec4 vWaves_6;
-  float fBranchPhase_7;
-  fBranchPhase_7 = (dot (_Object2World[3].xyz, vec3(1.0, 1.0, 1.0)) + gl_Color.x);
-  vec2 tmpvar_8;
-  tmpvar_8.x = dot (tmpvar_2.xyz, vec3((gl_Color.y + fBranchPhase_7)));
-  tmpvar_8.y = fBranchPhase_7;
-  vWaves_6 = ((fract(
-    ((_TimeX + tmpvar_8).xxyy * vec4(1.975, 0.793, 0.375, 0.193))
-  ) * 2.0) - 1.0);
-  vec4 tmpvar_9;
-  tmpvar_9 = abs(((
-    fract((vWaves_6 + 0.5))
-   * 2.0) - 1.0));
-  vec4 tmpvar_10;
-  tmpvar_10 = ((tmpvar_9 * tmpvar_9) * (3.0 - (2.0 * tmpvar_9)));
-  vWaves_6 = tmpvar_10;
-  vWavesSum_5 = (tmpvar_10.xz + tmpvar_10.yw);
-  bend_4.xz = ((gl_Color.y * 0.1) * gl_Normal).xz;
-  bend_4.y = (gl_MultiTexCoord1.y * 0.3);
-  tmpvar_3.xyz = (tmpvar_2.xyz + ((
-    (vWavesSum_5.xyx * bend_4)
-   + 
-    ((_Wind.xyz * vWavesSum_5.y) * gl_MultiTexCoord1.y)
-  ) * _Wind.w));
-  tmpvar_3.xyz = (tmpvar_3.xyz + (gl_MultiTexCoord1.x * _Wind.xyz));
-  vec3 tmpvar_11;
-  tmpvar_11.xz = vec2(0.0, 0.0);
-  tmpvar_11.y = _SquashPlaneNormal.w;
-  vec4 tmpvar_12;
-  tmpvar_12.w = 1.0;
-  tmpvar_12.xyz = mix ((tmpvar_3.xyz + (
-    dot (_SquashPlaneNormal.xyz, (tmpvar_11 - tmpvar_3.xyz))
-   * _SquashPlaneNormal.xyz)), tmpvar_3.xyz, vec3(_SquashAmount));
-  tmpvar_2 = tmpvar_12;
-  o_pos_1 = (gl_ModelViewProjectionMatrix * tmpvar_12);
-  o_pos_1.z = (o_pos_1.z + unity_LightShadowBias.x);
-  if ((o_pos_1.z < -(o_pos_1.w))) {
-    o_pos_1.z = -(o_pos_1.w);
-  };
-  gl_Position = o_pos_1;
+  vec3 t0 = (gl_Vertex.xyz * _Scale.xyz);
+  float t1 = (dot(_Object2World[3].xyz, vec3(1.0)) + gl_Color.x);
+  vec4 t2 = abs(((fract((-0.5 + (fract(((_TimeX + vec2(dot(t0, vec3((gl_Color.y + t1))), t1)).xxyy * vec4(1.975, 0.793, 0.375, 0.193))) * 2.0))) * 2.0) - 1.0));
+  vec4 t3 = ((t2 * t2) * (3.0 - (2.0 * t2)));
+  vec2 t4 = (t3.xz + t3.yw);
+  vec3 t5 = ((gl_Color.y * 0.1) * gl_Normal);
+  vec3 t6 = ((t0 + (((t4.xyx * vec3(t5.x, (gl_MultiTexCoord1.y * 0.3), t5.z)) + ((_Wind.xyz * t4.y) * gl_MultiTexCoord1.y)) * _Wind.w)) + (gl_MultiTexCoord1.x * _Wind.xyz));
+  vec3 t7 = mix((t6 + (dot(_SquashPlaneNormal.xyz, (vec3(0.0, _SquashPlaneNormal.w, 0.0) - t6)) * _SquashPlaneNormal.xyz)), t6, vec3(_SquashAmount));
+  vec4 t8 = (gl_ModelViewProjectionMatrix * vec4(t7, 1.0));
+  float t9 = (t8.z + unity_LightShadowBias.x);
+  float t10 = (-t8.w);
+  gl_Position = ((t9 < t10) ? vec4(t8.xy, t10, t8.w) : vec4(t8.xy, t9, t8.w));
 }
 
-
-// stats: 43 alu 0 tex 1 flow
+// stats: 44 alu 0 tex 0 flow
 // inputs: 4
-//  #0: gl_MultiTexCoord1 (high float) 4x1 [-1] loc 8
+//  #0: gl_MultiTexCoord1 (high float) 4x1 [-1] loc 7
 //  #1: gl_Color (high float) 4x1 [-1] loc 2
 //  #2: gl_Normal (high float) 3x1 [-1] loc 1
 //  #3: gl_Vertex (high float) 4x1 [-1] loc 0

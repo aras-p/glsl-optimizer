@@ -1,25 +1,14 @@
 #version 300 es
+precision highp float;
+precision highp int;
 out mediump vec4 _glesFragData;
 in mediump vec3 inNormal;
 void main ()
 {
-  mediump vec4 c_1;
-  mediump mat3 tmpvar_2;
-  tmpvar_2[uint(0)].x = 0.8164966;
-  tmpvar_2[uint(0)].y = -0.4082483;
-  tmpvar_2[uint(0)].z = -0.4082483;
-  tmpvar_2[1u].x = 0.0;
-  tmpvar_2[1u].y = 0.7071068;
-  tmpvar_2[1u].z = -0.7071068;
-  tmpvar_2[2u].x = 0.5773503;
-  tmpvar_2[2u].y = 0.5773503;
-  tmpvar_2[2u].z = 0.5773503;
-  c_1.xyz = (tmpvar_2 * inNormal);
-  c_1.w = 0.0;
-  _glesFragData = c_1;
+  mediump vec3 t0 = (mat3(vec3(0.8164966, -0.4082483, -0.4082483), vec3(0.0, 0.7071068, -0.7071068), vec3(0.5773503)) * inNormal);
+  _glesFragData = vec4(t0, 0.0);
 }
 
-
-// stats: 11 alu 0 tex 0 flow
+// stats: 5 alu 0 tex 0 flow
 // inputs: 1
 //  #0: inNormal (medium float) 3x1 [-1]

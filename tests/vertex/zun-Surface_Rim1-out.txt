@@ -7,56 +7,29 @@ attribute vec4 TANGENT;
 varying vec4 xlv_FOG;
 void main ()
 {
-  vec3 binormal_1;
-  vec4 tmpvar_2;
-  tmpvar_2 = (gl_ModelViewProjectionMatrix * gl_Vertex);
-  vec4 o_3;
-  o_3 = (tmpvar_2 * 0.5);
-  vec2 tmpvar_4;
-  tmpvar_4.x = o_3.x;
-  tmpvar_4.y = (o_3.y * _ProjectionParams.x);
-  o_3.xy = (tmpvar_4 + o_3.w);
-  o_3.zw = tmpvar_2.zw;
-  binormal_1 = (((gl_Normal.yzx * TANGENT.zxy) - (gl_Normal.zxy * TANGENT.yzx)) * TANGENT.w);
-  mat3 tmpvar_5;
-  tmpvar_5[0].x = TANGENT.x;
-  tmpvar_5[0].y = binormal_1.x;
-  tmpvar_5[0].z = gl_Normal.x;
-  tmpvar_5[1].x = TANGENT.y;
-  tmpvar_5[1].y = binormal_1.y;
-  tmpvar_5[1].z = gl_Normal.y;
-  tmpvar_5[2].x = TANGENT.z;
-  tmpvar_5[2].y = binormal_1.z;
-  tmpvar_5[2].z = gl_Normal.z;
-  vec4 tmpvar_6;
-  tmpvar_6.w = 1.0;
-  tmpvar_6.xyz = _WorldSpaceCameraPos;
-  gl_Position = tmpvar_2;
-  vec4 tmpvar_7;
-  tmpvar_7.yzw = vec3(0.0, 0.0, 0.0);
-  tmpvar_7.x = tmpvar_2.z;
-  xlv_FOG = tmpvar_7;
-  vec4 tmpvar_8;
-  tmpvar_8.zw = vec2(0.0, 0.0);
-  tmpvar_8.xy = ((gl_MultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
-  gl_TexCoord[0] = tmpvar_8;
-  vec4 tmpvar_9;
-  tmpvar_9.w = 0.0;
-  tmpvar_9.xyz = (tmpvar_5 * ((
-    (_World2Object * tmpvar_6)
-  .xyz * unity_Scale.w) - gl_Vertex.xyz));
-  gl_TexCoord[1] = tmpvar_9;
-  gl_TexCoord[2] = o_3;
-  vec4 tmpvar_10;
-  tmpvar_10.w = 0.0;
-  tmpvar_10.xyz = (tmpvar_5 * (gl_Normal * unity_Scale.w));
-  gl_TexCoord[3] = tmpvar_10;
+  vec4 t0 = (gl_ModelViewProjectionMatrix * gl_Vertex);
+  vec2 t1 = ((gl_MultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
+  vec4 t2 = (t0 * 0.5);
+  vec2 t3 = (vec2(t2.x, (t2.y * _ProjectionParams.x)) + t2.w);
+  vec3 t4 = (((gl_Normal.yzx * TANGENT.zxy) - (gl_Normal.zxy * TANGENT.yzx)) * TANGENT.w);
+  vec3 t5 = (gl_Normal * unity_Scale.w);
+  vec3 t6 = vec3(TANGENT.x, t4.x, gl_Normal.x);
+  vec3 t7 = vec3(TANGENT.y, t4.y, gl_Normal.y);
+  vec3 t8 = vec3(TANGENT.z, t4.z, gl_Normal.z);
+  vec3 t9 = (mat3(t6, t7, t8) * t5);
+  vec3 t10 = (((_World2Object * vec4(_WorldSpaceCameraPos, 1.0)).xyz * unity_Scale.w) - gl_Vertex.xyz);
+  vec3 t11 = (mat3(t6, t7, t8) * t10);
+  gl_Position = t0;
+  xlv_FOG = vec4(t0.z, 0.0, 0.0, 0.0);
+  gl_TexCoord[0] = vec4(t1, 0.0, 0.0);
+  gl_TexCoord[1] = vec4(t11, 0.0);
+  gl_TexCoord[2] = vec4(t3, t0.zw);
+  gl_TexCoord[3] = vec4(t9, 0.0);
 }
 
-
-// stats: 21 alu 0 tex 0 flow
+// stats: 35 alu 0 tex 0 flow
 // inputs: 4
-//  #0: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 7
+//  #0: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 6
 //  #1: gl_Normal (high float) 3x1 [-1] loc 1
 //  #2: gl_Vertex (high float) 4x1 [-1] loc 0
 //  #3: TANGENT (high float) 4x1 [-1]

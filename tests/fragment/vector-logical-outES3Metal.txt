@@ -16,19 +16,16 @@ struct xlatMtlShaderUniform {
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  bool4 tmpvar_1 = false;
-  tmpvar_1 = (_mtl_i.a < _mtl_i.b);
-  bool4 tmpvar_2 = false;
-  tmpvar_2 = (_mtl_i.a >= (half4)(float4(0.0, 0.0, 0.0, 0.0)));
-  _mtl_o.andMask = half4((tmpvar_1 && tmpvar_2));
-  _mtl_o.notAndMask = half4(!((tmpvar_1 && tmpvar_2)));
-  _mtl_o.orMask = half4((tmpvar_1 || tmpvar_2));
-  _mtl_o.xorMask = half4((tmpvar_1 != tmpvar_2));
+  bool4 t0 = (_mtl_i.a < _mtl_i.b);
+  bool4 t1 = (_mtl_i.a >= half(0.0));
+  _mtl_o.andMask = half4((t0 && t1));
+  _mtl_o.notAndMask = half4((!bool4((t0.x && t1.x), (t0.y && t1.y), (t0.z && t1.z), (t0.w && t1.w))));
+  _mtl_o.orMask = half4(bool4((t0.x || t1.x), (t0.y || t1.y), (t0.z || t1.z), (t0.w || t1.w)));
+  _mtl_o.xorMask = half4(bool4((t0.x != t1.x), (t0.y != t1.y), (t0.z != t1.z), (t0.w != t1.w)));
   return _mtl_o;
 }
 
-
-// stats: 11 alu 0 tex 0 flow
+// stats: 20 alu 0 tex 0 flow
 // inputs: 2
 //  #0: a (medium float) 4x1 [-1]
 //  #1: b (medium float) 4x1 [-1]

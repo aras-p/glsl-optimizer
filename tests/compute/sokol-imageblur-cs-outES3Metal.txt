@@ -1,229 +1,89 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
-struct alignas(16) _xlat_buf_storage0 {
-  alignas(4) int filter_dim;
-  alignas(4) int block_dim;
-  alignas(4) int flip;
+struct _xlat_buf_cs_params_std140 {
+  int filter_dim;
+  int block_dim;
+  int flip;
+  char _pad0[4];
 };
-static_assert(sizeof(_xlat_buf_storage0) == 16, "std140 size");
+static_assert(sizeof(_xlat_buf_cs_params_std140) == 16, "std140 size");
 struct xlatMtlShaderUniform {
 };
 // threadsPerThreadgroup: 32, 1, 1
 kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , constant _xlat_buf_storage0& _mtl_buffer1 [[buffer(1)]]
-  , uint3 gl_WorkGroupID [[threadgroup_position_in_grid]]
-  , uint3 gl_LocalInvocationID [[thread_position_in_threadgroup]]
+  , constant _xlat_buf_cs_params_std140& _xlat_blk_cs_params [[buffer(1)]]
   , texture2d<float> cs_inp_tex [[texture(0)]], sampler _mtlsmp_cs_inp_tex [[sampler(0)]]
-  , texture2d<float, access::write> cs_outp_tex [[texture(1)]])
+  , texture2d<float, access::write> cs_outp_tex [[texture(1)]]
+  , uint3 gl_WorkGroupID [[threadgroup_position_in_grid]]
+  , uint3 gl_LocalInvocationID [[thread_position_in_threadgroup]])
 {
-threadgroup float3 tile_1[4][128];
-  int r_2 = 0;
-  uint tmpvar_3;
-  tmpvar_3 = ((uint(int(_mtl_buffer1.filter_dim)) + 4294967295u) / 2u);
-  int2 tmpvar_4 = 0;
-  tmpvar_4 = int2(cs_inp_tex.get_width(0), cs_inp_tex.get_height(0));
-  float2 tmpvar_5 = 0;
-  tmpvar_5.y = 4.0;
-  tmpvar_5.x = float(int(_mtl_buffer1.block_dim));
-  float2 tmpvar_6 = 0;
-  tmpvar_6.y = 0.0;
-  tmpvar_6.x = float(tmpvar_3);
-  int2 tmpvar_7 = 0;
-  tmpvar_7 = int2(((
-    (float2(gl_WorkGroupID.xy) * tmpvar_5)
-   + 
-    (float2(gl_LocalInvocationID.xy) * float2(4.0, 1.0))
-  ) - tmpvar_6));
-  float2 load_index_8 = 0;
-  float2 tmpvar_9 = 0;
-  tmpvar_9 = float2(tmpvar_7);
-  load_index_8 = tmpvar_9;
-  if ((int(_mtl_buffer1.flip) != 0)) {
-    load_index_8 = tmpvar_9.yx;
-  };
-  tile_1[0][(4u * gl_LocalInvocationID.x)] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (float2)((((load_index_8 + float2(0.25, 0.25)) / float2(tmpvar_4)))), level(0.0)).xyz;
-  float2 load_index_10 = 0;
-  float2 tmpvar_11 = 0;
-  tmpvar_11 = (float2(tmpvar_7) + float2(1.0, 0.0));
-  load_index_10 = tmpvar_11;
-  if ((int(_mtl_buffer1.flip) != 0)) {
-    load_index_10 = tmpvar_11.yx;
-  };
-  tile_1[0][((4u * gl_LocalInvocationID.x) + 1u)] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (float2)((((load_index_10 + float2(0.25, 0.25)) / float2(tmpvar_4)))), level(0.0)).xyz;
-  float2 load_index_12 = 0;
-  float2 tmpvar_13 = 0;
-  tmpvar_13 = (float2(tmpvar_7) + float2(2.0, 0.0));
-  load_index_12 = tmpvar_13;
-  if ((int(_mtl_buffer1.flip) != 0)) {
-    load_index_12 = tmpvar_13.yx;
-  };
-  tile_1[0][((4u * gl_LocalInvocationID.x) + 2u)] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (float2)((((load_index_12 + float2(0.25, 0.25)) / float2(tmpvar_4)))), level(0.0)).xyz;
-  float2 load_index_14 = 0;
-  float2 tmpvar_15 = 0;
-  tmpvar_15 = (float2(tmpvar_7) + float2(3.0, 0.0));
-  load_index_14 = tmpvar_15;
-  if ((int(_mtl_buffer1.flip) != 0)) {
-    load_index_14 = tmpvar_15.yx;
-  };
-  tile_1[0][((4u * gl_LocalInvocationID.x) + 3u)] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (float2)((((load_index_14 + float2(0.25, 0.25)) / float2(tmpvar_4)))), level(0.0)).xyz;
-  float2 load_index_16 = 0;
-  float2 tmpvar_17 = 0;
-  tmpvar_17 = (float2(tmpvar_7) + float2(0.0, 1.0));
-  load_index_16 = tmpvar_17;
-  if ((int(_mtl_buffer1.flip) != 0)) {
-    load_index_16 = tmpvar_17.yx;
-  };
-  tile_1[1][(4u * gl_LocalInvocationID.x)] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (float2)((((load_index_16 + float2(0.25, 0.25)) / float2(tmpvar_4)))), level(0.0)).xyz;
-  float2 load_index_18 = 0;
-  float2 tmpvar_19 = 0;
-  tmpvar_19 = (float2(tmpvar_7) + float2(1.0, 1.0));
-  load_index_18 = tmpvar_19;
-  if ((int(_mtl_buffer1.flip) != 0)) {
-    load_index_18 = tmpvar_19.yx;
-  };
-  tile_1[1][((4u * gl_LocalInvocationID.x) + 1u)] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (float2)((((load_index_18 + float2(0.25, 0.25)) / float2(tmpvar_4)))), level(0.0)).xyz;
-  float2 load_index_20 = 0;
-  float2 tmpvar_21 = 0;
-  tmpvar_21 = (float2(tmpvar_7) + float2(2.0, 1.0));
-  load_index_20 = tmpvar_21;
-  if ((int(_mtl_buffer1.flip) != 0)) {
-    load_index_20 = tmpvar_21.yx;
-  };
-  tile_1[1][((4u * gl_LocalInvocationID.x) + 2u)] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (float2)((((load_index_20 + float2(0.25, 0.25)) / float2(tmpvar_4)))), level(0.0)).xyz;
-  float2 load_index_22 = 0;
-  float2 tmpvar_23 = 0;
-  tmpvar_23 = (float2(tmpvar_7) + float2(3.0, 1.0));
-  load_index_22 = tmpvar_23;
-  if ((int(_mtl_buffer1.flip) != 0)) {
-    load_index_22 = tmpvar_23.yx;
-  };
-  tile_1[1][((4u * gl_LocalInvocationID.x) + 3u)] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (float2)((((load_index_22 + float2(0.25, 0.25)) / float2(tmpvar_4)))), level(0.0)).xyz;
-  float2 load_index_24 = 0;
-  float2 tmpvar_25 = 0;
-  tmpvar_25 = (float2(tmpvar_7) + float2(0.0, 2.0));
-  load_index_24 = tmpvar_25;
-  if ((int(_mtl_buffer1.flip) != 0)) {
-    load_index_24 = tmpvar_25.yx;
-  };
-  tile_1[2][(4u * gl_LocalInvocationID.x)] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (float2)((((load_index_24 + float2(0.25, 0.25)) / float2(tmpvar_4)))), level(0.0)).xyz;
-  float2 load_index_26 = 0;
-  float2 tmpvar_27 = 0;
-  tmpvar_27 = (float2(tmpvar_7) + float2(1.0, 2.0));
-  load_index_26 = tmpvar_27;
-  if ((int(_mtl_buffer1.flip) != 0)) {
-    load_index_26 = tmpvar_27.yx;
-  };
-  tile_1[2][((4u * gl_LocalInvocationID.x) + 1u)] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (float2)((((load_index_26 + float2(0.25, 0.25)) / float2(tmpvar_4)))), level(0.0)).xyz;
-  float2 load_index_28 = 0;
-  float2 tmpvar_29 = 0;
-  tmpvar_29 = (float2(tmpvar_7) + float2(2.0, 2.0));
-  load_index_28 = tmpvar_29;
-  if ((int(_mtl_buffer1.flip) != 0)) {
-    load_index_28 = tmpvar_29.yx;
-  };
-  tile_1[2][((4u * gl_LocalInvocationID.x) + 2u)] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (float2)((((load_index_28 + float2(0.25, 0.25)) / float2(tmpvar_4)))), level(0.0)).xyz;
-  float2 load_index_30 = 0;
-  float2 tmpvar_31 = 0;
-  tmpvar_31 = (float2(tmpvar_7) + float2(3.0, 2.0));
-  load_index_30 = tmpvar_31;
-  if ((int(_mtl_buffer1.flip) != 0)) {
-    load_index_30 = tmpvar_31.yx;
-  };
-  tile_1[2][((4u * gl_LocalInvocationID.x) + 3u)] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (float2)((((load_index_30 + float2(0.25, 0.25)) / float2(tmpvar_4)))), level(0.0)).xyz;
-  float2 load_index_32 = 0;
-  float2 tmpvar_33 = 0;
-  tmpvar_33 = (float2(tmpvar_7) + float2(0.0, 3.0));
-  load_index_32 = tmpvar_33;
-  if ((int(_mtl_buffer1.flip) != 0)) {
-    load_index_32 = tmpvar_33.yx;
-  };
-  tile_1[3][(4u * gl_LocalInvocationID.x)] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (float2)((((load_index_32 + float2(0.25, 0.25)) / float2(tmpvar_4)))), level(0.0)).xyz;
-  float2 load_index_34 = 0;
-  float2 tmpvar_35 = 0;
-  tmpvar_35 = (float2(tmpvar_7) + float2(1.0, 3.0));
-  load_index_34 = tmpvar_35;
-  if ((int(_mtl_buffer1.flip) != 0)) {
-    load_index_34 = tmpvar_35.yx;
-  };
-  tile_1[3][((4u * gl_LocalInvocationID.x) + 1u)] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (float2)((((load_index_34 + float2(0.25, 0.25)) / float2(tmpvar_4)))), level(0.0)).xyz;
-  float2 load_index_36 = 0;
-  float2 tmpvar_37 = 0;
-  tmpvar_37 = (float2(tmpvar_7) + float2(2.0, 3.0));
-  load_index_36 = tmpvar_37;
-  if ((int(_mtl_buffer1.flip) != 0)) {
-    load_index_36 = tmpvar_37.yx;
-  };
-  tile_1[3][((4u * gl_LocalInvocationID.x) + 2u)] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (float2)((((load_index_36 + float2(0.25, 0.25)) / float2(tmpvar_4)))), level(0.0)).xyz;
-  float2 load_index_38 = 0;
-  float2 tmpvar_39 = 0;
-  tmpvar_39 = (float2(tmpvar_7) + float2(3.0, 3.0));
-  load_index_38 = tmpvar_39;
-  if ((int(_mtl_buffer1.flip) != 0)) {
-    load_index_38 = tmpvar_39.yx;
-  };
-  tile_1[3][((4u * gl_LocalInvocationID.x) + 3u)] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (float2)((((load_index_38 + float2(0.25, 0.25)) / float2(tmpvar_4)))), level(0.0)).xyz;
+  threadgroup float3 tile[4][128];
+  int r0 = 0;
+  float3 r1 = 0;
+  int r2 = 0;
+  int r3 = 0;
+  int t0 = int(_xlat_blk_cs_params.filter_dim);
+  int2 t1 = int2(cs_inp_tex.get_width(uint(0)), cs_inp_tex.get_height(uint(0)));
+  uint t2 = (uint((t0 - 1)) >> uint(1u));
+  float2 t3 = (((float2(gl_WorkGroupID.xy) * float2(float(int(_xlat_blk_cs_params.block_dim)), 4.0)) - float2(float(t2), 0.0)) + (float2(gl_LocalInvocationID.xy) * float2(4.0, 1.0)));
+  bool t4 = (int(_xlat_blk_cs_params.flip) != 0);
+  float2 t5 = float2(t1);
+  int t6 = (int(gl_LocalInvocationID.x) << int(2u));
+  tile[0][t6] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (((t4 ? t3.yx : t3) + 0.25) / t5), level(0.0)).xyz;
+  float2 t7 = (t3 + float2(1.0, 0.0));
+  int t8 = (t6 + 1);
+  tile[0][t8] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (((t4 ? t7.yx : t7) + 0.25) / t5), level(0.0)).xyz;
+  float2 t9 = (t3 + float2(2.0, 0.0));
+  int t10 = (t6 + 2);
+  tile[0][t10] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (((t4 ? t9.yx : t9) + 0.25) / t5), level(0.0)).xyz;
+  float2 t11 = (t3 + float2(3.0, 0.0));
+  int t12 = (t6 + 3);
+  tile[0][t12] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (((t4 ? t11.yx : t11) + 0.25) / t5), level(0.0)).xyz;
+  float2 t13 = (t3 + float2(0.0, 1.0));
+  tile[1][t6] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (((t4 ? t13.yx : t13) + 0.25) / t5), level(0.0)).xyz;
+  float2 t14 = (t3 + 1.0);
+  tile[1][t8] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (((t4 ? t14.yx : t14) + 0.25) / t5), level(0.0)).xyz;
+  float2 t15 = (t3 + float2(2.0, 1.0));
+  tile[1][t10] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (((t4 ? t15.yx : t15) + 0.25) / t5), level(0.0)).xyz;
+  float2 t16 = (t3 + float2(3.0, 1.0));
+  tile[1][t12] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (((t4 ? t16.yx : t16) + 0.25) / t5), level(0.0)).xyz;
+  float2 t17 = (t3 + float2(0.0, 2.0));
+  tile[2][t6] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (((t4 ? t17.yx : t17) + 0.25) / t5), level(0.0)).xyz;
+  float2 t18 = (t3 + float2(1.0, 2.0));
+  tile[2][t8] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (((t4 ? t18.yx : t18) + 0.25) / t5), level(0.0)).xyz;
+  float2 t19 = (t3 + 2.0);
+  tile[2][t10] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (((t4 ? t19.yx : t19) + 0.25) / t5), level(0.0)).xyz;
+  float2 t20 = (t3 + float2(3.0, 2.0));
+  tile[2][t12] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (((t4 ? t20.yx : t20) + 0.25) / t5), level(0.0)).xyz;
+  float2 t21 = (t3 + float2(0.0, 3.0));
+  tile[3][t6] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (((t4 ? t21.yx : t21) + 0.25) / t5), level(0.0)).xyz;
+  float2 t22 = (t3 + float2(1.0, 3.0));
+  tile[3][t8] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (((t4 ? t22.yx : t22) + 0.25) / t5), level(0.0)).xyz;
+  float2 t23 = (t3 + float2(2.0, 3.0));
+  tile[3][t10] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (((t4 ? t23.yx : t23) + 0.25) / t5), level(0.0)).xyz;
+  float2 t24 = (t3 + 3.0);
+  tile[3][t12] = cs_inp_tex.sample(_mtlsmp_cs_inp_tex, (((t4 ? t24.yx : t24) + 0.25) / t5), level(0.0)).xyz;
   threadgroup_barrier(mem_flags::mem_threadgroup);
-  r_2 = 0;
-  while (true) {
-    int c_40 = 0;
-    if ((r_2 >= 4)) {
-      break;
-    };
-    c_40 = 0;
-    while (true) {
-      int2 write_index_41 = 0;
-      if ((c_40 >= 4)) {
-        break;
-      };
-      int2 tmpvar_42 = 0;
-      tmpvar_42.x = c_40;
-      tmpvar_42.y = r_2;
-      int2 tmpvar_43 = 0;
-      tmpvar_43 = (tmpvar_7 + tmpvar_42);
-      write_index_41 = tmpvar_43;
-      if ((int(_mtl_buffer1.flip) != 0)) {
-        write_index_41 = tmpvar_43.yx;
-      };
-      int tmpvar_44 = 0;
-      tmpvar_44 = ((4 * int(gl_LocalInvocationID.x)) + c_40);
-      bool tmpvar_45 = false;
-      if (((tmpvar_44 >= int(tmpvar_3)) && (tmpvar_44 < (128 - 
-        int(tmpvar_3)
-      )))) {
-        tmpvar_45 = all((write_index_41 < tmpvar_4) == bool2(1, 1));
-      } else {
-        tmpvar_45 = bool(0);
-      };
-      if (tmpvar_45) {
-        int f_46 = 0;
-        float3 acc_47 = 0;
-        acc_47 = float3(0.0, 0.0, 0.0);
-        f_46 = 0;
-        while (true) {
-          if ((f_46 >= int(_mtl_buffer1.filter_dim))) {
-            break;
-          };
-          int tmpvar_48 = 0;
-          tmpvar_48 = ((tmpvar_44 + f_46) - int(tmpvar_3));
-          acc_47 = (acc_47 + ((1.0/(
-            float(int(_mtl_buffer1.filter_dim))
-          )) * tile_1[r_2][tmpvar_48]));
-          f_46++;
-        };
-        float4 tmpvar_49 = 0;
-        tmpvar_49.w = 1.0;
-        tmpvar_49.xyz = acc_47;
-        cs_outp_tex.write(float4(tmpvar_49), uint2(write_index_41));
-      };
-      c_40++;
-    };
-    r_2++;
-  };
+  int2 t25 = int2(t3);
+  for (r3 = 0; (r3 < 4); r3++) {
+    for (r2 = 0; (r2 < 4); r2++) {
+      int2 t26 = (t25 + int2(r2, r3));
+      int2 t27 = (t4 ? t26.yx : t26);
+      int t28 = (t6 + r2);
+      if ((((t28 >= int(t2)) && (t28 < (128 - int(t2)))) && all((t27 < t1) == bool2(true)))) {
+        r0 = 0;
+        r1 = float3(0.0);
+        for (; (r0 < t0); r0++) {
+          r1 = (r1 + ((1.0 / float(t0)) * tile[r3][((t28 + r0) - int(t2))]));
+        }
+        cs_outp_tex.write(float4(r1.x, r1.y, r1.z, 1.0), uint2(int4(t27, 0, 0).xy));
+      }
+    }
+  }
 }
 
-
-// stats: 169 alu 18 tex 25 flow
+// stats: 102 alu 18 tex 7 flow
 // workgroup size: 32 1 1
 // buffer #0: cs_params layout std140 binding 0 (size: 16) metal 1
 //  member #0: int filter_dim offset 0

@@ -1,12 +1,13 @@
 #version 300 es
+precision highp float;
+precision highp int;
 uniform mediump sampler3D tex;
 in mediump vec3 uv;
 out mediump vec4 _fragColor;
 void main ()
 {
-  _fragColor = texture (tex, uv);
+  _fragColor = texture(tex, uv);
 }
-
 
 // stats: 0 alu 1 tex 0 flow
 // inputs: 1

@@ -1,12 +1,14 @@
 #version 320 es
+precision highp float;
+precision highp int;
 layout(early_fragment_tests) in;
 struct NodeType {
   highp vec4 color;
   highp float depth;
   highp uint next;
 };
-layout(std430, column_major, binding=0) buffer linkedLists {
-  layout(column_major) NodeType nodes[];
+layout(std430, binding = 0) buffer linkedLists {
+  NodeType nodes[];
 };
 in highp vec3 Position;
 in highp vec3 Normal;
@@ -14,29 +16,24 @@ uniform highp vec4 LightPosition;
 uniform highp vec3 LightIntensity;
 uniform highp vec4 Kd;
 uniform highp vec4 Ka;
-layout(r32ui, binding=0) uniform highp uimage2D headPointers;
-layout(binding=0, offset=0) uniform highp atomic_uint nextNodeCounter;
+layout(r32ui, binding = 0) uniform highp uimage2D headPointers;
+layout(binding = 0, offset = 0) uniform atomic_uint nextNodeCounter;
 uniform highp uint MaxNodes;
 void main ()
 {
-  highp uint tmpvar_1;
-  tmpvar_1 = atomicCounterIncrement (nextNodeCounter);
-  if ((tmpvar_1 < MaxNodes)) {
-    highp uint tmpvar_2;
-    tmpvar_2 = imageAtomicExchange (headPointers, ivec2(gl_FragCoord.xy), tmpvar_1);
-    highp vec4 tmpvar_3;
-    tmpvar_3.xyz = (LightIntensity * (Ka.xyz + (Kd.xyz * 
-      max (dot (normalize((LightPosition.xyz - Position)), normalize(Normal)), 0.0)
-    )));
-    tmpvar_3.w = Kd.w;
-    nodes[tmpvar_1].color = tmpvar_3;
-    nodes[tmpvar_1].depth = gl_FragCoord.z;
-    nodes[tmpvar_1].next = tmpvar_2;
-  };
+  highp uint t0 = atomicCounterIncrement(nextNodeCounter);
+  if ((t0 < MaxNodes)) {
+    highp ivec2 t1 = ivec2(gl_FragCoord.xy);
+    highp uint t2 = imageAtomicExchange(headPointers, ivec4(t1, 0, 0).xy, t0);
+    highp vec3 t3 = (LightPosition.xyz - Position);
+    highp vec3 t4 = (LightIntensity * (Ka.xyz + (Kd.xyz * max(dot(normalize(t3), normalize(Normal)), 0.0))));
+    nodes[int(t0)].color = vec4(t4, Kd.w);
+    nodes[int(t0)].depth = gl_FragCoord.z;
+    nodes[int(t0)].next = t2;
+  }
 }
 
-
-// stats: 10 alu 1 tex 1 flow
+// stats: 14 alu 1 tex 1 flow
 // inputs: 3
 //  #0: gl_FragCoord (high float) 4x1 [-1] loc 0
 //  #1: Position (high float) 3x1 [-1]

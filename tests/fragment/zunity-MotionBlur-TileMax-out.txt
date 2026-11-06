@@ -3,98 +3,32 @@ uniform vec4 _MainTex_TexelSize;
 varying vec2 xlv_TEXCOORD0;
 void main ()
 {
-  vec2 mx_2;
-  mx_2 = texture2D (_MainTex, xlv_TEXCOORD0).xy;
-  for (int j_1 = 0; j_1 < 8; j_1++) {
-    vec2 tmpvar_3;
-    tmpvar_3.x = 0.0;
-    tmpvar_3.y = float(j_1);
-    vec2 tmpvar_4;
-    tmpvar_4 = texture2D (_MainTex, (xlv_TEXCOORD0 + (tmpvar_3 * _MainTex_TexelSize.xy))).xy;
-    mx_2 = mix (mx_2, tmpvar_4, vec2(float((
-      dot (tmpvar_4, tmpvar_4)
-     >= 
-      dot (mx_2, mx_2)
-    ))));
-    vec2 tmpvar_5;
-    tmpvar_5.x = 1.0;
-    tmpvar_5.y = float(j_1);
-    vec2 tmpvar_6;
-    tmpvar_6 = texture2D (_MainTex, (xlv_TEXCOORD0 + (tmpvar_5 * _MainTex_TexelSize.xy))).xy;
-    mx_2 = mix (mx_2, tmpvar_6, vec2(float((
-      dot (tmpvar_6, tmpvar_6)
-     >= 
-      dot (mx_2, mx_2)
-    ))));
-    vec2 tmpvar_7;
-    tmpvar_7.x = 2.0;
-    tmpvar_7.y = float(j_1);
-    vec2 tmpvar_8;
-    tmpvar_8 = texture2D (_MainTex, (xlv_TEXCOORD0 + (tmpvar_7 * _MainTex_TexelSize.xy))).xy;
-    mx_2 = mix (mx_2, tmpvar_8, vec2(float((
-      dot (tmpvar_8, tmpvar_8)
-     >= 
-      dot (mx_2, mx_2)
-    ))));
-    vec2 tmpvar_9;
-    tmpvar_9.x = 3.0;
-    tmpvar_9.y = float(j_1);
-    vec2 tmpvar_10;
-    tmpvar_10 = texture2D (_MainTex, (xlv_TEXCOORD0 + (tmpvar_9 * _MainTex_TexelSize.xy))).xy;
-    mx_2 = mix (mx_2, tmpvar_10, vec2(float((
-      dot (tmpvar_10, tmpvar_10)
-     >= 
-      dot (mx_2, mx_2)
-    ))));
-    vec2 tmpvar_11;
-    tmpvar_11.x = 4.0;
-    tmpvar_11.y = float(j_1);
-    vec2 tmpvar_12;
-    tmpvar_12 = texture2D (_MainTex, (xlv_TEXCOORD0 + (tmpvar_11 * _MainTex_TexelSize.xy))).xy;
-    mx_2 = mix (mx_2, tmpvar_12, vec2(float((
-      dot (tmpvar_12, tmpvar_12)
-     >= 
-      dot (mx_2, mx_2)
-    ))));
-    vec2 tmpvar_13;
-    tmpvar_13.x = 5.0;
-    tmpvar_13.y = float(j_1);
-    vec2 tmpvar_14;
-    tmpvar_14 = texture2D (_MainTex, (xlv_TEXCOORD0 + (tmpvar_13 * _MainTex_TexelSize.xy))).xy;
-    mx_2 = mix (mx_2, tmpvar_14, vec2(float((
-      dot (tmpvar_14, tmpvar_14)
-     >= 
-      dot (mx_2, mx_2)
-    ))));
-    vec2 tmpvar_15;
-    tmpvar_15.x = 6.0;
-    tmpvar_15.y = float(j_1);
-    vec2 tmpvar_16;
-    tmpvar_16 = texture2D (_MainTex, (xlv_TEXCOORD0 + (tmpvar_15 * _MainTex_TexelSize.xy))).xy;
-    mx_2 = mix (mx_2, tmpvar_16, vec2(float((
-      dot (tmpvar_16, tmpvar_16)
-     >= 
-      dot (mx_2, mx_2)
-    ))));
-    vec2 tmpvar_17;
-    tmpvar_17.x = 7.0;
-    tmpvar_17.y = float(j_1);
-    vec2 tmpvar_18;
-    tmpvar_18 = texture2D (_MainTex, (xlv_TEXCOORD0 + (tmpvar_17 * _MainTex_TexelSize.xy))).xy;
-    mx_2 = mix (mx_2, tmpvar_18, vec2(float((
-      dot (tmpvar_18, tmpvar_18)
-     >= 
-      dot (mx_2, mx_2)
-    ))));
-  };
-  vec4 tmpvar_19;
-  tmpvar_19.zw = vec2(0.0, 0.0);
-  tmpvar_19.xy = mx_2;
-  gl_FragData[0] = tmpvar_19;
+  int r0;
+  vec2 r1;
+  r1 = texture2D(_MainTex, xlv_TEXCOORD0).xy;
+  for (r0 = 0; (r0 < 8); r0++) {
+    float t0 = float(r0);
+    vec4 t1 = texture2D(_MainTex, (xlv_TEXCOORD0 + (vec2(0.0, t0) * _MainTex_TexelSize.xy)));
+    vec2 t2 = mix(r1, t1.xy, vec2(step(dot(r1, r1), dot(t1.xy, t1.xy))));
+    vec4 t3 = texture2D(_MainTex, (xlv_TEXCOORD0 + (vec2(1.0, t0) * _MainTex_TexelSize.xy)));
+    vec2 t4 = mix(t2, t3.xy, vec2(step(dot(t2, t2), dot(t3.xy, t3.xy))));
+    vec4 t5 = texture2D(_MainTex, (xlv_TEXCOORD0 + (vec2(2.0, t0) * _MainTex_TexelSize.xy)));
+    vec2 t6 = mix(t4, t5.xy, vec2(step(dot(t4, t4), dot(t5.xy, t5.xy))));
+    vec4 t7 = texture2D(_MainTex, (xlv_TEXCOORD0 + (vec2(3.0, t0) * _MainTex_TexelSize.xy)));
+    vec2 t8 = mix(t6, t7.xy, vec2(step(dot(t6, t6), dot(t7.xy, t7.xy))));
+    vec4 t9 = texture2D(_MainTex, (xlv_TEXCOORD0 + (vec2(4.0, t0) * _MainTex_TexelSize.xy)));
+    vec2 t10 = mix(t8, t9.xy, vec2(step(dot(t8, t8), dot(t9.xy, t9.xy))));
+    vec4 t11 = texture2D(_MainTex, (xlv_TEXCOORD0 + (vec2(5.0, t0) * _MainTex_TexelSize.xy)));
+    vec2 t12 = mix(t10, t11.xy, vec2(step(dot(t10, t10), dot(t11.xy, t11.xy))));
+    vec4 t13 = texture2D(_MainTex, (xlv_TEXCOORD0 + (vec2(6.0, t0) * _MainTex_TexelSize.xy)));
+    vec2 t14 = mix(t12, t13.xy, vec2(step(dot(t12, t12), dot(t13.xy, t13.xy))));
+    vec4 t15 = texture2D(_MainTex, (xlv_TEXCOORD0 + (vec2(7.0, t0) * _MainTex_TexelSize.xy)));
+    r1 = mix(t14, t15.xy, vec2(step(dot(t14, t14), dot(t15.xy, t15.xy))));
+  }
+  gl_FragData[0] = vec4(r1.x, r1.y, 0.0, 0.0);
 }
 
-
-// stats: 76 alu 9 tex 2 flow
+// stats: 59 alu 9 tex 2 flow
 // inputs: 1
 //  #0: xlv_TEXCOORD0 (high float) 2x1 [-1]
 // uniforms: 1 (total size: 0)

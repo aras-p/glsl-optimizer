@@ -22,166 +22,70 @@ varying vec3 xlv_COLOR;
 varying vec2 xlv_TEXCOORD2;
 void main ()
 {
-  vec3 worldVert_1;
-  worldVert_1 = (_Object2World * gl_Vertex).xyz;
-  mat3 tmpvar_2;
-  tmpvar_2[0] = _Object2World[0].xyz;
-  tmpvar_2[1] = _Object2World[1].xyz;
-  tmpvar_2[2] = _Object2World[2].xyz;
-  vec3 tmpvar_3;
-  tmpvar_3 = normalize((tmpvar_2 * gl_Normal));
-  vec4 nn_4;
-  vec4 tmpvar_5;
-  tmpvar_5 = ((gl_MultiTexCoord1.xyxy * vec4(2.0, 2.0, 0.0, 0.0)) + vec4(-1.0, -1.0, 1.01, -1.0));
-  nn_4.w = tmpvar_5.w;
-  float tmpvar_6;
-  tmpvar_6 = dot (tmpvar_5.xyz, -(tmpvar_5.xyw));
-  nn_4.z = tmpvar_6;
-  nn_4.xy = (tmpvar_5.xy * sqrt(tmpvar_6));
-  vec3 tmpvar_7;
-  vec3 tmpvar_8;
-  tmpvar_8 = (gl_Color.xyz * 3.0);
-  tmpvar_7 = (tmpvar_8 * tmpvar_8);
-  ivec4 tmpvar_9;
-  tmpvar_9 = ivec4((texture2DLod (GridLightTexture, clamp (
-    ((worldVert_1 - GridLightTextureStartCell) * GridLightTextureCellSize)
-  .xz, IngameGridLimit.xy, IngameGridLimit.zw), 0.0) * 255.0));
-  vec4 tmpvar_10;
-  vec4 tmpvar_11;
-  vec4 tmpvar_12;
-  vec4 tmpvar_13;
-  vec4 tmpvar_14;
-  vec4 tmpvar_15;
-  vec4 tmpvar_16;
-  vec4 tmpvar_17;
-  tmpvar_10 = LightPos[tmpvar_9.x];
-  tmpvar_11 = LightCol[tmpvar_9.x];
-  tmpvar_12 = LightPos[tmpvar_9.y];
-  tmpvar_13 = LightCol[tmpvar_9.y];
-  tmpvar_14 = LightPos[tmpvar_9.z];
-  tmpvar_15 = LightCol[tmpvar_9.z];
-  tmpvar_16 = LightPos[tmpvar_9.w];
-  tmpvar_17 = LightCol[tmpvar_9.w];
-  vec3 tmpvar_18;
-  vec4 atten_19;
-  float wAgg_20;
-  vec3 lAgg_21;
-  vec3 tmpvar_22;
-  tmpvar_22 = (tmpvar_10.xyz - worldVert_1);
-  float tmpvar_23;
-  tmpvar_23 = dot (tmpvar_22, tmpvar_22);
-  vec3 tmpvar_24;
-  tmpvar_24 = (tmpvar_22 * inversesqrt(tmpvar_23));
-  atten_19[0] = max ((1.0 - (
-    (tmpvar_23 * tmpvar_10.w)
-   * 0.8)), 0.0);
-  atten_19[0] = (atten_19[0] * atten_19[0]);
-  float tmpvar_25;
-  tmpvar_25 = ((atten_19[0] * tmpvar_11.w) * max (dot (tmpvar_24, tmpvar_3), 0.05));
-  lAgg_21 = (tmpvar_25 * tmpvar_24);
-  wAgg_20 = (0.001 + tmpvar_25);
-  vec3 tmpvar_26;
-  tmpvar_26 = (tmpvar_12.xyz - worldVert_1);
-  float tmpvar_27;
-  tmpvar_27 = dot (tmpvar_26, tmpvar_26);
-  vec3 tmpvar_28;
-  tmpvar_28 = (tmpvar_26 * inversesqrt(tmpvar_27));
-  atten_19[1] = max ((1.0 - (
-    (tmpvar_27 * tmpvar_12.w)
-   * 0.8)), 0.0);
-  atten_19[1] = (atten_19[1] * atten_19[1]);
-  float tmpvar_29;
-  tmpvar_29 = ((atten_19[1] * tmpvar_13.w) * max (dot (tmpvar_28, tmpvar_3), 0.05));
-  lAgg_21 = (lAgg_21 + (tmpvar_29 * tmpvar_28));
-  wAgg_20 = (wAgg_20 + tmpvar_29);
-  vec3 tmpvar_30;
-  tmpvar_30 = (tmpvar_14.xyz - worldVert_1);
-  float tmpvar_31;
-  tmpvar_31 = dot (tmpvar_30, tmpvar_30);
-  vec3 tmpvar_32;
-  tmpvar_32 = (tmpvar_30 * inversesqrt(tmpvar_31));
-  atten_19[2] = max ((1.0 - (
-    (tmpvar_31 * tmpvar_14.w)
-   * 0.8)), 0.0);
-  atten_19[2] = (atten_19[2] * atten_19[2]);
-  float tmpvar_33;
-  tmpvar_33 = ((atten_19[2] * tmpvar_15.w) * max (dot (tmpvar_32, tmpvar_3), 0.05));
-  lAgg_21 = (lAgg_21 + (tmpvar_33 * tmpvar_32));
-  wAgg_20 = (wAgg_20 + tmpvar_33);
-  vec3 tmpvar_34;
-  tmpvar_34 = (tmpvar_16.xyz - worldVert_1);
-  float tmpvar_35;
-  tmpvar_35 = dot (tmpvar_34, tmpvar_34);
-  vec3 tmpvar_36;
-  tmpvar_36 = (tmpvar_34 * inversesqrt(tmpvar_35));
-  atten_19[3] = max ((1.0 - (
-    (tmpvar_35 * tmpvar_16.w)
-   * 0.8)), 0.0);
-  atten_19[3] = (atten_19[3] * atten_19[3]);
-  float tmpvar_37;
-  tmpvar_37 = ((atten_19[3] * tmpvar_17.w) * max (dot (tmpvar_36, tmpvar_3), 0.05));
-  lAgg_21 = (lAgg_21 + (tmpvar_37 * tmpvar_36));
-  wAgg_20 = (wAgg_20 + tmpvar_37);
-  float tmpvar_38;
-  tmpvar_38 = (dot (tmpvar_7, vec3(0.22, 0.707, 0.071)) * 2.0);
-  lAgg_21 = (lAgg_21 + ((
-    ((nn_4.xyz * 2.0) + vec3(0.0, 0.0, -1.0))
-   * 
-    (gl_Color.w * 2.0)
-  ) * tmpvar_38));
-  wAgg_20 = (wAgg_20 + tmpvar_38);
-  tmpvar_18 = (tmpvar_7 + (tmpvar_11.xyz * atten_19[0]));
-  tmpvar_18 = (tmpvar_18 + (tmpvar_13.xyz * atten_19[1]));
-  tmpvar_18 = (tmpvar_18 + (tmpvar_15.xyz * atten_19[2]));
-  tmpvar_18 = (tmpvar_18 + (tmpvar_17.xyz * atten_19[3]));
-  vec3 tmpvar_39;
-  tmpvar_39 = (tmpvar_18 * 0.25);
-  vec3 tmpvar_40;
-  vec3 tmpvar_41;
-  tmpvar_41 = (_Tonemap_blackLevel * 0.25);
-  tmpvar_40 = max ((tmpvar_39 - tmpvar_41), vec3(0.0, 0.0, 0.0));
-  tmpvar_39 = ((tmpvar_40 * (
-    (_Tonemap_colorScale1 * tmpvar_40)
-   + _Tonemap_heel)) / ((tmpvar_40 * 
-    ((_Tonemap_colorScale2 * tmpvar_40) + _Tonemap_shoulder)
-  ) + _Tonemap_toeLength));
-  vec3 tmpvar_42;
-  tmpvar_42 = ((_HybridSunCol.xyz * dot (tmpvar_3, _HybridSunDir)) * 0.25);
-  vec3 tmpvar_43;
-  tmpvar_43 = max ((tmpvar_42 - tmpvar_41), vec3(0.0, 0.0, 0.0));
-  tmpvar_42 = ((tmpvar_43 * (
-    (_Tonemap_colorScale1 * tmpvar_43)
-   + _Tonemap_heel)) / ((tmpvar_43 * 
-    ((_Tonemap_colorScale2 * tmpvar_43) + _Tonemap_shoulder)
-  ) + _Tonemap_toeLength));
-  vec3 tmpvar_44;
-  tmpvar_44 = (((gl_Normal.yzx * TANGENT.zxy) - (gl_Normal.zxy * TANGENT.yzx)) * TANGENT.w);
-  mat3 tmpvar_45;
-  tmpvar_45[0].x = TANGENT.xyz[0];
-  tmpvar_45[0].y = tmpvar_44[0];
-  tmpvar_45[0].z = gl_Normal[0];
-  tmpvar_45[1].x = TANGENT.xyz[1];
-  tmpvar_45[1].y = tmpvar_44[1];
-  tmpvar_45[1].z = gl_Normal[1];
-  tmpvar_45[2].x = TANGENT.xyz[2];
-  tmpvar_45[2].y = tmpvar_44[2];
-  tmpvar_45[2].z = gl_Normal[2];
-  mat3 tmpvar_46;
-  tmpvar_46[0] = _World2Object[0].xyz;
-  tmpvar_46[1] = _World2Object[1].xyz;
-  tmpvar_46[2] = _World2Object[2].xyz;
+  vec4 t0 = (_Object2World * gl_Vertex);
+  vec3 t1 = (mat3(_Object2World[0].xyz, _Object2World[1].xyz, _Object2World[2].xyz) * gl_Normal);
+  vec3 t2 = normalize(t1);
+  vec4 t3 = ((gl_MultiTexCoord1.xyxy * vec4(2.0, 2.0, 0.0, 0.0)) + vec4(-1.0, -1.0, 1.01, -1.0));
+  float t4 = dot(t3.xyz, (-t3.xyw));
+  vec2 t5 = (t3.xy * sqrt(t4));
+  vec4 t6 = (texture2DLod(GridLightTexture, min(max(((t0.xyz - GridLightTextureStartCell) * GridLightTextureCellSize).xz, IngameGridLimit.xy), IngameGridLimit.zw), 0.0) * 255.0);
+  ivec4 t7 = ivec4(t6);
+  int t8 = t7.x;
+  vec4 t9 = LightPos[t8];
+  vec4 t10 = LightCol[t8];
+  int t11 = t7.y;
+  vec4 t12 = LightPos[t11];
+  vec4 t13 = LightCol[t11];
+  int t14 = t7.z;
+  vec4 t15 = LightPos[t14];
+  vec4 t16 = LightCol[t14];
+  int t17 = t7.w;
+  vec4 t18 = LightPos[t17];
+  vec4 t19 = LightCol[t17];
+  vec3 t20 = (t9.xyz - t0.xyz);
+  float t21 = dot(t20, t20);
+  vec3 t22 = (t20 * inversesqrt(t21));
+  float t23 = max((1.0 - ((t21 * 0.8) * t9.w)), 0.0);
+  float t24 = (t23 * t23);
+  float t25 = ((t24 * t10.w) * max(dot(t22, t2), 0.05));
+  vec3 t26 = (t12.xyz - t0.xyz);
+  float t27 = dot(t26, t26);
+  vec3 t28 = (t26 * inversesqrt(t27));
+  vec4 t29 = vec4((false ? max((1.0 - ((t27 * 0.8) * t12.w)), 0.0) : t24), (true ? max((1.0 - ((t27 * 0.8) * t12.w)), 0.0) : t24), (false ? max((1.0 - ((t27 * 0.8) * t12.w)), 0.0) : t24), (false ? max((1.0 - ((t27 * 0.8) * t12.w)), 0.0) : t24));
+  vec4 t30 = vec4((false ? (t29.y * t29.y) : t24), (true ? (t29.y * t29.y) : t24), (false ? (t29.y * t29.y) : t24), (false ? (t29.y * t29.y) : t24));
+  float t31 = ((t30.y * t13.w) * max(dot(t28, t2), 0.05));
+  vec3 t32 = (t15.xyz - t0.xyz);
+  float t33 = dot(t32, t32);
+  vec3 t34 = (t32 * inversesqrt(t33));
+  vec4 t35 = vec4((false ? max((1.0 - ((t33 * 0.8) * t15.w)), 0.0) : t30.x), (false ? max((1.0 - ((t33 * 0.8) * t15.w)), 0.0) : t30.y), (true ? max((1.0 - ((t33 * 0.8) * t15.w)), 0.0) : t30.z), (false ? max((1.0 - ((t33 * 0.8) * t15.w)), 0.0) : t30.w));
+  vec4 t36 = vec4((false ? (t35.z * t35.z) : t30.x), (false ? (t35.z * t35.z) : t30.y), (true ? (t35.z * t35.z) : t30.z), (false ? (t35.z * t35.z) : t30.w));
+  float t37 = ((t36.z * t16.w) * max(dot(t34, t2), 0.05));
+  vec3 t38 = (t18.xyz - t0.xyz);
+  float t39 = dot(t38, t38);
+  vec3 t40 = (t38 * inversesqrt(t39));
+  vec4 t41 = vec4((false ? max((1.0 - ((t39 * 0.8) * t18.w)), 0.0) : t36.x), (false ? max((1.0 - ((t39 * 0.8) * t18.w)), 0.0) : t36.y), (false ? max((1.0 - ((t39 * 0.8) * t18.w)), 0.0) : t36.z), (true ? max((1.0 - ((t39 * 0.8) * t18.w)), 0.0) : t36.w));
+  vec4 t42 = vec4((false ? (t41.w * t41.w) : t36.x), (false ? (t41.w * t41.w) : t36.y), (false ? (t41.w * t41.w) : t36.z), (true ? (t41.w * t41.w) : t36.w));
+  float t43 = ((t42.w * t19.w) * max(dot(t40, t2), 0.05));
+  vec3 t44 = (gl_Color.xyz * 3.0);
+  vec3 t45 = (t44 * t44);
+  float t46 = (dot(t45, vec3(0.22, 0.707, 0.071)) * 2.0);
+  vec3 t47 = ((((((t25 * t22) + (t31 * t28)) + (t37 * t34)) + (t43 * t40)) + ((((vec3(t5, t4) * 2.0) + vec3(0.0, 0.0, -1.0)) * (gl_Color.w * 2.0)) * t46)) / (((((0.001 + t25) + t31) + t37) + t43) + t46));
+  vec3 t48 = (_Tonemap_blackLevel * 0.25);
+  vec3 t49 = max(((((((t45 + (t10.xyz * t42.x)) + (t13.xyz * t42.y)) + (t16.xyz * t42.z)) + (t19.xyz * t42.w)) * 0.25) - t48), vec3(0.0));
+  vec3 t50 = max((((_HybridSunCol.xyz * 0.25) * dot(t2, _HybridSunDir)) - t48), vec3(0.0));
+  vec3 t51 = (((gl_Normal.yzx * TANGENT.zxy) - (gl_Normal.zxy * TANGENT.yzx)) * TANGENT.w);
+  vec3 t52 = (mat3(_World2Object[0].xyz, _World2Object[1].xyz, _World2Object[2].xyz) * t47);
   gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex);
-  xlv_TEXCOORD0 = (tmpvar_45 * (tmpvar_46 * (lAgg_21 / wAgg_20)));
-  xlv_TEXCOORD1 = (tmpvar_39 * 4.0);
-  xlv_COLOR = (tmpvar_42 * 4.0);
+  xlv_TEXCOORD0 = (mat3(vec3(TANGENT.x, t51.x, gl_Normal.x), vec3(TANGENT.y, t51.y, gl_Normal.y), vec3(TANGENT.z, t51.z, gl_Normal.z)) * t52);
+  xlv_TEXCOORD1 = (((t49 * ((_Tonemap_colorScale1 * t49) + _Tonemap_heel)) / ((t49 * ((_Tonemap_colorScale2 * t49) + _Tonemap_shoulder)) + _Tonemap_toeLength)) * 4.0);
+  xlv_COLOR = (((t50 * ((_Tonemap_colorScale1 * t50) + _Tonemap_heel)) / ((t50 * ((_Tonemap_colorScale2 * t50) + _Tonemap_shoulder)) + _Tonemap_toeLength)) * 4.0);
   xlv_TEXCOORD2 = ((gl_MultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
 }
 
-
-// stats: 134 alu 1 tex 0 flow
+// stats: 166 alu 1 tex 0 flow
 // inputs: 6
-//  #0: gl_MultiTexCoord1 (high float) 4x1 [-1] loc 8
-//  #1: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 7
+//  #0: gl_MultiTexCoord1 (high float) 4x1 [-1] loc 7
+//  #1: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 6
 //  #2: gl_Color (high float) 4x1 [-1] loc 2
 //  #3: gl_Normal (high float) 3x1 [-1] loc 1
 //  #4: gl_Vertex (high float) 4x1 [-1] loc 0

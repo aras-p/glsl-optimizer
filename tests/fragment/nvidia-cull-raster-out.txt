@@ -1,9 +1,9 @@
 #version 450
 layout(early_fragment_tests) in;
-layout(location=0) in Interpolant {
+layout(location = 0) in Interpolant {
   flat int f_objectID;
 } IN;
-layout(std430, column_major, binding=0) buffer visibleBuffer {
+layout(std430, binding = 0) buffer visibleBuffer {
   int visibles[];
 };
 void main ()
@@ -11,8 +11,7 @@ void main ()
   visibles[IN.f_objectID] = 1;
 }
 
-
-// stats: 1 alu 0 tex 0 flow
+// stats: 0 alu 0 tex 0 flow
 // inputs: 1
 //  #0: IN (high other) 0x0 [-1] loc 0
 // buffer #0: visibleBuffer storage layout std430 binding 0 (size: unknown)

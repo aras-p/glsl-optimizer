@@ -7,7 +7,10 @@ struct xlatMtlShaderInput {
   float3 xlv_TEXCOORD2;
 };
 struct xlatMtlShaderOutput {
-  half4 _glesFragData_0 [[color(0)]];
+  half4 _xlat_varying0 [[color(0)]];
+  half4 _xlat_varying1 [[color(1)]];
+  half4 _xlat_varying2 [[color(2)]];
+  half4 _xlat_varying3 [[color(3)]];
 };
 struct xlatMtlShaderUniform {
   float4 _WorldSpaceLightPos0;
@@ -20,31 +23,21 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   , texture2d<half> _MainTex [[texture(2)]], sampler _mtlsmp__MainTex [[sampler(2)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half4 c_1 = 0;
-  half4 lightCoord_2 = 0;
-  half4 tmpvar_3 = 0;
-  tmpvar_3 = _MainTex.sample(_mtlsmp__MainTex, (float2)((_mtl_i.xlv_TEXCOORD0)));
-  float4 tmpvar_4 = 0;
-  tmpvar_4.w = 1.0;
-  tmpvar_4.xyz = _mtl_i.xlv_TEXCOORD2;
-  lightCoord_2 = half4(((float4)(_mtl_u._LightMatrix0 * (half4)(tmpvar_4))));
-  half3 tmpvar_5 = 0;
-  tmpvar_5 = half3(normalize((_mtl_u._WorldSpaceLightPos0.xyz - _mtl_i.xlv_TEXCOORD2)));
-  half4 c_6 = 0;
-  c_6.xyz = ((tmpvar_3.xyz * _mtl_u._LightColor0.xyz) * ((
-    max ((half)0.0, dot (_mtl_i.xlv_TEXCOORD1, tmpvar_5))
-   * 
-    ((half(((half)(0.0) < lightCoord_2.z)) * _LightTexture0.sample(_mtlsmp__LightTexture0, (float2)((((lightCoord_2.xy / lightCoord_2.w) + (half)(0.5))))).w) * _LightTextureB0.sample(_mtlsmp__LightTextureB0, (float2)((half2(dot (lightCoord_2.xyz, lightCoord_2.xyz))))).w)
-  ) * (half)(2.0)));
-  c_6.w = tmpvar_3.w;
-  c_1.xyz = c_6.xyz;
-  c_1.w = half(0.0);
-  _mtl_o._glesFragData_0 = c_1;
+  half4 _glesFragData[4];
+  float3 t0 = (_mtl_u._WorldSpaceLightPos0.xyz - _mtl_i.xlv_TEXCOORD2);
+  half4 t1 = half4(float4((_mtl_u._LightMatrix0 * half4(half3(_mtl_i.xlv_TEXCOORD2), 1.0))));
+  half t2 = (select(half(0.0), _LightTexture0.sample(_mtlsmp__LightTexture0, float2(((t1.xy / t1.w) + half(0.5)))).w, (half(0.0) < t1.z)) * _LightTextureB0.sample(_mtlsmp__LightTextureB0, float2(half2(dot(t1.xyz, t1.xyz)))).w);
+  half3 t3 = half3(normalize(t0));
+  half3 t4 = ((_MainTex.sample(_mtlsmp__MainTex, _mtl_i.xlv_TEXCOORD0).xyz * _mtl_u._LightColor0.xyz) * ((max(half(0.0), dot(_mtl_i.xlv_TEXCOORD1, t3)) * half(2.0)) * t2));
+  _glesFragData[0] = half4(t4, half(0.0));
+  _mtl_o._xlat_varying0 = _glesFragData[0];
+  _mtl_o._xlat_varying1 = _glesFragData[1];
+  _mtl_o._xlat_varying2 = _glesFragData[2];
+  _mtl_o._xlat_varying3 = _glesFragData[3];
   return _mtl_o;
 }
 
-
-// stats: 18 alu 3 tex 0 flow
+// stats: 22 alu 3 tex 0 flow
 // inputs: 3
 //  #0: xlv_TEXCOORD0 (high float) 2x1 [-1]
 //  #1: xlv_TEXCOORD1 (medium float) 3x1 [-1]

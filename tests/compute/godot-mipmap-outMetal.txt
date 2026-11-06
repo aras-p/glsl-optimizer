@@ -1,56 +1,46 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
-struct alignas(16) _xlat_buf_storage0 {
-  alignas(16) int4 section;
-  alignas(8) int2 target;
-  alignas(4) uint flags;
-  alignas(4) float luminance_multiplier;
-  alignas(4) float glow_strength;
-  alignas(4) float glow_bloom;
-  alignas(4) float glow_hdr_threshold;
-  alignas(4) float glow_hdr_scale;
-  alignas(4) float glow_exposure;
-  alignas(4) float glow_white;
-  alignas(4) float glow_luminance_cap;
-  alignas(4) float glow_auto_exposure_scale;
-  alignas(4) float camera_z_far;
-  alignas(4) float camera_z_near;
-  alignas(8) float2 octmap_border_size;
-  alignas(16) float4 set_color;
+struct _xlat_buf_Params_std140 {
+  int4 section;
+  int2 target;
+  uint flags;
+  float luminance_multiplier;
+  float glow_strength;
+  float glow_bloom;
+  float glow_hdr_threshold;
+  float glow_hdr_scale;
+  float glow_exposure;
+  float glow_white;
+  float glow_luminance_cap;
+  float glow_auto_exposure_scale;
+  float camera_z_far;
+  float camera_z_near;
+  float2 octmap_border_size;
+  float4 set_color;
 };
-static_assert(sizeof(_xlat_buf_storage0) == 96, "std140 size");
+static_assert(sizeof(_xlat_buf_Params_std140) == 96, "std140 size");
 struct xlatMtlShaderUniform {
 };
 // threadsPerThreadgroup: 8, 8, 1
 kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , constant _xlat_buf_storage0& _mtl_buffer1 [[buffer(1)]]
-  , uint3 gl_GlobalInvocationID [[thread_position_in_grid]]
+  , constant _xlat_buf_Params_std140& params [[buffer(1)]]
   , texture2d<float> source_color [[texture(0)]], sampler _mtlsmp_source_color [[sampler(0)]]
-  , texture2d<float, access::write> dest_buffer [[texture(1)]])
+  , texture2d<float, access::write> dest_buffer [[texture(1)]]
+  , uint3 gl_GlobalInvocationID [[thread_position_in_grid]])
 {
-  float4 color_1 = 0;
-  int2 tmpvar_2 = 0;
-  tmpvar_2 = int2(gl_GlobalInvocationID.xy);
-  if (any((tmpvar_2 >= int4(_mtl_buffer1.section).zw) != bool2(0, 0))) {
-    return;
-  };
-  int2 tmpvar_3 = 0;
-  tmpvar_3 = ((tmpvar_2 + int4(_mtl_buffer1.section).xy) << 1);
-  color_1 = (source_color.read(uint2(tmpvar_3), uint(0)) + source_color.read(uint2((tmpvar_3 + int2(0, 1))), uint(0)));
-  color_1 = (color_1 + source_color.read(uint2((tmpvar_3 + int2(1, 0))), uint(0)));
-  color_1 = (color_1 + source_color.read(uint2((tmpvar_3 + int2(1, 1))), uint(0)));
-  color_1 = (color_1 / 4.0);
-  float4 tmpvar_4 = 0;
-  tmpvar_4 = select(color_1, float4(100.0, 100.0, 100.0, 1.0), (abs(color_1) == float4((1.0/0.0), (1.0/0.0), (1.0/0.0), (1.0/0.0))));
-  float4 tmpvar_5 = 0;
-  tmpvar_5 = select(tmpvar_4, float4(100.0, 100.0, 100.0, 1.0), (tmpvar_4 != tmpvar_4));
-  color_1 = tmpvar_5;
-  dest_buffer.write(float4(tmpvar_5), uint2((tmpvar_2 + int2(_mtl_buffer1.target))));
+  int4 t0 = int4(params.section);
+  if ((!any((int2(gl_GlobalInvocationID.xy) >= t0.zw) != bool2(false)))) {
+    int2 t1 = ((int2(gl_GlobalInvocationID.xy) + t0.xy) << int(1u));
+    float4 t2 = (((source_color.read(uint2(t1), uint(0)) + source_color.read(uint2((int2(0, 1) + t1)), uint(0))) + source_color.read(uint2((int2(1, 0) + t1)), uint(0))) + source_color.read(uint2((1 + t1)), uint(0)));
+    float4 t3 = (t2 / 4.0);
+    float4 t4 = select(t3, float4(1e+02, 1e+02, 1e+02, 1.0), (abs(t3) == INFINITY));
+    int2 t5 = (int2(gl_GlobalInvocationID.xy) + int2(params.target));
+    dest_buffer.write(select(t4, float4(1e+02, 1e+02, 1e+02, 1.0), (t4 != t4)), uint2(int4(t5, 0, 0).xy));
+  }
 }
 
-
-// stats: 18 alu 5 tex 2 flow
+// stats: 18 alu 5 tex 1 flow
 // workgroup size: 8 8 1
 // buffer #0: Params instance params layout std140 binding 0 (size: 96) metal 1
 //  member #0: ivec4 section offset 0

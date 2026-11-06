@@ -2,39 +2,19 @@ uniform vec3 _TerrainTreeLightDirections[4];
 uniform float _TranslucencyViewDependency;
 void main ()
 {
-  vec3 o_backContrib_1;
-  vec3 o_nl_2;
-  vec3 tmpvar_3;
-  tmpvar_3 = _TerrainTreeLightDirections[0];
-  float tmpvar_4;
-  tmpvar_4 = dot (gl_Normal, tmpvar_3);
-  o_backContrib_1[0] = mix (-(tmpvar_4), dot (gl_Vertex.xyz, -(tmpvar_3)), _TranslucencyViewDependency);
-  o_nl_2[0] = max (0.0, ((tmpvar_4 * 0.6) + 0.4));
-  vec3 tmpvar_5;
-  tmpvar_5 = _TerrainTreeLightDirections[1];
-  float tmpvar_6;
-  tmpvar_6 = dot (gl_Normal, tmpvar_5);
-  o_backContrib_1[1] = mix (-(tmpvar_6), dot (gl_Vertex.xyz, -(tmpvar_5)), _TranslucencyViewDependency);
-  o_nl_2[1] = max (0.0, ((tmpvar_6 * 0.6) + 0.4));
-  vec3 tmpvar_7;
-  tmpvar_7 = _TerrainTreeLightDirections[2];
-  float tmpvar_8;
-  tmpvar_8 = dot (gl_Normal, tmpvar_7);
-  o_backContrib_1[2] = mix (-(tmpvar_8), dot (gl_Vertex.xyz, -(tmpvar_7)), _TranslucencyViewDependency);
-  o_nl_2[2] = max (0.0, ((tmpvar_8 * 0.6) + 0.4));
+  float t0 = dot(gl_Normal, _TerrainTreeLightDirections[0]);
+  float t1 = dot(gl_Normal, _TerrainTreeLightDirections[1]);
+  vec3 t2 = vec3((false ? mix((-t1), dot(gl_Vertex.xyz, (-_TerrainTreeLightDirections[1])), _TranslucencyViewDependency) : mix((-t0), dot(gl_Vertex.xyz, (-_TerrainTreeLightDirections[0])), _TranslucencyViewDependency)), (true ? mix((-t1), dot(gl_Vertex.xyz, (-_TerrainTreeLightDirections[1])), _TranslucencyViewDependency) : mix((-t0), dot(gl_Vertex.xyz, (-_TerrainTreeLightDirections[0])), _TranslucencyViewDependency)), (false ? mix((-t1), dot(gl_Vertex.xyz, (-_TerrainTreeLightDirections[1])), _TranslucencyViewDependency) : mix((-t0), dot(gl_Vertex.xyz, (-_TerrainTreeLightDirections[0])), _TranslucencyViewDependency)));
+  float t3 = dot(gl_Normal, _TerrainTreeLightDirections[2]);
+  vec3 t4 = vec3((false ? mix((-t3), dot(gl_Vertex.xyz, (-_TerrainTreeLightDirections[2])), _TranslucencyViewDependency) : t2.x), (false ? mix((-t3), dot(gl_Vertex.xyz, (-_TerrainTreeLightDirections[2])), _TranslucencyViewDependency) : t2.y), (true ? mix((-t3), dot(gl_Vertex.xyz, (-_TerrainTreeLightDirections[2])), _TranslucencyViewDependency) : t2.z));
+  vec3 t5 = vec3((false ? (t3 * 0.6) : vec3((false ? (t1 * 0.6) : (t0 * 0.6)), (true ? (t1 * 0.6) : (t0 * 0.6)), (false ? (t1 * 0.6) : (t0 * 0.6))).x), (false ? (t3 * 0.6) : vec3((false ? (t1 * 0.6) : (t0 * 0.6)), (true ? (t1 * 0.6) : (t0 * 0.6)), (false ? (t1 * 0.6) : (t0 * 0.6))).y), (true ? (t3 * 0.6) : vec3((false ? (t1 * 0.6) : (t0 * 0.6)), (true ? (t1 * 0.6) : (t0 * 0.6)), (false ? (t1 * 0.6) : (t0 * 0.6))).z));
   gl_Position = gl_Vertex;
-  vec4 tmpvar_9;
-  tmpvar_9.w = 0.0;
-  tmpvar_9.xyz = o_backContrib_1;
-  gl_TexCoord[2] = tmpvar_9;
-  vec4 tmpvar_10;
-  tmpvar_10.w = 0.0;
-  tmpvar_10.xyz = o_nl_2;
-  gl_TexCoord[3] = tmpvar_10;
+  gl_TexCoord[2] = vec4(t4, 0.0);
+  vec3 t6 = max(vec3(0.0), (0.4 + t5));
+  gl_TexCoord[3] = vec4(t6, 0.0);
 }
 
-
-// stats: 26 alu 0 tex 0 flow
+// stats: 24 alu 0 tex 0 flow
 // inputs: 2
 //  #0: gl_Normal (high float) 3x1 [-1] loc 1
 //  #1: gl_Vertex (high float) 4x1 [-1] loc 0

@@ -1,8 +1,9 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
-struct alignas(8) _xlat_buf_storage0_element { float2 value; };
-static_assert(sizeof(_xlat_buf_storage0_element) == 8, "array stride");
+struct _xlat_buf_Data_std430 {
+  float2 values[1];
+};
 struct xlatMtlShaderInput {
 };
 struct xlatMtlShaderOutput {
@@ -12,19 +13,15 @@ struct xlatMtlShaderUniform {
   int index;
 };
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , device uchar* _mtl_buffer1 [[buffer(1)]])
+  , device _xlat_buf_Data_std430& data [[buffer(1)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[_mtl_u.index].value.x = float(2.0);
-  float4 tmpvar_1 = 0;
-  tmpvar_1.zw = float2(0.0, 1.0);
-  tmpvar_1.xy = float2(reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[_mtl_u.index].value);
-  _mtl_o.color = tmpvar_1;
+  data.values[_mtl_u.index][0] = 2.0;
+  _mtl_o.color = float4(2.0, float2(data.values[_mtl_u.index]).y, 0.0, 1.0);
   return _mtl_o;
 }
 
-
-// stats: 2 alu 0 tex 0 flow
+// stats: 0 alu 0 tex 0 flow
 // uniforms: 1 (total size: 4)
 //  #0: index (high int) 1x1 [-1] loc 0
 // buffer #0: Data storage instance data layout packed (size: unknown) metal 1

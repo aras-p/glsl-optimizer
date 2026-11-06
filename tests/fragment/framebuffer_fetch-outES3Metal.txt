@@ -3,24 +3,27 @@
 using namespace metal;
 struct xlatMtlShaderInput {
   half4 xlv_TEXCOORD0;
-  half4 _glesFragData_0 [[color(0)]];
 };
 struct xlatMtlShaderOutput {
-  half4 _glesFragData_0 [[color(0)]];
+  half4 _xlat_varying0 [[color(0)]];
+  half4 _xlat_varying1 [[color(1)]];
+  half4 _xlat_varying2 [[color(2)]];
+  half4 _xlat_varying3 [[color(3)]];
 };
 struct xlatMtlShaderUniform {
 };
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half4 tmpvar_1 = 0;
-  tmpvar_1.w = _mtl_i._glesFragData_0.w;
-  tmpvar_1.xy = _mtl_i.xlv_TEXCOORD0.xy;
-  tmpvar_1.z = (_mtl_i._glesFragData_0.z * (half)(2.0));
-  _mtl_o._glesFragData_0 = tmpvar_1;
+  half4 _glesFragData[4];
+  half4 t0 = _glesFragData[0];
+  _glesFragData[0] = half4(_mtl_i.xlv_TEXCOORD0.xy, (t0.z * half(2.0)), t0.w);
+  _mtl_o._xlat_varying0 = _glesFragData[0];
+  _mtl_o._xlat_varying1 = _glesFragData[1];
+  _mtl_o._xlat_varying2 = _glesFragData[2];
+  _mtl_o._xlat_varying3 = _glesFragData[3];
   return _mtl_o;
 }
-
 
 // stats: 1 alu 0 tex 0 flow
 // inputs: 1

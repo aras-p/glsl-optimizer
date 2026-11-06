@@ -1,4 +1,6 @@
 #version 300 es
+precision highp float;
+precision highp int;
 out mediump vec4 _fragData;
 uniform mediump sampler2D _BumpMap;
 uniform mediump vec4 _LightColor0;
@@ -10,25 +12,13 @@ in mediump vec3 xlv_TEXCOORD2;
 in mediump vec3 xlv_TEXCOORD3;
 void main ()
 {
-  mediump vec4 c_1;
-  mediump vec4 tmpvar_2;
-  tmpvar_2 = texture (_MainTex, xlv_TEXCOORD0);
-  mediump vec3 tmpvar_3;
-  tmpvar_3 = ((texture (_BumpMap, xlv_TEXCOORD0).xyz * 2.0) - 1.0);
-  mediump vec4 c_4;
-  c_4.xyz = (((
-    (tmpvar_2.xyz * max (0.0, dot (tmpvar_3, xlv_TEXCOORD2)))
-   + 
-    (pow (max (0.0, dot (tmpvar_3, xlv_TEXCOORD1)), (_Shininess * 128.0)) * tmpvar_2.w)
-  ) * _LightColor0.xyz) * 2.0);
-  c_4.w = 0.0;
-  c_1.w = c_4.w;
-  c_1.xyz = (c_4.xyz + (tmpvar_2.xyz * xlv_TEXCOORD3));
-  _fragData = c_1;
+  mediump vec4 t0 = texture(_MainTex, xlv_TEXCOORD0);
+  mediump vec3 t1 = ((texture(_BumpMap, xlv_TEXCOORD0).xyz * 2.0) - 1.0);
+  mediump vec3 t2 = (((((t0.xyz * max(0.0, dot(t1, xlv_TEXCOORD2))) + (pow(max(0.0, dot(t1, xlv_TEXCOORD1)), (_Shininess * 128.0)) * t0.w)) * 2.0) * _LightColor0.xyz) + (t0.xyz * xlv_TEXCOORD3));
+  _fragData = vec4(t2, 0.0);
 }
 
-
-// stats: 16 alu 2 tex 0 flow
+// stats: 14 alu 2 tex 0 flow
 // inputs: 4
 //  #0: xlv_TEXCOORD0 (medium float) 2x1 [-1]
 //  #1: xlv_TEXCOORD1 (medium float) 3x1 [-1]

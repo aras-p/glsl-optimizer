@@ -1,9 +1,10 @@
 #version 300 es
+precision highp float;
+precision highp int;
 out mediump vec4 _fragData;
 void main ()
 {
-  _fragData = vec4(-0.3441301, 0.05004501, 0.0, 0.0);
+  _fragData = vec4(-0.3441301, 0.050045013, 0.0, 0.0);
 }
 
-
-// stats: 1 alu 0 tex 0 flow
+// stats: 0 alu 0 tex 0 flow

@@ -1,24 +1,19 @@
 #version 430
-layout(local_size_x=8) in;
-layout(std430, column_major) buffer Output {
+layout(local_size_x = 8) in;
+layout(std430) buffer Output {
   vec2 values[];
 } outputData;
 shared mat2 matrices[8];
 void main ()
 {
-  mat2 tmpvar_1;
-  vec4 tmpvar_2;
-  tmpvar_2.yzw = vec3(0.0, 0.0, 0.0);
-  tmpvar_2.x = float(gl_LocalInvocationIndex);
-  tmpvar_1[uint(0)] = tmpvar_2.xy;
-  tmpvar_1[1u] = tmpvar_2.yx;
-  matrices[gl_LocalInvocationIndex] = tmpvar_1;
+  float t0 = float(gl_LocalInvocationIndex);
+  matrices[int(gl_LocalInvocationIndex)][0] = vec2(t0, 0.0);
+  matrices[int(gl_LocalInvocationIndex)][1] = vec2(0.0, t0);
   barrier();
-  outputData.values[gl_GlobalInvocationID.x] = matrices[((gl_LocalInvocationIndex + 1u) % 8u)][0];
+  outputData.values[int(gl_GlobalInvocationID.x)] = matrices[int((uint((int(gl_LocalInvocationIndex) + 1)) & 7u))][0];
 }
 
-
-// stats: 4 alu 0 tex 0 flow
+// stats: 3 alu 0 tex 0 flow
 // workgroup size: 8 1 1
 // buffer #0: Output storage instance outputData layout std430 (size: unknown)
 //  member #0: vec2[] values offset 0 array runtime stride 8

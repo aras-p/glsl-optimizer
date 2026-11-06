@@ -1,5 +1,7 @@
 #version 300 es
-layout(location=0) out mediump vec4 _glesFragData[4];
+precision highp float;
+precision highp int;
+layout(location = 0) out mediump vec4 _glesFragData[4];
 uniform highp vec4 _ZBufferParams;
 uniform highp vec4 _LightPos;
 uniform highp mat4 _FrustumRays;
@@ -10,114 +12,36 @@ uniform mediump sampler2D _CameraDepthTexture;
 in highp vec2 xlv_TEXCOORD0;
 void main ()
 {
-  highp vec4 tmpvar_1;
-  highp vec2 coordTemp_2;
-  highp float epipolarLine_3;
-  highp float sampleOnEpipolarLine_4;
-  sampleOnEpipolarLine_4 = (xlv_TEXCOORD0.x - (0.5 / _CoordTexDim.x));
-  mediump float tmpvar_5;
-  tmpvar_5 = (xlv_TEXCOORD0.y - (0.5 / _CoordTexDim.y));
-  epipolarLine_3 = clamp (tmpvar_5, 0.0, 1.0);
-  sampleOnEpipolarLine_4 = (sampleOnEpipolarLine_4 * (_CoordTexDim.x / (_CoordTexDim.x - 1.0)));
-  mediump float tmpvar_6;
-  tmpvar_6 = sampleOnEpipolarLine_4;
-  sampleOnEpipolarLine_4 = clamp (tmpvar_6, 0.0, 1.0);
-  highp float tmpvar_7;
-  tmpvar_7 = ((2.0 * fract(
-    (epipolarLine_3 * 4.0)
-  )) - 1.0);
-  highp vec4 tmpvar_8;
-  tmpvar_8.xz = vec2(-1.0, 1.0);
-  tmpvar_8.y = tmpvar_7;
-  tmpvar_8.w = -(tmpvar_7);
-  highp vec4 tmpvar_9;
-  tmpvar_9.yw = vec2(-1.0, 1.0);
-  tmpvar_9.x = -(tmpvar_7);
-  tmpvar_9.z = tmpvar_7;
-  bvec4 tmpvar_10;
-  tmpvar_10 = equal (ivec4(int(clamp (
-    floor((epipolarLine_3 * 4.0))
-  , 0.0, 3.0))), ivec4(0, 1, 2, 3));
-  highp vec2 tmpvar_11;
-  tmpvar_11.x = dot (tmpvar_9, vec4(tmpvar_10));
-  tmpvar_11.y = dot (tmpvar_8, vec4(tmpvar_10));
-  coordTemp_2 = ((mix (_LightPos.xy, 
-    -(tmpvar_11)
-  , vec2(sampleOnEpipolarLine_4)) * 0.5) + 0.5);
-  highp vec4 tmpvar_12;
-  tmpvar_12.zw = vec2(0.0, 0.0);
-  tmpvar_12.xy = coordTemp_2;
-  coordTemp_2 = ((floor(
-    (coordTemp_2 * _ScreenTexDim.xy)
-  ) + 0.5) * _ScreenTexDim.zw);
-  highp float tmpvar_13;
-  highp float tmpvar_14;
-  tmpvar_14 = texture (_CameraDepthTexture, coordTemp_2).x;
-  tmpvar_13 = (1.0/(((_ZBufferParams.x * tmpvar_14) + _ZBufferParams.y)));
-  tmpvar_1 = vec4(tmpvar_13);
-  mediump mat4 tmpvar_15;
-  tmpvar_15 = _FrustumRays;
-  mediump vec4 v_16;
-  v_16.x = tmpvar_15[0][0];
-  v_16.y = tmpvar_15[1][0];
-  v_16.z = tmpvar_15[2][0];
-  v_16.w = tmpvar_15[3][0];
-  mediump mat4 tmpvar_17;
-  tmpvar_17 = _FrustumRays;
-  mediump vec4 v_18;
-  v_18.x = tmpvar_17[0][1];
-  v_18.y = tmpvar_17[1][1];
-  v_18.z = tmpvar_17[2][1];
-  v_18.w = tmpvar_17[3][1];
-  mediump mat4 tmpvar_19;
-  tmpvar_19 = _FrustumRays;
-  mediump vec4 v_20;
-  v_20.x = tmpvar_19[0][3];
-  v_20.y = tmpvar_19[1][3];
-  v_20.z = tmpvar_19[2][3];
-  v_20.w = tmpvar_19[3][3];
-  mediump mat4 tmpvar_21;
-  tmpvar_21 = _FrustumRays;
-  mediump vec4 v_22;
-  v_22.x = tmpvar_21[0][2];
-  v_22.y = tmpvar_21[1][2];
-  v_22.z = tmpvar_21[2][2];
-  v_22.w = tmpvar_21[3][2];
-  highp vec3 tmpvar_23;
-  tmpvar_23 = mix (mix (v_16.xyz, v_18.xyz, tmpvar_12.xxx), mix (v_20.xyz, v_22.xyz, tmpvar_12.xxx), tmpvar_12.yyy);
-  highp float tmpvar_24;
-  tmpvar_24 = sqrt(dot (tmpvar_23, tmpvar_23));
-  bool tmpvar_25;
-  highp vec3 tmpvar_26;
-  tmpvar_26 = (1.0/((tmpvar_23 / tmpvar_24)));
-  highp vec3 tmpvar_27;
-  tmpvar_27 = (tmpvar_26 * (-(_CameraPosLocal.xyz) - 0.5));
-  highp vec3 tmpvar_28;
-  tmpvar_28 = (tmpvar_26 * (0.5 - _CameraPosLocal.xyz));
-  highp vec3 tmpvar_29;
-  tmpvar_29 = min (tmpvar_28, tmpvar_27);
-  highp vec3 tmpvar_30;
-  tmpvar_30 = max (tmpvar_28, tmpvar_27);
-  highp vec2 tmpvar_31;
-  tmpvar_31 = max (tmpvar_29.xx, tmpvar_29.yz);
-  highp float tmpvar_32;
-  tmpvar_32 = max (tmpvar_31.x, tmpvar_31.y);
-  highp vec2 tmpvar_33;
-  tmpvar_33 = min (tmpvar_30.xx, tmpvar_30.yz);
-  highp float tmpvar_34;
-  tmpvar_34 = min (tmpvar_33.x, tmpvar_33.y);
-  tmpvar_25 = ((tmpvar_32 < tmpvar_34) && (0.0 < tmpvar_34));
-  if ((!(tmpvar_25) || (tmpvar_13 < (tmpvar_32 / tmpvar_24)))) {
-    tmpvar_1 = -(vec4(tmpvar_13));
-  } else {
-    tmpvar_1 = min (vec4(tmpvar_13), vec4((tmpvar_34 / tmpvar_24)));
-  };
-  _glesFragData[0] = tmpvar_12;
-  _glesFragData[1] = tmpvar_1;
+  mediump float t0 = (xlv_TEXCOORD0.y - (0.5 / _CoordTexDim.y));
+  highp float t1 = clamp(t0, 0.0, 1.0);
+  mediump float t2 = ((xlv_TEXCOORD0.x - (0.5 / _CoordTexDim.x)) * (_CoordTexDim.x / (_CoordTexDim.x - 1.0)));
+  highp float t3 = clamp(t2, 0.0, 1.0);
+  highp float t4 = (t1 * 4.0);
+  highp float t5 = ((fract(t4) * 2.0) - 1.0);
+  highp float t6 = (-t5);
+  mediump vec4 t7 = vec4(equal(ivec4(int(clamp(floor(t4), 0.0, 3.0))), ivec4(0, 1, 2, 3)));
+  highp vec2 t8 = ((mix(_LightPos.xy, (-vec2(dot(vec4(t6, -1.0, t5, 1.0), t7), dot(vec4(-1.0, t5, 1.0, t6), t7))), vec2(t3)) * 0.5) + 0.5);
+  highp float t9 = texture(_CameraDepthTexture, ((floor((t8 * _ScreenTexDim.xy)) + 0.5) * _ScreenTexDim.zw)).x;
+  mediump vec4 t10 = _FrustumRays[0];
+  mediump vec4 t11 = _FrustumRays[1];
+  mediump vec4 t12 = _FrustumRays[2];
+  highp vec3 t13 = mix(mix(vec3(t10.x, t11.x, t12.x), vec3(t10.y, t11.y, t12.y), t8.xxx), mix(vec3(t10.w, t11.w, t12.w), vec3(t10.z, t11.z, t12.z), t8.xxx), t8.yyy);
+  highp float t14 = length(t13);
+  highp vec3 t15 = (1.0 / (t13 / t14));
+  highp vec3 t16 = (t15 * (-0.5 - _CameraPosLocal.xyz));
+  highp vec3 t17 = (t15 * (0.5 - _CameraPosLocal.xyz));
+  highp vec3 t18 = min(t17, t16);
+  highp vec3 t19 = max(t17, t16);
+  highp vec2 t20 = max(t18.xx, t18.yz);
+  highp float t21 = max(t20.x, t20.y);
+  highp vec2 t22 = min(t19.xx, t19.yz);
+  highp float t23 = min(t22.x, t22.y);
+  highp float t24 = (1.0 / ((_ZBufferParams.x * t9) + _ZBufferParams.y));
+  _glesFragData[0] = vec4(t8, 0.0, 0.0);
+  _glesFragData[1] = (((max(t21, 0.0) >= t23) || (t24 < (t21 / t14))) ? (-vec4(t24)) : min(vec4(t24), vec4((t23 / t14))));
 }
 
-
-// stats: 69 alu 1 tex 1 flow
+// stats: 58 alu 1 tex 0 flow
 // inputs: 1
 //  #0: xlv_TEXCOORD0 (high float) 2x1 [-1]
 // uniforms: 6 (total size: 0)

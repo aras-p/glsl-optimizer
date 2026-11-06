@@ -15,16 +15,13 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   , depth2d<float> shadowmap [[texture(1)]], sampler _mtlsmp_shadowmap [[sampler(1)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half4 c_1 = 0;
-  c_1 = (tex.sample(_mtlsmp_tex, (float2)((_mtl_i.uv.xy)) / (float)(_mtl_i.uv.w)) + tex.sample(_mtlsmp_tex, (float2)((_mtl_i.uv.xy)) / (float)(_mtl_i.uv.z)));
-  c_1 = (c_1 + tex.sample(_mtlsmp_tex, (float2)((_mtl_i.uv.xy)) / (float)(_mtl_i.uv.w), level(1.0)));
-  c_1 = (c_1 + tex.sample(_mtlsmp_tex, (float2)((_mtl_i.uv.xy)) / (float)(_mtl_i.uv.z), level(1.0)));
-  c_1 = (c_1 + half4(half(shadowmap.sample_compare(_mtl_xl_shadow_sampler, (float2)((_mtl_i.uv.xy)), saturate((float)(_mtl_i.uv.z))))));
-  c_1 = (c_1 + half4(half(shadowmap.sample_compare(_mtl_xl_shadow_sampler, (float2)((_mtl_i.uv.xy)) / (float)(_mtl_i.uv.w), saturate((float)(_mtl_i.uv.z) / (float)(_mtl_i.uv.w))))));
-  _mtl_o._fragData = c_1;
+  float t0 = _mtl_i.uv.w;
+  float2 t1 = _mtl_i.uv.xy;
+  float t2 = _mtl_i.uv.z;
+  half4 t3 = (((tex.sample(_mtlsmp_tex, (t1 / t0)) + tex.sample(_mtlsmp_tex, (t1 / t2))) + tex.sample(_mtlsmp_tex, (t1 / t0), level(1.0))) + tex.sample(_mtlsmp_tex, (t1 / t2), level(1.0)));
+  _mtl_o._fragData = ((t3 + half(shadowmap.sample_compare(_mtl_xl_shadow_sampler, t1, saturate(t2)))) + half(shadowmap.sample_compare(_mtl_xl_shadow_sampler, (t1 / t0), saturate((t2 / t0)))));
   return _mtl_o;
 }
-
 
 // stats: 5 alu 6 tex 0 flow
 // inputs: 1

@@ -10,165 +10,17 @@ struct xlatMtlShaderOutput {
 };
 struct xlatMtlShaderUniform {
   float4x4 glstate_matrix_mvp;
-  float4x4 _Object2World;
-  half2 _DynLampInfo_bufferSize;
 };
-vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , texture2d<half> _DynLampInfo [[texture(0)]], sampler _mtlsmp__DynLampInfo [[sampler(0)]])
+vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half3 o_diffuse_1 = 0;
-  float3 tmpvar_2 = 0;
-  float3 tmpvar_3 = 0;
-  tmpvar_3 = (_mtl_u._Object2World * _mtl_i._glesVertex).xyz;
-  half3 tmpvar_4 = 0;
-  int4 tmpvar_5 = 0;
-  tmpvar_5.xyz = int3(tmpvar_3);
-  tmpvar_5.w = int(-(tmpvar_3.x));
-  half4 tmpvar_6 = 0;
-  half4 tmpvar_7 = 0;
-  half4 tmpvar_8 = 0;
-  half4 tmpvar_9 = 0;
-  half4 tmpvar_10 = 0;
-  half4 tmpvar_11 = 0;
-  half4 tmpvar_12 = 0;
-  half4 tmpvar_13 = 0;
-  float2 tmpvar_14 = 0;
-  tmpvar_14.y = 1.0;
-  tmpvar_14.x = float(tmpvar_5.x);
-  half2 tmpvar_15 = 0;
-  tmpvar_15 = half2(tmpvar_14);
-  half4 tmpvar_16 = 0;
-  tmpvar_16.zw = half2(float2(0.0, 0.0));
-  tmpvar_16.xy = (tmpvar_15 / _mtl_u._DynLampInfo_bufferSize);
-  float4 tmpvar_17 = 0;
-  float4 tmpvar_18 = 0;
-  tmpvar_18 = float4(tmpvar_16);
-  tmpvar_17 = float4(_DynLampInfo.sample(_mtlsmp__DynLampInfo, (float2)((tmpvar_18.xy)), level(tmpvar_18.w)));
-  tmpvar_6 = half4(tmpvar_17);
-  float2 tmpvar_19 = 0;
-  tmpvar_19.y = 2.0;
-  tmpvar_19.x = float(tmpvar_5.x);
-  half2 tmpvar_20 = 0;
-  tmpvar_20 = half2(tmpvar_19);
-  half4 tmpvar_21 = 0;
-  tmpvar_21.zw = half2(float2(0.0, 0.0));
-  tmpvar_21.xy = (tmpvar_20 / _mtl_u._DynLampInfo_bufferSize);
-  float4 tmpvar_22 = 0;
-  float4 tmpvar_23 = 0;
-  tmpvar_23 = float4(tmpvar_21);
-  tmpvar_22 = float4(_DynLampInfo.sample(_mtlsmp__DynLampInfo, (float2)((tmpvar_23.xy)), level(tmpvar_23.w)));
-  tmpvar_7 = half4(tmpvar_22);
-  float2 tmpvar_24 = 0;
-  tmpvar_24.y = 1.0;
-  tmpvar_24.x = float(tmpvar_5.y);
-  half2 tmpvar_25 = 0;
-  tmpvar_25 = half2(tmpvar_24);
-  half4 tmpvar_26 = 0;
-  tmpvar_26.zw = half2(float2(0.0, 0.0));
-  tmpvar_26.xy = (tmpvar_25 / _mtl_u._DynLampInfo_bufferSize);
-  float4 tmpvar_27 = 0;
-  float4 tmpvar_28 = 0;
-  tmpvar_28 = float4(tmpvar_26);
-  tmpvar_27 = float4(_DynLampInfo.sample(_mtlsmp__DynLampInfo, (float2)((tmpvar_28.xy)), level(tmpvar_28.w)));
-  tmpvar_8 = half4(tmpvar_27);
-  float2 tmpvar_29 = 0;
-  tmpvar_29.y = 2.0;
-  tmpvar_29.x = float(tmpvar_5.y);
-  half2 tmpvar_30 = 0;
-  tmpvar_30 = half2(tmpvar_29);
-  half4 tmpvar_31 = 0;
-  tmpvar_31.zw = half2(float2(0.0, 0.0));
-  tmpvar_31.xy = (tmpvar_30 / _mtl_u._DynLampInfo_bufferSize);
-  float4 tmpvar_32 = 0;
-  float4 tmpvar_33 = 0;
-  tmpvar_33 = float4(tmpvar_31);
-  tmpvar_32 = float4(_DynLampInfo.sample(_mtlsmp__DynLampInfo, (float2)((tmpvar_33.xy)), level(tmpvar_33.w)));
-  tmpvar_9 = half4(tmpvar_32);
-  float2 tmpvar_34 = 0;
-  tmpvar_34.y = 1.0;
-  tmpvar_34.x = float(tmpvar_5.z);
-  half2 tmpvar_35 = 0;
-  tmpvar_35 = half2(tmpvar_34);
-  half4 tmpvar_36 = 0;
-  tmpvar_36.zw = half2(float2(0.0, 0.0));
-  tmpvar_36.xy = (tmpvar_35 / _mtl_u._DynLampInfo_bufferSize);
-  float4 tmpvar_37 = 0;
-  float4 tmpvar_38 = 0;
-  tmpvar_38 = float4(tmpvar_36);
-  tmpvar_37 = float4(_DynLampInfo.sample(_mtlsmp__DynLampInfo, (float2)((tmpvar_38.xy)), level(tmpvar_38.w)));
-  tmpvar_10 = half4(tmpvar_37);
-  float2 tmpvar_39 = 0;
-  tmpvar_39.y = 2.0;
-  tmpvar_39.x = float(tmpvar_5.z);
-  half2 tmpvar_40 = 0;
-  tmpvar_40 = half2(tmpvar_39);
-  half4 tmpvar_41 = 0;
-  tmpvar_41.zw = half2(float2(0.0, 0.0));
-  tmpvar_41.xy = (tmpvar_40 / _mtl_u._DynLampInfo_bufferSize);
-  float4 tmpvar_42 = 0;
-  float4 tmpvar_43 = 0;
-  tmpvar_43 = float4(tmpvar_41);
-  tmpvar_42 = float4(_DynLampInfo.sample(_mtlsmp__DynLampInfo, (float2)((tmpvar_43.xy)), level(tmpvar_43.w)));
-  tmpvar_11 = half4(tmpvar_42);
-  float2 tmpvar_44 = 0;
-  tmpvar_44.y = 1.0;
-  tmpvar_44.x = float(tmpvar_5.w);
-  half2 tmpvar_45 = 0;
-  tmpvar_45 = half2(tmpvar_44);
-  half4 tmpvar_46 = 0;
-  tmpvar_46.zw = half2(float2(0.0, 0.0));
-  tmpvar_46.xy = (tmpvar_45 / _mtl_u._DynLampInfo_bufferSize);
-  float4 tmpvar_47 = 0;
-  float4 tmpvar_48 = 0;
-  tmpvar_48 = float4(tmpvar_46);
-  tmpvar_47 = float4(_DynLampInfo.sample(_mtlsmp__DynLampInfo, (float2)((tmpvar_48.xy)), level(tmpvar_48.w)));
-  tmpvar_12 = half4(tmpvar_47);
-  float2 tmpvar_49 = 0;
-  tmpvar_49.y = 2.0;
-  tmpvar_49.x = float(tmpvar_5.w);
-  half2 tmpvar_50 = 0;
-  tmpvar_50 = half2(tmpvar_49);
-  half4 tmpvar_51 = 0;
-  tmpvar_51.zw = half2(float2(0.0, 0.0));
-  tmpvar_51.xy = (tmpvar_50 / _mtl_u._DynLampInfo_bufferSize);
-  float4 tmpvar_52 = 0;
-  float4 tmpvar_53 = 0;
-  tmpvar_53 = float4(tmpvar_51);
-  tmpvar_52 = float4(_DynLampInfo.sample(_mtlsmp__DynLampInfo, (float2)((tmpvar_53.xy)), level(tmpvar_53.w)));
-  tmpvar_13 = half4(tmpvar_52);
-  half3 tmpvar_54 = 0;
-  half4 atten_55 = 0;
-  float3 tmpvar_56 = 0;
-  tmpvar_56 = ((float3)(tmpvar_6.xyz) - tmpvar_3);
-  atten_55[0] = half((dot (tmpvar_56, tmpvar_56) * (float)(tmpvar_6.w)));
-  float3 tmpvar_57 = 0;
-  tmpvar_57 = ((float3)(tmpvar_8.xyz) - tmpvar_3);
-  atten_55[1] = half((dot (tmpvar_57, tmpvar_57) * (float)(tmpvar_8.w)));
-  float3 tmpvar_58 = 0;
-  tmpvar_58 = ((float3)(tmpvar_10.xyz) - tmpvar_3);
-  atten_55[2] = half((dot (tmpvar_58, tmpvar_58) * (float)(tmpvar_10.w)));
-  float3 tmpvar_59 = 0;
-  tmpvar_59 = ((float3)(tmpvar_12.xyz) - tmpvar_3);
-  atten_55[3] = half((dot (tmpvar_59, tmpvar_59) * (float)(tmpvar_12.w)));
-  tmpvar_54 = (tmpvar_4 + (tmpvar_7.xyz * atten_55[0]));
-  tmpvar_54 = (tmpvar_54 + (tmpvar_9.xyz * atten_55[1]));
-  tmpvar_54 = (tmpvar_54 + (tmpvar_11.xyz * atten_55[2]));
-  tmpvar_54 = (tmpvar_54 + (tmpvar_13.xyz * atten_55[3]));
-  tmpvar_2 = float3(tmpvar_54);
-  o_diffuse_1 = half3(tmpvar_2);
   _mtl_o.gl_Position = (_mtl_u.glstate_matrix_mvp * _mtl_i._glesVertex);
-  _mtl_o.xlv_TEXCOORD2 = o_diffuse_1;
+  _mtl_o.xlv_TEXCOORD2 = half3(NAN);
   return _mtl_o;
 }
 
-
-// stats: 57 alu 8 tex 0 flow
+// stats: 7 alu 0 tex 0 flow
 // inputs: 1
 //  #0: _glesVertex (high float) 4x1 [-1] loc 0
-// uniforms: 3 (total size: 132)
+// uniforms: 1 (total size: 64)
 //  #0: glstate_matrix_mvp (high float) 4x4 [-1] loc 0
-//  #1: _Object2World (high float) 4x4 [-1] loc 64
-//  #2: _DynLampInfo_bufferSize (medium float) 2x1 [-1] loc 128
-// textures: 1
-//  #0: _DynLampInfo (medium 2d) 0x0 [-1] loc 0

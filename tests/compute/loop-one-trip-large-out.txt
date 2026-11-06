@@ -1,45 +1,44 @@
 #version 430
-layout(local_size_x=1) in;
-layout(std430, column_major, binding=0) buffer Results {
+layout(local_size_x = 1) in;
+layout(std430, binding = 0) buffer Results {
   uint values[32];
 };
 uniform uint seed;
 void main ()
 {
-  values[0] = (((seed ^ 1u) * 2654435761u) ^ (seed + seed));
-  values[1] = (((seed ^ 2u) * 2654435761u) ^ ((seed * 2u) + (seed >> 1u)));
-  values[2] = (((seed ^ 3u) * 2654435761u) ^ ((seed * 3u) + (seed >> 2u)));
-  values[3] = (((seed ^ 4u) * 2654435761u) ^ ((seed * 4u) + (seed >> 3u)));
-  values[4] = (((seed ^ 5u) * 2654435761u) ^ ((seed * 5u) + (seed >> 4u)));
-  values[5] = (((seed ^ 6u) * 2654435761u) ^ ((seed * 6u) + (seed >> 5u)));
-  values[6] = (((seed ^ 7u) * 2654435761u) ^ ((seed * 7u) + (seed >> 6u)));
-  values[7] = (((seed ^ 8u) * 2654435761u) ^ ((seed * 8u) + (seed >> 7u)));
-  values[8] = (((seed ^ 9u) * 2654435761u) ^ ((seed * 9u) + (seed >> 8u)));
-  values[9] = (((seed ^ 10u) * 2654435761u) ^ ((seed * 10u) + (seed >> 9u)));
-  values[10] = (((seed ^ 11u) * 2654435761u) ^ ((seed * 11u) + (seed >> 10u)));
-  values[11] = (((seed ^ 12u) * 2654435761u) ^ ((seed * 12u) + (seed >> 11u)));
-  values[12] = (((seed ^ 13u) * 2654435761u) ^ ((seed * 13u) + (seed >> 12u)));
-  values[13] = (((seed ^ 14u) * 2654435761u) ^ ((seed * 14u) + (seed >> 13u)));
-  values[14] = (((seed ^ 15u) * 2654435761u) ^ ((seed * 15u) + (seed >> 14u)));
-  values[15] = (((seed ^ 16u) * 2654435761u) ^ ((seed * 16u) + (seed >> 15u)));
-  values[16] = (((seed ^ 17u) * 2654435761u) ^ ((seed * 17u) + (seed >> 16u)));
-  values[17] = (((seed ^ 18u) * 2654435761u) ^ ((seed * 18u) + (seed >> 17u)));
-  values[18] = (((seed ^ 19u) * 2654435761u) ^ ((seed * 19u) + (seed >> 18u)));
-  values[19] = (((seed ^ 20u) * 2654435761u) ^ ((seed * 20u) + (seed >> 19u)));
-  values[20] = (((seed ^ 21u) * 2654435761u) ^ ((seed * 21u) + (seed >> 20u)));
-  values[21] = (((seed ^ 22u) * 2654435761u) ^ ((seed * 22u) + (seed >> 21u)));
-  values[22] = (((seed ^ 23u) * 2654435761u) ^ ((seed * 23u) + (seed >> 22u)));
-  values[23] = (((seed ^ 24u) * 2654435761u) ^ ((seed * 24u) + (seed >> 23u)));
-  values[24] = (((seed ^ 25u) * 2654435761u) ^ ((seed * 25u) + (seed >> 24u)));
-  values[25] = (((seed ^ 26u) * 2654435761u) ^ ((seed * 26u) + (seed >> 25u)));
-  values[26] = (((seed ^ 27u) * 2654435761u) ^ ((seed * 27u) + (seed >> 26u)));
-  values[27] = (((seed ^ 28u) * 2654435761u) ^ ((seed * 28u) + (seed >> 27u)));
-  values[28] = (((seed ^ 29u) * 2654435761u) ^ ((seed * 29u) + (seed >> 28u)));
-  values[29] = (((seed ^ 30u) * 2654435761u) ^ ((seed * 30u) + (seed >> 29u)));
-  values[30] = (((seed ^ 31u) * 2654435761u) ^ ((seed * 31u) + (seed >> 30u)));
-  values[31] = (((seed ^ 32u) * 2654435761u) ^ ((seed * 32u) + (seed >> 31u)));
+  values[0] = (uint((int((seed ^ 1u)) * -1640531535)) ^ uint((int(seed) + int(seed))));
+  values[1] = (uint((int((seed ^ 2u)) * -1640531535)) ^ uint(((int(seed) << 1u) + int((seed >> 1u)))));
+  values[2] = (uint((int((seed ^ 3u)) * -1640531535)) ^ uint(((int(seed) * 3) + int((seed >> 2u)))));
+  values[3] = (uint((int((seed ^ 4u)) * -1640531535)) ^ uint(((int(seed) << 2u) + int((seed >> 3u)))));
+  values[4] = (uint((int((seed ^ 5u)) * -1640531535)) ^ uint(((int(seed) * 5) + int((seed >> 4u)))));
+  values[5] = (uint((int((seed ^ 6u)) * -1640531535)) ^ uint(((int(seed) * 6) + int((seed >> 5u)))));
+  values[6] = (uint((int((seed ^ 7u)) * -1640531535)) ^ uint(((int(seed) * 7) + int((seed >> 6u)))));
+  values[7] = (uint((int((seed ^ 8u)) * -1640531535)) ^ uint(((int(seed) << 3u) + int((seed >> 7u)))));
+  values[8] = (uint((int((seed ^ 9u)) * -1640531535)) ^ uint(((int(seed) * 9) + int((seed >> 8u)))));
+  values[9] = (uint((int((seed ^ 10u)) * -1640531535)) ^ uint(((int(seed) * 10) + int((seed >> 9u)))));
+  values[10] = (uint((int((seed ^ 11u)) * -1640531535)) ^ uint(((int(seed) * 11) + int((seed >> 10u)))));
+  values[11] = (uint((int((seed ^ 12u)) * -1640531535)) ^ uint(((int(seed) * 12) + int((seed >> 11u)))));
+  values[12] = (uint((int((seed ^ 13u)) * -1640531535)) ^ uint(((int(seed) * 13) + int((seed >> 12u)))));
+  values[13] = (uint((int((seed ^ 14u)) * -1640531535)) ^ uint(((int(seed) * 14) + int((seed >> 13u)))));
+  values[14] = (uint((int((seed ^ 15u)) * -1640531535)) ^ uint(((int(seed) * 15) + int((seed >> 14u)))));
+  values[15] = (uint((int((seed ^ 16u)) * -1640531535)) ^ uint(((int(seed) << 4u) + int((seed >> 15u)))));
+  values[16] = (uint((int((seed ^ 17u)) * -1640531535)) ^ uint(((int(seed) * 17) + int((seed >> 16u)))));
+  values[17] = (uint((int((seed ^ 18u)) * -1640531535)) ^ uint(((int(seed) * 18) + int((seed >> 17u)))));
+  values[18] = (uint((int((seed ^ 19u)) * -1640531535)) ^ uint(((int(seed) * 19) + int((seed >> 18u)))));
+  values[19] = (uint((int((seed ^ 20u)) * -1640531535)) ^ uint(((int(seed) * 20) + int((seed >> 19u)))));
+  values[20] = (uint((int((seed ^ 21u)) * -1640531535)) ^ uint(((int(seed) * 21) + int((seed >> 20u)))));
+  values[21] = (uint((int((seed ^ 22u)) * -1640531535)) ^ uint(((int(seed) * 22) + int((seed >> 21u)))));
+  values[22] = (uint((int((seed ^ 23u)) * -1640531535)) ^ uint(((int(seed) * 23) + int((seed >> 22u)))));
+  values[23] = (uint((int((seed ^ 24u)) * -1640531535)) ^ uint(((int(seed) * 24) + int((seed >> 23u)))));
+  values[24] = (uint((int((seed ^ 25u)) * -1640531535)) ^ uint(((int(seed) * 25) + int((seed >> 24u)))));
+  values[25] = (uint((int((seed ^ 26u)) * -1640531535)) ^ uint(((int(seed) * 26) + int((seed >> 25u)))));
+  values[26] = (uint((int((seed ^ 27u)) * -1640531535)) ^ uint(((int(seed) * 27) + int((seed >> 26u)))));
+  values[27] = (uint((int((seed ^ 28u)) * -1640531535)) ^ uint(((int(seed) * 28) + int((seed >> 27u)))));
+  values[28] = (uint((int((seed ^ 29u)) * -1640531535)) ^ uint(((int(seed) * 29) + int((seed >> 28u)))));
+  values[29] = (uint((int((seed ^ 30u)) * -1640531535)) ^ uint(((int(seed) * 30) + int((seed >> 29u)))));
+  values[30] = (uint((int((seed ^ 31u)) * -1640531535)) ^ uint(((int(seed) * 31) + int((seed >> 30u)))));
+  values[31] = (uint((int((seed ^ 32u)) * -1640531535)) ^ uint(((int(seed) << 5u) + int((seed >> 31u)))));
 }
-
 
 // stats: 190 alu 0 tex 0 flow
 // workgroup size: 1 1 1

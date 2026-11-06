@@ -1,13 +1,14 @@
 #version 300 es
+precision highp float;
+precision highp int;
 out mediump vec4 _fragData;
 in mediump vec3 normal;
 in mediump vec3 halfDir;
 uniform mediump float specPower;
 void main ()
 {
-  _fragData = vec4(pow (dot (normal, halfDir), specPower));
+  _fragData = vec4(pow(dot(normal, halfDir), specPower));
 }
-
 
 // stats: 2 alu 0 tex 0 flow
 // inputs: 2

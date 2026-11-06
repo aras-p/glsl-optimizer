@@ -3,26 +3,29 @@ uniform int u_iter;
 uniform vec4 u_deltas[5];
 void main ()
 {
-  int i_1;
   gl_Position = a_position;
-  i_1 = 0;
-  while (true) {
-    int tmpvar_2;
-    if ((u_iter < 5)) {
-      tmpvar_2 = u_iter;
-    } else {
-      tmpvar_2 = 5;
-    };
-    if ((i_1 >= tmpvar_2)) {
-      break;
-    };
-    gl_Position = (gl_Position + u_deltas[i_1]);
-    i_1++;
-  };
+  if ((0 < u_iter)) {
+    vec4 t0 = (a_position + u_deltas[0]);
+    gl_Position = t0;
+    if ((1 < u_iter)) {
+      vec4 t1 = (t0 + u_deltas[1]);
+      gl_Position = t1;
+      if ((2 < u_iter)) {
+        vec4 t2 = (t1 + u_deltas[2]);
+        gl_Position = t2;
+        if ((3 < u_iter)) {
+          vec4 t3 = (t2 + u_deltas[3]);
+          gl_Position = t3;
+          if ((4 < u_iter)) {
+            gl_Position = (t3 + u_deltas[4]);
+          }
+        }
+      }
+    }
+  }
 }
 
-
-// stats: 6 alu 0 tex 3 flow
+// stats: 10 alu 0 tex 5 flow
 // inputs: 1
 //  #0: a_position (high float) 4x1 [-1]
 // uniforms: 2 (total size: 0)

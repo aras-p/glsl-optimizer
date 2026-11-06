@@ -8,18 +8,14 @@ uniform vec4 v3c;
 void main ()
 {
   gl_Position = (mvp * gl_Vertex);
-  vec4 tmpvar_1;
-  tmpvar_1.w = 1.0;
-  tmpvar_1.xyz = (((m3a * 
-    (gl_Vertex.xyz - v3a.xyz)
-  ) + (m3b * 
-    (gl_Vertex.xyz - (mvp * v3b).xyz)
-  )) + (m3c * (gl_Vertex.xyz - v3c.xyz)));
-  gl_FrontColor = tmpvar_1;
+  vec3 t0 = (v3a.xyz - gl_Vertex.xyz);
+  vec3 t1 = ((mvp * v3b).xyz - gl_Vertex.xyz);
+  vec3 t2 = (v3c.xyz - gl_Vertex.xyz);
+  vec3 t3 = (((((-(t0.x * m3a[0])) - (t0.y * m3a[1])) - (t0.z * m3a[2])) + (((-(t1.x * m3b[0])) - (t1.y * m3b[1])) - (t1.z * m3b[2]))) + (((-(t2.x * m3c[0])) - (t2.y * m3c[1])) - (t2.z * m3c[2])));
+  gl_FrontColor = vec4(t3, 1.0);
 }
 
-
-// stats: 11 alu 0 tex 0 flow
+// stats: 37 alu 0 tex 0 flow
 // inputs: 1
 //  #0: gl_Vertex (high float) 4x1 [-1] loc 0
 // uniforms: 7 (total size: 0)

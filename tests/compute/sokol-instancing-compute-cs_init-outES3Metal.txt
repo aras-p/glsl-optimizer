@@ -1,50 +1,34 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
-struct particle {
+struct _xlat_particle_std430 {
   float4 pos;
   float4 vel;
 };
-static_assert(sizeof(particle) == 32, "buffer size");
-struct alignas(16) _xlat_buf_storage0_element { particle value; };
-static_assert(sizeof(_xlat_buf_storage0_element) == 32, "array stride");
+static_assert(sizeof(_xlat_particle_std430) == 32, "std430 size");
+struct _xlat_buf_cs_ssbo_std430 {
+  _xlat_particle_std430 prt[1];
+};
 struct xlatMtlShaderUniform {
 };
 // threadsPerThreadgroup: 64, 1, 1
 kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , device uchar* _mtl_buffer1 [[buffer(1)]]
+  , device _xlat_buf_cs_ssbo_std430& _xlat_blk_cs_ssbo [[buffer(1)]]
   , uint3 gl_GlobalInvocationID [[thread_position_in_grid]])
 {
-  uint tmpvar_1;
-  tmpvar_1 = (305419896u + gl_GlobalInvocationID.x);
-  tmpvar_1 = (tmpvar_1 ^ (tmpvar_1 << 13));
-  tmpvar_1 = (tmpvar_1 ^ (tmpvar_1 >> 17));
-  tmpvar_1 = (tmpvar_1 ^ (tmpvar_1 << 5));
-  uint tmpvar_2;
-  tmpvar_2 = (tmpvar_1 ^ (tmpvar_1 << 13));
-  tmpvar_2 = (tmpvar_2 ^ (tmpvar_2 >> 17));
-  tmpvar_2 = (tmpvar_2 ^ (tmpvar_2 << 5));
-  uint tmpvar_3;
-  tmpvar_3 = (tmpvar_2 ^ (tmpvar_2 << 13));
-  tmpvar_3 = (tmpvar_3 ^ (tmpvar_3 >> 17));
-  tmpvar_3 = (tmpvar_3 ^ (tmpvar_3 << 5));
-  reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_GlobalInvocationID.x].value.pos = float4(float4(0.0, 0.0, 0.0, 0.0));
-  float4 tmpvar_4 = 0;
-  tmpvar_4.w = 0.0;
-  tmpvar_4.x = ((float(
-    (tmpvar_1 & 32767u)
-  ) / 32767.0) - 0.5);
-  tmpvar_4.y = (((
-    float((tmpvar_2 & 32767u))
-   / 32767.0) * 0.5) + 2.0);
-  tmpvar_4.z = ((float(
-    (tmpvar_3 & 32767u)
-  ) / 32767.0) - 0.5);
-  reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_GlobalInvocationID.x].value.vel = float4(tmpvar_4);
+  uint t0 = (uint((305419896 + int(gl_GlobalInvocationID.x))) ^ uint(((int(gl_GlobalInvocationID.x) << int(13u)) - 1966145536)));
+  uint t1 = (t0 ^ (t0 >> uint(17u)));
+  uint t2 = (t1 ^ uint((int(t1) << int(5u))));
+  uint t3 = (t2 ^ uint((int(t2) << int(13u))));
+  uint t4 = (t3 ^ (t3 >> uint(17u)));
+  uint t5 = (t4 ^ uint((int(t4) << int(5u))));
+  uint t6 = (t5 ^ uint((int(t5) << int(13u))));
+  uint t7 = (t6 ^ (t6 >> uint(17u)));
+  _xlat_blk_cs_ssbo.prt[int(gl_GlobalInvocationID.x)].pos = float4(0.0);
+  _xlat_blk_cs_ssbo.prt[int(gl_GlobalInvocationID.x)].vel = float4(((float((t2 & 32767u)) / 32767.0) - 0.5), (((float((t5 & 32767u)) / 32767.0) * 0.5) + 2.0), ((float(((t7 ^ uint((int(t7) << int(5u)))) & 32767u)) / 32767.0) - 0.5), 0.0);
 }
 
-
-// stats: 34 alu 0 tex 0 flow
+// stats: 33 alu 0 tex 0 flow
 // workgroup size: 64 1 1
 // buffer #0: cs_ssbo storage layout std430 binding 0 (size: unknown) metal 1
 //  member #0: particle[] prt offset 0 array runtime stride 32

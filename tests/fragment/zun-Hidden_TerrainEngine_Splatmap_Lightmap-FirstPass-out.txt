@@ -7,32 +7,15 @@ uniform sampler2D _Splat3;
 uniform vec4 unity_Ambient;
 void main ()
 {
-  vec4 xlt_IN_hip_pack0_1;
-  vec4 xlt_IN_hip_pack1_2;
-  vec4 xlt_IN_hip_screen_3;
-  xlt_IN_hip_pack0_1 = gl_TexCoord[0];
-  xlt_IN_hip_pack1_2 = gl_TexCoord[1];
-  xlt_IN_hip_screen_3 = gl_TexCoord[3];
-  vec4 light_4;
-  vec3 col_5;
-  vec4 tmpvar_6;
-  tmpvar_6 = texture2D (_Control, xlt_IN_hip_pack0_1.xy);
-  col_5 = (tmpvar_6.x * texture2D (_Splat0, xlt_IN_hip_pack0_1.zw).xyz);
-  col_5 = (col_5 + (tmpvar_6.y * texture2D (_Splat1, xlt_IN_hip_pack1_2.xy).xyz));
-  col_5 = (col_5 + (tmpvar_6.z * texture2D (_Splat2, xlt_IN_hip_pack1_2.zw).xyz));
-  col_5 = (col_5 + (tmpvar_6.w * texture2D (_Splat3, gl_TexCoord[2].xy).xyz));
-  light_4 = -(log2(texture2DProj (_LightBuffer, vec3(xlt_IN_hip_screen_3.xy, xlt_IN_hip_screen_3.w))));
-  light_4.xyz = (light_4.xyz + unity_Ambient.xyz);
-  vec4 c_7;
-  c_7.xyz = (col_5 * light_4.xyz);
-  c_7.w = 0.0;
-  gl_FragData[0] = c_7;
+  vec4 t0 = texture2D(_Control, gl_TexCoord[0].xy);
+  vec3 t1 = ((mat3(texture2D(_Splat0, gl_TexCoord[0].zw).xyz, texture2D(_Splat1, gl_TexCoord[1].xy).xyz, texture2D(_Splat2, gl_TexCoord[1].zw).xyz) * t0.xyz) + (t0.w * texture2D(_Splat3, gl_TexCoord[2].xy).xyz));
+  vec3 t2 = (t1 * (unity_Ambient.xyz - log2(texture2DProj(_LightBuffer, vec3(gl_TexCoord[3].xy, gl_TexCoord[3].w))).xyz));
+  gl_FragData[0] = vec4(t2, 0.0);
 }
 
-
-// stats: 12 alu 6 tex 0 flow
+// stats: 10 alu 6 tex 0 flow
 // inputs: 1
-//  #0: gl_TexCoord (high float) 4x1 [4] loc 4
+//  #0: gl_TexCoord (high float) 4x1 [0] loc 4
 // uniforms: 1 (total size: 0)
 //  #0: unity_Ambient (high float) 4x1 [-1]
 // textures: 6

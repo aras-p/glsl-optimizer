@@ -13,24 +13,22 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   , texture2d<half> _MainTex [[texture(0)]], sampler _mtlsmp__MainTex [[sampler(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half3 light_1 = 0;
-  half4 tmpvar_2 = 0;
-  tmpvar_2 = _MainTex.sample(_mtlsmp__MainTex, (float2)((_mtl_i.xlv_uv)));
-  light_1 = half3(float3(0.0, 0.0, 0.0));
-  if ((tmpvar_2.x >= (half)(0.0))) {
-    for (half j_3 = half(0.0); j_3 < _mtl_i.xlv_uv.x; j_3 += 1.0) {
-      light_1 = (light_1 + tmpvar_2.xyz);
-    };
-  };
-  half4 tmpvar_4 = 0;
-  tmpvar_4.w = half(1.0);
-  tmpvar_4.xyz = light_1;
-  _mtl_o._fragData = tmpvar_4;
+  float r0 = 0;
+  half3 r1 = 0;
+  half4 t0 = _MainTex.sample(_mtlsmp__MainTex, _mtl_i.xlv_uv);
+  if ((t0.x >= half(0.0))) {
+    r1 = half3(0.0);
+    for (r0 = 0.0; (r0 < _mtl_i.xlv_uv.x); r0 = (r0 + 1.0)) {
+      r1 = (r1 + t0.xyz);
+    }
+  } else {
+    r1 = half3(0.0);
+  }
+  _mtl_o._fragData = half4(r1.x, r1.y, r1.z, half(1.0));
   return _mtl_o;
 }
 
-
-// stats: 7 alu 1 tex 3 flow
+// stats: 4 alu 1 tex 3 flow
 // inputs: 1
 //  #0: xlv_uv (high float) 2x1 [-1]
 // textures: 1

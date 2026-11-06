@@ -1,34 +1,23 @@
 #version 430
-#extension GL_KHR_shader_subgroup : enable
+#extension GL_KHR_shader_subgroup_arithmetic : enable
+#extension GL_KHR_shader_subgroup_ballot : enable
+#extension GL_KHR_shader_subgroup_basic : enable
 flat in ivec2 range;
 flat in uint mask;
-layout(location=0) out uvec4 result;
+layout(location = 0) out uvec4 result;
 void main ()
 {
-  int tmpvar_1;
-  tmpvar_1 = subgroupMin (range.x);
-  int tmpvar_2;
-  tmpvar_2 = subgroupBroadcastFirst (tmpvar_1);
-  int tmpvar_3;
-  tmpvar_3 = subgroupMax (range.y);
-  int tmpvar_4;
-  tmpvar_4 = subgroupBroadcastFirst (tmpvar_3);
-  uint tmpvar_5;
-  tmpvar_5 = subgroupOr (mask);
-  uint tmpvar_6;
-  tmpvar_6 = subgroupBroadcastFirst (tmpvar_5);
-  uvec2 tmpvar_7;
-  tmpvar_7 = subgroupMax (uvec2(range));
-  uvec4 tmpvar_8;
-  tmpvar_8.x = uint(tmpvar_2);
-  tmpvar_8.y = uint(tmpvar_4);
-  tmpvar_8.z = tmpvar_6;
-  tmpvar_8.w = tmpvar_7.y;
-  result = tmpvar_8;
+  int t0 = subgroupMin(range.x);
+  int t1 = subgroupBroadcastFirst(t0);
+  int t2 = subgroupMax(range.y);
+  int t3 = subgroupBroadcastFirst(t2);
+  uint t4 = subgroupOr(mask);
+  uint t5 = subgroupBroadcastFirst(t4);
+  ivec2 t6 = subgroupMax(range);
+  result = uvec4(ivec4(t1, t3, int(t5), t6.y));
 }
 
-
-// stats: 3 alu 0 tex 0 flow
+// stats: 0 alu 0 tex 0 flow
 // inputs: 2
 //  #0: range (high int) 2x1 [-1]
 //  #1: mask (high int) 1x1 [-1]

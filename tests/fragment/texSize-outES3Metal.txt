@@ -12,16 +12,11 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   , texture2d<float> map [[texture(0)]], sampler _mtlsmp_map [[sampler(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half2 map_size_1 = 0;
-  map_size_1 = half2(float2(int2(map.get_width(0), map.get_height(0))));
-  half4 tmpvar_2 = 0;
-  tmpvar_2.zw = half2(float2(0.0, 0.0));
-  tmpvar_2.xy = map_size_1;
-  _mtl_o.out_color = tmpvar_2;
+  half2 t0 = half2(float2(int2(map.get_width(uint(0)), map.get_height(uint(0)))));
+  _mtl_o.out_color = half4(t0, half(0.0), half(0.0));
   return _mtl_o;
 }
 
-
-// stats: 2 alu 1 tex 0 flow
+// stats: 1 alu 1 tex 0 flow
 // textures: 1
 //  #0: map (high 2d) 0x0 [-1] loc 0

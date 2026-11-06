@@ -1,6 +1,6 @@
 #version 430
-layout(local_size_x=8, local_size_y=8) in;
-layout(std140, column_major, binding=0) uniform Params {
+layout(local_size_x = 8, local_size_y = 8) in;
+layout(std140, binding = 0) uniform Params {
   ivec4 section;
   ivec2 target;
   uint flags;
@@ -18,32 +18,21 @@ layout(std140, column_major, binding=0) uniform Params {
   vec2 octmap_border_size;
   vec4 set_color;
 } params;
-layout(binding=0) uniform sampler2D source_color;
-layout(rgba16f, binding=3) writeonly restrict uniform image2D dest_buffer;
+layout(binding = 0) uniform sampler2D source_color;
+layout(rgba16f, binding = 3) restrict writeonly uniform image2D dest_buffer;
 void main ()
 {
-  vec4 color_1;
-  ivec2 tmpvar_2;
-  tmpvar_2 = ivec2(gl_GlobalInvocationID.xy);
-  if ((greaterThanEqual (tmpvar_2, params.section.zw) != bvec2(0, 0))) {
-    return;
-  };
-  ivec2 tmpvar_3;
-  tmpvar_3 = ((tmpvar_2 + params.section.xy) << 1);
-  color_1 = (texelFetch (source_color, tmpvar_3, 0) + texelFetch (source_color, (tmpvar_3 + ivec2(0, 1)), 0));
-  color_1 = (color_1 + texelFetch (source_color, (tmpvar_3 + ivec2(1, 0)), 0));
-  color_1 = (color_1 + texelFetch (source_color, (tmpvar_3 + ivec2(1, 1)), 0));
-  color_1 = (color_1 / 4.0);
-  vec4 tmpvar_4;
-  tmpvar_4 = vec4(((equal (abs(color_1), vec4((1.0/0.0), (1.0/0.0), (1.0/0.0), (1.0/0.0)))).x ? (vec4(100.0, 100.0, 100.0, 1.0)).x : (color_1).x), ((equal (abs(color_1), vec4((1.0/0.0), (1.0/0.0), (1.0/0.0), (1.0/0.0)))).y ? (vec4(100.0, 100.0, 100.0, 1.0)).y : (color_1).y), ((equal (abs(color_1), vec4((1.0/0.0), (1.0/0.0), (1.0/0.0), (1.0/0.0)))).z ? (vec4(100.0, 100.0, 100.0, 1.0)).z : (color_1).z), ((equal (abs(color_1), vec4((1.0/0.0), (1.0/0.0), (1.0/0.0), (1.0/0.0)))).w ? (vec4(100.0, 100.0, 100.0, 1.0)).w : (color_1).w));
-  vec4 tmpvar_5;
-  tmpvar_5 = vec4(((notEqual (tmpvar_4, tmpvar_4)).x ? (vec4(100.0, 100.0, 100.0, 1.0)).x : (tmpvar_4).x), ((notEqual (tmpvar_4, tmpvar_4)).y ? (vec4(100.0, 100.0, 100.0, 1.0)).y : (tmpvar_4).y), ((notEqual (tmpvar_4, tmpvar_4)).z ? (vec4(100.0, 100.0, 100.0, 1.0)).z : (tmpvar_4).z), ((notEqual (tmpvar_4, tmpvar_4)).w ? (vec4(100.0, 100.0, 100.0, 1.0)).w : (tmpvar_4).w));
-  color_1 = tmpvar_5;
-  imageStore (dest_buffer, (tmpvar_2 + params.target), tmpvar_5);
+  if ((!(greaterThanEqual(ivec2(gl_GlobalInvocationID.xy), params.section.zw) != bvec2(false)))) {
+    ivec2 t0 = ((ivec2(gl_GlobalInvocationID.xy) + params.section.xy) << 1u);
+    vec4 t1 = (((texelFetch(source_color, t0, 0) + texelFetch(source_color, (ivec2(0, 1) + t0), 0)) + texelFetch(source_color, (ivec2(1, 0) + t0), 0)) + texelFetch(source_color, (1 + t0), 0));
+    vec4 t2 = (t1 / 4.0);
+    vec4 t3 = mix(t2, vec4(1e+02, 1e+02, 1e+02, 1.0), equal(abs(t2), vec4((1.0/0.0))));
+    ivec2 t4 = (ivec2(gl_GlobalInvocationID.xy) + params.target);
+    imageStore(dest_buffer, ivec4(t4, 0, 0).xy, mix(t3, vec4(1e+02, 1e+02, 1e+02, 1.0), notEqual(t3, t3)));
+  }
 }
 
-
-// stats: 18 alu 5 tex 2 flow
+// stats: 18 alu 5 tex 1 flow
 // workgroup size: 8 8 1
 // buffer #0: Params instance params layout std140 binding 0 (size: 96)
 //  member #0: ivec4 section offset 0

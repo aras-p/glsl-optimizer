@@ -26,56 +26,30 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   , texture2d<half> _TranslucencyMap [[texture(3)]], sampler _mtlsmp__TranslucencyMap [[sampler(3)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half4 c_1 = 0;
-  half3 lightDir_2 = 0;
-  half3 tmpvar_3 = 0;
-  half tmpvar_4 = 0;
-  half4 tmpvar_5 = 0;
-  tmpvar_5 = _MainTex.sample(_mtlsmp__MainTex, (float2)((_mtl_i.xlv_TEXCOORD0)));
-  tmpvar_3 = half3((((float3)(tmpvar_5.xyz) * _mtl_u._Color.xyz) * _mtl_i.xlv_COLOR0.w));
-  half4 tmpvar_6 = 0;
-  tmpvar_6 = _TranslucencyMap.sample(_mtlsmp__TranslucencyMap, (float2)((_mtl_i.xlv_TEXCOORD0)));
-  tmpvar_4 = half(((float)(tmpvar_6.w) * _mtl_u._Color.x));
-  half4 tmpvar_7 = 0;
-  tmpvar_7 = _BumpSpecMap.sample(_mtlsmp__BumpSpecMap, (float2)((_mtl_i.xlv_TEXCOORD0)));
-  half4 normal_8 = 0;
-  normal_8.xy = ((tmpvar_7.wy * (half)(2.0)) - (half)(1.0));
-  normal_8.z = sqrt((((half)(1.0) - 
-    (normal_8.x * normal_8.x)
-  ) - (normal_8.y * normal_8.y)));
-  half tmpvar_9 = 0;
-  tmpvar_9 = half(((float)(tmpvar_5.w) - _mtl_u._Cutoff));
-  if ((tmpvar_9 < (half)(0.0))) discard_fragment();
-  lightDir_2 = half3(_mtl_i.xlv_TEXCOORD1);
-  half3 tmpvar_10 = 0;
-  tmpvar_10 = half3(normalize(_mtl_i.xlv_TEXCOORD2));
-  half4 c_11 = 0;
-  half nl_12 = 0;
-  nl_12 = dot (normal_8.xyz, lightDir_2);
-  half tmpvar_13 = 0;
-  tmpvar_13 = mix (saturate(-(nl_12)), saturate(dot (tmpvar_10, 
-    -(lightDir_2)
-  )), _mtl_u._TranslucencyViewDependency);
-  half tmpvar_14 = 0;
-  tmpvar_14 = max ((half)0.0, ((nl_12 * (half)(0.6)) + (half)(0.4)));
-  nl_12 = tmpvar_14;
-  c_11.xyz = (tmpvar_3 * ((
-    ((tmpvar_13 * tmpvar_6.z) * _mtl_u._TranslucencyColor)
-   * (half)(2.0)) + tmpvar_14));
-  c_11.xyz = half3((((float3)(c_11.xyz) * _mtl_u._LightColor0.xyz) + (float)((pow (
-    max ((half)0.0, dot (normal_8.xyz, normalize((lightDir_2 + tmpvar_10))))
-  , 
-    (tmpvar_7.x * (half)(128.0))
-  ) * tmpvar_4))));
-  c_11.xyz = (c_11.xyz * mix ((half)2.0, (_LightTexture0.sample(_mtlsmp__LightTexture0, (float2)((_mtl_i.xlv_TEXCOORD3))).w * (half)(2.0)), _mtl_u._ShadowStrength));
-  c_1.xyz = c_11.xyz;
-  c_1.w = tmpvar_5.w;
-  _mtl_o._fragData = c_1;
+  half4 t0 = _MainTex.sample(_mtlsmp__MainTex, _mtl_i.xlv_TEXCOORD0);
+  half3 t1 = half3(((float3(t0.xyz) * _mtl_u._Color.xyz) * _mtl_i.xlv_COLOR0.w));
+  half4 t2 = _TranslucencyMap.sample(_mtlsmp__TranslucencyMap, _mtl_i.xlv_TEXCOORD0);
+  half t3 = half((float(t2.w) * _mtl_u._Color.x));
+  half4 t4 = _BumpSpecMap.sample(_mtlsmp__BumpSpecMap, _mtl_i.xlv_TEXCOORD0);
+  half2 t5 = ((t4.wy * half(2.0)) - half(1.0));
+  half t6 = ((half(1.0) - (t5.x * t5.x)) - (t5.y * t5.y));
+  half t7 = half((float(t0.w) - _mtl_u._Cutoff));
+  if ((t7 < half(0.0))) {
+    discard_fragment();
+  }
+  half3 t8 = half3(_mtl_i.xlv_TEXCOORD1);
+  half3 t9 = half3(normalize(_mtl_i.xlv_TEXCOORD2));
+  half3 t10 = (t8 + t9);
+  half3 t11 = half3(t5, sqrt(t6));
+  half t12 = dot(t11, t8);
+  half3 t13 = ((((half3(mix(saturate((-t12)), saturate(dot(t9, (-t8))), _mtl_u._TranslucencyViewDependency)) * half(2.0)) * t2.z) * _mtl_u._TranslucencyColor) + max(half(0.0), ((t12 * half(0.6)) + half(0.4))));
+  half4 t14 = half4(((float3((t1 * t13)) * _mtl_u._LightColor0.xyz) + float((pow(max(half(0.0), dot(t11, normalize(t10))), (t4.x * half(128.0))) * t3))).xyzx);
+  half3 t15 = (t14.xyz * mix(half(2.0), (half(2.0) * _LightTexture0.sample(_mtlsmp__LightTexture0, _mtl_i.xlv_TEXCOORD3).w), _mtl_u._ShadowStrength));
+  _mtl_o._fragData = half4(t15, t0.w);
   return _mtl_o;
 }
 
-
-// stats: 40 alu 5 tex 1 flow
+// stats: 43 alu 5 tex 1 flow
 // inputs: 5
 //  #0: xlv_TEXCOORD0 (high float) 2x1 [-1]
 //  #1: xlv_COLOR0 (high float) 4x1 [-1]

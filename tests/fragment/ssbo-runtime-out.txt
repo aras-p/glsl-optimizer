@@ -1,22 +1,19 @@
 #version 450
-layout(std430, column_major, binding=2) buffer Data {
-  layout(offset=16) vec2 bias;
+layout(std430, binding = 2) buffer Data {
+  layout(offset = 16) vec2 bias;
   float values[];
 } data;
 uniform int index;
 out vec4 color;
 void main ()
 {
-  data.values[index] = (data.values[index] + data.bias.x);
-  vec4 tmpvar_1;
-  tmpvar_1.x = data.values[index];
-  tmpvar_1.y = float(data.values.length());
-  tmpvar_1.zw = data.bias;
-  color = tmpvar_1;
+  float t0 = (data.values[index] + data.bias.x);
+  data.values[index] = t0;
+  vec2 t1 = data.bias;
+  color = vec4(t0, float(data.values.length()), t1);
 }
 
-
-// stats: 3 alu 0 tex 0 flow
+// stats: 2 alu 0 tex 0 flow
 // uniforms: 1 (total size: 0)
 //  #0: index (high int) 1x1 [-1]
 // buffer #0: Data storage instance data layout std430 binding 2 (size: unknown)

@@ -14,10 +14,9 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   , depthcube<float> shadowmap [[texture(0)]], sampler _mtlsmp_shadowmap [[sampler(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  _mtl_o._fragColor = half4(half(shadowmap.sample_compare(_mtl_xl_shadow_sampler, (float3)((_mtl_i.uv.xyz)), saturate((float)(_mtl_i.uv.w)))));
+  _mtl_o._fragColor = half4(half(shadowmap.sample_compare(_mtl_xl_shadow_sampler, float3(_mtl_i.uv.xyz), saturate(float(_mtl_i.uv.w)))));
   return _mtl_o;
 }
-
 
 // stats: 0 alu 1 tex 0 flow
 // inputs: 1

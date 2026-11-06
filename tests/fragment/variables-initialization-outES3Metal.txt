@@ -2,39 +2,19 @@
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
 struct xlatMtlShaderInput {
-  half2 xlv_TEXCOORD0;
 };
 struct xlatMtlShaderOutput {
-  half4 _glesFragData_0 [[color(0)]];
+  half4 _xlat_varying0 [[color(0)]];
 };
 struct xlatMtlShaderUniform {
 };
-fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , texture2d<half> _MainTex [[texture(0)]], sampler _mtlsmp__MainTex [[sampler(0)]])
+fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half4 col_1 = 0;
-  half4 tmpvar_2 = 0;
-  bool bar_3 = false;
-  half4 foo_4 = 0;
-  half4 tmpvar_5 = 0;
-  tmpvar_5 = _MainTex.sample(_mtlsmp__MainTex, (float2)((_mtl_i.xlv_TEXCOORD0)));
-  col_1 = tmpvar_5;
-  half4 tmpvar_6 = 0;
-  if (bar_3) {
-    tmpvar_6 = foo_4;
-  } else {
-    tmpvar_6 = half4(float4(0.5, 0.5, 0.5, 0.5));
-  };
-  col_1 = (tmpvar_5 + tmpvar_6);
-  col_1 = (col_1 + tmpvar_2);
-  _mtl_o._glesFragData_0 = col_1;
+  half4 _glesFragData[1];
+  _glesFragData[0] = half4(NAN);
+  _mtl_o._xlat_varying0 = _glesFragData[0];
   return _mtl_o;
 }
 
-
-// stats: 3 alu 1 tex 1 flow
-// inputs: 1
-//  #0: xlv_TEXCOORD0 (medium float) 2x1 [-1]
-// textures: 1
-//  #0: _MainTex (medium 2d) 0x0 [-1] loc 0
+// stats: 0 alu 0 tex 0 flow

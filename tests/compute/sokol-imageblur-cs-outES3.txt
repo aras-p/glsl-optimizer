@@ -1,221 +1,79 @@
 #version 310 es
-layout(local_size_x=32) in;
-layout(std140, column_major, binding=0) uniform cs_params {
+layout(local_size_x = 32) in;
+layout(std140, binding = 0) uniform cs_params {
   highp int filter_dim;
   highp int block_dim;
   highp int flip;
 };
-layout(binding=3) uniform highp sampler2D cs_inp_tex;
-layout(rgba8, binding=1) writeonly uniform highp image2D cs_outp_tex;
+layout(binding = 3) uniform highp sampler2D cs_inp_tex;
+layout(rgba8, binding = 1) writeonly uniform highp image2D cs_outp_tex;
 shared highp vec3 tile[4][128];
 void main ()
 {
-  highp int r_1;
-  highp uint tmpvar_2;
-  tmpvar_2 = ((uint(filter_dim) + 4294967295u) / 2u);
-  highp ivec2 tmpvar_3;
-  tmpvar_3 = textureSize (cs_inp_tex, 0);
-  highp vec2 tmpvar_4;
-  tmpvar_4.y = 4.0;
-  tmpvar_4.x = float(block_dim);
-  highp vec2 tmpvar_5;
-  tmpvar_5.y = 0.0;
-  tmpvar_5.x = float(tmpvar_2);
-  highp ivec2 tmpvar_6;
-  tmpvar_6 = ivec2(((
-    (vec2(gl_WorkGroupID.xy) * tmpvar_4)
-   + 
-    (vec2(gl_LocalInvocationID.xy) * vec2(4.0, 1.0))
-  ) - tmpvar_5));
-  highp vec2 load_index_7;
-  highp vec2 tmpvar_8;
-  tmpvar_8 = vec2(tmpvar_6);
-  load_index_7 = tmpvar_8;
-  if ((flip != 0)) {
-    load_index_7 = tmpvar_8.yx;
-  };
-  tile[0][(4u * gl_LocalInvocationID.x)] = textureLod (cs_inp_tex, ((load_index_7 + vec2(0.25, 0.25)) / vec2(tmpvar_3)), 0.0).xyz;
-  highp vec2 load_index_9;
-  highp vec2 tmpvar_10;
-  tmpvar_10 = (vec2(tmpvar_6) + vec2(1.0, 0.0));
-  load_index_9 = tmpvar_10;
-  if ((flip != 0)) {
-    load_index_9 = tmpvar_10.yx;
-  };
-  tile[0][((4u * gl_LocalInvocationID.x) + 1u)] = textureLod (cs_inp_tex, ((load_index_9 + vec2(0.25, 0.25)) / vec2(tmpvar_3)), 0.0).xyz;
-  highp vec2 load_index_11;
-  highp vec2 tmpvar_12;
-  tmpvar_12 = (vec2(tmpvar_6) + vec2(2.0, 0.0));
-  load_index_11 = tmpvar_12;
-  if ((flip != 0)) {
-    load_index_11 = tmpvar_12.yx;
-  };
-  tile[0][((4u * gl_LocalInvocationID.x) + 2u)] = textureLod (cs_inp_tex, ((load_index_11 + vec2(0.25, 0.25)) / vec2(tmpvar_3)), 0.0).xyz;
-  highp vec2 load_index_13;
-  highp vec2 tmpvar_14;
-  tmpvar_14 = (vec2(tmpvar_6) + vec2(3.0, 0.0));
-  load_index_13 = tmpvar_14;
-  if ((flip != 0)) {
-    load_index_13 = tmpvar_14.yx;
-  };
-  tile[0][((4u * gl_LocalInvocationID.x) + 3u)] = textureLod (cs_inp_tex, ((load_index_13 + vec2(0.25, 0.25)) / vec2(tmpvar_3)), 0.0).xyz;
-  highp vec2 load_index_15;
-  highp vec2 tmpvar_16;
-  tmpvar_16 = (vec2(tmpvar_6) + vec2(0.0, 1.0));
-  load_index_15 = tmpvar_16;
-  if ((flip != 0)) {
-    load_index_15 = tmpvar_16.yx;
-  };
-  tile[1][(4u * gl_LocalInvocationID.x)] = textureLod (cs_inp_tex, ((load_index_15 + vec2(0.25, 0.25)) / vec2(tmpvar_3)), 0.0).xyz;
-  highp vec2 load_index_17;
-  highp vec2 tmpvar_18;
-  tmpvar_18 = (vec2(tmpvar_6) + vec2(1.0, 1.0));
-  load_index_17 = tmpvar_18;
-  if ((flip != 0)) {
-    load_index_17 = tmpvar_18.yx;
-  };
-  tile[1][((4u * gl_LocalInvocationID.x) + 1u)] = textureLod (cs_inp_tex, ((load_index_17 + vec2(0.25, 0.25)) / vec2(tmpvar_3)), 0.0).xyz;
-  highp vec2 load_index_19;
-  highp vec2 tmpvar_20;
-  tmpvar_20 = (vec2(tmpvar_6) + vec2(2.0, 1.0));
-  load_index_19 = tmpvar_20;
-  if ((flip != 0)) {
-    load_index_19 = tmpvar_20.yx;
-  };
-  tile[1][((4u * gl_LocalInvocationID.x) + 2u)] = textureLod (cs_inp_tex, ((load_index_19 + vec2(0.25, 0.25)) / vec2(tmpvar_3)), 0.0).xyz;
-  highp vec2 load_index_21;
-  highp vec2 tmpvar_22;
-  tmpvar_22 = (vec2(tmpvar_6) + vec2(3.0, 1.0));
-  load_index_21 = tmpvar_22;
-  if ((flip != 0)) {
-    load_index_21 = tmpvar_22.yx;
-  };
-  tile[1][((4u * gl_LocalInvocationID.x) + 3u)] = textureLod (cs_inp_tex, ((load_index_21 + vec2(0.25, 0.25)) / vec2(tmpvar_3)), 0.0).xyz;
-  highp vec2 load_index_23;
-  highp vec2 tmpvar_24;
-  tmpvar_24 = (vec2(tmpvar_6) + vec2(0.0, 2.0));
-  load_index_23 = tmpvar_24;
-  if ((flip != 0)) {
-    load_index_23 = tmpvar_24.yx;
-  };
-  tile[2][(4u * gl_LocalInvocationID.x)] = textureLod (cs_inp_tex, ((load_index_23 + vec2(0.25, 0.25)) / vec2(tmpvar_3)), 0.0).xyz;
-  highp vec2 load_index_25;
-  highp vec2 tmpvar_26;
-  tmpvar_26 = (vec2(tmpvar_6) + vec2(1.0, 2.0));
-  load_index_25 = tmpvar_26;
-  if ((flip != 0)) {
-    load_index_25 = tmpvar_26.yx;
-  };
-  tile[2][((4u * gl_LocalInvocationID.x) + 1u)] = textureLod (cs_inp_tex, ((load_index_25 + vec2(0.25, 0.25)) / vec2(tmpvar_3)), 0.0).xyz;
-  highp vec2 load_index_27;
-  highp vec2 tmpvar_28;
-  tmpvar_28 = (vec2(tmpvar_6) + vec2(2.0, 2.0));
-  load_index_27 = tmpvar_28;
-  if ((flip != 0)) {
-    load_index_27 = tmpvar_28.yx;
-  };
-  tile[2][((4u * gl_LocalInvocationID.x) + 2u)] = textureLod (cs_inp_tex, ((load_index_27 + vec2(0.25, 0.25)) / vec2(tmpvar_3)), 0.0).xyz;
-  highp vec2 load_index_29;
-  highp vec2 tmpvar_30;
-  tmpvar_30 = (vec2(tmpvar_6) + vec2(3.0, 2.0));
-  load_index_29 = tmpvar_30;
-  if ((flip != 0)) {
-    load_index_29 = tmpvar_30.yx;
-  };
-  tile[2][((4u * gl_LocalInvocationID.x) + 3u)] = textureLod (cs_inp_tex, ((load_index_29 + vec2(0.25, 0.25)) / vec2(tmpvar_3)), 0.0).xyz;
-  highp vec2 load_index_31;
-  highp vec2 tmpvar_32;
-  tmpvar_32 = (vec2(tmpvar_6) + vec2(0.0, 3.0));
-  load_index_31 = tmpvar_32;
-  if ((flip != 0)) {
-    load_index_31 = tmpvar_32.yx;
-  };
-  tile[3][(4u * gl_LocalInvocationID.x)] = textureLod (cs_inp_tex, ((load_index_31 + vec2(0.25, 0.25)) / vec2(tmpvar_3)), 0.0).xyz;
-  highp vec2 load_index_33;
-  highp vec2 tmpvar_34;
-  tmpvar_34 = (vec2(tmpvar_6) + vec2(1.0, 3.0));
-  load_index_33 = tmpvar_34;
-  if ((flip != 0)) {
-    load_index_33 = tmpvar_34.yx;
-  };
-  tile[3][((4u * gl_LocalInvocationID.x) + 1u)] = textureLod (cs_inp_tex, ((load_index_33 + vec2(0.25, 0.25)) / vec2(tmpvar_3)), 0.0).xyz;
-  highp vec2 load_index_35;
-  highp vec2 tmpvar_36;
-  tmpvar_36 = (vec2(tmpvar_6) + vec2(2.0, 3.0));
-  load_index_35 = tmpvar_36;
-  if ((flip != 0)) {
-    load_index_35 = tmpvar_36.yx;
-  };
-  tile[3][((4u * gl_LocalInvocationID.x) + 2u)] = textureLod (cs_inp_tex, ((load_index_35 + vec2(0.25, 0.25)) / vec2(tmpvar_3)), 0.0).xyz;
-  highp vec2 load_index_37;
-  highp vec2 tmpvar_38;
-  tmpvar_38 = (vec2(tmpvar_6) + vec2(3.0, 3.0));
-  load_index_37 = tmpvar_38;
-  if ((flip != 0)) {
-    load_index_37 = tmpvar_38.yx;
-  };
-  tile[3][((4u * gl_LocalInvocationID.x) + 3u)] = textureLod (cs_inp_tex, ((load_index_37 + vec2(0.25, 0.25)) / vec2(tmpvar_3)), 0.0).xyz;
+  highp int r0;
+  highp vec3 r1;
+  highp int r2;
+  highp int r3;
+  highp ivec2 t0 = textureSize(cs_inp_tex, 0);
+  highp uint t1 = (uint((filter_dim - 1)) >> 1u);
+  highp vec2 t2 = (((vec2(gl_WorkGroupID.xy) * vec2(float(block_dim), 4.0)) - vec2(float(t1), 0.0)) + (vec2(gl_LocalInvocationID.xy) * vec2(4.0, 1.0)));
+  bool t3 = (flip != 0);
+  highp vec2 t4 = vec2(t0);
+  highp int t5 = (int(gl_LocalInvocationID.x) << 2u);
+  tile[0][t5] = textureLod(cs_inp_tex, (((t3 ? t2.yx : t2) + 0.25) / t4), 0.0).xyz;
+  highp vec2 t6 = (t2 + vec2(1.0, 0.0));
+  highp int t7 = (t5 + 1);
+  tile[0][t7] = textureLod(cs_inp_tex, (((t3 ? t6.yx : t6) + 0.25) / t4), 0.0).xyz;
+  highp vec2 t8 = (t2 + vec2(2.0, 0.0));
+  highp int t9 = (t5 + 2);
+  tile[0][t9] = textureLod(cs_inp_tex, (((t3 ? t8.yx : t8) + 0.25) / t4), 0.0).xyz;
+  highp vec2 t10 = (t2 + vec2(3.0, 0.0));
+  highp int t11 = (t5 + 3);
+  tile[0][t11] = textureLod(cs_inp_tex, (((t3 ? t10.yx : t10) + 0.25) / t4), 0.0).xyz;
+  highp vec2 t12 = (t2 + vec2(0.0, 1.0));
+  tile[1][t5] = textureLod(cs_inp_tex, (((t3 ? t12.yx : t12) + 0.25) / t4), 0.0).xyz;
+  highp vec2 t13 = (t2 + 1.0);
+  tile[1][t7] = textureLod(cs_inp_tex, (((t3 ? t13.yx : t13) + 0.25) / t4), 0.0).xyz;
+  highp vec2 t14 = (t2 + vec2(2.0, 1.0));
+  tile[1][t9] = textureLod(cs_inp_tex, (((t3 ? t14.yx : t14) + 0.25) / t4), 0.0).xyz;
+  highp vec2 t15 = (t2 + vec2(3.0, 1.0));
+  tile[1][t11] = textureLod(cs_inp_tex, (((t3 ? t15.yx : t15) + 0.25) / t4), 0.0).xyz;
+  highp vec2 t16 = (t2 + vec2(0.0, 2.0));
+  tile[2][t5] = textureLod(cs_inp_tex, (((t3 ? t16.yx : t16) + 0.25) / t4), 0.0).xyz;
+  highp vec2 t17 = (t2 + vec2(1.0, 2.0));
+  tile[2][t7] = textureLod(cs_inp_tex, (((t3 ? t17.yx : t17) + 0.25) / t4), 0.0).xyz;
+  highp vec2 t18 = (t2 + 2.0);
+  tile[2][t9] = textureLod(cs_inp_tex, (((t3 ? t18.yx : t18) + 0.25) / t4), 0.0).xyz;
+  highp vec2 t19 = (t2 + vec2(3.0, 2.0));
+  tile[2][t11] = textureLod(cs_inp_tex, (((t3 ? t19.yx : t19) + 0.25) / t4), 0.0).xyz;
+  highp vec2 t20 = (t2 + vec2(0.0, 3.0));
+  tile[3][t5] = textureLod(cs_inp_tex, (((t3 ? t20.yx : t20) + 0.25) / t4), 0.0).xyz;
+  highp vec2 t21 = (t2 + vec2(1.0, 3.0));
+  tile[3][t7] = textureLod(cs_inp_tex, (((t3 ? t21.yx : t21) + 0.25) / t4), 0.0).xyz;
+  highp vec2 t22 = (t2 + vec2(2.0, 3.0));
+  tile[3][t9] = textureLod(cs_inp_tex, (((t3 ? t22.yx : t22) + 0.25) / t4), 0.0).xyz;
+  highp vec2 t23 = (t2 + 3.0);
+  tile[3][t11] = textureLod(cs_inp_tex, (((t3 ? t23.yx : t23) + 0.25) / t4), 0.0).xyz;
   barrier();
-  r_1 = 0;
-  while (true) {
-    highp int c_39;
-    if ((r_1 >= 4)) {
-      break;
-    };
-    c_39 = 0;
-    while (true) {
-      highp ivec2 write_index_40;
-      if ((c_39 >= 4)) {
-        break;
-      };
-      highp ivec2 tmpvar_41;
-      tmpvar_41.x = c_39;
-      tmpvar_41.y = r_1;
-      highp ivec2 tmpvar_42;
-      tmpvar_42 = (tmpvar_6 + tmpvar_41);
-      write_index_40 = tmpvar_42;
-      if ((flip != 0)) {
-        write_index_40 = tmpvar_42.yx;
-      };
-      highp int tmpvar_43;
-      tmpvar_43 = ((4 * int(gl_LocalInvocationID.x)) + c_39);
-      bool tmpvar_44;
-      if (((tmpvar_43 >= int(tmpvar_2)) && (tmpvar_43 < (128 - 
-        int(tmpvar_2)
-      )))) {
-        tmpvar_44 = (lessThan (write_index_40, tmpvar_3) == bvec2(1, 1));
-      } else {
-        tmpvar_44 = bool(0);
-      };
-      if (tmpvar_44) {
-        highp int f_45;
-        highp vec3 acc_46;
-        acc_46 = vec3(0.0, 0.0, 0.0);
-        f_45 = 0;
-        while (true) {
-          if ((f_45 >= filter_dim)) {
-            break;
-          };
-          highp int tmpvar_47;
-          tmpvar_47 = ((tmpvar_43 + f_45) - int(tmpvar_2));
-          acc_46 = (acc_46 + ((1.0/(
-            float(filter_dim)
-          )) * tile[r_1][tmpvar_47]));
-          f_45++;
-        };
-        highp vec4 tmpvar_48;
-        tmpvar_48.w = 1.0;
-        tmpvar_48.xyz = acc_46;
-        imageStore (cs_outp_tex, write_index_40, tmpvar_48);
-      };
-      c_39++;
-    };
-    r_1++;
-  };
+  highp ivec2 t24 = ivec2(t2);
+  for (r3 = 0; (r3 < 4); r3++) {
+    for (r2 = 0; (r2 < 4); r2++) {
+      highp ivec2 t25 = (t24 + ivec2(r2, r3));
+      highp ivec2 t26 = (t3 ? t25.yx : t25);
+      highp int t27 = (t5 + r2);
+      if ((((t27 >= int(t1)) && (t27 < (128 - int(t1)))) && (lessThan(t26, t0) == bvec2(true)))) {
+        r0 = 0;
+        r1 = vec3(0.0);
+        for (; (r0 < filter_dim); r0++) {
+          r1 = (r1 + ((1.0 / float(filter_dim)) * tile[r3][((t27 + r0) - int(t1))]));
+        }
+        imageStore(cs_outp_tex, ivec4(t26, 0, 0).xy, vec4(r1.x, r1.y, r1.z, 1.0));
+      }
+    }
+  }
 }
 
-
-// stats: 169 alu 18 tex 25 flow
+// stats: 102 alu 18 tex 7 flow
 // workgroup size: 32 1 1
 // buffer #0: cs_params layout std140 binding 0 (size: 16)
 //  member #0: int filter_dim offset 0

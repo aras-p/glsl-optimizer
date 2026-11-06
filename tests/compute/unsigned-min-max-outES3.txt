@@ -1,6 +1,6 @@
 #version 310 es
-layout(local_size_x=1) in;
-layout(std430, column_major, binding=0) buffer Data {
+layout(local_size_x = 1) in;
+layout(std430, binding = 0) buffer Data {
   highp uint value;
   highp uvec2 pair;
   highp uvec4 result;
@@ -8,17 +8,10 @@ layout(std430, column_major, binding=0) buffer Data {
 } data;
 void main ()
 {
-  highp uint tmpvar_1;
-  tmpvar_1 = data.value;
-  highp uvec4 tmpvar_2;
-  tmpvar_2.x = min (256u, tmpvar_1);
-  tmpvar_2.y = min (tmpvar_1, 4294967294u);
-  tmpvar_2.z = max (tmpvar_1, 4u);
-  tmpvar_2.w = max (2147483648u, tmpvar_1);
-  data.result = tmpvar_2;
-  data.vector_result = min (data.pair, uvec2(8u, 16u));
+  highp uint t0 = data.value;
+  data.result = uvec4(min(256u, t0), min(t0, 4294967294u), max(t0, 4u), max(2147483648u, t0));
+  data.vector_result = min(data.pair, uvec2(8u, 16u));
 }
-
 
 // stats: 5 alu 0 tex 0 flow
 // workgroup size: 1 1 1

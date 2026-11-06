@@ -1,10 +1,11 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
-struct alignas(4) _xlat_buf_storage0_element { int value; };
-static_assert(sizeof(_xlat_buf_storage0_element) == 4, "array stride");
-struct _xlat_stage_type0 {
+struct Interpolant {
   int f_objectID;
+};
+struct _xlat_buf_visibleBuffer_std430 {
+  int visibles[1];
 };
 struct xlatMtlShaderInput {
   int _xlat_varying0 [[user(locn0)]] [[flat]];
@@ -13,18 +14,17 @@ struct xlatMtlShaderOutput {
 };
 struct xlatMtlShaderUniform {
 };
-[[early_fragment_tests]] fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , device uchar* _mtl_buffer1 [[buffer(1)]])
+fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , device _xlat_buf_visibleBuffer_std430& _xlat_blk_visibleBuffer [[buffer(1)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  _xlat_stage_type0 _xlat_stage0;
-  _xlat_stage0.f_objectID = _mtl_i._xlat_varying0;
-  reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[_xlat_stage0.f_objectID].value = int(1);
+  Interpolant IN;
+  IN.f_objectID = _mtl_i._xlat_varying0;
+  _xlat_blk_visibleBuffer.visibles[IN.f_objectID] = 1;
   return _mtl_o;
 }
 
-
-// stats: 1 alu 0 tex 0 flow
+// stats: 0 alu 0 tex 0 flow
 // inputs: 1
 //  #0: IN (high other) 0x0 [-1] loc 0
 // buffer #0: visibleBuffer storage layout std430 binding 0 (size: unknown) metal 1

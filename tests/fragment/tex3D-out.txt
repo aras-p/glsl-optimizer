@@ -2,9 +2,8 @@ uniform sampler3D tex;
 varying vec3 uv;
 void main ()
 {
-  gl_FragColor = texture3D (tex, uv);
+  gl_FragColor = texture3D(tex, uv);
 }
-
 
 // stats: 0 alu 1 tex 0 flow
 // inputs: 1

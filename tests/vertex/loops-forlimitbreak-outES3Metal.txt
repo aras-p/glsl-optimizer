@@ -17,62 +17,83 @@ struct xlatMtlShaderUniform {
 vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  float3 xlt_IN_pos_1 = 0;
-  xlt_IN_pos_1 = _mtl_i._glesVertex.xyz;
-  int j_2 = 0;
-  int j_3 = 0;
-  int il_4 = 0;
-  half3 lcolor_5 = 0;
-  half3 eyeNormal_6 = 0;
-  half4 color_7 = 0;
-  color_7 = half4(float4(0.0, 0.0, 0.0, 1.1));
-  eyeNormal_6 = half3(_mtl_i._glesNormal);
-  lcolor_5 = half3(float3(0.0, 0.0, 0.0));
-  il_4 = 0;
+  int r0 = 0;
+  int r1 = 0;
+  half3 r2 = 0;
+  half4 r3 = 0;
+  int4 t1 = 0;
+  half3 t0 = half3(_mtl_i._glesNormal);
+  r0 = 0;
+  r2 = half3(0.0);
   while (true) {
-    float tmpvar_8 = 0;
-    tmpvar_8 = min (8.0, float(_mtl_u.unity_VertexLightParams.x));
-    if ((float(il_4) >= tmpvar_8)) {
+    t1 = _mtl_u.unity_VertexLightParams;
+    if ((float(r0) >= min(8.0, float(t1.x)))) {
       break;
-    };
-    half3 tmpvar_9 = 0;
-    tmpvar_9 = half3(_mtl_u.unity_LightPosition[il_4].xyz);
-    lcolor_5 = (lcolor_5 + min ((
-      (max (dot (eyeNormal_6, tmpvar_9), (half)0.0) * _mtl_u.unity_LightColor[il_4].xyz)
-     * 0.5), (half3)float3(1.0, 1.0, 1.0)));
-    il_4++;
-  };
-  color_7.xyz = lcolor_5;
-  j_3 = 0;
-  while (true) {
-    float tmpvar_10 = 0;
-    tmpvar_10 = min (float(_mtl_u.unity_VertexLightParams.y), 4.0);
-    if ((j_3 >= int(tmpvar_10))) {
-      break;
-    };
-    color_7.xyz = (color_7.xyz + _mtl_u.unity_LightColor[j_3].xyz);
-    j_3++;
-  };
-  j_2 = 0;
-  while (true) {
-    int tmpvar_11 = 0;
-    tmpvar_11 = min (_mtl_u.unity_VertexLightParams.y, 4);
-    if ((j_2 >= tmpvar_11)) {
-      break;
-    };
-    color_7.xyz = (color_7.xyz * _mtl_u.unity_LightColor[j_2].xyz);
-    j_2++;
-  };
-  float4 tmpvar_12 = 0;
-  tmpvar_12.w = 1.0;
-  tmpvar_12.xyz = xlt_IN_pos_1;
-  _mtl_o.xlv_COLOR0 = color_7;
-  _mtl_o.gl_Position = tmpvar_12;
+    }
+    half3 t2 = half3(_mtl_u.unity_LightPosition[r0].xyz);
+    r2 = (r2 + min(((half3(max(dot(t0, t2), half(0.0))) * half(0.5)) * _mtl_u.unity_LightColor[r0].xyz), half3(1.0)));
+    r0 = (r0 + 1);
+  }
+  int t3 = int(min(float(t1.y), 4.0));
+  if ((0 < t3)) {
+    half3 t4 = (r2 + _mtl_u.unity_LightColor[0].xyz);
+    if ((1 < t3)) {
+      half3 t5 = (t4 + _mtl_u.unity_LightColor[1].xyz);
+      if ((2 < t3)) {
+        half3 t6 = (t5 + _mtl_u.unity_LightColor[2].xyz);
+        if ((3 < t3)) {
+          half3 t7 = (t6 + _mtl_u.unity_LightColor[3].xyz);
+          if ((4 < t3)) {
+            half3 t8 = (t7 + _mtl_u.unity_LightColor[4].xyz);
+            if ((5 < t3)) {
+              half3 t9 = (t8 + _mtl_u.unity_LightColor[5].xyz);
+              if ((6 < t3)) {
+                half3 t10 = (t9 + _mtl_u.unity_LightColor[6].xyz);
+                if ((7 < t3)) {
+                  half3 t11 = (t10 + _mtl_u.unity_LightColor[7].xyz);
+                  r3 = half4(t11, half(1.1));
+                  r1 = 8;
+                  while ((r1 < t3)) {
+                    r1 = (r1 + 1);
+                    r3 = half4(half(NAN), half(NAN), half(NAN), r3.w);
+                  }
+                } else {
+                  r3 = half4(t10, half(1.1));
+                }
+              } else {
+                r3 = half4(t9, half(1.1));
+              }
+            } else {
+              r3 = half4(t8, half(1.1));
+            }
+          } else {
+            r3 = half4(t7, half(1.1));
+          }
+        } else {
+          r3 = half4(t6, half(1.1));
+        }
+      } else {
+        r3 = half4(t5, half(1.1));
+      }
+    } else {
+      r3 = half4(t4, half(1.1));
+    }
+  } else {
+    r3 = half4(r2.x, r2.y, r2.z, half(1.1));
+  }
+  if ((0 < t1.y)) {
+    half3 t12 = (r3.xyz * _mtl_u.unity_LightColor[0].xyz);
+    half3 t13 = (t12 * _mtl_u.unity_LightColor[1].xyz);
+    half3 t14 = (t13 * _mtl_u.unity_LightColor[2].xyz);
+    half3 t15 = (t14 * _mtl_u.unity_LightColor[3].xyz);
+    r3 = ((1 < t1.y) ? ((2 < t1.y) ? ((3 < t1.y) ? half4(t15, r3.w) : half4(t14, r3.w)) : half4(t13, r3.w)) : half4(t12, r3.w));
+  }
+  _mtl_o.xlv_COLOR0 = r3;
+  _mtl_o.gl_Position = float4(_mtl_i._glesVertex.xyz, 1.0);
   return _mtl_o;
 }
 
-
-// stats: 27 alu 0 tex 6 flow
+// stats: 43 alu 0 tex 13 flow
 // inputs: 2
 //  #0: _glesVertex (high float) 4x1 [-1] loc 0
 //  #1: _glesNormal (high float) 3x1 [-1] loc 1

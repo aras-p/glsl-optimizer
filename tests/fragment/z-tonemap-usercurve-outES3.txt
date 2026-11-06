@@ -1,38 +1,22 @@
 #version 300 es
-layout(location=0) out mediump vec4 _glesFragData[4];
+precision highp float;
+precision highp int;
+layout(location = 0) out mediump vec4 _glesFragData[4];
 uniform mediump sampler2D _MainTex;
 uniform mediump sampler2D _Curve;
 uniform highp float _RangeScale;
 in highp vec2 xlv_TEXCOORD0;
 void main ()
 {
-  highp float newLum_1;
-  highp vec3 cie_2;
-  highp vec4 color_3;
-  color_3 = texture (_MainTex, xlv_TEXCOORD0);
-  highp vec3 Yxy_4;
-  highp vec3 tmpvar_5;
-  tmpvar_5 = (mat3(0.514136, 0.265068, 0.0241188, 0.323879, 0.670234, 0.122818, 0.160364, 0.0640916, 0.844427) * color_3.xyz);
-  Yxy_4.x = tmpvar_5.y;
-  Yxy_4.yz = (tmpvar_5.xy / dot (vec3(1.0, 1.0, 1.0), tmpvar_5));
-  cie_2.yz = Yxy_4.yz;
-  highp vec2 tmpvar_6;
-  tmpvar_6.y = 0.5;
-  tmpvar_6.x = (tmpvar_5.y * _RangeScale);
-  newLum_1 = texture (_Curve, tmpvar_6).x;
-  cie_2.x = newLum_1;
-  highp vec3 XYZ_7;
-  XYZ_7.x = ((newLum_1 * Yxy_4.y) / Yxy_4.z);
-  XYZ_7.y = cie_2.x;
-  XYZ_7.z = ((newLum_1 * (
-    (1.0 - Yxy_4.y)
-   - Yxy_4.z)) / Yxy_4.z);
-  color_3.xyz = (mat3(2.5651, -1.0217, 0.0753, -1.1665, 1.9777, -0.2543, -0.3986, 0.0439, 1.1892) * XYZ_7);
-  _glesFragData[0] = color_3;
+  highp vec4 t0 = texture(_MainTex, xlv_TEXCOORD0);
+  highp vec3 t1 = (mat3(vec3(0.514136, 0.265068, 0.0241188), vec3(0.323879, 0.670234, 0.122818), vec3(0.160364, 0.0640916, 0.844427)) * t0.xyz);
+  highp vec2 t2 = (t1.xy / dot(vec3(1.0), t1));
+  highp float t3 = texture(_Curve, vec2((t1.y * _RangeScale), 0.5)).x;
+  highp vec3 t4 = (((vec3(2.5651, -1.0217, 0.0753) * ((t3 * t2.x) / t2.y)) + (vec3(-1.1665, 1.9777, -0.2543) * t3)) + (vec3(-0.3986, 0.0439, 1.1892) * ((t3 * ((1.0 - t2.x) - t2.y)) / t2.y)));
+  _glesFragData[0] = vec4(t4, t0.w);
 }
 
-
-// stats: 12 alu 2 tex 0 flow
+// stats: 19 alu 2 tex 0 flow
 // inputs: 1
 //  #0: xlv_TEXCOORD0 (high float) 2x1 [-1]
 // uniforms: 1 (total size: 0)

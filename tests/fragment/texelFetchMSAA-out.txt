@@ -4,9 +4,8 @@ in vec2 uv;
 out vec4 color;
 void main ()
 {
-  color = texelFetch (tex, ivec2(uv), 3);
+  color = texelFetch(tex, ivec2(uv), 3);
 }
-
 
 // stats: 1 alu 1 tex 0 flow
 // inputs: 1

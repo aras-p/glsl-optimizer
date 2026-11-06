@@ -1,47 +1,52 @@
 #version 300 es
+precision highp float;
+precision highp int;
 uniform highp int bound;
 uniform highp float values[32];
 out highp vec4 color;
 void main ()
 {
-  highp int arrayIndex_1;
-  highp int starts_2[2];
-  highp int start_4;
-  highp int liveIndex_5;
-  highp float sum_7;
-  sum_7 = values[0];
-  for (highp int privateIndex_6 = 0; privateIndex_6 < bound; privateIndex_6++) {
-    sum_7 = (sum_7 + values[privateIndex_6]);
-  };
-  liveIndex_5 = 0;
-  for (; liveIndex_5 < bound; liveIndex_5++) {
-    sum_7 = (sum_7 + values[liveIndex_5]);
-  };
-  sum_7 = (sum_7 + float(liveIndex_5));
-  highp int tmpvar_8;
-  tmpvar_8 = int(sum_7);
-  start_4 = (tmpvar_8 + bound);
-  for (highp int snapshotIndex_3 = tmpvar_8; snapshotIndex_3 < start_4; snapshotIndex_3++) {
-    sum_7 = (sum_7 + values[snapshotIndex_3]);
-  };
-  starts_2[0] = int(sum_7);
-  starts_2[1] = bound;
-  arrayIndex_1 = starts_2[(bound & 1)];
-  if ((0.0 < sum_7)) {
-    highp int tmpvar_9;
-    tmpvar_9 = (bound & 1);
-    starts_2[tmpvar_9] = (starts_2[tmpvar_9] + 1);
-  };
-  for (; arrayIndex_1 < bound; arrayIndex_1++) {
-    sum_7 = (sum_7 + (values[arrayIndex_1] + float(starts_2[
-      (arrayIndex_1 & 1)
-    ])));
-  };
-  color = vec4(sum_7);
+  highp int r0;
+  highp int r1;
+  highp float r2;
+  highp int r3;
+  highp int r4;
+  highp float r5;
+  highp int starts[2];
+  highp int t0;
+  r2 = values[0];
+  r0 = 0;
+  while (true) {
+    t0 = bound;
+    if ((r0 >= t0)) {
+      break;
+    }
+    r2 = (r2 + values[r0]);
+    r0 = (r0 + 1);
+  }
+  for (r1 = 0; (r1 < t0); r1++) {
+    r2 = (r2 + values[r1]);
+  }
+  r5 = (r2 + float(r1));
+  r3 = int(r5);
+  highp int t1 = (r3 + t0);
+  for (; (r3 < t1); r3++) {
+    r5 = (r5 + values[r3]);
+  }
+  starts[0] = int(r5);
+  starts[1] = t0;
+  highp uint t2 = (uint(t0) & 1u);
+  r4 = starts[int(t2)];
+  if ((0.0 < r5)) {
+    starts[int(t2)] = (r4 + 1);
+  }
+  for (; (r4 < t0); r4++) {
+    r5 = (r5 + (values[r4] + float(starts[int((uint(r4) & 1u))])));
+  }
+  color = vec4(r5);
 }
 
-
-// stats: 26 alu 0 tex 9 flow
+// stats: 23 alu 0 tex 9 flow
 // uniforms: 2 (total size: 0)
 //  #0: bound (high int) 1x1 [-1]
 //  #1: values (high float) 1x1 [32]

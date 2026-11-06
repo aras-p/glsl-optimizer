@@ -5,28 +5,18 @@ struct xlatMtlShaderUniform {
 };
 // threadsPerThreadgroup: 4, 1, 1
 kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , uint3 gl_GlobalInvocationID [[thread_position_in_grid]]
   , texture2d<float, access::read> sourceImage [[texture(0)]]
   , texture2d<float, access::write> destinationImage [[texture(1)]]
   , texture2d<int, access::read> sourceIntegers [[texture(2)]]
-  , texture2d<int, access::write> destinationIntegers [[texture(3)]])
+  , texture2d<int, access::write> destinationIntegers [[texture(3)]]
+  , uint3 gl_GlobalInvocationID [[thread_position_in_grid]])
 {
-  short4 integers_1 = 0;
-  half4 color_2 = 0;
-  int2 tmpvar_3 = 0;
-  tmpvar_3 = int2(gl_GlobalInvocationID.xy);
-  float4 tmpvar_4 = 0;
-  tmpvar_4 = sourceImage.read(uint2(tmpvar_3));
-  color_2 = half4(tmpvar_4);
-  int4 tmpvar_5 = 0;
-  tmpvar_5 = sourceIntegers.read(uint2(tmpvar_3));
-  integers_1 = short4(tmpvar_5);
-  destinationImage.write(float4((color_2 * (half)(0.5))), uint2(tmpvar_3));
-  destinationIntegers.write(int4((integers_1 + (short4)(int4(1, 1, 1, 1)))), uint2(tmpvar_3));
+  short4 t0 = short4(sourceIntegers.read(uint2(int4(uint4(gl_GlobalInvocationID.xy, 0u, 0u)).xy)));
+  destinationImage.write(float4((half4(sourceImage.read(uint2(int4(uint4(gl_GlobalInvocationID.xy, 0u, 0u)).xy))) * half(0.5))), uint2(int4(uint4(gl_GlobalInvocationID.xy, 0u, 0u)).xy));
+  destinationIntegers.write(int4((t0 + short(1))), uint2(int4(uint4(gl_GlobalInvocationID.xy, 0u, 0u)).xy));
 }
 
-
-// stats: 3 alu 4 tex 0 flow
+// stats: 2 alu 4 tex 0 flow
 // workgroup size: 4 1 1
 // textures: 4
 //  #0: sourceImage (medium image2d) 0x0 [-1] loc 0 format rgba16f component float readonly

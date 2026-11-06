@@ -1,14 +1,11 @@
 void main ()
 {
   gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex);
-  vec4 tmpvar_1;
-  tmpvar_1.w = 1.0;
-  tmpvar_1.xyz = (((mat3(0.1, 0.8, 0.1, 0.3, 0.3, 0.5, 0.9, 0.0, 0.1) * gl_Normal) * 0.5) + 0.5);
-  gl_FrontColor = tmpvar_1;
+  vec3 t0 = (((mat3(vec3(0.1, 0.8, 0.1), vec3(0.3, 0.3, 0.5), vec3(0.9, 0.0, 0.1)) * gl_Normal) * 0.5) + 0.5);
+  gl_FrontColor = vec4(t0, 1.0);
 }
 
-
-// stats: 5 alu 0 tex 0 flow
+// stats: 14 alu 0 tex 0 flow
 // inputs: 2
 //  #0: gl_Normal (high float) 3x1 [-1] loc 1
 //  #1: gl_Vertex (high float) 4x1 [-1] loc 0

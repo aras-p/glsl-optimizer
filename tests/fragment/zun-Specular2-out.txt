@@ -6,27 +6,18 @@ uniform sampler2D unity_Lightmap;
 uniform sampler2D unity_LightmapInd;
 void main ()
 {
-  vec4 xlt_IN_hip_screen_1;
-  vec3 xlt_IN_hip_lmapFade_2;
-  xlt_IN_hip_screen_1 = gl_TexCoord[1];
-  xlt_IN_hip_lmapFade_2 = gl_TexCoord[2].xyz;
-  vec4 light_3;
-  vec4 tmpvar_4;
-  tmpvar_4 = texture2D (_MainTex, gl_TexCoord[0].xy);
-  light_3 = -(log2(texture2DProj (_LightBuffer, vec3(xlt_IN_hip_screen_1.xy, xlt_IN_hip_screen_1.w))));
-  light_3.xyz = (light_3.xyz + mix ((2.0 * texture2D (unity_LightmapInd, xlt_IN_hip_lmapFade_2.xy).xyz), (2.0 * texture2D (unity_Lightmap, xlt_IN_hip_lmapFade_2.xy).xyz), vec3(clamp (xlt_IN_hip_lmapFade_2.z, 0.0, 1.0))));
-  vec4 c_5;
-  float spec_6;
-  spec_6 = (light_3.w * tmpvar_4.w);
-  c_5.xyz = (((tmpvar_4.xyz * _Color.xyz) * light_3.xyz) + ((light_3.xyz * _SpecColor.xyz) * spec_6));
-  c_5.w = ((tmpvar_4.w * _Color.w) + (spec_6 * _SpecColor.w));
-  gl_FragData[0] = c_5;
+  vec4 t0 = texture2D(_MainTex, gl_TexCoord[0].xy);
+  vec2 t1 = gl_TexCoord[2].xy;
+  vec4 t2 = log2(texture2DProj(_LightBuffer, vec3(gl_TexCoord[1].xy, gl_TexCoord[1].w)));
+  vec3 t3 = ((mix(texture2D(unity_LightmapInd, t1).xyz, texture2D(unity_Lightmap, t1).xyz, vec3(clamp(gl_TexCoord[2].z, 0.0, 1.0))) * 2.0) - t2.xyz);
+  float t4 = (t2.w * t0.w);
+  vec3 t5 = (((t0.xyz * _Color.xyz) * t3) - (t4 * (t3 * _SpecColor.xyz)));
+  gl_FragData[0] = vec4(t5, ((t0.w * _Color.w) - (t4 * _SpecColor.w)));
 }
 
-
-// stats: 17 alu 4 tex 0 flow
+// stats: 14 alu 4 tex 0 flow
 // inputs: 1
-//  #0: gl_TexCoord (high float) 4x1 [3] loc 4
+//  #0: gl_TexCoord (high float) 4x1 [0] loc 4
 // uniforms: 2 (total size: 0)
 //  #0: _Color (high float) 4x1 [-1]
 //  #1: _SpecColor (high float) 4x1 [-1]

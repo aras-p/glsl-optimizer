@@ -10,7 +10,6 @@ void main ()
   weightedProduct = (transform * vec3(1.0, 1.0, 0.0));
 }
 
-
 // stats: 1 alu 0 tex 0 flow
 // uniforms: 2 (total size: 0)
 //  #0: world (high float) 4x4 [-1]
