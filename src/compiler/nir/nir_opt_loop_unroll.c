@@ -1113,7 +1113,11 @@ process_loops(nir_function_impl *impl, nir_cf_node *cf_node, bool *has_nested_lo
           (!breaks_after_first_iteration && has_nested_loop))
          goto exit;
 
-      if (!check_unrolling_restrictions(impl->function->shader, loop))
+      /* glsl-optimizer change: unrolling a loop that runs at most once does
+       * not duplicate its body, so the size limits do not apply.
+       */
+      if (!breaks_after_first_iteration &&
+          !check_unrolling_restrictions(impl->function->shader, loop))
          goto exit;
 
       if (loop->info->exact_trip_count_known) {

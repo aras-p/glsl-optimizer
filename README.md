@@ -266,6 +266,8 @@ frontend, `glsl_to_nir`, NIR with the passes we run, and the util code they need
   the preprocessor and hands out the parse state (version, extensions) for printing;
   `texture()`/`textureProj()` bias overloads for external textures in fragment shaders;
   block-level locations allowed on arrays of interface blocks.
+- Loops that run at most once are always unrolled (`nir_opt_loop_unroll` size
+  limits do not apply to them).
 
 #### Generated code size
 
