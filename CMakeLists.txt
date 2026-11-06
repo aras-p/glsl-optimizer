@@ -194,6 +194,11 @@ target_compile_definitions(glsl_optimizer PRIVATE HAVE_OPENGL=1 HAVE_OPENGL_ES_2
 # c11/threads.h: pthreads or win32 threads; the platform has struct timespec
 target_compile_definitions(glsl_optimizer PRIVATE HAVE_STRUCT_TIMESPEC $<$<NOT:$<BOOL:${WIN32}>>:HAVE_PTHREAD>)
 if(MSVC)
+    # warnings upstream Mesa disables for MSVC (meson.build)
+    target_compile_options(glsl_optimizer PRIVATE
+        /wd4018 /wd4056 /wd4244 /wd4267 /wd4305 /wd4351 /wd4756 /wd4800 /wd4291 /wd4146
+        /wd4200 /wd4624 /wd4309 /wd4838
+    )
     target_compile_definitions(glsl_optimizer PRIVATE
         NOMINMAX _USE_MATH_DEFINES _CRT_SECURE_NO_WARNINGS _CRT_NONSTDC_NO_DEPRECATE strdup=_strdup
         # the checked-in flex scanner requires this for const-correct prototypes

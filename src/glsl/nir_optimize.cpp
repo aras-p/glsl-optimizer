@@ -245,7 +245,7 @@ call_globals_wrapper(nir_shader* nir)
       if (!func->is_tmp_globals_wrapper || !func->impl)
          continue;
       nir_builder b = nir_builder_at(nir_before_impl(main_impl));
-      nir_call(&b, func);
+      nir_build_call(&b, func, 0, NULL); // nir_call() without arguments is a zero-size array
    }
 }
 
