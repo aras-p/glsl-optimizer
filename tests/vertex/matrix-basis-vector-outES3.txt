@@ -1,0 +1,17 @@
+#version 300 es
+uniform highp mat4 world;
+uniform mediump mat3x2 transform;
+out mediump vec2 selectedColumn;
+out mediump vec2 weightedProduct;
+void main ()
+{
+  gl_Position = world[3];
+  selectedColumn = transform[1];
+  weightedProduct = (transform * vec3(1.0, 1.0, 0.0));
+}
+
+
+// stats: 1 alu 0 tex 0 flow
+// uniforms: 2 (total size: 0)
+//  #0: world (high float) 4x4 [-1]
+//  #1: transform (medium float) 2x3 [-1]

@@ -329,6 +329,29 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
          return mul(matrix_mul->operands[0],
                     mul(matrix_mul->operands[1], ir->operands[1]));
       }
+
+      /* glsl-optimizer change: multiplying by a basis vector selects a
+       * single matrix column. Keep the multiply if the vector raises its
+       * precision. */
+      auto *matrix = ir->operands[0]->as_dereference();
+      auto *basis = ir->operands[1]->as_constant();
+      if (matrix && basis && basis->type->is_float() &&
+          (basis->get_precision() == GLSL_PRECISION_NONE ||
+           matrix->get_precision() == GLSL_PRECISION_HIGH ||
+           matrix->get_precision() == basis->get_precision())) {
+         int column = -1;
+         for (unsigned i = 0; i < basis->type->vector_elements; ++i) {
+            const float value = basis->get_float_component(i);
+            if (value == 0.0f)
+               continue;
+            if (value != 1.0f || column >= 0)
+               return ir;
+            column = i;
+         }
+         if (column >= 0)
+            return new(ralloc_parent(ir)) ir_dereference_array(
+               matrix, new(ralloc_parent(ir)) ir_constant(column));
+      }
    }
 
    assert(ir->num_operands <= 4);

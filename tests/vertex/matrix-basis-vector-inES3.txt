@@ -1,0 +1,14 @@
+#version 300 es
+precision highp float;
+
+uniform mat4 world;
+uniform mediump mat3x2 transform;
+out mediump vec2 selectedColumn;
+out mediump vec2 weightedProduct;
+
+void main()
+{
+    gl_Position = world * vec4(0.0, 0.0, 0.0, 1.0);
+    selectedColumn = transform * vec3(0.0, 1.0, 0.0);
+    weightedProduct = transform * vec3(1.0, 1.0, 0.0);
+}

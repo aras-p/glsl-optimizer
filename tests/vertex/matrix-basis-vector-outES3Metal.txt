@@ -1,0 +1,28 @@
+#include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+using namespace metal;
+struct xlatMtlShaderInput {
+};
+struct xlatMtlShaderOutput {
+  float4 gl_Position [[position]];
+  half2 selectedColumn;
+  half2 weightedProduct;
+};
+struct xlatMtlShaderUniform {
+  float4x4 world;
+  half3x2 transform;
+};
+vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
+{
+  xlatMtlShaderOutput _mtl_o;
+  _mtl_o.gl_Position = _mtl_u.world[3];
+  _mtl_o.selectedColumn = _mtl_u.transform[1];
+  _mtl_o.weightedProduct = (_mtl_u.transform * (half3)(float3(1.0, 1.0, 0.0)));
+  return _mtl_o;
+}
+
+
+// stats: 1 alu 0 tex 0 flow
+// uniforms: 2 (total size: 76)
+//  #0: world (high float) 4x4 [-1] loc 0
+//  #1: transform (medium float) 2x3 [-1] loc 64

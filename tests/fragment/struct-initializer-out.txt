@@ -10,7 +10,7 @@ void main ()
   vec3 tmpvar_5;
   tmpvar_5 = normalize(varyingNormalDirection);
   vec3 tmpvar_6;
-  tmpvar_6 = normalize(((v_inv * vec4(0.0, 0.0, 0.0, 1.0)) - position).xyz);
+  tmpvar_6 = normalize((v_inv[3] - position).xyz);
   totalLighting_2 = vec3(0.04, 0.04, 0.04);
   vec3 tmpvar_7;
   tmpvar_7 = (vec4(0.0, 3.0, 0.0, 1.0) - position).xyz;
@@ -41,7 +41,7 @@ void main ()
 }
 
 
-// stats: 30 alu 0 tex 1 flow
+// stats: 29 alu 0 tex 1 flow
 // inputs: 2
 //  #0: position (high float) 4x1 [-1]
 //  #1: varyingNormalDirection (high float) 3x1 [-1]
