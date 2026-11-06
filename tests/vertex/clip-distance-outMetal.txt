@@ -1,0 +1,2 @@
+// expected error
+gl_ClipDistance is not supported by the Metal backend.

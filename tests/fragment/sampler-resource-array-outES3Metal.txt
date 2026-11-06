@@ -1,0 +1,2 @@
+// expected error
+Sampler resource arrays are not supported by the Metal backend.
