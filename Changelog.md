@@ -16,8 +16,8 @@ Added a whole bunch of stuff that could be summarized as "compute shader support
 * Image load, store and atomics.
 * Stage interface blocks.
 * Texture gather operations.
-* Subgroup (wave) ops: `subgroupAdd`, `subgroupMin`, `subgroupMax`, `subgroupOr`,
-  `subgroupElect` and `subgroupBroadcastFirst`.
+* Subgroup (wave) operations: all of `GL_KHR_shader_subgroup_*` (basic, vote, arithmetic,
+  ballot, shuffle, shuffle_relative, clustered, quad).
 * Recognize `GL_OES_EGL_image_external_essl3` in GLES3 inputs.
 
 Changed:
@@ -26,11 +26,14 @@ Changed:
   shaders are accepted and produced now.
 * `lowp` and `mediump` precision are treated as the same precision now. Last time any GPU
   had _actual_ `lowp` was, like, 15 years ago.
-* Updated underlying Mesa compiler/optimizer codebase from 10.4-dev (2014 Oct) to Mesa 20.3.5 (2021 Mar).
-  This slightly improves constant folding, dead-code elimination, vector assignment
-  simplification, and arithmetic optimization. It also seems to have improved performance
-  of the optimizer itself (20-30% faster across tests). I did not pick more recent Mesa since it moved
-  a lot of optimization to their new "NIR" architecture, which would have been a lot more work. Maybe someday!
+* Updated underlying Mesa compiler/optimizer codebase from 10.4-dev (2014 Oct) to **Mesa 26.2.6** (2026),
+  and switched to its **"NIR" optimizer**, with new GLSL and Metal printers on top of it.
+  Output looks different (temporaries are named `tN`/`rN`, loops get unrolled more), is generally
+  shorter, and shaders are optimized better on average (~3% fewer cycles on Mali-G78 for the GLES3 tests).
+  `glslopt_shader_get_stats` numbers now count NIR instructions, so they differ from before.
+  The optimizer itself is about 2.6x faster than before, on the test shaders.
+* Removed `kGlslOptionNotFullShader` option and `glslopt_get_raw_output` function (and `rawOutput`
+  in the Node addon).
 
 Build:
 

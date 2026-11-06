@@ -91,6 +91,7 @@ Language Support
 * GLSL ES: the OpenGL ES and Metal targets accept `#version 300 es`, `310 es`,
   and `320 es`. The desktop OpenGL target accepts ES 3.00 input only.
 * Supported shader stages are vertex, fragment, and compute.
+* Subgroup (wave) operations: all of `GL_KHR_shader_subgroup_*`.
 
 #### Limitations
 
@@ -107,7 +108,7 @@ Language Support
 
 * Basic vertex and fragment shaders compile as Metal 1.2, but the version can
   become higher depending on the features it uses.
-* Floating point `mediump` and `lowp` mostly translate to Metal `half`.
+* `mediump` and `lowp` floats translate to Metal `half`, integers to `short`/`ushort`.
 * Shadow sampling uses a fixed sampler with clamp-to-edge addressing,
   linear filtering, and a less-equal comparison. Shadow gathers use the bound sampler.
 * No support for arrays of samplers, `gl_ClipDistance`,
@@ -117,8 +118,9 @@ Language Support
   Metal 3.1+ (4.0+ for cube images) and GPU support for texture
   atomics.
 * Multisample storage images support reads and queries only.
-* Subgroup scans other than add/mul and clustered reductions are emulated with
-  shuffles and assume all lanes are active.
+* Subgroup operations require Metal 2.3+. Scans other than add/mul and clustered
+  reductions are emulated with shuffles and assume all lanes are active; ballots
+  assume at most 64 lanes.
 * `memoryBarrier*()` and `groupMemoryBarrier()` translate to `atomic_thread_fence`
   and thus require Metal 3.2 or later. A `memoryBarrierShared()` immediately
   followed by `barrier()` in the optimizer's instruction stream can use a single
@@ -203,6 +205,13 @@ If you're making changes to the project and want pull requests accepted easier, 
 appreciate if there would be no test suite regressions. If you are implementing a
 feature, it would be cool to add tests to cover it as well!
 
+AI Usage
+--------
+
+Majority of the codebase comes from Mesa project. This project itself had no AI
+usage before 2026 November. In the latest updates to add compute shader support,
+as well as to move Mesa parts from 2014 to 2026 and their NIR based optimization
+pipeline, LLM tools (Claude Opus 5.5 and GPT 6.1 Sol) were partially used.
 
 Dev Notes
 ---------
@@ -249,7 +258,8 @@ frontend, `glsl_to_nir`, NIR with the passes we run, and the util code they need
 - `glsl_optimizer.cpp`: public API, GL context setup, validation of what the
   printers can express, reflection and stats (all from the final NIR).
 - `nir_optimize.cpp`: the NIR pipeline (inlining, optimization loop, out of SSA),
-  and the GLSL ES precision analysis that the pipeline and printers share.
+  the GLSL ES precision analysis that the pipeline and printers share, and
+  regrouping of field-by-field copies back into aggregate copies for printing.
 - `nir_printer.cpp`: printing core shared by GLSL and Metal: typing of NIR values,
   folding single-use values into expressions, and print-time recovery of shapes NIR
   lowered (matrix multiplies, `normalize`/`length`/`clamp`/..., `for`/`while`/`do` loops).
