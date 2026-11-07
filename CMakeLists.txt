@@ -246,7 +246,7 @@ endif()
 
 # Node addon, when built through cmake-js (npm install)
 if(CMAKE_JS_VERSION)
-    execute_process(COMMAND node -p "require('nan')" WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    execute_process(COMMAND node -e "require('nan')" WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         OUTPUT_VARIABLE NAN_INCLUDE_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
     add_library(glslOptimizer SHARED src/node/binding.cpp src/node/compiler.cpp src/node/shader.cpp ${CMAKE_JS_SRC})
     set_target_properties(glslOptimizer PROPERTIES PREFIX "" SUFFIX ".node")
