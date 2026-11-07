@@ -1,8 +1,8 @@
 GLSL optimizer
 ==============
 
-> :warning: As of mid-2016, this project is unlikely to have any significant developments.
-> This project was developed for Unity needs around year 2010, but by year 2016 Unity's
+> :warning: This project is unlikely to have any significant developments.
+> Originally it was developed for Unity needs around year 2010, but by year 2016 Unity's
 > shader compilation pipeline has evolved into a different one, and glsl-optimizer was no
 > longer used there. So from my side there won't be significant work done on it. :warning:
 
@@ -13,7 +13,8 @@ constant folding, constant propagation, arithmetic optimizations, loop unrolling
 Apparently quite a few mobile platforms are pretty bad at optimizing shaders; and
 unfortunately they *also* lack offline shader compilers. So using a GLSL optimizer offline
 before can make the shader run much faster on a platform like that. See performance numbers
-in [this blog post](https://aras-p.info/blog/2010/09/29/glsl-optimizer/).
+in [this blog post](https://aras-p.info/blog/2010/09/29/glsl-optimizer/) _(note: this was in 2010, by now
+maybe this problem no longer exists)_.
 
 Even for drivers that have decent shader optimization, GLSL optimizer could be useful to just strip away
 dead code, make shaders smaller and do uniform/input reflection offline.
@@ -208,10 +209,13 @@ feature, it would be cool to add tests to cover it as well!
 AI Usage
 --------
 
-Majority of the codebase comes from Mesa project. This project itself had no AI
-usage before 2026 November. In the latest updates to add compute shader support,
-as well as to move Mesa parts from 2014 to 2026 and their NIR based optimization
-pipeline, LLM tools (Claude Opus 5.5 and GPT 6.1 Sol) were partially used.
+GLSL Optimizer itself had no AI usage before 2026 November. In the latest updates
+to add compute shader support, as well as to move Mesa parts from 2014 to 2026 and
+their NIR based optimization pipeline, I have used LLM tools (Claude Opus 5.5 and
+GPT 6.1 Sol) to help me do that.
+
+Majority of the code itself comes from Mesa project, I don't know how much (or if any)
+of their code is LLM/AI authored or assisted.
 
 Dev Notes
 ---------
