@@ -15,7 +15,7 @@ Testing/
 metalTemp.metal
 metalTemp.air
 
-# bison reports from generateParsers.sh
+# bison reports from gen_sources.sh
 /src/glsl/glsl_parser.output
 /src/glsl/glcpp/glcpp-parse.output
 

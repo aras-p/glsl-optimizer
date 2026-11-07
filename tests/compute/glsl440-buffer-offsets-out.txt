@@ -1,22 +1,21 @@
 #version 440
-layout(local_size_x=8) in;
-layout(std430, column_major, binding=2) buffer Output {
+layout(local_size_x = 8) in;
+layout(std430, binding = 2) buffer Output {
   uint header;
-  layout(offset=32) vec4 values[8];
+  layout(offset = 32) vec4 values[8];
 } outputData;
-layout(std140, column_major, binding=1) uniform Config {
-  layout(offset=32) vec4 color;
-  layout(offset=64) uint count;
+layout(std140, binding = 1) uniform Config {
+  layout(offset = 32) vec4 color;
+  layout(offset = 64) uint count;
 } config;
 void main ()
 {
-  if (((gl_GlobalInvocationID.x < config.count) && (gl_GlobalInvocationID.x < 8u))) {
-    outputData.values[gl_GlobalInvocationID.x] = config.color;
-  };
+  if ((gl_GlobalInvocationID.x < min(config.count, 8u))) {
+    outputData.values[int(gl_GlobalInvocationID.x)] = config.color;
+  }
 }
 
-
-// stats: 3 alu 0 tex 1 flow
+// stats: 2 alu 0 tex 1 flow
 // workgroup size: 8 1 1
 // buffer #0: Config instance config layout std140 binding 1 (size: 80)
 //  member #0: vec4 color offset 32

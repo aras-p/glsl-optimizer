@@ -1,6 +1,6 @@
 #version 310 es
-layout(local_size_x=1) in;
-layout(std430, column_major, binding=0) buffer Data {
+layout(local_size_x = 1) in;
+layout(std430, binding = 0) buffer Data {
   highp uint u;
   highp int s;
   highp uvec2 uv;
@@ -16,32 +16,46 @@ layout(std430, column_major, binding=0) buffer Data {
 } data;
 void main ()
 {
-  highp uvec4 tmpvar_1;
-  tmpvar_1.x = bitfieldExtract (data.u, int(uint(data.offset)), int(uint(data.width)));
-  tmpvar_1.y = bitfieldInsert (data.u, data.uv.x, int(uint(data.offset)), int(uint(data.width)));
-  tmpvar_1.zw = bitfieldExtract (data.uv, int((uvec2(uint(data.offset))).x), int((uvec2(uint(data.width))).x));
-  data.unsigned_results = tmpvar_1;
-  highp ivec4 tmpvar_2;
-  tmpvar_2.x = bitfieldExtract (data.s, data.offset, data.width);
-  tmpvar_2.y = bitfieldInsert (data.s, data.sv.x, data.offset, data.width);
-  tmpvar_2.zw = bitfieldExtract (data.sv, (ivec2(data.offset)).x, (ivec2(data.width)).x);
-  data.signed_results = tmpvar_2;
-  data.unsigned_insert = bitfieldInsert (data.uv, uvec2(data.u), int((uvec2(uint(data.offset))).x), int((uvec2(uint(data.width))).x));
-  data.signed_insert = bitfieldInsert (data.sv, ivec2(data.s), (ivec2(data.offset)).x, (ivec2(data.width)).x);
-  highp ivec4 tmpvar_3;
-  tmpvar_3.x = findLSB(data.u);
-  tmpvar_3.y = findMSB(data.u);
-  tmpvar_3.z = findLSB(data.s);
-  tmpvar_3.w = findMSB(data.s);
-  data.scan_results = tmpvar_3;
-  highp ivec4 tmpvar_4;
-  tmpvar_4.xy = findLSB(data.uv);
-  tmpvar_4.zw = findMSB(data.sv);
-  data.vector_scan_results = tmpvar_4;
+  highp uint t0 = data.u;
+  highp int t1 = data.offset;
+  highp int t2 = data.width;
+  highp int t3 = ((1 << uint(t2)) - 1);
+  highp uvec2 t4 = data.uv;
+  highp int t5 = (t3 << uint(t1));
+  highp uvec2 t6 = ((t4 >> uint(t1)) & uvec2(ivec2((equal(ivec2(t2), ivec2(32)).x ? -1 : ((ivec2(1) << uint(t2)) - 1).x), (equal(ivec2(t2), ivec2(32)).y ? -1 : ((ivec2(1) << uint(t2)) - 1).y))));
+  data.unsigned_results = uvec4(((t0 >> uint(t1)) & uint(((t2 == 32) ? -1 : t3))), ((31u < uint(t2)) ? t4.x : ((t0 & uint((~t5))) | (uint((int(t4.x) << uint(t1))) & uint(t5)))), t6);
+  highp int t7 = data.s;
+  highp int t8 = data.offset;
+  highp int t9 = data.width;
+  highp int t10 = (32 - t9);
+  highp ivec2 t11 = data.sv;
+  highp int t12 = (((1 << uint(t9)) - 1) << uint(t8));
+  highp ivec2 t13 = (ivec2(32) - t9);
+  highp ivec2 t14 = ivec2((equal(ivec2(0), ivec2(t9)).x ? 0 : ((t11 << uvec2((t13 - t8))) >> uvec2(t13)).x), (equal(ivec2(0), ivec2(t9)).y ? 0 : ((t11 << uvec2((t13 - t8))) >> uvec2(t13)).y));
+  data.signed_results = ivec4(((0 == t9) ? 0 : ((t7 << uint((t10 - t8))) >> uint(t10))), ((31u < uint(t9)) ? t11.x : int(((uint(t7) & uint((~t12))) | (uint((t11.x << uint(t8))) & uint(t12))))), t14);
+  highp uint t15 = data.u;
+  highp int t16 = data.offset;
+  highp int t17 = data.width;
+  highp ivec2 t18 = (((ivec2(1) << uint(t17)) - 1) << uint(t16));
+  data.unsigned_insert = uvec2((lessThan(uvec2(31u), uvec2(ivec2(t17))).x ? t15 : ((data.uv & uvec2((~t18))) | (uvec2((ivec2(uvec2(t15)) << uint(t16))) & uvec2(t18))).x), (lessThan(uvec2(31u), uvec2(ivec2(t17))).y ? t15 : ((data.uv & uvec2((~t18))) | (uvec2((ivec2(uvec2(t15)) << uint(t16))) & uvec2(t18))).y));
+  highp int t19 = data.s;
+  highp int t20 = data.offset;
+  highp int t21 = data.width;
+  highp ivec2 t22 = (((ivec2(1) << uint(t21)) - 1) << uint(t20));
+  data.signed_insert = ivec2((lessThan(uvec2(31u), uvec2(ivec2(t21))).x ? t19 : int(((uvec2(data.sv) & uvec2((~t22))) | (uvec2((ivec2(t19) << uint(t20))) & uvec2(t22))).x)), (lessThan(uvec2(31u), uvec2(ivec2(t21))).y ? t19 : int(((uvec2(data.sv) & uvec2((~t22))) | (uvec2((ivec2(t19) << uint(t20))) & uvec2(t22))).y)));
+  highp uint t23 = data.u;
+  mediump int t24 = findLSB(int(t23));
+  mediump int t25 = findMSB(t23);
+  highp int t26 = data.s;
+  mediump int t27 = findLSB(t26);
+  mediump int t28 = findMSB(t26);
+  data.scan_results = ivec4(t24, t25, t27, t28);
+  mediump ivec2 t29 = findLSB(ivec2(data.uv));
+  mediump ivec2 t30 = findMSB(data.sv);
+  data.vector_scan_results = ivec4(t29, t30);
 }
 
-
-// stats: 22 alu 0 tex 0 flow
+// stats: 68 alu 0 tex 0 flow
 // workgroup size: 1 1 1
 // buffer #0: Data storage instance data layout std430 binding 0 (size: 112)
 //  member #0: uint u offset 0

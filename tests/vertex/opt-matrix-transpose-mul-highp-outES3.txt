@@ -13,43 +13,22 @@ out mediump vec3 varLightDir;
 out mediump vec3 varViewDir;
 void main ()
 {
-  mediump vec3 o_lightDir_1;
-  mediump vec3 o_viewDir_2;
-  mediump vec3 o_worldN_3;
-  highp mat3 tmpvar_4;
-  tmpvar_4[uint(0)] = _Object2World[0].xyz;
-  tmpvar_4[1u] = _Object2World[1].xyz;
-  tmpvar_4[2u] = _Object2World[2].xyz;
-  o_worldN_3 = (tmpvar_4 * attrNormal);
-  highp vec3 tmpvar_5;
-  tmpvar_5 = (((attrNormal.yzx * attrTangent.zxy) - (attrNormal.zxy * attrTangent.yzx)) * attrTangent.w);
-  highp mat3 tmpvar_6;
-  tmpvar_6[uint(0)].x = attrTangent.xyz[0];
-  tmpvar_6[uint(0)].y = tmpvar_5[0];
-  tmpvar_6[uint(0)].z = attrNormal[0];
-  tmpvar_6[1u].x = attrTangent.xyz[1];
-  tmpvar_6[1u].y = tmpvar_5[1];
-  tmpvar_6[1u].z = attrNormal[1];
-  tmpvar_6[2u].x = attrTangent.xyz[2];
-  tmpvar_6[2u].y = tmpvar_5[2];
-  tmpvar_6[2u].z = attrNormal[2];
-  highp vec3 tmpvar_7;
-  tmpvar_7 = (tmpvar_6 * (_World2Object * _WorldSpaceLightPos0).xyz);
-  o_lightDir_1 = tmpvar_7;
-  highp vec4 tmpvar_8;
-  tmpvar_8.w = 1.0;
-  tmpvar_8.xyz = _WorldSpaceCameraPos;
-  o_viewDir_2 = normalize((tmpvar_7 + normalize(
-    (tmpvar_6 * (((_World2Object * tmpvar_8).xyz * unity_Scale.w) - attrVertex.xyz))
-  )));
+  highp vec3 t0 = (((attrNormal.yzx * attrTangent.zxy) - (attrNormal.zxy * attrTangent.yzx)) * attrTangent.w);
+  highp vec4 t1 = (_World2Object * _WorldSpaceLightPos0);
+  highp vec3 t2 = vec3(attrTangent.x, t0.x, attrNormal.x);
+  highp vec3 t3 = vec3(attrTangent.y, t0.y, attrNormal.y);
+  highp vec3 t4 = vec3(attrTangent.z, t0.z, attrNormal.z);
+  highp vec3 t5 = (mat3(t2, t3, t4) * t1.xyz);
+  highp vec3 t6 = (((_World2Object * vec4(_WorldSpaceCameraPos, 1.0)).xyz * unity_Scale.w) - attrVertex.xyz);
+  highp vec3 t7 = (mat3(t2, t3, t4) * t6);
+  highp vec3 t8 = (t5 + normalize(t7));
   gl_Position = (glstate_matrix_mvp * attrVertex);
-  varWorldN = o_worldN_3;
-  varLightDir = o_lightDir_1;
-  varViewDir = o_viewDir_2;
+  varWorldN = (mat3(_Object2World) * attrNormal);
+  varLightDir = t5;
+  varViewDir = normalize(t8);
 }
 
-
-// stats: 16 alu 0 tex 0 flow
+// stats: 48 alu 0 tex 0 flow
 // inputs: 3
 //  #0: attrVertex (high float) 4x1 [-1]
 //  #1: attrNormal (high float) 3x1 [-1]

@@ -1,4 +1,6 @@
 #version 300 es
+precision highp float;
+precision highp int;
 uniform mediump sampler2D _CameraDepthTexture;
 uniform highp vec4 _LightShadowData;
 uniform highp vec4 _LightSplitsFar;
@@ -14,54 +16,20 @@ in highp vec3 xlv_TEXCOORD1;
 out mediump vec4 _fragData;
 void main ()
 {
-  highp vec4 res_1;
-  highp float depth_2;
-  depth_2 = texture (_CameraDepthTexture, xlv_TEXCOORD0).x;
-  highp float tmpvar_3;
-  tmpvar_3 = (1.0/(((_ZBufferParams.x * depth_2) + _ZBufferParams.y)));
-  depth_2 = tmpvar_3;
-  highp vec4 tmpvar_4;
-  tmpvar_4.w = 1.0;
-  tmpvar_4.xyz = (xlv_TEXCOORD1 * tmpvar_3);
-  mediump float shadow_5;
-  highp vec4 weights_6;
-  highp vec4 far_7;
-  highp vec4 near_8;
-  near_8 = vec4(greaterThanEqual (tmpvar_4.zzzz, _LightSplitsNear));
-  far_7 = vec4(lessThan (tmpvar_4.zzzz, _LightSplitsFar));
-  weights_6 = (near_8 * far_7);
-  highp vec4 tmpvar_9;
-  tmpvar_9.w = 1.0;
-  tmpvar_9.xyz = (((
-    ((_View2Shadow * tmpvar_4).xyz * weights_6.x)
-   + 
-    ((_View2Shadow1 * tmpvar_4).xyz * weights_6.y)
-  ) + (
-    (_View2Shadow2 * tmpvar_4)
-  .xyz * weights_6.z)) + ((_View2Shadow3 * tmpvar_4).xyz * weights_6.w));
-  mediump vec4 tmpvar_10;
-  tmpvar_10 = texture (_ShadowMapTexture, tmpvar_9.xy);
-  highp float tmpvar_11;
-  if ((tmpvar_10.x < tmpvar_9.z)) {
-    tmpvar_11 = _LightShadowData.x;
-  } else {
-    tmpvar_11 = 1.0;
-  };
-  shadow_5 = tmpvar_11;
-  res_1.x = shadow_5;
-  res_1.y = 1.0;
-  highp vec2 enc_12;
-  enc_12 = (vec2(1.0, 255.0) * (1.0 - tmpvar_3));
-  highp vec2 tmpvar_13;
-  tmpvar_13 = fract(enc_12);
-  enc_12.y = tmpvar_13.y;
-  enc_12.x = (tmpvar_13.x - (tmpvar_13.y * 0.00392157));
-  res_1.zw = enc_12;
-  _fragData = res_1;
+  highp float t0 = texture(_CameraDepthTexture, xlv_TEXCOORD0).x;
+  highp float t1 = (1.0 / ((_ZBufferParams.x * t0) + _ZBufferParams.y));
+  highp vec3 t2 = (xlv_TEXCOORD1 * t1);
+  highp vec4 t3 = step(_LightSplitsNear, t2.zzzz);
+  highp vec4 t4 = vec4(lessThan(t2.zzzz, _LightSplitsFar));
+  highp vec4 t5 = (t3 * t4);
+  highp vec3 t6 = (mat4x3((_View2Shadow * vec4(t2, 1.0)).xyz, (_View2Shadow1 * vec4(t2, 1.0)).xyz, (_View2Shadow2 * vec4(t2, 1.0)).xyz, (_View2Shadow3 * vec4(t2, 1.0)).xyz) * t5);
+  mediump float t7 = ((texture(_ShadowMapTexture, t6.xy).x < t6.z) ? _LightShadowData.x : 1.0);
+  highp vec4 t8 = vec4(t7);
+  highp vec2 t9 = fract((vec2(1.0, 255.0) * (1.0 - t1)));
+  _fragData = vec4(t8.x, 1.0, (t9.x - (t9.y * 0.00392157)), t9.y);
 }
 
-
-// stats: 30 alu 2 tex 1 flow
+// stats: 47 alu 2 tex 0 flow
 // inputs: 2
 //  #0: xlv_TEXCOORD0 (high float) 2x1 [-1]
 //  #1: xlv_TEXCOORD1 (high float) 3x1 [-1]

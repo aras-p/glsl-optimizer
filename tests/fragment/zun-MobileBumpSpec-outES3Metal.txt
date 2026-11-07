@@ -19,26 +19,15 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   , texture2d<half> _MainTex [[texture(1)]], sampler _mtlsmp__MainTex [[sampler(1)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half4 c_1 = 0;
-  half4 tmpvar_2 = 0;
-  tmpvar_2 = _MainTex.sample(_mtlsmp__MainTex, (float2)((_mtl_i.xlv_TEXCOORD0)));
-  half3 tmpvar_3 = 0;
-  tmpvar_3 = ((_BumpMap.sample(_mtlsmp__BumpMap, (float2)((_mtl_i.xlv_TEXCOORD0))).xyz * (half)(2.0)) - (half)(1.0));
-  half4 c_4 = 0;
-  c_4.xyz = (((
-    (tmpvar_2.xyz * max ((half)0.0, dot (tmpvar_3, _mtl_i.xlv_TEXCOORD2)))
-   + 
-    (pow (max ((half)0.0, dot (tmpvar_3, _mtl_i.xlv_TEXCOORD1)), (_mtl_u._Shininess * (half)(128.0))) * tmpvar_2.w)
-  ) * _mtl_u._LightColor0.xyz) * 2.0);
-  c_4.w = half(0.0);
-  c_1.w = c_4.w;
-  c_1.xyz = (c_4.xyz + (tmpvar_2.xyz * _mtl_i.xlv_TEXCOORD3));
-  _mtl_o._fragData = c_1;
+  half4 t0 = _MainTex.sample(_mtlsmp__MainTex, float2(_mtl_i.xlv_TEXCOORD0));
+  half3 t1 = ((_BumpMap.sample(_mtlsmp__BumpMap, float2(_mtl_i.xlv_TEXCOORD0)).xyz * half(2.0)) - half(1.0));
+  half3 t2 = (((t0.xyz * max(half(0.0), dot(t1, _mtl_i.xlv_TEXCOORD2))) + (pow(max(half(0.0), dot(t1, _mtl_i.xlv_TEXCOORD1)), (_mtl_u._Shininess * half(128.0))) * t0.w)) * half(2.0));
+  half3 t3 = ((t2 * _mtl_u._LightColor0.xyz) + (t0.xyz * _mtl_i.xlv_TEXCOORD3));
+  _mtl_o._fragData = half4(t3, half(0.0));
   return _mtl_o;
 }
 
-
-// stats: 16 alu 2 tex 0 flow
+// stats: 14 alu 2 tex 0 flow
 // inputs: 4
 //  #0: xlv_TEXCOORD0 (medium float) 2x1 [-1]
 //  #1: xlv_TEXCOORD1 (medium float) 3x1 [-1]

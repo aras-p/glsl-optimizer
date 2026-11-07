@@ -1,19 +1,11 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
-template<typename A, typename T>
-inline T _xlat_atomic_comp_swap(device A* address, T compare, T value) {
-  T expected = compare;
-  while (!atomic_compare_exchange_weak_explicit(address, &expected, value, memory_order_relaxed, memory_order_relaxed) && expected == compare) {}
-  return expected;
-}
-struct alignas(8) _xlat_buf_storage1_element { int2 value; };
-struct _xlat_buf_storage1 { _xlat_buf_storage1_element elements[4]; };
-static_assert(sizeof(_xlat_buf_storage1) == 32, "std430 size");
-struct alignas(8) _xlat_buf_storage0 {
-  alignas(8) _xlat_buf_storage1 values;
+struct _xlat_buf_Data_std430 {
+  int2 values[4];
 };
-static_assert(sizeof(_xlat_buf_storage0) == 32, "std430 size");
+static_assert(sizeof(_xlat_buf_Data_std430) == 32, "std430 size");
+template <typename P, typename T> inline T _xlat_atomic_comp_swap(P p, T compare, T value) { T expected = compare; atomic_compare_exchange_weak_explicit(p, &expected, value, memory_order_relaxed, memory_order_relaxed); return expected; }
 struct xlatMtlShaderInput {
 };
 struct xlatMtlShaderOutput {
@@ -24,23 +16,16 @@ struct xlatMtlShaderUniform {
   short operand;
 };
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , device _xlat_buf_storage0& _mtl_buffer1 [[buffer(1)]])
+  , device _xlat_buf_Data_std430& data [[buffer(1)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  short tmpvar_1 = 0;
-  tmpvar_1 = atomic_fetch_add_explicit (reinterpret_cast<device atomic_int*>(&_mtl_buffer1.values.elements[_mtl_u.index].value) + 0, int(_mtl_u.operand), memory_order_relaxed);
-  short tmpvar_2 = 0;
-  tmpvar_2 = _xlat_atomic_comp_swap (reinterpret_cast<device atomic_int*>(&_mtl_buffer1.values.elements[_mtl_u.index].value) + 1, int(tmpvar_1), int(_mtl_u.operand));
-  half4 tmpvar_3 = 0;
-  tmpvar_3.zw = half2(float2(0.0, 1.0));
-  tmpvar_3.x = half(tmpvar_1);
-  tmpvar_3.y = half(tmpvar_2);
-  _mtl_o.color = tmpvar_3;
+  short t0 = short(atomic_fetch_add_explicit(((device atomic_int*)&data.values[_mtl_u.index] + 0), int(_mtl_u.operand), memory_order_relaxed));
+  short t1 = short(_xlat_atomic_comp_swap(((device atomic_int*)&data.values[_mtl_u.index] + 1), int(t0), int(_mtl_u.operand)));
+  _mtl_o.color = half4(half(t0), half(t1), half(0.0), half(1.0));
   return _mtl_o;
 }
 
-
-// stats: 3 alu 0 tex 0 flow
+// stats: 2 alu 0 tex 0 flow
 // uniforms: 2 (total size: 4)
 //  #0: index (medium int) 1x1 [-1] loc 0
 //  #1: operand (medium int) 1x1 [-1] loc 2

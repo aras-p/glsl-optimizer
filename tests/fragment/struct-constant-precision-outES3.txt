@@ -1,21 +1,16 @@
 #version 300 es
+precision highp float;
+precision highp int;
 in highp float value;
 uniform highp float scale;
 out highp vec4 result;
 void main ()
 {
-  mediump float data_pair_rounded_1;
-  data_pair_rounded_1 = value;
-  highp vec4 tmpvar_2;
-  tmpvar_2.w = 1.0;
-  tmpvar_2.x = (value * scale);
-  tmpvar_2.y = (data_pair_rounded_1 * scale);
-  tmpvar_2.z = 3.0;
-  result = tmpvar_2;
+  mediump float t0 = value;
+  result = vec4((value * scale), (t0 * scale), 3.0, 1.0);
 }
 
-
-// stats: 4 alu 0 tex 0 flow
+// stats: 2 alu 0 tex 0 flow
 // inputs: 1
 //  #0: value (high float) 1x1 [-1]
 // uniforms: 1 (total size: 0)

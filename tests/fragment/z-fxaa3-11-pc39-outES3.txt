@@ -1,717 +1,321 @@
 #version 300 es
-layout(location=0) out mediump vec4 _fragData;
+precision highp float;
+precision highp int;
+layout(location = 0) out mediump vec4 _fragData;
 uniform mediump sampler2D _MainTex;
 uniform highp vec4 _MainTex_TexelSize;
 in highp vec2 xlv_TEXCOORD0;
 void main ()
 {
-  highp vec2 tmpvar_1;
-  tmpvar_1 = _MainTex_TexelSize.xy;
-  highp vec4 tmpvar_2;
-  highp float subpixH_3;
-  highp float pixelOffset_4;
-  highp float spanLengthRcp_5;
-  bool goodSpanP_6;
-  bool goodSpanN_7;
-  highp float dstP_8;
-  highp float dstN_9;
-  bool doneNP_10;
-  bool doneP_11;
-  bool doneN_12;
-  bool lumaMLTZero_13;
-  highp float subpixF_14;
-  highp float gradientScaled_15;
-  highp float lumaEndP_16;
-  highp float subpixE_17;
-  highp float lumaEndN_18;
-  highp float subpixD_19;
-  highp vec2 posP_20;
-  highp vec2 posN_21;
-  highp vec2 posB_22;
-  highp float subpixC_23;
-  highp float gradient_24;
-  bool pairN_25;
-  highp float lumaSS_26;
-  highp float lumaNN_27;
-  highp float gradientS_28;
-  highp float gradientN_29;
-  highp float subpixB_30;
-  highp float subpixA_31;
-  bool horzSpan_32;
-  highp float lengthSign_33;
-  highp float lumaNWSW_34;
-  highp float lumaNESE_35;
-  highp float subpixRcpRange_36;
-  highp float lumaWE_37;
-  highp float lumaNS_38;
-  highp float range_39;
-  highp float lumaN_40;
-  highp float lumaS_41;
-  highp vec4 rgbyM_42;
-  highp vec2 posM_43;
-  posM_43 = xlv_TEXCOORD0;
-  highp vec4 tmpvar_44;
-  tmpvar_44.zw = vec2(0.0, 0.0);
-  tmpvar_44.xy = xlv_TEXCOORD0;
-  mediump vec4 tmpvar_45;
-  tmpvar_45 = tmpvar_44;
-  rgbyM_42 = textureLod (_MainTex, tmpvar_45.xy, tmpvar_45.w);
-  highp vec4 tmpvar_46;
-  tmpvar_46.zw = vec2(0.0, 0.0);
-  tmpvar_46.xy = (xlv_TEXCOORD0 + (vec2(0.0, 1.0) * _MainTex_TexelSize.xy));
-  mediump vec4 tmpvar_47;
-  tmpvar_47 = tmpvar_46;
-  highp vec4 tmpvar_48;
-  tmpvar_48 = textureLod (_MainTex, tmpvar_47.xy, tmpvar_47.w);
-  lumaS_41 = tmpvar_48.w;
-  highp vec4 tmpvar_49;
-  tmpvar_49.zw = vec2(0.0, 0.0);
-  tmpvar_49.xy = (xlv_TEXCOORD0 + (vec2(1.0, 0.0) * _MainTex_TexelSize.xy));
-  mediump vec4 tmpvar_50;
-  tmpvar_50 = tmpvar_49;
-  highp float tmpvar_51;
-  highp vec4 tmpvar_52;
-  tmpvar_52 = textureLod (_MainTex, tmpvar_50.xy, tmpvar_50.w);
-  tmpvar_51 = tmpvar_52.w;
-  highp vec4 tmpvar_53;
-  tmpvar_53.zw = vec2(0.0, 0.0);
-  tmpvar_53.xy = (xlv_TEXCOORD0 + (vec2(0.0, -1.0) * _MainTex_TexelSize.xy));
-  mediump vec4 tmpvar_54;
-  tmpvar_54 = tmpvar_53;
-  highp vec4 tmpvar_55;
-  tmpvar_55 = textureLod (_MainTex, tmpvar_54.xy, tmpvar_54.w);
-  lumaN_40 = tmpvar_55.w;
-  highp vec4 tmpvar_56;
-  tmpvar_56.zw = vec2(0.0, 0.0);
-  tmpvar_56.xy = (xlv_TEXCOORD0 + (vec2(-1.0, 0.0) * _MainTex_TexelSize.xy));
-  mediump vec4 tmpvar_57;
-  tmpvar_57 = tmpvar_56;
-  highp float tmpvar_58;
-  highp vec4 tmpvar_59;
-  tmpvar_59 = textureLod (_MainTex, tmpvar_57.xy, tmpvar_57.w);
-  tmpvar_58 = tmpvar_59.w;
-  highp float tmpvar_60;
-  tmpvar_60 = max (max (tmpvar_55.w, tmpvar_59.w), max (tmpvar_52.w, max (tmpvar_48.w, rgbyM_42.w)));
-  range_39 = (tmpvar_60 - min (min (tmpvar_55.w, tmpvar_59.w), min (
-    min (tmpvar_52.w, tmpvar_48.w)
-  , rgbyM_42.w)));
-  if ((range_39 < max (0.0833, (tmpvar_60 * 0.166)))) {
-    tmpvar_2 = rgbyM_42;
-  } else {
-    highp vec4 tmpvar_61;
-    tmpvar_61.zw = vec2(0.0, 0.0);
-    tmpvar_61.xy = (xlv_TEXCOORD0 - _MainTex_TexelSize.xy);
-    mediump vec4 tmpvar_62;
-    tmpvar_62 = tmpvar_61;
-    highp vec4 tmpvar_63;
-    tmpvar_63 = textureLod (_MainTex, tmpvar_62.xy, tmpvar_62.w);
-    highp vec4 tmpvar_64;
-    tmpvar_64.zw = vec2(0.0, 0.0);
-    tmpvar_64.xy = (xlv_TEXCOORD0 + _MainTex_TexelSize.xy);
-    mediump vec4 tmpvar_65;
-    tmpvar_65 = tmpvar_64;
-    highp vec4 tmpvar_66;
-    tmpvar_66 = textureLod (_MainTex, tmpvar_65.xy, tmpvar_65.w);
-    highp vec4 tmpvar_67;
-    tmpvar_67.zw = vec2(0.0, 0.0);
-    tmpvar_67.xy = (xlv_TEXCOORD0 + (vec2(1.0, -1.0) * _MainTex_TexelSize.xy));
-    mediump vec4 tmpvar_68;
-    tmpvar_68 = tmpvar_67;
-    highp vec4 tmpvar_69;
-    tmpvar_69 = textureLod (_MainTex, tmpvar_68.xy, tmpvar_68.w);
-    highp vec4 tmpvar_70;
-    tmpvar_70.zw = vec2(0.0, 0.0);
-    tmpvar_70.xy = (xlv_TEXCOORD0 + (vec2(-1.0, 1.0) * _MainTex_TexelSize.xy));
-    mediump vec4 tmpvar_71;
-    tmpvar_71 = tmpvar_70;
-    highp vec4 tmpvar_72;
-    tmpvar_72 = textureLod (_MainTex, tmpvar_71.xy, tmpvar_71.w);
-    lumaNS_38 = (tmpvar_55.w + tmpvar_48.w);
-    lumaWE_37 = (tmpvar_59.w + tmpvar_52.w);
-    subpixRcpRange_36 = (1.0/(range_39));
-    lumaNESE_35 = (tmpvar_69.w + tmpvar_66.w);
-    lumaNWSW_34 = (tmpvar_63.w + tmpvar_72.w);
-    lengthSign_33 = tmpvar_1.x;
-    horzSpan_32 = ((abs(
-      ((-2.0 * tmpvar_59.w) + lumaNWSW_34)
-    ) + (
-      (abs(((-2.0 * rgbyM_42.w) + lumaNS_38)) * 2.0)
-     + 
-      abs(((-2.0 * tmpvar_52.w) + lumaNESE_35))
-    )) >= (abs(
-      ((-2.0 * tmpvar_48.w) + (tmpvar_72.w + tmpvar_66.w))
-    ) + (
-      (abs(((-2.0 * rgbyM_42.w) + lumaWE_37)) * 2.0)
-     + 
-      abs(((-2.0 * tmpvar_55.w) + (tmpvar_63.w + tmpvar_69.w)))
-    )));
-    subpixA_31 = (((lumaNS_38 + lumaWE_37) * 2.0) + (lumaNWSW_34 + lumaNESE_35));
-    if (!(horzSpan_32)) {
-      lumaN_40 = tmpvar_58;
-    };
-    if (!(horzSpan_32)) {
-      lumaS_41 = tmpvar_51;
-    };
-    if (horzSpan_32) {
-      lengthSign_33 = tmpvar_1.y;
-    };
-    subpixB_30 = ((subpixA_31 * 0.0833333) - rgbyM_42.w);
-    gradientN_29 = (lumaN_40 - rgbyM_42.w);
-    gradientS_28 = (lumaS_41 - rgbyM_42.w);
-    lumaNN_27 = (lumaN_40 + rgbyM_42.w);
-    lumaSS_26 = (lumaS_41 + rgbyM_42.w);
-    pairN_25 = (abs(gradientN_29) >= abs(gradientS_28));
-    gradient_24 = max (abs(gradientN_29), abs(gradientS_28));
-    if (pairN_25) {
-      lengthSign_33 = -(lengthSign_33);
-    };
-    mediump float tmpvar_73;
-    tmpvar_73 = (abs(subpixB_30) * subpixRcpRange_36);
-    subpixC_23 = clamp (tmpvar_73, 0.0, 1.0);
-    posB_22 = xlv_TEXCOORD0;
-    highp float tmpvar_74;
-    if (!(horzSpan_32)) {
-      tmpvar_74 = 0.0;
-    } else {
-      tmpvar_74 = tmpvar_1.x;
-    };
-    highp float tmpvar_75;
-    if (horzSpan_32) {
-      tmpvar_75 = 0.0;
-    } else {
-      tmpvar_75 = tmpvar_1.y;
-    };
-    if (!(horzSpan_32)) {
-      posB_22.x = (xlv_TEXCOORD0.x + (lengthSign_33 * 0.5));
-    };
-    if (horzSpan_32) {
-      posB_22.y = (xlv_TEXCOORD0.y + (lengthSign_33 * 0.5));
-    };
-    posN_21.x = (posB_22.x - tmpvar_74);
-    posN_21.y = (posB_22.y - tmpvar_75);
-    posP_20.x = (posB_22.x + tmpvar_74);
-    posP_20.y = (posB_22.y + tmpvar_75);
-    subpixD_19 = ((-2.0 * subpixC_23) + 3.0);
-    highp vec4 tmpvar_76;
-    tmpvar_76.zw = vec2(0.0, 0.0);
-    tmpvar_76.xy = posN_21;
-    mediump vec4 tmpvar_77;
-    tmpvar_77 = tmpvar_76;
-    highp vec4 tmpvar_78;
-    tmpvar_78 = textureLod (_MainTex, tmpvar_77.xy, tmpvar_77.w);
-    lumaEndN_18 = tmpvar_78.w;
-    subpixE_17 = (subpixC_23 * subpixC_23);
-    highp vec4 tmpvar_79;
-    tmpvar_79.zw = vec2(0.0, 0.0);
-    tmpvar_79.xy = posP_20;
-    mediump vec4 tmpvar_80;
-    tmpvar_80 = tmpvar_79;
-    highp vec4 tmpvar_81;
-    tmpvar_81 = textureLod (_MainTex, tmpvar_80.xy, tmpvar_80.w);
-    lumaEndP_16 = tmpvar_81.w;
-    if (!(pairN_25)) {
-      lumaNN_27 = lumaSS_26;
-    };
-    gradientScaled_15 = (gradient_24 / 4.0);
-    subpixF_14 = (subpixD_19 * subpixE_17);
-    lumaMLTZero_13 = (rgbyM_42.w < (lumaNN_27 * 0.5));
-    lumaEndN_18 = (tmpvar_78.w - (lumaNN_27 * 0.5));
-    lumaEndP_16 = (tmpvar_81.w - (lumaNN_27 * 0.5));
-    doneN_12 = (abs(lumaEndN_18) >= gradientScaled_15);
-    doneP_11 = (abs(lumaEndP_16) >= gradientScaled_15);
-    if (!(doneN_12)) {
-      posN_21.x = (posN_21.x - tmpvar_74);
-    };
-    if (!(doneN_12)) {
-      posN_21.y = (posN_21.y - tmpvar_75);
-    };
-    doneNP_10 = !((doneN_12 && doneP_11));
-    if (!(doneP_11)) {
-      posP_20.x = (posP_20.x + tmpvar_74);
-    };
-    if (!(doneP_11)) {
-      posP_20.y = (posP_20.y + tmpvar_75);
-    };
-    if (doneNP_10) {
-      if (!(doneN_12)) {
-        highp vec4 tmpvar_82;
-        tmpvar_82.zw = vec2(0.0, 0.0);
-        tmpvar_82.xy = posN_21;
-        mediump vec4 tmpvar_83;
-        tmpvar_83 = tmpvar_82;
-        highp vec4 tmpvar_84;
-        tmpvar_84 = textureLod (_MainTex, tmpvar_83.xy, tmpvar_83.w);
-        lumaEndN_18 = tmpvar_84.w;
-      };
-      if (!(doneP_11)) {
-        highp vec4 tmpvar_85;
-        tmpvar_85.zw = vec2(0.0, 0.0);
-        tmpvar_85.xy = posP_20;
-        mediump vec4 tmpvar_86;
-        tmpvar_86 = tmpvar_85;
-        highp vec4 tmpvar_87;
-        tmpvar_87 = textureLod (_MainTex, tmpvar_86.xy, tmpvar_86.w);
-        lumaEndP_16 = tmpvar_87.w;
-      };
-      if (!(doneN_12)) {
-        lumaEndN_18 = (lumaEndN_18 - (lumaNN_27 * 0.5));
-      };
-      if (!(doneP_11)) {
-        lumaEndP_16 = (lumaEndP_16 - (lumaNN_27 * 0.5));
-      };
-      doneN_12 = (abs(lumaEndN_18) >= gradientScaled_15);
-      doneP_11 = (abs(lumaEndP_16) >= gradientScaled_15);
-      if (!(doneN_12)) {
-        posN_21.x = (posN_21.x - tmpvar_74);
-      };
-      if (!(doneN_12)) {
-        posN_21.y = (posN_21.y - tmpvar_75);
-      };
-      doneNP_10 = !((doneN_12 && doneP_11));
-      if (!(doneP_11)) {
-        posP_20.x = (posP_20.x + tmpvar_74);
-      };
-      if (!(doneP_11)) {
-        posP_20.y = (posP_20.y + tmpvar_75);
-      };
-      if (doneNP_10) {
-        if (!(doneN_12)) {
-          highp vec4 tmpvar_88;
-          tmpvar_88.zw = vec2(0.0, 0.0);
-          tmpvar_88.xy = posN_21;
-          mediump vec4 tmpvar_89;
-          tmpvar_89 = tmpvar_88;
-          highp vec4 tmpvar_90;
-          tmpvar_90 = textureLod (_MainTex, tmpvar_89.xy, tmpvar_89.w);
-          lumaEndN_18 = tmpvar_90.w;
-        };
-        if (!(doneP_11)) {
-          highp vec4 tmpvar_91;
-          tmpvar_91.zw = vec2(0.0, 0.0);
-          tmpvar_91.xy = posP_20;
-          mediump vec4 tmpvar_92;
-          tmpvar_92 = tmpvar_91;
-          highp vec4 tmpvar_93;
-          tmpvar_93 = textureLod (_MainTex, tmpvar_92.xy, tmpvar_92.w);
-          lumaEndP_16 = tmpvar_93.w;
-        };
-        if (!(doneN_12)) {
-          lumaEndN_18 = (lumaEndN_18 - (lumaNN_27 * 0.5));
-        };
-        if (!(doneP_11)) {
-          lumaEndP_16 = (lumaEndP_16 - (lumaNN_27 * 0.5));
-        };
-        doneN_12 = (abs(lumaEndN_18) >= gradientScaled_15);
-        doneP_11 = (abs(lumaEndP_16) >= gradientScaled_15);
-        if (!(doneN_12)) {
-          posN_21.x = (posN_21.x - tmpvar_74);
-        };
-        if (!(doneN_12)) {
-          posN_21.y = (posN_21.y - tmpvar_75);
-        };
-        doneNP_10 = !((doneN_12 && doneP_11));
-        if (!(doneP_11)) {
-          posP_20.x = (posP_20.x + tmpvar_74);
-        };
-        if (!(doneP_11)) {
-          posP_20.y = (posP_20.y + tmpvar_75);
-        };
-        if (doneNP_10) {
-          if (!(doneN_12)) {
-            highp vec4 tmpvar_94;
-            tmpvar_94.zw = vec2(0.0, 0.0);
-            tmpvar_94.xy = posN_21;
-            mediump vec4 tmpvar_95;
-            tmpvar_95 = tmpvar_94;
-            highp vec4 tmpvar_96;
-            tmpvar_96 = textureLod (_MainTex, tmpvar_95.xy, tmpvar_95.w);
-            lumaEndN_18 = tmpvar_96.w;
-          };
-          if (!(doneP_11)) {
-            highp vec4 tmpvar_97;
-            tmpvar_97.zw = vec2(0.0, 0.0);
-            tmpvar_97.xy = posP_20;
-            mediump vec4 tmpvar_98;
-            tmpvar_98 = tmpvar_97;
-            highp vec4 tmpvar_99;
-            tmpvar_99 = textureLod (_MainTex, tmpvar_98.xy, tmpvar_98.w);
-            lumaEndP_16 = tmpvar_99.w;
-          };
-          if (!(doneN_12)) {
-            lumaEndN_18 = (lumaEndN_18 - (lumaNN_27 * 0.5));
-          };
-          if (!(doneP_11)) {
-            lumaEndP_16 = (lumaEndP_16 - (lumaNN_27 * 0.5));
-          };
-          doneN_12 = (abs(lumaEndN_18) >= gradientScaled_15);
-          doneP_11 = (abs(lumaEndP_16) >= gradientScaled_15);
-          if (!(doneN_12)) {
-            posN_21.x = (posN_21.x - tmpvar_74);
-          };
-          if (!(doneN_12)) {
-            posN_21.y = (posN_21.y - tmpvar_75);
-          };
-          doneNP_10 = !((doneN_12 && doneP_11));
-          if (!(doneP_11)) {
-            posP_20.x = (posP_20.x + tmpvar_74);
-          };
-          if (!(doneP_11)) {
-            posP_20.y = (posP_20.y + tmpvar_75);
-          };
-          if (doneNP_10) {
-            if (!(doneN_12)) {
-              highp vec4 tmpvar_100;
-              tmpvar_100.zw = vec2(0.0, 0.0);
-              tmpvar_100.xy = posN_21;
-              mediump vec4 tmpvar_101;
-              tmpvar_101 = tmpvar_100;
-              highp vec4 tmpvar_102;
-              tmpvar_102 = textureLod (_MainTex, tmpvar_101.xy, tmpvar_101.w);
-              lumaEndN_18 = tmpvar_102.w;
-            };
-            if (!(doneP_11)) {
-              highp vec4 tmpvar_103;
-              tmpvar_103.zw = vec2(0.0, 0.0);
-              tmpvar_103.xy = posP_20;
-              mediump vec4 tmpvar_104;
-              tmpvar_104 = tmpvar_103;
-              highp vec4 tmpvar_105;
-              tmpvar_105 = textureLod (_MainTex, tmpvar_104.xy, tmpvar_104.w);
-              lumaEndP_16 = tmpvar_105.w;
-            };
-            if (!(doneN_12)) {
-              lumaEndN_18 = (lumaEndN_18 - (lumaNN_27 * 0.5));
-            };
-            if (!(doneP_11)) {
-              lumaEndP_16 = (lumaEndP_16 - (lumaNN_27 * 0.5));
-            };
-            doneN_12 = (abs(lumaEndN_18) >= gradientScaled_15);
-            doneP_11 = (abs(lumaEndP_16) >= gradientScaled_15);
-            if (!(doneN_12)) {
-              posN_21.x = (posN_21.x - (tmpvar_74 * 1.5));
-            };
-            if (!(doneN_12)) {
-              posN_21.y = (posN_21.y - (tmpvar_75 * 1.5));
-            };
-            doneNP_10 = !((doneN_12 && doneP_11));
-            if (!(doneP_11)) {
-              posP_20.x = (posP_20.x + (tmpvar_74 * 1.5));
-            };
-            if (!(doneP_11)) {
-              posP_20.y = (posP_20.y + (tmpvar_75 * 1.5));
-            };
-            if (doneNP_10) {
-              if (!(doneN_12)) {
-                highp vec4 tmpvar_106;
-                tmpvar_106.zw = vec2(0.0, 0.0);
-                tmpvar_106.xy = posN_21;
-                mediump vec4 tmpvar_107;
-                tmpvar_107 = tmpvar_106;
-                highp vec4 tmpvar_108;
-                tmpvar_108 = textureLod (_MainTex, tmpvar_107.xy, tmpvar_107.w);
-                lumaEndN_18 = tmpvar_108.w;
-              };
-              if (!(doneP_11)) {
-                highp vec4 tmpvar_109;
-                tmpvar_109.zw = vec2(0.0, 0.0);
-                tmpvar_109.xy = posP_20;
-                mediump vec4 tmpvar_110;
-                tmpvar_110 = tmpvar_109;
-                highp vec4 tmpvar_111;
-                tmpvar_111 = textureLod (_MainTex, tmpvar_110.xy, tmpvar_110.w);
-                lumaEndP_16 = tmpvar_111.w;
-              };
-              if (!(doneN_12)) {
-                lumaEndN_18 = (lumaEndN_18 - (lumaNN_27 * 0.5));
-              };
-              if (!(doneP_11)) {
-                lumaEndP_16 = (lumaEndP_16 - (lumaNN_27 * 0.5));
-              };
-              doneN_12 = (abs(lumaEndN_18) >= gradientScaled_15);
-              doneP_11 = (abs(lumaEndP_16) >= gradientScaled_15);
-              if (!(doneN_12)) {
-                posN_21.x = (posN_21.x - (tmpvar_74 * 2.0));
-              };
-              if (!(doneN_12)) {
-                posN_21.y = (posN_21.y - (tmpvar_75 * 2.0));
-              };
-              doneNP_10 = !((doneN_12 && doneP_11));
-              if (!(doneP_11)) {
-                posP_20.x = (posP_20.x + (tmpvar_74 * 2.0));
-              };
-              if (!(doneP_11)) {
-                posP_20.y = (posP_20.y + (tmpvar_75 * 2.0));
-              };
-              if (doneNP_10) {
-                if (!(doneN_12)) {
-                  highp vec4 tmpvar_112;
-                  tmpvar_112.zw = vec2(0.0, 0.0);
-                  tmpvar_112.xy = posN_21;
-                  mediump vec4 tmpvar_113;
-                  tmpvar_113 = tmpvar_112;
-                  highp vec4 tmpvar_114;
-                  tmpvar_114 = textureLod (_MainTex, tmpvar_113.xy, tmpvar_113.w);
-                  lumaEndN_18 = tmpvar_114.w;
-                };
-                if (!(doneP_11)) {
-                  highp vec4 tmpvar_115;
-                  tmpvar_115.zw = vec2(0.0, 0.0);
-                  tmpvar_115.xy = posP_20;
-                  mediump vec4 tmpvar_116;
-                  tmpvar_116 = tmpvar_115;
-                  highp vec4 tmpvar_117;
-                  tmpvar_117 = textureLod (_MainTex, tmpvar_116.xy, tmpvar_116.w);
-                  lumaEndP_16 = tmpvar_117.w;
-                };
-                if (!(doneN_12)) {
-                  lumaEndN_18 = (lumaEndN_18 - (lumaNN_27 * 0.5));
-                };
-                if (!(doneP_11)) {
-                  lumaEndP_16 = (lumaEndP_16 - (lumaNN_27 * 0.5));
-                };
-                doneN_12 = (abs(lumaEndN_18) >= gradientScaled_15);
-                doneP_11 = (abs(lumaEndP_16) >= gradientScaled_15);
-                if (!(doneN_12)) {
-                  posN_21.x = (posN_21.x - (tmpvar_74 * 2.0));
-                };
-                if (!(doneN_12)) {
-                  posN_21.y = (posN_21.y - (tmpvar_75 * 2.0));
-                };
-                doneNP_10 = !((doneN_12 && doneP_11));
-                if (!(doneP_11)) {
-                  posP_20.x = (posP_20.x + (tmpvar_74 * 2.0));
-                };
-                if (!(doneP_11)) {
-                  posP_20.y = (posP_20.y + (tmpvar_75 * 2.0));
-                };
-                if (doneNP_10) {
-                  if (!(doneN_12)) {
-                    highp vec4 tmpvar_118;
-                    tmpvar_118.zw = vec2(0.0, 0.0);
-                    tmpvar_118.xy = posN_21;
-                    mediump vec4 tmpvar_119;
-                    tmpvar_119 = tmpvar_118;
-                    highp vec4 tmpvar_120;
-                    tmpvar_120 = textureLod (_MainTex, tmpvar_119.xy, tmpvar_119.w);
-                    lumaEndN_18 = tmpvar_120.w;
-                  };
-                  if (!(doneP_11)) {
-                    highp vec4 tmpvar_121;
-                    tmpvar_121.zw = vec2(0.0, 0.0);
-                    tmpvar_121.xy = posP_20;
-                    mediump vec4 tmpvar_122;
-                    tmpvar_122 = tmpvar_121;
-                    highp vec4 tmpvar_123;
-                    tmpvar_123 = textureLod (_MainTex, tmpvar_122.xy, tmpvar_122.w);
-                    lumaEndP_16 = tmpvar_123.w;
-                  };
-                  if (!(doneN_12)) {
-                    lumaEndN_18 = (lumaEndN_18 - (lumaNN_27 * 0.5));
-                  };
-                  if (!(doneP_11)) {
-                    lumaEndP_16 = (lumaEndP_16 - (lumaNN_27 * 0.5));
-                  };
-                  doneN_12 = (abs(lumaEndN_18) >= gradientScaled_15);
-                  doneP_11 = (abs(lumaEndP_16) >= gradientScaled_15);
-                  if (!(doneN_12)) {
-                    posN_21.x = (posN_21.x - (tmpvar_74 * 2.0));
-                  };
-                  if (!(doneN_12)) {
-                    posN_21.y = (posN_21.y - (tmpvar_75 * 2.0));
-                  };
-                  doneNP_10 = !((doneN_12 && doneP_11));
-                  if (!(doneP_11)) {
-                    posP_20.x = (posP_20.x + (tmpvar_74 * 2.0));
-                  };
-                  if (!(doneP_11)) {
-                    posP_20.y = (posP_20.y + (tmpvar_75 * 2.0));
-                  };
-                  if (doneNP_10) {
-                    if (!(doneN_12)) {
-                      highp vec4 tmpvar_124;
-                      tmpvar_124.zw = vec2(0.0, 0.0);
-                      tmpvar_124.xy = posN_21;
-                      mediump vec4 tmpvar_125;
-                      tmpvar_125 = tmpvar_124;
-                      highp vec4 tmpvar_126;
-                      tmpvar_126 = textureLod (_MainTex, tmpvar_125.xy, tmpvar_125.w);
-                      lumaEndN_18 = tmpvar_126.w;
-                    };
-                    if (!(doneP_11)) {
-                      highp vec4 tmpvar_127;
-                      tmpvar_127.zw = vec2(0.0, 0.0);
-                      tmpvar_127.xy = posP_20;
-                      mediump vec4 tmpvar_128;
-                      tmpvar_128 = tmpvar_127;
-                      highp vec4 tmpvar_129;
-                      tmpvar_129 = textureLod (_MainTex, tmpvar_128.xy, tmpvar_128.w);
-                      lumaEndP_16 = tmpvar_129.w;
-                    };
-                    if (!(doneN_12)) {
-                      lumaEndN_18 = (lumaEndN_18 - (lumaNN_27 * 0.5));
-                    };
-                    if (!(doneP_11)) {
-                      lumaEndP_16 = (lumaEndP_16 - (lumaNN_27 * 0.5));
-                    };
-                    doneN_12 = (abs(lumaEndN_18) >= gradientScaled_15);
-                    doneP_11 = (abs(lumaEndP_16) >= gradientScaled_15);
-                    if (!(doneN_12)) {
-                      posN_21.x = (posN_21.x - (tmpvar_74 * 2.0));
-                    };
-                    if (!(doneN_12)) {
-                      posN_21.y = (posN_21.y - (tmpvar_75 * 2.0));
-                    };
-                    doneNP_10 = !((doneN_12 && doneP_11));
-                    if (!(doneP_11)) {
-                      posP_20.x = (posP_20.x + (tmpvar_74 * 2.0));
-                    };
-                    if (!(doneP_11)) {
-                      posP_20.y = (posP_20.y + (tmpvar_75 * 2.0));
-                    };
-                    if (doneNP_10) {
-                      if (!(doneN_12)) {
-                        highp vec4 tmpvar_130;
-                        tmpvar_130.zw = vec2(0.0, 0.0);
-                        tmpvar_130.xy = posN_21;
-                        mediump vec4 tmpvar_131;
-                        tmpvar_131 = tmpvar_130;
-                        highp vec4 tmpvar_132;
-                        tmpvar_132 = textureLod (_MainTex, tmpvar_131.xy, tmpvar_131.w);
-                        lumaEndN_18 = tmpvar_132.w;
-                      };
-                      if (!(doneP_11)) {
-                        highp vec4 tmpvar_133;
-                        tmpvar_133.zw = vec2(0.0, 0.0);
-                        tmpvar_133.xy = posP_20;
-                        mediump vec4 tmpvar_134;
-                        tmpvar_134 = tmpvar_133;
-                        highp vec4 tmpvar_135;
-                        tmpvar_135 = textureLod (_MainTex, tmpvar_134.xy, tmpvar_134.w);
-                        lumaEndP_16 = tmpvar_135.w;
-                      };
-                      if (!(doneN_12)) {
-                        lumaEndN_18 = (lumaEndN_18 - (lumaNN_27 * 0.5));
-                      };
-                      if (!(doneP_11)) {
-                        lumaEndP_16 = (lumaEndP_16 - (lumaNN_27 * 0.5));
-                      };
-                      doneN_12 = (abs(lumaEndN_18) >= gradientScaled_15);
-                      doneP_11 = (abs(lumaEndP_16) >= gradientScaled_15);
-                      if (!(doneN_12)) {
-                        posN_21.x = (posN_21.x - (tmpvar_74 * 4.0));
-                      };
-                      if (!(doneN_12)) {
-                        posN_21.y = (posN_21.y - (tmpvar_75 * 4.0));
-                      };
-                      doneNP_10 = !((doneN_12 && doneP_11));
-                      if (!(doneP_11)) {
-                        posP_20.x = (posP_20.x + (tmpvar_74 * 4.0));
-                      };
-                      if (!(doneP_11)) {
-                        posP_20.y = (posP_20.y + (tmpvar_75 * 4.0));
-                      };
-                      if (doneNP_10) {
-                        if (!(doneN_12)) {
-                          highp vec4 tmpvar_136;
-                          tmpvar_136.zw = vec2(0.0, 0.0);
-                          tmpvar_136.xy = posN_21;
-                          mediump vec4 tmpvar_137;
-                          tmpvar_137 = tmpvar_136;
-                          highp vec4 tmpvar_138;
-                          tmpvar_138 = textureLod (_MainTex, tmpvar_137.xy, tmpvar_137.w);
-                          lumaEndN_18 = tmpvar_138.w;
-                        };
-                        if (!(doneP_11)) {
-                          highp vec4 tmpvar_139;
-                          tmpvar_139.zw = vec2(0.0, 0.0);
-                          tmpvar_139.xy = posP_20;
-                          mediump vec4 tmpvar_140;
-                          tmpvar_140 = tmpvar_139;
-                          highp vec4 tmpvar_141;
-                          tmpvar_141 = textureLod (_MainTex, tmpvar_140.xy, tmpvar_140.w);
-                          lumaEndP_16 = tmpvar_141.w;
-                        };
-                        if (!(doneN_12)) {
-                          lumaEndN_18 = (lumaEndN_18 - (lumaNN_27 * 0.5));
-                        };
-                        if (!(doneP_11)) {
-                          lumaEndP_16 = (lumaEndP_16 - (lumaNN_27 * 0.5));
-                        };
-                        doneN_12 = (abs(lumaEndN_18) >= gradientScaled_15);
-                        doneP_11 = (abs(lumaEndP_16) >= gradientScaled_15);
-                        if (!(doneN_12)) {
-                          posN_21.x = (posN_21.x - (tmpvar_74 * 8.0));
-                        };
-                        if (!(doneN_12)) {
-                          posN_21.y = (posN_21.y - (tmpvar_75 * 8.0));
-                        };
-                        doneNP_10 = !((doneN_12 && doneP_11));
-                        if (!(doneP_11)) {
-                          posP_20.x = (posP_20.x + (tmpvar_74 * 8.0));
-                        };
-                        if (!(doneP_11)) {
-                          posP_20.y = (posP_20.y + (tmpvar_75 * 8.0));
-                        };
-                      };
-                    };
-                  };
-                };
-              };
-            };
-          };
-        };
-      };
-    };
-    dstN_9 = (xlv_TEXCOORD0.x - posN_21.x);
-    dstP_8 = (posP_20.x - xlv_TEXCOORD0.x);
-    if (!(horzSpan_32)) {
-      dstN_9 = (xlv_TEXCOORD0.y - posN_21.y);
-    };
-    if (!(horzSpan_32)) {
-      dstP_8 = (posP_20.y - xlv_TEXCOORD0.y);
-    };
-    goodSpanN_7 = ((lumaEndN_18 < 0.0) != lumaMLTZero_13);
-    goodSpanP_6 = ((lumaEndP_16 < 0.0) != lumaMLTZero_13);
-    spanLengthRcp_5 = (1.0/((dstP_8 + dstN_9)));
-    highp float tmpvar_142;
-    tmpvar_142 = min (dstN_9, dstP_8);
-    bool tmpvar_143;
-    if ((dstN_9 < dstP_8)) {
-      tmpvar_143 = goodSpanN_7;
-    } else {
-      tmpvar_143 = goodSpanP_6;
-    };
-    pixelOffset_4 = ((tmpvar_142 * -(spanLengthRcp_5)) + 0.5);
-    subpixH_3 = ((subpixF_14 * subpixF_14) * 0.75);
-    highp float tmpvar_144;
-    if (tmpvar_143) {
-      tmpvar_144 = pixelOffset_4;
-    } else {
-      tmpvar_144 = 0.0;
-    };
-    highp float tmpvar_145;
-    tmpvar_145 = max (tmpvar_144, subpixH_3);
-    if (!(horzSpan_32)) {
-      posM_43.x = (xlv_TEXCOORD0.x + (tmpvar_145 * lengthSign_33));
-    };
-    if (horzSpan_32) {
-      posM_43.y = (xlv_TEXCOORD0.y + (tmpvar_145 * lengthSign_33));
-    };
-    highp vec4 tmpvar_146;
-    tmpvar_146.zw = vec2(0.0, 0.0);
-    tmpvar_146.xy = posM_43;
-    mediump vec4 tmpvar_147;
-    tmpvar_147 = tmpvar_146;
-    highp vec4 tmpvar_148;
-    tmpvar_148.xyz = textureLod (_MainTex, tmpvar_147.xy, tmpvar_147.w).xyz;
-    tmpvar_148.w = rgbyM_42.w;
-    tmpvar_2 = tmpvar_148;
-  };
-  _fragData = tmpvar_2;
+  highp vec2 r0;
+  highp vec2 r1;
+  highp float r2;
+  highp float r3;
+  highp vec4 r4;
+  mediump vec4 t0 = vec4(xlv_TEXCOORD0, 0.0, 0.0);
+  r4 = textureLod(_MainTex, t0.xy, t0.w);
+  highp vec2 t1 = (xlv_TEXCOORD0 + (vec2(0.0, 1.0) * _MainTex_TexelSize.xy));
+  mediump vec4 t2 = vec4(t1, 0.0, 0.0);
+  highp vec4 t3 = textureLod(_MainTex, t2.xy, t2.w);
+  highp vec2 t4 = (xlv_TEXCOORD0 + (vec2(1.0, 0.0) * _MainTex_TexelSize.xy));
+  mediump vec4 t5 = vec4(t4, 0.0, 0.0);
+  highp vec4 t6 = textureLod(_MainTex, t5.xy, t5.w);
+  highp vec2 t7 = (xlv_TEXCOORD0 + (vec2(0.0, -1.0) * _MainTex_TexelSize.xy));
+  mediump vec4 t8 = vec4(t7, 0.0, 0.0);
+  highp vec4 t9 = textureLod(_MainTex, t8.xy, t8.w);
+  highp vec2 t10 = (xlv_TEXCOORD0 + (vec2(-1.0, 0.0) * _MainTex_TexelSize.xy));
+  mediump vec4 t11 = vec4(t10, 0.0, 0.0);
+  highp vec4 t12 = textureLod(_MainTex, t11.xy, t11.w);
+  highp float t13 = max(max(t9.w, t12.w), max(t6.w, max(t3.w, r4.w)));
+  highp float t14 = (t13 - min(min(t9.w, t12.w), min(t6.w, min(t3.w, r4.w))));
+  if ((t14 >= max(0.0833, (t13 * 0.166)))) {
+    highp vec2 t15 = (xlv_TEXCOORD0 - _MainTex_TexelSize.xy);
+    mediump vec4 t16 = vec4(t15, 0.0, 0.0);
+    highp vec4 t17 = textureLod(_MainTex, t16.xy, t16.w);
+    highp vec2 t18 = (xlv_TEXCOORD0 + _MainTex_TexelSize.xy);
+    mediump vec4 t19 = vec4(t18, 0.0, 0.0);
+    highp vec4 t20 = textureLod(_MainTex, t19.xy, t19.w);
+    highp vec2 t21 = (xlv_TEXCOORD0 + (vec2(1.0, -1.0) * _MainTex_TexelSize.xy));
+    mediump vec4 t22 = vec4(t21, 0.0, 0.0);
+    highp vec4 t23 = textureLod(_MainTex, t22.xy, t22.w);
+    highp vec2 t24 = (xlv_TEXCOORD0 + (vec2(-1.0, 1.0) * _MainTex_TexelSize.xy));
+    mediump vec4 t25 = vec4(t24, 0.0, 0.0);
+    highp vec4 t26 = textureLod(_MainTex, t25.xy, t25.w);
+    highp float t27 = (t9.w + t3.w);
+    highp float t28 = (t12.w + t6.w);
+    highp float t29 = (2.0 * r4.w);
+    highp float t30 = (t23.w + t20.w);
+    highp float t31 = (t17.w + t26.w);
+    bool t32 = ((abs((t31 - (2.0 * t12.w))) + ((abs((t27 - t29)) * 2.0) + abs((t30 - (2.0 * t6.w))))) >= (abs(((t26.w + t20.w) - (2.0 * t3.w))) + ((abs((t28 - t29)) * 2.0) + abs(((t17.w + t23.w) - (2.0 * t9.w))))));
+    highp float t33 = (t32 ? t9.w : t12.w);
+    highp float t34 = (t32 ? t3.w : t6.w);
+    highp float t35 = (t32 ? _MainTex_TexelSize.y : _MainTex_TexelSize.x);
+    highp float t36 = abs((t34 - r4.w));
+    highp float t37 = abs((t33 - r4.w));
+    bool t38 = (t37 >= t36);
+    highp float t39 = (t38 ? (-t35) : t35);
+    mediump float t40 = (abs((((((t27 + t28) * 2.0) + (t31 + t30)) * 0.0833333) - r4.w)) * (1.0 / t14));
+    highp float t41 = clamp(t40, 0.0, 1.0);
+    highp float t42 = (t32 ? _MainTex_TexelSize.x : 0.0);
+    highp float t43 = (t32 ? 0.0 : _MainTex_TexelSize.y);
+    highp float t44 = (t39 * 0.5);
+    highp vec2 t45 = (t32 ? vec2(xlv_TEXCOORD0.x, (xlv_TEXCOORD0.y + t44)) : vec2((xlv_TEXCOORD0.x + t44), xlv_TEXCOORD0.y));
+    highp float t46 = (t45.x - t42);
+    highp float t47 = (t45.y - t43);
+    highp float t48 = (t45.x + t42);
+    highp float t49 = (t45.y + t43);
+    mediump vec4 t50 = vec4(t46, t47, 0.0, 0.0);
+    highp vec4 t51 = textureLod(_MainTex, t50.xy, t50.w);
+    mediump vec4 t52 = vec4(t48, t49, 0.0, 0.0);
+    highp vec4 t53 = textureLod(_MainTex, t52.xy, t52.w);
+    highp float t54 = ((3.0 - (2.0 * t41)) * (t41 * t41));
+    highp float t55 = ((r4.w + (t38 ? t33 : t34)) * 0.5);
+    r2 = (t51.w - t55);
+    r3 = (t53.w - t55);
+    highp float t56 = (t46 - t42);
+    highp float t57 = (t47 - t43);
+    highp float t58 = (max(t37, t36) / 4.0);
+    bool t59 = (abs(r2) >= t58);
+    r0 = (t59 ? vec2(t46, t47) : vec2(t56, t57));
+    bool t60 = (abs(r3) >= t58);
+    highp float t61 = (t48 + t42);
+    highp float t62 = (t49 + t43);
+    r1 = (t60 ? vec2(t48, t49) : vec2(t61, t62));
+    if ((!(t59 && t60))) {
+      if ((!t59)) {
+        mediump vec4 t63 = vec4(t56, t57, 0.0, 0.0);
+        highp vec4 t64 = textureLod(_MainTex, t63.xy, t63.w);
+        r2 = t64.w;
+      }
+      if ((!t60)) {
+        mediump vec4 t65 = vec4(t61, t62, 0.0, 0.0);
+        highp vec4 t66 = textureLod(_MainTex, t65.xy, t65.w);
+        r3 = t66.w;
+      }
+      r2 = (t59 ? r2 : (r2 - t55));
+      r3 = (t60 ? r3 : (r3 - t55));
+      highp float t67 = (r0.x - t42);
+      highp float t68 = (r0.y - t43);
+      bool t69 = (abs(r2) >= t58);
+      r0 = (t69 ? r0 : vec2(t67, t68));
+      bool t70 = (abs(r3) >= t58);
+      highp float t71 = (r1.x + t42);
+      highp float t72 = (r1.y + t43);
+      r1 = (t70 ? r1 : vec2(t71, t72));
+      if ((!(t69 && t70))) {
+        if ((!t69)) {
+          mediump vec4 t73 = vec4(t67, t68, 0.0, 0.0);
+          highp vec4 t74 = textureLod(_MainTex, t73.xy, t73.w);
+          r2 = t74.w;
+        }
+        if ((!t70)) {
+          mediump vec4 t75 = vec4(t71, t72, 0.0, 0.0);
+          highp vec4 t76 = textureLod(_MainTex, t75.xy, t75.w);
+          r3 = t76.w;
+        }
+        r2 = (t69 ? r2 : (r2 - t55));
+        r3 = (t70 ? r3 : (r3 - t55));
+        highp float t77 = (r0.x - t42);
+        highp float t78 = (r0.y - t43);
+        bool t79 = (abs(r2) >= t58);
+        r0 = (t79 ? r0 : vec2(t77, t78));
+        bool t80 = (abs(r3) >= t58);
+        highp float t81 = (r1.x + t42);
+        highp float t82 = (r1.y + t43);
+        r1 = (t80 ? r1 : vec2(t81, t82));
+        if ((!(t79 && t80))) {
+          if ((!t79)) {
+            mediump vec4 t83 = vec4(t77, t78, 0.0, 0.0);
+            highp vec4 t84 = textureLod(_MainTex, t83.xy, t83.w);
+            r2 = t84.w;
+          }
+          if ((!t80)) {
+            mediump vec4 t85 = vec4(t81, t82, 0.0, 0.0);
+            highp vec4 t86 = textureLod(_MainTex, t85.xy, t85.w);
+            r3 = t86.w;
+          }
+          r2 = (t79 ? r2 : (r2 - t55));
+          r3 = (t80 ? r3 : (r3 - t55));
+          highp float t87 = (r0.x - t42);
+          highp float t88 = (r0.y - t43);
+          bool t89 = (abs(r2) >= t58);
+          r0 = (t89 ? r0 : vec2(t87, t88));
+          bool t90 = (abs(r3) >= t58);
+          highp float t91 = (r1.x + t42);
+          highp float t92 = (r1.y + t43);
+          r1 = (t90 ? r1 : vec2(t91, t92));
+          if ((!(t89 && t90))) {
+            if ((!t89)) {
+              mediump vec4 t93 = vec4(t87, t88, 0.0, 0.0);
+              highp vec4 t94 = textureLod(_MainTex, t93.xy, t93.w);
+              r2 = t94.w;
+            }
+            if ((!t90)) {
+              mediump vec4 t95 = vec4(t91, t92, 0.0, 0.0);
+              highp vec4 t96 = textureLod(_MainTex, t95.xy, t95.w);
+              r3 = t96.w;
+            }
+            r2 = (t89 ? r2 : (r2 - t55));
+            r3 = (t90 ? r3 : (r3 - t55));
+            highp float t97 = (t42 * 1.5);
+            highp float t98 = (r0.x - t97);
+            highp float t99 = (t43 * 1.5);
+            highp float t100 = (r0.y - t99);
+            bool t101 = (abs(r2) >= t58);
+            r0 = (t101 ? r0 : vec2(t98, t100));
+            bool t102 = (abs(r3) >= t58);
+            highp float t103 = (r1.x + t97);
+            highp float t104 = (r1.y + t99);
+            r1 = (t102 ? r1 : vec2(t103, t104));
+            if ((!(t101 && t102))) {
+              if ((!t101)) {
+                mediump vec4 t105 = vec4(t98, t100, 0.0, 0.0);
+                highp vec4 t106 = textureLod(_MainTex, t105.xy, t105.w);
+                r2 = t106.w;
+              }
+              if ((!t102)) {
+                mediump vec4 t107 = vec4(t103, t104, 0.0, 0.0);
+                highp vec4 t108 = textureLod(_MainTex, t107.xy, t107.w);
+                r3 = t108.w;
+              }
+              r2 = (t101 ? r2 : (r2 - t55));
+              r3 = (t102 ? r3 : (r3 - t55));
+              highp float t109 = (t42 * 2.0);
+              highp float t110 = (r0.x - t109);
+              highp float t111 = (t43 * 2.0);
+              highp float t112 = (r0.y - t111);
+              bool t113 = (abs(r2) >= t58);
+              r0 = (t113 ? r0 : vec2(t110, t112));
+              bool t114 = (abs(r3) >= t58);
+              highp float t115 = (r1.x + t109);
+              highp float t116 = (r1.y + t111);
+              r1 = (t114 ? r1 : vec2(t115, t116));
+              if ((!(t113 && t114))) {
+                if ((!t113)) {
+                  mediump vec4 t117 = vec4(t110, t112, 0.0, 0.0);
+                  highp vec4 t118 = textureLod(_MainTex, t117.xy, t117.w);
+                  r2 = t118.w;
+                }
+                if ((!t114)) {
+                  mediump vec4 t119 = vec4(t115, t116, 0.0, 0.0);
+                  highp vec4 t120 = textureLod(_MainTex, t119.xy, t119.w);
+                  r3 = t120.w;
+                }
+                r2 = (t113 ? r2 : (r2 - t55));
+                r3 = (t114 ? r3 : (r3 - t55));
+                highp float t121 = (r0.x - t109);
+                highp float t122 = (r0.y - t111);
+                bool t123 = (abs(r2) >= t58);
+                r0 = (t123 ? r0 : vec2(t121, t122));
+                bool t124 = (abs(r3) >= t58);
+                highp float t125 = (r1.x + t109);
+                highp float t126 = (r1.y + t111);
+                r1 = (t124 ? r1 : vec2(t125, t126));
+                if ((!(t123 && t124))) {
+                  if ((!t123)) {
+                    mediump vec4 t127 = vec4(t121, t122, 0.0, 0.0);
+                    highp vec4 t128 = textureLod(_MainTex, t127.xy, t127.w);
+                    r2 = t128.w;
+                  }
+                  if ((!t124)) {
+                    mediump vec4 t129 = vec4(t125, t126, 0.0, 0.0);
+                    highp vec4 t130 = textureLod(_MainTex, t129.xy, t129.w);
+                    r3 = t130.w;
+                  }
+                  r2 = (t123 ? r2 : (r2 - t55));
+                  r3 = (t124 ? r3 : (r3 - t55));
+                  highp float t131 = (r0.x - t109);
+                  highp float t132 = (r0.y - t111);
+                  bool t133 = (abs(r2) >= t58);
+                  r0 = (t133 ? r0 : vec2(t131, t132));
+                  bool t134 = (abs(r3) >= t58);
+                  highp float t135 = (r1.x + t109);
+                  highp float t136 = (r1.y + t111);
+                  r1 = (t134 ? r1 : vec2(t135, t136));
+                  if ((!(t133 && t134))) {
+                    if ((!t133)) {
+                      mediump vec4 t137 = vec4(t131, t132, 0.0, 0.0);
+                      highp vec4 t138 = textureLod(_MainTex, t137.xy, t137.w);
+                      r2 = t138.w;
+                    }
+                    if ((!t134)) {
+                      mediump vec4 t139 = vec4(t135, t136, 0.0, 0.0);
+                      highp vec4 t140 = textureLod(_MainTex, t139.xy, t139.w);
+                      r3 = t140.w;
+                    }
+                    r2 = (t133 ? r2 : (r2 - t55));
+                    r3 = (t134 ? r3 : (r3 - t55));
+                    highp float t141 = (r0.x - t109);
+                    highp float t142 = (r0.y - t111);
+                    bool t143 = (abs(r2) >= t58);
+                    r0 = (t143 ? r0 : vec2(t141, t142));
+                    bool t144 = (abs(r3) >= t58);
+                    highp float t145 = (r1.x + t109);
+                    highp float t146 = (r1.y + t111);
+                    r1 = (t144 ? r1 : vec2(t145, t146));
+                    if ((!(t143 && t144))) {
+                      if ((!t143)) {
+                        mediump vec4 t147 = vec4(t141, t142, 0.0, 0.0);
+                        highp vec4 t148 = textureLod(_MainTex, t147.xy, t147.w);
+                        r2 = t148.w;
+                      }
+                      if ((!t144)) {
+                        mediump vec4 t149 = vec4(t145, t146, 0.0, 0.0);
+                        highp vec4 t150 = textureLod(_MainTex, t149.xy, t149.w);
+                        r3 = t150.w;
+                      }
+                      r2 = (t143 ? r2 : (r2 - t55));
+                      r3 = (t144 ? r3 : (r3 - t55));
+                      highp float t151 = (t42 * 4.0);
+                      highp float t152 = (r0.x - t151);
+                      highp float t153 = (t43 * 4.0);
+                      highp float t154 = (r0.y - t153);
+                      bool t155 = (abs(r2) >= t58);
+                      r0 = (t155 ? r0 : vec2(t152, t154));
+                      bool t156 = (abs(r3) >= t58);
+                      highp float t157 = (r1.x + t151);
+                      highp float t158 = (r1.y + t153);
+                      r1 = (t156 ? r1 : vec2(t157, t158));
+                      if ((!(t155 && t156))) {
+                        if ((!t155)) {
+                          mediump vec4 t159 = vec4(t152, t154, 0.0, 0.0);
+                          highp vec4 t160 = textureLod(_MainTex, t159.xy, t159.w);
+                          r2 = t160.w;
+                        }
+                        if ((!t156)) {
+                          mediump vec4 t161 = vec4(t157, t158, 0.0, 0.0);
+                          highp vec4 t162 = textureLod(_MainTex, t161.xy, t161.w);
+                          r3 = t162.w;
+                        }
+                        r2 = (t155 ? r2 : (r2 - t55));
+                        r3 = (t156 ? r3 : (r3 - t55));
+                        highp float t163 = (t42 * 8.0);
+                        highp float t164 = (t43 * 8.0);
+                        r0 = ((abs(r2) >= t58) ? r0 : vec2((r0.x - t163), (r0.y - t164)));
+                        r1 = ((abs(r3) >= t58) ? r1 : vec2((r1.x + t163), (r1.y + t164)));
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    highp float t165 = (t32 ? (xlv_TEXCOORD0.x - r0.x) : (xlv_TEXCOORD0.y - r0.y));
+    highp float t166 = (t32 ? (r1.x - xlv_TEXCOORD0.x) : (r1.y - xlv_TEXCOORD0.y));
+    bool t167 = (r4.w < t55);
+    highp float t168 = (max((((t165 < t166) ? ((r2 < 0.0) != t167) : ((r3 < 0.0) != t167)) ? (0.5 - ((1.0 / (t166 + t165)) * min(t165, t166))) : 0.0), ((t54 * 0.75) * t54)) * t39);
+    highp vec2 t169 = (t32 ? vec2(xlv_TEXCOORD0.x, (xlv_TEXCOORD0.y + t168)) : vec2((xlv_TEXCOORD0.x + t168), xlv_TEXCOORD0.y));
+    mediump vec4 t170 = vec4(t169, 0.0, 0.0);
+    mediump vec4 t171 = textureLod(_MainTex, t170.xy, t170.w);
+    r4 = vec4(t171.xyz, r4.w);
+  }
+  _fragData = r4;
 }
 
-
-// stats: 425 alu 32 tex 110 flow
+// stats: 321 alu 32 tex 31 flow
 // inputs: 1
 //  #0: xlv_TEXCOORD0 (high float) 2x1 [-1]
 // uniforms: 1 (total size: 0)

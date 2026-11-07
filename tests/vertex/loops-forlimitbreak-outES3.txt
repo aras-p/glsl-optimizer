@@ -7,61 +7,73 @@ uniform highp ivec4 unity_VertexLightParams;
 out mediump vec4 xlv_COLOR0;
 void main ()
 {
-  highp vec3 xlt_IN_pos_1;
-  xlt_IN_pos_1 = _glesVertex.xyz;
-  highp int j_2;
-  highp int j_3;
-  highp int il_4;
-  mediump vec3 lcolor_5;
-  mediump vec3 eyeNormal_6;
-  mediump vec4 color_7;
-  color_7 = vec4(0.0, 0.0, 0.0, 1.1);
-  eyeNormal_6 = _glesNormal;
-  lcolor_5 = vec3(0.0, 0.0, 0.0);
-  il_4 = 0;
-  while (true) {
-    highp float tmpvar_8;
-    tmpvar_8 = min (8.0, float(unity_VertexLightParams.x));
-    if ((float(il_4) >= tmpvar_8)) {
-      break;
-    };
-    mediump vec3 tmpvar_9;
-    tmpvar_9 = unity_LightPosition[il_4].xyz;
-    lcolor_5 = (lcolor_5 + min ((
-      (max (dot (eyeNormal_6, tmpvar_9), 0.0) * unity_LightColor[il_4].xyz)
-     * 0.5), vec3(1.0, 1.0, 1.0)));
-    il_4++;
-  };
-  color_7.xyz = lcolor_5;
-  j_3 = 0;
-  while (true) {
-    highp float tmpvar_10;
-    tmpvar_10 = min (float(unity_VertexLightParams.y), 4.0);
-    if ((j_3 >= int(tmpvar_10))) {
-      break;
-    };
-    color_7.xyz = (color_7.xyz + unity_LightColor[j_3].xyz);
-    j_3++;
-  };
-  j_2 = 0;
-  while (true) {
-    highp int tmpvar_11;
-    tmpvar_11 = min (unity_VertexLightParams.y, 4);
-    if ((j_2 >= tmpvar_11)) {
-      break;
-    };
-    color_7.xyz = (color_7.xyz * unity_LightColor[j_2].xyz);
-    j_2++;
-  };
-  highp vec4 tmpvar_12;
-  tmpvar_12.w = 1.0;
-  tmpvar_12.xyz = xlt_IN_pos_1;
-  xlv_COLOR0 = color_7;
-  gl_Position = tmpvar_12;
+  highp int r0;
+  highp int r1;
+  mediump vec3 r2;
+  mediump vec4 r3;
+  mediump vec3 t0 = _glesNormal;
+  r2 = vec3(0.0);
+  for (r0 = 0; (float(r0) < min(8.0, float(unity_VertexLightParams.x))); r0++) {
+    mediump vec3 t1 = unity_LightPosition[r0].xyz;
+    r2 = (r2 + min(((vec3(max(dot(t0, t1), 0.0)) * 0.5) * unity_LightColor[r0].xyz), vec3(1.0)));
+  }
+  highp int t2 = int(min(float(unity_VertexLightParams.y), 4.0));
+  if ((0 < t2)) {
+    mediump vec3 t3 = (r2 + unity_LightColor[0].xyz);
+    if ((1 < t2)) {
+      mediump vec3 t4 = (t3 + unity_LightColor[1].xyz);
+      if ((2 < t2)) {
+        mediump vec3 t5 = (t4 + unity_LightColor[2].xyz);
+        if ((3 < t2)) {
+          mediump vec3 t6 = (t5 + unity_LightColor[3].xyz);
+          if ((4 < t2)) {
+            mediump vec3 t7 = (t6 + unity_LightColor[4].xyz);
+            if ((5 < t2)) {
+              mediump vec3 t8 = (t7 + unity_LightColor[5].xyz);
+              if ((6 < t2)) {
+                mediump vec3 t9 = (t8 + unity_LightColor[6].xyz);
+                if ((7 < t2)) {
+                  mediump vec3 t10 = (t9 + unity_LightColor[7].xyz);
+                  r3 = vec4(t10, 1.1);
+                  for (r1 = 8; (r1 < t2); r1++) {
+                    r3 = vec4((0.0/0.0), (0.0/0.0), (0.0/0.0), r3.w);
+                  }
+                } else {
+                  r3 = vec4(t9, 1.1);
+                }
+              } else {
+                r3 = vec4(t8, 1.1);
+              }
+            } else {
+              r3 = vec4(t7, 1.1);
+            }
+          } else {
+            r3 = vec4(t6, 1.1);
+          }
+        } else {
+          r3 = vec4(t5, 1.1);
+        }
+      } else {
+        r3 = vec4(t4, 1.1);
+      }
+    } else {
+      r3 = vec4(t3, 1.1);
+    }
+  } else {
+    r3 = vec4(r2.x, r2.y, r2.z, 1.1);
+  }
+  if ((0 < unity_VertexLightParams.y)) {
+    mediump vec3 t11 = (r3.xyz * unity_LightColor[0].xyz);
+    mediump vec3 t12 = (t11 * unity_LightColor[1].xyz);
+    mediump vec3 t13 = (t12 * unity_LightColor[2].xyz);
+    mediump vec3 t14 = (t13 * unity_LightColor[3].xyz);
+    r3 = ((1 < unity_VertexLightParams.y) ? ((2 < unity_VertexLightParams.y) ? ((3 < unity_VertexLightParams.y) ? vec4(t14, r3.w) : vec4(t13, r3.w)) : vec4(t12, r3.w)) : vec4(t11, r3.w));
+  }
+  xlv_COLOR0 = r3;
+  gl_Position = vec4(_glesVertex.xyz, 1.0);
 }
 
-
-// stats: 27 alu 0 tex 6 flow
+// stats: 43 alu 0 tex 13 flow
 // inputs: 2
 //  #0: _glesVertex (high float) 4x1 [-1]
 //  #1: _glesNormal (high float) 3x1 [-1]

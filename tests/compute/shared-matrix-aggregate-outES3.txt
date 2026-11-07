@@ -1,5 +1,5 @@
 #version 310 es
-layout(local_size_x=8) in;
+layout(local_size_x = 8) in;
 struct Tile {
   mediump mat2x3 transforms[2];
 };
@@ -7,33 +7,25 @@ struct Entry {
   Tile tile;
   highp uint tag;
 };
-layout(std430, column_major) buffer Output {
-  layout(column_major) Entry values[];
+layout(std430) buffer Output {
+  Entry values[];
 } outputData;
 shared Entry entries[8];
 void main ()
 {
-  Entry entry_1;
-  highp mat2x3 tmpvar_2;
-  highp vec4 tmpvar_3;
-  tmpvar_3.yzw = vec3(0.0, 0.0, 0.0);
-  tmpvar_3.x = float(gl_LocalInvocationIndex);
-  tmpvar_2[uint(0)] = tmpvar_3.xyy;
-  tmpvar_2[1u] = tmpvar_3.yxy;
-  entry_1.tile.transforms[0] = tmpvar_2;
-  entry_1.tile.transforms[1] = mat2x3(2.0, 0.0, 0.0, 0.0, 2.0, 0.0);
-  entry_1.tag = gl_LocalInvocationIndex;
-  entries[gl_LocalInvocationIndex] = entry_1;
-  entries[gl_LocalInvocationIndex].tile.transforms[1][(gl_LocalInvocationIndex & 1u)].xz = vec2(4.0, 3.0);
-  entries[gl_LocalInvocationIndex].tile.transforms[0][0][(gl_LocalInvocationIndex % 3u)] = 5.0;
+  highp float t0 = float(gl_LocalInvocationIndex);
+  entries[int(gl_LocalInvocationIndex)].tile.transforms[0][0] = vec3(t0, 0.0, 0.0);
+  entries[int(gl_LocalInvocationIndex)].tile.transforms[0][1] = vec3(0.0, t0, 0.0);
+  entries[int(gl_LocalInvocationIndex)].tile.transforms[1][0] = vec3(2.0, 0.0, 0.0);
+  entries[int(gl_LocalInvocationIndex)].tile.transforms[1][1] = vec3(0.0, 2.0, 0.0);
+  entries[int(gl_LocalInvocationIndex)].tag = gl_LocalInvocationIndex;
+  entries[int(gl_LocalInvocationIndex)].tile.transforms[1][int((gl_LocalInvocationIndex & 1u))].xz = vec2(4.0, 3.0);
+  entries[int(gl_LocalInvocationIndex)].tile.transforms[0][0][int((gl_LocalInvocationIndex % 3u))] = 5.0;
   barrier();
-  highp uint tmpvar_4;
-  tmpvar_4 = ((gl_LocalInvocationIndex + 1u) % 8u);
-  outputData.values[gl_GlobalInvocationID.x] = entries[tmpvar_4];
+  outputData.values[int(gl_GlobalInvocationID.x)] = entries[int((uint((int(gl_LocalInvocationIndex) + 1)) & 7u))];
 }
 
-
-// stats: 9 alu 0 tex 0 flow
+// stats: 5 alu 0 tex 0 flow
 // workgroup size: 8 1 1
 // buffer #0: Output storage instance outputData layout std430 (size: unknown)
 //  member #0: Entry[] values offset 0 array runtime stride 80

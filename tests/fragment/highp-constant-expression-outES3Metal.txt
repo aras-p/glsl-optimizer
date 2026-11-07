@@ -12,15 +12,11 @@ struct xlatMtlShaderUniform {
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  float4 tmpvar_1 = 0;
-  tmpvar_1.w = 1.0;
-  tmpvar_1.x = dot (float2(171.0, 231.0), ((float2)(_mtl_i.coord) + float2(1.0, 1.0)));
-  tmpvar_1.yz = ((float2)(_mtl_i.coord) + float2(2.0, 2.0));
-  _mtl_o.color = tmpvar_1;
+  half2 t0 = (_mtl_i.coord + half(2.0));
+  _mtl_o.color = float4(half4(dot(half2(171.0, 231.0), (_mtl_i.coord + half(1.0))), t0, half(1.0)));
   return _mtl_o;
 }
 
-
-// stats: 4 alu 0 tex 0 flow
+// stats: 3 alu 0 tex 0 flow
 // inputs: 1
 //  #0: coord (medium float) 2x1 [-1]

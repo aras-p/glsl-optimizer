@@ -95,7 +95,7 @@ _mesa_string_buffer_vprintf(struct _mesa_string_buffer *str,
 
 bool
 _mesa_string_buffer_printf(struct _mesa_string_buffer *str,
-                            const char *format, ...);
+                            const char *format, ...) PRINTFLIKE(2, 3);
 
 #ifdef __cplusplus
 } /* extern "C" */

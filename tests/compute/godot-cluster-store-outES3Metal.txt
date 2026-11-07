@@ -1,144 +1,82 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
-template<typename R, typename T, bool Signed> inline R _xlat_findMSB(T x) {
-  return R(31) - R(clz(Signed ? x ^ (x >> 31) : x));
-}
-template<typename R, typename T> inline R _xlat_findLSB(T x) {
-  R n = R(ctz(x));
-  return select(n, R(-1), n == R(32));
-}
-struct RenderElement {
+struct _xlat_buf_ClusterRender_std430 {
+  uint data[1];
+};
+struct _xlat_buf_ClusterStore_std430 {
+  uint data[1];
+};
+struct _xlat_buf_Params_std140 {
+  uint cluster_render_data_size;
+  uint max_render_element_count_div_32;
+  uint2 cluster_screen_size;
+  uint render_element_count_div_32;
+  uint max_cluster_element_count_div_32;
+  uint pad1;
+  uint pad2;
+};
+static_assert(sizeof(_xlat_buf_Params_std140) == 32, "std140 size");
+struct _xlat_RenderElement_std430 {
   uint type;
-  bool touches_near;
-  bool touches_far;
+  uint touches_near;
+  uint touches_far;
   uint original_index;
-  float3x4 transform_inv;
-  float3 scale;
+  float4 transform_inv[3];
+  packed_float3 scale;
   uint pad;
 };
-struct alignas(4) _xlat_buf_storage0_element { uint value; };
-static_assert(sizeof(_xlat_buf_storage0_element) == 4, "array stride");
-struct alignas(16) _xlat_buf_storage1 {
-  alignas(4) uint cluster_render_data_size;
-  alignas(4) uint max_render_element_count_div_32;
-  alignas(8) uint2 cluster_screen_size;
-  alignas(4) uint render_element_count_div_32;
-  alignas(4) uint max_cluster_element_count_div_32;
-  alignas(4) uint pad1;
-  alignas(4) uint pad2;
+static_assert(sizeof(_xlat_RenderElement_std430) == 80, "std430 size");
+struct _xlat_buf_RenderElements_std430 {
+  _xlat_RenderElement_std430 data[1];
 };
-static_assert(sizeof(_xlat_buf_storage1) == 32, "std140 size");
-static_assert(sizeof(float3x4) == 48, "buffer size");
-struct alignas(16) _xlat_buf_storage3 {
-  alignas(4) uint type;
-  alignas(4) uint touches_near;
-  alignas(4) uint touches_far;
-  alignas(4) uint original_index;
-  alignas(16) float3x4 transform_inv;
-  alignas(16) packed_float3 scale;
-  alignas(4) uint pad;
-};
-static_assert(sizeof(_xlat_buf_storage3) == 80, "std430 size");
-inline __attribute__((always_inline)) RenderElement _xlat_buf_storage3_read(const device _xlat_buf_storage3& storage)
-{
-  RenderElement value;
-  value.type = uint(storage.type);
-  value.touches_near = bool(storage.touches_near);
-  value.touches_far = bool(storage.touches_far);
-  value.original_index = uint(storage.original_index);
-  value.transform_inv = storage.transform_inv;
-  value.scale = float3(storage.scale);
-  value.pad = uint(storage.pad);
-  return value;
-}
-struct alignas(16) _xlat_buf_storage2_element { _xlat_buf_storage3 value; };
-static_assert(sizeof(_xlat_buf_storage2_element) == 80, "array stride");
+template <typename T> inline T _xlat_findLSB(T x) { return select(T(ctz(x)), T(-1), x == T(0)); }
+template <typename T> inline T _xlat_findMSBu(T x) { return select(T(31) - T(clz(x)), T(-1), x == T(0)); }
 struct xlatMtlShaderUniform {
 };
 // threadsPerThreadgroup: 8, 8, 1
 kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , const device uchar* _mtl_buffer1 [[buffer(1)]]
-  , device uchar* _mtl_buffer2 [[buffer(2)]]
-  , constant _xlat_buf_storage1& _mtl_buffer3 [[buffer(3)]]
-  , const device uchar* _mtl_buffer4 [[buffer(4)]]
+  , const device _xlat_buf_ClusterRender_std430& cluster_render [[buffer(1)]]
+  , device _xlat_buf_ClusterStore_std430& cluster_store [[buffer(2)]]
+  , constant _xlat_buf_Params_std140& params [[buffer(3)]]
+  , const device _xlat_buf_RenderElements_std430& render_elements [[buffer(4)]]
   , uint3 gl_GlobalInvocationID [[thread_position_in_grid]])
 {
-  if (any((gl_GlobalInvocationID.xy >= uint2(_mtl_buffer3.cluster_screen_size)) != bool2(0, 0))) {
-    return;
-  };
-  uint tmpvar_2;
-  tmpvar_2 = (gl_GlobalInvocationID.x + (uint2(_mtl_buffer3.cluster_screen_size).x * gl_GlobalInvocationID.y));
-  uint tmpvar_3;
-  tmpvar_3 = (tmpvar_2 * uint(_mtl_buffer3.cluster_render_data_size));
-  for (uint render_element_offset_1 = 0u; render_element_offset_1 < uint(_mtl_buffer3.render_element_count_div_32); render_element_offset_1++) {
-    uint bits_4;
-    bits_4 = uint(reinterpret_cast<const device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[(tmpvar_3 + render_element_offset_1)].value);
-    while (true) {
-      if ((bits_4 == 0u)) {
-        break;
-      };
-      uint tmpvar_5;
-      tmpvar_5 = uint(_xlat_findLSB<int, uint>(bits_4));
-      uint tmpvar_6;
-      tmpvar_6 = ((render_element_offset_1 * 32u) + tmpvar_5);
-      uint tmpvar_7;
-      tmpvar_7 = uint(reinterpret_cast<const device _xlat_buf_storage2_element*>(_mtl_buffer4 + 0)[tmpvar_6].value.type);
-      uint tmpvar_8;
-      tmpvar_8 = ((tmpvar_3 + uint(_mtl_buffer3.max_render_element_count_div_32)) + tmpvar_6);
-      uint tmpvar_9;
-      tmpvar_9 = uint(reinterpret_cast<const device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[tmpvar_8].value);
-      if ((tmpvar_9 != 0u)) {
-        uint i_10;
-        uint to_z_11;
-        uint from_z_12;
-        from_z_12 = uint(_xlat_findLSB<int, uint>(tmpvar_9));
-        to_z_11 = (uint(_xlat_findMSB<int, uint, false>(tmpvar_9)) + 1u);
-        if (bool(reinterpret_cast<const device _xlat_buf_storage2_element*>(_mtl_buffer4 + 0)[tmpvar_6].value.touches_near)) {
-          from_z_12 = 0u;
-        };
-        if (bool(reinterpret_cast<const device _xlat_buf_storage2_element*>(_mtl_buffer4 + 0)[tmpvar_6].value.touches_far)) {
-          to_z_11 = 32u;
-        };
-        uint tmpvar_13;
-        tmpvar_13 = ((tmpvar_2 + (tmpvar_7 * 
-          (uint2(_mtl_buffer3.cluster_screen_size).x * uint2(_mtl_buffer3.cluster_screen_size).y)
-        )) * (uint(_mtl_buffer3.max_cluster_element_count_div_32) + 32u));
-        uint tmpvar_14;
-        tmpvar_14 = uint(reinterpret_cast<const device _xlat_buf_storage2_element*>(_mtl_buffer4 + 0)[tmpvar_6].value.original_index);
-        i_10 = from_z_12;
-        while (true) {
-          uint minmax_15;
-          if ((i_10 >= to_z_11)) {
-            break;
-          };
-          uint tmpvar_16;
-          tmpvar_16 = ((tmpvar_13 + uint(_mtl_buffer3.max_cluster_element_count_div_32)) + i_10);
-          uint tmpvar_17;
-          tmpvar_17 = uint(reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer2 + 0)[tmpvar_16].value);
-          minmax_15 = tmpvar_17;
-          if ((tmpvar_17 == 0u)) {
-            minmax_15 = 65535u;
-          };
-          minmax_15 = (min (tmpvar_14, (minmax_15 & 65535u)) | (max (
-            (tmpvar_14 + 1u)
-          , 
-            (minmax_15 >> 16)
-          ) << 16));
-          reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer2 + 0)[tmpvar_16].value = uint(minmax_15);
-          i_10++;
-        };
-        uint tmpvar_18;
-        tmpvar_18 = (tmpvar_14 >> 5);
-        reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer2 + 0)[(tmpvar_13 + tmpvar_18)].value = uint((uint(reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer2 + 0)[(tmpvar_13 + tmpvar_18)].value) | (1u << (tmpvar_14 & 31u))));
-      };
-      bits_4 = (bits_4 & ~((1u << tmpvar_5)));
-    };
-  };
+  int r0 = 0;
+  uint r1 = 0;
+  int r2 = 0;
+  uint2 t0 = uint2(params.cluster_screen_size);
+  if ((!any((gl_GlobalInvocationID.xy >= t0) != bool2(false)))) {
+    int t1 = (int(gl_GlobalInvocationID.x) + (int(t0.x) * int(gl_GlobalInvocationID.y)));
+    int t2 = (t1 * int(uint(params.cluster_render_data_size)));
+    for (r2 = 0; (uint(r2) < uint(params.render_element_count_div_32)); r2++) {
+      r1 = uint(cluster_render.data[(t2 + r2)]);
+      while ((int(r1) != 0)) {
+        int t3 = int(_xlat_findLSB(int(r1)));
+        int t4 = ((r2 << int(5u)) + t3);
+        uint t5 = uint(render_elements.data[t4].type);
+        uint t6 = uint(cluster_render.data[((t2 + int(uint(params.max_render_element_count_div_32))) + t4)]);
+        if ((int(t6) != 0)) {
+          short t7 = short(int(_xlat_findMSBu(t6)));
+          int t8 = int((t7 + short(1)));
+          int t9 = (bool(render_elements.data[t4].touches_far) ? 32 : t8);
+          uint t10 = uint(params.max_cluster_element_count_div_32);
+          int t11 = ((t1 + (int(t5) * (int(t0.x) * int(t0.y)))) * (int(t10) + 32));
+          uint t12 = uint(render_elements.data[t4].original_index);
+          for (r0 = (bool(render_elements.data[t4].touches_near) ? 0 : int(_xlat_findLSB(int(t6)))); (uint(r0) < uint(t9)); r0++) {
+            uint t13 = uint(cluster_store.data[((t11 + int(t10)) + r0)]);
+            uint t14 = ((int(t13) == 0) ? 65535u : t13);
+            cluster_store.data[((t11 + int(t10)) + r0)] = (min(t12, (t14 & 65535u)) | uint((int(max(uint((int(t12) + 1)), (t14 >> uint(16u)))) << int(16u))));
+          }
+          cluster_store.data[(t11 + int((t12 >> uint(5u))))] = (uint(cluster_store.data[(t11 + int((t12 >> uint(5u))))]) | uint((1 << int(t12))));
+        }
+        r1 = (r1 & uint((~(1 << int(uint(t3))))));
+      }
+    }
+  }
 }
 
-
-// stats: 51 alu 0 tex 12 flow
+// stats: 46 alu 0 tex 8 flow
 // workgroup size: 8 8 1
 // buffer #0: ClusterRender storage instance cluster_render layout std430 binding 1 (size: unknown) metal 1
 //  member #0: uint[] data offset 0 array runtime stride 4 readonly

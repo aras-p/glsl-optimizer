@@ -1,18 +1,18 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
-struct alignas(16) _xlat_buf_storage0 {
-  alignas(4) float unusedPacked;
-  char _buf_pad1[12];
-  alignas(16) float4 factor;
+struct _xlat_buf_Packed_std140 {
+  float unusedPacked;
+  char _pad0[12];
+  float4 factor;
 };
-static_assert(sizeof(_xlat_buf_storage0) == 32, "std140 size");
-struct alignas(16) _xlat_buf_storage1 {
-  alignas(4) float unused;
-  char _buf_pad1[12];
-  alignas(16) float4 tint;
+static_assert(sizeof(_xlat_buf_Packed_std140) == 32, "std140 size");
+struct _xlat_buf_Shared_std140 {
+  float unused;
+  char _pad0[12];
+  float4 tint;
 };
-static_assert(sizeof(_xlat_buf_storage1) == 32, "std140 size");
+static_assert(sizeof(_xlat_buf_Shared_std140) == 32, "std140 size");
 struct xlatMtlShaderInput {
 };
 struct xlatMtlShaderOutput {
@@ -21,14 +21,13 @@ struct xlatMtlShaderOutput {
 struct xlatMtlShaderUniform {
 };
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , constant _xlat_buf_storage0& _mtl_buffer1 [[buffer(1)]]
-  , constant _xlat_buf_storage1& _mtl_buffer2 [[buffer(2)]])
+  , constant _xlat_buf_Packed_std140& data [[buffer(1)]]
+  , constant _xlat_buf_Shared_std140& _xlat_blk_Shared [[buffer(2)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  _mtl_o.color = (float4(_mtl_buffer2.tint) * float4(_mtl_buffer1.factor));
+  _mtl_o.color = (float4(_xlat_blk_Shared.tint) * float4(data.factor));
   return _mtl_o;
 }
-
 
 // stats: 1 alu 0 tex 0 flow
 // buffer #0: Packed instance data layout packed (size: 32) metal 1

@@ -1,606 +1,291 @@
 #version 300 es
+precision highp float;
+precision highp int;
 uniform highp vec3 iResolution;
 uniform highp float iTime;
 uniform highp vec4 iMouse;
-layout(location=0) out highp vec4 fragColor;
+layout(location = 0) out highp vec4 fragColor;
 void main ()
 {
-  highp float tmpvar_1;
-  tmpvar_1 = ((iTime * 0.3) + (iMouse.x * 0.01));
-  highp vec3 dir_2;
-  highp vec2 uv_3;
-  uv_3 = (((gl_FragCoord.xy / iResolution.xy) * 2.0) - 1.0);
-  uv_3.x = (uv_3.x * (iResolution.x / iResolution.y));
-  highp vec3 tmpvar_4;
-  tmpvar_4.x = (sin((tmpvar_1 * 3.0)) * 0.1);
-  tmpvar_4.y = ((sin(tmpvar_1) * 0.2) + 0.3);
-  tmpvar_4.z = tmpvar_1;
-  highp vec3 tmpvar_5;
-  tmpvar_5.xy = vec2(0.0, 3.5);
-  tmpvar_5.z = (tmpvar_1 * 5.0);
-  highp vec3 tmpvar_6;
-  tmpvar_6.z = -2.0;
-  tmpvar_6.xy = uv_3;
-  highp vec3 tmpvar_7;
-  tmpvar_7 = normalize(tmpvar_6);
-  dir_2.xy = tmpvar_7.xy;
-  dir_2.z = (tmpvar_7.z + (sqrt(
-    dot (uv_3, uv_3)
-  ) * 0.14));
-  highp mat3 m_8;
-  highp float tmpvar_9;
-  tmpvar_9 = sin(tmpvar_4.x);
-  highp float tmpvar_10;
-  tmpvar_10 = cos(tmpvar_4.x);
-  highp float tmpvar_11;
-  tmpvar_11 = sin(tmpvar_4.y);
-  highp float tmpvar_12;
-  tmpvar_12 = cos(tmpvar_4.y);
-  highp vec2 tmpvar_13;
-  tmpvar_13.x = tmpvar_11;
-  tmpvar_13.y = tmpvar_12;
-  highp float tmpvar_14;
-  tmpvar_14 = sin(tmpvar_1);
-  highp float tmpvar_15;
-  tmpvar_15 = cos(tmpvar_1);
-  highp vec3 tmpvar_16;
-  tmpvar_16.x = ((tmpvar_10 * tmpvar_15) + ((tmpvar_9 * tmpvar_11) * tmpvar_14));
-  tmpvar_16.y = (((tmpvar_10 * tmpvar_11) * tmpvar_14) + (tmpvar_15 * tmpvar_9));
-  tmpvar_16.z = (-(tmpvar_12) * tmpvar_14);
-  m_8[0] = tmpvar_16;
-  highp vec3 tmpvar_17;
-  tmpvar_17.x = (-(tmpvar_12) * tmpvar_9);
-  tmpvar_17.y = (tmpvar_10 * tmpvar_12);
-  tmpvar_17.z = tmpvar_13.x;
-  m_8[1] = tmpvar_17;
-  highp vec3 tmpvar_18;
-  tmpvar_18.x = (((tmpvar_15 * tmpvar_9) * tmpvar_11) + (tmpvar_10 * tmpvar_14));
-  tmpvar_18.y = ((tmpvar_9 * tmpvar_14) - ((tmpvar_10 * tmpvar_15) * tmpvar_11));
-  tmpvar_18.z = (tmpvar_12 * tmpvar_15);
-  m_8[2] = tmpvar_18;
-  dir_2 = (normalize(dir_2) * m_8);
-  highp vec3 tmpvar_19;
-  highp int i_20;
-  highp float hm_21;
-  highp float hx_22;
-  highp float tx_23;
-  highp float tm_24;
-  tm_24 = 0.0;
-  tx_23 = 1000.0;
-  highp float tmpvar_25;
-  highp vec3 tmpvar_26;
-  tmpvar_26 = (tmpvar_5 + (dir_2 * 1000.0));
-  highp float h_28;
-  highp vec2 uv_29;
-  highp float choppy_30;
-  highp float amp_31;
-  highp float freq_32;
-  freq_32 = 0.16;
-  amp_31 = 0.6;
-  choppy_30 = 4.0;
-  uv_29.y = tmpvar_26.z;
-  uv_29.x = (tmpvar_26.x * 0.75);
-  h_28 = 0.0;
-  for (highp int i_27 = 0; i_27 < 3; i_27++) {
-    highp vec2 tmpvar_33;
-    highp float tmpvar_34;
-    tmpvar_34 = (iTime * 0.8);
-    tmpvar_33 = ((uv_29 + (1.0 + tmpvar_34)) * freq_32);
-    highp vec2 u_35;
-    highp vec2 tmpvar_36;
-    tmpvar_36 = floor(tmpvar_33);
-    highp vec2 tmpvar_37;
-    tmpvar_37 = fract(tmpvar_33);
-    u_35 = ((tmpvar_37 * tmpvar_37) * (3.0 - (2.0 * tmpvar_37)));
-    tmpvar_33 = (tmpvar_33 + ((2.0 * 
-      mix (mix (fract((
-        sin(dot (tmpvar_36, vec2(127.1, 311.7)))
-       * 43758.55)), fract((
-        sin(dot ((tmpvar_36 + vec2(1.0, 0.0)), vec2(127.1, 311.7)))
-       * 43758.55)), u_35.x), mix (fract((
-        sin(dot ((tmpvar_36 + vec2(0.0, 1.0)), vec2(127.1, 311.7)))
-       * 43758.55)), fract((
-        sin(dot ((tmpvar_36 + vec2(1.0, 1.0)), vec2(127.1, 311.7)))
-       * 43758.55)), u_35.x), u_35.y)
-    ) - 1.0));
-    highp vec2 tmpvar_38;
-    tmpvar_38 = (1.0 - abs(sin(tmpvar_33)));
-    highp vec2 tmpvar_39;
-    tmpvar_39 = mix (tmpvar_38, abs(cos(tmpvar_33)), tmpvar_38);
-    highp vec2 tmpvar_40;
-    tmpvar_40 = ((uv_29 - (1.0 + tmpvar_34)) * freq_32);
-    highp vec2 u_41;
-    highp vec2 tmpvar_42;
-    tmpvar_42 = floor(tmpvar_40);
-    highp vec2 tmpvar_43;
-    tmpvar_43 = fract(tmpvar_40);
-    u_41 = ((tmpvar_43 * tmpvar_43) * (3.0 - (2.0 * tmpvar_43)));
-    tmpvar_40 = (tmpvar_40 + ((2.0 * 
-      mix (mix (fract((
-        sin(dot (tmpvar_42, vec2(127.1, 311.7)))
-       * 43758.55)), fract((
-        sin(dot ((tmpvar_42 + vec2(1.0, 0.0)), vec2(127.1, 311.7)))
-       * 43758.55)), u_41.x), mix (fract((
-        sin(dot ((tmpvar_42 + vec2(0.0, 1.0)), vec2(127.1, 311.7)))
-       * 43758.55)), fract((
-        sin(dot ((tmpvar_42 + vec2(1.0, 1.0)), vec2(127.1, 311.7)))
-       * 43758.55)), u_41.x), u_41.y)
-    ) - 1.0));
-    highp vec2 tmpvar_44;
-    tmpvar_44 = (1.0 - abs(sin(tmpvar_40)));
-    highp vec2 tmpvar_45;
-    tmpvar_45 = mix (tmpvar_44, abs(cos(tmpvar_40)), tmpvar_44);
-    h_28 = (h_28 + ((
-      pow ((1.0 - pow ((tmpvar_39.x * tmpvar_39.y), 0.65)), choppy_30)
-     + 
-      pow ((1.0 - pow ((tmpvar_45.x * tmpvar_45.y), 0.65)), choppy_30)
-    ) * amp_31));
-    uv_29 = (uv_29 * mat2(1.6, 1.2, -1.2, 1.6));
-    freq_32 = (freq_32 * 1.9);
-    amp_31 = (amp_31 * 0.22);
-    choppy_30 = mix (choppy_30, 1.0, 0.2);
-  };
-  tmpvar_25 = (tmpvar_26.y - h_28);
-  hx_22 = tmpvar_25;
-  if ((0.0 < tmpvar_25)) {
-    tmpvar_19 = (tmpvar_5 + (dir_2 * 1000.0));
-  } else {
-    highp float h_47;
-    highp vec2 uv_48;
-    highp float choppy_49;
-    highp float amp_50;
-    highp float freq_51;
-    freq_51 = 0.16;
-    amp_50 = 0.6;
-    choppy_49 = 4.0;
-    uv_48.y = tmpvar_5.z;
-    uv_48.x = 0.0;
-    h_47 = 0.0;
-    for (highp int i_46 = 0; i_46 < 3; i_46++) {
-      highp vec2 tmpvar_52;
-      highp float tmpvar_53;
-      tmpvar_53 = (iTime * 0.8);
-      tmpvar_52 = ((uv_48 + (1.0 + tmpvar_53)) * freq_51);
-      highp vec2 u_54;
-      highp vec2 tmpvar_55;
-      tmpvar_55 = floor(tmpvar_52);
-      highp vec2 tmpvar_56;
-      tmpvar_56 = fract(tmpvar_52);
-      u_54 = ((tmpvar_56 * tmpvar_56) * (3.0 - (2.0 * tmpvar_56)));
-      tmpvar_52 = (tmpvar_52 + ((2.0 * 
-        mix (mix (fract((
-          sin(dot (tmpvar_55, vec2(127.1, 311.7)))
-         * 43758.55)), fract((
-          sin(dot ((tmpvar_55 + vec2(1.0, 0.0)), vec2(127.1, 311.7)))
-         * 43758.55)), u_54.x), mix (fract((
-          sin(dot ((tmpvar_55 + vec2(0.0, 1.0)), vec2(127.1, 311.7)))
-         * 43758.55)), fract((
-          sin(dot ((tmpvar_55 + vec2(1.0, 1.0)), vec2(127.1, 311.7)))
-         * 43758.55)), u_54.x), u_54.y)
-      ) - 1.0));
-      highp vec2 tmpvar_57;
-      tmpvar_57 = (1.0 - abs(sin(tmpvar_52)));
-      highp vec2 tmpvar_58;
-      tmpvar_58 = mix (tmpvar_57, abs(cos(tmpvar_52)), tmpvar_57);
-      highp vec2 tmpvar_59;
-      tmpvar_59 = ((uv_48 - (1.0 + tmpvar_53)) * freq_51);
-      highp vec2 u_60;
-      highp vec2 tmpvar_61;
-      tmpvar_61 = floor(tmpvar_59);
-      highp vec2 tmpvar_62;
-      tmpvar_62 = fract(tmpvar_59);
-      u_60 = ((tmpvar_62 * tmpvar_62) * (3.0 - (2.0 * tmpvar_62)));
-      tmpvar_59 = (tmpvar_59 + ((2.0 * 
-        mix (mix (fract((
-          sin(dot (tmpvar_61, vec2(127.1, 311.7)))
-         * 43758.55)), fract((
-          sin(dot ((tmpvar_61 + vec2(1.0, 0.0)), vec2(127.1, 311.7)))
-         * 43758.55)), u_60.x), mix (fract((
-          sin(dot ((tmpvar_61 + vec2(0.0, 1.0)), vec2(127.1, 311.7)))
-         * 43758.55)), fract((
-          sin(dot ((tmpvar_61 + vec2(1.0, 1.0)), vec2(127.1, 311.7)))
-         * 43758.55)), u_60.x), u_60.y)
-      ) - 1.0));
-      highp vec2 tmpvar_63;
-      tmpvar_63 = (1.0 - abs(sin(tmpvar_59)));
-      highp vec2 tmpvar_64;
-      tmpvar_64 = mix (tmpvar_63, abs(cos(tmpvar_59)), tmpvar_63);
-      h_47 = (h_47 + ((
-        pow ((1.0 - pow ((tmpvar_58.x * tmpvar_58.y), 0.65)), choppy_49)
-       + 
-        pow ((1.0 - pow ((tmpvar_64.x * tmpvar_64.y), 0.65)), choppy_49)
-      ) * amp_50));
-      uv_48 = (uv_48 * mat2(1.6, 1.2, -1.2, 1.6));
-      freq_51 = (freq_51 * 1.9);
-      amp_50 = (amp_50 * 0.22);
-      choppy_49 = mix (choppy_49, 1.0, 0.2);
-    };
-    hm_21 = (3.5 - h_47);
-    i_20 = 0;
-    while (true) {
-      if ((i_20 >= 32)) {
+  highp vec2 r0;
+  highp float r1;
+  highp float r2;
+  highp float r3;
+  highp int r4;
+  highp float r5;
+  highp vec2 r6;
+  highp float r7;
+  highp float r8;
+  highp float r9;
+  highp int r10;
+  highp float r11;
+  highp vec2 r12;
+  highp float r13;
+  highp float r14;
+  highp float r15;
+  highp int r16;
+  highp float r17;
+  highp float r18;
+  highp float r19;
+  highp float r20;
+  highp float r21;
+  highp int r22;
+  highp vec2 r23;
+  highp float r24;
+  highp float r25;
+  highp float r26;
+  highp int r27;
+  highp float r28;
+  highp vec2 r29;
+  highp float r30;
+  highp float r31;
+  highp float r32;
+  highp int r33;
+  highp float r34;
+  highp vec2 r35;
+  highp float r36;
+  highp float r37;
+  highp float r38;
+  highp int r39;
+  highp float r40;
+  highp vec3 r41;
+  highp float t0 = ((iTime * 0.3) + (iMouse.x * 0.01));
+  highp vec2 t1 = (((gl_FragCoord.xy / iResolution.xy) * 2.0) - 1.0);
+  highp float t2 = (t1.x * (iResolution.x / iResolution.y));
+  highp vec3 t3 = vec3(t2, t1.y, -2.0);
+  highp vec3 t4 = normalize(t3);
+  highp vec2 t5 = vec2(t2, t1.y);
+  highp vec3 t6 = vec3(t4.xy, (t4.z + (length(t5) * 0.14)));
+  highp vec3 t7 = normalize(t6);
+  highp float t8 = cos(t0);
+  highp float t9 = (sin((t0 * 3.0)) * 0.1);
+  highp float t10 = cos(t9);
+  highp float t11 = (t10 * t8);
+  highp float t12 = sin(t0);
+  highp float t13 = ((t12 * 0.2) + 0.3);
+  highp float t14 = sin(t9);
+  highp float t15 = sin(t13);
+  highp float t16 = (t8 * t14);
+  highp float t17 = cos(t13);
+  highp float t18 = dot(t7, vec3((-(t17 * t14)), (t10 * t17), t15));
+  highp vec3 t19 = vec3(dot(t7, vec3((t11 + ((t14 * t15) * t12)), (((t10 * t15) * t12) + t16), (-(t17 * t12)))), t18, dot(t7, vec3(((t16 * t15) + (t10 * t12)), ((t14 * t12) - (t11 * t15)), (t17 * t8))));
+  highp float t20 = (t0 * 5.0);
+  highp vec3 t21 = vec3(0.0, 3.5, t20);
+  r41 = (t21 + (t19 * 1e+03));
+  r0 = vec2((r41.x * 0.75), r41.z);
+  r5 = 0.0;
+  r3 = 4.0;
+  r2 = 0.6;
+  r1 = 0.16;
+  for (r4 = 0; (r4 < 3); r4++) {
+    highp float t22 = (1.0 + (iTime * 0.8));
+    highp vec2 t23 = ((r0 + t22) * r1);
+    highp vec2 t24 = fract(t23);
+    highp vec2 t25 = ((t24 * t24) * (3.0 - (2.0 * t24)));
+    highp vec2 t26 = floor(t23);
+    highp float t27 = mix(mix(fract((sin(dot(t26, vec2(127.1, 311.7))) * 43758.547)), fract((sin(dot((t26 + vec2(1.0, 0.0)), vec2(127.1, 311.7))) * 43758.547)), t25.x), mix(fract((sin(dot((t26 + vec2(0.0, 1.0)), vec2(127.1, 311.7))) * 43758.547)), fract((sin(dot((t26 + 1.0), vec2(127.1, 311.7))) * 43758.547)), t25.x), t25.y);
+    highp vec2 t28 = (t23 + ((t27 * 2.0) - 1.0));
+    highp vec2 t29 = (1.0 - abs(sin(t28)));
+    highp vec2 t30 = mix(t29, abs(cos(t28)), t29);
+    highp vec2 t31 = ((r0 - t22) * r1);
+    highp vec2 t32 = fract(t31);
+    highp vec2 t33 = ((t32 * t32) * (3.0 - (2.0 * t32)));
+    highp vec2 t34 = floor(t31);
+    highp float t35 = mix(mix(fract((sin(dot(t34, vec2(127.1, 311.7))) * 43758.547)), fract((sin(dot((t34 + vec2(1.0, 0.0)), vec2(127.1, 311.7))) * 43758.547)), t33.x), mix(fract((sin(dot((t34 + vec2(0.0, 1.0)), vec2(127.1, 311.7))) * 43758.547)), fract((sin(dot((t34 + 1.0), vec2(127.1, 311.7))) * 43758.547)), t33.x), t33.y);
+    highp vec2 t36 = (t31 + ((t35 * 2.0) - 1.0));
+    highp vec2 t37 = (1.0 - abs(sin(t36)));
+    highp vec2 t38 = mix(t37, abs(cos(t36)), t37);
+    r5 = (r5 + ((pow((1.0 - pow((t30.x * t30.y), 0.65)), r3) + pow((1.0 - pow((t38.x * t38.y), 0.65)), r3)) * r2));
+    r0 = vec2(dot(r0, vec2(1.6, 1.2)), dot(r0, vec2(-1.2, 1.6)));
+    r1 = (r1 * 1.9);
+    r2 = (r2 * 0.22);
+    r3 = mix(r3, 1.0, 0.2);
+  }
+  r19 = (r41.y - r5);
+  if ((0.0 >= r19)) {
+    r6 = vec2(0.0, t20);
+    r11 = 0.0;
+    r9 = 4.0;
+    r8 = 0.6;
+    r7 = 0.16;
+    for (r10 = 0; (r10 < 3); r10++) {
+      highp float t39 = (1.0 + (iTime * 0.8));
+      highp vec2 t40 = ((r6 + t39) * r7);
+      highp vec2 t41 = fract(t40);
+      highp vec2 t42 = ((t41 * t41) * (3.0 - (2.0 * t41)));
+      highp vec2 t43 = floor(t40);
+      highp float t44 = mix(mix(fract((sin(dot(t43, vec2(127.1, 311.7))) * 43758.547)), fract((sin(dot((t43 + vec2(1.0, 0.0)), vec2(127.1, 311.7))) * 43758.547)), t42.x), mix(fract((sin(dot((t43 + vec2(0.0, 1.0)), vec2(127.1, 311.7))) * 43758.547)), fract((sin(dot((t43 + 1.0), vec2(127.1, 311.7))) * 43758.547)), t42.x), t42.y);
+      highp vec2 t45 = (t40 + ((t44 * 2.0) - 1.0));
+      highp vec2 t46 = (1.0 - abs(sin(t45)));
+      highp vec2 t47 = mix(t46, abs(cos(t45)), t46);
+      highp vec2 t48 = ((r6 - t39) * r7);
+      highp vec2 t49 = fract(t48);
+      highp vec2 t50 = ((t49 * t49) * (3.0 - (2.0 * t49)));
+      highp vec2 t51 = floor(t48);
+      highp float t52 = mix(mix(fract((sin(dot(t51, vec2(127.1, 311.7))) * 43758.547)), fract((sin(dot((t51 + vec2(1.0, 0.0)), vec2(127.1, 311.7))) * 43758.547)), t50.x), mix(fract((sin(dot((t51 + vec2(0.0, 1.0)), vec2(127.1, 311.7))) * 43758.547)), fract((sin(dot((t51 + 1.0), vec2(127.1, 311.7))) * 43758.547)), t50.x), t50.y);
+      highp vec2 t53 = (t48 + ((t52 * 2.0) - 1.0));
+      highp vec2 t54 = (1.0 - abs(sin(t53)));
+      highp vec2 t55 = mix(t54, abs(cos(t53)), t54);
+      r11 = (r11 + ((pow((1.0 - pow((t47.x * t47.y), 0.65)), r9) + pow((1.0 - pow((t55.x * t55.y), 0.65)), r9)) * r8));
+      r6 = vec2(dot(r6, vec2(1.6, 1.2)), dot(r6, vec2(-1.2, 1.6)));
+      r7 = (r7 * 1.9);
+      r8 = (r8 * 0.22);
+      r9 = mix(r9, 1.0, 0.2);
+    }
+    r18 = (3.5 - r11);
+    r21 = 1e+03;
+    r20 = 0.0;
+    for (r22 = 0; (r22 < 32); r22++) {
+      highp float t56 = mix(r20, r21, (r18 / (r18 - r19)));
+      r41 = (t21 + (t19 * t56));
+      r12 = vec2((r41.x * 0.75), r41.z);
+      r17 = 0.0;
+      r15 = 4.0;
+      r14 = 0.6;
+      r13 = 0.16;
+      for (r16 = 0; (r16 < 3); r16++) {
+        highp float t57 = (1.0 + (iTime * 0.8));
+        highp vec2 t58 = ((r12 + t57) * r13);
+        highp vec2 t59 = fract(t58);
+        highp vec2 t60 = ((t59 * t59) * (3.0 - (2.0 * t59)));
+        highp vec2 t61 = floor(t58);
+        highp float t62 = mix(mix(fract((sin(dot(t61, vec2(127.1, 311.7))) * 43758.547)), fract((sin(dot((t61 + vec2(1.0, 0.0)), vec2(127.1, 311.7))) * 43758.547)), t60.x), mix(fract((sin(dot((t61 + vec2(0.0, 1.0)), vec2(127.1, 311.7))) * 43758.547)), fract((sin(dot((t61 + 1.0), vec2(127.1, 311.7))) * 43758.547)), t60.x), t60.y);
+        highp vec2 t63 = (t58 + ((t62 * 2.0) - 1.0));
+        highp vec2 t64 = (1.0 - abs(sin(t63)));
+        highp vec2 t65 = mix(t64, abs(cos(t63)), t64);
+        highp vec2 t66 = ((r12 - t57) * r13);
+        highp vec2 t67 = fract(t66);
+        highp vec2 t68 = ((t67 * t67) * (3.0 - (2.0 * t67)));
+        highp vec2 t69 = floor(t66);
+        highp float t70 = mix(mix(fract((sin(dot(t69, vec2(127.1, 311.7))) * 43758.547)), fract((sin(dot((t69 + vec2(1.0, 0.0)), vec2(127.1, 311.7))) * 43758.547)), t68.x), mix(fract((sin(dot((t69 + vec2(0.0, 1.0)), vec2(127.1, 311.7))) * 43758.547)), fract((sin(dot((t69 + 1.0), vec2(127.1, 311.7))) * 43758.547)), t68.x), t68.y);
+        highp vec2 t71 = (t66 + ((t70 * 2.0) - 1.0));
+        highp vec2 t72 = (1.0 - abs(sin(t71)));
+        highp vec2 t73 = mix(t72, abs(cos(t71)), t72);
+        r17 = (r17 + ((pow((1.0 - pow((t65.x * t65.y), 0.65)), r15) + pow((1.0 - pow((t73.x * t73.y), 0.65)), r15)) * r14));
+        r12 = vec2(dot(r12, vec2(1.6, 1.2)), dot(r12, vec2(-1.2, 1.6)));
+        r13 = (r13 * 1.9);
+        r14 = (r14 * 0.22);
+        r15 = mix(r15, 1.0, 0.2);
+      }
+      highp float t74 = (r41.y - r17);
+      bool t75 = (t74 < 0.0);
+      r18 = (t75 ? r18 : t74);
+      r19 = (t75 ? t74 : r19);
+      r20 = (t75 ? r20 : t56);
+      r21 = (t75 ? t56 : r21);
+      if ((abs(t74) < 0.001)) {
         break;
-      };
-      highp float tmpvar_65;
-      tmpvar_65 = mix (tm_24, tx_23, (hm_21 / (hm_21 - hx_22)));
-      tmpvar_19 = (tmpvar_5 + (dir_2 * tmpvar_65));
-      highp float tmpvar_66;
-      highp float h_68;
-      highp vec2 uv_69;
-      highp float choppy_70;
-      highp float amp_71;
-      highp float freq_72;
-      freq_72 = 0.16;
-      amp_71 = 0.6;
-      choppy_70 = 4.0;
-      uv_69.y = tmpvar_19.z;
-      uv_69.x = (tmpvar_19.x * 0.75);
-      h_68 = 0.0;
-      for (highp int i_67 = 0; i_67 < 3; i_67++) {
-        highp vec2 tmpvar_73;
-        highp float tmpvar_74;
-        tmpvar_74 = (iTime * 0.8);
-        tmpvar_73 = ((uv_69 + (1.0 + tmpvar_74)) * freq_72);
-        highp vec2 u_75;
-        highp vec2 tmpvar_76;
-        tmpvar_76 = floor(tmpvar_73);
-        highp vec2 tmpvar_77;
-        tmpvar_77 = fract(tmpvar_73);
-        u_75 = ((tmpvar_77 * tmpvar_77) * (3.0 - (2.0 * tmpvar_77)));
-        tmpvar_73 = (tmpvar_73 + ((2.0 * 
-          mix (mix (fract((
-            sin(dot (tmpvar_76, vec2(127.1, 311.7)))
-           * 43758.55)), fract((
-            sin(dot ((tmpvar_76 + vec2(1.0, 0.0)), vec2(127.1, 311.7)))
-           * 43758.55)), u_75.x), mix (fract((
-            sin(dot ((tmpvar_76 + vec2(0.0, 1.0)), vec2(127.1, 311.7)))
-           * 43758.55)), fract((
-            sin(dot ((tmpvar_76 + vec2(1.0, 1.0)), vec2(127.1, 311.7)))
-           * 43758.55)), u_75.x), u_75.y)
-        ) - 1.0));
-        highp vec2 tmpvar_78;
-        tmpvar_78 = (1.0 - abs(sin(tmpvar_73)));
-        highp vec2 tmpvar_79;
-        tmpvar_79 = mix (tmpvar_78, abs(cos(tmpvar_73)), tmpvar_78);
-        highp vec2 tmpvar_80;
-        tmpvar_80 = ((uv_69 - (1.0 + tmpvar_74)) * freq_72);
-        highp vec2 u_81;
-        highp vec2 tmpvar_82;
-        tmpvar_82 = floor(tmpvar_80);
-        highp vec2 tmpvar_83;
-        tmpvar_83 = fract(tmpvar_80);
-        u_81 = ((tmpvar_83 * tmpvar_83) * (3.0 - (2.0 * tmpvar_83)));
-        tmpvar_80 = (tmpvar_80 + ((2.0 * 
-          mix (mix (fract((
-            sin(dot (tmpvar_82, vec2(127.1, 311.7)))
-           * 43758.55)), fract((
-            sin(dot ((tmpvar_82 + vec2(1.0, 0.0)), vec2(127.1, 311.7)))
-           * 43758.55)), u_81.x), mix (fract((
-            sin(dot ((tmpvar_82 + vec2(0.0, 1.0)), vec2(127.1, 311.7)))
-           * 43758.55)), fract((
-            sin(dot ((tmpvar_82 + vec2(1.0, 1.0)), vec2(127.1, 311.7)))
-           * 43758.55)), u_81.x), u_81.y)
-        ) - 1.0));
-        highp vec2 tmpvar_84;
-        tmpvar_84 = (1.0 - abs(sin(tmpvar_80)));
-        highp vec2 tmpvar_85;
-        tmpvar_85 = mix (tmpvar_84, abs(cos(tmpvar_80)), tmpvar_84);
-        h_68 = (h_68 + ((
-          pow ((1.0 - pow ((tmpvar_79.x * tmpvar_79.y), 0.65)), choppy_70)
-         + 
-          pow ((1.0 - pow ((tmpvar_85.x * tmpvar_85.y), 0.65)), choppy_70)
-        ) * amp_71));
-        uv_69 = (uv_69 * mat2(1.6, 1.2, -1.2, 1.6));
-        freq_72 = (freq_72 * 1.9);
-        amp_71 = (amp_71 * 0.22);
-        choppy_70 = mix (choppy_70, 1.0, 0.2);
-      };
-      tmpvar_66 = (tmpvar_19.y - h_68);
-      if ((tmpvar_66 < 0.0)) {
-        tx_23 = tmpvar_65;
-        hx_22 = tmpvar_66;
-      } else {
-        tm_24 = tmpvar_65;
-        hm_21 = tmpvar_66;
-      };
-      highp float tmpvar_86;
-      tmpvar_86 = abs(tmpvar_66);
-      if ((tmpvar_86 < 0.001)) {
-        break;
-      };
-      i_20++;
-    };
-  };
-  highp vec3 tmpvar_87;
-  tmpvar_87 = (tmpvar_19 - tmpvar_5);
-  highp float tmpvar_88;
-  tmpvar_88 = (dot (tmpvar_87, tmpvar_87) * (0.1 / iResolution.x));
-  highp vec3 n_89;
-  highp float tmpvar_90;
-  highp float h_92;
-  highp vec2 uv_93;
-  highp float choppy_94;
-  highp float amp_95;
-  highp float freq_96;
-  freq_96 = 0.16;
-  amp_95 = 0.6;
-  choppy_94 = 4.0;
-  uv_93.y = tmpvar_19.z;
-  uv_93.x = (tmpvar_19.x * 0.75);
-  h_92 = 0.0;
-  for (highp int i_91 = 0; i_91 < 5; i_91++) {
-    highp vec2 tmpvar_97;
-    highp float tmpvar_98;
-    tmpvar_98 = (iTime * 0.8);
-    tmpvar_97 = ((uv_93 + (1.0 + tmpvar_98)) * freq_96);
-    highp vec2 u_99;
-    highp vec2 tmpvar_100;
-    tmpvar_100 = floor(tmpvar_97);
-    highp vec2 tmpvar_101;
-    tmpvar_101 = fract(tmpvar_97);
-    u_99 = ((tmpvar_101 * tmpvar_101) * (3.0 - (2.0 * tmpvar_101)));
-    tmpvar_97 = (tmpvar_97 + ((2.0 * 
-      mix (mix (fract((
-        sin(dot (tmpvar_100, vec2(127.1, 311.7)))
-       * 43758.55)), fract((
-        sin(dot ((tmpvar_100 + vec2(1.0, 0.0)), vec2(127.1, 311.7)))
-       * 43758.55)), u_99.x), mix (fract((
-        sin(dot ((tmpvar_100 + vec2(0.0, 1.0)), vec2(127.1, 311.7)))
-       * 43758.55)), fract((
-        sin(dot ((tmpvar_100 + vec2(1.0, 1.0)), vec2(127.1, 311.7)))
-       * 43758.55)), u_99.x), u_99.y)
-    ) - 1.0));
-    highp vec2 tmpvar_102;
-    tmpvar_102 = (1.0 - abs(sin(tmpvar_97)));
-    highp vec2 tmpvar_103;
-    tmpvar_103 = mix (tmpvar_102, abs(cos(tmpvar_97)), tmpvar_102);
-    highp vec2 tmpvar_104;
-    tmpvar_104 = ((uv_93 - (1.0 + tmpvar_98)) * freq_96);
-    highp vec2 u_105;
-    highp vec2 tmpvar_106;
-    tmpvar_106 = floor(tmpvar_104);
-    highp vec2 tmpvar_107;
-    tmpvar_107 = fract(tmpvar_104);
-    u_105 = ((tmpvar_107 * tmpvar_107) * (3.0 - (2.0 * tmpvar_107)));
-    tmpvar_104 = (tmpvar_104 + ((2.0 * 
-      mix (mix (fract((
-        sin(dot (tmpvar_106, vec2(127.1, 311.7)))
-       * 43758.55)), fract((
-        sin(dot ((tmpvar_106 + vec2(1.0, 0.0)), vec2(127.1, 311.7)))
-       * 43758.55)), u_105.x), mix (fract((
-        sin(dot ((tmpvar_106 + vec2(0.0, 1.0)), vec2(127.1, 311.7)))
-       * 43758.55)), fract((
-        sin(dot ((tmpvar_106 + vec2(1.0, 1.0)), vec2(127.1, 311.7)))
-       * 43758.55)), u_105.x), u_105.y)
-    ) - 1.0));
-    highp vec2 tmpvar_108;
-    tmpvar_108 = (1.0 - abs(sin(tmpvar_104)));
-    highp vec2 tmpvar_109;
-    tmpvar_109 = mix (tmpvar_108, abs(cos(tmpvar_104)), tmpvar_108);
-    h_92 = (h_92 + ((
-      pow ((1.0 - pow ((tmpvar_103.x * tmpvar_103.y), 0.65)), choppy_94)
-     + 
-      pow ((1.0 - pow ((tmpvar_109.x * tmpvar_109.y), 0.65)), choppy_94)
-    ) * amp_95));
-    uv_93 = (uv_93 * mat2(1.6, 1.2, -1.2, 1.6));
-    freq_96 = (freq_96 * 1.9);
-    amp_95 = (amp_95 * 0.22);
-    choppy_94 = mix (choppy_94, 1.0, 0.2);
-  };
-  tmpvar_90 = (tmpvar_19.y - h_92);
-  n_89.y = tmpvar_90;
-  highp vec3 tmpvar_110;
-  tmpvar_110.x = (tmpvar_19.x + tmpvar_88);
-  tmpvar_110.yz = tmpvar_19.yz;
-  highp float h_112;
-  highp vec2 uv_113;
-  highp float choppy_114;
-  highp float amp_115;
-  highp float freq_116;
-  freq_116 = 0.16;
-  amp_115 = 0.6;
-  choppy_114 = 4.0;
-  uv_113.y = tmpvar_110.z;
-  uv_113.x = (tmpvar_110.x * 0.75);
-  h_112 = 0.0;
-  for (highp int i_111 = 0; i_111 < 5; i_111++) {
-    highp vec2 tmpvar_117;
-    highp float tmpvar_118;
-    tmpvar_118 = (iTime * 0.8);
-    tmpvar_117 = ((uv_113 + (1.0 + tmpvar_118)) * freq_116);
-    highp vec2 u_119;
-    highp vec2 tmpvar_120;
-    tmpvar_120 = floor(tmpvar_117);
-    highp vec2 tmpvar_121;
-    tmpvar_121 = fract(tmpvar_117);
-    u_119 = ((tmpvar_121 * tmpvar_121) * (3.0 - (2.0 * tmpvar_121)));
-    tmpvar_117 = (tmpvar_117 + ((2.0 * 
-      mix (mix (fract((
-        sin(dot (tmpvar_120, vec2(127.1, 311.7)))
-       * 43758.55)), fract((
-        sin(dot ((tmpvar_120 + vec2(1.0, 0.0)), vec2(127.1, 311.7)))
-       * 43758.55)), u_119.x), mix (fract((
-        sin(dot ((tmpvar_120 + vec2(0.0, 1.0)), vec2(127.1, 311.7)))
-       * 43758.55)), fract((
-        sin(dot ((tmpvar_120 + vec2(1.0, 1.0)), vec2(127.1, 311.7)))
-       * 43758.55)), u_119.x), u_119.y)
-    ) - 1.0));
-    highp vec2 tmpvar_122;
-    tmpvar_122 = (1.0 - abs(sin(tmpvar_117)));
-    highp vec2 tmpvar_123;
-    tmpvar_123 = mix (tmpvar_122, abs(cos(tmpvar_117)), tmpvar_122);
-    highp vec2 tmpvar_124;
-    tmpvar_124 = ((uv_113 - (1.0 + tmpvar_118)) * freq_116);
-    highp vec2 u_125;
-    highp vec2 tmpvar_126;
-    tmpvar_126 = floor(tmpvar_124);
-    highp vec2 tmpvar_127;
-    tmpvar_127 = fract(tmpvar_124);
-    u_125 = ((tmpvar_127 * tmpvar_127) * (3.0 - (2.0 * tmpvar_127)));
-    tmpvar_124 = (tmpvar_124 + ((2.0 * 
-      mix (mix (fract((
-        sin(dot (tmpvar_126, vec2(127.1, 311.7)))
-       * 43758.55)), fract((
-        sin(dot ((tmpvar_126 + vec2(1.0, 0.0)), vec2(127.1, 311.7)))
-       * 43758.55)), u_125.x), mix (fract((
-        sin(dot ((tmpvar_126 + vec2(0.0, 1.0)), vec2(127.1, 311.7)))
-       * 43758.55)), fract((
-        sin(dot ((tmpvar_126 + vec2(1.0, 1.0)), vec2(127.1, 311.7)))
-       * 43758.55)), u_125.x), u_125.y)
-    ) - 1.0));
-    highp vec2 tmpvar_128;
-    tmpvar_128 = (1.0 - abs(sin(tmpvar_124)));
-    highp vec2 tmpvar_129;
-    tmpvar_129 = mix (tmpvar_128, abs(cos(tmpvar_124)), tmpvar_128);
-    h_112 = (h_112 + ((
-      pow ((1.0 - pow ((tmpvar_123.x * tmpvar_123.y), 0.65)), choppy_114)
-     + 
-      pow ((1.0 - pow ((tmpvar_129.x * tmpvar_129.y), 0.65)), choppy_114)
-    ) * amp_115));
-    uv_113 = (uv_113 * mat2(1.6, 1.2, -1.2, 1.6));
-    freq_116 = (freq_116 * 1.9);
-    amp_115 = (amp_115 * 0.22);
-    choppy_114 = mix (choppy_114, 1.0, 0.2);
-  };
-  n_89.x = ((tmpvar_19.y - h_112) - tmpvar_90);
-  highp vec3 tmpvar_130;
-  tmpvar_130.xy = tmpvar_19.xy;
-  tmpvar_130.z = (tmpvar_19.z + tmpvar_88);
-  highp float h_132;
-  highp vec2 uv_133;
-  highp float choppy_134;
-  highp float amp_135;
-  highp float freq_136;
-  freq_136 = 0.16;
-  amp_135 = 0.6;
-  choppy_134 = 4.0;
-  uv_133.y = tmpvar_130.z;
-  uv_133.x = (tmpvar_19.x * 0.75);
-  h_132 = 0.0;
-  for (highp int i_131 = 0; i_131 < 5; i_131++) {
-    highp vec2 tmpvar_137;
-    highp float tmpvar_138;
-    tmpvar_138 = (iTime * 0.8);
-    tmpvar_137 = ((uv_133 + (1.0 + tmpvar_138)) * freq_136);
-    highp vec2 u_139;
-    highp vec2 tmpvar_140;
-    tmpvar_140 = floor(tmpvar_137);
-    highp vec2 tmpvar_141;
-    tmpvar_141 = fract(tmpvar_137);
-    u_139 = ((tmpvar_141 * tmpvar_141) * (3.0 - (2.0 * tmpvar_141)));
-    tmpvar_137 = (tmpvar_137 + ((2.0 * 
-      mix (mix (fract((
-        sin(dot (tmpvar_140, vec2(127.1, 311.7)))
-       * 43758.55)), fract((
-        sin(dot ((tmpvar_140 + vec2(1.0, 0.0)), vec2(127.1, 311.7)))
-       * 43758.55)), u_139.x), mix (fract((
-        sin(dot ((tmpvar_140 + vec2(0.0, 1.0)), vec2(127.1, 311.7)))
-       * 43758.55)), fract((
-        sin(dot ((tmpvar_140 + vec2(1.0, 1.0)), vec2(127.1, 311.7)))
-       * 43758.55)), u_139.x), u_139.y)
-    ) - 1.0));
-    highp vec2 tmpvar_142;
-    tmpvar_142 = (1.0 - abs(sin(tmpvar_137)));
-    highp vec2 tmpvar_143;
-    tmpvar_143 = mix (tmpvar_142, abs(cos(tmpvar_137)), tmpvar_142);
-    highp vec2 tmpvar_144;
-    tmpvar_144 = ((uv_133 - (1.0 + tmpvar_138)) * freq_136);
-    highp vec2 u_145;
-    highp vec2 tmpvar_146;
-    tmpvar_146 = floor(tmpvar_144);
-    highp vec2 tmpvar_147;
-    tmpvar_147 = fract(tmpvar_144);
-    u_145 = ((tmpvar_147 * tmpvar_147) * (3.0 - (2.0 * tmpvar_147)));
-    tmpvar_144 = (tmpvar_144 + ((2.0 * 
-      mix (mix (fract((
-        sin(dot (tmpvar_146, vec2(127.1, 311.7)))
-       * 43758.55)), fract((
-        sin(dot ((tmpvar_146 + vec2(1.0, 0.0)), vec2(127.1, 311.7)))
-       * 43758.55)), u_145.x), mix (fract((
-        sin(dot ((tmpvar_146 + vec2(0.0, 1.0)), vec2(127.1, 311.7)))
-       * 43758.55)), fract((
-        sin(dot ((tmpvar_146 + vec2(1.0, 1.0)), vec2(127.1, 311.7)))
-       * 43758.55)), u_145.x), u_145.y)
-    ) - 1.0));
-    highp vec2 tmpvar_148;
-    tmpvar_148 = (1.0 - abs(sin(tmpvar_144)));
-    highp vec2 tmpvar_149;
-    tmpvar_149 = mix (tmpvar_148, abs(cos(tmpvar_144)), tmpvar_148);
-    h_132 = (h_132 + ((
-      pow ((1.0 - pow ((tmpvar_143.x * tmpvar_143.y), 0.65)), choppy_134)
-     + 
-      pow ((1.0 - pow ((tmpvar_149.x * tmpvar_149.y), 0.65)), choppy_134)
-    ) * amp_135));
-    uv_133 = (uv_133 * mat2(1.6, 1.2, -1.2, 1.6));
-    freq_136 = (freq_136 * 1.9);
-    amp_135 = (amp_135 * 0.22);
-    choppy_134 = mix (choppy_134, 1.0, 0.2);
-  };
-  n_89.z = ((tmpvar_19.y - h_132) - tmpvar_90);
-  n_89.y = tmpvar_88;
-  highp vec3 tmpvar_150;
-  tmpvar_150 = normalize(n_89);
-  highp vec3 tmpvar_151;
-  tmpvar_151.xz = dir_2.xz;
-  tmpvar_151.y = (((
-    max (dir_2.y, 0.0)
-   * 0.8) + 0.2) * 0.8);
-  highp vec3 tmpvar_152;
-  highp float tmpvar_153;
-  tmpvar_153 = (1.0 - tmpvar_151.y);
-  tmpvar_152.x = (tmpvar_153 * tmpvar_153);
-  tmpvar_152.y = (1.0 - tmpvar_151.y);
-  tmpvar_152.z = (0.6 + ((1.0 - tmpvar_151.y) * 0.4));
-  highp vec3 color_154;
-  highp float tmpvar_155;
-  tmpvar_155 = clamp ((1.0 - dot (tmpvar_150, 
-    -(dir_2)
-  )), 0.0, 1.0);
-  highp vec3 tmpvar_156;
-  tmpvar_156 = (dir_2 - (2.0 * (
-    dot (tmpvar_150, dir_2)
-   * tmpvar_150)));
-  tmpvar_156.y = (((
-    max (tmpvar_156.y, 0.0)
-   * 0.8) + 0.2) * 0.8);
-  highp vec3 tmpvar_157;
-  highp float tmpvar_158;
-  tmpvar_158 = (1.0 - tmpvar_156.y);
-  tmpvar_157.x = (tmpvar_158 * tmpvar_158);
-  tmpvar_157.y = (1.0 - tmpvar_156.y);
-  tmpvar_157.z = (0.6 + ((1.0 - tmpvar_156.y) * 0.4));
-  color_154 = (mix ((vec3(0.0, 0.09, 0.18) + 
-    (vec3(0.0576, 0.0648, 0.0432) * pow (((
-      dot (tmpvar_150, vec3(0.0, 0.7808688, 0.6246951))
-     * 0.4) + 0.6), 80.0))
-  ), (tmpvar_157 * 1.1), min (
-    ((tmpvar_155 * tmpvar_155) * tmpvar_155)
-  , 0.5)) + ((vec3(0.08640001, 0.09720001, 0.0648) * 
-    (tmpvar_19.y - 0.6)
-  ) * max (
-    (1.0 - (dot (tmpvar_87, tmpvar_87) * 0.001))
-  , 0.0)));
-  highp float tmpvar_159;
-  tmpvar_159 = (600.0 * inversesqrt(dot (tmpvar_87, tmpvar_87)));
-  color_154 = (color_154 + (pow (
-    max (dot ((dir_2 - (2.0 * 
-      (dot (tmpvar_150, dir_2) * tmpvar_150)
-    )), vec3(0.0, 0.7808688, 0.6246951)), 0.0)
-  , tmpvar_159) * (
-    (tmpvar_159 + 8.0)
-   / 25.13274)));
-  highp float tmpvar_160;
-  tmpvar_160 = clamp ((dir_2.y / -0.02), 0.0, 1.0);
-  highp vec4 tmpvar_161;
-  tmpvar_161.w = 1.0;
-  tmpvar_161.xyz = pow (mix ((tmpvar_152 * 1.1), color_154, pow (
-    (tmpvar_160 * (tmpvar_160 * (3.0 - (2.0 * tmpvar_160))))
-  , 0.2)), vec3(0.65, 0.65, 0.65));
-  fragColor = tmpvar_161;
+      }
+    }
+  }
+  highp vec3 t76 = (r41 - t21);
+  highp float t77 = dot(t76, t76);
+  highp float t78 = (t77 * (0.1 / iResolution.x));
+  highp float t79 = (r41.x * 0.75);
+  r23 = vec2(t79, r41.z);
+  r28 = 0.0;
+  r26 = 4.0;
+  r25 = 0.6;
+  r24 = 0.16;
+  for (r27 = 0; (r27 < 5); r27++) {
+    highp float t80 = (1.0 + (iTime * 0.8));
+    highp vec2 t81 = ((r23 + t80) * r24);
+    highp vec2 t82 = fract(t81);
+    highp vec2 t83 = ((t82 * t82) * (3.0 - (2.0 * t82)));
+    highp vec2 t84 = floor(t81);
+    highp float t85 = mix(mix(fract((sin(dot(t84, vec2(127.1, 311.7))) * 43758.547)), fract((sin(dot((t84 + vec2(1.0, 0.0)), vec2(127.1, 311.7))) * 43758.547)), t83.x), mix(fract((sin(dot((t84 + vec2(0.0, 1.0)), vec2(127.1, 311.7))) * 43758.547)), fract((sin(dot((t84 + 1.0), vec2(127.1, 311.7))) * 43758.547)), t83.x), t83.y);
+    highp vec2 t86 = (t81 + ((t85 * 2.0) - 1.0));
+    highp vec2 t87 = (1.0 - abs(sin(t86)));
+    highp vec2 t88 = mix(t87, abs(cos(t86)), t87);
+    highp vec2 t89 = ((r23 - t80) * r24);
+    highp vec2 t90 = fract(t89);
+    highp vec2 t91 = ((t90 * t90) * (3.0 - (2.0 * t90)));
+    highp vec2 t92 = floor(t89);
+    highp float t93 = mix(mix(fract((sin(dot(t92, vec2(127.1, 311.7))) * 43758.547)), fract((sin(dot((t92 + vec2(1.0, 0.0)), vec2(127.1, 311.7))) * 43758.547)), t91.x), mix(fract((sin(dot((t92 + vec2(0.0, 1.0)), vec2(127.1, 311.7))) * 43758.547)), fract((sin(dot((t92 + 1.0), vec2(127.1, 311.7))) * 43758.547)), t91.x), t91.y);
+    highp vec2 t94 = (t89 + ((t93 * 2.0) - 1.0));
+    highp vec2 t95 = (1.0 - abs(sin(t94)));
+    highp vec2 t96 = mix(t95, abs(cos(t94)), t95);
+    r28 = (r28 + ((pow((1.0 - pow((t88.x * t88.y), 0.65)), r26) + pow((1.0 - pow((t96.x * t96.y), 0.65)), r26)) * r25));
+    r23 = vec2(dot(r23, vec2(1.6, 1.2)), dot(r23, vec2(-1.2, 1.6)));
+    r24 = (r24 * 1.9);
+    r25 = (r25 * 0.22);
+    r26 = mix(r26, 1.0, 0.2);
+  }
+  highp float t97 = (r41.y - r28);
+  r29 = vec2(((r41.x + t78) * 0.75), r41.z);
+  r34 = 0.0;
+  r32 = 4.0;
+  r31 = 0.6;
+  r30 = 0.16;
+  for (r33 = 0; (r33 < 5); r33++) {
+    highp float t98 = (1.0 + (iTime * 0.8));
+    highp vec2 t99 = ((r29 + t98) * r30);
+    highp vec2 t100 = fract(t99);
+    highp vec2 t101 = ((t100 * t100) * (3.0 - (2.0 * t100)));
+    highp vec2 t102 = floor(t99);
+    highp float t103 = mix(mix(fract((sin(dot(t102, vec2(127.1, 311.7))) * 43758.547)), fract((sin(dot((t102 + vec2(1.0, 0.0)), vec2(127.1, 311.7))) * 43758.547)), t101.x), mix(fract((sin(dot((t102 + vec2(0.0, 1.0)), vec2(127.1, 311.7))) * 43758.547)), fract((sin(dot((t102 + 1.0), vec2(127.1, 311.7))) * 43758.547)), t101.x), t101.y);
+    highp vec2 t104 = (t99 + ((t103 * 2.0) - 1.0));
+    highp vec2 t105 = (1.0 - abs(sin(t104)));
+    highp vec2 t106 = mix(t105, abs(cos(t104)), t105);
+    highp vec2 t107 = ((r29 - t98) * r30);
+    highp vec2 t108 = fract(t107);
+    highp vec2 t109 = ((t108 * t108) * (3.0 - (2.0 * t108)));
+    highp vec2 t110 = floor(t107);
+    highp float t111 = mix(mix(fract((sin(dot(t110, vec2(127.1, 311.7))) * 43758.547)), fract((sin(dot((t110 + vec2(1.0, 0.0)), vec2(127.1, 311.7))) * 43758.547)), t109.x), mix(fract((sin(dot((t110 + vec2(0.0, 1.0)), vec2(127.1, 311.7))) * 43758.547)), fract((sin(dot((t110 + 1.0), vec2(127.1, 311.7))) * 43758.547)), t109.x), t109.y);
+    highp vec2 t112 = (t107 + ((t111 * 2.0) - 1.0));
+    highp vec2 t113 = (1.0 - abs(sin(t112)));
+    highp vec2 t114 = mix(t113, abs(cos(t112)), t113);
+    r34 = (r34 + ((pow((1.0 - pow((t106.x * t106.y), 0.65)), r32) + pow((1.0 - pow((t114.x * t114.y), 0.65)), r32)) * r31));
+    r29 = vec2(dot(r29, vec2(1.6, 1.2)), dot(r29, vec2(-1.2, 1.6)));
+    r30 = (r30 * 1.9);
+    r31 = (r31 * 0.22);
+    r32 = mix(r32, 1.0, 0.2);
+  }
+  highp float t115 = ((r41.y - r34) - t97);
+  r35 = vec2(t79, (r41.z + t78));
+  r40 = 0.0;
+  r38 = 4.0;
+  r37 = 0.6;
+  r36 = 0.16;
+  for (r39 = 0; (r39 < 5); r39++) {
+    highp float t116 = (1.0 + (iTime * 0.8));
+    highp vec2 t117 = ((r35 + t116) * r36);
+    highp vec2 t118 = fract(t117);
+    highp vec2 t119 = ((t118 * t118) * (3.0 - (2.0 * t118)));
+    highp vec2 t120 = floor(t117);
+    highp float t121 = mix(mix(fract((sin(dot(t120, vec2(127.1, 311.7))) * 43758.547)), fract((sin(dot((t120 + vec2(1.0, 0.0)), vec2(127.1, 311.7))) * 43758.547)), t119.x), mix(fract((sin(dot((t120 + vec2(0.0, 1.0)), vec2(127.1, 311.7))) * 43758.547)), fract((sin(dot((t120 + 1.0), vec2(127.1, 311.7))) * 43758.547)), t119.x), t119.y);
+    highp vec2 t122 = (t117 + ((t121 * 2.0) - 1.0));
+    highp vec2 t123 = (1.0 - abs(sin(t122)));
+    highp vec2 t124 = mix(t123, abs(cos(t122)), t123);
+    highp vec2 t125 = ((r35 - t116) * r36);
+    highp vec2 t126 = fract(t125);
+    highp vec2 t127 = ((t126 * t126) * (3.0 - (2.0 * t126)));
+    highp vec2 t128 = floor(t125);
+    highp float t129 = mix(mix(fract((sin(dot(t128, vec2(127.1, 311.7))) * 43758.547)), fract((sin(dot((t128 + vec2(1.0, 0.0)), vec2(127.1, 311.7))) * 43758.547)), t127.x), mix(fract((sin(dot((t128 + vec2(0.0, 1.0)), vec2(127.1, 311.7))) * 43758.547)), fract((sin(dot((t128 + 1.0), vec2(127.1, 311.7))) * 43758.547)), t127.x), t127.y);
+    highp vec2 t130 = (t125 + ((t129 * 2.0) - 1.0));
+    highp vec2 t131 = (1.0 - abs(sin(t130)));
+    highp vec2 t132 = mix(t131, abs(cos(t130)), t131);
+    r40 = (r40 + ((pow((1.0 - pow((t124.x * t124.y), 0.65)), r38) + pow((1.0 - pow((t132.x * t132.y), 0.65)), r38)) * r37));
+    r35 = vec2(dot(r35, vec2(1.6, 1.2)), dot(r35, vec2(-1.2, 1.6)));
+    r36 = (r36 * 1.9);
+    r37 = (r37 * 0.22);
+    r38 = mix(r38, 1.0, 0.2);
+  }
+  highp vec3 t133 = vec3(t115, t78, ((r41.y - r40) - t97));
+  highp vec3 t134 = normalize(t133);
+  highp float t135 = clamp((1.0 - dot(t134, (-t19))), 0.0, 1.0);
+  highp vec3 t136 = (t19 - ((vec3(dot(t134, t19)) * 2.0) * t134));
+  highp float t137 = (1.0 - (((max(t136.y, 0.0) * 0.8) + 0.2) * 0.8));
+  highp vec3 t138 = mix((vec3(0.0, 0.09, 0.18) + (vec3(0.057600003, 0.0648, 0.0432) * pow(((dot(vec2(0.78086877, 0.624695), t134.yz) * 0.4) + 0.6), 8e+01))), (vec3((t137 * t137), t137, (0.6 + (t137 * 0.4))) * 1.1), vec3(min(((t135 * t135) * t135), 0.5)));
+  highp float t139 = (6e+02 * inversesqrt(t77));
+  highp vec3 t140 = ((t138 + ((vec3(0.08640001, 0.097200006, 0.0648) * (r41.y - 0.6)) * clamp((1.0 - (t77 * 0.001)), 0.0, 1.0))) + (pow(max(dot(vec2(0.78086877, 0.624695), t136.yz), 0.0), t139) * ((t139 + 8.0) / 25.132736)));
+  highp float t141 = clamp((t18 / -0.02), 0.0, 1.0);
+  highp float t142 = (1.0 - (((max(t18, 0.0) * 0.8) + 0.2) * 0.8));
+  highp vec3 t143 = pow(mix((vec3((t142 * t142), t142, (0.6 + (t142 * 0.4))) * 1.1), t140, vec3(pow((t141 * (t141 * (3.0 - (2.0 * t141)))), 0.2))), vec3(0.65));
+  fragColor = vec4(t143, 1.0);
 }
 
-
-// stats: 783 alu 0 tex 17 flow
+// stats: 727 alu 0 tex 16 flow
 // inputs: 1
 //  #0: gl_FragCoord (high float) 4x1 [-1] loc 0
 // uniforms: 3 (total size: 0)

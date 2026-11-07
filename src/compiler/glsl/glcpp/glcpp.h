@@ -91,6 +91,7 @@ do {								\
       (Current).first_column = YYRHSLOC(Rhs, 1).first_column;	\
       (Current).last_line    = YYRHSLOC(Rhs, N).last_line;	\
       (Current).last_column  = YYRHSLOC(Rhs, N).last_column;	\
+      (Current).source       = YYRHSLOC(Rhs, N).source;		\
    }								\
    else								\
    {								\
@@ -98,11 +99,12 @@ do {								\
 	 YYRHSLOC(Rhs, 0).last_line;				\
       (Current).first_column = (Current).last_column =		\
 	 YYRHSLOC(Rhs, 0).last_column;				\
+      (Current).source       = YYRHSLOC(Rhs, 0).source;		\
    }								\
-   (Current).source = 0;					\
 } while (0)
 
 struct token {
+	bool expanding;
 	int type;
 	YYSTYPE value;
 	YYLTYPE location;
@@ -185,7 +187,7 @@ typedef void (*glcpp_extension_iterator)(
 		bool es);
 
 struct glcpp_parser {
-	void *linalloc;
+	linear_ctx *linalloc;
 	yyscan_t scanner;
 	struct hash_table *defines;
 	active_list_t *active;

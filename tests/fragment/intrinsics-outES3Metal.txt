@@ -1,6 +1,7 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
+template <typename T> inline T _xlat_mod(T x, T y) { return x - y * floor(x / y); }
 struct xlatMtlShaderInput {
   float4 xlv_TEXCOORD0;
 };
@@ -12,143 +13,37 @@ struct xlatMtlShaderUniform {
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half4 c_1 = 0;
-  c_1 = half4(float4(0.0, 0.0, 0.0, 0.0));
-  half tmpvar_2 = 0;
-  tmpvar_2 = half(_mtl_i.xlv_TEXCOORD0.x);
-  half tmpvar_3 = 0;
-  tmpvar_3 = (tmpvar_2 / 2.0);
-  half tmpvar_4 = 0;
-  tmpvar_4 = (fract(abs(tmpvar_3)) * 2.0);
-  half tmpvar_5 = 0;
-  if ((tmpvar_3 >= (half)(0.0))) {
-    tmpvar_5 = tmpvar_4;
-  } else {
-    tmpvar_5 = -(tmpvar_4);
-  };
-  c_1.x = tmpvar_5;
-  half2 tmpvar_6 = 0;
-  tmpvar_6 = half2(_mtl_i.xlv_TEXCOORD0.xy);
-  half2 tmpvar_7 = 0;
-  tmpvar_7 = (tmpvar_6 / half2(2.0, 2.0));
-  half2 tmpvar_8 = 0;
-  tmpvar_8 = (fract(abs(tmpvar_7)) * half2(2.0, 2.0));
-  half tmpvar_9 = 0;
-  if ((tmpvar_7.x >= (half)(0.0))) {
-    tmpvar_9 = tmpvar_8.x;
-  } else {
-    tmpvar_9 = -(tmpvar_8.x);
-  };
-  half tmpvar_10 = 0;
-  if ((tmpvar_7.y >= (half)(0.0))) {
-    tmpvar_10 = tmpvar_8.y;
-  } else {
-    tmpvar_10 = -(tmpvar_8.y);
-  };
-  half2 tmpvar_11 = 0;
-  tmpvar_11.x = tmpvar_9;
-  tmpvar_11.y = tmpvar_10;
-  c_1.xy = (c_1.xy + tmpvar_11);
-  half3 tmpvar_12 = 0;
-  tmpvar_12 = half3(_mtl_i.xlv_TEXCOORD0.xyz);
-  half3 tmpvar_13 = 0;
-  tmpvar_13 = (tmpvar_12 / half3(2.0, 2.0, 2.0));
-  half3 tmpvar_14 = 0;
-  tmpvar_14 = (fract(abs(tmpvar_13)) * half3(2.0, 2.0, 2.0));
-  half tmpvar_15 = 0;
-  if ((tmpvar_13.x >= (half)(0.0))) {
-    tmpvar_15 = tmpvar_14.x;
-  } else {
-    tmpvar_15 = -(tmpvar_14.x);
-  };
-  half tmpvar_16 = 0;
-  if ((tmpvar_13.y >= (half)(0.0))) {
-    tmpvar_16 = tmpvar_14.y;
-  } else {
-    tmpvar_16 = -(tmpvar_14.y);
-  };
-  half tmpvar_17 = 0;
-  if ((tmpvar_13.z >= (half)(0.0))) {
-    tmpvar_17 = tmpvar_14.z;
-  } else {
-    tmpvar_17 = -(tmpvar_14.z);
-  };
-  half3 tmpvar_18 = 0;
-  tmpvar_18.x = tmpvar_15;
-  tmpvar_18.y = tmpvar_16;
-  tmpvar_18.z = tmpvar_17;
-  c_1.xyz = (c_1.xyz + tmpvar_18);
-  half4 tmpvar_19 = 0;
-  tmpvar_19 = half4(_mtl_i.xlv_TEXCOORD0);
-  half4 tmpvar_20 = 0;
-  tmpvar_20 = (tmpvar_19 / half4(2.0, 2.0, 2.0, 2.0));
-  half4 tmpvar_21 = 0;
-  tmpvar_21 = (fract(abs(tmpvar_20)) * half4(2.0, 2.0, 2.0, 2.0));
-  half tmpvar_22 = 0;
-  if ((tmpvar_20.x >= (half)(0.0))) {
-    tmpvar_22 = tmpvar_21.x;
-  } else {
-    tmpvar_22 = -(tmpvar_21.x);
-  };
-  half tmpvar_23 = 0;
-  if ((tmpvar_20.y >= (half)(0.0))) {
-    tmpvar_23 = tmpvar_21.y;
-  } else {
-    tmpvar_23 = -(tmpvar_21.y);
-  };
-  half tmpvar_24 = 0;
-  if ((tmpvar_20.z >= (half)(0.0))) {
-    tmpvar_24 = tmpvar_21.z;
-  } else {
-    tmpvar_24 = -(tmpvar_21.z);
-  };
-  half tmpvar_25 = 0;
-  if ((tmpvar_20.w >= (half)(0.0))) {
-    tmpvar_25 = tmpvar_21.w;
-  } else {
-    tmpvar_25 = -(tmpvar_21.w);
-  };
-  half4 tmpvar_26 = 0;
-  tmpvar_26.x = tmpvar_22;
-  tmpvar_26.y = tmpvar_23;
-  tmpvar_26.z = tmpvar_24;
-  tmpvar_26.w = tmpvar_25;
-  c_1 = (c_1 + tmpvar_26);
-  half tmpvar_27 = 0;
-  tmpvar_27 = half(_mtl_i.xlv_TEXCOORD0.x);
-  c_1.x = (c_1.x + (tmpvar_27 - half(
-    short(tmpvar_27)
-  )));
-  half2 tmpvar_28 = 0;
-  tmpvar_28 = half2(_mtl_i.xlv_TEXCOORD0.xy);
-  c_1.xy = (c_1.xy + (tmpvar_28 - half2(
-    short2(tmpvar_28)
-  )));
-  half3 tmpvar_29 = 0;
-  tmpvar_29 = half3(_mtl_i.xlv_TEXCOORD0.xyz);
-  c_1.xyz = (c_1.xyz + (tmpvar_29 - half3(
-    short3(tmpvar_29)
-  )));
-  half4 tmpvar_30 = 0;
-  tmpvar_30 = half4(_mtl_i.xlv_TEXCOORD0);
-  half4 tmpvar_31 = 0;
-  tmpvar_31 = half4(short4(tmpvar_30));
-  c_1 = (c_1 + (tmpvar_30 - tmpvar_31));
-  c_1.x = half(((float)(c_1.x) + (float(fmod (_mtl_i.xlv_TEXCOORD0.x, (float)tmpvar_31.x)))));
-  c_1.xy = half2(((float2)(c_1.xy) + (float2(fmod (_mtl_i.xlv_TEXCOORD0.xy, (float2)tmpvar_31.xy)))));
-  c_1.xyz = half3(((float3)(c_1.xyz) + (float3(fmod (_mtl_i.xlv_TEXCOORD0.xyz, (float3)tmpvar_31.xyz)))));
-  float tmpvar_32 = 0;
-  tmpvar_32 = (1.0/(_mtl_i.xlv_TEXCOORD0.x));
-  c_1.x = half(((float)(c_1.x) + tmpvar_32));
-  c_1.x = half(((float)(c_1.x) + max (0.0, tmpvar_32)));
-  c_1.y = (c_1.y + ((half)1.0/(c_1.z)));
-  c_1.y = (c_1.y + max ((half)0.0, ((half)1.0/(c_1.w))));
-  c_1.x = half(((float)(c_1.x) + max (_mtl_i.xlv_TEXCOORD0.x, (float)c_1.z)));
-  _mtl_o._fragData = c_1;
+  half t0 = half(_mtl_i.xlv_TEXCOORD0.x);
+  half t1 = (t0 / half(2.0));
+  half t2 = (fract(abs(t1)) * half(2.0));
+  half2 t3 = half2(_mtl_i.xlv_TEXCOORD0.xy);
+  half2 t4 = (t3 / half(2.0));
+  half2 t5 = (fract(abs(t4)) * half(2.0));
+  half2 t6 = (half2(((t1 >= half(0.0)) ? t2 : (-t2)), half(0.0)) + half2(((t4.x >= half(0.0)) ? t5.x : (-t5.x)), ((t4.y >= half(0.0)) ? t5.y : (-t5.y))));
+  half3 t7 = half3(_mtl_i.xlv_TEXCOORD0.xyz);
+  half3 t8 = (t7 / half(2.0));
+  half3 t9 = (fract(abs(t8)) * half(2.0));
+  half3 t10 = (half3(t6, half(0.0)) + half3(((t8.x >= half(0.0)) ? t9.x : (-t9.x)), ((t8.y >= half(0.0)) ? t9.y : (-t9.y)), ((t8.z >= half(0.0)) ? t9.z : (-t9.z))));
+  half4 t11 = half4(_mtl_i.xlv_TEXCOORD0);
+  half4 t12 = (t11 / half(2.0));
+  half4 t13 = (fract(abs(t12)) * half(2.0));
+  half4 t14 = half4(((t12.x >= half(0.0)) ? t13.x : (-t13.x)), ((t12.y >= half(0.0)) ? t13.y : (-t13.y)), ((t12.z >= half(0.0)) ? t13.z : (-t13.z)), ((t12.w >= half(0.0)) ? t13.w : (-t13.w)));
+  half4 t15 = (half4(t10, half(0.0)) + t14);
+  half2 t16 = (half2((t15.x + (t0 - trunc(t0))), t15.y) + (t3 - trunc(t3)));
+  half3 t17 = (half3(t16, t15.z) + (t7 - trunc(t7)));
+  half4 t18 = trunc(t11);
+  half4 t19 = (half4(t17, t15.w) + (t11 - t18));
+  half4 t20 = half4(float4((float(t19.x) + _xlat_mod(_mtl_i.xlv_TEXCOORD0.x, float(t18.x)))));
+  half4 t21 = half4((float2(half2(t20.x, t19.y)) + _xlat_mod(_mtl_i.xlv_TEXCOORD0.xy, float2(t18.xy))).xyxx);
+  half4 t22 = half4((float3(half3(t21.xy, t19.z)) + _xlat_mod(_mtl_i.xlv_TEXCOORD0.xyz, float3(t18.xyz))).xyzx);
+  float t23 = (1.0 / _mtl_i.xlv_TEXCOORD0.x);
+  half4 t24 = half4(float4((float(t22.x) + t23)));
+  half4 t25 = half4(float4((float(t24.x) + max(0.0, t23))));
+  half4 t26 = half4(float4((float(t25.x) + max(_mtl_i.xlv_TEXCOORD0.x, float(t22.z)))));
+  _mtl_o._fragData = half4(t26.x, ((t22.y + (half(1.0) / t22.z)) + max(half(0.0), (half(1.0) / t19.w))), t22.z, t19.w);
   return _mtl_o;
 }
 
-
-// stats: 73 alu 0 tex 10 flow
+// stats: 78 alu 0 tex 0 flow
 // inputs: 1
 //  #0: xlv_TEXCOORD0 (high float) 4x1 [-1]

@@ -13,47 +13,24 @@ out mediump vec3 varLightDir;
 out mediump vec3 varViewDir;
 void main ()
 {
-  mediump vec3 lightDir_1;
-  mediump mat3 rotation_2;
-  mediump vec3 o_viewDir_3;
-  mediump vec3 o_worldN_4;
-  highp mat3 tmpvar_5;
-  tmpvar_5[uint(0)] = _Object2World[0].xyz;
-  tmpvar_5[1u] = _Object2World[1].xyz;
-  tmpvar_5[2u] = _Object2World[2].xyz;
-  o_worldN_4 = (tmpvar_5 * attrNormal);
-  mediump mat3 tmpvar_6;
-  tmpvar_6[uint(0)] = attrTangent.xyz;
-  tmpvar_6[1u] = (((attrNormal.yzx * attrTangent.zxy) - (attrNormal.zxy * attrTangent.yzx)) * attrTangent.w);
-  tmpvar_6[2u] = attrNormal;
-  highp mat3 tmpvar_7;
-  tmpvar_7 = tmpvar_6;
-  highp mat3 tmpvar_8;
-  tmpvar_8[uint(0)].x = tmpvar_7[0][0];
-  tmpvar_8[uint(0)].y = tmpvar_7[1][0];
-  tmpvar_8[uint(0)].z = tmpvar_7[2][0];
-  tmpvar_8[1u].x = tmpvar_7[0][1];
-  tmpvar_8[1u].y = tmpvar_7[1][1];
-  tmpvar_8[1u].z = tmpvar_7[2][1];
-  tmpvar_8[2u].x = tmpvar_7[0][2];
-  tmpvar_8[2u].y = tmpvar_7[1][2];
-  tmpvar_8[2u].z = tmpvar_7[2][2];
-  rotation_2 = tmpvar_8;
-  lightDir_1 = (rotation_2 * (_World2Object * _WorldSpaceLightPos0).xyz);
-  highp vec4 tmpvar_9;
-  tmpvar_9.w = 1.0;
-  tmpvar_9.xyz = _WorldSpaceCameraPos;
-  o_viewDir_3 = normalize((lightDir_1 + normalize(
-    (rotation_2 * (((_World2Object * tmpvar_9).xyz * unity_Scale.w) - attrVertex.xyz))
-  )));
+  highp vec3 t0 = attrTangent.xyz;
+  highp vec3 t1 = (((attrNormal.yzx * attrTangent.zxy) - (attrNormal.zxy * attrTangent.yzx)) * attrTangent.w);
+  highp vec3 t2 = attrNormal;
+  mediump vec3 t3 = vec3(t0.x, t1.x, t2.x);
+  mediump vec3 t4 = vec3(t0.y, t1.y, t2.y);
+  mediump vec3 t5 = vec3(t0.z, t1.z, t2.z);
+  highp vec4 t6 = (_World2Object * _WorldSpaceLightPos0);
+  mediump vec3 t7 = (mat3(t3, t4, t5) * t6.xyz);
+  highp vec3 t8 = (((_World2Object * vec4(_WorldSpaceCameraPos, 1.0)).xyz * unity_Scale.w) - attrVertex.xyz);
+  highp vec3 t9 = (mat3(t3, t4, t5) * t8);
+  highp vec3 t10 = (t7 + normalize(t9));
   gl_Position = (glstate_matrix_mvp * attrVertex);
-  varWorldN = o_worldN_4;
-  varLightDir = lightDir_1;
-  varViewDir = o_viewDir_3;
+  varWorldN = (mat3(_Object2World) * attrNormal);
+  varLightDir = t7;
+  varViewDir = normalize(t10);
 }
 
-
-// stats: 16 alu 0 tex 0 flow
+// stats: 48 alu 0 tex 0 flow
 // inputs: 3
 //  #0: attrVertex (high float) 4x1 [-1]
 //  #1: attrNormal (medium float) 3x1 [-1]

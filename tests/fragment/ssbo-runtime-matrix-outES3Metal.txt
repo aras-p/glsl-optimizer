@@ -1,10 +1,12 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
-struct _xlat_buf_storage1 { float4 vectors[3]; };
-static_assert(sizeof(_xlat_buf_storage1) == 48, "std140 size");
-struct alignas(16) _xlat_buf_storage0_element { _xlat_buf_storage1 value; };
-static_assert(sizeof(_xlat_buf_storage0_element) == 48, "array stride");
+struct _xlat_element_float2_16 { float2 value; char _pad[8]; };
+struct _xlat_buf_Input_std140_row {
+  float bias;
+  char _pad0[12];
+  _xlat_element_float2_16 matrices[3][1];
+};
 struct xlatMtlShaderInput {
 };
 struct xlatMtlShaderOutput {
@@ -14,17 +16,15 @@ struct xlatMtlShaderUniform {
   int index;
 };
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , const device uchar* _mtl_buffer1 [[buffer(1)]]
+  , const device _xlat_buf_Input_std140_row& source [[buffer(1)]]
   , constant uint* _mtl_buffer_sizes [[buffer(2)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  float4 tmpvar_1 = 0;
-  tmpvar_1.xyz = ((transpose(float3x2(float2(reinterpret_cast<const device _xlat_buf_storage0_element*>(_mtl_buffer1 + 16)[_mtl_u.index].value.vectors[0].xy), float2(reinterpret_cast<const device _xlat_buf_storage0_element*>(_mtl_buffer1 + 16)[_mtl_u.index].value.vectors[1].xy), float2(reinterpret_cast<const device _xlat_buf_storage0_element*>(_mtl_buffer1 + 16)[_mtl_u.index].value.vectors[2].xy))) * float2(1.0, 2.0)) + float3(float((*reinterpret_cast<const device float*>(_mtl_buffer1 + 0)))));
-  tmpvar_1.w = float(int((max(_mtl_buffer_sizes[1u], 16u) - 16u) / 48u));
-  _mtl_o.color = tmpvar_1;
+  float3 t0 = (float3(float3(source.matrices[_mtl_u.index][0].value[0], source.matrices[_mtl_u.index][1].value[0], source.matrices[_mtl_u.index][2].value[0])) + float(source.bias));
+  float3 t1 = (t0 + (float3(float3(source.matrices[_mtl_u.index][0].value[1], source.matrices[_mtl_u.index][1].value[1], source.matrices[_mtl_u.index][2].value[1])) * 2.0));
+  _mtl_o.color = float4(t1, float((max(int(_mtl_buffer_sizes[1]) - 16, 0) / 48)));
   return _mtl_o;
 }
-
 
 // stats: 4 alu 0 tex 0 flow
 // uniforms: 1 (total size: 4)

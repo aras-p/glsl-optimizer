@@ -1,22 +1,22 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
-struct _xlat_stage_type0 {
+struct Payload {
   float2 value;
 };
-struct _xlat_stage_type2 {
+struct Extra {
   float2 uv;
   float2x2 basis;
 };
 struct xlatMtlShaderInput {
-  float2 _xlat_varying0 [[user(_xlat_block7_Payload_0)]];
-  int _xlat_varying1 [[user(locn14)]] [[flat]];
-  float2 _xlat_varying2 [[user(locn4)]] [[center_no_perspective]];
-  float2 _xlat_varying3 [[user(locn5)]];
-  float2 _xlat_varying4 [[user(locn6)]];
-  float2 _xlat_varying5 [[user(locn7)]] [[center_no_perspective]];
-  float2 _xlat_varying6 [[user(locn8)]];
-  float2 _xlat_varying7 [[user(locn9)]];
+  float2 _xlat_varying0;
+  int id [[user(locn14)]] [[flat]];
+  float2 _xlat_varying1 [[user(locn4)]] [[center_no_perspective]];
+  float2 _xlat_varying2 [[user(locn5)]];
+  float2 _xlat_varying3 [[user(locn6)]];
+  float2 _xlat_varying4 [[user(locn7)]] [[center_no_perspective]];
+  float2 _xlat_varying5 [[user(locn8)]];
+  float2 _xlat_varying6 [[user(locn9)]];
 };
 struct xlatMtlShaderOutput {
   float4 color [[color(0)]];
@@ -26,29 +26,23 @@ struct xlatMtlShaderUniform {
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  _xlat_stage_type0 _xlat_stage0;
-  _xlat_stage0.value = _mtl_i._xlat_varying0;
-  int _xlat_stage1;
-  _xlat_stage1 = _mtl_i._xlat_varying1;
-  _xlat_stage_type2 _xlat_stage2[2];
-  _xlat_stage2[0].uv = _mtl_i._xlat_varying2;
-  _xlat_stage2[0].basis[0] = _mtl_i._xlat_varying3;
-  _xlat_stage2[0].basis[1] = _mtl_i._xlat_varying4;
-  _xlat_stage2[1].uv = _mtl_i._xlat_varying5;
-  _xlat_stage2[1].basis[0] = _mtl_i._xlat_varying6;
-  _xlat_stage2[1].basis[1] = _mtl_i._xlat_varying7;
-  int tmpvar_1 = 0;
-  tmpvar_1 = (_xlat_stage1 & 1);
-  float4 tmpvar_2 = 0;
-  tmpvar_2.xy = (_xlat_stage2[tmpvar_1].basis * _xlat_stage2[tmpvar_1].uv);
-  tmpvar_2.zw = _xlat_stage0.value;
-  _mtl_o.color = tmpvar_2;
+  Payload payloadIn;
+  Extra extraIn[2];
+  payloadIn.value = _mtl_i._xlat_varying0;
+  extraIn[0].uv = _mtl_i._xlat_varying1;
+  extraIn[0].basis[0] = _mtl_i._xlat_varying2;
+  extraIn[0].basis[1] = _mtl_i._xlat_varying3;
+  extraIn[1].uv = _mtl_i._xlat_varying4;
+  extraIn[1].basis[0] = _mtl_i._xlat_varying5;
+  extraIn[1].basis[1] = _mtl_i._xlat_varying6;
+  float2 t0 = extraIn[int((uint(_mtl_i.id) & 1u))].uv;
+  float2 t1 = (extraIn[int((uint(_mtl_i.id) & 1u))].basis * t0);
+  _mtl_o.color = float4(t1, payloadIn.value);
   return _mtl_o;
 }
 
-
-// stats: 2 alu 0 tex 0 flow
+// stats: 4 alu 0 tex 0 flow
 // inputs: 3
 //  #0: payloadIn (high other) 0x0 [-1]
-//  #1: id (high int) 1x1 [-1] loc 46
+//  #1: id (high int) 1x1 [-1] loc 14
 //  #2: extraIn (high other) 0x0 [2] loc 4

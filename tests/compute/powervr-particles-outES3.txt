@@ -1,5 +1,5 @@
 #version 310 es
-layout(local_size_x=64) in;
+layout(local_size_x = 64) in;
 struct Emitter {
   highp mat4 mTransformation;
   mediump float fHeight;
@@ -11,8 +11,8 @@ struct Particle {
   mediump vec3 vVelocity;
   mediump float fLife;
 };
-layout(std140, column_major, binding=2) uniform UboData {
-  layout(column_major) Emitter emitter;
+layout(std140, binding = 2) uniform UboData {
+  Emitter emitter;
   highp vec3 gravity;
   highp float dt;
   highp float fTotalTime;
@@ -24,213 +24,123 @@ layout(std140, column_major, binding=2) uniform UboData {
   highp float minLifespan;
   highp float maxLifespan;
 };
-layout(std140, column_major, binding=1) uniform UboSpheres {
+layout(std140, binding = 1) uniform UboSpheres {
   highp vec4 aSpheres[8];
 };
-layout(std140, column_major, binding=4) buffer SsboParticlesOut {
-  layout(column_major) writeonly Particle aParticlesOut[];
+layout(std140, binding = 4) buffer SsboParticlesOut {
+  writeonly Particle aParticlesOut[];
 };
-layout(std140, column_major, binding=3) buffer SsboParticlesInput {
-  layout(column_major) readonly Particle aParticlesIn[];
+layout(std140, binding = 3) buffer SsboParticlesInput {
+  readonly Particle aParticlesIn[];
 };
 void main ()
 {
-  mediump float life_1;
-  Particle particle_2;
-  highp int tmpvar_3;
-  tmpvar_3 = (int((fTotalTime * 1.357985e+07)) + (int(
-    (gl_GlobalInvocationID.x + 10000u)
-  ) * 145));
-  Particle tmpvar_4;
-  tmpvar_4 = aParticlesIn[gl_GlobalInvocationID.x];
-  particle_2 = tmpvar_4;
-  life_1 = (tmpvar_4.fLife - (dt * 0.1));
-  if ((life_1 < 0.0)) {
-    mediump float particle__padding_particle_0_5;
-    mediump float particle_fLife_6;
-    mediump vec4 emittedDirection_7;
-    highp int tmpvar_8;
-    tmpvar_8 = abs(((1103515245 * 
-      abs(tmpvar_3)
-    ) + 12345));
-    highp int tmpvar_9;
-    tmpvar_9 = abs(((1103515245 * 
-      abs(tmpvar_8)
-    ) + 12345));
-    highp float tmpvar_10;
-    tmpvar_10 = ((float(tmpvar_9) / 2.147484e+09) * emitter.fRadius);
-    highp vec4 tmpvar_11;
-    tmpvar_11.w = 1.0;
-    tmpvar_11.x = tmpvar_10;
-    tmpvar_11.y = ((float(tmpvar_8) / 2.147484e+09) * emitter.fHeight);
-    tmpvar_11.z = tmpvar_10;
-    emittedDirection_7 = tmpvar_11;
-    emittedDirection_7 = (emitter.mTransformation * emittedDirection_7);
-    particle_2.vPosition = vec3(0.0, 0.0, 0.0);
-    particle_2._padding_particle_0 = particle__padding_particle_0_5;
-    particle_2.vVelocity = ((emittedDirection_7.xyz * vec3(7.0, 15.0, 7.0)) + vec3(0.0, 15.0, 0.0));
-    particle_2.fLife = particle_fLife_6;
-    life_1 = mix (minLifespan, maxLifespan, (float(
-      abs(((1103515245 * abs(tmpvar_9)) + 12345))
-    ) / 2.147484e+09));
+  highp vec3 r0;
+  highp vec3 r1;
+  highp vec3 r2;
+  highp vec3 r3;
+  mediump vec3 r4;
+  mediump float r5;
+  highp int t0 = (int((fTotalTime * 13579846.0)) + ((int(gl_GlobalInvocationID.x) * 145) + 1450000));
+  highp uint t1 = gl_GlobalInvocationID.x;
+  highp vec3 t2 = aParticlesIn[int(t1)].vPosition;
+  mediump float t3 = aParticlesIn[int(t1)]._padding_particle_0;
+  mediump vec3 t4 = aParticlesIn[int(t1)].vVelocity;
+  r5 = (aParticlesIn[int(t1)].fLife - (dt * 0.1));
+  if ((r5 < 0.0)) {
+    highp int t5 = abs(((1103515245 * abs(t0)) + 12345));
+    highp int t6 = abs(((1103515245 * t5) + 12345));
+    highp float t7 = ((float(t6) / 2.1474836e+09) * emitter.fRadius);
+    mediump vec4 t8 = vec4(t7, ((float(t5) / 2.1474836e+09) * emitter.fHeight), t7, 1.0);
+    mediump vec4 t9 = (emitter.mTransformation * t8);
+    r5 = mix(minLifespan, maxLifespan, (float(abs(((1103515245 * t6) + 12345))) / 2.1474836e+09));
+    r4 = ((t9.xyz * vec3(7.0, 15.0, 7.0)) + vec3(0.0, 15.0, 0.0));
+    r3 = vec3(0.0);
   } else {
-    highp vec3 Ftotal_12;
-    highp vec3 v_13;
-    v_13 = tmpvar_4.vVelocity;
-    Ftotal_12 = gravity;
-    if ((inwardForceCoeff != 0.0)) {
-      mediump float inward_14;
-      inward_14 = (((tmpvar_4.vPosition.x * tmpvar_4.vPosition.x) + (tmpvar_4.vPosition.z * tmpvar_4.vPosition.z)) * inwardForceCoeff);
-      if ((0.001 < inward_14)) {
-        highp vec3 tmpvar_15;
-        tmpvar_15.y = 0.0;
-        tmpvar_15.x = -(tmpvar_4.vPosition.x);
-        tmpvar_15.z = -(tmpvar_4.vPosition.z);
-        Ftotal_12 = (gravity + (max (
-          ((inward_14 - inwardForceRadius) + life_1)
-        , 0.0) * normalize(tmpvar_15)));
-      };
-    };
-    if (((dragCoeffLinear != 0.0) && (dragCoeffQuadratic != 0.0))) {
-      mediump float vlength_16;
-      vlength_16 = sqrt(dot (v_13, v_13));
-      Ftotal_12 = (Ftotal_12 + ((v_13 / vlength_16) * (vlength_16 * 
-        (-((dragCoeffQuadratic * vlength_16)) - dragCoeffLinear)
-      )));
-    };
-    v_13 = ((Ftotal_12 * dt) + v_13);
-    particle_2.vPosition = ((v_13 * dt) + tmpvar_4.vPosition);
-    highp vec4 tmpvar_17;
-    tmpvar_17 = aSpheres[uint(0)];
-    highp vec3 tmpvar_18;
-    tmpvar_18 = (particle_2.vPosition - tmpvar_17.xyz);
-    highp float tmpvar_19;
-    tmpvar_19 = dot (tmpvar_18, tmpvar_18);
-    if ((tmpvar_19 < (tmpvar_17.w * tmpvar_17.w))) {
-      highp vec3 tmpvar_20;
-      tmpvar_20 = (tmpvar_18 * inversesqrt(tmpvar_19));
-      particle_2.vPosition = ((tmpvar_20 * tmpvar_17.w) + tmpvar_17.xyz);
-      v_13 = ((v_13 - (2.0 * 
-        (dot (tmpvar_20, v_13) * tmpvar_20)
-      )) * bounciness);
+    highp vec3 t10 = t4;
+    r0 = gravity;
+    mediump float t11 = (((t2.x * t2.x) + (t2.z * t2.z)) * inwardForceCoeff);
+    if (((0.001 < t11) && (inwardForceCoeff != 0.0))) {
+      highp vec3 t12 = vec3((-t2.x), 0.0, (-t2.z));
+      r0 = (r0 + (max(((t11 - inwardForceRadius) + r5), 0.0) * (t12 * inversesqrt(dot(t12.xz, t12.xz)))));
+    }
+    mediump float t13 = length(t10);
+    r1 = ((((min(abs(dragCoeffLinear), abs(dragCoeffQuadratic)) != 0.0) ? (r0 + ((t10 / t13) * (t13 * ((-dragCoeffLinear) - (dragCoeffQuadratic * t13))))) : r0) * dt) + t10);
+    r2 = ((r1 * dt) + t2);
+    highp vec3 t14 = (r2 - aSpheres[0].xyz);
+    highp float t15 = dot(t14, t14);
+    if ((t15 < (aSpheres[0].w * aSpheres[0].w))) {
+      highp vec3 t16 = (t14 * inversesqrt(t15));
+      r2 = ((t16 * aSpheres[0].w) + aSpheres[0].xyz);
+      r1 = ((r1 - ((vec3(dot(t16, r1)) * 2.0) * t16)) * bounciness);
     } else {
-      highp vec4 tmpvar_21;
-      tmpvar_21 = aSpheres[1u];
-      highp vec3 tmpvar_22;
-      tmpvar_22 = (particle_2.vPosition - tmpvar_21.xyz);
-      highp float tmpvar_23;
-      tmpvar_23 = dot (tmpvar_22, tmpvar_22);
-      if ((tmpvar_23 < (tmpvar_21.w * tmpvar_21.w))) {
-        highp vec3 tmpvar_24;
-        tmpvar_24 = (tmpvar_22 * inversesqrt(tmpvar_23));
-        particle_2.vPosition = ((tmpvar_24 * tmpvar_21.w) + tmpvar_21.xyz);
-        v_13 = ((v_13 - (2.0 * 
-          (dot (tmpvar_24, v_13) * tmpvar_24)
-        )) * bounciness);
+      highp vec3 t17 = (r2 - aSpheres[1].xyz);
+      highp float t18 = dot(t17, t17);
+      if ((t18 < (aSpheres[1].w * aSpheres[1].w))) {
+        highp vec3 t19 = (t17 * inversesqrt(t18));
+        r2 = ((t19 * aSpheres[1].w) + aSpheres[1].xyz);
+        r1 = ((r1 - ((vec3(dot(t19, r1)) * 2.0) * t19)) * bounciness);
       } else {
-        highp vec4 tmpvar_25;
-        tmpvar_25 = aSpheres[2u];
-        highp vec3 tmpvar_26;
-        tmpvar_26 = (particle_2.vPosition - tmpvar_25.xyz);
-        highp float tmpvar_27;
-        tmpvar_27 = dot (tmpvar_26, tmpvar_26);
-        if ((tmpvar_27 < (tmpvar_25.w * tmpvar_25.w))) {
-          highp vec3 tmpvar_28;
-          tmpvar_28 = (tmpvar_26 * inversesqrt(tmpvar_27));
-          particle_2.vPosition = ((tmpvar_28 * tmpvar_25.w) + tmpvar_25.xyz);
-          v_13 = ((v_13 - (2.0 * 
-            (dot (tmpvar_28, v_13) * tmpvar_28)
-          )) * bounciness);
+        highp vec3 t20 = (r2 - aSpheres[2].xyz);
+        highp float t21 = dot(t20, t20);
+        if ((t21 < (aSpheres[2].w * aSpheres[2].w))) {
+          highp vec3 t22 = (t20 * inversesqrt(t21));
+          r2 = ((t22 * aSpheres[2].w) + aSpheres[2].xyz);
+          r1 = ((r1 - ((vec3(dot(t22, r1)) * 2.0) * t22)) * bounciness);
         } else {
-          highp vec4 tmpvar_29;
-          tmpvar_29 = aSpheres[3u];
-          highp vec3 tmpvar_30;
-          tmpvar_30 = (particle_2.vPosition - tmpvar_29.xyz);
-          highp float tmpvar_31;
-          tmpvar_31 = dot (tmpvar_30, tmpvar_30);
-          if ((tmpvar_31 < (tmpvar_29.w * tmpvar_29.w))) {
-            highp vec3 tmpvar_32;
-            tmpvar_32 = (tmpvar_30 * inversesqrt(tmpvar_31));
-            particle_2.vPosition = ((tmpvar_32 * tmpvar_29.w) + tmpvar_29.xyz);
-            v_13 = ((v_13 - (2.0 * 
-              (dot (tmpvar_32, v_13) * tmpvar_32)
-            )) * bounciness);
+          highp vec3 t23 = (r2 - aSpheres[3].xyz);
+          highp float t24 = dot(t23, t23);
+          if ((t24 < (aSpheres[3].w * aSpheres[3].w))) {
+            highp vec3 t25 = (t23 * inversesqrt(t24));
+            r2 = ((t25 * aSpheres[3].w) + aSpheres[3].xyz);
+            r1 = ((r1 - ((vec3(dot(t25, r1)) * 2.0) * t25)) * bounciness);
           } else {
-            highp vec4 tmpvar_33;
-            tmpvar_33 = aSpheres[4u];
-            highp vec3 tmpvar_34;
-            tmpvar_34 = (particle_2.vPosition - tmpvar_33.xyz);
-            highp float tmpvar_35;
-            tmpvar_35 = dot (tmpvar_34, tmpvar_34);
-            if ((tmpvar_35 < (tmpvar_33.w * tmpvar_33.w))) {
-              highp vec3 tmpvar_36;
-              tmpvar_36 = (tmpvar_34 * inversesqrt(tmpvar_35));
-              particle_2.vPosition = ((tmpvar_36 * tmpvar_33.w) + tmpvar_33.xyz);
-              v_13 = ((v_13 - (2.0 * 
-                (dot (tmpvar_36, v_13) * tmpvar_36)
-              )) * bounciness);
+            highp vec3 t26 = (r2 - aSpheres[4].xyz);
+            highp float t27 = dot(t26, t26);
+            if ((t27 < (aSpheres[4].w * aSpheres[4].w))) {
+              highp vec3 t28 = (t26 * inversesqrt(t27));
+              r2 = ((t28 * aSpheres[4].w) + aSpheres[4].xyz);
+              r1 = ((r1 - ((vec3(dot(t28, r1)) * 2.0) * t28)) * bounciness);
             } else {
-              highp vec4 tmpvar_37;
-              tmpvar_37 = aSpheres[5u];
-              highp vec3 tmpvar_38;
-              tmpvar_38 = (particle_2.vPosition - tmpvar_37.xyz);
-              highp float tmpvar_39;
-              tmpvar_39 = dot (tmpvar_38, tmpvar_38);
-              if ((tmpvar_39 < (tmpvar_37.w * tmpvar_37.w))) {
-                highp vec3 tmpvar_40;
-                tmpvar_40 = (tmpvar_38 * inversesqrt(tmpvar_39));
-                particle_2.vPosition = ((tmpvar_40 * tmpvar_37.w) + tmpvar_37.xyz);
-                v_13 = ((v_13 - (2.0 * 
-                  (dot (tmpvar_40, v_13) * tmpvar_40)
-                )) * bounciness);
+              highp vec3 t29 = (r2 - aSpheres[5].xyz);
+              highp float t30 = dot(t29, t29);
+              if ((t30 < (aSpheres[5].w * aSpheres[5].w))) {
+                highp vec3 t31 = (t29 * inversesqrt(t30));
+                r2 = ((t31 * aSpheres[5].w) + aSpheres[5].xyz);
+                r1 = ((r1 - ((vec3(dot(t31, r1)) * 2.0) * t31)) * bounciness);
               } else {
-                highp vec4 tmpvar_41;
-                tmpvar_41 = aSpheres[6u];
-                highp vec3 tmpvar_42;
-                tmpvar_42 = (particle_2.vPosition - tmpvar_41.xyz);
-                highp float tmpvar_43;
-                tmpvar_43 = dot (tmpvar_42, tmpvar_42);
-                if ((tmpvar_43 < (tmpvar_41.w * tmpvar_41.w))) {
-                  highp vec3 tmpvar_44;
-                  tmpvar_44 = (tmpvar_42 * inversesqrt(tmpvar_43));
-                  particle_2.vPosition = ((tmpvar_44 * tmpvar_41.w) + tmpvar_41.xyz);
-                  v_13 = ((v_13 - (2.0 * 
-                    (dot (tmpvar_44, v_13) * tmpvar_44)
-                  )) * bounciness);
+                highp vec3 t32 = (r2 - aSpheres[6].xyz);
+                highp float t33 = dot(t32, t32);
+                if ((t33 < (aSpheres[6].w * aSpheres[6].w))) {
+                  highp vec3 t34 = (t32 * inversesqrt(t33));
+                  r2 = ((t34 * aSpheres[6].w) + aSpheres[6].xyz);
+                  r1 = ((r1 - ((vec3(dot(t34, r1)) * 2.0) * t34)) * bounciness);
                 } else {
-                  highp vec4 tmpvar_45;
-                  tmpvar_45 = aSpheres[7u];
-                  highp vec3 tmpvar_46;
-                  tmpvar_46 = (particle_2.vPosition - tmpvar_45.xyz);
-                  highp float tmpvar_47;
-                  tmpvar_47 = dot (tmpvar_46, tmpvar_46);
-                  if ((tmpvar_47 < (tmpvar_45.w * tmpvar_45.w))) {
-                    highp vec3 tmpvar_48;
-                    tmpvar_48 = (tmpvar_46 * inversesqrt(tmpvar_47));
-                    particle_2.vPosition = ((tmpvar_48 * tmpvar_45.w) + tmpvar_45.xyz);
-                    v_13 = ((v_13 - (2.0 * 
-                      (dot (tmpvar_48, v_13) * tmpvar_48)
-                    )) * bounciness);
-                  };
-                };
-              };
-            };
-          };
-        };
-      };
-    };
-    if ((particle_2.vPosition.y < 0.0)) {
-      particle_2.vPosition.y = -(particle_2.vPosition.y);
-      v_13 = (v_13 * vec3(0.4, -0.3, 0.4));
-    };
-    particle_2.vVelocity = v_13;
-  };
-  particle_2.fLife = life_1;
-  aParticlesOut[gl_GlobalInvocationID.x] = particle_2;
+                  highp vec3 t35 = (r2 - aSpheres[7].xyz);
+                  highp float t36 = dot(t35, t35);
+                  if ((t36 < (aSpheres[7].w * aSpheres[7].w))) {
+                    highp vec3 t37 = (t35 * inversesqrt(t36));
+                    r2 = ((t37 * aSpheres[7].w) + aSpheres[7].xyz);
+                    r1 = ((r1 - ((vec3(dot(t37, r1)) * 2.0) * t37)) * bounciness);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    bool t38 = (r2.y < 0.0);
+    r3 = (t38 ? vec3(r2.x, (-r2.y), r2.z) : r2);
+    r4 = (t38 ? (r1 * vec3(0.4, -0.3, 0.4)) : r1);
+  }
+  aParticlesOut[int(t1)].vPosition = r3;
+  aParticlesOut[int(t1)]._padding_particle_0 = t3;
+  aParticlesOut[int(t1)].vVelocity = r4;
+  aParticlesOut[int(t1)].fLife = r5;
 }
 
-
-// stats: 173 alu 0 tex 13 flow
+// stats: 180 alu 0 tex 10 flow
 // workgroup size: 64 1 1
 // buffer #0: SsboParticlesInput storage layout std140 binding 3 (size: unknown)
 //  member #0: Particle[] aParticlesIn offset 0 array runtime stride 32 readonly

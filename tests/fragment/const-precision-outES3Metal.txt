@@ -1,42 +1,51 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
-constant half3 _xlat_mtl_const1[3] = {half3(float3(1.0, 2.0, 3.0)), half3(float3(4.0, 5.0, 6.0)), half3(float3(7.0, 8.0, 9.0))};
-constant float3 _xlat_mtl_const2[3] = {float3(11.0, 12.0, 13.0), float3(14.0, 15.0, 16.0), float3(17.0, 18.0, 19.0)};
 struct xlatMtlShaderInput {
   half2 xlv_TEXCOORD0;
 };
 struct xlatMtlShaderOutput {
-  half4 _glesFragData_0 [[color(0)]];
+  half4 _xlat_varying0 [[color(0)]];
 };
 struct xlatMtlShaderUniform {
 };
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  float3 p_2 = 0;
-  float3 f_3 = 0;
-  half3 h_4 = 0;
-  h_4 = half3(float3(0.0, 0.0, 0.0));
-  f_3 = float3(0.0, 0.0, 0.0);
-  half3 tmpvar_5 = 0;
-  tmpvar_5.z = half(1.0);
-  tmpvar_5.xy = _mtl_i.xlv_TEXCOORD0;
-  p_2 = float3(tmpvar_5);
-  for (int j_1 = 0; j_1 < short((_mtl_i.xlv_TEXCOORD0.x * (half)(3.0))); j_1++) {
-    h_4 = (h_4 + (half3)(_xlat_mtl_const1[j_1]));
-    f_3 = (f_3 + _xlat_mtl_const2[j_1]);
-    f_3 = (f_3 + (p_2 * float3(1.0, 2.0, 3.0)));
-    f_3 = (f_3 + (float3(4.0, 5.0, 6.0) * p_2));
-  };
-  float4 tmpvar_6 = 0;
-  tmpvar_6.xy = float2(h_4.xy);
-  tmpvar_6.zw = f_3.xy;
-  _mtl_o._glesFragData_0 = half4(tmpvar_6);
+  half4 _glesFragData[1];
+  int r0 = 0;
+  float3 r1 = 0;
+  float3 r2 = 0;
+  float3 t0 = float3(half3(_mtl_i.xlv_TEXCOORD0, half(1.0)));
+  short t1 = short((_mtl_i.xlv_TEXCOORD0.x * half(3.0)));
+  if ((short(0) < t1)) {
+    float3 t2 = (float3(4.0, 5.0, 6.0) * t0);
+    float3 t3 = (t0 * float3(1.0, 2.0, 3.0));
+    r1 = ((float3(11.0, 12.0, 13.0) + t3) + t2);
+    if ((short(1) < t1)) {
+      r1 = (((r1 + float3(14.0, 15.0, 16.0)) + t3) + t2);
+      if ((short(2) < t1)) {
+        r1 = (((r1 + float3(17.0, 18.0, 19.0)) + t3) + t2);
+        r2 = float3(12.0, 15.0, 18.0);
+        for (r0 = 3; (short(r0) < t1); r0++) {
+          r1 = float3(NAN);
+          r2 = float3(NAN);
+        }
+      } else {
+        r2 = float3(5.0, 7.0, 9.0);
+      }
+    } else {
+      r2 = float3(1.0, 2.0, 3.0);
+    }
+  } else {
+    r1 = float3(0.0);
+    r2 = float3(0.0);
+  }
+  _glesFragData[0] = half4(float4(r2.x, r2.y, r1.x, r1.y));
+  _mtl_o._xlat_varying0 = _glesFragData[0];
   return _mtl_o;
 }
 
-
-// stats: 14 alu 0 tex 2 flow
+// stats: 17 alu 0 tex 5 flow
 // inputs: 1
 //  #0: xlv_TEXCOORD0 (medium float) 2x1 [-1]

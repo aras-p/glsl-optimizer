@@ -1,43 +1,24 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
-struct Entry {
-  float3 color;
+struct _xlat_Entry_std430 {
+  packed_float3 color;
   float weight;
 };
-struct alignas(4) _xlat_buf_storage1_element { float value; };
-struct _xlat_buf_storage1 { _xlat_buf_storage1_element elements[3]; };
-static_assert(sizeof(_xlat_buf_storage1) == 12, "std430 size");
-struct alignas(16) _xlat_buf_storage3 {
-  alignas(16) packed_float3 color;
-  alignas(4) float weight;
+static_assert(sizeof(_xlat_Entry_std430) == 16, "std430 size");
+struct _xlat_buf_Data_std430 {
+  uint index;
+  float values[3];
+  _xlat_Entry_std430 entries[2];
+  float2 pairs[2];
+  uint unused;
+  char _pad0[12];
 };
-static_assert(sizeof(_xlat_buf_storage3) == 16, "std430 size");
-inline __attribute__((always_inline)) Entry _xlat_buf_storage3_read(const device _xlat_buf_storage3& storage)
-{
-  Entry value;
-  value.color = float3(storage.color);
-  value.weight = float(storage.weight);
-  return value;
-}
-struct alignas(16) _xlat_buf_storage2_element { _xlat_buf_storage3 value; };
-struct _xlat_buf_storage2 { _xlat_buf_storage2_element elements[2]; };
-static_assert(sizeof(_xlat_buf_storage2) == 32, "std430 size");
-struct alignas(8) _xlat_buf_storage4_element { float2 value; };
-struct _xlat_buf_storage4 { _xlat_buf_storage4_element elements[2]; };
-static_assert(sizeof(_xlat_buf_storage4) == 16, "std430 size");
-struct alignas(16) _xlat_buf_storage0 {
-  alignas(4) uint index;
-  alignas(4) _xlat_buf_storage1 values;
-  alignas(16) _xlat_buf_storage2 entries;
-  alignas(8) _xlat_buf_storage4 pairs;
-  alignas(4) uint unused;
+static_assert(sizeof(_xlat_buf_Data_std430) == 80, "std430 size");
+struct _xlat_buf_Params_std140 {
+  float4 tint;
 };
-static_assert(sizeof(_xlat_buf_storage0) == 80, "std430 size");
-struct alignas(16) _xlat_buf_storage5 {
-  alignas(16) float4 tint;
-};
-static_assert(sizeof(_xlat_buf_storage5) == 16, "std140 size");
+static_assert(sizeof(_xlat_buf_Params_std140) == 16, "std140 size");
 struct xlatMtlShaderInput {
 };
 struct xlatMtlShaderOutput {
@@ -46,28 +27,20 @@ struct xlatMtlShaderOutput {
 struct xlatMtlShaderUniform {
 };
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , device _xlat_buf_storage0& _mtl_buffer1 [[buffer(1)]]
-  , constant _xlat_buf_storage5& _mtl_buffer2 [[buffer(2)]])
+  , device _xlat_buf_Data_std430& data [[buffer(1)]]
+  , constant _xlat_buf_Params_std140& params [[buffer(2)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  uint tmpvar_1;
-  tmpvar_1 = (uint(_mtl_buffer1.index) & 1u);
-  float tmpvar_2 = 0;
-  tmpvar_2 = float(_mtl_buffer1.values.elements[tmpvar_1].value);
-  _mtl_buffer1.values.elements[tmpvar_1].value = float((tmpvar_2 + 1.0));
-  _mtl_buffer1.entries.elements[tmpvar_1].value.color = float3(float4(_mtl_buffer2.tint).xyz);
-  _mtl_buffer1.entries.elements[tmpvar_1].value.weight = float(tmpvar_2);
-  float2 tmpvar_3 = 0;
-  tmpvar_3.x = tmpvar_2;
-  tmpvar_3.y = float(_mtl_buffer1.values.elements[tmpvar_1].value);
-  _mtl_buffer1.pairs.elements[tmpvar_1].value = float2(tmpvar_3);
-  float4 tmpvar_4 = 0;
-  tmpvar_4.xyz = (float3(_mtl_buffer1.entries.elements[tmpvar_1].value.color) * float(_mtl_buffer1.entries.elements[tmpvar_1].value.weight));
-  tmpvar_4.w = float(_mtl_buffer1.values.elements[tmpvar_1].value);
-  _mtl_o.color = tmpvar_4;
+  uint t0 = (uint(data.index) & 1u);
+  float t1 = float(data.values[int(t0)]);
+  data.values[int(t0)] = (t1 + 1.0);
+  data.entries[int(t0)].color = float4(params.tint).xyz;
+  data.entries[int(t0)].weight = t1;
+  data.pairs[int(t0)] = float2(t1, float(data.values[int(t0)]));
+  float3 t2 = (float3(data.entries[int(t0)].color) * float(data.entries[int(t0)].weight));
+  _mtl_o.color = float4(t2, float(data.values[int(t0)]));
   return _mtl_o;
 }
-
 
 // stats: 3 alu 0 tex 0 flow
 // buffer #0: Data storage instance data layout std430 binding 3 (size: 80) metal 1

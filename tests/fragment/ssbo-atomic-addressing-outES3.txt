@@ -1,35 +1,27 @@
 #version 310 es
+precision highp float;
+precision highp int;
 struct Entry {
   highp uint count;
   highp uvec3 values;
 };
-layout(std140, column_major) buffer Data {
+layout(std140) buffer Data {
   highp uint header;
-  layout(column_major) Entry entries[];
+  Entry entries[];
 } data[2];
 uniform highp int index;
 uniform highp int component;
 out highp vec4 color;
 void main ()
 {
-  highp uint tmpvar_1;
-  tmpvar_1 = atomicAdd (data[0].entries[index].count, 1u);
-  highp uint tmpvar_2;
-  tmpvar_2 = atomicExchange (data[1].entries[index].values.y, 2u);
-  highp uint tmpvar_3;
-  tmpvar_3 = atomicCompSwap (data[0].entries[index].values[component], 3u, 4u);
-  highp uint tmpvar_4;
-  tmpvar_4 = atomicOr (data[1].header, 8u);
-  highp vec4 tmpvar_5;
-  tmpvar_5.w = 1.0;
-  tmpvar_5.x = float(tmpvar_1);
-  tmpvar_5.y = float(tmpvar_2);
-  tmpvar_5.z = float(tmpvar_3);
-  color = tmpvar_5;
+  highp uint t0 = atomicAdd(data[0].entries[index].count, 1u);
+  highp uint t1 = atomicExchange(data[1].entries[index].values[1], 2u);
+  highp uint t2 = atomicCompSwap(data[0].entries[index].values[component], 3u, 4u);
+  atomicOr(data[1].header, 8u);
+  color = vec4(float(t0), float(t1), float(t2), 1.0);
 }
 
-
-// stats: 4 alu 0 tex 0 flow
+// stats: 3 alu 0 tex 0 flow
 // uniforms: 2 (total size: 0)
 //  #0: index (high int) 1x1 [-1]
 //  #1: component (high int) 1x1 [-1]

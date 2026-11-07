@@ -1,31 +1,19 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
-template<typename A, typename T>
-inline T _xlat_atomic_comp_swap(device A* address, T compare, T value) {
-  T expected = compare;
-  while (!atomic_compare_exchange_weak_explicit(address, &expected, value, memory_order_relaxed, memory_order_relaxed) && expected == compare) {}
-  return expected;
-}
-struct Entry {
+struct _xlat_Entry_std140 {
   uint count;
-  uint3 values;
+  char _pad0[12];
+  packed_uint3 values;
+  char _pad1[4];
 };
-struct alignas(16) _xlat_buf_storage1 {
-  alignas(4) uint count;
-  char _buf_pad1[12];
-  alignas(16) packed_uint3 values;
+static_assert(sizeof(_xlat_Entry_std140) == 32, "std140 size");
+struct _xlat_buf_Data_std140 {
+  uint header;
+  char _pad0[12];
+  _xlat_Entry_std140 entries[1];
 };
-static_assert(sizeof(_xlat_buf_storage1) == 32, "std140 size");
-inline __attribute__((always_inline)) Entry _xlat_buf_storage1_read(const device _xlat_buf_storage1& storage)
-{
-  Entry value;
-  value.count = uint(storage.count);
-  value.values = uint3(storage.values);
-  return value;
-}
-struct alignas(16) _xlat_buf_storage0_element { _xlat_buf_storage1 value; };
-static_assert(sizeof(_xlat_buf_storage0_element) == 32, "array stride");
+template <typename P, typename T> inline T _xlat_atomic_comp_swap(P p, T compare, T value) { T expected = compare; atomic_compare_exchange_weak_explicit(p, &expected, value, memory_order_relaxed, memory_order_relaxed); return expected; }
 struct xlatMtlShaderInput {
 };
 struct xlatMtlShaderOutput {
@@ -36,30 +24,20 @@ struct xlatMtlShaderUniform {
   int component;
 };
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , device uchar* _mtl_buffer1 [[buffer(1)]]
-  , device uchar* _mtl_buffer2 [[buffer(2)]])
+  , device _xlat_buf_Data_std140& data_0 [[buffer(1)]]
+  , device _xlat_buf_Data_std140& data_1 [[buffer(2)]])
 {
-  device uchar* _mtl_b0[2] = {_mtl_buffer1, _mtl_buffer2};
   xlatMtlShaderOutput _mtl_o;
-  uint tmpvar_1;
-  tmpvar_1 = atomic_fetch_add_explicit (reinterpret_cast<device atomic_uint*>(&reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_b0[0] + 16)[_mtl_u.index].value.count), uint(1u), memory_order_relaxed);
-  uint tmpvar_2;
-  tmpvar_2 = atomic_exchange_explicit (reinterpret_cast<device atomic_uint*>(&reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_b0[1] + 16)[_mtl_u.index].value.values) + 1, uint(2u), memory_order_relaxed);
-  uint tmpvar_3;
-  tmpvar_3 = _xlat_atomic_comp_swap (reinterpret_cast<device atomic_uint*>(&reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_b0[0] + 16)[_mtl_u.index].value.values) + _mtl_u.component, uint(3u), uint(4u));
-  uint tmpvar_4;
-  tmpvar_4 = atomic_fetch_or_explicit (reinterpret_cast<device atomic_uint*>(&(*reinterpret_cast<device uint*>(_mtl_b0[1] + 0))), uint(8u), memory_order_relaxed);
-  float4 tmpvar_5 = 0;
-  tmpvar_5.w = 1.0;
-  tmpvar_5.x = float(tmpvar_1);
-  tmpvar_5.y = float(tmpvar_2);
-  tmpvar_5.z = float(tmpvar_3);
-  _mtl_o.color = tmpvar_5;
+  device _xlat_buf_Data_std140* data[2] = { &data_0, &data_1 };
+  uint t0 = atomic_fetch_add_explicit((device atomic_uint*)&(*data[0]).entries[_mtl_u.index].count, 1u, memory_order_relaxed);
+  uint t1 = atomic_exchange_explicit(((device atomic_uint*)&(*data[1]).entries[_mtl_u.index].values + 1), 2u, memory_order_relaxed);
+  uint t2 = _xlat_atomic_comp_swap(((device atomic_uint*)&(*data[0]).entries[_mtl_u.index].values + _mtl_u.component), 3u, 4u);
+  atomic_fetch_or_explicit((device atomic_uint*)&(*data[1]).header, 8u, memory_order_relaxed);
+  _mtl_o.color = float4(float(t0), float(t1), float(t2), 1.0);
   return _mtl_o;
 }
 
-
-// stats: 4 alu 0 tex 0 flow
+// stats: 3 alu 0 tex 0 flow
 // uniforms: 2 (total size: 8)
 //  #0: index (high int) 1x1 [-1] loc 0
 //  #1: component (high int) 1x1 [-1] loc 4

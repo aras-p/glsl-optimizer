@@ -5,12 +5,8 @@ varying vec4 xlv_TEXCOORD0;
 varying vec4 xlv_TEXCOORD1;
 void main ()
 {
-  vec4 c_1;
-  c_1 = (_Color * texture2D (_MainTex, xlv_TEXCOORD0.xy));
-  c_1 = ((c_1 * texture2D (_Detail, xlv_TEXCOORD1.xy)) * 2.0);
-  gl_FragData[0] = c_1;
+  gl_FragData[0] = (((_Color * 2.0) * texture2D(_MainTex, xlv_TEXCOORD0.xy)) * texture2D(_Detail, xlv_TEXCOORD1.xy));
 }
-
 
 // stats: 3 alu 2 tex 0 flow
 // inputs: 2

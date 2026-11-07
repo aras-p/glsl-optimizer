@@ -1,43 +1,29 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
-struct alignas(16) _xlat_buf_storage0_element { uint4 value; };
-static_assert(sizeof(_xlat_buf_storage0_element) == 16, "array stride");
+struct _xlat_buf_Data_std430 {
+  uint4 values[1];
+};
 struct xlatMtlShaderUniform {
 };
 // threadsPerThreadgroup: 4, 2, 3
 kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , device uchar* _mtl_buffer1 [[buffer(1)]]
+  , device _xlat_buf_Data_std430& data [[buffer(1)]]
+  , uint3 gl_WorkGroupID [[threadgroup_position_in_grid]]
+  , uint3 gl_NumWorkGroups [[threadgroups_per_grid]]
   , uint gl_LocalInvocationIndex [[thread_index_in_threadgroup]]
   , uint3 gl_GlobalInvocationID [[thread_position_in_grid]]
-  , uint3 gl_NumWorkGroups [[threadgroups_per_grid]]
-  , uint3 gl_WorkGroupID [[threadgroup_position_in_grid]]
   , uint3 gl_LocalInvocationID [[thread_position_in_threadgroup]])
 {
-  uint tmpvar_1;
-  tmpvar_1 = (((
-    (gl_WorkGroupID.x + (gl_NumWorkGroups.x * (gl_WorkGroupID.y + (gl_NumWorkGroups.y * gl_WorkGroupID.z))))
-   * 24u) + gl_LocalInvocationIndex) * 4u);
-  uint4 tmpvar_2;
-  tmpvar_2.xyz = gl_GlobalInvocationID;
-  tmpvar_2.w = gl_LocalInvocationIndex;
-  reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[tmpvar_1].value = uint4(tmpvar_2);
-  uint4 tmpvar_3;
-  tmpvar_3.w = 4u;
-  tmpvar_3.xyz = gl_LocalInvocationID;
-  reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[(tmpvar_1 + 1u)].value = uint4(tmpvar_3);
-  uint4 tmpvar_4;
-  tmpvar_4.w = 2u;
-  tmpvar_4.xyz = gl_WorkGroupID;
-  reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[(tmpvar_1 + 2u)].value = uint4(tmpvar_4);
-  uint4 tmpvar_5;
-  tmpvar_5.w = 3u;
-  tmpvar_5.xyz = gl_NumWorkGroups;
-  reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[(tmpvar_1 + 3u)].value = uint4(tmpvar_5);
+  int t0 = (((int(gl_WorkGroupID.x) + (int(gl_NumWorkGroups.x) * (int(gl_WorkGroupID.y) + (int(gl_NumWorkGroups.y) * int(gl_WorkGroupID.z))))) * 24) + int(gl_LocalInvocationIndex));
+  int t1 = (t0 << int(2u));
+  data.values[t1] = uint4(gl_GlobalInvocationID, gl_LocalInvocationIndex);
+  data.values[(t1 + 1)] = uint4(gl_LocalInvocationID, 4u);
+  data.values[(t1 + 2)] = uint4(gl_WorkGroupID, 2u);
+  data.values[(t1 + 3)] = uint4(gl_NumWorkGroups, 3u);
 }
 
-
-// stats: 13 alu 0 tex 0 flow
+// stats: 10 alu 0 tex 0 flow
 // workgroup size: 4 2 3
 // buffer #0: Data storage instance data layout std430 (size: unknown) metal 1
 //  member #0: uvec4[] values offset 0 array runtime stride 16

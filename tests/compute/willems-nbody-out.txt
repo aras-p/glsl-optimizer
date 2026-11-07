@@ -1,82 +1,65 @@
 #version 450
-layout(local_size_x=256) in;
+layout(local_size_x = 256) in;
 struct Particle {
   vec4 pos;
   vec4 vel;
 };
-layout(std140, column_major, binding=1) uniform UBO {
+layout(std140, binding = 1) uniform UBO {
   float deltaT;
   int particleCount;
   float gravity;
   float power;
   float soften;
 } ubo;
-layout(std140, column_major, binding=0) buffer Pos {
-  layout(column_major) Particle particles[];
+layout(std140, binding = 0) buffer Pos {
+  Particle particles[];
 };
 shared vec4 sharedData[256];
 void main ()
 {
-  uint i_1;
-  vec3 acceleration_2;
-  vec4 position_3;
-  uint tmpvar_4;
-  tmpvar_4 = uint(ubo.particleCount);
-  bool tmpvar_5;
-  tmpvar_5 = (gl_GlobalInvocationID.x < tmpvar_4);
-  position_3 = vec4(0.0, 0.0, 0.0, 0.0);
-  if (tmpvar_5) {
-    position_3 = particles[gl_GlobalInvocationID.x].pos;
-  };
-  acceleration_2 = vec3(0.0, 0.0, 0.0);
-  i_1 = uint(0);
-  while (true) {
-    if ((i_1 >= tmpvar_4)) {
-      break;
-    };
-    uint tmpvar_6;
-    tmpvar_6 = (i_1 + gl_LocalInvocationID.x);
-    if ((tmpvar_6 < tmpvar_4)) {
-      sharedData[gl_LocalInvocationID.x] = particles[tmpvar_6].pos;
+  vec4 r0;
+  int r1;
+  int r2;
+  vec3 r3;
+  bool t0 = (gl_GlobalInvocationID.x < uint(ubo.particleCount));
+  if (t0) {
+    r0 = particles[int(gl_GlobalInvocationID.x)].pos;
+  } else {
+    r0 = vec4(0.0);
+  }
+  r3 = vec3(0.0);
+  for (r2 = 0; (uint(r2) < uint(ubo.particleCount)); r2 += 256) {
+    int t1 = (r2 + int(gl_LocalInvocationID.x));
+    if ((uint(t1) < uint(ubo.particleCount))) {
+      sharedData[int(gl_LocalInvocationID.x)] = particles[t1].pos;
     } else {
-      sharedData[gl_LocalInvocationID.x] = vec4(0.0, 0.0, 0.0, 0.0);
-    };
-    memoryBarrierShared ();
+      sharedData[int(gl_LocalInvocationID.x)] = vec4(0.0);
+    }
+    memoryBarrierShared();
     barrier();
-    if (tmpvar_5) {
-      uint j_7;
-      j_7 = uint(0);
-      while (true) {
-        if ((j_7 >= 256u)) {
-          break;
-        };
-        vec4 tmpvar_8;
-        tmpvar_8 = sharedData[j_7];
-        vec3 tmpvar_9;
-        tmpvar_9 = (tmpvar_8.xyz - position_3.xyz);
-        acceleration_2 = (acceleration_2 + ((
-          (ubo.gravity * tmpvar_9)
-         * tmpvar_8.w) / pow (
-          (dot (tmpvar_9, tmpvar_9) + ubo.soften)
-        , ubo.power)));
-        j_7++;
-      };
-    };
-    memoryBarrierShared ();
+    if (t0) {
+      for (r1 = 0; (uint(r1) < 256u); r1++) {
+        vec4 t2 = sharedData[r1];
+        vec3 t3 = (t2.xyz - r0.xyz);
+        r3 = (r3 + (((ubo.gravity * t3) * t2.w) / pow((dot(t3, t3) + ubo.soften), ubo.power)));
+      }
+    }
+    memoryBarrierShared();
     barrier();
-    i_1 += 256u;
-  };
-  if (tmpvar_5) {
-    particles[gl_GlobalInvocationID.x].vel.xyz = (particles[gl_GlobalInvocationID.x].vel.xyz + (ubo.deltaT * acceleration_2));
-    particles[gl_GlobalInvocationID.x].vel.w = (particles[gl_GlobalInvocationID.x].vel.w + (0.1 * ubo.deltaT));
-    if ((1.0 < particles[gl_GlobalInvocationID.x].vel.w)) {
-      particles[gl_GlobalInvocationID.x].vel.w = (particles[gl_GlobalInvocationID.x].vel.w - 1.0);
-    };
-  };
+  }
+  if (t0) {
+    uint t4 = gl_GlobalInvocationID.x;
+    vec4 t5 = particles[int(t4)].vel;
+    vec3 t6 = (t5.xyz + (ubo.deltaT * r3));
+    float t7 = (t5.w + (0.1 * ubo.deltaT));
+    particles[int(t4)].vel = vec4(t6, t7);
+    if ((1.0 < t7)) {
+      particles[int(t4)].vel.w = vec4((t7 - 1.0)).w;
+    }
+  }
 }
 
-
-// stats: 27 alu 0 tex 9 flow
+// stats: 21 alu 0 tex 9 flow
 // workgroup size: 256 1 1
 // buffer #0: Pos storage layout std140 binding 0 (size: unknown)
 //  member #0: Particle[] particles offset 0 array runtime stride 32

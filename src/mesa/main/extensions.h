@@ -1,3 +1,13 @@
+/**
+ * \file extensions.h
+ * Extension handling.
+ * 
+ * \if subset
+ * (No-op)
+ *
+ * \endif
+ */
+
 /*
  * Mesa 3-D graphics library
  *
@@ -23,46 +33,91 @@
  */
 
 
-/* glsl-optimizer change: Generate direct predicates from compiler-used extension metadata; omit
- * extensions_table.c, runtime names/offsets/years, string enumeration and
- * overrides. Preserve capability aliases, API-specific uint8_t thresholds
- * and the 255 sentinel, including explicit parser API/version checks. */
-
 #ifndef _EXTENSIONS_H_
 #define _EXTENSIONS_H_
 
 #include "mtypes.h"
 
-/* Preserve the upstream uint8_t thresholds, including its 255 sentinel. */
-static inline bool
-_mesa_extension_version_supported(gl_api api, uint8_t version,
-                                  uint8_t compat, uint8_t core,
-                                  uint8_t es1, uint8_t es2)
-{
-   switch (api) {
-   case API_OPENGL_COMPAT: return version >= compat;
-   case API_OPENGL_CORE:   return version >= core;
-   case API_OPENGLES:      return version >= es1;
-   case API_OPENGLES2:     return version >= es2;
-   default:               return false;
-   }
-}
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-/* Parser checks may use an API/version different from the context's. */
-#define EXT(name, capability, compat, core, es1, es2) \
+struct gl_context;
+struct gl_extensions;
+
+extern void _mesa_one_time_init_extension_overrides(const char *override);
+
+extern void _mesa_init_extensions(struct gl_extensions *extentions);
+
+extern GLubyte *_mesa_make_extension_string(struct gl_context *ctx);
+
+extern void _mesa_override_extensions(struct gl_context *ctx);
+
+extern GLuint
+_mesa_get_extension_count(struct gl_context *ctx);
+
+extern const GLubyte *
+_mesa_get_enabled_extension(struct gl_context *ctx, GLuint index);
+
+
+/**
+ * \brief An element of the \c extension_table.
+ */
+struct mesa_extension {
+   /** Name of extension, such as "GL_ARB_depth_clamp". */
+   const char *name;
+
+   /** Offset (in bytes) of the corresponding member in struct gl_extensions. */
+   size_t offset;
+
+   /** Minimum version the extension requires for the given API
+    * (see gl_api defined in mtypes.h). The value is equal to:
+    * 10 * major_version + minor_version
+    */
+   uint8_t version[API_OPENGL_LAST + 1];
+
+   /** Year the extension was proposed or approved.  Used to sort the 
+    * extension string chronologically. */
+   uint16_t year;
+};
+
+extern const struct mesa_extension _mesa_extension_table[];
+
+
+/* Generate enums for the functions below */
+enum {
+#define EXT(name_str, ...) MESA_EXTENSION_##name_str,
+#include "extensions_table.h"
+#undef EXT
+MESA_EXTENSION_COUNT
+};
+
+
+/** Checks if the context supports a user-facing extension */
+#define EXT(name_str, driver_cap, ...) \
 static inline bool \
-_mesa_has_##name##_for_version(const struct gl_context *ctx, \
-                              gl_api api, uint8_t version) \
+_mesa_has_##name_str(const struct gl_context *ctx) \
 { \
-   return ctx->Extensions.capability && \
-      _mesa_extension_version_supported(api, version, compat, core, es1, es2); \
-} \
-static inline bool \
-_mesa_has_##name(const struct gl_context *ctx) \
-{ \
-   return _mesa_has_##name##_for_version(ctx, ctx->API, ctx->Extensions.Version); \
+   return ctx->Extensions.driver_cap && (ctx->Extensions.Version >= \
+          _mesa_extension_table[MESA_EXTENSION_##name_str].version[ctx->API]); \
 }
 #include "extensions_table.h"
 #undef EXT
 
-#endif /* _EXTENSIONS_H_ */
+/* Sometimes the driver wants to query the extension override status before
+ * a context is created. These variables are filled with extension override
+ * information before context creation.
+ *
+ * This can be useful during extension bring-up when an extension is
+ * partially implemented, but cannot yet be advertised as supported.
+ *
+ * Use it with care and keep access read-only.
+ */
+extern struct gl_extensions _mesa_extension_override_enables;
+extern struct gl_extensions _mesa_extension_override_disables;
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

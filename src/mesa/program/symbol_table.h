@@ -40,11 +40,6 @@ extern int _mesa_symbol_table_replace_symbol(struct _mesa_symbol_table *table,
                                              const char *name,
                                              void *declaration);
 
-extern int
-_mesa_symbol_table_add_global_symbol(struct _mesa_symbol_table *symtab,
-                                     const char *name,
-                                     void *declaration);
-
 extern int _mesa_symbol_table_symbol_scope(struct _mesa_symbol_table *table,
                                            const char *name);
 

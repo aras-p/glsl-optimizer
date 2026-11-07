@@ -2,7 +2,7 @@
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
 struct xlatMtlShaderInput {
-  bool gl_FrontFacing [[front_facing]];
+  bool gl_FrontFacing;
   float2 uv;
 };
 struct xlatMtlShaderOutput {
@@ -15,16 +15,12 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   , texture2d<half> halfTexture [[texture(1)]], sampler _mtlsmp_halfTexture [[sampler(1)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  float front_1 = 0;
-  float4 mask_2 = 0;
-  float4 tmpvar_3 = 0;
-  tmpvar_3 = fullTexture.sample(_mtlsmp_fullTexture, (float2)((_mtl_i.uv)), level(0.0));
-  mask_2 = float4(half4((float4(0.5, 0.5, 0.5, 0.5) < tmpvar_3)));
-  front_1 = float(half(_mtl_i.gl_FrontFacing));
-  _mtl_o.result = (((tmpvar_3 + (float4)(halfTexture.sample(_mtlsmp_halfTexture, (float2)((_mtl_i.uv)), level(0.0)))) + mask_2) + front_1);
+  float4 t0 = fullTexture.sample(_mtlsmp_fullTexture, _mtl_i.uv, level(0.0));
+  float4 t1 = float4(half4((0.5 < t0)));
+  float t2 = float(half(_mtl_i.gl_FrontFacing));
+  _mtl_o.result = (((t0 + float4(halfTexture.sample(_mtlsmp_halfTexture, _mtl_i.uv, level(0.0)))) + t1) + t2);
   return _mtl_o;
 }
-
 
 // stats: 6 alu 2 tex 0 flow
 // inputs: 2

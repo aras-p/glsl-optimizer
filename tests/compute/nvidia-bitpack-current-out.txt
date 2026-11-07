@@ -1,40 +1,37 @@
 #version 430
-layout(local_size_x=64) in;
-layout(std430, column_major, binding=0) buffer outputBuffer {
+layout(local_size_x = 64) in;
+layout(std430, binding = 0) buffer outputBuffer {
   writeonly uint outstream[];
 };
-layout(std430, column_major, binding=1) buffer inputBuffer {
+layout(std430, binding = 1) buffer inputBuffer {
   readonly uvec4 instream[];
 };
-layout(location=0) uniform uint numObjects;
+layout(location = 0) uniform uint numObjects;
 void main ()
 {
-  int outbit_2;
-  uint bits_3;
-  uint tmpvar_4;
-  tmpvar_4 = ((30u + numObjects) / 32u);
-  bits_3 = uint(0);
-  outbit_2 = 0;
-  for (int i_1 = 0; i_1 < 8; i_1++) {
-    uvec4 tmpvar_5;
-    tmpvar_5 = instream[((min (gl_GlobalInvocationID.x, tmpvar_4) * 8u) + uint(i_1))];
-    bits_3 = (bits_3 | ((tmpvar_5[0] & 1u) << outbit_2));
-    outbit_2++;
-    bits_3 = (bits_3 | ((tmpvar_5[1] & 1u) << outbit_2));
-    outbit_2++;
-    bits_3 = (bits_3 | ((tmpvar_5[2] & 1u) << outbit_2));
-    outbit_2++;
-    bits_3 = (bits_3 | ((tmpvar_5[3] & 1u) << outbit_2));
-    outbit_2++;
-  };
-  if ((tmpvar_4 < gl_GlobalInvocationID.x)) {
-    return;
-  };
-  outstream[gl_GlobalInvocationID.x] = bits_3;
+  uint t0 = (uint((30 + int(numObjects))) >> 5u);
+  int t1 = (int(min(gl_GlobalInvocationID.x, t0)) << 3u);
+  uvec4 t2 = instream[t1];
+  uvec4 t3 = instream[(t1 + 1)];
+  uint t4 = ((((((t2.x & 1u) | uint((int((t2.y & 1u)) << 1u))) | uint((int((t2.z & 1u)) << 2u))) | uint((int((t2.w & 1u)) << 3u))) | uint((int((t3.x & 1u)) << 4u))) | uint((int((t3.y & 1u)) << 5u)));
+  uvec4 t5 = instream[(t1 + 2)];
+  uint t6 = (((((t4 | uint((int((t3.z & 1u)) << 6u))) | uint((int((t3.w & 1u)) << 7u))) | uint((int((t5.x & 1u)) << 8u))) | uint((int((t5.y & 1u)) << 9u))) | uint((int((t5.z & 1u)) << 10u)));
+  uvec4 t7 = instream[(t1 + 3)];
+  uint t8 = (((((t6 | uint((int((t5.w & 1u)) << 11u))) | uint((int((t7.x & 1u)) << 12u))) | uint((int((t7.y & 1u)) << 13u))) | uint((int((t7.z & 1u)) << 14u))) | uint((int((t7.w & 1u)) << 15u)));
+  uvec4 t9 = instream[(t1 + 4)];
+  uvec4 t10 = instream[(t1 + 5)];
+  uint t11 = (((((t8 | uint((int((t9.x & 1u)) << 16u))) | uint((int((t9.y & 1u)) << 17u))) | uint((int((t9.z & 1u)) << 18u))) | uint((int((t9.w & 1u)) << 19u))) | uint((int((t10.x & 1u)) << 20u)));
+  uvec4 t12 = instream[(t1 + 6)];
+  uint t13 = (((((t11 | uint((int((t10.y & 1u)) << 21u))) | uint((int((t10.z & 1u)) << 22u))) | uint((int((t10.w & 1u)) << 23u))) | uint((int((t12.x & 1u)) << 24u))) | uint((int((t12.y & 1u)) << 25u)));
+  uvec4 t14 = instream[(t1 + 7)];
+  uint t15 = (((((t13 | uint((int((t12.z & 1u)) << 26u))) | uint((int((t12.w & 1u)) << 27u))) | uint((int((t14.x & 1u)) << 28u))) | uint((int((t14.y & 1u)) << 29u))) | uint((int((t14.z & 1u)) << 30u)));
+  uint t16 = (t15 | uint((int((t14.w & 1u)) << 31u)));
+  if ((t0 >= gl_GlobalInvocationID.x)) {
+    outstream[int(gl_GlobalInvocationID.x)] = t16;
+  }
 }
 
-
-// stats: 28 alu 0 tex 4 flow
+// stats: 106 alu 0 tex 1 flow
 // workgroup size: 64 1 1
 // uniforms: 1 (total size: 0)
 //  #0: numObjects (high int) 1x1 [-1] loc 0

@@ -12,10 +12,9 @@ struct xlatMtlShaderUniform {
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  _mtl_o._fragData = half4(float4(0.5, 0.5, 0.5, 0.5));
+  _mtl_o._fragData = half4(0.5);
   _mtl_o.gl_FragDepth = 0.9;
   return _mtl_o;
 }
 
-
-// stats: 2 alu 0 tex 0 flow
+// stats: 0 alu 0 tex 0 flow

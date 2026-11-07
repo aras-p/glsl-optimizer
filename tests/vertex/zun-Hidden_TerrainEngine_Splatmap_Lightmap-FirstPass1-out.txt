@@ -9,49 +9,28 @@ uniform vec4 unity_LightmapST;
 varying vec4 xlv_FOG;
 void main ()
 {
-  vec4 o_hip_pack0_1;
-  vec4 o_hip_pack1_2;
-  vec3 o_hip_lmapFade_3;
-  vec4 tmpvar_4;
-  tmpvar_4 = (gl_ModelViewProjectionMatrix * gl_Vertex);
-  o_hip_pack0_1.xy = ((gl_MultiTexCoord0.xy * _Control_ST.xy) + _Control_ST.zw);
-  o_hip_pack0_1.zw = ((gl_MultiTexCoord0.xy * _Splat0_ST.xy) + _Splat0_ST.zw);
-  o_hip_pack1_2.xy = ((gl_MultiTexCoord0.xy * _Splat1_ST.xy) + _Splat1_ST.zw);
-  o_hip_pack1_2.zw = ((gl_MultiTexCoord0.xy * _Splat2_ST.xy) + _Splat2_ST.zw);
-  vec4 o_5;
-  o_5 = (tmpvar_4 * 0.5);
-  vec2 tmpvar_6;
-  tmpvar_6.x = o_5.x;
-  tmpvar_6.y = (o_5.y * _ProjectionParams.x);
-  o_5.xy = (tmpvar_6 + o_5.w);
-  o_5.zw = tmpvar_4.zw;
-  o_hip_lmapFade_3.xy = ((gl_MultiTexCoord1.xy * unity_LightmapST.xy) + unity_LightmapST.zw);
-  o_hip_lmapFade_3.z = ((-(
-    (gl_ModelViewMatrix * gl_Vertex)
-  .z) * unity_LightmapFade.z) + unity_LightmapFade.w);
-  gl_Position = tmpvar_4;
-  vec4 tmpvar_7;
-  tmpvar_7.yzw = vec3(0.0, 0.0, 0.0);
-  tmpvar_7.x = tmpvar_4.z;
-  xlv_FOG = tmpvar_7;
-  gl_TexCoord[0] = o_hip_pack0_1;
-  gl_TexCoord[1] = o_hip_pack1_2;
-  vec4 tmpvar_8;
-  tmpvar_8.zw = vec2(0.0, 0.0);
-  tmpvar_8.xy = ((gl_MultiTexCoord0.xy * _Splat3_ST.xy) + _Splat3_ST.zw);
-  gl_TexCoord[2] = tmpvar_8;
-  gl_TexCoord[3] = o_5;
-  vec4 tmpvar_9;
-  tmpvar_9.w = 0.0;
-  tmpvar_9.xyz = o_hip_lmapFade_3;
-  gl_TexCoord[4] = tmpvar_9;
+  vec4 t0 = (gl_ModelViewProjectionMatrix * gl_Vertex);
+  vec2 t1 = ((gl_MultiTexCoord0.xy * _Control_ST.xy) + _Control_ST.zw);
+  vec2 t2 = ((gl_MultiTexCoord0.xy * _Splat0_ST.xy) + _Splat0_ST.zw);
+  vec2 t3 = ((gl_MultiTexCoord0.xy * _Splat1_ST.xy) + _Splat1_ST.zw);
+  vec2 t4 = ((gl_MultiTexCoord0.xy * _Splat2_ST.xy) + _Splat2_ST.zw);
+  vec2 t5 = ((gl_MultiTexCoord0.xy * _Splat3_ST.xy) + _Splat3_ST.zw);
+  vec4 t6 = (t0 * 0.5);
+  vec2 t7 = (vec2(t6.x, (t6.y * _ProjectionParams.x)) + t6.w);
+  vec2 t8 = ((gl_MultiTexCoord1.xy * unity_LightmapST.xy) + unity_LightmapST.zw);
+  gl_Position = t0;
+  xlv_FOG = vec4(t0.z, 0.0, 0.0, 0.0);
+  gl_TexCoord[0] = vec4(t1, t2);
+  gl_TexCoord[1] = vec4(t3, t4);
+  gl_TexCoord[2] = vec4(t5, 0.0, 0.0);
+  gl_TexCoord[3] = vec4(t7, t0.zw);
+  gl_TexCoord[4] = vec4(t8, (unity_LightmapFade.w - ((gl_ModelViewMatrix * gl_Vertex).z * unity_LightmapFade.z)), 0.0);
 }
 
-
-// stats: 23 alu 0 tex 0 flow
+// stats: 31 alu 0 tex 0 flow
 // inputs: 3
-//  #0: gl_MultiTexCoord1 (high float) 4x1 [-1] loc 8
-//  #1: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 7
+//  #0: gl_MultiTexCoord1 (high float) 4x1 [-1] loc 7
+//  #1: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 6
 //  #2: gl_Vertex (high float) 4x1 [-1] loc 0
 // uniforms: 10 (total size: 0)
 //  #0: gl_ModelViewProjectionMatrix (high float) 4x4 [-1]

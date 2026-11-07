@@ -1,22 +1,17 @@
 #version 300 es
+precision highp float;
+precision highp int;
 uniform mediump sampler2DShadow shadowmap;
 in highp vec4 uvHi;
 in mediump vec4 uvMed;
 out mediump vec4 _fragColor;
 void main ()
 {
-  mediump vec4 r_1;
-  mediump vec3 tmpvar_2;
-  tmpvar_2 = uvHi.xyz;
-  mediump vec4 tmpvar_3;
-  tmpvar_3 = uvHi;
-  mediump vec4 tmpvar_4;
-  tmpvar_4 = vec4((texture (shadowmap, vec3(tmpvar_2.xy, tmpvar_2.z)) + textureProj (shadowmap, vec4(tmpvar_3.xy, tmpvar_3.z, tmpvar_3.w))));
-  r_1.yzw = tmpvar_4.yzw;
-  r_1.x = (tmpvar_4.x + texture (shadowmap, vec3(uvMed.xy, uvMed.z)));
-  _fragColor = r_1;
+  mediump vec3 t0 = uvHi.xyz;
+  mediump vec4 t1 = uvHi;
+  mediump float t2 = (texture(shadowmap, vec3(t0.xy, t0.z)) + textureProj(shadowmap, vec4(vec3(t1.xy, t1.z), t1.w)));
+  _fragColor = vec4((t2 + texture(shadowmap, vec3(uvMed.xy, uvMed.z))), vec3(t2));
 }
-
 
 // stats: 2 alu 3 tex 0 flow
 // inputs: 2

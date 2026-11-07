@@ -47,13 +47,6 @@ const char* Shader::getOutput() const
 
 //----------------------------------------------------------------------
 
-const char* Shader::getRawOutput() const
-{
-	return (_compiled) ? glslopt_get_raw_output(_binding) : "";
-}
-
-//----------------------------------------------------------------------
-
 const char* Shader::getLog() const
 {
 	return (_compiled) ? glslopt_get_log(_binding) : "";
@@ -150,14 +143,6 @@ NAN_METHOD(Shader::Output)
 
 //----------------------------------------------------------------------
 
-NAN_METHOD(Shader::RawOutput)
-{
-	Shader* obj = ObjectWrap::Unwrap<Shader>(info.This());
-
-	info.GetReturnValue().Set(Nan::New<String>(obj->getRawOutput()).ToLocalChecked());
-}
-
-//----------------------------------------------------------------------
 
 NAN_METHOD(Shader::Log)
 {

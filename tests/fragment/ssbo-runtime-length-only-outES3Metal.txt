@@ -1,8 +1,11 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
-struct alignas(16) _xlat_buf_storage0_element { float4 value; };
-static_assert(sizeof(_xlat_buf_storage0_element) == 16, "array stride");
+struct _xlat_buf_Data_std430 {
+  float2 header;
+  char _pad0[8];
+  float4 values[1];
+};
 struct xlatMtlShaderInput {
 };
 struct xlatMtlShaderOutput {
@@ -11,16 +14,15 @@ struct xlatMtlShaderOutput {
 struct xlatMtlShaderUniform {
 };
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , const device uchar* _mtl_buffer1 [[buffer(1)]]
+  , const device _xlat_buf_Data_std430& data [[buffer(1)]]
   , constant uint* _mtl_buffer_sizes [[buffer(2)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  _mtl_o.color = float4(float(int((max(_mtl_buffer_sizes[1u], 16u) - 16u) / 16u)));
+  _mtl_o.color = float4(float((max(int(_mtl_buffer_sizes[1]) - 16, 0) / 16)));
   return _mtl_o;
 }
 
-
-// stats: 2 alu 0 tex 0 flow
+// stats: 1 alu 0 tex 0 flow
 // buffer #0: Data storage instance data layout std430 (size: unknown) metal 1 metal-size-buffer 2
 //  member #0: vec2 header offset 0 readonly (unused)
 //  member #1: vec4[] values offset 16 array runtime stride 16 readonly

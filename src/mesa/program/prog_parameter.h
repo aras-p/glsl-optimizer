@@ -54,22 +54,13 @@ extern "C" {
 typedef enum
 {
    PROGRAM_TEMPORARY,   /**< machine->Temporary[] */
-   PROGRAM_ARRAY,       /**< Arrays & Matrixes */
    PROGRAM_INPUT,       /**< machine->Inputs[] */
    PROGRAM_OUTPUT,      /**< machine->Outputs[] */
    PROGRAM_STATE_VAR,   /**< gl_program->Parameters[] */
    PROGRAM_CONSTANT,    /**< gl_program->Parameters[] */
    PROGRAM_UNIFORM,     /**< gl_program->Parameters[] */
-   PROGRAM_WRITE_ONLY,  /**< A dummy, write-only register */
    PROGRAM_ADDRESS,     /**< machine->AddressReg */
-   PROGRAM_SAMPLER,     /**< for shader samplers, compile-time only */
-   PROGRAM_SYSTEM_VALUE,/**< InstanceId, PrimitiveID, etc. */
    PROGRAM_UNDEFINED,   /**< Invalid/TBD value */
-   PROGRAM_IMMEDIATE,   /**< Immediate value, used by TGSI */
-   PROGRAM_BUFFER,      /**< for shader buffers, compile-time only */
-   PROGRAM_MEMORY,      /**< for shared, global and local memory */
-   PROGRAM_IMAGE,       /**< for shader images, compile-time only */
-   PROGRAM_HW_ATOMIC,   /**< for hw atomic counters, compile-time only */
    PROGRAM_FILE_MAX
 } gl_register_file;
 
@@ -107,13 +98,17 @@ struct gl_program_parameter
     * Number of components (1..4), or more.
     * If the number of components is greater than 4,
     * this parameter is part of a larger uniform like a GLSL matrix or array.
-    * The next program parameter's Size will be Size-4 of this parameter.
     */
    GLushort Size;
    /**
     * A sequence of STATE_* tokens and integers to identify GL state.
     */
    gl_state_index16 StateIndexes[STATE_LENGTH];
+
+   /**
+    * Offset within ParameterValues where this parameter is stored.
+    */
+   unsigned ValueOffset;
 
    /**
     * Index of this parameter's uniform storage.
@@ -133,14 +128,24 @@ struct gl_program_parameter
  */
 struct gl_program_parameter_list
 {
-   GLuint Size;           /**< allocated size of Parameters, ParameterValues */
+   unsigned Size;           /**< allocated size of Parameters */
+   unsigned SizeValues;     /**< alllocate size of ParameterValues */
    GLuint NumParameters;  /**< number of used parameters in array */
    unsigned NumParameterValues;  /**< number of used parameter values array */
    struct gl_program_parameter *Parameters; /**< Array [Size] */
-   unsigned *ParameterValueOffset;
    gl_constant_value *ParameterValues; /**< Array [Size] of gl_constant_value */
    GLbitfield StateFlags; /**< _NEW_* flags indicating which state changes
                                might invalidate ParameterValues[] */
+   bool DisallowRealloc;
+
+   /* Parameters are optionally sorted as follows. Uniforms and constants
+    * are first, then state vars. This should be true in all cases except
+    * ir_to_mesa, which adds constants at the end, and ARB_vp with ARL,
+    * which can't sort parameters.
+    */
+   int UniformBytes;
+   int FirstStateVarIndex;
+   int LastStateVarIndex;
 };
 
 
@@ -155,7 +160,11 @@ _mesa_free_parameter_list(struct gl_program_parameter_list *paramList);
 
 extern void
 _mesa_reserve_parameter_storage(struct gl_program_parameter_list *paramList,
-                                unsigned reserve_slots);
+                                unsigned reserve_params,
+                                unsigned reserve_values);
+
+extern void
+_mesa_disallow_parameter_storage_realloc(struct gl_program_parameter_list *paramList);
 
 extern GLint
 _mesa_add_parameter(struct gl_program_parameter_list *paramList,
@@ -167,17 +176,21 @@ _mesa_add_parameter(struct gl_program_parameter_list *paramList,
 
 extern GLint
 _mesa_add_typed_unnamed_constant(struct gl_program_parameter_list *paramList,
-                           const gl_constant_value values[4], GLuint size,
+                           const gl_constant_value *values, GLuint size,
                            GLenum datatype, GLuint *swizzleOut);
 
 static inline GLint
 _mesa_add_unnamed_constant(struct gl_program_parameter_list *paramList,
-                           const gl_constant_value values[4], GLuint size,
+                           const gl_constant_value *values, GLuint size,
                            GLuint *swizzleOut)
 {
    return _mesa_add_typed_unnamed_constant(paramList, values, size, GL_NONE,
                                            swizzleOut);
 }
+
+extern GLint
+_mesa_lookup_state_param_idx(struct gl_program_parameter_list *paramList,
+                             const gl_state_index16 stateTokens[STATE_LENGTH]);
 
 extern GLint
 _mesa_add_sized_state_reference(struct gl_program_parameter_list *paramList,
@@ -186,7 +199,7 @@ _mesa_add_sized_state_reference(struct gl_program_parameter_list *paramList,
 
 extern GLint
 _mesa_add_state_reference(struct gl_program_parameter_list *paramList,
-                          const gl_state_index16 stateTokens[]);
+                          const gl_state_index16 stateTokens[STATE_LENGTH]);
 
 
 static inline GLint
@@ -236,6 +249,9 @@ _mesa_gl_datatype_is_64bit(GLenum datatype)
       return false;
    }
 }
+
+void
+_mesa_recompute_parameter_bounds(struct gl_program_parameter_list *list);
 
 #ifdef __cplusplus
 }

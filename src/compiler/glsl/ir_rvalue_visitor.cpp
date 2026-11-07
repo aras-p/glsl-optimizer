@@ -53,6 +53,7 @@ ir_rvalue_base_visitor::rvalue_visit(ir_texture *ir)
    handle_rvalue(&ir->projector);
    handle_rvalue(&ir->shadow_comparator);
    handle_rvalue(&ir->offset);
+   handle_rvalue(&ir->clamp);
 
    switch (ir->op) {
    case ir_tex:
@@ -117,15 +118,13 @@ ir_visitor_status
 ir_rvalue_base_visitor::rvalue_visit(ir_assignment *ir)
 {
    handle_rvalue(&ir->rhs);
-   handle_rvalue(&ir->condition);
-
    return visit_continue;
 }
 
 ir_visitor_status
 ir_rvalue_base_visitor::rvalue_visit(ir_call *ir)
 {
-   foreach_in_list_safe(ir_rvalue, param, &ir->actual_parameters) {
+   ir_foreach_in_list_safe(ir_rvalue, param, &ir->actual_parameters) {
       ir_rvalue *new_param = param;
       handle_rvalue(&new_param);
 

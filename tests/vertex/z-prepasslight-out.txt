@@ -5,25 +5,15 @@ varying vec4 xlv_TEXCOORD0;
 varying vec3 xlv_TEXCOORD1;
 void main ()
 {
-  vec4 o_pos_1;
-  vec3 o_ray_2;
-  o_pos_1 = (glstate_matrix_mvp * gl_Vertex);
-  vec4 o_3;
-  o_3 = (o_pos_1 * 0.5);
-  vec2 tmpvar_4;
-  tmpvar_4.x = o_3.x;
-  tmpvar_4.y = (o_3.y * _ProjectionParams.x);
-  o_3.xy = (tmpvar_4 + o_3.w);
-  o_3.zw = o_pos_1.zw;
-  o_ray_2 = ((glstate_matrix_modelview0 * gl_Vertex).xyz * vec3(-1.0, -1.0, 1.0));
-  o_ray_2 = mix (o_ray_2, gl_Normal, vec3(float((gl_Normal.z != 0.0))));
-  gl_Position = o_pos_1;
-  xlv_TEXCOORD0 = o_3;
-  xlv_TEXCOORD1 = o_ray_2;
+  vec4 t0 = (glstate_matrix_mvp * gl_Vertex);
+  vec4 t1 = (t0 * 0.5);
+  vec2 t2 = (vec2(t1.x, (t1.y * _ProjectionParams.x)) + t1.w);
+  gl_Position = t0;
+  xlv_TEXCOORD0 = vec4(t2, t0.zw);
+  xlv_TEXCOORD1 = mix(((glstate_matrix_modelview0 * gl_Vertex).xyz * vec3(-1.0, -1.0, 1.0)), gl_Normal, vec3(float((gl_Normal.z != 0.0))));
 }
 
-
-// stats: 9 alu 0 tex 0 flow
+// stats: 21 alu 0 tex 0 flow
 // inputs: 2
 //  #0: gl_Normal (high float) 3x1 [-1] loc 1
 //  #1: gl_Vertex (high float) 4x1 [-1] loc 0

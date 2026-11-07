@@ -8,27 +8,16 @@ out highp vec4 xlv_TEXCOORD0;
 out highp vec3 xlv_TEXCOORD1;
 void main ()
 {
-  highp vec3 xlt_v_normal_1;
-  xlt_v_normal_1 = _inNormal;
-  highp vec4 o_pos_2;
-  highp vec3 o_ray_3;
-  o_pos_2 = (glstate_matrix_mvp * _inVertex);
-  highp vec4 o_4;
-  o_4 = (o_pos_2 * 0.5);
-  highp vec2 tmpvar_5;
-  tmpvar_5.x = o_4.x;
-  tmpvar_5.y = (o_4.y * _ProjectionParams.x);
-  o_4.xy = (tmpvar_5 + o_4.w);
-  o_4.zw = o_pos_2.zw;
-  o_ray_3 = ((glstate_matrix_modelview0 * _inVertex).xyz * vec3(-1.0, -1.0, 1.0));
-  o_ray_3 = mix (o_ray_3, xlt_v_normal_1, vec3(float((xlt_v_normal_1.z != 0.0))));
-  gl_Position = o_pos_2;
-  xlv_TEXCOORD0 = o_4;
-  xlv_TEXCOORD1 = o_ray_3;
+  highp vec3 t0 = _inNormal;
+  highp vec4 t1 = (glstate_matrix_mvp * _inVertex);
+  highp vec4 t2 = (t1 * 0.5);
+  highp vec2 t3 = (vec2(t2.x, (t2.y * _ProjectionParams.x)) + t2.w);
+  gl_Position = t1;
+  xlv_TEXCOORD0 = vec4(t3, t1.zw);
+  xlv_TEXCOORD1 = mix(((glstate_matrix_modelview0 * _inVertex).xyz * vec3(-1.0, -1.0, 1.0)), t0, vec3(float((t0.z != 0.0))));
 }
 
-
-// stats: 9 alu 0 tex 0 flow
+// stats: 21 alu 0 tex 0 flow
 // inputs: 2
 //  #0: _inVertex (high float) 4x1 [-1]
 //  #1: _inNormal (medium float) 3x1 [-1]

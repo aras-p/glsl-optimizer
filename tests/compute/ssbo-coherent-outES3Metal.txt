@@ -2,93 +2,57 @@
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
 #if __METAL_VERSION__ < 320
-#error Coherent storage buffers require Metal 3.2 or newer
+#error This shader requires Metal 3.2 or newer
 #endif
-template<typename A, typename T>
-inline T _xlat_atomic_comp_swap(coherent(device) device A* address, T compare, T value) {
-  T expected = compare;
-  while (!atomic_compare_exchange_weak_explicit(address, &expected, value, memory_order_relaxed, memory_order_relaxed) && expected == compare) {}
-  return expected;
-}
-template<typename A, typename T>
-inline T _xlat_atomic_comp_swap(device A* address, T compare, T value) {
-  T expected = compare;
-  while (!atomic_compare_exchange_weak_explicit(address, &expected, value, memory_order_relaxed, memory_order_relaxed) && expected == compare) {}
-  return expected;
-}
-#if __METAL_VERSION__ < 320
-#error Memory barriers require Metal 3.2 or newer
-#endif
-struct Entry {
+struct _xlat_Entry_std430 {
   float4 value;
-  float4x4 transform;
+  float4 transform[4];
 };
-struct _xlat_buf_storage2 { float4 vectors[4]; };
-static_assert(sizeof(_xlat_buf_storage2) == 64, "std430 size");
-struct alignas(16) _xlat_buf_storage1 {
-  alignas(16) float4 value;
-  alignas(16) _xlat_buf_storage2 transform;
+static_assert(sizeof(_xlat_Entry_std430) == 80, "std430 size");
+struct _xlat_buf_Input_std430 {
+  _xlat_Entry_std430 entries[1];
 };
-static_assert(sizeof(_xlat_buf_storage1) == 80, "std430 size");
-inline __attribute__((always_inline)) Entry _xlat_buf_storage1_read(const coherent(device) device _xlat_buf_storage1& storage)
-{
-  Entry value;
-  value.value = float4(storage.value);
-  value.transform = float4x4(float4(storage.transform.vectors[0].xyzw), float4(storage.transform.vectors[1].xyzw), float4(storage.transform.vectors[2].xyzw), float4(storage.transform.vectors[3].xyzw));
-  return value;
-}
-struct alignas(16) _xlat_buf_storage0_element { _xlat_buf_storage1 value; };
-static_assert(sizeof(_xlat_buf_storage0_element) == 80, "array stride");
-struct alignas(4) _xlat_buf_storage3_element { uint value; };
-static_assert(sizeof(_xlat_buf_storage3_element) == 4, "array stride");
-struct alignas(16) _xlat_buf_storage5_element { _xlat_buf_storage1 value; };
-struct _xlat_buf_storage5 { _xlat_buf_storage5_element elements[8]; };
-static_assert(sizeof(_xlat_buf_storage5) == 640, "std430 size");
-struct alignas(16) _xlat_buf_storage4 {
-  alignas(4) uint counter;
-  alignas(4) uint payload;
-  char _buf_pad2[8];
-  alignas(16) _xlat_buf_storage5 entries;
+struct _xlat_buf_Ordinary_std430 {
+  uint value;
+  uint results[1];
 };
-static_assert(sizeof(_xlat_buf_storage4) == 656, "std430 size");
+struct _xlat_buf_Output_std430 {
+  uint counter;
+  uint payload;
+  char _pad0[8];
+  _xlat_Entry_std430 entries[8];
+};
+static_assert(sizeof(_xlat_buf_Output_std430) == 656, "std430 size");
+template <typename P, typename T> inline T _xlat_atomic_comp_swap(P p, T compare, T value) { T expected = compare; atomic_compare_exchange_weak_explicit(p, &expected, value, memory_order_relaxed, memory_order_relaxed); return expected; }
 struct xlatMtlShaderUniform {
 };
 // threadsPerThreadgroup: 8, 1, 1
 kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , const coherent(device) device uchar* _mtl_buffer1 [[buffer(1)]]
-  , device uchar* _mtl_buffer2 [[buffer(2)]]
-  , coherent(device) device _xlat_buf_storage4& _mtl_buffer3 [[buffer(3)]]
+  , const device coherent(device) _xlat_buf_Input_std430& inputData [[buffer(1)]]
+  , device _xlat_buf_Ordinary_std430& ordinary [[buffer(2)]]
+  , device _xlat_buf_Output_std430& outputData [[buffer(3)]]
   , uint3 gl_GlobalInvocationID [[thread_position_in_grid]])
 {
-  uint tmpvar_1;
-  tmpvar_1 = gl_GlobalInvocationID.x;
-  Entry tmpvar_2;
-  tmpvar_2 = _xlat_buf_storage1_read(reinterpret_cast<const coherent(device) device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_GlobalInvocationID.x].value);
-  {
-    coherent(device) device _xlat_buf_storage1& _buf_dst = _mtl_buffer3.entries.elements[gl_GlobalInvocationID.x].value;
-    const thread auto& _buf_src = tmpvar_2;
-    _buf_dst.value = float4(_buf_src.value);
-    _buf_dst.transform.vectors[0].xyzw = float4(_buf_src.transform[0][0], _buf_src.transform[0][1], _buf_src.transform[0][2], _buf_src.transform[0][3]);
-    _buf_dst.transform.vectors[1].xyzw = float4(_buf_src.transform[1][0], _buf_src.transform[1][1], _buf_src.transform[1][2], _buf_src.transform[1][3]);
-    _buf_dst.transform.vectors[2].xyzw = float4(_buf_src.transform[2][0], _buf_src.transform[2][1], _buf_src.transform[2][2], _buf_src.transform[2][3]);
-    _buf_dst.transform.vectors[3].xyzw = float4(_buf_src.transform[3][0], _buf_src.transform[3][1], _buf_src.transform[3][2], _buf_src.transform[3][3]);
-  };
-  {
-    coherent(device) device _xlat_buf_storage2& _buf_matrix = _mtl_buffer3.entries.elements[gl_GlobalInvocationID.x].value.transform;
-    const auto _buf_column = (gl_GlobalInvocationID.x & 3u);
-    const auto _buf_component = 1;
-    reinterpret_cast<coherent(device) device float*>(&_buf_matrix.vectors[_buf_column])[_buf_component] = float(tmpvar_2.value.x);
-  };
-  uint tmpvar_3;
-  tmpvar_3 = _xlat_atomic_comp_swap (reinterpret_cast<coherent(device) device atomic_uint*>(&_mtl_buffer3.counter), uint(tmpvar_1), uint((gl_GlobalInvocationID.x + 1u)));
-  uint tmpvar_4;
-  tmpvar_4 = _xlat_atomic_comp_swap (reinterpret_cast<device atomic_uint*>(&(*reinterpret_cast<device uint*>(_mtl_buffer2 + 0))), uint(tmpvar_1), uint((gl_GlobalInvocationID.x + 1u)));
+  uint t0 = gl_GlobalInvocationID.x;
+  float4 t1 = float4(inputData.entries[int(t0)].value);
+  float4 t2 = float4(inputData.entries[int(t0)].transform[0]);
+  float4 t3 = float4(inputData.entries[int(t0)].transform[1]);
+  float4 t4 = float4(inputData.entries[int(t0)].transform[2]);
+  float4 t5 = float4(inputData.entries[int(t0)].transform[3]);
+  outputData.entries[int(t0)].value = t1;
+  outputData.entries[int(t0)].transform[0] = t2;
+  outputData.entries[int(t0)].transform[1] = t3;
+  outputData.entries[int(t0)].transform[2] = t4;
+  outputData.entries[int(t0)].transform[3] = t5;
+  outputData.entries[int(t0)].transform[int((gl_GlobalInvocationID.x & 3u))][1] = float4(0.0, t1.x, 0.0, 0.0).y;
+  int t6 = (1 + int(gl_GlobalInvocationID.x));
+  uint t7 = _xlat_atomic_comp_swap((device atomic_uint*)&outputData.counter, t0, uint(t6));
+  uint t8 = _xlat_atomic_comp_swap((device atomic_uint*)&ordinary.value, t0, uint(t6));
   atomic_thread_fence(mem_flags::mem_device, memory_order_seq_cst, thread_scope_device);
-  reinterpret_cast<device _xlat_buf_storage3_element*>(_mtl_buffer2 + 4)[gl_GlobalInvocationID.x].value = uint(((uint(_mtl_buffer3.payload) + tmpvar_3) + tmpvar_4));
+  ordinary.results[int(t0)] = uint(((int(uint(outputData.payload)) + int(t7)) + int(t8)));
 }
 
-
-// stats: 5 alu 0 tex 0 flow
+// stats: 4 alu 0 tex 0 flow
 // workgroup size: 8 1 1
 // buffer #0: Input storage instance inputData layout std430 binding 0 (size: unknown) metal 1
 //  member #0: Entry[] entries offset 0 array runtime stride 80 readonly

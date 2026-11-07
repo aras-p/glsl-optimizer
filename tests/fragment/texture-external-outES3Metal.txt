@@ -13,19 +13,17 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   , texture2d<half> tex [[texture(0)]], sampler _mtlsmp_tex [[sampler(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  float4 tmpvar_1 = 0;
-  tmpvar_1.zw = float2(0.0, 0.0);
-  tmpvar_1.xy = float2(int2(tex.get_width(0), tex.get_height(0)));
-  _mtl_o.color = half4(((float4)(((
-    ((tex.sample(_mtlsmp_tex, (float2)((_mtl_i.uv.xy))) + tex.sample(_mtlsmp_tex, (float2)((_mtl_i.uv.xy)) / (float)(_mtl_i.uv.z))) + (tex.sample(_mtlsmp_tex, (float2)((_mtl_i.uv.xy)) / (float)(_mtl_i.uv.w)) + tex.sample(_mtlsmp_tex, (float2)((_mtl_i.uv.xy)), bias(_mtl_i.uv.w))))
-   + 
-    (tex.sample(_mtlsmp_tex, (float2)((_mtl_i.uv.xy)) / (float)(_mtl_i.uv.z), bias(_mtl_i.uv.w)) + tex.sample(_mtlsmp_tex, (float2)((_mtl_i.uv.xy)) / (float)(_mtl_i.uv.w), bias(_mtl_i.uv.z)))
-  ) + tex.read(uint2(short2(_mtl_i.uv.xy)), uint(0)))) + tmpvar_1));
+  half2 t0 = _mtl_i.uv.xy;
+  half t1 = _mtl_i.uv.z;
+  half t2 = _mtl_i.uv.w;
+  half4 t3 = (((tex.sample(_mtlsmp_tex, float2(t0)) + tex.sample(_mtlsmp_tex, (float2(t0) / float(t1)))) + tex.sample(_mtlsmp_tex, (float2(t0) / float(t2)))) + tex.sample(_mtlsmp_tex, float2(t0), bias(float(t2))));
+  half4 t4 = (((t3 + tex.sample(_mtlsmp_tex, (float2(t0) / float(t1)), bias(float(t2)))) + tex.sample(_mtlsmp_tex, (float2(t0) / float(t2)), bias(float(t1)))) + tex.read(uint2(short2(_mtl_i.uv.xy)), uint(0)));
+  float2 t5 = float2(int2(tex.get_width(uint(0)), tex.get_height(uint(0))));
+  _mtl_o.color = half4((float4(t4) + float4(t5, 0.0, 0.0)));
   return _mtl_o;
 }
 
-
-// stats: 10 alu 8 tex 0 flow
+// stats: 9 alu 8 tex 0 flow
 // inputs: 1
 //  #0: uv (medium float) 4x1 [-1]
 // textures: 1

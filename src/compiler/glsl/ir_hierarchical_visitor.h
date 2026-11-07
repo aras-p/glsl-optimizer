@@ -147,7 +147,7 @@ public:
    /**
     * Utility function to process a linked list of instructions with a visitor
     */
-   void run(struct exec_list *instructions);
+   void run(struct ir_exec_list *instructions);
 
    /**
     * Utility function to call both the leave and enter callback functions.
@@ -209,7 +209,7 @@ void visit_tree(ir_instruction *ir,
 		void (*callback_leave)(class ir_instruction *ir, void *data) = NULL,
 		void *data_leave = NULL);
 
-ir_visitor_status visit_list_elements(ir_hierarchical_visitor *v, exec_list *l,
+ir_visitor_status visit_list_elements(ir_hierarchical_visitor *v, ir_exec_list *l,
                                       bool statement_list = true);
 #endif /* __cplusplus */
 

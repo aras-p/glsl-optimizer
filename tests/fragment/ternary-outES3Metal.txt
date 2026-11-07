@@ -12,50 +12,14 @@ struct xlatMtlShaderUniform {
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half4 c_1 = 0;
-  c_1 = half4(float4(0.0, 0.0, 0.0, 0.0));
-  float tmpvar_2 = 0;
-  if ((0.5 < _mtl_i.xlv_TEXCOORD0.x)) {
-    tmpvar_2 = 0.9;
-  } else {
-    tmpvar_2 = 0.1;
-  };
-  c_1 = half4(float4(tmpvar_2));
-  float4 tmpvar_3 = 0;
-  if ((0.5 < _mtl_i.xlv_TEXCOORD0.x)) {
-    tmpvar_3 = float4(0.9, 0.9, 0.9, 0.9);
-  } else {
-    tmpvar_3 = float4(0.1, 0.1, 0.1, 0.1);
-  };
-  c_1 = half4((float4(tmpvar_2) + tmpvar_3));
-  float3 tmpvar_4 = 0;
-  if ((0.5 < _mtl_i.xlv_TEXCOORD0.x)) {
-    tmpvar_4 = float3(0.9, 0.9, 0.9);
-  } else {
-    tmpvar_4 = float3(0.1, 0.1, 0.1);
-  };
-  c_1.xyz = (c_1.xyz + (half3)(tmpvar_4));
-  float2 tmpvar_5 = 0;
-  if ((0.5 < _mtl_i.xlv_TEXCOORD0.x)) {
-    tmpvar_5 = float2(0.9, 0.9);
-  } else {
-    tmpvar_5 = float2(0.1, 0.1);
-  };
-  c_1.xy = (c_1.xy + (half2)(tmpvar_5));
-  float tmpvar_6 = 0;
-  tmpvar_6 = fract(_mtl_i.xlv_TEXCOORD0.x);
-  float tmpvar_7 = 0;
-  if (bool(tmpvar_6)) {
-    tmpvar_7 = 0.9;
-  } else {
-    tmpvar_7 = 0.1;
-  };
-  c_1.x = (c_1.x + (half)(tmpvar_7));
-  _mtl_o._fragData = c_1;
+  bool t0 = (0.5 < _mtl_i.xlv_TEXCOORD0.x);
+  float4 t1 = (t0 ? float4(1.8) : float4(0.2));
+  float3 t2 = (t1.xyz + (t0 ? float3(0.9) : float3(0.1)));
+  float2 t3 = (t2.xy + (t0 ? float2(0.9) : float2(0.1)));
+  _mtl_o._fragData = half4(float4((t3.x + ((fract(_mtl_i.xlv_TEXCOORD0.x) != 0.0) ? 0.9 : 0.1)), t3.y, t2.z, t1.w));
   return _mtl_o;
 }
 
-
-// stats: 21 alu 0 tex 5 flow
+// stats: 10 alu 0 tex 0 flow
 // inputs: 1
 //  #0: xlv_TEXCOORD0 (high float) 4x1 [-1]

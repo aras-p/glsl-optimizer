@@ -13,45 +13,41 @@ struct xlatMtlShaderUniform {
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  int arrayIndex_1 = 0;
-  int starts_2[2];
-  int start_4 = 0;
-  int liveIndex_5 = 0;
-  float sum_7 = 0;
-  sum_7 = _mtl_u.values[0];
-  for (int privateIndex_6 = 0; privateIndex_6 < _mtl_u.bound; privateIndex_6++) {
-    sum_7 = (sum_7 + _mtl_u.values[privateIndex_6]);
-  };
-  liveIndex_5 = 0;
-  for (; liveIndex_5 < _mtl_u.bound; liveIndex_5++) {
-    sum_7 = (sum_7 + _mtl_u.values[liveIndex_5]);
-  };
-  sum_7 = (sum_7 + float(liveIndex_5));
-  int tmpvar_8 = 0;
-  tmpvar_8 = int(sum_7);
-  start_4 = (tmpvar_8 + _mtl_u.bound);
-  for (int snapshotIndex_3 = tmpvar_8; snapshotIndex_3 < start_4; snapshotIndex_3++) {
-    sum_7 = (sum_7 + _mtl_u.values[snapshotIndex_3]);
-  };
-  starts_2[0] = int(sum_7);
-  starts_2[1] = _mtl_u.bound;
-  arrayIndex_1 = starts_2[(_mtl_u.bound & 1)];
-  if ((0.0 < sum_7)) {
-    int tmpvar_9 = 0;
-    tmpvar_9 = (_mtl_u.bound & 1);
-    starts_2[tmpvar_9] = (starts_2[tmpvar_9] + 1);
-  };
-  for (; arrayIndex_1 < _mtl_u.bound; arrayIndex_1++) {
-    sum_7 = (sum_7 + (_mtl_u.values[arrayIndex_1] + float(starts_2[
-      (arrayIndex_1 & 1)
-    ])));
-  };
-  _mtl_o.color = float4(sum_7);
+  int r0 = 0;
+  int r1 = 0;
+  float r2 = 0;
+  int r3 = 0;
+  int r4 = 0;
+  float r5 = 0;
+  int starts[2];
+  r2 = _mtl_u.values[0];
+  for (r0 = 0; (r0 < _mtl_u.bound); r0++) {
+    r2 = (r2 + _mtl_u.values[r0]);
+  }
+  for (r1 = 0; (r1 < _mtl_u.bound); r1++) {
+    r2 = (r2 + _mtl_u.values[r1]);
+  }
+  r5 = (r2 + float(r1));
+  r3 = int(r5);
+  int t0 = (r3 + _mtl_u.bound);
+  for (; (r3 < t0); r3++) {
+    r5 = (r5 + _mtl_u.values[r3]);
+  }
+  starts[0] = int(r5);
+  starts[1] = _mtl_u.bound;
+  uint t1 = (uint(_mtl_u.bound) & 1u);
+  r4 = starts[int(t1)];
+  if ((0.0 < r5)) {
+    starts[int(t1)] = (r4 + 1);
+  }
+  for (; (r4 < _mtl_u.bound); r4++) {
+    r5 = (r5 + (_mtl_u.values[r4] + float(starts[int((uint(r4) & 1u))])));
+  }
+  _mtl_o.color = float4(r5);
   return _mtl_o;
 }
 
-
-// stats: 26 alu 0 tex 9 flow
+// stats: 23 alu 0 tex 9 flow
 // uniforms: 2 (total size: 132)
 //  #0: bound (high int) 1x1 [-1] loc 0
 //  #1: values (high float) 1x1 [32] loc 4

@@ -4,31 +4,20 @@ uniform vec4 _ProjectionParams;
 varying vec4 xlv_FOG;
 void main ()
 {
-  vec4 o_hip_pack0_1;
-  vec4 tmpvar_2;
-  tmpvar_2 = (gl_ModelViewProjectionMatrix * gl_Vertex);
-  o_hip_pack0_1.xy = ((gl_MultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
-  o_hip_pack0_1.zw = ((gl_MultiTexCoord0.xy * _Illum_ST.xy) + _Illum_ST.zw);
-  vec4 o_3;
-  o_3 = (tmpvar_2 * 0.5);
-  vec2 tmpvar_4;
-  tmpvar_4.x = o_3.x;
-  tmpvar_4.y = (o_3.y * _ProjectionParams.x);
-  o_3.xy = (tmpvar_4 + o_3.w);
-  o_3.zw = tmpvar_2.zw;
-  gl_Position = tmpvar_2;
-  vec4 tmpvar_5;
-  tmpvar_5.yzw = vec3(0.0, 0.0, 0.0);
-  tmpvar_5.x = tmpvar_2.z;
-  xlv_FOG = tmpvar_5;
-  gl_TexCoord[0] = o_hip_pack0_1;
-  gl_TexCoord[1] = o_3;
+  vec4 t0 = (gl_ModelViewProjectionMatrix * gl_Vertex);
+  vec2 t1 = ((gl_MultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
+  vec2 t2 = ((gl_MultiTexCoord0.xy * _Illum_ST.xy) + _Illum_ST.zw);
+  vec4 t3 = (t0 * 0.5);
+  vec2 t4 = (vec2(t3.x, (t3.y * _ProjectionParams.x)) + t3.w);
+  gl_Position = t0;
+  xlv_FOG = vec4(t0.z, 0.0, 0.0, 0.0);
+  gl_TexCoord[0] = vec4(t1, t2);
+  gl_TexCoord[1] = vec4(t4, t0.zw);
 }
 
-
-// stats: 9 alu 0 tex 0 flow
+// stats: 14 alu 0 tex 0 flow
 // inputs: 2
-//  #0: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 7
+//  #0: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 6
 //  #1: gl_Vertex (high float) 4x1 [-1] loc 0
 // uniforms: 4 (total size: 0)
 //  #0: gl_ModelViewProjectionMatrix (high float) 4x4 [-1]

@@ -1,12 +1,6 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
-inline float4x4 _xlcast_float4x4(half4x4 v) { return float4x4(float4(v[0]), float4(v[1]), float4(v[2]), float4(v[3])); }
-inline float3x3 _xlcast_float3x3(half3x3 v) { return float3x3(float3(v[0]), float3(v[1]), float3(v[2])); }
-inline float2x2 _xlcast_float2x2(half2x2 v) { return float2x2(float2(v[0]), float2(v[1])); }
-inline half4x4 _xlcast_half4x4(float4x4 v) { return half4x4(half4(v[0]), half4(v[1]), half4(v[2]), half4(v[3])); }
-inline half3x3 _xlcast_half3x3(float3x3 v) { return half3x3(half3(v[0]), half3(v[1]), half3(v[2])); }
-inline half2x2 _xlcast_half2x2(float2x2 v) { return half2x2(half2(v[0]), half2(v[1])); }
 struct xlatMtlShaderInput {
   float4 xlv_TEXCOORD0;
   float4 xlv_TEXCOORD1;
@@ -23,67 +17,22 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   , texture2d<half> _DecalNorm [[texture(1)]], sampler _mtlsmp__DecalNorm [[sampler(1)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half4 res_1 = 0;
-  half3 worldN_2 = 0;
-  half3 tmpvar_3 = 0;
-  float3x3 nBasis_4;
-  half3 detailNormal_5 = 0;
-  half3 tmpvar_6 = 0;
-  tmpvar_6 = ((_DecalNorm.sample(_mtlsmp__DecalNorm, (float2)((_mtl_i.xlv_TEXCOORD0.zw))).xyz * (half)(2.0)) - (half)(1.0));
-  detailNormal_5 = ((_PanelNorm.sample(_mtlsmp__PanelNorm, (float2)((_mtl_i.xlv_TEXCOORD0.xy))).xyz * (half)(2.0)) - (half)(1.0));
-  half3 tmpvar_7 = 0;
-  tmpvar_7.x = tmpvar_6.z;
-  tmpvar_7.y = tmpvar_6.y;
-  tmpvar_7.z = -(tmpvar_6.x);
-  half3 tmpvar_8 = 0;
-  tmpvar_8.x = tmpvar_6.x;
-  tmpvar_8.y = tmpvar_6.z;
-  tmpvar_8.z = -(tmpvar_6.y);
-  half3x3 tmpvar_9;
-  tmpvar_9[0u].x = tmpvar_7[0];
-  tmpvar_9[0u].y = tmpvar_8[0];
-  tmpvar_9[0u].z = tmpvar_6[0];
-  tmpvar_9[1u].x = tmpvar_7[1];
-  tmpvar_9[1u].y = tmpvar_8[1];
-  tmpvar_9[1u].z = tmpvar_6[1];
-  tmpvar_9[2u].x = tmpvar_7[2];
-  tmpvar_9[2u].y = tmpvar_8[2];
-  tmpvar_9[2u].z = tmpvar_6[2];
-  nBasis_4 = _xlcast_float3x3(tmpvar_9);
-  half3x3 tmpvar_10;
-  tmpvar_10 = _xlcast_half3x3(nBasis_4);
-  half3 v_11 = 0;
-  v_11.x = tmpvar_10[0][0];
-  v_11.y = tmpvar_10[1][0];
-  v_11.z = tmpvar_10[2][0];
-  half3x3 tmpvar_12;
-  tmpvar_12 = _xlcast_half3x3(nBasis_4);
-  half3 v_13 = 0;
-  v_13.x = tmpvar_12[0][1];
-  v_13.y = tmpvar_12[1][1];
-  v_13.z = tmpvar_12[2][1];
-  half3x3 tmpvar_14;
-  tmpvar_14 = _xlcast_half3x3(nBasis_4);
-  half3 v_15 = 0;
-  v_15.x = tmpvar_14[0][2];
-  v_15.y = tmpvar_14[1][2];
-  v_15.z = tmpvar_14[2][2];
-  tmpvar_3 = normalize(((
-    (detailNormal_5.x * v_11)
-   + 
-    (detailNormal_5.y * v_13)
-  ) + (detailNormal_5.z * v_15)));
-  worldN_2.x = half(dot (_mtl_i.xlv_TEXCOORD1.xyz, (float3)tmpvar_3));
-  worldN_2.y = half(dot (_mtl_i.xlv_TEXCOORD2.xyz, (float3)tmpvar_3));
-  worldN_2.z = half(dot (_mtl_i.xlv_TEXCOORD3.xyz, (float3)tmpvar_3));
-  res_1.xyz = ((worldN_2 * (half)(0.5)) + (half)(0.5));
-  res_1.w = half(0.0);
-  _mtl_o._fragData = res_1;
+  half3 t0 = ((_DecalNorm.sample(_mtlsmp__DecalNorm, _mtl_i.xlv_TEXCOORD0.zw).xyz * half(2.0)) - half(1.0));
+  half3 t1 = half3(t0.zxx);
+  half3 t2 = half3(t0.yzy);
+  half3 t3 = half3((-t0.x), (-t0.y), t0.z);
+  half3 t4 = ((_PanelNorm.sample(_mtlsmp__PanelNorm, _mtl_i.xlv_TEXCOORD0.xy).xyz * half(2.0)) - half(1.0));
+  half3 t5 = (half3x3(half3(t1.x, t2.x, t3.x), half3(t1.y, t2.y, t3.y), half3(t1.z, t2.z, t3.z)) * t4);
+  half3 t6 = normalize(t5);
+  half3 t7 = half3(float3(dot(_mtl_i.xlv_TEXCOORD1.xyz, float3(t6))));
+  half3 t8 = half3(float3(dot(_mtl_i.xlv_TEXCOORD2.xyz, float3(t6))));
+  half3 t9 = half3(float3(dot(_mtl_i.xlv_TEXCOORD3.xyz, float3(t6))));
+  half3 t10 = ((half3(t7.x, t8.y, t9.z) * half(0.5)) + half(0.5));
+  _mtl_o._fragData = half4(t10, half(0.0));
   return _mtl_o;
 }
 
-
-// stats: 18 alu 2 tex 0 flow
+// stats: 17 alu 2 tex 0 flow
 // inputs: 4
 //  #0: xlv_TEXCOORD0 (high float) 4x1 [-1]
 //  #1: xlv_TEXCOORD1 (high float) 4x1 [-1]

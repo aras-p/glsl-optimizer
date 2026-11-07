@@ -1,24 +1,23 @@
 #version 310 es
-layout(local_size_x=1) in;
+layout(local_size_x = 1) in;
 struct Entry {
   highp mat4 transform;
   highp vec4 color;
 };
-layout(std140, column_major, binding=3) buffer Output {
-  layout(column_major) writeonly coherent Entry value;
+layout(std140, binding = 3) coherent buffer Output {
+  coherent writeonly Entry value;
 } outputData;
-layout(std140, column_major, binding=2) buffer Ordinary {
-  layout(column_major) Entry value;
+layout(std140, binding = 2) buffer Ordinary {
+  Entry value;
 } ordinary;
-layout(std140, column_major, binding=0) buffer Input {
-  layout(column_major) readonly coherent Entry value;
+layout(std140, binding = 0) coherent buffer Input {
+  coherent readonly Entry value;
 } inputData[2];
 void main ()
 {
   ordinary.value = inputData[1].value;
   outputData.value = ordinary.value;
 }
-
 
 // stats: 0 alu 0 tex 0 flow
 // workgroup size: 1 1 1

@@ -1,12 +1,13 @@
 #version 300 es
 #extension GL_EXT_shader_framebuffer_fetch : enable
-layout(location=0) inout mediump vec4 _glesFragData[4];
+precision highp float;
+precision highp int;
+layout(location = 0) inout mediump vec4 _glesFragData[4];
 in highp vec2 inUV;
 void main ()
 {
   _glesFragData[0] = inUV.xxxx;
 }
-
 
 // stats: 0 alu 0 tex 0 flow
 // inputs: 1

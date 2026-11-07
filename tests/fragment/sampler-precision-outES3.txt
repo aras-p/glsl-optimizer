@@ -1,4 +1,6 @@
 #version 300 es
+precision highp float;
+precision highp int;
 out mediump vec4 _fragData;
 uniform mediump sampler2D texlow;
 uniform mediump sampler2D texmed;
@@ -9,15 +11,11 @@ uniform highp samplerCube cubehigh;
 in highp vec4 varUV;
 void main ()
 {
-  mediump vec4 c_1;
-  c_1 = (texture (texlow, varUV.xy) + texture (texmed, varUV.xy));
-  c_1 = (c_1 + texture (texhigh, varUV.xy));
-  c_1 = (c_1 + texture (cubelow, varUV.xyz));
-  c_1 = (c_1 + texture (cubemed, varUV.xyz));
-  c_1 = (c_1 + texture (cubehigh, varUV.xyz));
-  _fragData = c_1;
+  highp vec2 t0 = varUV.xy;
+  mediump vec4 t1 = ((texture(texlow, t0) + texture(texmed, t0)) + texture(texhigh, t0));
+  highp vec3 t2 = varUV.xyz;
+  _fragData = (((t1 + texture(cubelow, t2)) + texture(cubemed, t2)) + texture(cubehigh, t2));
 }
-
 
 // stats: 5 alu 6 tex 0 flow
 // inputs: 1

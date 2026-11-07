@@ -1,24 +1,16 @@
 #version 310 es
-layout(local_size_x=8, local_size_y=4) in;
-layout(rgba16f, binding=2) readonly uniform highp image2D sourceImage;
-layout(rgba8, binding=5) writeonly uniform highp image2D destinationImage;
+layout(local_size_x = 8, local_size_y = 4) in;
+layout(rgba16f, binding = 2) readonly uniform highp image2D sourceImage;
+layout(rgba8, binding = 5) writeonly uniform highp image2D destinationImage;
 uniform highp sampler2D sampledImage;
 void main ()
 {
-  highp ivec2 tmpvar_1;
-  tmpvar_1 = ivec2(gl_GlobalInvocationID.xy);
-  highp ivec2 tmpvar_2;
-  tmpvar_2 = imageSize (destinationImage);
-  if ((greaterThanEqual (tmpvar_1, tmpvar_2) != bvec2(0, 0))) {
-    return;
-  };
-  highp vec4 tmpvar_3;
-  tmpvar_3 = imageLoad (sourceImage, tmpvar_1);
-  imageStore (destinationImage, tmpvar_1, (tmpvar_3 + texelFetch (sampledImage, tmpvar_1, 0)));
+  if ((!(greaterThanEqual(ivec2(gl_GlobalInvocationID.xy), imageSize(destinationImage)) != bvec2(false)))) {
+    imageStore(destinationImage, ivec2(uvec4(gl_GlobalInvocationID.xy, 0u, 0u).xy), (imageLoad(sourceImage, ivec2(uvec4(gl_GlobalInvocationID.xy, 0u, 0u).xy)) + texelFetch(sampledImage, ivec2(gl_GlobalInvocationID.xy), 0)));
+  }
 }
 
-
-// stats: 4 alu 4 tex 2 flow
+// stats: 4 alu 4 tex 1 flow
 // workgroup size: 8 4 1
 // textures: 3
 //  #0: sourceImage (high image2d) 0x0 [-1] loc 2 format rgba16f component float readonly

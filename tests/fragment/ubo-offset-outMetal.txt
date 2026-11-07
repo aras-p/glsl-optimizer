@@ -1,17 +1,17 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
-struct _xlat_buf_storage1 { float4 vectors[2]; };
-static_assert(sizeof(_xlat_buf_storage1) == 32, "std140 size");
-struct alignas(16) _xlat_buf_storage0 {
-  char _buf_pad0[32];
-  alignas(16) packed_float3 direction;
-  char _buf_pad1[4];
-  alignas(16) _xlat_buf_storage1 transform;
-  char _buf_pad2[16];
-  alignas(4) float weight;
+struct _xlat_element_float2_16 { float2 value; char _pad[8]; };
+struct _xlat_buf_Material_std140 {
+  char _pad0[32];
+  packed_float3 direction;
+  char _pad1[4];
+  _xlat_element_float2_16 transform[2];
+  char _pad2[16];
+  float weight;
+  char _pad3[12];
 };
-static_assert(sizeof(_xlat_buf_storage0) == 112, "std140 size");
+static_assert(sizeof(_xlat_buf_Material_std140) == 112, "std140 size");
 struct xlatMtlShaderInput {
 };
 struct xlatMtlShaderOutput {
@@ -20,19 +20,16 @@ struct xlatMtlShaderOutput {
 struct xlatMtlShaderUniform {
 };
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , constant _xlat_buf_storage0& _mtl_buffer1 [[buffer(1)]])
+  , constant _xlat_buf_Material_std140& material [[buffer(1)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  float4 tmpvar_1 = 0;
-  tmpvar_1.w = 1.0;
-  tmpvar_1.xy = (transpose(float2x2(float2(_mtl_buffer1.transform.vectors[0].xy), float2(_mtl_buffer1.transform.vectors[1].xy))) * float3(_mtl_buffer1.direction).xy);
-  tmpvar_1.z = float(_mtl_buffer1.weight);
-  _mtl_o.color = tmpvar_1;
+  float3 t0 = float3(material.direction);
+  float2 t1 = (float2x2(float2(float2(material.transform[0].value[0], material.transform[1].value[0])), float2(float2(material.transform[0].value[1], material.transform[1].value[1]))) * t0.xy);
+  _mtl_o.color = float4(t1, float(material.weight), 1.0);
   return _mtl_o;
 }
 
-
-// stats: 2 alu 0 tex 0 flow
+// stats: 3 alu 0 tex 0 flow
 // buffer #0: Material instance material layout std140 binding 5 (size: 112) metal 1
 //  member #0: vec3 direction offset 32
 //  member #1: mat2 transform offset 48 matrix-stride 16 row-major

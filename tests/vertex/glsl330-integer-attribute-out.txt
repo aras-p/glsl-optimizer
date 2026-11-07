@@ -1,18 +1,14 @@
 #version 330
-layout(location=2) in vec3 position;
-layout(location=4) in uvec2 ids;
+layout(location = 2) in vec3 position;
+layout(location = 4) in uvec2 ids;
 flat out uint objectID;
 void main ()
 {
-  vec4 tmpvar_1;
-  tmpvar_1.w = 1.0;
-  tmpvar_1.xyz = position;
-  gl_Position = tmpvar_1;
-  objectID = ((ids.x << 16u) | (ids.y & 65535u));
+  gl_Position = vec4(position, 1.0);
+  objectID = (uint((int(ids.x) << 16u)) | (ids.y & 65535u));
 }
 
-
-// stats: 4 alu 0 tex 0 flow
+// stats: 3 alu 0 tex 0 flow
 // inputs: 2
-//  #0: position (high float) 3x1 [-1] loc 18
-//  #1: ids (high int) 2x1 [-1] loc 20
+//  #0: position (high float) 3x1 [-1] loc 17
+//  #1: ids (high int) 2x1 [-1] loc 19

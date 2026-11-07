@@ -16,32 +16,27 @@ struct xlatMtlShaderUniform {
 vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half4 o_pos_1 = 0;
-  half4 o_color_2 = 0;
-  o_pos_1 = half4((_mtl_u.UNITY_MATRIX_MVP * _mtl_i._inVertex));
-  o_color_2 = half4(_mtl_u.unity_LightColor[0]);
-  o_color_2 = half4(((float4)(o_color_2) + _mtl_u.unity_LightColor[1]));
-  o_color_2 = half4(((float4)(o_color_2) + _mtl_u.unity_LightColor[0]));
-  o_color_2 = half4(((float4)(o_color_2) + _mtl_u.unity_LightColor[1]));
-  o_color_2 = half4(((float4)(o_color_2) + _mtl_u.unity_LightColor[2]));
-  o_color_2 = half4(((float4)(o_color_2) + _mtl_u.unity_LightColor[3]));
-  o_color_2 = half4(((float4)(o_color_2) + _mtl_u.unity_LightColor[3]));
-  o_color_2 = half4(((float4)(o_color_2) + _mtl_u.unity_LightColor[2]));
-  o_color_2 = half4(((float4)(o_color_2) + _mtl_u.unity_LightColor[1]));
-  o_color_2 = half4(((float4)(o_color_2) + _mtl_u.unity_LightColor[0]));
-  o_color_2 = half4(((float4)(o_color_2) + (_mtl_u.unity_LightColor[0] * _mtl_u.unity_LightAtten[0].x)));
-  o_color_2 = half4(((float4)(o_color_2) + (_mtl_u.unity_LightColor[1] * _mtl_u.unity_LightAtten[1].x)));
-  o_color_2 = half4(((float4)(o_color_2) + (_mtl_u.unity_LightColor[0] * _mtl_u.unity_LightAtten[0].z)));
-  o_color_2 = half4(((float4)(o_color_2) + (_mtl_u.unity_LightColor[1] * _mtl_u.unity_LightAtten[1].z)));
-  o_color_2 = half4(((float4)(o_color_2) + _mtl_u.unity_LightColor[1].x));
-  o_color_2 = half4(((float4)(o_color_2) + _mtl_u.unity_LightColor[2].x));
-  _mtl_o.gl_Position = float4(o_pos_1);
-  _mtl_o.xlv_TEXCOORD0 = o_color_2;
+  half4 t0 = half4(_mtl_u.unity_LightColor[0]);
+  half4 t1 = half4((float4(t0) + _mtl_u.unity_LightColor[1]));
+  half4 t2 = half4((float4(t1) + _mtl_u.unity_LightColor[0]));
+  half4 t3 = half4((float4(t2) + _mtl_u.unity_LightColor[1]));
+  half4 t4 = half4((float4(t3) + _mtl_u.unity_LightColor[2]));
+  half4 t5 = half4((float4(t4) + _mtl_u.unity_LightColor[3]));
+  half4 t6 = half4((float4(t5) + _mtl_u.unity_LightColor[3]));
+  half4 t7 = half4((float4(t6) + _mtl_u.unity_LightColor[2]));
+  half4 t8 = half4((float4(t7) + _mtl_u.unity_LightColor[1]));
+  half4 t9 = half4((float4(t8) + _mtl_u.unity_LightColor[0]));
+  half4 t10 = half4((float4(t9) + (_mtl_u.unity_LightColor[0] * _mtl_u.unity_LightAtten[0].x)));
+  half4 t11 = half4((float4(t10) + (_mtl_u.unity_LightColor[1] * _mtl_u.unity_LightAtten[1].x)));
+  half4 t12 = half4((float4(t11) + (_mtl_u.unity_LightColor[0] * _mtl_u.unity_LightAtten[0].z)));
+  half4 t13 = half4((float4(t12) + (_mtl_u.unity_LightColor[1] * _mtl_u.unity_LightAtten[1].z)));
+  half4 t14 = half4((float4(t13) + _mtl_u.unity_LightColor[1].x));
+  _mtl_o.gl_Position = float4(half4((_mtl_u.UNITY_MATRIX_MVP * _mtl_i._inVertex)));
+  _mtl_o.xlv_TEXCOORD0 = half4((float4(t14) + _mtl_u.unity_LightColor[2].x));
   return _mtl_o;
 }
 
-
-// stats: 20 alu 0 tex 0 flow
+// stats: 26 alu 0 tex 0 flow
 // inputs: 1
 //  #0: _inVertex (high float) 4x1 [-1] loc 0
 // uniforms: 3 (total size: 192)

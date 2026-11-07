@@ -41,6 +41,13 @@ string_to_uint_map_ctor();
 void
 string_to_uint_map_dtor(struct string_to_uint_map *);
 
+void
+string_to_uint_map_put(struct string_to_uint_map *map,
+                       unsigned value, const char *key);
+
+bool
+string_to_uint_map_get(struct string_to_uint_map *map,
+                       unsigned *value, const char *key);
 
 #ifdef __cplusplus
 }
@@ -70,6 +77,9 @@ public:
       hash_table_call_foreach(this->ht, delete_key, NULL);
       _mesa_hash_table_destroy(this->ht, NULL);
    }
+
+   string_to_uint_map(const string_to_uint_map &) = delete;
+   string_to_uint_map & operator=(const string_to_uint_map &) = delete;
 
    /**
     * Remove all mappings from this map.

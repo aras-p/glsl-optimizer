@@ -22,13 +22,11 @@ assert.equal(typeof compiler.dispose, 'function', 'exports Compiler#dispose()');
 var shader = new glslOptimizer.Shader(compiler, glslOptimizer.FRAGMENT_SHADER, frag);
 
 var didCompile = shader.compiled();
-var raw = shader.rawOutput();
 var output = shader.output();
 var log = shader.log();
 
 assert.equal(didCompile, true, 'shader compiles');
 assert.ok(output.length > 0, 'optimized source is returned');
-assert.equal(typeof raw, 'string', 'exports rawOutput()');
 assert.equal(typeof output, 'string', 'exports output()');
 assert.equal(typeof log, 'string', 'exports log()');
 

@@ -1,22 +1,21 @@
 #version 300 es
 #extension GL_OES_EGL_image_external_essl3 : enable
+precision highp float;
+precision highp int;
 uniform mediump samplerExternalOES tex;
 out mediump vec4 color;
 in mediump vec4 uv;
 void main ()
 {
-  highp vec4 tmpvar_1;
-  tmpvar_1.zw = vec2(0.0, 0.0);
-  tmpvar_1.xy = vec2(textureSize (tex, 0));
-  color = (((
-    ((texture (tex, uv.xy) + textureProj (tex, vec3(uv.xy, uv.z))) + (textureProj (tex, vec3(uv.xy, uv.w)) + texture (tex, uv.xy, uv.w)))
-   + 
-    (textureProj (tex, vec3(uv.xy, uv.z), uv.w) + textureProj (tex, vec3(uv.xy, uv.w), uv.z))
-  ) + texelFetch (tex, ivec2(uv.xy), 0)) + tmpvar_1);
+  mediump vec2 t0 = uv.xy;
+  mediump float t1 = uv.z;
+  mediump float t2 = uv.w;
+  mediump vec4 t3 = (((((texture(tex, t0) + textureProj(tex, vec3(t0, t1))) + textureProj(tex, vec3(t0, t2))) + texture(tex, t0, t2)) + textureProj(tex, vec3(t0, t1), t2)) + textureProj(tex, vec3(t0, t2), t1));
+  highp vec2 t4 = vec2(textureSize(tex, 0));
+  color = ((t3 + texelFetch(tex, ivec2(uv.xy), 0)) + vec4(t4, 0.0, 0.0));
 }
 
-
-// stats: 10 alu 8 tex 0 flow
+// stats: 9 alu 8 tex 0 flow
 // inputs: 1
 //  #0: uv (medium float) 4x1 [-1]
 // textures: 1

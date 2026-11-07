@@ -12,25 +12,17 @@ struct xlatMtlShaderOutput {
 struct xlatMtlShaderUniform {
 };
 vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , uint gl_InstanceID [[instance_id]]
-  , uint gl_VertexID [[vertex_id]])
+  , uint gl_VertexID [[vertex_id]]
+  , uint gl_InstanceID [[instance_id]])
 {
   xlatMtlShaderOutput _mtl_o;
-  float3 p_1 = 0;
-  p_1.z = _mtl_i._inPos.z;
-  p_1.x = (_mtl_i._inPos.x + float(int(gl_VertexID)));
-  p_1.y = (_mtl_i._inPos.y + float(int(gl_InstanceID)));
-  p_1 = (p_1 + _mtl_i._inNor);
-  float4 tmpvar_2 = 0;
-  tmpvar_2.w = 1.0;
-  tmpvar_2.xyz = p_1;
-  _mtl_o.gl_Position = tmpvar_2;
-  _mtl_o.gl_PointSize = p_1.x;
+  float3 t0 = (float3((_mtl_i._inPos.x + float(int(gl_VertexID))), (_mtl_i._inPos.y + float(int(gl_InstanceID))), _mtl_i._inPos.z) + _mtl_i._inNor);
+  _mtl_o.gl_Position = float4(t0, 1.0);
+  _mtl_o.gl_PointSize = t0.x;
   return _mtl_o;
 }
 
-
-// stats: 6 alu 0 tex 0 flow
+// stats: 5 alu 0 tex 0 flow
 // inputs: 2
 //  #0: _inPos (high float) 3x1 [-1] loc 0
 //  #1: _inNor (high float) 3x1 [-1] loc 1

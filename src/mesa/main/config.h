@@ -76,6 +76,10 @@
 
 /** Maximum Name stack depth */
 #define MAX_NAME_STACK_DEPTH 64
+/** Name stack buffer size */
+#define NAME_STACK_BUFFER_SIZE 2048
+/** Maximum name stack result number */
+#define MAX_NAME_STACK_RESULT_NUM 256
 
 /** Minimum point size */
 #define MIN_POINT_SIZE 1.0
@@ -91,32 +95,16 @@
 /** Line width granularity */
 #define LINE_WIDTH_GRANULARITY 0.1
 
-/** Max memory to allow for a single texture image (in megabytes) */
-#define MAX_TEXTURE_MBYTES 1024
-
-/** Number of 1D/2D texture mipmap levels */
-#define MAX_TEXTURE_LEVELS 15
-
-/** Number of 3D texture mipmap levels */
-#define MAX_3D_TEXTURE_LEVELS 15
-
-/** Number of cube texture mipmap levels - GL_ARB_texture_cube_map */
-#define MAX_CUBE_TEXTURE_LEVELS 15
+/** Number of texture mipmap levels */
+#define MAX_TEXTURE_LEVELS 17
 
 /** Maximum rectangular texture size - GL_NV_texture_rectangle */
-#define MAX_TEXTURE_RECT_SIZE 16384
+#define MAX_TEXTURE_RECT_SIZE 65536
 
 /**
  * Maximum number of layers in a 1D or 2D array texture - GL_MESA_texture_array
  */
 #define MAX_ARRAY_TEXTURE_LAYERS 64
-
-/**
- * Max number of texture coordinate units.  This mainly just applies to
- * the fixed-function vertex code.  This will be difficult to raise above
- * eight because of various vertex attribute bitvectors.
- */
-#define MAX_TEXTURE_COORD_UNITS 8
 
 /**
  * Max number of texture image units.  Also determines number of texture
@@ -154,6 +142,9 @@
 /** For GL_EXT_texture_lod_bias (typically MAX_TEXTURE_LEVELS - 1) */
 #define MAX_TEXTURE_LOD_BIAS 14.0
 
+/** For GL_OVR_multiview, value is recommended in extension spec. */
+#define MAX_VIEWS_OVR 6
+
 /** For any program target/extension */
 /*@{*/
 #define MAX_PROGRAM_INSTRUCTIONS       (16 * 1024)
@@ -171,17 +162,14 @@
 #define MAX_UNIFORMS                   4096
 #define MAX_UNIFORM_BUFFERS            15 /* + 1 default uniform buffer */
 #define MAX_SHADER_STORAGE_BUFFERS     16
-/* 6 is for vertex, hull, domain, geometry, fragment, and compute shader. */
-#define MAX_COMBINED_UNIFORM_BUFFERS   (MAX_UNIFORM_BUFFERS * 6)
-#define MAX_COMBINED_SHADER_STORAGE_BUFFERS   (MAX_SHADER_STORAGE_BUFFERS * 6)
+#define MAX_COMBINED_UNIFORM_BUFFERS   (MAX_UNIFORM_BUFFERS * MESA_SHADER_MESH_STAGES)
+#define MAX_COMBINED_SHADER_STORAGE_BUFFERS   (MAX_SHADER_STORAGE_BUFFERS * MESA_SHADER_MESH_STAGES)
 #define MAX_ATOMIC_COUNTERS            4096
-/* 6 is for vertex, hull, domain, geometry, fragment, and compute shader. */
-#define MAX_COMBINED_ATOMIC_BUFFERS    (MAX_UNIFORM_BUFFERS * 6)
+#define MAX_COMBINED_ATOMIC_BUFFERS    (MAX_UNIFORM_BUFFERS * MESA_SHADER_MESH_STAGES)
 /* Size of an atomic counter in bytes according to ARB_shader_atomic_counters */
 #define ATOMIC_COUNTER_SIZE            4
 #define MAX_IMAGE_UNIFORMS             32
-/* 6 is for vertex, hull, domain, geometry, fragment, and compute shader. */
-#define MAX_IMAGE_UNITS                (MAX_IMAGE_UNIFORMS * 6)
+#define MAX_IMAGE_UNITS                (MAX_IMAGE_UNIFORMS * MESA_SHADER_MESH_STAGES)
 /*@}*/
 
 /**
@@ -219,16 +207,14 @@
 
 /** For GL_ARB_vertex_shader */
 /*@{*/
-#define MAX_VERTEX_GENERIC_ATTRIBS 16
-/* 6 is for vertex, hull, domain, geometry, fragment, and compute shader. */
-#define MAX_COMBINED_TEXTURE_IMAGE_UNITS (MAX_TEXTURE_IMAGE_UNITS * 6)
+#define MAX_COMBINED_TEXTURE_IMAGE_UNITS (MAX_TEXTURE_IMAGE_UNITS * MESA_SHADER_MESH_STAGES)
 /*@}*/
 
 
 /** For GL_EXT_framebuffer_object */
 /*@{*/
 #define MAX_COLOR_ATTACHMENTS 8
-#define MAX_RENDERBUFFER_SIZE 16384
+#define MAX_RENDERBUFFER_SIZE 65536
 /*@}*/
 
 /** For GL_ATI_envmap_bump - support bump mapping on first 8 units */
@@ -253,7 +239,6 @@
 
 /** For GL_KHR_debug */
 /*@{*/
-#define MAX_LABEL_LENGTH 256
 #define MAX_DEBUG_GROUP_STACK_DEPTH 64
 /*@}*/
 
@@ -309,6 +294,10 @@
  */
 #define MAX_CLIPPED_VERTICES ((2 * (6 + MAX_CLIP_PLANES))+1)
 
+/**
+ * Maximum number of MSAA samples
+ */
+#define MAX_SAMPLES 16
 
 /** For GL_ARB_sample_locations - maximum of SAMPLE_LOCATION_PIXEL_GRID_*_ARB */
 #define MAX_SAMPLE_LOCATION_GRID_SIZE 4

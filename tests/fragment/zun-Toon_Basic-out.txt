@@ -3,18 +3,14 @@ uniform sampler2D _MainTex;
 uniform samplerCube _ToonShade;
 void main ()
 {
-  vec4 col_1;
-  col_1 = (_Color * texture2D (_MainTex, gl_TexCoord[0].xy));
-  vec4 tmpvar_2;
-  tmpvar_2.xyz = ((2.0 * textureCube (_ToonShade, gl_TexCoord[1].xyz).xyz) * col_1.xyz);
-  tmpvar_2.w = col_1.w;
-  gl_FragData[0] = tmpvar_2;
+  vec4 t0 = (_Color * texture2D(_MainTex, gl_TexCoord[0].xy));
+  vec3 t1 = ((2.0 * textureCube(_ToonShade, gl_TexCoord[1].xyz).xyz) * t0.xyz);
+  gl_FragData[0] = vec4(t1, t0.w);
 }
-
 
 // stats: 3 alu 2 tex 0 flow
 // inputs: 1
-//  #0: gl_TexCoord (high float) 4x1 [2] loc 4
+//  #0: gl_TexCoord (high float) 4x1 [0] loc 4
 // uniforms: 1 (total size: 0)
 //  #0: _Color (high float) 4x1 [-1]
 // textures: 2

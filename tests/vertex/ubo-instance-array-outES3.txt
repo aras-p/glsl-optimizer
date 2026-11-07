@@ -1,16 +1,16 @@
 #version 320 es
-layout(std140, column_major, binding=2) uniform Transform {
-  layout(column_major) highp mat4 matrix;
+layout(std140, binding = 2) uniform Transform {
+  highp mat4 matrix;
   highp float unused;
 } transforms[2];
 uniform highp int index;
 void main ()
 {
-  gl_Position = (transforms[1].matrix * transforms[index].matrix[0]);
+  highp vec4 t0 = transforms[index].matrix[0];
+  gl_Position = (transforms[1].matrix * t0);
 }
 
-
-// stats: 1 alu 0 tex 0 flow
+// stats: 7 alu 0 tex 0 flow
 // uniforms: 1 (total size: 0)
 //  #0: index (high int) 1x1 [-1]
 // buffer #0: Transform instance transforms layout std140 binding 2 array 2 (size: 80)

@@ -1,12 +1,13 @@
 #version 300 es
+precision highp float;
+precision highp int;
 uniform mediump sampler2D textures[4];
 in highp vec2 uv;
 out highp vec4 color;
 void main ()
 {
-  color = texture (textures[2], uv);
+  color = texture(textures[2], uv);
 }
-
 
 // stats: 0 alu 1 tex 0 flow
 // inputs: 1

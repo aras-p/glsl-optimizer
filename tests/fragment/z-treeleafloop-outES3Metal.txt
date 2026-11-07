@@ -24,55 +24,30 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   , texture2d<half> _TranslucencyMap [[texture(2)]], sampler _mtlsmp__TranslucencyMap [[sampler(2)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half4 c_1 = 0;
-  half nh_2 = 0;
-  half nl_3 = 0;
-  half3 lightColor_4 = 0;
-  half3 backContribs_5 = 0;
-  half3 light_6 = 0;
-  half specular_7 = 0;
-  half3 albedo_8 = 0;
-  half4 tmpvar_9 = 0;
-  tmpvar_9 = _MainTex.sample(_mtlsmp__MainTex, (float2)((_mtl_i.xlv_TEXCOORD0)));
-  if (((tmpvar_9.w - _mtl_u._Cutoff) < (half)(0.0))) discard_fragment();
-  albedo_8 = half3(((float3)(tmpvar_9.xyz) * _mtl_i.xlv_TEXCOORD1));
-  specular_7 = (_BumpSpecMap.sample(_mtlsmp__BumpSpecMap, (float2)((_mtl_i.xlv_TEXCOORD0))).x * (half)(128.0));
-  half4 tmpvar_10 = 0;
-  tmpvar_10 = _TranslucencyMap.sample(_mtlsmp__TranslucencyMap, (float2)((_mtl_i.xlv_TEXCOORD0)));
-  light_6 = (_mtl_u.UNITY_LIGHTMODEL_AMBIENT.xyz * albedo_8);
-  backContribs_5 = half3((_mtl_i.xlv_TEXCOORD2 * (float)(tmpvar_10.z)));
-  lightColor_4 = half3(_mtl_u._TerrainTreeLightColors[0].xyz);
-  nl_3 = half(_mtl_i.xlv_TEXCOORD3[0]);
-  nh_2 = half(_mtl_i.xlv_TEXCOORD4[0]);
-  light_6 = (light_6 + ((
-    (albedo_8 * ((backContribs_5[0] * _mtl_u._TranslucencyColor) + nl_3))
-   + 
-    (_mtl_u._SpecColor.xyz * (pow (nh_2, specular_7) * tmpvar_10.w))
-  ) * lightColor_4));
-  lightColor_4 = half3(_mtl_u._TerrainTreeLightColors[1].xyz);
-  nl_3 = half(_mtl_i.xlv_TEXCOORD3[1]);
-  nh_2 = half(_mtl_i.xlv_TEXCOORD4[1]);
-  light_6 = (light_6 + ((
-    (albedo_8 * ((backContribs_5[1] * _mtl_u._TranslucencyColor) + nl_3))
-   + 
-    (_mtl_u._SpecColor.xyz * (pow (nh_2, specular_7) * tmpvar_10.w))
-  ) * lightColor_4));
-  lightColor_4 = half3(_mtl_u._TerrainTreeLightColors[2].xyz);
-  nl_3 = half(_mtl_i.xlv_TEXCOORD3[2]);
-  nh_2 = half(_mtl_i.xlv_TEXCOORD4[2]);
-  light_6 = (light_6 + ((
-    (albedo_8 * ((backContribs_5[2] * _mtl_u._TranslucencyColor) + nl_3))
-   + 
-    (_mtl_u._SpecColor.xyz * (pow (nh_2, specular_7) * tmpvar_10.w))
-  ) * lightColor_4));
-  c_1.xyz = (light_6 * (half)(2.0));
-  c_1.w = half(1.0);
-  _mtl_o._fragData = c_1;
+  half4 t0 = _MainTex.sample(_mtlsmp__MainTex, _mtl_i.xlv_TEXCOORD0);
+  if ((t0.w < _mtl_u._Cutoff)) {
+    discard_fragment();
+  }
+  half3 t1 = half3((float3(t0.xyz) * _mtl_i.xlv_TEXCOORD1));
+  half4 t2 = _TranslucencyMap.sample(_mtlsmp__TranslucencyMap, _mtl_i.xlv_TEXCOORD0);
+  half3 t3 = half3((_mtl_i.xlv_TEXCOORD2 * float(t2.z)));
+  half3 t4 = half3(_mtl_u._TerrainTreeLightColors[0].xyz);
+  half t5 = half(_mtl_i.xlv_TEXCOORD3.x);
+  half t6 = half(_mtl_i.xlv_TEXCOORD4.x);
+  half t7 = (_BumpSpecMap.sample(_mtlsmp__BumpSpecMap, _mtl_i.xlv_TEXCOORD0).x * half(128.0));
+  half3 t8 = half3(_mtl_u._TerrainTreeLightColors[1].xyz);
+  half t9 = half(_mtl_i.xlv_TEXCOORD3.y);
+  half t10 = half(_mtl_i.xlv_TEXCOORD4.y);
+  half3 t11 = (((_mtl_u.UNITY_LIGHTMODEL_AMBIENT.xyz * t1) + (((t1 * ((t3.x * _mtl_u._TranslucencyColor) + t5)) + (_mtl_u._SpecColor.xyz * (pow(t6, t7) * t2.w))) * t4)) + (((t1 * ((t3.y * _mtl_u._TranslucencyColor) + t9)) + (_mtl_u._SpecColor.xyz * (pow(t10, t7) * t2.w))) * t8));
+  half3 t12 = half3(_mtl_u._TerrainTreeLightColors[2].xyz);
+  half t13 = half(_mtl_i.xlv_TEXCOORD3.z);
+  half t14 = half(_mtl_i.xlv_TEXCOORD4.z);
+  half3 t15 = ((t11 + (((t1 * ((t3.z * _mtl_u._TranslucencyColor) + t13)) + (_mtl_u._SpecColor.xyz * (pow(t14, t7) * t2.w))) * t12)) * half(2.0));
+  _mtl_o._fragData = half4(t15, half(1.0));
   return _mtl_o;
 }
 
-
-// stats: 35 alu 4 tex 1 flow
+// stats: 33 alu 4 tex 1 flow
 // inputs: 5
 //  #0: xlv_TEXCOORD0 (high float) 2x1 [-1]
 //  #1: xlv_TEXCOORD1 (high float) 3x1 [-1]

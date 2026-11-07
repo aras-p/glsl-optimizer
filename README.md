@@ -8,7 +8,7 @@ GLSL optimizer
 
 A C++ library that takes GLSL vertex/fragment/compute shaders, does GPU-independent optimizations on them
 and outputs GLSL or Metal source back. Optimizations are function inlining, dead code removal, copy propagation,
-constant folding, constant propagation, arithmetic optimizations and so on.
+constant folding, constant propagation, arithmetic optimizations, loop unrolling and so on (Mesa's NIR optimizer).
 
 Apparently quite a few mobile platforms are pretty bad at optimizing shaders; and
 unfortunately they *also* lack offline shader compilers. So using a GLSL optimizer offline
@@ -19,7 +19,7 @@ Even for drivers that have decent shader optimization, GLSL optimizer could be u
 dead code, make shaders smaller and do uniform/input reflection offline.
 
 Almost all actual code is [Mesa 3D's GLSL](https://gitlab.freedesktop.org/mesa/mesa)
-compiler; all this library does is spits out optimized GLSL or Metal back, and adds GLES type precision
+compiler and NIR optimizer; all this library does is spits out optimized GLSL or Metal back, and adds GLES type precision
 handling to the optimizer.
 
 This GLSL optimizer is made for [Unity's](https://unity3d.com/) purposes and is built-in
@@ -59,8 +59,8 @@ CMake options:
 * `GLSLOPT_TEST_OPENGL=ON` enables optional external OpenGL validation in the test
   runner on Windows/macOS. It is off by default and is not needed for regression tests.
 
-> There's a Node addon contributed; that is built via a separate `node-gyp` build.
-> Its JavaScript smoke test is `node tests/tests.js` after building the addon. I have no
+> There's a Node addon contributed; `npm install` builds it with `cmake-js` from the same
+> CMake project. Its JavaScript smoke test is `npm test` after building the addon. I have no
 > idea if or how it works.
 
 Usage
@@ -91,6 +91,7 @@ Language Support
 * GLSL ES: the OpenGL ES and Metal targets accept `#version 300 es`, `310 es`,
   and `320 es`. The desktop OpenGL target accepts ES 3.00 input only.
 * Supported shader stages are vertex, fragment, and compute.
+* Subgroup (wave) operations: all of `GL_KHR_shader_subgroup_*`.
 
 #### Limitations
 
@@ -98,8 +99,6 @@ Language Support
   2015, anything since then got much less "real" testing.
 * Geometry and tessellation shaders are not supported.
 * Double precision types and shader subroutines are not supported.
-* Subgroup (wave) support covers `subgroupAdd`, `subgroupMin`, `subgroupMax`, `subgroupOr`,
-  `subgroupElect` and `subgroupBroadcastFirst`.
 * Variable workgroup sizes (`GL_ARB_compute_variable_group_size`) are not supported.
 * Each shader stage is optimized independently. Optimizer retains vertex outputs
   even if fragment shader never reads them, and it does not match or validate
@@ -109,7 +108,7 @@ Language Support
 
 * Basic vertex and fragment shaders compile as Metal 1.2, but the version can
   become higher depending on the features it uses.
-* Floating point `mediump` and `lowp` mostly translate to Metal `half`.
+* `mediump` and `lowp` floats translate to Metal `half`, integers to `short`/`ushort`.
 * Shadow sampling uses a fixed sampler with clamp-to-edge addressing,
   linear filtering, and a less-equal comparison. Shadow gathers use the bound sampler.
 * No support for arrays of samplers, `gl_ClipDistance`,
@@ -119,6 +118,9 @@ Language Support
   Metal 3.1+ (4.0+ for cube images) and GPU support for texture
   atomics.
 * Multisample storage images support reads and queries only.
+* Subgroup operations require Metal 2.3+. Scans other than add/mul and clustered
+  reductions are emulated with shuffles and assume all lanes are active; ballots
+  assume at most 64 lanes.
 * `memoryBarrier*()` and `groupMemoryBarrier()` translate to `atomic_thread_fence`
   and thus require Metal 3.2 or later. A `memoryBarrierShared()` immediately
   followed by `barrier()` in the optimizer's instruction stream can use a single
@@ -203,15 +205,86 @@ If you're making changes to the project and want pull requests accepted easier, 
 appreciate if there would be no test suite regressions. If you are implementing a
 feature, it would be cool to add tests to cover it as well!
 
+AI Usage
+--------
+
+Majority of the codebase comes from Mesa project. This project itself had no AI
+usage before 2026 November. In the latest updates to add compute shader support,
+as well as to move Mesa parts from 2014 to 2026 and their NIR based optimization
+pipeline, LLM tools (Claude Opus 5.5 and GPT 6.1 Sol) were partially used.
 
 Dev Notes
 ---------
 
-- Current Mesa codebase is from [Mesa 20.3.5](https://archive.mesa3d.org/older-versions/20.x/mesa-20.3.5.tar.xz).
-- Use release snapshots, not merges with whole Mesa history.
-- Only minimal subset of that, as needed by the glsl optimizer. A bunch
-  of files were reduced to only contain what we need; they are mostly marked
-  with `glsl-optimizer change:` comments.
-- In order to rebuild the generated GLSL/glcpp lexers, parsers and some tables,
-  you need to run `./generateParsers.sh`.
+The Mesa code (`src/compiler`, `src/util`, `src/mesa`, `src/gallium`, `src/c11`,
+`include`) is a small subset of the
+[Mesa 26.2.6](https://archive.mesa3d.org/mesa-26.2.6.tar.xz) release: the GLSL
+frontend, `glsl_to_nir`, NIR with the passes we run, and the util code they need.
 
+#### Upgrading Mesa
+
+- Copy the new versions of the files that exist here from the new release, then
+  bring back the `glsl-optimizer change` edits. Files that fail to build usually
+  need a header that we deliberately dropped (see below), not the header itself.
+- Regenerate our minimal files with the scripts in `upgrade-tools/` (they take
+  the path of an upstream Mesa tree): `gen_minimal_formats.py` (pipe_format
+  enum + descriptions) and `extract_nir_helpers.py` (helpers copied out of NIR
+  passes we do not build).
+- Run `upgrade-tools/gen_sources.sh` to regenerate the checked-in lexers,
+  parsers and NIR/GLSL tables (needs bison, flex, python3 with Mako).
+- Check the test corpus output.
+
+#### What we have removed on purpose
+
+- GL context/driver state (vbo, state tracker, glapi, glthread, driver function
+  tables, gallium state): an offline compiler has no GL context. `mtypes.h`,
+  `context.h` and `pipe/p_screen.h` are minimal versions with just the members
+  the compiler reads.
+- Khronos GL/GLES headers: `util/glminimal.h` has the types and enums we use.
+- Texture formats/codecs: only GLSL image formats are needed.
+- C11 threads emulation and futexes: `c11/threads.h` and `util/simple_mtx.h` are
+  minimal versions on one process-wide `std::recursive_mutex` (only shared caches
+  and debug output take locks).
+- Disk cache, BLAKE3 source hashes, fossilize, compression, NIR serialization,
+  perf tracing, CPU detection, xxHash (hash tables use FNV-1a), most of
+  logging/OS layers (`log.c`, `os_misc.c` are stderr/getenv-only).
+- Driver-oriented compiler parts: fp64 emulation library, NIR IO/explicit-IO/
+  int64/double lowering, divergence analysis, per-app workarounds, and all
+  unused passes. A coverage run over the test corpus was used to find code that
+  was linked but never executed.
+- GLSL IR optimizations and `lower_precision`: NIR does all optimization.
+- `nir_opt_loop`: it rotates loops into shapes that cannot be printed as `for`
+  loops, with no measurable benefit for our use.
+
+#### Our code (`src/glsl`)
+
+- `glsl_optimizer.cpp`: public API, GL context setup, validation of what the
+  printers can express, reflection and stats (all from the final NIR).
+- `nir_optimize.cpp`: the NIR pipeline (inlining, optimization loop, out of SSA),
+  the GLSL ES precision analysis that the pipeline and printers share, and
+  regrouping of field-by-field copies back into aggregate copies for printing.
+- `nir_printer.cpp`: printing core shared by GLSL and Metal: typing of NIR values,
+  folding single-use values into expressions, and print-time recovery of shapes NIR
+  lowered (matrix multiplies, `normalize`/`length`/`clamp`/..., `for`/`while`/`do` loops).
+- `nir_print_glsl.cpp`, `nir_print_metal.cpp`: the dialects. `buffer_layout.h` has the
+  std140/std430 and Metal slot rules shared by reflection and the Metal printer.
+
+#### Behavior changes
+
+- No GLSL IR optimization before `glsl_to_nir`: it erased stores into locals of
+  different precision, i.e. the source's precision conversions.
+- `glslopt_precision` NIR intrinsic: marks such precision conversions so they
+  survive NIR optimization and get printed as properly qualified temporaries.
+- Frontend changes (marked in the Mesa sources): a compile entry point that can skip
+  the preprocessor and hands out the parse state (version, extensions) for printing;
+  `texture()`/`textureProj()` bias overloads for external textures in fragment shaders;
+  block-level locations allowed on arrays of interface blocks.
+- Loops that run at most once are always unrolled (`nir_opt_loop_unroll` size
+  limits do not apply to them).
+
+#### Generated code size
+
+`nir_opt_algebraic.c` now stores its automaton tables compressed (the dense
+`bcsel` table alone was 2.57M entries), only the two algebraic passes we use are
+generated, and `upgrade-tools/compact_c_tables.py` strips whitespace from generated
+tables. Original file was 51MB source, now about 4MB source.

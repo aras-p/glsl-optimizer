@@ -2,48 +2,41 @@ uniform sampler2D mainTex;
 varying vec2 uv;
 void main ()
 {
-  int i_2;
-  vec4 c_7;
-  c_7 = vec4(0.0, 0.0, 0.0, 0.0);
-  for (int i_6 = 0; i_6 < 100; i_6++) {
-    vec2 tmpvar_8;
-    tmpvar_8.x = float(i_6);
-    tmpvar_8.y = float(i_6);
-    c_7.x = (c_7.x + texture2D (mainTex, (uv + tmpvar_8)).x);
-  };
-  for (int i_5 = 0; 100 >= i_5; i_5 += 3) {
-    vec2 tmpvar_9;
-    tmpvar_9.x = float(i_5);
-    tmpvar_9.y = float(i_5);
-    c_7.x = (c_7.x + texture2D (mainTex, (uv + tmpvar_9)).x);
-  };
-  for (int i_4 = 100; i_4 >= 0; i_4 = (i_4 - 1)) {
-    vec2 tmpvar_10;
-    tmpvar_10.x = float(i_4);
-    tmpvar_10.y = float(i_4);
-    c_7.x = (c_7.x + texture2D (mainTex, (uv + tmpvar_10)).x);
-  };
-  int tmpvar_11;
-  tmpvar_11 = int((c_7.x * 10.0));
-  for (int i_3 = 3; i_3 < tmpvar_11; i_3++) {
-    vec2 tmpvar_12;
-    tmpvar_12.x = float(i_3);
-    tmpvar_12.y = float(i_3);
-    c_7.x = (c_7.x + texture2D (mainTex, (uv + tmpvar_12)).x);
-  };
-  i_2 = 1;
-  for (int j_1 = 2; ((i_2 < 100) && (j_1 < 50)); j_1 += 3) {
-    vec2 tmpvar_13;
-    tmpvar_13.x = float(i_2);
-    tmpvar_13.y = float(j_1);
-    c_7.x = (c_7.x + texture2D (mainTex, (uv + tmpvar_13)).x);
-    i_2 += 2;
-  };
-  gl_FragColor = c_7;
+  int r0;
+  int r1;
+  int r2;
+  int r3;
+  int r4;
+  int r5;
+  vec4 r6;
+  r6 = vec4(0.0);
+  for (r0 = 0; (r0 < 100); r0++) {
+    float t0 = (r6.x + texture2D(mainTex, (uv + float(r0))).x);
+    r6 = vec4(t0, r6.y, r6.z, r6.w);
+  }
+  for (r1 = 0; (100 >= r1); r1 += 3) {
+    float t1 = (r6.x + texture2D(mainTex, (uv + float(r1))).x);
+    r6 = vec4(t1, r6.y, r6.z, r6.w);
+  }
+  for (r2 = 100; (r2 >= 0); r2--) {
+    float t2 = (r6.x + texture2D(mainTex, (uv + float(r2))).x);
+    r6 = vec4(t2, r6.y, r6.z, r6.w);
+  }
+  int t3 = int((r6.x * 1e+01));
+  for (r3 = 3; (r3 < t3); r3++) {
+    float t4 = (r6.x + texture2D(mainTex, (uv + float(r3))).x);
+    r6 = vec4(t4, r6.y, r6.z, r6.w);
+  }
+  r5 = 2;
+  for (r4 = 1; ((r4 < 100) && (r5 < 50)); r4 += 2) {
+    float t5 = (r6.x + texture2D(mainTex, (uv + vec2(float(r4), float(r5)))).x);
+    r5 = (r5 + 3);
+    r6 = vec4(t5, r6.y, r6.z, r6.w);
+  }
+  gl_FragColor = r6;
 }
 
-
-// stats: 43 alu 5 tex 10 flow
+// stats: 32 alu 5 tex 10 flow
 // inputs: 1
 //  #0: uv (high float) 2x1 [-1]
 // textures: 1

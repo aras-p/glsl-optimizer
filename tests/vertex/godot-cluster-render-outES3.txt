@@ -8,11 +8,11 @@ struct RenderElement {
   highp vec3 scale;
   highp uint pad;
 };
-layout(std430, column_major, binding=2) buffer RenderElements {
-  layout(column_major) readonly restrict RenderElement data[];
+layout(std430, binding = 2) restrict buffer RenderElements {
+  restrict readonly RenderElement data[];
 } render_elements;
-layout(std140, column_major, binding=1) uniform State {
-  layout(column_major) highp mat4 projection;
+layout(std140, binding = 1) uniform State {
+  highp mat4 projection;
   highp float inv_z_far;
   highp uint screen_to_clusters_shift;
   highp uint cluster_screen_width;
@@ -22,35 +22,31 @@ layout(std140, column_major, binding=1) uniform State {
   highp uint pad1;
   highp uint pad2;
 } state;
-layout(std140, column_major, binding=0) uniform Params {
+layout(std140, binding = 0) uniform Params {
   highp uint base_index;
   highp uint pad0;
   highp uint pad1;
   highp uint pad2;
 } params;
-layout(location=0) in highp vec3 vertex_attrib;
-layout(location=0) out highp float depth_interp;
-layout(location=1) flat out highp uint element_index;
+layout(location = 0) in highp vec3 vertex_attrib;
+layout(location = 0) out highp float depth_interp;
+layout(location = 1) flat out highp uint element_index;
 void main ()
 {
-  highp vec3 vertex_1;
-  element_index = (params.base_index + uint(gl_InstanceID));
-  vertex_1 = (vertex_attrib * render_elements.data[element_index].scale);
-  highp vec4 tmpvar_2;
-  tmpvar_2.w = 1.0;
-  tmpvar_2.xyz = vertex_1;
-  vertex_1 = (tmpvar_2 * render_elements.data[element_index].transform_inv);
-  depth_interp = -(vertex_1.z);
-  highp vec4 tmpvar_3;
-  tmpvar_3.w = 1.0;
-  tmpvar_3.xyz = vertex_1;
-  gl_Position = (state.projection * tmpvar_3);
+  highp int t0 = (int(params.base_index) + gl_InstanceID);
+  element_index = uint(t0);
+  highp vec3 t1 = (vertex_attrib * render_elements.data[t0].scale);
+  highp vec4 t2 = vec4(t1, 1.0);
+  highp float t3 = dot(t2, render_elements.data[t0].transform_inv[0]);
+  highp float t4 = dot(t2, render_elements.data[t0].transform_inv[1]);
+  highp float t5 = dot(t2, render_elements.data[t0].transform_inv[2]);
+  depth_interp = (-t5);
+  gl_Position = (state.projection * vec4(t3, t4, t5, 1.0));
 }
 
-
-// stats: 8 alu 0 tex 0 flow
+// stats: 12 alu 0 tex 0 flow
 // inputs: 1
-//  #0: vertex_attrib (high float) 3x1 [-1] loc 16
+//  #0: vertex_attrib (high float) 3x1 [-1] loc 15
 // buffer #0: Params instance params layout std140 binding 0 (size: 16)
 //  member #0: uint base_index offset 0
 //  member #1: uint pad0 offset 4 (unused)

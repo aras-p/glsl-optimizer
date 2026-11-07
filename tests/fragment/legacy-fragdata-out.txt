@@ -7,7 +7,6 @@ void main ()
   gl_FragData[2] = thirdColor;
 }
 
-
 // stats: 0 alu 0 tex 0 flow
 // uniforms: 2 (total size: 0)
 //  #0: firstColor (high float) 4x1 [-1]

@@ -18,26 +18,16 @@ struct xlatMtlShaderUniform {
 vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  float4 o_pos_1 = 0;
-  float3 o_ray_2 = 0;
-  o_pos_1 = (_mtl_u.glstate_matrix_mvp * _mtl_i._vertex);
-  float4 o_3 = 0;
-  o_3 = (o_pos_1 * 0.5);
-  float2 tmpvar_4 = 0;
-  tmpvar_4.x = o_3.x;
-  tmpvar_4.y = (o_3.y * _mtl_u._ProjectionParams.x);
-  o_3.xy = (tmpvar_4 + o_3.w);
-  o_3.zw = o_pos_1.zw;
-  o_ray_2 = ((_mtl_u.glstate_matrix_modelview0 * _mtl_i._vertex).xyz * float3(-1.0, -1.0, 1.0));
-  o_ray_2 = mix (o_ray_2, _mtl_i._normal, (float3)half3(half((_mtl_i._normal.z != 0.0))));
-  _mtl_o.gl_Position = o_pos_1;
-  _mtl_o.xlv_TEXCOORD0 = o_3;
-  _mtl_o.xlv_TEXCOORD1 = o_ray_2;
+  float4 t0 = (_mtl_u.glstate_matrix_mvp * _mtl_i._vertex);
+  float4 t1 = (t0 * 0.5);
+  float2 t2 = (float2(t1.x, (t1.y * _mtl_u._ProjectionParams.x)) + t1.w);
+  _mtl_o.gl_Position = t0;
+  _mtl_o.xlv_TEXCOORD0 = float4(t2, t0.zw);
+  _mtl_o.xlv_TEXCOORD1 = mix(((_mtl_u.glstate_matrix_modelview0 * _mtl_i._vertex).xyz * float3(-1.0, -1.0, 1.0)), _mtl_i._normal, float3(half3(half((_mtl_i._normal.z != 0.0)))));
   return _mtl_o;
 }
 
-
-// stats: 9 alu 0 tex 0 flow
+// stats: 21 alu 0 tex 0 flow
 // inputs: 2
 //  #0: _vertex (high float) 4x1 [-1] loc 0
 //  #1: _normal (high float) 3x1 [-1] loc 1

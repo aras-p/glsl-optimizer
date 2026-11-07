@@ -1,12 +1,13 @@
 #version 300 es
+precision highp float;
+precision highp int;
 uniform mediump samplerCubeShadow shadowmap;
 in mediump vec4 uv;
 out mediump vec4 _fragColor;
 void main ()
 {
-  _fragColor = vec4(texture (shadowmap, vec4(uv.xyz, uv.w)));
+  _fragColor = vec4(texture(shadowmap, vec4(uv.xyz, uv.w)));
 }
-
 
 // stats: 0 alu 1 tex 0 flow
 // inputs: 1

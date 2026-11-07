@@ -6,11 +6,9 @@ uniform int sample_index;
 out vec4 color;
 void main ()
 {
-  ivec2 tmpvar_1;
-  tmpvar_1 = ivec2(gl_FragCoord.xy);
-  color = ((texelFetch (buffer_texture, tmpvar_1.x) + texelFetch (rectangle_texture, tmpvar_1)) + texelFetch (multisample_texture, tmpvar_1, sample_index));
+  ivec2 t0 = ivec2(gl_FragCoord.xy);
+  color = ((texelFetch(buffer_texture, t0.x) + texelFetch(rectangle_texture, t0)) + texelFetch(multisample_texture, t0, sample_index));
 }
-
 
 // stats: 3 alu 3 tex 0 flow
 // inputs: 1

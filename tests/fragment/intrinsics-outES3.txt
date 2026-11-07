@@ -1,144 +1,39 @@
 #version 300 es
+precision highp float;
+precision highp int;
 in highp vec4 xlv_TEXCOORD0;
 out mediump vec4 _fragData;
 void main ()
 {
-  mediump vec4 c_1;
-  c_1 = vec4(0.0, 0.0, 0.0, 0.0);
-  mediump float tmpvar_2;
-  tmpvar_2 = xlv_TEXCOORD0.x;
-  mediump float tmpvar_3;
-  tmpvar_3 = (tmpvar_2 / 2.0);
-  mediump float tmpvar_4;
-  tmpvar_4 = (fract(abs(tmpvar_3)) * 2.0);
-  mediump float tmpvar_5;
-  if ((tmpvar_3 >= 0.0)) {
-    tmpvar_5 = tmpvar_4;
-  } else {
-    tmpvar_5 = -(tmpvar_4);
-  };
-  c_1.x = tmpvar_5;
-  mediump vec2 tmpvar_6;
-  tmpvar_6 = xlv_TEXCOORD0.xy;
-  mediump vec2 tmpvar_7;
-  tmpvar_7 = (tmpvar_6 / vec2(2.0, 2.0));
-  mediump vec2 tmpvar_8;
-  tmpvar_8 = (fract(abs(tmpvar_7)) * vec2(2.0, 2.0));
-  mediump float tmpvar_9;
-  if ((tmpvar_7.x >= 0.0)) {
-    tmpvar_9 = tmpvar_8.x;
-  } else {
-    tmpvar_9 = -(tmpvar_8.x);
-  };
-  mediump float tmpvar_10;
-  if ((tmpvar_7.y >= 0.0)) {
-    tmpvar_10 = tmpvar_8.y;
-  } else {
-    tmpvar_10 = -(tmpvar_8.y);
-  };
-  mediump vec2 tmpvar_11;
-  tmpvar_11.x = tmpvar_9;
-  tmpvar_11.y = tmpvar_10;
-  c_1.xy = (c_1.xy + tmpvar_11);
-  mediump vec3 tmpvar_12;
-  tmpvar_12 = xlv_TEXCOORD0.xyz;
-  mediump vec3 tmpvar_13;
-  tmpvar_13 = (tmpvar_12 / vec3(2.0, 2.0, 2.0));
-  mediump vec3 tmpvar_14;
-  tmpvar_14 = (fract(abs(tmpvar_13)) * vec3(2.0, 2.0, 2.0));
-  mediump float tmpvar_15;
-  if ((tmpvar_13.x >= 0.0)) {
-    tmpvar_15 = tmpvar_14.x;
-  } else {
-    tmpvar_15 = -(tmpvar_14.x);
-  };
-  mediump float tmpvar_16;
-  if ((tmpvar_13.y >= 0.0)) {
-    tmpvar_16 = tmpvar_14.y;
-  } else {
-    tmpvar_16 = -(tmpvar_14.y);
-  };
-  mediump float tmpvar_17;
-  if ((tmpvar_13.z >= 0.0)) {
-    tmpvar_17 = tmpvar_14.z;
-  } else {
-    tmpvar_17 = -(tmpvar_14.z);
-  };
-  mediump vec3 tmpvar_18;
-  tmpvar_18.x = tmpvar_15;
-  tmpvar_18.y = tmpvar_16;
-  tmpvar_18.z = tmpvar_17;
-  c_1.xyz = (c_1.xyz + tmpvar_18);
-  mediump vec4 tmpvar_19;
-  tmpvar_19 = xlv_TEXCOORD0;
-  mediump vec4 tmpvar_20;
-  tmpvar_20 = (tmpvar_19 / vec4(2.0, 2.0, 2.0, 2.0));
-  mediump vec4 tmpvar_21;
-  tmpvar_21 = (fract(abs(tmpvar_20)) * vec4(2.0, 2.0, 2.0, 2.0));
-  mediump float tmpvar_22;
-  if ((tmpvar_20.x >= 0.0)) {
-    tmpvar_22 = tmpvar_21.x;
-  } else {
-    tmpvar_22 = -(tmpvar_21.x);
-  };
-  mediump float tmpvar_23;
-  if ((tmpvar_20.y >= 0.0)) {
-    tmpvar_23 = tmpvar_21.y;
-  } else {
-    tmpvar_23 = -(tmpvar_21.y);
-  };
-  mediump float tmpvar_24;
-  if ((tmpvar_20.z >= 0.0)) {
-    tmpvar_24 = tmpvar_21.z;
-  } else {
-    tmpvar_24 = -(tmpvar_21.z);
-  };
-  mediump float tmpvar_25;
-  if ((tmpvar_20.w >= 0.0)) {
-    tmpvar_25 = tmpvar_21.w;
-  } else {
-    tmpvar_25 = -(tmpvar_21.w);
-  };
-  mediump vec4 tmpvar_26;
-  tmpvar_26.x = tmpvar_22;
-  tmpvar_26.y = tmpvar_23;
-  tmpvar_26.z = tmpvar_24;
-  tmpvar_26.w = tmpvar_25;
-  c_1 = (c_1 + tmpvar_26);
-  mediump float tmpvar_27;
-  tmpvar_27 = xlv_TEXCOORD0.x;
-  c_1.x = (c_1.x + (tmpvar_27 - float(
-    int(tmpvar_27)
-  )));
-  mediump vec2 tmpvar_28;
-  tmpvar_28 = xlv_TEXCOORD0.xy;
-  c_1.xy = (c_1.xy + (tmpvar_28 - vec2(
-    ivec2(tmpvar_28)
-  )));
-  mediump vec3 tmpvar_29;
-  tmpvar_29 = xlv_TEXCOORD0.xyz;
-  c_1.xyz = (c_1.xyz + (tmpvar_29 - vec3(
-    ivec3(tmpvar_29)
-  )));
-  mediump vec4 tmpvar_30;
-  tmpvar_30 = xlv_TEXCOORD0;
-  mediump vec4 tmpvar_31;
-  tmpvar_31 = vec4(ivec4(tmpvar_30));
-  c_1 = (c_1 + (tmpvar_30 - tmpvar_31));
-  c_1.x = (c_1.x + (float(mod (xlv_TEXCOORD0.x, tmpvar_31.x))));
-  c_1.xy = (c_1.xy + (vec2(mod (xlv_TEXCOORD0.xy, tmpvar_31.xy))));
-  c_1.xyz = (c_1.xyz + (vec3(mod (xlv_TEXCOORD0.xyz, tmpvar_31.xyz))));
-  highp float tmpvar_32;
-  tmpvar_32 = (1.0/(xlv_TEXCOORD0.x));
-  c_1.x = (c_1.x + tmpvar_32);
-  c_1.x = (c_1.x + max (0.0, tmpvar_32));
-  c_1.y = (c_1.y + (1.0/(c_1.z)));
-  c_1.y = (c_1.y + max (0.0, (1.0/(c_1.w))));
-  c_1.x = (c_1.x + max (xlv_TEXCOORD0.x, c_1.z));
-  _fragData = c_1;
+  mediump float t0 = xlv_TEXCOORD0.x;
+  mediump float t1 = (t0 / 2.0);
+  mediump float t2 = (fract(abs(t1)) * 2.0);
+  mediump vec2 t3 = xlv_TEXCOORD0.xy;
+  mediump vec2 t4 = (t3 / 2.0);
+  mediump vec2 t5 = (fract(abs(t4)) * 2.0);
+  mediump vec2 t6 = (vec2(((t1 >= 0.0) ? t2 : (-t2)), 0.0) + vec2(((t4.x >= 0.0) ? t5.x : (-t5.x)), ((t4.y >= 0.0) ? t5.y : (-t5.y))));
+  mediump vec3 t7 = xlv_TEXCOORD0.xyz;
+  mediump vec3 t8 = (t7 / 2.0);
+  mediump vec3 t9 = (fract(abs(t8)) * 2.0);
+  mediump vec3 t10 = (vec3(t6, 0.0) + vec3(((t8.x >= 0.0) ? t9.x : (-t9.x)), ((t8.y >= 0.0) ? t9.y : (-t9.y)), ((t8.z >= 0.0) ? t9.z : (-t9.z))));
+  mediump vec4 t11 = xlv_TEXCOORD0;
+  mediump vec4 t12 = (t11 / 2.0);
+  mediump vec4 t13 = (fract(abs(t12)) * 2.0);
+  mediump vec4 t14 = (vec4(t10, 0.0) + vec4(((t12.x >= 0.0) ? t13.x : (-t13.x)), ((t12.y >= 0.0) ? t13.y : (-t13.y)), ((t12.z >= 0.0) ? t13.z : (-t13.z)), ((t12.w >= 0.0) ? t13.w : (-t13.w))));
+  mediump vec2 t15 = (vec2((t14.x + (t0 - trunc(t0))), t14.y) + (t3 - trunc(t3)));
+  mediump vec3 t16 = (vec3(t15, t14.z) + (t7 - trunc(t7)));
+  mediump vec4 t17 = trunc(t11);
+  mediump vec4 t18 = (vec4(t16, t14.w) + (t11 - t17));
+  mediump vec4 t19 = vec4((t18.x + mod(xlv_TEXCOORD0.x, t17.x)));
+  mediump vec4 t20 = (vec2(t19.x, t18.y) + mod(xlv_TEXCOORD0.xy, t17.xy)).xyxx;
+  mediump vec4 t21 = (vec3(t20.xy, t18.z) + mod(xlv_TEXCOORD0.xyz, t17.xyz)).xyzx;
+  highp float t22 = (1.0 / xlv_TEXCOORD0.x);
+  mediump vec4 t23 = vec4((t21.x + t22));
+  mediump vec4 t24 = vec4((t23.x + max(0.0, t22)));
+  mediump vec4 t25 = vec4((t24.x + max(xlv_TEXCOORD0.x, t21.z)));
+  _fragData = vec4(t25.x, ((t21.y + (1.0 / t21.z)) + max(0.0, (1.0 / t18.w))), t21.z, t18.w);
 }
 
-
-// stats: 73 alu 0 tex 10 flow
+// stats: 78 alu 0 tex 0 flow
 // inputs: 1
 //  #0: xlv_TEXCOORD0 (high float) 4x1 [-1]

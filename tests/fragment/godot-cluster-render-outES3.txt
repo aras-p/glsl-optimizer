@@ -1,9 +1,11 @@
 #version 320 es
-layout(std430, column_major, binding=3) buffer ClusterRender {
+precision highp float;
+precision highp int;
+layout(std430, binding = 3) restrict buffer ClusterRender {
   restrict highp uint data[];
 } cluster_render;
-layout(std140, column_major, binding=1) uniform State {
-  layout(column_major) highp mat4 projection;
+layout(std140, binding = 1) uniform State {
+  highp mat4 projection;
   highp float inv_z_far;
   highp uint screen_to_clusters_shift;
   highp uint cluster_screen_width;
@@ -13,32 +15,19 @@ layout(std140, column_major, binding=1) uniform State {
   highp uint pad1;
   highp uint pad2;
 } state;
-layout(location=0) in highp float depth_interp;
-layout(location=1) flat in highp uint element_index;
-layout(location=0) out highp vec4 frag_color;
+layout(location = 0) in highp float depth_interp;
+layout(location = 1) flat in highp uint element_index;
+layout(location = 0) out highp vec4 frag_color;
 void main ()
 {
-  highp uint cluster_offset_1;
-  highp uvec2 tmpvar_2;
-  tmpvar_2 = (uvec2(gl_FragCoord.xy) >> state.screen_to_clusters_shift);
-  cluster_offset_1 = ((tmpvar_2.x + (state.cluster_screen_width * tmpvar_2.y)) * state.cluster_data_size);
-  highp uint tmpvar_3;
-  tmpvar_3 = (cluster_offset_1 + (element_index >> 5));
-  highp uint tmpvar_4;
-  tmpvar_4 = ((cluster_offset_1 + state.cluster_depth_offset) + element_index);
-  highp uint tmpvar_5;
-  tmpvar_5 = (1u << uint(clamp (
-    floor(((depth_interp * state.inv_z_far) * 32.0))
-  , 0.0, 31.0)));
-  highp uint tmpvar_6;
-  tmpvar_6 = atomicOr (cluster_render.data[tmpvar_3], (1u << (element_index & 31u)));
-  highp uint tmpvar_7;
-  tmpvar_7 = atomicOr (cluster_render.data[tmpvar_4], tmpvar_5);
-  frag_color = vec4(float(tmpvar_7));
+  highp uvec2 t0 = (uvec2(gl_FragCoord.xy) >> state.screen_to_clusters_shift);
+  highp int t1 = ((int(t0.x) + (int(state.cluster_screen_width) * int(t0.y))) * int(state.cluster_data_size));
+  atomicOr(cluster_render.data[(t1 + int((element_index >> 5u)))], uint((1 << element_index)));
+  highp uint t2 = atomicOr(cluster_render.data[((t1 + int(state.cluster_depth_offset)) + int(element_index))], uint((1 << uint(clamp(floor(((depth_interp * 32.0) * state.inv_z_far)), 0.0, 31.0)))));
+  frag_color = vec4(float(t2));
 }
 
-
-// stats: 19 alu 0 tex 0 flow
+// stats: 18 alu 0 tex 0 flow
 // inputs: 3
 //  #0: gl_FragCoord (high float) 4x1 [-1] loc 0
 //  #1: depth_interp (high float) 1x1 [-1] loc 32

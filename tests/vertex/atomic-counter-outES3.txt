@@ -1,26 +1,15 @@
 #version 310 es
-layout(binding=0, offset=4) uniform highp atomic_uint counter;
-layout(binding=2, offset=0) uniform highp atomic_uint counters[2];
+layout(binding = 0, offset = 4) uniform atomic_uint counter;
+layout(binding = 2, offset = 0) uniform atomic_uint counters[2];
 void main ()
 {
-  highp uint tmpvar_1;
-  tmpvar_1 = (uint(gl_VertexID) & 1u);
-  highp uint tmpvar_2;
-  tmpvar_2 = atomicCounter (counters[tmpvar_1]);
-  highp uint tmpvar_3;
-  tmpvar_3 = atomicCounter (counter);
-  highp uint tmpvar_4;
-  tmpvar_4 = atomicCounter (counter);
-  highp vec4 tmpvar_5;
-  tmpvar_5.w = 1.0;
-  tmpvar_5.x = float(tmpvar_2);
-  tmpvar_5.y = float(tmpvar_3);
-  tmpvar_5.z = float(tmpvar_4);
-  gl_Position = tmpvar_5;
+  highp uint t0 = atomicCounter(counters[int((uint(gl_VertexID) & 1u))]);
+  highp uint t1 = atomicCounter(counter);
+  highp uint t2 = atomicCounter(counter);
+  gl_Position = vec4(float(t0), float(t1), float(t2), 1.0);
 }
 
-
-// stats: 6 alu 0 tex 0 flow
+// stats: 4 alu 0 tex 0 flow
 // buffer #0: atomic_counters_0 atomic-counter layout atomic-counter binding 0 (size: 8)
 //  member #0: atomic_uint counter offset 4
 // buffer #1: atomic_counters_2 atomic-counter layout atomic-counter binding 2 (size: 8)

@@ -1,5 +1,5 @@
 #version 310 es
-layout(local_size_x=128) in;
+layout(local_size_x = 128) in;
 struct PointLight {
   highp vec4 position;
   highp vec4 color;
@@ -12,41 +12,39 @@ struct Cluster {
   highp uint count;
   highp uint lightIndices[100];
 };
-layout(std430, column_major, binding=2) buffer lightSSBO {
-  layout(column_major) readonly restrict PointLight pointLight[];
+layout(std430, binding = 2) buffer lightSSBO {
+  restrict readonly PointLight pointLight[];
 };
-layout(std430, column_major, binding=1) buffer clusterSSBO {
-  layout(column_major) restrict Cluster clusters[];
+layout(std430, binding = 1) buffer clusterSSBO {
+  restrict Cluster clusters[];
 };
 uniform highp mat4 viewMatrix;
 void main ()
 {
-  Cluster cluster_2;
-  highp uint lightCount_3;
-  lightCount_3 = uint(pointLight.length());
-  highp uint tmpvar_4;
-  tmpvar_4 = ((gl_WorkGroupID.x * 128u) + gl_LocalInvocationID.x);
-  cluster_2 = clusters[tmpvar_4];
-  cluster_2.count = uint(0);
-  for (highp uint i_1 = uint(0); i_1 < lightCount_3; i_1++) {
-    bool tmpvar_5;
-    highp vec3 tmpvar_6;
-    tmpvar_6 = (viewMatrix * pointLight[i_1].position).xyz;
-    highp float tmpvar_7;
-    tmpvar_7 = pointLight[i_1].radius;
-    highp vec3 tmpvar_8;
-    tmpvar_8 = clamp (tmpvar_6, cluster_2.minPoint.xyz, cluster_2.maxPoint.xyz);
-    tmpvar_5 = ((tmpvar_7 * tmpvar_7) >= dot ((tmpvar_8 - tmpvar_6), (tmpvar_8 - tmpvar_6)));
-    if ((tmpvar_5 && (cluster_2.count < 100u))) {
-      cluster_2.lightIndices[cluster_2.count] = i_1;
-      cluster_2.count = (cluster_2.count + 1u);
-    };
-  };
-  clusters[tmpvar_4] = cluster_2;
+  highp int r0;
+  highp int r1;
+  highp uint cluster_lightIndices[100];
+  highp int t0 = pointLight.length();
+  highp int t1 = ((int(gl_WorkGroupID.x) << 7u) + int(gl_LocalInvocationID.x));
+  highp vec4 t2 = clusters[t1].minPoint;
+  highp vec4 t3 = clusters[t1].maxPoint;
+  cluster_lightIndices = clusters[t1].lightIndices;
+  r1 = 0;
+  for (r0 = 0; (uint(r0) < uint(t0)); r0++) {
+    highp vec4 t4 = pointLight[r0].position;
+    highp vec4 t5 = (viewMatrix * t4);
+    highp float t6 = pointLight[r0].radius;
+    highp vec3 t7 = (min(max(t5.xyz, t2.xyz), t3.xyz) - t5.xyz);
+    if ((((t6 * t6) >= dot(t7, t7)) && (uint(r1) < 100u))) {
+      cluster_lightIndices[r1] = uint(r0);
+      r1 = (r1 + 1);
+    }
+  }
+  clusters[t1].count = uint(r1);
+  clusters[t1].lightIndices = cluster_lightIndices;
 }
 
-
-// stats: 19 alu 0 tex 3 flow
+// stats: 20 alu 0 tex 3 flow
 // workgroup size: 128 1 1
 // uniforms: 1 (total size: 0)
 //  #0: viewMatrix (high float) 4x4 [-1]
@@ -62,6 +60,6 @@ void main ()
 //  member #0: PointLight[] pointLight offset 0 array runtime stride 48 readonly
 //  member #1: PointLight [] parent 0 offset 0 readonly
 //  member #2: vec4 position parent 1 offset 0 readonly
-//  member #3: vec4 color parent 1 offset 16 readonly
-//  member #4: float intensity parent 1 offset 32 readonly
+//  member #3: vec4 color parent 1 offset 16 readonly (unused)
+//  member #4: float intensity parent 1 offset 32 readonly (unused)
 //  member #5: float radius parent 1 offset 36 readonly

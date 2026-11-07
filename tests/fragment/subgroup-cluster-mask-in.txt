@@ -1,5 +1,6 @@
 #version 430
-#extension GL_KHR_shader_subgroup : require
+#extension GL_KHR_shader_subgroup_arithmetic : require
+#extension GL_KHR_shader_subgroup_ballot : require
 
 flat in ivec2 range;
 flat in uint mask;

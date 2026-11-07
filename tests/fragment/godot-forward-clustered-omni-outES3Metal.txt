@@ -1,29 +1,25 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
-template<typename R, typename T, bool Signed> inline R _xlat_findMSB(T x) {
-  return R(31) - R(clz(Signed ? x ^ (x >> 31) : x));
-}
-template<typename R, typename T> inline R _xlat_findLSB(T x) {
-  R n = R(ctz(x));
-  return select(n, R(-1), n == R(32));
-}
-struct LightData {
-  float3 position;
+struct _xlat_buf_ClusterBuffer_std430 {
+  uint data[1];
+};
+struct _xlat_LightData_std430 {
+  packed_float3 position;
   float inv_radius;
-  float3 direction;
+  packed_float3 direction;
   float size;
-  float3 color;
+  packed_float3 color;
   float attenuation;
-  half3 area_width;
+  packed_float3 area_width;
   float cone_attenuation;
-  half3 area_height;
+  packed_float3 area_height;
   float cone_angle;
   float specular_amount;
   float shadow_opacity;
   float pad[2];
   float4 atlas_rect;
-  float4x4 shadow_matrix;
+  float4 shadow_matrix[4];
   float shadow_bias;
   float shadow_normal_bias;
   float transmittance_bias;
@@ -34,83 +30,22 @@ struct LightData {
   uint bake_mode;
   float4 projector_rect;
 };
-struct alignas(4) _xlat_buf_storage0_element { uint value; };
-static_assert(sizeof(_xlat_buf_storage0_element) == 4, "array stride");
-struct alignas(4) _xlat_buf_storage3_element { float value; };
-struct _xlat_buf_storage3 { _xlat_buf_storage3_element elements[2]; };
-static_assert(sizeof(_xlat_buf_storage3) == 8, "std430 size");
-static_assert(sizeof(float4x4) == 64, "buffer size");
-struct alignas(16) _xlat_buf_storage2 {
-  alignas(16) packed_float3 position;
-  alignas(4) float inv_radius;
-  alignas(16) packed_float3 direction;
-  alignas(4) float size;
-  alignas(16) packed_float3 color;
-  alignas(4) float attenuation;
-  alignas(16) packed_float3 area_width;
-  alignas(4) float cone_attenuation;
-  alignas(16) packed_float3 area_height;
-  alignas(4) float cone_angle;
-  alignas(4) float specular_amount;
-  alignas(4) float shadow_opacity;
-  alignas(4) _xlat_buf_storage3 pad;
-  alignas(16) float4 atlas_rect;
-  alignas(16) float4x4 shadow_matrix;
-  alignas(4) float shadow_bias;
-  alignas(4) float shadow_normal_bias;
-  alignas(4) float transmittance_bias;
-  alignas(4) float soft_shadow_size;
-  alignas(4) float soft_shadow_scale;
-  alignas(4) uint mask;
-  alignas(4) float volumetric_fog_energy;
-  alignas(4) uint bake_mode;
-  alignas(16) float4 projector_rect;
+static_assert(sizeof(_xlat_LightData_std430) == 224, "std430 size");
+struct _xlat_buf_OmniLights_std430 {
+  _xlat_LightData_std430 data[1];
 };
-static_assert(sizeof(_xlat_buf_storage2) == 224, "std430 size");
-inline __attribute__((always_inline)) LightData _xlat_buf_storage2_read(const device _xlat_buf_storage2& storage)
-{
-  LightData value;
-  value.position = float3(storage.position);
-  value.inv_radius = float(storage.inv_radius);
-  value.direction = float3(storage.direction);
-  value.size = float(storage.size);
-  value.color = float3(storage.color);
-  value.attenuation = float(storage.attenuation);
-  value.area_width = half3(storage.area_width);
-  value.cone_attenuation = float(storage.cone_attenuation);
-  value.area_height = half3(storage.area_height);
-  value.cone_angle = float(storage.cone_angle);
-  value.specular_amount = float(storage.specular_amount);
-  value.shadow_opacity = float(storage.shadow_opacity);
-  for (uint _buf_i0 = 0; _buf_i0 < 2; ++_buf_i0) {
-    value.pad[_buf_i0] = float(storage.pad.elements[_buf_i0].value);
-  }
-  value.atlas_rect = float4(storage.atlas_rect);
-  value.shadow_matrix = storage.shadow_matrix;
-  value.shadow_bias = float(storage.shadow_bias);
-  value.shadow_normal_bias = float(storage.shadow_normal_bias);
-  value.transmittance_bias = float(storage.transmittance_bias);
-  value.soft_shadow_size = float(storage.soft_shadow_size);
-  value.soft_shadow_scale = float(storage.soft_shadow_scale);
-  value.mask = uint(storage.mask);
-  value.volumetric_fog_energy = float(storage.volumetric_fog_energy);
-  value.bake_mode = uint(storage.bake_mode);
-  value.projector_rect = float4(storage.projector_rect);
-  return value;
-}
-struct alignas(16) _xlat_buf_storage1_element { _xlat_buf_storage2 value; };
-static_assert(sizeof(_xlat_buf_storage1_element) == 224, "array stride");
-struct alignas(16) _xlat_buf_storage5 {
-  alignas(4) float z_far;
-  alignas(4) uint cluster_shift;
-  alignas(4) uint cluster_width;
-  alignas(4) uint max_cluster_element_count_div_32;
-  alignas(4) uint layer_mask;
-  alignas(4) float roughness;
-  alignas(4) float metallic;
-  alignas(4) float specular;
+struct _xlat_buf_Scene_std140 {
+  float z_far;
+  uint cluster_shift;
+  uint cluster_width;
+  uint max_cluster_element_count_div_32;
+  uint layer_mask;
+  float roughness;
+  float metallic;
+  float specular;
 };
-static_assert(sizeof(_xlat_buf_storage5) == 32, "std140 size");
+static_assert(sizeof(_xlat_buf_Scene_std140) == 32, "std140 size");
+template <typename T> inline T _xlat_findMSBu(T x) { return select(T(31) - T(clz(x)), T(-1), x == T(0)); }
 struct xlatMtlShaderInput {
   float4 gl_FragCoord [[position]];
   float3 view_position [[user(locn0)]];
@@ -123,136 +58,84 @@ struct xlatMtlShaderOutput {
 struct xlatMtlShaderUniform {
 };
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , const device uchar* _mtl_buffer1 [[buffer(1)]]
-  , const device uchar* _mtl_buffer2 [[buffer(2)]]
-  , constant _xlat_buf_storage5& _mtl_buffer3 [[buffer(3)]]
+  , const device _xlat_buf_ClusterBuffer_std430& cluster_buffer [[buffer(1)]]
+  , const device _xlat_buf_OmniLights_std430& omni_lights [[buffer(2)]]
+  , constant _xlat_buf_Scene_std140& scene [[buffer(3)]]
   , texture2d<half> albedo_texture [[texture(0)]], sampler _mtlsmp_albedo_texture [[sampler(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  float3 lighting_2 = 0;
-  float3 f0_3 = 0;
-  float3 V_4 = 0;
-  float3 N_5 = 0;
-  float4 base_color_6 = 0;
-  base_color_6 = float4(albedo_texture.sample(_mtlsmp_albedo_texture, (float2)((_mtl_i.uv))));
-  N_5 = normalize(_mtl_i.normal_interp);
-  V_4 = normalize(-(_mtl_i.view_position));
-  f0_3 = mix (float3(((0.16 * float(_mtl_buffer3.specular)) * float(_mtl_buffer3.specular))), base_color_6.xyz, float(_mtl_buffer3.metallic));
-  lighting_2 = float3(0.0, 0.0, 0.0);
-  uint2 tmpvar_7;
-  tmpvar_7 = (uint2(_mtl_i.gl_FragCoord.xy) >> uint(_mtl_buffer3.cluster_shift));
-  uint tmpvar_8;
-  tmpvar_8 = (((uint(_mtl_buffer3.cluster_width) * tmpvar_7.y) + tmpvar_7.x) * (uint(_mtl_buffer3.max_cluster_element_count_div_32) + 32u));
-  uint tmpvar_9;
-  tmpvar_9 = ((tmpvar_8 + uint(_mtl_buffer3.max_cluster_element_count_div_32)) + uint(min (
-    max (((-(_mtl_i.view_position.z) / float(_mtl_buffer3.z_far)) * 32.0), 0.0)
-  , 31.0)));
-  uint tmpvar_10;
-  uint tmpvar_11;
-  uint tmpvar_12;
-  uint tmpvar_13;
-  tmpvar_13 = uint(reinterpret_cast<const device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[tmpvar_9].value);
-  tmpvar_10 = (tmpvar_13 & 65535u);
-  tmpvar_11 = (tmpvar_13 >> 16);
-  tmpvar_12 = (tmpvar_10 >> 5);
-  uint tmpvar_14;
-  if ((tmpvar_11 == 0u)) {
-    tmpvar_14 = 0u;
-  } else {
-    tmpvar_14 = (((tmpvar_11 + 4294967295u) >> 5) + 1u);
-  };
-  for (uint i_1 = tmpvar_12; i_1 < tmpvar_14; i_1++) {
-    uint mask_15;
-    mask_15 = uint(reinterpret_cast<const device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[(tmpvar_8 + i_1)].value);
-    int tmpvar_16 = 0;
-    tmpvar_16 = min (max ((
-      int(tmpvar_10)
-     - 
-      (int(i_1) * 32)
-    ), 0), 31);
-    mask_15 = (mask_15 & insert_bits(uint(0u), uint(4294967295u), uint(tmpvar_16), uint(
-      min ((int(tmpvar_11) - int(tmpvar_10)), (32 - tmpvar_16))
-    )));
-    while (true) {
-      if ((mask_15 == 0u)) {
-        break;
-      };
-      uint tmpvar_17;
-      tmpvar_17 = uint(_xlat_findMSB<int, uint, false>(mask_15));
-      mask_15 = (mask_15 & ~((1u << tmpvar_17)));
-      uint tmpvar_18;
-      tmpvar_18 = ((32u * i_1) + tmpvar_17);
-      if (((uint(reinterpret_cast<const device _xlat_buf_storage1_element*>(_mtl_buffer2 + 0)[tmpvar_18].value.mask) & uint(_mtl_buffer3.layer_mask)) != 0u)) {
-        float3 tmpvar_19 = 0;
-        float3 specular_20 = 0;
-        float3 tmpvar_21 = 0;
-        tmpvar_21 = (float3(reinterpret_cast<const device _xlat_buf_storage1_element*>(_mtl_buffer2 + 0)[tmpvar_18].value.position) - _mtl_i.view_position);
-        float tmpvar_22 = 0;
-        float tmpvar_23 = 0;
-        tmpvar_23 = sqrt(dot (tmpvar_21, tmpvar_21));
-        float nd_24 = 0;
-        float tmpvar_25 = 0;
-        tmpvar_25 = (tmpvar_23 * float(reinterpret_cast<const device _xlat_buf_storage1_element*>(_mtl_buffer2 + 0)[tmpvar_18].value.inv_radius));
-        nd_24 = (tmpvar_25 * tmpvar_25);
-        nd_24 = (nd_24 * nd_24);
-        float tmpvar_26 = 0;
-        tmpvar_26 = max ((1.0 - nd_24), 0.0);
-        nd_24 = (tmpvar_26 * tmpvar_26);
-        tmpvar_22 = (nd_24 * pow (max (tmpvar_23, 0.0001), -(float(reinterpret_cast<const device _xlat_buf_storage1_element*>(_mtl_buffer2 + 0)[tmpvar_18].value.attenuation))));
-        if ((6.103516e-05 >= tmpvar_22)) {
-          tmpvar_19 = float3(0.0, 0.0, 0.0);
+  float3 r0 = 0;
+  float3 r1 = 0;
+  uint r2 = 0;
+  int r3 = 0;
+  float3 r4 = 0;
+  float4 t0 = float4(albedo_texture.sample(_mtlsmp_albedo_texture, _mtl_i.uv));
+  float3 t1 = normalize(_mtl_i.normal_interp);
+  float3 t2 = (-_mtl_i.view_position);
+  float3 t3 = (_mtl_i.view_position * rsqrt(dot(t2, t2)));
+  float t4 = float(scene.specular);
+  float t5 = float(scene.metallic);
+  float3 t6 = mix(float3(((0.16 * t4) * t4)), t0.xyz, float3(t5));
+  uint2 t7 = (uint2(_mtl_i.gl_FragCoord.xy) >> uint(uint(scene.cluster_shift)));
+  uint t8 = uint(scene.max_cluster_element_count_div_32);
+  int t9 = (((int(uint(scene.cluster_width)) * int(t7.y)) + int(t7.x)) * (int(t8) + 32));
+  uint t10 = uint(cluster_buffer.data[((t9 + int(t8)) + int(uint(clamp((((-_mtl_i.view_position.z) / float(scene.z_far)) * 32.0), 0.0, 31.0))))]);
+  uint t11 = (t10 >> uint(16u));
+  int t12 = ((int(t11) == 0) ? 0 : (int((uint((int(t11) - 1)) >> uint(5u))) + 1));
+  float3 t13 = (-t3);
+  uint t14 = (t10 & 65535u);
+  r4 = float3(0.0);
+  for (r3 = int((t14 >> uint(5u))); (uint(r3) < uint(t12)); r3++) {
+    int t15 = (r3 << int(5u));
+    int t16 = min(max((int(t14) - t15), 0), 31);
+    int t17 = min((int(t11) - int(t14)), (32 - t16));
+    r2 = (uint(cluster_buffer.data[(t9 + r3)]) & ((31u < uint(t17)) ? 4294967295u : (uint((-1 << int(uint(t16)))) & uint((((1 << int(uint(t17))) - 1) << int(uint(t16)))))));
+    while ((int(r2) != 0)) {
+      int t18 = int(_xlat_findMSBu(r2));
+      r2 = (r2 & uint((~(1 << int(uint(t18))))));
+      int t19 = (t15 + t18);
+      if ((int((uint(omni_lights.data[t19].mask) & uint(scene.layer_mask))) != 0)) {
+        float3 t20 = (float3(omni_lights.data[t19].position) - _mtl_i.view_position);
+        float t21 = dot(t20, t20);
+        float t22 = sqrt(t21);
+        float t23 = (t22 * float(omni_lights.data[t19].inv_radius));
+        float t24 = (t23 * t23);
+        float t25 = saturate((1.0 - (t24 * t24)));
+        float t26 = ((t25 * t25) * pow(max(t22, 0.0001), (-float(omni_lights.data[t19].attenuation))));
+        if ((6.1035156e-05 < t26)) {
+          float3 t27 = (t20 * rsqrt(t21));
+          float t28 = dot(t1, t13);
+          float t29 = max(dot(t1, t27), 0.0);
+          float3 t30 = (((1.0 - t5) * t0.xyz) * (t29 * 0.31830987));
+          float t31 = float(scene.roughness);
+          if ((0.0 < t31)) {
+            float3 t32 = (t27 - t3);
+            float3 t33 = normalize(t32);
+            float t34 = (t31 * t31);
+            float t35 = saturate(dot(t1, t33));
+            float t36 = (t35 * t34);
+            float t37 = (t34 / ((1.0 - (t35 * t35)) + (t36 * t36)));
+            float t38 = max(t28, 0.0001);
+            float t39 = (1.0 - saturate(dot(t27, t33)));
+            float t40 = (t39 * t39);
+            float3 t41 = (((t29 * min(((t37 * 0.31830987) * t37), 65504.0)) * mix(t6, float3(min(max(dot(t6, float3(16.5)), t5), 1.0)), float3(((t40 * t40) * t39)))) * min((0.5 / mix(((2.0 * t29) * t38), (t29 + t38), t34)), 65504.0));
+            r0 = (t41 * float(omni_lights.data[t19].specular_amount));
+          } else {
+            r0 = float3(0.0);
+          }
+          r1 = (((t30 + r0) * float3(omni_lights.data[t19].color)) * t26);
         } else {
-          float3 tmpvar_27 = 0;
-          tmpvar_27 = normalize(tmpvar_21);
-          float tmpvar_28 = 0;
-          tmpvar_28 = max (dot (N_5, tmpvar_27), 0.0);
-          float tmpvar_29 = 0;
-          tmpvar_29 = max (dot (N_5, V_4), 0.0001);
-          float3 tmpvar_30 = 0;
-          tmpvar_30 = (((1.0 - float(_mtl_buffer3.metallic)) * base_color_6.xyz) * (tmpvar_28 * 0.3183099));
-          specular_20 = float3(0.0, 0.0, 0.0);
-          if ((0.0 < float(_mtl_buffer3.roughness))) {
-            float3 tmpvar_31 = 0;
-            tmpvar_31 = normalize((V_4 + tmpvar_27));
-            float tmpvar_32 = 0;
-            tmpvar_32 = saturate(dot (N_5, tmpvar_31));
-            float tmpvar_33 = 0;
-            tmpvar_33 = (float(_mtl_buffer3.roughness) * float(_mtl_buffer3.roughness));
-            float tmpvar_34 = 0;
-            tmpvar_34 = (tmpvar_32 * tmpvar_33);
-            float tmpvar_35 = 0;
-            tmpvar_35 = (tmpvar_33 / ((1.0 - 
-              (tmpvar_32 * tmpvar_32)
-            ) + (tmpvar_34 * tmpvar_34)));
-            float tmpvar_36 = 0;
-            tmpvar_36 = (1.0 - saturate(dot (tmpvar_27, tmpvar_31)));
-            float tmpvar_37 = 0;
-            tmpvar_37 = (tmpvar_36 * tmpvar_36);
-            specular_20 = (((
-              (tmpvar_28 * min (((tmpvar_35 * tmpvar_35) * 0.3183099), 65504.0))
-             * 
-              (f0_3 + ((min (
-                max (dot (f0_3, float3(16.5, 16.5, 16.5)), float(_mtl_buffer3.metallic))
-              , 1.0) - f0_3) * ((tmpvar_37 * tmpvar_37) * tmpvar_36)))
-            ) * min (
-              (0.5 / mix (((2.0 * tmpvar_28) * tmpvar_29), (tmpvar_28 + tmpvar_29), tmpvar_33))
-            , 65504.0)) * float(reinterpret_cast<const device _xlat_buf_storage1_element*>(_mtl_buffer2 + 0)[tmpvar_18].value.specular_amount));
-          };
-          tmpvar_19 = (((tmpvar_30 + specular_20) * float3(reinterpret_cast<const device _xlat_buf_storage1_element*>(_mtl_buffer2 + 0)[tmpvar_18].value.color)) * tmpvar_22);
-        };
-        lighting_2 = (lighting_2 + tmpvar_19);
-      };
-    };
-  };
-  float4 tmpvar_38 = 0;
-  tmpvar_38.xyz = lighting_2;
-  tmpvar_38.w = base_color_6.w;
-  _mtl_o.color = tmpvar_38;
+          r1 = float3(0.0);
+        }
+        r4 = (r4 + r1);
+      }
+    }
+  }
+  _mtl_o.color = float4(r4.x, r4.y, r4.z, t0.w);
   return _mtl_o;
 }
 
-
-// stats: 123 alu 1 tex 8 flow
+// stats: 124 alu 1 tex 7 flow
 // inputs: 4
 //  #0: gl_FragCoord (high float) 4x1 [-1] loc 0
 //  #1: view_position (high float) 3x1 [-1] loc 32

@@ -1,15 +1,14 @@
 #version 320 es
+precision highp float;
+precision highp int;
 flat in highp uint bits;
 out highp vec4 color;
 void main ()
 {
-  highp vec4 tmpvar_1;
-  tmpvar_1.yzw = vec3(8.0, 8.0, 8.0);
-  tmpvar_1.x = float(bitCount(bits));
-  color = tmpvar_1;
+  mediump int t0 = bitCount(bits);
+  color = vec4(float(t0), 8.0, 8.0, 8.0);
 }
 
-
-// stats: 3 alu 0 tex 0 flow
+// stats: 2 alu 0 tex 0 flow
 // inputs: 1
 //  #0: bits (high int) 1x1 [-1]

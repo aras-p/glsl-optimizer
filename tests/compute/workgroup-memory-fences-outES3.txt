@@ -1,21 +1,20 @@
 #version 310 es
-layout(local_size_x=8) in;
-layout(std430, column_major) buffer Output {
+layout(local_size_x = 8) in;
+layout(std430) buffer Output {
   highp uint values[];
 } outputData;
 shared highp uint values[8];
 void main ()
 {
-  values[gl_LocalInvocationIndex] = gl_LocalInvocationIndex;
-  if (((gl_LocalInvocationIndex & 1u) != uint(0))) {
-    memoryBarrierShared ();
-  };
-  groupMemoryBarrier ();
-  memoryBarrier ();
+  values[int(gl_LocalInvocationIndex)] = gl_LocalInvocationIndex;
+  if ((int((gl_LocalInvocationIndex & 1u)) != 0)) {
+    memoryBarrierShared();
+  }
+  groupMemoryBarrier();
+  memoryBarrier();
   barrier();
-  outputData.values[gl_GlobalInvocationID.x] = values[((gl_LocalInvocationIndex + 1u) % 8u)];
+  outputData.values[int(gl_GlobalInvocationID.x)] = values[int((uint((int(gl_LocalInvocationIndex) + 1)) & 7u))];
 }
-
 
 // stats: 4 alu 0 tex 1 flow
 // workgroup size: 8 1 1

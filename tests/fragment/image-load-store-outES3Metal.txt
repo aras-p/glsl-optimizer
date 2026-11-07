@@ -14,25 +14,12 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   , texture2d_array<uint, access::write> destinationImage [[texture(1)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  short2 p_1 = 0;
-  p_1 = short2(int2(_mtl_i.gl_FragCoord.xy));
-  int3 tmpvar_2 = 0;
-  tmpvar_2 = int3(sourceImage.get_width(), sourceImage.get_height(), sourceImage.get_depth());
-  int3 tmpvar_3 = 0;
-  tmpvar_3.xy = int2(p_1);
-  tmpvar_3.z = (tmpvar_2.z - 1);
-  float4 tmpvar_4 = 0;
-  tmpvar_4 = sourceImage.read(uint3(tmpvar_3));
-  _mtl_o.color = tmpvar_4;
-  int3 tmpvar_5 = 0;
-  tmpvar_5 = int3(destinationImage.get_width(), destinationImage.get_height(), destinationImage.get_array_size());
-  int3 tmpvar_6 = 0;
-  tmpvar_6.xy = int2(p_1);
-  tmpvar_6.z = (tmpvar_5.z - 1);
-  destinationImage.write(uint4(uint4((tmpvar_4 * 255.0))), uint2(tmpvar_6.xy), uint(tmpvar_6.z));
+  short2 t0 = short2(int2(_mtl_i.gl_FragCoord.xy));
+  float4 t1 = sourceImage.read(uint3(int4(int2(t0), (int3(sourceImage.get_width(), sourceImage.get_height(), sourceImage.get_depth()).z - 1), 0).xyz));
+  _mtl_o.color = t1;
+  destinationImage.write(uint4((t1 * 255.0)), uint2(int4(int2(t0), (int3(destinationImage.get_width(), destinationImage.get_height(), destinationImage.get_array_size()).z - 1), 0).xy), uint(int4(int2(t0), (int3(destinationImage.get_width(), destinationImage.get_height(), destinationImage.get_array_size()).z - 1), 0).z));
   return _mtl_o;
 }
-
 
 // stats: 5 alu 4 tex 0 flow
 // inputs: 1

@@ -81,3 +81,20 @@ jobs:
           build/Testing/Temporary/
           build/test-output/
           build/runner-checks/
+
+  node:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, macos-15, ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+    - uses: actions/checkout@v6
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+    - name: Build addon
+      run: npm install
+    - name: Test addon
+      run: npm test

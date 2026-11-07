@@ -14,211 +14,78 @@ struct xlatMtlShaderUniform {
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  float2 tmpvar_1 = 0;
-  tmpvar_1 = (((2.0 * _mtl_i.gl_FragCoord.xy) - _mtl_u.iResolution.xy) / _mtl_u.iResolution.y);
-  float tmpvar_2 = 0;
-  tmpvar_2 = (2.0 / _mtl_u.iResolution.y);
-  float hdi_4 = 0;
-  int2 hid_5 = 0;
-  float s3_6 = 0;
-  float s2_7 = 0;
-  float s1_8 = 0;
-  int2 i3_9 = 0;
-  int2 i2_10 = 0;
-  int2 i1_11 = 0;
-  float3 col_12 = 0;
-  float2 rd_13 = 0;
-  float2 ro_14 = 0;
-  tmpvar_1 = (tmpvar_1 * 8.0);
-  tmpvar_2 = (tmpvar_2 * 8.0);
-  ro_14 = (float2(9.0, 2.0) * cos((
-    (0.11 * _mtl_u.iTime)
-   + float2(0.0, 1.0))));
-  rd_13 = normalize(cos((float2(2.0, 1.0) + 
-    (float2(0.13, 0.11) * _mtl_u.iTime)
-  )));
-  int2 id_15 = 0;
-  float2 f_16 = 0;
-  float2 tmpvar_17 = 0;
-  tmpvar_17.x = tmpvar_1.x;
-  tmpvar_17.y = ((tmpvar_1.x * 0.5) + (tmpvar_1.y * 0.8660254));
-  int2 tmpvar_18 = 0;
-  tmpvar_18 = int2(floor(tmpvar_17));
-  f_16 = fract(tmpvar_17);
-  int tmpvar_19 = 0;
-  tmpvar_19 = (tmpvar_18.x + tmpvar_18.y);
-  int tmpvar_20 = 0;
-  if ((tmpvar_19 < 0)) {
-    tmpvar_20 = (2 - ((2 - tmpvar_19) % 3));
-  } else {
-    tmpvar_20 = (tmpvar_19 % 3);
-  };
-  int2 tmpvar_21 = 0;
-  tmpvar_21 = (tmpvar_18 + tmpvar_20);
-  id_15 = tmpvar_21;
-  if ((tmpvar_20 == 2)) {
-    int2 tmpvar_22 = 0;
-    if ((f_16.y < f_16.x)) {
-      tmpvar_22 = int2(1, 2);
-    } else {
-      tmpvar_22 = int2(2, 1);
-    };
-    id_15 = (tmpvar_21 - tmpvar_22);
-  };
-  int2 tmpvar_23 = 0;
-  tmpvar_23.x = id_15.x;
-  tmpvar_23.y = (((2 * id_15.y) - id_15.x) / 3);
-  col_12 = float3((0.3 + (0.2 * sin(
-    (float((15 * id_15.x)) + cos(float((33 * tmpvar_23.y))))
-  ))));
-  float2 tmpvar_24 = 0;
-  tmpvar_24 = (tmpvar_1 - ro_14);
-  float2 tmpvar_25 = 0;
-  tmpvar_25 = ((ro_14 + (rd_13 * 30.0)) - ro_14);
-  float2 tmpvar_26 = 0;
-  tmpvar_26 = (tmpvar_24 - (tmpvar_25 * saturate(
-    (dot (tmpvar_24, tmpvar_25) / dot (tmpvar_25, tmpvar_25))
-  )));
-  float tmpvar_27 = 0;
-  tmpvar_27 = (-(tmpvar_2) * 0.5);
-  float tmpvar_28 = 0;
-  tmpvar_28 = saturate(((
-    (sqrt(dot (tmpvar_26, tmpvar_26)) - 0.03)
-   - tmpvar_27) / (
-    (tmpvar_2 * 0.5)
-   - tmpvar_27)));
-  col_12 = mix (col_12, float3(1.0, 1.0, 0.0), (1.0 - (tmpvar_28 * 
-    (tmpvar_28 * (3.0 - (2.0 * tmpvar_28)))
-  )));
-  i1_11 = int2(2, 0);
-  i2_10 = int2(1, 1);
-  i3_9 = int2(-1, 1);
-  float tmpvar_29 = 0;
-  tmpvar_29 = (1.0/(dot (rd_13, float2(1.0, 0.0))));
-  float tmpvar_30 = 0;
-  tmpvar_30 = (1.0/(dot (rd_13, float2(0.5, 0.866025))));
-  float tmpvar_31 = 0;
-  tmpvar_31 = (1.0/(dot (rd_13, float2(-0.5, 0.866025))));
-  s1_8 = 1.0;
-  if ((tmpvar_29 < 0.0)) {
-    s1_8 = -1.0;
-    i1_11 = int2(-2, 0);
-  };
-  s1_8 = ((s1_8 - dot (ro_14, float2(1.0, 0.0))) * tmpvar_29);
-  s2_7 = 1.0;
-  if ((tmpvar_30 < 0.0)) {
-    s2_7 = -1.0;
-    i2_10 = int2(-1, -1);
-  };
-  s2_7 = ((s2_7 - dot (ro_14, float2(0.5, 0.866025))) * tmpvar_30);
-  s3_6 = 1.0;
-  if ((tmpvar_31 < 0.0)) {
-    s3_6 = -1.0;
-    i3_9 = int2(1, -1);
-  };
-  s3_6 = ((s3_6 - dot (ro_14, float2(-0.5, 0.866025))) * tmpvar_31);
-  int2 id_32 = 0;
-  float2 f_33 = 0;
-  float2 tmpvar_34 = 0;
-  tmpvar_34.x = ro_14.x;
-  tmpvar_34.y = ((ro_14.x * 0.5) + (ro_14.y * 0.8660254));
-  int2 tmpvar_35 = 0;
-  tmpvar_35 = int2(floor(tmpvar_34));
-  f_33 = fract(tmpvar_34);
-  int tmpvar_36 = 0;
-  tmpvar_36 = (tmpvar_35.x + tmpvar_35.y);
-  int tmpvar_37 = 0;
-  if ((tmpvar_36 < 0)) {
-    tmpvar_37 = (2 - ((2 - tmpvar_36) % 3));
-  } else {
-    tmpvar_37 = (tmpvar_36 % 3);
-  };
-  int2 tmpvar_38 = 0;
-  tmpvar_38 = (tmpvar_35 + tmpvar_37);
-  id_32 = tmpvar_38;
-  if ((tmpvar_37 == 2)) {
-    int2 tmpvar_39 = 0;
-    if ((f_33.y < f_33.x)) {
-      tmpvar_39 = int2(1, 2);
-    } else {
-      tmpvar_39 = int2(2, 1);
-    };
-    id_32 = (tmpvar_38 - tmpvar_39);
-  };
-  int2 tmpvar_40 = 0;
-  tmpvar_40.x = id_32.x;
-  tmpvar_40.y = (((2 * id_32.y) - id_32.x) / 3);
-  hid_5 = tmpvar_40;
-  hdi_4 = 0.0;
-  for (int i_3 = 0; i_3 < 32; i_3++) {
-    if (all(hid_5 == tmpvar_23)) {
-      col_12 = mix (col_12, float3(1.0, 0.0, 0.0), 0.3);
-    };
-    float2 tmpvar_41 = 0;
-    tmpvar_41.x = float(hid_5.x);
-    tmpvar_41.y = (float(hid_5.y) * 1.732051);
-    float2 tmpvar_42 = 0;
-    tmpvar_42 = (tmpvar_1 - tmpvar_41);
-    float tmpvar_43 = 0;
-    tmpvar_43 = (-(tmpvar_2) * 0.5);
-    float tmpvar_44 = 0;
-    tmpvar_44 = saturate(((
-      (sqrt(dot (tmpvar_42, tmpvar_42)) - 0.1)
-     - tmpvar_43) / (
-      (tmpvar_2 * 0.5)
-     - tmpvar_43)));
-    col_12 = mix (col_12, float3(1.0, 0.0, 0.0), (1.0 - (tmpvar_44 * 
-      (tmpvar_44 * (3.0 - (2.0 * tmpvar_44)))
-    )));
-    float2 tmpvar_45 = 0;
-    tmpvar_45 = (tmpvar_1 - (ro_14 + (rd_13 * hdi_4)));
-    float tmpvar_46 = 0;
-    tmpvar_46 = (-(tmpvar_2) * 0.5);
-    float tmpvar_47 = 0;
-    tmpvar_47 = saturate(((
-      (sqrt(dot (tmpvar_45, tmpvar_45)) - 0.1)
-     - tmpvar_46) / (
-      (tmpvar_2 * 0.5)
-     - tmpvar_46)));
-    col_12 = mix (col_12, float3(1.0, 1.0, 0.0), (1.0 - (tmpvar_47 * 
-      (tmpvar_47 * (3.0 - (2.0 * tmpvar_47)))
-    )));
-    float tmpvar_48 = 0;
-    tmpvar_48 = (s1_8 + (float(hid_5.x) * tmpvar_29));
-    float tmpvar_49 = 0;
-    tmpvar_49 = (s2_7 + ((
-      (float(hid_5.y) * 1.5)
-     + 
-      (float(hid_5.x) * 0.5)
-    ) * tmpvar_30));
-    float tmpvar_50 = 0;
-    tmpvar_50 = (s3_6 + ((
-      (float(hid_5.y) * 1.5)
-     - 
-      (float(hid_5.x) * 0.5)
-    ) * tmpvar_31));
-    if (((tmpvar_48 < tmpvar_49) && (tmpvar_48 < tmpvar_50))) {
-      hid_5 = (hid_5 + i1_11);
-      hdi_4 = tmpvar_48;
-    } else {
-      if ((tmpvar_49 < tmpvar_50)) {
-        hid_5 = (hid_5 + i2_10);
-        hdi_4 = tmpvar_49;
-      } else {
-        hid_5 = (hid_5 + i3_9);
-        hdi_4 = tmpvar_50;
-      };
-    };
-  };
-  float4 tmpvar_51 = 0;
-  tmpvar_51.w = 1.0;
-  tmpvar_51.xyz = col_12;
-  _mtl_o.fragColor = tmpvar_51;
+  int2 r0 = 0;
+  float r1 = 0;
+  int r2 = 0;
+  float3 r3 = 0;
+  float2 t0 = (((2.0 * _mtl_i.gl_FragCoord.xy) - _mtl_u.iResolution.xy) / _mtl_u.iResolution.y);
+  float2 t1 = cos((float2(2.0, 1.0) + (float2(0.13, 0.11000001) * _mtl_u.iTime)));
+  float2 t2 = normalize(t1);
+  float2 t3 = (t0 * 8.0);
+  float2 t4 = float2(t3.x, ((4.0 * t0.x) + (6.928203 * t0.y)));
+  int2 t5 = int2(floor(t4));
+  int t6 = (t5.x + t5.y);
+  int t7 = ((t6 < 0) ? (2 - int((uint((2 - t6)) % 3u))) : int((uint(t6) % 3u)));
+  int2 t8 = (t5 + t7);
+  float2 t9 = fract(t4);
+  int2 t10 = ((t7 == 2) ? (t8 + ((t9.y < t9.x) ? int2(-1, -2) : int2(-2, -1))) : t8);
+  int t11 = (((t10.y << int(1u)) - t10.x) / 3);
+  float2 t12 = cos(((0.11 * _mtl_u.iTime) + float2(0.0, 1.0)));
+  float2 t13 = (float2(9.0, 2.0) * t12);
+  float2 t14 = (t3 - t13);
+  float2 t15 = (t2 * 3e+01);
+  float2 t16 = (t14 - (t15 * saturate((dot(t14, t15) / dot(t15, t15)))));
+  float t17 = (2.0 / _mtl_u.iResolution.y);
+  float t18 = (4.0 * t17);
+  float t19 = (t17 * 8.0);
+  float t20 = saturate((((length(t16) - 0.030000001) + t18) / t19));
+  r3 = mix(float3((0.3 + (0.2 * sin((float((15 * t10.x)) + cos(float((33 * t11)))))))), float3(1.0, 1.0, 0.0), float3((1.0 - (t20 * (t20 * (3.0 - (2.0 * t20)))))));
+  float t21 = (1.0 / t2.x);
+  bool t22 = (t21 < 0.0);
+  float t23 = ((t22 ? -1.0 : 1.0) - t13.x);
+  float t24 = (1.0 / dot(t2, float2(0.5, 0.866025)));
+  bool t25 = (t24 < 0.0);
+  float t26 = ((t25 ? -1.0 : 1.0) - dot(t13, float2(0.5, 0.866025)));
+  float t27 = (1.0 / dot(t2, float2(-0.5, 0.866025)));
+  bool t28 = (t27 < 0.0);
+  float t29 = ((t28 ? -1.0 : 1.0) - dot(t13, float2(-0.5, 0.866025)));
+  float2 t30 = float2(t13.x, ((4.5 * t12.x) + (1.7320508 * t12.y)));
+  int2 t31 = int2(floor(t30));
+  int t32 = (t31.x + t31.y);
+  int t33 = ((t32 < 0) ? (2 - int((uint((2 - t32)) % 3u))) : int((uint(t32) % 3u)));
+  int2 t34 = (t31 + t33);
+  float2 t35 = fract(t30);
+  int2 t36 = ((t33 == 2) ? (t34 + ((t35.y < t35.x) ? int2(-1, -2) : int2(-2, -1))) : t34);
+  r0 = int2(t36.x, (((t36.y << int(1u)) - t36.x) / 3));
+  int2 t37 = (t22 ? int2(-2, 0) : int2(2, 0));
+  int2 t38 = (t25 ? int2(-1) : int2(1));
+  int2 t39 = (t28 ? int2(1, -1) : int2(-1, 1));
+  r1 = 0.0;
+  for (r2 = 0; (r2 < 32); r2++) {
+    float t40 = float(r0.y);
+    float t41 = float(r0.x);
+    float2 t42 = (t3 - float2(t41, (t40 * 1.7320508)));
+    float t43 = saturate((((length(t42) - 0.1) + t18) / t19));
+    float3 t44 = mix((all(r0 == int2(t10.x, t11)) ? mix(r3, float3(1.0, 0.0, 0.0), float3(0.3)) : r3), float3(1.0, 0.0, 0.0), float3((1.0 - (t43 * (t43 * (3.0 - (2.0 * t43)))))));
+    float2 t45 = (t3 - (t13 + (t2 * r1)));
+    float t46 = saturate((((length(t45) - 0.1) + t18) / t19));
+    r3 = mix(t44, float3(1.0, 1.0, 0.0), float3((1.0 - (t46 * (t46 * (3.0 - (2.0 * t46)))))));
+    float t47 = (t21 * (t23 + t41));
+    float t48 = (t40 * 1.5);
+    float t49 = (t41 * 0.5);
+    float t50 = (t24 * ((t48 + t26) + t49));
+    float t51 = (t27 * ((t48 + t29) - t49));
+    bool t52 = (t50 < t51);
+    float t53 = (t52 ? t50 : t51);
+    bool t54 = (t47 < min(t50, t51));
+    r0 = (r0 + (t54 ? t37 : (t52 ? t38 : t39)));
+    r1 = (t54 ? t47 : t53);
+  }
+  _mtl_o.fragColor = float4(r3.x, r3.y, r3.z, 1.0);
   return _mtl_o;
 }
 
-
-// stats: 191 alu 0 tex 14 flow
+// stats: 163 alu 0 tex 2 flow
 // inputs: 1
 //  #0: gl_FragCoord (high float) 4x1 [-1] loc 0
 // uniforms: 2 (total size: 20)

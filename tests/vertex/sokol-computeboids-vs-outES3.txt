@@ -3,80 +3,40 @@ struct particle {
   highp vec2 pos;
   highp vec2 vel;
 };
-layout(std430, column_major, binding=0) buffer vs_ssbo {
-  layout(column_major) readonly particle prt[];
+layout(std430, binding = 0) buffer vs_ssbo {
+  readonly particle prt[];
 };
 out highp vec4 color;
 void main ()
 {
-  highp vec2 tmpvar_1;
-  tmpvar_1 = vec2[3](vec2(-0.01, -0.02), vec2(0.01, -0.02), vec2(0.0, 0.02))[gl_VertexID];
-  highp vec2 tmpvar_2;
-  tmpvar_2 = prt[gl_InstanceID].vel;
-  bool tmpvar_3;
-  tmpvar_3 = (0.0 >= tmpvar_2.y);
-  highp float tmpvar_4;
-  tmpvar_4 = ((tmpvar_3) ? (abs(tmpvar_2.y)) : (tmpvar_2.x));
-  highp float tmpvar_5;
-  tmpvar_5 = ((tmpvar_3) ? (tmpvar_2.x) : (abs(tmpvar_2.y)));
-  highp float tmpvar_6;
-  tmpvar_6 = (((abs(tmpvar_5) >= 1e+18)) ? (0.25) : (1.0));
-  highp float tmpvar_7;
-  tmpvar_7 = (1.0/((tmpvar_5 * tmpvar_6)));
-  highp float tmpvar_8;
-  highp float tmpvar_9;
-  tmpvar_9 = (min (abs(
-    (((abs(tmpvar_2.y) == abs(tmpvar_2.x))) ? (1.0) : (abs(((tmpvar_4 * tmpvar_6) * tmpvar_7))))
-  ), 1.0) / max (abs(
-    (((abs(tmpvar_2.y) == abs(tmpvar_2.x))) ? (1.0) : (abs(((tmpvar_4 * tmpvar_6) * tmpvar_7))))
-  ), 1.0));
-  highp float tmpvar_10;
-  tmpvar_10 = (tmpvar_9 * tmpvar_9);
-  tmpvar_10 = (((
-    ((((
-      ((((-0.01213232 * tmpvar_10) + 0.05368138) * tmpvar_10) - 0.1173503)
-     * tmpvar_10) + 0.1938925) * tmpvar_10) - 0.3326756)
-   * tmpvar_10) + 0.9999793) * tmpvar_9);
-  tmpvar_10 = (tmpvar_10 + (float(
-    (1.0 < abs((((
-      abs(tmpvar_2.y)
-     == 
-      abs(tmpvar_2.x)
-    )) ? (1.0) : (abs(
-      ((tmpvar_4 * tmpvar_6) * tmpvar_7)
-    )))))
-  ) * (
-    (tmpvar_10 * -2.0)
-   + 1.570796)));
-  tmpvar_8 = (tmpvar_10 * sign(((
-    (abs(tmpvar_2.y) == abs(tmpvar_2.x))
-  ) ? (1.0) : (
-    abs(((tmpvar_4 * tmpvar_6) * tmpvar_7))
-  ))));
-  tmpvar_8 = (tmpvar_8 + (float(tmpvar_3) * 1.570796));
-  highp float tmpvar_11;
-  tmpvar_11 = -((((
-    min (tmpvar_2.x, tmpvar_7)
-   < 0.0)) ? (-(tmpvar_8)) : (tmpvar_8)));
-  highp vec2 tmpvar_12;
-  tmpvar_12.x = ((tmpvar_1.x * cos(tmpvar_11)) - (tmpvar_1.y * sin(tmpvar_11)));
-  tmpvar_12.y = ((tmpvar_1.x * sin(tmpvar_11)) + (tmpvar_1.y * cos(tmpvar_11)));
-  highp vec4 tmpvar_13;
-  tmpvar_13.zw = vec2(0.0, 1.0);
-  tmpvar_13.xy = (tmpvar_12 + prt[gl_InstanceID].pos);
-  gl_Position = tmpvar_13;
-  highp vec4 tmpvar_14;
-  tmpvar_14.w = 1.0;
-  tmpvar_14.x = ((1.0 - sin(
-    (tmpvar_11 + 1.0)
-  )) - tmpvar_2.y);
-  tmpvar_14.y = (((tmpvar_12.x * 100.0) - tmpvar_2.y) + 0.1);
-  tmpvar_14.z = (tmpvar_2.x + cos((tmpvar_11 + 0.5)));
-  color = tmpvar_14;
+  highp vec2 verts[3];
+  verts[0] = vec2(-0.01, -0.02);
+  verts[1] = vec2(0.01, -0.02);
+  verts[2] = vec2(0.0, 0.02);
+  highp vec2 t0 = verts[gl_VertexID];
+  highp vec2 t1 = prt[gl_InstanceID].vel;
+  highp float t2 = abs(t1.y);
+  bool t3 = (0.0 >= t1.y);
+  highp float t4 = (t3 ? t1.x : t2);
+  highp float t5 = ((abs(t4) >= 1e+18) ? 0.25 : 1.0);
+  highp float t6 = (1.0 / (t4 * t5));
+  highp float t7 = ((t2 == abs(t1.x)) ? 1.0 : (abs(((t3 ? t2 : t1.x) * t5)) * abs(t6)));
+  bool t8 = (1.0 >= t7);
+  highp float t9 = (t8 ? t7 : (1.0 / t7));
+  highp float t10 = (t9 * t9);
+  highp float t11 = ((t9 * ((((((((((-0.0121323215 * t10) + 0.053681377) * t10) - 0.11735032) * t10) + 0.1938925) * t10) - 0.33267564) * t10) + 0.9999793)) + (t8 ? 0.0 : -1.5707964));
+  highp float t12 = ((float(t3) * 1.5707964) + uintBitsToFloat(((floatBitsToUint(t11) & 2147483647u) | (floatBitsToUint(t7) & 2147483648u))));
+  highp float t13 = ((min(t1.x, t6) < 0.0) ? (-t12) : t12);
+  highp float t14 = (-t13);
+  highp float t15 = cos(t14);
+  highp float t16 = sin(t14);
+  highp float t17 = ((t0.x * t15) - (t0.y * t16));
+  highp vec2 t18 = (vec2(t17, ((t0.x * t16) + (t0.y * t15))) + prt[gl_InstanceID].pos);
+  gl_Position = vec4(t18, 0.0, 1.0);
+  color = vec4(((1.0 - sin((1.0 - t13))) - t1.y), ((0.1 - t1.y) + (t17 * 1e+02)), (t1.x + cos((0.5 - t13))), 1.0);
 }
 
-
-// stats: 95 alu 0 tex 0 flow
+// stats: 63 alu 0 tex 0 flow
 // buffer #0: vs_ssbo storage layout std430 binding 0 (size: unknown)
 //  member #0: particle[] prt offset 0 array runtime stride 16 readonly
 //  member #1: particle [] parent 0 offset 0 readonly

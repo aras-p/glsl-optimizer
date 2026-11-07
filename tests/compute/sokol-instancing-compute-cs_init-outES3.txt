@@ -1,44 +1,27 @@
 #version 310 es
-layout(local_size_x=64) in;
+layout(local_size_x = 64) in;
 struct particle {
   highp vec4 pos;
   highp vec4 vel;
 };
-layout(std430, column_major, binding=0) buffer cs_ssbo {
-  layout(column_major) particle prt[];
+layout(std430, binding = 0) buffer cs_ssbo {
+  particle prt[];
 };
 void main ()
 {
-  highp uint tmpvar_1;
-  tmpvar_1 = (305419896u + gl_GlobalInvocationID.x);
-  tmpvar_1 = (tmpvar_1 ^ (tmpvar_1 << 13));
-  tmpvar_1 = (tmpvar_1 ^ (tmpvar_1 >> 17));
-  tmpvar_1 = (tmpvar_1 ^ (tmpvar_1 << 5));
-  highp uint tmpvar_2;
-  tmpvar_2 = (tmpvar_1 ^ (tmpvar_1 << 13));
-  tmpvar_2 = (tmpvar_2 ^ (tmpvar_2 >> 17));
-  tmpvar_2 = (tmpvar_2 ^ (tmpvar_2 << 5));
-  highp uint tmpvar_3;
-  tmpvar_3 = (tmpvar_2 ^ (tmpvar_2 << 13));
-  tmpvar_3 = (tmpvar_3 ^ (tmpvar_3 >> 17));
-  tmpvar_3 = (tmpvar_3 ^ (tmpvar_3 << 5));
-  prt[gl_GlobalInvocationID.x].pos = vec4(0.0, 0.0, 0.0, 0.0);
-  highp vec4 tmpvar_4;
-  tmpvar_4.w = 0.0;
-  tmpvar_4.x = ((float(
-    (tmpvar_1 & 32767u)
-  ) / 32767.0) - 0.5);
-  tmpvar_4.y = (((
-    float((tmpvar_2 & 32767u))
-   / 32767.0) * 0.5) + 2.0);
-  tmpvar_4.z = ((float(
-    (tmpvar_3 & 32767u)
-  ) / 32767.0) - 0.5);
-  prt[gl_GlobalInvocationID.x].vel = tmpvar_4;
+  highp uint t0 = (uint((305419896 + int(gl_GlobalInvocationID.x))) ^ uint(((int(gl_GlobalInvocationID.x) << 13u) - 1966145536)));
+  highp uint t1 = (t0 ^ (t0 >> 17u));
+  highp uint t2 = (t1 ^ uint((int(t1) << 5u)));
+  highp uint t3 = (t2 ^ uint((int(t2) << 13u)));
+  highp uint t4 = (t3 ^ (t3 >> 17u));
+  highp uint t5 = (t4 ^ uint((int(t4) << 5u)));
+  highp uint t6 = (t5 ^ uint((int(t5) << 13u)));
+  highp uint t7 = (t6 ^ (t6 >> 17u));
+  prt[int(gl_GlobalInvocationID.x)].pos = vec4(0.0);
+  prt[int(gl_GlobalInvocationID.x)].vel = vec4(((float((t2 & 32767u)) / 32767.0) - 0.5), (((float((t5 & 32767u)) / 32767.0) * 0.5) + 2.0), ((float(((t7 ^ uint((int(t7) << 5u))) & 32767u)) / 32767.0) - 0.5), 0.0);
 }
 
-
-// stats: 34 alu 0 tex 0 flow
+// stats: 33 alu 0 tex 0 flow
 // workgroup size: 64 1 1
 // buffer #0: cs_ssbo storage layout std430 binding 0 (size: unknown)
 //  member #0: particle[] prt offset 0 array runtime stride 32

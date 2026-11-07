@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2008 VMware, Inc.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 
@@ -35,21 +35,25 @@
  */
 
 
-/* glsl-optimizer change: Omit unused approximate exp/log tables, initialization and FP-state
- * helpers, so u_math.c and CPU detection are unnecessary. Keep inline math
- * used by the compiler; unused double/softfloat libraries are not imported. */
-
 #ifndef U_MATH_H
 #define U_MATH_H
 
 
-#include "c99_math.h"
+#include "c99_compat.h"
 #include <assert.h>
 #include <float.h>
 #include <stdarg.h>
+#include <math.h>
 
 #include "bitscan.h"
 #include "u_endian.h" /* for UTIL_ARCH_BIG_ENDIAN */
+#include "util/detect_cc.h"
+#include "util/detect_arch.h"
+#include "util/macros.h"
+
+#ifdef __HAIKU__
+#include <sys/param.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -59,6 +63,15 @@ extern "C" {
 #ifndef M_SQRT2
 #define M_SQRT2 1.41421356237309504880
 #endif
+
+
+/**
+ * Initialize math module.  This should be called before using any
+ * other functions in this module.
+ */
+extern void
+util_init_math(void);
+
 
 union fi {
    float f;
@@ -88,13 +101,35 @@ util_get_float32_exponent(float x)
 }
 
 
+#define LOG2_TABLE_SIZE_LOG2 8
+#define LOG2_TABLE_SCALE (1 << LOG2_TABLE_SIZE_LOG2)
+#define LOG2_TABLE_SIZE (LOG2_TABLE_SCALE + 1)
+extern float log2_table[LOG2_TABLE_SIZE];
+
+
+/**
+ * Fast approximation to log2(x).
+ */
+static inline float
+util_fast_log2(float x)
+{
+   union fi num;
+   float epart, mpart;
+   num.f = x;
+   epart = (float)(((num.i & 0x7f800000) >> 23) - 127);
+   /* mpart = log2_table[mantissa*LOG2_TABLE_SCALE + 0.5] */
+   mpart = log2_table[((num.i & 0x007fffff) + (1 << (22 - LOG2_TABLE_SIZE_LOG2))) >> (23 - LOG2_TABLE_SIZE_LOG2)];
+   return epart + mpart;
+}
+
+
 /**
  * Floor(x), returned as int.
  */
 static inline int
 util_ifloor(float f)
 {
-#if defined(USE_X86_ASM) && defined(__GNUC__) && defined(__i386__)
+#if DETECT_ARCH_X86 && DETECT_CC_GCC
    /*
     * IEEE floor for computers that round to nearest or even.
     * 'f' must be between -4194304 and 4194303.
@@ -125,27 +160,12 @@ util_ifloor(float f)
 
 /**
  * Round float to nearest int.
+ * the range of f should be [INT_MIN, INT_MAX]
  */
 static inline int
 util_iround(float f)
 {
-#if defined(PIPE_CC_GCC) && defined(PIPE_ARCH_X86) 
-   int r;
-   __asm__ ("fistpl %0" : "=m" (r) : "t" (f) : "st");
-   return r;
-#elif defined(PIPE_CC_MSVC) && defined(PIPE_ARCH_X86)
-   int r;
-   _asm {
-      fld f
-      fistp r
-   }
-   return r;
-#else
-   if (f >= 0.0f)
-      return (int) (f + 0.5f);
-   else
-      return (int) (f - 0.5f);
-#endif
+   return (int)lrintf(f);
 }
 
 
@@ -253,6 +273,13 @@ util_is_half_nan(int16_t x)
 }
 
 
+static inline bool
+util_is_half_subnormal(int16_t x)
+{
+   return (x & 0x7c00) == 0 && (x & 0x03ff) != 0;
+}
+
+
 static inline int
 util_half_inf_sign(int16_t x)
 {
@@ -263,7 +290,7 @@ util_half_inf_sign(int16_t x)
    return (x < 0) ? -1 : 1;
 }
 
-
+#ifndef __OPENCL_VERSION__
 /**
  * Return float bits.
  */
@@ -283,6 +310,66 @@ uif(uint32_t ui)
    return fi.f;
 }
 
+#else
+static inline uint32_t
+fui(float f)
+{
+   return as_uint(f);
+}
+
+static inline float
+uif(uint32_t ui)
+{
+   return as_float(ui);
+}
+#endif
+
+static inline uint64_t
+dui( double f )
+{
+   union di di;
+   di.d = f;
+   return di.ui;
+}
+
+static inline double
+uid(uint64_t ui)
+{
+   union di di;
+   di.ui = ui;
+   return di.d;
+}
+
+
+/* Unlike C's fmax, this follows IEEE 754-2019
+ * maximumNumber rules (except sNaN vs qNaN behavior).
+ * This means, +0.0 is strictly greater than -0.0
+ * and NaN less than any number.
+ */
+static inline double
+util_max_num(double a, double b)
+{
+   /* Handle signed zero. (And sign bit.) */
+   if (a == b)
+      return uid(dui(a) & dui(b));
+
+   return fmax(a, b);
+}
+
+/* Unlike C's fmin, this follows IEEE 754-2019
+ * minimumNumber rules (except sNaN vs qNaN behavior).
+ * This means, -0.0 is strictly less than +0.0
+ * and NaN greater than any number.
+ */
+static inline double
+util_min_num(double a, double b)
+{
+   /* Handle signed zero. (Or sign bit.) */
+   if (a == b)
+      return uid(dui(a) | dui(b));
+
+   return fmin(a, b);
+}
 
 /**
  * Convert uint8_t to float in [0, 1].
@@ -551,6 +638,34 @@ util_bswap16(uint16_t n)
           (n << 8);
 }
 
+/**
+ * Mask and sign-extend a number
+ *
+ * The bit at position `width - 1` is replicated to all the higher bits.
+ * This makes no assumptions about the high bits of the value and will
+ * overwrite them with the sign bit.
+ */
+static inline int64_t
+util_mask_sign_extend(uint64_t val, unsigned width)
+{
+   assert(width > 0 && width <= 64);
+   unsigned shift = 64 - width;
+   return (int64_t)(val << shift) >> shift;
+}
+
+/**
+ * Sign-extend a number
+ *
+ * The bit at position `width - 1` is replicated to all the higher bits.
+ * This assumes and asserts that the value fits into `width` bits.
+ */
+static inline int64_t
+util_sign_extend(uint64_t val, unsigned width)
+{
+   assert(width == 64 || val < (UINT64_C(1) << width));
+   return util_mask_sign_extend(val, width);
+}
+
 static inline void*
 util_memcpy_cpu_to_le32(void * restrict dest, const void * restrict src, size_t n)
 {
@@ -570,45 +685,7 @@ util_memcpy_cpu_to_le32(void * restrict dest, const void * restrict src, size_t 
 }
 
 /**
- * Clamp X to [MIN, MAX].
- * This is a macro to allow float, int, uint, etc. types.
- * We arbitrarily turn NaN into MIN.
- */
-#define CLAMP( X, MIN, MAX )  ( (X)>(MIN) ? ((X)>(MAX) ? (MAX) : (X)) : (MIN) )
-
-/* Syntax sugar occuring frequently in graphics code */
-#define SATURATE( X ) CLAMP(X, 0.0f, 1.0f)
-
-#define MIN2( A, B )   ( (A)<(B) ? (A) : (B) )
-#define MAX2( A, B )   ( (A)>(B) ? (A) : (B) )
-
-#define MIN3( A, B, C ) ((A) < (B) ? MIN2(A, C) : MIN2(B, C))
-#define MAX3( A, B, C ) ((A) > (B) ? MAX2(A, C) : MAX2(B, C))
-
-#define MIN4( A, B, C, D ) ((A) < (B) ? MIN3(A, C, D) : MIN3(B, C, D))
-#define MAX4( A, B, C, D ) ((A) > (B) ? MAX3(A, C, D) : MAX3(B, C, D))
-
-
-/**
- * Align a value up to an alignment value
- *
- * If \c value is not already aligned to the requested alignment value, it
- * will be rounded up.
- *
- * \param value  Value to be rounded
- * \param alignment  Alignment value to be used.  This must be a power of two.
- *
- * \sa ROUND_DOWN_TO()
- */
-static inline uintptr_t
-ALIGN(uintptr_t value, int32_t alignment)
-{
-   assert(util_is_power_of_two_nonzero(alignment));
-   return (((value) + (alignment) - 1) & ~((alignment) - 1));
-}
-
-/**
- * Like ALIGN(), but works with a non-power-of-two alignment.
+ * Like align(), but works with a non-power-of-two alignment.
  */
 static inline uintptr_t
 ALIGN_NPOT(uintptr_t value, int32_t alignment)
@@ -626,28 +703,46 @@ ALIGN_NPOT(uintptr_t value, int32_t alignment)
  * \param value  Value to be rounded
  * \param alignment  Alignment value to be used.  This must be a power of two.
  *
- * \sa ALIGN()
+ * \sa align()
  */
-static inline uintptr_t
-ROUND_DOWN_TO(uintptr_t value, int32_t alignment)
+static inline uint64_t
+ROUND_DOWN_TO(uint64_t value, uint32_t alignment)
 {
    assert(util_is_power_of_two_nonzero(alignment));
-   return ((value) & ~(alignment - 1));
+   return ((value) & ~(uint64_t)(alignment - 1));
+}
+
+static inline uint64_t
+ROUND_DOWN_TO_NPOT(uint64_t value, uint32_t alignment)
+{
+   return value - (value % alignment);
 }
 
 /**
  * Align a value, only works pot alignemnts.
  */
-static inline int
-align(int value, int alignment)
+static inline uint32_t
+align(uint32_t value, uint32_t alignment)
 {
-   return (value + alignment - 1) & ~(alignment - 1);
+   assert(util_is_power_of_two_nonzero(alignment));
+   return ALIGN_POT(value, alignment);
 }
 
 static inline uint64_t
-align64(uint64_t value, unsigned alignment)
+align64(uint64_t value, uint64_t alignment)
 {
-   return (value + alignment - 1) & ~((uint64_t)alignment - 1);
+   assert(util_is_power_of_two_nonzero64(alignment));
+   return ALIGN_POT(value, alignment);
+}
+
+/**
+ * Align a value(uintptr_t, intptr_t, ptrdiff_t), only works pot alignemnts.
+ */
+static inline uintptr_t
+align_uintptr(uintptr_t value, uintptr_t alignment)
+{
+   assert(util_is_power_of_two_nonzero_uintptr(alignment));
+   return ALIGN_POT(value, alignment);
 }
 
 /**
@@ -656,9 +751,14 @@ align64(uint64_t value, unsigned alignment)
 static inline size_t
 util_align_npot(size_t value, size_t alignment)
 {
-   if (value % alignment)
-      return value + (alignment - (value % alignment));
-   return value;
+   assert(alignment > 0);
+   return (value + alignment - 1) / alignment * alignment;
+}
+
+static inline size_t
+util_round_down_npot(size_t value, size_t alignment)
+{
+   return value - (value % alignment);
 }
 
 static inline unsigned
@@ -706,6 +806,13 @@ util_signed_fixed(float value, unsigned frac_bits)
    return (int32_t)(value * (1<<frac_bits));
 }
 
+unsigned
+util_fpstate_get(void);
+unsigned
+util_fpstate_set_denorms_to_zero(unsigned current_fpstate);
+void
+util_fpstate_set(unsigned fpstate);
+
 /**
  * For indexed draw calls, return true if the vertex count to be drawn is
  * much lower than the vertex count that has to be uploaded, meaning
@@ -718,12 +825,95 @@ static inline bool
 util_is_vbo_upload_ratio_too_large(unsigned draw_vertex_count,
                                    unsigned upload_vertex_count)
 {
-   if (draw_vertex_count > 1024)
+   if (upload_vertex_count > 256)
       return upload_vertex_count > draw_vertex_count * 4;
-   else if (draw_vertex_count > 32)
+   else if (upload_vertex_count > 64)
       return upload_vertex_count > draw_vertex_count * 8;
    else
       return upload_vertex_count > draw_vertex_count * 16;
+}
+
+bool util_invert_mat4x4(float *out, const float *m);
+
+/* Quantize the lod bias value to reduce the number of sampler state
+ * variants in gallium because apps use it for smooth mipmap transitions,
+ * thrashing cso_cache and degrading performance.
+ *
+ * This quantization matches the AMD hw specification, so having more
+ * precision would have no effect anyway.
+ */
+static inline float
+util_quantize_lod_bias(float lod)
+{
+   lod = CLAMP(lod, -32, 31);
+   return roundf(lod * 256) / 256;
+}
+
+/**
+ * Adds two unsigned integers and if the addition
+ * overflows then clamp it to ~0U.
+ */
+static inline unsigned
+util_clamped_uadd(unsigned a, unsigned b)
+{
+   unsigned res = a + b;
+   if (res < a) {
+      res = ~0U;
+   }
+   return res;
+}
+
+/**
+ * Checks the value 'n' is aligned to 'a'.
+ * The alignment must be a power of two.
+ */
+static inline bool
+util_is_aligned(uintmax_t n, uintmax_t a)
+{
+   assert((a != 0) && ((a & (a - 1)) == 0));
+   return (n & (a - 1)) == 0;
+}
+
+static inline bool
+util_ptr_is_aligned(const void *ptr, uintmax_t a)
+{
+   return util_is_aligned((uintptr_t) ptr, a);
+}
+
+static inline bool
+util_is_sint16(int x)
+{
+   return x >= INT16_MIN && x <= INT16_MAX;
+}
+
+static inline bool
+util_is_uint16(int x)
+{
+   return x >= 0 && x <= UINT16_MAX;
+}
+
+/* Heuristic to determine whether a uint32_t is probably actually a float
+ * (http://stackoverflow.com/a/2953466)
+ */
+static inline bool
+util_is_probably_float(uint32_t bits)
+{
+   int exp = ((bits & 0x7f800000U) >> 23) - 127;
+   uint32_t mant = bits & 0x007fffff;
+
+   /* +- 0.0 */
+   if (exp == -127 && mant == 0)
+      return true;
+
+   /* +- 1 billionth to 1 billion */
+   if (-30 <= exp && exp <= 30)
+      return true;
+
+   /* some value with only a few binary digits */
+   if ((mant & 0x0000ffff) == 0)
+      return true;
+
+   return false;
 }
 
 #ifdef __cplusplus

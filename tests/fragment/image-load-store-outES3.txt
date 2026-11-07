@@ -1,27 +1,16 @@
 #version 310 es
-layout(rgba8, binding=1) readonly uniform highp image3D sourceImage;
-layout(rgba32ui, binding=3) writeonly uniform highp uimage2DArray destinationImage;
-layout(location=0) out highp vec4 color;
+precision highp float;
+precision highp int;
+layout(rgba8, binding = 1) readonly uniform highp image3D sourceImage;
+layout(rgba32ui, binding = 3) writeonly uniform highp uimage2DArray destinationImage;
+layout(location = 0) out highp vec4 color;
 void main ()
 {
-  mediump ivec2 p_1;
-  p_1 = ivec2(gl_FragCoord.xy);
-  highp ivec3 tmpvar_2;
-  tmpvar_2 = imageSize (sourceImage);
-  highp ivec3 tmpvar_3;
-  tmpvar_3.xy = p_1;
-  tmpvar_3.z = (tmpvar_2.z - 1);
-  highp vec4 tmpvar_4;
-  tmpvar_4 = imageLoad (sourceImage, tmpvar_3);
-  color = tmpvar_4;
-  highp ivec3 tmpvar_5;
-  tmpvar_5 = imageSize (destinationImage);
-  highp ivec3 tmpvar_6;
-  tmpvar_6.xy = p_1;
-  tmpvar_6.z = (tmpvar_5.z - 1);
-  imageStore (destinationImage, tmpvar_6, uvec4((tmpvar_4 * 255.0)));
+  mediump ivec2 t0 = ivec2(gl_FragCoord.xy);
+  highp vec4 t1 = imageLoad(sourceImage, ivec4(t0, (imageSize(sourceImage).z - 1), 0).xyz);
+  color = t1;
+  imageStore(destinationImage, ivec4(t0, (imageSize(destinationImage).z - 1), 0).xyz, uvec4((t1 * 255.0)));
 }
-
 
 // stats: 5 alu 4 tex 0 flow
 // inputs: 1

@@ -8,34 +8,17 @@ uniform sampler2D unity_Lightmap;
 uniform sampler2D unity_LightmapInd;
 void main ()
 {
-  vec4 xlt_IN_hip_pack0_1;
-  vec4 xlt_IN_hip_pack1_2;
-  vec4 xlt_IN_hip_screen_3;
-  vec3 xlt_IN_hip_lmapFade_4;
-  xlt_IN_hip_pack0_1 = gl_TexCoord[0];
-  xlt_IN_hip_pack1_2 = gl_TexCoord[1];
-  xlt_IN_hip_screen_3 = gl_TexCoord[3];
-  xlt_IN_hip_lmapFade_4 = gl_TexCoord[4].xyz;
-  vec4 light_5;
-  vec3 col_6;
-  vec4 tmpvar_7;
-  tmpvar_7 = texture2D (_Control, xlt_IN_hip_pack0_1.xy);
-  col_6 = (tmpvar_7.x * texture2D (_Splat0, xlt_IN_hip_pack0_1.zw).xyz);
-  col_6 = (col_6 + (tmpvar_7.y * texture2D (_Splat1, xlt_IN_hip_pack1_2.xy).xyz));
-  col_6 = (col_6 + (tmpvar_7.z * texture2D (_Splat2, xlt_IN_hip_pack1_2.zw).xyz));
-  col_6 = (col_6 + (tmpvar_7.w * texture2D (_Splat3, gl_TexCoord[2].xy).xyz));
-  light_5 = -(log2(texture2DProj (_LightBuffer, vec3(xlt_IN_hip_screen_3.xy, xlt_IN_hip_screen_3.w))));
-  light_5.xyz = (light_5.xyz + mix ((2.0 * texture2D (unity_LightmapInd, xlt_IN_hip_lmapFade_4.xy).xyz), (2.0 * texture2D (unity_Lightmap, xlt_IN_hip_lmapFade_4.xy).xyz), vec3(clamp (xlt_IN_hip_lmapFade_4.z, 0.0, 1.0))));
-  vec4 c_8;
-  c_8.xyz = (col_6 * light_5.xyz);
-  c_8.w = 0.0;
-  gl_FragData[0] = c_8;
+  vec4 t0 = texture2D(_Control, gl_TexCoord[0].xy);
+  vec3 t1 = ((mat3(texture2D(_Splat0, gl_TexCoord[0].zw).xyz, texture2D(_Splat1, gl_TexCoord[1].xy).xyz, texture2D(_Splat2, gl_TexCoord[1].zw).xyz) * t0.xyz) + (t0.w * texture2D(_Splat3, gl_TexCoord[2].xy).xyz));
+  vec2 t2 = gl_TexCoord[4].xy;
+  vec3 t3 = ((mix(texture2D(unity_LightmapInd, t2).xyz, texture2D(unity_Lightmap, t2).xyz, vec3(clamp(gl_TexCoord[4].z, 0.0, 1.0))) * 2.0) - log2(texture2DProj(_LightBuffer, vec3(gl_TexCoord[3].xy, gl_TexCoord[3].w))).xyz);
+  vec3 t4 = (t1 * t3);
+  gl_FragData[0] = vec4(t4, 0.0);
 }
 
-
-// stats: 17 alu 8 tex 0 flow
+// stats: 13 alu 8 tex 0 flow
 // inputs: 1
-//  #0: gl_TexCoord (high float) 4x1 [5] loc 4
+//  #0: gl_TexCoord (high float) 4x1 [0] loc 4
 // textures: 8
 //  #0: _Control (high 2d) 0x0 [-1]
 //  #1: _LightBuffer (high 2d) 0x0 [-1]

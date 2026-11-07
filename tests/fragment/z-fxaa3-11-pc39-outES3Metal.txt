@@ -14,714 +14,316 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   , texture2d<half> _MainTex [[texture(0)]], sampler _mtlsmp__MainTex [[sampler(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  float2 tmpvar_1 = 0;
-  tmpvar_1 = _mtl_u._MainTex_TexelSize.xy;
-  float4 tmpvar_2 = 0;
-  float subpixH_3 = 0;
-  float pixelOffset_4 = 0;
-  float spanLengthRcp_5 = 0;
-  bool goodSpanP_6 = false;
-  bool goodSpanN_7 = false;
-  float dstP_8 = 0;
-  float dstN_9 = 0;
-  bool doneNP_10 = false;
-  bool doneP_11 = false;
-  bool doneN_12 = false;
-  bool lumaMLTZero_13 = false;
-  float subpixF_14 = 0;
-  float gradientScaled_15 = 0;
-  float lumaEndP_16 = 0;
-  float subpixE_17 = 0;
-  float lumaEndN_18 = 0;
-  float subpixD_19 = 0;
-  float2 posP_20 = 0;
-  float2 posN_21 = 0;
-  float2 posB_22 = 0;
-  float subpixC_23 = 0;
-  float gradient_24 = 0;
-  bool pairN_25 = false;
-  float lumaSS_26 = 0;
-  float lumaNN_27 = 0;
-  float gradientS_28 = 0;
-  float gradientN_29 = 0;
-  float subpixB_30 = 0;
-  float subpixA_31 = 0;
-  bool horzSpan_32 = false;
-  float lengthSign_33 = 0;
-  float lumaNWSW_34 = 0;
-  float lumaNESE_35 = 0;
-  float subpixRcpRange_36 = 0;
-  float lumaWE_37 = 0;
-  float lumaNS_38 = 0;
-  float range_39 = 0;
-  float lumaN_40 = 0;
-  float lumaS_41 = 0;
-  float4 rgbyM_42 = 0;
-  float2 posM_43 = 0;
-  posM_43 = _mtl_i.xlv_TEXCOORD0;
-  float4 tmpvar_44 = 0;
-  tmpvar_44.zw = float2(0.0, 0.0);
-  tmpvar_44.xy = _mtl_i.xlv_TEXCOORD0;
-  half4 tmpvar_45 = 0;
-  tmpvar_45 = half4(tmpvar_44);
-  rgbyM_42 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_45.xy)), level(tmpvar_45.w)));
-  float4 tmpvar_46 = 0;
-  tmpvar_46.zw = float2(0.0, 0.0);
-  tmpvar_46.xy = (_mtl_i.xlv_TEXCOORD0 + (float2(0.0, 1.0) * _mtl_u._MainTex_TexelSize.xy));
-  half4 tmpvar_47 = 0;
-  tmpvar_47 = half4(tmpvar_46);
-  float4 tmpvar_48 = 0;
-  tmpvar_48 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_47.xy)), level(tmpvar_47.w)));
-  lumaS_41 = tmpvar_48.w;
-  float4 tmpvar_49 = 0;
-  tmpvar_49.zw = float2(0.0, 0.0);
-  tmpvar_49.xy = (_mtl_i.xlv_TEXCOORD0 + (float2(1.0, 0.0) * _mtl_u._MainTex_TexelSize.xy));
-  half4 tmpvar_50 = 0;
-  tmpvar_50 = half4(tmpvar_49);
-  float tmpvar_51 = 0;
-  float4 tmpvar_52 = 0;
-  tmpvar_52 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_50.xy)), level(tmpvar_50.w)));
-  tmpvar_51 = tmpvar_52.w;
-  float4 tmpvar_53 = 0;
-  tmpvar_53.zw = float2(0.0, 0.0);
-  tmpvar_53.xy = (_mtl_i.xlv_TEXCOORD0 + (float2(0.0, -1.0) * _mtl_u._MainTex_TexelSize.xy));
-  half4 tmpvar_54 = 0;
-  tmpvar_54 = half4(tmpvar_53);
-  float4 tmpvar_55 = 0;
-  tmpvar_55 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_54.xy)), level(tmpvar_54.w)));
-  lumaN_40 = tmpvar_55.w;
-  float4 tmpvar_56 = 0;
-  tmpvar_56.zw = float2(0.0, 0.0);
-  tmpvar_56.xy = (_mtl_i.xlv_TEXCOORD0 + (float2(-1.0, 0.0) * _mtl_u._MainTex_TexelSize.xy));
-  half4 tmpvar_57 = 0;
-  tmpvar_57 = half4(tmpvar_56);
-  float tmpvar_58 = 0;
-  float4 tmpvar_59 = 0;
-  tmpvar_59 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_57.xy)), level(tmpvar_57.w)));
-  tmpvar_58 = tmpvar_59.w;
-  float tmpvar_60 = 0;
-  tmpvar_60 = max (max (tmpvar_55.w, tmpvar_59.w), max (tmpvar_52.w, max (tmpvar_48.w, rgbyM_42.w)));
-  range_39 = (tmpvar_60 - min (min (tmpvar_55.w, tmpvar_59.w), min (
-    min (tmpvar_52.w, tmpvar_48.w)
-  , rgbyM_42.w)));
-  if ((range_39 < max (0.0833, (tmpvar_60 * 0.166)))) {
-    tmpvar_2 = rgbyM_42;
-  } else {
-    float4 tmpvar_61 = 0;
-    tmpvar_61.zw = float2(0.0, 0.0);
-    tmpvar_61.xy = (_mtl_i.xlv_TEXCOORD0 - _mtl_u._MainTex_TexelSize.xy);
-    half4 tmpvar_62 = 0;
-    tmpvar_62 = half4(tmpvar_61);
-    float4 tmpvar_63 = 0;
-    tmpvar_63 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_62.xy)), level(tmpvar_62.w)));
-    float4 tmpvar_64 = 0;
-    tmpvar_64.zw = float2(0.0, 0.0);
-    tmpvar_64.xy = (_mtl_i.xlv_TEXCOORD0 + _mtl_u._MainTex_TexelSize.xy);
-    half4 tmpvar_65 = 0;
-    tmpvar_65 = half4(tmpvar_64);
-    float4 tmpvar_66 = 0;
-    tmpvar_66 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_65.xy)), level(tmpvar_65.w)));
-    float4 tmpvar_67 = 0;
-    tmpvar_67.zw = float2(0.0, 0.0);
-    tmpvar_67.xy = (_mtl_i.xlv_TEXCOORD0 + (float2(1.0, -1.0) * _mtl_u._MainTex_TexelSize.xy));
-    half4 tmpvar_68 = 0;
-    tmpvar_68 = half4(tmpvar_67);
-    float4 tmpvar_69 = 0;
-    tmpvar_69 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_68.xy)), level(tmpvar_68.w)));
-    float4 tmpvar_70 = 0;
-    tmpvar_70.zw = float2(0.0, 0.0);
-    tmpvar_70.xy = (_mtl_i.xlv_TEXCOORD0 + (float2(-1.0, 1.0) * _mtl_u._MainTex_TexelSize.xy));
-    half4 tmpvar_71 = 0;
-    tmpvar_71 = half4(tmpvar_70);
-    float4 tmpvar_72 = 0;
-    tmpvar_72 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_71.xy)), level(tmpvar_71.w)));
-    lumaNS_38 = (tmpvar_55.w + tmpvar_48.w);
-    lumaWE_37 = (tmpvar_59.w + tmpvar_52.w);
-    subpixRcpRange_36 = (1.0/(range_39));
-    lumaNESE_35 = (tmpvar_69.w + tmpvar_66.w);
-    lumaNWSW_34 = (tmpvar_63.w + tmpvar_72.w);
-    lengthSign_33 = tmpvar_1.x;
-    horzSpan_32 = ((abs(
-      ((-2.0 * tmpvar_59.w) + lumaNWSW_34)
-    ) + (
-      (abs(((-2.0 * rgbyM_42.w) + lumaNS_38)) * 2.0)
-     + 
-      abs(((-2.0 * tmpvar_52.w) + lumaNESE_35))
-    )) >= (abs(
-      ((-2.0 * tmpvar_48.w) + (tmpvar_72.w + tmpvar_66.w))
-    ) + (
-      (abs(((-2.0 * rgbyM_42.w) + lumaWE_37)) * 2.0)
-     + 
-      abs(((-2.0 * tmpvar_55.w) + (tmpvar_63.w + tmpvar_69.w)))
-    )));
-    subpixA_31 = (((lumaNS_38 + lumaWE_37) * 2.0) + (lumaNWSW_34 + lumaNESE_35));
-    if (!(horzSpan_32)) {
-      lumaN_40 = tmpvar_58;
-    };
-    if (!(horzSpan_32)) {
-      lumaS_41 = tmpvar_51;
-    };
-    if (horzSpan_32) {
-      lengthSign_33 = tmpvar_1.y;
-    };
-    subpixB_30 = ((subpixA_31 * 0.0833333) - rgbyM_42.w);
-    gradientN_29 = (lumaN_40 - rgbyM_42.w);
-    gradientS_28 = (lumaS_41 - rgbyM_42.w);
-    lumaNN_27 = (lumaN_40 + rgbyM_42.w);
-    lumaSS_26 = (lumaS_41 + rgbyM_42.w);
-    pairN_25 = (abs(gradientN_29) >= abs(gradientS_28));
-    gradient_24 = max (abs(gradientN_29), abs(gradientS_28));
-    if (pairN_25) {
-      lengthSign_33 = -(lengthSign_33);
-    };
-    half tmpvar_73 = 0;
-    tmpvar_73 = half((abs(subpixB_30) * subpixRcpRange_36));
-    subpixC_23 = float(saturate(tmpvar_73));
-    posB_22 = _mtl_i.xlv_TEXCOORD0;
-    float tmpvar_74 = 0;
-    if (!(horzSpan_32)) {
-      tmpvar_74 = 0.0;
-    } else {
-      tmpvar_74 = tmpvar_1.x;
-    };
-    float tmpvar_75 = 0;
-    if (horzSpan_32) {
-      tmpvar_75 = 0.0;
-    } else {
-      tmpvar_75 = tmpvar_1.y;
-    };
-    if (!(horzSpan_32)) {
-      posB_22.x = (_mtl_i.xlv_TEXCOORD0.x + (lengthSign_33 * 0.5));
-    };
-    if (horzSpan_32) {
-      posB_22.y = (_mtl_i.xlv_TEXCOORD0.y + (lengthSign_33 * 0.5));
-    };
-    posN_21.x = (posB_22.x - tmpvar_74);
-    posN_21.y = (posB_22.y - tmpvar_75);
-    posP_20.x = (posB_22.x + tmpvar_74);
-    posP_20.y = (posB_22.y + tmpvar_75);
-    subpixD_19 = ((-2.0 * subpixC_23) + 3.0);
-    float4 tmpvar_76 = 0;
-    tmpvar_76.zw = float2(0.0, 0.0);
-    tmpvar_76.xy = posN_21;
-    half4 tmpvar_77 = 0;
-    tmpvar_77 = half4(tmpvar_76);
-    float4 tmpvar_78 = 0;
-    tmpvar_78 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_77.xy)), level(tmpvar_77.w)));
-    lumaEndN_18 = tmpvar_78.w;
-    subpixE_17 = (subpixC_23 * subpixC_23);
-    float4 tmpvar_79 = 0;
-    tmpvar_79.zw = float2(0.0, 0.0);
-    tmpvar_79.xy = posP_20;
-    half4 tmpvar_80 = 0;
-    tmpvar_80 = half4(tmpvar_79);
-    float4 tmpvar_81 = 0;
-    tmpvar_81 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_80.xy)), level(tmpvar_80.w)));
-    lumaEndP_16 = tmpvar_81.w;
-    if (!(pairN_25)) {
-      lumaNN_27 = lumaSS_26;
-    };
-    gradientScaled_15 = (gradient_24 / 4.0);
-    subpixF_14 = (subpixD_19 * subpixE_17);
-    lumaMLTZero_13 = (rgbyM_42.w < (lumaNN_27 * 0.5));
-    lumaEndN_18 = (tmpvar_78.w - (lumaNN_27 * 0.5));
-    lumaEndP_16 = (tmpvar_81.w - (lumaNN_27 * 0.5));
-    doneN_12 = (abs(lumaEndN_18) >= gradientScaled_15);
-    doneP_11 = (abs(lumaEndP_16) >= gradientScaled_15);
-    if (!(doneN_12)) {
-      posN_21.x = (posN_21.x - tmpvar_74);
-    };
-    if (!(doneN_12)) {
-      posN_21.y = (posN_21.y - tmpvar_75);
-    };
-    doneNP_10 = !((doneN_12 && doneP_11));
-    if (!(doneP_11)) {
-      posP_20.x = (posP_20.x + tmpvar_74);
-    };
-    if (!(doneP_11)) {
-      posP_20.y = (posP_20.y + tmpvar_75);
-    };
-    if (doneNP_10) {
-      if (!(doneN_12)) {
-        float4 tmpvar_82 = 0;
-        tmpvar_82.zw = float2(0.0, 0.0);
-        tmpvar_82.xy = posN_21;
-        half4 tmpvar_83 = 0;
-        tmpvar_83 = half4(tmpvar_82);
-        float4 tmpvar_84 = 0;
-        tmpvar_84 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_83.xy)), level(tmpvar_83.w)));
-        lumaEndN_18 = tmpvar_84.w;
-      };
-      if (!(doneP_11)) {
-        float4 tmpvar_85 = 0;
-        tmpvar_85.zw = float2(0.0, 0.0);
-        tmpvar_85.xy = posP_20;
-        half4 tmpvar_86 = 0;
-        tmpvar_86 = half4(tmpvar_85);
-        float4 tmpvar_87 = 0;
-        tmpvar_87 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_86.xy)), level(tmpvar_86.w)));
-        lumaEndP_16 = tmpvar_87.w;
-      };
-      if (!(doneN_12)) {
-        lumaEndN_18 = (lumaEndN_18 - (lumaNN_27 * 0.5));
-      };
-      if (!(doneP_11)) {
-        lumaEndP_16 = (lumaEndP_16 - (lumaNN_27 * 0.5));
-      };
-      doneN_12 = (abs(lumaEndN_18) >= gradientScaled_15);
-      doneP_11 = (abs(lumaEndP_16) >= gradientScaled_15);
-      if (!(doneN_12)) {
-        posN_21.x = (posN_21.x - tmpvar_74);
-      };
-      if (!(doneN_12)) {
-        posN_21.y = (posN_21.y - tmpvar_75);
-      };
-      doneNP_10 = !((doneN_12 && doneP_11));
-      if (!(doneP_11)) {
-        posP_20.x = (posP_20.x + tmpvar_74);
-      };
-      if (!(doneP_11)) {
-        posP_20.y = (posP_20.y + tmpvar_75);
-      };
-      if (doneNP_10) {
-        if (!(doneN_12)) {
-          float4 tmpvar_88 = 0;
-          tmpvar_88.zw = float2(0.0, 0.0);
-          tmpvar_88.xy = posN_21;
-          half4 tmpvar_89 = 0;
-          tmpvar_89 = half4(tmpvar_88);
-          float4 tmpvar_90 = 0;
-          tmpvar_90 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_89.xy)), level(tmpvar_89.w)));
-          lumaEndN_18 = tmpvar_90.w;
-        };
-        if (!(doneP_11)) {
-          float4 tmpvar_91 = 0;
-          tmpvar_91.zw = float2(0.0, 0.0);
-          tmpvar_91.xy = posP_20;
-          half4 tmpvar_92 = 0;
-          tmpvar_92 = half4(tmpvar_91);
-          float4 tmpvar_93 = 0;
-          tmpvar_93 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_92.xy)), level(tmpvar_92.w)));
-          lumaEndP_16 = tmpvar_93.w;
-        };
-        if (!(doneN_12)) {
-          lumaEndN_18 = (lumaEndN_18 - (lumaNN_27 * 0.5));
-        };
-        if (!(doneP_11)) {
-          lumaEndP_16 = (lumaEndP_16 - (lumaNN_27 * 0.5));
-        };
-        doneN_12 = (abs(lumaEndN_18) >= gradientScaled_15);
-        doneP_11 = (abs(lumaEndP_16) >= gradientScaled_15);
-        if (!(doneN_12)) {
-          posN_21.x = (posN_21.x - tmpvar_74);
-        };
-        if (!(doneN_12)) {
-          posN_21.y = (posN_21.y - tmpvar_75);
-        };
-        doneNP_10 = !((doneN_12 && doneP_11));
-        if (!(doneP_11)) {
-          posP_20.x = (posP_20.x + tmpvar_74);
-        };
-        if (!(doneP_11)) {
-          posP_20.y = (posP_20.y + tmpvar_75);
-        };
-        if (doneNP_10) {
-          if (!(doneN_12)) {
-            float4 tmpvar_94 = 0;
-            tmpvar_94.zw = float2(0.0, 0.0);
-            tmpvar_94.xy = posN_21;
-            half4 tmpvar_95 = 0;
-            tmpvar_95 = half4(tmpvar_94);
-            float4 tmpvar_96 = 0;
-            tmpvar_96 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_95.xy)), level(tmpvar_95.w)));
-            lumaEndN_18 = tmpvar_96.w;
-          };
-          if (!(doneP_11)) {
-            float4 tmpvar_97 = 0;
-            tmpvar_97.zw = float2(0.0, 0.0);
-            tmpvar_97.xy = posP_20;
-            half4 tmpvar_98 = 0;
-            tmpvar_98 = half4(tmpvar_97);
-            float4 tmpvar_99 = 0;
-            tmpvar_99 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_98.xy)), level(tmpvar_98.w)));
-            lumaEndP_16 = tmpvar_99.w;
-          };
-          if (!(doneN_12)) {
-            lumaEndN_18 = (lumaEndN_18 - (lumaNN_27 * 0.5));
-          };
-          if (!(doneP_11)) {
-            lumaEndP_16 = (lumaEndP_16 - (lumaNN_27 * 0.5));
-          };
-          doneN_12 = (abs(lumaEndN_18) >= gradientScaled_15);
-          doneP_11 = (abs(lumaEndP_16) >= gradientScaled_15);
-          if (!(doneN_12)) {
-            posN_21.x = (posN_21.x - tmpvar_74);
-          };
-          if (!(doneN_12)) {
-            posN_21.y = (posN_21.y - tmpvar_75);
-          };
-          doneNP_10 = !((doneN_12 && doneP_11));
-          if (!(doneP_11)) {
-            posP_20.x = (posP_20.x + tmpvar_74);
-          };
-          if (!(doneP_11)) {
-            posP_20.y = (posP_20.y + tmpvar_75);
-          };
-          if (doneNP_10) {
-            if (!(doneN_12)) {
-              float4 tmpvar_100 = 0;
-              tmpvar_100.zw = float2(0.0, 0.0);
-              tmpvar_100.xy = posN_21;
-              half4 tmpvar_101 = 0;
-              tmpvar_101 = half4(tmpvar_100);
-              float4 tmpvar_102 = 0;
-              tmpvar_102 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_101.xy)), level(tmpvar_101.w)));
-              lumaEndN_18 = tmpvar_102.w;
-            };
-            if (!(doneP_11)) {
-              float4 tmpvar_103 = 0;
-              tmpvar_103.zw = float2(0.0, 0.0);
-              tmpvar_103.xy = posP_20;
-              half4 tmpvar_104 = 0;
-              tmpvar_104 = half4(tmpvar_103);
-              float4 tmpvar_105 = 0;
-              tmpvar_105 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_104.xy)), level(tmpvar_104.w)));
-              lumaEndP_16 = tmpvar_105.w;
-            };
-            if (!(doneN_12)) {
-              lumaEndN_18 = (lumaEndN_18 - (lumaNN_27 * 0.5));
-            };
-            if (!(doneP_11)) {
-              lumaEndP_16 = (lumaEndP_16 - (lumaNN_27 * 0.5));
-            };
-            doneN_12 = (abs(lumaEndN_18) >= gradientScaled_15);
-            doneP_11 = (abs(lumaEndP_16) >= gradientScaled_15);
-            if (!(doneN_12)) {
-              posN_21.x = (posN_21.x - (tmpvar_74 * 1.5));
-            };
-            if (!(doneN_12)) {
-              posN_21.y = (posN_21.y - (tmpvar_75 * 1.5));
-            };
-            doneNP_10 = !((doneN_12 && doneP_11));
-            if (!(doneP_11)) {
-              posP_20.x = (posP_20.x + (tmpvar_74 * 1.5));
-            };
-            if (!(doneP_11)) {
-              posP_20.y = (posP_20.y + (tmpvar_75 * 1.5));
-            };
-            if (doneNP_10) {
-              if (!(doneN_12)) {
-                float4 tmpvar_106 = 0;
-                tmpvar_106.zw = float2(0.0, 0.0);
-                tmpvar_106.xy = posN_21;
-                half4 tmpvar_107 = 0;
-                tmpvar_107 = half4(tmpvar_106);
-                float4 tmpvar_108 = 0;
-                tmpvar_108 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_107.xy)), level(tmpvar_107.w)));
-                lumaEndN_18 = tmpvar_108.w;
-              };
-              if (!(doneP_11)) {
-                float4 tmpvar_109 = 0;
-                tmpvar_109.zw = float2(0.0, 0.0);
-                tmpvar_109.xy = posP_20;
-                half4 tmpvar_110 = 0;
-                tmpvar_110 = half4(tmpvar_109);
-                float4 tmpvar_111 = 0;
-                tmpvar_111 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_110.xy)), level(tmpvar_110.w)));
-                lumaEndP_16 = tmpvar_111.w;
-              };
-              if (!(doneN_12)) {
-                lumaEndN_18 = (lumaEndN_18 - (lumaNN_27 * 0.5));
-              };
-              if (!(doneP_11)) {
-                lumaEndP_16 = (lumaEndP_16 - (lumaNN_27 * 0.5));
-              };
-              doneN_12 = (abs(lumaEndN_18) >= gradientScaled_15);
-              doneP_11 = (abs(lumaEndP_16) >= gradientScaled_15);
-              if (!(doneN_12)) {
-                posN_21.x = (posN_21.x - (tmpvar_74 * 2.0));
-              };
-              if (!(doneN_12)) {
-                posN_21.y = (posN_21.y - (tmpvar_75 * 2.0));
-              };
-              doneNP_10 = !((doneN_12 && doneP_11));
-              if (!(doneP_11)) {
-                posP_20.x = (posP_20.x + (tmpvar_74 * 2.0));
-              };
-              if (!(doneP_11)) {
-                posP_20.y = (posP_20.y + (tmpvar_75 * 2.0));
-              };
-              if (doneNP_10) {
-                if (!(doneN_12)) {
-                  float4 tmpvar_112 = 0;
-                  tmpvar_112.zw = float2(0.0, 0.0);
-                  tmpvar_112.xy = posN_21;
-                  half4 tmpvar_113 = 0;
-                  tmpvar_113 = half4(tmpvar_112);
-                  float4 tmpvar_114 = 0;
-                  tmpvar_114 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_113.xy)), level(tmpvar_113.w)));
-                  lumaEndN_18 = tmpvar_114.w;
-                };
-                if (!(doneP_11)) {
-                  float4 tmpvar_115 = 0;
-                  tmpvar_115.zw = float2(0.0, 0.0);
-                  tmpvar_115.xy = posP_20;
-                  half4 tmpvar_116 = 0;
-                  tmpvar_116 = half4(tmpvar_115);
-                  float4 tmpvar_117 = 0;
-                  tmpvar_117 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_116.xy)), level(tmpvar_116.w)));
-                  lumaEndP_16 = tmpvar_117.w;
-                };
-                if (!(doneN_12)) {
-                  lumaEndN_18 = (lumaEndN_18 - (lumaNN_27 * 0.5));
-                };
-                if (!(doneP_11)) {
-                  lumaEndP_16 = (lumaEndP_16 - (lumaNN_27 * 0.5));
-                };
-                doneN_12 = (abs(lumaEndN_18) >= gradientScaled_15);
-                doneP_11 = (abs(lumaEndP_16) >= gradientScaled_15);
-                if (!(doneN_12)) {
-                  posN_21.x = (posN_21.x - (tmpvar_74 * 2.0));
-                };
-                if (!(doneN_12)) {
-                  posN_21.y = (posN_21.y - (tmpvar_75 * 2.0));
-                };
-                doneNP_10 = !((doneN_12 && doneP_11));
-                if (!(doneP_11)) {
-                  posP_20.x = (posP_20.x + (tmpvar_74 * 2.0));
-                };
-                if (!(doneP_11)) {
-                  posP_20.y = (posP_20.y + (tmpvar_75 * 2.0));
-                };
-                if (doneNP_10) {
-                  if (!(doneN_12)) {
-                    float4 tmpvar_118 = 0;
-                    tmpvar_118.zw = float2(0.0, 0.0);
-                    tmpvar_118.xy = posN_21;
-                    half4 tmpvar_119 = 0;
-                    tmpvar_119 = half4(tmpvar_118);
-                    float4 tmpvar_120 = 0;
-                    tmpvar_120 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_119.xy)), level(tmpvar_119.w)));
-                    lumaEndN_18 = tmpvar_120.w;
-                  };
-                  if (!(doneP_11)) {
-                    float4 tmpvar_121 = 0;
-                    tmpvar_121.zw = float2(0.0, 0.0);
-                    tmpvar_121.xy = posP_20;
-                    half4 tmpvar_122 = 0;
-                    tmpvar_122 = half4(tmpvar_121);
-                    float4 tmpvar_123 = 0;
-                    tmpvar_123 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_122.xy)), level(tmpvar_122.w)));
-                    lumaEndP_16 = tmpvar_123.w;
-                  };
-                  if (!(doneN_12)) {
-                    lumaEndN_18 = (lumaEndN_18 - (lumaNN_27 * 0.5));
-                  };
-                  if (!(doneP_11)) {
-                    lumaEndP_16 = (lumaEndP_16 - (lumaNN_27 * 0.5));
-                  };
-                  doneN_12 = (abs(lumaEndN_18) >= gradientScaled_15);
-                  doneP_11 = (abs(lumaEndP_16) >= gradientScaled_15);
-                  if (!(doneN_12)) {
-                    posN_21.x = (posN_21.x - (tmpvar_74 * 2.0));
-                  };
-                  if (!(doneN_12)) {
-                    posN_21.y = (posN_21.y - (tmpvar_75 * 2.0));
-                  };
-                  doneNP_10 = !((doneN_12 && doneP_11));
-                  if (!(doneP_11)) {
-                    posP_20.x = (posP_20.x + (tmpvar_74 * 2.0));
-                  };
-                  if (!(doneP_11)) {
-                    posP_20.y = (posP_20.y + (tmpvar_75 * 2.0));
-                  };
-                  if (doneNP_10) {
-                    if (!(doneN_12)) {
-                      float4 tmpvar_124 = 0;
-                      tmpvar_124.zw = float2(0.0, 0.0);
-                      tmpvar_124.xy = posN_21;
-                      half4 tmpvar_125 = 0;
-                      tmpvar_125 = half4(tmpvar_124);
-                      float4 tmpvar_126 = 0;
-                      tmpvar_126 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_125.xy)), level(tmpvar_125.w)));
-                      lumaEndN_18 = tmpvar_126.w;
-                    };
-                    if (!(doneP_11)) {
-                      float4 tmpvar_127 = 0;
-                      tmpvar_127.zw = float2(0.0, 0.0);
-                      tmpvar_127.xy = posP_20;
-                      half4 tmpvar_128 = 0;
-                      tmpvar_128 = half4(tmpvar_127);
-                      float4 tmpvar_129 = 0;
-                      tmpvar_129 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_128.xy)), level(tmpvar_128.w)));
-                      lumaEndP_16 = tmpvar_129.w;
-                    };
-                    if (!(doneN_12)) {
-                      lumaEndN_18 = (lumaEndN_18 - (lumaNN_27 * 0.5));
-                    };
-                    if (!(doneP_11)) {
-                      lumaEndP_16 = (lumaEndP_16 - (lumaNN_27 * 0.5));
-                    };
-                    doneN_12 = (abs(lumaEndN_18) >= gradientScaled_15);
-                    doneP_11 = (abs(lumaEndP_16) >= gradientScaled_15);
-                    if (!(doneN_12)) {
-                      posN_21.x = (posN_21.x - (tmpvar_74 * 2.0));
-                    };
-                    if (!(doneN_12)) {
-                      posN_21.y = (posN_21.y - (tmpvar_75 * 2.0));
-                    };
-                    doneNP_10 = !((doneN_12 && doneP_11));
-                    if (!(doneP_11)) {
-                      posP_20.x = (posP_20.x + (tmpvar_74 * 2.0));
-                    };
-                    if (!(doneP_11)) {
-                      posP_20.y = (posP_20.y + (tmpvar_75 * 2.0));
-                    };
-                    if (doneNP_10) {
-                      if (!(doneN_12)) {
-                        float4 tmpvar_130 = 0;
-                        tmpvar_130.zw = float2(0.0, 0.0);
-                        tmpvar_130.xy = posN_21;
-                        half4 tmpvar_131 = 0;
-                        tmpvar_131 = half4(tmpvar_130);
-                        float4 tmpvar_132 = 0;
-                        tmpvar_132 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_131.xy)), level(tmpvar_131.w)));
-                        lumaEndN_18 = tmpvar_132.w;
-                      };
-                      if (!(doneP_11)) {
-                        float4 tmpvar_133 = 0;
-                        tmpvar_133.zw = float2(0.0, 0.0);
-                        tmpvar_133.xy = posP_20;
-                        half4 tmpvar_134 = 0;
-                        tmpvar_134 = half4(tmpvar_133);
-                        float4 tmpvar_135 = 0;
-                        tmpvar_135 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_134.xy)), level(tmpvar_134.w)));
-                        lumaEndP_16 = tmpvar_135.w;
-                      };
-                      if (!(doneN_12)) {
-                        lumaEndN_18 = (lumaEndN_18 - (lumaNN_27 * 0.5));
-                      };
-                      if (!(doneP_11)) {
-                        lumaEndP_16 = (lumaEndP_16 - (lumaNN_27 * 0.5));
-                      };
-                      doneN_12 = (abs(lumaEndN_18) >= gradientScaled_15);
-                      doneP_11 = (abs(lumaEndP_16) >= gradientScaled_15);
-                      if (!(doneN_12)) {
-                        posN_21.x = (posN_21.x - (tmpvar_74 * 4.0));
-                      };
-                      if (!(doneN_12)) {
-                        posN_21.y = (posN_21.y - (tmpvar_75 * 4.0));
-                      };
-                      doneNP_10 = !((doneN_12 && doneP_11));
-                      if (!(doneP_11)) {
-                        posP_20.x = (posP_20.x + (tmpvar_74 * 4.0));
-                      };
-                      if (!(doneP_11)) {
-                        posP_20.y = (posP_20.y + (tmpvar_75 * 4.0));
-                      };
-                      if (doneNP_10) {
-                        if (!(doneN_12)) {
-                          float4 tmpvar_136 = 0;
-                          tmpvar_136.zw = float2(0.0, 0.0);
-                          tmpvar_136.xy = posN_21;
-                          half4 tmpvar_137 = 0;
-                          tmpvar_137 = half4(tmpvar_136);
-                          float4 tmpvar_138 = 0;
-                          tmpvar_138 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_137.xy)), level(tmpvar_137.w)));
-                          lumaEndN_18 = tmpvar_138.w;
-                        };
-                        if (!(doneP_11)) {
-                          float4 tmpvar_139 = 0;
-                          tmpvar_139.zw = float2(0.0, 0.0);
-                          tmpvar_139.xy = posP_20;
-                          half4 tmpvar_140 = 0;
-                          tmpvar_140 = half4(tmpvar_139);
-                          float4 tmpvar_141 = 0;
-                          tmpvar_141 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_140.xy)), level(tmpvar_140.w)));
-                          lumaEndP_16 = tmpvar_141.w;
-                        };
-                        if (!(doneN_12)) {
-                          lumaEndN_18 = (lumaEndN_18 - (lumaNN_27 * 0.5));
-                        };
-                        if (!(doneP_11)) {
-                          lumaEndP_16 = (lumaEndP_16 - (lumaNN_27 * 0.5));
-                        };
-                        doneN_12 = (abs(lumaEndN_18) >= gradientScaled_15);
-                        doneP_11 = (abs(lumaEndP_16) >= gradientScaled_15);
-                        if (!(doneN_12)) {
-                          posN_21.x = (posN_21.x - (tmpvar_74 * 8.0));
-                        };
-                        if (!(doneN_12)) {
-                          posN_21.y = (posN_21.y - (tmpvar_75 * 8.0));
-                        };
-                        doneNP_10 = !((doneN_12 && doneP_11));
-                        if (!(doneP_11)) {
-                          posP_20.x = (posP_20.x + (tmpvar_74 * 8.0));
-                        };
-                        if (!(doneP_11)) {
-                          posP_20.y = (posP_20.y + (tmpvar_75 * 8.0));
-                        };
-                      };
-                    };
-                  };
-                };
-              };
-            };
-          };
-        };
-      };
-    };
-    dstN_9 = (_mtl_i.xlv_TEXCOORD0.x - posN_21.x);
-    dstP_8 = (posP_20.x - _mtl_i.xlv_TEXCOORD0.x);
-    if (!(horzSpan_32)) {
-      dstN_9 = (_mtl_i.xlv_TEXCOORD0.y - posN_21.y);
-    };
-    if (!(horzSpan_32)) {
-      dstP_8 = (posP_20.y - _mtl_i.xlv_TEXCOORD0.y);
-    };
-    goodSpanN_7 = ((lumaEndN_18 < 0.0) != lumaMLTZero_13);
-    goodSpanP_6 = ((lumaEndP_16 < 0.0) != lumaMLTZero_13);
-    spanLengthRcp_5 = (1.0/((dstP_8 + dstN_9)));
-    float tmpvar_142 = 0;
-    tmpvar_142 = min (dstN_9, dstP_8);
-    bool tmpvar_143 = false;
-    if ((dstN_9 < dstP_8)) {
-      tmpvar_143 = goodSpanN_7;
-    } else {
-      tmpvar_143 = goodSpanP_6;
-    };
-    pixelOffset_4 = ((tmpvar_142 * -(spanLengthRcp_5)) + 0.5);
-    subpixH_3 = ((subpixF_14 * subpixF_14) * 0.75);
-    float tmpvar_144 = 0;
-    if (tmpvar_143) {
-      tmpvar_144 = pixelOffset_4;
-    } else {
-      tmpvar_144 = 0.0;
-    };
-    float tmpvar_145 = 0;
-    tmpvar_145 = max (tmpvar_144, subpixH_3);
-    if (!(horzSpan_32)) {
-      posM_43.x = (_mtl_i.xlv_TEXCOORD0.x + (tmpvar_145 * lengthSign_33));
-    };
-    if (horzSpan_32) {
-      posM_43.y = (_mtl_i.xlv_TEXCOORD0.y + (tmpvar_145 * lengthSign_33));
-    };
-    float4 tmpvar_146 = 0;
-    tmpvar_146.zw = float2(0.0, 0.0);
-    tmpvar_146.xy = posM_43;
-    half4 tmpvar_147 = 0;
-    tmpvar_147 = half4(tmpvar_146);
-    float4 tmpvar_148 = 0;
-    tmpvar_148.xyz = float3(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_147.xy)), level(tmpvar_147.w)).xyz);
-    tmpvar_148.w = rgbyM_42.w;
-    tmpvar_2 = tmpvar_148;
-  };
-  _mtl_o._fragData = half4(tmpvar_2);
+  float2 r0 = 0;
+  float2 r1 = 0;
+  float r2 = 0;
+  float r3 = 0;
+  float4 r4 = 0;
+  half4 t0 = half4(float4(_mtl_i.xlv_TEXCOORD0, 0.0, 0.0));
+  r4 = float4(_MainTex.sample(_mtlsmp__MainTex, float2(t0.xy), level(float(t0.w))));
+  float2 t1 = (_mtl_i.xlv_TEXCOORD0 + (float2(0.0, 1.0) * _mtl_u._MainTex_TexelSize.xy));
+  half4 t2 = half4(float4(t1, 0.0, 0.0));
+  float4 t3 = float4(_MainTex.sample(_mtlsmp__MainTex, float2(t2.xy), level(float(t2.w))));
+  float2 t4 = (_mtl_i.xlv_TEXCOORD0 + (float2(1.0, 0.0) * _mtl_u._MainTex_TexelSize.xy));
+  half4 t5 = half4(float4(t4, 0.0, 0.0));
+  float4 t6 = float4(_MainTex.sample(_mtlsmp__MainTex, float2(t5.xy), level(float(t5.w))));
+  float2 t7 = (_mtl_i.xlv_TEXCOORD0 + (float2(0.0, -1.0) * _mtl_u._MainTex_TexelSize.xy));
+  half4 t8 = half4(float4(t7, 0.0, 0.0));
+  float4 t9 = float4(_MainTex.sample(_mtlsmp__MainTex, float2(t8.xy), level(float(t8.w))));
+  float2 t10 = (_mtl_i.xlv_TEXCOORD0 + (float2(-1.0, 0.0) * _mtl_u._MainTex_TexelSize.xy));
+  half4 t11 = half4(float4(t10, 0.0, 0.0));
+  float4 t12 = float4(_MainTex.sample(_mtlsmp__MainTex, float2(t11.xy), level(float(t11.w))));
+  float t13 = max(max(t9.w, t12.w), max(t6.w, max(t3.w, r4.w)));
+  float t14 = (t13 - min(min(t9.w, t12.w), min(t6.w, min(t3.w, r4.w))));
+  if ((t14 >= max(0.0833, (t13 * 0.166)))) {
+    float2 t15 = (_mtl_i.xlv_TEXCOORD0 - _mtl_u._MainTex_TexelSize.xy);
+    half4 t16 = half4(float4(t15, 0.0, 0.0));
+    float4 t17 = float4(_MainTex.sample(_mtlsmp__MainTex, float2(t16.xy), level(float(t16.w))));
+    float2 t18 = (_mtl_i.xlv_TEXCOORD0 + _mtl_u._MainTex_TexelSize.xy);
+    half4 t19 = half4(float4(t18, 0.0, 0.0));
+    float4 t20 = float4(_MainTex.sample(_mtlsmp__MainTex, float2(t19.xy), level(float(t19.w))));
+    float2 t21 = (_mtl_i.xlv_TEXCOORD0 + (float2(1.0, -1.0) * _mtl_u._MainTex_TexelSize.xy));
+    half4 t22 = half4(float4(t21, 0.0, 0.0));
+    float4 t23 = float4(_MainTex.sample(_mtlsmp__MainTex, float2(t22.xy), level(float(t22.w))));
+    float2 t24 = (_mtl_i.xlv_TEXCOORD0 + (float2(-1.0, 1.0) * _mtl_u._MainTex_TexelSize.xy));
+    half4 t25 = half4(float4(t24, 0.0, 0.0));
+    float4 t26 = float4(_MainTex.sample(_mtlsmp__MainTex, float2(t25.xy), level(float(t25.w))));
+    float t27 = (t9.w + t3.w);
+    float t28 = (t12.w + t6.w);
+    float t29 = (2.0 * r4.w);
+    float t30 = (t23.w + t20.w);
+    float t31 = (t17.w + t26.w);
+    bool t32 = ((abs((t31 - (2.0 * t12.w))) + ((abs((t27 - t29)) * 2.0) + abs((t30 - (2.0 * t6.w))))) >= (abs(((t26.w + t20.w) - (2.0 * t3.w))) + ((abs((t28 - t29)) * 2.0) + abs(((t17.w + t23.w) - (2.0 * t9.w))))));
+    float t33 = (t32 ? t9.w : t12.w);
+    float t34 = (t32 ? t3.w : t6.w);
+    float t35 = (t32 ? _mtl_u._MainTex_TexelSize.y : _mtl_u._MainTex_TexelSize.x);
+    float t36 = abs((t34 - r4.w));
+    float t37 = abs((t33 - r4.w));
+    bool t38 = (t37 >= t36);
+    float t39 = (t38 ? (-t35) : t35);
+    half t40 = half((abs((((((t27 + t28) * 2.0) + (t31 + t30)) * 0.0833333) - r4.w)) * (1.0 / t14)));
+    float t41 = float(saturate(t40));
+    float t42 = (t32 ? _mtl_u._MainTex_TexelSize.x : 0.0);
+    float t43 = (t32 ? 0.0 : _mtl_u._MainTex_TexelSize.y);
+    float t44 = (t39 * 0.5);
+    float2 t45 = (t32 ? float2(_mtl_i.xlv_TEXCOORD0.x, (_mtl_i.xlv_TEXCOORD0.y + t44)) : float2((_mtl_i.xlv_TEXCOORD0.x + t44), _mtl_i.xlv_TEXCOORD0.y));
+    float t46 = (t45.x - t42);
+    float t47 = (t45.y - t43);
+    float t48 = (t45.x + t42);
+    float t49 = (t45.y + t43);
+    half4 t50 = half4(float4(t46, t47, 0.0, 0.0));
+    float4 t51 = float4(_MainTex.sample(_mtlsmp__MainTex, float2(t50.xy), level(float(t50.w))));
+    half4 t52 = half4(float4(t48, t49, 0.0, 0.0));
+    float4 t53 = float4(_MainTex.sample(_mtlsmp__MainTex, float2(t52.xy), level(float(t52.w))));
+    float t54 = ((3.0 - (2.0 * t41)) * (t41 * t41));
+    float t55 = ((r4.w + (t38 ? t33 : t34)) * 0.5);
+    r2 = (t51.w - t55);
+    r3 = (t53.w - t55);
+    float t56 = (t46 - t42);
+    float t57 = (t47 - t43);
+    float t58 = (max(t37, t36) / 4.0);
+    bool t59 = (abs(r2) >= t58);
+    r0 = (t59 ? float2(t46, t47) : float2(t56, t57));
+    bool t60 = (abs(r3) >= t58);
+    float t61 = (t48 + t42);
+    float t62 = (t49 + t43);
+    r1 = (t60 ? float2(t48, t49) : float2(t61, t62));
+    if ((!(t59 && t60))) {
+      if ((!t59)) {
+        half4 t63 = half4(float4(t56, t57, 0.0, 0.0));
+        float4 t64 = float4(_MainTex.sample(_mtlsmp__MainTex, float2(t63.xy), level(float(t63.w))));
+        r2 = t64.w;
+      }
+      if ((!t60)) {
+        half4 t65 = half4(float4(t61, t62, 0.0, 0.0));
+        float4 t66 = float4(_MainTex.sample(_mtlsmp__MainTex, float2(t65.xy), level(float(t65.w))));
+        r3 = t66.w;
+      }
+      r2 = (t59 ? r2 : (r2 - t55));
+      r3 = (t60 ? r3 : (r3 - t55));
+      float t67 = (r0.x - t42);
+      float t68 = (r0.y - t43);
+      bool t69 = (abs(r2) >= t58);
+      r0 = (t69 ? r0 : float2(t67, t68));
+      bool t70 = (abs(r3) >= t58);
+      float t71 = (r1.x + t42);
+      float t72 = (r1.y + t43);
+      r1 = (t70 ? r1 : float2(t71, t72));
+      if ((!(t69 && t70))) {
+        if ((!t69)) {
+          half4 t73 = half4(float4(t67, t68, 0.0, 0.0));
+          float4 t74 = float4(_MainTex.sample(_mtlsmp__MainTex, float2(t73.xy), level(float(t73.w))));
+          r2 = t74.w;
+        }
+        if ((!t70)) {
+          half4 t75 = half4(float4(t71, t72, 0.0, 0.0));
+          float4 t76 = float4(_MainTex.sample(_mtlsmp__MainTex, float2(t75.xy), level(float(t75.w))));
+          r3 = t76.w;
+        }
+        r2 = (t69 ? r2 : (r2 - t55));
+        r3 = (t70 ? r3 : (r3 - t55));
+        float t77 = (r0.x - t42);
+        float t78 = (r0.y - t43);
+        bool t79 = (abs(r2) >= t58);
+        r0 = (t79 ? r0 : float2(t77, t78));
+        bool t80 = (abs(r3) >= t58);
+        float t81 = (r1.x + t42);
+        float t82 = (r1.y + t43);
+        r1 = (t80 ? r1 : float2(t81, t82));
+        if ((!(t79 && t80))) {
+          if ((!t79)) {
+            half4 t83 = half4(float4(t77, t78, 0.0, 0.0));
+            float4 t84 = float4(_MainTex.sample(_mtlsmp__MainTex, float2(t83.xy), level(float(t83.w))));
+            r2 = t84.w;
+          }
+          if ((!t80)) {
+            half4 t85 = half4(float4(t81, t82, 0.0, 0.0));
+            float4 t86 = float4(_MainTex.sample(_mtlsmp__MainTex, float2(t85.xy), level(float(t85.w))));
+            r3 = t86.w;
+          }
+          r2 = (t79 ? r2 : (r2 - t55));
+          r3 = (t80 ? r3 : (r3 - t55));
+          float t87 = (r0.x - t42);
+          float t88 = (r0.y - t43);
+          bool t89 = (abs(r2) >= t58);
+          r0 = (t89 ? r0 : float2(t87, t88));
+          bool t90 = (abs(r3) >= t58);
+          float t91 = (r1.x + t42);
+          float t92 = (r1.y + t43);
+          r1 = (t90 ? r1 : float2(t91, t92));
+          if ((!(t89 && t90))) {
+            if ((!t89)) {
+              half4 t93 = half4(float4(t87, t88, 0.0, 0.0));
+              float4 t94 = float4(_MainTex.sample(_mtlsmp__MainTex, float2(t93.xy), level(float(t93.w))));
+              r2 = t94.w;
+            }
+            if ((!t90)) {
+              half4 t95 = half4(float4(t91, t92, 0.0, 0.0));
+              float4 t96 = float4(_MainTex.sample(_mtlsmp__MainTex, float2(t95.xy), level(float(t95.w))));
+              r3 = t96.w;
+            }
+            r2 = (t89 ? r2 : (r2 - t55));
+            r3 = (t90 ? r3 : (r3 - t55));
+            float t97 = (t42 * 1.5);
+            float t98 = (r0.x - t97);
+            float t99 = (t43 * 1.5);
+            float t100 = (r0.y - t99);
+            bool t101 = (abs(r2) >= t58);
+            r0 = (t101 ? r0 : float2(t98, t100));
+            bool t102 = (abs(r3) >= t58);
+            float t103 = (r1.x + t97);
+            float t104 = (r1.y + t99);
+            r1 = (t102 ? r1 : float2(t103, t104));
+            if ((!(t101 && t102))) {
+              if ((!t101)) {
+                half4 t105 = half4(float4(t98, t100, 0.0, 0.0));
+                float4 t106 = float4(_MainTex.sample(_mtlsmp__MainTex, float2(t105.xy), level(float(t105.w))));
+                r2 = t106.w;
+              }
+              if ((!t102)) {
+                half4 t107 = half4(float4(t103, t104, 0.0, 0.0));
+                float4 t108 = float4(_MainTex.sample(_mtlsmp__MainTex, float2(t107.xy), level(float(t107.w))));
+                r3 = t108.w;
+              }
+              r2 = (t101 ? r2 : (r2 - t55));
+              r3 = (t102 ? r3 : (r3 - t55));
+              float t109 = (t42 * 2.0);
+              float t110 = (r0.x - t109);
+              float t111 = (t43 * 2.0);
+              float t112 = (r0.y - t111);
+              bool t113 = (abs(r2) >= t58);
+              r0 = (t113 ? r0 : float2(t110, t112));
+              bool t114 = (abs(r3) >= t58);
+              float t115 = (r1.x + t109);
+              float t116 = (r1.y + t111);
+              r1 = (t114 ? r1 : float2(t115, t116));
+              if ((!(t113 && t114))) {
+                if ((!t113)) {
+                  half4 t117 = half4(float4(t110, t112, 0.0, 0.0));
+                  float4 t118 = float4(_MainTex.sample(_mtlsmp__MainTex, float2(t117.xy), level(float(t117.w))));
+                  r2 = t118.w;
+                }
+                if ((!t114)) {
+                  half4 t119 = half4(float4(t115, t116, 0.0, 0.0));
+                  float4 t120 = float4(_MainTex.sample(_mtlsmp__MainTex, float2(t119.xy), level(float(t119.w))));
+                  r3 = t120.w;
+                }
+                r2 = (t113 ? r2 : (r2 - t55));
+                r3 = (t114 ? r3 : (r3 - t55));
+                float t121 = (r0.x - t109);
+                float t122 = (r0.y - t111);
+                bool t123 = (abs(r2) >= t58);
+                r0 = (t123 ? r0 : float2(t121, t122));
+                bool t124 = (abs(r3) >= t58);
+                float t125 = (r1.x + t109);
+                float t126 = (r1.y + t111);
+                r1 = (t124 ? r1 : float2(t125, t126));
+                if ((!(t123 && t124))) {
+                  if ((!t123)) {
+                    half4 t127 = half4(float4(t121, t122, 0.0, 0.0));
+                    float4 t128 = float4(_MainTex.sample(_mtlsmp__MainTex, float2(t127.xy), level(float(t127.w))));
+                    r2 = t128.w;
+                  }
+                  if ((!t124)) {
+                    half4 t129 = half4(float4(t125, t126, 0.0, 0.0));
+                    float4 t130 = float4(_MainTex.sample(_mtlsmp__MainTex, float2(t129.xy), level(float(t129.w))));
+                    r3 = t130.w;
+                  }
+                  r2 = (t123 ? r2 : (r2 - t55));
+                  r3 = (t124 ? r3 : (r3 - t55));
+                  float t131 = (r0.x - t109);
+                  float t132 = (r0.y - t111);
+                  bool t133 = (abs(r2) >= t58);
+                  r0 = (t133 ? r0 : float2(t131, t132));
+                  bool t134 = (abs(r3) >= t58);
+                  float t135 = (r1.x + t109);
+                  float t136 = (r1.y + t111);
+                  r1 = (t134 ? r1 : float2(t135, t136));
+                  if ((!(t133 && t134))) {
+                    if ((!t133)) {
+                      half4 t137 = half4(float4(t131, t132, 0.0, 0.0));
+                      float4 t138 = float4(_MainTex.sample(_mtlsmp__MainTex, float2(t137.xy), level(float(t137.w))));
+                      r2 = t138.w;
+                    }
+                    if ((!t134)) {
+                      half4 t139 = half4(float4(t135, t136, 0.0, 0.0));
+                      float4 t140 = float4(_MainTex.sample(_mtlsmp__MainTex, float2(t139.xy), level(float(t139.w))));
+                      r3 = t140.w;
+                    }
+                    r2 = (t133 ? r2 : (r2 - t55));
+                    r3 = (t134 ? r3 : (r3 - t55));
+                    float t141 = (r0.x - t109);
+                    float t142 = (r0.y - t111);
+                    bool t143 = (abs(r2) >= t58);
+                    r0 = (t143 ? r0 : float2(t141, t142));
+                    bool t144 = (abs(r3) >= t58);
+                    float t145 = (r1.x + t109);
+                    float t146 = (r1.y + t111);
+                    r1 = (t144 ? r1 : float2(t145, t146));
+                    if ((!(t143 && t144))) {
+                      if ((!t143)) {
+                        half4 t147 = half4(float4(t141, t142, 0.0, 0.0));
+                        float4 t148 = float4(_MainTex.sample(_mtlsmp__MainTex, float2(t147.xy), level(float(t147.w))));
+                        r2 = t148.w;
+                      }
+                      if ((!t144)) {
+                        half4 t149 = half4(float4(t145, t146, 0.0, 0.0));
+                        float4 t150 = float4(_MainTex.sample(_mtlsmp__MainTex, float2(t149.xy), level(float(t149.w))));
+                        r3 = t150.w;
+                      }
+                      r2 = (t143 ? r2 : (r2 - t55));
+                      r3 = (t144 ? r3 : (r3 - t55));
+                      float t151 = (t42 * 4.0);
+                      float t152 = (r0.x - t151);
+                      float t153 = (t43 * 4.0);
+                      float t154 = (r0.y - t153);
+                      bool t155 = (abs(r2) >= t58);
+                      r0 = (t155 ? r0 : float2(t152, t154));
+                      bool t156 = (abs(r3) >= t58);
+                      float t157 = (r1.x + t151);
+                      float t158 = (r1.y + t153);
+                      r1 = (t156 ? r1 : float2(t157, t158));
+                      if ((!(t155 && t156))) {
+                        if ((!t155)) {
+                          half4 t159 = half4(float4(t152, t154, 0.0, 0.0));
+                          float4 t160 = float4(_MainTex.sample(_mtlsmp__MainTex, float2(t159.xy), level(float(t159.w))));
+                          r2 = t160.w;
+                        }
+                        if ((!t156)) {
+                          half4 t161 = half4(float4(t157, t158, 0.0, 0.0));
+                          float4 t162 = float4(_MainTex.sample(_mtlsmp__MainTex, float2(t161.xy), level(float(t161.w))));
+                          r3 = t162.w;
+                        }
+                        r2 = (t155 ? r2 : (r2 - t55));
+                        r3 = (t156 ? r3 : (r3 - t55));
+                        float t163 = (t42 * 8.0);
+                        float t164 = (t43 * 8.0);
+                        r0 = ((abs(r2) >= t58) ? r0 : float2((r0.x - t163), (r0.y - t164)));
+                        r1 = ((abs(r3) >= t58) ? r1 : float2((r1.x + t163), (r1.y + t164)));
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    float t165 = (t32 ? (_mtl_i.xlv_TEXCOORD0.x - r0.x) : (_mtl_i.xlv_TEXCOORD0.y - r0.y));
+    float t166 = (t32 ? (r1.x - _mtl_i.xlv_TEXCOORD0.x) : (r1.y - _mtl_i.xlv_TEXCOORD0.y));
+    bool t167 = (r4.w < t55);
+    float t168 = (max((((t165 < t166) ? ((r2 < 0.0) != t167) : ((r3 < 0.0) != t167)) ? (0.5 - ((1.0 / (t166 + t165)) * min(t165, t166))) : 0.0), ((t54 * 0.75) * t54)) * t39);
+    float2 t169 = (t32 ? float2(_mtl_i.xlv_TEXCOORD0.x, (_mtl_i.xlv_TEXCOORD0.y + t168)) : float2((_mtl_i.xlv_TEXCOORD0.x + t168), _mtl_i.xlv_TEXCOORD0.y));
+    half4 t170 = half4(float4(t169, 0.0, 0.0));
+    half4 t171 = _MainTex.sample(_mtlsmp__MainTex, float2(t170.xy), level(float(t170.w)));
+    r4 = float4(float3(t171.xyz), r4.w);
+  }
+  _mtl_o._fragData = half4(r4);
   return _mtl_o;
 }
 
-
-// stats: 424 alu 32 tex 110 flow
+// stats: 321 alu 32 tex 31 flow
 // inputs: 1
 //  #0: xlv_TEXCOORD0 (high float) 2x1 [-1]
 // uniforms: 1 (total size: 16)

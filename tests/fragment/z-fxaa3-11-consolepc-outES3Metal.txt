@@ -15,109 +15,46 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   , texture2d<half> _MainTex [[texture(0)]], sampler _mtlsmp__MainTex [[sampler(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  float4 tmpvar_1 = 0;
-  tmpvar_1 = (_mtl_u._MainTex_TexelSize.xyxy * float4(-0.5, -0.5, 0.5, 0.5));
-  float4 tmpvar_2 = 0;
-  tmpvar_2 = (_mtl_u._MainTex_TexelSize.xyxy * float4(-2.0, -2.0, 2.0, 2.0));
-  half4 tmpvar_3 = 0;
-  half4 rgbyB_4 = 0;
-  half4 rgbyA_5 = 0;
-  float2 dir_6 = 0;
-  float dirSeMinusNw_7 = 0;
-  float lumaMaxSubMinM_8 = 0;
-  float dirSwMinusNe_9 = 0;
-  float lumaM_10 = 0;
-  float lumaNe_11 = 0;
-  float4 tmpvar_12 = 0;
-  tmpvar_12.zw = float2(0.0, 0.0);
-  tmpvar_12.xy = _mtl_i.xlv_TEXCOORD1.xy;
-  half4 tmpvar_13 = 0;
-  tmpvar_13 = half4(tmpvar_12);
-  float tmpvar_14 = 0;
-  tmpvar_14 = float(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_13.xy)), level(tmpvar_13.w)).y);
-  float4 tmpvar_15 = 0;
-  tmpvar_15.zw = float2(0.0, 0.0);
-  tmpvar_15.xy = _mtl_i.xlv_TEXCOORD1.xw;
-  half4 tmpvar_16 = 0;
-  tmpvar_16 = half4(tmpvar_15);
-  float tmpvar_17 = 0;
-  tmpvar_17 = float(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_16.xy)), level(tmpvar_16.w)).y);
-  float4 tmpvar_18 = 0;
-  tmpvar_18.zw = float2(0.0, 0.0);
-  tmpvar_18.xy = _mtl_i.xlv_TEXCOORD1.zy;
-  half4 tmpvar_19 = 0;
-  tmpvar_19 = half4(tmpvar_18);
-  float tmpvar_20 = 0;
-  tmpvar_20 = float(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_19.xy)), level(tmpvar_19.w)).y);
-  float4 tmpvar_21 = 0;
-  tmpvar_21.zw = float2(0.0, 0.0);
-  tmpvar_21.xy = _mtl_i.xlv_TEXCOORD1.zw;
-  half4 tmpvar_22 = 0;
-  tmpvar_22 = half4(tmpvar_21);
-  float tmpvar_23 = 0;
-  tmpvar_23 = float(_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_22.xy)), level(tmpvar_22.w)).y);
-  float4 tmpvar_24 = 0;
-  tmpvar_24.zw = float2(0.0, 0.0);
-  tmpvar_24.xy = _mtl_i.xlv_TEXCOORD0;
-  half4 tmpvar_25 = 0;
-  tmpvar_25 = half4(tmpvar_24);
-  half4 tmpvar_26 = 0;
-  tmpvar_26 = _MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_25.xy)), level(tmpvar_25.w));
-  lumaM_10 = float(tmpvar_26.y);
-  lumaNe_11 = (tmpvar_20 + 0.00260417);
-  float tmpvar_27 = 0;
-  tmpvar_27 = max (max (lumaNe_11, tmpvar_23), max (tmpvar_14, tmpvar_17));
-  float tmpvar_28 = 0;
-  tmpvar_28 = min (min (lumaNe_11, tmpvar_23), min (tmpvar_14, tmpvar_17));
-  float tmpvar_29 = 0;
-  tmpvar_29 = max (0.05, (tmpvar_27 * 0.125));
-  dirSwMinusNe_9 = (tmpvar_17 - lumaNe_11);
-  lumaMaxSubMinM_8 = (max (tmpvar_27, lumaM_10) - min (tmpvar_28, lumaM_10));
-  dirSeMinusNw_7 = (tmpvar_23 - tmpvar_14);
-  if ((lumaMaxSubMinM_8 < tmpvar_29)) {
-    tmpvar_3 = tmpvar_26;
-  } else {
-    dir_6.x = (dirSwMinusNe_9 + dirSeMinusNw_7);
-    dir_6.y = (dirSwMinusNe_9 - dirSeMinusNw_7);
-    float2 tmpvar_30 = 0;
-    tmpvar_30 = normalize(dir_6);
-    float4 tmpvar_31 = 0;
-    tmpvar_31.zw = float2(0.0, 0.0);
-    tmpvar_31.xy = (_mtl_i.xlv_TEXCOORD0 - (tmpvar_30 * tmpvar_1.zw));
-    half4 tmpvar_32 = 0;
-    tmpvar_32 = half4(tmpvar_31);
-    float4 tmpvar_33 = 0;
-    tmpvar_33.zw = float2(0.0, 0.0);
-    tmpvar_33.xy = (_mtl_i.xlv_TEXCOORD0 + (tmpvar_30 * tmpvar_1.zw));
-    half4 tmpvar_34 = 0;
-    tmpvar_34 = half4(tmpvar_33);
-    float2 tmpvar_35 = 0;
-    tmpvar_35 = min (max ((tmpvar_30 / 
-      (min (abs(tmpvar_30.x), abs(tmpvar_30.y)) * 8.0)
-    ), float2(-2.0, -2.0)), float2(2.0, 2.0));
-    float4 tmpvar_36 = 0;
-    tmpvar_36.zw = float2(0.0, 0.0);
-    tmpvar_36.xy = (_mtl_i.xlv_TEXCOORD0 - (tmpvar_35 * tmpvar_2.zw));
-    half4 tmpvar_37 = 0;
-    tmpvar_37 = half4(tmpvar_36);
-    float4 tmpvar_38 = 0;
-    tmpvar_38.zw = float2(0.0, 0.0);
-    tmpvar_38.xy = (_mtl_i.xlv_TEXCOORD0 + (tmpvar_35 * tmpvar_2.zw));
-    half4 tmpvar_39 = 0;
-    tmpvar_39 = half4(tmpvar_38);
-    rgbyA_5 = (_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_32.xy)), level(tmpvar_32.w)) + _MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_34.xy)), level(tmpvar_34.w)));
-    rgbyB_4 = (((_MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_37.xy)), level(tmpvar_37.w)) + _MainTex.sample(_mtlsmp__MainTex, (float2)((tmpvar_39.xy)), level(tmpvar_39.w))) * (half)(0.25)) + (rgbyA_5 * (half)(0.25)));
-    if ((((float)(rgbyB_4.y) < tmpvar_28) || (tmpvar_27 < (float)(rgbyB_4.y)))) {
-      rgbyB_4.xyz = (rgbyA_5.xyz * (half)(0.5));
-    };
-    tmpvar_3 = rgbyB_4;
-  };
-  _mtl_o._fragData = tmpvar_3;
+  half4 r0 = 0;
+  half4 t0 = half4(float4(_mtl_i.xlv_TEXCOORD1.xy, 0.0, 0.0));
+  float t1 = float(_MainTex.sample(_mtlsmp__MainTex, float2(t0.xy), level(float(t0.w))).y);
+  half4 t2 = half4(float4(_mtl_i.xlv_TEXCOORD1.xw, 0.0, 0.0));
+  float t3 = float(_MainTex.sample(_mtlsmp__MainTex, float2(t2.xy), level(float(t2.w))).y);
+  half4 t4 = half4(float4(_mtl_i.xlv_TEXCOORD1.zy, 0.0, 0.0));
+  float t5 = float(_MainTex.sample(_mtlsmp__MainTex, float2(t4.xy), level(float(t4.w))).y);
+  half4 t6 = half4(float4(_mtl_i.xlv_TEXCOORD1.zw, 0.0, 0.0));
+  float t7 = float(_MainTex.sample(_mtlsmp__MainTex, float2(t6.xy), level(float(t6.w))).y);
+  half4 t8 = half4(float4(_mtl_i.xlv_TEXCOORD0, 0.0, 0.0));
+  r0 = _MainTex.sample(_mtlsmp__MainTex, float2(t8.xy), level(float(t8.w)));
+  float t9 = float(r0.y);
+  float t10 = (t5 + 0.00260417);
+  float t11 = max(max(t10, t7), max(t1, t3));
+  float t12 = min(min(t10, t7), min(t1, t3));
+  float t13 = (t3 - t10);
+  float t14 = (t7 - t1);
+  if (((max(t11, t9) - min(t12, t9)) >= max(0.05, (t11 * 0.125)))) {
+    float2 t15 = float2((t13 + t14), (t13 - t14));
+    float2 t16 = normalize(t15);
+    float2 t17 = (t16 * (_mtl_u._MainTex_TexelSize.xyxy * float4(-0.5, -0.5, 0.5, 0.5)).zw);
+    float2 t18 = (_mtl_i.xlv_TEXCOORD0 - t17);
+    half4 t19 = half4(float4(t18, 0.0, 0.0));
+    float2 t20 = (_mtl_i.xlv_TEXCOORD0 + t17);
+    half4 t21 = half4(float4(t20, 0.0, 0.0));
+    float2 t22 = (clamp((t16 / (min(abs(t16.x), abs(t16.y)) * 8.0)), -2.0, 2.0) * (_mtl_u._MainTex_TexelSize.xyxy * float4(-2.0, -2.0, 2.0, 2.0)).zw);
+    float2 t23 = (_mtl_i.xlv_TEXCOORD0 - t22);
+    half4 t24 = half4(float4(t23, 0.0, 0.0));
+    float2 t25 = (_mtl_i.xlv_TEXCOORD0 + t22);
+    half4 t26 = half4(float4(t25, 0.0, 0.0));
+    half4 t27 = (_MainTex.sample(_mtlsmp__MainTex, float2(t19.xy), level(float(t19.w))) + _MainTex.sample(_mtlsmp__MainTex, float2(t21.xy), level(float(t21.w))));
+    half4 t28 = (half(0.25) * ((_MainTex.sample(_mtlsmp__MainTex, float2(t24.xy), level(float(t24.w))) + _MainTex.sample(_mtlsmp__MainTex, float2(t26.xy), level(float(t26.w)))) + t27));
+    half3 t29 = (t27.xyz * half(0.5));
+    r0 = (((float(t28.y) < t12) || (t11 < float(t28.y))) ? half4(t29, t28.w) : t28);
+  }
+  _mtl_o._fragData = r0;
   return _mtl_o;
 }
 
-
-// stats: 53 alu 9 tex 2 flow
+// stats: 44 alu 9 tex 1 flow
 // inputs: 2
 //  #0: xlv_TEXCOORD0 (high float) 2x1 [-1]
 //  #1: xlv_TEXCOORD1 (high float) 4x1 [-1]

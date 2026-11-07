@@ -1,43 +1,21 @@
 #version 320 es
-layout(local_size_x=8) in;
-layout(std430, column_major) buffer Results {
+layout(local_size_x = 8) in;
+layout(std430) buffer Results {
   highp uvec4 values[];
 } results;
 layout(r32ui) coherent uniform highp uimage3D volume;
 void main ()
 {
-  highp int x_1;
-  highp uint i_2;
-  i_2 = gl_GlobalInvocationID.x;
-  highp int tmpvar_3;
-  tmpvar_3 = int(gl_GlobalInvocationID.x);
-  x_1 = (tmpvar_3 + 1);
-  highp ivec3 tmpvar_4;
-  tmpvar_4.yz = ivec2(0, 0);
-  tmpvar_4.x = tmpvar_3;
-  highp uint tmpvar_5;
-  tmpvar_5 = imageAtomicAdd (volume, tmpvar_4, 1u);
-  highp ivec3 tmpvar_6;
-  tmpvar_6.yz = ivec2(0, 0);
-  tmpvar_6.x = x_1;
-  highp uint tmpvar_7;
-  tmpvar_7 = imageAtomicCompSwap (volume, tmpvar_6, uint(0), (gl_GlobalInvocationID.x + 2u));
-  highp uint tmpvar_8;
-  tmpvar_8 = imageAtomicCompSwap (volume, ivec3(-1, 0, 0), uint(0), i_2);
-  highp ivec3 tmpvar_9;
-  tmpvar_9 = imageSize (volume);
-  highp uint tmpvar_10;
-  tmpvar_10 = imageAtomicCompSwap (volume, tmpvar_9, uint(0), i_2);
-  highp uvec4 tmpvar_11;
-  tmpvar_11.x = tmpvar_5;
-  tmpvar_11.y = tmpvar_7;
-  tmpvar_11.z = tmpvar_8;
-  tmpvar_11.w = tmpvar_10;
-  results.values[gl_GlobalInvocationID.x] = tmpvar_11;
+  highp uint t0 = imageAtomicAdd(volume, ivec3(uvec4(gl_GlobalInvocationID.x, 0u, 0u, 0u).xyz), 1u);
+  highp uint t1 = imageAtomicCompSwap(volume, ivec4((1 + int(gl_GlobalInvocationID.x)), 0, 0, 0).xyz, 0u, uint((2 + int(gl_GlobalInvocationID.x))));
+  highp uint t2 = gl_GlobalInvocationID.x;
+  highp uint t3 = imageAtomicCompSwap(volume, ivec4(-1, 0, 0, 0).xyz, 0u, t2);
+  highp ivec3 t4 = imageSize(volume);
+  highp uint t5 = imageAtomicCompSwap(volume, ivec4(t4, 0).xyz, 0u, t2);
+  results.values[int(t2)] = uvec4(t0, t1, t3, t5);
 }
 
-
-// stats: 5 alu 5 tex 0 flow
+// stats: 2 alu 5 tex 0 flow
 // workgroup size: 8 1 1
 // buffer #0: Results storage instance results layout std430 (size: unknown)
 //  member #0: uvec4[] values offset 0 array runtime stride 16

@@ -42,7 +42,7 @@ public:
 }
 
 bool
-lower_builtins(exec_list *instructions)
+lower_builtins(ir_exec_list *instructions)
 {
    lower_builtins_visitor v;
    visit_list_elements(&v, instructions);

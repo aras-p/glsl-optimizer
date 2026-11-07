@@ -1,32 +1,29 @@
 #version 310 es
-layout(std430, column_major, binding=3) buffer Output {
+precision highp float;
+precision highp int;
+layout(std430, binding = 3) buffer Output {
   mediump vec3 value;
   bvec3 flags;
   highp ivec2 indices;
   highp vec2 values[2][3];
 } dest;
-layout(std430, column_major, binding=1) buffer Input {
+layout(std430, binding = 1) buffer Input {
   readonly mediump vec3 value;
   readonly bool enabled;
 } source[2];
 out highp vec4 color;
 void main ()
 {
-  dest.value.xy = source[0].value.yx;
-  dest.value.z = source[1].value.z;
-  bvec3 tmpvar_1;
-  tmpvar_1.yz = bvec2(1, 0);
-  tmpvar_1.x = source[1].enabled;
-  dest.flags = tmpvar_1;
-  dest.values[dest.indices.x][dest.indices.y] = dest.value.xy;
-  mediump vec4 tmpvar_2;
-  tmpvar_2.xyz = dest.value;
-  tmpvar_2.w = float(dest.flags.x);
-  color = tmpvar_2;
+  dest.value.xy = source[0].value.yxy.xy;
+  dest.value.z = source[1].value.zzz.z;
+  dest.flags = bvec3(source[1].enabled, true, false);
+  highp ivec2 t0 = dest.indices;
+  dest.values[t0.x][t0.y] = dest.value.xy;
+  mediump vec3 t1 = dest.value;
+  color = vec4(t1, float(dest.flags.x));
 }
 
-
-// stats: 2 alu 0 tex 0 flow
+// stats: 1 alu 0 tex 0 flow
 // buffer #0: Input storage instance source layout std430 binding 1 array 2 (size: 16)
 //  member #0: vec3 value offset 0 readonly
 //  member #1: bool enabled offset 12 readonly

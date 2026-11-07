@@ -1,5 +1,5 @@
 #version 310 es
-layout(local_size_x=1) in;
+layout(local_size_x = 1) in;
 struct Mixed {
   mediump mat4 m;
   highp vec4 v;
@@ -19,67 +19,62 @@ struct Entry {
   Pair pair;
   highp mat4 transform;
 };
-layout(std430, column_major) buffer Matrices {
-  layout(column_major) Mixed mixed;
+layout(std430) buffer Matrices {
+  Mixed mixed;
   highp vec2 values[2];
-  layout(column_major) highp mat2 small;
-  layout(column_major) highp mat3x2 wide;
+  highp mat2 small;
+  highp mat3x2 wide;
   layout(row_major) highp mat2x3 row;
-  layout(column_major) Tiny tiny;
-  layout(column_major) Padded padded;
-  layout(column_major) mediump mat4 reduced;
+  Tiny tiny;
+  Padded padded;
+  mediump mat4 reduced;
   highp vec4 result;
 } matrices;
-layout(std430, column_major) buffer Output {
-  layout(column_major) Entry entries[];
+layout(std430) buffer Output {
+  Entry entries[];
 } data;
-layout(std140, column_major) uniform Input {
-  layout(column_major) Entry entry;
-  layout(column_major) Mixed mixed;
-  layout(column_major) highp mat2 small;
-  layout(column_major) Tiny tiny;
-  layout(column_major) Padded padded;
+layout(std140) uniform Input {
+  Entry entry;
+  Mixed mixed;
+  highp mat2 small;
+  Tiny tiny;
+  Padded padded;
 } sourceData;
 void main ()
 {
-  highp vec2 values_1[2];
-  values_1[0] = vec2(float(gl_GlobalInvocationID.x));
-  values_1[1] = sourceData.tiny.value;
-  matrices.values = values_1;
-  data.entries[gl_GlobalInvocationID.x] = sourceData.entry;
-  data.entries[(gl_GlobalInvocationID.x + 1u)].pair = data.entries[gl_GlobalInvocationID.x].pair;
-  data.entries[gl_GlobalInvocationID.x].transform = sourceData.entry.transform;
+  matrices.values[0] = vec2(float(gl_GlobalInvocationID.x));
+  matrices.values[1] = sourceData.tiny.value;
+  data.entries[int(gl_GlobalInvocationID.x)].pair = sourceData.entry.pair;
+  data.entries[int(gl_GlobalInvocationID.x)].transform[0] = sourceData.entry.transform[0];
+  data.entries[int(gl_GlobalInvocationID.x)].transform[1] = sourceData.entry.transform[1];
+  data.entries[int(gl_GlobalInvocationID.x)].transform[2] = sourceData.entry.transform[2];
+  data.entries[int(gl_GlobalInvocationID.x)].transform[3] = sourceData.entry.transform[3];
+  data.entries[(1 + int(gl_GlobalInvocationID.x))].pair = data.entries[int(gl_GlobalInvocationID.x)].pair;
+  data.entries[int(gl_GlobalInvocationID.x)].transform[0] = sourceData.entry.transform[0];
+  data.entries[int(gl_GlobalInvocationID.x)].transform[1] = sourceData.entry.transform[1];
+  data.entries[int(gl_GlobalInvocationID.x)].transform[2] = sourceData.entry.transform[2];
+  data.entries[int(gl_GlobalInvocationID.x)].transform[3] = sourceData.entry.transform[3];
   matrices.mixed = sourceData.mixed;
-  highp mat2x3 tmpvar_2;
-  highp mat4 tmpvar_3;
-  tmpvar_3 = sourceData.entry.transform;
-  tmpvar_2[uint(0)] = tmpvar_3[uint(0)].xyz;
-  tmpvar_2[1u] = tmpvar_3[1u].xyz;
-  matrices.row = (tmpvar_2 * 0.5);
+  matrices.row[0] = (sourceData.entry.transform[0].xyz * 0.5);
+  matrices.row[1] = (sourceData.entry.transform[1].xyz * 0.5);
   matrices.small = sourceData.small;
-  highp mat3x2 tmpvar_4;
-  highp mat4 tmpvar_5;
-  tmpvar_5 = sourceData.entry.transform;
-  tmpvar_4[uint(0)] = tmpvar_5[uint(0)].xy;
-  tmpvar_4[1u] = tmpvar_5[1u].xy;
-  tmpvar_4[2u] = tmpvar_5[2u].xy;
-  matrices.wide = tmpvar_4;
-  matrices.tiny = sourceData.tiny;
+  matrices.wide[0] = sourceData.entry.transform[0].xy;
+  matrices.wide[1] = sourceData.entry.transform[1].xy;
+  matrices.wide[2] = sourceData.entry.transform[2].xy;
+  matrices.tiny.value = sourceData.tiny.value;
   matrices.padded = sourceData.padded;
-  matrices.reduced = sourceData.entry.transform;
-  mediump mat4 tmpvar_6;
-  tmpvar_6 = matrices.reduced;
-  highp vec4 tmpvar_7;
-  tmpvar_7.xy = matrices.small[0];
-  tmpvar_7.zw = tmpvar_6[1].xy;
-  highp vec4 tmpvar_8;
-  tmpvar_8.xy = matrices.wide[2];
-  tmpvar_8.zw = matrices.tiny.value;
-  matrices.result = (((data.entries[gl_GlobalInvocationID.x].transform[1] + vec4(data.entries[gl_GlobalInvocationID.x].transform[2][3])) + tmpvar_7) + tmpvar_8);
+  matrices.reduced[0] = sourceData.entry.transform[0];
+  matrices.reduced[1] = sourceData.entry.transform[1];
+  matrices.reduced[2] = sourceData.entry.transform[2];
+  matrices.reduced[3] = sourceData.entry.transform[3];
+  mediump vec4 t0 = matrices.reduced[1];
+  highp vec2 t1 = matrices.small[0];
+  highp vec2 t2 = matrices.wide[2];
+  highp vec2 t3 = matrices.tiny.value;
+  matrices.result = (((data.entries[int(gl_GlobalInvocationID.x)].transform[1] + data.entries[int(gl_GlobalInvocationID.x)].transform[2][3]) + vec4(t1, t0.xy)) + vec4(t2, t3));
 }
 
-
-// stats: 6 alu 0 tex 0 flow
+// stats: 7 alu 0 tex 0 flow
 // workgroup size: 1 1 1
 // buffer #0: Input instance sourceData layout std140 (size: 240)
 //  member #0: Entry entry offset 0

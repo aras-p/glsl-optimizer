@@ -1,32 +1,19 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
-struct alignas(16) _xlat_buf_storage1_element { float4 value; };
-struct _xlat_buf_storage1 { _xlat_buf_storage1_element elements[256]; };
-static_assert(sizeof(_xlat_buf_storage1) == 4096, "std140 size");
-struct alignas(16) _xlat_buf_storage2_element { float value; };
-struct _xlat_buf_storage2 { _xlat_buf_storage2_element elements[256]; };
-static_assert(sizeof(_xlat_buf_storage2) == 4096, "std140 size");
-struct _xlat_buf_storage4 { float4 vectors[3]; };
-static_assert(sizeof(_xlat_buf_storage4) == 48, "std140 size");
-struct alignas(16) _xlat_buf_storage3_element { _xlat_buf_storage4 value; };
-struct _xlat_buf_storage3 { _xlat_buf_storage3_element elements[4]; };
-static_assert(sizeof(_xlat_buf_storage3) == 192, "std140 size");
-struct _xlat_buf_storage6 { float4 vectors[3]; };
-static_assert(sizeof(_xlat_buf_storage6) == 48, "std140 size");
-struct alignas(16) _xlat_buf_storage5_element { _xlat_buf_storage6 value; };
-struct _xlat_buf_storage5 { _xlat_buf_storage5_element elements[4]; };
-static_assert(sizeof(_xlat_buf_storage5) == 192, "std140 size");
-struct alignas(16) _xlat_buf_storage0 {
-  alignas(16) _xlat_buf_storage1 colors;
-  alignas(16) _xlat_buf_storage2 weights;
-  alignas(16) _xlat_buf_storage3 rows;
-  alignas(16) _xlat_buf_storage5 columns;
-  alignas(16) packed_uint3 indices;
-  char _buf_pad5[4];
-  alignas(8) uint2 enabled;
+struct _xlat_element_float_16 { float value; char _pad[12]; };
+struct _xlat_element_float2_16 { float2 value; char _pad[8]; };
+struct _xlat_buf_Lookup_std140 {
+  float4 colors[256];
+  _xlat_element_float_16 weights[256];
+  _xlat_element_float2_16 rows[3][4];
+  _xlat_element_float2_16 columns[3][4];
+  packed_uint3 indices;
+  char _pad0[4];
+  uint2 enabled;
+  char _pad1[8];
 };
-static_assert(sizeof(_xlat_buf_storage0) == 8608, "std140 size");
+static_assert(sizeof(_xlat_buf_Lookup_std140) == 8608, "std140 size");
 struct xlatMtlShaderInput {
 };
 struct xlatMtlShaderOutput {
@@ -36,34 +23,19 @@ struct xlatMtlShaderUniform {
   int index;
 };
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , constant _xlat_buf_storage0& _mtl_buffer1 [[buffer(1)]])
+  , constant _xlat_buf_Lookup_std140& lookup [[buffer(1)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  float4 value_1 = 0;
-  float4 tmpvar_2 = 0;
-  tmpvar_2 = (float4(_mtl_buffer1.colors.elements[_mtl_u.index].value) * (float)(half(_mtl_buffer1.weights.elements[_mtl_u.index].value)));
-  value_1.w = tmpvar_2.w;
-  int tmpvar_3 = 0;
-  tmpvar_3 = (_mtl_u.index & 3);
-  int tmpvar_4 = 0;
-  tmpvar_4 = (_mtl_u.index % 3);
-  int tmpvar_5 = 0;
-  tmpvar_5 = (_mtl_u.index & 1);
-  value_1.x = (tmpvar_2.x + float(_mtl_buffer1.rows.elements[tmpvar_3].value.vectors[tmpvar_4][tmpvar_5]));
-  value_1.y = (tmpvar_2.y + float(_mtl_buffer1.columns.elements[tmpvar_3].value.vectors[tmpvar_4][tmpvar_5]));
-  value_1.z = (tmpvar_2.z + float(uint(_mtl_buffer1.indices[tmpvar_4])));
-  float4 tmpvar_6 = 0;
-  if (bool(_mtl_buffer1.enabled[(_mtl_u.index & 1)])) {
-    tmpvar_6 = value_1;
-  } else {
-    tmpvar_6 = float4(0.0, 0.0, 0.0, 0.0);
-  };
-  _mtl_o.color = tmpvar_6;
+  float4 t0 = (float4(lookup.colors[_mtl_u.index]) * float(half(lookup.weights[_mtl_u.index].value)));
+  uint t1 = (uint(_mtl_u.index) & 3u);
+  uint t2 = (uint(_mtl_u.index) & 1u);
+  uint t3 = (uint(_mtl_u.index) % 3u);
+  float4 t4 = float4((t0.x + float(lookup.rows[int(t1)][int(t3)].value[int(t2)])), (t0.y + float(lookup.columns[int(t1)][int(t3)].value[int(t2)])), (t0.z + float(uint(lookup.indices[int(t3)]))), t0.w);
+  _mtl_o.color = (bool(lookup.enabled[int(t2)]) ? t4 : float4(0.0));
   return _mtl_o;
 }
 
-
-// stats: 10 alu 0 tex 1 flow
+// stats: 9 alu 0 tex 0 flow
 // uniforms: 1 (total size: 4)
 //  #0: index (high int) 1x1 [-1] loc 0
 // buffer #0: Lookup instance lookup layout std140 (size: 8608) metal 1

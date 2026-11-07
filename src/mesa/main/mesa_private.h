@@ -31,7 +31,7 @@
 #ifndef MESA_PRIVATE_H
 #define MESA_PRIVATE_H
 
-#include "glheader.h"
+#include "util/glheader.h"
 
 #ifdef __cplusplus
 extern "C" {

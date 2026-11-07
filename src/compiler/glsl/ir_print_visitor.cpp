@@ -23,6 +23,7 @@
 
 #include <inttypes.h> /* for PRIx64 macro */
 #include "ir_print_visitor.h"
+#include "linker_util.h"
 #include "compiler/glsl_types.h"
 #include "glsl_parser_extras.h"
 #include "main/macros.h"
@@ -45,9 +46,23 @@ ir_instruction::fprint(FILE *f) const
    deconsted->accept(&v);
 }
 
+static void
+glsl_print_type(FILE *f, const glsl_type *t)
+{
+   if (glsl_type_is_array(t)) {
+      fprintf(f, "(array ");
+      glsl_print_type(f, t->fields.array);
+      fprintf(f, " %u)", t->length);
+   } else if (glsl_type_is_struct(t) && !is_gl_identifier(glsl_get_type_name(t))) {
+      fprintf(f, "%s@%p", glsl_get_type_name(t), (void *) t);
+   } else {
+      fprintf(f, "%s", glsl_get_type_name(t));
+   }
+}
+
 extern "C" {
 void
-_mesa_print_ir(FILE *f, exec_list *instructions,
+_mesa_print_ir(FILE *f, ir_exec_list *instructions,
 	       struct _mesa_glsl_parse_state *state)
 {
    if (state) {
@@ -55,7 +70,7 @@ _mesa_print_ir(FILE *f, exec_list *instructions,
 	 const glsl_type *const s = state->user_structures[i];
 
 	 fprintf(f, "(structure (%s) (%s@%p) (%u) (\n",
-                 s->name, s->name, (void *) s, s->length);
+                 glsl_get_type_name(s), glsl_get_type_name(s), (void *) s, s->length);
 
 	 for (unsigned j = 0; j < s->length; j++) {
 	    fprintf(f, "\t((");
@@ -68,7 +83,7 @@ _mesa_print_ir(FILE *f, exec_list *instructions,
    }
 
    fprintf(f, "(\n");
-   foreach_in_list(ir_instruction, ir, instructions) {
+   ir_foreach_in_list(ir_instruction, ir, instructions) {
       ir->fprint(f);
       if (ir->ir_type != ir_type_function)
 	 fprintf(f, "\n");
@@ -194,20 +209,22 @@ void ir_print_visitor::visit(ir_variable *ir)
    const char *const memory_volatile = (ir->data.memory_volatile) ? "volatile " : "";
    const char *const memory_restrict = (ir->data.memory_restrict) ? "restrict " : "";
    const char *const mode[] = { "", "uniform ", "shader_storage ",
-                                "shader_shared ", "shader_in ", "shader_out ",
+                                "shader_shared ", "task_payload ", "shader_in ", "shader_out ",
+                                "shader_pixel_local ",
                                 "in ", "out ", "inout ",
-			        "const_in ", "sys ", "temporary " };
+                                "const_in ", "sys ", "temporary " };
+   const char *const per_primitive = (ir->data.per_primitive) ? "per_primitive " : "";
    STATIC_ASSERT(ARRAY_SIZE(mode) == ir_var_mode_count);
-   const char *const interp[] = { "", "smooth", "flat", "noperspective", "explicit", "color" };
+   const char *const interp[] = { "", "smooth", "flat", "noperspective", "explicit" };
    STATIC_ASSERT(ARRAY_SIZE(interp) == INTERP_MODE_COUNT);
    const char *const precision[] = { "", "highp ", "mediump ", "lowp "};
 
-   fprintf(f, "(%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s) ",
+   fprintf(f, "(%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s) ",
            binding, loc, component, cent, bindless, bound,
            image_format, memory_read_only, memory_write_only,
            memory_coherent, memory_volatile, memory_restrict,
-           samp, patc, inv, explicit_inv, prec, mode[ir->data.mode],
-           stream,
+           samp, patc, inv, explicit_inv, prec, per_primitive,
+           mode[ir->data.mode], stream,
            interp[ir->data.interpolation], precision[ir->data.precision]);
 
    glsl_print_type(f, ir->type);
@@ -238,7 +255,7 @@ void ir_print_visitor::visit(ir_function_signature *ir)
    fprintf(f, "(parameters\n");
    indentation++;
 
-   foreach_in_list(ir_variable, inst, &ir->parameters) {
+   ir_foreach_in_list(ir_variable, inst, &ir->parameters) {
       indent();
       inst->accept(this);
       fprintf(f, "\n");
@@ -253,7 +270,7 @@ void ir_print_visitor::visit(ir_function_signature *ir)
    fprintf(f, "(\n");
    indentation++;
 
-   foreach_in_list(ir_instruction, inst, &ir->body) {
+   ir_foreach_in_list(ir_instruction, inst, &ir->body) {
       indent();
       inst->accept(this);
       fprintf(f, "\n");
@@ -270,7 +287,7 @@ void ir_print_visitor::visit(ir_function *ir)
 {
    fprintf(f, "(%s function %s\n", ir->is_subroutine ? "subroutine" : "", ir->name);
    indentation++;
-   foreach_in_list(ir_function_signature, sig, &ir->signatures) {
+   ir_foreach_in_list(ir_function_signature, sig, &ir->signatures) {
       indent();
       sig->accept(this);
       fprintf(f, "\n");
@@ -321,6 +338,9 @@ void ir_print_visitor::visit(ir_texture *ir)
 
       fprintf(f, " ");
 
+      if (ir->op != ir_lod && ir->op != ir_samples_identical)
+         fprintf(f, "%d ", ir->is_sparse);
+
       if (ir->offset != NULL) {
 	 ir->offset->accept(this);
       } else {
@@ -343,6 +363,15 @@ void ir_print_visitor::visit(ir_texture *ir)
 	 ir->shadow_comparator->accept(this);
       } else {
 	 fprintf(f, " ()");
+      }
+   }
+
+   if (ir->op == ir_tex || ir->op == ir_txb || ir->op == ir_txd) {
+      if (ir->clamp) {
+         fprintf(f, " ");
+         ir->clamp->accept(this);
+      } else {
+         fprintf(f, " ()");
       }
    }
 
@@ -376,7 +405,7 @@ void ir_print_visitor::visit(ir_texture *ir)
       ir->lod_info.component->accept(this);
       break;
    case ir_samples_identical:
-      unreachable("ir_samples_identical was already handled");
+      UNREACHABLE("ir_samples_identical was already handled");
    };
    fprintf(f, ")");
 }
@@ -432,9 +461,6 @@ void ir_print_visitor::visit(ir_assignment *ir)
 {
    fprintf(f, "(assign ");
 
-   if (ir->condition)
-      ir->condition->accept(this);
-
    char mask[5];
    unsigned j = 0;
 
@@ -476,17 +502,17 @@ void ir_print_visitor::visit(ir_constant *ir)
    glsl_print_type(f, ir->type);
    fprintf(f, " (");
 
-   if (ir->type->is_array()) {
+   if (glsl_type_is_array(ir->type)) {
       for (unsigned i = 0; i < ir->type->length; i++)
 	 ir->get_array_element(i)->accept(this);
-   } else if (ir->type->is_struct()) {
+   } else if (glsl_type_is_struct(ir->type)) {
       for (unsigned i = 0; i < ir->type->length; i++) {
 	 fprintf(f, "(%s ", ir->type->fields.structure[i].name);
          ir->get_record_field(i)->accept(this);
 	 fprintf(f, ")");
       }
    } else {
-      for (unsigned i = 0; i < ir->type->components(); i++) {
+      for (unsigned i = 0; i < glsl_get_components(ir->type); i++) {
 	 if (i != 0)
 	    fprintf(f, " ");
 	 switch (ir->type->base_type) {
@@ -519,7 +545,7 @@ void ir_print_visitor::visit(ir_constant *ir)
                fprintf(f, "%f", ir->value.d[i]);
             break;
 	 default:
-            unreachable("Invalid constant type");
+            UNREACHABLE("Invalid constant type");
 	 }
       }
    }
@@ -534,7 +560,7 @@ ir_print_visitor::visit(ir_call *ir)
    if (ir->return_deref)
       ir->return_deref->accept(this);
    fprintf(f, " (");
-   foreach_in_list(ir_rvalue, param, &ir->actual_parameters) {
+   ir_foreach_in_list(ir_rvalue, param, &ir->actual_parameters) {
       param->accept(this);
    }
    fprintf(f, "))\n");
@@ -586,7 +612,7 @@ ir_print_visitor::visit(ir_if *ir)
    fprintf(f, "(\n");
    indentation++;
 
-   foreach_in_list(ir_instruction, inst, &ir->then_instructions) {
+   ir_foreach_in_list(ir_instruction, inst, &ir->then_instructions) {
       indent();
       inst->accept(this);
       fprintf(f, "\n");
@@ -601,7 +627,7 @@ ir_print_visitor::visit(ir_if *ir)
       fprintf(f, "(\n");
       indentation++;
 
-      foreach_in_list(ir_instruction, inst, &ir->else_instructions) {
+      ir_foreach_in_list(ir_instruction, inst, &ir->else_instructions) {
 	 indent();
 	 inst->accept(this);
 	 fprintf(f, "\n");
@@ -621,7 +647,13 @@ ir_print_visitor::visit(ir_loop *ir)
    fprintf(f, "(loop (\n");
    indentation++;
 
-   foreach_in_list(ir_instruction, inst, &ir->body_instructions) {
+   ir_foreach_in_list(ir_instruction, inst, &ir->body_instructions) {
+      indent();
+      inst->accept(this);
+      fprintf(f, "\n");
+   }
+   fprintf(stderr, ") continue (\n");
+   ir_foreach_in_list(ir_instruction, inst, &ir->continue_instructions) {
       indent();
       inst->accept(this);
       fprintf(f, "\n");

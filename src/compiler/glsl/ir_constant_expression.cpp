@@ -44,10 +44,10 @@
 static float
 dot_f(ir_constant *op0, ir_constant *op1)
 {
-   assert(op0->type->is_float() && op1->type->is_float());
+   assert(glsl_type_is_float(op0->type) && glsl_type_is_float(op1->type));
 
    float result = 0;
-   for (unsigned c = 0; c < op0->type->components(); c++)
+   for (unsigned c = 0; c < glsl_get_components(op0->type); c++)
       result += op0->value.f[c] * op1->value.f[c];
 
    return result;
@@ -56,10 +56,10 @@ dot_f(ir_constant *op0, ir_constant *op1)
 static double
 dot_d(ir_constant *op0, ir_constant *op1)
 {
-   assert(op0->type->is_double() && op1->type->is_double());
+   assert(glsl_type_is_double(op0->type) && glsl_type_is_double(op1->type));
 
    double result = 0;
-   for (unsigned c = 0; c < op0->type->components(); c++)
+   for (unsigned c = 0; c < glsl_get_components(op0->type); c++)
       result += op0->value.d[c] * op1->value.d[c];
 
    return result;
@@ -474,7 +474,7 @@ unpack_2x32(uint64_t p, uint32_t *a, uint32_t *b)
  * The offset is used when the reference is to a specific column of a matrix.
  */
 static bool
-constant_referenced(const ir_dereference *deref,
+constant_referenced(linear_ctx *linalloc, const ir_dereference *deref,
                     struct hash_table *variable_context,
                     ir_constant *&store, int &offset)
 {
@@ -490,10 +490,10 @@ constant_referenced(const ir_dereference *deref,
          (const ir_dereference_array *) deref;
 
       ir_constant *const index_c =
-         da->array_index->constant_expression_value(variable_context);
+         da->array_index->constant_expression_value(linalloc);
 
-      if (!index_c || !index_c->type->is_scalar() ||
-          !index_c->type->is_integer_32())
+      if (!index_c || !glsl_type_is_scalar(index_c->type) ||
+          !glsl_type_is_integer_32(index_c->type))
          break;
 
       const int index = index_c->type->base_type == GLSL_TYPE_INT ?
@@ -507,17 +507,17 @@ constant_referenced(const ir_dereference *deref,
       if (!deref)
          break;
 
-      if (!constant_referenced(deref, variable_context, substore, suboffset))
+      if (!constant_referenced(linalloc, deref, variable_context, substore, suboffset))
          break;
 
       const glsl_type *const vt = da->array->type;
-      if (vt->is_array()) {
+      if (glsl_type_is_array(vt)) {
          store = substore->get_array_element(index);
          offset = 0;
-      } else if (vt->is_matrix()) {
+      } else if (glsl_type_is_matrix(vt)) {
          store = substore;
          offset = index * vt->vector_elements;
-      } else if (vt->is_vector()) {
+      } else if (glsl_type_is_vector(vt)) {
          store = substore;
          offset = suboffset + index;
       }
@@ -536,7 +536,7 @@ constant_referenced(const ir_dereference *deref,
       ir_constant *substore;
       int suboffset;
 
-      if (!constant_referenced(deref, variable_context, substore, suboffset))
+      if (!constant_referenced(linalloc, deref, variable_context, substore, suboffset))
          break;
 
       /* Since we're dropping it on the floor...
@@ -567,9 +567,9 @@ constant_referenced(const ir_dereference *deref,
 
 
 ir_constant *
-ir_rvalue::constant_expression_value(void *, struct hash_table *)
+ir_rvalue::constant_expression_value(linear_ctx *, struct hash_table *)
 {
-   assert(this->type->is_error());
+   assert(glsl_type_is_error(this->type));
    return NULL;
 }
 
@@ -686,12 +686,12 @@ bitfield_insert(uint32_t base, uint32_t insert, int offset, int bits)
 }
 
 ir_constant *
-ir_expression::constant_expression_value(void *mem_ctx,
+ir_expression::constant_expression_value(linear_ctx *linalloc,
                                          struct hash_table *variable_context)
 {
-   assert(mem_ctx);
+   assert(linalloc);
 
-   if (this->type->is_error())
+   if (glsl_type_is_error(this->type))
       return NULL;
 
    const glsl_type *return_type = this->type;
@@ -702,7 +702,7 @@ ir_expression::constant_expression_value(void *mem_ctx,
 
    for (unsigned operand = 0; operand < this->num_operands; operand++) {
       op[operand] =
-         this->operands[operand]->constant_expression_value(mem_ctx,
+         this->operands[operand]->constant_expression_value(linalloc,
                                                             variable_context);
       if (!op[operand])
          return NULL;
@@ -712,47 +712,50 @@ ir_expression::constant_expression_value(void *mem_ctx,
       switch (op[operand]->type->base_type) {
       case GLSL_TYPE_FLOAT16: {
          const struct glsl_type *float_type =
-               glsl_type::get_instance(GLSL_TYPE_FLOAT,
-                                       op[operand]->type->vector_elements,
-                                       op[operand]->type->matrix_columns,
-                                       op[operand]->type->explicit_stride,
-                                       op[operand]->type->interface_row_major);
+               glsl_simple_explicit_type(GLSL_TYPE_FLOAT,
+                                         op[operand]->type->vector_elements,
+                                         op[operand]->type->matrix_columns,
+                                         op[operand]->type->explicit_stride,
+                                         op[operand]->type->interface_row_major,
+                                         0 /* explicit_alignment */);
 
          ir_constant_data f;
          for (unsigned i = 0; i < ARRAY_SIZE(f.f); i++)
             f.f[i] = _mesa_half_to_float(op[operand]->value.f16[i]);
 
-         op[operand] = new(mem_ctx) ir_constant(float_type, &f);
+         op[operand] = new(linalloc) ir_constant(float_type, &f);
          break;
       }
       case GLSL_TYPE_INT16: {
          const struct glsl_type *int_type =
-            glsl_type::get_instance(GLSL_TYPE_INT,
-                                    op[operand]->type->vector_elements,
-                                    op[operand]->type->matrix_columns,
-                                    op[operand]->type->explicit_stride,
-                                    op[operand]->type->interface_row_major);
+            glsl_simple_explicit_type(GLSL_TYPE_INT,
+                                      op[operand]->type->vector_elements,
+                                      op[operand]->type->matrix_columns,
+                                      op[operand]->type->explicit_stride,
+                                      op[operand]->type->interface_row_major,
+                                      0 /* explicit_alignment */);
 
          ir_constant_data d;
          for (unsigned i = 0; i < ARRAY_SIZE(d.i); i++)
             d.i[i] = op[operand]->value.i16[i];
 
-         op[operand] = new(mem_ctx) ir_constant(int_type, &d);
+         op[operand] = new(linalloc) ir_constant(int_type, &d);
          break;
       }
       case GLSL_TYPE_UINT16: {
          const struct glsl_type *uint_type =
-            glsl_type::get_instance(GLSL_TYPE_UINT,
-                                    op[operand]->type->vector_elements,
-                                    op[operand]->type->matrix_columns,
-                                    op[operand]->type->explicit_stride,
-                                    op[operand]->type->interface_row_major);
+            glsl_simple_explicit_type(GLSL_TYPE_UINT,
+                                      op[operand]->type->vector_elements,
+                                      op[operand]->type->matrix_columns,
+                                      op[operand]->type->explicit_stride,
+                                      op[operand]->type->interface_row_major,
+                                      0 /* explicit_alignment */);
 
          ir_constant_data d;
          for (unsigned i = 0; i < ARRAY_SIZE(d.u); i++)
             d.u[i] = op[operand]->value.u16[i];
 
-         op[operand] = new(mem_ctx) ir_constant(uint_type, &d);
+         op[operand] = new(linalloc) ir_constant(uint_type, &d);
          break;
       }
       default:
@@ -763,45 +766,32 @@ ir_expression::constant_expression_value(void *mem_ctx,
 
    switch (return_type->base_type) {
    case GLSL_TYPE_FLOAT16:
-      return_type = glsl_type::get_instance(GLSL_TYPE_FLOAT,
-                                            return_type->vector_elements,
-                                            return_type->matrix_columns,
-                                            return_type->explicit_stride,
-                                            return_type->interface_row_major);
+      return_type = glsl_simple_explicit_type(GLSL_TYPE_FLOAT,
+                                              return_type->vector_elements,
+                                              return_type->matrix_columns,
+                                              return_type->explicit_stride,
+                                              return_type->interface_row_major,
+                                              0 /* explicit_alignment */);
       break;
    case GLSL_TYPE_INT16:
-      return_type = glsl_type::get_instance(GLSL_TYPE_INT,
-                                            return_type->vector_elements,
-                                            return_type->matrix_columns,
-                                            return_type->explicit_stride,
-                                            return_type->interface_row_major);
+      return_type = glsl_simple_explicit_type(GLSL_TYPE_INT,
+                                              return_type->vector_elements,
+                                              return_type->matrix_columns,
+                                              return_type->explicit_stride,
+                                              return_type->interface_row_major,
+                                              0 /* explicit_alignment */);
       break;
    case GLSL_TYPE_UINT16:
-      return_type = glsl_type::get_instance(GLSL_TYPE_UINT,
-                                            return_type->vector_elements,
-                                            return_type->matrix_columns,
-                                            return_type->explicit_stride,
-                                            return_type->interface_row_major);
+      return_type = glsl_simple_explicit_type(GLSL_TYPE_UINT,
+                                              return_type->vector_elements,
+                                              return_type->matrix_columns,
+                                              return_type->explicit_stride,
+                                              return_type->interface_row_major,
+                                              0 /* explicit_alignment */);
       break;
    default:
       /* nothing to do */
       break;
-   }
-
-   /* glsl-optimizer change: fold normalize without forcing a value for zero. */
-   if (this->operation == ir_unop_normalize) {
-      double length_squared = 0.0;
-      for (unsigned i = 0; i < op[0]->type->vector_elements; ++i) {
-         double v = op[0]->type->is_double() ? op[0]->value.d[i] : op[0]->value.f[i];
-         length_squared += v * v;
-      }
-      if (length_squared == 0.0) return NULL;
-      double length = sqrt(length_squared);
-      for (unsigned i = 0; i < op[0]->type->vector_elements; ++i) {
-         if (return_type->is_double()) data.d[i] = op[0]->value.d[i] / length;
-         else data.f[i] = op[0]->value.f[i] / length;
-      }
-      return new(mem_ctx) ir_constant(return_type, &data);
    }
 
    if (op[1] != NULL)
@@ -821,8 +811,8 @@ ir_expression::constant_expression_value(void *mem_ctx,
          break;
       }
 
-   bool op0_scalar = op[0]->type->is_scalar();
-   bool op1_scalar = op[1] != NULL && op[1]->type->is_scalar();
+   bool op0_scalar = glsl_type_is_scalar(op[0]->type);
+   bool op1_scalar = op[1] != NULL && glsl_type_is_scalar(op[1]->type);
 
    /* When iterating over a vector or matrix's components, we want to increase
     * the loop counter.  However, for scalars, we want to stay at 0.
@@ -831,19 +821,19 @@ ir_expression::constant_expression_value(void *mem_ctx,
    unsigned c1_inc = op1_scalar ? 0 : 1;
    unsigned components;
    if (op1_scalar || !op[1]) {
-      components = op[0]->type->components();
+      components = glsl_get_components(op[0]->type);
    } else {
-      components = op[1]->type->components();
+      components = glsl_get_components(op[1]->type);
    }
 
    /* Handle array operations here, rather than below. */
-   if (op[0]->type->is_array()) {
-      assert(op[1] != NULL && op[1]->type->is_array());
+   if (glsl_type_is_array(op[0]->type)) {
+      assert(op[1] != NULL && glsl_type_is_array(op[1]->type));
       switch (this->operation) {
       case ir_binop_all_equal:
-         return new(mem_ctx) ir_constant(op[0]->has_value(op[1]));
+         return new(linalloc) ir_constant(op[0]->has_value(op[1]));
       case ir_binop_any_nequal:
-         return new(mem_ctx) ir_constant(!op[0]->has_value(op[1]));
+         return new(linalloc) ir_constant(!op[0]->has_value(op[1]));
       default:
          break;
       }
@@ -858,30 +848,30 @@ ir_expression::constant_expression_value(void *mem_ctx,
       for (unsigned i = 0; i < ARRAY_SIZE(f.f16); i++)
          f.f16[i] = _mesa_float_to_half(data.f[i]);
 
-      return new(mem_ctx) ir_constant(this->type, &f);
+      return new(linalloc) ir_constant(this->type, &f);
    }
    case GLSL_TYPE_INT16: {
       ir_constant_data d;
       for (unsigned i = 0; i < ARRAY_SIZE(d.i16); i++)
          d.i16[i] = data.i[i];
 
-      return new(mem_ctx) ir_constant(this->type, &d);
+      return new(linalloc) ir_constant(this->type, &d);
    }
    case GLSL_TYPE_UINT16: {
       ir_constant_data d;
       for (unsigned i = 0; i < ARRAY_SIZE(d.u16); i++)
          d.u16[i] = data.u[i];
 
-      return new(mem_ctx) ir_constant(this->type, &d);
+      return new(linalloc) ir_constant(this->type, &d);
    }
    default:
-      return new(mem_ctx) ir_constant(this->type, &data);
+      return new(linalloc) ir_constant(this->type, &data);
    }
 }
 
 
 ir_constant *
-ir_texture::constant_expression_value(void *, struct hash_table *)
+ir_texture::constant_expression_value(linear_ctx *, struct hash_table *)
 {
    /* texture lookups aren't constant expressions */
    return NULL;
@@ -889,12 +879,12 @@ ir_texture::constant_expression_value(void *, struct hash_table *)
 
 
 ir_constant *
-ir_swizzle::constant_expression_value(void *mem_ctx,
+ir_swizzle::constant_expression_value(linear_ctx *linalloc,
                                       struct hash_table *variable_context)
 {
-   assert(mem_ctx);
+   assert(linalloc);
 
-   ir_constant *v = this->val->constant_expression_value(mem_ctx,
+   ir_constant *v = this->val->constant_expression_value(linalloc,
                                                          variable_context);
 
    if (v != NULL) {
@@ -920,18 +910,18 @@ ir_swizzle::constant_expression_value(void *mem_ctx,
          }
       }
 
-      return new(mem_ctx) ir_constant(this->type, &data);
+      return new(linalloc) ir_constant(this->type, &data);
    }
    return NULL;
 }
 
 
 ir_constant *
-ir_dereference_variable::constant_expression_value(void *mem_ctx,
+ir_dereference_variable::constant_expression_value(linear_ctx *linalloc,
                                                    struct hash_table *variable_context)
 {
    assert(var);
-   assert(mem_ctx);
+   assert(linalloc);
 
    /* Give priority to the context hashtable, if it exists */
    if (variable_context) {
@@ -950,26 +940,26 @@ ir_dereference_variable::constant_expression_value(void *mem_ctx,
    if (!var->constant_value)
       return NULL;
 
-   return var->constant_value->clone(mem_ctx, NULL);
+   return var->constant_value->clone(linalloc, NULL);
 }
 
 
 ir_constant *
-ir_dereference_array::constant_expression_value(void *mem_ctx,
+ir_dereference_array::constant_expression_value(linear_ctx *linalloc,
                                                 struct hash_table *variable_context)
 {
-   assert(mem_ctx);
+   assert(linalloc);
 
-   ir_constant *array = this->array->constant_expression_value(mem_ctx, variable_context);
-   ir_constant *idx = this->array_index->constant_expression_value(mem_ctx, variable_context);
+   ir_constant *array = this->array->constant_expression_value(linalloc, variable_context);
+   ir_constant *idx = this->array_index->constant_expression_value(linalloc, variable_context);
 
    if ((array != NULL) && (idx != NULL)) {
-      if (array->type->is_matrix()) {
+      if (glsl_type_is_matrix(array->type)) {
          /* Array access of a matrix results in a vector.
           */
          const unsigned column = idx->value.u[0];
 
-         const glsl_type *const column_type = array->type->column_type();
+         const glsl_type *const column_type = glsl_get_column_type(array->type);
 
          /* Section 5.11 (Out-of-Bounds Accesses) of the GLSL 4.60 spec says:
           *
@@ -981,7 +971,7 @@ ir_dereference_array::constant_expression_value(void *mem_ctx,
          if (idx->value.i[0] < 0 || column >= array->type->matrix_columns) {
             ir_constant_data data = { { 0 } };
 
-            return new(mem_ctx) ir_constant(column_type, &data);
+            return new(linalloc) ir_constant(column_type, &data);
          }
 
          /* Offset in the constant matrix to the first element of the column
@@ -1011,17 +1001,17 @@ ir_dereference_array::constant_expression_value(void *mem_ctx,
             break;
 
          default:
-            unreachable("Matrix types are either float or double.");
+            UNREACHABLE("Matrix types are either float or double.");
          }
 
-         return new(mem_ctx) ir_constant(column_type, &data);
-      } else if (array->type->is_vector()) {
+         return new(linalloc) ir_constant(column_type, &data);
+      } else if (glsl_type_is_vector(array->type)) {
          const unsigned component = idx->value.u[0];
 
-         return new(mem_ctx) ir_constant(array, component);
-      } else if (array->type->is_array()) {
+         return new(linalloc) ir_constant(array, component);
+      } else if (glsl_type_is_array(array->type)) {
          const unsigned index = idx->value.u[0];
-         return array->get_array_element(index)->clone(mem_ctx, NULL);
+         return array->get_array_element(index)->clone(linalloc, NULL);
       }
    }
    return NULL;
@@ -1029,19 +1019,19 @@ ir_dereference_array::constant_expression_value(void *mem_ctx,
 
 
 ir_constant *
-ir_dereference_record::constant_expression_value(void *mem_ctx,
+ir_dereference_record::constant_expression_value(linear_ctx *linalloc,
                                                  struct hash_table *)
 {
-   assert(mem_ctx);
+   assert(linalloc);
 
-   ir_constant *v = this->record->constant_expression_value(mem_ctx);
+   ir_constant *v = this->record->constant_expression_value(linalloc);
 
    return (v != NULL) ? v->get_record_field(this->field_idx) : NULL;
 }
 
 
 ir_constant *
-ir_assignment::constant_expression_value(void *, struct hash_table *)
+ir_assignment::constant_expression_value(linear_ctx *, struct hash_table *)
 {
    /* FINISHME: Handle CEs involving assignment (return RHS) */
    return NULL;
@@ -1049,61 +1039,51 @@ ir_assignment::constant_expression_value(void *, struct hash_table *)
 
 
 ir_constant *
-ir_constant::constant_expression_value(void *, struct hash_table *)
+ir_constant::constant_expression_value(linear_ctx *, struct hash_table *)
 {
    return this;
 }
 
 
 ir_constant *
-ir_call::constant_expression_value(void *mem_ctx, struct hash_table *variable_context)
+ir_call::constant_expression_value(linear_ctx *linalloc, struct hash_table *variable_context)
 {
-   assert(mem_ctx);
+   assert(linalloc);
 
-   return this->callee->constant_expression_value(mem_ctx,
+   return this->callee->constant_expression_value(linalloc,
                                                   &this->actual_parameters,
                                                   variable_context);
 }
 
 
-bool ir_function_signature::constant_expression_evaluate_expression_list(void *mem_ctx,
-                                                                        const struct exec_list &body,
+bool ir_function_signature::constant_expression_evaluate_expression_list(linear_ctx *linalloc,
+                                                                        const struct ir_exec_list &body,
                                                                          struct hash_table *variable_context,
                                                                          ir_constant **result)
 {
-   assert(mem_ctx);
+   assert(linalloc);
 
-   foreach_in_list(ir_instruction, inst, &body) {
+   ir_foreach_in_list(ir_instruction, inst, &body) {
       switch(inst->ir_type) {
 
          /* (declare () type symbol) */
       case ir_type_variable: {
          ir_variable *var = inst->as_variable();
-         _mesa_hash_table_insert(variable_context, var, ir_constant::zero(this, var->type));
+         _mesa_hash_table_insert(variable_context, var, ir_constant::zero(linalloc, var->type));
          break;
       }
 
          /* (assign [condition] (write-mask) (ref) (value)) */
       case ir_type_assignment: {
          ir_assignment *asg = inst->as_assignment();
-         if (asg->condition) {
-            ir_constant *cond =
-               asg->condition->constant_expression_value(mem_ctx,
-                                                         variable_context);
-            if (!cond)
-               return false;
-            if (!cond->get_bool_component(0))
-               break;
-         }
-
          ir_constant *store = NULL;
          int offset = 0;
 
-         if (!constant_referenced(asg->lhs, variable_context, store, offset))
+         if (!constant_referenced(linalloc, asg->lhs, variable_context, store, offset))
             return false;
 
          ir_constant *value =
-            asg->rhs->constant_expression_value(mem_ctx, variable_context);
+            asg->rhs->constant_expression_value(linalloc, variable_context);
 
          if (!value)
             return false;
@@ -1116,7 +1096,7 @@ bool ir_function_signature::constant_expression_evaluate_expression_list(void *m
       case ir_type_return:
          assert (result);
          *result =
-            inst->as_return()->value->constant_expression_value(mem_ctx,
+            inst->as_return()->value->constant_expression_value(linalloc,
                                                                 variable_context);
          return *result != NULL;
 
@@ -1134,17 +1114,17 @@ bool ir_function_signature::constant_expression_evaluate_expression_list(void *m
          ir_constant *store = NULL;
          int offset = 0;
 
-         if (!constant_referenced(call->return_deref, variable_context,
+         if (!constant_referenced(linalloc, call->return_deref, variable_context,
                                   store, offset))
             return false;
 
          ir_constant *value =
-            call->constant_expression_value(mem_ctx, variable_context);
+            call->constant_expression_value(linalloc, variable_context);
 
          if(!value)
             return false;
 
-         store->copy_offset(value, offset);
+         store->copy_offset(linalloc, value, offset);
          break;
       }
 
@@ -1153,15 +1133,15 @@ bool ir_function_signature::constant_expression_evaluate_expression_list(void *m
          ir_if *iif = inst->as_if();
 
          ir_constant *cond =
-            iif->condition->constant_expression_value(mem_ctx,
+            iif->condition->constant_expression_value(linalloc,
                                                       variable_context);
-         if (!cond || !cond->type->is_boolean())
+         if (!cond || !glsl_type_is_boolean(cond->type))
             return false;
 
-         exec_list &branch = cond->get_bool_component(0) ? iif->then_instructions : iif->else_instructions;
+         ir_exec_list &branch = cond->get_bool_component(0) ? iif->then_instructions : iif->else_instructions;
 
          *result = NULL;
-         if (!constant_expression_evaluate_expression_list(mem_ctx, branch,
+         if (!constant_expression_evaluate_expression_list(linalloc, branch,
                                                            variable_context,
                                                            result))
             return false;
@@ -1187,14 +1167,14 @@ bool ir_function_signature::constant_expression_evaluate_expression_list(void *m
 }
 
 ir_constant *
-ir_function_signature::constant_expression_value(void *mem_ctx,
-                                                 exec_list *actual_parameters,
+ir_function_signature::constant_expression_value(linear_ctx *linalloc,
+                                                 ir_exec_list *actual_parameters,
                                                  struct hash_table *variable_context)
 {
-   assert(mem_ctx);
+   assert(linalloc);
 
    const glsl_type *type = this->return_type;
-   if (type == glsl_type::void_type)
+   if (type == &glsl_type_builtin_void)
       return NULL;
 
    /* From the GLSL 1.20 spec, page 23:
@@ -1223,25 +1203,26 @@ ir_function_signature::constant_expression_value(void *mem_ctx,
     * We expect the correctness of the number of parameters to have
     * been checked earlier.
     */
-   hash_table *deref_hash = _mesa_pointer_hash_table_create(NULL);
+   hash_table deref_hash;
+   _mesa_pointer_hash_table_init(&deref_hash, NULL);
 
    /* If "origin" is non-NULL, then the function body is there.  So we
     * have to use the variable objects from the object with the body,
     * but the parameter instanciation on the current object.
     */
-   const exec_node *parameter_info = origin ? origin->parameters.get_head_raw() : parameters.get_head_raw();
+   const ir_exec_node *parameter_info = origin ? origin->parameters.get_head_raw() : parameters.get_head_raw();
 
-   foreach_in_list(ir_rvalue, n, actual_parameters) {
+   ir_foreach_in_list(ir_rvalue, n, actual_parameters) {
       ir_constant *constant =
-         n->constant_expression_value(mem_ctx, variable_context);
+         n->constant_expression_value(linalloc, variable_context);
       if (constant == NULL) {
-         _mesa_hash_table_destroy(deref_hash, NULL);
+         _mesa_hash_table_fini(&deref_hash, NULL);
          return NULL;
       }
 
 
       ir_variable *var = (ir_variable *)parameter_info;
-      _mesa_hash_table_insert(deref_hash, var, constant);
+      _mesa_hash_table_insert(&deref_hash, var, constant);
 
       parameter_info = parameter_info->next;
    }
@@ -1251,11 +1232,11 @@ ir_function_signature::constant_expression_value(void *mem_ctx,
    /* Now run the builtin function until something non-constant
     * happens or we get the result.
     */
-   if (constant_expression_evaluate_expression_list(mem_ctx, origin ? origin->body : body, deref_hash, &result) &&
+   if (constant_expression_evaluate_expression_list(linalloc, origin ? origin->body : body, &deref_hash, &result) &&
        result)
-      result = result->clone(mem_ctx, NULL);
+      result = result->clone(linalloc, NULL);
 
-   _mesa_hash_table_destroy(deref_hash, NULL);
+   _mesa_hash_table_fini(&deref_hash, NULL);
 
    return result;
 }

@@ -12,23 +12,20 @@ struct xlatMtlShaderUniform {
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half a_2 = 0;
-  if ((_mtl_i.gl_FragCoord.x == 1.0)) discard_fragment();
-  a_2 = half(4.0);
-  for (short i_1 = short(0); i_1 < 10; i_1++) {
-    a_2 += 1.0;
-  };
-  a_2 += 2.0;
-  a_2 += 1.0;
-  a_2 = (a_2 * a_2);
-  a_2 = -(a_2);
-  a_2 = (a_2 - (half)(1.0));
-  a_2 = rsqrt(a_2);
-  _mtl_o._fragData = half4(a_2);
+  int r0 = 0;
+  float r1 = 0;
+  if ((_mtl_i.gl_FragCoord.x == 1.0)) {
+    discard_fragment();
+  }
+  r1 = 4.0;
+  for (r0 = 0; (r0 < 10); r0++) {
+    r1 = (r1 + 1.0);
+  }
+  float t0 = (3.0 + r1);
+  _mtl_o._fragData = half4(float4(rsqrt((-1.0 - (t0 * t0)))));
   return _mtl_o;
 }
 
-
-// stats: 12 alu 1 tex 3 flow
+// stats: 8 alu 1 tex 3 flow
 // inputs: 1
 //  #0: gl_FragCoord (high float) 4x1 [-1] loc 0

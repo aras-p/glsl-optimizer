@@ -1,4 +1,6 @@
 #version 300 es
+precision highp float;
+precision highp int;
 uniform highp vec3 a;
 uniform highp vec3 b;
 uniform highp float value;
@@ -6,14 +8,11 @@ uniform bvec3 mask;
 out highp vec4 color;
 void main ()
 {
-  highp vec4 tmpvar_1;
-  tmpvar_1.w = 1.0;
-  tmpvar_1.xyz = (vec3(((mask).x ? (b).x : (a).x), ((mask).y ? (b).y : (a).y), ((mask).z ? (b).z : (a).z)) + vec3(((bvec3((value == 0.0))).x ? (b).x : (a).x), ((bvec3((value == 0.0))).y ? (b).y : (a).y), ((bvec3((value == 0.0))).z ? (b).z : (a).z)));
-  color = tmpvar_1;
+  highp vec3 t0 = (mix(a, b, mask) + ((value == 0.0) ? b : a));
+  color = vec4(t0, 1.0);
 }
 
-
-// stats: 5 alu 0 tex 0 flow
+// stats: 4 alu 0 tex 0 flow
 // uniforms: 4 (total size: 0)
 //  #0: a (high float) 3x1 [-1]
 //  #1: b (high float) 3x1 [-1]

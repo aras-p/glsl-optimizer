@@ -7,46 +7,20 @@ uniform float _Shininess;
 uniform vec4 _SpecColor;
 void main ()
 {
-  vec4 xlt_IN_hip_pack0_1;
-  vec3 xlt_IN_lightDir_2;
-  vec4 xlt_IN__ShadowCoord_3;
-  xlt_IN_hip_pack0_1 = gl_TexCoord[0];
-  xlt_IN_lightDir_2 = gl_TexCoord[2].xyz;
-  xlt_IN__ShadowCoord_3 = gl_TexCoord[4];
-  vec4 c_4;
-  vec3 tmpvar_5;
-  vec4 tmpvar_6;
-  tmpvar_6 = texture2D (_MainTex, xlt_IN_hip_pack0_1.xy);
-  tmpvar_5 = (tmpvar_6.xyz * _Color.xyz);
-  vec4 normal_7;
-  normal_7.xy = ((texture2D (_BumpMap, xlt_IN_hip_pack0_1.zw).wy * 2.0) - 1.0);
-  normal_7.z = sqrt(((1.0 - 
-    (normal_7.x * normal_7.x)
-  ) - (normal_7.y * normal_7.y)));
-  float tmpvar_8;
-  tmpvar_8 = texture2DProj (_ShadowMapTexture, vec3(xlt_IN__ShadowCoord_3.xy, xlt_IN__ShadowCoord_3.w)).x;
-  vec4 c_9;
-  float spec_10;
-  spec_10 = (pow (max (0.0, 
-    dot (normal_7.xyz, normalize((xlt_IN_lightDir_2 + normalize(gl_TexCoord[1].xyz))))
-  ), (_Shininess * 128.0)) * tmpvar_6.w);
-  c_9.xyz = (((
-    (tmpvar_5 * _LightColor0.xyz)
-   * 
-    max (0.0, dot (normal_7.xyz, xlt_IN_lightDir_2))
-  ) + (
-    (_LightColor0.xyz * _SpecColor.xyz)
-   * spec_10)) * (tmpvar_8 * 2.0));
-  c_9.w = ((tmpvar_6.w * _Color.w) + ((_LightColor0.w * _SpecColor.w) * (spec_10 * tmpvar_8)));
-  c_4.w = c_9.w;
-  c_4.xyz = (c_9.xyz + (tmpvar_5 * gl_TexCoord[3].xyz));
-  gl_FragData[0] = c_4;
+  vec4 t0 = texture2D(_MainTex, gl_TexCoord[0].xy);
+  vec3 t1 = (t0.xyz * _Color.xyz);
+  vec2 t2 = ((texture2D(_BumpMap, gl_TexCoord[0].zw).wy * 2.0) - 1.0);
+  vec4 t3 = texture2DProj(_ShadowMapTexture, vec3(gl_TexCoord[4].xy, gl_TexCoord[4].w));
+  vec3 t4 = (gl_TexCoord[2].xyz + normalize(gl_TexCoord[1].xyz));
+  vec3 t5 = vec3(t2, sqrt(((1.0 - (t2.x * t2.x)) - (t2.y * t2.y))));
+  float t6 = (pow(max(0.0, dot(t5, normalize(t4))), (_Shininess * 128.0)) * t0.w);
+  vec3 t7 = (((((t1 * _LightColor0.xyz) * max(0.0, dot(t5, gl_TexCoord[2].xyz))) + ((_LightColor0.xyz * _SpecColor.xyz) * t6)) * (t3.x * 2.0)) + (t1 * gl_TexCoord[3].xyz));
+  gl_FragData[0] = vec4(t7, ((t0.w * _Color.w) + (((_LightColor0.w * _SpecColor.w) * t6) * t3.x)));
 }
 
-
-// stats: 32 alu 3 tex 0 flow
+// stats: 35 alu 3 tex 0 flow
 // inputs: 1
-//  #0: gl_TexCoord (high float) 4x1 [5] loc 4
+//  #0: gl_TexCoord (high float) 4x1 [0] loc 4
 // uniforms: 4 (total size: 0)
 //  #0: _Color (high float) 4x1 [-1]
 //  #1: _LightColor0 (high float) 4x1 [-1]

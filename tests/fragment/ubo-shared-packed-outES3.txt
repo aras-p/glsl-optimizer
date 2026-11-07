@@ -1,9 +1,11 @@
 #version 300 es
-layout(packed, column_major) uniform Packed {
+precision highp float;
+precision highp int;
+layout(packed) uniform Packed {
   highp float unusedPacked;
   highp vec4 factor;
 } data;
-layout(shared, column_major) uniform Shared {
+layout(shared) uniform Shared {
   highp float unused;
   highp vec4 tint;
 };
@@ -12,7 +14,6 @@ void main ()
 {
   color = (tint * data.factor);
 }
-
 
 // stats: 1 alu 0 tex 0 flow
 // buffer #0: Packed instance data layout packed (size: unknown)

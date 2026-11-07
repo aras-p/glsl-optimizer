@@ -1,113 +1,52 @@
 #version 300 es
-layout(location=0) out mediump vec4 _fragData;
+precision highp float;
+precision highp int;
+layout(location = 0) out mediump vec4 _fragData;
 uniform mediump sampler2D _MainTex;
 uniform highp vec4 _MainTex_TexelSize;
 in highp vec2 xlv_TEXCOORD0;
 in highp vec4 xlv_TEXCOORD1;
 void main ()
 {
-  highp vec4 tmpvar_1;
-  tmpvar_1 = (_MainTex_TexelSize.xyxy * vec4(-0.5, -0.5, 0.5, 0.5));
-  highp vec4 tmpvar_2;
-  tmpvar_2 = (_MainTex_TexelSize.xyxy * vec4(-2.0, -2.0, 2.0, 2.0));
-  mediump vec4 tmpvar_3;
-  mediump vec4 rgbyB_4;
-  mediump vec4 rgbyA_5;
-  highp vec2 dir_6;
-  highp float dirSeMinusNw_7;
-  highp float lumaMaxSubMinM_8;
-  highp float dirSwMinusNe_9;
-  highp float lumaM_10;
-  highp float lumaNe_11;
-  highp vec4 tmpvar_12;
-  tmpvar_12.zw = vec2(0.0, 0.0);
-  tmpvar_12.xy = xlv_TEXCOORD1.xy;
-  mediump vec4 tmpvar_13;
-  tmpvar_13 = tmpvar_12;
-  highp float tmpvar_14;
-  tmpvar_14 = textureLod (_MainTex, tmpvar_13.xy, tmpvar_13.w).y;
-  highp vec4 tmpvar_15;
-  tmpvar_15.zw = vec2(0.0, 0.0);
-  tmpvar_15.xy = xlv_TEXCOORD1.xw;
-  mediump vec4 tmpvar_16;
-  tmpvar_16 = tmpvar_15;
-  highp float tmpvar_17;
-  tmpvar_17 = textureLod (_MainTex, tmpvar_16.xy, tmpvar_16.w).y;
-  highp vec4 tmpvar_18;
-  tmpvar_18.zw = vec2(0.0, 0.0);
-  tmpvar_18.xy = xlv_TEXCOORD1.zy;
-  mediump vec4 tmpvar_19;
-  tmpvar_19 = tmpvar_18;
-  highp float tmpvar_20;
-  tmpvar_20 = textureLod (_MainTex, tmpvar_19.xy, tmpvar_19.w).y;
-  highp vec4 tmpvar_21;
-  tmpvar_21.zw = vec2(0.0, 0.0);
-  tmpvar_21.xy = xlv_TEXCOORD1.zw;
-  mediump vec4 tmpvar_22;
-  tmpvar_22 = tmpvar_21;
-  highp float tmpvar_23;
-  tmpvar_23 = textureLod (_MainTex, tmpvar_22.xy, tmpvar_22.w).y;
-  highp vec4 tmpvar_24;
-  tmpvar_24.zw = vec2(0.0, 0.0);
-  tmpvar_24.xy = xlv_TEXCOORD0;
-  mediump vec4 tmpvar_25;
-  tmpvar_25 = tmpvar_24;
-  mediump vec4 tmpvar_26;
-  tmpvar_26 = textureLod (_MainTex, tmpvar_25.xy, tmpvar_25.w);
-  lumaM_10 = tmpvar_26.y;
-  lumaNe_11 = (tmpvar_20 + 0.00260417);
-  highp float tmpvar_27;
-  tmpvar_27 = max (max (lumaNe_11, tmpvar_23), max (tmpvar_14, tmpvar_17));
-  highp float tmpvar_28;
-  tmpvar_28 = min (min (lumaNe_11, tmpvar_23), min (tmpvar_14, tmpvar_17));
-  highp float tmpvar_29;
-  tmpvar_29 = max (0.05, (tmpvar_27 * 0.125));
-  dirSwMinusNe_9 = (tmpvar_17 - lumaNe_11);
-  lumaMaxSubMinM_8 = (max (tmpvar_27, lumaM_10) - min (tmpvar_28, lumaM_10));
-  dirSeMinusNw_7 = (tmpvar_23 - tmpvar_14);
-  if ((lumaMaxSubMinM_8 < tmpvar_29)) {
-    tmpvar_3 = tmpvar_26;
-  } else {
-    dir_6.x = (dirSwMinusNe_9 + dirSeMinusNw_7);
-    dir_6.y = (dirSwMinusNe_9 - dirSeMinusNw_7);
-    highp vec2 tmpvar_30;
-    tmpvar_30 = normalize(dir_6);
-    highp vec4 tmpvar_31;
-    tmpvar_31.zw = vec2(0.0, 0.0);
-    tmpvar_31.xy = (xlv_TEXCOORD0 - (tmpvar_30 * tmpvar_1.zw));
-    mediump vec4 tmpvar_32;
-    tmpvar_32 = tmpvar_31;
-    highp vec4 tmpvar_33;
-    tmpvar_33.zw = vec2(0.0, 0.0);
-    tmpvar_33.xy = (xlv_TEXCOORD0 + (tmpvar_30 * tmpvar_1.zw));
-    mediump vec4 tmpvar_34;
-    tmpvar_34 = tmpvar_33;
-    highp vec2 tmpvar_35;
-    tmpvar_35 = clamp ((tmpvar_30 / (
-      min (abs(tmpvar_30.x), abs(tmpvar_30.y))
-     * 8.0)), vec2(-2.0, -2.0), vec2(2.0, 2.0));
-    highp vec4 tmpvar_36;
-    tmpvar_36.zw = vec2(0.0, 0.0);
-    tmpvar_36.xy = (xlv_TEXCOORD0 - (tmpvar_35 * tmpvar_2.zw));
-    mediump vec4 tmpvar_37;
-    tmpvar_37 = tmpvar_36;
-    highp vec4 tmpvar_38;
-    tmpvar_38.zw = vec2(0.0, 0.0);
-    tmpvar_38.xy = (xlv_TEXCOORD0 + (tmpvar_35 * tmpvar_2.zw));
-    mediump vec4 tmpvar_39;
-    tmpvar_39 = tmpvar_38;
-    rgbyA_5 = (textureLod (_MainTex, tmpvar_32.xy, tmpvar_32.w) + textureLod (_MainTex, tmpvar_34.xy, tmpvar_34.w));
-    rgbyB_4 = (((textureLod (_MainTex, tmpvar_37.xy, tmpvar_37.w) + textureLod (_MainTex, tmpvar_39.xy, tmpvar_39.w)) * 0.25) + (rgbyA_5 * 0.25));
-    if (((rgbyB_4.y < tmpvar_28) || (tmpvar_27 < rgbyB_4.y))) {
-      rgbyB_4.xyz = (rgbyA_5.xyz * 0.5);
-    };
-    tmpvar_3 = rgbyB_4;
-  };
-  _fragData = tmpvar_3;
+  mediump vec4 r0;
+  mediump vec4 t0 = vec4(xlv_TEXCOORD1.xy, 0.0, 0.0);
+  highp float t1 = textureLod(_MainTex, t0.xy, t0.w).y;
+  mediump vec4 t2 = vec4(xlv_TEXCOORD1.xw, 0.0, 0.0);
+  highp float t3 = textureLod(_MainTex, t2.xy, t2.w).y;
+  mediump vec4 t4 = vec4(xlv_TEXCOORD1.zy, 0.0, 0.0);
+  highp float t5 = textureLod(_MainTex, t4.xy, t4.w).y;
+  mediump vec4 t6 = vec4(xlv_TEXCOORD1.zw, 0.0, 0.0);
+  highp float t7 = textureLod(_MainTex, t6.xy, t6.w).y;
+  mediump vec4 t8 = vec4(xlv_TEXCOORD0, 0.0, 0.0);
+  r0 = textureLod(_MainTex, t8.xy, t8.w);
+  highp float t9 = r0.y;
+  highp float t10 = (t5 + 0.00260417);
+  highp float t11 = max(max(t10, t7), max(t1, t3));
+  highp float t12 = min(min(t10, t7), min(t1, t3));
+  highp float t13 = (t3 - t10);
+  highp float t14 = (t7 - t1);
+  if (((max(t11, t9) - min(t12, t9)) >= max(0.05, (t11 * 0.125)))) {
+    highp vec2 t15 = vec2((t13 + t14), (t13 - t14));
+    highp vec2 t16 = normalize(t15);
+    highp vec2 t17 = (t16 * (_MainTex_TexelSize.xyxy * vec4(-0.5, -0.5, 0.5, 0.5)).zw);
+    highp vec2 t18 = (xlv_TEXCOORD0 - t17);
+    mediump vec4 t19 = vec4(t18, 0.0, 0.0);
+    highp vec2 t20 = (xlv_TEXCOORD0 + t17);
+    mediump vec4 t21 = vec4(t20, 0.0, 0.0);
+    highp vec2 t22 = (clamp((t16 / (min(abs(t16.x), abs(t16.y)) * 8.0)), -2.0, 2.0) * (_MainTex_TexelSize.xyxy * vec4(-2.0, -2.0, 2.0, 2.0)).zw);
+    highp vec2 t23 = (xlv_TEXCOORD0 - t22);
+    mediump vec4 t24 = vec4(t23, 0.0, 0.0);
+    highp vec2 t25 = (xlv_TEXCOORD0 + t22);
+    mediump vec4 t26 = vec4(t25, 0.0, 0.0);
+    mediump vec4 t27 = (textureLod(_MainTex, t19.xy, t19.w) + textureLod(_MainTex, t21.xy, t21.w));
+    mediump vec4 t28 = (0.25 * ((textureLod(_MainTex, t24.xy, t24.w) + textureLod(_MainTex, t26.xy, t26.w)) + t27));
+    mediump vec3 t29 = (t27.xyz * 0.5);
+    r0 = (((t28.y < t12) || (t11 < t28.y)) ? vec4(t29, t28.w) : t28);
+  }
+  _fragData = r0;
 }
 
-
-// stats: 53 alu 9 tex 2 flow
+// stats: 44 alu 9 tex 1 flow
 // inputs: 2
 //  #0: xlv_TEXCOORD0 (high float) 2x1 [-1]
 //  #1: xlv_TEXCOORD1 (high float) 4x1 [-1]

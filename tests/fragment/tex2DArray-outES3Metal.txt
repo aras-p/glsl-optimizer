@@ -13,29 +13,19 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   , texture2d_array<half> myarr [[texture(0)]], sampler _mtlsmp_myarr [[sampler(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  float4 slod_1 = 0;
-  float4 sbias_2 = 0;
-  float4 sswiz_3 = 0;
-  float4 s_4 = 0;
-  half3 tmpvar_5 = 0;
-  tmpvar_5 = half3(_mtl_i.uv.xyz);
-  s_4 = float4(myarr.sample(_mtlsmp_myarr, (float2)((tmpvar_5).xy), uint((tmpvar_5).z)));
-  half3 tmpvar_6 = 0;
-  tmpvar_6 = half3(_mtl_i.uv.xyw);
-  sswiz_3 = float4(myarr.sample(_mtlsmp_myarr, (float2)((tmpvar_6).xy), uint((tmpvar_6).z)));
-  float4 tmpvar_7 = 0;
-  tmpvar_7.w = 1.5;
-  tmpvar_7.xyz = _mtl_i.uv.xyz;
-  half4 tmpvar_8 = 0;
-  tmpvar_8 = half4(tmpvar_7);
-  sbias_2 = float4(myarr.sample(_mtlsmp_myarr, (float2)((tmpvar_8.xyz).xy), uint((tmpvar_8.xyz).z), bias(tmpvar_8.w)));
-  slod_1 = float4(myarr.sample(_mtlsmp_myarr, (float2)((_mtl_i.uv.xyz).xy), uint((_mtl_i.uv.xyz).z), level(2.5)));
-  _mtl_o._fragData = half4(((s_4 + sswiz_3) + (sbias_2 + slod_1)));
+  float3 t0 = _mtl_i.uv.xyz;
+  half3 t1 = half3(t0);
+  float4 t2 = float4(myarr.sample(_mtlsmp_myarr, float3(t1).xy, uint(rint(float3(t1).z))));
+  half3 t3 = half3(_mtl_i.uv.xyw);
+  float4 t4 = float4(myarr.sample(_mtlsmp_myarr, float3(t3).xy, uint(rint(float3(t3).z))));
+  half4 t5 = half4(float4(_mtl_i.uv.xyz, 1.5));
+  float4 t6 = float4(myarr.sample(_mtlsmp_myarr, float3(t5.xyz).xy, uint(rint(float3(t5.xyz).z)), bias(float(t5.w))));
+  float4 t7 = float4(myarr.sample(_mtlsmp_myarr, t0.xy, uint(rint(t0.z)), level(2.5)));
+  _mtl_o._fragData = half4((((t2 + t4) + t6) + t7));
   return _mtl_o;
 }
 
-
-// stats: 4 alu 4 tex 0 flow
+// stats: 3 alu 4 tex 0 flow
 // inputs: 1
 //  #0: uv (high float) 4x1 [-1]
 // textures: 1

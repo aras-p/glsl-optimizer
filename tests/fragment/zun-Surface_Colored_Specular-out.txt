@@ -5,39 +5,17 @@ uniform sampler2D _MainTex;
 uniform sampler2D _SpecMap;
 void main ()
 {
-  vec4 xlt_IN_hip_pack0_1;
-  vec3 xlt_IN_normal_2;
-  vec4 xlt_IN__LightCoord_3;
-  xlt_IN_hip_pack0_1 = gl_TexCoord[0];
-  xlt_IN_normal_2 = gl_TexCoord[1].xyz;
-  xlt_IN__LightCoord_3 = gl_TexCoord[4];
-  vec4 c_4;
-  vec3 lightDir_5;
-  lightDir_5 = normalize(gl_TexCoord[2].xyz);
-  vec4 c_6;
-  c_6.xyz = (((
-    ((texture2D (_MainTex, xlt_IN_hip_pack0_1.xy).xyz * 0.3) * _LightColor0.xyz)
-   * 
-    max (0.0, dot (xlt_IN_normal_2, lightDir_5))
-  ) + (_LightColor0.xyz * 
-    (pow (max (0.0, dot (xlt_IN_normal_2, 
-      normalize((lightDir_5 + normalize(gl_TexCoord[3].xyz)))
-    )), 32.0) * texture2D (_SpecMap, xlt_IN_hip_pack0_1.zw).xyz)
-  )) * ((
-    (float((0.0 < xlt_IN__LightCoord_3.z)) * texture2D (_LightTexture0, ((xlt_IN__LightCoord_3.xy / xlt_IN__LightCoord_3.w) + 0.5)).w)
-   * texture2D (_LightTextureB0, vec2(
-    dot (xlt_IN__LightCoord_3.xyz, xlt_IN__LightCoord_3.xyz)
-  )).w) * 2.0));
-  c_6.w = 0.0;
-  c_4.xyz = c_6.xyz;
-  c_4.w = 0.0;
-  gl_FragData[0] = c_4;
+  vec3 t0 = normalize(gl_TexCoord[2].xyz);
+  vec3 t1 = (t0 + normalize(gl_TexCoord[3].xyz));
+  vec3 t2 = ((((texture2D(_MainTex, gl_TexCoord[0].xy).xyz * 0.3) * _LightColor0.xyz) * max(0.0, dot(gl_TexCoord[1].xyz, t0))) + (_LightColor0.xyz * (pow(max(0.0, dot(gl_TexCoord[1].xyz, normalize(t1))), 32.0) * texture2D(_SpecMap, gl_TexCoord[0].zw).xyz)));
+  float t3 = ((mix(0.0, texture2D(_LightTexture0, ((gl_TexCoord[4].xy / gl_TexCoord[4].w) + 0.5)).w, float((0.0 < gl_TexCoord[4].z))) * 2.0) * texture2D(_LightTextureB0, vec2(dot(gl_TexCoord[4].xyz, gl_TexCoord[4].xyz))).w);
+  vec3 t4 = (t2 * t3);
+  gl_FragData[0] = vec4(t4, 0.0);
 }
 
-
-// stats: 26 alu 4 tex 0 flow
+// stats: 29 alu 4 tex 0 flow
 // inputs: 1
-//  #0: gl_TexCoord (high float) 4x1 [5] loc 4
+//  #0: gl_TexCoord (high float) 4x1 [0] loc 4
 // uniforms: 1 (total size: 0)
 //  #0: _LightColor0 (high float) 4x1 [-1]
 // textures: 4

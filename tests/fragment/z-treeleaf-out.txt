@@ -15,45 +15,24 @@ varying vec3 xlv_TEXCOORD2;
 varying vec2 xlv_TEXCOORD3;
 void main ()
 {
-  vec4 c_1;
-  vec4 tmpvar_2;
-  tmpvar_2 = texture2D (_MainTex, xlv_TEXCOORD0);
-  vec4 tmpvar_3;
-  tmpvar_3 = texture2D (_TranslucencyMap, xlv_TEXCOORD0);
-  vec4 tmpvar_4;
-  tmpvar_4 = texture2D (_BumpSpecMap, xlv_TEXCOORD0);
-  vec4 normal_5;
-  normal_5.xy = ((tmpvar_4.wy * 2.0) - 1.0);
-  normal_5.z = sqrt(((1.0 - 
-    (normal_5.x * normal_5.x)
-  ) - (normal_5.y * normal_5.y)));
-  if (((tmpvar_2.w - _Cutoff) < 0.0)) discard;
-  vec3 tmpvar_6;
-  tmpvar_6 = normalize(xlv_TEXCOORD2);
-  vec4 c_7;
-  float nl_8;
-  nl_8 = dot (normal_5.xyz, xlv_TEXCOORD1);
-  float tmpvar_9;
-  tmpvar_9 = mix (clamp (-(nl_8), 0.0, 1.0), clamp (dot (tmpvar_6, 
-    -(xlv_TEXCOORD1)
-  ), 0.0, 1.0), _TranslucencyViewDependency);
-  float tmpvar_10;
-  tmpvar_10 = max (0.0, ((nl_8 * 0.6) + 0.4));
-  nl_8 = tmpvar_10;
-  c_7.xyz = (((tmpvar_2.xyz * _Color.xyz) * xlv_COLOR0.w) * ((
-    ((tmpvar_9 * tmpvar_3.z) * _TranslucencyColor)
-   * 2.0) + tmpvar_10));
-  c_7.xyz = ((c_7.xyz * _LightColor0.xyz) + (pow (
-    max (0.0, dot (normal_5.xyz, normalize((xlv_TEXCOORD1 + tmpvar_6))))
-  , 
-    (tmpvar_4.x * 128.0)
-  ) * (tmpvar_3.w * _Color.x)));
-  c_7.xyz = (c_7.xyz * mix (2.0, (texture2D (_LightTexture0, xlv_TEXCOORD3).w * 2.0), _ShadowStrength));
-  c_1.xyz = c_7.xyz;
-  c_1.w = tmpvar_2.w;
-  gl_FragData[0] = c_1;
+  vec4 t0 = texture2D(_MainTex, xlv_TEXCOORD0);
+  vec3 t1 = ((t0.xyz * _Color.xyz) * xlv_COLOR0.w);
+  vec4 t2 = texture2D(_TranslucencyMap, xlv_TEXCOORD0);
+  float t3 = (t2.w * _Color.x);
+  vec4 t4 = texture2D(_BumpSpecMap, xlv_TEXCOORD0);
+  vec2 t5 = ((t4.wy * 2.0) - 1.0);
+  float t6 = ((1.0 - (t5.x * t5.x)) - (t5.y * t5.y));
+  if ((t0.w < _Cutoff)) {
+    discard;
+  }
+  vec3 t7 = normalize(xlv_TEXCOORD2);
+  vec3 t8 = (xlv_TEXCOORD1 + t7);
+  vec3 t9 = vec3(t5, sqrt(t6));
+  float t10 = dot(t9, xlv_TEXCOORD1);
+  vec3 t11 = ((((vec3(mix(clamp((-t10), 0.0, 1.0), clamp(dot(t7, (-xlv_TEXCOORD1)), 0.0, 1.0), _TranslucencyViewDependency)) * 2.0) * t2.z) * _TranslucencyColor) + max(0.0, ((t10 * 0.6) + 0.4)));
+  vec3 t12 = ((((t1 * t11) * _LightColor0.xyz) + (pow(max(0.0, dot(t9, normalize(t8))), (t4.x * 128.0)) * t3)) * mix(2.0, (2.0 * texture2D(_LightTexture0, xlv_TEXCOORD3).w), _ShadowStrength));
+  gl_FragData[0] = vec4(t12, t0.w);
 }
-
 
 // stats: 42 alu 5 tex 1 flow
 // inputs: 5

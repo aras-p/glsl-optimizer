@@ -371,7 +371,7 @@ ir_hierarchical_visitor::visit_leave(ir_end_primitive *ir)
 }
 
 void
-ir_hierarchical_visitor::run(exec_list *instructions)
+ir_hierarchical_visitor::run(ir_exec_list *instructions)
 {
    visit_list_elements(this, instructions);
 }

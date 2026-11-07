@@ -5,7 +5,10 @@ struct xlatMtlShaderInput {
   float2 xlv_TEXCOORD0;
 };
 struct xlatMtlShaderOutput {
-  half4 _glesFragData_0 [[color(0)]];
+  half4 _xlat_varying0 [[color(0)]];
+  half4 _xlat_varying1 [[color(1)]];
+  half4 _xlat_varying2 [[color(2)]];
+  half4 _xlat_varying3 [[color(3)]];
 };
 struct xlatMtlShaderUniform {
   float _RangeScale;
@@ -15,34 +18,21 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   , texture2d<half> _Curve [[texture(1)]], sampler _mtlsmp__Curve [[sampler(1)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  float newLum_1 = 0;
-  float3 cie_2 = 0;
-  float4 color_3 = 0;
-  color_3 = float4(_MainTex.sample(_mtlsmp__MainTex, (float2)((_mtl_i.xlv_TEXCOORD0))));
-  float3 Yxy_4 = 0;
-  float3 tmpvar_5 = 0;
-  tmpvar_5 = (float3x3(float3(0.514136, 0.265068, 0.0241188), float3(0.323879, 0.670234, 0.122818), float3(0.160364, 0.0640916, 0.844427)) * color_3.xyz);
-  Yxy_4.x = tmpvar_5.y;
-  Yxy_4.yz = (tmpvar_5.xy / dot (float3(1.0, 1.0, 1.0), tmpvar_5));
-  cie_2.yz = Yxy_4.yz;
-  float2 tmpvar_6 = 0;
-  tmpvar_6.y = 0.5;
-  tmpvar_6.x = (tmpvar_5.y * _mtl_u._RangeScale);
-  newLum_1 = float(_Curve.sample(_mtlsmp__Curve, (float2)((tmpvar_6))).x);
-  cie_2.x = newLum_1;
-  float3 XYZ_7 = 0;
-  XYZ_7.x = ((newLum_1 * Yxy_4.y) / Yxy_4.z);
-  XYZ_7.y = cie_2.x;
-  XYZ_7.z = ((newLum_1 * (
-    (1.0 - Yxy_4.y)
-   - Yxy_4.z)) / Yxy_4.z);
-  color_3.xyz = (float3x3(float3(2.5651, -1.0217, 0.0753), float3(-1.1665, 1.9777, -0.2543), float3(-0.3986, 0.0439, 1.1892)) * XYZ_7);
-  _mtl_o._glesFragData_0 = half4(color_3);
+  half4 _glesFragData[4];
+  float4 t0 = float4(_MainTex.sample(_mtlsmp__MainTex, _mtl_i.xlv_TEXCOORD0));
+  float3 t1 = (float3x3(float3(0.514136, 0.265068, 0.0241188), float3(0.323879, 0.670234, 0.122818), float3(0.160364, 0.0640916, 0.844427)) * t0.xyz);
+  float2 t2 = (t1.xy / dot(float3(1.0), t1));
+  float t3 = float(_Curve.sample(_mtlsmp__Curve, float2((t1.y * _mtl_u._RangeScale), 0.5)).x);
+  float3 t4 = (((float3(2.5651, -1.0217, 0.0753) * ((t3 * t2.x) / t2.y)) + (float3(-1.1665, 1.9777, -0.2543) * t3)) + (float3(-0.3986, 0.0439, 1.1892) * ((t3 * ((1.0 - t2.x) - t2.y)) / t2.y)));
+  _glesFragData[0] = half4(float4(t4, t0.w));
+  _mtl_o._xlat_varying0 = _glesFragData[0];
+  _mtl_o._xlat_varying1 = _glesFragData[1];
+  _mtl_o._xlat_varying2 = _glesFragData[2];
+  _mtl_o._xlat_varying3 = _glesFragData[3];
   return _mtl_o;
 }
 
-
-// stats: 12 alu 2 tex 0 flow
+// stats: 19 alu 2 tex 0 flow
 // inputs: 1
 //  #0: xlv_TEXCOORD0 (high float) 2x1 [-1]
 // uniforms: 1 (total size: 4)

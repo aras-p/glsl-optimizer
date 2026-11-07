@@ -16,19 +16,12 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   , texture2d<half> _BurntTex [[texture(1)]], sampler _mtlsmp__BurntTex [[sampler(1)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half4 tmpvar_1 = 0;
-  tmpvar_1.w = half(1.0);
-  tmpvar_1.xyz = mix (_MainTex.sample(_mtlsmp__MainTex, (float2)((_mtl_i.xlv_TEXCOORD0))).xyz, _BurntTex.sample(_mtlsmp__BurntTex, (float2)((_mtl_i.xlv_TEXCOORD0))).xyz, half3(saturate((
-    (_mtl_u._EmberFadeStart - (half)(0.05))
-   / 
-    (_mtl_u._EmberFadeStart - _mtl_u._EmberFadeEnd)
-  ))));
-  _mtl_o._fragData = tmpvar_1;
+  half3 t0 = mix(_MainTex.sample(_mtlsmp__MainTex, float2(_mtl_i.xlv_TEXCOORD0)).xyz, _BurntTex.sample(_mtlsmp__BurntTex, float2(_mtl_i.xlv_TEXCOORD0)).xyz, half3(saturate(((_mtl_u._EmberFadeStart - half(0.05)) / (_mtl_u._EmberFadeStart - _mtl_u._EmberFadeEnd)))));
+  _mtl_o._fragData = half4(t0, half(1.0));
   return _mtl_o;
 }
 
-
-// stats: 6 alu 2 tex 0 flow
+// stats: 5 alu 2 tex 0 flow
 // inputs: 1
 //  #0: xlv_TEXCOORD0 (medium float) 2x1 [-1]
 // uniforms: 2 (total size: 4)

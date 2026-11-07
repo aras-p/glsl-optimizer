@@ -36,7 +36,9 @@
 class ir_print_visitor : public ir_visitor {
 public:
    ir_print_visitor(FILE *f);
+   ir_print_visitor(const ir_print_visitor &) = delete;
    virtual ~ir_print_visitor();
+   ir_print_visitor & operator=(const ir_print_visitor &) = delete;
 
    void indent(void);
 

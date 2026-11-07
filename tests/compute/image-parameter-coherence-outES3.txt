@@ -1,19 +1,17 @@
 #version 310 es
-layout(local_size_x=4) in;
-layout(r32ui, binding=0) writeonly coherent uniform highp uimage2D coherentData;
-layout(r32ui, binding=1) writeonly uniform highp uimage2D ordinaryData;
+layout(local_size_x = 4) in;
+layout(r32ui, binding = 0) writeonly uniform highp uimage2D coherentData;
+layout(r32ui, binding = 1) writeonly uniform highp uimage2D ordinaryData;
 void main ()
 {
-  highp ivec2 tmpvar_1;
-  tmpvar_1 = ivec2(gl_GlobalInvocationID.xy);
-  imageStore (coherentData, tmpvar_1, uvec4(1u, 1u, 1u, 1u));
-  imageStore (coherentData, (tmpvar_1 + ivec2(0, 1)), uvec4(1u, 1u, 1u, 1u));
-  imageStore (ordinaryData, tmpvar_1, uvec4(2u, 2u, 2u, 2u));
-  memoryBarrierImage ();
+  imageStore(coherentData, ivec2(uvec4(gl_GlobalInvocationID.xy, 0u, 0u).xy), uvec4(1u));
+  highp ivec2 t0 = (ivec2(0, 1) + ivec2(gl_GlobalInvocationID.xy));
+  imageStore(coherentData, ivec4(t0, 0, 0).xy, uvec4(1u));
+  imageStore(ordinaryData, ivec2(uvec4(gl_GlobalInvocationID.xy, 0u, 0u).xy), uvec4(2u));
+  memoryBarrierImage();
 }
 
-
-// stats: 2 alu 3 tex 0 flow
+// stats: 1 alu 3 tex 0 flow
 // workgroup size: 4 1 1
 // textures: 2
 //  #0: coherentData (high image2d) 0x0 [-1] loc 0 format r32ui component uint writeonly

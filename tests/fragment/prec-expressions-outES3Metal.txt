@@ -13,20 +13,12 @@ struct xlatMtlShaderUniform {
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half4 r_1 = 0;
-  half3 lightCoord_2 = 0;
-  float4 tmpvar_3 = 0;
-  tmpvar_3.w = 1.0;
-  tmpvar_3.xyz = _mtl_u._WorldPos;
-  lightCoord_2 = half3(((float4)(_mtl_u._LightMatrix * (half4)(tmpvar_3))).xyz);
-  r_1.xyz = lightCoord_2;
-  r_1.w = half(1.0);
-  _mtl_o._fragData = r_1;
+  half3 t0 = half3(float4((_mtl_u._LightMatrix * half4(half3(_mtl_u._WorldPos), 1.0))).xyz);
+  _mtl_o._fragData = half4(t0, half(1.0));
   return _mtl_o;
 }
 
-
-// stats: 3 alu 0 tex 0 flow
+// stats: 6 alu 0 tex 0 flow
 // uniforms: 2 (total size: 48)
 //  #0: _LightMatrix (medium float) 4x4 [-1] loc 0
 //  #1: _WorldPos (high float) 3x1 [-1] loc 32

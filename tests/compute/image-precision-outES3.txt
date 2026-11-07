@@ -1,27 +1,17 @@
 #version 310 es
-layout(local_size_x=4) in;
-layout(rgba16f, binding=0) readonly uniform mediump image2D sourceImage;
-layout(rgba8, binding=1) writeonly uniform mediump image2D destinationImage;
-layout(rgba16i, binding=2) readonly uniform mediump iimage2D sourceIntegers;
-layout(rgba16i, binding=3) writeonly uniform mediump iimage2D destinationIntegers;
+layout(local_size_x = 4) in;
+layout(rgba16f, binding = 0) readonly uniform mediump image2D sourceImage;
+layout(rgba8, binding = 1) writeonly uniform mediump image2D destinationImage;
+layout(rgba16i, binding = 2) readonly uniform mediump iimage2D sourceIntegers;
+layout(rgba16i, binding = 3) writeonly uniform mediump iimage2D destinationIntegers;
 void main ()
 {
-  mediump ivec4 integers_1;
-  mediump vec4 color_2;
-  highp ivec2 tmpvar_3;
-  tmpvar_3 = ivec2(gl_GlobalInvocationID.xy);
-  highp vec4 tmpvar_4;
-  tmpvar_4 = imageLoad (sourceImage, tmpvar_3);
-  color_2 = tmpvar_4;
-  highp ivec4 tmpvar_5;
-  tmpvar_5 = imageLoad (sourceIntegers, tmpvar_3);
-  integers_1 = tmpvar_5;
-  imageStore (destinationImage, tmpvar_3, (color_2 * 0.5));
-  imageStore (destinationIntegers, tmpvar_3, (integers_1 + ivec4(1, 1, 1, 1)));
+  mediump ivec4 t0 = imageLoad(sourceIntegers, ivec2(uvec4(gl_GlobalInvocationID.xy, 0u, 0u).xy));
+  imageStore(destinationImage, ivec2(uvec4(gl_GlobalInvocationID.xy, 0u, 0u).xy), (imageLoad(sourceImage, ivec2(uvec4(gl_GlobalInvocationID.xy, 0u, 0u).xy)) * 0.5));
+  imageStore(destinationIntegers, ivec2(uvec4(gl_GlobalInvocationID.xy, 0u, 0u).xy), (t0 + 1));
 }
 
-
-// stats: 3 alu 4 tex 0 flow
+// stats: 2 alu 4 tex 0 flow
 // workgroup size: 4 1 1
 // textures: 4
 //  #0: sourceImage (medium image2d) 0x0 [-1] loc 0 format rgba16f component float readonly

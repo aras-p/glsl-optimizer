@@ -2,29 +2,24 @@
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
 #if __METAL_VERSION__ < 320
-#error Coherent images require Metal 3.2 or newer
-#endif
-#if __METAL_VERSION__ < 320
-#error Memory barriers require Metal 3.2 or newer
+#error This shader requires Metal 3.2 or newer
 #endif
 struct xlatMtlShaderUniform {
 };
 // threadsPerThreadgroup: 4, 1, 1
 kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , uint3 gl_GlobalInvocationID [[thread_position_in_grid]]
-  , texture2d<uint, access::write, memory_coherence_device> coherentData [[texture(0)]]
-  , texture2d<uint, access::write> ordinaryData [[texture(1)]])
+  , texture2d<uint, access::write> coherentData [[texture(0)]]
+  , texture2d<uint, access::write> ordinaryData [[texture(1)]]
+  , uint3 gl_GlobalInvocationID [[thread_position_in_grid]])
 {
-  int2 tmpvar_1 = 0;
-  tmpvar_1 = int2(gl_GlobalInvocationID.xy);
-  coherentData.write(uint4(uint4(1u, 1u, 1u, 1u)), uint2(tmpvar_1));
-  coherentData.write(uint4(uint4(1u, 1u, 1u, 1u)), uint2((tmpvar_1 + int2(0, 1))));
-  ordinaryData.write(uint4(uint4(2u, 2u, 2u, 2u)), uint2(tmpvar_1));
+  coherentData.write(uint4(1u), uint2(int4(uint4(gl_GlobalInvocationID.xy, 0u, 0u)).xy));
+  int2 t0 = (int2(0, 1) + int2(gl_GlobalInvocationID.xy));
+  coherentData.write(uint4(1u), uint2(int4(t0, 0, 0).xy));
+  ordinaryData.write(uint4(2u), uint2(int4(uint4(gl_GlobalInvocationID.xy, 0u, 0u)).xy));
   atomic_thread_fence(mem_flags::mem_texture, memory_order_seq_cst, thread_scope_device);
 }
 
-
-// stats: 2 alu 3 tex 0 flow
+// stats: 1 alu 3 tex 0 flow
 // workgroup size: 4 1 1
 // textures: 2
 //  #0: coherentData (high image2d) 0x0 [-1] loc 0 format r32ui component uint writeonly

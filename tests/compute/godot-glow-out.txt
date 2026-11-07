@@ -1,6 +1,6 @@
 #version 430
-layout(local_size_x=8, local_size_y=8) in;
-layout(std140, column_major, binding=0) uniform Params {
+layout(local_size_x = 8, local_size_y = 8) in;
+layout(std140, binding = 0) uniform Params {
   ivec4 section;
   ivec2 target;
   uint flags;
@@ -18,118 +18,69 @@ layout(std140, column_major, binding=0) uniform Params {
   vec2 octmap_border_size;
   vec4 set_color;
 } params;
-layout(binding=0) uniform sampler2D source_color;
-layout(binding=1) uniform sampler2D source_auto_exposure;
-layout(rgba16f, binding=3) writeonly restrict uniform image2D dest_buffer;
+layout(binding = 0) uniform sampler2D source_color;
+layout(binding = 1) uniform sampler2D source_auto_exposure;
+layout(rgba16f, binding = 3) restrict writeonly uniform image2D dest_buffer;
 shared vec4 local_cache[256];
 shared vec4 temp_cache[128];
 void main ()
 {
-  vec4 color_1;
-  vec4 color_bottom_2;
-  vec4 color_top_3;
-  ivec2 tmpvar_4;
-  tmpvar_4 = ivec2(gl_GlobalInvocationID.xy);
-  vec2 tmpvar_5;
-  tmpvar_5 = clamp (((
-    vec2(((uvec2(params.section.xy) + gl_GlobalInvocationID.xy) + gl_LocalInvocationID.xy))
-   - 3.5) / vec2(params.section.zw)), (0.5 / vec2(params.section.zw)), (1.0 - (1.5 / 
-    vec2(params.section.zw)
-  )));
-  uint tmpvar_6;
-  tmpvar_6 = ((gl_LocalInvocationID.x * 2u) + (32u * gl_LocalInvocationID.y));
-  local_cache[tmpvar_6] = textureLod (source_color, tmpvar_5, 0.0);
-  vec2 tmpvar_7;
-  tmpvar_7.y = 0.0;
-  tmpvar_7.x = (1.0/(float(params.section.z)));
-  local_cache[(tmpvar_6 + 1u)] = textureLod (source_color, (tmpvar_5 + tmpvar_7), 0.0);
-  vec2 tmpvar_8;
-  tmpvar_8.x = 0.0;
-  tmpvar_8.y = (1.0/(float(params.section.w)));
-  local_cache[(tmpvar_6 + 16u)] = textureLod (source_color, (tmpvar_5 + tmpvar_8), 0.0);
-  local_cache[(17u + tmpvar_6)] = textureLod (source_color, (tmpvar_5 + (1.0/(vec2(params.section.zw)))), 0.0);
-  if (bool(int((params.flags & 16u)))) {
-    vec3 tmpvar_9;
-    tmpvar_9 = (vec3(0.299, 0.587, 0.114) / max (params.glow_luminance_cap, 6.0));
-    local_cache[tmpvar_6] = (local_cache[tmpvar_6] / (1.0 + dot (local_cache[tmpvar_6].xyz, tmpvar_9)));
-    local_cache[(tmpvar_6 + 1u)] = (local_cache[(tmpvar_6 + 1u)] / (1.0 + dot (local_cache[
-      (tmpvar_6 + 1u)
-    ].xyz, tmpvar_9)));
-    local_cache[(tmpvar_6 + 16u)] = (local_cache[(tmpvar_6 + 16u)] / (1.0 + dot (local_cache[
-      (tmpvar_6 + 16u)
-    ].xyz, tmpvar_9)));
-    local_cache[(17u + tmpvar_6)] = (local_cache[(17u + tmpvar_6)] / (1.0 + dot (local_cache[
-      (17u + tmpvar_6)
-    ].xyz, tmpvar_9)));
-  };
-  memoryBarrierShared ();
+  vec4 r0;
+  vec4 r1;
+  vec2 t0 = vec2(params.section.zw);
+  vec2 t1 = min(max(((vec2(uvec2(((params.section.xy + ivec2(gl_GlobalInvocationID.xy)) + ivec2(gl_LocalInvocationID.xy)))) - 3.5) / t0), (0.5 / t0)), (1.0 - (1.5 / t0)));
+  int t2 = (int(gl_LocalInvocationID.y) << 5u);
+  int t3 = ((int(gl_LocalInvocationID.x) << 1u) + t2);
+  local_cache[t3] = textureLod(source_color, t1, 0.0);
+  int t4 = (t3 + 1);
+  local_cache[t4] = textureLod(source_color, (t1 + vec2((1.0 / float(params.section.z)), 0.0)), 0.0);
+  int t5 = (t3 + 16);
+  local_cache[t5] = textureLod(source_color, (t1 + vec2(0.0, (1.0 / float(params.section.w)))), 0.0);
+  int t6 = (17 + t3);
+  local_cache[t6] = textureLod(source_color, (t1 + (1.0 / t0)), 0.0);
+  bool t7 = (int((params.flags & 16u)) != 0);
+  if (t7) {
+    vec4 t8 = local_cache[t3];
+    vec3 t9 = (vec3(0.299, 0.587, 0.114) / max(params.glow_luminance_cap, 6.0));
+    local_cache[t3] = (t8 / (1.0 + dot(t8.xyz, t9)));
+    vec4 t10 = local_cache[t4];
+    local_cache[t4] = (t10 / (1.0 + dot(t10.xyz, t9)));
+    vec4 t11 = local_cache[t5];
+    local_cache[t5] = (t11 / (1.0 + dot(t11.xyz, t9)));
+    vec4 t12 = local_cache[t6];
+    local_cache[t6] = (t12 / (1.0 + dot(t12.xyz, t9)));
+  }
+  memoryBarrierShared();
   barrier();
-  uint tmpvar_10;
-  tmpvar_10 = ((gl_LocalInvocationID.x + (gl_LocalInvocationID.y * 32u)) + 4u);
-  color_top_3 = (local_cache[tmpvar_10] * 0.2024);
-  color_top_3 = (color_top_3 + (local_cache[(tmpvar_10 + 1u)] * 0.179));
-  color_top_3 = (color_top_3 + (local_cache[(tmpvar_10 + 2u)] * 0.124));
-  color_top_3 = (color_top_3 + (local_cache[(tmpvar_10 + 3u)] * 0.0672));
-  color_top_3 = (color_top_3 + (local_cache[(tmpvar_10 + 4294967295u)] * 0.179));
-  color_top_3 = (color_top_3 + (local_cache[(tmpvar_10 + 4294967294u)] * 0.124));
-  color_top_3 = (color_top_3 + (local_cache[(tmpvar_10 + 4294967293u)] * 0.0672));
-  color_top_3 = (color_top_3 + (local_cache[(tmpvar_10 + 4u)] * 0.0285));
-  color_top_3 = (color_top_3 + (local_cache[(tmpvar_10 + 4294967292u)] * 0.0285));
-  color_bottom_2 = (local_cache[(tmpvar_10 + 16u)] * 0.2024);
-  color_bottom_2 = (color_bottom_2 + (local_cache[(17u + tmpvar_10)] * 0.179));
-  color_bottom_2 = (color_bottom_2 + (local_cache[(18u + tmpvar_10)] * 0.124));
-  color_bottom_2 = (color_bottom_2 + (local_cache[(19u + tmpvar_10)] * 0.0672));
-  color_bottom_2 = (color_bottom_2 + (local_cache[(15u + tmpvar_10)] * 0.179));
-  color_bottom_2 = (color_bottom_2 + (local_cache[(14u + tmpvar_10)] * 0.124));
-  color_bottom_2 = (color_bottom_2 + (local_cache[(13u + tmpvar_10)] * 0.0672));
-  color_bottom_2 = (color_bottom_2 + (local_cache[(20u + tmpvar_10)] * 0.0285));
-  color_bottom_2 = (color_bottom_2 + (local_cache[(12u + tmpvar_10)] * 0.0285));
-  uint tmpvar_11;
-  tmpvar_11 = ((gl_LocalInvocationID.y * 2u) + (gl_LocalInvocationID.x * 16u));
-  temp_cache[tmpvar_11] = color_top_3;
-  temp_cache[(tmpvar_11 + 1u)] = color_bottom_2;
-  memoryBarrierShared ();
+  int t13 = (int(gl_LocalInvocationID.x) + t2);
+  vec4 t14 = (((((local_cache[(t13 + 4)] * 0.2024) + (local_cache[(5 + t13)] * 0.179)) + (local_cache[(6 + t13)] * 0.124)) + (local_cache[(7 + t13)] * 0.0672)) + (local_cache[(3 + t13)] * 0.179));
+  vec4 t15 = (((((local_cache[(20 + t13)] * 0.2024) + (local_cache[(21 + t13)] * 0.179)) + (local_cache[(22 + t13)] * 0.124)) + (local_cache[(23 + t13)] * 0.0672)) + (local_cache[(19 + t13)] * 0.179));
+  vec4 t16 = ((((t15 + (local_cache[(18 + t13)] * 0.124)) + (local_cache[(17 + t13)] * 0.0672)) + (local_cache[(24 + t13)] * 0.0285)) + (local_cache[(16 + t13)] * 0.0285));
+  int t17 = (int(gl_LocalInvocationID.x) << 4u);
+  int t18 = ((int(gl_LocalInvocationID.y) << 1u) + t17);
+  temp_cache[t18] = ((((t14 + (local_cache[(2 + t13)] * 0.124)) + (local_cache[(1 + t13)] * 0.0672)) + (local_cache[(8 + t13)] * 0.0285)) + (local_cache[t13] * 0.0285));
+  temp_cache[(t18 + 1)] = t16;
+  memoryBarrierShared();
   barrier();
-  if ((greaterThanEqual (tmpvar_4, params.section.zw) != bvec2(0, 0))) {
-    return;
-  };
-  uint tmpvar_12;
-  tmpvar_12 = ((gl_LocalInvocationID.y + (gl_LocalInvocationID.x * 16u)) + 4u);
-  color_1 = (temp_cache[tmpvar_12] * 0.2024);
-  color_1 = (color_1 + (temp_cache[(tmpvar_12 + 1u)] * 0.179));
-  color_1 = (color_1 + (temp_cache[(tmpvar_12 + 2u)] * 0.124));
-  color_1 = (color_1 + (temp_cache[(tmpvar_12 + 3u)] * 0.0672));
-  color_1 = (color_1 + (temp_cache[(tmpvar_12 + 4294967295u)] * 0.179));
-  color_1 = (color_1 + (temp_cache[(tmpvar_12 + 4294967294u)] * 0.124));
-  color_1 = (color_1 + (temp_cache[(tmpvar_12 + 4294967293u)] * 0.0672));
-  color_1 = (color_1 + (temp_cache[(tmpvar_12 + 4u)] * 0.0285));
-  color_1 = (color_1 + (temp_cache[(tmpvar_12 + 4294967292u)] * 0.0285));
-  if (bool(int((params.flags & 16u)))) {
-    color_1 = (color_1 / (1.0 - dot (color_1.xyz, 
-      (vec3(0.299, 0.587, 0.114) / max (params.glow_luminance_cap, 6.0))
-    )));
-  };
-  color_1 = (color_1 * params.glow_strength);
-  if (bool(int((params.flags & 16u)))) {
-    color_1 = (color_1 / (texelFetch (source_auto_exposure, ivec2(0, 0), 0).x / params.glow_auto_exposure_scale));
-    color_1 = (color_1 * params.glow_exposure);
-    float tmpvar_13;
-    tmpvar_13 = params.glow_hdr_threshold;
-    float tmpvar_14;
-    tmpvar_14 = clamp (((
-      max (color_1.x, max (color_1.y, color_1.z))
-     - tmpvar_13) / (
-      (params.glow_hdr_threshold + params.glow_hdr_scale)
-     - tmpvar_13)), 0.0, 1.0);
-    color_1 = min ((color_1 * max (
-      (tmpvar_14 * (tmpvar_14 * (3.0 - (2.0 * tmpvar_14))))
-    , params.glow_bloom)), vec4(params.glow_luminance_cap));
-  };
-  imageStore (dest_buffer, (tmpvar_4 + params.target), color_1);
+  if ((!(greaterThanEqual(ivec2(gl_GlobalInvocationID.xy), params.section.zw) != bvec2(false)))) {
+    int t19 = (int(gl_LocalInvocationID.y) + t17);
+    vec4 t20 = (((((temp_cache[(t19 + 4)] * 0.2024) + (temp_cache[(5 + t19)] * 0.179)) + (temp_cache[(6 + t19)] * 0.124)) + (temp_cache[(7 + t19)] * 0.0672)) + (temp_cache[(3 + t19)] * 0.179));
+    r0 = ((((t20 + (temp_cache[(2 + t19)] * 0.124)) + (temp_cache[(1 + t19)] * 0.0672)) + (temp_cache[(8 + t19)] * 0.0285)) + (temp_cache[t19] * 0.0285));
+    if (t7) {
+      r0 = (r0 / (1.0 - dot(r0.xyz, (vec3(0.299, 0.587, 0.114) / max(params.glow_luminance_cap, 6.0)))));
+    }
+    r1 = (r0 * params.glow_strength);
+    if (t7) {
+      vec4 t21 = ((r1 / (texelFetch(source_auto_exposure, ivec2(0), 0).x / params.glow_auto_exposure_scale)) * params.glow_exposure);
+      float t22 = clamp(((max(t21.x, max(t21.y, t21.z)) - params.glow_hdr_threshold) / params.glow_hdr_scale), 0.0, 1.0);
+      r1 = min((t21 * max((t22 * (t22 * (3.0 - (2.0 * t22)))), params.glow_bloom)), vec4(params.glow_luminance_cap));
+    }
+    ivec2 t23 = (ivec2(gl_GlobalInvocationID.xy) + params.target);
+    imageStore(dest_buffer, ivec4(t23, 0, 0).xy, r1);
+  }
 }
 
-
-// stats: 177 alu 6 tex 5 flow
+// stats: 148 alu 6 tex 4 flow
 // workgroup size: 8 8 1
 // buffer #0: Params instance params layout std140 binding 0 (size: 96)
 //  member #0: ivec4 section offset 0

@@ -1,9 +1,11 @@
 #version 300 es
+precision highp float;
+precision highp int;
 struct MyStruct {
   highp float f;
   mediump int i;
 };
-layout(location=0) out mediump vec4 _fragData;
+layout(location = 0) out mediump vec4 _fragData;
 uniform MyStruct s1;
 uniform highp float fh1;
 uniform highp float fh2;
@@ -13,26 +15,12 @@ uniform mediump int il2;
 uniform mediump int im;
 void main ()
 {
-  highp int i_1;
-  mediump float f_2;
-  f_2 = (((fh1 + fh2) + fm) + s1.f);
-  i_1 = (((il1 + il2) + im) + s1.i);
-  highp float tmpvar_3;
-  if ((0.5 < gl_FragCoord.x)) {
-    tmpvar_3 = 0.9;
-  } else {
-    tmpvar_3 = 0.1;
-  };
-  highp vec4 tmpvar_4;
-  tmpvar_4.w = 0.0;
-  tmpvar_4.x = f_2;
-  tmpvar_4.y = float(i_1);
-  tmpvar_4.z = tmpvar_3;
-  _fragData = tmpvar_4;
+  mediump float t0 = (((fh1 + fh2) + fm) + s1.f);
+  highp int t1 = (((il1 + il2) + im) + s1.i);
+  _fragData = vec4(t0, float(t1), ((0.5 < gl_FragCoord.x) ? 0.9 : 0.1), 0.0);
 }
 
-
-// stats: 11 alu 0 tex 1 flow
+// stats: 9 alu 0 tex 0 flow
 // inputs: 1
 //  #0: gl_FragCoord (high float) 4x1 [-1] loc 0
 // uniforms: 7 (total size: 0)

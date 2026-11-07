@@ -5,31 +5,16 @@ uniform sampler2D _LightTexture0;
 uniform sampler2D _MainTex;
 void main ()
 {
-  vec4 xlt_IN_hip_pack0_1;
-  xlt_IN_hip_pack0_1 = gl_TexCoord[0];
-  vec4 c_2;
-  vec4 c_3;
-  vec4 tmpvar_4;
-  tmpvar_4 = texture2D (_MainTex, xlt_IN_hip_pack0_1.xy);
-  c_3.w = tmpvar_4.w;
-  vec4 tmpvar_5;
-  tmpvar_5 = texture2D (_DecalTex, xlt_IN_hip_pack0_1.zw);
-  c_3.xyz = mix (tmpvar_4.xyz, tmpvar_5.xyz, tmpvar_5.www);
-  c_3 = (c_3 * _Color);
-  vec4 c_6;
-  c_6.xyz = ((c_3.xyz * _LightColor0.xyz) * ((
-    max (0.0, dot (gl_TexCoord[1].xyz, gl_TexCoord[2].xyz))
-   * texture2D (_LightTexture0, gl_TexCoord[3].xy).w) * 2.0));
-  c_6.w = c_3.w;
-  c_2.xyz = c_6.xyz;
-  c_2.w = 0.0;
-  gl_FragData[0] = c_2;
+  vec4 t0 = texture2D(_MainTex, gl_TexCoord[0].xy);
+  vec4 t1 = texture2D(_DecalTex, gl_TexCoord[0].zw);
+  vec3 t2 = mix(t0.xyz, t1.xyz, t1.www);
+  vec3 t3 = (((vec4(t2, t0.w) * _Color).xyz * _LightColor0.xyz) * ((max(0.0, dot(gl_TexCoord[1].xyz, gl_TexCoord[2].xyz)) * 2.0) * texture2D(_LightTexture0, gl_TexCoord[3].xy).w));
+  gl_FragData[0] = vec4(t3, 0.0);
 }
 
-
-// stats: 9 alu 3 tex 0 flow
+// stats: 8 alu 3 tex 0 flow
 // inputs: 1
-//  #0: gl_TexCoord (high float) 4x1 [4] loc 4
+//  #0: gl_TexCoord (high float) 4x1 [0] loc 4
 // uniforms: 2 (total size: 0)
 //  #0: _Color (high float) 4x1 [-1]
 //  #1: _LightColor0 (high float) 4x1 [-1]

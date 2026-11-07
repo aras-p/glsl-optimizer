@@ -13,10 +13,9 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   , texture2d<float> sourceTexture [[texture(0)]], sampler _mtlsmp_sourceTexture [[sampler(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  _mtl_o.color = sourceTexture.gather(_mtlsmp_sourceTexture, (float2)((_mtl_i.uv)), int2(0), component::y);
+  _mtl_o.color = sourceTexture.gather(_mtlsmp_sourceTexture, _mtl_i.uv, int2(0), component::y);
   return _mtl_o;
 }
-
 
 // stats: 0 alu 1 tex 0 flow
 // inputs: 1

@@ -3,44 +3,21 @@ uniform vec3 _TerrainTreeLightDirections[4];
 attribute vec4 TANGENT;
 void main ()
 {
-  vec3 lightColor_1;
-  vec3 tmpvar_2;
-  float isBillboard_3;
-  isBillboard_3 = (1.0 - abs(TANGENT.w));
-  vec4 tmpvar_4;
-  tmpvar_4.w = 0.0;
-  tmpvar_4.xyz = gl_Normal;
-  tmpvar_2 = mix (gl_Normal, normalize((tmpvar_4 * gl_ModelViewMatrixInverseTranspose)).xyz, vec3(isBillboard_3));
-  lightColor_1 = gl_LightModel.ambient.xyz;
-  lightColor_1 = (lightColor_1 + (_TerrainTreeLightColors[0] * max (0.0, 
-    ((dot (_TerrainTreeLightDirections[0], tmpvar_2) * 0.5) + 0.5)
-  )).xyz);
-  lightColor_1 = (lightColor_1 + (_TerrainTreeLightColors[1] * max (0.0, 
-    ((dot (_TerrainTreeLightDirections[1], tmpvar_2) * 0.5) + 0.5)
-  )).xyz);
-  lightColor_1 = (lightColor_1 + (_TerrainTreeLightColors[2] * max (0.0, 
-    ((dot (_TerrainTreeLightDirections[2], tmpvar_2) * 0.5) + 0.5)
-  )).xyz);
-  lightColor_1 = (lightColor_1 + (_TerrainTreeLightColors[3] * max (0.0, 
-    ((dot (_TerrainTreeLightDirections[3], tmpvar_2) * 0.5) + 0.5)
-  )).xyz);
-  gl_Position = (gl_ModelViewProjectionMatrix * (gl_Vertex + (
-    (TANGENT * gl_ModelViewMatrixInverseTranspose)
-   * isBillboard_3)));
-  vec4 tmpvar_5;
-  tmpvar_5.zw = vec2(0.0, 0.0);
-  tmpvar_5.xy = gl_MultiTexCoord0.xy;
-  gl_TexCoord[0] = tmpvar_5;
-  vec4 tmpvar_6;
-  tmpvar_6.w = 0.0;
-  tmpvar_6.xyz = (lightColor_1 * gl_Color.w);
-  gl_TexCoord[1] = tmpvar_6;
+  vec4 t0 = vec4(dot(gl_Normal, gl_ModelViewMatrixInverseTranspose[0].xyz), dot(gl_Normal, gl_ModelViewMatrixInverseTranspose[1].xyz), dot(gl_Normal, gl_ModelViewMatrixInverseTranspose[2].xyz), dot(gl_Normal, gl_ModelViewMatrixInverseTranspose[3].xyz));
+  float t1 = (1.0 - abs(TANGENT.w));
+  vec4 t2 = (gl_Vertex + ((TANGENT * gl_ModelViewMatrixInverseTranspose) * t1));
+  vec3 t3 = mix(gl_Normal, normalize(t0).xyz, vec3(t1));
+  vec3 t4 = ((gl_LightModel.ambient.xyz + (_TerrainTreeLightColors[0] * max(0.0, ((dot(_TerrainTreeLightDirections[0], t3) * 0.5) + 0.5))).xyz) + (_TerrainTreeLightColors[1] * max(0.0, ((dot(_TerrainTreeLightDirections[1], t3) * 0.5) + 0.5))).xyz);
+  vec3 t5 = ((t4 + (_TerrainTreeLightColors[2] * max(0.0, ((dot(_TerrainTreeLightDirections[2], t3) * 0.5) + 0.5))).xyz) + (_TerrainTreeLightColors[3] * max(0.0, ((dot(_TerrainTreeLightDirections[3], t3) * 0.5) + 0.5))).xyz);
+  vec3 t6 = (t5 * gl_Color.w);
+  gl_Position = (gl_ModelViewProjectionMatrix * t2);
+  gl_TexCoord[0] = vec4(gl_MultiTexCoord0.xy, 0.0, 0.0);
+  gl_TexCoord[1] = vec4(t6, 0.0);
 }
 
-
-// stats: 37 alu 0 tex 0 flow
+// stats: 48 alu 0 tex 0 flow
 // inputs: 5
-//  #0: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 7
+//  #0: gl_MultiTexCoord0 (high float) 4x1 [-1] loc 6
 //  #1: gl_Color (high float) 4x1 [-1] loc 2
 //  #2: gl_Normal (high float) 3x1 [-1] loc 1
 //  #3: gl_Vertex (high float) 4x1 [-1] loc 0

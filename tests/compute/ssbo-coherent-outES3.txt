@@ -1,39 +1,36 @@
 #version 310 es
-layout(local_size_x=8) in;
+layout(local_size_x = 8) in;
 struct Entry {
   highp vec4 value;
   highp mat4 transform;
 };
-layout(std430, column_major, binding=2) buffer Ordinary {
+layout(std430, binding = 2) buffer Ordinary {
   highp uint value;
   highp uint results[];
 } ordinary;
-layout(std430, column_major, binding=1) buffer Output {
+layout(std430, binding = 1) buffer Output {
   coherent highp uint counter;
   highp uint payload;
-  layout(column_major) Entry entries[8];
+  Entry entries[8];
 } outputData;
-layout(std430, column_major, binding=0) buffer Input {
-  layout(column_major) readonly coherent Entry entries[];
+layout(std430, binding = 0) coherent buffer Input {
+  coherent readonly Entry entries[];
 } inputData;
 void main ()
 {
-  highp uint tmpvar_1;
-  tmpvar_1 = gl_GlobalInvocationID.x;
-  Entry tmpvar_2;
-  tmpvar_2 = inputData.entries[gl_GlobalInvocationID.x];
-  outputData.entries[gl_GlobalInvocationID.x] = tmpvar_2;
-  outputData.entries[gl_GlobalInvocationID.x].transform[(gl_GlobalInvocationID.x & 3u)][1] = tmpvar_2.value.x;
-  highp uint tmpvar_3;
-  tmpvar_3 = atomicCompSwap (outputData.counter, tmpvar_1, (gl_GlobalInvocationID.x + 1u));
-  highp uint tmpvar_4;
-  tmpvar_4 = atomicCompSwap (ordinary.value, tmpvar_1, (gl_GlobalInvocationID.x + 1u));
-  memoryBarrierBuffer ();
-  ordinary.results[gl_GlobalInvocationID.x] = ((outputData.payload + tmpvar_3) + tmpvar_4);
+  highp uint t0 = gl_GlobalInvocationID.x;
+  highp vec4 t1 = inputData.entries[int(t0)].value;
+  outputData.entries[int(t0)].value = t1;
+  outputData.entries[int(t0)].transform = inputData.entries[int(t0)].transform;
+  outputData.entries[int(t0)].transform[int((gl_GlobalInvocationID.x & 3u))].y = vec4(0.0, t1.x, 0.0, 0.0).y;
+  highp int t2 = (1 + int(gl_GlobalInvocationID.x));
+  highp uint t3 = atomicCompSwap(outputData.counter, t0, uint(t2));
+  highp uint t4 = atomicCompSwap(ordinary.value, t0, uint(t2));
+  memoryBarrier();
+  ordinary.results[int(t0)] = uint(((int(outputData.payload) + int(t3)) + int(t4)));
 }
 
-
-// stats: 5 alu 0 tex 0 flow
+// stats: 4 alu 0 tex 0 flow
 // workgroup size: 8 1 1
 // buffer #0: Input storage instance inputData layout std430 binding 0 (size: unknown)
 //  member #0: Entry[] entries offset 0 array runtime stride 80 readonly

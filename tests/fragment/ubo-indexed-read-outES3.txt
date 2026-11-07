@@ -1,9 +1,11 @@
 #version 310 es
-layout(std140, column_major) uniform Lookup {
+precision highp float;
+precision highp int;
+layout(std140) uniform Lookup {
   highp vec4 colors[256];
   mediump float weights[256];
   layout(row_major) highp mat2x3 rows[4];
-  layout(column_major) highp mat3x2 columns[4];
+  highp mat3x2 columns[4];
   highp uvec3 indices;
   bvec2 enabled;
 } lookup;
@@ -11,30 +13,14 @@ uniform highp int index;
 out highp vec4 color;
 void main ()
 {
-  highp vec4 value_1;
-  highp vec4 tmpvar_2;
-  tmpvar_2 = (lookup.colors[index] * lookup.weights[index]);
-  value_1.w = tmpvar_2.w;
-  highp int tmpvar_3;
-  tmpvar_3 = (index & 3);
-  highp int tmpvar_4;
-  tmpvar_4 = (index % 3);
-  highp int tmpvar_5;
-  tmpvar_5 = (index & 1);
-  value_1.x = (tmpvar_2.x + lookup.rows[tmpvar_3][tmpvar_5][tmpvar_4]);
-  value_1.y = (tmpvar_2.y + lookup.columns[tmpvar_3][tmpvar_4][tmpvar_5]);
-  value_1.z = (tmpvar_2.z + float(lookup.indices[tmpvar_4]));
-  highp vec4 tmpvar_6;
-  if (lookup.enabled[(index & 1)]) {
-    tmpvar_6 = value_1;
-  } else {
-    tmpvar_6 = vec4(0.0, 0.0, 0.0, 0.0);
-  };
-  color = tmpvar_6;
+  highp vec4 t0 = (lookup.colors[index] * lookup.weights[index]);
+  highp uint t1 = (uint(index) & 3u);
+  highp uint t2 = (uint(index) & 1u);
+  highp uint t3 = (uint(index) % 3u);
+  color = (lookup.enabled[int(t2)] ? vec4((t0.x + lookup.rows[int(t1)][int(t2)][int(t3)]), (t0.y + lookup.columns[int(t1)][int(t3)][int(t2)]), (t0.z + float(lookup.indices[int(t3)])), t0.w) : vec4(0.0));
 }
 
-
-// stats: 10 alu 0 tex 1 flow
+// stats: 9 alu 0 tex 0 flow
 // uniforms: 1 (total size: 0)
 //  #0: index (high int) 1x1 [-1]
 // buffer #0: Lookup instance lookup layout std140 (size: 8608)

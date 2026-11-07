@@ -24,12 +24,7 @@
 /**
  * \file builtin_types.cpp
  *
- * The glsl_type class has static members to represent all the built-in types
- * (such as the glsl_type::_float_type flyweight) as well as convenience pointer
- * accessors (such as glsl_type::float_type).  Those global variables are
- * declared and initialized in this file.
- *
- * This also contains _mesa_glsl_initialize_types(), a function which populates
+ * This contains _mesa_glsl_initialize_types(), a function which populates
  * a symbol table with the available built-in types for a particular language
  * version and set of enabled extensions.
  */
@@ -37,84 +32,68 @@
 #include "compiler/glsl_types.h"
 #include "glsl_parser_extras.h"
 #include "util/macros.h"
-#include "main/mtypes.h"
-
-/**
- * Declarations of type flyweights (glsl_type::_foo_type) and
- * convenience pointers (glsl_type::foo_type).
- * @{
- */
-#define DECL_TYPE(NAME, ...)
-
-#define STRUCT_TYPE(NAME)                                       \
-   const glsl_type glsl_type::_struct_##NAME##_type =           \
-      glsl_type(NAME##_fields, ARRAY_SIZE(NAME##_fields), #NAME); \
-   const glsl_type *const glsl_type::struct_##NAME##_type =     \
-      &glsl_type::_struct_##NAME##_type;
+#include "main/consts_exts.h"
 
 static const struct glsl_struct_field gl_DepthRangeParameters_fields[] = {
-   glsl_struct_field(glsl_type::float_type, GLSL_PRECISION_HIGH, "near"),
-   glsl_struct_field(glsl_type::float_type, GLSL_PRECISION_HIGH, "far"),
-   glsl_struct_field(glsl_type::float_type, GLSL_PRECISION_HIGH, "diff"),
+   glsl_struct_field(&glsl_type_builtin_float, GLSL_PRECISION_HIGH, "near"),
+   glsl_struct_field(&glsl_type_builtin_float, GLSL_PRECISION_HIGH, "far"),
+   glsl_struct_field(&glsl_type_builtin_float, GLSL_PRECISION_HIGH, "diff"),
 };
 
 static const struct glsl_struct_field gl_PointParameters_fields[] = {
-   glsl_struct_field(glsl_type::float_type, "size"),
-   glsl_struct_field(glsl_type::float_type, "sizeMin"),
-   glsl_struct_field(glsl_type::float_type, "sizeMax"),
-   glsl_struct_field(glsl_type::float_type, "fadeThresholdSize"),
-   glsl_struct_field(glsl_type::float_type, "distanceConstantAttenuation"),
-   glsl_struct_field(glsl_type::float_type, "distanceLinearAttenuation"),
-   glsl_struct_field(glsl_type::float_type, "distanceQuadraticAttenuation"),
+   glsl_struct_field(&glsl_type_builtin_float, "size"),
+   glsl_struct_field(&glsl_type_builtin_float, "sizeMin"),
+   glsl_struct_field(&glsl_type_builtin_float, "sizeMax"),
+   glsl_struct_field(&glsl_type_builtin_float, "fadeThresholdSize"),
+   glsl_struct_field(&glsl_type_builtin_float, "distanceConstantAttenuation"),
+   glsl_struct_field(&glsl_type_builtin_float, "distanceLinearAttenuation"),
+   glsl_struct_field(&glsl_type_builtin_float, "distanceQuadraticAttenuation"),
 };
 
 static const struct glsl_struct_field gl_MaterialParameters_fields[] = {
-   glsl_struct_field(glsl_type::vec4_type, "emission"),
-   glsl_struct_field(glsl_type::vec4_type, "ambient"),
-   glsl_struct_field(glsl_type::vec4_type, "diffuse"),
-   glsl_struct_field(glsl_type::vec4_type, "specular"),
-   glsl_struct_field(glsl_type::float_type, "shininess"),
+   glsl_struct_field(&glsl_type_builtin_vec4, "emission"),
+   glsl_struct_field(&glsl_type_builtin_vec4, "ambient"),
+   glsl_struct_field(&glsl_type_builtin_vec4, "diffuse"),
+   glsl_struct_field(&glsl_type_builtin_vec4, "specular"),
+   glsl_struct_field(&glsl_type_builtin_float, "shininess"),
 };
 
 static const struct glsl_struct_field gl_LightSourceParameters_fields[] = {
-   glsl_struct_field(glsl_type::vec4_type, "ambient"),
-   glsl_struct_field(glsl_type::vec4_type, "diffuse"),
-   glsl_struct_field(glsl_type::vec4_type, "specular"),
-   glsl_struct_field(glsl_type::vec4_type, "position"),
-   glsl_struct_field(glsl_type::vec4_type, "halfVector"),
-   glsl_struct_field(glsl_type::vec3_type, "spotDirection"),
-   glsl_struct_field(glsl_type::float_type, "spotCosCutoff"),
-   glsl_struct_field(glsl_type::float_type, "constantAttenuation"),
-   glsl_struct_field(glsl_type::float_type, "linearAttenuation"),
-   glsl_struct_field(glsl_type::float_type, "quadraticAttenuation"),
-   glsl_struct_field(glsl_type::float_type, "spotExponent"),
-   glsl_struct_field(glsl_type::float_type, "spotCutoff"),
+   glsl_struct_field(&glsl_type_builtin_vec4, "ambient"),
+   glsl_struct_field(&glsl_type_builtin_vec4, "diffuse"),
+   glsl_struct_field(&glsl_type_builtin_vec4, "specular"),
+   glsl_struct_field(&glsl_type_builtin_vec4, "position"),
+   glsl_struct_field(&glsl_type_builtin_vec4, "halfVector"),
+   glsl_struct_field(&glsl_type_builtin_vec3, "spotDirection"),
+   glsl_struct_field(&glsl_type_builtin_float, "spotCosCutoff"),
+   glsl_struct_field(&glsl_type_builtin_float, "constantAttenuation"),
+   glsl_struct_field(&glsl_type_builtin_float, "linearAttenuation"),
+   glsl_struct_field(&glsl_type_builtin_float, "quadraticAttenuation"),
+   glsl_struct_field(&glsl_type_builtin_float, "spotExponent"),
+   glsl_struct_field(&glsl_type_builtin_float, "spotCutoff"),
 };
 
 static const struct glsl_struct_field gl_LightModelParameters_fields[] = {
-   glsl_struct_field(glsl_type::vec4_type, "ambient"),
+   glsl_struct_field(&glsl_type_builtin_vec4, "ambient"),
 };
 
 static const struct glsl_struct_field gl_LightModelProducts_fields[] = {
-   glsl_struct_field(glsl_type::vec4_type, "sceneColor"),
+   glsl_struct_field(&glsl_type_builtin_vec4, "sceneColor"),
 };
 
 static const struct glsl_struct_field gl_LightProducts_fields[] = {
-   glsl_struct_field(glsl_type::vec4_type, "ambient"),
-   glsl_struct_field(glsl_type::vec4_type, "diffuse"),
-   glsl_struct_field(glsl_type::vec4_type, "specular"),
+   glsl_struct_field(&glsl_type_builtin_vec4, "ambient"),
+   glsl_struct_field(&glsl_type_builtin_vec4, "diffuse"),
+   glsl_struct_field(&glsl_type_builtin_vec4, "specular"),
 };
 
 static const struct glsl_struct_field gl_FogParameters_fields[] = {
-   glsl_struct_field(glsl_type::vec4_type, "color"),
-   glsl_struct_field(glsl_type::float_type, "density"),
-   glsl_struct_field(glsl_type::float_type, "start"),
-   glsl_struct_field(glsl_type::float_type, "end"),
-   glsl_struct_field(glsl_type::float_type, "scale"),
+   glsl_struct_field(&glsl_type_builtin_vec4, "color"),
+   glsl_struct_field(&glsl_type_builtin_float, "density"),
+   glsl_struct_field(&glsl_type_builtin_float, "start"),
+   glsl_struct_field(&glsl_type_builtin_float, "end"),
+   glsl_struct_field(&glsl_type_builtin_float, "scale"),
 };
-
-#include "compiler/builtin_type_macros.h"
-/** @} */
 
 /**
  * Code to populate a symbol table with the built-in types available in a
@@ -124,7 +103,7 @@ static const struct glsl_struct_field gl_FogParameters_fields[] = {
  * @{
  */
 #define T(TYPE, MIN_GL, MIN_ES) \
-   { glsl_type::TYPE##_type, MIN_GL, MIN_ES },
+   { &glsl_type_builtin_##TYPE, MIN_GL, MIN_ES },
 
 static const struct builtin_type_versions {
    const glsl_type *const type;
@@ -216,8 +195,6 @@ static const struct builtin_type_versions {
    T(samplerCubeArrayShadow,          400, 320)
    T(sampler2DRectShadow,             140, 999)
 
-   T(struct_gl_DepthRangeParameters,  110, 100)
-
    T(image1D,                         420, 999)
    T(image2D,                         420, 310)
    T(image3D,                         420, 310)
@@ -255,20 +232,12 @@ static const struct builtin_type_versions {
    T(atomic_uint,                     420, 310)
 };
 
-static const glsl_type *const deprecated_types[] = {
-   glsl_type::struct_gl_PointParameters_type,
-   glsl_type::struct_gl_MaterialParameters_type,
-   glsl_type::struct_gl_LightSourceParameters_type,
-   glsl_type::struct_gl_LightModelParameters_type,
-   glsl_type::struct_gl_LightModelProducts_type,
-   glsl_type::struct_gl_LightProducts_type,
-   glsl_type::struct_gl_FogParameters_type,
-};
+#undef T
 
 static inline void
 add_type(glsl_symbol_table *symbols, const glsl_type *const type)
 {
-   symbols->add_type(type->name, type);
+   symbols->add_type(glsl_get_type_name(type), type);
 }
 
 /**
@@ -286,13 +255,30 @@ _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state)
       }
    }
 
-   /* Add deprecated structure types.  While these were deprecated in 1.30,
-    * they're still present.  We've removed them in 1.40+ (OpenGL 3.1+).
+   /* Note: use glsl_type::get_struct_instance() to get the properly cached
+    * copy of the struct types.
     */
-   if (state->compat_shader || state->ARB_compatibility_enable) {
-      for (unsigned i = 0; i < ARRAY_SIZE(deprecated_types); i++) {
-         add_type(symbols, deprecated_types[i]);
+   {
+      #define GET_STRUCT_TYPE(NAME) glsl_struct_type(NAME##_fields, ARRAY_SIZE(NAME##_fields), #NAME, false /* packed */)
+
+      if (state->is_version(110, 100)) {
+         add_type(symbols, GET_STRUCT_TYPE(gl_DepthRangeParameters));
       }
+
+      /* Add deprecated structure types.  While these were deprecated in 1.30,
+      * they're still present.  We've removed them in 1.40+ (OpenGL 3.1+).
+      */
+      if (state->compat_shader || state->ARB_compatibility_enable) {
+         add_type(symbols, GET_STRUCT_TYPE(gl_PointParameters));
+         add_type(symbols, GET_STRUCT_TYPE(gl_MaterialParameters));
+         add_type(symbols, GET_STRUCT_TYPE(gl_LightSourceParameters));
+         add_type(symbols, GET_STRUCT_TYPE(gl_LightModelParameters));
+         add_type(symbols, GET_STRUCT_TYPE(gl_LightModelProducts));
+         add_type(symbols, GET_STRUCT_TYPE(gl_LightProducts));
+         add_type(symbols, GET_STRUCT_TYPE(gl_FogParameters));
+      };
+
+      #undef GET_STRUCT_TYPE
    }
 
    /* Add types for enabled extensions.  They may have already been added
@@ -302,173 +288,173 @@ _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state)
    if (state->ARB_texture_cube_map_array_enable ||
        state->EXT_texture_cube_map_array_enable ||
        state->OES_texture_cube_map_array_enable) {
-      add_type(symbols, glsl_type::samplerCubeArray_type);
-      add_type(symbols, glsl_type::samplerCubeArrayShadow_type);
-      add_type(symbols, glsl_type::isamplerCubeArray_type);
-      add_type(symbols, glsl_type::usamplerCubeArray_type);
+      add_type(symbols, &glsl_type_builtin_samplerCubeArray);
+      add_type(symbols, &glsl_type_builtin_samplerCubeArrayShadow);
+      add_type(symbols, &glsl_type_builtin_isamplerCubeArray);
+      add_type(symbols, &glsl_type_builtin_usamplerCubeArray);
    }
 
    if (state->ARB_texture_multisample_enable) {
-      add_type(symbols, glsl_type::sampler2DMS_type);
-      add_type(symbols, glsl_type::isampler2DMS_type);
-      add_type(symbols, glsl_type::usampler2DMS_type);
+      add_type(symbols, &glsl_type_builtin_sampler2DMS);
+      add_type(symbols, &glsl_type_builtin_isampler2DMS);
+      add_type(symbols, &glsl_type_builtin_usampler2DMS);
    }
    if (state->ARB_texture_multisample_enable ||
        state->OES_texture_storage_multisample_2d_array_enable) {
-      add_type(symbols, glsl_type::sampler2DMSArray_type);
-      add_type(symbols, glsl_type::isampler2DMSArray_type);
-      add_type(symbols, glsl_type::usampler2DMSArray_type);
+      add_type(symbols, &glsl_type_builtin_sampler2DMSArray);
+      add_type(symbols, &glsl_type_builtin_isampler2DMSArray);
+      add_type(symbols, &glsl_type_builtin_usampler2DMSArray);
    }
 
    if (state->ARB_texture_rectangle_enable) {
-      add_type(symbols, glsl_type::sampler2DRect_type);
-      add_type(symbols, glsl_type::sampler2DRectShadow_type);
+      add_type(symbols, &glsl_type_builtin_sampler2DRect);
+      add_type(symbols, &glsl_type_builtin_sampler2DRectShadow);
    }
 
    if (state->EXT_gpu_shader4_enable) {
-      add_type(symbols, glsl_type::uint_type);
-      add_type(symbols, glsl_type::uvec2_type);
-      add_type(symbols, glsl_type::uvec3_type);
-      add_type(symbols, glsl_type::uvec4_type);
+      add_type(symbols, &glsl_type_builtin_uint);
+      add_type(symbols, &glsl_type_builtin_uvec2);
+      add_type(symbols, &glsl_type_builtin_uvec3);
+      add_type(symbols, &glsl_type_builtin_uvec4);
 
-      add_type(symbols, glsl_type::samplerCubeShadow_type);
+      add_type(symbols, &glsl_type_builtin_samplerCubeShadow);
 
-      if (state->ctx->Extensions.EXT_texture_array) {
-         add_type(symbols, glsl_type::sampler1DArray_type);
-         add_type(symbols, glsl_type::sampler2DArray_type);
-         add_type(symbols, glsl_type::sampler1DArrayShadow_type);
-         add_type(symbols, glsl_type::sampler2DArrayShadow_type);
+      if (state->exts->EXT_texture_array) {
+         add_type(symbols, &glsl_type_builtin_sampler1DArray);
+         add_type(symbols, &glsl_type_builtin_sampler2DArray);
+         add_type(symbols, &glsl_type_builtin_sampler1DArrayShadow);
+         add_type(symbols, &glsl_type_builtin_sampler2DArrayShadow);
       }
-      if (state->ctx->Extensions.EXT_texture_buffer_object) {
-         add_type(symbols, glsl_type::samplerBuffer_type);
+      if (state->exts->EXT_texture_buffer_object) {
+         add_type(symbols, &glsl_type_builtin_samplerBuffer);
       }
 
-      if (state->ctx->Extensions.EXT_texture_integer) {
-         add_type(symbols, glsl_type::isampler1D_type);
-         add_type(symbols, glsl_type::isampler2D_type);
-         add_type(symbols, glsl_type::isampler3D_type);
-         add_type(symbols, glsl_type::isamplerCube_type);
+      if (state->exts->EXT_texture_integer) {
+         add_type(symbols, &glsl_type_builtin_isampler1D);
+         add_type(symbols, &glsl_type_builtin_isampler2D);
+         add_type(symbols, &glsl_type_builtin_isampler3D);
+         add_type(symbols, &glsl_type_builtin_isamplerCube);
 
-         add_type(symbols, glsl_type::usampler1D_type);
-         add_type(symbols, glsl_type::usampler2D_type);
-         add_type(symbols, glsl_type::usampler3D_type);
-         add_type(symbols, glsl_type::usamplerCube_type);
+         add_type(symbols, &glsl_type_builtin_usampler1D);
+         add_type(symbols, &glsl_type_builtin_usampler2D);
+         add_type(symbols, &glsl_type_builtin_usampler3D);
+         add_type(symbols, &glsl_type_builtin_usamplerCube);
 
-         if (state->ctx->Extensions.NV_texture_rectangle) {
-            add_type(symbols, glsl_type::isampler2DRect_type);
-            add_type(symbols, glsl_type::usampler2DRect_type);
+         if (state->exts->NV_texture_rectangle) {
+            add_type(symbols, &glsl_type_builtin_isampler2DRect);
+            add_type(symbols, &glsl_type_builtin_usampler2DRect);
          }
-         if (state->ctx->Extensions.EXT_texture_array) {
-            add_type(symbols, glsl_type::isampler1DArray_type);
-            add_type(symbols, glsl_type::isampler2DArray_type);
-            add_type(symbols, glsl_type::usampler1DArray_type);
-            add_type(symbols, glsl_type::usampler2DArray_type);
+         if (state->exts->EXT_texture_array) {
+            add_type(symbols, &glsl_type_builtin_isampler1DArray);
+            add_type(symbols, &glsl_type_builtin_isampler2DArray);
+            add_type(symbols, &glsl_type_builtin_usampler1DArray);
+            add_type(symbols, &glsl_type_builtin_usampler2DArray);
          }
-         if (state->ctx->Extensions.EXT_texture_buffer_object) {
-            add_type(symbols, glsl_type::isamplerBuffer_type);
-            add_type(symbols, glsl_type::usamplerBuffer_type);
+         if (state->exts->EXT_texture_buffer_object) {
+            add_type(symbols, &glsl_type_builtin_isamplerBuffer);
+            add_type(symbols, &glsl_type_builtin_usamplerBuffer);
          }
       }
    }
 
    if (state->EXT_texture_array_enable) {
-      add_type(symbols, glsl_type::sampler1DArray_type);
-      add_type(symbols, glsl_type::sampler2DArray_type);
-      add_type(symbols, glsl_type::sampler1DArrayShadow_type);
-      add_type(symbols, glsl_type::sampler2DArrayShadow_type);
+      add_type(symbols, &glsl_type_builtin_sampler1DArray);
+      add_type(symbols, &glsl_type_builtin_sampler2DArray);
+      add_type(symbols, &glsl_type_builtin_sampler1DArrayShadow);
+      add_type(symbols, &glsl_type_builtin_sampler2DArrayShadow);
    }
 
    if (state->OES_EGL_image_external_enable ||
        state->OES_EGL_image_external_essl3_enable) {
-      add_type(symbols, glsl_type::samplerExternalOES_type);
+      add_type(symbols, &glsl_type_builtin_samplerExternalOES);
    }
 
    if (state->OES_texture_3D_enable) {
-      add_type(symbols, glsl_type::sampler3D_type);
+      add_type(symbols, &glsl_type_builtin_sampler3D);
    }
 
    if (state->ARB_shader_image_load_store_enable ||
        state->EXT_texture_cube_map_array_enable ||
        state->OES_texture_cube_map_array_enable) {
-      add_type(symbols, glsl_type::imageCubeArray_type);
-      add_type(symbols, glsl_type::iimageCubeArray_type);
-      add_type(symbols, glsl_type::uimageCubeArray_type);
+      add_type(symbols, &glsl_type_builtin_imageCubeArray);
+      add_type(symbols, &glsl_type_builtin_iimageCubeArray);
+      add_type(symbols, &glsl_type_builtin_uimageCubeArray);
    }
 
    if (state->ARB_shader_image_load_store_enable) {
-      add_type(symbols, glsl_type::image1D_type);
-      add_type(symbols, glsl_type::image2D_type);
-      add_type(symbols, glsl_type::image3D_type);
-      add_type(symbols, glsl_type::image2DRect_type);
-      add_type(symbols, glsl_type::imageCube_type);
-      add_type(symbols, glsl_type::imageBuffer_type);
-      add_type(symbols, glsl_type::image1DArray_type);
-      add_type(symbols, glsl_type::image2DArray_type);
-      add_type(symbols, glsl_type::image2DMS_type);
-      add_type(symbols, glsl_type::image2DMSArray_type);
-      add_type(symbols, glsl_type::iimage1D_type);
-      add_type(symbols, glsl_type::iimage2D_type);
-      add_type(symbols, glsl_type::iimage3D_type);
-      add_type(symbols, glsl_type::iimage2DRect_type);
-      add_type(symbols, glsl_type::iimageCube_type);
-      add_type(symbols, glsl_type::iimageBuffer_type);
-      add_type(symbols, glsl_type::iimage1DArray_type);
-      add_type(symbols, glsl_type::iimage2DArray_type);
-      add_type(symbols, glsl_type::iimage2DMS_type);
-      add_type(symbols, glsl_type::iimage2DMSArray_type);
-      add_type(symbols, glsl_type::uimage1D_type);
-      add_type(symbols, glsl_type::uimage2D_type);
-      add_type(symbols, glsl_type::uimage3D_type);
-      add_type(symbols, glsl_type::uimage2DRect_type);
-      add_type(symbols, glsl_type::uimageCube_type);
-      add_type(symbols, glsl_type::uimageBuffer_type);
-      add_type(symbols, glsl_type::uimage1DArray_type);
-      add_type(symbols, glsl_type::uimage2DArray_type);
-      add_type(symbols, glsl_type::uimage2DMS_type);
-      add_type(symbols, glsl_type::uimage2DMSArray_type);
+      add_type(symbols, &glsl_type_builtin_image1D);
+      add_type(symbols, &glsl_type_builtin_image2D);
+      add_type(symbols, &glsl_type_builtin_image3D);
+      add_type(symbols, &glsl_type_builtin_image2DRect);
+      add_type(symbols, &glsl_type_builtin_imageCube);
+      add_type(symbols, &glsl_type_builtin_imageBuffer);
+      add_type(symbols, &glsl_type_builtin_image1DArray);
+      add_type(symbols, &glsl_type_builtin_image2DArray);
+      add_type(symbols, &glsl_type_builtin_image2DMS);
+      add_type(symbols, &glsl_type_builtin_image2DMSArray);
+      add_type(symbols, &glsl_type_builtin_iimage1D);
+      add_type(symbols, &glsl_type_builtin_iimage2D);
+      add_type(symbols, &glsl_type_builtin_iimage3D);
+      add_type(symbols, &glsl_type_builtin_iimage2DRect);
+      add_type(symbols, &glsl_type_builtin_iimageCube);
+      add_type(symbols, &glsl_type_builtin_iimageBuffer);
+      add_type(symbols, &glsl_type_builtin_iimage1DArray);
+      add_type(symbols, &glsl_type_builtin_iimage2DArray);
+      add_type(symbols, &glsl_type_builtin_iimage2DMS);
+      add_type(symbols, &glsl_type_builtin_iimage2DMSArray);
+      add_type(symbols, &glsl_type_builtin_uimage1D);
+      add_type(symbols, &glsl_type_builtin_uimage2D);
+      add_type(symbols, &glsl_type_builtin_uimage3D);
+      add_type(symbols, &glsl_type_builtin_uimage2DRect);
+      add_type(symbols, &glsl_type_builtin_uimageCube);
+      add_type(symbols, &glsl_type_builtin_uimageBuffer);
+      add_type(symbols, &glsl_type_builtin_uimage1DArray);
+      add_type(symbols, &glsl_type_builtin_uimage2DArray);
+      add_type(symbols, &glsl_type_builtin_uimage2DMS);
+      add_type(symbols, &glsl_type_builtin_uimage2DMSArray);
    }
 
    if (state->EXT_texture_buffer_enable || state->OES_texture_buffer_enable) {
-      add_type(symbols, glsl_type::samplerBuffer_type);
-      add_type(symbols, glsl_type::isamplerBuffer_type);
-      add_type(symbols, glsl_type::usamplerBuffer_type);
+      add_type(symbols, &glsl_type_builtin_samplerBuffer);
+      add_type(symbols, &glsl_type_builtin_isamplerBuffer);
+      add_type(symbols, &glsl_type_builtin_usamplerBuffer);
 
-      add_type(symbols, glsl_type::imageBuffer_type);
-      add_type(symbols, glsl_type::iimageBuffer_type);
-      add_type(symbols, glsl_type::uimageBuffer_type);
+      add_type(symbols, &glsl_type_builtin_imageBuffer);
+      add_type(symbols, &glsl_type_builtin_iimageBuffer);
+      add_type(symbols, &glsl_type_builtin_uimageBuffer);
    }
 
    if (state->has_atomic_counters()) {
-      add_type(symbols, glsl_type::atomic_uint_type);
+      add_type(symbols, &glsl_type_builtin_atomic_uint);
    }
 
    if (state->ARB_gpu_shader_fp64_enable) {
-      add_type(symbols, glsl_type::double_type);
-      add_type(symbols, glsl_type::dvec2_type);
-      add_type(symbols, glsl_type::dvec3_type);
-      add_type(symbols, glsl_type::dvec4_type);
-      add_type(symbols, glsl_type::dmat2_type);
-      add_type(symbols, glsl_type::dmat3_type);
-      add_type(symbols, glsl_type::dmat4_type);
-      add_type(symbols, glsl_type::dmat2x3_type);
-      add_type(symbols, glsl_type::dmat2x4_type);
-      add_type(symbols, glsl_type::dmat3x2_type);
-      add_type(symbols, glsl_type::dmat3x4_type);
-      add_type(symbols, glsl_type::dmat4x2_type);
-      add_type(symbols, glsl_type::dmat4x3_type);
+      add_type(symbols, &glsl_type_builtin_double);
+      add_type(symbols, &glsl_type_builtin_dvec2);
+      add_type(symbols, &glsl_type_builtin_dvec3);
+      add_type(symbols, &glsl_type_builtin_dvec4);
+      add_type(symbols, &glsl_type_builtin_dmat2);
+      add_type(symbols, &glsl_type_builtin_dmat3);
+      add_type(symbols, &glsl_type_builtin_dmat4);
+      add_type(symbols, &glsl_type_builtin_dmat2x3);
+      add_type(symbols, &glsl_type_builtin_dmat2x4);
+      add_type(symbols, &glsl_type_builtin_dmat3x2);
+      add_type(symbols, &glsl_type_builtin_dmat3x4);
+      add_type(symbols, &glsl_type_builtin_dmat4x2);
+      add_type(symbols, &glsl_type_builtin_dmat4x3);
    }
 
    if (state->ARB_gpu_shader_int64_enable ||
        state->AMD_gpu_shader_int64_enable) {
-      add_type(symbols, glsl_type::int64_t_type);
-      add_type(symbols, glsl_type::i64vec2_type);
-      add_type(symbols, glsl_type::i64vec3_type);
-      add_type(symbols, glsl_type::i64vec4_type);
+      add_type(symbols, &glsl_type_builtin_int64_t);
+      add_type(symbols, &glsl_type_builtin_i64vec2);
+      add_type(symbols, &glsl_type_builtin_i64vec3);
+      add_type(symbols, &glsl_type_builtin_i64vec4);
 
-      add_type(symbols, glsl_type::uint64_t_type);
-      add_type(symbols, glsl_type::u64vec2_type);
-      add_type(symbols, glsl_type::u64vec3_type);
-      add_type(symbols, glsl_type::u64vec4_type);
+      add_type(symbols, &glsl_type_builtin_uint64_t);
+      add_type(symbols, &glsl_type_builtin_u64vec2);
+      add_type(symbols, &glsl_type_builtin_u64vec3);
+      add_type(symbols, &glsl_type_builtin_u64vec4);
    }
 }
 /** @} */

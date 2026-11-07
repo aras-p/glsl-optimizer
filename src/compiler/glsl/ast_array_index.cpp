@@ -28,7 +28,7 @@
 void
 ast_array_specifier::print(void) const
 {
-   foreach_list_typed (ast_node, array_dimension, link, &this->array_dimensions) {
+   ir_foreach_list_typed (ast_node, array_dimension, link, &this->array_dimensions) {
       printf("[ ");
       if (((ast_expression*)array_dimension)->oper != ast_unsized_array_dim)
          array_dimension->print();
@@ -140,24 +140,23 @@ get_implicit_array_size(struct _mesa_glsl_parse_state *state,
 
 
 ir_rvalue *
-_mesa_ast_array_index_to_hir(void *mem_ctx,
-                             struct _mesa_glsl_parse_state *state,
+_mesa_ast_array_index_to_hir(struct _mesa_glsl_parse_state *state,
                              ir_rvalue *array, ir_rvalue *idx,
                              YYLTYPE &loc, YYLTYPE &idx_loc)
 {
-   if (!array->type->is_error()
-       && !array->type->is_array()
-       && !array->type->is_matrix()
-       && !array->type->is_vector()) {
+   if (!glsl_type_is_error(array->type)
+       && !glsl_type_is_array(array->type)
+       && !glsl_type_is_matrix(array->type)
+       && !glsl_type_is_vector(array->type)) {
       _mesa_glsl_error(& idx_loc, state,
                        "cannot dereference non-array / non-matrix / "
                        "non-vector");
    }
 
-   if (!idx->type->is_error()) {
-      if (!idx->type->is_integer_32()) {
+   if (!glsl_type_is_error(idx->type)) {
+      if (!glsl_type_is_integer_32(idx->type)) {
          _mesa_glsl_error(& idx_loc, state, "array index must be integer type");
-      } else if (!idx->type->is_scalar()) {
+      } else if (!glsl_type_is_scalar(idx->type)) {
          _mesa_glsl_error(& idx_loc, state, "array index must be scalar");
       }
    }
@@ -167,8 +166,8 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
     * index is not a constant expression, ensure that the array has a
     * declared size.
     */
-   ir_constant *const const_index = idx->constant_expression_value(mem_ctx);
-   if (const_index != NULL && idx->type->is_integer_32()) {
+   ir_constant *const const_index = idx->constant_expression_value(state->linalloc);
+   if (const_index != NULL && glsl_type_is_integer_32(idx->type)) {
       const int idx = const_index->value.i[0];
       const char *type_name = "error";
       unsigned bound = 0;
@@ -181,12 +180,12 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
        *    declared size. It is also illegal to index an array with a
        *    negative constant expression."
        */
-      if (array->type->is_matrix()) {
-         if (array->type->row_type()->vector_elements <= idx) {
+      if (glsl_type_is_matrix(array->type)) {
+         if (glsl_get_row_type(array->type)->vector_elements <= idx) {
             type_name = "matrix";
-            bound = array->type->row_type()->vector_elements;
+            bound = glsl_get_row_type(array->type)->vector_elements;
          }
-      } else if (array->type->is_vector()) {
+      } else if (glsl_type_is_vector(array->type)) {
          if (array->type->vector_elements <= idx) {
             type_name = "vector";
             bound = array->type->vector_elements;
@@ -196,10 +195,10 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
           * that we don't need to verify that the type is an array before
           * doing the bounds checking.
           */
-         if ((array->type->array_size() > 0)
-             && (array->type->array_size() <= idx)) {
+         if ((glsl_array_size(array->type) > 0)
+             && (glsl_array_size(array->type) <= idx)) {
             type_name = "array";
-            bound = array->type->array_size();
+            bound = glsl_array_size(array->type);
          }
       }
 
@@ -210,10 +209,10 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
          _mesa_glsl_error(& loc, state, "%s index must be >= 0", type_name);
       }
 
-      if (array->type->is_array())
+      if (glsl_type_is_array(array->type))
          update_max_array_access(array, idx, &loc, state);
-   } else if (const_index == NULL && array->type->is_array()) {
-      if (array->type->is_unsized_array()) {
+   } else if (const_index == NULL && glsl_type_is_array(array->type)) {
+      if (glsl_type_is_unsized_array(array->type)) {
          int implicit_size = get_implicit_array_size(state, array);
          if (implicit_size) {
             ir_variable *v = array->whole_variable_referenced();
@@ -229,6 +228,9 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
              * "gl_InvocationID"). The array size will be determined
              * by the linker.
              */
+         } else if (state->stage == MESA_SHADER_MESH &&
+                    array->variable_referenced()->data.mode == ir_var_shader_out) {
+            /* Mesh shader output arrays are initially unsized. */
          }
          else if (array->variable_referenced()->data.mode !=
                   ir_var_shader_storage) {
@@ -239,7 +241,7 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
              */
             ir_variable *var = array->variable_referenced();
             const glsl_type *iface_type = var->get_interface_type();
-            int field_index = iface_type->field_index(var->name);
+            int field_index = glsl_get_field_index(iface_type, var->name);
             /* Field index can be < 0 for instance arrays */
             if (field_index >= 0 &&
                 field_index != (int) iface_type->length - 1) {
@@ -248,7 +250,7 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
                                 "SSBO.");
             }
          }
-      } else if (array->type->without_array()->is_interface()
+      } else if (glsl_type_is_interface(glsl_without_array(array->type))
                  && ((array->variable_referenced()->data.mode == ir_var_uniform
                       && !state->is_version(400, 320)
                       && !state->ARB_gpu_shader5_enable
@@ -277,7 +279,7 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
           */
          ir_variable *v = array->whole_variable_referenced();
          if (v != NULL)
-            v->data.max_array_access = array->type->array_size() - 1;
+            v->data.max_array_access = glsl_array_size(array->type) - 1;
       }
 
       /* From page 23 (29 of the PDF) of the GLSL 1.30 spec:
@@ -305,7 +307,7 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
        *    "Samplers aggregated into arrays within a shader (using square
        *    brackets []) can be indexed with arbitrary integer expressions."
        */
-      if (array->type->without_array()->is_sampler()) {
+      if (glsl_type_is_sampler(glsl_without_array(array->type))) {
          if (!state->is_version(400, 320) &&
              !state->ARB_gpu_shader5_enable &&
              !state->EXT_gpu_shader5_enable &&
@@ -339,7 +341,7 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
        * non-constant indexing of image arrays, but behavior is left undefined
        * in cases where the indexing expression is not dynamically uniform.
        */
-      if (state->es_shader && array->type->without_array()->is_image()) {
+      if (state->es_shader && glsl_type_is_image(glsl_without_array(array->type))) {
          _mesa_glsl_error(&loc, state,
                           "image arrays indexed with non-constant "
                           "expressions are forbidden in GLSL ES.");
@@ -349,15 +351,15 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
    /* After performing all of the error checking, generate the IR for the
     * expression.
     */
-   if (array->type->is_array()
-       || array->type->is_matrix()
-       || array->type->is_vector()) {
-      return new(mem_ctx) ir_dereference_array(array, idx);
-   } else if (array->type->is_error()) {
+   if (glsl_type_is_array(array->type)
+       || glsl_type_is_matrix(array->type)
+       || glsl_type_is_vector(array->type)) {
+      return new(state->linalloc) ir_dereference_array(array, idx);
+   } else if (glsl_type_is_error(array->type)) {
       return array;
    } else {
-      ir_rvalue *result = new(mem_ctx) ir_dereference_array(array, idx);
-      result->type = glsl_type::error_type;
+      ir_rvalue *result = new(state->linalloc) ir_dereference_array(array, idx);
+      result->type = &glsl_type_builtin_error;
 
       return result;
    }

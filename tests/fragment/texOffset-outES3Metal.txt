@@ -14,18 +14,12 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   , texture3d<half> vol [[texture(1)]], sampler _mtlsmp_vol [[sampler(1)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half4 c_1 = 0;
-  c_1 = (tex.sample(_mtlsmp_tex, (float2)((_mtl_i.uv.xy)), int2(-2, -3)) + tex.sample(_mtlsmp_tex, (float2)((_mtl_i.uv.xy)), bias(0.5), int2(4, 5)));
-  c_1 = (c_1 + vol.sample(_mtlsmp_vol, (float3)((_mtl_i.uv)), int3(-2, -3, -4)));
-  c_1 = (c_1 + vol.sample(_mtlsmp_vol, (float3)((_mtl_i.uv)), bias(-0.5), int3(4, 5, 6)));
-  c_1 = (c_1 + tex.read(uint2(int2(1, 2)), uint(1)));
-  c_1 = (c_1 + vol.read(uint3(int3(1, 2, 3)), uint(2)));
-  c_1 = (c_1 + tex.read(uint2(int2(1, 2) + int2(-2, -3)), uint(3)));
-  c_1 = (c_1 + vol.read(uint3(int3(1, 2, 3) + int3(-2, -3, -4)), uint(0)));
-  _mtl_o.outColor = c_1;
+  half2 t0 = _mtl_i.uv.xy;
+  half4 t1 = ((tex.sample(_mtlsmp_tex, float2(t0), int2(-2, -3)) + tex.sample(_mtlsmp_tex, float2(t0), bias(0.5), int2(4, 5))) + vol.sample(_mtlsmp_vol, float3(_mtl_i.uv), int3(-2, -3, -4)));
+  half4 t2 = (((t1 + vol.sample(_mtlsmp_vol, float3(_mtl_i.uv), bias(-0.5), int3(4, 5, 6))) + tex.read(uint2(int2(1, 2)), uint(1))) + vol.read(uint3(int3(1, 2, 3)), uint(2)));
+  _mtl_o.outColor = ((t2 + tex.read(uint2(int2(1, 2) + int2(-2, -3)), uint(3))) + vol.read(uint3(int3(1, 2, 3) + int3(-2, -3, -4)), uint(0)));
   return _mtl_o;
 }
-
 
 // stats: 7 alu 8 tex 0 flow
 // inputs: 1

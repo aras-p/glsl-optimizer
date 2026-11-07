@@ -1,47 +1,31 @@
 #version 300 es
+precision highp float;
+precision highp int;
 out mediump vec4 _fragData;
 uniform highp float _Speed;
 uniform highp vec4 _Time;
 in highp vec2 uv;
 void main ()
 {
-  mediump mat2 halfMatrix_1;
-  highp mat2 rotationMatrix_2;
-  highp float tmpvar_3;
-  highp float tmpvar_4;
-  tmpvar_4 = (_Speed * _Time.x);
-  tmpvar_3 = sin(tmpvar_4);
-  highp float tmpvar_5;
-  tmpvar_5 = cos(tmpvar_4);
-  highp mat2 tmpvar_6;
-  tmpvar_6[uint(0)].x = tmpvar_5;
-  tmpvar_6[uint(0)].y = tmpvar_3;
-  tmpvar_6[1u].x = -(tmpvar_3);
-  tmpvar_6[1u].y = tmpvar_5;
-  rotationMatrix_2 = (tmpvar_6 * 2.0);
-  rotationMatrix_2 = (rotationMatrix_2 - 1.0);
-  rotationMatrix_2 = (tmpvar_3 - rotationMatrix_2);
-  rotationMatrix_2 = (tmpvar_5 + rotationMatrix_2);
-  rotationMatrix_2 = (rotationMatrix_2 / tmpvar_3);
-  highp mat2 tmpvar_7;
-  tmpvar_7[uint(0)].x = tmpvar_5;
-  tmpvar_7[uint(0)].y = tmpvar_3;
-  tmpvar_7[1u].x = -(tmpvar_3);
-  tmpvar_7[1u].y = tmpvar_5;
-  halfMatrix_1 = tmpvar_7;
-  halfMatrix_1 = (halfMatrix_1 * 2.0);
-  halfMatrix_1 = (halfMatrix_1 - 1.0);
-  halfMatrix_1 = (tmpvar_3 - halfMatrix_1);
-  halfMatrix_1 = (tmpvar_5 + halfMatrix_1);
-  halfMatrix_1 = (halfMatrix_1 / tmpvar_3);
-  highp vec4 tmpvar_8;
-  tmpvar_8.xy = (rotationMatrix_2 * uv);
-  tmpvar_8.zw = (halfMatrix_1 * uv);
-  _fragData = tmpvar_8;
+  highp float t0 = (_Speed * _Time.x);
+  highp float t1 = sin(t0);
+  highp float t2 = cos(t0);
+  highp vec2 t3 = vec2(t2, t1);
+  highp vec2 t4 = vec2((-t1), t2);
+  mediump vec2 t5 = t3;
+  mediump vec2 t6 = t4;
+  mediump vec2 t7 = (t1 - ((t5 * 2.0) - 1.0));
+  mediump vec2 t8 = (t1 - ((t6 * 2.0) - 1.0));
+  mediump vec2 t9 = (t2 + t7);
+  mediump vec2 t10 = (t2 + t8);
+  mediump vec2 t11 = (t9 / t1);
+  mediump vec2 t12 = (t10 / t1);
+  highp vec2 t13 = (mat2(((t2 + (t1 - ((t3 * 2.0) - 1.0))) / t1), ((t2 + (t1 - ((t4 * 2.0) - 1.0))) / t1)) * uv);
+  highp vec2 t14 = (mat2(t11, t12) * uv);
+  _fragData = vec4(t13, t14);
 }
 
-
-// stats: 17 alu 0 tex 0 flow
+// stats: 26 alu 0 tex 0 flow
 // inputs: 1
 //  #0: uv (high float) 2x1 [-1]
 // uniforms: 2 (total size: 0)

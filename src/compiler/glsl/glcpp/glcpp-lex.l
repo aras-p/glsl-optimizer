@@ -105,7 +105,7 @@ void glcpp_set_column (int  column_no , yyscan_t yyscanner);
 			 * an implicit call on strlen() for the length  \
 			 * of the string, as this is already found by   \
 			 * flex and stored in yyleng */                 \
-			void *mem_ctx = yyextra->linalloc;		\
+			linear_ctx *mem_ctx = yyextra->linalloc;	\
 			yylval->str = linear_alloc_child(mem_ctx,	\
 							 yyleng + 1);	\
 			memcpy(yylval->str, yytext, yyleng + 1);        \
@@ -178,7 +178,7 @@ glcpp_lex_update_state_per_token (glcpp_parser_t *parser, int token)
 	 * update the "Internal compiler error" catch-all rule near the end of
 	 * this file. */
 
-%x COMMENT DEFINE DONE HASH NEWLINE_CATCHUP UNREACHABLE
+%x COMMENT DEFINE DONE HASH NEWLINE_CATCHUP NOT_REACHABLE
 
 SPACE		[[:space:]]
 NONSPACE	[^[:space:]]
@@ -403,7 +403,7 @@ PATH			["][]^./ _A-Za-z0-9+*%[(){}|&~=!:;,?-]*["]
 	 * for the lexer. Within <DEFINE> we are looking for the first
 	 * identifier and specifically checking whether the identifier
 	 * is followed by a '(' or not, (to lex either a
-	 * FUNC_IDENTIFIER or an OBJ_IDENITIFIER token).
+	 * FUNC_IDENTIFIER or an OBJ_IDENTIFIER token).
 	 *
 	 * While in the <DEFINE> state we also need to explicitly
 	 * handle a few other things that may appear before the
@@ -602,11 +602,11 @@ PATH			["][]^./ _A-Za-z0-9+*%[(){}|&~=!:;,?-]*["]
 <*>. {
 	glcpp_error(yylloc, yyextra, "Internal compiler error: Unexpected character: %s", yytext);
 
-	/* We don't actually use the UNREACHABLE start condition. We
+	/* We don't actually use the NOT_REACHABLE start condition. We
 	only have this block here so that we can pretend to call some
 	generated functions, (to avoid "defined but not used"
 	warnings. */
-        if (YY_START == UNREACHABLE) {
+        if (YY_START == NOT_REACHABLE) {
 		unput('.');
 		yy_top_state(yyextra);
 	}

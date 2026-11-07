@@ -1,51 +1,17 @@
 #version 300 es
+precision highp float;
+precision highp int;
 in highp vec4 xlv_TEXCOORD0;
 out mediump vec4 _fragData;
 void main ()
 {
-  mediump vec4 c_1;
-  c_1 = vec4(0.0, 0.0, 0.0, 0.0);
-  highp float tmpvar_2;
-  if ((0.5 < xlv_TEXCOORD0.x)) {
-    tmpvar_2 = 0.9;
-  } else {
-    tmpvar_2 = 0.1;
-  };
-  c_1 = vec4(tmpvar_2);
-  highp vec4 tmpvar_3;
-  if ((0.5 < xlv_TEXCOORD0.x)) {
-    tmpvar_3 = vec4(0.9, 0.9, 0.9, 0.9);
-  } else {
-    tmpvar_3 = vec4(0.1, 0.1, 0.1, 0.1);
-  };
-  c_1 = (vec4(tmpvar_2) + tmpvar_3);
-  highp vec3 tmpvar_4;
-  if ((0.5 < xlv_TEXCOORD0.x)) {
-    tmpvar_4 = vec3(0.9, 0.9, 0.9);
-  } else {
-    tmpvar_4 = vec3(0.1, 0.1, 0.1);
-  };
-  c_1.xyz = (c_1.xyz + tmpvar_4);
-  highp vec2 tmpvar_5;
-  if ((0.5 < xlv_TEXCOORD0.x)) {
-    tmpvar_5 = vec2(0.9, 0.9);
-  } else {
-    tmpvar_5 = vec2(0.1, 0.1);
-  };
-  c_1.xy = (c_1.xy + tmpvar_5);
-  highp float tmpvar_6;
-  tmpvar_6 = fract(xlv_TEXCOORD0.x);
-  highp float tmpvar_7;
-  if (bool(tmpvar_6)) {
-    tmpvar_7 = 0.9;
-  } else {
-    tmpvar_7 = 0.1;
-  };
-  c_1.x = (c_1.x + tmpvar_7);
-  _fragData = c_1;
+  bool t0 = (0.5 < xlv_TEXCOORD0.x);
+  highp vec4 t1 = (t0 ? vec4(1.8) : vec4(0.2));
+  highp vec3 t2 = (t1.xyz + (t0 ? vec3(0.9) : vec3(0.1)));
+  highp vec2 t3 = (t2.xy + (t0 ? vec2(0.9) : vec2(0.1)));
+  _fragData = vec4((t3.x + ((fract(xlv_TEXCOORD0.x) != 0.0) ? 0.9 : 0.1)), t3.y, t2.z, t1.w);
 }
 
-
-// stats: 21 alu 0 tex 5 flow
+// stats: 10 alu 0 tex 0 flow
 // inputs: 1
 //  #0: xlv_TEXCOORD0 (high float) 4x1 [-1]

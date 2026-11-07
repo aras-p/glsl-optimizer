@@ -6,31 +6,26 @@ in highp vec4 _inVertex;
 out mediump vec4 xlv_TEXCOORD0;
 void main ()
 {
-  mediump vec4 o_pos_1;
-  mediump vec4 o_color_2;
-  o_pos_1 = (UNITY_MATRIX_MVP * _inVertex);
-  o_color_2 = unity_LightColor[0];
-  o_color_2 = (o_color_2 + unity_LightColor[1]);
-  o_color_2 = (o_color_2 + unity_LightColor[0]);
-  o_color_2 = (o_color_2 + unity_LightColor[1]);
-  o_color_2 = (o_color_2 + unity_LightColor[2]);
-  o_color_2 = (o_color_2 + unity_LightColor[3]);
-  o_color_2 = (o_color_2 + unity_LightColor[3]);
-  o_color_2 = (o_color_2 + unity_LightColor[2]);
-  o_color_2 = (o_color_2 + unity_LightColor[1]);
-  o_color_2 = (o_color_2 + unity_LightColor[0]);
-  o_color_2 = (o_color_2 + (unity_LightColor[0] * unity_LightAtten[0].x));
-  o_color_2 = (o_color_2 + (unity_LightColor[1] * unity_LightAtten[1].x));
-  o_color_2 = (o_color_2 + (unity_LightColor[0] * unity_LightAtten[0].z));
-  o_color_2 = (o_color_2 + (unity_LightColor[1] * unity_LightAtten[1].z));
-  o_color_2 = (o_color_2 + unity_LightColor[1].x);
-  o_color_2 = (o_color_2 + unity_LightColor[2].x);
-  gl_Position = o_pos_1;
-  xlv_TEXCOORD0 = o_color_2;
+  mediump vec4 t0 = unity_LightColor[0];
+  mediump vec4 t1 = (t0 + unity_LightColor[1]);
+  mediump vec4 t2 = (t1 + unity_LightColor[0]);
+  mediump vec4 t3 = (t2 + unity_LightColor[1]);
+  mediump vec4 t4 = (t3 + unity_LightColor[2]);
+  mediump vec4 t5 = (t4 + unity_LightColor[3]);
+  mediump vec4 t6 = (t5 + unity_LightColor[3]);
+  mediump vec4 t7 = (t6 + unity_LightColor[2]);
+  mediump vec4 t8 = (t7 + unity_LightColor[1]);
+  mediump vec4 t9 = (t8 + unity_LightColor[0]);
+  mediump vec4 t10 = (t9 + (unity_LightColor[0] * unity_LightAtten[0].x));
+  mediump vec4 t11 = (t10 + (unity_LightColor[1] * unity_LightAtten[1].x));
+  mediump vec4 t12 = (t11 + (unity_LightColor[0] * unity_LightAtten[0].z));
+  mediump vec4 t13 = (t12 + (unity_LightColor[1] * unity_LightAtten[1].z));
+  mediump vec4 t14 = (t13 + unity_LightColor[1].x);
+  gl_Position = (UNITY_MATRIX_MVP * _inVertex);
+  xlv_TEXCOORD0 = (t14 + unity_LightColor[2].x);
 }
 
-
-// stats: 20 alu 0 tex 0 flow
+// stats: 26 alu 0 tex 0 flow
 // inputs: 1
 //  #0: _inVertex (high float) 4x1 [-1]
 // uniforms: 3 (total size: 0)

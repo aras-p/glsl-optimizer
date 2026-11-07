@@ -1,17 +1,14 @@
 #version 300 es
+precision highp float;
+precision highp int;
 uniform highp sampler2D map;
-layout(location=0) out mediump vec4 out_color;
+layout(location = 0) out mediump vec4 out_color;
 void main ()
 {
-  mediump vec2 map_size_1;
-  map_size_1 = vec2(textureSize (map, 0));
-  mediump vec4 tmpvar_2;
-  tmpvar_2.zw = vec2(0.0, 0.0);
-  tmpvar_2.xy = map_size_1;
-  out_color = tmpvar_2;
+  mediump vec2 t0 = vec2(textureSize(map, 0));
+  out_color = vec4(t0, 0.0, 0.0);
 }
 
-
-// stats: 2 alu 1 tex 0 flow
+// stats: 1 alu 1 tex 0 flow
 // textures: 1
 //  #0: map (high 2d) 0x0 [-1]

@@ -1,284 +1,173 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
-struct Emitter {
-  float4x4 mTransformation;
-  half fHeight;
-  half fRadius;
+struct _xlat_Particle_std140 {
+  packed_float3 vPosition;
+  float _padding_particle_0;
+  packed_float3 vVelocity;
+  float fLife;
 };
-struct Particle {
-  float3 vPosition;
-  half _padding_particle_0;
-  half3 vVelocity;
-  half fLife;
+static_assert(sizeof(_xlat_Particle_std140) == 32, "std140 size");
+struct _xlat_buf_SsboParticlesInput_std140 {
+  _xlat_Particle_std140 aParticlesIn[1];
 };
-struct alignas(16) _xlat_buf_storage1 {
-  alignas(16) packed_float3 vPosition;
-  alignas(4) float _padding_particle_0;
-  alignas(16) packed_float3 vVelocity;
-  alignas(4) float fLife;
+struct _xlat_buf_SsboParticlesOut_std140 {
+  _xlat_Particle_std140 aParticlesOut[1];
 };
-static_assert(sizeof(_xlat_buf_storage1) == 32, "std140 size");
-inline __attribute__((always_inline)) Particle _xlat_buf_storage1_read(const device _xlat_buf_storage1& storage)
-{
-  Particle value;
-  value.vPosition = float3(storage.vPosition);
-  value._padding_particle_0 = half(storage._padding_particle_0);
-  value.vVelocity = half3(storage.vVelocity);
-  value.fLife = half(storage.fLife);
-  return value;
-}
-struct alignas(16) _xlat_buf_storage0_element { _xlat_buf_storage1 value; };
-static_assert(sizeof(_xlat_buf_storage0_element) == 32, "array stride");
-static_assert(sizeof(float4x4) == 64, "buffer size");
-struct alignas(16) _xlat_buf_storage3 {
-  alignas(16) float4x4 mTransformation;
-  alignas(4) float fHeight;
-  alignas(4) float fRadius;
+struct _xlat_Emitter_std140 {
+  float4 mTransformation[4];
+  float fHeight;
+  float fRadius;
+  char _pad0[8];
 };
-static_assert(sizeof(_xlat_buf_storage3) == 80, "std140 size");
-inline __attribute__((always_inline)) Emitter _xlat_buf_storage3_read(constant _xlat_buf_storage3& storage)
-{
-  Emitter value;
-  value.mTransformation = storage.mTransformation;
-  value.fHeight = half(storage.fHeight);
-  value.fRadius = half(storage.fRadius);
-  return value;
-}
-struct alignas(16) _xlat_buf_storage2 {
-  alignas(16) _xlat_buf_storage3 emitter;
-  alignas(16) packed_float3 gravity;
-  alignas(4) float dt;
-  alignas(4) float fTotalTime;
-  alignas(4) float dragCoeffLinear;
-  alignas(4) float dragCoeffQuadratic;
-  alignas(4) float inwardForceCoeff;
-  alignas(4) float inwardForceRadius;
-  alignas(4) float bounciness;
-  alignas(4) float minLifespan;
-  alignas(4) float maxLifespan;
+static_assert(sizeof(_xlat_Emitter_std140) == 80, "std140 size");
+struct _xlat_buf_UboData_std140 {
+  _xlat_Emitter_std140 emitter;
+  packed_float3 gravity;
+  float dt;
+  float fTotalTime;
+  float dragCoeffLinear;
+  float dragCoeffQuadratic;
+  float inwardForceCoeff;
+  float inwardForceRadius;
+  float bounciness;
+  float minLifespan;
+  float maxLifespan;
 };
-static_assert(sizeof(_xlat_buf_storage2) == 128, "std140 size");
-struct alignas(16) _xlat_buf_storage6_element { float4 value; };
-struct _xlat_buf_storage6 { _xlat_buf_storage6_element elements[8]; };
-static_assert(sizeof(_xlat_buf_storage6) == 128, "std140 size");
-struct alignas(16) _xlat_buf_storage5 {
-  alignas(16) _xlat_buf_storage6 aSpheres;
+static_assert(sizeof(_xlat_buf_UboData_std140) == 128, "std140 size");
+struct _xlat_buf_UboSpheres_std140 {
+  float4 aSpheres[8];
 };
-static_assert(sizeof(_xlat_buf_storage5) == 128, "std140 size");
+static_assert(sizeof(_xlat_buf_UboSpheres_std140) == 128, "std140 size");
 struct xlatMtlShaderUniform {
 };
 // threadsPerThreadgroup: 64, 1, 1
 kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , const device uchar* _mtl_buffer1 [[buffer(1)]]
-  , device uchar* _mtl_buffer2 [[buffer(2)]]
-  , constant _xlat_buf_storage2& _mtl_buffer3 [[buffer(3)]]
-  , constant _xlat_buf_storage5& _mtl_buffer4 [[buffer(4)]]
+  , const device _xlat_buf_SsboParticlesInput_std140& _xlat_blk_SsboParticlesInput [[buffer(1)]]
+  , device _xlat_buf_SsboParticlesOut_std140& _xlat_blk_SsboParticlesOut [[buffer(2)]]
+  , constant _xlat_buf_UboData_std140& _xlat_blk_UboData [[buffer(3)]]
+  , constant _xlat_buf_UboSpheres_std140& _xlat_blk_UboSpheres [[buffer(4)]]
   , uint3 gl_GlobalInvocationID [[thread_position_in_grid]])
 {
-  half life_1 = 0;
-  Particle particle_2;
-  int tmpvar_3 = 0;
-  tmpvar_3 = (int((float(_mtl_buffer3.fTotalTime) * 1.357985e+07)) + (int(
-    (gl_GlobalInvocationID.x + 10000u)
-  ) * 145));
-  Particle tmpvar_4;
-  tmpvar_4 = _xlat_buf_storage1_read(reinterpret_cast<const device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_GlobalInvocationID.x].value);
-  particle_2 = tmpvar_4;
-  life_1 = half(((float)(tmpvar_4.fLife) - (float(_mtl_buffer3.dt) * 0.1)));
-  if ((life_1 < (half)(0.0))) {
-    half particle__padding_particle_0_5 = 0;
-    half particle_fLife_6 = 0;
-    half4 emittedDirection_7 = 0;
-    int tmpvar_8 = 0;
-    tmpvar_8 = abs(((1103515245 * 
-      abs(tmpvar_3)
-    ) + 12345));
-    int tmpvar_9 = 0;
-    tmpvar_9 = abs(((1103515245 * 
-      abs(tmpvar_8)
-    ) + 12345));
-    float tmpvar_10 = 0;
-    tmpvar_10 = ((float(tmpvar_9) / 2.147484e+09) * (float)(half(_mtl_buffer3.emitter.fRadius)));
-    float4 tmpvar_11 = 0;
-    tmpvar_11.w = 1.0;
-    tmpvar_11.x = tmpvar_10;
-    tmpvar_11.y = ((float(tmpvar_8) / 2.147484e+09) * (float)(half(_mtl_buffer3.emitter.fHeight)));
-    tmpvar_11.z = tmpvar_10;
-    emittedDirection_7 = half4(tmpvar_11);
-    emittedDirection_7 = half4((_mtl_buffer3.emitter.mTransformation * (float4)(emittedDirection_7)));
-    particle_2.vPosition = float3(0.0, 0.0, 0.0);
-    particle_2._padding_particle_0 = particle__padding_particle_0_5;
-    particle_2.vVelocity = ((emittedDirection_7.xyz * (half3)(float3(7.0, 15.0, 7.0))) + (half3)(float3(0.0, 15.0, 0.0)));
-    particle_2.fLife = particle_fLife_6;
-    life_1 = half(mix (float(_mtl_buffer3.minLifespan), float(_mtl_buffer3.maxLifespan), (float(
-      abs(((1103515245 * abs(tmpvar_9)) + 12345))
-    ) / 2.147484e+09)));
+  float3 r0 = 0;
+  float3 r1 = 0;
+  float3 r2 = 0;
+  float3 r3 = 0;
+  half3 r4 = 0;
+  half r5 = 0;
+  int t0 = (int((float(_xlat_blk_UboData.fTotalTime) * 13579846.0)) + ((int(gl_GlobalInvocationID.x) * 145) + 1450000));
+  uint t1 = gl_GlobalInvocationID.x;
+  float3 t2 = float3(_xlat_blk_SsboParticlesInput.aParticlesIn[int(t1)].vPosition);
+  half t3 = half(_xlat_blk_SsboParticlesInput.aParticlesIn[int(t1)]._padding_particle_0);
+  half3 t4 = half3(_xlat_blk_SsboParticlesInput.aParticlesIn[int(t1)].vVelocity);
+  float t5 = float(_xlat_blk_UboData.dt);
+  r5 = half((float(half(_xlat_blk_SsboParticlesInput.aParticlesIn[int(t1)].fLife)) - (t5 * 0.1)));
+  if ((r5 < half(0.0))) {
+    int t6 = abs(((1103515245 * abs(t0)) + 12345));
+    int t7 = abs(((1103515245 * t6) + 12345));
+    float t8 = ((float(t7) / 2.1474836e+09) * float(half(_xlat_blk_UboData.emitter.fRadius)));
+    half4 t9 = half4(float4(t8, ((float(t6) / 2.1474836e+09) * float(half(_xlat_blk_UboData.emitter.fHeight))), t8, 1.0));
+    float4 t10 = (float3x4(float4(_xlat_blk_UboData.emitter.mTransformation[0]), float4(_xlat_blk_UboData.emitter.mTransformation[1]), float4(_xlat_blk_UboData.emitter.mTransformation[2])) * float3(t9.xyz));
+    half4 t11 = half4((t10 + (float4(_xlat_blk_UboData.emitter.mTransformation[3]) * float(t9.w))));
+    r5 = half(mix(float(_xlat_blk_UboData.minLifespan), float(_xlat_blk_UboData.maxLifespan), (float(abs(((1103515245 * t7) + 12345))) / 2.1474836e+09)));
+    r4 = ((t11.xyz * half3(7.0, 15.0, 7.0)) + half3(0.0, 15.0, 0.0));
+    r3 = float3(0.0);
   } else {
-    float3 Ftotal_12 = 0;
-    float3 v_13 = 0;
-    v_13 = float3(tmpvar_4.vVelocity);
-    Ftotal_12 = float3(_mtl_buffer3.gravity);
-    if ((float(_mtl_buffer3.inwardForceCoeff) != 0.0)) {
-      half inward_14 = 0;
-      inward_14 = half((((tmpvar_4.vPosition.x * tmpvar_4.vPosition.x) + (tmpvar_4.vPosition.z * tmpvar_4.vPosition.z)) * float(_mtl_buffer3.inwardForceCoeff)));
-      if (((half)(0.001) < inward_14)) {
-        float3 tmpvar_15 = 0;
-        tmpvar_15.y = 0.0;
-        tmpvar_15.x = -(tmpvar_4.vPosition.x);
-        tmpvar_15.z = -(tmpvar_4.vPosition.z);
-        Ftotal_12 = (float3(_mtl_buffer3.gravity) + (max (
-          (((float)(inward_14) - float(_mtl_buffer3.inwardForceRadius)) + (float)(life_1))
-        , 0.0) * normalize(tmpvar_15)));
-      };
-    };
-    if (((float(_mtl_buffer3.dragCoeffLinear) != 0.0) && (float(_mtl_buffer3.dragCoeffQuadratic) != 0.0))) {
-      half vlength_16 = 0;
-      vlength_16 = half(sqrt(dot (v_13, v_13)));
-      Ftotal_12 = (Ftotal_12 + ((v_13 / (float)(vlength_16)) * ((float)(vlength_16) * 
-        (-((float(_mtl_buffer3.dragCoeffQuadratic) * (float)(vlength_16))) - float(_mtl_buffer3.dragCoeffLinear))
-      )));
-    };
-    v_13 = ((Ftotal_12 * float(_mtl_buffer3.dt)) + v_13);
-    particle_2.vPosition = ((v_13 * float(_mtl_buffer3.dt)) + tmpvar_4.vPosition);
-    float4 tmpvar_17 = 0;
-    tmpvar_17 = float4(_mtl_buffer4.aSpheres.elements[0u].value);
-    float3 tmpvar_18 = 0;
-    tmpvar_18 = (particle_2.vPosition - tmpvar_17.xyz);
-    float tmpvar_19 = 0;
-    tmpvar_19 = dot (tmpvar_18, tmpvar_18);
-    if ((tmpvar_19 < (tmpvar_17.w * tmpvar_17.w))) {
-      float3 tmpvar_20 = 0;
-      tmpvar_20 = (tmpvar_18 * rsqrt(tmpvar_19));
-      particle_2.vPosition = ((tmpvar_20 * tmpvar_17.w) + tmpvar_17.xyz);
-      v_13 = ((v_13 - (2.0 * 
-        (dot (tmpvar_20, v_13) * tmpvar_20)
-      )) * float(_mtl_buffer3.bounciness));
+    float3 t12 = float3(t4);
+    r0 = float3(_xlat_blk_UboData.gravity);
+    float t13 = float(_xlat_blk_UboData.inwardForceCoeff);
+    half t14 = half((((t2.x * t2.x) + (t2.z * t2.z)) * t13));
+    if (((half(0.001) < t14) && (t13 != 0.0))) {
+      float3 t15 = float3((-t2.x), 0.0, (-t2.z));
+      r0 = (r0 + (max(((float(t14) - float(_xlat_blk_UboData.inwardForceRadius)) + float(r5)), 0.0) * (t15 * rsqrt(dot(t15.xz, t15.xz)))));
+    }
+    float t16 = float(_xlat_blk_UboData.dragCoeffLinear);
+    float t17 = float(_xlat_blk_UboData.dragCoeffQuadratic);
+    half t18 = half(length(t12));
+    r1 = ((((min(abs(t16), abs(t17)) != 0.0) ? (r0 + ((t12 / float(t18)) * (float(t18) * ((-t16) - (t17 * float(t18)))))) : r0) * t5) + t12);
+    r2 = ((r1 * t5) + t2);
+    float4 t19 = float4(_xlat_blk_UboSpheres.aSpheres[0]);
+    float3 t20 = (r2 - t19.xyz);
+    float t21 = dot(t20, t20);
+    if ((t21 < (t19.w * t19.w))) {
+      float3 t22 = (t20 * rsqrt(t21));
+      r2 = ((t22 * t19.w) + t19.xyz);
+      r1 = ((r1 - ((float3(dot(t22, r1)) * 2.0) * t22)) * float(_xlat_blk_UboData.bounciness));
     } else {
-      float4 tmpvar_21 = 0;
-      tmpvar_21 = float4(_mtl_buffer4.aSpheres.elements[1u].value);
-      float3 tmpvar_22 = 0;
-      tmpvar_22 = (particle_2.vPosition - tmpvar_21.xyz);
-      float tmpvar_23 = 0;
-      tmpvar_23 = dot (tmpvar_22, tmpvar_22);
-      if ((tmpvar_23 < (tmpvar_21.w * tmpvar_21.w))) {
-        float3 tmpvar_24 = 0;
-        tmpvar_24 = (tmpvar_22 * rsqrt(tmpvar_23));
-        particle_2.vPosition = ((tmpvar_24 * tmpvar_21.w) + tmpvar_21.xyz);
-        v_13 = ((v_13 - (2.0 * 
-          (dot (tmpvar_24, v_13) * tmpvar_24)
-        )) * float(_mtl_buffer3.bounciness));
+      float4 t23 = float4(_xlat_blk_UboSpheres.aSpheres[1]);
+      float3 t24 = (r2 - t23.xyz);
+      float t25 = dot(t24, t24);
+      if ((t25 < (t23.w * t23.w))) {
+        float3 t26 = (t24 * rsqrt(t25));
+        r2 = ((t26 * t23.w) + t23.xyz);
+        r1 = ((r1 - ((float3(dot(t26, r1)) * 2.0) * t26)) * float(_xlat_blk_UboData.bounciness));
       } else {
-        float4 tmpvar_25 = 0;
-        tmpvar_25 = float4(_mtl_buffer4.aSpheres.elements[2u].value);
-        float3 tmpvar_26 = 0;
-        tmpvar_26 = (particle_2.vPosition - tmpvar_25.xyz);
-        float tmpvar_27 = 0;
-        tmpvar_27 = dot (tmpvar_26, tmpvar_26);
-        if ((tmpvar_27 < (tmpvar_25.w * tmpvar_25.w))) {
-          float3 tmpvar_28 = 0;
-          tmpvar_28 = (tmpvar_26 * rsqrt(tmpvar_27));
-          particle_2.vPosition = ((tmpvar_28 * tmpvar_25.w) + tmpvar_25.xyz);
-          v_13 = ((v_13 - (2.0 * 
-            (dot (tmpvar_28, v_13) * tmpvar_28)
-          )) * float(_mtl_buffer3.bounciness));
+        float4 t27 = float4(_xlat_blk_UboSpheres.aSpheres[2]);
+        float3 t28 = (r2 - t27.xyz);
+        float t29 = dot(t28, t28);
+        if ((t29 < (t27.w * t27.w))) {
+          float3 t30 = (t28 * rsqrt(t29));
+          r2 = ((t30 * t27.w) + t27.xyz);
+          r1 = ((r1 - ((float3(dot(t30, r1)) * 2.0) * t30)) * float(_xlat_blk_UboData.bounciness));
         } else {
-          float4 tmpvar_29 = 0;
-          tmpvar_29 = float4(_mtl_buffer4.aSpheres.elements[3u].value);
-          float3 tmpvar_30 = 0;
-          tmpvar_30 = (particle_2.vPosition - tmpvar_29.xyz);
-          float tmpvar_31 = 0;
-          tmpvar_31 = dot (tmpvar_30, tmpvar_30);
-          if ((tmpvar_31 < (tmpvar_29.w * tmpvar_29.w))) {
-            float3 tmpvar_32 = 0;
-            tmpvar_32 = (tmpvar_30 * rsqrt(tmpvar_31));
-            particle_2.vPosition = ((tmpvar_32 * tmpvar_29.w) + tmpvar_29.xyz);
-            v_13 = ((v_13 - (2.0 * 
-              (dot (tmpvar_32, v_13) * tmpvar_32)
-            )) * float(_mtl_buffer3.bounciness));
+          float4 t31 = float4(_xlat_blk_UboSpheres.aSpheres[3]);
+          float3 t32 = (r2 - t31.xyz);
+          float t33 = dot(t32, t32);
+          if ((t33 < (t31.w * t31.w))) {
+            float3 t34 = (t32 * rsqrt(t33));
+            r2 = ((t34 * t31.w) + t31.xyz);
+            r1 = ((r1 - ((float3(dot(t34, r1)) * 2.0) * t34)) * float(_xlat_blk_UboData.bounciness));
           } else {
-            float4 tmpvar_33 = 0;
-            tmpvar_33 = float4(_mtl_buffer4.aSpheres.elements[4u].value);
-            float3 tmpvar_34 = 0;
-            tmpvar_34 = (particle_2.vPosition - tmpvar_33.xyz);
-            float tmpvar_35 = 0;
-            tmpvar_35 = dot (tmpvar_34, tmpvar_34);
-            if ((tmpvar_35 < (tmpvar_33.w * tmpvar_33.w))) {
-              float3 tmpvar_36 = 0;
-              tmpvar_36 = (tmpvar_34 * rsqrt(tmpvar_35));
-              particle_2.vPosition = ((tmpvar_36 * tmpvar_33.w) + tmpvar_33.xyz);
-              v_13 = ((v_13 - (2.0 * 
-                (dot (tmpvar_36, v_13) * tmpvar_36)
-              )) * float(_mtl_buffer3.bounciness));
+            float4 t35 = float4(_xlat_blk_UboSpheres.aSpheres[4]);
+            float3 t36 = (r2 - t35.xyz);
+            float t37 = dot(t36, t36);
+            if ((t37 < (t35.w * t35.w))) {
+              float3 t38 = (t36 * rsqrt(t37));
+              r2 = ((t38 * t35.w) + t35.xyz);
+              r1 = ((r1 - ((float3(dot(t38, r1)) * 2.0) * t38)) * float(_xlat_blk_UboData.bounciness));
             } else {
-              float4 tmpvar_37 = 0;
-              tmpvar_37 = float4(_mtl_buffer4.aSpheres.elements[5u].value);
-              float3 tmpvar_38 = 0;
-              tmpvar_38 = (particle_2.vPosition - tmpvar_37.xyz);
-              float tmpvar_39 = 0;
-              tmpvar_39 = dot (tmpvar_38, tmpvar_38);
-              if ((tmpvar_39 < (tmpvar_37.w * tmpvar_37.w))) {
-                float3 tmpvar_40 = 0;
-                tmpvar_40 = (tmpvar_38 * rsqrt(tmpvar_39));
-                particle_2.vPosition = ((tmpvar_40 * tmpvar_37.w) + tmpvar_37.xyz);
-                v_13 = ((v_13 - (2.0 * 
-                  (dot (tmpvar_40, v_13) * tmpvar_40)
-                )) * float(_mtl_buffer3.bounciness));
+              float4 t39 = float4(_xlat_blk_UboSpheres.aSpheres[5]);
+              float3 t40 = (r2 - t39.xyz);
+              float t41 = dot(t40, t40);
+              if ((t41 < (t39.w * t39.w))) {
+                float3 t42 = (t40 * rsqrt(t41));
+                r2 = ((t42 * t39.w) + t39.xyz);
+                r1 = ((r1 - ((float3(dot(t42, r1)) * 2.0) * t42)) * float(_xlat_blk_UboData.bounciness));
               } else {
-                float4 tmpvar_41 = 0;
-                tmpvar_41 = float4(_mtl_buffer4.aSpheres.elements[6u].value);
-                float3 tmpvar_42 = 0;
-                tmpvar_42 = (particle_2.vPosition - tmpvar_41.xyz);
-                float tmpvar_43 = 0;
-                tmpvar_43 = dot (tmpvar_42, tmpvar_42);
-                if ((tmpvar_43 < (tmpvar_41.w * tmpvar_41.w))) {
-                  float3 tmpvar_44 = 0;
-                  tmpvar_44 = (tmpvar_42 * rsqrt(tmpvar_43));
-                  particle_2.vPosition = ((tmpvar_44 * tmpvar_41.w) + tmpvar_41.xyz);
-                  v_13 = ((v_13 - (2.0 * 
-                    (dot (tmpvar_44, v_13) * tmpvar_44)
-                  )) * float(_mtl_buffer3.bounciness));
+                float4 t43 = float4(_xlat_blk_UboSpheres.aSpheres[6]);
+                float3 t44 = (r2 - t43.xyz);
+                float t45 = dot(t44, t44);
+                if ((t45 < (t43.w * t43.w))) {
+                  float3 t46 = (t44 * rsqrt(t45));
+                  r2 = ((t46 * t43.w) + t43.xyz);
+                  r1 = ((r1 - ((float3(dot(t46, r1)) * 2.0) * t46)) * float(_xlat_blk_UboData.bounciness));
                 } else {
-                  float4 tmpvar_45 = 0;
-                  tmpvar_45 = float4(_mtl_buffer4.aSpheres.elements[7u].value);
-                  float3 tmpvar_46 = 0;
-                  tmpvar_46 = (particle_2.vPosition - tmpvar_45.xyz);
-                  float tmpvar_47 = 0;
-                  tmpvar_47 = dot (tmpvar_46, tmpvar_46);
-                  if ((tmpvar_47 < (tmpvar_45.w * tmpvar_45.w))) {
-                    float3 tmpvar_48 = 0;
-                    tmpvar_48 = (tmpvar_46 * rsqrt(tmpvar_47));
-                    particle_2.vPosition = ((tmpvar_48 * tmpvar_45.w) + tmpvar_45.xyz);
-                    v_13 = ((v_13 - (2.0 * 
-                      (dot (tmpvar_48, v_13) * tmpvar_48)
-                    )) * float(_mtl_buffer3.bounciness));
-                  };
-                };
-              };
-            };
-          };
-        };
-      };
-    };
-    if ((particle_2.vPosition.y < 0.0)) {
-      particle_2.vPosition.y = -(particle_2.vPosition.y);
-      v_13 = (v_13 * float3(0.4, -0.3, 0.4));
-    };
-    particle_2.vVelocity = half3(v_13);
-  };
-  particle_2.fLife = life_1;
-  {
-    device _xlat_buf_storage1& _buf_dst = reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer2 + 0)[gl_GlobalInvocationID.x].value;
-    const thread auto& _buf_src = particle_2;
-    _buf_dst.vPosition = float3(_buf_src.vPosition);
-    _buf_dst._padding_particle_0 = float(_buf_src._padding_particle_0);
-    _buf_dst.vVelocity = float3(_buf_src.vVelocity);
-    _buf_dst.fLife = float(_buf_src.fLife);
-  };
+                  float4 t47 = float4(_xlat_blk_UboSpheres.aSpheres[7]);
+                  float3 t48 = (r2 - t47.xyz);
+                  float t49 = dot(t48, t48);
+                  if ((t49 < (t47.w * t47.w))) {
+                    float3 t50 = (t48 * rsqrt(t49));
+                    r2 = ((t50 * t47.w) + t47.xyz);
+                    r1 = ((r1 - ((float3(dot(t50, r1)) * 2.0) * t50)) * float(_xlat_blk_UboData.bounciness));
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    bool t51 = (r2.y < 0.0);
+    r3 = (t51 ? float3(r2.x, (-r2.y), r2.z) : r2);
+    r4 = half3((t51 ? (r1 * float3(0.4, -0.3, 0.4)) : r1));
+  }
+  _xlat_blk_SsboParticlesOut.aParticlesOut[int(t1)].vPosition = r3;
+  _xlat_blk_SsboParticlesOut.aParticlesOut[int(t1)]._padding_particle_0 = float(t3);
+  _xlat_blk_SsboParticlesOut.aParticlesOut[int(t1)].vVelocity = float3(r4);
+  _xlat_blk_SsboParticlesOut.aParticlesOut[int(t1)].fLife = float(r5);
 }
 
-
-// stats: 173 alu 0 tex 13 flow
+// stats: 180 alu 0 tex 10 flow
 // workgroup size: 64 1 1
 // buffer #0: SsboParticlesInput storage layout std140 binding 3 (size: unknown) metal 1
 //  member #0: Particle[] aParticlesIn offset 0 array runtime stride 32 readonly

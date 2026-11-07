@@ -4,7 +4,9 @@ using namespace metal;
 struct xlatMtlShaderInput {
 };
 struct xlatMtlShaderOutput {
-  half4 _colArr_0 [[color(0)]];
+  half4 _xlat_varying0 [[color(0)]];
+  half4 _xlat_varying1 [[color(1)]];
+  half4 _colVecUnused [[color(2)]];
   half4 _colVec [[color(3)]];
 };
 struct xlatMtlShaderUniform {
@@ -12,10 +14,12 @@ struct xlatMtlShaderUniform {
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  _mtl_o._colArr_0 = half4(float4(0.0, 0.0, 0.0, 0.0));
-  _mtl_o._colVec = half4(float4(1.0, 1.0, 1.0, 1.0));
+  half4 _colArr[2];
+  _colArr[0] = half4(0.0);
+  _mtl_o._colVec = half4(1.0);
+  _mtl_o._xlat_varying0 = _colArr[0];
+  _mtl_o._xlat_varying1 = _colArr[1];
   return _mtl_o;
 }
 
-
-// stats: 2 alu 0 tex 0 flow
+// stats: 0 alu 0 tex 0 flow

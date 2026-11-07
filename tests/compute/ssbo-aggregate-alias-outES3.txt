@@ -1,23 +1,18 @@
 #version 310 es
-layout(local_size_x=1) in;
+layout(local_size_x = 1) in;
 struct Entry {
   highp uint index;
   highp vec3 value;
   highp float weights[3];
 };
-layout(std430, column_major) buffer Data {
-  layout(column_major) Entry entries[];
+layout(std430) buffer Data {
+  Entry entries[];
 } data;
 void main ()
 {
-  highp uint i_1;
-  highp uint tmpvar_2;
-  tmpvar_2 = (gl_GlobalInvocationID.x + 1u);
-  i_1 = (tmpvar_2 + 1u);
-  data.entries[data.entries[0].index] = data.entries[tmpvar_2];
-  data.entries[0].weights = data.entries[i_1].weights;
+  data.entries[int(data.entries[0].index)] = data.entries[(1 + int(gl_GlobalInvocationID.x))];
+  data.entries[0].weights = data.entries[(2 + int(gl_GlobalInvocationID.x))].weights;
 }
-
 
 // stats: 2 alu 0 tex 0 flow
 // workgroup size: 1 1 1

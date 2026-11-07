@@ -1,38 +1,30 @@
 #version 310 es
-layout(local_size_x=64) in;
+layout(local_size_x = 64) in;
 struct particle {
   highp vec4 pos;
   highp vec4 vel;
 };
-layout(std430, column_major, binding=0) buffer cs_ssbo {
-  layout(column_major) particle prt[];
+layout(std430, binding = 0) buffer cs_ssbo {
+  particle prt[];
 };
-layout(std140, column_major, binding=0) uniform cs_params {
+layout(std140, binding = 0) uniform cs_params {
   highp float dt;
   highp int num_particles;
 };
 void main ()
 {
-  highp vec4 vel_1;
-  highp vec4 pos_2;
-  if ((gl_GlobalInvocationID.x >= uint(num_particles))) {
-    return;
-  };
-  highp vec4 tmpvar_3;
-  tmpvar_3 = prt[gl_GlobalInvocationID.x].vel;
-  vel_1.xzw = tmpvar_3.xzw;
-  vel_1.y = (tmpvar_3.y - dt);
-  pos_2 = (prt[gl_GlobalInvocationID.x].pos + (vel_1 * dt));
-  if ((pos_2.y < -2.0)) {
-    pos_2.y = -1.8;
-    vel_1 = (vel_1 * vec4(0.8, -0.8, 0.8, 0.0));
-  };
-  prt[gl_GlobalInvocationID.x].pos = pos_2;
-  prt[gl_GlobalInvocationID.x].vel = vel_1;
+  if ((gl_GlobalInvocationID.x < uint(num_particles))) {
+    highp vec4 t0 = prt[int(gl_GlobalInvocationID.x)].vel;
+    highp vec4 t1 = vec4(t0.x, (t0.y - dt), t0.zw);
+    highp vec4 t2 = (prt[int(gl_GlobalInvocationID.x)].pos + (t1 * dt));
+    bool t3 = (t2.y < -2.0);
+    highp vec4 t4 = (t3 ? (t1 * vec4(0.8, -0.8, 0.8, 0.0)) : t1);
+    prt[int(gl_GlobalInvocationID.x)].pos = (t3 ? vec4(t2.x, -1.8, t2.zw) : t2);
+    prt[int(gl_GlobalInvocationID.x)].vel = t4;
+  }
 }
 
-
-// stats: 8 alu 0 tex 3 flow
+// stats: 8 alu 0 tex 1 flow
 // workgroup size: 64 1 1
 // buffer #0: cs_params layout std140 binding 0 (size: 16)
 //  member #0: float dt offset 0

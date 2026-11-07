@@ -4,5 +4,4 @@ void main ()
   gl_FragData[1] = vec4((1.0/0.0), (-1.0/0.0), (0.0/0.0), (0.0/0.0));
 }
 
-
-// stats: 2 alu 0 tex 0 flow
+// stats: 0 alu 0 tex 0 flow

@@ -1,48 +1,25 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
-struct alignas(16) _xlat_buf_storage0_element { float4 value; };
-static_assert(sizeof(_xlat_buf_storage0_element) == 16, "array stride");
+struct _xlat_buf_Output_std430 {
+  float4 values[1];
+};
 struct xlatMtlShaderUniform {
 };
 // threadsPerThreadgroup: 8, 1, 1
 kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , device uchar* _mtl_buffer1 [[buffer(1)]]
-  , uint3 gl_GlobalInvocationID [[thread_position_in_grid]]
+  , device _xlat_buf_Output_std430& outputData [[buffer(1)]]
   , texture2d<uint, access::read> source2D [[texture(0)]]
   , texture2d_array<int, access::read> sourceArray [[texture(1)]]
-  , texture3d<float, access::read> source3D [[texture(2)]])
+  , texture3d<float, access::read> source3D [[texture(2)]]
+  , uint3 gl_GlobalInvocationID [[thread_position_in_grid]])
 {
-  int tmpvar_1 = 0;
-  tmpvar_1 = (int(gl_GlobalInvocationID.x) - 1);
-  int2 tmpvar_2 = 0;
-  tmpvar_2 = int2(source2D.get_width(), source2D.get_height());
-  int2 tmpvar_3 = 0;
-  tmpvar_3.x = tmpvar_1;
-  tmpvar_3.y = tmpvar_2.y;
-  uint4 tmpvar_4;
-  tmpvar_4 = source2D.read(uint2(tmpvar_3));
-  int3 tmpvar_5 = 0;
-  tmpvar_5 = int3(sourceArray.get_width(), sourceArray.get_height(), sourceArray.get_array_size());
-  int3 tmpvar_6 = 0;
-  tmpvar_6.y = 0;
-  tmpvar_6.x = tmpvar_1;
-  tmpvar_6.z = tmpvar_5.z;
-  int4 tmpvar_7 = 0;
-  tmpvar_7 = sourceArray.read(uint2(tmpvar_6.xy), uint(tmpvar_6.z));
-  int3 tmpvar_8 = 0;
-  tmpvar_8 = int3(source3D.get_width(), source3D.get_height(), source3D.get_depth());
-  int3 tmpvar_9 = 0;
-  tmpvar_9.y = 0;
-  tmpvar_9.x = tmpvar_1;
-  tmpvar_9.z = tmpvar_8.z;
-  float4 tmpvar_10 = 0;
-  tmpvar_10 = source3D.read(uint3(tmpvar_9));
-  reinterpret_cast<device _xlat_buf_storage0_element*>(_mtl_buffer1 + 0)[gl_GlobalInvocationID.x].value = float4(((float4(tmpvar_4) + float4(tmpvar_7)) + tmpvar_10));
+  int t0 = (int(gl_GlobalInvocationID.x) - 1);
+  int4 t1 = sourceArray.read(uint2(int4(t0, 0, int3(sourceArray.get_width(), sourceArray.get_height(), sourceArray.get_array_size()).z, 0).xy), uint(int4(t0, 0, int3(sourceArray.get_width(), sourceArray.get_height(), sourceArray.get_array_size()).z, 0).z));
+  outputData.values[int(gl_GlobalInvocationID.x)] = ((float4(source2D.read(uint2(int4(t0, int2(source2D.get_width(), source2D.get_height()).y, 0, 0).xy))) + float4(t1)) + source3D.read(uint3(int4(t0, 0, int3(source3D.get_width(), source3D.get_height(), source3D.get_depth()).z, 0).xyz)));
 }
 
-
-// stats: 8 alu 6 tex 0 flow
+// stats: 5 alu 6 tex 0 flow
 // workgroup size: 8 1 1
 // buffer #0: Output storage instance outputData layout std430 (size: unknown) metal 1
 //  member #0: vec4[] values offset 0 array runtime stride 16

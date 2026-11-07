@@ -13,11 +13,10 @@ struct xlatMtlShaderUniform {
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  _mtl_o.final_color0 = half4(float4(1.0, 0.0, 0.0, 1.0));
-  _mtl_o.final_color1 = half4(float4(0.0, 1.0, 0.0, 1.0));
-  _mtl_o.final_color2 = half4(float4(0.0, 0.0, 1.0, 1.0));
+  _mtl_o.final_color0 = half4(1.0, 0.0, 0.0, 1.0);
+  _mtl_o.final_color1 = half4(0.0, 1.0, 0.0, 1.0);
+  _mtl_o.final_color2 = half4(0.0, 0.0, 1.0, 1.0);
   return _mtl_o;
 }
 
-
-// stats: 3 alu 0 tex 0 flow
+// stats: 0 alu 0 tex 0 flow

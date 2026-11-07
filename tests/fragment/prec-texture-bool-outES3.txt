@@ -1,19 +1,17 @@
 #version 300 es
+precision highp float;
+precision highp int;
 uniform highp sampler2D fullTexture;
 uniform mediump sampler2D halfTexture;
 in highp vec2 uv;
 out highp vec4 result;
 void main ()
 {
-  highp float front_1;
-  highp vec4 mask_2;
-  highp vec4 tmpvar_3;
-  tmpvar_3 = textureLod (fullTexture, uv, 0.0);
-  mask_2 = vec4(lessThan (vec4(0.5, 0.5, 0.5, 0.5), tmpvar_3));
-  front_1 = float(gl_FrontFacing);
-  result = (((tmpvar_3 + textureLod (halfTexture, uv, 0.0)) + mask_2) + front_1);
+  highp vec4 t0 = textureLod(fullTexture, uv, 0.0);
+  highp vec4 t1 = vec4(lessThan(vec4(0.5), t0));
+  highp float t2 = float(gl_FrontFacing);
+  result = (((t0 + textureLod(halfTexture, uv, 0.0)) + t1) + t2);
 }
-
 
 // stats: 6 alu 2 tex 0 flow
 // inputs: 2

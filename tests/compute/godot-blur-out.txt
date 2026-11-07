@@ -1,6 +1,6 @@
 #version 430
-layout(local_size_x=8, local_size_y=8) in;
-layout(std140, column_major, binding=0) uniform Params {
+layout(local_size_x = 8, local_size_y = 8) in;
+layout(std140, binding = 0) uniform Params {
   ivec4 section;
   ivec2 target;
   uint flags;
@@ -18,76 +18,41 @@ layout(std140, column_major, binding=0) uniform Params {
   vec2 octmap_border_size;
   vec4 set_color;
 } params;
-layout(binding=0) uniform sampler2D source_color;
-layout(rgba16f, binding=3) writeonly restrict uniform image2D dest_buffer;
+layout(binding = 0) uniform sampler2D source_color;
+layout(rgba16f, binding = 3) restrict writeonly uniform image2D dest_buffer;
 shared vec4 local_cache[256];
 shared vec4 temp_cache[128];
 void main ()
 {
-  vec4 color_1;
-  vec4 color_bottom_2;
-  vec4 color_top_3;
-  ivec2 tmpvar_4;
-  tmpvar_4 = ivec2(gl_GlobalInvocationID.xy);
-  vec2 tmpvar_5;
-  tmpvar_5 = clamp (((
-    vec2(((uvec2(params.section.xy) + gl_GlobalInvocationID.xy) + gl_LocalInvocationID.xy))
-   - 3.5) / vec2(params.section.zw)), (0.5 / vec2(params.section.zw)), (1.0 - (1.5 / 
-    vec2(params.section.zw)
-  )));
-  uint tmpvar_6;
-  tmpvar_6 = ((gl_LocalInvocationID.x * 2u) + (32u * gl_LocalInvocationID.y));
-  local_cache[tmpvar_6] = textureLod (source_color, tmpvar_5, 0.0);
-  vec2 tmpvar_7;
-  tmpvar_7.y = 0.0;
-  tmpvar_7.x = (1.0/(float(params.section.z)));
-  local_cache[(tmpvar_6 + 1u)] = textureLod (source_color, (tmpvar_5 + tmpvar_7), 0.0);
-  vec2 tmpvar_8;
-  tmpvar_8.x = 0.0;
-  tmpvar_8.y = (1.0/(float(params.section.w)));
-  local_cache[(tmpvar_6 + 16u)] = textureLod (source_color, (tmpvar_5 + tmpvar_8), 0.0);
-  local_cache[(17u + tmpvar_6)] = textureLod (source_color, (tmpvar_5 + (1.0/(vec2(params.section.zw)))), 0.0);
-  memoryBarrierShared ();
+  vec2 t0 = vec2(params.section.zw);
+  vec2 t1 = min(max(((vec2(uvec2(((params.section.xy + ivec2(gl_GlobalInvocationID.xy)) + ivec2(gl_LocalInvocationID.xy)))) - 3.5) / t0), (0.5 / t0)), (1.0 - (1.5 / t0)));
+  int t2 = (int(gl_LocalInvocationID.y) << 5u);
+  int t3 = ((int(gl_LocalInvocationID.x) << 1u) + t2);
+  local_cache[t3] = textureLod(source_color, t1, 0.0);
+  local_cache[(t3 + 1)] = textureLod(source_color, (t1 + vec2((1.0 / float(params.section.z)), 0.0)), 0.0);
+  local_cache[(t3 + 16)] = textureLod(source_color, (t1 + vec2(0.0, (1.0 / float(params.section.w)))), 0.0);
+  local_cache[(17 + t3)] = textureLod(source_color, (t1 + (1.0 / t0)), 0.0);
+  memoryBarrierShared();
   barrier();
-  uint tmpvar_9;
-  tmpvar_9 = ((gl_LocalInvocationID.x + (gl_LocalInvocationID.y * 32u)) + 4u);
-  color_top_3 = (local_cache[tmpvar_9] * 0.214607);
-  color_top_3 = (color_top_3 + (local_cache[(tmpvar_9 + 1u)] * 0.189879));
-  color_top_3 = (color_top_3 + (local_cache[(tmpvar_9 + 2u)] * 0.131514));
-  color_top_3 = (color_top_3 + (local_cache[(tmpvar_9 + 3u)] * 0.071303));
-  color_top_3 = (color_top_3 + (local_cache[(tmpvar_9 + 4294967295u)] * 0.189879));
-  color_top_3 = (color_top_3 + (local_cache[(tmpvar_9 + 4294967294u)] * 0.131514));
-  color_top_3 = (color_top_3 + (local_cache[(tmpvar_9 + 4294967293u)] * 0.071303));
-  color_bottom_2 = (local_cache[(tmpvar_9 + 16u)] * 0.214607);
-  color_bottom_2 = (color_bottom_2 + (local_cache[(17u + tmpvar_9)] * 0.189879));
-  color_bottom_2 = (color_bottom_2 + (local_cache[(18u + tmpvar_9)] * 0.131514));
-  color_bottom_2 = (color_bottom_2 + (local_cache[(19u + tmpvar_9)] * 0.071303));
-  color_bottom_2 = (color_bottom_2 + (local_cache[(15u + tmpvar_9)] * 0.189879));
-  color_bottom_2 = (color_bottom_2 + (local_cache[(14u + tmpvar_9)] * 0.131514));
-  color_bottom_2 = (color_bottom_2 + (local_cache[(13u + tmpvar_9)] * 0.071303));
-  uint tmpvar_10;
-  tmpvar_10 = ((gl_LocalInvocationID.y * 2u) + (gl_LocalInvocationID.x * 16u));
-  temp_cache[tmpvar_10] = color_top_3;
-  temp_cache[(tmpvar_10 + 1u)] = color_bottom_2;
-  memoryBarrierShared ();
+  int t4 = (int(gl_LocalInvocationID.x) + t2);
+  vec4 t5 = (((((local_cache[(t4 + 4)] * 0.214607) + (local_cache[(5 + t4)] * 0.189879)) + (local_cache[(6 + t4)] * 0.131514)) + (local_cache[(7 + t4)] * 0.071303)) + (local_cache[(3 + t4)] * 0.189879));
+  vec4 t6 = (((((local_cache[(20 + t4)] * 0.214607) + (local_cache[(21 + t4)] * 0.189879)) + (local_cache[(22 + t4)] * 0.131514)) + (local_cache[(23 + t4)] * 0.071303)) + (local_cache[(19 + t4)] * 0.189879));
+  vec4 t7 = ((t6 + (local_cache[(18 + t4)] * 0.131514)) + (local_cache[(17 + t4)] * 0.071303));
+  int t8 = (int(gl_LocalInvocationID.x) << 4u);
+  int t9 = ((int(gl_LocalInvocationID.y) << 1u) + t8);
+  temp_cache[t9] = ((t5 + (local_cache[(2 + t4)] * 0.131514)) + (local_cache[(1 + t4)] * 0.071303));
+  temp_cache[(t9 + 1)] = t7;
+  memoryBarrierShared();
   barrier();
-  if ((greaterThanEqual (tmpvar_4, params.section.zw) != bvec2(0, 0))) {
-    return;
-  };
-  uint tmpvar_11;
-  tmpvar_11 = ((gl_LocalInvocationID.y + (gl_LocalInvocationID.x * 16u)) + 4u);
-  color_1 = (temp_cache[tmpvar_11] * 0.214607);
-  color_1 = (color_1 + (temp_cache[(tmpvar_11 + 1u)] * 0.189879));
-  color_1 = (color_1 + (temp_cache[(tmpvar_11 + 2u)] * 0.131514));
-  color_1 = (color_1 + (temp_cache[(tmpvar_11 + 3u)] * 0.071303));
-  color_1 = (color_1 + (temp_cache[(tmpvar_11 + 4294967295u)] * 0.189879));
-  color_1 = (color_1 + (temp_cache[(tmpvar_11 + 4294967294u)] * 0.131514));
-  color_1 = (color_1 + (temp_cache[(tmpvar_11 + 4294967293u)] * 0.071303));
-  imageStore (dest_buffer, (tmpvar_4 + params.target), color_1);
+  if ((!(greaterThanEqual(ivec2(gl_GlobalInvocationID.xy), params.section.zw) != bvec2(false)))) {
+    int t10 = (int(gl_LocalInvocationID.y) + t8);
+    vec4 t11 = (((((temp_cache[(t10 + 4)] * 0.214607) + (temp_cache[(5 + t10)] * 0.189879)) + (temp_cache[(6 + t10)] * 0.131514)) + (temp_cache[(7 + t10)] * 0.071303)) + (temp_cache[(3 + t10)] * 0.189879));
+    ivec2 t12 = (ivec2(gl_GlobalInvocationID.xy) + params.target);
+    imageStore(dest_buffer, ivec4(t12, 0, 0).xy, ((t11 + (temp_cache[(2 + t10)] * 0.131514)) + (temp_cache[(1 + t10)] * 0.071303)));
+  }
 }
 
-
-// stats: 103 alu 5 tex 2 flow
+// stats: 95 alu 5 tex 1 flow
 // workgroup size: 8 8 1
 // buffer #0: Params instance params layout std140 binding 0 (size: 96)
 //  member #0: ivec4 section offset 0

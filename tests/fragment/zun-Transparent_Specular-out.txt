@@ -6,39 +6,16 @@ uniform float _Shininess;
 uniform vec4 _SpecColor;
 void main ()
 {
-  vec3 xlt_IN_normal_1;
-  vec3 xlt_IN_lightDir_2;
-  xlt_IN_normal_1 = gl_TexCoord[1].xyz;
-  xlt_IN_lightDir_2 = gl_TexCoord[2].xyz;
-  vec4 c_3;
-  float tmpvar_4;
-  vec4 tmpvar_5;
-  tmpvar_5 = texture2D (_MainTex, gl_TexCoord[0].xy);
-  tmpvar_4 = (tmpvar_5.w * _Color.w);
-  float tmpvar_6;
-  tmpvar_6 = texture2D (_LightTexture0, gl_TexCoord[4].xy).w;
-  vec4 c_7;
-  float spec_8;
-  spec_8 = (pow (max (0.0, 
-    dot (xlt_IN_normal_1, normalize((xlt_IN_lightDir_2 + normalize(gl_TexCoord[3].xyz))))
-  ), (_Shininess * 128.0)) * tmpvar_5.w);
-  c_7.xyz = (((
-    ((tmpvar_5.xyz * _Color.xyz) * _LightColor0.xyz)
-   * 
-    max (0.0, dot (xlt_IN_normal_1, xlt_IN_lightDir_2))
-  ) + (
-    (_LightColor0.xyz * _SpecColor.xyz)
-   * spec_8)) * (tmpvar_6 * 2.0));
-  c_7.w = (tmpvar_4 + ((_LightColor0.w * _SpecColor.w) * (spec_8 * tmpvar_6)));
-  c_3.xyz = c_7.xyz;
-  c_3.w = tmpvar_4;
-  gl_FragData[0] = c_3;
+  vec4 t0 = texture2D(_MainTex, gl_TexCoord[0].xy);
+  vec3 t1 = (gl_TexCoord[2].xyz + normalize(gl_TexCoord[3].xyz));
+  vec3 t2 = ((((t0.xyz * _Color.xyz) * _LightColor0.xyz) * max(0.0, dot(gl_TexCoord[1].xyz, gl_TexCoord[2].xyz))) + ((_LightColor0.xyz * _SpecColor.xyz) * (pow(max(0.0, dot(gl_TexCoord[1].xyz, normalize(t1))), (_Shininess * 128.0)) * t0.w)));
+  vec3 t3 = (t2 * (2.0 * texture2D(_LightTexture0, gl_TexCoord[4].xy).w));
+  gl_FragData[0] = vec4(t3, (t0.w * _Color.w));
 }
-
 
 // stats: 23 alu 2 tex 0 flow
 // inputs: 1
-//  #0: gl_TexCoord (high float) 4x1 [5] loc 4
+//  #0: gl_TexCoord (high float) 4x1 [0] loc 4
 // uniforms: 4 (total size: 0)
 //  #0: _Color (high float) 4x1 [-1]
 //  #1: _LightColor0 (high float) 4x1 [-1]

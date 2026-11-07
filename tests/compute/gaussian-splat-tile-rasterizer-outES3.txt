@@ -1,5 +1,5 @@
 #version 310 es
-layout(local_size_x=16, local_size_y=16) in;
+layout(local_size_x = 16, local_size_y = 16) in;
 struct RasterizeData {
   highp vec2 image_pos;
   highp vec2 pos_xy;
@@ -7,119 +7,81 @@ struct RasterizeData {
   highp float pos_z;
   highp vec4 color;
 };
-layout(std140, column_major, binding=3) uniform Params {
+layout(std140, binding = 3) uniform Params {
   highp float heatmap_factor;
 };
-layout(std430, column_major, binding=2) buffer BoundsBuffer {
-  readonly restrict highp uvec2 bounds_buffer[];
+layout(std430, binding = 2) buffer BoundsBuffer {
+  restrict readonly highp uvec2 bounds_buffer[];
 };
-layout(std430, column_major, binding=1) buffer SortBuffer {
-  readonly restrict highp uint sort_buffer[];
+layout(std430, binding = 1) buffer SortBuffer {
+  restrict readonly highp uint sort_buffer[];
 };
-layout(std430, column_major, binding=0) buffer CulledBuffer {
-  layout(column_major) readonly restrict RasterizeData culled_buffer[];
+layout(std430, binding = 0) buffer CulledBuffer {
+  restrict readonly RasterizeData culled_buffer[];
 };
-layout(rgba32f, binding=4) writeonly restrict uniform highp image2D rasterized_image;
+layout(rgba32f, binding = 4) restrict writeonly uniform highp image2D rasterized_image;
 shared highp vec3 conic_tile[256];
 shared highp vec4 color_tile[256];
 shared highp vec2 image_pos_tile[256];
 shared highp uint shared_t;
 void main ()
 {
-  highp uint i_1;
-  highp float t_2;
-  highp vec3 blended_color_3;
-  highp ivec2 tmpvar_4;
-  tmpvar_4 = imageSize (rasterized_image);
-  highp uvec2 tmpvar_5;
-  tmpvar_5 = uvec2(tmpvar_4);
-  highp uvec2 tmpvar_6;
-  tmpvar_6 = ((15u + tmpvar_5) / 16u);
-  if ((greaterThanEqual (gl_WorkGroupID.xy, tmpvar_6) != bvec2(0, 0))) {
-    return;
-  };
-  highp uint tmpvar_7;
-  tmpvar_7 = ((gl_WorkGroupID.y * tmpvar_6.x) + gl_WorkGroupID.x);
-  highp uvec2 tmpvar_8;
-  tmpvar_8 = ((gl_WorkGroupID.xy * 16u) + gl_LocalInvocationID.xy);
-  bool tmpvar_9;
-  tmpvar_9 = (lessThan (tmpvar_8, tmpvar_5) == bvec2(1, 1));
-  highp uvec2 tmpvar_10;
-  tmpvar_10 = bounds_buffer[tmpvar_7];
-  highp uint tmpvar_11;
-  tmpvar_11 = (tmpvar_10.y - tmpvar_10.x);
-  highp uint tmpvar_12;
-  tmpvar_12 = ((255u + tmpvar_11) / 256u);
-  if ((gl_LocalInvocationIndex == uint(0))) {
-    shared_t = 4294967295u;
-  };
-  barrier();
-  blended_color_3 = vec3(0.0, 0.0, 0.0);
-  t_2 = 1.0;
-  i_1 = uint(0);
-  while (true) {
-    if (!(((i_1 < tmpvar_12) && (255u < shared_t)))) {
-      break;
-    };
-    highp uint tmpvar_13;
-    tmpvar_13 = (256u * i_1);
-    highp uint tmpvar_14;
-    tmpvar_14 = min (256u, (tmpvar_11 - tmpvar_13));
+  highp int r0;
+  highp int r1;
+  highp float r2;
+  highp vec3 r3;
+  highp ivec2 t0 = imageSize(rasterized_image);
+  highp uvec2 t1 = (uvec2((15 + t0)) >> 4u);
+  if ((!(greaterThanEqual(gl_WorkGroupID.xy, t1) != bvec2(false)))) {
+    highp ivec2 t2 = ((ivec2(gl_WorkGroupID.xy) << 4u) + ivec2(gl_LocalInvocationID.xy));
+    bool t3 = (lessThan(uvec2(t2), uvec2(t0)) == bvec2(true));
+    highp uvec2 t4 = bounds_buffer[((int(gl_WorkGroupID.y) * int(t1.x)) + int(gl_WorkGroupID.x))];
+    highp int t5 = (int(t4.y) - int(t4.x));
+    bool t6 = (int(gl_LocalInvocationIndex) == 0);
+    if (t6) {
+      shared_t = 4294967295u;
+    }
     barrier();
-    if ((gl_LocalInvocationIndex < tmpvar_14)) {
-      RasterizeData tmpvar_15;
-      tmpvar_15 = culled_buffer[sort_buffer[((tmpvar_10.x + tmpvar_13) + gl_LocalInvocationIndex)]];
-      conic_tile[gl_LocalInvocationIndex] = tmpvar_15.conic;
-      color_tile[gl_LocalInvocationIndex] = tmpvar_15.color;
-      image_pos_tile[gl_LocalInvocationIndex] = tmpvar_15.image_pos;
-    };
-    if ((gl_LocalInvocationIndex == uint(0))) {
-      shared_t = uint(0);
-    };
-    barrier();
-    if (tmpvar_9) {
-      highp uint j_16;
-      j_16 = uint(0);
-      while (true) {
-        if (!(((j_16 < tmpvar_14) && (0.003921569 < t_2)))) {
-          break;
-        };
-        highp vec3 tmpvar_17;
-        tmpvar_17 = conic_tile[j_16];
-        highp vec4 tmpvar_18;
-        tmpvar_18 = color_tile[j_16];
-        highp vec2 tmpvar_19;
-        tmpvar_19 = (image_pos_tile[j_16] - vec2(tmpvar_8));
-        highp float tmpvar_20;
-        tmpvar_20 = (tmpvar_18.w * exp((
-          (-0.5 * (((tmpvar_17.x * tmpvar_19.x) * tmpvar_19.x) + ((tmpvar_17.z * tmpvar_19.y) * tmpvar_19.y)))
-         - 
-          ((tmpvar_17.y * tmpvar_19.x) * tmpvar_19.y)
-        )));
-        blended_color_3 = (blended_color_3 + ((tmpvar_18.xyz * tmpvar_20) * t_2));
-        t_2 = (t_2 * (1.0 - tmpvar_20));
-        j_16++;
-      };
-      highp uint tmpvar_21;
-      tmpvar_21 = atomicAdd (shared_t, uint((t_2 * 255.0)));
-    };
-    barrier();
-    i_1++;
-  };
-  if (tmpvar_9) {
-    highp vec4 tmpvar_22;
-    tmpvar_22.w = 1.0;
-    tmpvar_22.xyz = (blended_color_3 + ((
-      mix (vec3(0.0, 0.0, 1.0), vec3(1.0, 0.2, 0.2), (float(tmpvar_11) * 0.0005))
-     * 
-      (1.0 - t_2)
-    ) * heatmap_factor));
-    imageStore (rasterized_image, ivec2(tmpvar_8), tmpvar_22);
-  };
+    highp uint t7 = (uint((255 + t5)) >> 8u);
+    r2 = 1.0;
+    r3 = vec3(0.0);
+    for (r1 = 0; ((uint(r1) < t7) && (255u < shared_t)); r1++) {
+      highp int t8 = (r1 << 8u);
+      highp int t9 = (t5 - t8);
+      barrier();
+      highp uint t10 = min(256u, uint(t9));
+      if ((gl_LocalInvocationIndex < t10)) {
+        highp vec2 t11 = culled_buffer[int(sort_buffer[((int(t4.x) + t8) + int(gl_LocalInvocationIndex))])].image_pos;
+        highp vec4 t12 = culled_buffer[int(sort_buffer[((int(t4.x) + t8) + int(gl_LocalInvocationIndex))])].color;
+        conic_tile[int(gl_LocalInvocationIndex)] = culled_buffer[int(sort_buffer[((int(t4.x) + t8) + int(gl_LocalInvocationIndex))])].conic;
+        color_tile[int(gl_LocalInvocationIndex)] = t12;
+        image_pos_tile[int(gl_LocalInvocationIndex)] = t11;
+      }
+      if (t6) {
+        shared_t = 0u;
+      }
+      barrier();
+      if (t3) {
+        for (r0 = 0; ((uint(r0) < t10) && (0.003921569 < r2)); r0++) {
+          highp vec3 t13 = conic_tile[r0];
+          highp vec4 t14 = color_tile[r0];
+          highp vec2 t15 = (image_pos_tile[r0] - vec2(uvec2(t2)));
+          highp float t16 = (t14.w * exp(((-(0.5 * (((t13.x * t15.x) * t15.x) + ((t13.z * t15.y) * t15.y)))) - ((t13.y * t15.x) * t15.y))));
+          r3 = (r3 + ((t14.xyz * t16) * r2));
+          r2 = (r2 * (1.0 - t16));
+        }
+        atomicAdd(shared_t, uint((r2 * 255.0)));
+      }
+      barrier();
+    }
+    if (t3) {
+      highp vec3 t17 = (r3 + ((mix(vec3(0.0, 0.0, 1.0), vec3(1.0, 0.2, 0.2), vec3((float(uint(t5)) * 0.0005))) * (1.0 - r2)) * heatmap_factor));
+      imageStore(rasterized_image, ivec4(t2, 0, 0).xy, vec4(t17, 1.0));
+    }
+  }
 }
 
-
-// stats: 67 alu 2 tex 11 flow
+// stats: 60 alu 2 tex 10 flow
 // workgroup size: 16 16 1
 // buffer #0: BoundsBuffer storage layout std430 binding 2 (size: unknown)
 //  member #0: uvec2[] bounds_buffer offset 0 array runtime stride 8 readonly
@@ -128,9 +90,9 @@ void main ()
 //  member #0: RasterizeData[] culled_buffer offset 0 array runtime stride 48 readonly
 //  member #1: RasterizeData [] parent 0 offset 0 readonly
 //  member #2: vec2 image_pos parent 1 offset 0 readonly
-//  member #3: vec2 pos_xy parent 1 offset 8 readonly
+//  member #3: vec2 pos_xy parent 1 offset 8 readonly (unused)
 //  member #4: vec3 conic parent 1 offset 16 readonly
-//  member #5: float pos_z parent 1 offset 28 readonly
+//  member #5: float pos_z parent 1 offset 28 readonly (unused)
 //  member #6: vec4 color parent 1 offset 32 readonly
 // buffer #2: Params layout std140 binding 3 (size: 16)
 //  member #0: float heatmap_factor offset 0

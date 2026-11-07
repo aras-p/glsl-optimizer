@@ -313,6 +313,11 @@ void *ralloc_parent(const void *ptr);
  */
 void ralloc_set_destructor(const void *ptr, void(*destructor)(void *));
 
+/**
+ * Duplicate memory, allocating the memory from the given context.
+ */
+void *ralloc_memdup(const void *ctx, const void *mem, size_t n) MALLOCLIKE;
+
 /// \defgroup array String Functions @{
 /**
  * Duplicate a string, allocating the memory from the given context.
@@ -479,6 +484,45 @@ bool ralloc_vasprintf_append(char **str, const char *fmt, va_list args);
 /// @}
 
 /**
+ * Estimate the memory usage in bytes of a ralloc context, recursively including
+ * all of its child counts. This is only available in debug builds as release
+ * builds do not track size information. It is providing as a aid for debugging
+ * memory bloat.
+ */
+#ifndef NDEBUG
+size_t ralloc_total_size(const void *ptr);
+#endif
+
+typedef struct gc_ctx gc_ctx;
+
+/**
+ * Allocate a new garbage collection context. The children of the
+ * context are not necessarily ralloc'd pointers and cannot be stolen to a ralloc context. Instead,
+ * The user should use the mark-and-sweep interface below to free any unused children. Under the
+ * hood, this restriction lets us manage allocations ourselves, using a freelist. This means that
+ * GC contexts should be used for scenarios where there are many allocations and frees, most of
+ * which use only a few different sizes.
+ */
+gc_ctx *gc_context(const void *parent);
+
+#define gc_alloc(ctx, type, count) gc_alloc_size(ctx, sizeof(type) * (count), alignof(type))
+#define gc_zalloc(ctx, type, count) gc_zalloc_size(ctx, sizeof(type) * (count), alignof(type))
+
+#define gc_alloc_zla(ctx, type, type2, count) \
+   gc_alloc_size(ctx, sizeof(type) + sizeof(type2) * (count), MAX2(alignof(type), alignof(type2)))
+#define gc_zalloc_zla(ctx, type, type2, count) \
+   gc_zalloc_size(ctx, sizeof(type) + sizeof(type2) * (count), MAX2(alignof(type), alignof(type2)))
+
+void *gc_alloc_size(gc_ctx *ctx, size_t size, size_t alignment) MALLOCLIKE;
+void *gc_zalloc_size(gc_ctx *ctx, size_t size, size_t alignment) MALLOCLIKE;
+void gc_free(void *ptr);
+gc_ctx *gc_get_context(void *ptr);
+
+void gc_sweep_start(gc_ctx *ctx);
+void gc_mark_live(gc_ctx *ctx, const void *mem);
+void gc_sweep_end(gc_ctx *ctx);
+
+/**
  * Declare C++ new and delete operators which use ralloc.
  *
  * Placing this macro in the body of a class makes it possible to do:
@@ -488,7 +532,7 @@ bool ralloc_vasprintf_append(char **str, const char *fmt, va_list args);
  *
  * which is more idiomatic in C++ than calling ralloc.
  */
-#define DECLARE_ALLOC_CXX_OPERATORS_TEMPLATE(TYPE, ALLOC_FUNC)           \
+#define DECLARE_RALLOC_CXX_OPERATORS_TEMPLATE(TYPE, ALLOC_FUNC)          \
 private:                                                                 \
    static void _ralloc_destructor(void *p)                               \
    {                                                                     \
@@ -515,95 +559,190 @@ public:                                                                  \
       ralloc_free(p);                                                    \
    }
 
-/* glsl-optimizer change: matching placement deletes handle failed constructors.
- * Ralloc cleanup must clear the registered destructor; an incompletely
- * constructed object must not be destroyed. Linear children cannot be freed
- * individually and remain owned by their allocator. */
 #define DECLARE_RALLOC_CXX_OPERATORS(type) \
-   DECLARE_ALLOC_CXX_OPERATORS_TEMPLATE(type, ralloc_size) \
-   static void operator delete(void *p, void *) { operator delete(p); }
+   DECLARE_RALLOC_CXX_OPERATORS_TEMPLATE(type, ralloc_size)
 
 #define DECLARE_RZALLOC_CXX_OPERATORS(type) \
-   DECLARE_ALLOC_CXX_OPERATORS_TEMPLATE(type, rzalloc_size) \
-   static void operator delete(void *p, void *) { operator delete(p); }
+   DECLARE_RALLOC_CXX_OPERATORS_TEMPLATE(type, rzalloc_size)
 
-#define DECLARE_LINEAR_ALLOC_CXX_OPERATORS(type) \
-   DECLARE_ALLOC_CXX_OPERATORS_TEMPLATE(type, linear_alloc_child) \
-   static void operator delete(void *, void *) {}
 
-#define DECLARE_LINEAR_ZALLOC_CXX_OPERATORS(type) \
-   DECLARE_ALLOC_CXX_OPERATORS_TEMPLATE(type, linear_zalloc_child) \
-   static void operator delete(void *, void *) {}
+#define DECLARE_LINEAR_ALLOC_CXX_OPERATORS_TEMPLATE(TYPE, ALLOC_FUNC, new_cmd, new_array_cmd, ATTRIBUTE) \
+public:                                                                  \
+   ATTRIBUTE                                                             \
+   static void* operator new(size_t size, linear_ctx *ctx)               \
+   {                                                                     \
+      void *p = ALLOC_FUNC(ctx, size);                                   \
+      assert(p != NULL);                                                 \
+      new_cmd                                                            \
+      return p;                                                          \
+   }                                                                     \
+   ATTRIBUTE                                                             \
+   static void* operator new[](size_t size, linear_ctx *ctx)             \
+   {                                                                     \
+      void *p = ALLOC_FUNC(ctx, size);                                   \
+      assert(p != NULL);                                                 \
+      new_array_cmd                                                      \
+      return p;                                                          \
+   }
 
+#define DECLARE_LINEAR_ALLOC_CXX_OPERATORS(type, new_cmd, new_array_cmd) \
+   DECLARE_LINEAR_ALLOC_CXX_OPERATORS_TEMPLATE(type, linear_alloc_child, \
+                                               new_cmd, new_array_cmd,)
+
+#define DECLARE_LINEAR_ZALLOC_CXX_OPERATORS(type, new_cmd, new_array_cmd) \
+   DECLARE_LINEAR_ALLOC_CXX_OPERATORS_TEMPLATE(type, linear_zalloc_child, \
+                                               new_cmd, new_array_cmd,)
+
+#define DECLARE_LINEAR_ZALLOC_CXX_OPERATORS_NO_SANITIZE(type, new_cmd, new_array_cmd, FLAG) \
+   DECLARE_LINEAR_ALLOC_CXX_OPERATORS_TEMPLATE(type, linear_zalloc_child, \
+                                               new_cmd, new_array_cmd,    \
+                                               ATTRIBUTE_NO_SANITIZE_##FLAG)
+
+typedef struct linear_ctx linear_ctx;
 
 /**
- * Do a fast allocation from the linear buffer, also known as the child node
+ * Do a fast allocation from the linear context, also known as the child node
  * from the allocator's point of view. It can't be freed directly. You have
- * to free the parent or the ralloc parent.
+ * to free the linear context or the ralloc parent.
  *
- * \param parent   parent node of the linear allocator
+ * \param ctx      linear context of the allocator
  * \param size     size to allocate (max 32 bits)
  */
-void *linear_alloc_child(void *parent, unsigned size);
+void *linear_alloc_child(linear_ctx *ctx, unsigned size);
+
+typedef struct {
+   unsigned min_buffer_size;
+} linear_opts;
 
 /**
- * Allocate a parent node that will hold linear buffers. The returned
- * allocation is actually the first child node, but it's also the handle
- * of the parent node. Use it for all child node allocations.
+ * Allocate a linear context that will internally hold linear buffers.
+ * Use it for all child node allocations.
  *
  * \param ralloc_ctx  ralloc context, must not be NULL
- * \param size        size to allocate (max 32 bits)
  */
-void *linear_alloc_parent(void *ralloc_ctx, unsigned size);
+linear_ctx *linear_context(void *ralloc_ctx);
+
+linear_ctx *linear_context_with_opts(void *ralloc_ctx, const linear_opts *opts);
 
 /**
  * Same as linear_alloc_child, but also clears memory.
  */
-void *linear_zalloc_child(void *parent, unsigned size);
+void *linear_zalloc_child(linear_ctx *ctx, unsigned size) MALLOCLIKE;
 
 /**
- * Same as linear_alloc_parent, but also clears memory.
+ * Free a linear context. This will free all child nodes too.
+ * Alternatively, freeing the ralloc parent will also free
+ * the linear context.
  */
-void *linear_zalloc_parent(void *ralloc_ctx, unsigned size);
+void linear_free_context(linear_ctx *ctx);
 
 /**
- * Free the linear parent node. This will free all child nodes too.
- * Freeing the ralloc parent will also free this.
+ * Same as ralloc_steal, but steals the entire linear context.
  */
-void linear_free_parent(void *ptr);
+void ralloc_steal_linear_context(void *new_ralloc_ctx, linear_ctx *ctx);
 
 /**
- * Same as ralloc_steal, but steals the linear parent node.
+ * Return the ralloc parent of the linear context.
  */
-void ralloc_steal_linear_parent(void *new_ralloc_ctx, void *ptr);
+void *ralloc_parent_of_linear_context(linear_ctx *ctx);
 
 /**
- * Return the ralloc parent of the linear parent node.
+ * Do a fast allocation of an array from the linear context and initialize it to zero.
+ *
+ * Similar to \c calloc, but does not initialize the memory to zero.
+ *
+ * More than a convenience function, this also checks for integer overflow when
+ * multiplying \p size and \p count.  This is necessary for security.
  */
-void *ralloc_parent_of_linear_parent(void *ptr);
+void *linear_alloc_child_array(linear_ctx *ctx, size_t size, unsigned count) MALLOCLIKE;
 
 /**
- * Same as realloc except that the linear allocator doesn't free child nodes,
- * so it's reduced to memory duplication. It's used in places where
- * reallocation is required. Don't use it often. It's much slower than
- * realloc.
+ * Do a fast allocation of an array from the linear context.
+ *
+ * Similar to \c calloc.
+ *
+ * More than a convenience function, this also checks for integer overflow when
+ * multiplying \p size and \p count.  This is necessary for security.
  */
-void *linear_realloc(void *parent, void *old, unsigned new_size);
+void *linear_zalloc_child_array(linear_ctx *ctx, size_t size, unsigned count) MALLOCLIKE;
 
 /* The functions below have the same semantics as their ralloc counterparts,
  * except that they always allocate a linear child node.
  */
-char *linear_strdup(void *parent, const char *str);
-char *linear_asprintf(void *parent, const char *fmt, ...);
-char *linear_vasprintf(void *parent, const char *fmt, va_list args);
-bool linear_asprintf_append(void *parent, char **str, const char *fmt, ...);
-bool linear_vasprintf_append(void *parent, char **str, const char *fmt,
+char *linear_strdup(linear_ctx *ctx, const char *str) MALLOCLIKE;
+char *linear_asprintf(linear_ctx *ctx, const char *fmt, ...) PRINTFLIKE(2, 3) MALLOCLIKE;
+char *linear_vasprintf(linear_ctx *ctx, const char *fmt, va_list args) MALLOCLIKE;
+void *linear_memdup(linear_ctx *ctx, const void *mem, size_t n) MALLOCLIKE;
+bool linear_asprintf_append(linear_ctx *ctx, char **str, const char *fmt, ...) PRINTFLIKE(3, 4);
+bool linear_vasprintf_append(linear_ctx *ctx, char **str, const char *fmt,
                              va_list args);
-bool linear_asprintf_rewrite_tail(void *parent, char **str, size_t *start,
-                                  const char *fmt, ...);
-bool linear_vasprintf_rewrite_tail(void *parent, char **str, size_t *start,
+bool linear_asprintf_rewrite_tail(linear_ctx *ctx, char **str, size_t *start,
+                                  const char *fmt, ...) PRINTFLIKE(4, 5);
+bool linear_vasprintf_rewrite_tail(linear_ctx *ctx, char **str, size_t *start,
                                    const char *fmt, va_list args);
-bool linear_strcat(void *parent, char **dest, const char *str);
+bool linear_strcat(linear_ctx *ctx, char **dest, const char *str);
+
+/**
+ * \def linear_alloc(ctx, type)
+ * Do a fast allocation from the linear context.
+ *
+ * This is equivalent to:
+ * \code
+ * ((type *) linear_alloc_child(ctx, sizeof(type))
+ * \endcode
+ */
+#define linear_alloc(ctx, type)  ((type *) linear_alloc_child(ctx, sizeof(type)))
+
+/**
+ * \def linear_zalloc(ctx, type)
+ * Do a fast allocation from the linear context and initialize it to zero.
+ *
+ * This is equivalent to:
+ * \code
+ * ((type *) linear_zalloc_child(ctx, sizeof(type))
+ * \endcode
+ */
+#define linear_zalloc(ctx, type) ((type *) linear_zalloc_child(ctx, sizeof(type)))
+
+/**
+ * \def linear_alloc_array(ctx, type, count)
+ * Do a fast allocation of an array from the linear context.
+ *
+ * Similar to \c calloc, but does not initialize the memory to zero.
+ *
+ * More than a convenience function, this also checks for integer overflow when
+ * multiplying \c sizeof(type) and \p count.  This is necessary for security.
+ *
+ * This is equivalent to:
+ * \code
+ * ((type *) linear_alloc_child_array(ctx, sizeof(type), count)
+ * \endcode
+ */
+#define linear_alloc_array(ctx, type, count) \
+   ((type *) linear_alloc_child_array(ctx, sizeof(type), count))
+
+/**
+ * \def linear_zalloc_array(ctx, type, count)
+ * Do a fast allocation of an array from the linear context and initialize it to zero
+ *
+ * Similar to \c calloc.
+ *
+ * More than a convenience function, this also checks for integer overflow when
+ * multiplying \c sizeof(type) and \p count.  This is necessary for security.
+ *
+ * This is equivalent to:
+ * \code
+ * ((type *) linear_zalloc_child_array(ctx, sizeof(type), count)
+ * \endcode
+ */
+#define linear_zalloc_array(ctx, type, count) \
+   ((type *) linear_zalloc_child_array(ctx, sizeof(type), count))
+
+enum {
+   RALLOC_PRINT_INFO_SUMMARY_ONLY = 1 << 0,
+};
+
+void ralloc_print_info(FILE *f, const void *p, unsigned flags);
 
 #ifdef __cplusplus
 } /* end of extern "C" */

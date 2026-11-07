@@ -2,42 +2,23 @@
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
 #if __METAL_VERSION__ < 320
-#error Coherent images require Metal 3.2 or newer
-#endif
-#if __METAL_VERSION__ < 320
-#error Memory barriers require Metal 3.2 or newer
+#error This shader requires Metal 3.2 or newer
 #endif
 struct xlatMtlShaderUniform {
 };
 // threadsPerThreadgroup: 8, 1, 1
 kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , uint3 gl_GlobalInvocationID [[thread_position_in_grid]]
   , texture2d<float, access::read, memory_coherence_device> sourceImage [[texture(0)]]
   , texture3d<float, access::write, memory_coherence_device> destinationImage [[texture(1)]]
-  , texture2d_array<uint, access::read_write, memory_coherence_device> data [[texture(2)]])
+  , texture2d_array<uint, access::read_write, memory_coherence_device> data [[texture(2)]]
+  , uint3 gl_GlobalInvocationID [[thread_position_in_grid]])
 {
-  int2 tmpvar_1 = 0;
-  tmpvar_1 = int2(gl_GlobalInvocationID.xy);
-  float4 tmpvar_2 = 0;
-  tmpvar_2 = sourceImage.read(uint2(tmpvar_1));
-  int3 tmpvar_3 = 0;
-  tmpvar_3.z = 0;
-  tmpvar_3.xy = tmpvar_1;
-  destinationImage.write(float4(tmpvar_2), uint3(tmpvar_3));
-  int3 tmpvar_4 = 0;
-  tmpvar_4.z = 0;
-  tmpvar_4.xy = tmpvar_1;
-  uint4 tmpvar_5;
-  tmpvar_5 = data.read(uint2(tmpvar_4.xy), uint(tmpvar_4.z));
-  int3 tmpvar_6 = 0;
-  tmpvar_6.z = 0;
-  tmpvar_6.xy = tmpvar_1;
-  data.write(uint4((tmpvar_5 + uint4(1u, 1u, 1u, 1u))), uint2(tmpvar_6.xy), uint(tmpvar_6.z));
+  destinationImage.write(sourceImage.read(uint2(int4(uint4(gl_GlobalInvocationID.xy, 0u, 0u)).xy)), uint3(int4(uint4(gl_GlobalInvocationID.xy, 0u, 0u)).xyz));
+  data.write(uint4((int4(data.read(uint2(int4(uint4(gl_GlobalInvocationID.xy, 0u, 0u)).xy), uint(int4(uint4(gl_GlobalInvocationID.xy, 0u, 0u)).z))) + 1)), uint2(int4(uint4(gl_GlobalInvocationID.xy, 0u, 0u)).xy), uint(int4(uint4(gl_GlobalInvocationID.xy, 0u, 0u)).z));
   atomic_thread_fence(mem_flags::mem_texture, memory_order_seq_cst, thread_scope_device);
 }
 
-
-// stats: 5 alu 4 tex 0 flow
+// stats: 1 alu 4 tex 0 flow
 // workgroup size: 8 1 1
 // textures: 3
 //  #0: sourceImage (high image2d) 0x0 [-1] loc 0 format rgba32f component float readonly

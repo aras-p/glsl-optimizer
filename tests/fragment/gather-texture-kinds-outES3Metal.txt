@@ -17,12 +17,11 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   , texture2d<uint> labels [[texture(4)]], sampler _mtlsmp_labels [[sampler(4)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  _mtl_o.color = (((
-    (layers.gather(_mtlsmp_layers, (float2)((_mtl_i.coord.xyz).xy), uint(clamp(floor(float((_mtl_i.coord.xyz).z) + 0.5), 0.0, float(layers.get_array_size() - 1u))), int2(1, -1), component::z) + cubeMap.gather(_mtlsmp_cubeMap, (float3)((_mtl_i.coord.xyz))))
-   + cubeLayers.gather(_mtlsmp_cubeLayers, (float3)((_mtl_i.coord).xyz), uint(clamp(floor(float((_mtl_i.coord).w) + 0.5), 0.0, float(cubeLayers.get_array_size() - 1u))), component::w)) + shadowLayers.gather_compare(_mtlsmp_shadowLayers, (float2)((_mtl_i.coord.xyz).xy), uint(clamp(floor(float((_mtl_i.coord.xyz).z) + 0.5), 0.0, float(shadowLayers.get_array_size() - 1u))), float(_mtl_i.coord.w))) + float4(labels.gather(_mtlsmp_labels, (float2)((_mtl_i.coord.xy)), int2(0), component::y)));
+  float3 t0 = _mtl_i.coord.xyz;
+  float4 t1 = ((layers.gather(_mtlsmp_layers, t0.xy, uint(rint(t0.z)), int2(1, -1), component::z) + cubeMap.gather(_mtlsmp_cubeMap, t0)) + cubeLayers.gather(_mtlsmp_cubeLayers, _mtl_i.coord.xyz, uint(rint(_mtl_i.coord.w)), component::w));
+  _mtl_o.color = ((t1 + shadowLayers.gather_compare(_mtlsmp_shadowLayers, t0.xy, uint(rint(t0.z)), _mtl_i.coord.w)) + float4(labels.gather(_mtlsmp_labels, _mtl_i.coord.xy, int2(0), component::y)));
   return _mtl_o;
 }
-
 
 // stats: 5 alu 5 tex 0 flow
 // inputs: 1

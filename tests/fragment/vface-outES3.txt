@@ -1,11 +1,12 @@
 #version 300 es
-layout(location=0) out mediump vec4 _fragData;
+precision highp float;
+precision highp int;
+layout(location = 0) out mediump vec4 _fragData;
 in highp float xlv_VFACE;
 void main ()
 {
   _fragData = vec4(xlv_VFACE);
 }
-
 
 // stats: 0 alu 0 tex 0 flow
 // inputs: 1

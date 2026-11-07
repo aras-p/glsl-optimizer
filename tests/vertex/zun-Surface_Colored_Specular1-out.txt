@@ -1,18 +1,11 @@
 void main ()
 {
-  mat3 tmpvar_1;
-  tmpvar_1[0] = gl_ModelViewMatrixInverseTranspose[0].xyz;
-  tmpvar_1[1] = gl_ModelViewMatrixInverseTranspose[1].xyz;
-  tmpvar_1[2] = gl_ModelViewMatrixInverseTranspose[2].xyz;
+  vec3 t0 = (mat3(gl_ModelViewMatrixInverseTranspose[0].xyz, gl_ModelViewMatrixInverseTranspose[1].xyz, gl_ModelViewMatrixInverseTranspose[2].xyz) * gl_Normal);
   gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex);
-  vec4 tmpvar_2;
-  tmpvar_2.w = 0.0;
-  tmpvar_2.xyz = (tmpvar_1 * gl_Normal);
-  gl_TexCoord[0] = tmpvar_2;
+  gl_TexCoord[0] = vec4(t0, 0.0);
 }
 
-
-// stats: 3 alu 0 tex 0 flow
+// stats: 12 alu 0 tex 0 flow
 // inputs: 2
 //  #0: gl_Normal (high float) 3x1 [-1] loc 1
 //  #1: gl_Vertex (high float) 4x1 [-1] loc 0

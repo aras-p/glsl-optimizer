@@ -39,23 +39,10 @@ ir_factory::make_temp(const glsl_type *type, const char *name)
 {
    ir_variable *var;
 
-   var = new(mem_ctx) ir_variable(type, name, ir_var_temporary);
+   var = new(linalloc) ir_variable(type, name, ir_var_temporary);
    emit(var);
 
    return var;
-}
-
-ir_assignment *
-assign(deref lhs, operand rhs, operand condition, int writemask)
-{
-   void *mem_ctx = ralloc_parent(lhs.val);
-
-   ir_assignment *assign = new(mem_ctx) ir_assignment(lhs.val,
-                                                      rhs.val,
-                                                      condition.val,
-                                                      writemask);
-
-   return assign;
 }
 
 ir_assignment *
@@ -67,28 +54,28 @@ assign(deref lhs, operand rhs)
 ir_assignment *
 assign(deref lhs, operand rhs, int writemask)
 {
-   return assign(lhs, rhs, (ir_rvalue *) NULL, writemask);
-}
+   linear_ctx *linalloc = lhs.val->node_linalloc;
 
-ir_assignment *
-assign(deref lhs, operand rhs, operand condition)
-{
-   return assign(lhs, rhs, condition, (1 << lhs.val->type->vector_elements) - 1);
+   ir_assignment *assign = new(linalloc) ir_assignment(lhs.val,
+                                                      rhs.val,
+                                                      writemask);
+
+   return assign;
 }
 
 ir_return *
 ret(operand retval)
 {
-   void *mem_ctx = ralloc_parent(retval.val);
-   return new(mem_ctx) ir_return(retval.val);
+   linear_ctx *linalloc = retval.val->node_linalloc;
+   return new(linalloc) ir_return(retval.val);
 }
 
 ir_swizzle *
 swizzle(operand a, int swizzle, int components)
 {
-   void *mem_ctx = ralloc_parent(a.val);
+   linear_ctx *linalloc = a.val->node_linalloc;
 
-   return new(mem_ctx) ir_swizzle(a.val,
+   return new(linalloc) ir_swizzle(a.val,
                                   GET_SWZ(swizzle, 0),
                                   GET_SWZ(swizzle, 1),
                                   GET_SWZ(swizzle, 2),
@@ -99,7 +86,7 @@ swizzle(operand a, int swizzle, int components)
 ir_swizzle *
 swizzle_for_size(operand a, unsigned components)
 {
-   void *mem_ctx = ralloc_parent(a.val);
+   linear_ctx *linalloc = a.val->node_linalloc;
 
    if (a.val->type->vector_elements < components)
       components = a.val->type->vector_elements;
@@ -108,31 +95,7 @@ swizzle_for_size(operand a, unsigned components)
    for (int i = components; i < 4; i++)
       s[i] = components - 1;
 
-   return new(mem_ctx) ir_swizzle(a.val, s, components);
-}
-
-ir_swizzle *
-swizzle_xxxx(operand a)
-{
-   return swizzle(a, SWIZZLE_XXXX, 4);
-}
-
-ir_swizzle *
-swizzle_yyyy(operand a)
-{
-   return swizzle(a, SWIZZLE_YYYY, 4);
-}
-
-ir_swizzle *
-swizzle_zzzz(operand a)
-{
-   return swizzle(a, SWIZZLE_ZZZZ, 4);
-}
-
-ir_swizzle *
-swizzle_wwww(operand a)
-{
-   return swizzle(a, SWIZZLE_WWWW, 4);
+   return new(linalloc) ir_swizzle(a.val, s, components);
 }
 
 ir_swizzle *
@@ -159,46 +122,28 @@ swizzle_w(operand a)
    return swizzle(a, SWIZZLE_WWWW, 1);
 }
 
-ir_swizzle *
-swizzle_xy(operand a)
-{
-   return swizzle(a, SWIZZLE_XYZW, 2);
-}
-
-ir_swizzle *
-swizzle_xyz(operand a)
-{
-   return swizzle(a, SWIZZLE_XYZW, 3);
-}
-
-ir_swizzle *
-swizzle_xyzw(operand a)
-{
-   return swizzle(a, SWIZZLE_XYZW, 4);
-}
-
 ir_expression *
 expr(ir_expression_operation op, operand a)
 {
-   void *mem_ctx = ralloc_parent(a.val);
+   linear_ctx *linalloc = a.val->node_linalloc;
 
-   return new(mem_ctx) ir_expression(op, a.val);
+   return new(linalloc) ir_expression(op, a.val);
 }
 
 ir_expression *
 expr(ir_expression_operation op, operand a, operand b)
 {
-   void *mem_ctx = ralloc_parent(a.val);
+   linear_ctx *linalloc = a.val->node_linalloc;
 
-   return new(mem_ctx) ir_expression(op, a.val, b.val);
+   return new(linalloc) ir_expression(op, a.val, b.val);
 }
 
 ir_expression *
 expr(ir_expression_operation op, operand a, operand b, operand c)
 {
-   void *mem_ctx = ralloc_parent(a.val);
+   linear_ctx *linalloc = a.val->node_linalloc;
 
-   return new(mem_ctx) ir_expression(op, a.val, b.val, c.val);
+   return new(linalloc) ir_expression(op, a.val, b.val, c.val);
 }
 
 ir_expression *add(operand a, operand b)
@@ -226,11 +171,6 @@ ir_expression *mul(operand a, operand b)
    return expr(ir_binop_mul, a, b);
 }
 
-ir_expression *imul_high(operand a, operand b)
-{
-   return expr(ir_binop_imul_high, a, b);
-}
-
 ir_expression *div(operand a, operand b)
 {
    return expr(ir_binop_div, a, b);
@@ -254,11 +194,6 @@ ir_expression *trunc(operand a)
 ir_expression *round_even(operand a)
 {
    return expr(ir_unop_round_even, a);
-}
-
-ir_expression *fract(operand a)
-{
-   return expr(ir_unop_fract, a);
 }
 
 /* dot for vectors, mul for scalars */
@@ -312,12 +247,6 @@ ir_expression *
 exp(operand a)
 {
    return expr(ir_unop_exp, a);
-}
-
-ir_expression *
-rcp(operand a)
-{
-   return expr(ir_unop_rcp, a);
 }
 
 ir_expression *
@@ -375,12 +304,6 @@ greater(operand a, operand b)
 }
 
 ir_expression*
-lequal(operand a, operand b)
-{
-   return expr(ir_binop_gequal, b, a);
-}
-
-ir_expression*
 gequal(operand a, operand b)
 {
    return expr(ir_binop_gequal, a, b);
@@ -420,12 +343,6 @@ ir_expression*
 bit_or(operand a, operand b)
 {
    return expr(ir_binop_bit_or, a, b);
-}
-
-ir_expression*
-bit_xor(operand a, operand b)
-{
-   return expr(ir_binop_bit_xor, a, b);
 }
 
 ir_expression*
@@ -501,21 +418,9 @@ bitcast_u2f(operand a)
 }
 
 ir_expression*
-i2b(operand a)
-{
-   return expr(ir_unop_i2b, a);
-}
-
-ir_expression*
 b2i(operand a)
 {
    return expr(ir_unop_b2i, a);
-}
-
-ir_expression *
-f2b(operand a)
-{
-   return expr(ir_unop_f2b, a);
 }
 
 ir_expression *
@@ -567,21 +472,15 @@ interpolate_at_sample(operand a, operand b)
 }
 
 ir_expression *
+f2f16(operand a)
+{
+   return expr(ir_unop_f2f16, a);
+}
+
+ir_expression *
 f2d(operand a)
 {
    return expr(ir_unop_f2d, a);
-}
-
-ir_expression *
-i2d(operand a)
-{
-   return expr(ir_unop_i2d, a);
-}
-
-ir_expression *
-u2d(operand a)
-{
-   return expr(ir_unop_u2d, a);
 }
 
 ir_expression *
@@ -611,8 +510,8 @@ bitfield_extract(operand a, operand b, operand c)
 ir_expression *
 bitfield_insert(operand a, operand b, operand c, operand d)
 {
-   void *mem_ctx = ralloc_parent(a.val);
-   return new(mem_ctx) ir_expression(ir_quadop_bitfield_insert,
+   linear_ctx *linalloc = a.val->node_linalloc;
+   return new(linalloc) ir_expression(ir_quadop_bitfield_insert,
                                      a.val->type, a.val, b.val, c.val, d.val);
 }
 
@@ -622,9 +521,9 @@ if_tree(operand condition,
 {
    assert(then_branch != NULL);
 
-   void *mem_ctx = ralloc_parent(condition.val);
+   linear_ctx *linalloc = condition.val->node_linalloc;
 
-   ir_if *result = new(mem_ctx) ir_if(condition.val);
+   ir_if *result = new(linalloc) ir_if(condition.val);
    result->then_instructions.push_tail(then_branch);
    return result;
 }
@@ -637,9 +536,9 @@ if_tree(operand condition,
    assert(then_branch != NULL);
    assert(else_branch != NULL);
 
-   void *mem_ctx = ralloc_parent(condition.val);
+   linear_ctx *linalloc = condition.val->node_linalloc;
 
-   ir_if *result = new(mem_ctx) ir_if(condition.val);
+   ir_if *result = new(linalloc) ir_if(condition.val);
    result->then_instructions.push_tail(then_branch);
    result->else_instructions.push_tail(else_branch);
    return result;

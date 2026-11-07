@@ -1,12 +1,11 @@
 #version 450
-layout(location=9) in vec4 varyingColor;
-layout(location=2) out vec4 color;
-layout(location=5) uniform vec4 tint;
+layout(location = 9) in vec4 varyingColor;
+layout(location = 2) out vec4 color;
+layout(location = 5) uniform vec4 tint;
 void main ()
 {
   color = (varyingColor * tint);
 }
-
 
 // stats: 1 alu 0 tex 0 flow
 // inputs: 1

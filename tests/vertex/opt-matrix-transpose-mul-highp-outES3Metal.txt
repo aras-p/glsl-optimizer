@@ -23,44 +23,23 @@ struct xlatMtlShaderUniform {
 vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half3 o_lightDir_1 = 0;
-  half3 o_viewDir_2 = 0;
-  half3 o_worldN_3 = 0;
-  float3x3 tmpvar_4;
-  tmpvar_4[0u] = _mtl_u._Object2World[0].xyz;
-  tmpvar_4[1u] = _mtl_u._Object2World[1].xyz;
-  tmpvar_4[2u] = _mtl_u._Object2World[2].xyz;
-  o_worldN_3 = half3((tmpvar_4 * _mtl_i.attrNormal));
-  float3 tmpvar_5 = 0;
-  tmpvar_5 = (((_mtl_i.attrNormal.yzx * _mtl_i.attrTangent.zxy) - (_mtl_i.attrNormal.zxy * _mtl_i.attrTangent.yzx)) * _mtl_i.attrTangent.w);
-  float3x3 tmpvar_6;
-  tmpvar_6[0u].x = _mtl_i.attrTangent.xyz[0];
-  tmpvar_6[0u].y = tmpvar_5[0];
-  tmpvar_6[0u].z = _mtl_i.attrNormal[0];
-  tmpvar_6[1u].x = _mtl_i.attrTangent.xyz[1];
-  tmpvar_6[1u].y = tmpvar_5[1];
-  tmpvar_6[1u].z = _mtl_i.attrNormal[1];
-  tmpvar_6[2u].x = _mtl_i.attrTangent.xyz[2];
-  tmpvar_6[2u].y = tmpvar_5[2];
-  tmpvar_6[2u].z = _mtl_i.attrNormal[2];
-  float3 tmpvar_7 = 0;
-  tmpvar_7 = (tmpvar_6 * (_mtl_u._World2Object * (float4)(_mtl_u._WorldSpaceLightPos0)).xyz);
-  o_lightDir_1 = half3(tmpvar_7);
-  float4 tmpvar_8 = 0;
-  tmpvar_8.w = 1.0;
-  tmpvar_8.xyz = _mtl_u._WorldSpaceCameraPos;
-  o_viewDir_2 = half3(normalize((tmpvar_7 + normalize(
-    (tmpvar_6 * (((_mtl_u._World2Object * tmpvar_8).xyz * _mtl_u.unity_Scale.w) - _mtl_i.attrVertex.xyz))
-  ))));
+  float3 t0 = (((_mtl_i.attrNormal.yzx * _mtl_i.attrTangent.zxy) - (_mtl_i.attrNormal.zxy * _mtl_i.attrTangent.yzx)) * _mtl_i.attrTangent.w);
+  float4 t1 = (_mtl_u._World2Object * float4(_mtl_u._WorldSpaceLightPos0));
+  float3 t2 = float3(_mtl_i.attrTangent.x, t0.x, _mtl_i.attrNormal.x);
+  float3 t3 = float3(_mtl_i.attrTangent.y, t0.y, _mtl_i.attrNormal.y);
+  float3 t4 = float3(_mtl_i.attrTangent.z, t0.z, _mtl_i.attrNormal.z);
+  float3 t5 = (float3x3(t2, t3, t4) * t1.xyz);
+  float3 t6 = (((_mtl_u._World2Object * float4(_mtl_u._WorldSpaceCameraPos, 1.0)).xyz * _mtl_u.unity_Scale.w) - _mtl_i.attrVertex.xyz);
+  float3 t7 = (float3x3(t2, t3, t4) * t6);
+  float3 t8 = (t5 + normalize(t7));
   _mtl_o.gl_Position = (_mtl_u.glstate_matrix_mvp * _mtl_i.attrVertex);
-  _mtl_o.varWorldN = o_worldN_3;
-  _mtl_o.varLightDir = o_lightDir_1;
-  _mtl_o.varViewDir = o_viewDir_2;
+  _mtl_o.varWorldN = half3((float3x3(_mtl_u._Object2World[0].xyz, _mtl_u._Object2World[1].xyz, _mtl_u._Object2World[2].xyz) * _mtl_i.attrNormal));
+  _mtl_o.varLightDir = half3(t5);
+  _mtl_o.varViewDir = half3(normalize(t8));
   return _mtl_o;
 }
 
-
-// stats: 16 alu 0 tex 0 flow
+// stats: 48 alu 0 tex 0 flow
 // inputs: 3
 //  #0: attrVertex (high float) 4x1 [-1] loc 0
 //  #1: attrNormal (high float) 3x1 [-1] loc 1

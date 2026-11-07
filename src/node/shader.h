@@ -18,7 +18,6 @@ public:
 		Nan::SetPrototypeMethod(tpl, "dispose", Dispose);
 		Nan::SetPrototypeMethod(tpl, "compiled", Compiled);
 		Nan::SetPrototypeMethod(tpl, "output", Output);
-		Nan::SetPrototypeMethod(tpl, "rawOutput", RawOutput);
 		Nan::SetPrototypeMethod(tpl, "log", Log);
 
     constructor().Reset(Nan::GetFunction(tpl).ToLocalChecked());
@@ -27,7 +26,6 @@ public:
 
 	inline bool isCompiled() const { return _compiled; }
 	const char* getOutput() const;
-	const char* getRawOutput() const;
 	const char* getLog() const;
 
 	void release();
@@ -41,7 +39,6 @@ private:
 
 	static NAN_METHOD(Compiled);
 	static NAN_METHOD(Output);
-	static NAN_METHOD(RawOutput);
 	static NAN_METHOD(Log);
 
 	static inline Nan::Persistent<v8::Function> & constructor() {

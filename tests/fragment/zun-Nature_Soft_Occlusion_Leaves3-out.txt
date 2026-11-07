@@ -4,23 +4,16 @@ uniform vec4 _LightPositionRange;
 uniform sampler2D _MainTex;
 void main ()
 {
-  vec3 xlt_IN_vec_1;
-  xlt_IN_vec_1 = gl_TexCoord[0].xyz;
-  if ((((texture2D (_MainTex, gl_TexCoord[1].xy) * _Color).w - _Cutoff) < 0.0)) discard;
-  vec4 enc_2;
-  enc_2 = (vec4(1.0, 255.0, 65025.0, 1.60581e+08) * (sqrt(
-    dot (xlt_IN_vec_1, xlt_IN_vec_1)
-  ) * _LightPositionRange.w));
-  vec4 tmpvar_3;
-  tmpvar_3 = fract(enc_2);
-  enc_2 = (tmpvar_3 - (tmpvar_3.yzww * 0.00392157));
-  gl_FragData[0] = enc_2;
+  if (((texture2D(_MainTex, gl_TexCoord[1].xy) * _Color).w < _Cutoff)) {
+    discard;
+  }
+  vec4 t0 = fract(((length(gl_TexCoord[0].xyz) * vec4(1.0, 255.0, 65025.0, 1.60581e+08)) * _LightPositionRange.w));
+  gl_FragData[0] = (t0 - (t0.yzww * 0.00392157));
 }
 
-
-// stats: 10 alu 2 tex 1 flow
+// stats: 9 alu 2 tex 1 flow
 // inputs: 1
-//  #0: gl_TexCoord (high float) 4x1 [2] loc 4
+//  #0: gl_TexCoord (high float) 4x1 [0] loc 4
 // uniforms: 3 (total size: 0)
 //  #0: _Color (high float) 4x1 [-1]
 //  #1: _Cutoff (high float) 1x1 [-1]

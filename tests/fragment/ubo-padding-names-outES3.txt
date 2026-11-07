@@ -1,22 +1,23 @@
 #version 300 es
+precision highp float;
+precision highp int;
 struct Entry {
   highp float _buf_pad1;
   highp vec4 color;
   highp float _buf_pad2;
   highp vec4 other;
 };
-layout(std140, column_major) uniform Data {
+layout(std140) uniform Data {
   highp float _buf_pad1;
   highp vec4 color;
   highp float _buf_pad2;
-  layout(column_major) Entry entry;
+  Entry entry;
 } data;
 out highp vec4 color;
 void main ()
 {
   color = (((data.color * data._buf_pad1) + (data.entry.color * data.entry._buf_pad1)) + (data.entry.other * (data._buf_pad2 + data.entry._buf_pad2)));
 }
-
 
 // stats: 6 alu 0 tex 0 flow
 // buffer #0: Data instance data layout std140 (size: 112)

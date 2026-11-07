@@ -1,24 +1,23 @@
 #version 300 es
+precision highp float;
+precision highp int;
 in mediump vec4 a;
 in mediump vec4 b;
-layout(location=0) out mediump vec4 andMask;
-layout(location=1) out mediump vec4 orMask;
-layout(location=2) out mediump vec4 xorMask;
-layout(location=3) out mediump vec4 notAndMask;
+layout(location = 0) out mediump vec4 andMask;
+layout(location = 1) out mediump vec4 orMask;
+layout(location = 2) out mediump vec4 xorMask;
+layout(location = 3) out mediump vec4 notAndMask;
 void main ()
 {
-  bvec4 tmpvar_1;
-  tmpvar_1 = lessThan (a, b);
-  bvec4 tmpvar_2;
-  tmpvar_2 = greaterThanEqual (a, vec4(0.0, 0.0, 0.0, 0.0));
-  andMask = (vec4(tmpvar_1) * vec4(tmpvar_2));
-  notAndMask = vec4(not(bvec4(ivec4(tmpvar_1) * ivec4(tmpvar_2))));
-  orMask = vec4(bvec4(ivec4(tmpvar_1) + ivec4(tmpvar_2)));
-  xorMask = vec4(notEqual (tmpvar_1, tmpvar_2));
+  bvec4 t0 = lessThan(a, b);
+  bvec4 t1 = greaterThanEqual(a, vec4(0.0));
+  andMask = vec4(bvec4((t0.x && t1.x), (t0.y && t1.y), (t0.z && t1.z), (t0.w && t1.w)));
+  notAndMask = vec4(not(bvec4((t0.x && t1.x), (t0.y && t1.y), (t0.z && t1.z), (t0.w && t1.w))));
+  orMask = vec4(bvec4((t0.x || t1.x), (t0.y || t1.y), (t0.z || t1.z), (t0.w || t1.w)));
+  xorMask = vec4(bvec4((t0.x ^^ t1.x), (t0.y ^^ t1.y), (t0.z ^^ t1.z), (t0.w ^^ t1.w)));
 }
 
-
-// stats: 11 alu 0 tex 0 flow
+// stats: 20 alu 0 tex 0 flow
 // inputs: 2
 //  #0: a (medium float) 4x1 [-1]
 //  #1: b (medium float) 4x1 [-1]

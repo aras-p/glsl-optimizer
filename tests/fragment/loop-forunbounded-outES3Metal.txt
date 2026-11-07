@@ -15,24 +15,33 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   , texture2d<half> _MainTex [[texture(0)]], sampler _mtlsmp__MainTex [[sampler(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half3 light_2 = 0;
-  half4 tmpvar_3 = 0;
-  tmpvar_3 = _MainTex.sample(_mtlsmp__MainTex, (float2)((_mtl_i.xlv_uv)));
-  light_2 = half3(float3(0.0, 0.0, 0.0));
-  short tmpvar_4 = 0;
-  tmpvar_4 = short((tmpvar_3.w * (half)(10.0)));
-  for (short j_1 = short(0); j_1 < tmpvar_4; j_1++) {
-    light_2 = half3(((float3)(light_2) + (((float3)(tmpvar_3.xyz) * _mtl_i.xlv_nl[j_1]) * _mtl_u._TerrainTreeLightColors[j_1].xyz)));
-  };
-  half4 tmpvar_5 = 0;
-  tmpvar_5.w = half(1.0);
-  tmpvar_5.xyz = light_2;
-  _mtl_o._fragData = tmpvar_5;
+  int r0 = 0;
+  half3 r1 = 0;
+  half4 t0 = _MainTex.sample(_mtlsmp__MainTex, _mtl_i.xlv_uv);
+  short t1 = short((t0.w * half(1e+01)));
+  if ((short(0) < t1)) {
+    r1 = half3(((float3(t0.xyz) * _mtl_i.xlv_nl.x) * _mtl_u._TerrainTreeLightColors[0].xyz));
+    if ((short(1) < t1)) {
+      r1 = half3((float3(r1) + ((float3(t0.xyz) * _mtl_i.xlv_nl.y) * _mtl_u._TerrainTreeLightColors[1].xyz)));
+      if ((short(2) < t1)) {
+        float3 t2 = (float3(t0.xyz) * _mtl_i.xlv_nl.z);
+        r1 = half3((float3(r1) + (t2 * _mtl_u._TerrainTreeLightColors[2].xyz)));
+        if ((short(3) < t1)) {
+          r1 = half3((float3(r1) + (t2 * _mtl_u._TerrainTreeLightColors[3].xyz)));
+          for (r0 = 4; (short(r0) < t1); r0++) {
+            r1 = half3(NAN);
+          }
+        }
+      }
+    }
+  } else {
+    r1 = half3(0.0);
+  }
+  _mtl_o._fragData = half4(r1.x, r1.y, r1.z, half(1.0));
   return _mtl_o;
 }
 
-
-// stats: 10 alu 1 tex 2 flow
+// stats: 18 alu 1 tex 6 flow
 // inputs: 2
 //  #0: xlv_uv (high float) 2x1 [-1]
 //  #1: xlv_nl (high float) 3x1 [-1]

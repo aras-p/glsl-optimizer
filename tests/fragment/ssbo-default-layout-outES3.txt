@@ -1,40 +1,35 @@
 #version 310 es
+precision highp float;
+precision highp int;
 struct Pair {
   highp float x;
   highp float y;
 };
-layout(shared, column_major) uniform UniformData {
+layout(shared) uniform UniformData {
   highp float values[2];
 } uniforms;
-layout(std140, column_major) buffer ExplicitData {
+layout(std140) buffer ExplicitData {
   readonly highp float values[2];
 } explicitSource;
-layout(packed, column_major) buffer PackedData {
-  layout(column_major) readonly Pair pairs[2];
-  layout(column_major) readonly highp mat2 matrix;
+layout(packed) buffer PackedData {
+  readonly Pair pairs[2];
+  readonly highp mat2 matrix;
 } packedSource;
-layout(shared, column_major) buffer SharedData {
+layout(shared) buffer SharedData {
   readonly highp vec2 sharedValues[2];
 };
-layout(shared, column_major) buffer DefaultData {
+layout(shared) buffer DefaultData {
   readonly highp float values[3];
   readonly highp vec2 pairs[2];
 } source;
 out highp vec4 color;
 void main ()
 {
-  highp vec2 tmpvar_1;
-  tmpvar_1.x = packedSource.pairs[1].x;
-  tmpvar_1.y = packedSource.pairs[1].y;
-  highp vec4 tmpvar_2;
-  tmpvar_2.xy = ((source.pairs[1] + sharedValues[1]) + (packedSource.matrix * tmpvar_1));
-  tmpvar_2.z = (source.values[2] + explicitSource.values[1]);
-  tmpvar_2.w = uniforms.values[1];
-  color = tmpvar_2;
+  highp vec2 t0 = (((packedSource.matrix[0] * packedSource.pairs[1].x) + (source.pairs[1] + sharedValues[1])) + (packedSource.matrix[1] * packedSource.pairs[1].y));
+  color = vec4(t0, (source.values[2] + explicitSource.values[1]), uniforms.values[1]);
 }
 
-
-// stats: 4 alu 0 tex 0 flow
+// stats: 6 alu 0 tex 0 flow
 // buffer #0: DefaultData storage instance source layout shared (size: unknown)
 //  member #0: float[3] values array 3 readonly
 //  member #1: float [] parent 0 readonly

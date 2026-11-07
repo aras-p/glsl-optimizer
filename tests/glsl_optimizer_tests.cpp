@@ -548,27 +548,23 @@ static bool TestFile (glslopt_ctx* ctx, glslopt_shader_type type,
 		return res;
 	}
 
-	if (optimizeOk && (!glslopt_get_raw_output(shader) || !glslopt_get_output(shader))) {
+	if (optimizeOk && !glslopt_get_output(shader)) {
 		printf("\n  %s: optimizer returned no source output.\n", testName.c_str());
 		glslopt_shader_delete(shader);
 		return false;
 	}
 	if (optimizeOk)
 	{
-		std::string textHir = glslopt_get_raw_output (shader);
 		std::string textOpt = glslopt_get_output (shader);
 
 		if (reparse) {
-			for (const std::string* output : {&textHir, &textOpt}) {
-				glslopt_shader* parsed = glslopt_optimize(ctx, type, output->c_str(), output == &textHir ? kGlslOptionNotFullShader : 0);
-				if (!glslopt_get_status(parsed)) {
-					printf("\n  %s: printed %s does not compile: %s\n", testName.c_str(),
-						output == &textHir ? "raw" : "optimized", glslopt_get_log(parsed));
-					WriteStringToFile(actualPath + (output == &textHir ? ".raw" : ".invalid"), *output);
-					res = false;
-				}
-				glslopt_shader_delete(parsed);
+			glslopt_shader* parsed = glslopt_optimize(ctx, type, textOpt.c_str(), 0);
+			if (!glslopt_get_status(parsed)) {
+				printf("\n  %s: printed output does not compile: %s\n", testName.c_str(), glslopt_get_log(parsed));
+				WriteStringToFile(actualPath + ".invalid", textOpt);
+				res = false;
 			}
+			glslopt_shader_delete(parsed);
 		}
 		// append stats
 		char buffer[1000];
@@ -701,8 +697,6 @@ static bool TestFile (glslopt_ctx* ctx, glslopt_shader_type type,
 		
 		res = CompareExpectedOutput(testName, outputPath, actualPath, outputOpt, haveExpected,
 			textOpt, "does not match optimized output", updateExpected && res) && res;
-		if (res && doCheckGLSL && !CheckGLSL (vertex, gles, testName, "raw", textHir.c_str()))
-			res = false;
 		if (res && doCheckGLSL && !CheckGLSL (vertex, gles, testName, "optimized", textOpt.c_str()))
 			res = false;
 	}

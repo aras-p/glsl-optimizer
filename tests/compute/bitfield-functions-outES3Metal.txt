@@ -1,60 +1,70 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
-template<typename R, typename T, bool Signed> inline R _xlat_findMSB(T x) {
-  return R(31) - R(clz(Signed ? x ^ (x >> 31) : x));
-}
-template<typename R, typename T> inline R _xlat_findLSB(T x) {
-  R n = R(ctz(x));
-  return select(n, R(-1), n == R(32));
-}
-struct alignas(16) _xlat_buf_storage0 {
-  alignas(4) uint u;
-  alignas(4) int s;
-  alignas(8) uint2 uv;
-  alignas(8) int2 sv;
-  alignas(4) int offset;
-  alignas(4) int width;
-  alignas(16) uint4 unsigned_results;
-  alignas(16) int4 signed_results;
-  alignas(16) int4 scan_results;
-  alignas(16) int4 vector_scan_results;
-  alignas(8) uint2 unsigned_insert;
-  alignas(8) int2 signed_insert;
+struct _xlat_buf_Data_std430 {
+  uint u;
+  int s;
+  uint2 uv;
+  int2 sv;
+  int offset;
+  int width;
+  uint4 unsigned_results;
+  int4 signed_results;
+  int4 scan_results;
+  int4 vector_scan_results;
+  uint2 unsigned_insert;
+  int2 signed_insert;
 };
-static_assert(sizeof(_xlat_buf_storage0) == 112, "std430 size");
+static_assert(sizeof(_xlat_buf_Data_std430) == 112, "std430 size");
+template <typename T> inline T _xlat_findLSB(T x) { return select(T(ctz(x)), T(-1), x == T(0)); }
+template <typename T> inline T _xlat_findMSBu(T x) { return select(T(31) - T(clz(x)), T(-1), x == T(0)); }
+template <typename T> inline T _xlat_findMSBi(T x) { T y = select(x, ~x, x < T(0)); return select(T(31) - T(clz(y)), T(-1), y == T(0)); }
 struct xlatMtlShaderUniform {
 };
 // threadsPerThreadgroup: 1, 1, 1
 kernel void xlatMtlMain (constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , device _xlat_buf_storage0& _mtl_buffer1 [[buffer(1)]])
+  , device _xlat_buf_Data_std430& data [[buffer(1)]])
 {
-  uint4 tmpvar_1;
-  tmpvar_1.x = extract_bits(uint(_mtl_buffer1.u), uint(int(_mtl_buffer1.offset)), uint(int(_mtl_buffer1.width)));
-  tmpvar_1.y = insert_bits(uint(_mtl_buffer1.u), uint2(_mtl_buffer1.uv).x, uint(int(_mtl_buffer1.offset)), uint(int(_mtl_buffer1.width)));
-  tmpvar_1.zw = extract_bits(uint2(_mtl_buffer1.uv), (uint2(uint(int(_mtl_buffer1.offset)))).x, (uint2(uint(int(_mtl_buffer1.width)))).x);
-  _mtl_buffer1.unsigned_results = uint4(tmpvar_1);
-  int4 tmpvar_2 = 0;
-  tmpvar_2.x = extract_bits(int(_mtl_buffer1.s), uint(int(_mtl_buffer1.offset)), uint(int(_mtl_buffer1.width)));
-  tmpvar_2.y = insert_bits(int(_mtl_buffer1.s), int2(_mtl_buffer1.sv).x, uint(int(_mtl_buffer1.offset)), uint(int(_mtl_buffer1.width)));
-  tmpvar_2.zw = extract_bits(int2(_mtl_buffer1.sv), uint((int2(int(_mtl_buffer1.offset))).x), uint((int2(int(_mtl_buffer1.width))).x));
-  _mtl_buffer1.signed_results = int4(tmpvar_2);
-  _mtl_buffer1.unsigned_insert = uint2(insert_bits(uint2(_mtl_buffer1.uv), uint2(uint(_mtl_buffer1.u)), (uint2(uint(int(_mtl_buffer1.offset)))).x, (uint2(uint(int(_mtl_buffer1.width)))).x));
-  _mtl_buffer1.signed_insert = int2(insert_bits(int2(_mtl_buffer1.sv), int2(int(_mtl_buffer1.s)), uint((int2(int(_mtl_buffer1.offset))).x), uint((int2(int(_mtl_buffer1.width))).x)));
-  int4 tmpvar_3 = 0;
-  tmpvar_3.x = _xlat_findLSB<int, uint>(uint(_mtl_buffer1.u));
-  tmpvar_3.y = _xlat_findMSB<int, uint, false>(uint(_mtl_buffer1.u));
-  tmpvar_3.z = _xlat_findLSB<int, int>(int(_mtl_buffer1.s));
-  tmpvar_3.w = _xlat_findMSB<int, int, true>(int(_mtl_buffer1.s));
-  _mtl_buffer1.scan_results = int4(tmpvar_3);
-  int4 tmpvar_4 = 0;
-  tmpvar_4.xy = _xlat_findLSB<int2, uint2>(uint2(_mtl_buffer1.uv));
-  tmpvar_4.zw = _xlat_findMSB<int2, int2, true>(int2(_mtl_buffer1.sv));
-  _mtl_buffer1.vector_scan_results = int4(tmpvar_4);
+  uint t0 = uint(data.u);
+  int t1 = int(data.offset);
+  int t2 = int(data.width);
+  int t3 = ((1 << int(uint(t2))) - 1);
+  uint2 t4 = uint2(data.uv);
+  int t5 = (t3 << int(uint(t1)));
+  uint2 t6 = ((t4 >> uint(uint(t1))) & uint2(select(((int2(1) << int(uint(t2))) - 1), int2(-1), (int2(t2) == 32))));
+  data.unsigned_results = uint4(((t0 >> uint(uint(t1))) & uint(((t2 == 32) ? -1 : t3))), ((31u < uint(t2)) ? t4.x : ((t0 & uint((~t5))) | (uint((int(t4.x) << int(uint(t1)))) & uint(t5)))), t6);
+  int t7 = int(data.s);
+  int t8 = int(data.offset);
+  int t9 = int(data.width);
+  int t10 = (32 - t9);
+  int2 t11 = int2(data.sv);
+  int t12 = (((1 << int(uint(t9))) - 1) << int(uint(t8)));
+  int2 t13 = (int2(32) - t9);
+  int2 t14 = select(((t11 << int2(uint2((t13 - t8)))) >> int2(uint2(t13))), int2(0), (int2(0) == t9));
+  data.signed_results = int4(((0 == t9) ? 0 : ((t7 << int(uint((t10 - t8)))) >> int(uint(t10)))), ((31u < uint(t9)) ? t11.x : int(((uint(t7) & uint((~t12))) | (uint((t11.x << int(uint(t8)))) & uint(t12))))), t14);
+  uint t15 = uint(data.u);
+  int t16 = int(data.offset);
+  int t17 = int(data.width);
+  int2 t18 = (((int2(1) << int(uint(t17))) - 1) << int(uint(t16)));
+  data.unsigned_insert = select(((uint2(data.uv) & uint2((~t18))) | (uint2((int2(uint2(t15)) << int(uint(t16)))) & uint2(t18))), uint2(t15), (uint2(31u) < uint(t17)));
+  int t19 = int(data.s);
+  int t20 = int(data.offset);
+  int t21 = int(data.width);
+  int2 t22 = (((int2(1) << int(uint(t21))) - 1) << int(uint(t20)));
+  data.signed_insert = select(int2(((uint2(int2(data.sv)) & uint2((~t22))) | (uint2((int2(t19) << int(uint(t20)))) & uint2(t22)))), int2(t19), (uint2(31u) < uint(t21)));
+  uint t23 = uint(data.u);
+  short t24 = short(int(_xlat_findLSB(int(t23))));
+  short t25 = short(int(_xlat_findMSBu(t23)));
+  int t26 = int(data.s);
+  short t27 = short(int(_xlat_findLSB(t26)));
+  short t28 = short(_xlat_findMSBi(t26));
+  data.scan_results = int4(short4(t24, t25, t27, t28));
+  short2 t29 = short2(int2(_xlat_findLSB(int2(uint2(data.uv)))));
+  short2 t30 = short2(_xlat_findMSBi(int2(data.sv)));
+  data.vector_scan_results = int4(short4(t29, t30));
 }
 
-
-// stats: 22 alu 0 tex 0 flow
+// stats: 68 alu 0 tex 0 flow
 // workgroup size: 1 1 1
 // buffer #0: Data storage instance data layout std430 binding 0 (size: 112) metal 1
 //  member #0: uint u offset 0

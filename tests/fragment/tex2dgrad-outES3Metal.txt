@@ -15,20 +15,14 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   , texturecube<half> cub [[texture(1)]], sampler _mtlsmp_cub [[sampler(1)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  _mtl_o._fragColor = (((tex.sample(_mtlsmp_tex, (float2)((_mtl_i.uv1.xy)), gradient2d((float2)(
-    dfdx(_mtl_i.uv1.xy)
-  ), (float2)(
-    dfdy(_mtl_i.uv1.xy)
-  ))) + tex.sample(_mtlsmp_tex, (float2)((_mtl_i.uv2.xy)), gradient2d((float2)(
-    dfdx(_mtl_i.uv2.xy)
-  ), (float2)(
-    dfdy(_mtl_i.uv2.xy)
-  )))) + tex.sample(_mtlsmp_tex, (float2)((_mtl_i.uv2.xy)), gradient2d((float2)(_mtl_i.uv1.xy), (float2)(_mtl_i.uv1.xy)))) + cub.sample(_mtlsmp_cub, (float3)((_mtl_i.uv2)), gradientcube((float3)(dfdx(_mtl_i.uv2)), (float3)(dfdy(_mtl_i.uv2)))));
+  half2 t0 = _mtl_i.uv1.xy;
+  float2 t1 = _mtl_i.uv2.xy;
+  half4 t2 = ((tex.sample(_mtlsmp_tex, float2(t0), gradient2d(float2(dfdx(t0)), float2(dfdy(t0)))) + tex.sample(_mtlsmp_tex, t1, gradient2d(dfdx(t1), dfdy(t1)))) + tex.sample(_mtlsmp_tex, t1, gradient2d(float2(t0), float2(t0))));
+  _mtl_o._fragColor = (t2 + cub.sample(_mtlsmp_cub, _mtl_i.uv2, gradientcube(dfdx(_mtl_i.uv2), dfdy(_mtl_i.uv2))));
   return _mtl_o;
 }
 
-
-// stats: 9 alu 4 tex 0 flow
+// stats: 3 alu 4 tex 0 flow
 // inputs: 2
 //  #0: uv1 (medium float) 3x1 [-1]
 //  #1: uv2 (high float) 3x1 [-1]

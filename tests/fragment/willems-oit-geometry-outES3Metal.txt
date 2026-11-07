@@ -2,43 +2,28 @@
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
 #if __METAL_VERSION__ < 320
-#error Coherent images require Metal 3.2 or newer
+#error This shader requires Metal 3.2 or newer
 #endif
-#if __METAL_VERSION__ < 310
-#error Image atomics require Metal 3.1 or newer
-#endif
-struct Node {
+struct _xlat_buf_GeometrySBO_std430 {
+  uint count;
+  uint maxNodeCount;
+};
+static_assert(sizeof(_xlat_buf_GeometrySBO_std430) == 8, "std430 size");
+struct _xlat_Node_std430 {
   float4 color;
   float depth;
   uint next;
+  char _pad0[8];
 };
-struct alignas(4) _xlat_buf_storage0 {
-  alignas(4) uint count;
-  alignas(4) uint maxNodeCount;
+static_assert(sizeof(_xlat_Node_std430) == 32, "std430 size");
+struct _xlat_buf_LinkedListSBO_std430 {
+  _xlat_Node_std430 nodes[1];
 };
-static_assert(sizeof(_xlat_buf_storage0) == 8, "std430 size");
-struct alignas(16) _xlat_buf_storage2 {
-  alignas(16) float4 color;
-  alignas(4) float depth;
-  alignas(4) uint next;
+struct _xlat_buf_PushConsts_std140 {
+  float4 model[4];
+  float4 color;
 };
-static_assert(sizeof(_xlat_buf_storage2) == 32, "std430 size");
-inline __attribute__((always_inline)) Node _xlat_buf_storage2_read(const device _xlat_buf_storage2& storage)
-{
-  Node value;
-  value.color = float4(storage.color);
-  value.depth = float(storage.depth);
-  value.next = uint(storage.next);
-  return value;
-}
-struct alignas(16) _xlat_buf_storage1_element { _xlat_buf_storage2 value; };
-static_assert(sizeof(_xlat_buf_storage1_element) == 32, "array stride");
-static_assert(sizeof(float4x4) == 64, "buffer size");
-struct alignas(16) _xlat_buf_storage3 {
-  alignas(16) float4x4 model;
-  alignas(16) float4 color;
-};
-static_assert(sizeof(_xlat_buf_storage3) == 80, "std140 size");
+static_assert(sizeof(_xlat_buf_PushConsts_std140) == 80, "std140 size");
 struct xlatMtlShaderInput {
   float4 gl_FragCoord [[position]];
 };
@@ -46,25 +31,23 @@ struct xlatMtlShaderOutput {
 };
 struct xlatMtlShaderUniform {
 };
-[[early_fragment_tests]] fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
-  , device _xlat_buf_storage0& _mtl_buffer1 [[buffer(1)]]
-  , device uchar* _mtl_buffer2 [[buffer(2)]]
-  , constant _xlat_buf_storage3& _mtl_buffer3 [[buffer(3)]]
+fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]]
+  , device _xlat_buf_GeometrySBO_std430& _xlat_blk_GeometrySBO [[buffer(1)]]
+  , device _xlat_buf_LinkedListSBO_std430& _xlat_blk_LinkedListSBO [[buffer(2)]]
+  , constant _xlat_buf_PushConsts_std140& pushConsts [[buffer(3)]]
   , texture2d<uint, access::read_write, memory_coherence_device> headIndexImage [[texture(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  uint tmpvar_1;
-  tmpvar_1 = atomic_fetch_add_explicit (reinterpret_cast<device atomic_uint*>(&_mtl_buffer1.count), uint(1u), memory_order_relaxed);
-  if ((tmpvar_1 < uint(_mtl_buffer1.maxNodeCount))) {
-    uint tmpvar_2;
-    tmpvar_2 = headIndexImage.atomic_exchange(uint2(int2(_mtl_i.gl_FragCoord.xy)), uint4(tmpvar_1)).x;
-    reinterpret_cast<device _xlat_buf_storage1_element*>(_mtl_buffer2 + 0)[tmpvar_1].value.color = float4(float4(_mtl_buffer3.color));
-    reinterpret_cast<device _xlat_buf_storage1_element*>(_mtl_buffer2 + 0)[tmpvar_1].value.depth = float(_mtl_i.gl_FragCoord.z);
-    reinterpret_cast<device _xlat_buf_storage1_element*>(_mtl_buffer2 + 0)[tmpvar_1].value.next = uint(tmpvar_2);
-  };
+  uint t0 = atomic_fetch_add_explicit((device atomic_uint*)&_xlat_blk_GeometrySBO.count, 1u, memory_order_relaxed);
+  if ((t0 < uint(_xlat_blk_GeometrySBO.maxNodeCount))) {
+    int2 t1 = int2(_mtl_i.gl_FragCoord.xy);
+    uint t2 = headIndexImage.atomic_exchange(uint2(int4(t1, 0, 0).xy), uint4(t0)).x;
+    _xlat_blk_LinkedListSBO.nodes[int(t0)].color = float4(pushConsts.color);
+    _xlat_blk_LinkedListSBO.nodes[int(t0)].depth = _mtl_i.gl_FragCoord.z;
+    _xlat_blk_LinkedListSBO.nodes[int(t0)].next = t2;
+  }
   return _mtl_o;
 }
-
 
 // stats: 2 alu 1 tex 1 flow
 // inputs: 1

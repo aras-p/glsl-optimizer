@@ -1,15 +1,13 @@
 #version 300 es
-layout(location=0) out mediump vec4 _fragData;
+precision highp float;
+precision highp int;
+layout(location = 0) out mediump vec4 _fragData;
 in highp vec2 xlv_VPOS;
 void main ()
 {
-  highp vec4 tmpvar_1;
-  tmpvar_1.zw = vec2(0.0, 0.0);
-  tmpvar_1.xy = xlv_VPOS;
-  _fragData = tmpvar_1;
+  _fragData = vec4(xlv_VPOS, 0.0, 0.0);
 }
 
-
-// stats: 1 alu 0 tex 0 flow
+// stats: 0 alu 0 tex 0 flow
 // inputs: 1
 //  #0: xlv_VPOS (high float) 2x1 [-1]

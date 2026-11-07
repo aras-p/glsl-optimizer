@@ -21,12 +21,9 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   , texture2d<half> tex [[texture(0)]], sampler _mtlsmp_tex [[sampler(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  _mtl_o.fragColor = half4(((float4)(((
-    ((_mtl_u.values.color * _mtl_u.tint) * _mtl_u.scale)
-   + (half)(0.25)) * tex.sample(_mtlsmp_tex, (float2)((_mtl_i.uv))))) + (_mtl_u.values.position + _mtl_u.offset)));
+  _mtl_o.fragColor = half4((float4(((((_mtl_u.values.color * _mtl_u.tint) * _mtl_u.scale) + half(0.25)) * tex.sample(_mtlsmp_tex, _mtl_i.uv))) + (_mtl_u.values.position + _mtl_u.offset)));
   return _mtl_o;
 }
-
 
 // stats: 6 alu 1 tex 0 flow
 // inputs: 1
