@@ -141,6 +141,7 @@ add_library(glsl_optimizer STATIC
     src/util/set.c
     src/util/softfloat.c
     src/util/string_buffer.c
+    src/util/strndup.c
     src/util/strtod.c
     src/util/u_debug.c
     src/util/u_dynarray.c
